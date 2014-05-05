@@ -2,7 +2,7 @@
 
 #define Execute(func) if(func->Init) func->Init()
 
-void SysInit();
+//void SysInit();
 
 TSystem Sys;
 

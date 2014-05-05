@@ -4,77 +4,87 @@
   */
 
 #ifndef _SYSTEM_H_
-#define _SYSTEM_H_ 1
+#define _SYSTEM_H_
 
 typedef char                sbyte;
 typedef unsigned char       byte;
 typedef unsigned short      ushort;
 typedef unsigned int        uint;
 typedef char*               string;
-//typedef unsigned char       bool;
+typedef unsigned char       bool;
 #define true                1
 #define false               0
 
-//typedef uint				Pin;
-struct Pin
+typedef struct
 {
 	ushort Group;
 	ushort Port;
-};
+} Pin;
 
-struct TBase
+typedef struct
 {
 	void (*Init)(void);
 	void (*Uninit)(void);
-};
 
-struct TCore : TBase
-{
     void (*Printf)(const string format, ...);
     void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
-    void (*Free)(void*  ptr);
+    void (*Free)(void* ptr);
     void (*Sleep)(uint ms);
     void (*Delay)(uint us);
     void (*DisableInterrupts)();
     void (*EnableInterrupts)();
     uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
-    uint ComputeCRC(const void* rgBlock, int nLength, uint crc);
-};
+    uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
+} TCore;
 
-struct TBoot : TBase
+typedef struct
 {
-	
-};
+	void (*Init)(void);
+	void (*Uninit)(void);
 
-struct TMem : TBase
+} TBoot;
+
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     int (*snprintf)(string buffer, uint len, const string format, ...);
     int (*stricmp)(const string dst, const string src);
     int (*strncmp)(const string str1, const string str2, uint num);
     uint (*strlen)(const string str);
     void *(*memcpy)(void * dst, const void * src, uint len);
     void *(*memset)(void * dst, int value, uint len);
-};
+} TMem;
 
-struct TFlash : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     int (*Erase)(uint address, uint count);
     int (*Read)(uint address, uint count,byte *buffer);
     int (*Write)(uint address, uint count,byte *buffer);
-};
+} TFlash;
 
-struct TIO : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
     //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
     void (*EnableOutputPin)(Pin pin, bool initialState);
     bool (*GetPinState)(Pin pin);
     void (*SetPinState)(Pin pin, bool state);
-};
+} TIO;
 
-struct TUsart : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     bool (*Initialize)(int ComPortNum, int BaudRate, int Parity, int DataBits, int StopBits, int FlowValue);
     bool (*Uninitialize)(int ComPortNum);
     int  (*Write)(int ComPortNum, const string Data, uint size);
@@ -82,41 +92,56 @@ struct TUsart : TBase
     bool (*Flush)(int ComPortNum);
     int  (*BytesInBuffer)(int ComPortNum, bool fRx);
     void (*DiscardBuffer)(int ComPortNum, bool fRx);
-};
+} TUsart;
 
-struct TAnalog : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
 	//bool (*DA_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//void (*DA_Write)(ANALOG_CHANNEL channel, int level);
 	//bool (*AD_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//int (*AD_Read)(ANALOG_CHANNEL channel);
-};
+} TAnalog;
 
-struct TPwm : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     //bool (*Initialize)(PWM_CHANNEL channel);
     //bool (*Uninitialize)(PWM_CHANNEL channel);
     //bool (*ApplyConfiguration)(PWM_CHANNEL channel, Pin pin, uint& period, uint& duration, PWM_SCALE_FACTOR &scale, bool invert);
     //bool (*Start)(PWM_CHANNEL channel, Pin pin);
     //void (*Stop)(PWM_CHANNEL channel, Pin pin);
     //Pin (*GetPinForChannel)(PWM_CHANNEL channel);
-};
+} TPwm;
 
-struct TSpi : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
-};
+} TSpi;
 
-struct TI2c : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     bool (*Initialize)();
     bool (*Uninitialize)();
     bool (*Execute)(ushort address,byte *inBuffer,int inCount,byte *outBuffer,int outCount,uint clockRateKhz,int timeout);
-};
+} TI2c;
 
-struct TLcd : TBase
+typedef struct
 {
+	void (*Init)(void);
+	void (*Uninit)(void);
+
     void (*Clear)(uint color);
     void (*SetPixel)(int x,int y,uint color);
     uint (*GetPixel)(int x,int y);
@@ -132,27 +157,27 @@ struct TLcd : TBase
     void (*GetFrameBufferEx)(byte *bytData,uint offset,uint size);
     void (*SuspendLayout)();
     void (*ResumeLayout)();
-};
+} TLcd;
 
 // 全局系统根
 // 采用指针而不是对象，主要是考虑到每个模块可能扩展，而不能影响系统根的其它部分
-struct TSystem : TBase
+typedef struct
 {
-	struct TBoot* Boot;
-	struct TCore* Core;
-	struct TMem* Mem;
-	struct TFlash* Flash;
-	struct TIO* IO;
-	struct TUsart* Usart;
-	struct TAnalog* Analog;
-	struct TPwm* Pwm;
-	struct TSpi* Spi;
-	struct TI2c* I2c;
-	struct TLcd* Lcd;
-};
+	TBoot* Boot;
+	TCore* Core;
+	TMem* Mem;
+	TFlash* Flash;
+	TIO* IO;
+	TUsart* Usart;
+	TAnalog* Analog;
+	TPwm* Pwm;
+	TSpi* Spi;
+	TI2c* I2c;
+	TLcd* Lcd;
+} TSystem;
 
 // 声明全局的Sys根对象
 extern TSystem Sys;
-void SysInit();
+extern void SysInit();
 
 #endif //_SYSTEM_H_
