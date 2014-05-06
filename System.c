@@ -2,6 +2,8 @@
 
 #define Execute(func) if(func.Init) func.Init()
 
+Pin PA3;
+
 void SysInit(void);
 
 TSystem Sys = {SysInit,};
@@ -16,8 +18,24 @@ void SysInit(void)
 	Execute(Sys.IO);
 	Execute(Sys.Usart);
 	Execute(Sys.Analog);
-	Execute(Sys.Pwm);
 	Execute(Sys.Spi);
-	Execute(Sys.I2c);
-	Execute(Sys.Lcd);
+	/*Execute(Sys.I2c);
+	Execute(Sys.Pwm);
+	Execute(Sys.Lcd);*/
+}
+
+void TCore_Init(void)
+{
+}
+
+void TBoot_Init(void)
+{
+}
+
+void TIO_Init(void)
+{
+}
+
+void TUsart_Init(void)
+{
 }

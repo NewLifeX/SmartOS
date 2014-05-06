@@ -21,6 +21,8 @@ typedef struct
 	byte Port;
 } Pin;
 
+extern Pin PA3;
+
 typedef struct
 {
 	void (*Init)(void);
@@ -38,12 +40,16 @@ typedef struct
     uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
 } TCore;
 
+extern void TCore_Init(void);
+
 typedef struct
 {
 	void (*Init)(void);
 	void (*Uninit)(void);
 
 } TBoot;
+
+extern void TBoot_Init(void);
 
 typedef struct
 {
@@ -58,6 +64,8 @@ typedef struct
     void *(*memset)(void * dst, int value, uint len);
 } TMem;
 
+extern void TMem_Init(void);
+
 typedef struct
 {
 	void (*Init)(void);
@@ -68,6 +76,8 @@ typedef struct
     int (*Write)(uint address, uint count,byte *buffer);
 } TFlash;
 
+extern void TFlash_Init(void);
+
 typedef struct
 {
 	void (*Init)(void);
@@ -76,9 +86,11 @@ typedef struct
     //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
     //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
     void (*EnableOutputPin)(Pin pin, bool initialState);
-    bool (*GetPinState)(Pin pin);
-    void (*SetPinState)(Pin pin, bool state);
+    bool (*Get)(Pin pin);
+    void (*Set)(Pin pin, bool state);
 } TIO;
+
+extern void TIO_Init(void);
 
 typedef struct
 {
@@ -94,6 +106,8 @@ typedef struct
     void (*DiscardBuffer)(int ComPortNum, bool fRx);
 } TUsart;
 
+extern void TUsart_Init(void);
+
 typedef struct
 {
 	void (*Init)(void);
@@ -104,6 +118,29 @@ typedef struct
 	//bool (*AD_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//int (*AD_Read)(ANALOG_CHANNEL channel);
 } TAnalog;
+
+extern void TAnalog_Init(void);
+
+typedef struct
+{
+	void (*Init)(void);
+	void (*Uninit)(void);
+
+    //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
+    //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
+} TSpi;
+
+extern void TSpi_Init(void);
+
+/*typedef struct
+{
+	void (*Init)(void);
+	void (*Uninit)(void);
+
+    bool (*Initialize)();
+    bool (*Uninitialize)();
+    bool (*Execute)(ushort address,byte *inBuffer,int inCount,byte *outBuffer,int outCount,uint clockRateKhz,int timeout);
+} TI2c;
 
 typedef struct
 {
@@ -117,25 +154,6 @@ typedef struct
     //void (*Stop)(PWM_CHANNEL channel, Pin pin);
     //Pin (*GetPinForChannel)(PWM_CHANNEL channel);
 } TPwm;
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
-    //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
-    //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
-} TSpi;
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
-    bool (*Initialize)();
-    bool (*Uninitialize)();
-    bool (*Execute)(ushort address,byte *inBuffer,int inCount,byte *outBuffer,int outCount,uint clockRateKhz,int timeout);
-} TI2c;
 
 typedef struct
 {
@@ -158,13 +176,14 @@ typedef struct
     void (*SuspendLayout)();
     void (*ResumeLayout)();
 } TLcd;
-
+*/
 // 全局系统根
-// 采用指针而不是对象，主要是考虑到每个模块可能扩展，而不能影响系统根的其它部分
 typedef struct
 {
 	void (*Init)(void);
 	void (*Uninit)(void);
+	
+	int Clock;
 
 	TBoot Boot;
 	TCore Core;
@@ -173,14 +192,26 @@ typedef struct
 	TIO IO;
 	TUsart Usart;
 	TAnalog Analog;
-	TPwm Pwm;
 	TSpi Spi;
-	TI2c I2c;
-	TLcd Lcd;
+	/*TI2c I2c;
+	TPwm Pwm;
+	TLcd Lcd;*/
 } TSystem;
 
 // 声明全局的Sys根对象
 extern TSystem Sys;
-extern void SysInit(void);
+//extern void SysInit(void);
+
+// 全局对象省略写法
+/*#define Boot Sys.Boot;
+#define Core Sys.Core;
+#define Mem Sys.Mem;
+#define Flash Sys.Flash;
+#define IO Sys.IO;
+#define Usart Sys.Usart;
+#define Analog Sys.Analog;*/
+
+// 使用何种模块的宏定义
+#define using(module) Sys.module.Init = T##module##_Init;
 
 #endif //_SYSTEM_H_
