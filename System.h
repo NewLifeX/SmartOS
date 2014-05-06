@@ -17,8 +17,8 @@ typedef unsigned char       bool;
 
 typedef struct
 {
-	ushort Group;
-	ushort Port;
+	byte Group;
+	byte Port;
 } Pin;
 
 typedef struct
@@ -163,21 +163,24 @@ typedef struct
 // 采用指针而不是对象，主要是考虑到每个模块可能扩展，而不能影响系统根的其它部分
 typedef struct
 {
-	TBoot* Boot;
-	TCore* Core;
-	TMem* Mem;
-	TFlash* Flash;
-	TIO* IO;
-	TUsart* Usart;
-	TAnalog* Analog;
-	TPwm* Pwm;
-	TSpi* Spi;
-	TI2c* I2c;
-	TLcd* Lcd;
+	void (*Init)(void);
+	void (*Uninit)(void);
+
+	TBoot Boot;
+	TCore Core;
+	TMem Mem;
+	TFlash Flash;
+	TIO IO;
+	TUsart Usart;
+	TAnalog Analog;
+	TPwm Pwm;
+	TSpi Spi;
+	TI2c I2c;
+	TLcd Lcd;
 } TSystem;
 
 // 声明全局的Sys根对象
 extern TSystem Sys;
-extern void SysInit();
+extern void SysInit(void);
 
 #endif //_SYSTEM_H_

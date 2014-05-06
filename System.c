@@ -1,12 +1,12 @@
 #include "System.h"
 
-#define Execute(func) if(func->Init) func->Init()
+#define Execute(func) if(func.Init) func.Init()
 
-//void SysInit();
+void SysInit(void);
 
-TSystem Sys;
+TSystem Sys = {SysInit,};
 
-void SysInit()
+void SysInit(void)
 {
 	//if(Sys.Boot->Init) Sys.Boot->Init();
 	Execute(Sys.Core);
