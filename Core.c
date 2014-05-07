@@ -1,4 +1,4 @@
-﻿#include "stm32f0xx.h"
+#include "stm32f0xx.h"
 #include "System.h"
 
 #ifndef BIT
@@ -57,5 +57,5 @@ void TCore_Init(TCore* this)
     this->Sleep = delay_ms;
     this->Delay = delay_us;
     
-    delay_init(Sys.Clock/1000000);
+    delay_init(Sys.Clock);
 }

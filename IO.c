@@ -20,7 +20,8 @@ void TIO_OpenOutput(Pin pin, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type)
     GPIO_StructInit(&p);
     
     // 打开时钟
-    RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+    //RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+    RCC->AHBENR |= _RCC_AHB(pin);
 
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
