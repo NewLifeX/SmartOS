@@ -10,9 +10,11 @@
 #define _PIN(PIN) ('A' + (PIN >> 4)), (PIN & 0x0F)
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
-// 打开输出口
-// speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz, type=GPIO_OType_PP/GPIO_OType_OD
-void TIO_OpenOutput(Pin pin, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type)
+// 打开端口
+// mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
+// speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
+// type=GPIO_OType_PP/GPIO_OType_OD
+void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type)
 {
     GPIO_InitTypeDef p;
     
@@ -25,23 +27,28 @@ void TIO_OpenOutput(Pin pin, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type)
 
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
-    p.GPIO_Mode = GPIO_Mode_OUT;
+    p.GPIO_Mode = mode;
     p.GPIO_OType = type;	
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// 打开输入口
-void TIO_OpenInput(Pin pin, byte speed, byte type)
+// 按常用方式打开端口
+void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
+    if(mode == GPIO_Mode_OUT)
+        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
+    else if(mode == GPIO_Mode_IN)
+        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
+    else if(mode == GPIO_Mode_AF)
+        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_PP);
+    else
+        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
 }
 
-// 按常用方式打开端口
-void TIO_OpenPort(Pin pin, bool isOutput)
+// 关闭端口。设为浮空输入
+void TIO_Close(Pin pin)
 {
-    if(isOutput)
-        TIO_OpenOutput(pin, GPIO_Speed_50MHz, GPIO_OType_OD);
-    else
-        TIO_OpenInput(pin, 0, 0);
+    TIO_OpenPort(pin, GPIO_Mode_IN, GPIO_Speed_2MHz, GPIO_OType_PP);
 }
 
 void TIO_Set(Pin pin, bool value)
@@ -60,9 +67,8 @@ bool TIO_Get(Pin pin)
 
 void TIO_Init(TIO* this)
 {
+    this->Open = TIO_Open;
     this->OpenPort = TIO_OpenPort;
-    this->OpenOutput = TIO_OpenOutput;
-    this->OpenInput = TIO_OpenInput;
     this->Set = TIO_Set;
     this->Get = TIO_Get;
 }

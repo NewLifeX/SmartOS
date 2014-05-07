@@ -59,22 +59,26 @@ _class_end(Boot)
 _class(IO)
     //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
     //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
-    void (*OpenPort)(Pin pin, bool isOutput);
-    void (*OpenOutput)(Pin pin, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type); // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz, type=GPIO_OType_PP/GPIO_OType_OD
-    void (*OpenInput)(Pin pin, byte speed, byte type);
+    void (*Open)(Pin pin, GPIOMode_TypeDef mode);
+    // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
+    // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
+    // type=GPIO_OType_PP/GPIO_OType_OD
+    void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type);
+    void (*Close)(Pin pin);
     bool (*Get)(Pin pin);
     void (*Set)(Pin pin, bool state);
 _class_end(IO)
 
 /* ´®¿Ú */
 _class(Usart)
-    bool (*Initialize)(int ComPortNum, int BaudRate, int Parity, int DataBits, int StopBits, int FlowValue);
-    bool (*Uninitialize)(int ComPortNum);
-    int  (*Write)(int ComPortNum, const string Data, uint size);
-    int  (*Read)(int ComPortNum, string Data, uint size);
-    bool (*Flush)(int ComPortNum);
-    int  (*BytesInBuffer)(int ComPortNum, bool fRx);
-    void (*DiscardBuffer)(int ComPortNum, bool fRx);
+    bool (*Open)(int com, int baudRate);
+    bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue);
+    bool (*Close)(int com);
+    void (*Write)(int com, const string data, uint size);
+    int  (*Read)(int com, string data, uint size);
+    void (*Flush)(int com);
+    //int  (*BytesInBuffer)(int com, bool fRx);
+    //void (*DiscardBuffer)(int com, bool fRx);
 _class_end(Usart)
 
 /* ÄÚ´æ */

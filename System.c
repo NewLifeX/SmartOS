@@ -25,7 +25,3 @@ void SysInit(void)
 void TBoot_Init(TBoot* this)
 {
 }
-
-void TUsart_Init(TUsart* this)
-{
-}
