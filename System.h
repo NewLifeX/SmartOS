@@ -6,22 +6,24 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
-typedef char                sbyte;
-typedef unsigned char       byte;
-typedef unsigned short      ushort;
-typedef unsigned int        uint;
-typedef char*               string;
-typedef unsigned char       bool;
-#define true                1
-#define false               0
+/* 类型定义 */
+typedef char            sbyte;
+typedef unsigned char   byte;
+typedef unsigned short  ushort;
+typedef unsigned int    uint;
+typedef char*           string;
+typedef unsigned char   bool;
+#define true            1
+#define false           0
 
-typedef struct
+/* 引脚定义 */
+typedef ushort			Pin;
+/*typedef struct
 {
 	byte Group;
 	byte Port;
-} Pin;
-
-extern Pin PA3;
+} TPin;*/
+#include "Pin.h"
 
 typedef struct
 {
@@ -200,16 +202,6 @@ typedef struct
 
 // 声明全局的Sys根对象
 extern TSystem Sys;
-//extern void SysInit(void);
-
-// 全局对象省略写法
-/*#define Boot Sys.Boot;
-#define Core Sys.Core;
-#define Mem Sys.Mem;
-#define Flash Sys.Flash;
-#define IO Sys.IO;
-#define Usart Sys.Usart;
-#define Analog Sys.Analog;*/
 
 // 使用何种模块的宏定义
 #define using(module) Sys.module.Init = T##module##_Init;

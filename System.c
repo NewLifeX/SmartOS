@@ -2,8 +2,6 @@
 
 #define Execute(func) if(func.Init) func.Init()
 
-Pin PA3;
-
 void SysInit(void);
 
 TSystem Sys = {SysInit,};
