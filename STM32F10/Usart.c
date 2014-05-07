@@ -55,18 +55,27 @@ void TUsart_Close(int com)
     Sys.IO.Close(g_Uart_Pins[(com<<2) + 1]);
 }
 
+void TUsart_SendData(USART_TypeDef* port, char* data)
+{
+    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
+    //port->TDR = *byte;//发送数据	
+    USART_SendData(port, (ushort)*data);
+    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
+}
+
 void TUsart_Write(int com, const string data, uint size)
 {
     int i;
     string byte = data;
     USART_TypeDef* port = g_Uart_Ports[com];
     
-    for(i=0; i<size || size==0xFF && byte!=0; i++, byte++)
+    if(size != (uint)-1)
     {
-        //while(!((port->ISR)&(1<<6)));//等待缓冲为空
-        //port->TDR = *byte;//发送数据	
-        USART_SendData(port, (char)*byte);
-		while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
+        for(i=0; i<size; i++) TUsart_SendData(port, byte++);
+    }
+    else
+    {
+        while(*byte) TUsart_SendData(port, byte++);
     }
 }
 
