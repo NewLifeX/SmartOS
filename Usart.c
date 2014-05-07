@@ -1,4 +1,4 @@
-#include "System.h"
+﻿#include "System.h"
 #include "Pin_STM32F0.h"
 
 static USART_TypeDef* g_Uart_Ports[] = UARTS; 
@@ -63,7 +63,8 @@ void TUsart_Write(int com, const string data, uint size)
     
     for(i=0; i<size || size==0xFF && byte!=0; i++, byte++)
     {
-        while(!((port->ISR)&(1<<6)));//等待缓冲为空
+        //while(!((port->ISR)&(1<<6)));//等待缓冲为空
+		while(USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);//等待发送完毕
         port->TDR = *byte;//发送数据	
     }
 }

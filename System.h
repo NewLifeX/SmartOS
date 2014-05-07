@@ -1,5 +1,5 @@
-/*
-  * È«ĞÂµÄÏµÍ³API¼Ü¹¹
+ï»¿/*
+  * å…¨æ–°çš„ç³»ç»ŸAPIæ¶æ„
   *
   */
 
@@ -8,7 +8,7 @@
 
 #include "stm32.h"
 
-/* ÀàĞÍ¶¨Òå */
+/* ç±»å‹å®šä¹‰ */
 typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
@@ -18,7 +18,7 @@ typedef unsigned char   bool;
 #define true            1
 #define false           0
 
-/* Òı½Å¶¨Òå */
+/* å¼•è„šå®šä¹‰ */
 typedef ushort			Pin;
 /*typedef struct
 {
@@ -27,7 +27,7 @@ typedef ushort			Pin;
 } TPin;*/
 #include "Pin.h"
 
-/* ÃæÏò¶ÔÏóºê */
+/* é¢å‘å¯¹è±¡å® */
 #define _class(name) typedef struct T##name##_Def\
 {\
 	void (*Init)(struct T##name##_Def* this);\
@@ -37,25 +37,25 @@ typedef ushort			Pin;
 extern void T##name##_Init(T##name* this);
 
 
-/* ºËĞÄ¶¨Òå */
+/* æ ¸å¿ƒå®šä¹‰ */
 _class(Core)
     void (*Printf)(const string format, ...);
     /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
     void (*Free)(void* ptr);*/
-    void (*Sleep)(uint ms); // ºÁÃë¼¶ÑÓ³Ù
-    void (*Delay)(uint us); // Î¢Ãë¼¶ÑÓ³Ù
-    void (*DisableInterrupts)();    // ¹Ø±ÕÖĞ¶Ï
-    void (*EnableInterrupts)();     // ´ò¿ªÖĞ¶Ï
+    void (*Sleep)(uint ms); // æ¯«ç§’çº§å»¶è¿Ÿ
+    void (*Delay)(uint us); // å¾®ç§’çº§å»¶è¿Ÿ
+    void (*DisableInterrupts)();    // å…³é—­ä¸­æ–­
+    void (*EnableInterrupts)();     // æ‰“å¼€ä¸­æ–­
     //uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
     //uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
 _class_end(Core)
 
-/* Òıµ¼ */
+/* å¼•å¯¼ */
 _class(Boot)
 _class_end(Boot)
 
-/* IO¿Ú */
+/* IOå£ */
 _class(IO)
     //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
     //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
@@ -69,7 +69,7 @@ _class(IO)
     void (*Set)(Pin pin, bool state);
 _class_end(IO)
 
-/* ´®¿Ú */
+/* ä¸²å£ */
 _class(Usart)
     bool (*Open)(int com, int baudRate);
     bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue);
@@ -81,7 +81,7 @@ _class(Usart)
     //void (*DiscardBuffer)(int com, bool fRx);
 _class_end(Usart)
 
-/* ÄÚ´æ */
+/* å†…å­˜ */
 _class(Mem)
     int (*snprintf)(string buffer, uint len, const string format, ...);
     int (*stricmp)(const string dst, const string src);
@@ -153,7 +153,7 @@ typedef struct
     void (*ResumeLayout)();
 } TLcd;
 */
-// È«¾ÖÏµÍ³¸ù
+// å…¨å±€ç³»ç»Ÿæ ¹
 typedef struct
 {
 	void (*Init)(void);
@@ -174,10 +174,10 @@ typedef struct
 	TLcd Lcd;*/
 } TSystem;
 
-// ÉùÃ÷È«¾ÖµÄSys¸ù¶ÔÏó
+// å£°æ˜å…¨å±€çš„Sysæ ¹å¯¹è±¡
 extern TSystem Sys;
 
-// Ê¹ÓÃºÎÖÖÄ£¿éµÄºê¶¨Òå
+// ä½¿ç”¨ä½•ç§æ¨¡å—çš„å®å®šä¹‰
 #define using(module) Sys.module.Init = T##module##_Init;
 
 #endif //_SYSTEM_H_

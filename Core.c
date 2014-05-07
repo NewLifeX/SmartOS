@@ -1,4 +1,4 @@
-#include "stm32f0xx.h"
+﻿#include "stm32f0xx.h"
 #include "System.h"
 
 #ifndef BIT
@@ -16,6 +16,11 @@ byte fac_us;//全局变量
 *****************************************************/
 void delay_init(uint clk)
 {
+	 /****************************************
+	 *SystemFrequency/1000      1ms中断一次  *
+	 *SystemFrequency/100000    10us中断一次 *
+	 *SystemFrequency/1000000   1us中断一次  *
+	 *****************************************/
      SysTick->CTRL &=~BIT(2);//选择外部时钟
 	 SysTick->CTRL &=~BIT(1);//关闭定时器减到0后的中断请求
 	 fac_us = clk/8;//计算好SysTick加载值
