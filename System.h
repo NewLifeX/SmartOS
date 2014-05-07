@@ -1,4 +1,4 @@
-﻿/*
+/*
   * 全新的系统API架构
   *
   */
@@ -63,7 +63,11 @@ _class(IO)
     // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
     // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
     // type=GPIO_OType_PP/GPIO_OType_OD
+#if STM32F0XX
     void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type);
+#else
+    void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed);
+#endif
     void (*Close)(Pin pin);
     bool (*Get)(Pin pin);
     void (*Set)(Pin pin, bool state);
@@ -73,7 +77,7 @@ _class_end(IO)
 _class(Usart)
     bool (*Open)(int com, int baudRate);
     bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue);
-    bool (*Close)(int com);
+    void (*Close)(int com);
     void (*Write)(int com, const string data, uint size);
     int  (*Read)(int com, string data, uint size);
     void (*Flush)(int com);
