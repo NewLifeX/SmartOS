@@ -63,7 +63,7 @@ _class(IO)
     // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
     // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
     // type=GPIO_OType_PP/GPIO_OType_OD
-#if STM32F0XX
+#ifdef STM32F0XX
     void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type);
 #else
     void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed);
