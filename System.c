@@ -1,6 +1,6 @@
 #include "System.h"
 
-#define Execute(func) if(func.Init) func.Init()
+#define Execute(module) if(Sys.module.Init) Sys.module.Init(&Sys.module)
 
 void SysInit(void);
 
@@ -8,28 +8,24 @@ TSystem Sys = {SysInit,};
 
 void SysInit(void)
 {
-	if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
-	//Execute(Sys.Core);
-	Execute(Sys.Boot);
-	Execute(Sys.Mem);
-	Execute(Sys.Flash);
-	Execute(Sys.IO);
-	Execute(Sys.Usart);
-	Execute(Sys.Analog);
-	Execute(Sys.Spi);
+	//if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
+	Execute(Core);
+	Execute(Boot);
+	Execute(IO);
+	Execute(Usart);
+	//Execute(Mem);
+	//Execute(Flash);
+	//Execute(Analog);
+	//Execute(Spi);
 	/*Execute(Sys.I2c);
 	Execute(Sys.Pwm);
 	Execute(Sys.Lcd);*/
 }
 
-void TBoot_Init(void)
+void TBoot_Init(TBoot* this)
 {
 }
 
-void TIO_Init(void)
-{
-}
-
-void TUsart_Init(void)
+void TUsart_Init(TUsart* this)
 {
 }

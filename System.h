@@ -6,6 +6,8 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include "stm32.h"
+
 /* 类型定义 */
 typedef char            sbyte;
 typedef unsigned char   byte;
@@ -25,12 +27,18 @@ typedef ushort			Pin;
 } TPin;*/
 #include "Pin.h"
 
-/* 核心定义 */
-typedef struct Core_Def
-{
-	void (*Init)(struct Core_Def* this);
-	void (*Uninit)(struct Core_Def* this);
+/* 面向对象宏 */
+#define _class(name) typedef struct T##name##_Def\
+{\
+	void (*Init)(struct T##name##_Def* this);\
+	void (*Uninit)(struct T##name##_Def* this);
 
+#define _class_end(name) } T##name;\
+extern void T##name##_Init(T##name* this);
+
+
+/* 核心定义 */
+_class(Core)
     void (*Printf)(const string format, ...);
     /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
@@ -41,65 +49,25 @@ typedef struct Core_Def
     void (*EnableInterrupts)();     // 打开中断
     //uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
     //uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
-} TCore;
+_class_end(Core)
 
-extern void TCore_Init(TCore* this);
+/* 引导 */
+_class(Boot)
+_class_end(Boot)
 
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
-} TBoot;
-
-extern void TBoot_Init(void);
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
-    int (*snprintf)(string buffer, uint len, const string format, ...);
-    int (*stricmp)(const string dst, const string src);
-    int (*strncmp)(const string str1, const string str2, uint num);
-    uint (*strlen)(const string str);
-    void *(*memcpy)(void * dst, const void * src, uint len);
-    void *(*memset)(void * dst, int value, uint len);
-} TMem;
-
-extern void TMem_Init(void);
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
-    int (*Erase)(uint address, uint count);
-    int (*Read)(uint address, uint count,byte *buffer);
-    int (*Write)(uint address, uint count,byte *buffer);
-} TFlash;
-
-extern void TFlash_Init(void);
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
+/* IO口 */
+_class(IO)
     //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
     //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
-    void (*EnableOutputPin)(Pin pin, bool initialState);
+    void (*OpenPort)(Pin pin, bool isOutput);
+    void (*OpenOutput)(Pin pin, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type); // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz, type=GPIO_OType_PP/GPIO_OType_OD
+    void (*OpenInput)(Pin pin, byte speed, byte type);
     bool (*Get)(Pin pin);
     void (*Set)(Pin pin, bool state);
-} TIO;
+_class_end(IO)
 
-extern void TIO_Init(void);
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
+/* 串口 */
+_class(Usart)
     bool (*Initialize)(int ComPortNum, int BaudRate, int Parity, int DataBits, int StopBits, int FlowValue);
     bool (*Uninitialize)(int ComPortNum);
     int  (*Write)(int ComPortNum, const string Data, uint size);
@@ -107,33 +75,34 @@ typedef struct
     bool (*Flush)(int ComPortNum);
     int  (*BytesInBuffer)(int ComPortNum, bool fRx);
     void (*DiscardBuffer)(int ComPortNum, bool fRx);
-} TUsart;
+_class_end(Usart)
 
-extern void TUsart_Init(void);
+/* 内存 */
+_class(Mem)
+    int (*snprintf)(string buffer, uint len, const string format, ...);
+    int (*stricmp)(const string dst, const string src);
+    int (*strncmp)(const string str1, const string str2, uint num);
+    uint (*strlen)(const string str);
+    void *(*memcpy)(void * dst, const void * src, uint len);
+    void *(*memset)(void * dst, int value, uint len);
+_class_end(Mem)
 
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
+_class(Flash)
+    int (*Erase)(uint address, uint count);
+    int (*Read)(uint address, uint count,byte *buffer);
+    int (*Write)(uint address, uint count,byte *buffer);
+_class_end(Flash)
 
-	//bool (*DA_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
+_class(Analog)
 	//void (*DA_Write)(ANALOG_CHANNEL channel, int level);
 	//bool (*AD_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//int (*AD_Read)(ANALOG_CHANNEL channel);
-} TAnalog;
+_class_end(Analog)
 
-extern void TAnalog_Init(void);
-
-typedef struct
-{
-	void (*Init)(void);
-	void (*Uninit)(void);
-
+_class(Spi)
     //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
-} TSpi;
-
-extern void TSpi_Init(void);
+_class_end(Spi)
 
 /*typedef struct
 {
@@ -190,10 +159,10 @@ typedef struct
 
 	TBoot Boot;
 	TCore Core;
-	TMem Mem;
-	TFlash Flash;
 	TIO IO;
 	TUsart Usart;
+	TMem Mem;
+	TFlash Flash;
 	TAnalog Analog;
 	TSpi Spi;
 	/*TI2c I2c;
