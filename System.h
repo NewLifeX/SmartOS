@@ -25,24 +25,25 @@ typedef ushort			Pin;
 } TPin;*/
 #include "Pin.h"
 
-typedef struct
+/* 核心定义 */
+typedef struct Core_Def
 {
-	void (*Init)(void);
-	void (*Uninit)(void);
+	void (*Init)(struct Core_Def* this);
+	void (*Uninit)(struct Core_Def* this);
 
     void (*Printf)(const string format, ...);
-    void (*LcdPrintf)(const string format,...);
+    /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
-    void (*Free)(void* ptr);
-    void (*Sleep)(uint ms);
-    void (*Delay)(uint us);
-    void (*DisableInterrupts)();
-    void (*EnableInterrupts)();
-    uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
-    uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
+    void (*Free)(void* ptr);*/
+    void (*Sleep)(uint ms); // 毫秒级延迟
+    void (*Delay)(uint us); // 微秒级延迟
+    void (*DisableInterrupts)();    // 关闭中断
+    void (*EnableInterrupts)();     // 打开中断
+    //uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
+    //uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
 } TCore;
 
-extern void TCore_Init(void);
+extern void TCore_Init(TCore* this);
 
 typedef struct
 {

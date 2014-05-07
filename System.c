@@ -8,8 +8,8 @@ TSystem Sys = {SysInit,};
 
 void SysInit(void)
 {
-	//if(Sys.Boot->Init) Sys.Boot->Init();
-	Execute(Sys.Core);
+	if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
+	//Execute(Sys.Core);
 	Execute(Sys.Boot);
 	Execute(Sys.Mem);
 	Execute(Sys.Flash);
@@ -20,10 +20,6 @@ void SysInit(void)
 	/*Execute(Sys.I2c);
 	Execute(Sys.Pwm);
 	Execute(Sys.Lcd);*/
-}
-
-void TCore_Init(void)
-{
 }
 
 void TBoot_Init(void)
