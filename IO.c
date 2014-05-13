@@ -4,10 +4,6 @@
 #define BIT(x)	(1 << (x))
 #endif
 
-// 获取组和针脚
-#define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))
-#define _PORT(PIN) (1 << ((PIN) & (uint16_t)0x0F))
-#define _PIN(PIN) ('A' + (PIN >> 4)), (PIN & 0x0F)
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
 #ifdef STM32F0XX

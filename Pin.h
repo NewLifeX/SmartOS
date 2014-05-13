@@ -1,4 +1,4 @@
-﻿#ifndef _PIN_H_
+#ifndef _PIN_H_
 #define _PIN_H_ 1
 
 /* 针脚 ------------------------------------------------------------------*/
@@ -115,5 +115,19 @@
 #define PG13 109
 #define PG14 110
 #define PG15 111
+
+#if defined(STM32F4XX)
+	#include "stm32f4xx.h"
+#elif defined(STM32F2XX)
+	#include "stm32f2xx.h"
+#elif defined(STM32F10X)
+	#include "Pin_STM32F1.h"
+#elif defined(STM32F3XX)
+	#include "stm32f3xx.h"
+#elif defined(STM32F0XX)
+	#include "Pin_STM32F0.h"
+#else
+	#include "Pin_STM32F1.h"
+#endif
 
 #endif

@@ -8,10 +8,14 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits,
 {
 	USART_InitTypeDef  p;
     USART_TypeDef* port = g_Uart_Ports[com];
+    Pin tx = g_Uart_Pins[(com<<2) + 0];
+    Pin rx = g_Uart_Pins[(com<<2) + 1];
 
 	//串口引脚初始化
-    Sys.IO.OpenPort(g_Uart_Pins[(com<<2) + 0], GPIO_Mode_AF, GPIO_Speed_50MHz, GPIO_OType_PP);
-    Sys.IO.OpenPort(g_Uart_Pins[(com<<2) + 1], GPIO_Mode_AF, GPIO_Speed_50MHz, GPIO_OType_PP);
+    Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP);
+    Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP);
+    GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
+    GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1); 
 
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);//开启时钟
     // 打开 UART 时钟
@@ -32,7 +36,7 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits,
 	USART_ITConfig(port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
 	USART_Cmd(port, ENABLE);//使能串口
-    
+
     return true;
 }
 
@@ -58,7 +62,7 @@ void TUsart_Close(int com)
 void TUsart_SendData(USART_TypeDef* port, char* data)
 {
     //while(!((port->ISR)&(1<<6)));//等待缓冲为空
-    //port->TDR = *byte;//发送数据	
+    //port->TDR = *data;//发送数据	
     USART_SendData(port, (ushort)*data);
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
 }
