@@ -25,3 +25,8 @@ void SysInit(void)
 void TBoot_Init(TBoot* this)
 {
 }
+
+void TLog_Init(TLog* this)
+{
+	
+}

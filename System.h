@@ -20,11 +20,6 @@ typedef unsigned char   bool;
 
 /* 引脚定义 */
 typedef ushort			Pin;
-/*typedef struct
-{
-	byte Group;
-	byte Port;
-} TPin;*/
 #include "Pin.h"
 
 /* 面向对象宏 */
@@ -39,7 +34,7 @@ extern void T##name##_Init(T##name* this);
 
 /* 核心定义 */
 _class(Core)
-    void (*Printf)(const string format, ...);
+    //void (*Printf)(const string format, ...);
     /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
     void (*Free)(void* ptr);*/
@@ -57,8 +52,6 @@ _class_end(Boot)
 
 /* IO口 */
 _class(IO)
-    //void (*DisablePin)(Pin pin, GPIO_RESISTOR ResistorState, uint Direction, GPIO_ALT_MODE AltFunction);
-    //bool (*EnableInputPin)(Pin pin, bool GlitchFilterEnable, GPIO_INTERRUPT_SERVICE_ROUTINE ISR, GPIO_INT_EDGE IntEdge, GPIO_RESISTOR ResistorState);
     void (*Open)(Pin pin, GPIOMode_TypeDef mode);
     // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
     // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
@@ -69,8 +62,8 @@ _class(IO)
     void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed);
 #endif
     void (*Close)(Pin pin);
-    bool (*Get)(Pin pin);
-    void (*Set)(Pin pin, bool state);
+    bool (*Read)(Pin pin);
+    void (*Write)(Pin pin, bool state);
 _class_end(IO)
 
 /* 串口 */
@@ -78,7 +71,7 @@ _class(Usart)
     bool (*Open)(int com, int baudRate);
     bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue);
     void (*Close)(int com);
-    void (*Write)(int com, const string data, uint size);
+    void (*Write)(int com, const string data, int size);
     int  (*Read)(int com, string data, uint size);
     void (*Flush)(int com);
     //int  (*BytesInBuffer)(int com, bool fRx);
@@ -95,18 +88,21 @@ _class(Mem)
     void *(*memset)(void * dst, int value, uint len);
 _class_end(Mem)
 
+/* Flash存储 */
 _class(Flash)
     int (*Erase)(uint address, uint count);
     int (*Read)(uint address, uint count,byte *buffer);
     int (*Write)(uint address, uint count,byte *buffer);
 _class_end(Flash)
 
+/* 模拟量 */
 _class(Analog)
 	//void (*DA_Write)(ANALOG_CHANNEL channel, int level);
 	//bool (*AD_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//int (*AD_Read)(ANALOG_CHANNEL channel);
 _class_end(Analog)
 
+/* 串行总线 */
 _class(Spi)
     //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
@@ -157,13 +153,23 @@ typedef struct
     void (*ResumeLayout)();
 } TLcd;
 */
+
+/* 日志 */
+_class(Log)
+    int MessagePort;    // 消息口，默认0表示USART1
+
+    void (*WriteLine)(const string format, ...);    // 输出一行日志，自动换行
+    void (*DebugLine)(const string format, ...);    // 输出一行日志，Sys.Debug时有效
+_class_end(Log)
+
 // 全局系统根
 typedef struct
 {
 	void (*Init)(void);
 	void (*Uninit)(void);
 	
-	int Clock;
+    bool Debug; // 是否调试
+	int Clock;  // 系统时钟
 
 	TBoot Boot;
 	TCore Core;
@@ -176,6 +182,7 @@ typedef struct
 	/*TI2c I2c;
 	TPwm Pwm;
 	TLcd Lcd;*/
+	TLog Log;
 } TSystem;
 
 // 声明全局的Sys根对象

@@ -63,13 +63,13 @@ void TUsart_SendData(USART_TypeDef* port, char* data)
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
 }
 
-void TUsart_Write(int com, const string data, uint size)
+void TUsart_Write(int com, const string data, int size)
 {
     int i;
     string byte = data;
     USART_TypeDef* port = g_Uart_Ports[com];
     
-    if(size != (uint)-1)
+    if(size > 0)
     {
         for(i=0; i<size; i++) TUsart_SendData(port, byte++);
     }
