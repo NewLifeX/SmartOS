@@ -1,5 +1,6 @@
 #include "System.h"
 #include "Pin_STM32F0.h"
+#include <stdio.h>
 
 static USART_TypeDef* g_Uart_Ports[] = UARTS; 
 static ushort g_Uart_Pins[] = UART_PINS;
@@ -103,4 +104,16 @@ void TUsart_Init(TUsart* this)
     this->Write = TUsart_Write;
     this->Read  = TUsart_Read;
     this->Flush = TUsart_Flush;
+}
+
+/* 重载fputc可以让用户程序使用printf函数 */
+int fputc(int ch, FILE *f)
+{
+    USART_TypeDef* port;
+    if(Sys.MessagePort == 0xFF) return ch;
+    port = g_Uart_Ports[Sys.MessagePort];
+
+    while(!((port->ISR)&(1<<6)));//等待缓冲为空
+    port->TDR = (byte) ch;
+    return ch;
 }
