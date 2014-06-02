@@ -105,6 +105,18 @@ void TUsart_Close(int com)
     
     Sys.IO.Close(tx);
     Sys.IO.Close(rx);
+
+	// 检查重映射
+#ifdef STM32F1XX
+	if(IS_REMAP(com))
+	{
+		switch (com) {
+		case 0: AFIO->MAPR &= ~AFIO_MAPR_USART1_REMAP; break;
+		case 1: AFIO->MAPR &= ~AFIO_MAPR_USART2_REMAP; break;
+		case 2: AFIO->MAPR &= ~AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
+		}
+	}
+#endif
 }
 
 // 发送单一字节数据
