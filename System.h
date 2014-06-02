@@ -23,6 +23,7 @@ typedef ushort			Pin;
 #include "Pin.h"
 
 /* 面向对象宏 */
+/* 以结构体来定义一个类的头部和尾部，同时创建一个全局的初始化函数 */
 #define _class(name) typedef struct T##name##_Def\
 {\
 	void (*Init)(struct T##name##_Def* this);\
@@ -155,12 +156,13 @@ typedef struct
 */
 
 /* 日志 */
-_class(Log)
+/*_class(Log)
     int MessagePort;    // 消息口，默认0表示USART1
 
     void (*WriteLine)(const string format, ...);    // 输出一行日志，自动换行
     void (*DebugLine)(const string format, ...);    // 输出一行日志，Sys.Debug时有效
 _class_end(Log)
+*/
 
 // 全局系统根
 typedef struct
@@ -169,7 +171,8 @@ typedef struct
 	void (*Uninit)(void);
 	
     bool Debug; // 是否调试
-	int Clock;  // 系统时钟
+	byte Clock;  // 系统时钟
+    byte MessagePort;    // 消息口，默认0表示USART1
 
 	TBoot Boot;
 	TCore Core;
@@ -181,8 +184,8 @@ typedef struct
 	TSpi Spi;
 	/*TI2c I2c;
 	TPwm Pwm;
-	TLcd Lcd;*/
-	TLog Log;
+	TLcd Lcd;
+	TLog Log;*/
 } TSystem;
 
 // 声明全局的Sys根对象
