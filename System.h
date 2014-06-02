@@ -75,6 +75,7 @@ _class(Usart)
     void (*Write)(int com, const string data, int size);
     int  (*Read)(int com, string data, uint size);
     void (*Flush)(int com);
+	void (*SetRemap)(int com);
     //int  (*BytesInBuffer)(int com, bool fRx);
     //void (*DiscardBuffer)(int com, bool fRx);
 _class_end(Usart)

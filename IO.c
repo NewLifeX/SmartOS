@@ -19,8 +19,8 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
     GPIO_StructInit(&p);
     
     // 打开时钟
-    //RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
-    RCC->AHBENR |= _RCC_AHB(pin);
+    RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+    //RCC->AHBENR |= _RCC_AHB(pin);
 
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
@@ -62,8 +62,8 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
     GPIO_StructInit(&p);
     
     // 打开时钟
-    //RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
-    RCC->APB2ENR |= _RCC_AHB(pin);
+    RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+    //RCC->APB2ENR |= _RCC_AHB(pin);
 
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
@@ -84,6 +84,7 @@ void TIO_Close(Pin pin)
 }
 #endif
 
+// 设置端口状态
 void TIO_Write(Pin pin, bool value)
 {
     if(value)
@@ -92,12 +93,14 @@ void TIO_Write(Pin pin, bool value)
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
 
+// 读取端口状态
 bool TIO_Read(Pin pin)
 {
     GPIO_TypeDef* group = _GROUP(pin);
     return (group->IDR >> (pin & 0xF)) & 1;
 }
 
+// IO端口函数初始化
 void TIO_Init(TIO* this)
 {
     this->Open = TIO_Open;
