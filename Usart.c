@@ -31,7 +31,7 @@ void TUsart_GetPins(int com, Pin* rxPin, Pin* txPin)
 }
 
 // 打开串口
-bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue)
+bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
 	USART_InitTypeDef  p;
     USART_TypeDef* port = g_Uart_Ports[com];
@@ -72,12 +72,11 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits,
     }
 #endif
 
+    USART_StructInit(&p);
 	p.USART_BaudRate = baudRate;
 	p.USART_WordLength = dataBits;
 	p.USART_StopBits = stopBits;
 	p.USART_Parity = parity;
-	p.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-	p.USART_HardwareFlowControl = flowValue;
 	USART_Init(port, &p);
 
 	USART_ITConfig(port, USART_IT_RXNE, ENABLE);//串口接收中断配置
@@ -95,8 +94,7 @@ bool TUsart_Open(int com, int baudRate)
     return TUsart_Open2(com, baudRate, 
         USART_Parity_No,        //无奇偶校验
         USART_WordLength_8b,    //8位数据长度
-        USART_StopBits_1,       //1位停止位
-        USART_HardwareFlowControl_None//不使用硬件流控制
+        USART_StopBits_1        //1位停止位
     );
 }
 
@@ -179,6 +177,22 @@ void TUsart_SetRemap(int com)
 {
 	Usart_Remap |= (1 << com);
 }
+
+void OnReceive(USART_TypeDef* u)
+{
+    char c;
+    if(USART_GetITStatus(u, USART_IT_RXNE) != RESET)
+    { 	
+        c = u->DR;
+        //USART_SendByte(u, c); 	    
+    } 
+}
+
+void USART1_IRQHandler(void) { OnReceive(USART1); }
+void USART2_IRQHandler(void) { OnReceive(USART2); }
+void USART3_IRQHandler(void) { OnReceive(USART3); }
+void USART4_IRQHandler(void) { OnReceive(UART4); }
+void USART5_IRQHandler(void) { OnReceive(UART5); }
 
 // 初始化串口函数
 void TUsart_Init(TUsart* this)

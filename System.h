@@ -78,7 +78,7 @@ _class_end(IO)
 /* 串口 */
 _class(Usart)
     bool (*Open)(int com, int baudRate);
-    bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits, int flowValue);
+    bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits);
     void (*Close)(int com);
     void (*Write)(int com, const string data, int size);
     int  (*Read)(int com, string data, uint size);
@@ -179,8 +179,11 @@ typedef struct
 	void (*Init)(void);
 	void (*Uninit)(void);
 	
-    bool Debug; // 是否调试
-	byte Clock;  // 系统时钟
+    bool Debug;  // 是否调试
+	uint Clock;  // 系统时钟
+#if GD32F1
+    uint CystalClock;   // 晶振时钟
+#endif
     byte MessagePort;    // 消息口，默认0表示USART1
 
 	TBoot Boot;

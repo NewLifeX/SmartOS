@@ -10,16 +10,21 @@ TSystem Sys = {
     0,
     
     false,  // Debug        是否调试
-    0,      // Clock        主频
+    72000000,      // Clock        主频
+#if GD32F1
+     8000000,      // CystalClock
+#endif
     COM_NONE,   // MessagePort  消息口
 };
 
 void SysInit(void)
 {
+#ifndef GD32F1
     RCC_ClocksTypeDef clock;
     
     RCC_GetClocksFreq(&clock);
-    Sys.Clock = clock.SYSCLK_Frequency/1000000;
+    Sys.Clock = clock.SYSCLK_Frequency;
+#endif
 
 	//if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
 	Execute(Core);
