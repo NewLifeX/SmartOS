@@ -186,16 +186,18 @@ void OnReceive(USART_TypeDef* u)
     char c;
     if(USART_GetITStatus(u, USART_IT_RXNE) != RESET)
     { 	
-        c = u->DR;
+        //c = u->DR;
         //USART_SendByte(u, c); 	    
     } 
 }
 
 void USART1_IRQHandler(void) { OnReceive(USART1); }
 void USART2_IRQHandler(void) { OnReceive(USART2); }
+#if STM32F1XX
 void USART3_IRQHandler(void) { OnReceive(USART3); }
 void USART4_IRQHandler(void) { OnReceive(UART4); }
 void USART5_IRQHandler(void) { OnReceive(UART5); }
+#endif
 
 // 初始化串口函数
 void TUsart_Init(TUsart* this)
