@@ -16,10 +16,10 @@ TSystem Sys = {
 
 void SysInit(void)
 {
-    RCC_ClocksTypeDef* clock;
+    RCC_ClocksTypeDef clock;
     
-    RCC_GetClocksFreq(clock);
-    Sys.Clock = clock->SYSCLK_Frequency/1000000;
+    RCC_GetClocksFreq(&clock);
+    Sys.Clock = clock.SYSCLK_Frequency/1000000;
 
 	//if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
 	Execute(Core);

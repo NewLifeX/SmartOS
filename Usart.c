@@ -188,7 +188,7 @@ int fputc(int ch, FILE *f)
 
     //while(!((port->ISR)&(1<<6)));//等待缓冲为空
     //port->TDR = (byte) ch;
-    USART_SendData(UART4, (unsigned char) ch);
+    USART_SendData(port, (unsigned char) ch);
 
 #ifdef STM32F0XX
     while(!((port->ISR)&(1<<6)));//等待缓冲为空
