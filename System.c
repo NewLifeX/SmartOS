@@ -11,7 +11,7 @@ TSystem Sys = {
     
     false,  // Debug        是否调试
     0,      // Clock        主频
-    0xFF,   // MessagePort  消息口
+    COM_NONE,   // MessagePort  消息口
 };
 
 void SysInit(void)

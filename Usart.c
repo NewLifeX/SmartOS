@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 #define IS_REMAP(com) ((Usart_Remap >> com) & 0x01 == 0x01)
+// 默认波特率
+#define USART_DEFAULT_BAUDRATE 115200
 
 static USART_TypeDef* g_Uart_Ports[] = UARTS; 
 static const Pin g_Uart_Pins[] = UART_PINS;
@@ -10,6 +12,8 @@ static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
 // 指定哪个串口采用重映射
 static byte Usart_Remap;
+// 串口状态
+static bool Usart_opened[6];
 
 // 获取引脚
 void TUsart_GetPins(int com, Pin* rxPin, Pin* txPin)
@@ -80,6 +84,8 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits,
 
 	USART_Cmd(port, ENABLE);//使能串口
 
+    Usart_opened[com] = true;
+
     return true;
 }
 
@@ -117,15 +123,16 @@ void TUsart_Close(int com)
 		}
 	}
 #endif
+    
+    Usart_opened[com] = false;
 }
 
 // 发送单一字节数据
 void TUsart_SendData(USART_TypeDef* port, char* data)
 {
-    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
-    //port->TDR = *data;//发送数据	
-    USART_SendData(port, (ushort)*data);
+    //USART_SendData(port, (ushort)*data);
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
+    USART_SendData(port, (ushort)*data);
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
@@ -134,6 +141,8 @@ void TUsart_Write(int com, const string data, int size)
     int i;
     string byte = data;
     USART_TypeDef* port = g_Uart_Ports[com];
+
+    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
     
     if(size > 0)
     {
@@ -149,14 +158,20 @@ void TUsart_Write(int com, const string data, int size)
 int TUsart_Read(int com, string data, uint size)
 {
     //USART_TypeDef* port = g_Uart_Ports[com];
-    
+
+    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
+
     return 0;
 }
 
 // 刷出某个端口中的数据
 void TUsart_Flush(int com)
 {
-    //USART_TypeDef* port = g_Uart_Ports[com];
+    USART_TypeDef* port = g_Uart_Ports[com];
+
+    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
+
+    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
 }
 
 // 指定哪个串口采用重映射
@@ -181,20 +196,25 @@ void TUsart_Init(TUsart* this)
 int fputc(int ch, FILE *f)
 {
     USART_TypeDef* port;
+    int com = Sys.MessagePort;
 
-    if(Sys.MessagePort == 0xFF) return ch;
+    if(com == COM_NONE) return ch;
 
-    port = g_Uart_Ports[Sys.MessagePort];
+    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
+
+    port = g_Uart_Ports[com];
 
     //while(!((port->ISR)&(1<<6)));//等待缓冲为空
     //port->TDR = (byte) ch;
-    USART_SendData(port, (unsigned char) ch);
+    //USART_SendData(port, (unsigned char) ch);
 
 #ifdef STM32F0XX
-    while(!((port->ISR)&(1<<6)));//等待缓冲为空
+    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
 #else
-    while (!(port->SR & USART_FLAG_TXE));
+    //while (!(port->SR & USART_FLAG_TXE));
 #endif
-    
+    //USART_SendData(port, (unsigned char) ch);
+    TUsart_SendData(port, (char*)&ch);
+
     return ch;
 }
