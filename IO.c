@@ -4,9 +4,10 @@
 #define BIT(x)	(1 << (x))
 #endif
 
+#ifdef STM32F0XX
+
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
-#ifdef STM32F0XX
 // 打开端口
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
@@ -50,6 +51,9 @@ void TIO_Close(Pin pin)
     //GPIO_DeInit(_GROUP(pin));
 }
 #else
+
+#define _RCC_APB2(PIN) (RCC_APB2Periph_GPIOA << (PIN >> 4))
+
 // 打开端口
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
@@ -62,7 +66,7 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
     GPIO_StructInit(&p);
     
     // 打开时钟
-    RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+    RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
     //RCC->APB2ENR |= _RCC_AHB(pin);
 
     p.GPIO_Pin = _PORT(pin);

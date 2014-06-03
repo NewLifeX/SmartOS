@@ -186,7 +186,15 @@ int fputc(int ch, FILE *f)
 
     port = g_Uart_Ports[Sys.MessagePort];
 
+    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
+    //port->TDR = (byte) ch;
+    USART_SendData(UART4, (unsigned char) ch);
+
+#ifdef STM32F0XX
     while(!((port->ISR)&(1<<6)));//等待缓冲为空
-    port->TDR = (byte) ch;
+#else
+    while (!(port->SR & USART_FLAG_TXE));
+#endif
+    
     return ch;
 }

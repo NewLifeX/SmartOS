@@ -4,9 +4,10 @@
 #include "Pin.h"
 
 // 获取组和针脚
-#define GET_GPIO_GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + 0x40 * ((PIN) & (uint16_t)0xF0)))
-#define GET_GPIO_PIN(PIN) (1 << ((PIN) & (uint16_t)0x0F))
-#define _PIN(pin) ('A' + (pin >> 4)), (pin & 0x0F)
+#define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))
+#define _PORT(PIN) (1 << ((PIN) & (uint16_t)0x0F))
+#define _PIN(PIN) (PIN & 0x0F)
+#define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
 #define UARTS {USART1, USART2, USART3, UART4, UART5}
