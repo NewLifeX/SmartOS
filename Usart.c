@@ -16,7 +16,7 @@ static byte Usart_Remap;
 static bool Usart_opened[6];
 
 // 获取引脚
-void TUsart_GetPins(int com, Pin* rxPin, Pin* txPin)
+void TUsart_GetPins(int com, Pin* txPin, Pin* rxPin)
 {
 	const Pin* p;
 
@@ -37,6 +37,8 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
     USART_TypeDef* port = g_Uart_Ports[com];
     Pin tx, rx;
     TUsart_GetPins(com, &tx, &rx);
+    
+    USART_DeInit(port);
 
 	// 检查重映射
 #ifdef STM32F1XX
@@ -48,6 +50,18 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 		case 2: AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
 		}
 	}
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE );
+#endif
+
+    // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
+#ifdef STM32F0XX
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);//开启时钟
+#else
+	if (com) { // COM2-5 on APB1
+        RCC->APB1ENR |= RCC_APB1ENR_USART2EN >> 1 << com;
+    } else { // COM1 on APB2
+        RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    }
 #endif
 
 	//串口引脚初始化
@@ -58,18 +72,7 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
 #else
     Sys.IO.OpenPort(tx, GPIO_Mode_AF_PP, GPIO_Speed_50MHz);
-    Sys.IO.OpenPort(rx, GPIO_Mode_AF_PP, GPIO_Speed_50MHz);
-#endif
-
-    // 打开 UART 时钟
-#ifdef STM32F0XX
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);//开启时钟
-#else
-    if (com) { // COM2-5 on APB1
-        RCC->APB1ENR |= RCC_APB1ENR_USART2EN >> 1 << com;
-    } else { // COM1 on APB2
-        RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    }
+    Sys.IO.Open(rx, GPIO_Mode_IN_FLOATING);
 #endif
 
     USART_StructInit(&p);

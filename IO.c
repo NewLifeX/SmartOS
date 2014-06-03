@@ -33,14 +33,16 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
 // 按常用方式打开端口
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
-    if(mode == GPIO_Mode_OUT)
-        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
-    else if(mode == GPIO_Mode_IN)
-        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
-    else if(mode == GPIO_Mode_AF)
-        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_PP);
-    else
-        TIO_OpenPort(pin, mode, GPIO_Speed_50MHz, GPIO_OType_OD);
+    GPIO_InitTypeDef p;
+    GPIO_StructInit(&p);
+    
+    // 打开时钟
+    RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
+
+    p.GPIO_Pin = _PORT(pin);
+    p.GPIO_Mode = mode;
+
+    GPIO_Init(_GROUP(pin), &p);
 }
 
 // 关闭端口。设为浮空输入
@@ -57,7 +59,6 @@ void TIO_Close(Pin pin)
 // 打开端口
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
-// type=GPIO_OType_PP/GPIO_OType_OD
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
 {
     GPIO_InitTypeDef p;
@@ -78,13 +79,22 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
 // 按常用方式打开端口
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
-    TIO_OpenPort(pin, mode, GPIO_Speed_50MHz);
+    GPIO_InitTypeDef p;
+    GPIO_StructInit(&p);
+    
+    // 打开时钟
+    RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
+
+    p.GPIO_Pin = _PORT(pin);
+    p.GPIO_Mode = mode;
+
+    GPIO_Init(_GROUP(pin), &p);
 }
 
 // 关闭端口。设为浮空输入
 void TIO_Close(Pin pin)
 {
-    TIO_OpenPort(pin, GPIO_Mode_IN_FLOATING, GPIO_Speed_2MHz);
+    TIO_Open(pin, GPIO_Mode_IN_FLOATING);
 }
 #endif
 
