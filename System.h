@@ -7,13 +7,7 @@
 #define _SYSTEM_H_
 
 #include <stdio.h>
-// 调试输出
-/*#if DEBUG
-    void debug_printf( const char* format, ... );
-#else
-    __inline void debug_printf( const char* format, ... ) { }
-#endif
-*/
+
 #include "stm32.h"
 
 /* 类型定义 */
@@ -196,6 +190,7 @@ typedef struct
     uint CystalClock;   // 晶振时钟
 #endif
     byte MessagePort;    // 消息口，默认0表示USART1
+    uint ID[3]; // 芯片ID
 
 	TBoot Boot;
 	TCore Core;
