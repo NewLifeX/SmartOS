@@ -265,6 +265,7 @@ void TIO_Init(TIO* this)
     
     this->Open = TIO_Open;
     this->OpenPort = TIO_OpenPort;
+    this->Close = TIO_Close;
     this->Write = TIO_Write;
     this->Read = TIO_Read;
     this->Register = TIO_Register;

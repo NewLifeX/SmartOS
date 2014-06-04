@@ -41,11 +41,15 @@ void delay_init(uint clk)
 *****************************************************/							    
 void delay_ms(uint nms)
 {
-   	  SysTick->LOAD = (uint)fac_ms*nms-1;//加载时间值
-	  SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
-	  SysTick->CTRL |= BIT(0);//SysTick使能
-	  while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
-	  SysTick->CTRL &=~BIT(0);//关闭SysTick
+    Sys.DisableInterrupts();
+
+    SysTick->LOAD = (uint)fac_ms*nms-1;//加载时间值
+    SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
+    SysTick->CTRL |= BIT(0);//SysTick使能
+    while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
+    SysTick->CTRL &=~BIT(0);//关闭SysTick
+
+    Sys.EnableInterrupts();
 }
 
 /****************************************************
@@ -56,11 +60,44 @@ void delay_ms(uint nms)
 *****************************************************/		    								   
 void delay_us(uint nus)
 {		
-	  SysTick->LOAD = (uint)fac_us*nus-1;//加载时间值
-	  SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
-	  SysTick->CTRL |= BIT(0);//SysTick使能
-	  while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
-	  SysTick->CTRL &=~BIT(0);//关闭SysTick
+    Sys.DisableInterrupts();
+
+    SysTick->LOAD = (uint)fac_us*nus-1;//加载时间值
+    SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
+    SysTick->CTRL |= BIT(0);//SysTick使能
+    while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
+    SysTick->CTRL &=~BIT(0);//关闭SysTick
+
+    Sys.EnableInterrupts();
+}
+
+__asm void ForceDisabled()
+{
+/*
+    register UINT32 Primask __asm("primask");
+    UINT32 m = Primask;
+    __disable_irq();
+    return m ^ 1;
+*/
+    MRS      r0,PRIMASK
+    CPSID    i
+    EOR      r0,r0,#1
+    BX       lr
+}
+
+__asm void ForceEnabled()
+{
+/*
+    register UINT32 Primask __asm("primask");
+    UINT32 m = Primask;
+    __enable_irq();
+    return m ^ 1;
+*/
+	// 这里打开中断以后，经常发生各种各样的异常，没有关系，并不是这里的错，而是之前可能就已经发生了异常，只不过无法产生中断，等到这里而已
+    MRS      r0,PRIMASK
+    CPSIE    i
+    EOR      r0,r0,#1
+    BX       lr
 }
 
 #if GD32F1
@@ -217,6 +254,8 @@ void TCore_Init(TCore* this)
 {
     Sys.Sleep = delay_ms;
     Sys.Delay = delay_us;
+    Sys.EnableInterrupts = ForceEnabled;
+    Sys.DisableInterrupts = ForceDisabled;
 
 #if GD32F1
 	STM32_BootstrapCode();

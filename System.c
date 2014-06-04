@@ -29,7 +29,7 @@ void SysInit(void)
 
 	//if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
 	Execute(Core);
-	Execute(Boot);
+	//Execute(Boot);
 	Execute(IO);
 	Execute(Usart);
 	//Execute(Mem);

@@ -93,14 +93,14 @@ _class(Usart)
 _class_end(Usart)
 
 /* 内存 */
-_class(Mem)
+/*_class(Mem)
     int (*snprintf)(string buffer, uint len, const string format, ...);
     int (*stricmp)(const string dst, const string src);
     int (*strncmp)(const string str1, const string str2, uint num);
     uint (*strlen)(const string str);
     void *(*memcpy)(void * dst, const void * src, uint len);
     void *(*memset)(void * dst, int value, uint len);
-_class_end(Mem)
+_class_end(Mem)*/
 
 /* Flash存储 */
 _class(Flash)
@@ -192,15 +192,15 @@ typedef struct
     uint ID[3]; // 芯片ID
     uint FlashSize; // 芯片Flash容量
 
-	TBoot Boot;
+	//TBoot Boot;
 	TCore Core;
 	TIO IO;
 	TUsart Usart;
-	TMem Mem;
+	/*TMem Mem;
 	TFlash Flash;
 	TAnalog Analog;
 	TSpi Spi;
-	/*TI2c I2c;
+	TI2c I2c;
 	TPwm Pwm;
 	TLcd Lcd;
 	TLog Log;*/
