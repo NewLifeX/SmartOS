@@ -43,4 +43,5 @@ void SysInit(void)
     Sys.ID[0] = *(__IO u32 *)(0X1FFFF7F0); // 高字节
     Sys.ID[1] = *(__IO u32 *)(0X1FFFF7EC); // 
     Sys.ID[2] = *(__IO u32 *)(0X1FFFF7E8); // 低字节
+    Sys.FlashSize = *(__IO u16 *)(0X1FFFF7E0);  // 容量
 }

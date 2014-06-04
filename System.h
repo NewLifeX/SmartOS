@@ -58,7 +58,7 @@ _class(Boot)
 _class_end(Boot)
 
 // 读取委托
-typedef void (*ReadHandler)(Pin pin, bool value);
+typedef void (*ReadHandler)(Pin pin, bool down);
 /* IO口 */
 _class(IO)
     void (*Open)(Pin pin, GPIOMode_TypeDef mode);
@@ -187,6 +187,7 @@ typedef struct
 #endif
     byte MessagePort;    // 消息口，默认0表示USART1
     uint ID[3]; // 芯片ID
+    uint FlashSize; // 芯片Flash容量
 
 	TBoot Boot;
 	TCore Core;

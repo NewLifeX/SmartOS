@@ -11,6 +11,7 @@ typedef struct TIntState
 {
     Pin Pin;
     ReadHandler Handler;
+    bool OldValue;
 } IntState;
 // 16条中断线
 static IntState State[16];
@@ -130,7 +131,7 @@ void TIO_Register(Pin pin, ReadHandler handler)
 {
     byte port = _PORT(pin);
     byte pins = pin & 0x0F;
-    IntState* state = &State[port];
+    IntState* state = &State[pins];
     EXTI_InitTypeDef   EXTI_InitStructure;
     NVIC_InitTypeDef   NVIC_InitStructure;
     
@@ -157,23 +158,23 @@ void TIO_Register(Pin pin, ReadHandler handler)
 
         /* Configure EXTI0 line */
         //EXTI_InitStructure.EXTI_Line = EXTI_Line0;
-        EXTI_InitStructure.EXTI_Line = EXTI_Line0 << port;
+        EXTI_InitStructure.EXTI_Line = EXTI_Line0 << pins;
         EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-        EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+        EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;  
         EXTI_InitStructure.EXTI_LineCmd = ENABLE;
         EXTI_Init(&EXTI_InitStructure);
 
         /* Enable and set EXTI0 Interrupt to the lowest priority */
         //NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-        if(port < 5)
+        if(pins < 5)
             NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn + 6;
-        else if(port < 10)
+        else if(pins < 10)
             NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
         else
             NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
 
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
     }
@@ -197,13 +198,17 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
     if(!state->Handler) return;
     
     do {
+        //value = TIO_Read(state->Pin); // 获取引脚状态
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
         
         Sys.Sleep(20); // 避免抖动
     } while (EXTI->PR & bit); // 如果再次挂起则重复
 
-    if(state->Handler) state->Handler(state->Pin, value);
+    if(state->Handler)
+    {
+        state->Handler(state->Pin, value);
+    }
 }
 
 void EXTI0_IRQHandler (void) { GPIO_ISR(0); } // EXTI0
