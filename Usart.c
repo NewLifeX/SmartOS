@@ -89,12 +89,12 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 	USART_ITConfig(port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
     /* Configure the NVIC Preemption Priority Bits */  
-#if STM32F10x
+#ifdef STM32F10X
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 #endif
 
     NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-#if STM32F10x
+#ifdef STM32F10X
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 #else
     NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;
@@ -224,7 +224,7 @@ void OnReceive(int com)
 
     if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
     { 	
-#if STM32F10x
+#ifdef STM32F10X
         if(UsartHandlers[com]) UsartHandlers[com](com, (byte)port->DR);
 #else
         if(UsartHandlers[com]) UsartHandlers[com](com, (byte)port->RDR);
@@ -234,7 +234,7 @@ void OnReceive(int com)
 
 void USART1_IRQHandler(void) { OnReceive(0); }
 void USART2_IRQHandler(void) { OnReceive(1); }
-#if STM32F1XX
+#ifdef STM32F10X
 void USART3_IRQHandler(void) { OnReceive(2); }
 void USART4_IRQHandler(void) { OnReceive(3); }
 void USART5_IRQHandler(void) { OnReceive(4); }

@@ -1,9 +1,9 @@
 #include "System.h"
 
-#if STM32F1XX
-#include "stm32f10x_exti.h"
+#ifdef STM32F10X
+    #include "stm32f10x_exti.h"
 #else
-#include "stm32f0xx_exti.h"
+    #include "stm32f0xx_exti.h"
 #endif
 
 #ifndef BIT
