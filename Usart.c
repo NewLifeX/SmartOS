@@ -9,6 +9,8 @@
 static USART_TypeDef* g_Uart_Ports[] = UARTS; 
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
+// 串口接收委托
+static UsartReadHandler UsartHandlers[6];
 
 // 指定哪个串口采用重映射
 static byte Usart_Remap;
@@ -36,6 +38,8 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 	USART_InitTypeDef  p;
     USART_TypeDef* port = g_Uart_Ports[com];
     Pin tx, rx;
+    NVIC_InitTypeDef NVIC_InitStructure;
+
     TUsart_GetPins(com, &tx, &rx);
     
     USART_DeInit(port);
@@ -83,6 +87,21 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 	USART_Init(port, &p);
 
 	USART_ITConfig(port, USART_IT_RXNE, ENABLE);//串口接收中断配置
+
+    /* Configure the NVIC Preemption Priority Bits */  
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    switch (com) {
+        case 0: NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; break;
+        case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
+        case 2: NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn; break;
+        case 3: NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn; break;
+        case 4: NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn; break;
+    }
+    NVIC_Init(&NVIC_InitStructure);
 
 	USART_Cmd(port, ENABLE);//使能串口
 
@@ -171,8 +190,6 @@ void TUsart_Flush(int com)
     USART_TypeDef* port = g_Uart_Ports[com];
 
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
-
-    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
 }
 
 // 指定哪个串口采用重映射
@@ -181,22 +198,34 @@ void TUsart_SetRemap(int com)
 	Usart_Remap |= (1 << com);
 }
 
-void OnReceive(USART_TypeDef* u)
+void TUsart_Register(int com, UsartReadHandler handler)
 {
-    char c;
-    if(USART_GetITStatus(u, USART_IT_RXNE) != RESET)
+    if(!Usart_opened[com]) TUsart_Open(com, USART_DEFAULT_BAUDRATE);
+
+    if(handler) {
+        UsartHandlers[com] = handler;
+    }
+    else {
+        UsartHandlers[com] = 0;
+    }
+}
+
+void OnReceive(int com)
+{
+    USART_TypeDef* port = g_Uart_Ports[com];
+
+    if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
     { 	
-        //c = u->DR;
-        //USART_SendByte(u, c); 	    
+        if(UsartHandlers[com]) UsartHandlers[com](com, (byte)port->DR);
     } 
 }
 
-void USART1_IRQHandler(void) { OnReceive(USART1); }
-void USART2_IRQHandler(void) { OnReceive(USART2); }
+void USART1_IRQHandler(void) { OnReceive(0); }
+void USART2_IRQHandler(void) { OnReceive(1); }
 #if STM32F1XX
-void USART3_IRQHandler(void) { OnReceive(USART3); }
-void USART4_IRQHandler(void) { OnReceive(UART4); }
-void USART5_IRQHandler(void) { OnReceive(UART5); }
+void USART3_IRQHandler(void) { OnReceive(2); }
+void USART4_IRQHandler(void) { OnReceive(3); }
+void USART5_IRQHandler(void) { OnReceive(4); }
 #endif
 
 // 初始化串口函数
@@ -209,6 +238,7 @@ void TUsart_Init(TUsart* this)
     this->Read  = TUsart_Read;
     this->Flush = TUsart_Flush;
 	this->SetRemap = TUsart_SetRemap;
+    this->Register = TUsart_Register;
 }
 
 /* 重载fputc可以让用户程序使用printf函数 */

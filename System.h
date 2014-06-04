@@ -58,7 +58,7 @@ _class(Boot)
 _class_end(Boot)
 
 // 读取委托
-typedef void (*ReadHandler)(Pin pin, bool down);
+typedef void (*IOReadHandler)(Pin pin, bool down);
 /* IO口 */
 _class(IO)
     void (*Open)(Pin pin, GPIOMode_TypeDef mode);
@@ -73,9 +73,11 @@ _class(IO)
     void (*Close)(Pin pin);
     bool (*Read)(Pin pin);
     void (*Write)(Pin pin, bool state);
-    void (*Register)(Pin pin, ReadHandler handler);
+    void (*Register)(Pin pin, IOReadHandler handler);
 _class_end(IO)
 
+// 读取委托
+typedef void (*UsartReadHandler)(int com, byte data);
 /* 串口 */
 _class(Usart)
     bool (*Open)(int com, int baudRate);
@@ -84,6 +86,7 @@ _class(Usart)
     void (*Write)(int com, const string data, int size);
     int  (*Read)(int com, string data, uint size);
     void (*Flush)(int com);
+    void (*Register)(int com, UsartReadHandler handler);
 	void (*SetRemap)(int com);
     //int  (*BytesInBuffer)(int com, bool fRx);
     //void (*DiscardBuffer)(int com, bool fRx);

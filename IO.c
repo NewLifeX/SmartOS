@@ -10,7 +10,7 @@
 typedef struct TIntState
 {
     Pin Pin;
-    ReadHandler Handler;
+    IOReadHandler Handler;
     bool OldValue;
 } IntState;
 // 16条中断线
@@ -127,9 +127,9 @@ bool TIO_Read(Pin pin)
 }
 
 // 注册回调
-void TIO_Register(Pin pin, ReadHandler handler)
+void TIO_Register(Pin pin, IOReadHandler handler)
 {
-    byte port = _PORT(pin);
+    //byte port = _PORT(pin);
     byte pins = pin & 0x0F;
     IntState* state = &State[pins];
     EXTI_InitTypeDef   EXTI_InitStructure;
