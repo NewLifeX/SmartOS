@@ -200,7 +200,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
         
-        Sys.Core.Sleep(20); // 避免抖动
+        Sys.Sleep(20); // 避免抖动
     } while (EXTI->PR & bit); // 如果再次挂起则重复
 
     if(state->Handler) state->Handler(state->Pin, value);

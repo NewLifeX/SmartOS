@@ -49,10 +49,6 @@ _class(Core)
     /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
     void (*Free)(void* ptr);*/
-    void (*Sleep)(uint ms); // 毫秒级延迟
-    void (*Delay)(uint us); // 微秒级延迟
-    void (*DisableInterrupts)();    // 关闭中断
-    void (*EnableInterrupts)();     // 打开中断
     //uint (*WaitForEvents)(uint wakeupSystemEvents, uint timeout_Milliseconds);
     //uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
 _class_end(Core)
@@ -204,6 +200,11 @@ typedef struct
 	TPwm Pwm;
 	TLcd Lcd;
 	TLog Log;*/
+
+    void (*Sleep)(uint ms); // 毫秒级延迟
+    void (*Delay)(uint us); // 微秒级延迟
+    void (*DisableInterrupts)();    // 关闭中断
+    void (*EnableInterrupts)();     // 打开中断
 } TSystem;
 
 // 声明全局的Sys根对象

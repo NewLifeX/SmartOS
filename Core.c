@@ -215,8 +215,8 @@ void STM32_BootstrapCode()
 
 void TCore_Init(TCore* this)
 {
-    this->Sleep = delay_ms;
-    this->Delay = delay_us;
+    Sys.Sleep = delay_ms;
+    Sys.Delay = delay_us;
 
 #if GD32F1
 	STM32_BootstrapCode();

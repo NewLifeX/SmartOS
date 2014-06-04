@@ -44,7 +44,3 @@ void SysInit(void)
     Sys.ID[1] = *(__IO u32 *)(0X1FFFF7EC); // 
     Sys.ID[2] = *(__IO u32 *)(0X1FFFF7E8); // 低字节
 }
-
-void TBoot_Init(TBoot* this)
-{
-}
