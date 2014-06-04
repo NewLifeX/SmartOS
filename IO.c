@@ -193,9 +193,12 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
     IntState* state = &State[num];
     uint bit = 1 << num;
     bool value;
+    //byte line = EXTI_Line0 << num;
 
     // 如果未指定委托，则不处理
     if(!state->Handler) return;
+    
+    //if(EXTI_GetITStatus(line) == RESET) return;
     
     do {
         //value = TIO_Read(state->Pin); // 获取引脚状态
@@ -204,6 +207,8 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         
         Sys.Sleep(20); // 避免抖动
     } while (EXTI->PR & bit); // 如果再次挂起则重复
+
+    //EXTI_ClearITPendingBit(line);
 
     if(state->Handler)
     {
