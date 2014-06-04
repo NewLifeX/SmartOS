@@ -1,14 +1,25 @@
 #include "System.h"
+#include "stm32f10x_exti.h"
 
 #ifndef BIT
-#define BIT(x)	(1 << (x))
+    #define BIT(x)	(1 << (x))
 #endif
+
+/* ÖĞ¶Ï×´Ì¬½á¹¹Ìå */
+/* Ò»¹²16ÌõÖĞ¶ÏÏß£¬ÒâÎ¶×ÅÍ¬Ò»ÌõÏßÃ¿Ò»×éÖ»ÄÜÓĞÒ»¸öÒı½ÅÊ¹ÓÃÖĞ¶Ï */
+typedef struct TIntState
+{
+    Pin Pin;
+    ReadHandler Handler;
+} IntState;
+// 16ÌõÖĞ¶ÏÏß
+static IntState State[16];
 
 #ifdef STM32F0XX
 
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
-// æ‰“å¼€ç«¯å£
+// ´ò¿ª¶Ë¿Ú
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 // type=GPIO_OType_PP/GPIO_OType_OD
@@ -16,10 +27,10 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
 {
     GPIO_InitTypeDef p;
     
-    // åˆå§‹åŒ–ç»“æ„ä½“ï¼Œä¿é™©èµ·è§ã€‚ä¸ºäº†èŠ‚çœä»£ç ç©ºé—´ï¼Œä¹Ÿå¯ä»¥ä¸ç”¨
+    // ³õÊ¼»¯½á¹¹Ìå£¬±£ÏÕÆğ¼û¡£ÎªÁË½ÚÊ¡´úÂë¿Õ¼ä£¬Ò²¿ÉÒÔ²»ÓÃ
     GPIO_StructInit(&p);
     
-    // æ‰“å¼€æ—¶é’Ÿ
+    // ´ò¿ªÊ±ÖÓ
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
     //RCC->AHBENR |= _RCC_AHB(pin);
 
@@ -30,13 +41,13 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// æŒ‰å¸¸ç”¨æ–¹å¼æ‰“å¼€ç«¯å£
+// °´³£ÓÃ·½Ê½´ò¿ª¶Ë¿Ú
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
     
-    // æ‰“å¼€æ—¶é’Ÿ
+    // ´ò¿ªÊ±ÖÓ
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
 
     p.GPIO_Pin = _PORT(pin);
@@ -45,28 +56,28 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// å…³é—­ç«¯å£ã€‚è®¾ä¸ºæµ®ç©ºè¾“å…¥
+// ¹Ø±Õ¶Ë¿Ú¡£ÉèÎª¸¡¿ÕÊäÈë
 void TIO_Close(Pin pin)
 {
     TIO_OpenPort(pin, GPIO_Mode_IN, GPIO_Speed_2MHz, GPIO_OType_PP);
-    // ä¸‹é¢è¿™ä¸ªä¼šå…³é—­æ•´ä¸ªé’ˆè„šç»„ï¼Œä¸èƒ½ç”¨
+    // ÏÂÃæÕâ¸ö»á¹Ø±ÕÕû¸öÕë½Å×é£¬²»ÄÜÓÃ
     //GPIO_DeInit(_GROUP(pin));
 }
 #else
 
 #define _RCC_APB2(PIN) (RCC_APB2Periph_GPIOA << (PIN >> 4))
 
-// æ‰“å¼€ç«¯å£
+// ´ò¿ª¶Ë¿Ú
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
 {
     GPIO_InitTypeDef p;
     
-    // åˆå§‹åŒ–ç»“æ„ä½“ï¼Œä¿é™©èµ·è§ã€‚ä¸ºäº†èŠ‚çœä»£ç ç©ºé—´ï¼Œä¹Ÿå¯ä»¥ä¸ç”¨
+    // ³õÊ¼»¯½á¹¹Ìå£¬±£ÏÕÆğ¼û¡£ÎªÁË½ÚÊ¡´úÂë¿Õ¼ä£¬Ò²¿ÉÒÔ²»ÓÃ
     GPIO_StructInit(&p);
     
-    // æ‰“å¼€æ—¶é’Ÿ
+    // ´ò¿ªÊ±ÖÓ
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
     //RCC->APB2ENR |= _RCC_AHB(pin);
 
@@ -76,13 +87,13 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// æŒ‰å¸¸ç”¨æ–¹å¼æ‰“å¼€ç«¯å£
+// °´³£ÓÃ·½Ê½´ò¿ª¶Ë¿Ú
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
     
-    // æ‰“å¼€æ—¶é’Ÿ
+    // ´ò¿ªÊ±ÖÓ
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
 
     p.GPIO_Pin = _PORT(pin);
@@ -91,14 +102,14 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// å…³é—­ç«¯å£ã€‚è®¾ä¸ºæµ®ç©ºè¾“å…¥
+// ¹Ø±Õ¶Ë¿Ú¡£ÉèÎª¸¡¿ÕÊäÈë
 void TIO_Close(Pin pin)
 {
     TIO_Open(pin, GPIO_Mode_IN_FLOATING);
 }
 #endif
 
-// è®¾ç½®ç«¯å£çŠ¶æ€
+// ÉèÖÃ¶Ë¿Ú×´Ì¬
 void TIO_Write(Pin pin, bool value)
 {
     if(value)
@@ -107,18 +118,131 @@ void TIO_Write(Pin pin, bool value)
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
 
-// è¯»å–ç«¯å£çŠ¶æ€
+// ¶ÁÈ¡¶Ë¿Ú×´Ì¬
 bool TIO_Read(Pin pin)
 {
     GPIO_TypeDef* group = _GROUP(pin);
     return (group->IDR >> (pin & 0xF)) & 1;
 }
 
-// IOç«¯å£å‡½æ•°åˆå§‹åŒ–
+// ×¢²á»Øµ÷
+void TIO_Register(Pin pin, ReadHandler handler)
+{
+    byte port = _PORT(pin);
+    byte pins = pin & 0x0F;
+    IntState* state = &State[port];
+    EXTI_InitTypeDef   EXTI_InitStructure;
+    NVIC_InitTypeDef   NVIC_InitStructure;
+    
+    // ×¢²áÖĞ¶ÏÊÂ¼ş
+    if(handler)
+    {
+        // ¼ì²éÊÇ·ñÒÑ¾­×¢²áµ½±ğµÄÒı½ÅÉÏ
+        if(state->Pin != pin && state->Pin != P0)
+        {
+#if DEBUG
+            printf("EXTI%d can't register to P%c%d, it has register to P%c%d\r\n", pins, _PIN_NAME(pin), _PIN_NAME(state->Pin));
+#endif
+            return;
+        }
+        
+        state->Pin = pin;
+        state->Handler = handler;
+
+        /* Enable AFIO clock */
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+
+        /* Connect EXTI0 Line to PA.00 pin */
+        GPIO_EXTILineConfig(pin>>4, pins);
+
+        /* Configure EXTI0 line */
+        //EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+        EXTI_InitStructure.EXTI_Line = EXTI_Line0 << port;
+        EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+        EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+        EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+        EXTI_Init(&EXTI_InitStructure);
+
+        /* Enable and set EXTI0 Interrupt to the lowest priority */
+        //NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+        if(port < 5)
+            NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn + 6;
+        else if(port < 10)
+            NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+        else
+            NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
+    }
+    else
+    {
+        // È¡Ïû×¢²á
+        state->Pin = P0;
+        state->Handler = 0;
+    }
+}
+
+#define IT 1
+#ifdef IT
+void GPIO_ISR (int num)  // 0 <= num <= 15
+{
+    IntState* state = &State[num];
+    uint bit = 1 << num;
+    bool value;
+
+    // Èç¹ûÎ´Ö¸¶¨Î¯ÍĞ£¬Ôò²»´¦Àí
+    if(!state->Handler) return;
+    
+    do {
+        EXTI->PR = bit;   // ÖØÖÃ¹ÒÆğÎ»
+        value = TIO_Read(state->Pin); // »ñÈ¡Òı½Å×´Ì¬
+        
+        Sys.Core.Sleep(20); // ±ÜÃâ¶¶¶¯
+    } while (EXTI->PR & bit); // Èç¹ûÔÙ´Î¹ÒÆğÔòÖØ¸´
+
+    if(state->Handler) state->Handler(state->Pin, value);
+}
+
+void EXTI0_IRQHandler (void) { GPIO_ISR(0); } // EXTI0
+void EXTI1_IRQHandler (void) { GPIO_ISR(1); } // EXTI1
+void EXTI2_IRQHandler (void) { GPIO_ISR(2); } // EXTI2
+void EXTI3_IRQHandler (void) { GPIO_ISR(3); } // EXTI3
+void EXTI4_IRQHandler (void) { GPIO_ISR(4); } // EXTI4
+
+void EXTI9_5_IRQHandler (void) // EXTI5 - EXTI9
+{
+    uint pending = EXTI->PR & EXTI->IMR & 0x03E0; // pending bits 5..9
+    int num = 5; pending >>= 5;
+    do {
+        if (pending & 1) GPIO_ISR(num);
+        num++; pending >>= 1;
+    } while (pending);
+}
+
+void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
+{
+    uint pending = EXTI->PR & EXTI->IMR & 0xFC00; // pending bits 10..15
+    int num = 10; pending >>= 10;
+    do {
+        if (pending & 1) GPIO_ISR(num);
+        num++; pending >>= 1;
+    } while (pending);
+}
+#endif
+
+// IO¶Ë¿Úº¯Êı³õÊ¼»¯
 void TIO_Init(TIO* this)
 {
+    int i = 0;
+    
     this->Open = TIO_Open;
     this->OpenPort = TIO_OpenPort;
     this->Write = TIO_Write;
     this->Read = TIO_Read;
+    this->Register = TIO_Register;
+    
+    for(i=0; i<16; i++) TIO_Register(i, 0);
 }
