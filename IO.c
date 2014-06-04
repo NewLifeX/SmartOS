@@ -1,5 +1,10 @@
 #include "System.h"
+
+#if STM32F1XX
 #include "stm32f10x_exti.h"
+#else
+#include "stm32f0xx_exti.h"
+#endif
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
@@ -150,11 +155,16 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         state->Pin = pin;
         state->Handler = handler;
 
-        /* Enable AFIO clock */
+        /* ´ò¿ªÊ±ÖÓ */
+#ifdef STM32F0XX
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+        SYSCFG_EXTILineConfig(pin>>4, pins);
+#else
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 
-        /* Connect EXTI0 Line to PA.00 pin */
         GPIO_EXTILineConfig(pin>>4, pins);
+#endif
 
         /* Configure EXTI0 line */
         //EXTI_InitStructure.EXTI_Line = EXTI_Line0;
@@ -165,6 +175,7 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         EXTI_Init(&EXTI_InitStructure);
 
         /* Enable and set EXTI0 Interrupt to the lowest priority */
+#ifdef STM32F10X
         //NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
         if(pins < 5)
             NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn + 6;
@@ -175,6 +186,10 @@ void TIO_Register(Pin pin, IOReadHandler handler)
 
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
+#else
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI0_1_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;
+#endif
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
     }
