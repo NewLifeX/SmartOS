@@ -1,4 +1,5 @@
 #include "System.h"
+#include <stdarg.h>
 
 #define Execute(module) if(Sys.module.Init) Sys.module.Init(&Sys.module)
 
@@ -44,7 +45,31 @@ void TBoot_Init(TBoot* this)
 {
 }
 
-/*void TLog_Init(TLog* this)
+/*#if DEBUG
+// 调试输出
+void debug_printf( const char* format, ... )
 {
-	
-}*/
+    char    buffer[256];
+    va_list arg_ptr;
+    byte com;
+    int len;
+
+    com = Sys.MessagePort;
+    if(com == COM_NONE) return;
+
+    va_start( arg_ptr, format );
+    
+    len = vsnprintf( buffer, sizeof(buffer)-1, format, arg_ptr );
+
+    // 刷出已存在字符
+    Sys.Usart.Flush(com);
+
+    // 写入字符串
+    Sys.Usart.Write(com, buffer, len );
+
+    // 刷出新字符
+    Sys.Usart.Flush(com);
+
+    va_end( arg_ptr );
+}
+#endif*/

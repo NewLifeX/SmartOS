@@ -6,6 +6,14 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include <stdio.h>
+// 调试输出
+/*#if DEBUG
+    void debug_printf( const char* format, ... );
+#else
+    __inline void debug_printf( const char* format, ... ) { }
+#endif
+*/
 #include "stm32.h"
 
 /* 类型定义 */
@@ -59,6 +67,8 @@ _class_end(Core)
 _class(Boot)
 _class_end(Boot)
 
+// 读取委托
+typedef void (*ReadHandler)(Pin pin, bool value);
 /* IO口 */
 _class(IO)
     void (*Open)(Pin pin, GPIOMode_TypeDef mode);
@@ -73,6 +83,7 @@ _class(IO)
     void (*Close)(Pin pin);
     bool (*Read)(Pin pin);
     void (*Write)(Pin pin, bool state);
+    void (*Register)(Pin pin, ReadHandler handler);
 _class_end(IO)
 
 /* 串口 */
