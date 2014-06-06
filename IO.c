@@ -18,6 +18,9 @@ typedef struct TIntState
     IOReadHandler Handler;
     bool OldValue;
 } IntState;
+
+
+
 // 16条中断线
 static IntState State[16];
 
@@ -29,7 +32,7 @@ static IntState State[16];
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 // type=GPIO_OType_PP/GPIO_OType_OD
-void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type)
+void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type,GPIOPuPd_TypeDef PuPd)
 {
     GPIO_InitTypeDef p;
     
@@ -44,6 +47,7 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
     p.GPIO_Speed = speed;
     p.GPIO_Mode = mode;
     p.GPIO_OType = type;	
+		p.GPIO_PuPd	= PuPd;
     GPIO_Init(_GROUP(pin), &p);
 }
 
@@ -65,7 +69,7 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 // 关闭端口。设为浮空输入
 void TIO_Close(Pin pin)
 {
-    TIO_OpenPort(pin, GPIO_Mode_IN, GPIO_Speed_2MHz, GPIO_OType_PP);
+    TIO_OpenPort(pin, GPIO_Mode_IN, GPIO_Speed_2MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
     // 下面这个会关闭整个针脚组，不能用
     //GPIO_DeInit(_GROUP(pin));
 }
@@ -131,7 +135,15 @@ bool TIO_Read(Pin pin)
     return (group->IDR >> (pin & 0xF)) & 1;
 }
 
-// 注册回调
+
+
+
+
+
+// 注册回调  及中断使能
+
+
+
 void TIO_Register(Pin pin, IOReadHandler handler)
 {
     //byte port = _PORT(pin);
@@ -187,10 +199,17 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 #else
+				if(pins<2)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI0_1_IRQn;
+				if(pins<4)
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI2_3_IRQn;
+				else
+        NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
+				
+
         NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;
 #endif
-        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+				NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
     }
     else
@@ -200,6 +219,20 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         state->Handler = 0;
     }
 }
+
+
+
+
+
+
+
+
+
+//.............................中断函数处理部分.............................
+
+
+
+
 
 #define IT 1
 #ifdef IT
@@ -220,7 +253,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
         
-        Sys.Sleep(20); // 避免抖动
+        Sys.Sleep(20); // 避免抖动		//最好在硬件上处理抖动
     } while (EXTI->PR & bit); // 如果再次挂起则重复
 
     //EXTI_ClearITPendingBit(line);
@@ -230,6 +263,13 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         state->Handler(state->Pin, value);
     }
 }
+
+
+
+
+
+
+#ifdef STM32F10X
 
 void EXTI0_IRQHandler (void) { GPIO_ISR(0); } // EXTI0
 void EXTI1_IRQHandler (void) { GPIO_ISR(1); } // EXTI1
@@ -256,9 +296,58 @@ void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
         num++; pending >>= 1;
     } while (pending);
 }
-#endif
+#else			
 
-// IO端口函数初始化
+			//stm32f0xx					
+
+void EXTI0_1_IRQHandler(void)
+{
+	  uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 4..15
+    int num = 0; pending >>= 0;
+    do {
+        if (pending & 1) GPIO_ISR(num);
+        num++; pending >>= 1;
+    } while (pending);
+}	
+
+void EXTI2_3_IRQHandler(void)
+{
+	  uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
+    int num = 2; pending >>= 2;
+    do {
+        if (pending & 1) GPIO_ISR(num);
+        num++; pending >>= 1;
+    } while (pending);
+}	
+
+void EXTI4_15_IRQHandler(void)
+{
+	  uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
+    int num = 4; pending >>= 4;
+    do {
+        if (pending & 1) GPIO_ISR(num);
+        num++; pending >>= 1;
+    } while (pending);
+}	
+
+
+
+#endif		//STM32F10X
+
+
+
+#endif 		//IT
+
+
+
+
+
+
+
+
+
+
+// .............................IO端口函数初始化.............................
 void TIO_Init(TIO* this)
 {
     int i = 0;
