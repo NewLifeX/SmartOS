@@ -45,7 +45,7 @@ extern void T##name##_Init(T##name* this);
 
 /* 核心定义 */
 _class(Core)
-    //void (*Printf)(const string format, ...);
+    void (*Printf)(const string format, ...);
     /*void (*LcdPrintf)(const string format,...);
     void* (*Malloc)(uint len);
     void (*Free)(void* ptr);*/
@@ -58,22 +58,23 @@ _class(Boot)
 _class_end(Boot)
 
 // 读取委托
-typedef void (*IOReadHandler)(Pin pin, bool down);
+typedef void (*IOReadHandler)(Pin , bool );
 /* IO口 */
 _class(IO)
-    void (*Open)(Pin pin, GPIOMode_TypeDef mode);
+    void (*Open)(Pin , GPIOMode_TypeDef );
     // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
     // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
     // type=GPIO_OType_PP/GPIO_OType_OD
+		
 #ifdef STM32F0XX
-    void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type);
+   void (*OpenPort)(Pin , GPIOMode_TypeDef , GPIOSpeed_TypeDef , GPIOOType_TypeDef ,GPIOPuPd_TypeDef );
 #else
-    void (*OpenPort)(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed);
+    void (*OpenPort)(Pin , GPIOMode_TypeDef , GPIOSpeed_TypeDef );
 #endif
-    void (*Close)(Pin pin);
-    bool (*Read)(Pin pin);
-    void (*Write)(Pin pin, bool state);
-    void (*Register)(Pin pin, IOReadHandler handler);
+    void (*Close)(Pin );
+    bool (*Read)(Pin );
+    void (*Write)(Pin , bool );
+    void (*Register)(Pin , IOReadHandler );
 _class_end(IO)
 
 // 读取委托
@@ -205,8 +206,8 @@ typedef struct
 	TLcd Lcd;
 	TLog Log;*/
 
-    void (*Sleep)(uint ms); // 毫秒级延迟
-    void (*Delay)(uint us); // 微秒级延迟
+    void (*Sleep)(uint ); // 毫秒级延迟
+    void (*Delay)(uint ); // 微秒级延迟
     void (*DisableInterrupts)();    // 关闭中断
     void (*EnableInterrupts)();     // 打开中断
 } TSystem;
