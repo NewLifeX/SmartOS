@@ -70,8 +70,8 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 
 	//串口引脚初始化
 #ifdef STM32F0XX
-    Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP);
-    Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP);
+    Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+    Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
 #else
