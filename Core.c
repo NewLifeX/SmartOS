@@ -79,10 +79,15 @@ __asm void ForceDisabled()
     __disable_irq();
     return m ^ 1;
 */
+#ifdef STM32F10X
     MRS      r0,PRIMASK
     CPSID    i
     EOR      r0,r0,#1
     BX       lr
+#else
+    BX       lr
+	
+#endif
 }
 
 __asm void ForceEnabled()
@@ -94,10 +99,16 @@ __asm void ForceEnabled()
     return m ^ 1;
 */
 	// 这里打开中断以后，经常发生各种各样的异常，没有关系，并不是这里的错，而是之前可能就已经发生了异常，只不过无法产生中断，等到这里而已
+#ifdef STM32F10X
+	
     MRS      r0,PRIMASK
     CPSIE    i
     EOR      r0,r0,#1
     BX       lr
+#else
+    BX       lr
+	
+#endif
 }
 
 #if GD32F1
