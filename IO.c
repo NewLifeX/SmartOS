@@ -253,7 +253,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
         
-        Sys.Sleep(20); // 避免抖动		//最好在硬件上处理抖动
+        Sys.Sleep(70); // 避免抖动		//最好在硬件上处理抖动
     } while (EXTI->PR & bit); // 如果再次挂起则重复
 
     //EXTI_ClearITPendingBit(line);
@@ -361,3 +361,9 @@ void TIO_Init(TIO* this)
     
     for(i=0; i<16; i++) TIO_Register(i, 0);
 }
+
+
+
+
+
+

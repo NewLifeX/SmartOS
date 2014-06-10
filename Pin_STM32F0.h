@@ -54,10 +54,24 @@
 
 
 /* 串行外设接口(SPI)针脚 ------------------------------------------------------------------*/
-#define SPI_NSS_PINS  {4, 28, 15} // PA4, PB12, PA15
-#define SPI_SCLK_PINS {5, 29, 19} // PA5, PB13, PB3
-#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4
-#define SPI_MOSI_PINS {7, 31, 21} // PA7, PB15, PB5
+//#define SPI_NSS_PINS  {4, 28, 15} // PA4, PB12, PA15
+//#define SPI_SCLK_PINS {5, 29, 19} // PA5, PB13, PB3
+//#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4
+//#define SPI_MOSI_PINS {7, 31, 21} // PA7, PB15, PB5
+
+#define SPI_PINS_FULLREMAP	{\
+/*	NSS  CLK  MISO MOSI			*/\
+		{PA4, PA5, PA6, PA7 },\
+		{PB12,PB13,PB14,PB15},\
+		{PA15,PB3, PB4, PB5 }\
+}
+
+
+
+
+
+
+
 
 /* 控制器区域网络(CAN)针脚 ------------------------------------------------------------------*/
 //						  TX    RX
