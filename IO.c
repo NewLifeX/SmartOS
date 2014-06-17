@@ -207,7 +207,7 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
 				
 
-        NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;
+        NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;		//为滴答定时器让道  中断优先级不为最高
 #endif
 				NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);

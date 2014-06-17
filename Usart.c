@@ -3,17 +3,24 @@
 #include <stdio.h>
 
 #define IS_REMAP(com) ((Usart_Remap >> com) & 0x01 == 0x01)
+
+
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
 
 static USART_TypeDef* g_Uart_Ports[] = UARTS; 
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
+
+
+
 // 串口接收委托
 static UsartReadHandler UsartHandlers[6];
 
+
 // 指定哪个串口采用重映射
 static byte Usart_Remap;
+
 // 串口状态
 static bool Usart_opened[6];
 
@@ -31,6 +38,7 @@ void TUsart_GetPins(int com, Pin* txPin, Pin* rxPin)
 	*txPin  = p[com];
 	*rxPin  = p[com + 1];
 }
+
 
 // 打开串口
 bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
@@ -97,7 +105,7 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 #ifdef STM32F10X
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 #else
-    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;
+    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;
 #endif
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     switch (com) {
@@ -118,6 +126,7 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
     return true;
 }
 
+
 // 打开串口
 bool TUsart_Open(int com, int baudRate)
 {
@@ -127,6 +136,7 @@ bool TUsart_Open(int com, int baudRate)
         USART_StopBits_1        //1位停止位
     );
 }
+
 
 // 关闭端口
 void TUsart_Close(int com)
@@ -140,6 +150,7 @@ void TUsart_Close(int com)
     Sys.IO.Close(tx);
     Sys.IO.Close(rx);
 
+	
 	// 检查重映射
 #ifdef STM32F1XX
 	if(IS_REMAP(com))
@@ -155,6 +166,8 @@ void TUsart_Close(int com)
     Usart_opened[com] = false;
 }
 
+
+
 // 发送单一字节数据
 void TUsart_SendData(USART_TypeDef* port, char* data)
 {
@@ -162,6 +175,8 @@ void TUsart_SendData(USART_TypeDef* port, char* data)
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
     USART_SendData(port, (ushort)*data);
 }
+
+
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
 void TUsart_Write(int com, const string data, int size)
@@ -182,6 +197,8 @@ void TUsart_Write(int com, const string data, int size)
     }
 }
 
+
+
 // 从某个端口读取数据
 int TUsart_Read(int com, string data, uint size)
 {
@@ -192,6 +209,8 @@ int TUsart_Read(int com, string data, uint size)
     return 0;
 }
 
+
+
 // 刷出某个端口中的数据
 void TUsart_Flush(int com)
 {
@@ -200,11 +219,16 @@ void TUsart_Flush(int com)
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
 }
 
+
+
 // 指定哪个串口采用重映射
 void TUsart_SetRemap(int com)
 {
 	Usart_Remap |= (1 << com);
 }
+
+
+
 
 void TUsart_Register(int com, UsartReadHandler handler)
 {
@@ -218,6 +242,9 @@ void TUsart_Register(int com, UsartReadHandler handler)
     }
 }
 
+
+
+//真正的串口中断函数
 void OnReceive(int com)
 {
     USART_TypeDef* port = g_Uart_Ports[com];
@@ -232,6 +259,9 @@ void OnReceive(int com)
     } 
 }
 
+
+
+//所有中断重映射到onreceive函数
 void USART1_IRQHandler(void) { OnReceive(0); }
 void USART2_IRQHandler(void) { OnReceive(1); }
 #ifdef STM32F10X
@@ -239,6 +269,10 @@ void USART3_IRQHandler(void) { OnReceive(2); }
 void USART4_IRQHandler(void) { OnReceive(3); }
 void USART5_IRQHandler(void) { OnReceive(4); }
 #endif
+
+
+
+
 
 // 初始化串口函数
 void TUsart_Init(TUsart* this)
@@ -249,9 +283,12 @@ void TUsart_Init(TUsart* this)
     this->Write = TUsart_Write;
     this->Read  = TUsart_Read;
     this->Flush = TUsart_Flush;
-	this->SetRemap = TUsart_SetRemap;
+		this->SetRemap = TUsart_SetRemap;
     this->Register = TUsart_Register;
 }
+
+
+
 
 /* 重载fputc可以让用户程序使用printf函数 */
 int fputc(int ch, FILE *f)

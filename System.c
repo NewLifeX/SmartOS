@@ -15,7 +15,7 @@ TSystem Sys = {
 #if GD32F1
      8000000,      // CystalClock
 #endif
-    COM_NONE,   // MessagePort  消息口
+    COM1,   // MessagePort  消息口
 };
 
 void SysInit(void)

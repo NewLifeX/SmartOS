@@ -11,8 +11,10 @@
 
 #define GD32_PLL_MASK	0x20000000
 
-ushort fac_ms;//全局变量
-byte fac_us;//全局变量
+
+byte fac_us;//全局变量		
+volatile uint TickStat;//全局变量	 为延时函数服务
+
 
 /****************************************************
 函数功能：延时初始化
@@ -22,54 +24,34 @@ byte fac_us;//全局变量
 *****************************************************/
 void delay_init(uint clk)
 {
+	 NVIC_InitTypeDef NVIC_InitStructure;
 	 /****************************************
 	 *SystemFrequency/1000      1ms中断一次  *
 	 *SystemFrequency/100000    10us中断一次 *
 	 *SystemFrequency/1000000   1us中断一次  *
 	 *****************************************/
-     SysTick->CTRL &=~BIT(2);//选择外部时钟
-	 SysTick->CTRL &=~BIT(1);//关闭定时器减到0后的中断请求
+   SysTick->CTRL &=~BIT(2);//选择外部时钟
+	 SysTick->CTRL |=BIT(1);//开启定时器减到0后的中断请求
 	 fac_us = clk/8;//计算好SysTick加载值
-	 fac_ms = (ushort)fac_us*1000;	 
-}
-
-/****************************************************
-函数功能：ms级延时
-输入参数：nms : 毫秒
-输出参数：无
-备    注：调用此函数前，需要初始化Delay_Init()函数
-*****************************************************/							    
-void delay_ms(uint nms)
-{
-    Sys.DisableInterrupts();
-
-    SysTick->LOAD = (uint)fac_ms*nms-1;//加载时间值
+	
+/*初始化部分代码*/
+    SysTick->LOAD = (uint)fac_us*1000-1;//加载时间值
     SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
     SysTick->CTRL |= BIT(0);//SysTick使能
-    while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
-    SysTick->CTRL &=~BIT(0);//关闭SysTick
 
-    Sys.EnableInterrupts();
+	   /* Configure the NVIC Preemption Priority Bits */  
+    NVIC_InitStructure.NVIC_IRQChannel = (byte)SysTick_IRQn;
+		 
+#ifdef STM32F10X
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+#else
+    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;			//想在中断里使用延时函数就必须让此中断优先级最高
+#endif
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
+    NVIC_Init(&NVIC_InitStructure);
 }
 
-/****************************************************
-函数功能：us级延时
-输入参数：nus : 微秒
-输出参数：无
-备    注：调用此函数前，需要初始化Delay_Init()函数
-*****************************************************/		    								   
-void delay_us(uint nus)
-{		
-    Sys.DisableInterrupts();
-
-    SysTick->LOAD = (uint)fac_us*nus-1;//加载时间值
-    SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
-    SysTick->CTRL |= BIT(0);//SysTick使能
-    while(!(SysTick->CTRL&(1<<16)));//判断是否减到0
-    SysTick->CTRL &=~BIT(0);//关闭SysTick
-
-    Sys.EnableInterrupts();
-}
 
 __asm void ForceDisabled()
 {
@@ -79,7 +61,7 @@ __asm void ForceDisabled()
     __disable_irq();
     return m ^ 1;
 */
-#ifdef STM32F10X
+	#ifdef STM32F10X							//stm32f030的汇编与此有所区别
     MRS      r0,PRIMASK
     CPSID    i
     EOR      r0,r0,#1
@@ -99,9 +81,9 @@ __asm void ForceEnabled()
     return m ^ 1;
 */
 	// 这里打开中断以后，经常发生各种各样的异常，没有关系，并不是这里的错，而是之前可能就已经发生了异常，只不过无法产生中断，等到这里而已
-#ifdef STM32F10X
+#ifdef STM32F10X							//stm32f030的汇编与此有所区别
 	
-    MRS      r0,PRIMASK
+    MRS      r0,PRIMASK	
     CPSIE    i
     EOR      r0,r0,#1
     BX       lr
@@ -110,6 +92,70 @@ __asm void ForceEnabled()
 	
 #endif
 }
+
+
+//利用SysTick定时器产生1ms时基
+
+// SysTick_Handler  		滴答定时器中断
+void SysTick_Handler(void)				//需要最高优先级  必须有抢断任何其他中断的能力才能
+														//供其他中断内延时使用
+{
+	if(TickStat)
+	TickStat--;
+}
+
+
+/****************************************************
+函数功能：ms级延时
+输入参数：nms : 毫秒
+输出参数：无
+备    注：调用此函数前，需要初始化Delay_Init()函数
+*****************************************************/							    
+void delay_ms(uint nms)
+{
+	TickStat=nms;
+	while(TickStat);
+}
+
+
+/****************************************************
+函数功能：us级延时
+输入参数：nus : 微秒
+输出参数：无
+备    注：调用此函数前，需要初始化Delay_Init()函数
+*****************************************************/		    								   
+void delay_us(uint nus)
+{		
+	
+	uint t=SysTick->CTRL&(1<<24);		//SysTick  为24位倒计数定时器
+	uint tc=fac_us*nus;
+	//if(nus<100){for();retrun}											//低于100微秒的延时就没有必要使用定时器作为时基了
+	
+	if(nus>1000)										//如果延迟超过1ms 
+		{
+			delay_ms(nus/1000);
+			tc=(t%1000)*fac_us;				 
+		}
+		
+	if((t-tc)>0)
+		{
+			while(SysTick->CTRL>(t-tc));
+			return;
+		}
+	else if((t-tc)==0)
+		{
+			while(SysTick->CTRL);
+			return;
+		}
+	else 
+		{
+			tc= SysTick->LOAD -(tc-t);				//低于1s  所以
+			while(SysTick->CTRL!=tc);
+			return;
+		}
+}
+
+
 
 #if GD32F1
 // 获取JTAG编号，ST是0x041，GD是0x7A3
@@ -124,6 +170,7 @@ uint16_t Get_JTAG_ID()
 
     return  0;
 }
+
 
 void STM32_BootstrapCode()
 {
@@ -260,6 +307,8 @@ void STM32_BootstrapCode()
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
 #endif
+
+
 
 void TCore_Init(TCore* this)
 {
