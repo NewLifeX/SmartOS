@@ -28,6 +28,14 @@ typedef unsigned char   bool;
 #define COM5 4
 #define COM_NONE 0xFF
 
+/*Spi定义*/
+//SPI1..这种格式与st库冲突  
+#define SPI_1	0
+#define SPI_2	1
+#define SPI_3	2
+#define SPI_NONE 0XFF
+
+
 /* 引脚定义 */
 typedef ushort			Pin;
 #include "Pin.h"
