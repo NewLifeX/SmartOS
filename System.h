@@ -127,7 +127,7 @@ _class_end(Analog)
 
 /* 串行总线 */
 _class(Spi)
-		//bool (*Open)(int,int);
+		bool (*Open)(int,int);
 		//bool (*Close)(int);
     //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
@@ -207,11 +207,11 @@ typedef struct
 	TCore Core;
 	TIO IO;
 	TUsart Usart;
-	/*TMem Mem;
+/*TMem Mem;
 	TFlash Flash;
-	TAnalog Analog;
+	TAnalog Analog;*/
 	TSpi Spi;
-	TI2c I2c;
+/*TI2c I2c;
 	TPwm Pwm;
 	TLcd Lcd;
 	TLog Log;*/

@@ -129,12 +129,13 @@ void delay_us(uint nus)
 	
 	uint t=SysTick->CTRL&0x00ffffff;		//SysTick  为24位倒计数定时器
 	uint tc=fac_us*nus;
-	//if(nus<100){for();retrun}											//低于100微秒的延时就没有必要使用定时器作为时基了
+	
+	//if(nus<100){for();retrun}					//低于100微秒的延时就没有必要使用定时器作为时基了
 	
 	if(nus>1000)										//如果延迟超过1ms 
 		{
 			delay_ms(nus/1000);
-//		if(tc%1000==0)return;				//几率比较小  忽略此句
+//		if(tc%1000==0)return;				//几率比较小  忽略此句、
 			tc=(tc%1000)*fac_us;				 
 		}
 		
