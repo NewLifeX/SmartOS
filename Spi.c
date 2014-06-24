@@ -24,6 +24,8 @@ static const Pin spi_nss[3]=
 	PA15	,								//spi3
 };
 
+
+
 #define SPI_CS_HIGH(spi)		Sys.IO.Write(spi_nss[spi],1)
 #define SPI_CS_LOW(spi)			Sys.IO.Write(spi_nss[spi],0)
 
@@ -70,7 +72,7 @@ void gpio_config(const Pin pin[])
 
 
 
-bool Spi_config(int spi,int clk)
+bool Spi_config(int spi)
 {
 	//get pin
 	const Pin  * p= g_Spi_Pins_Map[spi];
@@ -190,24 +192,69 @@ bool Spi_Disable(int spi)
 
 
 
-uint8_t SPI_ReadWriteByte(uint8_t TxData)
+byte SPI_ReadWriteByte8(int spi,byte TxData)
 {		
-	unsigned char retry=0;				 	
-	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET) //检查指定的SPI标志位设置与否:发送缓存空标志位
+	unsigned char retry=0;				 
+	SPI_TypeDef *	p;
+	
+		switch(spi)
+	{							
+		  case SPI_1 : p=  SPI1 ; break;
+//			case SPI_2 :  break;
+//			case SPI_3 :  break;
+	}	 
+	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET) 
 		{
 		retry++;
-		if(retry>200)return 0;
+		if(retry>200)return 0;		//超时处理
 		}			  
-	SPI_SendData8(SPI1, TxData); //通过外设SPIx发送一个数据
+	SPI_SendData8(p, TxData); 																	//发送一个数据
 	retry=0;
 
-	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET) //检查指定的SPI标志位设置与否:接受缓存非空标志位
+	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
 		{
 		retry++;
-		if(retry>200)return 0;
+		if(retry>200)return 0;		//超时处理
 		}	  						    
-	return SPI_ReceiveData8(SPI1); //返回通过SPIx最近接收的数据					    
+	return SPI_ReceiveData8(p); //返回通过SPIx最近接收的数据					    
 }	
+
+
+
+
+
+
+ushort SPI_ReadWriteByte16(int spi,ushort HalfWord)
+{
+ 	unsigned char retry=0;				 
+	SPI_TypeDef *	p;
+	
+		switch(spi)
+	{							
+		  case SPI_1 : p=  SPI1 ; break;
+//			case SPI_2 :  break;
+//			case SPI_3 :  break;
+	}	 
+	
+  while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET)
+	{
+		retry++;
+		if(retry>500)return 0;		//超时处理
+	}			
+ 
+  SPI_I2S_SendData16(p, HalfWord);
+
+ 
+  while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET)
+	{
+		retry++;
+		if(retry>500)return 0;		//超时处理
+	}			
+
+  return SPI_I2S_ReceiveData16(p);
+	
+}
+
 
 
 
@@ -233,8 +280,10 @@ uint8_t SPI_ReadWriteByte(uint8_t TxData)
 
 void TSpi_Init(TSpi* this)
 {
-			this->Open  			= Spi_config;
-			this->Close 			= Spi_Disable;
+			this->Open  					= Spi_config;
+			this->Close 					= Spi_Disable;
+			this->WriteReadByte8 	= SPI_ReadWriteByte8;
+			this->WriteReadByte16	=	SPI_ReadWriteByte16;
 	
 //    this->WriteRead 	= 
 //    this->WriteRead16	= 
