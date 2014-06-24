@@ -128,7 +128,7 @@ _class_end(Analog)
 /* 串行总线 */
 _class(Spi)
 		bool (*Open)(int,int);
-		//bool (*Close)(int);
+		bool (*Close)(int);
     //bool (*WriteRead)(const SPI_CONFIGURATION& Configuration, byte* Write8, int WriteCount, byte* Read8, int ReadCount, int ReadStartOffset);
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
 _class_end(Spi)
