@@ -32,7 +32,7 @@ static const Pin spi_nss[3]=
 
 
 
-#define IS_SPI(a)	   {if(3<a<0xff)return false;}
+#define IS_SPI(a)	   if(a>3){return false;}
 
 
 
@@ -78,12 +78,13 @@ bool Spi_config(int spi)
 	const Pin  * p= g_Spi_Pins_Map[spi];
 	
 #ifdef STM32F1XX
+	
 #else
 	SPI_InitTypeDef SPI_InitStructure;
 	
 #endif	
 
-	IS_SPI(spi);
+	IS_SPI(spi)
 	gpio_config(p);
 	
 #ifdef STM32F1XX
@@ -108,6 +109,9 @@ bool Spi_config(int spi)
 		SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;  //8分频，9MHz
 		SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;  				//高位在前
 		SPI_InitStructure.SPI_CRCPolynomial = 7;
+		
+		printf("   初始化SPI_%d\r\n",(spi+1));
+	
 	switch(spi)
 	{								/*				配置spi													使能spi  */	
 		  case SPI_1 : SPI_Init(SPI1, &SPI_InitStructure);  SPI_Cmd(SPI1, ENABLE);	break;
@@ -118,15 +122,7 @@ bool Spi_config(int spi)
 	
 #else
 
-	    /*
-	*************************************************************************************
-	*	SPI初始化：SPI为双线双向全双工，主SPI模式，接收发送的数据帧为8位格式			    *
-	*			   空闲时时钟为高电平（W25X16选择模式3），数据在第二个时钟上升			    *
-	*			   沿开始捕获（1、由于时钟空闲时为高电平，2、W25X16在上升沿时数据输入）	*
-	*			   决定了是第二个时钟上升沿不是第一个时钟。SPI波特率2分频，36MHz		    *
-	*			   W25X16手册说SPI时钟不超过75MHz，数据先传送高位，						*
-	*************************************************************************************
-	*/		
+	
 	switch(spi)
 	{								
 		  case SPI_1 : RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);  	break;
@@ -146,6 +142,8 @@ bool Spi_config(int spi)
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;	//指定数据传输从MSB位还是LSB位开始:数据传输从MSB位开始
 	SPI_InitStructure.SPI_CRCPolynomial = 7;	//CRC值计算的多项式
 	
+	
+	printf("   初始化SPI_%d\r\n",(spi+1));
 	switch(spi)
 	{								/*				配置spi													使能spi  */	
 		  case SPI_1 : SPI_Init(SPI1, &SPI_InitStructure);  SPI_Cmd(SPI1, ENABLE);	break;
@@ -164,7 +162,7 @@ bool Spi_config(int spi)
 bool Spi_Disable(int spi)
 {
 	
-	IS_SPI(spi);
+	IS_SPI(spi)
 	
 	SPI_CS_HIGH(spi);		//使从机释放总线
 
@@ -174,15 +172,19 @@ bool Spi_Disable(int spi)
 		  case SPI_1 :		SPI_Cmd(SPI1, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); break;
 			case SPI_2 :		SPI_Cmd(SPI2, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, DISABLE); break;
 			case SPI_3 :		SPI_Cmd(SPI3, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, DISABLE); break;
-					
+			
 	}	 
+	printf("   关闭SPI_%d\r\n",(spi+1));
+	return true;
 #else
 	switch(spi)
 	{								/*		失能spi  															关闭spi时钟							*/	
 		  case SPI_1 :   SPI_Cmd(SPI1, DISABLE);	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); break;
 //			case SPI_2 :   SPI_Cmd(SPI2, DISABLE);	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, DISABLE); break;
 //			case SPI_3 :   SPI_Cmd(SPI3, DISABLE);	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, DISABLE); break;
+			
 	}	  
+		printf("   关闭SPI_%d\r\n",(spi+1));
 	return true;
 #endif
 }

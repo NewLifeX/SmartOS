@@ -35,7 +35,7 @@ void SysInit(void)
 	//Execute(Mem);
 	//Execute(Flash);
 	//Execute(Analog);
-	//Execute(Spi);
+	Execute(Spi);
 	/*Execute(Sys.I2c);
 	Execute(Sys.Pwm);
 	Execute(Sys.Lcd);*/
