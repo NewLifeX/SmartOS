@@ -324,3 +324,5 @@ void TCore_Init(TCore* this)
 #endif
     delay_init(Sys.Clock/1000000);
 }
+
+

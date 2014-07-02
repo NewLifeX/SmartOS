@@ -56,7 +56,7 @@ static const Pin spi_nss[3]=
   * @param  无
   * @retval 无
   */
-void SPI_NRF_Init(void)
+void nRF_Init(void)
 {
 #ifdef STM32F1XX
 	
@@ -161,7 +161,7 @@ byte SPI_NRF_ReadBuf(byte reg,byte *pBuf,byte bytes)
   * @param  无
   * @retval SUCCESS/ERROR 连接正常/连接失败
   */
-byte NRF_Check(void)
+byte TnRF_Check(void)
 {
 	byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf1[5];
@@ -430,22 +430,6 @@ byte NRF_Tx_Dat(byte *txbuf)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk)
 {
@@ -469,8 +453,28 @@ void nRF24L01_irq(Pin pin, bool opk)
 
 
 
+//初始化nRF函数接口
+void TnRF_Init(TnRF* this)
+{
+    this->Open  	= nRF_Init;
+    this->Check 	= TnRF_Check;
+    this->RX_Mode = NRF_RX_Mode;
+    this->TX_Mode = NRF_TX_Mode;
+    this->Rx_Dat  = NRF_Rx_Dat;
+    this->Tx_Dat 	= NRF_Tx_Dat;
+}
 
 
+//析构函数接口
+void TnRF_Uninit(TnRF* this)
+{
+    this->Open  	= '\0';
+    this->Check 	= '\0';
+    this->RX_Mode = '\0';
+    this->TX_Mode = '\0';
+    this->Rx_Dat  = '\0';
+    this->Tx_Dat 	= '\0';
+}
 
 
 

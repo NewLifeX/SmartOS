@@ -44,8 +44,9 @@ typedef ushort			Pin;
 /* 以结构体来定义一个类的头部和尾部，同时创建一个全局的初始化函数 */
 #define _class(name) typedef struct T##name##_Def\
 {\
-	void (*Init)(struct T##name##_Def* this);\
-	void (*Uninit)(struct T##name##_Def* this);
+	void (*Init)(struct T##name##_Def* this);
+	
+//	void (*Uninit)(struct T##name##_Def* this);
 
 #define _class_end(name) } T##name;\
 extern void T##name##_Init(T##name* this);
@@ -135,6 +136,19 @@ _class(Spi)
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
 _class_end(Spi)
 
+
+/* nRF24L01+ */
+_class(nRF)
+		void (*Open)(void);
+		bool (*Check)(void);
+		void (*RX_Mode)(void);
+		void (*TX_Mode)(void);
+		byte (*Rx_Dat)(byte *rxbuf);
+		byte (*Tx_Dat)(byte *txbuf);
+_class_end(nRF)
+
+
+
 /*typedef struct
 {
 	void (*Init)(void);
@@ -213,6 +227,7 @@ typedef struct
 	TFlash Flash;
 	TAnalog Analog;*/
 	TSpi Spi;
+	TnRF	nRF;
 /*TI2c I2c;
 	TPwm Pwm;
 	TLcd Lcd;
@@ -231,3 +246,5 @@ extern TSystem Sys;
 #define using(module) Sys.module.Init = T##module##_Init;
 
 #endif //_SYSTEM_H_
+
+
