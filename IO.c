@@ -139,7 +139,6 @@ bool TIO_Read(Pin pin)
 
 
 
-
 // 注册回调  及中断使能
 
 
@@ -199,9 +198,9 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 #else
-				if(pins<2)
+				if(pins<0x02)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI0_1_IRQn;
-				if(pins<4)
+				if(pins<0x04)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI2_3_IRQn;
 				else
         NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
@@ -298,11 +297,13 @@ void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
 }
 #else			
 
+
+
 			//stm32f0xx					
 
 void EXTI0_1_IRQHandler(void)
 {
-	  uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 4..15
+	  uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
     int num = 0; pending >>= 0;
     do {
         if (pending & 1) GPIO_ISR(num);
