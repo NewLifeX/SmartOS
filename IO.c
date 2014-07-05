@@ -1,4 +1,5 @@
 #include "System.h"
+#include "OS_cfg.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -252,7 +253,8 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
         
-        Sys.Sleep(70); // 避免抖动		//最好在硬件上处理抖动
+        Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
+			
     } while (EXTI->PR & bit); // 如果再次挂起则重复
 
     //EXTI_ClearITPendingBit(line);

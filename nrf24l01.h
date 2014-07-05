@@ -3,6 +3,7 @@
 #define __NRF24L01_H__
 
 
+
 /********************  *************  ***********************/
 /********************  *************  ***********************/
 
@@ -65,8 +66,8 @@
 #define RX_PLOAD_WIDTH				5
 #define TX_PLOAD_WIDTH				5
 
-extern byte RX_BUF[];		//接收数据缓存
-extern byte TX_BUF[];		//发射数据缓存
+extern unsigned char RX_BUF[];		//接收数据缓存
+extern unsigned char TX_BUF[];		//发射数据缓存
 
 
 
@@ -81,8 +82,8 @@ extern byte TX_BUF[];		//发射数据缓存
 
 // 定义一个静态发送地址
 /*初始地址到。c去设置*/
-extern byte TX_ADDRESS[];  		
-extern byte RX_ADDRESS[]; 
+extern unsigned char TX_ADDRESS[];  		
+extern unsigned char RX_ADDRESS[]; 
 
 
 #define CHANAL 				40	//频道选择 
