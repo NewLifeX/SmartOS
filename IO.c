@@ -1,5 +1,4 @@
 #include "System.h"
-#include "OS_cfg.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -20,6 +19,8 @@ typedef struct TIntState
     bool OldValue;
 } IntState;
 
+/*默认按键去抖延时   70ms*/
+static byte shake_time=70;
 
 
 // 16条中断线
@@ -300,7 +301,6 @@ void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
 #else			
 
 
-
 			//stm32f0xx					
 
 void EXTI0_1_IRQHandler(void)
@@ -334,19 +334,16 @@ void EXTI4_15_IRQHandler(void)
 }	
 
 
-
 #endif		//STM32F10X
-
-
 
 #endif 		//IT
 
 
 
-
-
-
-
+void Tio_SetShakeTime(byte time_ms)
+{
+	shake_time=time_ms;
+}
 
 
 
@@ -361,7 +358,7 @@ void TIO_Init(TIO* this)
     this->Write = TIO_Write;
     this->Read = TIO_Read;
     this->Register = TIO_Register;
-    
+    this->SetShakeTime=Tio_SetShakeTime;
     for(i=0; i<16; i++) TIO_Register(i, 0);
 }
 

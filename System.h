@@ -10,6 +10,7 @@
 
 #include "stm32.h"
 
+
 /* 类型定义 */
 typedef char            sbyte;
 typedef unsigned char   byte;
@@ -19,6 +20,7 @@ typedef char*           string;
 typedef unsigned char   bool;
 #define true            1
 #define false           0
+
 
 /* 串口定义 */
 #define COM1 0
@@ -84,6 +86,7 @@ _class(IO)
     bool (*Read)(Pin );
     void (*Write)(Pin , bool );
     void (*Register)(Pin , IOReadHandler );
+		void (* SetShakeTime)(byte time_ms);	/*按键去抖设置   默认延时70ms*/
 _class_end(IO)
 
 // 读取委托
