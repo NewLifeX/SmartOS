@@ -1,5 +1,3 @@
-
-
 #include "System.h"
 
 #ifdef STM32F1XX
@@ -290,13 +288,3 @@ void TSpi_Init(TSpi* this)
 //    this->WriteRead 	= 
 //    this->WriteRead16	= 
 }
-
-
-
-
-
-
-
-
-
-

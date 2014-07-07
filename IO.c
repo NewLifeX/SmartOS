@@ -1,4 +1,4 @@
-#include "System.h"
+ï»¿#include "System.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -10,8 +10,8 @@
     #define BIT(x)	(1 << (x))
 #endif
 
-/* ÖĞ¶Ï×´Ì¬½á¹¹Ìå */
-/* Ò»¹²16ÌõÖĞ¶ÏÏß£¬ÒâÎ¶×ÅÍ¬Ò»ÌõÏßÃ¿Ò»×éÖ»ÄÜÓĞÒ»¸öÒı½ÅÊ¹ÓÃÖĞ¶Ï */
+/* ä¸­æ–­çŠ¶æ€ç»“æ„ä½“ */
+/* ä¸€å…±16æ¡ä¸­æ–­çº¿ï¼Œæ„å‘³ç€åŒä¸€æ¡çº¿æ¯ä¸€ç»„åªèƒ½æœ‰ä¸€ä¸ªå¼•è„šä½¿ç”¨ä¸­æ–­ */
 typedef struct TIntState
 {
     Pin Pin;
@@ -19,18 +19,18 @@ typedef struct TIntState
     bool OldValue;
 } IntState;
 
-/*Ä¬ÈÏ°´¼üÈ¥¶¶ÑÓÊ±   70ms*/
+/*é»˜è®¤æŒ‰é”®å»æŠ–å»¶æ—¶   70ms*/
 static byte shake_time=70;
 
 
-// 16ÌõÖĞ¶ÏÏß
+// 16æ¡ä¸­æ–­çº¿
 static IntState State[16];
 
 #ifdef STM32F0XX
 
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
-// ´ò¿ª¶Ë¿Ú
+// æ‰“å¼€ç«¯å£
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 // type=GPIO_OType_PP/GPIO_OType_OD
@@ -38,10 +38,10 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
 {
     GPIO_InitTypeDef p;
     
-    // ³õÊ¼»¯½á¹¹Ìå£¬±£ÏÕÆğ¼û¡£ÎªÁË½ÚÊ¡´úÂë¿Õ¼ä£¬Ò²¿ÉÒÔ²»ÓÃ
+    // åˆå§‹åŒ–ç»“æ„ä½“ï¼Œä¿é™©èµ·è§ã€‚ä¸ºäº†èŠ‚çœä»£ç ç©ºé—´ï¼Œä¹Ÿå¯ä»¥ä¸ç”¨
     GPIO_StructInit(&p);
     
-    // ´ò¿ªÊ±ÖÓ
+    // æ‰“å¼€æ—¶é’Ÿ
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
     //RCC->AHBENR |= _RCC_AHB(pin);
 
@@ -53,13 +53,13 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOO
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// °´³£ÓÃ·½Ê½´ò¿ª¶Ë¿Ú
+// æŒ‰å¸¸ç”¨æ–¹å¼æ‰“å¼€ç«¯å£
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
     
-    // ´ò¿ªÊ±ÖÓ
+    // æ‰“å¼€æ—¶é’Ÿ
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
 
     p.GPIO_Pin = _PORT(pin);
@@ -68,28 +68,28 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// ¹Ø±Õ¶Ë¿Ú¡£ÉèÎª¸¡¿ÕÊäÈë
+// å…³é—­ç«¯å£ã€‚è®¾ä¸ºæµ®ç©ºè¾“å…¥
 void TIO_Close(Pin pin)
 {
     TIO_OpenPort(pin, GPIO_Mode_IN, GPIO_Speed_2MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
-    // ÏÂÃæÕâ¸ö»á¹Ø±ÕÕû¸öÕë½Å×é£¬²»ÄÜÓÃ
+    // ä¸‹é¢è¿™ä¸ªä¼šå…³é—­æ•´ä¸ªé’ˆè„šç»„ï¼Œä¸èƒ½ç”¨
     //GPIO_DeInit(_GROUP(pin));
 }
 #else
 
 #define _RCC_APB2(PIN) (RCC_APB2Periph_GPIOA << (PIN >> 4))
 
-// ´ò¿ª¶Ë¿Ú
+// æ‰“å¼€ç«¯å£
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
 {
     GPIO_InitTypeDef p;
     
-    // ³õÊ¼»¯½á¹¹Ìå£¬±£ÏÕÆğ¼û¡£ÎªÁË½ÚÊ¡´úÂë¿Õ¼ä£¬Ò²¿ÉÒÔ²»ÓÃ
+    // åˆå§‹åŒ–ç»“æ„ä½“ï¼Œä¿é™©èµ·è§ã€‚ä¸ºäº†èŠ‚çœä»£ç ç©ºé—´ï¼Œä¹Ÿå¯ä»¥ä¸ç”¨
     GPIO_StructInit(&p);
     
-    // ´ò¿ªÊ±ÖÓ
+    // æ‰“å¼€æ—¶é’Ÿ
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
     //RCC->APB2ENR |= _RCC_AHB(pin);
 
@@ -99,13 +99,13 @@ void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// °´³£ÓÃ·½Ê½´ò¿ª¶Ë¿Ú
+// æŒ‰å¸¸ç”¨æ–¹å¼æ‰“å¼€ç«¯å£
 void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
     
-    // ´ò¿ªÊ±ÖÓ
+    // æ‰“å¼€æ—¶é’Ÿ
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
 
     p.GPIO_Pin = _PORT(pin);
@@ -114,14 +114,14 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
     GPIO_Init(_GROUP(pin), &p);
 }
 
-// ¹Ø±Õ¶Ë¿Ú¡£ÉèÎª¸¡¿ÕÊäÈë
+// å…³é—­ç«¯å£ã€‚è®¾ä¸ºæµ®ç©ºè¾“å…¥
 void TIO_Close(Pin pin)
 {
     TIO_Open(pin, GPIO_Mode_IN_FLOATING);
 }
 #endif
 
-// ÉèÖÃ¶Ë¿Ú×´Ì¬
+// è®¾ç½®ç«¯å£çŠ¶æ€
 void TIO_Write(Pin pin, bool value)
 {
     if(value)
@@ -130,7 +130,7 @@ void TIO_Write(Pin pin, bool value)
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
 
-// ¶ÁÈ¡¶Ë¿Ú×´Ì¬
+// è¯»å–ç«¯å£çŠ¶æ€
 bool TIO_Read(Pin pin)
 {
     GPIO_TypeDef* group = _GROUP(pin);
@@ -141,7 +141,7 @@ bool TIO_Read(Pin pin)
 
 
 
-// ×¢²á»Øµ÷  ¼°ÖĞ¶ÏÊ¹ÄÜ
+// æ³¨å†Œå›è°ƒ  åŠä¸­æ–­ä½¿èƒ½
 
 
 
@@ -153,10 +153,10 @@ void TIO_Register(Pin pin, IOReadHandler handler)
     EXTI_InitTypeDef   EXTI_InitStructure;
     NVIC_InitTypeDef   NVIC_InitStructure;
     
-    // ×¢²áÖĞ¶ÏÊÂ¼ş
+    // æ³¨å†Œä¸­æ–­äº‹ä»¶
     if(handler)
     {
-        // ¼ì²éÊÇ·ñÒÑ¾­×¢²áµ½±ğµÄÒı½ÅÉÏ
+        // æ£€æŸ¥æ˜¯å¦å·²ç»æ³¨å†Œåˆ°åˆ«çš„å¼•è„šä¸Š
         if(state->Pin != pin && state->Pin != P0)
         {
 #if DEBUG
@@ -168,7 +168,7 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         state->Pin = pin;
         state->Handler = handler;
 
-        /* ´ò¿ªÊ±ÖÓ */
+        /* æ‰“å¼€æ—¶é’Ÿ */
 #ifdef STM32F0XX
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 
@@ -208,14 +208,14 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
 				
 
-        NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;		//ÎªµÎ´ğ¶¨Ê±Æ÷ÈÃµÀ  ÖĞ¶ÏÓÅÏÈ¼¶²»Îª×î¸ß
+        NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;		//ä¸ºæ»´ç­”å®šæ—¶å™¨è®©é“  ä¸­æ–­ä¼˜å…ˆçº§ä¸ä¸ºæœ€é«˜
 #endif
 				NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
     }
     else
     {
-        // È¡Ïû×¢²á
+        // å–æ¶ˆæ³¨å†Œ
         state->Pin = P0;
         state->Handler = 0;
     }
@@ -229,7 +229,7 @@ void TIO_Register(Pin pin, IOReadHandler handler)
 
 
 
-//.............................ÖĞ¶Ïº¯Êı´¦Àí²¿·Ö.............................
+//.............................ä¸­æ–­å‡½æ•°å¤„ç†éƒ¨åˆ†.............................
 
 
 
@@ -244,19 +244,19 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
     bool value;
     //byte line = EXTI_Line0 << num;
 
-    // Èç¹ûÎ´Ö¸¶¨Î¯ÍĞ£¬Ôò²»´¦Àí
+    // å¦‚æœæœªæŒ‡å®šå§”æ‰˜ï¼Œåˆ™ä¸å¤„ç†
     if(!state->Handler) return;
     
     //if(EXTI_GetITStatus(line) == RESET) return;
     
     do {
-        //value = TIO_Read(state->Pin); // »ñÈ¡Òı½Å×´Ì¬
-        EXTI->PR = bit;   // ÖØÖÃ¹ÒÆğÎ»
-        value = TIO_Read(state->Pin); // »ñÈ¡Òı½Å×´Ì¬
+        //value = TIO_Read(state->Pin); // è·å–å¼•è„šçŠ¶æ€
+        EXTI->PR = bit;   // é‡ç½®æŒ‚èµ·ä½
+        value = TIO_Read(state->Pin); // è·å–å¼•è„šçŠ¶æ€
         
-        Sys.Sleep(shake_time); // ±ÜÃâ¶¶¶¯		ÔÚos_cfg.hÀïÃæĞŞ¸Ä
+        Sys.Sleep(shake_time); // é¿å…æŠ–åŠ¨		åœ¨os_cfg.hé‡Œé¢ä¿®æ”¹
 			
-    } while (EXTI->PR & bit); // Èç¹ûÔÙ´Î¹ÒÆğÔòÖØ¸´
+    } while (EXTI->PR & bit); // å¦‚æœå†æ¬¡æŒ‚èµ·åˆ™é‡å¤
 
     //EXTI_ClearITPendingBit(line);
 
@@ -347,7 +347,7 @@ void Tio_SetShakeTime(byte time_ms)
 
 
 
-// .............................IO¶Ë¿Úº¯Êı³õÊ¼»¯.............................
+// .............................IOç«¯å£å‡½æ•°åˆå§‹åŒ–.............................
 void TIO_Init(TIO* this)
 {
     int i = 0;
@@ -361,7 +361,3 @@ void TIO_Init(TIO* this)
     this->SetShakeTime=Tio_SetShakeTime;
     for(i=0; i<16; i++) TIO_Register(i, 0);
 }
-
-
-
-

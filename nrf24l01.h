@@ -1,4 +1,3 @@
-
 #ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
@@ -168,4 +167,3 @@ void nRF24L01_irq(Pin pin, bool opk);
 
 
 #endif
-

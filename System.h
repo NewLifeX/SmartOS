@@ -1,8 +1,3 @@
-/*
-  * å…¨æ–°çš„ç³»ç»ŸAPIæ¶æ„
-  *
-  */
-
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
@@ -11,7 +6,7 @@
 #include "stm32.h"
 
 
-/* ç±»å‹å®šä¹‰ */
+/* ÀàĞÍ¶¨Òå */
 typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
@@ -22,7 +17,7 @@ typedef unsigned char   bool;
 #define false           0
 
 
-/* ä¸²å£å®šä¹‰ */
+/* ´®¿Ú¶¨Òå */
 #define COM1 0
 #define COM2 1
 #define COM3 2
@@ -30,20 +25,20 @@ typedef unsigned char   bool;
 #define COM5 4
 #define COM_NONE 0xFF
 
-/*Spiå®šä¹‰*/
-//SPI1..è¿™ç§æ ¼å¼ä¸ståº“å†²çª  
+/*Spi¶¨Òå*/
+//SPI1..ÕâÖÖ¸ñÊ½Óëst¿â³åÍ»  
 #define SPI_1	0
 #define SPI_2	1
 #define SPI_3	2
 #define SPI_NONE 0XFF
 
 
-/* å¼•è„šå®šä¹‰ */
+/* Òı½Å¶¨Òå */
 typedef ushort			Pin;
 #include "Pin.h"
 
-/* é¢å‘å¯¹è±¡å® */
-/* ä»¥ç»“æ„ä½“æ¥å®šä¹‰ä¸€ä¸ªç±»çš„å¤´éƒ¨å’Œå°¾éƒ¨ï¼ŒåŒæ—¶åˆ›å»ºä¸€ä¸ªå…¨å±€çš„åˆå§‹åŒ–å‡½æ•° */
+/* ÃæÏò¶ÔÏóºê */
+/* ÒÔ½á¹¹ÌåÀ´¶¨ÒåÒ»¸öÀàµÄÍ·²¿ºÍÎ²²¿£¬Í¬Ê±´´½¨Ò»¸öÈ«¾ÖµÄ³õÊ¼»¯º¯Êı */
 #define _class(name) typedef struct T##name##_Def\
 {\
 	void (*Init)(struct T##name##_Def* this);
@@ -54,7 +49,7 @@ typedef ushort			Pin;
 extern void T##name##_Init(T##name* this);
 
 
-/* æ ¸å¿ƒå®šä¹‰ */
+/* ºËĞÄ¶¨Òå */
 _class(Core)
     void (*Printf)(const string format, ...);
     /*void (*LcdPrintf)(const string format,...);
@@ -64,13 +59,13 @@ _class(Core)
     //uint (*ComputeCRC)(const void* rgBlock, int nLength, uint crc);
 _class_end(Core)
 
-/* å¼•å¯¼ */
+/* Òıµ¼ */
 _class(Boot)
 _class_end(Boot)
 
-// è¯»å–å§”æ‰˜
+// ¶ÁÈ¡Î¯ÍĞ
 typedef void (*IOReadHandler)(Pin , bool );
-/* IOå£ */
+/* IO¿Ú */
 _class(IO)
     void (*Open)(Pin , GPIOMode_TypeDef );
     // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
@@ -86,12 +81,12 @@ _class(IO)
     bool (*Read)(Pin );
     void (*Write)(Pin , bool );
     void (*Register)(Pin , IOReadHandler );
-		void (* SetShakeTime)(byte time_ms);	/*æŒ‰é”®å»æŠ–è®¾ç½®   é»˜è®¤å»¶æ—¶70ms*/
+		void (* SetShakeTime)(byte time_ms);	/*°´¼üÈ¥¶¶ÉèÖÃ   Ä¬ÈÏÑÓÊ±70ms*/
 _class_end(IO)
 
-// è¯»å–å§”æ‰˜
+// ¶ÁÈ¡Î¯ÍĞ
 typedef void (*UsartReadHandler)(int com, byte data);
-/* ä¸²å£ */
+/* ´®¿Ú */
 _class(Usart)
     bool (*Open)(int com, int baudRate);
     bool (*Open2)(int com, int baudRate, int parity, int dataBits, int stopBits);
@@ -105,7 +100,7 @@ _class(Usart)
     //void (*DiscardBuffer)(int com, bool fRx);
 _class_end(Usart)
 
-/* å†…å­˜ */
+/* ÄÚ´æ */
 /*_class(Mem)
     int (*snprintf)(string buffer, uint len, const string format, ...);
     int (*stricmp)(const string dst, const string src);
@@ -115,21 +110,21 @@ _class_end(Usart)
     void *(*memset)(void * dst, int value, uint len);
 _class_end(Mem)*/
 
-/* Flashå­˜å‚¨ */
+/* Flash´æ´¢ */
 _class(Flash)
     int (*Erase)(uint address, uint count);
     int (*Read)(uint address, uint count,byte *buffer);
     int (*Write)(uint address, uint count,byte *buffer);
 _class_end(Flash)
 
-/* æ¨¡æ‹Ÿé‡ */
+/* Ä£ÄâÁ¿ */
 _class(Analog)
 	//void (*DA_Write)(ANALOG_CHANNEL channel, int level);
 	//bool (*AD_Initialize)(ANALOG_CHANNEL channel, int precisionInBits);
 	//int (*AD_Read)(ANALOG_CHANNEL channel);
 _class_end(Analog)
 
-/* ä¸²è¡Œæ€»çº¿ */
+/* ´®ĞĞ×ÜÏß */
 _class(Spi)
 		bool 		(*Open)(int);
 		bool 		(*Close)(int);
@@ -198,29 +193,29 @@ typedef struct
 } TLcd;
 */
 
-/* æ—¥å¿— */
+/* ÈÕÖ¾ */
 /*_class(Log)
-    int MessagePort;    // æ¶ˆæ¯å£ï¼Œé»˜è®¤0è¡¨ç¤ºUSART1
+    int MessagePort;    // ÏûÏ¢¿Ú£¬Ä¬ÈÏ0±íÊ¾USART1
 
-    void (*WriteLine)(const string format, ...);    // è¾“å‡ºä¸€è¡Œæ—¥å¿—ï¼Œè‡ªåŠ¨æ¢è¡Œ
-    void (*DebugLine)(const string format, ...);    // è¾“å‡ºä¸€è¡Œæ—¥å¿—ï¼ŒSys.Debugæ—¶æœ‰æ•ˆ
+    void (*WriteLine)(const string format, ...);    // Êä³öÒ»ĞĞÈÕÖ¾£¬×Ô¶¯»»ĞĞ
+    void (*DebugLine)(const string format, ...);    // Êä³öÒ»ĞĞÈÕÖ¾£¬Sys.DebugÊ±ÓĞĞ§
 _class_end(Log)
 */
 
-// å…¨å±€ç³»ç»Ÿæ ¹
+// È«¾ÖÏµÍ³¸ù
 typedef struct
 {
 	void (*Init)(void);
 	void (*Uninit)(void);
 	
-    bool Debug;  // æ˜¯å¦è°ƒè¯•
-	uint Clock;  // ç³»ç»Ÿæ—¶é’Ÿ
+    bool Debug;  // ÊÇ·ñµ÷ÊÔ
+	uint Clock;  // ÏµÍ³Ê±ÖÓ
 #if GD32F1
-    uint CystalClock;   // æ™¶æŒ¯æ—¶é’Ÿ
+    uint CystalClock;   // ¾§ÕñÊ±ÖÓ
 #endif
-    byte MessagePort;    // æ¶ˆæ¯å£ï¼Œé»˜è®¤0è¡¨ç¤ºUSART1
-    uint ID[3]; // èŠ¯ç‰‡ID
-    uint FlashSize; // èŠ¯ç‰‡Flashå®¹é‡
+    byte MessagePort;    // ÏûÏ¢¿Ú£¬Ä¬ÈÏ0±íÊ¾USART1
+    uint ID[3]; // Ğ¾Æ¬ID
+    uint FlashSize; // Ğ¾Æ¬FlashÈİÁ¿
 
 	//TBoot Boot;
 	TCore Core;
@@ -236,18 +231,16 @@ typedef struct
 	TLcd Lcd;
 	TLog Log;*/
 
-    void (*Sleep)(uint ); // æ¯«ç§’çº§å»¶è¿Ÿ
-    void (*Delay)(uint ); // å¾®ç§’çº§å»¶è¿Ÿ
-    void (*DisableInterrupts)();    // å…³é—­ä¸­æ–­
-    void (*EnableInterrupts)();     // æ‰“å¼€ä¸­æ–­
+    void (*Sleep)(uint ); // ºÁÃë¼¶ÑÓ³Ù
+    void (*Delay)(uint ); // Î¢Ãë¼¶ÑÓ³Ù
+    void (*DisableInterrupts)();    // ¹Ø±ÕÖĞ¶Ï
+    void (*EnableInterrupts)();     // ´ò¿ªÖĞ¶Ï
 } TSystem;
 
-// å£°æ˜å…¨å±€çš„Sysæ ¹å¯¹è±¡
+// ÉùÃ÷È«¾ÖµÄSys¸ù¶ÔÏó
 extern TSystem Sys;
 
-// ä½¿ç”¨ä½•ç§æ¨¡å—çš„å®å®šä¹‰
+// Ê¹ÓÃºÎÖÖÄ£¿éµÄºê¶¨Òå
 #define using(module) Sys.module.Init = T##module##_Init;
 
 #endif //_SYSTEM_H_
-
-

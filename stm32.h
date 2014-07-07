@@ -1,4 +1,3 @@
-
 #ifndef __STM32_H
 #define __STM32_H
 
@@ -28,4 +27,4 @@
 	#include "stm32f10x.h"
 #endif
 
-#endif /* __STM32_H */
+#endif

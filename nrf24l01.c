@@ -1,4 +1,3 @@
-
 #include "System.h"
 #include "nrf24l01.h"
 
@@ -474,37 +473,3 @@ void TnRF_Uninit(TnRF* this)
     this->Rx_Dat  = '\0';
     this->Tx_Dat 	= '\0';
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
