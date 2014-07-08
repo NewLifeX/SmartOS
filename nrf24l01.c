@@ -3,7 +3,7 @@
 
 byte RX_BUF[RX_PLOAD_WIDTH];		//接收数据缓存
 byte TX_BUF[TX_PLOAD_WIDTH];		//发射数据缓存
-
+/*发送  接受   地址*/
 byte TX_ADDRESS[TX_ADR_WIDTH] = {0x34,0x43,0x10,0x10,0x01};  
 byte RX_ADDRESS[RX_ADR_WIDTH] = {0x34,0x43,0x10,0x10,0x01}; 
 //nRF2401 状态  供委托使用
@@ -38,13 +38,11 @@ void nRF_Init(void)
 #ifdef STM32F1XX
 	
 #else
-	
 	#if Other_nRF_CSN
 		Sys.IO.OpenPort(nRF2401_CSN, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
 	#else	
 		Sys.IO.OpenPort(spi_nss[nRF2401_SPI], GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
 	#endif  //Other_nRF_CSN
-
 	#if us_nrf_ce
 		Sys.IO.OpenPort(nRF2401_CE, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
 	#endif
@@ -280,7 +278,7 @@ byte NRF_Tx_Dat(byte *txbuf)
 			 return MAX_RT; 
 	else if(state&TX_DS)                  //发送完成
 		 	return TX_DS;
-	 else						  
+	else						  
 			return ERROR;                 //其他原因发送失败
 } 
 
