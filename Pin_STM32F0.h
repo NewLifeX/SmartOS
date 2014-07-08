@@ -60,18 +60,11 @@
 //#define SPI_MOSI_PINS {7, 31, 21} // PA7, PB15, PB5
 
 #define SPI_PINS_FULLREMAP	{\
-/*	NSS  CLK  MISO MOSI			*/\
+	/*	NSS  CLK  MISO MOSI	*/\
 		{PA4, PA5, PA6, PA7 },\
 		{PB12,PB13,PB14,PB15},\
 		{PA15,PB3, PB4, PB5 }\
 }
-
-
-
-
-
-
-
 
 /* 控制器区域网络(CAN)针脚 ------------------------------------------------------------------*/
 //						  TX    RX

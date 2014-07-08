@@ -1,65 +1,38 @@
 #ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
-
-
-/********************  *************  ***********************/
-/********************  *************  ***********************/
-
-
 //使用哪个spi作为 nrf 通信口
 #define 	nRF2401_SPI					SPI_1
-
-
 //中断引脚
 #define 	nRF2401_IRQ_pin		 PA1
-
-
 //中断引脚检测
 #define NRF_Read_IRQ()		  Sys.IO.Read(nRF2401_IRQ_pin)  
-
-
 //是否使用非默认csn引脚
 #define 	Other_nRF_CSN 			0
-
 //是否使用CE引脚
 #define		us_nrf_ce						0
-
-
-
 //CE引脚操作
 #if us_nrf_ce
-
 	//CE引脚定义
 	#define   nRF2401_CE					PE10
 	#define 	NRF_CE_LOW()				Sys.IO.Write(nRF2401_CE,0)
 	#define 	NRF_CE_HIGH()				Sys.IO.Write(nRF2401_CE,1)
-	
 #else
-
 	#define 	NRF_CE_LOW()				
 	#define 	NRF_CE_HIGH()				
 #endif
-
-
 //csn引脚操作
 #if	!Other_nRF_CSN
-
 			//一般情况   csn引脚用nss引脚
 	#define  	NRF_CSN_LOW()				Sys.IO.Write(spi_nss[nRF2401_SPI],0)	
 	#define  	NRF_CSN_HIGH()			Sys.IO.Write(spi_nss[nRF2401_SPI],1)	
-						
 			//自定义csn引脚
 #else
-
 	//CSN引脚定义
 	#define   nRF2401_CSN						PE10
 	#define 	NRF_CSN_LOW()					Sys.IO.Write(nRF2401_CSN,0)
 	#define 	NRF_CSN_HIGH()				Sys.IO.Write(nRF2401_CSN,1)
-
 #endif
-
-
 
 //定义缓冲区大小  单位  byte
 #define RX_PLOAD_WIDTH				5
@@ -68,29 +41,16 @@
 extern unsigned char RX_BUF[];		//接收数据缓存
 extern unsigned char TX_BUF[];		//发射数据缓存
 
-
-
-/********************  *************  ***********************/
-/********************  *************  ***********************/
-
-
 /*发送包大小*/
 #define TX_ADR_WIDTH	5
 #define RX_ADR_WIDTH	5
-
 
 // 定义一个静态发送地址
 /*初始地址到。c去设置*/
 extern unsigned char TX_ADDRESS[];  		
 extern unsigned char RX_ADDRESS[]; 
 
-
 #define CHANAL 				40	//频道选择 
-
-
-/********************  *************  ***********************/
-/********************  *************  ***********************/
-
 
 // SPI(nRF24L01) commands ,	NRF的SPI命令宏定义，详见NRF功能使用文档
 #define NRF_READ_REG    0x00  // Define read command to register
@@ -129,25 +89,14 @@ extern unsigned char RX_ADDRESS[];
 #define FIFO_STATUS 0x17  // 'FIFO Status Register' register address
 
 
-
-
 /********************     中断相关    ***********************/
 /********************  *************  ***********************/
-
-
-
 #define MAX_RT      0x10 //达到最大重发次数中断标志位
-
 #define TX_DS		0x20 //发送完成中断标志位	  // 
-
 #define RX_DR		0x40 //接收到数据中断标志位
 
-
-
 /********************  *************  ***********************/
 /********************  *************  ***********************/
-
-
 /*	此处函数原型不需要    直接使用Sys.nRF.xxxx();
 //初始化		包含委托申请
 void SPI_NRF_Init(void);
@@ -164,6 +113,4 @@ byte NRF_Tx_Dat(byte *txbuf);
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk);
 */
-
-
 #endif

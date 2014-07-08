@@ -1,4 +1,4 @@
-﻿#include "System.h"
+#include "System.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -22,12 +22,10 @@ typedef struct TIntState
 /*默认按键去抖延时   70ms*/
 static byte shake_time=70;
 
-
 // 16条中断线
 static IntState State[16];
 
 #ifdef STM32F0XX
-
 #define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
 
 // 打开端口
@@ -37,19 +35,16 @@ static IntState State[16];
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type,GPIOPuPd_TypeDef PuPd)
 {
     GPIO_InitTypeDef p;
-    
     // 初始化结构体，保险起见。为了节省代码空间，也可以不用
     GPIO_StructInit(&p);
-    
     // 打开时钟
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
     //RCC->AHBENR |= _RCC_AHB(pin);
-
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
     p.GPIO_Mode = mode;
     p.GPIO_OType = type;	
-		p.GPIO_PuPd	= PuPd;
+	p.GPIO_PuPd	= PuPd;
     GPIO_Init(_GROUP(pin), &p);
 }
 
@@ -58,13 +53,10 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
-    
     // 打开时钟
     RCC_AHBPeriphClockCmd(_RCC_AHB(pin), ENABLE);
-
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Mode = mode;
-
     GPIO_Init(_GROUP(pin), &p);
 }
 
@@ -85,14 +77,11 @@ void TIO_Close(Pin pin)
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed)
 {
     GPIO_InitTypeDef p;
-    
     // 初始化结构体，保险起见。为了节省代码空间，也可以不用
     GPIO_StructInit(&p);
-    
     // 打开时钟
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
     //RCC->APB2ENR |= _RCC_AHB(pin);
-
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Speed = speed;
     p.GPIO_Mode = mode;
@@ -104,13 +93,10 @@ void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 {
     GPIO_InitTypeDef p;
     GPIO_StructInit(&p);
-    
     // 打开时钟
     RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
-
     p.GPIO_Pin = _PORT(pin);
     p.GPIO_Mode = mode;
-
     GPIO_Init(_GROUP(pin), &p);
 }
 
@@ -137,14 +123,7 @@ bool TIO_Read(Pin pin)
     return (group->IDR >> (pin & 0xF)) & 1;
 }
 
-
-
-
-
 // 注册回调  及中断使能
-
-
-
 void TIO_Register(Pin pin, IOReadHandler handler)
 {
     //byte port = _PORT(pin);
@@ -152,7 +131,6 @@ void TIO_Register(Pin pin, IOReadHandler handler)
     IntState* state = &State[pins];
     EXTI_InitTypeDef   EXTI_InitStructure;
     NVIC_InitTypeDef   NVIC_InitStructure;
-    
     // 注册中断事件
     if(handler)
     {
@@ -164,21 +142,16 @@ void TIO_Register(Pin pin, IOReadHandler handler)
 #endif
             return;
         }
-        
         state->Pin = pin;
         state->Handler = handler;
-
         /* 打开时钟 */
 #ifdef STM32F0XX
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-
         SYSCFG_EXTILineConfig(pin>>4, pins);
 #else
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-
         GPIO_EXTILineConfig(pin>>4, pins);
 #endif
-
         /* Configure EXTI0 line */
         //EXTI_InitStructure.EXTI_Line = EXTI_Line0;
         EXTI_InitStructure.EXTI_Line = EXTI_Line0 << pins;
@@ -186,7 +159,6 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;  
         EXTI_InitStructure.EXTI_LineCmd = ENABLE;
         EXTI_Init(&EXTI_InitStructure);
-
         /* Enable and set EXTI0 Interrupt to the lowest priority */
 #ifdef STM32F10X
         //NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
@@ -196,7 +168,6 @@ void TIO_Register(Pin pin, IOReadHandler handler)
             NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
         else
             NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 #else
@@ -206,11 +177,9 @@ void TIO_Register(Pin pin, IOReadHandler handler)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI2_3_IRQn;
 				else
         NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
-				
-
         NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;		//为滴答定时器让道  中断优先级不为最高
 #endif
-				NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
     }
     else
@@ -221,20 +190,7 @@ void TIO_Register(Pin pin, IOReadHandler handler)
     }
 }
 
-
-
-
-
-
-
-
-
 //.............................中断函数处理部分.............................
-
-
-
-
-
 #define IT 1
 #ifdef IT
 void GPIO_ISR (int num)  // 0 <= num <= 15
@@ -243,42 +199,28 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
     uint bit = 1 << num;
     bool value;
     //byte line = EXTI_Line0 << num;
-
     // 如果未指定委托，则不处理
     if(!state->Handler) return;
-    
     //if(EXTI_GetITStatus(line) == RESET) return;
-    
     do {
         //value = TIO_Read(state->Pin); // 获取引脚状态
         EXTI->PR = bit;   // 重置挂起位
         value = TIO_Read(state->Pin); // 获取引脚状态
-        
         Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
-			
     } while (EXTI->PR & bit); // 如果再次挂起则重复
-
     //EXTI_ClearITPendingBit(line);
-
     if(state->Handler)
     {
         state->Handler(state->Pin, value);
     }
 }
 
-
-
-
-
-
 #ifdef STM32F10X
-
 void EXTI0_IRQHandler (void) { GPIO_ISR(0); } // EXTI0
 void EXTI1_IRQHandler (void) { GPIO_ISR(1); } // EXTI1
 void EXTI2_IRQHandler (void) { GPIO_ISR(2); } // EXTI2
 void EXTI3_IRQHandler (void) { GPIO_ISR(3); } // EXTI3
 void EXTI4_IRQHandler (void) { GPIO_ISR(4); } // EXTI4
-
 void EXTI9_5_IRQHandler (void) // EXTI5 - EXTI9
 {
     uint pending = EXTI->PR & EXTI->IMR & 0x03E0; // pending bits 5..9
@@ -300,12 +242,10 @@ void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
 }
 #else			
 
-
 			//stm32f0xx					
-
 void EXTI0_1_IRQHandler(void)
 {
-	  uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
+	uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
     int num = 0; pending >>= 0;
     do {
         if (pending & 1) GPIO_ISR(num);
@@ -315,7 +255,7 @@ void EXTI0_1_IRQHandler(void)
 
 void EXTI2_3_IRQHandler(void)
 {
-	  uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
+	uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
     int num = 2; pending >>= 2;
     do {
         if (pending & 1) GPIO_ISR(num);
@@ -325,7 +265,7 @@ void EXTI2_3_IRQHandler(void)
 
 void EXTI4_15_IRQHandler(void)
 {
-	  uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
+	uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
     int num = 4; pending >>= 4;
     do {
         if (pending & 1) GPIO_ISR(num);
@@ -333,25 +273,19 @@ void EXTI4_15_IRQHandler(void)
     } while (pending);
 }	
 
-
 #endif		//STM32F10X
 
 #endif 		//IT
-
-
 
 void Tio_SetShakeTime(byte time_ms)
 {
 	shake_time=time_ms;
 }
 
-
-
 // .............................IO端口函数初始化.............................
 void TIO_Init(TIO* this)
 {
     int i = 0;
-    
     this->Open = TIO_Open;
     this->OpenPort = TIO_OpenPort;
     this->Close = TIO_Close;
