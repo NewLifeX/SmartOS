@@ -37,7 +37,8 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
 	USART_InitTypeDef  p;
     USART_TypeDef* port = g_Uart_Ports[com];
-    Pin tx, rx;
+    Pin rx;
+	Pin	tx;
     NVIC_InitTypeDef NVIC_InitStructure;
 
     TUsart_GetPins(com, &tx, &rx);
@@ -59,7 +60,12 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
 #ifdef STM32F0XX
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);//开启时钟
+	switch(com)
+	{
+		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;//开启时钟   
+		case COM2:	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);	break;
+		default:	break;
+	}
 #else
 	if (com) { // COM2-5 on APB1
         RCC->APB1ENR |= RCC_APB1ENR_USART2EN >> 1 << com;
@@ -92,8 +98,11 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 #ifdef STM32F10X
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 #endif
-
-    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+	if(com==COM1)
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; 
+	else
+    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; 
+		
 #ifdef STM32F10X
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 #else
@@ -102,8 +111,9 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     switch (com) {
         case 0: NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; break;
-#if STM32F10x
         case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
+#if STM32F10x
+//        case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
         case 2: NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn; break;
         case 3: NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn; break;
         case 4: NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn; break;
@@ -253,7 +263,7 @@ void TUsart_Init(TUsart* this)
     this->Write = TUsart_Write;
     this->Read  = TUsart_Read;
     this->Flush = TUsart_Flush;
-		this->SetRemap = TUsart_SetRemap;
+	this->SetRemap = TUsart_SetRemap;
     this->Register = TUsart_Register;
 }
 
