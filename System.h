@@ -85,7 +85,7 @@ _class(IO)
 _class_end(IO)
 
 // ¶ÁÈ¡Î¯ÍÐ
-typedef void (*UsartReadHandler)(int com, byte data);
+typedef void (*UsartReadHandler)(byte data);
 /* ´®¿Ú */
 _class(Usart)
     bool (*Open)(int com, int baudRate);

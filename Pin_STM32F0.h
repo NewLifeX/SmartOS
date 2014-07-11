@@ -6,10 +6,16 @@
 // 获取组和针脚
 #define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))
 #define _PORT(PIN) (1 << ((PIN) & (uint16_t)0x0F))
-#define _PIN(PIN) (PIN & 0x0F)
+#define _PIN(PIN) (PIN & 0x000F)
 #define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
+/*STM32F030C8T6串口针脚*/
+	//TX		RX		COM		AF
+	//PA2		PA3		COM2	AF1
+	//PA9		PA10	COM1	AF1
+	//PA14		PA15	COM2	AF1
+	//PB6		PB7		COM1	AF0
 #define UARTS {USART1, USART2}
 #define UART_PINS {\
  /* TX   RX   CTS  RTS */	\

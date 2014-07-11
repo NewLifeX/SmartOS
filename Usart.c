@@ -2,7 +2,7 @@
 #include "Pin_STM32F0.h"
 #include <stdio.h>
 
-#define IS_REMAP(com) ((Usart_Remap >> com) & 0x01 == 0x01)
+#define IS_REMAP(com) (((Usart_Remap >> com) & 0x01 )== 0x01)
 
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
@@ -11,13 +11,24 @@ static USART_TypeDef* g_Uart_Ports[] = UARTS;
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
-// 串口接收委托
-static UsartReadHandler UsartHandlers[6];
+#ifdef STM32F1XX
+	// 串口接收委托
+	static UsartReadHandler UsartHandlers[6];
+	// 串口状态
+	static bool Usart_opened[6];
+#else
+	static UsartReadHandler UsartHandlers[2];		//只有2个串口
+	static bool Usart_opened[2];
+#endif
 // 指定哪个串口采用重映射
 static byte Usart_Remap;
-// 串口状态
-static bool Usart_opened[6];
 // 获取引脚
+
+//定义空委托   避免在没有做接收委托时受到数据时死机（委托为空指针报硬件错误）
+void IOR_NULL(byte c)
+{
+}
+
 void TUsart_GetPins(int com, Pin* txPin, Pin* rxPin)
 {
 	const Pin* p;
@@ -78,6 +89,11 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 #ifdef STM32F0XX
     Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
     Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+	//TX		RX		COM		AF
+	//PA2		PA3		COM2	AF1
+	//PA9		PA10	COM1	AF1
+	//PA14		PA15	COM2	AF1
+	//PB6		PB7		COM1	AF0
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
 #else
@@ -174,7 +190,6 @@ void TUsart_SendData(USART_TypeDef* port, char* data)
 }
 
 
-
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
 void TUsart_Write(int com, const string data, int size)
 {
@@ -238,9 +253,9 @@ void OnReceive(int com)
     if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
     { 	
 #ifdef STM32F10X
-        if(UsartHandlers[com]) UsartHandlers[com](com, (byte)port->DR);
+        if(UsartHandlers[com]) UsartHandlers[com]((byte)port->DR);
 #else
-        if(UsartHandlers[com]) UsartHandlers[com](com, (byte)port->RDR);
+        if(UsartHandlers[com]) UsartHandlers[com]((byte)port->RDR);
 #endif
     } 
 }
@@ -257,6 +272,7 @@ void USART5_IRQHandler(void) { OnReceive(4); }
 // 初始化串口函数
 void TUsart_Init(TUsart* this)
 {
+	int i;
     this->Open  = TUsart_Open;
     this->Open2 = TUsart_Open2;
     this->Close = TUsart_Close;
@@ -265,6 +281,8 @@ void TUsart_Init(TUsart* this)
     this->Flush = TUsart_Flush;
 	this->SetRemap = TUsart_SetRemap;
     this->Register = TUsart_Register;
+	for(i=0;i<sizeof(Usart_opened);i++)		//指针有明确指向 不野指针 避免为申请委托时 程序死掉
+		UsartHandlers[i]=IOR_NULL;
 }
 
 /* 重载fputc可以让用户程序使用printf函数 */
