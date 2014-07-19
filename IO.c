@@ -32,6 +32,7 @@ static IntState State[16];
 // mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
 // speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
 // type=GPIO_OType_PP/GPIO_OType_OD
+// PuPd= GPIO_PuPd_NOPULL/ GPIO_PuPd_UP  /GPIO_PuPd_DOWN 
 void TIO_OpenPort(Pin pin, GPIOMode_TypeDef mode, GPIOSpeed_TypeDef speed, GPIOOType_TypeDef type,GPIOPuPd_TypeDef PuPd)
 {
     GPIO_InitTypeDef p;
