@@ -31,7 +31,9 @@ static const Pin spi_nss[3]=
 #ifdef STM32F10X
 void gpio_config(const Pin  pin[])
 {
-
+	Sys.IO.Open(pin[1],GPIO_Mode_AF_PP);
+	Sys.IO.Open(pin[2],GPIO_Mode_AF_PP);
+	Sys.IO.Open(pin[3],GPIO_Mode_AF_PP);
 }
 #else
 void gpio_config(const Pin pin[])
@@ -47,15 +49,11 @@ void gpio_config(const Pin pin[])
 #endif
 bool Spi_config(int spi)
 {
-	
-	const Pin  * p= g_Spi_Pins_Map[spi];
-#ifdef STM32F1XX
-	
-#else
+	const Pin  * p= g_Spi_Pins_Map[spi];		//选定spi引脚
 	SPI_InitTypeDef SPI_InitStructure;
-#endif	
+	
 	IS_SPI(spi)
-	gpio_config(p);
+	gpio_config(p);								//初始化引脚
 #ifdef STM32F10X
   /*使能SPI1时钟*/
 	switch(spi)
