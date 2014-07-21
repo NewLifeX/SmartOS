@@ -157,7 +157,7 @@ byte SPI_ReadWriteByte8(int spi,byte TxData)
 #ifdef STM32F10X
 	SPI_I2S_SendData(p, TxData);
 #else
-	SPI_I2S_SendData8(p, HalfWord);
+	SPI_SendData8(p, TxData);
 #endif		
 	retry=0;
 	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
