@@ -1,13 +1,15 @@
 #include "System.h"
 
-#ifdef STM32F1XX
+#ifdef STM32F10X
 	#include "stm32f10x_spi.h"
+	#include "Pin_STM32F1.h"
 #else
 	#include "stm32f0xx_spi.h"
 	#include "Pin_STM32F0.h"
 #endif
 
 #include "Pin.h"
+
 static const  Pin  g_Spi_Pins_Map[][4]=  SPI_PINS_FULLREMAP;
 /*cs引脚*/
 static const Pin spi_nss[3]=
@@ -26,7 +28,7 @@ static const Pin spi_nss[3]=
 //#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4
 //#define SPI_MOSI_PINS {7, 31, 21} // PA7, PB15, PB5
 
-#ifdef STM32F1XX
+#ifdef STM32F10X
 void gpio_config(const Pin  pin[])
 {
 
@@ -54,13 +56,13 @@ bool Spi_config(int spi)
 #endif	
 	IS_SPI(spi)
 	gpio_config(p);
-#ifdef STM32F1XX
+#ifdef STM32F10X
   /*使能SPI1时钟*/
 	switch(spi)
 	{
 		case SPI_1 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); break;
-		case SPI_2 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, ENABLE); break;
-		case SPI_3 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, ENABLE); break;
+		case SPI_2 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
+		case SPI_3 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE); break;
 	}	  
   /* 拉高csn引脚，释放spi总线*/
 	SPI_CS_HIGH(spi);
@@ -112,12 +114,12 @@ bool Spi_Disable(int spi)
 {
 	IS_SPI(spi)
 	SPI_CS_HIGH(spi);		//使从机释放总线
-#ifdef STM32F1XX
+#ifdef STM32F10X
 	switch(spi)
 	{								/*		失能spi  															关闭spi时钟							*/	
 		case SPI_1 :		SPI_Cmd(SPI1, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); break;
-		case SPI_2 :		SPI_Cmd(SPI2, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, DISABLE); break;
-		case SPI_3 :		SPI_Cmd(SPI3, DISABLE);		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, DISABLE); break;
+		case SPI_2 :		SPI_Cmd(SPI2, DISABLE);		RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, DISABLE); break;
+		case SPI_3 :		SPI_Cmd(SPI3, DISABLE);		RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, DISABLE); break;
 	}	 
 	printf("   关闭SPI_%d\r\n",(spi+1));
 	return true;

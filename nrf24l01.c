@@ -35,7 +35,7 @@ static const Pin spi_nss[3]=
   */
 void nRF_Init(void)
 {
-#ifdef STM32F1XX
+#ifdef STM32F10X
 	
 #else
 	#if Other_nRF_CSN
