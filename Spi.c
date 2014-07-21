@@ -121,7 +121,7 @@ bool Spi_Disable(int spi)
 		case SPI_2 :		SPI_Cmd(SPI2, DISABLE);		RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, DISABLE); break;
 		case SPI_3 :		SPI_Cmd(SPI3, DISABLE);		RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, DISABLE); break;
 	}	 
-	printf("   关闭SPI_%d\r\n",(spi+1));
+//	printf("   关闭SPI_%d\r\n",(spi+1));
 	return true;
 #else
 	switch(spi)
@@ -130,7 +130,7 @@ bool Spi_Disable(int spi)
 //			case SPI_2 :   SPI_Cmd(SPI2, DISABLE);	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, DISABLE); break;
 //			case SPI_3 :   SPI_Cmd(SPI3, DISABLE);	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, DISABLE); break;
 	}	  
-		printf("   关闭SPI_%d\r\n",(spi+1));
+//		printf("   关闭SPI_%d\r\n",(spi+1));
 	return true;
 #endif
 }
@@ -141,9 +141,12 @@ byte SPI_ReadWriteByte8(int spi,byte TxData)
 	SPI_TypeDef *	p;
 		switch(spi)
 	{							
-		  case SPI_1 : p=  SPI1 ; break;
-//			case SPI_2 :  break;
-//			case SPI_3 :  break;
+		case SPI_1 : p=  SPI1 ; break;
+
+#ifdef STM32F10X
+		case SPI_2 : p=  SPI2;  break;
+		case SPI_3 : p=  SPI3; 	break;
+#endif
 	}	 
 	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET) 
 		{
@@ -166,9 +169,12 @@ ushort SPI_ReadWriteByte16(int spi,ushort HalfWord)
 	SPI_TypeDef *	p;
 	switch(spi)
 	{							
-		  case SPI_1 : p=  SPI1 ; break;
-//			case SPI_2 :  break;
-//			case SPI_3 :  break;
+		case SPI_1 : p=  SPI1 ; break;
+
+#ifdef STM32F10X
+		case SPI_2 : p=  SPI2;  break;
+		case SPI_3 : p=  SPI3; 	break;
+#endif
 	}	 
 	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET)
 	{
@@ -176,13 +182,22 @@ ushort SPI_ReadWriteByte16(int spi,ushort HalfWord)
 		if(retry>500)return 0;		//超时处理
 	}			
  
+#ifdef STM32F10X
+	SPI_I2S_SendData(p, HalfWord);
+#else
 	SPI_I2S_SendData16(p, HalfWord);
+#endif
 	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET)
 	{
 		retry++;
 		if(retry>500)return 0;		//超时处理
 	}			
+	
+#ifdef STM32F10X
+	return SPI_I2S_ReceiveData(p);
+#else
 	return SPI_I2S_ReceiveData16(p);
+#endif
 }
 
 void TSpi_Init(TSpi* this)
