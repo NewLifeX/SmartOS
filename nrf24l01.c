@@ -36,7 +36,18 @@ static const Pin spi_nss[3]=
 void nRF_Init(void)
 {
 #ifdef STM32F10X
-	
+	#if Other_nRF_CSN
+		Sys.IO.OpenPort(nRF2401_CSN, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+	#else	
+		Sys.IO.OpenPort(spi_nss[nRF2401_SPI], GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+	#endif  //Other_nRF_CSN
+	#if us_nrf_ce
+		Sys.IO.OpenPort(nRF2401_CE, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+	#endif
+	//中断引脚初始化
+	Sys.IO.OpenPort(nRF2401_IRQ_pin, GPIO_Mode_IN,  GPIO_Speed_10MHz , GPIO_OType_PP, GPIO_PuPd_DOWN );
+	//中断引脚申请委托	
+	Sys.IO.Register(nRF2401_IRQ_pin,nRF24L01_irq);
 #else
 	#if Other_nRF_CSN
 		Sys.IO.OpenPort(nRF2401_CSN, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);

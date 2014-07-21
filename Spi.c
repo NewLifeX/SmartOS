@@ -152,15 +152,24 @@ byte SPI_ReadWriteByte8(int spi,byte TxData)
 		{
 		retry++;
 		if(retry>200)return 0;		//超时处理
-		}			  
-	SPI_SendData8(p, TxData); 																	//发送一个数据
+		}		
+ 
+#ifdef STM32F10X
+	SPI_I2S_SendData(p, TxData);
+#else
+	SPI_I2S_SendData8(p, HalfWord);
+#endif		
 	retry=0;
 	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
 		{
 		retry++;
 		if(retry>200)return 0;		//超时处理
-		}	  						    
-	return SPI_ReceiveData8(p); //返回通过SPIx最近接收的数据					    
+		}	 
+#ifdef STM32F10X
+	return SPI_I2S_ReceiveData(p);
+#else 						    
+	return SPI_ReceiveData8(p); //返回通过SPIx最近接收的数据			
+#endif		
 }	
 
 ushort SPI_ReadWriteByte16(int spi,ushort HalfWord)
