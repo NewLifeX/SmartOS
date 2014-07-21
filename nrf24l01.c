@@ -32,20 +32,21 @@ static const Pin spi_nss[3]=
   * @brief  SPI的 I/O配置
   * @param  无
   * @retval 无
-  */
+  */   //void TIO_Open(Pin pin, GPIOMode_TypeDef mode)
 void nRF_Init(void)
 {
 #ifdef STM32F10X
 	#if Other_nRF_CSN
-		Sys.IO.OpenPort(nRF2401_CSN, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+		Sys.IO.Open (nRF2401_CSN,  GPIO_Mode_Out_PP );
 	#else	
-		Sys.IO.OpenPort(spi_nss[nRF2401_SPI], GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+		Sys.IO.Open (spi_nss[nRF2401_SPI],  GPIO_Mode_Out_PP );
 	#endif  //Other_nRF_CSN
 	#if us_nrf_ce
-		Sys.IO.OpenPort(nRF2401_CE, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+		Sys.IO.Open (nRF2401_CE,  GPIO_Mode_Out_PP );
 	#endif
 	//中断引脚初始化
-	Sys.IO.OpenPort(nRF2401_IRQ_pin, GPIO_Mode_IN,  GPIO_Speed_10MHz , GPIO_OType_PP, GPIO_PuPd_DOWN );
+	//Sys.IO.OpenPort(nRF2401_IRQ_pin, GPIO_Mode_IN_FLOATING,  GPIO_Speed_10MHz , 0, GPIO_PuPd_DOWN );
+		Sys.IO.Open (nRF2401_IRQ_pin,  GPIO_Mode_Out_PP );
 	//中断引脚申请委托	
 	Sys.IO.Register(nRF2401_IRQ_pin,nRF24L01_irq);
 #else
