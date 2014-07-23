@@ -2,9 +2,7 @@
 #define _SYSTEM_H_
 
 #include <stdio.h>
-
 #include "stm32.h"
-
 
 /* 类型定义 */
 typedef char            sbyte;
@@ -15,7 +13,6 @@ typedef char*           string;
 typedef unsigned char   bool;
 #define true            1
 #define false           0
-
 
 /* 串口定义 */
 #define COM1 0
@@ -32,7 +29,6 @@ typedef unsigned char   bool;
 #define SPI_3	2
 #define SPI_NONE 0XFF
 
-
 /* 引脚定义 */
 typedef ushort			Pin;
 #include "Pin.h"
@@ -47,7 +43,6 @@ typedef ushort			Pin;
 
 #define _class_end(name) } T##name;\
 extern void T##name##_Init(T##name* this);
-
 
 /* 核心定义 */
 _class(Core)
@@ -134,7 +129,6 @@ _class(Spi)
     //bool (*WriteRead16)(const SPI_CONFIGURATION& Configuration, ushort* Write16, int WriteCount, ushort* Read16, int ReadCount, int ReadStartOffset);
 _class_end(Spi)
 
-
 /* nRF24L01+ */
 _class(nRF)
 		void (*Open)(void);
@@ -144,8 +138,6 @@ _class(nRF)
 		byte (*Rx_Dat)(byte *rxbuf);
 		byte (*Tx_Dat)(byte *txbuf);
 _class_end(nRF)
-
-
 
 /*typedef struct
 {

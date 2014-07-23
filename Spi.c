@@ -73,7 +73,7 @@ bool Spi_config(int spi)
 	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;  //8分频，9MHz
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;  				//高位在前
 	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	printf("   初始化SPI_%d\r\n",(spi+1));
+//	printf("   初始化SPI_%d\r\n",(spi+1));
 	switch(spi)
 	{								/*				配置spi													使能spi  */	
 		case SPI_1 : SPI_Init(SPI1, &SPI_InitStructure);  SPI_Cmd(SPI1, ENABLE);	break;
