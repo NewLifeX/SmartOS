@@ -39,7 +39,12 @@ void nRF_Init(void)
 	#if Other_nRF_CSN
 		Sys.IO.Open (nRF2401_CSN,  GPIO_Mode_Out_PP );
 	#else	
-		Sys.IO.Open (spi_nss[nRF2401_SPI],  GPIO_Mode_Out_PP );
+		Sys.IO.Open (spi_nss[nRF2401_SPI],  GPIO_Mode_Out_PP );		
+		if(nRF2401_SPI==SPI_3)
+		{	//PA15是jtag接口中的一员 想要使用 必须开启remap
+			RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);	
+			GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+		}
 	#endif  //Other_nRF_CSN
 	#if us_nrf_ce
 		Sys.IO.Open (nRF2401_CE,  GPIO_Mode_Out_PP );
@@ -54,6 +59,7 @@ void nRF_Init(void)
 		Sys.IO.OpenPort(nRF2401_CSN, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
 	#else	
 		Sys.IO.OpenPort(spi_nss[nRF2401_SPI], GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
+
 	#endif  //Other_nRF_CSN
 	#if us_nrf_ce
 		Sys.IO.OpenPort(nRF2401_CE, GPIO_Mode_OUT, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
@@ -327,4 +333,5 @@ void TnRF_Init(TnRF* this)
     this->TX_Mode = NRF_TX_Mode;
     this->Rx_Dat  = NRF_Rx_Dat;
     this->Tx_Dat 	= NRF_Tx_Dat;
+//	Execute(Spi);
 }

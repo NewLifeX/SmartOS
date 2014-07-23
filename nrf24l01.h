@@ -2,19 +2,19 @@
 #define __NRF24L01_H__
 
 //使用哪个spi作为 nrf 通信口
-#define 	nRF2401_SPI					SPI_1
+#define 	nRF2401_SPI					SPI_3
 //中断引脚
-#define 	nRF2401_IRQ_pin		 PA1
+#define 	nRF2401_IRQ_pin		 PD14
 //中断引脚检测
 #define NRF_Read_IRQ()		  Sys.IO.Read(nRF2401_IRQ_pin)  
 //是否使用非默认csn引脚
 #define 	Other_nRF_CSN 			0
 //是否使用CE引脚
-#define		us_nrf_ce						0
+#define		us_nrf_ce						1
 //CE引脚操作
 #if us_nrf_ce
 	//CE引脚定义
-	#define   nRF2401_CE					PE10
+	#define   nRF2401_CE					PD13
 	#define 	NRF_CE_LOW()				Sys.IO.Write(nRF2401_CE,0)
 	#define 	NRF_CE_HIGH()				Sys.IO.Write(nRF2401_CE,1)
 #else
