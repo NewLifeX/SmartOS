@@ -26,7 +26,10 @@ void SysInit(void)
     RCC_GetClocksFreq(&clock);
     Sys.Clock = clock.SYSCLK_Frequency;
 #endif
-
+#ifdef STM32F10X
+	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
+#endif
+	
 	//if(Sys.Core.Init) Sys.Core.Init(&Sys.Core);
 	Execute(Core);
 	//Execute(Boot);

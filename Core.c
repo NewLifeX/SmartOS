@@ -40,7 +40,8 @@ void delay_init(uint clk)
 	   /* Configure the NVIC Preemption Priority Bits */  
     NVIC_InitStructure.NVIC_IRQChannel = (byte)SysTick_IRQn;
 #ifdef STM32F10X
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 #else
     NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;			//想在中断里使用延时函数就必须让此中断优先级最高
 #endif

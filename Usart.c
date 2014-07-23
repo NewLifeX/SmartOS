@@ -111,16 +111,17 @@ bool TUsart_Open2(int com, int baudRate, int parity, int dataBits, int stopBits)
 	USART_ITConfig(port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
     /* Configure the NVIC Preemption Priority Bits */  
-#ifdef STM32F10X
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-#endif
+//#ifdef STM32F10X				//全局设置  放到system.c里面
+//    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+//#endif
 	if(com==COM1)
     NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; 
 	else
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; 
 		
 #ifdef STM32F10X
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xff;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xff;
 #else
     NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;
 #endif

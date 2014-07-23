@@ -169,8 +169,8 @@ void TIO_Register(Pin pin, IOReadHandler handler)
             NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
         else
             NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xff;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xff;
 #else
 				if(pins<0x02)
         NVIC_InitStructure.NVIC_IRQChannel = EXTI0_1_IRQn;
