@@ -1,7 +1,7 @@
 #ifndef __SerialPort_H__
 #define __SerialPort_H__
 
-#include "System.h"
+#include "Sys.h"
 
 // 读取委托
 typedef void (*SerialPortReadHandler)(byte data);
