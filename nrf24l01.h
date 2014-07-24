@@ -1,12 +1,14 @@
 #ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
+#include "Spi.h"
+
 //使用哪个spi作为 nrf 通信口
 #define 	nRF2401_SPI					SPI_3
 //中断引脚
 #define 	nRF2401_IRQ_pin		 PD14
 //中断引脚检测
-#define NRF_Read_IRQ()		  Sys.IO.Read(nRF2401_IRQ_pin)  
+#define NRF_Read_IRQ()		  Port::Read(nRF2401_IRQ_pin)  
 //是否使用非默认csn引脚
 #define 	Other_nRF_CSN 			0
 //是否使用CE引脚
@@ -15,8 +17,8 @@
 #if us_nrf_ce
 	//CE引脚定义
 	#define   nRF2401_CE					PD13
-	#define 	NRF_CE_LOW()				Sys.IO.Write(nRF2401_CE,0)
-	#define 	NRF_CE_HIGH()				Sys.IO.Write(nRF2401_CE,1)
+	#define 	NRF_CE_LOW()				Port::Write(nRF2401_CE, false)
+	#define 	NRF_CE_HIGH()				Port::Write(nRF2401_CE, true)
 #else
 	#define 	NRF_CE_LOW()				
 	#define 	NRF_CE_HIGH()				
@@ -24,14 +26,14 @@
 //csn引脚操作
 #if	!Other_nRF_CSN
 			//一般情况   csn引脚用nss引脚
-	#define  	NRF_CSN_LOW()				Sys.IO.Write(spi_nss[nRF2401_SPI],0)	
-	#define  	NRF_CSN_HIGH()			Sys.IO.Write(spi_nss[nRF2401_SPI],1)	
+	#define  	NRF_CSN_LOW()				Port::Write(spi_nss[nRF2401_SPI], false)	
+	#define  	NRF_CSN_HIGH()			    Port::Write(spi_nss[nRF2401_SPI], true)	
 			//自定义csn引脚
 #else
 	//CSN引脚定义
-	#define   nRF2401_CSN						PE10
-	#define 	NRF_CSN_LOW()					Sys.IO.Write(nRF2401_CSN,0)
-	#define 	NRF_CSN_HIGH()				Sys.IO.Write(nRF2401_CSN,1)
+	#define   nRF2401_CSN					PE10
+	#define 	NRF_CSN_LOW()				Port::Write(nRF2401_CSN, false)
+	#define 	NRF_CSN_HIGH()				Port::Write(nRF2401_CSN, true)
 #endif
 
 //定义缓冲区大小  单位  byte
@@ -113,4 +115,29 @@ byte NRF_Tx_Dat(byte *txbuf);
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk);
 */
+
+
+// NRF24L01类
+class NRF24L01
+{
+private:
+    Spi* _spi;
+
+    byte WriteBuf(byte reg ,byte *pBuf,byte bytes);
+    byte ReadBuf(byte reg,byte *pBuf,byte bytes);
+    byte ReadReg(byte reg);
+    byte WriteReg(byte reg, byte dat);
+    byte Check(void);
+
+public:
+    NRF24L01(int spi);
+    ~NRF24L01();
+
+    void EnterSend();
+    void EnterReceive();
+
+    byte Send(byte* data);
+    byte Receive(byte* data);
+};
+
 #endif
