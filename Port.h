@@ -41,6 +41,7 @@ public:
     static void Write(Pin pin, bool value);
     static bool Read(Pin pin);
     static void Register(Pin pin, IOReadHandler handler);
+    static void SetShakeTime(byte ms);
 };
 
 #endif //_Port_H_

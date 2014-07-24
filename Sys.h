@@ -1,5 +1,5 @@
-#ifndef _SYSTEM_H_
-#define _SYSTEM_H_
+#ifndef _Sys_H_
+#define _Sys_H_
 
 #include <stdio.h>
 #include "stm32.h"
@@ -14,14 +14,6 @@ typedef char*           string;
 #define true            1
 #define false           0
 
-/* 串口定义 */
-#define COM1 0
-#define COM2 1
-#define COM3 2
-#define COM4 3
-#define COM5 4
-#define COM_NONE 0xFF
-
 /*Spi定义*/
 //SPI1..这种格式与st库冲突  
 #define SPI_1	0
@@ -33,4 +25,27 @@ typedef char*           string;
 typedef ushort			Pin;
 #include "Pin.h"
 
-#endif //_SYSTEM_H_
+// 系统类
+class TSys
+{
+public:
+    bool Debug;  // 是否调试
+	uint Clock;  // 系统时钟
+#if GD32F1
+    uint CystalClock;    // 晶振时钟
+#endif
+    byte MessagePort;    // 消息口，默认0表示USART1
+    uint ID[3];      // 芯片ID
+    uint FlashSize;  // 芯片Flash容量
+
+    void Init();     // 初始化系统
+
+    void Sleep(uint ms); // 毫秒级延迟
+    void Delay(uint us); // 微秒级延迟
+    void DisableInterrupts();    // 关闭中断
+    void EnableInterrupts();     // 打开中断
+};
+
+extern TSys Sys;
+
+#endif //_Sys_H_

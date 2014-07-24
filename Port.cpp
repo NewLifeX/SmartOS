@@ -20,7 +20,7 @@ typedef struct TIntState
 } IntState;
 
 /*默认按键去抖延时   70ms*/
-//static byte shake_time=70;
+static byte shake_time=70;
 
 // 16条中断线
 static IntState State[16];
@@ -200,7 +200,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
         //value = TIO_Read(state->Pin); // 获取引脚状态
         EXTI->PR = bit;   // 重置挂起位
         value = Port::Read(state->Pin); // 获取引脚状态
-//        Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
+        Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
     } while (EXTI->PR & bit); // 如果再次挂起则重复
     //EXTI_ClearITPendingBit(line);
     if(state->Handler)
@@ -271,21 +271,7 @@ void EXTI4_15_IRQHandler(void)
 
 #endif 		//IT
 
-void Tio_SetShakeTime(byte time_ms)
+void Port::SetShakeTime(byte ms)
 {
-//	shake_time=time_ms;
+	shake_time = ms;
 }
-
-// .............................IO端口函数初始化.............................
-/*void TIO_Init(TIO* this)
-{
-    int i = 0;
-    this->Open = TIO_Open;
-    this->OpenPort = TIO_OpenPort;
-    this->Close = TIO_Close;
-    this->Write = TIO_Write;
-    this->Read = TIO_Read;
-    this->Register = TIO_Register;
-    this->SetShakeTime=Tio_SetShakeTime;
-    for(i=0; i<16; i++) TIO_Register(i, 0);
-}*/

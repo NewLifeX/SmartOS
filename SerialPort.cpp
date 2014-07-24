@@ -49,7 +49,7 @@ void SerialPort::Open()
 
 	// 检查重映射
 #ifdef STM32F1XX
-	if(IS_REMAP(_com))
+	if(IsRemap)
 	{
 		switch (_com) {
 		case 0: AFIO->MAPR |= AFIO_MAPR_USART1_REMAP; break;
@@ -151,10 +151,12 @@ void SerialPort::Close()
     
     //Sys.IO.Close(tx);
     //Sys.IO.Close(rx);
+    Port::SetAlternate(tx);
+    Port::SetAlternate(rx);
 
 	// 检查重映射
 #ifdef STM32F1XX
-	if(IS_REMAP(_com))
+	if(IsRemap)
 	{
 		switch (_com) {
 		case 0: AFIO->MAPR &= ~AFIO_MAPR_USART1_REMAP; break;
@@ -264,8 +266,7 @@ extern "C"
 /* 重载fputc可以让用户程序使用printf函数 */
 int fputc(int ch, FILE *f)
 {
-    //int _com = Sys.MessagePort;
-    int _com = 0;
+    int _com = Sys.MessagePort;
     if(_com == COM_NONE) return ch;
 
     USART_TypeDef* port = g_Uart_Ports[_com];
