@@ -1,6 +1,8 @@
-#include "SerialPort.h"
 #include "Pin_STM32F0.h"
 #include <stdio.h>
+
+#include "Port.h"
+#include "SerialPort.h"
 
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
@@ -78,7 +80,8 @@ void SerialPort::Open()
 #ifdef STM32F0XX
     //Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
     //Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
-	//TX		RX		COM		AF
+    Port::SetAlternate(tx, false, Port::Speed_10MHz);
+    Port::SetInput(rx, true);	//TX		RX		COM		AF
 	//PA2		PA3		COM2	AF1
 	//PA9		PA10	COM1	AF1
 	//PA14		PA15	COM2	AF1
@@ -88,6 +91,8 @@ void SerialPort::Open()
 #else
     //Sys.IO.OpenPort(tx, GPIO_Mode_AF_PP, GPIO_Speed_50MHz);
     //Sys.IO.Open(rx, GPIO_Mode_IN_FLOATING);
+    Port::SetAlternate(tx, false, Port::Speed_50MHz);
+    Port::SetInput(rx, true);
 #endif
 
     USART_StructInit(&p);
