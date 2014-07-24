@@ -16,7 +16,6 @@ private:
 	int _dataBits;
 	int _stopBits;
 	
-	bool _opened;
     USART_TypeDef* _port;
 
 public:
@@ -28,7 +27,10 @@ public:
 	// 析构时自动关闭
     ~SerialPort();
 
-	bool Open();
+    bool Opened;    // 是否打开
+    bool IsRemap;   // 是否重映射
+
+	void Open();
     void Close();
 
     void Write(const string data, int size);
@@ -36,7 +38,6 @@ public:
     void Flush();
 
     void Register(SerialPortReadHandler handler);
-	void SetRemap();
     void GetPins(Pin* txPin, Pin* rxPin);
 };
 

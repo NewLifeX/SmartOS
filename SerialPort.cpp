@@ -2,8 +2,6 @@
 #include "Pin_STM32F0.h"
 #include <stdio.h>
 
-#define IS_REMAP(_com) (((Usart_Remap >> _com) & 0x01 )== 0x01)
-
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
 
@@ -13,16 +11,10 @@ static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
 #ifdef STM32F1XX
 	// 串口接收委托
-	static SerialPortReadHandler UsartHandlers[6];
+	static SerialPortReadHandler UsartHandlers[6] = {0, 0, 0, 0, 0, 0};
 #else
-	static SerialPortReadHandler UsartHandlers[2];		//只有2个串口
+	static SerialPortReadHandler UsartHandlers[2] = {0, 0};		//只有2个串口
 #endif
-// 指定哪个串口采用重映射
-static byte Usart_Remap;
-// 获取引脚
-
-//定义空委托   避免在没有做接收委托时受到数据时死机（委托为空指针报硬件错误）
-void IOR_NULL(byte c) { }
 
 SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
@@ -40,8 +32,10 @@ SerialPort::~SerialPort()
 }
 
 // 打开串口
-bool SerialPort::Open()
+void SerialPort::Open()
 {
+    if(Opened) return;
+
 	USART_InitTypeDef  p;
     Pin rx;
 	Pin	tx;
@@ -115,12 +109,13 @@ bool SerialPort::Open()
         NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; 
 		
 #ifdef STM32F10X
-        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xff;
-        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xff;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xff;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xff;
 #else
     NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;
 #endif
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
     switch (_com) {
         case 0: NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; break;
         case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
@@ -131,18 +126,19 @@ bool SerialPort::Open()
         case 4: NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn; break;
 #endif
     }
+
     NVIC_Init(&NVIC_InitStructure);
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
-    _opened = true;
-
-    return true;
+    Opened = true;
 }
 
 // 关闭端口
 void SerialPort::Close()
 {
+    if(!Opened) return;
+
     Pin tx, rx;
     GetPins(&tx, &rx);
 
@@ -162,8 +158,11 @@ void SerialPort::Close()
 		}
 	}
 #endif
-    
-    _opened = false;
+
+    // 清空接收委托
+    Register(0);
+
+    Opened = false;
 }
 
 // 发送单一字节数据
@@ -173,7 +172,6 @@ void TUsart_SendData(USART_TypeDef* port, char* data)
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
     USART_SendData(port, (ushort)*data);
 }
-
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
 void SerialPort::Write(const string data, int size)
@@ -209,16 +207,8 @@ void SerialPort::Flush()
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
 }
 
-// 指定哪个串口采用重映射
-void SerialPort::SetRemap()
-{
-	Usart_Remap |= (1 << _com);
-}
-
 void SerialPort::Register(SerialPortReadHandler handler)
 {
-    Open();
-
     if(handler)
         UsartHandlers[_com] = handler;
     else
@@ -257,28 +247,12 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
     *rxPin = *txPin = P0;
 	
 	p = g_Uart_Pins;
-	if(IS_REMAP(_com)) p = g_Uart_Pins_Map;
+	if(IsRemap) p = g_Uart_Pins_Map;
 
 	_com = _com << 2;
 	*txPin  = p[_com];
 	*rxPin  = p[_com + 1];
 }
-
-// 初始化串口函数
-/*void TUsart_Init(TUsart* this)
-{
-	int i;
-    this->Open  = TUsart_Open;
-    this->Open2 = TUsart_Open2;
-    this->Close = TUsart_Close;
-    this->Write = TUsart_Write;
-    this->Read  = TUsart_Read;
-    this->Flush = TUsart_Flush;
-	this->SetRemap = TUsart_SetRemap;
-    this->Register = TUsart_Register;
-	for(i=0;i<sizeof(Usart_opened);i++)		//指针有明确指向 不野指针 避免为申请委托时 程序死掉
-		UsartHandlers[i]=IOR_NULL;
-}*/
 
 extern "C"
 {
@@ -287,7 +261,6 @@ int fputc(int ch, FILE *f)
 {
     //int _com = Sys.MessagePort;
     int _com = 0;
-
     if(_com == COM_NONE) return ch;
 
     USART_TypeDef* port = g_Uart_Ports[_com];
