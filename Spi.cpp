@@ -2,14 +2,6 @@
 #include "Port.h"
 #include "Spi.h"
 
-#ifdef STM32F10X
-	#include "stm32f10x_spi.h"
-#else
-	#include "stm32f0xx_spi.h"
-#endif
-
-#include "Pin.h"
-
 static SPI_TypeDef* g_Spis[] = SPIS;
 static const Pin  g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
@@ -18,7 +10,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	if(spi > sizeof(g_Spis)) return;
 
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
-    SPI_TypeDef* spiport = g_Spis[spi];
+    SPI = g_Spis[spi];
 
     // 计算速度
     ushort pre = 0;
@@ -45,7 +37,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     if(useNss)
     {
         _nss = ps[0];
-        if(spiport == SPI3)
+        if(SPI == SPI3)
         {
             //PA15是jtag接口中的一员 想要使用 必须开启remap
             RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);
@@ -92,8 +84,8 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	sp.SPI_FirstBit = SPI_FirstBit_MSB; // 高位在前。指定数据传输从MSB位还是LSB位开始:数据传输从MSB位开始
 	sp.SPI_CRCPolynomial = 7;           // CRC值计算的多项式
 
-    SPI_Init(spiport, &sp);
-    SPI_Cmd(spiport, ENABLE);
+    SPI_Init(SPI, &sp);
+    SPI_Cmd(SPI, ENABLE);
 
     _spi = spi;
 }

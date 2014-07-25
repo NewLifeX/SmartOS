@@ -3,6 +3,12 @@
 
 #include "Sys.h"
 
+#ifdef STM32F10X
+	#include "stm32f10x_spi.h"
+#else
+	#include "stm32f0xx_spi.h"
+#endif
+
 /*Spi定义*/
 //SPI1..这种格式与st库冲突
 #define SPI_1	0
@@ -18,6 +24,7 @@ private:
     Pin _nss;
 
 public:
+    SPI_TypeDef* SPI;
     int Speed;
 
     Spi(int spi, int speedHz = 9000000, bool useNss = true);

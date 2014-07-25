@@ -112,6 +112,8 @@ byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
 		_spi->ReadWriteByte8(*pBuf++);
 
 	_spi->Stop();
+    
+    delete _spi;
 
   	return (status);	//返回NRF24L01的状态
 }
