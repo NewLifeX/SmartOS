@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "stm32.h"
 
-/* ÀàĞÍ¶¨Òå */
+/* ç±»å‹å®šä¹‰ */
 typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
@@ -14,34 +14,29 @@ typedef char*           string;
 #define true            1
 #define false           0
 
-/*Spi¶¨Òå*/
-//SPI1..ÕâÖÖ¸ñÊ½Óëst¿â³åÍ»  
-#define SPI_1	0
-#define SPI_2	1
-#define SPI_3	2
-#define SPI_NONE 0XFF
-
-/* Òı½Å¶¨Òå */
+/* å¼•è„šå®šä¹‰ */
 typedef ushort			Pin;
 #include "Pin.h"
 
-// ÏµÍ³Àà
+// ç³»ç»Ÿç±»
 class TSys
 {
 public:
-    bool Debug;  // ÊÇ·ñµ÷ÊÔ
-	uint Clock;  // ÏµÍ³Ê±ÖÓ
-#if GD32F1
-    uint CystalClock;    // ¾§ÕñÊ±ÖÓ
-#endif
-    byte MessagePort;    // ÏûÏ¢¿Ú£¬Ä¬ÈÏ0±íÊ¾USART1
-    uint ID[3];      // Ğ¾Æ¬ID
-    uint FlashSize;  // Ğ¾Æ¬FlashÈİÁ¿
-    void Init();     // ³õÊ¼»¯ÏµÍ³
-    void Sleep(uint ms); // ºÁÃë¼¶ÑÓ³Ù
-    void Delay(uint us); // Î¢Ãë¼¶ÑÓ³Ù
-    void DisableInterrupts();    // ¹Ø±ÕÖĞ¶Ï
-    void EnableInterrupts();     // ´ò¿ªÖĞ¶Ï
+    bool Debug;  // æ˜¯å¦è°ƒè¯•
+	uint Clock;  // ç³»ç»Ÿæ—¶é’Ÿ
+    uint CystalClock;    // æ™¶æŒ¯æ—¶é’Ÿ
+    byte MessagePort;    // æ¶ˆæ¯å£ï¼Œé»˜è®¤0è¡¨ç¤ºUSART1
+    uint ID[3];     // èŠ¯ç‰‡ID
+    uint FlashSize; // èŠ¯ç‰‡Flashå®¹é‡
+    uint MCUID;     // MCUç¼–ç ã€‚ä½å­—è®¾å¤‡ç‰ˆæœ¬ï¼Œé«˜å­—å­ç‰ˆæœ¬
+    //ushort JTAGID;  // Joint Test Action Groupç¼–å·
+    bool IsGD;      // æ˜¯å¦GDèŠ¯ç‰‡
+    TSys();
+    void Init();     // åˆå§‹åŒ–ç³»ç»Ÿ
+    void Sleep(uint ms); // æ¯«ç§’çº§å»¶è¿Ÿ
+    void Delay(uint us); // å¾®ç§’çº§å»¶è¿Ÿ
+    void DisableInterrupts();    // å…³é—­ä¸­æ–­
+    void EnableInterrupts();     // æ‰“å¼€ä¸­æ–­
 };
 
 extern TSys Sys;

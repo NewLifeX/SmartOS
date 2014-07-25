@@ -91,11 +91,13 @@ __asm void TSys::EnableInterrupts()
 
 //利用SysTick定时器产生1ms时基
 
-// SysTick_Handler  		滴答定时器中断
-void SysTick_Handler(void)				//需要最高优先级  必须有抢断任何其他中断的能力才能  //供其他中断内延时使用
+extern "C"
 {
-	if(TickStat)
-		TickStat--;
+    // SysTick_Handler  		滴答定时器中断
+    void SysTick_Handler(void)				//需要最高优先级  必须有抢断任何其他中断的能力才能  //供其他中断内延时使用
+    {
+        if(TickStat) TickStat--;
+    }
 }
 
 /****************************************************
@@ -145,7 +147,6 @@ void TSys::Delay(uint us)
 	}
 }
 
-#if GD32F1
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
 {
@@ -158,7 +159,7 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
-void STM32_BootstrapCode()
+void Bootstrap()
 {
     uint n = 0;
     uint RCC_CFGR_ADC_BITS = RCC_CFGR_ADCPRE_DIV8;
@@ -288,27 +289,54 @@ void STM32_BootstrapCode()
 	Sys.Clock = Sys.CystalClock * mull;
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
+
+TSys::TSys()
+{
+#if DEBUG
+    Debug = false;
+#else
+    Debug = true;
 #endif
 
-void TSys::Init(void)
-{
-#ifndef GD32F1
-    RCC_ClocksTypeDef clock;
-    
-    RCC_GetClocksFreq(&clock);
-    Clock = clock.SYSCLK_Frequency;
-#endif
-#ifdef STM32F10X
-	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
-#endif
-	
+    Clock = 72000000;
+    CystalClock = 8000000;    // 晶振时钟
+    MessagePort = 0; // COM1;
+
     ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
     ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
     ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
-    FlashSize = *(__IO ushort *)(0X1FFFF7E0);  // 容量
+    MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
+    FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
+    //JTAGID = *(__IO ushort *)(0xE00FFFE8);
+    IsGD = Get_JTAG_ID() == 0x7A3;
 
-#if GD32F1
-	STM32_BootstrapCode();
+    if(IsGD) Clock = 120000000;
+}
+
+void TSys::Init(void)
+{
+    // 获取当前频率
+    RCC_ClocksTypeDef clock;
+
+    RCC_GetClocksFreq(&clock);
+    //Clock = clock.SYSCLK_Frequency;
+    // 如果当前频率不等于配置，则重新配置时钟
+	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
+
+#ifdef STM32F10X
+	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
 #endif
+
     delay_init(Clock/1000000);
 }
+
+/*extern "C"
+{
+    void Reset_Handler()
+    {
+        Bootstrap();
+        //SystemInit();
+        //__main();
+        //main();
+    }
+}*/
