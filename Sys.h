@@ -37,9 +37,7 @@ public:
     byte MessagePort;    // 消息口，默认0表示USART1
     uint ID[3];      // 芯片ID
     uint FlashSize;  // 芯片Flash容量
-
     void Init();     // 初始化系统
-
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
     void DisableInterrupts();    // 关闭中断

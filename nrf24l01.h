@@ -1,7 +1,9 @@
 #ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
+#include "Sys.h"
 #include "Spi.h"
+//#include "Spi.h"
 
 //使用哪个spi作为 nrf 通信口
 #define 	nRF2401_SPI					SPI_3
