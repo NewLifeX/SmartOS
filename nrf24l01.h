@@ -54,6 +54,7 @@ private:
     void CEUp();
     void CEDown();
 public:
+    int Channel;    // 通讯频道
 
     NRF24L01(Spi* spi, Pin ce = P0);
     ~NRF24L01();
