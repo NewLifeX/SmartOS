@@ -18,46 +18,14 @@
 
 #define Dummy_Byte 0xA5
 
-byte SpiFlash::ReadByte() { return WriteByte(Dummy_Byte); }
-
-byte SpiFlash::WriteByte(byte data)
-{
-    /* Loop while DR register in not emplty */
-    while (SPI_I2S_GetFlagStatus(_spi->SPI, SPI_I2S_FLAG_TXE) == RESET);
-
-    /* Send byte through the SPI1 peripheral */
-    SPI_I2S_SendData(_spi->SPI, data);
-
-    /* Wait to receive a byte */
-    while (SPI_I2S_GetFlagStatus(_spi->SPI, SPI_I2S_FLAG_RXNE) == RESET);
-
-    /* Return the byte read from the SPI bus */
-    return SPI_I2S_ReceiveData(_spi->SPI);
-}
-
-ushort SpiFlash::Write(ushort data)
-{
-    /* Loop while DR register in not emplty */
-    while (SPI_I2S_GetFlagStatus(_spi->SPI, SPI_I2S_FLAG_TXE) == RESET);
-
-    /* Send Half Word through the SPI1 peripheral */
-    SPI_I2S_SendData(_spi->SPI, data);
-
-    /* Wait to receive a Half Word */
-    while (SPI_I2S_GetFlagStatus(_spi->SPI, SPI_I2S_FLAG_RXNE) == RESET);
-
-    /* Return the Half Word read from the SPI bus */
-    return SPI_I2S_ReceiveData(_spi->SPI);
-}
-
 void SpiFlash::SetAddr(uint addr)
 {
     /* Send addr high nibble address byte */
-    WriteByte((addr & 0xFF0000) >> 16);
+    _spi->WriteRead((addr & 0xFF0000) >> 16);
     /* Send addr medium nibble address byte */
-    WriteByte((addr & 0xFF00) >> 8);
+    _spi->WriteRead((addr & 0xFF00) >> 8);
     /* Send addr low nibble address byte */
-    WriteByte(addr & 0xFF);
+    _spi->WriteRead(addr & 0xFF);
 }
 
 void SpiFlash::WaitForEnd()
@@ -68,14 +36,14 @@ void SpiFlash::WaitForEnd()
     _spi->Start();
 
     /* Send "Read Status Register" instruction */
-    WriteByte(RDSR);
+    _spi->WriteRead(RDSR);
 
     /* Loop as long as the memory is busy with a write cycle */
     do
     {
         /* Send a dummy byte to generate the clock needed by the FLASH
         and put the value of the status register in FLASH_Status variable */
-        FLASH_Status = ReadByte();
+        FLASH_Status = _spi->WriteRead(Dummy_Byte);
     }
     while ((FLASH_Status & RDY_Flag) == RESET); /* Busy in progress */
 
@@ -85,9 +53,6 @@ void SpiFlash::WaitForEnd()
 
 SpiFlash::SpiFlash(Spi* spi)
 {
-    //RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);//把JTAG给禁止只用SWDP功能了。然后配置spi的io口
-
     _spi = spi;
     /* Deselect the FLASH: Chip Select high */
     _spi->Stop();
@@ -103,7 +68,7 @@ void SpiFlash::Erase(uint sector)
 {
     _spi->Start();
     /* Send Sector Erase instruction */
-    WriteByte(SE);
+    _spi->WriteRead(SE);
     SetAddr(sector);
     _spi->Stop();
 
@@ -115,7 +80,7 @@ void SpiFlash::ErasePage(uint pageAddr)
 {
     _spi->Start();
     /* Send Sector Erase instruction */
-    WriteByte(PE);
+    _spi->WriteRead(PE);
     SetAddr(pageAddr);
     _spi->Stop();
 
@@ -127,14 +92,14 @@ void SpiFlash::PageWrite(byte* buf, uint addr, uint count)
 {
     _spi->Start();
     /* Send "Write to Memory " instruction */
-    WriteByte(WRITE);
+    _spi->WriteRead(WRITE);
     SetAddr(addr);
 
     /* while there is data to be written on the FLASH */
     while (count--)
     {
         /* Send the current byte */
-        WriteByte(*buf);
+        _spi->WriteRead(*buf);
         /* Point on the next byte to be written */
         buf++;
     }
@@ -220,19 +185,19 @@ void SpiFlash::Read(byte* buf, uint addr, uint count)
     _spi->Start();
 
     /* Send "Read from Memory " instruction */
-    WriteByte(READ);
+    _spi->WriteRead(READ);
 
     SetAddr(addr);
 
-    ReadByte();
-    ReadByte();
-    ReadByte();
-    ReadByte();
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
 
     while (count--) /* while there is data to be read */
     {
         /* Read a byte from the FLASH */
-        *buf = ReadByte();
+        *buf = _spi->WriteRead(Dummy_Byte);
         /* Point to the next location where the byte read will be saved */
         buf++;
     }
@@ -245,12 +210,12 @@ uint SpiFlash::ReadID()
     _spi->Start();
 
     /* Send "RDID " instruction */
-    WriteByte(RDID);
+    _spi->WriteRead(RDID);
 
-    uint Temp0 = ReadByte();
-    uint Temp1 = ReadByte();
-    uint Temp2 = ReadByte();
-    uint Temp3 = ReadByte();
+    uint Temp0 = _spi->WriteRead(Dummy_Byte);
+    uint Temp1 = _spi->WriteRead(Dummy_Byte);
+    uint Temp2 = _spi->WriteRead(Dummy_Byte);
+    uint Temp3 = _spi->WriteRead(Dummy_Byte);
 
     _spi->Stop();
 

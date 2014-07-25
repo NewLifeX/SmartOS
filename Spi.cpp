@@ -31,6 +31,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     }
 
     Speed = speedHz;
+    Timeout = 200;
 
     //_nss = useNss ? spi_nss[spi] : P0;
     _nss = P0;
@@ -94,96 +95,62 @@ Spi::~Spi()
 {
     Stop();
 
-#ifdef STM32F10X
-	switch(_spi)
-	{
-        /* 失能spi 关闭spi时钟 */
-        case SPI_1 : SPI_Cmd(SPI1, DISABLE); RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); break;
-        case SPI_2 : SPI_Cmd(SPI2, DISABLE); RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, DISABLE); break;
-        case SPI_3 : SPI_Cmd(SPI3, DISABLE); RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, DISABLE); break;
-	}
-#else
-	switch(_spi)
-	{
-        /* 失能spi 关闭spi时钟 */
-        case SPI_1 : SPI_Cmd(SPI1, DISABLE); RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, DISABLE); break;
-        case SPI_2 : SPI_Cmd(SPI2, DISABLE); RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI2, DISABLE); break;
-        case SPI_3 : SPI_Cmd(SPI3, DISABLE); RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI3, DISABLE); break;
-	}
-#endif
+    SPI_Cmd(SPI, DISABLE);
+    SPI_I2S_DeInit(SPI);
 }
 
-byte Spi::ReadWriteByte8(byte data)
+byte Spi::WriteRead(byte data)
 {
-	unsigned char retry=0;
-	SPI_TypeDef *	p;
-    switch(_spi)
-	{
-		case SPI_1 : p=  SPI1 ; break;
-
-#ifdef STM32F10X
-		case SPI_2 : p=  SPI2;  break;
-		case SPI_3 : p=  SPI3; 	break;
-#endif
-	}
-    while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET)
+    int times = Timeout;
+	byte retry = 0;
+    while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
     {
-        retry++;
-        if(retry>200)return 0;		//超时处理
+        if(retry++ > times) return 0; // 超时处理
     }
 
 #ifdef STM32F10X
-	SPI_I2S_SendData(p, data);
+	SPI_I2S_SendData(SPI, data);
 #else
-	SPI_SendData8(p, data);
+	SPI_SendData8(SPI, data);
 #endif
-	retry=0;
-	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
+
+	retry = 0;
+	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
     {
-        retry++;
-        if(retry>200)return 0;		//超时处理
+        if(retry++ > times) return 0; // 超时处理
     }
 #ifdef STM32F10X
-	return SPI_I2S_ReceiveData(p);
+	return SPI_I2S_ReceiveData(SPI);
 #else
-	return SPI_ReceiveData8(p); //返回通过SPIx最近接收的数据
+	return SPI_ReceiveData8(SPI); //返回通过SPIx最近接收的数据
 #endif
 }
 
-ushort Spi::ReadWriteByte16(ushort data)
+ushort Spi::WriteRead16(ushort data)
 {
- 	uint retry=0;
-	SPI_TypeDef* p;
-	switch(_spi)
+    // 双字节操作，超时次数加倍
+    int times = Timeout << 1;
+ 	uint retry = 0;
+	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
 	{
-		case SPI_1 : p=  SPI1 ; break;
-
-#ifdef STM32F10X
-		case SPI_2 : p=  SPI2;  break;
-		case SPI_3 : p=  SPI3; 	break;
-#endif
-	}
-	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_TXE) == RESET)
-	{
-		retry++;
-		if(retry>500)return 0;		//超时处理
+        if(retry++ > times) return 0; // 超时处理
 	}
 
 #ifdef STM32F10X
-	SPI_I2S_SendData(p, data);
+	SPI_I2S_SendData(SPI, data);
 #else
-	SPI_I2S_SendData16(p, data);
+	SPI_I2S_SendData16(SPI, data);
 #endif
-	while (SPI_I2S_GetFlagStatus(p, SPI_I2S_FLAG_RXNE) == RESET)
+
+	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET)
 	{
-		retry++;
-		if(retry>500)return 0;		//超时处理
+        if(retry++ > times) return 0; // 超时处理
 	}
 
 #ifdef STM32F10X
-	return SPI_I2S_ReceiveData(p);
+	return SPI_I2S_ReceiveData(SPI);
 #else
-	return SPI_I2S_ReceiveData16(p);
+	return SPI_I2S_ReceiveData16(SPI);
 #endif
 }
 

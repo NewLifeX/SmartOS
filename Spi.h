@@ -26,12 +26,13 @@ private:
 public:
     SPI_TypeDef* SPI;
     int Speed;
+    int Timeout;    // 操作超时次数，默认200
 
     Spi(int spi, int speedHz = 9000000, bool useNss = true);
     ~Spi();
 
-    byte ReadWriteByte8(byte data);
-    ushort ReadWriteByte16(ushort data);
+    byte WriteRead(byte data);
+    ushort WriteRead16(ushort data);
 
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输

@@ -11,9 +11,6 @@ private:
     Spi* _spi;
     Pin _nss;
 
-	byte ReadByte();
-	byte WriteByte(byte data);
-	ushort Write(ushort data);
     void SetAddr(uint addr);
 	void WaitForEnd();
 public:

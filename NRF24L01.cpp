@@ -105,11 +105,11 @@ byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
 	_spi->Start();
 
     /*发送寄存器号*/
-	status = _spi->ReadWriteByte8(reg);
+	status = _spi->WriteRead(reg);
   	  /*向缓冲区写入数据*/
 	for(byte_cnt=0;byte_cnt<bytes;byte_cnt++)
 	//	SPI_NRF_RW(*pBuf++);	//写数据到缓冲区
-		_spi->ReadWriteByte8(*pBuf++);
+		_spi->WriteRead(*pBuf++);
 
 	_spi->Stop();
     
@@ -135,10 +135,10 @@ byte NRF24L01::ReadBuf(byte reg,byte *pBuf,byte bytes)
 	_spi->Start();
 
 	/*发送寄存器号*/
-	status = _spi->ReadWriteByte8(reg);
+	status = _spi->WriteRead(reg);
  	/*读取缓冲区数据*/
 	for(byte_cnt=0;byte_cnt<bytes;byte_cnt++)
-	  pBuf[byte_cnt] = _spi->ReadWriteByte8(NOP); //从NRF24L01读取数据
+	  pBuf[byte_cnt] = _spi->WriteRead(NOP); //从NRF24L01读取数据
 
 	_spi->Stop();
 
@@ -186,9 +186,9 @@ byte NRF24L01::ReadReg(byte reg)
 	_spi->Start();
 
   	 /*发送寄存器号*/
-	_spi->ReadWriteByte8(reg);
+	_spi->WriteRead(reg);
 	 /*读取寄存器的值 */
-	reg_val =  _spi->ReadWriteByte8(NOP);
+	reg_val =  _spi->WriteRead(NOP);
 
 	_spi->Stop();
 
@@ -210,9 +210,9 @@ byte NRF24L01::WriteReg(byte reg,byte dat)
 	_spi->Start();
 
 	/*发送命令及寄存器号 */
-	status = _spi->ReadWriteByte8(reg);
+	status = _spi->WriteRead(reg);
 	 /*向寄存器写入数据*/
-    _spi->ReadWriteByte8(dat);
+    _spi->WriteRead(dat);
 
 	_spi->Stop();
 
