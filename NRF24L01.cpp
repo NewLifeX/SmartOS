@@ -282,11 +282,11 @@ byte NRF24L01::Receive(byte *data)
 	/* 清除中断标志*/      
 	WriteReg(WRITE_REG_NRF + STATUS, state);
 	/*判断是否接收到数据*/
-	if(state & RX_DR)                                 //接收到数据
+	if(state & RX_OK)                                 //接收到数据
 	{
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
         WriteReg(FLUSH_RX,NOP);          //清除RX FIFO寄存器
-        return RX_DR; 
+        return RX_OK; 
 	}
 	else    
 		return ERROR;                    //没收到任何数据
@@ -315,10 +315,10 @@ byte NRF24L01::Send(byte* data)
 	WriteReg(WRITE_REG_NRF+STATUS,state); 	
 	WriteReg(FLUSH_TX,NOP);    //清除TX FIFO寄存器 
 	 /*判断中断类型*/    
-    if(state & MAX_RT)                     //达到最大重发次数
-        return MAX_RT; 
-    else if(state & TX_DS)                  //发送完成
-        return TX_DS;
+    if(state & MAX_TX)                     //达到最大重发次数
+        return MAX_TX; 
+    else if(state & TX_OK)                  //发送完成
+        return TX_OK;
     else						  
         return ERROR;                 //其他原因发送失败
 } 
