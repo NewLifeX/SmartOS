@@ -1,4 +1,4 @@
-﻿#include "Port.h"
+#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -25,37 +25,47 @@ static byte shake_time=70;
 // 16条中断线
 static IntState State[16];
 
-#ifdef STM32F0XX
-#define _RCC_AHB(PIN) (RCC_AHBENR_GPIOAEN << (PIN >> 4))
-    void OpenClock(Pin pin)
-    {
-        // 打开时钟
-        RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
-    }
-#else
-#define _RCC_APB2(PIN) (RCC_APB2Periph_GPIOA << (PIN >> 4))
-    void OpenClock(Pin pin)
-    {
-        // 打开时钟
-        RCC_APB2PeriphClockCmd(_RCC_APB2(pin), ENABLE);
-    }
-#endif
+// 单一引脚初始化
+Port::Port(Pin pin)
+{
+    Group = IndexToGroup(pin >> 4);
+    PinBit = IndexToBits(pin & 0x0F);
+}
 
-// 打开端口
-// mode=GPIO_Mode_IN/GPIO_Mode_OUT/GPIO_Mode_AF/GPIO_Mode_AN
-// speed=GPIO_Speed_50MHz/GPIO_Speed_2MHz/GPIO_Speed_10MHz
-// type=GPIO_OType_PP/GPIO_OType_OD
-// PuPd= GPIO_PuPd_NOPULL/ GPIO_PuPd_UP  /GPIO_PuPd_DOWN
-void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
+Port::Port(GPIO_TypeDef* group, ushort pinbit)
+{
+    Group = group;
+    PinBit = pinbit;
+}
+
+// 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
+Port::Port(Pin pins[])
+{
+    Group = IndexToGroup(pins[0] >> 4);
+    PinBit = 0;
+    for(int i=0; i<sizeof(pins)/sizeof(Pin); i++)
+        PinBit |= IndexToBits(pins[i] & 0x0F);
+}
+
+// mode=Mode_IN/Mode_OUT/Mode_AF/Mode_AN
+// speed=Speed_50MHz/Speed_2MHz/Speed_10MHz
+// type=OType_PP/OType_OD
+// PuPd= PuPd_NOPULL/ PuPd_UP  /PuPd_DOWN
+void SetPort(GPIO_TypeDef* group, short port, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
 {
     GPIO_InitTypeDef p;
     // 初始化结构体，保险起见。为了节省代码空间，也可以不用
     GPIO_StructInit(&p);
 
     // 打开时钟
-    OpenClock(pin);
+    int gi = Port::GroupToIndex(group);
+#ifdef STM32F0XX
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
+#else
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
+#endif
 
-    p.GPIO_Pin = _PORT(pin);
+    p.GPIO_Pin = port;
     p.GPIO_Speed = (GPIOSpeed_TypeDef)speed;
 #ifdef STM32F0XX
     p.GPIO_Mode = mode;
@@ -78,7 +88,54 @@ void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef 
     }
 #endif
 
-    GPIO_Init(_GROUP(pin), &p);
+    GPIO_Init(group, &p);
+}
+
+void Port::Config()
+{
+    SetPort(Group, PinBit, Mode, IsOD, Speed, PuPd);
+}
+
+void Port::Write(bool value)
+{
+    if(value ^ Invert)
+        GPIO_SetBits(Group, PinBit);
+    else
+        GPIO_ResetBits(Group, PinBit);
+}
+
+void Port::WriteGroup(ushort value)
+{
+    GPIO_Write(Group, value);
+}
+
+// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+bool Port::Read()
+{
+    // 最低那一个位的索引
+    //byte idx = BitsToIndex(PinBit);
+    return (ReadGroup() & PinBit) ^ Invert;
+}
+
+ushort Port::ReadGroup()
+{
+    switch(Mode)
+    {
+        case Mode_IN:
+        case Mode_AN:
+            return GPIO_ReadInputData(Group);
+        case Mode_OUT:
+        case Mode_AF:
+            return GPIO_ReadOutputData(Group);
+        default:
+            return 0;
+    }
+}
+
+// 打开端口
+void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
+{
+    SetPort(_GROUP(pin), _PORT(pin), mode, isOD, speed, pupd);
 }
 
 void Port::SetInput(Pin pin, bool isFloating, Port::Speed_TypeDef speed)
@@ -274,4 +331,16 @@ void EXTI4_15_IRQHandler(void)
 void Port::SetShakeTime(byte ms)
 {
 	shake_time = ms;
+}
+
+GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
+ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
+byte Port::BitsToIndex(byte bits)
+{
+    for(int i=0; i < 16; i++)
+    {
+        if((bits & 1) == 1) return i;
+    }
+    return 0xFF;
 }
