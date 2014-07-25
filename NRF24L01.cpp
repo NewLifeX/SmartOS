@@ -69,15 +69,19 @@ nRF24L01_status=nrf_mode_free;
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk);
 
-NRF24L01::NRF24L01(Spi* spi, Pin ce)
+NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
     _CE = ce;
-	Port::SetOutput(_CE, false);
+	if(_CE != P0) Port::SetOutput(_CE, false);
 
-	// 中断引脚初始化
-	Port::Set(nRF2401_IRQ_pin, Port::Mode_IN, false, Port::Speed_10MHz , Port::PuPd_UP);
-	// 中断引脚申请委托
-	Port::Register(nRF2401_IRQ_pin, nRF24L01_irq);
+    _IRQ = irq;
+    if(_IRQ != P0)
+    {
+        // 中断引脚初始化
+        Port::Set(_IRQ, Port::Mode_IN, false, Port::Speed_10MHz , Port::PuPd_UP);
+        // 中断引脚申请委托
+        Port::Register(_IRQ, nRF24L01_irq);
+    }
 
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
