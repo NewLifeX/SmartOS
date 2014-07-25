@@ -29,8 +29,8 @@ public:
     uint ID[3];     // 芯片ID
     uint FlashSize; // 芯片Flash容量
     uint MCUID;     // MCU编码。低字设备版本，高字子版本
-    //ushort JTAGID;  // Joint Test Action Group编号
     bool IsGD;      // 是否GD芯片
+
     TSys();
     void Init();     // 初始化系统
     void Sleep(uint ms); // 毫秒级延迟

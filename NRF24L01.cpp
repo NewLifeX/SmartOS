@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 #include "Port.h"
 #include "NRF24L01.h"
 
@@ -36,15 +36,15 @@ NRF24L01::NRF24L01(int spi)
 	#if Other_nRF_CSN
 		Port::SetOutput(nRF2401_CSN, false);
 	#else	
-        Port::SetOutput(spi_nss[nRF2401_SPI], false);		
-		if(nRF2401_SPI==SPI_3)
+        Port::SetOutput(spi_nss[spi], false);		
+		if(spi==SPI_3)
 		{	//PA15是jtag接口中的一员 想要使用 必须开启remap
 			RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);	
 			GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 		}
 	#endif  //Other_nRF_CSN
 	#if us_nrf_ce
-		Port::SetOutput(nRF2401_CE, false);
+		Port::SetOutput(CE, false);
 	#endif
 	//中断引脚初始化
 	//Sys.IO.OpenPort(nRF2401_IRQ_pin, GPIO_Mode_IN_FLOATING,  GPIO_Speed_10MHz , 0, GPIO_PuPd_DOWN );
@@ -81,9 +81,9 @@ NRF24L01::NRF24L01(int spi)
 byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
 {
 	byte status,byte_cnt;
-	NRF_CE_LOW();
+	Port::Write(CE, false);
    	 /*置低CSN，使能SPI传输*/
-	NRF_CSN_LOW();			
+	Port::Write(CSN, false);
 	 /*发送寄存器号*/	
 	status = _spi->ReadWriteByte8(reg);
   	  /*向缓冲区写入数据*/
@@ -91,7 +91,8 @@ byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
 	//	SPI_NRF_RW(*pBuf++);	//写数据到缓冲区 	 
 		_spi->ReadWriteByte8(*pBuf++);
 	/*CSN拉高，完成*/
-	NRF_CSN_HIGH();			
+	Port::Write(CSN, true);
+
   	return (status);	//返回NRF24L01的状态 		
 }
 
@@ -106,16 +107,18 @@ byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
 byte NRF24L01::ReadBuf(byte reg,byte *pBuf,byte bytes)
 {
  	byte status, byte_cnt;
-	  NRF_CE_LOW();
+
+	Port::Write(CE, false);
 	/*置低CSN，使能SPI传输*/
-	NRF_CSN_LOW();
+	Port::Write(CSN, false);
 	/*发送寄存器号*/		
 	status = _spi->ReadWriteByte8(reg); 
  	/*读取缓冲区数据*/
 	for(byte_cnt=0;byte_cnt<bytes;byte_cnt++)		  
 	  pBuf[byte_cnt] = _spi->ReadWriteByte8(NOP); //从NRF24L01读取数据  
 	 /*CSN拉高，完成*/
-	NRF_CSN_HIGH();	
+	Port::Write(CSN, true);
+
  	return status;		//返回寄存器状态值
 }
 
@@ -154,17 +157,17 @@ byte NRF24L01::Check(void)
 byte NRF24L01::ReadReg(byte reg)
 {
  	byte reg_val;
-	NRF_CE_LOW();
+	Port::Write(CE, false);
 	/*置低CSN，使能SPI传输*/
- 	NRF_CSN_LOW();
+	Port::Write(CSN, false);
   	 /*发送寄存器号*/
 	_spi->ReadWriteByte8(reg); 
 	 /*读取寄存器的值 */
 	reg_val =  _spi->ReadWriteByte8(NOP);
    	/*CSN拉高，完成*/
-	NRF_CSN_HIGH();		
+	Port::Write(CSN, true);
 	return reg_val;
-}	
+}
 
 /**
   * @brief   用于向NRF特定的寄存器写入数据
@@ -176,15 +179,15 @@ byte NRF24L01::ReadReg(byte reg)
 byte NRF24L01::WriteReg(byte reg,byte dat)
 {
  	byte status;
-	 NRF_CE_LOW();
+	Port::Write(CE, false);
 	/*置低CSN，使能SPI传输*/
-    NRF_CSN_LOW();
+	Port::Write(CSN, false);
 	/*发送命令及寄存器号 */
 	status = _spi->ReadWriteByte8(reg);
 	 /*向寄存器写入数据*/
     _spi->ReadWriteByte8(dat); 
 	/*CSN拉高，完成*/	   
-  	NRF_CSN_HIGH();	
+	Port::Write(CSN, true);
 	/*返回状态寄存器的值*/
    	return(status);
 }
@@ -196,7 +199,7 @@ byte NRF24L01::WriteReg(byte reg,byte dat)
   */
 void NRF24L01::EnterReceive(void)
 {
-	NRF_CE_LOW();	
+	Port::Write(CE, false);
 	WriteBuf(NRF_WRITE_REG+RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH);//写RX节点地址
 	WriteReg(NRF_WRITE_REG+EN_AA,0x01);    //使能通道0的自动应答    
 	WriteReg(NRF_WRITE_REG+EN_RXADDR,0x01);//使能通道0的接收地址    
@@ -206,7 +209,7 @@ void NRF24L01::EnterReceive(void)
 	WriteReg(NRF_WRITE_REG+RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启  
 	WriteReg(NRF_WRITE_REG+CONFIG, 0x0f);  //配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式 
     /*CE拉高，进入接收模式*/	
-	NRF_CE_HIGH();
+	Port::Write(CE, true);
 	nRF24L01_status=nrf_mode_rx;
 }    
 
@@ -217,7 +220,7 @@ void NRF24L01::EnterReceive(void)
   */
 void NRF24L01::EnterSend(void)
 {  
-	NRF_CE_LOW();
+	Port::Write(CE, false);
 	WriteBuf(NRF_WRITE_REG+TX_ADDR,TX_ADDRESS,TX_ADR_WIDTH);    //写TX节点地址 
 	WriteBuf(NRF_WRITE_REG+RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH); //设置TX节点地址,主要为了使能ACK   
 	WriteReg(NRF_WRITE_REG+EN_AA,0x01);     //使能通道0的自动应答    
@@ -227,10 +230,10 @@ void NRF24L01::EnterSend(void)
  // WriteReg(NRF_WRITE_REG+RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启   
 	WriteReg(NRF_WRITE_REG+RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启   
 	WriteReg(NRF_WRITE_REG+CONFIG,0x0e);    //配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
-/*CE拉高，进入发送模式*/	
-	NRF_CE_HIGH();
+    /*CE拉高，进入发送模式*/	
+	Port::Write(CE, true);
 	nRF24L01_status=nrf_mode_tx;
-  Sys.Sleep(500); //CE要拉高一段时间才进入发送模式
+    Sys.Sleep(500); //CE要拉高一段时间才进入发送模式
 }
 
 /*
@@ -250,8 +253,8 @@ byte NRF24L01::Receive(byte *data)
 	byte state; 
 	/*等待接收中断*/
 //	while(NRF_Read_IRQ()!=0); 
-	NRF_CE_HIGH();	 //进入接收状态
-	NRF_CE_LOW();  	 //进入待机状态
+	Port::Write(CE, true);
+	Port::Write(CE, false);
 	/*读取status寄存器的值  */               
 	state=ReadReg(STATUS);
 	/* 清除中断标志*/      
@@ -277,11 +280,11 @@ byte NRF24L01::Send(byte* data)
 {
 	byte state;  
 	 /*ce为低，进入待机模式1*/
-	NRF_CE_LOW();
+	Port::Write(CE, false);
 	/*写数据到TX BUF 最大 32个字节*/						
 	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
       /*CE为高，txbuf非空，发送数据包 */   
- 	NRF_CE_HIGH();
+	Port::Write(CE, true);
 	  /*等待发送完成中断 */                            
 //	while(NRF_Read_IRQ()!=0); 	
 	/*读取状态寄存器的值 */                              

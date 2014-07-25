@@ -307,7 +307,6 @@ TSys::TSys()
     ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
     MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
-    //JTAGID = *(__IO ushort *)(0xE00FFFE8);
     IsGD = Get_JTAG_ID() == 0x7A3;
 
     if(IsGD) Clock = 120000000;

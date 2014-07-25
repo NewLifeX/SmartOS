@@ -1,4 +1,4 @@
-﻿#ifndef __NRF24L01_H__
+#ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
 #include "Sys.h"
@@ -6,7 +6,7 @@
 
 
 //使用哪个spi作为 nrf 通信口
-#define 	nRF2401_SPI					SPI_3
+//#define 	nRF2401_SPI					SPI_3
 //中断引脚
 #define 	nRF2401_IRQ_pin		 PD14
 //中断引脚检测
@@ -18,9 +18,9 @@
 //CE引脚操作
 #if us_nrf_ce
 	//CE引脚定义
-	#define   nRF2401_CE					PD13
-	#define 	NRF_CE_LOW()				Port::Write(nRF2401_CE, false)
-	#define 	NRF_CE_HIGH()				Port::Write(nRF2401_CE, true)
+	//#define   nRF2401_CE					PD13
+	//#define 	NRF_CE_LOW()				Port::Write(nRF2401_CE, false)
+	//#define 	NRF_CE_HIGH()				Port::Write(nRF2401_CE, true)
 #else
 	#define 	NRF_CE_LOW()				
 	#define 	NRF_CE_HIGH()				
@@ -33,9 +33,9 @@
 			//自定义csn引脚
 #else
 	//CSN引脚定义
-	#define   nRF2401_CSN					PE10
-	#define 	NRF_CSN_LOW()				Port::Write(nRF2401_CSN, false)
-	#define 	NRF_CSN_HIGH()				Port::Write(nRF2401_CSN, true)
+	//#define   nRF2401_CSN					PE10
+	//#define 	NRF_CSN_LOW()				Port::Write(nRF2401_CSN, false)
+	//#define 	NRF_CSN_HIGH()				Port::Write(nRF2401_CSN, true)
 #endif
 
 //定义缓冲区大小  单位  byte
@@ -128,12 +128,15 @@ private:
     byte ReadBuf(byte reg,byte *pBuf,byte bytes);
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
-    byte Check(void);
 
 public:
+    Pin CSN;
+    Pin CE;
+
     NRF24L01(int spi);
     ~NRF24L01();
 
+    byte Check(void);
     void EnterSend();
     void EnterReceive();
 
