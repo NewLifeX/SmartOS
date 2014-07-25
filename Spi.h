@@ -15,13 +15,19 @@ class Spi
 {
 private:
     int _spi;
+    Pin _nss;
 
 public:
-    Spi(int spi);
+    int Speed;
+
+    Spi(int spi, int speedMHz = 9, bool useNss = true);
     ~Spi();
 
     byte ReadWriteByte8(byte data);
     ushort ReadWriteByte16(ushort data);
+
+    void Start();   // 拉低NSS，开始传输
+    void Stop();    // 拉高NSS，停止传输
 };
 
 #endif
