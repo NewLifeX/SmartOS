@@ -157,7 +157,7 @@ byte NRF24L01::Check(void)
 	byte buf1[5];
 	byte i;
 	/*写入5个字节的地址.  */
-	WriteBuf(WRITE_REG_NRF+TX_ADDR,buf,5);
+	WriteBuf(WRITE_REG_NRF + TX_ADDR,buf,5);
 	/*读出写入的地址 */
 	ReadBuf(TX_ADDR,buf1,5);
 	/*比较*/
@@ -217,7 +217,7 @@ byte NRF24L01::WriteReg(byte reg,byte dat)
 	_spi->Stop();
 
 	/*返回状态寄存器的值*/
-   	return(status);
+   	return status;
 }
 
 /**
@@ -228,17 +228,17 @@ byte NRF24L01::WriteReg(byte reg,byte dat)
 void NRF24L01::EnterReceive(void)
 {
 	CEDown();
-	WriteBuf(WRITE_REG_NRF+RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH);//写RX节点地址
-	WriteReg(WRITE_REG_NRF+EN_AA,0x01);    //使能通道0的自动应答
-	WriteReg(WRITE_REG_NRF+EN_RXADDR,0x01);//使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF+RF_CH, Channel);      //设置RF通信频率
-	WriteReg(WRITE_REG_NRF+RX_PW_P0,RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
-    //WriteReg(WRITE_REG_NRF+RF_SETUP,0x0f); //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF+RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF+CONFIG, 0x0f);  //配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
+	WriteBuf(WRITE_REG_NRF + RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH);//写RX节点地址
+	WriteReg(WRITE_REG_NRF + EN_AA,0x01);    //使能通道0的自动应答
+	WriteReg(WRITE_REG_NRF + EN_RXADDR,0x01);//使能通道0的接收地址
+	WriteReg(WRITE_REG_NRF + RF_CH, Channel);      //设置RF通信频率
+	WriteReg(WRITE_REG_NRF + RX_PW_P0,RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
+    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f); //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
+	WriteReg(WRITE_REG_NRF + RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	WriteReg(WRITE_REG_NRF + CONFIG, 0x0f);  //配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
     /*CE拉高，进入接收模式*/
 	CEUp();
-	nRF24L01_status=nrf_mode_rx;
+	nRF24L01_status = nrf_mode_rx;
 }
 
 /**
@@ -249,15 +249,15 @@ void NRF24L01::EnterReceive(void)
 void NRF24L01::EnterSend(void)
 {
 	CEDown();
-	WriteBuf(WRITE_REG_NRF+TX_ADDR,TX_ADDRESS,TX_ADR_WIDTH);    //写TX节点地址
-	WriteBuf(WRITE_REG_NRF+RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH); //设置TX节点地址,主要为了使能ACK
-	WriteReg(WRITE_REG_NRF+EN_AA,0x01);     //使能通道0的自动应答
-	WriteReg(WRITE_REG_NRF+EN_RXADDR,0x01); //使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF+SETUP_RETR,0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-	WriteReg(WRITE_REG_NRF+RF_CH, Channel);       //设置RF通道为CHANAL
-    //WriteReg(WRITE_REG_NRF+RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF+RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF+CONFIG,0x0e);    //配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
+	WriteBuf(WRITE_REG_NRF + TX_ADDR,TX_ADDRESS,TX_ADR_WIDTH);    //写TX节点地址
+	WriteBuf(WRITE_REG_NRF + RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH); //设置TX节点地址,主要为了使能ACK
+	WriteReg(WRITE_REG_NRF + EN_AA,0x01);     //使能通道0的自动应答
+	WriteReg(WRITE_REG_NRF + EN_RXADDR,0x01); //使能通道0的接收地址
+	WriteReg(WRITE_REG_NRF + SETUP_RETR,0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+	WriteReg(WRITE_REG_NRF + RF_CH, Channel);       //设置RF通道为CHANAL
+    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
+	WriteReg(WRITE_REG_NRF + RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	WriteReg(WRITE_REG_NRF + CONFIG,0x0e);    //配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
     /*CE拉高，进入发送模式*/
 	CEUp();
 	nRF24L01_status=nrf_mode_tx;
@@ -318,7 +318,7 @@ byte NRF24L01::Send(byte* data)
 	/*读取状态寄存器的值 */
 	state = ReadReg(STATUS);
 	 /*清除TX_DS或MAX_RT中断标志*/
-	WriteReg(WRITE_REG_NRF+STATUS,state);
+	WriteReg(WRITE_REG_NRF + STATUS,state);
 	WriteReg(FLUSH_TX,NOP);    //清除TX FIFO寄存器
 	 /*判断中断类型*/
     if(state & MAX_TX)                     //达到最大重发次数
