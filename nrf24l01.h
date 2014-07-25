@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Spi.h"
-//#include "Spi.h"
+
 
 //使用哪个spi作为 nrf 通信口
 #define 	nRF2401_SPI					SPI_3
@@ -117,7 +117,6 @@ byte NRF_Tx_Dat(byte *txbuf);
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk);
 */
-
 
 // NRF24L01类
 class NRF24L01
