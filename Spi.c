@@ -94,7 +94,7 @@ bool Spi_config(int spi)
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;		//选择了串行时钟的稳态:时钟悬空高
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;	//数据捕获于第二个时钟沿
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;		//NSS信号由硬件（NSS管脚）还是软件（使用SSI位）管理:内部NSS信号有SSI位控制
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;		//定义波特率预分频的值:波特率预分频值为
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;		//定义波特率预分频的值:波特率预分频值为
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;	//指定数据传输从MSB位还是LSB位开始:数据传输从MSB位开始
 	SPI_InitStructure.SPI_CRCPolynomial = 7;	//CRC值计算的多项式
 	printf("   初始化SPI_%d\r\n",(spi+1));
@@ -207,48 +207,10 @@ ushort SPI_ReadWriteByte16(int spi,ushort HalfWord)
 #endif
 }
 
-
- #ifdef STM32F10X 
-//SPI 速度设置函数
-//SpeedSet:
-//SPI_BaudRatePrescaler_2   2分频   
-//SPI_BaudRatePrescaler_8   8分频   
-//SPI_BaudRatePrescaler_16  16分频  
-//SPI_BaudRatePrescaler_256 256分频 
-  
-void Spi_SetSpeed(int spi,byte SPI_BaudRatePrescaler)
-{	
-	SPI_TypeDef *	p;
-  assert_param(IS_SPI_BAUDRATE_PRESCALER(SPI_BaudRatePrescaler));
-	switch(spi)
-	{							
-		case SPI_1 : p=  SPI1 ; break;
-
-#ifdef STM32F10X
-		case SPI_2 : p=  SPI2;  break;
-		case SPI_3 : p=  SPI3; 	break;
-#endif
-	}	
-	p->CR1&=0XFFC7;
-	p->CR1|=SPI_BaudRatePrescaler;	//设置SPI3速度 
-	SPI_Cmd(p,ENABLE); 
-} 
-#else
-
-void Spi_SetSpeed(int spi,u8 SPI_BaudRatePrescaler)
-{
-}
-
-#endif
-
-
-
-
 void TSpi_Init(TSpi* this)
 {
 			this->Open  					= Spi_config;
 			this->Close 					= Spi_Disable;
-			this->SetSpeed				= Spi_SetSpeed;
 			this->WriteReadByte8 	= SPI_ReadWriteByte8;
 			this->WriteReadByte16	=	SPI_ReadWriteByte16;
 //    this->WriteRead 	= 
