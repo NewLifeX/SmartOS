@@ -251,16 +251,14 @@ void USART5_IRQHandler(void) { OnReceive(4); }
 // 获取引脚
 void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 {
-	const Pin* p;
-
     *rxPin = *txPin = P0;
 	
-	p = g_Uart_Pins;
+	const Pin* p = g_Uart_Pins;
 	if(IsRemap) p = g_Uart_Pins_Map;
 
-	_com = _com << 2;
-	*txPin  = p[_com];
-	*rxPin  = p[_com + 1];
+	int n = _com << 2;
+	*txPin  = p[n];
+	*rxPin  = p[n + 1];
 }
 
 extern "C"
