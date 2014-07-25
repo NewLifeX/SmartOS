@@ -1,8 +1,8 @@
-#ifndef __SPI_H__
+Ôªø#ifndef __SPI_H__
 #define __SPI_H__
 
 #include "Sys.h"
-// Spi¿‡
+// SpiÁ±ª
 class Spi
 {
 private:

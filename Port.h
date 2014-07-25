@@ -1,12 +1,12 @@
-#ifndef _Port_H_
+ï»¿#ifndef _Port_H_
 #define _Port_H_
 
 #include "Sys.h"
 
-// ¶ÁÈ¡Î¯ÍĞ
+// è¯»å–å§”æ‰˜
 typedef void (*IOReadHandler)(Pin , bool );
 
-// ¶Ë¿ÚÀà
+// ç«¯å£ç±»
 class Port
 {
 public:

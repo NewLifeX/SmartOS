@@ -1,4 +1,4 @@
-#ifndef __STM32_H
+﻿#ifndef __STM32_H
 #define __STM32_H
 
 #ifdef STM32F0XX_LD

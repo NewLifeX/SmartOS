@@ -1,23 +1,23 @@
-#ifndef __NRF24L01_H__
+ï»¿#ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
 #include "Sys.h"
 #include "Spi.h"
 
 
-//Ê¹ÓÃÄÄ¸öspi×÷Îª nrf Í¨ĞÅ¿Ú
+//ä½¿ç”¨å“ªä¸ªspiä½œä¸º nrf é€šä¿¡å£
 #define 	nRF2401_SPI					SPI_3
-//ÖĞ¶ÏÒı½Å
+//ä¸­æ–­å¼•è„š
 #define 	nRF2401_IRQ_pin		 PD14
-//ÖĞ¶ÏÒı½Å¼ì²â
+//ä¸­æ–­å¼•è„šæ£€æµ‹
 #define NRF_Read_IRQ()		  Port::Read(nRF2401_IRQ_pin)  
-//ÊÇ·ñÊ¹ÓÃ·ÇÄ¬ÈÏcsnÒı½Å
+//æ˜¯å¦ä½¿ç”¨éé»˜è®¤csnå¼•è„š
 #define 	Other_nRF_CSN 			0
-//ÊÇ·ñÊ¹ÓÃCEÒı½Å
+//æ˜¯å¦ä½¿ç”¨CEå¼•è„š
 #define		us_nrf_ce						1
-//CEÒı½Å²Ù×÷
+//CEå¼•è„šæ“ä½œ
 #if us_nrf_ce
-	//CEÒı½Å¶¨Òå
+	//CEå¼•è„šå®šä¹‰
 	#define   nRF2401_CE					PD13
 	#define 	NRF_CE_LOW()				Port::Write(nRF2401_CE, false)
 	#define 	NRF_CE_HIGH()				Port::Write(nRF2401_CE, true)
@@ -25,38 +25,38 @@
 	#define 	NRF_CE_LOW()				
 	#define 	NRF_CE_HIGH()				
 #endif
-//csnÒı½Å²Ù×÷
+//csnå¼•è„šæ“ä½œ
 #if	!Other_nRF_CSN
-			//Ò»°ãÇé¿ö   csnÒı½ÅÓÃnssÒı½Å
+			//ä¸€èˆ¬æƒ…å†µ   csnå¼•è„šç”¨nsså¼•è„š
 	#define  	NRF_CSN_LOW()				Port::Write(spi_nss[nRF2401_SPI], false)	
 	#define  	NRF_CSN_HIGH()			    Port::Write(spi_nss[nRF2401_SPI], true)	
-			//×Ô¶¨ÒåcsnÒı½Å
+			//è‡ªå®šä¹‰csnå¼•è„š
 #else
-	//CSNÒı½Å¶¨Òå
+	//CSNå¼•è„šå®šä¹‰
 	#define   nRF2401_CSN					PE10
 	#define 	NRF_CSN_LOW()				Port::Write(nRF2401_CSN, false)
 	#define 	NRF_CSN_HIGH()				Port::Write(nRF2401_CSN, true)
 #endif
 
-//¶¨Òå»º³åÇø´óĞ¡  µ¥Î»  byte
+//å®šä¹‰ç¼“å†²åŒºå¤§å°  å•ä½  byte
 #define RX_PLOAD_WIDTH				5
 #define TX_PLOAD_WIDTH				5
 
-extern unsigned char RX_BUF[];		//½ÓÊÕÊı¾İ»º´æ
-extern unsigned char TX_BUF[];		//·¢ÉäÊı¾İ»º´æ
+extern unsigned char RX_BUF[];		//æ¥æ”¶æ•°æ®ç¼“å­˜
+extern unsigned char TX_BUF[];		//å‘å°„æ•°æ®ç¼“å­˜
 
-/*·¢ËÍ°ü´óĞ¡*/
+/*å‘é€åŒ…å¤§å°*/
 #define TX_ADR_WIDTH	5
 #define RX_ADR_WIDTH	5
 
-// ¶¨ÒåÒ»¸ö¾²Ì¬·¢ËÍµØÖ·
-/*³õÊ¼µØÖ·µ½¡£cÈ¥ÉèÖÃ*/
+// å®šä¹‰ä¸€ä¸ªé™æ€å‘é€åœ°å€
+/*åˆå§‹åœ°å€åˆ°ã€‚cå»è®¾ç½®*/
 extern unsigned char TX_ADDRESS[];  		
 extern unsigned char RX_ADDRESS[]; 
 
-#define CHANAL 				40	//ÆµµÀÑ¡Ôñ 
+#define CHANAL 				40	//é¢‘é“é€‰æ‹© 
 
-// SPI(nRF24L01) commands ,	NRFµÄSPIÃüÁîºê¶¨Òå£¬Ïê¼ûNRF¹¦ÄÜÊ¹ÓÃÎÄµµ
+// SPI(nRF24L01) commands ,	NRFçš„SPIå‘½ä»¤å®å®šä¹‰ï¼Œè¯¦è§NRFåŠŸèƒ½ä½¿ç”¨æ–‡æ¡£
 #define NRF_READ_REG    0x00  // Define read command to register
 #define NRF_WRITE_REG   0x20  // Define write command to register
 #define RD_RX_PLOAD 0x61  // Define RX payload register address
@@ -66,7 +66,7 @@ extern unsigned char RX_ADDRESS[];
 #define REUSE_TX_PL 0xE3  // Define reuse TX payload register command
 #define NOP         0xFF  // Define No Operation, might be used to read status register
 
-// SPI(nRF24L01) registers(addresses) £¬NRF24L01 Ïà¹Ø¼Ä´æÆ÷µØÖ·µÄºê¶¨Òå
+// SPI(nRF24L01) registers(addresses) ï¼ŒNRF24L01 ç›¸å…³å¯„å­˜å™¨åœ°å€çš„å®å®šä¹‰
 #define CONFIG      0x00  // 'Config' register address
 #define EN_AA       0x01  // 'Enable Auto Acknowledgment' register address
 #define EN_RXADDR   0x02  // 'Enabled RX addresses' register address
@@ -93,32 +93,32 @@ extern unsigned char RX_ADDRESS[];
 #define FIFO_STATUS 0x17  // 'FIFO Status Register' register address
 
 
-/********************     ÖĞ¶ÏÏà¹Ø    ***********************/
+/********************     ä¸­æ–­ç›¸å…³    ***********************/
 /********************  *************  ***********************/
-#define MAX_RT      0x10 //´ïµ½×î´óÖØ·¢´ÎÊıÖĞ¶Ï±êÖ¾Î»
-#define TX_DS		0x20 //·¢ËÍÍê³ÉÖĞ¶Ï±êÖ¾Î»	  // 
-#define RX_DR		0x40 //½ÓÊÕµ½Êı¾İÖĞ¶Ï±êÖ¾Î»
+#define MAX_RT      0x10 //è¾¾åˆ°æœ€å¤§é‡å‘æ¬¡æ•°ä¸­æ–­æ ‡å¿—ä½
+#define TX_DS		0x20 //å‘é€å®Œæˆä¸­æ–­æ ‡å¿—ä½	  // 
+#define RX_DR		0x40 //æ¥æ”¶åˆ°æ•°æ®ä¸­æ–­æ ‡å¿—ä½
 
 /********************  *************  ***********************/
 /********************  *************  ***********************/
-/*	´Ë´¦º¯ÊıÔ­ĞÍ²»ĞèÒª    Ö±½ÓÊ¹ÓÃSys.nRF.xxxx();
-//³õÊ¼»¯		°üº¬Î¯ÍĞÉêÇë
+/*	æ­¤å¤„å‡½æ•°åŸå‹ä¸éœ€è¦    ç›´æ¥ä½¿ç”¨Sys.nRF.xxxx();
+//åˆå§‹åŒ–		åŒ…å«å§”æ‰˜ç”³è¯·
 void SPI_NRF_Init(void);
-//¼ì²éÊÇ·ñÓĞÁ¬½Óµ½Ó²¼ş
+//æ£€æŸ¥æ˜¯å¦æœ‰è¿æ¥åˆ°ç¡¬ä»¶
 byte NRF_Check(void);
-//ÉèÖÃ½ÓÊÕÄ£Ê½
+//è®¾ç½®æ¥æ”¶æ¨¡å¼
 void NRF_RX_Mode(void);
-//½ÓÊÕÊı¾İ
+//æ¥æ”¶æ•°æ®
 byte NRF_Rx_Dat(byte *rxbuf);
-//ÉèÖÃ·¢ËÍÄ£Ê½
+//è®¾ç½®å‘é€æ¨¡å¼
 void NRF_TX_Mode(void);
-//·¢ËÍÊı¾İ
+//å‘é€æ•°æ®
 byte NRF_Tx_Dat(byte *txbuf);
-//2401Î¯ÍĞº¯Êı
+//2401å§”æ‰˜å‡½æ•°
 void nRF24L01_irq(Pin pin, bool opk);
 */
 
-// NRF24L01Àà
+// NRF24L01ç±»
 class NRF24L01
 {
 private:

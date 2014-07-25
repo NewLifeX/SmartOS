@@ -1,4 +1,4 @@
-#include "Pin_STM32F0.h"
+#include "Sys.h"
 #include <stdio.h>
 
 #include "Port.h"
@@ -25,6 +25,8 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
+    
+    _port = g_Uart_Ports[com];
 }
 
 // 析构时自动关闭
@@ -263,26 +265,29 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 
 extern "C"
 {
-/* 重载fputc可以让用户程序使用printf函数 */
-int fputc(int ch, FILE *f)
-{
-    int _com = Sys.MessagePort;
-    if(_com == COM_NONE) return ch;
+    #define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
 
-    USART_TypeDef* port = g_Uart_Ports[_com];
+    SerialPort* _printf_sp;
 
-    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
-    //port->TDR = (byte) ch;
-    //USART_SendData(port, (unsigned char) ch);
+    /* 重载fputc可以让用户程序使用printf函数 */
+    int fputc(int ch, FILE *f)
+    {
+        int _com = Sys.MessagePort;
+        if(_com == COM_NONE) return ch;
 
-#ifdef STM32F0XX
-    //while(!((port->ISR)&(1<<6)));//等待缓冲为空
-#else
-    //while (!(port->SR & USART_FLAG_TXE));
-#endif
-    //USART_SendData(port, (unsigned char) ch);
-    TUsart_SendData(port, (char*)&ch);
+        USART_TypeDef* port = g_Uart_Ports[_com];
 
-    return ch;
-}
+        // 检查并打开串口
+        if((port->CR1 & CR1_UE_Set) != CR1_UE_Set && _printf_sp == NULL)
+        {
+            if(_printf_sp != NULL) delete _printf_sp;
+
+            _printf_sp = new SerialPort(_com);
+            _printf_sp->Open();
+        }
+
+        TUsart_SendData(port, (char*)&ch);
+
+        return ch;
+    }
 }
