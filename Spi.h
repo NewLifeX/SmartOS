@@ -20,7 +20,7 @@ private:
 public:
     int Speed;
 
-    Spi(int spi, int speedMHz = 9, bool useNss = true);
+    Spi(int spi, int speedMHz = 9000000, bool useNss = true);
     ~Spi();
 
     byte ReadWriteByte8(byte data);

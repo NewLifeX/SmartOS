@@ -13,7 +13,7 @@
 static SPI_TypeDef* g_Spis[] = SPIS;
 static const Pin  g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
-Spi::Spi(int spi, int speedMHz, bool useNss)
+Spi::Spi(int spi, int speedHz, bool useNss)
 {
 	if(spi > sizeof(g_Spis)) return;
 
@@ -22,7 +22,7 @@ Spi::Spi(int spi, int speedMHz, bool useNss)
 
     // 计算速度
     ushort pre = 0;
-    int n = Sys.Clock / speedMHz;   // 分频
+    int n = Sys.Clock / speedHz;   // 分频
     switch(n)
     {
         case 2: pre = SPI_BaudRatePrescaler_2; break;
@@ -34,11 +34,11 @@ Spi::Spi(int spi, int speedMHz, bool useNss)
         case 128: pre = SPI_BaudRatePrescaler_128; break;
         case 256: pre = SPI_BaudRatePrescaler_256; break;
         default:
-            printf("Spi%d Init Error! speedMHz=%d mush be dived with %d\r\n", spi, speedMHz, Sys.Clock);
+            printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
             return;
     }
 
-    Speed = speedMHz;
+    Speed = speedHz;
 
     //_nss = useNss ? spi_nss[spi] : P0;
     _nss = P0;
