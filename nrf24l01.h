@@ -10,7 +10,7 @@
 //中断引脚
 #define 	nRF2401_IRQ_pin		 PD14
 //中断引脚检测
-#define NRF_Read_IRQ()		  Port::Read(nRF2401_IRQ_pin)  
+#define NRF_Read_IRQ()		  Port::Read(nRF2401_IRQ_pin)
 //是否使用CE引脚
 #define		us_nrf_ce						1
 //CE引脚操作
@@ -20,8 +20,8 @@
 	//#define 	NRF_CE_LOW()				Port::Write(nRF2401_CE, false)
 	//#define 	NRF_CE_HIGH()				Port::Write(nRF2401_CE, true)
 #else
-	#define 	NRF_CE_LOW()				
-	#define 	NRF_CE_HIGH()				
+	#define 	NRF_CE_LOW()
+	#define 	NRF_CE_HIGH()
 #endif
 
 //定义缓冲区大小  单位  byte

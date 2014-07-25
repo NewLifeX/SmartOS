@@ -4,7 +4,7 @@
 #include "Sys.h"
 
 /*Spi定义*/
-//SPI1..这种格式与st库冲突  
+//SPI1..这种格式与st库冲突
 #define SPI_1	0
 #define SPI_2	1
 #define SPI_3	2
