@@ -49,10 +49,10 @@ public:
     bool Invert;        // 是否倒置输入输出
 
     Port(Pin pin);      // 单一引脚初始化
-    Port(Pin pins[]);    // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
+    Port(Pin pins[]);    // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
     Port(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
 
-    void Config();    // 确定配置
+    void Config();    // 确定配置,确认用对象内部的参数进行初始化
     void Write(bool value); // 按位值写入
     bool Read(); // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
     void WriteGroup(ushort value);   // 整组写入
@@ -67,7 +67,7 @@ public:
     static void Write(Pin pin, bool value);
     static bool Read(Pin pin);
     static void Register(Pin pin, IOReadHandler handler);			// 申请引脚中断托管
-    static void SetShakeTime(byte ms);			//按键去抖动时间
+    static void SetShakeTime(byte ms);			//设置按键去抖动时间
 
     // 辅助函数
     static GPIO_TypeDef* IndexToGroup(byte index);
