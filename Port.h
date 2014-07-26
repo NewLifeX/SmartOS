@@ -15,7 +15,6 @@ class Port
 public:
     GPIO_TypeDef* Group;// 针脚组
     ushort PinBit;       // 组内引脚位。每个引脚一个位
-
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
@@ -31,6 +30,9 @@ protected:
 
     Port()
     {
+        Group = 0;
+        PinBit = 0;
+
         // 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
         GPIO_StructInit(&gpio);
     }
@@ -41,41 +43,32 @@ protected:
 
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig();
-
-    typedef enum
-    {
-        Mode_IN   = 0x00, /*!< GPIO Input Mode              */
-        Mode_OUT  = 0x01, /*!< GPIO Output Mode             */
-        Mode_AF   = 0x02, /*!< GPIO Alternate function Mode */
-        Mode_AN   = 0x03  /*!< GPIO Analog In/Out Mode      */
-    }Mode_TypeDef;
-
-    Mode_TypeDef Mode;  // 模式
 };
 
 // 输入输出口基类
 class InputOutputPort : public Port
 {
 public:
-    /*typedef enum
-    { 
-      Speed_10MHz = 1,
-      Speed_2MHz, 
-      Speed_50MHz
-    }Speed_TypeDef;*/
-
     uint Speed;// 速度
-
     bool Invert;        // 是否倒置输入输出
 
     bool Read(); // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-    ushort ReadGroup();    // 整组读取
+    virtual ushort ReadGroup()    // 整组读取
+    {
+        return GPIO_ReadOutputData(Group);
+    }
 
     static bool Read(Pin pin);
 
     operator bool() { return this != NULL; }
 
 protected:
+    InputOutputPort()
+    {
+        Speed = 2;
+        Invert = false;
+    }
+
     virtual void OnConfig()
     {
         Port::OnConfig();
@@ -111,8 +104,6 @@ public:
 protected:
     void Init(bool openDrain = false, uint speed = 50)
     {
-        // 默认初始化为50M推挽输出
-        Mode = Port::Mode_OUT;
         OpenDrain = openDrain;
         Speed = speed;
     }
@@ -141,7 +132,6 @@ public:
 protected:
     void Init()
     {
-        Mode = Port::Mode_AF;
         OpenDrain = false;
         Speed = 10;
     }
@@ -180,6 +170,11 @@ public:
     InputPort(Pin pins[], bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
+    virtual ushort ReadGroup()    // 整组读取
+    {
+        return GPIO_ReadInputData(Group);
+    }
+
     void Register(IOReadHandler handler);   // 申请引脚中断托管
     static void SetShakeTime(byte ms);			//设置按键去抖动时间
 
@@ -188,7 +183,6 @@ public:
 protected:
     void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL)
     {
-        Mode = Port::Mode_IN;
         Floating = floating;
         Speed = speed;
 

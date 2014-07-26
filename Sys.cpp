@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 
 TSys Sys;
 
@@ -326,9 +326,12 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-    //Clock = clock.SYSCLK_Frequency;
+#if GD32
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
+#else
+    Clock = clock.SYSCLK_Frequency;
+#endif
 
 #ifdef STM32F10X
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级

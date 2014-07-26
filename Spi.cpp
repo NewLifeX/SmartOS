@@ -104,6 +104,7 @@ Spi::~Spi()
     SPI_I2S_DeInit(SPI);
     
     if(_nss) delete _nss;
+    _nss = NULL;
 }
 
 byte Spi::WriteRead(byte data)

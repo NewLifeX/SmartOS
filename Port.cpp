@@ -64,27 +64,6 @@ void Port::OnConfig()
 #endif
 
     gpio.GPIO_Pin = PinBit;
-    //gpio.GPIO_Speed = (GPIOSpeed_TypeDef)speed;
-#ifdef STM32F0XX
-    gpio.GPIO_Mode = mode;
-    gpio.GPIO_OType = isOD ? GPIO_OType_OD : GPIO_OType_PP;	
-#else
-    switch(Mode)
-    {
-        case Port::Mode_IN:
-            //p->GPIO_Mode = isOD ? GPIO_Mode_AIN : GPIO_Mode_IN_FLOATING;
-            break;
-        case Port::Mode_OUT:
-            //p->GPIO_Mode = isOD ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
-            break;
-        case Port::Mode_AF:
-            //p->GPIO_Mode = isOD ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
-            break;
-        case Port::Mode_AN:
-            //p->GPIO_Mode = isOD ? GPIO_Mode_IPD : GPIO_Mode_IPU;
-            break;
-    }
-#endif
 }
 
 void OutputPort::Write(bool value)
@@ -103,51 +82,8 @@ void OutputPort::WriteGroup(ushort value)
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
 bool InputOutputPort::Read()
 {
-    // 最低那一个位的索引
-    //byte idx = BitsToIndex(PinBit);
     return (ReadGroup() & PinBit) ^ Invert;
 }
-
-ushort InputOutputPort::ReadGroup()
-{
-    switch(Mode)
-    {
-        case Mode_IN:
-        case Mode_AN:
-            return GPIO_ReadInputData(Group);
-        case Mode_OUT:
-        case Mode_AF:
-            return GPIO_ReadOutputData(Group);
-        default:
-            return 0;
-    }
-}
-
-// 打开端口
-/*void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
-{
-    SetPort(_GROUP(pin), _PORT(pin), mode, isOD, speed, pupd);
-}
-
-void Port::SetInput(Pin pin, bool isFloating, Port::Speed_TypeDef speed)
-{
-    Set(pin, Port::Mode_IN, !isFloating, speed);
-}
-
-void Port::SetOutput(Pin pin, bool isOD, Port::Speed_TypeDef speed)
-{
-    Set(pin, Port::Mode_OUT, isOD, speed);
-}
-
-void Port::SetAlternate(Pin pin, bool isOD, Port::Speed_TypeDef speed)
-{
-    Set(pin, Port::Mode_AF, isOD, speed);
-}
-
-void Port::SetAnalog(Pin pin)
-{
-    Set(pin, Port::Mode_AN);
-}*/
 
 // 设置端口状态
 void OutputPort::Write(Pin pin, bool value)
