@@ -21,10 +21,8 @@ public:
     static GPIO_TypeDef* IndexToGroup(byte index);
     static byte GroupToIndex(GPIO_TypeDef* group);
     static ushort IndexToBits(byte index);
-    static byte BitsToIndex(byte bits); // 最低那一个位的索引
+    static byte BitsToIndex(ushort bits); // 最低那一个位的索引
 
-    //Port& operator=(bool value) { Write(value); return *this; }
-    //Port& operator=(Port& port) { Write(port.Read()); return *this; }
 protected:
     GPIO_InitTypeDef gpio;
 
@@ -38,7 +36,7 @@ protected:
     }
 
     void SetPort(Pin pin);      // 单一引脚初始化
-    void SetPort(Pin pins[]);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
+    void SetPort(Pin pins[], int count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
     void SetPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
 
     // 配置过程，由Config调用，最后GPIO_Init
@@ -89,7 +87,7 @@ public:
     bool OpenDrain;  // 是否开漏输出
 
     OutputPort(Pin pin, bool openDrain = false, uint speed = 50) { SetPort(pin); Init(openDrain, speed); Config(); }
-    OutputPort(Pin pins[], bool openDrain = false, uint speed = 50) { SetPort(pins); Init(openDrain, speed); Config(); }
+    OutputPort(Pin pins[], int count, bool openDrain = false, uint speed = 50) { SetPort(pins, count); Init(openDrain, speed); Config(); }
     OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); Config(); }
 
     void Write(bool value); // 按位值写入
@@ -126,7 +124,7 @@ class AlternatePort : public OutputPort
 {
 public:
     AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort(pin, openDrain, speed) { Init(); Config(); }
-    AlternatePort(Pin pins[], bool openDrain = false, uint speed = 10) : OutputPort(pins, openDrain, speed) { Init(); Config(); }
+    AlternatePort(Pin pins[], int count, bool openDrain = false, uint speed = 10) : OutputPort(pins, count, openDrain, speed) { Init(); Config(); }
     AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort(group, pinbit) { Init(); Config(); }
 
 protected:
@@ -167,7 +165,7 @@ public:
     bool Floating;      // 是否浮空输入
 
     InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pin); Init(floating, speed, pupd); }
-    InputPort(Pin pins[], bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins); Init(floating, speed, pupd); }
+    InputPort(Pin pins[], int count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins, count); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ushort ReadGroup()    // 整组读取
@@ -181,6 +179,7 @@ public:
     operator bool() { return Read(); }
 
 protected:
+    // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
     void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL)
     {
         Floating = floating;

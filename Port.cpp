@@ -43,10 +43,6 @@ void Port::SetPort(Pin pins[])
         PinBit |= IndexToBits(pins[i] & 0x0F);
 }
 
-// mode=Mode_IN/Mode_OUT/Mode_AF/Mode_AN
-// speed=Speed_50MHz/Speed_2MHz/Speed_10MHz
-// type=OType_PP/OType_OD
-// PuPd= PuPd_NOPULL/ PuPd_UP  /PuPd_DOWN
 void Port::Config()
 {
     OnConfig();
@@ -66,6 +62,32 @@ void Port::OnConfig()
     gpio.GPIO_Pin = PinBit;
 }
 
+GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
+ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
+byte Port::BitsToIndex(ushort bits)
+{
+    for(int i=0; i < 16; i++)
+    {
+        if((bits & 1) == 1) return i;
+        bits >>= 1;
+    }
+    return 0xFF;
+}
+
+// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+bool InputOutputPort::Read()
+{
+    return (ReadGroup() & PinBit) ^ Invert;
+}
+
+// 读取端口状态
+bool InputOutputPort::Read(Pin pin)
+{
+    GPIO_TypeDef* group = _GROUP(pin);
+    return (group->IDR >> (pin & 0xF)) & 1;
+}
+
 void OutputPort::Write(bool value)
 {
     if(value ^ Invert)
@@ -79,12 +101,6 @@ void OutputPort::WriteGroup(ushort value)
     GPIO_Write(Group, value);
 }
 
-// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-bool InputOutputPort::Read()
-{
-    return (ReadGroup() & PinBit) ^ Invert;
-}
-
 // 设置端口状态
 void OutputPort::Write(Pin pin, bool value)
 {
@@ -92,13 +108,6 @@ void OutputPort::Write(Pin pin, bool value)
         GPIO_SetBits(_GROUP(pin), _PORT(pin));
     else
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
-}
-
-// 读取端口状态
-bool InputOutputPort::Read(Pin pin)
-{
-    GPIO_TypeDef* group = _GROUP(pin);
-    return (group->IDR >> (pin & 0xF)) & 1;
 }
 
 // 注册回调  及中断使能
@@ -277,16 +286,4 @@ extern "C"
 void InputPort::SetShakeTime(byte ms)
 {
 	shake_time = ms;
-}
-
-GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
-byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
-ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
-byte Port::BitsToIndex(byte bits)
-{
-    for(int i=0; i < 16; i++)
-    {
-        if((bits & 1) == 1) return i;
-    }
-    return 0xFF;
 }
