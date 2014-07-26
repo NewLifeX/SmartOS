@@ -25,8 +25,9 @@ private:
 
 public:
     SPI_TypeDef* SPI;
-    int Speed;
-    int Timeout;    // 操作超时次数，默认200
+    int Speed;  // 速度
+    int Retry;  // 等待重试次数，默认200
+    int Error;  // 错误次数
 
     Spi(int spi, int speedHz = 9000000, bool useNss = true);
     ~Spi();

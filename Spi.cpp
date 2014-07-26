@@ -3,7 +3,7 @@
 #include "Spi.h"
 
 static SPI_TypeDef* g_Spis[] = SPIS;
-static const Pin  g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
+static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
 Spi::Spi(int spi, int speedHz, bool useNss)
 {
@@ -31,7 +31,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     }
 
     Speed = speedHz;
-    Timeout = 200;
+    Retry = 200;
 
     //_nss = useNss ? spi_nss[spi] : P0;
     _nss = P0;
@@ -101,11 +101,10 @@ Spi::~Spi()
 
 byte Spi::WriteRead(byte data)
 {
-    int times = Timeout;
-	byte retry = 0;
+	int retry = Retry;
     while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
     {
-        if(retry++ > times) return 0; // 超时处理
+        if(--retry <= 0) return ++Error; // 超时处理
     }
 
 #ifdef STM32F10X
@@ -114,10 +113,10 @@ byte Spi::WriteRead(byte data)
 	SPI_SendData8(SPI, data);
 #endif
 
-	retry = 0;
+	retry = Retry;
 	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
     {
-        if(retry++ > times) return 0; // 超时处理
+        if(--retry <= 0) return ++Error; // 超时处理
     }
 #ifdef STM32F10X
 	return SPI_I2S_ReceiveData(SPI);
@@ -129,11 +128,10 @@ byte Spi::WriteRead(byte data)
 ushort Spi::WriteRead16(ushort data)
 {
     // 双字节操作，超时次数加倍
-    int times = Timeout << 1;
- 	uint retry = 0;
+	int retry = Retry << 1;
 	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
 	{
-        if(retry++ > times) return 0; // 超时处理
+        if(--retry <= 0) return ++Error; // 超时处理
 	}
 
 #ifdef STM32F10X
@@ -142,9 +140,10 @@ ushort Spi::WriteRead16(ushort data)
 	SPI_I2S_SendData16(SPI, data);
 #endif
 
+    retry = Retry << 1;
 	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET)
 	{
-        if(retry++ > times) return 0; // 超时处理
+        if(--retry <= 0) return ++Error; // 超时处理
 	}
 
 #ifdef STM32F10X
