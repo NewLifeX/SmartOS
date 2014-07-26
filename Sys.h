@@ -37,6 +37,8 @@ public:
     void Delay(uint us); // 微秒级延迟
     void DisableInterrupts();    // 关闭中断
     void EnableInterrupts();     // 打开中断
+
+    void (*OnError)(int code);  // 系统出错时引发
 };
 
 extern TSys Sys;

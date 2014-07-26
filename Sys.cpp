@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 
 TSys Sys;
 
@@ -290,12 +290,14 @@ void Bootstrap()
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
 
+void ShowError(int code) { printf("系统错误！%d\r\n", code); }
+
 TSys::TSys()
 {
 #if DEBUG
-    Debug = false;
-#else
     Debug = true;
+#else
+    Debug = false;
 #endif
 
     Clock = 72000000;
@@ -310,6 +312,12 @@ TSys::TSys()
     IsGD = Get_JTAG_ID() == 0x7A3;
 
     if(IsGD) Clock = 120000000;
+    
+#if DEBUG
+    OnError = ShowError;
+#else
+    OnError = 0;
+#endif
 }
 
 void TSys::Init(void)
@@ -329,13 +337,18 @@ void TSys::Init(void)
     delay_init(Clock/1000000);
 }
 
-/*extern "C"
+extern "C"
 {
-    void Reset_Handler()
+    void HardFault_Handler()
+    {
+        if(Sys.OnError) Sys.OnError(1);
+    }
+
+    /*void Reset_Handler()
     {
         Bootstrap();
         //SystemInit();
         //__main();
         //main();
-    }
-}*/
+    }*/
+}
