@@ -1,18 +1,7 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 #include "Port.h"
 #include "Spi.h"
 #include "AT45DB.h"
-
-#define READ       0xD2  /* Read from Memory instruction */
-#define WRITE      0x82  /* Write to Memory instruction */
-
-#define RDID       0x9F  /* Read identification */
-#define RDSR       0xD7  /* Read Status Register instruction  */
-
-#define SE         0x7C  /* Sector Erase instruction */
-#define PE         0x81  /* Page Erase instruction */
-
-#define RDY_Flag   0x80  /* Ready/busy(1/0) status flag */
 
 #define Dummy_Byte 0xA5
 
@@ -21,6 +10,8 @@ AT45DB::AT45DB(Spi* spi)
     _spi = spi;
     _spi->Stop();
 
+    // 在120M主频下用3000，其它主频不确定是否需要调整
+    Retry = 3000;
     //PageSize = 0x210;
     
     // 状态位最后一位决定页大小
@@ -44,6 +35,7 @@ AT45DB::AT45DB(Spi* spi)
 AT45DB::~AT45DB()
 {
     delete _spi;
+    _spi = NULL;
 }
 
 // 设置操作地址
@@ -58,89 +50,108 @@ void AT45DB::SetAddr(uint addr)
 }
 
 // 等待操作完成
-void AT45DB::WaitForEnd()
+bool AT45DB::WaitForEnd()
 {
-    uint8_t FLASH_Status = 0;
-
     _spi->Start();
 
-    /* Send "Read Status Register" instruction */
-    _spi->WriteRead(RDSR);
+    _spi->WriteRead(0xD7);
 
+    int retry = Retry;
+    byte status = 0;
     /* Loop as long as the memory is busy with a write cycle */
     do
     {
         /* Send a dummy byte to generate the clock needed by the FLASH
         and put the value of the status register in FLASH_Status variable */
-        FLASH_Status = _spi->WriteRead(Dummy_Byte);
+        status = _spi->WriteRead(Dummy_Byte);
     }
-    while ((FLASH_Status & RDY_Flag) == RESET); /* Busy in progress */
+    while ((status & 0x80) == RESET && --retry); /* Busy in progress */
 
     _spi->Stop();
+
+    // 重试次数没有用完，才返回成功
+    return retry > 0;
 }
 
 // 擦除扇区
-void AT45DB::Erase(uint sector)
+bool AT45DB::Erase(uint sector)
 {
     _spi->Start();
-    /* Send Sector Erase instruction */
-    _spi->WriteRead(SE);
+    _spi->WriteRead(0x7C);
     SetAddr(sector);
     _spi->Stop();
 
-    /* Wait the end of Flash writing */
-    WaitForEnd();
+    return WaitForEnd();
 }
 
 // 擦除页
-void AT45DB::ErasePage(uint pageAddr)
+bool AT45DB::ErasePage(uint pageAddr)
 {
     _spi->Start();
-    /* Send Sector Erase instruction */
-    _spi->WriteRead(PE);
+    _spi->WriteRead(0x81);
     SetAddr(pageAddr);
     _spi->Stop();
 
-    WaitForEnd();
+    return WaitForEnd();
 }
 
 // 按页写入
-void AT45DB::WritePage(uint addr, byte* buf, uint count)
+bool AT45DB::WritePage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
-    /* Send "Write to Memory " instruction */
-    _spi->WriteRead(WRITE);
+
+    /*_spi->WriteRead(0x82);
     SetAddr(addr);
 
-    /* while there is data to be written on the FLASH */
     while (count--)
     {
-        /* Send the current byte */
         _spi->WriteRead(*buf);
-        /* Point on the next byte to be written */
+        buf++;
+    }*/
+
+    WaitForEnd();
+    // 使用第二缓冲区来作为写入
+    _spi->WriteRead(0x87);
+
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
+    _spi->WriteRead(Dummy_Byte);
+
+    // 把数据写入缓冲区
+    while (count--)
+    {
+        _spi->WriteRead(*buf);
         buf++;
     }
+    _spi->Stop();
+    WaitForEnd();
+
+    _spi->Start();
+    // 将第二缓冲区的数据写入主存储器（擦除模式）
+    _spi->WriteRead(0x86);
+    SetAddr(addr);
 
     _spi->Stop();
 
-    WaitForEnd();
+    return WaitForEnd();
 }
 
 // 写入数据
-void AT45DB::Write(uint addr, byte* buf, uint count)
+bool AT45DB::Write(uint addr, byte* buf, uint count)
 {
     // 地址中不够一页的部分
-    byte addr2 = addr % PageSize;
+    uint addr2 = addr % PageSize;
     // 页数
-    byte pages =  count / PageSize;
+    uint pages =  count / PageSize;
     // 字节数中不够一页的部分
-    byte singles = count % PageSize;
+    uint singles = count % PageSize;
 
     if (addr2 == 0) /* 地址按页大小对齐 */
     {
         if (pages == 0) /* count < PageSize */
         {
-            WritePage(addr, buf, count);
+            return WritePage(addr, buf, count);
         }
         else /* count > PageSize */
         {
@@ -152,12 +163,12 @@ void AT45DB::Write(uint addr, byte* buf, uint count)
                 buf += PageSize;
             }
 
-            WritePage(addr, buf, singles);
+            return WritePage(addr, buf, singles);
         }
     }
     else /* 地址不是页大小对齐 */
     {
-        byte num = PageSize - addr2;
+        uint num = PageSize - addr2;
         if (pages == 0) /* count < PageSize */
         {
             // 如果要写入的数据跨两页，则需要分两次写入
@@ -169,11 +180,11 @@ void AT45DB::Write(uint addr, byte* buf, uint count)
                 addr +=  num;
                 buf += num;
 
-                WritePage(addr, buf, temp);
+                return WritePage(addr, buf, temp);
             }
             else
             {
-                WritePage(addr, buf, count);
+                return WritePage(addr, buf, count);
             }
         }
         else /* count > PageSize */
@@ -197,17 +208,22 @@ void AT45DB::Write(uint addr, byte* buf, uint count)
             {
                 WritePage(addr, buf, singles);
             }
+            
+            return true;
         }
     }
 }
 
-// 读取数据
-void AT45DB::Read(uint addr, byte* buf, uint count)
+// 读取一页
+bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
+    WaitForEnd();
 
-    /* Send "Read from Memory " instruction */
-    _spi->WriteRead(READ);
+    // 直接读取数据指令
+    //_spi->WriteRead(0xD2);
+    // 使用第二缓冲区来读取
+    _spi->WriteRead(0xD3);
 
     SetAddr(addr);
 
@@ -216,15 +232,92 @@ void AT45DB::Read(uint addr, byte* buf, uint count)
     _spi->WriteRead(Dummy_Byte);
     _spi->WriteRead(Dummy_Byte);
 
-    while (count--) /* while there is data to be read */
+    while (count--)
     {
-        /* Read a byte from the FLASH */
         *buf = _spi->WriteRead(Dummy_Byte);
-        /* Point to the next location where the byte read will be saved */
         buf++;
     }
 
     _spi->Stop();
+    
+    return WaitForEnd();
+}
+
+// 读取数据
+bool AT45DB::Read(uint addr, byte* buf, uint count)
+{
+    // 地址中不够一页的部分
+    byte addr2 = addr % PageSize;
+    // 页数
+    byte pages =  count / PageSize;
+    // 字节数中不够一页的部分
+    byte singles = count % PageSize;
+
+    if (addr2 == 0) /* 地址按页大小对齐 */
+    {
+        if (pages == 0) /* count < PageSize */
+        {
+            return ReadPage(addr, buf, count);
+        }
+        else /* count > PageSize */
+        {
+            // 逐页写入
+            while (pages--)
+            {
+                ReadPage(addr, buf, PageSize);
+                addr +=  PageSize;
+                buf += PageSize;
+            }
+
+            return ReadPage(addr, buf, singles);
+        }
+    }
+    else /* 地址不是页大小对齐 */
+    {
+        byte num = PageSize - addr2;
+        if (pages == 0) /* count < PageSize */
+        {
+            // 如果要写入的数据跨两页，则需要分两次写入
+            if (singles > num) /* (count + addr) > PageSize */
+            {
+                byte temp = singles - num;
+
+                ReadPage(addr, buf, num);
+                addr +=  num;
+                buf += num;
+
+                return ReadPage(addr, buf, temp);
+            }
+            else
+            {
+                return ReadPage(addr, buf, count);
+            }
+        }
+        else /* count > PageSize */
+        {
+            count -= num;
+            pages =  count / PageSize;
+            singles = count % PageSize;
+
+            ReadPage(addr, buf, num);
+            addr +=  num;
+            buf += num;
+
+            while (pages--)
+            {
+                ReadPage(addr, buf, PageSize);
+                addr +=  PageSize;
+                buf += PageSize;
+            }
+
+            if (singles != 0)
+            {
+                ReadPage(addr, buf, singles);
+            }
+            
+            return true;
+        }
+    }
 }
 
 // 读取编号
@@ -233,7 +326,7 @@ uint AT45DB::ReadID()
     _spi->Start();
 
     /* Send "RDID " instruction */
-    _spi->WriteRead(RDID);
+    _spi->WriteRead(0x9F);
 
     uint Temp0 = _spi->WriteRead(Dummy_Byte);
     uint Temp1 = _spi->WriteRead(Dummy_Byte);

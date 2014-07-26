@@ -157,6 +157,9 @@ ushort Spi::WriteRead16(ushort data)
 void Spi::Start()
 {
     if(_nss != P0) Port::Write(_nss, false);
+
+    // 开始新一轮事务操作，错误次数清零
+    Error = 0;
 }
 
 // 拉高NSS，停止传输
