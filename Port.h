@@ -61,13 +61,13 @@ public:
     static void Set(Pin pin, Mode_TypeDef mode = Mode_AF, bool isOD = true, Speed_TypeDef speed = Speed_2MHz, PuPd_TypeDef pupd = PuPd_NOPULL);
     static void SetInput(Pin pin, bool isFloating = true, Speed_TypeDef speed = Speed_2MHz);
     static void SetOutput(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_50MHz);
-    static void SetAlternate(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);
-    static void SetAnalog(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);
+    static void SetAlternate(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);	// 复用输出功能设置
+    static void SetAnalog(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);			// 模拟量输入输出
 
     static void Write(Pin pin, bool value);
     static bool Read(Pin pin);
-    static void Register(Pin pin, IOReadHandler handler);
-    static void SetShakeTime(byte ms);
+    static void Register(Pin pin, IOReadHandler handler);			// 申请引脚中断托管
+    static void SetShakeTime(byte ms);			//按键去抖动时间
 
     // 辅助函数
     static GPIO_TypeDef* IndexToGroup(byte index);
