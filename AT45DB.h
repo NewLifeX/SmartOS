@@ -15,11 +15,6 @@ private:
     // 等待操作完成
 	bool WaitForEnd();
 
-    // 写入一页
-	bool WritePage(uint addr, byte* buf, uint count);
-    // 读取一页
-	bool ReadPage(uint addr, byte* buf, uint count);
-
     // 读取编号
 	uint ReadID();
 public:
@@ -34,6 +29,11 @@ public:
     bool Erase(uint sector);
     // 擦除页
 	bool ErasePage(uint pageAddr);
+
+    // 写入一页
+	bool WritePage(uint addr, byte* buf, uint count);
+    // 读取一页
+	bool ReadPage(uint addr, byte* buf, uint count);
     // 写入数据
 	bool Write(uint addr, byte* buf, uint count);
     // 读取数据

@@ -100,16 +100,16 @@ bool AT45DB::WritePage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
 
-    /*_spi->WriteRead(0x82);
+    _spi->WriteRead(0x82);
     SetAddr(addr);
 
     while (count--)
     {
         _spi->WriteRead(*buf);
         buf++;
-    }*/
+    }
 
-    WaitForEnd();
+    /*WaitForEnd();
     // 使用第二缓冲区来作为写入
     _spi->WriteRead(0x87);
 
@@ -130,7 +130,7 @@ bool AT45DB::WritePage(uint addr, byte* buf, uint count)
     _spi->Start();
     // 将第二缓冲区的数据写入主存储器（擦除模式）
     _spi->WriteRead(0x86);
-    SetAddr(addr);
+    SetAddr(addr);*/
 
     _spi->Stop();
 
@@ -221,9 +221,9 @@ bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
     WaitForEnd();
 
     // 直接读取数据指令
-    //_spi->WriteRead(0xD2);
+    _spi->WriteRead(0xD2);
     // 使用第二缓冲区来读取
-    _spi->WriteRead(0xD3);
+    //_spi->WriteRead(0xD3);
 
     SetAddr(addr);
 
