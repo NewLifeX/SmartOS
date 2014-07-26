@@ -26,12 +26,16 @@ Port::Port(Pin pin)
 {
     Group = IndexToGroup(pin >> 4);
     PinBit = IndexToBits(pin & 0x0F);
+
+    //OnInit();
 }
 
 Port::Port(GPIO_TypeDef* group, ushort pinbit)
 {
     Group = group;
     PinBit = pinbit;
+
+    //OnInit();
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
@@ -41,7 +45,11 @@ Port::Port(Pin pins[])
     PinBit = 0;
     for(int i=0; i<sizeof(pins)/sizeof(Pin); i++)
         PinBit |= IndexToBits(pins[i] & 0x0F);
+
+    //OnInit();
 }
+
+//void Port::OnInit() { }
 
 // mode=Mode_IN/Mode_OUT/Mode_AF/Mode_AN
 // speed=Speed_50MHz/Speed_2MHz/Speed_10MHz
@@ -149,9 +157,9 @@ void Port::SetAlternate(Pin pin, bool isOD, Port::Speed_TypeDef speed)
     Set(pin, Port::Mode_AF, isOD, speed);
 }
 
-void Port::SetAnalog(Pin pin, bool isOD, Port::Speed_TypeDef speed)
+void Port::SetAnalog(Pin pin)
 {
-    Set(pin, Port::Mode_AN, isOD, speed);
+    Set(pin, Port::Mode_AN);
 }
 
 // 设置端口状态

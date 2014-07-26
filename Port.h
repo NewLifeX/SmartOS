@@ -42,7 +42,7 @@ public:
     ushort PinBit;       // 组内引脚位。每个引脚一个位
 
     Mode_TypeDef Mode;  // 模式
-    bool IsOD;          // 是否开漏输出
+    bool IsOD;          // 是否开漏输出OpenDrain
     Speed_TypeDef Speed;// 速度
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     
@@ -58,11 +58,11 @@ public:
     void WriteGroup(ushort value);   // 整组写入
     ushort ReadGroup();    // 整组读取
 
-    static void Set(Pin pin, Mode_TypeDef mode = Mode_AF, bool isOD = true, Speed_TypeDef speed = Speed_2MHz, PuPd_TypeDef pupd = PuPd_NOPULL);
+    static void Set(Pin pin, Mode_TypeDef mode = Mode_AF, bool isOD = false, Speed_TypeDef speed = Speed_2MHz, PuPd_TypeDef pupd = PuPd_NOPULL);
     static void SetInput(Pin pin, bool isFloating = true, Speed_TypeDef speed = Speed_2MHz);
-    static void SetOutput(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_50MHz);
-    static void SetAlternate(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);	// 复用输出功能设置
-    static void SetAnalog(Pin pin, bool isOD = true, Speed_TypeDef speed = Speed_2MHz);			// 模拟量输入输出
+    static void SetOutput(Pin pin, bool isOD = false, Speed_TypeDef speed = Speed_50MHz);
+    static void SetAlternate(Pin pin, bool isOD = false, Speed_TypeDef speed = Speed_10MHz);	// 复用输出功能设置
+    static void SetAnalog(Pin pin);			// 模拟量输入输出
 
     static void Write(Pin pin, bool value);
     static bool Read(Pin pin);
@@ -74,6 +74,95 @@ public:
     static byte GroupToIndex(GPIO_TypeDef* group);
     static ushort IndexToBits(byte index);
     static byte BitsToIndex(byte bits); // 最低那一个位的索引
+    
+    //Port& operator=(bool value) { Write(value); return *this; }
+    //Port& operator=(Port& port) { Write(port.Read()); return *this; }
+protected:
+    //virtual void OnInit();
+};
+
+// 输出口
+class OutputPort : public Port
+{
+    public:
+        OutputPort(Pin pin) : Port(pin) { OnInit(); }
+        OutputPort(Pin pins[]) : Port(pins) { OnInit(); }
+        OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : Port(group, pinbit) { OnInit(); }
+
+        OutputPort& operator=(bool value) { Write(value); return *this; }
+        OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }
+        operator bool() { return Read(); }
+
+    protected:
+        virtual void OnInit()
+        {
+            // 默认初始化为50M推挽输出
+            Mode = Port::Mode_OUT;
+            Speed = Port::Speed_50MHz;
+            IsOD = false;
+
+            Config();
+        }
+};
+
+// 输入口
+class InputPort : public virtual Port
+{
+     public:
+        InputPort(Pin pin) : Port(pin) { OnInit(); }
+        InputPort(Pin pins[]) : Port(pins) { OnInit(); }
+        InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : Port(group, pinbit) { OnInit(); }
+
+        operator bool() { return Read(); }
+
+   protected:
+        virtual void OnInit()
+        {
+            // 默认初始化为50M浮空
+            Mode = Port::Mode_IN;
+            Speed = Port::Speed_50MHz;
+            IsOD = false;
+
+            Config();
+        }
+};
+
+// 复用输出口
+class AlternatePort : public Port
+{
+    public:
+        AlternatePort(Pin pin) : Port(pin) { OnInit(); }
+        AlternatePort(Pin pins[]) : Port(pins) { OnInit(); }
+        AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : Port(group, pinbit) { OnInit(); }
+
+    protected:
+        virtual void OnInit()
+        {
+            // 默认初始化为10M浮空
+            Mode = Port::Mode_AF;
+            Speed = Port::Speed_10MHz;
+            IsOD = false;
+
+            Config();
+        }
+};
+
+// 模拟输入输出口
+class AnalogPort : public Port
+{
+    public:
+        AnalogPort(Pin pin) : Port(pin) { OnInit(); }
+        AnalogPort(Pin pins[]) : Port(pins) { OnInit(); }
+        AnalogPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : Port(group, pinbit) { OnInit(); }
+
+    protected:
+        virtual void OnInit()
+        {
+            // 默认初始化为50M浮空
+            Mode = Port::Mode_AN;
+
+            Config();
+        }
 };
 
 #endif //_Port_H_
