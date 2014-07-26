@@ -3,8 +3,6 @@
 #include "Spi.h"
 #include "SpiFlash.h"
 
-#define SPI_FLASH_PageSize    0x210
-
 #define READ       0xD2  /* Read from Memory instruction */
 #define WRITE      0x82  /* Write to Memory instruction */
 
@@ -18,6 +16,20 @@
 
 #define Dummy_Byte 0xA5
 
+SpiFlash::SpiFlash(Spi* spi)
+{
+    _spi = spi;
+    _spi->Stop();
+
+    PageSize = 0x210;
+}
+
+SpiFlash::~SpiFlash()
+{
+    delete _spi;
+}
+
+// 设置操作地址
 void SpiFlash::SetAddr(uint addr)
 {
     /* Send addr high nibble address byte */
@@ -28,11 +40,11 @@ void SpiFlash::SetAddr(uint addr)
     _spi->WriteRead(addr & 0xFF);
 }
 
+// 等待操作完成
 void SpiFlash::WaitForEnd()
 {
     uint8_t FLASH_Status = 0;
 
-    /* Select the FLASH: Chip Select low */
     _spi->Start();
 
     /* Send "Read Status Register" instruction */
@@ -47,23 +59,10 @@ void SpiFlash::WaitForEnd()
     }
     while ((FLASH_Status & RDY_Flag) == RESET); /* Busy in progress */
 
-    /* Deselect the FLASH: Chip Select high */
     _spi->Stop();
 }
 
-SpiFlash::SpiFlash(Spi* spi)
-{
-    _spi = spi;
-    /* Deselect the FLASH: Chip Select high */
-    _spi->Stop();
-    //_spi->Start();
-}
-
-SpiFlash::~SpiFlash()
-{
-    delete _spi;
-}
-
+// 擦除扇区
 void SpiFlash::Erase(uint sector)
 {
     _spi->Start();
@@ -76,6 +75,7 @@ void SpiFlash::Erase(uint sector)
     WaitForEnd();
 }
 
+// 擦除页
 void SpiFlash::ErasePage(uint pageAddr)
 {
     _spi->Start();
@@ -84,11 +84,11 @@ void SpiFlash::ErasePage(uint pageAddr)
     SetAddr(pageAddr);
     _spi->Stop();
 
-    /* Wait the end of Flash writing */
     WaitForEnd();
 }
 
-void SpiFlash::PageWrite(byte* buf, uint addr, uint count)
+// 按页写入
+void SpiFlash::WritePage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
     /* Send "Write to Memory " instruction */
@@ -104,83 +104,88 @@ void SpiFlash::PageWrite(byte* buf, uint addr, uint count)
         buf++;
     }
 
-    /* Deselect the FLASH: Chip Select high */
     _spi->Stop();
 
-    /* Wait the end of Flash writing */
     WaitForEnd();
 }
 
-void SpiFlash::Write(byte* buf, uint addr, uint count)
+// 写入数据
+void SpiFlash::Write(uint addr, byte* buf, uint count)
 {
-    byte addr2 = addr % SPI_FLASH_PageSize;
-    byte num = SPI_FLASH_PageSize - addr2;
-    byte pages =  count / SPI_FLASH_PageSize;
-    byte singles = count % SPI_FLASH_PageSize;
+    // 地址中不够一页的部分
+    byte addr2 = addr % PageSize;
+    // 页数
+    byte pages =  count / PageSize;
+    // 字节数中不够一页的部分
+    byte singles = count % PageSize;
 
-    if (addr2 == 0) /* addr is SPI_FLASH_PageSize aligned  */
+    if (addr2 == 0) /* 地址按页大小对齐 */
     {
-        if (pages == 0) /* count < SPI_FLASH_PageSize */
+        if (pages == 0) /* count < PageSize */
         {
-            PageWrite(buf, addr, count);
+            WritePage(addr, buf, count);
         }
-        else /* count > SPI_FLASH_PageSize */
+        else /* count > PageSize */
         {
+            // 逐页写入
             while (pages--)
             {
-                PageWrite(buf, addr, SPI_FLASH_PageSize);
-                addr +=  SPI_FLASH_PageSize;
-                buf += SPI_FLASH_PageSize;
+                WritePage(addr, buf, PageSize);
+                addr +=  PageSize;
+                buf += PageSize;
             }
 
-            PageWrite(buf, addr, singles);
+            WritePage(addr, buf, singles);
         }
-        }
-    else /* addr is not SPI_FLASH_PageSize aligned  */
+    }
+    else /* 地址不是页大小对齐 */
     {
-        if (pages == 0) /* count < SPI_FLASH_PageSize */
+        byte num = PageSize - addr2;
+        if (pages == 0) /* count < PageSize */
         {
-            if (singles > num) /* (count + addr) > SPI_FLASH_PageSize */
+            // 如果要写入的数据跨两页，则需要分两次写入
+            if (singles > num) /* (count + addr) > PageSize */
             {
                 byte temp = singles - num;
 
-                PageWrite(buf, addr, num);
+                WritePage(addr, buf, num);
                 addr +=  num;
                 buf += num;
 
-                PageWrite(buf, addr, temp);
+                WritePage(addr, buf, temp);
             }
             else
             {
-                PageWrite(buf, addr, count);
+                WritePage(addr, buf, count);
             }
         }
-        else /* count > SPI_FLASH_PageSize */
+        else /* count > PageSize */
         {
             count -= num;
-            pages =  count / SPI_FLASH_PageSize;
-            singles = count % SPI_FLASH_PageSize;
+            pages =  count / PageSize;
+            singles = count % PageSize;
 
-            PageWrite(buf, addr, num);
+            WritePage(addr, buf, num);
             addr +=  num;
             buf += num;
 
             while (pages--)
             {
-                PageWrite(buf, addr, SPI_FLASH_PageSize);
-                addr +=  SPI_FLASH_PageSize;
-                buf += SPI_FLASH_PageSize;
+                WritePage(addr, buf, PageSize);
+                addr +=  PageSize;
+                buf += PageSize;
             }
 
             if (singles != 0)
             {
-                PageWrite(buf, addr, singles);
+                WritePage(addr, buf, singles);
             }
         }
     }
 }
 
-void SpiFlash::Read(byte* buf, uint addr, uint count)
+// 读取数据
+void SpiFlash::Read(uint addr, byte* buf, uint count)
 {
     _spi->Start();
 
@@ -205,6 +210,7 @@ void SpiFlash::Read(byte* buf, uint addr, uint count)
     _spi->Stop();
 }
 
+// 读取编号
 uint SpiFlash::ReadID()
 {
     _spi->Start();
