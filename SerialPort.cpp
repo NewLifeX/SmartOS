@@ -79,11 +79,11 @@ void SerialPort::Open()
 #endif
 
 	//串口引脚初始化
+    AlternatePort ptx(tx, false, 10);
+    InputPort prx(rx);
 #ifdef STM32F0XX
-    //Sys.IO.OpenPort(tx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
-    //Sys.IO.OpenPort(rx, GPIO_Mode_AF, GPIO_Speed_10MHz, GPIO_OType_PP,GPIO_PuPd_NOPULL);
-    Port::SetAlternate(tx, false, Port::Speed_10MHz);
-    Port::SetInput(rx, true);	//TX		RX		COM		AF
+    //Port::SetAlternate(tx, false, Port::Speed_10MHz);
+    //Port::SetInput(rx, true);	//TX		RX		COM		AF
 	//PA2		PA3		COM2	AF1
 	//PA9		PA10	COM1	AF1
 	//PA14		PA15	COM2	AF1
@@ -91,10 +91,8 @@ void SerialPort::Open()
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
 #else
-    //Sys.IO.OpenPort(tx, GPIO_Mode_AF_PP, GPIO_Speed_50MHz);
-    //Sys.IO.Open(rx, GPIO_Mode_IN_FLOATING);
-    Port::SetAlternate(tx, false, Port::Speed_50MHz);
-    Port::SetInput(rx, true);
+    //Port::SetAlternate(tx, false, Port::Speed_50MHz);
+    //Port::SetInput(rx, true);
 #endif
 
     USART_StructInit(&p);
@@ -151,10 +149,10 @@ void SerialPort::Close()
 
     USART_DeInit(_port);
     
-    //Sys.IO.Close(tx);
-    //Sys.IO.Close(rx);
-    Port::SetAlternate(tx);
-    Port::SetAlternate(rx);
+    //Port::SetAlternate(tx);
+    //Port::SetAlternate(rx);
+    InputPort ptx(tx);
+    InputPort prx(rx);
 
 	// 检查重映射
 #ifdef STM32F1XX

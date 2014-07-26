@@ -34,22 +34,27 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     Retry = 200;
 
     //_nss = useNss ? spi_nss[spi] : P0;
-    _nss = P0;
+    //_nss = P0;
     if(useNss)
     {
-        _nss = ps[0];
+        //_nss = ps[0];
         if(SPI == SPI3)
         {
             //PA15是jtag接口中的一员 想要使用 必须开启remap
             RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);
             GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
         }
-        Port::SetOutput(_nss, false);
+        //Port::SetOutput(_nss, false);
+        _nss = new OutputPort(ps[0]);
     }
 
-	Port::SetAlternate(ps[1], false, Port::Speed_10MHz);
-	Port::SetAlternate(ps[2], false, Port::Speed_10MHz);
-	Port::SetAlternate(ps[3], false, Port::Speed_10MHz);
+	//Port::SetAlternate(ps[1], false, Port::Speed_10MHz);
+	//Port::SetAlternate(ps[2], false, Port::Speed_10MHz);
+	//Port::SetAlternate(ps[3], false, Port::Speed_10MHz);
+    // 仅仅配置，退出当前函数后，对象将自动释放
+    AlternatePort clk(ps[1], false, 10);
+    AlternatePort msio(ps[2], false, 10);
+    AlternatePort mosi(ps[3], false, 10);
 
 #ifdef STM32F10X
     /*使能SPI时钟*/
@@ -97,6 +102,8 @@ Spi::~Spi()
 
     SPI_Cmd(SPI, DISABLE);
     SPI_I2S_DeInit(SPI);
+    
+    if(_nss) delete _nss;
 }
 
 byte Spi::WriteRead(byte data)
@@ -156,7 +163,8 @@ ushort Spi::WriteRead16(ushort data)
 // 拉低NSS，开始传输
 void Spi::Start()
 {
-    if(_nss != P0) Port::Write(_nss, false);
+    //if(_nss != P0) Port::Write(_nss, false);
+    if(_nss) *_nss = false;
 
     // 开始新一轮事务操作，错误次数清零
     Error = 0;
@@ -165,5 +173,6 @@ void Spi::Start()
 // 拉高NSS，停止传输
 void Spi::Stop()
 {
-    if(_nss != P0) Port::Write(_nss, true);
+    //if(_nss != P0) Port::Write(_nss, true);
+    if(_nss) *_nss = true;
 }

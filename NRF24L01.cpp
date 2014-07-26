@@ -71,16 +71,19 @@ void nRF24L01_irq(Pin pin, bool opk);
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
-    _CE = ce;
-	if(_CE != P0) Port::SetOutput(_CE, false);
+    //_CE = ce;
+	//if(_CE != P0) Port::SetOutput(_CE, false);
+    if(ce != P0) _CE = new OutputPort(ce);
 
-    _IRQ = irq;
-    if(_IRQ != P0)
+    //_IRQ = irq;
+    if(irq != P0)
     {
         // 中断引脚初始化
-        Port::Set(_IRQ, Port::Mode_IN, false, Port::Speed_10MHz , Port::PuPd_UP);
+        //Port::Set(_IRQ, Port::Mode_IN, false, Port::Speed_10MHz , Port::PuPd_UP);
         // 中断引脚申请委托
-        Port::Register(_IRQ, nRF24L01_irq);
+        //Port::Register(_IRQ, nRF24L01_irq);
+        _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
+        _IRQ->Register(nRF24L01_irq);
     }
 
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
@@ -331,12 +334,14 @@ byte NRF24L01::Send(byte* data)
 
 void NRF24L01::CEUp()
 {
-    if(_CE != P0) Port::Write(_CE, true);
+    //if(_CE != P0) Port::Write(_CE, true);
+    if(_CE) *_CE = true;
 }
 
 void NRF24L01::CEDown()
 {
-    if(_CE != P0) Port::Write(_CE, false);
+    //if(_CE != P0) Port::Write(_CE, false);
+    if(_CE) *_CE = false;
 }
 
 //2401委托函数  未完成

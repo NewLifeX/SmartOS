@@ -24,8 +24,8 @@ class NRF24L01
 {
 private:
     Spi* _spi;
-    Pin _CE;
-    Pin _IRQ;
+    OutputPort* _CE;
+    InputPort* _IRQ;
 
     byte WriteBuf(byte reg ,byte *pBuf,byte bytes);
     byte ReadBuf(byte reg,byte *pBuf,byte bytes);
@@ -38,7 +38,12 @@ public:
     int Channel;    // 通讯频道
 
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
-    ~NRF24L01();
+    virtual ~NRF24L01()
+    {
+        if(_spi) delete _spi;
+        if(_CE) delete _CE;
+        if(_IRQ) delete _IRQ;
+    }
 
     byte Check(void);
     void EnterSend();

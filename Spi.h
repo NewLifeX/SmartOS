@@ -2,6 +2,7 @@
 #define __SPI_H__
 
 #include "Sys.h"
+#include "Port.h"
 
 #ifdef STM32F10X
 	#include "stm32f10x_spi.h"
@@ -21,7 +22,7 @@ class Spi
 {
 private:
     int _spi;
-    Pin _nss;
+    OutputPort* _nss;
 
 public:
     SPI_TypeDef* SPI;
@@ -30,7 +31,7 @@ public:
     int Error;  // 错误次数
 
     Spi(int spi, int speedHz = 9000000, bool useNss = true);
-    ~Spi();
+    virtual ~Spi();
 
     byte WriteRead(byte data);
     ushort WriteRead16(ushort data);
