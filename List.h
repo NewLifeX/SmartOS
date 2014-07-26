@@ -3,7 +3,23 @@
 
 #include "Sys.h"
 
-// 列表模版
+// 数组长度
+#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
+// 从数组创建列表
+#define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
+
+// 定长数组模版
+template<typename T, int array_size>
+struct array
+{
+    T Arr[array_size];
+    
+    int Count() { return array_size; }
+
+    //List<T> operator=(array arr) { return List<T>(arr.Arr, array_size); }
+};
+
+// 变长列表模版
 template<typename T>
 class List
 {
@@ -15,7 +31,17 @@ public:
         _total = size;
         arr = new T[size];
     }
-    List(T* items) { }
+    List(T* items, uint count)
+    {
+        arr = new T[count];
+
+        _count = 0;
+        _total = count;
+        for(int i=0; i<count; i++)
+        {
+            arr[_count++] = *items++;
+        }
+    }
 
     ~List() { if(arr) delete[] arr; arr = NULL; }
 
@@ -55,6 +81,7 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。内部不检查下标越界，外部好自为之
     T operator[](int i) { return arr[i]; }
     T* operator=(List list) { return list.ToArray(); }
+
 private:
     T* arr;
     uint _count;
