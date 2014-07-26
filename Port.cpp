@@ -35,11 +35,11 @@ void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
-void Port::SetPort(Pin pins[])
+void Port::SetPort(List<Pin> pins)
 {
     Group = IndexToGroup(pins[0] >> 4);
     PinBit = 0;
-    for(int i=0; i<sizeof(pins)/sizeof(Pin); i++)
+    for(int i=0; i<pins.Count(); i++)
         PinBit |= IndexToBits(pins[i] & 0x0F);
 }
 

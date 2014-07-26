@@ -18,6 +18,9 @@ typedef char*           string;
 typedef ushort			Pin;
 #include "Pin.h"
 
+// 列表模版
+#include "List.h"
+
 // 系统类
 class TSys
 {
