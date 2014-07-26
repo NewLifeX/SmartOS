@@ -11,7 +11,7 @@
 typedef struct TIntState
 {
     Pin Pin;
-    IOReadHandler Handler;
+    InputPort::IOReadHandler Handler;
     bool OldValue;
 } IntState;
 
@@ -22,85 +22,72 @@ static byte shake_time = 70;
 static IntState* State;
 
 // 单一引脚初始化
-Port::Port(Pin pin)
+void Port::SetPort(Pin pin)
 {
     Group = IndexToGroup(pin >> 4);
     PinBit = IndexToBits(pin & 0x0F);
-
-    //OnInit();
 }
 
-Port::Port(GPIO_TypeDef* group, ushort pinbit)
+void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
 {
     Group = group;
     PinBit = pinbit;
-
-    //OnInit();
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
-Port::Port(Pin pins[])
+void Port::SetPort(Pin pins[])
 {
     Group = IndexToGroup(pins[0] >> 4);
     PinBit = 0;
     for(int i=0; i<sizeof(pins)/sizeof(Pin); i++)
         PinBit |= IndexToBits(pins[i] & 0x0F);
-
-    //OnInit();
 }
-
-//void Port::OnInit() { }
 
 // mode=Mode_IN/Mode_OUT/Mode_AF/Mode_AN
 // speed=Speed_50MHz/Speed_2MHz/Speed_10MHz
 // type=OType_PP/OType_OD
 // PuPd= PuPd_NOPULL/ PuPd_UP  /PuPd_DOWN
-void SetPort(GPIO_TypeDef* group, short port, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
+void Port::Config()
 {
-    GPIO_InitTypeDef p;
-    // 初始化结构体，保险起见。为了节省代码空间，也可以不用
-    GPIO_StructInit(&p);
+    OnConfig();
+    GPIO_Init(Group, &gpio);
+}
 
+void Port::OnConfig()
+{
     // 打开时钟
-    int gi = Port::GroupToIndex(group);
+    int gi = Port::GroupToIndex(Group);
 #ifdef STM32F0XX
     RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
 #else
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
 #endif
 
-    p.GPIO_Pin = port;
-    p.GPIO_Speed = (GPIOSpeed_TypeDef)speed;
+    gpio.GPIO_Pin = PinBit;
+    //gpio.GPIO_Speed = (GPIOSpeed_TypeDef)speed;
 #ifdef STM32F0XX
-    p.GPIO_Mode = mode;
-    p.GPIO_OType = isOD ? GPIO_OType_OD : GPIO_OType_PP;	
+    gpio.GPIO_Mode = mode;
+    gpio.GPIO_OType = isOD ? GPIO_OType_OD : GPIO_OType_PP;	
 #else
-    switch(mode)
+    switch(Mode)
     {
         case Port::Mode_IN:
-            p.GPIO_Mode = isOD ? GPIO_Mode_AIN : GPIO_Mode_IN_FLOATING;
+            //p->GPIO_Mode = isOD ? GPIO_Mode_AIN : GPIO_Mode_IN_FLOATING;
             break;
         case Port::Mode_OUT:
-            p.GPIO_Mode = isOD ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+            //p->GPIO_Mode = isOD ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
             break;
         case Port::Mode_AF:
-            p.GPIO_Mode = isOD ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+            //p->GPIO_Mode = isOD ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
             break;
         case Port::Mode_AN:
-            p.GPIO_Mode = isOD ? GPIO_Mode_IPD : GPIO_Mode_IPU;
+            //p->GPIO_Mode = isOD ? GPIO_Mode_IPD : GPIO_Mode_IPU;
             break;
     }
 #endif
-
-    GPIO_Init(group, &p);
 }
 
-void Port::Config()
-{
-    SetPort(Group, PinBit, Mode, IsOD, Speed, PuPd);
-}
-
-void Port::Write(bool value)
+void OutputPort::Write(bool value)
 {
     if(value ^ Invert)
         GPIO_SetBits(Group, PinBit);
@@ -108,20 +95,20 @@ void Port::Write(bool value)
         GPIO_ResetBits(Group, PinBit);
 }
 
-void Port::WriteGroup(ushort value)
+void OutputPort::WriteGroup(ushort value)
 {
     GPIO_Write(Group, value);
 }
 
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-bool Port::Read()
+bool InputOutputPort::Read()
 {
     // 最低那一个位的索引
     //byte idx = BitsToIndex(PinBit);
     return (ReadGroup() & PinBit) ^ Invert;
 }
 
-ushort Port::ReadGroup()
+ushort InputOutputPort::ReadGroup()
 {
     switch(Mode)
     {
@@ -137,7 +124,7 @@ ushort Port::ReadGroup()
 }
 
 // 打开端口
-void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
+/*void Port::Set(Pin pin, Port::Mode_TypeDef mode, bool isOD, Port::Speed_TypeDef speed, Port::PuPd_TypeDef pupd)
 {
     SetPort(_GROUP(pin), _PORT(pin), mode, isOD, speed, pupd);
 }
@@ -160,10 +147,10 @@ void Port::SetAlternate(Pin pin, bool isOD, Port::Speed_TypeDef speed)
 void Port::SetAnalog(Pin pin)
 {
     Set(pin, Port::Mode_AN);
-}
+}*/
 
 // 设置端口状态
-void Port::Write(Pin pin, bool value)
+void OutputPort::Write(Pin pin, bool value)
 {
     if(value)
         GPIO_SetBits(_GROUP(pin), _PORT(pin));
@@ -172,14 +159,14 @@ void Port::Write(Pin pin, bool value)
 }
 
 // 读取端口状态
-bool Port::Read(Pin pin)
+bool InputOutputPort::Read(Pin pin)
 {
     GPIO_TypeDef* group = _GROUP(pin);
     return (group->IDR >> (pin & 0xF)) & 1;
 }
 
 // 注册回调  及中断使能
-void Port::Register(Pin pin, IOReadHandler handler)
+void InputPort::Register(IOReadHandler handler)
 {
     // 检查并初始化中断线数组
     if(!State)
@@ -192,11 +179,12 @@ void Port::Register(Pin pin, IOReadHandler handler)
         }
     }
 
-    byte pins = pin & 0x0F;
+    byte pins = GroupToIndex(Group);
     IntState* state = &State[pins];
     // 注册中断事件
     if(handler)
     {
+        ushort pin = (GroupToIndex(Group) << 4) + BitsToIndex(PinBit);
         // 检查是否已经注册到别的引脚上
         if(state->Pin != pin && state->Pin != P0)
         {
@@ -279,7 +267,7 @@ extern "C"
         do {
             //value = TIO_Read(state->Pin); // 获取引脚状态
             EXTI->PR = bit;   // 重置挂起位
-            value = Port::Read(state->Pin); // 获取引脚状态
+            value = InputOutputPort::Read(state->Pin); // 获取引脚状态
             Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
         } while (EXTI->PR & bit); // 如果再次挂起则重复
         //EXTI_ClearITPendingBit(line);
@@ -350,7 +338,7 @@ extern "C"
 #endif 		//IT
 }
 
-void Port::SetShakeTime(byte ms)
+void InputPort::SetShakeTime(byte ms)
 {
 	shake_time = ms;
 }
