@@ -1,6 +1,9 @@
 #include "Sys.h"
 
+#include "Time.h"
+
 TSys Sys;
+Time* g_Time;
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
@@ -13,45 +16,7 @@ TSys Sys;
 
 #define GD32_PLL_MASK	0x20000000
 
-byte fac_us;//全局变量		
-volatile uint TickStat;//全局变量	 为延时函数服务
-
-/****************************************************
-函数功能：延时初始化
-输入参数：SYSCLK : 系统时钟
-输出参数：无
-备    注：无
-*****************************************************/
-void delay_init(uint clk)
-{
-    NVIC_InitTypeDef NVIC_InitStructure;
-    /****************************************
-    *SystemFrequency/1000      1ms中断一次  *
-    *SystemFrequency/100000    10us中断一次 *
-    *SystemFrequency/1000000   1us中断一次  *
-    *****************************************/
-    SysTick->CTRL &=~BIT(2);//选择外部时钟
-    SysTick->CTRL |=BIT(1);//开启定时器减到0后的中断请求
-    fac_us = clk/8;//计算好SysTick加载值
-
-    /*初始化部分代码*/
-    SysTick->LOAD = (uint)fac_us*1000-1;//加载时间值
-    SysTick->VAL = 1;//随便写个值，清除加载寄存器的值
-    SysTick->CTRL |= BIT(0);//SysTick使能
-
-    /* Configure the NVIC Preemption Priority Bits */  
-    NVIC_InitStructure.NVIC_IRQChannel = (byte)SysTick_IRQn;
-#ifdef STM32F10X
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
-#else
-    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x00;			//想在中断里使用延时函数就必须让此中断优先级最高
-#endif
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
-}
-
-__asm void TSys::DisableInterrupts()
+__asm bool TSys::DisableInterrupts()
 {
 /*
     register UINT32 Primask __asm("primask");
@@ -68,7 +33,7 @@ __asm void TSys::DisableInterrupts()
     BX       lr
 #endif
 }
-__asm void TSys::EnableInterrupts()
+__asm bool TSys::EnableInterrupts()
 {
 /*
     register UINT32 Primask __asm("primask");
@@ -88,64 +53,9 @@ __asm void TSys::EnableInterrupts()
 #endif
 }
 
+void TSys::Sleep(uint ms) { g_Time->Sleep(ms * 1000); }
 
-//利用SysTick定时器产生1ms时基
-
-extern "C"
-{
-    // SysTick_Handler  		滴答定时器中断
-    void SysTick_Handler(void)				//需要最高优先级  必须有抢断任何其他中断的能力才能  //供其他中断内延时使用
-    {
-        if(TickStat) TickStat--;
-    }
-}
-
-/****************************************************
-函数功能：ms级延时
-输入参数：nms : 毫秒
-输出参数：无
-备    注：调用此函数前，需要初始化Delay_Init()函数
-*****************************************************/							    
-void TSys::Sleep(uint ms)
-{
-	TickStat = ms;
-	while(TickStat);
-}
-
-/****************************************************
-函数功能：us级延时
-输入参数：nus : 微秒
-输出参数：无
-备    注：调用此函数前，需要初始化Delay_Init()函数
-*****************************************************/		    								   
-void TSys::Delay(uint us)
-{		
-	uint t = SysTick->CTRL&0x00ffffff;		//SysTick  为24位倒计数定时器
-	uint tc = fac_us * us;
-	//if(nus<100){for();retrun}					//低于100微秒的延时就没有必要使用定时器作为时基了
-	if(us > 1000)										//如果延迟超过1ms 
-	{
-		Sleep(us / 1000);
-//		if(tc%1000==0)return;				//几率比较小  忽略此句、
-		tc=(tc%1000)*fac_us;				 
-	}
-	if((t-tc)>0)
-	{
-		while(SysTick->CTRL>(t-tc));
-		return;
-	}
-	else if((t-tc)==0)
-	{
-		while(SysTick->CTRL);
-		return;
-	}
-	else 
-	{
-		tc= SysTick->LOAD -(tc-t);				//低于1s  所以
-		while(SysTick->CTRL!=tc);
-		return;
-	}
-}
+void TSys::Delay(uint us) { g_Time->Sleep(us); }
 
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
@@ -307,7 +217,8 @@ TSys::TSys()
     ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
     ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
     ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
-    MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
+    //MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
+    MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
     IsGD = Get_JTAG_ID() == 0x7A3;
 
@@ -318,6 +229,14 @@ TSys::TSys()
 #else
     OnError = 0;
 #endif
+
+    g_Time = new Time();
+}
+
+TSys::~TSys()
+{
+    if(g_Time) delete g_Time;
+    g_Time = NULL;
 }
 
 void TSys::Init(void)
@@ -336,8 +255,6 @@ void TSys::Init(void)
 #ifdef STM32F10X
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
 #endif
-
-    delay_init(Clock/1000000);
 }
 
 extern "C"

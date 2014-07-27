@@ -9,6 +9,7 @@ typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
+typedef unsigned long   ulong;
 typedef char*           string;
 //typedef unsigned char   bool;
 #define true            1
@@ -35,11 +36,13 @@ public:
     bool IsGD;      // 是否GD芯片
 
     TSys();
+    virtual ~TSys();
+
     void Init();     // 初始化系统
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
-    void DisableInterrupts();    // 关闭中断
-    void EnableInterrupts();     // 打开中断
+    bool DisableInterrupts();    // 关闭中断
+    bool EnableInterrupts();     // 打开中断
 
     void (*OnError)(int code);  // 系统出错时引发
 };
