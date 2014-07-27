@@ -196,7 +196,12 @@ protected:
         gpio.GPIO_Mode = Mode_IN;
         //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;	
 #else
-        gpio.GPIO_Mode = Floating ? GPIO_Mode_IN_FLOATING : GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+        if(Floating)
+            gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+        else if(PuPd == PuPd_UP)
+            gpio.GPIO_Mode = GPIO_Mode_IPU;
+        else if(PuPd == PuPd_DOWN)
+            gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
 #endif
     }
 };
