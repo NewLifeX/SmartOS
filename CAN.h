@@ -1,0 +1,50 @@
+#ifndef __CAN_H__
+#define __CAN_H__
+
+#include "Sys.h"
+
+#ifdef STM32F10X
+	#include "stm32f10x_can.h"
+#else
+	#include "stm32f0xx_can.h"
+#endif
+
+// CAN类
+class CAN
+{
+public:
+    typedef enum
+    {
+        Mode_Send = 0x00,        // 发送模式
+        STD_Data = 0x01,    // 只接收标准数据帧
+        STD_Remote = 0x02,  // 只接收标准远程帧
+        STD = 0x03,         // 标准帧不会被过滤掉
+        EXT_Data = 0x04,    // 只接收扩展数据帧
+        EXT_Remote = 0x05,  // 只接收扩展远程帧
+        EXT = 0x06,         // 扩展帧不会被过滤掉
+        Mode_ALL = 0x07          // 接收所有类型
+    }Mode_TypeDef;
+
+    CAN_TypeDef* Port;  // 端口
+    Mode_TypeDef Mode;  // 工作模式
+
+    CAN(CAN_TypeDef* port = CAN1, Mode_TypeDef mode = Mode_Send, int remap = 1);
+    virtual ~CAN()
+    {
+        if(_TxMsg) delete _TxMsg;
+        _TxMsg = NULL;
+        if(_RxMsg) delete _RxMsg;
+        _RxMsg = NULL;
+    }
+
+    void Send(byte* buf, uint len);
+    
+private:
+    CAN_InitTypeDef _can;
+    int Remap;
+
+    CanTxMsg* _TxMsg;
+    CanRxMsg* _RxMsg;
+};
+
+#endif
