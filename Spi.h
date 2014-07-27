@@ -33,8 +33,8 @@ public:
     Spi(int spi, int speedHz = 9000000, bool useNss = true);
     virtual ~Spi();
 
-    byte WriteRead(byte data);
-    ushort WriteRead16(ushort data);
+    byte Write(byte data);
+    ushort Write16(ushort data);
 
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输

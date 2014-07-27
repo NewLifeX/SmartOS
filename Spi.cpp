@@ -45,7 +45,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
             GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
         }
         //Port::SetOutput(_nss, false);
-        _nss = new OutputPort(ps[0]);
+        _nss = new OutputPort(ps[0], false, 10);
     }
 
 	//Port::SetAlternate(ps[1], false, Port::Speed_10MHz);
@@ -107,7 +107,7 @@ Spi::~Spi()
     _nss = NULL;
 }
 
-byte Spi::WriteRead(byte data)
+byte Spi::Write(byte data)
 {
 	int retry = Retry;
     while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
@@ -133,7 +133,7 @@ byte Spi::WriteRead(byte data)
 #endif
 }
 
-ushort Spi::WriteRead16(ushort data)
+ushort Spi::Write16(ushort data)
 {
     // 双字节操作，超时次数加倍
 	int retry = Retry << 1;
