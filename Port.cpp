@@ -21,7 +21,8 @@ typedef struct TIntState
 static byte shake_time = 70;
 
 // 16条中断线
-static IntState* State;
+static IntState State[16];
+static bool hasInitState = false;
 
 void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
 void UnRegisterInput(int pinIndex);
@@ -33,21 +34,25 @@ void Port::SetPort(Pin pin)
 {
     Group = IndexToGroup(pin >> 4);
     PinBit = IndexToBits(pin & 0x0F);
+    Pin0 = pin;
 }
 
 void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
 {
     Group = group;
     PinBit = pinbit;
+    
+    Pin0 = (GroupToIndex(group) << 4) + BitsToIndex(pinbit);
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
-void Port::SetPort(List<Pin> pins)
+void Port::SetPort(Pin pins[], uint count)
 {
     Group = IndexToGroup(pins[0] >> 4);
     PinBit = 0;
-    for(int i=0; i<pins.Count(); i++)
+    for(int i=0; i<count; i++)
         PinBit |= IndexToBits(pins[i] & 0x0F);
+    Pin0 = pins[0];
 }
 
 void Port::Config()
@@ -109,7 +114,7 @@ void OutputPort::Write(bool value)
 InputPort::~InputPort()
 {
     // 取消所有中断
-    Register(NULL);
+    if(_Registed) Register(NULL);
 }
 
 // 注册回调  及中断使能
@@ -118,20 +123,21 @@ void InputPort::Register(IOReadHandler handler)
     if(!PinBit) return;
 
     // 检查并初始化中断线数组
-    if(!State)
+    if(!hasInitState)
     {
-        State = new IntState[16];
+        //State = new IntState[16];
         for(int i=0; i<16; i++)
         {
             State[i].Pin = P0;
             State[i].Handler = NULL;
             State[i].Used = 0;
         }
+        hasInitState = true;
     }
 
     byte groupIndex = GroupToIndex(Group);
-    uint n = PinBit;
-    for(int i=0; i<16 && n!=0; i++, n>>=1)
+    ushort n = PinBit;
+    for(int i=0; i<16 && n!=0; i++)
     {
         // 如果设置了这一位，则注册事件
         if(n & 0x01)
@@ -142,7 +148,10 @@ void InputPort::Register(IOReadHandler handler)
             else
                 UnRegisterInput(i);
         }
+        n >>= 1;
     }
+    
+    _Registed = handler != NULL;
 }
 
 
@@ -153,7 +162,7 @@ extern "C"
 {
     void GPIO_ISR (int num)  // 0 <= num <= 15
     {
-        if(!State) return;
+        if(!hasInitState) return;
 
         IntState* state = State + num;
         if(!state) return;

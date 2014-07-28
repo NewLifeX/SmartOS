@@ -14,7 +14,9 @@ class Port
 {
 public:
     GPIO_TypeDef* Group;// 针脚组
-    ushort PinBit;       // 组内引脚位。每个引脚一个位
+    ushort PinBit;      // 组内引脚位。每个引脚一个位
+    Pin Pin0;           // 第一个针脚
+
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
@@ -36,7 +38,7 @@ protected:
     }
 
     void SetPort(Pin pin);      // 单一引脚初始化
-    void SetPort(List<Pin> pins);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
+    void SetPort(Pin pins[], uint count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
     void SetPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
 
     // 配置过程，由Config调用，最后GPIO_Init
@@ -87,7 +89,7 @@ public:
     bool OpenDrain;  // 是否开漏输出
 
     OutputPort(Pin pin, bool openDrain = false, uint speed = 50) { SetPort(pin); Init(openDrain, speed); Config(); }
-    OutputPort(List<Pin> pins, bool openDrain = false, uint speed = 50) { SetPort(pins); Init(openDrain, speed); Config(); }
+    OutputPort(Pin pins[], uint count, bool openDrain = false, uint speed = 50) { SetPort(pins, count); Init(openDrain, speed); Config(); }
     OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); Config(); }
 
     void Write(bool value); // 按位值写入
@@ -124,15 +126,15 @@ class AlternatePort : public OutputPort
 {
 public:
     AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort(pin, openDrain, speed) { Init(); Config(); }
-    AlternatePort(List<Pin> pins, bool openDrain = false, uint speed = 10) : OutputPort(pins, openDrain, speed) { Init(); Config(); }
+    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort(pins, count, openDrain, speed) { Init(); Config(); }
     AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort(group, pinbit) { Init(); Config(); }
 
 protected:
-    void Init()
+    /*void Init()
     {
         OpenDrain = false;
         Speed = 10;
-    }
+    }*/
 
     virtual void OnConfig()
     {
@@ -165,7 +167,7 @@ public:
     bool Floating;      // 是否浮空输入
 
     InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pin); Init(floating, speed, pupd); }
-    InputPort(List<Pin> pins, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins); Init(floating, speed, pupd); }
+    InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins, count); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     ~InputPort();
@@ -188,6 +190,8 @@ protected:
         Speed = speed;
 
         Config();
+        
+        _Registed = false;
     }
 
     virtual void OnConfig()
@@ -206,7 +210,9 @@ protected:
             gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
 #endif
     }
-    //void Register(byte pinbit, IOReadHandler handler);   // 申请引脚中断托管
+
+private:
+    bool _Registed;
 };
 
 // 模拟输入输出口
