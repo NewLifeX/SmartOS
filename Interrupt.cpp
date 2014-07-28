@@ -49,7 +49,7 @@ void TInterrupt::Init()
                 | SCB_SHCSR_MEMFAULTENA;
 }
 
-bool TInterrupt::Activate(int irq, Callback isr, void* param)
+bool TInterrupt::Activate(int irq, Func isr)
 {
     Vectors[irq + 16] = (uint)isr; // exception = irq + 16
     __DMB(); // asure table is written

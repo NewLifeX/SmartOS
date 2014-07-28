@@ -47,7 +47,7 @@ Time::Time()
     //(*g_Interrupt).Activate
 	//Time_Handler = OnHandler;
 	// 再次打开中断，为了设定中断函数
-	Interrupt.Activate(SysTick_IRQn, OnHandler, 0);
+	Interrupt.Activate(SysTick_IRQn, OnHandler);
 }
 
 Time::~Time()
@@ -58,7 +58,7 @@ Time::~Time()
 	//SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
-void Time::OnHandler(void* param)
+void Time::OnHandler()
 {
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)

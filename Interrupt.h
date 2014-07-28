@@ -3,8 +3,6 @@
 
 #include "Sys.h"
 
-typedef void (*Callback)( void* arg );
-
 // 中断管理类
 class TInterrupt
 {
@@ -16,7 +14,7 @@ private:
 public:
     void Init();    // 初始化中断向量表
 
-    bool Activate(int irq, Callback isr, void* param);
+    bool Activate(int irq, Func isr);
     bool Deactivate(int irq);
     bool Enable(int irq);
     bool Disable(int irq);
@@ -31,8 +29,5 @@ public:
 };
 
 extern TInterrupt Interrupt;
-//extern TInterrupt* g_Interrupt;
-//#define Interrupt (*g_Interrupt);
-//#define Interrupt (*(TInterrupt*)TInterrupt::GetInstance());
 
 #endif
