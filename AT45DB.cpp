@@ -218,7 +218,6 @@ bool AT45DB::Write(uint addr, byte* buf, uint count)
 bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
-    WaitForEnd();
 
     // 直接读取数据指令
     _spi->Write(0xD2);
@@ -240,7 +239,7 @@ bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
 
     _spi->Stop();
     
-    return WaitForEnd();
+    return true;
 }
 
 // 读取数据
