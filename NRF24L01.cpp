@@ -86,10 +86,11 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         _IRQ->Register(nRF24L01_irq);
     }
 
+    // 必须先赋值，后面WriteReg需要用到
+    _spi = spi;
+
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
-
-    _spi = spi;
 }
 
 /**
