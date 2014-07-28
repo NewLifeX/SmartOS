@@ -97,7 +97,7 @@ public:
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
     OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }
-    operator bool() { return this != NULL; }
+    operator bool() { return Read(); }
 
 protected:
     void Init(bool openDrain = false, uint speed = 50)
