@@ -112,7 +112,7 @@ protected:
 
 #ifdef STM32F0XX
         gpio.GPIO_Mode = Mode_OUT;
-        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;	
+        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
 #endif
@@ -140,7 +140,7 @@ protected:
 
 #ifdef STM32F0XX
         gpio.GPIO_Mode = Mode_AF;
-        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;	
+        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
 #endif
@@ -168,13 +168,15 @@ public:
     InputPort(List<Pin> pins, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
+    ~InputPort();
+
     virtual ushort ReadGroup()    // 整组读取
     {
         return GPIO_ReadInputData(Group);
     }
 
-    void Register(IOReadHandler handler);   // 申请引脚中断托管
-    static void SetShakeTime(byte ms);			//设置按键去抖动时间
+    void Register(IOReadHandler handler);   // 注册事件
+    static void SetShakeTime(byte ms);      // 设置按键去抖动时间
 
     operator bool() { return Read(); }
 
@@ -194,7 +196,7 @@ protected:
 
 #ifdef STM32F0XX
         gpio.GPIO_Mode = Mode_IN;
-        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;	
+        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         if(Floating)
             gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
@@ -204,6 +206,7 @@ protected:
             gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
 #endif
     }
+    //void Register(byte pinbit, IOReadHandler handler);   // 申请引脚中断托管
 };
 
 // 模拟输入输出口
@@ -221,7 +224,7 @@ protected:
 
 #ifdef STM32F0XX
         gpio.GPIO_Mode = Mode_AN;
-        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;	
+        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = GPIO_Mode_AIN; // 这里很不确定，需要根据实际进行调整
 #endif
