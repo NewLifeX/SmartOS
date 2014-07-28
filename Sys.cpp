@@ -57,6 +57,8 @@ void TSys::Sleep(uint ms) { g_Time->Sleep(ms * 1000); }
 
 void TSys::Delay(uint us) { g_Time->Sleep(us); }
 
+void TSys::Reset() { NVIC_SystemReset(); }
+
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
 {
@@ -230,6 +232,7 @@ TSys::TSys()
     OnError = 0;
 #endif
 
+    Interrupt.Init();
     g_Time = new Time();
 }
 

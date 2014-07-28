@@ -1,4 +1,3 @@
-#include "Sys.h"
 #include "Time.h"
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
@@ -6,7 +5,7 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-void (*Time_Handler)(void);
+Func Time_Handler;
 
 Time::Time()
 {
@@ -15,8 +14,10 @@ Time::Time()
 	NextEvent = TIME_Completion_IdleValue;
 
 	// 准备使用外部时钟，Systick时钟=HCLK/8
+	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
 	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
+	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
 	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
@@ -40,29 +41,64 @@ Time::Time()
 #endif
     nvic.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic);
-
-	//Time_Handler = (void*)OnHandler;
+    
+    //(*(TInterrupt*)TInterrupt::GetInstance()).Activate(SysTick_IRQn, OnHandler, 0);
+    //g_Interrupt->Activate
+    //(*g_Interrupt).Activate
+	//Time_Handler = OnHandler;
+	// 再次打开中断，为了设定中断函数
+	Interrupt.Activate(SysTick_IRQn, OnHandler, 0);
 }
 
 Time::~Time()
 {
 	//Time_Handler = NULL;
+    Interrupt.Deactivate(SysTick_IRQn);
     // 关闭定时器
-	SysTick->CTRL &= ~SYSTICK_ENABLE;
+	//SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
-void Time::OnHandler()
+void Time::OnHandler(void* param)
 {
-    
+	// 累加计数
+	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
+	{
+		g_Time->Ticks += SysTick->LOAD;
+	}
 }
 
 void Time::SetCompare(ulong compareValue)
 {
+    Sys.DisableInterrupts();
+
+    NextEvent = compareValue;
+
+	ulong curTicks = CurrentTicks();
+
+	uint diff;
+
+	// 如果已经超过计划比较值，那么安排最小滴答，准备马上中断
+	if(curTicks >= NextEvent)
+		diff = 1;
+	// 计算下一次中断的间隔，最大为SYSTICK_MAXCOUNT
+	else if((compareValue - curTicks) > SYSTICK_MAXCOUNT)
+		diff = SYSTICK_MAXCOUNT;
+	else
+		diff = (uint)(compareValue - curTicks);
+
+	// 把时钟里面的剩余量累加到g_Ticks
+	Ticks = CurrentTicks();
+
+	// 重新设定重载值，下一次将在该值处中断
+	SysTick->LOAD = diff;
+	SysTick->VAL = 0x00;
+
+    Sys.EnableInterrupts();
 }
 
 ulong Time::CurrentTicks()
 {
-	Sys.DisableInterrupts();
+	//Sys.DisableInterrupts();
 
 	uint value = (SysTick->LOAD - SysTick->VAL);
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
@@ -70,7 +106,7 @@ ulong Time::CurrentTicks()
 		Ticks += SysTick->LOAD;
 	}
 
-    Sys.EnableInterrupts();
+    //Sys.EnableInterrupts();
 
 	return Ticks + value;
 }
