@@ -2,6 +2,7 @@
 #define _Sys_H_
 
 #include <stdio.h>
+#include <string.h>
 #include "stm32.h"
 
 /* 类型定义 */
@@ -9,15 +10,31 @@ typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
-typedef unsigned long   ulong;
+typedef unsigned long long  ulong;
 typedef char*           string;
 //typedef unsigned char   bool;
 #define true            1
 #define false           0
 
+/*
+// 尚未决定是否采用下面这种类型
+typedef char            SByte;
+typedef unsigned char   Byte;
+typedef short           Int16;
+typedef unsigned short  UInt16;
+typedef int             Int32;
+typedef unsigned int    UInt32;
+typedef long long       Int64;
+typedef unsigned long long  UInt64;
+typedef char*           String;
+*/
+
 /* 引脚定义 */
 typedef ushort			Pin;
 #include "Pin.h"
+
+// 委托
+typedef void (*Func)(void);
 
 // 列表模版
 #include "List.h"
@@ -44,9 +61,15 @@ public:
     bool DisableInterrupts();    // 关闭中断
     bool EnableInterrupts();     // 打开中断
 
+    void Reset();   // 重启系统
     void (*OnError)(int code);  // 系统出错时引发
+    Func OnStop;
 };
 
 extern TSys Sys;
+
+#include "Time.h"
+#include "Interrupt.h"
+
 
 #endif //_Sys_H_
