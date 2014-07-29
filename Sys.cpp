@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 
 #include "Time.h"
 
@@ -71,7 +71,7 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
-#if GD32 && STM32F10X
+#if defined(GD32) && defined(STM32F10X)
 void Bootstrap()
 {
     uint n = 0;
@@ -218,7 +218,7 @@ TSys::TSys()
     CystalClock = 8000000;    // 晶振时钟
     MessagePort = 0; // COM1;
 
-    ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
+    ID[0] = SCB->CPUID; // 高字节
     ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
     ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
     //MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
@@ -250,7 +250,7 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if GD32 && STM32F10X
+#if defined(GD32) && defined(STM32F10X)
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
 #else
