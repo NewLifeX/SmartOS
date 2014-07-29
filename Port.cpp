@@ -201,7 +201,7 @@ extern "C"
     void EXTI_IRQHandler(uint num, void* param)
     {
         // EXTI0 - EXTI4
-        if(num < EXTI4_IRQn)
+        if(num <= EXTI4_IRQn)
             GPIO_ISR(num - EXTI0_IRQn);
         else if(num == EXTI9_5_IRQn)
         {

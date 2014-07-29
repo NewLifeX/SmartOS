@@ -140,7 +140,7 @@ void TInterrupt::OnHandler()
     // 找到应用层中断委托并调用
     InterruptCallback isr = (InterruptCallback)Interrupt.Vectors[num];
     void* param = (void*)Interrupt.Params[num];
-    isr(num, param);
+    isr(num - 16, param);
 }
 
 void FAULT_SubHandler()
