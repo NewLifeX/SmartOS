@@ -58,7 +58,7 @@ Time::~Time()
 	//SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
-void Time::OnHandler(uint num, void* param)
+void Time::OnHandler(ushort num, void* param)
 {
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)

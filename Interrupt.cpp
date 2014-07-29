@@ -56,9 +56,9 @@ void TInterrupt::Init()
                 | SCB_SHCSR_MEMFAULTENA;
 }
 
-bool TInterrupt::Activate(int irq, InterruptCallback isr, void* param)
+bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
-    int irq2 = irq + 16; // exception = irq + 16
+    short irq2 = irq + 16; // exception = irq + 16
     _Vectors[irq2] = (uint)OnHandler;
     Vectors[irq2] = (uint)isr;
     Params[irq2] = (uint)param;
@@ -66,57 +66,68 @@ bool TInterrupt::Activate(int irq, InterruptCallback isr, void* param)
     __DMB(); // asure table is written
     //NVIC->ICPR[irq >> 5] = 1 << (irq & 0x1F); // clear pending bit
     //NVIC->ISER[irq >> 5] = 1 << (irq & 0x1F); // set enable bit
-    NVIC_ClearPendingIRQ((IRQn_Type)irq);
-    NVIC_EnableIRQ((IRQn_Type)irq);
+    if(irq >= 0)
+    {
+        NVIC_ClearPendingIRQ((IRQn_Type)irq);
+        NVIC_EnableIRQ((IRQn_Type)irq);
+    }
 
     return true;
 }
 
-bool TInterrupt::Deactivate(int irq)
+bool TInterrupt::Deactivate(short irq)
 {
-    int irq2 = irq + 16; // exception = irq + 16
+    short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = 0;
     Params[irq2] = 0;
 
     //NVIC->ICER[irq >> 5] = 1 << (irq & 0x1F); // clear enable bit */
-	NVIC_DisableIRQ((IRQn_Type)irq);
+    if(irq >= 0) NVIC_DisableIRQ((IRQn_Type)irq);
     return true;
 }
 
-bool TInterrupt::Enable(int irq)
+bool TInterrupt::Enable(short irq)
 {
+    if(irq < 0) return false;
+
     uint ier = NVIC->ISER[irq >> 5]; // old state
     //NVIC->ISER[irq >> 5] = 1 << (irq & 0x1F); // set enable bit
-	NVIC_EnableIRQ((IRQn_Type)irq);
+    NVIC_EnableIRQ((IRQn_Type)irq);
     return (ier >> (irq & 0x1F)) & 1; // old enable bit
 }
 
-bool TInterrupt::Disable(int irq)
+bool TInterrupt::Disable(short irq)
 {
+    if(irq < 0) return false;
+
     uint ier = NVIC->ISER[irq >> 5]; // old state
     //NVIC->ICER[irq >> 5] = 1 << (irq & 0x1F); // clear enable bit
-	NVIC_DisableIRQ((IRQn_Type)irq);
+    NVIC_DisableIRQ((IRQn_Type)irq);
     return (ier >> (irq & 0x1F)) & 1; // old enable bit
 }
 
-bool TInterrupt::EnableState(int irq)
+bool TInterrupt::EnableState(short irq)
 {
+    if(irq < 0) return false;
+
     // return enabled bit
     return (NVIC->ISER[(uint)irq >> 5] >> ((uint)irq & 0x1F)) & 1;
 }
 
-bool TInterrupt::PendingState(int irq)
+bool TInterrupt::PendingState(short irq)
 {
+    if(irq < 0) return false;
+
     // return pending bit
     return (NVIC->ISPR[(uint)irq >> 5] >> ((uint)irq & 0x1F)) & 1;
 }
 
-void TInterrupt::SetPriority(int irq, uint priority)
+void TInterrupt::SetPriority(short irq, uint priority)
 {
     NVIC_SetPriority((IRQn_Type)irq, priority);
 }
 
-void TInterrupt::GetPriority(int irq)
+void TInterrupt::GetPriority(short irq)
 {
     NVIC_GetPriority((IRQn_Type)irq);
 }

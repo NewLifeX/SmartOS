@@ -4,7 +4,7 @@
 #include "Sys.h"
 
 // 中断委托（中断号，参数）
-typedef void (*InterruptCallback)(uint num, void* param);
+typedef void (*InterruptCallback)(ushort num, void* param);
 
 // 中断管理类
 class TInterrupt
@@ -20,16 +20,16 @@ private:
 public:
     void Init();    // 初始化中断向量表
 
-    bool Activate(int irq, InterruptCallback isr, void* param = NULL);
-    bool Deactivate(int irq);
-    bool Enable(int irq);
-    bool Disable(int irq);
+    bool Activate(short irq, InterruptCallback isr, void* param = NULL);
+    bool Deactivate(short irq);
+    bool Enable(short irq);
+    bool Disable(short irq);
 
-    bool EnableState(int irq);
-    bool PendingState(int irq);
+    bool EnableState(short irq);
+    bool PendingState(short irq);
 
-    void SetPriority(int irq, uint priority);
-    void GetPriority(int irq);
+    void SetPriority(short irq, uint priority);
+    void GetPriority(short irq);
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
     void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);
 };

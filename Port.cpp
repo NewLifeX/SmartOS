@@ -202,7 +202,7 @@ extern "C"
     }
 
 #ifdef STM32F10X
-    void EXTI_IRQHandler(uint num, void* param)
+    void EXTI_IRQHandler(ushort num, void* param)
     {
         // EXTI0 - EXTI4
         if(num <= EXTI4_IRQn)
@@ -230,7 +230,7 @@ extern "C"
     }
 #else
     //stm32f0xx
-    void EXTI_IRQHandler(uint num, void* param)
+    void EXTI_IRQHandler(ushort num, void* param)
     {
         switch(num)
         {
