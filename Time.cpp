@@ -47,7 +47,7 @@ Time::Time()
     //(*g_Interrupt).Activate
 	//Time_Handler = OnHandler;
 	// 再次打开中断，为了设定中断函数
-	Interrupt.Activate(SysTick_IRQn, OnHandler);
+	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
 Time::~Time()
@@ -58,7 +58,7 @@ Time::~Time()
 	//SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
-void Time::OnHandler()
+void Time::OnHandler(uint num, void* param)
 {
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
@@ -138,11 +138,11 @@ void Time::Sleep(uint us)
 	if (!state) Sys.DisableInterrupts();
 }
 
-extern "C"
+/*extern "C"
 {
     // SysTick_Handler  		滴答定时器中断
     void SysTick_Handler(void) //需要最高优先级  必须有抢断任何其他中断的能力才能 供其他中断内延时使用
     {
         if(Time_Handler) Time_Handler();
     }
-}
+}*/

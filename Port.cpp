@@ -25,6 +25,11 @@ typedef struct TIntState
 static IntState State[16];
 static bool hasInitState = false;
 
+static int PORT_IRQns[] = { EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
+                       EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
+                       EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
+                        };
+
 void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
 void UnRegisterInput(int pinIndex);
 
@@ -193,60 +198,67 @@ extern "C"
     }
 
 #ifdef STM32F10X
-    void EXTI0_IRQHandler (void) { GPIO_ISR(0); } // EXTI0
-    void EXTI1_IRQHandler (void) { GPIO_ISR(1); } // EXTI1
-    void EXTI2_IRQHandler (void) { GPIO_ISR(2); } // EXTI2
-    void EXTI3_IRQHandler (void) { GPIO_ISR(3); } // EXTI3
-    void EXTI4_IRQHandler (void) { GPIO_ISR(4); } // EXTI4
-    void EXTI9_5_IRQHandler (void) // EXTI5 - EXTI9
+    void EXTI_IRQHandler(uint num, void* param)
     {
-        uint pending = EXTI->PR & EXTI->IMR & 0x03E0; // pending bits 5..9
-        int num = 5; pending >>= 5;
-        do {
-            if (pending & 1) GPIO_ISR(num);
-            num++; pending >>= 1;
-        } while (pending);
-    }
-
-    void EXTI15_10_IRQHandler (void) // EXTI10 - EXTI15
-    {
-        uint pending = EXTI->PR & EXTI->IMR & 0xFC00; // pending bits 10..15
-        int num = 10; pending >>= 10;
-        do {
-            if (pending & 1) GPIO_ISR(num);
-            num++; pending >>= 1;
-        } while (pending);
+        // EXTI0 - EXTI4
+        if(num < EXTI4_IRQn)
+            GPIO_ISR(num - EXTI0_IRQn);
+        else if(num == EXTI9_5_IRQn)
+        {
+            // EXTI5 - EXTI9
+            uint pending = EXTI->PR & EXTI->IMR & 0x03E0; // pending bits 5..9
+            int num = 5; pending >>= 5;
+            do {
+                if (pending & 1) GPIO_ISR(num);
+                num++; pending >>= 1;
+            } while (pending);
+        }
+        else if(num == EXTI15_10_IRQn)
+        {
+            // EXTI10 - EXTI15
+            uint pending = EXTI->PR & EXTI->IMR & 0xFC00; // pending bits 10..15
+            int num = 10; pending >>= 10;
+            do {
+                if (pending & 1) GPIO_ISR(num);
+                num++; pending >>= 1;
+            } while (pending);
+        }
     }
 #else
     //stm32f0xx
-    void EXTI0_1_IRQHandler(void)
+    void EXTI_IRQHandler(uint num, void* param)
     {
-        uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
-        int num = 0; pending >>= 0;
-        do {
-            if (pending & 1) GPIO_ISR(num);
-            num++; pending >>= 1;
-        } while (pending);
-    }
-
-    void EXTI2_3_IRQHandler(void)
-    {
-        uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
-        int num = 2; pending >>= 2;
-        do {
-            if (pending & 1) GPIO_ISR(num);
-            num++; pending >>= 1;
-        } while (pending);
-    }
-
-    void EXTI4_15_IRQHandler(void)
-    {
-        uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
-        int num = 4; pending >>= 4;
-        do {
-            if (pending & 1) GPIO_ISR(num);
-            num++; pending >>= 1;
-        } while (pending);
+        switch(num)
+        {
+            case EXTI0_1_IRQn:
+            {
+                uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
+                int num = 0; pending >>= 0;
+                do {
+                    if (pending & 1) GPIO_ISR(num);
+                    num++; pending >>= 1;
+                } while (pending);
+                break;
+            }
+            case EXTI2_3_IRQn:
+            {
+                uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
+                int num = 2; pending >>= 2;
+                do {
+                    if (pending & 1) GPIO_ISR(num);
+                    num++; pending >>= 1;
+                } while (pending);
+            }
+            case EXTI4_15_IRQn:
+            {
+                uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
+                int num = 4; pending >>= 4;
+                do {
+                    if (pending & 1) GPIO_ISR(num);
+                    num++; pending >>= 1;
+                } while (pending);
+            }
+        }
     }
 #endif
 
@@ -269,7 +281,7 @@ void OutputPort::Write(Pin pin, bool value)
 #endif
 
 // 申请引脚中断托管
-void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler)
+void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler)
 {
     IntState* state = &State[pinIndex];
     Pin pin = (Pin)((groupIndex << 4) + pinIndex);
@@ -328,33 +340,34 @@ void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handle
     NVIC_Init(&nvic);
 
     state->Used++;
-    if(state->Used)
+    if(state->Used == 1)
     {
-        switch(pinIndex)
+        Interrupt.Activate(PORT_IRQns[pinIndex], EXTI_IRQHandler, this);
+        /*switch(pinIndex)
         {
-            case 0: Interrupt.Activate(EXTI0_IRQn, EXTI0_IRQHandler); break;
-            case 1: Interrupt.Activate(EXTI1_IRQn, EXTI1_IRQHandler); break;
-            case 2: Interrupt.Activate(EXTI2_IRQn, EXTI2_IRQHandler); break;
-            case 3: Interrupt.Activate(EXTI3_IRQn, EXTI3_IRQHandler); break;
-            case 4: Interrupt.Activate(EXTI4_IRQn, EXTI4_IRQHandler); break;
+            case 0: Interrupt.Activate(EXTI0_IRQn, EXTI_IRQHandler, this); break;
+            case 1: Interrupt.Activate(EXTI1_IRQn, EXTI_IRQHandler, this); break;
+            case 2: Interrupt.Activate(EXTI2_IRQn, EXTI_IRQHandler, this); break;
+            case 3: Interrupt.Activate(EXTI3_IRQn, EXTI_IRQHandler, this); break;
+            case 4: Interrupt.Activate(EXTI4_IRQn, EXTI_IRQHandler, this); break;
             case 5:
             case 6:
             case 7:
             case 8:
             case 9:
-                Interrupt.Activate(EXTI9_5_IRQn, EXTI9_5_IRQHandler); break;
+                Interrupt.Activate(EXTI9_5_IRQn, EXTI_IRQHandler, this); break;
             case 10:
             case 11:
             case 12:
             case 13:
             case 14:
             case 15:
-                Interrupt.Activate(EXTI15_10_IRQn, EXTI15_10_IRQHandler); break;
-        }
+                Interrupt.Activate(EXTI15_10_IRQn, EXTI_IRQHandler, this); break;
+        }*/
     }
 }
 
-void UnRegisterInput(int pinIndex)
+void InputPort::UnRegisterInput(int pinIndex)
 {
     IntState* state = &State[pinIndex];
     // 取消注册
@@ -371,9 +384,10 @@ void UnRegisterInput(int pinIndex)
     NVIC_Init(&nvic);
 
     state->Used--;
-    if(state->Used >= 0)
+    if(state->Used == 0)
     {
-        switch(pinIndex)
+        Interrupt.Deactivate(PORT_IRQns[pinIndex]);
+        /*switch(pinIndex)
         {
             case 0: Interrupt.Deactivate(EXTI0_IRQn); break;
             case 1: Interrupt.Deactivate(EXTI1_IRQn); break;
@@ -395,7 +409,7 @@ void UnRegisterInput(int pinIndex)
             case 15:
                 // 最后一个中断销毁才关闭中断
                 if(!state->Used) Interrupt.Deactivate(EXTI15_10_IRQn); break;
-        }
+        }*/
     }
 }
 

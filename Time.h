@@ -7,7 +7,7 @@
 class Time
 {
 private:
-    static void OnHandler();
+    static void OnHandler(uint num, void* param);
 
 public:
     ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。乘以0x10000，避免每次计算滴答时都需要移位

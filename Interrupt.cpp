@@ -1,8 +1,16 @@
 #include "Interrupt.h"
 
+/*
+完全接管中断，在RAM中开辟中断向量表，做到随时可换。
+由于中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
+
+为了增强中断函数处理，我们使用_Vectors作为真正的中断向量表，全部使用OnHandler作为中断处理函数。
+然后在OnHandler内部获取中断号，再调用Vectors中保存的用户委托，并向它传递中断号和参数。
+*/
 TInterrupt Interrupt;
 
-uint GetException(); // 标准异常处理
+void IntcHandler();         // 标准中断处理
+uint GetInterruptNumber();  // 获取中断号
 void FAULT_SubHandler();
 
 void TInterrupt::Init()
@@ -18,22 +26,21 @@ void TInterrupt::Init()
 
     // 清零中断向量表
     memset((void*)_mem, 0, sizeof(_mem));
-    //memset((void*)Vectors, 0, sizeof(Vectors));
     
     // 中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
     byte* p = (byte*)_mem;
     while((uint)p % 128 != 0) p++;
-    Vectors = (uint*)p;
+    _Vectors = (uint*)p;
 
-    Vectors[2]  = (uint)&FAULT_SubHandler; // NMI
-    Vectors[3]  = (uint)&FAULT_SubHandler; // Hard Fault
-    Vectors[4]  = (uint)&FAULT_SubHandler; // MMU Fault
-    Vectors[5]  = (uint)&FAULT_SubHandler; // Bus Fault
-    Vectors[6]  = (uint)&FAULT_SubHandler; // Usage Fault
-    Vectors[11] = (uint)&FAULT_SubHandler; // SVC
-    Vectors[12] = (uint)&FAULT_SubHandler; // Debug
-    Vectors[14] = (uint)&FAULT_SubHandler; // PendSV
-    Vectors[15] = (uint)&FAULT_SubHandler; // Systick
+    _Vectors[2]  = (uint)&FAULT_SubHandler; // NMI
+    _Vectors[3]  = (uint)&FAULT_SubHandler; // Hard Fault
+    _Vectors[4]  = (uint)&FAULT_SubHandler; // MMU Fault
+    _Vectors[5]  = (uint)&FAULT_SubHandler; // Bus Fault
+    _Vectors[6]  = (uint)&FAULT_SubHandler; // Usage Fault
+    _Vectors[11] = (uint)&FAULT_SubHandler; // SVC
+    _Vectors[12] = (uint)&FAULT_SubHandler; // Debug
+    _Vectors[14] = (uint)&FAULT_SubHandler; // PendSV
+    _Vectors[15] = (uint)&FAULT_SubHandler; // Systick
 
     //for(int i=0; i<ArrayLength(Vectors); i++)
     //    Vectors[i] = (uint)&FAULT_SubHandler;
@@ -42,16 +49,20 @@ void TInterrupt::Init()
 
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
-    SCB->VTOR = (uint)Vectors; // 向量表基地址
+    SCB->VTOR = (uint)_Vectors; // 向量表基地址
     //NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)Vectors);
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
 }
 
-bool TInterrupt::Activate(int irq, Func isr)
+bool TInterrupt::Activate(int irq, InterruptCallback isr, void* param)
 {
-    Vectors[irq + 16] = (uint)isr; // exception = irq + 16
+    int irq2 = irq + 16; // exception = irq + 16
+    _Vectors[irq2] = (uint)OnHandler;
+    Vectors[irq2] = (uint)isr;
+    Params[irq2] = (uint)param;
+
     __DMB(); // asure table is written
     //NVIC->ICPR[irq >> 5] = 1 << (irq & 0x1F); // clear pending bit
     //NVIC->ISER[irq >> 5] = 1 << (irq & 0x1F); // set enable bit
@@ -63,6 +74,10 @@ bool TInterrupt::Activate(int irq, Func isr)
 
 bool TInterrupt::Deactivate(int irq)
 {
+    int irq2 = irq + 16; // exception = irq + 16
+    Vectors[irq2] = 0;
+    Params[irq2] = 0;
+
     //NVIC->ICER[irq >> 5] = 1 << (irq & 0x1F); // clear enable bit */
 	NVIC_DisableIRQ((IRQn_Type)irq);
     return true;
@@ -116,9 +131,21 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
     NVIC_DecodePriority(priority, priorityGroup, pPreemptPriority, pSubPriority);
 }
 
+void TInterrupt::OnHandler()
+{
+    uint num = GetInterruptNumber();
+    if(num >= 84) return;
+    if(!Interrupt.Vectors[num]) return;
+
+    // 找到应用层中断委托并调用
+    InterruptCallback isr = (InterruptCallback)Interrupt.Vectors[num];
+    void* param = (void*)Interrupt.Params[num];
+    isr(num, param);
+}
+
 void FAULT_SubHandler()
 {
-    uint exception = GetException();
+    uint exception = GetInterruptNumber();
     if (exception) {
         printf("EXCEPTION 0x%02x:\r\n", exception);
     } else {
@@ -211,7 +238,7 @@ void FAULT_SubHandler()
     while(true);
 }
 
-__asm uint GetException()
+__asm uint GetInterruptNumber()
 {
     mrs     r0,IPSR               // exception number
     bx      lr

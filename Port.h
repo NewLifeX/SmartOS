@@ -214,6 +214,9 @@ protected:
 
 private:
     bool _Registed;
+
+    void RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler);
+    void UnRegisterInput(int pinIndex);
 };
 
 // 模拟输入输出口
