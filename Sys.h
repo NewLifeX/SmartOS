@@ -30,11 +30,11 @@ typedef char*           String;
 */
 
 /* 引脚定义 */
-//typedef ushort			Pin;
+//typedef ushort Pin;
 #include "Pin.h"
 
 // 委托
-typedef void (*Func)(void);
+#include "Delegate.h"
 
 // 列表模版
 #include "List.h"
