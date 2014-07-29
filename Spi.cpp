@@ -7,7 +7,7 @@ static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
 Spi::Spi(int spi, int speedHz, bool useNss)
 {
-	if(spi > sizeof(g_Spis)) return;
+	if(spi > ArrayLength(g_Spis)) return;
 
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
     SPI = g_Spis[spi];
@@ -33,24 +33,19 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     Speed = speedHz;
     Retry = 200;
 
-    //_nss = useNss ? spi_nss[spi] : P0;
-    //_nss = P0;
     if(useNss)
     {
-        //_nss = ps[0];
+#ifdef STM32F10X
         if(SPI == SPI3)
         {
             //PA15是jtag接口中的一员 想要使用 必须开启remap
             RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);
             GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
         }
-        //Port::SetOutput(_nss, false);
+#endif
         _nss = new OutputPort(ps[0], false, 10);
     }
 
-	//Port::SetAlternate(ps[1], false, Port::Speed_10MHz);
-	//Port::SetAlternate(ps[2], false, Port::Speed_10MHz);
-	//Port::SetAlternate(ps[3], false, Port::Speed_10MHz);
     // 仅仅配置，退出当前函数后，对象将自动释放
     AlternatePort clk(ps[1], false, 10);
     AlternatePort msio(ps[2], false, 10);

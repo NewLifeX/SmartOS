@@ -58,6 +58,9 @@ Time::~Time()
 	//SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
+#ifdef STM32F0XX
+    #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
+#endif
 void Time::OnHandler(ushort num, void* param)
 {
 	// 累加计数

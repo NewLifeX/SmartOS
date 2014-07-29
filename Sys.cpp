@@ -71,6 +71,7 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
+#if GD32 && STM32F10X
 void Bootstrap()
 {
     uint n = 0;
@@ -201,6 +202,7 @@ void Bootstrap()
 	Sys.Clock = Sys.CystalClock * mull;
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
+#endif
 
 void ShowError(int code) { printf("系统错误！%d\r\n", code); }
 
@@ -248,7 +250,7 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if GD32
+#if GD32 && STM32F10X
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
 #else

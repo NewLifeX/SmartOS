@@ -10,8 +10,10 @@ typedef void (*InterruptCallback)(ushort num, void* param);
 class TInterrupt
 {
 private:
-    uint _mem[84 + 128 / 4];  // 中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
-    uint* _Vectors; // 真正的中断向量表
+#ifdef STM32F10X
+    __IO uint _mem[84 + 128 / 4];  // 中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
+#endif
+    __IO uint* _Vectors; // 真正的中断向量表
     uint Vectors[84];   // 对外的中断向量表
     uint Params[84];    // 每一个中断向量对应的参数
 
@@ -30,8 +32,10 @@ public:
 
     void SetPriority(short irq, uint priority);
     void GetPriority(short irq);
+#ifdef STM32F10X
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
     void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);
+#endif
 };
 
 extern TInterrupt Interrupt;

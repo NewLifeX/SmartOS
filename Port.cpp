@@ -25,11 +25,20 @@ typedef struct TIntState
 static IntState State[16];
 static bool hasInitState = false;
 
+#ifdef STM32F10X
 static int PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
     EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
+#else
+static int PORT_IRQns[] = {
+    EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
+    EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
+    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, 
+    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
+};
+#endif
 
 void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
 void UnRegisterInput(int pinIndex);
@@ -322,24 +331,12 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     // 打开并设置EXTI中断为低优先级
     NVIC_InitTypeDef nvic;
 #ifdef STM32F10X
-    //nvic.NVIC_IRQChannel = EXTI0_IRQn;
-    if(groupIndex < 5)
-        nvic.NVIC_IRQChannel = EXTI0_IRQn + groupIndex;
-    else if(groupIndex < 10)
-        nvic.NVIC_IRQChannel = EXTI9_5_IRQn;
-    else
-        nvic.NVIC_IRQChannel = EXTI15_10_IRQn;
     nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
     nvic.NVIC_IRQChannelSubPriority = 0x01;
 #else
-    if(pins < 0x02)
-        nvic.NVIC_IRQChannel = EXTI0_1_IRQn;
-    if(pins < 0x04)
-        nvic.NVIC_IRQChannel = EXTI2_3_IRQn;
-    else
-        nvic.NVIC_IRQChannel = EXTI4_15_IRQn;
     nvic.NVIC_IRQChannelPriority = 0x01;		//为滴答定时器让道  中断优先级不为最高
 #endif
+    nvic.NVIC_IRQChannel = PORT_IRQns[pinIndex];
     nvic.NVIC_IRQChannelCmd = ENABLE;
 
     NVIC_Init(&nvic);
@@ -348,27 +345,6 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     if(state->Used == 1)
     {
         Interrupt.Activate(PORT_IRQns[pinIndex], EXTI_IRQHandler, this);
-        /*switch(pinIndex)
-        {
-            case 0: Interrupt.Activate(EXTI0_IRQn, EXTI_IRQHandler, this); break;
-            case 1: Interrupt.Activate(EXTI1_IRQn, EXTI_IRQHandler, this); break;
-            case 2: Interrupt.Activate(EXTI2_IRQn, EXTI_IRQHandler, this); break;
-            case 3: Interrupt.Activate(EXTI3_IRQn, EXTI_IRQHandler, this); break;
-            case 4: Interrupt.Activate(EXTI4_IRQn, EXTI_IRQHandler, this); break;
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-                Interrupt.Activate(EXTI9_5_IRQn, EXTI_IRQHandler, this); break;
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-                Interrupt.Activate(EXTI15_10_IRQn, EXTI_IRQHandler, this); break;
-        }*/
     }
 }
 
@@ -392,33 +368,5 @@ void InputPort::UnRegisterInput(int pinIndex)
     if(state->Used == 0)
     {
         Interrupt.Deactivate(PORT_IRQns[pinIndex]);
-        /*switch(pinIndex)
-        {
-            case 0: Interrupt.Deactivate(EXTI0_IRQn); break;
-            case 1: Interrupt.Deactivate(EXTI1_IRQn); break;
-            case 2: Interrupt.Deactivate(EXTI2_IRQn); break;
-            case 3: Interrupt.Deactivate(EXTI3_IRQn); break;
-            case 4: Interrupt.Deactivate(EXTI4_IRQn); break;
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-                // 最后一个中断销毁才关闭中断
-                if(!state->Used) Interrupt.Deactivate(EXTI9_5_IRQn); break;
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-            case 15:
-                // 最后一个中断销毁才关闭中断
-                if(!state->Used) Interrupt.Deactivate(EXTI15_10_IRQn); break;
-        }*/
     }
 }
-
-/*void InputPort::SetShakeTime(byte ms)
-{
-	shake_time = ms;
-}*/

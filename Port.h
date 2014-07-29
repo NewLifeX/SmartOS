@@ -109,7 +109,7 @@ protected:
         InputOutputPort::OnConfig();
 
 #ifdef STM32F0XX
-        gpio.GPIO_Mode = Mode_OUT;
+        gpio.GPIO_Mode = GPIO_Mode_OUT;
         gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
@@ -137,7 +137,7 @@ protected:
         InputOutputPort::OnConfig();
 
 #ifdef STM32F0XX
-        gpio.GPIO_Mode = Mode_AF;
+        gpio.GPIO_Mode = GPIO_Mode_AF;
         gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
@@ -196,7 +196,7 @@ protected:
         InputOutputPort::OnConfig();
 
 #ifdef STM32F0XX
-        gpio.GPIO_Mode = Mode_IN;
+        gpio.GPIO_Mode = GPIO_Mode_IN;
         //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         if(Floating)
@@ -229,7 +229,7 @@ protected:
         Port::OnConfig();
 
 #ifdef STM32F0XX
-        gpio.GPIO_Mode = Mode_AN;
+        gpio.GPIO_Mode = GPIO_Mode_AN;
         //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
         gpio.GPIO_Mode = GPIO_Mode_AIN; // 这里很不确定，需要根据实际进行调整

@@ -1,4 +1,4 @@
-﻿#include "Interrupt.h"
+#include "Interrupt.h"
 
 /*
 完全接管中断，在RAM中开辟中断向量表，做到随时可换。
@@ -13,17 +13,27 @@ void IntcHandler();         // 标准中断处理
 uint GetInterruptNumber();  // 获取中断号
 void FAULT_SubHandler();
 
+#ifdef STM32F0XX
+    __IO uint VectorTable[48] __attribute__((at(0x20000000)));
+#endif
+
 void TInterrupt::Init()
 {
     // 禁用所有中断
     NVIC->ICER[0] = 0xFFFFFFFF;
+#ifdef STM32F10X
     NVIC->ICER[1] = 0xFFFFFFFF;
     NVIC->ICER[2] = 0xFFFFFFFF;
+#endif
+
     // 清除所有中断位
     NVIC->ICPR[0] = 0xFFFFFFFF;
+#ifdef STM32F10X
     NVIC->ICPR[1] = 0xFFFFFFFF;
     NVIC->ICPR[2] = 0xFFFFFFFF;
+#endif
 
+#ifdef STM32F10X
     // 清零中断向量表
     memset((void*)_mem, 0, sizeof(_mem));
     
@@ -31,6 +41,9 @@ void TInterrupt::Init()
     byte* p = (byte*)_mem;
     while((uint)p % 128 != 0) p++;
     _Vectors = (uint*)p;
+#else
+    _Vectors = VectorTable;
+#endif
 
     _Vectors[2]  = (uint)&FAULT_SubHandler; // NMI
     _Vectors[3]  = (uint)&FAULT_SubHandler; // Hard Fault
@@ -42,9 +55,7 @@ void TInterrupt::Init()
     _Vectors[14] = (uint)&FAULT_SubHandler; // PendSV
     _Vectors[15] = (uint)&FAULT_SubHandler; // Systick
 
-    //for(int i=0; i<ArrayLength(Vectors); i++)
-    //    Vectors[i] = (uint)&FAULT_SubHandler;
-
+#ifdef STM32F10X
     __DMB(); // 确保中断表已经被写入
 
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
@@ -54,6 +65,12 @@ void TInterrupt::Init()
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
+#else
+    /* Enable the SYSCFG peripheral clock*/
+    RCC_APB2PeriphResetCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+    /* Remap SRAM at 0x00000000 */
+    SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_SRAM);
+#endif
 }
 
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
@@ -132,6 +149,7 @@ void TInterrupt::GetPriority(short irq)
     NVIC_GetPriority((IRQn_Type)irq);
 }
 
+#ifdef STM32F10X
 uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority)
 {
     return NVIC_EncodePriority(priorityGroup, preemptPriority, subPriority);
@@ -141,6 +159,7 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 {
     NVIC_DecodePriority(priority, priorityGroup, pPreemptPriority, pSubPriority);
 }
+#endif
 
 void TInterrupt::OnHandler()
 {
@@ -171,7 +190,9 @@ void FAULT_SubHandler()
 	if(exception==5)
 	{
 		i = *(byte*)(0xE000ED29);
+#ifdef STM32F10X
 		printf("\r\nBus Fault %d 0x%08x: ", i, SCB->BFAR);
+#endif
 		switch(i)
 		{
 		case 0:
@@ -197,7 +218,9 @@ void FAULT_SubHandler()
 	}else if(exception==4)
 	{
 		i = *(byte*)(0xE000ED28);
+#ifdef STM32F10X
 		printf("\r\nMemManage Fault %d 0x%08x: ", i, SCB->MMFAR);
+#endif
 		switch(i)
 		{
 		case 0:
