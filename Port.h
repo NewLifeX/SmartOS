@@ -102,11 +102,7 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    void Init(bool openDrain = false, uint speed = 50)
-    {
-        OpenDrain = openDrain;
-        Speed = speed;
-    }
+    OutputPort() { }
 
     virtual void OnConfig()
     {
@@ -119,23 +115,23 @@ protected:
         gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
 #endif
     }
+
+    void Init(bool openDrain = false, uint speed = 50)
+    {
+        OpenDrain = openDrain;
+        Speed = speed;
+    }
 };
 
 // 复用输出口
 class AlternatePort : public OutputPort
 {
 public:
-    AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort(pin, openDrain, speed) { }
-    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort(pins, count, openDrain, speed) { }
-    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort(group, pinbit) { }
+    AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
+    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
+    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort() { SetPort(group, pinbit); Init(); Config(); }
 
 protected:
-    /*void Init()
-    {
-        OpenDrain = false;
-        Speed = 10;
-    }*/
-
     virtual void OnConfig()
     {
         InputOutputPort::OnConfig();
@@ -179,7 +175,6 @@ public:
     }
 
     void Register(IOReadHandler handler);   // 注册事件
-    //static void SetShakeTime(byte ms);      // 设置按键去抖动时间
 
     operator bool() { return Read(); }
 
