@@ -108,7 +108,7 @@ void SerialPort::Open()
     {
         case COM1: nvic.NVIC_IRQChannel = USART1_IRQn; break;
         case COM2: nvic.NVIC_IRQChannel = USART2_IRQn; break;
-#if STM32F10x
+#ifdef STM32F10X
         case COM3: nvic.NVIC_IRQChannel = USART3_IRQn; break;
         case COM4: nvic.NVIC_IRQChannel = UART4_IRQn; break;
         case COM5: nvic.NVIC_IRQChannel = UART5_IRQn; break;
