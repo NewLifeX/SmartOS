@@ -190,9 +190,10 @@ protected:
         Floating = floating;
         Speed = speed;
 
-        Config();
-        
         _Registed = false;
+        ShakeTime = 20;
+
+        Config();
     }
 
     virtual void OnConfig()
