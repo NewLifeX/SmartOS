@@ -218,9 +218,15 @@ TSys::TSys()
     CystalClock = 8000000;    // 晶振时钟
     MessagePort = 0; // COM1;
 
+#ifdef STM32F10X
     ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
     ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
     ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
+#else
+    ID[0] = *(__IO uint *)(0X1FFFF7B4); // 高字节
+    ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
+    ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
+#endif
     //MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
     MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
