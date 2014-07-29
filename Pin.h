@@ -1,120 +1,139 @@
-﻿#ifndef _PIN_H_
+#ifndef _PIN_H_
 #define _PIN_H_ 1
-
+	
 /* 针脚 ------------------------------------------------------------------*/
-#define P0 0xFFFF
-#define PA0 0
-#define PA1 1
-#define PA2 2
-#define PA3 3
-#define PA4 4
-#define PA5 5
-#define PA6 6
-#define PA7 7
-#define PA8 8
-#define PA9 9
-#define PA10 10
-#define PA11 11
-#define PA12 12
-#define PA13 13
-#define PA14 14
-#define PA15 15
-#define PB0 16
-#define PB1 17
-#define PB2 18
-#define PB3 19
-#define PB4 20
-#define PB5 21
-#define PB6 22
-#define PB7 23
-#define PB8 24
-#define PB9 25
-#define PB10 26
-#define PB11 27
-#define PB12 28
-#define PB13 29
-#define PB14 30
-#define PB15 31
-#define PC0 32
-#define PC1 33
-#define PC2 34
-#define PC3 35
-#define PC4 36
-#define PC5 37
-#define PC6 38
-#define PC7 39
-#define PC8 40
-#define PC9 41
-#define PC10 42
-#define PC11 43
-#define PC12 44
-#define PC13 45
-#define PC14 46
-#define PC15 47
-#define PD0 48
-#define PD1 49
-#define PD2 50
-#define PD3 51
-#define PD4 52
-#define PD5 53
-#define PD6 54
-#define PD7 55
-#define PD8 56
-#define PD9 57
-#define PD10 58
-#define PD11 59
-#define PD12 60
-#define PD13 61
-#define PD14 62
-#define PD15 63
-#define PE0 64
-#define PE1 65
-#define PE2 66
-#define PE3 67
-#define PE4 68
-#define PE5 69
-#define PE6 70
-#define PE7 71
-#define PE8 72
-#define PE9 73
-#define PE10 74
-#define PE11 75
-#define PE12 76
-#define PE13 77
-#define PE14 78
-#define PE15 79
-#define PF0 80
-#define PF1 81
-#define PF2 82
-#define PF3 83
-#define PF4 84
-#define PF5 85
-#define PF6 86
-#define PF7 87
-#define PF8 88
-#define PF9 89
-#define PF10 90
-#define PF11 91
-#define PF12 92
-#define PF13 93
-#define PF14 94
-#define PF15 95
-#define PG0 96
-#define PG1 97
-#define PG2 98
-#define PG3 99
-#define PG4 100
-#define PG5 101
-#define PG6 102
-#define PG7 103
-#define PG8 104
-#define PG9 105
-#define PG10 106
-#define PG11 107
-#define PG12 108
-#define PG13 109
-#define PG14 110
-#define PG15 111
+enum Pin
+{
+	P0 = 0xFFFF,
+    PA0 = 0x00,
+    PA1 = 0x01,
+    PA2 = 0x02,
+    PA3 = 0x03,
+    PA4 = 0x04,
+    PA5 = 0x05,
+    PA6 = 0x06,
+    PA7 = 0x07,
+    PA8 = 0x08,
+    PA9 = 0x09,
+    PA10 = 0x0A,
+    PA11 = 0x0B,
+    PA12 = 0x0C,
+    PA13 = 0x0D,
+    PA14 = 0x0E,
+    PA15 = 0x0F,
+    PB0 = 0x10,
+    PB1 = 0x11,
+    PB2 = 0x12,
+    PB3 = 0x13,
+    PB4 = 0x14,
+    PB5 = 0x15,
+    PB6 = 0x16,
+    PB7 = 0x17,
+    PB8 = 0x18,
+    PB9 = 0x19,
+    PB10 = 0x1A,
+    PB11 = 0x1B,
+    PB12 = 0x1C,
+    PB13 = 0x1D,
+    PB14 = 0x1E,
+    PB15 = 0x1F,
+    PC0 = 0x20,
+    PC1 = 0x21,
+    PC2 = 0x22,
+    PC3 = 0x23,
+    PC4 = 0x24,
+    PC5 = 0x25,
+    PC6 = 0x26,
+    PC7 = 0x27,
+    PC8 = 0x28,
+    PC9 = 0x29,
+    PC10 = 0x2A,
+    PC11 = 0x2B,
+    PC12 = 0x2C,
+    PC13 = 0x2D,
+    PC14 = 0x2E,
+    PC15 = 0x2F,
+    PD0 = 0x30,
+    PD1 = 0x31,
+    PD2 = 0x32,
+    PD3 = 0x33,
+    PD4 = 0x34,
+    PD5 = 0x35,
+    PD6 = 0x36,
+    PD7 = 0x37,
+    PD8 = 0x38,
+    PD9 = 0x39,
+    PD10 = 0x3A,
+    PD11 = 0x3B,
+    PD12 = 0x3C,
+    PD13 = 0x3D,
+    PD14 = 0x3E,
+    PD15 = 0x3F,
+    PE0 = 0x40,
+    PE1 = 0x41,
+    PE2 = 0x42,
+    PE3 = 0x43,
+    PE4 = 0x44,
+    PE5 = 0x45,
+    PE6 = 0x46,
+    PE7 = 0x47,
+    PE8 = 0x48,
+    PE9 = 0x49,
+    PE10 = 0x4A,
+    PE11 = 0x4B,
+    PE12 = 0x4C,
+    PE13 = 0x4D,
+    PE14 = 0x4E,
+    PE15 = 0x4F,
+    PF0 = 0x50,
+    PF1 = 0x51,
+    PF2 = 0x52,
+    PF3 = 0x53,
+    PF4 = 0x54,
+    PF5 = 0x55,
+    PF6 = 0x56,
+    PF7 = 0x57,
+    PF8 = 0x58,
+    PF9 = 0x59,
+    PF10 = 0x5A,
+    PF11 = 0x5B,
+    PF12 = 0x5C,
+    PF13 = 0x5D,
+    PF14 = 0x5E,
+    PF15 = 0x5F,
+    PG0 = 0x60,
+    PG1 = 0x61,
+    PG2 = 0x62,
+    PG3 = 0x63,
+    PG4 = 0x64,
+    PG5 = 0x65,
+    PG6 = 0x66,
+    PG7 = 0x67,
+    PG8 = 0x68,
+    PG9 = 0x69,
+    PG10 = 0x6A,
+    PG11 = 0x6B,
+    PG12 = 0x6C,
+    PG13 = 0x6D,
+    PG14 = 0x6E,
+    PG15 = 0x6F,
+    PH0 = 0x70,
+    PH1 = 0x71,
+    PH2 = 0x72,
+    PH3 = 0x73,
+    PH4 = 0x74,
+    PH5 = 0x75,
+    PH6 = 0x76,
+    PH7 = 0x77,
+    PH8 = 0x78,
+    PH9 = 0x79,
+    PH10 = 0x7A,
+    PH11 = 0x7B,
+    PH12 = 0x7C,
+    PH13 = 0x7D,
+    PH14 = 0x7E,
+    PH15 = 0x7F
+};
 
 #if defined(STM32F4XX)
 	#include "stm32f4xx.h"

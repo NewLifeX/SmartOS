@@ -125,9 +125,9 @@ protected:
 class AlternatePort : public OutputPort
 {
 public:
-    AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort(pin, openDrain, speed) { Init(); Config(); }
-    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort(pins, count, openDrain, speed) { Init(); Config(); }
-    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort(group, pinbit) { Init(); Config(); }
+    AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort(pin, openDrain, speed) { }
+    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort(pins, count, openDrain, speed) { }
+    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort(group, pinbit) { }
 
 protected:
     /*void Init()
@@ -165,6 +165,7 @@ public:
 
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     bool Floating;      // 是否浮空输入
+    uint ShakeTime;     // 抖动时间
 
     InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pin); Init(floating, speed, pupd); }
     InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins, count); Init(floating, speed, pupd); }
@@ -178,7 +179,7 @@ public:
     }
 
     void Register(IOReadHandler handler);   // 注册事件
-    static void SetShakeTime(byte ms);      // 设置按键去抖动时间
+    //static void SetShakeTime(byte ms);      // 设置按键去抖动时间
 
     operator bool() { return Read(); }
 

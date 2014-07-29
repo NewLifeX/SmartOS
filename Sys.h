@@ -30,7 +30,7 @@ typedef char*           String;
 */
 
 /* 引脚定义 */
-typedef ushort			Pin;
+//typedef ushort			Pin;
 #include "Pin.h"
 
 // 委托

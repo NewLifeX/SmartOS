@@ -14,11 +14,12 @@ typedef struct TIntState
     InputPort::IOReadHandler Handler;
     bool OldValue;
 
+    uint ShakeTime;     // 抖动时间
     int Used;   // 被使用次数。对于前5行中断来说，这个只会是1，对于后面的中断线来说，可能多个
 } IntState;
 
 /*默认按键去抖延时   70ms*/
-static byte shake_time = 70;
+//static byte shake_time = 70;
 
 // 16条中断线
 static IntState State[16];
@@ -42,7 +43,7 @@ void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
     Group = group;
     PinBit = pinbit;
     
-    Pin0 = (GroupToIndex(group) << 4) + BitsToIndex(pinbit);
+    Pin0 = (Pin)((GroupToIndex(group) << 4) + BitsToIndex(pinbit));
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
@@ -128,9 +129,10 @@ void InputPort::Register(IOReadHandler handler)
         //State = new IntState[16];
         for(int i=0; i<16; i++)
         {
-            State[i].Pin = P0;
-            State[i].Handler = NULL;
-            State[i].Used = 0;
+            IntState* state = &State[i];
+            state->Pin = P0;
+            state->Handler = NULL;
+            state->Used = 0;
         }
         hasInitState = true;
     }
@@ -144,7 +146,11 @@ void InputPort::Register(IOReadHandler handler)
         {
             // 注册中断事件
             if(handler)
+            {
+                IntState* state = &State[i];
+                state->ShakeTime = ShakeTime;
                 RegisterInput(groupIndex, i, handler);
+            }
             else
                 UnRegisterInput(i);
         }
@@ -177,7 +183,7 @@ extern "C"
             //value = TIO_Read(state->Pin); // 获取引脚状态
             EXTI->PR = bit;   // 重置挂起位
             value = InputOutputPort::Read(state->Pin); // 获取引脚状态
-            Sys.Sleep(shake_time); // 避免抖动		在os_cfg.h里面修改
+            Sys.Sleep(state->ShakeTime); // 避免抖动
         } while (EXTI->PR & bit); // 如果再次挂起则重复
         //EXTI_ClearITPendingBit(line);
         if(state->Handler)
@@ -266,7 +272,7 @@ void OutputPort::Write(Pin pin, bool value)
 void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler)
 {
     IntState* state = &State[pinIndex];
-    Pin pin = (groupIndex << 4) + pinIndex;
+    Pin pin = (Pin)((groupIndex << 4) + pinIndex);
     // 检查是否已经注册到别的引脚上
     if(state->Pin != pin && state->Pin != P0)
     {
@@ -277,6 +283,7 @@ void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handle
     }
     state->Pin = pin;
     state->Handler = handler;
+
     /* 打开时钟 */
 #ifdef STM32F0XX
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -321,26 +328,29 @@ void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handle
     NVIC_Init(&nvic);
 
     state->Used++;
-    switch(pinIndex)
+    if(state->Used)
     {
-        case 0: Interrupt.Activate(EXTI0_IRQn, EXTI0_IRQHandler); break;
-        case 1: Interrupt.Activate(EXTI1_IRQn, EXTI1_IRQHandler); break;
-        case 2: Interrupt.Activate(EXTI2_IRQn, EXTI2_IRQHandler); break;
-        case 3: Interrupt.Activate(EXTI3_IRQn, EXTI3_IRQHandler); break;
-        case 4: Interrupt.Activate(EXTI4_IRQn, EXTI4_IRQHandler); break;
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-            Interrupt.Activate(EXTI9_5_IRQn, EXTI9_5_IRQHandler); break;
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14:
-        case 15:
-            Interrupt.Activate(EXTI15_10_IRQn, EXTI15_10_IRQHandler); break;
+        switch(pinIndex)
+        {
+            case 0: Interrupt.Activate(EXTI0_IRQn, EXTI0_IRQHandler); break;
+            case 1: Interrupt.Activate(EXTI1_IRQn, EXTI1_IRQHandler); break;
+            case 2: Interrupt.Activate(EXTI2_IRQn, EXTI2_IRQHandler); break;
+            case 3: Interrupt.Activate(EXTI3_IRQn, EXTI3_IRQHandler); break;
+            case 4: Interrupt.Activate(EXTI4_IRQn, EXTI4_IRQHandler); break;
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+                Interrupt.Activate(EXTI9_5_IRQn, EXTI9_5_IRQHandler); break;
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+                Interrupt.Activate(EXTI15_10_IRQn, EXTI15_10_IRQHandler); break;
+        }
     }
 }
 
@@ -361,32 +371,35 @@ void UnRegisterInput(int pinIndex)
     NVIC_Init(&nvic);
 
     state->Used--;
-    switch(pinIndex)
+    if(state->Used >= 0)
     {
-        case 0: Interrupt.Deactivate(EXTI0_IRQn); break;
-        case 1: Interrupt.Deactivate(EXTI1_IRQn); break;
-        case 2: Interrupt.Deactivate(EXTI2_IRQn); break;
-        case 3: Interrupt.Deactivate(EXTI3_IRQn); break;
-        case 4: Interrupt.Deactivate(EXTI4_IRQn); break;
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-            // 最后一个中断销毁才关闭中断
-            if(!state->Used) Interrupt.Deactivate(EXTI9_5_IRQn); break;
-        case 10:
-        case 11:
-        case 12:
-        case 13:
-        case 14:
-        case 15:
-            // 最后一个中断销毁才关闭中断
-            if(!state->Used) Interrupt.Deactivate(EXTI15_10_IRQn); break;
+        switch(pinIndex)
+        {
+            case 0: Interrupt.Deactivate(EXTI0_IRQn); break;
+            case 1: Interrupt.Deactivate(EXTI1_IRQn); break;
+            case 2: Interrupt.Deactivate(EXTI2_IRQn); break;
+            case 3: Interrupt.Deactivate(EXTI3_IRQn); break;
+            case 4: Interrupt.Deactivate(EXTI4_IRQn); break;
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+                // 最后一个中断销毁才关闭中断
+                if(!state->Used) Interrupt.Deactivate(EXTI9_5_IRQn); break;
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+                // 最后一个中断销毁才关闭中断
+                if(!state->Used) Interrupt.Deactivate(EXTI15_10_IRQn); break;
+        }
     }
 }
 
-void InputPort::SetShakeTime(byte ms)
+/*void InputPort::SetShakeTime(byte ms)
 {
 	shake_time = ms;
-}
+}*/

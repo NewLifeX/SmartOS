@@ -128,6 +128,8 @@ void FAULT_SubHandler()
 #if DEBUG
 	// 显示异常详细信息
     int i;
+    if(exception==3)
+        printf("硬件错误\r\n");
 	if(exception==5)
 	{
 		i = *(byte*)(0xE000ED29);
