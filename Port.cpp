@@ -284,13 +284,13 @@ void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handle
     state->Pin = pin;
     state->Handler = handler;
 
-    /* 打开时钟 */
+    // 打开时钟，选择端口作为端口EXTI时钟线
 #ifdef STM32F0XX
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-    SYSCFG_EXTILineConfig(groupIndex, 1 << pinIndex);
+    SYSCFG_EXTILineConfig(groupIndex, pinIndex);
 #else
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    GPIO_EXTILineConfig(groupIndex, 1 << pinIndex);
+    GPIO_EXTILineConfig(groupIndex, pinIndex);
 #endif
     /* 配置EXTI中断线 */
     EXTI_InitTypeDef ext;
@@ -307,13 +307,13 @@ void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handle
 #ifdef STM32F10X
     //nvic.NVIC_IRQChannel = EXTI0_IRQn;
     if(groupIndex < 5)
-        nvic.NVIC_IRQChannel = EXTI0_IRQn + 6;
+        nvic.NVIC_IRQChannel = EXTI0_IRQn + groupIndex;
     else if(groupIndex < 10)
         nvic.NVIC_IRQChannel = EXTI9_5_IRQn;
     else
         nvic.NVIC_IRQChannel = EXTI15_10_IRQn;
-    nvic.NVIC_IRQChannelPreemptionPriority = 0xff;
-    nvic.NVIC_IRQChannelSubPriority = 0xff;
+    nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
+    nvic.NVIC_IRQChannelSubPriority = 0x01;
 #else
     if(pins < 0x02)
         nvic.NVIC_IRQChannel = EXTI0_1_IRQn;

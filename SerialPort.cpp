@@ -7,7 +7,7 @@
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
 
-static USART_TypeDef* g_Uart_Ports[] = UARTS; 
+static USART_TypeDef* g_Uart_Ports[] = UARTS;
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
@@ -25,7 +25,7 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
-    
+
     _port = g_Uart_Ports[com];
 }
 
@@ -43,10 +43,9 @@ void SerialPort::Open()
 	USART_InitTypeDef  p;
     Pin rx;
 	Pin	tx;
-    NVIC_InitTypeDef NVIC_InitStructure;
 
     GetPins(&tx, &rx);
-    
+
     USART_DeInit(_port);
 
 	// 检查重映射
@@ -66,7 +65,7 @@ void SerialPort::Open()
 #ifdef STM32F0XX
 	switch(_com)
 	{
-		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;//开启时钟   
+		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;//开启时钟
 		case COM2:	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);	break;
 		default:	break;
 	}
@@ -104,35 +103,27 @@ void SerialPort::Open()
 
 	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
-    /* Configure the NVIC Preemption Priority Bits */  
-//#ifdef STM32F10X				//全局设置  放到system.c里面
-//    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-//#endif
-	if(_com==COM1)
-        NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; 
-	else
-        NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; 
-		
-#ifdef STM32F10X
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xff;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xff;
-#else
-    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x01;
-#endif
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-
-    switch (_com) {
-        case 0: NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn; break;
-        case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
+    NVIC_InitTypeDef nvic;
+    switch(_com)
+    {
+        case COM1: nvic.NVIC_IRQChannel = USART1_IRQn; break;
+        case COM2: nvic.NVIC_IRQChannel = USART2_IRQn; break;
 #if STM32F10x
-//        case 1: NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn; break;
-        case 2: NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn; break;
-        case 3: NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn; break;
-        case 4: NVIC_InitStructure.NVIC_IRQChannel = UART5_IRQn; break;
+        case COM3: nvic.NVIC_IRQChannel = USART3_IRQn; break;
+        case COM4: nvic.NVIC_IRQChannel = UART4_IRQn; break;
+        case COM5: nvic.NVIC_IRQChannel = UART5_IRQn; break;
 #endif
     }
 
-    NVIC_Init(&NVIC_InitStructure);
+#ifdef STM32F10X
+    nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
+    nvic.NVIC_IRQChannelSubPriority = 0x01;
+#else
+    nvic.NVIC_IRQChannelPriority = 0x01;
+#endif
+    nvic.NVIC_IRQChannelCmd = ENABLE;
+
+    NVIC_Init(&nvic);
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
@@ -148,7 +139,7 @@ void SerialPort::Close()
     GetPins(&tx, &rx);
 
     USART_DeInit(_port);
-    
+
     //Port::SetAlternate(tx);
     //Port::SetAlternate(rx);
     InputPort ptx(tx);
@@ -187,7 +178,7 @@ void SerialPort::Write(const string data, int size)
     string byte = data;
 
     Open();
-    
+
     if(size > 0)
     {
         for(i=0; i<size; i++) TUsart_SendData(_port, byte++);
@@ -228,13 +219,13 @@ void OnReceive(int _com)
     USART_TypeDef* port = g_Uart_Ports[_com];
 
     if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
-    { 	
+    {
 #ifdef STM32F10X
         if(UsartHandlers[_com]) UsartHandlers[_com]((byte)port->DR);
 #else
         if(UsartHandlers[_com]) UsartHandlers[_com]((byte)port->RDR);
 #endif
-    } 
+    }
 }
 
 //所有中断重映射到onreceive函数
@@ -250,7 +241,7 @@ void USART5_IRQHandler(void) { OnReceive(4); }
 void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 {
     *rxPin = *txPin = P0;
-	
+
 	const Pin* p = g_Uart_Pins;
 	if(IsRemap) p = g_Uart_Pins_Map;
 
@@ -287,3 +278,23 @@ extern "C"
         return ch;
     }
 }
+
+#ifdef  USE_FULL_ASSERT
+
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *   where the assert_param error has occurred.
+  * @param file: pointer to the source file name
+  * @param line: assert_param error line source number
+  * @retval : None
+  */
+void assert_failed(uint8_t* file, uint32_t line)
+{
+    /* User can add his own implementation to report the file name and line number,
+    ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+    if(_printf_sp) printf("Assert Failed! Line %d, %s\r\n", line, file);
+
+    /* Infinite loop */
+    while (1) { }
+}
+#endif
