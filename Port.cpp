@@ -183,12 +183,16 @@ extern "C"
         //byte line = EXTI_Line0 << num;
         // 如果未指定委托，则不处理
         if(!state->Handler) return;
-        //if(EXTI_GetITStatus(line) == RESET) return;
+
+        // 默认20us抖动时间
+        uint shakeTime = state->ShakeTime;
+        if(shakeTime == 0) shakeTime = 20;
+
         do {
             //value = TIO_Read(state->Pin); // 获取引脚状态
             EXTI->PR = bit;   // 重置挂起位
             value = InputOutputPort::Read(state->Pin); // 获取引脚状态
-            Sys.Sleep(state->ShakeTime); // 避免抖动
+            Sys.Sleep(shakeTime); // 避免抖动
         } while (EXTI->PR & bit); // 如果再次挂起则重复
         //EXTI_ClearITPendingBit(line);
         if(state->Handler)

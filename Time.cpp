@@ -115,6 +115,9 @@ ulong Time::CurrentTicks()
 
 void Time::Sleep(uint us)
 {
+    // 睡眠时间太短
+    if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
+
 	// 自己关闭中断，简直实在找死！
 	// Sleep的时候，尽量保持中断打开，否则g_Ticks无法累加，从而造成死循环
 	// 记录现在的中断状态
@@ -137,12 +140,3 @@ void Time::Sleep(uint us)
 	// 如果之前是打开中断的，那么这里也要重新打开
 	if (!state) Sys.DisableInterrupts();
 }
-
-/*extern "C"
-{
-    // SysTick_Handler  		滴答定时器中断
-    void SysTick_Handler(void) //需要最高优先级  必须有抢断任何其他中断的能力才能 供其他中断内延时使用
-    {
-        if(Time_Handler) Time_Handler();
-    }
-}*/
