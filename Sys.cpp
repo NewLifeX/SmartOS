@@ -227,7 +227,7 @@ TSys::TSys()
     ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
     ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
 #endif
-    //MCUID = *(__IO uint *)(0xE0042000); // MCU编码。低字设备版本，高字子版本
+    CPUID = SCB->CPUID; // MCU编码。低字设备版本，高字子版本
     MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
     IsGD = Get_JTAG_ID() == 0x7A3;
