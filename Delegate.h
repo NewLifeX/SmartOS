@@ -30,7 +30,8 @@ class Delegate
 {
 public:
     Delegate(T* target, void(T::*func)(TArg)) : _Target(target), _Func(func) {}
-
+					// 构造函数后面的冒号起分割作用，是类给成员变量赋值的方法
+					// 初始化列表，更适用于成员变量的常量const型
     void Invoke(TArg value)
     {
         (_Target->*_Func)(value);
