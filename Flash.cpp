@@ -1,5 +1,7 @@
-﻿#include "Flash.h"
+#include "Flash.h"
 #include <stdlib.h>
+
+#define FLASH_DEBUG 1
 
 static const uint STM32_FLASH_KEY1 = 0x45670123;
 static const uint STM32_FLASH_KEY2 = 0xcdef89ab;
@@ -12,14 +14,17 @@ static const uint STM32_FLASH_KEY2 = 0xcdef89ab;
 
 Flash::Flash()
 {
-	Size = *(__IO ushort *)(0x1FFFF7E0);
+	Size = *(__IO ushort *)(0x1FFFF7E0) << 10;  // 里面的单位是k，要转为字节
 	BytesPerBlock = FLASH_PAGE_SIZE;
+    StartAddress = 0x8000000;
 }
 
 /* 读取段数据 （起始段，字节数量，目标缓冲区） */
-bool Flash::Read(byte* address, uint numBytes, byte* buf)
+bool Flash::Read(uint address, byte* buf, uint numBytes)
 {
     if (buf == NULL) return false;
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
 #if FLASH_DEBUG
     printf( "Flash::Read( 0x%08x, %d, 0x%08x)\r\n", address, numBytes, buf );
 #endif
@@ -38,8 +43,10 @@ bool Flash::Read(byte* address, uint numBytes, byte* buf)
 }
 
 /* 写入段数据 （起始段，段数量，目标缓冲区，读改写） */
-bool Flash::WriteBlock(byte* address, uint numBytes, byte* pSectorBuff, bool fIncrementDataPtr)
+bool Flash::WriteBlock(uint address, byte* buf, uint numBytes, bool fIncrementDataPtr)
 {
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
     // 进行闪存编程操作时(写或擦除)，必须打开内部的RC振荡器(HSI)
     // 打开 HSI 时钟
     RCC->CR |= RCC_CR_HSION;
@@ -53,7 +60,7 @@ bool Flash::WriteBlock(byte* address, uint numBytes, byte* pSectorBuff, bool fIn
 
     ushort* ChipAddress = (ushort *)address;
     ushort* EndAddress  = (ushort *)(address + numBytes);
-    ushort* pBuf        = (ushort *)pSectorBuff;
+    ushort* pBuf        = (ushort *)buf;
 
     // 开始编程
     FLASH->CR = FLASH_CR_PG;
@@ -86,30 +93,32 @@ bool Flash::WriteBlock(byte* address, uint numBytes, byte* pSectorBuff, bool fIn
     return true;
 }
 
-bool Flash::Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModifyWrite)
+bool Flash::Write(uint address, byte* buf, uint numBytes, bool readModifyWrite)
 {
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
 #if FLASH_DEBUG
-    printf( "Flash::Write( 0x%08x, %d, 0x%08x, %d )", address, numBytes, pSectorBuff, readModifyWrite );
+    printf( "Flash::Write( 0x%08x, %d, 0x%08x, %d )", address, numBytes, buf, readModifyWrite );
     int len = 0x10;
     if(numBytes < len) len = numBytes;
     //printf("    Data: ");
     //!!! 必须另起一个指针，否则移动原来的指针可能造成重大失误
-    byte* p = pSectorBuff;
+    byte* p = buf;
     for(int i=0; i<len; i++) printf(" %02X", *p++);
     printf("\r\n");
 #endif
 
     // 如果没有读改写，直接执行
-    if(!readModifyWrite) return WriteBlock(address, numBytes, pSectorBuff, true);
+    if(!readModifyWrite) return WriteBlock(address, buf, numBytes, true);
 
     // Flash操作一般需要先擦除然后再写入，由于擦除是按块进行，这就需要先读取出来，修改以后再写回去
 
     // 从地址找到所在扇区
     uint  offset          = (uint)address % BytesPerBlock;
-    byte* addr            = address;
-    byte* addrEnd         = address + numBytes;
+    uint  addr            = address;
+    uint  addrEnd         = address + numBytes;
     uint  index           = 0;
-    byte* startBlock      = 0;
+    uint  startBlock      = 0;
 
     // 分配一块内存，作为读取备份修改使用
     byte* pData;
@@ -126,7 +135,7 @@ bool Flash::Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModi
         if(offset == 0 && numBytes >= BytesPerBlock)
         {
             // 则直接使用原始地址
-            pData = &pSectorBuff[index];
+            pData = &buf[index];
         }
         else
         {
@@ -137,7 +146,7 @@ bool Flash::Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModi
             // 整块内存原始数据拷贝到临时内存
             memcpy(&pBuf[0], (void*)startBlock, BytesPerBlock);
             // 拷贝需要写入的目标数据到临时内存，起到修改作用
-            memcpy(&pBuf[offset], &pSectorBuff[index], bytes);
+            memcpy(&pBuf[offset], &buf[index], bytes);
 
             pData = pBuf;
         }
@@ -151,7 +160,7 @@ bool Flash::Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModi
         }
 
         // 写入数据
-        fRet = WriteBlock(startBlock, BytesPerBlock, pData, true);
+        fRet = WriteBlock(startBlock, pData, BytesPerBlock, true);
 
         // 重新定位偏移量
         numBytes -= BytesPerBlock;
@@ -165,25 +174,29 @@ bool Flash::Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModi
     return fRet;
 }
 
-bool Flash::Memset(byte* address, byte data, uint numBytes)
+bool Flash::Memset(uint address, byte data, uint numBytes)
 {
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
 #if FLASH_DEBUG
     printf( "Flash::Memset( 0x%08x, %d, 0x%02x )\r\n", address, numBytes, data );
 #endif
 
 	// 这里还没有考虑超过一块的情况，将来补上
-    return WriteBlock( address, numBytes, &data, false);
+    return WriteBlock( address, &data, numBytes, false);
 }
 
 /* 指定块是否被擦除 */
-bool Flash::IsBlockErased(byte* blockStart, uint blockLength)
+bool Flash::IsBlockErased(uint address, uint numBytes)
 {
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
 #if FLASH_DEBUG
-	debug_printf( "STM32_Flash_Driver::IsBlockErased( 0x%08x, %d )\r\n", blockStart, blockLength );
+	printf( "Flash::IsBlockErased( 0x%08x, %d )\r\n", address, numBytes );
 #endif
 
-    ushort* ChipAddress = (ushort *) blockStart;
-    ushort* EndAddress  = (ushort *)(blockStart + blockLength);
+    ushort* ChipAddress = (ushort *) address;
+    ushort* EndAddress  = (ushort *)(address + numBytes);
 
     while(ChipAddress < EndAddress)
     {
@@ -198,10 +211,12 @@ bool Flash::IsBlockErased(byte* blockStart, uint blockLength)
 }
 
 /* 擦除块 （段地址） */
-bool Flash::EraseBlock(byte* sector)
+bool Flash::EraseBlock(uint address)
 {
+    if(address < StartAddress || address + BytesPerBlock > StartAddress + Size) return false;
+
 #if FLASH_DEBUG
-    printf( "Flash::EraseBlock( 0x%08x )", sector );
+    printf( "Flash::EraseBlock( 0x%08x )", address );
 #endif
 
     // 进行闪存编程操作时(写或擦除)，必须打开内部的RC振荡器(HSI)
@@ -218,7 +233,7 @@ bool Flash::EraseBlock(byte* sector)
     // 打开擦除
     FLASH->CR = FLASH_CR_PER;
     // 设置页地址
-    FLASH->AR = (uint)sector;
+    FLASH->AR = (uint)address;
     // 开始擦除
     FLASH->CR = FLASH_CR_PER | FLASH_CR_STRT;
     // 确保繁忙标记位被设置 (参考 STM32 勘误表)
@@ -242,31 +257,30 @@ bool Flash::EraseBlock(byte* sector)
     RCC->CR &= ~RCC_CR_HSION;
 
 #if FLASH_DEBUG
-    //printf("    Data: ");
-    byte* p = (byte*)sector;
+    byte* p = (byte*)address;
     for(int i=0; i<0x10; i++) printf(" %02X", *p++);
     printf("\r\n");
-    //status = FLASH_GetBank1Status();
-    //if(status != FLASH_COMPLETE) printf( " EraseBlock failure 0x%08x Err:%d (BUSY=1/ERROR_PG/ERROR_WRP/COMPLETE/TIMEOUT)\r\n", sector, status );
 #endif
 
     return true;
 }
 
 // 擦除块。其实地址，字节数量默认0表示擦除全部
-bool Flash::Erase(byte* address, uint numBytes)
+bool Flash::Erase(uint address, uint numBytes)
 {
-	if(numBytes == 0) numBytes = Size;
+    if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
+	if(numBytes == 0) numBytes = StartAddress + Size - address;
 
 	// 该地址所在的块
-	byte* addr = address - ((uint)address % BytesPerBlock);
-	byte* end = (byte*)Size;
+	uint addr = address - ((uint)address % BytesPerBlock);
+	uint end  = address + numBytes;
 	while(addr < end)
 	{
 		EraseBlock(addr);
 		
 		addr += BytesPerBlock;
 	}
-	
+
 	return true;
 }
