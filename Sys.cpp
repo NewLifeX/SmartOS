@@ -15,6 +15,7 @@ Time* g_Time;
 #define  RCC_CFGR_USBPRE_2Div5                    ((uint32_t)0x00800000)        /*!< USB Device prescaler */
 
 #define GD32_PLL_MASK	0x20000000
+#define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
 __asm bool TSys::DisableInterrupts()
 {
@@ -93,9 +94,16 @@ void Bootstrap()
         RCC_CFGR_ADC_BITS = RCC_CFGR_ADCPRE_DIV8;
     // GD32的Flash零等待
     if (isGD)
-        FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_0; // 不允许等待
+    {
+        // GD 256k以内是零等待，512k以内是1等待，以后是2等待
+        FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_0; // 零等待
+    }
     else
-        FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_2; // 等待两个
+    {
+        //FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_2; // 等待两个
+        n = Sys.Clock / 24000000 - 1;
+        FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_0 + n;
+    }
     
     // 配置JTAG调试支持
     DBGMCU->CR = DBGMCU_CR_DBG_TIM2_STOP | DBGMCU_CR_DBG_SLEEP;
@@ -192,9 +200,9 @@ void Bootstrap()
     RCC->CR &= ~RCC_CR_HSION;
 
 	// 计算当前工作频率
-	mull = RCC->CFGR & ((int)0x3C0000 | GD32_PLL_MASK);
+	mull = RCC->CFGR & (CFGR_PLLMull_Mask | GD32_PLL_MASK);
 	if((mull & GD32_PLL_MASK) != 0) // 兼容GD32的108MHz
-		mull = (((mull)&(0x003C0000)) >> 18) + 17;
+		mull = ((mull & CFGR_PLLMull_Mask) >> 18) + 17;
 	else
 		mull = ( mull >> 18) + 2;
 	//TSys::Frequency = HSI_VALUE * pllmull;
