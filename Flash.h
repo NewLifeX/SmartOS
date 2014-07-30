@@ -1,4 +1,4 @@
-#ifndef __SPI_H__
+﻿#ifndef __SPI_H__
 #define __SPI_H__
 
 #include "Sys.h"
@@ -8,23 +8,25 @@
 class Flash
 {
 private:
-    int _spi;
-    OutputPort* _nss;
+	bool WriteBlock(byte* address, uint numBytes, byte* pSectorBuff, bool fIncrementDataPtr);
+    // 擦除块 （段地址）
+    bool EraseBlock(byte* sector);
+    // 指定块是否被擦除
+    bool IsBlockErased(byte* blockStart, uint blockLength);
 
 public:
-    SPI_TypeDef* SPI;
-    int Speed;  // 速度
-    int Retry;  // 等待重试次数，默认200
-    int Error;  // 错误次数
+	uint Size;			// 容量大小，字节
+    uint BytesPerBlock;	// 每块字节数
 
-    Flash(int spi, int speedHz = 9000000, bool useNss = true);
-    virtual ~Flash();
+	Flash();
 
-    byte Write(byte data);
-    ushort Write16(ushort data);
-
-    void Start();   // 拉低NSS，开始传输
-    void Stop();    // 拉高NSS，停止传输
+    // 擦除块。其实地址，字节数量默认0表示擦除全部
+    bool Erase(byte* address = 0, uint numBytes = 0);
+    // 读取段数据 （起始段，字节数量，目标缓冲区）
+    bool Read(byte* address, uint numBytes, byte* buf);
+    // 写入段数据 （起始段，段数量，目标缓冲区，读改写）
+    bool Write(byte* address, uint numBytes, byte* pSectorBuff, bool readModifyWrite);
+    bool Memset(byte* address, byte data, uint numBytes);
 };
 
 #endif
