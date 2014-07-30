@@ -95,6 +95,7 @@ void Bootstrap()
     // GD32的Flash零等待
     if (isGD)
     {
+        // 对于GD来说，这个寄存器位其实没有什么意义，内部设定好等待时间了
         // GD 256k以内是零等待，512k以内是1等待，以后是2等待
         FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_0; // 零等待
     }
