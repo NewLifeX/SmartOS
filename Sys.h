@@ -53,8 +53,8 @@ public:
     uint MCUID;     // MCU编码。低字设备版本，高字子版本
     bool IsGD;      // 是否GD芯片
 
-    TSys();
-    virtual ~TSys();
+    TSys();					//构造函数
+    virtual ~TSys();//析构函数
 
     void Init();     // 初始化系统
     void Sleep(uint ms); // 毫秒级延迟
@@ -67,7 +67,7 @@ public:
     Func OnStop;
 };
 
-extern TSys Sys;
+extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
 
 #include "Time.h"
 #include "Interrupt.h"
