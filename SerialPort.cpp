@@ -35,6 +35,9 @@ SerialPort::~SerialPort()
     Close();
 
     USART_DeInit(_port);
+	
+	if(RS485) delete RS485;
+	RS485 = NULL;
 }
 
 // 打开串口
@@ -83,17 +86,8 @@ void SerialPort::Open()
     AlternatePort ptx(tx, false, 10);
     InputPort prx(rx);
 #ifdef STM32F0XX
-    //Port::SetAlternate(tx, false, Port::Speed_10MHz);
-    //Port::SetInput(rx, true);	//TX		RX		COM		AF
-	//PA2		PA3		COM2	AF1
-	//PA9		PA10	COM1	AF1
-	//PA14		PA15	COM2	AF1
-	//PB6		PB7		COM1	AF0
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
-#else
-    //Port::SetAlternate(tx, false, Port::Speed_50MHz);
-    //Port::SetInput(rx, true);
 #endif
 
     USART_StructInit(&p);
@@ -129,6 +123,8 @@ void SerialPort::Open()
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
+	if(RS485) *RS485 = false;
+
     Opened = true;
 }
 
@@ -142,8 +138,6 @@ void SerialPort::Close()
 
     USART_DeInit(_port);
 
-    //Port::SetAlternate(tx);
-    //Port::SetAlternate(rx);
     InputPort ptx(tx);
     InputPort prx(rx);
 
@@ -168,7 +162,6 @@ void SerialPort::Close()
 // 发送单一字节数据
 void TUsart_SendData(USART_TypeDef* port, char* data)
 {
-    //USART_SendData(port, (ushort)*data);
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
     USART_SendData(port, (ushort)*data);
 }
@@ -181,6 +174,8 @@ void SerialPort::Write(const string data, int size)
 
     Open();
 
+	if(RS485) *RS485 = true;
+
     if(size > 0)
     {
         for(i=0; i<size; i++) TUsart_SendData(_port, byte++);
@@ -189,6 +184,8 @@ void SerialPort::Write(const string data, int size)
     {
         while(*byte) TUsart_SendData(_port, byte++);
     }
+
+	if(RS485) *RS485 = false;
 }
 
 // 从某个端口读取数据

@@ -27,6 +27,8 @@ private:
     USART_TypeDef* _port;
 
 public:
+	OutputPort* RS485;	// RS485使能引脚
+
     SerialPort(int com, 
         int baudRate = 115200, 
         int parity = USART_Parity_No,       //无奇偶校验
