@@ -433,17 +433,7 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     EXTI_Init(&ext);
 
     // 打开并设置EXTI中断为低优先级
-    NVIC_InitTypeDef nvic;
-#ifdef STM32F10X
-    nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
-    nvic.NVIC_IRQChannelSubPriority = 0x01;
-#else
-    nvic.NVIC_IRQChannelPriority = 0x01;		//为滴答定时器让道  中断优先级不为最高
-#endif
-    nvic.NVIC_IRQChannel = PORT_IRQns[pinIndex];
-    nvic.NVIC_IRQChannelCmd = ENABLE;
-
-    NVIC_Init(&nvic);
+    Interrupt.SetPriority(PORT_IRQns[pinIndex], 1);
 
     state->Used++;
     if(state->Used == 1)
@@ -462,11 +452,6 @@ void InputPort::UnRegisterInput(int pinIndex)
     EXTI_InitTypeDef ext;
     ext.EXTI_LineCmd = DISABLE;
     EXTI_Init(&ext);
-
-    NVIC_InitTypeDef nvic;
-    nvic.NVIC_IRQChannelCmd = DISABLE;
-
-    NVIC_Init(&nvic);
 
     state->Used--;
     if(state->Used == 0)

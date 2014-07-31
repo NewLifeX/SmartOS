@@ -35,15 +35,7 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
     AlternatePort tx(p[0], false, 50);
     InputPort rx(p[1], false, 50, InputPort::PuPd_UP);
 
-    NVIC_InitTypeDef nvic;
-    /* Configure one bit for preemption priority */
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
-    /*中断设置*/
-    nvic.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;	   //CAN1 RX0中断
-    nvic.NVIC_IRQChannelPreemptionPriority = 0;		   //抢占优先级0
-    nvic.NVIC_IRQChannelSubPriority = 0;			   //子优先级为0
-    nvic.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&nvic);
+    Interrupt.SetPriority(USB_LP_CAN1_RX0_IRQn, 0);
 
     /************************CAN通信参数设置**********************************/
     /*CAN寄存器初始化*/

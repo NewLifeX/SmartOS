@@ -106,18 +106,7 @@ void SerialPort::Open()
 
 	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
-    NVIC_InitTypeDef nvic;
-    nvic.NVIC_IRQChannel = SERIALPORT_IRQns[_com];
-
-#ifdef STM32F10X
-    nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
-    nvic.NVIC_IRQChannelSubPriority = 0x01;
-#else
-    nvic.NVIC_IRQChannelPriority = 0x01;
-#endif
-    nvic.NVIC_IRQChannelCmd = ENABLE;
-
-    NVIC_Init(&nvic);
+    Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
 	USART_Cmd(_port, ENABLE);//使能串口
 

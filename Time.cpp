@@ -27,18 +27,8 @@ Time::Time()
 	SysTick->VAL = 0;
 	SysTick->CTRL |= SYSTICK_ENABLE;	// SysTick使能
 
-	NVIC_InitTypeDef nvic;
-    nvic.NVIC_IRQChannel = (byte)SysTick_IRQn;
-    //nvic.NVIC_IRQChannelSubPriority = 0;	// 需要最高级别的中断优先级
-#ifdef STM32F10X
-    nvic.NVIC_IRQChannelPreemptionPriority = 0x00;
-    nvic.NVIC_IRQChannelSubPriority = 0x00; // 需要最高级别的中断优先级
-#else
-    nvic.NVIC_IRQChannelPriority = 0x00;    // 想在中断里使用延时函数就必须让此中断优先级最高
-#endif
-    nvic.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&nvic);
-    
+	// 想在中断里使用延时函数就必须让此中断优先级最高
+    Interrupt.SetPriority(SysTick_IRQn, 0);
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
