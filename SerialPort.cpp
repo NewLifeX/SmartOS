@@ -207,18 +207,15 @@ void SerialPort::OnReceive(ushort num, void* param)
 	SerialPort* sp = (SerialPort*)param;
 	if(sp && sp->_Received)
 	{
-		//sp->_Received();
-		USART_TypeDef* port = sp->_port;
-		byte data = 0;
-		if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
+		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
 #ifdef STM32F10X
-			data = (byte)port->DR;
+			byte data = (byte)port->DR;
 #else
-			data = (byte)port->RDR;
+			byte data = (byte)port->RDR;
 #endif
+			sp->_Received(data);
 		}
-		sp->_Received(data);
 	}
 }
 
