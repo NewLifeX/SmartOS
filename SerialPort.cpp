@@ -18,6 +18,13 @@ static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 	static SerialPortReadHandler UsartHandlers[2] = {0, 0};		//只有2个串口
 #endif
 
+static int SERIALPORT_IRQns[] = {
+    USART1_IRQn, USART2_IRQn, 
+#ifdef STM32F10X
+    USART3_IRQn, UART4_IRQn, UART5_IRQn
+#endif
+};
+
 SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
     _com = com;
@@ -100,16 +107,7 @@ void SerialPort::Open()
 	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
     NVIC_InitTypeDef nvic;
-    switch(_com)
-    {
-        case COM1: nvic.NVIC_IRQChannel = USART1_IRQn; break;
-        case COM2: nvic.NVIC_IRQChannel = USART2_IRQn; break;
-#ifdef STM32F10X
-        case COM3: nvic.NVIC_IRQChannel = USART3_IRQn; break;
-        case COM4: nvic.NVIC_IRQChannel = UART4_IRQn; break;
-        case COM5: nvic.NVIC_IRQChannel = UART5_IRQn; break;
-#endif
-    }
+    nvic.NVIC_IRQChannel = SERIALPORT_IRQns[_com];
 
 #ifdef STM32F10X
     nvic.NVIC_IRQChannelPreemptionPriority = 0x01;
