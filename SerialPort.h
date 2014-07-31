@@ -25,6 +25,8 @@ private:
 	int _stopBits;
 	
     USART_TypeDef* _port;
+	AlternatePort* _tx;
+	InputPort* _rx;
 
 public:
 	OutputPort* RS485;	// RS485使能引脚

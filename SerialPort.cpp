@@ -40,8 +40,6 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
 SerialPort::~SerialPort()
 {
     Close();
-
-    USART_DeInit(_port);
 	
 	if(RS485) delete RS485;
 	RS485 = NULL;
@@ -90,8 +88,11 @@ void SerialPort::Open()
 #endif
 
 	//串口引脚初始化
-    AlternatePort ptx(tx, false, 10);
-    InputPort prx(rx);
+    _tx = new AlternatePort(tx, false, 10);
+    _rx = new InputPort(rx);
+	_tx->Restore = true;
+	_rx->Restore = true;
+
 #ifdef STM32F0XX
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
@@ -125,8 +126,8 @@ void SerialPort::Close()
 
     USART_DeInit(_port);
 
-    InputPort ptx(tx);
-    InputPort prx(rx);
+    if(_tx) delete _tx;
+	if(_rx) delete _rx;
 
 	// 检查重映射
 #ifdef STM32F1XX

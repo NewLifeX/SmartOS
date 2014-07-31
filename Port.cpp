@@ -78,13 +78,13 @@ Port::~Port()
 				}
 			}
 		}
-#if DEBUG
-		// 解除保护引脚
-		byte groupIndex = GroupToIndex(Group) << 4;
-		bits = PinBit;
-		for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), false);
-#endif
 	}
+#if DEBUG
+	// 解除保护引脚
+	byte groupIndex = GroupToIndex(Group) << 4;
+	ushort bits = PinBit;
+	for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), false);
+#endif
 }
 
 void Port::OnSetPort()
