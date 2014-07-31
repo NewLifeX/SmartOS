@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 #include "Port.h"
 #include "Spi.h"
 #include "AT45DB.h"
@@ -13,12 +13,14 @@ AT45DB::AT45DB(Spi* spi)
     // 在120M主频下用3000，其它主频不确定是否需要调整
     Retry = 3000;
     //PageSize = 0x210;
-    
+
     // 状态位最后一位决定页大小
     _spi->Start();
+    // 读状态寄存器命令
+    _spi->Write(0xD7);
     byte status = _spi->Write(Dummy_Byte) & 0x01;
     _spi->Stop();
-    
+
     // 需要根据芯片来动态识别页大小
     ID = ReadID();
     if(ID == 0x1F260000)
@@ -54,6 +56,7 @@ bool AT45DB::WaitForEnd()
 {
     _spi->Start();
 
+    // 读状态寄存器命令
     _spi->Write(0xD7);
 
     int retry = Retry;
@@ -77,6 +80,7 @@ bool AT45DB::WaitForEnd()
 bool AT45DB::Erase(uint sector)
 {
     _spi->Start();
+	// 扇区擦除命令
     _spi->Write(0x7C);
     SetAddr(sector);
     _spi->Stop();
@@ -88,6 +92,7 @@ bool AT45DB::Erase(uint sector)
 bool AT45DB::ErasePage(uint pageAddr)
 {
     _spi->Start();
+	// 页擦除命令
     _spi->Write(0x81);
     SetAddr(pageAddr);
     _spi->Stop();
@@ -100,6 +105,7 @@ bool AT45DB::WritePage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
 
+	// 主存储器页编程命令，带预擦除
     _spi->Write(0x82);
     SetAddr(addr);
 
@@ -208,7 +214,7 @@ bool AT45DB::Write(uint addr, byte* buf, uint count)
             {
                 WritePage(addr, buf, singles);
             }
-            
+
             return true;
         }
     }
@@ -219,7 +225,7 @@ bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
 {
     _spi->Start();
 
-    // 直接读取数据指令
+    // 主存储器页读取命令
     _spi->Write(0xD2);
     // 使用第二缓冲区来读取
     //_spi->Write(0xD3);
@@ -238,7 +244,7 @@ bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
     }
 
     _spi->Stop();
-    
+
     return true;
 }
 
@@ -313,7 +319,7 @@ bool AT45DB::Read(uint addr, byte* buf, uint count)
             {
                 ReadPage(addr, buf, singles);
             }
-            
+
             return true;
         }
     }
@@ -324,7 +330,7 @@ uint AT45DB::ReadID()
 {
     _spi->Start();
 
-    /* Send "RDID " instruction */
+    // 读ID命令，AT45DB161D的ID是1F260000；其中：1F代表厂商ID；2600代表设备ID；00代表配置符字节数
     _spi->Write(0x9F);
 
     uint Temp0 = _spi->Write(Dummy_Byte);
