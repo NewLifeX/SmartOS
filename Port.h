@@ -16,6 +16,7 @@ public:
     GPIO_TypeDef* Group;// 针脚组
     ushort PinBit;      // 组内引脚位。每个引脚一个位
     Pin Pin0;           // 第一个针脚
+	bool Restore;		// 析构时是否恢复引脚的初始状态，默认false
 
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
@@ -25,17 +26,16 @@ public:
     static ushort IndexToBits(byte index);
     static byte BitsToIndex(ushort bits); // 最低那一个位的索引
 
+#if DEBUG
+	static bool Reserve(Pin pin, bool flag);	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
+	static bool IsBusy(Pin pin);	// 引脚是否被保护
+#endif
+
 protected:
     GPIO_InitTypeDef gpio;
 
-    Port()
-    {
-        Group = 0;
-        PinBit = 0;
-
-        // 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-        GPIO_StructInit(&gpio);
-    }
+	Port();
+	virtual ~Port();
 
     void SetPort(Pin pin);      // 单一引脚初始化
     void SetPort(Pin pins[], uint count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
@@ -43,6 +43,12 @@ protected:
 
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig();
+
+private:
+	//static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
+	ulong InitState;	// 备份引脚初始状态，在析构时还原
+	
+	void OnSetPort();
 };
 
 // 输入输出口基类
@@ -167,7 +173,7 @@ public:
     InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins, count); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
-    ~InputPort();
+    virtual ~InputPort();
 
     virtual ushort ReadGroup()    // 整组读取
     {

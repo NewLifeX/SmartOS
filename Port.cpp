@@ -24,6 +24,7 @@ typedef struct TIntState
 // 16条中断线
 static IntState State[16];
 static bool hasInitState = false;
+static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
 
 #ifdef STM32F10X
 static int PORT_IRQns[] = {
@@ -45,12 +46,68 @@ void UnRegisterInput(int pinIndex);
 
 #define REGION_Port 1
 #ifdef REGION_Port
+Port::Port()
+{
+	Group = 0;
+	PinBit = 0;
+	Restore = false;
+
+	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
+	GPIO_StructInit(&gpio);
+}
+
+Port::~Port()
+{
+	if(Restore)
+	{
+		// 恢复为初始化状态
+		ushort bits = PinBit;
+		int config = InitState & 0xFFFFFFFF;
+		for(int i=0; i<16 && bits; i++, bits>>=1)
+		{
+			if(i == 7) config = InitState >> 32;
+			if(bits & 1)
+			{
+				uint shift = (i & 7) << 2; // 每引脚4位
+				uint mask = 0xF << shift;  // 屏蔽掉其它位
+
+				if (i & 0x08) { // bit 8 - 15
+					Group->CRH = Group->CRH & ~mask | (config & mask);
+				} else { // bit 0-7
+					Group->CRL = Group->CRL & ~mask | (config & mask);
+				}
+			}
+		}
+#if DEBUG
+		// 解除保护引脚
+		byte groupIndex = GroupToIndex(Group) << 4;
+		bits = PinBit;
+		for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), false);
+#endif
+	}
+}
+
+void Port::OnSetPort()
+{
+	// 整组引脚的初始状态，析构时有选择恢复
+	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
+
+#if DEBUG
+	// 保护引脚
+	byte groupIndex = GroupToIndex(Group) << 4;
+	ushort bits = PinBit;
+	for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), true);
+#endif
+}
+
 // 单一引脚初始化
 void Port::SetPort(Pin pin)
 {
     Group = IndexToGroup(pin >> 4);
     PinBit = IndexToBits(pin & 0x0F);
     Pin0 = pin;
+
+	OnSetPort();
 }
 
 void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
@@ -59,6 +116,8 @@ void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
     PinBit = pinbit;
     
     Pin0 = (Pin)((GroupToIndex(group) << 4) + BitsToIndex(pinbit));
+
+	OnSetPort();
 }
 
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
@@ -69,6 +128,8 @@ void Port::SetPort(Pin pins[], uint count)
     for(int i=0; i<count; i++)
         PinBit |= IndexToBits(pins[i] & 0x0F);
     Pin0 = pins[0];
+
+	OnSetPort();
 }
 
 void Port::Config()
@@ -90,12 +151,55 @@ void Port::OnConfig()
     gpio.GPIO_Pin = PinBit;
 }
 
+#if DEBUG
+// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
+bool Port::Reserve(Pin pin, bool flag)
+{
+    int port = pin >> 4, bit = 1 << (pin & 0x0F);
+    if (flag) {
+        if (Reserved[port] & bit) {
+			// 增加针脚已经被保护的提示，很多地方调用ReservePin而不写日志，得到False后直接抛异常
+			printf("ReservePin P%c%d already reserved\r\n", _PIN_NAME(pin));
+			return false; // already reserved
+		}
+        Reserved[port] |= bit;
+
+		printf("ReservePin P%c%d\r\n", _PIN_NAME(pin));
+    } else {
+        Reserved[port] &= ~bit;
+
+		int config = 0;
+		uint shift = (pin & 7) << 2; // 4 bits / pin
+		uint mask = 0xF << shift; // 屏蔽掉其它位
+		GPIO_TypeDef* port2 = IndexToGroup(pin >> 4); // pointer to the actual port registers 
+		if (pin & 0x08) { // bit 8 - 15
+			config = port2->CRH & mask;
+		} else { // bit 0-7
+			config = port2->CRL & mask;
+		}
+
+		config >>= shift;	// 移位到最右边
+		config &= 0xF;
+		printf("UnReservePin P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
+	}
+
+    return true;
+}
+
+// 引脚是否被保护
+bool Port::IsBusy(Pin pin)
+{
+    int port = pin >> 4, sh = pin & 0x0F;
+    return (Reserved[port] >> sh) & 1;
+}
+#endif
+
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
 ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
 byte Port::BitsToIndex(ushort bits)
 {
-    for(int i=0; i < 16; i++)
+    for(int i=0; i < 16 & bits; i++)
     {
         if((bits & 1) == 1) return i;
         bits >>= 1;
