@@ -210,9 +210,9 @@ void SerialPort::OnReceive(ushort num, void* param)
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
 #ifdef STM32F10X
-			byte data = (byte)port->DR;
+			byte data = (byte)sp->_port->DR;
 #else
-			byte data = (byte)port->RDR;
+			byte data = (byte)sp->_port->RDR;
 #endif
 			sp->_Received(data);
 		}

@@ -76,7 +76,11 @@ void TInterrupt::Init()
 TInterrupt::~TInterrupt()
 {
 	// 恢复中断向量表
+#ifdef STM32F10X
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0);
+#else
+    SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_Flash);
+#endif
 }
 
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)

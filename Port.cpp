@@ -58,6 +58,7 @@ Port::Port()
 
 Port::~Port()
 {
+#if STM32F10X
 	if(Restore)
 	{
 		// 恢复为初始化状态
@@ -79,6 +80,8 @@ Port::~Port()
 			}
 		}
 	}
+#endif
+
 #if DEBUG
 	// 解除保护引脚
 	byte groupIndex = GroupToIndex(Group) << 4;
@@ -89,8 +92,10 @@ Port::~Port()
 
 void Port::OnSetPort()
 {
+#if STM32F10X
 	// 整组引脚的初始状态，析构时有选择恢复
 	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
+#endif
 
 #if DEBUG
 	// 保护引脚
@@ -168,6 +173,7 @@ bool Port::Reserve(Pin pin, bool flag)
     } else {
         Reserved[port] &= ~bit;
 
+#ifdef STM32F10X
 		int config = 0;
 		uint shift = (pin & 7) << 2; // 4 bits / pin
 		uint mask = 0xF << shift; // 屏蔽掉其它位
@@ -181,6 +187,9 @@ bool Port::Reserve(Pin pin, bool flag)
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
 		printf("UnReservePin P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
+#else
+		printf("UnReservePin P%c%d\r\n", _PIN_NAME(pin));
+#endif
 	}
 
     return true;

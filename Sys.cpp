@@ -242,16 +242,18 @@ TSys::TSys()
     IsGD = Get_JTAG_ID() == 0x7A3;
 
     if(IsGD) Clock = 120000000;
-    
+
 #if DEBUG
     OnError = ShowError;
 #else
     OnError = 0;
 #endif
 
+#ifdef STM32F10X
 	// 关闭JTAG仿真接口，只打开SW仿真。
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // 打开时钟
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;    //关闭JTAG仿真接口，只打开SW仿真。
+#endif
 
     Interrupt.Init();
     g_Time = new Time();
