@@ -249,6 +249,10 @@ TSys::TSys()
     OnError = 0;
 #endif
 
+	// 关闭JTAG仿真接口，只打开SW仿真。
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // 打开时钟
+	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;    //关闭JTAG仿真接口，只打开SW仿真。
+
     Interrupt.Init();
     g_Time = new Time();
 }
