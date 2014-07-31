@@ -28,6 +28,9 @@ private:
 	AlternatePort* _tx;
 	InputPort* _rx;
 
+	static void OnReceive(ushort num, void* param);
+	SerialPortReadHandler _Received;
+
 public:
 	OutputPort* RS485;	// RS485使能引脚
 

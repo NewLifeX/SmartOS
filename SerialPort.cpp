@@ -11,13 +11,6 @@ static USART_TypeDef* g_Uart_Ports[] = UARTS;
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
-#ifdef STM32F1XX
-	// 串口接收委托
-	static SerialPortReadHandler UsartHandlers[6] = {0, 0, 0, 0, 0, 0};
-#else
-	static SerialPortReadHandler UsartHandlers[2] = {0, 0};		//只有2个串口
-#endif
-
 static int SERIALPORT_IRQns[] = {
     USART1_IRQn, USART2_IRQn, 
 #ifdef STM32F10X
@@ -121,6 +114,9 @@ void SerialPort::Close()
 {
     if(!Opened) return;
 
+    // 清空接收委托
+    Register(0);
+
     Pin tx, rx;
     GetPins(&tx, &rx);
 
@@ -140,9 +136,6 @@ void SerialPort::Close()
 		}
 	}
 #endif
-
-    // 清空接收委托
-    Register(0);
 
     Opened = false;
 }
@@ -195,34 +188,39 @@ void SerialPort::Flush()
 void SerialPort::Register(SerialPortReadHandler handler)
 {
     if(handler)
-        UsartHandlers[_com] = handler;
+	{
+        _Received = handler;
+
+		Interrupt.Activate(SERIALPORT_IRQns[_com], OnReceive, this);
+	}
     else
-        UsartHandlers[_com] = 0;
+	{
+        _Received = 0;
+
+		Interrupt.Deactivate(SERIALPORT_IRQns[_com]);
+	}
 }
 
 // 真正的串口中断函数
-void OnReceive(int _com)
+void SerialPort::OnReceive(ushort num, void* param)
 {
-    USART_TypeDef* port = g_Uart_Ports[_com];
-
-    if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
-    {
+	SerialPort* sp = (SerialPort*)param;
+	if(sp && sp->_Received)
+	{
+		//sp->_Received();
+		USART_TypeDef* port = sp->_port;
+		byte data = 0;
+		if(USART_GetITStatus(port, USART_IT_RXNE) != RESET)
+		{
 #ifdef STM32F10X
-        if(UsartHandlers[_com]) UsartHandlers[_com]((byte)port->DR);
+			data = (byte)port->DR;
 #else
-        if(UsartHandlers[_com]) UsartHandlers[_com]((byte)port->RDR);
+			data = (byte)port->RDR;
 #endif
-    }
+		}
+		sp->_Received(data);
+	}
 }
-
-//所有中断重映射到onreceive函数
-void USART1_IRQHandler(void) { OnReceive(0); }
-void USART2_IRQHandler(void) { OnReceive(1); }
-#ifdef STM32F10X
-void USART3_IRQHandler(void) { OnReceive(2); }
-void USART4_IRQHandler(void) { OnReceive(3); }
-void USART5_IRQHandler(void) { OnReceive(4); }
-#endif
 
 // 获取引脚
 void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
