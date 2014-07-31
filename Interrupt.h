@@ -21,23 +21,25 @@ private:
 
 public:
     void Init();    // 初始化中断向量表
+		
+    bool Activate(short irq, InterruptCallback isr, void* param = NULL);// 注册中断函数
+																																				// irq终端号			isr中断函数		param中断函数
+    bool Deactivate(short irq);		// 解除中断注册
+    bool Enable(short irq);				// 开中断
+    bool Disable(short irq);			// 关中断
 
-    bool Activate(short irq, InterruptCallback isr, void* param = NULL);
-    bool Deactivate(short irq);
-    bool Enable(short irq);
-    bool Disable(short irq);
+    bool EnableState(short irq);	// 取消挂起
+    bool PendingState(short irq);	// 挂起
 
-    bool EnableState(short irq);
-    bool PendingState(short irq);
-
-    void SetPriority(short irq, uint priority);
-    void GetPriority(short irq);
+    void SetPriority(short irq, uint priority);		// 设置优先级
+    void GetPriority(short irq);									// 获取优先级
 #ifdef STM32F10X
-    uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
-    void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);
+    uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);		 // 修改优先级
+    void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);	// 读取优先级
 #endif
 };
 
-extern TInterrupt Interrupt;
-
+extern TInterrupt Interrupt;		// 全局中断类对象    会在maim（）  之前进行初始化   没有构造函数... 
+																// 初始化函数  Interrupt.Init（）  在 Sys.cpp 内 TSys::TSys() 中被调用
+																// <TSys::TSys()也是构造函数   Sys.TSys()函数 在main（）函数之前被执行>
 #endif
