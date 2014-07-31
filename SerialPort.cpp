@@ -33,6 +33,8 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
 SerialPort::~SerialPort()
 {
     Close();
+
+    USART_DeInit(_port);
 }
 
 // 打开串口

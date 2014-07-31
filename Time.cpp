@@ -5,11 +5,8 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-Func Time_Handler;
-
 Time::Time()
 {
-	Time_Handler = NULL;
 	Ticks = 0;
 	NextEvent = TIME_Completion_IdleValue;
 
@@ -42,20 +39,14 @@ Time::Time()
     nvic.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic);
     
-    //(*(TInterrupt*)TInterrupt::GetInstance()).Activate(SysTick_IRQn, OnHandler, 0);
-    //g_Interrupt->Activate
-    //(*g_Interrupt).Activate
-	//Time_Handler = OnHandler;
-	// 再次打开中断，为了设定中断函数
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
 Time::~Time()
 {
-	//Time_Handler = NULL;
     Interrupt.Deactivate(SysTick_IRQn);
     // 关闭定时器
-	//SysTick->CTRL &= ~SYSTICK_ENABLE;
+	SysTick->CTRL &= ~SYSTICK_ENABLE;
 }
 
 #ifdef STM32F0XX

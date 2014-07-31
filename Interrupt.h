@@ -21,6 +21,7 @@ private:
 
 public:
     void Init();    // 初始化中断向量表
+	virtual ~TInterrupt();
 		
     bool Activate(short irq, InterruptCallback isr, void* param = NULL);// 注册中断函数
 																																				// irq终端号			isr中断函数		param中断函数

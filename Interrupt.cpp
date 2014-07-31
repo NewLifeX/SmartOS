@@ -73,6 +73,12 @@ void TInterrupt::Init()
 #endif
 }
 
+TInterrupt::~TInterrupt()
+{
+	// 恢复中断向量表
+	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0);
+}
+
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
     short irq2 = irq + 16; // exception = irq + 16
