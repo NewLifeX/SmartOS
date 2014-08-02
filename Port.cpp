@@ -1,4 +1,4 @@
-﻿#include "Port.h"
+#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -86,7 +86,10 @@ Port::~Port()
 	// 解除保护引脚
 	byte groupIndex = GroupToIndex(Group) << 4;
 	ushort bits = PinBit;
-	for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), false);
+	for(int i=0; i<16 && bits; i++, bits>>=1)
+    {
+        if(bits & 1) Reserve((Pin)(groupIndex | i), false);
+    }
 #endif
 }
 
@@ -101,7 +104,10 @@ void Port::OnSetPort()
 	// 保护引脚
 	byte groupIndex = GroupToIndex(Group) << 4;
 	ushort bits = PinBit;
-	for(int i=0; i<16 && bits; i++, bits>>=1) Reserve((Pin)(groupIndex | i), true);
+	for(int i=0; i<16 && bits; i++, bits>>=1)
+    {
+        if(bits & 1) Reserve((Pin)(groupIndex | i), true);
+    }
 #endif
 }
 
