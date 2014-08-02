@@ -1,4 +1,4 @@
-#ifndef _Sys_H_
+﻿#ifndef _Sys_H_
 #define _Sys_H_
 
 #include <stdio.h>
@@ -44,7 +44,8 @@ class TSys
 {
 public:
     bool Debug;  // 是否调试
-	uint Clock;  // 系统时钟
+    bool Inited; // 是否已完成初始化
+    uint Clock;  // 系统时钟
     uint CystalClock;    // 晶振时钟
     byte MessagePort;    // 消息口，默认0表示USART1
     uint ID[3];     // 芯片ID

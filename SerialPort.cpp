@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 #include <stdio.h>
 
 #include "Port.h"
@@ -241,6 +241,8 @@ extern "C"
     /* 重载fputc可以让用户程序使用printf函数 */
     int fputc(int ch, FILE *f)
     {
+        if(!Sys.Inited) return ch;
+
         int _com = Sys.MessagePort;
         if(_com == COM_NONE) return ch;
 

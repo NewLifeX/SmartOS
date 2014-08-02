@@ -1,4 +1,4 @@
-#include "Flash.h"
+﻿#include "Flash.h"
 #include <stdlib.h>
 
 #define FLASH_DEBUG 1
@@ -269,6 +269,10 @@ bool Flash::EraseBlock(uint address)
 bool Flash::Erase(uint address, uint numBytes)
 {
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
+
+#if FLASH_DEBUG
+    printf( "Flash::Erase( 0x%08x, 0x%08x )", address, numBytes );
+#endif
 
 	if(numBytes == 0) numBytes = StartAddress + Size - address;
 

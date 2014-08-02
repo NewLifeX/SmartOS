@@ -222,6 +222,7 @@ TSys::TSys()
 #else
     Debug = false;
 #endif
+    Inited = false;
 
     Clock = 72000000;
     CystalClock = 8000000;    // 晶振时钟
@@ -281,6 +282,8 @@ void TSys::Init(void)
 #ifdef STM32F10X
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
 #endif
+
+    Inited = true;
 }
 
 extern "C"
