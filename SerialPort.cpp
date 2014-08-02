@@ -141,10 +141,10 @@ void SerialPort::Close()
 }
 
 // 发送单一字节数据
-void TUsart_SendData(USART_TypeDef* port, char* data)
+void TUsart_SendData(USART_TypeDef* port, char* data, uint times = 300)
 {
-    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
-    USART_SendData(port, (ushort)*data);
+    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+    if(times > 0) USART_SendData(port, (ushort)*data);
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
