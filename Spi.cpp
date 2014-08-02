@@ -9,8 +9,13 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 {
 	if(spi > ArrayLength(g_Spis)) return;
 
+    _spi = spi;
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
     SPI = g_Spis[spi];
+
+#if DEBUG
+    printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
+#endif
 
     // 计算速度
     ushort pre = 0;
@@ -33,6 +38,20 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     Speed = speedHz;
     Retry = 200;
 
+    // 端口配置，销毁Spi对象时才释放
+#if DEBUG
+    printf("    CLK : ");
+#endif
+    clk = new AlternatePort(ps[1], false, 10);
+#if DEBUG
+    printf("    MSIO: ");
+#endif
+    msio = new AlternatePort(ps[2], false, 10);
+#if DEBUG
+    printf("    MOSI: ");
+#endif
+    mosi = new AlternatePort(ps[3], false, 10);
+
     if(useNss)
     {
 #ifdef STM32F10X
@@ -43,13 +62,11 @@ Spi::Spi(int spi, int speedHz, bool useNss)
             GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
         }
 #endif
+#if DEBUG
+    printf("    NSS : ");
+#endif
         _nss = new OutputPort(ps[0], false, 10);
     }
-
-    // 仅仅配置，退出当前函数后，对象将自动释放
-    AlternatePort clk(ps[1], false, 10);
-    AlternatePort msio(ps[2], false, 10);
-    AlternatePort mosi(ps[3], false, 10);
 
 #ifdef STM32F10X
     /*使能SPI时钟*/
@@ -87,17 +104,38 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
     SPI_Init(SPI, &sp);
     SPI_Cmd(SPI, ENABLE);
-
-    _spi = spi;
 }
 
 Spi::~Spi()
 {
+#if DEBUG
+    printf("~Spi%d\r\n", _spi + 1);
+#endif
+
     Stop();
 
     SPI_Cmd(SPI, DISABLE);
     SPI_I2S_DeInit(SPI);
     
+#if DEBUG
+    printf("    CLK : ");
+#endif
+    if(clk) delete clk;
+#if DEBUG
+    printf("    MSIO: ");
+#endif
+    if(msio) delete msio;
+#if DEBUG
+    printf("    MOSI: ");
+#endif
+    if(mosi) delete mosi;
+    clk = NULL;
+    msio = NULL;
+    mosi = NULL;
+
+#if DEBUG
+    printf("    NSS : ");
+#endif
     if(_nss) delete _nss;
     _nss = NULL;
 }

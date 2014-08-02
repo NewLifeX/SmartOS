@@ -16,7 +16,7 @@ public:
     GPIO_TypeDef* Group;// 针脚组
     ushort PinBit;      // 组内引脚位。每个引脚一个位
     Pin Pin0;           // 第一个针脚
-	bool Restore;		// 析构时是否恢复引脚的初始状态，默认false
+	//bool Restore;		// 析构时是否恢复引脚的初始状态，默认false
 
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 

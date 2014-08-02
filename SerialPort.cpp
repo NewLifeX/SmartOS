@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 #include <stdio.h>
 
 #include "Port.h"
@@ -83,8 +83,8 @@ void SerialPort::Open()
 	//串口引脚初始化
     _tx = new AlternatePort(tx, false, 10);
     _rx = new InputPort(rx);
-	_tx->Restore = true;
-	_rx->Restore = true;
+	//_tx->Restore = true;
+	//_rx->Restore = true;
 
 #ifdef STM32F0XX
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口

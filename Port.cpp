@@ -50,7 +50,7 @@ Port::Port()
 {
 	Group = 0;
 	PinBit = 0;
-	Restore = false;
+	//Restore = false;
 
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
@@ -59,7 +59,7 @@ Port::Port()
 Port::~Port()
 {
 #ifdef STM32F10X
-	if(Restore)
+	//if(Restore)
 	{
 		// 恢复为初始化状态
 		ushort bits = PinBit;

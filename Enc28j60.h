@@ -17,7 +17,7 @@ public:
     Enc28j60(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~Enc28j60()
     {
-        if(_spi) delete _spi;
+        //if(_spi) delete _spi;
         _spi = NULL;
     }
 

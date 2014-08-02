@@ -40,10 +40,10 @@ public:
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01()
     {
-        if(_spi) delete _spi;
+        //if(_spi) delete _spi;
         if(_CE) delete _CE;
         if(_IRQ) delete _IRQ;
-        
+
         _spi = NULL;
         _CE = NULL;
         _IRQ = NULL;

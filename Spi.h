@@ -24,6 +24,10 @@ private:
     int _spi;
     OutputPort* _nss;
 
+    AlternatePort* clk;
+    AlternatePort* msio;
+    AlternatePort* mosi;
+
 public:
     SPI_TypeDef* SPI;
     int Speed;  // 速度
