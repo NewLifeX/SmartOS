@@ -9,6 +9,8 @@ class Enc28j60
 {
 private:
     Spi* _spi;
+    OutputPort* _ce;
+
     uint NextPacketPtr;
 
 public:
@@ -19,6 +21,9 @@ public:
     {
         //if(_spi) delete _spi;
         _spi = NULL;
+        
+        if(_ce) delete _ce;
+        _ce = NULL;
     }
 
     byte ReadOp(byte op, byte addr);

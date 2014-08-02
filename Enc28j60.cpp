@@ -3,6 +3,7 @@
 Enc28j60::Enc28j60(Spi* spi, Pin ce, Pin irq)
 {
     _spi = spi;
+    if(ce != P0) _ce = new OutputPort(ce);
 }
 
 byte Enc28j60::ReadOp(byte op, byte addr)
@@ -118,6 +119,15 @@ void Enc28j60::ClockOut(byte clock)
 
 void Enc28j60::Init(string mac)
 {
+    if(_ce)
+    {
+        *_ce = true;
+        Sys.Sleep(100);
+        *_ce = false;
+        Sys.Sleep(10000);
+        *_ce = true;
+    }
+
     _spi->Stop();
 
     // 系统软重启
