@@ -66,6 +66,9 @@ public:
     void Reset();   // 重启系统
     void (*OnError)(int code);  // 系统出错时引发
     Func OnStop;
+    
+    // CRC32校验
+    uint Crc(const void* rgBlock, int len, uint crc = 0);
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）

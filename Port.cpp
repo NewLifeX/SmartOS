@@ -1,4 +1,4 @@
-#include "Port.h"
+﻿#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -58,7 +58,7 @@ Port::Port()
 
 Port::~Port()
 {
-#if STM32F10X
+#ifdef STM32F10X
 	if(Restore)
 	{
 		// 恢复为初始化状态
@@ -92,7 +92,7 @@ Port::~Port()
 
 void Port::OnSetPort()
 {
-#if STM32F10X
+#ifdef STM32F10X
 	// 整组引脚的初始状态，析构时有选择恢复
 	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
 #endif
