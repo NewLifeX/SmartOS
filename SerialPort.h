@@ -1,7 +1,8 @@
-﻿#ifndef __SerialPort_H__
+#ifndef __SerialPort_H__
 #define __SerialPort_H__
 
 #include "Sys.h"
+#include "Port.h"
 
 /* 串口定义 */
 #define COM1 0
