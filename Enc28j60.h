@@ -32,7 +32,7 @@ public:
     void ClockOut(byte clock);
 
     void Init(string mac);
-    byte GetReceive();
+    byte GetRevision();
     void PacketSend(byte* packet, uint len);
     uint PacketReceive(byte* packet, uint maxlen);
 };
