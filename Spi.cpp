@@ -13,10 +13,8 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
     SPI = g_Spis[spi];
 
-    debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
-
     // 计算速度
-    ushort pre = 0;
+    /*ushort pre = 0;
     int n = Sys.Clock / speedHz;   // 分频
     switch(n)
     {
@@ -31,7 +29,24 @@ Spi::Spi(int spi, int speedHz, bool useNss)
         default:
             debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
             return;
-    }
+    }*/
+	// 自动计算稍低于速度speedHz的分频
+	ushort pre = 2;
+	uint clock = Sys.Clock >> 1;
+	while(pre <= 256)
+	{
+		if(clock <= speedHz) break;
+		clock >>= 1;
+		pre <<= 1;
+	}
+	if(pre > 256)
+	{
+		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
+		return;
+	}
+
+	speedHz = clock;
+    debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
 
     Speed = speedHz;
     Retry = 200;
