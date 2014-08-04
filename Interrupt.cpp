@@ -13,8 +13,11 @@ void IntcHandler();         // 标准中断处理
 uint GetInterruptNumber();  // 获取中断号
 void FAULT_SubHandler();
 
+// 真正的向量表 64k=0x10000
 #ifdef STM32F0XX
-    __IO uint VectorTable[48] __attribute__((at(0x20000000)));
+	__IO uint _Vectors[VectorySize] __attribute__((at(0x20000000)));
+#else
+	__IO uint _Vectors[VectorySize] __attribute__((__aligned__(128)));
 #endif
 
 void TInterrupt::Init()
@@ -31,18 +34,6 @@ void TInterrupt::Init()
 #ifdef STM32F10X
     NVIC->ICPR[1] = 0xFFFFFFFF;
     NVIC->ICPR[2] = 0xFFFFFFFF;
-#endif
-
-#ifdef STM32F10X
-    // 清零中断向量表
-    memset((void*)_mem, 0, sizeof(_mem));
-    
-    // 中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
-    byte* p = (byte*)_mem;
-    while((uint)p % 128 != 0) p++;
-    _Vectors = (uint*)p;
-#else
-    _Vectors = VectorTable;
 #endif
 
     _Vectors[2]  = (uint)&FAULT_SubHandler; // NMI

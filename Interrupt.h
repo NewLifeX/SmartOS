@@ -6,16 +6,18 @@
 // 中断委托（中断号，参数）
 typedef void (*InterruptCallback)(ushort num, void* param);
 
+#ifdef STM32F10X
+	#define VectorySize 84
+#elif STM32F0XX
+	#define VectorySize 48
+#endif
+
 // 中断管理类
 class TInterrupt
 {
 private:
-#ifdef STM32F10X
-    __IO uint _mem[84 + 128 / 4];  // 中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
-#endif
-    __IO uint* _Vectors; 	// 真正的中断向量表
-    uint Vectors[84];   	// 对外的中断向量表
-    uint Params[84];    	// 每一个中断向量对应的参数
+    uint Vectors[VectorySize];   	// 对外的中断向量表
+    uint Params[VectorySize];    	// 每一个中断向量对应的参数
 
     static void OnHandler();
 
