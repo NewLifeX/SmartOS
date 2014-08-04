@@ -25,10 +25,6 @@ typedef struct TIntState
 static IntState State[16];
 static bool hasInitState = false;
 
-#if DEBUG
-static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
-#endif
-
 #ifdef STM32F10X
 static int PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
@@ -47,6 +43,7 @@ static int PORT_IRQns[] = {
 void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
 void UnRegisterInput(int pinIndex);
 
+// 端口基本功能
 #define REGION_Port 1
 #ifdef REGION_Port
 Port::Port()
@@ -88,7 +85,7 @@ Port::~Port()
 	ushort bits2 = PinBit;
 	for(int i=0; i<16 && bits2; i++, bits2>>=1)
     {
-        if(bits2 & 1) Reserve((Pin)(groupIndex | i), false);
+        if(bits2 & 1) OnReserve((Pin)(groupIndex | i), false);
     }
 #endif
 }
@@ -106,7 +103,7 @@ void Port::OnSetPort()
 	ushort bits = PinBit;
 	for(int i=0; i<16 && bits; i++, bits>>=1)
     {
-        if(bits & 1) Reserve((Pin)(groupIndex | i), true);
+        if(bits & 1) OnReserve((Pin)(groupIndex | i), true);
     }
 #endif
 }
@@ -164,7 +161,24 @@ void Port::OnConfig()
     gpio.GPIO_Pin = PinBit;
 }
 
+GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
+ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
+byte Port::BitsToIndex(ushort bits)
+{
+    for(int i=0; i < 16 & bits; i++)
+    {
+        if((bits & 1) == 1) return i;
+        bits >>= 1;
+    }
+    return 0xFF;
+}
+#endif
+
+// 端口引脚保护
 #if DEBUG
+static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
+
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
 bool Port::Reserve(Pin pin, bool flag)
 {
@@ -203,6 +217,33 @@ bool Port::Reserve(Pin pin, bool flag)
     return true;
 }
 
+bool Port::OnReserve(Pin pin, bool flag)
+{
+	//OnReserve(pin, flag);
+	return Reserve(pin, flag);
+}
+
+bool OutputPort::OnReserve(Pin pin, bool flag)
+{
+	debug_printf("Output ");
+
+	return Port::OnReserve(pin, flag);
+}
+
+bool AlternatePort::OnReserve(Pin pin, bool flag)
+{
+	debug_printf("Alternate ");
+
+	return Port::OnReserve(pin, flag);
+}
+
+bool InputPort::OnReserve(Pin pin, bool flag)
+{
+	debug_printf("Input ");
+
+	return Port::OnReserve(pin, flag);
+}
+
 // 引脚是否被保护
 bool Port::IsBusy(Pin pin)
 {
@@ -211,20 +252,78 @@ bool Port::IsBusy(Pin pin)
 }
 #endif
 
-GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
-byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
-ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
-byte Port::BitsToIndex(ushort bits)
+// 引脚配置
+#define REGION_Config 1
+#ifdef REGION_Config
+void InputOutputPort::OnConfig()
 {
-    for(int i=0; i < 16 & bits; i++)
-    {
-        if((bits & 1) == 1) return i;
-        bits >>= 1;
-    }
-    return 0xFF;
+	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
+
+	Port::OnConfig();
+
+	switch(Speed)
+	{
+		case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
+		case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
+		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
+	}
+}
+
+void OutputPort::OnConfig()
+{
+	InputOutputPort::OnConfig();
+
+#ifdef STM32F0XX
+	gpio.GPIO_Mode = GPIO_Mode_OUT;
+	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+#else
+	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+#endif
+}
+
+void AlternatePort::OnConfig()
+{
+	InputOutputPort::OnConfig();
+
+#ifdef STM32F0XX
+	gpio.GPIO_Mode = GPIO_Mode_AF;
+	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+#else
+	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+#endif
+}
+
+void InputPort::OnConfig()
+{
+	InputOutputPort::OnConfig();
+
+#ifdef STM32F0XX
+	gpio.GPIO_Mode = GPIO_Mode_IN;
+	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+#else
+	if(Floating)
+		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	else if(PuPd == PuPd_UP)
+		gpio.GPIO_Mode = GPIO_Mode_IPU;
+	else if(PuPd == PuPd_DOWN)
+		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+#endif
+}
+
+void AnalogPort::OnConfig()
+{
+	Port::OnConfig();
+
+#ifdef STM32F0XX
+	gpio.GPIO_Mode = GPIO_Mode_AN;
+	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+#else
+	gpio.GPIO_Mode = GPIO_Mode_AIN; // 这里很不确定，需要根据实际进行调整
+#endif
 }
 #endif
 
+// 输出端口
 #define REGION_Output 1
 #ifdef REGION_Output
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
@@ -248,6 +347,24 @@ void OutputPort::Write(bool value)
         GPIO_ResetBits(Group, PinBit);
 }
 
+void OutputPort::WriteGroup(ushort value)
+{
+    GPIO_Write(Group, value);
+}
+
+// 设置端口状态
+void OutputPort::Write(Pin pin, bool value)
+{
+    if(value)
+        GPIO_SetBits(_GROUP(pin), _PORT(pin));
+    else
+        GPIO_ResetBits(_GROUP(pin), _PORT(pin));
+}
+#endif
+
+// 输入端口
+#define REGION_Output 1
+#ifdef REGION_Output
 InputPort::~InputPort()
 {
     // 取消所有中断
@@ -397,21 +514,6 @@ extern "C"
 #endif
 }
 
-void OutputPort::WriteGroup(ushort value)
-{
-    GPIO_Write(Group, value);
-}
-
-// 设置端口状态
-void OutputPort::Write(Pin pin, bool value)
-{
-    if(value)
-        GPIO_SetBits(_GROUP(pin), _PORT(pin));
-    else
-        GPIO_ResetBits(_GROUP(pin), _PORT(pin));
-}
-#endif
-
 // 申请引脚中断托管
 void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler)
 {
@@ -475,3 +577,5 @@ void InputPort::UnRegisterInput(int pinIndex)
         Interrupt.Deactivate(PORT_IRQns[pinIndex]);
     }
 }
+#endif
+

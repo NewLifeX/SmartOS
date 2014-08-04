@@ -1,4 +1,4 @@
-#ifndef _Port_H_
+﻿#ifndef _Port_H_
 #define _Port_H_
 
 #include "Sys.h"
@@ -44,10 +44,13 @@ protected:
 
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig();
+#if DEBUG
+	virtual bool OnReserve(Pin pin, bool flag);
+#endif
 
 private:
 	ulong InitState;	// 备份引脚初始状态，在析构时还原
-	
+
 	void OnSetPort();
 };
 
@@ -75,19 +78,7 @@ protected:
         Invert = false;
     }
 
-    virtual void OnConfig()
-    {
-		assert_param(Speed == 2 || Speed == 10 || Speed == 50);
-
-        Port::OnConfig();
-
-        switch(Speed)
-        {
-            case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
-            case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
-            case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
-        }
-    }
+    virtual void OnConfig();
 };
 
 // 输出口
@@ -112,23 +103,17 @@ public:
 protected:
     OutputPort() { }
 
-    virtual void OnConfig()
-    {
-        InputOutputPort::OnConfig();
-
-#ifdef STM32F0XX
-        gpio.GPIO_Mode = GPIO_Mode_OUT;
-        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-        gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
-#endif
-    }
+    virtual void OnConfig();
 
     void Init(bool openDrain = false, uint speed = 50)
     {
         OpenDrain = openDrain;
         Speed = speed;
     }
+
+#if DEBUG
+	virtual bool OnReserve(Pin pin, bool flag);
+#endif
 };
 
 // 复用输出口
@@ -140,17 +125,11 @@ public:
     AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort() { SetPort(group, pinbit); Init(); Config(); }
 
 protected:
-    virtual void OnConfig()
-    {
-        InputOutputPort::OnConfig();
+    virtual void OnConfig();
 
-#ifdef STM32F0XX
-        gpio.GPIO_Mode = GPIO_Mode_AF;
-        gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-        gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+#if DEBUG
+	virtual bool OnReserve(Pin pin, bool flag);
 #endif
-    }
 };
 
 // 输入口
@@ -199,22 +178,11 @@ protected:
         Config();
     }
 
-    virtual void OnConfig()
-    {
-        InputOutputPort::OnConfig();
+    virtual void OnConfig();
 
-#ifdef STM32F0XX
-        gpio.GPIO_Mode = GPIO_Mode_IN;
-        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-        if(Floating)
-            gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-        else if(PuPd == PuPd_UP)
-            gpio.GPIO_Mode = GPIO_Mode_IPU;
-        else if(PuPd == PuPd_DOWN)
-            gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+#if DEBUG
+	virtual bool OnReserve(Pin pin, bool flag);
 #endif
-    }
 
 private:
     bool _Registed;
@@ -232,17 +200,7 @@ public:
     AnalogPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); }
 
 protected:
-    virtual void OnConfig()
-    {
-        Port::OnConfig();
-
-#ifdef STM32F0XX
-        gpio.GPIO_Mode = GPIO_Mode_AN;
-        //gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-        gpio.GPIO_Mode = GPIO_Mode_AIN; // 这里很不确定，需要根据实际进行调整
-#endif
-    }
+    virtual void OnConfig();
 };
 
 #endif //_Port_H_
