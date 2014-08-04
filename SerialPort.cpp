@@ -20,6 +20,8 @@ static int SERIALPORT_IRQns[] = {
 
 SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
+	assert_param(com >= 0 && com < ArrayLength(g_Uart_Ports));
+
     _com = com;
     _baudRate = baudRate;
     _parity = parity;
@@ -153,40 +155,51 @@ void SerialPort::Close()
 }
 
 // 发送单一字节数据
-void TUsart_SendData(USART_TypeDef* port, char* data, uint times = 300)
+void TUsart_SendData(USART_TypeDef* port, byte* data, uint times = 300)
 {
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
     if(times > 0) USART_SendData(port, (ushort)*data);
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-void SerialPort::Write(const string data, int size)
+void SerialPort::Write(byte* buf, uint size)
 {
-    int i;
-    string byte = data;
-
     Open();
 
 	if(RS485) *RS485 = true;
 
     if(size > 0)
     {
-        for(i=0; i<size; i++) TUsart_SendData(_port, byte++);
+        for(int i=0; i<size; i++) TUsart_SendData(_port, buf++);
     }
     else
     {
-        while(*byte) TUsart_SendData(_port, byte++);
+        while(*buf) TUsart_SendData(_port, buf++);
     }
 
 	if(RS485) *RS485 = false;
 }
 
 // 从某个端口读取数据
-int SerialPort::Read(string data, uint size)
+uint SerialPort::Read(byte* buf, uint size)
 {
     Open();
-	
-	return USART_ReceiveData(_port);
+
+	//return USART_ReceiveData(_port);
+
+	// 在500ms内接收数据
+	uint end = g_Time->CurrentTicks() + g_Time->TicksPerMillisecond * 500;
+	uint count = 0; // 收到的字节数
+	while(count < size && g_Time->CurrentTicks() < end)
+	{
+		// 轮询接收寄存器，收到数据则放入缓冲区
+		if(USART_GetFlagStatus(_port, USART_FLAG_RXNE) != RESET)
+		{
+			*buf++ = (byte)USART_ReceiveData(_port);
+			count++;
+		}
+	}
+	return count;
 }
 
 // 刷出某个端口中的数据
@@ -198,6 +211,8 @@ void SerialPort::Flush()
 
 void SerialPort::Register(SerialPortReadHandler handler)
 {
+    Open();
+
     if(handler)
 	{
         _Received = handler;
@@ -220,12 +235,8 @@ void SerialPort::OnReceive(ushort num, void* param)
 	{
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
-#ifdef STM32F10X
-			byte data = (byte)sp->_port->DR;
-#else
-			byte data = (byte)sp->_port->RDR;
-#endif
-			sp->_Received(data);
+			uint count = sp->Read(sp->tx_buf, ArrayLength(tx_buf));
+			if(count > 0) sp->_Received(sp->tx_buf, count);
 		}
 	}
 }
@@ -268,7 +279,7 @@ extern "C"
             _printf_sp->Open();
         }
 
-        TUsart_SendData(port, (char*)&ch);
+        TUsart_SendData(port, (byte*)&ch);
 
         return ch;
     }

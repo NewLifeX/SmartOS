@@ -13,7 +13,7 @@
 #define COM_NONE 0xFF
 
 // 读取委托
-typedef void (*SerialPortReadHandler)(byte data);
+typedef void (*SerialPortReadHandler)(byte* buf, uint size);
 
 // 串口类
 class SerialPort
@@ -29,6 +29,7 @@ private:
 	AlternatePort* _tx;
 	InputPort* _rx;
 
+	byte tx_buf[64];	// 接收缓冲区
 	static void OnReceive(ushort num, void* param);
 	SerialPortReadHandler _Received;
 
@@ -49,8 +50,9 @@ public:
 	void Open();
     void Close();
 
-    void Write(const string data, int size);
-    int  Read(string data, uint size);
+    void Write(byte* buf, uint size);
+    void Write(const string data, uint size = 0) { Write((byte*)data, size); }
+    uint  Read(byte* buf, uint size);
     void Flush();
 
     void Register(SerialPortReadHandler handler);
