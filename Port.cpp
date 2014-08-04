@@ -1,4 +1,4 @@
-#include "Port.h"
+﻿#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -24,7 +24,10 @@ typedef struct TIntState
 // 16条中断线
 static IntState State[16];
 static bool hasInitState = false;
+
+#if DEBUG
 static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
+#endif
 
 #ifdef STM32F10X
 static int PORT_IRQns[] = {
