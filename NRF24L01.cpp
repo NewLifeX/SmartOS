@@ -2,10 +2,6 @@
 #include "Port.h"
 #include "NRF24L01.h"
 
-byte RX_BUF[RX_PLOAD_WIDTH];		//接收数据缓存
-byte TX_BUF[TX_PLOAD_WIDTH];		//发射数据缓存
-
-
 /********************************************************************************/
 //NRF24L01寄存器操作命令
 #define READ_REG_NRF        0x00  //读配置寄存器,低5位为寄存器地址
@@ -51,6 +47,18 @@ byte TX_BUF[TX_PLOAD_WIDTH];		//发射数据缓存
 #define TX_OK   		0x20  //TX发送完成中断
 #define RX_OK   		0x40  //接收到数据中断
 
+//定义缓冲区大小  单位  byte
+#define RX_PLOAD_WIDTH				5
+#define TX_PLOAD_WIDTH				5
+
+/*发送包大小*/
+#define TX_ADR_WIDTH	5
+#define RX_ADR_WIDTH	5
+
+/*发送 接收数据地址*/
+#define TX_Address	{0x34,0x43,0x10,0x10,0x01}
+#define RX_Address	{0x34,0x43,0x10,0x10,0x01}
+
 /*发送  接受   地址*/
 byte TX_ADDRESS[TX_ADR_WIDTH] = TX_Address;
 byte RX_ADDRESS[RX_ADR_WIDTH] = RX_Address;
@@ -71,9 +79,10 @@ void nRF24L01_irq(Pin pin, bool opk);
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
+    debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+
     if(ce != P0) _CE = new OutputPort(ce);
 
-    //_IRQ = irq;
     if(irq != P0)
     {
         // 中断引脚初始化
@@ -88,48 +97,43 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
 }
 
-/**
-  * @brief   用于向NRF的寄存器中写入一串数据
-  * @param
-  *		@arg reg : NRF的命令+寄存器地址
-  *		@arg pBuf：存储了将要写入写寄存器数据的数组，外部定义
-  * 	@arg bytes: pBuf的数据长度
-  * @retval  NRF的status寄存器的状态
-  */
+NRF24L01::~NRF24L01()
+{
+    debug_printf("~NRF24L01\r\n");
+
+	//if(_spi) delete _spi;
+	if(_CE) delete _CE;
+	if(_IRQ) delete _IRQ;
+
+	_spi = NULL;
+	_CE = NULL;
+	_IRQ = NULL;
+}
+
+// 向NRF的寄存器中写入一串数据
 byte NRF24L01::WriteBuf(byte reg, byte* buf, byte bytes)
 {
 	CEDown();
 	SpiScope sc(_spi);
 
-    /*发送寄存器号*/
 	byte status = _spi->Write(reg);
-  	/*向缓冲区写入数据*/
 	for(byte i=0; i<bytes; i++)
 		_spi->Write(*buf++);
 
-  	return status; // 返回NRF24L01的状态
+  	return status;
 }
 
-/**
-  * @brief   用于向NRF的寄存器中写入一串数据
-  * @param
-  *		@arg reg : NRF的命令+寄存器地址
-  *		@arg pBuf：用于存储将被读出的寄存器数据的数组，外部定义
-  * 	@arg bytes: pBuf的数据长度
-  * @retval  NRF的status寄存器的状态
-  */
+// 向NRF的寄存器中写入一串数据
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
 	CEDown();
 	SpiScope sc(_spi);
 
-	/*发送寄存器号*/
 	byte status = _spi->Write(reg);
- 	/*读取缓冲区数据*/
 	for(byte i=0; i<bytes; i++)
 	  buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
 
- 	return status; // 返回寄存器状态值
+ 	return status;
 }
 
 // 主要用于NRF与MCU是否正常连接
@@ -151,12 +155,7 @@ bool NRF24L01::Check(void)
 	return true; // 成功连接
 }
 
-/**
-  * @brief   用于从NRF特定的寄存器读出数据
-  * @param
-  *		@arg reg:NRF的命令+寄存器地址
-  * @retval  寄存器中的数据
-  */
+// 从NRF特定的寄存器读出数据 reg:NRF的命令+寄存器地址
 byte NRF24L01::ReadReg(byte reg)
 {
 	CEDown();
@@ -164,93 +163,84 @@ byte NRF24L01::ReadReg(byte reg)
 
   	 /*发送寄存器号*/
 	_spi->Write(reg);
-	 /*读取寄存器的值 */
 	return _spi->Write(NOP);
 }
 
-/**
-  * @brief   用于向NRF特定的寄存器写入数据
-  * @param
-  *		@arg reg:NRF的命令+寄存器地址
-  *		@arg dat:将要向寄存器写入的数据
-  * @retval  NRF的status寄存器的状态
-  */
-byte NRF24L01::WriteReg(byte reg,byte dat)
+// 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
+byte NRF24L01::WriteReg(byte reg, byte dat)
 {
 	CEDown();
 	SpiScope sc(_spi);
 
-	/*发送命令及寄存器号 */
 	byte status = _spi->Write(reg);
-	 /*向寄存器写入数据*/
     _spi->Write(dat);
 
-	/*返回状态寄存器的值*/
    	return status;
 }
 
-/**
-  * @brief  配置并进入接收模式
-  * @param  无
-  * @retval 无
-  */
-void NRF24L01::EnterReceive(void)
+// 配置
+void NRF24L01::Config(bool isReceive)
 {
 	CEDown();
-	WriteBuf(WRITE_REG_NRF + RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH);//写RX节点地址
-	WriteReg(WRITE_REG_NRF + EN_AA,0x01);    //使能通道0的自动应答
-	WriteReg(WRITE_REG_NRF + EN_RXADDR,0x01);//使能通道0的接收地址
+
+	if(isReceive)
+	{
+		// 接收模式
+		WriteBuf(WRITE_REG_NRF + TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH); // 写发送地址=本机接收端0地址
+		WriteBuf(WRITE_REG_NRF + RX_ADDR_P0, RX_ADDRESS, RX_ADR_WIDTH); // 写通道0地址
+	}
+	else
+	{
+		// 发送模式
+		if((Channel == 0))
+		{
+			WriteBuf(WRITE_REG_NRF | TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH);// 2-5通道使用1字节
+			WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, RX_ADDRESS, RX_ADR_WIDTH);// 写接收端地址
+		}
+		else
+		{
+			TX_ADDRESS[0] = 0x30 + Channel;
+			WriteBuf(WRITE_REG_NRF | TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH);// 2-5通道使用1字节
+			WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, TX_ADDRESS, RX_ADR_WIDTH);// 写接收端地址
+		}
+	}
+
+	WriteReg(WRITE_REG_NRF + EN_AA, 0x01);    //使能通道0的自动应答
+	WriteReg(WRITE_REG_NRF + EN_RXADDR, 0x01);//使能通道0的接收地址
 	WriteReg(WRITE_REG_NRF + RF_CH, Channel);      //设置RF通信频率
-	WriteReg(WRITE_REG_NRF + RX_PW_P0,RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
-    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f); //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF + RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF + CONFIG, 0x0f);  //配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
+	WriteReg(WRITE_REG_NRF + RX_PW_P0, RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
+	WriteReg(WRITE_REG_NRF + SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
+	WriteReg(WRITE_REG_NRF + RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	
+	if(isReceive)
+		WriteReg(WRITE_REG_NRF + CONFIG, 0x0f); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
+	else
+		WriteReg(WRITE_REG_NRF + CONFIG, 0x0e); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
+
     /*CE拉高，进入接收模式*/
 	CEUp();
 	nRF24L01_status = nrf_mode_rx;
+	if(!isReceive) Sys.Delay(500); //CE要拉高一段时间才进入发送模式
 }
 
-/**
-  * @brief  配置发送模式
-  * @param  无
-  * @retval 无
-  */
-void NRF24L01::EnterSend(void)
+void NRF24L01::SetMode(bool isReceive)
 {
-	CEDown();
-	WriteBuf(WRITE_REG_NRF + TX_ADDR,TX_ADDRESS,TX_ADR_WIDTH);    //写TX节点地址
-	WriteBuf(WRITE_REG_NRF + RX_ADDR_P0,RX_ADDRESS,RX_ADR_WIDTH); //设置TX节点地址,主要为了使能ACK
-	WriteReg(WRITE_REG_NRF + EN_AA,0x01);     //使能通道0的自动应答
-	WriteReg(WRITE_REG_NRF + EN_RXADDR,0x01); //使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF + SETUP_RETR,0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-	WriteReg(WRITE_REG_NRF + RF_CH, Channel);       //设置RF通道为CHANAL
-    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF + RF_SETUP,0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF + CONFIG,0x0e);    //配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
-    /*CE拉高，进入发送模式*/
-	CEUp();
-	nRF24L01_status=nrf_mode_tx;
-    Sys.Sleep(500); //CE要拉高一段时间才进入发送模式
+	byte mode = ReadReg(CONFIG);
+	if(isReceive) // 接收模式
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
+	else		  // 发送模式
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
 }
 
-/*
-此处有等待中断的 无限循环   注意
-需要修改
-*/
-
-/**
-  * @brief   用于从NRF的接收缓冲区中读出数据
-  * @param
-  *		@arg rxBuf ：用于接收该数据的数组，外部定义
-  * @retval
-  *		@arg 接收结果
-  */
+// 从NRF的接收缓冲区中读出数据
 byte NRF24L01::Receive(byte *data)
 {
-	/*等待接收中断*/
-//	while(NRF_Read_IRQ()!=0);
 	CEUp();
+	// 等待接收中断
+	while(_IRQ->Read()); 
 	CEDown();
+
 	/*读取status寄存器的值  */
 	byte state = ReadReg(STATUS);
 	/* 清除中断标志*/
@@ -259,41 +249,37 @@ byte NRF24L01::Receive(byte *data)
 	if(state & RX_OK)                                 //接收到数据
 	{
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
-        WriteReg(FLUSH_RX,NOP);          //清除RX FIFO寄存器
+        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
         return RX_OK;
 	}
 
 	return false;                    //没收到任何数据
 }
 
-/**
-  * @brief   用于向NRF的发送缓冲区中写入数据
-  * @param
-  *		@arg txBuf：存储了将要发送的数据的数组，外部定义
-  * @retval  发送结果，成功返回TXDS,失败返回MAXRT或ERROR
-  */
+// 向NRF的发送缓冲区中写入数据
 byte NRF24L01::Send(byte* data)
 {
 	 /*ce为低，进入待机模式1*/
 	CEDown();
 	/*写数据到TX BUF 最大 32个字节*/
 	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
-      /*CE为高，txbuf非空，发送数据包 */
+    /*CE为高，txbuf非空，发送数据包 */
 	CEUp();
-	  /*等待发送完成中断 */
-//	while(NRF_Read_IRQ()!=0);
-	/*读取状态寄存器的值 */
+	// 等待发送完成中断
+	while(_IRQ->Read()); 
+
+	// 读取状态寄存器的值
 	byte state = ReadReg(STATUS);
-	/*清除TX_DS或MAX_RT中断标志*/
-	WriteReg(WRITE_REG_NRF + STATUS,state);
-	WriteReg(FLUSH_TX,NOP);    //清除TX FIFO寄存器
-	 /*判断中断类型*/
-    if(state & MAX_TX)                     //达到最大重发次数
+	// 清除TX_DS或MAX_RT中断标志
+	WriteReg(WRITE_REG_NRF + STATUS, state);
+	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
+	// 判断中断类型
+    if(state & MAX_TX)		// 达到最大重发次数
         return MAX_TX;
-    else if(state & TX_OK)                  //发送完成
+    else if(state & TX_OK)	// 发送完成
         return TX_OK;
     else
-        return false;                 //其他原因发送失败
+        return false;		// 其他原因发送失败
 }
 
 void NRF24L01::CEUp()
