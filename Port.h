@@ -77,6 +77,8 @@ protected:
 
     virtual void OnConfig()
     {
+		assert_param(Speed == 2 || Speed == 10 || Speed == 50);
+
         Port::OnConfig();
 
         switch(Speed)

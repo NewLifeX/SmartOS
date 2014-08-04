@@ -7,15 +7,13 @@ static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
 Spi::Spi(int spi, int speedHz, bool useNss)
 {
-	if(spi > ArrayLength(g_Spis)) return;
+	assert_param(spi >= 0 && spi < ArrayLength(g_Spis));
 
     _spi = spi;
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
     SPI = g_Spis[spi];
 
-#if DEBUG
     debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
-#endif
 
     // 计算速度
     ushort pre = 0;
@@ -39,17 +37,11 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     Retry = 200;
 
     // 端口配置，销毁Spi对象时才释放
-#if DEBUG
     debug_printf("    CLK : ");
-#endif
     clk = new AlternatePort(ps[1], false, 10);
-#if DEBUG
     debug_printf("    MSIO: ");
-#endif
     msio = new AlternatePort(ps[2], false, 10);
-#if DEBUG
     debug_printf("    MOSI: ");
-#endif
     mosi = new AlternatePort(ps[3], false, 10);
 
     if(useNss)
@@ -62,9 +54,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
             GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
         }
 #endif
-#if DEBUG
-    debug_printf("    NSS : ");
-#endif
+		debug_printf("    NSS : ");
         _nss = new OutputPort(ps[0], false, 10);
     }
 
@@ -108,34 +98,24 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
 Spi::~Spi()
 {
-#if DEBUG
     debug_printf("~Spi%d\r\n", _spi + 1);
-#endif
 
     Stop();
 
     SPI_Cmd(SPI, DISABLE);
     SPI_I2S_DeInit(SPI);
     
-#if DEBUG
     debug_printf("    CLK : ");
-#endif
     if(clk) delete clk;
-#if DEBUG
     debug_printf("    MSIO: ");
-#endif
     if(msio) delete msio;
-#if DEBUG
     debug_printf("    MOSI: ");
-#endif
     if(mosi) delete mosi;
     clk = NULL;
     msio = NULL;
     mosi = NULL;
 
-#if DEBUG
     debug_printf("    NSS : ");
-#endif
     if(_nss) delete _nss;
     _nss = NULL;
 }

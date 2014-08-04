@@ -286,22 +286,6 @@ void TSys::Init(void)
     Inited = true;
 }
 
-extern "C"
-{
-    void HardFault_Handler()
-    {
-        if(Sys.OnError) Sys.OnError(1);
-    }
-
-    /*void Reset_Handler()
-    {
-        Bootstrap();
-        //SystemInit();
-        //__main();
-        //main();
-    }*/
-}
-
 #define __CRC__MODULE__ 1
 #ifdef __CRC__MODULE__
 //

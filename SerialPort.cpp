@@ -27,6 +27,13 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
     _stopBits = stopBits;
 
     _port = g_Uart_Ports[com];
+
+	_tx = NULL;
+	_rx = NULL;
+	RS485 = NULL;
+
+	Opened = false;
+	IsRemap = false;
 }
 
 // 析构时自动关闭
@@ -42,6 +49,8 @@ SerialPort::~SerialPort()
 void SerialPort::Open()
 {
     if(Opened) return;
+
+    debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _com + 1, _baudRate, _parity, _dataBits, _stopBits);
 
 	USART_InitTypeDef  p;
     Pin rx;
@@ -114,6 +123,8 @@ void SerialPort::Close()
 {
     if(!Opened) return;
 
+    debug_printf("~Serial%d Close\r\n", _com + 1);
+
     // 清空接收委托
     Register(0);
 
@@ -124,6 +135,8 @@ void SerialPort::Close()
 
     if(_tx) delete _tx;
 	if(_rx) delete _rx;
+	_tx = NULL;
+	_rx = NULL;
 
 	// 检查重映射
 #ifdef STM32F1XX

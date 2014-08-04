@@ -62,24 +62,21 @@ Port::Port()
 Port::~Port()
 {
 #ifdef STM32F10X
-	//if(Restore)
+	// 恢复为初始化状态
+	ushort bits = PinBit;
+	int config = InitState & 0xFFFFFFFF;
+	for(int i=0; i<16 && bits; i++, bits>>=1)
 	{
-		// 恢复为初始化状态
-		ushort bits = PinBit;
-		int config = InitState & 0xFFFFFFFF;
-		for(int i=0; i<16 && bits; i++, bits>>=1)
+		if(i == 7) config = InitState >> 32;
+		if(bits & 1)
 		{
-			if(i == 7) config = InitState >> 32;
-			if(bits & 1)
-			{
-				uint shift = (i & 7) << 2; // 每引脚4位
-				uint mask = 0xF << shift;  // 屏蔽掉其它位
+			uint shift = (i & 7) << 2; // 每引脚4位
+			uint mask = 0xF << shift;  // 屏蔽掉其它位
 
-				if (i & 0x08) { // bit 8 - 15
-					Group->CRH = Group->CRH & ~mask | (config & mask);
-				} else { // bit 0-7
-					Group->CRL = Group->CRL & ~mask | (config & mask);
-				}
+			if (i & 0x08) { // bit 8 - 15
+				Group->CRH = Group->CRH & ~mask | (config & mask);
+			} else { // bit 0-7
+				Group->CRL = Group->CRL & ~mask | (config & mask);
 			}
 		}
 	}
@@ -88,10 +85,10 @@ Port::~Port()
 #if DEBUG
 	// 解除保护引脚
 	byte groupIndex = GroupToIndex(Group) << 4;
-	ushort bits = PinBit;
-	for(int i=0; i<16 && bits; i++, bits>>=1)
+	ushort bits2 = PinBit;
+	for(int i=0; i<16 && bits2; i++, bits2>>=1)
     {
-        if(bits & 1) Reserve((Pin)(groupIndex | i), false);
+        if(bits2 & 1) Reserve((Pin)(groupIndex | i), false);
     }
 #endif
 }
@@ -137,6 +134,8 @@ void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
 // 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
 void Port::SetPort(Pin pins[], uint count)
 {
+	assert_param(pins != NULL && count > 0 && count <= 16);
+
     Group = IndexToGroup(pins[0] >> 4);
     PinBit = 0;
     for(int i=0; i<count; i++)

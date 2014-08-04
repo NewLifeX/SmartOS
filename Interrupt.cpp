@@ -20,6 +20,8 @@ void FAULT_SubHandler();
 	__IO uint _Vectors[VectorySize] __attribute__((__aligned__(128)));
 #endif
 
+#define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
+
 void TInterrupt::Init()
 {
     // 禁用所有中断
@@ -76,6 +78,8 @@ TInterrupt::~TInterrupt()
 
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
+	assert_param(IS_IRQ(irq));
+
     short irq2 = irq + 16; // exception = irq + 16
     _Vectors[irq2] = (uint)OnHandler;
     Vectors[irq2] = (uint)isr;
@@ -95,6 +99,8 @@ bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 
 bool TInterrupt::Deactivate(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = 0;
     Params[irq2] = 0;
@@ -106,6 +112,8 @@ bool TInterrupt::Deactivate(short irq)
 
 bool TInterrupt::Enable(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     if(irq < 0) return false;
 
     uint ier = NVIC->ISER[irq >> 5]; // old state
@@ -116,6 +124,8 @@ bool TInterrupt::Enable(short irq)
 
 bool TInterrupt::Disable(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     if(irq < 0) return false;
 
     uint ier = NVIC->ISER[irq >> 5]; // old state
@@ -126,6 +136,8 @@ bool TInterrupt::Disable(short irq)
 
 bool TInterrupt::EnableState(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     if(irq < 0) return false;
 
     // return enabled bit
@@ -134,6 +146,8 @@ bool TInterrupt::EnableState(short irq)
 
 bool TInterrupt::PendingState(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     if(irq < 0) return false;
 
     // return pending bit
@@ -142,11 +156,15 @@ bool TInterrupt::PendingState(short irq)
 
 void TInterrupt::SetPriority(short irq, uint priority)
 {
+	assert_param(IS_IRQ(irq));
+
     NVIC_SetPriority((IRQn_Type)irq, priority);
 }
 
 void TInterrupt::GetPriority(short irq)
 {
+	assert_param(IS_IRQ(irq));
+
     NVIC_GetPriority((IRQn_Type)irq);
 }
 
@@ -165,7 +183,7 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 void TInterrupt::OnHandler()
 {
     uint num = GetInterruptNumber();
-    if(num >= 84) return;
+    if(num >= VectorySize) return;
     if(!Interrupt.Vectors[num]) return;
 
     // 找到应用层中断委托并调用
