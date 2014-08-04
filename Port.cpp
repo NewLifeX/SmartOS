@@ -333,9 +333,9 @@ extern "C"
         }
     }
 
-#ifdef STM32F10X
     void EXTI_IRQHandler(ushort num, void* param)
     {
+#ifdef STM32F10X
         // EXTI0 - EXTI4
         if(num <= EXTI4_IRQn)
             GPIO_ISR(num - EXTI0_IRQn);
@@ -359,11 +359,8 @@ extern "C"
                 num++; pending >>= 1;
             } while (pending);
         }
-    }
 #else
     //stm32f0xx
-    void EXTI_IRQHandler(ushort num, void* param)
-    {
         switch(num)
         {
             case EXTI0_1_IRQn:
@@ -395,8 +392,8 @@ extern "C"
                 } while (pending);
             }
         }
-    }
 #endif
+    }
 
 #endif
 }
@@ -443,7 +440,6 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     /* 配置EXTI中断线 */
     EXTI_InitTypeDef ext;
     EXTI_StructInit(&ext);
-    //ext.EXTI_Line = EXTI_Line0;
     ext.EXTI_Line = EXTI_Line0 << pinIndex;
     ext.EXTI_Mode = EXTI_Mode_Interrupt;
     ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
@@ -468,6 +464,8 @@ void InputPort::UnRegisterInput(int pinIndex)
     state->Handler = 0;
 
     EXTI_InitTypeDef ext;
+    ext.EXTI_Line = EXTI_Line0 << pinIndex;
+    ext.EXTI_Mode = EXTI_Mode_Interrupt;
     ext.EXTI_LineCmd = DISABLE;
     EXTI_Init(&ext);
 

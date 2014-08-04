@@ -75,7 +75,7 @@ extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行
 
 extern "C"
 {
-#if !defined(DEBUG)
+#ifdef DEBUG
 
 #define debug_printf printf
 
