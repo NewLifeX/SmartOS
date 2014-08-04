@@ -465,6 +465,7 @@ void InputPort::UnRegisterInput(int pinIndex)
     EXTI_InitTypeDef ext;
     ext.EXTI_Line = EXTI_Line0 << pinIndex;
     ext.EXTI_Mode = EXTI_Mode_Interrupt;
+    ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
     ext.EXTI_LineCmd = DISABLE;
     EXTI_Init(&ext);
 
