@@ -9,7 +9,9 @@
 	#include "stm32f0xx_gpio.h"
 #endif
 
-// 端口类。
+// 端口基类
+// 用于管理一组端口Group，通过PinBit标识该组的哪些引脚。
+// 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
 class Port
 {
 public:
@@ -31,7 +33,7 @@ public:
 #endif
 
 protected:
-    GPIO_InitTypeDef gpio;
+    GPIO_InitTypeDef gpio;	// 用于配置端口的结构体对象
 
 	Port();
 	virtual ~Port();
@@ -44,7 +46,6 @@ protected:
     virtual void OnConfig();
 
 private:
-	//static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
 	ulong InitState;	// 备份引脚初始状态，在析构时还原
 	
 	void OnSetPort();
