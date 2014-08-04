@@ -213,7 +213,7 @@ void Bootstrap()
 }
 #endif
 
-void ShowError(int code) { printf("系统错误！%d\r\n", code); }
+void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
 
 TSys::TSys()
 {

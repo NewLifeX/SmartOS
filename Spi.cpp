@@ -14,7 +14,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
     SPI = g_Spis[spi];
 
 #if DEBUG
-    printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
+    debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
 #endif
 
     // 计算速度
@@ -31,7 +31,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
         case 128: pre = SPI_BaudRatePrescaler_128; break;
         case 256: pre = SPI_BaudRatePrescaler_256; break;
         default:
-            printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
+            debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
             return;
     }
 
@@ -40,15 +40,15 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
     // 端口配置，销毁Spi对象时才释放
 #if DEBUG
-    printf("    CLK : ");
+    debug_printf("    CLK : ");
 #endif
     clk = new AlternatePort(ps[1], false, 10);
 #if DEBUG
-    printf("    MSIO: ");
+    debug_printf("    MSIO: ");
 #endif
     msio = new AlternatePort(ps[2], false, 10);
 #if DEBUG
-    printf("    MOSI: ");
+    debug_printf("    MOSI: ");
 #endif
     mosi = new AlternatePort(ps[3], false, 10);
 
@@ -63,7 +63,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
         }
 #endif
 #if DEBUG
-    printf("    NSS : ");
+    debug_printf("    NSS : ");
 #endif
         _nss = new OutputPort(ps[0], false, 10);
     }
@@ -109,7 +109,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 Spi::~Spi()
 {
 #if DEBUG
-    printf("~Spi%d\r\n", _spi + 1);
+    debug_printf("~Spi%d\r\n", _spi + 1);
 #endif
 
     Stop();
@@ -118,15 +118,15 @@ Spi::~Spi()
     SPI_I2S_DeInit(SPI);
     
 #if DEBUG
-    printf("    CLK : ");
+    debug_printf("    CLK : ");
 #endif
     if(clk) delete clk;
 #if DEBUG
-    printf("    MSIO: ");
+    debug_printf("    MSIO: ");
 #endif
     if(msio) delete msio;
 #if DEBUG
-    printf("    MOSI: ");
+    debug_printf("    MOSI: ");
 #endif
     if(mosi) delete mosi;
     clk = NULL;
@@ -134,7 +134,7 @@ Spi::~Spi()
     mosi = NULL;
 
 #if DEBUG
-    printf("    NSS : ");
+    debug_printf("    NSS : ");
 #endif
     if(_nss) delete _nss;
     _nss = NULL;

@@ -275,8 +275,8 @@ extern "C"
 void assert_failed(uint8_t* file, uint32_t line)
 {
     /* User can add his own implementation to report the file name and line number,
-    ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    if(_printf_sp) printf("Assert Failed! Line %d, %s\r\n", line, file);
+    ex: debug_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+    if(_printf_sp) debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
     /* Infinite loop */
     while (1) { }

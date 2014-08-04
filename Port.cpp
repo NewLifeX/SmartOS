@@ -173,12 +173,12 @@ bool Port::Reserve(Pin pin, bool flag)
     if (flag) {
         if (Reserved[port] & bit) {
 			// 增加针脚已经被保护的提示，很多地方调用ReservePin而不写日志，得到False后直接抛异常
-			printf("ReservePin P%c%d already reserved\r\n", _PIN_NAME(pin));
+			debug_printf("ReservePin P%c%d already reserved\r\n", _PIN_NAME(pin));
 			return false; // already reserved
 		}
         Reserved[port] |= bit;
 
-		printf("ReservePin P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("ReservePin P%c%d\r\n", _PIN_NAME(pin));
     } else {
         Reserved[port] &= ~bit;
 
@@ -195,9 +195,9 @@ bool Port::Reserve(Pin pin, bool flag)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		printf("UnReservePin P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
+		debug_printf("UnReservePin P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
 #else
-		printf("UnReservePin P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("UnReservePin P%c%d\r\n", _PIN_NAME(pin));
 #endif
 	}
 
@@ -425,7 +425,7 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     if(state->Pin != pin && state->Pin != P0)
     {
 #if DEBUG
-        printf("EXTI%d can't register to P%c%d, it has register to P%c%d\r\n", groupIndex, _PIN_NAME(pin), _PIN_NAME(state->Pin));
+        debug_printf("EXTI%d can't register to P%c%d, it has register to P%c%d\r\n", groupIndex, _PIN_NAME(pin), _PIN_NAME(state->Pin));
 #endif
         return;
     }

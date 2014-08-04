@@ -26,7 +26,7 @@ bool Flash::Read(uint address, byte* buf, uint numBytes)
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-    printf( "Flash::Read( 0x%08x, %d, 0x%08x)\r\n", address, numBytes, buf );
+    debug_printf( "Flash::Read( 0x%08x, %d, 0x%08x)\r\n", address, numBytes, buf );
 #endif
 
 	// 按字读取
@@ -74,7 +74,7 @@ bool Flash::WriteBlock(uint address, byte* buf, uint numBytes, bool fIncrementDa
             while (FLASH->SR & FLASH_SR_BSY);
             // check
             if (*ChipAddress != *pBuf) {
-                printf( " Flash_WriteToSector failure @ 0x%08x, write 0x%08x, read 0x%08x\r\n", (uint)ChipAddress, *pBuf, *ChipAddress );
+                debug_printf( " Flash_WriteToSector failure @ 0x%08x, write 0x%08x, read 0x%08x\r\n", (uint)ChipAddress, *pBuf, *ChipAddress );
                 return false;
             }
         }
@@ -98,14 +98,14 @@ bool Flash::Write(uint address, byte* buf, uint numBytes, bool readModifyWrite)
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-    printf( "Flash::Write( 0x%08x, %d, 0x%08x, %d )", address, numBytes, buf, readModifyWrite );
+    debug_printf( "Flash::Write( 0x%08x, %d, 0x%08x, %d )", address, numBytes, buf, readModifyWrite );
     int len = 0x10;
     if(numBytes < len) len = numBytes;
-    //printf("    Data: ");
+    //debug_printf("    Data: ");
     //!!! 必须另起一个指针，否则移动原来的指针可能造成重大失误
     byte* p = buf;
-    for(int i=0; i<len; i++) printf(" %02X", *p++);
-    printf("\r\n");
+    for(int i=0; i<len; i++) debug_printf(" %02X", *p++);
+    debug_printf("\r\n");
 #endif
 
     // 如果没有读改写，直接执行
@@ -179,7 +179,7 @@ bool Flash::Memset(uint address, byte data, uint numBytes)
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-    printf( "Flash::Memset( 0x%08x, %d, 0x%02x )\r\n", address, numBytes, data );
+    debug_printf( "Flash::Memset( 0x%08x, %d, 0x%02x )\r\n", address, numBytes, data );
 #endif
 
 	// 这里还没有考虑超过一块的情况，将来补上
@@ -192,7 +192,7 @@ bool Flash::IsBlockErased(uint address, uint numBytes)
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-	printf( "Flash::IsBlockErased( 0x%08x, %d )\r\n", address, numBytes );
+	debug_printf( "Flash::IsBlockErased( 0x%08x, %d )\r\n", address, numBytes );
 #endif
 
     ushort* ChipAddress = (ushort *) address;
@@ -216,7 +216,7 @@ bool Flash::EraseBlock(uint address)
     if(address < StartAddress || address + BytesPerBlock > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-    printf( "Flash::EraseBlock( 0x%08x )", address );
+    debug_printf( "Flash::EraseBlock( 0x%08x )", address );
 #endif
 
     // 进行闪存编程操作时(写或擦除)，必须打开内部的RC振荡器(HSI)
@@ -258,8 +258,8 @@ bool Flash::EraseBlock(uint address)
 
 #if FLASH_DEBUG
     byte* p = (byte*)address;
-    for(int i=0; i<0x10; i++) printf(" %02X", *p++);
-    printf("\r\n");
+    for(int i=0; i<0x10; i++) debug_printf(" %02X", *p++);
+    debug_printf("\r\n");
 #endif
 
     return true;
@@ -271,7 +271,7 @@ bool Flash::Erase(uint address, uint numBytes)
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;
 
 #if FLASH_DEBUG
-    printf( "Flash::Erase( 0x%08x, 0x%08x )", address, numBytes );
+    debug_printf( "Flash::Erase( 0x%08x, 0x%08x )", address, numBytes );
 #endif
 
 	if(numBytes == 0) numBytes = StartAddress + Size - address;

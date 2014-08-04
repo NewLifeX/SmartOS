@@ -73,6 +73,19 @@ public:
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
 
+extern "C"
+{
+#if !defined(DEBUG)
+
+#define debug_printf printf
+
+#else
+
+__inline void debug_printf( const char *format, ... ) {}
+
+#endif  // !defined(BUILD_RTM)
+}
+
 #include "Time.h"
 #include "Interrupt.h"
 
