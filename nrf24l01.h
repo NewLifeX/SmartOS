@@ -49,7 +49,7 @@ public:
         _IRQ = NULL;
     }
 
-    byte Check(void);
+    bool Check(void);
     void EnterSend();
     void EnterReceive();
 

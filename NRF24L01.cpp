@@ -71,17 +71,12 @@ void nRF24L01_irq(Pin pin, bool opk);
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
-    //_CE = ce;
-	//if(_CE != P0) Port::SetOutput(_CE, false);
     if(ce != P0) _CE = new OutputPort(ce);
 
     //_IRQ = irq;
     if(irq != P0)
     {
         // 中断引脚初始化
-        //Port::Set(_IRQ, Port::Mode_IN, false, Port::Speed_10MHz , Port::PuPd_UP);
-        // 中断引脚申请委托
-        //Port::Register(_IRQ, nRF24L01_irq);
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
         _IRQ->Register(nRF24L01_irq);
     }
@@ -101,23 +96,18 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
   * 	@arg bytes: pBuf的数据长度
   * @retval  NRF的status寄存器的状态
   */
-byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
+byte NRF24L01::WriteBuf(byte reg, byte* buf, byte bytes)
 {
-	byte status,byte_cnt;
 	CEDown();
-
-	_spi->Start();
+	SpiScope sc(_spi);
 
     /*发送寄存器号*/
-	status = _spi->Write(reg);
-  	  /*向缓冲区写入数据*/
-	for(byte_cnt=0;byte_cnt<bytes;byte_cnt++)
-	//	SPI_NRF_RW(*pBuf++);	//写数据到缓冲区
-		_spi->Write(*pBuf++);
+	byte status = _spi->Write(reg);
+  	/*向缓冲区写入数据*/
+	for(byte i=0; i<bytes; i++)
+		_spi->Write(*buf++);
 
-	_spi->Stop();
-
-  	return (status);	//返回NRF24L01的状态
+  	return status; // 返回NRF24L01的状态
 }
 
 /**
@@ -128,50 +118,37 @@ byte NRF24L01::WriteBuf(byte reg ,byte *pBuf,byte bytes)
   * 	@arg bytes: pBuf的数据长度
   * @retval  NRF的status寄存器的状态
   */
-byte NRF24L01::ReadBuf(byte reg,byte *pBuf,byte bytes)
+byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
- 	byte status, byte_cnt;
-
 	CEDown();
-
-	_spi->Start();
+	SpiScope sc(_spi);
 
 	/*发送寄存器号*/
-	status = _spi->Write(reg);
+	byte status = _spi->Write(reg);
  	/*读取缓冲区数据*/
-	for(byte_cnt=0;byte_cnt<bytes;byte_cnt++)
-	  pBuf[byte_cnt] = _spi->Write(NOP); //从NRF24L01读取数据
+	for(byte i=0; i<bytes; i++)
+	  buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
 
-	_spi->Stop();
-
- 	return status;		//返回寄存器状态值
+ 	return status; // 返回寄存器状态值
 }
 
-/**
-  * @brief  主要用于NRF与MCU是否正常连接
-  * @param  无
-  * @retval SUCCESS/ERROR 连接正常/连接失败
-  */
-byte NRF24L01::Check(void)
+// 主要用于NRF与MCU是否正常连接
+bool NRF24L01::Check(void)
 {
 	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf[5]={0XA5,0XA5,0XA5,0XA5,0XA5};
 	byte buf1[5];
-	byte i;
 	/*写入5个字节的地址.  */
-	WriteBuf(WRITE_REG_NRF + TX_ADDR,buf,5);
+	WriteBuf(WRITE_REG_NRF + TX_ADDR, buf, 5);
 	/*读出写入的地址 */
-	ReadBuf(TX_ADDR,buf1,5);
-	/*比较*/
-	for(i=0;i<5;i++)
+	ReadBuf(TX_ADDR, buf1, 5);
+
+	// 比较
+	for(byte i=0; i<5; i++)
 	{
-		if(buf1[i]!=0xC2)
-		break;
+		if(buf1[i] != 0xC2) return false; // 连接不正常
 	}
-	if(i==5)
-		return SUCCESS ;        //MCU与NRF成功连接
-	else
-		return ERROR ;        //MCU与NRF不正常连接
+	return true; // 成功连接
 }
 
 /**
@@ -182,19 +159,13 @@ byte NRF24L01::Check(void)
   */
 byte NRF24L01::ReadReg(byte reg)
 {
- 	byte reg_val;
 	CEDown();
-
-	_spi->Start();
+	SpiScope sc(_spi);
 
   	 /*发送寄存器号*/
 	_spi->Write(reg);
 	 /*读取寄存器的值 */
-	reg_val =  _spi->Write(NOP);
-
-	_spi->Stop();
-
-	return reg_val;
+	return _spi->Write(NOP);
 }
 
 /**
@@ -206,17 +177,13 @@ byte NRF24L01::ReadReg(byte reg)
   */
 byte NRF24L01::WriteReg(byte reg,byte dat)
 {
- 	byte status;
 	CEDown();
-
-	_spi->Start();
+	SpiScope sc(_spi);
 
 	/*发送命令及寄存器号 */
-	status = _spi->Write(reg);
+	byte status = _spi->Write(reg);
 	 /*向寄存器写入数据*/
     _spi->Write(dat);
-
-	_spi->Stop();
 
 	/*返回状态寄存器的值*/
    	return status;
@@ -280,13 +247,12 @@ void NRF24L01::EnterSend(void)
   */
 byte NRF24L01::Receive(byte *data)
 {
-	byte state;
 	/*等待接收中断*/
 //	while(NRF_Read_IRQ()!=0);
 	CEUp();
 	CEDown();
 	/*读取status寄存器的值  */
-	state = ReadReg(STATUS);
+	byte state = ReadReg(STATUS);
 	/* 清除中断标志*/
 	WriteReg(WRITE_REG_NRF + STATUS, state);
 	/*判断是否接收到数据*/
@@ -296,8 +262,8 @@ byte NRF24L01::Receive(byte *data)
         WriteReg(FLUSH_RX,NOP);          //清除RX FIFO寄存器
         return RX_OK;
 	}
-	else
-		return ERROR;                    //没收到任何数据
+
+	return false;                    //没收到任何数据
 }
 
 /**
@@ -308,7 +274,6 @@ byte NRF24L01::Receive(byte *data)
   */
 byte NRF24L01::Send(byte* data)
 {
-	byte state;
 	 /*ce为低，进入待机模式1*/
 	CEDown();
 	/*写数据到TX BUF 最大 32个字节*/
@@ -318,8 +283,8 @@ byte NRF24L01::Send(byte* data)
 	  /*等待发送完成中断 */
 //	while(NRF_Read_IRQ()!=0);
 	/*读取状态寄存器的值 */
-	state = ReadReg(STATUS);
-	 /*清除TX_DS或MAX_RT中断标志*/
+	byte state = ReadReg(STATUS);
+	/*清除TX_DS或MAX_RT中断标志*/
 	WriteReg(WRITE_REG_NRF + STATUS,state);
 	WriteReg(FLUSH_TX,NOP);    //清除TX FIFO寄存器
 	 /*判断中断类型*/
@@ -328,7 +293,7 @@ byte NRF24L01::Send(byte* data)
     else if(state & TX_OK)                  //发送完成
         return TX_OK;
     else
-        return ERROR;                 //其他原因发送失败
+        return false;                 //其他原因发送失败
 }
 
 void NRF24L01::CEUp()

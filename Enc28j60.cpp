@@ -3,12 +3,13 @@
 Enc28j60::Enc28j60(Spi* spi, Pin ce, Pin irq)
 {
     _spi = spi;
+	_ce = NULL;
     if(ce != P0) _ce = new OutputPort(ce);
 }
 
 byte Enc28j60::ReadOp(byte op, byte addr)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     byte dat = op | (addr & ADDR_MASK);
     _spi->Write(dat);
@@ -19,14 +20,12 @@ byte Enc28j60::ReadOp(byte op, byte addr)
         dat = _spi->Write(0xFF);
     }
 
-    _spi->Stop();
-
     return dat;
 }
 
 void Enc28j60::WriteOp(byte op, byte addr, byte data)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // issue write command
     byte dat = op | (addr & ADDR_MASK);
@@ -34,13 +33,11 @@ void Enc28j60::WriteOp(byte op, byte addr, byte data)
     // write data
     dat = data;
     _spi->Write(dat);
-
-    _spi->Stop();
 }
 
 void Enc28j60::ReadBuffer(byte* buf, uint len)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // issue read command
     _spi->Write(ENC28J60_READ_BUF_MEM);
@@ -49,13 +46,11 @@ void Enc28j60::ReadBuffer(byte* buf, uint len)
         *buf++ = _spi->Write(0);
     }
     *buf='\0';
-
-    _spi->Stop();
 }
 
 void Enc28j60::WriteBuffer(byte* buf, uint len)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // issue write command
     _spi->Write(ENC28J60_WRITE_BUF_MEM);
@@ -64,8 +59,6 @@ void Enc28j60::WriteBuffer(byte* buf, uint len)
     {
         _spi->Write(*buf++);
     }
-
-    _spi->Stop();
 }
 
 void Enc28j60::SetBank(byte addr)

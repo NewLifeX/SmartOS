@@ -45,4 +45,23 @@ public:
     void Stop();    // 拉高NSS，停止传输
 };
 
+// Spi会话类。初始化时打开Spi，超出作用域析构时关闭
+class SpiScope
+{
+private:
+	Spi* _spi;
+
+public:
+	SpiScope(Spi* spi)
+	{
+		_spi = spi;
+		_spi->Start();
+	}
+
+	~SpiScope()
+	{
+		_spi->Stop();
+	}
+};
+
 #endif

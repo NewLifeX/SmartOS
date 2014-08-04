@@ -14,8 +14,8 @@ AT45DB::AT45DB(Spi* spi)
     Retry = 3000;
     //PageSize = 0x210;
 
+    SpiScope sc(_spi);
     // 状态位最后一位决定页大小
-    _spi->Start();
     // 读状态寄存器命令
     _spi->Write(0xD7);
     byte status = _spi->Write(Dummy_Byte) & 0x01;
@@ -36,7 +36,7 @@ AT45DB::AT45DB(Spi* spi)
 
 AT45DB::~AT45DB()
 {
-    delete _spi;
+    if(_spi) delete _spi;
     _spi = NULL;
 }
 
@@ -54,7 +54,7 @@ void AT45DB::SetAddr(uint addr)
 // 等待操作完成
 bool AT45DB::WaitForEnd()
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // 读状态寄存器命令
     _spi->Write(0xD7);
@@ -70,8 +70,6 @@ bool AT45DB::WaitForEnd()
     }
     while ((status & 0x80) == RESET && --retry); /* Busy in progress */
 
-    _spi->Stop();
-
     // 重试次数没有用完，才返回成功
     return retry > 0;
 }
@@ -79,11 +77,10 @@ bool AT45DB::WaitForEnd()
 // 擦除扇区
 bool AT45DB::Erase(uint sector)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 	// 扇区擦除命令
     _spi->Write(0x7C);
     SetAddr(sector);
-    _spi->Stop();
 
     return WaitForEnd();
 }
@@ -91,11 +88,10 @@ bool AT45DB::Erase(uint sector)
 // 擦除页
 bool AT45DB::ErasePage(uint pageAddr)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 	// 页擦除命令
     _spi->Write(0x81);
     SetAddr(pageAddr);
-    _spi->Stop();
 
     return WaitForEnd();
 }
@@ -103,7 +99,7 @@ bool AT45DB::ErasePage(uint pageAddr)
 // 按页写入
 bool AT45DB::WritePage(uint addr, byte* buf, uint count)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
 	// 主存储器页编程命令，带预擦除
     _spi->Write(0x82);
@@ -133,12 +129,10 @@ bool AT45DB::WritePage(uint addr, byte* buf, uint count)
     _spi->Stop();
     //WaitForEnd();
 
-    _spi->Start();
+    SpiScope sc(_spi);
     // 将第二缓冲区的数据写入主存储器（擦除模式）
     _spi->Write(0x86);
     SetAddr(addr & 0xFFFF00);*/
-
-    _spi->Stop();
 
     return WaitForEnd();
 }
@@ -223,7 +217,7 @@ bool AT45DB::Write(uint addr, byte* buf, uint count)
 // 读取一页
 bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // 主存储器页读取命令
     _spi->Write(0xD2);
@@ -242,8 +236,6 @@ bool AT45DB::ReadPage(uint addr, byte* buf, uint count)
         *buf = _spi->Write(Dummy_Byte);
         buf++;
     }
-
-    _spi->Stop();
 
     return true;
 }
@@ -328,7 +320,7 @@ bool AT45DB::Read(uint addr, byte* buf, uint count)
 // 读取编号
 uint AT45DB::ReadID()
 {
-    _spi->Start();
+    SpiScope sc(_spi);
 
     // 读ID命令，AT45DB161D的ID是1F260000；其中：1F代表厂商ID；2600代表设备ID；00代表配置符字节数
     _spi->Write(0x9F);
@@ -337,8 +329,6 @@ uint AT45DB::ReadID()
     uint Temp1 = _spi->Write(Dummy_Byte);
     uint Temp2 = _spi->Write(Dummy_Byte);
     uint Temp3 = _spi->Write(Dummy_Byte);
-
-    _spi->Stop();
 
     return (Temp0 << 24) | (Temp1 << 16) | (Temp2<<8) | Temp3;
 }
