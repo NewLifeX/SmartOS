@@ -150,7 +150,7 @@ bool NRF24L01::Check(void)
 	// 比较
 	for(byte i=0; i<5; i++)
 	{
-		if(buf1[i] != 0xC2) return false; // 连接不正常
+		if(buf1[i] != buf[i]) return false; // 连接不正常
 	}
 	return true; // 成功连接
 }
