@@ -58,7 +58,8 @@ void SerialPort::Open()
 
     GetPins(&tx, &rx);
 
-    USART_DeInit(_port);
+	// 不要关调试口，否则杯具
+    if(_com != Sys.MessagePort) USART_DeInit(_port);
 
 	// 检查重映射
 #ifdef STM32F1XX
@@ -92,8 +93,6 @@ void SerialPort::Open()
 	//串口引脚初始化
     _tx = new AlternatePort(tx, false, 10);
     _rx = new InputPort(rx);
-	//_tx->Restore = true;
-	//_rx->Restore = true;
 
 #ifdef STM32F0XX
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
@@ -186,16 +185,15 @@ void SerialPort::Write(const string data, int size)
 int SerialPort::Read(string data, uint size)
 {
     Open();
-
-    return 0;
+	
+	return USART_ReceiveData(_port);
 }
 
 // 刷出某个端口中的数据
 void SerialPort::Flush()
 {
-    USART_TypeDef* port = g_Uart_Ports[_com];
-
-    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET);//等待发送完毕
+	uint times = 300;
+    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
 }
 
 void SerialPort::Register(SerialPortReadHandler handler)
