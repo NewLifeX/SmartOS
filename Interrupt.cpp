@@ -287,7 +287,7 @@ void FAULT_SubHandler()
 		debug_printf("\r\n");
 	}
 #endif
-    
+
     while(true);
 }
 
