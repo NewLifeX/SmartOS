@@ -65,7 +65,7 @@ extern TInterrupt Interrupt;
 class SmartIRQ
 {
 public:
-	SmartIRQ(bool enable = false)
+	force_inline SmartIRQ(bool enable = false)
 	{
 		_state = __get_PRIMASK();
 		if(enable)
@@ -74,7 +74,7 @@ public:
 			__disable_irq();
 	}
 
-	~SmartIRQ()
+	force_inline ~SmartIRQ()
 	{
 		__set_PRIMASK(_state);
 	}

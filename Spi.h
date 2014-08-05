@@ -52,13 +52,13 @@ private:
 	Spi* _spi;
 
 public:
-	SpiScope(Spi* spi)
+	force_inline SpiScope(Spi* spi)
 	{
 		_spi = spi;
 		_spi->Start();
 	}
 
-	~SpiScope()
+	force_inline ~SpiScope()
 	{
 		_spi->Stop();
 	}
