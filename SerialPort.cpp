@@ -91,6 +91,7 @@ ShowLog:
 	//串口引脚初始化
     _tx = new AlternatePort(tx, false, 10);
     _rx = new InputPort(rx);
+    //_tx->Write(true);
 
 	// 不要关调试口，否则杯具
     if(_com != Sys.MessagePort) USART_DeInit(_port);
@@ -140,6 +141,10 @@ ShowLog:
 
     Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
+    //USART_ClearFlag(_port, USART_FLAG_TC);
+    //USART_ClearFlag(_port, USART_FLAG_RXNE);
+    //USART_ClearITPendingBit(_port, USART_IT_TC);
+    //USART_ClearITPendingBit(_port, USART_IT_RXNE);
 	USART_Cmd(_port, ENABLE);//使能串口
 
 	if(RS485) *RS485 = false;
