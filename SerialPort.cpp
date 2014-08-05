@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 #include <stdio.h>
 
 #include "Port.h"
@@ -74,10 +74,12 @@ ShowLog:
         }
         switch(_stopBits)
         {
-            case USART_StopBits_1: debug_printf(", StopBits_1"); break;
+#ifdef STM32F10X
             case USART_StopBits_0_5: debug_printf(", StopBits_0_5"); break;
-            case USART_StopBits_2: debug_printf(", StopBits_2"); break;
+#endif
+            case USART_StopBits_1: debug_printf(", StopBits_1"); break;
             case USART_StopBits_1_5: debug_printf(", StopBits_1_5"); break;
+            case USART_StopBits_2: debug_printf(", StopBits_2"); break;
         }
         debug_printf(") TX=P%c%d RX=P%c%d\r\n", _PIN_NAME(tx), _PIN_NAME(rx));
 
