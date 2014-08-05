@@ -12,7 +12,7 @@ static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
 static int SERIALPORT_IRQns[] = {
-    USART1_IRQn, USART2_IRQn, 
+    USART1_IRQn, USART2_IRQn,
 #ifdef STM32F10X
     USART3_IRQn, UART4_IRQn, UART5_IRQn
 #endif
@@ -42,7 +42,7 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
 SerialPort::~SerialPort()
 {
     Close();
-	
+
 	if(RS485) delete RS485;
 	RS485 = NULL;
 }
@@ -52,13 +52,45 @@ void SerialPort::Open()
 {
     if(Opened) return;
 
-    debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _com + 1, _baudRate, _parity, _dataBits, _stopBits);
+    Pin rx, tx;
+    GetPins(&tx, &rx);
+
+    //debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _com + 1, _baudRate, _parity, _dataBits, _stopBits);
+#if DEBUG
+    if(_com != Sys.MessagePort)
+    {
+ShowLog:
+        debug_printf("Serial%d Open(%d", _com + 1, _baudRate);
+        switch(_parity)
+        {
+            case USART_Parity_No: debug_printf(", Parity_None"); break;
+            case USART_Parity_Even: debug_printf(", Parity_Even"); break;
+            case USART_Parity_Odd: debug_printf(", Parity_Odd"); break;
+        }
+        switch(_dataBits)
+        {
+            case USART_WordLength_8b: debug_printf(", WordLength_8b"); break;
+            case USART_WordLength_9b: debug_printf(", WordLength_9b"); break;
+        }
+        switch(_stopBits)
+        {
+            case USART_StopBits_1: debug_printf(", StopBits_1"); break;
+            case USART_StopBits_0_5: debug_printf(", StopBits_0_5"); break;
+            case USART_StopBits_2: debug_printf(", StopBits_2"); break;
+            case USART_StopBits_1_5: debug_printf(", StopBits_1_5"); break;
+        }
+        debug_printf(") TX=P%c%d RX=P%c%d\r\n", _PIN_NAME(tx), _PIN_NAME(rx));
+
+        // 有可能是打开串口完成以后跳回来
+        if(Opened) return;
+    }
+#endif
 
 	USART_InitTypeDef  p;
-    Pin rx;
-	Pin	tx;
 
-    GetPins(&tx, &rx);
+	//串口引脚初始化
+    _tx = new AlternatePort(tx, false, 10);
+    _rx = new InputPort(rx);
 
 	// 不要关调试口，否则杯具
     if(_com != Sys.MessagePort) USART_DeInit(_port);
@@ -92,10 +124,6 @@ void SerialPort::Open()
     }
 #endif
 
-	//串口引脚初始化
-    _tx = new AlternatePort(tx, false, 10);
-    _rx = new InputPort(rx);
-
 #ifdef STM32F0XX
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
@@ -117,6 +145,10 @@ void SerialPort::Open()
 	if(RS485) *RS485 = false;
 
     Opened = true;
+
+#if DEBUG
+    if(_com == Sys.MessagePort) goto ShowLog;
+#endif
 }
 
 // 关闭端口
