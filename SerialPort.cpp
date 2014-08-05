@@ -272,7 +272,7 @@ void SerialPort::OnReceive(ushort num, void* param)
 	{
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
-			uint count = sp->Read(sp->rx_buf, ArrayLength(rx_buf));
+			uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
 			if(count > 0) sp->_Received(sp->rx_buf, count);
 		}
 	}
