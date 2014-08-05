@@ -29,7 +29,7 @@ private:
 	AlternatePort* _tx;
 	InputPort* _rx;
 
-	byte tx_buf[64];	// 接收缓冲区
+	byte rx_buf[64];	// 接收缓冲区
 	static void OnReceive(ushort num, void* param);
 	SerialPortReadHandler _Received;
 
