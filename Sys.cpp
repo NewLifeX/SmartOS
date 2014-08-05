@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 
 #include "Time.h"
 
@@ -257,7 +257,6 @@ TSys::TSys()
 #endif
 
     Interrupt.Init();
-    g_Time = new Time();
 }
 
 TSys::~TSys()
@@ -282,6 +281,9 @@ void TSys::Init(void)
 #ifdef STM32F10X
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
 #endif
+
+	// 必须在系统主频率确定以后再初始化时钟
+    g_Time = new Time();
 
     Inited = true;
 }

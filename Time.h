@@ -10,8 +10,8 @@ private:
     static void OnHandler(ushort num, void* param);
 
 public:
-    ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。乘以0x10000，避免每次计算滴答时都需要移位
-    ulong NextEvent;    // 下一个计划事件的嘀嗒数
+    volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。乘以0x10000，避免每次计算滴答时都需要移位
+    volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
     uint TicksPerSecond;        // 每秒的时钟滴答数
     uint TicksPerMillisecond;   // 每毫秒的时钟滴答数
