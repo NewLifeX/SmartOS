@@ -60,8 +60,6 @@ public:
     void Init();     // 初始化系统
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
-    bool DisableInterrupts();    // 关闭中断
-    bool EnableInterrupts();     // 打开中断
 
     void Reset();   // 重启系统
     void (*OnError)(int code);  // 系统出错时引发

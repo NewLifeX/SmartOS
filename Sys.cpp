@@ -17,43 +17,6 @@ Time* g_Time;
 #define GD32_PLL_MASK	0x20000000
 #define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
-__asm bool TSys::DisableInterrupts()
-{
-/*
-    register UINT32 Primask __asm("primask");
-    UINT32 m = Primask;
-    __disable_irq();
-    return m ^ 1;
-*/
-#ifdef STM32F10X							//stm32f030的汇编与此有所区别
-    MRS      r0,PRIMASK
-    CPSID    i
-    EOR      r0,r0,#1
-    BX       lr
-#else
-    BX       lr
-#endif
-}
-__asm bool TSys::EnableInterrupts()
-{
-/*
-    register UINT32 Primask __asm("primask");
-    UINT32 m = Primask;
-    __enable_irq();
-    return m ^ 1;
-*/
-	// 这里打开中断以后，经常发生各种各样的异常，没有关系，并不是这里的错，而是之前可能就已经发生了异常，只不过无法产生中断，等到这里而已
-#ifdef STM32F10X							//stm32f030的汇编与此有所区别
-    MRS      r0,PRIMASK	
-    CPSIE    i
-    EOR      r0,r0,#1
-    BX       lr
-#else
-    BX       lr
-	
-#endif
-}
-
 void TSys::Sleep(uint ms) { g_Time->Sleep(ms * 1000); }
 
 void TSys::Delay(uint us) { g_Time->Sleep(us); }

@@ -53,7 +53,7 @@ void Time::OnHandler(ushort num, void* param)
 
 void Time::SetCompare(ulong compareValue)
 {
-    Sys.DisableInterrupts();
+    SmartIRQ irq;
 
     NextEvent = compareValue;
 
@@ -76,21 +76,17 @@ void Time::SetCompare(ulong compareValue)
 	// 重新设定重载值，下一次将在该值处中断
 	SysTick->LOAD = diff;
 	SysTick->VAL = 0x00;
-
-    Sys.EnableInterrupts();
 }
 
 ulong Time::CurrentTicks()
 {
-	//Sys.DisableInterrupts();
+    SmartIRQ irq;
 
 	uint value = (SysTick->LOAD - SysTick->VAL);
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
 		Ticks += SysTick->LOAD;
 	}
-
-    //Sys.EnableInterrupts();
 
 	return Ticks + value;
 }
@@ -105,7 +101,7 @@ void Time::Sleep(uint us)
 	// 自己关闭中断，简直实在找死！
 	// Sleep的时候，尽量保持中断打开，否则g_Ticks无法累加，从而造成死循环
 	// 记录现在的中断状态
-	bool state = Sys.EnableInterrupts();
+    SmartIRQ irq(true);
 
 	// 时钟滴答需要采用UINT64
     ulong maxDiff = us * TicksPerMicrosecond;
@@ -122,5 +118,5 @@ void Time::Sleep(uint us)
     while(CurrentTicks() <= maxDiff);
 	
 	// 如果之前是打开中断的，那么这里也要重新打开
-	if (!state) Sys.DisableInterrupts();
+	//if (!state) Sys.DisableInterrupts();
 }

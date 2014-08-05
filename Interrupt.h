@@ -49,6 +49,10 @@ public:
     // 解码优先级
     void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);
 #endif
+
+    void GlobalEnable();	// 打开全局中断
+    void GlobalDisable();	// 关闭全局中断
+	bool GlobalState();		// 全局中断开关状态
 };
 
 // 全局中断类对象
@@ -56,4 +60,27 @@ extern TInterrupt Interrupt;
 // 会在maim（）  之前进行初始化   没有构造函数...
 // 初始化函数  Interrupt.Init（）  在 Sys.cpp 内 TSys::TSys() 中被调用
 // <TSys::TSys()也是构造函数   Sys.TSys()函数 在main（）函数之前被执行>
+
+// 智能IRQ，初始化时备份，销毁时还原
+class SmartIRQ
+{
+public:
+	SmartIRQ(bool enable = false)
+	{
+		_state = __get_PRIMASK();
+		if(enable)
+			__enable_irq();
+		else
+			__disable_irq();
+	}
+
+	~SmartIRQ()
+	{
+		__set_PRIMASK(_state);
+	}
+	
+private:
+	uint _state;
+};
+
 #endif

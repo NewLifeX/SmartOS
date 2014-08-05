@@ -168,6 +168,10 @@ void TInterrupt::GetPriority(short irq)
     NVIC_GetPriority((IRQn_Type)irq);
 }
 
+void TInterrupt::GlobalEnable() { __enable_irq(); }
+void TInterrupt::GlobalDisable() { __disable_irq(); }
+bool TInterrupt::GlobalState() { return __get_PRIMASK(); }
+
 #ifdef STM32F10X
 uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority)
 {
