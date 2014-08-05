@@ -23,6 +23,19 @@ void TSys::Delay(uint us) { g_Time->Sleep(us); }
 
 void TSys::Reset() { NVIC_SystemReset(); }
 
+// 原配置MSP作为PSP，而使用全局数组作为新的MSP
+// MSP 堆栈大小
+#define IRQ_STACK_SIZE 0x100
+uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
+
+force_inline void Set_SP()
+{
+	__set_PSP(__get_MSP());
+	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
+	__set_CONTROL(2);
+	__ISB();
+}
+
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
 {
@@ -180,6 +193,8 @@ void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
 
 TSys::TSys()
 {
+	Set_SP();
+
 #if DEBUG
     Debug = true;
 #else
