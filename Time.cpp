@@ -44,6 +44,8 @@ Time::~Time()
 #endif
 void Time::OnHandler(ushort num, void* param)
 {
+	assert_param(Sys.CheckMemory());
+
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{

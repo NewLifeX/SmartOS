@@ -1,6 +1,7 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 
 #include "Time.h"
+#include <stdlib.h>
 
 TSys Sys;
 Time* g_Time;
@@ -34,6 +35,20 @@ force_inline void Set_SP()
 	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
 	__set_CONTROL(2);
 	__ISB();
+}
+
+bool TSys::CheckMemory()
+{
+	uint msp = __get_MSP();
+	if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
+
+	uint psp = __get_PSP();
+	void* p = malloc(0x10);
+	if(!p) return false;
+	free(p);
+	if((uint)p >= psp) return false;
+
+	return true;
 }
 
 // 获取JTAG编号，ST是0x041，GD是0x7A3
