@@ -15,9 +15,9 @@ void FAULT_SubHandler();
 
 // 真正的向量表 64k=0x10000
 #ifdef STM32F0XX
-	__IO uint _Vectors[VectorySize] __attribute__((at(0x20000000)));
+	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
 #else
-	__IO uint _Vectors[VectorySize] __attribute__((__aligned__(128)));
+	__IO Func _Vectors[VectorySize] __attribute__((__aligned__(128)));
 #endif
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
@@ -38,15 +38,15 @@ void TInterrupt::Init()
     NVIC->ICPR[2] = 0xFFFFFFFF;
 #endif
 
-    _Vectors[2]  = (uint)&FAULT_SubHandler; // NMI
-    _Vectors[3]  = (uint)&FAULT_SubHandler; // Hard Fault
-    _Vectors[4]  = (uint)&FAULT_SubHandler; // MMU Fault
-    _Vectors[5]  = (uint)&FAULT_SubHandler; // Bus Fault
-    _Vectors[6]  = (uint)&FAULT_SubHandler; // Usage Fault
-    _Vectors[11] = (uint)&FAULT_SubHandler; // SVC
-    _Vectors[12] = (uint)&FAULT_SubHandler; // Debug
-    _Vectors[14] = (uint)&FAULT_SubHandler; // PendSV
-    _Vectors[15] = (uint)&FAULT_SubHandler; // Systick
+    _Vectors[2]  = (Func)&FAULT_SubHandler; // NMI
+    _Vectors[3]  = (Func)&FAULT_SubHandler; // Hard Fault
+    _Vectors[4]  = (Func)&FAULT_SubHandler; // MMU Fault
+    _Vectors[5]  = (Func)&FAULT_SubHandler; // Bus Fault
+    _Vectors[6]  = (Func)&FAULT_SubHandler; // Usage Fault
+    _Vectors[11] = (Func)&FAULT_SubHandler; // SVC
+    _Vectors[12] = (Func)&FAULT_SubHandler; // Debug
+    _Vectors[14] = (Func)&FAULT_SubHandler; // PendSV
+    _Vectors[15] = (Func)&FAULT_SubHandler; // Systick
 
 #ifdef STM32F10X
     __DMB(); // 确保中断表已经被写入
@@ -81,9 +81,9 @@ bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 	assert_param(IS_IRQ(irq));
 
     short irq2 = irq + 16; // exception = irq + 16
-    _Vectors[irq2] = (uint)OnHandler;
-    Vectors[irq2] = (uint)isr;
-    Params[irq2] = (uint)param;
+    _Vectors[irq2] = OnHandler;
+    Vectors[irq2] = isr;
+    Params[irq2] = param;
 
     __DMB(); // asure table is written
     //NVIC->ICPR[irq >> 5] = 1 << (irq & 0x1F); // clear pending bit

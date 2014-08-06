@@ -16,8 +16,8 @@ typedef void (*InterruptCallback)(ushort num, void* param);
 class TInterrupt
 {
 private:
-    uint Vectors[VectorySize];      // 对外的中断向量表
-    uint Params[VectorySize];       // 每一个中断向量对应的参数
+    InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
+    void* Params[VectorySize];       // 每一个中断向量对应的参数
 
     static void OnHandler();
 
