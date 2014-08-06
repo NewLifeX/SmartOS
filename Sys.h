@@ -58,6 +58,7 @@ public:
     virtual ~TSys();//析构函数
 
     void Init();     // 初始化系统
+	void ShowInfo();
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
 

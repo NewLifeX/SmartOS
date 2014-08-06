@@ -266,6 +266,15 @@ void TSys::Init(void)
     Inited = true;
 }
 
+void TSys::ShowInfo()
+{
+    // 系统信息
+    debug_printf("主频：%dMHz Flash: %dkByte\r\n", Sys.Clock/1000000, Sys.FlashSize);
+    debug_printf("芯片：%08X-%08X-%08X\r\n", Sys.ID[0], Sys.ID[1], Sys.ID[2]);
+    debug_printf("CPUID: 0x%08X  MCUID: 0x%08X \r\n", Sys.CPUID, Sys.MCUID);
+    debug_printf("\r\n");
+}
+
 #define __CRC__MODULE__ 1
 #ifdef __CRC__MODULE__
 //
