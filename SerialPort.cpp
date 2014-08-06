@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 #include <stdio.h>
 
 #include "Port.h"
@@ -141,8 +141,6 @@ ShowLog:
 
 	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);//串口接收中断配置
 
-    Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
-
     //USART_ClearFlag(_port, USART_FLAG_TC);
     //USART_ClearFlag(_port, USART_FLAG_RXNE);
     //USART_ClearITPendingBit(_port, USART_IT_TC);
@@ -255,6 +253,8 @@ void SerialPort::Register(SerialPortReadHandler handler)
     if(handler)
 	{
         _Received = handler;
+
+        Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
 		Interrupt.Activate(SERIALPORT_IRQns[_com], OnReceive, this);
 	}
