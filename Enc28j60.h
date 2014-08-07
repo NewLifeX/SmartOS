@@ -33,8 +33,10 @@ public:
     void SetBank(byte addr);
     byte Read(byte addr);
     void Write(byte addr, byte data);
+    uint PhyRead(byte addr);
     void PhyWrite(byte addr, uint data);
     void ClockOut(byte clock);
+	bool Linked();
 
     void Init(string mac);
     byte GetRevision();
@@ -282,5 +284,61 @@ public:
 // max frame length which the conroller will accept:
 #define        MAX_FRAMELEN        1500        // (note: maximum ethernet frame length would be 1518)
 //#define MAX_FRAMELEN     600
+
+typedef union _WORD_VAL
+{
+    u16 Val;
+    u8 v[2];
+    struct
+    {
+        u8 LB;
+        u8 HB;
+    } byte;
+    struct
+    {
+        unsigned char b0:1;
+        unsigned char b1:1;
+        unsigned char b2:1;
+        unsigned char b3:1;
+        unsigned char b4:1;
+        unsigned char b5:1;
+        unsigned char b6:1;
+        unsigned char b7:1;
+        unsigned char b8:1;
+        unsigned char b9:1;
+        unsigned char b10:1;
+        unsigned char b11:1;
+        unsigned char b12:1;
+        unsigned char b13:1;
+        unsigned char b14:1;
+        unsigned char b15:1;
+    } bits;
+} WORD_VAL, WORD_BITS;
+
+typedef union {
+	u8 v[7];
+	struct {
+		u16	 		ByteCount;
+		unsigned char	CollisionCount:4;
+		unsigned char	CRCError:1;
+		unsigned char	LengthCheckError:1;
+		unsigned char	LengthOutOfRange:1;
+		unsigned char	Done:1;
+		unsigned char	Multicast:1;
+		unsigned char	Broadcast:1;
+		unsigned char	PacketDefer:1;
+		unsigned char	ExcessiveDefer:1;
+		unsigned char	MaximumCollisions:1;
+		unsigned char	LateCollision:1;
+		unsigned char	Giant:1;
+		unsigned char	Underrun:1;
+		u16 	 		BytesTransmittedOnWire;
+		unsigned char	ControlFrame:1;
+		unsigned char	PAUSEControlFrame:1;
+		unsigned char	BackpressureApplied:1;
+		unsigned char	VLANTaggedFrame:1;
+		unsigned char	Zeros:4;
+	} bits;
+} TXSTATUS;
 
 #endif
