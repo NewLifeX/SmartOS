@@ -17,7 +17,8 @@ void FAULT_SubHandler();
 #ifdef STM32F0XX
 	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
 #else
-	__IO Func _Vectors[VectorySize] __attribute__((__aligned__(128)));
+	// 84个中断向量，向上取整到2整数倍也就是128，128*4=512=0x200。CM3权威手册
+	__IO Func _Vectors[VectorySize] __attribute__((__aligned__(0x200)));
 #endif
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
