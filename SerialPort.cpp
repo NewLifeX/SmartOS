@@ -224,8 +224,8 @@ uint SerialPort::Read(byte* buf, uint size)
 
 	//return USART_ReceiveData(_port);
 
-	// 在500ms内接收数据
-	uint end = g_Time->CurrentTicks() + g_Time->TicksPerMillisecond * 500;
+	// 在100ms内接收数据
+	uint end = g_Time->CurrentTicks() + g_Time->TicksPerMillisecond * 100;
 	uint count = 0; // 收到的字节数
 	while(count < size && g_Time->CurrentTicks() < end)
 	{
