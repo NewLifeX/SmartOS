@@ -352,6 +352,25 @@ void OutputPort::WriteGroup(ushort value)
     GPIO_Write(Group, value);
 }
 
+void OutputPort::Up(uint ms)
+{
+    Write(true);
+	Sys.Sleep(ms);
+    Write(false);
+}
+
+void OutputPort::Blink(uint times, uint ms)
+{
+	bool flag = true;
+    for(int i=0; i<times; i++)
+	{
+		Write(flag);
+		flag = !flag;
+		Sys.Sleep(ms);
+	}
+    Write(false);
+}
+
 // 设置端口状态
 void OutputPort::Write(Pin pin, bool value)
 {

@@ -93,6 +93,8 @@ public:
 
     void Write(bool value); // 按位值写入
     void WriteGroup(ushort value);   // 整组写入
+	void Up(uint ms);	// 拉高一段时间后拉低
+	void Blink(uint times, uint ms);	// 闪烁多次
 
     static void Write(Pin pin, bool value);
 
