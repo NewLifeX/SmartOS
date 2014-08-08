@@ -1,4 +1,4 @@
-#include "TinyIP.h"
+ï»¿#include "TinyIP.h"
 
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
@@ -69,24 +69,32 @@ void TinyIP::TcpSend(byte* buf, uint size)
 
 void TinyIP::Start()
 {
-	// ·ÖÅä»º³åÇø¡£±È½Ï´ó£¬Ğ¡ĞÄÕ»¿Õ¼ä²»¹»
+	// åˆ†é…ç¼“å†²åŒºã€‚æ¯”è¾ƒå¤§ï¼Œå°å¿ƒæ ˆç©ºé—´ä¸å¤Ÿ
 	if(!Buffer) Buffer = new byte[BufferSize + 1];
 	assert_param(Buffer);
 	assert_param(Sys.CheckMemory());
 	byte* buf = Buffer;
 
-    // ³õÊ¼»¯ enc28j60 µÄMACµØÖ·(ÎïÀíµØÖ·),Õâ¸öº¯Êı±ØĞëÒªµ÷ÓÃÒ»´Î
+    // åˆå§‹åŒ– enc28j60 çš„MACåœ°å€(ç‰©ç†åœ°å€),è¿™ä¸ªå‡½æ•°å¿…é¡»è¦è°ƒç”¨ä¸€æ¬¡
     _enc->Init((string)Mac);
 
-    // ½«enc28j60µÚÈıÒı½ÅµÄÊ±ÖÓÊä³ö¸ÄÎª£ºfrom 6.25MHz to 12.5MHz(±¾Àı³Ì¸ÃÒı½ÅNC,Ã»ÓÃµ½)
+    // å°†enc28j60ç¬¬ä¸‰å¼•è„šçš„æ—¶é’Ÿè¾“å‡ºæ”¹ä¸ºï¼šfrom 6.25MHz to 12.5MHz(æœ¬ä¾‹ç¨‹è¯¥å¼•è„šNC,æ²¡ç”¨åˆ°)
     _enc->ClockOut(2);
+
+	if(UseDHCP)
+	{
+		DHCP_config(buf);
+
+		_enc->Init((string)Mac);
+		_enc->ClockOut(2);
+	}
 
     while(1)
     {
-        // »ñÈ¡»º³åÆ÷µÄ°ü
+        // è·å–ç¼“å†²å™¨çš„åŒ…
         uint len = _enc->PacketReceive(buf, BufferSize);
 
-        // Èç¹û»º³åÆ÷ÀïÃæÃ»ÓĞÊı¾İÔò×ªÈëÏÂÒ»´ÎÑ­»·
+        // å¦‚æœç¼“å†²å™¨é‡Œé¢æ²¡æœ‰æ•°æ®åˆ™è½¬å…¥ä¸‹ä¸€æ¬¡å¾ªç¯
         if(!len) continue;
 
         if(eth_type_is_arp_and_my_ip(buf, len))
@@ -104,17 +112,17 @@ void TinyIP::Start()
             debug_printf("\r\n");
         }
 
-        // ÅĞ¶ÏÊÇ·ñÎª·¢ËÍ¸øÎÒÃÇipµÄ°ü
+        // åˆ¤æ–­æ˜¯å¦ä¸ºå‘é€ç»™æˆ‘ä»¬ipçš„åŒ…
         if(!eth_type_is_ip_and_my_ip(buf, len)) continue;
 
-        // ICMPĞ­Òé¼ì²âÓë¼ì²âÊÇ·ñÎªICMPÇëÇó ping
+        // ICMPåè®®æ£€æµ‹ä¸æ£€æµ‹æ˜¯å¦ä¸ºICMPè¯·æ±‚ ping
         if(buf[IP_PROTO_P] == IP_PROTO_ICMP_V)
         {
 			ProcessICMP(buf, len);
             continue;
         }
 
-        //ÓÃÓÚ²é¿´Êı¾İ°üµÄ±êÖ¾Î»
+        //ç”¨äºæŸ¥çœ‹æ•°æ®åŒ…çš„æ ‡å¿—ä½
         if (buf[IP_PROTO_P] == IP_PROTO_TCP_V)
         {
 			ProcessTcp(buf, len);
@@ -134,7 +142,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 {
 	if(buf[ICMP_TYPE_P] != ICMP_TYPE_ECHOREQUEST_V) return;
 
-	debug_printf("from "); // ´òÓ¡·¢·½µÄip
+	debug_printf("from "); // æ‰“å°å‘æ–¹çš„ip
 	ShowIP(&buf[IP_SRC_P]);
 	debug_printf(" ICMP package.\r\n");
 	make_echo_reply_from_request(buf, len);
@@ -142,37 +150,37 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
 {
-	//»ñÈ¡Ä¿±ê»úµÄTCP¶Ë¿Ú
+	//è·å–ç›®æ ‡æœºçš„TCPç«¯å£
 	//ushort tcp_port = buf[TCP_DST_PORT_H_P] << 8 | buf[TCP_DST_PORT_L_P];
 
-	// µÚÒ»´ÎÍ¬²½Ó¦´ğ
-	if (buf[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) // SYNÁ¬½ÓÇëÇó±êÖ¾Î»£¬Îª1±íÊ¾·¢ÆğÁ¬½ÓµÄÇëÇóÊı¾İ°ü
+	// ç¬¬ä¸€æ¬¡åŒæ­¥åº”ç­”
+	if (buf[TCP_FLAGS_P] & TCP_FLAGS_SYN_V) // SYNè¿æ¥è¯·æ±‚æ ‡å¿—ä½ï¼Œä¸º1è¡¨ç¤ºå‘èµ·è¿æ¥çš„è¯·æ±‚æ•°æ®åŒ…
 	{
-		debug_printf("One TCP request from "); // ´òÓ¡·¢ËÍ·½µÄip
+		debug_printf("One TCP request from "); // æ‰“å°å‘é€æ–¹çš„ip
 		ShowIP(&buf[IP_SRC_P]);
 		debug_printf("\r\n");
 
-		//µÚ¶ş´ÎÍ¬²½Ó¦´ğ
+		//ç¬¬äºŒæ¬¡åŒæ­¥åº”ç­”
 		make_tcp_synack_from_syn(buf);
 
 		return;
 	}
-	// µÚÈı´ÎÍ¬²½Ó¦´ğ,Èı´ÎÓ¦´ğºó·½¿É´«ÊäÊı¾İ
-	if (buf[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) // ACKÈ·ÈÏ±êÖ¾Î»£¬Îª1±íÊ¾´ËÊı¾İ°üÎªÓ¦´ğÊı¾İ°ü
+	// ç¬¬ä¸‰æ¬¡åŒæ­¥åº”ç­”,ä¸‰æ¬¡åº”ç­”åæ–¹å¯ä¼ è¾“æ•°æ®
+	if (buf[TCP_FLAGS_P] & TCP_FLAGS_ACK_V) // ACKç¡®è®¤æ ‡å¿—ä½ï¼Œä¸º1è¡¨ç¤ºæ­¤æ•°æ®åŒ…ä¸ºåº”ç­”æ•°æ®åŒ…
 	{
 		init_len_info(buf);
 		uint dat_p = get_tcp_data_pointer();
 
-		//ÎŞÊı¾İ·µ»ØACK
+		//æ— æ•°æ®è¿”å›ACK
 		if (dat_p == 0)
 		{
-			if (buf[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)      //FIN½áÊøÁ¬½ÓÇëÇó±êÖ¾Î»¡£Îª1±íÊ¾ÊÇ½áÊøÁ¬½ÓµÄÇëÇóÊı¾İ°ü
+			if (buf[TCP_FLAGS_P] & TCP_FLAGS_FIN_V)      //FINç»“æŸè¿æ¥è¯·æ±‚æ ‡å¿—ä½ã€‚ä¸º1è¡¨ç¤ºæ˜¯ç»“æŸè¿æ¥çš„è¯·æ±‚æ•°æ®åŒ…
 			{
 				make_tcp_ack_from_any(buf);
 			}
 			return;
 		}
-		///////////////////////////´òÓ¡TCPÊı¾İ/////////////////
+		///////////////////////////æ‰“å°TCPæ•°æ®/////////////////
 		debug_printf("Data from TCP:");
 		uint i = 0;
 		while(i < tcp_d_len)
@@ -182,7 +190,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		}
 		debug_printf("\r\n");
 		///////////////////////////////////////////////////////
-		make_tcp_ack_from_any(buf);       // ·¢ËÍACK£¬Í¨ÖªÒÑÊÕµ½
+		make_tcp_ack_from_any(buf);       // å‘é€ACKï¼Œé€šçŸ¥å·²æ”¶åˆ°
 		TcpSend(buf, len);
 
 		// tcp_close(buf,len);
@@ -193,11 +201,11 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
-	//»ñÈ¡Ä¿±ê»úUDPµÄ¶Ë¿Ú
+	//è·å–ç›®æ ‡æœºUDPçš„ç«¯å£
 	//ushort udp_port = buf[UDP_DST_PORT_H_P] << 8 | buf[UDP_DST_PORT_L_P];
 
 	debug_printf("Data from UDP:");
-	//UDPÊı¾İ³¤¶È
+	//UDPæ•°æ®é•¿åº¦
 	uint payloadlen = buf[UDP_LEN_H_P];
 	payloadlen = payloadlen << 8;
 	payloadlen = (payloadlen + buf[UDP_LEN_L_P]) - UDP_HEADER_LEN;
@@ -210,7 +218,7 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	}
 	debug_printf("\r\n");
 
-	//»ñÈ¡·¢ËÍÔ´¶Ë¿Ú
+	//è·å–å‘é€æºç«¯å£
 	ushort pc_port = buf[UDP_SRC_PORT_H_P] << 8 | buf[UDP_SRC_PORT_L_P];
 	make_udp_reply_from_request(buf, buf2, payloadlen, pc_port);
 }
@@ -261,14 +269,14 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     //if(type==0){
     //        // do not add anything
     //}
-    if(type==1)
+    if(type == 1)
     {
         sum+=IP_PROTO_UDP_V; // protocol udp
         // the length here is the length of udp (data+header len)
         // =length given to this function - (IP.scr+IP.dst length)
         sum+=len-8; // = real tcp len
     }
-    if(type==2)
+    if(type == 2)
     {
         sum+=IP_PROTO_TCP_V;
         // the length here is the length of tcp (data+header len)
@@ -297,13 +305,13 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-//¼ì²éÊÇ·ñÎªºÏ·¨µÄeth£¬²¢ÇÒÖ»½ÓÊÕ·¢¸ø±¾»úµÄarpÊı¾İ
+//æ£€æŸ¥æ˜¯å¦ä¸ºåˆæ³•çš„ethï¼Œå¹¶ä¸”åªæ¥æ”¶å‘ç»™æœ¬æœºçš„arpæ•°æ®
 byte TinyIP::eth_type_is_arp_and_my_ip(byte* buf, uint len)
 {
-    //arp±¨ÎÄ³¤¶ÈÅĞ¶Ï£¬Õı³£µÄarp±¨ÎÄ³¤¶ÈÎª42byts
+    //arpæŠ¥æ–‡é•¿åº¦åˆ¤æ–­ï¼Œæ­£å¸¸çš„arpæŠ¥æ–‡é•¿åº¦ä¸º42byts
     if (len < 41) return false;
 
-	//¼ì²âÊÇ·ñÎªarp±¨ÎÄ
+	//æ£€æµ‹æ˜¯å¦ä¸ºarpæŠ¥æ–‡
     if(buf[ETH_TYPE_H_P] != ETHTYPE_ARP_H_V || buf[ETH_TYPE_L_P] != ETHTYPE_ARP_L_V) return false;
 
     for(int i=0; i<4; i++)
@@ -391,9 +399,9 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         i++;
     }
     // set source port  (http):
-   // buf[TCP_SRC_PORT_L_P] = wwwport;                //Ô´Âë//////////////////////////////////////////////
+   // buf[TCP_SRC_PORT_L_P] = wwwport;                //æºç //////////////////////////////////////////////
 		//debug_printf("%d\r\n",src_port_H<<8 | src_port_L);
-	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;								//×Ô¼ºÌí¼Ó
+	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;								//è‡ªå·±æ·»åŠ 
 	buf[TCP_SRC_PORT_L_P] = RemotePort & 0xFF;								//
 
     i=4;
@@ -459,7 +467,7 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 void TinyIP::make_arp_answer_from_request(byte* buf)
 {
     make_eth(buf);
-    buf[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;   //arp ÏìÓ¦
+    buf[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;   //arp å“åº”
     buf[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
     // fill the mac addresses:
     for(int i=0; i<6; i++)
@@ -480,7 +488,7 @@ void TinyIP::make_echo_reply_from_request(byte* buf, uint len)
 {
     make_eth(buf);
     make_ip(buf);
-    buf[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;	  //////»ØËÍÓ¦´ğ////////////////////////////////////////////////////////////////////////////
+    buf[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;	  //////å›é€åº”ç­”////////////////////////////////////////////////////////////////////////////
     // we changed only the icmp.type field from request(=8) to reply(=0).
     // we can therefore easily correct the checksum:
     if (buf[ICMP_CHECKSUM_P] > (0xff-0x08))
@@ -521,8 +529,8 @@ void TinyIP::make_udp_reply_from_request(byte* buf,byte *data, uint datalen, uin
         buf[UDP_DATA_P + i] = data[i];
         i++;
     }
-		//ÕâÀïµÄ16×Ö½ÚÊÇUDPµÄÎ±Ê×²¿£¬¼´IPµÄÔ´µØÖ·-0x1a+Ä¿±êµØÖ·-0x1e
-		//+UDPÊ×²¿=4+4+8=16
+		//è¿™é‡Œçš„16å­—èŠ‚æ˜¯UDPçš„ä¼ªé¦–éƒ¨ï¼Œå³IPçš„æºåœ°å€-0x1a+ç›®æ ‡åœ°å€-0x1e
+		//+UDPé¦–éƒ¨=4+4+8=16
     uint ck=checksum(&buf[IP_SRC_P], 16 + datalen,1);
     buf[UDP_CHECKSUM_H_P] = ck >> 8;
     buf[UDP_CHECKSUM_L_P] = ck & 0xff;
@@ -566,14 +574,14 @@ uint TinyIP::get_tcp_data_pointer(void)
 // do some basic length calculations and store the result in static varibales
 void TinyIP::init_len_info(byte* buf)
 {
-	  //IP°ü³¤¶È
+	  //IPåŒ…é•¿åº¦
     info_data_len=(buf[IP_TOTLEN_H_P]<<8)|(buf[IP_TOTLEN_L_P]&0xff);
 	  buf_len=info_data_len;
-	  //¼õÈ¥IPÊ×²¿³¤¶È
+	  //å‡å»IPé¦–éƒ¨é•¿åº¦
     info_data_len-=IP_HEADER_LEN;
-	  //TCPÊ×²¿³¤¶È£¬ÒòÎªTCPĞ­Òé¹æ¶¨ÁËÖ»ÓĞËÄÎ»À´±íÊ¾³¤¶È£¬ËùÒÔĞèÒªÒÔÏÂ´¦Àí,4*6=24
+	  //TCPé¦–éƒ¨é•¿åº¦ï¼Œå› ä¸ºTCPåè®®è§„å®šäº†åªæœ‰å››ä½æ¥è¡¨ç¤ºé•¿åº¦ï¼Œæ‰€ä»¥éœ€è¦ä»¥ä¸‹å¤„ç†,4*6=24
     info_hdr_len=(buf[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
-	  //¼õÈ¥TCPÊ×²¿³¤¶È
+	  //å‡å»TCPé¦–éƒ¨é•¿åº¦
     info_data_len-=info_hdr_len;
 	tcp_d_len=info_data_len;
     if (info_data_len<=0)
@@ -625,7 +633,8 @@ void TinyIP::make_tcp_ack_from_any(byte* buf)
     make_eth(buf);
     // fill the header:
     buf[TCP_FLAGS_P] = TCP_FLAGS_ACK_V;
-    if (info_data_len==0)
+
+    if (info_data_len == 0)
     {
         // if there is no data then we must still acknoledge one packet
         make_tcphead(buf,1,0,1); // no options
@@ -676,4 +685,372 @@ void TinyIP::make_tcp_ack_with_data(byte* buf, uint dlen)
     buf[TCP_CHECKSUM_H_P] = j >> 8;
     buf[TCP_CHECKSUM_L_P] = j& 0xff;
     _enc->PacketSend(buf, IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen+ETH_HEADER_LEN);
+}
+
+unsigned char hex_to_dec_L(int d)
+{
+	unsigned char b[2];
+	b[1]=d%16;     //1ä½
+	b[0]=d/16%16;  //2ä½
+	return (unsigned char)((b[0]<<4)+b[1]);
+}
+
+unsigned char hex_to_dec_H(int d)
+{
+	unsigned char b[4];
+	b[3]=d%16;     //1ä½
+	b[2]=d/16%16;  //2ä½
+	b[1]=d/16/16%16;  //3ä½
+	b[0]=d/16/16/16%16;  //4ä½
+	if((d/16/16/16%16) == 0)
+		b[0]=d/16/16/16;
+	return (unsigned char)((b[0]<<4)+b[1]);
+}
+
+void TinyIP::dhcp_discover(byte* buf)
+{
+	dhcp_fill_public_data(buf);
+	//	char i=0;
+	//	for(i=0;i<6;i++) //å¡«å……ä»¥å¤ªç½‘å¤´éƒ¨mac	//
+	//	{  				//
+	//		buf[ETH_DST_MAC+i] = 0xff;
+	//		buf[ETH_SRC_MAC+i]=mymac[i];
+	//		buf[0x46+i]=mymac[i]; //client mac
+	//		buf[0x120+i]=mymac[i]; //option client mac
+	//	}
+
+	buf[0x0c] = 0x08; // 0x80 0x00  ipåŒ…
+	//	buf[0x0d] = 0x00;
+
+	//	buf[0x0e] = 0x45; //4ä»£è¡¨ ipv4 5ä»£è¡¨5*4bytes=20 bytes ipv4å¤´éƒ¨é•¿åº¦
+	//	buf[0x0f] = 0x00;
+
+	buf[0x10]=hex_to_dec_H(0x143-0xe); //é•¿åº¦ä¸º328 bytes
+	buf[0x11]=hex_to_dec_L(0x143-0xe);
+
+	//	buf[0x14] = 0x00;     //                        //fragment offset =0
+	//	buf[0x15] = 0x00;//
+
+	//	buf[0x16] = 0x40;			//												//ttl=64
+	//	buf[0x17] = 0x11;			//												//udpåè®®
+
+	fill_ip_hdr_checksum(buf);
+
+	//	for(i=0;i<4;i++)								//					  //å¡«å……ip
+	//	{//
+	//		buf[IP_SRC_P+i] = 0x00;//
+	//		buf[IP_DST_P+i] = 0xff;//
+	//	}//
+
+	//  buf[0x22] = 0x00;//
+	//	buf[0x23] = 0x44;           //                  //æœ¬åœ°dhcpç«¯å£ä¸º68
+
+	//	buf[0x24] = 0x00;//
+	//	buf[0x25] = 0x43;					//										//dhcpæœåŠ¡å™¨ç«¯å£
+
+	buf[0x26]=hex_to_dec_H(0x143-0xe-0x14);
+	buf[0x27]=hex_to_dec_L(0x143-0xe-0x14); 	//é•¿åº¦=udp+bootstrap
+
+	//	buf[0x28]=
+	//	buf[0x29]= 			//udp checksum
+
+	//	buf[0x2a] = 0x01;                 //            //boot request
+	//	buf[0x2b] = 0x01;									//						//ç¡¬ä»¶ç±»å‹  ethernet
+	//
+	//	buf[0x2c] = 0x06;									//						//ç¡¬ä»¶åœ°å€é•¿åº¦ 6
+	//	buf[0x2d] = 0x00; 	//Hops æ¯ç«™åŠ 1
+
+	//	buf[0x2e]=dhcp_id>>24;			//					//dhcpè¯†åˆ«ç 
+	//	buf[0x2f]=dhcp_id>>16&0xff;//
+	//	buf[0x30]=dhcp_id>>8&0xff;//
+	//	buf[0x31]=dhcp_id&0xff;	//
+
+	//	buf[0x34] = 0x80;// 	//æœ€å·¦ä¸€bitä¸º1æ—¶è¡¨ç¤ºserverå°†ä»¥å¹¿æ’­æ–¹å¼ä¼ é€’å°åŒ…ç»™clientï¼Œå…¶ä½™å°šæœªä½¿ç”¨
+
+	//	buf[0x116] = 0x63; //DHCP
+	//	buf[0x117] = 0x82;
+	//	buf[0x118] = 0x53;
+	//	buf[0x119] = 0x63;
+
+	buf[0x11a] = 0x35; //option DHCP message type
+	buf[0x11b] = 0x01; //lenth=1
+	buf[0x11c] = 0x01; //discover=1
+
+	buf[0x11d] = 0x3d; //option client identifier
+	buf[0x11e] = 0x07; //option é•¿åº¦  1ä¸€ä¸ªmac+ä¸€å­—èŠ‚ç±»å‹
+	buf[0x11f] = 0x01; //ç±»å‹ETHERNET=1
+
+	buf[0x126] = 0x32; //requested ip option
+	buf[0x127] = 0x04; //option lenth
+
+	buf[0x128] = 0x00; //è¯·æ±‚çš„ip
+	buf[0x129] = 0x00;
+	buf[0x12a] = 0x00;
+	buf[0x12b] = 0x00;
+
+	buf[0x12c] = 0x0c; //host option
+	buf[0x12d] = 0x04; //é•¿åº¦ä¸º4
+	buf[0x12e] = 0x61; //å­—ç¬¦ a
+	buf[0x12f] = 0x62; //å­—ç¬¦ b
+	buf[0x130] = 0x63; //å­—ç¬¦ c
+	buf[0x131] = 0x64; //å­—ç¬¦ d
+
+	buf[0x132] = 0x3c; //vendor option
+	buf[0x133] = 0x08; //é•¿åº¦ä¸º8
+	buf[0x134] = 0x4d; //ä¸‹é¢ä¸ºvenderä¿¡æ¯
+	buf[0x135] = 0x53;
+	buf[0x136] = 0x46;
+	buf[0x137] = 0x54;
+	buf[0x138] = 0x20;
+	buf[0x139] = 0x35;
+	buf[0x13a] = 0x2e;
+	buf[0x13b] = 0x30;
+
+	buf[0x13c] = 0x37; //è¯·æ±‚åˆ—è¡¨
+	buf[0x13d] = 0x04; //é•¿åº¦
+	buf[0x13e] = 0x01; //mask
+	buf[0x13f] = 0x06; //dns
+	buf[0x140] = 0x03; //router
+	buf[0x141] = 0x2b ; //vender imfo
+	buf[0x142] = 0xff; //option end
+
+	_enc->PacketSend(buf, 0x143);
+}
+
+int TinyIP::dhcp_offer(byte* buf)
+{
+	unsigned int i,i1,i2,i3,i4;
+
+	i1=buf[DHCP_ID_H];
+	i2=buf[DHCP_ID_H+1];
+	i3=buf[DHCP_ID_H+2];
+	i4=buf[DHCP_ID_H+3];
+	i=(i1<<24)+(i2<<16)+(i3<<8)+i4;
+	if(i == dhcp_id)   //åˆ¤æ–­æ˜¯å¦å‘é€ç»™è‡ªå·±çš„dhcp offer
+	{
+		//è£…è½½ip
+		fill_data(buf, MY_IP_H, IP, 0, 4);
+		search_list_data(buf);
+		return 1;
+	}
+	return 0;
+}
+
+void TinyIP::dhcp_request(byte* buf)
+{
+	dhcp_fill_public_data(buf);
+
+
+	buf[0x10]=hex_to_dec_H(0x152-0xe); 	//é•¿åº¦ä¸º328 bytes
+	buf[0x11]=hex_to_dec_L(0x152-0xe);
+
+	fill_ip_hdr_checksum(buf);
+
+	buf[0x26]=hex_to_dec_H(0x152-0xe-0x14);
+	buf[0x27]=hex_to_dec_L(0x152-0xe-0x14);
+
+	buf[0x28] = 0x00;
+	buf[0x29] = 0x00;
+
+	buf[0x11a] = 0x35; //option DHCP message type
+	buf[0x11b] = 0x01; //lenth=1
+	buf[0x11c] = 0x03; //dhcp request
+
+	buf[0x11d] = 0x3d; //option client identifier
+	buf[0x11e] = 0x07; //option é•¿åº¦  1ä¸€ä¸ªmac+ä¸€å­—èŠ‚ç±»å‹
+	buf[0x11f] = 0x01; //ç±»å‹ETHERNET=1
+
+	buf[0x126] = 0x32; //requested ip option
+	buf[0x127] = 0x04; //option lenth
+
+	buf[0x128] = IP[0]; //è¯·æ±‚çš„ip
+	buf[0x129] = IP[1];
+	buf[0x12a] = IP[2];
+	buf[0x12b] = IP[3];
+
+
+	buf[0x12c] = dhcp_option_server_id;
+	buf[0x12d] = 0x04;
+	buf[0x12e] = DHCPServer[0]; //dhcp server id
+	buf[0x12f] = DHCPServer[1];
+	buf[0x130] = DHCPServer[2];
+	buf[0x131] = DHCPServer[3];
+
+
+	buf[0x132] = 0x0c; //host option
+	buf[0x133] = 0x04; //é•¿åº¦ä¸º4
+	buf[0x134] = 0x61; //å­—ç¬¦ a
+	buf[0x135] = 0x62; //å­—ç¬¦ b
+	buf[0x136] = 0x63; //å­—ç¬¦ c
+	buf[0x137] = 0x64; //å­—ç¬¦ d
+
+	buf[0x138] = 0x51; 	//Client Fully Qualified Domain Name
+	buf[0x139] = 0x07;
+	buf[0x13a] = 0x00;
+	buf[0x13b] = 0x00;
+	buf[0x13c] = 0x00;
+	buf[0x13d] = 0x61; //å­—ç¬¦ a
+	buf[0x13e] = 0x62; //å­—ç¬¦ b
+	buf[0x13f] = 0x63; //å­—ç¬¦ c
+	buf[0x140] = 0x64; //å­—ç¬¦ d
+
+	buf[0x141] = 0x3c; //vendor option
+	buf[0x142] = 0x08; //é•¿åº¦ä¸º8
+	buf[0x143] = 0x4d; //ä¸‹é¢ä¸ºvenderä¿¡æ¯
+	buf[0x144] = 0x53;
+	buf[0x145] = 0x46;
+	buf[0x146] = 0x54;
+	buf[0x147] = 0x20;
+	buf[0x148] = 0x35;
+	buf[0x149] = 0x2e;
+	buf[0x14a] = 0x30;
+
+	buf[0x14b] = 0x37; //è¯·æ±‚åˆ—è¡¨
+	buf[0x14c] = 0x04; //é•¿åº¦
+	buf[0x14d] = 0x01; //mask
+	buf[0x14e] = 0x06; //dns
+	buf[0x14f] = 0x03; //router
+	buf[0x150] = 0x2b ; //vender imfo
+	buf[0x151] = 0xff; //option end
+
+	_enc->PacketSend(buf, 0x152);
+}
+
+int TinyIP::dhcp_ack(byte* buf)
+{
+	if(buf[MY_IP_H] == IP[0] && buf[MY_IP_H+1] == IP[1] &&
+	   buf[MY_IP_H+2] == IP[2] && buf[MY_IP_H+3] == IP[3])
+	{
+		IPIsReady = 1;
+		return 1;
+	}
+
+	return 0;
+}
+
+void TinyIP::fill_data(byte *src, int src_begin, byte *dst, int dst_begin, int len)
+{
+	for(int i=0; i<len; i++, dst_begin++, src_begin++)
+		dst[dst_begin] = src[src_begin];
+}
+
+void TinyIP::search_list_data(byte* buf)
+{
+	char find=0,len=0;
+	int begin = dhcp_option_type_h;
+	while(1)
+	{
+		if(buf[begin] == dhcp_option_mask)
+		{
+			fill_data(buf, begin + 2, Mask, 0, 4);
+			len = buf[begin + 1] + 2;
+			begin += len;
+			find++;
+		}
+		else if(buf[begin] == dhcp_option_dns)
+		{
+			fill_data(buf, begin + 2, DNSServer, 0, 4);
+			len = buf[begin + 1] + 2;
+			begin += len;
+			find++;
+		}
+		else if(buf[begin] == dhcp_option_router)
+		{
+			fill_data(buf, begin + 2, Gateway, 0, 4);
+			len = buf[begin + 1] + 2;
+			begin += len;
+			find++;
+		}
+		else if(buf[begin] == dhcp_option_server_id)
+		{
+			fill_data(buf, begin + 2, DHCPServer, 0, 4);
+			len = buf[begin + 1] + 2;
+			begin += len;
+			find++;
+		}
+		else
+		{
+			len = buf[begin + 1];
+			begin += len + 2;
+		}
+
+		if(find == 4) break;
+	}
+}
+
+void TinyIP::dhcp_fill_public_data(byte* buf)
+{
+	char i=0;
+	for(i=0;i<6;i++)                    				//å¡«å……ä»¥å¤ªç½‘å¤´éƒ¨mac
+	{
+		buf[ETH_DST_MAC + i] = 0xff;
+		buf[ETH_SRC_MAC + i] = Mac[i];
+		buf[0x46 + i] = Mac[i];											//client mac
+		buf[0x120 + i] = Mac[i];										//option client mac
+	}
+
+	buf[0x0c] = 0x08;     												//0x80 0x00  ipåŒ…
+	buf[0x0d] = 0x00;
+
+	buf[0x0e] = 0x45;     												//4ä»£è¡¨ ipv4 5ä»£è¡¨5*4bytes=20 bytes ipv4å¤´éƒ¨é•¿åº¦
+	buf[0x0f] = 0x00;
+
+	buf[0x14] = 0x00;                             //fragment offset =0
+	buf[0x15] = 0x00;
+
+	buf[0x16] = 0x40; 	//ttl=64
+	buf[0x17] = 0x11; 	//udpåè®®
+
+	for(i=0;i<4;i++)													  //å¡«å……ip
+	{
+		buf[IP_SRC_P+i] = 0x00;
+		buf[IP_DST_P+i] = 0xff;
+	}
+
+	buf[0x22] = 0x00;
+	buf[0x23] = 0x44;                             //æœ¬åœ°dhcpç«¯å£ä¸º68
+
+	buf[0x24] = 0x00;
+	buf[0x25] = 0x43; 	//dhcpæœåŠ¡å™¨ç«¯å£
+
+	buf[0x2a] = 0x01;                             //boot requese
+	buf[0x2b] = 0x01; 	//ç¡¬ä»¶ç±»å‹  ethernet
+
+	buf[0x2c] = 0x06; 	//ç¡¬ä»¶åœ°å€é•¿åº¦ 6
+
+	buf[0x2e]=dhcp_id>>24;								//dhcpè¯†åˆ«ç 
+	buf[0x2f]=dhcp_id>>16&0xff;
+	buf[0x30]=dhcp_id>>8&0xff;
+	buf[0x31]=dhcp_id&0xff;
+
+	buf[0x34] = 0x80; 	//æœ€å·¦ä¸€bitä¸º1æ—¶è¡¨ç¤ºserverå°†ä»¥å¹¿æ’­æ–¹å¼ä¼ é€’å°åŒ…ç»™clientï¼Œå…¶ä½™å°šæœªä½¿ç”¨
+
+	buf[0x116] = 0x63; //DHCP
+	buf[0x117] = 0x82;
+	buf[0x118] = 0x53;
+	buf[0x119] = 0x63;
+}
+
+void TinyIP::DHCP_config(byte* buf)
+{
+	dhcp_discover(buf);
+	while(1)
+	{
+		uint len = _enc->PacketReceive(buf, BufferSize);
+		if(!len) continue;
+
+		if(buf[dhcp_protocol_h]==0x63 && buf[0x11c]==0x02 && buf[0x25]==0x44)
+		{
+			if(dhcp_offer(buf))
+			{
+				dhcp_request(buf);
+				continue;
+			}
+		}
+		if(buf[dhcp_protocol_h]==0x63 && buf[0x11c]==0x05 && buf[0x25]==0x44)
+		{
+			if(dhcp_ack(buf)) break;
+			continue;
+		}
+	}
 }

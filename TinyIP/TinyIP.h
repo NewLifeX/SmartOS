@@ -42,10 +42,26 @@ private:
 	void fill_ip_hdr_checksum(byte* buf);
 	uint checksum(byte* buf, uint len, byte type);
 
+	uint dhcp_id;
+	void dhcp_discover(byte* buf);
+	int dhcp_offer(byte* buf);
+	void dhcp_request(byte* buf);
+	int dhcp_ack(byte* buf);
+	void fill_data(byte* src, int src_begin, byte* dst, int dst_begin, int len);
+	void search_list_data(byte* buf);
+	void dhcp_fill_public_data(byte* buf);
+	void DHCP_config(byte* buf);
+
 public:
     byte IP[4];
 	byte Mac[6];
 	ushort BufferSize;	// 缓冲区大小
+	bool UseDHCP;
+	bool IPIsReady;
+	byte DHCPServer[4];
+	byte DNSServer[4];
+	byte Gateway[4];
+	byte Mask[4];
 
     TinyIP(Enc28j60* enc, byte ip[4], byte mac[6]);
     virtual ~TinyIP();
@@ -176,5 +192,22 @@ public:
 #define TCP_CHECKSUM_L_P 0x33
 //选项起始位置
 #define TCP_OPTIONS_P 0x36
+
+//DHCP ID
+#define DHCP_ID_H 0x2e
+#define MY_IP_H 0x3a
+#define dhcp_option_type_h 0x11a
+//option 内容
+#define dhcp_option_mask 0x01
+#define dhcp_option_dns 0x06
+#define dhcp_option_router 0x03
+#define dhcp_option_server_id 0x36
+#define dhcp_option_end 0xff
+//头部
+#define dhcp_eth_det_h 0x00
+#define dhcp_eth_src_h 0x06
+//DHCP协议头部
+#define dhcp_protocol_h 0x116
+#define dhcp_protocol 0x63825363
 
 #endif
