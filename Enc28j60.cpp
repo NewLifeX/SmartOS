@@ -118,6 +118,9 @@ void Enc28j60::ClockOut(byte clock)
 
 void Enc28j60::Init(string mac)
 {
+	assert_param(mac);
+
+	debug_printf("Enc28j60::Init(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     if(_ce)
     {
         *_ce = true;
