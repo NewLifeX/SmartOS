@@ -83,6 +83,9 @@ void TinyIP::Start()
 
 	if(UseDHCP)
 	{
+		IPIsReady = false;
+		dhcp_id = (uint)g_Time->CurrentTicks();
+
 		DHCP_config(buf);
 
 		_enc->Init((string)Mac);
