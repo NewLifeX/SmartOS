@@ -43,13 +43,13 @@
 #define NRF_FIFO_STATUS 0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
 
-#define MAX_TX  		0x10  //达到最大发送次数中断
-#define TX_OK   		0x20  //TX发送完成中断
-#define RX_OK   		0x40  //接收到数据中断
+//#define MAX_TX  		0x10  //达到最大发送次数中断
+//#define TX_OK   		0x20  //TX发送完成中断
+//#define RX_OK   		0x40  //接收到数据中断
 
 //定义缓冲区大小  单位  byte
-#define RX_PLOAD_WIDTH				5
-#define TX_PLOAD_WIDTH				5
+#define RX_PLOAD_WIDTH				32
+#define TX_PLOAD_WIDTH				32
 
 /*发送包大小*/
 #define TX_ADR_WIDTH	5
@@ -80,7 +80,7 @@ void nRF24L01_irq(Pin pin, bool opk);
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
-
+	_outTime = 5000;
     if(ce != P0) _CE = new OutputPort(ce);
 
     if(irq != P0)
@@ -207,7 +207,7 @@ void NRF24L01::Config(bool isReceive)
 
 	WriteReg(WRITE_REG_NRF + EN_AA, 0x01);    //使能通道0的自动应答
 	WriteReg(WRITE_REG_NRF + EN_RXADDR, 0x01);//使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF + RF_CH, Channel);      //设置RF通信频率
+	WriteReg(WRITE_REG_NRF + RF_CH, Channel=40);      //设置RF通信频率
 	WriteReg(WRITE_REG_NRF + RX_PW_P0, RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
 	WriteReg(WRITE_REG_NRF + SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
     //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
@@ -237,8 +237,13 @@ void NRF24L01::SetMode(bool isReceive)
 byte NRF24L01::Receive(byte *data)
 {
 	CEUp();
-	// 等待接收中断
-	while(_IRQ->Read()); 
+	int time=0;
+	// 等待接收中断   此中断可能不发生  所以不能while（xx）；
+	while(_IRQ->Read())
+		{
+			time++;
+			if(time > _outTime)return RX_TIME_OUT ;
+		}
 	CEDown();
 
 	/*读取status寄存器的值  */
@@ -265,7 +270,7 @@ byte NRF24L01::Send(byte* data)
 	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
     /*CE为高，txbuf非空，发送数据包 */
 	CEUp();
-	// 等待发送完成中断
+	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
 	while(_IRQ->Read()); 
 
 	// 读取状态寄存器的值
