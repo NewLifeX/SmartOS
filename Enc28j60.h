@@ -1,4 +1,4 @@
-#ifndef __Enc28j60_H__
+﻿#ifndef __Enc28j60_H__
 #define __Enc28j60_H__
 
 #include "Sys.h"
@@ -44,9 +44,8 @@ public:
     uint PacketReceive(byte* packet, uint maxlen);
 };
 
-// ENC28J60 Control Registers
-// Control register definitions are a combination of address,
-// bank number, and Ethernet/MAC/PHY indicator bits.
+// ENC28J60 控制寄存器
+// 控制寄存器是地址、Bank和Ethernet/MAC/PHY 的组合地址
 // - Register address         (bits 0-4)
 // - Bank number              (bits 5-6)
 // - MAC/PHY indicator        (bit 7)
@@ -60,97 +59,102 @@ public:
 #define ESTAT            0x1D
 #define ECON2            0x1E
 #define ECON1            0x1F
+
+// Bank
+#define BANK0			0x00
+#define BANK1			0x20
+#define BANK2			0x40
+#define BANK3			0x60
+
 // Bank 0 registers
-#define ERDPTL           (0x00|0x00)
-#define ERDPTH           (0x01|0x00)
-#define EWRPTL           (0x02|0x00)
-#define EWRPTH           (0x03|0x00)
-#define ETXSTL           (0x04|0x00)
-#define ETXSTH           (0x05|0x00)
-#define ETXNDL           (0x06|0x00)
-#define ETXNDH           (0x07|0x00)
-#define ERXSTL           (0x08|0x00)
-#define ERXSTH           (0x09|0x00)
-#define ERXNDL           (0x0A|0x00)
-#define ERXNDH           (0x0B|0x00)
-//ERXWRPTH:ERXWRPTL 寄存器定义硬件向FIFO 中
-//的哪个位置写入其接收到的字节。 指针是只读的，在成
-//功接收到一个数据包后，硬件会自动更新指针。 指针可
-//用于判断FIFO 内剩余空间的大小。
-#define ERXRDPTL         (0x0C|0x00)
-#define ERXRDPTH         (0x0D|0x00)
-#define ERXWRPTL         (0x0E|0x00)
-#define ERXWRPTH         (0x0F|0x00)
-#define EDMASTL          (0x10|0x00)
-#define EDMASTH          (0x11|0x00)
-#define EDMANDL          (0x12|0x00)
-#define EDMANDH          (0x13|0x00)
-#define EDMADSTL         (0x14|0x00)
-#define EDMADSTH         (0x15|0x00)
-#define EDMACSL          (0x16|0x00)
-#define EDMACSH          (0x17|0x00)
+#define ERDPTL           (0x00|BANK0)
+#define ERDPTH           (0x01|BANK0)
+#define EWRPTL           (0x02|BANK0)
+#define EWRPTH           (0x03|BANK0)
+#define ETXSTL           (0x04|BANK0)
+#define ETXSTH           (0x05|BANK0)
+#define ETXNDL           (0x06|BANK0)
+#define ETXNDH           (0x07|BANK0)
+#define ERXSTL           (0x08|BANK0)
+#define ERXSTH           (0x09|BANK0)
+#define ERXNDL           (0x0A|BANK0)
+#define ERXNDH           (0x0B|BANK0)
+#define ERXRDPTL         (0x0C|BANK0)
+#define ERXRDPTH         (0x0D|BANK0)
+// ERXWRPTH:ERXWRPTL 寄存器定义硬件向FIFO 中的哪个位置写入其接收到的字节。 
+// 指针是只读的，在成功接收到一个数据包后，硬件会自动更新指针。 指针可用于判断FIFO内剩余空间的大小。
+#define ERXWRPTL         (0x0E|BANK0)
+#define ERXWRPTH         (0x0F|BANK0)
+#define EDMASTL          (0x10|BANK0)
+#define EDMASTH          (0x11|BANK0)
+#define EDMANDL          (0x12|BANK0)
+#define EDMANDH          (0x13|BANK0)
+#define EDMADSTL         (0x14|BANK0)
+#define EDMADSTH         (0x15|BANK0)
+#define EDMACSL          (0x16|BANK0)
+#define EDMACSH          (0x17|BANK0)
 // Bank 1 registers
-#define EHT0             (0x00|0x20)
-#define EHT1             (0x01|0x20)
-#define EHT2             (0x02|0x20)
-#define EHT3             (0x03|0x20)
-#define EHT4             (0x04|0x20)
-#define EHT5             (0x05|0x20)
-#define EHT6             (0x06|0x20)
-#define EHT7             (0x07|0x20)
-#define EPMM0            (0x08|0x20)
-#define EPMM1            (0x09|0x20)
-#define EPMM2            (0x0A|0x20)
-#define EPMM3            (0x0B|0x20)
-#define EPMM4            (0x0C|0x20)
-#define EPMM5            (0x0D|0x20)
-#define EPMM6            (0x0E|0x20)
-#define EPMM7            (0x0F|0x20)
-#define EPMCSL           (0x10|0x20)
-#define EPMCSH           (0x11|0x20)
-#define EPMOL            (0x14|0x20)
-#define EPMOH            (0x15|0x20)
-#define EWOLIE           (0x16|0x20)
-#define EWOLIR           (0x17|0x20)
-#define ERXFCON          (0x18|0x20)
-#define EPKTCNT          (0x19|0x20)
+#define EHT0             (0x00|BANK1)
+#define EHT1             (0x01|BANK1)
+#define EHT2             (0x02|BANK1)
+#define EHT3             (0x03|BANK1)
+#define EHT4             (0x04|BANK1)
+#define EHT5             (0x05|BANK1)
+#define EHT6             (0x06|BANK1)
+#define EHT7             (0x07|BANK1)
+#define EPMM0            (0x08|BANK1)
+#define EPMM1            (0x09|BANK1)
+#define EPMM2            (0x0A|BANK1)
+#define EPMM3            (0x0B|BANK1)
+#define EPMM4            (0x0C|BANK1)
+#define EPMM5            (0x0D|BANK1)
+#define EPMM6            (0x0E|BANK1)
+#define EPMM7            (0x0F|BANK1)
+#define EPMCSL           (0x10|BANK1)
+#define EPMCSH           (0x11|BANK1)
+#define EPMOL            (0x14|BANK1)
+#define EPMOH            (0x15|BANK1)
+#define EWOLIE           (0x16|BANK1)
+#define EWOLIR           (0x17|BANK1)
+#define ERXFCON          (0x18|BANK1)
+#define EPKTCNT          (0x19|BANK1)
 // Bank 2 registers
-#define MACON1           (0x00|0x40|0x80)
-#define MACON2           (0x01|0x40|0x80)
-#define MACON3           (0x02|0x40|0x80)
-#define MACON4           (0x03|0x40|0x80)
-#define MABBIPG          (0x04|0x40|0x80)
-#define MAIPGL           (0x06|0x40|0x80)
-#define MAIPGH           (0x07|0x40|0x80)
-#define MACLCON1         (0x08|0x40|0x80)
-#define MACLCON2         (0x09|0x40|0x80)
-#define MAMXFLL          (0x0A|0x40|0x80)
-#define MAMXFLH          (0x0B|0x40|0x80)
-#define MAPHSUP          (0x0D|0x40|0x80)
-#define MICON            (0x11|0x40|0x80)
-#define MICMD            (0x12|0x40|0x80)
-#define MIREGADR         (0x14|0x40|0x80)
-#define MIWRL            (0x16|0x40|0x80)
-#define MIWRH            (0x17|0x40|0x80)
-#define MIRDL            (0x18|0x40|0x80)
-#define MIRDH            (0x19|0x40|0x80)
+#define MACON1           (0x00|BANK2|0x80)
+#define MACON2           (0x01|BANK2|0x80)
+#define MACON3           (0x02|BANK2|0x80)
+#define MACON4           (0x03|BANK2|0x80)
+#define MABBIPG          (0x04|BANK2|0x80)
+#define MAIPGL           (0x06|BANK2|0x80)
+#define MAIPGH           (0x07|BANK2|0x80)
+#define MACLCON1         (0x08|BANK2|0x80)
+#define MACLCON2         (0x09|BANK2|0x80)
+#define MAMXFLL          (0x0A|BANK2|0x80)
+#define MAMXFLH          (0x0B|BANK2|0x80)
+#define MAPHSUP          (0x0D|BANK2|0x80)
+#define MICON            (0x11|BANK2|0x80)
+#define MICMD            (0x12|BANK2|0x80)
+#define MIREGADR         (0x14|BANK2|0x80)
+#define MIWRL            (0x16|BANK2|0x80)
+#define MIWRH            (0x17|BANK2|0x80)
+#define MIRDL            (0x18|BANK2|0x80)
+#define MIRDH            (0x19|BANK2|0x80)
 // Bank 3 registers
-#define MAADR1           (0x00|0x60|0x80)
-#define MAADR0           (0x01|0x60|0x80)
-#define MAADR3           (0x02|0x60|0x80)
-#define MAADR2           (0x03|0x60|0x80)
-#define MAADR5           (0x04|0x60|0x80)
-#define MAADR4           (0x05|0x60|0x80)
-#define EBSTSD           (0x06|0x60)
-#define EBSTCON          (0x07|0x60)
-#define EBSTCSL          (0x08|0x60)
-#define EBSTCSH          (0x09|0x60)
-#define MISTAT           (0x0A|0x60|0x80)
-#define EREVID           (0x12|0x60)
-#define ECOCON           (0x15|0x60)
-#define EFLOCON          (0x17|0x60)
-#define EPAUSL           (0x18|0x60)
-#define EPAUSH           (0x19|0x60)
+#define MAADR1           (0x00|BANK3|0x80)
+#define MAADR0           (0x01|BANK3|0x80)
+#define MAADR3           (0x02|BANK3|0x80)
+#define MAADR2           (0x03|BANK3|0x80)
+#define MAADR5           (0x04|BANK3|0x80)
+#define MAADR4           (0x05|BANK3|0x80)
+#define EBSTSD           (0x06|BANK3)
+#define EBSTCON          (0x07|BANK3)
+#define EBSTCSL          (0x08|BANK3)
+#define EBSTCSH          (0x09|BANK3)
+#define MISTAT           (0x0A|BANK3|0x80)
+#define EREVID           (0x12|BANK3)
+#define ECOCON           (0x15|BANK3)
+#define EFLOCON          (0x17|BANK3)
+#define EPAUSL           (0x18|BANK3)
+#define EPAUSH           (0x19|BANK3)
 // PHY registers
 #define PHCON1           0x00
 #define PHSTAT1          0x01
@@ -281,7 +285,7 @@ public:
 // stp TX buffer at end of mem
 #define TXSTOP_INIT      0x1FFF
 //
-// max frame length which the conroller will accept:
+// 控制器将接受的最大帧长度
 #define        MAX_FRAMELEN        1500        // (note: maximum ethernet frame length would be 1518)
 //#define MAX_FRAMELEN     600
 

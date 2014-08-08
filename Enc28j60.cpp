@@ -126,7 +126,7 @@ void Enc28j60::Init(string mac)
         *_ce = true;
         Sys.Sleep(100);
         *_ce = false;
-        Sys.Sleep(10000);
+        Sys.Sleep(100);
         *_ce = true;
     }
 
@@ -150,18 +150,18 @@ void Enc28j60::Init(string mac)
     // 设置接收指针地址
     Write(ERXRDPTL, RXSTART_INIT & 0xFF);
     Write(ERXRDPTH, RXSTART_INIT >> 8);
-    // Rx结束
+    // 设置接收缓冲区的末尾地址 ERXND寄存器默认指向整个缓冲区的最后一个单元
     Write(ERXNDL, RXSTOP_INIT & 0xFF);
     Write(ERXNDH, RXSTOP_INIT >> 8);
-    // TX 开始 1500
+    // 设置发送缓冲区起始地址 ETXST寄存器默认地址是整个缓冲区的第一个单元
     Write(ETXSTL, TXSTART_INIT & 0xFF);
     Write(ETXSTH, TXSTART_INIT >> 8);
     // TX 结束
     Write(ETXNDL, TXSTOP_INIT & 0xFF);
     Write(ETXNDH, TXSTOP_INIT >> 8);
-    // do bank 1 stuff, packet filter:
-    // For broadcast packets we allow only ARP packtets
-    // All other packets should be unicast only for our mac (MAADR)
+
+    // Bank 1 填充，包过滤
+    // 广播包只允许ARP通过，单播包只允许目的地址是我们mac(MAADR)的数据包
     //
     // The pattern to match on is therefore
     // Type     ETH.DST
@@ -179,19 +179,20 @@ void Enc28j60::Init(string mac)
 
     // Bank 2，打开MAC接收
     Write(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
-    // bring MAC out of reset
+    // MACON2清零，让MAC退出复位状态
     Write(MACON2, 0x00);
     // 启用自动填充到60字节并进行Crc校验
     WriteOp(ENC28J60_BIT_FIELD_SET, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
-    // set inter-frame gap (non-back-to-back)
+    // 配置非背对背包之间的间隔
     Write(MAIPGL, 0x12);
     Write(MAIPGH, 0x0C);
-    // set inter-frame gap (back-to-back)
+    // 配置背对背包之间的间隔
     Write(MABBIPG, 0x15);   // 有的例程这里是0x12
     // 设置控制器将接收的最大包大小，不要发送大于该大小的包
     Write(MAMXFLL, MAX_FRAMELEN & 0xFF);
     Write(MAMXFLH, MAX_FRAMELEN >> 8);
-    // do bank 3 stuff
+    
+	// Bank 3 填充
     // write MAC addr
     // NOTE: MAC addr in ENC28J60 is byte-backward
     Write(MAADR5, mac[0]);
@@ -203,10 +204,10 @@ void Enc28j60::Init(string mac)
 
     // 配置PHY为全双工  LEDB为拉电流
     PhyWrite(PHCON1, PHCON1_PDPXMD);
-    // no loopback of transmitted frames
+    // 阻止发送回路的自动环回
     PhyWrite(PHCON2, PHCON2_HDLDIS);
-    // PHY LED
-    PhyWrite(PHLCON,0x476);
+    // PHY LED 配置,LED用来指示通信的状态
+    PhyWrite(PHLCON, 0x476);
     // 切换到bank0
     SetBank(ECON1);
     // 打开中断
@@ -244,9 +245,9 @@ void Enc28j60::PacketSend(byte* packet, uint len)
 
     if(GetRevision() == 0x05u || GetRevision() == 0x06u)
 	{
-		ushort AttemptCounter = 0x0000;
-		while((Read(EIR) & (EIR_TXERIF | EIR_TXIF)) && (++AttemptCounter < 1000));
-		if((Read(EIR) & EIR_TXERIF) || (AttemptCounter >= 1000))
+		ushort count = 0;
+		while((Read(EIR) & (EIR_TXERIF | EIR_TXIF)) && (++count < 1000));
+		if((Read(EIR) & EIR_TXERIF) || (count >= 1000))
 		{
 			WORD_VAL ReadPtrSave;
 			WORD_VAL TXEnd;
@@ -322,26 +323,32 @@ uint Enc28j60::PacketReceive(byte* packet, uint maxlen)
     uint rxstat;
     uint len;
 
-    // check if a packet has been received and buffered
-    //if( !(Read(EIR) & EIR_PKTIF) ){
-    // The above does not work. See Rev. B4 Silicon Errata point 6.
-	// 收到的以太网数据包长度
-    if( Read(EPKTCNT) ==0 ) return 0;
+    // 检测缓冲区是否收到一个数据包
+    /*if( !(Read(EIR) & EIR_PKTIF) )
+	{
+		// The above does not work. See Rev. B4 Silicon Errata point 6.
+		// 通过查看EPKTCNT寄存器再次检查是否收到包
+		// EPKTCNT为0表示没有包接收/或包已被处理
+		if(Read(EPKTCNT) == 0) return 0;
+	}*/
 
-    // Set the read pointer to the start of the received packet		 缓冲器读指针
+	// 收到的以太网数据包长度
+    if( Read(EPKTCNT) == 0 ) return 0;
+
+    // 配置接收缓冲器读指针指向地址
     Write(ERDPTL, (NextPacketPtr));
     Write(ERDPTH, (NextPacketPtr) >> 8);
 
-    // read the next packet pointer
+    // 下一个数据包的读指针
     NextPacketPtr  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     NextPacketPtr |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
-    // read the packet length (see datasheet page 43)
+    // 读数据包字节长度 (see datasheet page 43)
     len  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     len |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
-    len-=4; //remove the CRC count
-    // read the receive status (see datasheet page 43)
+    len-=4; // 删除 CRC 计数
+    // 读接收数据包的状态 (see datasheet page 43)
     rxstat  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
     // 限制获取的长度。有些例程这里不用减一
@@ -360,7 +367,7 @@ uint Enc28j60::PacketReceive(byte* packet, uint maxlen)
     }
     else
     {
-        // copy the packet from the receive buffer
+        // 从缓冲区中将数据包复制到packet中
         ReadBuffer(packet, len);
     }
     // Move the RX read pointer to the start of the next received packet
@@ -368,7 +375,7 @@ uint Enc28j60::PacketReceive(byte* packet, uint maxlen)
     Write(ERXRDPTL, (NextPacketPtr));
     Write(ERXRDPTH, (NextPacketPtr) >> 8);
 
-    // decrement the packet counter indicate we are done with this packet
+    // 数据包个数递减位EPKTCNT减1
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
 
     return len;
