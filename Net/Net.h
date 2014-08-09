@@ -36,11 +36,12 @@ typedef struct _ETH_HEADER
 typedef enum
 {
 	IP_ICMP = 1,
+	IP_IGMP = 2,
 	IP_TCP = 6,
 	IP_UDP = 17,
 }IP_TYPE;
 
-//IP头部，总长度20字节
+// IP头部，总长度20字节。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _IP_HEADER
 {
 	#if LITTLE_ENDIAN
@@ -48,9 +49,9 @@ typedef struct _IP_HEADER
 	unsigned char Version:4; //版本
 	#else
 	unsigned char Version:4; //版本
-	unsigned char Length:4;  //首部长度
+	unsigned char Length:4;  //首部长度。每个单位4个字节
 	#endif
-	unsigned char ToS;       //服务类型
+	unsigned char TypeOfService;       //服务类型
 	unsigned short TotalLength;	//总长度
 	unsigned short Identifier;	//标志
 	unsigned char Flags;		// 标识是否对数据包进行分段
@@ -62,7 +63,7 @@ typedef struct _IP_HEADER
 	unsigned char DestIP[4];	//目的IP地址
 }IP_HEADER;
 
-//TCP头部，总长度20字节
+//TCP头部，总长度20字节。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _TCP_HEADER
 {
 	unsigned short SrcPort;    //源端口号
