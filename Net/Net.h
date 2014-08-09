@@ -178,10 +178,10 @@ public:
 	NetPacker(byte* buf)
 	{
 		Buffer = buf;
-		_ETH = (ETH_HEADER*)buf;
+		Eth = (ETH_HEADER*)buf;
 	}
 
-	ETH_HEADER* _ETH;
+	ETH_HEADER* Eth;
 	uint TotalLength;	// 数据总长度
 
 	ARP_HEADER* ARP;
@@ -200,9 +200,9 @@ public:
 		TotalLength = len;
 
 		// 计算负载。不同协议负载不一样，后面可能还会再次进行计算
-		Payload = (byte*)_ETH + sizeof(ETH_HEADER);
+		Payload = (byte*)Eth + sizeof(ETH_HEADER);
 		PayloadLength = len - sizeof(ETH_HEADER);
-		switch(_ETH->Type)
+		switch(Eth->Type)
 		{
 			case ETH_ARP:
 			{
@@ -253,13 +253,13 @@ public:
 			}
 		}
 
-		return Payload <= (byte*)_ETH + len;
+		return Payload <= (byte*)Eth + len;
 	}
 
 	// 封包。把参数组装回去
 	void Pack();
 
-	ETH_HEADER* GetEthernet() { return (ETH_HEADER*)Buffer; }
+	//ETH_HEADER* GetEthernet() { return (ETH_HEADER*)Buffer; }
 };
 
 #endif

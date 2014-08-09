@@ -9,6 +9,7 @@ class TinyIP : protected IEthernetAdapter
 {
 private:
     Enc28j60* _enc;
+	NetPacker* _net;
 
 	byte* Buffer; // 缓冲区
 
@@ -29,8 +30,6 @@ private:
 	void make_ip(byte* buf);
 	void make_tcp_synack_from_syn(byte* buf);
 	void make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq);
-	uint fill_tcp_data_p(byte* buf, uint pos, const byte* progmem_s);
-	uint fill_tcp_data(byte* buf, uint pos, const byte* s);
 	void make_tcp_ack_from_any(byte* buf, uint dlen);
 	void make_tcp_ack_with_data(byte* buf, uint dlen);
 

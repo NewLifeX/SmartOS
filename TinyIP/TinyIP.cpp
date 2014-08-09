@@ -13,18 +13,29 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	BufferSize = 1500;
 
 	seqnum = 0xa;
+	
+	// 分配缓冲区。比较大，小心栈空间不够
+	if(!Buffer) Buffer = new byte[BufferSize + 1];
+	assert_param(Buffer);
+	assert_param(Sys.CheckMemory());
+	
+	_net = new NetPacker(Buffer);
 }
 
 TinyIP::~TinyIP()
 {
     _enc = NULL;
 	if(Buffer) delete Buffer;
+	Buffer = NULL;
+	
+	if(_net) delete _net;
+	_net = NULL;
 }
 
 void TinyIP::TcpClose(byte* buf, uint size)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
     // fill the header:
     // This code requires that we send only one data packet
     // because we keep no state information. We must therefore set
@@ -51,8 +62,8 @@ void TinyIP::TcpClose(byte* buf, uint size)
 
 void TinyIP::TcpSend(byte* buf, uint size)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
     // fill the header:
     // This code requires that we send only one data packet
     // because we keep no state information. We must therefore set
@@ -80,10 +91,6 @@ void TinyIP::TcpSend(byte* buf, uint size)
 
 void TinyIP::Start()
 {
-	// 分配缓冲区。比较大，小心栈空间不够
-	if(!Buffer) Buffer = new byte[BufferSize + 1];
-	assert_param(Buffer);
-	assert_param(Sys.CheckMemory());
 	byte* buf = Buffer;
 
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
@@ -104,18 +111,14 @@ void TinyIP::Start()
 	}
 
 	uint eth_size = sizeof(ETH_HEADER);
-	//uint ip_size = eth_size + sizeof(IP_HEADER);
     while(1)
     {
         // 获取缓冲区的包
         uint len = _enc->PacketReceive(buf, BufferSize);
-
         // 如果缓冲器里面没有数据则转入下一次循环
-        if(!len) continue;
-		// 不够一帧
-		if(len < eth_size) continue;
+        if(!_net->Unpack(len)) continue;
 
-		ETH_HEADER* eth = (ETH_HEADER*)buf;
+		ETH_HEADER* eth = _net->Eth;
 		// 处理ARP
 		if(eth->Type == ETH_ARP)
 		{
@@ -166,15 +169,14 @@ void TinyIP::Start()
 
 void TinyIP::ProcessArp(byte* buf, uint len)
 {
-	// ARP头
-	if(len < sizeof(ETH_HEADER) + sizeof(ARP_HEADER)) return;
+	ARP_HEADER* arp = _net->ARP;
+	if(!arp) return;
 
 	/*
 	当封装的ARP报文在以太网上传输时，硬件类型字段赋值为0x0100，标识硬件为以太网硬件；
 	协议类型字段赋值为0x0800，标识上次协议为IP协议；由于以太网的MAC地址为48比特位，IP地址为32比特位，则硬件地址长度字段赋值为6，协议地址长度字段赋值为4 ；
 	选项字段标识ARP报文的类型，当为请求报文时，赋值为0x0100，当为回答报文时，赋值为0x0200。
 	*/
-	ARP_HEADER* arp = (ARP_HEADER*)(buf + sizeof(ETH_HEADER));
 
 	// 是否发给本机。注意memcmp相等返回0
 	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
@@ -221,10 +223,9 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
 {
-	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
-	if(len < sizeof(ICMP_HEADER)) return;
+	ICMP_HEADER* icmp = _net->ICMP;
+	if(!icmp) return;
 
-	ICMP_HEADER* icmp = (ICMP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 	// 只处理ECHO请求
 	if(icmp->Type != 8) return;
 	
@@ -241,8 +242,8 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
 	if(len < sizeof(TCP_HEADER)) return;
 
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
 
 #if NET_DEBUG
 	debug_printf("TCP ");
@@ -286,7 +287,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	if (tcp->Flags & TCP_FLAGS_ACK_V) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
 		//IP包长度
-		uint dlen = (buf[IP_TOTLEN_H_P]<<8)|(buf[IP_TOTLEN_L_P]&0xff);
+		uint dlen = __REV16(ip->TotalLength);
 		//减去IP首部长度
 		dlen -= IP_HEADER_LEN;
 		//TCP首部长度，因为TCP协议规定了只有四位来表示长度，所以需要以下处理,4*6=24
@@ -327,8 +328,8 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	UDP_HEADER* udp = (UDP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	UDP_HEADER* udp = _net->UDP;
 
 #if NET_DEBUG
 	debug_printf("UDP ");
@@ -344,11 +345,9 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	//datalen = (datalen + buf[UDP_LEN_L_P]) - sizeof(UDP_HEADER);
 	uint datalen = __REV16(udp->Length) - sizeof(UDP_HEADER);
 
-	//byte* data = new byte[datalen];
-	byte* data = (byte*)udp + sizeof(UDP_HEADER);
-	for(int i=0; i<datalen; i++)
+	byte* data = _net->Payload;
+	for(int i=0; i<_net->PayloadLength; i++)
 	{
-		//data[i] = buf[UDP_DATA_P + i];
 		debug_printf("%c", data[i]);
 	}
 	debug_printf("\r\n");
@@ -414,7 +413,7 @@ void TinyIP::ShowMac(byte* mac)
 
 void TinyIP::SendEthernet(byte* buf, uint len)
 {
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	ETH_HEADER* eth = _net->Eth;
 	memcpy(&eth->DestMac, &eth->SrcMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
@@ -423,7 +422,7 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 
 void TinyIP::SendIP(byte* buf, uint len)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	IP_HEADER* ip = _net->IP;
 	memcpy(&ip->DestIP, &ip->SrcIP, 4);
 	memcpy(&ip->SrcIP, IP, 4);
 
@@ -433,29 +432,29 @@ void TinyIP::SendIP(byte* buf, uint len)
 	ip->TTL = 64;
 
 	// 网络序是大端
-	ip->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER), sizeof(IP_HEADER), 0));
+	ip->Checksum = __REV16((ushort)checksum((byte*)ip, sizeof(IP_HEADER), 0));
 
 	SendEthernet(buf, sizeof(IP_HEADER) + len);
 }
 
 void TinyIP::SendTcp(byte* buf, uint len)
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	TCP_HEADER* tcp = _net->TCP;
 
 	tcp->Checksum = 0;
 	// 网络序是大端
-	tcp->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER) - 8, 8 + sizeof(TCP_HEADER) + len, 2));
+	tcp->Checksum = __REV16((ushort)checksum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
 	SendIP(buf, sizeof(TCP_HEADER) + len);
 }
 
 void TinyIP::SendUdp(byte* buf, uint len)
 {
-	UDP_HEADER* udp = (UDP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	UDP_HEADER* udp = _net->UDP;
 
 	udp->Checksum = 0;
 	// 网络序是大端
-	udp->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER), sizeof(UDP_HEADER) + len, 1));
+	udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	SendIP(buf, sizeof(UDP_HEADER) + len);
 }
@@ -503,16 +502,8 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-// make a return eth header from a received eth packet
 void TinyIP::make_eth(byte* buf)
 {
-    //copy the destination mac from the source and fill my mac into src
-    /*for(int i=0; i<6; i++)
-    {
-        buf[ETH_DST_MAC +i] = buf[ETH_SRC_MAC +i];
-        buf[ETH_SRC_MAC +i] = Mac[i];
-    }*/
-
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	memcpy(&eth->DestMac, &eth->SrcMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
@@ -520,30 +511,16 @@ void TinyIP::make_eth(byte* buf)
 
 void TinyIP::fill_ip_hdr_checksum(byte* buf)
 {
-    /*uint ck;
-    // clear the 2 byte checksum
-    buf[IP_CHECKSUM_P] = 0;
-    buf[IP_CHECKSUM_P + 1] = 0;
-    buf[IP_FLAGS_P] = 0x40; // don't fragment
-    buf[IP_FLAGS_P + 1] = 0;  // fragement offset
-    buf[IP_TTL_P] = 64; // ttl*/
-
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	IP_HEADER* ip = _net->IP;
 	ip->Checksum = 0;
 	ip->Flags = 0x40;
 	ip->FragmentOffset = 0;
 	ip->TTL = 64;
 
-    // calculate the checksum:
-    /*uint ck = checksum(&buf[IP_P], IP_HEADER_LEN, 0);
-    buf[IP_CHECKSUM_P] = ck >> 8;
-    buf[IP_CHECKSUM_P + 1] = ck & 0xff;*/
-
 	// 网络序是大端
 	ip->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER), sizeof(IP_HEADER), 0));
 }
 
-// make a return ip header from a received ip packet
 void TinyIP::make_ip(byte* buf)
 {
     for(int i=0; i<4; i++)
@@ -554,33 +531,13 @@ void TinyIP::make_ip(byte* buf)
     fill_ip_hdr_checksum(buf);
 }
 
-// make a return tcp header from a received tcp packet
-// rel_ack_num is how much we must step the seq number received from the
-// other side. We do not send more than 255 bytes of text (=data) in the tcp packet.
-// If mss=1 then mss is included in the options list
-//
-// After calling this function you can fill in the first data byte at TCP_OPTIONS_P + 4
-// If cp_seq=0 then an initial sequence number is used (should be use in synack)
-// otherwise it is copied from the packet we received
 void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 {
-	//IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	TCP_HEADER* tcp = _net->TCP;
 
-    /*byte i=0;
-    byte tseq;
-    while(i<2)
-    {
-        buf[TCP_DST_PORT_H_P + i] = buf[TCP_SRC_PORT_H_P + i];
-        buf[TCP_SRC_PORT_H_P + i] = 0; // clear source port
-        i++;
-    }
-	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;
-	buf[TCP_SRC_PORT_L_P] = RemotePort & 0xFF;*/
 	ushort port = tcp->SrcPort;
 	tcp->SrcPort = tcp->DestPort;
 	tcp->DestPort = port;
-	//tcp->SrcPort = __REV16(RemotePort);
 
     byte i = 4;
     // sequence numbers:
@@ -604,22 +561,12 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
     }
     if (cp_seq == 0)
     {
-        // put inital seq number
-        /*buf[TCP_SEQ_H_P + 0] = 0;
-        buf[TCP_SEQ_H_P + 1] = 0;
-        // we step only the second byte, this allows us to send packts
-        // with 255 bytes or 512 (if we step the initial seqnum by 2)
-        buf[TCP_SEQ_H_P + 2] = seqnum;
-        buf[TCP_SEQ_H_P + 3] = 0;*/
 		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
 		tcp->Seq = __REV(seqnum << 8);
         // step the inititial seq num by something we will not use
         // during this tcp session:
         seqnum += 2;
     }
-    // zero the checksum
-    //buf[TCP_CHECKSUM_H_P] = 0;
-    //buf[TCP_CHECKSUM_L_P] = 0;
 	tcp->Checksum = 0;
 
 	tcp->Length = sizeof(TCP_HEADER);
@@ -629,12 +576,6 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         // 使用可选域设置 MSS 到 1408:0x580
 		uint p = sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER);
 		*(uint *)(buf + p) = __REV(0x02040580);
-        //buf[TCP_OPTIONS_P] = 2;
-        //buf[TCP_OPTIONS_P + 1] = 4;
-        //buf[TCP_OPTIONS_P + 2] = 0x05;
-        //buf[TCP_OPTIONS_P + 3] = 0x80;
-        // 24 bytes:
-        //buf[TCP_HEADER_LEN_P] = 0x60;
 
 		tcp->Length++;
     }
@@ -642,73 +583,22 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 
 void TinyIP::make_tcp_synack_from_syn(byte* buf)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
 
-    //uint ck;
-    //make_eth(buf);
-    // total length field in the IP header must be set:
-    // 20 bytes IP + 24 bytes (20tcp+4tcp options)
-    //buf[IP_TOTLEN_H_P] = 0;
-    //buf[IP_TOTLEN_L_P] = IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4;
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 4);
     make_ip(buf);
     tcp->Flags = TCP_FLAGS_SYNACK_V;
     make_tcphead(buf,1,1,0);
-    // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
-    /*ck=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+4,2);
-    buf[TCP_CHECKSUM_H_P] = ck >> 8;
-    buf[TCP_CHECKSUM_L_P] = ck & 0xff;
-    // add 4 for option mss:
-    _enc->PacketSend(buf, IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+4+ETH_HEADER_LEN);*/
+
 	SendTcp(buf, 4);
 }
 
-// fill in tcp data at position pos. pos=0 means start of
-// tcp data. Returns the position at which the string after
-// this string could be filled.
-uint TinyIP::fill_tcp_data_p(byte* buf, uint pos, const byte* progmem_s)
-{
-    byte c;
-    // fill in tcp data at position pos
-    //
-    // with no options the data starts after the checksum + 2 more bytes (urgent ptr)
-    while (*progmem_s)
-    {
-		c = *progmem_s++;
-        buf[TCP_CHECKSUM_L_P + 3 + pos] = c;
-        pos++;
-    }
-    return(pos);
-}
-
-// fill in tcp data at position pos. pos=0 means start of
-// tcp data. Returns the position at which the string after
-// this string could be filled.
-uint TinyIP::fill_tcp_data(byte* buf, uint pos, const byte* s)
-{
-    // fill in tcp data at position pos
-    //
-    // with no options the data starts after the checksum + 2 more bytes (urgent ptr)
-    while (*s)
-    {
-        buf[TCP_CHECKSUM_L_P + 3+pos]=*s;
-        pos++;
-        s++;
-    }
-    return(pos);
-}
-
-// Make just an ack packet with no tcp data inside
-// This will modify the eth/ip/tcp header
 void TinyIP::make_tcp_ack_from_any(byte* buf, uint dlen)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
 
-    //uint j;
-    //make_eth(buf);
-    // fill the header:
     tcp->Flags = TCP_FLAGS_ACK_V;
 
     if (dlen == 0)
@@ -721,53 +611,23 @@ void TinyIP::make_tcp_ack_from_any(byte* buf, uint dlen)
         make_tcphead(buf, dlen, 0, 1); // no options
     }
 
-    // total length field in the IP header must be set:
-    // 20 bytes IP + 20 bytes tcp (when no options)
-    //j=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN;
-    //buf[IP_TOTLEN_H_P] = j >> 8;
-    //buf[IP_TOTLEN_L_P] = j& 0xff;
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(TCP_HEADER));
     make_ip(buf);
-    // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + data len
-    /*j=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN,2);
-    buf[TCP_CHECKSUM_H_P] = j >> 8;
-    buf[TCP_CHECKSUM_L_P] = j& 0xff;
-    _enc->PacketSend(buf, IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+ETH_HEADER_LEN);*/
+
 	SendTcp(buf, 0);
 }
 
-// dlen is the amount of tcp data (http data) we send in this packet
-// You can use this function only immediately after make_tcp_ack_from_any
-// This is because this function will NOT modify the eth/ip/tcp header except for
-// length and checksum
 void TinyIP::make_tcp_ack_with_data(byte* buf, uint dlen)
 {
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
-	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	IP_HEADER* ip = _net->IP;
+	TCP_HEADER* tcp = _net->TCP;
 
-    //uint j;
-    // fill the header:
-    // This code requires that we send only one data packet
-    // because we keep no state information. We must therefore set
-    // the fin here:
-    tcp->Flags = TCP_FLAGS_ACK_V|TCP_FLAGS_PUSH_V;//|TCP_FLAGS_FIN_V;
+    tcp->Flags = TCP_FLAGS_ACK_V | TCP_FLAGS_PUSH_V;//|TCP_FLAGS_FIN_V;
 
-    // total length field in the IP header must be set:
-    // 20 bytes IP + 20 bytes tcp (when no options) + len of data
-    //j=IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen;
-    //buf[IP_TOTLEN_H_P] = j >> 8;
-    //buf[IP_TOTLEN_L_P] = j& 0xff;
-	ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(TCP_HEADER));
+	ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(TCP_HEADER) + dlen);
     fill_ip_hdr_checksum(buf);
-    // zero the checksum
-    /*buf[TCP_CHECKSUM_H_P] = 0;
-    buf[TCP_CHECKSUM_L_P] = 0;
-    // calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + data len
-    j=checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+dlen,2);
-    buf[TCP_CHECKSUM_H_P] = j >> 8;
-    buf[TCP_CHECKSUM_L_P] = j& 0xff;
-    _enc->PacketSend(buf, IP_HEADER_LEN+TCP_HEADER_LEN_PLAIN+dlen+ETH_HEADER_LEN);*/
-	SendTcp(buf, 0);
+
+	SendTcp(buf, dlen);
 }
 
 unsigned char hex_to_dec_L(int d)
