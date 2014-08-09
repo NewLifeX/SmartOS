@@ -20,6 +20,7 @@ private:
 	void SendEthernet(byte* buf, uint len);
 	void SendIP(byte* buf, uint len);
 	void SendTcp(byte* buf, uint len);
+	void SendUdp(byte* buf, uint len);
 
 	byte seqnum;
 

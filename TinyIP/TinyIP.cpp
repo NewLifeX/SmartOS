@@ -150,14 +150,6 @@ void TinyIP::Start()
         }
         if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
         {
-#if NET_DEBUG
-			debug_printf("UDP ");
-			ShowIP(ip->SrcIP);
-			debug_printf(" => ");
-			ShowIP(ip->DestIP);
-			debug_printf("\r\n");
-#endif
-
 			ProcessUdp(buf, len);
 			continue;
         }
@@ -335,26 +327,73 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
-	//获取目标机UDP的端口
-	//ushort udp_port = buf[UDP_DST_PORT_H_P] << 8 | buf[UDP_DST_PORT_L_P];
+	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	UDP_HEADER* udp = (UDP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	debug_printf("Data from UDP:");
+#if NET_DEBUG
+	debug_printf("UDP ");
+	ShowIP(ip->SrcIP);
+	debug_printf(":%d => ", __REV16(udp->SrcPort));
+	ShowIP(ip->DestIP);
+	debug_printf(":%d\r\n", __REV16(udp->DestPort));
+#endif
+
 	//UDP数据长度
-	uint payloadlen = buf[UDP_LEN_H_P];
-	payloadlen = payloadlen << 8;
-	payloadlen = (payloadlen + buf[UDP_LEN_L_P]) - UDP_HEADER_LEN;
+	uint datalen = buf[UDP_LEN_H_P];
+	datalen = datalen << 8;
+	datalen = (datalen + buf[UDP_LEN_L_P]) - sizeof(UDP_HEADER);
 
-	byte* buf2 = new byte[payloadlen];
-	for(int i=0; i<payloadlen; i++)
+	byte* data = new byte[datalen];
+	for(int i=0; i<datalen; i++)
 	{
-		buf2[i] = buf[UDP_DATA_P + i];
-		debug_printf("%c", buf2[i]);
+		data[i] = buf[UDP_DATA_P + i];
+		debug_printf("%c", data[i]);
 	}
 	debug_printf("\r\n");
 
 	//获取发送源端口
-	ushort pc_port = buf[UDP_SRC_PORT_H_P] << 8 | buf[UDP_SRC_PORT_L_P];
-	make_udp_reply_from_request(buf, buf2, payloadlen, pc_port);
+	//ushort port = buf[UDP_SRC_PORT_H_P] << 8 | buf[UDP_SRC_PORT_L_P];
+
+	// 最大发送220字节数据
+    //make_eth(buf);
+    //if (datalen>220)
+    //	{
+    //    datalen=220;
+    //	}
+
+    // total length field in the IP header must be set:
+    //uint i = IP_HEADER_LEN + UDP_HEADER_LEN + datalen;
+    //buf[IP_TOTLEN_H_P] = i >> 8;
+    //buf[IP_TOTLEN_L_P] = i;
+	ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(UDP_HEADER) + datalen);
+    make_ip(buf);
+    //buf[UDP_DST_PORT_H_P] = port >> 8;
+    //buf[UDP_DST_PORT_L_P] = port & 0xff;
+	udp->DestPort = udp->SrcPort;
+    // source port does not matter and is what the sender used.
+    // calculte the udp length:
+    //buf[UDP_LEN_H_P] = datalen >> 8;
+    //buf[UDP_LEN_L_P] = UDP_HEADER_LEN+datalen;
+	udp->Length = sizeof(UDP_HEADER) + datalen;
+    // zero the checksum
+    /*buf[UDP_CHECKSUM_H_P] = 0;
+    buf[UDP_CHECKSUM_L_P] = 0;
+    // copy the data:
+    while(i<datalen)
+    {
+        buf[UDP_DATA_P + i] = data[i];
+        i++;
+    }
+	//这里的16字节是UDP的伪首部，即IP的源地址-0x1a+目标地址-0x1e
+	//+UDP首部=4+4+8=16
+    uint ck=checksum(&buf[IP_SRC_P], 16 + datalen,1);
+    buf[UDP_CHECKSUM_H_P] = ck >> 8;
+    buf[UDP_CHECKSUM_L_P] = ck & 0xff;
+    _enc->PacketSend(buf, UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen);*/
+	
+	memcpy((byte*)(udp + sizeof(UDP_HEADER)), data, datalen);
+
+	SendUdp(buf, datalen);
 }
 
 void TinyIP::ShowIP(byte* ip)
@@ -406,6 +445,17 @@ void TinyIP::SendTcp(byte* buf, uint len)
 	tcp->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER) - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
 	SendIP(buf, sizeof(TCP_HEADER) + len);
+}
+
+void TinyIP::SendUdp(byte* buf, uint len)
+{
+	UDP_HEADER* udp = (UDP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+
+	udp->Checksum = 0;
+	// 网络序是大端
+	udp->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER), sizeof(UDP_HEADER) + len, 1));
+
+	SendIP(buf, sizeof(UDP_HEADER) + len);
 }
 
 uint TinyIP::checksum(byte* buf, uint len, byte type)
@@ -586,43 +636,6 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 
 		tcp->Length++;
     }
-}
-
-// you can send a max of 220 bytes of data
-void TinyIP::make_udp_reply_from_request(byte* buf,byte *data, uint datalen, uint port)
-{
-    make_eth(buf);
-    //if (datalen>220)
-    //	{
-    //    datalen=220;
-    //	}
-
-    // total length field in the IP header must be set:
-    uint i = IP_HEADER_LEN+UDP_HEADER_LEN+datalen;
-    buf[IP_TOTLEN_H_P] = i >> 8;
-    buf[IP_TOTLEN_L_P] = i;
-    make_ip(buf);
-    buf[UDP_DST_PORT_H_P] = port >> 8;
-    buf[UDP_DST_PORT_L_P] = port & 0xff;
-    // source port does not matter and is what the sender used.
-    // calculte the udp length:
-    buf[UDP_LEN_H_P] = datalen >> 8;
-    buf[UDP_LEN_L_P] = UDP_HEADER_LEN+datalen;
-    // zero the checksum
-    buf[UDP_CHECKSUM_H_P] = 0;
-    buf[UDP_CHECKSUM_L_P] = 0;
-    // copy the data:
-    while(i<datalen)
-    {
-        buf[UDP_DATA_P + i] = data[i];
-        i++;
-    }
-		//这里的16字节是UDP的伪首部，即IP的源地址-0x1a+目标地址-0x1e
-		//+UDP首部=4+4+8=16
-    uint ck=checksum(&buf[IP_SRC_P], 16 + datalen,1);
-    buf[UDP_CHECKSUM_H_P] = ck >> 8;
-    buf[UDP_CHECKSUM_L_P] = ck & 0xff;
-    _enc->PacketSend(buf, UDP_HEADER_LEN+IP_HEADER_LEN+ETH_HEADER_LEN+datalen);
 }
 
 void TinyIP::make_tcp_synack_from_syn(byte* buf)
