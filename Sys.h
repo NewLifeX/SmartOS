@@ -1,4 +1,4 @@
-﻿#ifndef _Sys_H_
+#ifndef _Sys_H_
 #define _Sys_H_
 
 #include <stdio.h>
@@ -13,8 +13,8 @@ typedef unsigned int    uint;
 typedef unsigned long long  ulong;
 typedef char*           string;
 //typedef unsigned char   bool;
-#define true            1
-#define false           0
+//#define true            1
+//#define false           0
 
 /*
 // 尚未决定是否采用下面这种类型

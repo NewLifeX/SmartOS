@@ -7,7 +7,7 @@
 #define MAX_TX  		0x10  //达到最大发送次数中断
 #define TX_OK   		0x20  //TX发送完成中断
 #define RX_OK   		0x40  //接收到数据中断
-#define RX_TIME_OUT		0x50  //接收超时
+#define NO_NEWS			0x50  //没有数据在2401中
 
 // NRF24L01类
 class NRF24L01
@@ -21,6 +21,8 @@ private:
     byte ReadBuf(byte reg,byte *pBuf,byte bytes);
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
+
+//	bool _isEvent;
 
     void CEUp();
     void CEDown();

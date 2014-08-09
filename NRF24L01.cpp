@@ -73,7 +73,8 @@ enum nRF_state
 	nrf_mode_free
 }
 nRF24L01_status=nrf_mode_free;
-
+//bool * IsEvent_p;
+volatile  bool _isEvent;
 //2401委托函数
 void nRF24L01_irq(Pin pin, bool opk);
 
@@ -92,7 +93,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-
+	_isEvent = false;
+//	IsEvent_p = & _isEvent ;
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
 }
@@ -227,8 +229,13 @@ void NRF24L01::Config(bool isReceive)
 void NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
+	//改变状态
+	//_isEvent = false;
 	if(isReceive) // 接收模式
+	{
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
+		CEUp();
+	}
 	else		  // 发送模式
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
 }
@@ -236,16 +243,17 @@ void NRF24L01::SetMode(bool isReceive)
 // 从NRF的接收缓冲区中读出数据
 byte NRF24L01::Receive(byte *data)
 {
-	CEUp();
-	int time=0;
-	// 等待接收中断   此中断可能不发生  所以不能while（xx）；
-	while(_IRQ->Read())
-		{
-			time++;
-			if(time > _outTime)return RX_TIME_OUT ;
-		}
-	CEDown();
-
+//	int time=0;
+//	// 等待接收中断   此中断可能不发生  所以不能while（xx）；
+//	while(_IRQ->Read())
+//		{
+//			time++;
+//			if(time > _outTime)return NO_NEWS ;
+//		}
+	if(_isEvent == false)return NO_NEWS;
+//	CEUp();		// 开始接受命令
+//	CEDown();	// 结束接受命令
+	
 	/*读取status寄存器的值  */
 	byte state = ReadReg(STATUS);
 	/* 清除中断标志*/
@@ -253,11 +261,16 @@ byte NRF24L01::Receive(byte *data)
 	/*判断是否接收到数据*/
 	if(state & RX_OK)                                 //接收到数据
 	{
+		CEDown();		// 收到一帧数据  停止接受  开始读取
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
+		CEDown();
+		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
+		_isEvent = false;
         return RX_OK;
 	}
-
+	Config(false);	// 在出现问题的时候重新配置保证通信稳定
+	SetMode(true);
 	return false;                    //没收到任何数据
 }
 
@@ -302,13 +315,8 @@ void NRF24L01::CEDown()
 //2401委托函数  未完成
 void nRF24L01_irq(Pin pin, bool opk)
 {
-	byte a=3 ,b=5;
-	(void)pin;
-	(void)opk;
-	switch(nRF24L01_status)
-	{
-        case nrf_mode_rx: a=b; break;
-        case nrf_mode_tx: a+=b; break;
-        case nrf_mode_free: a-=b; break;
-	}
+	if(opk == false)
+//		*IsEvent_p = true;
+		_isEvent=true;
+	
 }
