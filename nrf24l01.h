@@ -28,7 +28,6 @@ private:
     void CEDown();
 public:
     int Channel;    // 通讯频道
-	int _outTime;	// 接收数据超时时间
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();
 

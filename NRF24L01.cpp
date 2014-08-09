@@ -81,16 +81,14 @@ void nRF24L01_irq(Pin pin, bool opk);
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
-	_outTime = 5000;
     if(ce != P0) _CE = new OutputPort(ce);
-
     if(irq != P0)
     {
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
+		_IRQ->ShakeTime = 10;
         _IRQ->Register(nRF24L01_irq);
     }
-
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
 	_isEvent = false;
