@@ -279,7 +279,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		//make_ip(buf);
 		ip->TotalLength = __REV16(sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 4);
 		tcp->Flags = TCP_FLAGS_SYNACK_V;
-		make_tcphead(buf,1,1,0);
+		make_tcphead(buf, 1, 1, 0);
 		// calculate the checksum, len=8 (start from ip.src) + TCP_HEADER_LEN_PLAIN + 4 (one option: mss)
 		/*ck = checksum(&buf[IP_SRC_P], 8+TCP_HEADER_LEN_PLAIN+4,2);
 		buf[TCP_CHECKSUM_H_P] = ck >> 8;
@@ -570,30 +570,21 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
     //buf[TCP_CHECKSUM_L_P] = 0;
 	tcp->Checksum = 0;
 
-    // The tcp header length is only a 4 bit field (the upper 4 bits).
-    // It is calculated in units of 4 bytes.
-    // E.g 24 bytes: 24/4=6 => 0x60=header len field
-    //buf[TCP_HEADER_LEN_P]=(((TCP_HEADER_LEN_PLAIN+4)/4)) <<4; // 0x60
+	tcp->Length = sizeof(TCP_HEADER);
+    // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
     if (mss)
     {
-        // the only option we set is MSS to 1408:
-        // 1408 in hex is 0x580
-        buf[TCP_OPTIONS_P] = 2;
-        buf[TCP_OPTIONS_P + 1] = 4;
-        buf[TCP_OPTIONS_P + 2] = 0x05;
-        buf[TCP_OPTIONS_P + 3] = 0x80;
+        // 使用可选域设置 MSS 到 1408:0x580
+		uint p = sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER);
+		*(uint *)(buf + p) = __REV(0x02040580);
+        //buf[TCP_OPTIONS_P] = 2;
+        //buf[TCP_OPTIONS_P + 1] = 4;
+        //buf[TCP_OPTIONS_P + 2] = 0x05;
+        //buf[TCP_OPTIONS_P + 3] = 0x80;
         // 24 bytes:
         //buf[TCP_HEADER_LEN_P] = 0x60;
 
-		tcp->Length = 0x60;
-    }
-    else
-    {
-        // no options:
-        // 20 bytes:
-        //buf[TCP_HEADER_LEN_P] = 0x50;
-
-		tcp->Length = 0x50;
+		tcp->Length++;
     }
 }
 
