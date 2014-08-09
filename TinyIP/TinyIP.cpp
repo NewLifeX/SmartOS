@@ -496,7 +496,10 @@ void TinyIP::make_ip(byte* buf)
 // otherwise it is copied from the packet we received
 void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 {
-    byte i=0;
+	//IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+
+    /*byte i=0;
     byte tseq;
     while(i<2)
     {
@@ -504,20 +507,19 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         buf[TCP_SRC_PORT_H_P + i] = 0; // clear source port
         i++;
     }
-    // set source port  (http):
-   // buf[TCP_SRC_PORT_L_P] = wwwport;                //源码//////////////////////////////////////////////
-		//debug_printf("%d\r\n",src_port_H<<8 | src_port_L);
-	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;								//自己添加
-	buf[TCP_SRC_PORT_L_P] = RemotePort & 0xFF;								//
+	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;
+	buf[TCP_SRC_PORT_L_P] = RemotePort & 0xFF;*/
+	tcp->DestPort = tcp->SrcPort;
+	tcp->SrcPort = __REV16(RemotePort);
 
-    i=4;
+    byte i = 4;
     // sequence numbers:
     // add the rel ack num to SEQACK
     while(i>0)
     {
         rel_ack_num = buf[TCP_SEQ_H_P + i-1] + rel_ack_num;
-        tseq = buf[TCP_SEQACK_H_P + i-1];
-        buf[TCP_SEQACK_H_P + i-1] = 0xff&rel_ack_num;
+        byte tseq = buf[TCP_SEQACK_H_P + i-1];
+        buf[TCP_SEQACK_H_P + i-1] = 0xff & rel_ack_num;
         if (cp_seq)
         {
             // copy the acknum sent to us into the sequence number
@@ -544,8 +546,9 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         seqnum += 2;
     }
     // zero the checksum
-    buf[TCP_CHECKSUM_H_P] = 0;
-    buf[TCP_CHECKSUM_L_P] = 0;
+    //buf[TCP_CHECKSUM_H_P] = 0;
+    //buf[TCP_CHECKSUM_L_P] = 0;
+	tcp->Checksum = 0;
 
     // The tcp header length is only a 4 bit field (the upper 4 bits).
     // It is calculated in units of 4 bytes.
@@ -560,13 +563,17 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         buf[TCP_OPTIONS_P + 2] = 0x05;
         buf[TCP_OPTIONS_P + 3] = 0x80;
         // 24 bytes:
-        buf[TCP_HEADER_LEN_P] = 0x60;
+        //buf[TCP_HEADER_LEN_P] = 0x60;
+
+		tcp->Length = 0x60;
     }
     else
     {
         // no options:
         // 20 bytes:
-        buf[TCP_HEADER_LEN_P] = 0x50;
+        //buf[TCP_HEADER_LEN_P] = 0x50;
+
+		tcp->Length = 0x50;
     }
 }
 
@@ -612,8 +619,8 @@ void TinyIP::make_tcp_synack_from_syn(byte* buf)
 	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
 	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-    uint ck;
-    make_eth(buf);
+    //uint ck;
+    //make_eth(buf);
     // total length field in the IP header must be set:
     // 20 bytes IP + 24 bytes (20tcp+4tcp options)
     //buf[IP_TOTLEN_H_P] = 0;
@@ -675,8 +682,9 @@ uint TinyIP::fill_tcp_data_p(byte* buf, uint pos, const byte* progmem_s)
     // fill in tcp data at position pos
     //
     // with no options the data starts after the checksum + 2 more bytes (urgent ptr)
-    while ((c = *progmem_s++))
+    while (*progmem_s)
     {
+		c = *progmem_s++;
         buf[TCP_CHECKSUM_L_P + 3 + pos] = c;
         pos++;
     }
@@ -707,8 +715,8 @@ void TinyIP::make_tcp_ack_from_any(byte* buf)
 	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
 	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-    uint j;
-    make_eth(buf);
+    //uint j;
+    //make_eth(buf);
     // fill the header:
     tcp->Flags = TCP_FLAGS_ACK_V;
 
@@ -747,7 +755,7 @@ void TinyIP::make_tcp_ack_with_data(byte* buf, uint dlen)
 	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
 	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-    uint j;
+    //uint j;
     // fill the header:
     // This code requires that we send only one data packet
     // because we keep no state information. We must therefore set
