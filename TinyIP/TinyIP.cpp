@@ -96,6 +96,7 @@ void TinyIP::Start()
 	}
 
 	uint eth_size = sizeof(ETH_HEADER);
+	//uint ip_size = eth_size + sizeof(IP_HEADER);
     while(1)
     {
         // 获取缓冲区的包
@@ -110,7 +111,7 @@ void TinyIP::Start()
 		// 处理ARP
 		if(eth->Type == ETH_ARP)
 		{
-			ProcessArp(buf + eth_size, len - eth_size);
+			ProcessArp(buf, len);
             continue;
 		}
 
@@ -141,6 +142,11 @@ void TinyIP::Start()
         // ICMP协议检测与检测是否为ICMP请求 ping
         if(ip->Protocol == IP_ICMP)
         {
+			debug_printf("Ping From "); // 打印发方的ip
+			//ShowIP(&buf[IP_SRC_P]);
+			ShowIP(ip->SrcIP);
+			debug_printf(" ICMP package.\r\n");
+
 			ProcessICMP(buf, len);
             continue;
         }
@@ -162,14 +168,14 @@ void TinyIP::Start()
 void TinyIP::ProcessArp(byte* buf, uint len)
 {
 	// ARP头
-	if(len < sizeof(ARP_HEADER)) return;
+	if(len < sizeof(ETH_HEADER) + sizeof(ARP_HEADER)) return;
 
 	/*
 	当封装的ARP报文在以太网上传输时，硬件类型字段赋值为0x0100，标识硬件为以太网硬件；
 	协议类型字段赋值为0x0800，标识上次协议为IP协议；由于以太网的MAC地址为48比特位，IP地址为32比特位，则硬件地址长度字段赋值为6，协议地址长度字段赋值为4 ；
 	选项字段标识ARP报文的类型，当为请求报文时，赋值为0x0100，当为回答报文时，赋值为0x0200。
 	*/
-	ARP_HEADER* arp = (ARP_HEADER*)buf;
+	ARP_HEADER* arp = (ARP_HEADER*)(buf + sizeof(ETH_HEADER));
 
 	// 是否发给本机。注意memcmp相等返回0
 	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
@@ -211,11 +217,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	debug_printf("\r\n");
 #endif
 
-	uint eth_size = sizeof(ETH_HEADER);
-	buf -= eth_size;
-	make_eth(buf);
-
-	_enc->PacketSend(buf, eth_size + sizeof(ARP_HEADER));
+	SendEthernet(buf, sizeof(ARP_HEADER));
 }
 
 //检查是否为合法的eth，并且只接收发给本机的arp数据
@@ -256,12 +258,33 @@ void TinyIP::make_arp_answer_from_request(byte* buf)
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
 {
-	if(buf[ICMP_TYPE_P] != ICMP_TYPE_ECHOREQUEST_V) return;
+	//if(buf[ICMP_TYPE_P] != ICMP_TYPE_ECHOREQUEST_V) return;
+	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
+	if(len < sizeof(ICMP_HEADER)) return;
 
-	debug_printf("from "); // 打印发方的ip
-	ShowIP(&buf[IP_SRC_P]);
-	debug_printf(" ICMP package.\r\n");
-	make_echo_reply_from_request(buf, len);
+	ICMP_HEADER* icmp = (ICMP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	// 只处理ECHO请求
+	if(icmp->Type != 8) return;
+
+    //make_eth(buf);
+    /*make_ip(buf);
+    buf[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;
+    // we changed only the icmp.type field from request(=8) to reply(=0).
+    // we can therefore easily correct the checksum:
+    if (buf[ICMP_CHECKSUM_P] > (0xff-0x08))
+    {
+        buf[ICMP_CHECKSUM_P + 1]++;
+    }
+    buf[ICMP_CHECKSUM_P] += 0x08;
+	//_enc->PacketSend(buf, len);
+	SendEthernet(buf, len - sizeof(ETH_HEADER));*/
+	
+	icmp->Type = 0; // 响应
+	// 因为仅仅改变类型，因此我们能够提前修正校验码
+	icmp->Checksum += 0x08;
+
+	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
+    SendIP(buf, len);
 }
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
@@ -351,6 +374,26 @@ void TinyIP::ShowMac(byte* mac)
 	debug_printf("%02X", *mac++);
 	for(int i=1; i<6; i++)
 		debug_printf("-%02X", *mac++);
+}
+
+void TinyIP::SendEthernet(byte* buf, uint len)
+{
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	memcpy(&eth->DestMac, &eth->SrcMac, 6);
+	memcpy(&eth->SrcMac, Mac, 6);
+
+	_enc->PacketSend(buf, sizeof(ETH_HEADER) + len);
+}
+
+void TinyIP::SendIP(byte* buf, uint len)
+{
+	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	memcpy(&ip->DestIP, &ip->SrcIP, 4);
+	memcpy(&ip->SrcIP, IP, 4);
+
+    fill_ip_hdr_checksum(buf);
+
+	SendEthernet(buf, sizeof(IP_HEADER) + len);
 }
 
 // The Ip checksum is calculated over the ip header only starting
@@ -462,17 +505,27 @@ void TinyIP::make_eth(byte* buf)
 
 void TinyIP::fill_ip_hdr_checksum(byte* buf)
 {
-    uint ck;
+    /*uint ck;
     // clear the 2 byte checksum
     buf[IP_CHECKSUM_P] = 0;
     buf[IP_CHECKSUM_P + 1] = 0;
     buf[IP_FLAGS_P] = 0x40; // don't fragment
     buf[IP_FLAGS_P + 1] = 0;  // fragement offset
-    buf[IP_TTL_P] = 64; // ttl
+    buf[IP_TTL_P] = 64; // ttl*/
+
+	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
+	ip->Checksum = 0;
+	ip->Flags = 0x40;
+	ip->FragmentOffset = 0;
+	ip->TTL = 64;
+
     // calculate the checksum:
-    ck = checksum(&buf[IP_P], IP_HEADER_LEN, 0);
+    uint ck = checksum(&buf[IP_P], IP_HEADER_LEN, 0);
     buf[IP_CHECKSUM_P] = ck >> 8;
     buf[IP_CHECKSUM_P + 1] = ck & 0xff;
+
+	// 网络序是大端
+	//ip->Checksum = __REV(checksum(buf + sizeof(ETH_HEADER), sizeof(IP_HEADER), 0));
 }
 
 // make a return ip header from a received ip packet
@@ -568,22 +621,6 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         // 20 bytes:
         buf[TCP_HEADER_LEN_P] = 0x50;
     }
-}
-
-void TinyIP::make_echo_reply_from_request(byte* buf, uint len)
-{
-    make_eth(buf);
-    make_ip(buf);
-    buf[ICMP_TYPE_P] = ICMP_TYPE_ECHOREPLY_V;	  //////回送应答////////////////////////////////////////////////////////////////////////////
-    // we changed only the icmp.type field from request(=8) to reply(=0).
-    // we can therefore easily correct the checksum:
-    if (buf[ICMP_CHECKSUM_P] > (0xff-0x08))
-    {
-        buf[ICMP_CHECKSUM_P + 1]++;
-    }
-    buf[ICMP_CHECKSUM_P]+=0x08;
-    //
-    _enc->PacketSend(buf, len);
 }
 
 // you can send a max of 220 bytes of data

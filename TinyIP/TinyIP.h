@@ -17,6 +17,8 @@ private:
 	void ProcessUdp(byte* buf, uint len);
 	void ShowIP(byte* ip);
 	void ShowMac(byte* mac);
+	void SendEthernet(byte* buf, uint len);
+	void SendIP(byte* buf, uint len);
 
 	byte seqnum;
 	uint info_data_len;
