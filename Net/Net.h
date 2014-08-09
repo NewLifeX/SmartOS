@@ -1,7 +1,7 @@
 #ifndef _Net_H_
 #define _Net_H_
 
-//#include "Sys.h"
+#include "Sys.h"
 
 // TCP/IP协议头部结构体
 
@@ -166,6 +166,100 @@ struct icmp11
 	unsigned short icmp_cksum;
 	unsigned int icmp_void;
 	char icmp_data[1];
+};
+
+// 网络封包机
+class NetPacker
+{
+private:
+	byte* Buffer;
+
+public:
+	NetPacker(byte* buf)
+	{
+		Buffer = buf;
+		_ETH = (ETH_HEADER*)buf;
+	}
+
+	ETH_HEADER* _ETH;
+	uint TotalLength;	// 数据总长度
+
+	ARP_HEADER* ARP;
+	IP_HEADER* IP;
+	ICMP_HEADER* ICMP;
+	TCP_HEADER* TCP;
+	UDP_HEADER* UDP;
+	byte* Payload;	// 负载数据
+	uint PayloadLength; // 负载数据长度
+
+	// 解包。把参数拆分出来，主要涉及各指针长度
+	bool Unpack(uint len)
+	{
+		if(len < sizeof(ETH_HEADER)) return false;
+
+		TotalLength = len;
+
+		// 计算负载。不同协议负载不一样，后面可能还会再次进行计算
+		Payload = (byte*)_ETH + sizeof(ETH_HEADER);
+		PayloadLength = len - sizeof(ETH_HEADER);
+		switch(_ETH->Type)
+		{
+			case ETH_ARP:
+			{
+				ARP = (ARP_HEADER*)Payload;
+				IP = NULL;
+				Payload += sizeof(ARP_HEADER);
+				PayloadLength -= sizeof(ARP_HEADER);
+				break;
+			}
+			case ETH_IP:
+			{
+				IP = (IP_HEADER*)Payload;
+				ARP = NULL;
+
+				// IP包后面可能有附加数据。长度是4的倍数
+				uint iplen = IP->Length << 2;
+				if(iplen < sizeof(IP_HEADER)) iplen = sizeof(IP_HEADER);
+				Payload += iplen;
+				PayloadLength -= iplen;
+
+				switch(IP->Protocol)
+				{
+					case IP_ICMP:
+					{
+						ICMP = (ICMP_HEADER*)Payload;
+						Payload += sizeof(ICMP_HEADER);
+						PayloadLength -= sizeof(ICMP_HEADER);
+						break;
+					}
+					case IP_TCP:
+					{
+						TCP = (TCP_HEADER*)Payload;
+						iplen = TCP->Length << 2;
+						Payload += iplen;
+						PayloadLength -= iplen;
+						break;
+					}
+					case IP_UDP:
+					{
+						UDP = (UDP_HEADER*)Payload;
+						Payload += sizeof(UDP_HEADER);
+						PayloadLength -= sizeof(UDP_HEADER);
+						break;
+					}
+				}
+
+				break;
+			}
+		}
+
+		return Payload <= (byte*)_ETH + len;
+	}
+
+	// 封包。把参数组装回去
+	void Pack();
+
+	ETH_HEADER* GetEthernet() { return (ETH_HEADER*)Buffer; }
 };
 
 #endif
