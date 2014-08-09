@@ -24,9 +24,9 @@ private:
 	uint info_hdr_len;
 	uint tcp_d_len;
 
-	byte eth_type_is_arp_and_my_ip(byte* buf, uint len);
-	byte eth_type_is_ip_and_my_ip(byte* buf, uint len);
-	void make_arp_answer_from_request(byte* buf);
+	//byte eth_type_is_arp_and_my_ip(byte* buf, uint len);
+	//byte eth_type_is_ip_and_my_ip(byte* buf, uint len);
+	//void make_arp_answer_from_request(byte* buf);
 	void make_echo_reply_from_request(byte* buf, uint len);
 	void make_udp_reply_from_request(byte* buf,byte *data, uint datalen, uint port);
 	void make_eth(byte* buf);

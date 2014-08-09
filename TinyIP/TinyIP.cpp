@@ -98,7 +98,7 @@ void TinyIP::Start()
 	uint eth_size = sizeof(ETH_HEADER);
     while(1)
     {
-        // 获取缓冲器的包
+        // 获取缓冲区的包
         uint len = _enc->PacketReceive(buf, BufferSize);
 
         // 如果缓冲器里面没有数据则转入下一次循环
@@ -114,39 +114,48 @@ void TinyIP::Start()
             continue;
 		}
 
-        if(eth_type_is_arp_and_my_ip(buf, len))
+        /*if(eth_type_is_arp_and_my_ip(buf, len))
         {
             make_arp_answer_from_request(buf);
             continue;
-        }
+        }*/
 		
 		if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
 
 		IP_HEADER* ip = (IP_HEADER*)(buf + eth_size);
-		if(!memcmp(ip->DestIP, IP, 4)) continue;
+		// 是否发给本机。注意memcmp相等返回0
+		if(memcmp(ip->DestIP, IP, 4) !=0 ) continue;
+
+#if NET_DEBUG
+		debug_printf("IP Protocol=%d ", ip->Protocol);
+		ShowIP(ip->SrcIP);
+		debug_printf(" => ");
+		ShowIP(ip->DestIP);
+		debug_printf("\r\n");
+#endif
 
         // 判断是否为发送给我们ip的包
-        if(!eth_type_is_ip_and_my_ip(buf, len)) continue;
+        //if(!eth_type_is_ip_and_my_ip(buf, len)) continue;
 
-		byte protocol = buf[IP_PROTO_P];
+		//byte protocol = buf[IP_PROTO_P];
         // ICMP协议检测与检测是否为ICMP请求 ping
-        if(protocol == IP_PROTO_ICMP_V)
+        if(ip->Protocol == IP_ICMP)
         {
 			ProcessICMP(buf, len);
             continue;
         }
-        if (protocol == IP_PROTO_TCP_V)
+        if (ip->Protocol == IP_TCP)
         {
 			ProcessTcp(buf, len);
 			continue;
         }
-        if (protocol == IP_PROTO_UDP_V /*&& buf[UDP_DST_PORT_H_P] == 4*/)
+        if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
         {
 			ProcessUdp(buf, len);
 			continue;
         }
 
-        debug_printf("Unkown Protocol 0x%02X\r\n", protocol);
+        debug_printf("Unkown Protocol 0x%02X\r\n", ip->Protocol);
     }
 }
 
@@ -162,8 +171,8 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	*/
 	ARP_HEADER* arp = (ARP_HEADER*)buf;
 
-	// 是否发给本机
-	if(memcmp(arp->DestIP, IP, 4)) return;
+	// 是否发给本机。注意memcmp相等返回0
+	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
 
 #if NET_DEBUG
 	// 数据校验
@@ -210,7 +219,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 }
 
 //检查是否为合法的eth，并且只接收发给本机的arp数据
-byte TinyIP::eth_type_is_arp_and_my_ip(byte* buf, uint len)
+/*byte TinyIP::eth_type_is_arp_and_my_ip(byte* buf, uint len)
 {
     //arp报文长度判断，正常的arp报文长度为42byts
     if (len < 41) return false;
@@ -243,7 +252,7 @@ void TinyIP::make_arp_answer_from_request(byte* buf)
     }
     // eth+arp is 42 bytes:
     _enc->PacketSend(buf, 42);
-}
+}*/
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
 {
@@ -412,7 +421,7 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-byte TinyIP::eth_type_is_ip_and_my_ip(byte* buf, uint len)
+/*byte TinyIP::eth_type_is_ip_and_my_ip(byte* buf, uint len)
 {
     byte i=0;
     //eth+ip+udp header is 42
@@ -434,7 +443,7 @@ byte TinyIP::eth_type_is_ip_and_my_ip(byte* buf, uint len)
         i++;
     }
     return true;
-}
+}*/
 
 // make a return eth header from a received eth packet
 void TinyIP::make_eth(byte* buf)

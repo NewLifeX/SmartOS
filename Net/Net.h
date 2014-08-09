@@ -21,6 +21,7 @@ typedef enum
 {
 	ETH_ARP = 0x0608,
 	ETH_IP = 0x0008,
+	ETH_IPv6 = 0xDD86,
 }ETH_TYPE;
 
 //Mac头部，总长度14字节
