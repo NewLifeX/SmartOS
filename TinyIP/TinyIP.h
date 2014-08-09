@@ -21,19 +21,15 @@ private:
 	void ShowMac(byte* mac);
 	void SendEthernet(byte* buf, uint len);
 	void SendIP(byte* buf, uint len);
-	void SendTcp(byte* buf, uint len);
+	void SendTcp(byte* buf, uint len, byte flags);
 	void SendUdp(byte* buf, uint len);
 
 	byte seqnum;
 
-	void make_eth(byte* buf);
-	void make_ip(byte* buf);
-	void make_tcp_synack_from_syn(byte* buf);
 	void make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq);
 	void make_tcp_ack_from_any(byte* buf, uint dlen);
 	void make_tcp_ack_with_data(byte* buf, uint dlen);
 
-	void fill_ip_hdr_checksum(byte* buf);
 	uint checksum(byte* buf, uint len, byte type);
 
 	uint dhcp_id;
@@ -50,6 +46,12 @@ private:
 public:
     byte IP[4];
 	byte Mac[6];
+	ushort Port;
+
+	byte RemoteMac[6];
+	byte RemoteIP[4];
+	ushort RemotePort;
+
 	ushort BufferSize;	// 缓冲区大小
 	bool UseDHCP;
 	bool IPIsReady;
@@ -62,9 +64,6 @@ public:
     virtual ~TinyIP();
 
 	void Start();
-
-	byte RemoteIP[4];
-	ushort RemotePort;
 
     void TcpSend(byte* packet, uint len);
     void TcpClose(byte* packet, uint maxlen);
