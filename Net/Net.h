@@ -117,56 +117,23 @@ typedef struct _ARP_HEADER
 	unsigned char DestIP[4];	//目的IP地址
 }ARP_HEADER;
 
-/*********************************************/
-//ICMP的各种形式
-//icmpx,x==icmp_type;
-//icmp报文(能到达目的地,响应-请求包)
-struct icmp8
+// DHCP头部
+typedef struct _DHCP_HEADER
 {
-	unsigned char icmp_type; //type of message(报文类型)
-	unsigned char icmp_code; //type sub code(报文类型子码)
-	unsigned short icmp_cksum;
-	unsigned short icmp_id;
-	unsigned short icmp_seq;
-	char icmp_data[1];
-};
-//icmp报文(能返回目的地,响应-应答包)
-struct icmp0
-{
-	unsigned char icmp_type; //type of message(报文类型)
-	unsigned char icmp_code; //type sub code(报文类型子码)
-	unsigned short icmp_cksum;
-	unsigned short icmp_id;
-	unsigned short icmp_seq;
-	char icmp_data[1];
-};
-//icmp报文(不能到达目的地)
-struct icmp3
-{
-	unsigned char icmp_type; //type of message(报文类型)
-	unsigned char icmp_code; //type sub code(报文类型子码),例如:0网络原因不能到达,1主机原因不能到达...
-	unsigned short icmp_cksum;
-	unsigned short icmp_pmvoid;
-	unsigned short icmp_nextmtu;
-	char icmp_data[1];
-};
-//icmp报文(重发结构体)
-struct icmp5
-{
-	unsigned char icmp_type; //type of message(报文类型)
-	unsigned char icmp_code; //type sub code(报文类型子码)
-	unsigned short icmp_cksum;
-	unsigned int icmp_gwaddr;
-	char icmp_data[1];
-};
-struct icmp11
-{
-	unsigned char icmp_type; //type of message(报文类型)
-	unsigned char icmp_code; //type sub code(报文类型子码)
-	unsigned short icmp_cksum;
-	unsigned int icmp_void;
-	char icmp_data[1];
-};
+	unsigned char MsgType;		// 若是client送给server的封包，设为1，反向为2
+	unsigned char HardType;		// 以太网1
+	unsigned char HardLength;	// 以太网6
+	unsigned char Hops;			// 若数据包需经过router传送，每站加1，若在同一网内，为0
+	unsigned int TransID;		// 事务ID，是个随机数，用于客户和服务器之间匹配请求和相应消息
+	unsigned short Seconds;		// 由用户指定的时间，指开始地址获取和更新进行后的时间
+	unsigned short Flags;		// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
+	unsigned char ClientIP[4];	// 客户机IP
+	unsigned char YourIP[4];	// 你的IP
+	unsigned char ServerIP[4];	// 服务器IP
+	unsigned char GatewayIP[16];	// 中继代理IP
+	unsigned char ServerName[64];	// 服务器名
+	unsigned char BootFile[128];	// 启动文件名
+}DHCP_HEADER;
 
 // 网络封包机
 class NetPacker
@@ -259,7 +226,40 @@ public:
 	// 封包。把参数组装回去
 	void Pack();
 
-	//ETH_HEADER* GetEthernet() { return (ETH_HEADER*)Buffer; }
+	DHCP_HEADER* GetDHCP()
+	{
+		if(PayloadLength < sizeof(DHCP_HEADER)) return NULL;
+
+		return (DHCP_HEADER*)Payload;
+	}
+	
+	// 设置使用IP协议
+	IP_HEADER* SetIP()
+	{
+		ARP = NULL;
+		IP = (IP_HEADER*)((byte*)Eth + sizeof(ETH_HEADER));
+		Eth->Type = ETH_IP;
+		
+		return IP;
+	}
+	
+	// 设置使用UDP协议
+	UDP_HEADER* SetUDP()
+	{
+		SetIP();
+		
+		IP->Protocol = IP_UDP;
+		IP->Length = sizeof(IP_HEADER);
+		
+		ICMP = NULL;
+		TCP = NULL;
+		UDP = (UDP_HEADER*)((byte*)IP + sizeof(IP_HEADER));
+		
+		UDP->Length = sizeof(UDP_HEADER);
+		Payload = (byte*)UDP + UDP->Length;
+
+		return UDP;
+	}
 };
 
 #endif
