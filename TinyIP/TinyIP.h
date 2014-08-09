@@ -19,6 +19,7 @@ private:
 	void ShowMac(byte* mac);
 	void SendEthernet(byte* buf, uint len);
 	void SendIP(byte* buf, uint len);
+	void SendTcp(byte* buf, uint len);
 
 	byte seqnum;
 	uint info_data_len;

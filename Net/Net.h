@@ -71,14 +71,14 @@ typedef struct _TCP_HEADER
 	unsigned int Ack;        //确认号
 	#if LITTLE_ENDIAN
 	unsigned char reserved_1:4; //保留6位中的4位首部长度
-	unsigned char thl:4;        //tcp头部长度
-	unsigned char flag:6;       //6位标志
+	unsigned char Length:4;        //tcp头部长度
+	unsigned char Flags:6;       //6位标志
 	unsigned char reseverd_2:2; //保留6位中的2位
 	#else
-	unsigned char thl:4;        //tcp头部长度
+	unsigned char Length:4;        //tcp头部长度
 	unsigned char reserved_1:4; //保留6位中的4位首部长度
 	unsigned char reseverd_2:2; //保留6位中的2位
-	unsigned char flag:6;       //6位标志
+	unsigned char Flags:6;       //6位标志
 	#endif
 	unsigned short WindowSize;    //16位窗口大小
 	unsigned short Checksum;     //16位TCP检验和
