@@ -1,4 +1,7 @@
 ﻿#include "TinyIP.h"
+#include "../Net/Net.h"
+
+#define NET_DEBUG DEBUG
 
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
@@ -92,6 +95,7 @@ void TinyIP::Start()
 		_enc->ClockOut(2);
 	}
 
+	uint eth_size = sizeof(ETH_HEADER);
     while(1)
     {
         // 获取缓冲器的包
@@ -99,46 +103,146 @@ void TinyIP::Start()
 
         // 如果缓冲器里面没有数据则转入下一次循环
         if(!len) continue;
+		// 不够一帧
+		if(len < eth_size) continue;
+
+		ETH_HEADER* eth = (ETH_HEADER*)buf;
+		// 处理ARP
+		if(eth->Type == ETH_ARP)
+		{
+			ProcessArp(buf + eth_size, len - eth_size);
+            continue;
+		}
 
         if(eth_type_is_arp_and_my_ip(buf, len))
         {
             make_arp_answer_from_request(buf);
             continue;
         }
+		
+		if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
 
-        debug_printf("Packet: %d\r\n", len);
-
-        for(int i=0; i<4; i++)
-        {
-            debug_printf("begin:\r\n");
-            debug_printf("TCP_FLAGS_P %d\r\n", buf[TCP_FLAGS_P]);
-            debug_printf("\r\n");
-        }
+		IP_HEADER* ip = (IP_HEADER*)(buf + eth_size);
+		if(!memcmp(ip->DestIP, IP, 4)) continue;
 
         // 判断是否为发送给我们ip的包
         if(!eth_type_is_ip_and_my_ip(buf, len)) continue;
 
+		byte protocol = buf[IP_PROTO_P];
         // ICMP协议检测与检测是否为ICMP请求 ping
-        if(buf[IP_PROTO_P] == IP_PROTO_ICMP_V)
+        if(protocol == IP_PROTO_ICMP_V)
         {
 			ProcessICMP(buf, len);
             continue;
         }
-
-        //用于查看数据包的标志位
-        if (buf[IP_PROTO_P] == IP_PROTO_TCP_V)
+        if (protocol == IP_PROTO_TCP_V)
         {
 			ProcessTcp(buf, len);
 			continue;
         }
-        if (buf[IP_PROTO_P] == IP_PROTO_UDP_V /*&& buf[UDP_DST_PORT_H_P] == 4*/)
+        if (protocol == IP_PROTO_UDP_V /*&& buf[UDP_DST_PORT_H_P] == 4*/)
         {
 			ProcessUdp(buf, len);
 			continue;
         }
 
-        debug_printf("Something accessed me....\r\n");
+        debug_printf("Unkown Protocol 0x%02X\r\n", protocol);
     }
+}
+
+void TinyIP::ProcessArp(byte* buf, uint len)
+{
+	// ARP头
+	if(len < sizeof(ARP_HEADER)) return;
+
+	/*
+	当封装的ARP报文在以太网上传输时，硬件类型字段赋值为0x0100，标识硬件为以太网硬件；
+	协议类型字段赋值为0x0800，标识上次协议为IP协议；由于以太网的MAC地址为48比特位，IP地址为32比特位，则硬件地址长度字段赋值为6，协议地址长度字段赋值为4 ；
+	选项字段标识ARP报文的类型，当为请求报文时，赋值为0x0100，当为回答报文时，赋值为0x0200。
+	*/
+	ARP_HEADER* arp = (ARP_HEADER*)buf;
+
+	// 是否发给本机
+	if(memcmp(arp->DestIP, IP, 4)) return;
+
+#if NET_DEBUG
+	// 数据校验
+	assert_param(arp->HardType == 0x0100);
+	assert_param(arp->ProtocolType == ETH_IP);
+	assert_param(arp->HardLength == 6);
+	assert_param(arp->ProtocolLength == 4);
+	assert_param(arp->Option == 0x0100);
+
+	if(arp->Option == 0x0100)
+		debug_printf("ARP Request For ");
+	else
+		debug_printf("ARP Response For ");
+
+	ShowIP(arp->DestIP);
+	debug_printf(" <= ");
+	ShowIP(arp->SrcIP);
+	debug_printf(" [");
+	ShowMac(arp->SrcMac);
+	debug_printf("]\r\n");
+#endif
+	// 是否发给本机
+	//if(memcmp(arp->DestIP, IP, 4)) return;
+
+	// 构造响应包
+	arp->Option = 0x0200;
+	// 来源IP和Mac作为目的地址
+	memcpy(&arp->DestMac, &arp->SrcMac, 6);
+	memcpy(&arp->DestIP, &arp->SrcIP, 4);
+	memcpy(&arp->SrcMac, Mac, 6);
+	memcpy(&arp->SrcIP, IP, 4);
+
+#if NET_DEBUG
+	debug_printf("ARP Response To ");
+	ShowIP(arp->DestIP);
+	debug_printf("\r\n");
+#endif
+
+	uint eth_size = sizeof(ETH_HEADER);
+	buf -= eth_size;
+	make_eth(buf);
+
+	_enc->PacketSend(buf, eth_size + sizeof(ARP_HEADER));
+}
+
+//检查是否为合法的eth，并且只接收发给本机的arp数据
+byte TinyIP::eth_type_is_arp_and_my_ip(byte* buf, uint len)
+{
+    //arp报文长度判断，正常的arp报文长度为42byts
+    if (len < 41) return false;
+
+	//检测是否为arp报文
+    if(buf[ETH_TYPE_H_P] != ETHTYPE_ARP_H_V || buf[ETH_TYPE_L_P] != ETHTYPE_ARP_L_V) return false;
+
+    for(int i=0; i<4; i++)
+    {
+        if(buf[ETH_ARP_DST_IP_P + i] != IP[i]) return false;
+    }
+    return true;
+}
+
+void TinyIP::make_arp_answer_from_request(byte* buf)
+{
+    make_eth(buf);
+    buf[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;   //arp 响应
+    buf[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
+    // fill the mac addresses:
+    for(int i=0; i<6; i++)
+    {
+        buf[ETH_ARP_DST_MAC_P + i] = buf[ETH_ARP_SRC_MAC_P + i];
+        buf[ETH_ARP_SRC_MAC_P + i] = Mac[i];
+    }
+    for(int i=0; i<4; i++)
+    {
+        buf[ETH_ARP_DST_IP_P + i] = buf[ETH_ARP_SRC_IP_P + i];
+        buf[ETH_ARP_SRC_IP_P + i] = IP[i];
+    }
+    // eth+arp is 42 bytes:
+    _enc->PacketSend(buf, 42);
 }
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
@@ -308,22 +412,6 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-//检查是否为合法的eth，并且只接收发给本机的arp数据
-byte TinyIP::eth_type_is_arp_and_my_ip(byte* buf, uint len)
-{
-    //arp报文长度判断，正常的arp报文长度为42byts
-    if (len < 41) return false;
-
-	//检测是否为arp报文
-    if(buf[ETH_TYPE_H_P] != ETHTYPE_ARP_H_V || buf[ETH_TYPE_L_P] != ETHTYPE_ARP_L_V) return false;
-
-    for(int i=0; i<4; i++)
-    {
-        if(buf[ETH_ARP_DST_IP_P + i] != IP[i]) return false;
-    }
-    return true;
-}
-
 byte TinyIP::eth_type_is_ip_and_my_ip(byte* buf, uint len)
 {
     byte i=0;
@@ -347,16 +435,22 @@ byte TinyIP::eth_type_is_ip_and_my_ip(byte* buf, uint len)
     }
     return true;
 }
+
 // make a return eth header from a received eth packet
 void TinyIP::make_eth(byte* buf)
 {
     //copy the destination mac from the source and fill my mac into src
-    for(int i=0; i<6; i++)
+    /*for(int i=0; i<6; i++)
     {
         buf[ETH_DST_MAC +i] = buf[ETH_SRC_MAC +i];
         buf[ETH_SRC_MAC +i] = Mac[i];
-    }
+    }*/
+
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	memcpy(&eth->DestMac, &eth->SrcMac, 6);
+	memcpy(&eth->SrcMac, Mac, 6);
 }
+
 void TinyIP::fill_ip_hdr_checksum(byte* buf)
 {
     uint ck;
@@ -465,26 +559,6 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         // 20 bytes:
         buf[TCP_HEADER_LEN_P] = 0x50;
     }
-}
-
-void TinyIP::make_arp_answer_from_request(byte* buf)
-{
-    make_eth(buf);
-    buf[ETH_ARP_OPCODE_H_P] = ETH_ARP_OPCODE_REPLY_H_V;   //arp 响应
-    buf[ETH_ARP_OPCODE_L_P] = ETH_ARP_OPCODE_REPLY_L_V;
-    // fill the mac addresses:
-    for(int i=0; i<6; i++)
-    {
-        buf[ETH_ARP_DST_MAC_P + i] = buf[ETH_ARP_SRC_MAC_P + i];
-        buf[ETH_ARP_SRC_MAC_P + i] = Mac[i];
-    }
-    for(int i=0; i<4; i++)
-    {
-        buf[ETH_ARP_DST_IP_P + i] = buf[ETH_ARP_SRC_IP_P + i];
-        buf[ETH_ARP_SRC_IP_P + i] = IP[i];
-    }
-    // eth+arp is 42 bytes:
-    _enc->PacketSend(buf, 42);
 }
 
 void TinyIP::make_echo_reply_from_request(byte* buf, uint len)

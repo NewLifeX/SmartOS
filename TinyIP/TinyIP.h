@@ -11,6 +11,7 @@ private:
 
 	byte* Buffer; // 缓冲区
 
+	void ProcessArp(byte* buf, uint len);
 	void ProcessICMP(byte* buf, uint len);
 	void ProcessTcp(byte* buf, uint len);
 	void ProcessUdp(byte* buf, uint len);
