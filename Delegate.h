@@ -23,15 +23,20 @@ A* pa=&a;
 
 #include "Sys.h"
 
+// 没有参数和返回值的委托
 typedef void (*Func)(void);
+
+// 数据接收委托
+typedef void (*DataHandler)(void* sender, byte* buf, uint size);
 
 template<typename T, typename TArg>
 class Delegate
 {
 public:
+	// 构造函数后面的冒号起分割作用，是类给成员变量赋值的方法
+	// 初始化列表，更适用于成员变量的常量const型
     Delegate(T* target, void(T::*func)(TArg)) : _Target(target), _Func(func) {}
-					// 构造函数后面的冒号起分割作用，是类给成员变量赋值的方法
-					// 初始化列表，更适用于成员变量的常量const型
+
     void Invoke(TArg value)
     {
         (_Target->*_Func)(value);

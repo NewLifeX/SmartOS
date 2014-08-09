@@ -12,9 +12,6 @@
 #define COM5 4
 #define COM_NONE 0xFF
 
-// 读取委托
-typedef void (*SerialPortReadHandler)(byte* buf, uint size);
-
 // 串口类
 class SerialPort
 {
@@ -31,7 +28,8 @@ private:
 
 	byte rx_buf[64];	// 接收缓冲区
 	static void OnReceive(ushort num, void* param);
-	SerialPortReadHandler _Received;
+	DataHandler _Received;
+	void* _Param;
 
 public:
 	OutputPort* RS485;	// RS485使能引脚
@@ -55,7 +53,7 @@ public:
     uint  Read(byte* buf, uint size);
     void Flush();
 
-    void Register(SerialPortReadHandler handler);
+    void Register(DataHandler handler, void* param = NULL);
     void GetPins(Pin* txPin, Pin* rxPin);
 };
 

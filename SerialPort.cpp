@@ -246,13 +246,14 @@ void SerialPort::Flush()
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
 }
 
-void SerialPort::Register(SerialPortReadHandler handler)
+void SerialPort::Register(DataHandler handler, void* param)
 {
     Open();
 
     if(handler)
 	{
         _Received = handler;
+		_Param = param;
 
         Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
@@ -260,7 +261,8 @@ void SerialPort::Register(SerialPortReadHandler handler)
 	}
     else
 	{
-        _Received = 0;
+        _Received = NULL;
+		_Param = NULL;
 
 		Interrupt.Deactivate(SERIALPORT_IRQns[_com]);
 	}
@@ -275,7 +277,7 @@ void SerialPort::OnReceive(ushort num, void* param)
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
 			uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
-			if(count > 0) sp->_Received(sp->rx_buf, count);
+			if(count > 0) sp->_Received(sp->_Param, sp->rx_buf, count);
 		}
 	}
 }
