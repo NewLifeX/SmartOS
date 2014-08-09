@@ -396,28 +396,6 @@ void TinyIP::SendIP(byte* buf, uint len)
 	SendEthernet(buf, sizeof(IP_HEADER) + len);
 }
 
-// The Ip checksum is calculated over the ip header only starting
-// with the header length field and a total length of 20 bytes
-// unitl ip.dst
-// You must set the IP checksum field to zero before you start
-// the calculation.
-// len for ip is 20.
-//
-// For UDP/TCP we do not make up the required pseudo header. Instead we
-// use the ip.src and ip.dst fields of the real packet:
-// The udp checksum calculation starts with the ip.src field
-// Ip.src=4bytes,Ip.dst=4 bytes,Udp header=8bytes + data length=16+len
-// In other words the len here is 8 + length over which you actually
-// want to calculate the checksum.
-// You must set the checksum field to zero before you start
-// the calculation.
-// len for udp is: 8 + 8 + data length
-// len for tcp is: 4+4 + 20 + option len + data length
-//
-// For more information on how this algorithm works see:
-// http://www.netfor2.com/checksum.html
-// http://www.msc.uky.edu/ken/cs471/notes/chap3.htm
-// The RFC has also a C code example: http://www.faqs.org/rfcs/rfc1071.html
 uint TinyIP::checksum(byte* buf, uint len, byte type)
 {
     // type 0=ip
@@ -425,9 +403,6 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
     //      2=tcp
     unsigned long sum = 0;
 
-    //if(type==0){
-    //        // do not add anything
-    //}
     if(type == 1)
     {
         sum+=IP_PROTO_UDP_V; // protocol udp
@@ -443,11 +418,11 @@ uint TinyIP::checksum(byte* buf, uint len, byte type)
         sum+=len-8; // = real tcp len
     }
     // build the sum of 16bit words
-    while(len >1)
+    while(len > 1)
     {
         sum += 0xFFFF & (*buf<<8|*(buf+1));
-        buf+=2;
-        len-=2;
+        buf += 2;
+        len -= 2;
     }
     // if there is a byte left then add it (padded with zero)
     if (len)
@@ -520,12 +495,12 @@ void TinyIP::fill_ip_hdr_checksum(byte* buf)
 	ip->TTL = 64;
 
     // calculate the checksum:
-    uint ck = checksum(&buf[IP_P], IP_HEADER_LEN, 0);
+    /*uint ck = checksum(&buf[IP_P], IP_HEADER_LEN, 0);
     buf[IP_CHECKSUM_P] = ck >> 8;
-    buf[IP_CHECKSUM_P + 1] = ck & 0xff;
+    buf[IP_CHECKSUM_P + 1] = ck & 0xff;*/
 
 	// 网络序是大端
-	//ip->Checksum = __REV(checksum(buf + sizeof(ETH_HEADER), sizeof(IP_HEADER), 0));
+	ip->Checksum = __REV16((ushort)checksum(buf + sizeof(ETH_HEADER), sizeof(IP_HEADER), 0));
 }
 
 // make a return ip header from a received ip packet
