@@ -339,14 +339,16 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 #endif
 
 	//UDP数据长度
-	uint datalen = buf[UDP_LEN_H_P];
-	datalen = datalen << 8;
-	datalen = (datalen + buf[UDP_LEN_L_P]) - sizeof(UDP_HEADER);
+	//uint datalen = buf[UDP_LEN_H_P];
+	//datalen = datalen << 8;
+	//datalen = (datalen + buf[UDP_LEN_L_P]) - sizeof(UDP_HEADER);
+	uint datalen = __REV16(udp->Length) - sizeof(UDP_HEADER);
 
-	byte* data = new byte[datalen];
+	//byte* data = new byte[datalen];
+	byte* data = (byte*)udp + sizeof(UDP_HEADER);
 	for(int i=0; i<datalen; i++)
 	{
-		data[i] = buf[UDP_DATA_P + i];
+		//data[i] = buf[UDP_DATA_P + i];
 		debug_printf("%c", data[i]);
 	}
 	debug_printf("\r\n");

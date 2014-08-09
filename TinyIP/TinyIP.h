@@ -24,11 +24,6 @@ private:
 
 	byte seqnum;
 
-	//byte eth_type_is_arp_and_my_ip(byte* buf, uint len);
-	//byte eth_type_is_ip_and_my_ip(byte* buf, uint len);
-	//void make_arp_answer_from_request(byte* buf);
-	void make_echo_reply_from_request(byte* buf, uint len);
-	void make_udp_reply_from_request(byte* buf,byte *data, uint datalen, uint port);
 	void make_eth(byte* buf);
 	void make_ip(byte* buf);
 	void make_tcp_synack_from_syn(byte* buf);
@@ -91,23 +86,6 @@ public:
 #define ETH_DST_MAC 0
 #define ETH_SRC_MAC 6
 
-
-// ******* ARP *******
-#define ETH_ARP_OPCODE_REPLY_H_V 0x0
-#define ETH_ARP_OPCODE_REPLY_L_V 0x02
-//
-#define ETHTYPE_ARP_L_V 0x06
-// arp.dst.ip
-#define ETH_ARP_DST_IP_P 0x26
-// arp.opcode
-#define ETH_ARP_OPCODE_H_P 0x14
-#define ETH_ARP_OPCODE_L_P 0x15
-// arp.src.mac
-#define ETH_ARP_SRC_MAC_P 0x16
-#define ETH_ARP_SRC_IP_P 0x1c
-#define ETH_ARP_DST_MAC_P 0x20
-#define ETH_ARP_DST_IP_P 0x26
-
 // ******* IP *******
 #define IP_HEADER_LEN	20
 // ip.src
@@ -127,30 +105,6 @@ public:
 #define IP_PROTO_TCP_V 6
 // 17=0x11
 #define IP_PROTO_UDP_V 17
-// ******* ICMP *******
-#define ICMP_TYPE_ECHOREPLY_V 0
-#define ICMP_TYPE_ECHOREQUEST_V 8
-//
-#define ICMP_TYPE_P 0x22
-#define ICMP_CHECKSUM_P 0x24
-
-// ******* UDP *******
-//UDP首部长度
-#define UDP_HEADER_LEN	8
-//源端口位置
-#define UDP_SRC_PORT_H_P 0x22
-#define UDP_SRC_PORT_L_P 0x23
-//目标端口位置
-#define UDP_DST_PORT_H_P 0x24
-#define UDP_DST_PORT_L_P 0x25
-//UDP数据长度位置
-#define UDP_LEN_H_P 0x26
-#define UDP_LEN_L_P 0x27
-//UDP校验和位置
-#define UDP_CHECKSUM_H_P 0x28
-#define UDP_CHECKSUM_L_P 0x29
-//UDP数据其实位置
-#define UDP_DATA_P 0x2a
 
 // ******* TCP *******
 //源端口位置
