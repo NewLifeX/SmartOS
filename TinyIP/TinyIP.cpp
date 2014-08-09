@@ -286,29 +286,38 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	// 第三次同步应答,三次应答后方可传输数据
 	if (tcp->Flags & TCP_FLAGS_ACK_V) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
-		init_len_info(buf);
-		uint dat_p = get_tcp_data_pointer();
+		//IP包长度
+		uint dlen = (buf[IP_TOTLEN_H_P]<<8)|(buf[IP_TOTLEN_L_P]&0xff);
+		//减去IP首部长度
+		dlen -= IP_HEADER_LEN;
+		//TCP首部长度，因为TCP协议规定了只有四位来表示长度，所以需要以下处理,4*6=24
+		uint info_hdr_len = (buf[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
+		//减去TCP首部长度
+		dlen -= info_hdr_len;
+		
+		uint dat_p = 0;
+		if(dlen) dat_p = (uint)TCP_SRC_PORT_H_P + info_hdr_len;
 
 		//无数据返回ACK
 		if (dat_p == 0)
 		{
 			if (tcp->Flags & TCP_FLAGS_FIN_V)      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
-				make_tcp_ack_from_any(buf);
+				make_tcp_ack_from_any(buf, dlen);
 			}
 			return;
 		}
 		///////////////////////////打印TCP数据/////////////////
 		debug_printf("Data from TCP:");
 		uint i = 0;
-		while(i < tcp_d_len)
+		while(i < dlen)
 		{
 			debug_printf("%c", buf[dat_p + i]);
 			i++;
 		}
 		debug_printf("\r\n");
 		///////////////////////////////////////////////////////
-		make_tcp_ack_from_any(buf);       // 发送ACK，通知已收到
+		make_tcp_ack_from_any(buf, dlen);       // 发送ACK，通知已收到
 		TcpSend(buf, len);
 
 		// tcp_close(buf,len);
@@ -535,12 +544,14 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
     if (cp_seq == 0)
     {
         // put inital seq number
-        buf[TCP_SEQ_H_P + 0] = 0;
+        /*buf[TCP_SEQ_H_P + 0] = 0;
         buf[TCP_SEQ_H_P + 1] = 0;
         // we step only the second byte, this allows us to send packts
         // with 255 bytes or 512 (if we step the initial seqnum by 2)
         buf[TCP_SEQ_H_P + 2] = seqnum;
-        buf[TCP_SEQ_H_P + 3] = 0;
+        buf[TCP_SEQ_H_P + 3] = 0;*/
+		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
+		tcp->Seq = __REV(seqnum << 8);
         // step the inititial seq num by something we will not use
         // during this tcp session:
         seqnum += 2;
@@ -638,41 +649,6 @@ void TinyIP::make_tcp_synack_from_syn(byte* buf)
 	SendTcp(buf, 4);
 }
 
-// get a pointer to the start of tcp data in buf
-// Returns 0 if there is no data
-// You must call init_len_info once before calling this function
-uint TinyIP::get_tcp_data_pointer(void)
-{
-    if (info_data_len)
-    {
-        return((uint)TCP_SRC_PORT_H_P + info_hdr_len);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-// do some basic length calculations and store the result in static varibales
-void TinyIP::init_len_info(byte* buf)
-{
-	  //IP包长度
-    info_data_len=(buf[IP_TOTLEN_H_P]<<8)|(buf[IP_TOTLEN_L_P]&0xff);
-	  buf_len=info_data_len;
-	  //减去IP首部长度
-    info_data_len-=IP_HEADER_LEN;
-	  //TCP首部长度，因为TCP协议规定了只有四位来表示长度，所以需要以下处理,4*6=24
-    info_hdr_len=(buf[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
-	  //减去TCP首部长度
-    info_data_len-=info_hdr_len;
-	tcp_d_len=info_data_len;
-    if (info_data_len<=0)
-    {
-        info_data_len=0;
-    }
-
-}
-
 // fill in tcp data at position pos. pos=0 means start of
 // tcp data. Returns the position at which the string after
 // this string could be filled.
@@ -710,7 +686,7 @@ uint TinyIP::fill_tcp_data(byte* buf, uint pos, const byte* s)
 
 // Make just an ack packet with no tcp data inside
 // This will modify the eth/ip/tcp header
-void TinyIP::make_tcp_ack_from_any(byte* buf)
+void TinyIP::make_tcp_ack_from_any(byte* buf, uint dlen)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
 	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
@@ -720,14 +696,14 @@ void TinyIP::make_tcp_ack_from_any(byte* buf)
     // fill the header:
     tcp->Flags = TCP_FLAGS_ACK_V;
 
-    if (info_data_len == 0)
+    if (dlen == 0)
     {
         // if there is no data then we must still acknoledge one packet
         make_tcphead(buf,1,0,1); // no options
     }
     else
     {
-        make_tcphead(buf,info_data_len,0,1); // no options
+        make_tcphead(buf, dlen, 0, 1); // no options
     }
 
     // total length field in the IP header must be set:
@@ -745,7 +721,6 @@ void TinyIP::make_tcp_ack_from_any(byte* buf)
 	SendTcp(buf, 0);
 }
 
-// you must have called init_len_info at some time before calling this function
 // dlen is the amount of tcp data (http data) we send in this packet
 // You can use this function only immediately after make_tcp_ack_from_any
 // This is because this function will NOT modify the eth/ip/tcp header except for

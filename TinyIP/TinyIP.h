@@ -22,10 +22,6 @@ private:
 	void SendTcp(byte* buf, uint len);
 
 	byte seqnum;
-	uint info_data_len;
-	uint buf_len;
-	uint info_hdr_len;
-	uint tcp_d_len;
 
 	//byte eth_type_is_arp_and_my_ip(byte* buf, uint len);
 	//byte eth_type_is_ip_and_my_ip(byte* buf, uint len);
@@ -35,12 +31,10 @@ private:
 	void make_eth(byte* buf);
 	void make_ip(byte* buf);
 	void make_tcp_synack_from_syn(byte* buf);
-	void init_len_info(byte* buf);
-	uint get_tcp_data_pointer(void);
 	void make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq);
 	uint fill_tcp_data_p(byte* buf, uint pos, const byte* progmem_s);
 	uint fill_tcp_data(byte* buf, uint pos, const byte* s);
-	void make_tcp_ack_from_any(byte* buf);
+	void make_tcp_ack_from_any(byte* buf, uint dlen);
 	void make_tcp_ack_with_data(byte* buf, uint dlen);
 
 	void fill_ip_hdr_checksum(byte* buf);
