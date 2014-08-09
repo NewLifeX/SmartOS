@@ -33,6 +33,14 @@ typedef char*           String;
 //typedef ushort Pin;
 #include "Pin.h"
 
+/* 串口定义 */
+#define COM1 0
+#define COM2 1
+#define COM3 2
+#define COM4 3
+#define COM5 4
+#define COM_NONE 0xFF
+
 // 委托
 #include "Delegate.h"
 
