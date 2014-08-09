@@ -115,6 +115,7 @@ typedef struct _ARP_HEADER
 	unsigned char SrcIP[4];		//源IP地址
 	unsigned char DestMac[6];
 	unsigned char DestIP[4];	//目的IP地址
+	//unsigned char Padding[18];	// 填充凑够60字节
 }ARP_HEADER;
 
 // DHCP头部

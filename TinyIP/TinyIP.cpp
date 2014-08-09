@@ -149,7 +149,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	ShowIP(arp->SrcIP);
 	debug_printf(" [");
 	ShowMac(arp->SrcMac);
-	debug_printf("]\r\n");
+	debug_printf("] len=%d Payload=%d\r\n", len, _net->PayloadLength);
 #endif
 	// 是否发给本机
 	//if(memcmp(arp->DestIP, IP, 4)) return;
@@ -314,7 +314,9 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 	memcpy(&eth->DestMac, &RemoteMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
-	_enc->PacketSend(buf, sizeof(ETH_HEADER) + len);
+	len += sizeof(ETH_HEADER);
+	if(len < 60) len = 60;	// 以太网最小包60字节
+	_enc->PacketSend(buf, len);
 }
 
 void TinyIP::SendIP(byte* buf, uint len)
