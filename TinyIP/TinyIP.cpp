@@ -122,38 +122,23 @@ void TinyIP::Start()
 			ProcessArp(buf, len);
             continue;
 		}
-
-        /*if(eth_type_is_arp_and_my_ip(buf, len))
-        {
-            make_arp_answer_from_request(buf);
-            continue;
-        }*/
 		
+#if NET_DEBUG
 		if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
+#endif
 
 		IP_HEADER* ip = (IP_HEADER*)(buf + eth_size);
 		// 是否发给本机。注意memcmp相等返回0
 		if(memcmp(ip->DestIP, IP, 4) !=0 ) continue;
 
-#if NET_DEBUG
-		debug_printf("IP Protocol=%d ", ip->Protocol);
-		ShowIP(ip->SrcIP);
-		debug_printf(" => ");
-		ShowIP(ip->DestIP);
-		debug_printf("\r\n");
-#endif
-
-        // 判断是否为发送给我们ip的包
-        //if(!eth_type_is_ip_and_my_ip(buf, len)) continue;
-
-		//byte protocol = buf[IP_PROTO_P];
-        // ICMP协议检测与检测是否为ICMP请求 ping
         if(ip->Protocol == IP_ICMP)
         {
+#if NET_DEBUG
 			debug_printf("Ping From "); // 打印发方的ip
 			//ShowIP(&buf[IP_SRC_P]);
 			ShowIP(ip->SrcIP);
-			debug_printf(" ICMP package.\r\n");
+			debug_printf("\r\n");
+#endif
 
 			ProcessICMP(buf, len);
             continue;
@@ -165,11 +150,25 @@ void TinyIP::Start()
         }
         if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
         {
+#if NET_DEBUG
+			debug_printf("UDP ");
+			ShowIP(ip->SrcIP);
+			debug_printf(" => ");
+			ShowIP(ip->DestIP);
+			debug_printf("\r\n");
+#endif
+
 			ProcessUdp(buf, len);
 			continue;
         }
 
-        debug_printf("Unkown Protocol 0x%02X\r\n", ip->Protocol);
+#if NET_DEBUG
+		debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
+		ShowIP(ip->SrcIP);
+		debug_printf(" => ");
+		ShowIP(ip->DestIP);
+		debug_printf("\r\n");
+#endif
     }
 }
 
@@ -247,16 +246,24 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
 {
-	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER);
+	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
 	if(len < sizeof(TCP_HEADER)) return;
 
 	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(ETH_HEADER));
 	TCP_HEADER* tcp = (TCP_HEADER*)(buf + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
+#if NET_DEBUG
+	debug_printf("TCP ");
+	ShowIP(ip->SrcIP);
+	debug_printf(":%d => ", __REV16(tcp->SrcPort));
+	ShowIP(ip->DestIP);
+	debug_printf(":%d\r\n", __REV16(tcp->DestPort));
+#endif
+
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN_V) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
-		debug_printf("One TCP request from "); // 打印发送方的ip
+		debug_printf("\tRequest From "); // 打印发送方的ip
 		ShowIP(ip->SrcIP);
 		debug_printf("\r\n");
 
@@ -518,8 +525,10 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
     }
 	buf[TCP_SRC_PORT_H_P] = RemotePort >> 8;
 	buf[TCP_SRC_PORT_L_P] = RemotePort & 0xFF;*/
-	tcp->DestPort = tcp->SrcPort;
-	tcp->SrcPort = __REV16(RemotePort);
+	ushort port = tcp->SrcPort;
+	tcp->SrcPort = tcp->DestPort;
+	tcp->DestPort = port;
+	//tcp->SrcPort = __REV16(RemotePort);
 
     byte i = 4;
     // sequence numbers:
