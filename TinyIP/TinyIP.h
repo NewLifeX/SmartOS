@@ -2,9 +2,10 @@
 #define _TinyIP_H_
 
 #include "Enc28j60.h"
+#include "Net/Ethernet.h"
 
 // 精简IP类
-class TinyIP
+class TinyIP : protected IEthernetAdapter
 {
 private:
     Enc28j60* _enc;
@@ -46,6 +47,7 @@ private:
 	void dhcp_fill_public_data(byte* buf);
 	void DHCP_config(byte* buf);
 
+	virtual void Send(byte* buf, uint len);
 public:
     byte IP[4];
 	byte Mac[6];

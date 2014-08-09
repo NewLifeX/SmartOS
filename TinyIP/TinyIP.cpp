@@ -1137,3 +1137,7 @@ void TinyIP::DHCP_config(byte* buf)
 		}
 	}
 }
+
+void TinyIP::Send(byte* buf, uint len)
+{
+}
