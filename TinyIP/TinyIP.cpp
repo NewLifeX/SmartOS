@@ -13,12 +13,12 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	BufferSize = 1500;
 
 	seqnum = 0xa;
-	
+
 	// 分配缓冲区。比较大，小心栈空间不够
 	if(!Buffer) Buffer = new byte[BufferSize + 1];
 	assert_param(Buffer);
 	assert_param(Sys.CheckMemory());
-	
+
 	_net = new NetPacker(Buffer);
 }
 
@@ -27,7 +27,7 @@ TinyIP::~TinyIP()
     _enc = NULL;
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
-	
+
 	if(_net) delete _net;
 	_net = NULL;
 }
@@ -78,7 +78,7 @@ void TinyIP::Start()
 			ProcessArp(buf, len);
             continue;
 		}
-		
+
 #if NET_DEBUG
 		if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
 #endif
@@ -175,7 +175,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 {
 	ICMP_HEADER* icmp = _net->ICMP;
 	if(!icmp) return;
-	//len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
+
 	len -= ((byte*)icmp - (byte*)_net->Eth);
 
 #if NET_DEBUG
@@ -190,7 +190,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 	// 只处理ECHO请求
 	if(icmp->Type != 8) return;
-	
+
 	icmp->Type = 0; // 响应
 	// 因为仅仅改变类型，因此我们能够提前修正校验码
 	icmp->Checksum += 0x08;
@@ -206,13 +206,16 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 	IP_HEADER* ip = _net->IP;
 	TCP_HEADER* tcp = _net->TCP;
+	if(!tcp) return;
+
+	len -= ((byte*)tcp - (byte*)_net->Eth);
 
 	Port = __REV16(tcp->DestPort);
 	RemotePort = __REV16(tcp->SrcPort);
 
 #if NET_DEBUG
 	debug_printf("TCP ");
-	ShowIP(ip->SrcIP);
+	ShowIP(RemoteIP);
 	debug_printf(":%d => ", __REV16(tcp->SrcPort));
 	ShowIP(ip->DestIP);
 	debug_printf(":%d\r\n", __REV16(tcp->DestPort));
@@ -222,12 +225,13 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	if (tcp->Flags & TCP_FLAGS_SYN_V) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
 		debug_printf("\tRequest From "); // 打印发送方的ip
-		ShowIP(ip->SrcIP);
+		ShowIP(RemoteIP);
 		debug_printf("\r\n");
 
 		//第二次同步应答
 		make_tcphead(buf, 1, 1, 0);
 
+		// 需要用到MSS，所以采用4个字节的可选段
 		SendTcp(buf, 4, TCP_FLAGS_SYNACK_V);
 
 		return;
@@ -235,38 +239,23 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	// 第三次同步应答,三次应答后方可传输数据
 	if (tcp->Flags & TCP_FLAGS_ACK_V) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
-		//IP包长度
-		uint dlen = __REV16(ip->TotalLength);
-		//减去IP首部长度
-		dlen -= IP_HEADER_LEN;
-		//TCP首部长度，因为TCP协议规定了只有四位来表示长度，所以需要以下处理,4*6=24
-		uint info_hdr_len = (buf[TCP_HEADER_LEN_P]>>4)*4; // generate len in bytes;
-		//减去TCP首部长度
-		dlen -= info_hdr_len;
-		
-		uint dat_p = 0;
-		if(dlen) dat_p = (uint)TCP_SRC_PORT_H_P + info_hdr_len;
-
-		//无数据返回ACK
-		if (dat_p == 0)
+		// 无数据返回ACK
+		if (_net->PayloadLength == 0)
 		{
 			if (tcp->Flags & TCP_FLAGS_FIN_V)      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
-				make_tcp_ack_from_any(buf, dlen);
+				make_tcp_ack_from_any(buf, 0);
 			}
 			return;
 		}
 		///////////////////////////打印TCP数据/////////////////
 		debug_printf("Data from TCP:");
-		uint i = 0;
-		while(i < dlen)
-		{
-			debug_printf("%c", buf[dat_p + i]);
-			i++;
-		}
+		for(int i=0; i<_net->PayloadLength; i++)
+			debug_printf("%c", _net->Payload[i]);
+
 		debug_printf("\r\n");
 		///////////////////////////////////////////////////////
-		make_tcp_ack_from_any(buf, dlen);       // 发送ACK，通知已收到
+		make_tcp_ack_from_any(buf, _net->PayloadLength);       // 发送ACK，通知已收到
 		TcpSend(buf, len);
 
 		// tcp_close(buf,len);
@@ -288,7 +277,7 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	ShowIP(ip->SrcIP);
 	debug_printf(":%d => ", __REV16(udp->SrcPort));
 	ShowIP(ip->DestIP);
-	debug_printf(":%d\r\n", __REV16(udp->DestPort));
+	debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
 #endif
 
 	byte* data = _net->Payload;
@@ -299,7 +288,6 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	debug_printf("\r\n");
 
 	udp->DestPort = udp->SrcPort;
-	udp->Length = sizeof(UDP_HEADER) + _net->PayloadLength;
 
 	memcpy((byte*)(udp + sizeof(UDP_HEADER)), data, _net->PayloadLength);
 
@@ -363,6 +351,8 @@ void TinyIP::SendUdp(byte* buf, uint len)
 {
 	UDP_HEADER* udp = _net->UDP;
 
+	udp->SrcPort = __REV16(Port);
+	udp->Length = __REV16(sizeof(UDP_HEADER) + len);
 	udp->Checksum = 0;
 	// 网络序是大端
 	udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
