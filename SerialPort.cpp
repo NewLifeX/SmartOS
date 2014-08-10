@@ -218,14 +218,14 @@ void SerialPort::Write(byte* buf, uint size)
 }
 
 // 从某个端口读取数据
-uint SerialPort::Read(byte* buf, uint size)
+uint SerialPort::Read(byte* buf, uint size, uint msTimeout)
 {
     Open();
 
 	//return USART_ReceiveData(_port);
 
 	// 在100ms内接收数据
-	uint end = g_Time->CurrentTicks() + g_Time->TicksPerMillisecond * 100;
+	uint end = g_Time->CurrentTicks() + g_Time->TicksPerMillisecond * msTimeout;
 	uint count = 0; // 收到的字节数
 	while(count < size && g_Time->CurrentTicks() < end)
 	{

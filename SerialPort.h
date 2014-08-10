@@ -38,7 +38,7 @@ public:
 
     void Write(byte* buf, uint size);
     void Write(const string data, uint size = 0) { Write((byte*)data, size); }
-    uint  Read(byte* buf, uint size);
+    uint  Read(byte* buf, uint size, uint msTimeout = 100);
     void Flush();
 
     void GetPins(Pin* txPin, Pin* rxPin);
