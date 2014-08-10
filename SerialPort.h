@@ -18,10 +18,6 @@ private:
 	AlternatePort* _tx;
 	InputPort* _rx;
 
-	byte rx_buf[64];	// 接收缓冲区
-	static void OnReceive(ushort num, void* param);
-	DataHandler _Received;
-	void* _Param;
 
 public:
 	OutputPort* RS485;	// RS485使能引脚
@@ -45,8 +41,17 @@ public:
     uint  Read(byte* buf, uint size);
     void Flush();
 
-    void Register(DataHandler handler, void* param = NULL);
     void GetPins(Pin* txPin, Pin* rxPin);
+	
+	// 数据接收委托，一般param用作目标对象
+	typedef void (*DataReceived)(SerialPort* sp, void* param);
+    void Register(DataReceived handler, void* param = NULL);
+
+private:
+	//byte rx_buf[64];	// 接收缓冲区
+	static void OnReceive(ushort num, void* param);
+	DataReceived _Received;
+	void* _Param;
 };
 
 #endif

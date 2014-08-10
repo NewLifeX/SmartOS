@@ -246,7 +246,7 @@ void SerialPort::Flush()
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
 }
 
-void SerialPort::Register(DataHandler handler, void* param)
+void SerialPort::Register(DataReceived handler, void* param)
 {
     Open();
 
@@ -276,8 +276,9 @@ void SerialPort::OnReceive(ushort num, void* param)
 	{
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
-			uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
-			if(count > 0) sp->_Received(sp->_Param, sp->rx_buf, count);
+			//uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
+			//if(count > 0) sp->_Received(sp, sp->rx_buf, count, sp->_Param);
+			sp->_Received(sp, sp->_Param);
 		}
 	}
 }
