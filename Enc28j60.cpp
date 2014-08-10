@@ -252,7 +252,7 @@ void Enc28j60::PacketSend(byte* packet, uint len)
 			WORD_VAL ReadPtrSave;
 			WORD_VAL TXEnd;
 			TXSTATUS TXStatus;
-			u8 i;
+			byte i;
 
 			// Cancel the previous transmission if it has become stuck set
 			//BFCReg(ECON1, ECON1_TXRTS);

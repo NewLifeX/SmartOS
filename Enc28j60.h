@@ -1,4 +1,4 @@
-﻿#ifndef __Enc28j60_H__
+#ifndef __Enc28j60_H__
 #define __Enc28j60_H__
 
 #include "Sys.h"
@@ -291,12 +291,12 @@ public:
 
 typedef union _WORD_VAL
 {
-    u16 Val;
-    u8 v[2];
+    ushort Val;
+    byte v[2];
     struct
     {
-        u8 LB;
-        u8 HB;
+        byte LB;
+        byte HB;
     } byte;
     struct
     {
@@ -320,9 +320,9 @@ typedef union _WORD_VAL
 } WORD_VAL, WORD_BITS;
 
 typedef union {
-	u8 v[7];
+	byte v[7];
 	struct {
-		u16	 		ByteCount;
+		ushort	 		ByteCount;
 		unsigned char	CollisionCount:4;
 		unsigned char	CRCError:1;
 		unsigned char	LengthCheckError:1;
@@ -336,7 +336,7 @@ typedef union {
 		unsigned char	LateCollision:1;
 		unsigned char	Giant:1;
 		unsigned char	Underrun:1;
-		u16 	 		BytesTransmittedOnWire;
+		ushort 	 		BytesTransmittedOnWire;
 		unsigned char	ControlFrame:1;
 		unsigned char	PAUSEControlFrame:1;
 		unsigned char	BackpressureApplied:1;
