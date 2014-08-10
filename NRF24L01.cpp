@@ -73,10 +73,6 @@ enum nRF_state
 	nrf_mode_free
 }
 nRF24L01_status=nrf_mode_free;
-//bool * IsEvent_p;
-volatile  bool _isEvent;
-//2401委托函数
-void nRF24L01_irq(Pin pin, bool opk);
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
@@ -87,12 +83,10 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 10;
-        _IRQ->Register(nRF24L01_irq);
+        _IRQ->Register(OnReceive);
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-	_isEvent = false;
-//	IsEvent_p = & _isEvent ;
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
 }
@@ -248,7 +242,7 @@ byte NRF24L01::Receive(byte *data)
 //			time++;
 //			if(time > _outTime)return NO_NEWS ;
 //		}
-	if(_isEvent == false)return NO_NEWS;
+	//if(_isEvent == false)return NO_NEWS;
 //	CEUp();		// 开始接受命令
 //	CEDown();	// 结束接受命令
 	
@@ -264,7 +258,7 @@ byte NRF24L01::Receive(byte *data)
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 		CEDown();
 		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
-		_isEvent = false;
+		//_isEvent = false;
         return RX_OK;
 	}
 	Config(false);	// 在出现问题的时候重新配置保证通信稳定
@@ -310,11 +304,35 @@ void NRF24L01::CEDown()
     if(_CE) *_CE = false;
 }
 
-//2401委托函数  未完成
-void nRF24L01_irq(Pin pin, bool opk)
+void NRF24L01::Register(DataReceived handler, void* param)
 {
-	if(opk == false)
-//		*IsEvent_p = true;
-		_isEvent=true;
-	
+    if(handler)
+	{
+        _Received = handler;
+		_Param = param;
+	}
+    else
+	{
+        _Received = NULL;
+		_Param = NULL;
+	}
+}
+
+// 中断函数
+void NRF24L01::OnReceive(Pin pin, bool down)
+{
+	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
+	if(_Received)
+	{
+		_Received(this, _Param);
+	}
+}
+
+void NRF24L01::OnReceive(Pin pin, bool down, void* param)
+{
+	if(!down)
+	{
+		NRF24L01* nrf = (NRF24L01*)param;
+		nrf->OnReceive(pin, down);
+	}
 }

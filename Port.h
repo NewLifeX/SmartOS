@@ -146,7 +146,7 @@ public:
     }PuPd_TypeDef;
 
     // 读取委托
-    typedef void (*IOReadHandler)(Pin , bool );
+    typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     bool Floating;      // 是否浮空输入
@@ -163,7 +163,7 @@ public:
         return GPIO_ReadInputData(Group);
     }
 
-    void Register(IOReadHandler handler);   // 注册事件
+    void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 
     operator bool() { return Read(); }
 
@@ -189,7 +189,7 @@ protected:
 private:
     bool _Registed;
 
-    void RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler);
+    void RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler, void* param);
     void UnRegisterInput(int pinIndex);
 };
 

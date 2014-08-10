@@ -22,7 +22,7 @@ private:
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 
-//	bool _isEvent;
+	typedef void (*IRQHandler)(Pin pin, bool down, void* param);
 
     void CEUp();
     void CEDown();
@@ -37,6 +37,17 @@ public:
 
     byte Send(byte* data);
     byte Receive(byte* data);
+
+	// 数据接收委托，一般param用作目标对象
+	typedef void (*DataReceived)(NRF24L01* sp, void* param);
+    void Register(DataReceived handler, void* param = NULL);
+	void OnReceive(Pin pin, bool down);
+
+private:
+	DataReceived _Received;
+	void* _Param;
+
+	static void OnReceive(Pin pin, bool down, void* param);
 };
 
 #endif

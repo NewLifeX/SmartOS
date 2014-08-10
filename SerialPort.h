@@ -42,7 +42,7 @@ public:
     void Flush();
 
     void GetPins(Pin* txPin, Pin* rxPin);
-	
+
 	// 数据接收委托，一般param用作目标对象
 	typedef void (*DataReceived)(SerialPort* sp, void* param);
     void Register(DataReceived handler, void* param = NULL);

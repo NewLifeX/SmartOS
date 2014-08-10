@@ -11,7 +11,8 @@
 typedef struct TIntState
 {
     Pin Pin;
-    InputPort::IOReadHandler Handler;
+    InputPort::IOReadHandler Handler;	// 委托事件
+	void* Param;	// 事件参数，一般用来作为事件挂载者的对象，然后借助静态方法调用成员方法
     bool OldValue;
 
     uint ShakeTime;     // 抖动时间
@@ -391,7 +392,7 @@ InputPort::~InputPort()
 }
 
 // 注册回调  及中断使能
-void InputPort::Register(IOReadHandler handler)
+void InputPort::Register(IOReadHandler handler, void* param)
 {
     if(!PinBit) return;
 
@@ -421,7 +422,7 @@ void InputPort::Register(IOReadHandler handler)
             {
                 IntState* state = &State[i];
                 state->ShakeTime = ShakeTime;
-                RegisterInput(groupIndex, i, handler);
+                RegisterInput(groupIndex, i, handler, param);
             }
             else
                 UnRegisterInput(i);
@@ -464,7 +465,7 @@ extern "C"
         //EXTI_ClearITPendingBit(line);
         if(state->Handler)
         {
-            state->Handler(state->Pin, value);
+            state->Handler(state->Pin, value, state->Param);
         }
     }
 
@@ -534,7 +535,7 @@ extern "C"
 }
 
 // 申请引脚中断托管
-void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler)
+void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler, void* param)
 {
     IntState* state = &State[pinIndex];
     Pin pin = (Pin)((groupIndex << 4) + pinIndex);
@@ -548,6 +549,7 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     }
     state->Pin = pin;
     state->Handler = handler;
+	state->Param = param;
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #ifdef STM32F0XX
