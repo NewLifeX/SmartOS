@@ -5,13 +5,16 @@
 #include "Net/Ethernet.h"
 
 // 精简IP类
-class TinyIP : protected IEthernetAdapter
+class TinyIP //: protected IEthernetAdapter
 {
 private:
     Enc28j60* _enc;
 	NetPacker* _net;
 
 	byte* Buffer; // 缓冲区
+
+	static void Work(void* param);	// 任务函数
+	void OnWork();	// 循环调度的任务
 
 	void ProcessArp(byte* buf, uint len);
 	void ProcessICMP(byte* buf, uint len);
@@ -63,7 +66,7 @@ public:
     TinyIP(Enc28j60* enc, byte ip[4], byte mac[6]);
     virtual ~TinyIP();
 
-	void Start();
+	void Init();
 
     void TcpSend(byte* packet, uint len);
     void TcpClose(byte* packet, uint maxlen);

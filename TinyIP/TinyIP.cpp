@@ -42,10 +42,69 @@ void TinyIP::TcpSend(byte* buf, uint size)
 	SendTcp(buf, size, TCP_FLAGS_ACK_V | TCP_FLAGS_PUSH_V);
 }
 
-void TinyIP::Start()
+// 循环调度的任务
+void TinyIP::OnWork()
 {
 	byte* buf = Buffer;
+	// 获取缓冲区的包
+	uint len = _enc->PacketReceive(buf, BufferSize);
+	// 如果缓冲器里面没有数据则转入下一次循环
+	if(!_net->Unpack(len)) return;
 
+	ETH_HEADER* eth = _net->Eth;
+	// 处理ARP
+	if(eth->Type == ETH_ARP)
+	{
+		ProcessArp(buf, len);
+		return;
+	}
+
+#if NET_DEBUG
+	if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
+#endif
+
+	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(eth));
+	// 是否发给本机。注意memcmp相等返回0
+	if(memcmp(ip->DestIP, IP, 4) !=0 ) return;
+
+	// 记录远程信息
+	memcpy(RemoteMac, eth->SrcMac, 6);
+	memcpy(RemoteIP, ip->SrcIP, 4);
+
+	if(ip->Protocol == IP_ICMP)
+	{
+		ProcessICMP(buf, len);
+		return;
+	}
+	if (ip->Protocol == IP_TCP)
+	{
+		ProcessTcp(buf, len);
+		return;
+	}
+	if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
+	{
+		ProcessUdp(buf, len);
+		return;
+	}
+
+#if NET_DEBUG
+	debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
+	ShowIP(ip->SrcIP);
+	debug_printf(" => ");
+	ShowIP(ip->DestIP);
+	debug_printf("\r\n");
+#endif
+}
+
+// 任务函数
+void TinyIP::Work(void* param)
+{
+	TinyIP* tip = (TinyIP*)param;
+	if(tip) tip->OnWork();
+}
+
+void TinyIP::Init()
+{
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
     _enc->Init((string)Mac);
 
@@ -55,66 +114,16 @@ void TinyIP::Start()
 	if(UseDHCP)
 	{
 		IPIsReady = false;
-		dhcp_id = (uint)g_Time->CurrentTicks();
+		dhcp_id = (uint)Time.CurrentTicks();
 
-		DHCP_config(buf);
+		//DHCP_config(buf);
 
 		_enc->Init((string)Mac);
 		_enc->ClockOut(2);
 	}
 
-	uint eth_size = sizeof(ETH_HEADER);
-    while(1)
-    {
-        // 获取缓冲区的包
-        uint len = _enc->PacketReceive(buf, BufferSize);
-        // 如果缓冲器里面没有数据则转入下一次循环
-        if(!_net->Unpack(len)) continue;
-
-		ETH_HEADER* eth = _net->Eth;
-		// 处理ARP
-		if(eth->Type == ETH_ARP)
-		{
-			ProcessArp(buf, len);
-            continue;
-		}
-
-#if NET_DEBUG
-		if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
-#endif
-
-		IP_HEADER* ip = (IP_HEADER*)(buf + eth_size);
-		// 是否发给本机。注意memcmp相等返回0
-		if(memcmp(ip->DestIP, IP, 4) !=0 ) continue;
-
-		// 记录远程信息
-		memcpy(RemoteMac, eth->SrcMac, 6);
-		memcpy(RemoteIP, ip->SrcIP, 4);
-
-        if(ip->Protocol == IP_ICMP)
-        {
-			ProcessICMP(buf, len);
-            continue;
-        }
-        if (ip->Protocol == IP_TCP)
-        {
-			ProcessTcp(buf, len);
-			continue;
-        }
-        if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
-        {
-			ProcessUdp(buf, len);
-			continue;
-        }
-
-#if NET_DEBUG
-		debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
-		ShowIP(ip->SrcIP);
-		debug_printf(" => ");
-		ShowIP(ip->DestIP);
-		debug_printf("\r\n");
-#endif
-    }
+	// 添加到系统任务，马上开始，尽可能多被调度
+    Sys.AddTask(Work, this);
 }
 
 void TinyIP::ProcessArp(byte* buf, uint len)
@@ -204,7 +213,6 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
 	if(len < sizeof(TCP_HEADER)) return;
 
-	IP_HEADER* ip = _net->IP;
 	TCP_HEADER* tcp = _net->TCP;
 	if(!tcp) return;
 
@@ -217,7 +225,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	debug_printf("TCP ");
 	ShowIP(RemoteIP);
 	debug_printf(":%d => ", __REV16(tcp->SrcPort));
-	ShowIP(ip->DestIP);
+	ShowIP(_net->IP->DestIP);
 	debug_printf(":%d\r\n", __REV16(tcp->DestPort));
 #endif
 
@@ -266,13 +274,13 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
-	IP_HEADER* ip = _net->IP;
 	UDP_HEADER* udp = _net->UDP;
 
 	Port = __REV16(udp->DestPort);
 	RemotePort = __REV16(udp->SrcPort);
 
 #if NET_DEBUG
+	IP_HEADER* ip = _net->IP;
 	debug_printf("UDP ");
 	ShowIP(ip->SrcIP);
 	debug_printf(":%d => ", __REV16(udp->SrcPort));
