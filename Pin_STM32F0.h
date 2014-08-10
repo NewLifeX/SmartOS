@@ -29,7 +29,7 @@
 }
 
 /* 定时器针脚 ------------------------------------------------------------------*/
-#define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
+#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6}
 #define TIM_PINS {\
 	PA8, PA9, PA10,PA11,/* TIM1 */	\
 	PA0, PA1, PA2, PA3, /* TIM2 */	\
