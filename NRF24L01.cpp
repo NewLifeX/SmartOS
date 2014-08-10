@@ -226,7 +226,7 @@ void NRF24L01::SetMode(bool isReceive)
 	if(isReceive) // 接收模式
 	{
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
-		CEUp();
+		CEUp();		//开始监听频段
 	}
 	else		  // 发送模式
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
@@ -243,8 +243,8 @@ byte NRF24L01::Receive(byte *data)
 //			if(time > _outTime)return NO_NEWS ;
 //		}
 	//if(_isEvent == false)return NO_NEWS;
-//	CEUp();		// 开始接受命令
-//	CEDown();	// 结束接受命令
+//	CEUp();		// 开始接收数据
+//	CEDown();	// 结束接收数据
 	
 	/*读取status寄存器的值  */
 	byte state = ReadReg(STATUS);
@@ -256,7 +256,7 @@ byte NRF24L01::Receive(byte *data)
 		CEDown();		// 收到一帧数据  停止接受  开始读取
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-		CEDown();
+		CEDown();		// 结束接收数据
 		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
 		//_isEvent = false;
         return RX_OK;
