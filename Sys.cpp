@@ -353,7 +353,7 @@ uint TSys::Crc(const void* rgBlock, int len, uint crc)
 #define __TASK__MODULE__ 1
 #ifdef __TASK__MODULE__
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TSys::AddTask(Func func, uint dueTime, int period)
+uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 {
 	// 屏蔽中断，否则可能有线程冲突
 	SmartIRQ irq;
@@ -367,6 +367,7 @@ uint TSys::AddTask(Func func, uint dueTime, int period)
 	_Tasks[i - 1] = task;
 	task->ID = i;
 	task->Callback = func;
+	task->Param = param;
 	task->Period = period;
 	task->NextTime = Time.CurrentMicrosecond() + dueTime;
 	
@@ -408,7 +409,7 @@ void TSys::Start()
 			{
 				// 先计算下一次时间
 				task->NextTime += task->Period;
-				task->Callback();
+				task->Callback(task->Param);
 				
 				// 如果只是一次性任务，在这里清理
 				if(task->Period < 0)
