@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 TSys Sys;
-Time* g_Time;
+TTime Time;
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
@@ -18,9 +18,9 @@ Time* g_Time;
 #define GD32_PLL_MASK	0x20000000
 #define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
-void TSys::Sleep(uint ms) { g_Time->Sleep(ms * 1000); }
+void TSys::Sleep(uint ms) { Time.Sleep(ms * 1000); }
 
-void TSys::Delay(uint us) { g_Time->Sleep(us); }
+void TSys::Delay(uint us) { Time.Sleep(us); }
 
 void TSys::Reset() { NVIC_SystemReset(); }
 
@@ -254,8 +254,8 @@ TSys::TSys()
 
 TSys::~TSys()
 {
-    if(g_Time) delete g_Time;
-    g_Time = NULL;
+    //if(g_Time) delete g_Time;
+    //g_Time = NULL;
 }
 
 void TSys::Init(void)
@@ -276,7 +276,7 @@ void TSys::Init(void)
 #endif
 
 	// 必须在系统主频率确定以后再初始化时钟
-    g_Time = new Time();
+    Time.Init();
 
     Inited = true;
 }

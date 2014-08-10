@@ -4,7 +4,7 @@
 #include "Sys.h"
 
 // 时间类
-class Time
+class TTime
 {
 private:
     static void OnHandler(ushort num, void* param);
@@ -17,14 +17,17 @@ public:
     uint TicksPerMillisecond;   // 每毫秒的时钟滴答数
     uint TicksPerMicrosecond;   // 每微秒的时钟滴答数
 
-    Time();
-    virtual ~Time();
+    TTime();
+    virtual ~TTime();
 
+	void Init();
     void SetCompare(ulong compareValue);
-    ulong CurrentTicks();
+    ulong CurrentTicks();	// 当前滴答时钟
+	ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
+	ulong CurrentMicrosecond(); // 当前微秒数
     void Sleep(uint us);
 };
 
-extern Time* g_Time;
+extern TTime Time;
 
 #endif

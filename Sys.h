@@ -67,14 +67,16 @@ public:
 
     void Init();     // 初始化系统
 	void ShowInfo();
+
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
+
 	bool CheckMemory();
 
     void Reset();   // 重启系统
     void (*OnError)(int code);  // 系统出错时引发
     Func OnStop;
-    
+
     // CRC32校验
     uint Crc(const void* rgBlock, int len, uint crc = 0);
 };

@@ -5,11 +5,21 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-Time::Time()
+TTime::TTime()
 {
 	Ticks = 0;
 	NextEvent = TIME_Completion_IdleValue;
+}
 
+TTime::~TTime()
+{
+    Interrupt.Deactivate(SysTick_IRQn);
+    // 关闭定时器
+	SysTick->CTRL &= ~SYSTICK_ENABLE;
+}
+
+void TTime::Init()
+{
 	// 准备使用外部时钟，Systick时钟=HCLK/8
 	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
 	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
@@ -32,28 +42,21 @@ Time::Time()
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
-Time::~Time()
-{
-    Interrupt.Deactivate(SysTick_IRQn);
-    // 关闭定时器
-	SysTick->CTRL &= ~SYSTICK_ENABLE;
-}
-
 #ifdef STM32F0XX
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
-void Time::OnHandler(ushort num, void* param)
+void TTime::OnHandler(ushort num, void* param)
 {
 	assert_param(Sys.CheckMemory());
 
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
-		g_Time->Ticks += SysTick->LOAD;
+		Time.Ticks += SysTick->LOAD;
 	}
 }
 
-void Time::SetCompare(ulong compareValue)
+void TTime::SetCompare(ulong compareValue)
 {
     SmartIRQ irq;
 
@@ -80,7 +83,7 @@ void Time::SetCompare(ulong compareValue)
 	SysTick->VAL = 0x00;
 }
 
-ulong Time::CurrentTicks()
+ulong TTime::CurrentTicks()
 {
     SmartIRQ irq;
 
@@ -95,7 +98,7 @@ ulong Time::CurrentTicks()
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
 
-void Time::Sleep(uint us)
+void TTime::Sleep(uint us)
 {
     // 睡眠时间太短
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
@@ -122,3 +125,17 @@ void Time::Sleep(uint us)
 	// 如果之前是打开中断的，那么这里也要重新打开
 	//if (!state) Sys.DisableInterrupts();
 }
+
+// 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
+ulong TTime::NewTicks(uint us)
+{
+	return CurrentTicks() + us * TicksPerSecond / 1000000;
+}
+
+// 当前微秒数
+ulong TTime::CurrentMicrosecond()
+{
+	// 为了精度，这里没有直接除TicksPerMicrosecond
+	return CurrentTicks() * 1000000 / TicksPerSecond;
+}
+
