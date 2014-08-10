@@ -48,7 +48,6 @@ public:
     void Register(DataReceived handler, void* param = NULL);
 
 private:
-	//byte rx_buf[64];	// 接收缓冲区
 	static void OnReceive(ushort num, void* param);
 	DataReceived _Received;
 	void* _Param;

@@ -11,13 +11,6 @@ static USART_TypeDef* g_Uart_Ports[] = UARTS;
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
-static int SERIALPORT_IRQns[] = {
-    USART1_IRQn, USART2_IRQn,
-#ifdef STM32F10X
-    USART3_IRQn, UART4_IRQn, UART5_IRQn
-#endif
-};
-
 SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stopBits)
 {
 	assert_param(com >= 0 && com < ArrayLength(g_Uart_Ports));
@@ -250,20 +243,23 @@ void SerialPort::Register(DataReceived handler, void* param)
 {
     Open();
 
+	_Received = handler;
+	_Param = param;
+
+	int SERIALPORT_IRQns[] = {
+		USART1_IRQn, USART2_IRQn,
+#ifdef STM32F10X
+		USART3_IRQn, UART4_IRQn, UART5_IRQn
+#endif
+	};
     if(handler)
 	{
-        _Received = handler;
-		_Param = param;
-
         Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
 		Interrupt.Activate(SERIALPORT_IRQns[_com], OnReceive, this);
 	}
     else
 	{
-        _Received = NULL;
-		_Param = NULL;
-
 		Interrupt.Deactivate(SERIALPORT_IRQns[_com]);
 	}
 }
