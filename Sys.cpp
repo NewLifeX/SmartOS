@@ -29,6 +29,8 @@ void TSys::Reset() { NVIC_SystemReset(); }
 #define IRQ_STACK_SIZE 0x100
 uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 
+#pragma arm section code
+
 force_inline void Set_SP()
 {
 	__set_PSP(__get_MSP());
@@ -250,6 +252,9 @@ TSys::TSys()
 #endif
 
     Interrupt.Init();
+	
+	_TaskCount = 0;
+	memset(_Tasks, 0, ArrayLength(_Tasks));
 }
 
 TSys::~TSys()
@@ -342,5 +347,94 @@ uint TSys::Crc(const void* rgBlock, int len, uint crc)
     }
 
     return crc;
+}
+#endif
+
+#define __TASK__MODULE__ 1
+#ifdef __TASK__MODULE__
+// 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
+uint TSys::AddTask(Func func, uint dueTime, int period)
+{
+	// 屏蔽中断，否则可能有线程冲突
+	SmartIRQ irq;
+
+	// 找一个空闲位给它
+	int i = 0;
+	while(i < ArrayLength(_Tasks) && _Tasks[i++] != NULL);
+	assert_param(i < ArrayLength(_Tasks));
+
+	Task* task = new Task();
+	_Tasks[i - 1] = task;
+	task->ID = i;
+	task->Callback = func;
+	task->Period = period;
+	task->NextTime = Time.CurrentMicrosecond() + dueTime;
+	
+	_TaskCount++;
+	debug_printf("添加任务%d 0x%08x\r\n", task->ID, func);
+	
+	return task->ID;
+}
+
+void TSys::RemoveTask(uint taskid)
+{
+	assert_param(taskid > 0);
+	assert_param(taskid <= _TaskCount);
+	
+	Task* task = _Tasks[taskid - 1];
+	_Tasks[taskid - 1] = NULL;
+	if(task)
+	{
+		debug_printf("删除任务%d 0x%08x\r\n", task->ID, task->Callback);
+		delete task;
+		
+		_TaskCount--;
+	}
+}
+
+void TSys::Start()
+{
+	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
+
+	_Running = true;
+	while(_Running)
+	{
+		//uint minTime = 0xFFFFFFFF;	// 最小等待时间
+		uint now = Time.CurrentMicrosecond();	// 当前时间
+		for(int i=0; i < ArrayLength(_Tasks); i++)
+		{
+			Task* task = _Tasks[i];
+			if(task && task->NextTime <= now)
+			{
+				// 先计算下一次时间
+				task->NextTime += task->Period;
+				task->Callback();
+				
+				// 如果只是一次性任务，在这里清理
+				if(task->Period < 0)
+				{
+					_Tasks[i] = NULL;
+					delete task;
+				}
+			}
+		}
+		
+		//if(minTime > 0) Delay(minTime);
+	}
+	debug_printf("系统停止调度，共有%d个任务！\r\n", _TaskCount);
+}
+
+void TSys::Stop()
+{
+	debug_printf("系统停止！\r\n");
+	_Running = false;
+	
+	// 销毁所有任务
+	/*for(int i=0; i < ArrayLength(_Tasks); i++)
+	{
+		Task* task = _Tasks[i];
+		if(task) delete task;
+	}
+	memset(_Tasks, 0, ArrayLength(_Tasks));*/
 }
 #endif
