@@ -402,7 +402,8 @@ void TSys::Start()
 	{
 		//uint minTime = 0xFFFFFFFF;	// 最小等待时间
 		uint now = Time.CurrentMicrosecond();	// 当前时间
-		for(int i=0; i < ArrayLength(_Tasks); i++)
+		int k = 0;
+		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
 		{
 			Task* task = _Tasks[i];
 			if(task && task->NextTime <= now)
@@ -417,6 +418,8 @@ void TSys::Start()
 					_Tasks[i] = NULL;
 					delete task;
 				}
+				
+				k++;
 			}
 		}
 		
