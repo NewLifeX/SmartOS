@@ -133,7 +133,7 @@ ulong TTime::NewTicks(uint us)
 }
 
 // 当前微秒数
-ulong TTime::CurrentMicrosecond()
+ulong TTime::Current()
 {
 	// 为了精度，这里没有直接除TicksPerMicrosecond
 	return CurrentTicks() * 1000000 / TicksPerSecond;

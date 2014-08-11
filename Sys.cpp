@@ -369,7 +369,7 @@ uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 	task->Callback = func;
 	task->Param = param;
 	task->Period = period;
-	task->NextTime = Time.CurrentMicrosecond() + dueTime;
+	task->NextTime = Time.Current() + dueTime;
 	
 	_TaskCount++;
 	debug_printf("添加任务%d 0x%08x\r\n", task->ID, func);
@@ -401,7 +401,7 @@ void TSys::Start()
 	while(_Running)
 	{
 		//uint minTime = 0xFFFFFFFF;	// 最小等待时间
-		uint now = Time.CurrentMicrosecond();	// 当前时间
+		uint now = Time.Current();	// 当前时间
 		int k = 0;
 		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
 		{
