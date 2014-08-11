@@ -77,7 +77,7 @@ void TinyIP::OnWork()
 	//if(memcmp(eth->DestMac, Mac, 6) != 0) return;
 	// 这里复制Mac地址
 	memcpy(RemoteMac, eth->SrcMac, 6);
-	
+
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
@@ -174,7 +174,7 @@ bool TinyIP::Init()
 
 	// 添加到系统任务，马上开始，尽可能多被调度
     Sys.AddTask(Work, this);
-	
+
 #if NET_DEBUG
 	debug_printf("TinyIP Ready!\r\n\r\n");
 #endif
@@ -325,7 +325,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		//make_tcp_ack_from_any(buf, _net->PayloadLength);       // 发送ACK，通知已收到
 		make_tcphead(buf, _net->PayloadLength, 0, 1);
 		SendTcp(buf, 0, TCP_FLAGS_ACK_V);
-		
+
 		TcpSend(buf, len);
 
 		// tcp_close(buf,len);
@@ -397,9 +397,9 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 void TinyIP::SendIP(byte* buf, uint len)
 {
 	IP_HEADER* ip = _net->IP;
-	assert_param(ip->Protocol == IP_ICMP || 
-				 ip->Protocol == IP_IGMP || 
-				 ip->Protocol == IP_TCP || 
+	assert_param(ip->Protocol == IP_ICMP ||
+				 ip->Protocol == IP_IGMP ||
+				 ip->Protocol == IP_TCP ||
 				 ip->Protocol == IP_UDP);
 
 	memcpy(&ip->DestIP, RemoteIP, 4);
@@ -446,7 +446,7 @@ void TinyIP::SendUdp(byte* buf, uint len)
 
 	// 网络序是大端
 	udp->Checksum = 0;
-	udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+	//udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	_net->IP->Protocol = IP_UDP;
 	SendIP(buf, sizeof(UDP_HEADER) + len);
@@ -469,7 +469,7 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 	// 如果最后一个字节不是DHCP_OPT_End，则增加End
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
-	
+
 	SendUdp(buf, sizeof(DHCP_HEADER) + len);
 }
 
@@ -587,7 +587,7 @@ void TinyIP::make_tcp_ack_with_data(byte* buf, uint dlen)
 }
 
 // 获取选项，返回数据部分指针
-DHCP_OPT* GetOption(byte* p, int len, byte option)
+DHCP_OPT* GetOption(byte* p, int len, DHCP_OPTION option)
 {
 	byte* end = p + len;
 	while(p < end)
@@ -630,7 +630,7 @@ void TinyIP::dhcp_discover()
 	UDP_HEADER* udp = _net->UDP;
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-	
+
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 	//opt->Option = DHCP_OPT_MessageType;
@@ -643,24 +643,24 @@ void TinyIP::dhcp_discover()
 	opt->Data = 1;	// 类型ETHERNET=1
 	memcpy(&opt->Data + 1, Mac, 6);
 
-	/*opt = opt->Next();
+	opt = opt->Next();
 	opt->Option = DHCP_OPT_RequestedIP;
 	opt->Length = 4;
-	memcpy(&opt->Data, IP, 4);*/
+	memcpy(&opt->Data, IP, 4);
 
 	opt = opt->Next();
 	opt->Option = DHCP_OPT_HostName;
-	string name = "YWS SmartOS";
-	opt->Length = 11;
-	//string name = "abcd";
-	//opt->Length = 4;
+	//string name = "YWS SmartOS";
+	//opt->Length = 11;
+	string name = "abcd";
+	opt->Length = 4;
 	memcpy(&opt->Data, name, opt->Length);
 
-	/*opt = opt->Next();
+	opt = opt->Next();
 	opt->Option = DHCP_OPT_Vendor;
-	string vendor = "MST 5.27";
+	string vendor = "MSFT5.07";
 	opt->Length = 8;
-	memcpy(&opt->Data, vendor, opt->Length);*/
+	memcpy(&opt->Data, vendor, opt->Length);
 
 	opt = opt->Next();
 	opt->Option = DHCP_OPT_ParameterList;
@@ -819,6 +819,7 @@ void TinyIP::PareOption(byte* buf, int len)
 	while(p < end)
 	{
 		byte opt = *p++;
+		if(opt == DHCP_OPT_End) break;
 		byte len = *p++;
 		switch(opt)
 		{
@@ -828,52 +829,11 @@ void TinyIP::PareOption(byte* buf, int len)
 			case DHCP_OPT_DHCPServer: memcpy(DHCPServer, p, len); break;
 #if NET_DEBUG
 			default:
-				debug_printf("Unkown DHCP Option=%d Length=%d", opt, len);
+				debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 #endif
 		}
 		p += len;
 	}
-
-	/*char find=0,len=0;
-	int begin = dhcp_option_type_h;
-	while(1)
-	{
-		if(buf[begin] == DHCP_OPT_Mask)
-		{
-			fill_data(buf, begin + 2, Mask, 0, 4);
-			len = buf[begin + 1] + 2;
-			begin += len;
-			find++;
-		}
-		else if(buf[begin] == dhcp_option_dns)
-		{
-			fill_data(buf, begin + 2, DNSServer, 0, 4);
-			len = buf[begin + 1] + 2;
-			begin += len;
-			find++;
-		}
-		else if(buf[begin] == dhcp_option_router)
-		{
-			fill_data(buf, begin + 2, Gateway, 0, 4);
-			len = buf[begin + 1] + 2;
-			begin += len;
-			find++;
-		}
-		else if(buf[begin] == dhcp_option_server_id)
-		{
-			fill_data(buf, begin + 2, DHCPServer, 0, 4);
-			len = buf[begin + 1] + 2;
-			begin += len;
-			find++;
-		}
-		else
-		{
-			len = buf[begin + 1];
-			begin += len + 2;
-		}
-
-		if(find == 4) break;
-	}*/
 }
 
 void TinyIP::dhcp_fill_public_data(byte* buf)
@@ -928,7 +888,7 @@ void TinyIP::dhcp_fill_public_data(byte* buf)
 	//UDP_HEADER* udp = _net->UDP;
 	Port = 68;
 	RemotePort = 67;
-	
+
 	/*buf[0x2a] = 0x01;                             //boot requese
 	buf[0x2b] = 0x01; 	//硬件类型  ethernet
 
@@ -962,11 +922,13 @@ void TinyIP::DHCP_config(byte* buf)
         // 如果缓冲器里面没有数据则转入下一次循环
         if(!_net->Unpack(len)) continue;
 
+		//debug_printf("Packet %d Type=%d\r\n", len, _net->Eth->Type);
 		IP_HEADER* ip = _net->IP;
 		if(!ip) continue;
 
+		//debug_printf("IP Protocol=%d\r\n", len, __REV16(ip->Protocol));
 		UDP_HEADER* udp = _net->UDP;
-		if(!udp) continue;
+		if(!udp || __REV16(udp->DestPort) != 68) continue;
 
 #if NET_DEBUG
 		debug_printf("IP Protocol=%d ", ip->Protocol);
@@ -976,35 +938,46 @@ void TinyIP::DHCP_config(byte* buf)
 		debug_printf(":%d \r\n", __REV16(udp->DestPort));
 #endif
 
+		// DHCP附加数据的长度
+		len = _net->PayloadLength;
+		if(len <= sizeof(DHCP_HEADER)) continue;
+
+		len -= sizeof(DHCP_HEADER);
+
 		DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
+		if(!dhcp->Valid())continue;
+
+		DHCP_OPT* opt = GetOption((byte*)dhcp + sizeof(DHCP_HEADER), len, DHCP_OPT_MessageType);
+		if(!opt) continue;
+		debug_printf("DHCP Type=%d\r\n", opt->Data);
 
 		//if(buf[dhcp_protocol_h]==0x63 && buf[0x11c]==0x02 && buf[0x25]==0x44)
-		if(dhcp->Valid() && buf[0x11c] == DHCP_TYPE_Offer && udp->DestPort == 68)
+		if(opt->Data == DHCP_TYPE_Offer)
 		{
 			debug_printf("DHCP Server Found:");
 			ShowIP(ip->SrcIP);
 			debug_printf("\r\n");
-			
+
 			//if(dhcp_offer(buf))
 			if(__REV(dhcp->TransID) == dhcp_id)
 			{
 				memcpy(IP, dhcp->YourIP, 4);
 				PareOption(buf, _net->PayloadLength - sizeof(DHCP_HEADER));
-				
+
 				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 				debug_printf("DHCP Request  IP...\r\n");
 				dhcp_request(buf);
 			}
 		}
-		else if(dhcp->Valid() && buf[0x11c] == DHCP_TYPE_Ack && udp->DestPort == 68)
+		else if(opt->Data == DHCP_TYPE_Ack)
 		{
 			//if(dhcp_ack(buf)) break;
 			//continue;
 			debug_printf("DHCP Response IP:");
 			ShowIP(dhcp->YourIP);
 			debug_printf("\r\n");
-			
+
 			if(memcmp(dhcp->YourIP, IP, 4) == 0)
 			{
 				IPIsReady = true;

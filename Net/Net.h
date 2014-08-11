@@ -162,6 +162,7 @@ typedef enum
 	DHCP_OPT_MessageType = 53,
 	DHCP_OPT_Identifier = 54,
 	DHCP_OPT_ParameterList = 55,
+	DHCP_OPT_MaxMessageSize = 57,
 	DHCP_OPT_Vendor = 60,
 	DHCP_OPT_ClientIdentifier = 61,
 	DHCP_OPT_End = 255,
