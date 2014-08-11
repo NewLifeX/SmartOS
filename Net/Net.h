@@ -240,6 +240,7 @@ public:
 		ARP = NULL;
 		IP = (IP_HEADER*)((byte*)Eth + sizeof(ETH_HEADER));
 		Eth->Type = ETH_IP;
+		IP->Version = 4;
 		
 		return IP;
 	}

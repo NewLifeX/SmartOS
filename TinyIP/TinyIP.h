@@ -30,16 +30,16 @@ private:
 	byte seqnum;
 
 	void make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq);
-	void make_tcp_ack_from_any(byte* buf, uint dlen);
+	//void make_tcp_ack_from_any(byte* buf, uint dlen);
 	void make_tcp_ack_with_data(byte* buf, uint dlen);
 
 	uint checksum(byte* buf, uint len, byte type);
 
 	uint dhcp_id;
-	void dhcp_discover(byte* buf);
-	int dhcp_offer(byte* buf);
+	void dhcp_discover();
+	//int dhcp_offer(byte* buf);
 	void dhcp_request(byte* buf);
-	int dhcp_ack(byte* buf);
+	//int dhcp_ack(byte* buf);
 	void fill_data(byte* src, int src_begin, byte* dst, int dst_begin, int len);
 	void search_list_data(byte* buf);
 	void dhcp_fill_public_data(byte* buf);
