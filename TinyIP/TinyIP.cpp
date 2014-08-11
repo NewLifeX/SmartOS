@@ -5,7 +5,12 @@
 
 void ShowHex(byte* buf, int size)
 {
-	while(size--) debug_printf("%02X-", *buf++);
+	//while(size--) debug_printf("%02X-", *buf++);
+	for(int i=0; i<size; i++)
+	{
+		debug_printf("%02X-", *buf++);
+		if(((i + 1) & 0xF) == 0) debug_printf("\r\n");
+	}
 	debug_printf("\r\n");
 }
 
@@ -128,7 +133,7 @@ void TinyIP::Work(void* param)
 	if(tip) tip->OnWork();
 }
 
-void TinyIP::Init()
+bool TinyIP::Init()
 {
 #if NET_DEBUG
 	debug_printf("\r\nTinyIP Init...");
@@ -153,6 +158,13 @@ void TinyIP::Init()
 		dhcp_id = (uint)Time.CurrentTicks();
 
 		DHCP_config(Buffer);
+		if(!IPIsReady)
+		{
+#if NET_DEBUG
+			debug_printf("TinyIP DHCP Fail!\r\n\r\n");
+#endif
+			return false;
+		}
 
 		_enc->Init((string)Mac);
 		_enc->ClockOut(2);
@@ -164,6 +176,7 @@ void TinyIP::Init()
 #if NET_DEBUG
 	debug_printf("TinyIP Ready!\r\n\r\n");
 #endif
+	return true;
 }
 
 void TinyIP::ProcessArp(byte* buf, uint len)
@@ -217,6 +230,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
+	_net->Eth->Type = ETH_ARP;
 	SendEthernet(buf, sizeof(ARP_HEADER));
 }
 
@@ -244,6 +258,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	// 因为仅仅改变类型，因此我们能够提前修正校验码
 	icmp->Checksum += 0x08;
 
+	_net->IP->Protocol = IP_ICMP;
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
     SendIP(buf, len);
 }
@@ -364,31 +379,42 @@ void TinyIP::ShowMac(byte* mac)
 void TinyIP::SendEthernet(byte* buf, uint len)
 {
 	ETH_HEADER* eth = _net->Eth;
+	assert_param(eth->Type == ETH_ARP || eth->Type == ETH_IP || eth->Type == ETH_IPv6);
+
 	memcpy(&eth->DestMac, &RemoteMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
 	len += sizeof(ETH_HEADER);
 	if(len < 60) len = 60;	// 以太网最小包60字节
-	//debug_printf("SendEthernet: %d\r\n", len);
-	//ShowHex((byte*)eth, len);
+
+	debug_printf("SendEthernet: %d\r\n", len);
+	ShowHex((byte*)eth, len);
 	_enc->PacketSend((byte*)eth, len);
 }
 
 void TinyIP::SendIP(byte* buf, uint len)
 {
 	IP_HEADER* ip = _net->IP;
+	assert_param(ip->Protocol == IP_ICMP || 
+				 ip->Protocol == IP_IGMP || 
+				 ip->Protocol == IP_TCP || 
+				 ip->Protocol == IP_UDP);
+
 	memcpy(&ip->DestIP, RemoteIP, 4);
 	memcpy(&ip->SrcIP, IP, 4);
 
+	ip->Version = 4;
+	ip->Length = sizeof(IP_HEADER) / 4;
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
-	ip->Checksum = 0;
 	ip->Flags = 0x40;
 	ip->FragmentOffset = 0;
 	ip->TTL = 64;
 
 	// 网络序是大端
+	ip->Checksum = 0;
 	ip->Checksum = __REV16((ushort)checksum((byte*)ip, sizeof(IP_HEADER), 0));
 
+	_net->Eth->Type = ETH_IP;
 	SendEthernet(buf, sizeof(IP_HEADER) + len);
 }
 
@@ -396,11 +422,15 @@ void TinyIP::SendTcp(byte* buf, uint len, byte flags)
 {
 	TCP_HEADER* tcp = _net->TCP;
 
+	tcp->SrcPort = __REV16(Port);
+	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
-	tcp->Checksum = 0;
+
 	// 网络序是大端
+	tcp->Checksum = 0;
 	tcp->Checksum = __REV16((ushort)checksum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
+	_net->IP->Protocol = IP_TCP;
 	SendIP(buf, sizeof(TCP_HEADER) + len);
 }
 
@@ -409,11 +439,14 @@ void TinyIP::SendUdp(byte* buf, uint len)
 	UDP_HEADER* udp = _net->UDP;
 
 	udp->SrcPort = __REV16(Port);
+	udp->DestPort = __REV16(RemotePort);
 	udp->Length = __REV16(sizeof(UDP_HEADER) + len);
-	udp->Checksum = 0;
+
 	// 网络序是大端
+	udp->Checksum = 0;
 	udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
+	_net->IP->Protocol = IP_UDP;
 	SendIP(buf, sizeof(UDP_HEADER) + len);
 }
 
@@ -464,9 +497,9 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
 {
 	TCP_HEADER* tcp = _net->TCP;
 
-	ushort port = tcp->SrcPort;
+	/*ushort port = tcp->SrcPort;
 	tcp->SrcPort = tcp->DestPort;
-	tcp->DestPort = port;
+	tcp->DestPort = port;*/
 
     byte i = 4;
     // sequence numbers:
@@ -496,7 +529,7 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         // during this tcp session:
         seqnum += 2;
     }
-	tcp->Checksum = 0;
+	//tcp->Checksum = 0;
 
 	tcp->Length = sizeof(TCP_HEADER);
     // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
@@ -633,7 +666,7 @@ void TinyIP::dhcp_discover()
 	}* /
 	
 	UDP_HEADER* udp = _net->UDP;
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(udp));
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
 	if(__REV(dhcp->TransID) == dhcp_id)
 	{
 		memcpy(IP, dhcp->YourIP, 4);
@@ -830,7 +863,7 @@ void TinyIP::dhcp_fill_public_data(byte* buf)
 	//memset(ip->SrcIP, 0x00, 4);
 	//memset(ip->DestIP, 0xFF, 4);
 	// 底层会设置IP，这里不着急
-	memset(IP, 0x00, 6);
+	//memset(IP, 0x00, 6);
 	memset(RemoteIP, 0xFF, 6);
 
 	//buf[0x22] = 0x00;
@@ -842,10 +875,11 @@ void TinyIP::dhcp_fill_public_data(byte* buf)
 	Port = 68;
 	RemotePort = 67;
 
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(udp));
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
 	dhcp->MsgType = 1;
 	dhcp->HardType = 1;
 	dhcp->HardLength = 6;
+	dhcp->Hops = 0;
 	dhcp->TransID = __REV(dhcp_id);
 	dhcp->Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
 	
@@ -868,15 +902,9 @@ void TinyIP::dhcp_fill_public_data(byte* buf)
 	buf[0x119] = 0x63;
 }
 
-/*void DiscoverTask(void* param)
-{
-	TinyIP* tip = (TinyIP*)param;
-	debug_printf("DHCP Discover...\r\n");
-	tip->dhcp_discover();
-}*/
-
 void TinyIP::DHCP_config(byte* buf)
 {
+	// 向DHCP服务器广播
 	debug_printf("DHCP Discover...\r\n");
 	dhcp_discover();
 	// 每2秒执行一次服务器发现任务
@@ -894,7 +922,15 @@ void TinyIP::DHCP_config(byte* buf)
 		UDP_HEADER* udp = _net->UDP;
 		if(!udp) continue;
 
-		DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(udp));
+#if NET_DEBUG
+		debug_printf("IP Protocol=%d ", ip->Protocol);
+		ShowIP(ip->SrcIP);
+		debug_printf(":%d => ", __REV16(udp->SrcPort));
+		ShowIP(ip->DestIP);
+		debug_printf(":%d \r\n", __REV16(udp->DestPort));
+#endif
+
+		DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
 
 		//if(buf[dhcp_protocol_h]==0x63 && buf[0x11c]==0x02 && buf[0x25]==0x44)
 		if(buf[0x116]==0x63 && buf[0x11c]==0x02 && udp->DestPort == 68)
@@ -909,6 +945,8 @@ void TinyIP::DHCP_config(byte* buf)
 				memcpy(IP, dhcp->YourIP, 4);
 				search_list_data(buf);
 				
+				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
+				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 				debug_printf("DHCP Request  IP...\r\n");
 				dhcp_request(buf);
 			}

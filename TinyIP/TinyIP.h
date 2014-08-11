@@ -66,7 +66,7 @@ public:
     TinyIP(Enc28j60* enc, byte ip[4], byte mac[6]);
     virtual ~TinyIP();
 
-	void Init();
+	bool Init();
 
     void TcpSend(byte* packet, uint len);
     void TcpClose(byte* packet, uint maxlen);

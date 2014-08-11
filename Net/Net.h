@@ -41,7 +41,7 @@ typedef enum
 	IP_UDP = 17,
 }IP_TYPE;
 
-// IP头部，总长度20字节。后面可能有可选数据，Length决定头部总长度（4的倍数）
+// IP头部，总长度20=0x14字节，偏移14=0x0E。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _IP_HEADER
 {
 	#if LITTLE_ENDIAN
@@ -63,7 +63,7 @@ typedef struct _IP_HEADER
 	unsigned char DestIP[4];	//目的IP地址
 }IP_HEADER;
 
-//TCP头部，总长度20字节。后面可能有可选数据，Length决定头部总长度（4的倍数）
+//TCP头部，总长度20=0x14字节，偏移34=0x22。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _TCP_HEADER
 {
 	unsigned short SrcPort;    //源端口号
@@ -86,7 +86,7 @@ typedef struct _TCP_HEADER
 	unsigned short urgt_p;      //16为紧急指针
 }TCP_HEADER;
 
-//UDP头部，总长度8字节
+//UDP头部，总长度8字节，偏移34=0x22
 typedef struct _UDP_HEADER
 {
 	unsigned short SrcPort; //远端口号
@@ -95,7 +95,7 @@ typedef struct _UDP_HEADER
 	unsigned short Checksum;  //16位udp检验和
 }UDP_HEADER;
 
-//ICMP头部，总长度4字节
+//ICMP头部，总长度4字节，偏移34=0x22
 typedef struct _ICMP_HEADER
 {
 	unsigned char Type;   //类型
@@ -103,7 +103,7 @@ typedef struct _ICMP_HEADER
 	unsigned short Checksum;    //16位检验和
 }ICMP_HEADER;
 
-// ARP头部，总长度28字节，可能加18字节填充
+// ARP头部，总长度28=0x1C字节，偏移14=0x0E，可能加18字节填充
 typedef struct _ARP_HEADER
 {
 	unsigned short HardType;		// 硬件类型
@@ -118,7 +118,7 @@ typedef struct _ARP_HEADER
 	//unsigned char Padding[18];	// 填充凑够60字节
 }ARP_HEADER;
 
-// DHCP头部
+// DHCP头部，总长度240字节，偏移42=0x2A
 typedef struct _DHCP_HEADER
 {
 	unsigned char MsgType;		// 若是client送给server的封包，设为1，反向为2
@@ -131,9 +131,11 @@ typedef struct _DHCP_HEADER
 	unsigned char ClientIP[4];	// 客户机IP
 	unsigned char YourIP[4];	// 你的IP
 	unsigned char ServerIP[4];	// 服务器IP
-	unsigned char GatewayIP[16];	// 中继代理IP
+	unsigned char RelayIP[4];	// 中继代理IP
+	unsigned char ClientMac[16];	// 客户端硬件地址
 	unsigned char ServerName[64];	// 服务器名
 	unsigned char BootFile[128];	// 启动文件名
+	unsigned int Magic[4];		// 幻数0x63825363，其实就是DHCP
 }DHCP_HEADER;
 
 // 网络封包机
