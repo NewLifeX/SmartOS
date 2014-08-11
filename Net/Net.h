@@ -155,13 +155,13 @@ typedef enum
 	DHCP_OPT_MTU = 26,
 	DHCP_OPT_StaticRout = 33,
 	DHCP_OPT_ARPCacheTimeout = 35,
-	DHCP_OPT_DHCPServer = 36,
 	DHCP_OPT_NTPServer = 42,
 	DHCP_OPT_RequestedIP = 50,
 	DHCP_OPT_IPLeaseTime = 51,
 	DHCP_OPT_MessageType = 53,
-	DHCP_OPT_Identifier = 54,
+	DHCP_OPT_DHCPServer = 54,
 	DHCP_OPT_ParameterList = 55,
+	DHCP_OPT_Message = 56,
 	DHCP_OPT_MaxMessageSize = 57,
 	DHCP_OPT_Vendor = 60,
 	DHCP_OPT_ClientIdentifier = 61,
@@ -188,11 +188,39 @@ typedef struct DHCP_OPTDef
 	
 	struct DHCP_OPTDef* Next() { return (struct DHCP_OPTDef*)((byte*)this + 2 + Length); }
 	
-	void SetType(DHCP_MSGTYPE type)
+	struct DHCP_OPTDef* SetType(DHCP_MSGTYPE type)
 	{
 		Option = DHCP_OPT_MessageType;
 		Length = 1;
 		Data = type;
+
+		return this;
+	}
+	
+	struct DHCP_OPTDef* SetData(DHCP_OPTION option, byte* buf, uint len)
+	{
+		Option = option;
+		Length = len;
+		memcpy(&Data, buf, Length);
+
+		return this;
+	}
+	
+	struct DHCP_OPTDef* SetClientId(byte* mac, uint len = 6)
+	{
+		Option = DHCP_OPT_ClientIdentifier;
+		Length = 1 + len;
+		Data = 1;	// 类型ETHERNET=1
+		memcpy(&Data + 1, mac, len);
+
+		return this;
+	}
+	
+	struct DHCP_OPTDef* End()
+	{
+		Option = DHCP_OPT_End;
+
+		return this;
 	}
 }DHCP_OPT;
 

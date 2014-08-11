@@ -151,7 +151,7 @@ bool TinyIP::Init()
 
     // 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
     _enc->ClockOut(2);
-	Sys.Sleep(500);
+	Sys.Sleep(1000);
 
 	if(UseDHCP)
 	{
@@ -389,8 +389,8 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	if(len < 60) len = 60;	// 以太网最小包60字节
 
-	debug_printf("SendEthernet: %d\r\n", len);
-	ShowHex((byte*)eth, len);
+	//debug_printf("SendEthernet: %d\r\n", len);
+	//ShowHex((byte*)eth, len);
 	_enc->PacketSend((byte*)eth, len);
 }
 
@@ -456,6 +456,22 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 {
 	UDP_HEADER* udp = _net->UDP;
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
+
+	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
+	if(p[len - 1] != DHCP_OPT_End)
+	{
+		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
+		opt = opt->Next()->SetClientId(Mac, 6);
+		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, IP, 4);
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS SmartOS", 11);
+		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
+		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
+		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
+		opt = opt->End();
+
+		len = (byte*)opt + 1 - p;
+	}
+
 	dhcp->MsgType = 1;
 	dhcp->HardType = 1;
 	dhcp->HardLength = 6;
@@ -467,8 +483,8 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 	memcpy(dhcp->ClientMac, Mac, 6);
 
 	// 如果最后一个字节不是DHCP_OPT_End，则增加End
-	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-	if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
+	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
+	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
 
 	SendUdp(buf, sizeof(DHCP_HEADER) + len);
 }
@@ -617,108 +633,13 @@ void TinyIP::dhcp_discover()
 	byte* buf = Buffer;
 	dhcp_fill_public_data(buf);
 
-	//buf[0x10]=hex_to_dec_H(0x143-0xe); //长度为328 bytes
-	//buf[0x11]=hex_to_dec_L(0x143-0xe);
-	//IP_HEADER* ip = _net->IP;
-	//ip->Length = 0x143 - 0x0e;
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
 
-	//buf[0x26]=hex_to_dec_H(0x143-0xe-0x14);
-	//buf[0x27]=hex_to_dec_L(0x143-0xe-0x14); 	//长度=udp+bootstrap
-	//UDP_HEADER* udp = _net->UDP;
-	//udp->Length = 0x143 - 0x0e - 0x14;
-
-	UDP_HEADER* udp = _net->UDP;
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
-	//opt->Option = DHCP_OPT_MessageType;
-	//opt->Length = 1;
-	//opt->Data = DHCP_TYPE_Discover;
 
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_ClientIdentifier;
-	opt->Length = 7;
-	opt->Data = 1;	// 类型ETHERNET=1
-	memcpy(&opt->Data + 1, Mac, 6);
-
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_RequestedIP;
-	opt->Length = 4;
-	memcpy(&opt->Data, IP, 4);
-
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_HostName;
-	//string name = "YWS SmartOS";
-	//opt->Length = 11;
-	string name = "abcd";
-	opt->Length = 4;
-	memcpy(&opt->Data, name, opt->Length);
-
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_Vendor;
-	string vendor = "MSFT5.07";
-	opt->Length = 8;
-	memcpy(&opt->Data, vendor, opt->Length);
-
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_ParameterList;
-	// 需要参数 Mask/DNS/Router/Vendor
-	byte ps[] = { 0x01, 0x06, 0x03, 0x2b};
-	opt->Length = ArrayLength(ps);
-	memcpy(&opt->Data, ps, opt->Length);
-
-	opt = opt->Next();
-	opt->Option = DHCP_OPT_End;
-
-	/*buf[0x11a] = 0x35; //option DHCP message type
-	buf[0x11b] = 0x01; //lenth=1
-	buf[0x11c] = 0x01; //discover=1
-
-	buf[0x11d] = 0x3d; //option client identifier
-	buf[0x11e] = 0x07; //option 长度  1一个mac+一字节类型
-	buf[0x11f] = 0x01; //类型ETHERNET=1
-
-	buf[0x126] = 0x32; //requested ip option
-	buf[0x127] = 0x04; //option lenth
-
-	buf[0x128] = 0x00; //请求的ip
-	buf[0x129] = 0x00;
-	buf[0x12a] = 0x00;
-	buf[0x12b] = 0x00;
-
-	buf[0x12c] = 0x0c; //host option
-	buf[0x12d] = 0x04; //长度为4
-	buf[0x12e] = 0x61; //字符 a
-	buf[0x12f] = 0x62; //字符 b
-	buf[0x130] = 0x63; //字符 c
-	buf[0x131] = 0x64; //字符 d*/
-
-	// 60可以直接不要
-	/*buf[0x132] = 0x3c; //vendor option
-	buf[0x133] = 0x08; //长度为8
-	buf[0x134] = 0x4d; //下面为vender信息
-	buf[0x135] = 0x53;
-	buf[0x136] = 0x46;
-	buf[0x137] = 0x54;
-	buf[0x138] = 0x20;
-	buf[0x139] = 0x35;
-	buf[0x13a] = 0x2e;
-	buf[0x13b] = 0x30;*/
-
-	// 参数请求列表
-	/*buf[0x13c] = 0x37; //请求列表
-	buf[0x13d] = 0x04; //长度
-	buf[0x13e] = 0x01; //mask
-	buf[0x13f] = 0x06; //dns
-	buf[0x140] = 0x03; //router
-	buf[0x141] = 0x2b ; //vender imfo
-	buf[0x142] = 0xff; //option end*/
-
-	//_enc->PacketSend(buf, 0x143);
-	//SendDhcp(buf, 0x143 - 14 - 20 - 8 - sizeof(DHCP_HEADER));
-	SendDhcp(buf, (byte*)opt + 1 - p);
+	SendDhcp(buf, (byte*)opt->Next() - p);
 }
 
 void TinyIP::dhcp_request(byte* buf)
@@ -728,80 +649,14 @@ void TinyIP::dhcp_request(byte* buf)
 
 	dhcp_fill_public_data(buf);
 
-	//buf[0x10]=hex_to_dec_H(0x152-0xe); 	//长度为328 bytes
-	//buf[0x11]=hex_to_dec_L(0x152-0xe);
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
 
-	//fill_ip_hdr_checksum(buf);
+	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
+	DHCP_OPT* opt = (DHCP_OPT*)p;
+	opt->SetType(DHCP_TYPE_Request);
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, DHCPServer, 4);
 
-	//buf[0x26]=hex_to_dec_H(0x152-0xe-0x14);
-	//buf[0x27]=hex_to_dec_L(0x152-0xe-0x14);
-
-	//buf[0x28] = 0x00;	// Checksum
-	//buf[0x29] = 0x00;
-
-	buf[0x11a] = 0x35; //option DHCP message type
-	buf[0x11b] = 0x01; //lenth=1
-	buf[0x11c] = 0x03; //dhcp request
-
-	buf[0x11d] = 0x3d; //option client identifier
-	buf[0x11e] = 0x07; //option 长度  1一个mac+一字节类型
-	buf[0x11f] = 0x01; //类型ETHERNET=1
-
-	buf[0x126] = 0x32; //requested ip option
-	buf[0x127] = 0x04; //option lenth
-
-	buf[0x128] = IP[0]; //请求的ip
-	buf[0x129] = IP[1];
-	buf[0x12a] = IP[2];
-	buf[0x12b] = IP[3];
-
-
-	buf[0x12c] = dhcp_option_server_id;
-	buf[0x12d] = 0x04;
-	buf[0x12e] = DHCPServer[0]; //dhcp server id
-	buf[0x12f] = DHCPServer[1];
-	buf[0x130] = DHCPServer[2];
-	buf[0x131] = DHCPServer[3];
-
-
-	buf[0x132] = 0x0c; //host option
-	buf[0x133] = 0x04; //长度为4
-	buf[0x134] = 0x61; //字符 a
-	buf[0x135] = 0x62; //字符 b
-	buf[0x136] = 0x63; //字符 c
-	buf[0x137] = 0x64; //字符 d
-
-	buf[0x138] = 0x51; 	//Client Fully Qualified Domain Name
-	buf[0x139] = 0x07;
-	buf[0x13a] = 0x00;
-	buf[0x13b] = 0x00;
-	buf[0x13c] = 0x00;
-	buf[0x13d] = 0x61; //字符 a
-	buf[0x13e] = 0x62; //字符 b
-	buf[0x13f] = 0x63; //字符 c
-	buf[0x140] = 0x64; //字符 d
-
-	buf[0x141] = 0x3c; //vendor option
-	buf[0x142] = 0x08; //长度为8
-	buf[0x143] = 0x4d; //下面为vender信息
-	buf[0x144] = 0x53;
-	buf[0x145] = 0x46;
-	buf[0x146] = 0x54;
-	buf[0x147] = 0x20;
-	buf[0x148] = 0x35;
-	buf[0x149] = 0x2e;
-	buf[0x14a] = 0x30;
-
-	buf[0x14b] = 0x37; //请求列表
-	buf[0x14c] = 0x04; //长度
-	buf[0x14d] = 0x01; //mask
-	buf[0x14e] = 0x06; //dns
-	buf[0x14f] = 0x03; //router
-	buf[0x150] = 0x2b ; //vender imfo
-	buf[0x151] = 0xff; //option end
-
-	//_enc->PacketSend(buf, 0x152);
-	SendUdp(buf, 0x152 - 14 - 20 - 8);
+	SendDhcp(buf, (byte*)opt->Next() - p);
 }
 
 void TinyIP::fill_data(byte *src, int src_begin, byte *dst, int dst_begin, int len)
@@ -838,74 +693,14 @@ void TinyIP::PareOption(byte* buf, int len)
 
 void TinyIP::dhcp_fill_public_data(byte* buf)
 {
-	/*char i=0;
-	for(i=0;i<6;i++)                    				//填充以太网头部mac
-	{
-		//buf[ETH_DST_MAC + i] = 0xff;
-		//buf[ETH_SRC_MAC + i] = Mac[i];
-		//buf[0x46 + i] = Mac[i];											//client mac
-		buf[0x120 + i] = Mac[i];										//option client mac
-	}*/
-	//ETH_HEADER* eth = _net->Eth;
-	//memcpy(eth->SrcMac, Mac, 6);
-	//memset(eth->DestMac, 0xFF, 6);
 	// 底层会设置Mac，这里不着急
 	memset(RemoteMac, 0xFF, 6);
-
-	//IP_HEADER* dhcp = _net->IP;
-	//memcpy(eth->SrcMac, Mac, 6);
-	//memset(eth->DestMac, 0xFF, 6);
-
-	//buf[0x0c] = 0x08;     												//0x80 0x00  ip包
-	//buf[0x0d] = 0x00;
-
-	//buf[0x0e] = 0x45;     												//4代表 ipv4 5代表5*4bytes=20 bytes ipv4头部长度
-	//buf[0x0f] = 0x00;
-
-	//buf[0x14] = 0x00;                             //fragment offset =0
-	//buf[0x15] = 0x00;
-
-	//buf[0x16] = 0x40; 	//ttl=64
-	//buf[0x17] = 0x11; 	//udp协议
-
-	/*for(i=0;i<4;i++)													  //填充ip
-	{
-		buf[IP_SRC_P+i] = 0x00;
-		buf[IP_DST_P+i] = 0xff;
-	}*/
-	//IP_HEADER* ip = _net->IP;
-	//memset(ip->SrcIP, 0x00, 4);
-	//memset(ip->DestIP, 0xFF, 4);
 	// 底层会设置IP，这里不着急
-	memset(IP, 0x00, 6);
+	//memset(IP, 0x00, 6);
 	memset(RemoteIP, 0xFF, 6);
 
-	//buf[0x22] = 0x00;
-	//buf[0x23] = 0x44;                             //本地dhcp端口为68
-
-	//buf[0x24] = 0x00;
-	//buf[0x25] = 0x43; 	//dhcp服务器端口
-	//UDP_HEADER* udp = _net->UDP;
 	Port = 68;
 	RemotePort = 67;
-
-	/*buf[0x2a] = 0x01;                             //boot requese
-	buf[0x2b] = 0x01; 	//硬件类型  ethernet
-
-	buf[0x2c] = 0x06; 	//硬件地址长度 6
-
-	buf[0x2e]=dhcp_id>>24;								//dhcp识别码
-	buf[0x2f]=dhcp_id>>16&0xff;
-	buf[0x30]=dhcp_id>>8&0xff;
-	buf[0x31]=dhcp_id&0xff;
-
-	buf[0x34] = 0x80; 	//最左一bit为1时表示server将以广播方式传递封包给client，其余尚未使用
-	*/
-
-	/*buf[0x116] = 0x63; //DHCP
-	buf[0x117] = 0x82;
-	buf[0x118] = 0x53;
-	buf[0x119] = 0x63;*/
 }
 
 void TinyIP::DHCP_config(byte* buf)
@@ -954,15 +749,24 @@ void TinyIP::DHCP_config(byte* buf)
 		//if(buf[dhcp_protocol_h]==0x63 && buf[0x11c]==0x02 && buf[0x25]==0x44)
 		if(opt->Data == DHCP_TYPE_Offer)
 		{
-			debug_printf("DHCP Server Found:");
-			ShowIP(ip->SrcIP);
-			debug_printf("\r\n");
-
-			//if(dhcp_offer(buf))
 			if(__REV(dhcp->TransID) == dhcp_id)
 			{
 				memcpy(IP, dhcp->YourIP, 4);
 				PareOption(buf, _net->PayloadLength - sizeof(DHCP_HEADER));
+#if NET_DEBUG
+				debug_printf("DHCP Offer IP:");
+				ShowIP(IP);
+				debug_printf(" Mask:");
+				ShowIP(Mask);
+				debug_printf(" DHCPServer:");
+				ShowIP(DHCPServer);
+				debug_printf(" DNSServer:");
+				ShowIP(DNSServer);
+				debug_printf(" Gateway:");
+				ShowIP(Gateway);
+				debug_printf("\r\n");
+#endif
+
 
 				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
@@ -972,8 +776,6 @@ void TinyIP::DHCP_config(byte* buf)
 		}
 		else if(opt->Data == DHCP_TYPE_Ack)
 		{
-			//if(dhcp_ack(buf)) break;
-			//continue;
 			debug_printf("DHCP Response IP:");
 			ShowIP(dhcp->YourIP);
 			debug_printf("\r\n");
@@ -983,6 +785,20 @@ void TinyIP::DHCP_config(byte* buf)
 				IPIsReady = true;
 				break;
 			}
+		}
+		else if(opt->Data == DHCP_TYPE_Nak)
+		{
+			opt = GetOption((byte*)dhcp + sizeof(DHCP_HEADER), len, DHCP_OPT_Message);
+			debug_printf("DHCP Nak IP:");
+			ShowIP(IP);
+			if(opt)
+			{
+				debug_printf(" ");
+				byte* str = &opt->Data;
+				for(int i=0; i<opt->Length; i++)
+					debug_printf("%c", str[i]);
+			}
+			debug_printf("\r\n");
 		}
 	}
 	// 删除任务
