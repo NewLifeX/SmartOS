@@ -26,6 +26,7 @@ private:
 	void SendIP(byte* buf, uint len);
 	void SendTcp(byte* buf, uint len, byte flags);
 	void SendUdp(byte* buf, uint len);
+	void SendDhcp(byte* buf, uint len);
 
 	byte seqnum;
 
@@ -41,7 +42,7 @@ private:
 	void dhcp_request(byte* buf);
 	//int dhcp_ack(byte* buf);
 	void fill_data(byte* src, int src_begin, byte* dst, int dst_begin, int len);
-	void search_list_data(byte* buf);
+	void PareOption(byte* buf, int len);
 	void dhcp_fill_public_data(byte* buf);
 	void DHCP_config(byte* buf);
 

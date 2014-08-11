@@ -118,7 +118,7 @@ typedef struct _ARP_HEADER
 	//unsigned char Padding[18];	// 填充凑够60字节
 }ARP_HEADER;
 
-// DHCP头部，总长度240字节，偏移42=0x2A
+// DHCP头部，总长度240=0xF0字节，偏移42=0x2A，后面可选数据偏移282=0x11A
 typedef struct _DHCP_HEADER
 {
 	unsigned char MsgType;		// 若是client送给server的封包，设为1，反向为2
@@ -135,8 +135,65 @@ typedef struct _DHCP_HEADER
 	unsigned char ClientMac[16];	// 客户端硬件地址
 	unsigned char ServerName[64];	// 服务器名
 	unsigned char BootFile[128];	// 启动文件名
-	unsigned int Magic[4];		// 幻数0x63825363，其实就是DHCP
+	unsigned int Magic;		// 幻数0x63825363，小端0x63538263
+
+	void SetMagic() { Magic = 0x63538263; }
+	bool Valid() { return Magic == 0x63538263; }
 }DHCP_HEADER;
+
+// DHCP后面可选数据格式为“代码+长度+数据”
+
+typedef enum
+{
+	DHCP_OPT_Mask = 1,
+	DHCP_OPT_Router = 3,
+	DHCP_OPT_TimeServer = 4,
+	DHCP_OPT_NameServer = 5,
+	DHCP_OPT_DNSServer = 6,
+	DHCP_OPT_LOGServer = 7,
+	DHCP_OPT_HostName = 12,
+	DHCP_OPT_MTU = 26,
+	DHCP_OPT_StaticRout = 33,
+	DHCP_OPT_ARPCacheTimeout = 35,
+	DHCP_OPT_DHCPServer = 36,
+	DHCP_OPT_NTPServer = 42,
+	DHCP_OPT_RequestedIP = 50,
+	DHCP_OPT_IPLeaseTime = 51,
+	DHCP_OPT_MessageType = 53,
+	DHCP_OPT_Identifier = 54,
+	DHCP_OPT_ParameterList = 55,
+	DHCP_OPT_Vendor = 60,
+	DHCP_OPT_ClientIdentifier = 61,
+	DHCP_OPT_End = 255,
+}DHCP_OPTION;
+
+typedef enum
+{
+	DHCP_TYPE_Discover = 1,
+	DHCP_TYPE_Offer = 2,
+	DHCP_TYPE_Request = 3,
+	DHCP_TYPE_Decline = 4,
+	DHCP_TYPE_Ack = 5,
+	DHCP_TYPE_Nak = 6,
+	DHCP_TYPE_Release = 7,
+	DHCP_TYPE_Inform = 8,
+}DHCP_MSGTYPE;
+
+typedef struct DHCP_OPTDef
+{
+	DHCP_OPTION Option;// 代码
+	byte Length;	// 长度
+	byte Data;		// 数据
+	
+	struct DHCP_OPTDef* Next() { return (struct DHCP_OPTDef*)((byte*)this + 2 + Length); }
+	
+	void SetType(DHCP_MSGTYPE type)
+	{
+		Option = DHCP_OPT_MessageType;
+		Length = 1;
+		Data = type;
+	}
+}DHCP_OPT;
 
 // 网络封包机
 class NetPacker
