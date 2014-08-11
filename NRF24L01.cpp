@@ -83,7 +83,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 10;
-        _IRQ->Register(OnReceive);
+        _IRQ->Register(OnReceive,this);
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
@@ -304,6 +304,7 @@ void NRF24L01::CEDown()
     if(_CE) *_CE = false;
 }
 
+// 注册中断函数  不注册的结果是    有中断 无中断处理代码 
 void NRF24L01::Register(DataReceived handler, void* param)
 {
     if(handler)
@@ -318,7 +319,7 @@ void NRF24L01::Register(DataReceived handler, void* param)
 	}
 }
 
-// 中断函数
+// 由引脚中断函数调用此函数  （nrf24l01的真正中断函数）
 void NRF24L01::OnReceive(Pin pin, bool down)
 {
 	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
@@ -328,6 +329,9 @@ void NRF24L01::OnReceive(Pin pin, bool down)
 	}
 }
 
+// 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个 
+// void Register(IOReadHandler handler, void* param = NULL);   // 注册事件    
+// typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 void NRF24L01::OnReceive(Pin pin, bool down, void* param)
 {
 	if(!down)

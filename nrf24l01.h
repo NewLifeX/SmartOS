@@ -9,6 +9,13 @@
 #define RX_OK   		0x40  //接收到数据中断
 #define NO_NEWS			0x50  //没有数据在2401中
 
+/*
+nRF24L01+  内部有缓存   没有必要收到数据就直接读出来
+用个事件标志位就ok了  一个类里面一个
+面对多个nRF24L01 的问题  申请中断的时候传入nRF的事例就好
+*/
+
+
 // NRF24L01类
 class NRF24L01
 {
@@ -47,7 +54,7 @@ private:
 	DataReceived _Received;
 	void* _Param;
 
-	static void OnReceive(Pin pin, bool down, void* param);
+	static  void OnReceive(Pin pin, bool down, void* param);
 };
 
 #endif
