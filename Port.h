@@ -171,6 +171,7 @@ protected:
     // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
     void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL)
     {
+		PuPd = pupd;
         Floating = floating;
         Speed = speed;
 
