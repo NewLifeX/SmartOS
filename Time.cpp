@@ -129,7 +129,7 @@ void TTime::Sleep(uint us)
 // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
 ulong TTime::NewTicks(uint us)
 {
-	return CurrentTicks() + us * TicksPerSecond / 1000000;
+	return CurrentTicks() + (ulong)us * TicksPerSecond / 1000000;
 }
 
 // 当前微秒数
