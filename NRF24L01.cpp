@@ -82,7 +82,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     {
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
-		_IRQ->ShakeTime = 10;
+		_IRQ->ShakeTime = 2;
         _IRQ->Register(OnReceive,this);
     }
     // 必须先赋值，后面WriteReg需要用到
@@ -225,6 +225,8 @@ void NRF24L01::SetMode(bool isReceive)
 	//_isEvent = false;
 	if(isReceive) // 接收模式
 	{
+		CEDown();		// 结束接收数据
+        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
 		CEUp();		//开始监听频段
 	}
@@ -323,6 +325,7 @@ void NRF24L01::Register(DataReceived handler, void* param)
 void NRF24L01::OnReceive(Pin pin, bool down)
 {
 	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
+	if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平 
 	if(_Received)
 	{
 		_Received(this, _Param);
