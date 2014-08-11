@@ -48,6 +48,7 @@ private:
 	virtual void Send(byte* buf, uint len);
 public:
     byte IP[4];
+    byte Mask[4];
 	byte Mac[6];
 	ushort Port;
 
@@ -61,7 +62,6 @@ public:
 	byte DHCPServer[4];
 	byte DNSServer[4];
 	byte Gateway[4];
-	byte Mask[4];
 
     TinyIP(Enc28j60* enc, byte ip[4], byte mac[6]);
     virtual ~TinyIP();

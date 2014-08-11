@@ -103,7 +103,7 @@ typedef struct _ICMP_HEADER
 	unsigned short Checksum;    //16位检验和
 }ICMP_HEADER;
 
-// ARP头部
+// ARP头部，总长度28字节，可能加18字节填充
 typedef struct _ARP_HEADER
 {
 	unsigned short HardType;		// 硬件类型

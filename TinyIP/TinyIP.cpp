@@ -3,11 +3,19 @@
 
 #define NET_DEBUG DEBUG
 
+void ShowHex(byte* buf, int size)
+{
+	while(size--) debug_printf("%02X-", *buf++);
+	debug_printf("\r\n");
+}
+
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
 	_enc = enc;
 	memcpy(IP, ip, 4);
 	memcpy(Mac, mac, 6);
+	byte mask[] = {0xFF, 0xFF, 0xFF, 0};
+	memcpy(Mask, mask, 4);
 
 	Buffer = NULL;
 	BufferSize = 1500;
@@ -52,6 +60,19 @@ void TinyIP::OnWork()
 	if(!_net->Unpack(len)) return;
 
 	ETH_HEADER* eth = _net->Eth;
+#if NET_DEBUG
+	/*debug_printf("Ethernet 0x%04X ", eth->Type);
+	ShowMac(eth->SrcMac);
+	debug_printf(" => ");
+	ShowMac(eth->DestMac);
+	debug_printf("\r\n");*/
+#endif
+
+	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
+	//if(memcmp(eth->DestMac, Mac, 6) != 0) return;
+	// 这里复制Mac地址
+	memcpy(RemoteMac, eth->SrcMac, 6);
+	
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
@@ -59,16 +80,20 @@ void TinyIP::OnWork()
 		return;
 	}
 
+	IP_HEADER* ip = _net->IP;
+	// 是否发给本机。注意memcmp相等返回0
+	if(!ip || memcmp(ip->DestIP, IP, 4) != 0) return;
+
 #if NET_DEBUG
-	if(eth->Type != ETH_IP) debug_printf("Unkown EthernetType 0x%02X\r\n", eth->Type);
+	if(eth->Type != ETH_IP)
+	{
+		debug_printf("Unkown EthernetType 0x%02X From", eth->Type);
+		ShowIP(ip->SrcIP);
+		debug_printf("\r\n");
+	}
 #endif
 
-	IP_HEADER* ip = (IP_HEADER*)(buf + sizeof(eth));
-	// 是否发给本机。注意memcmp相等返回0
-	if(memcmp(ip->DestIP, IP, 4) !=0 ) return;
-
 	// 记录远程信息
-	memcpy(RemoteMac, eth->SrcMac, 6);
 	memcpy(RemoteIP, ip->SrcIP, 4);
 
 	if(ip->Protocol == IP_ICMP)
@@ -105,6 +130,17 @@ void TinyIP::Work(void* param)
 
 void TinyIP::Init()
 {
+#if NET_DEBUG
+	debug_printf("\r\nTinyIP Init...");
+	debug_printf(" IP:");
+	ShowIP(IP);
+	debug_printf(" Mask:");
+	ShowIP(Mask);
+	debug_printf(" MAC:");
+	ShowMac(Mac);
+	debug_printf("\r\n");
+#endif
+
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
     _enc->Init((string)Mac);
 
@@ -124,6 +160,10 @@ void TinyIP::Init()
 
 	// 添加到系统任务，马上开始，尽可能多被调度
     Sys.AddTask(Work, this);
+	
+#if NET_DEBUG
+	debug_printf("TinyIP Ready!\r\n\r\n");
+#endif
 }
 
 void TinyIP::ProcessArp(byte* buf, uint len)
@@ -174,7 +214,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 #if NET_DEBUG
 	debug_printf("ARP Response To ");
 	ShowIP(arp->DestIP);
-	debug_printf("\r\n");
+	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
 	SendEthernet(buf, sizeof(ARP_HEADER));
@@ -324,7 +364,9 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 
 	len += sizeof(ETH_HEADER);
 	if(len < 60) len = 60;	// 以太网最小包60字节
-	_enc->PacketSend(buf, len);
+	//debug_printf("SendEthernet: %d\r\n", len);
+	//ShowHex((byte*)eth, len);
+	_enc->PacketSend((byte*)eth, len);
 }
 
 void TinyIP::SendIP(byte* buf, uint len)
