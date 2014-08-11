@@ -414,7 +414,7 @@ void TinyIP::SendIP(byte* buf, uint len)
 
 	// 网络序是大端
 	ip->Checksum = 0;
-	ip->Checksum = __REV16((ushort)checksum((byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum = __REV16((ushort)CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
 
 	_net->Eth->Type = ETH_IP;
 	SendEthernet(buf, sizeof(IP_HEADER) + len);
@@ -430,13 +430,13 @@ void TinyIP::SendTcp(byte* buf, uint len, byte flags)
 
 	// 网络序是大端
 	tcp->Checksum = 0;
-	tcp->Checksum = __REV16((ushort)checksum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
+	tcp->Checksum = __REV16((ushort)CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
 	_net->IP->Protocol = IP_TCP;
 	SendIP(buf, sizeof(TCP_HEADER) + len);
 }
 
-void TinyIP::SendUdp(byte* buf, uint len)
+void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
 {
 	UDP_HEADER* udp = _net->UDP;
 
@@ -446,7 +446,7 @@ void TinyIP::SendUdp(byte* buf, uint len)
 
 	// 网络序是大端
 	udp->Checksum = 0;
-	//udp->Checksum = __REV16((ushort)checksum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+	if(checksum) udp->Checksum = __REV16((ushort)CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	_net->IP->Protocol = IP_UDP;
 	SendIP(buf, sizeof(UDP_HEADER) + len);
@@ -486,10 +486,10 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
 
-	SendUdp(buf, sizeof(DHCP_HEADER) + len);
+	SendUdp(buf, sizeof(DHCP_HEADER) + len, false);
 }
 
-uint TinyIP::checksum(byte* buf, uint len, byte type)
+uint TinyIP::CheckSum(byte* buf, uint len, byte type)
 {
     // type 0=ip
     //      1=udp
@@ -708,8 +708,7 @@ void TinyIP::DHCP_config(byte* buf)
 	// 向DHCP服务器广播
 	debug_printf("DHCP Discover...\r\n");
 	dhcp_discover();
-	// 每2秒执行一次服务器发现任务
-	//uint taskid = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+
 	ulong end = Time.NewTicks(10 * 1000000);
 	while(end > Time.CurrentTicks())
 	{
@@ -721,7 +720,7 @@ void TinyIP::DHCP_config(byte* buf)
 		IP_HEADER* ip = _net->IP;
 		if(!ip) continue;
 
-		//debug_printf("IP Protocol=%d\r\n", len, __REV16(ip->Protocol));
+		debug_printf("IP Protocol=%d\r\n", __REV16(ip->Protocol));
 		UDP_HEADER* udp = _net->UDP;
 		if(!udp || __REV16(udp->DestPort) != 68) continue;
 
@@ -801,8 +800,6 @@ void TinyIP::DHCP_config(byte* buf)
 			debug_printf("\r\n");
 		}
 	}
-	// 删除任务
-	//Sys.RemoveTask(taskid);
 }
 
 void TinyIP::Send(byte* buf, uint len)

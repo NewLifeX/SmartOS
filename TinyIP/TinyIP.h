@@ -25,7 +25,7 @@ private:
 	void SendEthernet(byte* buf, uint len);
 	void SendIP(byte* buf, uint len);
 	void SendTcp(byte* buf, uint len, byte flags);
-	void SendUdp(byte* buf, uint len);
+	void SendUdp(byte* buf, uint len, bool checksum = true);
 	void SendDhcp(byte* buf, uint len);
 
 	byte seqnum;
@@ -34,7 +34,7 @@ private:
 	//void make_tcp_ack_from_any(byte* buf, uint dlen);
 	void make_tcp_ack_with_data(byte* buf, uint dlen);
 
-	uint checksum(byte* buf, uint len, byte type);
+	uint CheckSum(byte* buf, uint len, byte type);
 
 	uint dhcp_id;
 	void dhcp_discover();
