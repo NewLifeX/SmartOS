@@ -38,13 +38,9 @@ private:
 
 	uint dhcp_id;
 	void dhcp_discover();
-	//int dhcp_offer(byte* buf);
 	void dhcp_request(byte* buf);
-	//int dhcp_ack(byte* buf);
-	void fill_data(byte* src, int src_begin, byte* dst, int dst_begin, int len);
 	void PareOption(byte* buf, int len);
-	void dhcp_fill_public_data(byte* buf);
-	void DHCP_config(byte* buf);
+	void DHCPConfig(byte* buf);
 
 	virtual void Send(byte* buf, uint len);
 public:
