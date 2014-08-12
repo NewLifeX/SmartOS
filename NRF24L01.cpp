@@ -238,17 +238,10 @@ void NRF24L01::SetMode(bool isReceive)
 // 从NRF的接收缓冲区中读出数据
 byte NRF24L01::Receive(byte *data)
 {
-//	int time=0;
-//	// 等待接收中断   此中断可能不发生  所以不能while（xx）；
-//	while(_IRQ->Read())
-//		{
-//			time++;
-//			if(time > _outTime)return NO_NEWS ;
-//		}
-	//if(_isEvent == false)return NO_NEWS;
 //	CEUp();		// 开始接收数据
 //	CEDown();	// 结束接收数据
-	
+	if(_isEvent == false)return NO_NEWS;
+
 	/*读取status寄存器的值  */
 	byte state = ReadReg(STATUS);
 	/* 清除中断标志*/
@@ -261,12 +254,15 @@ byte NRF24L01::Receive(byte *data)
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 		CEDown();		// 结束接收数据
 		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
-		//_isEvent = false;
+		_isEvent = false;
+		CEUp();			// 继续监听空中数据
         return RX_OK;
 	}
+	Config(false);	// 切换一次发送模式  然后切回来
+	SetMode(false);
 	Config(false);	// 在出现问题的时候重新配置保证通信稳定
 	SetMode(true);
-	return false;                    //没收到任何数据
+	return false;  	// 没收到任何数据
 }
 
 // 向NRF的发送缓冲区中写入数据
@@ -330,6 +326,7 @@ void NRF24L01::OnReceive(Pin pin, bool down)
 	if(_Received)
 	{
 		_Received(this, _Param);
+		this->_isEvent=true;
 	}
 }
 

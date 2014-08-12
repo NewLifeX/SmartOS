@@ -23,6 +23,7 @@ private:
     Spi* _spi;
     OutputPort* _CE;
     InputPort* _IRQ;
+	bool _isEvent;
 
     byte WriteBuf(byte reg ,byte *pBuf,byte bytes);
     byte ReadBuf(byte reg,byte *pBuf,byte bytes);
