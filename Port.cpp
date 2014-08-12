@@ -460,7 +460,10 @@ extern "C"
             //value = TIO_Read(state->Pin); // 获取引脚状态
             EXTI->PR = bit;   // 重置挂起位
             value = InputOutputPort::Read(state->Pin); // 获取引脚状态
-            Sys.Sleep(shakeTime); // 避免抖动
+			// 值必须有变动才触发
+			if(value == state->OldValue) return;
+
+			Time.Sleep(shakeTime); // 避免抖动
         } while (EXTI->PR & bit); // 如果再次挂起则重复
         //EXTI_ClearITPendingBit(line);
 		// 值必须有变动才触发

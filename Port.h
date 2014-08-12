@@ -152,8 +152,8 @@ public:
     bool Floating;      // 是否浮空输入
     uint ShakeTime;     // 抖动时间
 
-    InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pin); Init(floating, speed, pupd); }
-    InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL) { SetPort(pins, count); Init(floating, speed, pupd); }
+    InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, speed, pupd); }
+    InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ~InputPort();
@@ -169,7 +169,7 @@ public:
 
 protected:
     // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
-    void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_NOPULL)
+    void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP)
     {
 		PuPd = pupd;
         Floating = floating;
