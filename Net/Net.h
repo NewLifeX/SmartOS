@@ -67,8 +67,10 @@ typedef enum
 {
 	TCP_FLAGS_FIN = 1,		// 结束连接请求标志位。为1表示结束连接请求数据包
 	TCP_FLAGS_SYN = 2,		// 连接请求标志位。为1表示发起连接的请求数据包
+	TCP_FLAGS_RST = 4,
 	TCP_FLAGS_PUSH = 8,		// 标志位，为1表示此数据包应立即进行传递
 	TCP_FLAGS_ACK = 0x10,	// 应答标志位，为1表示确认，数据包为应答数据包
+	TCP_FLAGS_URG = 0x20,
 }TCP_FLAGS;
 
 //TCP头部，总长度20=0x14字节，偏移34=0x22。后面可能有可选数据，Length决定头部总长度（4的倍数）
@@ -286,6 +288,8 @@ public:
 				if(iplen < sizeof(IP_HEADER)) iplen = sizeof(IP_HEADER);
 				Payload += iplen;
 				PayloadLength -= iplen;
+				// 前面的len不准确，必须以这个为准
+				PayloadLength = __REV16(IP->TotalLength) - iplen;
 
 				switch(IP->Protocol)
 				{

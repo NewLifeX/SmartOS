@@ -3,6 +3,24 @@
 
 #define NET_DEBUG DEBUG
 
+#ifndef USE_TCP
+	#define USE_TCP 1
+#endif
+
+#ifndef USE_UDP
+	#define USE_UDP 1
+#endif
+
+#ifndef USE_DHCP
+	#define USE_UDP 1
+	#define USE_DHCP 1
+#endif
+
+#ifndef USE_DNS
+	#define USE_UDP 1
+	#define USE_DNS 1
+#endif
+
 void ShowHex(byte* buf, int size)
 {
 	for(int i=0; i<size; i++)
@@ -77,6 +95,9 @@ void TinyIP::OnWork()
 	// 这里复制Mac地址
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
+	// 计算负载数据的长度
+	len -= sizeof(ETH_HEADER);
+
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
@@ -100,6 +121,16 @@ void TinyIP::OnWork()
 	// 记录远程信息
 	memcpy(RemoteIP, ip->SrcIP, 4);
 
+	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
+	//assert_param(__REV16(ip->TotalLength) == len);
+	// 数据包是否完整
+	if(len < __REV16(ip->TotalLength)) return;
+	// 计算负载数据的长度，注意ip可能变长，长度Length的单位是4字节
+	//len -= sizeof(IP_HEADER);
+	
+	// 前面的len不准确，必须以这个为准
+	len = __REV16(ip->TotalLength) - ip->Length << 2;
+	
 	if(ip->Protocol == IP_ICMP)
 	{
 		ProcessICMP(buf, len);
@@ -243,10 +274,11 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
 {
+	if(len < sizeof(ICMP_HEADER)) return;
+	len -= sizeof(ICMP_HEADER);
+
 	ICMP_HEADER* icmp = _net->ICMP;
 	if(!icmp) return;
-
-	len -= ((byte*)icmp - (byte*)_net->Eth);
 
 #if NET_DEBUG
 	debug_printf("Ping From "); // 打印发方的ip
@@ -272,34 +304,37 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
 {
-	len -= sizeof(ETH_HEADER) + sizeof(IP_HEADER);
 	if(len < sizeof(TCP_HEADER)) return;
 
 	TCP_HEADER* tcp = _net->TCP;
 	if(!tcp) return;
 
-	len -= ((byte*)tcp - (byte*)_net->Eth);
+	assert_param((tcp->Length << 2) >= sizeof(TCP_HEADER));
+	len -= tcp->Length << 2;
+	assert_param(len == _net->PayloadLength);
 
 	Port = __REV16(tcp->DestPort);
 	RemotePort = __REV16(tcp->SrcPort);
 
 #if NET_DEBUG
-	debug_printf("TCP ");
+	/*debug_printf("TCP ");
 	ShowIP(RemoteIP);
 	debug_printf(":%d => ", __REV16(tcp->SrcPort));
 	ShowIP(_net->IP->DestIP);
-	debug_printf(":%d\r\n", __REV16(tcp->DestPort));
+	debug_printf(":%d\r\n", __REV16(tcp->DestPort));*/
 #endif
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
-		debug_printf("\tRequest From "); // 打印发送方的ip
+#if NET_DEBUG
+		debug_printf("Tcp Accept "); // 打印发送方的ip
 		ShowIP(RemoteIP);
 		debug_printf("\r\n");
+#endif
 
 		//第二次同步应答
-		TcpHead(1, 1, 0);
+		TcpHead(1, true, false);
 
 		// 需要用到MSS，所以采用4个字节的可选段
 		SendTcp(buf, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
@@ -310,31 +345,36 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	if (tcp->Flags & TCP_FLAGS_ACK) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
 		// 无数据返回ACK
-		if (_net->PayloadLength == 0)
+		if (len == 0)
 		{
-			if (tcp->Flags & TCP_FLAGS_FIN)      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
+			if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
-				TcpHead(1,0,1);
+				TcpHead(1, false, true);
 				SendTcp(buf, 0, TCP_FLAGS_ACK);
 			}
 			return;
 		}
-		///////////////////////////打印TCP数据/////////////////
-		debug_printf("Data from TCP:");
-		for(int i=0; i<_net->PayloadLength; i++)
+#if NET_DEBUG
+		debug_printf("Tcp Data(%d) From ", len);
+		ShowIP(RemoteIP);
+		debug_printf(" : ");
+		for(int i=0; i<len; i++)
 			debug_printf("%c", _net->Payload[i]);
-
 		debug_printf("\r\n");
-		///////////////////////////////////////////////////////
+#endif
 		// 发送ACK，通知已收到
-		TcpHead(_net->PayloadLength, 0, 1);
-		SendTcp(buf, 0, TCP_FLAGS_ACK);
+		TcpHead(len, false, true);
+		//SendTcp(buf, 0, TCP_FLAGS_ACK);
 
-		TcpSend(buf, len);
-
-		// tcp_close(buf,len);
-		// for(;reset<BufferSize + 1;reset++)
-		// 	buf[BufferSize + 1] = 0;
+		//TcpSend(buf, len);
+		
+		// 响应Ack和发送数据一步到位
+		SendTcp(buf, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	}
+	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
+	{
+		TcpHead(1, false, true);
+		TcpClose(buf, 0);
 	}
 }
 
@@ -434,6 +474,7 @@ void TinyIP::SendTcp(byte* buf, uint len, byte flags)
 	tcp->SrcPort = __REV16(Port);
 	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
+	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
 	// 网络序是大端
 	tcp->Checksum = 0;
@@ -545,26 +586,12 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
 
 void TinyIP::TcpHead(uint ackNum, bool mss, bool opSeq)
 {
-    /*byte i = 4;
-    // sequence numbers:
-    // add the rel ack num to SEQACK
-    while(i>0)
-    {
-        rel_ack_num = buf[TCP_SEQ_H_P + i-1] + rel_ack_num;
-        byte tseq = buf[TCP_SEQACK_H_P + i-1];
-        buf[TCP_SEQACK_H_P + i-1] = 0xff & rel_ack_num;
-        if (opSeq)
-        {
-            // copy the acknum sent to us into the sequence number
-            buf[TCP_SEQ_H_P + i-1] = tseq;
-        }
-        else
-        {
-            buf[TCP_SEQ_H_P + i-1] = 0; // some preset vallue
-        }
-        rel_ack_num = rel_ack_num >> 8;
-        i--;
-    }*/
+    /*
+	第一次握手：主机A发送位码为syn＝1，随机产生seq number=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机；
+	第二次握手：主机B收到请求后要确认联机信息，向A发送ack number=(主机A的seq+1)，syn=1，ack=1，随机产生seq=7654321的包；
+	第三次握手：主机A收到后检查ack number是否正确，即第一次发送的seq number+1，以及位码ack是否为1，若正确，主机A会再发送ack number=(主机B的seq+1)，ack=1，主机B收到后确认seq值与ack=1则连接建立成功。
+	完成三次握手，主机A与主机B开始传送数据。
+	*/
 	TCP_HEADER* tcp = _net->TCP;
 	int ack = tcp->Ack;
 	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
@@ -580,12 +607,12 @@ void TinyIP::TcpHead(uint ackNum, bool mss, bool opSeq)
 		tcp->Seq = ack;
 	}
 
-	tcp->Length = sizeof(TCP_HEADER);
+	tcp->Length = sizeof(TCP_HEADER) / 4;
     // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
     if (mss)
     {
-        // 使用可选域设置 MSS 到 1408:0x580
-		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x02040580);
+        // 使用可选域设置 MSS 到 1460:0x5b4
+		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x020405b4);
 
 		tcp->Length++;
     }
