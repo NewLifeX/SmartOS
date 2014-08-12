@@ -63,6 +63,14 @@ typedef struct _IP_HEADER
 	unsigned char DestIP[4];	//目的IP地址
 }IP_HEADER;
 
+typedef enum
+{
+	TCP_FLAGS_FIN = 1,		// 结束连接请求标志位。为1表示结束连接请求数据包
+	TCP_FLAGS_SYN = 2,		// 连接请求标志位。为1表示发起连接的请求数据包
+	TCP_FLAGS_PUSH = 8,		// 标志位，为1表示此数据包应立即进行传递
+	TCP_FLAGS_ACK = 0x10,	// 应答标志位，为1表示确认，数据包为应答数据包
+}TCP_FLAGS;
+
 //TCP头部，总长度20=0x14字节，偏移34=0x22。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _TCP_HEADER
 {
@@ -185,9 +193,9 @@ typedef struct DHCP_OPTDef
 	DHCP_OPTION Option;// 代码
 	byte Length;	// 长度
 	byte Data;		// 数据
-	
+
 	struct DHCP_OPTDef* Next() { return (struct DHCP_OPTDef*)((byte*)this + 2 + Length); }
-	
+
 	struct DHCP_OPTDef* SetType(DHCP_MSGTYPE type)
 	{
 		Option = DHCP_OPT_MessageType;
@@ -196,7 +204,7 @@ typedef struct DHCP_OPTDef
 
 		return this;
 	}
-	
+
 	struct DHCP_OPTDef* SetData(DHCP_OPTION option, byte* buf, uint len)
 	{
 		Option = option;
@@ -205,7 +213,7 @@ typedef struct DHCP_OPTDef
 
 		return this;
 	}
-	
+
 	struct DHCP_OPTDef* SetClientId(byte* mac, uint len = 6)
 	{
 		Option = DHCP_OPT_ClientIdentifier;
@@ -215,7 +223,7 @@ typedef struct DHCP_OPTDef
 
 		return this;
 	}
-	
+
 	struct DHCP_OPTDef* End()
 	{
 		Option = DHCP_OPT_End;
@@ -321,30 +329,30 @@ public:
 
 		return (DHCP_HEADER*)Payload;
 	}
-	
+
 	// 设置使用IP协议
 	IP_HEADER* SetIP()
 	{
 		ARP = NULL;
 		IP = (IP_HEADER*)((byte*)Eth + sizeof(ETH_HEADER));
-		Eth->Type = ETH_IP;
 		IP->Version = 4;
-		
+		IP->Length = sizeof(IP_HEADER);
+		Eth->Type = ETH_IP;
+
 		return IP;
 	}
-	
+
 	// 设置使用UDP协议
 	UDP_HEADER* SetUDP()
 	{
 		SetIP();
-		
+
 		IP->Protocol = IP_UDP;
-		IP->Length = sizeof(IP_HEADER);
-		
+
 		ICMP = NULL;
 		TCP = NULL;
 		UDP = (UDP_HEADER*)((byte*)IP + sizeof(IP_HEADER));
-		
+
 		UDP->Length = sizeof(UDP_HEADER);
 		Payload = (byte*)UDP + UDP->Length;
 
