@@ -226,12 +226,25 @@ void NRF24L01::SetMode(bool isReceive)
 	//_isEvent = false;
 	if(isReceive) // 接收模式
 	{
+		//CEDown();		// 结束接收数据
+		Config(false);
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
+		Sys.Sleep(300);
+        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
+		Config(false);
+		CEDown();		// 结束接收数据
+        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
+		CEUp();		//开始监听频段
+		Sys.Sleep(50);
+		Config(false);
 		CEDown();		// 结束接收数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
 		CEUp();		//开始监听频段
 	}
 	else		  // 发送模式
+		Config(false);
 	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
 }
 
@@ -269,6 +282,8 @@ byte NRF24L01::Receive(byte *data)
 byte NRF24L01::Send(byte* data)
 {
 	 /*ce为低，进入待机模式1*/
+	SetMode(false);	//直接在这里进行设置模式
+	
 	CEDown();
 	/*写数据到TX BUF 最大 32个字节*/
 	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
