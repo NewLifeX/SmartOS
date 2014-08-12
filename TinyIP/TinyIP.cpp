@@ -390,8 +390,8 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 	memcpy(&eth->DestMac, &RemoteMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
-	len += sizeof(ETH_HEADER);
-	if(len < 60) len = 60;	// 以太网最小包60字节
+	//len += sizeof(ETH_HEADER);
+	//if(len < 60) len = 60;	// 以太网最小包60字节
 
 	//debug_printf("SendEthernet: %d\r\n", len);
 	//ShowHex((byte*)eth, len);
@@ -470,8 +470,9 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	if(p[len - 1] != DHCP_OPT_End)
 	{
+		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
-		opt = opt->Next()->SetClientId(Mac, 6);
+		opt = opt->SetClientId(Mac, 6);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, IP, 4);
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS SmartOS", 11);
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
