@@ -400,8 +400,7 @@ void TSys::Start()
 	_Running = true;
 	while(_Running)
 	{
-		//uint minTime = 0xFFFFFFFF;	// 最小等待时间
-		uint now = Time.Current();	// 当前时间
+		ulong now = Time.Current();	// 当前时间
 		int k = 0;
 		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
 		{
@@ -417,13 +416,12 @@ void TSys::Start()
 				{
 					_Tasks[i] = NULL;
 					delete task;
+					_TaskCount--;
 				}
 				
 				k++;
 			}
 		}
-		
-		//if(minTime > 0) Delay(minTime);
 	}
 	debug_printf("系统停止调度，共有%d个任务！\r\n", _TaskCount);
 }

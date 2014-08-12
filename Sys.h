@@ -90,7 +90,7 @@ private:
 		Action Callback;// 回调
 		void* Param;	// 参数
 		int Period;		// 周期us
-		int NextTime;	// 下一次执行时间
+		ulong NextTime;	// 下一次执行时间
 	};
 
 	Task* _Tasks[32];
