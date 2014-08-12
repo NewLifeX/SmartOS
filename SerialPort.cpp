@@ -20,7 +20,7 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
-
+	_Received = NULL;	// 赋值NULL  以免野指针
     _port = g_Uart_Ports[com];
 
 	_tx = NULL;
@@ -53,7 +53,7 @@ void SerialPort::Open()
     if(_com != Sys.MessagePort)
     {
 ShowLog:
-        debug_printf("Serial%d Open(%d", _com + 1, _baudRate);
+        debug_printf("\r\nSerial%d Open(%d", _com + 1, _baudRate);
         switch(_parity)
         {
             case USART_Parity_No: debug_printf(", Parity_None"); break;
@@ -261,6 +261,7 @@ void SerialPort::Register(DataReceived handler, void* param)
     else
 	{
 		Interrupt.Deactivate(SERIALPORT_IRQns[_com]);
+		_Received = NULL;
 	}
 }
 
@@ -274,7 +275,8 @@ void SerialPort::OnReceive(ushort num, void* param)
 		{
 			//uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
 			//if(count > 0) sp->_Received(sp, sp->rx_buf, count, sp->_Param);
-			sp->_Received(sp, sp->_Param);
+			if(sp->_Received)			// 验证是否可用  以免造成不要的程序跑飞
+				sp->_Received(sp, sp->_Param);
 		}
 	}
 }
