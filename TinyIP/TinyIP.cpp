@@ -359,13 +359,13 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	{
 		debug_printf("%c", data[i]);
 	}
-	debug_printf("\r\n");
+	debug_printf(" \r\n");
 
 	udp->DestPort = udp->SrcPort;
+	assert_param(data == (byte*)udp + sizeof(UDP_HEADER));
+	memcpy((byte*)udp + sizeof(UDP_HEADER), data, _net->PayloadLength);
 
-	memcpy((byte*)(udp + sizeof(UDP_HEADER)), data, _net->PayloadLength);
-
-	SendUdp(buf, _net->PayloadLength);
+	SendUdp(buf, _net->PayloadLength, false);
 }
 
 void TinyIP::ShowIP(byte* ip)
@@ -390,7 +390,7 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 	memcpy(&eth->DestMac, &RemoteMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
-	//len += sizeof(ETH_HEADER);
+	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
 	//debug_printf("SendEthernet: %d\r\n", len);
@@ -478,7 +478,7 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
-		opt = opt->End();
+		opt = opt->Next()->End();
 
 		len = (byte*)opt + 1 - p;
 	}
@@ -631,6 +631,8 @@ void TinyIP::DHCPDiscover()
 
 	assert_param(_net->UDP);
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
+	// 为了安全，清空一次
+	memset(dhcp, 0, sizeof(DHCP_HEADER));
 
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	DHCP_OPT* opt = (DHCP_OPT*)p;
@@ -651,6 +653,8 @@ void TinyIP::DHCPRequest(byte* buf)
 
 	assert_param(_net->UDP);
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
+	// 为了安全，清空一次
+	memset(dhcp, 0, sizeof(DHCP_HEADER));
 
 	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	DHCP_OPT* opt = (DHCP_OPT*)p;
