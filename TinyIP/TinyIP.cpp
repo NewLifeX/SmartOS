@@ -5,7 +5,6 @@
 
 void ShowHex(byte* buf, int size)
 {
-	//while(size--) debug_printf("%02X-", *buf++);
 	for(int i=0; i<size; i++)
 	{
 		debug_printf("%02X-", *buf++);
@@ -300,7 +299,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		debug_printf("\r\n");
 
 		//第二次同步应答
-		make_tcphead(buf, 1, 1, 0);
+		TcpHead(1, 1, 0);
 
 		// 需要用到MSS，所以采用4个字节的可选段
 		SendTcp(buf, 4, TCP_FLAGS_SYNACK_V);
@@ -315,8 +314,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		{
 			if (tcp->Flags & TCP_FLAGS_FIN_V)      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
-				//make_tcp_ack_from_any(buf, 0);
-				make_tcphead(buf,1,0,1);
+				TcpHead(1,0,1);
 				SendTcp(buf, 0, TCP_FLAGS_ACK_V);
 			}
 			return;
@@ -328,8 +326,8 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 
 		debug_printf("\r\n");
 		///////////////////////////////////////////////////////
-		//make_tcp_ack_from_any(buf, _net->PayloadLength);       // 发送ACK，通知已收到
-		make_tcphead(buf, _net->PayloadLength, 0, 1);
+		// 发送ACK，通知已收到
+		TcpHead(_net->PayloadLength, 0, 1);
 		SendTcp(buf, 0, TCP_FLAGS_ACK_V);
 
 		TcpSend(buf, len);
@@ -538,15 +536,9 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
+void TinyIP::TcpHead(uint ackNum, bool mss, bool opSeq)
 {
-	TCP_HEADER* tcp = _net->TCP;
-
-	/*ushort port = tcp->SrcPort;
-	tcp->SrcPort = tcp->DestPort;
-	tcp->DestPort = port;*/
-
-    byte i = 4;
+    /*byte i = 4;
     // sequence numbers:
     // add the rel ack num to SEQACK
     while(i>0)
@@ -554,7 +546,7 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         rel_ack_num = buf[TCP_SEQ_H_P + i-1] + rel_ack_num;
         byte tseq = buf[TCP_SEQACK_H_P + i-1];
         buf[TCP_SEQACK_H_P + i-1] = 0xff & rel_ack_num;
-        if (cp_seq)
+        if (opSeq)
         {
             // copy the acknum sent to us into the sequence number
             buf[TCP_SEQ_H_P + i-1] = tseq;
@@ -565,45 +557,34 @@ void TinyIP::make_tcphead(byte* buf, uint rel_ack_num, byte mss, byte cp_seq)
         }
         rel_ack_num = rel_ack_num >> 8;
         i--;
-    }
-    if (cp_seq == 0)
+    }*/
+	TCP_HEADER* tcp = _net->TCP;
+	int ack = tcp->Ack;
+	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
+    if (!opSeq)
     {
 		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
 		tcp->Seq = __REV(seqnum << 8);
         // step the inititial seq num by something we will not use
         // during this tcp session:
         seqnum += 2;
-    }
-	//tcp->Checksum = 0;
+    }else
+	{
+		tcp->Seq = ack;
+	}
 
 	tcp->Length = sizeof(TCP_HEADER);
     // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
     if (mss)
     {
         // 使用可选域设置 MSS 到 1408:0x580
-		uint p = sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER);
-		*(uint *)(buf + p) = __REV(0x02040580);
+		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x02040580);
 
 		tcp->Length++;
     }
 }
 
-/*void TinyIP::make_tcp_ack_from_any(byte* buf, uint dlen)
-{
-    if (dlen == 0)
-    {
-        // if there is no data then we must still acknoledge one packet
-        make_tcphead(buf,1,0,1); // no options
-    }
-    else
-    {
-        make_tcphead(buf, dlen, 0, 1); // no options
-    }
-
-	SendTcp(buf, 0, TCP_FLAGS_ACK_V);
-}*/
-
-void TinyIP::make_tcp_ack_with_data(byte* buf, uint dlen)
+void TinyIP::TcpAck(byte* buf, uint dlen)
 {
 	SendTcp(buf, dlen, TCP_FLAGS_ACK_V | TCP_FLAGS_PUSH_V /*| TCP_FLAGS_FIN_V*/);
 }
@@ -631,7 +612,7 @@ void SetOption(byte* p, int len)
 }
 
 // 找服务器
-void TinyIP::dhcp_discover()
+void TinyIP::DHCPDiscover()
 {
 	byte* buf = Buffer;
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
@@ -643,7 +624,7 @@ void TinyIP::dhcp_discover()
 	SendDhcp(buf, (byte*)opt->Next() - p);
 }
 
-void TinyIP::dhcp_request(byte* buf)
+void TinyIP::DHCPRequest(byte* buf)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
 
@@ -701,7 +682,7 @@ void TinyIP::DHCPConfig(byte* buf)
 		{
 			// 向DHCP服务器广播
 			debug_printf("DHCP Discover...\r\n");
-			dhcp_discover();
+			DHCPDiscover();
 			
 			next = Time.NewTicks(1 * 1000000);
 		}
@@ -739,7 +720,7 @@ void TinyIP::DHCPConfig(byte* buf)
 				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 				debug_printf("DHCP Request  IP...\r\n");
-				dhcp_request(buf);
+				DHCPRequest(buf);
 			}
 		}
 		else if(opt->Data == DHCP_TYPE_Ack)
