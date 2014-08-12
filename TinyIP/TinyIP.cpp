@@ -45,7 +45,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	seqnum = 0xa;
 
 	// 分配缓冲区。比较大，小心栈空间不够
-	if(!Buffer) Buffer = new byte[BufferSize + 1];
+	if(!Buffer) Buffer = new byte[BufferSize];
 	assert_param(Buffer);
 	assert_param(Sys.CheckMemory());
 
@@ -816,6 +816,6 @@ void TinyIP::DHCPConfig(byte* buf)
 	}
 }
 
-void TinyIP::Send(byte* buf, uint len)
+void TinyIP::Send(IP_TYPE type, uint len)
 {
 }
