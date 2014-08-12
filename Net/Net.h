@@ -304,6 +304,7 @@ public:
 					{
 						TCP = (TCP_HEADER*)Payload;
 						iplen = TCP->Length << 2;
+						if(iplen < sizeof(TCP_HEADER)) iplen = sizeof(TCP_HEADER);
 						Payload += iplen;
 						PayloadLength -= iplen;
 						break;

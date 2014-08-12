@@ -129,7 +129,7 @@ void TinyIP::OnWork()
 	//len -= sizeof(IP_HEADER);
 	
 	// 前面的len不准确，必须以这个为准
-	len = __REV16(ip->TotalLength) - ip->Length << 2;
+	len = __REV16(ip->TotalLength) - (ip->Length << 2);
 	
 	if(ip->Protocol == IP_ICMP)
 	{
