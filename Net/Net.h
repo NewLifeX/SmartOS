@@ -30,6 +30,8 @@ typedef struct _ETH_HEADER
 	unsigned char DestMac[6]; //目标mac地址
 	unsigned char SrcMac[6]; //源mac地址
 	ETH_TYPE Type; //以太网类型
+
+	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }ETH_HEADER;
 
 // IP协议类型
@@ -61,6 +63,9 @@ typedef struct _IP_HEADER
 	unsigned short Checksum;	//检验和
 	unsigned char SrcIP[4];		//源IP地址
 	unsigned char DestIP[4];	//目的IP地址
+
+	//byte* Next() { return (byte*)this + sizeof(&this[0]); }
+	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
 }IP_HEADER;
 
 typedef enum
@@ -94,6 +99,8 @@ typedef struct _TCP_HEADER
 	unsigned short WindowSize;    //16位窗口大小
 	unsigned short Checksum;     //16位TCP检验和
 	unsigned short urgt_p;      //16为紧急指针
+
+	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
 }TCP_HEADER;
 
 //UDP头部，总长度8字节，偏移34=0x22
@@ -103,6 +110,8 @@ typedef struct _UDP_HEADER
 	unsigned short DestPort; //目的端口号
 	unsigned short Length;      //udp头部长度
 	unsigned short Checksum;  //16位udp检验和
+
+	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }UDP_HEADER;
 
 //ICMP头部，总长度4字节，偏移34=0x22
@@ -113,6 +122,8 @@ typedef struct _ICMP_HEADER
 	unsigned short Checksum;    //16位检验和
 	unsigned short Identifier;	//标识，仅用于Ping
 	unsigned short Sequence;	//序列号，仅用于Ping
+
+	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }ICMP_HEADER;
 
 // ARP头部，总长度28=0x1C字节，偏移14=0x0E，可能加18字节填充
@@ -128,6 +139,8 @@ typedef struct _ARP_HEADER
 	unsigned char DestMac[6];
 	unsigned char DestIP[4];	//目的IP地址
 	//unsigned char Padding[18];	// 填充凑够60字节
+
+	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }ARP_HEADER;
 
 // DHCP头部，总长度240=0xF0字节，偏移42=0x2A，后面可选数据偏移282=0x11A
@@ -148,6 +161,8 @@ typedef struct _DHCP_HEADER
 	unsigned char ServerName[64];	// 服务器名
 	unsigned char BootFile[128];	// 启动文件名
 	unsigned int Magic;		// 幻数0x63825363，小端0x63538263
+
+	byte* Next() { return (byte*)this + sizeof(this[0]); }
 
 	void SetMagic() { Magic = 0x63538263; }
 	bool Valid() { return Magic == 0x63538263; }

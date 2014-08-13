@@ -71,16 +71,16 @@ public:
     void TcpSend(byte* packet, uint len);
     void TcpClose(byte* packet, uint maxlen);
 
-	// 收到Ping请求时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
-	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, uint len);
+	// 收到Ping请求时触发，传递结构体和负载数据长度
+	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, byte* buf, uint len);
 	PingHandler OnPing;
 
-	// 收到Udp数据时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
-	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, uint len);
+	// 收到Udp数据时触发，传递结构体和负载数据长度
+	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, byte* buf, uint len);
 	UdpHandler OnUdpReceived;
 
-	// 收到Tcp数据时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
-	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, uint len);
+	// 收到Tcp数据时触发，传递结构体和负载数据长度
+	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, byte* buf, uint len);
 	TcpHandler OnTcpAccepted;
 	TcpHandler OnTcpReceived;
 	TcpHandler OnTcpDisconnected;

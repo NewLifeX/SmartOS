@@ -235,6 +235,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	// 是否发给本机。注意memcmp相等返回0
 	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
 
+	len -= sizeof(ARP_HEADER);
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
@@ -242,6 +243,8 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	assert_param(arp->HardLength == 6);
 	assert_param(arp->ProtocolLength == 4);
 	assert_param(arp->Option == 0x0100);
+	assert_param(_net->PayloadLength == len);
+	assert_param(_net->Payload == arp->Next());
 
 	if(arp->Option == 0x0100)
 		debug_printf("ARP Request For ");
@@ -283,9 +286,10 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 	ICMP_HEADER* icmp = _net->ICMP;
 	if(!icmp) return;
+	assert_param(_net->Payload == icmp->Next());
 
 	if(OnPing)
-		OnPing(this, icmp, len);
+		OnPing(this, icmp, icmp->Next(), len);
 	else
 	{
 #if NET_DEBUG
@@ -322,6 +326,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	assert_param((tcp->Length << 2) >= sizeof(TCP_HEADER));
 	len -= tcp->Length << 2;
 	assert_param(len == _net->PayloadLength);
+	assert_param(_net->Payload == tcp->Next());
 
 	Port = __REV16(tcp->DestPort);
 	RemotePort = __REV16(tcp->SrcPort);
@@ -338,7 +343,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
 		if(OnTcpAccepted)
-			OnTcpAccepted(this, tcp, len);
+			OnTcpAccepted(this, tcp, tcp->Next(), len);
 		else
 		{
 #if NET_DEBUG
@@ -371,7 +376,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		}
 
 		if(OnTcpReceived)
-			OnTcpReceived(this, tcp, len);
+			OnTcpReceived(this, tcp, tcp->Next(), len);
 		else
 		{
 #if NET_DEBUG
@@ -394,7 +399,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
-		if(OnTcpDisconnected) OnTcpDisconnected(this, tcp, len);
+		if(OnTcpDisconnected) OnTcpDisconnected(this, tcp, tcp->Next(), len);
 
 		TcpHead(1, false, true);
 		TcpClose(buf, 0);
@@ -408,9 +413,10 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	Port = __REV16(udp->DestPort);
 	RemotePort = __REV16(udp->SrcPort);
 	byte* data = _net->Payload;
+	assert_param(data == udp->Next());
 
 	if(OnUdpReceived)
-		OnUdpReceived(this, udp, len);
+		OnUdpReceived(this, udp, udp->Next(), len);
 	else
 	{
 #if NET_DEBUG
