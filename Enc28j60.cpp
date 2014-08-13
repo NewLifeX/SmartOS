@@ -1,5 +1,7 @@
 #include "Enc28j60.h"
 
+#define ENC_DEBUG 0
+
 Enc28j60::Enc28j60(Spi* spi, Pin ce, Pin irq)
 {
     _spi = spi;
@@ -253,6 +255,7 @@ void Enc28j60::PacketSend(byte* packet, uint len)
     // 把传输缓冲区的内容发送到网络
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 
+#if ENC_DEBUG
     if(GetRevision() == 0x05u || GetRevision() == 0x06u)
 	{
 		ushort count = 0;
@@ -318,6 +321,7 @@ void Enc28j60::PacketSend(byte* packet, uint len)
 			Write(ERDPTH, ReadPtrSave.v[1]);
 		}
 	}
+#endif
 
     // Reset the transmit logic problem. See Rev. B4 Silicon Errata point 12.
     if( (Read(EIR) & EIR_TXERIF) )
