@@ -3,24 +3,6 @@
 
 #define NET_DEBUG DEBUG
 
-#ifndef USE_TCP
-	#define USE_TCP 1
-#endif
-
-#ifndef USE_UDP
-	#define USE_UDP 1
-#endif
-
-#ifndef USE_DHCP
-	#define USE_UDP 1
-	#define USE_DHCP 1
-#endif
-
-#ifndef USE_DNS
-	#define USE_UDP 1
-	#define USE_DNS 1
-#endif
-
 void ShowHex(byte* buf, int size)
 {
 	for(int i=0; i<size; i++)
@@ -34,15 +16,43 @@ void ShowHex(byte* buf, int size)
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
 	_enc = enc;
-	memcpy(IP, ip, 4);
-	memcpy(Mac, mac, 6);
+
+	byte defip[] = {192, 168, 0, 1};
+	if(ip)
+		memcpy(IP, ip, 4);
+	else
+	{
+		// 随机IP，取ID最后一个字节
+		//IP[0] = 192; IP[1] = 168, IP[2] = 0, IP[3] = Sys.ID[2];
+		memcpy(IP, defip, 3);
+		IP[3] = Sys.ID[2];
+	}
+	
+	if(mac)
+		memcpy(Mac, mac, 6);
+	else
+	{
+		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
+		//Mac[0] = 59; Mac[1] = 57; Mac[2] = 53;
+		memcpy(Mac, "YWS", 3);
+		byte* p = (byte*)&Sys.ID[2];
+		p++;
+		//for(int i=3; i<6; i++) Mac[i] = *p++;
+		memcpy(&Mac[3], p, 3);
+	}
+
 	byte mask[] = {0xFF, 0xFF, 0xFF, 0};
 	memcpy(Mask, mask, 4);
+	memcpy(DHCPServer, defip, 4);
+	memcpy(Gateway, defip, 4);
+	memcpy(DNSServer, defip, 4);
 
 	Buffer = NULL;
 	BufferSize = 1500;
 
+#if TinyIP_TCP
 	seqnum = 0xa;
+#endif
 
 	// 分配缓冲区。比较大，小心栈空间不够
 	if(!Buffer) Buffer = new byte[BufferSize];
@@ -60,16 +70,6 @@ TinyIP::~TinyIP()
 
 	if(_net) delete _net;
 	_net = NULL;
-}
-
-void TinyIP::TcpClose(byte* buf, uint size)
-{
-	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
-}
-
-void TinyIP::TcpSend(byte* buf, uint size)
-{
-	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
 // 循环调度的任务
@@ -134,21 +134,27 @@ void TinyIP::OnWork()
 	len = size;
 	buf += (ip->Length << 2);
 
+#if TinyIP_ICMP
 	if(ip->Protocol == IP_ICMP)
 	{
 		ProcessICMP(buf, len);
 		return;
 	}
+#endif
+#if TinyIP_TCP
 	if (ip->Protocol == IP_TCP)
 	{
 		ProcessTcp(buf, len);
 		return;
 	}
+#endif
+#if TinyIP_UDP
 	if (ip->Protocol == IP_UDP /*&& buf[UDP_DST_PORT_H_P] == 4*/)
 	{
 		ProcessUdp(buf, len);
 		return;
 	}
+#endif
 
 #if NET_DEBUG
 	debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
@@ -184,6 +190,7 @@ bool TinyIP::Init()
     _enc->ClockOut(2);
 	//Sys.Sleep(1000);
 
+#if TinyIP_DHCP
 	if(UseDHCP)
 	{
 		IPIsReady = false;
@@ -198,6 +205,7 @@ bool TinyIP::Init()
 			return false;
 		}
 	}
+#endif
 
 #if NET_DEBUG
 	debug_printf("\tIP:\t");
@@ -281,6 +289,49 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
 }
 
+void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
+{
+	ETH_HEADER* eth = _net->Eth;
+	assert_param(IS_ETH_TYPE(type));
+
+	eth->Type = type;
+	memcpy(&eth->DestMac, &RemoteMac, 6);
+	memcpy(&eth->SrcMac, Mac, 6);
+
+	len += sizeof(ETH_HEADER);
+	//if(len < 60) len = 60;	// 以太网最小包60字节
+
+	//debug_printf("SendEthernet: %d\r\n", len);
+	//ShowHex((byte*)eth, len);
+	assert_param((byte*)eth == Buffer);
+	_enc->PacketSend((byte*)eth, len);
+}
+
+void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
+{
+	IP_HEADER* ip = _net->IP;
+	assert_param(ip);
+	assert_param(IS_IP_TYPE(type));
+
+	memcpy(&ip->DestIP, RemoteIP, 4);
+	memcpy(&ip->SrcIP, IP, 4);
+
+	ip->Version = 4;
+	ip->Length = sizeof(IP_HEADER) / 4;
+	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
+	ip->Flags = 0x40;
+	ip->FragmentOffset = 0;
+	ip->TTL = 64;
+	ip->Protocol = type;
+
+	// 网络序是大端
+	ip->Checksum = 0;
+	ip->Checksum = __REV16((ushort)CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
+
+	SendEthernet(ETH_IP, buf, sizeof(IP_HEADER) + len);
+}
+
+#if TinyIP_ICMP
 void TinyIP::ProcessICMP(byte* buf, uint len)
 {
 	if(len < sizeof(ICMP_HEADER)) return;
@@ -316,7 +367,9 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
     SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + len);
 }
+#endif
 
+#if TinyIP_TCP
 void TinyIP::ProcessTcp(byte* buf, uint len)
 {
 	if(len < sizeof(TCP_HEADER)) return;
@@ -407,6 +460,75 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	}
 }
 
+void TinyIP::SendTcp(byte* buf, uint len, byte flags)
+{
+	TCP_HEADER* tcp = _net->TCP;
+	assert_param(tcp);
+
+	tcp->SrcPort = __REV16(Port);
+	tcp->DestPort = __REV16(RemotePort);
+    tcp->Flags = flags;
+	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
+
+	// 网络序是大端
+	tcp->Checksum = 0;
+	tcp->Checksum = __REV16((ushort)CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
+
+	assert_param(_net->IP);
+	SendIP(IP_TCP, buf, sizeof(TCP_HEADER) + len);
+}
+
+void TinyIP::TcpHead(uint ackNum, bool mss, bool opSeq)
+{
+    /*
+	第一次握手：主机A发送位码为syn＝1，随机产生seq number=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机；
+	第二次握手：主机B收到请求后要确认联机信息，向A发送ack number=(主机A的seq+1)，syn=1，ack=1，随机产生seq=7654321的包；
+	第三次握手：主机A收到后检查ack number是否正确，即第一次发送的seq number+1，以及位码ack是否为1，若正确，主机A会再发送ack number=(主机B的seq+1)，ack=1，主机B收到后确认seq值与ack=1则连接建立成功。
+	完成三次握手，主机A与主机B开始传送数据。
+	*/
+	TCP_HEADER* tcp = _net->TCP;
+	int ack = tcp->Ack;
+	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
+    if (!opSeq)
+    {
+		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
+		tcp->Seq = __REV(seqnum << 8);
+        // step the inititial seq num by something we will not use
+        // during this tcp session:
+        seqnum += 2;
+    }else
+	{
+		tcp->Seq = ack;
+	}
+
+	tcp->Length = sizeof(TCP_HEADER) / 4;
+    // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
+    if (mss)
+    {
+        // 使用可选域设置 MSS 到 1460:0x5b4
+		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x020405b4);
+
+		tcp->Length++;
+    }
+}
+
+void TinyIP::TcpAck(byte* buf, uint dlen)
+{
+	SendTcp(buf, dlen, TCP_FLAGS_ACK | TCP_FLAGS_PUSH /*| TCP_FLAGS_FIN*/);
+}
+
+void TinyIP::TcpClose(byte* buf, uint size)
+{
+	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+}
+
+void TinyIP::TcpSend(byte* buf, uint size)
+{
+	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+}
+#endif
+
+#if TinyIP_UDP
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
 	UDP_HEADER* udp = _net->UDP;
@@ -443,80 +565,6 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	SendUdp(buf, _net->PayloadLength, false);
 }
 
-void TinyIP::ShowIP(byte* ip)
-{
-	debug_printf("%d", *ip++);
-	for(int i=1; i<4; i++)
-		debug_printf(".%d", *ip++);
-}
-
-void TinyIP::ShowMac(byte* mac)
-{
-	debug_printf("%02X", *mac++);
-	for(int i=1; i<6; i++)
-		debug_printf("-%02X", *mac++);
-}
-
-void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
-{
-	ETH_HEADER* eth = _net->Eth;
-	assert_param(IS_ETH_TYPE(type));
-
-	eth->Type = type;
-	memcpy(&eth->DestMac, &RemoteMac, 6);
-	memcpy(&eth->SrcMac, Mac, 6);
-
-	len += sizeof(ETH_HEADER);
-	//if(len < 60) len = 60;	// 以太网最小包60字节
-
-	//debug_printf("SendEthernet: %d\r\n", len);
-	//ShowHex((byte*)eth, len);
-	assert_param((byte*)eth == Buffer);
-	_enc->PacketSend((byte*)eth, len);
-}
-
-void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
-{
-	IP_HEADER* ip = _net->IP;
-	assert_param(ip);
-	assert_param(IS_IP_TYPE(type));
-
-	memcpy(&ip->DestIP, RemoteIP, 4);
-	memcpy(&ip->SrcIP, IP, 4);
-
-	ip->Version = 4;
-	ip->Length = sizeof(IP_HEADER) / 4;
-	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
-	ip->Flags = 0x40;
-	ip->FragmentOffset = 0;
-	ip->TTL = 64;
-	ip->Protocol = type;
-
-	// 网络序是大端
-	ip->Checksum = 0;
-	ip->Checksum = __REV16((ushort)CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
-
-	SendEthernet(ETH_IP, buf, sizeof(IP_HEADER) + len);
-}
-
-void TinyIP::SendTcp(byte* buf, uint len, byte flags)
-{
-	TCP_HEADER* tcp = _net->TCP;
-	assert_param(tcp);
-
-	tcp->SrcPort = __REV16(Port);
-	tcp->DestPort = __REV16(RemotePort);
-    tcp->Flags = flags;
-	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
-
-	// 网络序是大端
-	tcp->Checksum = 0;
-	tcp->Checksum = __REV16((ushort)CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
-
-	assert_param(_net->IP);
-	SendIP(IP_TCP, buf, sizeof(TCP_HEADER) + len);
-}
-
 void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
 {
 	UDP_HEADER* udp = _net->UDP;
@@ -533,43 +581,20 @@ void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
 	assert_param(_net->IP);
 	SendIP(IP_UDP, buf, sizeof(UDP_HEADER) + len);
 }
+#endif
 
-void TinyIP::SendDhcp(byte* buf, uint len)
+void TinyIP::ShowIP(byte* ip)
 {
-	UDP_HEADER* udp = _net->UDP;
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
+	debug_printf("%d", *ip++);
+	for(int i=1; i<4; i++)
+		debug_printf(".%d", *ip++);
+}
 
-	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-	if(p[len - 1] != DHCP_OPT_End)
-	{
-		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
-		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
-		opt = opt->SetClientId(Mac, 6);
-		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, IP, 4);
-		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS SmartOS", 11);
-		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
-		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
-		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
-		opt = opt->Next()->End();
-
-		len = (byte*)opt + 1 - p;
-	}
-
-	dhcp->MsgType = 1;
-	dhcp->HardType = 1;
-	dhcp->HardLength = 6;
-	dhcp->Hops = 0;
-	dhcp->TransID = __REV(dhcp_id);
-	dhcp->Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
-	dhcp->SetMagic();
-
-	memcpy(dhcp->ClientMac, Mac, 6);
-
-	// 如果最后一个字节不是DHCP_OPT_End，则增加End
-	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
-
-	SendUdp(buf, sizeof(DHCP_HEADER) + len, false);
+void TinyIP::ShowMac(byte* mac)
+{
+	debug_printf("%02X", *mac++);
+	for(int i=1; i<6; i++)
+		debug_printf("-%02X", *mac++);
 }
 
 uint TinyIP::CheckSum(byte* buf, uint len, byte type)
@@ -615,43 +640,43 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-void TinyIP::TcpHead(uint ackNum, bool mss, bool opSeq)
+#if TinyIP_DHCP
+void TinyIP::SendDhcp(byte* buf, uint len)
 {
-    /*
-	第一次握手：主机A发送位码为syn＝1，随机产生seq number=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机；
-	第二次握手：主机B收到请求后要确认联机信息，向A发送ack number=(主机A的seq+1)，syn=1，ack=1，随机产生seq=7654321的包；
-	第三次握手：主机A收到后检查ack number是否正确，即第一次发送的seq number+1，以及位码ack是否为1，若正确，主机A会再发送ack number=(主机B的seq+1)，ack=1，主机B收到后确认seq值与ack=1则连接建立成功。
-	完成三次握手，主机A与主机B开始传送数据。
-	*/
-	TCP_HEADER* tcp = _net->TCP;
-	int ack = tcp->Ack;
-	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
-    if (!opSeq)
-    {
-		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
-		tcp->Seq = __REV(seqnum << 8);
-        // step the inititial seq num by something we will not use
-        // during this tcp session:
-        seqnum += 2;
-    }else
+	UDP_HEADER* udp = _net->UDP;
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
+
+	byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
+	if(p[len - 1] != DHCP_OPT_End)
 	{
-		tcp->Seq = ack;
+		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
+		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
+		opt = opt->SetClientId(Mac, 6);
+		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, IP, 4);
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS SmartOS", 11);
+		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
+		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
+		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
+		opt = opt->Next()->End();
+
+		len = (byte*)opt + 1 - p;
 	}
 
-	tcp->Length = sizeof(TCP_HEADER) / 4;
-    // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
-    if (mss)
-    {
-        // 使用可选域设置 MSS 到 1460:0x5b4
-		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x020405b4);
+	dhcp->MsgType = 1;
+	dhcp->HardType = 1;
+	dhcp->HardLength = 6;
+	dhcp->Hops = 0;
+	dhcp->TransID = __REV(dhcp_id);
+	dhcp->Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
+	dhcp->SetMagic();
 
-		tcp->Length++;
-    }
-}
+	memcpy(dhcp->ClientMac, Mac, 6);
 
-void TinyIP::TcpAck(byte* buf, uint dlen)
-{
-	SendTcp(buf, dlen, TCP_FLAGS_ACK | TCP_FLAGS_PUSH /*| TCP_FLAGS_FIN*/);
+	// 如果最后一个字节不是DHCP_OPT_End，则增加End
+	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
+	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
+
+	SendUdp(buf, sizeof(DHCP_HEADER) + len, false);
 }
 
 // 获取选项，返回数据部分指针
@@ -846,8 +871,9 @@ void TinyIP::DHCPConfig(byte* buf)
 #endif
 	}
 }
+#endif
 
-void TinyIP::Register(DataHandler handler, void* param)
+/*void TinyIP::Register(DataHandler handler, void* param)
 {
 	if(handler)
 	{
@@ -861,6 +887,6 @@ void TinyIP::Register(DataHandler handler, void* param)
 	}
 }
 
-/*void TinyIP::Send(IP_TYPE type, uint len)
+void TinyIP::Send(IP_TYPE type, uint len)
 {
 }*/

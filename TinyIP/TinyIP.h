@@ -4,6 +4,33 @@
 #include "Enc28j60.h"
 #include "Net/Ethernet.h"
 
+// 默认打开所有模块，用户需要根据自己需要在编译器设置关闭条件，比如TinyIP_DHCP=0
+#ifndef TinyIP_ICMP
+	#define TinyIP_ICMP 1
+#endif
+
+#ifndef TinyIP_TCP
+	#define TinyIP_TCP 1
+#endif
+
+#ifndef TinyIP_UDP
+	#define TinyIP_UDP 1
+#endif
+
+#ifndef TinyIP_DHCP
+	#define TinyIP_DHCP 1
+#endif
+
+/*#ifndef TinyIP_DNS
+	#define TinyIP_DNS 1
+#endif*/
+
+// DHCP和DNS需要UDP
+#if TinyIP_DHCP || TinyIP_DNS
+	#undef TinyIP_UDP
+	#define TinyIP_UDP 1
+#endif
+
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
@@ -17,27 +44,39 @@ private:
 	void OnWork();	// 循环调度的任务
 
 	void ProcessArp(byte* buf, uint len);
-	void ProcessICMP(byte* buf, uint len);
-	void ProcessTcp(byte* buf, uint len);
-	void ProcessUdp(byte* buf, uint len);
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);
+	
+#if TinyIP_ICMP
+	void ProcessICMP(byte* buf, uint len);
+#endif
+
+#if TinyIP_TCP
+	void ProcessTcp(byte* buf, uint len);
 	void SendTcp(byte* buf, uint len, byte flags);
-	void SendUdp(byte* buf, uint len, bool checksum = true);
-	void SendDhcp(byte* buf, uint len);
 
 	byte seqnum;
 
 	void TcpHead(uint ackNum, bool mss, bool cp_seq);
 	void TcpAck(byte* buf, uint dlen);
+#endif
+
+#if TinyIP_UDP
+	void ProcessUdp(byte* buf, uint len);
+	void SendUdp(byte* buf, uint len, bool checksum = true);
+#endif
 
 	uint CheckSum(byte* buf, uint len, byte type);
 
+#if TinyIP_DHCP
 	uint dhcp_id;
 	void DHCPDiscover();
 	void DHCPRequest(byte* buf);
 	void PareOption(byte* buf, int len);
 	void DHCPConfig(byte* buf);
+
+	void SendDhcp(byte* buf, uint len);
+#endif
 
 	/*virtual void Send(IP_TYPE type, uint len);
 	// 获取负载数据指针。外部可以直接填充数据
@@ -54,41 +93,45 @@ public:
 	ushort RemotePort;
 
 	ushort BufferSize;	// 缓冲区大小
-	bool UseDHCP;
-	bool IPIsReady;
 	byte DHCPServer[4];
 	byte DNSServer[4];
 	byte Gateway[4];
 
-    TinyIP(Enc28j60* enc, byte ip[4], byte mac[6]);
+#if TinyIP_DHCP
+	bool IPIsReady;
+	bool UseDHCP;
+#endif
+
+    TinyIP(Enc28j60* enc, byte ip[4] = NULL, byte mac[6] = NULL);
     virtual ~TinyIP();
 
 	bool Init();
 	static void ShowIP(byte* ip);
 	static void ShowMac(byte* mac);
 
-	bool TcpConnect(byte ip[4], ushort port);	// 连接远程
-    void TcpSend(byte* packet, uint len);
-    void TcpClose(byte* packet, uint maxlen);
-
+#if TinyIP_ICMP
 	// 收到Ping请求时触发，传递结构体和负载数据长度
 	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, byte* buf, uint len);
 	PingHandler OnPing;
+#endif
 
 	// 收到Udp数据时触发，传递结构体和负载数据长度
+#if TinyIP_UDP
 	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, byte* buf, uint len);
 	UdpHandler OnUdpReceived;
+#endif
+
+#if TinyIP_TCP
+	bool TcpConnect(byte ip[4], ushort port);	// 连接远程
+    void TcpSend(byte* packet, uint len);
+    void TcpClose(byte* packet, uint maxlen);
 
 	// 收到Tcp数据时触发，传递结构体和负载数据长度
 	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, byte* buf, uint len);
 	TcpHandler OnTcpAccepted;
 	TcpHandler OnTcpReceived;
 	TcpHandler OnTcpDisconnected;
-
-	void Register(DataHandler handler, void* param = NULL);
-private:
-	DataHandler _Handler;
-	void* _Param;
+#endif
 };
 
 #endif
