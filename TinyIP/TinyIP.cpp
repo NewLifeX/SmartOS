@@ -284,16 +284,21 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	ICMP_HEADER* icmp = _net->ICMP;
 	if(!icmp) return;
 
+	if(OnPing)
+		OnPing(this, icmp, len);
+	else
+	{
 #if NET_DEBUG
-	debug_printf("Ping From "); // 打印发方的ip
-	ShowIP(RemoteIP);
-	debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
-	// 越过2个字节标识和2字节序列号
-	debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
-	for(int i=0; i<_net->PayloadLength; i++)
-		debug_printf("%c", _net->Payload[i]);
-	debug_printf(" \r\n");
+		debug_printf("Ping From "); // 打印发方的ip
+		ShowIP(RemoteIP);
+		debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
+		// 越过2个字节标识和2字节序列号
+		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
+		for(int i=0; i<_net->PayloadLength; i++)
+			debug_printf("%c", _net->Payload[i]);
+		debug_printf(" \r\n");
 #endif
+	}
 
 	// 只处理ECHO请求
 	if(icmp->Type != 8) return;
@@ -332,11 +337,16 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
+		if(OnTcpAccepted)
+			OnTcpAccepted(this, tcp, len);
+		else
+		{
 #if NET_DEBUG
-		debug_printf("Tcp Accept "); // 打印发送方的ip
-		ShowIP(RemoteIP);
-		debug_printf("\r\n");
+			debug_printf("Tcp Accept "); // 打印发送方的ip
+			ShowIP(RemoteIP);
+			debug_printf("\r\n");
 #endif
+		}
 
 		//第二次同步应答
 		TcpHead(1, true, false);
@@ -359,14 +369,20 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 			}
 			return;
 		}
+
+		if(OnTcpReceived)
+			OnTcpReceived(this, tcp, len);
+		else
+		{
 #if NET_DEBUG
-		debug_printf("Tcp Data(%d) From ", len);
-		ShowIP(RemoteIP);
-		debug_printf(" : ");
-		for(int i=0; i<len; i++)
-			debug_printf("%c", _net->Payload[i]);
-		debug_printf("\r\n");
+			debug_printf("Tcp Data(%d) From ", len);
+			ShowIP(RemoteIP);
+			debug_printf(" : ");
+			for(int i=0; i<len; i++)
+				debug_printf("%c", _net->Payload[i]);
+			debug_printf("\r\n");
 #endif
+		}
 		// 发送ACK，通知已收到
 		TcpHead(len, false, true);
 		//SendTcp(buf, 0, TCP_FLAGS_ACK);
@@ -378,6 +394,8 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
+		if(OnTcpDisconnected) OnTcpDisconnected(this, tcp, len);
+
 		TcpHead(1, false, true);
 		TcpClose(buf, 0);
 	}
@@ -389,22 +407,27 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 
 	Port = __REV16(udp->DestPort);
 	RemotePort = __REV16(udp->SrcPort);
+	byte* data = _net->Payload;
 
+	if(OnUdpReceived)
+		OnUdpReceived(this, udp, len);
+	else
+	{
 #if NET_DEBUG
-	IP_HEADER* ip = _net->IP;
-	debug_printf("UDP ");
-	ShowIP(ip->SrcIP);
-	debug_printf(":%d => ", __REV16(udp->SrcPort));
-	ShowIP(ip->DestIP);
-	debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
+		IP_HEADER* ip = _net->IP;
+		debug_printf("UDP ");
+		ShowIP(ip->SrcIP);
+		debug_printf(":%d => ", __REV16(udp->SrcPort));
+		ShowIP(ip->DestIP);
+		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
 #endif
 
-	byte* data = _net->Payload;
-	for(int i=0; i<_net->PayloadLength; i++)
-	{
-		debug_printf("%c", data[i]);
+		for(int i=0; i<_net->PayloadLength; i++)
+		{
+			debug_printf("%c", data[i]);
+		}
+		debug_printf(" \r\n");
 	}
-	debug_printf(" \r\n");
 
 	udp->DestPort = udp->SrcPort;
 	assert_param(data == (byte*)udp + sizeof(UDP_HEADER));
@@ -818,6 +841,20 @@ void TinyIP::DHCPConfig(byte* buf)
 		else
 			debug_printf("DHCP Unkown Type=%d\r\n", opt->Data);
 #endif
+	}
+}
+
+void TinyIP::Register(DataHandler handler, void* param)
+{
+	if(handler)
+	{
+		_Handler = handler;
+		_Param = param;
+	}
+	else
+	{
+		_Handler = NULL;
+		_Param = NULL;
 	}
 }
 

@@ -20,8 +20,6 @@ private:
 	void ProcessICMP(byte* buf, uint len);
 	void ProcessTcp(byte* buf, uint len);
 	void ProcessUdp(byte* buf, uint len);
-	void ShowIP(byte* ip);
-	void ShowMac(byte* mac);
 	void SendEthernet(byte* buf, uint len);
 	void SendIP(byte* buf, uint len);
 	void SendTcp(byte* buf, uint len, byte flags);
@@ -66,9 +64,31 @@ public:
     virtual ~TinyIP();
 
 	bool Init();
+	static void ShowIP(byte* ip);
+	static void ShowMac(byte* mac);
 
+	bool TcpConnect(byte ip[4], ushort port);	// 连接远程
     void TcpSend(byte* packet, uint len);
     void TcpClose(byte* packet, uint maxlen);
+
+	// 收到Ping请求时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
+	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, uint len);
+	PingHandler OnPing;
+
+	// 收到Udp数据时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
+	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, uint len);
+	UdpHandler OnUdpReceived;
+
+	// 收到Tcp数据时触发，传递结构体和负载数据长度，负载数据紧跟着结构体
+	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, uint len);
+	TcpHandler OnTcpAccepted;
+	TcpHandler OnTcpReceived;
+	TcpHandler OnTcpDisconnected;
+
+	void Register(DataHandler handler, void* param = NULL);
+private:
+	DataHandler _Handler;
+	void* _Param;
 };
 
 #endif
