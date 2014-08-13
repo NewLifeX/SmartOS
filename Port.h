@@ -1,7 +1,8 @@
-﻿#ifndef _Port_H_
+#ifndef _Port_H_
 #define _Port_H_
 
 #include "Sys.h"
+#include "ADC.h"
 
 #ifdef STM32F10X
 	#include "stm32f10x_gpio.h"
@@ -195,15 +196,15 @@ private:
 };
 
 // 模拟输入输出口
-class AnalogPort : public Port
+class AnalogInPort : public Port ,public ADConverter
 {
 public:
-    AnalogPort(Pin pin) { SetPort(pin); }
-    //AnalogPort(Pin pins[]) : Port(pins) { OnInit(); }
-    AnalogPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); }
+    AnalogInPort(Pin pin);
+//	AnalogInPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);	// 不支持一个对象里面包含多个模拟量信号
 
 protected:
     virtual void OnConfig();
+	
 };
 
 #endif //_Port_H_

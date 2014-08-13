@@ -1,4 +1,4 @@
-﻿#include "Port.h"
+#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -311,7 +311,7 @@ void InputPort::OnConfig()
 #endif
 }
 
-void AnalogPort::OnConfig()
+void AnalogInPort::OnConfig()
 {
 	Port::OnConfig();
 
@@ -319,10 +319,37 @@ void AnalogPort::OnConfig()
 	gpio.GPIO_Mode = GPIO_Mode_AN;
 	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
-	gpio.GPIO_Mode = GPIO_Mode_AIN; // 这里很不确定，需要根据实际进行调整
+	gpio.GPIO_Mode = GPIO_Mode_AIN; // 
 #endif
 }
 #endif
+
+AnalogInPort::AnalogInPort(Pin pin):Port(),ADConverter((ADC_Channel)pin)
+{
+	assert_param( (pin < PA10) || ((PC0 <= pin) && (pin < PC6)) || (0x80 == pin)||(pin == 0x81) );
+	
+	SetPort(pin);
+	Config();		//至此引脚初始化完成
+}
+
+//AnalogInPort::AnalogInPort(GPIO_TypeDef* group, ushort pinbit):Port(),ADConverter()
+//{
+//	assert_param(((group == GPIOA) && ((pinbit & 0xfc00)== 0x0000))
+//					||((group == GPIOC)&&((pinbit & 0xffc0)==0x0000)));
+//	SetPort(group, pinbit);
+//	Config();	//至此引脚初始化完成
+//	
+//	if(group == GPIOA)
+//	{
+//		for(int i=PA0;i < PA10;i++)
+//		{
+//			if(pintbit&0x0001) ADConverter((ADC_Channel)i);
+//		}
+//	}
+//	else
+//	{
+//	}
+//}
 
 // 输出端口
 #define REGION_Output 1

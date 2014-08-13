@@ -2,8 +2,9 @@
 #define __ADC_H__
 
 #include "Pin.h"
-#include "Port.h"		
+//#include "Port.h"		
 #include "DMA.h"
+#include "Sys.h"
 
 /* 
 Analog-to-digital converter
@@ -16,12 +17,11 @@ STM32F103内部ADC
 	转换结果可以设置对齐格式  左对齐/右对齐
 	
 	PVD模拟看门狗特性允许应用程序检测输入电压是否合格。
-	
+	Port
 */
 
 
-
-class AnalogInput : public	Port	
+class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不用继承的好
 {
 	
 public :
@@ -47,21 +47,22 @@ public :
 	   Temperature =0x81	// IC内部温度
 	}ADC_Channel;
 	
-	// 用规则通道  使用DMA实现数据迁移
-	AnalogInput(ADC_Channel line);
+	ADConverter();
+	ADConverter(ADC_Channel line);
+	
+	void OnConfig();
+	static void StartConverter();
+	
+//	bool AddLine(ADC_Channel line);
 	int Read();
 	
 private :
 	int _ChannelNum;
-
-	static Pin PinList[18];
-	static int AnalogValue[18];
 	static void RegisterDMA(ADC_Channel lime);	// 注册DMA信息
-
 protected:
-	virtual void OnConfig();
-	virtual bool OnReserve(Pin pin, bool flag);
-	virtual ~AnalogInput();
+	virtual ~ADConverter();
+//	virtual void OnConfig();
+//	virtual bool OnReserve(Pin pin, bool flag);
 
 };
 
