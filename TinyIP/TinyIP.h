@@ -20,8 +20,8 @@ private:
 	void ProcessICMP(byte* buf, uint len);
 	void ProcessTcp(byte* buf, uint len);
 	void ProcessUdp(byte* buf, uint len);
-	void SendEthernet(byte* buf, uint len);
-	void SendIP(byte* buf, uint len);
+	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
+	void SendIP(IP_TYPE type, byte* buf, uint len);
 	void SendTcp(byte* buf, uint len, byte flags);
 	void SendUdp(byte* buf, uint len, bool checksum = true);
 	void SendDhcp(byte* buf, uint len);

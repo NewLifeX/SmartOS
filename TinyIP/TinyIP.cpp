@@ -97,6 +97,7 @@ void TinyIP::OnWork()
 
 	// 计算负载数据的长度
 	len -= sizeof(ETH_HEADER);
+	//buf += sizeof(ETH_HEADER);
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -129,8 +130,10 @@ void TinyIP::OnWork()
 	//len -= sizeof(IP_HEADER);
 	
 	// 前面的len不准确，必须以这个为准
-	len = __REV16(ip->TotalLength) - (ip->Length << 2);
-	
+	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
+	len = size;
+	buf += (ip->Length << 2);
+
 	if(ip->Protocol == IP_ICMP)
 	{
 		ProcessICMP(buf, len);
@@ -275,8 +278,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	_net->Eth->Type = ETH_ARP;
-	SendEthernet(buf, sizeof(ARP_HEADER));
+	SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
 }
 
 void TinyIP::ProcessICMP(byte* buf, uint len)
@@ -311,9 +313,8 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	// 因为仅仅改变类型，因此我们能够提前修正校验码
 	icmp->Checksum += 0x08;
 
-	_net->IP->Protocol = IP_ICMP;
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
-    SendIP(buf, sizeof(ICMP_HEADER) + len);
+    SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + len);
 }
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
@@ -456,11 +457,12 @@ void TinyIP::ShowMac(byte* mac)
 		debug_printf("-%02X", *mac++);
 }
 
-void TinyIP::SendEthernet(byte* buf, uint len)
+void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 {
 	ETH_HEADER* eth = _net->Eth;
-	assert_param(eth->Type == ETH_ARP || eth->Type == ETH_IP || eth->Type == ETH_IPv6);
+	assert_param(IS_ETH_TYPE(type));
 
+	eth->Type = type;
 	memcpy(&eth->DestMac, &RemoteMac, 6);
 	memcpy(&eth->SrcMac, Mac, 6);
 
@@ -473,14 +475,11 @@ void TinyIP::SendEthernet(byte* buf, uint len)
 	_enc->PacketSend((byte*)eth, len);
 }
 
-void TinyIP::SendIP(byte* buf, uint len)
+void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 {
 	IP_HEADER* ip = _net->IP;
 	assert_param(ip);
-	assert_param(ip->Protocol == IP_ICMP ||
-				 ip->Protocol == IP_IGMP ||
-				 ip->Protocol == IP_TCP ||
-				 ip->Protocol == IP_UDP);
+	assert_param(IS_IP_TYPE(type));
 
 	memcpy(&ip->DestIP, RemoteIP, 4);
 	memcpy(&ip->SrcIP, IP, 4);
@@ -491,13 +490,13 @@ void TinyIP::SendIP(byte* buf, uint len)
 	ip->Flags = 0x40;
 	ip->FragmentOffset = 0;
 	ip->TTL = 64;
+	ip->Protocol = type;
 
 	// 网络序是大端
 	ip->Checksum = 0;
 	ip->Checksum = __REV16((ushort)CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
 
-	_net->Eth->Type = ETH_IP;
-	SendEthernet(buf, sizeof(IP_HEADER) + len);
+	SendEthernet(ETH_IP, buf, sizeof(IP_HEADER) + len);
 }
 
 void TinyIP::SendTcp(byte* buf, uint len, byte flags)
@@ -515,8 +514,7 @@ void TinyIP::SendTcp(byte* buf, uint len, byte flags)
 	tcp->Checksum = __REV16((ushort)CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
 	assert_param(_net->IP);
-	_net->IP->Protocol = IP_TCP;
-	SendIP(buf, sizeof(TCP_HEADER) + len);
+	SendIP(IP_TCP, buf, sizeof(TCP_HEADER) + len);
 }
 
 void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
@@ -533,8 +531,7 @@ void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
 	if(checksum) udp->Checksum = __REV16((ushort)CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	assert_param(_net->IP);
-	_net->IP->Protocol = IP_UDP;
-	SendIP(buf, sizeof(UDP_HEADER) + len);
+	SendIP(IP_UDP, buf, sizeof(UDP_HEADER) + len);
 }
 
 void TinyIP::SendDhcp(byte* buf, uint len)

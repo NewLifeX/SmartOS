@@ -24,6 +24,8 @@ typedef enum
 	ETH_IPv6 = 0xDD86,
 }ETH_TYPE;
 
+#define IS_ETH_TYPE(type) (type == ETH_ARP || type == ETH_IP || type == ETH_IPv6)
+
 //Mac头部，总长度14字节
 typedef struct _ETH_HEADER
 {
@@ -42,6 +44,8 @@ typedef enum
 	IP_TCP = 6,
 	IP_UDP = 17,
 }IP_TYPE;
+
+#define IS_IP_TYPE(type) (type == IP_ICMP || type == IP_IGMP || type == IP_TCP || type == IP_UDP)
 
 // IP头部，总长度20=0x14字节，偏移14=0x0E。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _IP_HEADER
