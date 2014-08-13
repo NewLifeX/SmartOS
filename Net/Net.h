@@ -108,9 +108,11 @@ typedef struct _UDP_HEADER
 //ICMP头部，总长度4字节，偏移34=0x22
 typedef struct _ICMP_HEADER
 {
-	unsigned char Type;   //类型
-	unsigned char Code;        //代码
+	unsigned char Type;			//类型
+	unsigned char Code;			//代码
 	unsigned short Checksum;    //16位检验和
+	unsigned short Identifier;	//标识，仅用于Ping
+	unsigned short Sequence;	//序列号，仅用于Ping
 }ICMP_HEADER;
 
 // ARP头部，总长度28=0x1C字节，偏移14=0x0E，可能加18字节填充

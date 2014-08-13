@@ -289,7 +289,8 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	ShowIP(RemoteIP);
 	debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
 	// 越过2个字节标识和2字节序列号
-	for(int i=4; i<_net->PayloadLength; i++)
+	debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
+	for(int i=0; i<_net->PayloadLength; i++)
 		debug_printf("%c", _net->Payload[i]);
 	debug_printf(" \r\n");
 #endif
@@ -303,7 +304,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 
 	_net->IP->Protocol = IP_ICMP;
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
-    SendIP(buf, len);
+    SendIP(buf, sizeof(ICMP_HEADER) + len);
 }
 
 void TinyIP::ProcessTcp(byte* buf, uint len)
