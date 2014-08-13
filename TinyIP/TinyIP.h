@@ -5,7 +5,7 @@
 #include "Net/Ethernet.h"
 
 // 精简IP类
-class TinyIP : protected IEthernetAdapter
+class TinyIP //: protected IEthernetAdapter
 {
 private:
     Enc28j60* _enc;
@@ -41,10 +41,10 @@ private:
 	void PareOption(byte* buf, int len);
 	void DHCPConfig(byte* buf);
 
-	virtual void Send(IP_TYPE type, uint len);
+	/*virtual void Send(IP_TYPE type, uint len);
 	// 获取负载数据指针。外部可以直接填充数据
 	virtual byte* GetPayload();
-	virtual void OnReceive(byte* buf, uint len);
+	virtual void OnReceive(byte* buf, uint len);*/
 public:
     byte IP[4];
     byte Mask[4];

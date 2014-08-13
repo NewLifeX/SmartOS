@@ -816,6 +816,6 @@ void TinyIP::DHCPConfig(byte* buf)
 	}
 }
 
-void TinyIP::Send(IP_TYPE type, uint len)
+/*void TinyIP::Send(IP_TYPE type, uint len)
 {
-}
+}*/
