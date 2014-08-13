@@ -79,7 +79,7 @@ void TinyIP::OnWork()
 	// 获取缓冲区的包
 	uint len = _enc->PacketReceive(buf, BufferSize);
 	// 如果缓冲器里面没有数据则转入下一次循环
-	if(!_net->Unpack(len)) return;
+	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return;
 
 	ETH_HEADER* eth = _net->Eth;
 #if NET_DEBUG
@@ -166,12 +166,16 @@ void TinyIP::Work(void* param)
 bool TinyIP::Init()
 {
 #if NET_DEBUG
-	debug_printf("\r\nTinyIP Init...\r\nT");
+	debug_printf("\r\nTinyIP Init...\r\n");
 	uint us = Time.Current();
 #endif
 
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
-    _enc->Init((string)Mac);
+    if(!_enc->Init((string)Mac))
+	{
+		debug_printf("TinyIP Init Failed!\r\n");
+		return false;
+	}
 
     // 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
     _enc->ClockOut(2);

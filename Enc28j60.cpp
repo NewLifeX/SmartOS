@@ -116,7 +116,7 @@ void Enc28j60::ClockOut(byte clock)
     Write(ECOCON, clock & 0x7);
 }
 
-void Enc28j60::Init(string mac)
+bool Enc28j60::Init(string mac)
 {
 	assert_param(mac);
 
@@ -216,6 +216,16 @@ void Enc28j60::Init(string mac)
     WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_RXERIE | EIE_TXERIE | EIE_INTIE);
     // 打开包接收
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
+
+	byte rev = GetRevision();
+	if(rev == 0)
+	{
+		debug_printf("Enc28j60::Init Failed! Revision=%d\r\n", rev);
+		return false;
+	}
+
+	debug_printf("Enc28j60::Inited! Revision=%d\r\n", rev);
+	return true;
 }
 
 byte Enc28j60::GetRevision()

@@ -38,7 +38,7 @@ public:
     void ClockOut(byte clock);
 	bool Linked();
 
-    void Init(string mac);
+    bool Init(string mac);
     byte GetRevision();
     void PacketSend(byte* packet, uint len);
     uint PacketReceive(byte* packet, uint maxlen);
