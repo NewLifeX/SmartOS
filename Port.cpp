@@ -324,13 +324,13 @@ void AnalogInPort::OnConfig()
 }
 #endif
 
-AnalogInPort::AnalogInPort(Pin pin):Port(),ADConverter((ADC_Channel)pin)
+/*AnalogInPort::AnalogInPort(Pin pin):Port(),ADConverter((ADC_Channel)pin)
 {
 	assert_param( (pin < PA10) || ((PC0 <= pin) && (pin < PC6)) || (0x80 == pin)||(pin == 0x81) );
 	
 	SetPort(pin);
 	Config();		//至此引脚初始化完成
-}
+}*/
 
 //AnalogInPort::AnalogInPort(GPIO_TypeDef* group, ushort pinbit):Port(),ADConverter()
 //{

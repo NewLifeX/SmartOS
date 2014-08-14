@@ -196,15 +196,15 @@ private:
 };
 
 // 模拟输入输出口
-class AnalogInPort : public Port ,public ADConverter
+class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin);
-//	AnalogInPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);	// 不支持一个对象里面包含多个模拟量信号
+    AnalogInPort(Pin pin) { SetPort(pin); Config(); }
+    AnalogInPort(Pin pins[], uint count) { SetPort(pins, count); Config(); }
+	AnalogInPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Config(); }
 
 protected:
     virtual void OnConfig();
-	
 };
 
 #endif //_Port_H_
