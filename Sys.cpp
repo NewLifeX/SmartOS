@@ -31,9 +31,11 @@ uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 
 #pragma arm section code
 
-force_inline void Set_SP()
+force_inline void Set_SP(uint ramSize)
 {
-	__set_PSP(__get_MSP());
+	//__set_PSP(__get_MSP());
+	// 直接使用RAM最后
+	__set_PSP(0x20000000 + (ramSize << 10));	// 左移10位，就是乘以1024
 	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
 	__set_CONTROL(2);
 	__ISB();
@@ -210,8 +212,6 @@ void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
 
 TSys::TSys()
 {
-	Set_SP();
-
 #if DEBUG
     Debug = true;
 #else
@@ -235,8 +235,35 @@ TSys::TSys()
     CPUID = SCB->CPUID; // MCU编码。低字设备版本，高字子版本
     MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
-    IsGD = Get_JTAG_ID() == 0x7A3;
+	RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
+#ifdef STM32F0XX
+	switch(FlashSize)
+	{
+		case 16: RAMSize = 4; break;
+		case 32: RAMSize = 4; break;	// 130有4k，150有6k
+		case 64: RAMSize = 8; break;
+	}
+#endif
+#ifdef STM32F10X
+	switch(FlashSize)
+	{
+		case 16: RAMSize = 6; break;
+		case 32: RAMSize = 10; break;
+		case 64:
+		case 128: RAMSize = 20; break;
+		case 256: RAMSize = 48; break;
+		case 384:
+		case 512: RAMSize = 64; break;
+		case 768:
+		case 1024:
+		case 2048:
+		case 3072: RAMSize = 96; break;
+	}
+#endif
 
+	Set_SP(RAMSize);
+
+    IsGD = Get_JTAG_ID() == 0x7A3;
     if(IsGD) Clock = 120000000;
 
 #if DEBUG
