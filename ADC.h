@@ -23,7 +23,6 @@ STM32F103内部ADC
 
 class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不用继承的好
 {
-	
 public :
 	typedef enum
     {	// 16路 引脚对应 和两路内部
@@ -55,11 +54,14 @@ public :
 	
 //	bool AddLine(ADC_Channel line);
 	int Read();
+	byte ReallyChannel(ADC_Channel ParameterChannel); //ADC_Channel上的通道转化为真实的通道
 	
 private :
-	int _ChannelNum;
+	byte _ADC_group;	// 通道挂在那个ADC上
+	int _ChannelNum;	// 在_AnalogValue[18];中的第几个数  可能被修改 
+						// 使用前验证_isChangeEvent 标志参数
 	static void RegisterDMA(ADC_Channel lime);	// 注册DMA信息
-	static int isSmall();
+	static byte isSmall();
 protected:
 	virtual ~ADConverter();
 //	virtual void OnConfig();
@@ -71,6 +73,7 @@ protected:
 class ADC_Stru
 {
 	ADC_InitTypeDef adc_intstr;
+	ADC_Stru(byte ADC_group);
 };
 
 
