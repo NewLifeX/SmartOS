@@ -20,7 +20,6 @@ STM32F103内部ADC
 	Port
 */
 
-
 class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不用继承的好
 {
 public :
@@ -54,10 +53,11 @@ public :
 	
 //	bool AddLine(ADC_Channel line);
 	int Read();
-	byte ReallyChannel(ADC_Channel ParameterChannel); //ADC_Channel上的通道转化为真实的通道
+	void ReallyChannel(ADC_Channel ParameterChannel); //ADC_Channel上的通道转化为真实的通道
 	
 private :
 	byte _ADC_group;	// 通道挂在那个ADC上
+	byte _ReallyChannel;
 	int _ChannelNum;	// 在_AnalogValue[18];中的第几个数  可能被修改 
 						// 使用前验证_isChangeEvent 标志参数
 	static void RegisterDMA(ADC_Channel lime);	// 注册DMA信息
@@ -70,10 +70,14 @@ protected:
 };
 
 
+
 class ADC_Stru
 {
-	ADC_InitTypeDef adc_intstr;
-	ADC_Stru(byte ADC_group);
+public:
+	ADC_InitTypeDef adc_intstr;		// 初始化ADC所使用的函数
+	volatile int _AnalogValue[6]; 	// 每个ADC最多分摊到6个通道进行转换
+
+	ADC_Stru(byte ADC_group);		// 构造函数
 };
 
 
