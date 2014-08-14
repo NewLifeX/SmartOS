@@ -11,6 +11,7 @@ static ADC_TypeDef * const g_ADCs[3]= {ADC1,ADC2,ADC3};	// flash内
 
 ADC_Stru * adc_IntStrs[3]={NULL,NULL,NULL}; // 三个ADC的类
 
+
 byte ADConverter::isSmall()
 {	// 避免飞出
 	if(adc_IntStrs[0] == NULL)return 0;
@@ -28,6 +29,7 @@ byte ADConverter::isSmall()
 		else  return 2;
 	}
 }
+
 
 void ADConverter::ReallyChannel(ADC_Channel ParameterChannel)
 {
@@ -54,6 +56,7 @@ void ADConverter::ReallyChannel(ADC_Channel ParameterChannel)
 		//return ;
 	}
 }
+
 
 void ADConverter:: RegisterDMA(ADC_Channel lime)	
 {
@@ -100,7 +103,8 @@ void ADConverter::OnConfig()
 {
 }
 
-int ADConverter::Read()
+
+int ADConverter::Read()	// 读取转换出来的结果
 {
 	return adc_IntStrs[_ADC_group]->_AnalogValue[_ChannelNum];
 }
