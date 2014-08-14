@@ -59,11 +59,18 @@ public :
 private :
 	int _ChannelNum;
 	static void RegisterDMA(ADC_Channel lime);	// 注册DMA信息
+	static int isSmall();
 protected:
 	virtual ~ADConverter();
 //	virtual void OnConfig();
 //	virtual bool OnReserve(Pin pin, bool flag);
 
+};
+
+
+class ADC_Stru
+{
+	ADC_InitTypeDef adc_intstr;
 };
 
 
