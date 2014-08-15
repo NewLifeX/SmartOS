@@ -240,18 +240,24 @@ TSys::TSys()
     CystalClock = 8000000;    // 晶振时钟
     MessagePort = 0; // COM1;
 
-#ifdef STM32F10X
-    //ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
-    //ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
-    //ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
-	void* p = (void*)0x1FFFF7E8;
+    IsGD = Get_JTAG_ID() == 0x7A3;
+    if(IsGD) Clock = 120000000;
+
+	if(IsGD)
+	{
+		void* p = (void*)0x1FFFF7AC;
+		memcpy(ID, p, 12);
+	}
+	else
+	{
+		void* p = (void*)0x1FFFF7E8;
+#ifdef STM32F0XX
+		memcpy(ID, p, 4);
 #else
-    //ID[0] = *(__IO uint *)(0X1FFFF7B4); // 高字节
-    //ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
-    //ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
-	void* p = (void*)0x1FFFF7AC;
+		memcpy(ID, p, 12);
 #endif
-	memcpy(ID, p, 12);
+	}
+
     CPUID = SCB->CPUID;
     uint MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
 	RevID = MCUID >> 16;
@@ -274,9 +280,6 @@ TSys::TSys()
 	}
 
 	Set_SP(RAMSize);
-
-    IsGD = Get_JTAG_ID() == 0x7A3;
-    if(IsGD) Clock = 120000000;
 
 #if DEBUG
     OnError = ShowError;
