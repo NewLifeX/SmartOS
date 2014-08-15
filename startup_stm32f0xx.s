@@ -6,7 +6,7 @@ Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
 ; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存不足的项目可改小
-Heap_Size       EQU     0x00000800
+Heap_Size       EQU     0x00000200
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base

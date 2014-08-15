@@ -54,15 +54,15 @@ public:
     bool Debug;  // 是否调试
     bool Inited; // 是否已完成初始化
     uint Clock;  // 系统时钟
-    uint CystalClock;    // 晶振时钟
-    byte MessagePort;    // 消息口，默认0表示USART1
-    byte ID[12];     // 芯片ID
-    uint FlashSize; // 芯片Flash容量
-    uint RAMSize;	// 芯片RAM容量
-    uint CPUID;     // CPUID
-    ushort DevID;     // MCU编码。低字设备版本，高字子版本
-    ushort RevID;     // MCU编码。低字设备版本，高字子版本
-    bool IsGD;      // 是否GD芯片
+    uint CystalClock;	// 晶振时钟
+    byte MessagePort;	// 消息口，默认0表示USART1
+    byte ID[12];		// 芯片ID
+    ushort FlashSize;	// 芯片Flash容量
+    ushort RAMSize;		// 芯片RAM容量
+    uint CPUID;			// CPUID
+    ushort DevID;		// MCU编码。低字设备版本，高字子版本
+    ushort RevID;		// MCU编码。低字设备版本，高字子版本
+    bool IsGD;			// 是否GD芯片
 
     TSys();					//构造函数
     virtual ~TSys();//析构函数

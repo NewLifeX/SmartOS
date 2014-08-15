@@ -18,9 +18,16 @@ TTime Time;
 #define GD32_PLL_MASK	0x20000000
 #define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
+#ifdef STM32F10X
 char MemNames[] = "468BCDEFGIK";
 uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 10,  20,  48,  48,  64,  96,   96,   96,   96 };
+#elif defined(STM32F0XX)
+char MemNames[] = "468B";
+uint MemSizes[] = { 16, 32, 64, 128 };
+//uint RamSizes[] = {  4,  6,  8,  16 }; // 150x6有6kRAM
+uint RamSizes[] = {  4,  4,  8,  16 };
+#endif
 
 void TSys::Sleep(uint ms) { Time.Sleep(ms * 1000); }
 
@@ -37,16 +44,18 @@ uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 
 force_inline void Set_SP(uint ramSize)
 {
-	//__set_PSP(__get_MSP());
-	void* p = (void*)__get_MSP();
-	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
-	__set_PSP(0x20000000 + (ramSize << 10) - 0x40);	// 左移10位，就是乘以1024
+	uint p = __get_MSP();
+	if(!ramSize)
+		__set_PSP(p);
+	else
+		// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
+		__set_PSP(0x20000000 + (ramSize << 10) - 0x40);	// 左移10位，就是乘以1024
 	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
 	__set_CONTROL(2);
 	__ISB();
 	
 	// 拷贝一部分栈内容到新栈
-	memcpy((void*)__get_PSP(), p, 0x40);
+	memcpy((void*)__get_PSP(), (void*)p, 0x40);
 }
 
 bool TSys::CheckMemory()
@@ -249,37 +258,18 @@ TSys::TSys()
 	DevID = MCUID & 0x0FFF;
 
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
-	RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
-/*#ifdef STM32F0XX
-	switch(FlashSize)
+	if(FlashSize == 0xFFFF)
+		FlashSize = RAMSize = 0;
+	else
 	{
-		case 16: RAMSize = 4; break;
-		case 32: RAMSize = 4; break;	// 130有4k，150有6k
-		case 64: RAMSize = 8; break;
-	}
-#endif
-#ifdef STM32F10X
-	switch(FlashSize)
-	{
-		case 16: RAMSize = 6; break;
-		case 32: RAMSize = 10; break;
-		case 64:
-		case 128: RAMSize = 20; break;
-		case 256: RAMSize = 48; break;
-		case 384:
-		case 512: RAMSize = 64; break;
-		case 768:
-		case 1024:
-		case 2048:
-		case 3072: RAMSize = 96; break;
-	}
-#endif*/
-	for(int i=0; i<ArrayLength(MemSizes); i++)
-	{
-		if(MemSizes[i] == Sys.FlashSize)
+		RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
+		for(int i=0; i<ArrayLength(MemSizes); i++)
 		{
-			RAMSize = RamSizes[i];
-			break;
+			if(MemSizes[i] == Sys.FlashSize)
+			{
+				RAMSize = RamSizes[i];
+				break;
+			}
 		}
 	}
 
