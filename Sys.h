@@ -56,11 +56,12 @@ public:
     uint Clock;  // 系统时钟
     uint CystalClock;    // 晶振时钟
     byte MessagePort;    // 消息口，默认0表示USART1
-    uint ID[3];     // 芯片ID
+    byte ID[12];     // 芯片ID
     uint FlashSize; // 芯片Flash容量
     uint RAMSize;	// 芯片RAM容量
     uint CPUID;     // CPUID
-    uint MCUID;     // MCU编码。低字设备版本，高字子版本
+    ushort DevID;     // MCU编码。低字设备版本，高字子版本
+    ushort RevID;     // MCU编码。低字设备版本，高字子版本
     bool IsGD;      // 是否GD芯片
 
     TSys();					//构造函数

@@ -18,6 +18,10 @@ TTime Time;
 #define GD32_PLL_MASK	0x20000000
 #define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
+char MemNames[] = "468BCDEFGIK";
+uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
+uint RamSizes[] = {  6, 10, 10,  20,  48,  48,  64,  96,   96,   96,   96 };
+
 void TSys::Sleep(uint ms) { Time.Sleep(ms * 1000); }
 
 void TSys::Delay(uint us) { Time.Sleep(us); }
@@ -228,19 +232,25 @@ TSys::TSys()
     MessagePort = 0; // COM1;
 
 #ifdef STM32F10X
-    ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
-    ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
-    ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
+    //ID[0] = *(__IO uint *)(0X1FFFF7F0); // 高字节
+    //ID[1] = *(__IO uint *)(0X1FFFF7EC); // 
+    //ID[2] = *(__IO uint *)(0X1FFFF7E8); // 低字节
+	void* p = (void*)0x1FFFF7E8;
 #else
-    ID[0] = *(__IO uint *)(0X1FFFF7B4); // 高字节
-    ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
-    ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
+    //ID[0] = *(__IO uint *)(0X1FFFF7B4); // 高字节
+    //ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
+    //ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
+	void* p = (void*)0x1FFFF7AC;
 #endif
+	memcpy(ID, p, 12);
     CPUID = SCB->CPUID;
-    MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
+    uint MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
+	RevID = MCUID >> 16;
+	DevID = MCUID & 0x0FFF;
+
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
-#ifdef STM32F0XX
+/*#ifdef STM32F0XX
 	switch(FlashSize)
 	{
 		case 16: RAMSize = 4; break;
@@ -263,7 +273,15 @@ TSys::TSys()
 		case 2048:
 		case 3072: RAMSize = 96; break;
 	}
-#endif
+#endif*/
+	for(int i=0; i<ArrayLength(MemSizes); i++)
+	{
+		if(MemSizes[i] == Sys.FlashSize)
+		{
+			RAMSize = RamSizes[i];
+			break;
+		}
+	}
 
 	Set_SP(RAMSize);
 
@@ -320,10 +338,32 @@ void TSys::Init(void)
 void TSys::ShowInfo()
 {
 #if DEBUG
+	debug_printf("SmartOS ");
+	if(IsGD)
+		debug_printf("GD32");
+	else
+		debug_printf("STM32");
+	if(DevID == 0x414 || DevID == 0x430)
+		debug_printf("F103");
+	// 暂时不知道怎么计算引脚
+	debug_printf("V");
+	
+	for(int i=0; i<ArrayLength(MemSizes); i++)
+	{
+		if(MemSizes[i] == FlashSize)
+		{
+			debug_printf("%c", MemNames[i]);
+			break;
+		}
+	}
+	//debug_printf("\r\n");
+
     // 系统信息
-    debug_printf("主频：%dMHz Flash: %dkByte RAM: %dkByte\r\n", Sys.Clock/1000000, Sys.FlashSize, Sys.RAMSize);
-    debug_printf("芯片：%08X-%08X-%08X\r\n", Sys.ID[0], Sys.ID[1], Sys.ID[2]);
-    debug_printf("CPUID: 0x%08X  MCUID: 0x%08X \r\n", Sys.CPUID, Sys.MCUID);
+    debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
+    debug_printf("芯片：%02X", ID[0]);
+	for(int i=1; i<12; i++) debug_printf("-%02X", ID[i]);
+	debug_printf("\r\n");
+    debug_printf("DevID:0x%04X RevID:0x%04X CPUID:0x%08X \r\n", DevID, RevID, CPUID);
     debug_printf("\r\n");
 #endif
 }
