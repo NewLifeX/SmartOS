@@ -53,7 +53,7 @@ void SerialPort::Open()
     if(_com != Sys.MessagePort)
     {
 ShowLog:
-        debug_printf("\r\nSerial%d Open(%d", _com + 1, _baudRate);
+        debug_printf("Serial%d Open(%d", _com + 1, _baudRate);
         switch(_parity)
         {
             case USART_Parity_No: debug_printf(", Parity_None"); break;

@@ -236,7 +236,7 @@ TSys::TSys()
     ID[1] = *(__IO uint *)(0X1FFFF7B0); // 
     ID[2] = *(__IO uint *)(0X1FFFF7AC); // 低字节
 #endif
-    CPUID = SCB->CPUID; // MCU编码。低字设备版本，高字子版本
+    CPUID = SCB->CPUID;
     MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
@@ -319,11 +319,13 @@ void TSys::Init(void)
 
 void TSys::ShowInfo()
 {
+#if DEBUG
     // 系统信息
-    debug_printf("主频：%dMHz Flash: %dkByte\r\n", Sys.Clock/1000000, Sys.FlashSize);
+    debug_printf("主频：%dMHz Flash: %dkByte RAM: %dkByte\r\n", Sys.Clock/1000000, Sys.FlashSize, Sys.RAMSize);
     debug_printf("芯片：%08X-%08X-%08X\r\n", Sys.ID[0], Sys.ID[1], Sys.ID[2]);
     debug_printf("CPUID: 0x%08X  MCUID: 0x%08X \r\n", Sys.CPUID, Sys.MCUID);
     debug_printf("\r\n");
+#endif
 }
 
 #define __CRC__MODULE__ 1
