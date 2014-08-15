@@ -357,30 +357,44 @@ public:
 	}
 
 	// 设置使用IP协议
-	IP_HEADER* SetIP()
+	IP_HEADER* SetIP(IP_TYPE type)
 	{
 		ARP = NULL;
-		IP = (IP_HEADER*)((byte*)Eth + sizeof(ETH_HEADER));
+		IP = (IP_HEADER*)Eth->Next();
 		IP->Version = 4;
-		IP->Length = sizeof(IP_HEADER);
+		IP->Length = sizeof(IP_HEADER) >> 2;
+		IP->Protocol = type;
 		Eth->Type = ETH_IP;
 
 		return IP;
+	}
+	
+	ICMP_HEADER* SetICMP()
+	{
+		SetIP(IP_ICMP);
+		
+		TCP = NULL;
+		UDP = NULL;
+		ICMP = (ICMP_HEADER*)IP->Next();
+
+		Payload = ICMP->Next();
+		PayloadLength = 0;
+
+		return ICMP;
 	}
 
 	// 设置使用UDP协议
 	UDP_HEADER* SetUDP()
 	{
-		SetIP();
-
-		IP->Protocol = IP_UDP;
+		SetIP(IP_UDP);
 
 		ICMP = NULL;
 		TCP = NULL;
-		UDP = (UDP_HEADER*)((byte*)IP + sizeof(IP_HEADER));
+		UDP = (UDP_HEADER*)IP->Next();
 
 		UDP->Length = sizeof(UDP_HEADER);
-		Payload = (byte*)UDP + UDP->Length;
+		Payload = UDP->Next();
+		PayloadLength = 0;
 
 		return UDP;
 	}

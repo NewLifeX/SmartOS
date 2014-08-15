@@ -113,12 +113,18 @@ public:
 	// 收到Ping请求时触发，传递结构体和负载数据长度
 	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, byte* buf, uint len);
 	PingHandler OnPing;
+
+	// Ping目的地址，附带a~z重复的负载数据
+	void Ping(byte ip[4], uint payloadLength = 32);
 #endif
 
-	// 收到Udp数据时触发，传递结构体和负载数据长度
 #if TinyIP_UDP
+	// 收到Udp数据时触发，传递结构体和负载数据长度
 	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, byte* buf, uint len);
 	UdpHandler OnUdpReceived;
+
+	// 发送UDP数据到目标地址
+	void SendUdp(byte* buf, uint len, byte ip[4], ushort port);
 #endif
 
 #if TinyIP_TCP

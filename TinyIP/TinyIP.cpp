@@ -367,6 +367,27 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
     SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + len);
 }
+
+// Ping目的地址，附带a~z重复的负载数据
+void TinyIP::Ping(byte ip[4], uint payloadLength)
+{
+	memcpy(RemoteIP, ip, 4);
+	ICMP_HEADER* icmp = _net->SetICMP();
+	icmp->Type = 8;
+	icmp->Code = 0;
+	icmp->Identifier = Time.Current();
+	icmp->Sequence = Time.Current();
+	
+	byte* data = icmp->Next();
+	for(int i=0, k=0; i<payloadLength; i++, k++)
+	{
+		if(k > 'z') k-=26;
+		*data++ = ('a' + k);
+	}
+	_net->PayloadLength = payloadLength;
+	
+    SendIP(IP_ICMP, Buffer, sizeof(ICMP_HEADER) + payloadLength);
+}
 #endif
 
 #if TinyIP_TCP
@@ -713,7 +734,7 @@ void TinyIP::DHCPDiscover()
 	RemotePort = 67;
 
 	assert_param(_net->UDP);
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)_net->UDP->Next();
 	// 为了安全，清空一次
 	memset(dhcp, 0, sizeof(DHCP_HEADER));
 
@@ -735,7 +756,7 @@ void TinyIP::DHCPRequest(byte* buf)
 	RemotePort = 67;
 
 	assert_param(_net->UDP);
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)_net->UDP + sizeof(UDP_HEADER));
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)_net->UDP->Next();
 	// 为了安全，清空一次
 	memset(dhcp, 0, sizeof(DHCP_HEADER));
 
