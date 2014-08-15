@@ -34,11 +34,15 @@ uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 force_inline void Set_SP(uint ramSize)
 {
 	//__set_PSP(__get_MSP());
-	// 直接使用RAM最后
-	__set_PSP(0x20000000 + (ramSize << 10));	// 左移10位，就是乘以1024
+	void* p = (void*)__get_MSP();
+	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
+	__set_PSP(0x20000000 + (ramSize << 10) - 0x40);	// 左移10位，就是乘以1024
 	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
 	__set_CONTROL(2);
 	__ISB();
+	
+	// 拷贝一部分栈内容到新栈
+	memcpy((void*)__get_PSP(), p, 0x40);
 }
 
 bool TSys::CheckMemory()
