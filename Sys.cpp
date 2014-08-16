@@ -53,7 +53,7 @@ force_inline void Set_SP(uint ramSize)
 	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
 	__set_CONTROL(2);
 	__ISB();
-	
+
 	// 拷贝一部分栈内容到新栈
 	memcpy((void*)__get_PSP(), (void*)p, 0x40);
 }
@@ -117,7 +117,7 @@ void Bootstrap()
         n = Sys.Clock / 24000000 - 1;
         FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_0 + n;
     }
-    
+
     // 配置JTAG调试支持
     DBGMCU->CR = DBGMCU_CR_DBG_TIM2_STOP | DBGMCU_CR_DBG_SLEEP;
 
@@ -192,7 +192,7 @@ void Bootstrap()
               | RCC_CFGR_PPRE1_DIV2 // APB1 clock
               | RCC_CFGR_PPRE2_DIV1 // APB2 clock
               | RCC_CFGR_ADC_BITS;      // ADC clock (max 14MHz)
-    
+
     // 打开 HSE & PLL
     RCC->CR |= RCC_CR_PLLON;// | RCC_CR_HSEON;
 
@@ -289,7 +289,7 @@ TSys::TSys()
 #endif
 
     Interrupt.Init();
-	
+
 	_TaskCount = 0;
 	memset(_Tasks, 0, ArrayLength(_Tasks));
 }
@@ -342,7 +342,7 @@ void TSys::ShowInfo()
 		debug_printf("GD32");
 	else
 		debug_printf("STM32");
-	
+
 	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
 	if(DevID > 0)
 	{
@@ -375,8 +375,6 @@ void TSys::ShowInfo()
 
     // 系统信息
     debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
-    debug_printf("芯片：%02X", ID[0]);
-	for(int i=1; i<12; i++) debug_printf("-%02X", ID[i]);
 	debug_printf("\r\n");
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
@@ -393,7 +391,9 @@ void TSys::ShowInfo()
 	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
-	
+    debug_printf("ChipID:%02X", ID[0]);
+	for(int i=1; i<12; i++) debug_printf("-%02X", ID[i]);
+
     debug_printf("\r\n");
 #endif
 }
@@ -473,10 +473,10 @@ uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 	task->Param = param;
 	task->Period = period;
 	task->NextTime = Time.Current() + dueTime;
-	
+
 	_TaskCount++;
 	debug_printf("添加任务%d 0x%08x\r\n", task->ID, func);
-	
+
 	return task->ID;
 }
 
@@ -484,14 +484,14 @@ void TSys::RemoveTask(uint taskid)
 {
 	assert_param(taskid > 0);
 	assert_param(taskid <= _TaskCount);
-	
+
 	Task* task = _Tasks[taskid - 1];
 	_Tasks[taskid - 1] = NULL;
 	if(task)
 	{
 		debug_printf("删除任务%d 0x%08x\r\n", task->ID, task->Callback);
 		delete task;
-		
+
 		_TaskCount--;
 	}
 }
@@ -513,7 +513,7 @@ void TSys::Start()
 				// 先计算下一次时间
 				task->NextTime += task->Period;
 				task->Callback(task->Param);
-				
+
 				// 如果只是一次性任务，在这里清理
 				if(task->Period < 0)
 				{
@@ -521,7 +521,7 @@ void TSys::Start()
 					delete task;
 					_TaskCount--;
 				}
-				
+
 				k++;
 			}
 		}
@@ -533,7 +533,7 @@ void TSys::Stop()
 {
 	debug_printf("系统停止！\r\n");
 	_Running = false;
-	
+
 	// 销毁所有任务
 	/*for(int i=0; i < ArrayLength(_Tasks); i++)
 	{
