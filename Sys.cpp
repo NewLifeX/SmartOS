@@ -342,12 +342,24 @@ void TSys::ShowInfo()
 		debug_printf("GD32");
 	else
 		debug_printf("STM32");
-	if(DevID == 0x414 || DevID == 0x430)
-		debug_printf("F103");
-	else if(DevID == 0x412)
-		debug_printf("F130");
-	else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
-		debug_printf("F030");
+	
+	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
+	if(DevID > 0)
+	{
+		if(DevID == 0x414 || DevID == 0x430)
+			debug_printf("F103");
+		else if(DevID == 0x412)
+			debug_printf("F130");
+		else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
+			debug_printf("F030");
+	}
+	else if(CPUID > 0)
+	{
+		if(Clock == 48000000)
+			debug_printf("F130");
+		else
+			debug_printf("F103");
+	}
 
 	// 暂时不知道怎么计算引脚，一般F4/F6/C8CB/RB/VC/VE
 	if(_Index < 2)
@@ -369,8 +381,6 @@ void TSys::ShowInfo()
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
     debug_printf("CPUID:0x%08X", CPUID);
-	//uint cpuid = __REV(CPUID);
-	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
 	if(cpu->Implementer == 0x41) debug_printf(" ARM");
 	if(cpu->Constant == 0x0C)
 		debug_printf(" ARMv6-M");
@@ -380,7 +390,7 @@ void TSys::ShowInfo()
 		debug_printf(" Cortex-M0");
 	if(cpu->PartNo == 0x0C23)
 		debug_printf(" Cortex-M3");*/
-	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf("Cortex-M%d", cpu->PartNo & 0x0F);
+	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
 	
