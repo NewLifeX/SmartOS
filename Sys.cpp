@@ -328,6 +328,17 @@ void TSys::Init(void)
     Inited = true;
 }
 
+#if DEBUG
+typedef struct
+{
+	byte Revision:4;	// The p value in the Rnpn product revision identifier, indicates patch release.0x0: patch 0
+	ushort PartNo:12;		// Part number of the processor. 0xC20: Cortex-M0
+	byte Constant:4;	// Constant that defines the architecture of the processor. 0xC: ARMv6-M architecture
+	byte Variant:4;		// Variant number: The r value in the Rnpn product revision identifier. 0x0: revision 0
+	byte Implementer;	// Implementer code. 0x41 ARM
+}ST_CPUID;
+#endif
+
 void TSys::ShowInfo()
 {
 #if DEBUG
@@ -356,7 +367,18 @@ void TSys::ShowInfo()
     debug_printf("芯片：%02X", ID[0]);
 	for(int i=1; i<12; i++) debug_printf("-%02X", ID[i]);
 	debug_printf("\r\n");
-    debug_printf("DevID:0x%04X RevID:0x%04X CPUID:0x%08X \r\n", DevID, RevID, CPUID);
+    debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
+
+    debug_printf("CPUID:0x%08X", CPUID);
+	//uint cpuid = __REV(CPUID);
+	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
+	if(cpu->Implementer == 0x41) debug_printf(" ARM");
+	if(cpu->Constant == 0x0C) debug_printf(" ARMv6-M architecture");
+	if(cpu->PartNo == 0x0C20) debug_printf(" Cortex-M0");
+	//if(cpu->PartNo2 == 0x20) debug_printf("M0");
+	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
+    debug_printf("\r\n");
+	
     debug_printf("\r\n");
 #endif
 }
