@@ -87,6 +87,7 @@ public:
     uint Crc(const void* rgBlock, int len, uint crc = 0);
 
 private:
+	int _Index;	// MCU在型号表中的索引
 
 	// 任务类
 	class Task

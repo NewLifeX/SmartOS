@@ -243,26 +243,20 @@ TSys::TSys()
     IsGD = Get_JTAG_ID() == 0x7A3;
     if(IsGD) Clock = 120000000;
 
-	if(IsGD)
-	{
-		void* p = (void*)0x1FFFF7AC;
-		memcpy(ID, p, 12);
-	}
-	else
-	{
-		void* p = (void*)0x1FFFF7E8;
 #ifdef STM32F0XX
-		memcpy(ID, p, 4);
+	void* p = (void*)0x1FFFF7AC;
+	memcpy(ID, p, 4);
 #else
-		memcpy(ID, p, 12);
+	void* p = (void*)0x1FFFF7E8;
+	memcpy(ID, p, 12);
 #endif
-	}
 
     CPUID = SCB->CPUID;
     uint MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
 	RevID = MCUID >> 16;
 	DevID = MCUID & 0x0FFF;
 
+	_Index = 0;
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	if(FlashSize == 0xFFFF)
 		FlashSize = RAMSize = 0;
@@ -273,10 +267,11 @@ TSys::TSys()
 		{
 			if(MemSizes[i] == Sys.FlashSize)
 			{
-				RAMSize = RamSizes[i];
+				_Index = i;
 				break;
 			}
 		}
+		RAMSize = RamSizes[_Index];
 	}
 
 	Set_SP(RAMSize);
@@ -349,17 +344,23 @@ void TSys::ShowInfo()
 		debug_printf("STM32");
 	if(DevID == 0x414 || DevID == 0x430)
 		debug_printf("F103");
-	// 暂时不知道怎么计算引脚
-	debug_printf("V");
-	
-	for(int i=0; i<ArrayLength(MemSizes); i++)
+	else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
 	{
-		if(MemSizes[i] == FlashSize)
-		{
-			debug_printf("%c", MemNames[i]);
-			break;
-		}
+		if(IsGD)
+			debug_printf("F130");
+		else
+			debug_printf("F030");
 	}
+	// 暂时不知道怎么计算引脚，一般F4/F6/C8CB/RB/VC/VE
+	if(_Index < 2)
+		debug_printf("F");
+	else if(_Index < 4)
+		debug_printf("C");
+	else if(_Index < 6)
+		debug_printf("R");
+	else
+		debug_printf("V");
+	debug_printf("%c", MemNames[_Index]);
 	//debug_printf("\r\n");
 
     // 系统信息
