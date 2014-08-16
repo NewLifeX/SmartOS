@@ -344,13 +344,11 @@ void TSys::ShowInfo()
 		debug_printf("STM32");
 	if(DevID == 0x414 || DevID == 0x430)
 		debug_printf("F103");
+	else if(DevID == 0x412)
+		debug_printf("F130");
 	else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
-	{
-		if(IsGD)
-			debug_printf("F130");
-		else
-			debug_printf("F030");
-	}
+		debug_printf("F030");
+
 	// 暂时不知道怎么计算引脚，一般F4/F6/C8CB/RB/VC/VE
 	if(_Index < 2)
 		debug_printf("F");
@@ -374,9 +372,15 @@ void TSys::ShowInfo()
 	//uint cpuid = __REV(CPUID);
 	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
 	if(cpu->Implementer == 0x41) debug_printf(" ARM");
-	if(cpu->Constant == 0x0C) debug_printf(" ARMv6-M architecture");
-	if(cpu->PartNo == 0x0C20) debug_printf(" Cortex-M0");
-	//if(cpu->PartNo2 == 0x20) debug_printf("M0");
+	if(cpu->Constant == 0x0C)
+		debug_printf(" ARMv6-M");
+	else if(cpu->Constant == 0x0F)
+		debug_printf(" ARMv7-M");
+	/*if(cpu->PartNo == 0x0C20)
+		debug_printf(" Cortex-M0");
+	if(cpu->PartNo == 0x0C23)
+		debug_printf(" Cortex-M3");*/
+	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf("Cortex-M%d", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
 	
