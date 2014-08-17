@@ -245,11 +245,10 @@ TSys::TSys()
 
 #ifdef STM32F0XX
 	void* p = (void*)0x1FFFF7AC;
-	memcpy(ID, p, 4);
 #else
 	void* p = (void*)0x1FFFF7E8;
-	memcpy(ID, p, 12);
 #endif
+	memcpy(ID, p, ArrayLength(ID));
 
     CPUID = SCB->CPUID;
     uint MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
@@ -375,7 +374,7 @@ void TSys::ShowInfo()
 
     // 系统信息
     debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
-	debug_printf("\r\n");
+	//debug_printf("\r\n");
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
     debug_printf("CPUID:0x%08X", CPUID);
@@ -392,7 +391,10 @@ void TSys::ShowInfo()
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
     debug_printf("ChipID:%02X", ID[0]);
-	for(int i=1; i<12; i++) debug_printf("-%02X", ID[i]);
+	for(int i=1; i<ArrayLength(ID); i++) debug_printf("-%02X", ID[i]);
+    debug_printf(" %c", ID[0]);
+	for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
+    debug_printf("\r\n");
 
     debug_printf("\r\n");
 #endif
