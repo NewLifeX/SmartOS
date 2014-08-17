@@ -72,6 +72,11 @@ bool TSys::CheckMemory()
 	free(p);
 	if((uint)p >= psp) return false;
 
+	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
+	uint start = (uint)&__heap_base;
+	uint end = (uint)&__heap_limit;
+	if((uint)p + 0x40 >= end) return false;
+
 	return true;
 }
 
