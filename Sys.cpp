@@ -73,7 +73,6 @@ bool TSys::CheckMemory()
 	if((uint)p >= psp) return false;
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	uint start = (uint)&__heap_base;
 	uint end = (uint)&__heap_limit;
 	if((uint)p + 0x40 >= end) return false;
 
@@ -356,8 +355,10 @@ void TSys::ShowInfo()
 	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
 	if(DevID > 0)
 	{
-		if(DevID == 0x414 || DevID == 0x430)
+		if(DevID == 0x410 || DevID == 0x412 || DevID == 0x414 || DevID == 0x430)
 			debug_printf("F103");
+		else if(DevID == 0x418)
+			debug_printf("F107");
 		else if(DevID == 0x412)
 			debug_printf("F130");
 		else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
