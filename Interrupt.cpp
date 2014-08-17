@@ -13,6 +13,8 @@ void IntcHandler();         // 标准中断处理
 uint GetInterruptNumber();  // 获取中断号
 void FAULT_SubHandler();
 
+// 没有必要重定向中断向量表，把所有中断硬编码指向IntcHandler和FAULT_SubHandler即可
+
 // 真正的向量表 64k=0x10000
 #ifdef STM32F0XX
 	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
