@@ -6,6 +6,9 @@
 TSys Sys;
 TTime Time;
 
+extern uint __heap_base;
+extern uint __heap_limit;
+
 #ifndef BIT
     #define BIT(x)	(1 << (x))
 #endif
@@ -258,7 +261,10 @@ TSys::TSys()
 	_Index = 0;
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	if(FlashSize == 0xFFFF)
-		FlashSize = RAMSize = 0;
+	{
+		FlashSize = MemSizes[0];
+		RAMSize = RamSizes[0];
+	}
 	else
 	{
 		RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
@@ -397,6 +403,14 @@ void TSys::ShowInfo()
 	for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
 #endif
     debug_printf("\r\n");
+	
+	// 输出堆信息
+	uint start = (uint)&__heap_base;
+	uint end = (uint)&__heap_limit;
+	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x\r\n", start, end, end - start);
+	start = end;
+	end = 0x20000000 + (RAMSize << 10);
+	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x\r\n", start, end, end - start);
 
     debug_printf("\r\n");
 #endif

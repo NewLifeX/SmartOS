@@ -211,7 +211,7 @@ void FAULT_SubHandler()
     int i;
     if(exception==3)
 	{
- 		uint n = *(uint*)(0xE000ED2C);
+ 		uint n = *(uint*)(SCB_BASE + 0x2C);
         debug_printf("\r\n硬件错误 %d\r\n", n);
 		if(n & (1<<1))
 		{
@@ -228,7 +228,7 @@ void FAULT_SubHandler()
 	}
 	else if(exception==5)
 	{
-		i = *(byte*)(0xE000ED29);
+		i = *(byte*)(SCB_BASE + 0x29);
 #ifdef STM32F10X
 		debug_printf("\r\nBus Fault %d 0x%08x: \r\n", i, SCB->BFAR);
 #endif
@@ -260,7 +260,7 @@ void FAULT_SubHandler()
 	}
 	else if(exception==4)
 	{
-		i = *(byte*)(0xE000ED28);
+		i = *(byte*)(SCB_BASE + 0x28);
 #ifdef STM32F10X
 		debug_printf("\r\nMemManage Fault %d 0x%08x: \r\n", i, SCB->MMFAR);
 #endif
@@ -288,7 +288,7 @@ void FAULT_SubHandler()
 	}
 	else if(exception==6)
 	{
-		i = *(byte*)(0xE000ED2A);
+		i = *(byte*)(SCB_BASE + 0x2A);
 		debug_printf("\r\nUsage Fault %d: \r\n", i);
 		if(i & (1<<0))
 		{
