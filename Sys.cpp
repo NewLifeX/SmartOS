@@ -392,8 +392,10 @@ void TSys::ShowInfo()
     debug_printf("\r\n");
     debug_printf("ChipID:%02X", ID[0]);
 	for(int i=1; i<ArrayLength(ID); i++) debug_printf("-%02X", ID[i]);
+#if GD32
     debug_printf(" %c", ID[0]);
 	for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
+#endif
     debug_printf("\r\n");
 
     debug_printf("\r\n");
