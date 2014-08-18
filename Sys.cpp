@@ -65,24 +65,6 @@ force_inline void Set_SP(uint ramSize)
 	memcpy((void*)__get_PSP(), (void*)p, 0x40);
 }
 
-bool TSys::CheckMemory()
-{
-	uint msp = __get_MSP();
-	if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
-
-	uint psp = __get_PSP();
-	void* p = malloc(0x10);
-	if(!p) return false;
-	free(p);
-	if((uint)p >= psp) return false;
-
-	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	uint end = (uint)&__heap_limit;
-	if((uint)p + 0x40 >= end) return false;
-
-	return true;
-}
-
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
 {
@@ -262,9 +244,9 @@ TSys::TSys()
 	memcpy(ID, p, ArrayLength(ID));
 
     CPUID = SCB->CPUID;
-    uint MCUID = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
-	RevID = MCUID >> 16;
-	DevID = MCUID & 0x0FFF;
+    uint mcuid = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
+	RevID = mcuid >> 16;
+	DevID = mcuid & 0x0FFF;
 
 	_Index = 0;
 #ifdef STM32F0XX
@@ -272,13 +254,7 @@ TSys::TSys()
 #else
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 #endif
-	if(FlashSize == 0xFFFF)
-	{
-		if(DevID == 0x440) _Index = 2;
-		FlashSize = MemSizes[_Index];
-		RAMSize = RamSizes[_Index];
-	}
-	else
+	if(FlashSize != 0xFFFF)
 	{
 		RAMSize = FlashSize >> 3;	// 通过Flash大小和MCUID识别型号后得知内存大小
 		for(int i=0; i<ArrayLength(MemSizes); i++)
