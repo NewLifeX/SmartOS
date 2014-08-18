@@ -127,6 +127,9 @@ __inline void debug_printf( const char *format, ... ) {}
 #endif  // !defined(BUILD_RTM)
 }
 
+// 内存管理
+#include "Memory.h"
+
 #include "Time.h"
 #include "Interrupt.h"
 

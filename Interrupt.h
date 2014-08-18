@@ -19,6 +19,8 @@ private:
     InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
     void* Params[VectorySize];       // 每一个中断向量对应的参数
 
+	static uint GetIPSR();		// 获取中断号
+	static void FaultHandler();	// 错误处理程序
 public:
     void Init();    // 初始化中断向量表
     virtual ~TInterrupt();

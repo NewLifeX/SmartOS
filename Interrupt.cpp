@@ -16,10 +16,6 @@
 */
 TInterrupt Interrupt;
 
-void IntcHandler();         // 标准中断处理
-uint GetInterruptNumber();  // 获取中断号
-void FAULT_SubHandler();
-
 // 没有必要重定向中断向量表，把所有中断硬编码指向IntcHandler和FAULT_SubHandler即可
 
 // 真正的向量表 64k=0x10000
@@ -52,15 +48,15 @@ void TInterrupt::Init()
 
 #if VEC_TABLE_ON_RAM
 	memset((void*)_Vectors, 0, VectorySize << 2);
-    _Vectors[2]  = (Func)&FAULT_SubHandler; // NMI
-    _Vectors[3]  = (Func)&FAULT_SubHandler; // Hard Fault
-    _Vectors[4]  = (Func)&FAULT_SubHandler; // MMU Fault
-    _Vectors[5]  = (Func)&FAULT_SubHandler; // Bus Fault
-    _Vectors[6]  = (Func)&FAULT_SubHandler; // Usage Fault
-    _Vectors[11] = (Func)&FAULT_SubHandler; // SVC
-    _Vectors[12] = (Func)&FAULT_SubHandler; // Debug
-    _Vectors[14] = (Func)&FAULT_SubHandler; // PendSV
-    _Vectors[15] = (Func)&FAULT_SubHandler; // Systick
+    _Vectors[2]  = (Func)&FaultHandler; // NMI
+    _Vectors[3]  = (Func)&FaultHandler; // Hard Fault
+    _Vectors[4]  = (Func)&FaultHandler; // MMU Fault
+    _Vectors[5]  = (Func)&FaultHandler; // Bus Fault
+    _Vectors[6]  = (Func)&FaultHandler; // Usage Fault
+    _Vectors[11] = (Func)&FaultHandler; // SVC
+    _Vectors[12] = (Func)&FaultHandler; // Debug
+    _Vectors[14] = (Func)&FaultHandler; // PendSV
+    _Vectors[15] = (Func)&FaultHandler; // Systick
 
 #ifdef STM32F10X
     __DMB(); // 确保中断表已经被写入
@@ -211,7 +207,7 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 
 void TInterrupt::OnHandler()
 {
-    uint num = GetInterruptNumber();
+    uint num = GetIPSR();
     //if(num >= VectorySize) return;
     //if(!Interrupt.Vectors[num]) return;
 	assert_param(num < VectorySize);
@@ -223,9 +219,9 @@ void TInterrupt::OnHandler()
     isr(num - 16, param);
 }
 
-void FAULT_SubHandler()
+void TInterrupt::FaultHandler()
 {
-    uint exception = GetInterruptNumber();
+    uint exception = GetIPSR();
     if (exception) {
         debug_printf("EXCEPTION 0x%02x:\r\n", exception);
     } else {
@@ -239,18 +235,18 @@ void FAULT_SubHandler()
 	{
 		// 0xE000ED2C
  		uint n = *(uint*)(SCB_BASE + 0x2C);
-        debug_printf("\r\n硬件错误 %d\r\n", n);
+        debug_printf("\r\n硬件错误 %d ", n);
 		if(n & (1<<1))
 		{
-			debug_printf("硬fault 是在取向量时发生的\r\n");
+			debug_printf("在取向量时发生\r\n");
 		}
 		else if(n & (1u<<30))
 		{
-			debug_printf("硬fault 是总线fault，存储器管理fault 或是用法fault 上访的结果\r\n");
+			debug_printf("是总线fault，存储器管理fault 或是用法fault 上访的结果\r\n");
 		}
 		else if(n & (1u<<31))
 		{
-			debug_printf("硬fault 因调试事件而产生\r\n");
+			debug_printf("因调试事件而产生\r\n");
 		}
 	}
 	else if(exception==5)
@@ -261,7 +257,7 @@ void FAULT_SubHandler()
 #endif
 		if(i & (1<<0))
 		{
-			debug_printf("IBUSERR 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了\r\n"); // 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了
+			debug_printf("IBUSERR 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。 5. 在异常处理期间，入栈的PC值被破坏了\r\n"); // 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了
 		}
 		else if(i & (1<<1))
 		{
@@ -293,7 +289,7 @@ void FAULT_SubHandler()
 #endif
 		if(i & (1<<0))
 		{
-			debug_printf("IACCVIOL 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了\r\n"); // 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了
+			debug_printf("IACCVIOL 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。 5. 在异常处理期间，入栈的PC值被破坏了\r\n"); // 取指访问违例 1. 内存访问保护违例。常常是用户应用程序企图访问特权级region。在这种情况下，入栈的PC给出的地址，就是产生问题的代码之所在 2. 跳转到不可执行指令的 regions 3. 异常返回时，使用了无效的EXC_RETURN值 4. 向量表中有无效的向量。例如，异常在向量建立之前就发生了，或者加载的是用于传统ARM内核的可执行映像 5. 在异常处理期间，入栈的PC值被破坏了
 		}
 		else if(i & (1<<1))
 		{
@@ -311,7 +307,6 @@ void FAULT_SubHandler()
 		{
 			debug_printf("MMARVALID 表示MMAR有效\r\n"); // 表示MMAR有效
 		}
-		//debug_printf("\r\n");
 	}
 	else if(exception==6)
 	{
@@ -341,14 +336,13 @@ void FAULT_SubHandler()
 		{
 			debug_printf("DIVBYZERO 表示除法运算时除数为零。引发此fault的指令可以从入栈的PC读取\r\n"); // 表示除法运算时除数为零（只有在DIV_0_TRP置位时才会发生）。引发此fault的指令可以从入栈的PC读取
 		}
-		//debug_printf("\r\n");
 	}
 #endif
 
     while(true);
 }
 
-__asm uint GetInterruptNumber()
+__asm uint TInterrupt::GetIPSR()
 {
     mrs     r0,IPSR               // exception number
     bx      lr
@@ -357,8 +351,11 @@ __asm uint GetInterruptNumber()
 #if !VEC_TABLE_ON_RAM
 extern "C"
 {
-	void NMI_Handler()			{ FAULT_SubHandler(); }
-	void HardFault_Handler()	{ FAULT_SubHandler(); }
+	void NMI_Handler()			{ TInterrupt::FaultHandler(); }
+	void HardFault_Handler()	{ TInterrupt::FaultHandler(); }
+	void MemManage_Handler()	{ TInterrupt::FaultHandler(); }
+	void BusFault_Handler()		{ TInterrupt::FaultHandler(); }
+	void UsageFault_Handler()	{ TInterrupt::FaultHandler(); }
 	void SVC_Handler()			{ TInterrupt::OnHandler(); }
 	void PendSV_Handler()		{ TInterrupt::OnHandler(); }
 	void SysTick_Handler()		{ TInterrupt::OnHandler(); }

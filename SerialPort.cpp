@@ -299,6 +299,7 @@ extern "C"
     #define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
 
     SerialPort* _printf_sp;
+	bool isInFPutc;
 
     /* 重载fputc可以让用户程序使用printf函数 */
     int fputc(int ch, FILE *f)
@@ -310,6 +311,8 @@ extern "C"
 
         USART_TypeDef* port = g_Uart_Ports[_com];
 
+		if(isInFPutc) return ch;
+		isInFPutc = true;
         // 检查并打开串口
         if((port->CR1 & CR1_UE_Set) != CR1_UE_Set && _printf_sp == NULL)
         {
@@ -321,26 +324,7 @@ extern "C"
 
         TUsart_SendData(port, (byte*)&ch);
 
+		isInFPutc = false;
         return ch;
     }
 }
-
-#ifdef  USE_FULL_ASSERT
-
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *   where the assert_param error has occurred.
-  * @param file: pointer to the source file name
-  * @param line: assert_param error line source number
-  * @retval : None
-  */
-void assert_failed(uint8_t* file, uint32_t line)
-{
-    /* User can add his own implementation to report the file name and line number,
-    ex: debug_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    if(_printf_sp) debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
-
-    /* Infinite loop */
-    while (1) { }
-}
-#endif

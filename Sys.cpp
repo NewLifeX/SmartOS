@@ -404,10 +404,6 @@ void TSys::ShowInfo()
 		debug_printf(" ARMv6-M");
 	else if(cpu->Constant == 0x0F)
 		debug_printf(" ARMv7-M");
-	/*if(cpu->PartNo == 0x0C20)
-		debug_printf(" Cortex-M0");
-	if(cpu->PartNo == 0x0C23)
-		debug_printf(" Cortex-M3");*/
 	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
