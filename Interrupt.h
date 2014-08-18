@@ -19,8 +19,6 @@ private:
     InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
     void* Params[VectorySize];       // 每一个中断向量对应的参数
 
-    static void OnHandler();
-
 public:
     void Init();    // 初始化中断向量表
     virtual ~TInterrupt();
@@ -43,6 +41,8 @@ public:
     void SetPriority(short irq, uint priority);
     // 获取优先级
     void GetPriority(short irq);
+
+    static void OnHandler();
 #ifdef STM32F10X
     // 编码优先级
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);

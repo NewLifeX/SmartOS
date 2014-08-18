@@ -1,5 +1,7 @@
 ﻿#include "Interrupt.h"
 
+#define VEC_TABLE_ON_RAM 1
+
 /*
 完全接管中断，在RAM中开辟中断向量表，做到随时可换。
 由于中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
@@ -16,11 +18,13 @@ void FAULT_SubHandler();
 // 没有必要重定向中断向量表，把所有中断硬编码指向IntcHandler和FAULT_SubHandler即可
 
 // 真正的向量表 64k=0x10000
+#if VEC_TABLE_ON_RAM
 #ifdef STM32F0XX
 	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
 #else
 	// 84个中断向量，向上取整到2整数倍也就是128，128*4=512=0x200。CM3权威手册
 	__IO Func _Vectors[VectorySize] __attribute__((__aligned__(0x200)));
+#endif
 #endif
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
@@ -41,6 +45,7 @@ void TInterrupt::Init()
     NVIC->ICPR[2] = 0xFFFFFFFF;
 #endif
 
+#if VEC_TABLE_ON_RAM
     _Vectors[2]  = (Func)&FAULT_SubHandler; // NMI
     _Vectors[3]  = (Func)&FAULT_SubHandler; // Hard Fault
     _Vectors[4]  = (Func)&FAULT_SubHandler; // MMU Fault
@@ -62,10 +67,19 @@ void TInterrupt::Init()
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
 #else
-    /* Enable the SYSCFG peripheral clock*/
+    // Enable the SYSCFG peripheral clock
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-    /* Remap SRAM at 0x00000000 */
+    // Remap SRAM at 0x00000000
     SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_SRAM);
+#endif
+#else
+#ifdef STM32F10X
+    SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
+               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
+                | SCB_SHCSR_BUSFAULTENA
+                | SCB_SHCSR_MEMFAULTENA;
+#endif
 #endif
 }
 
@@ -84,7 +98,9 @@ bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 	assert_param(IS_IRQ(irq));
 
     short irq2 = irq + 16; // exception = irq + 16
+#if VEC_TABLE_ON_RAM
     _Vectors[irq2] = OnHandler;
+#endif
     Vectors[irq2] = isr;
     Params[irq2] = param;
 
@@ -213,6 +229,7 @@ void FAULT_SubHandler()
     int i;
     if(exception==3)
 	{
+		// 0xE000ED2C
  		uint n = *(uint*)(SCB_BASE + 0x2C);
         debug_printf("\r\n硬件错误 %d\r\n", n);
 		if(n & (1<<1))
@@ -328,3 +345,43 @@ __asm uint GetInterruptNumber()
     mrs     r0,IPSR               // exception number
     bx      lr
 }
+
+#if !VEC_TABLE_ON_RAM
+extern "C"
+{
+	void NMI_Handler()			{ FAULT_SubHandler(); }
+	void HardFault_Handler()	{ FAULT_SubHandler(); }
+	void SVC_Handler()			{ TInterrupt::OnHandler(); }
+	void PendSV_Handler()		{ TInterrupt::OnHandler(); }
+	void SysTick_Handler()		{ TInterrupt::OnHandler(); }
+	void WWDG_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void PVD_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void RTC_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void FLASH_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void RCC_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void EXTI0_1_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void EXTI2_3_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void EXTI4_15_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void TS_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void DMA1_Channel1_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void DMA1_Channel2_3_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void DMA1_Channel4_5_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void ADC1_COMP_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void TIM1_BRK_UP_TRG_COM_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void TIM1_CC_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void TIM2_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void TIM3_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void TIM6_DAC_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void TIM14_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void TIM15_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void TIM16_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void TIM17_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void I2C1_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void I2C2_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void SPI1_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void SPI2_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void USART1_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void USART2_IRQHandler()	{ TInterrupt::OnHandler(); }
+	void CEC_IRQHandler()		{ TInterrupt::OnHandler(); }
+}
+#endif
