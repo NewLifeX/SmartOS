@@ -251,7 +251,7 @@ TSys::TSys()
     if(IsGD) Clock = 120000000;
 
 #ifdef STM32F0XX
-	void* p = (void*)0x1FFFF7AC;
+	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
 #else
 	void* p = (void*)0x1FFFF7E8;
 #endif
@@ -264,7 +264,7 @@ TSys::TSys()
 
 	_Index = 0;
 #ifdef STM32F0XX
-    FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量
+    FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量。手册里搜索FLASH_SIZE，优先英文手册
 #else
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 #endif
