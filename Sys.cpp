@@ -367,7 +367,12 @@ void TSys::ShowInfo()
 	else if(CPUID > 0)
 	{
 		if(Clock == 48000000)
-			debug_printf("F130");
+		{
+			if(ID[0] == 0x8F && ID[1] == 0x14)
+				debug_printf("F150");
+			else
+				debug_printf("F130");
+		}
 		else
 			debug_printf("F103");
 	}
