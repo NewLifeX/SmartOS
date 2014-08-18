@@ -351,8 +351,9 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 		debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
-		for(int i=0; i<_net->PayloadLength; i++)
-			debug_printf("%c", _net->Payload[i]);
+		ShowData(_net->Payload, _net->PayloadLength);
+		/*for(int i=0; i<_net->PayloadLength; i++)
+			debug_printf("%c", _net->Payload[i]);*/
 		debug_printf(" \r\n");
 #endif
 	}
@@ -458,8 +459,9 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 			debug_printf("Tcp Data(%d) From ", len);
 			ShowIP(RemoteIP);
 			debug_printf(" : ");
-			for(int i=0; i<len; i++)
-				debug_printf("%c", _net->Payload[i]);
+			ShowData(_net->Payload, len);
+			/*for(int i=0; i<len; i++)
+				debug_printf("%c", _net->Payload[i]);*/
 			debug_printf("\r\n");
 #endif
 		}
@@ -556,12 +558,17 @@ void TinyIP::TcpSend(byte* buf, uint size)
 #if TinyIP_UDP
 void TinyIP::ProcessUdp(byte* buf, uint len)
 {
+	if(len < sizeof(UDP_HEADER)) return;
+	len -= sizeof(UDP_HEADER);
+
 	UDP_HEADER* udp = _net->UDP;
 
 	Port = __REV16(udp->DestPort);
 	RemotePort = __REV16(udp->SrcPort);
 	byte* data = _net->Payload;
 	assert_param(data == udp->Next());
+	assert_param(len == _net->PayloadLength);
+	assert_param(len + sizeof(UDP_HEADER) == __REV16(udp->Length));
 
 	if(OnUdpReceived)
 		OnUdpReceived(this, udp, udp->Next(), len);
@@ -576,10 +583,11 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
 #endif
 
-		for(int i=0; i<_net->PayloadLength; i++)
+		ShowData(data, len);
+		/*for(int i=0; i<_net->PayloadLength; i++)
 		{
 			debug_printf("%c", data[i]);
-		}
+		}*/
 		debug_printf(" \r\n");
 	}
 
@@ -620,6 +628,18 @@ void TinyIP::ShowMac(byte* mac)
 	debug_printf("%02X", *mac++);
 	for(int i=1; i<6; i++)
 		debug_printf("-%02X", *mac++);
+}
+
+void TinyIP::ShowData(byte* buf, uint len)
+{
+    for(int i=0; i<len; i++)
+    {
+		//if(buf[i] >= '0' && buf[i] <= '9' || buf[i] >='a' && buf[i] <= 'z' || buf[i] >= 'A' && buf[i] <= 'Z')
+		if(buf[i] >= 32 && buf[i] <=126)
+			debug_printf("%c", buf[i]);
+		else
+			debug_printf("%02X", buf[i]);
+    }
 }
 
 uint TinyIP::CheckSum(byte* buf, uint len, byte type)
@@ -885,9 +905,10 @@ void TinyIP::DHCPConfig(byte* buf)
 			if(opt)
 			{
 				debug_printf(" ");
-				byte* str = &opt->Data;
+				ShowData(&opt->Data, opt->Length);
+				/*byte* str = &opt->Data;
 				for(int i=0; i<opt->Length; i++)
-					debug_printf("%c", str[i]);
+					debug_printf("%c", str[i]);*/
 			}
 			debug_printf("\r\n");
 		}
