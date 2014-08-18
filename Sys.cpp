@@ -24,7 +24,7 @@ extern uint __heap_limit;
 #ifdef STM32F10X
 char MemNames[] = "468BCDEFGIK";
 uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
-uint RamSizes[] = {  6, 10, 10,  20,  48,  48,  64,  96,   96,   96,   96 };
+uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
 #elif defined(STM32F0XX)
 char MemNames[] = "468B";
 uint MemSizes[] = { 16, 32, 64, 128 };
@@ -266,8 +266,9 @@ TSys::TSys()
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	if(FlashSize == 0xFFFF)
 	{
-		FlashSize = MemSizes[0];
-		RAMSize = RamSizes[0];
+		if(DevID == 0x440) _Index = 2;
+		FlashSize = MemSizes[_Index];
+		RAMSize = RamSizes[_Index];
 	}
 	else
 	{
@@ -409,10 +410,12 @@ void TSys::ShowInfo()
     debug_printf("\r\n");
     debug_printf("ChipID:%02X", ID[0]);
 	for(int i=1; i<ArrayLength(ID); i++) debug_printf("-%02X", ID[i]);
-#if GD32
-    debug_printf(" %c", ID[0]);
-	for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
-#endif
+
+	if(IsGD)
+	{
+		debug_printf(" %c", ID[0]);
+		for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
+	}
     debug_printf("\r\n");
 	
 	// 输出堆信息
