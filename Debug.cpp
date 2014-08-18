@@ -8,6 +8,8 @@ void* operator new(uint size)
 {
     debug_printf("new size: %d\r\n", size);
     void * p = malloc(size);
+	if(!p) debug_printf("malloc failed! size=%d", size);
+	assert_param(p);
     return p;
 }
 

@@ -494,12 +494,12 @@ uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 
 	// 找一个空闲位给它
 	int i = 0;
-	while(i < ArrayLength(_Tasks) && _Tasks[i++] != NULL);
+	while(i < ArrayLength(_Tasks) && _Tasks[i] != NULL) i++;
 	assert_param(i < ArrayLength(_Tasks));
 
 	Task* task = new Task();
-	_Tasks[i - 1] = task;
-	task->ID = i;
+	_Tasks[i] = task;
+	task->ID = i + 1;
 	task->Callback = func;
 	task->Param = param;
 	task->Period = period;
@@ -539,18 +539,21 @@ void TSys::Start()
 		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
 		{
 			Task* task = _Tasks[i];
-			if(task && task->NextTime <= now)
+			if(task)
 			{
-				// 先计算下一次时间
-				task->NextTime += task->Period;
-				task->Callback(task->Param);
-
-				// 如果只是一次性任务，在这里清理
-				if(task->Period < 0)
+				if(task->NextTime <= now)
 				{
-					_Tasks[i] = NULL;
-					delete task;
-					_TaskCount--;
+					// 先计算下一次时间
+					task->NextTime += task->Period;
+					task->Callback(task->Param);
+
+					// 如果只是一次性任务，在这里清理
+					if(task->Period < 0)
+					{
+						_Tasks[i] = NULL;
+						delete task;
+						_TaskCount--;
+					}
 				}
 
 				k++;
