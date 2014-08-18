@@ -46,7 +46,7 @@ private:
 	void ProcessArp(byte* buf, uint len);
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);
-	
+
 #if TinyIP_ICMP
 	void ProcessICMP(byte* buf, uint len);
 #endif

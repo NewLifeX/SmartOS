@@ -27,7 +27,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 		memcpy(IP, defip, 3);
 		IP[3] = Sys.ID[0];
 	}
-	
+
 	if(mac)
 		memcpy(Mac, mac, 6);
 	else
@@ -128,7 +128,7 @@ void TinyIP::OnWork()
 	if(len < __REV16(ip->TotalLength)) return;
 	// 计算负载数据的长度，注意ip可能变长，长度Length的单位是4字节
 	//len -= sizeof(IP_HEADER);
-	
+
 	// 前面的len不准确，必须以这个为准
 	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
 	len = size;
@@ -377,7 +377,7 @@ void TinyIP::Ping(byte ip[4], uint payloadLength)
 	icmp->Code = 0;
 	icmp->Identifier = Time.Current();
 	icmp->Sequence = Time.Current();
-	
+
 	byte* data = icmp->Next();
 	for(int i=0, k=0; i<payloadLength; i++, k++)
 	{
@@ -385,7 +385,7 @@ void TinyIP::Ping(byte ip[4], uint payloadLength)
 		*data++ = ('a' + k);
 	}
 	_net->PayloadLength = payloadLength;
-	
+
     SendIP(IP_ICMP, Buffer, sizeof(ICMP_HEADER) + payloadLength);
 }
 #endif
@@ -468,7 +468,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		//SendTcp(buf, 0, TCP_FLAGS_ACK);
 
 		//TcpSend(buf, len);
-		
+
 		// 响应Ack和发送数据一步到位
 		SendTcp(buf, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 	}
@@ -476,8 +476,12 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 	{
 		if(OnTcpDisconnected) OnTcpDisconnected(this, tcp, tcp->Next(), len);
 
-		TcpHead(1, false, true);
-		TcpClose(buf, 0);
+		// RST是对方紧急关闭，这里啥都不干
+		if(tcp->Flags & TCP_FLAGS_FIN)
+		{
+			TcpHead(1, false, true);
+			TcpClose(buf, 0);
+		}
 	}
 }
 
@@ -567,7 +571,7 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 		IP_HEADER* ip = _net->IP;
 		debug_printf("UDP ");
 		ShowIP(ip->SrcIP);
-		debug_printf(":%d => ", __REV16(udp->SrcPort));
+		debug_printf(":%d => ", RemotePort);
 		ShowIP(ip->DestIP);
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
 #endif
