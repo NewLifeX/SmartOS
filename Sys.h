@@ -58,7 +58,7 @@ public:
     uint CystalClock;	// 晶振时钟
     byte MessagePort;	// 消息口，默认0表示USART1
     byte ID[12];		// 芯片ID。
-    ushort FlashSize;	// 芯片Flash容量。手册里搜索FLASH_SIZE
+    ushort FlashSize;	// 芯片Flash容量。
     ushort RAMSize;		// 芯片RAM容量
     uint CPUID;			// CPUID
     ushort DevID;		// MCU编码。低字设备版本，高字子版本
