@@ -57,11 +57,7 @@ public:
     uint Clock;  // 系统时钟
     uint CystalClock;	// 晶振时钟
     byte MessagePort;	// 消息口，默认0表示USART1
-#if defined(STM32F0XX) && !defined(GD32)
-    byte ID[12];			// 芯片ID
-#else
     byte ID[12];		// 芯片ID
-#endif
     ushort FlashSize;	// 芯片Flash容量
     ushort RAMSize;		// 芯片RAM容量
     uint CPUID;			// CPUID

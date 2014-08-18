@@ -263,7 +263,11 @@ TSys::TSys()
 	DevID = MCUID & 0x0FFF;
 
 	_Index = 0;
+#ifdef STM32F0XX
+    FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量
+#else
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
+#endif
 	if(FlashSize == 0xFFFF)
 	{
 		if(DevID == 0x440) _Index = 2;
