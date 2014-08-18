@@ -25,7 +25,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 		// 随机IP，取ID最后一个字节
 		//IP[0] = 192; IP[1] = 168, IP[2] = 0, IP[3] = Sys.ID[2];
 		memcpy(IP, defip, 3);
-		IP[3] = Sys.ID[2];
+		IP[3] = Sys.ID[0];
 	}
 	
 	if(mac)
@@ -35,7 +35,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 		//Mac[0] = 59; Mac[1] = 57; Mac[2] = 53;
 		memcpy(Mac, "YWS", 3);
-		byte* p = (byte*)&Sys.ID[2];
+		byte* p = (byte*)Sys.ID;
 		p++;
 		//for(int i=3; i<6; i++) Mac[i] = *p++;
 		memcpy(&Mac[3], p, 3);
