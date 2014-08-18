@@ -367,17 +367,12 @@ void TSys::ShowInfo()
 		else if(DevID == 0x412)
 			debug_printf("F130");
 		else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
-			debug_printf("F030");
+			debug_printf("F030/F051");
 	}
 	else if(CPUID > 0)
 	{
 		if(Clock == 48000000)
-		{
-			if(ID[0] == 0x8F && ID[1] == 0x14)
-				debug_printf("F150");
-			else
-				debug_printf("F130");
-		}
+			debug_printf("F130/F150");
 		else
 			debug_printf("F103");
 	}
