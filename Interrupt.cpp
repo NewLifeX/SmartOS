@@ -1,6 +1,11 @@
 ﻿#include "Interrupt.h"
 
-#define VEC_TABLE_ON_RAM 1
+// GD32F150无法把向量表映射到RAM
+#if GD32
+	#define VEC_TABLE_ON_RAM 0
+#else
+	#define VEC_TABLE_ON_RAM 1
+#endif
 
 /*
 完全接管中断，在RAM中开辟中断向量表，做到随时可换。
@@ -46,6 +51,7 @@ void TInterrupt::Init()
 #endif
 
 #if VEC_TABLE_ON_RAM
+	memset((void*)_Vectors, 0, VectorySize << 2);
     _Vectors[2]  = (Func)&FAULT_SubHandler; // NMI
     _Vectors[3]  = (Func)&FAULT_SubHandler; // Hard Fault
     _Vectors[4]  = (Func)&FAULT_SubHandler; // MMU Fault
@@ -206,8 +212,10 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 void TInterrupt::OnHandler()
 {
     uint num = GetInterruptNumber();
-    if(num >= VectorySize) return;
-    if(!Interrupt.Vectors[num]) return;
+    //if(num >= VectorySize) return;
+    //if(!Interrupt.Vectors[num]) return;
+	assert_param(num < VectorySize);
+	assert_param(Interrupt.Vectors[num]);
 
     // 找到应用层中断委托并调用
     InterruptCallback isr = (InterruptCallback)Interrupt.Vectors[num];
