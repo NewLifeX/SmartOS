@@ -27,9 +27,9 @@ __Vectors       DCD     __initial_sp                   ; Top of Stack
                 DCD     Reset_Handler                  ; Reset Handler
                 DCD     NMI_Handler                    ; NMI Handler
                 DCD     HardFault_Handler              ; Hard Fault Handler
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
+                DCD     MemManage_Handler          ; MPU Fault Handler
+                DCD     BusFault_Handler           ; Bus Fault Handler
+                DCD     UsageFault_Handler         ; Usage Fault Handler
                 DCD     0                              ; Reserved
                 DCD     0                              ; Reserved
                 DCD     0                              ; Reserved
@@ -100,6 +100,21 @@ NMI_Handler     PROC
 HardFault_Handler\
                 PROC
                 EXPORT  HardFault_Handler              [WEAK]
+                B       .
+                ENDP
+MemManage_Handler\
+                PROC
+                EXPORT  MemManage_Handler          [WEAK]
+                B       .
+                ENDP
+BusFault_Handler\
+                PROC
+                EXPORT  BusFault_Handler           [WEAK]
+                B       .
+                ENDP
+UsageFault_Handler\
+                PROC
+                EXPORT  UsageFault_Handler         [WEAK]
                 B       .
                 ENDP
 SVC_Handler     PROC

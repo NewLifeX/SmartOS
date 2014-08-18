@@ -40,7 +40,11 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 // 原配置MSP作为PSP，而使用全局数组作为新的MSP
 // MSP 堆栈大小
-#define IRQ_STACK_SIZE 0x100
+#ifdef STM32F10X
+	#define IRQ_STACK_SIZE 0x100
+#elif defined(STM32F0XX)
+	#define IRQ_STACK_SIZE 0x40
+#endif
 uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 
 #pragma arm section code
