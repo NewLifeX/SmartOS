@@ -19,14 +19,16 @@ public:
     GPIO_TypeDef* Group;// 针脚组
     ushort PinBit;      // 组内引脚位。每个引脚一个位
     Pin Pin0;           // 第一个针脚。为了便于使用而设立，大多数情况下端口对象只管理一个针脚。
+	byte PinCount;		// 针脚数
+	byte GroupIndex;	// 分组
 
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
-    static GPIO_TypeDef* IndexToGroup(byte index);
-    static byte GroupToIndex(GPIO_TypeDef* group);
-    static ushort IndexToBits(byte index);
-    static byte BitsToIndex(ushort bits); // 最低那一个位的索引
+    force_inline static GPIO_TypeDef* IndexToGroup(byte index);
+    force_inline static byte GroupToIndex(GPIO_TypeDef* group);
+    //force_inline static ushort IndexToBits(byte index);
+    //static byte BitsToIndex(ushort bits); // 最低那一个位的索引
 
 #if DEBUG
 	static bool Reserve(Pin pin, bool flag);	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
@@ -59,10 +61,10 @@ private:
 class InputOutputPort : public Port
 {
 public:
-    uint Speed;// 速度
-    bool Invert;        // 是否倒置输入输出
+    uint Speed;		// 速度
+    bool Invert;	// 是否倒置输入输出
 
-    bool Read(); // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
     virtual ushort ReadGroup()    // 整组读取
     {
         return GPIO_ReadOutputData(Group);

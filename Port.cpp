@@ -19,9 +19,6 @@ typedef struct TIntState
     int Used;   // 被使用次数。对于前5行中断来说，这个只会是1，对于后面的中断线来说，可能多个
 } IntState;
 
-/*默认按键去抖延时   70ms*/
-//static byte shake_time = 70;
-
 // 16条中断线
 static IntState State[16];
 static bool hasInitState = false;
@@ -36,7 +33,7 @@ static int PORT_IRQns[] = {
 static int PORT_IRQns[] = {
     EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
     EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
-    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, 
+    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn,
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
 };
 #endif
@@ -51,7 +48,9 @@ Port::Port()
 {
 	Group = 0;
 	PinBit = 0;
-	//Restore = false;
+	Pin0 = P0;
+	PinCount = 0;
+	GroupIndex = 0;
 
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
@@ -82,11 +81,10 @@ Port::~Port()
 
 #if DEBUG
 	// 解除保护引脚
-	byte groupIndex = GroupToIndex(Group) << 4;
 	ushort bits2 = PinBit;
 	for(int i=0; i<16 && bits2; i++, bits2>>=1)
     {
-        if(bits2 & 1) OnReserve((Pin)(groupIndex | i), false);
+        if(bits2 & 1) OnReserve((Pin)(GroupIndex | i), false);
     }
 #endif
 }
@@ -100,11 +98,10 @@ void Port::OnSetPort()
 
 #if DEBUG
 	// 保护引脚
-	byte groupIndex = GroupToIndex(Group) << 4;
 	ushort bits = PinBit;
 	for(int i=0; i<16 && bits; i++, bits>>=1)
     {
-        if(bits & 1) OnReserve((Pin)(groupIndex | i), true);
+        if(bits & 1) OnReserve((Pin)(GroupIndex | i), true);
     }
 #endif
 }
@@ -112,19 +109,39 @@ void Port::OnSetPort()
 // 单一引脚初始化
 void Port::SetPort(Pin pin)
 {
+	assert_param(pin != P0);
+
     Group = IndexToGroup(pin >> 4);
-    PinBit = IndexToBits(pin & 0x0F);
+    PinBit = 1 << (pin & 0x0F);
+
     Pin0 = pin;
+	PinCount = 1;
+	GroupIndex = pin & 0xF0;
 
 	OnSetPort();
 }
 
 void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
 {
+	assert_param(group);
+	assert_param(pinbit);
+
     Group = group;
     PinBit = pinbit;
-    
-    Pin0 = (Pin)((GroupToIndex(group) << 4) + BitsToIndex(pinbit));
+
+	GroupIndex = GroupToIndex(group) << 4;
+	ushort bits = pinbit;
+	byte first = 0xFF;
+	PinCount = 0;
+	for(int i=0; i<16 && bits; i++, bits>>=1)
+	{
+		if(bits & 0x01)
+		{
+			if(first == 0xFF) first = i;
+			PinCount++;
+		}
+	}
+    Pin0 = (Pin)(GroupIndex | first);
 
 	OnSetPort();
 }
@@ -135,10 +152,13 @@ void Port::SetPort(Pin pins[], uint count)
 	assert_param(pins != NULL && count > 0 && count <= 16);
 
     Group = IndexToGroup(pins[0] >> 4);
+	GroupIndex = pins[0] & 0xF0;
     PinBit = 0;
     for(int i=0; i<count; i++)
-        PinBit |= IndexToBits(pins[i] & 0x0F);
-    Pin0 = pins[0];
+        PinBit |= (1 << (pins[i] & 0x0F));
+
+	Pin0 = pins[0];
+	PinCount = count;
 
 	OnSetPort();
 }
@@ -152,7 +172,7 @@ void Port::Config()
 void Port::OnConfig()
 {
     // 打开时钟
-    int gi = Port::GroupToIndex(Group);
+    int gi = GroupIndex >> 4;
 #ifdef STM32F0XX
     RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
 #else
@@ -164,16 +184,15 @@ void Port::OnConfig()
 
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
-ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
+/*ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
 byte Port::BitsToIndex(ushort bits)
 {
-    for(int i=0; i < 16 & bits; i++)
+    for(int i=0; i < 16 & bits; i++, bits >>= 1)
     {
-        if((bits & 1) == 1) return i;
-        bits >>= 1;
+        if(bits & 1) return i;
     }
     return 0xFF;
-}
+}*/
 #endif
 
 // 端口引脚保护
@@ -200,7 +219,7 @@ bool Port::Reserve(Pin pin, bool flag)
 		int config = 0;
 		uint shift = (pin & 7) << 2; // 4 bits / pin
 		uint mask = 0xF << shift; // 屏蔽掉其它位
-		GPIO_TypeDef* port2 = IndexToGroup(pin >> 4); // pointer to the actual port registers 
+		GPIO_TypeDef* port2 = IndexToGroup(port); // pointer to the actual port registers
 		if (pin & 0x08) { // bit 8 - 15
 			config = port2->CRH & mask;
 		} else { // bit 0-7
@@ -319,7 +338,7 @@ void AnalogInPort::OnConfig()
 	gpio.GPIO_Mode = GPIO_Mode_AN;
 	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #else
-	gpio.GPIO_Mode = GPIO_Mode_AIN; // 
+	gpio.GPIO_Mode = GPIO_Mode_AIN; //
 #endif
 }
 #endif
@@ -327,7 +346,7 @@ void AnalogInPort::OnConfig()
 /*AnalogInPort::AnalogInPort(Pin pin):Port(),ADConverter((ADC_Channel)pin)
 {
 	assert_param( (pin < PA10) || ((PC0 <= pin) && (pin < PC6)) || (0x80 == pin)||(pin == 0x81) );
-	
+
 	SetPort(pin);
 	Config();		//至此引脚初始化完成
 }*/
@@ -338,7 +357,7 @@ void AnalogInPort::OnConfig()
 //					||((group == GPIOC)&&((pinbit & 0xffc0)==0x0000)));
 //	SetPort(group, pinbit);
 //	Config();	//至此引脚初始化完成
-//	
+//
 //	if(group == GPIOA)
 //	{
 //		for(int i=PA0;i < PA10;i++)
@@ -410,8 +429,8 @@ void OutputPort::Write(Pin pin, bool value)
 #endif
 
 // 输入端口
-#define REGION_Output 1
-#ifdef REGION_Output
+#define REGION_Input 1
+#ifdef REGION_Input
 InputPort::~InputPort()
 {
     // 取消所有中断
@@ -426,7 +445,6 @@ void InputPort::Register(IOReadHandler handler, void* param)
     // 检查并初始化中断线数组
     if(!hasInitState)
     {
-        //State = new IntState[16];
         for(int i=0; i<16; i++)
         {
             IntState* state = &State[i];
@@ -437,7 +455,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
         hasInitState = true;
     }
 
-    byte groupIndex = GroupToIndex(Group);
+    byte groupIndex = GroupIndex >> 4;
     ushort n = PinBit;
     for(int i=0; i<16 && n!=0; i++)
     {
@@ -456,12 +474,10 @@ void InputPort::Register(IOReadHandler handler, void* param)
         }
         n >>= 1;
     }
-    
+
     _Registed = handler != NULL;
 }
 
-
-//.............................中断函数处理部分.............................
 #define IT 1
 #ifdef IT
 extern "C"
@@ -567,6 +583,18 @@ extern "C"
 #endif
 }
 
+void SetEXIT(int pinIndex, bool enable)
+{
+    /* 配置EXTI中断线 */
+    EXTI_InitTypeDef ext;
+    EXTI_StructInit(&ext);
+    ext.EXTI_Line = EXTI_Line0 << pinIndex;
+    ext.EXTI_Mode = EXTI_Mode_Interrupt;
+    ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
+    ext.EXTI_LineCmd = enable ? ENABLE : DISABLE;
+    EXTI_Init(&ext);
+}
+
 // 申请引脚中断托管
 void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler, void* param)
 {
@@ -592,14 +620,8 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     GPIO_EXTILineConfig(groupIndex, pinIndex);
 #endif
-    /* 配置EXTI中断线 */
-    EXTI_InitTypeDef ext;
-    EXTI_StructInit(&ext);
-    ext.EXTI_Line = EXTI_Line0 << pinIndex;
-    ext.EXTI_Mode = EXTI_Mode_Interrupt;
-    ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
-    ext.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&ext);
+
+	SetEXIT(pinIndex, true);
 
     // 打开并设置EXTI中断为低优先级
     Interrupt.SetPriority(PORT_IRQns[pinIndex], 1);
@@ -618,12 +640,7 @@ void InputPort::UnRegisterInput(int pinIndex)
     state->Pin = P0;
     state->Handler = 0;
 
-    EXTI_InitTypeDef ext;
-    ext.EXTI_Line = EXTI_Line0 << pinIndex;
-    ext.EXTI_Mode = EXTI_Mode_Interrupt;
-    ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
-    ext.EXTI_LineCmd = DISABLE;
-    EXTI_Init(&ext);
+	SetEXIT(pinIndex, false);
 
     state->Used--;
     if(state->Used == 0)
