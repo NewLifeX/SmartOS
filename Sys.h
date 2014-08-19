@@ -137,6 +137,7 @@ __inline void debug_printf( const char *format, ... ) {}
 #endif //_Sys_H_
 
 /*
+v2.5.2014.0819	增加堆栈溢出检测模块，重载new/delete实现，仅Debug有效
 v2.4.2014.0811	实现系统多任务调度，一次性编译测试通过，多任务小灯例程4k
 				实现以太网精简协议TinyIP，ARP/ICMP/TCP/UDP，混合网络例程7.5k
 				增加看门狗、定时器模块
