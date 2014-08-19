@@ -3,10 +3,18 @@
 
 #if DEBUG
 
-
 void* operator new(uint size)
 {
-    debug_printf("new size: %d\r\n", size);
+    debug_printf(" new size: %d ", size);
+    void * p = malloc(size);
+	if(!p) debug_printf("malloc failed! size=%d", size);
+	assert_param(p);
+    return p;
+}
+
+void* operator new[](uint size)
+{
+    debug_printf(" new size[]: %d ", size);
     void * p = malloc(size);
 	if(!p) debug_printf("malloc failed! size=%d", size);
 	assert_param(p);
@@ -15,13 +23,13 @@ void* operator new(uint size)
 
 void operator delete(void * p)
 {
-	debug_printf("delete 0x%08x\r\n", p);
+	debug_printf(" delete 0x%08x ", p);
     if(p) free(p);
 }
 
-void operator delete [] (void * p)
+void operator delete[](void * p)
 {
-	debug_printf("delete[] 0x%08x\r\n", p);
+	debug_printf(" delete[] 0x%08x ", p);
     if(p) free(p);
 }
 
