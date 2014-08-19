@@ -6,7 +6,7 @@ Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
 ; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存不足的项目可改小	。堆空间不足时malloc讲引发异常
-Heap_Size       EQU     0x00004000	
+Heap_Size       EQU     0x00004000
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
