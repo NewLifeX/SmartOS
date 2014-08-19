@@ -25,24 +25,6 @@ void operator delete [] (void * p)
     if(p) free(p);
 }
 
-bool TSys::CheckMemory()
-{
-	uint msp = __get_MSP();
-	if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
-
-	uint psp = __get_PSP();
-	void* p = malloc(0x10);
-	if(!p) return false;
-	free(p);
-	if((uint)p >= psp) return false;
-
-	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	uint end = (uint)&__heap_limit;
-	if((uint)p + 0x40 >= end) return false;
-
-	return true;
-}
-
 #ifdef  USE_FULL_ASSERT
 
 /**

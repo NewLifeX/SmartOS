@@ -352,8 +352,6 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
 		ShowData(_net->Payload, _net->PayloadLength);
-		/*for(int i=0; i<_net->PayloadLength; i++)
-			debug_printf("%c", _net->Payload[i]);*/
 		debug_printf(" \r\n");
 #endif
 	}
@@ -460,8 +458,6 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 			ShowIP(RemoteIP);
 			debug_printf(" : ");
 			ShowData(_net->Payload, len);
-			/*for(int i=0; i<len; i++)
-				debug_printf("%c", _net->Payload[i]);*/
 			debug_printf("\r\n");
 #endif
 		}
@@ -581,14 +577,10 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 		debug_printf(":%d => ", RemotePort);
 		ShowIP(ip->DestIP);
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
-#endif
 
 		ShowData(data, len);
-		/*for(int i=0; i<_net->PayloadLength; i++)
-		{
-			debug_printf("%c", data[i]);
-		}*/
 		debug_printf(" \r\n");
+#endif
 	}
 
 	udp->DestPort = udp->SrcPort;
@@ -906,9 +898,6 @@ void TinyIP::DHCPConfig(byte* buf)
 			{
 				debug_printf(" ");
 				ShowData(&opt->Data, opt->Length);
-				/*byte* str = &opt->Data;
-				for(int i=0; i<opt->Length; i++)
-					debug_printf("%c", str[i]);*/
 			}
 			debug_printf("\r\n");
 		}
