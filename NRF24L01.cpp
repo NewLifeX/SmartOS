@@ -52,16 +52,12 @@
 #define TX_PLOAD_WIDTH				32
 
 /*发送包大小*/
-#define TX_ADR_WIDTH	5
-#define RX_ADR_WIDTH	5
+//#define TX_ADR_WIDTH	5
+//#define RX_ADR_WIDTH	5
 
 /*发送 接收数据地址*/
-#define TX_Address	{0x34,0x43,0x10,0x10,0x01}
-#define RX_Address	{0x34,0x43,0x10,0x10,0x01}
-
-/*发送  接受   地址*/
-byte TX_ADDRESS[TX_ADR_WIDTH] = TX_Address;
-byte RX_ADDRESS[RX_ADR_WIDTH] = RX_Address;
+byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
+//byte RX_ADDRESS[RX_ADR_WIDTH] = {0x34,0x43,0x10,0x10,0x01};
 
 /********************************************************************************/
 
@@ -77,6 +73,10 @@ nRF24L01_status=nrf_mode_free;
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+
+	// 初始化地址
+	memcpy(Address, TX_ADDRESS, 5);
+
     if(ce != P0) _CE = new OutputPort(ce);
     if(irq != P0)
     {
@@ -87,7 +87,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-	_Received=NULL;
+	_Received = NULL;
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
 }
@@ -164,7 +164,7 @@ byte NRF24L01::ReadReg(byte reg)
 // 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
-	CEDown();
+	//CEDown();
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(reg);
@@ -178,36 +178,20 @@ void NRF24L01::Config(bool isReceive)
 {
 	CEDown();
 
-	if(isReceive)
-	{
-		// 接收模式
-		WriteBuf(WRITE_REG_NRF + TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH); // 写发送地址=本机接收端0地址
-		WriteBuf(WRITE_REG_NRF + RX_ADDR_P0, RX_ADDRESS, RX_ADR_WIDTH); // 写通道0地址
-	}
-	else
-	{
-		// 发送模式
-		if((Channel == 0))
-		{
-			WriteBuf(WRITE_REG_NRF | TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH);// 2-5通道使用1字节
-			WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, RX_ADDRESS, RX_ADR_WIDTH);// 写接收端地址
-		}
-		else
-		{
-			TX_ADDRESS[0] = 0x30 + Channel;
-			WriteBuf(WRITE_REG_NRF | TX_ADDR,    TX_ADDRESS, RX_ADR_WIDTH);// 2-5通道使用1字节
-			WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, TX_ADDRESS, RX_ADR_WIDTH);// 写接收端地址
-		}
-	}
+	if(!isReceive)
+		WriteBuf(WRITE_REG_NRF | TX_ADDR,    Address, ArrayLength(Address));// 2-5通道使用1字节
+
+	WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, Address, ArrayLength(Address));// 写接收端地址
 
 	WriteReg(WRITE_REG_NRF + EN_AA, 0x01);    //使能通道0的自动应答
 	WriteReg(WRITE_REG_NRF + EN_RXADDR, 0x01);//使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF + RF_CH, Channel=40);      //设置RF通信频率
+	WriteReg(WRITE_REG_NRF + RF_CH, Channel);      //设置RF通信频率
 	WriteReg(WRITE_REG_NRF + RX_PW_P0, RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
-	WriteReg(WRITE_REG_NRF + SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+	if(!isReceive)
+		WriteReg(WRITE_REG_NRF + SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
     //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
 	WriteReg(WRITE_REG_NRF + RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	
+
 	if(isReceive)
 		WriteReg(WRITE_REG_NRF + CONFIG, 0x0f); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
 	else
@@ -228,31 +212,35 @@ void NRF24L01::SetMode(bool isReceive)
 	{
 		//CEDown();		// 结束接收数据
 		Config(false);
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);
 		Sys.Sleep(300);
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 		Config(false);
 		CEDown();		// 结束接收数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);
 		CEUp();		//开始监听频段
 		Sys.Sleep(50);
 		Config(false);
 		CEDown();		// 结束接收数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);	
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);
 		CEUp();		//开始监听频段
 	}
 	else		  // 发送模式
 		Config(false);
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);	
+	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);
 }
 
 // 从NRF的接收缓冲区中读出数据
 byte NRF24L01::Receive(byte *data)
 {
-//	CEUp();		// 开始接收数据
-//	CEDown();	// 结束接收数据
+	/*CEUp();			// 开始接收数据
+	// 等待接收中断
+	if(!WaitForIRQ()) return false;
+	CEDown();		// 结束接收数据
+	*/
+
 	if(_isEvent == false)return NO_NEWS;
 
 	/*读取status寄存器的值  */
@@ -283,14 +271,14 @@ byte NRF24L01::Send(byte* data)
 {
 	 /*ce为低，进入待机模式1*/
 	SetMode(false);	//直接在这里进行设置模式
-	
+
 	CEDown();
 	/*写数据到TX BUF 最大 32个字节*/
 	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
     /*CE为高，txbuf非空，发送数据包 */
 	CEUp();
-	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
-	while(_IRQ->Read()); 
+	// 等待发送完成中断
+	if(!WaitForIRQ()) return false;
 
 	// 读取状态寄存器的值
 	byte state = ReadReg(STATUS);
@@ -306,6 +294,16 @@ byte NRF24L01::Send(byte* data)
         return false;		// 其他原因发送失败
 }
 
+bool NRF24L01::WaitForIRQ()
+{
+	ulong ticks = Time.NewTicks(100 * 1000); // 等待100ms
+	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
+	while(_IRQ->Read() && ticks > Time.CurrentTicks());
+	if(ticks < Time.CurrentTicks()) return false;
+
+	return true;
+}
+
 void NRF24L01::CEUp()
 {
     //if(_CE != P0) Port::Write(_CE, true);
@@ -318,7 +316,7 @@ void NRF24L01::CEDown()
     if(_CE) *_CE = false;
 }
 
-// 注册中断函数  不注册的结果是    有中断 无中断处理代码 
+// 注册中断函数  不注册的结果是    有中断 无中断处理代码
 void NRF24L01::Register(DataReceived handler, void* param)
 {
     if(handler)
@@ -337,7 +335,7 @@ void NRF24L01::Register(DataReceived handler, void* param)
 void NRF24L01::OnReceive(Pin pin, bool down)
 {
 	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
-	if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平 
+	if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平
 	if(_Received)
 	{
 		_Received(this, _Param);
@@ -345,14 +343,14 @@ void NRF24L01::OnReceive(Pin pin, bool down)
 	}
 }
 
-// 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个 
-// void Register(IOReadHandler handler, void* param = NULL);   // 注册事件    
+// 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个
+// void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 // typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 void NRF24L01::OnReceive(Pin pin, bool down, void* param)
 {
 	if(!down)
 	{
 		NRF24L01* nrf = (NRF24L01*)param;
-		nrf->OnReceive(pin, down);
+		if(nrf) nrf->OnReceive(pin, down);
 	}
 }

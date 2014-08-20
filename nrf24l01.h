@@ -30,12 +30,16 @@ private:
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 
+	bool WaitForIRQ();
+
 	typedef void (*IRQHandler)(Pin pin, bool down, void* param);
 
     void CEUp();
     void CEDown();
 public:
     int Channel;    // 通讯频道
+	byte Address[5];
+
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();
 
