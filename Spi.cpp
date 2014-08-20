@@ -71,6 +71,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 #endif
 		debug_printf("    NSS : ");
         _nss = new OutputPort(ps[0], false, 10);
+		*_nss = true; // 拉高进入空闲状态
     }
 
 #ifdef STM32F10X
