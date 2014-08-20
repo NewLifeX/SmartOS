@@ -62,13 +62,13 @@ byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
 /********************************************************************************/
 
 //nRF2401 状态  供委托使用
-enum nRF_state
+/*enum nRF_state
 {
 	nrf_mode_rx,
 	nrf_mode_tx,
 	nrf_mode_free
 }
-nRF24L01_status=nrf_mode_free;
+nRF24L01_status = nrf_mode_free;*/
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
@@ -83,11 +83,13 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 2;
-        _IRQ->Register(OnReceive,this);
+        //_IRQ->Register(OnReceive,this);
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
 	_Received = NULL;
+	Timeout = 200;
+
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
 }
@@ -199,7 +201,7 @@ void NRF24L01::Config(bool isReceive)
 
     /*CE拉高，进入接收模式*/
 	CEUp();
-	nRF24L01_status = nrf_mode_rx;
+	//nRF24L01_status = nrf_mode_rx;
 	if(!isReceive) Sys.Delay(500); //CE要拉高一段时间才进入发送模式
 }
 
@@ -233,31 +235,30 @@ void NRF24L01::SetMode(bool isReceive)
 }
 
 // 从NRF的接收缓冲区中读出数据
-byte NRF24L01::Receive(byte *data)
+bool NRF24L01::Receive(byte *data)
 {
-	/*CEUp();			// 开始接收数据
+	CEUp();			// 开始接收数据
 	// 等待接收中断
 	if(!WaitForIRQ()) return false;
 	CEDown();		// 结束接收数据
-	*/
 
-	if(_isEvent == false)return NO_NEWS;
+	//if(_isEvent == false)return NO_NEWS;
 
 	/*读取status寄存器的值  */
-	byte state = ReadReg(STATUS);
+	Status = (RF_STATUS)ReadReg(STATUS);
 	/* 清除中断标志*/
-	WriteReg(WRITE_REG_NRF + STATUS, state);
+	WriteReg(WRITE_REG_NRF + STATUS, Status);
 	/*判断是否接收到数据*/
-	if(state & RX_OK)                                 //接收到数据
+	if(Status & RX_OK)                                 //接收到数据
 	{
 		CEDown();		// 收到一帧数据  停止接受  开始读取
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
 		CEDown();		// 结束接收数据
 		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
-		_isEvent = false;
+		//_isEvent = false;
 		CEUp();			// 继续监听空中数据
-        return RX_OK;
+        return true;
 	}
 	Config(false);	// 切换一次发送模式  然后切回来
 	SetMode(false);
@@ -267,7 +268,7 @@ byte NRF24L01::Receive(byte *data)
 }
 
 // 向NRF的发送缓冲区中写入数据
-byte NRF24L01::Send(byte* data)
+bool NRF24L01::Send(byte* data)
 {
 	 /*ce为低，进入待机模式1*/
 	SetMode(false);	//直接在这里进行设置模式
@@ -278,30 +279,34 @@ byte NRF24L01::Send(byte* data)
     /*CE为高，txbuf非空，发送数据包 */
 	CEUp();
 	// 等待发送完成中断
-	if(!WaitForIRQ()) return false;
+	//if(!WaitForIRQ()) return false;
 
 	// 读取状态寄存器的值
-	byte state = ReadReg(STATUS);
+	Status = (RF_STATUS)ReadReg(STATUS);
 	// 清除TX_DS或MAX_RT中断标志
-	WriteReg(WRITE_REG_NRF + STATUS, state);
+	WriteReg(WRITE_REG_NRF + STATUS, Status);
 	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 	// 判断中断类型
-    if(state & MAX_TX)		// 达到最大重发次数
+    /*if(state & MAX_TX)		// 达到最大重发次数
         return MAX_TX;
     else if(state & TX_OK)	// 发送完成
         return TX_OK;
     else
         return false;		// 其他原因发送失败
+	*/
+	return Status & TX_OK;	// 发送完成
 }
 
 bool NRF24L01::WaitForIRQ()
 {
-	ulong ticks = Time.NewTicks(100 * 1000); // 等待100ms
+	ulong ticks = Time.NewTicks(Timeout * 1000); // 等待100ms
 	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
 	while(_IRQ->Read() && ticks > Time.CurrentTicks());
-	if(ticks < Time.CurrentTicks()) return false;
+	if(ticks >= Time.CurrentTicks()) return true;
+	
+	debug_printf("NRF24L01::Send Timeout %dms\r\n", Timeout);
 
-	return true;
+	return false;
 }
 
 void NRF24L01::CEUp()
@@ -339,7 +344,7 @@ void NRF24L01::OnReceive(Pin pin, bool down)
 	if(_Received)
 	{
 		_Received(this, _Param);
-		this->_isEvent=true;
+		//this->_isEvent=true;
 	}
 }
 
