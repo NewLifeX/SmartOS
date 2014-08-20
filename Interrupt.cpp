@@ -1,7 +1,7 @@
 ﻿#include "Interrupt.h"
 
 // GD32F150无法把向量表映射到RAM
-#if defined(GD32) && defined(STM32F0xx)
+#if defined(GD32) && defined(STM32F0XX)
 	#define VEC_TABLE_ON_RAM 0
 #else
 	#define VEC_TABLE_ON_RAM 1
@@ -16,7 +16,7 @@
 */
 TInterrupt Interrupt;
 
-// 没有必要重定向中断向量表，把所有中断硬编码指向IntcHandler和FAULT_SubHandler即可
+void FaultHandler();	// 错误处理程序
 
 // 真正的向量表 64k=0x10000
 #if VEC_TABLE_ON_RAM
@@ -205,7 +205,13 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 }
 #endif
 
-void TInterrupt::OnHandler()
+__asm uint GetIPSR()
+{
+    mrs     r0,IPSR               // exception number
+    bx      lr
+}
+
+void OnHandler()
 {
     uint num = GetIPSR();
     //if(num >= VectorySize) return;
@@ -219,7 +225,7 @@ void TInterrupt::OnHandler()
     isr(num - 16, param);
 }
 
-void TInterrupt::FaultHandler()
+void FaultHandler()
 {
     uint exception = GetIPSR();
     if (exception) {
@@ -342,51 +348,45 @@ void TInterrupt::FaultHandler()
     while(true);
 }
 
-__asm uint TInterrupt::GetIPSR()
-{
-    mrs     r0,IPSR               // exception number
-    bx      lr
-}
-
 #if !VEC_TABLE_ON_RAM
 extern "C"
 {
-	void NMI_Handler()			{ TInterrupt::FaultHandler(); }
-	void HardFault_Handler()	{ TInterrupt::FaultHandler(); }
-	void MemManage_Handler()	{ TInterrupt::FaultHandler(); }
-	void BusFault_Handler()		{ TInterrupt::FaultHandler(); }
-	void UsageFault_Handler()	{ TInterrupt::FaultHandler(); }
-	void SVC_Handler()			{ TInterrupt::OnHandler(); }
-	void PendSV_Handler()		{ TInterrupt::OnHandler(); }
-	void SysTick_Handler()		{ TInterrupt::OnHandler(); }
-	void WWDG_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void PVD_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void RTC_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void FLASH_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void RCC_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void EXTI0_1_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void EXTI2_3_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void EXTI4_15_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void TS_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void DMA1_Channel1_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void DMA1_Channel2_3_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void DMA1_Channel4_5_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void ADC1_COMP_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void TIM1_BRK_UP_TRG_COM_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void TIM1_CC_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void TIM2_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void TIM3_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void TIM6_DAC_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void TIM14_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void TIM15_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void TIM16_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void TIM17_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void I2C1_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void I2C2_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void SPI1_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void SPI2_IRQHandler()		{ TInterrupt::OnHandler(); }
-	void USART1_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void USART2_IRQHandler()	{ TInterrupt::OnHandler(); }
-	void CEC_IRQHandler()		{ TInterrupt::OnHandler(); }
+	void NMI_Handler()			{ FaultHandler(); }
+	void HardFault_Handler()	{ FaultHandler(); }
+	void MemManage_Handler()	{ FaultHandler(); }
+	void BusFault_Handler()		{ FaultHandler(); }
+	void UsageFault_Handler()	{ FaultHandler(); }
+	void SVC_Handler()			{ OnHandler(); }
+	void PendSV_Handler()		{ OnHandler(); }
+	void SysTick_Handler()		{ OnHandler(); }
+	void WWDG_IRQHandler()		{ OnHandler(); }
+	void PVD_IRQHandler()		{ OnHandler(); }
+	void RTC_IRQHandler()		{ OnHandler(); }
+	void FLASH_IRQHandler()		{ OnHandler(); }
+	void RCC_IRQHandler()		{ OnHandler(); }
+	void EXTI0_1_IRQHandler()	{ OnHandler(); }
+	void EXTI2_3_IRQHandler()	{ OnHandler(); }
+	void EXTI4_15_IRQHandler()	{ OnHandler(); }
+	void TS_IRQHandler()		{ OnHandler(); }
+	void DMA1_Channel1_IRQHandler()		{ OnHandler(); }
+	void DMA1_Channel2_3_IRQHandler()	{ OnHandler(); }
+	void DMA1_Channel4_5_IRQHandler()	{ OnHandler(); }
+	void ADC1_COMP_IRQHandler()	{ OnHandler(); }
+	void TIM1_BRK_UP_TRG_COM_IRQHandler()	{ OnHandler(); }
+	void TIM1_CC_IRQHandler()	{ OnHandler(); }
+	void TIM2_IRQHandler()		{ OnHandler(); }
+	void TIM3_IRQHandler()		{ OnHandler(); }
+	void TIM6_DAC_IRQHandler()	{ OnHandler(); }
+	void TIM14_IRQHandler()		{ OnHandler(); }
+	void TIM15_IRQHandler()		{ OnHandler(); }
+	void TIM16_IRQHandler()		{ OnHandler(); }
+	void TIM17_IRQHandler()		{ OnHandler(); }
+	void I2C1_IRQHandler()		{ OnHandler(); }
+	void I2C2_IRQHandler()		{ OnHandler(); }
+	void SPI1_IRQHandler()		{ OnHandler(); }
+	void SPI2_IRQHandler()		{ OnHandler(); }
+	void USART1_IRQHandler()	{ OnHandler(); }
+	void USART2_IRQHandler()	{ OnHandler(); }
+	void CEC_IRQHandler()		{ OnHandler(); }
 }
 #endif
