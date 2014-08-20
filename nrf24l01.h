@@ -39,7 +39,7 @@ private:
 public:
     int Channel;    // 通讯频道
 	byte Address[5];
-	uint Timeout;	// 超时时间200ms
+	uint Timeout;	// 超时时间ms
 
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();

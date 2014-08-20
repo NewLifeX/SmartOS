@@ -88,7 +88,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
 	_Received = NULL;
-	Timeout = 200;
+	Timeout = 50;
 
     WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
@@ -137,7 +137,7 @@ byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 bool NRF24L01::Check(void)
 {
 	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
-	byte buf[5]={0XA5,0XA5,0XA5,0XA5,0XA5};
+	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
 	byte buf1[5];
 	/*写入5个字节的地址.  */
 	WriteBuf(WRITE_REG_NRF + TX_ADDR, buf, 5);
@@ -279,7 +279,7 @@ bool NRF24L01::Send(byte* data)
     /*CE为高，txbuf非空，发送数据包 */
 	CEUp();
 	// 等待发送完成中断
-	//if(!WaitForIRQ()) return false;
+	if(!WaitForIRQ()) return false;
 
 	// 读取状态寄存器的值
 	Status = (RF_STATUS)ReadReg(STATUS);
@@ -312,7 +312,11 @@ bool NRF24L01::WaitForIRQ()
 void NRF24L01::CEUp()
 {
     //if(_CE != P0) Port::Write(_CE, true);
-    if(_CE) *_CE = true;
+    if(_CE)
+	{
+		*_CE = true;
+		Sys.Delay(20); // 进入发送模式，高电平>10us
+	}
 }
 
 void NRF24L01::CEDown()
