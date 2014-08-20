@@ -193,10 +193,7 @@ bool TinyIP::Init()
 #if TinyIP_DHCP
 	if(UseDHCP)
 	{
-		IPIsReady = false;
-		dhcp_id = (uint)Time.CurrentTicks();
-
-		DHCPConfig(Buffer);
+		DHCPStart();
 		if(!IPIsReady)
 		{
 #if NET_DEBUG
@@ -690,7 +687,7 @@ void TinyIP::SendDhcp(byte* buf, uint len)
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId(Mac, 6);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, IP, 4);
-		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS SmartOS", 11);
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS_SmartOS", 11);
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
@@ -810,8 +807,18 @@ void TinyIP::PareOption(byte* buf, int len)
 	}
 }
 
-void TinyIP::DHCPConfig(byte* buf)
+void RenewDHCP(void* param)
 {
+	TinyIP* tip = (TinyIP*)param;
+	if(tip) tip->DHCPStart();
+}
+
+void TinyIP::DHCPStart()
+{
+	IPIsReady = false;
+	dhcp_id = (uint)Time.CurrentTicks();
+
+	byte* buf = Buffer;
 	ulong next = 0;
 	// 总等待时间
 	ulong end = Time.NewTicks(10 * 1000000);
@@ -843,11 +850,13 @@ void TinyIP::DHCPConfig(byte* buf)
 
 		len -= sizeof(DHCP_HEADER);
 
-		DHCP_HEADER* dhcp = (DHCP_HEADER*)((byte*)udp + sizeof(UDP_HEADER));
+		DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 		if(!dhcp->Valid())continue;
 
+		byte* data = dhcp->Next();
+
 		// 获取DHCP消息类型
-		DHCP_OPT* opt = GetOption((byte*)dhcp + sizeof(DHCP_HEADER), len, DHCP_OPT_MessageType);
+		DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
 		if(!opt) continue;
 
 		if(opt->Data == DHCP_TYPE_Offer)
@@ -855,7 +864,7 @@ void TinyIP::DHCPConfig(byte* buf)
 			if(__REV(dhcp->TransID) == dhcp_id)
 			{
 				memcpy(IP, dhcp->YourIP, 4);
-				PareOption(buf, _net->PayloadLength - sizeof(DHCP_HEADER));
+				PareOption(buf, len);
 
 				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
@@ -883,13 +892,25 @@ void TinyIP::DHCPConfig(byte* buf)
 			if(memcmp(dhcp->YourIP, IP, 4) == 0)
 			{
 				IPIsReady = true;
+
+				// 查找租约时间，提前续约
+				opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
+				if(opt)
+				{
+					// 续约时间，大字节序，时间单位秒
+					uint time = __REV(*(uint*)&opt->Data);
+					// DHCP租约过了一半以后重新获取IP地址
+					if(time > 0) Sys.AddTask(RenewDHCP, this, time / 2 * 1000000, -1);
+				}
+
 				break;
 			}
 		}
 #if NET_DEBUG
 		else if(opt->Data == DHCP_TYPE_Nak)
 		{
-			opt = GetOption((byte*)dhcp + sizeof(DHCP_HEADER), len, DHCP_OPT_Message);
+			// 导致Nak的原因
+			opt = GetOption(data, len, DHCP_OPT_Message);
 			debug_printf("DHCP Nak   IP:");
 			ShowIP(IP);
 			debug_printf(" From ");

@@ -73,7 +73,6 @@ private:
 	void DHCPDiscover();
 	void DHCPRequest(byte* buf);
 	void PareOption(byte* buf, int len);
-	void DHCPConfig(byte* buf);
 
 	void SendDhcp(byte* buf, uint len);
 #endif
@@ -100,6 +99,8 @@ public:
 #if TinyIP_DHCP
 	bool IPIsReady;
 	bool UseDHCP;
+
+	void DHCPStart();
 #endif
 
     TinyIP(Enc28j60* enc, byte ip[4] = NULL, byte mac[6] = NULL);
