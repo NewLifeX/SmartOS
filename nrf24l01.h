@@ -23,7 +23,6 @@ private:
     Spi* _spi;
     OutputPort* _CE;
     InputPort* _IRQ;
-	//bool _isEvent;
 
     byte WriteBuf(byte reg ,byte *pBuf,byte bytes);
     byte ReadBuf(byte reg,byte *pBuf,byte bytes);
@@ -49,7 +48,7 @@ public:
     virtual ~NRF24L01();
 
     bool Check();
-	void Config(bool isReceive);	// 完成基础参数设定
+	void Config();	// 完成基础参数设定，默认初始化为发送模式
     void SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 
 	byte Status;
@@ -59,15 +58,15 @@ public:
     bool Receive(byte* data);
 
 	// 数据接收委托，一般param用作目标对象
-	typedef void (*DataReceived)(NRF24L01* sp, void* param);
+	/*typedef void (*DataReceived)(NRF24L01* sp, void* param);
     void Register(DataReceived handler, void* param = NULL);
-	void OnReceive(Pin pin, bool down);
+	void OnReceive(Pin pin, bool down);*/
 
 private:
-	DataReceived _Received;
+	/*DataReceived _Received;
 	void* _Param;
 
-	static  void OnReceive(Pin pin, bool down, void* param);
+	static  void OnReceive(Pin pin, bool down, void* param);*/
 
 	class ByteStruct
 	{
