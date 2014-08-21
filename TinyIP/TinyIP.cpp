@@ -272,10 +272,10 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	// 构造响应包
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
-	memcpy(&arp->DestMac, &arp->SrcMac, 6);
-	memcpy(&arp->DestIP, &arp->SrcIP, 4);
-	memcpy(&arp->SrcMac, Mac, 6);
-	memcpy(&arp->SrcIP, IP, 4);
+	memcpy(arp->DestMac, arp->SrcMac, 6);
+	memcpy(arp->DestIP, arp->SrcIP, 4);
+	memcpy(arp->SrcMac, Mac, 6);
+	memcpy(arp->SrcIP, IP, 4);
 
 #if NET_DEBUG
 	debug_printf("ARP Response To ");
@@ -292,8 +292,8 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
-	memcpy(&eth->DestMac, &RemoteMac, 6);
-	memcpy(&eth->SrcMac, Mac, 6);
+	memcpy(eth->DestMac, RemoteMac, 6);
+	memcpy(eth->SrcMac, Mac, 6);
 
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
@@ -310,8 +310,8 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
-	memcpy(&ip->DestIP, RemoteIP, 4);
-	memcpy(&ip->SrcIP, IP, 4);
+	memcpy(ip->DestIP, RemoteIP, 4);
+	memcpy(ip->SrcIP, IP, 4);
 
 	ip->Version = 4;
 	ip->Length = sizeof(IP_HEADER) / 4;
@@ -580,7 +580,7 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 #endif
 	}
 
-	udp->DestPort = udp->SrcPort;
+	//udp->DestPort = udp->SrcPort;
 	assert_param(data == (byte*)udp + sizeof(UDP_HEADER));
 	memcpy((byte*)udp + sizeof(UDP_HEADER), data, _net->PayloadLength);
 
