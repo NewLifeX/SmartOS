@@ -1,4 +1,4 @@
-﻿#include "Interrupt.h"
+#include "Interrupt.h"
 
 // GD32F150无法把向量表映射到RAM
 #if defined(GD32) && defined(STM32F0XX)
@@ -16,6 +16,7 @@
 */
 TInterrupt Interrupt;
 
+void OnHandler();
 void FaultHandler();	// 错误处理程序
 
 // 真正的向量表 64k=0x10000
