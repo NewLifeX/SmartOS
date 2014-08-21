@@ -181,9 +181,9 @@ void NRF24L01::Config(bool isReceive)
 	CEDown();
 
 	if(!isReceive)
-		WriteBuf(WRITE_REG_NRF | TX_ADDR,    Address, ArrayLength(Address));// 2-5通道使用1字节
+		WriteBuf(WRITE_REG_NRF | TX_ADDR, Address, ArrayLength(Address));
 
-	WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, Address, ArrayLength(Address));// 写接收端地址
+	WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, Address, ArrayLength(Address));	// 写接收端地址
 
 	WriteReg(WRITE_REG_NRF + EN_AA, 0x01);    //使能通道0的自动应答
 	WriteReg(WRITE_REG_NRF + EN_RXADDR, 0x01);//使能通道0的接收地址
@@ -194,10 +194,20 @@ void NRF24L01::Config(bool isReceive)
     //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
 	WriteReg(WRITE_REG_NRF + RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
 
-	if(isReceive)
+	// 编译器会优化下面的代码为一个常数
+	RF_CONFIG config;
+	config.Init();
+	config.PWR_UP = 1;	// 1:上电 0:掉电
+	config.CRCO = 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
+	config.EN_CRC = 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	if(isReceive) config.PRIM_RX = 1;
+	WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
+
+	/*if(isReceive)
 		WriteReg(WRITE_REG_NRF + CONFIG, 0x0f); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
 	else
 		WriteReg(WRITE_REG_NRF + CONFIG, 0x0e); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
+	*/
 
     /*CE拉高，进入接收模式*/
 	CEUp();
@@ -208,30 +218,21 @@ void NRF24L01::Config(bool isReceive)
 void NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
-	//改变状态
-	//_isEvent = false;
+	RF_CONFIG config;
+	config.Init(mode);
 	if(isReceive) // 接收模式
 	{
-		//CEDown();		// 结束接收数据
-		Config(false);
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);
-		Sys.Sleep(300);
-        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-		Config(false);
+		config.PRIM_RX = 1;
 		CEDown();		// 结束接收数据
-        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);
-		CEUp();		//开始监听频段
-		Sys.Sleep(50);
-		Config(false);
-		CEDown();		// 结束接收数据
-        WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode | 0x01);
+        WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
+		WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
 		CEUp();		//开始监听频段
 	}
-	else		  // 发送模式
-		Config(false);
-	 	WriteReg(WRITE_REG_NRF | CONFIG, mode & 0xfe);
+	else // 发送模式
+	{
+		//Config(false);
+		WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
+	}
 }
 
 // 从NRF的接收缓冲区中读出数据
@@ -245,11 +246,13 @@ bool NRF24L01::Receive(byte *data)
 	//if(_isEvent == false)return NO_NEWS;
 
 	/*读取status寄存器的值  */
-	Status = (RF_STATUS)ReadReg(STATUS);
+	Status = ReadReg(STATUS);
 	/* 清除中断标志*/
 	WriteReg(WRITE_REG_NRF + STATUS, Status);
 	/*判断是否接收到数据*/
-	if(Status & RX_OK)                                 //接收到数据
+	RF_STATUS st;
+	st.Init(Status);
+	if(st.RX_DR)	// 接收到数据
 	{
 		CEDown();		// 收到一帧数据  停止接受  开始读取
         ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
@@ -282,7 +285,7 @@ bool NRF24L01::Send(byte* data)
 	if(!WaitForIRQ()) return false;
 
 	// 读取状态寄存器的值
-	Status = (RF_STATUS)ReadReg(STATUS);
+	Status = ReadReg(STATUS);
 	// 清除TX_DS或MAX_RT中断标志
 	WriteReg(WRITE_REG_NRF + STATUS, Status);
 	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
@@ -293,8 +296,11 @@ bool NRF24L01::Send(byte* data)
         return TX_OK;
     else
         return false;		// 其他原因发送失败
-	*/
 	return Status & TX_OK;	// 发送完成
+	*/
+	RF_STATUS st;
+	st.Init(Status);
+	return st.TX_DS;
 }
 
 bool NRF24L01::WaitForIRQ()
@@ -303,7 +309,7 @@ bool NRF24L01::WaitForIRQ()
 	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
 	while(_IRQ->Read() && ticks > Time.CurrentTicks());
 	if(ticks >= Time.CurrentTicks()) return true;
-	
+
 	debug_printf("NRF24L01::Send Timeout %dms\r\n", Timeout);
 
 	return false;
