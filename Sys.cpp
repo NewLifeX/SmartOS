@@ -478,6 +478,34 @@ uint TSys::Crc(const void* rgBlock, int len, uint crc)
 }
 #endif
 
+#define __HELP__MODULE__ 1
+#ifdef __HELP__MODULE__
+// 显示十六进制数据，指定分隔字符
+void TSys::ShowHex(byte* buf, uint len, char sep)
+{
+	for(int i=0; i<len; i++)
+	{
+		debug_printf("%02X", *buf++);
+		if(!sep) debug_printf("%c", sep);
+		//if(((i + 1) & 0xF) == 0) debug_printf("\r\n");
+	}
+	//debug_printf("\r\n");
+}
+
+// 显示字符串，不指定长度时自动找\0
+void TSys::ShowString(byte* buf, uint len)
+{
+	if(len == 0) len = 1000;
+    for(int i=0; i<len; i++)
+    {
+		if(buf[i] >= 32 && buf[i] <= 126 || buf[i] == 0x0A || buf[i] == 0x0D || buf[i] == 0x09)
+			debug_printf("%c", buf[i]);
+		else
+			debug_printf("%02X", buf[i]);
+    }
+}
+#endif
+
 #define __TASK__MODULE__ 1
 #ifdef __TASK__MODULE__
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次

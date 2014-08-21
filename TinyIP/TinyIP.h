@@ -111,7 +111,6 @@ public:
 	bool Init();
 	static void ShowIP(byte* ip);
 	static void ShowMac(byte* mac);
-	static void ShowData(byte* buf, uint len);
 
 #if TinyIP_ICMP
 	// 收到Ping请求时触发，传递结构体和负载数据长度

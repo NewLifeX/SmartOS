@@ -83,6 +83,8 @@ public:
     // CRC32校验
     uint Crc(const void* rgBlock, int len, uint crc = 0);
 
+	void ShowHex(byte* buf, uint len, char sep = '\0');// 显示十六进制数据，指定分隔字符
+	void ShowString(byte* buf, uint len = 0);	// 显示字符串，不指定长度时自动找\0
 private:
 	int _Index;	// MCU在型号表中的索引
 

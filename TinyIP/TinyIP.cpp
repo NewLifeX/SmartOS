@@ -3,16 +3,6 @@
 
 #define NET_DEBUG DEBUG
 
-void ShowHex(byte* buf, int size)
-{
-	for(int i=0; i<size; i++)
-	{
-		debug_printf("%02X-", *buf++);
-		if(((i + 1) & 0xF) == 0) debug_printf("\r\n");
-	}
-	debug_printf("\r\n");
-}
-
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
 	_enc = enc;
@@ -364,7 +354,7 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 		debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
-		ShowData(_net->Payload, _net->PayloadLength);
+		Sys.ShowString(_net->Payload, _net->PayloadLength);
 		debug_printf(" \r\n");
 #endif
 	}
@@ -470,7 +460,7 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 			debug_printf("Tcp Data(%d) From ", len);
 			ShowIP(RemoteIP);
 			debug_printf(" : ");
-			ShowData(_net->Payload, len);
+			Sys.ShowString(_net->Payload, len);
 			debug_printf("\r\n");
 #endif
 		}
@@ -591,7 +581,7 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 		ShowIP(ip->DestIP);
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), _net->PayloadLength, __REV16(udp->Length));
 
-		ShowData(data, len);
+		Sys.ShowString(data, len);
 		debug_printf(" \r\n");
 #endif
 	}
@@ -633,18 +623,6 @@ void TinyIP::ShowMac(byte* mac)
 	debug_printf("%02X", *mac++);
 	for(int i=1; i<6; i++)
 		debug_printf("-%02X", *mac++);
-}
-
-void TinyIP::ShowData(byte* buf, uint len)
-{
-    for(int i=0; i<len; i++)
-    {
-		//if(buf[i] >= '0' && buf[i] <= '9' || buf[i] >='a' && buf[i] <= 'z' || buf[i] >= 'A' && buf[i] <= 'Z')
-		if(buf[i] >= 32 && buf[i] <=126)
-			debug_printf("%c", buf[i]);
-		else
-			debug_printf("%02X", buf[i]);
-    }
 }
 
 uint TinyIP::CheckSum(byte* buf, uint len, byte type)
@@ -934,7 +912,7 @@ void TinyIP::DHCPStart()
 			if(opt)
 			{
 				debug_printf(" ");
-				ShowData(&opt->Data, opt->Length);
+				Sys.ShowString(&opt->Data, opt->Length);
 			}
 			debug_printf("\r\n");
 		}
