@@ -46,6 +46,7 @@ private:
 	void ProcessArp(byte* buf, uint len);
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);
+	bool IsMyIP(byte ip[4]);	// 是否发给我的IP地址
 
 #if TinyIP_ICMP
 	void ProcessICMP(byte* buf, uint len);
@@ -82,14 +83,15 @@ private:
 	virtual byte* GetPayload();
 	virtual void OnReceive(byte* buf, uint len);*/
 public:
-    byte IP[4];
-    byte Mask[4];
-	byte Mac[6];
-	ushort Port;
+    byte IP[4];		// 本地IP地址
+    byte Mask[4];	// 子网掩码
+	byte Mac[6];	// 本地Mac地址
+	ushort Port;	// 本地端口
+	bool EnableBroadcast;	// 使用广播
 
-	byte RemoteMac[6];
-	byte RemoteIP[4];
-	ushort RemotePort;
+	byte RemoteMac[6];	// 远程Mac地址
+	byte RemoteIP[4];	// 远程IP地址
+	ushort RemotePort;	// 远程端口
 
 	ushort BufferSize;	// 缓冲区大小
 	byte DHCPServer[4];

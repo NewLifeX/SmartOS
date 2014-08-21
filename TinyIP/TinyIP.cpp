@@ -23,7 +23,6 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	else
 	{
 		// 随机IP，取ID最后一个字节
-		//IP[0] = 192; IP[1] = 168, IP[2] = 0, IP[3] = Sys.ID[2];
 		memcpy(IP, defip, 3);
 		IP[3] = Sys.ID[0];
 	}
@@ -35,10 +34,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 		//Mac[0] = 59; Mac[1] = 57; Mac[2] = 53;
 		memcpy(Mac, "YWS", 3);
-		byte* p = (byte*)Sys.ID;
-		p++;
-		//for(int i=3; i<6; i++) Mac[i] = *p++;
-		memcpy(&Mac[3], p, 3);
+		memcpy(&Mac[3], (byte*)Sys.ID, 3);
 	}
 
 	byte mask[] = {0xFF, 0xFF, 0xFF, 0};
@@ -49,6 +45,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 
 	Buffer = NULL;
 	BufferSize = 1500;
+	EnableBroadcast = true;
 
 #if TinyIP_TCP
 	seqnum = 0xa;
@@ -70,6 +67,25 @@ TinyIP::~TinyIP()
 
 	if(_net) delete _net;
 	_net = NULL;
+}
+
+bool TinyIP::IsMyIP(byte ip[4])
+{
+	int i = 0;
+	for(i = 0; i < 4 && ip[i] == IP[i]; i++);
+	if(i == 4) return true;
+
+	if(EnableBroadcast)
+	{
+		// 全网广播
+		for(i = 0; i < 4 && ip[i] == 0xFF; i++);
+		if(i == 4) return true;
+		// 子网广播。网络位不变，主机位全1
+		for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
+		if(i == 4) return true;
+	}
+
+	return false;
 }
 
 // 循环调度的任务
@@ -108,7 +124,7 @@ void TinyIP::OnWork()
 
 	IP_HEADER* ip = _net->IP;
 	// 是否发给本机。注意memcmp相等返回0
-	if(!ip || memcmp(ip->DestIP, IP, 4) != 0) return;
+	if(!ip || !IsMyIP(ip->DestIP)) return;
 
 #if NET_DEBUG
 	if(eth->Type != ETH_IP)
