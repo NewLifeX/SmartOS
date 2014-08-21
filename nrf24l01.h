@@ -40,15 +40,20 @@ public:
     int Channel;    // 通讯频道
 	byte Address[5];
 	uint Timeout;	// 超时时间ms
+	byte PayloadWidth; // 负载数据宽度，默认32字节
+	bool AutoAnswer;// 自动应答，默认启用
+	byte Retry;		// 重试次数，最大15次
+	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
 
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();
 
     bool Check();
-	void Config(bool isReceive);
-    void SetMode(bool isReceive);
+	void Config(bool isReceive);	// 完成基础参数设定
+    void SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 
 	byte Status;
+	void ShowStatus();
 	
     bool Send(byte* data);
     bool Receive(byte* data);
@@ -146,8 +151,8 @@ private:
 		byte TX_FULL:1;	// TX FIFO 寄存器满标志, 1:TX FIFO 寄存器满, 0: TX FIFO 寄存器未满,有可用空间
 		byte RX_P_NO:3;	// 接收数据通道号, 000-101:数据通道号, 110:未使用, 111:RX FIFO 寄存器为空
 		byte MAX_RT:1;	// 达到最多次重发中断, 写‘1’清除中断, 如果MAX_RT 中断产生则必须清除后系统才能进行通讯
-		byte TX_DS:1;	// 数据发送完成中断当数据发送完成后产生中断。如果工作在自动应答模式下，只有当接收到应答信号后此位置一写‘1’清除中断
-		byte RX_DR:1;	// 接收数据中断当接收到有效数据后置一, 写‘1’清除中断
+		byte TX_DS:1;	// 数据发送完成中断，当数据发送完成后产生中断。如果工作在自动应答模式下，只有当接收到应答信号后此位置一写‘1’清除中断
+		byte RX_DR:1;	// 接收数据中断，当接收到有效数据后置一, 写‘1’清除中断
 		byte Reserved:1;
 	}RF_STATUS;
 

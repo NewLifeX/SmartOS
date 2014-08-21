@@ -1,11 +1,11 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 #include "Port.h"
 #include "NRF24L01.h"
 
 /********************************************************************************/
 //NRF24L01寄存器操作命令
-#define READ_REG_NRF        0x00  //读配置寄存器,低5位为寄存器地址
-#define WRITE_REG_NRF       0x20  //写配置寄存器,低5位为寄存器地址
+#define READ_REG_NRF    0x00  //读配置寄存器,低5位为寄存器地址
+#define WRITE_REG_NRF   0x20  //写配置寄存器,低5位为寄存器地址
 #define RD_RX_PLOAD     0x61  //读RX有效数据,1~32字节
 #define WR_TX_PLOAD     0xA0  //写TX有效数据,1~32字节
 #define FLUSH_TX        0xE1  //清除TX FIFO寄存器.发射模式下用
@@ -15,7 +15,7 @@
 /********************************************************************************/
 //SPI(NRF24L01)寄存器地址
 #define CONFIG          0x00  //配置收发状态，CRC校验模式及收发状态响应方式;
-															//bit0:1接收模式,0发射模式;bit1:电选择;bit2:CRC模式;bit3:CRC使能;
+							  //bit0:1接收模式,0发射模式;bit1:电选择;bit2:CRC模式;bit3:CRC使能;
                               //bit4:中断MAX_RT(达到最大重发次数中断)使能;bit5:中断TX_DS使能;bit6:中断RX_DR使能
 #define EN_AA           0x01  //自动应答功能设置  bit0~5,对应通道0~5
 #define EN_RXADDR       0x02  //接收信道使能,bit0~5,对应通道0~5
@@ -24,7 +24,7 @@
 #define RF_CH           0x05  //RF通道,bit6:0,工作通道频率;
 #define RF_SETUP        0x06  //RF寄存器;bit3:传输速率(0:1Mbps,1:2Mbps);bit2:1,发射功率;bit0:低噪声放大器增益
 #define STATUS          0x07  //状态寄存器;bit0:TX FIFO满标志;bit3:1,接收数据通道号(最大:6);
-															//bit4,达到最多次重发  bit5:数据发送完成中断;bit6:接收数据中断;
+							  //bit4,达到最多次重发  bit5:数据发送完成中断;bit6:接收数据中断;
 #define OBSERVE_TX      0x08  //发送检测寄存器,bit7:4,数据包丢失计数器;bit3:0,重发计数器
 #define CD              0x09  //载波检测寄存器,bit0,载波检测;
 #define RX_ADDR_P0      0x0A  //数据通道0接收地址,最大长度5个字节,低字节在前
@@ -43,38 +43,12 @@
 #define NRF_FIFO_STATUS 0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
 
-//#define MAX_TX  		0x10  //达到最大发送次数中断
-//#define TX_OK   		0x20  //TX发送完成中断
-//#define RX_OK   		0x40  //接收到数据中断
-
-//定义缓冲区大小  单位  byte
-#define RX_PLOAD_WIDTH				32
-#define TX_PLOAD_WIDTH				32
-
-/*发送包大小*/
-//#define TX_ADR_WIDTH	5
-//#define RX_ADR_WIDTH	5
-
-/*发送 接收数据地址*/
-byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
-//byte RX_ADDRESS[RX_ADR_WIDTH] = {0x34,0x43,0x10,0x10,0x01};
-
-/********************************************************************************/
-
-//nRF2401 状态  供委托使用
-/*enum nRF_state
-{
-	nrf_mode_rx,
-	nrf_mode_tx,
-	nrf_mode_free
-}
-nRF24L01_status = nrf_mode_free;*/
-
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
 
 	// 初始化地址
+	byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
 	memcpy(Address, TX_ADDRESS, 5);
 
     if(ce != P0) _CE = new OutputPort(ce);
@@ -89,16 +63,19 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     _spi = spi;
 	_Received = NULL;
 	Timeout = 50;
+	PayloadWidth = 32;
+	AutoAnswer = true;
+	Retry = 15;
+	RetryPeriod = 500;	// 500us
 
-    WriteReg(FLUSH_RX, 0xff);   // 清除RX FIFO寄存器
-	WriteReg(FLUSH_TX, 0xff);   // 清除RX FIFO寄存器
+    WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
+	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 }
 
 NRF24L01::~NRF24L01()
 {
     debug_printf("~NRF24L01\r\n");
 
-	//if(_spi) delete _spi;
 	if(_CE) delete _CE;
 	if(_IRQ) delete _IRQ;
 
@@ -110,10 +87,10 @@ NRF24L01::~NRF24L01()
 // 向NRF的寄存器中写入一串数据
 byte NRF24L01::WriteBuf(byte reg, byte* buf, byte bytes)
 {
-	CEDown();
+	//CEDown();
 	SpiScope sc(_spi);
 
-	byte status = _spi->Write(reg);
+	byte status = _spi->Write(WRITE_REG_NRF | reg);
 	for(byte i=0; i<bytes; i++)
 		_spi->Write(*buf++);
 
@@ -123,7 +100,7 @@ byte NRF24L01::WriteBuf(byte reg, byte* buf, byte bytes)
 // 向NRF的寄存器中写入一串数据
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
-	CEDown();
+	//CEDown();
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(reg);
@@ -140,7 +117,7 @@ bool NRF24L01::Check(void)
 	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
 	byte buf1[5];
 	/*写入5个字节的地址.  */
-	WriteBuf(WRITE_REG_NRF + TX_ADDR, buf, 5);
+	WriteBuf(TX_ADDR, buf, 5);
 	/*读出写入的地址 */
 	ReadBuf(TX_ADDR, buf1, 5);
 
@@ -155,7 +132,7 @@ bool NRF24L01::Check(void)
 // 从NRF特定的寄存器读出数据 reg:NRF的命令+寄存器地址
 byte NRF24L01::ReadReg(byte reg)
 {
-	CEDown();
+	//CEDown();
 	SpiScope sc(_spi);
 
   	 /*发送寄存器号*/
@@ -169,7 +146,7 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 	//CEDown();
 	SpiScope sc(_spi);
 
-	byte status = _spi->Write(reg);
+	byte status = _spi->Write(WRITE_REG_NRF | reg);
     _spi->Write(dat);
 
    	return status;
@@ -180,19 +157,24 @@ void NRF24L01::Config(bool isReceive)
 {
 	CEDown();
 
-	if(!isReceive)
-		WriteBuf(WRITE_REG_NRF | TX_ADDR, Address, ArrayLength(Address));
+	//if(!isReceive)
+		WriteBuf(TX_ADDR, Address, ArrayLength(Address));
 
-	WriteBuf(WRITE_REG_NRF | RX_ADDR_P0, Address, ArrayLength(Address));	// 写接收端地址
+	WriteBuf(RX_ADDR_P0, Address, ArrayLength(Address));	// 写接收端地址
 
-	WriteReg(WRITE_REG_NRF + EN_AA, 0x01);    //使能通道0的自动应答
-	WriteReg(WRITE_REG_NRF + EN_RXADDR, 0x01);//使能通道0的接收地址
-	WriteReg(WRITE_REG_NRF + RF_CH, Channel);      //设置RF通信频率
-	WriteReg(WRITE_REG_NRF + RX_PW_P0, RX_PLOAD_WIDTH);//选择通道0的有效数据宽度
-	if(!isReceive)
-		WriteReg(WRITE_REG_NRF + SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-    //WriteReg(WRITE_REG_NRF + RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
-	WriteReg(WRITE_REG_NRF + RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	WriteReg(EN_AA, AutoAnswer);	//使能通道0的自动应答
+	WriteReg(EN_RXADDR, 0x01);		//使能通道0的接收地址
+	WriteReg(RF_CH, Channel);		//设置RF通信频率
+	WriteReg(RX_PW_P0, PayloadWidth);//选择通道0的有效数据宽度
+	//if(!isReceive)
+	{
+		//WriteReg(SETUP_RETR, 0x1a);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+		int period = RetryPeriod / 250 - 1;
+		if(period < 0) period = 0;
+		WriteReg(SETUP_RETR, (period << 4) | Retry);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+	}
+    //WriteReg(RF_SETUP,0x0f);  //设置TX发射参数,0db增益,2Mbps,低噪声增益开启
+	WriteReg(RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
 
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
@@ -200,94 +182,105 @@ void NRF24L01::Config(bool isReceive)
 	config.PWR_UP = 1;	// 1:上电 0:掉电
 	config.CRCO = 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 	config.EN_CRC = 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	if(isReceive) config.PRIM_RX = 1;
-	WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
+	//if(isReceive) config.PRIM_RX = 1;
+	WriteReg(CONFIG, config.ToByte());
+
+	//if(isReceive)
+        WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
+	//else
+        WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 
 	/*if(isReceive)
-		WriteReg(WRITE_REG_NRF + CONFIG, 0x0f); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
+		WriteReg(CONFIG, 0x0f); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC, 16BIT_CRC, 接收模式
 	else
-		WriteReg(WRITE_REG_NRF + CONFIG, 0x0e); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
+		WriteReg(CONFIG, 0x0e); // 配置基本工作模式的参数;  PWR_UP,  EN_CRC,  16BIT_CRC,  发射模式,   开启所有中断
 	*/
 
-    /*CE拉高，进入接收模式*/
 	CEUp();
-	//nRF24L01_status = nrf_mode_rx;
-	if(!isReceive) Sys.Delay(500); //CE要拉高一段时间才进入发送模式
+	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
+	Sys.Delay(1500);
 }
 
 void NRF24L01::SetMode(bool isReceive)
 {
+	CEDown();
+
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
 	config.Init(mode);
+
+	// 检查设置
+	assert_param(config.PWR_UP);
+	assert_param(config.CRCO);
+	assert_param(config.EN_CRC);
+
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-		CEDown();		// 结束接收数据
         WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
-		WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
-		CEUp();		//开始监听频段
 	}
 	else // 发送模式
 	{
-		//Config(false);
-		WriteReg(WRITE_REG_NRF + CONFIG, config.ToByte());
+		config.PRIM_RX = 0;
+        WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
+	WriteReg(CONFIG, config.ToByte());
+
+	CEUp();
 }
 
 // 从NRF的接收缓冲区中读出数据
 bool NRF24L01::Receive(byte *data)
 {
-	CEUp();			// 开始接收数据
+	//CEUp();			// 开始接收数据
 	// 等待接收中断
 	if(!WaitForIRQ()) return false;
-	CEDown();		// 结束接收数据
+	//CEDown();		// 结束接收数据
 
 	//if(_isEvent == false)return NO_NEWS;
 
 	/*读取status寄存器的值  */
 	Status = ReadReg(STATUS);
 	/* 清除中断标志*/
-	WriteReg(WRITE_REG_NRF + STATUS, Status);
+	WriteReg(STATUS, Status);
 	/*判断是否接收到数据*/
 	RF_STATUS st;
 	st.Init(Status);
 	if(st.RX_DR)	// 接收到数据
 	{
 		CEDown();		// 收到一帧数据  停止接受  开始读取
-        ReadBuf(RD_RX_PLOAD, data, RX_PLOAD_WIDTH);//读取数据
+        ReadBuf(RD_RX_PLOAD, data, PayloadWidth);//读取数据
         WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
-		CEDown();		// 结束接收数据
-		Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
+		//CEDown();		// 结束接收数据
+		//Sys.Sleep (20);	// 确保通信稳定  有中断也不理会
 		//_isEvent = false;
 		CEUp();			// 继续监听空中数据
         return true;
 	}
-	Config(false);	// 切换一次发送模式  然后切回来
-	SetMode(false);
-	Config(false);	// 在出现问题的时候重新配置保证通信稳定
-	SetMode(true);
+	//Config(false);	// 切换一次发送模式  然后切回来
+	//SetMode(false);
+	//Config(false);	// 在出现问题的时候重新配置保证通信稳定
+	//SetMode(true);
 	return false;  	// 没收到任何数据
 }
 
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::Send(byte* data)
 {
-	 /*ce为低，进入待机模式1*/
 	SetMode(false);	//直接在这里进行设置模式
 
-	CEDown();
+	//CEDown();
 	/*写数据到TX BUF 最大 32个字节*/
-	WriteBuf(WR_TX_PLOAD, data, TX_PLOAD_WIDTH);
+	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
     /*CE为高，txbuf非空，发送数据包 */
-	CEUp();
+	//CEUp();
 	// 等待发送完成中断
 	if(!WaitForIRQ()) return false;
 
 	// 读取状态寄存器的值
 	Status = ReadReg(STATUS);
 	// 清除TX_DS或MAX_RT中断标志
-	WriteReg(WRITE_REG_NRF + STATUS, Status);
+	WriteReg(STATUS, Status);
 	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 	// 判断中断类型
     /*if(state & MAX_TX)		// 达到最大重发次数
@@ -310,7 +303,9 @@ bool NRF24L01::WaitForIRQ()
 	while(_IRQ->Read() && ticks > Time.CurrentTicks());
 	if(ticks >= Time.CurrentTicks()) return true;
 
-	debug_printf("NRF24L01::Send Timeout %dms\r\n", Timeout);
+	// 读取状态寄存器的值
+	Status = ReadReg(STATUS);
+	debug_printf("NRF24L01::WaitForIRQ Timeout %dms\r\n", Timeout);
 
 	return false;
 }
@@ -368,4 +363,35 @@ void NRF24L01::OnReceive(Pin pin, bool down, void* param)
 		NRF24L01* nrf = (NRF24L01*)param;
 		if(nrf) nrf->OnReceive(pin, down);
 	}
+}
+
+void NRF24L01::ShowStatus()
+{
+	RF_STATUS st;
+	st.Init(Status);
+
+	debug_printf("NRF24L01::Status=0x%02x ", Status);
+	if(st.TX_FULL) debug_printf(" TX_FULL TX FIFO寄存器满标志");
+	if(st.RX_P_NO != 6)
+	{
+		byte mode = ReadReg(CONFIG);
+		RF_CONFIG config;
+		config.Init(mode);
+		// 只有接收模式才处理
+		if(config.PRIM_RX)
+		{
+			if(st.RX_P_NO == 7)
+				debug_printf(" RX_P_NO RX FIFO寄存器为空");
+			else
+				debug_printf(" RX_P_NO 接收数据通道号=%d", st.RX_P_NO);
+		}
+	}
+	if(st.MAX_RT)
+	{
+		byte retr = ReadReg(SETUP_RETR);
+		debug_printf(" MAX_RT 达到最多次重发次数%d 延迟%dus", retr & 0x0F, ((retr >> 4) + 1) * 250);
+	}
+	if(st.TX_DS) debug_printf(" TX_DS 数据发送完成中断");
+	if(st.RX_DR) debug_printf(" RX_DR 接收数据中断");
+	debug_printf("\r\n");
 }
