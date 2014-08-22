@@ -1,10 +1,8 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
-#include "Pin.h"
-//#include "Port.h"		
-#include "DMA.h"
 #include "Sys.h"
+#include "DMA.h"
 
 /* 
 Analog-to-digital converter

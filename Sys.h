@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "stm32.h"
+#include "Platform/stm32.h"
 
 /* 类型定义 */
 typedef char            sbyte;
@@ -32,7 +32,7 @@ typedef char*           String;
 
 /* 引脚定义 */
 //typedef ushort Pin;
-#include "Pin.h"
+#include "Platform/Pin.h"
 
 /* 串口定义 */
 #define COM1 0
@@ -145,6 +145,7 @@ __inline void debug_printf( const char *format, ... ) {}
 #endif //_Sys_H_
 
 /*
+v2.6.2014.0823	平台文件独立，接管系统初始化控制权
 v2.5.2014.0819	增加堆栈溢出检测模块，重载new/delete实现，仅Debug有效
 v2.4.2014.0811	实现系统多任务调度，一次性编译测试通过，多任务小灯例程4k
 				实现以太网精简协议TinyIP，ARP/ICMP/TCP/UDP，混合网络例程7.5k

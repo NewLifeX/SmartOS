@@ -429,12 +429,21 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if defined(GD32) && defined(STM32F10X) || defined(STM32F4)
+#if defined(GD32) && defined(STM32F1) || defined(STM32F4)
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE) Bootstrap();
 #ifdef STM32F4
 	HSE_VALUE = CystalClock;
 #endif
+    RCC_GetClocksFreq(&clock);
+    Clock = clock.SYSCLK_Frequency;
+#elif defined(STM32F0)
+    // 如果当前频率不等于配置，则重新配置时钟
+	if(Clock != clock.SYSCLK_Frequency)
+	{
+		SystemCoreClock = Clock;
+		SystemInit();
+	}
     RCC_GetClocksFreq(&clock);
     Clock = clock.SYSCLK_Frequency;
 #else
@@ -474,7 +483,19 @@ void TSys::ShowInfo()
 	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
 	if(DevID > 0)
 	{
-		if(DevID == 0x410 || DevID == 0x412 || DevID == 0x414 || DevID == 0x430)
+		if(DevID == 0x410)
+		{
+			if(IsGD && RevID == 0x1303)
+			{
+				if(Clock == 48000000)
+					debug_printf("F130");
+				else
+					debug_printf("F150");
+			}
+			else
+				debug_printf("F103");
+		}
+		else if(DevID == 0x412 || DevID == 0x414 || DevID == 0x430)
 			debug_printf("F103");
 		else if(DevID == 0x418)
 			debug_printf("F107");
