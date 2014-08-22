@@ -49,7 +49,7 @@ uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 
 #pragma arm section code
 
-force_inline void Set_SP(uint ramSize)
+_force_inline void Set_SP(uint ramSize)
 {
 	uint p = __get_MSP();
 	if(!ramSize)

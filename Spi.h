@@ -1,4 +1,4 @@
-#ifndef __SPI_H__
+﻿#ifndef __SPI_H__
 #define __SPI_H__
 
 #include "Sys.h"
@@ -52,13 +52,13 @@ private:
 	Spi* _spi;
 
 public:
-	force_inline SpiScope(Spi* spi)
+	_force_inline SpiScope(Spi* spi)
 	{
 		_spi = spi;
 		_spi->Start();
 	}
 
-	force_inline ~SpiScope()
+	_force_inline ~SpiScope()
 	{
 		_spi->Stop();
 	}

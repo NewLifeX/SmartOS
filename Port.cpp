@@ -1,4 +1,4 @@
-#include "Port.h"
+﻿#include "Port.h"
 
 #ifdef STM32F10X
     #include "stm32f10x_exti.h"
@@ -514,7 +514,8 @@ extern "C"
 		state->OldValue = value;
         if(state->Handler)
         {
-            state->Handler(state->Pin, value, state->Param);
+			// 新值value为true，说明是上升，第二个参数是down，所以取非
+            state->Handler(state->Pin, !value, state->Param);
         }
     }
 
@@ -611,6 +612,7 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
     state->Pin = pin;
     state->Handler = handler;
 	state->Param = param;
+	state->OldValue = Read(pin); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #ifdef STM32F0XX

@@ -1,4 +1,4 @@
-#ifndef _Sys_H_
+﻿#ifndef _Sys_H_
 #define _Sys_H_
 
 #include <stdio.h>
@@ -115,7 +115,7 @@ public:
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
 
 // 强迫内联
-#define force_inline __attribute__( ( always_inline ) ) __INLINE
+#define _force_inline __attribute__( ( always_inline ) ) __INLINE
 
 extern "C"
 {

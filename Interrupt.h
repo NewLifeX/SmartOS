@@ -1,4 +1,4 @@
-#ifndef __INTERRUPT_H__
+﻿#ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
 #include "Sys.h"
@@ -67,7 +67,7 @@ extern TInterrupt Interrupt;
 class SmartIRQ
 {
 public:
-	force_inline SmartIRQ(bool enable = false)
+	_force_inline SmartIRQ(bool enable = false)
 	{
 		_state = __get_PRIMASK();
 		if(enable)
@@ -76,7 +76,7 @@ public:
 			__disable_irq();
 	}
 
-	force_inline ~SmartIRQ()
+	_force_inline ~SmartIRQ()
 	{
 		__set_PRIMASK(_state);
 	}

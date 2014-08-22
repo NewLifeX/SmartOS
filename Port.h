@@ -1,4 +1,4 @@
-#ifndef _Port_H_
+﻿#ifndef _Port_H_
 #define _Port_H_
 
 #include "Sys.h"
@@ -25,9 +25,9 @@ public:
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
-    force_inline static GPIO_TypeDef* IndexToGroup(byte index);
-    force_inline static byte GroupToIndex(GPIO_TypeDef* group);
-    //force_inline static ushort IndexToBits(byte index);
+    _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
+    _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
+    //_force_inline static ushort IndexToBits(byte index);
     //static byte BitsToIndex(ushort bits); // 最低那一个位的索引
 
 #if DEBUG
