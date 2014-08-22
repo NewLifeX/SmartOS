@@ -190,6 +190,32 @@ void Port::OnConfig()
 #endif
 
     gpio.GPIO_Pin = PinBit;
+
+#ifdef STM32F1
+	// PA15/PB2/PB3 需要关闭JTAG
+	bool flag = false;
+	if(gi == 0 && (PinBit & (1<<15)))
+	{
+		debug_printf("Close JTAG for PA15\r\n");
+		flag = true;
+	}
+	if(gi == 1 && (PinBit & (1<<2)))
+	{
+		debug_printf("Close JTAG for PB2\r\n");
+		flag = true;
+	}
+	if(gi == 1 && (PinBit & (1<<3)))
+	{
+		debug_printf("Close JTAG for PB3\r\n");
+		flag = true;
+	}
+	if(flag)
+	{
+		// PA15是jtag接口中的一员 想要使用 必须开启remap
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+		GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+	}
+#endif
 }
 
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }

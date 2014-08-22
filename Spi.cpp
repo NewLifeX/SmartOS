@@ -93,12 +93,9 @@ void Spi::Open()
     if(ps[0] != P0)
     {
 #ifdef STM32F10X
-        if(SPI == SPI3)
+        /*if(SPI == SPI3)
         {
-            //PA15是jtag接口中的一员 想要使用 必须开启remap
-            RCC_APB2PeriphClockCmd( RCC_APB2Periph_AFIO, ENABLE);
-            GPIO_PinRemapConfig( GPIO_Remap_SWJ_JTAGDisable, ENABLE);
-        }
+        }*/
 #endif
 		debug_printf("    NSS : ");
         _nss = new OutputPort(ps[0]);
