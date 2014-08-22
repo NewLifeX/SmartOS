@@ -110,10 +110,7 @@ void Bootstrap()
     // 是否GD
     bool isGD = Get_JTAG_ID() == 0x7A3;
     if(isGD && Sys.Clock == 72000000) Sys.Clock = 120000000;
-    // 确保关闭中断，为了方便调试，Debug时不关闭
-#ifndef DEBUG
-    //__disable_irq();
-#endif
+
     n = Sys.Clock / 14000000;
     if (n < 6)
         RCC_CFGR_ADC_BITS = RCC_CFGR_ADCPRE_DIV6;
@@ -238,6 +235,84 @@ void Bootstrap()
 	Sys.Clock = Sys.CystalClock * mull;
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
+#elif defined(STM32F4)
+void Bootstrap()
+{
+#ifdef STM32F4XX
+    // 打开 FPU 协处理器 (CP10, CP11)
+    SCB->CPACR |= 0x3 << 2 * 10 | 0x3 << 2 * 11; // 完全访问
+#endif
+
+    // 配置JTAG调试支持
+    DBGMCU->CR = DBGMCU_CR_DBG_SLEEP;
+
+    // 允许非对齐内存访问，不强迫8字节栈对齐
+    SCB->CCR &= ~(SCB_CCR_UNALIGN_TRP_Msk | SCB_CCR_STKALIGN_Msk);
+
+    // 捕获所有错误
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_VC_HARDERR_Msk | CoreDebug_DEMCR_VC_INTERR_Msk |
+                        CoreDebug_DEMCR_VC_BUSERR_Msk | CoreDebug_DEMCR_VC_STATERR_Msk |
+                        CoreDebug_DEMCR_VC_CHKERR_Msk | CoreDebug_DEMCR_VC_NOCPERR_Msk |
+                        CoreDebug_DEMCR_VC_MMERR_Msk;
+
+    // for clock configuration the cpu has to run on the internal 16MHz oscillator
+    RCC->CR |= RCC_CR_HSION;
+    while(!(RCC->CR & RCC_CR_HSIRDY));
+
+    RCC->CFGR = RCC_CFGR_SW_HSI;         // sysclk = AHB = APB1 = APB2 = HSI (16MHz)
+    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON); // pll off
+
+    // turn HSE on
+    RCC->CR |= RCC_CR_HSEON;
+    while(!(RCC->CR & RCC_CR_HSERDY));
+
+	int FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_5WS;
+    // 设置Flash访问事件，打开缓存和预读取缓冲区
+#ifdef STM32F4XX
+    // The prefetch buffer must not be enabled on rev A devices.
+    // Rev A cannot be read from revision field (another rev A error!).
+    // The wrong device field (411=F2) must be used instead!
+    if ((DBGMCU->IDCODE & 0xFF) == 0x11) {
+        FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
+    } else {
+        FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
+    }
+#else
+    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
+#endif
+
+    // 设置 PLL
+    RCC->PLLCFGR = Sys.CystalClock / 1000000 * RCC_PLLCFGR_PLLM_0 // pll multipliers
+				| Sys.Clock * 2 / 1000000 * RCC_PLLCFGR_PLLN_0
+				| 0	// P
+				| Sys.Clock * 2 / 48000000 * RCC_PLLCFGR_PLLQ_0
+				| RCC_PLLCFGR_PLLSRC_HSE;
+    RCC->CR |= RCC_CR_PLLON;             // pll on
+    while(!(RCC->CR & RCC_CR_PLLRDY));
+
+    // 完成时钟设置
+    RCC->CFGR = RCC_CFGR_SW_PLL      // sysclk = pll out (SYSTEM_CLOCK_HZ)
+              | RCC_CFGR_HPRE_DIV1   // AHB clock
+              | RCC_CFGR_PPRE1_DIV4  // APB1 clock
+              | RCC_CFGR_PPRE2_DIV2; // APB2 clock
+
+    // 最小外设时钟
+#ifdef STM32F4XX
+    RCC->AHB1ENR = RCC_AHB1ENR_CCMDATARAMEN; // 64k RAM (CCM)
+#else
+    RCC->AHB1ENR = 0;
+#endif
+    RCC->AHB2ENR = 0;
+    RCC->AHB3ENR = 0;
+    RCC->APB1ENR = RCC_APB1ENR_PWREN;    // PWR clock used for sleep;
+    RCC->APB2ENR = RCC_APB2ENR_SYSCFGEN; // SYSCFG clock used for IO;
+
+    // stop HSI clock
+    RCC->CR &= ~RCC_CR_HSION;
+
+    // remove Flash remap to Boot area to avoid problems with Monitor_Execute
+    SYSCFG->MEMRMP = 1; // map System memory to Boot area
+}
 #endif
 
 void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
@@ -251,7 +326,13 @@ TSys::TSys()
 #endif
     Inited = false;
 
+#ifdef STM32F0
+    Clock = 48000000;
+#elif defined(STM32F1)
     Clock = 72000000;
+#elif defined(STM32F4)
+    Clock = 168000000;
+#endif
     CystalClock = 8000000;    // 晶振时钟
     MessagePort = 0; // COM1;
 
@@ -326,9 +407,11 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if defined(GD32) && defined(STM32F10X)
+#if defined(GD32) && defined(STM32F10X) || defined(STM32F4)
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
+    RCC_GetClocksFreq(&clock);
+    Clock = clock.SYSCLK_Frequency;
 #else
     Clock = clock.SYSCLK_Frequency;
 #endif
@@ -372,8 +455,12 @@ void TSys::ShowInfo()
 			debug_printf("F107");
 		else if(DevID == 0x412)
 			debug_printf("F130");
+		else if(DevID == 0x413)
+			debug_printf("F407");
 		else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
 			debug_printf("F030/F051");
+		else
+			debug_printf("F%03x", DevID);
 	}
 	else if(CPUID > 0)
 	{
