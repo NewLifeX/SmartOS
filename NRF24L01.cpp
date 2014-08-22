@@ -275,23 +275,33 @@ bool NRF24L01::Send(byte* data)
 
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
 	// 等待发送完成中断
-	if(!WaitForIRQ()) return false;
+	//if(!WaitForIRQ()) return false;
+	// IRQ不可靠，改为轮询寄存器
+	// 这里需要延迟一点时间，发送没有那么快完成
+	ulong ticks = Time.NewTicks(Timeout * 1000);
+	while(ticks > Time.CurrentTicks())
+	{
+		Status = ReadReg(STATUS);
+		RF_STATUS st;
+		st.Init(Status);
 
-	// 读取状态寄存器的值
-	Status = ReadReg(STATUS);
-	// 清除TX_DS或MAX_RT中断标志
-	WriteReg(STATUS, Status);
-	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
+		if(st.TX_DS || st.MAX_RT)
+		{
+			// 清除TX_DS或MAX_RT中断标志
+			WriteReg(STATUS, Status);
+			WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
-	RF_STATUS st;
-	st.Init(Status);
-	return st.TX_DS;
+			return st.TX_DS;
+		}
+	}
+	//if(ticks >= Time.CurrentTicks()) return true;
+
+	return false;
 }
 
 bool NRF24L01::WaitForIRQ()
 {
 	ulong ticks = Time.NewTicks(Timeout * 1000); // 等待100ms
-	// 等待发送完成中断   次中断必然会发生 所以无所谓while（xx）；
 	while(_IRQ->Read() && ticks > Time.CurrentTicks());
 	if(ticks >= Time.CurrentTicks()) return true;
 
@@ -323,7 +333,7 @@ void NRF24L01::CEDown()
 	{
         _Received = handler;
 		_Param = param;
-		
+
 		//if(!_IRQ->Read()) OnReceive();
 	}
     else
