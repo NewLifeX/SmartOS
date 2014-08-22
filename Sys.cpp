@@ -282,11 +282,28 @@ void Bootstrap()
 #endif
 
     // 设置 PLL
-    RCC->PLLCFGR = Sys.CystalClock / 1000000 * RCC_PLLCFGR_PLLM_0 // pll multipliers
+	/*
+	PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N
+	SYSCLK = PLL_VCO / PLL_P
+	USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ
+	*/
+	int PLL_N = Sys.Clock / 1000000;
+	int PLL_M = Sys.CystalClock / 1000000;	// 为了让它除到1
+	int PLL_P = 1;	// 这是分母，在系统主频不变的情况下，可以加倍扩大PLL_VC0以获取48M
+	// 168M分不出48M，向上加倍吧，恰巧336M可以
+	while(PLL_N % 48 != 0)
+	{
+		PLL_P++;
+		PLL_N *= PLL_P;
+	}
+	int PLL_Q = PLL_N / 48 * RCC_PLLCFGR_PLLQ_0;	// USB等需要48M
+    RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
+                   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
+    /*RCC->PLLCFGR = Sys.CystalClock / 1000000 * RCC_PLLCFGR_PLLM_0 // pll multipliers
 				| Sys.Clock * 2 / 1000000 * RCC_PLLCFGR_PLLN_0
 				| 0	// P
 				| Sys.Clock * 2 / 48000000 * RCC_PLLCFGR_PLLQ_0
-				| RCC_PLLCFGR_PLLSRC_HSE;
+				| RCC_PLLCFGR_PLLSRC_HSE;*/
     RCC->CR |= RCC_CR_PLLON;             // pll on
     while(!(RCC->CR & RCC_CR_PLLRDY));
 
