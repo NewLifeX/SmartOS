@@ -44,7 +44,8 @@ public:
 
 	void SetPin(Pin clk = P0, Pin miso = P0, Pin mosi = P0, Pin nss = P0);
 	void GetPin(Pin* clk = NULL, Pin* miso = NULL, Pin* mosi = NULL, Pin* nss = NULL);
-	void Config();
+	void Open();
+	void Close();
 
     byte Write(byte data);
     ushort Write16(ushort data);

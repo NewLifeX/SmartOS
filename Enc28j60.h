@@ -34,7 +34,7 @@ public:
     byte Read(byte addr);
     void Write(byte addr, byte data);
     uint PhyRead(byte addr);
-    void PhyWrite(byte addr, uint data);
+    bool PhyWrite(byte addr, uint data);
     void ClockOut(byte clock);
 	bool Linked();
 

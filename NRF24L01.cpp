@@ -181,6 +181,9 @@ void NRF24L01::Config()
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
 #endif
 
+	// 检查并打开Spi
+	_spi->Open();
+
 	CEDown();
 
 	uint addrLen = ArrayLength(Address);

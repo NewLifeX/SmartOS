@@ -97,19 +97,21 @@ uint Enc28j60::PhyRead(byte addr)
 	return (Read(MIRDH) << 8) | Read(MIRDL);
 }
 
-void Enc28j60::PhyWrite(byte addr, uint data)
+bool Enc28j60::PhyWrite(byte addr, uint data)
 {
     // set the PHY register addr
     Write(MIREGADR, addr);
     // write the PHY data
     Write(MIWRL, data);
     Write(MIWRH, data >> 8);
+	
+	ulong ticks = Time.NewTicks(10 * 1000);
     // wait until the PHY write completes
     while(Read(MISTAT) & MISTAT_BUSY)
     {
-        //Del_10us(1);
-        //_nop_();
+        if(ticks < Time.CurrentTicks()) return false;
     }
+	return true;
 }
 
 void Enc28j60::ClockOut(byte clock)
@@ -132,7 +134,8 @@ bool Enc28j60::Init(string mac)
         *_ce = true;
     }
 
-    _spi->Stop();
+	// 检查并打开Spi
+	_spi->Open();
 
     // 系统软重启
     WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
@@ -204,12 +207,19 @@ bool Enc28j60::Init(string mac)
     Write(MAADR1, mac[4]);
     Write(MAADR0, mac[5]);
 
+	bool flag = true;
     // 配置PHY为全双工  LEDB为拉电流
-    PhyWrite(PHCON1, PHCON1_PDPXMD);
+    if(flag && !PhyWrite(PHCON1, PHCON1_PDPXMD)) flag = false;
     // 阻止发送回路的自动环回
-    PhyWrite(PHCON2, PHCON2_HDLDIS);
+    if(flag && !PhyWrite(PHCON2, PHCON2_HDLDIS)) flag = false;
     // PHY LED 配置,LED用来指示通信的状态
-    PhyWrite(PHLCON, 0x476);
+    if(flag && !PhyWrite(PHLCON, 0x476)) flag = false;
+	if(!flag)
+	{
+		debug_printf("Enc28j60::Init Failed! Can't write Physical, please check Spi!\r\n");
+		return false;
+	}
+
     // 切换到bank0
     SetBank(ECON1);
     // 打开中断

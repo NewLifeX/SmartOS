@@ -21,7 +21,7 @@ int GetPre(int spi, uint* speedHz)
 		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, *speedHz, Sys.Clock);
 		return -1;
 	}
-	
+
 	*speedHz = clock;
 	return pre;
 }
@@ -52,27 +52,7 @@ Spi::~Spi()
 {
     debug_printf("~Spi%d\r\n", _spi + 1);
 
-    Stop();
-
-	if(Opened)
-	{
-		SPI_Cmd(SPI, DISABLE);
-		SPI_I2S_DeInit(SPI);
-		
-		debug_printf("    CLK : ");
-		if(_clk) delete _clk;
-		debug_printf("    MISO: ");
-		if(_miso) delete _miso;
-		debug_printf("    MOSI: ");
-		if(_mosi) delete _mosi;
-		_clk = NULL;
-		_miso = NULL;
-		_mosi = NULL;
-
-		debug_printf("    NSS : ");
-		if(_nss) delete _nss;
-		_nss = NULL;
-	}
+	Close();
 }
 
 void Spi::SetPin(Pin clk, Pin miso, Pin mosi, Pin nss)
@@ -92,7 +72,7 @@ void Spi::GetPin(Pin* clk, Pin* miso, Pin* mosi, Pin* nss)
 	if(mosi) *mosi = Pins[3];
 }
 
-void Spi::Config()
+void Spi::Open()
 {
 	if(Opened) return;
 
@@ -166,8 +146,36 @@ void Spi::Config()
 
     SPI_Init(SPI, &sp);
     SPI_Cmd(SPI, ENABLE);
-	
+
+	Stop();
+
 	Opened = true;
+}
+
+void Spi::Close()
+{
+	if(!Opened) return;
+
+    Stop();
+
+	SPI_Cmd(SPI, DISABLE);
+	SPI_I2S_DeInit(SPI);
+
+	debug_printf("    CLK : ");
+	if(_clk) delete _clk;
+	debug_printf("    MISO: ");
+	if(_miso) delete _miso;
+	debug_printf("    MOSI: ");
+	if(_mosi) delete _mosi;
+	_clk = NULL;
+	_miso = NULL;
+	_mosi = NULL;
+
+	debug_printf("    NSS : ");
+	if(_nss) delete _nss;
+	_nss = NULL;
+
+	Opened = false;
 }
 
 byte Spi::Write(byte data)
