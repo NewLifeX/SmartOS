@@ -2,9 +2,9 @@
 #include "Port.h"
 #include "CAN.h"
 
-static const Pin g_CAN_Pins_Map[] =  CAN_PINS;
-static const Pin g_CAN_Pins_Map2[] =  CAN_PINS_REMAP2;
-static const Pin g_CAN_Pins_Map3[] =  CAN_PINS_REMAP3;
+//static const Pin g_CAN_Pins_Map[] =  CAN_PINS;
+//static const Pin g_CAN_Pins_Map2[] =  CAN_PINS_REMAP2;
+//static const Pin g_CAN_Pins_Map3[] =  CAN_PINS_REMAP3;
 
 CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
 {
