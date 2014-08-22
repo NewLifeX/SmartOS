@@ -1,9 +1,11 @@
 ﻿#include "Port.h"
 
-#ifdef STM32F10X
+#ifdef STM32F1
     #include "stm32f10x_exti.h"
-#else
+#elif defined((STM32F0)
     #include "stm32f0xx_exti.h"
+#elif defined((STM32F4)
+    #include "stm32f4xx_exti.h"
 #endif
 
 /* 中断状态结构体 */

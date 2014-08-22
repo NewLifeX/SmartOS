@@ -4,10 +4,12 @@
 #include "Sys.h"
 #include "ADC.h"
 
-#ifdef STM32F10X
+#ifdef STM32F1
 	#include "stm32f10x_gpio.h"
-#else
+#elif defined(STM32F0)
 	#include "stm32f0xx_gpio.h"
+#elif defined(STM32F4)
+	#include "stm32f4xx_gpio.h"
 #endif
 
 // 端口基类

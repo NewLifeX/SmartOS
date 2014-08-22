@@ -6,10 +6,12 @@
 // 中断委托（中断号，参数）
 typedef void (*InterruptCallback)(ushort num, void* param);
 
-#ifdef STM32F10X
+#ifdef STM32F1
     #define VectorySize 84
-#elif STM32F0XX
+#elif defined(STM32F0)
     #define VectorySize 48
+#elif defined(STM32F4)
+    #define VectorySize 84
 #endif
 
 // 中断管理类

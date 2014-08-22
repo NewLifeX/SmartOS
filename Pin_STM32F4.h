@@ -1,5 +1,5 @@
-﻿#ifndef _PIN_STM32F0_H_
-#define _PIN_STM32F0_H_ 1
+#ifndef _PIN_STM32F4_H_
+#define _PIN_STM32F4_H_
 
 #include "Pin.h"
 
@@ -10,26 +10,26 @@
 #define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
-/*STM32F030C8T6串口针脚*/
-	//TX		RX		COM		AF
-	//PA2		PA3		COM2	AF1
-	//PA9		PA10	COM1	AF1
-	//PA14		PA15	COM2	AF1
-	//PB6		PB7		COM1	AF0
-#define UARTS {USART1, USART2}
+#define UARTS {USART1, USART2, USART3, UART4, UART5}
 #define UART_PINS {\
  /* TX   RX   CTS  RTS */	\
 	PA9, PA10,PA11,PA12,/* USART1 */	\
 	PA2, PA3, PA0, PA1, /* USART2 */	\
+	PB10,PB11,PB13,PB14,/* USART3 */	\
+	PC10,PC11,P0,  P0,  /* UART4  */	\
+	PC12, PD2,P0,  P0,  /* UART5  */	\
 }
 #define UART_PINS_FULLREMAP {\
  /* TX   RX   CTS  RTS */	\
 	PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
 	PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
+	PD8, PD9, PD11,PD12,/* USART3 AFIO_MAPR_USART3_REMAP_FULLREMAP */	\
+	PC10,PC11,P0,  P0,  /* UART4  */	\
+	PC12, PD2,P0,  P0,  /* UART5  */	\
 }
 
 /* 定时器针脚 ------------------------------------------------------------------*/
-#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6}
+#define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
 #define TIM_PINS {\
 	PA8, PA9, PA10,PA11,/* TIM1 */	\
 	PA0, PA1, PA2, PA3, /* TIM2 */	\
@@ -60,7 +60,7 @@
 
 
 /* 串行外设接口(SPI)针脚 ------------------------------------------------------------------*/
-#define SPIS {SPI1, SPI2}
+#define SPIS {SPI1, SPI2, SPI3}
 //#define SPI_NSS_PINS  {4, 28, 15} // PA4, PB12, PA15
 //#define SPI_SCLK_PINS {5, 29, 19} // PA5, PB13, PB3
 //#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4

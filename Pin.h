@@ -1,5 +1,5 @@
 #ifndef _PIN_H_
-#define _PIN_H_ 1
+#define _PIN_H_
 	
 /* 针脚 ------------------------------------------------------------------*/
 enum Pin
@@ -135,18 +135,18 @@ enum Pin
     PH15 = 0x7F
 };
 
-#if defined(STM32F4XX)
-	#include "stm32f4xx.h"
+#if defined(STM32F4)
+	#include "Pin_STM32F4.h"
 #elif defined(STM32F2XX)
-	#include "stm32f2xx.h"
-#elif defined(STM32F10X)
+	#include "Pin_STM32F2.h"
+#elif defined(STM32F1)
 	#include "Pin_STM32F1.h"
 #elif defined(STM32F3XX)
-	#include "stm32f3xx.h"
-#elif defined(STM32F0XX)
+	#include "Pin_STM32F3.h"
+#elif defined(STM32F0)
 	#include "Pin_STM32F0.h"
-#else
-	#include "Pin_STM32F1.h"
+//#else
+//	#include "Pin_STM32F1.h"
 #endif
 
 #endif

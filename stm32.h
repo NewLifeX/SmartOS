@@ -44,7 +44,6 @@
 #endif
 
 #if defined(STM32F4)
-	#define HSE_VALUE    ((uint32_t)8000000) /*!< 定义晶振频率为8MHz */
 	#include "stm32f4xx.h"
 #elif defined(STM32F2)
 	#include "stm32f2xx.h"
@@ -55,7 +54,7 @@
 #elif defined(STM32F0)
 	#include "stm32f0xx.h"
 #else
-	#include "stm32f10x.h"
+	#error "请在Keil项目配置C/C++页定义芯片平台，如STM32F0/STM32F1/STM32F4"
 #endif
 
 #endif
