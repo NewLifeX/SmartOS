@@ -427,7 +427,7 @@ void TSys::Init(void)
     RCC_GetClocksFreq(&clock);
 #if defined(GD32) && defined(STM32F10X) || defined(STM32F4)
     // 如果当前频率不等于配置，则重新配置时钟
-	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
+	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE) Bootstrap();
 	HSE_VALUE = CystalClock;
     RCC_GetClocksFreq(&clock);
     Clock = clock.SYSCLK_Frequency;
