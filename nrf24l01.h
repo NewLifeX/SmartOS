@@ -68,6 +68,7 @@ private:
 
 	static  void OnReceive(Pin pin, bool down, void* param);*/
 
+public:
 	class ByteStruct
 	{
 	public:

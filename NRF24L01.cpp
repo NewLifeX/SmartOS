@@ -152,7 +152,7 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 void NRF24L01::Config()
 {
 #if DEBUG
-	debug_printf("    Address:");
+	debug_printf("    Address: ");
 	Sys.ShowHex(Address, 5, '-');
 	debug_printf("\r\n");
 	debug_printf("    Channel: %d\r\n", Channel);
@@ -162,20 +162,40 @@ void NRF24L01::Config()
 
 	CEDown();
 
-	WriteBuf(TX_ADDR, Address, ArrayLength(Address));
+	byte addr[ArrayLength(Address)];
+	uint addrLen = ArrayLength(Address);
+	memcpy(addr, Address, addrLen);
 
-	WriteBuf(RX_ADDR_P0, Address, ArrayLength(Address));	// 写接收端地址
+	WriteBuf(TX_ADDR, addr, addrLen);
 
-	WriteReg(EN_AA, AutoAnswer);	//使能通道0的自动应答
-	WriteReg(EN_RXADDR, 0x01);		//使能通道0的接收地址
-	WriteReg(RF_CH, Channel);		//设置RF通信频率
-	WriteReg(RX_PW_P0, PayloadWidth);//选择通道0的有效数据宽度
+	WriteBuf(RX_ADDR_P0, addr, addrLen); // 写接收端0地址
 
+	addr[0]++;
+	WriteBuf(RX_ADDR_P1, addr, addrLen); // 写接收端1地址
+	// 写其它4个接收端的地址
+	for(int i = 2; i < addrLen; i++)
+	{
+		WriteReg(RX_ADDR_P0 + i, ++addr[0]);
+	}
+
+	// 使能6个接收端的自动应答和接收
+	WriteReg(EN_AA, AutoAnswer ? 0x15 : 0);	// 使能通道0的自动应答
+	WriteReg(EN_RXADDR, 0x15);		// 使能通道0的接收地址
+	WriteReg(SETUP_AW, addrLen - 2); // 设置地址宽度
+
+	//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 	int period = RetryPeriod / 250 - 1;
 	if(period < 0) period = 0;
-	WriteReg(SETUP_RETR, (period << 4) | Retry);//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+	WriteReg(SETUP_RETR, (period << 4) | Retry);
 
-	WriteReg(RF_SETUP, 0x07);  //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	WriteReg(RF_CH, Channel); //设置RF通信频率
+	WriteReg(RF_SETUP, 0x07); //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+
+	// 设置6个接收端的数据宽度
+	for(int i = 0; i < addrLen; i++)
+	{
+		WriteReg(RX_PW_P0 + i, PayloadWidth); // 选择通道0的有效数据宽度
+	}
 
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
