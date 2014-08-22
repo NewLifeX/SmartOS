@@ -107,7 +107,7 @@ void Spi::Open()
 
 #ifdef STM32F1
     /*使能SPI时钟*/
-	switch(spi)
+	switch(_spi)
 	{
 		case SPI_1 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); break;
 		case SPI_2 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
