@@ -368,12 +368,16 @@ TSys::TSys()
 
     CPUID = SCB->CPUID;
     uint mcuid = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本
+	if(mcuid == 0 && IsGD) mcuid = *(uint*)0xE0042000; // 用GD32F103的位置
 	RevID = mcuid >> 16;
 	DevID = mcuid & 0x0FFF;
 
 	_Index = 0;
 #ifdef STM32F0
-    FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量。手册里搜索FLASH_SIZE，优先英文手册
+	if(IsGD)
+		FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
+	else
+		FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量。手册里搜索FLASH_SIZE，优先英文手册
 #elif defined(STM32F1)
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 #elif defined(STM32F4)
