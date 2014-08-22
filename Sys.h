@@ -40,6 +40,11 @@ typedef char*           String;
 #define COM3 2
 #define COM4 3
 #define COM5 4
+#ifdef STM32F4
+#define COM6 5
+#define COM7 6
+#define COM8 7
+#endif
 #define COM_NONE 0xFF
 
 // 委托
