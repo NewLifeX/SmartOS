@@ -119,6 +119,9 @@ byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 // 主要用于NRF与MCU是否正常连接
 bool NRF24L01::Check(void)
 {
+	// 检查并打开Spi
+	_spi->Open();
+
 	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
 	byte buf1[5];
@@ -180,9 +183,6 @@ void NRF24L01::Config()
 	debug_printf("    AutoAns: %d\r\n", AutoAnswer);
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
 #endif
-
-	// 检查并打开Spi
-	_spi->Open();
 
 	CEDown();
 
