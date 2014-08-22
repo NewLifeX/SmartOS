@@ -3,18 +3,6 @@
 
 #include "Sys.h"
 #include "Spi.h"
-/*
-#define MAX_TX  		0x10  //达到最大发送次数中断
-#define TX_OK   		0x20  //TX发送完成中断
-#define RX_OK   		0x40  //接收到数据中断
-#define NO_NEWS			0x50  //没有数据在2401中
-*/
-/*
-nRF24L01+  内部有缓存   没有必要收到数据就直接读出来
-用个事件标志位就ok了  一个类里面一个
-面对多个nRF24L01 的问题  申请中断的时候传入nRF的事例就好
-*/
-
 
 // NRF24L01类
 class NRF24L01
@@ -30,8 +18,6 @@ private:
     byte WriteReg(byte reg, byte dat);
 
 	bool WaitForIRQ();
-
-	typedef void (*IRQHandler)(Pin pin, bool down, void* param);
 
     void CEUp();
     void CEDown();
@@ -53,20 +39,21 @@ public:
 
 	byte Status;
 	void ShowStatus();
-	
+	bool CanReceive();
+
     bool Send(byte* data);
     bool Receive(byte* data);
 
 	// 数据接收委托，一般param用作目标对象
-	/*typedef void (*DataReceived)(NRF24L01* sp, void* param);
+	/*typedef void (*DataReceived)(NRF24L01* nrf, void* param);
     void Register(DataReceived handler, void* param = NULL);
-	void OnReceive(Pin pin, bool down);*/
+	void OnReceive();*/
 
 private:
 	/*DataReceived _Received;
 	void* _Param;
 
-	static  void OnReceive(Pin pin, bool down, void* param);*/
+	static void OnReceive(Pin pin, bool down, void* param);*/
 
 public:
 	class ByteStruct

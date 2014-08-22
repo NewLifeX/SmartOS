@@ -57,16 +57,18 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, 10, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 2;
-        //_IRQ->Register(OnReceive,this);
+        //_IRQ->Register(OnReceive, this);
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-	//_Received = NULL;
 	Timeout = 50;
 	PayloadWidth = 32;
 	AutoAnswer = true;
 	Retry = 15;
 	RetryPeriod = 500;	// 500us
+
+	//_Received = NULL;
+	//_Param = NULL;
 
     WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
@@ -82,6 +84,8 @@ NRF24L01::~NRF24L01()
 	_spi = NULL;
 	_CE = NULL;
 	_IRQ = NULL;
+
+	//Register(NULL);
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -230,12 +234,12 @@ void NRF24L01::SetMode(bool isReceive)
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-        WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
+        //WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
-        WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
+        //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
 	WriteReg(CONFIG, config.ToByte());
 
@@ -245,20 +249,21 @@ void NRF24L01::SetMode(bool isReceive)
 // 从NRF的接收缓冲区中读出数据
 bool NRF24L01::Receive(byte *data)
 {
-	// 等待接收中断
-	if(!WaitForIRQ()) return false;
+	// 如果不是异步，等待接收中断
+	//if(!_Received && !WaitForIRQ()) return false;
 
-	/*读取status寄存器的值  */
+	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
-	/* 清除中断标志*/
-	WriteReg(STATUS, Status);
-	/*判断是否接收到数据*/
+	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR)return false;
+	if(!st.RX_DR) return false;
 
-	ReadBuf(RD_RX_PLOAD, data, PayloadWidth);//读取数据
-	WriteReg(FLUSH_RX, NOP);          //清除RX FIFO寄存器
+	// 清除中断标志
+	WriteReg(STATUS, Status);
+
+	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
+	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 
 	return true;
 }
@@ -318,6 +323,8 @@ void NRF24L01::CEDown()
 	{
         _Received = handler;
 		_Param = param;
+		
+		//if(!_IRQ->Read()) OnReceive();
 	}
     else
 	{
@@ -327,26 +334,22 @@ void NRF24L01::CEDown()
 }
 
 // 由引脚中断函数调用此函数  （nrf24l01的真正中断函数）
-void NRF24L01::OnReceive(Pin pin, bool down)
+void NRF24L01::OnReceive()
 {
 	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
-	if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平
-	if(_Received)
-	{
-		_Received(this, _Param);
-		//this->_isEvent=true;
-	}
+	//if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平
+	if(_Received) _Received(this, _Param);
 }
 
 // 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个
-// void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 // typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 void NRF24L01::OnReceive(Pin pin, bool down, void* param)
 {
+	debug_printf("IRQ down=%d\r\n", down);
 	if(!down)
 	{
 		NRF24L01* nrf = (NRF24L01*)param;
-		if(nrf) nrf->OnReceive(pin, down);
+		if(nrf) nrf->OnReceive();
 	}
 }*/
 
@@ -379,4 +382,14 @@ void NRF24L01::ShowStatus()
 	if(st.TX_DS) debug_printf(" TX_DS 数据发送完成中断");
 	if(st.RX_DR) debug_printf(" RX_DR 接收数据中断");
 	debug_printf("\r\n");
+}
+
+bool NRF24L01::CanReceive()
+{
+	// 读取状态寄存器的值
+	Status = ReadReg(STATUS);
+
+	RF_STATUS st;
+	st.Init(Status);
+	return st.RX_DR;
 }
