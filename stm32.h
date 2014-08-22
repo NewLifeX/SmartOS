@@ -44,6 +44,7 @@
 #endif
 
 #if defined(STM32F4)
+	#define HSE_VALUE    ((uint32_t)8000000) /*!< 定义晶振频率为8MHz */
 	#include "stm32f4xx.h"
 #elif defined(STM32F2)
 	#include "stm32f2xx.h"
