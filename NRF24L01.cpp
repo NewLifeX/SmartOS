@@ -151,6 +151,15 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 // 配置
 void NRF24L01::Config()
 {
+#if DEBUG
+	debug_printf("    Address:");
+	Sys.ShowHex(Address, 5, '-');
+	debug_printf("\r\n");
+	debug_printf("    Channel: %d\r\n", Channel);
+	debug_printf("    AutoAns: %d\r\n", AutoAnswer);
+	debug_printf("    Payload: %d\r\n", PayloadWidth);
+#endif
+
 	CEDown();
 
 	WriteBuf(TX_ADDR, Address, ArrayLength(Address));

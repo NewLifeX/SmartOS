@@ -483,10 +483,10 @@ uint TSys::Crc(const void* rgBlock, int len, uint crc)
 // 显示十六进制数据，指定分隔字符
 void TSys::ShowHex(byte* buf, uint len, char sep)
 {
-	for(int i=0; i<len; i++)
+	for(int i=0; i < len; i++)
 	{
 		debug_printf("%02X", *buf++);
-		if(!sep) debug_printf("%c", sep);
+		if(i < len - 1 && sep != '\0') debug_printf("%c", sep);
 		//if(((i + 1) & 0xF) == 0) debug_printf("\r\n");
 	}
 	//debug_printf("\r\n");
@@ -498,11 +498,33 @@ void TSys::ShowString(byte* buf, uint len)
 	if(len == 0) len = 1000;
     for(int i=0; i<len; i++)
     {
+		if(buf[i] == 0) return;
 		if(buf[i] >= 32 && buf[i] <= 126 || buf[i] == 0x0A || buf[i] == 0x0D || buf[i] == 0x09)
 			debug_printf("%c", buf[i]);
 		else
 			debug_printf("%02X", buf[i]);
     }
+}
+
+// 源数据转为十六进制字符编码再放入目标字符，比如0x28在目标放两个字节0x02 0x08
+void TSys::ToHex(byte* buf, byte* src, uint len)
+{
+	for(int i=0; i < len; i++, src++)
+	{
+		byte n = *src >> 4;
+		if(n < 10)
+			n += '0';
+		else
+			n += 'A' - 10;
+		*buf++ = n;
+
+		n = *src & 0x0F;
+		if(n < 10)
+			n += '0';
+		else
+			n += 'A' - 10;
+		*buf++ = n;
+	}
 }
 #endif
 
