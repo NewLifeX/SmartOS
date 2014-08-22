@@ -127,8 +127,8 @@ protected:
 class AlternatePort : public OutputPort
 {
 public:
-    AlternatePort(Pin pin, bool openDrain = false, uint speed = 10) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
-    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 10) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
+    AlternatePort(Pin pin, bool openDrain = false, uint speed = 50) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
+    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 50) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
     AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort() { SetPort(group, pinbit); Init(); Config(); }
 
 protected:

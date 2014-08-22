@@ -11,7 +11,7 @@ typedef void (*InterruptCallback)(ushort num, void* param);
 #elif defined(STM32F0)
     #define VectorySize 48
 #elif defined(STM32F4)
-    #define VectorySize 84
+    #define VectorySize 86 + 16 + 1
 #endif
 
 // 中断管理类

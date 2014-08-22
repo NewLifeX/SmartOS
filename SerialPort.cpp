@@ -84,7 +84,7 @@ ShowLog:
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
-    _tx = new AlternatePort(tx, false, 10);
+    _tx = new AlternatePort(tx, false, 50);
     _rx = new InputPort(rx);
     //_tx->Write(true);
 

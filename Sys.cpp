@@ -21,15 +21,19 @@ extern uint __heap_limit;
 #define GD32_PLL_MASK	0x20000000
 #define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
-#ifdef STM32F10X
+#ifdef STM32F1
 char MemNames[] = "468BCDEFGIK";
 uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
-#elif defined(STM32F0XX)
+#elif defined(STM32F0)
 char MemNames[] = "468B";
 uint MemSizes[] = { 16, 32, 64, 128 };
 //uint RamSizes[] = {  4,  6,  8,  16 }; // 150x6有6kRAM
 uint RamSizes[] = {  4,  4,  8,  16 };
+#elif defined(STM32F4)
+char MemNames[] = "468BCDEFGIK";
+uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
+uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
 #endif
 
 void TSys::Sleep(uint ms) { Time.Sleep(ms * 1000); }
@@ -40,10 +44,10 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 // 原配置MSP作为PSP，而使用全局数组作为新的MSP
 // MSP 堆栈大小
-#ifdef STM32F10X
-	#define IRQ_STACK_SIZE 0x100
-#elif defined(STM32F0XX)
+#ifdef STM32F0
 	#define IRQ_STACK_SIZE 0x40
+#else
+	#define IRQ_STACK_SIZE 0x100
 #endif
 uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
 

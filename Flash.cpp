@@ -1,10 +1,10 @@
-﻿#include "Flash.h"
+#include "Flash.h"
 #include <stdlib.h>
 
 #define FLASH_DEBUG 1
 
-static const uint STM32_FLASH_KEY1 = 0x45670123;
-static const uint STM32_FLASH_KEY2 = 0xcdef89ab;
+//static const uint STM32_FLASH_KEY1 = 0x45670123;
+//static const uint STM32_FLASH_KEY2 = 0xcdef89ab;
 
 #if defined (STM32F10X_HD) || defined (STM32F10X_HD_VL) || defined (STM32F10X_CL) || defined (STM32F10X_XL)
   #define FLASH_PAGE_SIZE    ((uint16_t)0x800)
@@ -52,11 +52,11 @@ bool Flash::WriteBlock(uint address, byte* buf, uint numBytes, bool fIncrementDa
     RCC->CR |= RCC_CR_HSION;
     while(!(RCC->CR & RCC_CR_HSIRDY));
 
-    if (FLASH->CR & FLASH_CR_LOCK) { // unlock
+    /*if (FLASH->CR & FLASH_CR_LOCK) { // unlock
         FLASH->KEYR = STM32_FLASH_KEY1;
         FLASH->KEYR = STM32_FLASH_KEY2;
-    }
-    //FLASH_Unlock();
+    }*/
+    FLASH_Unlock();
 
     ushort* ChipAddress = (ushort *)address;
     ushort* EndAddress  = (ushort *)(address + numBytes);
@@ -83,9 +83,9 @@ bool Flash::WriteBlock(uint address, byte* buf, uint numBytes, bool fIncrementDa
     }
 
     // 重置并锁定控制器。直接赋值一了百了，后面两个都是位运算，更麻烦
-    FLASH->CR = FLASH_CR_LOCK;
+    //FLASH->CR = FLASH_CR_LOCK;
     //FLASH->CR &= ~FLASH_CR_PG;
-    //FLASH_Lock();
+    FLASH_Lock();
 
     // 关闭 HSI 时钟
     RCC->CR &= ~RCC_CR_HSION;
@@ -224,14 +224,14 @@ bool Flash::EraseBlock(uint address)
     RCC->CR |= RCC_CR_HSION;
     while(!(RCC->CR & RCC_CR_HSIRDY));
 
-    if (FLASH->CR & FLASH_CR_LOCK) { // unlock
+    /*if (FLASH->CR & FLASH_CR_LOCK) { // unlock
         FLASH->KEYR = STM32_FLASH_KEY1;
         FLASH->KEYR = STM32_FLASH_KEY2;
-    }
-    //FLASH_Unlock();
+    }*/
+    FLASH_Unlock();
 
     // 打开擦除
-    FLASH->CR = FLASH_CR_PER;
+    /*FLASH->CR = FLASH_CR_PER;
     // 设置页地址
     FLASH->AR = (uint)address;
     // 开始擦除
@@ -239,19 +239,22 @@ bool Flash::EraseBlock(uint address)
     // 确保繁忙标记位被设置 (参考 STM32 勘误表)
     FLASH->CR = FLASH_CR_PER | FLASH_CR_STRT;
     // 等待完成
-    while (FLASH->SR & FLASH_SR_BSY);
+    while (FLASH->SR & FLASH_SR_BSY);*/
 
     //FLASH_Status status = FLASH_COMPLETE;
     //boolret = true;
 
-    /*FLASH_Status status = FLASH_ErasePage(sector);
-    boolret = false;
-    if(status == FLASH_COMPLETE) ret = true;*/
+#ifndef STM32F4
+    FLASH_Status status = FLASH_ErasePage(address);
+#else
+    FLASH_Status status = FLASH_EraseSector(address, VoltageRange_3);
+#endif
+    bool ret = status == FLASH_COMPLETE;
 
     // 重置并锁定控制器。直接赋值一了百了，后面两个都是位运算，更麻烦
-    FLASH->CR = FLASH_CR_LOCK;
+    //FLASH->CR = FLASH_CR_LOCK;
     //FLASH->CR &= ~FLASH_CR_PER;
-    //FLASH_Lock();
+    FLASH_Lock();
 
     // 关闭 HSI 时钟
     RCC->CR &= ~RCC_CR_HSION;
@@ -262,10 +265,10 @@ bool Flash::EraseBlock(uint address)
     debug_printf("\r\n");
 #endif
 
-    return true;
+    return ret;
 }
 
-// 擦除块。其实地址，字节数量默认0表示擦除全部
+// 擦除块。起始地址，字节数量默认0表示擦除全部
 bool Flash::Erase(uint address, uint numBytes)
 {
     if(address < StartAddress || address + numBytes > StartAddress + Size) return false;

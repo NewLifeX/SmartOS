@@ -1,7 +1,7 @@
 ﻿#include "Interrupt.h"
 
 // GD32F150无法把向量表映射到RAM
-#if defined(GD32) && defined(STM32F0XX)
+#if defined(GD32) && defined(STM32F0)
 	#define VEC_TABLE_ON_RAM 0
 #else
 	#define VEC_TABLE_ON_RAM 1
@@ -21,7 +21,7 @@ void FaultHandler();	// 错误处理程序
 
 // 真正的向量表 64k=0x10000
 #if VEC_TABLE_ON_RAM
-#ifdef STM32F0XX
+#ifdef STM32F0
 	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
 #else
 	// 84个中断向量，向上取整到2整数倍也就是128，128*4=512=0x200。CM3权威手册
@@ -35,14 +35,14 @@ void TInterrupt::Init()
 {
     // 禁用所有中断
     NVIC->ICER[0] = 0xFFFFFFFF;
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
     NVIC->ICER[1] = 0xFFFFFFFF;
     NVIC->ICER[2] = 0xFFFFFFFF;
 #endif
 
     // 清除所有中断位
     NVIC->ICPR[0] = 0xFFFFFFFF;
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
     NVIC->ICPR[1] = 0xFFFFFFFF;
     NVIC->ICPR[2] = 0xFFFFFFFF;
 #endif
@@ -59,16 +59,22 @@ void TInterrupt::Init()
     _Vectors[14] = (Func)&FaultHandler; // PendSV
     _Vectors[15] = (Func)&FaultHandler; // Systick
 
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
     __DMB(); // 确保中断表已经被写入
 
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
-    SCB->VTOR = (uint)_Vectors; // 向量表基地址
-    //NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)Vectors);
+    //SCB->VTOR = (uint)_Vectors; // 向量表基地址
+    NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)_Vectors - 0x20000000);
+#ifdef STM32F4
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTACT_Msk  // 打开异常
+                | SCB_SHCSR_BUSFAULTACT_Msk
+                | SCB_SHCSR_MEMFAULTACT_Msk;
+#else
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
+#endif
 #else
     // Enable the SYSCFG peripheral clock
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -76,7 +82,7 @@ void TInterrupt::Init()
     SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_SRAM);
 #endif
 #else
-#ifdef STM32F10X
+#ifdef STM32F1
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
@@ -89,7 +95,7 @@ void TInterrupt::Init()
 TInterrupt::~TInterrupt()
 {
 	// 恢复中断向量表
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0);
 #else
     SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_Flash);

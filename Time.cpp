@@ -42,7 +42,9 @@ void TTime::Init()
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
-#ifdef STM32F0XX
+#ifdef STM32F0
+    #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
+#elif defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
 void TTime::OnHandler(ushort num, void* param)

@@ -2,9 +2,9 @@
 
 #ifdef STM32F1
     #include "stm32f10x_exti.h"
-#elif defined((STM32F0)
+#elif defined(STM32F0)
     #include "stm32f0xx_exti.h"
-#elif defined((STM32F4)
+#elif defined(STM32F4)
     #include "stm32f4xx_exti.h"
 #endif
 
@@ -25,18 +25,24 @@ typedef struct TIntState
 static IntState State[16];
 static bool hasInitState = false;
 
-#ifdef STM32F10X
+#ifdef STM32F1
 static int PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
     EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
-#else
+#elif defined(STM32F0)
 static int PORT_IRQns[] = {
     EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
     EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn,
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
+};
+#elif defined(STM32F4)
+static int PORT_IRQns[] = {
+    EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
+    EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
+    EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
 #endif
 
@@ -175,10 +181,12 @@ void Port::OnConfig()
 {
     // 打开时钟
     int gi = GroupIndex >> 4;
-#ifdef STM32F0XX
+#ifdef STM32F0
     RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
-#else
+#elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
 #endif
 
     gpio.GPIO_Pin = PinBit;
@@ -279,14 +287,23 @@ bool Port::IsBusy(Pin pin)
 #ifdef REGION_Config
 void InputOutputPort::OnConfig()
 {
+#ifndef STM32F4
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
+#else
+	assert_param(Speed == 2 || Speed == 25 || Speed == 50 || Speed == 100);
+#endif
 
 	Port::OnConfig();
 
 	switch(Speed)
 	{
 		case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
+#ifndef STM32F4
 		case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
+#else
+		case 25: gpio.GPIO_Speed = GPIO_Speed_25MHz; break;
+		case 100: gpio.GPIO_Speed = GPIO_Speed_100MHz; break;
+#endif
 		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
 	}
 }
@@ -295,11 +312,11 @@ void OutputPort::OnConfig()
 {
 	InputOutputPort::OnConfig();
 
-#ifdef STM32F0XX
+#ifdef STM32F1
+	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+#else
 	gpio.GPIO_Mode = GPIO_Mode_OUT;
 	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
 #endif
 }
 
@@ -307,11 +324,11 @@ void AlternatePort::OnConfig()
 {
 	InputOutputPort::OnConfig();
 
-#ifdef STM32F0XX
+#ifdef STM32F1
+	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+#else
 	gpio.GPIO_Mode = GPIO_Mode_AF;
 	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
 #endif
 }
 
@@ -319,16 +336,16 @@ void InputPort::OnConfig()
 {
 	InputOutputPort::OnConfig();
 
-#ifdef STM32F0XX
-	gpio.GPIO_Mode = GPIO_Mode_IN;
-	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#else
+#ifdef STM32F1
 	if(Floating)
 		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	else if(PuPd == PuPd_UP)
 		gpio.GPIO_Mode = GPIO_Mode_IPU;
 	else if(PuPd == PuPd_DOWN)
 		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+#else
+	gpio.GPIO_Mode = GPIO_Mode_IN;
+	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
 
@@ -336,11 +353,11 @@ void AnalogInPort::OnConfig()
 {
 	Port::OnConfig();
 
-#ifdef STM32F0XX
+#ifdef STM32F1
+	gpio.GPIO_Mode = GPIO_Mode_AIN; //
+#else
 	gpio.GPIO_Mode = GPIO_Mode_AN;
 	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#else
-	gpio.GPIO_Mode = GPIO_Mode_AIN; //
 #endif
 }
 #endif
@@ -523,7 +540,7 @@ extern "C"
 
     void EXTI_IRQHandler(ushort num, void* param)
     {
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
         // EXTI0 - EXTI4
         if(num <= EXTI4_IRQn)
             GPIO_ISR(num - EXTI0_IRQn);
@@ -547,8 +564,7 @@ extern "C"
                 num++; pending >>= 1;
             } while (pending);
         }
-#else
-    //stm32f0xx
+#elif defined(STM32F0)
         switch(num)
         {
             case EXTI0_1_IRQn:
@@ -617,12 +633,15 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
 	state->OldValue = Read(pin); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
-#ifdef STM32F0XX
+#ifdef STM32F0
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
     SYSCFG_EXTILineConfig(groupIndex, pinIndex);
-#else
+#elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     GPIO_EXTILineConfig(groupIndex, pinIndex);
+#elif defined(STM32F1)
+    //RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+    //GPIO_EXTILineConfig(groupIndex, pinIndex);
 #endif
 
 	SetEXIT(pinIndex, true);

@@ -53,11 +53,11 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
     // 端口配置，销毁Spi对象时才释放
     debug_printf("    CLK : ");
-    clk = new AlternatePort(ps[1], false, 10);
+    clk = new AlternatePort(ps[1]);
     debug_printf("    MSIO: ");
-    msio = new AlternatePort(ps[2], false, 10);
+    msio = new AlternatePort(ps[2]);
     debug_printf("    MOSI: ");
-    mosi = new AlternatePort(ps[3], false, 10);
+    mosi = new AlternatePort(ps[3]);
 
     if(useNss)
     {
@@ -70,11 +70,11 @@ Spi::Spi(int spi, int speedHz, bool useNss)
         }
 #endif
 		debug_printf("    NSS : ");
-        _nss = new OutputPort(ps[0], false, 10);
+        _nss = new OutputPort(ps[0]);
 		*_nss = true; // 拉高进入空闲状态
     }
 
-#ifdef STM32F10X
+#ifndef STM32F0
     /*使能SPI时钟*/
 	switch(spi)
 	{
@@ -144,7 +144,7 @@ byte Spi::Write(byte data)
         if(--retry <= 0) return ++Error; // 超时处理
     }
 
-#ifdef STM32F10X
+#ifndef STM32F0
 	SPI_I2S_SendData(SPI, data);
 #else
 	SPI_SendData8(SPI, data);
@@ -155,7 +155,7 @@ byte Spi::Write(byte data)
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
-#ifdef STM32F10X
+#ifndef STM32F0
 	return SPI_I2S_ReceiveData(SPI);
 #else
 	return SPI_ReceiveData8(SPI); //返回通过SPIx最近接收的数据
@@ -171,7 +171,7 @@ ushort Spi::Write16(ushort data)
         if(--retry <= 0) return ++Error; // 超时处理
 	}
 
-#ifdef STM32F10X
+#ifndef STM32F0
 	SPI_I2S_SendData(SPI, data);
 #else
 	SPI_I2S_SendData16(SPI, data);
@@ -183,7 +183,7 @@ ushort Spi::Write16(ushort data)
         if(--retry <= 0) return ++Error; // 超时处理
 	}
 
-#ifdef STM32F10X
+#ifndef STM32F0
 	return SPI_I2S_ReceiveData(SPI);
 #else
 	return SPI_I2S_ReceiveData16(SPI);

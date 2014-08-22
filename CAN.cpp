@@ -16,6 +16,7 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOB, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
   	/*IO设置*/
+#ifdef STM32F1
     if(port == CAN1)
     {
         if(remap == 1)
@@ -34,8 +35,13 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
     
     AlternatePort tx(p[0], false, 50);
     InputPort rx(p[1], false, 50, InputPort::PuPd_UP);
+#endif
 
+#ifdef STM32F1
     Interrupt.SetPriority(USB_LP_CAN1_RX0_IRQn, 0);
+#elif defined(STM32F4)
+    Interrupt.SetPriority(CAN1_RX0_IRQn, 0);
+#endif
 
     /************************CAN通信参数设置**********************************/
     /*CAN寄存器初始化*/
