@@ -22,8 +22,11 @@ private:
     void CEUp();
     void CEDown();
 public:
-    int Channel;    // 通讯频道
-	byte Address[5];
+    byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0X28 MHZ
+	byte Address[5];	// 通道0地址
+	byte Address1[5];	// 通道1地址
+	byte Address2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
+
 	uint Timeout;	// 超时时间ms
 	byte PayloadWidth; // 负载数据宽度，默认32字节
 	bool AutoAnswer;// 自动应答，默认启用

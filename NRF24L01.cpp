@@ -48,8 +48,12 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
 
 	// 初始化地址
-	byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
-	memcpy(Address, TX_ADDRESS, 5);
+	//byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
+	//memcpy(Address, TX_ADDRESS, 5);
+	memset(Address, 0, 5);
+	memcpy(Address1, (byte*)Sys.ID, 5);
+	for(int i=0; i<4; i++) Address2_5[i] = Address1[0] + i + 1;
+	Channel = 0;	// 默认通道0
 
     if(ce != P0) _CE = new OutputPort(ce);
     if(irq != P0)
@@ -156,9 +160,22 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 void NRF24L01::Config()
 {
 #if DEBUG
+	debug_printf("NRF24L01::Config\r\n");
+
 	debug_printf("    Address: ");
 	Sys.ShowHex(Address, 5, '-');
 	debug_printf("\r\n");
+	debug_printf("    Addres1: ");
+	Sys.ShowHex(Address1, 5, '-');
+	debug_printf("\r\n");
+	for(int i=0; i<4; i++)
+	{
+		debug_printf("    Addres%d: ", i + 2);
+		Sys.ShowHex(Address2_5 + i, 1, '-');
+		debug_printf("-");
+		Sys.ShowHex(Address1 + 1, 4, '-');
+		debug_printf("\r\n");
+	}
 	debug_printf("    Channel: %d\r\n", Channel);
 	debug_printf("    AutoAns: %d\r\n", AutoAnswer);
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
@@ -166,20 +183,17 @@ void NRF24L01::Config()
 
 	CEDown();
 
-	byte addr[ArrayLength(Address)];
 	uint addrLen = ArrayLength(Address);
-	memcpy(addr, Address, addrLen);
 
-	WriteBuf(TX_ADDR, addr, addrLen);
-
-	WriteBuf(RX_ADDR_P0, addr, addrLen); // 写接收端0地址
-
-	addr[0]++;
-	WriteBuf(RX_ADDR_P1, addr, addrLen); // 写接收端1地址
+	WriteBuf(TX_ADDR, Address, addrLen);
+	WriteBuf(RX_ADDR_P0, Address, addrLen); // 写接收端0地址
+	WriteBuf(RX_ADDR_P1, Address1, addrLen); // 写接收端1地址
 	// 写其它4个接收端的地址
-	for(int i = 2; i < addrLen; i++)
+	byte addr[ArrayLength(Address1)];
+	memcpy(addr, Address1, addrLen);
+	for(int i = 0; i < 4; i++)
 	{
-		WriteReg(RX_ADDR_P0 + i, ++addr[0]);
+		WriteReg(RX_ADDR_P2 + i, Address2_5[i]);
 	}
 
 	// 使能6个接收端的自动应答和接收
