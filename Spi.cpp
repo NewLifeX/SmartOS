@@ -5,7 +5,28 @@
 static SPI_TypeDef* g_Spis[] = SPIS;
 static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
-Spi::Spi(int spi, int speedHz, bool useNss)
+int GetPre(int spi, uint* speedHz)
+{
+	// 自动计算稍低于速度speedHz的分频
+	ushort pre = SPI_BaudRatePrescaler_2;
+	uint clock = Sys.Clock >> 1;
+	while(pre <= SPI_BaudRatePrescaler_256)
+	{
+		if(clock <= *speedHz) break;
+		clock >>= 1;
+		pre += (SPI_BaudRatePrescaler_4 - SPI_BaudRatePrescaler_2);
+	}
+	if(pre > SPI_BaudRatePrescaler_256)
+	{
+		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, *speedHz, Sys.Clock);
+		return -1;
+	}
+	
+	*speedHz = clock;
+	return pre;
+}
+
+Spi::Spi(int spi, uint speedHz, bool useNss)
 {
 	assert_param(spi >= 0 && spi < ArrayLength(g_Spis));
 
@@ -18,21 +39,9 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	if(!useNss) Pins[0] = P0;
 
 	// 自动计算稍低于速度speedHz的分频
-	ushort pre = 2;
-	uint clock = Sys.Clock >> 1;
-	while(pre <= 256)
-	{
-		if(clock <= speedHz) break;
-		clock >>= 1;
-		pre <<= 1;
-	}
-	if(pre > 256)
-	{
-		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
-		return;
-	}
+	int pre = GetPre(spi, &speedHz);
+	if(pre == -1) return;
 
-	speedHz = clock;
     debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
 
     Speed = speedHz;
@@ -87,6 +96,11 @@ void Spi::Config()
 {
 	if(Opened) return;
 
+	// 自动计算稍低于速度speedHz的分频
+	uint speedHz = Speed;
+	int pre = GetPre(_spi, &speedHz);
+	if(pre == -1) return;
+
 	Pin* ps = Pins;
     // 端口配置，销毁Spi对象时才释放
     debug_printf("    CLK : ");
@@ -138,7 +152,6 @@ void Spi::Config()
 
 	Stop();
 
-	int pre = Sys.Clock / Speed;
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
 	sp.SPI_Direction = SPI_Direction_2Lines_FullDuplex; //双线全双工
