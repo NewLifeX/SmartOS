@@ -235,101 +235,6 @@ void Bootstrap()
 	Sys.Clock = Sys.CystalClock * mull;
 	if( (RCC->CFGR & RCC_CFGR_PLLXTPRE_HSE_Div2) && !isGD ) Sys.Clock /= 2;
 }
-#elif defined(STM32F4)
-void Bootstrap()
-{
-#ifdef STM32F4XX
-    // 打开 FPU 协处理器 (CP10, CP11)
-    SCB->CPACR |= 0x3 << 2 * 10 | 0x3 << 2 * 11; // 完全访问
-#endif
-
-    // 配置JTAG调试支持
-    DBGMCU->CR = DBGMCU_CR_DBG_SLEEP;
-
-    // 允许非对齐内存访问，不强迫8字节栈对齐
-    SCB->CCR &= ~(SCB_CCR_UNALIGN_TRP_Msk | SCB_CCR_STKALIGN_Msk);
-
-    // 捕获所有错误
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_VC_HARDERR_Msk | CoreDebug_DEMCR_VC_INTERR_Msk |
-                        CoreDebug_DEMCR_VC_BUSERR_Msk | CoreDebug_DEMCR_VC_STATERR_Msk |
-                        CoreDebug_DEMCR_VC_CHKERR_Msk | CoreDebug_DEMCR_VC_NOCPERR_Msk |
-                        CoreDebug_DEMCR_VC_MMERR_Msk;
-
-    // for clock configuration the cpu has to run on the internal 16MHz oscillator
-    RCC->CR |= RCC_CR_HSION;
-    while(!(RCC->CR & RCC_CR_HSIRDY));
-
-    RCC->CFGR = RCC_CFGR_SW_HSI;         // sysclk = AHB = APB1 = APB2 = HSI (16MHz)
-    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON); // pll off
-
-    // turn HSE on
-    RCC->CR |= RCC_CR_HSEON;
-    while(!(RCC->CR & RCC_CR_HSERDY));
-
-	int FLASH_ACR_LATENCY_BITS = FLASH_ACR_LATENCY_5WS;
-    // 设置Flash访问事件，打开缓存和预读取缓冲区
-#ifdef STM32F4XX
-    // The prefetch buffer must not be enabled on rev A devices.
-    // Rev A cannot be read from revision field (another rev A error!).
-    // The wrong device field (411=F2) must be used instead!
-    if ((DBGMCU->IDCODE & 0xFF) == 0x11) {
-        FLASH->ACR = FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
-    } else {
-        FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
-    }
-#else
-    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_BITS;
-#endif
-
-    // 设置 PLL
-	/*
-	PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N
-	SYSCLK = PLL_VCO / PLL_P
-	USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ
-	*/
-	int PLL_N = Sys.Clock / 1000000;
-	int PLL_M = Sys.CystalClock / 1000000;	// 为了让它除到1
-	int PLL_P = 1;	// 这是分母，在系统主频不变的情况下，可以加倍扩大PLL_VC0以获取48M
-	// 168M分不出48M，向上加倍吧，恰巧336M可以
-	while(PLL_N % 48 != 0)
-	{
-		PLL_P++;
-		PLL_N *= PLL_P;
-	}
-	int PLL_Q = PLL_N / 48;	// USB等需要48M
-    RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
-                   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
-    /*RCC->PLLCFGR = Sys.CystalClock / 1000000 * RCC_PLLCFGR_PLLM_0 // pll multipliers
-				| Sys.Clock * 2 / 1000000 * RCC_PLLCFGR_PLLN_0
-				| 0	// P
-				| Sys.Clock * 2 / 48000000 * RCC_PLLCFGR_PLLQ_0
-				| RCC_PLLCFGR_PLLSRC_HSE;*/
-    RCC->CR |= RCC_CR_PLLON;             // pll on
-    while(!(RCC->CR & RCC_CR_PLLRDY));
-
-    // 完成时钟设置
-    RCC->CFGR = RCC_CFGR_SW_PLL      // sysclk = pll out (SYSTEM_CLOCK_HZ)
-              | RCC_CFGR_HPRE_DIV1   // AHB clock
-              | RCC_CFGR_PPRE1_DIV4  // APB1 clock
-              | RCC_CFGR_PPRE2_DIV2; // APB2 clock
-
-    // 最小外设时钟
-#ifdef STM32F4XX
-    RCC->AHB1ENR = RCC_AHB1ENR_CCMDATARAMEN; // 64k RAM (CCM)
-#else
-    RCC->AHB1ENR = 0;
-#endif
-    RCC->AHB2ENR = 0;
-    RCC->AHB3ENR = 0;
-    RCC->APB1ENR = RCC_APB1ENR_PWREN;    // PWR clock used for sleep;
-    RCC->APB2ENR = RCC_APB2ENR_SYSCFGEN; // SYSCFG clock used for IO;
-
-    // stop HSI clock
-    RCC->CR &= ~RCC_CR_HSION;
-
-    // remove Flash remap to Boot area to avoid problems with Monitor_Execute
-    SYSCFG->MEMRMP = 1; // map System memory to Boot area
-}
 #endif
 
 void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
@@ -429,22 +334,23 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if defined(GD32) && defined(STM32F1) || defined(STM32F4)
+#if defined(GD32) && defined(STM32F1)
     // 如果当前频率不等于配置，则重新配置时钟
-	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE) Bootstrap();
-#ifdef STM32F4
-	HSE_VALUE = CystalClock;
-#endif
+	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
     RCC_GetClocksFreq(&clock);
     Clock = clock.SYSCLK_Frequency;
-#elif defined(STM32F0)
+#elif defined(STM32F0) || defined(STM32F4)
     // 如果当前频率不等于配置，则重新配置时钟
-	if(Clock != clock.SYSCLK_Frequency)
+	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE)
 	{
-		SetSysClock(Clock);
+		SetSysClock(Clock, CystalClock);
 
+#ifdef STM32F4
+		HSE_VALUE = CystalClock;
+#endif
 		RCC_GetClocksFreq(&clock);
 		Clock = clock.SYSCLK_Frequency;
+		SystemCoreClock = Clock;
 	}
 #else
     Clock = clock.SYSCLK_Frequency;

@@ -10,10 +10,10 @@ extern "C"
 		SystemCoreClock = 48000000;
 
 		/* Configure the System clock frequency, AHB/APBx prescalers and Flash settings */
-		SetSysClock(SystemCoreClock);
+		SetSysClock(SystemCoreClock, 8000000);
 	}
 
-	void SetSysClock(unsigned int clock)
+	void SetSysClock(unsigned int clock, unsigned int cystalClock)
 	{
 		__IO uint32_t StartUpCounter = 0, HSEStatus = 0;
 		uint32_t mull, pll;
@@ -80,10 +80,10 @@ extern "C"
 		RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL));
 		//RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLMULL6);
 		// 支持多种倍频
-		mull = clock / 8000000;
+		mull = clock / cystalClock;
 		pll = ((mull - 2) * 4) << 16;
 		RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLXTPRE_PREDIV1 | pll);
-		SystemCoreClock = 8000000 * mull;
+		//SystemCoreClock = cystalClock * mull;
 
 		/* Enable PLL */
 		RCC->CR |= RCC_CR_PLLON;

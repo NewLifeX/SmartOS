@@ -59,7 +59,7 @@
 
 extern "C"
 {
-	void SetSysClock(unsigned int clock);
+	void SetSysClock(unsigned int clock, unsigned int cystalClock);
 }
 
 #endif
