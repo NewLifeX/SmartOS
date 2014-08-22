@@ -296,7 +296,7 @@ void Bootstrap()
 		PLL_P++;
 		PLL_N *= PLL_P;
 	}
-	int PLL_Q = PLL_N / 48 * RCC_PLLCFGR_PLLQ_0;	// USB等需要48M
+	int PLL_Q = PLL_N / 48;	// USB等需要48M
     RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
                    (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
     /*RCC->PLLCFGR = Sys.CystalClock / 1000000 * RCC_PLLCFGR_PLLM_0 // pll multipliers
@@ -350,7 +350,8 @@ TSys::TSys()
 #elif defined(STM32F4)
     Clock = 168000000;
 #endif
-    CystalClock = 8000000;    // 晶振时钟
+    //CystalClock = 8000000;    // 晶振时钟
+    CystalClock = HSE_VALUE;    // 晶振时钟
     MessagePort = 0; // COM1;
 
     IsGD = Get_JTAG_ID() == 0x7A3;
@@ -429,6 +430,7 @@ void TSys::Init(void)
 	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
     RCC_GetClocksFreq(&clock);
     Clock = clock.SYSCLK_Frequency;
+	HSE_VALUE = CystalClock;
 #else
     Clock = clock.SYSCLK_Frequency;
 #endif
