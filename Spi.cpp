@@ -10,26 +10,13 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	assert_param(spi >= 0 && spi < ArrayLength(g_Spis));
 
     _spi = spi;
-	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
+	Opened = false;
     SPI = g_Spis[spi];
+	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
+	memcpy(Pins, ps, sizeof(Pins));
 
-    // 计算速度
-    /*ushort pre = 0;
-    int n = Sys.Clock / speedHz;   // 分频
-    switch(n)
-    {
-        case 2: pre = SPI_BaudRatePrescaler_2; break;
-        case 4: pre = SPI_BaudRatePrescaler_4; break;
-        case 8: pre = SPI_BaudRatePrescaler_8; break;
-        case 16: pre = SPI_BaudRatePrescaler_16; break;
-        case 32: pre = SPI_BaudRatePrescaler_32; break;
-        case 64: pre = SPI_BaudRatePrescaler_64; break;
-        case 128: pre = SPI_BaudRatePrescaler_128; break;
-        case 256: pre = SPI_BaudRatePrescaler_256; break;
-        default:
-            debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, speedHz, Sys.Clock);
-            return;
-    }*/
+	if(!useNss) Pins[0] = P0;
+
 	// 自动计算稍低于速度speedHz的分频
 	ushort pre = 2;
 	uint clock = Sys.Clock >> 1;
@@ -50,16 +37,66 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
     Speed = speedHz;
     Retry = 200;
+}
 
+Spi::~Spi()
+{
+    debug_printf("~Spi%d\r\n", _spi + 1);
+
+    Stop();
+
+	if(Opened)
+	{
+		SPI_Cmd(SPI, DISABLE);
+		SPI_I2S_DeInit(SPI);
+		
+		debug_printf("    CLK : ");
+		if(_clk) delete _clk;
+		debug_printf("    MISO: ");
+		if(_miso) delete _miso;
+		debug_printf("    MOSI: ");
+		if(_mosi) delete _mosi;
+		_clk = NULL;
+		_miso = NULL;
+		_mosi = NULL;
+
+		debug_printf("    NSS : ");
+		if(_nss) delete _nss;
+		_nss = NULL;
+	}
+}
+
+void Spi::SetPin(Pin clk, Pin miso, Pin mosi, Pin nss)
+{
+	if(nss != P0) Pins[0] = nss;
+	if(clk != P0) Pins[1] = clk;
+	if(miso != P0) Pins[2] = miso;
+	if(mosi != P0) Pins[3] = mosi;
+}
+
+void Spi::GetPin(Pin* clk, Pin* miso, Pin* mosi, Pin* nss)
+{
+	//const Pin* ps = g_Spi_Pins_Map[_spi];
+	if(nss) *nss = Pins[0];
+	if(clk) *clk = Pins[1];
+	if(miso) *miso = Pins[2];
+	if(mosi) *mosi = Pins[3];
+}
+
+void Spi::Config()
+{
+	if(Opened) return;
+
+	Pin* ps = Pins;
     // 端口配置，销毁Spi对象时才释放
     debug_printf("    CLK : ");
-    clk = new AlternatePort(ps[1]);
-    debug_printf("    MSIO: ");
-    msio = new AlternatePort(ps[2]);
+    _clk = new AlternatePort(ps[1]);
+    debug_printf("    MISO: ");
+    _miso = new AlternatePort(ps[2]);
     debug_printf("    MOSI: ");
-    mosi = new AlternatePort(ps[3]);
+    _mosi = new AlternatePort(ps[3]);
 
-    if(useNss)
+    if(ps[0] != P0)
     {
 #ifdef STM32F10X
         if(SPI == SPI3)
@@ -74,7 +111,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 		*_nss = true; // 拉高进入空闲状态
     }
 
-#ifndef STM32F0
+#ifdef STM32F1
     /*使能SPI时钟*/
 	switch(spi)
 	{
@@ -82,7 +119,7 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 		case SPI_2 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
 		case SPI_3 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE); break;
 	}
-#else
+#elif defined(STM32F0)
 	// SPI都在GPIO_AF_0分组内
     GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), GPIO_AF_0);
     GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), GPIO_AF_0);
@@ -92,10 +129,16 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 	{
         case SPI_1 : RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);  	break;
 	}
+#elif defined(STM32F4)
+	byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6,  };
+    GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), afs[_spi]);
+    GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), afs[_spi]);
+    GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), afs[_spi]);
 #endif
 
 	Stop();
 
+	int pre = Sys.Clock / Speed;
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
 	sp.SPI_Direction = SPI_Direction_2Lines_FullDuplex; //双线全双工
@@ -110,30 +153,8 @@ Spi::Spi(int spi, int speedHz, bool useNss)
 
     SPI_Init(SPI, &sp);
     SPI_Cmd(SPI, ENABLE);
-}
-
-Spi::~Spi()
-{
-    debug_printf("~Spi%d\r\n", _spi + 1);
-
-    Stop();
-
-    SPI_Cmd(SPI, DISABLE);
-    SPI_I2S_DeInit(SPI);
-    
-    debug_printf("    CLK : ");
-    if(clk) delete clk;
-    debug_printf("    MSIO: ");
-    if(msio) delete msio;
-    debug_printf("    MOSI: ");
-    if(mosi) delete mosi;
-    clk = NULL;
-    msio = NULL;
-    mosi = NULL;
-
-    debug_printf("    NSS : ");
-    if(_nss) delete _nss;
-    _nss = NULL;
+	
+	Opened = true;
 }
 
 byte Spi::Write(byte data)

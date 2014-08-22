@@ -60,7 +60,7 @@
 
 
 /* 串行外设接口(SPI)针脚 ------------------------------------------------------------------*/
-#define SPIS {SPI1, SPI2, SPI3}
+#define SPIS {SPI1, SPI2, SPI3, SPI4, SPI5, SPI6}
 //#define SPI_NSS_PINS  {4, 28, 15} // PA4, PB12, PA15
 //#define SPI_SCLK_PINS {5, 29, 19} // PA5, PB13, PB3
 //#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4

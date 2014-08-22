@@ -24,21 +24,27 @@ class Spi
 {
 private:
     int _spi;
+	Pin Pins[4];	// NSS/CLK/MISO/MOSI
     OutputPort* _nss;
 
-    AlternatePort* clk;
-    AlternatePort* msio;
-    AlternatePort* mosi;
+    AlternatePort* _clk;
+    AlternatePort* _miso;
+    AlternatePort* _mosi;
 
 public:
     SPI_TypeDef* SPI;
     int Speed;  // 速度
     int Retry;  // 等待重试次数，默认200
     int Error;  // 错误次数
+	bool Opened;
 
 	// 使用端口和最大速度初始化Spi，因为需要分频，实际速度小于等于该速度
     Spi(int spi, int speedHz = 9000000, bool useNss = true);
     virtual ~Spi();
+
+	void SetPin(Pin clk = P0, Pin miso = P0, Pin mosi = P0, Pin nss = P0);
+	void GetPin(Pin* clk = NULL, Pin* miso = NULL, Pin* mosi = NULL, Pin* nss = NULL);
+	void Config();
 
     byte Write(byte data);
     ushort Write16(ushort data);
