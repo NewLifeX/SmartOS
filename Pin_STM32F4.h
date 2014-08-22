@@ -10,7 +10,7 @@
 #define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
-#define UARTS {USART1, USART2, USART3, UART4, UART5}
+#define UARTS {USART1, USART2, USART3, UART4, UART5, USART6, UART7, UART8}
 #define UART_PINS {\
  /* TX   RX   CTS  RTS */	\
 	PA9, PA10,PA11,PA12,/* USART1 */	\

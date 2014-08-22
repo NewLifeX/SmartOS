@@ -258,10 +258,12 @@ TSys::TSys()
     IsGD = Get_JTAG_ID() == 0x7A3;
     if(IsGD) Clock = 120000000;
 
-#ifdef STM32F0XX
+#ifdef STM32F0
 	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
-#else
+#elif defined(STM32F1)
 	void* p = (void*)0x1FFFF7E8;
+#elif defined(STM32F4)
+	void* p = (void*)0x1FFF7A10;
 #endif
 	memcpy(ID, p, ArrayLength(ID));
 
@@ -271,10 +273,12 @@ TSys::TSys()
 	DevID = mcuid & 0x0FFF;
 
 	_Index = 0;
-#ifdef STM32F0XX
+#ifdef STM32F0
     FlashSize = *(__IO ushort *)(0x1FFFF7CC);  // 容量。手册里搜索FLASH_SIZE，优先英文手册
-#else
+#elif defined(STM32F1)
     FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
+#elif defined(STM32F4)
+    FlashSize = *(__IO ushort *)(0x1FFF7A22);  // 容量
 #endif
 	if(FlashSize != 0xFFFF)
 	{
@@ -405,23 +409,22 @@ void TSys::ShowInfo()
 	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
-    debug_printf("ChipID:%02X", ID[0]);
-	for(int i=1; i<ArrayLength(ID); i++) debug_printf("-%02X", ID[i]);
+    //debug_printf("ChipID:%02X", ID[0]);
+	//for(int i=1; i<ArrayLength(ID); i++) debug_printf("-%02X", ID[i]);
+    debug_printf("ChipID:");
+	ShowHex(ID, ArrayLength(ID), '-');
 
-	if(IsGD)
-	{
-		debug_printf(" %c", ID[0]);
-		for(int i=1; i<ArrayLength(ID); i++) debug_printf("%c", ID[i]);
-	}
+	debug_printf("\t");
+	ShowString(ID, 12, false);
     debug_printf("\r\n");
-	
+
 	// 输出堆信息
 	uint start = (uint)&__heap_base;
 	uint end = (uint)&__heap_limit;
-	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x\r\n", start, end, end - start);
+	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 	start = end;
 	end = 0x20000000 + (RAMSize << 10);
-	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x\r\n", start, end, end - start);
+	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 
     debug_printf("\r\n");
 #endif
@@ -497,12 +500,12 @@ void TSys::ShowHex(byte* buf, uint len, char sep)
 }
 
 // 显示字符串，不指定长度时自动找\0
-void TSys::ShowString(byte* buf, uint len)
+void TSys::ShowString(byte* buf, uint len, bool autoEnd)
 {
 	if(len == 0) len = 1000;
     for(int i=0; i<len; i++)
     {
-		if(buf[i] == 0) return;
+		if(buf[i] == 0 && autoEnd) return;
 		if(buf[i] >= 32 && buf[i] <= 126 || buf[i] == 0x0A || buf[i] == 0x0D || buf[i] == 0x09)
 			debug_printf("%c", buf[i]);
 		else
