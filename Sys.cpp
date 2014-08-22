@@ -355,7 +355,7 @@ TSys::TSys()
     MessagePort = 0; // COM1;
 
     IsGD = Get_JTAG_ID() == 0x7A3;
-    if(IsGD) Clock = 120000000;
+    //if(IsGD) Clock = 120000000;
 
 #ifdef STM32F0
 	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
@@ -441,11 +441,11 @@ void TSys::Init(void)
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency)
 	{
-		SystemCoreClock = Clock;
-		SystemInit();
+		SetSysClock(Clock);
+
+		RCC_GetClocksFreq(&clock);
+		Clock = clock.SYSCLK_Frequency;
 	}
-    RCC_GetClocksFreq(&clock);
-    Clock = clock.SYSCLK_Frequency;
 #else
     Clock = clock.SYSCLK_Frequency;
 #endif

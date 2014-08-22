@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Platform/stm32.h"
+#include "Platform\stm32.h"
 
 /* 类型定义 */
 typedef char            sbyte;
@@ -32,7 +32,7 @@ typedef char*           String;
 
 /* 引脚定义 */
 //typedef ushort Pin;
-#include "Platform/Pin.h"
+#include "Platform\Pin.h"
 
 /* 串口定义 */
 #define COM1 0

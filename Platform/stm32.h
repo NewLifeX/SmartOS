@@ -57,4 +57,9 @@
 	#error "请在Keil项目配置C/C++页定义芯片平台，如STM32F0/STM32F1/STM32F4"
 #endif
 
+extern "C"
+{
+	void SetSysClock(unsigned int clock);
+}
+
 #endif
