@@ -26,7 +26,6 @@ __heap_limit
 __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
 
-				IF :DEF:GD32
 				IMPORT FaultHandler
 				IMPORT UserHandler
                 DCD     FaultHandler ; NMI Handler
@@ -34,6 +33,8 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     FaultHandler ; MPU Fault Handler
                 DCD     FaultHandler ; Bus Fault Handler
                 DCD     FaultHandler ; Usage Fault Handler
+
+				IF :DEF:GD32
                 DCD     0            ; Reserved
                 DCD     0            ; Reserved
                 DCD     0            ; Reserved
