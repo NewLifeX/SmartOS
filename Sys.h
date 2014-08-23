@@ -141,7 +141,6 @@ __inline void debug_printf( const char *format, ... ) {}
 #include "Time.h"
 #include "Interrupt.h"
 
-
 #endif //_Sys_H_
 
 /*

@@ -87,4 +87,11 @@ private:
 	uint _state;
 };
 
+extern "C"
+{
+	void FaultHandler(void);
+	void UserHandler(void);
+	void ShowFault(uint exception);
+}
+
 #endif

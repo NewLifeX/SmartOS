@@ -25,7 +25,10 @@ __heap_limit
 
 __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
-IF GD32 = "1"
+
+				IF :DEF:GD32
+				IMPORT FaultHandler
+				IMPORT UserHandler
                 DCD     FaultHandler  ; NMI Handler
                 DCD     FaultHandler  ; Hard Fault Handler
                 DCD     FaultHandler  ; MPU Fault Handler
@@ -102,20 +105,20 @@ IF GD32 = "1"
                 DCD     UserHandler ; DMA2 Channel2
                 DCD     UserHandler ; DMA2 Channel3
                 DCD     UserHandler ; DMA2 Channel4 & Channel5
-ENDIF
+				ENDIF
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
 
                 AREA    |.text|, CODE, READONLY
-                
+
 ; Reset handler
 Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  __main
                 IMPORT  SystemInit
                 LDR     R0, =SystemInit
-                BLX     R0               
+                BLX     R0
                 LDR     R0, =__main
                 BX      R0
                 ENDP
