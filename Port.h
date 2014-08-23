@@ -4,14 +4,6 @@
 #include "Sys.h"
 #include "ADC.h"
 
-#ifdef STM32F1
-	#include "stm32f10x_gpio.h"
-#elif defined(STM32F0)
-	#include "stm32f0xx_gpio.h"
-#elif defined(STM32F4)
-	#include "stm32f4xx_gpio.h"
-#endif
-
 // 端口基类
 // 用于管理一组端口Group，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态

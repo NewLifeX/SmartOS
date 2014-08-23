@@ -43,6 +43,11 @@
     #endif
 #endif
 
+// 默认使用固件库
+#ifndef USE_STDPERIPH_DRIVER
+#define USE_STDPERIPH_DRIVER
+#endif
+
 #if defined(STM32F4)
 	#include "stm32f4xx.h"
 #elif defined(STM32F2)
