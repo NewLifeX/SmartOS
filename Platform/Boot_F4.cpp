@@ -131,44 +131,4 @@ extern "C"
 		SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
 		#endif
 	}
-
-#if !VEC_TABLE_ON_RAM
-	void NMI_Handler()			{ FaultHandler(); }
-	void HardFault_Handler()	{ FaultHandler(); }
-	void MemManage_Handler()	{ FaultHandler(); }
-	void BusFault_Handler()		{ FaultHandler(); }
-	void UsageFault_Handler()	{ FaultHandler(); }
-	void SVC_Handler()			{ UserHandler(); }
-	void PendSV_Handler()		{ UserHandler(); }
-	void SysTick_Handler()		{ UserHandler(); }
-	void WWDG_IRQHandler()		{ UserHandler(); }
-	void PVD_IRQHandler()		{ UserHandler(); }
-	void RTC_IRQHandler()		{ UserHandler(); }
-	void FLASH_IRQHandler()		{ UserHandler(); }
-	void RCC_IRQHandler()		{ UserHandler(); }
-	void EXTI0_1_IRQHandler()	{ UserHandler(); }
-	void EXTI2_3_IRQHandler()	{ UserHandler(); }
-	void EXTI4_15_IRQHandler()	{ UserHandler(); }
-	void TS_IRQHandler()		{ UserHandler(); }
-	void DMA1_Channel1_IRQHandler()		{ UserHandler(); }
-	void DMA1_Channel2_3_IRQHandler()	{ UserHandler(); }
-	void DMA1_Channel4_5_IRQHandler()	{ UserHandler(); }
-	void ADC1_COMP_IRQHandler()	{ UserHandler(); }
-	void TIM1_BRK_UP_TRG_COM_IRQHandler()	{ UserHandler(); }
-	void TIM1_CC_IRQHandler()	{ UserHandler(); }
-	void TIM2_IRQHandler()		{ UserHandler(); }
-	void TIM3_IRQHandler()		{ UserHandler(); }
-	void TIM6_DAC_IRQHandler()	{ UserHandler(); }
-	void TIM14_IRQHandler()		{ UserHandler(); }
-	void TIM15_IRQHandler()		{ UserHandler(); }
-	void TIM16_IRQHandler()		{ UserHandler(); }
-	void TIM17_IRQHandler()		{ UserHandler(); }
-	void I2C1_IRQHandler()		{ UserHandler(); }
-	void I2C2_IRQHandler()		{ UserHandler(); }
-	void SPI1_IRQHandler()		{ UserHandler(); }
-	void SPI2_IRQHandler()		{ UserHandler(); }
-	void USART1_IRQHandler()	{ UserHandler(); }
-	void USART2_IRQHandler()	{ UserHandler(); }
-	void CEC_IRQHandler()		{ UserHandler(); }
-#endif
 }

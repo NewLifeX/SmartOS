@@ -44,10 +44,6 @@ Reset_Handler    PROC
                  ENDP
 
                 ALIGN
-
-;*******************************************************************************
-; User Stack and Heap initialization
-;*******************************************************************************
                 
                  EXPORT  __initial_sp
                  EXPORT  __heap_base

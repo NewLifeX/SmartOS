@@ -5,7 +5,7 @@ Stack_Size      EQU     0x00000400
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
-; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存充足时尽可能分配到最大	。堆空间不足时malloc将引发异常
+; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存充足时尽可能分配到最大。堆空间不足时malloc将引发异常
 Heap_Size       EQU     0x00000800
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
@@ -23,57 +23,61 @@ __heap_limit
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
-__Vectors       DCD     __initial_sp                   ; Top of Stack
-                DCD     Reset_Handler                  ; Reset Handler
-                DCD     NMI_Handler                    ; NMI Handler
-                DCD     HardFault_Handler              ; Hard Fault Handler
-                DCD     MemManage_Handler          ; MPU Fault Handler
-                DCD     BusFault_Handler           ; Bus Fault Handler
-                DCD     UsageFault_Handler         ; Usage Fault Handler
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     SVC_Handler                    ; SVCall Handler
-                DCD     0                              ; Reserved
-                DCD     0                              ; Reserved
-                DCD     PendSV_Handler                 ; PendSV Handler
-                DCD     SysTick_Handler                ; SysTick Handler
+__Vectors       DCD     __initial_sp  ; Top of Stack
+                DCD     Reset_Handler ; Reset Handler
+
+				IF :DEF:GD32
+				IMPORT FaultHandler
+				IMPORT UserHandler
+                DCD     FaultHandler ; NMI Handler
+                DCD     FaultHandler ; Hard Fault Handler
+                DCD     FaultHandler ; MPU Fault Handler
+                DCD     FaultHandler ; Bus Fault Handler
+                DCD     FaultHandler ; Usage Fault Handler
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
+                DCD     UserHandler ; SVCall Handler
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     UserHandler ; PendSV Handler
+                DCD     UserHandler ; SysTick Handler
 
                 ; External Interrupts
-                DCD     WWDG_IRQHandler                ; Window Watchdog
-                DCD     PVD_IRQHandler                 ; PVD through EXTI Line detect
-                DCD     RTC_IRQHandler                 ; RTC through EXTI Line
-                DCD     FLASH_IRQHandler               ; FLASH
-                DCD     RCC_IRQHandler                 ; RCC
-                DCD     EXTI0_1_IRQHandler             ; EXTI Line 0 and 1
-                DCD     EXTI2_3_IRQHandler             ; EXTI Line 2 and 3
-                DCD     EXTI4_15_IRQHandler            ; EXTI Line 4 to 15
-                DCD     TS_IRQHandler                  ; TS
-                DCD     DMA1_Channel1_IRQHandler       ; DMA1 Channel 1
-                DCD     DMA1_Channel2_3_IRQHandler     ; DMA1 Channel 2 and Channel 3
-                DCD     DMA1_Channel4_5_IRQHandler     ; DMA1 Channel 4 and Channel 5
-                DCD     ADC1_COMP_IRQHandler           ; ADC1, COMP1 and COMP2 
-                DCD     TIM1_BRK_UP_TRG_COM_IRQHandler ; TIM1 Break, Update, Trigger and Commutation
-                DCD     TIM1_CC_IRQHandler             ; TIM1 Capture Compare
-                DCD     TIM2_IRQHandler                ; TIM2
-                DCD     TIM3_IRQHandler                ; TIM3
-                DCD     TIM6_DAC_IRQHandler            ; TIM6 and DAC
-                DCD     0                              ; Reserved
-                DCD     TIM14_IRQHandler               ; TIM14
-                DCD     TIM15_IRQHandler               ; TIM15
-                DCD     TIM16_IRQHandler               ; TIM16
-                DCD     TIM17_IRQHandler               ; TIM17
-                DCD     I2C1_IRQHandler                ; I2C1
-                DCD     I2C2_IRQHandler                ; I2C2
-                DCD     SPI1_IRQHandler                ; SPI1
-                DCD     SPI2_IRQHandler                ; SPI2
-                DCD     USART1_IRQHandler              ; USART1
-                DCD     USART2_IRQHandler              ; USART2
-                DCD     0                              ; Reserved
-                DCD     CEC_IRQHandler                 ; CEC
-                DCD     0                              ; Reserved
-                
+                DCD     UserHandler ; Window Watchdog
+                DCD     UserHandler ; PVD through EXTI Line detect
+                DCD     UserHandler ; RTC through EXTI Line
+                DCD     UserHandler ; FLASH
+                DCD     UserHandler ; RCC
+                DCD     UserHandler ; EXTI Line 0 and 1
+                DCD     UserHandler ; EXTI Line 2 and 3
+                DCD     UserHandler ; EXTI Line 4 to 15
+                DCD     UserHandler ; TS
+                DCD     UserHandler ; DMA1 Channel 1
+                DCD     UserHandler ; DMA1 Channel 2 and Channel 3
+                DCD     UserHandler ; DMA1 Channel 4 and Channel 5
+                DCD     UserHandler ; ADC1, COMP1 and COMP2 
+                DCD     UserHandler ; TIM1 Break, Update, Trigger and Commutation
+                DCD     UserHandler ; TIM1 Capture Compare
+                DCD     UserHandler ; TIM2
+                DCD     UserHandler ; TIM3
+                DCD     UserHandler ; TIM6 and DAC
+                DCD     0           ; Reserved
+                DCD     UserHandler ; TIM14
+                DCD     UserHandler ; TIM15
+                DCD     UserHandler ; TIM16
+                DCD     UserHandler ; TIM17
+                DCD     UserHandler ; I2C1
+                DCD     UserHandler ; I2C2
+                DCD     UserHandler ; SPI1
+                DCD     UserHandler ; SPI2
+                DCD     UserHandler ; USART1
+                DCD     UserHandler ; USART2
+                DCD     0           ; Reserved
+                DCD     UserHandler ; CEC
+                DCD     0           ; Reserved
+				ENDIF
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
@@ -91,138 +95,10 @@ Reset_Handler    PROC
                  BX      R0
                  ENDP
 
-; Dummy Exception Handlers (infinite loops which can be modified)
-
-NMI_Handler     PROC
-                EXPORT  NMI_Handler                    [WEAK]
-                B       .
-                ENDP
-HardFault_Handler\
-                PROC
-                EXPORT  HardFault_Handler              [WEAK]
-                B       .
-                ENDP
-MemManage_Handler\
-                PROC
-                EXPORT  MemManage_Handler          [WEAK]
-                B       .
-                ENDP
-BusFault_Handler\
-                PROC
-                EXPORT  BusFault_Handler           [WEAK]
-                B       .
-                ENDP
-UsageFault_Handler\
-                PROC
-                EXPORT  UsageFault_Handler         [WEAK]
-                B       .
-                ENDP
-SVC_Handler     PROC
-                EXPORT  SVC_Handler                    [WEAK]
-                B       .
-                ENDP
-PendSV_Handler  PROC
-                EXPORT  PendSV_Handler                 [WEAK]
-                B       .
-                ENDP
-SysTick_Handler PROC
-                EXPORT  SysTick_Handler                [WEAK]
-                B       .
-                ENDP
-
-Default_Handler PROC
-
-                EXPORT  WWDG_IRQHandler                [WEAK]
-                EXPORT  PVD_IRQHandler                 [WEAK]
-                EXPORT  RTC_IRQHandler                 [WEAK]
-                EXPORT  FLASH_IRQHandler               [WEAK]
-                EXPORT  RCC_IRQHandler                 [WEAK]
-                EXPORT  EXTI0_1_IRQHandler             [WEAK]
-                EXPORT  EXTI2_3_IRQHandler             [WEAK]
-                EXPORT  EXTI4_15_IRQHandler            [WEAK]
-                EXPORT  TS_IRQHandler                  [WEAK]
-                EXPORT  DMA1_Channel1_IRQHandler       [WEAK]
-                EXPORT  DMA1_Channel2_3_IRQHandler     [WEAK]
-                EXPORT  DMA1_Channel4_5_IRQHandler     [WEAK]
-                EXPORT  ADC1_COMP_IRQHandler           [WEAK]
-                EXPORT  TIM1_BRK_UP_TRG_COM_IRQHandler [WEAK]
-                EXPORT  TIM1_CC_IRQHandler             [WEAK]
-                EXPORT  TIM2_IRQHandler                [WEAK]
-                EXPORT  TIM3_IRQHandler                [WEAK]
-                EXPORT  TIM6_DAC_IRQHandler            [WEAK]
-                EXPORT  TIM14_IRQHandler               [WEAK]
-                EXPORT  TIM15_IRQHandler               [WEAK]
-                EXPORT  TIM16_IRQHandler               [WEAK]
-                EXPORT  TIM17_IRQHandler               [WEAK]
-                EXPORT  I2C1_IRQHandler                [WEAK]
-                EXPORT  I2C2_IRQHandler                [WEAK]
-                EXPORT  SPI1_IRQHandler                [WEAK]
-                EXPORT  SPI2_IRQHandler                [WEAK]
-                EXPORT  USART1_IRQHandler              [WEAK]
-                EXPORT  USART2_IRQHandler              [WEAK]
-                EXPORT  CEC_IRQHandler                 [WEAK]
-
-
-WWDG_IRQHandler
-PVD_IRQHandler
-RTC_IRQHandler
-FLASH_IRQHandler
-RCC_IRQHandler
-EXTI0_1_IRQHandler
-EXTI2_3_IRQHandler
-EXTI4_15_IRQHandler
-TS_IRQHandler
-DMA1_Channel1_IRQHandler
-DMA1_Channel2_3_IRQHandler
-DMA1_Channel4_5_IRQHandler
-ADC1_COMP_IRQHandler 
-TIM1_BRK_UP_TRG_COM_IRQHandler
-TIM1_CC_IRQHandler
-TIM2_IRQHandler
-TIM3_IRQHandler
-TIM6_DAC_IRQHandler
-TIM14_IRQHandler
-TIM15_IRQHandler
-TIM16_IRQHandler
-TIM17_IRQHandler
-I2C1_IRQHandler
-I2C2_IRQHandler
-SPI1_IRQHandler
-SPI2_IRQHandler
-USART1_IRQHandler
-USART2_IRQHandler
-CEC_IRQHandler   
-
-                B       .
-
-                ENDP
-
                 ALIGN
 
-;*******************************************************************************
-; User Stack and Heap initialization
-;*******************************************************************************
-                 IF      :DEF:__MICROLIB
-                
                  EXPORT  __initial_sp
                  EXPORT  __heap_base
                  EXPORT  __heap_limit
-                
-                 ELSE
-                
-                 IMPORT  __use_two_region_memory
-                 EXPORT  __user_initial_stackheap
-                 
-__user_initial_stackheap
-
-                 LDR     R0, =  Heap_Mem
-                 LDR     R1, =(Stack_Mem + Stack_Size)
-                 LDR     R2, = (Heap_Mem +  Heap_Size)
-                 LDR     R3, = Stack_Mem
-                 BX      LR
-
-                 ALIGN
-
-                 ENDIF
 
                  END

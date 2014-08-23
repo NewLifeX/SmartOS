@@ -29,18 +29,18 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
 				IF :DEF:GD32
 				IMPORT FaultHandler
 				IMPORT UserHandler
-                DCD     FaultHandler  ; NMI Handler
-                DCD     FaultHandler  ; Hard Fault Handler
-                DCD     FaultHandler  ; MPU Fault Handler
-                DCD     FaultHandler  ; Bus Fault Handler
-                DCD     FaultHandler  ; Usage Fault Handler
-                DCD     0             ; Reserved
-                DCD     0             ; Reserved
-                DCD     0             ; Reserved
-                DCD     0             ; Reserved
+                DCD     FaultHandler ; NMI Handler
+                DCD     FaultHandler ; Hard Fault Handler
+                DCD     FaultHandler ; MPU Fault Handler
+                DCD     FaultHandler ; Bus Fault Handler
+                DCD     FaultHandler ; Usage Fault Handler
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
+                DCD     0            ; Reserved
                 DCD     UserHandler ; SVCall Handler
                 DCD     UserHandler ; Debug Monitor Handler
-                DCD     0                          ; Reserved
+                DCD     0           ; Reserved
                 DCD     UserHandler ; PendSV Handler
                 DCD     UserHandler ; SysTick Handler
 
@@ -125,9 +125,6 @@ Reset_Handler   PROC
 
                 ALIGN
 
-;*******************************************************************************
-; User Stack and Heap initialization
-;*******************************************************************************
                  EXPORT  __initial_sp
                  EXPORT  __heap_base
                  EXPORT  __heap_limit
