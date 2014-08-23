@@ -260,7 +260,6 @@ TSys::TSys()
     MessagePort = 0; // COM1;
 
     IsGD = Get_JTAG_ID() == 0x7A3;
-    //if(IsGD) Clock = 120000000;
 
 #ifdef STM32F0
 	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
@@ -276,6 +275,9 @@ TSys::TSys()
 	if(mcuid == 0 && IsGD) mcuid = *(uint*)0xE0042000; // 用GD32F103的位置
 	RevID = mcuid >> 16;
 	DevID = mcuid & 0x0FFF;
+	
+	// GD32F103 默认使用120M
+    if(IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 
 	_Index = 0;
 #ifdef STM32F0
@@ -334,12 +336,6 @@ void TSys::Init(void)
     RCC_ClocksTypeDef clock;
 
     RCC_GetClocksFreq(&clock);
-#if defined(GD32) && defined(STM32F1)
-    // 如果当前频率不等于配置，则重新配置时钟
-	if(Clock != clock.SYSCLK_Frequency) Bootstrap();
-    RCC_GetClocksFreq(&clock);
-    Clock = clock.SYSCLK_Frequency;
-#elif defined(STM32F0) || defined(STM32F4)
     // 如果当前频率不等于配置，则重新配置时钟
 	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE)
 	{
@@ -352,11 +348,8 @@ void TSys::Init(void)
 		Clock = clock.SYSCLK_Frequency;
 		SystemCoreClock = Clock;
 	}
-#else
-    Clock = clock.SYSCLK_Frequency;
-#endif
 
-#ifdef STM32F10X
+#ifdef STM32F1
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
 #endif
 
