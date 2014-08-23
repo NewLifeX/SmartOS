@@ -1,6 +1,6 @@
 ﻿#include "Interrupt.h"
 
-// GD32F150无法把向量表映射到RAM
+// GD32全系列无法把向量表映射到RAM，F103只能映射到Flash别的地方
 #if defined(GD32)
 	#define VEC_TABLE_ON_RAM 0
 #else
