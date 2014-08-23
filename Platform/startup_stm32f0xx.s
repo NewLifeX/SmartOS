@@ -79,6 +79,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     UserHandler ; CEC
                 DCD     0           ; Reserved
 				ENDIF
+				
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors

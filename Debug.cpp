@@ -12,6 +12,9 @@
 
 extern uint __heap_base;
 extern uint __heap_limit;
+extern uint __Vectors;
+extern uint __Vectors_End;
+extern uint __Vectors_Size;
 
 void* operator new(uint size)
 {
@@ -95,6 +98,12 @@ void ShowFault(uint exception)
 		else if(n & (1u<<30))
 		{
 			debug_printf("是总线fault，存储器管理fault 或是用法fault 上访的结果\r\n");
+			// GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1
+			uint size = __Vectors_End - __Vectors;
+			if(Sys.IsGD && __Vectors_Size <= 7 * 4)
+			{
+				debug_printf("GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1\r\n");
+			}
 		}
 		else if(n & (1u<<31))
 		{
