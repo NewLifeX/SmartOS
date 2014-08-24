@@ -26,15 +26,15 @@ __heap_limit
 __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
 
-				IMPORT FaultHandler
-				IMPORT UserHandler
+                IMPORT FaultHandler
+                IMPORT UserHandler
                 DCD     FaultHandler ; NMI Handler
                 DCD     FaultHandler ; Hard Fault Handler
                 DCD     FaultHandler ; MPU Fault Handler
                 DCD     FaultHandler ; Bus Fault Handler
                 DCD     FaultHandler ; Usage Fault Handler
 
-				IF :DEF:GD32
+                IF :DEF:GD32
                 DCD     0            ; Reserved
                 DCD     0            ; Reserved
                 DCD     0            ; Reserved
@@ -58,7 +58,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     UserHandler ; DMA1 Channel 1
                 DCD     UserHandler ; DMA1 Channel 2 and Channel 3
                 DCD     UserHandler ; DMA1 Channel 4 and Channel 5
-                DCD     UserHandler ; ADC1, COMP1 and COMP2 
+                DCD     UserHandler ; ADC1, COMP1 and COMP2
                 DCD     UserHandler ; TIM1 Break, Update, Trigger and Commutation
                 DCD     UserHandler ; TIM1 Capture Compare
                 DCD     UserHandler ; TIM2
@@ -78,8 +78,8 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     0           ; Reserved
                 DCD     UserHandler ; CEC
                 DCD     0           ; Reserved
-				ENDIF
-				
+                ENDIF
+
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
@@ -87,20 +87,20 @@ __Vectors_Size  EQU  __Vectors_End - __Vectors
                 AREA    |.text|, CODE, READONLY
 
 ; Reset handler routine
-Reset_Handler    PROC
-                 EXPORT  Reset_Handler                 [WEAK]
+Reset_Handler   PROC
+                EXPORT  Reset_Handler                 [WEAK]
         IMPORT  __main
-        IMPORT  SystemInit  
-                 LDR     R0, =SystemInit
-                 BLX     R0
-                 LDR     R0, =__main
-                 BX      R0
-                 ENDP
+        IMPORT  SystemInit
+                LDR     R0, =SystemInit
+                BLX     R0
+                LDR     R0, =__main
+                BX      R0
+                ENDP
 
                 ALIGN
 
-                 EXPORT  __initial_sp
-                 EXPORT  __heap_base
-                 EXPORT  __heap_limit
+                EXPORT  __initial_sp
+                EXPORT  __heap_base
+                EXPORT  __heap_limit
 
-                 END
+                END

@@ -90,7 +90,7 @@ void ShowFault(uint exception)
 	{
 		// 0xE000ED2C
  		uint n = *(uint*)(SCB_BASE + 0x2C);
-        debug_printf("\r\n硬件错误 %d ", n);
+        debug_printf("\r\n硬件错误 0x%x ", n);
 		if(n & (1<<1))
 		{
 			debug_printf("在取向量时发生\r\n");
@@ -99,8 +99,8 @@ void ShowFault(uint exception)
 		{
 			debug_printf("是总线fault，存储器管理fault 或是用法fault 上访的结果\r\n");
 			// GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1
-			uint size = __Vectors_End - __Vectors;
-			if(Sys.IsGD && __Vectors_Size <= 7 * 4)
+			// __Vectors_Size只是一个标记，需要先取地址，才得到它的值
+			if(Sys.IsGD && (uint)&__Vectors_Size <= 7 * 4)
 			{
 				debug_printf("GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1\r\n");
 			}
