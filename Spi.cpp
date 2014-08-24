@@ -102,24 +102,26 @@ void Spi::Open()
 		*_nss = true; // 拉高进入空闲状态
     }
 
-#ifdef STM32F1
-    /*使能SPI时钟*/
+    // 使能SPI时钟
 	switch(_spi)
 	{
 		case SPI_1 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); break;
+#if defined(STM32F1) || defined(STM32F4)
 		case SPI_2 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
 		case SPI_3 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE); break;
+#if defined(STM32F4)
+		case SPI_4 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI4, ENABLE); break;
+		case SPI_5 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI5, ENABLE); break;
+		case SPI_6 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI6, ENABLE); break;
+#endif
+#endif
 	}
-#elif defined(STM32F0)
+
+#if defined(STM32F0)
 	// SPI都在GPIO_AF_0分组内
     GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), GPIO_AF_0);
     GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), GPIO_AF_0);
     GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), GPIO_AF_0);
-
-	switch(_spi)
-	{
-        case SPI_1 : RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);  	break;
-	}
 #elif defined(STM32F4)
 	byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6,  };
     GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), afs[_spi]);
@@ -128,6 +130,7 @@ void Spi::Open()
 #endif
 
 	Stop();
+	SPI_DeInit(SPI);	// SPI_I2S_DeInit的宏定义别名
 
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
