@@ -46,7 +46,9 @@ protected:
 #endif
 
 private:
+#if defined(STM32F1)
 	ulong InitState;	// 备份引脚初始状态，在析构时还原
+#endif
 
 	void OnSetPort();
 };

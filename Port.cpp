@@ -17,7 +17,7 @@ typedef struct TIntState
 static IntState State[16];
 static bool hasInitState = false;
 
-#ifdef STM32F1
+#if defined(STM32F1) || defined(STM32F4)
 static int PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
@@ -29,12 +29,6 @@ static int PORT_IRQns[] = {
     EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn,
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
-};
-#elif defined(STM32F4)
-static int PORT_IRQns[] = {
-    EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
-    EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
-    EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
 #endif
 
@@ -58,7 +52,7 @@ Port::Port()
 
 Port::~Port()
 {
-#ifdef STM32F10X
+#if defined(STM32F1)
 	// 恢复为初始化状态
 	ushort bits = PinBit;
 	int config = InitState & 0xFFFFFFFF;
@@ -91,7 +85,7 @@ Port::~Port()
 
 void Port::OnSetPort()
 {
-#ifdef STM32F10X
+#if defined(STM32F1)
 	// 整组引脚的初始状态，析构时有选择恢复
 	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
 #endif
@@ -212,15 +206,6 @@ void Port::OnConfig()
 
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
-/*ushort Port::IndexToBits(byte index) { return 1 << (ushort)(index & 0x0F); }
-byte Port::BitsToIndex(ushort bits)
-{
-    for(int i=0; i < 16 & bits; i++, bits >>= 1)
-    {
-        if(bits & 1) return i;
-    }
-    return 0xFF;
-}*/
 #endif
 
 // 端口引脚保护
@@ -243,7 +228,7 @@ bool Port::Reserve(Pin pin, bool flag)
     } else {
         Reserved[port] &= ~bit;
 
-#ifdef STM32F10X
+#if defined(STM32F1)
 		int config = 0;
 		uint shift = (pin & 7) << 2; // 4 bits / pin
 		uint mask = 0xF << shift; // 屏蔽掉其它位
@@ -651,15 +636,13 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
 	state->OldValue = Read(pin); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
-#ifdef STM32F0
+#if defined(STM32F0) || defined(STM32F4)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
     SYSCFG_EXTILineConfig(groupIndex, pinIndex);
+	//SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource0);
 #elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     GPIO_EXTILineConfig(groupIndex, pinIndex);
-#elif defined(STM32F1)
-    //RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    //GPIO_EXTILineConfig(groupIndex, pinIndex);
 #endif
 
 	SetEXIT(pinIndex, true);
@@ -690,4 +673,3 @@ void InputPort::UnRegisterInput(int pinIndex)
     }
 }
 #endif
-
