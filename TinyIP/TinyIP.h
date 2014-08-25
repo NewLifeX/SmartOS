@@ -1,6 +1,8 @@
 #ifndef _TinyIP_H_
 #define _TinyIP_H_
 
+// 模块开发使用说明见后
+
 #include "Enc28j60.h"
 #include "Net/Ethernet.h"
 
@@ -41,12 +43,29 @@ private:
 	byte* Buffer; // 缓冲区
 
 	static void Work(void* param);	// 任务函数
-	void OnWork();	// 循环调度的任务
+	uint Fetch();	// 循环调度的任务，捕获数据包，返回长度
+	void Process(byte* buf, uint len);	// 处理数据包
 
 	void ProcessArp(byte* buf, uint len);
+	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
+	const byte* RequestArp(const byte ip[4], int timeout = 3);
+
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);
-	bool IsMyIP(byte ip[4]);	// 是否发给我的IP地址
+	bool IsMyIP(const byte ip[4]);	// 是否发给我的IP地址
+	bool IsBroadcast(const byte ip[4]);	// 是否广播地址
+
+	// ARP表
+	typedef struct
+	{
+		byte IP[4];
+		byte Mac[6];
+		uint Time;	// 生存时间，秒
+	}ARP_ITEM;
+	ARP_ITEM* _Arps;	// Arp表，动态分配
+	byte ArpCount;	// Arp表行数，默认16行
+	const byte* ResolveArp(const byte ip[4]);
+	void AddArp(const byte ip[4], const byte mac[6]);
 
 #if TinyIP_ICMP
 	void ProcessICMP(byte* buf, uint len);
@@ -131,9 +150,9 @@ public:
 #endif
 
 #if TinyIP_TCP
-	bool TcpConnect(byte ip[4], ushort port);	// 连接远程
-    void TcpSend(byte* packet, uint len);
-    void TcpClose(byte* packet, uint maxlen);
+	int TcpConnect(byte ip[4], ushort port);				// 连接远程服务器，记录远程服务器IP和端口，成功返回Socket索引，后续发送数据和关闭连接需要
+    void TcpSend(byte* packet, uint len, int sock = 1);		// 向指定Socket发送数据
+    void TcpClose(byte* packet, uint maxlen, int sock = 1);	// 关闭指定Socket
 
 	// 收到Tcp数据时触发，传递结构体和负载数据长度
 	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, byte* buf, uint len);
@@ -142,5 +161,18 @@ public:
 	TcpHandler OnTcpDisconnected;
 #endif
 };
+
+/*
+TinyIP作为精简以太网协议，目标定位是超简单的使用场合！
+ARP是必须有的，子网内计算机发数据包给它之前必须先通过ARP得到它的MAC地址
+ARP还必须有一个表，记录部分IP和MAC的对照关系，子网内通讯时需要，子网外通讯也需要网关MAC
+ICMP提供一个简单的Ping服务，可要可不要，用户习惯通过Ping来识别网络设备是否在线，因此默认使用该模块
+TCP可作为服务端，处理任意端口请求并响应，这里不需要记录连接状态，因为客户端的每一次请求过来都有IP地址和MAC地址
+TCP也可作为客户端，但只能使用固定几个连接，每次发送数据之前，还需要设置远程IP和端口
+UDP可作为服务端，处理任意端口请求并响应
+UDP也可作为客户端，向任意地址端口发送数据
+
+因为只有一个缓冲区，所有收发数据包不能过大，并且只能有一包数据
+*/
 
 #endif

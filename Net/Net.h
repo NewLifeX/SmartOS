@@ -356,6 +356,18 @@ public:
 		return (DHCP_HEADER*)Payload;
 	}
 
+	ARP_HEADER* SetARP()
+	{
+		IP = NULL;
+		ARP = (ARP_HEADER*)Eth->Next();
+		ARP->HardType = 0;
+		ARP->ProtocolType = 0;
+		ARP->HardLength = 6;
+		ARP->ProtocolLength = 0;
+
+		return ARP;
+	}
+
 	// 设置使用IP协议
 	IP_HEADER* SetIP(IP_TYPE type)
 	{
@@ -368,11 +380,11 @@ public:
 
 		return IP;
 	}
-	
+
 	ICMP_HEADER* SetICMP()
 	{
 		SetIP(IP_ICMP);
-		
+
 		TCP = NULL;
 		UDP = NULL;
 		ICMP = (ICMP_HEADER*)IP->Next();

@@ -3,6 +3,9 @@
 
 #define NET_DEBUG DEBUG
 
+const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
 TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 {
 	_enc = enc;
@@ -41,12 +44,9 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	seqnum = 0xa;
 #endif
 
-	// 分配缓冲区。比较大，小心栈空间不够
-	if(!Buffer) Buffer = new byte[BufferSize];
-	assert_param(Buffer);
-	assert_param(Sys.CheckMemory());
-
-	_net = new NetPacker(Buffer);
+	ArpCount = 16;
+	_Arps = NULL;
+	_net = NULL;
 }
 
 TinyIP::~TinyIP()
@@ -55,39 +55,37 @@ TinyIP::~TinyIP()
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
 
+	if(_Arps) delete _Arps;
+	_Arps = NULL;
+
 	if(_net) delete _net;
 	_net = NULL;
 }
 
-bool TinyIP::IsMyIP(byte ip[4])
-{
-	int i = 0;
-	for(i = 0; i < 4 && ip[i] == IP[i]; i++);
-	if(i == 4) return true;
-
-	if(EnableBroadcast)
-	{
-		// 全网广播
-		for(i = 0; i < 4 && ip[i] == 0xFF; i++);
-		if(i == 4) return true;
-		// 子网广播。网络位不变，主机位全1
-		for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
-		if(i == 4) return true;
-	}
-
-	return false;
-}
-
 // 循环调度的任务
-void TinyIP::OnWork()
+uint TinyIP::Fetch()
 {
 	byte* buf = Buffer;
 	// 获取缓冲区的包
 	uint len = _enc->PacketReceive(buf, BufferSize);
 	// 如果缓冲器里面没有数据则转入下一次循环
-	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return;
+	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
 
-	ETH_HEADER* eth = _net->Eth;
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
+	if(memcmp(eth->DestMac, Mac, 6) != 0
+	&& memcmp(eth->DestMac, g_FullMac, 6) != 0
+	&& memcmp(eth->DestMac, g_ZeroMac, 6) != 0
+	) return 0;
+
+	return len;
+}
+
+void TinyIP::Process(byte* buf, uint len)
+{
+	if(!buf) return;
+
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
 #if NET_DEBUG
 	/*debug_printf("Ethernet 0x%04X ", eth->Type);
 	ShowMac(eth->SrcMac);
@@ -175,7 +173,11 @@ void TinyIP::OnWork()
 void TinyIP::Work(void* param)
 {
 	TinyIP* tip = (TinyIP*)param;
-	if(tip) tip->OnWork();
+	if(tip)
+	{
+		uint len = tip->Fetch();
+		if(!len) tip->Process(tip->Buffer, len);
+	}
 }
 
 bool TinyIP::Init()
@@ -184,6 +186,17 @@ bool TinyIP::Init()
 	debug_printf("\r\nTinyIP Init...\r\n");
 	uint us = Time.Current();
 #endif
+
+	// 分配缓冲区。比较大，小心堆空间不够
+	if(!Buffer)
+	{
+		Buffer = new byte[BufferSize];
+		assert_param(Buffer);
+		assert_param(Sys.CheckMemory());
+
+		// 首次使用时初始化缓冲区
+		if(!_net) _net = new NetPacker(Buffer);
+	}
 
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
     if(!_enc->Init((string)Mac))
@@ -290,6 +303,59 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 #endif
 
 	SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
+}
+
+// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
+const byte* TinyIP::RequestArp(const byte ip[4], int timeout)
+{
+	ARP_HEADER* arp = _net->SetARP();
+
+	// 构造请求包
+	arp->Option = 0x0100;
+	memcpy(arp->DestMac, g_FullMac, 6);
+	memcpy(arp->DestIP, ip, 4);
+	memcpy(arp->SrcMac, Mac, 6);
+	memcpy(arp->SrcIP, IP, 4);
+
+#if NET_DEBUG
+	debug_printf("ARP Request To ");
+	ShowIP(arp->DestIP);
+	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
+#endif
+
+	byte* buf = Buffer;
+	SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
+
+	// 如果没有超时时间，表示异步请求，不用等待结果
+	if(timeout <= 0) return NULL;
+
+	// 总等待时间
+	ulong end = Time.NewTicks(timeout * 1000000);
+	while(end > Time.CurrentTicks())
+	{
+		// 阻塞其它任务，频繁调度OnWork，等待目标数据
+		uint len = Fetch();
+		if(!len) continue;
+
+		ETH_HEADER* eth = (ETH_HEADER*)buf;
+		// 处理ARP
+		if(eth->Type == ETH_ARP)
+		{
+			ARP_HEADER* arp = _net->ARP;
+
+			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
+			if(memcmp(arp->DestIP, IP, 4) == 0
+			&& memcmp(arp->SrcIP, ip, 4) == 0
+			&& arp->Option == 0x0200)
+			{
+				return arp->SrcMac;
+			}
+		}
+
+		Process(buf, len);
+	}
+
+	return NULL;
 }
 
 void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
@@ -543,12 +609,12 @@ void TinyIP::TcpAck(byte* buf, uint dlen)
 	SendTcp(buf, dlen, TCP_FLAGS_ACK | TCP_FLAGS_PUSH /*| TCP_FLAGS_FIN*/);
 }
 
-void TinyIP::TcpClose(byte* buf, uint size)
+void TinyIP::TcpClose(byte* buf, uint size, int sock)
 {
 	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-void TinyIP::TcpSend(byte* buf, uint size)
+void TinyIP::TcpSend(byte* buf, uint size, int sock)
 {
 	SendTcp(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
@@ -666,6 +732,120 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
     }
     // build 1's complement:
     return( (uint) sum ^ 0xFFFF);
+}
+
+bool TinyIP::IsMyIP(const byte ip[4])
+{
+	int i = 0;
+	for(i = 0; i < 4 && ip[i] == IP[i]; i++);
+	if(i == 4) return true;
+
+	if(EnableBroadcast && IsBroadcast(ip)) return true;
+
+	return false;
+}
+
+bool TinyIP::IsBroadcast(const byte ip[4])
+{
+	int i = 0;
+	// 全网广播
+	for(i = 0; i < 4 && ip[i] == 0xFF; i++);
+	if(i == 4) return true;
+
+	// 子网广播。网络位不变，主机位全1
+	for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
+	if(i == 4) return true;
+
+	return false;
+}
+
+const byte* TinyIP::ResolveArp(const byte ip[4])
+{
+	if(IsBroadcast(ip)) return g_FullMac;
+
+	// 如果不在本子网，那么应该找网关的Mac
+	if(ip[0] & Mask[0] != IP[0] & Mask[0]
+	|| ip[1] & Mask[1] != IP[1] & Mask[1]
+	|| ip[2] & Mask[2] != IP[2] & Mask[2]
+	|| ip[3] & Mask[3] != IP[3] & Mask[3]
+	) ip = Gateway;
+	// 下面的也可以，但是比较难理解
+	/*if(ip[0] ^ IP[0] != ~Mask[0]
+	|| ip[1] ^ IP[1] != ~Mask[1]
+	|| ip[2] ^ IP[2] != ~Mask[2]
+	|| ip[3] ^ IP[3] != ~Mask[3]
+	) ip = Gateway;*/
+	
+	ARP_ITEM* item = NULL;	// 匹配项
+	if(_Arps)
+	{
+		uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+		// 在表中查找
+		for(int i=0; i<ArpCount; i++)
+		{
+			ARP_ITEM* arp = &_Arps[i];
+			if(memcmp(arp->IP, ip, 4) == 0)
+			{
+				// 如果未过期，则直接使用。否则重新请求
+				if(arp->Time > sNow) return arp->Mac;
+
+				// 暂时保存，待会可能请求失败，还可以用旧的顶着
+				item = arp;
+			}
+		}
+	}
+	
+	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
+	const byte* mac = RequestArp(ip, item ? 0 : 3);
+	if(!mac) return item ? item->Mac : NULL;
+
+	AddArp(ip, mac);
+
+	return mac;
+}
+
+void TinyIP::AddArp(const byte ip[4], const byte mac[6])
+{
+	if(!_Arps)
+	{
+		_Arps = new ARP_ITEM[ArpCount];
+		memset(_Arps, 0, sizeof(_Arps));
+	}
+
+	ARP_ITEM* empty = NULL;
+	// 在表中查找空项
+	byte ipnull[] = { 0, 0, 0, 0 };
+	for(int i=0; i<ArpCount; i++)
+	{
+		ARP_ITEM* arp = &_Arps[i];
+		if(memcmp(arp->IP, ipnull, 4) == 0)
+		{
+			empty = arp;
+			break;
+		}
+	}
+
+	if(!empty)
+	{
+		uint oldTime = 0xFFFFFF;
+		// 在表中查找最老项用于替换
+		for(int i=0; i<ArpCount; i++)
+		{
+			ARP_ITEM* arp = &_Arps[i];
+			// 找最老的一个，待会如果需要覆盖，就先覆盖它
+			if(arp->Time < oldTime)
+			{
+				oldTime = arp->Time;
+				empty = arp;
+			}
+		}
+	}
+
+	uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+	// 保存
+	memcpy(empty->IP, ip, 4);
+	memcpy(empty->Mac, mac, 6);
+	empty->Time = sNow + 60;	// 默认过期时间1分钟
 }
 
 #if TinyIP_DHCP
