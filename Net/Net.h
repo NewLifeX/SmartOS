@@ -360,10 +360,10 @@ public:
 	{
 		IP = NULL;
 		ARP = (ARP_HEADER*)Eth->Next();
-		ARP->HardType = 0;
-		ARP->ProtocolType = 0;
+		ARP->HardType = 0x0100;
+		ARP->ProtocolType = 0x08;
 		ARP->HardLength = 6;
-		ARP->ProtocolLength = 0;
+		ARP->ProtocolLength = 4;
 
 		return ARP;
 	}

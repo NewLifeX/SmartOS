@@ -44,7 +44,7 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	seqnum = 0xa;
 #endif
 
-	ArpCount = 16;
+	ArpCount = 32;
 	_Arps = NULL;
 	_net = NULL;
 }
@@ -71,12 +71,12 @@ uint TinyIP::Fetch()
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
 
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	/*ETH_HEADER* eth = (ETH_HEADER*)buf;
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
 	if(memcmp(eth->DestMac, Mac, 6) != 0
 	&& memcmp(eth->DestMac, g_FullMac, 6) != 0
 	&& memcmp(eth->DestMac, g_ZeroMac, 6) != 0
-	) return 0;
+	) return 0;*/
 
 	return len;
 }
@@ -176,7 +176,7 @@ void TinyIP::Work(void* param)
 	if(tip)
 	{
 		uint len = tip->Fetch();
-		if(!len) tip->Process(tip->Buffer, len);
+		if(len) tip->Process(tip->Buffer, len);
 	}
 }
 
@@ -259,6 +259,17 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	选项字段标识ARP报文的类型，当为请求报文时，赋值为0x0100，当为回答报文时，赋值为0x0200。
 	*/
 
+	// 如果是Arp响应包，自动加入缓存
+	if(arp->Option == 0x0200)
+	{
+		AddArp(arp->SrcIP, arp->SrcMac);
+	}
+	// 别人的响应包这里收不到呀，还是把请求包也算上吧
+	if(arp->Option == 0x0100)
+	{
+		AddArp(arp->SrcIP, arp->SrcMac);
+	}
+	
 	// 是否发给本机。注意memcmp相等返回0
 	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
 
@@ -312,7 +323,7 @@ const byte* TinyIP::RequestArp(const byte ip[4], int timeout)
 
 	// 构造请求包
 	arp->Option = 0x0100;
-	memcpy(arp->DestMac, g_FullMac, 6);
+	memcpy(arp->DestMac, g_ZeroMac, 6);
 	memcpy(arp->DestIP, ip, 4);
 	memcpy(arp->SrcMac, Mac, 6);
 	memcpy(arp->SrcIP, IP, 4);
@@ -677,14 +688,14 @@ void TinyIP::SendUdp(byte* buf, uint len, bool checksum)
 }
 #endif
 
-void TinyIP::ShowIP(byte* ip)
+void TinyIP::ShowIP(const byte* ip)
 {
 	debug_printf("%d", *ip++);
 	for(int i=1; i<4; i++)
 		debug_printf(".%d", *ip++);
 }
 
-void TinyIP::ShowMac(byte* mac)
+void TinyIP::ShowMac(const byte* mac)
 {
 	debug_printf("%02X", *mac++);
 	for(int i=1; i<6; i++)
@@ -806,10 +817,18 @@ const byte* TinyIP::ResolveArp(const byte ip[4])
 
 void TinyIP::AddArp(const byte ip[4], const byte mac[6])
 {
+#if NET_DEBUG
+	debug_printf("Add Arp(");
+	ShowIP(ip);
+	debug_printf(", ");
+	ShowMac(mac);
+	debug_printf(")\r\n");
+#endif
+	
 	if(!_Arps)
 	{
 		_Arps = new ARP_ITEM[ArpCount];
-		memset(_Arps, 0, sizeof(_Arps));
+		memset(_Arps, 0, sizeof(ARP_ITEM) * ArpCount);
 	}
 
 	ARP_ITEM* empty = NULL;
@@ -839,6 +858,11 @@ void TinyIP::AddArp(const byte ip[4], const byte mac[6])
 				empty = arp;
 			}
 		}
+#if NET_DEBUG
+		debug_printf("Arp Table is full, replace ");
+		ShowIP(empty->IP);
+		debug_printf("\r\n");
+#endif
 	}
 
 	uint sNow = Time.Current() / 1000000;	// 当前时间，秒

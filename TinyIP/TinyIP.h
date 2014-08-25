@@ -128,8 +128,8 @@ public:
     virtual ~TinyIP();
 
 	bool Init();
-	static void ShowIP(byte* ip);
-	static void ShowMac(byte* mac);
+	static void ShowIP(const byte* ip);
+	static void ShowMac(const byte* mac);
 
 #if TinyIP_ICMP
 	// 收到Ping请求时触发，传递结构体和负载数据长度
