@@ -4,6 +4,12 @@
 #include "Sys.h"
 #include "ADC.h"
 
+#ifdef STM32F4
+	#define GPIO_MAX_SPEED 100
+#else
+	#define GPIO_MAX_SPEED 50
+#endif
+
 // 端口基类
 // 用于管理一组端口Group，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
@@ -86,8 +92,8 @@ class OutputPort : public InputOutputPort
 public:
     bool OpenDrain;  // 是否开漏输出
 
-    OutputPort(Pin pin, bool openDrain = false, uint speed = 50) { SetPort(pin); Init(openDrain, speed); Config(); }
-    OutputPort(Pin pins[], uint count, bool openDrain = false, uint speed = 50) { SetPort(pins, count); Init(openDrain, speed); Config(); }
+    OutputPort(Pin pin, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pin); Init(openDrain, speed); Config(); }
+    OutputPort(Pin pins[], uint count, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pins, count); Init(openDrain, speed); Config(); }
     OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); Config(); }
 
     void Write(bool value); // 按位值写入
@@ -106,7 +112,7 @@ protected:
 
     virtual void OnConfig();
 
-    void Init(bool openDrain = false, uint speed = 50)
+    void Init(bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
         OpenDrain = openDrain;
         Speed = speed;
@@ -121,8 +127,8 @@ protected:
 class AlternatePort : public OutputPort
 {
 public:
-    AlternatePort(Pin pin, bool openDrain = false, uint speed = 50) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
-    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = 50) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
+    AlternatePort(Pin pin, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
+    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
     AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort() { SetPort(group, pinbit); Init(); Config(); }
 
 protected:
@@ -151,8 +157,8 @@ public:
     bool Floating;      // 是否浮空输入
     uint ShakeTime;     // 抖动时间
 
-    InputPort(Pin pin, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, speed, pupd); }
-    InputPort(Pin pins[], uint count, bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, speed, pupd); }
+    InputPort(Pin pin, bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, speed, pupd); }
+    InputPort(Pin pins[], uint count, bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, speed, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ~InputPort();
@@ -168,7 +174,7 @@ public:
 
 protected:
     // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
-    void Init(bool floating = true, uint speed = 50, PuPd_TypeDef pupd = PuPd_UP)
+    void Init(bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP)
     {
 		PuPd = pupd;
         Floating = floating;

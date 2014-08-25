@@ -86,7 +86,6 @@ ShowLog:
 	//串口引脚初始化
     _tx = new AlternatePort(tx, false, 50);
     _rx = new InputPort(rx);
-    //_tx->Write(true);
 
 	// 不要关调试口，否则杯具
     if(_com != Sys.MessagePort) USART_DeInit(_port);
