@@ -189,7 +189,7 @@ void SerialPort::Close()
 }
 
 // 发送单一字节数据
-void TUsart_SendData(USART_TypeDef* port, byte* data, uint times = 300)
+void TUsart_SendData(USART_TypeDef* port, byte* data, uint times = 3000)
 {
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
     if(times > 0) USART_SendData(port, (ushort)*data);
