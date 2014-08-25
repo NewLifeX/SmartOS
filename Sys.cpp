@@ -458,6 +458,9 @@ void TSys::ShowInfo()
 	end = 0x20000000 + (RAMSize << 10);
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 
+	// 系统启动时间
+	debug_printf("System Start Cost %dus\r\n", (uint)Time.Current());
+
     debug_printf("\r\n");
 #endif
 }
