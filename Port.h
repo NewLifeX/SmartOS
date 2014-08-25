@@ -59,38 +59,13 @@ private:
 	void OnSetPort();
 };
 
-// 输入输出口基类
-class InputOutputPort : public Port
-{
-public:
-    uint Speed;		// 速度
-    bool Invert;	// 是否倒置输入输出
-
-    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-    virtual ushort ReadGroup()    // 整组读取
-    {
-        return GPIO_ReadOutputData(Group);
-    }
-
-    static bool Read(Pin pin);
-
-    operator bool() { return this != NULL; }
-
-protected:
-    InputOutputPort()
-    {
-        Speed = 2;
-        Invert = false;
-    }
-
-    virtual void OnConfig();
-};
-
 // 输出口
-class OutputPort : public InputOutputPort
+class OutputPort : public Port
 {
 public:
     bool OpenDrain;  // 是否开漏输出
+    uint Speed;		// 速度
+    bool Invert;	// 是否倒置输入输出
 
     OutputPort(Pin pin, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pin); Init(openDrain, speed); Config(); }
     OutputPort(Pin pins[], uint count, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pins, count); Init(openDrain, speed); Config(); }
@@ -101,6 +76,20 @@ public:
 	void Up(uint ms);	// 拉高一段时间后拉低
 	void Blink(uint times, uint ms);	// 闪烁多次
 
+    virtual ushort ReadGroup()    // 整组读取
+    {
+        return GPIO_ReadOutputData(Group);
+    }
+	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+    bool Read()
+	{
+		return (ReadGroup() & PinBit) ^ Invert;
+	}
+    static bool Read(Pin pin)
+	{
+		GPIO_TypeDef* group = _GROUP(pin);
+		return (group->IDR >> (pin & 0xF)) & 1;
+	}
     static void Write(Pin pin, bool value);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
@@ -108,7 +97,11 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    OutputPort() { }
+    OutputPort()
+    {
+        Speed = 2;
+        Invert = false;
+    }
 
     virtual void OnConfig();
 
@@ -140,7 +133,7 @@ protected:
 };
 
 // 输入口
-class InputPort : public InputOutputPort
+class InputPort : public Port
 {
 public:
     typedef enum
@@ -156,9 +149,10 @@ public:
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     bool Floating;      // 是否浮空输入
     uint ShakeTime;     // 抖动时间
+    bool Invert;		// 是否倒置输入输出
 
-    InputPort(Pin pin, bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, speed, pupd); }
-    InputPort(Pin pins[], uint count, bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, speed, pupd); }
+    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, pupd); }
+    InputPort(Pin pins[], uint count, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, pupd); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ~InputPort();
@@ -168,17 +162,27 @@ public:
         return GPIO_ReadInputData(Group);
     }
 
+	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+    bool Read()
+	{
+		return (ReadGroup() & PinBit) ^ Invert;
+	}
+    static bool Read(Pin pin)
+	{
+		GPIO_TypeDef* group = _GROUP(pin);
+		return (group->IDR >> (pin & 0xF)) & 1;
+	}
+
     void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 
     operator bool() { return Read(); }
 
 protected:
     // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
-    void Init(bool floating = true, uint speed = GPIO_MAX_SPEED, PuPd_TypeDef pupd = PuPd_UP)
+    void Init(bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
     {
 		PuPd = pupd;
         Floating = floating;
-        Speed = speed;
 
         _Registed = false;
         ShakeTime = 20;

@@ -59,7 +59,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     if(irq != P0)
     {
         // 中断引脚初始化
-        _IRQ = new InputPort(irq, false, 50, InputPort::PuPd_UP);
+        _IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 2;
         //_IRQ->Register(OnReceive, this);
     }

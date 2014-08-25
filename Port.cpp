@@ -288,7 +288,7 @@ bool Port::IsBusy(Pin pin)
 // 引脚配置
 #define REGION_Config 1
 #ifdef REGION_Config
-void InputOutputPort::OnConfig()
+void OutputPort::OnConfig()
 {
 #ifndef STM32F4
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
@@ -309,11 +309,6 @@ void InputOutputPort::OnConfig()
 #endif
 		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
 	}
-}
-
-void OutputPort::OnConfig()
-{
-	InputOutputPort::OnConfig();
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
@@ -325,7 +320,7 @@ void OutputPort::OnConfig()
 
 void AlternatePort::OnConfig()
 {
-	InputOutputPort::OnConfig();
+	OutputPort::OnConfig();
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
@@ -337,7 +332,7 @@ void AlternatePort::OnConfig()
 
 void InputPort::OnConfig()
 {
-	InputOutputPort::OnConfig();
+	Port::OnConfig();
 
 #ifdef STM32F1
 	if(Floating)
@@ -395,19 +390,6 @@ void AnalogInPort::OnConfig()
 // 输出端口
 #define REGION_Output 1
 #ifdef REGION_Output
-// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-bool InputOutputPort::Read()
-{
-    return (ReadGroup() & PinBit) ^ Invert;
-}
-
-// 读取端口状态
-bool InputOutputPort::Read(Pin pin)
-{
-    GPIO_TypeDef* group = _GROUP(pin);
-    return (group->IDR >> (pin & 0xF)) & 1;
-}
-
 void OutputPort::Write(bool value)
 {
     if(value ^ Invert)
@@ -524,7 +506,7 @@ extern "C"
         do {
             //value = TIO_Read(state->Pin); // 获取引脚状态
             EXTI->PR = bit;   // 重置挂起位
-            value = InputOutputPort::Read(state->Pin); // 获取引脚状态
+            value = InputPort::Read(state->Pin); // 获取引脚状态
 			// 值必须有变动才触发
 			if(value == state->OldValue) return;
 
