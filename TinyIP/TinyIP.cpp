@@ -602,7 +602,17 @@ void TinyIP::ProcessTcp(byte* buf, uint len)
 		}
 
 		if(OnTcpReceived)
-			OnTcpReceived(this, tcp, tcp->Next(), len);
+		{
+			// 返回值指示是否向对方发送数据包
+			bool rs = OnTcpReceived(this, tcp, tcp->Next(), len);
+			if(!rs)
+			{
+				// 发送ACK，通知已收到
+				TcpHead(1, false, true);
+				SendTcp(buf, 0, TCP_FLAGS_ACK);
+				return;
+			}
+		}
 		else
 		{
 #if NET_DEBUG

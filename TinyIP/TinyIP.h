@@ -154,8 +154,8 @@ public:
     void TcpSend(byte* packet, uint len, int sock = 1);		// 向指定Socket发送数据
     void TcpClose(byte* packet, uint maxlen, int sock = 1);	// 关闭指定Socket
 
-	// 收到Tcp数据时触发，传递结构体和负载数据长度
-	typedef void (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, byte* buf, uint len);
+	// 收到Tcp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
+	typedef bool (*TcpHandler)(TinyIP* tip, TCP_HEADER* tcp, byte* buf, uint len);
 	TcpHandler OnTcpAccepted;
 	TcpHandler OnTcpReceived;
 	TcpHandler OnTcpDisconnected;
