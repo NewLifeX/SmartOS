@@ -1,22 +1,5 @@
 ﻿#include "Port.h"
 
-/* 中断状态结构体 */
-/* 一共16条中断线，意味着同一条线每一组只能有一个引脚使用中断 */
-typedef struct TIntState
-{
-    Pin Pin;
-    InputPort::IOReadHandler Handler;	// 委托事件
-	void* Param;	// 事件参数，一般用来作为事件挂载者的对象，然后借助静态方法调用成员方法
-    bool OldValue;
-
-    uint ShakeTime;     // 抖动时间
-    int Used;   // 被使用次数。对于前5行中断来说，这个只会是1，对于后面的中断线来说，可能多个
-} IntState;
-
-// 16条中断线
-static IntState State[16];
-static bool hasInitState = false;
-
 #if defined(STM32F1) || defined(STM32F4)
 static int PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
@@ -31,9 +14,6 @@ static int PORT_IRQns[] = {
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
 };
 #endif
-
-void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
-void UnRegisterInput(int pinIndex);
 
 // 端口基本功能
 #define REGION_Port 1
@@ -435,6 +415,26 @@ void OutputPort::Write(Pin pin, bool value)
 // 输入端口
 #define REGION_Input 1
 #ifdef REGION_Input
+/* 中断状态结构体 */
+/* 一共16条中断线，意味着同一条线每一组只能有一个引脚使用中断 */
+typedef struct TIntState
+{
+    Pin Pin;
+    InputPort::IOReadHandler Handler;	// 委托事件
+	void* Param;	// 事件参数，一般用来作为事件挂载者的对象，然后借助静态方法调用成员方法
+    bool OldValue;
+
+    uint ShakeTime;     // 抖动时间
+    int Used;   // 被使用次数。对于前5行中断来说，这个只会是1，对于后面的中断线来说，可能多个
+} IntState;
+
+// 16条中断线
+static IntState State[16];
+static bool hasInitState = false;
+
+void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
+void UnRegisterInput(int pinIndex);
+
 InputPort::~InputPort()
 {
     // 取消所有中断
