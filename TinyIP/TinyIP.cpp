@@ -441,7 +441,11 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	assert_param(_net->Payload == icmp->Next());
 
 	if(OnPing)
-		OnPing(this, icmp, icmp->Next(), len);
+	{
+		// 返回值指示是否向对方发送数据包
+		bool rs = OnPing(this, icmp, icmp->Next(), len);
+		if(!rs) return;
+	}
 	else
 	{
 #if NET_DEBUG
@@ -715,7 +719,11 @@ void TinyIP::ProcessUdp(byte* buf, uint len)
 	assert_param(len + sizeof(UDP_HEADER) == __REV16(udp->Length));
 
 	if(OnUdpReceived)
-		OnUdpReceived(this, udp, udp->Next(), len);
+	{
+		// 返回值指示是否向对方发送数据包
+		bool rs = OnUdpReceived(this, udp, udp->Next(), len);
+		if(!rs) return;
+	}
 	else
 	{
 #if NET_DEBUG

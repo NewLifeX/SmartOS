@@ -132,8 +132,8 @@ public:
 	static void ShowMac(const byte* mac);
 
 #if TinyIP_ICMP
-	// 收到Ping请求时触发，传递结构体和负载数据长度
-	typedef void (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, byte* buf, uint len);
+	// 收到Ping请求时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
+	typedef bool (*PingHandler)(TinyIP* tip, ICMP_HEADER* icmp, byte* buf, uint len);
 	PingHandler OnPing;
 
 	// Ping目的地址，附带a~z重复的负载数据
@@ -141,8 +141,8 @@ public:
 #endif
 
 #if TinyIP_UDP
-	// 收到Udp数据时触发，传递结构体和负载数据长度
-	typedef void (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, byte* buf, uint len);
+	// 收到Udp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
+	typedef bool (*UdpHandler)(TinyIP* tip, UDP_HEADER* udp, byte* buf, uint len);
 	UdpHandler OnUdpReceived;
 
 	// 发送UDP数据到目标地址
