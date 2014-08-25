@@ -312,6 +312,10 @@ public:
 				// 前面的len不准确，必须以这个为准
 				PayloadLength = __REV16(IP->TotalLength) - iplen;
 
+				ICMP = NULL;
+				TCP = NULL;
+				UDP = NULL;
+
 				switch(IP->Protocol)
 				{
 					case IP_ICMP:

@@ -77,12 +77,12 @@ uint TinyIP::Fetch()
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
 
-	/*ETH_HEADER* eth = (ETH_HEADER*)buf;
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
 	if(memcmp(eth->DestMac, Mac, 6) != 0
 	&& memcmp(eth->DestMac, g_FullMac, 6) != 0
 	&& memcmp(eth->DestMac, g_ZeroMac, 6) != 0
-	) return 0;*/
+	) return 0;
 
 	return len;
 }
@@ -185,13 +185,13 @@ void TinyIP::Work(void* param)
 		if(len)
 		{
 #if NET_DEBUG
-			ulong start = Time.Current();
+			//ulong start = Time.Current();
 #endif
 
 			tip->Process(tip->Buffer, len);
 #if NET_DEBUG
-			uint cost = Time.Current() - start;
-			debug_printf("TinyIP::Process cost %d us\r\n", cost);
+			//uint cost = Time.Current() - start;
+			//debug_printf("TinyIP::Process cost %d us\r\n", cost);
 #endif
 		}
 	}
@@ -277,7 +277,7 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	*/
 
 	// 如果是Arp响应包，自动加入缓存
-	if(arp->Option == 0x0200)
+	/*if(arp->Option == 0x0200)
 	{
 		AddArp(arp->SrcIP, arp->SrcMac);
 	}
@@ -285,8 +285,8 @@ void TinyIP::ProcessArp(byte* buf, uint len)
 	if(arp->Option == 0x0100)
 	{
 		AddArp(arp->SrcIP, arp->SrcMac);
-	}
-	
+	}*/
+
 	// 是否发给本机。注意memcmp相等返回0
 	if(memcmp(arp->DestIP, IP, 4) !=0 ) return;
 
@@ -380,6 +380,7 @@ const byte* TinyIP::RequestArp(const byte ip[4], int timeout)
 			}
 		}
 
+		// 用不到数据包交由系统处理
 		Process(buf, len);
 	}
 
@@ -398,8 +399,9 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	//debug_printf("SendEthernet: %d\r\n", len);
-	//ShowHex((byte*)eth, len);
+	debug_printf("SendEthernet: type=0x%04x, len=%d\r\n", type, len);
+	Sys.ShowHex((byte*)eth, len, '-');
+	debug_printf("\r\n");
 	assert_param((byte*)eth == Buffer);
 	_enc->PacketSend((byte*)eth, len);
 }
@@ -465,24 +467,73 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 }
 
 // Ping目的地址，附带a~z重复的负载数据
-void TinyIP::Ping(byte ip[4], uint payloadLength)
+bool TinyIP::Ping(byte ip[4], uint payloadLength)
 {
+	byte* buf = Buffer;
+	uint count = 0;
+
+	const byte* mac = ResolveArp(ip);
+	if(!mac)
+	{
+#if NET_DEBUG
+		debug_printf("No Mac For ");
+		ShowIP(ip);
+		debug_printf("\r\n");
+#endif
+		return false;
+	}
+
+	memcpy(RemoteMac, mac, 6);
 	memcpy(RemoteIP, ip, 4);
+
 	ICMP_HEADER* icmp = _net->SetICMP();
 	icmp->Type = 8;
 	icmp->Code = 0;
-	icmp->Identifier = Time.Current();
-	icmp->Sequence = Time.Current();
 
 	byte* data = icmp->Next();
 	for(int i=0, k=0; i<payloadLength; i++, k++)
 	{
-		if(k > 'z') k-=26;
+		if(k >= 26) k-=26;
 		*data++ = ('a' + k);
 	}
 	_net->PayloadLength = payloadLength;
 
-    SendIP(IP_ICMP, Buffer, sizeof(ICMP_HEADER) + payloadLength);
+	ushort now = Time.Current();
+	icmp->Identifier = now;
+	icmp->Sequence = now;
+
+#if NET_DEBUG
+	debug_printf("Ping ");
+	ShowIP(ip);
+	debug_printf(" with Identifier=%d\r\n", now);
+#endif
+	SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
+
+	// 总等待时间
+	ulong end = Time.NewTicks(1 * 1000000);
+	while(end > Time.CurrentTicks())
+	{
+		// 阻塞其它任务，频繁调度OnWork，等待目标数据
+		uint len = Fetch();
+		if(!len) continue;
+
+		if(_net->IP && _net->ICMP)
+		{
+			ICMP_HEADER* icmp = _net->ICMP;
+			if(icmp->Identifier == now && icmp->Sequence == now
+			&& memcmp(_net->IP->DestIP, IP, 4) == 0
+			&& memcmp(_net->IP->SrcIP, ip, 4) == 0)
+			{
+				count++;
+				break;
+			}
+		}
+
+		// 用不到数据包交由系统处理
+		Process(buf, len);
+	}
+
+	return count;
 }
 #endif
 
@@ -803,7 +854,7 @@ const byte* TinyIP::ResolveArp(const byte ip[4])
 	|| ip[2] ^ IP[2] != ~Mask[2]
 	|| ip[3] ^ IP[3] != ~Mask[3]
 	) ip = Gateway;*/
-	
+
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
 	{
@@ -822,7 +873,7 @@ const byte* TinyIP::ResolveArp(const byte ip[4])
 			}
 		}
 	}
-	
+
 	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
 	const byte* mac = RequestArp(ip, item ? 0 : 3);
 	if(!mac) return item ? item->Mac : NULL;
@@ -841,7 +892,7 @@ void TinyIP::AddArp(const byte ip[4], const byte mac[6])
 	ShowMac(mac);
 	debug_printf(")\r\n");
 #endif
-	
+
 	if(!_Arps)
 	{
 		_Arps = new ARP_ITEM[ArpCount];

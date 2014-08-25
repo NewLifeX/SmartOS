@@ -137,7 +137,7 @@ public:
 	PingHandler OnPing;
 
 	// Ping目的地址，附带a~z重复的负载数据
-	void Ping(byte ip[4], uint payloadLength = 32);
+	bool Ping(byte ip[4], uint payloadLength = 32);
 #endif
 
 #if TinyIP_UDP
