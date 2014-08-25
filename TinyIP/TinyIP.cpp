@@ -399,9 +399,10 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	debug_printf("SendEthernet: type=0x%04x, len=%d\r\n", type, len);
+	/*debug_printf("SendEthernet: type=0x%04x, len=%d\r\n", type, len);
 	Sys.ShowHex((byte*)eth, len, '-');
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
+
 	assert_param((byte*)eth == Buffer);
 	_enc->PacketSend((byte*)eth, len);
 }
@@ -466,8 +467,8 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 		debug_printf("Checksum=0x%04X Checksum=0x%04X ", icmp->Checksum, __REV16(chksum));*/
 		Sys.ShowString(_net->Payload, _net->PayloadLength);
 		debug_printf(" \r\n");
-		Sys.ShowHex(Buffer, len + sizeof(ICMP_HEADER) + sizeof(IP_HEADER) + sizeof(ETH_HEADER), '-');
-		debug_printf(" \r\n");
+		//Sys.ShowHex(Buffer, len + sizeof(ICMP_HEADER) + sizeof(IP_HEADER) + sizeof(ETH_HEADER), '-');
+		//debug_printf(" \r\n");
 #endif
 	}
 
@@ -515,8 +516,10 @@ bool TinyIP::Ping(byte ip[4], uint payloadLength)
 	_net->PayloadLength = payloadLength;
 
 	ushort now = Time.Current() / 1000;
-	icmp->Identifier = __REV16(Sys.ID[0]);
-	icmp->Sequence = __REV16(now);
+	ushort id = __REV16(Sys.ID[0]);
+	ushort seq = __REV16(now);
+	icmp->Identifier = id;
+	icmp->Sequence = seq;
 
 	icmp->Checksum = 0;
 	icmp->Checksum = __REV16((ushort)CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
@@ -524,7 +527,7 @@ bool TinyIP::Ping(byte ip[4], uint payloadLength)
 	#if NET_DEBUG
 	debug_printf("Ping ");
 	ShowIP(ip);
-	debug_printf(" with Identifier=%d\r\n", now);
+	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
 #endif
 	SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
 
@@ -539,7 +542,7 @@ bool TinyIP::Ping(byte ip[4], uint payloadLength)
 		if(_net->IP && _net->ICMP)
 		{
 			ICMP_HEADER* icmp = _net->ICMP;
-			if(icmp->Identifier == now && icmp->Sequence == now
+			if(icmp->Identifier == id && icmp->Sequence == seq
 			&& memcmp(_net->IP->DestIP, IP, 4) == 0
 			&& memcmp(_net->IP->SrcIP, ip, 4) == 0)
 			{
