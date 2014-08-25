@@ -1,4 +1,4 @@
-﻿#ifndef __INTERRUPT_H__
+#ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
 #include "Sys.h"
@@ -11,7 +11,7 @@ typedef void (*InterruptCallback)(ushort num, void* param);
 #elif defined(STM32F0)
     #define VectorySize 48
 #elif defined(STM32F4)
-    #define VectorySize 86 + 16 + 1
+    #define VectorySize (86 + 16 + 1)
 #endif
 
 // 中断管理类
