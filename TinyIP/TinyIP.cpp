@@ -416,6 +416,7 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	memcpy(ip->SrcIP, IP, 4);
 
 	ip->Version = 4;
+	//ip->TypeOfService = 0;
 	ip->Length = sizeof(IP_HEADER) / 4;
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
 	ip->Flags = 0x40;
@@ -449,12 +450,23 @@ void TinyIP::ProcessICMP(byte* buf, uint len)
 	else
 	{
 #if NET_DEBUG
-		debug_printf("Ping From "); // 打印发方的ip
+		if(icmp->Type != 0)
+			debug_printf("Ping From "); // 打印发方的ip
+		else
+			debug_printf("Ping Reply "); // 打印发方的ip
 		ShowIP(RemoteIP);
 		debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
+		// 校验码验证通过
+		/*ushort oldsum = icmp->Checksum;
+		icmp->Checksum = 0;
+		ushort chksum = (ushort)CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + len, 0);
+		icmp->Checksum = oldsum;
+		debug_printf("Checksum=0x%04X Checksum=0x%04X ", icmp->Checksum, __REV16(chksum));*/
 		Sys.ShowString(_net->Payload, _net->PayloadLength);
+		debug_printf(" \r\n");
+		Sys.ShowHex(Buffer, len + sizeof(ICMP_HEADER) + sizeof(IP_HEADER) + sizeof(ETH_HEADER), '-');
 		debug_printf(" \r\n");
 #endif
 	}
@@ -497,16 +509,19 @@ bool TinyIP::Ping(byte ip[4], uint payloadLength)
 	byte* data = icmp->Next();
 	for(int i=0, k=0; i<payloadLength; i++, k++)
 	{
-		if(k >= 26) k-=26;
+		if(k >= 23) k-=23;
 		*data++ = ('a' + k);
 	}
 	_net->PayloadLength = payloadLength;
 
-	ushort now = Time.Current();
-	icmp->Identifier = now;
-	icmp->Sequence = now;
+	ushort now = Time.Current() / 1000;
+	icmp->Identifier = __REV16(Sys.ID[0]);
+	icmp->Sequence = __REV16(now);
 
-#if NET_DEBUG
+	icmp->Checksum = 0;
+	icmp->Checksum = __REV16((ushort)CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
+
+	#if NET_DEBUG
 	debug_printf("Ping ");
 	ShowIP(ip);
 	debug_printf(" with Identifier=%d\r\n", now);

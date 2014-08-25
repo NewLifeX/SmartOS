@@ -118,7 +118,7 @@ typedef struct _UDP_HEADER
 	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }UDP_HEADER;
 
-//ICMP头部，总长度4字节，偏移34=0x22
+//ICMP头部，总长度8字节，偏移34=0x22
 typedef struct _ICMP_HEADER
 {
 	unsigned char Type;			//类型
