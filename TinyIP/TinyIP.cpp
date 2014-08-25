@@ -44,7 +44,13 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 	seqnum = 0xa;
 #endif
 
-	ArpCount = 32;
+#ifdef STM32F0
+	ArpCount = 4;
+#elif defined(STM32F1)
+	ArpCount = 16;
+#elif defined(STM32F4)
+	ArpCount = 64;
+#endif
 	_Arps = NULL;
 	_net = NULL;
 }
@@ -176,7 +182,18 @@ void TinyIP::Work(void* param)
 	if(tip)
 	{
 		uint len = tip->Fetch();
-		if(len) tip->Process(tip->Buffer, len);
+		if(len)
+		{
+#if NET_DEBUG
+			ulong start = Time.Current();
+#endif
+
+			tip->Process(tip->Buffer, len);
+#if NET_DEBUG
+			uint cost = Time.Current() - start;
+			debug_printf("TinyIP::Process cost %d us\r\n", cost);
+#endif
+		}
 	}
 }
 
@@ -831,45 +848,54 @@ void TinyIP::AddArp(const byte ip[4], const byte mac[6])
 		memset(_Arps, 0, sizeof(ARP_ITEM) * ArpCount);
 	}
 
+	ARP_ITEM* item = NULL;
 	ARP_ITEM* empty = NULL;
-	// 在表中查找空项
+	// 在表中查找项
 	byte ipnull[] = { 0, 0, 0, 0 };
 	for(int i=0; i<ArpCount; i++)
 	{
 		ARP_ITEM* arp = &_Arps[i];
-		if(memcmp(arp->IP, ipnull, 4) == 0)
+		if(memcmp(arp->IP, ip, 4) == 0)
+		{
+			item = arp;
+			break;
+		}
+		if(!empty && memcmp(arp->IP, ipnull, 4) == 0)
 		{
 			empty = arp;
 			break;
 		}
 	}
 
-	if(!empty)
+	// 如果没有匹配项，则使用空项
+	if(!item) item = empty;
+	// 如果也没有空项，表示满了，那就替换最老的一个
+	if(!item)
 	{
 		uint oldTime = 0xFFFFFF;
 		// 在表中查找最老项用于替换
 		for(int i=0; i<ArpCount; i++)
 		{
 			ARP_ITEM* arp = &_Arps[i];
-			// 找最老的一个，待会如果需要覆盖，就先覆盖它
-			if(arp->Time < oldTime)
+			// 找最老的一个，待会如果需要覆盖，就先覆盖它。避开网关
+			if(arp->Time < oldTime && memcmp(arp->IP, Gateway, 4) != 0)
 			{
 				oldTime = arp->Time;
-				empty = arp;
+				item = arp;
 			}
 		}
 #if NET_DEBUG
 		debug_printf("Arp Table is full, replace ");
-		ShowIP(empty->IP);
+		ShowIP(item->IP);
 		debug_printf("\r\n");
 #endif
 	}
 
 	uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 	// 保存
-	memcpy(empty->IP, ip, 4);
-	memcpy(empty->Mac, mac, 6);
-	empty->Time = sNow + 60;	// 默认过期时间1分钟
+	memcpy(item->IP, ip, 4);
+	memcpy(item->Mac, mac, 6);
+	item->Time = sNow + 60;	// 默认过期时间1分钟
 }
 
 #if TinyIP_DHCP
