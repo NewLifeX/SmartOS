@@ -63,6 +63,7 @@ void TInterrupt::Init()
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
     //SCB->VTOR = (uint)_Vectors; // 向量表基地址
     NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)((byte*)_Vectors - 0x20000000));
+	assert_param(SCB->VTOR == (uint)_Vectors);
 #ifdef STM32F4
     SCB->SHCSR |= SCB_SHCSR_USGFAULTACT_Msk  // 打开异常
                 | SCB_SHCSR_BUSFAULTACT_Msk
