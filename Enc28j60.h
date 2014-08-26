@@ -19,14 +19,7 @@ public:
 	byte Mac[6];
 
     Enc28j60(Spi* spi, Pin ce = P0, Pin irq = P0);
-    virtual ~Enc28j60()
-    {
-        if(_spi) delete _spi;
-        _spi = NULL;
-        
-        if(_ce) delete _ce;
-        _ce = NULL;
-    }
+    virtual ~Enc28j60();
 
     byte ReadOp(byte op, byte addr);
     void WriteOp(byte op, byte addr, byte data);

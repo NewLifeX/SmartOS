@@ -9,6 +9,15 @@ Enc28j60::Enc28j60(Spi* spi, Pin ce, Pin irq)
     if(ce != P0) _ce = new OutputPort(ce);
 }
 
+Enc28j60::~Enc28j60()
+{
+	if(_spi) delete _spi;
+	_spi = NULL;
+	
+	if(_ce) delete _ce;
+	_ce = NULL;
+}
+
 byte Enc28j60::ReadOp(byte op, byte addr)
 {
     SpiScope sc(_spi);
@@ -124,7 +133,7 @@ bool Enc28j60::OnOpen()
 {
 	assert_param(Mac);
 
-	debug_printf("Enc28j60::Init(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
+	debug_printf("Enc28j60::Open(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
     if(_ce)
     {
         *_ce = true;

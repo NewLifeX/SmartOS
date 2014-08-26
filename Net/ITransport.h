@@ -40,24 +40,25 @@ public:
 	// 打开传输口
 	bool Open()
 	{
-		if(!Opened) return true;
+		if(Opened || Opening) return true;
 
 		Opening = true;
 		bool rs = OnOpen();
 		Opening = false;
 		Opened = true;
-		
+
 		return rs;
 	}
 
 	// 关闭传输口
 	void Close()
 	{
-		if(Opened)
-		{
-			OnClose();
-			Opened = false;
-		}
+		if(!Opened || Opening) return;
+
+		Opening = true;
+		OnClose();
+		Opening = false;
+		Opened = false;
 	}
 
 	// 发送数据
