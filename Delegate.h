@@ -27,8 +27,11 @@ A* pa=&a;
 typedef void (*Func)(void);
 // 一个参数没有返回值的委托，一般param参数用作目标对象，调用者用静态函数包装成员函数
 typedef void (*Action)(void* param);
+// 事件处理委托，一般sender表示事件发出者，param用作目标对象，调用者用静态函数包装成员函数
+typedef void (*EventHandler)(void* sender, void* param);
 // 数据接收委托，一般sender表示事件发出者，param用作目标对象，调用者用静态函数包装成员函数
-typedef void (*DataHandler)(void* sender, byte* buf, uint size, void* param);
+// 传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
+typedef uint (*DataHandler)(void* sender, byte* buf, uint size, void* param);
 
 template<typename T, typename TArg>
 class Delegate

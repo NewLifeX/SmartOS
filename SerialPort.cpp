@@ -20,30 +20,30 @@ SerialPort::SerialPort(int com, int baudRate, int parity, int dataBits, int stop
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
-	_Received = NULL;	// 赋值NULL  以免野指针
+	//_Received = NULL;	// 赋值NULL  以免野指针
     _port = g_Uart_Ports[com];
 
 	_tx = NULL;
 	_rx = NULL;
 	RS485 = NULL;
 
-	Opened = false;
+	//Opened = false;
 	IsRemap = false;
 }
 
 // 析构时自动关闭
 SerialPort::~SerialPort()
 {
-    Close();
+    //Close();
 
 	if(RS485) delete RS485;
 	RS485 = NULL;
 }
 
 // 打开串口
-void SerialPort::Open()
+void SerialPort::OnOpen()
 {
-    if(Opened) return;
+    //if(Opened) return;
 
     Pin rx, tx;
     GetPins(&tx, &rx);
@@ -145,22 +145,27 @@ ShowLog:
 
 	if(RS485) *RS485 = false;
 
-    Opened = true;
+    //Opened = true;
 
 #if DEBUG
-    if(_com == Sys.MessagePort) goto ShowLog;
+    if(_com == Sys.MessagePort)
+	{
+		// 提前设置为已打开端口，ShowLog里面需要判断
+		Opened = true;
+		goto ShowLog;
+	}
 #endif
 }
 
 // 关闭端口
-void SerialPort::Close()
+void SerialPort::OnClose()
 {
-    if(!Opened) return;
+    //if(!Opened) return;
 
     debug_printf("~Serial%d Close\r\n", _com + 1);
 
     // 清空接收委托
-    Register(0);
+    //Register(0);
 
     Pin tx, rx;
     GetPins(&tx, &rx);
@@ -184,20 +189,20 @@ void SerialPort::Close()
 	}
 #endif
 
-    Opened = false;
+    //Opened = false;
 }
 
 // 发送单一字节数据
-void TUsart_SendData(USART_TypeDef* port, byte* data, uint times = 3000)
+void TUsart_SendData(USART_TypeDef* port, const byte* data, uint times = 3000)
 {
     while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
     if(times > 0) USART_SendData(port, (ushort)*data);
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-void SerialPort::Write(byte* buf, uint size)
+void SerialPort::OnWrite(const byte* buf, uint size)
 {
-    Open();
+    //Open();
 
 	if(RS485) *RS485 = true;
 
@@ -214,13 +219,12 @@ void SerialPort::Write(byte* buf, uint size)
 }
 
 // 从某个端口读取数据
-uint SerialPort::Read(byte* buf, uint size, uint msTimeout)
+uint SerialPort::OnRead(byte* buf, uint size)
 {
-    Open();
-
-	//return USART_ReceiveData(_port);
+    //Open();
 
 	// 在100ms内接收数据
+	uint msTimeout = 100;
 	uint end = Time.NewTicks(msTimeout * 1000);
 	uint count = 0; // 收到的字节数
 	while(count < size && Time.CurrentTicks() < end)
@@ -236,18 +240,20 @@ uint SerialPort::Read(byte* buf, uint size, uint msTimeout)
 }
 
 // 刷出某个端口中的数据
-void SerialPort::Flush()
+bool SerialPort::Flush(uint times)
 {
-	uint times = 300;
+	//uint times = 3000;
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+	return times > 0;
 }
 
-void SerialPort::Register(DataReceived handler, void* param)
+void SerialPort::Register(TransportHandler handler, void* param)
 {
-    Open();
+	ITransport::Register(handler, param);
+    //Open();
 
-	_Received = handler;
-	_Param = param;
+	//_Received = handler;
+	//_Param = param;
 
 	int SERIALPORT_IRQns[] = {
 		USART1_IRQn, USART2_IRQn,
@@ -259,27 +265,35 @@ void SerialPort::Register(DataReceived handler, void* param)
 	{
         Interrupt.SetPriority(SERIALPORT_IRQns[_com], 1);
 
-		Interrupt.Activate(SERIALPORT_IRQns[_com], OnReceive, this);
+		Interrupt.Activate(SERIALPORT_IRQns[_com], OnUsartReceive, this);
 	}
     else
 	{
 		Interrupt.Deactivate(SERIALPORT_IRQns[_com]);
-		_Received = NULL;
+		//_Received = NULL;
 	}
 }
 
 // 真正的串口中断函数
-void SerialPort::OnReceive(ushort num, void* param)
+void SerialPort::OnUsartReceive(ushort num, void* param)
 {
 	SerialPort* sp = (SerialPort*)param;
-	if(sp && sp->_Received)
+	if(sp && sp->HasHandler())
 	{
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
-			//uint count = sp->Read(sp->rx_buf, ArrayLength(sp->rx_buf));
-			//if(count > 0) sp->_Received(sp, sp->rx_buf, count, sp->_Param);
-			if(sp->_Received)			// 验证是否可用  以免造成不要的程序跑飞
-				sp->_Received(sp, sp->_Param);
+			// 验证是否可用  以免造成不要的程序跑飞
+			//if(sp->_Received) sp->_Received(sp, sp->_Param);
+			
+			byte buf[64];
+			uint len = sp->Read(buf, ArrayLength(buf));
+			if(len)
+			{
+				len = sp->OnReceive(buf, len);
+				assert_param(len <= ArrayLength(buf));
+				// 如果有数据，则反馈回去
+				if(len) sp->Write(buf, len);
+			}
 		}
 	}
 }
