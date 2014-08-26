@@ -44,7 +44,7 @@ void Enc28j60::ReadBuffer(byte* buf, uint len)
     *buf='\0';
 }
 
-void Enc28j60::WriteBuffer(byte* buf, uint len)
+void Enc28j60::WriteBuffer(const byte* buf, uint len)
 {
     SpiScope sc(_spi);
 
@@ -120,11 +120,11 @@ void Enc28j60::ClockOut(byte clock)
     Write(ECOCON, clock & 0x7);
 }
 
-bool Enc28j60::Init(string mac)
+bool Enc28j60::OnOpen()
 {
-	assert_param(mac);
+	assert_param(Mac);
 
-	debug_printf("Enc28j60::Init(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	debug_printf("Enc28j60::Init(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
     if(_ce)
     {
         *_ce = true;
@@ -200,12 +200,12 @@ bool Enc28j60::Init(string mac)
 	// Bank 3 填充
     // write MAC addr
     // NOTE: MAC addr in ENC28J60 is byte-backward
-    Write(MAADR5, mac[0]);
-    Write(MAADR4, mac[1]);
-    Write(MAADR3, mac[2]);
-    Write(MAADR2, mac[3]);
-    Write(MAADR1, mac[4]);
-    Write(MAADR0, mac[5]);
+    Write(MAADR5, Mac[0]);
+    Write(MAADR4, Mac[1]);
+    Write(MAADR3, Mac[2]);
+    Write(MAADR2, Mac[3]);
+    Write(MAADR1, Mac[4]);
+    Write(MAADR0, Mac[5]);
 
 	bool flag = true;
     // 配置PHY为全双工  LEDB为拉电流
@@ -235,6 +235,8 @@ bool Enc28j60::Init(string mac)
 		debug_printf("Enc28j60::Init Failed! Revision=%d\r\n", rev);
 		return false;
 	}
+    // 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
+    ClockOut(2);
 
 	debug_printf("Enc28j60::Inited! Revision=%d\r\n", rev);
 	return true;
@@ -246,7 +248,7 @@ byte Enc28j60::GetRevision()
     return Read(EREVID);
 }
 
-void Enc28j60::PacketSend(byte* packet, uint len)
+void Enc28j60::OnWrite(const byte* packet, uint len)
 {
     // 设置写指针为传输数据区域的开头
     Write(EWRPTL, TXSTART_INIT & 0xFF);
@@ -342,7 +344,7 @@ void Enc28j60::PacketSend(byte* packet, uint len)
 
 // 从网络接收缓冲区获取一个数据包，该包开头是以太网头
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
-uint Enc28j60::PacketReceive(byte* packet, uint maxlen)
+uint Enc28j60::OnRead(byte* packet, uint maxlen)
 {
     uint rxstat;
     uint len;

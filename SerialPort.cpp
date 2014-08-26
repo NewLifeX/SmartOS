@@ -41,7 +41,7 @@ SerialPort::~SerialPort()
 }
 
 // 打开串口
-void SerialPort::OnOpen()
+bool SerialPort::OnOpen()
 {
     //if(Opened) return;
 
@@ -77,7 +77,7 @@ ShowLog:
         debug_printf(") TX=P%c%d RX=P%c%d\r\n", _PIN_NAME(tx), _PIN_NAME(rx));
 
         // 有可能是打开串口完成以后跳回来
-        if(Opened) return;
+        if(Opened) return true;
     }
 #endif
 
@@ -155,6 +155,8 @@ ShowLog:
 		goto ShowLog;
 	}
 #endif
+
+	return true;
 }
 
 // 关闭端口

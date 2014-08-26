@@ -6,9 +6,9 @@
 const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
+TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 {
-	_enc = enc;
+	_port = port;
 
 	byte defip[] = {192, 168, 0, 1};
 	if(ip)
@@ -57,7 +57,9 @@ TinyIP::TinyIP(Enc28j60* enc, byte ip[4], byte mac[6])
 
 TinyIP::~TinyIP()
 {
-    _enc = NULL;
+	if(_port) delete _port;
+    _port = NULL;
+	
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
 
@@ -73,7 +75,7 @@ uint TinyIP::Fetch()
 {
 	byte* buf = Buffer;
 	// 获取缓冲区的包
-	uint len = _enc->PacketReceive(buf, BufferSize);
+	uint len = _port->Read(buf, BufferSize);
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
 
@@ -216,14 +218,15 @@ bool TinyIP::Init()
 	}
 
     // 初始化 enc28j60 的MAC地址(物理地址),这个函数必须要调用一次
-    if(!_enc->Init((string)Mac))
+    //if(!_enc->Init((string)Mac))
+	if(!_port->Open())
 	{
 		debug_printf("TinyIP Init Failed!\r\n");
 		return false;
 	}
 
     // 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
-    _enc->ClockOut(2);
+    //_enc->ClockOut(2);
 	//Sys.Sleep(1000);
 
 #if TinyIP_DHCP
@@ -404,7 +407,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	debug_printf("\r\n");*/
 
 	assert_param((byte*)eth == Buffer);
-	_enc->PacketSend((byte*)eth, len);
+	_port->Write((byte*)eth, len);
 }
 
 void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
@@ -1145,7 +1148,7 @@ void TinyIP::DHCPStart()
 			next = Time.NewTicks(1 * 1000000);
 		}
 
-		uint len = _enc->PacketReceive(buf, BufferSize);
+		uint len = _port->Read(buf, BufferSize);
         // 如果缓冲器里面没有数据则转入下一次循环
         if(!_net->Unpack(len)) continue;
 

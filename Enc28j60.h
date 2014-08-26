@@ -3,9 +3,10 @@
 
 #include "Sys.h"
 #include "Spi.h"
+#include "Net\ITransport.h"
 
 // Enc28j60类
-class Enc28j60
+class Enc28j60 : public ITransport
 {
 private:
     Spi* _spi;
@@ -15,11 +16,12 @@ private:
 
 public:
     byte Bank;
+	byte Mac[6];
 
     Enc28j60(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~Enc28j60()
     {
-        //if(_spi) delete _spi;
+        if(_spi) delete _spi;
         _spi = NULL;
         
         if(_ce) delete _ce;
@@ -29,7 +31,7 @@ public:
     byte ReadOp(byte op, byte addr);
     void WriteOp(byte op, byte addr, byte data);
     void ReadBuffer(byte* buf, uint len);
-    void WriteBuffer(byte* buf, uint len);
+    void WriteBuffer(const byte* buf, uint len);
     void SetBank(byte addr);
     byte Read(byte addr);
     void Write(byte addr, byte data);
@@ -38,10 +40,17 @@ public:
     void ClockOut(byte clock);
 	bool Linked();
 
-    bool Init(string mac);
+    //bool Init(string mac);
     byte GetRevision();
-    void PacketSend(byte* packet, uint len);
-    uint PacketReceive(byte* packet, uint maxlen);
+    //void PacketSend(byte* packet, uint len);
+    //uint PacketReceive(byte* packet, uint maxlen);
+
+protected:
+	virtual bool OnOpen();
+    virtual void OnClose() { }
+
+    virtual void OnWrite(const byte* buf, uint len);
+	virtual uint OnRead(byte* buf, uint len);
 };
 
 // ENC28J60 控制寄存器

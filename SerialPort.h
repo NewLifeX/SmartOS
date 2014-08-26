@@ -48,7 +48,7 @@ public:
     virtual void Register(TransportHandler handler, void* param = NULL);
 
 protected:
-	virtual void OnOpen();
+	virtual bool OnOpen();
     virtual void OnClose();
 
     virtual void OnWrite(const byte* buf, uint size);

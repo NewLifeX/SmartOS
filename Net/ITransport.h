@@ -18,12 +18,14 @@ private:
 	void* _param;
 
 public:
+	bool Opening;	// 是否正在打开
     bool Opened;    // 是否打开
 	uint FrameSize;	// 读取的期望帧长度，小于该长度为未满一帧，读取不做返回
 
 	// 初始化
 	ITransport()
 	{
+		Opening = false;
 		Opened = false;
 		_handler = NULL;
 		_param = NULL;
@@ -36,13 +38,16 @@ public:
 	}
 
 	// 打开传输口
-	void Open()
+	bool Open()
 	{
-		if(!Opened)
-		{
-			OnOpen();
-			Opened = true;
-		}
+		if(!Opened) return true;
+
+		Opening = true;
+		bool rs = OnOpen();
+		Opening = false;
+		Opened = true;
+		
+		return rs;
 	}
 
 	// 关闭传输口
@@ -89,7 +94,7 @@ public:
 	}
 
 protected:
-	virtual void OnOpen() { }
+	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
 	virtual void OnWrite(const byte* buf, uint len) = 0;
 	virtual uint OnRead(byte* buf, uint len) = 0;

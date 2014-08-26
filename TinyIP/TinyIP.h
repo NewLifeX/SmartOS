@@ -3,8 +3,8 @@
 
 // 模块开发使用说明见后
 
-#include "Enc28j60.h"
-#include "Net/Ethernet.h"
+#include "Net\ITransport.h"
+#include "Net\Ethernet.h"
 
 // 默认打开所有模块，用户需要根据自己需要在编译器设置关闭条件，比如TinyIP_DHCP=0
 #ifndef TinyIP_ICMP
@@ -37,7 +37,8 @@
 class TinyIP //: protected IEthernetAdapter
 {
 private:
-    Enc28j60* _enc;
+    //Enc28j60* _enc;
+	ITransport* _port;
 	NetPacker* _net;
 
 	byte* Buffer; // 缓冲区
@@ -124,7 +125,7 @@ public:
 	void DHCPStart();
 #endif
 
-    TinyIP(Enc28j60* enc, byte ip[4] = NULL, byte mac[6] = NULL);
+    TinyIP(ITransport* port, byte ip[4] = NULL, byte mac[6] = NULL);
     virtual ~TinyIP();
 
 	bool Init();
