@@ -181,6 +181,8 @@ void Spi::Close()
 
 byte Spi::Write(byte data)
 {
+	if(!Opened) Open();
+
 	int retry = Retry;
     while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
     {
@@ -207,6 +209,8 @@ byte Spi::Write(byte data)
 
 ushort Spi::Write16(ushort data)
 {
+	if(!Opened) Open();
+
     // 双字节操作，超时次数加倍
 	int retry = Retry << 1;
 	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
