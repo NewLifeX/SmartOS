@@ -85,15 +85,14 @@ NRF24L01::~NRF24L01()
 	if(_CE) delete _CE;
 	if(_IRQ) delete _IRQ;
 
+	if(_spi) delete _spi;
 	_spi = NULL;
 	_CE = NULL;
 	_IRQ = NULL;
-
-	//Register(NULL);
 }
 
 // 向NRF的寄存器中写入一串数据
-byte NRF24L01::WriteBuf(byte reg, byte* buf, byte bytes)
+byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 {
 	SpiScope sc(_spi);
 
@@ -264,7 +263,7 @@ void NRF24L01::SetMode(bool isReceive)
 }
 
 // 从NRF的接收缓冲区中读出数据
-bool NRF24L01::Receive(byte *data)
+uint NRF24L01::OnRead(byte *data, uint len)
 {
 	// 如果不是异步，等待接收中断
 	//if(!_Received && !WaitForIRQ()) return false;
@@ -274,7 +273,7 @@ bool NRF24L01::Receive(byte *data)
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR) return false;
+	if(!st.RX_DR) return 0;
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
@@ -286,7 +285,7 @@ bool NRF24L01::Receive(byte *data)
 }
 
 // 向NRF的发送缓冲区中写入数据
-bool NRF24L01::Send(byte* data)
+bool NRF24L01::OnWrite(const byte* data, uint len)
 {
 	SetMode(false);	//直接在这里进行设置模式
 
@@ -311,7 +310,6 @@ bool NRF24L01::Send(byte* data)
 			return st.TX_DS;
 		}
 	}
-	//if(ticks >= Time.CurrentTicks()) return true;
 
 	return false;
 }

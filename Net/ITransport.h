@@ -62,11 +62,11 @@ public:
 	}
 
 	// 发送数据
-	void Write(const byte* buf, uint len)
+	bool Write(const byte* buf, uint len)
 	{
 		if(!Opened) Open();
 
-		OnWrite(buf, len);
+		return OnWrite(buf, len);
 	}
 
 	// 接收数据
@@ -97,7 +97,7 @@ public:
 protected:
 	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
-	virtual void OnWrite(const byte* buf, uint len) = 0;
+	virtual bool OnWrite(const byte* buf, uint len) = 0;
 	virtual uint OnRead(byte* buf, uint len) = 0;
 
 	// 是否有回调函数

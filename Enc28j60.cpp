@@ -13,7 +13,7 @@ Enc28j60::~Enc28j60()
 {
 	if(_spi) delete _spi;
 	_spi = NULL;
-	
+
 	if(_ce) delete _ce;
 	_ce = NULL;
 }
@@ -113,7 +113,7 @@ bool Enc28j60::PhyWrite(byte addr, uint data)
     // write the PHY data
     Write(MIWRL, data);
     Write(MIWRH, data >> 8);
-	
+
 	ulong ticks = Time.NewTicks(10 * 1000);
     // wait until the PHY write completes
     while(Read(MISTAT) & MISTAT_BUSY)
@@ -205,7 +205,7 @@ bool Enc28j60::OnOpen()
     // 设置控制器将接收的最大包大小，不要发送大于该大小的包
     Write(MAMXFLL, MAX_FRAMELEN & 0xFF);
     Write(MAMXFLH, MAX_FRAMELEN >> 8);
-    
+
 	// Bank 3 填充
     // write MAC addr
     // NOTE: MAC addr in ENC28J60 is byte-backward
@@ -257,7 +257,7 @@ byte Enc28j60::GetRevision()
     return Read(EREVID);
 }
 
-void Enc28j60::OnWrite(const byte* packet, uint len)
+bool Enc28j60::OnWrite(const byte* packet, uint len)
 {
     // 设置写指针为传输数据区域的开头
     Write(EWRPTL, TXSTART_INIT & 0xFF);
@@ -349,6 +349,8 @@ void Enc28j60::OnWrite(const byte* packet, uint len)
     {
         WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
     }
+
+	return true;
 }
 
 // 从网络接收缓冲区获取一个数据包，该包开头是以太网头

@@ -202,7 +202,7 @@ void TUsart_SendData(USART_TypeDef* port, const byte* data, uint times = 3000)
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-void SerialPort::OnWrite(const byte* buf, uint size)
+bool SerialPort::OnWrite(const byte* buf, uint size)
 {
     //Open();
 
@@ -218,6 +218,8 @@ void SerialPort::OnWrite(const byte* buf, uint size)
     }
 
 	if(RS485) *RS485 = false;
+
+	return true;
 }
 
 // 从某个端口读取数据
@@ -286,7 +288,7 @@ void SerialPort::OnUsartReceive(ushort num, void* param)
 		{
 			// 验证是否可用  以免造成不要的程序跑飞
 			//if(sp->_Received) sp->_Received(sp, sp->_Param);
-			
+
 			byte buf[64];
 			uint len = sp->Read(buf, ArrayLength(buf));
 			if(len)

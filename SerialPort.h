@@ -51,7 +51,7 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual void OnWrite(const byte* buf, uint size);
+    virtual bool OnWrite(const byte* buf, uint size);
 	virtual uint OnRead(byte* buf, uint size);
 
 private:

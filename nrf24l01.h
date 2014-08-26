@@ -3,17 +3,18 @@
 
 #include "Sys.h"
 #include "Spi.h"
+#include "Net\ITransport.h"
 
 // NRF24L01类
-class NRF24L01
+class NRF24L01 : public ITransport
 {
 private:
     Spi* _spi;
     OutputPort* _CE;
     InputPort* _IRQ;
 
-    byte WriteBuf(byte reg ,byte *pBuf,byte bytes);
-    byte ReadBuf(byte reg,byte *pBuf,byte bytes);
+    byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
+    byte ReadBuf(byte reg, byte *pBuf, byte bytes);
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 
@@ -44,19 +45,15 @@ public:
 	void ShowStatus();
 	bool CanReceive();
 
-    bool Send(byte* data);
-    bool Receive(byte* data);
+    //bool Send(byte* data);
+    //bool Receive(byte* data);
 
-	// 数据接收委托，一般param用作目标对象
-	/*typedef void (*DataReceived)(NRF24L01* nrf, void* param);
-    void Register(DataReceived handler, void* param = NULL);
-	void OnReceive();*/
+protected:
+	virtual bool OnOpen() { Config(); return true; }
+    virtual void OnClose() { }
 
-private:
-	/*DataReceived _Received;
-	void* _Param;
-
-	static void OnReceive(Pin pin, bool down, void* param);*/
+    virtual bool OnWrite(const byte* buf, uint len);
+	virtual uint OnRead(byte* buf, uint len);
 
 public:
 	class ByteStruct

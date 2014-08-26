@@ -42,7 +42,7 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose() { }
 
-    virtual void OnWrite(const byte* buf, uint len);
+    virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
 };
 
