@@ -130,8 +130,11 @@ void Spi::Open()
 #endif
 
 	Stop();
+#if defined(STM32F0)	
+	SPI_I2S_DeInit(SPI);
+#else		
 	SPI_DeInit(SPI);	// SPI_I2S_DeInit的宏定义别名
-
+#endif
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
 	sp.SPI_Direction = SPI_Direction_2Lines_FullDuplex; //双线全双工
