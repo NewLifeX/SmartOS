@@ -159,7 +159,7 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 }
 
 // 配置
-void NRF24L01::Config()
+bool NRF24L01::Config()
 {
 #if DEBUG
 	debug_printf("NRF24L01::Config\r\n");
@@ -226,7 +226,17 @@ void NRF24L01::Config()
 	//if(isReceive) config.PRIM_RX = 1;
 	// 默认进入接收模式
 	config.PRIM_RX = 1;
-	WriteReg(CONFIG, config.ToByte());
+	
+	/*config.MAX_RT = 1;
+	config.TX_DS = 1;
+	config.RX_DR = 1;*/
+	
+	byte mode = config.ToByte();
+	WriteReg(CONFIG, mode);
+	mode = ReadReg(CONFIG);
+	//assert_param(mode == config.ToByte());
+	// 如果电源还是关闭，则表示2401初始化失败
+	if(!config.PWR_UP) return false;
 
 	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
@@ -234,9 +244,14 @@ void NRF24L01::Config()
 	CEUp();
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
+
+	// 如果电源还是关闭，则表示2401初始化失败
+	mode = ReadReg(CONFIG);
+	config.Init(mode);
+	return config.PWR_UP;
 }
 
-void NRF24L01::SetMode(bool isReceive)
+bool NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
@@ -264,6 +279,17 @@ void NRF24L01::SetMode(bool isReceive)
 	WriteReg(CONFIG, config.ToByte());
 
 	CEUp();
+
+	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
+	mode = ReadReg(CONFIG);
+	config.Init(mode);
+	if(!config.PWR_UP)
+	{
+		debug_printf("NRF24L01已经断开，准备重新初始化，当前配置Config=0x%02x\r\n", mode);
+		Close();
+		return false;
+	}
+	return true;
 }
 
 void NRF24L01::OnClose()
@@ -273,7 +299,7 @@ void NRF24L01::OnClose()
 	config.Init(mode);
 
 	// 关闭电源
-	config.PWR_UP = 1;
+	config.PWR_UP = 0;
 
 	CEDown();
 	WriteReg(CONFIG, config.ToByte());
@@ -287,10 +313,11 @@ uint NRF24L01::OnRead(byte *data, uint len)
 
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
+	if(Status == 0xFF) return 0;
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR) return 0;
+	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
@@ -298,13 +325,14 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 
-	return true;
+	return PayloadWidth;
 }
 
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
-	SetMode(false);	// 直接在这里进行设置模式
+	// 进入发送模式
+	if(!SetMode(false)) return false;
 
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
 
@@ -317,6 +345,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	while(ticks > Time.CurrentTicks())
 	{
 		Status = ReadReg(STATUS);
+		if(Status == 0xFF) return 0;
 		RF_STATUS st;
 		st.Init(Status);
 
@@ -344,6 +373,7 @@ bool NRF24L01::WaitForIRQ()
 
 	// 读取状态寄存器的值
 	Status = ReadReg(STATUS);
+	if(Status == 0xFF) return false;
 	debug_printf("NRF24L01::WaitForIRQ Timeout %dms\r\n", Timeout);
 
 	return false;
@@ -435,6 +465,7 @@ bool NRF24L01::CanReceive()
 {
 	// 读取状态寄存器的值
 	Status = ReadReg(STATUS);
+	if(Status == 0xFF) return false;
 
 	RF_STATUS st;
 	st.Init(Status);

@@ -38,8 +38,8 @@ public:
     virtual ~NRF24L01();
 
     bool Check();
-	void Config();	// 完成基础参数设定，默认初始化为发送模式
-    void SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
+	bool Config();	// 完成基础参数设定，默认初始化为发送模式
+    bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 
 	byte Status;
 	void ShowStatus();
@@ -49,7 +49,7 @@ public:
     //bool Receive(byte* data);
 
 protected:
-	virtual bool OnOpen() { Config(); return true; }
+	virtual bool OnOpen() { return Check() && Config() && Check(); }
     virtual void OnClose();
 
     virtual bool OnWrite(const byte* buf, uint len);
