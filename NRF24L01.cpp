@@ -224,6 +224,8 @@ void NRF24L01::Config()
 	config.CRCO = 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 	config.EN_CRC = 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	//if(isReceive) config.PRIM_RX = 1;
+	// 默认进入接收模式
+	config.PRIM_RX = 1;
 	WriteReg(CONFIG, config.ToByte());
 
 	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
@@ -236,16 +238,15 @@ void NRF24L01::Config()
 
 void NRF24L01::SetMode(bool isReceive)
 {
-	CEDown();
-
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
 	config.Init(mode);
 
 	// 检查设置
-	assert_param(config.PWR_UP);
+	/*assert_param(config.PWR_UP);
 	assert_param(config.CRCO);
-	assert_param(config.EN_CRC);
+	assert_param(config.EN_CRC);*/
+	if(!config.PWR_UP) config.PWR_UP = 1;
 
 	if(isReceive) // 接收模式
 	{
@@ -257,6 +258,8 @@ void NRF24L01::SetMode(bool isReceive)
 		config.PRIM_RX = 0;
         //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
+	CEDown();
+
 	WriteReg(CONFIG, config.ToByte());
 
 	CEUp();
@@ -287,9 +290,11 @@ uint NRF24L01::OnRead(byte *data, uint len)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
-	SetMode(false);	//直接在这里进行设置模式
+	SetMode(false);	// 直接在这里进行设置模式
 
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
+	
+	bool rs = false;
 	// 等待发送完成中断
 	//if(!WaitForIRQ()) return false;
 	// IRQ不可靠，改为轮询寄存器
@@ -307,11 +312,14 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			WriteReg(STATUS, Status);
 			WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
-			return st.TX_DS;
+			rs = st.TX_DS;
+			break;
 		}
 	}
 
-	return false;
+	SetMode(true);	// 发送完成以后进入接收模式
+
+	return rs;
 }
 
 bool NRF24L01::WaitForIRQ()
