@@ -76,20 +76,9 @@ public:
 	void Up(uint ms);	// 拉高一段时间后拉低
 	void Blink(uint times, uint ms);	// 闪烁多次
 
-    virtual ushort ReadGroup()    // 整组读取
-    {
-        return GPIO_ReadOutputData(Group);
-    }
-	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-    bool Read()
-	{
-		return (ReadGroup() & PinBit) ^ Invert;
-	}
-    static bool Read(Pin pin)
-	{
-		GPIO_TypeDef* group = _GROUP(pin);
-		return (group->IDR >> (pin & 0xF)) & 1;
-	}
+    ushort ReadGroup();    // 整组读取
+    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+    static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
@@ -99,7 +88,7 @@ public:
 protected:
     OutputPort()
     {
-        Speed = 2;
+        Speed = GPIO_MAX_SPEED;
         Invert = false;
     }
 
@@ -157,21 +146,9 @@ public:
 
     virtual ~InputPort();
 
-    virtual ushort ReadGroup()    // 整组读取
-    {
-        return GPIO_ReadInputData(Group);
-    }
-
-	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-    bool Read()
-	{
-		return (ReadGroup() & PinBit) ^ Invert;
-	}
-    static bool Read(Pin pin)
-	{
-		GPIO_TypeDef* group = _GROUP(pin);
-		return (group->IDR >> (pin & 0xF)) & 1;
-	}
+    ushort ReadGroup();    // 整组读取
+    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+    static bool Read(Pin pin);
 
     void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 
@@ -186,6 +163,7 @@ protected:
 
         _Registed = false;
         ShakeTime = 20;
+        Invert = false;
 
         Config();
     }

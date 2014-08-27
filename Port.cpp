@@ -375,6 +375,25 @@ void AnalogInPort::OnConfig()
 // 输出端口
 #define REGION_Output 1
 #ifdef REGION_Output
+ushort OutputPort::ReadGroup()    // 整组读取
+{
+	return GPIO_ReadOutputData(Group);
+}
+
+// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+bool OutputPort::Read()
+{
+	// 转为bool时会转为0/1
+	bool rs = GPIO_ReadOutputData(Group) & PinBit;
+	return rs ^ Invert;
+}
+
+bool OutputPort::Read(Pin pin)
+{
+	GPIO_TypeDef* group = _GROUP(pin);
+	return (group->IDR >> (pin & 0xF)) & 1;
+}
+
 void OutputPort::Write(bool value)
 {
     if(value ^ Invert)
@@ -444,6 +463,26 @@ InputPort::~InputPort()
 {
     // 取消所有中断
     if(_Registed) Register(NULL);
+}
+
+ushort InputPort::ReadGroup()    // 整组读取
+{
+	return GPIO_ReadInputData(Group);
+}
+
+// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+bool InputPort::Read()
+{
+	//return (ReadGroup() & PinBit) ^ Invert;
+	// 转为bool时会转为0/1
+	bool rs = GPIO_ReadInputData(Group) & PinBit;
+	return rs ^ Invert;
+}
+
+bool InputPort::Read(Pin pin)
+{
+	GPIO_TypeDef* group = _GROUP(pin);
+	return (group->IDR >> (pin & 0xF)) & 1;
 }
 
 // 注册回调  及中断使能
