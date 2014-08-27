@@ -2,23 +2,19 @@
 
 extern "C"
 {
-	/*!< Uncomment the following line if you need to relocate your vector Table in
-		 Internal SRAM. */
-	/* #define VECT_TAB_SRAM */
-	#define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
-									   This value must be a multiple of 0x200. */
-
 	uint32_t HSE_VALUE = 25000000;
 	uint32_t SystemCoreClock = 168000000;
 	__I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
-	void SystemInit (void)
+	void SystemInit(void)
 	{
 		HSE_VALUE = 25000000;
 		SystemCoreClock = 168000000;
 
 		/* Configure the System clock frequency, AHB/APBx prescalers and Flash settings */
 		SetSysClock(SystemCoreClock, HSE_VALUE);
+
+		SCB->VTOR = FLASH_BASE; // Vector Table Relocation in Internal FLASH
 	}
 
 	void SetSysClock(unsigned int clock, unsigned int cystalClock)
@@ -123,12 +119,5 @@ extern "C"
 			/* Wait till the main PLL is used as system clock source */
 			while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS ) != RCC_CFGR_SWS_PLL); { }
 		}
-
-		/* Configure the Vector Table location add offset address ------------------*/
-		#ifdef VECT_TAB_SRAM
-		SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
-		#else
-		SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
-		#endif
 	}
 }
