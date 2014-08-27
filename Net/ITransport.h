@@ -45,7 +45,7 @@ public:
 		Opening = true;
 		bool rs = OnOpen();
 		Opening = false;
-		Opened = true;
+		Opened = rs;
 
 		return rs;
 	}
@@ -64,7 +64,7 @@ public:
 	// 发送数据
 	bool Write(const byte* buf, uint len)
 	{
-		if(!Opened) Open();
+		if(!Opened && !Open()) return false;
 
 		return OnWrite(buf, len);
 	}
@@ -72,7 +72,7 @@ public:
 	// 接收数据
 	uint Read(byte* buf, uint len)
 	{
-		if(!Opened) Open();
+		if(!Opened && !Open()) return 0;
 
 		return OnRead(buf, len);
 	}
