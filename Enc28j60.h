@@ -26,14 +26,14 @@ public:
     void ReadBuffer(byte* buf, uint len);
     void WriteBuffer(const byte* buf, uint len);
     void SetBank(byte addr);
-    byte Read(byte addr);
-    void Write(byte addr, byte data);
+    byte ReadReg(byte addr);
+    void WriteReg(byte addr, byte data);
     uint PhyRead(byte addr);
     bool PhyWrite(byte addr, uint data);
     void ClockOut(byte clock);
 	bool Linked();
 
-    //bool Init(string mac);
+    void Init(byte mac[6]);
     byte GetRevision();
     //void PacketSend(byte* packet, uint len);
     //uint PacketReceive(byte* packet, uint maxlen);

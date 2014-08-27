@@ -76,13 +76,13 @@ void Enc28j60::SetBank(byte addr)
     }
 }
 
-byte Enc28j60::Read(byte addr)
+byte Enc28j60::ReadReg(byte addr)
 {
     SetBank(addr);
     return ReadOp(ENC28J60_READ_CTRL_REG, addr);
 }
 
-void Enc28j60::Write(byte addr, byte data)
+void Enc28j60::WriteReg(byte addr, byte data)
 {
     SetBank(addr);
     WriteOp(ENC28J60_WRITE_CTRL_REG, addr, data);
@@ -92,31 +92,31 @@ void Enc28j60::Write(byte addr, byte data)
 uint Enc28j60::PhyRead(byte addr)
 {
 	// 设置PHY寄存器地址
-	Write(MIREGADR, addr);
-	Write(MICMD, MICMD_MIIRD);
+	WriteReg(MIREGADR, addr);
+	WriteReg(MICMD, MICMD_MIIRD);
 
 	// 循环等待PHY寄存器被MII读取，需要10.24us
-	while((Read(MISTAT) & MISTAT_BUSY));
+	while((ReadReg(MISTAT) & MISTAT_BUSY));
 
 	// 停止读取
-	//Write(MICMD, MICMD_MIIRD);
-	Write(MICMD, 0x00);	  // 赋值0x00
+	//WriteReg(MICMD, MICMD_MIIRD);
+	WriteReg(MICMD, 0x00);	  // 赋值0x00
 
 	// 获得结果并返回
-	return (Read(MIRDH) << 8) | Read(MIRDL);
+	return (ReadReg(MIRDH) << 8) | ReadReg(MIRDL);
 }
 
 bool Enc28j60::PhyWrite(byte addr, uint data)
 {
     // set the PHY register addr
-    Write(MIREGADR, addr);
+    WriteReg(MIREGADR, addr);
     // write the PHY data
-    Write(MIWRL, data);
-    Write(MIWRH, data >> 8);
+    WriteReg(MIWRL, data);
+    WriteReg(MIWRH, data >> 8);
 
 	ulong ticks = Time.NewTicks(10 * 1000);
     // wait until the PHY write completes
-    while(Read(MISTAT) & MISTAT_BUSY)
+    while(ReadReg(MISTAT) & MISTAT_BUSY)
     {
         if(ticks < Time.CurrentTicks()) return false;
     }
@@ -126,7 +126,14 @@ bool Enc28j60::PhyWrite(byte addr, uint data)
 void Enc28j60::ClockOut(byte clock)
 {
     // setup clkout: 2 is 12.5MHz:
-    Write(ECOCON, clock & 0x7);
+    WriteReg(ECOCON, clock & 0x7);
+}
+
+void Enc28j60::Init(byte mac[6])
+{
+	assert_param(mac);
+	
+	memcpy(Mac, mac, 6);
 }
 
 bool Enc28j60::OnOpen()
@@ -152,27 +159,27 @@ bool Enc28j60::OnOpen()
 
     // check CLKRDY bit to see if reset is complete
     // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
-    //while(!(Read(ESTAT) & ESTAT_CLKRDY));
+    //while(!(ReadReg(ESTAT) & ESTAT_CLKRDY));
     // do bank 0 stuff
     // initialize receive buffer
     // 16-bit transfers, must write low byte first
     // 设置接收缓冲区开始地址
     NextPacketPtr = RXSTART_INIT;
     // Rx开始
-    Write(ERXSTL, RXSTART_INIT & 0xFF);
-    Write(ERXSTH, RXSTART_INIT >> 8);
+    WriteReg(ERXSTL, RXSTART_INIT & 0xFF);
+    WriteReg(ERXSTH, RXSTART_INIT >> 8);
     // 设置接收指针地址
-    Write(ERXRDPTL, RXSTART_INIT & 0xFF);
-    Write(ERXRDPTH, RXSTART_INIT >> 8);
+    WriteReg(ERXRDPTL, RXSTART_INIT & 0xFF);
+    WriteReg(ERXRDPTH, RXSTART_INIT >> 8);
     // 设置接收缓冲区的末尾地址 ERXND寄存器默认指向整个缓冲区的最后一个单元
-    Write(ERXNDL, RXSTOP_INIT & 0xFF);
-    Write(ERXNDH, RXSTOP_INIT >> 8);
+    WriteReg(ERXNDL, RXSTOP_INIT & 0xFF);
+    WriteReg(ERXNDH, RXSTOP_INIT >> 8);
     // 设置发送缓冲区起始地址 ETXST寄存器默认地址是整个缓冲区的第一个单元
-    Write(ETXSTL, TXSTART_INIT & 0xFF);
-    Write(ETXSTH, TXSTART_INIT >> 8);
+    WriteReg(ETXSTL, TXSTART_INIT & 0xFF);
+    WriteReg(ETXSTH, TXSTART_INIT >> 8);
     // TX 结束
-    Write(ETXNDL, TXSTOP_INIT & 0xFF);
-    Write(ETXNDH, TXSTOP_INIT >> 8);
+    WriteReg(ETXNDL, TXSTOP_INIT & 0xFF);
+    WriteReg(ETXNDH, TXSTOP_INIT >> 8);
 
     // Bank 1 填充，包过滤
     // 广播包只允许ARP通过，单播包只允许目的地址是我们mac(MAADR)的数据包
@@ -184,37 +191,37 @@ bool Enc28j60::OnOpen()
     // in binary these poitions are:11 0000 0011 1111
     // This is hex 303F->EPMM0=0x3f,EPMM1=0x30
 
-    //Write(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
-    Write(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
-    Write(EPMM0, 0x3f);
-    Write(EPMM1, 0x30);
-    Write(EPMCSL, 0xf9);
-    Write(EPMCSH, 0xf7);
+    //WriteReg(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
+    WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
+    WriteReg(EPMM0, 0x3f);
+    WriteReg(EPMM1, 0x30);
+    WriteReg(EPMCSL, 0xf9);
+    WriteReg(EPMCSH, 0xf7);
 
     // Bank 2，打开MAC接收
-    Write(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
+    WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
     // MACON2清零，让MAC退出复位状态
-    Write(MACON2, 0x00);
+    WriteReg(MACON2, 0x00);
     // 启用自动填充到60字节并进行Crc校验
     WriteOp(ENC28J60_BIT_FIELD_SET, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
     // 配置非背对背包之间的间隔
-    Write(MAIPGL, 0x12);
-    Write(MAIPGH, 0x0C);
+    WriteReg(MAIPGL, 0x12);
+    WriteReg(MAIPGH, 0x0C);
     // 配置背对背包之间的间隔
-    Write(MABBIPG, 0x15);   // 有的例程这里是0x12
+    WriteReg(MABBIPG, 0x15);   // 有的例程这里是0x12
     // 设置控制器将接收的最大包大小，不要发送大于该大小的包
-    Write(MAMXFLL, MAX_FRAMELEN & 0xFF);
-    Write(MAMXFLH, MAX_FRAMELEN >> 8);
+    WriteReg(MAMXFLL, MAX_FRAMELEN & 0xFF);
+    WriteReg(MAMXFLH, MAX_FRAMELEN >> 8);
 
 	// Bank 3 填充
     // write MAC addr
     // NOTE: MAC addr in ENC28J60 is byte-backward
-    Write(MAADR5, Mac[0]);
-    Write(MAADR4, Mac[1]);
-    Write(MAADR3, Mac[2]);
-    Write(MAADR2, Mac[3]);
-    Write(MAADR1, Mac[4]);
-    Write(MAADR0, Mac[5]);
+    WriteReg(MAADR5, Mac[0]);
+    WriteReg(MAADR4, Mac[1]);
+    WriteReg(MAADR3, Mac[2]);
+    WriteReg(MAADR2, Mac[3]);
+    WriteReg(MAADR1, Mac[4]);
+    WriteReg(MAADR0, Mac[5]);
 
 	bool flag = true;
     // 配置PHY为全双工  LEDB为拉电流
@@ -254,18 +261,18 @@ bool Enc28j60::OnOpen()
 byte Enc28j60::GetRevision()
 {
     // 在EREVID 内也存储了版本信息。 EREVID 是一个只读控制寄存器，包含一个5 位标识符，用来标识器件特定硅片的版本号
-    return Read(EREVID);
+    return ReadReg(EREVID);
 }
 
 bool Enc28j60::OnWrite(const byte* packet, uint len)
 {
     // 设置写指针为传输数据区域的开头
-    Write(EWRPTL, TXSTART_INIT & 0xFF);
-    Write(EWRPTH, TXSTART_INIT >> 8);
+    WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
+    WriteReg(EWRPTH, TXSTART_INIT >> 8);
 
     // 设置TXND指针为纠正后的给定数据包大小
-    Write(ETXNDL, (TXSTART_INIT + len) & 0xFF);
-    Write(ETXNDH, (TXSTART_INIT + len) >> 8);
+    WriteReg(ETXNDL, (TXSTART_INIT + len) & 0xFF);
+    WriteReg(ETXNDH, (TXSTART_INIT + len) >> 8);
 
     // 写每个包的控制字节（0x00意味着使用macon3设置）
     WriteOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
@@ -280,8 +287,8 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
     if(GetRevision() == 0x05u || GetRevision() == 0x06u)
 	{
 		ushort count = 0;
-		while((Read(EIR) & (EIR_TXERIF | EIR_TXIF)) && (++count < 1000));
-		if((Read(EIR) & EIR_TXERIF) || (count >= 1000))
+		while((ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && (++count < 1000));
+		if((ReadReg(EIR) & EIR_TXERIF) || (count >= 1000))
 		{
 			WORD_VAL ReadPtrSave;
 			WORD_VAL TXEnd;
@@ -293,17 +300,17 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
             WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 
 			// Save the current read pointer (controlled by application)
-			ReadPtrSave.v[0] = Read(ERDPTL);
-			ReadPtrSave.v[1] = Read(ERDPTH);
+			ReadPtrSave.v[0] = ReadReg(ERDPTL);
+			ReadPtrSave.v[1] = ReadReg(ERDPTH);
 
 			// Get the location of the transmit status vector
-			TXEnd.v[0] = Read(ETXNDL);
-			TXEnd.v[1] = Read(ETXNDH);
+			TXEnd.v[0] = ReadReg(ETXNDL);
+			TXEnd.v[1] = ReadReg(ETXNDH);
 			TXEnd.Val++;
 
-			// Read the transmit status vector
-			Write(ERDPTL, TXEnd.v[0]);
-			Write(ERDPTH, TXEnd.v[1]);
+			// ReadReg the transmit status vector
+			WriteReg(ERDPTL, TXEnd.v[0]);
+			WriteReg(ERDPTH, TXEnd.v[1]);
 
 			ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 
@@ -312,7 +319,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 			// as the transmission)
 			for(i = 0; i < 16u; i++)
 			{
-				if((Read(EIR) & EIR_TXERIF) && TXStatus.bits.LateCollision)
+				if((ReadReg(EIR) & EIR_TXERIF) && TXStatus.bits.LateCollision)
 				{
 					// Reset the TX logic
                     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
@@ -321,14 +328,14 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 
 					// Transmit the packet again
 					WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
-					while(!(Read(EIR) & (EIR_TXERIF | EIR_TXIF)));
+					while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)));
 
 					// Cancel the previous transmission if it has become stuck set
 					WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 
-					// Read transmit status vector
-					Write(ERDPTL, TXEnd.v[0]);
-					Write(ERDPTH, TXEnd.v[1]);
+					// ReadReg transmit status vector
+					WriteReg(ERDPTL, TXEnd.v[0]);
+					WriteReg(ERDPTH, TXEnd.v[1]);
                     ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 				}
 				else
@@ -338,14 +345,14 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 			}
 
 			// Restore the current read pointer
-			Write(ERDPTL, ReadPtrSave.v[0]);
-			Write(ERDPTH, ReadPtrSave.v[1]);
+			WriteReg(ERDPTL, ReadPtrSave.v[0]);
+			WriteReg(ERDPTH, ReadPtrSave.v[1]);
 		}
 	}
 #endif
 
     // Reset the transmit logic problem. See Rev. B4 Silicon Errata point 12.
-    if( (Read(EIR) & EIR_TXERIF) )
+    if( (ReadReg(EIR) & EIR_TXERIF) )
     {
         WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
     }
@@ -361,20 +368,20 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     uint len;
 
     // 检测缓冲区是否收到一个数据包
-    /*if( !(Read(EIR) & EIR_PKTIF) )
+    /*if( !(ReadReg(EIR) & EIR_PKTIF) )
 	{
 		// The above does not work. See Rev. B4 Silicon Errata point 6.
 		// 通过查看EPKTCNT寄存器再次检查是否收到包
 		// EPKTCNT为0表示没有包接收/或包已被处理
-		if(Read(EPKTCNT) == 0) return 0;
+		if(ReadReg(EPKTCNT) == 0) return 0;
 	}*/
 
 	// 收到的以太网数据包长度
-    if( Read(EPKTCNT) == 0 ) return 0;
+    if( ReadReg(EPKTCNT) == 0 ) return 0;
 
     // 配置接收缓冲器读指针指向地址
-    Write(ERDPTL, (NextPacketPtr));
-    Write(ERDPTH, (NextPacketPtr) >> 8);
+    WriteReg(ERDPTL, (NextPacketPtr));
+    WriteReg(ERDPTH, (NextPacketPtr) >> 8);
 
     // 下一个数据包的读指针
     NextPacketPtr  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
@@ -409,8 +416,8 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     }
     // Move the RX read pointer to the start of the next received packet
     // This frees the memory we just read out
-    Write(ERXRDPTL, (NextPacketPtr));
-    Write(ERXRDPTH, (NextPacketPtr) >> 8);
+    WriteReg(ERXRDPTL, (NextPacketPtr));
+    WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);
 
     // 数据包个数递减位EPKTCNT减1
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
