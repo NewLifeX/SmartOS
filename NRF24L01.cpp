@@ -145,15 +145,24 @@ bool NRF24L01::Check(void)
 	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
 	byte buf1[5];
-	/*写入5个字节的地址.  */
-	WriteBuf(TX_ADDR, buf, 5);
-	/*读出写入的地址 */
+	byte buf2[5];
+
+	//!!! 必须确保还原会原来的地址，否则会干扰系统的正常工作
+	// 读出旧有的地址
 	ReadBuf(TX_ADDR, buf1, 5);
+
+	// 写入新的地址
+	WriteBuf(TX_ADDR, buf, 5);
+	// 读出写入的地址
+	ReadBuf(TX_ADDR, buf2, 5);
+
+	// 写入旧有的地址
+	WriteBuf(TX_ADDR, buf1, 5);
 
 	// 比较
 	for(byte i=0; i<5; i++)
 	{
-		if(buf1[i] != buf[i]) return false; // 连接不正常
+		if(buf2[i] != buf[i]) return false; // 连接不正常
 	}
 	return true; // 成功连接
 }
@@ -226,11 +235,11 @@ bool NRF24L01::Config()
 	//if(isReceive) config.PRIM_RX = 1;
 	// 默认进入接收模式
 	config.PRIM_RX = 1;
-	
+
 	/*config.MAX_RT = 1;
 	config.TX_DS = 1;
 	config.RX_DR = 1;*/
-	
+
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
 	mode = ReadReg(CONFIG);
@@ -299,7 +308,9 @@ bool NRF24L01::OnOpen()
 	// 检查并打开Spi
 	_spi->Open();
 
-	return Check() && Config() && Check();
+	//return Check() && Config() && Check();
+	// 配置完成以后，无需再次检查
+	return Check() && Config();
 }
 
 void NRF24L01::OnClose()

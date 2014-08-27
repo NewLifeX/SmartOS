@@ -29,6 +29,7 @@ public:
 		Opened = false;
 		_handler = NULL;
 		_param = NULL;
+		FrameSize = 0;
 	}
 
 	// 析构函数确保关闭
@@ -43,11 +44,10 @@ public:
 		if(Opened || Opening) return true;
 
 		Opening = true;
-		bool rs = OnOpen();
+		Opened = OnOpen();
 		Opening = false;
-		Opened = rs;
 
-		return rs;
+		return Opened;
 	}
 
 	// 关闭传输口
