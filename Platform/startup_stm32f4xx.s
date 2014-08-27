@@ -5,7 +5,7 @@ Stack_Size      EQU     0x00000400
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
-; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存充足时尽可能分配到最大	。堆空间不足时malloc将引发异常
+; 因为SmartOS需要大量分配内存，这里设定一个较大的值，在内存充足时尽可能分配到最大。堆空间不足时malloc将引发异常
 Heap_Size       EQU     0x00004000
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
@@ -23,8 +23,8 @@ __heap_limit
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
-__Vectors       DCD     __initial_sp               ; Top of Stack
-                DCD     Reset_Handler              ; Reset Handler
+__Vectors       DCD     __initial_sp  ; Top of Stack
+                DCD     Reset_Handler ; Reset Handler
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
