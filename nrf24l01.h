@@ -49,7 +49,7 @@ public:
     //bool Receive(byte* data);
 
 protected:
-	virtual bool OnOpen() { return Check() && Config() && Check(); }
+	virtual bool OnOpen();
     virtual void OnClose();
 
     virtual bool OnWrite(const byte* buf, uint len);

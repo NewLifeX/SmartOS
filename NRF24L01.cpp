@@ -115,6 +115,27 @@ byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
  	return status;
 }
 
+// 从NRF特定的寄存器读出数据 reg:NRF的命令+寄存器地址
+byte NRF24L01::ReadReg(byte reg)
+{
+	SpiScope sc(_spi);
+
+  	 /*发送寄存器号*/
+	_spi->Write(reg);
+	return _spi->Write(NOP);
+}
+
+// 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
+byte NRF24L01::WriteReg(byte reg, byte dat)
+{
+	SpiScope sc(_spi);
+
+	byte status = _spi->Write(WRITE_REG_NRF | reg);
+    _spi->Write(dat);
+
+   	return status;
+}
+
 // 主要用于NRF与MCU是否正常连接
 bool NRF24L01::Check(void)
 {
@@ -135,27 +156,6 @@ bool NRF24L01::Check(void)
 		if(buf1[i] != buf[i]) return false; // 连接不正常
 	}
 	return true; // 成功连接
-}
-
-// 从NRF特定的寄存器读出数据 reg:NRF的命令+寄存器地址
-byte NRF24L01::ReadReg(byte reg)
-{
-	SpiScope sc(_spi);
-
-  	 /*发送寄存器号*/
-	_spi->Write(reg);
-	return _spi->Write(NOP);
-}
-
-// 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
-byte NRF24L01::WriteReg(byte reg, byte dat)
-{
-	SpiScope sc(_spi);
-
-	byte status = _spi->Write(WRITE_REG_NRF | reg);
-    _spi->Write(dat);
-
-   	return status;
 }
 
 // 配置
@@ -294,6 +294,14 @@ bool NRF24L01::SetMode(bool isReceive)
 	return true;
 }
 
+bool NRF24L01::OnOpen()
+{
+	// 检查并打开Spi
+	_spi->Open();
+
+	return Check() && Config() && Check();
+}
+
 void NRF24L01::OnClose()
 {
 	byte mode = ReadReg(CONFIG);
@@ -348,7 +356,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	while(ticks > Time.CurrentTicks())
 	{
 		Status = ReadReg(STATUS);
-		if(Status == 0xFF) return 0;
+		if(Status == 0xFF) return false;
 		RF_STATUS st;
 		st.Init(Status);
 
