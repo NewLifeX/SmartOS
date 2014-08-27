@@ -257,6 +257,9 @@ bool NRF24L01::SetMode(bool isReceive)
 	RF_CONFIG config;
 	config.Init(mode);
 
+	// 如果本来就是该模式，则不再处理
+	if(!(isReceive ^ config.PRIM_RX)) return true;
+
 	// 检查设置
 	/*assert_param(config.PWR_UP);
 	assert_param(config.CRCO);
@@ -274,10 +277,9 @@ bool NRF24L01::SetMode(bool isReceive)
 		config.PRIM_RX = 0;
         //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
+	// 必须拉低CE后修改配置，然后再拉高
 	CEDown();
-
 	WriteReg(CONFIG, config.ToByte());
-
 	CEUp();
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
@@ -317,7 +319,8 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+	//if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+	if(!st.RX_DR) return 0;
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
