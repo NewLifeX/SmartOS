@@ -1,7 +1,7 @@
 ﻿#include "Interrupt.h"
 
 // GD32全系列无法把向量表映射到RAM，F103只能映射到Flash别的地方
-#if defined(GD32)
+#if defined(GD32)// || defined(STM32F4)
 	#define VEC_TABLE_ON_RAM 0
 #else
 	#define VEC_TABLE_ON_RAM 1
@@ -62,12 +62,13 @@ void TInterrupt::Init()
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
     //SCB->VTOR = (uint)_Vectors; // 向量表基地址
-    NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)((byte*)_Vectors - 0x20000000));
+    NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)((byte*)_Vectors - SRAM_BASE));
 	assert_param(SCB->VTOR == (uint)_Vectors);
 #ifdef STM32F4
-    SCB->SHCSR |= SCB_SHCSR_USGFAULTACT_Msk  // 打开异常
-                | SCB_SHCSR_BUSFAULTACT_Msk
-                | SCB_SHCSR_MEMFAULTACT_Msk;
+	// 不能使用以下代码，否则F4里面无法响应中断
+    //SCB->SHCSR |= SCB_SHCSR_USGFAULTACT_Msk  // 打开异常
+    //            | SCB_SHCSR_BUSFAULTACT_Msk
+    //            | SCB_SHCSR_MEMFAULTACT_Msk;
 #else
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
                 | SCB_SHCSR_BUSFAULTENA
@@ -88,6 +89,9 @@ void TInterrupt::Init()
                 | SCB_SHCSR_MEMFAULTENA;
 #endif
 #endif
+
+	// 初始化EXTI中断线为默认值
+	EXTI_DeInit();
 }
 
 TInterrupt::~TInterrupt()
