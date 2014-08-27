@@ -50,7 +50,7 @@ public:
 
 protected:
 	virtual bool OnOpen() { Config(); return true; }
-    virtual void OnClose() { }
+    virtual void OnClose();
 
     virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);

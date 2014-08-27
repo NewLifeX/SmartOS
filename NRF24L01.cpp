@@ -246,6 +246,7 @@ void NRF24L01::SetMode(bool isReceive)
 	/*assert_param(config.PWR_UP);
 	assert_param(config.CRCO);
 	assert_param(config.EN_CRC);*/
+	// 如果电源关闭，则重新打开电源
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
 	if(isReceive) // 接收模式
@@ -263,6 +264,19 @@ void NRF24L01::SetMode(bool isReceive)
 	WriteReg(CONFIG, config.ToByte());
 
 	CEUp();
+}
+
+void NRF24L01::OnClose()
+{
+	byte mode = ReadReg(CONFIG);
+	RF_CONFIG config;
+	config.Init(mode);
+
+	// 关闭电源
+	config.PWR_UP = 1;
+
+	CEDown();
+	WriteReg(CONFIG, config.ToByte());
 }
 
 // 从NRF的接收缓冲区中读出数据
@@ -293,7 +307,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	SetMode(false);	// 直接在这里进行设置模式
 
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
-	
+
 	bool rs = false;
 	// 等待发送完成中断
 	//if(!WaitForIRQ()) return false;
