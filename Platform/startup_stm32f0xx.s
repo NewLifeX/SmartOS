@@ -1,5 +1,5 @@
 ; 栈空间意义不大，SmartOS将会重新设定到RAM最大值，这里分配的栈空间仅用于TSys构造函数重新指定栈之前
-Stack_Size      EQU     0x00000400
+Stack_Size      EQU     0x00000020
 
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
 Stack_Mem       SPACE   Stack_Size

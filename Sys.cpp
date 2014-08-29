@@ -44,19 +44,19 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 // 原配置MSP作为PSP，而使用全局数组作为新的MSP
 // MSP 堆栈大小
-#ifdef STM32F0
+/*#ifdef STM32F0
 	#define IRQ_STACK_SIZE 0x40
 #else
 	#define IRQ_STACK_SIZE 0x100
 #endif
 uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
-
+*/
 #pragma arm section code
 
 _force_inline void Set_SP(uint ramSize)
 {
 	uint p = __get_MSP();
-	if(!ramSize)
+	/*if(!ramSize)
 		__set_PSP(p);
 	else
 		// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
@@ -66,19 +66,25 @@ _force_inline void Set_SP(uint ramSize)
 	__ISB();
 
 	// 拷贝一部分栈内容到新栈
-	memcpy((void*)__get_PSP(), (void*)p, 0x40);
+	memcpy((void*)__get_PSP(), (void*)p, 0x40);*/
+	
+	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
+	__set_PSP(SRAM_BASE + (ramSize << 10) - 0x20);	// 左移10位，就是乘以1024
+	// 拷贝一部分栈内容到新栈
+	memcpy((void*)__get_PSP(), (void*)p, 0x20);
 }
 
 bool TSys::CheckMemory()
 {
 	uint msp = __get_MSP();
-	if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
+	//if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
 
-	uint psp = __get_PSP();
+	//uint psp = __get_PSP();
 	void* p = malloc(0x10);
 	if(!p) return false;
 	free(p);
-	if((uint)p >= psp) return false;
+	//if((uint)p >= psp) return false;
+	if((uint)p >= msp) return false;
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
 	uint end = (uint)&__heap_limit;
