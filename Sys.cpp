@@ -305,10 +305,10 @@ void TSys::ShowInfo()
 
 	// 输出堆信息
 	uint start = (uint)&__heap_base;
-	uint end = (uint)&__heap_limit;
+	uint end = SRAM_BASE + (RAMSize << 10);
 	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
-	start = end;
-	end = 0x20000000 + (RAMSize << 10);
+	start = (uint)&__heap_limit;
+	//end = 0x20000000 + (RAMSize << 10);
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 
 	debug_printf("SystemTime: ");
