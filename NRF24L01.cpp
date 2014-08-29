@@ -55,7 +55,9 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	for(int i=0; i<4; i++) Address2_5[i] = Address1[0] + i + 1;
 	Channel = 0;	// 默认通道0
 
+	_CE = NULL;
     if(ce != P0) _CE = new OutputPort(ce);
+	_IRQ = NULL;
     if(irq != P0)
     {
         // 中断引脚初始化

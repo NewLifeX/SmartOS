@@ -18,7 +18,7 @@ public:
     byte Bank;
 	byte Mac[6];
 
-    Enc28j60(Spi* spi, Pin ce = P0, Pin irq = P0);
+    Enc28j60(Spi* spi, Pin ce = P0/*, Pin irq = P0*/);
     virtual ~Enc28j60();
 
     byte ReadOp(byte op, byte addr);

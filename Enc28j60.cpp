@@ -2,7 +2,7 @@
 
 #define ENC_DEBUG 0
 
-Enc28j60::Enc28j60(Spi* spi, Pin ce, Pin irq)
+Enc28j60::Enc28j60(Spi* spi, Pin ce/*, Pin irq*/)
 {
     _spi = spi;
 	_ce = NULL;
