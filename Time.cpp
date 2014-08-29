@@ -116,14 +116,14 @@ void TTime::Sleep(uint us)
 
 	// 减去误差指令周期，在获取当前时间以后多了几个指令
     if(maxDiff <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS)
-		maxDiff  = 0; 
+		maxDiff  = 0;
     else
 		maxDiff -= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS;
 
 	maxDiff += current;
 
     while(CurrentTicks() <= maxDiff);
-	
+
 	// 如果之前是打开中断的，那么这里也要重新打开
 	//if (!state) Sys.DisableInterrupts();
 }
@@ -141,3 +141,128 @@ ulong TTime::Current()
 	return CurrentTicks() * 1000000 / TicksPerSecond;
 }
 
+/// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
+#define BASE_YEAR                   2000
+#define BASE_YEAR_LEAPYEAR_ADJUST   484
+#define BASE_YEAR_DAYOFWEEK_SHIFT   6		// 星期偏移
+
+const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
+
+#define IS_LEAP_YEAR(y)             (((y % 4 == 0) && (y % 100 != 0)) || (y % 400 == 0))
+#define NUMBER_OF_LEAP_YEARS(y)     ((((y - 1) / 4) - ((y - 1) / 100) + ((y - 1) / 400)) - BASE_YEAR_LEAPYEAR_ADJUST) // 基于基本年1601的闰年数，不包含当年
+#define NUMBER_OF_YEARS(y)          (y - BASE_YEAR)
+
+#define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
+#define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
+
+SystemTime& TTime::To(ulong us, SystemTime& st)
+{
+	//if(!st) st = new SystemTime();
+
+	// 分别计算毫秒、秒、分、时，剩下天数
+	uint time = us;
+    st.Microsecond = time % 1000;
+    time /= 1000;
+    st.Milliseconds = time % 1000;
+    time /= 1000;
+    st.Second = time % 60;
+    time /= 60;
+    st.Minute = time % 60;
+    time /= 60;
+    st.Hour = time % 24;
+    time /= 24;
+
+	// 基本年的一天不一定是星期天，需要偏移BASE_YEAR_DAYOFWEEK_SHIFT
+    st.DayOfWeek = (time + BASE_YEAR_DAYOFWEEK_SHIFT) % 7;
+    st.Year = (ushort)(time / 365 + BASE_YEAR);
+
+	// 按最小每年365天估算，如果不满当天总天数，年份减一
+    int ytd = YEARS_TO_DAYS(st.Year);
+    if (ytd > time)
+    {
+        st.Year--;
+        ytd = YEARS_TO_DAYS(st.Year);
+    }
+
+	// 减去年份的天数
+    time -= ytd;
+
+	// 按最大每月31天估算，如果超过当月总天数，月份加一
+    st.Month = (ushort)(time / 31 + 1);
+    int mtd = MONTH_TO_DAYS(st.Year, st.Month + 1);
+    if (time >= mtd) st.Month++;
+
+	// 计算月份表示的天数
+    mtd = MONTH_TO_DAYS(st.Year, st.Month);
+
+	// 今年总天数减去月份天数，得到该月第几天
+    st.Day = (ushort)(time - mtd + 1);
+
+	return st;
+}
+
+ulong From(const SystemTime& st)
+{
+	ulong us = 0;
+	us += YEARS_TO_DAYS(st.Year) + MONTH_TO_DAYS(st.Year, st.Month) + st.Day - 1;
+	us = us * 24 + st.Hour;
+	us = us * 60 + st.Minute;
+	us = us * 60 + st.Second;
+	us = us * 1000 + st.Milliseconds;
+	us = us * 1000 + st.Microsecond;
+
+	return us;
+}
+
+// 默认格式化时间为yyyy-MM-dd HH:mm:ss
+/*
+	d短日期 M/d/yy
+	D长日期 yyyy-MM-dd
+	t短时间 mm:ss
+	T长时间 HH:mm:ss
+	f短全部 M/d/yy HH:mm
+	F长全部 yyyy-MM-dd HH:mm:ss
+*/
+const char* SystemTime::ToString(byte kind, string str)
+{
+	//assert_param(str);
+	if(!str) str = _Str;
+
+	const SystemTime& st = *this;
+	switch(kind)
+	{
+		case 'd':
+			sprintf(str, "%d/%d/%02d", st.Month, st.Day, st.Year % 100);
+			break;
+		case 'D':
+			sprintf(str, "%04d-%02d-%02d", st.Year, st.Month, st.Day);
+			break;
+		case 't':
+			sprintf(str, "%02d:%02d", st.Hour, st.Minute);
+			break;
+		case 'T':
+			sprintf(str, "%02d:%02d:%02d", st.Hour, st.Minute, st.Second);
+			break;
+		case 'f':
+			sprintf(str, "%d/%d/%02d %02d:%02d", st.Month, st.Day, st.Year % 100, st.Hour, st.Minute);
+			break;
+		case 'F':
+			sprintf(str, "%04d-%02d-%02d %02d:%02d:%02d", st.Year, st.Month, st.Day, st.Hour, st.Minute, st.Second);
+			break;
+		default:
+			assert_param(false);
+			break;
+	}
+	
+	return str;
+}
+
+// 当前时间
+SystemTime& TTime::Now()
+{
+	//if(!_Now) _Now = new SystemTime();
+
+	To(Current(), _Now);
+
+	return _Now;
+}
