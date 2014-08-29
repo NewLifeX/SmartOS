@@ -86,18 +86,16 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    OutputPort()
-    {
-        Speed = GPIO_MAX_SPEED;
-        Invert = false;
-    }
+    OutputPort() { }
 
     virtual void OnConfig();
 
     void Init(bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
+		OutputPort();
         OpenDrain = openDrain;
         Speed = speed;
+        Invert = false;
     }
 
 #if DEBUG
