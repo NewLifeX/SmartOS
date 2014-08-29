@@ -2,7 +2,7 @@
 #include "Port.h"
 #include "Spi.h"
 
-static SPI_TypeDef* g_Spis[] = SPIS;
+static SPI_TypeDef* const g_Spis[] = SPIS;
 static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
 int GetPre(int spi, uint* speedHz)

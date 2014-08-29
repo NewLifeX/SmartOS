@@ -1,4 +1,4 @@
-﻿#ifndef _PIN_STM32F0_H_
+#ifndef _PIN_STM32F0_H_
 #define _PIN_STM32F0_H_ 1
 
 #include "Pin.h"
@@ -57,14 +57,17 @@
 #define ADC3_PINS {PA0,PA1,PA2,PA3,PF6,PF7,PF8,PF9,PF10,PF3,PC0,PC1,PC2,PC3,PF4,PF5}
 
 /* I2C总线针脚 ------------------------------------------------------------------*/
+#define I2CS {I2C1, I2C2}
 
+#define I2C_PINS_FULLREMAP	{\
+	/*		SCL		SDA			*/\
+		{	PB6,	PB7	 },\
+		{	PB10,	PB11 },\
+/*F1 REMAP{	PA8,	PA9	 },*/\
+}
 
 /* 串行外设接口(SPI)针脚 ------------------------------------------------------------------*/
 #define SPIS {SPI1, SPI2}
-//#define SPI_NSS_PINS  {4, 28, 15} // PA4, PB12, PA15
-//#define SPI_SCLK_PINS {5, 29, 19} // PA5, PB13, PB3
-//#define SPI_MISO_PINS {6, 30, 20} // PA6, PB14, PB4
-//#define SPI_MOSI_PINS {7, 31, 21} // PA7, PB15, PB5
 
 #define SPI_PINS_FULLREMAP	{\
 	/*	NSS  CLK  MISO MOSI	*/\

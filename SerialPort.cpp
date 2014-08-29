@@ -7,7 +7,7 @@
 // 默认波特率
 #define USART_DEFAULT_BAUDRATE 115200
 
-static USART_TypeDef* g_Uart_Ports[] = UARTS;
+static USART_TypeDef* const g_Uart_Ports[] = UARTS;
 static const Pin g_Uart_Pins[] = UART_PINS;
 static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 
