@@ -1,25 +1,18 @@
 ﻿#include "Sys.h"
 
 #include "Time.h"
-//#include <stdlib.h>
 
 TSys Sys;
 TTime Time;
 
 extern uint __heap_base;
 extern uint __heap_limit;
+extern uint __microlib_freelist;
+extern uint __microlib_freelist_initialised;
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
 #endif
-
-#define  RCC_CFGR_USBPRE_Div1                     ((uint32_t)0x00400000)        /*!< USB Device prescaler */
-#define  RCC_CFGR_USBPRE_1Div5                    ((uint32_t)0x00000000)        /*!< USB Device prescaler */
-#define  RCC_CFGR_USBPRE_Div2                     ((uint32_t)0x00C00000)        /*!< USB Device prescaler */
-#define  RCC_CFGR_USBPRE_2Div5                    ((uint32_t)0x00800000)        /*!< USB Device prescaler */
-
-#define GD32_PLL_MASK	0x20000000
-#define CFGR_PLLMull_Mask         ((uint32_t)0x003C0000)
 
 #ifdef STM32F1
 char MemNames[] = "468BCDEFGIK";
@@ -42,53 +35,45 @@ void TSys::Delay(uint us) { Time.Sleep(us); }
 
 void TSys::Reset() { NVIC_SystemReset(); }
 
-// 原配置MSP作为PSP，而使用全局数组作为新的MSP
-// MSP 堆栈大小
-/*#ifdef STM32F0
-	#define IRQ_STACK_SIZE 0x40
-#else
-	#define IRQ_STACK_SIZE 0x100
-#endif
-uint IRQ_STACK[IRQ_STACK_SIZE]; // MSP 中断嵌套堆栈
-*/
 #pragma arm section code
 
 _force_inline void Set_SP(uint ramSize)
 {
 	uint p = __get_MSP();
-	/*if(!ramSize)
-		__set_PSP(p);
-	else
-		// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
-		__set_PSP(0x20000000 + (ramSize << 10) - 0x40);	// 左移10位，就是乘以1024
-	__set_MSP((uint)&IRQ_STACK[IRQ_STACK_SIZE]);
-	__set_CONTROL(2);
-	__ISB();
-
-	// 拷贝一部分栈内容到新栈
-	memcpy((void*)__get_PSP(), (void*)p, 0x40);*/
 	
 	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
-	__set_PSP(SRAM_BASE + (ramSize << 10) - 0x20);	// 左移10位，就是乘以1024
+	uint top = SRAM_BASE + (ramSize << 10);
+	__set_MSP(top - 0x40);	// 左移10位，就是乘以1024
 	// 拷贝一部分栈内容到新栈
-	memcpy((void*)__get_PSP(), (void*)p, 0x20);
+	memcpy((void*)(top - 0x40), (void*)p, 0x40);
+	
+	// 这个时候还没有初始化堆，我们来设置堆到内存最大值，让堆栈共用RAM剩下全部
+	if(!__microlib_freelist_initialised)
+	{
+		//*(uint*)&__heap_limit = top;
+		// 堆顶地址__heap_limit被编译固化到malloc函数附近，无法修改。只能这里负责初始化整个堆
+		//__microlib_freelist
+		p = (uint)&__heap_base + 4;
+		*(uint*)&__microlib_freelist = p;
+		// 设置堆大小，直达天花板
+		//*(uint*)p = (__heap_limit - __heap_base - 4) & 0xFFFFFFF8;
+		*(uint*)&__heap_limit = top;
+		*(uint*)p = (top - p) & 0xFFFFFFF8;
+		*(uint*)(p + 4) = 0;
+		
+		*(uint*)&__microlib_freelist_initialised = 1;
+	}
 }
 
 bool TSys::CheckMemory()
 {
 	uint msp = __get_MSP();
-	//if(msp < (uint)&IRQ_STACK[0] || msp > (uint)&IRQ_STACK[IRQ_STACK_SIZE]) return false;
 
-	//uint psp = __get_PSP();
-	void* p = malloc(0x10);
-	if(!p) return false;
-	free(p);
-	//if((uint)p >= psp) return false;
-	if((uint)p >= msp) return false;
+	if(__microlib_freelist >= msp) return false;
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	uint end = (uint)&__heap_limit;
-	if((uint)p + 0x40 >= end) return false;
+	uint end = SRAM_BASE + (RAMSize << 10);
+	if(__microlib_freelist + 0x40 >= end) return false;
 
 	return true;
 }
