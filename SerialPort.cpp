@@ -259,7 +259,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 	//_Received = handler;
 	//_Param = param;
 
-	int SERIALPORT_IRQns[] = {
+	byte SERIALPORT_IRQns[] = {
 		USART1_IRQn, USART2_IRQn,
 #ifdef STM32F10X
 		USART3_IRQn, UART4_IRQn, UART5_IRQn
