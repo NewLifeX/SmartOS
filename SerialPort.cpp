@@ -135,12 +135,10 @@ ShowLog:
 	p.USART_Parity = _parity;
 	USART_Init(_port, &p);
 
-	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);//串口接收中断配置
+	USART_ITConfig(_port, USART_IT_RXNE, ENABLE); // 串口接收中断配置
+	// 初始化的时候会关闭所有中断，这里不需要单独关闭发送中断
+	//USART_ITConfig(_port, USART_IT_TXE, DISABLE); // 不需要发送中断
 
-    //USART_ClearFlag(_port, USART_FLAG_TC);
-    //USART_ClearFlag(_port, USART_FLAG_RXNE);
-    //USART_ClearITPendingBit(_port, USART_IT_TC);
-    //USART_ClearITPendingBit(_port, USART_IT_RXNE);
 	USART_Cmd(_port, ENABLE);//使能串口
 
 	if(RS485) *RS485 = false;
