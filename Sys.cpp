@@ -69,11 +69,13 @@ bool TSys::CheckMemory()
 {
 	uint msp = __get_MSP();
 
-	if(__microlib_freelist >= msp) return false;
+	//if(__microlib_freelist >= msp) return false;
+	assert_param(__microlib_freelist + 0x40 < msp);
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
 	uint end = SRAM_BASE + (RAMSize << 10);
-	if(__microlib_freelist + 0x40 >= end) return false;
+	//if(__microlib_freelist + 0x40 >= end) return false;
+	assert_param(__microlib_freelist + 0x40 < end);
 
 	return true;
 }

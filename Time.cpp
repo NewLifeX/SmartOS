@@ -49,8 +49,6 @@ void TTime::Init()
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
-	assert_param(Sys.CheckMemory());
-
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
@@ -93,6 +91,10 @@ ulong TTime::CurrentTicks()
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
 		Ticks += SysTick->LOAD;
+		// 内存检查
+#if DEBUG
+		Sys.CheckMemory();
+#endif
 	}
 
 	return Ticks + value;

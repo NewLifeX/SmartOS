@@ -228,6 +228,11 @@ void UserHandler()
 	assert_param(num < VectorySize);
 	assert_param(Interrupt.Vectors[num]);
 
+	// 内存检查
+#if DEBUG
+	Sys.CheckMemory();
+#endif
+
     // 找到应用层中断委托并调用
     InterruptCallback isr = (InterruptCallback)Interrupt.Vectors[num];
     void* param = (void*)Interrupt.Params[num];
