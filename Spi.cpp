@@ -36,6 +36,12 @@ Spi::Spi(int spi, uint speedHz, bool useNss)
 	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
 	memcpy(Pins, ps, sizeof(Pins));
 
+	// 为了安全，必须先设置私有成员默认值
+	_nss = NULL;
+	_clk = NULL;
+	_miso = NULL;
+	_mosi = NULL;
+	
 	if(!useNss) Pins[0] = P0;
 
 	// 自动计算稍低于速度speedHz的分频
