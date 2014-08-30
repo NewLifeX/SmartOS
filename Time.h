@@ -42,8 +42,8 @@ public:
     volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
     uint TicksPerSecond;        // 每秒的时钟滴答数
-    uint TicksPerMillisecond;   // 每毫秒的时钟滴答数
-    uint TicksPerMicrosecond;   // 每微秒的时钟滴答数
+    ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
+    byte TicksPerMicrosecond;   // 每微秒的时钟滴答数
 
     TTime();
     virtual ~TTime();

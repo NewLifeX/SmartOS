@@ -25,6 +25,7 @@ void TTime::Init()
 	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
+	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
 	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
 	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
@@ -113,7 +114,7 @@ void TTime::Sleep(uint us)
     SmartIRQ irq(true);
 
 	// 时钟滴答需要采用UINT64
-    ulong maxDiff = us * TicksPerMicrosecond;
+    ulong maxDiff = (ulong)us * TicksPerMicrosecond;
     ulong current = CurrentTicks();
 
 	// 减去误差指令周期，在获取当前时间以后多了几个指令
@@ -133,14 +134,16 @@ void TTime::Sleep(uint us)
 // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
 ulong TTime::NewTicks(uint us)
 {
-	return CurrentTicks() + (ulong)us * TicksPerSecond / 1000000;
+	return CurrentTicks() + (ulong)us * TicksPerMicrosecond;
 }
 
 // 当前微秒数
 ulong TTime::Current()
 {
 	// 为了精度，这里没有直接除TicksPerMicrosecond
-	return CurrentTicks() * 1000000 / TicksPerSecond;
+	//return CurrentTicks() * 1000000 / TicksPerSecond;
+	// 上面的计算方式会导致溢出
+	return CurrentTicks() / TicksPerMicrosecond;
 }
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
