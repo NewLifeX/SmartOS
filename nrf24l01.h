@@ -19,6 +19,7 @@ private:
     byte WriteReg(byte reg, byte dat);
 
 	bool WaitForIRQ();
+	void AddError();
 
     void CEUp();
     void CEDown();
@@ -33,6 +34,8 @@ public:
 	bool AutoAnswer;// 自动应答，默认启用
 	byte Retry;		// 重试次数，最大15次
 	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
+	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
+	ushort Error;		// 错误次数，超过最大错误次数则自动重置
 
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();

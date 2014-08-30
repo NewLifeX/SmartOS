@@ -73,8 +73,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	Retry = 15;
 	RetryPeriod = 500;	// 500us
 
-	//_Received = NULL;
-	//_Param = NULL;
+	MaxError = 10;
+	Error = 0;
 
     WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
@@ -310,6 +310,8 @@ bool NRF24L01::OnOpen()
 	// 检查并打开Spi
 	_spi->Open();
 
+	Error = 0;
+
 	//return Check() && Config() && Check();
 	// 配置完成以后，无需再次检查
 	return Check() && Config();
@@ -336,7 +338,11 @@ uint NRF24L01::OnRead(byte *data, uint len)
 
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
-	if(Status == 0xFF) return 0;
+	if(Status == 0xFF)
+	{
+		AddError();
+		return 0;
+	}
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
@@ -369,7 +375,12 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	while(ticks > Time.CurrentTicks())
 	{
 		Status = ReadReg(STATUS);
-		if(Status == 0xFF) return false;
+		if(Status == 0xFF)
+		{
+			AddError();
+			return false;
+		}
+		
 		RF_STATUS st;
 		st.Init(Status);
 
@@ -380,6 +391,9 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 			rs = st.TX_DS;
+			
+			if(!st.TX_DS && st.MAX_RT) AddError();
+			
 			break;
 		}
 	}
@@ -401,6 +415,16 @@ bool NRF24L01::WaitForIRQ()
 	debug_printf("NRF24L01::WaitForIRQ Timeout %dms\r\n", Timeout);
 
 	return false;
+}
+
+void NRF24L01::AddError()
+{
+	Error++;
+	if(MaxError > 0 && Error >= MaxError)
+	{
+		Close();
+		Open();
+	}
 }
 
 void NRF24L01::CEUp()
