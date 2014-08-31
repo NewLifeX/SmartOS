@@ -13,7 +13,7 @@ template<typename T, int array_size>
 struct array
 {
     T Arr[array_size];
-    
+
     int Count() { return array_size; }
 
     //List<T> operator=(array arr) { return List<T>(arr.Arr, array_size); }
@@ -24,13 +24,14 @@ template<typename T>
 class List
 {
 public:
-    List() { _count = _total = 0; }
-    List(int size = 4)
+    //List() { _count = _total = 0; }
+    List(int size = 0)
     {
         _count = 0;
         _total = size;
-        arr = new T[size];
+        arr = !size ? NULL : new T[size];
     }
+
     List(T* items, uint count)
     {
         arr = new T[count];
@@ -45,14 +46,16 @@ public:
 
     ~List() { if(arr) delete[] arr; arr = NULL; }
 
-    void Add(T item)
+	// 添加单个元素
+    void Add(const T& item)
     {
         // 检查大小
         CheckSize();
-        
+
         arr[_count++] = item;
     }
-    
+
+	// 添加多个元素
     void Add(T* items, int count)
     {
         int size = _count + count;
@@ -63,6 +66,35 @@ public:
             arr[_count++] = *items++;
         }
     }
+
+	// 查找元素
+	int Find(const T& item)
+	{
+        for(int i=0; i<_count; i++)
+        {
+            if(arr[i] == item) return i;
+        }
+
+		return -1;
+	}
+
+	// 删除指定位置元素
+	void RemoveAt(int index)
+	{
+		if(_count <= 0 || index >= _count) return;
+
+		// 复制元素
+		if(index < _count - 1) memcpy(&arr[index + 1], &arr[index], (_count - index - 1) * sizeof(T));
+	}
+
+	// 删除指定元素
+	int Remove(const T& item)
+	{
+		int index = Find(item);
+		if(index >= 0) RemoveAt(index);
+
+		return index;
+	}
 
     T* ToArray()
     {
@@ -83,30 +115,30 @@ public:
     T* operator=(List list) { return list.ToArray(); }
 
 private:
-    T* arr;
-    uint _count;
-    uint _total;
+    T* arr;		// 存储数据的数组
+    uint _count;// 拥有实际元素个数
+    uint _total;// 可容纳元素总数
 
     void ChangeSize(int newSize)
     {
         if(_total == newSize) return;
-        
+
         T* arr2 = new T[newSize];
         if(arr)
         {
             // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
             if(newSize < _total)
-                memcpy(arr, arr2, newSize);
+                memcpy(arr, arr2, newSize * sizeof(T));
             else
             {
-                memcpy(arr, arr2, _total);
-                memset(arr2 + _total, newSize - _total);
+                memcpy(arr, arr2, _total * sizeof(T));
+                memset(arr2 + _total, (newSize - _total) * sizeof(T));
             }
             delete[] arr;
         }
         arr = arr2;
     }
-    
+
     void CheckSize()
     {
         // 如果数组空间已用完，则两倍扩容
