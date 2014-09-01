@@ -10,18 +10,45 @@
 
 // 定长数组模版
 template<typename T, int array_size>
-struct array
+struct Array
 {
     T Arr[array_size];
+	int _Count;
+	T Default;
 
-    int Count() { return array_size; }
+    int Count() { return _Count; }
+    int Max() { return array_size; }
 
+	void Init()
+	{
+		_Count = 0;
+		Default = 0x00;
+		memset(Arr, 0x00, array_size * sizeof(T));
+	}
+	
+	int Add(T item)
+	{
+		// 找到空闲位放置
+		for(int i=0; i<array_size; i++)
+		{
+			if(Arr[i] == Default)
+			{
+				Arr[i] = item;
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	void Remove(T item)
+	{
+	}
     //List<T> operator=(array arr) { return List<T>(arr.Arr, array_size); }
 };
 
 // 变长列表模版
 template<typename T>
-class List
+__packed class List
 {
 public:
     //List() { _count = _total = 0; }
@@ -29,7 +56,12 @@ public:
     {
         _count = 0;
         _total = size;
-        arr = !size ? NULL : new T[size];
+		arr = NULL;
+		if(size)
+		{
+			arr = new T[size];
+			memset(arr, 0, size * sizeof(T));
+		}
     }
 
     List(T* items, uint count)
@@ -127,12 +159,12 @@ private:
         if(arr)
         {
             // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
-            if(newSize < _total)
-                memcpy(arr, arr2, newSize * sizeof(T));
+            if(newSize < _count)
+                memcpy(arr2, arr, newSize * sizeof(T));
             else
             {
-                memcpy(arr, arr2, _total * sizeof(T));
-                memset(arr2 + _total, (newSize - _total) * sizeof(T));
+                memcpy(arr2, arr, _count * sizeof(T));
+                memset(&arr2[_count], 0, (newSize - _count) * sizeof(T));
             }
             delete[] arr;
         }

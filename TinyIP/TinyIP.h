@@ -7,33 +7,6 @@
 #include "Net\Ethernet.h"
 #include "Net\Net.h"
 
-// 默认打开所有模块，用户需要根据自己需要在编译器设置关闭条件，比如TinyIP_DHCP=0
-#ifndef TinyIP_ICMP
-	#define TinyIP_ICMP 1
-#endif
-
-#ifndef TinyIP_TCP
-	#define TinyIP_TCP 1
-#endif
-
-#ifndef TinyIP_UDP
-	#define TinyIP_UDP 1
-#endif
-
-#ifndef TinyIP_DHCP
-	#define TinyIP_DHCP 1
-#endif
-
-/*#ifndef TinyIP_DNS
-	#define TinyIP_DNS 1
-#endif*/
-
-// DHCP和DNS需要UDP
-#if TinyIP_DHCP || TinyIP_DNS
-	#undef TinyIP_UDP
-	#define TinyIP_UDP 1
-#endif
-
 class TinyIP;
 
 class Socket
@@ -151,6 +124,26 @@ public:
 	void Send(byte* buf, uint len, bool checksum = true);
 };
 
+// DHCP协议
+class Dhcp : UdpSocket
+{
+private:
+	uint dhcp_id;
+	void Discover(DHCP_HEADER* dhcp);
+	void Request(DHCP_HEADER* dhcp);
+	void PareOption(byte* buf, uint len);
+
+	void SendDhcp(DHCP_HEADER* dhcp, uint len);
+
+public:
+	//bool IPIsReady;
+	//bool UseDHCP;
+
+	Dhcp(TinyIP* tip) : UdpSocket(tip) { Type = IP_UDP; }
+
+	bool Start();
+};
+
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
@@ -164,12 +157,6 @@ public:
 	uint Fetch(byte* buf = NULL, uint len = 0);	// 循环调度的任务，捕获数据包，返回长度
 	void Process(byte* buf, uint len);	// 处理数据包
 
-	uint dhcp_id;
-	void DHCPDiscover();
-	void DHCPRequest(byte* buf);
-	void PareOption(byte* buf, int len);
-
-	void SendDhcp(byte* buf, uint len);
 
 public:
     byte IP[4];		// 本地IP地址
@@ -190,18 +177,14 @@ public:
 	// Arp套接字
 	ArpSocket* Arp;
 	// 套接字列表。套接字根据类型来识别
+	//Socket* Sockets[0x20];
+	//uint SocketCount;
 	List<Socket*> Sockets;
-
-#if TinyIP_DHCP
-	bool IPIsReady;
-	bool UseDHCP;
-
-	void DHCPStart();
-#endif
 
     TinyIP(ITransport* port, byte ip[4] = NULL, byte mac[6] = NULL);
     virtual ~TinyIP();
 
+	bool Open();
 	bool Init();
 	static void ShowIP(const byte* ip);
 	static void ShowMac(const byte* mac);
@@ -211,15 +194,6 @@ public:
 	void SendIP(IP_TYPE type, byte* buf, uint len);
 	bool IsMyIP(const byte ip[4]);	// 是否发给我的IP地址
 	bool IsBroadcast(const byte ip[4]);	// 是否广播地址
-
-#if TinyIP_ICMP
-#endif
-
-#if TinyIP_UDP
-#endif
-
-#if TinyIP_TCP
-#endif
 };
 
 /*

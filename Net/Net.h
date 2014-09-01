@@ -33,7 +33,9 @@ typedef struct _ETH_HEADER
 	unsigned char SrcMac[6]; //源mac地址
 	ETH_TYPE Type; //以太网类型
 
-	byte* Next() { return (byte*)this + sizeof(this[0]); }
+	uint Size() { return sizeof(this[0]); }
+	uint Offset() { return Size(); }
+	byte* Next() { return (byte*)this + Size(); }
 }ETH_HEADER;
 
 // IP协议类型
@@ -73,13 +75,15 @@ typedef struct _IP_HEADER
 		Version = 4;
 		Length = sizeof(this[0]) >> 2;
 		Protocol = type;
-		
+
 		if(recursion) Prev()->Type = ETH_IP;
 	}
 
-	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(this[0])); }
+	uint Size() { return (Length <= 5) ? sizeof(this[0]) : (Length << 2); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(ETH_HEADER)); }
 	//byte* Next() { return (byte*)this + sizeof(&this[0]); }
-	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
+	byte* Next() { return (byte*)this + Size(); }
 }IP_HEADER;
 
 typedef enum
@@ -116,12 +120,14 @@ typedef struct _TCP_HEADER
 
 	void Init(bool recursion = false)
 	{
-		
+
 		if(recursion) Prev()->Init(IP_TCP, recursion);
 	}
 
-	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
-	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
+	uint Size() { return (Length <= 5) ? sizeof(this[0]) : (Length << 2); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
+	byte* Next() { return (byte*)this + Size(); }
 }TCP_HEADER;
 
 //UDP头部，总长度8字节，偏移34=0x22
@@ -135,12 +141,14 @@ typedef struct _UDP_HEADER
 	void Init(bool recursion = false)
 	{
 		Length = sizeof(this[0]);
-		
+
 		if(recursion) Prev()->Init(IP_UDP, recursion);
 	}
 
-	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
-	byte* Next() { return (byte*)this + sizeof(this[0]); }
+	uint Size() { return sizeof(this[0]); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
+	byte* Next() { return (byte*)this + Size(); }
 }UDP_HEADER;
 
 //ICMP头部，总长度8字节，偏移34=0x22
@@ -154,12 +162,14 @@ typedef struct _ICMP_HEADER
 
 	void Init(bool recursion = false)
 	{
-		
+
 		if(recursion) Prev()->Init(IP_ICMP, recursion);
 	}
 
-	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
-	byte* Next() { return (byte*)this + sizeof(this[0]); }
+	uint Size() { return sizeof(this[0]); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
+	byte* Next() { return (byte*)this + Size(); }
 }ICMP_HEADER;
 
 // ARP头部，总长度28=0x1C字节，偏移14=0x0E，可能加18字节填充
@@ -186,8 +196,10 @@ typedef struct _ARP_HEADER
 		if(recursion) Prev()->Type = ETH_ARP;
 	}
 
-	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(this[0])); }
-	byte* Next() { return (byte*)this + sizeof(this[0]); }
+	uint Size() { return sizeof(this[0]); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(ETH_HEADER)); }
+	byte* Next() { return (byte*)this + Size(); }
 }ARP_HEADER;
 
 // DHCP头部，总长度240=0xF0字节，偏移42=0x2A，后面可选数据偏移282=0x11A
@@ -209,8 +221,26 @@ typedef struct _DHCP_HEADER
 	unsigned char BootFile[128];	// 启动文件名
 	unsigned int Magic;		// 幻数0x63825363，小端0x63538263
 
-	UDP_HEADER* Prev() { return (UDP_HEADER*)((byte*)this - sizeof(this[0])); }
-	byte* Next() { return (byte*)this + sizeof(this[0]); }
+	void Init(uint dhcpid, bool recursion = false)
+	{
+		// 为了安全，清空一次
+		memset(this, 0, sizeof(this[0]));
+
+		MsgType = 1;
+		HardType = 1;
+		HardLength = 6;
+		Hops = 0;
+		TransID = __REV(dhcpid);
+		Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
+		SetMagic();
+
+		if(recursion) Prev()->Init(recursion);
+	}
+
+	uint Size() { return sizeof(this[0]); }
+	uint Offset() { return Prev()->Offset() + Size(); }
+	UDP_HEADER* Prev() { return (UDP_HEADER*)((byte*)this - sizeof(UDP_HEADER)); }
+	byte* Next() { return (byte*)this + Size(); }
 
 	void SetMagic() { Magic = 0x63538263; }
 	bool Valid() { return Magic == 0x63538263; }
