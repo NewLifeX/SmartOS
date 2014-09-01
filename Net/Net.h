@@ -330,7 +330,7 @@ typedef struct _DHCP_OPT
 }DHCP_OPT;
 
 // 网络封包机
-class NetPacker
+/*class NetPacker
 {
 private:
 	byte* Buffer;
@@ -488,6 +488,6 @@ public:
 
 		return UDP;
 	}
-};
+};*/
 
 #endif

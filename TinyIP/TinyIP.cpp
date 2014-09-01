@@ -40,20 +40,20 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 	EnableBroadcast = true;
 
 	//memset(Sockets, 0x00, ArrayLength(Sockets) * sizeof(Socket*));
-	
-	_net = NULL;
+
+	//_net = NULL;
 }
 
 TinyIP::~TinyIP()
 {
 	if(_port) delete _port;
     _port = NULL;
-	
+
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
 
-	if(_net) delete _net;
-	_net = NULL;
+	/*if(_net) delete _net;
+	_net = NULL;*/
 }
 
 // 循环调度的任务
@@ -61,11 +61,11 @@ uint TinyIP::Fetch(byte* buf, uint len)
 {
 	if(!buf) buf = Buffer;
 	if(!len) len = BufferSize;
-	
+
 	// 获取缓冲区的包
 	len = _port->Read(buf, len);
 	// 如果缓冲器里面没有数据则转入下一次循环
-	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
+	if(len < sizeof(ETH_HEADER)/* || !_net->Unpack(len)*/) return 0;
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
@@ -96,8 +96,7 @@ void TinyIP::Process(byte* buf, uint len)
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
 	// 计算负载数据的长度
-	len -= sizeof(ETH_HEADER);
-	//buf += sizeof(ETH_HEADER);
+	len -= eth->Size();
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -108,7 +107,7 @@ void TinyIP::Process(byte* buf, uint len)
 		return;
 	}
 
-	IP_HEADER* ip = _net->IP;
+	IP_HEADER* ip = (IP_HEADER*)eth->Next();
 	// 是否发给本机。注意memcmp相等返回0
 	if(!ip || !IsMyIP(ip->DestIP)) return;
 
@@ -136,20 +135,6 @@ void TinyIP::Process(byte* buf, uint len)
 	len = size;
 	buf += (ip->Length << 2);
 
-	/*for(int i=0, k=0; i < ArrayLength(Sockets) && k < SocketCount; i++)
-	{
-		Socket* socket = Sockets[i];
-		if(socket)
-		{
-			// 必须类型匹配
-			if(socket->Type == ip->Protocol)
-			{
-				// 如果处理成功，则中断遍历
-				if(socket->Process(buf, len)) return;
-			}
-			k++;
-		}
-	}*/
 	for(int i=0; i < Sockets.Count(); i++)
 	{
 		Socket* socket = Sockets[i];
@@ -163,28 +148,6 @@ void TinyIP::Process(byte* buf, uint len)
 			}
 		}
 	}
-	/*
-#if TinyIP_ICMP
-	if(ip->Protocol == IP_ICMP)
-	{
-		ProcessICMP(buf, len);
-		return;
-	}
-#endif
-#if TinyIP_TCP
-	if (ip->Protocol == IP_TCP)
-	{
-		ProcessTcp(buf, len);
-		return;
-	}
-#endif
-#if TinyIP_UDP
-	if (ip->Protocol == IP_UDP)
-	{
-		ProcessUdp(buf, len);
-		return;
-	}
-#endif*/
 
 #if NET_DEBUG
 	debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
@@ -240,7 +203,7 @@ bool TinyIP::Init()
 		assert_param(Sys.CheckMemory());
 
 		// 首次使用时初始化缓冲区
-		if(!_net) _net = new NetPacker(Buffer);
+		//if(!_net) _net = new NetPacker(Buffer);
 	}
 
 	if(!Open()) return false;
@@ -272,7 +235,7 @@ bool TinyIP::Init()
 
 void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 {
-	ETH_HEADER* eth = _net->Eth;
+	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
@@ -286,13 +249,13 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	Sys.ShowHex((byte*)eth, len, '-');
 	debug_printf("\r\n");*/
 
-	assert_param((byte*)eth == Buffer);
+	//assert_param((byte*)eth == Buffer);
 	_port->Write((byte*)eth, len);
 }
 
 void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 {
-	IP_HEADER* ip = _net->IP;
+	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
@@ -301,7 +264,7 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 
 	ip->Version = 4;
 	//ip->TypeOfService = 0;
-	ip->Length = sizeof(IP_HEADER) / 4;
+	ip->Length = sizeof(IP_HEADER) / 4;	// 暂时不考虑附加数据
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
 	ip->Flags = 0x40;
 	ip->FragmentOffset = 0;
@@ -312,15 +275,15 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	ip->Checksum = 0;
 	ip->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
 
-	SendEthernet(ETH_IP, buf, sizeof(IP_HEADER) + len);
+	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
 bool IcmpSocket::Process(byte* buf, uint len)
 {
 	if(len < sizeof(ICMP_HEADER)) return false;
-	len -= sizeof(ICMP_HEADER);
 
 	ICMP_HEADER* icmp = (ICMP_HEADER*)buf;
+	len -= icmp->Size();
 	//if(!icmp) return;
 	//assert_param(_net->Payload == icmp->Next());
 
@@ -364,8 +327,8 @@ bool IcmpSocket::Process(byte* buf, uint len)
 	icmp->Checksum += 0x08;
 
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
-    Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + len);
-	
+    Tip->SendIP(IP_ICMP, (byte*)icmp, icmp->Size() + len);
+
 	return true;
 }
 
@@ -492,7 +455,7 @@ bool TcpSocket::Process(byte* buf, uint len)
 		Head(1, true, false);
 
 		// 需要用到MSS，所以采用4个字节的可选段
-		Send(buf, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+		Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 
 		return true;
 	}
@@ -505,7 +468,7 @@ bool TcpSocket::Process(byte* buf, uint len)
 			if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
 				Head(1, false, true);
-				Send(buf, 0, TCP_FLAGS_ACK);
+				Send(tcp, 0, TCP_FLAGS_ACK);
 			}
 			return true;
 		}
@@ -518,7 +481,7 @@ bool TcpSocket::Process(byte* buf, uint len)
 			{
 				// 发送ACK，通知已收到
 				Head(1, false, true);
-				Send(buf, 0, TCP_FLAGS_ACK);
+				Send(tcp, 0, TCP_FLAGS_ACK);
 				return true;
 			}
 		}
@@ -540,7 +503,7 @@ bool TcpSocket::Process(byte* buf, uint len)
 		//TcpSend(buf, len);
 
 		// 响应Ack和发送数据一步到位
-		Send(buf, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+		Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
@@ -550,18 +513,16 @@ bool TcpSocket::Process(byte* buf, uint len)
 		if(tcp->Flags & TCP_FLAGS_FIN)
 		{
 			Head(1, false, true);
-			Close(buf, 0);
+			//Close(tcp, 0);
+			Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 		}
 	}
-	
+
 	return true;
 }
 
-void TcpSocket::Send(byte* buf, uint len, byte flags)
+void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)buf;
-	assert_param(tcp);
-
 	tcp->SrcPort = __REV16(Port);
 	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
@@ -572,7 +533,7 @@ void TcpSocket::Send(byte* buf, uint len, byte flags)
 	tcp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
 	//assert_param(_net->IP);
-	Tip->SendIP(IP_TCP, buf, sizeof(TCP_HEADER) + len);
+	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
 }
 
 void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
@@ -609,19 +570,35 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
     }
 }
 
-void TcpSocket::Ack(byte* buf, uint dlen)
+void TcpSocket::Ack(uint len)
 {
-	Send(buf, dlen, TCP_FLAGS_ACK | TCP_FLAGS_PUSH /*| TCP_FLAGS_FIN*/);
+	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	tcp->Init(true);
+	Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
-void TcpSocket::Close(byte* buf, uint size)
+void TcpSocket::Close()
 {
-	Send(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	tcp->Init(true);
+	Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-void TcpSocket::Send(byte* buf, uint size)
+void TcpSocket::Send(byte* buf, uint len)
 {
-	Send(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	tcp->Init(true);
+	byte* end = Tip->Buffer + Tip->BufferSize;
+	if(buf < tcp->Next() || buf >= end)
+	{
+		// 复制数据，确保数据不会溢出
+		uint len2 = Tip->BufferSize - tcp->Offset() - tcp->Size();
+		assert_param(len <= len2);
+
+		memcpy(tcp->Next(), buf, len);
+	}
+
+	Send(tcp, len, TCP_FLAGS_PUSH);
 }
 
 bool UdpSocket::Process(byte* buf, uint len)
@@ -666,13 +643,13 @@ bool UdpSocket::Process(byte* buf, uint len)
 	memcpy((byte*)udp + sizeof(UDP_HEADER), data, len);
 
 	Send(buf, len, false);
-	
+
 	return true;
 }
 
 void UdpSocket::Send(byte* buf, uint len, bool checksum)
 {
-	UDP_HEADER* udp = (UDP_HEADER*)buf;
+	UDP_HEADER* udp = (UDP_HEADER*)(buf - sizeof(UDP_HEADER));
 	assert_param(udp);
 
 	udp->SrcPort = __REV16(Tip->Port);
@@ -684,7 +661,7 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 	if(checksum) udp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	//assert_param(_net->IP);
-	Tip->SendIP(IP_UDP, buf, sizeof(UDP_HEADER) + len);
+	Tip->SendIP(IP_UDP, (byte*)udp, sizeof(UDP_HEADER) + len);
 }
 
 void TinyIP::ShowIP(const byte* ip)
@@ -921,7 +898,8 @@ bool Dhcp::Start()
 		if(__REV16(udp->DestPort) != 68) continue;
 
 		// DHCP附加数据的长度
-		len -= dhcp->Offset() + dhcp->Size();
+		//len -= dhcp->Offset() + dhcp->Size();
+		len -= dhcp->Next() - buf;
 		if(len <= 0) continue;
 
 		if(!dhcp->Valid())continue;
@@ -934,7 +912,7 @@ bool Dhcp::Start()
 
 		if(opt->Data == DHCP_TYPE_Offer)
 		{
-			if(__REV(dhcp->TransID) == dhcp_id)
+			if(__REV(dhcp->TransID) == dhcpid)
 			{
 				memcpy(Tip->IP, dhcp->YourIP, 4);
 				PareOption(dhcp->Next(), len);
@@ -1000,7 +978,7 @@ bool Dhcp::Start()
 			debug_printf("DHCP Unkown Type=%d\r\n", opt->Data);
 #endif
 	}
-	
+
 	return false;
 }
 #endif
@@ -1111,7 +1089,7 @@ bool ArpSocket::Process(byte* buf, uint len)
 #endif
 
 	Tip->SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
-	
+
 	return true;
 }
 
