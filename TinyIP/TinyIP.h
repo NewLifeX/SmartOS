@@ -159,7 +159,7 @@ public:
 	byte* Buffer; // 缓冲区
 
 	static void Work(void* param);	// 任务函数
-	uint Fetch();	// 循环调度的任务，捕获数据包，返回长度
+	uint Fetch(byte* buf = NULL, uint len = 0);	// 循环调度的任务，捕获数据包，返回长度
 	void Process(byte* buf, uint len);	// 处理数据包
 
 	uint dhcp_id;

@@ -55,11 +55,13 @@ TinyIP::~TinyIP()
 }
 
 // 循环调度的任务
-uint TinyIP::Fetch()
+uint TinyIP::Fetch(byte* buf, uint len)
 {
-	byte* buf = Buffer;
+	if(!buf) buf = Buffer;
+	if(!len) len = BufferSize;
+	
 	// 获取缓冲区的包
-	uint len = _port->Read(buf, BufferSize);
+	len = _port->Read(buf, len);
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER) || !_net->Unpack(len)) return 0;
 
@@ -364,6 +366,13 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 {
 	//byte* buf = Buffer;
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
+	uint bufSize = ArrayLength(buf);
+
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+	ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
+	icmp->Init(true);
+
 	uint count = 0;
 
 	const byte* mac = Tip->Arp->Resolve(ip);
@@ -380,7 +389,6 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	memcpy(Tip->RemoteMac, mac, 6);
 	memcpy(Tip->RemoteIP, ip, 4);
 
-	ICMP_HEADER* icmp = (ICMP_HEADER*)buf;
 	icmp->Type = 8;
 	icmp->Code = 0;
 
@@ -401,30 +409,26 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	icmp->Checksum = 0;
 	icmp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
 
-	#if NET_DEBUG
+#if NET_DEBUG
 	debug_printf("Ping ");
 	Tip->ShowIP(ip);
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
 #endif
 	Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
 
-	//NetPacker* _net = Tip->_net;
 	// 总等待时间
 	ulong end = Time.NewTicks(1 * 1000000);
 	while(end > Time.CurrentTicks())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Tip->Fetch();
+		uint len = Tip->Fetch(buf, bufSize);
 		if(!len) continue;
 
-		ETH_HEADER* eth = (ETH_HEADER*)Tip->Buffer;
-		IP_HEADER* ip = (IP_HEADER*)eth->Next();
-		ICMP_HEADER* icmp = (ICMP_HEADER*)ip->Next();
-		//if(_net->IP && _net->ICMP)
+		if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
 		{
 			if(icmp->Identifier == id && icmp->Sequence == seq
-			&& memcmp(ip->DestIP, Tip->IP, 4) == 0
-			&& memcmp(ip->SrcIP, ip, 4) == 0)
+			&& memcmp(_ip->DestIP, Tip->IP, 4) == 0
+			&& memcmp(_ip->SrcIP, ip, 4) == 0)
 			{
 				count++;
 				break;
@@ -432,7 +436,7 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 		}
 
 		// 用不到数据包交由系统处理
-		Process(Tip->Buffer, len);
+		Process(buf, len);
 	}
 
 	return count;
@@ -602,12 +606,12 @@ void TcpSocket::Ack(byte* buf, uint dlen)
 	Send(buf, dlen, TCP_FLAGS_ACK | TCP_FLAGS_PUSH /*| TCP_FLAGS_FIN*/);
 }
 
-void TcpSocket::Close(byte* buf, uint size, int sock)
+void TcpSocket::Close(byte* buf, uint size)
 {
 	Send(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-void TcpSocket::Send(byte* buf, uint size, int sock)
+void TcpSocket::Send(byte* buf, uint size)
 {
 	Send(buf, size, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
@@ -636,7 +640,7 @@ bool UdpSocket::Process(byte* buf, uint len)
 	else
 	{
 #if NET_DEBUG
-		IP_HEADER* ip = _net->IP;
+		IP_HEADER* ip = udp->Prev();
 		debug_printf("UDP ");
 		Tip->ShowIP(ip->SrcIP);
 		debug_printf(":%d => ", Tip->RemotePort);
@@ -653,7 +657,7 @@ bool UdpSocket::Process(byte* buf, uint len)
 	//memcpy((byte*)udp + sizeof(UDP_HEADER), data, _net->PayloadLength);
 	memcpy((byte*)udp + sizeof(UDP_HEADER), data, len);
 
-	Send(buf, _net->PayloadLength, false);
+	Send(buf, len, false);
 	
 	return true;
 }
@@ -671,7 +675,7 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 	udp->Checksum = 0;
 	if(checksum) udp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
-	assert_param(_net->IP);
+	//assert_param(_net->IP);
 	Tip->SendIP(IP_UDP, buf, sizeof(UDP_HEADER) + len);
 }
 
@@ -1124,8 +1128,11 @@ bool ArpSocket::Process(byte* buf, uint len)
 const byte* ArpSocket::Request(const byte ip[4], int timeout)
 {
 	//ARP_HEADER* arp = _net->SetARP();
-	byte buf[sizeof(ARP_HEADER)];
-	ARP_HEADER* arp = (ARP_HEADER*)buf;
+	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER)];
+	uint bufSize = ArrayLength(buf);
+
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
 
 	// 构造请求包
 	arp->Option = 0x0100;
@@ -1151,15 +1158,12 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	while(end > Time.CurrentTicks())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Tip->Fetch();
+		uint len = Tip->Fetch(buf, bufSize);
 		if(!len) continue;
 
-		ETH_HEADER* eth = (ETH_HEADER*)buf;
 		// 处理ARP
 		if(eth->Type == ETH_ARP)
 		{
-			ARP_HEADER* arp = _net->ARP;
-
 			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
 			if(memcmp(arp->DestIP, Tip->IP, 4) == 0
 			&& memcmp(arp->SrcIP, ip, 4) == 0

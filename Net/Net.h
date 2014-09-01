@@ -68,6 +68,16 @@ typedef struct _IP_HEADER
 	unsigned char SrcIP[4];		//源IP地址
 	unsigned char DestIP[4];	//目的IP地址
 
+	void Init(IP_TYPE type, bool recursion = false)
+	{
+		Version = 4;
+		Length = sizeof(this[0]) >> 2;
+		Protocol = type;
+		
+		if(recursion) Prev()->Type = ETH_IP;
+	}
+
+	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(this[0])); }
 	//byte* Next() { return (byte*)this + sizeof(&this[0]); }
 	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
 }IP_HEADER;
@@ -104,6 +114,13 @@ typedef struct _TCP_HEADER
 	unsigned short Checksum;     //16位TCP检验和
 	unsigned short urgt_p;      //16为紧急指针
 
+	void Init(bool recursion = false)
+	{
+		
+		if(recursion) Prev()->Init(IP_TCP, recursion);
+	}
+
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
 	byte* Next() { return (byte*)this + ((Length <= 5) ? sizeof(this[0]) : (Length << 2)); }
 }TCP_HEADER;
 
@@ -115,6 +132,14 @@ typedef struct _UDP_HEADER
 	unsigned short Length;      //udp头部长度
 	unsigned short Checksum;  //16位udp检验和
 
+	void Init(bool recursion = false)
+	{
+		Length = sizeof(this[0]);
+		
+		if(recursion) Prev()->Init(IP_UDP, recursion);
+	}
+
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
 	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }UDP_HEADER;
 
@@ -127,6 +152,13 @@ typedef struct _ICMP_HEADER
 	unsigned short Identifier;	//标识，仅用于Ping
 	unsigned short Sequence;	//序列号，仅用于Ping
 
+	void Init(bool recursion = false)
+	{
+		
+		if(recursion) Prev()->Init(IP_ICMP, recursion);
+	}
+
+	IP_HEADER* Prev() { return (IP_HEADER*)((byte*)this - sizeof(this[0])); }
 	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }ICMP_HEADER;
 
@@ -144,6 +176,17 @@ typedef struct _ARP_HEADER
 	unsigned char DestIP[4];	//目的IP地址
 	//unsigned char Padding[18];	// 填充凑够60字节
 
+	void Init(bool recursion = false)
+	{
+		HardType = 0x0100;
+		ProtocolType = 0x08;
+		HardLength = 6;
+		ProtocolLength = 4;
+
+		if(recursion) Prev()->Type = ETH_ARP;
+	}
+
+	ETH_HEADER* Prev() { return (ETH_HEADER*)((byte*)this - sizeof(this[0])); }
 	byte* Next() { return (byte*)this + sizeof(this[0]); }
 }ARP_HEADER;
 
@@ -166,6 +209,7 @@ typedef struct _DHCP_HEADER
 	unsigned char BootFile[128];	// 启动文件名
 	unsigned int Magic;		// 幻数0x63825363，小端0x63538263
 
+	UDP_HEADER* Prev() { return (UDP_HEADER*)((byte*)this - sizeof(this[0])); }
 	byte* Next() { return (byte*)this + sizeof(this[0]); }
 
 	void SetMagic() { Magic = 0x63538263; }
@@ -211,15 +255,15 @@ typedef enum
 	DHCP_TYPE_Inform = 8,
 }DHCP_MSGTYPE;
 
-typedef struct DHCP_OPTDef
+typedef struct _DHCP_OPT
 {
 	DHCP_OPTION Option;// 代码
 	byte Length;	// 长度
 	byte Data;		// 数据
 
-	struct DHCP_OPTDef* Next() { return (struct DHCP_OPTDef*)((byte*)this + 2 + Length); }
+	struct _DHCP_OPT* Next() { return (struct _DHCP_OPT*)((byte*)this + 2 + Length); }
 
-	struct DHCP_OPTDef* SetType(DHCP_MSGTYPE type)
+	struct _DHCP_OPT* SetType(DHCP_MSGTYPE type)
 	{
 		Option = DHCP_OPT_MessageType;
 		Length = 1;
@@ -228,7 +272,7 @@ typedef struct DHCP_OPTDef
 		return this;
 	}
 
-	struct DHCP_OPTDef* SetData(DHCP_OPTION option, byte* buf, uint len)
+	struct _DHCP_OPT* SetData(DHCP_OPTION option, byte* buf, uint len)
 	{
 		Option = option;
 		Length = len;
@@ -237,7 +281,7 @@ typedef struct DHCP_OPTDef
 		return this;
 	}
 
-	struct DHCP_OPTDef* SetClientId(byte* mac, uint len = 6)
+	struct _DHCP_OPT* SetClientId(byte* mac, uint len = 6)
 	{
 		Option = DHCP_OPT_ClientIdentifier;
 		Length = 1 + len;
@@ -247,7 +291,7 @@ typedef struct DHCP_OPTDef
 		return this;
 	}
 
-	struct DHCP_OPTDef* End()
+	struct _DHCP_OPT* End()
 	{
 		Option = DHCP_OPT_End;
 
