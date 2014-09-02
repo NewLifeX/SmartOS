@@ -32,13 +32,26 @@ public:
 private:
 	int _iic;
 	I2C_TypeDef* _IIC;
-
+	
+	/*
+	发送地址时 高位在前   
+	地址上必须带有发送/接收标志  （y位0为发送  1为接收） 
+	10位地址时  1111 0xxy  xxxx xxxx
+	7位地址时	xxxx xxxy
+	*/
+	enum 
+	{
+		ADDR_LEN_10,
+		ADDR_LEN_7,
+	}addressLen;
+	short myAddr;
+	
     int Speed;  // 速度
     int Retry;  // 等待重试次数，默认200
     int Error;  // 错误次数5
 	
 	Pin Pins[2];
-    char _i2c;
+    byte _i2c;
 	AlternatePort* SCL;
 	AlternatePort* SDA;
 

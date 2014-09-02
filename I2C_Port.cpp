@@ -57,7 +57,23 @@ void I2C_Port::Open()
 	
 	I2C_InitTypeDef I2C_InitStruct;
 	I2C_DeInit(_IIC);	// 复位
-	  I2C_InitStruct.I2C_Timing =
+
+//	I2C_Timing
+//	I2C_AnalogFilter
+//	I2C_DigitalFilter
+//	I2C_Mode
+//	I2C_OwnAddress1
+//	I2C_Ack
+//	I2C_AcknowledgedAddress
+	
+	I2C_InitStruct.I2C_AnalogFilter = I2C_AnalogFilter_Disable;	// 关闭滤波器
+//	I2C_InitStruct.I2C_DigitalFilter		// 数字滤波器  不知道怎么设置 跟 cr1 的8-11位有关
+	I2C_InitStruct.I2C_Mode =I2C_Mode_I2C;	// IIC 模式
+//	I2C_InitStruct.I2C_OwnAddress1 
+	I2C_InitStruct.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;	
+	if(addressLen == ADDR_LEN_10)
+		I2C_InitStruct.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_10bit;	
+	
 	I2C_Init(_IIC, & I2C_InitStruct);
 }
 

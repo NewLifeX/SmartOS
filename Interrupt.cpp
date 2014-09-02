@@ -1,4 +1,4 @@
-﻿#include "Interrupt.h"
+#include "Interrupt.h"
 
 // GD32全系列无法把向量表映射到RAM，F103只能映射到Flash别的地方
 #if defined(GD32)// || defined(STM32F4)
