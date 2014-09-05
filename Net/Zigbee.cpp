@@ -7,7 +7,11 @@ Zigbee::Zigbee(ITransport* port, Pin rst)
 	_port = port;
 	
 	_rst = NULL;
-	if(rst != P0) _rst = new OutputPort(rst);
+	if(rst != P0) 
+	{
+		_rst = new OutputPort(rst);
+		Rest();
+	}
 }
 
 Zigbee::~Zigbee()

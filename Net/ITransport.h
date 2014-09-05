@@ -1,4 +1,4 @@
-﻿#ifndef __ITransport_H__
+#ifndef __ITransport_H__
 #define __ITransport_H__
 
 #include "Sys.h"
@@ -49,7 +49,7 @@ public:
 
 		return Opened;
 	}
-
+	
 	// 关闭传输口
 	void Close()
 	{
@@ -76,7 +76,8 @@ public:
 
 		return OnRead(buf, len);
 	}
-
+	
+	
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = NULL)
 	{

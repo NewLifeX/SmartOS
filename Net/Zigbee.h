@@ -1,4 +1,4 @@
-﻿#ifndef __Zigbee_H__
+#ifndef __Zigbee_H__
 #define __Zigbee_H__
 
 #include "Sys.h"
@@ -25,6 +25,15 @@ public:
 		_port->Register(OnPortReceive, this);
 	}
 
+	virtual void Rest(void)
+	{
+		*_rst=true;
+		Sys.Delay(100);
+		*_rst=false;
+		Sys.Delay(100);
+		*_rst=true;
+	}
+	
 protected:
 	virtual bool OnOpen() { return _port->Open(); }
     virtual void OnClose() { _port->Close(); }
