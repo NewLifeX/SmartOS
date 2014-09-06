@@ -39,7 +39,7 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 _force_inline void InitHeapStack(uint ramSize)
 {
-	uint p = __get_MSP();
+	uint* p = (uint*)__get_MSP();
 
 	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
 	uint top = SRAM_BASE + (ramSize << 10);
@@ -49,22 +49,22 @@ _force_inline void InitHeapStack(uint ramSize)
 
 	// 这个时候还没有初始化堆，我们来设置堆到内存最大值，让堆栈共用RAM剩下全部
 	//__microlib_freelist
-	p = (uint)&__heap_base + 4;
+	p = &__heap_base + 1;
 	if(!__microlib_freelist_initialised)
 	{
 		//*(uint*)&__heap_limit = top;
 		// 堆顶地址__heap_limit被编译固化到malloc函数附近，无法修改。只能这里负责初始化整个堆
-		*(uint*)&__microlib_freelist = p;	// 空闲链表指针
+		__microlib_freelist = (uint)p;	// 空闲链表指针
 		// 设置堆大小，直达天花板
-		*(uint*)p = (top - p) & 0xFFFFFFF8;	// 空闲链表剩余大小
-		*(uint*)(p + 4) = 0;
+		*p = (top - (uint)p) & 0xFFFFFFF8;	// 空闲链表剩余大小
+		*(p + 1) = 0;
 
-		*(uint*)&__microlib_freelist_initialised = 1;
+		__microlib_freelist_initialised = 1;
 	}
 	else
 	{
 		// 如果已经初始化堆，则直接增加大小即可
-		*(uint*)p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
+		*p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
 	}
 }
 
