@@ -22,6 +22,7 @@ private:
 	void* _Param;
 public:
 	string Name;
+
 	Button(Pin key, Pin led = P0, Pin relay = P0);
 	~Button();
 
