@@ -14,18 +14,20 @@ void Button::Init()
 
 Button::Button(Pin key, Pin led, Pin relay)
 {
+	Init();
+
 	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
 
 	if(led != P0) Led = new OutputPort(led);
 	if(relay != P0) Relay = new OutputPort(relay);
-
-	//SetValue(false);
 }
 
 Button::Button(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 {
+	Init();
+
 	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
