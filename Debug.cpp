@@ -77,6 +77,8 @@ void assert_failed(uint8_t* file, uint32_t line)
     ex: debug_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
     /*if(_printf_sp) */debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
+	if(Sys.OnStop) Sys.OnStop();
+
     /* Infinite loop */
     while (1) { }
 }

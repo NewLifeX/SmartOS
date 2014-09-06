@@ -242,7 +242,7 @@ void UserHandler()
 void FaultHandler()
 {
     uint exception = GetIPSR();
-    if (exception) {
+    /*if (exception) {
         debug_printf("EXCEPTION 0x%02x:\r\n", exception);
     } else {
         debug_printf("ERROR:\r\n");
@@ -250,7 +250,11 @@ void FaultHandler()
 
 #if DEBUG
 	ShowFault(exception);
-#endif
+#endif*/
 
-    while(true);
+	if(!Sys.OnError || Sys.OnError(exception))
+	{
+		if(Sys.OnStop) Sys.OnStop();
+		while(true);
+	}
 }

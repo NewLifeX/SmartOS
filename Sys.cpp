@@ -92,7 +92,21 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
-void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
+bool SysError(uint code)
+{
+	debug_printf("系统错误！0x%02x\r\n", code);
+
+#if DEBUG
+	ShowFault(code);
+#endif
+
+    return false;
+}
+
+void SysStop()
+{
+	debug_printf("系统停止！\r\n");
+}
 
 TSys::TSys()
 {
@@ -162,9 +176,11 @@ TSys::TSys()
 	InitHeapStack(RAMSize);
 
 #if DEBUG
-    OnError = ShowError;
+    OnError = SysError;
+    OnStop = SysStop;
 #else
     OnError = 0;
+    OnStop = 0;
 #endif
 
 #ifdef STM32F10X
@@ -181,6 +197,7 @@ TSys::TSys()
 
 TSys::~TSys()
 {
+	if(OnStop) OnStop();
 }
 
 void TSys::Init(void)

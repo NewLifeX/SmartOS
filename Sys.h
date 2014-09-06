@@ -82,7 +82,7 @@ public:
 	bool CheckMemory();
 
     void Reset();   // 重启系统
-    void (*OnError)(int code);  // 系统出错时引发
+    bool (*OnError)(uint code);  // 系统出错时引发，返回值决定是否停止系统
     Func OnStop;
 
     // CRC32校验
