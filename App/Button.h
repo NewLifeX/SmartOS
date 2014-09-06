@@ -11,10 +11,8 @@
 class Button
 {
 private:
-	bool _Value; // 状态
-	
 	void Init();
-	
+
 	static void OnPress(Pin pin, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
@@ -37,6 +35,9 @@ public:
 	void SetValue(bool value);
 
 	void Register(EventHandler handler, void* param = NULL);
+
+private:
+	bool _Value; // 状态
 };
 
 #endif
