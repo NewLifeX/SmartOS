@@ -11,10 +11,10 @@
 class Button
 {
 private:
-	InputPort*  _Key;	// 输入按键
-	OutputPort* _Led;	// 指示灯
-	OutputPort* _Relay;	// 继电器
-
+	bool _Value; // 状态
+	
+	void Init();
+	
 	static void OnPress(Pin pin, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
@@ -23,6 +23,13 @@ private:
 public:
 	string Name;
 
+	InputPort*  Key;	// 输入按键
+	OutputPort* Led;	// 指示灯
+	OutputPort* Relay;	// 继电器
+
+	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
+	Button() { Init(); }
+	Button(Pin key, Pin led = P0, bool ledInvert = true, Pin relay = P0, bool relayInvert = true);
 	Button(Pin key, Pin led = P0, Pin relay = P0);
 	~Button();
 
@@ -30,10 +37,6 @@ public:
 	void SetValue(bool value);
 
 	void Register(EventHandler handler, void* param = NULL);
-
-private:
-
-	bool _Value; // 状态
 };
 
 #endif

@@ -1,39 +1,51 @@
 #include "Button.h"
 
-Button::Button(Pin key, Pin led, Pin relay)
+void Button::Init()
 {
-	assert_param(key != P0);
-	_Key = new InputPort(key);
-	_Key->Register(OnPress, this);
-
-	_Led = NULL;
-	if(led != P0)
-	{
-		_Led = new OutputPort(led);
-		_Led->Invert = true;
-	}
-
-	_Relay = NULL;
-	if(relay != P0) _Relay = new OutputPort(relay);
-
-	//_Value = false;
-	SetValue(false);
+	Key = NULL;
+	Led = NULL;
+	Relay = NULL;
 
 	Name = NULL;
+	_Value = false;
 	_Handler = NULL;
 	_Param = NULL;
 }
 
+Button::Button(Pin key, Pin led, Pin relay)
+{
+	assert_param(key != P0);
+	Key = new InputPort(key);
+	Key->Register(OnPress, this);
+
+	if(led != P0) Led = new OutputPort(led);
+	if(relay != P0) Relay = new OutputPort(relay);
+
+	//SetValue(false);
+}
+
+Button::Button(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
+{
+	assert_param(key != P0);
+	Key = new InputPort(key);
+	Key->Register(OnPress, this);
+
+	if(led != P0) Led = new OutputPort(led, ledInvert);
+	if(relay != P0) Relay = new OutputPort(relay, relayInvert);
+
+	//SetValue(false);
+}
+
 Button::~Button()
 {
-	if(_Key) delete _Key;
-	_Key = NULL;
+	if(Key) delete Key;
+	Key = NULL;
 
-	if(_Led) delete _Led;
-	_Led = NULL;
+	if(Led) delete Led;
+	Led = NULL;
 
-	if(_Relay) delete _Relay;
-	_Relay = NULL;
+	if(Relay) delete Relay;
+	Relay = NULL;
 }
 
 void Button::OnPress(Pin pin, bool down, void* param)
@@ -71,8 +83,8 @@ bool Button::GetValue() { return _Value; }
 
 void Button::SetValue(bool value)
 {
-	if(_Led) *_Led = value;
-	if(_Relay) *_Relay = value;
+	if(Led) *Led = value;
+	if(Relay) *Relay = value;
 
 	_Value = value;
 }

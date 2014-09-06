@@ -22,6 +22,10 @@ public:
 	byte PinCount;		// 针脚数
 	byte GroupIndex;	// 分组
 
+    void SetPort(Pin pin);      // 单一引脚初始化
+    void SetPort(Pin pins[], uint count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
+    void SetPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
+
     virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
@@ -40,10 +44,6 @@ protected:
 
 	Port();
 	virtual ~Port();
-
-    void SetPort(Pin pin);      // 单一引脚初始化
-    void SetPort(Pin pins[], uint count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
-    void SetPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
 
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig();
@@ -67,9 +67,25 @@ public:
     uint Speed;		// 速度
     bool Invert;	// 是否倒置输入输出
 
-    OutputPort(Pin pin, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pin); Init(openDrain, speed); Config(); }
-    OutputPort(Pin pins[], uint count, bool openDrain = false, uint speed = GPIO_MAX_SPEED) { SetPort(pins, count); Init(openDrain, speed); Config(); }
-    OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); Config(); }
+    OutputPort() { Init(); }
+	// 普通输出一般采用开漏输出，需要倒置
+    OutputPort(Pin pin, bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
+	{
+		SetPort(pin);
+		Init(invert, openDrain, speed);
+		Config();
+	}
+    OutputPort(Pin pins[], uint count, bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
+	{
+		SetPort(pins, count);
+		Init(invert, openDrain, speed);
+		Config();
+	}
+    OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All)
+	{
+		SetPort(group, pinbit);
+		Init();
+	}
 
     void Write(bool value); // 按位值写入
     void WriteGroup(ushort value);   // 整组写入
@@ -86,16 +102,13 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    OutputPort() { }
-
     virtual void OnConfig();
 
-    void Init(bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    void Init(bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
     {
-		OutputPort();
         OpenDrain = openDrain;
         Speed = speed;
-        Invert = false;
+        Invert = invert;
     }
 
 #if DEBUG
@@ -107,9 +120,28 @@ protected:
 class AlternatePort : public OutputPort
 {
 public:
-    AlternatePort(Pin pin, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : OutputPort() { SetPort(pin); Init(openDrain, speed); Config(); }
-    AlternatePort(Pin pins[], uint count, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : OutputPort() { SetPort(pins, count); Init(openDrain, speed); Config(); }
-    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) : OutputPort() { SetPort(group, pinbit); Init(); Config(); }
+	AlternatePort() : OutputPort() { Init(false, false); }
+	// 复用输出一般采用推挽输出，不需要倒置
+    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+		: OutputPort()
+	{
+		SetPort(pin);
+		Init(invert, openDrain, speed);
+		Config();
+	}
+    AlternatePort(Pin pins[], uint count, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+		: OutputPort()
+	{
+		SetPort(pins, count);
+		Init(invert, openDrain, speed);
+		Config();
+	}
+    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All)
+		: OutputPort()
+	{
+		SetPort(group, pinbit);
+		Init(false, false);
+	}
 
 protected:
     virtual void OnConfig();
@@ -138,8 +170,9 @@ public:
     uint ShakeTime;     // 抖动时间
     bool Invert;		// 是否倒置输入输出
 
-    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, pupd); }
-    InputPort(Pin pins[], uint count, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, pupd); }
+	InputPort() { Init(); }
+    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, pupd); Config(); }
+    InputPort(Pin pins[], uint count, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, pupd); Config(); }
     InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ~InputPort();
@@ -162,8 +195,6 @@ protected:
         _Registed = false;
         ShakeTime = 20;
         Invert = false;
-
-        Config();
     }
 
     virtual void OnConfig();

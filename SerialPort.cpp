@@ -84,7 +84,7 @@ ShowLog:
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
-    _tx = new AlternatePort(tx, false, 50);
+    _tx = new AlternatePort(tx);
     _rx = new InputPort(rx);
 
 	// 不要关调试口，否则杯具
