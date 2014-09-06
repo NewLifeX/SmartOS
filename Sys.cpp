@@ -63,8 +63,16 @@ _force_inline void InitHeapStack(uint ramSize)
 	}
 	else
 	{
-		// 如果已经初始化堆，则直接增加大小即可
-		*p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
+		//// 如果已经初始化堆，则直接增加大小即可
+		//*p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
+		
+		// 需要找到最后一个空闲节点，然后把大小加上去
+		uint* p = (uint*)__microlib_freelist;
+		// 每一个节点由4字节大小以及4字节下一节点的指针组成
+		while(*(p + 1)) p = (uint*)*(p + 1);
+		
+		// 给最后一个空闲节点增加大小
+		*p += (top - (uint)p) & 0xFFFFFFF8;	// 空闲链表剩余大小
 	}
 }
 
