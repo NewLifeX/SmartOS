@@ -37,7 +37,7 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 #pragma arm section code
 
-_force_inline void Set_SP(uint ramSize)
+_force_inline void InitHeapStack(uint ramSize)
 {
 	uint p = __get_MSP();
 	
@@ -96,12 +96,12 @@ void ShowError(int code) { debug_printf("系统错误！%d\r\n", code); }
 
 TSys::TSys()
 {
+    Inited = false;
 #if DEBUG
     Debug = true;
 #else
     Debug = false;
 #endif
-    Inited = false;
 
 #ifdef STM32F0
     Clock = 48000000;
@@ -159,7 +159,7 @@ TSys::TSys()
 		RAMSize = RamSizes[_Index];
 	}
 
-	Set_SP(RAMSize);
+	InitHeapStack(RAMSize);
 
 #if DEBUG
     OnError = ShowError;
@@ -181,8 +181,6 @@ TSys::TSys()
 
 TSys::~TSys()
 {
-    //if(g_Time) delete g_Time;
-    //g_Time = NULL;
 }
 
 void TSys::Init(void)

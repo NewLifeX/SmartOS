@@ -5,8 +5,8 @@ Stack_Size      EQU     0x00000020
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
-; SmartOS将会重新设定堆到RAM最大值
-Heap_Size       EQU     0x00000000
+; SmartOS将会重新设定堆到RAM最大值，但是在Sys设定堆大小之前，别的地方也可能需要用到堆，特别是类的全局对象
+Heap_Size       EQU     0x00000100
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
