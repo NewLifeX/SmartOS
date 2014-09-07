@@ -8,27 +8,28 @@ class Timer
 {
 private:
 	TIM_TypeDef* _port;
-	TIM_TimeBaseInitTypeDef _timer;
 	byte _index;	// 第几个定时器，从0开始
 	bool _started;
 
-	
+	void ClockCmd(bool state);
 public:
-	Timer(byte index);
+	Timer(byte index);	// 第几个定时器，从1开始
 	~Timer();
-	
-	uint Prescaler;	// 预分频。实际值，此时无需减一。默认预分配到1MHz
+
+	ushort Prescaler;	// 预分频。实际值，此时无需减一。默认预分配到1MHz
 	uint Period;	// 周期。实际值，此时无需减一。默认1000个周期
-	
+
 	void Start();	// 开始定时器
 	void Stop();	// 停止定时器
-	
-	typedef void (*TimerHandler)(Timer* tim, void* param);
-	void Register(TimerHandler handler, void* param = NULL);
+	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
+	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
+
+	void Register(EventHandler handler, void* param = NULL);
 
 private:
+	void OnInterrupt();
 	static void OnHandler(ushort num, void* param);
-	TimerHandler _Handler;
+	EventHandler _Handler;
 	void* _Param;
 };
 
