@@ -535,13 +535,5 @@ void TSys::Stop()
 {
 	debug_printf("系统停止！\r\n");
 	_Running = false;
-
-	// 销毁所有任务
-	/*for(int i=0; i < ArrayLength(_Tasks); i++)
-	{
-		Task* task = _Tasks[i];
-		if(task) delete task;
-	}
-	memset(_Tasks, 0, ArrayLength(_Tasks));*/
 }
 #endif

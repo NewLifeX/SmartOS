@@ -132,7 +132,7 @@ extern "C"
 
 __inline void debug_printf( const char *format, ... ) {}
 
-#endif  // !defined(BUILD_RTM)
+#endif
 }
 
 // 内存管理
