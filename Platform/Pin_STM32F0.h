@@ -59,10 +59,10 @@
 /* I2C总线针脚 ------------------------------------------------------------------*/
 #define I2CS {I2C1, I2C2}
 
-#define I2C_PINS_FULLREMAP	{\
-	/*		SCL		SDA			*/\
-		{	PB6,	PB7	 },\
-		{	PB10,	PB11 },\
+#define I2C_PINS {\
+	/*	SCL		SDA	*/\
+	{	PB6,	PB7	 },\
+	{	PB10,	PB11 },\
 /*F1 REMAP{	PA8,	PA9	 },*/\
 }
 

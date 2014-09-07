@@ -58,7 +58,14 @@
 #define ADC3_PINS {PA0,PA1,PA2,PA3,PF6,PF7,PF8,PF9,PF10,PF3,PC0,PC1,PC2,PC3,PF4,PF5}
 
 /* I2C总线针脚 ------------------------------------------------------------------*/
+#define I2CS {I2C1, I2C2, I2C3}
 
+#define I2C_PINS {\
+	/*	SCL		SDA	 */\
+	{	PB6,	PB7	 },\
+	{	PB10,	PB11 },\
+	{	P0,		P0	 },\
+}
 
 /* 串行外设接口(SPI)针脚 ------------------------------------------------------------------*/
 #define SPIS {SPI1, SPI2, SPI3, SPI4, SPI5, SPI6}

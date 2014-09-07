@@ -159,10 +159,7 @@ void Timer::Register(EventHandler handler, void* param)
 
 	int irqs[] = TIM_IRQns;
 	if(handler)
-	{
-		Interrupt.SetPriority(irqs[_index], 0);
 		Interrupt.Activate(irqs[_index], OnHandler, this);
-	}
 	else
 		Interrupt.Deactivate(irqs[_index]);
 }

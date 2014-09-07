@@ -12,12 +12,13 @@
 class I2C_Port
 {
 public:
+    int Speed;  // 速度
+    int Retry;  // 等待重试次数，默认200
+    int Error;  // 错误次数
+	ushort Address;	// 7位地址或10位地址
 
-//	I2C_Port(int iic);
-//	I2C_Port(I2C_TypeDef* iic);
-
-	// 使用端口和最大速度初始化Spi，因为需要分频，实际速度小于等于该速度
-    I2C_Port(int iic = 1, uint speedHz = 9000000);
+	// 使用端口和最大速度初始化，因为需要分频，实际速度小于等于该速度
+    I2C_Port(I2C_TypeDef* iic = I2C1, uint speedHz = 10000);
     virtual ~I2C_Port();
 
 	void SetPin(Pin acl = P0, Pin sda = P0);
@@ -26,35 +27,19 @@ public:
 	void Open();
 	void Close();
 
-//    byte Write(byte data);
-//    ushort Write16(ushort data);
+	void Write(byte id, byte addr, byte dat);
+	byte Read(byte id, byte addr);
 
 private:
-	int _iic;
+    byte _index;
 	I2C_TypeDef* _IIC;
-	
-	/*
-	发送地址时 高位在前   
-	地址上必须带有发送/接收标志  （y位0为发送  1为接收） 
-	10位地址时  1111 0xxy  xxxx xxxx
-	7位地址时	xxxx xxxy
-	*/
-	enum 
-	{
-		ADDR_LEN_10,
-		ADDR_LEN_7,
-	}addressLen;
-	short myAddr;
-	
-    int Speed;  // 速度
-    int Retry;  // 等待重试次数，默认200
-    int Error;  // 错误次数5
-	
+
 	Pin Pins[2];
-    byte _i2c;
 	AlternatePort* SCL;
 	AlternatePort* SDA;
 
+	bool WaitForEvent(uint event);
+	bool SetID(byte id, bool tx = true);
 };
 
 #endif
