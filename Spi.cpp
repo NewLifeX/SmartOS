@@ -2,10 +2,10 @@
 #include "Port.h"
 #include "Spi.h"
 
-static SPI_TypeDef* const g_Spis[] = SPIS;
-static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
+//static SPI_TypeDef* const g_Spis[] = SPIS;
+//static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 
-int GetPre(int spi, uint* speedHz)
+int GetPre(int index, uint* speedHz)
 {
 	// 自动计算稍低于速度speedHz的分频
 	ushort pre = SPI_BaudRatePrescaler_2;
@@ -18,7 +18,7 @@ int GetPre(int spi, uint* speedHz)
 	}
 	if(pre > SPI_BaudRatePrescaler_256)
 	{
-		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", spi, *speedHz, Sys.Clock);
+		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", index, *speedHz, Sys.Clock);
 		return -1;
 	}
 
@@ -26,14 +26,25 @@ int GetPre(int spi, uint* speedHz)
 	return pre;
 }
 
-Spi::Spi(int spi, uint speedHz, bool useNss)
+Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 {
-	assert_param(spi >= 0 && spi < ArrayLength(g_Spis));
+	SPI_TypeDef* g_Spis[] = SPIS;
+	_index = 0xFF;
+	for(int i=0; i<ArrayLength(g_Spis); i++)
+	{
+		if(g_Spis[i] == spi)
+		{
+			_index = i;
+			break;
+		}
+	}
+	assert_param(_index < ArrayLength(g_Spis));
 
-    _spi = spi;
 	Opened = false;
-    SPI = g_Spis[spi];
-	const Pin* ps = g_Spi_Pins_Map[spi];		//选定spi引脚
+    SPI = g_Spis[_index];
+
+	Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
+	Pin* ps = g_Spi_Pins_Map[_index];		//选定spi引脚
 	memcpy(Pins, ps, sizeof(Pins));
 
 	// 为了安全，必须先设置私有成员默认值
@@ -45,10 +56,10 @@ Spi::Spi(int spi, uint speedHz, bool useNss)
 	if(!useNss) Pins[0] = P0;
 
 	// 自动计算稍低于速度speedHz的分频
-	int pre = GetPre(spi, &speedHz);
+	int pre = GetPre(_index, &speedHz);
 	if(pre == -1) return;
 
-    debug_printf("Spi%d %dHz Nss:%d\r\n", spi + 1, speedHz, useNss);
+    debug_printf("Spi%d %dHz Nss:%d\r\n", _index + 1, speedHz, useNss);
 
     Speed = speedHz;
     Retry = 200;
@@ -56,7 +67,7 @@ Spi::Spi(int spi, uint speedHz, bool useNss)
 
 Spi::~Spi()
 {
-    debug_printf("~Spi%d\r\n", _spi + 1);
+    debug_printf("~Spi%d\r\n", _index + 1);
 
 	Close();
 }
@@ -71,7 +82,7 @@ void Spi::SetPin(Pin clk, Pin miso, Pin mosi, Pin nss)
 
 void Spi::GetPin(Pin* clk, Pin* miso, Pin* mosi, Pin* nss)
 {
-	//const Pin* ps = g_Spi_Pins_Map[_spi];
+	//const Pin* ps = g_Spi_Pins_Map[_index];
 	if(nss) *nss = Pins[0];
 	if(clk) *clk = Pins[1];
 	if(miso) *miso = Pins[2];
@@ -84,7 +95,7 @@ void Spi::Open()
 
 	// 自动计算稍低于速度speedHz的分频
 	uint speedHz = Speed;
-	int pre = GetPre(_spi, &speedHz);
+	int pre = GetPre(_index, &speedHz);
 	if(pre == -1) return;
 
 	Pin* ps = Pins;
@@ -109,16 +120,16 @@ void Spi::Open()
     }
 
     // 使能SPI时钟
-	switch(_spi)
+	switch(_index)
 	{
-		case SPI_1 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); break;
+		case 0: RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE); break;
 #if defined(STM32F1) || defined(STM32F4)
-		case SPI_2 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
-		case SPI_3 :RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE); break;
+		case 1: RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE); break;
+		case 2: RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE); break;
 #if defined(STM32F4)
-		case SPI_4 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI4, ENABLE); break;
-		case SPI_5 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI5, ENABLE); break;
-		case SPI_6 :RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI6, ENABLE); break;
+		case 3: RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI4, ENABLE); break;
+		case 4: RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI5, ENABLE); break;
+		case 5: RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI6, ENABLE); break;
 #endif
 #endif
 	}
@@ -129,10 +140,10 @@ void Spi::Open()
     GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), GPIO_AF_0);
     GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), GPIO_AF_0);
 #elif defined(STM32F4)
-	byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6,  };
-    GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), afs[_spi]);
-    GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), afs[_spi]);
-    GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), afs[_spi]);
+	byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6 };
+    GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), afs[_index]);
+    GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), afs[_index]);
+    GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), afs[_index]);
 #endif
 
 	Stop();

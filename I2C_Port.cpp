@@ -8,7 +8,7 @@ I2C_Port::I2C_Port(I2C_TypeDef* iic, uint speedHz )
 	assert_param(iic);
 
 	I2C_TypeDef* g_I2Cs[] = I2CS;
-	_index = 0;
+	_index = 0xFF;
 	for(int i=0; i<ArrayLength(g_I2Cs); i++)
 	{
 		if(g_I2Cs[i] == iic)
@@ -17,7 +17,7 @@ I2C_Port::I2C_Port(I2C_TypeDef* iic, uint speedHz )
 			break;
 		}
 	}
-	assert_param(_index > 0 && _index <= ArrayLength(g_I2Cs));
+	assert_param(_index < ArrayLength(g_I2Cs));
 
 	_IIC = g_I2Cs[_index];
 
