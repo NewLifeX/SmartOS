@@ -28,6 +28,8 @@ int GetPre(int index, uint* speedHz)
 
 Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 {
+	assert_param(spi);
+
 	SPI_TypeDef* g_Spis[] = SPIS;
 	_index = 0xFF;
 	for(int i=0; i<ArrayLength(g_Spis); i++)

@@ -2,12 +2,22 @@
 
 //static TIM_TypeDef* g_Timers[] = TIMS;
 
-Timer::Timer(byte index)
+Timer::Timer(TIM_TypeDef* timer)
 {
-	TIM_TypeDef* g_Timers[] = TIMS;
-	assert_param(index > 0 && index <= ArrayLength(g_Timers));
+	assert_param(timer);
 
-	_index = index - 1;
+	TIM_TypeDef* g_Timers[] = TIMS;
+	_index = 0xFF;
+	for(int i=0; i<ArrayLength(g_Timers); i++)
+	{
+		if(g_Timers[i] == timer)
+		{
+			_index = i;
+			break;
+		}
+	}
+	assert_param(_index <= ArrayLength(g_Timers));
+
 	_port = g_Timers[_index];
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次

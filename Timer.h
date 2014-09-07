@@ -13,7 +13,7 @@ private:
 
 	void ClockCmd(bool state);
 public:
-	Timer(byte index);	// 第几个定时器，从1开始
+	Timer(TIM_TypeDef* timer);
 	~Timer();
 
 	ushort Prescaler;	// 预分频。实际值，此时无需减一。默认预分配到1MHz
