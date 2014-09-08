@@ -378,7 +378,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		if(Status == 0xFF)
 		{
 			AddError();
-			return false;
+			// 这里不能直接跳出函数，即使发送失败，也要在后面进入接收模式
+			break;
 		}
 		
 		RF_STATUS st;
