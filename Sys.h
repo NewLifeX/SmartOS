@@ -35,17 +35,20 @@ typedef char*           String;
 #include "Platform\Pin.h"
 
 /* 串口定义 */
-#define COM1 0
-#define COM2 1
-#define COM3 2
-#define COM4 3
-#define COM5 4
+typedef enum
+{
+	COM1 = 0,
+	COM2 = 1,
+	COM3 = 2,
+	COM4 = 3,
+	COM5 = 4,
 #ifdef STM32F4
-#define COM6 5
-#define COM7 6
-#define COM8 7
+	COM6 = 5,
+	COM7 = 6,
+	COM8 = 7,
 #endif
-#define COM_NONE 0xFF
+	COM_NONE = 0xFF
+} COM_Def;
 
 // 委托
 #include "Delegate.h"
@@ -61,7 +64,7 @@ public:
     bool Inited; // 是否已完成初始化
     uint Clock;  // 系统时钟
     uint CystalClock;	// 晶振时钟
-    byte MessagePort;	// 消息口，默认0表示USART1
+    COM_Def MessagePort;	// 消息口，默认0表示USART1
     byte ID[12];		// 芯片ID。
     ushort FlashSize;	// 芯片Flash容量。
     ushort RAMSize;		// 芯片RAM容量

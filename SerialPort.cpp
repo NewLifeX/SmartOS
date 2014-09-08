@@ -16,7 +16,7 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 	assert_param(com);
 
 	USART_TypeDef* g_Uart_Ports[] = UARTS;
-	_index = 0xFF;
+	byte _index = 0xFF;
 	for(int i=0; i<ArrayLength(g_Uart_Ports); i++)
 	{
 		if(g_Uart_Ports[i] == com)
@@ -25,13 +25,21 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 			break;
 		}
 	}
+	
+	Init(_index, baudRate, parity, dataBits, stopBits);
+}
+
+void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int stopBits)
+{
+	USART_TypeDef* g_Uart_Ports[] = UARTS;
+	_index = index;
 	assert_param(_index < ArrayLength(g_Uart_Ports));
 
+    _port = g_Uart_Ports[_index];
     _baudRate = baudRate;
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
-    _port = com;
 
 	_tx = NULL;
 	_rx = NULL;

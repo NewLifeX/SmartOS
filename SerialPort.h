@@ -19,8 +19,23 @@ private:
 	AlternatePort* _tx;
 	InputPort* _rx;
 
+    void Init(byte index, 
+        int baudRate = 115200, 
+        int parity = USART_Parity_No,       //无奇偶校验
+        int dataBits = USART_WordLength_8b, //8位数据长度
+        int stopBits = USART_StopBits_1);    //1位停止位
+
 public:
 	OutputPort* RS485;	// RS485使能引脚
+
+    SerialPort(COM_Def index, 
+        int baudRate = 115200, 
+        int parity = USART_Parity_No,       //无奇偶校验
+        int dataBits = USART_WordLength_8b, //8位数据长度
+        int stopBits = USART_StopBits_1)    //1位停止位
+	{
+		Init(index, baudRate, parity, dataBits, stopBits);
+	}
 
     SerialPort(USART_TypeDef* com, 
         int baudRate = 115200, 
