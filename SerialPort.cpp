@@ -345,7 +345,7 @@ extern "C"
     }
 }
 
-static SerialPort* SerialPort::GetMessagePort()
+SerialPort* SerialPort::GetMessagePort()
 {
 	if(!_printf_sp)
 	{

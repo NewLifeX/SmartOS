@@ -65,12 +65,12 @@ _force_inline void InitHeapStack(uint ramSize)
 	{
 		//// 如果已经初始化堆，则直接增加大小即可
 		//*p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
-		
+
 		// 需要找到最后一个空闲节点，然后把大小加上去
 		uint* p = (uint*)__microlib_freelist;
 		// 每一个节点由4字节大小以及4字节下一节点的指针组成
 		while(*(p + 1)) p = (uint*)*(p + 1);
-		
+
 		// 给最后一个空闲节点增加大小
 		*p += (top - (uint)p) & 0xFFFFFFF8;	// 空闲链表剩余大小
 	}
@@ -137,7 +137,7 @@ TSys::TSys()
 #endif
     //CystalClock = 8000000;    // 晶振时钟
     CystalClock = HSE_VALUE;    // 晶振时钟
-    MessagePort = 0; // COM1;
+    MessagePort = COM1; // COM1;
 
     IsGD = Get_JTAG_ID() == 0x7A3;
 
@@ -211,6 +211,12 @@ TSys::~TSys()
 	if(OnStop) OnStop();
 }
 
+void ShowTime(void* param)
+{
+	debug_printf("\r");
+	debug_printf(Time.Now().ToString());
+}
+
 void TSys::Init(void)
 {
     // 获取当前频率
@@ -238,6 +244,10 @@ void TSys::Init(void)
     Time.Init();
 
     Inited = true;
+
+#if DEBUG
+	AddTask(ShowTime, NULL, 1000000, 1000000);
+#endif
 }
 
 #if DEBUG
