@@ -111,14 +111,10 @@ void Spi::Open()
 
     if(ps[0] != P0)
     {
-#ifdef STM32F10X
-        /*if(SPI == SPI3)
-        {
-        }*/
-#endif
 		debug_printf("    NSS : ");
-        _nss = new OutputPort(ps[0]);
-		*_nss = true; // 拉高进入空闲状态
+        _nss = new OutputPort(ps[0], false, false);
+		// 这里可以不调用，后面有Stop等同效果
+		//*_nss = true; // 拉高进入空闲状态
     }
 
     // 使能SPI时钟
@@ -259,7 +255,6 @@ ushort Spi::Write16(ushort data)
 // 拉低NSS，开始传输
 void Spi::Start()
 {
-    //if(_nss != P0) Port::Write(_nss, false);
     if(_nss) *_nss = false;
 
     // 开始新一轮事务操作，错误次数清零
@@ -269,6 +264,5 @@ void Spi::Start()
 // 拉高NSS，停止传输
 void Spi::Stop()
 {
-    //if(_nss != P0) Port::Write(_nss, true);
     if(_nss) *_nss = true;
 }

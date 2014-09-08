@@ -6,7 +6,7 @@ Enc28j60::Enc28j60(Spi* spi, Pin ce/*, Pin irq*/)
 {
     _spi = spi;
 	_ce = NULL;
-    if(ce != P0) _ce = new OutputPort(ce);
+    if(ce != P0) _ce = new OutputPort(ce, false, false);
 }
 
 Enc28j60::~Enc28j60()

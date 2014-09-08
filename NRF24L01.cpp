@@ -56,7 +56,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	Channel = 0;	// 默认通道0
 
 	_CE = NULL;
-    if(ce != P0) _CE = new OutputPort(ce);
+    if(ce != P0) _CE = new OutputPort(ce, false, false);
 	_IRQ = NULL;
     if(irq != P0)
     {
