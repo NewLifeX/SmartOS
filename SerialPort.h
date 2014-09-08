@@ -53,6 +53,7 @@ public:
 
     virtual void Register(TransportHandler handler, void* param = NULL);
 
+	static SerialPort* GetMessagePort();
 protected:
 	virtual bool OnOpen();
     virtual void OnClose();

@@ -332,7 +332,7 @@ extern "C"
         // 检查并打开串口
         if((port->CR1 & CR1_UE_Set) != CR1_UE_Set && _printf_sp == NULL)
         {
-            if(_printf_sp != NULL) delete _printf_sp;
+            //if(_printf_sp != NULL) delete _printf_sp;
 
             _printf_sp = new SerialPort(port);
             _printf_sp->Open();
@@ -343,4 +343,19 @@ extern "C"
 		isInFPutc = false;
         return ch;
     }
+}
+
+static SerialPort* SerialPort::GetMessagePort()
+{
+	if(!_printf_sp)
+	{
+        int _index = Sys.MessagePort;
+        if(_index == COM_NONE) return NULL;
+
+		USART_TypeDef* g_Uart_Ports[] = UARTS;
+        USART_TypeDef* port = g_Uart_Ports[_index];
+		_printf_sp = new SerialPort(port);
+		_printf_sp->Open();
+	}
+	return _printf_sp;
 }
