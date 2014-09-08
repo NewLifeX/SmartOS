@@ -215,6 +215,7 @@ void ShowTime(void* param)
 {
 	debug_printf("\r");
 	debug_printf(Time.Now().ToString());
+	debug_printf(" ");
 }
 
 void TSys::Init(void)
