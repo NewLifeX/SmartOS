@@ -523,7 +523,9 @@ void TSys::Start()
 				if(task->NextTime <= now)
 				{
 					// 先计算下一次时间
-					task->NextTime += task->Period;
+					//task->NextTime += task->Period;
+					// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
+					task->NextTime = now + task->Period;
 					task->Callback(task->Param);
 
 					// 如果只是一次性任务，在这里清理

@@ -124,8 +124,11 @@ ulong TTime::CurrentTicks()
 
 void TTime::SetTime(ulong us)
 {
-	ulong ticks = CurrentTicks();
-	Ticks += us * TicksPerMicrosecond - ticks;
+    SmartIRQ irq;
+
+	SysTick->VAL = 0;
+	SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG;
+	Ticks = us * TicksPerMicrosecond;
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
@@ -248,7 +251,7 @@ uint SystemTime::TotalSeconds()
 
 ulong SystemTime::TotalMicroseconds()
 {
-	ulong us = TotalSeconds();
+	ulong us = (ulong)TotalSeconds();
 	us = us * 1000 + Millisecond;
 	us = us * 1000 + Microsecond;
 
