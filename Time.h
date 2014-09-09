@@ -13,10 +13,14 @@ struct SystemTime
 	byte Hour;
 	byte Minute;
 	byte Second;
-	ushort Milliseconds;
+	ushort Millisecond;
 	ushort Microsecond;
 
 	char _Str[19 + 1]; // 内部字符串缓冲区，按最长计算
+
+	SystemTime& Parse(ulong us);
+	uint TotalSeconds();
+	ulong TotalMicroseconds();
 
 	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
 	/*
@@ -51,14 +55,15 @@ public:
 	void Init();
     void SetCompare(ulong compareValue);
     ulong CurrentTicks();	// 当前滴答时钟
+	void SetTime(ulong us);	// 设置时间
 	ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
 	ulong Current(); // 当前微秒数
     void Sleep(uint us);
-	
+
 	// 微秒转为系统时钟结构体
-	SystemTime& To(ulong us, SystemTime& st);
+	//SystemTime& To(ulong us, SystemTime& st);
 	// 系统时钟结构体转为微秒
-	ulong From(const SystemTime& st);
+	//ulong From(const SystemTime& st);
 	// 当前时间。外部不要释放该指针
 	SystemTime& Now();
 };

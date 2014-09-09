@@ -5,6 +5,27 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
+// 大整数快速乘除法
+/*ulong mul_by_1k(ulong value)
+{
+	// value * (1024 - 16 - 8)
+	return value << 10 - value << 4 - value << 3;
+}
+
+ulong mul_by_1m(ulong value)
+{
+	return mul_by_1k(mul_by_1k(value));
+}
+
+ulong div_by_1k(ulong value)
+{
+}
+
+ulong div_by_1m(ulong value)
+{
+	return div_by_1k(div_by_1k(value));
+}*/
+
 TTime::TTime()
 {
 	Ticks = 0;
@@ -101,6 +122,12 @@ ulong TTime::CurrentTicks()
 	return Ticks + value;
 }
 
+void TTime::SetTime(ulong us)
+{
+	ulong ticks = CurrentTicks();
+	Ticks += us * TicksPerMicrosecond - ticks;
+}
+
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
 
 void TTime::Sleep(uint us)
@@ -160,18 +187,20 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
-SystemTime& TTime::To(ulong us, SystemTime& st)
+SystemTime& SystemTime::Parse(ulong us)
 {
 	//if(!st) st = new SystemTime();
+	SystemTime& st = *this;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
-	uint time = us;
+	uint time = us % 60000000; // 此时会削去高位，ulong=>uint
     st.Microsecond = time % 1000;
     time /= 1000;
-    st.Milliseconds = time % 1000;
+    st.Millisecond = time % 1000;
     time /= 1000;
     st.Second = time % 60;
-    time /= 60;
+    //time /= 60;
+	time = us / 60000000;	// 用一次大整数除法，重新计算高位
     st.Minute = time % 60;
     time /= 60;
     st.Hour = time % 24;
@@ -206,15 +235,22 @@ SystemTime& TTime::To(ulong us, SystemTime& st)
 	return st;
 }
 
-ulong From(const SystemTime& st)
+uint SystemTime::TotalSeconds()
 {
-	ulong us = 0;
-	us += YEARS_TO_DAYS(st.Year) + MONTH_TO_DAYS(st.Year, st.Month) + st.Day - 1;
-	us = us * 24 + st.Hour;
-	us = us * 60 + st.Minute;
-	us = us * 60 + st.Second;
-	us = us * 1000 + st.Milliseconds;
-	us = us * 1000 + st.Microsecond;
+	uint s = 0;
+	s += YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
+	s = s * 24 + Hour;
+	s = s * 60 + Minute;
+	s = s * 60 + Second;
+
+	return s;
+}
+
+ulong SystemTime::TotalMicroseconds()
+{
+	ulong us = TotalSeconds();
+	us = us * 1000 + Millisecond;
+	us = us * 1000 + Microsecond;
 
 	return us;
 }
@@ -258,7 +294,7 @@ const char* SystemTime::ToString(byte kind, string str)
 			assert_param(false);
 			break;
 	}
-	
+
 	return str;
 }
 
@@ -267,7 +303,8 @@ SystemTime& TTime::Now()
 {
 	//if(!_Now) _Now = new SystemTime();
 
-	To(Current(), _Now);
+	//To(Current(), _Now);
+	_Now.Parse(Current());
 
 	return _Now;
 }
