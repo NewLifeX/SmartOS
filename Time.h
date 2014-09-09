@@ -35,14 +35,20 @@ struct SystemTime
 };
 
 // 时间类
+// 使用双计数时钟，Ticks累加滴答，Microseconds累加微秒，_usTicks作为累加微秒时的滴答余数
+// 这样子可以避免频繁使用微秒时带来长整型乘除法
 class TTime
 {
 private:
     static void OnHandler(ushort num, void* param);
 	SystemTime _Now;
+	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
+
+	void AddUp();	// 累加滴答
 
 public:
-    volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。乘以0x10000，避免每次计算滴答时都需要移位
+    volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。
+	volatile ulong Microseconds;	// 全局微秒数
     volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
     uint TicksPerSecond;        // 每秒的时钟滴答数
@@ -60,10 +66,6 @@ public:
 	ulong Current(); // 当前微秒数
     void Sleep(uint us);
 
-	// 微秒转为系统时钟结构体
-	//SystemTime& To(ulong us, SystemTime& st);
-	// 系统时钟结构体转为微秒
-	//ulong From(const SystemTime& st);
 	// 当前时间。外部不要释放该指针
 	SystemTime& Now();
 };

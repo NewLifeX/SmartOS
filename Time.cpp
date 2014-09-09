@@ -5,31 +5,13 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-// 大整数快速乘除法
-/*ulong mul_by_1k(ulong value)
-{
-	// value * (1024 - 16 - 8)
-	return value << 10 - value << 4 - value << 3;
-}
-
-ulong mul_by_1m(ulong value)
-{
-	return mul_by_1k(mul_by_1k(value));
-}
-
-ulong div_by_1k(ulong value)
-{
-}
-
-ulong div_by_1m(ulong value)
-{
-	return div_by_1k(div_by_1k(value));
-}*/
-
 TTime::TTime()
 {
 	Ticks = 0;
 	NextEvent = TIME_Completion_IdleValue;
+	
+	Microseconds = 0;
+	_usTicks = 0;
 }
 
 TTime::~TTime()
@@ -71,11 +53,24 @@ void TTime::Init()
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
+	Time.AddUp();
+}
+
+void TTime::AddUp()
+{
+	uint value = (SysTick->LOAD - SysTick->VAL);
+	SysTick->VAL = 0;
+
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
-		Time.Ticks += SysTick->LOAD;
+		value += SysTick->LOAD;
 	}
+
+	Ticks += value;
+	_usTicks += value;
+	Microseconds += _usTicks / TicksPerMicrosecond;
+	_usTicks %= TicksPerMicrosecond;
 }
 
 void TTime::SetCompare(ulong compareValue)
@@ -109,17 +104,22 @@ ulong TTime::CurrentTicks()
 {
     SmartIRQ irq;
 
-	uint value = (SysTick->LOAD - SysTick->VAL);
-	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
-	{
-		Ticks += SysTick->LOAD;
-		// 内存检查
-#if DEBUG
-		Sys.CheckMemory();
-#endif
-	}
+	AddUp();
 
-	return Ticks + value;
+	return Ticks;
+}
+
+// 当前微秒数
+ulong TTime::Current()
+{
+	// 为了精度，这里没有直接除TicksPerMicrosecond
+	//return CurrentTicks() * 1000000 / TicksPerSecond;
+	// 上面的计算方式会导致溢出
+	//return CurrentTicks() / TicksPerMicrosecond;
+
+	AddUp();
+
+	return Microseconds;
 }
 
 void TTime::SetTime(ulong us)
@@ -129,6 +129,8 @@ void TTime::SetTime(ulong us)
 	SysTick->VAL = 0;
 	SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG;
 	Ticks = us * TicksPerMicrosecond;
+	Microseconds = us;
+	_usTicks = 0;
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
@@ -144,8 +146,10 @@ void TTime::Sleep(uint us)
     SmartIRQ irq(true);
 
 	// 时钟滴答需要采用UINT64
-    ulong maxDiff = (ulong)us * TicksPerMicrosecond;
-    ulong current = CurrentTicks();
+    //ulong maxDiff = (ulong)us * TicksPerMicrosecond;
+    //ulong current = CurrentTicks();
+    ulong maxDiff = (ulong)us;
+    ulong current = Current();
 
 	// 减去误差指令周期，在获取当前时间以后多了几个指令
     if(maxDiff <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS)
@@ -155,25 +159,14 @@ void TTime::Sleep(uint us)
 
 	maxDiff += current;
 
-    while(CurrentTicks() <= maxDiff);
-
-	// 如果之前是打开中断的，那么这里也要重新打开
-	//if (!state) Sys.DisableInterrupts();
+    //while(CurrentTicks() <= maxDiff);
+    while(Current() <= maxDiff);
 }
 
 // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
 ulong TTime::NewTicks(uint us)
 {
 	return CurrentTicks() + (ulong)us * TicksPerMicrosecond;
-}
-
-// 当前微秒数
-ulong TTime::Current()
-{
-	// 为了精度，这里没有直接除TicksPerMicrosecond
-	//return CurrentTicks() * 1000000 / TicksPerSecond;
-	// 上面的计算方式会导致溢出
-	return CurrentTicks() / TicksPerMicrosecond;
 }
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
