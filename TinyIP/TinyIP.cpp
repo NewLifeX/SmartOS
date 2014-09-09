@@ -371,7 +371,8 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	}
 	//_net->PayloadLength = payloadLength;
 
-	ushort now = Time.Current() / 1000;
+	//ushort now = Time.Current() / 1000;
+	ushort now = Time.Current() >> 10;
 	ushort id = __REV16(Sys.ID[0]);
 	ushort seq = __REV16(now);
 	icmp->Identifier = id;
@@ -388,8 +389,8 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 总等待时间
-	ulong end = Time.NewTicks(1 * 1000000);
-	while(end > Time.CurrentTicks())
+	ulong end = Time.Current() + 1 * 1000000;
+	while(end > Time.Current())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
 		uint len = Tip->Fetch(buf, bufSize);
@@ -875,18 +876,18 @@ bool Dhcp::Start()
 
 	ulong next = 0;
 	// 总等待时间
-	ulong end = Time.NewTicks(10 * 1000000);
-	while(end > Time.CurrentTicks())
+	ulong end = Time.Current() + 10 * 1000000;
+	while(end > Time.Current())
 	{
 		// 得不到就重新发广播
-		if(next < Time.CurrentTicks())
+		if(next < Time.Current())
 		{
 			// 向DHCP服务器广播
 			debug_printf("DHCP Discover...\r\n");
 			dhcp->Init(dhcpid, true);
 			Discover(dhcp);
 
-			next = Time.NewTicks(1 * 1000000);
+			next = Time.Current() + 1 * 1000000;
 		}
 
 		uint len = Tip->Fetch(buf, bufSize);
@@ -1123,8 +1124,8 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	if(timeout <= 0) return NULL;
 
 	// 总等待时间
-	ulong end = Time.NewTicks(timeout * 1000000);
-	while(end > Time.CurrentTicks())
+	ulong end = Time.Current() + timeout * 1000000;
+	while(end > Time.Current())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
 		uint len = Tip->Fetch(buf, bufSize);
@@ -1169,7 +1170,8 @@ const byte* ArpSocket::Resolve(const byte ip[4])
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
 	{
-		uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+		//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+		uint sNow = Time.Current() >> 20;	// 当前时间，秒
 		// 在表中查找
 		for(int i=0; i<Count; i++)
 		{
@@ -1253,7 +1255,8 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 #endif
 	}
 
-	uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+	//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
+	uint sNow = Time.Current() >> 20;	// 当前时间，秒
 	// 保存
 	memcpy(item->IP, ip, 4);
 	memcpy(item->Mac, mac, 6);

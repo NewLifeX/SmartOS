@@ -371,8 +371,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	//if(!WaitForIRQ()) return false;
 	// IRQ不可靠，改为轮询寄存器
 	// 这里需要延迟一点时间，发送没有那么快完成
-	ulong ticks = Time.NewTicks(Timeout * 1000);
-	while(ticks > Time.CurrentTicks())
+	ulong us = Time.Current() + Timeout * 1000;
+	while(us > Time.Current())
 	{
 		Status = ReadReg(STATUS);
 		if(Status == 0xFF)
@@ -406,9 +406,9 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 bool NRF24L01::WaitForIRQ()
 {
-	ulong ticks = Time.NewTicks(Timeout * 1000); // 等待100ms
-	while(_IRQ->Read() && ticks > Time.CurrentTicks());
-	if(ticks >= Time.CurrentTicks()) return true;
+	ulong us = Time.Current() + Timeout * 1000; // 等待100ms
+	while(_IRQ->Read() && us > Time.Current());
+	if(us >= Time.Current()) return true;
 
 	// 读取状态寄存器的值
 	Status = ReadReg(STATUS);

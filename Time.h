@@ -62,7 +62,7 @@ public:
     void SetCompare(ulong compareValue);
     ulong CurrentTicks();	// 当前滴答时钟
 	void SetTime(ulong us);	// 设置时间
-	ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
+	//ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
 	ulong Current(); // 当前微秒数
     void Sleep(uint us);
 

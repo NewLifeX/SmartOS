@@ -164,10 +164,10 @@ void TTime::Sleep(uint us)
 }
 
 // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
-ulong TTime::NewTicks(uint us)
+/*ulong TTime::NewTicks(uint us)
 {
 	return CurrentTicks() + (ulong)us * TicksPerMicrosecond;
-}
+}*/
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
 #define BASE_YEAR                   2000

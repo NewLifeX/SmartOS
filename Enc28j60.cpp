@@ -114,11 +114,11 @@ bool Enc28j60::PhyWrite(byte addr, uint data)
     WriteReg(MIWRL, data);
     WriteReg(MIWRH, data >> 8);
 
-	ulong ticks = Time.NewTicks(10 * 1000);
+	ulong us = Time.Current() + 10 * 1000;
     // wait until the PHY write completes
     while(ReadReg(MISTAT) & MISTAT_BUSY)
     {
-        if(ticks < Time.CurrentTicks()) return false;
+        if(us < Time.Current()) return false;
     }
 	return true;
 }

@@ -229,9 +229,9 @@ uint SerialPort::OnRead(byte* buf, uint size)
 {
 	// 在100ms内接收数据
 	uint msTimeout = 100;
-	ulong end = Time.NewTicks(msTimeout * 1000);
+	ulong us = Time.Current() + msTimeout * 1000;
 	uint count = 0; // 收到的字节数
-	while(count < size && Time.CurrentTicks() < end)
+	while(count < size && Time.Current() < us)
 	{
 		// 轮询接收寄存器，收到数据则放入缓冲区
 		if(USART_GetFlagStatus(_port, USART_FLAG_RXNE) != RESET)
