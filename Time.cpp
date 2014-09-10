@@ -23,13 +23,17 @@ TTime::~TTime()
 
 void TTime::Init()
 {
+	RCC_ClocksTypeDef  clock;
+	RCC_GetClocksFreq(&clock);	// 获得系统时钟频率。
+
 	// 准备使用外部时钟，Systick时钟=HCLK/8
 	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
 	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
+	//TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
+	TicksPerSecond = clock.HCLK_Frequency;			// 每秒的嘀嗒数
 	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
 
