@@ -2,6 +2,13 @@
 
 // 任务栈初始化
 
+/*
+task  	任务函数指针
+p_arg 	任务函数参数指针  
+ptos	栈底指针
+opt 	用于扩展的参数  
+*/
+
 OS_STK *OSTaskStkInit (void (*task)(void *p_arg), void *p_arg, OS_STK *ptos, INT16U opt)
 {
     OS_STK *stk;
@@ -75,7 +82,7 @@ void  OS_Sched (void)
             OS_SchedNew();
             if (OSPrioHighRdy != OSPrioCur) {            /* 最高优先级不是自己    */
                 OSTCBHighRdy = OSTCBPrioTbl[OSPrioHighRdy];
-                OS_TASK_SW();                            /* 执行上下文切换                     */
+                OS_TASK_SW();                            /* 执行上下文切换           */
             } 
 //        }
 //    }
@@ -91,11 +98,7 @@ void  OS_TaskIdle (void *p_arg)
 
 
 
-/*
-*********************************************************************************************************
-*                                          TASK CONTROL BLOCK
-*********************************************************************************************************
-*/
+// 任务控制块
 
 typedef struct os_tcb {
     OS_STK          *OSTCBStkPtr;           /* sp  栈顶                         */
@@ -104,7 +107,7 @@ typedef struct os_tcb {
     void            *OSTCBExtPtr;           /* Pointer to user definable data for TCB extension        */
     OS_STK          *OSTCBStkBottom;        /* 栈底                          */
     INT32U           OSTCBStkSize;          /* 堆栈大小 (不是字节为单位 是压栈一次所占空间)        */
-    INT16U           OSTCBOpt;              /* Task options as passed by OSTaskCreateExt()             */
+//    INT16U           OSTCBOpt;              /* 扩展用参数              */
     INT16U           OSTCBId;               /* Task ID (0..65535)                                      */
 #endif
 
@@ -118,28 +121,26 @@ typedef struct os_tcb {
     INT8U            OSTCBPrio;             /* ID 优先级                           */
 	
 											/* 任务表位图位置 xy */
-    INT8U            OSTCBX;                /* Bit position in group  corresponding to task priority   */
-    INT8U            OSTCBY;                /* Index into ready table corresponding to task priority   */
+    INT8U            OSTCBX;                
+    INT8U            OSTCBY;               
 #if OS_LOWEST_PRIO <= 63					/* 任务表位图位置的掩码  用ram换取速度 */
-    INT8U            OSTCBBitX;             /* Bit mask to access bit position in ready table          */
-    INT8U            OSTCBBitY;             /* Bit mask to access bit position in ready group          */
+    INT8U            OSTCBBitX;            
+    INT8U            OSTCBBitY;             
 #endif
 
 #if OS_TASK_DEL_EN > 0
     INT8U            OSTCBDelReq;           /* 是否被删除标志         */
 #endif
-
+/*
 #if OS_TASK_PROFILE_EN > 0
-    INT32U           OSTCBCtxSwCtr;         /* Number of time the task was switched in                 */
-    INT32U           OSTCBCyclesTot;        /* Total number of clock cycles the task has been running  */
-    INT32U           OSTCBCyclesStart;      /* Snapshot of cycle counter at start of task resumption   */
-    OS_STK          *OSTCBStkBase;          /* Pointer to the beginning of the task stack              */
-    INT32U           OSTCBStkUsed;          /* Number of bytes used from the stack                     */
+    INT32U           OSTCBCtxSwCtr;         // 任务切换次数                
+    INT32U           OSTCBCyclesTot;        // 任务运行时间统计  
+    INT32U           OSTCBCyclesStart;      // xx   
+    OS_STK          *OSTCBStkBase;          // 栈底            
+    INT32U           OSTCBStkUsed;          // 已使用的堆栈数                   
 #endif
+*/
 
-#if OS_TASK_NAME_SIZE > 1
-    INT8U            OSTCBTaskName[OS_TASK_NAME_SIZE];
-#endif
 } OS_TCB;
 
 
