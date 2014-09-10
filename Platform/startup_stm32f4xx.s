@@ -25,28 +25,130 @@ __heap_limit
 
 __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
+
+				IMPORT FaultHandler
+				IMPORT UserHandler
+                DCD     FaultHandler ; NMI Handler
+                DCD     FaultHandler ; Hard Fault Handler
+                DCD     FaultHandler ; MPU Fault Handler
+                DCD     FaultHandler ; Bus Fault Handler
+                DCD     FaultHandler ; Usage Fault Handler
+
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     UserHandler ; SVCall Handler
+                DCD     UserHandler ; Debug Monitor Handler
+                DCD     0           ; Reserved
+                DCD     UserHandler ; PendSV Handler
+                DCD     UserHandler ; SysTick Handler
+
+                ; External Interrupts
+                DCD     UserHandler ; Window WatchDog                                        
+                DCD     UserHandler ; PVD through EXTI Line detection                        
+                DCD     UserHandler ; Tamper and TimeStamps through the EXTI line            
+                DCD     UserHandler ; RTC Wakeup through the EXTI line                       
+                DCD     UserHandler ; FLASH                                           
+                DCD     UserHandler ; RCC                                             
+                DCD     UserHandler ; EXTI Line0                                             
+                DCD     UserHandler ; EXTI Line1                                             
+                DCD     UserHandler ; EXTI Line2                                             
+                DCD     UserHandler ; EXTI Line3                                             
+                DCD     UserHandler ; EXTI Line4                                             
+                DCD     UserHandler ; DMA1 Stream 0                                   
+                DCD     UserHandler ; DMA1 Stream 1                                   
+                DCD     UserHandler ; DMA1 Stream 2                                   
+                DCD     UserHandler ; DMA1 Stream 3                                   
+                DCD     UserHandler ; DMA1 Stream 4                                   
+                DCD     UserHandler ; DMA1 Stream 5                                   
+                DCD     UserHandler ; DMA1 Stream 6                                   
+                DCD     UserHandler ; ADC1, ADC2 and ADC3s                            
+                DCD     UserHandler ; CAN1 TX                                                
+                DCD     UserHandler ; CAN1 RX0                                               
+                DCD     UserHandler ; CAN1 RX1                                               
+                DCD     UserHandler ; CAN1 SCE                                               
+                DCD     UserHandler ; External Line[9:5]s                                    
+                DCD     UserHandler ; TIM1 Break and TIM9                   
+                DCD     UserHandler ; TIM1 Update and TIM10                 
+                DCD     UserHandler ; TIM1 Trigger and Commutation and TIM11
+                DCD     UserHandler ; TIM1 Capture Compare                                   
+                DCD     UserHandler ; TIM2                                            
+                DCD     UserHandler ; TIM3                                            
+                DCD     UserHandler ; TIM4                                            
+                DCD     UserHandler ; I2C1 Event                                             
+                DCD     UserHandler ; I2C1 Error                                             
+                DCD     UserHandler ; I2C2 Event                                             
+                DCD     UserHandler ; I2C2 Error                                               
+                DCD     UserHandler ; SPI1                                            
+                DCD     UserHandler ; SPI2                                            
+                DCD     UserHandler ; USART1                                          
+                DCD     UserHandler ; USART2                                          
+                DCD     UserHandler ; USART3                                          
+                DCD     UserHandler ; External Line[15:10]s                                  
+                DCD     UserHandler ; RTC Alarm (A and B) through EXTI Line                  
+                DCD     UserHandler ; USB OTG FS Wakeup through EXTI line                        
+                DCD     UserHandler ; TIM8 Break and TIM12                  
+                DCD     UserHandler ; TIM8 Update and TIM13                 
+                DCD     UserHandler ; TIM8 Trigger and Commutation and TIM14
+                DCD     UserHandler ; TIM8 Capture Compare                                   
+                DCD     UserHandler ; DMA1 Stream7                                           
+                DCD     UserHandler ; FSMC                                            
+                DCD     UserHandler ; SDIO                                            
+                DCD     UserHandler ; TIM5                                            
+                DCD     UserHandler ; SPI3                                            
+                DCD     UserHandler ; UART4                                           
+                DCD     UserHandler ; UART5                                           
+                DCD     UserHandler ; TIM6 and DAC1&2 underrun errors                   
+                DCD     UserHandler ; TIM7                   
+                DCD     UserHandler ; DMA2 Stream 0                                   
+                DCD     UserHandler ; DMA2 Stream 1                                   
+                DCD     UserHandler ; DMA2 Stream 2                                   
+                DCD     UserHandler ; DMA2 Stream 3                                   
+                DCD     UserHandler ; DMA2 Stream 4                                   
+                DCD     UserHandler ; Ethernet                                        
+                DCD     UserHandler ; Ethernet Wakeup through EXTI line                      
+                DCD     UserHandler ; CAN2 TX                                                
+                DCD     UserHandler ; CAN2 RX0                                               
+                DCD     UserHandler ; CAN2 RX1                                               
+                DCD     UserHandler ; CAN2 SCE                                               
+                DCD     UserHandler ; USB OTG FS                                      
+                DCD     UserHandler ; DMA2 Stream 5                                   
+                DCD     UserHandler ; DMA2 Stream 6                                   
+                DCD     UserHandler ; DMA2 Stream 7                                   
+                DCD     UserHandler ; USART6                                           
+                DCD     UserHandler ; I2C3 event                                             
+                DCD     UserHandler ; I2C3 error                                             
+                DCD     UserHandler ; USB OTG HS End Point 1 Out                      
+                DCD     UserHandler ; USB OTG HS End Point 1 In                       
+                DCD     UserHandler ; USB OTG HS Wakeup through EXTI                         
+                DCD     UserHandler ; USB OTG HS                                      
+                DCD     UserHandler ; DCMI                                            
+                DCD     UserHandler ; CRYP crypto                                     
+                DCD     UserHandler ; Hash and Rng
+                DCD     UserHandler ; FPU
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
 
                 AREA    |.text|, CODE, READONLY
 
-; Reset handler
-Reset_Handler    PROC
-                 EXPORT  Reset_Handler             [WEAK]
-        IMPORT  SystemInit
-        IMPORT  __main
+; 启动函数
+Reset_Handler   PROC
+                EXPORT  Reset_Handler             [WEAK]
+				IMPORT  SystemInit
+				IMPORT  __main
 
-                 LDR     R0, =SystemInit
-                 BLX     R0
-                 LDR     R0, =__main
-                 BX      R0
-                 ENDP
+                LDR     R0, =SystemInit
+                BLX     R0
+                LDR     R0, =__main
+                BX      R0
+                ENDP
 
                 ALIGN
                 
-                 EXPORT  __initial_sp
-                 EXPORT  __heap_base
-                 EXPORT  __heap_limit
+                EXPORT  __initial_sp
+                EXPORT  __heap_base
+                EXPORT  __heap_limit
 
-                 END
+                END

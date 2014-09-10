@@ -34,11 +34,10 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     FaultHandler ; Bus Fault Handler
                 DCD     FaultHandler ; Usage Fault Handler
 
-                IF :DEF:GD32
-                DCD     0            ; Reserved
-                DCD     0            ; Reserved
-                DCD     0            ; Reserved
-                DCD     0            ; Reserved
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
+                DCD     0           ; Reserved
                 DCD     UserHandler ; SVCall Handler
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
@@ -78,19 +77,18 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     0           ; Reserved
                 DCD     UserHandler ; CEC
                 DCD     0           ; Reserved
-                ENDIF
-
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
 
                 AREA    |.text|, CODE, READONLY
 
-; Reset handler routine
+; 启动函数
 Reset_Handler   PROC
-                EXPORT  Reset_Handler                 [WEAK]
-        IMPORT  __main
-        IMPORT  SystemInit
+                EXPORT  Reset_Handler             [WEAK]
+				IMPORT  SystemInit
+				IMPORT  __main
+
                 LDR     R0, =SystemInit
                 BLX     R0
                 LDR     R0, =__main

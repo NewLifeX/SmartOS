@@ -1,11 +1,11 @@
 #include "Interrupt.h"
 
 // GD32全系列无法把向量表映射到RAM，F103只能映射到Flash别的地方
-#if defined(GD32)// || defined(STM32F4)
+/*#if defined(GD32)// || defined(STM32F4)
 	#define VEC_TABLE_ON_RAM 0
 #else
 	#define VEC_TABLE_ON_RAM 1
-#endif
+#endif*/
 
 /*
 完全接管中断，在RAM中开辟中断向量表，做到随时可换。
@@ -17,14 +17,14 @@
 TInterrupt Interrupt;
 
 // 真正的向量表 64k=0x10000
-#if VEC_TABLE_ON_RAM
+/*#if VEC_TABLE_ON_RAM
 #ifdef STM32F0
 	__IO Func _Vectors[VectorySize] __attribute__((at(0x20000000)));
 #else
 	// 84个中断向量，向上取整到2整数倍也就是128，128*4=512=0x200。CM3权威手册
 	__IO Func _Vectors[VectorySize] __attribute__((__aligned__(0x200)));
 #endif
-#endif
+#endif*/
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
 
@@ -44,7 +44,7 @@ void TInterrupt::Init()
     NVIC->ICPR[2] = 0xFFFFFFFF;
 #endif
 
-#if VEC_TABLE_ON_RAM
+/*#if VEC_TABLE_ON_RAM
 	memset((void*)_Vectors, 0, VectorySize << 2);
     _Vectors[2]  = (Func)&FaultHandler; // NMI
     _Vectors[3]  = (Func)&FaultHandler; // Hard Fault
@@ -80,7 +80,7 @@ void TInterrupt::Init()
     // Remap SRAM at 0x00000000
     SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_SRAM);
 #endif
-#else
+#else*/
 #ifdef STM32F1
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
@@ -88,7 +88,7 @@ void TInterrupt::Init()
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
 #endif
-#endif
+//#endif
 
 	// 初始化EXTI中断线为默认值
 	EXTI_DeInit();
@@ -109,9 +109,9 @@ bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 	assert_param(IS_IRQ(irq));
 
     short irq2 = irq + 16; // exception = irq + 16
-#if VEC_TABLE_ON_RAM
+/*#if VEC_TABLE_ON_RAM
     _Vectors[irq2] = UserHandler;
-#endif
+#endif*/
     Vectors[irq2] = isr;
     Params[irq2] = param;
 

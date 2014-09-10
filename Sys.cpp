@@ -78,6 +78,7 @@ _force_inline void InitHeapStack(uint ramSize)
 
 bool TSys::CheckMemory()
 {
+#if DEBUG
 	uint msp = __get_MSP();
 
 	//if(__microlib_freelist >= msp) return false;
@@ -87,6 +88,7 @@ bool TSys::CheckMemory()
 	uint end = SRAM_BASE + (RAMSize << 10);
 	//if(__microlib_freelist + 0x40 >= end) return false;
 	assert_param(__microlib_freelist + 0x40 < end);
+#endif
 
 	return true;
 }
