@@ -1,5 +1,9 @@
 #include "Thread.h"
 
+Thread* Thread::Head = NULL;
+Thread* Thread::New = NULL;
+Thread* Thread::Current = NULL;
+
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
 	StackSize = stackSize;
