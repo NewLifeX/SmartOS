@@ -69,13 +69,13 @@ public:
 
     OutputPort() { Init(); }
 	// 普通输出一般采用开漏输出，需要倒置
-    OutputPort(Pin pin, bool invert = true, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
 		SetPort(pin);
 		Init(invert, openDrain, speed);
 		Config();
 	}
-    OutputPort(Pin pins[], uint count, bool invert = true, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    OutputPort(Pin pins[], uint count, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
 		SetPort(pins, count);
 		Init(invert, openDrain, speed);
@@ -104,7 +104,7 @@ public:
 protected:
     virtual void OnConfig();
 
-    void Init(bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
+    void Init(bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
         OpenDrain = openDrain;
         Speed = speed;
