@@ -17,7 +17,11 @@ private:
 	
     USART_TypeDef* _port;
 	AlternatePort* _tx;
+#ifdef STM32F4
+	AlternatePort* _rx;
+#else
 	InputPort* _rx;
+#endif
 
     void Init(byte index, 
         int baudRate = 115200, 

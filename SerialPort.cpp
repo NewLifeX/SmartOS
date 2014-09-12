@@ -98,7 +98,11 @@ ShowLog:
 
 	//串口引脚初始化
     _tx = new AlternatePort(tx);
+#ifdef STM32F4
+    _rx = new AlternatePort(rx);
+#else
     _rx = new InputPort(rx);
+#endif
 
 	// 不要关调试口，否则杯具
     if(_index != Sys.MessagePort) USART_DeInit(_port);
