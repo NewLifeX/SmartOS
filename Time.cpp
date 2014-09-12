@@ -32,8 +32,8 @@ void TTime::Init()
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	//TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
-	TicksPerSecond = clock.HCLK_Frequency;			// 每秒的嘀嗒数
+	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
+	//TicksPerSecond = clock.HCLK_Frequency;			// 每秒的嘀嗒数
 	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
 
