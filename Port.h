@@ -1,4 +1,4 @@
-﻿#ifndef _Port_H_
+#ifndef _Port_H_
 #define _Port_H_
 
 #include "Sys.h"
@@ -69,13 +69,13 @@ public:
 
     OutputPort() { Init(); }
 	// 普通输出一般采用开漏输出，需要倒置
-    OutputPort(Pin pin, bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
+    OutputPort(Pin pin, bool invert = true, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
 		SetPort(pin);
 		Init(invert, openDrain, speed);
 		Config();
 	}
-    OutputPort(Pin pins[], uint count, bool invert = true, bool openDrain = true, uint speed = GPIO_MAX_SPEED)
+    OutputPort(Pin pins[], uint count, bool invert = true, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
 		SetPort(pins, count);
 		Init(invert, openDrain, speed);
