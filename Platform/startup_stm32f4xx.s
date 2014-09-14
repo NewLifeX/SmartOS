@@ -41,7 +41,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     UserHandler ; SVCall Handler
                 DCD     UserHandler ; Debug Monitor Handler
                 DCD     0           ; Reserved
-                DCD     UserHandler ; PendSV Handler
+                DCD     PendSV_Handler ; PendSV Handler
                 DCD     UserHandler ; SysTick Handler
 
                 ; External Interrupts
@@ -143,6 +143,11 @@ Reset_Handler   PROC
                 BLX     R0
                 LDR     R0, =__main
                 BX      R0
+                ENDP
+
+PendSV_Handler  PROC
+                EXPORT  PendSV_Handler             [WEAK]
+                B       .
                 ENDP
 
                 ALIGN
