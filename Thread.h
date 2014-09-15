@@ -68,7 +68,8 @@ public:
 	static Action  IdleHandler;	// 空闲线程委托
 
 	static void Init();
-	static void Schedule();	// 任务调度，马上切换时间片给下一个线程
+	static void Schedule();	// 系统线程调度开始
+	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 
 	_force_inline static void PendSV_Handler(ushort num, void* param);
 };

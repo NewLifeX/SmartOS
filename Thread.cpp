@@ -278,7 +278,7 @@ int Thread::PrepareReady()
 	return count;
 }
 
-// 任务调度，马上切换时间片给下一个线程
+// 系统线程调度开始
 void Thread::Schedule()
 {
 	SmartIRQ irq;
@@ -292,10 +292,16 @@ void Thread::Schedule()
 		__ISB();
 	}
 
-	// 记住当前栈底
-	//Current->Stack = (uint*)(__get_PSP() - (0x24 >> 2));
-	//Current->State = Running;
+	// 有些说法这里MSP要8字节对齐。有些霸道。
+	//__set_MSP(__get_MSP() & 0xFFFFFFF8);
 
+	// 触发PendSV异常，引发上下文切换
+	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+// 切换线程，马上切换时间片给下一个线程
+void Thread::Switch()
+{
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
@@ -314,6 +320,18 @@ __asm void LoadRegister(uint* p)
 	BX		LR
 }
 
+__asm void SaveFPU(uint* p)
+{
+	VSTMFD	R0!, {d8 - d15}
+	BX		LR
+}
+
+__asm void LoadFPU(uint* p)
+{
+	VLDMFD	R0!, {d8 - d15}
+	BX		LR
+}
+
 __asm void CheckLR()
 {
 	ORR LR, LR, #0x04
@@ -323,16 +341,21 @@ __asm void CheckLR()
 void Thread::PendSV_Handler(ushort num, void* param)
 {
 	SmartIRQ irq;
+	register uint* p __ASM("r0");
 
 	if(Current)
 	{
-		uint* p = (uint*)__get_PSP();
+		p = (uint*)__get_PSP();
 		if(!p)
 		{
+#ifdef STM32F4
+			//SaveFPU(p);
+#endif
 			// 保存现场 r4-11   r0-3 pc等都被中断时压栈过了
 			p -= 8;	// 保护8个寄存器，32个字节
 			Current->Stack = p;	// 备份当前sp
 			SaveRegister(p);
+			// 这个时候可以检查线程栈是否溢出
 		}
 
 		Current = Current->Next;
@@ -347,17 +370,15 @@ void Thread::PendSV_Handler(ushort num, void* param)
 	if(Current)
 	{
 		// 恢复R4-11到新的进程栈中
-		uint* p = Current->Stack;
+		p = Current->Stack;
 		LoadRegister(p);
-		//p += 8;
-		__set_PSP((uint)(Current->Stack + 8));
+		p += 8;
+#ifdef STM32F4
+		//LoadFPU(p);
+#endif
+		//__set_PSP((uint)(Current->Stack + 8));
+		__set_PSP((uint)(p));
 
-		// Ensure exception return uses process stack
-		/*__arm
-		{
-			ORR LR, LR, #0x04
-		}*/
-		//__ASM volatile ("ORR LR, LR, #0x04" : : : "lr" );
 		CheckLR();
 	}
 }
@@ -370,7 +391,7 @@ extern "C"
 	}
 }
 
-void Idle_Handler(void* param) { }
+void Idle_Handler(void* param) { while(1); }
 
 void Thread::Init()
 {
