@@ -8,12 +8,13 @@
 TTime::TTime()
 {
 	Ticks = 0;
-	NextEvent = TIME_Completion_IdleValue;
+	//NextEvent = TIME_Completion_IdleValue;
 
 	Microseconds = 0;
 	_usTicks = 0;
 
 	InterruptsPerSecond = 100;
+	OnInterrupt = NULL;
 }
 
 TTime::~TTime()
@@ -25,8 +26,8 @@ TTime::~TTime()
 
 void TTime::Init()
 {
-	RCC_ClocksTypeDef  clock;
-	RCC_GetClocksFreq(&clock);	// 获得系统时钟频率。
+	//RCC_ClocksTypeDef  clock;
+	//RCC_GetClocksFreq(&clock);	// 获得系统时钟频率。
 
 	// 准备使用外部时钟，Systick时钟=HCLK/8
 	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
@@ -56,8 +57,8 @@ void TTime::Init()
 	// 本身主频已经非常快，除以8分频吧
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
 
-	// SysTick_Config内部会设置优先级
-    //Interrupt.SetPriority(SysTick_IRQn, 0);
+	// 需要最高优先级
+    Interrupt.SetPriority(SysTick_IRQn, 0);
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
@@ -68,27 +69,27 @@ void TTime::Init()
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
-	Time.AddUp();
-}
+	SmartIRQ irq;
 
-void TTime::AddUp()
-{
-	uint value = (SysTick->LOAD - SysTick->VAL);
-	SysTick->VAL = 0;
+	//uint value = (SysTick->LOAD - SysTick->VAL);
+	//SysTick->VAL = 0;
+	// 此时若修改寄存器VAL，将会影响SysTick_CTRL_COUNTFLAG标识位
 
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
-		value += SysTick->LOAD;
-	}
+		uint value = SysTick->LOAD;
 
-	Ticks += value;
-	_usTicks += value;
-	Microseconds += _usTicks / TicksPerMicrosecond;
-	_usTicks %= TicksPerMicrosecond;
+		Time.Ticks += value;
+		Time._usTicks += value;
+		Time.Microseconds += Time._usTicks / Time.TicksPerMicrosecond;
+		Time._usTicks %= Time.TicksPerMicrosecond;
+		
+		if(Time.OnInterrupt) Time.OnInterrupt(&Time, NULL);
+	}
 }
 
-void TTime::SetCompare(ulong compareValue)
+/*void TTime::SetCompare(ulong compareValue)
 {
     SmartIRQ irq;
 
@@ -113,28 +114,23 @@ void TTime::SetCompare(ulong compareValue)
 	// 重新设定重载值，下一次将在该值处中断
 	SysTick->LOAD = diff;
 	SysTick->VAL = 0x00;
-}
+}*/
 
 ulong TTime::CurrentTicks()
 {
-    SmartIRQ irq;
+    //SmartIRQ irq;
 
-	AddUp();
+	uint value = (SysTick->LOAD - SysTick->VAL);
 
-	return Ticks;
+	return Ticks + value;
 }
 
 // 当前微秒数
 ulong TTime::Current()
 {
-	// 为了精度，这里没有直接除TicksPerMicrosecond
-	//return CurrentTicks() * 1000000 / TicksPerSecond;
-	// 上面的计算方式会导致溢出
-	//return CurrentTicks() / TicksPerMicrosecond;
+	uint value = (SysTick->LOAD - SysTick->VAL);
 
-	AddUp();
-
-	return Microseconds;
+	return Microseconds + value / TicksPerMicrosecond;
 }
 
 void TTime::SetTime(ulong us)
@@ -161,10 +157,10 @@ void TTime::Sleep(uint us)
     SmartIRQ irq(true);
 
 	// 时钟滴答需要采用UINT64
-    //ulong maxDiff = (ulong)us * TicksPerMicrosecond;
-    //ulong current = CurrentTicks();
-    ulong maxDiff = (ulong)us;
-    ulong current = Current();
+    ulong maxDiff = (ulong)us * TicksPerMicrosecond;
+    ulong current = CurrentTicks();
+    //ulong maxDiff = (ulong)us;
+    //ulong current = Current();
 
 	// 减去误差指令周期，在获取当前时间以后多了几个指令
     if(maxDiff <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS)
@@ -174,15 +170,9 @@ void TTime::Sleep(uint us)
 
 	maxDiff += current;
 
-    //while(CurrentTicks() <= maxDiff);
-    while(Current() <= maxDiff);
+    while(CurrentTicks() <= maxDiff);
+    //while(Current() <= maxDiff);
 }
-
-// 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
-/*ulong TTime::NewTicks(uint us)
-{
-	return CurrentTicks() + (ulong)us * TicksPerMicrosecond;
-}*/
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
 #define BASE_YEAR                   2000
@@ -200,7 +190,6 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 
 SystemTime& SystemTime::Parse(ulong us)
 {
-	//if(!st) st = new SystemTime();
 	SystemTime& st = *this;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
@@ -312,9 +301,6 @@ const char* SystemTime::ToString(byte kind, string str)
 // 当前时间
 SystemTime& TTime::Now()
 {
-	//if(!_Now) _Now = new SystemTime();
-
-	//To(Current(), _Now);
 	_Now.Parse(Current());
 
 	return _Now;

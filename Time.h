@@ -44,9 +44,6 @@ private:
 	SystemTime _Now;
 	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
 
-	// _force_inline虽然可以减少压栈弹栈两个指令，但是增加了不少Flash
-	void AddUp();	// 累加滴答
-
 public:
     volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
@@ -66,8 +63,7 @@ public:
     //void SetCompare(ulong compareValue);
     ulong CurrentTicks();	// 当前滴答时钟
 	void SetTime(ulong us);	// 设置时间
-	//ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
-	ulong Current(); // 当前微秒数
+	ulong Current(); 		// 当前微秒数
     void Sleep(uint us);
 
 	// 当前时间。外部不要释放该指针
