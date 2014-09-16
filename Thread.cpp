@@ -287,6 +287,8 @@ void Thread::Schedule()
 	if(__get_CONTROL() != 2)
 	{
 		// 设置PSP，使用双栈
+		// 很多RTOS在这里设置PSP为0，然后这个函数最后是一个死循环。
+		// 其实，PSP为0以后，这个函数就无法正常退出了，我们把它设置为MSP，确保函数正常退出，外部死循环
 		__set_PSP(__get_MSP());
 		__set_CONTROL(2);
 		__ISB();
