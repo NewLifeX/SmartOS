@@ -262,7 +262,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 
 	byte SERIALPORT_IRQns[] = {
 		USART1_IRQn, USART2_IRQn,
-#ifdef STM32F10X
+#ifndef STM32F0
 		USART3_IRQn, UART4_IRQn, UART5_IRQn
 #endif
 	};
