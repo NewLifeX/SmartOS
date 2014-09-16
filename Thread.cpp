@@ -351,83 +351,6 @@ void Thread::Switch()
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-__asm void SaveRegister(uint* p)
-{
-	//MOV     R0, __cpp(p)
-	STM     R0, {R4-R11}
-	BX		LR
-}
-
-__asm void LoadRegister(uint* p)
-{
-	;MOV     R0, =p
-	LDM     R0, {R4-R11}
-	BX		LR
-}
-
-__asm void SaveFPU(uint* p)
-{
-	VSTMFD	R0!, {d8 - d15}
-	BX		LR
-}
-
-__asm void LoadFPU(uint* p)
-{
-	VLDMFD	R0!, {d8 - d15}
-	BX		LR
-}
-
-__asm void CheckLR()
-{
-	ORR LR, LR, #0x04
-	BX  LR
-}
-
-void Thread::OnPendSV()
-{
-	SmartIRQ irq;
-	register uint* p __ASM("r0");
-
-	if(Current)
-	{
-		p = (uint*)__get_PSP();
-		if(!p)
-		{
-#ifdef STM32F4
-			//SaveFPU(p);
-#endif
-			// 保存现场 r4-11   r0-3 pc等都被中断时压栈过了
-			p -= 8;	// 保护8个寄存器，32个字节
-			Current->Stack = p;	// 备份当前sp
-			SaveRegister(p);
-			// 这个时候可以检查线程栈是否溢出
-		}
-
-		Current = Current->Next;
-	}
-
-	if(!Current)
-	{
-		if(!Busy) PrepareReady();
-		Current = Busy;
-	}
-
-	if(Current)
-	{
-		// 恢复R4-11到新的进程栈中
-		p = Current->Stack;
-		LoadRegister(p);
-		p += 8;
-#ifdef STM32F4
-		//LoadFPU(p);
-#endif
-		//__set_PSP((uint)(Current->Stack + 8));
-		__set_PSP((uint)(p));
-
-		CheckLR();
-	}
-}
-
 void Thread::CheckCurrent()
 {
 	if(Current) Current = Current->Next;
@@ -468,10 +391,6 @@ extern "C"
 
 		LDR     R2, [R1, #0x04]    		// 备份当前sp到任务控制块
 		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
-
-		//LDR		R2, [R1, #0x08]			// Current = Current->Next
-		//STR		R2, [R1]
-		//MOV		R1, R2
 										// 此时整个上下文已经被保存
 PendSV_NoSave
 
@@ -480,6 +399,7 @@ PendSV_NoSave
 		PUSH    {R14}
 		BLX		R0
 		POP     {R14}
+		NOP
 
 		LDR		R0, =current			// Current->Stack
 		LDR     R0, [R0]
