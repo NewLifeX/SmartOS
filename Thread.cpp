@@ -351,20 +351,23 @@ void Thread::Switch()
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-void Thread::CheckCurrent()
+bool Thread::CheckCurrent()
 {
+	Thread* ori = Current;
 	if(Current) Current = Current->Next;
 	if(!Current)
 	{
 		if(!Busy) PrepareReady();
 		Current = Busy;
 	}
+	return ori != Current;
 }
 
 extern "C"
 {
 	Thread** current = &Thread::Current;
-	Func checkCurrent = Thread::CheckCurrent;
+	typedef bool (*FuncBool)(void);
+	FuncBool checkCurrent = Thread::CheckCurrent;
 
 	__asm void PendSV_Handler()
 	{
@@ -374,6 +377,14 @@ extern "C"
 		IMPORT checkCurrent
 
 		CPSID   I                       // 关闭全局中断
+		LDR		R0, =checkCurrent
+		LDR		R0, [R0]
+		PUSH    {R14}
+		BLX		R0
+		POP     {R14}
+
+		CBZ     R0, PendSV_End			// 如果返回false，则说明是同一个线程，不需要调度
+
 		LDR		R1, =current
 		LDR		R1, [R1]
 		LDR		R1, [R1]
@@ -391,16 +402,8 @@ extern "C"
 
 		LDR     R2, [R1, #0x04]    		// 备份当前sp到任务控制块
 		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
-										// 此时整个上下文已经被保存
-PendSV_NoSave
-
-		LDR		R0, =checkCurrent
-		LDR		R0, [R0]
-		PUSH    {R14}
-		BLX		R0
-		POP     {R14}
-		NOP
-
+										
+PendSV_NoSave							// 此时整个上下文已经被保存
 		LDR		R0, =current			// Current->Stack
 		LDR     R0, [R0]
 		LDR     R0, [R0]
@@ -416,6 +419,8 @@ PendSV_NoSave
 
 		MSR     PSP, R0                 // 修改PSP
 		ORR     LR, LR, #0x04           // 确保中断返回用户栈
+		
+PendSV_End
 		CPSIE   I
 		BX      LR                      // 中断返回将恢复上下文
 	}

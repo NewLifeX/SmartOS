@@ -72,7 +72,7 @@ public:
 	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 
-	static void CheckCurrent();
+	static bool CheckCurrent();
 };
 
 #endif
