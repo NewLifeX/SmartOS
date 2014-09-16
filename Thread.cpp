@@ -23,6 +23,28 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	uint* top = StackTop;
     uint* stk = StackTop;          /* Load stack pointer                                 */
                                    /* Registers stacked as if auto-saved on exception    */
+	
+	#ifdef STM32F4
+	*(--stk)  = (uint)0xaa;        /* R? : argument                            */ 
+	*(--stk)  = (uint)0xa;         /* FPSCR : argument                         */
+	*(--stk)  = (uint)0x15;        /* S15 : argument                           */        
+	*(--stk)  = (uint)0x14;        /* S14 : argument                           */
+	*(--stk)  = (uint)0x13;        /* S13 : argument                           */
+	*(--stk)  = (uint)0x12;        /* S12 : argument                           */
+	*(--stk)  = (uint)0x11;        /* S11 : argument                           */
+	*(--stk)  = (uint)0x10;        /* S10 : argument                           */
+	*(--stk)  = (uint)0x9;         /* S9 : argument                            */
+	*(--stk)  = (uint)0x8;         /* S8 : argument                            */
+	*(--stk)  = (uint)0x7;         /* S7 : argument                            */         
+	*(--stk)  = (uint)0x6;         /* S6 : argument                            */        
+	*(--stk)  = (uint)0x5;         /* S5 : argument                            */
+	*(--stk)  = (uint)0x4;         /* S4 : argument                            */
+	*(--stk)  = (uint)0x3;         /* S3 : argument                            */
+	*(--stk)  = (uint)0x2;         /* S2 : argument                            */
+	*(--stk)  = (uint)0x1;         /* S1 : argument                            */
+	*(--stk)  = (uint)0x0;         /* S0 : argument                            */
+	#endif
+	                                       
     *(stk)    = (uint)0x01000000L; /* xPSR                                               */
     *(--stk)  = (uint)callback;    /* Entry Point                                        */
     *(--stk)  = (uint)0xFFFFFFFEL; /* R14 (LR) (init value will cause fault if ever used)*/
@@ -31,6 +53,27 @@ Thread::Thread(Action callback, void* state, uint stackSize)
     *(--stk)  = (uint)0x02020202L; /* R2                                                 */
     *(--stk)  = (uint)0x01010101L; /* R1                                                 */
     *(--stk)  = (uint)state;       /* R0 : argument                                      */
+
+	#ifdef STM32F4
+	/* FPU register s16 ~ s31 */
+	*(--stk)  = (uint)0x31uL;		/* S31												  */
+	*(--stk)  = (uint)0x30uL;		/* S30												  */
+	*(--stk)  = (uint)0x29uL;		/* S29												  */
+	*(--stk)  = (uint)0x28uL;		/* S28												  */
+	*(--stk)  = (uint)0x27uL;		/* S27												  */
+	*(--stk)  = (uint)0x26uL;		/* S26												  */
+	*(--stk)  = (uint)0x25uL;		/* S25												  */
+	*(--stk)  = (uint)0x24uL;		/* S24												  */
+	*(--stk)  = (uint)0x23uL;		/* S23												  */
+	*(--stk)  = (uint)0x22uL;		/* S22												  */
+	*(--stk)  = (uint)0x21uL;		/* S21												  */
+	*(--stk)  = (uint)0x20uL;		/* S20												  */
+	*(--stk)  = (uint)0x19uL;		/* S19												  */
+	*(--stk)  = (uint)0x18uL;		/* S18												  */
+	*(--stk)  = (uint)0x17uL;		/* S17												  */
+	*(--stk)  = (uint)0x16uL;		/* S16												  */
+	#endif
+	                                 		
                                    /* Remaining registers saved on process stack         */
     *(--stk)  = (uint)0x11111111L; /* R11                                                */
     *(--stk)  = (uint)0x10101010L; /* R10                                                */
@@ -131,7 +174,7 @@ void Thread::Add(Thread* thread)
 
 	// 如果优先级最高，重建就绪队列
 	// 如果就绪队列为空，也重新调度
-	if(Current && thread->Priority >= Current->Priority || Busy == NULL) PrepareReady();
+	if(!Current || thread->Priority >= Current->Priority || !Busy) PrepareReady();
 }
 
 void Thread::Remove(Thread* thread)
@@ -340,7 +383,7 @@ __asm void CheckLR()
 	BX  LR
 }
 
-void Thread::PendSV_Handler(ushort num, void* param)
+void Thread::OnPendSV()
 {
 	SmartIRQ irq;
 	register uint* p __ASM("r0");
@@ -385,11 +428,76 @@ void Thread::PendSV_Handler(ushort num, void* param)
 	}
 }
 
+void Thread::CheckCurrent()
+{
+	if(Current) Current = Current->Next;
+	if(!Current)
+	{
+		if(!Busy) PrepareReady();
+		Current = Busy;
+	}
+}
+
 extern "C"
 {
-	void PendSV_Handler()
+	Thread** current = &Thread::Current;
+	Func checkCurrent = Thread::CheckCurrent;
+
+	__asm void PendSV_Handler()
 	{
-		Thread::PendSV_Handler(0, 0);
+		//Thread::OnPendSV();
+
+		IMPORT current
+		IMPORT checkCurrent
+
+		CPSID   I                       // 关闭全局中断
+		LDR		R1, =current
+		LDR		R1, [R1]
+		LDR		R1, [R1]
+		CBZ     R1, PendSV_NoSave
+
+		MRS     R0, PSP
+		#ifdef STM32F4
+		//IF		{FPU} != "SoftVFP"
+		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31
+		//ENDIF
+		#endif
+
+		SUBS    R0, R0, #0x20           // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
+		STM     R0, {R4-R11}
+
+		LDR     R2, [R1, #0x04]    		// 备份当前sp到任务控制块
+		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
+
+		//LDR		R2, [R1, #0x08]			// Current = Current->Next
+		//STR		R2, [R1]
+		//MOV		R1, R2
+										// 此时整个上下文已经被保存
+PendSV_NoSave
+
+		LDR		R0, =checkCurrent
+		LDR		R0, [R0]
+		PUSH    {R14}
+		BLX		R0
+		POP     {R14}
+
+		LDR		R0, =current			// Current->Stack
+		LDR     R0, [R0]
+		LDR     R0, [R0]
+		LDR     R0, [R0, #0x04]
+		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
+		ADDS    R0, R0, #0x20
+
+		#ifdef STM32F4
+		//IF		{FPU} != "SoftVFP"
+		VLDMFD	r0!, {d8 - d15} 		// 弹出 FPU 寄存器 s16~s31
+		//ENDIF
+		#endif
+
+		MSR     PSP, R0                 // 修改PSP
+		ORR     LR, LR, #0x04           // 确保中断返回用户栈
+		CPSIE   I
+		BX      LR                      // 中断返回将恢复上下文
 	}
 }
 
@@ -412,7 +520,7 @@ void Thread::Init()
 	Idle = idle;
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
-	Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
-	
+	//Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
+
 	Time.OnInterrupt = Switch;
 }

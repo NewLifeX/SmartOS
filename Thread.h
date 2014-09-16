@@ -10,11 +10,13 @@ class Thread
 {
 private:
 public:
+	uint* Stack;	// 栈底
+	Thread* Next;
+
 	ushort ID;		// 编号
 	string Name;	// 名称
 
 	uint* StackTop;	// 栈顶
-	uint* Stack;	// 栈底
 	uint StackSize;	// 栈大小
 
 	typedef enum
@@ -37,7 +39,6 @@ public:
 	} Priorities;
 	Priorities Priority;	// 优先级
 
-	Thread* Next;
 	Thread* Prev;
 
 	Thread(Action callback, void* state = NULL, uint stackSize = 0x100);
@@ -71,7 +72,8 @@ public:
 	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 
-	_force_inline static void PendSV_Handler(ushort num, void* param);
+	_force_inline static void OnPendSV();
+	static void CheckCurrent();
 };
 
 #endif
