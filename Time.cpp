@@ -85,7 +85,7 @@ void TTime::OnHandler(ushort num, void* param)
 		Time.Microseconds += Time._usTicks / Time.TicksPerMicrosecond;
 		Time._usTicks %= Time.TicksPerMicrosecond;
 		
-		if(Time.OnInterrupt) Time.OnInterrupt(&Time, NULL);
+		if(Time.OnInterrupt) Time.OnInterrupt();
 	}
 }
 

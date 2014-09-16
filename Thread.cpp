@@ -413,4 +413,6 @@ void Thread::Init()
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 	Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
+	
+	Time.OnInterrupt = Switch;
 }
