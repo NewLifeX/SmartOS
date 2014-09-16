@@ -42,7 +42,7 @@ public:
     bool PendingState(short irq);
 
     // 设置优先级
-    void SetPriority(short irq, uint priority);
+    void SetPriority(short irq, uint priority = 1);
     // 获取优先级
     void GetPriority(short irq);
 

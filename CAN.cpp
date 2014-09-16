@@ -40,9 +40,9 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
 #endif
 
 #ifdef STM32F1
-    Interrupt.SetPriority(USB_LP_CAN1_RX0_IRQn, 0);
+    Interrupt.SetPriority(USB_LP_CAN1_RX0_IRQn, 1);
 #elif defined(STM32F4)
-    Interrupt.SetPriority(CAN1_RX0_IRQn, 0);
+    Interrupt.SetPriority(CAN1_RX0_IRQn, 1);
 #endif
 
     /************************CAN通信参数设置**********************************/
