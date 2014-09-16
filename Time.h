@@ -44,23 +44,26 @@ private:
 	SystemTime _Now;
 	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
 
+	// _force_inline虽然可以减少压栈弹栈两个指令，但是增加了不少Flash
 	void AddUp();	// 累加滴答
 
 public:
     volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
-    volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
+    //volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
     uint TicksPerSecond;        // 每秒的时钟滴答数
     ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
     byte TicksPerMicrosecond;   // 每微秒的时钟滴答数
 
 	uint InterruptsPerSecond;	// 每秒的中断数，时间片抢占式系统调度算法基于此值调度，也即是线程时间片，默认100
+	EventHandler OnInterrupt;
+
     TTime();
     virtual ~TTime();
 
 	void Init();
-    void SetCompare(ulong compareValue);
+    //void SetCompare(ulong compareValue);
     ulong CurrentTicks();	// 当前滴答时钟
 	void SetTime(ulong us);	// 设置时间
 	//ulong NewTicks(uint us); // 累加指定微秒后的滴答时钟。一般用来做超时检测，直接比较滴答不需要换算更高效
