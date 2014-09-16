@@ -9,9 +9,11 @@ TTime::TTime()
 {
 	Ticks = 0;
 	NextEvent = TIME_Completion_IdleValue;
-	
+
 	Microseconds = 0;
 	_usTicks = 0;
+
+	InterruptsPerSecond = 100;
 }
 
 TTime::~TTime()
@@ -33,20 +35,29 @@ void TTime::Init()
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
 	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
-	//TicksPerSecond = clock.HCLK_Frequency;			// 每秒的嘀嗒数
 	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
 
-	SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
+	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
 
 	// 加载嘀嗒数，72M时~=0x00FFFFFF/9M=1864135us，96M时~=0x00FFFFFF/12M=1398101us
 	SysTick->LOAD = SYSTICK_MAXCOUNT - 1;
 	SysTick->VAL = 0;
-	SysTick->CTRL |= SYSTICK_ENABLE;	// SysTick使能
+	SysTick->CTRL |= SYSTICK_ENABLE;	// SysTick使能*/
 
-	// 想在中断里使用延时函数就必须让此中断优先级最高
-    Interrupt.SetPriority(SysTick_IRQn, 0);
+	// 默认100，也即是每秒100次中断，10ms一次
+	uint ticks = Sys.Clock / InterruptsPerSecond;
+	assert_param(ticks > 0 && ticks < SYSTICK_MAXCOUNT);
+	SysTick_Config(ticks);
+
+	// 必须放在SysTick_Config后面，因为它设为不除以8
+	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
+	// 本身主频已经非常快，除以8分频吧
+	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
+
+	// SysTick_Config内部会设置优先级
+    //Interrupt.SetPriority(SysTick_IRQn, 0);
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
