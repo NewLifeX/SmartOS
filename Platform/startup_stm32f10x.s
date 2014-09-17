@@ -123,6 +123,11 @@ Reset_Handler   PROC
                 BX      R0
                 ENDP
 
+PendSV_Handler  PROC
+                EXPORT  PendSV_Handler             [WEAK]
+                B       .
+                ENDP
+
                 ALIGN
 
                 EXPORT  __initial_sp
