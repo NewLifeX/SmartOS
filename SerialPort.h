@@ -17,7 +17,7 @@ private:
 	
     USART_TypeDef* _port;
 	AlternatePort* _tx;
-#ifdef STM32F4
+#if defined(STM32F0) || defined(STM32F4)
 	AlternatePort* _rx;
 #else
 	InputPort* _rx;

@@ -15,7 +15,7 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 {
 	assert_param(com);
 
-	USART_TypeDef* g_Uart_Ports[] = UARTS;
+	const USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	byte _index = 0xFF;
 	for(int i=0; i<ArrayLength(g_Uart_Ports); i++)
 	{
@@ -31,7 +31,7 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 
 void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int stopBits)
 {
-	USART_TypeDef* g_Uart_Ports[] = UARTS;
+	USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	_index = index;
 	assert_param(_index < ArrayLength(g_Uart_Ports));
 
@@ -98,7 +98,7 @@ ShowLog:
 
 	//串口引脚初始化
     _tx = new AlternatePort(tx);
-#ifdef STM32F4
+#if defined(STM32F0) || defined(STM32F4)
     _rx = new AlternatePort(rx);
 #else
     _rx = new InputPort(rx);
@@ -260,7 +260,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 {
 	ITransport::Register(handler, param);
 
-	byte SERIALPORT_IRQns[] = {
+	const byte SERIALPORT_IRQns[] = {
 		USART1_IRQn, USART2_IRQn,
 //#ifndef STM32F0
 // 标准写法，偷工减料可能在将来造成隐患
@@ -306,9 +306,9 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 {
     *rxPin = *txPin = P0;
 
-	Pin g_Uart_Pins[] = UART_PINS;
-	Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
-	Pin* p = g_Uart_Pins;
+	const Pin g_Uart_Pins[] = UART_PINS;
+	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
+	const Pin* p = g_Uart_Pins;
 	if(IsRemap) p = g_Uart_Pins_Map;
 
 	int n = _index << 2;
