@@ -65,13 +65,13 @@ private:
 	static void OnTick();	// 系统滴答时钟定时调用该方法
 
 	static void Init();
-	static void Schedule();	// 系统线程调度开始
 
 public:
 	static Thread* Current;	// 正在执行的线程
 	static byte Count;		// 线程个数
 
 	static Thread* Idle;	// 空闲线程。最低优先级
+	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 };
 

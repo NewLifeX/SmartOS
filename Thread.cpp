@@ -8,7 +8,14 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	if(g_ID >= 0xFFFF) g_ID = 0;
 	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
+#ifdef STM32F4
+	uint stkSize = 0xC4;
+#else
+	uint stkSize = 0x3C;
+#endif
+
 	StackSize = stackSize;
+	stackSize += stkSize;
 	// 栈以4字节来操作
 	stackSize >>= 2;
 	// 从堆里面动态分配一块空间作为线程栈空间
@@ -316,7 +323,8 @@ int Thread::PrepareReady()
 // 系统线程调度开始
 void Thread::Schedule()
 {
-	SmartIRQ irq;
+	//SmartIRQ irq;
+	__disable_irq();
 
 	// 使用双栈。每个线程有自己的栈，属于PSP，中断专用MSP
 	if(__get_CONTROL() != 2)
@@ -334,6 +342,14 @@ void Thread::Schedule()
 
 	// 触发PendSV异常，引发上下文切换
 	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+
+	Time.OnInterrupt = OnTick;
+
+	Switch();
+	
+	__enable_irq();	// 这里必须手工释放，否则会导致全局中断没有打开而造成无法调度
+
+	while(1);
 }
 
 // 检查Sleep是否过期
@@ -451,11 +467,8 @@ void Thread::Init()
 	Current = NULL;
 
 	// 创建一个空闲线程，确保队列不为空
-#ifdef STM32F4
-	Thread* idle = new Thread(Idle_Handler, NULL, 0xC4);
-#else
-	Thread* idle = new Thread(Idle_Handler, NULL, 0x3C);
-#endif
+	//Thread* idle = new Thread(Idle_Handler, NULL, 0x400);
+	Thread* idle = new Thread(Idle_Handler, NULL, 0);
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
@@ -463,11 +476,16 @@ void Thread::Init()
 
 	// 把main函数主线程作为Idle线程，这是一个不需要外部创建就可以使用的线程
 	Current = Idle;
+	/*// 把栈复制过来
+	uint p = __get_MSP();
+	memcpy(idle->Stack, (void*)p, idle->StackSize);
+	// 使用新的栈
+	__set_MSP((uint)idle->Stack);*/
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 	//Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
 
-	Schedule();
+	//Schedule();
 
-	Time.OnInterrupt = OnTick;
+	//Time.OnInterrupt = OnTick;
 }
