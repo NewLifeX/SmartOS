@@ -360,20 +360,25 @@ void Thread::Schedule()
 // 切换线程，马上切换时间片给下一个线程
 void Thread::Switch()
 {
+	// 触发PendSV异常，引发上下文切换
+	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+void Thread::OnTick()
+{
 	// 检查睡眠到期的线程
 	bool flag = false;
 	for(Thread* th = Free; th; th = th->Next)
 	{
-		if(th->State == Suspended && th->DelayExpire <= Time.Current())
+		if(th->State == Suspended && th->DelayExpire > 0 && th->DelayExpire <= Time.Current())
 		{
 			th->Resume();
 			flag = true;
 		}
 	}
 	if(flag) PrepareReady();
-	
-	// 触发PendSV异常，引发上下文切换
-	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+
+	Switch();
 }
 
 bool Thread::CheckCurrent()
@@ -463,7 +468,11 @@ void Thread::Init()
 
 	if(!IdleHandler) IdleHandler = Idle_Handler;
 	// 创建一个空闲线程，确保队列不为空
-	Thread* idle = new Thread(IdleHandler, NULL, 0x3c);
+#ifdef STM32F4
+	Thread* idle = new Thread(IdleHandler, NULL, 0xC4);
+#else
+	Thread* idle = new Thread(IdleHandler, NULL, 0x3C);
+#endif
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
@@ -472,5 +481,5 @@ void Thread::Init()
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 	//Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
 
-	Time.OnInterrupt = Switch;
+	Time.OnInterrupt = OnTick;
 }

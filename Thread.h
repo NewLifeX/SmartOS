@@ -13,7 +13,7 @@ public:
 	uint* Stack;	// 栈底
 	Thread* Next;
 
-	ushort ID;		// 编号
+	//ushort ID;		// 编号
 	string Name;	// 名称
 
 	uint* StackTop;	// 栈顶
@@ -28,7 +28,7 @@ public:
 	} States;
 
 	States State;	// 状态
-	
+
 	typedef enum
 	{
 		Lowest,
@@ -55,19 +55,21 @@ public:
 	// 静态管理
 private:
 	static bool Inited;
-	
+
 	static Thread* Free;	// 自由线程队列，未得到时间片
 	static Thread* Busy;	// 正在享受时间片的高优先级就绪队列
-	
+
 	static void Add(Thread* thread);
 	static void Remove(Thread* thread);
-	
+
 	static int PrepareReady();		// 准备就绪队列
+
+	static void OnTick();	// 系统滴答时钟定时调用该方法
 
 public:
 	static Thread* Current;	// 正在执行的线程
 	static byte Count;		// 线程个数
-	
+
 	static Thread* Idle;	// 空闲线程。最低优先级
 	static Action  IdleHandler;	// 空闲线程委托
 
