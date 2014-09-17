@@ -9,8 +9,6 @@ class Thread;
 class Thread : public LinkedNode<Thread>
 {
 private:
-	//Thread* UnLink();
-	//Thread* LinkAfter(Thread* node);
 	bool CheckExpire();	// 检查Sleep是否过期
 
 public:
@@ -40,9 +38,6 @@ public:
 	} Priorities;
 	Priorities Priority;	// 优先级
 
-	//Thread* Next;
-	//Thread* Prev;
-
 	Thread(Action callback, void* state = NULL, uint stackSize = 0x100);
 	virtual ~Thread();
 
@@ -69,18 +64,15 @@ private:
 
 	static void OnTick();	// 系统滴答时钟定时调用该方法
 
+	static void Init();
+	static void Schedule();	// 系统线程调度开始
+
 public:
 	static Thread* Current;	// 正在执行的线程
 	static byte Count;		// 线程个数
 
 	static Thread* Idle;	// 空闲线程。最低优先级
-	//static Action  IdleHandler;	// 空闲线程委托
-
-	static void Init();
-	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
-
-	static bool CheckCurrent();
 };
 
 #endif

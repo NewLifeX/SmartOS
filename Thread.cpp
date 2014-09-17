@@ -166,25 +166,6 @@ void Thread::Sleep(uint ms)
 	Suspend();
 }
 
-/*Thread* Thread::Unlink()
-{
-	if(Prev) Prev->Next = Next;
-	if(Next) Next->Prev = Prev;
-
-	return this;
-}
-
-Thread* Thread::LinkAfter(Thread* node)
-{
-	assert_param(node);
-
-	node->Next = this;
-	Prev = node;
-	Next = NULL;
-
-	return this;
-}*/
-
 void Thread::Add(Thread* thread)
 {
 	assert_param(thread);
@@ -202,13 +183,7 @@ void Thread::Add(Thread* thread)
 	else
 	{
 		// 把线程加到列表最后面
-		//Thread* th = Free;
-		//while(th->Next != NULL) th = th->Next;
-
 		thread->LinkAfter(Free->Last());
-		/*th->Next = thread;
-		thread->Prev = th;
-		thread->Next = NULL;*/
 	}
 
 	Count++;
@@ -237,9 +212,6 @@ void Thread::Remove(Thread* thread)
 	{
 		// 直接从链表中移除
 		thread->Unlink();
-		/*thread->Prev->Next = thread->Next;
-		if(thread->Next)
-			thread->Next->Prev = thread->Prev;*/
 	}
 
 	Count--;
@@ -289,22 +261,13 @@ int Thread::PrepareReady()
 				if(th == Free) Free = th->Next;
 
 				// 从原队列出列
-				/*if(th->Prev) th->Prev->Next = th->Next;
-				if(th->Next) th->Next->Prev = th->Prev;*/
 				th->Unlink();
 
 				// 加入队列
 				if(!head)
-				{
 					head = tail = th;
-				}
 				else
-				{
-					/*tail->Next = th;
-					th->Prev = tail;
-					tail = th;*/
 					th->LinkAfter(tail);
-				}
 
 				count++;
 			}
@@ -320,22 +283,13 @@ int Thread::PrepareReady()
 				if(th == Busy) Busy = th->Next;
 
 				// 从原队列出列
-				/*if(th->Prev) th->Prev->Next = th->Next;
-				if(th->Next) th->Next->Prev = th->Prev;*/
 				th->Unlink();
 
 				// 加入队列
 				if(!head)
-				{
 					head = tail = th;
-				}
 				else
-				{
-					/*tail->Next = th;
-					th->Prev = tail;
-					tail = th;*/
 					th->LinkAfter(tail);
-				}
 
 				count++;
 			}
@@ -346,19 +300,9 @@ int Thread::PrepareReady()
 	if(Busy)
 	{
 		if(Free)
-		{
-			// 找到末尾
-			/*th = Free;
-			while(th->Next) th = th->Next;
-
-			th->Next = Busy;
-			Busy->Prev = th;*/
 			Busy->LinkAfter(Free->Last());
-		}
 		else
-		{
 			Free = Busy;
-		}
 	}
 
 	// 新的就绪队列
@@ -401,19 +345,6 @@ bool Thread::CheckExpire()
 	return false;
 }
 
-bool Thread::CheckCurrent()
-{
-	Thread* ori = Current;
-	if(Current) Current = Current->Next;
-	if(!Current)
-	{
-		if(!Busy) PrepareReady();
-		assert_param(Busy);
-		Current = Busy;
-	}
-	return ori != Current;
-}
-
 extern "C"
 {
 	uint* curStack = 0;
@@ -425,50 +356,32 @@ extern "C"
 		IMPORT newStack
 
 		CPSID   I                       // 关闭全局中断
-		/*LDR		R0, =checkCurrent
-		LDR		R0, [R0]
-		PUSH    {R14}
-		BLX		R0
-		POP     {R14}*/
 
 		LDR		R2, =curStack
 		LDR		R2, [R2]
 		LDR		R3, =newStack
 		LDR		R3, [R3]
 		CMP		R2, R3
-		BEQ		PendSV_End			// 相等则说明是同一个线程，不需要调度
+		BEQ		PendSV_End				// 相等则说明是同一个线程，不需要调度
 
-		//LDR		R1, =curStack
-		//LDR		R1, [R1]
-		//LDR		R1, [R1]
-		CBZ     R2, PendSV_NoSave
+		CBZ     R2, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
 
 		MRS     R0, PSP
 		#ifdef STM32F4
-		//IF		{FPU} != "SoftVFP"
 		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31
-		//ENDIF
 		#endif
 
 		SUBS    R0, R0, #0x20           // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
 		STM     R0, {R4-R11}
 
-		//LDR     R2, [R1]    		// 备份当前sp到任务控制块
-		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
+		STR     R0, [R2]				// 备份当前sp到任务控制块
 
 PendSV_NoSave							// 此时整个上下文已经被保存
-		/*LDR		R0, =current			// Current->Stack
-		LDR     R0, [R0]
-		LDR     R0, [R0]
-		LDR     R0, [R0]*/
-		MOV		R0, R3
-		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
-		ADDS    R0, R0, #0x20
+		LDM     R3, {R4-R11}            // 从新的栈中恢复 r4-11
+		ADDS    R0, R3, #0x20
 
 		#ifdef STM32F4
-		//IF		{FPU} != "SoftVFP"
 		VLDMFD	r0!, {d8 - d15} 		// 弹出 FPU 寄存器 s16~s31
-		//ENDIF
 		#endif
 
 		MSR     PSP, R0                 // 修改PSP
@@ -493,7 +406,7 @@ void Thread::Switch()
 		assert_param(Current);
 	}
 	newStack = Current->Stack;
-	
+
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
@@ -520,7 +433,6 @@ Thread* Thread::Busy = NULL;
 Thread* Thread::Current = NULL;
 byte Thread::Count = 0;
 Thread* Thread::Idle = NULL;
-//Action Thread::IdleHandler = NULL;
 
 void Thread::Init()
 {
@@ -533,7 +445,6 @@ void Thread::Init()
 	Busy = NULL;
 	Current = NULL;
 
-	//if(!IdleHandler) IdleHandler = Idle_Handler;
 	// 创建一个空闲线程，确保队列不为空
 #ifdef STM32F4
 	Thread* idle = new Thread(Idle_Handler, NULL, 0xC4);
