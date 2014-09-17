@@ -81,6 +81,14 @@ void TInterrupt::Init()
     SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_SRAM);
 #endif
 #else*/
+#ifdef STM32F4
+    SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
+               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
+	// 不能使用以下代码，否则F4里面无法响应中断
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk  // 打开异常
+                | SCB_SHCSR_BUSFAULTENA_Msk
+                | SCB_SHCSR_MEMFAULTENA_Msk;
+#endif
 #ifdef STM32F1
     SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
