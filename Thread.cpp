@@ -144,6 +144,7 @@ void Thread::Suspend()
 
 	// 修改了状态，需要重新整理就绪列表
 	PrepareReady();
+	Switch();
 }
 
 void Thread::Resume()
@@ -157,6 +158,7 @@ void Thread::Resume()
 
 	// 修改了状态，需要重新整理就绪列表
 	PrepareReady();
+	Switch();
 }
 
 void Thread::Sleep(uint ms)
@@ -339,7 +341,9 @@ bool Thread::CheckExpire()
 {
 	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Time.Current())
 	{
-		Resume();
+		//Resume();
+		State = Ready;
+		DelayExpire = 0;
 		return true;
 	}
 	return false;
@@ -347,8 +351,8 @@ bool Thread::CheckExpire()
 
 extern "C"
 {
-	uint* curStack = 0;
-	uint* newStack = 0;
+	uint** curStack = 0;
+	uint** newStack = 0;
 
 	__asm void PendSV_Handler()
 	{
@@ -359,16 +363,18 @@ extern "C"
 
 		LDR		R2, =curStack
 		LDR		R2, [R2]
+		LDR		R1, [R2]
 		LDR		R3, =newStack
 		LDR		R3, [R3]
-		CMP		R2, R3
-		BEQ		PendSV_End				// 相等则说明是同一个线程，不需要调度
+		LDR		R3, [R3]
+		/*CMP		R2, R3
+		BEQ		PendSV_End				// 相等则说明是同一个线程，不需要调度*/
 
-		CBZ     R2, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
+		CBZ     R1, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
 
 		MRS     R0, PSP
 		#ifdef STM32F4
-		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31
+		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31，寄存器增加
 		#endif
 
 		SUBS    R0, R0, #0x20           // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
@@ -397,7 +403,7 @@ PendSV_End
 void Thread::Switch()
 {
 	// 准备当前任务和新任务的栈
-	curStack = Current->Stack;
+	curStack = &Current->Stack;
 	Current = Current->Next;
 	if(!Current)
 	{
@@ -405,7 +411,10 @@ void Thread::Switch()
 		Current = Busy;
 		assert_param(Current);
 	}
-	newStack = Current->Stack;
+	newStack = &Current->Stack;
+
+	// 如果栈相同，说明是同一个线程，不需要切换
+	if(curStack == newStack) return;
 
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
