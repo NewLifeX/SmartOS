@@ -166,6 +166,25 @@ void Thread::Sleep(uint ms)
 	Suspend();
 }
 
+/*Thread* Thread::Unlink()
+{
+	if(Prev) Prev->Next = Next;
+	if(Next) Next->Prev = Prev;
+
+	return this;
+}
+
+Thread* Thread::LinkAfter(Thread* node)
+{
+	assert_param(node);
+
+	node->Next = this;
+	Prev = node;
+	Next = NULL;
+
+	return this;
+}*/
+
 void Thread::Add(Thread* thread)
 {
 	assert_param(thread);
@@ -183,12 +202,13 @@ void Thread::Add(Thread* thread)
 	else
 	{
 		// 把线程加到列表最后面
-		Thread* th = Free;
-		while(th->Next != NULL) th = th->Next;
+		//Thread* th = Free;
+		//while(th->Next != NULL) th = th->Next;
 
-		th->Next = thread;
+		thread->LinkAfter(Free->Last());
+		/*th->Next = thread;
 		thread->Prev = th;
-		thread->Next = NULL;
+		thread->Next = NULL;*/
 	}
 
 	Count++;
@@ -216,9 +236,10 @@ void Thread::Remove(Thread* thread)
 	else
 	{
 		// 直接从链表中移除
-		thread->Prev->Next = thread->Next;
+		thread->Unlink();
+		/*thread->Prev->Next = thread->Next;
 		if(thread->Next)
-			thread->Next->Prev = thread->Prev;
+			thread->Next->Prev = thread->Prev;*/
 	}
 
 	Count--;
@@ -268,8 +289,9 @@ int Thread::PrepareReady()
 				if(th == Free) Free = th->Next;
 
 				// 从原队列出列
-				if(th->Prev) th->Prev->Next = th->Next;
-				if(th->Next) th->Next->Prev = th->Prev;
+				/*if(th->Prev) th->Prev->Next = th->Next;
+				if(th->Next) th->Next->Prev = th->Prev;*/
+				th->Unlink();
 
 				// 加入队列
 				if(!head)
@@ -278,9 +300,10 @@ int Thread::PrepareReady()
 				}
 				else
 				{
-					tail->Next = th;
+					/*tail->Next = th;
 					th->Prev = tail;
-					tail = th;
+					tail = th;*/
+					th->LinkAfter(tail);
 				}
 
 				count++;
@@ -297,8 +320,9 @@ int Thread::PrepareReady()
 				if(th == Busy) Busy = th->Next;
 
 				// 从原队列出列
-				if(th->Prev) th->Prev->Next = th->Next;
-				if(th->Next) th->Next->Prev = th->Prev;
+				/*if(th->Prev) th->Prev->Next = th->Next;
+				if(th->Next) th->Next->Prev = th->Prev;*/
+				th->Unlink();
 
 				// 加入队列
 				if(!head)
@@ -307,9 +331,10 @@ int Thread::PrepareReady()
 				}
 				else
 				{
-					tail->Next = th;
+					/*tail->Next = th;
 					th->Prev = tail;
-					tail = th;
+					tail = th;*/
+					th->LinkAfter(tail);
 				}
 
 				count++;
@@ -323,11 +348,12 @@ int Thread::PrepareReady()
 		if(Free)
 		{
 			// 找到末尾
-			th = Free;
+			/*th = Free;
 			while(th->Next) th = th->Next;
 
 			th->Next = Busy;
-			Busy->Prev = th;
+			Busy->Prev = th;*/
+			Busy->LinkAfter(Free->Last());
 		}
 		else
 		{
@@ -364,28 +390,15 @@ void Thread::Schedule()
 	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-// 切换线程，马上切换时间片给下一个线程
-void Thread::Switch()
+// 检查Sleep是否过期
+bool Thread::CheckExpire()
 {
-	// 触发PendSV异常，引发上下文切换
-	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
-}
-
-void Thread::OnTick()
-{
-	// 检查睡眠到期的线程
-	bool flag = false;
-	for(Thread* th = Free; th; th = th->Next)
+	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Time.Current())
 	{
-		if(th->State == Suspended && th->DelayExpire > 0 && th->DelayExpire <= Time.Current())
-		{
-			th->Resume();
-			flag = true;
-		}
+		Resume();
+		return true;
 	}
-	if(flag) PrepareReady();
-
-	Switch();
+	return false;
 }
 
 bool Thread::CheckCurrent()
@@ -395,6 +408,7 @@ bool Thread::CheckCurrent()
 	if(!Current)
 	{
 		if(!Busy) PrepareReady();
+		assert_param(Busy);
 		Current = Busy;
 	}
 	return ori != Current;
@@ -402,30 +416,32 @@ bool Thread::CheckCurrent()
 
 extern "C"
 {
-	Thread** current = &Thread::Current;
-	typedef bool (*FuncBool)(void);
-	FuncBool checkCurrent = Thread::CheckCurrent;
+	uint* curStack = 0;
+	uint* newStack = 0;
 
 	__asm void PendSV_Handler()
 	{
-		//Thread::OnPendSV();
-
-		IMPORT current
-		IMPORT checkCurrent
+		IMPORT curStack
+		IMPORT newStack
 
 		CPSID   I                       // 关闭全局中断
-		LDR		R0, =checkCurrent
+		/*LDR		R0, =checkCurrent
 		LDR		R0, [R0]
 		PUSH    {R14}
 		BLX		R0
-		POP     {R14}
+		POP     {R14}*/
 
-		CBZ     R0, PendSV_End			// 如果返回false，则说明是同一个线程，不需要调度
+		LDR		R2, =curStack
+		LDR		R2, [R2]
+		LDR		R3, =newStack
+		LDR		R3, [R3]
+		CMP		R2, R3
+		BEQ		PendSV_End			// 相等则说明是同一个线程，不需要调度
 
-		LDR		R1, =current
-		LDR		R1, [R1]
-		LDR		R1, [R1]
-		CBZ     R1, PendSV_NoSave
+		//LDR		R1, =curStack
+		//LDR		R1, [R1]
+		//LDR		R1, [R1]
+		CBZ     R2, PendSV_NoSave
 
 		MRS     R0, PSP
 		#ifdef STM32F4
@@ -437,14 +453,15 @@ extern "C"
 		SUBS    R0, R0, #0x20           // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
 		STM     R0, {R4-R11}
 
-		LDR     R2, [R1, #0x04]    		// 备份当前sp到任务控制块
+		//LDR     R2, [R1]    		// 备份当前sp到任务控制块
 		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
 
 PendSV_NoSave							// 此时整个上下文已经被保存
-		LDR		R0, =current			// Current->Stack
+		/*LDR		R0, =current			// Current->Stack
 		LDR     R0, [R0]
 		LDR     R0, [R0]
-		LDR     R0, [R0, #0x04]
+		LDR     R0, [R0]*/
+		MOV		R0, R3
 		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
 		ADDS    R0, R0, #0x20
 
@@ -461,6 +478,37 @@ PendSV_End
 		CPSIE   I
 		BX      LR                      // 中断返回将恢复上下文
 	}
+}
+
+// 切换线程，马上切换时间片给下一个线程
+void Thread::Switch()
+{
+	// 准备当前任务和新任务的栈
+	curStack = Current->Stack;
+	Current = Current->Next;
+	if(!Current)
+	{
+		if(!Busy) PrepareReady();
+		Current = Busy;
+		assert_param(Current);
+	}
+	newStack = Current->Stack;
+	
+	// 触发PendSV异常，引发上下文切换
+	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+void Thread::OnTick()
+{
+	// 检查睡眠到期的线程
+	bool flag = false;
+	for(Thread* th = Free; th; th = th->Next)
+	{
+		flag |= th->CheckExpire();
+	}
+	if(flag) PrepareReady();
+
+	Switch();
 }
 
 void Idle_Handler(void* param) { while(1); }

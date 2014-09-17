@@ -6,16 +6,18 @@
 class Thread;
 
 // 线程
-class Thread
+class Thread : public LinkedNode<Thread>
 {
 private:
-public:
-	uint* Stack;	// 栈底
-	Thread* Next;
+	//Thread* UnLink();
+	//Thread* LinkAfter(Thread* node);
+	bool CheckExpire();	// 检查Sleep是否过期
 
+public:
 	uint ID;		// 编号
 	string Name;	// 名称
 
+	uint* Stack;	// 栈底
 	uint* StackTop;	// 栈顶
 	uint StackSize;	// 栈大小
 
@@ -38,7 +40,8 @@ public:
 	} Priorities;
 	Priorities Priority;	// 优先级
 
-	Thread* Prev;
+	//Thread* Next;
+	//Thread* Prev;
 
 	Thread(Action callback, void* state = NULL, uint stackSize = 0x100);
 	virtual ~Thread();

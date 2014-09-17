@@ -1,6 +1,7 @@
 #ifndef _List_H_
 #define _List_H_
 
+#include <stddef.h>
 #include "Sys.h"
 
 // 数组长度
@@ -25,7 +26,7 @@ struct Array
 		Default = 0x00;
 		memset(Arr, 0x00, array_size * sizeof(T));
 	}
-	
+
 	int Add(T item)
 	{
 		// 找到空闲位放置
@@ -39,7 +40,7 @@ struct Array
 		}
 		return -1;
 	}
-	
+
 	void Remove(T item)
 	{
 	}
@@ -177,60 +178,64 @@ private:
         if(_count >= _total) ChangeSize(_count * 2);
     }
 };
-/*
+
 // 双向链表
-template <class T> class DblLinkedList;
+template <class T> class LinkedList;
 
 // 双向链表节点
-template <class T> class DblLinkedNode
+template <class T> class LinkedNode
 {
-    T* _nextNode;
-    T* _prevNode;
-
 	// 友元类。允许链表类控制本类私有成员
-    friend class DblLinkedList<T>;
+    friend class LinkedList<T>;
 
 public:
+    T* Next;
+    T* Prev;
+
     void Initialize()
     {
-        _nextNode = NULL;
-        _prevNode = NULL;
+        Next = NULL;
+        Prev = NULL;
     }
 
-    T* Next() const { return _nextNode; }
-    T* Prev() const { return _prevNode; }
-
-    void SetNext( T* next ) { _nextNode = next; }
-    void SetPrev( T* prev ) { _prevNode = prev; }
-	// 是否有下一个节点链接
-    bool IsLinked() const { return _nextNode != NULL; }
-
-    // 从链表中删除。需要修改前后节点的指针指向，但当前链表仍然指向之前的前后节点
+    // 从链表中删除。需要修改前后节点的指针指向，但当前节点仍然指向之前的前后节点
     void RemoveFromList()
     {
-        T* next = _nextNode;
-        T* prev = _prevNode;
-
-        if(prev) prev->_nextNode = next;
-        if(next) next->_prevNode = prev;
+        if(Prev) Prev->Next = Next;
+        if(Next) Next->Prev = Prev;
     }
 
 	// 完全脱离链表。不再指向其它节点
     void Unlink()
     {
-        T* next = _nextNode;
-        T* prev = _prevNode;
+        if(Prev) Prev->Next = Next;
+        if(Next) Next->Prev = Prev;
 
-        if(prev) prev->_nextNode = next;
-        if(next) next->_prevNode = prev;
-
-        _nextNode = NULL;
-        _prevNode = NULL;
+        Next = NULL;
+        Prev = NULL;
     }
+
+	// 把当前节点附加到另一个节点之后
+	void LinkAfter(T* node)
+	{
+		node->Next = (T*)this;
+		Prev = node;
+		// 不能清空Next，因为可能是两个链表的合并
+		//Next = NULL;
+	}
+
+	// 最后一个节点
+	T* Last()
+	{
+		T* node = (T*)this;
+		while(node->Next) node = node->Next;
+
+		return node;
+	}
 };
 
 // 双向链表
-template <class T> class DblLinkedList
+template <class T> class LinkedList
 {
     T* _first;
     T* _last;
@@ -264,19 +269,19 @@ public:
     T* FirstValidNode() const { T* res = _first; return res->Next() ? res : NULL; }
     T* LastValidNode () const { T* res = _last ; return res->Prev() ? res : NULL; }
 
-    T* Head() const { return (T*)((uint)&_first - offsetof(T, _nextNode)); }
-    T* Tail() const { return (T*)((uint)&_last  - offsetof(T, _prevNode)); }
+    T* Head() const { return (T*)((uint)&_first - offsetof(T, Next)); }
+    T* Tail() const { return (T*)((uint)&_last  - offsetof(T, Prev)); }
 
 private:
 
 	// 在两个节点之间插入新节点
     void Insert( T* prev, T* next, T* node )
     {
-        node->_nextNode = next;
-        node->_prevNode = prev;
+        node->Next = next;
+        node->Prev = prev;
 
-        next->_prevNode = node;
-        prev->_nextNode = node;
+        next->Prev = node;
+        prev->Next = node;
     }
 
 public:
@@ -346,5 +351,5 @@ public:
         return node;
     }
 };
-*/
+
 #endif //_List_H_
