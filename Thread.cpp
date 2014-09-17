@@ -351,8 +351,8 @@ bool Thread::CheckExpire()
 
 extern "C"
 {
-	uint** curStack = 0;
-	uint** newStack = 0;
+	uint** curStack = 0;	// 当前线程栈的指针。需要保存线程栈，所以需要指针
+	uint* newStack = 0;		// 新的线程栈
 
 	__asm void PendSV_Handler()
 	{
@@ -364,11 +364,6 @@ extern "C"
 		LDR		R2, =curStack
 		LDR		R2, [R2]
 		LDR		R1, [R2]
-		LDR		R3, =newStack
-		LDR		R3, [R3]
-		LDR		R3, [R3]
-		/*CMP		R2, R3
-		BEQ		PendSV_End				// 相等则说明是同一个线程，不需要调度*/
 
 		CBZ     R1, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
 
@@ -383,8 +378,10 @@ extern "C"
 		STR     R0, [R2]				// 备份当前sp到任务控制块
 
 PendSV_NoSave							// 此时整个上下文已经被保存
-		LDM     R3, {R4-R11}            // 从新的栈中恢复 r4-11
-		ADDS    R0, R3, #0x20
+		LDR		R3, =newStack
+		LDR		R0, [R3]
+		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
+		ADDS    R0, R0, #0x20
 
 		#ifdef STM32F4
 		VLDMFD	r0!, {d8 - d15} 		// 弹出 FPU 寄存器 s16~s31
@@ -393,7 +390,6 @@ PendSV_NoSave							// 此时整个上下文已经被保存
 		MSR     PSP, R0                 // 修改PSP
 		ORR     LR, LR, #0x04           // 确保中断返回用户栈
 
-PendSV_End
 		CPSIE   I
 		BX      LR                      // 中断返回将恢复上下文
 	}
@@ -411,10 +407,10 @@ void Thread::Switch()
 		Current = Busy;
 		assert_param(Current);
 	}
-	newStack = &Current->Stack;
+	newStack = Current->Stack;
 
 	// 如果栈相同，说明是同一个线程，不需要切换
-	if(curStack == newStack) return;
+	if(*curStack == newStack) return;
 
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
