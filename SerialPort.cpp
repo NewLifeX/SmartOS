@@ -4,6 +4,8 @@
 #include "Port.h"
 #include "SerialPort.h"
 
+#define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
+
 // 默认波特率
 //#define USART_DEFAULT_BAUDRATE 115200
 
@@ -25,7 +27,7 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 			break;
 		}
 	}
-	
+
 	Init(_index, baudRate, parity, dataBits, stopBits);
 }
 
@@ -46,6 +48,9 @@ void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int st
 	RS485 = NULL;
 
 	IsRemap = false;
+
+	// 根据端口实际情况决定打开状态
+	if(_port->CR1 & CR1_UE_Set) Opened = true;
 }
 
 // 析构时自动关闭
@@ -268,15 +273,16 @@ void SerialPort::Register(TransportHandler handler, void* param)
 		USART3_IRQn, UART4_IRQn, UART5_IRQn
 #endif
 	};
+	byte irq = SERIALPORT_IRQns[_index];
     if(handler)
 	{
-        Interrupt.SetPriority(SERIALPORT_IRQns[_index], 1);
+        Interrupt.SetPriority(irq, 1);
 
-		Interrupt.Activate(SERIALPORT_IRQns[_index], OnUsartReceive, this);
+		Interrupt.Activate(irq, OnUsartReceive, this);
 	}
     else
 	{
-		Interrupt.Deactivate(SERIALPORT_IRQns[_index]);
+		Interrupt.Deactivate(irq);
 	}
 }
 
@@ -288,6 +294,7 @@ void SerialPort::OnUsartReceive(ushort num, void* param)
 	{
 		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
 		{
+			// 从栈分配，节省内存
 			byte buf[64];
 			uint len = sp->Read(buf, ArrayLength(buf));
 			if(len)
@@ -318,8 +325,6 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 
 extern "C"
 {
-    #define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
-
     SerialPort* _printf_sp;
 	bool isInFPutc;
 
