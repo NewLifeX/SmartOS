@@ -17,17 +17,19 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	// 默认普通优先级
 	Priority = Normal;
 
+	DelayExpire = 0;
+
 	Next = NULL;
 	Prev = NULL;
 
 	uint* top = StackTop;
     uint* stk = StackTop;          /* Load stack pointer                                 */
                                    /* Registers stacked as if auto-saved on exception    */
-	
+
 	#ifdef STM32F4
-	*(--stk)  = (uint)0xaa;        /* R? : argument                            */ 
+	*(--stk)  = (uint)0xaa;        /* R? : argument                            */
 	*(--stk)  = (uint)0xa;         /* FPSCR : argument                         */
-	*(--stk)  = (uint)0x15;        /* S15 : argument                           */        
+	*(--stk)  = (uint)0x15;        /* S15 : argument                           */
 	*(--stk)  = (uint)0x14;        /* S14 : argument                           */
 	*(--stk)  = (uint)0x13;        /* S13 : argument                           */
 	*(--stk)  = (uint)0x12;        /* S12 : argument                           */
@@ -35,8 +37,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	*(--stk)  = (uint)0x10;        /* S10 : argument                           */
 	*(--stk)  = (uint)0x9;         /* S9 : argument                            */
 	*(--stk)  = (uint)0x8;         /* S8 : argument                            */
-	*(--stk)  = (uint)0x7;         /* S7 : argument                            */         
-	*(--stk)  = (uint)0x6;         /* S6 : argument                            */        
+	*(--stk)  = (uint)0x7;         /* S7 : argument                            */
+	*(--stk)  = (uint)0x6;         /* S6 : argument                            */
 	*(--stk)  = (uint)0x5;         /* S5 : argument                            */
 	*(--stk)  = (uint)0x4;         /* S4 : argument                            */
 	*(--stk)  = (uint)0x3;         /* S3 : argument                            */
@@ -44,7 +46,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	*(--stk)  = (uint)0x1;         /* S1 : argument                            */
 	*(--stk)  = (uint)0x0;         /* S0 : argument                            */
 	#endif
-	                                       
+
     *(stk)    = (uint)0x01000000L; /* xPSR                                               */
     *(--stk)  = (uint)callback;    /* Entry Point                                        */
     *(--stk)  = (uint)0xFFFFFFFEL; /* R14 (LR) (init value will cause fault if ever used)*/
@@ -73,7 +75,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	*(--stk)  = (uint)0x17uL;		/* S17												  */
 	*(--stk)  = (uint)0x16uL;		/* S16												  */
 	#endif
-	                                 		
+
                                    /* Remaining registers saved on process stack         */
     *(--stk)  = (uint)0x11111111L; /* R11                                                */
     *(--stk)  = (uint)0x10101010L; /* R10                                                */
@@ -126,7 +128,8 @@ void Thread::Suspend()
 
 	State = Suspended;
 
-	if(Current == this) Schedule();
+	// 修改了状态，需要重新整理就绪列表
+	PrepareReady();
 }
 
 void Thread::Resume()
@@ -134,8 +137,18 @@ void Thread::Resume()
 	assert_param(State == Suspended);
 
 	State = Ready;
+	DelayExpire = 0;
+
+	// 修改了状态，需要重新整理就绪列表
+	PrepareReady();
 }
 
+void Thread::Sleep(uint ms)
+{
+	DelayExpire = Time.Current() + ms * 1000;
+
+	Suspend();
+}
 
 bool Thread::Inited = false;
 Thread* Thread::Free = NULL;
@@ -347,6 +360,18 @@ void Thread::Schedule()
 // 切换线程，马上切换时间片给下一个线程
 void Thread::Switch()
 {
+	// 检查睡眠到期的线程
+	bool flag = false;
+	for(Thread* th = Free; th; th = th->Next)
+	{
+		if(th->State == Suspended && th->DelayExpire <= Time.Current())
+		{
+			th->Resume();
+			flag = true;
+		}
+	}
+	if(flag) PrepareReady();
+	
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
@@ -402,7 +427,7 @@ extern "C"
 
 		LDR     R2, [R1, #0x04]    		// 备份当前sp到任务控制块
 		STR     R0, [R2]                // R0 是被切换出去的线程栈地址
-										
+
 PendSV_NoSave							// 此时整个上下文已经被保存
 		LDR		R0, =current			// Current->Stack
 		LDR     R0, [R0]
@@ -419,7 +444,7 @@ PendSV_NoSave							// 此时整个上下文已经被保存
 
 		MSR     PSP, R0                 // 修改PSP
 		ORR     LR, LR, #0x04           // 确保中断返回用户栈
-		
+
 PendSV_End
 		CPSIE   I
 		BX      LR                      // 中断返回将恢复上下文
