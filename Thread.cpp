@@ -1,8 +1,12 @@
-#include "Thread.h"
+﻿#include "Thread.h"
 
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
 	if(!Inited) Init();
+
+	ID = ++g_ID;
+	if(g_ID >= 0xFFFF) g_ID = 0;
+	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
 	StackSize = stackSize;
 	// 栈以4字节来操作
@@ -11,6 +15,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	uint* p = new uint[stackSize];
 	Stack = p;
 	StackTop = Stack + stackSize;
+	debug_printf(" Stack=(0x%08x, 0x%08x)", Stack, StackTop);
+	debug_printf("\r\n");
 
 	// 默认状态就绪
 	State = Ready;
@@ -23,68 +29,68 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	Prev = NULL;
 
 	uint* top = StackTop;
-    uint* stk = StackTop;          /* Load stack pointer                                 */
-                                   /* Registers stacked as if auto-saved on exception    */
+    uint* stk = StackTop;          // 加载栈指针
+                                   // 中断时自动保存一部分寄存器
 
 	#ifdef STM32F4
-	*(--stk)  = (uint)0xaa;        /* R? : argument                            */
-	*(--stk)  = (uint)0xa;         /* FPSCR : argument                         */
-	*(--stk)  = (uint)0x15;        /* S15 : argument                           */
-	*(--stk)  = (uint)0x14;        /* S14 : argument                           */
-	*(--stk)  = (uint)0x13;        /* S13 : argument                           */
-	*(--stk)  = (uint)0x12;        /* S12 : argument                           */
-	*(--stk)  = (uint)0x11;        /* S11 : argument                           */
-	*(--stk)  = (uint)0x10;        /* S10 : argument                           */
-	*(--stk)  = (uint)0x9;         /* S9 : argument                            */
-	*(--stk)  = (uint)0x8;         /* S8 : argument                            */
-	*(--stk)  = (uint)0x7;         /* S7 : argument                            */
-	*(--stk)  = (uint)0x6;         /* S6 : argument                            */
-	*(--stk)  = (uint)0x5;         /* S5 : argument                            */
-	*(--stk)  = (uint)0x4;         /* S4 : argument                            */
-	*(--stk)  = (uint)0x3;         /* S3 : argument                            */
-	*(--stk)  = (uint)0x2;         /* S2 : argument                            */
-	*(--stk)  = (uint)0x1;         /* S1 : argument                            */
-	*(--stk)  = (uint)0x0;         /* S0 : argument                            */
+	*(--stk)  = (uint)0xaa;        // R?
+	*(--stk)  = (uint)0xa;         // FPSCR
+	*(--stk)  = (uint)0x15;        // S15
+	*(--stk)  = (uint)0x14;        // S14
+	*(--stk)  = (uint)0x13;        // S13
+	*(--stk)  = (uint)0x12;        // S12
+	*(--stk)  = (uint)0x11;        // S11
+	*(--stk)  = (uint)0x10;        // S10
+	*(--stk)  = (uint)0x9;         // S9
+	*(--stk)  = (uint)0x8;         // S8
+	*(--stk)  = (uint)0x7;         // S7
+	*(--stk)  = (uint)0x6;         // S6
+	*(--stk)  = (uint)0x5;         // S5
+	*(--stk)  = (uint)0x4;         // S4
+	*(--stk)  = (uint)0x3;         // S3
+	*(--stk)  = (uint)0x2;         // S2
+	*(--stk)  = (uint)0x1;         // S1
+	*(--stk)  = (uint)0x0;         // S0
 	#endif
 
-    *(stk)    = (uint)0x01000000L; /* xPSR                                               */
-    *(--stk)  = (uint)callback;    /* Entry Point                                        */
-    *(--stk)  = (uint)0xFFFFFFFEL; /* R14 (LR) (init value will cause fault if ever used)*/
-    *(--stk)  = (uint)0x12121212L; /* R12                                                */
-    *(--stk)  = (uint)0x03030303L; /* R3                                                 */
-    *(--stk)  = (uint)0x02020202L; /* R2                                                 */
-    *(--stk)  = (uint)0x01010101L; /* R1                                                 */
-    *(--stk)  = (uint)state;       /* R0 : argument                                      */
+    *(stk)    = (uint)0x01000000L; // xPSR
+    *(--stk)  = (uint)callback;    // Entry Point
+    *(--stk)  = (uint)0xFFFFFFFEL; // R14 (LR) (初始值如果用过将导致异常)
+    *(--stk)  = (uint)0x12121212L; // R12
+    *(--stk)  = (uint)0x03030303L; // R3
+    *(--stk)  = (uint)0x02020202L; // R2
+    *(--stk)  = (uint)0x01010101L; // R1
+    *(--stk)  = (uint)state;       // R0
 
 	#ifdef STM32F4
-	/* FPU register s16 ~ s31 */
-	*(--stk)  = (uint)0x31uL;		/* S31												  */
-	*(--stk)  = (uint)0x30uL;		/* S30												  */
-	*(--stk)  = (uint)0x29uL;		/* S29												  */
-	*(--stk)  = (uint)0x28uL;		/* S28												  */
-	*(--stk)  = (uint)0x27uL;		/* S27												  */
-	*(--stk)  = (uint)0x26uL;		/* S26												  */
-	*(--stk)  = (uint)0x25uL;		/* S25												  */
-	*(--stk)  = (uint)0x24uL;		/* S24												  */
-	*(--stk)  = (uint)0x23uL;		/* S23												  */
-	*(--stk)  = (uint)0x22uL;		/* S22												  */
-	*(--stk)  = (uint)0x21uL;		/* S21												  */
-	*(--stk)  = (uint)0x20uL;		/* S20												  */
-	*(--stk)  = (uint)0x19uL;		/* S19												  */
-	*(--stk)  = (uint)0x18uL;		/* S18												  */
-	*(--stk)  = (uint)0x17uL;		/* S17												  */
-	*(--stk)  = (uint)0x16uL;		/* S16												  */
+	// FPU 寄存器 s16 ~ s31
+	*(--stk)  = (uint)0x31uL;      // S31
+	*(--stk)  = (uint)0x30uL;      // S30
+	*(--stk)  = (uint)0x29uL;      // S29
+	*(--stk)  = (uint)0x28uL;      // S28
+	*(--stk)  = (uint)0x27uL;      // S27
+	*(--stk)  = (uint)0x26uL;      // S26
+	*(--stk)  = (uint)0x25uL;      // S25
+	*(--stk)  = (uint)0x24uL;      // S24
+	*(--stk)  = (uint)0x23uL;      // S23
+	*(--stk)  = (uint)0x22uL;      // S22
+	*(--stk)  = (uint)0x21uL;      // S21
+	*(--stk)  = (uint)0x20uL;      // S20
+	*(--stk)  = (uint)0x19uL;      // S19
+	*(--stk)  = (uint)0x18uL;      // S18
+	*(--stk)  = (uint)0x17uL;      // S17
+	*(--stk)  = (uint)0x16uL;      // S16
 	#endif
 
-                                   /* Remaining registers saved on process stack         */
-    *(--stk)  = (uint)0x11111111L; /* R11                                                */
-    *(--stk)  = (uint)0x10101010L; /* R10                                                */
-    *(--stk)  = (uint)0x09090909L; /* R9                                                 */
-    *(--stk)  = (uint)0x08080808L; /* R8                                                 */
-    *(--stk)  = (uint)0x07070707L; /* R7                                                 */
-    *(--stk)  = (uint)0x06060606L; /* R6                                                 */
-    *(--stk)  = (uint)0x05050505L; /* R5                                                 */
-    *(--stk)  = (uint)0x04040404L; /* R4                                                 */
+                                   // 余下的寄存器将保存到线程栈
+    *(--stk)  = (uint)0x11111111L; // R11
+    *(--stk)  = (uint)0x10101010L; // R10
+    *(--stk)  = (uint)0x09090909L; // R9
+    *(--stk)  = (uint)0x08080808L; // R8
+    *(--stk)  = (uint)0x07070707L; // R7
+    *(--stk)  = (uint)0x06060606L; // R6
+    *(--stk)  = (uint)0x05050505L; // R5
+    *(--stk)  = (uint)0x04040404L; // R4
 
 	// 分配的栈至少要够自己用
 	//assert_param(stk >= Stack);
@@ -106,6 +112,8 @@ void Thread::Start()
 {
 	assert_param(State == Ready || State == Stopped);
 
+	debug_printf("Thread::Start %d %s Priority=%d\r\n", ID, Name, Priority);
+
 	State = Ready;
 
 	Add(this);		// 进入线程队列
@@ -114,6 +122,8 @@ void Thread::Start()
 void Thread::Stop()
 {
 	assert_param(State == Running || State == Suspended);
+
+	debug_printf("Thread::Stop %d %s\r\n", ID, Name);
 
 	// 退出线程队列
 	// 虽然内部会调用重新调度，但是一般Stop由中断函数执行，具有较高优先级，不会被重新调度打断，可确保完成
@@ -126,6 +136,10 @@ void Thread::Suspend()
 {
 	assert_param(State == Running || State == Ready);
 
+	debug_printf("Thread::Suspend %d %s", ID, Name);
+	if(DelayExpire > 0) debug_printf(" for Sleep %dms", (uint)(DelayExpire - Time.Current()) / 1000);
+	debug_printf("\r\n");
+
 	State = Suspended;
 
 	// 修改了状态，需要重新整理就绪列表
@@ -135,6 +149,8 @@ void Thread::Suspend()
 void Thread::Resume()
 {
 	assert_param(State == Suspended);
+
+	debug_printf("Thread::Resume %d %s\r\n", ID, Name);
 
 	State = Ready;
 	DelayExpire = 0;
@@ -149,14 +165,6 @@ void Thread::Sleep(uint ms)
 
 	Suspend();
 }
-
-bool Thread::Inited = false;
-Thread* Thread::Free = NULL;
-Thread* Thread::Busy = NULL;
-Thread* Thread::Current = NULL;
-byte Thread::Count = 0;
-Thread* Thread::Idle = NULL;
-Action Thread::IdleHandler = NULL;
 
 void Thread::Add(Thread* thread)
 {
@@ -185,9 +193,8 @@ void Thread::Add(Thread* thread)
 
 	Count++;
 
-	// 如果优先级最高，重建就绪队列
-	// 如果就绪队列为空，也重新调度
-	if(!Current || thread->Priority >= Current->Priority || !Busy) PrepareReady();
+	// 如果就绪队列为空或优先级更高，重建就绪队列
+	if(!Busy || thread->Priority >= Busy->Priority) PrepareReady();
 }
 
 void Thread::Remove(Thread* thread)
@@ -216,10 +223,10 @@ void Thread::Remove(Thread* thread)
 
 	Count--;
 
+	// 如果刚好是当前线程，则放弃时间片，重新调度。因为PendSV优先级的原因，不会马上调度
+	if(thread == Current) Switch();
 	// 如果就绪队列为空，重新调度
 	if(Busy == NULL) PrepareReady();
-	// 如果在就绪队列，刚好是当前线程，则放弃时间片，马上重新调度
-	if(thread == Current) Schedule();
 }
 
 // 准备最高优先级的就绪队列。时间片将在该队列中分配
@@ -354,7 +361,7 @@ void Thread::Schedule()
 	//__set_MSP(__get_MSP() & 0xFFFFFFF8);
 
 	// 触发PendSV异常，引发上下文切换
-	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
 // 切换线程，马上切换时间片给下一个线程
@@ -458,28 +465,45 @@ PendSV_End
 
 void Idle_Handler(void* param) { while(1); }
 
+bool Thread::Inited = false;
+uint Thread::g_ID = 0;
+Thread* Thread::Free = NULL;
+Thread* Thread::Busy = NULL;
+Thread* Thread::Current = NULL;
+byte Thread::Count = 0;
+Thread* Thread::Idle = NULL;
+//Action Thread::IdleHandler = NULL;
+
 void Thread::Init()
 {
+	debug_printf("\r\n");
+	debug_printf("初始化抢占式调度内核...\r\n");
+
 	Inited = true;
 
 	Free = NULL;
 	Busy = NULL;
 	Current = NULL;
 
-	if(!IdleHandler) IdleHandler = Idle_Handler;
+	//if(!IdleHandler) IdleHandler = Idle_Handler;
 	// 创建一个空闲线程，确保队列不为空
 #ifdef STM32F4
-	Thread* idle = new Thread(IdleHandler, NULL, 0xC4);
+	Thread* idle = new Thread(Idle_Handler, NULL, 0xC4);
 #else
-	Thread* idle = new Thread(IdleHandler, NULL, 0x3C);
+	Thread* idle = new Thread(Idle_Handler, NULL, 0x3C);
 #endif
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
 	Idle = idle;
 
+	// 把main函数主线程作为Idle线程，这是一个不需要外部创建就可以使用的线程
+	Current = Idle;
+
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 	//Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
+
+	Schedule();
 
 	Time.OnInterrupt = OnTick;
 }

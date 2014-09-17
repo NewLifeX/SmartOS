@@ -13,7 +13,7 @@ public:
 	uint* Stack;	// 栈底
 	Thread* Next;
 
-	//ushort ID;		// 编号
+	uint ID;		// 编号
 	string Name;	// 名称
 
 	uint* StackTop;	// 栈顶
@@ -26,16 +26,15 @@ public:
 		Suspended,	// 挂起状态
 		Stopped		// 停止状态
 	} States;
-
 	States State;	// 状态
 
 	typedef enum
 	{
-		Lowest,
-		BelowNormal,
-		Normal,
-		AboveNormal,
-		Highest
+		Lowest,		// 最低优先级
+		BelowNormal,// 略低
+		Normal,		// 普通优先级
+		AboveNormal,// 略高
+		Highest		// 最高优先级
 	} Priorities;
 	Priorities Priority;	// 优先级
 
@@ -55,6 +54,7 @@ public:
 	// 静态管理
 private:
 	static bool Inited;
+	static uint g_ID;
 
 	static Thread* Free;	// 自由线程队列，未得到时间片
 	static Thread* Busy;	// 正在享受时间片的高优先级就绪队列
@@ -71,7 +71,7 @@ public:
 	static byte Count;		// 线程个数
 
 	static Thread* Idle;	// 空闲线程。最低优先级
-	static Action  IdleHandler;	// 空闲线程委托
+	//static Action  IdleHandler;	// 空闲线程委托
 
 	static void Init();
 	static void Schedule();	// 系统线程调度开始
@@ -83,6 +83,6 @@ public:
 #endif
 
 /*
-两个队列，一个全部任务队列，一个就绪队列。
-时间片将在任务队列之中的线程分配，低优先级的线程没有机会，除非就绪队列为空，重建就绪队列。
+两个队列，一个全部队列Free，一个就绪队列Busy。
+时间片将在任务队列Busy之中的线程分配，低优先级的线程Free没有机会，除非就绪队列Busy为空，重建就绪队列。
 */
