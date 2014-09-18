@@ -10,6 +10,7 @@ class Thread : public LinkedNode<Thread>
 {
 private:
 	bool CheckExpire();	// 检查Sleep是否过期
+	void CheckStack();	// 检查栈是否溢出
 
 public:
 	uint ID;		// 编号

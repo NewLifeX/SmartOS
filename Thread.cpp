@@ -100,8 +100,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
     *(--stk)  = (uint)0x04040404L; // R4
 
 	// 分配的栈至少要够自己用
-	//assert_param(stk >= Stack);
 	if(stk < p) debug_printf("StackSize must >= 0x%02x\r\n", (top - stk) << 2);
+	assert_param(stk >= Stack);
 
 	Stack = stk;
 }
@@ -143,9 +143,7 @@ void Thread::Suspend()
 {
 	assert_param(State == Running || State == Ready);
 
-	debug_printf("Thread::Suspend %d %s", ID, Name);
-	if(DelayExpire > 0) debug_printf(" for Sleep %dms", (uint)(DelayExpire - Time.Current()) / 1000);
-	debug_printf("\r\n");
+	debug_printf("Thread::Suspend %d %s\r\n", ID, Name);
 
 	State = Suspended;
 
@@ -172,7 +170,44 @@ void Thread::Sleep(uint ms)
 {
 	DelayExpire = Time.Current() + ms * 1000;
 
-	Suspend();
+	assert_param(State == Running || State == Ready);
+
+	debug_printf("Thread::Sleep %d %s for %dms\r\n", ID, Name, ms);
+
+	State = Suspended;
+
+	// 修改了状态，需要重新整理就绪列表
+	PrepareReady();
+	Switch();
+}
+
+// 检查Sleep是否过期
+bool Thread::CheckExpire()
+{
+	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Time.Current())
+	{
+		//Resume();
+		State = Ready;
+		DelayExpire = 0;
+		return true;
+	}
+	return false;
+}
+
+void Thread::CheckStack()
+{
+#ifdef DEBUG
+	uint p = __get_PSP();
+	// 不用考虑寄存器保护部分，前面还有恰好足够的空间留给它们
+	/*#ifdef STM32F4
+	p -= 0x40;
+	#endif
+	p -= 0x20;*/
+
+	uint stackBottom = (uint)StackTop - StackSize;
+	if(p < stackBottom) debug_printf("Thread::CheckStack %d %s Overflow, Stack 0x%08x < 0x%08x\r\n", ID, Name, p, stackBottom);
+	assert_param(stackBottom <= p);
+#endif
 }
 
 void Thread::Add(Thread* thread)
@@ -346,23 +381,10 @@ void Thread::Schedule()
 	Time.OnInterrupt = OnTick;
 
 	Switch();
-	
+
 	__enable_irq();	// 这里必须手工释放，否则会导致全局中断没有打开而造成无法调度
 
 	while(1);
-}
-
-// 检查Sleep是否过期
-bool Thread::CheckExpire()
-{
-	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Time.Current())
-	{
-		//Resume();
-		State = Ready;
-		DelayExpire = 0;
-		return true;
-	}
-	return false;
 }
 
 extern "C"
@@ -379,9 +401,9 @@ extern "C"
 
 		LDR		R2, =curStack
 		LDR		R2, [R2]
-		LDR		R1, [R2]
 
-		CBZ     R1, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
+		CBZ     R2, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
+		NOP
 
 		MRS     R0, PSP
 		#ifdef STM32F4
@@ -415,8 +437,14 @@ PendSV_NoSave							// 此时整个上下文已经被保存
 void Thread::Switch()
 {
 	// 准备当前任务和新任务的栈
-	curStack = &Current->Stack;
-	Current = Current->Next;
+	curStack = 0;
+	if(Current)
+	{
+		Current->CheckStack();
+
+		curStack = &Current->Stack;
+		Current = Current->Next;
+	}
 	if(!Current)
 	{
 		if(!Busy) PrepareReady();
@@ -426,7 +454,7 @@ void Thread::Switch()
 	newStack = Current->Stack;
 
 	// 如果栈相同，说明是同一个线程，不需要切换
-	if(*curStack == newStack) return;
+	if(curStack != 0 && *curStack == newStack) return;
 
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
@@ -475,7 +503,7 @@ void Thread::Init()
 	Idle = idle;
 
 	// 把main函数主线程作为Idle线程，这是一个不需要外部创建就可以使用的线程
-	Current = Idle;
+	//Current = Idle;
 	/*// 把栈复制过来
 	uint p = __get_MSP();
 	memcpy(idle->Stack, (void*)p, idle->StackSize);
