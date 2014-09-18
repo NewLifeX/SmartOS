@@ -1,21 +1,31 @@
 ﻿#include "Thread.h"
 
+#ifndef FPU
+	#ifdef STM32F4
+		#define FPU 1
+	#endif
+#endif
+
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
+	// 栈大小必须4字节对齐
+	assert_param((stackSize & 0x03) == 0);
+
 	if(!Inited) Init();
 
 	ID = ++g_ID;
 	if(g_ID >= 0xFFFF) g_ID = 0;
 	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
-#ifdef STM32F4
+	// 外部传入的stackSize参数只是用户可用的栈大小，这里还需要加上保存寄存器所需要的stk部分
+#ifdef FPU
 	uint stkSize = 0xC4;
 #else
 	uint stkSize = 0x3C;
 #endif
 
-	StackSize = stackSize;
 	stackSize += stkSize;
+	StackSize = stackSize;
 	// 栈以4字节来操作
 	stackSize >>= 2;
 	// 从堆里面动态分配一块空间作为线程栈空间
@@ -35,11 +45,10 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	Next = NULL;
 	Prev = NULL;
 
-	uint* top = StackTop;
     uint* stk = StackTop;          // 加载栈指针
                                    // 中断时自动保存一部分寄存器
 
-	#ifdef STM32F4
+	#ifdef FPU
 	*(--stk)  = (uint)0xaa;        // R?
 	*(--stk)  = (uint)0xa;         // FPSCR
 	*(--stk)  = (uint)0x15;        // S15
@@ -69,7 +78,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
     *(--stk)  = (uint)0x01010101L; // R1
     *(--stk)  = (uint)state;       // R0
 
-	#ifdef STM32F4
+	#ifdef FPU
 	// FPU 寄存器 s16 ~ s31
 	*(--stk)  = (uint)0x31uL;      // S31
 	*(--stk)  = (uint)0x30uL;      // S30
@@ -100,7 +109,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
     *(--stk)  = (uint)0x04040404L; // R4
 
 	// 分配的栈至少要够自己用
-	if(stk < p) debug_printf("StackSize must >= 0x%02x\r\n", (top - stk) << 2);
+	if(stk < p) debug_printf("StackSize must >= 0x%02x\r\n", (StackTop - stk) << 2);
 	assert_param(stk >= Stack);
 
 	Stack = stk;
@@ -113,6 +122,7 @@ Thread::~Thread()
 	Stack = StackTop - (StackSize >> 2);
 	if(Stack) delete Stack;
 	Stack = NULL;
+	StackTop = NULL;
 }
 
 void Thread::Start()
@@ -406,7 +416,7 @@ extern "C"
 		NOP
 
 		MRS     R0, PSP
-		#ifdef STM32F4
+		#ifdef FPU
 		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31，寄存器增加
 		#endif
 
@@ -421,7 +431,7 @@ PendSV_NoSave							// 此时整个上下文已经被保存
 		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
 		ADDS    R0, R0, #0x20
 
-		#ifdef STM32F4
+		#ifdef FPU
 		VLDMFD	r0!, {d8 - d15} 		// 弹出 FPU 寄存器 s16~s31
 		#endif
 
