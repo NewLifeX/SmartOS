@@ -66,6 +66,7 @@ private:
 	static void OnTick();	// 系统滴答时钟定时调用该方法
 
 	static void Init();
+	static void OnEnd();	// 每个线程结束时执行该方法，销毁线程
 
 public:
 	static Thread* Current;	// 正在执行的线程

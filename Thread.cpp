@@ -71,7 +71,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 
     *(stk)    = (uint)0x01000000L; // xPSR
     *(--stk)  = (uint)callback;    // Entry Point
-    *(--stk)  = (uint)0xFFFFFFFEL; // R14 (LR) (初始值如果用过将导致异常)
+    //*(--stk)  = (uint)0xFFFFFFFEL; // R14 (LR) (初始值如果用过将导致异常)
+    *(--stk)  = (uint)OnEnd; // R14 (LR)
     *(--stk)  = (uint)0x12121212L; // R12
     *(--stk)  = (uint)0x03030303L; // R3
     *(--stk)  = (uint)0x02020202L; // R2
@@ -117,6 +118,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 
 Thread::~Thread()
 {
+	SmartIRQ irq;	// 关闭全局中断，确保销毁成功
+
 	if(State != Stopped) Stop();
 
 	Stack = StackTop - (StackSize >> 2);
@@ -138,7 +141,8 @@ void Thread::Start()
 
 void Thread::Stop()
 {
-	assert_param(State == Running || State == Suspended);
+	// 任何状态都应该可以停止
+	//assert_param(State == Running || State == Suspended);
 
 	debug_printf("Thread::Stop %d %s\r\n", ID, Name);
 
@@ -260,19 +264,20 @@ void Thread::Remove(Thread* thread)
 		else if(thread == Busy)
 			Busy = thread->Next;
 		else
+		{
 			assert_param(false);	// 如果不是两个头部，不可能前一个节点为空
+			return;
+		}
 	}
-	else
-	{
-		// 直接从链表中移除
-		thread->Unlink();
-	}
+
+	// 直接从链表中移除
+	thread->Unlink();
 
 	Count--;
 
 	// 如果刚好是当前线程，则放弃时间片，重新调度。因为PendSV优先级的原因，不会马上调度
 	if(thread == Current) Switch();
-	// 如果就绪队列为空，重新调度
+	// 如果就绪队列为空，重新调度。这里其实不用操心，Switch里面会准备好Busy
 	if(Busy == NULL) PrepareReady();
 }
 
@@ -526,4 +531,11 @@ void Thread::Init()
 	//Schedule();
 
 	//Time.OnInterrupt = OnTick;
+}
+
+// 每个线程结束时执行该方法，销毁线程
+void Thread::OnEnd()
+{
+	Thread* th = Thread::Current;
+	if(th) delete th;
 }
