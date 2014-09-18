@@ -37,6 +37,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 
 	// 默认状态就绪
 	State = Ready;
+	IsReady = false;
 	// 默认普通优先级
 	Priority = Normal;
 
@@ -161,9 +162,12 @@ void Thread::Suspend()
 
 	State = Suspended;
 
-	// 修改了状态，需要重新整理就绪列表
-	PrepareReady();
-	Switch();
+	if(IsReady)
+	{
+		// 修改了状态，需要重新整理就绪列表
+		BuildReady();
+		if(this == Current) Switch();
+	}
 }
 
 void Thread::Resume()
@@ -173,10 +177,12 @@ void Thread::Resume()
 	debug_printf("Thread::Resume %d %s\r\n", ID, Name);
 
 	State = Ready;
+
+	if(DelayExpire > 0) _sleeps--;
 	DelayExpire = 0;
 
 	// 修改了状态，需要重新整理就绪列表
-	PrepareReady();
+	BuildReady();
 	Switch();
 }
 
@@ -189,10 +195,14 @@ void Thread::Sleep(uint ms)
 	debug_printf("Thread::Sleep %d %s for %dms\r\n", ID, Name, ms);
 
 	State = Suspended;
+	_sleeps++;
 
-	// 修改了状态，需要重新整理就绪列表
-	PrepareReady();
-	Switch();
+	if(IsReady)
+	{
+		// 修改了状态，需要重新整理就绪列表
+		BuildReady();
+		if(this == Current) Switch();
+	}
 }
 
 // 检查Sleep是否过期
@@ -203,6 +213,8 @@ bool Thread::CheckExpire()
 		//Resume();
 		State = Ready;
 		DelayExpire = 0;
+		_sleeps--;
+
 		return true;
 	}
 	return false;
@@ -247,7 +259,7 @@ void Thread::Add(Thread* thread)
 	Count++;
 
 	// 如果就绪队列为空或优先级更高，重建就绪队列
-	if(!Busy || thread->Priority >= Busy->Priority) PrepareReady();
+	if(!Busy || thread->Priority >= Busy->Priority) BuildReady();
 }
 
 void Thread::Remove(Thread* thread)
@@ -278,84 +290,74 @@ void Thread::Remove(Thread* thread)
 	// 如果刚好是当前线程，则放弃时间片，重新调度。因为PendSV优先级的原因，不会马上调度
 	if(thread == Current) Switch();
 	// 如果就绪队列为空，重新调度。这里其实不用操心，Switch里面会准备好Busy
-	if(Busy == NULL) PrepareReady();
+	if(Busy == NULL) BuildReady();
+}
+
+byte FindMax(Thread* first, byte pri)
+{
+	for(Thread* th = first; th; th = th->Next)
+	{
+		if(th->State == Thread::Ready || th->State == Thread::Running)
+		{
+			if(th->Priority > pri) pri = th->Priority;
+		}
+	}
+	return pri;
+}
+
+byte BuildList(Thread*& list, Thread*& head, Thread*& tail, byte pri)
+{
+	byte count = 0;
+	for(Thread* th = list; th; th = th->Next)
+	{
+		if(th->State == Thread::Ready || th->State == Thread::Running)
+		{
+			if(th->Priority == pri)
+			{
+				// 如果是开头，则重置开头
+				if(th == list) list = th->Next;
+
+				// 从原队列出列
+				th->Unlink();
+
+				// 加入队列
+				if(!head)
+					head = tail = th;
+				else
+					th->LinkAfter(tail);
+
+				count++;
+
+				th->IsReady = true;
+				continue;
+			}
+		}
+		th->IsReady = false;
+	}
+	return count;
 }
 
 // 准备最高优先级的就绪队列。时间片将在该队列中分配
-int Thread::PrepareReady()
+byte Thread::BuildReady()
 {
 	SmartIRQ irq;
 
 	// 为了让算法简单易懂，采用两次循环，一次获取最高优先级，第二次才构建就绪列表
 
-	Priorities pri = Lowest;
-	Thread* th;
 	// 找出所有已就绪线程的最高优先级
-	for(th = Free; th; th = th->Next)
-	{
-		if(th->State == Ready)
-		{
-			if(th->Priority > pri) pri = th->Priority;
-		}
-	}
-	for(th = Busy; th; th = th->Next)
-	{
-		if(th->State == Ready || th->State == Running)
-		{
-			if(th->Priority > pri) pri = th->Priority;
-		}
-	}
+	byte pri = Lowest;
+	pri = FindMax(Free, pri);
+	pri = FindMax(Busy, pri);
 
 	// 根据最高优先级重构线程就绪队列
 	Thread* head = NULL;
 	Thread* tail = NULL;
-	int count = 0;
-	for(th = Free; th; th = th->Next)
-	{
-		if(th->State == Ready)
-		{
-			if(th->Priority == pri)
-			{
-				// 如果是开头，则重置开头
-				if(th == Free) Free = th->Next;
+	byte count = 0;
+	count += BuildList(Free, head, tail, pri);
+	count += BuildList(Busy, head, tail, pri);
+	_running = count;
 
-				// 从原队列出列
-				th->Unlink();
-
-				// 加入队列
-				if(!head)
-					head = tail = th;
-				else
-					th->LinkAfter(tail);
-
-				count++;
-			}
-		}
-	}
-	for(th = Busy; th; th = th->Next)
-	{
-		if(th->State == Ready || th->State == Running)
-		{
-			if(th->Priority == pri)
-			{
-				// 如果是开头，则重置开头
-				if(th == Busy) Busy = th->Next;
-
-				// 从原队列出列
-				th->Unlink();
-
-				// 加入队列
-				if(!head)
-					head = tail = th;
-				else
-					th->LinkAfter(tail);
-
-				count++;
-			}
-		}
-	}
-
-	// 原就绪队列节点回到自由队列
+	// 原就绪队列余下节点回到自由队列
 	if(Busy)
 	{
 		if(Free)
@@ -390,8 +392,7 @@ void Thread::Schedule()
 	// 有些说法这里MSP要8字节对齐。有些霸道。
 	//__set_MSP(__get_MSP() & 0xFFFFFFF8);
 
-	// 触发PendSV异常，引发上下文切换
-	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+	debug_printf("开始调度%d个用户线程\r\n", Count - 1);
 
 	Time.OnInterrupt = OnTick;
 
@@ -455,14 +456,21 @@ void Thread::Switch()
 	curStack = 0;
 	if(Current)
 	{
+		// 检查线程栈空间
 		Current->CheckStack();
 
 		curStack = &Current->Stack;
+
+		// 下一个获得时间片的线程
 		Current = Current->Next;
 	}
+	// 如果下一个线程为空
 	if(!Current)
 	{
-		if(!Busy) PrepareReady();
+		// 如果就绪队列也为空，则重建就绪队列
+		if(!Busy) BuildReady();
+
+		// 从新去就绪队列头部
 		Current = Busy;
 		assert_param(Current);
 	}
@@ -477,14 +485,19 @@ void Thread::Switch()
 
 void Thread::OnTick()
 {
-	// 检查睡眠到期的线程
-	bool flag = false;
-	for(Thread* th = Free; th; th = th->Next)
+	if(_sleeps > 0)
 	{
-		flag |= th->CheckExpire();
+		// 检查睡眠到期的线程
+		bool flag = false;
+		for(Thread* th = Free; th; th = th->Next)
+		{
+			flag |= th->CheckExpire();
+		}
+		if(flag) BuildReady();
 	}
-	if(flag) PrepareReady();
 
+	/*// 单一任务不调度
+	if(_running > 1) Switch();*/
 	Switch();
 }
 
@@ -492,6 +505,8 @@ void Idle_Handler(void* param) { while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;
+byte Thread::_running = 0;
+byte Thread::_sleeps = 0;
 Thread* Thread::Free = NULL;
 Thread* Thread::Busy = NULL;
 Thread* Thread::Current = NULL;
@@ -501,7 +516,7 @@ Thread* Thread::Idle = NULL;
 void Thread::Init()
 {
 	debug_printf("\r\n");
-	debug_printf("初始化抢占式调度内核...\r\n");
+	debug_printf("初始化抢占式多线程调度...\r\n");
 
 	Inited = true;
 
@@ -510,27 +525,13 @@ void Thread::Init()
 	Current = NULL;
 
 	// 创建一个空闲线程，确保队列不为空
-	//Thread* idle = new Thread(Idle_Handler, NULL, 0x400);
 	Thread* idle = new Thread(Idle_Handler, NULL, 0);
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
 	Idle = idle;
 
-	// 把main函数主线程作为Idle线程，这是一个不需要外部创建就可以使用的线程
-	//Current = Idle;
-	/*// 把栈复制过来
-	uint p = __get_MSP();
-	memcpy(idle->Stack, (void*)p, idle->StackSize);
-	// 使用新的栈
-	__set_MSP((uint)idle->Stack);*/
-
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
-	//Interrupt.Activate(PendSV_IRQn, PendSV_Handler, NULL);
-
-	//Schedule();
-
-	//Time.OnInterrupt = OnTick;
 }
 
 // 每个线程结束时执行该方法，销毁线程
