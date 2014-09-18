@@ -28,6 +28,7 @@ public:
 		Stopped		// 停止状态
 	} States;
 	States State;	// 状态
+	bool IsReady;	// 是否位于就绪队列
 
 	typedef enum
 	{
@@ -52,16 +53,16 @@ public:
 
 	// 静态管理
 private:
-	static bool Inited;
-	static uint g_ID;
+	static bool Inited;		// 是否已初始化
+	static uint g_ID;		// 全局线程ID
+	static byte	_running;	// 就绪队列线程数
+	static byte _sleeps;	// 正在睡眠的线程数
 
 	static Thread* Free;	// 自由线程队列，未得到时间片
 	static Thread* Busy;	// 正在享受时间片的高优先级就绪队列
 
 	static void Add(Thread* thread);
 	static void Remove(Thread* thread);
-
-	static int PrepareReady();		// 准备就绪队列
 
 	static void OnTick();	// 系统滴答时钟定时调用该方法
 
@@ -70,9 +71,11 @@ private:
 
 public:
 	static Thread* Current;	// 正在执行的线程
+	static Thread* Idle;	// 空闲线程。最低优先级
 	static byte Count;		// 线程个数
 
-	static Thread* Idle;	// 空闲线程。最低优先级
+	static byte BuildReady();// 准备就绪队列
+
 	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 };
@@ -80,6 +83,20 @@ public:
 #endif
 
 /*
-两个队列，一个全部队列Free，一个就绪队列Busy。
-时间片将在任务队列Busy之中的线程分配，低优先级的线程Free没有机会，除非就绪队列Busy为空，重建就绪队列。
+SmartOS基于优先级的抢占式多线程调度
+特性：
+1，支持无限多个线程。线程的增多并不影响切换效率，仅影响创建和停止等效率
+2，支持无限多个动态优先级。数字越大优先级越高，0为最低优先级，支持运行时动态修改
+3，支持单独设定每个线程的栈大小。根据需要合理使用内存
+4，自动检查线程栈空间溢出。设计时检查栈溢出，发布时忽略以提升性能
+5，调度算法采用两个双向链表，其中一个最高优先级就绪队列，调度时根本不需要搜索
+6，支持时间片调度。同等最高优先级线程共同分享时间片
+7，线程完成后自行销毁。
+
+设计思路：
+1，两个队列，一个就绪队列Busy，包含所有最高优先级线程，一个后备队列Free，包含所有非最高优先级线程。
+2，多线程调度将在就绪队列Busy之中执行，低优先级的线程Free没有机会，除非就绪队列Busy为空，重建就绪队列。
+3，线程的创建、停止、挂起、恢复、睡眠都可能会导致重建就绪队列，以确保最高优先级的就绪线程得到优先调度
+4，没有其它处于就绪状态的线程时，系统将CPU资源分配给空闲线程Idle
+5，
 */
