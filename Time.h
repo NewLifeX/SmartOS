@@ -71,4 +71,24 @@ public:
 
 extern TTime Time;
 
+// 时间轮。用于超时处理
+class TimeWheel
+{
+private:
+	ulong _expire;
+
+public:
+	TimeWheel(uint seconds, uint ms = 0, uint us = 0)
+	{
+		_expire = ((seconds * 1000) + ms) * 1000 + us;
+		_expire += Time.Current();
+	}
+
+	// 是否已过期
+	bool Expired()
+	{
+		return Time.Current() >= _expire;
+	}
+};
+
 #endif

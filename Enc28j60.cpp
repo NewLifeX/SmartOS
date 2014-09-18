@@ -114,11 +114,13 @@ bool Enc28j60::PhyWrite(byte addr, uint data)
     WriteReg(MIWRL, data);
     WriteReg(MIWRH, data >> 8);
 
-	ulong us = Time.Current() + 10 * 1000;
-    // wait until the PHY write completes
+	//ulong us = Time.Current() + 10 * 1000;
+	TimeWheel tw(0, 10, 0);
+    // 等待 PHY 写完成
     while(ReadReg(MISTAT) & MISTAT_BUSY)
     {
-        if(us < Time.Current()) return false;
+        //if(us < Time.Current()) return false;
+		if(tw.Expired()) return false;
     }
 	return true;
 }
@@ -391,7 +393,7 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     len  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     len |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
-    len-=4; // 删除 CRC 计数
+    len -= 4; // 删除 CRC 计数
     // 读接收数据包的状态 (see datasheet page 43)
     rxstat  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
