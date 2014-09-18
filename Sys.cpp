@@ -29,9 +29,23 @@ uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
 #endif
 
-void TSys::Sleep(uint ms) { Time.Sleep(ms * 1000); }
+void TSys::Sleep(uint ms)
+{
+	// 优先使用线程级睡眠
+	if(OnSleep)
+		OnSleep(ms);
+	else
+		Time.Sleep(ms * 1000);
+}
 
-void TSys::Delay(uint us) { Time.Sleep(us); }
+void TSys::Delay(uint us)
+{
+	// 如果延迟微秒数太大，则使用线程级睡眠
+	if(OnSleep && us >= 2000)
+		OnSleep((us + 500) / 1000);
+	else
+		Time.Sleep(us);
+}
 
 void TSys::Reset() { NVIC_SystemReset(); }
 
@@ -187,6 +201,10 @@ TSys::TSys()
 	}
 
 	InitHeapStack(RAMSize);
+
+	StartTime = 0;
+	OnTick = NULL;
+	OnSleep = NULL;
 
 #if DEBUG
     OnError = SysError;
@@ -354,7 +372,7 @@ void TSys::ShowInfo()
 	debug_printf(Time.Now().ToString());
 	debug_printf("\r\n");
 	// 系统启动时间
-	debug_printf("System Start Cost %dus\r\n", (uint)Time.Current());
+	debug_printf("System Start Cost %dus\r\n", (uint)(Time.Current() - StartTime));
 
     debug_printf("\r\n");
 #endif

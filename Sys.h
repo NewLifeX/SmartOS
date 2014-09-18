@@ -64,7 +64,7 @@ public:
     bool Inited; // 是否已完成初始化
     uint Clock;  // 系统时钟
     uint CystalClock;	// 晶振时钟
-    COM_Def MessagePort;	// 消息口，默认0表示USART1
+    COM_Def MessagePort;// 消息口，默认0表示USART1
     byte ID[12];		// 芯片ID。
     ushort FlashSize;	// 芯片Flash容量。
     ushort RAMSize;		// 芯片RAM容量
@@ -73,14 +73,18 @@ public:
     ushort RevID;		// MCU编码。低字设备版本，高字子版本
     bool IsGD;			// 是否GD芯片
 
-    TSys();					//构造函数
-    virtual ~TSys();//析构函数
+    TSys();				// 构造函数
+    virtual ~TSys();	// 析构函数
 
-    void Init();     // 初始化系统
+    void Init();     	// 初始化系统
 	void ShowInfo();
 
+	ulong StartTime;	// 启动时间，微秒
+	Func OnTick;
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
+	typedef void (*FuncU32)(uint param);
+	FuncU32 OnSleep;
 
 	bool CheckMemory();
 

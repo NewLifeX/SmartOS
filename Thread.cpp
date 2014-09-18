@@ -1,5 +1,8 @@
 ﻿#include "Thread.h"
 
+//#define TH_DEBUG DEBUG
+#define TH_DEBUG 0
+
 #ifndef FPU
 	#ifdef STM32F4
 		#define FPU 1
@@ -192,7 +195,9 @@ void Thread::Sleep(uint ms)
 
 	assert_param(State == Running || State == Ready);
 
+#if TH_DEBUG
 	debug_printf("Thread::Sleep %d %s for %dms\r\n", ID, Name, ms);
+#endif
 
 	State = Suspended;
 	_sleeps++;
@@ -372,6 +377,12 @@ byte Thread::BuildReady()
 	return count;
 }
 
+void OnSleep(uint ms)
+{
+	Thread* th = Thread::Current;
+	if(th) th->Sleep(ms);
+}
+
 // 系统线程调度开始
 void Thread::Schedule()
 {
@@ -394,7 +405,8 @@ void Thread::Schedule()
 
 	debug_printf("开始调度%d个用户线程\r\n", Count - 1);
 
-	Time.OnInterrupt = OnTick;
+	Sys.OnTick = OnTick;
+	Sys.OnSleep = OnSleep;
 
 	Switch();
 

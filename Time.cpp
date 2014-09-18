@@ -13,8 +13,7 @@ TTime::TTime()
 	Microseconds = 0;
 	_usTicks = 0;
 
-	InterruptsPerSecond = 100;
-	OnInterrupt = NULL;
+	InterruptsPerSecond = 1000;
 }
 
 TTime::~TTime()
@@ -85,7 +84,7 @@ void TTime::OnHandler(ushort num, void* param)
 		Time.Microseconds += Time._usTicks / Time.TicksPerMicrosecond;
 		Time._usTicks %= Time.TicksPerMicrosecond;
 		
-		if(Time.OnInterrupt) Time.OnInterrupt();
+		if(Sys.OnTick) Sys.OnTick();
 	}
 }
 
@@ -140,6 +139,8 @@ void TTime::SetTime(ulong us)
 	SysTick->VAL = 0;
 	SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG;
 	Ticks = us * TicksPerMicrosecond;
+	// 修改系统启动时间
+	Sys.StartTime += us - Microseconds;
 	Microseconds = us;
 	_usTicks = 0;
 }
