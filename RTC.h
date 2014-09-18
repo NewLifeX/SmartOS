@@ -2,13 +2,27 @@
 #define __RTC_H__
 
 #include "Sys.h"
+#include "Interrupt.h"
+
 
 // RTC
-class RTC
+class RTClock
 {
-private:
+    typedef void (*RTCHandler)(void* param);
+	
+	RTClock();
+	RTClock(int s);
 
 public:
+	void Register(RTCHandler handler, void* param = NULL);
+
+
+	RTCHandler  _Handler;
+	void * _param;
+private:
+	
+// ÖÐ¶ÏºÅ  ²ÎÊý
 };
+
 
 #endif
