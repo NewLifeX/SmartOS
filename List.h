@@ -117,7 +117,8 @@ public:
 		if(_count <= 0 || index >= _count) return;
 
 		// 复制元素
-		if(index < _count - 1) memcpy(&arr[index + 1], &arr[index], (_count - index - 1) * sizeof(T));
+		if(index < _count - 1) memcpy(&arr[index], &arr[index + 1], (_count - index - 1) * sizeof(T));
+		_count--;
 	}
 
 	// 删除指定元素
@@ -170,6 +171,8 @@ private:
             }
             delete[] arr;
         }
+		else
+            memset(arr2, 0, newSize * sizeof(T));
         arr = arr2;
 		_total = newSize;
     }
