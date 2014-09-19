@@ -29,7 +29,7 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 		//memcpy(&Mac[3], (byte*)Sys.ID, 3);
 		// MAC地址首字节奇数表示组地址，这里用偶数
 		Mac[0] = 'N'; Mac[1] = 'X';
-		memcpy(&Mac[2], (byte*)Sys.ID, 2);
+		memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
 	}
 
 	const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
