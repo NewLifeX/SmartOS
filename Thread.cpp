@@ -516,7 +516,7 @@ void Thread::OnTick()
 	Switch();
 }
 
-void Idle_Handler(void* param) { while(1); }
+void Idle_Handler(void* param) { Sys.Start(); while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;
@@ -540,7 +540,9 @@ void Thread::Init()
 	Current = NULL;
 
 	// 创建一个空闲线程，确保队列不为空
-	Thread* idle = new Thread(Idle_Handler, NULL, 0);
+	//Thread* idle = new Thread(Idle_Handler, NULL, 0);
+	// 多线程调度与Sys定时调度联动，由多线程调度器的空闲线程负责驱动Sys.Start实现传统定时任务。要小心线程栈溢出
+	Thread* idle = new Thread(Idle_Handler, NULL, 0x400);
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
