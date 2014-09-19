@@ -42,12 +42,10 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 	BufferSize = 1500;
 	EnableBroadcast = true;
 
+	Sockets.SetCapacity(0x10);
 	//Arp = NULL;
 	// 必须有Arp，否则无法响应别人的IP询问
 	Arp = new ArpSocket(this);
-	//memset(Sockets, 0x00, ArrayLength(Sockets) * sizeof(Socket*));
-
-	//_net = NULL;
 }
 
 TinyIP::~TinyIP()
@@ -1042,9 +1040,9 @@ Socket::Socket(TinyIP* tip)
 
 	Tip = tip;
 	// 加入到列表
-	//tip->Sockets.Add(this);
-	__packed List<Socket*>* list = &tip->Sockets;
-	list->Add(this);
+	tip->Sockets.Add(this);
+	//__packed List<Socket*>* list = &tip->Sockets;
+	//list->Add(this);
 }
 
 Socket::~Socket()

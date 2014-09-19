@@ -92,7 +92,7 @@ public:
     void Add(T* items, int count)
     {
         int size = _count + count;
-        if(size >= _total) ChangeSize(size * 2);
+        if(size >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
 
         for(int i=0; i<count; i++)
         {
@@ -129,7 +129,7 @@ public:
 		return index;
 	}
 
-    T* ToArray()
+    const T* ToArray()
     {
         // 如果刚好完整则直接返回，否则重新调整空间
         if(_count != _total)
@@ -142,6 +142,7 @@ public:
         return arr;
     }
     int Count() { return _count; }
+	void SetCapacity(int capacity) { ChangeSize(capacity); }
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。内部不检查下标越界，外部好自为之
     T operator[](int i) { return arr[i]; }
@@ -170,12 +171,13 @@ private:
             delete[] arr;
         }
         arr = arr2;
+		_total = newSize;
     }
 
     void CheckSize()
     {
         // 如果数组空间已用完，则两倍扩容
-        if(_count >= _total) ChangeSize(_count * 2);
+        if(_count >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
     }
 };
 
