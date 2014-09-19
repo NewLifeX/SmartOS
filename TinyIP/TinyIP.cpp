@@ -2,14 +2,14 @@
 
 #define NET_DEBUG DEBUG
 
-const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // FF-FF-FF-FF-FF-FF
+const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-00-00
 
 TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 {
 	_port = port;
 
-	byte defip[] = {192, 168, 0, 1};
+	const byte defip[] = {192, 168, 0, 1};
 	if(ip)
 		memcpy(IP, ip, 4);
 	else
@@ -29,7 +29,7 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 		memcpy(&Mac[3], (byte*)Sys.ID, 3);
 	}
 
-	byte mask[] = {0xFF, 0xFF, 0xFF, 0};
+	const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
 	memcpy(Mask, mask, 4);
 	memcpy(DHCPServer, defip, 4);
 	memcpy(Gateway, defip, 4);
@@ -93,6 +93,7 @@ void TinyIP::Process(byte* buf, uint len)
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	//if(memcmp(eth->DestMac, Mac, 6) != 0) return;
 	// 这里复制Mac地址
+	memcpy(LocalMac, eth->DestMac, 6);
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
 	// 计算负载数据的长度
@@ -121,6 +122,7 @@ void TinyIP::Process(byte* buf, uint len)
 #endif
 
 	// 记录远程信息
+	memcpy(LocalIP, ip->DestIP, 4);
 	memcpy(RemoteIP, ip->SrcIP, 4);
 
 	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
@@ -389,9 +391,13 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 总等待时间
-	ulong end = Time.Current() + 1 * 1000000;
-	while(end > Time.Current())
+	//ulong end = Time.Current() + 1 * 1000000;
+	//while(end > Time.Current())
+	TimeWheel tw(1, 0, 0);
+	while(!tw.Expired())
 	{
+		Sys.Sleep(10);	// 等待一段时间，释放CPU
+
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
 		uint len = Tip->Fetch(buf, bufSize);
 		if(!len) continue;
@@ -427,8 +433,18 @@ bool TcpSocket::Process(byte* buf, uint len)
 	//assert_param(len == _net->PayloadLength);
 	//assert_param(_net->Payload == tcp->Next());
 
-	Port = __REV16(tcp->DestPort);
-	RemotePort = __REV16(tcp->SrcPort);
+	ushort port = __REV16(tcp->DestPort);
+	ushort remotePort = __REV16(tcp->SrcPort);
+
+	// 仅处理本连接的IP和端口
+	if(Port != 0 && port != Port) return false;
+	if(RemotePort != 0 && remotePort != RemotePort) return false;
+	if(memcmp(Tip->RemoteIP, RemoteIP, 4) != 0) return false;
+
+	Port = port;
+	RemotePort = remotePort;
+	Tip->Port = port;
+	Tip->RemotePort = remotePort;
 
 #if NET_DEBUG
 	/*debug_printf("TCP ");
@@ -609,8 +625,14 @@ bool UdpSocket::Process(byte* buf, uint len)
 
 	UDP_HEADER* udp = (UDP_HEADER*)buf;
 
-	Tip->Port = __REV16(udp->DestPort);
-	Tip->RemotePort = __REV16(udp->SrcPort);
+	ushort port = __REV16(udp->DestPort);
+	ushort remotePort = __REV16(udp->SrcPort);
+
+	// 仅处理本连接的IP和端口
+	if(Port != 0 && port != Port) return false;
+
+	Tip->Port = port;
+	Tip->RemotePort = remotePort;
 	//byte* data = _net->Payload;
 	//assert_param(data == udp->Next());
 	byte* data = udp->Next();
@@ -626,11 +648,10 @@ bool UdpSocket::Process(byte* buf, uint len)
 	else
 	{
 #if NET_DEBUG
-		IP_HEADER* ip = udp->Prev();
 		debug_printf("UDP ");
-		Tip->ShowIP(ip->SrcIP);
+		Tip->ShowIP(Tip->RemoteIP);
 		debug_printf(":%d => ", Tip->RemotePort);
-		Tip->ShowIP(ip->DestIP);
+		Tip->ShowIP(Tip->LocalIP);
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), len, __REV16(udp->Length));
 
 		Sys.ShowString(data, len);
@@ -665,6 +686,8 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 	Tip->SendIP(IP_UDP, (byte*)udp, sizeof(UDP_HEADER) + len);
 }
 
+#define TinyIP_HELP
+#ifdef TinyIP_HELP
 void TinyIP::ShowIP(const byte* ip)
 {
 	debug_printf("%d", *ip++);
@@ -746,6 +769,7 @@ bool TinyIP::IsBroadcast(const byte ip[4])
 
 	return false;
 }
+#endif
 
 #define TinyIP_DHCP
 #ifdef TinyIP_DHCP
@@ -874,21 +898,28 @@ bool Dhcp::Start()
 	UDP_HEADER*  udp  = (UDP_HEADER*) ip->Next();
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 
-	ulong next = 0;
+	//ulong next = 0;
 	// 总等待时间
-	ulong end = Time.Current() + 10 * 1000000;
-	while(end > Time.Current())
+	//ulong end = Time.Current() + 10 * 1000000;
+	//while(end > Time.Current())
+	TimeWheel tw(10);
+	TimeWheel next(0);
+	while(!tw.Expired())
 	{
 		// 得不到就重新发广播
-		if(next < Time.Current())
+		//if(next < Time.Current())
+		if(next.Expired())
 		{
 			// 向DHCP服务器广播
 			debug_printf("DHCP Discover...\r\n");
 			dhcp->Init(dhcpid, true);
 			Discover(dhcp);
 
-			next = Time.Current() + 1 * 1000000;
+			//next = Time.Current() + 1 * 1000000;
+			next.Reset(1);
 		}
+
+		Sys.Sleep(10);	// 等待一段时间，释放CPU
 
 		uint len = Tip->Fetch(buf, bufSize);
         // 如果缓冲器里面没有数据则转入下一次循环

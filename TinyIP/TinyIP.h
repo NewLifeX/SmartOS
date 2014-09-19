@@ -9,6 +9,7 @@
 
 class TinyIP;
 
+// 网络数据处理Socket基类
 class Socket
 {
 public:
@@ -165,6 +166,9 @@ public:
 	ushort Port;	// 本地端口
 	bool EnableBroadcast;	// 使用广播
 
+	byte LocalMac[6];	// 本地目标Mac地址
+	byte LocalIP[4];	// 本地目标IP地址
+	//ushort LocalPort;	// 本地目标端口
 	byte RemoteMac[6];	// 远程Mac地址
 	byte RemoteIP[4];	// 远程IP地址
 	ushort RemotePort;	// 远程端口
@@ -197,7 +201,7 @@ public:
 };
 
 /*
-TinyIP作为精简以太网协议，目标定位是超简单的使用场合！
+TinyIP作为精简以太网协议，每次只处理一个收发数据包，目标定位是超简单的使用场合！
 ARP是必须有的，子网内计算机发数据包给它之前必须先通过ARP得到它的MAC地址
 ARP还必须有一个表，记录部分IP和MAC的对照关系，子网内通讯时需要，子网外通讯也需要网关MAC
 ICMP提供一个简单的Ping服务，可要可不要，用户习惯通过Ping来识别网络设备是否在线，因此默认使用该模块
