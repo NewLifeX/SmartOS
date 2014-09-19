@@ -12,16 +12,17 @@ class RTClock
 	
 	RTClock();
 	RTClock(int s);
-
+	int _TickTime;  // å‡ ç§’ä¸­æ–­ä¸€æ¬¡
+	
 public:
 	void Register(RTCHandler handler, void* param = NULL);
-
+	int GetTime();
+	void SerTime(int );
 
 	RTCHandler  _Handler;
 	void * _param;
 private:
 	
-// ÖÐ¶ÏºÅ  ²ÎÊý
 };
 
 
