@@ -104,12 +104,14 @@ void TinyIP::Process(byte* buf, uint len)
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
 	// 计算负载数据的长度
+	if(len <= eth->Size()) return;
 	len -= eth->Size();
+	buf += eth->Size();
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		if(Arp) Arp->Process(eth->Next(), len);
+		if(Arp) Arp->Process(buf, len);
 
 		return;
 	}
