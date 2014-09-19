@@ -121,7 +121,7 @@ void ShowFault(uint exception)
 	else if(exception==5)
 	{
 		i = *(byte*)(SCB_BASE + 0x29);
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
 		debug_printf("\r\nBus Fault %d 0x%08x: \r\n", i, SCB->BFAR);
 #endif
 		if(i & (1<<0))
@@ -153,7 +153,7 @@ void ShowFault(uint exception)
 	else if(exception==4)
 	{
 		i = *(byte*)(SCB_BASE + 0x28);
-#ifdef STM32F10X
+#if defined(STM32F1) || defined(STM32F4)
 		debug_printf("\r\nMemManage Fault %d 0x%08x: \r\n", i, SCB->MMFAR);
 #endif
 		if(i & (1<<0))
