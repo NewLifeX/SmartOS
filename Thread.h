@@ -72,6 +72,7 @@ private:
 public:
 	static Thread* Current;	// 正在执行的线程
 	static Thread* Idle;	// 空闲线程。最低优先级
+	static Thread* Main;	// 主线程。略低优先级
 	static byte Count;		// 线程个数
 
 	static byte BuildReady();// 准备就绪队列

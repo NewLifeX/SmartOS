@@ -487,6 +487,7 @@ void Thread::Switch()
 
 		// 从新去就绪队列头部
 		Current = Busy;
+		if(!Current) debug_printf("没有可调度线程，可能是挂起或睡眠了Idle线程\r\n");
 		assert_param(Current);
 	}
 	newStack = Current->Stack;
@@ -516,7 +517,8 @@ void Thread::OnTick()
 	Switch();
 }
 
-void Idle_Handler(void* param) { Sys.Start(); while(1); }
+void Idle_Handler(void* param) { while(1); }
+void Main_Handler(void* param) { Sys.Start(); while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;
@@ -527,6 +529,7 @@ Thread* Thread::Busy = NULL;
 Thread* Thread::Current = NULL;
 byte Thread::Count = 0;
 Thread* Thread::Idle = NULL;
+Thread* Thread::Main = NULL;
 
 void Thread::Init()
 {
@@ -540,13 +543,18 @@ void Thread::Init()
 	Current = NULL;
 
 	// 创建一个空闲线程，确保队列不为空
-	//Thread* idle = new Thread(Idle_Handler, NULL, 0);
-	// 多线程调度与Sys定时调度联动，由多线程调度器的空闲线程负责驱动Sys.Start实现传统定时任务。要小心线程栈溢出
-	Thread* idle = new Thread(Idle_Handler, NULL, 0x400);
+	Thread* idle = new Thread(Idle_Handler, NULL, 0);
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
 	Idle = idle;
+
+	// 多线程调度与Sys定时调度联动，由多线程调度器的Main线程负责驱动Sys.Start实现传统定时任务。要小心线程栈溢出
+	Thread* main = new Thread(Main_Handler, NULL, 0x400);
+	main->Name = "Main";
+	main->Priority = BelowNormal;
+	main->Start();
+	Main = main;
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 }

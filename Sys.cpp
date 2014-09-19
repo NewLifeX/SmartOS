@@ -127,7 +127,7 @@ bool SysError(uint code)
 	ShowFault(code);
 #endif
 
-    return false;
+    return true;
 }
 
 void SysStop()
@@ -528,6 +528,8 @@ void TSys::RemoveTask(uint taskid)
 
 void TSys::Start()
 {
+	if(_Running) return;
+
 	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
 
 	_Running = true;
