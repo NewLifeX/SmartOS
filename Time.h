@@ -80,6 +80,11 @@ private:
 public:
 	TimeWheel(uint seconds, uint ms = 0, uint us = 0)
 	{
+		Reset(seconds, ms, us);
+	}
+
+	void Reset(uint seconds, uint ms = 0, uint us = 0)
+	{
 		_expire = ((seconds * 1000) + ms) * 1000 + us;
 		_expire += Time.Current();
 	}
