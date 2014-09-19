@@ -190,8 +190,8 @@ public:
 
 	bool Open();
 	bool Init();
-	static void ShowIP(const byte* ip);
-	static void ShowMac(const byte* mac);
+	static void ShowIP(const byte ip[4]);
+	static void ShowMac(const byte mac[6]);
 	static uint CheckSum(byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);

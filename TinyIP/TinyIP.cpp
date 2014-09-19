@@ -111,8 +111,7 @@ void TinyIP::Process(byte* buf, uint len)
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		//ProcessArp(buf, len);
-		if(Arp) Arp->Process(buf, len);
+		if(Arp) Arp->Process(eth->Next(), len);
 
 		return;
 	}
@@ -346,17 +345,6 @@ bool IcmpSocket::Process(byte* buf, uint len)
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 {
-	//byte* buf = Buffer;
-	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
-	uint bufSize = ArrayLength(buf);
-
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
-	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
-	ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
-	icmp->Init(true);
-
-	uint count = 0;
-
 	assert_param(Tip->Arp);
 	const byte* mac = Tip->Arp->Resolve(ip);
 	if(!mac)
@@ -372,6 +360,16 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	memcpy(Tip->RemoteMac, mac, 6);
 	memcpy(Tip->RemoteIP, ip, 4);
 
+	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
+	uint bufSize = ArrayLength(buf);
+
+	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+	ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
+	icmp->Init(true);
+
+	uint count = 0;
+
 	icmp->Type = 8;
 	icmp->Code = 0;
 
@@ -381,7 +379,6 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 		if(k >= 23) k-=23;
 		*data++ = ('a' + k);
 	}
-	//_net->PayloadLength = payloadLength;
 
 	//ushort now = Time.Current() / 1000;
 	ushort now = Time.Current() >> 10;
@@ -708,14 +705,14 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 
 #define TinyIP_HELP
 #ifdef TinyIP_HELP
-void TinyIP::ShowIP(const byte* ip)
+void TinyIP::ShowIP(const byte ip[4])
 {
 	debug_printf("%d", *ip++);
 	for(int i=1; i<4; i++)
 		debug_printf(".%d", *ip++);
 }
 
-void TinyIP::ShowMac(const byte* mac)
+void TinyIP::ShowMac(const byte mac[6])
 {
 	debug_printf("%02X", *mac++);
 	for(int i=1; i<6; i++)
@@ -1158,6 +1155,7 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
+	arp->Init();
 
 	// 构造请求包
 	arp->Option = 0x0100;
@@ -1198,7 +1196,8 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 		{
 			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
 			if(memcmp(arp->DestIP, Tip->IP, 4) == 0
-			&& memcmp(arp->SrcIP, ip, 4) == 0
+			// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
+			//&& memcmp(arp->SrcIP, ip, 4) == 0
 			&& arp->Option == 0x0200)
 			{
 				return arp->SrcMac;
