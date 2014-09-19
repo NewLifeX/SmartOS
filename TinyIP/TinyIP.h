@@ -110,7 +110,11 @@ class UdpSocket : public Socket
 public:
 	ushort Port;	// 本地端口
 
-	UdpSocket(TinyIP* tip) : Socket(tip) { Type = IP_UDP; }
+	UdpSocket(TinyIP* tip) : Socket(tip)
+	{
+		Type = IP_UDP;
+		Port = 0;
+	}
 
 	// 处理数据包
 	virtual bool Process(byte* buf, uint len);

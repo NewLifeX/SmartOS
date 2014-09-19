@@ -434,6 +434,9 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_TCP;
 
+	Port = 0;
+	*(uint*)RemoteIP = 0;
+	RemotePort = 0;
 	seqnum = 0xa;
 }
 
@@ -1005,7 +1008,7 @@ bool Dhcp::Start()
 					// 续约时间，大字节序，时间单位秒
 					uint time = __REV(*(uint*)&opt->Data);
 					// DHCP租约过了一半以后重新获取IP地址
-					if(time > 0) Sys.AddTask(RenewDHCP, this, time / 2 * 1000000, -1);
+					if(time > 0) Sys.AddTask(RenewDHCP, Tip, time / 2 * 1000000, -1);
 				}
 
 				return true;
