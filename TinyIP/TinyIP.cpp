@@ -1144,7 +1144,7 @@ bool ArpSocket::Process(byte* buf, uint len)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	Tip->SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
+	Tip->SendEthernet(ETH_ARP, (byte*)arp, sizeof(ARP_HEADER));
 
 	return true;
 }
@@ -1165,6 +1165,7 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	memcpy(arp->DestIP, ip, 4);
 	memcpy(arp->SrcMac, Tip->Mac, 6);
 	memcpy(arp->SrcIP, Tip->IP, 4);
+	memcpy(Tip->RemoteMac, g_ZeroMac, 6);
 
 #if NET_DEBUG
 	debug_printf("ARP Request To ");
@@ -1172,7 +1173,7 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	Tip->SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
+	Tip->SendEthernet(ETH_ARP, (byte*)arp, sizeof(ARP_HEADER));
 
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return NULL;
