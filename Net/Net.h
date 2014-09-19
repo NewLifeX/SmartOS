@@ -257,19 +257,19 @@ typedef enum
 	DHCP_OPT_DNSServer = 6,
 	DHCP_OPT_LOGServer = 7,
 	DHCP_OPT_HostName = 12,
-	DHCP_OPT_MTU = 26,
-	DHCP_OPT_StaticRout = 33,
-	DHCP_OPT_ARPCacheTimeout = 35,
-	DHCP_OPT_NTPServer = 42,
-	DHCP_OPT_RequestedIP = 50,
-	DHCP_OPT_IPLeaseTime = 51,
-	DHCP_OPT_MessageType = 53,
-	DHCP_OPT_DHCPServer = 54,
-	DHCP_OPT_ParameterList = 55,
-	DHCP_OPT_Message = 56,
-	DHCP_OPT_MaxMessageSize = 57,
-	DHCP_OPT_Vendor = 60,
-	DHCP_OPT_ClientIdentifier = 61,
+	DHCP_OPT_MTU = 26,				// 0x1A
+	DHCP_OPT_StaticRout = 33,		// 0x21
+	DHCP_OPT_ARPCacheTimeout = 35,	// 0x23
+	DHCP_OPT_NTPServer = 42,		// 0x2A
+	DHCP_OPT_RequestedIP = 50,		// 0x32
+	DHCP_OPT_IPLeaseTime = 51,		// 0x33
+	DHCP_OPT_MessageType = 53,		// 0x35
+	DHCP_OPT_DHCPServer = 54,		// 0x36
+	DHCP_OPT_ParameterList = 55,	// 0x37
+	DHCP_OPT_Message = 56,			// 0x38
+	DHCP_OPT_MaxMessageSize = 57,	// 0x39
+	DHCP_OPT_Vendor = 60,			// 0x3C
+	DHCP_OPT_ClientIdentifier = 61,	// 0x3D
 	DHCP_OPT_End = 255,
 }DHCP_OPTION;
 

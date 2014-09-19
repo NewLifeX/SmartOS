@@ -857,12 +857,13 @@ void Dhcp::PareOption(byte* buf, uint len)
 		byte opt = *p++;
 		if(opt == DHCP_OPT_End) break;
 		byte len = *p++;
+		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask: memcpy(Tip->Mask, p, len); break;
-			case DHCP_OPT_DNSServer: memcpy(Tip->DNSServer, p, len); break;
-			case DHCP_OPT_Router: memcpy(Tip->Gateway, p, len); break;
-			case DHCP_OPT_DHCPServer: memcpy(Tip->DHCPServer, p, len); break;
+			case DHCP_OPT_Mask: memcpy(Tip->Mask, p, 4); break;
+			case DHCP_OPT_DNSServer: memcpy(Tip->DNSServer, p, 4); break;
+			case DHCP_OPT_Router: memcpy(Tip->Gateway, p, 4); break;
+			case DHCP_OPT_DHCPServer: memcpy(Tip->DHCPServer, p, 4); break;
 #if NET_DEBUG
 			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
