@@ -26,7 +26,10 @@ void* operator new(uint size)
 	{
 		mem_printf("0x%08x ", p);
 		// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-		uint end = (uint)&__heap_limit;
+		//uint end = (uint)&__heap_limit;
+		//uint end = __get_PSP();
+		//if(!end) end = __get_MSP();
+		uint end = __get_MSP();
 		if((uint)p + size + 0x40 >= end) mem_printf(" + %d near HeapEnd=0x%08x", size, end);
 	}
 	assert_param(p);
@@ -43,7 +46,10 @@ void* operator new[](uint size)
 	{
 		mem_printf("0x%08x ", p);
 		// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-		uint end = (uint)&__heap_limit;
+		//uint end = (uint)&__heap_limit;
+		//uint end = __get_PSP();
+		//if(!end) end = __get_MSP();
+		uint end = __get_MSP();
 		if((uint)p + size + 0x40 >= end) mem_printf(" + %d near HeapEnd=0x%08x", size, end);
 	}
 	assert_param(p);

@@ -127,7 +127,7 @@ Thread::~Thread()
 	if(State != Stopped) Stop();
 
 	Stack = StackTop - (StackSize >> 2);
-	if(Stack) delete Stack;
+	if(Stack) delete[] Stack;
 	Stack = NULL;
 	StackTop = NULL;
 }
@@ -464,6 +464,9 @@ PendSV_NoSave							// 此时整个上下文已经被保存
 // 切换线程，马上切换时间片给下一个线程
 void Thread::Switch()
 {
+	// 如果有挂起的切换，则不再切换。否则切换时需要保存的栈会出错
+	if(SCB->ICSR & SCB_ICSR_PENDSVSET_Msk) return;
+
 	// 准备当前任务和新任务的栈
 	curStack = 0;
 	if(Current)
@@ -549,6 +552,8 @@ void Thread::Init()
 // 每个线程结束时执行该方法，销毁线程
 void Thread::OnEnd()
 {
+	SmartIRQ irq;	// 关闭全局中断，确保销毁成功
+
 	Thread* th = Thread::Current;
 	if(th) delete th;
 }
