@@ -145,7 +145,10 @@ void TinyIP::Process(byte* buf, uint len)
 	len = size;
 	buf += (ip->Length << 2);
 
-	for(int i=0; i < Sockets.Count(); i++)
+	//for(int i=0; i < Sockets.Count(); i++)
+	// 考虑到可能有通用端口处理器，也可能有专用端口处理器（一般在后面），这里偷懒使用倒序处理
+	uint count = Sockets.Count();
+	for(int i=count-1; i>=0; i--)
 	{
 		Socket* socket = Sockets[i];
 		if(socket)
