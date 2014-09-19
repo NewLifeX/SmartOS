@@ -25,8 +25,11 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 	{
 		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 		//Mac[0] = 59; Mac[1] = 57; Mac[2] = 53;
-		memcpy(Mac, "YWS", 3);
-		memcpy(&Mac[3], (byte*)Sys.ID, 3);
+		//memcpy(Mac, "YWS", 3);
+		//memcpy(&Mac[3], (byte*)Sys.ID, 3);
+		// MAC地址首字节奇数表示组地址，这里用偶数
+		Mac[0] = 'N'; Mac[1] = 'X';
+		memcpy(&Mac[2], (byte*)Sys.ID, 2);
 	}
 
 	const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
@@ -39,6 +42,9 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 	BufferSize = 1500;
 	EnableBroadcast = true;
 
+	//Arp = NULL;
+	// 必须有Arp，否则无法响应别人的IP询问
+	Arp = new ArpSocket(this);
 	//memset(Sockets, 0x00, ArrayLength(Sockets) * sizeof(Socket*));
 
 	//_net = NULL;
@@ -54,6 +60,9 @@ TinyIP::~TinyIP()
 
 	/*if(_net) delete _net;
 	_net = NULL;*/
+	
+	if(Arp) delete Arp;
+	Arp = NULL;
 }
 
 // 循环调度的任务
@@ -348,6 +357,7 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 
 	uint count = 0;
 
+	assert_param(Tip->Arp);
 	const byte* mac = Tip->Arp->Resolve(ip);
 	if(!mac)
 	{
@@ -396,11 +406,14 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	TimeWheel tw(1, 0, 0);
 	while(!tw.Expired())
 	{
-		Sys.Sleep(10);	// 等待一段时间，释放CPU
-
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
 		uint len = Tip->Fetch(buf, bufSize);
-		if(!len) continue;
+		if(!len)
+		{
+			Sys.Sleep(2);	// 等待一段时间，释放CPU
+
+			continue;
+		}
 
 		if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
 		{
@@ -418,6 +431,13 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	}
 
 	return count;
+}
+
+TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
+{
+	Type = IP_TCP;
+
+	seqnum = 0xa;
 }
 
 bool TcpSocket::Process(byte* buf, uint len)
@@ -920,11 +940,14 @@ bool Dhcp::Start()
 			next.Reset(1);
 		}
 
-		Sys.Sleep(10);	// 等待一段时间，释放CPU
-
 		uint len = Tip->Fetch(buf, bufSize);
         // 如果缓冲器里面没有数据则转入下一次循环
-        if(!len) continue;
+		if(!len)
+		{
+			Sys.Sleep(2);	// 等待一段时间，释放CPU
+
+			continue;
+		}
 
 		if(eth->Type != ETH_IP || ip->Protocol != IP_UDP) continue;
 
@@ -1078,7 +1101,7 @@ bool ArpSocket::Process(byte* buf, uint len)
 	}*/
 
 	// 是否发给本机。注意memcmp相等返回0
-	if(memcmp(arp->DestIP, Tip->IP, 4) !=0 ) return true;
+	if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
 
 	len -= sizeof(ARP_HEADER);
 #if NET_DEBUG
@@ -1149,19 +1172,25 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	//byte* buf = Buffer;
 	Tip->SendEthernet(ETH_ARP, buf, sizeof(ARP_HEADER));
 
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return NULL;
 
 	// 总等待时间
-	ulong end = Time.Current() + timeout * 1000000;
-	while(end > Time.Current())
+	//ulong end = Time.Current() + timeout * 1000000;
+	//while(end > Time.Current())
+	TimeWheel tw(1, 0, 0);
+	while(!tw.Expired())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
 		uint len = Tip->Fetch(buf, bufSize);
-		if(!len) continue;
+		if(!len)
+		{
+			Sys.Sleep(2);	// 等待一段时间，释放CPU
+
+			continue;
+		}
 
 		// 处理ARP
 		if(eth->Type == ETH_ARP)
@@ -1187,11 +1216,13 @@ const byte* ArpSocket::Resolve(const byte ip[4])
 	if(Tip->IsBroadcast(ip)) return g_FullMac;
 
 	// 如果不在本子网，那么应该找网关的Mac
-	if(ip[0] & Tip->Mask[0] != Tip->IP[0] & Tip->Mask[0]
+	uint mask = *(uint*)Tip->Mask;
+	if((*(uint*)ip & mask) != (*(uint*)Tip->IP & mask)) ip = Tip->Gateway;
+	/*if(ip[0] & Tip->Mask[0] != Tip->IP[0] & Tip->Mask[0]
 	|| ip[1] & Tip->Mask[1] != Tip->IP[1] & Tip->Mask[1]
 	|| ip[2] & Tip->Mask[2] != Tip->IP[2] & Tip->Mask[2]
 	|| ip[3] & Tip->Mask[3] != Tip->IP[3] & Tip->Mask[3]
-	) ip = Tip->Gateway;
+	) ip = Tip->Gateway;*/
 	// 下面的也可以，但是比较难理解
 	/*if(ip[0] ^ IP[0] != ~Mask[0]
 	|| ip[1] ^ IP[1] != ~Mask[1]
@@ -1247,7 +1278,7 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 	ARP_ITEM* item = NULL;
 	ARP_ITEM* empty = NULL;
 	// 在表中查找项
-	byte ipnull[] = { 0, 0, 0, 0 };
+	const byte ipnull[] = { 0, 0, 0, 0 };
 	for(int i=0; i<Count; i++)
 	{
 		ARP_ITEM* arp = &_Arps[i];
@@ -1268,7 +1299,7 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 	// 如果也没有空项，表示满了，那就替换最老的一个
 	if(!item)
 	{
-		uint oldTime = 0xFFFFFF;
+		uint oldTime = 0xFFFFFFFF;
 		// 在表中查找最老项用于替换
 		for(int i=0; i<Count; i++)
 		{
@@ -1293,11 +1324,4 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 	memcpy(item->IP, ip, 4);
 	memcpy(item->Mac, mac, 6);
 	item->Time = sNow + 60;	// 默认过期时间1分钟
-}
-
-TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
-{
-	Type = IP_TCP;
-
-	seqnum = 0xa;
 }
