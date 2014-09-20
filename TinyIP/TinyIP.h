@@ -31,7 +31,7 @@ private:
 	// ARP表
 	typedef struct
 	{
-		byte IP[4];
+		IPAddress IP;
 		byte Mac[6];
 		uint Time;	// 生存时间，秒
 	}ARP_ITEM;
@@ -48,10 +48,10 @@ public:
 	virtual bool Process(MemoryStream* ms);
 
 	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-	const byte* Request(const byte ip[4], int timeout = 3);
+	const byte* Request(IPAddress ip, int timeout = 3);
 
-	const byte* Resolve(const byte ip[4]);
-	void Add(const byte ip[4], const byte mac[6]);
+	const byte* Resolve(IPAddress ip);
+	void Add(IPAddress ip, const byte mac[6]);
 };
 
 // ICMP协议
@@ -68,7 +68,7 @@ public:
 	PingHandler OnPing;
 
 	// Ping目的地址，附带a~z重复的负载数据
-	bool Ping(byte ip[4], uint payloadLength = 32);
+	bool Ping(IPAddress ip, uint payloadLength = 32);
 };
 
 // Tcp会话
@@ -79,7 +79,7 @@ private:
 
 public:
 	ushort Port;		// 本地端口
-	byte RemoteIP[4];	// 远程地址
+	IPAddress RemoteIP;	// 远程地址
 	ushort RemotePort;	// 远程端口
 
 	TCP_HEADER* Header;
@@ -89,7 +89,7 @@ public:
 	// 处理数据包
 	virtual bool Process(MemoryStream* ms);
 
-	int Connect(byte ip[4], ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
+	int Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
     void Close();	// 关闭Socket
 	void Ack(uint len);
@@ -125,7 +125,7 @@ public:
 	UdpHandler OnReceived;
 
 	// 发送UDP数据到目标地址
-	void Send(byte* buf, uint len, byte ip[4], ushort port);
+	void Send(byte* buf, uint len, IPAddress ip, ushort port);
 	void Send(byte* buf, uint len, bool checksum = true);
 };
 
@@ -167,23 +167,23 @@ public:
 	void Process(MemoryStream* ms);
 
 public:
-    byte IP[4];		// 本地IP地址
-    byte Mask[4];	// 子网掩码
+    IPAddress IP;		// 本地IP地址
+    IPAddress Mask;	// 子网掩码
 	byte Mac[6];	// 本地Mac地址
 	ushort Port;	// 本地端口
 	bool EnableBroadcast;	// 使用广播
 
 	byte LocalMac[6];	// 本地目标Mac地址
-	byte LocalIP[4];	// 本地目标IP地址
+	IPAddress LocalIP;	// 本地目标IP地址
 	//ushort LocalPort;	// 本地目标端口
 	byte RemoteMac[6];	// 远程Mac地址
-	byte RemoteIP[4];	// 远程IP地址
+	IPAddress RemoteIP;	// 远程IP地址
 	ushort RemotePort;	// 远程端口
 
 	ushort BufferSize;	// 缓冲区大小
-	byte DHCPServer[4];
-	byte DNSServer[4];
-	byte Gateway[4];
+	IPAddress DHCPServer;
+	IPAddress DNSServer;
+	IPAddress Gateway;
 
 	// Arp套接字
 	ArpSocket* Arp;
@@ -192,19 +192,19 @@ public:
 	//uint SocketCount;
 	List<Socket*> Sockets;
 
-    TinyIP(ITransport* port, byte ip[4] = NULL, byte mac[6] = NULL);
+    TinyIP(ITransport* port, IPAddress ip = 0, byte mac[6] = NULL);
     virtual ~TinyIP();
 
 	bool Open();
 	bool Init();
-	static void ShowIP(const byte ip[4]);
+	static void ShowIP(IPAddress ip);
 	static void ShowMac(const byte mac[6]);
 	static uint CheckSum(byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);
-	bool IsMyIP(const byte ip[4]);	// 是否发给我的IP地址
-	bool IsBroadcast(const byte ip[4]);	// 是否广播地址
+	bool IsMyIP(IPAddress ip);	// 是否发给我的IP地址
+	bool IsBroadcast(IPAddress ip);	// 是否广播地址
 };
 
 /*

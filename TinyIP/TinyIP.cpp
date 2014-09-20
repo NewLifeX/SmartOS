@@ -5,19 +5,25 @@
 const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // FF-FF-FF-FF-FF-FF
 const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-00-00
 
-TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
+TinyIP::TinyIP(ITransport* port, IPAddress ip, byte mac[6])
 {
 	_port = port;
 	_StartTime = Time.Current();
 
-	const byte defip[] = {192, 168, 0, 1};
+	//const byte defip[] = {192, 168, 0, 1};
+	const IPAddress defip = 0x0100A8C0;
 	if(ip)
-		memcpy(IP, ip, 4);
+		//memcpy(IP, ip, 4);
+		IP = ip;
 	else
 	{
 		// 随机IP，取ID最后一个字节
-		memcpy(IP, defip, 3);
-		IP[3] = Sys.ID[0];
+		//memcpy(IP, defip, 3);
+		//IP[3] = Sys.ID[0];
+		IP = defip & 0x00FFFFFF;
+		byte first = Sys.ID[0];
+		if(first <= 1 || first >= 254) first = 2;
+		IP |= first << 24;
 	}
 
 	if(mac)
@@ -33,11 +39,13 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 		//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
 	}
 
-	const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
+	/*const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
 	memcpy(Mask, mask, 4);
 	memcpy(DHCPServer, defip, 4);
 	memcpy(Gateway, defip, 4);
-	memcpy(DNSServer, defip, 4);
+	memcpy(DNSServer, defip, 4);*/
+	Mask = 0x00FFFFFF;
+	DHCPServer = Gateway = DNSServer = defip;
 
 	Buffer = NULL;
 	BufferSize = 1500;
@@ -128,8 +136,10 @@ void TinyIP::Process(MemoryStream* ms)
 #endif
 
 	// 记录远程信息
-	memcpy(LocalIP, ip->DestIP, 4);
-	memcpy(RemoteIP, ip->SrcIP, 4);
+	//memcpy(LocalIP, ip->DestIP, 4);
+	//memcpy(RemoteIP, ip->SrcIP, 4);
+	LocalIP = ip->DestIP;
+	RemoteIP = ip->SrcIP;
 
 	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
 	//assert_param(__REV16(ip->TotalLength) == len);
@@ -278,8 +288,10 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
-	memcpy(ip->DestIP, RemoteIP, 4);
-	memcpy(ip->SrcIP, IP, 4);
+	//memcpy(ip->DestIP, RemoteIP, 4);
+	//memcpy(ip->SrcIP, IP, 4);
+	ip->DestIP = RemoteIP;
+	ip->SrcIP = IP;
 
 	ip->Version = 4;
 	//ip->TypeOfService = 0;
@@ -339,7 +351,7 @@ bool IcmpSocket::Process(MemoryStream* ms)
 }
 
 // Ping目的地址，附带a~z重复的负载数据
-bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
+bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
 	assert_param(Tip->Arp);
 	const byte* mac = Tip->Arp->Resolve(ip);
@@ -354,7 +366,8 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 	}
 
 	memcpy(Tip->RemoteMac, mac, 6);
-	memcpy(Tip->RemoteIP, ip, 4);
+	//memcpy(Tip->RemoteIP, ip, 4);
+	Tip->RemoteIP = ip;
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
@@ -412,8 +425,10 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 		if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
 		{
 			if(icmp->Identifier == id && icmp->Sequence == seq
-			&& memcmp(_ip->DestIP, Tip->IP, 4) == 0
-			&& memcmp(_ip->SrcIP, ip, 4) == 0)
+			//&& memcmp(_ip->DestIP, Tip->IP, 4) == 0
+			//&& memcmp(_ip->SrcIP, ip, 4) == 0)
+			&& _ip->DestIP == Tip->IP
+			&& _ip->SrcIP == ip)
 			{
 				count++;
 				break;
@@ -435,7 +450,8 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	Type = IP_TCP;
 
 	Port = 0;
-	*(uint*)RemoteIP = 0;
+	//*(uint*)RemoteIP = 0;
+	RemoteIP = 0;
 	RemotePort = 0;
 	seqnum = 0xa;
 }
@@ -455,8 +471,9 @@ bool TcpSocket::Process(MemoryStream* ms)
 	if(Port != 0 && port != Port) return false;
 	if(RemotePort != 0 && remotePort != RemotePort) return false;
 	//if(memcmp(Tip->RemoteIP, RemoteIP, 4) != 0) return false;
-	uint rip = *(uint*)RemoteIP;
-	if(rip != 0 && *(uint*)Tip->RemoteIP != rip) return false;
+	/*uint rip = *(uint*)RemoteIP;
+	if(rip != 0 && *(uint*)Tip->RemoteIP != rip) return false;*/
+	if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
 	// 不能修改主监听Socket的端口，否则可能导致收不到后续连接数据
 	//Port = port;
@@ -700,11 +717,12 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 
 #define TinyIP_HELP
 #ifdef TinyIP_HELP
-void TinyIP::ShowIP(const byte ip[4])
+void TinyIP::ShowIP(IPAddress ip)
 {
-	debug_printf("%d", *ip++);
+	byte* ips = (byte*)&ip;
+	debug_printf("%d", *ips++);
 	for(int i=1; i<4; i++)
-		debug_printf(".%d", *ip++);
+		debug_printf(".%d", *ips++);
 }
 
 void TinyIP::ShowMac(const byte mac[6])
@@ -757,30 +775,33 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
     return( (uint) sum ^ 0xFFFF);
 }
 
-bool TinyIP::IsMyIP(const byte ip[4])
+bool TinyIP::IsMyIP(IPAddress ip)
 {
 	//int i = 0;
 	//for(i = 0; i < 4 && ip[i] == IP[i]; i++);
 	//if(i == 4) return true;
-	if(*(uint*)ip == *(uint*)IP) return true;
+	//if(*(uint*)ip == *(uint*)IP) return true;
+	if(ip == IP) return true;
 
 	if(EnableBroadcast && IsBroadcast(ip)) return true;
 
 	return false;
 }
 
-bool TinyIP::IsBroadcast(const byte ip[4])
+bool TinyIP::IsBroadcast(IPAddress ip)
 {
 	//int i = 0;
 	// 全网广播
 	//for(i = 0; i < 4 && ip[i] == 0xFF; i++);
 	//if(i == 4) return true;
-	if(*(uint*)ip == 0xFFFFFFFF) return true;
+	//if(*(uint*)ip == 0xFFFFFFFF) return true;
+	if(ip == 0xFFFFFFFF) return true;
 
 	// 子网广播。网络位不变，主机位全1
 	//for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
 	//if(i == 4) return true;
-	if(*(uint*)ip == (*(uint*)IP | ~*(uint*)Mask)) return true;
+	//if(*(uint*)ip == (*(uint*)IP | ~*(uint*)Mask)) return true;
+	if(ip == (IP | ~Mask)) return true;
 
 	return false;
 }
@@ -796,7 +817,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId(Tip->Mac, 6);
-		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP, 4);
+		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP);
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS_SmartOS", 11);
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
@@ -809,8 +830,9 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	memcpy(dhcp->ClientMac, Tip->Mac, 6);
 
 	memset(Tip->RemoteMac, 0xFF, 6);
-	//memset(IP, 0x00, 6);
-	memset(Tip->RemoteIP, 0xFF, 6);
+	//memset(IP, 0x00, 4);
+	//memset(Tip->RemoteIP, 0xFF, 4);
+	Tip->RemoteIP = 0xFFFFFFFF;
 	Tip->Port = 68;
 	Tip->RemotePort = 67;
 
@@ -858,7 +880,7 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	byte* p = dhcp->Next();
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
-	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer, 4);
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer);
 
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
@@ -875,10 +897,10 @@ void Dhcp::PareOption(byte* buf, uint len)
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask: memcpy(Tip->Mask, p, 4); break;
-			case DHCP_OPT_DNSServer: memcpy(Tip->DNSServer, p, 4); break;
-			case DHCP_OPT_Router: memcpy(Tip->Gateway, p, 4); break;
-			case DHCP_OPT_DHCPServer: memcpy(Tip->DHCPServer, p, 4); break;
+			case DHCP_OPT_Mask: Tip->Mask = *(uint*)p; break;
+			case DHCP_OPT_DNSServer: Tip->DNSServer = *(uint*)p; break;
+			case DHCP_OPT_Router: Tip->Gateway = *(uint*)p; break;
+			case DHCP_OPT_DHCPServer: Tip->DHCPServer = *(uint*)p; break;
 #if NET_DEBUG
 			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
@@ -965,7 +987,8 @@ bool Dhcp::Start()
 		{
 			if(__REV(dhcp->TransID) == dhcpid)
 			{
-				memcpy(Tip->IP, dhcp->YourIP, 4);
+				//memcpy(Tip->IP, dhcp->YourIP, 4);
+				Tip->IP = dhcp->YourIP;
 				PareOption(dhcp->Next(), len);
 
 				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
@@ -992,7 +1015,8 @@ bool Dhcp::Start()
 			debug_printf("\r\n");
 #endif
 
-			if(memcmp(dhcp->YourIP, Tip->IP, 4) == 0)
+			//if(memcmp(dhcp->YourIP, Tip->IP, 4) == 0)
+			if(dhcp->YourIP == Tip->IP)
 			{
 				//IPIsReady = true;
 
@@ -1102,7 +1126,8 @@ bool ArpSocket::Process(MemoryStream* ms)
 
 	// 是否发给本机。注意memcmp相等返回0
 	//if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
-	if(*(uint*)arp->DestIP != *(uint*)Tip->IP) return true;
+	//if(*(uint*)arp->DestIP != *(uint*)Tip->IP) return true;
+	if(arp->DestIP != Tip->IP) return true;
 
 #if NET_DEBUG
 	// 数据校验
@@ -1129,9 +1154,11 @@ bool ArpSocket::Process(MemoryStream* ms)
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
 	memcpy(arp->DestMac, arp->SrcMac, 6);
-	memcpy(arp->DestIP, arp->SrcIP, 4);
+	//memcpy(arp->DestIP, arp->SrcIP, 4);
 	memcpy(arp->SrcMac, Tip->Mac, 6);
-	memcpy(arp->SrcIP, Tip->IP, 4);
+	//memcpy(arp->SrcIP, Tip->IP, 4);
+	arp->DestIP = arp->SrcIP;
+	arp->SrcIP = Tip->IP;
 
 #if NET_DEBUG
 	debug_printf("ARP Response To ");
@@ -1145,7 +1172,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 }
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-const byte* ArpSocket::Request(const byte ip[4], int timeout)
+const byte* ArpSocket::Request(IPAddress ip, int timeout)
 {
 	// 缓冲区必须略大，否则接收数据时可能少一个字节
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
@@ -1159,10 +1186,12 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	// 构造请求包
 	arp->Option = 0x0100;
 	memcpy(arp->DestMac, g_ZeroMac, 6);
-	memcpy(arp->DestIP, ip, 4);
+	//memcpy(arp->DestIP, ip, 4);
 	memcpy(arp->SrcMac, Tip->Mac, 6);
-	memcpy(arp->SrcIP, Tip->IP, 4);
+	//memcpy(arp->SrcIP, Tip->IP, 4);
 	memcpy(Tip->RemoteMac, g_ZeroMac, 6);
+	arp->DestIP = ip;
+	arp->SrcIP = Tip->IP;
 
 #if NET_DEBUG
 	debug_printf("ARP Request To ");
@@ -1194,7 +1223,8 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 		if(eth->Type == ETH_ARP)
 		{
 			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
-			if(memcmp(arp->DestIP, Tip->IP, 4) == 0
+			//if(memcmp(arp->DestIP, Tip->IP, 4) == 0
+			if(arp->DestIP == Tip->IP
 			// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
 			//&& memcmp(arp->SrcIP, ip, 4) == 0
 			&& arp->Option == 0x0200)
@@ -1213,13 +1243,14 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	return NULL;
 }
 
-const byte* ArpSocket::Resolve(const byte ip[4])
+const byte* ArpSocket::Resolve(IPAddress ip)
 {
 	if(Tip->IsBroadcast(ip)) return g_FullMac;
 
 	// 如果不在本子网，那么应该找网关的Mac
-	uint mask = *(uint*)Tip->Mask;
-	if((*(uint*)ip & mask) != (*(uint*)Tip->IP & mask)) ip = Tip->Gateway;
+	/*uint mask = *(uint*)Tip->Mask;
+	if((*(uint*)ip & mask) != (*(uint*)Tip->IP & mask)) ip = Tip->Gateway;*/
+	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
 	/*if(ip[0] & Tip->Mask[0] != Tip->IP[0] & Tip->Mask[0]
 	|| ip[1] & Tip->Mask[1] != Tip->IP[1] & Tip->Mask[1]
 	|| ip[2] & Tip->Mask[2] != Tip->IP[2] & Tip->Mask[2]
@@ -1241,7 +1272,8 @@ const byte* ArpSocket::Resolve(const byte ip[4])
 		for(int i=0; i<Count; i++)
 		{
 			ARP_ITEM* arp = &_Arps[i];
-			if(memcmp(arp->IP, ip, 4) == 0)
+			//if(memcmp(arp->IP, ip, 4) == 0)
+			if(arp->IP == ip)
 			{
 				// 如果未过期，则直接使用。否则重新请求
 				if(arp->Time > sNow) return arp->Mac;
@@ -1261,7 +1293,7 @@ const byte* ArpSocket::Resolve(const byte ip[4])
 	return mac;
 }
 
-void ArpSocket::Add(const byte ip[4], const byte mac[6])
+void ArpSocket::Add(IPAddress ip, const byte mac[6])
 {
 #if NET_DEBUG
 	debug_printf("Add Arp(");
@@ -1280,16 +1312,18 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 	ARP_ITEM* item = NULL;
 	ARP_ITEM* empty = NULL;
 	// 在表中查找项
-	const byte ipnull[] = { 0, 0, 0, 0 };
+	//const byte ipnull[] = { 0, 0, 0, 0 };
 	for(int i=0; i<Count; i++)
 	{
 		ARP_ITEM* arp = &_Arps[i];
-		if(memcmp(arp->IP, ip, 4) == 0)
+		//if(memcmp(arp->IP, ip, 4) == 0)
+		if(arp->IP == ip)
 		{
 			item = arp;
 			break;
 		}
-		if(!empty && memcmp(arp->IP, ipnull, 4) == 0)
+		//if(!empty && memcmp(arp->IP, ipnull, 4) == 0)
+		if(!empty && arp->IP == 0)
 		{
 			empty = arp;
 			break;
@@ -1307,7 +1341,8 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 		{
 			ARP_ITEM* arp = &_Arps[i];
 			// 找最老的一个，待会如果需要覆盖，就先覆盖它。避开网关
-			if(arp->Time < oldTime && memcmp(arp->IP, Tip->Gateway, 4) != 0)
+			//if(arp->Time < oldTime && memcmp(arp->IP, Tip->Gateway, 4) != 0)
+			if(arp->Time < oldTime && arp->IP != Tip->Gateway)
 			{
 				oldTime = arp->Time;
 				item = arp;
@@ -1323,7 +1358,8 @@ void ArpSocket::Add(const byte ip[4], const byte mac[6])
 	//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 	uint sNow = Time.Current() >> 20;	// 当前时间，秒
 	// 保存
-	memcpy(item->IP, ip, 4);
+	//memcpy(item->IP, ip, 4);
+	item->IP = ip;
 	memcpy(item->Mac, mac, 6);
 	item->Time = sNow + 60;	// 默认过期时间1分钟
 }
