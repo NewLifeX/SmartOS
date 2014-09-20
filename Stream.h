@@ -64,14 +64,16 @@ public:
 	// 数据流容量
 	uint Capacity() { return _Capacity; }
 
-	// 余下的有效数据流长度
+	// 余下的有效数据流长度。0表示已经到达终点
 	uint Remain() { return Length - Position; };
 
 	// 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
 	bool TrySeek(int offset)
 	{
 		int p = offset + Position;
-		if(p < 0 || p >= Length) return false;
+		//if(p < 0 || p >= Length) return false;
+		// 允许移动到最后一个字节之后，也就是Length
+		if(p < 0 || p > Length) return false;
 
 		Position = p;
 
@@ -84,7 +86,8 @@ public:
 	// 数据流当前位置指针
     byte* Current()
 	{
-		assert_param(Position < Length);
+		//assert_param(Position < Length);
+		if(Position >= Length) return NULL;
 
 		return _Buffer + Position;
 	}
@@ -141,6 +144,16 @@ public:
 
 		memcpy(Current(), buf + offset, count);
 		Length += count;
+	}
+
+	// 取回指定结构体指针，并移动游标位置
+	template<typename T>
+	T* Retrieve()
+	{
+		T* p = (T*)Current();
+		if(!TrySeek(sizeof(T))) return NULL;
+
+		return p;
 	}
 };
 
