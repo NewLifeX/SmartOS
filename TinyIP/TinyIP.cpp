@@ -580,12 +580,13 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
     if (!opSeq)
     {
 		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
-		tcp->Seq = __REV(seqnum << 8);
+		/*tcp->Seq = __REV(seqnum << 8);
         // step the inititial seq num by something we will not use
         // during this tcp session:
-        seqnum += 2;
+        seqnum += 2;*/
 		/*tcp->Seq = __REV(seqnum);
 		seqnum++;*/
+		tcp->Seq = 0;
     }else
 	{
 		tcp->Seq = ack;
