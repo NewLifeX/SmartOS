@@ -11,11 +11,36 @@
 	#define LITTLE_ENDIAN   1
 #endif
 
+// IP地址
 typedef uint IPAddress;
-typedef struct
+// Mac地址
+//typedef struct _MacAddress
+class MacAddress
 {
-	byte value[6];
-}MacAddress;
+public:
+	uint value;
+	ushort value2;
+
+    MacAddress& operator=(ulong v)
+	{
+		value = v >> 32;
+		value2 = v >> 16;
+		return *this;
+	}
+    ulong operator=(MacAddress& addr)
+	{
+		ulong v = (ulong)addr.value << 32;
+		v |= (uint)addr.value2 << 16;
+		return v;
+	}
+    /*struct _MacAddress& operator=(struct _MacAddress& addr)
+	{
+		value = addr.value;
+		value2 = addr.value2;
+		return *this;
+	}*/
+};
+//}MacAddress;
 
 // 强制结构体紧凑分配空间
 #pragma pack(1)

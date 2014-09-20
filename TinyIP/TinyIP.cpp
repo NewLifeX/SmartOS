@@ -10,6 +10,10 @@ TinyIP::TinyIP(ITransport* port, IPAddress ip, byte mac[6])
 	_port = port;
 	_StartTime = Time.Current();
 
+	/*MacAddress addr1 = *(ulong*)g_FullMac;
+	MacAddress addr2 = addr1;
+	ulong vv = addr2;*/
+	
 	//const byte defip[] = {192, 168, 0, 1};
 	const IPAddress defip = 0x0100A8C0;
 	if(ip)
