@@ -125,7 +125,6 @@ public:
 
 	// 发送UDP数据到目标地址
 	void Send(byte* buf, uint len, byte ip[4], ushort port);
-	//void ProcessUdp(byte* buf, uint len);
 	void Send(byte* buf, uint len, bool checksum = true);
 };
 
@@ -152,16 +151,16 @@ public:
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
-public:
+private:
 	ITransport* _port;
-	//NetPacker* _net;
+	ulong _StartTime;
 
+public:
 	byte* Buffer; // 缓冲区
 
 	static void Work(void* param);	// 任务函数
 	uint Fetch(byte* buf = NULL, uint len = 0);	// 循环调度的任务，捕获数据包，返回长度
 	void Process(byte* buf, uint len);	// 处理数据包
-
 
 public:
     byte IP[4];		// 本地IP地址

@@ -8,6 +8,7 @@ const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-
 TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 {
 	_port = port;
+	_StartTime = Time.Current();
 
 	const byte defip[] = {192, 168, 0, 1};
 	if(ip)
@@ -205,7 +206,7 @@ bool TinyIP::Init()
 {
 #if NET_DEBUG
 	debug_printf("\r\nTinyIP Init...\r\n");
-	uint us = Time.Current();
+	//uint us = Time.Current();
 #endif
 
 	// 分配缓冲区。比较大，小心堆空间不够
@@ -239,7 +240,7 @@ bool TinyIP::Init()
     Sys.AddTask(Work, this);
 
 #if NET_DEBUG
-	us = Time.Current() - us;
+	uint us = Time.Current() - _StartTime;
 	debug_printf("TinyIP Ready! Cost:%dms\r\n\r\n", us / 1000);
 #endif
 
@@ -656,16 +657,15 @@ bool UdpSocket::Process(byte* buf, uint len)
 
 	Tip->Port = port;
 	Tip->RemotePort = remotePort;
-	//byte* data = _net->Payload;
-	//assert_param(data == udp->Next());
+
 	byte* data = udp->Next();
-	//assert_param(len == _net->PayloadLength);
-	assert_param(len + sizeof(UDP_HEADER) == __REV16(udp->Length));
+	uint plen = __REV16(udp->Length);
+	assert_param(len + sizeof(UDP_HEADER) == plen);
 
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnReceived(this, udp, udp->Next(), len);
+		bool rs = OnReceived(this, udp, data, len);
 		if(!rs) return true;
 	}
 	else
@@ -675,19 +675,16 @@ bool UdpSocket::Process(byte* buf, uint len)
 		Tip->ShowIP(Tip->RemoteIP);
 		debug_printf(":%d => ", Tip->RemotePort);
 		Tip->ShowIP(Tip->LocalIP);
-		debug_printf(":%d Payload=%d udp_len=%d \r\n", __REV16(udp->DestPort), len, __REV16(udp->Length));
+		debug_printf(":%d Payload=%d udp_len=%d \r\n", port, len, plen);
 
 		Sys.ShowString(data, len);
 		debug_printf(" \r\n");
 #endif
 	}
 
-	//udp->DestPort = udp->SrcPort;
-	assert_param(data == (byte*)udp + sizeof(UDP_HEADER));
-	//memcpy((byte*)udp + sizeof(UDP_HEADER), data, _net->PayloadLength);
-	memcpy((byte*)udp + sizeof(UDP_HEADER), data, len);
+	//memcpy(udp->Next(), data, len);
 
-	Send(buf, len, false);
+	Send(data, len, false);
 
 	return true;
 }
