@@ -448,34 +448,24 @@ bool TcpSocket::Process(MemoryStream* ms)
 	Header = tcp;
 	uint len = ms->Remain();
 
-	//assert_param((tcp->Length << 2) >= sizeof(TCP_HEADER));
-	//len -= tcp->Length << 2;
-	//assert_param(len == _net->PayloadLength);
-	//assert_param(_net->Payload == tcp->Next());
-
 	ushort port = __REV16(tcp->DestPort);
 	ushort remotePort = __REV16(tcp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 	if(RemotePort != 0 && remotePort != RemotePort) return false;
-	if(memcmp(Tip->RemoteIP, RemoteIP, 4) != 0) return false;
+	//if(memcmp(Tip->RemoteIP, RemoteIP, 4) != 0) return false;
+	uint rip = *(uint*)RemoteIP;
+	if(rip != 0 && *(uint*)Tip->RemoteIP != rip) return false;
 
-	Port = port;
-	RemotePort = remotePort;
+	// 不能修改主监听Socket的端口，否则可能导致收不到后续连接数据
+	//Port = port;
+	//RemotePort = remotePort;
 	Tip->Port = port;
 	Tip->RemotePort = remotePort;
 
-#if NET_DEBUG
-	/*debug_printf("TCP ");
-	ShowIP(RemoteIP);
-	debug_printf(":%d => ", __REV16(tcp->SrcPort));
-	ShowIP(_net->IP->DestIP);
-	debug_printf(":%d\r\n", __REV16(tcp->DestPort));*/
-#endif
-
 	// 第一次同步应答
-	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
+	if (tcp->Flags & TCP_FLAGS_SYN && !(tcp->Flags & TCP_FLAGS_ACK)) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
 		if(OnAccepted)
 			OnAccepted(this, tcp, tcp->Next(), len);
@@ -492,7 +482,9 @@ bool TcpSocket::Process(MemoryStream* ms)
 		Head(1, true, false);
 
 		// 需要用到MSS，所以采用4个字节的可选段
-		Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+		//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+		// 注意tcp->Size()包括头部的扩展数据，这里不用单独填4
+		Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 
 		return true;
 	}
@@ -560,8 +552,8 @@ bool TcpSocket::Process(MemoryStream* ms)
 
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
-	tcp->SrcPort = __REV16(Port);
-	tcp->DestPort = __REV16(RemotePort);
+	tcp->SrcPort = __REV16(Port > 0 ? Port : Tip->Port);
+	tcp->DestPort = __REV16(RemotePort > 0 ? RemotePort : Tip->RemotePort);
     tcp->Flags = flags;
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
@@ -569,16 +561,17 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	tcp->Checksum = 0;
 	tcp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
 
-	//assert_param(_net->IP);
+	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
 }
 
 void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
 {
     /*
-	第一次握手：主机A发送位码为syn＝1，随机产生seq number=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机；
-	第二次握手：主机B收到请求后要确认联机信息，向A发送ack number=(主机A的seq+1)，syn=1，ack=1，随机产生seq=7654321的包；
-	第三次握手：主机A收到后检查ack number是否正确，即第一次发送的seq number+1，以及位码ack是否为1，若正确，主机A会再发送ack number=(主机B的seq+1)，ack=1，主机B收到后确认seq值与ack=1则连接建立成功。
+	第一次握手：主机A发送位码为SYN＝1，随机产生Seq=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机
+	第二次握手：主机B收到请求后要确认联机信息，向A发送Ack=(主机A的Seq+1)，SYN=1，Ack=1，随机产生Seq=7654321的包
+	第三次握手：主机A收到后检查Ack是否正确，即第一次发送的Seq+1，以及位码Ack是否为1，
+	若正确，主机A会再发送Ack=(主机B的Seq+1)，Ack=1，主机B收到后确认Seq值与Ack=1则连接建立成功。
 	完成三次握手，主机A与主机B开始传送数据。
 	*/
 	TCP_HEADER* tcp = Header;
@@ -591,6 +584,8 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
         // step the inititial seq num by something we will not use
         // during this tcp session:
         seqnum += 2;
+		/*tcp->Seq = __REV(seqnum);
+		seqnum++;*/
     }else
 	{
 		tcp->Seq = ack;
@@ -600,10 +595,13 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
     // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
     if (mss)
     {
+		uint* p = (uint*)tcp->Next();
         // 使用可选域设置 MSS 到 1460:0x5b4
-		*(uint *)((byte*)tcp + sizeof(TCP_HEADER)) = __REV(0x020405b4);
+		*p++ = __REV(0x020405b4);
+		//*p++ = __REV(0x01030302);
+		//*p++ = __REV(0x01010402);
 
-		tcp->Length++;
+		tcp->Length += 1;
     }
 }
 
