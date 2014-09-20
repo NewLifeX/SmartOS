@@ -85,11 +85,11 @@ uint TinyIP::Fetch(byte* buf, uint len)
 	return len;
 }
 
-void TinyIP::Process(byte* buf, uint len)
+void TinyIP::Process(MemoryStream* ms)
 {
-	if(!buf) return;
+	if(!ms) return;
 
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	ETH_HEADER* eth = (ETH_HEADER*)ms->Current();
 #if NET_DEBUG
 	/*debug_printf("Ethernet 0x%04X ", eth->Type);
 	ShowMac(eth->SrcMac);
@@ -105,19 +105,20 @@ void TinyIP::Process(byte* buf, uint len)
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
 	// 计算负载数据的长度
-	if(len <= eth->Size()) return;
-	len -= eth->Size();
-	buf += eth->Size();
+	//if(len <= eth->Size()) return;
+	//len -= eth->Size();
+	//buf += eth->Size();
+	if(!ms->TrySeek(sizeof(ETH_HEADER))) return;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		if(Arp) Arp->Process(buf, len);
+		if(Arp) Arp->Process(ms);
 
 		return;
 	}
 
-	IP_HEADER* ip = (IP_HEADER*)eth->Next();
+	IP_HEADER* ip = (IP_HEADER*)ms->Current();
 	// 是否发给本机。注意memcmp相等返回0
 	if(!ip || !IsMyIP(ip->DestIP)) return;
 
@@ -137,15 +138,18 @@ void TinyIP::Process(byte* buf, uint len)
 	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
 	//assert_param(__REV16(ip->TotalLength) == len);
 	// 数据包是否完整
-	if(len < __REV16(ip->TotalLength)) return;
+	if(ms->Remain() < __REV16(ip->TotalLength)) return;
 	// 计算负载数据的长度，注意ip可能变长，长度Length的单位是4字节
 	//len -= sizeof(IP_HEADER);
 
 	// 前面的len不准确，必须以这个为准
-	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
-	len = size;
-	buf += (ip->Length << 2);
+	//uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
+	//len = size;
+	//buf += (ip->Length << 2);
+	if(!ms->TrySeek(ip->Length << 2)) return;
 
+	// 各处理器有可能改变数据流游标，这里备份一下
+	uint p = ms->Position;
 	//for(int i=0; i < Sockets.Count(); i++)
 	// 考虑到可能有通用端口处理器，也可能有专用端口处理器（一般在后面），这里偷懒使用倒序处理
 	uint count = Sockets.Count();
@@ -158,7 +162,8 @@ void TinyIP::Process(byte* buf, uint len)
 			if(socket->Type == ip->Protocol)
 			{
 				// 如果处理成功，则中断遍历
-				if(socket->Process(buf, len)) return;
+				if(socket->Process(ms)) return;
+				ms->Position = p;
 			}
 		}
 	}
@@ -185,7 +190,10 @@ void TinyIP::Work(void* param)
 			//ulong start = Time.Current();
 #endif
 
-			tip->Process(tip->Buffer, len);
+			//tip->Process(tip->Buffer, tip->BufferSize, 0, len);
+			MemoryStream ms(tip->Buffer, tip->BufferSize);
+			ms.Length = len;
+			tip->Process(&ms);
 #if NET_DEBUG
 			//uint cost = Time.Current() - start;
 			//debug_printf("TinyIP::Process cost %d us\r\n", cost);
@@ -292,15 +300,15 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
-bool IcmpSocket::Process(byte* buf, uint len)
+bool IcmpSocket::Process(MemoryStream* ms)
 {
-	if(len < sizeof(ICMP_HEADER)) return false;
+	//if(len < sizeof(ICMP_HEADER)) return false;
 
-	ICMP_HEADER* icmp = (ICMP_HEADER*)buf;
-	len -= icmp->Size();
-	//if(!icmp) return;
-	//assert_param(_net->Payload == icmp->Next());
+	ICMP_HEADER* icmp = (ICMP_HEADER*)ms->Current();
+	//len -= icmp->Size();
+	if(!ms->TrySeek(sizeof(ICMP_HEADER))) return false;
 
+	uint len = ms->Remain();
 	if(OnPing)
 	{
 		// 返回值指示是否向对方发送数据包
@@ -366,6 +374,7 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
+	MemoryStream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
@@ -428,7 +437,10 @@ bool IcmpSocket::Ping(byte ip[4], uint payloadLength)
 		}
 
 		// 用不到数据包交由系统处理
-		Tip->Process(buf, len);
+		//Tip->Process(buf, bufSize, 0, len);
+		ms.Position = 0;
+		ms.Length = len;
+		Tip->Process(&ms);
 	}
 
 	return count;
@@ -444,16 +456,19 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	seqnum = 0xa;
 }
 
-bool TcpSocket::Process(byte* buf, uint len)
+bool TcpSocket::Process(MemoryStream* ms)
 {
-	if(len < sizeof(TCP_HEADER)) return false;
+	//if(len < sizeof(TCP_HEADER)) return false;
 
-	TCP_HEADER* tcp = (TCP_HEADER*)buf;
-	//if(!tcp) return;
-	Tcp = tcp;
+	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
+	//if(!ms->TrySeek(sizeof(TCP_HEADER))) return;
+	if(!ms->TrySeek(tcp->Length << 2)) return false;
+	
+	Header = tcp;
+	uint len = ms->Remain();
 
-	assert_param((tcp->Length << 2) >= sizeof(TCP_HEADER));
-	len -= tcp->Length << 2;
+	//assert_param((tcp->Length << 2) >= sizeof(TCP_HEADER));
+	//len -= tcp->Length << 2;
 	//assert_param(len == _net->PayloadLength);
 	//assert_param(_net->Payload == tcp->Next());
 
@@ -585,7 +600,7 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
 	第三次握手：主机A收到后检查ack number是否正确，即第一次发送的seq number+1，以及位码ack是否为1，若正确，主机A会再发送ack number=(主机B的seq+1)，ack=1，主机B收到后确认seq值与ack=1则连接建立成功。
 	完成三次握手，主机A与主机B开始传送数据。
 	*/
-	TCP_HEADER* tcp = Tcp;
+	TCP_HEADER* tcp = Header;
 	int ack = tcp->Ack;
 	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
     if (!opSeq)
@@ -642,12 +657,13 @@ void TcpSocket::Send(byte* buf, uint len)
 	Send(tcp, len, TCP_FLAGS_PUSH);
 }
 
-bool UdpSocket::Process(byte* buf, uint len)
+bool UdpSocket::Process(MemoryStream* ms)
 {
-	if(len < sizeof(UDP_HEADER)) return false;
-	len -= sizeof(UDP_HEADER);
+	//if(len < sizeof(UDP_HEADER)) return false;
+	//len -= sizeof(UDP_HEADER);
 
-	UDP_HEADER* udp = (UDP_HEADER*)buf;
+	UDP_HEADER* udp = (UDP_HEADER*)ms->Current();
+	if(!ms->TrySeek(sizeof(UDP_HEADER))) return false;
 
 	ushort port = __REV16(udp->DestPort);
 	ushort remotePort = __REV16(udp->SrcPort);
@@ -659,6 +675,7 @@ bool UdpSocket::Process(byte* buf, uint len)
 	Tip->RemotePort = remotePort;
 
 	byte* data = udp->Next();
+	uint len = ms->Remain();
 	uint plen = __REV16(udp->Length);
 	assert_param(len + sizeof(UDP_HEADER) == plen);
 
@@ -767,9 +784,10 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
 
 bool TinyIP::IsMyIP(const byte ip[4])
 {
-	int i = 0;
-	for(i = 0; i < 4 && ip[i] == IP[i]; i++);
-	if(i == 4) return true;
+	//int i = 0;
+	//for(i = 0; i < 4 && ip[i] == IP[i]; i++);
+	//if(i == 4) return true;
+	if(*(uint*)ip == *(uint*)IP) return true;
 
 	if(EnableBroadcast && IsBroadcast(ip)) return true;
 
@@ -778,14 +796,16 @@ bool TinyIP::IsMyIP(const byte ip[4])
 
 bool TinyIP::IsBroadcast(const byte ip[4])
 {
-	int i = 0;
+	//int i = 0;
 	// 全网广播
-	for(i = 0; i < 4 && ip[i] == 0xFF; i++);
-	if(i == 4) return true;
+	//for(i = 0; i < 4 && ip[i] == 0xFF; i++);
+	//if(i == 4) return true;
+	if(*(uint*)ip == 0xFFFFFFFF) return true;
 
 	// 子网广播。网络位不变，主机位全1
-	for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
-	if(i == 4) return true;
+	//for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
+	//if(i == 4) return true;
+	if(*(uint*)ip == (*(uint*)IP | ~*(uint*)Mask)) return true;
 
 	return false;
 }
@@ -1078,10 +1098,10 @@ ArpSocket::~ArpSocket()
 	_Arps = NULL;
 }
 
-bool ArpSocket::Process(byte* buf, uint len)
+bool ArpSocket::Process(MemoryStream* ms)
 {
-	ARP_HEADER* arp = (ARP_HEADER*)buf;
-	if(!arp) return false;
+	ARP_HEADER* arp = (ARP_HEADER*)ms->Current();
+	if(!ms->TrySeek(sizeof(ARP_HEADER))) return false;
 
 	/*
 	当封装的ARP报文在以太网上传输时，硬件类型字段赋值为0x0100，标识硬件为以太网硬件;
@@ -1102,9 +1122,10 @@ bool ArpSocket::Process(byte* buf, uint len)
 	}*/
 
 	// 是否发给本机。注意memcmp相等返回0
-	if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
+	//if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
+	if(*(uint*)arp->DestIP == *(uint*)Tip->IP) return true;
 
-	len -= sizeof(ARP_HEADER);
+	//len -= sizeof(ARP_HEADER);
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
@@ -1126,7 +1147,7 @@ bool ArpSocket::Process(byte* buf, uint len)
 	debug_printf(" [");
 	Tip->ShowMac(arp->SrcMac);
 	//debug_printf("] len=%d Payload=%d\r\n", len, _net->PayloadLength);
-	debug_printf("] Payload=%d\r\n", len);
+	debug_printf("] Payload=%d\r\n", ms->Remain());
 #endif
 	// 是否发给本机
 	//if(memcmp(arp->DestIP, IP, 4)) return;
@@ -1156,6 +1177,7 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 	//ARP_HEADER* arp = _net->SetARP();
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER)];
 	uint bufSize = ArrayLength(buf);
+	MemoryStream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
@@ -1209,7 +1231,10 @@ const byte* ArpSocket::Request(const byte ip[4], int timeout)
 		}
 
 		// 用不到数据包交由系统处理
-		Tip->Process(buf, len);
+		//Tip->Process(buf, bufSize, 0, len);
+		ms.Position = 0;
+		ms.Length = len;
+		Tip->Process(&ms);
 	}
 
 	return NULL;

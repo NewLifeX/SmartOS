@@ -3,6 +3,7 @@
 
 // 模块开发使用说明见后
 
+#include "Stream.h"
 #include "Net\ITransport.h"
 #include "Net\Ethernet.h"
 #include "Net\Net.h"
@@ -20,7 +21,7 @@ public:
 	virtual ~Socket();
 
 	// 处理数据包
-	virtual bool Process(byte* buf, uint len) = 0;
+	virtual bool Process(MemoryStream* ms) = 0;
 };
 
 // ARP协议
@@ -44,7 +45,7 @@ public:
 	virtual ~ArpSocket();
 
 	// 处理数据包
-	virtual bool Process(byte* buf, uint len);
+	virtual bool Process(MemoryStream* ms);
 
 	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 	const byte* Request(const byte ip[4], int timeout = 3);
@@ -60,7 +61,7 @@ public:
 	IcmpSocket(TinyIP* tip) : Socket(tip) { Type = IP_ICMP; }
 
 	// 处理数据包
-	virtual bool Process(byte* buf, uint len);
+	virtual bool Process(MemoryStream* ms);
 
 	// 收到Ping请求时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
 	typedef bool (*PingHandler)(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len);
@@ -81,12 +82,12 @@ public:
 	byte RemoteIP[4];	// 远程地址
 	ushort RemotePort;	// 远程端口
 
-	TCP_HEADER* Tcp;
+	TCP_HEADER* Header;
 
 	TcpSocket(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(byte* buf, uint len);
+	virtual bool Process(MemoryStream* ms);
 
 	int Connect(byte ip[4], ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
@@ -117,7 +118,7 @@ public:
 	}
 
 	// 处理数据包
-	virtual bool Process(byte* buf, uint len);
+	virtual bool Process(MemoryStream* ms);
 
 	// 收到Udp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
 	typedef bool (*UdpHandler)(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len);
@@ -158,9 +159,12 @@ private:
 public:
 	byte* Buffer; // 缓冲区
 
-	static void Work(void* param);	// 任务函数
-	uint Fetch(byte* buf = NULL, uint len = 0);	// 循环调度的任务，捕获数据包，返回长度
-	void Process(byte* buf, uint len);	// 处理数据包
+	// 任务函数
+	static void Work(void* param);
+	// 循环调度的任务，捕获数据包，返回长度
+	uint Fetch(byte* buf = NULL, uint len = 0);
+	// 处理数据包
+	void Process(MemoryStream* ms);
 
 public:
     byte IP[4];		// 本地IP地址
