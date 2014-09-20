@@ -89,7 +89,9 @@ void TinyIP::Process(MemoryStream* ms)
 {
 	if(!ms) return;
 
-	ETH_HEADER* eth = (ETH_HEADER*)ms->Current();
+	//ETH_HEADER* eth = (ETH_HEADER*)ms->Current();
+	ETH_HEADER* eth = ms->Retrieve<ETH_HEADER>();
+	if(!eth) return;
 #if NET_DEBUG
 	/*debug_printf("Ethernet 0x%04X ", eth->Type);
 	ShowMac(eth->SrcMac);
@@ -104,12 +106,6 @@ void TinyIP::Process(MemoryStream* ms)
 	memcpy(LocalMac, eth->DestMac, 6);
 	memcpy(RemoteMac, eth->SrcMac, 6);
 
-	// 计算负载数据的长度
-	//if(len <= eth->Size()) return;
-	//len -= eth->Size();
-	//buf += eth->Size();
-	if(!ms->TrySeek(sizeof(ETH_HEADER))) return;
-
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
@@ -118,7 +114,7 @@ void TinyIP::Process(MemoryStream* ms)
 		return;
 	}
 
-	IP_HEADER* ip = (IP_HEADER*)ms->Current();
+	IP_HEADER* ip = ms->Retrieve<IP_HEADER>();
 	// 是否发给本机。注意memcmp相等返回0
 	if(!ip || !IsMyIP(ip->DestIP)) return;
 
@@ -138,15 +134,16 @@ void TinyIP::Process(MemoryStream* ms)
 	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
 	//assert_param(__REV16(ip->TotalLength) == len);
 	// 数据包是否完整
-	if(ms->Remain() < __REV16(ip->TotalLength)) return;
+	//if(ms->Remain() < __REV16(ip->TotalLength)) return;
 	// 计算负载数据的长度，注意ip可能变长，长度Length的单位是4字节
 	//len -= sizeof(IP_HEADER);
 
 	// 前面的len不准确，必须以这个为准
-	//uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
+	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
+	ms->Length = ms->Position + size;
 	//len = size;
 	//buf += (ip->Length << 2);
-	if(!ms->TrySeek(ip->Length << 2)) return;
+	ms->Position += (ip->Length << 2) - sizeof(IP_HEADER);
 
 	// 各处理器有可能改变数据流游标，这里备份一下
 	uint p = ms->Position;
@@ -302,11 +299,8 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 
 bool IcmpSocket::Process(MemoryStream* ms)
 {
-	//if(len < sizeof(ICMP_HEADER)) return false;
-
-	ICMP_HEADER* icmp = (ICMP_HEADER*)ms->Current();
-	//len -= icmp->Size();
-	if(!ms->TrySeek(sizeof(ICMP_HEADER))) return false;
+	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();
+	if(!icmp) return false;
 
 	uint len = ms->Remain();
 	if(OnPing)
@@ -323,21 +317,11 @@ bool IcmpSocket::Process(MemoryStream* ms)
 		else
 			debug_printf("Ping Reply "); // 打印发方的ip
 		Tip->ShowIP(Tip->RemoteIP);
-		//debug_printf(" len=%d Payload=%d ", len, _net->PayloadLength);
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
-		// 校验码验证通过
-		/*ushort oldsum = icmp->Checksum;
-		icmp->Checksum = 0;
-		ushort chksum = (ushort)TinyIP::CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + len, 0);
-		icmp->Checksum = oldsum;
-		debug_printf("Checksum=0x%04X Checksum=0x%04X ", icmp->Checksum, __REV16(chksum));*/
-		//Sys.ShowString(_net->Payload, _net->PayloadLength);
 		Sys.ShowString(icmp->Next(), len);
 		debug_printf(" \r\n");
-		//Sys.ShowHex(Buffer, len + sizeof(ICMP_HEADER) + sizeof(IP_HEADER) + sizeof(ETH_HEADER), '-');
-		//debug_printf(" \r\n");
 #endif
 	}
 
@@ -458,10 +442,7 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 
 bool TcpSocket::Process(MemoryStream* ms)
 {
-	//if(len < sizeof(TCP_HEADER)) return false;
-
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
-	//if(!ms->TrySeek(sizeof(TCP_HEADER))) return;
 	if(!ms->TrySeek(tcp->Length << 2)) return false;
 	
 	Header = tcp;
@@ -659,11 +640,8 @@ void TcpSocket::Send(byte* buf, uint len)
 
 bool UdpSocket::Process(MemoryStream* ms)
 {
-	//if(len < sizeof(UDP_HEADER)) return false;
-	//len -= sizeof(UDP_HEADER);
-
-	UDP_HEADER* udp = (UDP_HEADER*)ms->Current();
-	if(!ms->TrySeek(sizeof(UDP_HEADER))) return false;
+	UDP_HEADER* udp = ms->Retrieve<UDP_HEADER>();
+	if(!udp) return false;
 
 	ushort port = __REV16(udp->DestPort);
 	ushort remotePort = __REV16(udp->SrcPort);
@@ -698,8 +676,6 @@ bool UdpSocket::Process(MemoryStream* ms)
 		debug_printf(" \r\n");
 #endif
 	}
-
-	//memcpy(udp->Next(), data, len);
 
 	Send(data, len, false);
 
@@ -1100,8 +1076,12 @@ ArpSocket::~ArpSocket()
 
 bool ArpSocket::Process(MemoryStream* ms)
 {
-	ARP_HEADER* arp = (ARP_HEADER*)ms->Current();
-	if(!ms->TrySeek(sizeof(ARP_HEADER))) return false;
+	// 前面的数据长度很不靠谱，这里进行小范围修正
+	//uint size = ms->Position + sizeof(ARP_HEADER);
+	//if(ms->Length < size) ms->Length = size;
+
+	ARP_HEADER* arp = ms->Retrieve<ARP_HEADER>();
+	if(!arp) return false;
 
 	/*
 	当封装的ARP报文在以太网上传输时，硬件类型字段赋值为0x0100，标识硬件为以太网硬件;
@@ -1123,9 +1103,8 @@ bool ArpSocket::Process(MemoryStream* ms)
 
 	// 是否发给本机。注意memcmp相等返回0
 	//if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
-	if(*(uint*)arp->DestIP == *(uint*)Tip->IP) return true;
+	if(*(uint*)arp->DestIP != *(uint*)Tip->IP) return true;
 
-	//len -= sizeof(ARP_HEADER);
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
@@ -1133,8 +1112,6 @@ bool ArpSocket::Process(MemoryStream* ms)
 	assert_param(arp->HardLength == 6);
 	assert_param(arp->ProtocolLength == 4);
 	assert_param(arp->Option == 0x0100);
-	//assert_param(_net->PayloadLength == len);
-	//assert_param(_net->Payload == arp->Next());
 
 	if(arp->Option == 0x0100)
 		debug_printf("ARP Request For ");
@@ -1146,11 +1123,8 @@ bool ArpSocket::Process(MemoryStream* ms)
 	Tip->ShowIP(arp->SrcIP);
 	debug_printf(" [");
 	Tip->ShowMac(arp->SrcMac);
-	//debug_printf("] len=%d Payload=%d\r\n", len, _net->PayloadLength);
 	debug_printf("] Payload=%d\r\n", ms->Remain());
 #endif
-	// 是否发给本机
-	//if(memcmp(arp->DestIP, IP, 4)) return;
 
 	// 构造响应包
 	arp->Option = 0x0200;
@@ -1174,8 +1148,8 @@ bool ArpSocket::Process(MemoryStream* ms)
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 const byte* ArpSocket::Request(const byte ip[4], int timeout)
 {
-	//ARP_HEADER* arp = _net->SetARP();
-	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER)];
+	// 缓冲区必须略大，否则接收数据时可能少一个字节
+	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
 	uint bufSize = ArrayLength(buf);
 	MemoryStream ms(buf, bufSize);
 
