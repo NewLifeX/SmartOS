@@ -25,12 +25,12 @@ TinyIP::TinyIP(ITransport* port, byte ip[4], byte mac[6])
 	else
 	{
 		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-		//Mac[0] = 59; Mac[1] = 57; Mac[2] = 53;
+		Mac[0] = 'Y'; Mac[1] = 'W'; Mac[2] = 'S';
 		//memcpy(Mac, "YWS", 3);
-		//memcpy(&Mac[3], (byte*)Sys.ID, 3);
+		memcpy(&Mac[3], (byte*)Sys.ID, 6 - 3);
 		// MAC地址首字节奇数表示组地址，这里用偶数
-		Mac[0] = 'N'; Mac[1] = 'X';
-		memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
+		//Mac[0] = 'N'; Mac[1] = 'X';
+		//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
 	}
 
 	const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
