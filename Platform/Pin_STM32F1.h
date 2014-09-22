@@ -30,6 +30,7 @@
 
 /* 定时器针脚 ------------------------------------------------------------------*/
 #define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
+#define TIM_IRQns {TIM1_UP_TIM10_IRQn, TIM2_IRQn, TIM3_IRQn, TIM4_IRQn, TIM5_IRQn, TIM6_DAC_IRQn, TIM7_IRQn, TIM8_UP_TIM13_IRQn}
 #define TIM_PINS {\
 	PA8, PA9, PA10,PA11,/* TIM1 */	\
 	PA0, PA1, PA2, PA3, /* TIM2 */	\

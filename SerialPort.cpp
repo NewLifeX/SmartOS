@@ -265,15 +265,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 {
 	ITransport::Register(handler, param);
 
-	const byte SERIALPORT_IRQns[] = {
-		USART1_IRQn, USART2_IRQn,
-//#ifndef STM32F0
-// 标准写法，偷工减料可能在将来造成隐患
-#if defined(STM32F1) || defined(STM32F4)
-		USART3_IRQn, UART4_IRQn, UART5_IRQn
-#endif
-	};
-	byte irq = SERIALPORT_IRQns[_index];
+	const byte irqs[] = UART_IRQs;
+	byte irq = irqs[_index];
     if(handler)
 	{
         Interrupt.SetPriority(irq, 1);

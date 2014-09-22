@@ -16,21 +16,40 @@
 	//PA9		PA10	COM1	AF1
 	//PA14		PA15	COM2	AF1
 	//PB6		PB7		COM1	AF0
-#define UARTS {USART1, USART2}
-#define UART_PINS {\
- /* TX   RX   CTS  RTS */	\
-	PA9, PA10,PA11,PA12,/* USART1 */	\
-	PA2, PA3, PA0, PA1, /* USART2 */	\
-}
-#define UART_PINS_FULLREMAP {\
- /* TX   RX   CTS  RTS */	\
-	PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
-	PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
-}
+#if defined (STM32F0XX_MD) || defined (STM32F030X8)
+	#define UARTS {USART1, USART2}
+	#define UART_IRQs {USART1_IRQn, USART2_IRQn}
+	#define UART_PINS {\
+	 /* TX   RX   CTS  RTS */	\
+		PA9, PA10,PA11,PA12,/* USART1 */	\
+		PA2, PA3, PA0, PA1, /* USART2 */	\
+	}
+	#define UART_PINS_FULLREMAP {\
+	 /* TX   RX   CTS  RTS */	\
+		PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
+		PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
+	}
+#elif defined (STM32F0XX_LD) || defined (STM32F030X6)
+	#define UARTS {USART1}
+	#define UART_IRQs {USART1_IRQn}
+	#define UART_PINS {\
+	 /* TX   RX   CTS  RTS */	\
+		PA9, PA10,PA11,PA12,/* USART1 */	\
+	}
+	#define UART_PINS_FULLREMAP {\
+	 /* TX   RX   CTS  RTS */	\
+		PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
+	}
+#endif
 
 /* 定时器针脚 ------------------------------------------------------------------*/
-#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6, 0, 0, 0, 0, 0, 0, 0, TIM14, TIM15, TIM16, TIM17}
-#define TIM_IRQns {TIM1_BRK_UP_TRG_COM_IRQn, TIM2_IRQn, TIM3_IRQn, 0, 0, TIM6_DAC_IRQn, 0, 0, 0, 0, 0, 0, 0, TIM14_IRQn, TIM15_IRQn, TIM16_IRQn, TIM17_IRQn}
+#if defined (STM32F0XX_MD) || defined (STM32F030X8)
+	#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6, 0, 0, 0, 0, 0, 0, 0, TIM14, TIM15, TIM16, TIM17}
+	#define TIM_IRQns {TIM1_BRK_UP_TRG_COM_IRQn, TIM2_IRQn, TIM3_IRQn, 0, 0, TIM6_DAC_IRQn, 0, 0, 0, 0, 0, 0, 0, TIM14_IRQn, TIM15_IRQn, TIM16_IRQn, TIM17_IRQn}
+#elif defined (STM32F0XX_LD) || defined (STM32F030X6)
+	#define TIMS {TIM1, TIM2, TIM3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TIM14, 0, TIM16, TIM17}
+	#define TIM_IRQns {TIM1_BRK_UP_TRG_COM_IRQn, TIM2_IRQn, TIM3_IRQn, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TIM14_IRQn, 0, TIM16_IRQn, TIM17_IRQn}
+#endif
 #define TIM_PINS {\
 	PA8, PA9, PA10,PA11,/* TIM1 */	\
 	PA0, PA1, PA2, PA3, /* TIM2 */	\
