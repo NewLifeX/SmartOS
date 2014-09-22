@@ -2,56 +2,42 @@
 
 #define NET_DEBUG DEBUG
 
-const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // FF-FF-FF-FF-FF-FF
-const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-00-00
+//const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // FF-FF-FF-FF-FF-FF
+//const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-00-00
 
-TinyIP::TinyIP(ITransport* port, IPAddress ip, byte mac[6])
+TinyIP::TinyIP(ITransport* port)
 {
 	_port = port;
 	_StartTime = Time.Current();
 
-	MacAddress addr1;
+	/*MacAddress addr1;
     addr1 = 0x0000129078563412ul;
 	uint v = sizeof(ETH_HEADER);
 	MacAddress addr2 = addr1;
 	ulong vv = addr2.Value();
 	if(addr1 == addr2) vv = *(ulong*)&addr1;
-	vv += v;
+	vv += v;*/
 	
 	//const byte defip[] = {192, 168, 0, 1};
 	const IPAddress defip = 0x0100A8C0;
-	if(ip)
-		//memcpy(IP, ip, 4);
-		IP = ip;
-	else
-	{
-		// 随机IP，取ID最后一个字节
-		//memcpy(IP, defip, 3);
-		//IP[3] = Sys.ID[0];
-		IP = defip & 0x00FFFFFF;
-		byte first = Sys.ID[0];
-		if(first <= 1 || first >= 254) first = 2;
-		IP |= first << 24;
-	}
 
-	if(mac)
-		memcpy(Mac, mac, 6);
-	else
-	{
-		// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-		Mac[0] = 'Y'; Mac[1] = 'W'; Mac[2] = 'S';
-		//memcpy(Mac, "YWS", 3);
-		memcpy(&Mac[3], (byte*)Sys.ID, 6 - 3);
-		// MAC地址首字节奇数表示组地址，这里用偶数
-		//Mac[0] = 'N'; Mac[1] = 'X';
-		//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
-	}
+	// 随机IP，取ID最后一个字节
+	//memcpy(IP, defip, 3);
+	//IP[3] = Sys.ID[0];
+	IP = defip & 0x00FFFFFF;
+	byte first = Sys.ID[0];
+	if(first <= 1 || first >= 254) first = 2;
+	IP |= first << 24;
 
-	/*const byte mask[] = {0xFF, 0xFF, 0xFF, 0};
-	memcpy(Mask, mask, 4);
-	memcpy(DHCPServer, defip, 4);
-	memcpy(Gateway, defip, 4);
-	memcpy(DNSServer, defip, 4);*/
+	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
+	byte* mac = (byte*)&Mac;
+	mac[0] = 'Y'; mac[1] = 'W'; mac[2] = 'S';
+	//memcpy(Mac, "YWS", 3);
+	memcpy(&mac[3], (byte*)Sys.ID, 6 - 3);
+	// MAC地址首字节奇数表示组地址，这里用偶数
+	//Mac[0] = 'N'; Mac[1] = 'X';
+	//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
+
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = defip;
 
@@ -72,9 +58,6 @@ TinyIP::~TinyIP()
 
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
-
-	/*if(_net) delete _net;
-	_net = NULL;*/
 	
 	if(Arp) delete Arp;
 	Arp = NULL;
@@ -93,10 +76,7 @@ uint TinyIP::Fetch(byte* buf, uint len)
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
-	if(memcmp(eth->DestMac, Mac, 6) != 0
-	&& memcmp(eth->DestMac, g_FullMac, 6) != 0
-	&& memcmp(eth->DestMac, g_ZeroMac, 6) != 0
-	) return 0;
+	if(eth->DestMac != Mac && !eth->DestMac.IsBroadcast()) return 0;
 
 	return len;
 }
@@ -108,19 +88,14 @@ void TinyIP::Process(MemoryStream* ms)
 	//ETH_HEADER* eth = (ETH_HEADER*)ms->Current();
 	ETH_HEADER* eth = ms->Retrieve<ETH_HEADER>();
 	if(!eth) return;
-#if NET_DEBUG
-	/*debug_printf("Ethernet 0x%04X ", eth->Type);
-	ShowMac(eth->SrcMac);
-	debug_printf(" => ");
-	ShowMac(eth->DestMac);
-	debug_printf("\r\n");*/
-#endif
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	//if(memcmp(eth->DestMac, Mac, 6) != 0) return;
 	// 这里复制Mac地址
-	memcpy(LocalMac, eth->DestMac, 6);
-	memcpy(RemoteMac, eth->SrcMac, 6);
+	//memcpy(LocalMac, eth->DestMac, 6);
+	//memcpy(RemoteMac, eth->SrcMac, 6);
+	LocalMac  = eth->DestMac;
+	RemoteMac = eth->SrcMac;	
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -144,8 +119,6 @@ void TinyIP::Process(MemoryStream* ms)
 #endif
 
 	// 记录远程信息
-	//memcpy(LocalIP, ip->DestIP, 4);
-	//memcpy(RemoteIP, ip->SrcIP, 4);
 	LocalIP = ip->DestIP;
 	RemoteIP = ip->SrcIP;
 
@@ -276,8 +249,10 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
-	memcpy(eth->DestMac, RemoteMac, 6);
-	memcpy(eth->SrcMac, Mac, 6);
+	//memcpy(eth->DestMac, RemoteMac, 6);
+	//memcpy(eth->SrcMac, Mac, 6);
+	eth->DestMac = RemoteMac;
+	eth->SrcMac  = Mac;
 
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
@@ -362,7 +337,7 @@ bool IcmpSocket::Process(MemoryStream* ms)
 bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
 	assert_param(Tip->Arp);
-	const byte* mac = Tip->Arp->Resolve(ip);
+	const MacAddress* mac = Tip->Arp->Resolve(ip);
 	if(!mac)
 	{
 #if NET_DEBUG
@@ -373,9 +348,9 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 		return false;
 	}
 
-	memcpy(Tip->RemoteMac, mac, 6);
-	//memcpy(Tip->RemoteIP, ip, 4);
-	Tip->RemoteIP = ip;
+	//memcpy(Tip->RemoteMac, mac, 6);
+	Tip->RemoteMac = *mac;
+	Tip->RemoteIP  = ip;
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
@@ -733,11 +708,12 @@ void TinyIP::ShowIP(IPAddress ip)
 		debug_printf(".%d", *ips++);
 }
 
-void TinyIP::ShowMac(const byte mac[6])
+void TinyIP::ShowMac(const MacAddress& mac)
 {
-	debug_printf("%02X", *mac++);
+	byte* m = (byte*)&mac;
+	debug_printf("%02X", *m++);
 	for(int i=1; i<6; i++)
-		debug_printf("-%02X", *mac++);
+		debug_printf("-%02X", *m++);
 }
 
 uint TinyIP::CheckSum(byte* buf, uint len, byte type)
@@ -785,10 +761,6 @@ uint TinyIP::CheckSum(byte* buf, uint len, byte type)
 
 bool TinyIP::IsMyIP(IPAddress ip)
 {
-	//int i = 0;
-	//for(i = 0; i < 4 && ip[i] == IP[i]; i++);
-	//if(i == 4) return true;
-	//if(*(uint*)ip == *(uint*)IP) return true;
 	if(ip == IP) return true;
 
 	if(EnableBroadcast && IsBroadcast(ip)) return true;
@@ -798,17 +770,9 @@ bool TinyIP::IsMyIP(IPAddress ip)
 
 bool TinyIP::IsBroadcast(IPAddress ip)
 {
-	//int i = 0;
 	// 全网广播
-	//for(i = 0; i < 4 && ip[i] == 0xFF; i++);
-	//if(i == 4) return true;
-	//if(*(uint*)ip == 0xFFFFFFFF) return true;
 	if(ip == 0xFFFFFFFF) return true;
 
-	// 子网广播。网络位不变，主机位全1
-	//for(i = 0; i < 4 && ip[i] == (IP[i] | ~Mask[i]); i++);
-	//if(i == 4) return true;
-	//if(*(uint*)ip == (*(uint*)IP | ~*(uint*)Mask)) return true;
 	if(ip == (IP | ~Mask)) return true;
 
 	return false;
@@ -824,7 +788,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
-		opt = opt->SetClientId(Tip->Mac, 6);
+		opt = opt->SetClientId((byte*)&Tip->Mac, 6);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP);
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS_SmartOS", 11);
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
@@ -835,11 +799,11 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		len = (byte*)opt + 1 - p;
 	}
 
-	memcpy(dhcp->ClientMac, Tip->Mac, 6);
+	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
+	//dhcp->ClientMac = Tip->Mac;
 
-	memset(Tip->RemoteMac, 0xFF, 6);
-	//memset(IP, 0x00, 4);
-	//memset(Tip->RemoteIP, 0xFF, 4);
+	//memset(Tip->RemoteMac, 0xFF, 6);
+	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
 	Tip->RemoteIP = 0xFFFFFFFF;
 	Tip->Port = 68;
 	Tip->RemotePort = 67;
@@ -1161,12 +1125,12 @@ bool ArpSocket::Process(MemoryStream* ms)
 	// 构造响应包
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
-	memcpy(arp->DestMac, arp->SrcMac, 6);
-	//memcpy(arp->DestIP, arp->SrcIP, 4);
-	memcpy(arp->SrcMac, Tip->Mac, 6);
-	//memcpy(arp->SrcIP, Tip->IP, 4);
-	arp->DestIP = arp->SrcIP;
-	arp->SrcIP = Tip->IP;
+	//memcpy(arp->DestMac, arp->SrcMac, 6);
+	//memcpy(arp->SrcMac, Tip->Mac, 6);
+	arp->DestMac = arp->SrcMac;
+	arp->SrcMac  = Tip->Mac;
+	arp->DestIP  = arp->SrcIP;
+	arp->SrcIP   = Tip->IP;
 
 #if NET_DEBUG
 	debug_printf("ARP Response To ");
@@ -1180,7 +1144,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 }
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-const byte* ArpSocket::Request(IPAddress ip, int timeout)
+const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 {
 	// 缓冲区必须略大，否则接收数据时可能少一个字节
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
@@ -1193,13 +1157,14 @@ const byte* ArpSocket::Request(IPAddress ip, int timeout)
 
 	// 构造请求包
 	arp->Option = 0x0100;
-	memcpy(arp->DestMac, g_ZeroMac, 6);
-	//memcpy(arp->DestIP, ip, 4);
-	memcpy(arp->SrcMac, Tip->Mac, 6);
-	//memcpy(arp->SrcIP, Tip->IP, 4);
-	memcpy(Tip->RemoteMac, g_ZeroMac, 6);
-	arp->DestIP = ip;
-	arp->SrcIP = Tip->IP;
+	//memcpy(arp->DestMac, g_ZeroMac, 6);
+	//memcpy(arp->SrcMac, Tip->Mac, 6);
+	//memcpy(Tip->RemoteMac, g_ZeroMac, 6);
+	Tip->RemoteMac = 0;
+	arp->DestMac = 0;
+	arp->SrcMac  = Tip->Mac;
+	arp->DestIP  = ip;
+	arp->SrcIP   = Tip->IP;
 
 #if NET_DEBUG
 	debug_printf("ARP Request To ");
@@ -1237,7 +1202,7 @@ const byte* ArpSocket::Request(IPAddress ip, int timeout)
 			//&& memcmp(arp->SrcIP, ip, 4) == 0
 			&& arp->Option == 0x0200)
 			{
-				return arp->SrcMac;
+				return &arp->SrcMac;
 			}
 		}
 
@@ -1251,25 +1216,12 @@ const byte* ArpSocket::Request(IPAddress ip, int timeout)
 	return NULL;
 }
 
-const byte* ArpSocket::Resolve(IPAddress ip)
+const MacAddress* ArpSocket::Resolve(IPAddress ip)
 {
-	if(Tip->IsBroadcast(ip)) return g_FullMac;
+	if(Tip->IsBroadcast(ip)) return NULL;
 
 	// 如果不在本子网，那么应该找网关的Mac
-	/*uint mask = *(uint*)Tip->Mask;
-	if((*(uint*)ip & mask) != (*(uint*)Tip->IP & mask)) ip = Tip->Gateway;*/
 	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
-	/*if(ip[0] & Tip->Mask[0] != Tip->IP[0] & Tip->Mask[0]
-	|| ip[1] & Tip->Mask[1] != Tip->IP[1] & Tip->Mask[1]
-	|| ip[2] & Tip->Mask[2] != Tip->IP[2] & Tip->Mask[2]
-	|| ip[3] & Tip->Mask[3] != Tip->IP[3] & Tip->Mask[3]
-	) ip = Tip->Gateway;*/
-	// 下面的也可以，但是比较难理解
-	/*if(ip[0] ^ IP[0] != ~Mask[0]
-	|| ip[1] ^ IP[1] != ~Mask[1]
-	|| ip[2] ^ IP[2] != ~Mask[2]
-	|| ip[3] ^ IP[3] != ~Mask[3]
-	) ip = Gateway;*/
 
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
@@ -1284,7 +1236,7 @@ const byte* ArpSocket::Resolve(IPAddress ip)
 			if(arp->IP == ip)
 			{
 				// 如果未过期，则直接使用。否则重新请求
-				if(arp->Time > sNow) return arp->Mac;
+				if(arp->Time > sNow) return &arp->Mac;
 
 				// 暂时保存，待会可能请求失败，还可以用旧的顶着
 				item = arp;
@@ -1293,15 +1245,15 @@ const byte* ArpSocket::Resolve(IPAddress ip)
 	}
 
 	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
-	const byte* mac = Request(ip, item ? 0 : 3);
-	if(!mac) return item ? item->Mac : NULL;
+	const MacAddress* mac = Request(ip, item ? 0 : 3);
+	if(!mac) return item ? &item->Mac : NULL;
 
-	Add(ip, mac);
+	Add(ip, *mac);
 
 	return mac;
 }
 
-void ArpSocket::Add(IPAddress ip, const byte mac[6])
+void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 {
 #if NET_DEBUG
 	debug_printf("Add Arp(");
@@ -1368,6 +1320,7 @@ void ArpSocket::Add(IPAddress ip, const byte mac[6])
 	// 保存
 	//memcpy(item->IP, ip, 4);
 	item->IP = ip;
-	memcpy(item->Mac, mac, 6);
+	//memcpy(item->Mac, mac, 6);
+	item->Mac = mac;
 	item->Time = sNow + 60;	// 默认过期时间1分钟
 }

@@ -32,7 +32,7 @@ private:
 	typedef struct
 	{
 		IPAddress IP;
-		byte Mac[6];
+		MacAddress Mac;
 		uint Time;	// 生存时间，秒
 	}ARP_ITEM;
 
@@ -48,10 +48,10 @@ public:
 	virtual bool Process(MemoryStream* ms);
 
 	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-	const byte* Request(IPAddress ip, int timeout = 3);
+	const MacAddress* Request(IPAddress ip, int timeout = 3);
 
-	const byte* Resolve(IPAddress ip);
-	void Add(IPAddress ip, const byte mac[6]);
+	const MacAddress* Resolve(IPAddress ip);
+	void Add(IPAddress ip, const MacAddress& mac);
 };
 
 // ICMP协议
@@ -167,16 +167,16 @@ public:
 	void Process(MemoryStream* ms);
 
 public:
-    IPAddress IP;		// 本地IP地址
+    IPAddress IP;	// 本地IP地址
     IPAddress Mask;	// 子网掩码
-	byte Mac[6];	// 本地Mac地址
+	MacAddress Mac;	// 本地Mac地址
 	ushort Port;	// 本地端口
 	bool EnableBroadcast;	// 使用广播
 
-	byte LocalMac[6];	// 本地目标Mac地址
+	MacAddress LocalMac;// 本地目标Mac地址
 	IPAddress LocalIP;	// 本地目标IP地址
 	//ushort LocalPort;	// 本地目标端口
-	byte RemoteMac[6];	// 远程Mac地址
+	MacAddress RemoteMac;// 远程Mac地址
 	IPAddress RemoteIP;	// 远程IP地址
 	ushort RemotePort;	// 远程端口
 
@@ -192,13 +192,13 @@ public:
 	//uint SocketCount;
 	List<Socket*> Sockets;
 
-    TinyIP(ITransport* port, IPAddress ip = 0, byte mac[6] = NULL);
+    TinyIP(ITransport* port);
     virtual ~TinyIP();
 
 	bool Open();
 	bool Init();
 	static void ShowIP(IPAddress ip);
-	static void ShowMac(const byte mac[6]);
+	static void ShowMac(const MacAddress& mac);
 	static uint CheckSum(byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);

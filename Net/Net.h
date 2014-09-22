@@ -27,6 +27,9 @@ public:
 	uint v4;
 	ushort v2;
 
+	// 是否广播地址，全0或全1
+	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
+	
     MacAddress& operator=(ulong v)
 	{
 		v4 = v;
@@ -55,6 +58,10 @@ public:
 	{
 		return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
 	}
+    friend bool operator!=(MacAddress& addr1, MacAddress& addr2)
+	{
+		return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
+	}
 };
 //}MacAddress;
 
@@ -71,9 +78,9 @@ typedef enum
 //Mac头部，总长度14字节
 typedef struct _ETH_HEADER
 {
-	byte DestMac[6];	// 目标mac地址
-	byte SrcMac[6];	// 源mac地址
-	ETH_TYPE Type;			// 以太网类型
+	MacAddress DestMac;	// 目标mac地址
+	MacAddress SrcMac;	// 源mac地址
+	ETH_TYPE Type;		// 以太网类型
 
 	uint Size() { return sizeof(this[0]); }
 	uint Offset() { return Size(); }
@@ -225,9 +232,9 @@ typedef struct _ARP_HEADER
 	byte HardLength;		// 硬件地址长度
 	byte ProtocolLength;	// 协议地址长度
 	ushort Option;			// 选项
-	byte SrcMac[6];
+	MacAddress SrcMac;
 	IPAddress SrcIP;		// 源IP地址
-	byte DestMac[6];
+	MacAddress DestMac;
 	IPAddress DestIP;		// 目的IP地址
 	//byte Padding[18];	// 填充凑够60字节
 
