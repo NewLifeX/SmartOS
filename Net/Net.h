@@ -11,39 +11,52 @@
 	#define LITTLE_ENDIAN   1
 #endif
 
+// 强制结构体紧凑分配空间
+#pragma pack(1)
+
 // IP地址
 typedef uint IPAddress;
-// Mac地址
-//typedef struct _MacAddress
+// Mac地址。结构体和类都可以
+//typedef struct _MacAddress MacAddress;
+//struct _MacAddress
 class MacAddress
 {
 public:
-	uint value;
-	ushort value2;
+	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
+	// 比如Mac地址12-34-56-78-90-12，v4是12-34-56-78，v2是90-12，ulong是0x0000129078563412
+	uint v4;
+	ushort v2;
 
     MacAddress& operator=(ulong v)
 	{
-		value = v >> 32;
-		value2 = v >> 16;
+		v4 = v;
+		v2 = v >> 32;
+
+		// 下面这个写法很好，一条汇编指令即可完成，但是会覆盖当前结构体后两个字节
+		//*(ulong*)this = v;
+
+		// 下面的写法需要5条汇编指令，先放入内存，再分两次读写
+		/*uint* p = (uint*)&v;
+		v4 = *p++;
+		v2 = *(ushort*)p;*/
+
 		return *this;
 	}
-    ulong operator=(MacAddress& addr)
+    ulong Value()
 	{
-		ulong v = (ulong)addr.value << 32;
-		v |= (uint)addr.value2 << 16;
+		ulong v = v4;
+		v |= ((ulong)v2) << 32;
 		return v;
+
+		// 下面这个写法简单，但是会带上后面两个字节，需要做或运算，不划算
+		//return *(ulong*)this | 0x0000FFFFFFFF;
 	}
-    /*struct _MacAddress& operator=(struct _MacAddress& addr)
+    friend bool operator==(MacAddress& addr1, MacAddress& addr2)
 	{
-		value = addr.value;
-		value2 = addr.value2;
-		return *this;
-	}*/
+		return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+	}
 };
 //}MacAddress;
-
-// 强制结构体紧凑分配空间
-#pragma pack(1)
 
 // 以太网协议类型
 typedef enum
@@ -84,7 +97,7 @@ typedef struct _IP_HEADER
 	#if LITTLE_ENDIAN
 	byte Length:4;  // 首部长度
 	byte Version:4; // 版本
-	#else              
+	#else
 	byte Version:4; // 版本
 	byte Length:4;  // 首部长度。每个单位4个字节
 	#endif
@@ -128,27 +141,28 @@ typedef enum
 //TCP头部，总长度20=0x14字节，偏移34=0x22。后面可能有可选数据，Length决定头部总长度（4的倍数）
 typedef struct _TCP_HEADER
 {
-	ushort SrcPort;    //源端口号
-	ushort DestPort;    //目的端口号
-	uint Seq;        //序列号
-	uint Ack;        //确认号
+	ushort SrcPort;		// 源端口号
+	ushort DestPort;    // 目的端口号
+	uint Seq;			// 序列号
+	uint Ack;	        // 确认号
 	#if LITTLE_ENDIAN
-	byte reserved_1:4; //保留6位中的4位首部长度
-	byte Length:4;        //tcp头部长度
-	byte Flags:6;       //6位标志
-	byte reseverd_2:2; //保留6位中的2位
+	byte reserved_1:4;	// 保留6位中的4位首部长度
+	byte Length:4;		// tcp头部长度
+	byte Flags:6;		// 6位标志
+	byte reseverd_2:2;	// 保留6位中的2位
 	#else
-	byte Length:4;        //tcp头部长度
-	byte reserved_1:4; //保留6位中的4位首部长度
-	byte reseverd_2:2; //保留6位中的2位
-	byte Flags:6;       //6位标志
+	byte Length:4;		// tcp头部长度
+	byte reserved_1:4;	// 保留6位中的4位首部长度
+	byte reseverd_2:2;	// 保留6位中的2位
+	byte Flags:6;		// 6位标志
 	#endif
-	ushort WindowSize;    //16位窗口大小
-	ushort Checksum;     //16位TCP检验和
-	ushort urgt_p;      //16为紧急指针
+	ushort WindowSize;	// 16位窗口大小
+	ushort Checksum;	// 16位TCP检验和
+	ushort urgt_p;		// 16为紧急指针
 
 	void Init(bool recursion = false)
 	{
+		Length = sizeof(this[0]);
 
 		if(recursion) Prev()->Init(IP_TCP, recursion);
 	}
@@ -183,14 +197,16 @@ typedef struct _UDP_HEADER
 //ICMP头部，总长度8字节，偏移34=0x22
 typedef struct _ICMP_HEADER
 {
-	byte Type;			//类型
-	byte Code;			//代码
-	ushort Checksum;    //16位检验和
-	ushort Identifier;	//标识，仅用于Ping
-	ushort Sequence;	//序列号，仅用于Ping
+	byte Type;			// 类型
+	byte Code;			// 代码
+	ushort Checksum;    // 16位检验和
+	ushort Identifier;	// 标识，仅用于Ping
+	ushort Sequence;	// 序列号，仅用于Ping
 
 	void Init(bool recursion = false)
 	{
+		Type = 8;
+		Code = 0;
 
 		if(recursion) Prev()->Init(IP_ICMP, recursion);
 	}
