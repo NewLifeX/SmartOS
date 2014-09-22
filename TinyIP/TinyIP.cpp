@@ -2,28 +2,15 @@
 
 #define NET_DEBUG DEBUG
 
-//const byte g_FullMac[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // FF-FF-FF-FF-FF-FF
-//const byte g_ZeroMac[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 00-00-00-00-00-00
-
 TinyIP::TinyIP(ITransport* port)
 {
 	_port = port;
 	_StartTime = Time.Current();
-
-	/*MacAddress addr1;
-    addr1 = 0x0000129078563412ul;
-	uint v = sizeof(ETH_HEADER);
-	MacAddress addr2 = addr1;
-	ulong vv = addr2.Value();
-	if(addr1 == addr2) vv = *(ulong*)&addr1;
-	vv += v;*/
 	
-	//const byte defip[] = {192, 168, 0, 1};
-	const IPAddress defip = 0x0100A8C0;
+	const byte defip_[] = {192, 168, 0, 1};
+	IPAddress defip = *(uint*)defip_;
 
 	// 随机IP，取ID最后一个字节
-	//memcpy(IP, defip, 3);
-	//IP[3] = Sys.ID[0];
 	IP = defip & 0x00FFFFFF;
 	byte first = Sys.ID[0];
 	if(first <= 1 || first >= 254) first = 2;
@@ -46,7 +33,6 @@ TinyIP::TinyIP(ITransport* port)
 	EnableBroadcast = true;
 
 	Sockets.SetCapacity(0x10);
-	//Arp = NULL;
 	// 必须有Arp，否则无法响应别人的IP询问
 	Arp = new ArpSocket(this);
 }
@@ -85,15 +71,11 @@ void TinyIP::Process(MemoryStream* ms)
 {
 	if(!ms) return;
 
-	//ETH_HEADER* eth = (ETH_HEADER*)ms->Current();
 	ETH_HEADER* eth = ms->Retrieve<ETH_HEADER>();
 	if(!eth) return;
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
-	//if(memcmp(eth->DestMac, Mac, 6) != 0) return;
-	// 这里复制Mac地址
-	//memcpy(LocalMac, eth->DestMac, 6);
-	//memcpy(RemoteMac, eth->SrcMac, 6);
+	//if(eth->DestMac != Mac) return;
 	LocalMac  = eth->DestMac;
 	RemoteMac = eth->SrcMac;	
 
@@ -174,18 +156,9 @@ void TinyIP::Work(void* param)
 		uint len = tip->Fetch();
 		if(len)
 		{
-#if NET_DEBUG
-			//ulong start = Time.Current();
-#endif
-
-			//tip->Process(tip->Buffer, tip->BufferSize, 0, len);
 			MemoryStream ms(tip->Buffer, tip->BufferSize);
 			ms.Length = len;
 			tip->Process(&ms);
-#if NET_DEBUG
-			//uint cost = Time.Current() - start;
-			//debug_printf("TinyIP::Process cost %d us\r\n", cost);
-#endif
 		}
 	}
 }
@@ -200,10 +173,7 @@ bool TinyIP::Open()
 
 bool TinyIP::Init()
 {
-#if NET_DEBUG
 	debug_printf("\r\nTinyIP Init...\r\n");
-	//uint us = Time.Current();
-#endif
 
 	// 分配缓冲区。比较大，小心堆空间不够
 	if(!Buffer)
@@ -211,9 +181,6 @@ bool TinyIP::Init()
 		Buffer = new byte[BufferSize];
 		assert_param(Buffer);
 		assert_param(Sys.CheckMemory());
-
-		// 首次使用时初始化缓冲区
-		//if(!_net) _net = new NetPacker(Buffer);
 	}
 
 	if(!Open()) return false;
@@ -249,8 +216,6 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
-	//memcpy(eth->DestMac, RemoteMac, 6);
-	//memcpy(eth->SrcMac, Mac, 6);
 	eth->DestMac = RemoteMac;
 	eth->SrcMac  = Mac;
 
@@ -271,8 +236,6 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
-	//memcpy(ip->DestIP, RemoteIP, 4);
-	//memcpy(ip->SrcIP, IP, 4);
 	ip->DestIP = RemoteIP;
 	ip->SrcIP = IP;
 
@@ -348,7 +311,6 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 		return false;
 	}
 
-	//memcpy(Tip->RemoteMac, mac, 6);
 	Tip->RemoteMac = *mac;
 	Tip->RemoteIP  = ip;
 
@@ -391,8 +353,6 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 总等待时间
-	//ulong end = Time.Current() + 1 * 1000000;
-	//while(end > Time.Current())
 	TimeWheel tw(1, 0, 0);
 	while(!tw.Expired())
 	{
@@ -408,8 +368,6 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 		if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
 		{
 			if(icmp->Identifier == id && icmp->Sequence == seq
-			//&& memcmp(_ip->DestIP, Tip->IP, 4) == 0
-			//&& memcmp(_ip->SrcIP, ip, 4) == 0)
 			&& _ip->DestIP == Tip->IP
 			&& _ip->SrcIP == ip)
 			{
@@ -419,7 +377,6 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 		}
 
 		// 用不到数据包交由系统处理
-		//Tip->Process(buf, bufSize, 0, len);
 		ms.Position = 0;
 		ms.Length = len;
 		Tip->Process(&ms);
@@ -433,7 +390,6 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	Type = IP_TCP;
 
 	Port = 0;
-	//*(uint*)RemoteIP = 0;
 	RemoteIP = 0;
 	RemotePort = 0;
 	seqnum = 0xa;
@@ -453,9 +409,6 @@ bool TcpSocket::Process(MemoryStream* ms)
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 	if(RemotePort != 0 && remotePort != RemotePort) return false;
-	//if(memcmp(Tip->RemoteIP, RemoteIP, 4) != 0) return false;
-	/*uint rip = *(uint*)RemoteIP;
-	if(rip != 0 && *(uint*)Tip->RemoteIP != rip) return false;*/
 	if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
 	// 不能修改主监听Socket的端口，否则可能导致收不到后续连接数据
@@ -520,7 +473,6 @@ bool TcpSocket::Process(MemoryStream* ms)
 			debug_printf("Tcp Data(%d) From ", len);
 			TinyIP::ShowIP(RemoteIP);
 			debug_printf(" : ");
-			//Sys.ShowString(_net->Payload, len);
 			Sys.ShowString(tcp->Next(), len);
 			debug_printf("\r\n");
 #endif
@@ -694,7 +646,6 @@ void UdpSocket::Send(byte* buf, uint len, bool checksum)
 	udp->Checksum = 0;
 	if(checksum) udp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
-	//assert_param(_net->IP);
 	Tip->SendIP(IP_UDP, (byte*)udp, sizeof(UDP_HEADER) + len);
 }
 
@@ -802,7 +753,6 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
 	//dhcp->ClientMac = Tip->Mac;
 
-	//memset(Tip->RemoteMac, 0xFF, 6);
 	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
 	Tip->RemoteIP = 0xFFFFFFFF;
 	Tip->Port = 68;
@@ -908,16 +858,12 @@ bool Dhcp::Start()
 	UDP_HEADER*  udp  = (UDP_HEADER*) ip->Next();
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 
-	//ulong next = 0;
 	// 总等待时间
-	//ulong end = Time.Current() + 10 * 1000000;
-	//while(end > Time.Current())
 	TimeWheel tw(10);
 	TimeWheel next(0);
 	while(!tw.Expired())
 	{
 		// 得不到就重新发广播
-		//if(next < Time.Current())
 		if(next.Expired())
 		{
 			// 向DHCP服务器广播
@@ -925,7 +871,6 @@ bool Dhcp::Start()
 			dhcp->Init(dhcpid, true);
 			Discover(dhcp);
 
-			//next = Time.Current() + 1 * 1000000;
 			next.Reset(1);
 		}
 
@@ -943,7 +888,6 @@ bool Dhcp::Start()
 		if(__REV16(udp->DestPort) != 68) continue;
 
 		// DHCP附加数据的长度
-		//len -= dhcp->Offset() + dhcp->Size();
 		len -= dhcp->Next() - buf;
 		if(len <= 0) continue;
 
@@ -959,7 +903,6 @@ bool Dhcp::Start()
 		{
 			if(__REV(dhcp->TransID) == dhcpid)
 			{
-				//memcpy(Tip->IP, dhcp->YourIP, 4);
 				Tip->IP = dhcp->YourIP;
 				PareOption(dhcp->Next(), len);
 
@@ -987,11 +930,8 @@ bool Dhcp::Start()
 			debug_printf("\r\n");
 #endif
 
-			//if(memcmp(dhcp->YourIP, Tip->IP, 4) == 0)
 			if(dhcp->YourIP == Tip->IP)
 			{
-				//IPIsReady = true;
-
 				// 查找租约时间，提前续约
 				opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
 				if(opt)
@@ -1037,8 +977,6 @@ Socket::Socket(TinyIP* tip)
 	Tip = tip;
 	// 加入到列表
 	tip->Sockets.Add(this);
-	//__packed List<Socket*>* list = &tip->Sockets;
-	//list->Add(this);
 }
 
 Socket::~Socket()
@@ -1096,9 +1034,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 		AddArp(arp->SrcIP, arp->SrcMac);
 	}*/
 
-	// 是否发给本机。注意memcmp相等返回0
-	//if(memcmp(arp->DestIP, Tip->IP, 4) != 0) return true;
-	//if(*(uint*)arp->DestIP != *(uint*)Tip->IP) return true;
+	// 是否发给本机。
 	if(arp->DestIP != Tip->IP) return true;
 
 #if NET_DEBUG
@@ -1125,8 +1061,6 @@ bool ArpSocket::Process(MemoryStream* ms)
 	// 构造响应包
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
-	//memcpy(arp->DestMac, arp->SrcMac, 6);
-	//memcpy(arp->SrcMac, Tip->Mac, 6);
 	arp->DestMac = arp->SrcMac;
 	arp->SrcMac  = Tip->Mac;
 	arp->DestIP  = arp->SrcIP;
@@ -1157,9 +1091,6 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 	// 构造请求包
 	arp->Option = 0x0100;
-	//memcpy(arp->DestMac, g_ZeroMac, 6);
-	//memcpy(arp->SrcMac, Tip->Mac, 6);
-	//memcpy(Tip->RemoteMac, g_ZeroMac, 6);
 	Tip->RemoteMac = 0;
 	arp->DestMac = 0;
 	arp->SrcMac  = Tip->Mac;
@@ -1178,8 +1109,6 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	if(timeout <= 0) return NULL;
 
 	// 总等待时间
-	//ulong end = Time.Current() + timeout * 1000000;
-	//while(end > Time.Current())
 	TimeWheel tw(1, 0, 0);
 	while(!tw.Expired())
 	{
@@ -1196,10 +1125,8 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 		if(eth->Type == ETH_ARP)
 		{
 			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
-			//if(memcmp(arp->DestIP, Tip->IP, 4) == 0
 			if(arp->DestIP == Tip->IP
 			// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
-			//&& memcmp(arp->SrcIP, ip, 4) == 0
 			&& arp->Option == 0x0200)
 			{
 				return &arp->SrcMac;
@@ -1207,7 +1134,6 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 		}
 
 		// 用不到数据包交由系统处理
-		//Tip->Process(buf, bufSize, 0, len);
 		ms.Position = 0;
 		ms.Length = len;
 		Tip->Process(&ms);
@@ -1226,13 +1152,11 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
 	{
-		//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 		uint sNow = Time.Current() >> 20;	// 当前时间，秒
 		// 在表中查找
 		for(int i=0; i<Count; i++)
 		{
 			ARP_ITEM* arp = &_Arps[i];
-			//if(memcmp(arp->IP, ip, 4) == 0)
 			if(arp->IP == ip)
 			{
 				// 如果未过期，则直接使用。否则重新请求
@@ -1272,17 +1196,14 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 	ARP_ITEM* item = NULL;
 	ARP_ITEM* empty = NULL;
 	// 在表中查找项
-	//const byte ipnull[] = { 0, 0, 0, 0 };
 	for(int i=0; i<Count; i++)
 	{
 		ARP_ITEM* arp = &_Arps[i];
-		//if(memcmp(arp->IP, ip, 4) == 0)
 		if(arp->IP == ip)
 		{
 			item = arp;
 			break;
 		}
-		//if(!empty && memcmp(arp->IP, ipnull, 4) == 0)
 		if(!empty && arp->IP == 0)
 		{
 			empty = arp;
@@ -1301,7 +1222,6 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 		{
 			ARP_ITEM* arp = &_Arps[i];
 			// 找最老的一个，待会如果需要覆盖，就先覆盖它。避开网关
-			//if(arp->Time < oldTime && memcmp(arp->IP, Tip->Gateway, 4) != 0)
 			if(arp->Time < oldTime && arp->IP != Tip->Gateway)
 			{
 				oldTime = arp->Time;
@@ -1318,9 +1238,7 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 	//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 	uint sNow = Time.Current() >> 20;	// 当前时间，秒
 	// 保存
-	//memcpy(item->IP, ip, 4);
 	item->IP = ip;
-	//memcpy(item->Mac, mac, 6);
 	item->Mac = mac;
 	item->Time = sNow + 60;	// 默认过期时间1分钟
 }
