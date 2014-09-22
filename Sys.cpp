@@ -99,9 +99,9 @@ bool TSys::CheckMemory()
 	assert_param(__microlib_freelist + 0x40 < msp);
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	uint end = SRAM_BASE + (RAMSize << 10);
+	//uint end = SRAM_BASE + (RAMSize << 10);
 	//if(__microlib_freelist + 0x40 >= end) return false;
-	assert_param(__microlib_freelist + 0x40 < end);
+	assert_param(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10));
 #endif
 
 	return true;
@@ -265,10 +265,6 @@ void TSys::Init(void)
     Time.Init();
 
     Inited = true;
-
-#if DEBUG
-	AddTask(ShowTime, NULL, 1000000, 1000000);
-#endif
 }
 
 #if DEBUG
@@ -530,6 +526,9 @@ void TSys::Start()
 {
 	if(_Running) return;
 
+#if DEBUG
+	AddTask(ShowTime, NULL, 1000000, 1000000);
+#endif
 	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
 
 	_Running = true;
