@@ -4,7 +4,7 @@
 #include "Port.h"
 #include "SerialPort.h"
 
-#define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
+//#define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
 
 // 默认波特率
 //#define USART_DEFAULT_BAUDRATE 115200
@@ -50,7 +50,7 @@ void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int st
 	IsRemap = false;
 
 	// 根据端口实际情况决定打开状态
-	if(_port->CR1 & CR1_UE_Set) Opened = true;
+	if(_port->CR1 & USART_CR1_UE) Opened = true;
 }
 
 // 析构时自动关闭
@@ -335,7 +335,7 @@ extern "C"
 		if(isInFPutc) return ch;
 		isInFPutc = true;
         // 检查并打开串口
-        if((port->CR1 & CR1_UE_Set) != CR1_UE_Set && _printf_sp == NULL)
+        if((port->CR1 & USART_CR1_UE) != USART_CR1_UE && _printf_sp == NULL)
         {
             //if(_printf_sp != NULL) delete _printf_sp;
 
