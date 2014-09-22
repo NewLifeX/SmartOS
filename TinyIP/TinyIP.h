@@ -127,26 +127,37 @@ public:
 	// 发送UDP数据到目标地址
 	void Send(byte* buf, uint len, IPAddress ip, ushort port);
 	void Send(byte* buf, uint len, bool checksum = true);
+
+protected:
+	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);
 };
 
 // DHCP协议
 class Dhcp : UdpSocket
 {
 private:
-	//uint dhcp_id;
+	uint dhcpid;
+	uint taskID;
+	ulong _expiredTime;
+	ulong _nextTime;
+
 	void Discover(DHCP_HEADER* dhcp);
 	void Request(DHCP_HEADER* dhcp);
 	void PareOption(byte* buf, uint len);
 
 	void SendDhcp(DHCP_HEADER* dhcp, uint len);
 
+	static void SendDiscover(void* param);
 public:
-	//bool IPIsReady;
-	//bool UseDHCP;
+	bool Running;	// 正在运行
 
-	Dhcp(TinyIP* tip) : UdpSocket(tip) { Type = IP_UDP; }
+	Dhcp(TinyIP* tip) : UdpSocket(tip) { Type = IP_UDP; Port = 68; }
 
-	bool Start();
+	void Start();	// 开始
+	void Stop();	// 停止
+
+protected:
+	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);
 };
 
 // 精简IP类

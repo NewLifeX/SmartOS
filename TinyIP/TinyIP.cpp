@@ -6,7 +6,7 @@ TinyIP::TinyIP(ITransport* port)
 {
 	_port = port;
 	_StartTime = Time.Current();
-	
+
 	const byte defip_[] = {192, 168, 0, 1};
 	IPAddress defip = *(uint*)defip_;
 
@@ -44,7 +44,7 @@ TinyIP::~TinyIP()
 
 	if(Buffer) delete Buffer;
 	Buffer = NULL;
-	
+
 	if(Arp) delete Arp;
 	Arp = NULL;
 }
@@ -77,7 +77,7 @@ void TinyIP::Process(MemoryStream* ms)
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	//if(eth->DestMac != Mac) return;
 	LocalMac  = eth->DestMac;
-	RemoteMac = eth->SrcMac;	
+	RemoteMac = eth->SrcMac;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -399,7 +399,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 {
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
 	if(!ms->TrySeek(tcp->Length << 2)) return false;
-	
+
 	Header = tcp;
 	uint len = ms->Remain();
 
@@ -603,16 +603,28 @@ bool UdpSocket::Process(MemoryStream* ms)
 	Tip->Port = port;
 	Tip->RemotePort = remotePort;
 
+#if NET_DEBUG
 	byte* data = udp->Next();
 	uint len = ms->Remain();
 	uint plen = __REV16(udp->Length);
 	assert_param(len + sizeof(UDP_HEADER) == plen);
+#endif
+
+	OnReceive(udp, *ms);
+
+	return true;
+}
+
+void UdpSocket::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
+{
+	byte* data = ms.Current();
+	uint len = ms.Remain();
 
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(this, udp, data, len);
-		if(!rs) return true;
+		if(rs) Send(data, len, false);
 	}
 	else
 	{
@@ -621,16 +633,14 @@ bool UdpSocket::Process(MemoryStream* ms)
 		Tip->ShowIP(Tip->RemoteIP);
 		debug_printf(":%d => ", Tip->RemotePort);
 		Tip->ShowIP(Tip->LocalIP);
-		debug_printf(":%d Payload=%d udp_len=%d \r\n", port, len, plen);
+		debug_printf(":%d Payload=%d udp_len=%d \r\n", Tip->Port, len, __REV16(udp->Length));
 
 		Sys.ShowString(data, len);
 		debug_printf(" \r\n");
+
+		Send(data, len, false);
 #endif
 	}
-
-	Send(data, len, false);
-
-	return true;
 }
 
 void UdpSocket::Send(byte* buf, uint len, bool checksum)
@@ -838,135 +848,135 @@ void RenewDHCP(void* param)
 	if(tip)
 	{
 		Dhcp dhcp(tip);
-		if(!dhcp.Start())
+		dhcp.Start();
+		/*if(!dhcp.Start())
 		{
 			debug_printf("TinyIP DHCP Fail!\r\n\r\n");
 			return;
-		}
+		}*/
 	}
 }
 
-bool Dhcp::Start()
+void Dhcp::Start()
 {
-	uint dhcpid = (uint)Time.CurrentTicks();
+	_expiredTime = Time.Current() + 10 * 1000000;
+	dhcpid = (uint)Time.Current();
+
+	// 创建任务，每秒发送一次Discover
+	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
+}
+
+void Dhcp::Stop()
+{
+	Running = false;
+	if(taskID) Sys.RemoveTask(taskID);
+}
+
+void Dhcp::SendDiscover(void* param)
+{
+	Dhcp* _dhcp = (Dhcp*)param;
+	if(!_dhcp->Running) return;
+
+	// 检查总等待时间
+	if(_dhcp->_expiredTime < Time.Current())
+	{
+		_dhcp->Stop();
+		return;
+	}
 
 	byte buf[400];
-	uint bufSize = ArrayLength(buf);
+	//uint bufSize = ArrayLength(buf);
 
 	ETH_HEADER*  eth  = (ETH_HEADER*) buf;
 	IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
 	UDP_HEADER*  udp  = (UDP_HEADER*) ip->Next();
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 
-	// 总等待时间
-	TimeWheel tw(10);
-	TimeWheel next(0);
-	while(!tw.Expired())
+	// 向DHCP服务器广播
+	debug_printf("DHCP Discover...\r\n");
+	dhcp->Init(_dhcp->dhcpid, true);
+	_dhcp->Discover(dhcp);
+}
+
+void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
+{
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
+	if(!dhcp->Valid()) return;
+
+	byte* data = dhcp->Next();
+	uint len = ms.Remain();
+
+	// 获取DHCP消息类型
+	DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
+	if(!opt) return;
+
+	if(opt->Data == DHCP_TYPE_Offer)
 	{
-		// 得不到就重新发广播
-		if(next.Expired())
+		if(__REV(dhcp->TransID) == dhcpid)
 		{
-			// 向DHCP服务器广播
-			debug_printf("DHCP Discover...\r\n");
-			dhcp->Init(dhcpid, true);
-			Discover(dhcp);
+			Tip->IP = dhcp->YourIP;
+			PareOption(dhcp->Next(), len);
 
-			next.Reset(1);
-		}
-
-		uint len = Tip->Fetch(buf, bufSize);
-        // 如果缓冲器里面没有数据则转入下一次循环
-		if(!len)
-		{
-			Sys.Sleep(2);	// 等待一段时间，释放CPU
-
-			continue;
-		}
-
-		if(eth->Type != ETH_IP || ip->Protocol != IP_UDP) continue;
-
-		if(__REV16(udp->DestPort) != 68) continue;
-
-		// DHCP附加数据的长度
-		len -= dhcp->Next() - buf;
-		if(len <= 0) continue;
-
-		if(!dhcp->Valid())continue;
-
-		byte* data = dhcp->Next();
-
-		// 获取DHCP消息类型
-		DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
-		if(!opt) continue;
-
-		if(opt->Data == DHCP_TYPE_Offer)
-		{
-			if(__REV(dhcp->TransID) == dhcpid)
-			{
-				Tip->IP = dhcp->YourIP;
-				PareOption(dhcp->Next(), len);
-
-				// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
-				// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
+			// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
+			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
-				debug_printf("DHCP Offer IP:");
-				TinyIP::ShowIP(Tip->IP);
-				debug_printf(" From ");
-				TinyIP::ShowIP(ip->SrcIP);
-				debug_printf("\r\n");
-#endif
-
-				dhcp->Init(dhcpid, true);
-				Request(dhcp);
-			}
-		}
-		else if(opt->Data == DHCP_TYPE_Ack)
-		{
-#if NET_DEBUG
-			debug_printf("DHCP Ack   IP:");
-			TinyIP::ShowIP(dhcp->YourIP);
-			debug_printf(" From ");
-			TinyIP::ShowIP(ip->SrcIP);
-			debug_printf("\r\n");
-#endif
-
-			if(dhcp->YourIP == Tip->IP)
-			{
-				// 查找租约时间，提前续约
-				opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
-				if(opt)
-				{
-					// 续约时间，大字节序，时间单位秒
-					uint time = __REV(*(uint*)&opt->Data);
-					// DHCP租约过了一半以后重新获取IP地址
-					if(time > 0) Sys.AddTask(RenewDHCP, Tip, time / 2 * 1000000, -1);
-				}
-
-				return true;
-			}
-		}
-#if NET_DEBUG
-		else if(opt->Data == DHCP_TYPE_Nak)
-		{
-			// 导致Nak的原因
-			opt = GetOption(data, len, DHCP_OPT_Message);
-			debug_printf("DHCP Nak   IP:");
+			debug_printf("DHCP Offer IP:");
 			TinyIP::ShowIP(Tip->IP);
 			debug_printf(" From ");
-			TinyIP::ShowIP(ip->SrcIP);
+			TinyIP::ShowIP(Tip->RemoteIP);
+			debug_printf("\r\n");
+#endif
+
+			dhcp->Init(dhcpid, true);
+			Request(dhcp);
+		}
+	}
+	else if(opt->Data == DHCP_TYPE_Ack)
+	{
+#if NET_DEBUG
+		debug_printf("DHCP Ack   IP:");
+		TinyIP::ShowIP(dhcp->YourIP);
+		debug_printf(" From ");
+		TinyIP::ShowIP(Tip->RemoteIP);
+		debug_printf("\r\n");
+#endif
+
+		if(dhcp->YourIP == Tip->IP)
+		{
+			// 查找租约时间，提前续约
+			opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
 			if(opt)
 			{
-				debug_printf(" ");
-				Sys.ShowString(&opt->Data, opt->Length);
+				// 续约时间，大字节序，时间单位秒
+				uint time = __REV(*(uint*)&opt->Data);
+				// DHCP租约过了一半以后重新获取IP地址
+				if(time > 0) Sys.AddTask(RenewDHCP, Tip, time / 2 * 1000000, -1);
 			}
-			debug_printf("\r\n");
-		}
-		else
-			debug_printf("DHCP Unkown Type=%d\r\n", opt->Data);
-#endif
-	}
 
-	return false;
+			//return true;
+			// 完成任务
+			Stop();
+		}
+	}
+#if NET_DEBUG
+	else if(opt->Data == DHCP_TYPE_Nak)
+	{
+		// 导致Nak的原因
+		opt = GetOption(data, len, DHCP_OPT_Message);
+		debug_printf("DHCP Nak   IP:");
+		TinyIP::ShowIP(Tip->IP);
+		debug_printf(" From ");
+		TinyIP::ShowIP(Tip->RemoteIP);
+		if(opt)
+		{
+			debug_printf(" ");
+			Sys.ShowString(&opt->Data, opt->Length);
+		}
+		debug_printf("\r\n");
+	}
+	else
+		debug_printf("DHCP Unkown Type=%d\r\n", opt->Data);
+#endif
 }
 #endif
 
