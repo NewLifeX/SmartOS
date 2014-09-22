@@ -29,7 +29,8 @@
 }
 
 /* 定时器针脚 ------------------------------------------------------------------*/
-#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6}
+#define TIMS {TIM1, TIM2, TIM3, 0, 0, TIM6, 0, 0, 0, 0, 0, 0, 0, TIM14, TIM15, TIM16, TIM17}
+#define TIM_IRQns {TIM1_BRK_UP_TRG_COM_IRQn, TIM2_IRQn, TIM3_IRQn, 0, 0, TIM6_DAC_IRQn, 0, 0, 0, 0, 0, 0, 0, TIM14_IRQn, TIM15_IRQn, TIM16_IRQn, TIM17_IRQn}
 #define TIM_PINS {\
 	PA8, PA9, PA10,PA11,/* TIM1 */	\
 	PA0, PA1, PA2, PA3, /* TIM2 */	\

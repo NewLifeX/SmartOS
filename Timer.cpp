@@ -45,9 +45,13 @@ void Timer::Start()
     RCC_ClocksTypeDef clock;
     RCC_GetClocksFreq(&clock);
 
+#ifdef STM32F4
 	uint clk = clock.PCLK1_Frequency;
 	if((uint)_port & 0x00010000) clk = clock.PCLK2_Frequency;
 	clk <<= 1;
+#elif defined(STM32F0)
+	uint clk = clock.PCLK_Frequency << 1;
+#endif
 
 	uint fre = clk / Prescaler / Period;
 	debug_printf("Timer%d_Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
@@ -100,11 +104,15 @@ void Timer::ClockCmd(bool state)
 		case 1: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, st); break;
 		case 2: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, st); break;
 		case 3: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, st); break;
+#if defined(STM32F1) && defined(STM32F4)
 		case 4: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, st); break;
 		case 5: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, st); break;
+#endif
 		case 6: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, st); break;
+#if defined(STM32F1) && defined(STM32F4)
 		case 7: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM7, st); break;
 		case 8: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8, st); break;
+#endif
 #ifdef STM32F4
 		case 9: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM9, st); break;
 		case 10: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM10, st); break;
@@ -112,6 +120,12 @@ void Timer::ClockCmd(bool state)
 		case 12: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM12, st); break;
 		case 13: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM13, st); break;
 		case 14: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, st); break;
+#endif
+#if defined(STM32F0)
+		case 14: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, st); break;
+		case 15: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, st); break;
+		case 16: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, st); break;
+		case 17: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM17, st); break;
 #endif
 	}
 }
@@ -132,9 +146,13 @@ void Timer::SetFrequency(uint frequency)
     RCC_ClocksTypeDef clock;
     RCC_GetClocksFreq(&clock);
 
+#ifdef STM32F4
 	uint clk = clock.PCLK1_Frequency;
 	if((uint)_port & 0x00010000) clk = clock.PCLK2_Frequency;
 	clk <<= 1;
+#elif defined(STM32F0)
+	uint clk = clock.PCLK_Frequency << 1;
+#endif
 
 	assert_param(frequency > 0 && frequency <= clk);
 
@@ -186,6 +204,6 @@ void Timer::OnInterrupt()
 	if(TIM_GetITStatus(_port, TIM_IT_Update) == RESET) return;
 	// 必须清除TIMx的中断待处理位，否则会频繁中断
 	TIM_ClearITPendingBit(_port, TIM_IT_Update);
-	
+
 	if(_Handler) _Handler(this, _Param);
 }
