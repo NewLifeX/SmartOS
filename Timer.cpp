@@ -60,8 +60,8 @@ void Timer::Start()
 	// 打开时钟
 	ClockCmd(true);
 
-	// 关闭
-	TIM_DeInit(_port);
+	// 关闭。不再需要，跟上面ClockCmd的效果一样
+	//TIM_DeInit(_port);
 
 	// 配置时钟
 	TIM_TimeBaseInitTypeDef _timer;
