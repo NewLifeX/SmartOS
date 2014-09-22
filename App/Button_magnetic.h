@@ -31,10 +31,11 @@ public:
 	OutputPort* Relay_pack2;	// 继电器引脚2
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
-	Button() { Init(); }
-	Button(Pin key = P0, Pin led = P0, bool ledInvert = true, Pin relay_pin1 = P0, bool relayInvert = true, Pin relay_pin2 = P0, bool relayInvert = true);
-	Button(Pin key =P0, Pin led = P0, Pin relay_pin1 = P0, Pin relay_pin2 = P0);
-	~Button();
+	Button_magnetic() { Init(); }
+	Button_magnetic(Pin key = P0, Pin led = P0, bool ledInvert = true, Pin relay_pin1 = P0, 
+					bool relayInvert1 = true, Pin relay_pin2 = P0, bool relayInvert2 = true);
+	Button_magnetic(Pin key =P0, Pin led = P0, Pin relay_pin1 = P0, Pin relay_pin2 = P0);
+	~Button_magnetic();
 
 	bool GetValue();
 	void SetValue(bool value);
