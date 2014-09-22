@@ -11,6 +11,7 @@
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
 #define UARTS {USART1, USART2, USART3, UART4, UART5}
+#define UART_IRQs {USART1_IRQn, USART2_IRQn, USART3_IRQn, UART4_IRQn, UART5_IRQn}
 #define UART_PINS {\
  /* TX   RX   CTS  RTS */	\
 	PA9, PA10,PA11,PA12,/* USART1 */	\
