@@ -4,7 +4,7 @@
 #include "Port.h"
 #include "SerialPort.h"
 
-//#define CR1_UE_Set                ((uint16_t)0x2000)  /*!< USART Enable Mask */
+#define COM_DEBUG 0
 
 // 默认波特率
 //#define USART_DEFAULT_BAUDRATE 115200
@@ -67,7 +67,7 @@ bool SerialPort::OnOpen()
     GetPins(&tx, &rx);
 
     //debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits);
-#if DEBUG
+#if COM_DEBUG
     if(_index != Sys.MessagePort)
     {
 ShowLog:
@@ -111,6 +111,7 @@ ShowLog:
 
 	// 不要关调试口，否则杯具
     if(_index != Sys.MessagePort) USART_DeInit(_port);
+	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
 	// 检查重映射
 #ifdef STM32F1XX
@@ -145,7 +146,7 @@ ShowLog:
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
 #elif defined(STM32F4)
-	byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
+	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
     GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), afs[_index]);
     GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), afs[_index]);
 #endif
@@ -167,7 +168,7 @@ ShowLog:
 
     //Opened = true;
 
-#if DEBUG
+#if COM_DEBUG
     if(_index == Sys.MessagePort)
 	{
 		// 提前设置为已打开端口，ShowLog里面需要判断
