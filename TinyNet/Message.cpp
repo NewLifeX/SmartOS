@@ -73,8 +73,17 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 
 void Controller::Process(byte* buf, uint len)
 {
+	// 只处理本机消息或广播消息
+	// 快速处理，高效。
+	if(buf[0] != Address && buf[0] != 0) return;
+
 	Message msg;
 	if(!msg.Parse(buf, len) || !msg.Verify()) return;
+
+	// 只处理本机消息或广播消息
+	//if(msg.Dest != Address && msg.Dest != 0) return;
+	// 广播的响应消息也不要
+	if(msg.Dest == 0 && msg.Reply) return;
 
 	int count = _Handlers.Count();
 	for(int i=0; i<count; i++)
@@ -82,8 +91,17 @@ void Controller::Process(byte* buf, uint len)
 		CommandHandlerLookup* lookup = _Handlers[i];
 		if(lookup && lookup->Code == msg.Code)
 		{
-			// 如果处理成功则退出，否则继续遍历其它处理器
-			if(lookup->Handler(msg)) return;
+			// 返回值决定是普通回复还是错误回复
+			bool rs = lookup->Handler(msg);
+			// 如果本来就是响应，不用回复
+			if(!msg.Reply)
+			{
+				if(rs)
+					Reply(msg);
+				else
+					Error(msg);
+			}
+			break;
 		}
 	}
 }
@@ -112,36 +130,106 @@ uint Controller::Send(byte dest, byte code, byte* buf, uint len)
 	return Send(msg);
 }
 
-bool Controller::Send(Message& msg, uint msTimeout)
+bool Controller::Send(Message& msg)
 {
 	// 附上自己的地址
 	msg.Src = Address;
 
 	// 先发送头部，然后发送负载数据
 	byte* buf = (byte*)&msg;
-	_port->Write(buf, 6);
-	if(msg.Length > 0)
+	bool rs = _port->Write(buf, 6);
+	if(rs && msg.Length > 0)
 		_port->Write(msg.Data, msg.Length);
 
-	/*// 等待响应
+	return rs;
+}
+
+bool Controller::SendSync(Message& msg, uint msTimeout)
+{
+	if(!Send(msg)) return false;
+
+	// 等待响应
 	TimeWheel tw(0, msTimeout, 0);
 	while(true)
 	{
-		if(tw.Expired) return false;
+		if(tw.Expired()) return false;
 
-		xxx
-	}*/
+		// 未完成
+		break;
+	}
 
 	return true;
 }
 
-void Controller::Reply(Message& msg)
+bool Controller::Reply(Message& msg)
 {
+	// 回复信息，源地址变成目的地址
+	msg.Dest = msg.Src;
 	msg.Reply = 1;
-	Send(msg);
+
+	return Send(msg);
 }
 
-bool Controller_Test_Discover(const Message& msg)
+bool Controller::Error(Message& msg)
+{
+	msg.Error = 1;
+
+	return Reply(msg);
+}
+
+// 常用系统级消息
+// 系统时间获取与设置
+bool Controller::SysTime(Message& msg)
+{
+	// 忽略响应消息
+	if(msg.Reply) return true;
+
+	debug_printf("Message_SysTime Flags=%d\r\n", msg.Flags);
+
+	// 标识位最低位决定是读时间还是写时间
+	if(msg.Flags == 1)
+	{
+		// 写时间
+		if(msg.Length < 8) return false;
+
+		ulong us = *(ulong*)msg.Data;
+
+		Time.SetTime(us);
+	}
+
+	// 读时间
+	SystemTime& st = Time.Now();
+	ulong us2 = st.TotalMicroseconds();
+	msg.Length = 8;
+	msg.Data = (byte*)&us2;
+
+	return true;
+}
+
+bool Controller::SysID(Message& msg)
+{
+	// 忽略响应消息
+	if(msg.Reply) return true;
+
+	debug_printf("Message_SysID Flags=%d\r\n", msg.Flags);
+
+	if(msg.Flags == 0)
+	{
+		// 12字节ID，4字节CPUID，4字节设备ID
+		msg.Length = 5 << 2;
+		msg.Data = (byte*)Sys.ID;
+	}
+	else
+	{
+		// 干脆直接输出Sys，前面11个uint
+		msg.Length = 11 << 2;
+		msg.Data = (byte*)&Sys;
+	}
+
+	return true;
+}
+
+bool Controller_Test_Discover(Message& msg)
 {
 	if(!msg.Reply)
 	{
@@ -181,6 +269,9 @@ void Controller::Test(ITransport* port)
 {
 	Controller control(port);
 	control.Address = 2;
+
+	control.Register(1, SysID);
+	control.Register(2, SysTime);
 
 	const byte DISC_CODE = 1;
 	control.Register(DISC_CODE, Controller_Test_Discover);

@@ -12,10 +12,10 @@ public:
 	// 标准头部，符合内存布局。注意凑够4字节，否则会有很头疼的对齐问题
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
-	byte Code;		// 代码
+	byte Code;		// 功能代码
 	byte Reply:1;	// 是否响应
 	byte Error:1;	// 是否错误
-	byte Flags:6;	// 标识位
+	byte Flags:6;	// 标识位。也可以用来做二级命令
 
 	// 负载数据及校验部分，并非内存布局。
 	ushort Checksum;// 16位检验和
@@ -45,8 +45,12 @@ public:
 	~Controller();
 
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0);
-	bool Send(Message& msg, uint msTimeout = 10);
-	void Reply(Message& msg);
+	// 发送消息
+	bool Send(Message& msg);
+	bool SendSync(Message& msg, uint msTimeout = 10);
+	// 回复对方的请求消息
+	bool Reply(Message& msg);
+	bool Error(Message& msg);
 
 protected:
 	void Process(byte* buf, uint len);
@@ -54,7 +58,7 @@ protected:
 // 处理器部分
 public:
 	// 处理消息，返回是否成功
-	typedef bool (*CommandHandler)(const Message& msg);
+	typedef bool (*CommandHandler)(Message& msg);
 
 private:
     struct CommandHandlerLookup
@@ -68,6 +72,11 @@ public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
 	void Register(byte code, CommandHandler handler);
 
+// 常用系统级消息
+public:
+	static bool SysTime(Message& msg);
+	static bool SysID(Message& msg);
+	
 // 测试部分
 public:
 	static void Test(ITransport* port);
