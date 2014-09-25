@@ -91,6 +91,7 @@ void Controller::Process(byte* buf, uint len)
 	// 校验
 	if(!msg.Verify())
 	{
+#if DEBUG
 		byte err[] = "Crc Error 0xXXXX";
 		len = ArrayLength(err);
 		// 把Crc16附到后面4字节
@@ -98,6 +99,9 @@ void Controller::Process(byte* buf, uint len)
 		
 		msg.Length = len;
 		msg.Data = err;
+#else
+		msg.Length = 0;
+#endif
 
 		Error(msg);
 

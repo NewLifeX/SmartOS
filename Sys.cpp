@@ -295,17 +295,23 @@ void TSys::ShowInfo()
 				else
 					debug_printf("F150");
 			}
+#ifdef STM32F1
 			else
 				debug_printf("F103");
+#endif
 		}
+#ifdef STM32F1
 		else if(DevID == 0x412 || DevID == 0x414 || DevID == 0x430)
 			debug_printf("F103");
 		else if(DevID == 0x418)
 			debug_printf("F107");
 		else if(DevID == 0x412)
 			debug_printf("F130");
+#endif
+#ifdef STM32F4
 		else if(DevID == 0x413)
 			debug_printf("F407");
+#endif
 		else if(DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
 			debug_printf("F030/F051");
 		else
@@ -315,8 +321,10 @@ void TSys::ShowInfo()
 	{
 		if(Clock == 48000000)
 			debug_printf("F130/F150");
+#ifdef STM32F1
 		else
 			debug_printf("F103");
+#endif
 	}
 
 	// 暂时不知道怎么计算引脚，一般F4/F6/C8CB/RB/VC/VE
