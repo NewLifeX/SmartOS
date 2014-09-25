@@ -11,7 +11,7 @@
 
 // 定长数组模版
 template<typename T, int array_size>
-class Array
+__packed class Array
 {
 private:
 	int _Count;

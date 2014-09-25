@@ -42,7 +42,7 @@ private:
 
 public:
 	byte Address;	// 本地地址
-	
+
 	Controller(ITransport* port);
 	~Controller();
 
@@ -68,7 +68,8 @@ private:
         uint Code;
         CommandHandler Handler;
     };
-	List<CommandHandlerLookup*> _Handlers;
+	CommandHandlerLookup* _Handlers[16];
+	byte _HandlerCount;
 
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
@@ -78,7 +79,7 @@ public:
 public:
 	static bool SysTime(Message& msg);
 	static bool SysID(Message& msg);
-	
+
 // 测试部分
 public:
 	static void Test(ITransport* port);

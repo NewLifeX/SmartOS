@@ -56,12 +56,14 @@ Controller::Controller(ITransport* port)
 	port->Register(OnReceive, this);
 
 	_port = port;
+	
+	memset(_Handlers, 0, ArrayLength(_Handlers));
+	_HandlerCount = 0;
 }
 
 Controller::~Controller()
 {
-	int count = _Handlers.Count();
-	for(int i=0; i<count; i++)
+	for(int i=0; i<_HandlerCount; i++)
 	{
 		if(_Handlers[i]) delete _Handlers[i];
 	}
@@ -108,8 +110,7 @@ void Controller::Process(byte* buf, uint len)
 		return;
 	}
 
-	int count = _Handlers.Count();
-	for(int i=0; i<count; i++)
+	for(int i=0; i<_HandlerCount; i++)
 	{
 		CommandHandlerLookup* lookup = _Handlers[i];
 		if(lookup && lookup->Code == msg.Code)
@@ -138,7 +139,7 @@ void Controller::Register(byte code, CommandHandler handler)
 	lookup->Code = code;
 	lookup->Handler = handler;
 
-	_Handlers.Add(lookup);
+	_Handlers[_HandlerCount++] = lookup;
 }
 
 uint Controller::Send(byte dest, byte code, byte* buf, uint len)
@@ -229,8 +230,7 @@ bool Controller::SysTime(Message& msg)
 	}
 
 	// 读时间
-	SystemTime& st = Time.Now();
-	ulong us2 = st.TotalMicroseconds();
+	ulong us2 = Time.Current();
 	msg.Length = 8;
 	msg.Data = (byte*)&us2;
 
