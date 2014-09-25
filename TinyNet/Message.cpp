@@ -18,13 +18,13 @@ bool Message::Parse(byte* buf, uint len)
 
 	// 复制头4字节
 	*(uint*)this = *(uint*)buf;
-	// 复制校验和
-	Checksum = *(ushort*)(buf + 4);
+
+	Crc16 = Sys.Crc16(buf, len - 2);
 
 	if(len > headerSize)
 	{
 		Length = len - headerSize;
-		Data = buf + headerSize;
+		Data = buf + 4;
 	}
 	else
 	{
@@ -32,13 +32,19 @@ bool Message::Parse(byte* buf, uint len)
 		Data = NULL;
 	}
 
+	// 数据校验在最后2字节
+	Checksum = *(ushort*)(buf + len - 2);
+
 	return true;
 }
 
 // 验证消息校验和是否有效
 bool Message::Verify()
 {
-	return false;
+	//ushort crc = Sys.Crc16((byte*)this, 6);
+	//if(Length > 0) crc = Sys.Crc16(Data, Length);
+
+	return Checksum == Crc16;
 }
 
 // 构造控制器
@@ -73,8 +79,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 
 void Controller::Process(byte* buf, uint len)
 {
-	// 只处理本机消息或广播消息
-	// 快速处理，高效。
+	// 只处理本机消息或广播消息。快速处理，高效。
 	if(buf[0] != Address && buf[0] != 0) return;
 
 	Message msg;
@@ -135,11 +140,19 @@ bool Controller::Send(Message& msg)
 	// 附上自己的地址
 	msg.Src = Address;
 
-	// 先发送头部，然后发送负载数据
+	// 计算校验
 	byte* buf = (byte*)&msg;
-	bool rs = _port->Write(buf, 6);
+	ushort crc = Sys.Crc16(buf, 4);
+	if(msg.Length > 0)
+		crc = Sys.Crc16(msg.Data, msg.Length, crc);
+
+	msg.Checksum = crc;
+
+	// 先发送头部，然后发送负载数据，最后校验
+	bool rs = _port->Write(buf, 4);
 	if(rs && msg.Length > 0)
 		_port->Write(msg.Data, msg.Length);
+	_port->Write((byte*)&msg.Checksum, 2);
 
 	return rs;
 }

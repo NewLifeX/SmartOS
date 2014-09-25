@@ -6,6 +6,7 @@
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
+// 测试指令 0201-0100-51CC，从1发往2，功能1，标识0，校验0xCC51
 class Message
 {
 public:
@@ -18,9 +19,10 @@ public:
 	byte Flags:6;	// 标识位。也可以用来做二级命令
 
 	// 负载数据及校验部分，并非内存布局。
-	ushort Checksum;// 16位检验和
 	ushort Length;	// 数据长度
+	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
 	byte* Data;		// 数据部分
+	ushort Checksum;// 16位检验和
 
 public:
 	// 初始化消息，各字段为0
