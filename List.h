@@ -11,48 +11,99 @@
 
 // 定长数组模版
 template<typename T, int array_size>
-struct Array
+class Array
 {
-    T Arr[array_size];
+private:
 	int _Count;
-	T Default;
+    T Arr[array_size];
 
+public:
+	// 有效元素个数
     int Count() { return _Count; }
+	// 最大元素个数
     int Max() { return array_size; }
 
 	void Init()
 	{
 		_Count = 0;
-		Default = 0x00;
 		memset(Arr, 0x00, array_size * sizeof(T));
 	}
 
-	int Add(T item)
+	// 压入一个元素
+	int Push(const T& item)
 	{
+		assert_param(_Count < array_size);
+
 		// 找到空闲位放置
-		for(int i=0; i<array_size; i++)
-		{
-			if(Arr[i] == Default)
-			{
-				Arr[i] = item;
-				return i;
-			}
-		}
-		return -1;
+		int idx = _Count++;
+		Arr[idx] = item;
+
+		return idx;
 	}
 
-	void Remove(T item)
+	// 弹出一个元素
+	const T& Pop()
 	{
+		assert_param(_Count > 0);
+
+		//const T& item = Arr[--_Count];
+
+		return Arr[--_Count];
 	}
-    //List<T> operator=(array arr) { return List<T>(arr.Arr, array_size); }
+
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。为了性能，内部不检查下标越界，外部好自为之
+    T operator[](int i)
+	{
+		assert_param(i >= 0 && i < _Count);
+		return Arr[i];
+	}
+	// 列表转为指针，注意安全
+    //T* operator=(Array arr) { return arr.Arr; }
 };
 
 // 变长列表模版
 template<typename T>
 __packed class List
 {
+private:
+    T* arr;		// 存储数据的数组
+    uint _count;// 拥有实际元素个数
+    uint _total;// 可容纳元素总数
+
+    void ChangeSize(int newSize)
+    {
+        if(_total == newSize) return;
+
+        T* arr2 = new T[newSize];
+        if(arr)
+        {
+            // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
+            if(newSize < _count)
+			{
+				// 此时有数据丢失
+                memcpy(arr2, arr, newSize * sizeof(T));
+				_count = newSize;
+			}
+            else
+            {
+                memcpy(arr2, arr, _count * sizeof(T));
+                memset(&arr2[_count], 0, (newSize - _count) * sizeof(T));
+            }
+            delete[] arr;
+        }
+		else
+            memset(arr2, 0, newSize * sizeof(T));
+        arr = arr2;
+		_total = newSize;
+    }
+
+    void CheckSize()
+    {
+        // 如果数组空间已用完，则两倍扩容
+        if(_count >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
+    }
+
 public:
-    //List() { _count = _total = 0; }
     List(int size = 0)
     {
         _count = 0;
@@ -142,46 +193,17 @@ public:
         }
         return arr;
     }
+
+	// 有效元素个数
     int Count() { return _count; }
+
+	// 设置新的容量，如果容量比元素个数小，则会丢失数据
 	void SetCapacity(int capacity) { ChangeSize(capacity); }
 
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。内部不检查下标越界，外部好自为之
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。为了性能，内部不检查下标越界，外部好自为之
     T operator[](int i) { return arr[i]; }
+	// 列表转为指针，注意安全
     T* operator=(List list) { return list.ToArray(); }
-
-private:
-    T* arr;		// 存储数据的数组
-    uint _count;// 拥有实际元素个数
-    uint _total;// 可容纳元素总数
-
-    void ChangeSize(int newSize)
-    {
-        if(_total == newSize) return;
-
-        T* arr2 = new T[newSize];
-        if(arr)
-        {
-            // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
-            if(newSize < _count)
-                memcpy(arr2, arr, newSize * sizeof(T));
-            else
-            {
-                memcpy(arr2, arr, _count * sizeof(T));
-                memset(&arr2[_count], 0, (newSize - _count) * sizeof(T));
-            }
-            delete[] arr;
-        }
-		else
-            memset(arr2, 0, newSize * sizeof(T));
-        arr = arr2;
-		_total = newSize;
-    }
-
-    void CheckSize()
-    {
-        // 如果数组空间已用完，则两倍扩容
-        if(_count >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
-    }
 };
 
 // 双向链表
