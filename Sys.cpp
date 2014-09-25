@@ -257,10 +257,6 @@ void TSys::Init(void)
 		SystemCoreClock = Clock;
 	}
 
-#if defined(STM32F1) || defined(STM32F4)
-	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4);	//中断优先级分配方案4   四位都是抢占优先级
-#endif
-
 	// 必须在系统主频率确定以后再初始化时钟
     Time.Init();
 

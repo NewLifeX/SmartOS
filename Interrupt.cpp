@@ -82,17 +82,22 @@ void TInterrupt::Init()
 #endif
 #else*/
 #ifdef STM32F4
-    SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
-               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
-	// 不能使用以下代码，否则F4里面无法响应中断
-    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk  // 打开异常
+    /*SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
+               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位*/
+	// 中断优先级分配方案4，四位都是抢占优先级。其实上面的寄存器操作就是设置优先级方案为0
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	// 打开系统异常，否则这些异常都会跑到硬件中断里面
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
                 | SCB_SHCSR_BUSFAULTENA_Msk
                 | SCB_SHCSR_MEMFAULTENA_Msk;
 #endif
 #ifdef STM32F1
-    SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
-               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位
-    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
+    /*SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
+               | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位*/
+	// 中断优先级分配方案4，四位都是抢占优先级。其实上面的寄存器操作就是设置优先级方案为0
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	// 打开系统异常，否则这些异常都会跑到硬件中断里面
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
 #endif
