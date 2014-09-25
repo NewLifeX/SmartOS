@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 
 #include "Time.h"
 
@@ -416,18 +416,15 @@ static const uint c_CRCTable[ 256 ] =
     0xAFB010B1, 0xAB710D06, 0xA6322BDF, 0xA2F33668, 0xBCB4666D, 0xB8757BDA, 0xB5365D03, 0xB1F740B4
 };
 
-uint TSys::Crc(const void* rgBlock, int len, uint crc)
+uint TSys::Crc(const byte* buf, uint len, uint crc)
 {
-    const byte* ptr = (const byte*)rgBlock;
-
     while(len-- > 0)
     {
-        crc = c_CRCTable[ ((crc >> 24) ^ (*ptr++)) & 0xFF ] ^ (crc << 8);
+        crc = c_CRCTable[ ((crc >> 24) ^ (*buf++)) & 0xFF ] ^ (crc << 8);
     }
 
     return crc;
 }
-
 
 static const ushort c_CRC16Table[] = 
 { 
@@ -435,24 +432,20 @@ static const ushort c_CRC16Table[] =
 0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400, 
 };
 
-ushort TSys::Crc16(void * buf, int len,ushort crc)
+ushort TSys::Crc16(const byte* buf, uint len, ushort crc)
 {
-    if (buf == NULL) return 0;
-	ushort u = crc;
-    byte b;
-    if (len <= 0) return 0;
-	len *= 2;
+    if (!buf || !len) return 0;
+
     for (int i = 0; i < len; i++)
     {
-        b = ((byte*)buf)[i];
-        u = (ushort)(c_CRC16Table[(b ^ u) & 15] ^ (u >> 4));
-        u = (ushort)(c_CRC16Table[((b >> 4) ^ u) & 15] ^ (u >> 4));
+        byte b = ((byte*)buf)[i];
+        crc = (ushort)(c_CRC16Table[(b ^ crc) & 0x0F] ^ (crc >> 4));
+        crc = (ushort)(c_CRC16Table[((b >> 4) ^ crc) & 0x0F] ^ (crc >> 4));
     }
-    return u;
+    return crc;
 }
 
 #endif
-
 
 #define __HELP__MODULE__ 1
 #ifdef __HELP__MODULE__
