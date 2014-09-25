@@ -143,6 +143,18 @@ __inline void debug_printf( const char *format, ... ) {}
 #endif
 }
 
+#ifdef USE_FULL_ASSERT
+
+// 验证确保对象不为空，并且在有效的内存范围内
+#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
+bool assert_ptr_(void* p);
+
+#else
+
+#define assert_ptr(expr) ((void)0)
+
+#endif
+
 // 内存管理
 #include "Memory.h"
 

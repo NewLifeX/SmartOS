@@ -88,6 +88,19 @@ void assert_failed(uint8_t* file, uint32_t line)
     /* Infinite loop */
     while (1) { }
 }
+
+extern uint __heap_base;
+
+bool assert_ptr_(void* p)
+{
+	if((uint)p < SRAM_BASE) return false;
+	if((uint)p > (SRAM_BASE + (Sys.RAMSize << 10))) return false;
+
+	// 不支持静态全局对象
+	if(p <= (void*)&__heap_base) return false;
+
+	return true;
+}
 #endif
 
 void ShowFault(uint exception)
