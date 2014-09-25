@@ -14,9 +14,9 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte Code;		// 功能代码
-	byte Reply:1;	// 是否响应
-	byte Error:1;	// 是否错误
 	byte Flags:6;	// 标识位。也可以用来做二级命令
+	byte Error:1;	// 是否错误
+	byte Reply:1;	// 是否响应
 
 	// 负载数据及校验部分，并非内存布局。
 	ushort Length;	// 数据长度

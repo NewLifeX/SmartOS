@@ -83,12 +83,26 @@ void Controller::Process(byte* buf, uint len)
 	if(buf[0] != Address && buf[0] != 0) return;
 
 	Message msg;
-	if(!msg.Parse(buf, len) || !msg.Verify()) return;
+	if(!msg.Parse(buf, len)) return;
 
-	// 只处理本机消息或广播消息
-	//if(msg.Dest != Address && msg.Dest != 0) return;
 	// 广播的响应消息也不要
 	if(msg.Dest == 0 && msg.Reply) return;
+
+	// 校验
+	if(!msg.Verify())
+	{
+		byte err[] = "Crc Error 0xXXXX";
+		len = ArrayLength(err);
+		// 把Crc16附到后面4字节
+		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
+		
+		msg.Length = len;
+		msg.Data = err;
+
+		Error(msg);
+
+		return;
+	}
 
 	int count = _Handlers.Count();
 	for(int i=0; i<count; i++)
