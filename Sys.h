@@ -94,7 +94,7 @@ public:
 
     // CRC32校验
     uint Crc(const void* rgBlock, int len, uint crc = 0);
-	ushort Crc16(void * rgBlock = NULL, int offset = 0, int count = 0 ,ushort crc = 0xFFFF);
+	ushort Crc16(void * buf = NULL , int len = 0 ,ushort crc = 0xFFFF);
 
 	void ShowHex(byte* buf, uint len, char sep = '\0');// 显示十六进制数据，指定分隔字符
 	void ShowString(byte* buf, uint len = 0, bool autoEnd = true);	// 显示字符串，不指定长度时自动找\0
@@ -142,18 +142,6 @@ __inline void debug_printf( const char *format, ... ) {}
 
 #endif
 }
-
-#ifdef USE_FULL_ASSERT
-
-// 验证确保对象不为空，并且在有效的内存范围内
-#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
-bool assert_ptr_(void* p);
-
-#else
-
-#define assert_ptr(expr) ((void)0)
-
-#endif
 
 // 内存管理
 #include "Memory.h"

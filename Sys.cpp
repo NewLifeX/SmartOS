@@ -435,15 +435,15 @@ static const ushort c_CRC16Table[] =
 0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400, 
 };
 
-ushort TSys::Crc16(void * rgBlock, int offset, int count,ushort crc)
+ushort TSys::Crc16(void * buf, int len,ushort crc)
 {
-    if (rgBlock == NULL) return 0;
+    if (buf == NULL) return 0;
 	ushort u = crc;
     byte b;
-    if (count == 0) return 0;
-    for (int i = offset; i < count; i++)
+    if (len <= 0) return 0;
+    for (int i = 0; i < len; i++)
     {
-        b = ((byte*)rgBlock)[i];
+        b = ((byte*)buf)[i];
         u = (ushort)(c_CRC16Table[(b ^ u) & 15] ^ (u >> 4));
         u = (ushort)(c_CRC16Table[((b >> 4) ^ u) & 15] ^ (u >> 4));
     }
