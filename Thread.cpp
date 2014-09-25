@@ -386,6 +386,8 @@ void OnSleep(uint ms)
 // 系统线程调度开始
 void Thread::Schedule()
 {
+	if(!Inited) Init();
+
 	//SmartIRQ irq;
 	__disable_irq();
 
