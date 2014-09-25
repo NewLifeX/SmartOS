@@ -388,7 +388,32 @@ ushort OutputPort::ReadGroup()    // 整组读取
 	return GPIO_ReadOutputData(Group);
 }
 
-// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
+bool OutputPort::Read(byte index)
+{
+	assert_param(index < PinCount);
+
+	ushort bits = PinBit;
+	if(index != 0xFF)
+	{
+		// 找到第index个有效位，从小到大
+		bits = 1;
+		for(int i=0; i<16; i++, bits <<= 1)
+		{
+			// 如果包含这个位，计数减一，为0则表示找到
+			if(PinBit & bits)
+			{
+				if(!index) break;
+				index--;
+			}
+		}
+	}
+
+	// 转为bool时会转为0/1
+	bool rs = GPIO_ReadOutputData(Group) & bits;
+	return rs ^ Invert;
+}
+
 bool OutputPort::Read()
 {
 	// 转为bool时会转为0/1
@@ -400,6 +425,33 @@ bool OutputPort::Read(Pin pin)
 {
 	GPIO_TypeDef* group = _GROUP(pin);
 	return (group->IDR >> (pin & 0xF)) & 1;
+}
+
+// 写入指定索引引脚。索引按照从小到大
+void OutputPort::Write(bool value, byte index)
+{
+	assert_param(index < PinCount);
+
+	ushort bits = PinBit;
+	if(index != 0xFF)
+	{
+		// 找到第index个有效位，从小到大
+		bits = 1;
+		for(int i=0; i<16; i++, bits <<= 1)
+		{
+			// 如果包含这个位，计数减一，为0则表示找到
+			if(PinBit & bits)
+			{
+				if(!index) break;
+				index--;
+			}
+		}
+	}
+
+    if(value ^ Invert)
+        GPIO_SetBits(Group, bits);
+    else
+        GPIO_ResetBits(Group, bits);
 }
 
 void OutputPort::Write(bool value)

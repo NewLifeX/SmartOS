@@ -87,13 +87,18 @@ public:
 		Init();
 	}
 
-    void Write(bool value); // 按位值写入
+	// 写入指定索引引脚。索引按照从小到大
+    void Write(bool value, byte index);
+	// 整体写入所有包含的引脚
+    void Write(bool value); 
     void WriteGroup(ushort value);   // 整组写入
 	void Up(uint ms);	// 拉高一段时间后拉低
 	void Blink(uint times, uint ms);	// 闪烁多次
 
     ushort ReadGroup();    // 整组读取
-    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
+	// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
+    bool Read(byte index);
+    bool Read();
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
 
