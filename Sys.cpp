@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 
 #include "Time.h"
 
@@ -427,7 +427,31 @@ uint TSys::Crc(const void* rgBlock, int len, uint crc)
 
     return crc;
 }
+
+
+static const ushort c_CRC16Table[] = 
+{ 
+0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401, 
+0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400, 
+};
+
+ushort TSys::Crc16(void * rgBlock, int offset, int count,ushort crc)
+{
+    if (rgBlock == NULL) return 0;
+	ushort u = crc;
+    byte b;
+    if (count == 0) return 0;
+    for (int i = offset; i < count; i++)
+    {
+        b = ((byte*)rgBlock)[i];
+        u = (ushort)(c_CRC16Table[(b ^ u) & 15] ^ (u >> 4));
+        u = (ushort)(c_CRC16Table[((b >> 4) ^ u) & 15] ^ (u >> 4));
+    }
+    return u;
+}
+
 #endif
+
 
 #define __HELP__MODULE__ 1
 #ifdef __HELP__MODULE__

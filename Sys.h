@@ -1,4 +1,4 @@
-﻿#ifndef _Sys_H_
+#ifndef _Sys_H_
 #define _Sys_H_
 
 #include <stdio.h>
@@ -94,6 +94,7 @@ public:
 
     // CRC32校验
     uint Crc(const void* rgBlock, int len, uint crc = 0);
+	ushort Crc16(void * rgBlock = NULL, int offset = 0, int count = 0 ,ushort crc = 0xFFFF);
 
 	void ShowHex(byte* buf, uint len, char sep = '\0');// 显示十六进制数据，指定分隔字符
 	void ShowString(byte* buf, uint len = 0, bool autoEnd = true);	// 显示字符串，不指定长度时自动找\0
