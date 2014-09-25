@@ -75,7 +75,7 @@ public:
     ushort RAMSize;		// 芯片RAM容量
 
     TSys();				// 构造函数
-    virtual ~TSys();	// 析构函数
+    ~TSys();	// 析构函数
 
     void Init();     	// 初始化系统
 	void ShowInfo();

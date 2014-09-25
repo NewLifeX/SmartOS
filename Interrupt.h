@@ -25,7 +25,7 @@ public:
     void* Params[VectorySize];       // 每一个中断向量对应的参数
 
     void Init();    // 初始化中断向量表
-    virtual ~TInterrupt();
+    ~TInterrupt();
 
     // 注册中断函数（中断号，函数，参数）
     bool Activate(short irq, InterruptCallback isr, void* param = NULL);

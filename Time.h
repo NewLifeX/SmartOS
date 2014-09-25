@@ -56,7 +56,7 @@ public:
 	uint InterruptsPerSecond;	// 每秒的中断数，时间片抢占式系统调度算法基于此值调度，也即是线程时间片，默认1000
 
     TTime();
-    virtual ~TTime();
+    ~TTime();
 
 	void Init();
     //void SetCompare(ulong compareValue);
