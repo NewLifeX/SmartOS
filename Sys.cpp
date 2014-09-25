@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+#include "Sys.h"
 
 #include "Time.h"
 
@@ -441,6 +441,7 @@ ushort TSys::Crc16(void * buf, int len,ushort crc)
 	ushort u = crc;
     byte b;
     if (len <= 0) return 0;
+	len *= 2;
     for (int i = 0; i < len; i++)
     {
         b = ((byte*)buf)[i];
