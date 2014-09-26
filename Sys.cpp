@@ -224,6 +224,7 @@ TSys::TSys()
 
 	_TaskCount = 0;
 	memset(_Tasks, 0, ArrayLength(_Tasks));
+	OnStart = NULL;
 }
 
 TSys::~TSys()
@@ -430,10 +431,10 @@ uint TSys::Crc(const byte* buf, uint len, uint crc)
     return crc;
 }
 
-static const ushort c_CRC16Table[] = 
-{ 
-0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401, 
-0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400, 
+static const ushort c_CRC16Table[] =
+{
+0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
+0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400,
 };
 
 ushort TSys::Crc16(const byte* buf, uint len, ushort crc)
@@ -553,6 +554,14 @@ void TSys::Start()
 #endif
 	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
 
+	if(OnStart)
+		OnStart();
+	else
+		StartInternal();
+}
+
+void TSys::StartInternal()
+{
 	_Running = true;
 	while(_Running)
 	{

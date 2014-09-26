@@ -69,15 +69,15 @@ private:
 	static void Init();
 	static void OnEnd();	// 每个线程结束时执行该方法，销毁线程
 
+	static byte BuildReady();// 准备就绪队列
+
+	static void Schedule();	// 系统线程调度开始
+
 public:
 	static Thread* Current;	// 正在执行的线程
 	static Thread* Idle;	// 空闲线程。最低优先级
 	static Thread* Main;	// 主线程。略低优先级
 	static byte Count;		// 线程个数
-
-	static byte BuildReady();// 准备就绪队列
-
-	static void Schedule();	// 系统线程调度开始
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
 };
 

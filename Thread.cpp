@@ -513,7 +513,7 @@ void Thread::Switch()
 	// 检查新栈的xPSR
 	//uint* psr = newStack + (STACK_Size >> 2) - 1;
 	//if(*psr != 0x01000000L) debug_printf("可能出错 xPSR=0x%08x\r\n", *psr);
-	
+
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
@@ -537,7 +537,7 @@ void Thread::OnTick()
 }
 
 void Idle_Handler(void* param) { while(1); }
-void Main_Handler(void* param) { Sys.Start(); while(1); }
+void Main_Handler(void* param) { Sys.StartInternal(); while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;
@@ -576,6 +576,8 @@ void Thread::Init()
 	Main = main;
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
+
+	Sys.OnStart = Schedule;
 }
 
 // 每个线程结束时执行该方法，销毁线程
