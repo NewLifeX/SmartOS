@@ -25,7 +25,7 @@ public:
 
 		_Buffer = new byte[len];
 		assert_ptr(_Buffer);
-		
+
 		_Capacity = len;
 		_Cur = _Buffer;
 		_Position = 0;
@@ -69,7 +69,7 @@ public:
 		_Position = p;
 		_Cur += offset;
 	}
-	
+
 	// 余下的有效数据流长度。0表示已经到达终点
 	uint Remain() { return Length - _Position; };
 
@@ -77,7 +77,7 @@ public:
 	bool Seek(int offset)
 	{
 		if(offset == 0) return true;
-		
+
 		int p = offset + _Position;
 		//if(p < 0 || p >= Length) return false;
 		// 允许移动到最后一个字节之后，也就是Length
@@ -160,7 +160,7 @@ public:
 
 		return p;
 	}
-	
+
 	// 常用读写整数方法
 	template<typename T>
 	T Read()
@@ -170,7 +170,7 @@ public:
 
 		return *(T*)p;
 	}
-	
+
 	template<typename T>
 	void Write(T value)
 	{
@@ -179,7 +179,7 @@ public:
 
 		*(T*)p = value;
 	}
-	
+
 	byte* ReadBytes(uint count)
 	{
 		byte* p = Current();
@@ -187,7 +187,7 @@ public:
 
 		return p;
 	}
-	
+
 	// 读取一个字节，不移动游标。如果没有可用数据，则返回-1
 	int Peek()
 	{
