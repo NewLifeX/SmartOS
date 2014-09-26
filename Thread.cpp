@@ -9,6 +9,18 @@
 	#endif
 #endif
 
+#ifdef FPU
+	#define STACK_Size ((18 + 8 + 16 + 8) << 2);	// 0xC8 = 200
+#else
+	#define STACK_Size ((8 + 8) << 2)	// 0x40 = 64
+#endif
+
+#ifdef FPU
+	#define STACK_SAVE_Size ((18 + 8) << 2)	// 0x68 = 104
+#else
+	#define STACK_SAVE_Size (8 << 2)	// 0x20 = 32
+#endif
+
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
 	// 栈大小必须4字节对齐
@@ -21,11 +33,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
 	// 外部传入的stackSize参数只是用户可用的栈大小，这里还需要加上保存寄存器所需要的stk部分
-#ifdef FPU
-	uint stkSize = 0xC4;
-#else
-	uint stkSize = 0x3C;
-#endif
+	uint stkSize = STACK_Size;
 
 	stackSize += stkSize;
 	StackSize = stackSize;
@@ -383,6 +391,8 @@ void OnSleep(uint ms)
 	if(th) th->Sleep(ms);
 }
 
+//byte Thread_PSP[STACK_SAVE_Size];
+
 // 系统线程调度开始
 void Thread::Schedule()
 {
@@ -391,6 +401,12 @@ void Thread::Schedule()
 	//SmartIRQ irq;
 	__disable_irq();
 
+	Sys.OnTick = OnTick;
+	Sys.OnSleep = OnSleep;
+
+	// 先切换好了才换栈，因为里面有很多层调用，不确定新栈空间是否足够
+	Switch();
+
 	// 使用双栈。每个线程有自己的栈，属于PSP，中断专用MSP
 	if(__get_CONTROL() != 2)
 	{
@@ -398,19 +414,16 @@ void Thread::Schedule()
 		// 很多RTOS在这里设置PSP为0，然后这个函数最后是一个死循环。
 		// 其实，PSP为0以后，这个函数就无法正常退出了，我们把它设置为MSP，确保函数正常退出，外部死循环
 		__set_PSP(__get_MSP());
+		// 这个时候的这个PSP是个祸害，首次中断会往这里压栈保存寄存器，我们申请一块不再回收的空间给它
+		//__set_PSP((uint)Thread_PSP + STACK_SAVE_Size);
 		__set_CONTROL(2);
 		__ISB();
 	}
 
 	// 有些说法这里MSP要8字节对齐。有些霸道。
-	//__set_MSP(__get_MSP() & 0xFFFFFFF8);
+	__set_MSP(__get_MSP() & 0xFFFFFFF8);
 
 	debug_printf("开始调度%d个用户线程\r\n", Count - 1);
-
-	Sys.OnTick = OnTick;
-	Sys.OnSleep = OnSleep;
-
-	Switch();
 
 	__enable_irq();	// 这里必须手工释放，否则会导致全局中断没有打开而造成无法调度
 
@@ -487,7 +500,7 @@ void Thread::Switch()
 		// 如果就绪队列也为空，则重建就绪队列
 		if(!Busy) BuildReady();
 
-		// 从新去就绪队列头部
+		// 重新取就绪队列头部
 		Current = Busy;
 		if(!Current) debug_printf("没有可调度线程，可能是挂起或睡眠了Idle线程\r\n");
 		assert_param(Current);
@@ -497,6 +510,10 @@ void Thread::Switch()
 	// 如果栈相同，说明是同一个线程，不需要切换
 	if(curStack != 0 && *curStack == newStack) return;
 
+	// 检查新栈的xPSR
+	//uint* psr = newStack + (STACK_Size >> 2) - 1;
+	//if(*psr != 0x01000000L) debug_printf("可能出错 xPSR=0x%08x\r\n", *psr);
+	
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
