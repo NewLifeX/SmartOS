@@ -339,8 +339,8 @@ void NRF24L01::OnClose()
 	CEDown();
 	WriteReg(CONFIG, config.ToByte());
 
-	if(_taskID) Sys.RemoveTask(_taskID);
-	_taskID = 0;
+	//if(_taskID) Sys.RemoveTask(_taskID);
+	//_taskID = 0;
 }
 
 // 从NRF的接收缓冲区中读出数据
@@ -539,6 +539,7 @@ void NRF24L01::ReceiveTask(void* param)
 	assert_ptr(param);
 
 	NRF24L01* nrf = (NRF24L01*)param;
+	if(!nrf->Opened) return;
 
     byte buf[32];
     //nrf->SetMode(true);

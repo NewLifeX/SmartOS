@@ -36,6 +36,8 @@ public:
 	virtual ~ITransport()
 	{
 		if(Opened) Close();
+
+		Register(NULL);
 	}
 
 	// 打开传输口
