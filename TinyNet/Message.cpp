@@ -158,7 +158,7 @@ bool Controller::Process(MemoryStream& ms)
 		if(lookup && lookup->Code == msg.Code)
 		{
 			// 返回值决定是普通回复还是错误回复
-			bool rs = lookup->Handler(msg);
+			bool rs = lookup->Handler(msg, lookup->Param);
 			// 如果本来就是响应，不用回复
 			if(!msg.Reply)
 			{
@@ -174,7 +174,7 @@ bool Controller::Process(MemoryStream& ms)
 	return true;
 }
 
-void Controller::Register(byte code, CommandHandler handler)
+void Controller::Register(byte code, CommandHandler handler, void* param)
 {
 	assert_param(code);
 	assert_param(handler);
@@ -182,6 +182,7 @@ void Controller::Register(byte code, CommandHandler handler)
 	CommandHandlerLookup* lookup = new CommandHandlerLookup();
 	lookup->Code = code;
 	lookup->Handler = handler;
+	lookup->Param = param;
 
 	_Handlers[_HandlerCount++] = lookup;
 }
@@ -273,7 +274,7 @@ bool Controller::Error(Message& msg)
 
 // 常用系统级消息
 // 系统时间获取与设置
-bool Controller::SysTime(Message& msg)
+bool Controller::SysTime(Message& msg, void* param)
 {
 	// 忽略响应消息
 	if(msg.Reply) return true;
@@ -299,7 +300,7 @@ bool Controller::SysTime(Message& msg)
 	return true;
 }
 
-bool Controller::SysID(Message& msg)
+bool Controller::SysID(Message& msg, void* param)
 {
 	// 忽略响应消息
 	if(msg.Reply) return true;
@@ -322,7 +323,7 @@ bool Controller::SysID(Message& msg)
 	return true;
 }
 
-bool Controller_Test_Discover(Message& msg)
+bool Controller::Discover(Message& msg, void* param)
 {
 	if(!msg.Reply)
 	{
@@ -366,8 +367,8 @@ void Controller::Test(ITransport* port)
 	control.Register(1, SysID);
 	control.Register(2, SysTime);
 
-	const byte DISC_CODE = 1;
-	control.Register(DISC_CODE, Controller_Test_Discover);
+	const byte DISC_CODE = 3;
+	control.Register(DISC_CODE, Discover);
 
 	control.Send(3, DISC_CODE);
 }

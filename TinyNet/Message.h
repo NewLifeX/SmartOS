@@ -67,25 +67,27 @@ protected:
 // 处理器部分
 public:
 	// 处理消息，返回是否成功
-	typedef bool (*CommandHandler)(Message& msg);
+	typedef bool (*CommandHandler)(Message& msg, void* param);
 
 private:
     struct CommandHandlerLookup
     {
         uint Code;
         CommandHandler Handler;
+		void* Param;
     };
 	CommandHandlerLookup* _Handlers[16];
 	byte _HandlerCount;
 
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
-	void Register(byte code, CommandHandler handler);
+	void Register(byte code, CommandHandler handler, void* param = NULL);
 
 // 常用系统级消息
 public:
-	static bool SysTime(Message& msg);
-	static bool SysID(Message& msg);
+	static bool SysTime(Message& msg, void* param);
+	static bool SysID(Message& msg, void* param);
+	static bool Discover(Message& msg, void* param);
 
 // 测试部分
 public:
