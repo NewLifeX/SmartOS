@@ -12,28 +12,23 @@ bool Message::Parse(byte* buf, uint len)
 	assert_ptr(buf);
 	assert_param(len > 0);
 
-	// 消息至少4个头部字节和2个校验字节，没有负载数据的情况下
-	const int headerSize = 4 + 2;
+	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
+	//const int headerSize = 4 + 2 + 2;
+	const int headerSize = MESSAGE_SIZE;
 	if(len < headerSize) return false;
 
-	// 复制头4字节
-	*(uint*)this = *(uint*)buf;
+	// 复制头8字节
+	*(ulong*)this = *(ulong*)buf;
+	// 校验剩余长度
+	if(len < headerSize + Length) return false;
 
-	Crc16 = Sys.Crc16(buf, len - 2);
+	// Checksum先清零再计算Crc16
+	ushort* p = (ushort*)(buf + headerSize - 2);
+	*p = 0;
+	Crc16 = Sys.Crc16(buf, len);
+	*p = Checksum;
 
-	if(len > headerSize)
-	{
-		Length = len - headerSize;
-		Data = buf + 4;
-	}
-	else
-	{
-		Length = 0;
-		Data = NULL;
-	}
-
-	// 数据校验在最后2字节
-	Checksum = *(ushort*)(buf + len - 2);
+	if(Length > 0) Data = buf + headerSize;
 
 	return true;
 }
@@ -55,8 +50,31 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(OnReceive, this);
 
-	_port = port;
-	
+	_ports = &port;
+	_portCount = 1;
+	_curPort = NULL;
+
+	memset(_Handlers, 0, ArrayLength(_Handlers));
+	_HandlerCount = 0;
+}
+
+Controller::Controller(ITransport** ports, int count)
+{
+	assert_ptr(ports);
+	assert_param(count > 0);
+
+	// 注册收到数据事件
+	for(int i=0; i<count; i++)
+	{
+		ITransport* p = *ports++;
+		assert_ptr(p);
+		p->Register(OnReceive, this);
+	}
+
+	_ports = ports;
+	_portCount = count;
+	_curPort = NULL;
+
 	memset(_Handlers, 0, ArrayLength(_Handlers));
 	_HandlerCount = 0;
 }
@@ -74,7 +92,12 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	assert_ptr(param);
 
 	Controller* control = (Controller*)param;
+	// 设置当前数据传输口
+	ITransport* old = control->_curPort;
+	control->_curPort = transport;
 	control->Process(buf, len);
+	// 还原回来
+	control->_curPort = old;
 
 	return 0;
 }
@@ -98,7 +121,7 @@ void Controller::Process(byte* buf, uint len)
 		len = ArrayLength(err);
 		// 把Crc16附到后面4字节
 		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
-		
+
 		msg.Length = len;
 		msg.Data = err;
 #else
@@ -159,19 +182,37 @@ bool Controller::Send(Message& msg)
 	// 附上自己的地址
 	msg.Src = Address;
 
-	// 计算校验
 	byte* buf = (byte*)&msg;
-	ushort crc = Sys.Crc16(buf, 4);
+	// 计算校验，先清零
+	msg.Checksum = 0;
+	ushort crc = Sys.Crc16(buf, MESSAGE_SIZE);
 	if(msg.Length > 0)
 		crc = Sys.Crc16(msg.Data, msg.Length, crc);
 
 	msg.Checksum = crc;
 
 	// 先发送头部，然后发送负载数据，最后校验
-	bool rs = _port->Write(buf, 4);
+	ITransport* _port = _curPort;
+	bool rs = true;
+	if(_port)
+		rs = Send(msg, _port);
+	else
+	{
+		// 发往所有端口
+		for(int i=0; i<_portCount; i++)
+			rs &= Send(msg, _ports[i]);
+	}
+
+	return rs;
+}
+
+bool Controller::Send(Message& msg, ITransport* port)
+{
+	byte* buf = (byte*)&msg;
+	// 先发送头部，然后发送负载数据，最后校验
+	bool rs = port->Write(buf, 8);
 	if(rs && msg.Length > 0)
-		_port->Write(msg.Data, msg.Length);
-	_port->Write((byte*)&msg.Checksum, 2);
+		port->Write(msg.Data, msg.Length);
 
 	return rs;
 }

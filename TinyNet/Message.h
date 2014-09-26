@@ -6,7 +6,7 @@
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
-// 测试指令 0201-0100-51CC，从1发往2，功能1，标识0，校验0xCC51
+// 测试指令 0201-0100-0000-51CC，从1发往2，功能1，标识0，校验0xCC51
 class Message
 {
 public:
@@ -17,12 +17,12 @@ public:
 	byte Flags:6;	// 标识位。也可以用来做二级命令
 	byte Error:1;	// 是否错误
 	byte Reply:1;	// 是否响应
-
-	// 负载数据及校验部分，并非内存布局。
 	ushort Length;	// 数据长度
+	ushort Checksum;// 16位检验和
+	
+	// 负载数据及校验部分，并非内存布局。
 	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
 	byte* Data;		// 数据部分
-	ushort Checksum;// 16位检验和
 
 public:
 	// 初始化消息，各字段为0
@@ -33,10 +33,14 @@ public:
 	bool Verify();
 };
 
+#define MESSAGE_SIZE offsetof(Message, Checksum) + 2
+
 class Controller
 {
 private:
-	ITransport* _port;	// 数据传输口
+	ITransport** _ports;	// 数据传输口
+	int _portCount;
+	ITransport* _curPort;	// 当前使用的数据传输口
 
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
@@ -44,11 +48,13 @@ public:
 	byte Address;	// 本地地址
 
 	Controller(ITransport* port);
+	Controller(ITransport** ports, int count);
 	~Controller();
 
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0);
 	// 发送消息
 	bool Send(Message& msg);
+	bool Send(Message& msg, ITransport* port);
 	bool SendSync(Message& msg, uint msTimeout = 10);
 	// 回复对方的请求消息
 	bool Reply(Message& msg);
