@@ -12,7 +12,9 @@ private:
 	byte* _Buffer;	// 数据缓冲区
 	byte* _Cur;		// 当前数据指针
 	uint _Capacity;	// 缓冲区容量
-	bool _free;		// 是否自动释放
+	//bool _free;		// 是否自动释放
+	// 又是头疼的对齐问题
+	uint _free;		// 是否自动释放
     uint _Position;	// 游标位置
 
 public:
