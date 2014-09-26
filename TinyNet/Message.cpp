@@ -7,9 +7,12 @@ void Message::Init()
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-bool Message::Parse(byte* buf, uint len)
+bool Message::Parse(MemoryStream& ms)
 {
+	byte* buf = ms.Current();
 	assert_ptr(buf);
+	
+	uint len = ms.Remain();
 	assert_param(len > 0);
 
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
@@ -18,17 +21,24 @@ bool Message::Parse(byte* buf, uint len)
 	if(len < headerSize) return false;
 
 	// 复制头8字节
-	*(ulong*)this = *(ulong*)buf;
+	//*(ulong*)this = *(ulong*)buf;
+	*(ulong*)this = ms.Read<ulong>();
 	// 校验剩余长度
 	if(len < headerSize + Length) return false;
 
 	// Checksum先清零再计算Crc16
-	ushort* p = (ushort*)(buf + headerSize - 2);
+	//ms.Seek(-2);
+	ushort* p = (ushort*)ms.Current() - 1;
+	//ushort* p = (ushort*)(buf + headerSize - 2);
 	*p = 0;
-	Crc16 = Sys.Crc16(buf, len);
+	Crc16 = Sys.Crc16(buf, headerSize + Length);
 	*p = Checksum;
 
-	if(Length > 0) Data = buf + headerSize;
+	if(Length > 0)
+	{
+		//Data = buf + headerSize;
+		Data = ms.ReadBytes(Length);
+	}
 
 	return true;
 }
@@ -95,30 +105,39 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	// 设置当前数据传输口
 	ITransport* old = control->_curPort;
 	control->_curPort = transport;
-	control->Process(buf, len);
+	
+	// 这里使用数据流，可能多个消息粘包在一起
+	MemoryStream ms(buf, len);
+	while(ms.Remain() >= MESSAGE_SIZE)
+	{
+		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
+		if(!control->Process(ms)) break;
+	}
+	
 	// 还原回来
 	control->_curPort = old;
 
 	return 0;
 }
 
-void Controller::Process(byte* buf, uint len)
+bool Controller::Process(MemoryStream& ms)
 {
 	// 只处理本机消息或广播消息。快速处理，高效。
-	if(buf[0] != Address && buf[0] != 0) return;
+	byte dest = ms.Peek();
+	if(dest != Address && dest != 0) return false;
 
 	Message msg;
-	if(!msg.Parse(buf, len)) return;
+	if(!msg.Parse(ms)) return false;
 
 	// 广播的响应消息也不要
-	if(msg.Dest == 0 && msg.Reply) return;
+	if(msg.Dest == 0 && msg.Reply) return true;
 
 	// 校验
 	if(!msg.Verify())
 	{
 #if DEBUG
 		byte err[] = "Crc Error 0xXXXX";
-		len = ArrayLength(err);
+		uint len = ArrayLength(err);
 		// 把Crc16附到后面4字节
 		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
 
@@ -130,7 +149,7 @@ void Controller::Process(byte* buf, uint len)
 
 		Error(msg);
 
-		return;
+		return true;
 	}
 
 	for(int i=0; i<_HandlerCount; i++)
@@ -151,6 +170,8 @@ void Controller::Process(byte* buf, uint len)
 			break;
 		}
 	}
+	
+	return true;
 }
 
 void Controller::Register(byte code, CommandHandler handler)
@@ -210,7 +231,7 @@ bool Controller::Send(Message& msg, ITransport* port)
 {
 	byte* buf = (byte*)&msg;
 	// 先发送头部，然后发送负载数据，最后校验
-	bool rs = port->Write(buf, 8);
+	bool rs = port->Write(buf, MESSAGE_SIZE);
 	if(rs && msg.Length > 0)
 		port->Write(msg.Data, msg.Length);
 

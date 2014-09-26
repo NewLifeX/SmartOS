@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Stream.h"
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
@@ -28,7 +29,7 @@ public:
 	// 初始化消息，各字段为0
 	void Init();
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-	bool Parse(byte* buf, uint len);
+	bool Parse(MemoryStream& ms);
 	// 验证消息校验和是否有效
 	bool Verify();
 };
@@ -61,7 +62,7 @@ public:
 	bool Error(Message& msg);
 
 protected:
-	void Process(byte* buf, uint len);
+	bool Process(MemoryStream& ms);
 
 // 处理器部分
 public:
