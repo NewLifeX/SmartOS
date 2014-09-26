@@ -23,6 +23,9 @@ bool Message::Parse(MemoryStream& ms)
 	// 复制头8字节
 	//*(ulong*)this = *(ulong*)buf;
 	*(ulong*)this = ms.Read<ulong>();
+	// 代码为0是非法的
+	if(!Code) return false;
+
 	// 校验剩余长度
 	if(len < headerSize + Length) return false;
 
@@ -135,6 +138,17 @@ bool Controller::Process(MemoryStream& ms)
 
 	Message msg;
 	if(!msg.Parse(ms)) return false;
+
+#if DEBUG
+	if(msg.Error)
+		debug_printf("Message Error");
+	else if(msg.Reply)
+		debug_printf("Message Reply");
+	else
+		debug_printf("Message Request");
+
+	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x\r\n", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+#endif
 
 	// 广播的响应消息也不要
 	if(msg.Dest == 0 && msg.Reply) return true;
