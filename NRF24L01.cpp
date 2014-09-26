@@ -436,6 +436,8 @@ void NRF24L01::AddError()
 	Error++;
 	if(MaxError > 0 && Error >= MaxError)
 	{
+		debug_printf("nRF24L01+出错%d次，超过最大次数%d，准备重启模块\r\n", Error, MaxError);
+
 		Close();
 		Open();
 	}
