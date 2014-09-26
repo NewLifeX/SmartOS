@@ -6,13 +6,6 @@
 
 #define COM_DEBUG 0
 
-// 默认波特率
-//#define USART_DEFAULT_BAUDRATE 115200
-
-//static USART_TypeDef* const g_Uart_Ports[] = UARTS;
-//static const Pin g_Uart_Pins[] = UART_PINS;
-//static const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
-
 SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBits, int stopBits)
 {
 	assert_param(com);
@@ -46,6 +39,7 @@ void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int st
 	_tx = NULL;
 	_rx = NULL;
 	RS485 = NULL;
+	Error = 0;
 
 	IsRemap = false;
 
@@ -209,10 +203,13 @@ void SerialPort::OnClose()
 }
 
 // 发送单一字节数据
-void TUsart_SendData(USART_TypeDef* port, const byte* data, uint times = 3000)
+void SerialPort::SendData(byte data, uint times)
 {
-    while(USART_GetFlagStatus(port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
-    if(times > 0) USART_SendData(port, (ushort)*data);
+    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+    if(times > 0)
+		USART_SendData(_port, (ushort)data);
+	else
+		Error++;
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
@@ -222,11 +219,11 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 
     if(size > 0)
     {
-        for(int i=0; i<size; i++) TUsart_SendData(_port, buf++);
+        for(int i=0; i<size; i++) SendData(*buf++);
     }
     else
     {
-        while(*buf) TUsart_SendData(_port, buf++);
+        while(*buf) SendData(*buf++);
     }
 
 	if(RS485) *RS485 = false;
@@ -344,7 +341,8 @@ extern "C"
             _printf_sp->Open();
         }
 
-        TUsart_SendData(port, (byte*)&ch);
+        //TUsart_SendData(port, (byte*)&ch);
+		_printf_sp->SendData((byte)ch);
 
 		isInFPutc = false;
         return ch;

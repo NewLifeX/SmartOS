@@ -31,6 +31,7 @@ private:
 
 public:
 	OutputPort* RS485;	// RS485使能引脚
+	int Error;			// 错误计数
 
     SerialPort(COM_Def index, 
         int baudRate = 115200, 
@@ -50,6 +51,8 @@ public:
     virtual ~SerialPort();
 
     bool IsRemap;   // 是否重映射
+
+	void SendData(byte data, uint times = 3000);
 
     bool Flush(uint times = 3000);
 
