@@ -10,44 +10,40 @@ class MemoryStream
 {
 private:
 	byte* _Buffer;	// 数据缓冲区
+	byte* _Cur;		// 当前数据指针
 	uint _Capacity;	// 缓冲区容量
 	bool _free;		// 是否自动释放
-
-	void Init()
-	{
-		_Buffer = NULL;
-		_Capacity = 0;
-		_free = false;
-
-		Position = 0;
-		Length = 0;
-	}
+    uint _Position;	// 游标位置
 
 public:
-    uint Position;	// 游标位置
 	uint Length;	// 数据长度
 
 	// 分配指定大小的数据流
 	MemoryStream(uint len)
 	{
 		assert_param(len > 0);
-		Init();
 
 		_Buffer = new byte[len];
+		assert_ptr(_Buffer);
+		
 		_Capacity = len;
-
+		_Cur = _Buffer;
+		_Position = 0;
 		_free = true;
+		Length = 0;
 	}
 
 	// 使用缓冲区初始化数据流
 	MemoryStream(byte* buf, uint len)
 	{
-		assert_param(buf);
+		assert_ptr(buf);
 		assert_param(len > 0);
-		Init();
 
 		_Buffer = buf;
 		_Capacity = len;
+		_Cur = _Buffer;
+		_Position = 0;
+		_free = false;
 		Length = len;
 	}
 
@@ -64,18 +60,31 @@ public:
 	// 数据流容量
 	uint Capacity() { return _Capacity; }
 
+	// 当前位置
+	uint Position() { return _Position; }
+	// 设置位置
+	void SetPosition(uint p)
+	{
+		int offset = p - _Position;
+		_Position = p;
+		_Cur += offset;
+	}
+	
 	// 余下的有效数据流长度。0表示已经到达终点
-	uint Remain() { return Length - Position; };
+	uint Remain() { return Length - _Position; };
 
 	// 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
-	bool TrySeek(int offset)
+	bool Seek(int offset)
 	{
-		int p = offset + Position;
+		if(offset == 0) return true;
+		
+		int p = offset + _Position;
 		//if(p < 0 || p >= Length) return false;
 		// 允许移动到最后一个字节之后，也就是Length
 		if(p < 0 || p > Length) return false;
 
-		Position = p;
+		_Position = p;
+		_Cur += offset;
 
 		return true;
 	}
@@ -84,13 +93,7 @@ public:
     byte* GetBuffer() { return _Buffer; }
 
 	// 数据流当前位置指针
-    byte* Current()
-	{
-		//assert_param(Position < Length);
-		if(Position >= Length) return NULL;
-
-		return _Buffer + Position;
-	}
+    byte* Current() { return _Cur; }
 
 	// 从当前位置读取数据
 	uint Read(byte* buf, uint offset = 0, int count = -1)
@@ -106,7 +109,8 @@ public:
 		memcpy(buf + offset, Current(), count);
 
 		// 游标移动
-		Position += count;
+		_Position = count;
+		_Cur += count;
 
 		return count;
 	}
@@ -116,7 +120,7 @@ public:
 	{
 		assert_param(buf);
 
-		uint remain = _Capacity - Position;
+		uint remain = _Capacity - _Position;
 		// 容量不够，需要扩容
 		if(count > remain)
 		{
@@ -128,18 +132,19 @@ public:
 			}
 
 			// 成倍扩容
-			uint total = Position + count;
+			uint total = _Position + count;
 			uint size = _Capacity;
 			while(size < total) size <<= 1;
 
 			// 申请新的空间，并复制数据
 			byte* bufNew = new byte[size];
-			if(Position > 0) memcpy(bufNew, _Buffer, Position);
+			if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
 
 			delete[] _Buffer;
 
 			_Buffer = bufNew;
 			_Capacity = size;
+			_Cur = _Buffer + _Position;
 		}
 
 		memcpy(Current(), buf + offset, count);
@@ -151,9 +156,43 @@ public:
 	T* Retrieve()
 	{
 		T* p = (T*)Current();
-		if(!TrySeek(sizeof(T))) return NULL;
+		if(!Seek(sizeof(T))) return NULL;
 
 		return p;
+	}
+	
+	// 常用读写整数方法
+	template<typename T>
+	T Read()
+	{
+		byte* p = Current();
+		if(!Seek(sizeof(T))) return 0;
+
+		return *(T*)p;
+	}
+	
+	template<typename T>
+	void Write(T value)
+	{
+		byte* p = Current();
+		if(!Seek(sizeof(T))) return;
+
+		*(T*)p = value;
+	}
+	
+	byte* ReadBytes(uint count)
+	{
+		byte* p = Current();
+		if(!Seek(count)) return NULL;
+
+		return p;
+	}
+	
+	// 读取一个字节，不移动游标。如果没有可用数据，则返回-1
+	int Peek()
+	{
+		if(!Remain()) return -1;
+		return *Current();
 	}
 };
 

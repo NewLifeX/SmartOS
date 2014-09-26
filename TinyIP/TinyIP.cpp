@@ -113,13 +113,13 @@ void TinyIP::Process(MemoryStream* ms)
 
 	// 前面的len不准确，必须以这个为准
 	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
-	ms->Length = ms->Position + size;
+	ms->Length = ms->Position() + size;
 	//len = size;
 	//buf += (ip->Length << 2);
-	ms->Position += (ip->Length << 2) - sizeof(IP_HEADER);
+	ms->Seek((ip->Length << 2) - sizeof(IP_HEADER));
 
 	// 各处理器有可能改变数据流游标，这里备份一下
-	uint p = ms->Position;
+	uint p = ms->Position();
 	//for(int i=0; i < Sockets.Count(); i++)
 	// 考虑到可能有通用端口处理器，也可能有专用端口处理器（一般在后面），这里偷懒使用倒序处理
 	uint count = Sockets.Count();
@@ -133,7 +133,7 @@ void TinyIP::Process(MemoryStream* ms)
 			{
 				// 如果处理成功，则中断遍历
 				if(socket->Process(ms)) return;
-				ms->Position = p;
+				ms->SetPosition(p);
 			}
 		}
 	}
@@ -377,7 +377,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 		}
 
 		// 用不到数据包交由系统处理
-		ms.Position = 0;
+		ms.SetPosition(0);
 		ms.Length = len;
 		Tip->Process(&ms);
 	}
@@ -398,7 +398,7 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 bool TcpSocket::Process(MemoryStream* ms)
 {
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
-	if(!ms->TrySeek(tcp->Length << 2)) return false;
+	if(!ms->Seek(tcp->Length << 2)) return false;
 
 	Header = tcp;
 	uint len = ms->Remain();
@@ -1144,7 +1144,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 		}
 
 		// 用不到数据包交由系统处理
-		ms.Position = 0;
+		ms.SetPosition(0);
 		ms.Length = len;
 		Tip->Process(&ms);
 	}
