@@ -45,7 +45,7 @@ void Timer::Start()
     RCC_ClocksTypeDef clock;
     RCC_GetClocksFreq(&clock);
 
-#ifdef STM32F4
+#if defined(STM32F1) || defined(STM32F4)
 	uint clk = clock.PCLK1_Frequency;
 	if((uint)_port & 0x00010000) clk = clock.PCLK2_Frequency;
 	clk <<= 1;
@@ -146,7 +146,7 @@ void Timer::SetFrequency(uint frequency)
     RCC_ClocksTypeDef clock;
     RCC_GetClocksFreq(&clock);
 
-#ifdef STM32F4
+#if defined(STM32F1) || defined(STM32F4)
 	uint clk = clock.PCLK1_Frequency;
 	if((uint)_port & 0x00010000) clk = clock.PCLK2_Frequency;
 	clk <<= 1;
