@@ -78,6 +78,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
     WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
+
+	_taskID = 0;
 }
 
 NRF24L01::~NRF24L01()
@@ -91,6 +93,8 @@ NRF24L01::~NRF24L01()
 	_spi = NULL;
 	_CE = NULL;
 	_IRQ = NULL;
+
+	if(_taskID) Sys.RemoveTask(_taskID);
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -149,7 +153,7 @@ bool NRF24L01::Check(void)
 	byte buf1[5];
 	byte buf2[5];
 
-	//!!! 必须确保还原会原来的地址，否则会干扰系统的正常工作
+	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
 	ReadBuf(TX_ADDR, buf1, 5);
 
@@ -314,7 +318,13 @@ bool NRF24L01::OnOpen()
 
 	//return Check() && Config() && Check();
 	// 配置完成以后，无需再次检查
-	return Check() && Config();
+	if(!(Check() && Config())) return false;
+
+	// 如果有注册事件，则启用接收任务
+	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
+	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
+
+	return true;
 }
 
 void NRF24L01::OnClose()
@@ -328,6 +338,9 @@ void NRF24L01::OnClose()
 
 	CEDown();
 	WriteReg(CONFIG, config.ToByte());
+
+	if(_taskID) Sys.RemoveTask(_taskID);
+	_taskID = 0;
 }
 
 // 从NRF的接收缓冲区中读出数据
@@ -381,7 +394,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			// 这里不能直接跳出函数，即使发送失败，也要在后面进入接收模式
 			break;
 		}
-		
+
 		RF_STATUS st;
 		st.Init(Status);
 
@@ -392,9 +405,9 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 			rs = st.TX_DS;
-			
+
 			if(!st.TX_DS && st.MAX_RT) AddError();
-			
+
 			break;
 		}
 	}
@@ -519,4 +532,38 @@ bool NRF24L01::CanReceive()
 	RF_STATUS st;
 	st.Init(Status);
 	return st.RX_DR;
+}
+
+void NRF24L01::ReceiveTask(void* param)
+{
+	assert_ptr(param);
+
+	NRF24L01* nrf = (NRF24L01*)param;
+
+    byte buf[32];
+    //nrf->SetMode(true);
+	uint len = nrf->Read(buf, ArrayLength(buf));
+    if(len)
+    {
+        len = nrf->OnReceive(buf, len);
+
+		// 如果有返回，说明有数据要回复出去
+		if(len) nrf->Write(buf, len);
+    }
+}
+
+void NRF24L01::Register(TransportHandler handler, void* param)
+{
+	ITransport::Register(handler, param);
+
+	// 如果有注册事件，则启用接收任务
+	if(handler)
+	{
+		if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
+	}
+	else
+	{
+		if(_taskID) Sys.RemoveTask(_taskID);
+		_taskID = 0;
+	}
 }

@@ -23,6 +23,11 @@ private:
 
     void CEUp();
     void CEDown();
+
+	// 接收任务。
+	static void ReceiveTask(void* param);
+	uint _taskID;
+
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0X28 MHZ
 	byte Address[5];	// 通道0地址
@@ -50,6 +55,8 @@ public:
 
     //bool Send(byte* data);
     //bool Receive(byte* data);
+
+	virtual void Register(TransportHandler handler, void* param = NULL);
 
 protected:
 	virtual bool OnOpen();
