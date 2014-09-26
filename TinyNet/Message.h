@@ -49,7 +49,7 @@ public:
 	byte Address;	// 本地地址
 
 	Controller(ITransport* port);
-	Controller(ITransport** ports, int count);
+	Controller(ITransport* ports[], int count);
 	~Controller();
 
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0);

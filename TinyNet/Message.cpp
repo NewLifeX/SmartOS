@@ -11,7 +11,7 @@ bool Message::Parse(MemoryStream& ms)
 {
 	byte* buf = ms.Current();
 	assert_ptr(buf);
-	
+
 	uint len = ms.Remain();
 	assert_param(len > 0);
 
@@ -68,20 +68,24 @@ Controller::Controller(ITransport* port)
 	_HandlerCount = 0;
 }
 
-Controller::Controller(ITransport** ports, int count)
+Controller::Controller(ITransport* ports[], int count)
 {
 	assert_ptr(ports);
 	assert_param(count > 0);
+
+	// 内部分配空间存放，避免外部内存被回收
+	_ports = new ITransport*[count];
 
 	// 注册收到数据事件
 	for(int i=0; i<count; i++)
 	{
 		ITransport* p = *ports++;
 		assert_ptr(p);
+
+		_ports[i] = p;
 		p->Register(OnReceive, this);
 	}
 
-	_ports = ports;
 	_portCount = count;
 	_curPort = NULL;
 
@@ -95,6 +99,9 @@ Controller::~Controller()
 	{
 		if(_Handlers[i]) delete _Handlers[i];
 	}
+
+	if(_ports) delete _ports;
+	_ports = NULL;
 }
 
 uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
@@ -105,7 +112,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	// 设置当前数据传输口
 	ITransport* old = control->_curPort;
 	control->_curPort = transport;
-	
+
 	// 这里使用数据流，可能多个消息粘包在一起
 	MemoryStream ms(buf, len);
 	while(ms.Remain() >= MESSAGE_SIZE)
@@ -113,7 +120,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
 		if(!control->Process(ms)) break;
 	}
-	
+
 	// 还原回来
 	control->_curPort = old;
 
@@ -170,7 +177,7 @@ bool Controller::Process(MemoryStream& ms)
 			break;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -230,6 +237,8 @@ bool Controller::Send(Message& msg)
 
 bool Controller::Send(Message& msg, ITransport* port)
 {
+	assert_ptr(port);
+
 	byte* buf = (byte*)&msg;
 	// 先发送头部，然后发送负载数据，最后校验
 	bool rs = port->Write(buf, MESSAGE_SIZE);
