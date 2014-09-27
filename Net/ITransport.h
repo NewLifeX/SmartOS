@@ -43,6 +43,9 @@ public:
 	// 打开传输口
 	bool Open()
 	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
 		if(Opened || Opening) return true;
 
 		Opening = true;
@@ -55,6 +58,9 @@ public:
 	// 关闭传输口
 	void Close()
 	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
 		if(!Opened || Opening) return;
 
 		Opening = true;
@@ -66,6 +72,9 @@ public:
 	// 发送数据
 	bool Write(const byte* buf, uint len)
 	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
 		if(!Opened && !Open()) return false;
 
 		return OnWrite(buf, len);
@@ -74,6 +83,9 @@ public:
 	// 接收数据
 	uint Read(byte* buf, uint len)
 	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
 		if(!Opened && !Open()) return 0;
 
 		return OnRead(buf, len);
@@ -82,6 +94,9 @@ public:
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = NULL)
 	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
 		if(handler)
 		{
 			_handler = handler;
@@ -95,6 +110,12 @@ public:
 			_param = NULL;
 		}
 	}
+
+#if DEBUG
+	virtual string ToString() { return "ITransport"; }
+#else
+	virtual string ToString() { return ""; }
+#endif
 
 protected:
 	virtual bool OnOpen() { return true; }

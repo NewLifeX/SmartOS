@@ -9,11 +9,11 @@
 class SerialPort : public ITransport
 {
 private:
-	int _index;
+	byte _index;
+	byte _parity;
+	byte _dataBits;
+	byte _stopBits;
 	int _baudRate;
-	int _parity;
-	int _dataBits;
-	int _stopBits;
 	
     USART_TypeDef* _port;
 	AlternatePort* _tx;
@@ -25,32 +25,32 @@ private:
 
     void Init(byte index, 
         int baudRate = 115200, 
-        int parity = USART_Parity_No,       //无奇偶校验
-        int dataBits = USART_WordLength_8b, //8位数据长度
-        int stopBits = USART_StopBits_1);    //1位停止位
+        byte parity = USART_Parity_No,       //无奇偶校验
+        byte dataBits = USART_WordLength_8b, //8位数据长度
+        byte stopBits = USART_StopBits_1);    //1位停止位
 
 public:
+	char 		Name[5];// 名称。COMx，后面1字节\0表示结束
+    bool		IsRemap;// 是否重映射
 	OutputPort* RS485;	// RS485使能引脚
-	int Error;			// 错误计数
+	int 		Error;	// 错误计数
 
     SerialPort(COM_Def index, 
         int baudRate = 115200, 
-        int parity = USART_Parity_No,       //无奇偶校验
-        int dataBits = USART_WordLength_8b, //8位数据长度
-        int stopBits = USART_StopBits_1)    //1位停止位
+        byte parity = USART_Parity_No,       //无奇偶校验
+        byte dataBits = USART_WordLength_8b, //8位数据长度
+        byte stopBits = USART_StopBits_1)    //1位停止位
 	{
 		Init(index, baudRate, parity, dataBits, stopBits);
 	}
 
     SerialPort(USART_TypeDef* com, 
         int baudRate = 115200, 
-        int parity = USART_Parity_No,       //无奇偶校验
-        int dataBits = USART_WordLength_8b, //8位数据长度
-        int stopBits = USART_StopBits_1);    //1位停止位
+        byte parity = USART_Parity_No,       //无奇偶校验
+        byte dataBits = USART_WordLength_8b, //8位数据长度
+        byte stopBits = USART_StopBits_1);    //1位停止位
 	// 析构时自动关闭
     virtual ~SerialPort();
-
-    bool IsRemap;   // 是否重映射
 
 	void SendData(byte data, uint times = 3000);
 
@@ -60,6 +60,8 @@ public:
 
     virtual void Register(TransportHandler handler, void* param = NULL);
 
+	virtual string ToString() { return Name; }
+	
 	static SerialPort* GetMessagePort();
 protected:
 	virtual bool OnOpen();

@@ -6,7 +6,7 @@
 
 #define COM_DEBUG 0
 
-SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBits, int stopBits)
+SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataBits, byte stopBits)
 {
 	assert_param(com);
 
@@ -24,7 +24,7 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, int parity, int dataBit
 	Init(_index, baudRate, parity, dataBits, stopBits);
 }
 
-void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int stopBits)
+void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte stopBits)
 {
 	USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	_index = index;
@@ -45,6 +45,12 @@ void SerialPort::Init(byte index, int baudRate, int parity, int dataBits, int st
 
 	// 根据端口实际情况决定打开状态
 	if(_port->CR1 & USART_CR1_UE) Opened = true;
+	
+	// 设置名称
+	//Name = "COMx";
+	*(uint*)Name = *(uint*)"COMx";
+	Name[3] = '0' + _index + 1;
+	Name[4] = 0;
 }
 
 // 析构时自动关闭
