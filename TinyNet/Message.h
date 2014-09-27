@@ -7,7 +7,9 @@
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
-// 测试指令 0201-0100-0000-51CC，从1发往2，功能1，标识0，校验0xCC51
+// 请求 0038-0403-0000-BC4C，从0x38发往0（广播），功能4，标识3（保留字段用于业务），长度0，校验0x4CBC（小字节序）
+// 响应 3856-048x-0000-xxxx
+// 错误 3856-044x-0000
 class Message
 {
 public:
@@ -37,13 +39,14 @@ public:
 	void Write(MemoryStream& ms);
 };
 
+// 消息头大小
 #define MESSAGE_SIZE offsetof(Message, Checksum) + 2
 
 class Controller
 {
 private:
 	ITransport** _ports;	// 数据传输口
-	int _portCount;
+	int _portCount;			// 传输口个数
 	ITransport* _curPort;	// 当前使用的数据传输口
 
 	void Init();
@@ -76,9 +79,9 @@ public:
 private:
     struct CommandHandlerLookup
     {
-        uint Code;
-        CommandHandler Handler;
-		void* Param;
+        uint			Code;	// 代码
+        CommandHandler	Handler;// 处理函数
+		void*			Param;	// 参数
     };
 	CommandHandlerLookup* _Handlers[16];
 	byte _HandlerCount;
@@ -89,19 +92,16 @@ public:
 
 // 常用系统级消息
 public:
+	// 询问及设置系统时间
 	static bool SysTime(Message& msg, void* param);
+	// 询问系统标识号
 	static bool SysID(Message& msg, void* param);
+	// 广播发现系统
 	static bool Discover(Message& msg, void* param);
 
 // 测试部分
 public:
 	static void Test(ITransport* port);
 };
-
-/*class DiscoverMessage : public Message
-{
-public:
-	//const
-}*/
 
 #endif
