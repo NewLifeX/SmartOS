@@ -3,7 +3,11 @@
 // 初始化消息，各字段为0
 void Message::Init()
 {
-	memset(this, 0, sizeof(Message));
+	// 只有POD类型才可以这样清除
+	//memset(this, 0, sizeof(Message));
+	*(ulong*)this = 0;
+	Crc16 = 0;
+	Data = NULL;
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -25,6 +29,10 @@ bool Message::Parse(MemoryStream& ms)
 	*(ulong*)this = ms.Read<ulong>();
 	// 代码为0是非法的
 	if(!Code) return false;
+	// 没有源地址是很不负责任的
+	if(!Src) return false;
+	// 非广播包时，源地址和目的地址相同也是非法的
+	if(Dest == Src) return false;
 
 	// 校验剩余长度
 	if(len < headerSize + Length) return false;
@@ -60,15 +68,15 @@ Controller::Controller(ITransport* port)
 {
 	assert_ptr(port);
 
+	debug_printf("微网控制器初始化 传输口：%s\r\n", port->ToString());
+	
 	// 注册收到数据事件
 	port->Register(OnReceive, this);
 
 	_ports = &port;
 	_portCount = 1;
-	_curPort = NULL;
 
-	memset(_Handlers, 0, ArrayLength(_Handlers));
-	_HandlerCount = 0;
+	Init();
 }
 
 Controller::Controller(ITransport* ports[], int count)
@@ -79,21 +87,40 @@ Controller::Controller(ITransport* ports[], int count)
 	// 内部分配空间存放，避免外部内存被回收
 	_ports = new ITransport*[count];
 
+	debug_printf("微网控制器初始化 共%d个传输口", count);
+	for(int i=0; i<count; i++)
+	{
+		assert_ptr(ports[i]);
+
+		debug_printf(" %s", ports[i]->ToString());
+		_ports[i] = ports[i];
+	}
+	debug_printf("\r\n");
+
 	// 注册收到数据事件
 	for(int i=0; i<count; i++)
 	{
-		ITransport* p = *ports++;
-		assert_ptr(p);
-
-		_ports[i] = p;
-		p->Register(OnReceive, this);
+		ports[i]->Register(OnReceive, this);
 	}
 
 	_portCount = count;
+
+	Init();
+}
+
+void Controller::Init()
+{
 	_curPort = NULL;
 
 	memset(_Handlers, 0, ArrayLength(_Handlers));
 	_HandlerCount = 0;
+
+	// 初始化一个随机地址
+	Address = Sys.ID[0];
+	// 如果地址为0，则使用时间来随机一个
+	while(!Address) Address = Time.Current();
+
+	debug_printf("初始化微网控制器 Address=%d 使用%d个传输接口\r\n", Address, _portCount);
 }
 
 Controller::~Controller()
@@ -105,6 +132,8 @@ Controller::~Controller()
 
 	if(_ports) delete _ports;
 	_ports = NULL;
+	
+	debug_printf("微网控制器销毁\r\n");
 }
 
 uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
@@ -140,6 +169,7 @@ bool Controller::Process(MemoryStream& ms)
 	if(!msg.Parse(ms)) return false;
 
 #if DEBUG
+	debug_printf("%s ", _curPort->ToString());
 	if(msg.Error)
 		debug_printf("Message Error");
 	else if(msg.Reply)
@@ -147,7 +177,13 @@ bool Controller::Process(MemoryStream& ms)
 	else
 		debug_printf("Message Request");
 
-	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x\r\n", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+	if(msg.Length > 0)
+	{
+		debug_printf(" 数据：[%d] ", msg.Length);
+		Sys.ShowString(msg.Data, msg.Length);
+	}
+	debug_printf("\r\n");
 #endif
 
 	// 广播的响应消息也不要

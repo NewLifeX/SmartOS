@@ -43,6 +43,7 @@ private:
 	int _portCount;
 	ITransport* _curPort;	// 当前使用的数据传输口
 
+	void Init();
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
 public:
