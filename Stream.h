@@ -12,9 +12,9 @@ private:
 	byte* _Buffer;	// 数据缓冲区
 	byte* _Cur;		// 当前数据指针
 	uint _Capacity;	// 缓冲区容量
-	//bool _free;		// 是否自动释放
+	//bool _internal;		// 是否自动释放
 	// 又是头疼的对齐问题
-	uint _free;		// 是否自动释放
+	uint _internal;	// 是否自动释放
     uint _Position;	// 游标位置
 
 public:
@@ -31,7 +31,7 @@ public:
 		_Capacity = len;
 		_Cur = _Buffer;
 		_Position = 0;
-		_free = true;
+		_internal = true;
 		Length = 0;
 	}
 
@@ -45,14 +45,14 @@ public:
 		_Capacity = len;
 		_Cur = _Buffer;
 		_Position = 0;
-		_free = false;
+		_internal = false;
 		Length = len;
 	}
 
 	// 销毁数据流
 	virtual ~MemoryStream()
 	{
-		if(_free)
+		if(_internal)
 		{
 			if(_Buffer) delete _Buffer;
 			_Buffer = NULL;
@@ -64,9 +64,13 @@ public:
 
 	// 当前位置
 	uint Position() { return _Position; }
+
 	// 设置位置
 	void SetPosition(uint p)
 	{
+		// 允许移动到最后一个字节之后，也就是Length
+		assert_param(p <= Length);
+
 		int offset = p - _Position;
 		_Position = p;
 		_Cur += offset;
@@ -102,16 +106,19 @@ public:
 	{
 		assert_param(buf);
 
+		if(count == 0) return 0;
+
+		uint remain = Remain();
 		if(count < 0)
-			count = Remain();
-		else if(count > Remain())
-			count = Remain();
+			count = remain;
+		else if(count > remain)
+			count = remain;
 
 		// 复制需要的数据
 		memcpy(buf + offset, Current(), count);
 
 		// 游标移动
-		_Position = count;
+		_Position += count;
 		_Cur += count;
 
 		return count;
@@ -122,34 +129,12 @@ public:
 	{
 		assert_param(buf);
 
-		uint remain = _Capacity - _Position;
-		// 容量不够，需要扩容
-		if(count > remain)
-		{
-			if(!_free)
-			{
-				debug_printf("数据流剩余容量%d不足%d，而外部缓冲区无法扩容！", remain, count);
-				assert_param(false);
-				return;
-			}
-
-			// 成倍扩容
-			uint total = _Position + count;
-			uint size = _Capacity;
-			while(size < total) size <<= 1;
-
-			// 申请新的空间，并复制数据
-			byte* bufNew = new byte[size];
-			if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
-
-			delete[] _Buffer;
-
-			_Buffer = bufNew;
-			_Capacity = size;
-			_Cur = _Buffer + _Position;
-		}
+		if(!CheckCapacity(count)) return;
 
 		memcpy(Current(), buf + offset, count);
+
+		_Position += count;
+		_Cur += count;
 		Length += count;
 	}
 
@@ -176,10 +161,15 @@ public:
 	template<typename T>
 	void Write(T value)
 	{
-		byte* p = Current();
-		if(!Seek(sizeof(T))) return;
+		if(!CheckCapacity(sizeof(T))) return;
 
+		byte* p = Current();
 		*(T*)p = value;
+
+		// 移动游标
+		_Position += sizeof(T);
+		_Cur += sizeof(T);
+		Length += sizeof(T);
 	}
 
 	byte* ReadBytes(uint count)
@@ -195,6 +185,39 @@ public:
 	{
 		if(!Remain()) return -1;
 		return *Current();
+	}
+
+private:
+	bool CheckCapacity(uint count)
+	{
+		uint remain = _Capacity - _Position;
+		// 容量不够，需要扩容
+		if(count > remain)
+		{
+			if(!_internal)
+			{
+				debug_printf("数据流剩余容量%d不足%d，而外部缓冲区无法扩容！", remain, count);
+				assert_param(false);
+				return false;
+			}
+
+			// 原始容量成倍扩容
+			uint total = _Position + count;
+			uint size = _Capacity;
+			while(size < total) size <<= 1;
+
+			// 申请新的空间，并复制数据
+			byte* bufNew = new byte[size];
+			if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
+
+			delete[] _Buffer;
+
+			_Buffer = bufNew;
+			_Capacity = size;
+			_Cur = _Buffer + _Position;
+		}
+
+		return true;
 	}
 };
 
