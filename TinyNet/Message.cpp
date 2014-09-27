@@ -64,13 +64,19 @@ bool Message::Verify()
 	return Checksum == Crc16;
 }
 
+void Message::Write(MemoryStream& ms)
+{
+	ms.Write(*(ulong*)this);
+	if(Length > 0) ms.Write(Data, 0, Length);
+}
+
 // 构造控制器
 Controller::Controller(ITransport* port)
 {
 	assert_ptr(port);
 
 	debug_printf("微网控制器初始化 传输口：%s\r\n", port->ToString());
-	
+
 	// 注册收到数据事件
 	port->Register(OnReceive, this);
 
@@ -133,7 +139,7 @@ Controller::~Controller()
 
 	if(_ports) delete _ports;
 	_ports = NULL;
-	
+
 	debug_printf("微网控制器销毁\r\n");
 }
 
@@ -165,7 +171,7 @@ bool Controller::Process(MemoryStream& ms)
 #if DEBUG
 	byte* p = ms.Current();
 #endif
-	
+
 	// 只处理本机消息或广播消息。快速处理，高效。
 	byte dest = ms.Peek();
 	if(dest != Address && dest != 0) return false;
@@ -176,8 +182,8 @@ bool Controller::Process(MemoryStream& ms)
 #if DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
-	Sys.ShowHex(p, ms.Current() - p);
-	debug_printf("\r\n");
+	/*Sys.ShowHex(p, ms.Current() - p);
+	debug_printf("\r\n");*/
 
 	debug_printf("%s ", _curPort->ToString());
 	if(msg.Error)
@@ -296,18 +302,27 @@ bool Controller::Send(Message& msg)
 	}
 	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
+
+	/*Sys.ShowHex(buf, MESSAGE_SIZE);
+	if(msg.Length > 0)
+		Sys.ShowHex(msg.Data, msg.Length);
+	debug_printf("\r\n");*/
 #endif
 
 	// 先发送头部，然后发送负载数据，最后校验
+	MemoryStream ms(MESSAGE_SIZE + msg.Length);
+	msg.Write(ms);
+	ms.SetPosition(0);
+
 	ITransport* _port = _curPort;
 	bool rs = true;
 	if(_port)
-		rs = Send(msg, _port);
+		rs = _port->Write(ms.Current(), ms.Length);
 	else
 	{
 		// 发往所有端口
 		for(int i=0; i<_portCount; i++)
-			rs &= Send(msg, _ports[i]);
+			rs &= _ports[i]->Write(ms.Current(), ms.Length);
 	}
 
 	return rs;
@@ -317,13 +332,11 @@ bool Controller::Send(Message& msg, ITransport* port)
 {
 	assert_ptr(port);
 
-	byte* buf = (byte*)&msg;
-	// 先发送头部，然后发送负载数据，最后校验
-	bool rs = port->Write(buf, MESSAGE_SIZE);
-	if(rs && msg.Length > 0)
-		port->Write(msg.Data, msg.Length);
+	MemoryStream ms(MESSAGE_SIZE + msg.Length);
+	msg.Write(ms);
+	ms.SetPosition(0);
 
-	return rs;
+	return port->Write(ms.Current(), ms.Length);
 }
 
 bool Controller::SendSync(Message& msg, uint msTimeout)

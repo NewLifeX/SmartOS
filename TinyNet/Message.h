@@ -20,7 +20,7 @@ public:
 	byte Reply:1;	// 是否响应
 	ushort Length;	// 数据长度
 	ushort Checksum;// 16位检验和
-	
+
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
 	byte* Data;		// 数据部分
@@ -32,6 +32,9 @@ public:
 	bool Parse(MemoryStream& ms);
 	// 验证消息校验和是否有效
 	bool Verify();
+
+	// 写入指定数据流
+	void Write(MemoryStream& ms);
 };
 
 #define MESSAGE_SIZE offsetof(Message, Checksum) + 2
