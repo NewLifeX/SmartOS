@@ -48,6 +48,7 @@ bool Message::Parse(MemoryStream& ms)
 	if(Length > 0)
 	{
 		//Data = buf + headerSize;
+		// 要移动游标
 		Data = ms.ReadBytes(Length);
 	}
 
@@ -120,7 +121,7 @@ void Controller::Init()
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("初始化微网控制器 Address=%d 使用%d个传输接口\r\n", Address, _portCount);
+	debug_printf("初始化微网控制器完成 Address=%d (0x%02x) 使用%d个传输接口\r\n", Address, Address, _portCount);
 }
 
 Controller::~Controller()
@@ -161,6 +162,10 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 
 bool Controller::Process(MemoryStream& ms)
 {
+#if DEBUG
+	byte* p = ms.Current();
+#endif
+	
 	// 只处理本机消息或广播消息。快速处理，高效。
 	byte dest = ms.Peek();
 	if(dest != Address && dest != 0) return false;
@@ -169,6 +174,11 @@ bool Controller::Process(MemoryStream& ms)
 	if(!msg.Parse(ms)) return false;
 
 #if DEBUG
+	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
+	// 输出整条信息
+	Sys.ShowHex(p, ms.Current() - p);
+	debug_printf("\r\n");
+
 	debug_printf("%s ", _curPort->ToString());
 	if(msg.Error)
 		debug_printf("Message Error");
@@ -194,7 +204,7 @@ bool Controller::Process(MemoryStream& ms)
 	if(!msg.Verify())
 	{
 #if DEBUG
-		byte err[] = "Crc Error 0xXXXX";
+		byte err[] = "Crc Error #XXXX";
 		uint len = ArrayLength(err);
 		// 把Crc16附到后面4字节
 		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
@@ -262,14 +272,31 @@ bool Controller::Send(Message& msg)
 	// 附上自己的地址
 	msg.Src = Address;
 
-	byte* buf = (byte*)&msg;
+	byte* buf = (byte*)&msg.Dest;
 	// 计算校验，先清零
 	msg.Checksum = 0;
 	ushort crc = Sys.Crc16(buf, MESSAGE_SIZE);
 	if(msg.Length > 0)
 		crc = Sys.Crc16(msg.Data, msg.Length, crc);
 
-	msg.Checksum = crc;
+	msg.Checksum = msg.Crc16 = crc;
+
+#if DEBUG
+	debug_printf("Message Send");
+	if(msg.Error)
+		debug_printf(" Error");
+	else if(msg.Reply)
+		debug_printf(" Reply");
+
+	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+	if(msg.Length > 0)
+	{
+		debug_printf(" 数据：[%d] ", msg.Length);
+		Sys.ShowString(msg.Data, msg.Length);
+	}
+	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
+	debug_printf("\r\n");
+#endif
 
 	// 先发送头部，然后发送负载数据，最后校验
 	ITransport* _port = _curPort;
