@@ -278,7 +278,10 @@ bool Controller::Send(Message& msg)
 	// 附上自己的地址
 	msg.Src = Address;
 
+	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
+	uint len = msg.Length;
+
 	// 计算校验，先清零
 	msg.Checksum = 0;
 	ushort crc = Sys.Crc16(buf, MESSAGE_SIZE);
@@ -309,20 +312,26 @@ bool Controller::Send(Message& msg)
 	debug_printf("\r\n");*/
 #endif
 
-	// 先发送头部，然后发送负载数据，最后校验
-	MemoryStream ms(MESSAGE_SIZE + msg.Length);
-	msg.Write(ms);
-	ms.SetPosition(0);
+	if(msg.Length > 0)
+	{
+		// 带有负载数据，需要合并成为一段连续的内存
+		MemoryStream ms(MESSAGE_SIZE + msg.Length);
+		msg.Write(ms);
+		ms.SetPosition(0);
+
+		buf = ms.Current();
+		len = ms.Length;
+	}
 
 	ITransport* _port = _curPort;
 	bool rs = true;
 	if(_port)
-		rs = _port->Write(ms.Current(), ms.Length);
+		rs = _port->Write(buf, len);
 	else
 	{
 		// 发往所有端口
 		for(int i=0; i<_portCount; i++)
-			rs &= _ports[i]->Write(ms.Current(), ms.Length);
+			rs &= _ports[i]->Write(buf, len);
 	}
 
 	return rs;
@@ -332,11 +341,19 @@ bool Controller::Send(Message& msg, ITransport* port)
 {
 	assert_ptr(port);
 
-	MemoryStream ms(MESSAGE_SIZE + msg.Length);
+	/*MemoryStream ms(MESSAGE_SIZE + msg.Length);
 	msg.Write(ms);
 	ms.SetPosition(0);
 
-	return port->Write(ms.Current(), ms.Length);
+	return port->Write(ms.Current(), ms.Length);*/
+
+	// 发送消息之前还要涉及校验以及消息序列化，还有内存连续性等问题，干脆用点技巧调用Send
+	ITransport* old = _curPort;
+	_curPort = port;
+	bool rs = Send(msg);
+	_curPort = old;
+
+	return rs;
 }
 
 bool Controller::SendSync(Message& msg, uint msTimeout)
