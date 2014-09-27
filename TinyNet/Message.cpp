@@ -183,6 +183,7 @@ bool Controller::Process(MemoryStream& ms)
 		debug_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length);
 	}
+	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
 #endif
 
