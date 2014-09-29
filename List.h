@@ -259,6 +259,14 @@ public:
 
 		return node;
 	}
+	
+	// 附加到当前节点后面
+	void Append(T* node)
+	{
+		Next = node;
+		node->Prev = (T*)this;
+		node->Next = NULL;
+	}
 };
 
 // 双向链表
