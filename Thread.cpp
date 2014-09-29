@@ -244,7 +244,8 @@ void Thread::CheckStack()
 	p -= 0x20;*/
 
 	uint stackBottom = (uint)StackTop - StackSize;
-	if(p < stackBottom) debug_printf("Thread::CheckStack %d %s Overflow, Stack 0x%08x < 0x%08x\r\n", ID, Name, p, stackBottom);
+	if(p < stackBottom)
+		debug_printf("Thread::CheckStack %d %s Overflow, Stack 0x%08x < 0x%08x\r\n", ID, Name, p, stackBottom);
 	assert_param(stackBottom <= p);
 #endif
 }
@@ -635,8 +636,13 @@ void Thread::Init()
 // 每个线程结束时执行该方法，销毁线程
 void Thread::OnEnd()
 {
-	SmartIRQ irq;	// 关闭全局中断，确保销毁成功
+	//SmartIRQ irq;	// 关闭全局中断，确保销毁成功
+	__disable_irq();
 
 	Thread* th = Thread::Current;
 	if(th) delete th;
+
+	__enable_irq();	// 这里必须手工释放，否则会导致全局中断没有打开而造成无法调度
+
+	while(1);
 }
