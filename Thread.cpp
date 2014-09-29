@@ -435,45 +435,97 @@ extern "C"
 	uint** curStack = 0;	// 当前线程栈的指针。需要保存线程栈，所以需要指针
 	uint* newStack = 0;		// 新的线程栈
 
+#ifdef STM32F0
 	__asm void PendSV_Handler()
 	{
 		IMPORT curStack
 		IMPORT newStack
 
-		CPSID   I                       // 关闭全局中断
+		CPSID   I                   // 关闭全局中断
 
 		LDR		R2, =curStack
 		LDR		R2, [R2]
 
-		CBZ     R2, PendSV_NoSave		// 如果当前线程栈为空则不需要保存。实际上不可能
+		CMP		R2, #0x00
+		BEQ		PendSV_NoSave
+
+		MRS     R0, PSP
+
+		SUBS    R0, R0, #0x20       // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
+		STM		R0!,{R4-R7}			// 先保存R4~R7，R0地址累加
+		MOV     R4, R8
+		MOV     R5, R9
+		MOV     R6, R10
+		MOV     R7, R11
+		STMIA   R0!,{R4-R7}			// 把R8~R11挪到R4~R7，再次保存
+		SUBS    R0, R0, #0x20
+
+		STR     R0, [R2]			// 备份当前sp到任务控制块
+
+PendSV_NoSave						// 此时整个上下文已经被保存
+		LDR		R3, =newStack
+		LDR		R0, [R3]
+
+		ADDS    R0, R0, #16			// 从新的栈中恢复 r4-11
+		LDM     R0!, {R4-R7}		// 先把高地址的4单元恢复出来，它们就是R8~R11
+		MOV     R8,  R4
+		MOV     R9,  R5
+		MOV     R10, R6
+		MOV     R11, R7
+		SUBS    R0, R0, #32			// 跑回到底地址的4单元，这个才是真正的R8~R11
+		LDMIA   R0!, {R4-R7}
+		ADDS    R0, R0, #16
+
+		MSR     PSP, R0             // 修改PSP
+
+		MOVS    R0, #4				// 确保中断返回用户栈
+		MOVS    R0, #4
+		RSBS    R0, #0
+
+		CPSIE   I
+		BX      LR                  // 中断返回将恢复上下文
+	}
+#else
+	__asm void PendSV_Handler()
+	{
+		IMPORT curStack
+		IMPORT newStack
+
+		CPSID   I                   // 关闭全局中断
+
+		LDR		R2, =curStack
+		LDR		R2, [R2]
+
+		CBZ     R2, PendSV_NoSave	// 如果当前线程栈为空则不需要保存。实际上不可能
 		NOP
 
 		MRS     R0, PSP
-		#ifdef FPU
-		VSTMFD	r0!, {d8 - d15} 		// 压入 FPU 寄存器 s16~s31，寄存器增加
-		#endif
+#ifdef FPU
+		VSTMFD	r0!, {d8 - d15} 	// 压入 FPU 寄存器 s16~s31，寄存器增加
+#endif
 
-		SUBS    R0, R0, #0x20           // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
+		SUBS    R0, R0, #0x20       // 保存r4-11到线程栈   r0-3 pc等在中断时被压栈了
 		STM     R0, {R4-R11}
 
-		STR     R0, [R2]				// 备份当前sp到任务控制块
+		STR     R0, [R2]			// 备份当前sp到任务控制块
 
-PendSV_NoSave							// 此时整个上下文已经被保存
+PendSV_NoSave						// 此时整个上下文已经被保存
 		LDR		R3, =newStack
 		LDR		R0, [R3]
-		LDM     R0, {R4-R11}            // 从新的栈中恢复 r4-11
+		LDM     R0, {R4-R11}        // 从新的栈中恢复 r4-11
 		ADDS    R0, R0, #0x20
 
-		#ifdef FPU
-		VLDMFD	r0!, {d8 - d15} 		// 弹出 FPU 寄存器 s16~s31
-		#endif
+#ifdef FPU
+		VLDMFD	r0!, {d8 - d15} 	// 弹出 FPU 寄存器 s16~s31
+#endif
 
-		MSR     PSP, R0                 // 修改PSP
-		ORR     LR, LR, #0x04           // 确保中断返回用户栈
+		MSR     PSP, R0             // 修改PSP
+		ORR     LR, LR, #0x04       // 确保中断返回用户栈
 
 		CPSIE   I
-		BX      LR                      // 中断返回将恢复上下文
+		BX      LR                  // 中断返回将恢复上下文
 	}
+#endif
 }
 
 // 切换线程，马上切换时间片给下一个线程
