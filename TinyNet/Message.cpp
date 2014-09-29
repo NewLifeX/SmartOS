@@ -312,10 +312,11 @@ bool Controller::Send(Message& msg)
 	debug_printf("\r\n");*/
 #endif
 
+	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
+	MemoryStream ms(MESSAGE_SIZE + msg.Length);
 	if(msg.Length > 0)
 	{
 		// 带有负载数据，需要合并成为一段连续的内存
-		MemoryStream ms(MESSAGE_SIZE + msg.Length);
 		msg.Write(ms);
 		ms.SetPosition(0);
 
