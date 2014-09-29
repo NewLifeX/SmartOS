@@ -54,7 +54,7 @@ void Timer::Start()
 #endif
 
 	uint fre = clk / Prescaler / Period;
-	debug_printf("Timer%d_Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
+	debug_printf("Timer%d Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
 #endif
 
 	// 打开时钟
@@ -87,6 +87,8 @@ void Timer::Start()
 void Timer::Stop()
 {
 	if(!_started) return;
+
+	debug_printf("Timer%d Stop\r\n", _index + 1);
 
 	// 关闭时钟
 	ClockCmd(false);
@@ -178,6 +180,18 @@ void Timer::SetFrequency(uint frequency)
 
 	Prescaler = pre;
 	Period = p;
+	
+	// 如果已启动定时器，则重新配置一下，让新设置生效
+	if(_started)
+	{
+		TIM_TimeBaseInitTypeDef _timer;
+		TIM_TimeBaseStructInit(&_timer);
+		_timer.TIM_Period = Period - 1;
+		_timer.TIM_Prescaler = Prescaler - 1;
+		//_timer.TIM_ClockDivision = 0x0;
+		_timer.TIM_CounterMode = TIM_CounterMode_Up;
+		TIM_TimeBaseInit(_port, &_timer);
+	}
 }
 
 void Timer::Register(EventHandler handler, void* param)
