@@ -20,7 +20,8 @@ public:
 	byte Flags:6;	// 标识位。也可以用来做二级命令
 	byte Error:1;	// 是否错误
 	byte Reply:1;	// 是否响应
-	ushort Length;	// 数据长度
+	byte Sequence;	// 序列号
+	byte Length;	// 数据长度
 	ushort Checksum;// 16位检验和
 
 	// 负载数据及校验部分，并非内存布局。
@@ -45,12 +46,22 @@ public:
 class Controller
 {
 private:
-	ITransport** _ports;	// 数据传输口
-	int _portCount;			// 传输口个数
-	ITransport* _curPort;	// 当前使用的数据传输口
+	ITransport**	_ports;		// 数据传输口
+	int				_portCount;	// 传输口个数
+	ITransport*		_curPort;	// 当前使用的数据传输口
+	uint			_Sequence;	// 控制器的消息序号
 
 	void Init();
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
+
+	class Queue : public LinkedNode<Queue>
+	{
+		ulong		Time;	// 开始时间
+		Message*	Msg;	// 消息
+	};
+	Queue* _queue;
+
+	bool SendInternal(Message& msg, byte* buf, uint len, ITransport* port);
 
 public:
 	byte Address;	// 本地地址
@@ -59,17 +70,17 @@ public:
 	Controller(ITransport* ports[], int count);
 	~Controller();
 
-	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0);
-	// 发送消息
-	bool Send(Message& msg);
-	bool Send(Message& msg, ITransport* port);
+	// 发送消息，传输口参数为空时向所有传输口发送消息
+	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
+	// 发送消息，传输口参数为空时向所有传输口发送消息
+	bool Send(Message& msg, ITransport* port = NULL);
 	bool SendSync(Message& msg, uint msTimeout = 10);
 	// 回复对方的请求消息
-	bool Reply(Message& msg);
-	bool Error(Message& msg);
+	bool Reply(Message& msg, ITransport* port = NULL);
+	bool Error(Message& msg, ITransport* port = NULL);
 
 protected:
-	bool Process(MemoryStream& ms);
+	bool Process(MemoryStream& ms, ITransport* port);
 
 // 处理器部分
 public:

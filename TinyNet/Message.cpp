@@ -118,6 +118,7 @@ Controller::Controller(ITransport* ports[], int count)
 void Controller::Init()
 {
 	_curPort = NULL;
+	_Sequence = 0;
 
 	memset(_Handlers, 0, ArrayLength(_Handlers));
 	_HandlerCount = 0;
@@ -157,7 +158,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	while(ms.Remain() >= MESSAGE_SIZE)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Process(ms)) break;
+		if(!control->Process(ms, transport)) break;
 	}
 
 	// 还原回来
@@ -166,7 +167,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	return 0;
 }
 
-bool Controller::Process(MemoryStream& ms)
+bool Controller::Process(MemoryStream& ms, ITransport* port)
 {
 #if DEBUG
 	byte* p = ms.Current();
@@ -221,7 +222,7 @@ bool Controller::Process(MemoryStream& ms)
 		msg.Length = 0;
 #endif
 
-		Error(msg);
+		Error(msg, port);
 
 		return true;
 	}
@@ -237,9 +238,9 @@ bool Controller::Process(MemoryStream& ms)
 			if(!msg.Reply)
 			{
 				if(rs)
-					Reply(msg);
+					Reply(msg, port);
 				else
-					Error(msg);
+					Error(msg, port);
 			}
 			break;
 		}
@@ -261,7 +262,7 @@ void Controller::Register(byte code, CommandHandler handler, void* param)
 	_Handlers[_HandlerCount++] = lookup;
 }
 
-uint Controller::Send(byte dest, byte code, byte* buf, uint len)
+uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
 {
 	Message msg;
 	msg.Init();
@@ -270,13 +271,16 @@ uint Controller::Send(byte dest, byte code, byte* buf, uint len)
 	msg.Length = len;
 	msg.Data = buf;
 
-	return Send(msg);
+	return Send(msg, port);
 }
 
-bool Controller::Send(Message& msg)
+bool Controller::Send(Message& msg, ITransport* port)
 {
 	// 附上自己的地址
 	msg.Src = Address;
+
+	// 附上序列号
+	msg.Sequence = ++_Sequence;
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
@@ -324,7 +328,7 @@ bool Controller::Send(Message& msg)
 		len = ms.Length;
 	}
 
-	ITransport* _port = _curPort;
+	ITransport* _port = port;
 	bool rs = true;
 	if(_port)
 		rs = _port->Write(buf, len);
@@ -334,25 +338,6 @@ bool Controller::Send(Message& msg)
 		for(int i=0; i<_portCount; i++)
 			rs &= _ports[i]->Write(buf, len);
 	}
-
-	return rs;
-}
-
-bool Controller::Send(Message& msg, ITransport* port)
-{
-	assert_ptr(port);
-
-	/*MemoryStream ms(MESSAGE_SIZE + msg.Length);
-	msg.Write(ms);
-	ms.SetPosition(0);
-
-	return port->Write(ms.Current(), ms.Length);*/
-
-	// 发送消息之前还要涉及校验以及消息序列化，还有内存连续性等问题，干脆用点技巧调用Send
-	ITransport* old = _curPort;
-	_curPort = port;
-	bool rs = Send(msg);
-	_curPort = old;
 
 	return rs;
 }
@@ -374,20 +359,22 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 	return true;
 }
 
-bool Controller::Reply(Message& msg)
+bool Controller::Reply(Message& msg, ITransport* port)
 {
 	// 回复信息，源地址变成目的地址
 	msg.Dest = msg.Src;
 	msg.Reply = 1;
 
-	return Send(msg);
+	if(!port) port = _curPort;
+	return Send(msg, port);
 }
 
-bool Controller::Error(Message& msg)
+bool Controller::Error(Message& msg, ITransport* port)
 {
 	msg.Error = 1;
 
-	return Reply(msg);
+	if(!port) port = _curPort;
+	return Reply(msg, port);
 }
 
 // 常用系统级消息
