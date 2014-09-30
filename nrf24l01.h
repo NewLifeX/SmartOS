@@ -4,6 +4,7 @@
 #include "Sys.h"
 #include "Spi.h"
 #include "Net\ITransport.h"
+#include "Timer.h"
 
 // NRF24L01类
 class NRF24L01 : public ITransport
@@ -25,8 +26,9 @@ private:
     void CEDown();
 
 	// 接收任务。
-	static void ReceiveTask(void* param);
-	uint _taskID;
+	static void ReceiveTask(void* sender, void* param);
+	//uint _taskID;
+	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
 
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0X28 MHZ

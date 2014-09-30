@@ -79,7 +79,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 
-	_taskID = 0;
+	//_taskID = 0;
+	_timer = NULL;
 }
 
 NRF24L01::~NRF24L01()
@@ -94,7 +95,8 @@ NRF24L01::~NRF24L01()
 	_CE = NULL;
 	_IRQ = NULL;
 
-	if(_taskID) Sys.RemoveTask(_taskID);
+	//if(_taskID) Sys.RemoveTask(_taskID);
+	Register(NULL);
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -536,7 +538,7 @@ bool NRF24L01::CanReceive()
 	return st.RX_DR;
 }
 
-void NRF24L01::ReceiveTask(void* param)
+void NRF24L01::ReceiveTask(void* sender, void* param)
 {
 	assert_ptr(param);
 
@@ -562,11 +564,19 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
+		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
+		// 如果外部没有设定，则内部设定
+		if(!_timer) _timer = new Timer(TIM2);
+
+		_timer->SetFrequency(10000);
+		_timer->Register(ReceiveTask, this);
+		_timer->Start();
 	}
 	else
 	{
-		if(_taskID) Sys.RemoveTask(_taskID);
-		_taskID = 0;
+		//if(_taskID) Sys.RemoveTask(_taskID);
+		//_taskID = 0;
+		if(_timer) delete _timer;
+		_timer = NULL;
 	}
 }
