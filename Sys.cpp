@@ -566,6 +566,7 @@ void TSys::StartInternal()
 	while(_Running)
 	{
 		ulong now = Time.Current();	// 当前时间
+		ulong min = UInt64_Max;	// 最小时间，这个时间就会有任务到来
 		int k = 0;
 		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
 		{
@@ -578,6 +579,8 @@ void TSys::StartInternal()
 					//task->NextTime += task->Period;
 					// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 					task->NextTime = now + task->Period;
+					if(task->NextTime < min) min = task->NextTime;
+
 					task->Callback(task->Param);
 
 					// 如果只是一次性任务，在这里清理
@@ -592,6 +595,10 @@ void TSys::StartInternal()
 				k++;
 			}
 		}
+
+		// 如果有最小时间，睡一会吧
+		now = Time.Current();	// 当前时间
+		if(min != UInt64_Max && min > now) Delay(min - now);
 	}
 	debug_printf("系统停止调度，共有%d个任务！\r\n", _TaskCount);
 }

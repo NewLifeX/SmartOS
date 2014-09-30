@@ -17,6 +17,8 @@ typedef char*           string;
 //#define true            1
 //#define false           0
 
+#define UInt64_Max 0xFFFFFFFFFFFFFFFFull
+
 /*
 // 尚未决定是否采用下面这种类型
 typedef char            SByte;
