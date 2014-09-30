@@ -274,7 +274,7 @@ uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* por
 	return Send(msg, port);
 }
 
-bool Controller::Send(Message& msg, ITransport* port)
+bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 {
 	// 附上自己的地址
 	msg.Src = Address;
@@ -316,31 +316,69 @@ bool Controller::Send(Message& msg, ITransport* port)
 	debug_printf("\r\n");*/
 #endif
 
-	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
-	MemoryStream ms(MESSAGE_SIZE + msg.Length);
-	if(msg.Length > 0)
+	bool rs = true;
+	if(msg.Reply || !msTimeout)
 	{
-		// 带有负载数据，需要合并成为一段连续的内存
-		msg.Write(ms);
-		ms.SetPosition(0);
+		// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
+		MemoryStream ms(MESSAGE_SIZE + msg.Length);
+		if(msg.Length > 0)
+		{
+			// 带有负载数据，需要合并成为一段连续的内存
+			msg.Write(ms);
+			ms.SetPosition(0);
 
-		buf = ms.Current();
-		len = ms.Length;
+			buf = ms.Current();
+			len = ms.Length;
+		}
+
+		if(port)
+			rs = port->Write(buf, len);
+		else
+		{
+			// 发往所有端口
+			for(int i=0; i<_portCount; i++)
+				rs &= _ports[i]->Write(buf, len);
+		}
+
+		return rs;
 	}
 
-	ITransport* _port = port;
-	bool rs = true;
-	if(_port)
-		rs = _port->Write(buf, len);
-	else
+	// 非响应消息，考虑异步
+	
+	Queue queue;
+	queue.Expired	= Time.Current() + msTimeout * 1000;
+	queue.Msg	= &msg;
+	queue.Port	= port;
+
+	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
+	Queue* head = &queue;
+	Queue* tail = head;
+
+	if(!port)
 	{
 		// 发往所有端口
 		for(int i=0; i<_portCount; i++)
-			rs &= _ports[i]->Write(buf, len);
-	}
+		{
+			if(i > 0)
+			{
+				Queue* node = new Queue(queue);
+				node->Port = _ports[i];
 
+				tail->Append(node);
+				tail = node;
+			}
+		}
+	}
+	// 加入队列
+	_Queue = head;
+	// 准备增加一个定时任务，用于轮询重发队列里面的任务
+	
 	return rs;
 }
+
+/*void Controller::SendTask(void* sender, void* param)
+{
+}*/
 
 bool Controller::SendSync(Message& msg, uint msTimeout)
 {

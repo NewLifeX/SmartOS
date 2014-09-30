@@ -56,10 +56,33 @@ private:
 
 	class Queue : public LinkedNode<Queue>
 	{
-		ulong		Time;	// 开始时间
+	public:
+		ulong		Expired;// 过期时间
 		Message*	Msg;	// 消息
+		ITransport*	Port;
+		byte*		Buf;
+		uint		Length;
+		bool		Success;
+
+		Queue()
+		{
+			Initialize();
+		}
+
+		Queue(const Queue& queue)
+		{
+			Expired	= queue.Expired;
+			Msg		= queue.Msg;
+			Port	= queue.Port;
+			Buf		= queue.Buf;
+			Length	= queue.Length;
+			Success	= queue.Success;
+
+			Next	= queue.Next;
+			Prev	= queue.Prev;
+		}
 	};
-	Queue* _queue;
+	Queue* _Queue;
 
 	bool SendInternal(Message& msg, byte* buf, uint len, ITransport* port);
 
@@ -73,7 +96,7 @@ public:
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	bool Send(Message& msg, ITransport* port = NULL);
+	bool Send(Message& msg, ITransport* port = NULL, uint msTimeout = 0);
 	bool SendSync(Message& msg, uint msTimeout = 10);
 	// 回复对方的请求消息
 	bool Reply(Message& msg, ITransport* port = NULL);
