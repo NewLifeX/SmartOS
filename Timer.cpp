@@ -1,24 +1,36 @@
 ﻿#include "Timer.h"
 
-//static TIM_TypeDef* g_Timers[] = TIMS;
+static TIM_TypeDef* const g_Timers[] = TIMS;
+Timer** Timer::Timers = NULL;
+const byte Timer::TimerCount = ArrayLength(g_Timers);
 
 Timer::Timer(TIM_TypeDef* timer)
 {
 	assert_param(timer);
 
-	TIM_TypeDef* g_Timers[] = TIMS;
-	_index = 0xFF;
+	// 初始化静态数组
+	if(!Timers)
+	{
+		Timers = new Timer*[TimerCount];
+		memset(Timers, NULL, TimerCount);
+	}
+
+	//TIM_TypeDef* g_Timers[] = TIMS;
+	byte idx = 0xFF;
 	for(int i=0; i<ArrayLength(g_Timers); i++)
 	{
 		if(g_Timers[i] == timer)
 		{
-			_index = i;
+			idx = i;
 			break;
 		}
 	}
-	assert_param(_index <= ArrayLength(g_Timers));
+	assert_param(idx <= ArrayLength(g_Timers));
 
-	_port = g_Timers[_index];
+	Timers[idx] = this;
+
+	_index = idx;
+	_port = g_Timers[idx];
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次
 	/*Prescaler = Sys.Clock / 1000000;
@@ -36,6 +48,35 @@ Timer::~Timer()
 	if(_started) Stop();
 
 	if(_Handler) Register(NULL);
+
+	Timers[_index] = NULL;
+}
+
+// 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
+Timer* Timer::Create(byte index)
+{
+	// 特殊处理随机分配
+	if(index == 0xFF)
+	{
+		// 找到第一个可用的位置
+		byte i = 0;
+		for(; i<TimerCount && Timers[i]; i++);
+
+		if(i >= TimerCount)
+		{
+			debug_printf("Timer::Create 失败！没有空闲定时器可用！\r\n");
+			return NULL;
+		}
+
+		index = i;
+	}
+
+	assert_param(index < TimerCount);
+
+	if(Timers[index])
+		return Timers[index];
+	else
+		return new Timer(g_Timers[index]);
 }
 
 void Timer::Start()
@@ -180,7 +221,7 @@ void Timer::SetFrequency(uint frequency)
 
 	Prescaler = pre;
 	Period = p;
-	
+
 	// 如果已启动定时器，则重新配置一下，让新设置生效
 	if(_started)
 	{

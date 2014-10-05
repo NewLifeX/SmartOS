@@ -31,6 +31,12 @@ private:
 	static void OnHandler(ushort num, void* param);
 	EventHandler _Handler;
 	void* _Param;
+
+public:
+	static Timer**		Timers;		// 已经实例化的定时器对象
+	static const byte	TimerCount;	// 定时器个数
+	
+	static Timer* Create(byte index = 0xFF);	// 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
 };
 
 #endif
