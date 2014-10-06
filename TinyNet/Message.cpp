@@ -119,6 +119,7 @@ void Controller::Init()
 {
 	_curPort = NULL;
 	_Sequence = 0;
+	_Timer = NULL;
 
 	memset(_Handlers, 0, ArrayLength(_Handlers));
 	_HandlerCount = 0;
@@ -140,6 +141,9 @@ Controller::~Controller()
 
 	if(_ports) delete _ports;
 	_ports = NULL;
+
+	if(_Timer) delete _Timer;
+	_Timer = NULL;
 
 	debug_printf("微网控制器销毁\r\n");
 }
@@ -210,6 +214,9 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	// 校验
 	if(!msg.Verify())
 	{
+		// 错误的响应包直接忽略
+		if(msg.Reply) return true;
+
 #if DEBUG
 		byte err[] = "Crc Error #XXXX";
 		uint len = ArrayLength(err);
@@ -284,7 +291,7 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
-	uint len = msg.Length;
+	//uint len = msg.Length;
 
 	// 计算校验，先清零
 	msg.Checksum = 0;
@@ -316,52 +323,27 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 	debug_printf("\r\n");*/
 #endif
 
-	bool rs = true;
-	if(msg.Reply || !msTimeout)
-	{
-		// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
-		MemoryStream ms(MESSAGE_SIZE + msg.Length);
-		if(msg.Length > 0)
-		{
-			// 带有负载数据，需要合并成为一段连续的内存
-			msg.Write(ms);
-			ms.SetPosition(0);
-
-			buf = ms.Current();
-			len = ms.Length;
-		}
-
-		if(port)
-			rs = port->Write(buf, len);
-		else
-		{
-			// 发往所有端口
-			for(int i=0; i<_portCount; i++)
-				rs &= _ports[i]->Write(buf, len);
-		}
-
-		return rs;
-	}
+	if(msg.Reply || !msTimeout) return SendInternal(msg, port);
 
 	// 非响应消息，考虑异步
-	
-	Queue queue;
-	queue.Expired	= Time.Current() + msTimeout * 1000;
-	queue.Msg	= &msg;
-	queue.Port	= port;
+
+	Queue* queue = new Queue();
+	queue->Expired	= Time.Current() + msTimeout * 1000;
+	queue->Msg	= &msg;
+	queue->Port	= port;
 
 	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
-	Queue* head = &queue;
+	Queue* head = queue;
 	Queue* tail = head;
 
+	// 发往所有端口
 	if(!port)
 	{
-		// 发往所有端口
 		for(int i=0; i<_portCount; i++)
 		{
 			if(i > 0)
 			{
-				Queue* node = new Queue(queue);
+				Queue* node = new Queue(*queue);
 				node->Port = _ports[i];
 
 				tail->Append(node);
@@ -370,15 +352,95 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 		}
 	}
 	// 加入队列
-	_Queue = head;
+	if(!_Queue)
+		_Queue = head;
+	else
+		_Queue->Last()->Append(head);
 	// 准备增加一个定时任务，用于轮询重发队列里面的任务
-	
+	if(!_Timer)
+	{
+		// 抽取一个空闲定时器，用于轮询重发队列
+		_Timer = Timer::Create();
+		_Timer->Register(SendTask, this);
+		_Timer->SetFrequency(100);
+	}
+	// 先发送一次，再开启定时器轮询
+	bool rs = SendInternal(msg, port);
+	_Timer->Start();
+
 	return rs;
 }
 
-/*void Controller::SendTask(void* sender, void* param)
+bool Controller::SendInternal(Message& msg, ITransport* port)
 {
-}*/
+	// 指针直接访问消息头。如果没有负载数据，它就是全部
+	byte* buf = (byte*)&msg.Dest;
+	uint len = msg.Length;
+
+	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
+	MemoryStream ms(MESSAGE_SIZE + msg.Length);
+	if(msg.Length > 0)
+	{
+		// 带有负载数据，需要合并成为一段连续的内存
+		msg.Write(ms);
+		ms.SetPosition(0);
+
+		buf = ms.Current();
+		len = ms.Length;
+	}
+
+	bool rs = true;
+	if(port)
+		rs = port->Write(buf, len);
+	else
+	{
+		// 发往所有端口
+		for(int i=0; i<_portCount; i++)
+			rs &= _ports[i]->Write(buf, len);
+	}
+
+	return rs;
+}
+
+void Controller::SendTask(void* sender, void* param)
+{
+	assert_ptr(param);
+
+	Controller* control = (Controller*)param;
+	control->SendTask();
+}
+
+void Controller::SendTask()
+{
+	// 如果没有轮询队列，则关闭定时器
+	if(!_Queue)
+	{
+		if(_Timer) _Timer->Stop();
+		return;
+	}
+
+	for(Queue* node = _Queue; node;)
+	{
+		Queue* next = node->Next;
+
+		// 如果过期，则删除
+		if(node->Expired < Time.Current())
+		{
+			// 如果是头部第一个元素，则修改头部
+			if(node == _Queue) _Queue = next;
+
+			node->Unlink();
+			delete node;
+		}
+		else
+		{
+			// 发送消息
+			SendInternal(*node->Msg, node->Port);
+		}
+
+		node = next;
+	}
+}
 
 bool Controller::SendSync(Message& msg, uint msTimeout)
 {

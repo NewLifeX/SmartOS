@@ -4,10 +4,11 @@
 #include "Sys.h"
 #include "Net\ITransport.h"
 #include "Stream.h"
+#include "Timer.h"
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
-// 请求 0038-0403-0000-BC4C，从0x38发往0（广播），功能4，标识3（保留字段用于业务），长度0，校验0x4CBC（小字节序）
+// 请求 0038-0403-0000-BC4C，从0x38发往0（广播），功能4，标识3（保留字段用于业务），序号0长度0，校验0x4CBC（小字节序）
 // 响应 3856-048x-0000-xxxx
 // 错误 3856-044x-0000
 class Message
@@ -50,6 +51,7 @@ private:
 	int				_portCount;	// 传输口个数
 	ITransport*		_curPort;	// 当前使用的数据传输口
 	uint			_Sequence;	// 控制器的消息序号
+	Timer*			_Timer;		// 用于错误重发机制的定时器
 
 	void Init();
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
@@ -84,7 +86,9 @@ private:
 	};
 	Queue* _Queue;
 
-	bool SendInternal(Message& msg, byte* buf, uint len, ITransport* port);
+	bool SendInternal(Message& msg, ITransport* port);
+	static void SendTask(void* sender, void* param);
+	void SendTask();
 
 public:
 	byte Address;	// 本地地址
