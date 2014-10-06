@@ -5,7 +5,7 @@
 #include "Sys.h"
 
 // 数组长度
-#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
+//#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
 

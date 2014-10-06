@@ -56,7 +56,7 @@ typedef enum
 #include "Delegate.h"
 
 // 列表模版
-#include "List.h"
+//#include "List.h"
 
 // 系统类
 class TSys
@@ -159,6 +159,9 @@ bool assert_ptr_(void* p);
 #define assert_ptr(expr) ((void)0)
 
 #endif
+
+// 数组长度
+#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
 
 // 内存管理
 #include "Memory.h"

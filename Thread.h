@@ -2,6 +2,7 @@
 #define __Thread_H__
 
 #include "Sys.h"
+#include "List.h"
 
 class Thread;
 

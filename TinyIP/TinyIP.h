@@ -3,6 +3,7 @@
 
 // 模块开发使用说明见后
 
+#include "List.h"
 #include "Stream.h"
 #include "Net\ITransport.h"
 #include "Net\Ethernet.h"

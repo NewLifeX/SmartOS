@@ -2,6 +2,7 @@
 #define __Message_H__
 
 #include "Sys.h"
+#include "List.h"
 #include "Net\ITransport.h"
 #include "Stream.h"
 #include "Timer.h"
