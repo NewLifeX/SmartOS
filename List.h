@@ -46,12 +46,10 @@ public:
 	{
 		assert_param(_Count > 0);
 
-		//const T& item = Arr[--_Count];
-
 		return Arr[--_Count];
 	}
 
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。为了性能，内部不检查下标越界，外部好自为之
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T operator[](int i)
 	{
 		assert_param(i >= 0 && i < _Count);
@@ -66,8 +64,8 @@ template<typename T>
 __packed class List
 {
 private:
-    T* arr;		// 存储数据的数组
-    uint _count;// 拥有实际元素个数
+    T* _Arr;		// 存储数据的数组
+    uint _Count;// 拥有实际元素个数
     uint _total;// 可容纳元素总数
 
     void ChangeSize(int newSize)
@@ -75,60 +73,60 @@ private:
         if(_total == newSize) return;
 
         T* arr2 = new T[newSize];
-        if(arr)
+        if(_Arr)
         {
             // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
-            if(newSize < _count)
+            if(newSize < _Count)
 			{
 				// 此时有数据丢失
-                memcpy(arr2, arr, newSize * sizeof(T));
-				_count = newSize;
+                memcpy(arr2, _Arr, newSize * sizeof(T));
+				_Count = newSize;
 			}
             else
             {
-                memcpy(arr2, arr, _count * sizeof(T));
-                memset(&arr2[_count], 0, (newSize - _count) * sizeof(T));
+                memcpy(arr2, _Arr, _Count * sizeof(T));
+                memset(&arr2[_Count], 0, (newSize - _Count) * sizeof(T));
             }
-            delete[] arr;
+            delete[] _Arr;
         }
 		else
             memset(arr2, 0, newSize * sizeof(T));
-        arr = arr2;
+        _Arr = arr2;
 		_total = newSize;
     }
 
     void CheckSize()
     {
         // 如果数组空间已用完，则两倍扩容
-        if(_count >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
+        if(_Count >= _total) ChangeSize(_Count > 0 ? _Count * 2 : 4);
     }
 
 public:
     List(int size = 0)
     {
-        _count = 0;
+        _Count = 0;
         _total = size;
-		arr = NULL;
+		_Arr = NULL;
 		if(size)
 		{
-			arr = new T[size];
-			memset(arr, 0, size * sizeof(T));
+			_Arr = new T[size];
+			memset(_Arr, 0, size * sizeof(T));
 		}
     }
 
     List(T* items, uint count)
     {
-        arr = new T[count];
+        _Arr = new T[count];
 
-        _count = 0;
+        _Count = 0;
         _total = count;
         for(int i=0; i<count; i++)
         {
-            arr[_count++] = *items++;
+            _Arr[_Count++] = *items++;
         }
     }
 
-    ~List() { if(arr) delete[] arr; arr = NULL; }
+    ~List() { if(_Arr) delete[] _Arr; _Arr = NULL; }
 
 	// 添加单个元素
     void Add(const T& item)
@@ -136,27 +134,27 @@ public:
         // 检查大小
         CheckSize();
 
-        arr[_count++] = item;
+        _Arr[_Count++] = item;
     }
 
 	// 添加多个元素
     void Add(T* items, int count)
     {
-        int size = _count + count;
-        if(size >= _total) ChangeSize(_count > 0 ? _count * 2 : 4);
+        int size = _Count + count;
+        if(size >= _total) ChangeSize(_Count > 0 ? _Count * 2 : 4);
 
         for(int i=0; i<count; i++)
         {
-            arr[_count++] = *items++;
+            _Arr[_Count++] = *items++;
         }
     }
 
 	// 查找元素
 	int Find(const T& item)
 	{
-        for(int i=0; i<_count; i++)
+        for(int i=0; i<_Count; i++)
         {
-            if(arr[i] == item) return i;
+            if(_Arr[i] == item) return i;
         }
 
 		return -1;
@@ -165,11 +163,11 @@ public:
 	// 删除指定位置元素
 	void RemoveAt(int index)
 	{
-		if(_count <= 0 || index >= _count) return;
+		if(_Count <= 0 || index >= _Count) return;
 
 		// 复制元素
-		if(index < _count - 1) memcpy(&arr[index], &arr[index + 1], (_count - index - 1) * sizeof(T));
-		_count--;
+		if(index < _Count - 1) memcpy(&_Arr[index], &_Arr[index + 1], (_Count - index - 1) * sizeof(T));
+		_Count--;
 	}
 
 	// 删除指定元素
@@ -181,29 +179,24 @@ public:
 		return index;
 	}
 
-    const T* ToArray()
-    {
-        // 如果刚好完整则直接返回，否则重新调整空间
-        if(_count != _total)
-        {
-            T* arr2 = new T[_count];
-            memcpy(arr, arr2, _count);
-            delete[] arr;
-            arr = arr2;
-        }
-        return arr;
-    }
+	// 返回内部指针
+    const T* ToArray() { return _Arr; }
 
 	// 有效元素个数
-    int Count() { return _count; }
+    int Count() { return _Count; }
 
 	// 设置新的容量，如果容量比元素个数小，则会丢失数据
 	void SetCapacity(int capacity) { ChangeSize(capacity); }
 
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。为了性能，内部不检查下标越界，外部好自为之
-    T operator[](int i) { return arr[i]; }
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    T operator[](int i)
+	{
+		assert_param(i >= 0 && i < _Count);
+		return _Arr[i];
+	}
+
 	// 列表转为指针，注意安全
-    T* operator=(List list) { return list.ToArray(); }
+    T* operator=(List& list) { return list.ToArray(); }
 };
 
 // 双向链表
@@ -265,7 +258,7 @@ public:
 	{
 		Next = node;
 		node->Prev = (T*)this;
-		node->Next = NULL;
+		//node->Next = NULL;
 	}
 };
 
@@ -320,22 +313,6 @@ private:
     }
 
 public:
-#if defined(_DEBUG)
-    BOOL Exists( T* searchNode )
-    {
-        T* node = FirstValidNode();
-        while( node != NULL && node != searchNode )
-        {
-            if (node == node->Next())
-            {
-                ASSERT(FALSE);
-            }
-            node = node->Next();
-        }
-        return (node == NULL? FALSE: TRUE);
-    }
-#endif
-
     void InsertBeforeNode( T* node, T* nodeNew )
     {
         if(node && nodeNew && node != nodeNew)
