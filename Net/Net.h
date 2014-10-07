@@ -11,6 +11,7 @@
 	#define LITTLE_ENDIAN   1
 #endif
 
+#pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
 #pragma pack(1)
 
@@ -29,7 +30,7 @@ public:
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
-	
+
     MacAddress& operator=(ulong v)
 	{
 		v4 = v;
@@ -390,5 +391,7 @@ typedef struct _DHCP_OPT
 		return this;
 	}
 }DHCP_OPT;
+
+#pragma pack(pop)	// 恢复对齐状态
 
 #endif
