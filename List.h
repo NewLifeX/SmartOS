@@ -62,6 +62,12 @@ public:
 		_Arr = new void*[capacity];
 		memset(_Arr, 0, capacity);
 	}
+	
+	~Array()
+	{
+		if(_Arr) delete _Arr;
+		_Arr = NULL;
+	}
 
 	// 压入一个元素
 	int Push(void* item)
