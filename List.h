@@ -9,6 +9,37 @@
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
 
+// 迭代器
+template<typename T>
+class IEnumerator
+{
+public:
+	virtual T& Current()	= 0;	// 获取集合中的当前元素
+	virtual bool MoveNext()	= 0;	// 将枚举数推进到集合的下一个元素
+	virtual void Reset()	= 0;	// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
+};
+
+// 公开枚举数，该枚举数支持在指定类型的集合上进行简单迭代
+template<typename T>
+class IEnumerable
+{
+public:
+	virtual IEnumerator<T>* GetEnumerator() = 0;	// 返回一个循环访问集合的枚举数
+};
+
+// 集合接口
+template<typename T>
+class ICollection
+{
+public:
+	virtual int Count() const		= 0;	// 集合中包含的元素数
+	virtual void Add(T& item)		= 0;	// 将某项添加到集合
+	virtual void Remove(T& item)	= 0;	// 从集合中移除特定对象的第一个匹配项
+	virtual bool Contains(T& item)	= 0;	// 确定集合是否包含特定值
+	virtual void Clear()			= 0;	// 从集合中移除所有项
+	virtual void CopyTo(T* arr)		= 0;	// 将集合元素复制到数组中
+};
+
 // 定长数组模版
 template<typename T, int array_size>
 __packed class Array
@@ -202,7 +233,7 @@ public:
 // 双向链表
 template <class T> class LinkedList;
 
-// 双向链表节点
+// 双向链表节点。实体类继承该类
 template <class T> class LinkedNode
 {
 	// 友元类。允许链表类控制本类私有成员
@@ -252,7 +283,7 @@ public:
 
 		return node;
 	}
-	
+
 	// 附加到当前节点后面
 	void Append(T* node)
 	{
@@ -263,104 +294,212 @@ public:
 };
 
 // 双向链表
-template <class T> class LinkedList
+template <class T>
+class LinkedList : public IEnumerable<T>, public ICollection<T>
 {
-    T* _first;
-    T* _last;
+private:
+    // 链表节点。实体类不需要继承该内部类
+	class Node
+	{
+	public:
+		T		Item;	// 元素
+		Node*	Prev;	// 前一节点
+		Node*	Next;	// 下一节点
+
+		Node()
+		{
+			Prev = NULL;
+			Next = NULL;
+		}
+
+		// 从队列中脱离
+		void Unlink()
+		{
+			if(Prev) Prev->Next = Next;
+			if(Next) Next->Prev = Prev;
+		}
+
+		// 附加到当前节点后面
+		void Append(Node* node)
+		{
+			Next = node;
+			node->Prev = this;
+		}
+	};
+
+	Node*	_Head;		// 链表头部
+    Node*	_Tail;		// 链表尾部
+	int 	_Count;		// 元素个数
+
+	void Init()
+	{
+        _Head = NULL;
+		_Tail = NULL;
+		_Count = 0;
+	}
 
 public:
-    void Initialize()
+    LinkedList()
     {
-        _first = Tail();
-        _last  = Head();
+		Init();
     }
 
 	// 计算链表节点数
-    int Count()
-    {
-        T*  ptr;
-        T*  ptrNext;
-        int num = 0;
+    virtual int Count() const { return _Count; }
 
-        for(ptr = FirstNode(); (ptrNext = ptr->Next()) != NULL; ptr = ptrNext)
-        {
-            num++;
-        }
+	// 将某项添加到集合
+	virtual void Add(T& item)
+	{
+		Node* node = new Node();
+		node->Item = &item;
 
-        return num;
-    }
+		if(_Tail)
+			_Tail->Append(node);
+		else
+			_Head = _Tail = node;
 
-    T* FirstNode() const { return _first          ; }
-    T* LastNode () const { return _last           ; }
-    bool IsEmpty  () const { return _first == Tail(); }
+		_Count++;
+	}
 
-    T* FirstValidNode() const { T* res = _first; return res->Next() ? res : NULL; }
-    T* LastValidNode () const { T* res = _last ; return res->Prev() ? res : NULL; }
+	// 从集合中移除特定对象的第一个匹配项
+	virtual void Remove(T& item)
+	{
+		if(!_Count) return;
 
-    T* Head() const { return (T*)((uint)&_first - offsetof(T, Next)); }
-    T* Tail() const { return (T*)((uint)&_last  - offsetof(T, Prev)); }
+		Node* node;
+		for(node = _Head; node; node = node->Next)
+		{
+			if(node->Item == &item) break;
+		}
+
+		if(node)
+		{
+			// 脱离队列
+			node->Unlink();
+			// 特殊处理头尾
+			if(node == _Head) _Head = node->Next;
+			if(node == _Tail) _Tail = node->Prev;
+
+			delete node;
+			_Count--;
+		}
+	}
+
+	// 确定集合是否包含特定值
+	virtual bool Contains(T& item)
+	{
+		if(!_Count) return false;
+
+		Node* node;
+		for(node = _Head; node; node = node->Next)
+		{
+			if(node->Item == &item) return true;
+		}
+
+		return false;
+	}
+
+	// 从集合中移除所有项。注意，该方法不会释放元素指针
+	virtual void Clear()
+	{
+		if(!_Count) return;
+
+		Node* node;
+		for(node = _Head; node; node = node->Next)
+		{
+			delete node;
+		}
+
+		Init();
+	}
+
+	// 将集合元素复制到数组中
+	virtual void CopyTo(T* arr)
+	{
+		assert_ptr(arr);
+
+		if(!_Count) return;
+
+		Node* node;
+		for(node = _Head; node; node = node->Next)
+		{
+			*arr++ = node->Item;
+		}
+	}
 
 private:
+	// 链表迭代器
+	class LinkedListEnumerator : public IEnumerator<T>
+	{
+	private:
+		LinkedList* _List;
+		Node*		_Current;
 
-	// 在两个节点之间插入新节点
-    void Insert( T* prev, T* next, T* node )
-    {
-        node->Next = next;
-        node->Prev = prev;
+	public:
+		LinkedListEnumerator(LinkedList* list)
+		{
+			_List = list;
+			_Current = NULL;
+		}
 
-        next->Prev = node;
-        prev->Next = node;
-    }
+		// 获取集合中的当前元素
+		virtual T& Current() { return _Current->Item; }
+		// 将枚举数推进到集合的下一个元素
+		virtual bool MoveNext()
+		{
+			if(!_Current)
+				_Current = _List->_Head;
+			else
+				_Current = _Current->Next;
+
+			return _Current != NULL;
+		}
+		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
+		virtual void Reset() { _Current = NULL; }
+	};
 
 public:
-    void InsertBeforeNode( T* node, T* nodeNew )
-    {
-        if(node && nodeNew && node != nodeNew)
-        {
-            nodeNew->RemoveFromList();
+	// 返回一个循环访问集合的枚举数。外部释放
+	virtual IEnumerator<T>* GetEnumerator()
+	{
+		return new LinkedListEnumerator(this);
+	}
 
-            Insert( node->Prev(), node, nodeNew );
-        }
-    }
-
-    void InsertAfterNode( T* node, T* nodeNew )
-    {
-        if(node && nodeNew && node != nodeNew)
-        {
-            nodeNew->RemoveFromList();
-
-            Insert( node, node->Next(), nodeNew );
-        }
-    }
-
-    void LinkAtFront( T* node )
-    {
-        InsertAfterNode( Head(), node );
-    }
-
-    void LinkAtBack( T* node )
-    {
-        InsertBeforeNode( Tail(), node );
-    }
-
+	T& First() { return _Head->Item; }
+	T& Last() { return _Tail->Item; }
+	
 	// 释放第一个有效节点
-    T* ExtractFirstNode()
+    T& ExtractFirst()
     {
-        T* node = FirstValidNode();
+		if(!_Count) return NULL;
 
-        if(node) node->Unlink();
+        Node* node = _Head;
+        _Head = _Head->Next;
+		// 可能只有一个节点
+		if(!_Head) _Tail = NULL;
 
-        return node;
+		T& item = node->Item;
+		delete node;
+		_Count--;
+
+        return item;
     }
 
 	// 释放最后一个有效节点
-    T* ExtractLastNode()
+    T& ExtractLast()
     {
-        T* node = LastValidNode();
+		if(!_Count) return NULL;
 
-        if(node) node->Unlink();
+        Node* node = _Tail;
+        _Tail = _Tail->Prev;
+		// 可能只有一个节点
+		if(!_Tail) _Head = NULL;
 
-        return node;
+		T& item = node->Item;
+		delete node;
+		_Count--;
+
+        return item;
     }
 };
 
