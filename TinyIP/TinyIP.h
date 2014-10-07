@@ -25,6 +25,13 @@ public:
 	virtual bool Process(MemoryStream* ms) = 0;
 };
 
+// Socket列表
+class SocketList : public List<Socket*>
+{
+public:
+	Socket* FindByType(ushort type);
+};
+
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
@@ -66,7 +73,7 @@ public:
 	// 套接字列表。套接字根据类型来识别
 	//Socket* Sockets[0x20];
 	//uint SocketCount;
-	List<Socket*> Sockets;
+	SocketList Sockets;
 
     TinyIP(ITransport* port);
     virtual ~TinyIP();

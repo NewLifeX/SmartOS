@@ -1,6 +1,8 @@
 ﻿#include "Icmp.h"
 #include "Arp.h"
 
+#define NET_DEBUG DEBUG
+
 bool IcmpSocket::Process(MemoryStream* ms)
 {
 	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();

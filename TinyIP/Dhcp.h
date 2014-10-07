@@ -21,11 +21,14 @@ private:
 	static void SendDiscover(void* param);
 public:
 	bool Running;	// 正在运行
+	bool Result;	// 是否获取IP成功
 
-	Dhcp(TinyIP* tip) : UdpSocket(tip) { Type = IP_UDP; Port = 68; }
+	Dhcp(TinyIP* tip);
 
 	void Start();	// 开始
 	void Stop();	// 停止
+
+	EventHandler OnStop;
 
 protected:
 	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);

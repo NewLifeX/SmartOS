@@ -353,3 +353,19 @@ Socket::~Socket()
 	// 从TinyIP中删除当前Socket
 	Tip->Sockets.Remove(this);
 }
+
+Socket* SocketList::FindByType(ushort type)
+{
+	uint count = Count();
+	for(int i=count-1; i>=0; i--)
+	{
+		Socket* socket = (*this)[i];
+		if(socket)
+		{
+			// 必须类型匹配
+			if(socket->Type == type) return socket;
+		}
+	}
+
+	return NULL;
+}

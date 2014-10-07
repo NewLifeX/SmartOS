@@ -1,5 +1,18 @@
 ﻿#include "Dhcp.h"
 
+#define NET_DEBUG DEBUG
+
+Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
+{
+	Type = IP_UDP;
+	Port = 68;
+
+	Running = false;
+	Result = false;
+
+	OnStop = NULL;
+}
+
 void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 {
 	byte* p = dhcp->Next();
@@ -122,12 +135,16 @@ void Dhcp::Start()
 
 	// 创建任务，每秒发送一次Discover
 	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
+	
+	Running = true;
 }
 
 void Dhcp::Stop()
 {
 	Running = false;
 	if(taskID) Sys.RemoveTask(taskID);
+
+	if(OnStop) OnStop(this, NULL);
 }
 
 void Dhcp::SendDiscover(void* param)
