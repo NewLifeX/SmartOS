@@ -31,6 +31,7 @@ TinyIP::TinyIP(ITransport* port)
 	Buffer = NULL;
 	BufferSize = 1500;
 	EnableBroadcast = true;
+	EnableArp = true;
 
 	Sockets.SetCapacity(0x10);
 	// 必须有Arp，否则无法响应别人的IP询问
@@ -83,7 +84,7 @@ void TinyIP::Process(MemoryStream* ms)
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		if(Arp) Arp->Process(ms);
+		if(EnableArp && Arp) Arp->Process(ms);
 
 		return;
 	}

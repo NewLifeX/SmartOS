@@ -55,6 +55,7 @@ public:
 	MacAddress Mac;	// 本地Mac地址
 	ushort Port;	// 本地端口
 	bool EnableBroadcast;	// 使用广播
+	bool EnableArp;	// 启用Arp
 
 	MacAddress LocalMac;// 本地目标Mac地址
 	IPAddress LocalIP;	// 本地目标IP地址

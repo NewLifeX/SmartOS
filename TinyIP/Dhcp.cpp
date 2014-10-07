@@ -34,8 +34,8 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
 	//dhcp->ClientMac = Tip->Mac;
 
-	//Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
-	//Tip->RemoteIP = 0xFFFFFFFF;
+	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
+	Tip->RemoteIP = 0xFFFFFFFF;
 	Tip->Port = 68;
 	Tip->RemotePort = 67;
 
@@ -75,8 +75,8 @@ void Dhcp::Discover(DHCP_HEADER* dhcp)
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 
-	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
-	Tip->RemoteIP = 0xFFFFFFFF;
+	//Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
+	//Tip->RemoteIP = 0xFFFFFFFF;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
@@ -89,7 +89,7 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 
 	// 发往DHCP服务器
 	//Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
-	Tip->RemoteIP = Tip->DHCPServer;
+	//Tip->RemoteIP = Tip->DHCPServer;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
@@ -144,6 +144,9 @@ void Dhcp::Start()
 	// 创建任务，每秒发送一次Discover
 	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
 
+	// 通过DHCP获取IP期间，关闭Arp响应
+	Tip->EnableArp = false;
+
 	Running = true;
 }
 
@@ -151,6 +154,9 @@ void Dhcp::Stop()
 {
 	Running = false;
 	if(taskID) Sys.RemoveTask(taskID);
+
+	// 通过DHCP获取IP期间，关闭Arp响应
+	Tip->EnableArp = true;
 
 	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
@@ -204,7 +210,6 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 	{
 		if(__REV(dhcp->TransID) == dhcpid)
 		{
-			uint old = Tip->IP;
 			Tip->IP = dhcp->YourIP;
 			PareOption(dhcp->Next(), len);
 
@@ -218,11 +223,8 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 			debug_printf("\r\n");
 #endif
 
-			uint yip = dhcp->YourIP;
 			dhcp->Init(dhcpid, true);
-			dhcp->YourIP = yip;
 			Request(dhcp);
-			Tip->IP = old;
 		}
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
