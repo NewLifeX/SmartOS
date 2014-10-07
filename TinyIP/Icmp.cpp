@@ -1,4 +1,5 @@
 ﻿#include "Icmp.h"
+#include "Arp.h"
 
 bool IcmpSocket::Process(MemoryStream* ms)
 {
@@ -44,8 +45,9 @@ bool IcmpSocket::Process(MemoryStream* ms)
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
-	assert_param(Tip->Arp);
-	const MacAddress* mac = Tip->Arp->Resolve(ip);
+	assert_ptr(Tip->Arp);
+	ArpSocket* arp = (ArpSocket*)Tip->Arp;
+	const MacAddress* mac = arp->Resolve(ip);
 	if(!mac)
 	{
 #if NET_DEBUG

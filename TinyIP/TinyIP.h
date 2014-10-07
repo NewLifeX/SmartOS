@@ -25,36 +25,6 @@ public:
 	virtual bool Process(MemoryStream* ms) = 0;
 };
 
-// ARP协议
-class ArpSocket : public Socket
-{
-private:
-	// ARP表
-	typedef struct
-	{
-		IPAddress IP;
-		MacAddress Mac;
-		uint Time;	// 生存时间，秒
-	}ARP_ITEM;
-
-	ARP_ITEM* _Arps;	// Arp表，动态分配
-
-public:
-	byte Count;	// Arp表行数，默认16行
-
-	ArpSocket(TinyIP* tip);
-	virtual ~ArpSocket();
-
-	// 处理数据包
-	virtual bool Process(MemoryStream* ms);
-
-	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-	const MacAddress* Request(IPAddress ip, int timeout = 3);
-
-	const MacAddress* Resolve(IPAddress ip);
-	void Add(IPAddress ip, const MacAddress& mac);
-};
-
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
@@ -92,7 +62,7 @@ public:
 	IPAddress Gateway;
 
 	// Arp套接字
-	ArpSocket* Arp;
+	Socket* Arp;
 	// 套接字列表。套接字根据类型来识别
 	//Socket* Sockets[0x20];
 	//uint SocketCount;
