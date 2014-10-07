@@ -32,17 +32,17 @@ template<typename T>
 class ICollection
 {
 public:
-	virtual int Count() const		= 0;	// 集合中包含的元素数
-	virtual void Add(T& item)		= 0;	// 将某项添加到集合
-	virtual void Remove(T& item)	= 0;	// 从集合中移除特定对象的第一个匹配项
-	virtual bool Contains(T& item)	= 0;	// 确定集合是否包含特定值
-	virtual void Clear()			= 0;	// 从集合中移除所有项
-	virtual void CopyTo(T* arr)		= 0;	// 将集合元素复制到数组中
+	virtual int Count() const			= 0;	// 集合中包含的元素数
+	virtual void Add(const T& item)		= 0;	// 将某项添加到集合
+	virtual void Remove(const T& item)	= 0;	// 从集合中移除特定对象的第一个匹配项
+	virtual bool Contains(const T& item)= 0;	// 确定集合是否包含特定值
+	virtual void Clear()				= 0;	// 从集合中移除所有项
+	virtual void CopyTo(T* arr)			= 0;	// 将集合元素复制到数组中
 };
 
 // 定长数组模版
 template<typename T, int array_size>
-__packed class Array
+class Array
 {
 private:
 	int _Count;
@@ -92,7 +92,7 @@ public:
 
 // 变长列表模版
 template<typename T>
-__packed class List
+class List : public IEnumerable<T>, public ICollection<T>
 {
 private:
     T* _Arr;		// 存储数据的数组
@@ -160,7 +160,7 @@ public:
     ~List() { if(_Arr) delete[] _Arr; _Arr = NULL; }
 
 	// 添加单个元素
-    void Add(const T& item)
+    virtual void Add(const T& item)
     {
         // 检查大小
         CheckSize();
@@ -191,6 +191,11 @@ public:
 		return -1;
 	}
 
+	virtual bool Contains(const T& item)
+	{
+		return Find(item) > -1;
+	}
+
 	// 删除指定位置元素
 	void RemoveAt(int index)
 	{
@@ -202,19 +207,30 @@ public:
 	}
 
 	// 删除指定元素
-	int Remove(const T& item)
+	virtual void Remove(const T& item)
 	{
 		int index = Find(item);
 		if(index >= 0) RemoveAt(index);
+	}
 
-		return index;
+	virtual void Clear()
+	{
+		_Count = 0;
+	}
+
+	virtual void CopyTo(T* arr)
+	{
+		assert_ptr(arr);
+		if(!_Count) return;
+
+		memcpy(arr, _Arr, _Count * sizeof(T));
 	}
 
 	// 返回内部指针
     const T* ToArray() { return _Arr; }
 
 	// 有效元素个数
-    int Count() { return _Count; }
+    virtual int Count() const { return _Count; }
 
 	// 设置新的容量，如果容量比元素个数小，则会丢失数据
 	void SetCapacity(int capacity) { ChangeSize(capacity); }
@@ -228,6 +244,41 @@ public:
 
 	// 列表转为指针，注意安全
     T* operator=(List& list) { return list.ToArray(); }
+
+private:
+	class ListEnumerator : public IEnumerator<T>
+	{
+	private:
+		List*	_List;
+		int		_Index;
+
+	public:
+		ListEnumerator(List* list)
+		{
+			_List = list;
+			_Index = -1;
+		}
+
+		// 获取集合中的当前元素
+		virtual T& Current() { return _List->_Arr[_Index]; }
+		// 将枚举数推进到集合的下一个元素
+		virtual bool MoveNext()
+		{
+			_Index++;
+			if(_Index >= _List->_Count) _Index = -1;
+
+			return _Index >= 0;
+		}
+		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
+		virtual void Reset() { _Index = -1; }
+	};
+
+public:
+	// 返回一个循环访问集合的枚举数。外部释放
+	virtual IEnumerator<T>* GetEnumerator()
+	{
+		return new ListEnumerator(this);
+	}
 };
 
 // 双向链表
@@ -348,7 +399,7 @@ public:
     virtual int Count() const { return _Count; }
 
 	// 将某项添加到集合
-	virtual void Add(T& item)
+	virtual void Add(const T& item)
 	{
 		Node* node = new Node();
 		node->Item = &item;
@@ -362,7 +413,7 @@ public:
 	}
 
 	// 从集合中移除特定对象的第一个匹配项
-	virtual void Remove(T& item)
+	virtual void Remove(const T& item)
 	{
 		if(!_Count) return;
 
@@ -386,7 +437,7 @@ public:
 	}
 
 	// 确定集合是否包含特定值
-	virtual bool Contains(T& item)
+	virtual bool Contains(const T& item)
 	{
 		if(!_Count) return false;
 
@@ -467,7 +518,7 @@ public:
 
 	T& First() { return _Head->Item; }
 	T& Last() { return _Tail->Item; }
-	
+
 	// 释放第一个有效节点
     T& ExtractFirst()
     {
