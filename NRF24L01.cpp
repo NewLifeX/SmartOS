@@ -566,7 +566,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	{
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
-		if(!_timer) _timer = new Timer(TIM2);
+		//if(!_timer) _timer = new Timer(TIM2);
+		if(!_timer) _timer = Timer::Create();
 
 		_timer->SetFrequency(10000);
 		_timer->Register(ReceiveTask, this);
