@@ -40,51 +40,54 @@ public:
 	virtual void CopyTo(T* arr)			= 0;	// 将集合元素复制到数组中
 };
 
-// 定长数组模版
-template<typename T, int array_size>
+// 数组
 class Array
 {
 private:
-	int _Count;
-    T Arr[array_size];
+    void**	_Arr;
+	int		_Count;
+	int		_Capacity;
 
 public:
 	// 有效元素个数
-    int Count() { return _Count; }
+    int Count() const { return _Count; }
 	// 最大元素个数
-    int Max() { return array_size; }
+    int Capacity() const { return _Capacity; }
 
-	void Init()
+	Array(int capacity = 0x10)
 	{
+		_Capacity = capacity;
 		_Count = 0;
-		memset(Arr, 0x00, array_size * sizeof(T));
+
+		_Arr = new void*[capacity];
+		memset(_Arr, 0, capacity);
 	}
 
 	// 压入一个元素
-	int Push(const T& item)
+	int Push(void* item)
 	{
-		assert_param(_Count < array_size);
+		assert_param(_Count < _Capacity);
 
 		// 找到空闲位放置
 		int idx = _Count++;
-		Arr[idx] = item;
+		_Arr[idx] = item;
 
 		return idx;
 	}
 
 	// 弹出一个元素
-	const T& Pop()
+	const void* Pop()
 	{
 		assert_param(_Count > 0);
 
-		return Arr[--_Count];
+		return _Arr[--_Count];
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    T operator[](int i)
+    void* operator[](int i)
 	{
 		assert_param(i >= 0 && i < _Count);
-		return Arr[i];
+		return _Arr[i];
 	}
 	// 列表转为指针，注意安全
     //T* operator=(Array arr) { return arr.Arr; }
