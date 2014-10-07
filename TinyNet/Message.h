@@ -57,7 +57,7 @@ private:
 	void Init();
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
-	class Queue : public LinkedNode<Queue>
+	class QueueNode
 	{
 	public:
 		ulong		Expired;// 过期时间
@@ -67,12 +67,9 @@ private:
 		uint		Length;
 		bool		Success;
 
-		Queue()
-		{
-			Initialize();
-		}
+		QueueNode() { }
 
-		Queue(const Queue& queue)
+		QueueNode(const QueueNode& queue)
 		{
 			Expired	= queue.Expired;
 			Msg		= queue.Msg;
@@ -80,12 +77,9 @@ private:
 			Buf		= queue.Buf;
 			Length	= queue.Length;
 			Success	= queue.Success;
-
-			Next	= queue.Next;
-			Prev	= queue.Prev;
 		}
 	};
-	Queue* _Queue;
+	LinkedList<QueueNode*> _Queue;
 
 	bool SendInternal(Message& msg, ITransport* port);
 	static void SendTask(void* sender, void* param);

@@ -411,7 +411,7 @@ public:
 	virtual void Add(const T& item)
 	{
 		Node* node = new Node();
-		node->Item = &item;
+		node->Item = item;
 
 		if(_Tail)
 			_Tail->Append(node);
@@ -429,7 +429,7 @@ public:
 		Node* node;
 		for(node = _Head; node; node = node->Next)
 		{
-			if(node->Item == &item) break;
+			if(node->Item == item) break;
 		}
 
 		if(node)
@@ -453,7 +453,7 @@ public:
 		Node* node;
 		for(node = _Head; node; node = node->Next)
 		{
-			if(node->Item == &item) return true;
+			if(node->Item == item) return true;
 		}
 
 		return false;

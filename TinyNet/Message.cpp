@@ -327,35 +327,26 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 
 	// 非响应消息，考虑异步
 
-	Queue* queue = new Queue();
-	queue->Expired	= Time.Current() + msTimeout * 1000;
-	queue->Msg	= &msg;
-	queue->Port	= port;
+	QueueNode* first = new QueueNode();
+	first->Expired	= Time.Current() + msTimeout * 1000;
+	first->Msg	= &msg;
+	first->Port	= port;
 
 	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
-	Queue* head = queue;
-	Queue* tail = head;
+	_Queue.Add(first);
 
 	// 发往所有端口
 	if(!port)
 	{
-		for(int i=0; i<_portCount; i++)
+		first->Port = _ports[0];
+		for(int i=1; i<_portCount; i++)
 		{
-			if(i > 0)
-			{
-				Queue* node = new Queue(*queue);
-				node->Port = _ports[i];
+			QueueNode* node = new QueueNode(*first);
+			node->Port = _ports[i];
 
-				tail->Append(node);
-				tail = node;
-			}
+			_Queue.Add(node);
 		}
 	}
-	// 加入队列
-	if(!_Queue)
-		_Queue = head;
-	else
-		_Queue->Last()->Append(head);
 	// 准备增加一个定时任务，用于轮询重发队列里面的任务
 	if(!_Timer)
 	{
@@ -413,23 +404,21 @@ void Controller::SendTask(void* sender, void* param)
 void Controller::SendTask()
 {
 	// 如果没有轮询队列，则关闭定时器
-	if(!_Queue)
+	if(!_Queue.Count())
 	{
 		if(_Timer) _Timer->Stop();
 		return;
 	}
 
-	for(Queue* node = _Queue; node;)
+	auto_ptr< IEnumerator<QueueNode*> > it(_Queue.GetEnumerator());
+	while(it->MoveNext())
 	{
-		Queue* next = node->Next;
+		QueueNode* node = it->Current();
 
 		// 如果过期，则删除
 		if(node->Expired < Time.Current())
 		{
-			// 如果是头部第一个元素，则修改头部
-			if(node == _Queue) _Queue = next;
-
-			node->Unlink();
+			_Queue.Remove(node);
 			delete node;
 		}
 		else
@@ -437,8 +426,6 @@ void Controller::SendTask()
 			// 发送消息
 			SendInternal(*node->Msg, node->Port);
 		}
-
-		node = next;
 	}
 }
 
