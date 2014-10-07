@@ -80,6 +80,7 @@ public:
 
 	bool Open();
 	bool Init();
+	void ShowInfo();
 	static void ShowIP(IPAddress ip);
 	static void ShowMac(const MacAddress& mac);
 	static uint CheckSum(byte* buf, uint len, byte type);

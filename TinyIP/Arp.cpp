@@ -1,5 +1,7 @@
 ﻿#include "Arp.h"
 
+#define NET_DEBUG DEBUG
+
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = ETH_ARP;

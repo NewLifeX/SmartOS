@@ -34,8 +34,8 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
 	//dhcp->ClientMac = Tip->Mac;
 
-	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
-	Tip->RemoteIP = 0xFFFFFFFF;
+	//Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
+	//Tip->RemoteIP = 0xFFFFFFFF;
 	Tip->Port = 68;
 	Tip->RemotePort = 67;
 
@@ -75,6 +75,8 @@ void Dhcp::Discover(DHCP_HEADER* dhcp)
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 
+	Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
+	Tip->RemoteIP = 0xFFFFFFFF;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
@@ -85,6 +87,9 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	opt->SetType(DHCP_TYPE_Request);
 	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer);
 
+	// 发往DHCP服务器
+	//Tip->RemoteMac = 0xFFFFFFFFFFFFFFFF;
+	Tip->RemoteIP = Tip->DHCPServer;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
@@ -130,12 +135,15 @@ void RenewDHCP(void* param)
 
 void Dhcp::Start()
 {
-	_expiredTime = Time.Current() + 10 * 1000000;
+	int s = 3;
+	_expiredTime = Time.Current() + s * 1000000;
 	dhcpid = (uint)Time.Current();
+
+	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", s, dhcpid);
 
 	// 创建任务，每秒发送一次Discover
 	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
-	
+
 	Running = true;
 }
 
@@ -144,7 +152,14 @@ void Dhcp::Stop()
 	Running = false;
 	if(taskID) Sys.RemoveTask(taskID);
 
+	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
+
 	if(OnStop) OnStop(this, NULL);
+
+	if(Result) Tip->ShowInfo();
+
+	// 销毁自己
+	delete this;
 }
 
 void Dhcp::SendDiscover(void* param)
@@ -189,6 +204,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 	{
 		if(__REV(dhcp->TransID) == dhcpid)
 		{
+			uint old = Tip->IP;
 			Tip->IP = dhcp->YourIP;
 			PareOption(dhcp->Next(), len);
 
@@ -196,14 +212,17 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
 			debug_printf("DHCP Offer IP:");
-			TinyIP::ShowIP(Tip->IP);
+			TinyIP::ShowIP(dhcp->YourIP);
 			debug_printf(" From ");
 			TinyIP::ShowIP(Tip->RemoteIP);
 			debug_printf("\r\n");
 #endif
 
+			uint yip = dhcp->YourIP;
 			dhcp->Init(dhcpid, true);
+			dhcp->YourIP = yip;
 			Request(dhcp);
+			Tip->IP = old;
 		}
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
@@ -216,7 +235,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 		debug_printf("\r\n");
 #endif
 
-		if(dhcp->YourIP == Tip->IP)
+		//if(dhcp->YourIP == Tip->IP)
 		{
 			// 查找租约时间，提前续约
 			opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
@@ -229,6 +248,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 			}
 
 			//return true;
+			Result = true;
 			// 完成任务
 			Stop();
 		}

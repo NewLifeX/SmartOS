@@ -18,9 +18,9 @@ TinyIP::TinyIP(ITransport* port)
 
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 	byte* mac = (byte*)&Mac;
-	mac[0] = 'Y'; mac[1] = 'W'; mac[2] = 'S';
+	mac[0] = 'P'; mac[1] = 'M'; //mac[2] = 'X';
 	//memcpy(Mac, "YWS", 3);
-	memcpy(&mac[3], (byte*)Sys.ID, 6 - 3);
+	memcpy(&mac[2], (byte*)Sys.ID, 6 - 2);
 	// MAC地址首字节奇数表示组地址，这里用偶数
 	//Mac[0] = 'N'; Mac[1] = 'X';
 	//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
@@ -186,6 +186,21 @@ bool TinyIP::Init()
 
 	if(!Open()) return false;
 
+	ShowInfo();
+
+	// 添加到系统任务，马上开始，尽可能多被调度
+    Sys.AddTask(Work, this);
+
+#if NET_DEBUG
+	uint us = Time.Current() - _StartTime;
+	debug_printf("TinyIP Ready! Cost:%dms\r\n\r\n", us / 1000);
+#endif
+
+	return true;
+}
+
+void TinyIP::ShowInfo()
+{
 #if NET_DEBUG
 	debug_printf("\tIP:\t");
 	ShowIP(IP);
@@ -199,16 +214,6 @@ bool TinyIP::Init()
 	ShowIP(DNSServer);
 	debug_printf("\r\n");
 #endif
-
-	// 添加到系统任务，马上开始，尽可能多被调度
-    Sys.AddTask(Work, this);
-
-#if NET_DEBUG
-	uint us = Time.Current() - _StartTime;
-	debug_printf("TinyIP Ready! Cost:%dms\r\n\r\n", us / 1000);
-#endif
-
-	return true;
 }
 
 void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
@@ -342,8 +347,8 @@ Socket::Socket(TinyIP* tip)
 	assert_param(tip);
 
 	Tip = tip;
-	// 加入到列表
-	tip->Sockets.Add(this);
+	// 除了ARP以外，加入到列表
+	if(this->Type != ETH_ARP) tip->Sockets.Add(this);
 }
 
 Socket::~Socket()
