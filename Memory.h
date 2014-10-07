@@ -60,8 +60,64 @@ public:
 			_ptr = NULL;
 		}
 	}
-	
+
 	void* ToPtr() { return _ptr->Ptr; }
+};
+
+// 经典的C++自动指针
+// 超出对象作用域时自动销毁被管理指针
+template<class T>
+class auto_ptr
+{
+private:
+	T* _ptr;
+
+public:
+	// 普通指针构造自动指针，隐式转换
+	explicit auto_ptr(T* p = 0) : _ptr(p) { }
+	// 拷贝构造函数，解除原来自动指针的管理权
+	auto_ptr(auto_ptr& ap) : _ptr(ap.release()) { }
+	// 析构时销毁被管理指针
+	~auto_ptr()
+	{
+		if(_ptr)
+		{
+			delete _ptr;
+			_ptr = NULL;
+		}
+	}
+
+	// 自动指针拷贝，解除原来自动指针的管理权
+	auto_ptr& operator=(auto_ptr& ap)
+	{
+		reset(ap.release());
+		return *this;
+	}
+
+	// 获取原始指针
+	T* get() const { return _ptr; }
+
+	// 重载*和->运算符
+	T& operator*() const { assert_param(_ptr); return *_ptr; }
+	T* operator->() const { return _ptr; }
+
+	// 接触指针的管理权
+	T* release()
+	{
+		T* p = _ptr;
+		_ptr = 0;
+		return p;
+	}
+
+	// 销毁原指针，管理新指针
+	void reset(T* p = 0)
+	{
+		if(_ptr != p)
+		{
+			if(_ptr) delete _ptr;
+			_ptr = p;
+		}
+	}
 };
 
 #endif
