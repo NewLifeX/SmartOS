@@ -74,17 +74,20 @@ private:
 
 public:
 	// 普通指针构造自动指针，隐式转换
+	// 构造函数的explicit关键词有效阻止从一个“裸”指针隐式转换成auto_ptr类型
 	explicit auto_ptr(T* p = 0) : _ptr(p) { }
 	// 拷贝构造函数，解除原来自动指针的管理权
 	auto_ptr(auto_ptr& ap) : _ptr(ap.release()) { }
 	// 析构时销毁被管理指针
 	~auto_ptr()
 	{
-		if(_ptr)
+		// 因为C++保证删除一个空指针是安全的，所以我们没有必要判断空
+		/*if(_ptr)
 		{
 			delete _ptr;
 			_ptr = NULL;
-		}
+		}*/
+		delete _ptr;
 	}
 
 	// 自动指针拷贝，解除原来自动指针的管理权
@@ -114,7 +117,9 @@ public:
 	{
 		if(_ptr != p)
 		{
-			if(_ptr) delete _ptr;
+			//if(_ptr) delete _ptr;
+			// 因为C++保证删除一个空指针是安全的，所以我们没有必要判断空
+			delete _ptr;
 			_ptr = p;
 		}
 	}
