@@ -40,6 +40,18 @@ public:
 	virtual void CopyTo(T* arr)			= 0;	// 将集合元素复制到数组中
 };
 
+#define foreach(cls,cur,list)					\
+	{												\
+		IEnumerator<cls>* et = list.GetEnumerator();\
+		while(et->MoveNext())						\
+		{											\
+			cls cur = et->Current();				\
+
+#define foreach_end()	\
+		}					\
+		delete et;			\
+	}
+
 // 数组
 class Array
 {
