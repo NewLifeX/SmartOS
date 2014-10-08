@@ -24,6 +24,13 @@ ArpSocket::~ArpSocket()
 
 bool ArpSocket::Process(MemoryStream* ms)
 {
+	// 如果ms为空，可能是纯为了更新ARP表
+	if(!ms)
+	{
+		Add(Tip->RemoteIP, Tip->RemoteMac);
+		return false;
+	}
+
 	// 前面的数据长度很不靠谱，这里进行小范围修正
 	//uint size = ms->Position + sizeof(ARP_HEADER);
 	//if(ms->Length < size) ms->Length = size;
@@ -194,6 +201,8 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 
 void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 {
+	if(!ip || ip == 0xFFFFFFFF) return;
+
 #if NET_DEBUG
 	debug_printf("Add Arp(");
 	TinyIP::ShowIP(ip);

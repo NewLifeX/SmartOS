@@ -105,6 +105,9 @@ void TinyIP::Process(MemoryStream* ms)
 	// 记录远程信息
 	LocalIP = ip->DestIP;
 	RemoteIP = ip->SrcIP;
+	
+	// 移交给ARP处理，为了让它更新ARP表
+	if(Arp) Arp->Process(NULL);
 
 	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
 	//assert_param(__REV16(ip->TotalLength) == len);
