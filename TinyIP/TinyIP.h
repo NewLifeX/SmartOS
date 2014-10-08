@@ -6,7 +6,6 @@
 #include "List.h"
 #include "Stream.h"
 #include "Net\ITransport.h"
-#include "Net\Ethernet.h"
 #include "Net\Net.h"
 
 class TinyIP;
