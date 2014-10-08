@@ -157,6 +157,7 @@ void Dhcp::Stop()
 {
 	Running = false;
 	if(taskID) Sys.RemoveTask(taskID);
+	taskID = 0;
 
 	// 通过DHCP获取IP期间，关闭Arp响应
 	Tip->EnableArp = true;
@@ -248,6 +249,9 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 			{
 				// 续约时间，大字节序，时间单位秒
 				uint time = __REV(*(uint*)&opt->Data);
+
+				debug_printf("DHCP IPLeaseTime:%ds\r\n", time);
+
 				// DHCP租约过了一半以后重新获取IP地址
 				if(time > 0) Sys.AddTask(RenewDHCP, Tip, time / 2 * 1000000, -1);
 			}

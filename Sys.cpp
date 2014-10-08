@@ -524,7 +524,7 @@ uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 	task->NextTime = Time.Current() + dueTime;
 
 	_TaskCount++;
-	debug_printf("添加任务%d 0x%08x\r\n", task->ID, func);
+	debug_printf("添加任务%d 0x%08x FirstTime=%dus Period=%dus\r\n", task->ID, func, dueTime, period);
 
 	return task->ID;
 }
