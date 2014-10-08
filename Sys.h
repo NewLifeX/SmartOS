@@ -112,7 +112,7 @@ private:
 		int ID;			// 编号
 		Action Callback;// 回调
 		void* Param;	// 参数
-		int Period;		// 周期us
+		long Period;	// 周期us
 		ulong NextTime;	// 下一次执行时间
 	};
 
@@ -122,7 +122,7 @@ private:
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-	uint AddTask(Action func, void* param, uint dueTime = 0, int period = 0);
+	uint AddTask(Action func, void* param, ulong dueTime = 0, long period = 0);
 	void RemoveTask(uint taskid);
 	void Start();	// 开始系统大循环
 	void StartInternal();

@@ -505,7 +505,7 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 #define __TASK__MODULE__ 1
 #ifdef __TASK__MODULE__
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
+uint TSys::AddTask(Action func, void* param, ulong dueTime, long period)
 {
 	// 屏蔽中断，否则可能有线程冲突
 	SmartIRQ irq;
@@ -524,7 +524,8 @@ uint TSys::AddTask(Action func, void* param, uint dueTime, int period)
 	task->NextTime = Time.Current() + dueTime;
 
 	_TaskCount++;
-	debug_printf("添加任务%d 0x%08x FirstTime=%dus Period=%dus\r\n", task->ID, func, dueTime, period);
+	// 输出长整型%ld，无符号长整型%llu
+	debug_printf("添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", task->ID, func, dueTime, period);
 
 	return task->ID;
 }

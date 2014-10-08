@@ -138,7 +138,7 @@ void RenewDHCP(void* param)
 
 void Dhcp::Start()
 {
-	int s = 3;
+	int s = 10;
 	_expiredTime = Time.Current() + s * 1000000;
 	dhcpid = (uint)Time.Current();
 
@@ -253,7 +253,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 				debug_printf("DHCP IPLeaseTime:%ds\r\n", time);
 
 				// DHCP租约过了一半以后重新获取IP地址
-				if(time > 0) Sys.AddTask(RenewDHCP, Tip, time / 2 * 1000000, -1);
+				if(time > 0) Sys.AddTask(RenewDHCP, Tip, (ulong)time / 2 * 1000000, -1);
 			}
 
 			//return true;
