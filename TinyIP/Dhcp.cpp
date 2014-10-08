@@ -123,8 +123,11 @@ void RenewDHCP(void* param)
 	TinyIP* tip = (TinyIP*)param;
 	if(tip)
 	{
-		Dhcp dhcp(tip);
-		dhcp.Start();
+		/*Dhcp dhcp(tip);
+		dhcp.Start();*/
+		// 不能使用栈分配，因为是异步操作
+		Dhcp* dhcp = new Dhcp(tip);
+		dhcp->Start();
 		/*if(!dhcp.Start())
 		{
 			debug_printf("TinyIP DHCP Fail!\r\n\r\n");
@@ -160,9 +163,9 @@ void Dhcp::Stop()
 
 	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
-	if(OnStop) OnStop(this, NULL);
-
 	if(Result) Tip->ShowInfo();
+
+	if(OnStop) OnStop(this, NULL);
 
 	// 销毁自己
 	delete this;
