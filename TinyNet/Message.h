@@ -50,7 +50,6 @@ class Controller
 private:
 	ITransport**	_ports;		// 数据传输口
 	int				_portCount;	// 传输口个数
-	ITransport*		_curPort;	// 当前使用的数据传输口
 	uint			_Sequence;	// 控制器的消息序号
 	Timer*			_Timer;		// 用于错误重发机制的定时器
 

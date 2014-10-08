@@ -117,7 +117,6 @@ Controller::Controller(ITransport* ports[], int count)
 
 void Controller::Init()
 {
-	_curPort = NULL;
 	_Sequence = 0;
 	_Timer = NULL;
 
@@ -153,9 +152,6 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	assert_ptr(param);
 
 	Controller* control = (Controller*)param;
-	// 设置当前数据传输口
-	ITransport* old = control->_curPort;
-	control->_curPort = transport;
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	MemoryStream ms(buf, len);
@@ -164,9 +160,6 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
 		if(!control->Process(ms, transport)) break;
 	}
-
-	// 还原回来
-	control->_curPort = old;
 
 	return 0;
 }
@@ -190,7 +183,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	/*Sys.ShowHex(p, ms.Current() - p);
 	debug_printf("\r\n");*/
 
-	debug_printf("%s ", _curPort->ToString());
+	debug_printf("%s ", port->ToString());
 	if(msg.Error)
 		debug_printf("Message Error");
 	else if(msg.Reply)
@@ -452,7 +445,6 @@ bool Controller::Reply(Message& msg, ITransport* port)
 	msg.Dest = msg.Src;
 	msg.Reply = 1;
 
-	if(!port) port = _curPort;
 	return Send(msg, port);
 }
 
@@ -460,7 +452,6 @@ bool Controller::Error(Message& msg, ITransport* port)
 {
 	msg.Error = 1;
 
-	if(!port) port = _curPort;
 	return Reply(msg, port);
 }
 
