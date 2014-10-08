@@ -421,6 +421,12 @@ bool OutputPort::Read()
 	return rs ^ Invert;
 }
 
+bool OutputPort::ReadInput()
+{
+	bool rs = GPIO_ReadInputData(Group) & PinBit;
+	return rs ^ Invert;
+}
+
 bool OutputPort::Read(Pin pin)
 {
 	GPIO_TypeDef* group = _GROUP(pin);

@@ -98,7 +98,9 @@ public:
     ushort ReadGroup();    // 整组读取
 	// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
     bool Read(byte index);
-    bool Read();
+    bool Read();		// Read() ReadReal() 的区别在  前者读输出  一个读输入    在开漏输出的时候有很大区别
+	bool ReadInput();
+	
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
 
