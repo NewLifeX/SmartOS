@@ -99,7 +99,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	Tip->ShowIP(ip);
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
 #endif
-	Tip->SendIP(IP_ICMP, buf, sizeof(ICMP_HEADER) + payloadLength);
+	Tip->SendIP(IP_ICMP, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 总等待时间
 	TimeWheel tw(1, 0, 0);
