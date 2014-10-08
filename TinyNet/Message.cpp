@@ -254,7 +254,22 @@ void Controller::Register(byte code, CommandHandler handler, void* param)
 	assert_param(code);
 	assert_param(handler);
 
-	CommandHandlerLookup* lookup = new CommandHandlerLookup();
+	CommandHandlerLookup* lookup;
+
+#if DEBUG
+	// 检查是否已注册。一般指令码是固定的，所以只在DEBUG版本检查
+	for(int i=0; i<_HandlerCount; i++)
+	{
+		lookup = _Handlers[i];
+		if(lookup && lookup->Code == code)
+		{
+			debug_printf("Controller::Register Error! Code=%d was Registered to 0x%08x\r\n", code, lookup->Handler);
+			return;
+		}
+	}
+#endif
+
+	lookup = new CommandHandlerLookup();
 	lookup->Code = code;
 	lookup->Handler = handler;
 	lookup->Param = param;
