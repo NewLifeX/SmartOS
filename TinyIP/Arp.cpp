@@ -203,14 +203,6 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 {
 	if(!ip || ip == 0xFFFFFFFF) return;
 
-#if NET_DEBUG
-	debug_printf("Add Arp(");
-	TinyIP::ShowIP(ip);
-	debug_printf(", ");
-	TinyIP::ShowMac(mac);
-	debug_printf(")\r\n");
-#endif
-
 	if(!_Arps)
 	{
 		_Arps = new ARP_ITEM[Count];
@@ -234,6 +226,17 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 			break;
 		}
 	}
+
+#if NET_DEBUG
+	if(!item)
+	{
+		debug_printf("Add Arp(");
+		TinyIP::ShowIP(ip);
+		debug_printf(", ");
+		TinyIP::ShowMac(mac);
+		debug_printf(")\r\n");
+	}
+#endif
 
 	// 如果没有匹配项，则使用空项
 	if(!item) item = empty;

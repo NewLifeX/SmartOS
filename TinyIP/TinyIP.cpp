@@ -105,7 +105,7 @@ void TinyIP::Process(MemoryStream* ms)
 	// 记录远程信息
 	LocalIP = ip->DestIP;
 	RemoteIP = ip->SrcIP;
-	
+
 	// 移交给ARP处理，为了让它更新ARP表
 	if(Arp) Arp->Process(NULL);
 

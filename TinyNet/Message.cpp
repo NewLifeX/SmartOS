@@ -219,7 +219,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 
 		// 不需要确认的也不费事了
 		if(!msg.Confirm) return true;
-		
+
 #if DEBUG
 		byte err[] = "Crc Error #XXXX";
 		uint len = ArrayLength(err);
@@ -251,7 +251,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		}
 		foreach_end();
 	}
-	
+
 	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)
 	{
@@ -322,7 +322,7 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 
 	// 是否需要响应
 	msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
-	
+
 	// 附上序列号
 	msg.Sequence = ++_Sequence;
 
@@ -464,7 +464,7 @@ void Controller::SendTask()
 			SendInternal(*node->Msg, node->Port);
 		}
 	}*/
-	
+
 	foreach(QueueNode*, node, _Queue)
 	{
 		// 如果过期，则删除
