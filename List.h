@@ -312,8 +312,8 @@ template <class T> class LinkedNode
     friend class LinkedList<T>;
 
 public:
-    T* Next;
-    T* Prev;
+    T* Prev;	// 上一个节点
+    T* Next;	// 下一个节点
 
     void Initialize()
     {
@@ -369,7 +369,7 @@ public:
 template <class T>
 class LinkedList : public IEnumerable<T>, public ICollection<T>
 {
-private:
+public:
     // 链表节点。实体类不需要继承该内部类
 	class Node
 	{
@@ -385,10 +385,11 @@ private:
 		}
 
 		// 从队列中脱离
-		void Unlink()
+		void RemoveFromList()
 		{
-			if(Prev) Prev->Next = Next;
-			if(Next) Next->Prev = Prev;
+			// 双保险，只有在前后节点指向当前节点时，才修改它们的值
+			if(Prev && Prev->Next == this) Prev->Next = Next;
+			if(Next && Next->Prev == this) Next->Prev = Prev;
 		}
 
 		// 附加到当前节点后面
@@ -399,6 +400,7 @@ private:
 		}
 	};
 
+private:
 	Node*	_Head;		// 链表头部
     Node*	_Tail;		// 链表尾部
 	int 	_Count;		// 元素个数
@@ -447,7 +449,7 @@ public:
 		if(node)
 		{
 			// 脱离队列
-			node->Unlink();
+			node->RemoveFromList();
 			// 特殊处理头尾
 			if(node == _Head) _Head = node->Next;
 			if(node == _Tail) _Tail = node->Prev;
@@ -477,9 +479,12 @@ public:
 		if(!_Count) return;
 
 		Node* node;
-		for(node = _Head; node; node = node->Next)
+		for(node = _Head; node;)
 		{
+			// 先备份，待会删除可能影响指针
+			Node* next = node->Next;
 			delete node;
+			node = next;
 		}
 
 		Init();
@@ -505,7 +510,8 @@ private:
 	{
 	private:
 		LinkedList* _List;
-		Node*		_Current;
+		Node*		_Current;	// 当前节点
+		Node*		_Next;		// 下一个节点。考虑到中途可能删节点，必须提前备好下一个
 
 	public:
 		LinkedListEnumerator(LinkedList* list)
@@ -548,7 +554,10 @@ public:
         Node* node = _Head;
         _Head = _Head->Next;
 		// 可能只有一个节点
-		if(!_Head) _Tail = NULL;
+		if(!_Head)
+			_Tail = NULL;
+		else
+			_Head->Prev = NULL;
 
 		T& item = node->Item;
 		delete node;
@@ -565,7 +574,10 @@ public:
         Node* node = _Tail;
         _Tail = _Tail->Prev;
 		// 可能只有一个节点
-		if(!_Tail) _Head = NULL;
+		if(!_Tail)
+			_Head = NULL;
+		else
+			_Tail->Next = NULL;
 
 		T& item = node->Item;
 		delete node;
