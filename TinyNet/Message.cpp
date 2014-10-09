@@ -227,6 +227,22 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		return true;
 	}
 
+	// 如果是响应消息，及时更新请求队列
+	if(msg.Reply)
+	{
+		foreach(QueueNode*, node, _Queue)
+		{
+			if(node->Port == port && node->Msg->Sequence == msg.Sequence)
+			{
+				delete node;
+				foreach_remove();
+				break;
+			}
+		}
+		foreach_end();
+	}
+	
+	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)
 	{
 		CommandHandlerLookup* lookup = _Handlers[i];
@@ -418,7 +434,7 @@ void Controller::SendTask()
 		return;
 	}
 
-	auto_ptr< IEnumerator<QueueNode*> > it(_Queue.GetEnumerator());
+	/*auto_ptr< IEnumerator<QueueNode*> > it(_Queue.GetEnumerator());
 	while(it->MoveNext())
 	{
 		QueueNode* node = it->Current();
@@ -434,7 +450,23 @@ void Controller::SendTask()
 			// 发送消息
 			SendInternal(*node->Msg, node->Port);
 		}
+	}*/
+	
+	foreach(QueueNode*, node, _Queue)
+	{
+		// 如果过期，则删除
+		if(node->Expired < Time.Current())
+		{
+			delete node;
+			foreach_remove();
+		}
+		else
+		{
+			// 发送消息
+			SendInternal(*node->Msg, node->Port);
+		}
 	}
+	foreach_end();
 }
 
 bool Controller::SendSync(Message& msg, uint msTimeout)
