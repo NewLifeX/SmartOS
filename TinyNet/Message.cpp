@@ -5,7 +5,7 @@ void Message::Init()
 {
 	// 只有POD类型才可以这样清除
 	//memset(this, 0, sizeof(Message));
-	*(ulong*)this = 0;
+	*(ulong*)&Dest = 0;
 	Crc16 = 0;
 	Data = NULL;
 }
@@ -26,7 +26,7 @@ bool Message::Parse(MemoryStream& ms)
 
 	// 复制头8字节
 	//*(ulong*)this = *(ulong*)buf;
-	*(ulong*)this = ms.Read<ulong>();
+	*(ulong*)&Dest = ms.Read<ulong>();
 	// 代码为0是非法的
 	if(!Code) return false;
 	// 没有源地址是很不负责任的
@@ -66,7 +66,7 @@ bool Message::Verify()
 
 void Message::Write(MemoryStream& ms)
 {
-	ms.Write(*(ulong*)this);
+	ms.Write(*(ulong*)&Dest);
 	if(Length > 0) ms.Write(Data, 0, Length);
 }
 
@@ -144,6 +144,13 @@ Controller::~Controller()
 	if(_Timer) delete _Timer;
 	_Timer = NULL;
 
+	foreach(QueueNode*, node, _Queue)
+	{
+		delete node;
+		foreach_remove();
+	}
+	foreach_end();
+
 	debug_printf("微网控制器销毁\r\n");
 }
 
@@ -210,6 +217,9 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		// 错误的响应包直接忽略
 		if(msg.Reply) return true;
 
+		// 不需要确认的也不费事了
+		if(!msg.Confirm) return true;
+		
 #if DEBUG
 		byte err[] = "Crc Error #XXXX";
 		uint len = ArrayLength(err);
@@ -251,7 +261,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 			// 返回值决定是普通回复还是错误回复
 			bool rs = lookup->Handler(msg, lookup->Param);
 			// 如果本来就是响应，不用回复
-			if(!msg.Reply)
+			if(!msg.Reply && msg.Confirm)
 			{
 				if(rs)
 					Reply(msg, port);
@@ -310,6 +320,9 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 	// 附上自己的地址
 	msg.Src = Address;
 
+	// 是否需要响应
+	msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
+	
 	// 附上序列号
 	msg.Sequence = ++_Sequence;
 

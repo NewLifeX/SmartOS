@@ -19,7 +19,8 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte Code;		// 功能代码
-	byte Flags:6;	// 标识位。也可以用来做二级命令
+	byte Flags:5;	// 标识位。也可以用来做二级命令
+	byte Confirm:1;	// 是否需要确认响应
 	byte Error:1;	// 是否错误
 	byte Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
