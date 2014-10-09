@@ -17,6 +17,8 @@ public:
 	virtual T& Current()	= 0;	// 获取集合中的当前元素
 	virtual bool MoveNext()	= 0;	// 将枚举数推进到集合的下一个元素
 	virtual void Reset()	= 0;	// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
+
+	virtual void Remove()	= 0;	// 从列表中移除当前节点
 };
 
 // 公开枚举数，该枚举数支持在指定类型的集合上进行简单迭代
@@ -40,6 +42,7 @@ public:
 	virtual void CopyTo(T* arr)			= 0;	// 将集合元素复制到数组中
 };
 
+// foreach宏，用于遍历迭代器接口，必须和foreach_end成对出现
 #define foreach(cls,cur,list)					\
 	{												\
 		IEnumerator<cls>* et = list.GetEnumerator();\
@@ -51,6 +54,9 @@ public:
 		}					\
 		delete et;			\
 	}
+
+// 用于在迭代器中删除当前节点的宏
+#define foreach_remove() et->Remove();
 
 // 数组
 class Array
@@ -74,7 +80,7 @@ public:
 		_Arr = new void*[capacity];
 		memset(_Arr, 0, capacity);
 	}
-	
+
 	~Array()
 	{
 		if(_Arr) delete _Arr;
@@ -292,6 +298,13 @@ private:
 		}
 		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
 		virtual void Reset() { _Index = -1; }
+		// 从列表中移除当前节点
+		virtual void Remove()
+		{
+			// 删除当前节点后，索引后移一位，因为后面的数据前移了一位
+			_List->RemoveAt(_Index);
+			_Index--;
+		}
 	};
 
 public:
@@ -412,6 +425,18 @@ private:
 		_Count = 0;
 	}
 
+	void Remove(Node* node)
+	{
+		// 脱离队列
+		node->RemoveFromList();
+		// 特殊处理头尾
+		if(node == _Head) _Head = node->Next;
+		if(node == _Tail) _Tail = node->Prev;
+
+		delete node;
+		_Count--;
+	}
+
 public:
     LinkedList()
     {
@@ -446,17 +471,7 @@ public:
 			if(node->Item == item) break;
 		}
 
-		if(node)
-		{
-			// 脱离队列
-			node->RemoveFromList();
-			// 特殊处理头尾
-			if(node == _Head) _Head = node->Next;
-			if(node == _Tail) _Tail = node->Prev;
-
-			delete node;
-			_Count--;
-		}
+		if(node) Remove(node);
 	}
 
 	// 确定集合是否包含特定值
@@ -516,8 +531,9 @@ private:
 	public:
 		LinkedListEnumerator(LinkedList* list)
 		{
-			_List = list;
-			_Current = NULL;
+			_List		= list;
+			_Current	= NULL;
+			_Next		= _List->_Head;
 		}
 
 		// 获取集合中的当前元素
@@ -525,15 +541,19 @@ private:
 		// 将枚举数推进到集合的下一个元素
 		virtual bool MoveNext()
 		{
-			if(!_Current)
-				_Current = _List->_Head;
-			else
-				_Current = _Current->Next;
+			// 总是提前计算下一个节点，以免中途当前节点被删除
+			_Current = _Next;
+			if(_Current) _Next = _Current->Next;
 
 			return _Current != NULL;
 		}
 		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
-		virtual void Reset() { _Current = NULL; }
+		virtual void Reset() { _Current = NULL; _Next = _List->_Head; }
+		// 从列表中移除当前节点
+		virtual void Remove()
+		{
+			_List->Remove(_Current);
+		}
 	};
 
 public:
