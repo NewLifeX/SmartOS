@@ -421,14 +421,45 @@ static const uint c_CRCTable[ 256 ] =
     0xAFB010B1, 0xAB710D06, 0xA6322BDF, 0xA2F33668, 0xBCB4666D, 0xB8757BDA, 0xB5365D03, 0xB1F740B4
 };
 
-uint TSys::Crc(const byte* buf, uint len, uint crc)
+uint TSys::Crc(const void* buf, uint len, uint crc)
 {
+    byte* ptr = (byte*)buf;
     while(len-- > 0)
     {
-        crc = c_CRCTable[ ((crc >> 24) ^ (*buf++)) & 0xFF ] ^ (crc << 8);
+        crc = c_CRCTable[ ((crc >> 24) ^ (*ptr++)) & 0xFF ] ^ (crc << 8);
     }
 
     return crc;
+}
+
+// 硬件实现的Crc
+uint TSys::Crc(const void* buf, uint len)
+{
+#ifdef STM32F4
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
+#else
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_CRC, ENABLE);
+#endif
+
+    CRC_ResetDR();
+    // STM32的初值是0xFFFFFFFF，而软Crc初值是0
+	//CRC->DR = __REV(crc ^ 0xFFFFFFFF);
+    //CRC->DR = 0xFFFFFFFF;
+    uint* ptr = (uint*)buf;
+    len >>= 2;
+    while(len-- > 0)
+    {
+        CRC->DR =__REV(*ptr++);    // 字节顺序倒过来,注意不是位序,不是用__RBIT指令
+    }
+    uint crc = CRC->DR;
+
+#ifdef STM32F4
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, DISABLE);
+#else
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_CRC, DISABLE);
+#endif
+
+	return crc;
 }
 
 static const ushort c_CRC16Table[] =
@@ -437,7 +468,7 @@ static const ushort c_CRC16Table[] =
 0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400,
 };
 
-ushort TSys::Crc16(const byte* buf, uint len, ushort crc)
+ushort TSys::Crc16(const void* buf, uint len, ushort crc)
 {
     if (!buf || !len) return 0;
 
