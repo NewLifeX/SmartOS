@@ -58,9 +58,9 @@ Timer* Timer::Create(byte index)
 	// 特殊处理随机分配
 	if(index == 0xFF)
 	{
-		// 找到第一个可用的位置
+		// 找到第一个可用的位置，没有被使用，并且该位置定时器存在
 		byte i = 0;
-		for(; i<TimerCount && Timers[i]; i++);
+		for(; i<TimerCount && Timers[i] && !g_Timers[i]; i++);
 
 		if(i >= TimerCount)
 		{
