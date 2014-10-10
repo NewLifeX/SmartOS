@@ -211,7 +211,9 @@ void Timer::SetFrequency(uint frequency)
 
     uint pre = clk / s; // prescaler
 
-	while (pre >= 0x10000 || p == 0) { // prescaler 太大
+	//while (pre >= 0x10000 || p == 0) { // prescaler 太大
+	// 周期刚好为1也不行，配置的时候需要先减去1，就变成了0
+	while (pre >= 0x10000 || p <= 1) { // prescaler 太大
 		if (p >= 0x80000000) return;
 		s *= 10;
 		pre /= 10;
