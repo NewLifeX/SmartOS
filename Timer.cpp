@@ -58,6 +58,13 @@ Timer* Timer::Create(byte index)
 	// 特殊处理随机分配
 	if(index == 0xFF)
 	{
+		// 初始化静态数组
+		if(!Timers)
+		{
+			Timers = new Timer*[TimerCount];
+			ArrayZero2(Timers, TimerCount);
+		}
+
 		// 找到第一个可用的位置，没有被使用，并且该位置定时器存在
 		byte i = 0;
 		for(; i<TimerCount && (Timers[i] || !g_Timers[i]); i++);
