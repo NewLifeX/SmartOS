@@ -78,7 +78,7 @@ public:
 		_Count = 0;
 
 		_Arr = new void*[capacity];
-		memset(_Arr, 0, capacity);
+		ArrayZero2(_Arr, capacity);
 	}
 
 	~Array()
@@ -148,7 +148,7 @@ private:
             delete[] _Arr;
         }
 		else
-            memset(arr2, 0, newSize * sizeof(T));
+			ArrayZero2(arr2, newSize);
         _Arr = arr2;
 		_total = newSize;
     }
@@ -168,7 +168,7 @@ public:
 		if(size)
 		{
 			_Arr = new T[size];
-			memset(_Arr, 0, size * sizeof(T));
+			ArrayZero2(_Arr, size);
 		}
     }
 

@@ -12,7 +12,7 @@ Timer::Timer(TIM_TypeDef* timer)
 	if(!Timers)
 	{
 		Timers = new Timer*[TimerCount];
-		memset(Timers, NULL, TimerCount * sizeof(Timer*));
+		ArrayZero2(Timers, TimerCount);
 	}
 
 	//TIM_TypeDef* g_Timers[] = TIMS;

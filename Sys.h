@@ -163,6 +163,10 @@ bool assert_ptr_(void* p);
 
 // 数组长度
 #define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
+// 数组清零，固定长度
+#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
+// 数组清零，可变长度
+#define ArrayZero2(arr, len) memset(arr, 0, len * sizeof(arr[0]))
 
 // 内存管理
 #include "Memory.h"

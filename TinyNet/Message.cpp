@@ -120,7 +120,7 @@ void Controller::Init()
 	_Sequence = 0;
 	_Timer = NULL;
 
-	memset(_Handlers, 0, ArrayLength(_Handlers));
+	ArrayZero(_Handlers);
 	_HandlerCount = 0;
 
 	// 初始化一个随机地址

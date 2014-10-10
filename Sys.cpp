@@ -223,7 +223,8 @@ TSys::TSys()
     Interrupt.Init();
 
 	_TaskCount = 0;
-	memset(_Tasks, 0, ArrayLength(_Tasks));
+	//memset(_Tasks, 0, ArrayLength(_Tasks) * sizeof(_Tasks[0]));
+	ArrayZero(_Tasks);
 	OnStart = NULL;
 }
 
