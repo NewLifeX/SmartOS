@@ -361,8 +361,9 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	//if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
-	if(!st.RX_DR) return 0;
+	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
+	//if(!st.RX_DR) return 0;
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
