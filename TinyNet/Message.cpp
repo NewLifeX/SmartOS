@@ -24,8 +24,7 @@ bool Message::Parse(MemoryStream& ms)
 	const int headerSize = MESSAGE_SIZE;
 	if(len < headerSize) return false;
 
-	// 复制头8字节
-	//*(ulong*)this = *(ulong*)buf;
+	// 复制头8字节。没有负载数据时，该分析已经完整
 	*(ulong*)&Dest = ms.Read<ulong>();
 	// 代码为0是非法的
 	if(!Code) return false;
@@ -37,19 +36,17 @@ bool Message::Parse(MemoryStream& ms)
 	// 校验剩余长度
 	if(len < headerSize + Length) return false;
 
-	// Checksum先清零再计算Crc16
-	//ms.Seek(-2);
-	ushort* p = (ushort*)ms.Current() - 1;
-	//ushort* p = (ushort*)(buf + headerSize - 2);
-	*p = 0;
-	Crc16 = Sys.Crc16(buf, headerSize + Length);
-	*p = Checksum;
+	// 直接计算Crc16
+	Crc16 = Sys.Crc16(buf, headerSize + Length - 2);
 
 	if(Length > 0)
 	{
-		//Data = buf + headerSize;
+		// 前面错误地把2字节数据当作校验码
+		ms.Seek(-2);
 		// 要移动游标
 		Data = ms.ReadBytes(Length);
+		// 读取真正的校验码
+		Checksum = ms.Read<ushort>();
 	}
 
 	return true;
@@ -58,16 +55,30 @@ bool Message::Parse(MemoryStream& ms)
 // 验证消息校验和是否有效
 bool Message::Verify()
 {
-	//ushort crc = Sys.Crc16((byte*)this, 6);
-	//if(Length > 0) crc = Sys.Crc16(Data, Length);
-
 	return Checksum == Crc16;
+}
+
+void Message::ComputeCrc()
+{
+	MemoryStream ms(MESSAGE_SIZE + Length);
+	byte* buf = ms.Current();
+	
+	Write(ms);
+	
+	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - 2);
 }
 
 void Message::Write(MemoryStream& ms)
 {
 	ms.Write(*(ulong*)&Dest);
-	if(Length > 0) ms.Write(Data, 0, Length);
+	if(Length > 0)
+	{
+		// 前面错误地把2字节数据当作校验码
+		ms.Seek(-2);
+		ms.Write(Data, 0, Length);
+		// 读取真正的校验码
+		ms.Write(Checksum);
+	}
 }
 
 // 构造控制器
@@ -345,16 +356,11 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 	msg.Sequence = ++_Sequence;
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
-	byte* buf = (byte*)&msg.Dest;
+	//byte* buf = (byte*)&msg.Dest;
 	//uint len = msg.Length;
 
-	// 计算校验，先清零
-	msg.Checksum = 0;
-	ushort crc = Sys.Crc16(buf, MESSAGE_SIZE);
-	if(msg.Length > 0)
-		crc = Sys.Crc16(msg.Data, msg.Length, crc);
-
-	msg.Checksum = msg.Crc16 = crc;
+	// 计算校验
+	msg.ComputeCrc();
 
 #if DEBUG
 	debug_printf("Message Send");
