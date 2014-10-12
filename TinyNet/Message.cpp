@@ -117,11 +117,7 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(OnReceive, this);
 
-	//_ports = &port;
-	// 上面的写法，引用了外部内存，有可能野指针
-	//_ports[0] = port;
 	_ports.Add(port);
-	//_portCount = 1;
 
 	Init();
 }
@@ -131,17 +127,12 @@ Controller::Controller(ITransport* ports[], int count)
 	assert_ptr(ports);
 	assert_param(count > 0 && count < ArrayLength(_ports));
 
-	// 内部分配空间存放，避免外部内存被回收
-	//_ports = new ITransport*[count];
-	//ArrayZero(_ports);
-
 	debug_printf("微网控制器初始化 共%d个传输口", count);
 	for(int i=0; i<count; i++)
 	{
 		assert_ptr(ports[i]);
 
 		debug_printf(" %s", ports[i]->ToString());
-		//_ports[i] = ports[i];
 		_ports.Add(ports[i]);
 	}
 	debug_printf("\r\n");
@@ -152,15 +143,12 @@ Controller::Controller(ITransport* ports[], int count)
 		ports[i]->Register(OnReceive, this);
 	}
 
-	//_portCount = count;
-
 	Init();
 }
 
 void Controller::Init()
 {
 	_Sequence = 0;
-	//_Timer = NULL;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -179,19 +167,6 @@ Controller::~Controller()
 	{
 		if(_Handlers[i]) delete _Handlers[i];
 	}
-
-	/*if(_ports) delete _ports;
-	_ports = NULL;*/
-
-	/*if(_Timer) delete _Timer;
-	_Timer = NULL;*/
-
-	/*foreach(QueueNode*, node, _Queue)
-	{
-		delete node;
-		foreach_remove();
-	}
-	foreach_end();*/
 
 	_ports.DeleteAll().Clear();
 
@@ -213,6 +188,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	Controller* control = (Controller*)param;
 
 	// 这里使用数据流，可能多个消息粘包在一起
+	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	MemoryStream ms(buf, len);
 	while(ms.Remain() >= MESSAGE_SIZE)
 	{
@@ -296,16 +272,6 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	// 如果是响应消息，及时更新请求队列
 	if(msg.Reply)
 	{
-		/*foreach(QueueNode*, node, _Queue)
-		{
-			if(node->Port == port && node->Sequence == msg.Sequence)
-			{
-				delete node;
-				foreach_remove();
-				break;
-			}
-		}
-		foreach_end();*/
 		int i = -1;
 		while(_Queue.MoveNext(i))
 		{
@@ -314,7 +280,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 			{
 				// 该传输口收到响应，从就绪队列中删除
 				node->Ports.Remove(port);
-				
+
 				// 复制一份响应消息
 				node->Reply = new Message(msg);
 			}
@@ -376,8 +342,6 @@ uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* por
 {
 	Message msg(code);
 	msg.Dest = dest;
-	//msg.Length = len;
-	//msg.Data = buf;
 	msg.SetData(buf, len);
 
 	return Send(msg, port);
@@ -417,18 +381,14 @@ void Controller::PrepareSend(Message& msg)
 #endif
 }
 
-bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
+bool Controller::Send(Message& msg, ITransport* port)
 {
 	// 是否需要响应
-	msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
+	//msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
+	// 不去修正Confirm，由外部决定好了
 
 	PrepareSend(msg);
 
-	return SendInternal(msg, port);
-}
-
-bool Controller::SendInternal(Message& msg, ITransport* port)
-{
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
 	uint len = msg.Length;
@@ -437,12 +397,11 @@ bool Controller::SendInternal(Message& msg, ITransport* port)
 	MemoryStream ms(MESSAGE_SIZE + msg.Length);
 	if(msg.Length > 0)
 	{
-		// 带有负载数据，需要合并成为一段连续的内存
-		msg.Write(ms);
-		ms.SetPosition(0);
-
 		buf = ms.Current();
 		len = ms.Length;
+
+		// 带有负载数据，需要合并成为一段连续的内存
+		msg.Write(ms);
 	}
 
 	bool rs = true;
@@ -459,41 +418,6 @@ bool Controller::SendInternal(Message& msg, ITransport* port)
 	return rs;
 }
 
-void Controller::SendTask(void* sender, void* param)
-{
-	assert_ptr(param);
-
-	Controller* control = (Controller*)param;
-	control->SendTask();
-}
-
-void Controller::SendTask()
-{
-	// 如果没有轮询队列，则关闭定时器
-	if(!_Queue.Count())
-	{
-		//if(_Timer) _Timer->Stop();
-		return;
-	}
-
-	/*foreach(QueueNode*, node, _Queue)
-	{
-		// 如果过期，则删除
-		if(node->Expired < Time.Current())
-		{
-			delete node;
-			foreach_remove();
-		}
-		else
-		{
-			// 发送消息
-			//SendInternal(*node->Msg, node->Port);
-			node->Port->Write(node->Data, node->Length);
-		}
-	}
-	foreach_end();*/
-}
-
 bool Controller::SendSync(Message& msg, uint msTimeout)
 {
 	// 需要响应
@@ -501,47 +425,11 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 
 	PrepareSend(msg);
 
-	//if(msg.Reply || !msTimeout) return SendInternal(msg, port);
-
-	// 非响应消息，考虑异步
-
-	/*QueueNode* first = new QueueNode();
-	first->Expired	= Time.Current() + msTimeout * 1000;
-	first->Port	= port;
-	first->SetMessage(msg);
-
-	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
-	_Queue.Add(first);
-
-	// 发往所有端口
-	if(!port)
-	{
-		first->Port = _ports[0];
-		int i = 1-1;
-		while(_ports.MoveNext(i))
-		{
-			QueueNode* node = new QueueNode(*first);
-			node->Port = _ports[i];
-
-			_Queue.Add(node);
-		}
-	}
-	// 准备增加一个定时任务，用于轮询重发队列里面的任务
-	if(!_Timer)
-	{
-		// 抽取一个空闲定时器，用于轮询重发队列
-		_Timer = Timer::Create();
-		_Timer->Register(SendTask, this);
-		_Timer->SetFrequency(100);
-	}
-	// 先发送一次，再开启定时器轮询
-	bool rs = SendInternal(msg, port);
-	_Timer->Start();*/
-
+	// 准备消息队列
 	MessageQueue queue;
 	queue.SetMessage(msg);
 	queue.Ports = _ports;
-	
+
 	// 加入等待队列
 	_Queue.Add(&queue);
 
@@ -556,16 +444,16 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 		{
 			queue.Ports[i]->Write(queue.Data, queue.Length);
 		}
-	
+
 		// 等一会
 		Sys.Sleep(10);
-		
+
 		// 检查未完成传输口
 		if(queue.Ports.Count() == 0) { rs = true; break; }
 	}
 
 	_Queue.Remove(&queue);
-	
+
 	return rs;
 }
 
@@ -592,14 +480,12 @@ bool Controller::SysTime(Message& msg, void* param)
 	// 忽略响应消息
 	if(msg.Reply) return true;
 
-	debug_printf("Message_SysTime Flags=%d\r\n", msg.Flags);
+	debug_printf("Message_SysTime Length=%d\r\n", msg.Length);
 
-	// 标识位最低位决定是读时间还是写时间
-	if(msg.Flags == 1)
+	// 负载数据决定是读时间还是写时间
+	if(msg.Length >= 8)
 	{
 		// 写时间
-		if(msg.Length < 8) return false;
-
 		ulong us = *(ulong*)msg.Data;
 
 		Time.SetTime(us);
@@ -618,20 +504,16 @@ bool Controller::SysID(Message& msg, void* param)
 	// 忽略响应消息
 	if(msg.Reply) return true;
 
-	debug_printf("Message_SysID Flags=%d\r\n", msg.Flags);
+	debug_printf("Message_SysID Length=%d\r\n", msg.Length);
 
-	if(msg.Flags == 0)
+	if(msg.Length == 0)
 	{
 		// 12字节ID，4字节CPUID，4字节设备ID
-		//msg.Length = 5 << 2;
-		//msg.Data = (byte*)Sys.ID;
 		msg.SetData(Sys.ID, 5 << 2);
 	}
 	else
 	{
 		// 干脆直接输出Sys，前面11个uint
-		//msg.Length = 11 << 2;
-		//msg.Data = (byte*)&Sys;
 		msg.SetData((byte*)&Sys, 11 << 2);
 	}
 
@@ -701,12 +583,20 @@ MessageQueue::~MessageQueue()
 
 void MessageQueue::SetMessage(Message& msg)
 {
+	Msg = &msg;
+
 	byte* buf = (byte*)&msg.Dest;
 	if(!msg.Length)
+	{
+		Length = MESSAGE_SIZE;
 		memcpy(Data, buf, MESSAGE_SIZE);
+	}
 	else
 	{
+		// 注意，此时指针位于0，而内容长度为缓冲区长度
 		MemoryStream ms(Data, ArrayLength(Data));
+		ms.Length = 0;
 		msg.Write(ms);
+		Length = ms.Length;
 	}
 }
