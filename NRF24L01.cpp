@@ -80,7 +80,10 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 
 	//_taskID = 0;
-	_timer = NULL;
+	//_timer = NULL;
+	_Thread = NULL;
+
+	_Lock = 0;
 }
 
 NRF24L01::~NRF24L01()
@@ -351,6 +354,8 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 如果不是异步，等待接收中断
 	//if(!_Received && !WaitForIRQ()) return false;
 
+	if(!EnterLock()) return false;
+
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
 	if(Status == 0xFF)
@@ -361,9 +366,14 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+	if(!st.RX_DR || st.RX_P_NO == 0x07)
+	{
+		ExitLock();
+		return 0;
+	}
 	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
 	//if(!st.RX_DR) return 0;
+	debug_printf("NRF24L01::OnRead st=0x%02x\r\n", Status);
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
@@ -371,15 +381,24 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 
+	ExitLock();
 	return PayloadWidth;
 }
 
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
-	// 进入发送模式
-	if(!SetMode(false)) return false;
+	if(!EnterLock()) return false;
 
+	// 进入发送模式
+	if(!SetMode(false))
+	{
+		ExitLock();
+		return false;
+	}
+
+	// 检查要发送数据的长度
+	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
 
 	bool rs = false;
@@ -417,6 +436,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
+	ExitLock();
 	return rs;
 }
 
@@ -539,23 +559,30 @@ bool NRF24L01::CanReceive()
 	return st.RX_DR;
 }
 
-void NRF24L01::ReceiveTask(void* sender, void* param)
+//void NRF24L01::ReceiveTask(void* sender, void* param)
+void NRF24L01::ReceiveTask(void* param)
 {
 	assert_ptr(param);
 
 	NRF24L01* nrf = (NRF24L01*)param;
-	if(!nrf->Opened) return;
+	byte buf[32];
+	while(true)
+	{
+		if(nrf->Opened)
+		{
+			//nrf->SetMode(true);
+			uint len = nrf->Read(buf, ArrayLength(buf));
+			if(len)
+			{
+				len = nrf->OnReceive(buf, len);
 
-    byte buf[32];
-    //nrf->SetMode(true);
-	uint len = nrf->Read(buf, ArrayLength(buf));
-    if(len)
-    {
-        len = nrf->OnReceive(buf, len);
+				// 如果有返回，说明有数据要回复出去
+				if(len) nrf->Write(buf, len);
+			}
+		}
 
-		// 如果有返回，说明有数据要回复出去
-		if(len) nrf->Write(buf, len);
-    }
+		Sys.Sleep(1);
+	}
 }
 
 void NRF24L01::Register(TransportHandler handler, void* param)
@@ -568,17 +595,43 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
-		if(!_timer) _timer = Timer::Create();
+		/*if(!_timer) _timer = Timer::Create();
 
 		_timer->SetFrequency(10000);
 		_timer->Register(ReceiveTask, this);
-		_timer->Start();
+		_timer->Start();*/
+
+		if(!_Thread)
+		{
+			_Thread = new Thread(ReceiveTask, this);
+			_Thread->Start();
+		}
 	}
 	else
 	{
 		//if(_taskID) Sys.RemoveTask(_taskID);
 		//_taskID = 0;
-		if(_timer) delete _timer;
-		_timer = NULL;
+		//if(_timer) delete _timer;
+		//_timer = NULL;
+		
+		delete _Thread;
+		_Thread = NULL;
 	}
 }
+
+bool NRF24L01::EnterLock()
+{
+	// 等待超时时间
+	TimeWheel tw(0, 100, 0);
+	while(_Lock)
+	{
+		// 延迟一下，释放CPU使用权
+		Sys.Sleep(1);
+		if(tw.Expired()) return false;
+	}
+	_Lock++;
+
+	return true;
+}
+
+void NRF24L01::ExitLock() { _Lock--; };

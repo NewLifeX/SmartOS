@@ -583,7 +583,7 @@ void TSys::Start()
 	if(_Running) return;
 
 #if DEBUG
-	AddTask(ShowTime, NULL, 2000000, 2000000);
+	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
 	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
 

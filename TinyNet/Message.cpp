@@ -175,6 +175,9 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 {
 #if DEBUG
 	byte* p = ms.Current();
+	// 输出整条信息
+	/*Sys.ShowHex(p, ms.Length, '-');
+	debug_printf("\r\n");*/
 #endif
 
 	// 只处理本机消息或广播消息。快速处理，高效。

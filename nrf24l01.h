@@ -5,14 +5,15 @@
 #include "Spi.h"
 #include "Net\ITransport.h"
 #include "Timer.h"
+#include "Thread.h"
 
 // NRF24L01类
 class NRF24L01 : public ITransport
 {
 private:
-    Spi* _spi;
-    OutputPort* _CE;
-    InputPort* _IRQ;
+    Spi*		_spi;
+    OutputPort*	_CE;
+    InputPort*	_IRQ;
 
     byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
     byte ReadBuf(byte reg, byte *pBuf, byte bytes);
@@ -26,20 +27,26 @@ private:
     void CEDown();
 
 	// 接收任务。
-	static void ReceiveTask(void* sender, void* param);
+	//static void ReceiveTask(void* sender, void* param);
+	static void ReceiveTask(void* param);
 	//uint _taskID;
-	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
+	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
+	Thread* _Thread;
+
+	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
+	bool EnterLock();	// 进入锁
+	void ExitLock();	// 退出锁
 
 public:
-    byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0X28 MHZ
+    byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
 	byte Address[5];	// 通道0地址
 	byte Address1[5];	// 通道1地址
 	byte Address2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
 
-	uint Timeout;	// 超时时间ms
-	byte PayloadWidth; // 负载数据宽度，默认32字节
-	bool AutoAnswer;// 自动应答，默认启用
-	byte Retry;		// 重试次数，最大15次
+	uint Timeout;		// 超时时间ms
+	byte PayloadWidth;	// 负载数据宽度，默认32字节
+	bool AutoAnswer;	// 自动应答，默认启用
+	byte Retry;			// 重试次数，最大15次
 	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
 	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
