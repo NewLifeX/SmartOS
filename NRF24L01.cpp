@@ -373,7 +373,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	}
 	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
 	//if(!st.RX_DR) return 0;
-	debug_printf("NRF24L01::OnRead st=0x%02x\r\n", Status);
+	//debug_printf("NRF24L01::OnRead st=0x%02x\r\n", Status);
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
@@ -603,7 +603,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 
 		if(!_Thread)
 		{
-			_Thread = new Thread(ReceiveTask, this);
+			// 分配1k大小的栈
+			_Thread = new Thread(ReceiveTask, this, 0x1000);
 			_Thread->Start();
 		}
 	}
