@@ -10,7 +10,6 @@ class MemoryStream
 {
 private:
 	byte* _Buffer;	// 数据缓冲区
-	byte* _Cur;		// 当前数据指针
 	uint _Capacity;	// 缓冲区容量
 	//bool _needFree;		// 是否自动释放
 	// 又是头疼的对齐问题
@@ -40,12 +39,11 @@ public:
 		}
 
 		_Capacity = len;
-		_Cur = _Buffer;
 		_Position = 0;
 		Length = 0;
 	}
 
-	// 使用缓冲区初始化数据流
+	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	MemoryStream(byte* buf, uint len)
 	{
 		assert_ptr(buf);
@@ -53,7 +51,6 @@ public:
 
 		_Buffer = buf;
 		_Capacity = len;
-		_Cur = _Buffer;
 		_Position = 0;
 		_needFree = false;
 		Length = len;
@@ -81,9 +78,7 @@ public:
 		// 允许移动到最后一个字节之后，也就是Length
 		assert_param(p <= Length);
 
-		int offset = p - _Position;
 		_Position = p;
-		_Cur += offset;
 	}
 
 	// 余下的有效数据流长度。0表示已经到达终点
@@ -100,7 +95,6 @@ public:
 		if(p < 0 || p > Length) return false;
 
 		_Position = p;
-		_Cur += offset;
 
 		return true;
 	}
@@ -109,7 +103,7 @@ public:
     byte* GetBuffer() { return _Buffer; }
 
 	// 数据流当前位置指针
-    byte* Current() { return _Cur; }
+    byte* Current() { return &_Buffer[_Position]; }
 
 	// 从当前位置读取数据
 	uint Read(byte* buf, uint offset = 0, int count = -1)
@@ -129,7 +123,6 @@ public:
 
 		// 游标移动
 		_Position += count;
-		_Cur += count;
 
 		return count;
 	}
@@ -144,8 +137,9 @@ public:
 		memcpy(Current(), buf + offset, count);
 
 		_Position += count;
-		_Cur += count;
-		Length += count;
+		//Length += count;
+		// 内容长度不是累加，而是根据位置而扩大
+		if(_Position > Length) Length = _Position;
 	}
 
 	// 取回指定结构体指针，并移动游标位置
@@ -178,8 +172,7 @@ public:
 
 		// 移动游标
 		_Position += sizeof(T);
-		_Cur += sizeof(T);
-		Length += sizeof(T);
+		if(_Position > Length) Length = _Position;
 	}
 
 	byte* ReadBytes(uint count)
@@ -224,7 +217,6 @@ private:
 
 			_Buffer = bufNew;
 			_Capacity = size;
-			_Cur = _Buffer + _Position;
 		}
 
 		return true;

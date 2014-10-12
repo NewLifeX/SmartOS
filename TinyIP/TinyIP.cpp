@@ -161,6 +161,7 @@ void TinyIP::Work(void* param)
 		uint len = tip->Fetch();
 		if(len)
 		{
+			// 注意，此时指针位于0，而内容长度为缓冲区长度
 			MemoryStream ms(tip->Buffer, tip->BufferSize);
 			ms.Length = len;
 			tip->Process(&ms);

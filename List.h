@@ -136,13 +136,21 @@ public:
 		_Count = 0;
 		ArrayZero(Arr);
 	}
-	
+
 	FixedArray(FixedArray& arr)
 	{
 		_Count = arr._Count;
 		ArrayCopy(Arr, arr.Arr);
 	}
-	
+
+    FixedArray& operator=(FixedArray& arr)
+	{
+		_Count = arr._Count;
+		ArrayCopy(Arr, arr.Arr);
+
+		return *this;
+	}
+
 	uint Count() const { return _Count; }
 
 	// 压入一个元素。返回元素所存储的索引
@@ -193,7 +201,7 @@ public:
 	// 删除指定位置的元素
 	void RemoveAt(int idx)
 	{
-		assert_param(idx > 0 && idx < ArraySize);
+		assert_param(idx >= 0 && idx < ArraySize);
 
 		Arr[idx] = NULL;
 	}

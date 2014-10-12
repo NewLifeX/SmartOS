@@ -105,6 +105,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	// 缓冲区必须略大，否则接收数据时可能少一个字节
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
 	uint bufSize = ArrayLength(buf);
+	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	MemoryStream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;

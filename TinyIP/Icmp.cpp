@@ -65,6 +65,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
+	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	MemoryStream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
