@@ -1,13 +1,14 @@
 ﻿#include "Message.h"
 
 // 初始化消息，各字段为0
-void Message::Init()
+Message::Message(byte code)
 {
 	// 只有POD类型才可以这样清除
 	//memset(this, 0, sizeof(Message));
 	*(ulong*)&Dest = 0;
+	Code = code;
 	Crc16 = 0;
-	Data = NULL;
+	//Data = NULL;
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -44,7 +45,9 @@ bool Message::Parse(MemoryStream& ms)
 		// 前面错误地把2字节数据当作校验码
 		ms.Seek(-2);
 		// 要移动游标
-		Data = ms.ReadBytes(Length);
+		//Data = ms.ReadBytes(Length);
+		//memcpy(Data, ms.ReadBytes(Length), Length);
+		ms.Read(Data, 0, Length);
 		// 读取真正的校验码
 		Checksum = ms.Read<ushort>();
 	}
@@ -66,6 +69,21 @@ void Message::ComputeCrc()
 	Write(ms);
 	
 	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - 2);
+}
+
+// 设置数据。
+void Message::SetData(byte* buf, uint len)
+{
+	//assert_ptr(buf);
+	//assert_param(len > 0 && len <= ArrayLength(Data));
+	assert_param(len <= ArrayLength(Data));
+	
+	Length = len;
+	if(len > 0)
+	{
+		assert_ptr(buf);
+		memcpy(Data, buf, len);
+	}
 }
 
 void Message::Write(MemoryStream& ms)
@@ -255,8 +273,9 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		// 把Crc16附到后面4字节
 		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
 
-		msg.Length = len;
-		msg.Data = err;
+		//msg.Length = len;
+		//msg.Data = err;
+		msg.SetData(err, len);
 #else
 		msg.Length = 0;
 #endif
@@ -334,12 +353,11 @@ void Controller::Register(byte code, CommandHandler handler, void* param)
 
 uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
 {
-	Message msg;
-	msg.Init();
+	Message msg(code);
 	msg.Dest = dest;
-	msg.Code = code;
-	msg.Length = len;
-	msg.Data = buf;
+	//msg.Length = len;
+	//msg.Data = buf;
+	msg.SetData(buf, len);
 
 	return Send(msg, port);
 }
@@ -562,7 +580,7 @@ bool Controller::SysTime(Message& msg, void* param)
 	// 读时间
 	ulong us2 = Time.Current();
 	msg.Length = 8;
-	msg.Data = (byte*)&us2;
+	*(ulong*)msg.Data = us2;
 
 	return true;
 }
@@ -577,14 +595,16 @@ bool Controller::SysID(Message& msg, void* param)
 	if(msg.Flags == 0)
 	{
 		// 12字节ID，4字节CPUID，4字节设备ID
-		msg.Length = 5 << 2;
-		msg.Data = (byte*)Sys.ID;
+		//msg.Length = 5 << 2;
+		//msg.Data = (byte*)Sys.ID;
+		msg.SetData(Sys.ID, 5 << 2);
 	}
 	else
 	{
 		// 干脆直接输出Sys，前面11个uint
-		msg.Length = 11 << 2;
-		msg.Data = (byte*)&Sys;
+		//msg.Length = 11 << 2;
+		//msg.Data = (byte*)&Sys;
+		msg.SetData((byte*)&Sys, 11 << 2);
 	}
 
 	return true;

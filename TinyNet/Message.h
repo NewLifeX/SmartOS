@@ -12,7 +12,7 @@
 // 请求 0038-0403-0000-BC4C，从0x38发往0（广播），功能4，标识3（保留字段用于业务），序号0长度0，校验0x4CBC（小字节序）
 // 响应 3856-048x-0000-xxxx
 // 错误 3856-044x-0000
-// 负载 0038-0400-0003-030303-FD37，从0x38广播，功能4，长度3，负载03-03-03
+// 负载 0038-1000-0003-030303-A936，从0x38广播，功能4，长度3，负载03-03-03
 class Message
 {
 public:
@@ -30,17 +30,19 @@ public:
 
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
-	byte* Data;		// 数据部分
+	byte Data[64];	// 数据部分
 
 public:
 	// 初始化消息，各字段为0
-	void Init();
+	Message(byte code = 0);
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 	bool Parse(MemoryStream& ms);
 	// 验证消息校验和是否有效
 	bool Verify();
 	// 计算当前消息的Crc
 	void ComputeCrc();
+	// 设置数据
+	void SetData(byte* buf, uint len);
 
 	// 写入指定数据流
 	void Write(MemoryStream& ms);
