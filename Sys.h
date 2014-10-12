@@ -167,6 +167,8 @@ bool assert_ptr_(void* p);
 #define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
 // 数组清零，可变长度
 #define ArrayZero2(arr, len) memset(arr, 0, len * sizeof(arr[0]))
+// 数组复制
+#define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
 
 // 内存管理
 #include "Memory.h"
