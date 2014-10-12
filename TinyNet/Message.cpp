@@ -80,8 +80,11 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(OnReceive, this);
 
-	_ports = &port;
-	_portCount = 1;
+	//_ports = &port;
+	// 上面的写法，引用了外部内存，有可能野指针
+	//_ports[0] = port;
+	_ports.Add(port);
+	//_portCount = 1;
 
 	Init();
 }
@@ -89,10 +92,11 @@ Controller::Controller(ITransport* port)
 Controller::Controller(ITransport* ports[], int count)
 {
 	assert_ptr(ports);
-	assert_param(count > 0);
+	assert_param(count > 0 && count < ArrayLength(_ports));
 
 	// 内部分配空间存放，避免外部内存被回收
-	_ports = new ITransport*[count];
+	//_ports = new ITransport*[count];
+	//ArrayZero(_ports);
 
 	debug_printf("微网控制器初始化 共%d个传输口", count);
 	for(int i=0; i<count; i++)
@@ -100,7 +104,8 @@ Controller::Controller(ITransport* ports[], int count)
 		assert_ptr(ports[i]);
 
 		debug_printf(" %s", ports[i]->ToString());
-		_ports[i] = ports[i];
+		//_ports[i] = ports[i];
+		_ports.Add(ports[i]);
 	}
 	debug_printf("\r\n");
 
@@ -110,7 +115,7 @@ Controller::Controller(ITransport* ports[], int count)
 		ports[i]->Register(OnReceive, this);
 	}
 
-	_portCount = count;
+	//_portCount = count;
 
 	Init();
 }
@@ -128,7 +133,7 @@ void Controller::Init()
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("初始化微网控制器完成 Address=%d (0x%02x) 使用%d个传输接口\r\n", Address, Address, _portCount);
+	debug_printf("初始化微网控制器完成 Address=%d (0x%02x) 使用%d个传输接口\r\n", Address, Address, _ports.Count());
 }
 
 Controller::~Controller()
@@ -138,8 +143,8 @@ Controller::~Controller()
 		if(_Handlers[i]) delete _Handlers[i];
 	}
 
-	if(_ports) delete _ports;
-	_ports = NULL;
+	/*if(_ports) delete _ports;
+	_ports = NULL;*/
 
 	if(_Timer) delete _Timer;
 	_Timer = NULL;
@@ -151,7 +156,17 @@ Controller::~Controller()
 	}
 	foreach_end();
 
+	_ports.DeleteAll().Clear();
+
 	debug_printf("微网控制器销毁\r\n");
+}
+
+void Controller::AddTransport(ITransport* port)
+{
+	assert_ptr(port);
+
+	//_ports[_portCount++] = port;
+	_ports.Add(port);
 }
 
 uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
@@ -379,7 +394,7 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 	if(!port)
 	{
 		first->Port = _ports[0];
-		for(int i=1; i<_portCount; i++)
+		for(int i=1-1; _ports.MoveNext(i);)
 		{
 			QueueNode* node = new QueueNode(*first);
 			node->Port = _ports[i];
@@ -426,7 +441,7 @@ bool Controller::SendInternal(Message& msg, ITransport* port)
 	else
 	{
 		// 发往所有端口
-		for(int i=0; i<_portCount; i++)
+		for(int i=0-1; _ports.MoveNext(i);)
 			rs &= _ports[i]->Write(buf, len);
 	}
 

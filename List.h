@@ -117,6 +117,140 @@ public:
     //T* operator=(Array arr) { return arr.Arr; }
 };
 
+// 固定大小的指针数组。
+/*
+用于数据元素不多，有个上限的场合。主要为了方便遍历。
+存储数据时，从头开始找到空位来存放，不用时清空相应空位。
+所以需要注意的是，在数组里面存储的元素不一定连续。
+*/
+template<typename T, int ArraySize>
+class FixedArray
+{
+private:
+	uint	_Count;
+	T*		Arr[ArraySize];
+
+public:
+	FixedArray()
+	{
+		_Count = 0;
+		ArrayZero(Arr);
+	}
+	
+	uint Count() const { return _Count; }
+
+	// 压入一个元素。返回元素所存储的索引
+	int Add(const T* item)
+	{
+		assert_param(_Count < ArraySize);
+
+		// 找到空闲位放置
+		int i = 0;
+		for(; i < ArraySize && Arr[i]; i++);
+		// 检查是否还有空位
+		if(i >= ArraySize) return -1;
+
+		Arr[i] = (T*)item;
+		_Count++;
+
+		return i;
+	}
+
+	// 弹出最后一个元素
+	T* Pop()
+	{
+		if(_Count == 0) return NULL;
+
+		// 找到最后一个元素
+		int i = ArraySize - 1;
+		for(; i >=0 && !Arr[i]; i--);
+
+		T* item = Arr[i];
+		Arr[i] = NULL;
+		_Count--;
+
+		return item;
+	}
+
+	// 删除元素
+	bool Remove(const T* item)
+	{
+		int idx = Find(item);
+		if(idx < 0) return false;
+
+		RemoveAt(idx);
+
+		return true;
+	}
+
+	// 删除指定位置的元素
+	void RemoveAt(int idx)
+	{
+		assert_param(idx > 0 && idx < ArraySize);
+
+		Arr[idx] = NULL;
+	}
+
+	FixedArray& Clear()
+	{
+		_Count = 0;
+		ArrayZero(Arr);
+
+		return *this;
+	}
+
+	// 释放所有指针指向的内存
+	FixedArray& DeleteAll()
+	{
+		for(int i=0; i < ArraySize; i++)
+		{
+			if(Arr[i]) delete Arr[i];
+		}
+
+		return *this;
+	}
+
+	// 查找元素
+	int Find(const T* item)
+	{
+		assert_ptr(item);
+
+		int i = 0;
+		for(; i < ArraySize && Arr[i] != item; i++);
+		if(i >= ArraySize) return -1;
+
+		return i;
+	}
+
+	// 移到下一个元素，累加参数，如果没有下一个元素则返回false。
+	bool MoveNext(int& idx)
+	{
+		//assert_ptr(idx);
+
+		// 从idx开始，找到第一个非空节点。注意，存储不一定连续
+		int i = idx + 1;
+		for(; i < ArraySize && !Arr[i]; i++);
+		if(i >= ArraySize) return false;
+
+		idx = i;
+
+		return true;
+	}
+
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    /*T*& operator[](int i)
+	{
+		assert_param(i >= 0 && i < ArraySize);
+		return Arr[i];
+	}*/
+	// 不能允许[]作为左值，否则外部直接设置数据以后，Count并没有改变
+    T* operator[](int i)
+	{
+		assert_param(i >= 0 && i < ArraySize);
+		return Arr[i];
+	}
+};
+
 // 变长列表模版
 template<typename T>
 class List : public IEnumerable<T>, public ICollection<T>

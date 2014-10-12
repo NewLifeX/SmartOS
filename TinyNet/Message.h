@@ -50,8 +50,8 @@ public:
 class Controller
 {
 private:
-	ITransport**	_ports;		// 数据传输口
-	int				_portCount;	// 传输口个数
+	FixedArray<ITransport, 4>	_ports;	// 数据传输口
+	//int				_portCount;	// 传输口个数
 	uint			_Sequence;	// 控制器的消息序号
 	Timer*			_Timer;		// 用于错误重发机制的定时器
 
@@ -93,6 +93,8 @@ public:
 	Controller(ITransport* ports[], int count);
 	~Controller();
 
+	void AddTransport(ITransport* port);
+	
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
