@@ -30,7 +30,7 @@ public:
 
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
-	byte Data[64];	// 数据部分
+	byte Data[32];	// 数据部分
 
 public:
 	// 初始化消息，各字段为0
