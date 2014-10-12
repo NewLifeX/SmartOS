@@ -54,6 +54,19 @@ public:
 #define MESSAGE_SIZE offsetof(Message, Checksum) + 2
 
 class MessageQueue;
+class RingQueue;
+
+// 环形队列。记录收到消息的序列号，防止短时间内重复处理消息
+class RingQueue
+{
+public:
+	int	Index;
+	byte Arr[16];
+
+	RingQueue();
+	void Push(byte item);
+	int Find(byte item);
+};
 
 // 消息控制器。负责发送消息、接收消息、分发消息
 class Controller
@@ -64,6 +77,7 @@ private:
 
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 	FixedArray<MessageQueue, 16> _Queue;	// 消息队列。最多允许16个消息同时等待响应
+	RingQueue	_Ring;	// 环形队列
 
 	void Init();
 	void PrepareSend(Message& msg);	// 发送准备

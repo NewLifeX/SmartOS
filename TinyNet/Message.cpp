@@ -223,6 +223,10 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	Message msg;
 	if(!msg.Parse(ms)) return false;
 
+	// 处理重复消息
+	if(_Ring.Find(msg.Sequence) >= 0) return false;
+	_Ring.Push(msg.Sequence);
+
 #if DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
@@ -360,8 +364,8 @@ void Controller::PrepareSend(Message& msg)
 	// 附上自己的地址
 	msg.Src = Address;
 
-	// 附上序列号
-	msg.Sequence = ++_Sequence;
+	// 附上序列号。响应消息保持序列号不变
+	if(!msg.Reply) msg.Sequence = ++_Sequence;
 
 	// 计算校验
 	msg.ComputeCrc();
@@ -454,7 +458,7 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 		}
 
 		// 等一会
-		Sys.Sleep(10);
+		Sys.Sleep(50);
 
 		// 检查未完成传输口
 		if(queue.Ports.Count() == 0) { rs = true; break; }
@@ -607,4 +611,26 @@ void MessageQueue::SetMessage(Message& msg)
 		msg.Write(ms);
 		Length = ms.Length;
 	}
+}
+
+RingQueue::RingQueue()
+{
+	Index = 0;
+	ArrayZero(Arr);
+}
+
+void RingQueue::Push(byte item)
+{
+	Arr[Index++] = item;
+	if(Index == ArrayLength(Arr)) Index = 0;
+}
+
+int RingQueue::Find(byte item)
+{
+	for(int i=0; i < ArrayLength(Arr); i++)
+	{
+		if(Arr[i] == item) return i;
+	}
+
+	return -1;
 }
