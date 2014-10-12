@@ -181,8 +181,8 @@ public:
 		for(; i >=0 && !Arr[i]; i--);
 
 		T* item = Arr[i];
-		Arr[i] = NULL;
 		_Count--;
+		Arr[i] = NULL;
 
 		return item;
 	}
@@ -203,6 +203,7 @@ public:
 	{
 		assert_param(idx >= 0 && idx < ArraySize);
 
+		_Count--;
 		Arr[idx] = NULL;
 	}
 
