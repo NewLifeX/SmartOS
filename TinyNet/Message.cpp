@@ -5,7 +5,9 @@ Message::Message(byte code)
 {
 	// 只有POD类型才可以这样清除
 	//memset(this, 0, sizeof(Message));
-	*(ulong*)&Dest = 0;
+	//*(ulong*)&Dest = 0;
+	// 如果地址不是8字节对齐，长整型操作会导致异常
+	memset(&Dest, 0, 8);
 	Code = code;
 	Crc16 = 0;
 	//Data = NULL;
@@ -13,7 +15,9 @@ Message::Message(byte code)
 
 Message::Message(Message& msg)
 {
-	*(ulong*)&Dest = *(ulong*)&msg.Dest;
+	//*(ulong*)&Dest = *(ulong*)&msg.Dest;
+	// 如果地址不是8字节对齐，长整型操作会导致异常
+	memcpy(&Dest, &msg.Dest, 8);
 
 	Crc16 = Crc16;
 	ArrayCopy(Data, msg.Data);
@@ -34,7 +38,9 @@ bool Message::Parse(MemoryStream& ms)
 	if(len < headerSize) return false;
 
 	// 复制头8字节。没有负载数据时，该分析已经完整
-	*(ulong*)&Dest = ms.Read<ulong>();
+	//*(ulong*)&Dest = ms.Read<ulong>();
+	// 如果地址不是8字节对齐，长整型操作会导致异常
+	memcpy(&Dest, ms.ReadBytes(8), 8);
 	// 代码为0是非法的
 	if(!Code) return false;
 	// 没有源地址是很不负责任的
@@ -96,7 +102,9 @@ void Message::SetData(byte* buf, uint len)
 
 void Message::Write(MemoryStream& ms)
 {
-	ms.Write(*(ulong*)&Dest);
+	//ms.Write(*(ulong*)&Dest);
+	// 如果地址不是8字节对齐，长整型操作会导致异常
+	ms.Write((byte*)&Dest, 0, 8);
 	if(Length > 0)
 	{
 		// 前面错误地把2字节数据当作校验码
