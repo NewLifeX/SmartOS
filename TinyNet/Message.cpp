@@ -205,7 +205,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
-		Sys.ShowString(msg.Data, msg.Length);
+		Sys.ShowString(msg.Data, msg.Length, false);
 	}
 	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
@@ -352,7 +352,7 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
-		Sys.ShowString(msg.Data, msg.Length);
+		Sys.ShowString(msg.Data, msg.Length, false);
 	}
 	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
@@ -577,7 +577,7 @@ bool Controller::Discover(Message& msg, void* param)
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length);
+			Sys.ShowString(msg.Data, msg.Length, false);
 		}
 		debug_printf("\r\n");
 	}
@@ -587,7 +587,7 @@ bool Controller::Discover(Message& msg, void* param)
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length);
+			Sys.ShowString(msg.Data, msg.Length, false);
 		}
 		debug_printf("\r\n");
 	}
@@ -597,7 +597,7 @@ bool Controller::Discover(Message& msg, void* param)
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length);
+			Sys.ShowString(msg.Data, msg.Length, false);
 		}
 		debug_printf("\r\n");
 	}
