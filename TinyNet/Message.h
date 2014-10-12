@@ -59,7 +59,6 @@ private:
 	uint			_Sequence;	// 控制器的消息序号
 	Timer*			_Timer;		// 用于错误重发机制的定时器
 
-	void Init();
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
 	class QueueNode
@@ -92,7 +91,8 @@ private:
 
 public:
 	byte Address;	// 本地地址
-
+	
+	void Init();
 	Controller(ITransport* port);
 	Controller(ITransport* ports[], int count);
 	~Controller();
