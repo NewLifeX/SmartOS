@@ -61,11 +61,11 @@ class RingQueue
 {
 public:
 	int	Index;
-	byte Arr[16];
+	ushort Arr[32];
 
 	RingQueue();
-	void Push(byte item);
-	int Find(byte item);
+	void Push(ushort item);
+	int Find(ushort item);
 };
 
 // 消息控制器。负责发送消息、接收消息、分发消息

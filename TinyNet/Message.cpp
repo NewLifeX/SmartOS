@@ -223,9 +223,10 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	Message msg;
 	if(!msg.Parse(ms)) return false;
 
-	// 处理重复消息
-	if(_Ring.Find(msg.Sequence) >= 0) return false;
-	_Ring.Push(msg.Sequence);
+	// 处理重复消息。加上来源地址，以免重复
+	ushort seq = (msg.Src << 8) | msg.Sequence;
+	if(_Ring.Find(seq) >= 0) return false;
+	_Ring.Push(seq);
 
 #if DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
@@ -619,13 +620,13 @@ RingQueue::RingQueue()
 	ArrayZero(Arr);
 }
 
-void RingQueue::Push(byte item)
+void RingQueue::Push(ushort item)
 {
 	Arr[Index++] = item;
 	if(Index == ArrayLength(Arr)) Index = 0;
 }
 
-int RingQueue::Find(byte item)
+int RingQueue::Find(ushort item)
 {
 	for(int i=0; i < ArrayLength(Arr); i++)
 	{
