@@ -137,11 +137,18 @@ public:
 		ArrayZero(Arr);
 	}
 	
+	FixedArray(FixedArray& arr)
+	{
+		_Count = arr._Count;
+		ArrayCopy(Arr, arr.Arr);
+	}
+	
 	uint Count() const { return _Count; }
 
 	// 压入一个元素。返回元素所存储的索引
-	int Add(const T* item)
+	int Add(T* item)
 	{
+		assert_ptr(item);
 		assert_param(_Count < ArraySize);
 
 		// 找到空闲位放置
@@ -150,7 +157,7 @@ public:
 		// 检查是否还有空位
 		if(i >= ArraySize) return -1;
 
-		Arr[i] = (T*)item;
+		Arr[i] = item;
 		_Count++;
 
 		return i;
@@ -173,7 +180,7 @@ public:
 	}
 
 	// 删除元素
-	bool Remove(const T* item)
+	bool Remove(T* item)
 	{
 		int idx = Find(item);
 		if(idx < 0) return false;
@@ -211,7 +218,7 @@ public:
 	}
 
 	// 查找元素
-	int Find(const T* item)
+	int Find(T* item)
 	{
 		assert_ptr(item);
 
