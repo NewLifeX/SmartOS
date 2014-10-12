@@ -160,9 +160,13 @@ public:
 		if(!Seek(sizeof(T))) return 0;
 
 		// 检查地址对齐
-		assert_param((uint)p % sizeof(T) == 0);
+		if((uint)p % sizeof(T) == 0)
+			return *(T*)p;
 
-		return *(T*)p;
+		T obj;
+		memcpy(&obj, p, sizeof(T));
+
+		return obj;
 	}
 
 	template<typename T>
@@ -173,9 +177,10 @@ public:
 		byte* p = Current();
 
 		// 检查地址对齐
-		assert_param((uint)p % sizeof(T) == 0);
-
-		*(T*)p = value;
+		if((uint)p % sizeof(T) == 0)
+			*(T*)p = value;
+		else
+			memcpy(p, &value, sizeof(T));
 
 		// 移动游标
 		_Position += sizeof(T);
