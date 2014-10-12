@@ -94,7 +94,7 @@ public:
 	~Controller();
 
 	void AddTransport(ITransport* port);
-	
+
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
