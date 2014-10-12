@@ -11,6 +11,14 @@ Message::Message(byte code)
 	//Data = NULL;
 }
 
+Message::Message(Message& msg)
+{
+	*(ulong*)&Dest = *(ulong*)&msg.Dest;
+
+	Crc16 = Crc16;
+	ArrayCopy(Data, msg.Data);
+}
+
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 bool Message::Parse(MemoryStream& ms)
 {
@@ -65,9 +73,9 @@ void Message::ComputeCrc()
 {
 	MemoryStream ms(MESSAGE_SIZE + Length);
 	byte* buf = ms.Current();
-	
+
 	Write(ms);
-	
+
 	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - 2);
 }
 
@@ -77,7 +85,7 @@ void Message::SetData(byte* buf, uint len)
 	//assert_ptr(buf);
 	//assert_param(len > 0 && len <= ArrayLength(Data));
 	assert_param(len <= ArrayLength(Data));
-	
+
 	Length = len;
 	if(len > 0)
 	{
@@ -152,7 +160,7 @@ Controller::Controller(ITransport* ports[], int count)
 void Controller::Init()
 {
 	_Sequence = 0;
-	_Timer = NULL;
+	//_Timer = NULL;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -175,15 +183,15 @@ Controller::~Controller()
 	/*if(_ports) delete _ports;
 	_ports = NULL;*/
 
-	if(_Timer) delete _Timer;
-	_Timer = NULL;
+	/*if(_Timer) delete _Timer;
+	_Timer = NULL;*/
 
-	foreach(QueueNode*, node, _Queue)
+	/*foreach(QueueNode*, node, _Queue)
 	{
 		delete node;
 		foreach_remove();
 	}
-	foreach_end();
+	foreach_end();*/
 
 	_ports.DeleteAll().Clear();
 
@@ -288,16 +296,29 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	// 如果是响应消息，及时更新请求队列
 	if(msg.Reply)
 	{
-		foreach(QueueNode*, node, _Queue)
+		/*foreach(QueueNode*, node, _Queue)
 		{
-			if(node->Port == port && node->Msg->Sequence == msg.Sequence)
+			if(node->Port == port && node->Sequence == msg.Sequence)
 			{
 				delete node;
 				foreach_remove();
 				break;
 			}
 		}
-		foreach_end();
+		foreach_end();*/
+		int i = -1;
+		while(_Queue.MoveNext(i))
+		{
+			MessageQueue* node = _Queue[i];
+			if(node->Msg->Sequence == msg.Sequence)
+			{
+				// 该传输口收到响应，从就绪队列中删除
+				node->Ports.Remove(port);
+				
+				// 复制一份响应消息
+				node->Reply = new Message(msg);
+			}
+		}
 	}
 
 	// 选择处理器来处理消息
@@ -362,20 +383,13 @@ uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* por
 	return Send(msg, port);
 }
 
-bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
+void Controller::PrepareSend(Message& msg)
 {
 	// 附上自己的地址
 	msg.Src = Address;
 
-	// 是否需要响应
-	msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
-
 	// 附上序列号
 	msg.Sequence = ++_Sequence;
-
-	// 指针直接访问消息头。如果没有负载数据，它就是全部
-	//byte* buf = (byte*)&msg.Dest;
-	//uint len = msg.Length;
 
 	// 计算校验
 	msg.ComputeCrc();
@@ -401,44 +415,16 @@ bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
 		Sys.ShowHex(msg.Data, msg.Length);
 	debug_printf("\r\n");*/
 #endif
+}
 
-	if(msg.Reply || !msTimeout) return SendInternal(msg, port);
+bool Controller::Send(Message& msg, ITransport* port, uint msTimeout)
+{
+	// 是否需要响应
+	msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
 
-	// 非响应消息，考虑异步
+	PrepareSend(msg);
 
-	QueueNode* first = new QueueNode();
-	first->Expired	= Time.Current() + msTimeout * 1000;
-	first->Msg	= &msg;
-	first->Port	= port;
-
-	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
-	_Queue.Add(first);
-
-	// 发往所有端口
-	if(!port)
-	{
-		first->Port = _ports[0];
-		for(int i=1-1; _ports.MoveNext(i);)
-		{
-			QueueNode* node = new QueueNode(*first);
-			node->Port = _ports[i];
-
-			_Queue.Add(node);
-		}
-	}
-	// 准备增加一个定时任务，用于轮询重发队列里面的任务
-	if(!_Timer)
-	{
-		// 抽取一个空闲定时器，用于轮询重发队列
-		_Timer = Timer::Create();
-		_Timer->Register(SendTask, this);
-		_Timer->SetFrequency(100);
-	}
-	// 先发送一次，再开启定时器轮询
-	bool rs = SendInternal(msg, port);
-	_Timer->Start();
-
-	return rs;
+	return SendInternal(msg, port);
 }
 
 bool Controller::SendInternal(Message& msg, ITransport* port)
@@ -465,7 +451,8 @@ bool Controller::SendInternal(Message& msg, ITransport* port)
 	else
 	{
 		// 发往所有端口
-		for(int i=0-1; _ports.MoveNext(i);)
+		int i = -1;
+		while(_ports.MoveNext(i))
 			rs &= _ports[i]->Write(buf, len);
 	}
 
@@ -485,29 +472,11 @@ void Controller::SendTask()
 	// 如果没有轮询队列，则关闭定时器
 	if(!_Queue.Count())
 	{
-		if(_Timer) _Timer->Stop();
+		//if(_Timer) _Timer->Stop();
 		return;
 	}
 
-	/*auto_ptr< IEnumerator<QueueNode*> > it(_Queue.GetEnumerator());
-	while(it->MoveNext())
-	{
-		QueueNode* node = it->Current();
-
-		// 如果过期，则删除
-		if(node->Expired < Time.Current())
-		{
-			_Queue.Remove(node);
-			delete node;
-		}
-		else
-		{
-			// 发送消息
-			SendInternal(*node->Msg, node->Port);
-		}
-	}*/
-
-	foreach(QueueNode*, node, _Queue)
+	/*foreach(QueueNode*, node, _Queue)
 	{
 		// 如果过期，则删除
 		if(node->Expired < Time.Current())
@@ -518,27 +487,86 @@ void Controller::SendTask()
 		else
 		{
 			// 发送消息
-			SendInternal(*node->Msg, node->Port);
+			//SendInternal(*node->Msg, node->Port);
+			node->Port->Write(node->Data, node->Length);
 		}
 	}
-	foreach_end();
+	foreach_end();*/
 }
 
 bool Controller::SendSync(Message& msg, uint msTimeout)
 {
-	if(!Send(msg)) return false;
+	// 需要响应
+	msg.Confirm = true;
+
+	PrepareSend(msg);
+
+	//if(msg.Reply || !msTimeout) return SendInternal(msg, port);
+
+	// 非响应消息，考虑异步
+
+	/*QueueNode* first = new QueueNode();
+	first->Expired	= Time.Current() + msTimeout * 1000;
+	first->Port	= port;
+	first->SetMessage(msg);
+
+	// 消息队列的设计，没有考虑多线程冲突，可能会有问题
+	_Queue.Add(first);
+
+	// 发往所有端口
+	if(!port)
+	{
+		first->Port = _ports[0];
+		int i = 1-1;
+		while(_ports.MoveNext(i))
+		{
+			QueueNode* node = new QueueNode(*first);
+			node->Port = _ports[i];
+
+			_Queue.Add(node);
+		}
+	}
+	// 准备增加一个定时任务，用于轮询重发队列里面的任务
+	if(!_Timer)
+	{
+		// 抽取一个空闲定时器，用于轮询重发队列
+		_Timer = Timer::Create();
+		_Timer->Register(SendTask, this);
+		_Timer->SetFrequency(100);
+	}
+	// 先发送一次，再开启定时器轮询
+	bool rs = SendInternal(msg, port);
+	_Timer->Start();*/
+
+	MessageQueue queue;
+	queue.SetMessage(msg);
+	queue.Ports = _ports;
+	
+	// 加入等待队列
+	_Queue.Add(&queue);
 
 	// 等待响应
+	bool rs = false;
 	TimeWheel tw(0, msTimeout, 0);
-	while(true)
+	while(!tw.Expired())
 	{
-		if(tw.Expired()) return false;
-
-		// 未完成
-		break;
+		// 发送消息
+		int i = -1;
+		while(queue.Ports.MoveNext(i))
+		{
+			queue.Ports[i]->Write(queue.Data, queue.Length);
+		}
+	
+		// 等一会
+		Sys.Sleep(10);
+		
+		// 检查未完成传输口
+		if(queue.Ports.Count() == 0) { rs = true; break; }
 	}
 
-	return true;
+	_Queue.Remove(&queue);
+	
+	return rs;
 }
 
 bool Controller::Reply(Message& msg, ITransport* port)
@@ -658,4 +686,27 @@ void Controller::Test(ITransport* port)
 	control.Register(DISC_CODE, Discover);
 
 	control.Send(3, DISC_CODE);
+}
+
+MessageQueue::MessageQueue()
+{
+	Reply = NULL;
+}
+
+MessageQueue::~MessageQueue()
+{
+	delete Reply;
+	Reply = NULL;
+}
+
+void MessageQueue::SetMessage(Message& msg)
+{
+	byte* buf = (byte*)&msg.Dest;
+	if(!msg.Length)
+		memcpy(Data, buf, MESSAGE_SIZE);
+	else
+	{
+		MemoryStream ms(Data, ArrayLength(Data));
+		msg.Write(ms);
+	}
 }

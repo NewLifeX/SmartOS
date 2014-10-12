@@ -35,6 +35,8 @@ public:
 public:
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
+	Message(Message& msg);	
+	
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 	bool Parse(MemoryStream& ms);
 	// 验证消息校验和是否有效
@@ -51,43 +53,69 @@ public:
 // 消息头大小
 #define MESSAGE_SIZE offsetof(Message, Checksum) + 2
 
+class MessageQueue;
+
+// 消息控制器。负责发送消息、接收消息、分发消息
 class Controller
 {
 private:
 	FixedArray<ITransport, 4>	_ports;	// 数据传输口
 	//int				_portCount;	// 传输口个数
 	uint			_Sequence;	// 控制器的消息序号
-	Timer*			_Timer;		// 用于错误重发机制的定时器
+	//Timer*			_Timer;		// 用于错误重发机制的定时器
 
 	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
 	class QueueNode
 	{
 	public:
-		ulong		Expired;// 过期时间
-		Message*	Msg;	// 消息
-		ITransport*	Port;
-		byte*		Buf;
-		uint		Length;
+		ulong		Expired;	// 过期时间
+		byte		Sequence;	// 序列号
 		bool		Success;
+		ITransport*	Port;
+		byte		Data[32];
+		uint		Length;
 
 		QueueNode() { }
 
-		QueueNode(const QueueNode& queue)
+		QueueNode(const QueueNode& node)
 		{
-			Expired	= queue.Expired;
-			Msg		= queue.Msg;
-			Port	= queue.Port;
-			Buf		= queue.Buf;
-			Length	= queue.Length;
-			Success	= queue.Success;
+			Expired	= node.Expired;
+			Sequence= node.Sequence;
+			Port	= node.Port;
+			//Data		= node.Data;
+			//Length	= node.Length;
+			SetData(node.Data, node.Length);
+			Success	= node.Success;
+		}
+
+		void SetData(const byte* buf, uint len)
+		{
+			Length = len;
+			if(len) memcpy(Data, buf, len);
+		}
+
+		void SetMessage(Message& msg)
+		{
+			Sequence = msg.Sequence;
+
+			byte* buf = (byte*)&msg.Dest;
+			if(!msg.Length)
+				memcpy(Data, buf, MESSAGE_SIZE);
+			else
+			{
+				MemoryStream ms(Data, ArrayLength(Data));
+				msg.Write(ms);
+			}
 		}
 	};
-	LinkedList<QueueNode*> _Queue;
+	//LinkedList<QueueNode*> _Queue;
+	FixedArray<MessageQueue, 16> _Queue;	// 消息队列。最多允许16个消息同时等待响应
 
 	bool SendInternal(Message& msg, ITransport* port);
 	static void SendTask(void* sender, void* param);
 	void SendTask();
+	void PrepareSend(Message& msg);	// 发送准备
 
 public:
 	byte Address;	// 本地地址
@@ -142,6 +170,24 @@ public:
 // 测试部分
 public:
 	static void Test(ITransport* port);
+};
+
+// 消息队列。需要等待响应的消息，进入消息队列处理。
+class MessageQueue
+{
+public:
+	Message*	Msg;	// 消息
+	byte		Data[32];
+	uint		Length;
+	//uint		Total;	// 等待的成功次数。该数字等于传输口总数
+	//uint		Success;// 已收到应答的次数。
+	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
+	Message*	Reply;	// 匹配的响应消息
+	
+	MessageQueue();
+	~MessageQueue();
+	
+	void SetMessage(Message& msg);
 };
 
 #endif
