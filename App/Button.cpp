@@ -7,6 +7,7 @@ void Button::Init()
 	Relay = NULL;
 
 	Name = NULL;
+	Index = 0;
 	_Value = false;
 	_Handler = NULL;
 	_Param = NULL;
