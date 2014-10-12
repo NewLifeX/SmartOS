@@ -159,6 +159,9 @@ public:
 		byte* p = Current();
 		if(!Seek(sizeof(T))) return 0;
 
+		// 检查地址对齐
+		assert_param(p % sizeof(T) == 0);
+
 		return *(T*)p;
 	}
 
@@ -168,6 +171,10 @@ public:
 		if(!CheckCapacity(sizeof(T))) return;
 
 		byte* p = Current();
+
+		// 检查地址对齐
+		assert_param(p % sizeof(T) == 0);
+
 		*(T*)p = value;
 
 		// 移动游标
