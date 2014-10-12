@@ -93,11 +93,28 @@ extern uint __heap_base;
 
 bool assert_ptr_(void* p)
 {
-	if((uint)p < SRAM_BASE) return false;
-	if((uint)p > (SRAM_BASE + (Sys.RAMSize << 10))) return false;
+	if((uint)p < FLASH_BASE)
+	{
+		debug_printf("ptr:0x%08x < FLASH_BASE:0x%08x\r\n", p, FLASH_BASE);
+		return false;
+	}
+
+	uint ramEnd = SRAM_BASE + (Sys.RAMSize << 10);
+	if((uint)p >= ramEnd)
+	{
+		debug_printf("ptr:0x%08x >= SRAM_END:0x%08x\r\n", p, ramEnd);
+		return false;
+	}
+
+	uint flashEnd = FLASH_BASE + (Sys.FlashSize << 10);
+	if((uint)p >= flashEnd && (uint)p < SRAM_BASE)
+	{
+		debug_printf("ptr:0x%08x >= FLASH_END:0x%08x\r\n", p, flashEnd);
+		return false;
+	}
 
 	// 不支持静态全局对象
-	if(p <= (void*)&__heap_base) return false;
+	//if(p <= (void*)&__heap_base) return false;
 
 	return true;
 }
