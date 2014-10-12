@@ -160,7 +160,7 @@ public:
 		if(!Seek(sizeof(T))) return 0;
 
 		// 检查地址对齐
-		assert_param(p % sizeof(T) == 0);
+		assert_param((uint)p % sizeof(T) == 0);
 
 		return *(T*)p;
 	}
@@ -173,7 +173,7 @@ public:
 		byte* p = Current();
 
 		// 检查地址对齐
-		assert_param(p % sizeof(T) == 0);
+		assert_param((uint)p % sizeof(T) == 0);
 
 		*(T*)p = value;
 
