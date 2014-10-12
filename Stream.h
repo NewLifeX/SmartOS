@@ -12,26 +12,36 @@ private:
 	byte* _Buffer;	// 数据缓冲区
 	byte* _Cur;		// 当前数据指针
 	uint _Capacity;	// 缓冲区容量
-	//bool _internal;		// 是否自动释放
+	//bool _needFree;		// 是否自动释放
 	// 又是头疼的对齐问题
-	uint _internal;	// 是否自动释放
+	uint _needFree;	// 是否自动释放
     uint _Position;	// 游标位置
 
+	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
 public:
 	uint Length;	// 数据长度
 
 	// 分配指定大小的数据流
-	MemoryStream(uint len)
+	MemoryStream(uint len = 0)
 	{
-		assert_param(len > 0);
+		//assert_param(len > 0);
 
-		_Buffer = new byte[len];
-		assert_ptr(_Buffer);
+		if(len <= ArrayLength(_Arr))
+		{
+			len = ArrayLength(_Arr);
+			_Buffer = _Arr;
+			_needFree = false;
+		}
+		else
+		{
+			_Buffer = new byte[len];
+			assert_ptr(_Buffer);
+			_needFree = true;
+		}
 
 		_Capacity = len;
 		_Cur = _Buffer;
 		_Position = 0;
-		_internal = true;
 		Length = 0;
 	}
 
@@ -45,14 +55,14 @@ public:
 		_Capacity = len;
 		_Cur = _Buffer;
 		_Position = 0;
-		_internal = false;
+		_needFree = false;
 		Length = len;
 	}
 
 	// 销毁数据流
 	virtual ~MemoryStream()
 	{
-		if(_internal)
+		if(_needFree)
 		{
 			if(_Buffer) delete _Buffer;
 			_Buffer = NULL;
@@ -194,7 +204,7 @@ private:
 		// 容量不够，需要扩容
 		if(count > remain)
 		{
-			if(!_internal)
+			if(!_needFree)
 			{
 				debug_printf("数据流剩余容量%d不足%d，而外部缓冲区无法扩容！", remain, count);
 				assert_param(false);
