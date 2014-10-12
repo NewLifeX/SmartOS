@@ -32,6 +32,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	if(g_ID >= 0xFFFF) g_ID = 0;
 	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
+	Name = NULL;
+
 	// 外部传入的stackSize参数只是用户可用的栈大小，这里还需要加上保存寄存器所需要的stk部分
 	uint stkSize = STACK_Size;
 
