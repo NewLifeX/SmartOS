@@ -1,4 +1,4 @@
-#include "Message.h"
+﻿#include "Message.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -182,6 +182,9 @@ Controller::~Controller()
 void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
+
+	// 注册收到数据事件
+	port->Register(OnReceive, this);
 
 	_ports.Add(port);
 }
@@ -487,103 +490,6 @@ bool Controller::Error(Message& msg, ITransport* port)
 	msg.Error = 1;
 
 	return Reply(msg, port);
-}
-
-// 常用系统级消息
-// 系统时间获取与设置
-bool Controller::SysTime(Message& msg, void* param)
-{
-	// 忽略响应消息
-	if(msg.Reply) return true;
-
-	debug_printf("Message_SysTime Length=%d\r\n", msg.Length);
-
-	// 负载数据决定是读时间还是写时间
-	if(msg.Length >= 8)
-	{
-		// 写时间
-		ulong us = *(ulong*)msg.Data;
-
-		Time.SetTime(us);
-	}
-
-	// 读时间
-	ulong us2 = Time.Current();
-	msg.Length = 8;
-	*(ulong*)msg.Data = us2;
-
-	return true;
-}
-
-bool Controller::SysID(Message& msg, void* param)
-{
-	// 忽略响应消息
-	if(msg.Reply) return true;
-
-	debug_printf("Message_SysID Length=%d\r\n", msg.Length);
-
-	if(msg.Length == 0)
-	{
-		// 12字节ID，4字节CPUID，4字节设备ID
-		msg.SetData(Sys.ID, 5 << 2);
-	}
-	else
-	{
-		// 干脆直接输出Sys，前面11个uint
-		msg.SetData((byte*)&Sys, 11 << 2);
-	}
-
-	return true;
-}
-
-bool Controller::Discover(Message& msg, void* param)
-{
-	if(!msg.Reply)
-	{
-		debug_printf("收到来自[%d]的Discover请求 ", msg.Src);
-		if(msg.Length > 0)
-		{
-			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length, false);
-		}
-		debug_printf("\r\n");
-	}
-	else if(!msg.Error)
-	{
-		debug_printf("收到来自[%d]的Discover响应 ", msg.Src);
-		if(msg.Length > 0)
-		{
-			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length, false);
-		}
-		debug_printf("\r\n");
-	}
-	else
-	{
-		debug_printf("收到来自[%d]的Discover错误 ", msg.Src);
-		if(msg.Length > 0)
-		{
-			debug_printf("数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length, false);
-		}
-		debug_printf("\r\n");
-	}
-
-	return true;
-}
-
-void Controller::Test(ITransport* port)
-{
-	Controller control(port);
-	control.Address = 2;
-
-	control.Register(1, SysID);
-	control.Register(2, SysTime);
-
-	const byte DISC_CODE = 3;
-	control.Register(DISC_CODE, Discover);
-
-	control.Send(3, DISC_CODE);
 }
 
 MessageQueue::MessageQueue()

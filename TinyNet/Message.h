@@ -75,15 +75,15 @@ private:
 	FixedArray<ITransport, 4>	_ports;	// 数据传输口
 	uint			_Sequence;	// 控制器的消息序号
 
-	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 	FixedArray<MessageQueue, 16> _Queue;	// 消息队列。最多允许16个消息同时等待响应
 	RingQueue	_Ring;	// 环形队列
 
 	void Init();
 	void PrepareSend(Message& msg);	// 发送准备
+	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
 
 public:
-	byte Address;	// 本地地址
+	byte	Address;	// 本地地址
 
 	Controller(ITransport* port);
 	Controller(ITransport* ports[], int count);
@@ -122,19 +122,6 @@ private:
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
 	void Register(byte code, CommandHandler handler, void* param = NULL);
-
-// 常用系统级消息
-public:
-	// 询问及设置系统时间
-	static bool SysTime(Message& msg, void* param);
-	// 询问系统标识号
-	static bool SysID(Message& msg, void* param);
-	// 广播发现系统
-	static bool Discover(Message& msg, void* param);
-
-// 测试部分
-public:
-	static void Test(ITransport* port);
 };
 
 // 消息队列。需要等待响应的消息，进入消息队列处理。
