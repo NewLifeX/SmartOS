@@ -225,9 +225,10 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 
 	// 处理重复消息。加上来源地址，以免重复
 	ushort seq = (msg.Src << 8) | msg.Sequence;
-	if(_Ring.Find(seq) >= 0) return false;
+#ifndef DEBUG
+	if(_Ring.Find(seq) >= 0) return false;		// 调试的时候会死人的
+#endif
 	_Ring.Push(seq);
-
 #if DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
@@ -248,7 +249,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		debug_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
-	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
+	if(!msg.Verify()) debug_printf(" Crc Error 0x%02x%02x", (byte)msg.Crc16,(byte)(msg.Crc16>>8));
 	debug_printf("\r\n");
 #endif
 
