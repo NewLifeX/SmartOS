@@ -1,4 +1,4 @@
-﻿#include "Message.h"
+#include "Message.h"
 
 // 初始化消息，各字段为0
 Message::Message(byte code)
@@ -19,7 +19,7 @@ Message::Message(Message& msg)
 	// 如果地址不是8字节对齐，长整型操作会导致异常
 	memcpy(&Dest, &msg.Dest, 8);
 
-	Crc16 = Crc16;
+	Crc16 = msg.Crc16;
 	ArrayCopy(Data, msg.Data);
 }
 
@@ -538,7 +538,7 @@ bool Controller::Discover(Message& msg, void* param)
 {
 	if(!msg.Reply)
 	{
-		debug_printf("收到来自[%d]的Discover请求！", msg.Src);
+		debug_printf("收到来自[%d]的Discover请求 ", msg.Src);
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
@@ -548,7 +548,7 @@ bool Controller::Discover(Message& msg, void* param)
 	}
 	else if(!msg.Error)
 	{
-		debug_printf("收到来自[%d]的Discover响应！", msg.Src);
+		debug_printf("收到来自[%d]的Discover响应 ", msg.Src);
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
@@ -558,7 +558,7 @@ bool Controller::Discover(Message& msg, void* param)
 	}
 	else
 	{
-		debug_printf("收到来自[%d]的Discover错误！", msg.Src);
+		debug_printf("收到来自[%d]的Discover错误 ", msg.Src);
 		if(msg.Length > 0)
 		{
 			debug_printf("数据：[%d] ", msg.Length);
