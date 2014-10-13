@@ -410,9 +410,9 @@ bool Controller::Send(Message& msg, ITransport* port)
 	MemoryStream ms(MESSAGE_SIZE + msg.Length);
 	if(msg.Length > 0)
 	{
+		buf = ms.Current();
 		// 带有负载数据，需要合并成为一段连续的内存
 		msg.Write(ms);
-		buf = ms.Current();
 		len = ms.Length;
 	}
 
