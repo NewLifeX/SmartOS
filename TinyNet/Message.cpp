@@ -223,12 +223,16 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	Message msg;
 	if(!msg.Parse(ms)) return false;
 
-	// 处理重复消息。加上来源地址，以免重复
-	ushort seq = (msg.Src << 8) | msg.Sequence;
-#ifndef DEBUG
-	if(_Ring.Find(seq) >= 0) return false;		// 调试的时候会死人的
+#if DEBUG
+	// 调试版不过滤序列号为0的重复消息
+	if(msg.Sequence != 0)
 #endif
-	_Ring.Push(seq);
+	{
+		// 处理重复消息。加上来源地址，以免重复
+		ushort seq = (msg.Src << 8) | msg.Sequence;
+		if(_Ring.Find(seq) >= 0) return false;
+		_Ring.Push(seq);
+	}
 #if DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
