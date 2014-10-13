@@ -95,7 +95,8 @@ public:
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	bool Send(Message& msg, ITransport* port = NULL);
-	bool SendSync(Message& msg, uint msTimeout = 100);
+	// 同步发送消息，等待对方响应一个确认消息
+	bool SendSync(Message& msg, uint msTimeout = 200, uint msInterval = 50, ITransport* port = NULL);
 	// 回复对方的请求消息
 	bool Reply(Message& msg, ITransport* port = NULL);
 	bool Error(Message& msg, ITransport* port = NULL);

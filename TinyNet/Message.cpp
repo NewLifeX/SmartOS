@@ -1,5 +1,8 @@
 #include "Message.h"
 
+#define MSG_DEBUG DEBUG
+//#define MSG_DEBUG 0
+
 // 初始化消息，各字段为0
 Message::Message(byte code)
 {
@@ -10,7 +13,6 @@ Message::Message(byte code)
 	memset(&Dest, 0, 8);
 	Code = code;
 	Crc16 = 0;
-	//Data = NULL;
 }
 
 Message::Message(Message& msg)
@@ -33,7 +35,6 @@ bool Message::Parse(MemoryStream& ms)
 	assert_param(len > 0);
 
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
-	//const int headerSize = 4 + 2 + 2;
 	const int headerSize = MESSAGE_SIZE;
 	if(len < headerSize) return false;
 
@@ -58,9 +59,6 @@ bool Message::Parse(MemoryStream& ms)
 	{
 		// 前面错误地把2字节数据当作校验码
 		ms.Seek(-2);
-		// 要移动游标
-		//Data = ms.ReadBytes(Length);
-		//memcpy(Data, ms.ReadBytes(Length), Length);
 		ms.Read(Data, 0, Length);
 		// 读取真正的校验码
 		Checksum = ms.Read<ushort>();
@@ -185,7 +183,6 @@ void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
 
-	//_ports[_portCount++] = port;
 	_ports.Add(port);
 }
 
@@ -209,7 +206,7 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 
 bool Controller::Process(MemoryStream& ms, ITransport* port)
 {
-#if DEBUG
+#if MSG_DEBUG
 	byte* p = ms.Current();
 	// 输出整条信息
 	/*Sys.ShowHex(p, ms.Length, '-');
@@ -233,7 +230,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		if(_Ring.Find(seq) >= 0) return false;
 		_Ring.Push(seq);
 	}
-#if DEBUG
+#if MSG_DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
 	/*Sys.ShowHex(p, ms.Current() - p);
@@ -253,7 +250,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		debug_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
-	if(!msg.Verify()) debug_printf(" Crc Error 0x%02x%02x", (byte)msg.Crc16,(byte)(msg.Crc16>>8));
+	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
 	debug_printf("\r\n");
 #endif
 
@@ -275,8 +272,6 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		// 把Crc16附到后面4字节
 		Sys.ToHex(err + len - 5, (byte*)&msg.Crc16, 2);
 
-		//msg.Length = len;
-		//msg.Data = err;
 		msg.SetData(err, len);
 #else
 		msg.Length = 0;
@@ -376,7 +371,7 @@ void Controller::PrepareSend(Message& msg)
 	// 计算校验
 	msg.ComputeCrc();
 
-#if DEBUG
+#if MSG_DEBUG
 	debug_printf("Message Send");
 	if(msg.Error)
 		debug_printf(" Error");
@@ -435,7 +430,7 @@ bool Controller::Send(Message& msg, ITransport* port)
 	return rs;
 }
 
-bool Controller::SendSync(Message& msg, uint msTimeout)
+bool Controller::SendSync(Message& msg, uint msTimeout, uint msInterval, ITransport* port)
 {
 	// 需要响应
 	msg.Confirm = true;
@@ -445,7 +440,10 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 	// 准备消息队列
 	MessageQueue* queue = new MessageQueue();
 	queue->SetMessage(msg);
-	queue->Ports = _ports;
+	if(!port)
+		queue->Ports = _ports;
+	else
+		queue->Ports.Add(port);
 
 	// 加入等待队列
 	_Queue.Add(queue);
@@ -463,7 +461,7 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 		}
 
 		// 等一会
-		Sys.Sleep(50);
+		Sys.Sleep(msInterval);
 
 		// 检查未完成传输口
 		if(queue->Ports.Count() == 0) { rs = true; break; }
