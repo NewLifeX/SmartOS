@@ -25,9 +25,6 @@ Port::Port()
 	Pin0 = P0;
 	PinCount = 0;
 	GroupIndex = 0;
-
-	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-	GPIO_StructInit(&gpio);
 }
 
 Port::~Port()
@@ -144,11 +141,15 @@ void Port::SetPort(Pin pins[], uint count)
 
 void Port::Config()
 {
-    OnConfig();
+	GPIO_InitTypeDef gpio;
+	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
+	GPIO_StructInit(&gpio);
+
+    OnConfig(gpio);
     GPIO_Init(Group, &gpio);
 }
 
-void Port::OnConfig()
+void Port::OnConfig(GPIO_InitTypeDef& gpio)
 {
     // 打开时钟
     int gi = GroupIndex;
@@ -273,7 +274,7 @@ bool Port::IsBusy(Pin pin)
 // 引脚配置
 #define REGION_Config 1
 #ifdef REGION_Config
-void OutputPort::OnConfig()
+void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 {
 #ifndef STM32F4
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
@@ -281,7 +282,7 @@ void OutputPort::OnConfig()
 	assert_param(Speed == 2 || Speed == 25 || Speed == 50 || Speed == 100);
 #endif
 
-	Port::OnConfig();
+	Port::OnConfig(gpio);
 
 	switch(Speed)
 	{
@@ -311,9 +312,9 @@ void OutputPort::OnConfig()
 	GPIO_Write(Group, dat);
 }
 
-void AlternatePort::OnConfig()
+void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
 {
-	OutputPort::OnConfig();
+	OutputPort::OnConfig(gpio);
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
@@ -323,9 +324,9 @@ void AlternatePort::OnConfig()
 #endif
 }
 
-void InputPort::OnConfig()
+void InputPort::OnConfig(GPIO_InitTypeDef& gpio)
 {
-	Port::OnConfig();
+	Port::OnConfig(gpio);
 
 #ifdef STM32F1
 	if(Floating)
@@ -340,9 +341,9 @@ void InputPort::OnConfig()
 #endif
 }
 
-void AnalogInPort::OnConfig()
+void AnalogInPort::OnConfig(GPIO_InitTypeDef& gpio)
 {
-	Port::OnConfig();
+	Port::OnConfig(gpio);
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = GPIO_Mode_AIN; //

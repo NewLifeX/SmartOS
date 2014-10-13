@@ -31,8 +31,6 @@ public:
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
-    //_force_inline static ushort IndexToBits(byte index);
-    //static byte BitsToIndex(ushort bits); // 最低那一个位的索引
 
 #if DEBUG
 	static bool Reserve(Pin pin, bool flag);	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
@@ -40,13 +38,11 @@ public:
 #endif
 
 protected:
-    GPIO_InitTypeDef gpio;	// 用于配置端口的结构体对象
-
 	Port();
 	virtual ~Port();
 
     // 配置过程，由Config调用，最后GPIO_Init
-    virtual void OnConfig();
+    virtual void OnConfig(GPIO_InitTypeDef& gpio);
 #if DEBUG
 	virtual bool OnReserve(Pin pin, bool flag);
 #endif
@@ -63,9 +59,9 @@ private:
 class OutputPort : public Port
 {
 public:
-    bool OpenDrain;  // 是否开漏输出
-    uint Speed;		// 速度
+    bool OpenDrain;	// 是否开漏输出
     bool Invert;	// 是否倒置输入输出
+    uint Speed;		// 速度
 
     OutputPort() { Init(); }
 	// 普通输出一般采用开漏输出，需要倒置
@@ -109,7 +105,7 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    virtual void OnConfig();
+    virtual void OnConfig(GPIO_InitTypeDef& gpio);
 
     void Init(bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
@@ -151,7 +147,7 @@ public:
 	}
 
 protected:
-    virtual void OnConfig();
+    virtual void OnConfig(GPIO_InitTypeDef& gpio);
 
 #if DEBUG
 	virtual bool OnReserve(Pin pin, bool flag);
@@ -172,9 +168,9 @@ public:
     // 读取委托
     typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 
+    uint ShakeTime;     // 抖动时间
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     bool Floating;      // 是否浮空输入
-    uint ShakeTime;     // 抖动时间
     bool Invert;		// 是否倒置输入输出
 
 	InputPort() { Init(); }
@@ -204,7 +200,7 @@ protected:
         Invert = false;
     }
 
-    virtual void OnConfig();
+    virtual void OnConfig(GPIO_InitTypeDef& gpio);
 
 #if DEBUG
 	virtual bool OnReserve(Pin pin, bool flag);
@@ -226,7 +222,7 @@ public:
 	AnalogInPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Config(); }
 
 protected:
-    virtual void OnConfig();
+    virtual void OnConfig(GPIO_InitTypeDef& gpio);
 };
 
 #endif //_Port_H_
