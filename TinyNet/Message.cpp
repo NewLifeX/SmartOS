@@ -439,12 +439,12 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 	PrepareSend(msg);
 
 	// 准备消息队列
-	MessageQueue queue;
-	queue.SetMessage(msg);
-	queue.Ports = _ports;
+	MessageQueue* queue = new MessageQueue();
+	queue->SetMessage(msg);
+	queue->Ports = _ports;
 
 	// 加入等待队列
-	_Queue.Add(&queue);
+	_Queue.Add(queue);
 
 	// 等待响应
 	bool rs = false;
@@ -453,19 +453,20 @@ bool Controller::SendSync(Message& msg, uint msTimeout)
 	{
 		// 发送消息
 		int i = -1;
-		while(queue.Ports.MoveNext(i))
+		while(queue->Ports.MoveNext(i))
 		{
-			queue.Ports[i]->Write(queue.Data, queue.Length);
+			queue->Ports[i]->Write(queue->Data, queue->Length);
 		}
 
 		// 等一会
 		Sys.Sleep(50);
 
 		// 检查未完成传输口
-		if(queue.Ports.Count() == 0) { rs = true; break; }
+		if(queue->Ports.Count() == 0) { rs = true; break; }
 	}
 
-	_Queue.Remove(&queue);
+	_Queue.Remove(queue);
+	delete queue;
 
 	return rs;
 }
