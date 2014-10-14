@@ -15,7 +15,7 @@ void Sensor::Init()
 	_Param = NULL;
 }
 
-Sensor::Sensor(Pin key, Pin led, Pin relay)
+Sensor::Sensor(Pin key, Pin led, Pin buzzer)
 {
 	Init();
 
@@ -24,10 +24,10 @@ Sensor::Sensor(Pin key, Pin led, Pin relay)
 	Key->Register(OnPress, this);
 
 	if(led != P0) Led = new OutputPort(led);
-	if(Buzzer != P0) Buzzer = new OutputPort(Buzzer);
+	if(buzzer != P0) Buzzer = new OutputPort(buzzer);
 }
 
-Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
+Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin buzzer, bool buzzerInvert)
 {
 	Init();
 
@@ -36,7 +36,7 @@ Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 	Key->Register(OnPress, this);
 
 	if(led != P0) Led = new OutputPort(led, ledInvert);
-	if(Buzzer != P0) key = new OutputPort(key, keyInvert);
+	if(buzzer != P0) Buzzer = new OutputPort(key, buzzerInvert);
 
 	//SetValue(false);
 }

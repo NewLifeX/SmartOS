@@ -16,9 +16,9 @@ public:
 
 	
 	OutputPort* Led;	// 指示灯
-	OutputPort* Buzzer;	// 指示灯
+	OutputPort* Buzzer;	// 蜂鸣器
 	
-	InputPort*  Key;	// 输入按键
+	InputPort* Key;	// 输入按键
 	InputPort* Pir;	   //人体感应
 	InputPort* Mag;	   //门磁
 	
@@ -28,15 +28,14 @@ public:
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Sensor() { Init(); }
-	Sensor(Pin key, Pin led = P0, bool ledInvert = true, Pin buzzer = P0, bool keyInvert = true);
-	Sensor(Pin key, Pin led = P0, Pin relay = P0);
+	Sensor(Pin key, Pin led = P0, bool ledInvert = true, Pin buzzer = P0, bool keyInvert=true);
+	Sensor(Pin key, Pin led = P0, Pin buzzer = P0);
 	~Sensor();
 
 	bool GetValue();
 	void SetValue(bool value);
 
 	void Register(EventHandler handler, void* param = NULL);
-
 
 	
 private:
