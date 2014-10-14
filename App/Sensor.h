@@ -10,23 +10,26 @@ class Sensor
 
 public:
 	
-	string Name;
+	
+	string Name;  //名字
+	int Index;   //索引号
 
 	
 	OutputPort* Led;	// 指示灯
 	OutputPort* Buzzer;	// 指示灯
 	
 	InputPort*  Key;	// 输入按键
-	InputPort* PIR;	   //人体感应
-	InputPort* MA;	   //门磁
+	InputPort* Pir;	   //人体感应
+	InputPort* Mag;	   //门磁
+	
+	//I2C*   Ifrared    //红外转发
 	
 	
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Sensor() { Init(); }
-	Sensor(Pin key = P0, Pin led = P0, bool ledInvert = true, Pin relay_pin1 = P0, 
-					bool relayInvert1 = true, Pin relay_pin2 = P0, bool relayInvert2 = true);
-	Sensor(Pin key =P0, Pin led = P0, Pin relay_pin1 = P0, Pin relay_pin2 = P0);
+	Sensor(Pin key, Pin led = P0, bool ledInvert = true, Pin buzzer = P0, bool keyInvert = true);
+	Sensor(Pin key, Pin led = P0, Pin relay = P0);
 	~Sensor();
 
 	bool GetValue();

@@ -5,9 +5,9 @@ void Sensor::Init()
 	Key = NULL;
 	Led = NULL;
 	Buzzer = NULL;
+	Pir=NULL;    //门磁
+  Pir=NULL;    //人体感应
 	
-	MAG=NILL;
-
 	Name = NULL;
 	Index = 0;
 	_Value = false;
@@ -24,7 +24,7 @@ Sensor::Sensor(Pin key, Pin led, Pin relay)
 	Key->Register(OnPress, this);
 
 	if(led != P0) Led = new OutputPort(led);
-	if(Buzzer != P0) Buzzer = new OutputPort(relay);
+	if(Buzzer != P0) Buzzer = new OutputPort(Buzzer);
 }
 
 Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
@@ -36,7 +36,7 @@ Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 	Key->Register(OnPress, this);
 
 	if(led != P0) Led = new OutputPort(led, ledInvert);
-	if(relay != P0) Relay = new OutputPort(relay, relayInvert);
+	if(Buzzer != P0) key = new OutputPort(key, keyInvert);
 
 	//SetValue(false);
 }
@@ -49,8 +49,8 @@ Sensor::~Sensor()
 	if(Led) delete Led;
 	Led = NULL;
 
-	if(Relay) delete Relay;
-	Relay = NULL;
+	if(Mag) delete Mag;
+	Mag = NULL;
 }
 
 void Sensor::OnPress(Pin pin, bool down, void* param)
@@ -61,7 +61,7 @@ void Sensor::OnPress(Pin pin, bool down, void* param)
 
 void Sensor::OnPress(Pin pin, bool down)
 {
-	// ??????,?????
+	
 	if(!down)
 	{
 		SetValue(!_Value);
@@ -89,7 +89,7 @@ bool Sensor::GetValue() { return _Value; }
 void Sensor::SetValue(bool value)
 {
 	if(Led) *Led = value;
-	if(Relay) *Relay = value;
+	if(Buzzer) *Buzzer = value;
 
 	_Value = value;
 }
