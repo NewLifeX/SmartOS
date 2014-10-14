@@ -642,3 +642,11 @@ void TSys::Stop()
 	_Running = false;
 }
 #endif
+
+const char* Object::ToString()
+{
+	const char* str = typeid(*this).name();
+	while(*str >= '0' && *str <= '9') str++;
+
+	return str;
+}

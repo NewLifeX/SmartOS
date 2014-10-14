@@ -58,6 +58,15 @@ typedef enum
 // 列表模版
 //#include "List.h"
 
+#include <typeinfo>
+
+// 根对象
+class Object
+{
+public:
+	virtual const char* ToString();
+};
+
 // 系统类
 class TSys
 {
