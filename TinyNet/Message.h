@@ -68,6 +68,9 @@ public:
 	int Find(ushort item);
 };
 
+// 处理消息，返回是否成功
+typedef bool (*MessageHandler)(Message& msg, void* param);
+
 // 消息控制器。负责发送消息、接收消息、分发消息
 class Controller
 {
@@ -105,23 +108,19 @@ protected:
 	bool Process(MemoryStream& ms, ITransport* port);
 
 // 处理器部分
-public:
-	// 处理消息，返回是否成功
-	typedef bool (*CommandHandler)(Message& msg, void* param);
-
 private:
-    struct CommandHandlerLookup
+    struct HandlerLookup
     {
         uint			Code;	// 代码
-        CommandHandler	Handler;// 处理函数
+        MessageHandler	Handler;// 处理函数
 		void*			Param;	// 参数
     };
-	CommandHandlerLookup* _Handlers[16];
+	HandlerLookup* _Handlers[16];
 	byte _HandlerCount;
 
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
-	void Register(byte code, CommandHandler handler, void* param = NULL);
+	void Register(byte code, MessageHandler handler, void* param = NULL);
 };
 
 // 消息队列。需要等待响应的消息，进入消息队列处理。

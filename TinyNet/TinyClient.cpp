@@ -4,8 +4,8 @@
 void DiscoverTask(void* param);
 void PingTask(void* param);
 
-uint _taskDiscover = 0;
-uint _taskPing = 0;
+static uint _taskDiscover = 0;
+static uint _taskPing = 0;
 
 TinyClient::TinyClient(Controller* control)
 {
@@ -16,6 +16,9 @@ TinyClient::TinyClient(Controller* control)
 	Password	= 0;
 
 	LastActive	= 0;
+
+	OnDiscover	= NULL;
+	OnPing		= NULL;
 }
 
 // 常用系统级消息
@@ -27,8 +30,8 @@ void TinyClient::SetDefault()
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
-	_control->Register(1, OnDiscover, this);
-	_control->Register(2, OnPing, this);
+	_control->Register(1, Discover, this);
+	_control->Register(2, Ping, this);
 	_control->Register(3, SysID, this);
 	_control->Register(4, SysTime, this);
 
@@ -67,7 +70,7 @@ void TinyClient::Discover()
 
 // Discover响应
 // 格式：1字节地址 + 8字节密码
-bool TinyClient::OnDiscover(Message& msg, void* param)
+bool TinyClient::Discover(Message& msg, void* param)
 {
 	// 客户端只处理Discover响应
 	if(!msg.Reply || msg.Error) return true;
@@ -96,6 +99,8 @@ bool TinyClient::OnDiscover(Message& msg, void* param)
 	// 启动Ping任务
 	debug_printf("开始Ping服务端 ");
 	_taskPing = Sys.AddTask(PingTask, client, 0, 5000000);
+
+	if(client->OnDiscover) return client->OnDiscover(msg, param);
 
 	return true;
 }
@@ -135,7 +140,7 @@ void TinyClient::Ping()
 	if(LastActive == 0) LastActive = Time.Current();
 }
 
-bool TinyClient::OnPing(Message& msg, void* param)
+bool TinyClient::Ping(Message& msg, void* param)
 {
 	assert_ptr(param);
 	TinyClient* client = (TinyClient*)param;
@@ -149,7 +154,8 @@ bool TinyClient::OnPing(Message& msg, void* param)
 
 	debug_printf("Message_Ping Length=%d\r\n", msg.Length);
 
-	// 原样返回
+	if(client->OnPing) return client->OnPing(msg, param);
+
 	return true;
 }
 

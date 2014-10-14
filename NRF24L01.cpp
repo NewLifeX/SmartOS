@@ -605,6 +605,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		{
 			// 分配1k大小的栈
 			_Thread = new Thread(ReceiveTask, this, 0x1000);
+			_Thread->Name = "RF2401";
 			_Thread->Start();
 		}
 	}

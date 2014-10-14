@@ -16,7 +16,7 @@ public:
 	ulong	Password;	// 通讯密码
 
 	ulong	LastActive;	// 最后活跃时间
-	
+
 	TinyClient(Controller* control);
 
 // 常用系统级消息
@@ -26,11 +26,13 @@ public:
 
 	// 广播发现系统
 	void Discover();
-	static bool OnDiscover(Message& msg, void* param);
+	MessageHandler OnDiscover;
+	static bool Discover(Message& msg, void* param);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
-	static bool OnPing(Message& msg, void* param);
+	MessageHandler OnPing;
+	static bool Ping(Message& msg, void* param);
 
 	// 询问及设置系统时间
 	static bool SysTime(Message& msg, void* param);

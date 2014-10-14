@@ -306,7 +306,7 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)
 	{
-		CommandHandlerLookup* lookup = _Handlers[i];
+		HandlerLookup* lookup = _Handlers[i];
 		if(lookup && lookup->Code == msg.Code)
 		{
 			// 返回值决定是普通回复还是错误回复
@@ -326,12 +326,12 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 	return true;
 }
 
-void Controller::Register(byte code, CommandHandler handler, void* param)
+void Controller::Register(byte code, MessageHandler handler, void* param)
 {
 	assert_param(code);
 	assert_param(handler);
 
-	CommandHandlerLookup* lookup;
+	HandlerLookup* lookup;
 
 #if DEBUG
 	// 检查是否已注册。一般指令码是固定的，所以只在DEBUG版本检查
@@ -346,7 +346,7 @@ void Controller::Register(byte code, CommandHandler handler, void* param)
 	}
 #endif
 
-	lookup = new CommandHandlerLookup();
+	lookup = new HandlerLookup();
 	lookup->Code = code;
 	lookup->Handler = handler;
 	lookup->Param = param;
