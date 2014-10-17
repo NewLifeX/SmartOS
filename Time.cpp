@@ -15,7 +15,7 @@ TTime::TTime()
 	Milliseconds = 0;
 	_msUs = 0;
 
-	InterruptsPerSecond = 1000;
+	InterruptsPerSecond = 100;
 }
 
 TTime::~TTime()
@@ -31,6 +31,7 @@ void TTime::Init()
 	//RCC_GetClocksFreq(&clock);	// 获得系统时钟频率。
 
 	// 准备使用外部时钟，Systick时钟=HCLK/8
+	uint clk = Sys.Clock / 8;
 	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
 	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
@@ -38,7 +39,7 @@ void TTime::Init()
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
 	//TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
 	//TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
-	TicksPerMicrosecond = Sys.Clock / 8000000;	// 每微秒的时钟滴答数
+	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
 
 	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
@@ -48,8 +49,10 @@ void TTime::Init()
 	SysTick->VAL = 0;
 	SysTick->CTRL |= SYSTICK_ENABLE;	// SysTick使能*/
 
+	// InterruptsPerSecond单位：中断每秒，clk单位：滴答每秒，ticks单位：滴答每中断
 	// 默认100，也即是每秒100次中断，10ms一次
-	uint ticks = Sys.Clock / InterruptsPerSecond;
+	uint ticks = clk / InterruptsPerSecond;
+	// ticks为每次中断的嘀嗒数，也就是重载值
 	assert_param(ticks > 0 && ticks < SYSTICK_MAXCOUNT);
 	SysTick_Config(ticks);
 

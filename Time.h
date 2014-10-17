@@ -48,7 +48,7 @@ private:
 public:
     volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
-	volatile uint  Milliseconds;	// 全局毫秒数
+	volatile ulong Milliseconds;	// 全局毫秒数
     //volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
     //uint TicksPerSecond;        // 每秒的时钟滴答数
