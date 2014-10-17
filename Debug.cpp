@@ -1,8 +1,6 @@
 ﻿#include "Sys.h"
 // 仅用于调试使用的一些函数实现，RTM不需要
 
-#if DEBUG
-
 #define MEM_DEBUG 0
 #if MEM_DEBUG
 	#define mem_printf debug_printf
@@ -18,6 +16,8 @@ extern uint __Vectors_Size;
 
 void* operator new(uint size)
 {
+	SmartIRQ irq;
+
     mem_printf(" new size: %d ", size);
     void * p = malloc(size);
 	if(!p)
@@ -38,6 +38,8 @@ void* operator new(uint size)
 
 void* operator new[](uint size)
 {
+	SmartIRQ irq;
+
     mem_printf(" new size[]: %d ", size);
     void * p = malloc(size);
 	if(!p)
@@ -58,15 +60,21 @@ void* operator new[](uint size)
 
 void operator delete(void * p)
 {
+	SmartIRQ irq;
+
 	mem_printf(" delete 0x%08x ", p);
     if(p) free(p);
 }
 
 void operator delete[](void * p)
 {
+	SmartIRQ irq;
+
 	mem_printf(" delete[] 0x%08x ", p);
     if(p) free(p);
 }
+
+#if DEBUG
 
 #ifdef  USE_FULL_ASSERT
 

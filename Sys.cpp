@@ -540,7 +540,7 @@ uint TSys::AddTask(Action func, void* param, ulong dueTime, long period)
 	// 屏蔽中断，否则可能有线程冲突
 	SmartIRQ irq;
 
-	if(!_Scheduler) _Scheduler = new TaskScheduler();
+	if(!_Scheduler) _Scheduler = new TaskScheduler("系统");
 
 	return _Scheduler->Add(func, param, dueTime, period);
 }

@@ -55,7 +55,10 @@ uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period)
 	_Tasks.Add(task);
 
 	// 输出长整型%ld，无符号长整型%llu
-	debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
+	//debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
+	uint dt = dueTime / 1000;
+	int  pd = period > 0 ? period / 1000 : period;
+	debug_printf("%s添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
 
 	return task->ID;
 }
@@ -87,10 +90,6 @@ void TaskScheduler::Start()
 #endif
 	debug_printf("%s准备就绪，开始循环处理%d个任务！\r\n", Name, Count);
 
-	/*if(OnStart)
-		OnStart();
-	else
-		StartInternal();*/
 	Running = true;
 	while(Running)
 	{
