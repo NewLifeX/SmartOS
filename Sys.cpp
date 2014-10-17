@@ -222,9 +222,7 @@ TSys::TSys()
 
     Interrupt.Init();
 
-	_TaskCount = 0;
-	//memset(_Tasks, 0, ArrayLength(_Tasks) * sizeof(_Tasks[0]));
-	ArrayZero(_Tasks);
+	_Scheduler = NULL;
 	OnStart = NULL;
 }
 
@@ -542,104 +540,40 @@ uint TSys::AddTask(Action func, void* param, ulong dueTime, long period)
 	// 屏蔽中断，否则可能有线程冲突
 	SmartIRQ irq;
 
-	// 找一个空闲位给它
-	int i = 0;
-	while(i < ArrayLength(_Tasks) && _Tasks[i] != NULL) i++;
-	assert_param(i < ArrayLength(_Tasks));
+	if(!_Scheduler) _Scheduler = new TaskScheduler();
 
-	Task* task = new Task();
-	_Tasks[i] = task;
-	task->ID = i + 1;
-	task->Callback = func;
-	task->Param = param;
-	task->Period = period;
-	task->NextTime = Time.Current() + dueTime;
-
-	_TaskCount++;
-	// 输出长整型%ld，无符号长整型%llu
-	debug_printf("添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", task->ID, func, dueTime, period);
-
-	return task->ID;
+	return _Scheduler->Add(func, param, dueTime, period);
 }
 
 void TSys::RemoveTask(uint taskid)
 {
-	assert_param(taskid > 0);
-	assert_param(taskid <= _TaskCount);
+	assert_ptr(_Scheduler);
 
-	Task* task = _Tasks[taskid - 1];
-	_Tasks[taskid - 1] = NULL;
-	if(task)
-	{
-		debug_printf("删除任务%d 0x%08x\r\n", task->ID, task->Callback);
-		delete task;
-
-		_TaskCount--;
-	}
+	Task* task = (*_Scheduler)[taskid];
+	delete task;
 }
 
 void TSys::Start()
 {
-	if(_Running) return;
+	assert_ptr(_Scheduler);
 
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
-	debug_printf("系统准备就绪，开始循环处理%d个任务！\r\n", _TaskCount);
-
 	if(OnStart)
 		OnStart();
 	else
-		StartInternal();
+		_Scheduler->Start();
 }
 
 void TSys::StartInternal()
 {
-	_Running = true;
-	while(_Running)
-	{
-		ulong now = Time.Current();	// 当前时间
-		ulong min = UInt64_Max;	// 最小时间，这个时间就会有任务到来
-		int k = 0;
-		for(int i=0; i < ArrayLength(_Tasks) && k < _TaskCount; i++)
-		{
-			Task* task = _Tasks[i];
-			if(task)
-			{
-				if(task->NextTime <= now)
-				{
-					// 先计算下一次时间
-					//task->NextTime += task->Period;
-					// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-					task->NextTime = now + task->Period;
-					if(task->NextTime < min) min = task->NextTime;
-
-					task->Callback(task->Param);
-
-					// 如果只是一次性任务，在这里清理
-					if(task->Period < 0)
-					{
-						_Tasks[i] = NULL;
-						delete task;
-						_TaskCount--;
-					}
-				}
-
-				k++;
-			}
-		}
-
-		// 如果有最小时间，睡一会吧
-		now = Time.Current();	// 当前时间
-		if(min != UInt64_Max && min > now) Delay(min - now);
-	}
-	debug_printf("系统停止调度，共有%d个任务！\r\n", _TaskCount);
+	_Scheduler->Start();
 }
 
 void TSys::Stop()
 {
-	debug_printf("系统停止！\r\n");
-	_Running = false;
+	_Scheduler->Stop();
 }
 #endif
 

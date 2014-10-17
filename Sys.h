@@ -55,7 +55,7 @@ typedef enum
 // 委托
 #include "Delegate.h"
 
-// 列表模版
+// 列表集合
 //#include "List.h"
 
 #include <typeinfo>
@@ -66,6 +66,8 @@ class Object
 public:
 	virtual const char* ToString();
 };
+
+class TaskScheduler;
 
 // 系统类
 class TSys
@@ -86,7 +88,7 @@ public:
     ushort RAMSize;		// 芯片RAM容量
 
     TSys();				// 构造函数
-    ~TSys();	// 析构函数
+    ~TSys();			// 析构函数
 
     void Init();     	// 初始化系统
 	void ShowInfo();
@@ -116,19 +118,7 @@ private:
 	int _Index;	// MCU在型号表中的索引
 
 	// 任务类
-	class Task
-	{
-	public:
-		int ID;			// 编号
-		Action Callback;// 回调
-		void* Param;	// 参数
-		long Period;	// 周期us
-		ulong NextTime;	// 下一次执行时间
-	};
-
-	Task* _Tasks[32];
-	int _TaskCount;
-	bool _Running;
+	TaskScheduler* _Scheduler;
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
@@ -170,14 +160,8 @@ bool assert_ptr_(void* p);
 
 #endif
 
-// 数组长度
-#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
-// 数组清零，固定长度
-#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
-// 数组清零，可变长度
-#define ArrayZero2(arr, len) memset(arr, 0, len * sizeof(arr[0]))
-// 数组复制
-#define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
+// 任务
+#include "Task.h"
 
 // 内存管理
 #include "Memory.h"
