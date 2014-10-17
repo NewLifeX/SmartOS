@@ -43,14 +43,16 @@ private:
     static void OnHandler(ushort num, void* param);
 	SystemTime _Now;
 	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
+	uint _msUs;		// 计算毫秒时剩下的微秒数
 
 public:
-    volatile ulong Ticks;  // 全局滴答中断数，0xFFFF次滴答一个中断。
+    volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
+	volatile uint  Milliseconds;	// 全局毫秒数
     //volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
 
-    uint TicksPerSecond;        // 每秒的时钟滴答数
-    ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
+    //uint TicksPerSecond;        // 每秒的时钟滴答数
+    //ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
     byte TicksPerMicrosecond;   // 每微秒的时钟滴答数
 
 	uint InterruptsPerSecond;	// 每秒的中断数，时间片抢占式系统调度算法基于此值调度，也即是线程时间片，默认1000

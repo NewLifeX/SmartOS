@@ -12,6 +12,8 @@ TTime::TTime()
 
 	Microseconds = 0;
 	_usTicks = 0;
+	Milliseconds = 0;
+	_msUs = 0;
 
 	InterruptsPerSecond = 1000;
 }
@@ -34,9 +36,9 @@ void TTime::Init()
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
-	TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
-	TicksPerMicrosecond = TicksPerSecond / 1000000;	// 每微秒的时钟滴答数
+	//TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
+	//TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
+	TicksPerMicrosecond = Sys.Clock / 8000000;	// 每微秒的时钟滴答数
 
 	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
@@ -61,9 +63,7 @@ void TTime::Init()
 	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
-#ifdef STM32F0
-    #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
-#elif defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
 void TTime::OnHandler(ushort num, void* param)
@@ -80,10 +80,15 @@ void TTime::OnHandler(ushort num, void* param)
 		uint value = SysTick->LOAD;
 
 		Time.Ticks += value;
+
 		Time._usTicks += value;
 		Time.Microseconds += Time._usTicks / Time.TicksPerMicrosecond;
 		Time._usTicks %= Time.TicksPerMicrosecond;
-		
+
+		Time._msUs += Time.Microseconds;
+		Time.Milliseconds += Time._msUs / 1000;
+		Time._msUs %= 1000;
+
 		if(Sys.OnTick) Sys.OnTick();
 	}
 }
@@ -139,10 +144,15 @@ void TTime::SetTime(ulong us)
 	SysTick->VAL = 0;
 	SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG;
 	Ticks = us * TicksPerMicrosecond;
+
 	// 修改系统启动时间
 	Sys.StartTime += us - Microseconds;
+
 	Microseconds = us;
 	_usTicks = 0;
+
+	Milliseconds = us / 1000;
+	_msUs = us % 1000;
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
