@@ -34,6 +34,7 @@ void TinyClient::SetDefault()
 	_control->Register(2, Ping, this);
 	_control->Register(3, SysID, this);
 	_control->Register(4, SysTime, this);
+	_control->Register(5, SysMode, this);
 
 	// 发现服务端的任务
 	debug_printf("开始寻找服务端 ");
@@ -201,6 +202,29 @@ bool TinyClient::SysID(Message& msg, void* param)
 		// 干脆直接输出Sys，前面11个uint
 		msg.SetData((byte*)&Sys, 11 << 2);
 	}
+
+	return true;
+}
+
+bool TinyClient::SysMode(Message& msg, void* param)
+{
+	// 忽略响应消息
+	if(msg.Reply) return true;
+
+	byte mode = 0;
+	if(msg.Length > 0) mode = msg.Data[0];
+
+	debug_printf("Message_SysMode Length=%d Mode=%d\r\n", msg.Length, mode);
+
+	switch(mode)
+	{
+		case 1:	// 系统软重启
+			Sys.Reset();
+			break;
+	}
+	
+	msg.Length = 1;
+	msg.Data[0] = 0;
 
 	return true;
 }

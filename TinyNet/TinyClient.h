@@ -39,6 +39,9 @@ public:
 
 	// 询问系统标识号
 	static bool SysID(Message& msg, void* param);
+	
+	// 设置系统模式
+	static bool SysMode(Message& msg, void* param);
 };
 
 #endif
