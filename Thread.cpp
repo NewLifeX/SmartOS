@@ -666,3 +666,54 @@ void Thread::OnEnd()
 
 	while(1);
 }
+
+/*************************************************************************/
+// 线程池任务型
+class ThreadItem
+{
+private:
+	Thread*	_thread;
+
+public:
+	Action	Callback;	// 委托
+	void*	Param;		// 参数
+
+	ThreadItem()
+	{
+		_thread = new Thread(OnWork);
+	}
+
+	~ThreadItem()
+	{
+		delete _thread;
+		_thread = NULL;
+	}
+
+	static void OnWork(void* param)
+	{
+		((ThreadItem*)param)->Work();
+	}
+
+	void Work()
+	{
+		while(true)
+		{
+			if(Callback) Callback(Param);
+
+			_thread->Suspend();
+		}
+	}
+
+	void Resume()
+	{
+		_thread->Resume();
+	}
+};
+
+/*void QueueUserWorkItem(Func func)
+{
+}*/
+
+void QueueUserWorkItem(Action func, void* param)
+{
+}

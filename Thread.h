@@ -80,6 +80,11 @@ public:
 	static Thread* Main;	// 主线程。略低优先级
 	static byte Count;		// 线程个数
 	static void Switch();	// 切换线程，马上切换时间片给下一个线程
+	
+// 线程池
+public:
+	//static void QueueUserWorkItem(Func func);
+	static void QueueUserWorkItem(Action func, void* param);
 };
 
 #endif
