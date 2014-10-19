@@ -80,8 +80,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 
 	//_taskID = 0;
-	//_timer = NULL;
-	_Thread = NULL;
+	_timer = NULL;
+	//_Thread = NULL;
 
 	_Lock = 0;
 }
@@ -559,8 +559,8 @@ bool NRF24L01::CanReceive()
 	return st.RX_DR;
 }
 
-//void NRF24L01::ReceiveTask(void* sender, void* param)
-void NRF24L01::ReceiveTask(void* param)
+void NRF24L01::ReceiveTask(void* sender, void* param)
+//void NRF24L01::ReceiveTask(void* param)
 {
 	assert_ptr(param);
 
@@ -595,29 +595,29 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
-		/*if(!_timer) _timer = Timer::Create();
+		if(!_timer) _timer = Timer::Create();
 
-		_timer->SetFrequency(10000);
+		_timer->SetFrequency(1000);
 		_timer->Register(ReceiveTask, this);
-		_timer->Start();*/
+		_timer->Start();
 
-		if(!_Thread)
+		/*if(!_Thread)
 		{
 			// 分配1k大小的栈
 			_Thread = new Thread(ReceiveTask, this, 0x1000);
 			_Thread->Name = "RF2401";
 			_Thread->Start();
-		}
+		}*/
 	}
 	else
 	{
 		//if(_taskID) Sys.RemoveTask(_taskID);
 		//_taskID = 0;
-		//if(_timer) delete _timer;
-		//_timer = NULL;
+		if(_timer) delete _timer;
+		_timer = NULL;
 		
-		delete _Thread;
-		_Thread = NULL;
+		//delete _Thread;
+		//_Thread = NULL;
 	}
 }
 

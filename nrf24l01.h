@@ -27,11 +27,11 @@ private:
     void CEDown();
 
 	// 接收任务。
-	//static void ReceiveTask(void* sender, void* param);
-	static void ReceiveTask(void* param);
+	static void ReceiveTask(void* sender, void* param);
+	//static void ReceiveTask(void* param);
 	//uint _taskID;
-	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
-	Thread* _Thread;
+	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
+	//Thread* _Thread;
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
 	bool EnterLock();	// 进入锁
