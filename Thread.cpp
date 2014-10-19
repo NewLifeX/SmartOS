@@ -23,6 +23,8 @@
 
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	// 栈大小必须4字节对齐
 	assert_param((stackSize & 0x03) == 0);
 
@@ -144,6 +146,8 @@ Thread::~Thread()
 
 void Thread::Start()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	assert_param(State == Ready || State == Stopped);
 
 	debug_printf("Thread::Start %d %s Priority=%d\r\n", ID, Name, Priority);
@@ -155,6 +159,8 @@ void Thread::Start()
 
 void Thread::Stop()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	// 任何状态都应该可以停止
 	//assert_param(State == Running || State == Suspended);
 
@@ -169,6 +175,8 @@ void Thread::Stop()
 
 void Thread::Suspend()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	assert_param(State == Running || State == Ready);
 
 	debug_printf("Thread::Suspend %d %s\r\n", ID, Name);
@@ -185,6 +193,8 @@ void Thread::Suspend()
 
 void Thread::Resume()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	assert_param(State == Suspended);
 
 	debug_printf("Thread::Resume %d %s\r\n", ID, Name);
@@ -201,6 +211,8 @@ void Thread::Resume()
 
 void Thread::Sleep(uint ms)
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	DelayExpire = Time.Current() + ms * 1000;
 
 	assert_param(State == Running || State == Ready);
@@ -309,6 +321,7 @@ void Thread::Remove(Thread* thread)
 	if(Busy == NULL) BuildReady();
 }
 
+// 查找最高优先级
 byte FindMax(Thread* first, byte pri)
 {
 	for(Thread* th = first; th; th = th->Next)
@@ -321,6 +334,7 @@ byte FindMax(Thread* first, byte pri)
 	return pri;
 }
 
+// 建立指定优先级的线程列表
 byte BuildList(Thread*& list, Thread*& head, Thread*& tail, byte pri)
 {
 	byte count = 0;
@@ -534,6 +548,8 @@ PendSV_NoSave						// 此时整个上下文已经被保存
 // 切换线程，马上切换时间片给下一个线程
 void Thread::Switch()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	// 如果有挂起的切换，则不再切换。否则切换时需要保存的栈会出错
 	if(SCB->ICSR & SCB_ICSR_PENDSVSET_Msk) return;
 
@@ -607,6 +623,8 @@ Thread* Thread::Main = NULL;
 
 void Thread::Init()
 {
+	SmartIRQ irq;	// 关闭全局中断
+
 	debug_printf("\r\n");
 	debug_printf("初始化抢占式多线程调度...\r\n");
 
