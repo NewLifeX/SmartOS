@@ -158,6 +158,9 @@ bool NRF24L01::Check(void)
 	byte buf1[5];
 	byte buf2[5];
 
+	// 必须拉低CE后修改配置，然后再拉高
+	CEDown();
+
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
 	ReadBuf(TX_ADDR, buf1, 5);
@@ -171,11 +174,14 @@ bool NRF24L01::Check(void)
 	WriteBuf(TX_ADDR, buf1, 5);
 
 	// 比较
+	bool rs = true;
 	for(byte i=0; i<5; i++)
 	{
-		if(buf2[i] != buf[i]) return false; // 连接不正常
+		if(buf2[i] != buf[i]) { rs = false; break; } // 连接不正常
 	}
-	return true; // 成功连接
+	CEUp();
+
+	return rs; // 成功连接
 }
 
 // 配置
@@ -323,7 +329,12 @@ bool NRF24L01::OnOpen()
 
 	//return Check() && Config() && Check();
 	// 配置完成以后，无需再次检查
-	if(!(Check() && Config())) return false;
+	if(!(Check() && Config()))
+	{
+		// 关闭SPI，可能是因为SPI通讯的问题，下次打开模块的时候会重新打开SPI
+		//_spi->Close();
+		return false;
+	}
 
 	// 如果有注册事件，则启用接收任务
 	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
@@ -343,6 +354,9 @@ void NRF24L01::OnClose()
 
 	CEDown();
 	WriteReg(CONFIG, config.ToByte());
+	CEUp();
+
+	_spi->Close();
 
 	//if(_taskID) Sys.RemoveTask(_taskID);
 	//_taskID = 0;
@@ -617,7 +631,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//_taskID = 0;
 		if(_timer) delete _timer;
 		_timer = NULL;
-		
+
 		//delete _Thread;
 		//_Thread = NULL;
 	}
