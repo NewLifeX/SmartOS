@@ -566,9 +566,10 @@ void NRF24L01::ReceiveTask(void* sender, void* param)
 
 	NRF24L01* nrf = (NRF24L01*)param;
 	byte buf[32];
-	while(true)
+	//while(true)
 	{
-		if(nrf->Opened)
+		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
+		if(nrf->Opened && nrf->_Lock == 0)
 		{
 			//nrf->SetMode(true);
 			uint len = nrf->Read(buf, ArrayLength(buf));
@@ -581,7 +582,7 @@ void NRF24L01::ReceiveTask(void* sender, void* param)
 			}
 		}
 
-		Sys.Sleep(1);
+		//Sys.Sleep(1);
 	}
 }
 
@@ -597,7 +598,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_timer) _timer = new Timer(TIM2);
 		if(!_timer) _timer = Timer::Create();
 
-		_timer->SetFrequency(1000);
+		_timer->SetFrequency(100);
 		_timer->Register(ReceiveTask, this);
 		_timer->Start();
 
@@ -624,7 +625,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 bool NRF24L01::EnterLock()
 {
 	// 等待超时时间
-	TimeWheel tw(0, 100, 0);
+	TimeWheel tw(0, 10, 0);
 	while(_Lock)
 	{
 		// 延迟一下，释放CPU使用权
