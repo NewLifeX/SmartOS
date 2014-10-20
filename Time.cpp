@@ -85,10 +85,11 @@ void TTime::OnHandler(ushort num, void* param)
 		Time.Ticks += value;
 
 		Time._usTicks += value;
-		Time.Microseconds += Time._usTicks / Time.TicksPerMicrosecond;
+		uint us = Time._usTicks / Time.TicksPerMicrosecond;
+		Time.Microseconds += us;
 		Time._usTicks %= Time.TicksPerMicrosecond;
 
-		Time._msUs += Time.Microseconds;
+		Time._msUs += us;
 		Time.Milliseconds += Time._msUs / 1000;
 		Time._msUs %= 1000;
 
