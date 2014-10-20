@@ -40,10 +40,11 @@ Port::~Port()
 			uint shift = (i & 7) << 2; // 每引脚4位
 			uint mask = 0xF << shift;  // 屏蔽掉其它位
 
+			GPIO_TypeDef* port = Group;
 			if (i & 0x08) { // bit 8 - 15
-				Group->CRH = Group->CRH & ~mask | (config & mask);
+				port->CRH = port->CRH & ~mask | (config & mask);
 			} else { // bit 0-7
-				Group->CRL = Group->CRL & ~mask | (config & mask);
+				port->CRL = port->CRL & ~mask | (config & mask);
 			}
 		}
 	}
@@ -239,6 +240,46 @@ void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 		dat |= PinBit;
 	GPIO_Write(Group, dat);
 }
+
+/*void OutputPort::Set(GPIO_TypeDef* group, ushort pinbit, bool openDrain, uint speed)
+{
+	GPIO_InitTypeDef gpio;
+	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
+	GPIO_StructInit(&gpio);
+
+    // 打开时钟
+    int gi = GroupToIndex(group);
+#ifdef STM32F0
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
+#elif defined(STM32F1)
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
+#endif
+
+    gpio.GPIO_Pin = pinbit;
+
+	switch(speed)
+	{
+		case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
+#ifndef STM32F4
+		case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
+#else
+		case 25: gpio.GPIO_Speed = GPIO_Speed_25MHz; break;
+		case 100: gpio.GPIO_Speed = GPIO_Speed_100MHz; break;
+#endif
+		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
+	}
+
+#ifdef STM32F1
+	gpio.GPIO_Mode = openDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+#else
+	gpio.GPIO_Mode = GPIO_Mode_OUT;
+	gpio.GPIO_OType = openDrain ? GPIO_OType_OD : GPIO_OType_PP;
+#endif
+
+    GPIO_Init(group, &gpio);
+}*/
 
 void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
 {

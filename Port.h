@@ -11,7 +11,7 @@
 #endif
 
 // 端口基类
-// 用于管理一组端口Group，通过PinBit标识该组的哪些引脚。
+// 用于管理一个端口，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
 class Port
 {
@@ -82,7 +82,7 @@ public:
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
 	
-	static void Set(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All, bool openDrain = false, uint speed = GPIO_MAX_SPEED);
+	//static void Set(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All, bool openDrain = false, uint speed = GPIO_MAX_SPEED);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
     OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }
@@ -145,13 +145,18 @@ public:
     bool Invert;		// 是否倒置输入输出
 
 	InputPort() { Init(); }
-    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, pupd); Config(); }
+    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
+	{
+		SetPort(pin);
+		Init(floating, pupd);
+		Config();
+	}
 
     virtual ~InputPort();
 
-    ushort ReadGroup();    // 整组读取
-    bool Read();	// 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-    static bool Read(Pin pin);
+    ushort ReadGroup();			// 整组读取
+    bool Read();				// 读取状态
+    static bool Read(Pin pin);	// 读取某个引脚
 
     void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 
