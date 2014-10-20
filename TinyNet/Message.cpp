@@ -399,6 +399,13 @@ void Controller::PrepareSend(Message& msg)
 
 bool Controller::Send(Message& msg, ITransport* port)
 {
+	// 如果没有传输口处于打开状态，则发送失败
+	bool rs = false;
+	int i = -1;
+	while(_ports.MoveNext(i))
+		rs |= _ports[i]->Open();
+	if(!rs) return false;
+
 	// 是否需要响应
 	//msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
 	// 不去修正Confirm，由外部决定好了
@@ -419,13 +426,13 @@ bool Controller::Send(Message& msg, ITransport* port)
 		len = ms.Length;
 	}
 
-	bool rs = true;
+	rs = true;
 	if(port)
 		rs = port->Write(buf, len);
 	else
 	{
 		// 发往所有端口
-		int i = -1;
+		i = -1;
 		while(_ports.MoveNext(i))
 			rs &= _ports[i]->Write(buf, len);
 	}
@@ -435,6 +442,13 @@ bool Controller::Send(Message& msg, ITransport* port)
 
 bool Controller::SendSync(Message& msg, uint msTimeout, uint msInterval, ITransport* port)
 {
+	// 如果没有传输口处于打开状态，则发送失败
+	bool rs = false;
+	int i = -1;
+	while(_ports.MoveNext(i))
+		rs |= _ports[i]->Open();
+	if(!rs) return false;
+
 	// 需要响应
 	msg.Confirm = true;
 
@@ -452,12 +466,12 @@ bool Controller::SendSync(Message& msg, uint msTimeout, uint msInterval, ITransp
 	_Queue.Add(queue);
 
 	// 等待响应
-	bool rs = false;
+	rs = false;
 	TimeWheel tw(0, msTimeout, 0);
 	while(!tw.Expired())
 	{
 		// 发送消息
-		int i = -1;
+		i = -1;
 		while(queue->Ports.MoveNext(i))
 		{
 			queue->Ports[i]->Write(queue->Data, queue->Length);
