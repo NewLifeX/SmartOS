@@ -360,6 +360,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	Status = ReadReg(STATUS);
 	if(Status == 0xFF)
 	{
+		ExitLock();
 		AddError();
 		return 0;
 	}
@@ -598,7 +599,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_timer) _timer = new Timer(TIM2);
 		if(!_timer) _timer = Timer::Create();
 
-		_timer->SetFrequency(100);
+		_timer->SetFrequency(1000);
 		_timer->Register(ReceiveTask, this);
 		_timer->Start();
 
