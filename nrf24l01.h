@@ -23,8 +23,8 @@ private:
 	bool WaitForIRQ();
 	void AddError();
 
-    void CEUp();
-    void CEDown();
+    //void CEUp();
+    //void CEDown();
 
 	// 接收任务。
 	static void ReceiveTask(void* sender, void* param);

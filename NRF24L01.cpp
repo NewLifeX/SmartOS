@@ -2,6 +2,8 @@
 #include "Port.h"
 #include "NRF24L01.h"
 
+#define RF2401_REG
+#ifdef  RF2401_REG
 /********************************************************************************/
 //NRF24L01寄存器操作命令
 #define READ_REG_NRF    0x00  //读配置寄存器,低5位为寄存器地址
@@ -42,6 +44,7 @@
 #define RX_PW_P5        0x16  //接收数据通道5有效数据宽度(1~32字节),设置为0则非法
 #define NRF_FIFO_STATUS 0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
+#endif
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
@@ -56,7 +59,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	Channel = 0;	// 默认通道0
 
 	_CE = NULL;
-    if(ce != P0) _CE = new OutputPort(ce, false, false);
+    if(ce != P0) _CE = new OutputPort(ce, true, false);
 	_IRQ = NULL;
     if(irq != P0)
     {
@@ -159,7 +162,8 @@ bool NRF24L01::Check(void)
 	byte buf2[5];
 
 	// 必须拉低CE后修改配置，然后再拉高
-	CEDown();
+	//CEDown();
+	PortScope ps(_CE);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
@@ -179,7 +183,7 @@ bool NRF24L01::Check(void)
 	{
 		if(buf2[i] != buf[i]) { rs = false; break; } // 连接不正常
 	}
-	CEUp();
+	//CEUp();
 
 	return rs; // 成功连接
 }
@@ -209,7 +213,8 @@ bool NRF24L01::Config()
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
 #endif
 
-	CEDown();
+	//CEDown();
+	PortScope ps(_CE);
 
 	uint addrLen = ArrayLength(Address);
 
@@ -267,7 +272,7 @@ bool NRF24L01::Config()
 	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 
-	CEUp();
+	//CEUp();
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
 
@@ -304,9 +309,10 @@ bool NRF24L01::SetMode(bool isReceive)
         //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
 	// 必须拉低CE后修改配置，然后再拉高
-	CEDown();
+	//CEDown();
+	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
-	CEUp();
+	//CEUp();
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -352,9 +358,10 @@ void NRF24L01::OnClose()
 	// 关闭电源
 	config.PWR_UP = 0;
 
-	CEDown();
+	//CEDown();
+	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
-	CEUp();
+	//CEUp();
 
 	_spi->Close();
 
@@ -481,19 +488,19 @@ void NRF24L01::AddError()
 	}
 }
 
-void NRF24L01::CEUp()
+/*void NRF24L01::CEUp()
 {
     if(_CE)
 	{
 		*_CE = true;
 		Sys.Delay(20); // 进入发送模式，高电平>10us
 	}
-}
+}*/
 
-void NRF24L01::CEDown()
+/*void NRF24L01::CEDown()
 {
     if(_CE) *_CE = false;
-}
+}*/
 
 // 注册中断函数  不注册的结果是    有中断 无中断处理代码
 /*void NRF24L01::Register(DataReceived handler, void* param)

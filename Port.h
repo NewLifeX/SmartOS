@@ -225,4 +225,23 @@ protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
 };
 
+// 输出端口会话类。初始化时打开端口，超出作用域析构时关闭。反向操作可配置端口为倒置
+class PortScope
+{
+private:
+	OutputPort* _port;
+
+public:
+	_force_inline PortScope(OutputPort* port)
+	{
+		_port = port;
+		if(_port) *_port = true;
+	}
+
+	_force_inline ~PortScope()
+	{
+		if(_port) *_port = false;
+	}
+};
+
 #endif //_Port_H_
