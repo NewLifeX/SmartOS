@@ -80,7 +80,7 @@ void TTime::OnHandler(ushort num, void* param)
 	// 累加计数
 	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
-		uint value = SysTick->LOAD;
+		uint value = SysTick->LOAD + 1;
 
 		Time.Ticks += value;
 
