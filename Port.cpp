@@ -20,11 +20,10 @@ static const int PORT_IRQns[] = {
 #ifdef REGION_Port
 Port::Port()
 {
+	_Pin = P0;
 	Group = NULL;
-	PinBit = 0;
-	Pin0 = P0;
-	PinCount = 0;
 	GroupIndex = 0;
+	PinBit = 0;
 }
 
 Port::~Port()
@@ -52,30 +51,7 @@ Port::~Port()
 
 #if DEBUG
 	// 解除保护引脚
-	byte gi = GroupIndex << 4;
-	ushort bits2 = PinBit;
-	for(int i=0; i<16 && bits2; i++, bits2>>=1)
-    {
-        if(bits2 & 1) OnReserve((Pin)(gi | i), false);
-    }
-#endif
-}
-
-void Port::OnSetPort()
-{
-#if defined(STM32F1)
-	// 整组引脚的初始状态，析构时有选择恢复
-	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
-#endif
-
-#if DEBUG
-	// 保护引脚
-	byte gi = GroupIndex << 4;
-	ushort bits = PinBit;
-	for(int i=0; i<16 && bits; i++, bits>>=1)
-    {
-        if(bits & 1) OnReserve((Pin)(gi | i), true);
-    }
+	OnReserve(_Pin, false);
 #endif
 }
 
@@ -84,59 +60,20 @@ void Port::SetPort(Pin pin)
 {
 	assert_param(pin != P0);
 
+    _Pin = pin;
     Group = IndexToGroup(pin >> 4);
+	GroupIndex = pin >> 4;
     PinBit = 1 << (pin & 0x0F);
 
-    Pin0 = pin;
-	PinCount = 1;
-	GroupIndex = pin >> 4;
+#if defined(STM32F1)
+	// 整组引脚的初始状态，析构时有选择恢复
+	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
+#endif
 
-	OnSetPort();
-}
-
-void Port::SetPort(GPIO_TypeDef* group, ushort pinbit)
-{
-	assert_param(group);
-	assert_param(pinbit);
-
-    Group = group;
-    PinBit = pinbit;
-
-	GroupIndex = GroupToIndex(group);
-	ushort bits = pinbit;
-	byte first = 0xFF;
-	PinCount = 0;
-	for(int i=0; i<16 && bits; i++, bits>>=1)
-	{
-		if(bits & 0x01)
-		{
-			if(first == 0xFF) first = i;
-			PinCount++;
-		}
-	}
-    Pin0 = (Pin)((GroupIndex << 4) | first);
-
-	OnSetPort();
-}
-
-// 用一组引脚来初始化，引脚组由第一个引脚决定，请确保所有引脚位于同一组
-void Port::SetPort(Pin pins[], uint count)
-{
-	assert_param(pins != NULL && count > 0 && count <= 16);
-
-    Group = IndexToGroup(pins[0] >> 4);
-	GroupIndex = pins[0] >> 4;
-    PinBit = 0;
-    for(int i=0; i<count; i++)
-	{
-		assert_param((pins[i] >> 4) == GroupIndex);
-        PinBit |= (1 << (pins[i] & 0x0F));
-	}
-
-	Pin0 = pins[0];
-	PinCount = count;
-
-	OnSetPort();
+#if DEBUG
+	// 保护引脚
+	OnReserve(_Pin, true);
+#endif
 }
 
 void Port::Config()
@@ -165,27 +102,19 @@ void Port::OnConfig(GPIO_InitTypeDef& gpio)
 
 #ifdef STM32F1
 	// PA15/PB3/PB4 需要关闭JTAG
-	bool flag = false;
-	if(gi == 0 && (PinBit & (1<<15)))
+	switch(_Pin)
 	{
-		debug_printf("Close JTAG for PA15\r\n");
-		flag = true;
-	}
-	if(gi == 1 && (PinBit & (1<<3)))
-	{
-		debug_printf("Close JTAG for PB3\r\n");
-		flag = true;
-	}
-	if(gi == 1 && (PinBit & (1<<4)))
-	{
-		debug_printf("Close JTAG for PB4\r\n");
-		flag = true;
-	}
-	if(flag)
-	{
-		// PA15是jtag接口中的一员 想要使用 必须开启remap
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-		GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+		case PA15:
+		case PB3:
+		case PB4:
+		{
+			debug_printf("Close JTAG for P%c%d\r\n", _PIN_NAME(_Pin));
+
+			// PA15是jtag接口中的一员 想要使用 必须开启remap
+			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+			GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+			break;
+		}
 	}
 #endif
 }
@@ -238,7 +167,6 @@ bool Port::Reserve(Pin pin, bool flag)
 
 bool Port::OnReserve(Pin pin, bool flag)
 {
-	//OnReserve(pin, flag);
 	return Reserve(pin, flag);
 }
 
@@ -354,65 +282,12 @@ void AnalogInPort::OnConfig(GPIO_InitTypeDef& gpio)
 }
 #endif
 
-/*AnalogInPort::AnalogInPort(Pin pin):Port(),ADConverter((ADC_Channel)pin)
-{
-	assert_param( (pin < PA10) || ((PC0 <= pin) && (pin < PC6)) || (0x80 == pin)||(pin == 0x81) );
-
-	SetPort(pin);
-	Config();		//至此引脚初始化完成
-}*/
-
-//AnalogInPort::AnalogInPort(GPIO_TypeDef* group, ushort pinbit):Port(),ADConverter()
-//{
-//	assert_param(((group == GPIOA) && ((pinbit & 0xfc00)== 0x0000))
-//					||((group == GPIOC)&&((pinbit & 0xffc0)==0x0000)));
-//	SetPort(group, pinbit);
-//	Config();	//至此引脚初始化完成
-//
-//	if(group == GPIOA)
-//	{
-//		for(int i=PA0;i < PA10;i++)
-//		{
-//			if(pintbit&0x0001) ADConverter((ADC_Channel)i);
-//		}
-//	}
-//	else
-//	{
-//	}
-//}
-
 // 输出端口
 #define REGION_Output 1
 #ifdef REGION_Output
 ushort OutputPort::ReadGroup()    // 整组读取
 {
 	return GPIO_ReadOutputData(Group);
-}
-
-// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
-bool OutputPort::Read(byte index)
-{
-	assert_param(index < PinCount);
-
-	ushort bits = PinBit;
-	if(index != 0xFF)
-	{
-		// 找到第index个有效位，从小到大
-		bits = 1;
-		for(int i=0; i<16; i++, bits <<= 1)
-		{
-			// 如果包含这个位，计数减一，为0则表示找到
-			if(PinBit & bits)
-			{
-				if(!index) break;
-				index--;
-			}
-		}
-	}
-
-	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadOutputData(Group) & bits;
-	return rs ^ Invert;
 }
 
 bool OutputPort::Read()
@@ -432,33 +307,6 @@ bool OutputPort::Read(Pin pin)
 {
 	GPIO_TypeDef* group = _GROUP(pin);
 	return (group->IDR >> (pin & 0xF)) & 1;
-}
-
-// 写入指定索引引脚。索引按照从小到大
-void OutputPort::Write(bool value, byte index)
-{
-	assert_param(index < PinCount);
-
-	ushort bits = PinBit;
-	if(index != 0xFF)
-	{
-		// 找到第index个有效位，从小到大
-		bits = 1;
-		for(int i=0; i<16; i++, bits <<= 1)
-		{
-			// 如果包含这个位，计数减一，为0则表示找到
-			if(PinBit & bits)
-			{
-				if(!index) break;
-				index--;
-			}
-		}
-	}
-
-    if(value ^ Invert)
-        GPIO_SetBits(Group, bits);
-    else
-        GPIO_ResetBits(Group, bits);
 }
 
 void OutputPort::Write(bool value)
@@ -540,7 +388,6 @@ ushort InputPort::ReadGroup()    // 整组读取
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
 bool InputPort::Read()
 {
-	//return (ReadGroup() & PinBit) ^ Invert;
 	// 转为bool时会转为0/1
 	bool rs = GPIO_ReadInputData(Group) & PinBit;
 	return rs ^ Invert;

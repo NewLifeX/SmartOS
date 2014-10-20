@@ -16,17 +16,14 @@
 class Port
 {
 public:
+    Pin _Pin;			// 针脚
     GPIO_TypeDef* Group;// 针脚组
-    ushort PinBit;      // 组内引脚位。每个引脚一个位
-    Pin Pin0;           // 第一个针脚。为了便于使用而设立，大多数情况下端口对象只管理一个针脚。
-	byte PinCount;		// 针脚数
 	byte GroupIndex;	// 分组
+    ushort PinBit;		// 组内引脚位。每个引脚一个位
 
-    void SetPort(Pin pin);      // 单一引脚初始化
-    void SetPort(Pin pins[], uint count);   // 用一组引脚来初始化，引脚组GPIOx由第一个引脚决定，请确保所有引脚位于同一组GPIOx
-    void SetPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All);
+    void SetPort(Pin pin);	// 单一引脚初始化
 
-    virtual void Config();    // 确定配置,确认用对象内部的参数进行初始化
+    virtual void Config();	// 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
@@ -51,8 +48,6 @@ private:
 #if defined(STM32F1)
 	ulong InitState;	// 备份引脚初始状态，在析构时还原
 #endif
-
-	void OnSetPort();
 };
 
 // 输出口
@@ -71,20 +66,7 @@ public:
 		Init(invert, openDrain, speed);
 		Config();
 	}
-    OutputPort(Pin pins[], uint count, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
-	{
-		SetPort(pins, count);
-		Init(invert, openDrain, speed);
-		Config();
-	}
-    OutputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All)
-	{
-		SetPort(group, pinbit);
-		Init();
-	}
 
-	// 写入指定索引引脚。索引按照从小到大
-    void Write(bool value, byte index);
 	// 整体写入所有包含的引脚
     void Write(bool value); 
     void WriteGroup(ushort value);   // 整组写入
@@ -99,6 +81,8 @@ public:
 	
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
+	
+	static void Set(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All, bool openDrain = false, uint speed = GPIO_MAX_SPEED);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
     OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }
@@ -132,19 +116,6 @@ public:
 		Init(invert, openDrain, speed);
 		Config();
 	}
-    AlternatePort(Pin pins[], uint count, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
-		: OutputPort()
-	{
-		SetPort(pins, count);
-		Init(invert, openDrain, speed);
-		Config();
-	}
-    AlternatePort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All)
-		: OutputPort()
-	{
-		SetPort(group, pinbit);
-		Init(false, false);
-	}
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
@@ -175,8 +146,6 @@ public:
 
 	InputPort() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pin); Init(floating, pupd); Config(); }
-    InputPort(Pin pins[], uint count, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) { SetPort(pins, count); Init(floating, pupd); Config(); }
-    InputPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Init(); }
 
     virtual ~InputPort();
 
@@ -218,8 +187,6 @@ class AnalogInPort : public Port
 {
 public:
     AnalogInPort(Pin pin) { SetPort(pin); Config(); }
-    AnalogInPort(Pin pins[], uint count) { SetPort(pins, count); Config(); }
-	AnalogInPort(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All) { SetPort(group, pinbit); Config(); }
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
