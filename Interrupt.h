@@ -46,7 +46,6 @@ public:
     // 获取优先级
     void GetPriority(short irq);
 
-    //static void OnHandler();
 #ifdef STM32F10X
     // 编码优先级
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
@@ -57,6 +56,8 @@ public:
     void GlobalEnable();	// 打开全局中断
     void GlobalDisable();	// 关闭全局中断
 	bool GlobalState();		// 全局中断开关状态
+
+	bool IsHandler();		// 是否在中断里面
 };
 
 // 全局中断类对象
@@ -82,7 +83,7 @@ public:
 	{
 		__set_PRIMASK(_state);
 	}
-	
+
 private:
 	uint _state;
 };

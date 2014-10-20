@@ -64,16 +64,6 @@ void TInterrupt::Init()
     //SCB->VTOR = (uint)_Vectors; // 向量表基地址
     NVIC_SetVectorTable(NVIC_VectTab_RAM, (uint)((byte*)_Vectors - SRAM_BASE));
 	assert_param(SCB->VTOR == (uint)_Vectors);
-#ifdef STM32F4
-	// 不能使用以下代码，否则F4里面无法响应中断
-    //SCB->SHCSR |= SCB_SHCSR_USGFAULTACT_Msk  // 打开异常
-    //            | SCB_SHCSR_BUSFAULTACT_Msk
-    //            | SCB_SHCSR_MEMFAULTACT_Msk;
-#else
-    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA  // 打开异常
-                | SCB_SHCSR_BUSFAULTENA
-                | SCB_SHCSR_MEMFAULTENA;
-#endif
 #else
     // Enable the SYSCFG peripheral clock
     RCC_APB2PeriphResetCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -233,6 +223,9 @@ __asm uint GetIPSR()
     bx      lr
 }
 
+// 是否在中断里面
+bool TInterrupt::IsHandler() { return GetIPSR() & 0x01; }
+
 void UserHandler()
 {
     uint num = GetIPSR();
@@ -255,15 +248,6 @@ void UserHandler()
 void FaultHandler()
 {
     uint exception = GetIPSR();
-    /*if (exception) {
-        debug_printf("EXCEPTION 0x%02x:\r\n", exception);
-    } else {
-        debug_printf("ERROR:\r\n");
-    }
-
-#if DEBUG
-	ShowFault(exception);
-#endif*/
 
 	if(!Sys.OnError || Sys.OnError(exception))
 	{
