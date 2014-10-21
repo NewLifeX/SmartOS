@@ -64,7 +64,7 @@ void TinyClient::Discover()
 	ms.Write(Sys.ID, 0, 20);
 	msg.Length = ms.Length;
 
-	_control->Send(msg);
+	_control->Post(msg);
 
 	_lastDiscoverID = msg.Sequence;
 }
@@ -136,7 +136,7 @@ void TinyClient::Ping()
 	Message msg(2);
 	msg.Length = 0;
 
-	_control->Send(msg);
+	_control->Post(msg);
 
 	if(LastActive == 0) LastActive = Time.Current();
 }

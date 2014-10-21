@@ -354,13 +354,13 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 	_Handlers[_HandlerCount++] = lookup;
 }
 
-uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
+uint Controller::Post(byte dest, byte code, byte* buf, uint len, ITransport* port)
 {
 	Message msg(code);
 	msg.Dest = dest;
 	msg.SetData(buf, len);
 
-	return Send(msg, port);
+	return Post(msg, port);
 }
 
 void Controller::PrepareSend(Message& msg)
@@ -397,7 +397,7 @@ void Controller::PrepareSend(Message& msg)
 #endif
 }
 
-bool Controller::Send(Message& msg, ITransport* port)
+bool Controller::Post(Message& msg, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	bool rs = false;
@@ -440,7 +440,7 @@ bool Controller::Send(Message& msg, ITransport* port)
 	return rs;
 }
 
-bool Controller::SendSync(Message& msg, uint msTimeout, uint msInterval, ITransport* port)
+bool Controller::Send(Message& msg, uint msTimeout, uint msInterval, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	bool rs = false;
@@ -496,7 +496,7 @@ bool Controller::Reply(Message& msg, ITransport* port)
 	msg.Dest = msg.Src;
 	msg.Reply = 1;
 
-	return Send(msg, port);
+	return Post(msg, port);
 }
 
 bool Controller::Error(Message& msg, ITransport* port)
