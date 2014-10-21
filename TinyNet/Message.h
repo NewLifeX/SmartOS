@@ -20,7 +20,8 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte Code;		// 功能代码
-	byte Flags:5;	// 标识位。也可以用来做二级命令
+	byte Flags:3;	// 标识位。也可以用来做二级命令
+	byte TTL:2;		// 路由声明周期
 	byte Confirm:1;	// 是否需要确认响应
 	byte Error:1;	// 是否错误
 	byte Reply:1;	// 是否响应
@@ -53,7 +54,7 @@ public:
 // 消息头大小
 #define MESSAGE_SIZE offsetof(Message, Checksum) + 2
 
-class MessageQueue;
+class MessageNode;
 class RingQueue;
 
 // 环形队列。记录收到消息的序列号，防止短时间内重复处理消息
@@ -75,17 +76,22 @@ typedef bool (*MessageHandler)(Message& msg, void* param);
 class Controller
 {
 private:
-	FixedArray<ITransport, 4>		_ports;	// 数据传输口
-	FixedArray<MessageQueue, 16>	_Queue;	// 消息队列。最多允许16个消息同时等待响应
-	uint						_Sequence;	// 控制器的消息序号
-	RingQueue						_Ring;	// 环形队列
+	FixedArray<ITransport, 4>	_ports;	// 数据传输口
+	FixedArray<MessageNode, 16>	_Queue;	// 消息队列。最多允许16个消息同时等待响应
+
+	uint		_Sequence;	// 控制器的消息序号
+	RingQueue	_Ring;		// 环形队列
+	uint		_taskID;	// 发送队列任务
 
 	void Init();
-	void PrepareSend(Message& msg);	// 发送准备
-	static uint OnReceive(ITransport* transport, byte* buf, uint len, void* param);
+	void PreSend(Message& msg);	// 发送准备
+	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
+	bool Dispatch(MemoryStream& ms, ITransport* port);
 
 public:
 	byte	Address;	// 本地地址
+	uint	Interval;	// 消息队列发送间隔，10毫秒
+	uint	Timeout;	// 消息队列发送消息的默认超时时间，50毫秒
 
 	Controller(ITransport* port);
 	Controller(ITransport* ports[], int count);
@@ -94,17 +100,17 @@ public:
 	void AddTransport(ITransport* port);
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
-	// 发送消息，传输口参数为空时向所有传输口发送消息
-	bool Post(Message& msg, ITransport* port = NULL);
-	// 同步发送消息，等待对方响应一个确认消息
-	bool Send(Message& msg, uint msTimeout = 200, uint msInterval = 50, ITransport* port = NULL);
+	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
+	// 把消息放入发送队列，timerout毫秒重试超时时间，传输口参数为空时向所有传输口发送消息
+	//bool Post(Message& msg, int timeout = 0, ITransport* port = NULL);
+	// 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送
+	bool Send(Message& msg, int expire = -1, ITransport* port = NULL);
 	// 回复对方的请求消息
 	bool Reply(Message& msg, ITransport* port = NULL);
 	bool Error(Message& msg, ITransport* port = NULL);
 
-protected:
-	bool Process(MemoryStream& ms, ITransport* port);
+	// 循环处理待发送的消息队列
+	void Loop();
 
 // 处理器部分
 private:
@@ -123,19 +129,40 @@ public:
 };
 
 // 消息队列。需要等待响应的消息，进入消息队列处理。
-class MessageQueue
+class MessageNode
 {
 public:
-	Message*	Msg;	// 消息
+	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
+	//Message*	Msg;	// 消息
+	byte		Sequence;	// 序列号
 	byte		Data[32];
 	uint		Length;
-	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
-	Message*	Reply;	// 匹配的响应消息
+	ulong		Next;		// 下一次重发时间
+	ulong		Expired;	// 过期时间，微秒
+	//Message*	Reply;	// 匹配的响应消息
 
-	MessageQueue();
-	~MessageQueue();
+	//MessageNode();
+	//~MessageNode();
 
 	void SetMessage(Message& msg);
 };
 
 #endif
+
+/*
+	微网消息协议
+
+微网协议是一个针对微型广播网进行通讯而开发的协议，网络节点最大255个，消息最大32字节。
+每一个网络节点随时都可以发送消息，而可能会出现冲突，因此要求各节点快速发送小数据包，并且要有错误重发机制。
+每个消息都有序列号，以免收到重复消息，特别是在启用错误重发机制时。
+
+消息类型：
+1，普通请求。Reply=0 Confirm=0，对方收到后处理业务逻辑，然后普通响应，不回复也行。用于不重要的数据包，比如广播。
+2，普通响应。Reply=1 Confirm=0，收到普通请求，处理业务逻辑后响应。也不管对方有没有收到。
+3，增强请求。Reply=0 Confirm=1，对方收到后马上做出负载为0的增强响应，告诉发送方已确认收到，否则发送方认为出错进行重发。
+4，增强响应。Reply=1 Confirm=1，业务处理后做出响应，要求对方确认收到该数据包，否则出错重发。
+
+显然，增强请求将会收到两个增强响应，一个为0负载，另一个带业务数据负载，当然后一个也可以取消。
+控制器不会把0负载的增强响应传递给业务层。
+
+*/

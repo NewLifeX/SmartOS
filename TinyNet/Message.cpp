@@ -121,7 +121,7 @@ Controller::Controller(ITransport* port)
 	debug_printf("微网控制器初始化 传输口：%s\r\n", port->ToString());
 
 	// 注册收到数据事件
-	port->Register(OnReceive, this);
+	port->Register(Dispatch, this);
 
 	_ports.Add(port);
 
@@ -146,7 +146,7 @@ Controller::Controller(ITransport* ports[], int count)
 	// 注册收到数据事件
 	for(int i=0; i<count; i++)
 	{
-		ports[i]->Register(OnReceive, this);
+		ports[i]->Register(Dispatch, this);
 	}
 
 	Init();
@@ -154,7 +154,10 @@ Controller::Controller(ITransport* ports[], int count)
 
 void Controller::Init()
 {
-	_Sequence = 0;
+	_Sequence	= 0;
+	_taskID		= 0;
+	Interval	= 10;
+	Timeout		= 50;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -169,6 +172,8 @@ void Controller::Init()
 
 Controller::~Controller()
 {
+	if(_taskID) Sys.RemoveTask(_taskID);
+
 	for(int i=0; i<_HandlerCount; i++)
 	{
 		if(_Handlers[i]) delete _Handlers[i];
@@ -184,12 +189,12 @@ void Controller::AddTransport(ITransport* port)
 	assert_ptr(port);
 
 	// 注册收到数据事件
-	port->Register(OnReceive, this);
+	port->Register(Dispatch, this);
 
 	_ports.Add(port);
 }
 
-uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
+uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
 {
 	assert_ptr(param);
 
@@ -201,13 +206,13 @@ uint Controller::OnReceive(ITransport* transport, byte* buf, uint len, void* par
 	while(ms.Remain() >= MESSAGE_SIZE)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Process(ms, transport)) break;
+		if(!control->Dispatch(ms, transport)) break;
 	}
 
 	return 0;
 }
 
-bool Controller::Process(MemoryStream& ms, ITransport* port)
+bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 {
 #if MSG_DEBUG
 	byte* p = ms.Current();
@@ -285,22 +290,37 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 		return true;
 	}
 
-	// 如果是响应消息，及时更新请求队列
-	if(msg.Reply)
+	// 快速响应确认请求消息，避免对方无休止的重发
+	if(!msg.Reply && msg.Confirm)
+	{
+		Message msg2(msg);
+		msg2.Dest = msg.Src;
+		msg2.Reply = 1;
+		msg2.Length = 0;
+
+		Send(msg2, 0, port);
+	}
+
+	// 如果是确认消息，及时更新请求队列
+	if(msg.Confirm)
 	{
 		int i = -1;
 		while(_Queue.MoveNext(i))
 		{
-			MessageQueue* node = _Queue[i];
-			if(node->Msg->Sequence == msg.Sequence)
+			MessageNode* node = _Queue[i];
+			if(node->Sequence == msg.Sequence)
 			{
 				// 该传输口收到响应，从就绪队列中删除
 				node->Ports.Remove(port);
 
 				// 复制一份响应消息
-				node->Reply = new Message(msg);
+				//node->Reply = new Message(msg);
 			}
 		}
+
+		// 如果只是响应的确认消息，不做处理
+		// 控制器不会把0负载的增强响应传递给业务层
+		if(msg.Reply && msg.Length == 0) return true;
 	}
 
 	// 选择处理器来处理消息
@@ -312,8 +332,11 @@ bool Controller::Process(MemoryStream& ms, ITransport* port)
 			// 返回值决定是普通回复还是错误回复
 			bool rs = lookup->Handler(msg, lookup->Param);
 			// 如果本来就是响应，不用回复
-			if(!msg.Reply && msg.Confirm)
+			if(!msg.Reply)
 			{
+				// 控制器不会把0负载的增强响应传递给业务层
+				if(msg.Confirm && msg.Length == 0) break;
+
 				if(rs)
 					Reply(msg, port);
 				else
@@ -354,16 +377,16 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 	_Handlers[_HandlerCount++] = lookup;
 }
 
-uint Controller::Post(byte dest, byte code, byte* buf, uint len, ITransport* port)
+uint Controller::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
 {
 	Message msg(code);
 	msg.Dest = dest;
 	msg.SetData(buf, len);
 
-	return Post(msg, port);
+	return Send(msg, -1, port);
 }
 
-void Controller::PrepareSend(Message& msg)
+void Controller::PreSend(Message& msg)
 {
 	// 附上自己的地址
 	msg.Src = Address;
@@ -397,7 +420,7 @@ void Controller::PrepareSend(Message& msg)
 #endif
 }
 
-bool Controller::Post(Message& msg, ITransport* port)
+/*bool Controller::Post(Message& msg, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	bool rs = false;
@@ -410,7 +433,7 @@ bool Controller::Post(Message& msg, ITransport* port)
 	//msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
 	// 不去修正Confirm，由外部决定好了
 
-	PrepareSend(msg);
+	PreSend(msg);
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
@@ -438,56 +461,83 @@ bool Controller::Post(Message& msg, ITransport* port)
 	}
 
 	return rs;
+}*/
+
+void SendTask(void* param)
+{
+	Controller* control = (Controller*)param;
+	control->Loop();
 }
 
-bool Controller::Send(Message& msg, uint msTimeout, uint msInterval, ITransport* port)
+void Controller::Loop()
 {
-	// 如果没有传输口处于打开状态，则发送失败
-	bool rs = false;
 	int i = -1;
-	while(_ports.MoveNext(i))
-		rs |= _ports[i]->Open();
-	if(!rs) return false;
-
-	// 需要响应
-	msg.Confirm = true;
-
-	PrepareSend(msg);
-
-	// 准备消息队列
-	MessageQueue* queue = new MessageQueue();
-	queue->SetMessage(msg);
-	if(!port)
-		queue->Ports = _ports;
-	else
-		queue->Ports.Add(port);
-
-	// 加入等待队列
-	_Queue.Add(queue);
-
-	// 等待响应
-	rs = false;
-	TimeWheel tw(0, msTimeout, 0);
-	while(!tw.Expired())
+	while(_Queue.MoveNext(i))
 	{
+		MessageNode* node = _Queue[i];
+
+		// 检查时间
+		if(node->Next > Time.Current()) continue;
+
 		// 发送消息
-		i = -1;
-		while(queue->Ports.MoveNext(i))
+		int k = -1;
+		while(node->Ports.MoveNext(k))
 		{
-			queue->Ports[i]->Write(queue->Data, queue->Length);
+			node->Ports[k]->Write(node->Data, node->Length);
 		}
 
-		// 等一会
-		Sys.Sleep(msInterval);
+		// 检查是否传输口已完成，是否已过期
+		if(node->Ports.Count() == 0 || node->Expired < Time.Current())
+		{
+			_Queue.Remove(node);
+			delete node;
+		}
+		else
+			node->Next = Time.Current() + Interval * 1000;
+	}
+}
 
-		// 检查未完成传输口
-		if(queue->Ports.Count() == 0) { rs = true; break; }
+// 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
+bool Controller::Send(Message& msg, int expire, ITransport* port)
+{
+	// 如果没有传输口处于打开状态，则发送失败
+	if(port && !port->Open()) return false;
+	bool rs = false;
+	if(!port)
+	{
+		int i = -1;
+		while(_ports.MoveNext(i))
+			rs |= _ports[i]->Open();
+		if(!rs) return false;
 	}
 
-	_Queue.Remove(queue);
-	delete queue;
+	if(expire < 0) expire = Timeout;
+	// 需要响应
+	if(expire > 0) msg.Confirm = true;
 
-	return rs;
+	PreSend(msg);
+
+	// 准备消息队列
+	MessageNode* node = new MessageNode();
+	node->SetMessage(msg);
+	if(!port)
+		node->Ports = _ports;
+	else
+		node->Ports.Add(port);
+
+	node->Next = 0;
+	node->Expired = Time.Current() + expire * 1000;
+
+	// 加入等待队列
+	if(_Queue.Add(node) < 0) return false;
+
+	if(!_taskID)
+	{
+		debug_printf("微网控制器消息发送队列 ");
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+	}
+
+	return true;
 }
 
 bool Controller::Reply(Message& msg, ITransport* port)
@@ -496,30 +546,30 @@ bool Controller::Reply(Message& msg, ITransport* port)
 	msg.Dest = msg.Src;
 	msg.Reply = 1;
 
-	return Post(msg, port);
+	return Send(msg, -1, port);
 }
 
 bool Controller::Error(Message& msg, ITransport* port)
 {
 	msg.Error = 1;
 
-	return Reply(msg, port);
+	return Send(msg, 0, port);
 }
 
-MessageQueue::MessageQueue()
+/*MessageNode::MessageNode()
 {
 	Reply = NULL;
 }
 
-MessageQueue::~MessageQueue()
+MessageNode::~MessageNode()
 {
 	delete Reply;
 	Reply = NULL;
-}
+}*/
 
-void MessageQueue::SetMessage(Message& msg)
+void MessageNode::SetMessage(Message& msg)
 {
-	Msg = &msg;
+	//Msg = &msg;
 
 	byte* buf = (byte*)&msg.Dest;
 	if(!msg.Length)
