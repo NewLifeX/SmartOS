@@ -26,18 +26,6 @@ TaskScheduler::TaskScheduler(string name)
 
 TaskScheduler::~TaskScheduler()
 {
-	/*IEnumerator<Task*>* et = _List.GetEnumerator();
-	while(et->MoveNext())
-	{
-		Task* cur = et->Current();
-	}
-	delete et;*/
-	/*foreach(Task*, task, _List)
-	{
-		delete task;
-	}
-	foreach_end();*/
-
 	_Tasks.DeleteAll().Clear();
 }
 
@@ -111,12 +99,7 @@ void TaskScheduler::Start()
 				task->Callback(task->Param);
 
 				// 如果只是一次性任务，在这里清理
-				if(task->Period < 0)
-				{
-					//_Tasks[i] = NULL;
-					delete task;
-					//_TaskCount--;
-				}
+				if(task->Period < 0) delete task;
 			}
 		}
 
@@ -144,4 +127,3 @@ Task* TaskScheduler::operator[](int taskid)
 	
 	return NULL;
 }
-
