@@ -166,7 +166,9 @@ public:
 	int Add(T* item)
 	{
 		assert_ptr(item);
-		assert_param(_Count < ArraySize);
+		//assert_param(_Count < ArraySize);
+
+		if(_Count >= ArraySize) return -1;
 
 		// 找到空闲位放置
 		int i = 0;
