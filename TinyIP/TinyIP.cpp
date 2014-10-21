@@ -207,15 +207,15 @@ bool TinyIP::Init()
 void TinyIP::ShowInfo()
 {
 #if NET_DEBUG
-	debug_printf("\tIP:\t");
+	debug_printf("    IP:\t");
 	ShowIP(IP);
-	debug_printf("\r\n\tMask:\t");
+	debug_printf("\r\n    Mask:\t");
 	ShowIP(Mask);
-	debug_printf("\r\n\tGate:\t");
+	debug_printf("\r\n    Gate:\t");
 	ShowIP(Gateway);
-	debug_printf("\r\n\tDHCP:\t");
+	debug_printf("\r\n    DHCP:\t");
 	ShowIP(DHCPServer);
-	debug_printf("\r\n\tDNS:\t");
+	debug_printf("\r\n    DNS:\t");
 	ShowIP(DNSServer);
 	debug_printf("\r\n");
 #endif
