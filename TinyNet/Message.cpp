@@ -317,8 +317,13 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			{
 				// 该传输口收到响应，从就绪队列中删除
 				node->Ports.Remove(port);
+
+				debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				return true;
 			}
 		}
+
+		debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
 
 		// 如果只是确认消息，不做处理
 		return true;
@@ -333,7 +338,9 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		msg2.Ack = 1;
 		msg2.Length = 0;
 
-		Send(msg2, 0, port);
+		debug_printf("发送Ack确认包 Dest=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+
+		Post(msg2, 0, port);
 	}
 
 	// 选择处理器来处理消息
@@ -433,7 +440,7 @@ void Controller::PreSend(Message& msg)
 #endif
 }
 
-/*bool Controller::Post(Message& msg, ITransport* port)
+bool Controller::Post(Message& msg, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	bool rs = false;
@@ -474,7 +481,7 @@ void Controller::PreSend(Message& msg)
 	}
 
 	return rs;
-}*/
+}
 
 void SendTask(void* param)
 {
@@ -499,9 +506,18 @@ void Controller::Loop()
 			node->Ports[k]->Write(node->Data, node->Length);
 		}
 
+		node->Times++;
+
 		// 检查是否传输口已完成，是否已过期
-		if(node->Ports.Count() == 0 || node->Expired < Time.Current())
+		int count = node->Ports.Count();
+		if(count == 0 || node->Expired < Time.Current())
 		{
+			debug_printf("删除消息 Seq=%d 共发送%d次 ", node->Sequence, node->Times);
+			if(count == 0)
+				debug_printf("已完成！\r\n");
+			else
+				debug_printf("超时！\r\n");
+
 			_Queue.Remove(node);
 			delete node;
 		}
@@ -584,6 +600,7 @@ void MessageNode::SetMessage(Message& msg)
 {
 	//Msg = &msg;
 	Sequence = msg.Sequence;
+	Times = 0;
 
 	byte* buf = (byte*)&msg.Dest;
 	if(!msg.Length)

@@ -107,8 +107,8 @@ public:
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
-	// 把消息放入发送队列，timerout毫秒重试超时时间，传输口参数为空时向所有传输口发送消息
-	//bool Post(Message& msg, int timeout = 0, ITransport* port = NULL);
+	// 把消息放入发送队列，传输口参数为空时向所有传输口发送消息
+	bool Post(Message& msg, ITransport* port = NULL);
 	// 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送
 	bool Send(Message& msg, int expire = -1, ITransport* port = NULL);
 	// 回复对方的请求消息
@@ -145,6 +145,7 @@ public:
 	uint		Length;
 	ulong		Next;		// 下一次重发时间
 	ulong		Expired;	// 过期时间，微秒
+	uint		Times;
 	//Message*	Reply;	// 匹配的响应消息
 
 	//MessageNode();
