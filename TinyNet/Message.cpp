@@ -13,6 +13,7 @@ Message::Message(byte code)
 	memset(&Dest, 0, 8);
 	Code = code;
 	Crc16 = 0;
+	TTL = 0;
 }
 
 Message::Message(Message& msg)
@@ -23,6 +24,7 @@ Message::Message(Message& msg)
 
 	Crc16 = msg.Crc16;
 	ArrayCopy(Data, msg.Data);
+	TTL = TTL;
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -249,7 +251,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	{
 		// 处理重复消息。加上来源地址，以免重复
 		ushort seq = (msg.Src << 8) | msg.Sequence;
-		if(_Ring.Find(seq) >= 0) return false;
+		if(!_Ring.Check(seq)) return false;
 		_Ring.Push(seq);
 	}
 #if MSG_DEBUG
@@ -304,19 +306,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		return true;
 	}
 
-	// 快速响应确认请求消息，避免对方无休止的重发
-	if(!msg.Reply && !msg.NoAck)
-	{
-		Message msg2(msg);
-		msg2.Dest = msg.Src;
-		msg2.Reply = 1;
-		msg2.Length = 0;
-
-		Send(msg2, 0, port);
-	}
-
 	// 如果是确认消息，及时更新请求队列
-	if(!msg.NoAck)
+	if(msg.Ack)
 	{
 		int i = -1;
 		while(_Queue.MoveNext(i))
@@ -326,15 +317,23 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			{
 				// 该传输口收到响应，从就绪队列中删除
 				node->Ports.Remove(port);
-
-				// 复制一份响应消息
-				//node->Reply = new Message(msg);
 			}
 		}
 
-		// 如果只是响应的确认消息，不做处理
-		// 控制器不会把0负载的增强响应传递给业务层
-		if(msg.Reply && msg.Length == 0) return true;
+		// 如果只是确认消息，不做处理
+		return true;
+	}
+
+	// 快速响应确认消息，避免对方无休止的重发
+	if(!msg.NoAck)
+	{
+		Message msg2(msg);
+		msg2.Dest = msg.Src;
+		msg2.Reply = 1;
+		msg2.Ack = 1;
+		msg2.Length = 0;
+
+		Send(msg2, 0, port);
 	}
 
 	// 选择处理器来处理消息
@@ -612,6 +611,9 @@ void RingQueue::Push(ushort item)
 {
 	Arr[Index++] = item;
 	if(Index == ArrayLength(Arr)) Index = 0;
+	
+	// 更新过期时间，10秒
+	Expired = Time.Current() + 10000000;
 }
 
 int RingQueue::Find(ushort item)
@@ -622,4 +624,24 @@ int RingQueue::Find(ushort item)
 	}
 
 	return -1;
+}
+
+bool RingQueue::Check(ushort item)
+{
+	// Expired为0说明还没有添加任何项
+	if(!Expired) return true;
+	
+	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
+	if(Expired < Time.Current())
+	{
+		// 清空队列，重新开始
+		Index = 0;
+		ArrayZero(Arr);
+		Expired = 0;
+
+		return true;
+	}
+
+	// 再检查是否存在
+	return Find(item) >= 0;
 }

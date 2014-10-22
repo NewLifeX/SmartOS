@@ -71,6 +71,8 @@ public:
 	RingQueue();
 	void Push(ushort item);
 	int Find(ushort item);
+
+	bool Check(ushort item);
 };
 
 // 处理消息，返回是否成功
