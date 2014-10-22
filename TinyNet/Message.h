@@ -21,8 +21,9 @@ public:
 	byte Src;		// 源地址
 	byte Code;		// 功能代码
 	byte Flags:3;	// 标识位。也可以用来做二级命令
-	byte TTL:2;		// 路由声明周期
-	byte Confirm:1;	// 是否需要确认响应
+	byte UseTTL:1;	// 使用TTL。具体TTL值位于数据包最后
+	byte NoAck:1;	// 是否不需要确认包
+	byte Ack:1;		// 确认包
 	byte Error:1;	// 是否错误
 	byte Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
@@ -32,6 +33,8 @@ public:
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
 	byte Data[32];	// 数据部分
+
+	byte TTL;		// 路由生命周期。为方便路由，不参与Crc校验
 
 public:
 	// 初始化消息，各字段为0
@@ -63,6 +66,7 @@ class RingQueue
 public:
 	int	Index;
 	ushort Arr[32];
+	ulong Expired;	// 过期时间，微秒
 
 	RingQueue();
 	void Push(ushort item);

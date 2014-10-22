@@ -41,7 +41,8 @@ bool Message::Parse(MemoryStream& ms)
 	// 复制头8字节。没有负载数据时，该分析已经完整
 	//*(ulong*)&Dest = ms.Read<ulong>();
 	// 如果地址不是8字节对齐，长整型操作会导致异常
-	memcpy(&Dest, ms.ReadBytes(8), 8);
+	//memcpy(&Dest, ms.ReadBytes(8), 8);
+	ms.Read(&Dest, 0, 8);
 	// 代码为0是非法的
 	if(!Code) return false;
 	// 没有源地址是很不负责任的
@@ -62,6 +63,16 @@ bool Message::Parse(MemoryStream& ms)
 		ms.Read(Data, 0, Length);
 		// 读取真正的校验码
 		Checksum = ms.Read<ushort>();
+	}
+
+	// 后面可能有TTL
+	if(UseTTL)
+	{
+		// 必须严格检查，否则可能成为溢出漏洞
+		if(ms.Remain() > 0)
+			TTL = ms.Read<byte>();
+		else
+			TTL = 0;
 	}
 
 	return true;
@@ -111,6 +122,9 @@ void Message::Write(MemoryStream& ms)
 		// 读取真正的校验码
 		ms.Write(Checksum);
 	}
+
+	// 后面可能有TTL
+	if(UseTTL) ms.Write(TTL);
 }
 
 // 构造控制器
@@ -272,7 +286,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		if(msg.Reply) return true;
 
 		// 不需要确认的也不费事了
-		if(!msg.Confirm) return true;
+		if(msg.NoAck) return true;
 
 #if DEBUG
 		byte err[] = "Crc Error #XXXX";
@@ -291,7 +305,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	}
 
 	// 快速响应确认请求消息，避免对方无休止的重发
-	if(!msg.Reply && msg.Confirm)
+	if(!msg.Reply && !msg.NoAck)
 	{
 		Message msg2(msg);
 		msg2.Dest = msg.Src;
@@ -302,7 +316,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	}
 
 	// 如果是确认消息，及时更新请求队列
-	if(msg.Confirm)
+	if(!msg.NoAck)
 	{
 		int i = -1;
 		while(_Queue.MoveNext(i))
@@ -335,7 +349,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			if(!msg.Reply)
 			{
 				// 控制器不会把0负载的增强响应传递给业务层
-				if(msg.Confirm && msg.Length == 0) break;
+				if(!msg.NoAck && msg.Length == 0) break;
 
 				if(rs)
 					Reply(msg, port);
@@ -513,7 +527,7 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 
 	if(expire < 0) expire = Timeout;
 	// 需要响应
-	if(expire > 0) msg.Confirm = true;
+	if(expire == 0) msg.NoAck = true;
 
 	PreSend(msg);
 
@@ -591,6 +605,7 @@ RingQueue::RingQueue()
 {
 	Index = 0;
 	ArrayZero(Arr);
+	Expired = 0;
 }
 
 void RingQueue::Push(ushort item)
