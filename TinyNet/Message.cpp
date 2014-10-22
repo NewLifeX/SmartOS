@@ -583,6 +583,7 @@ MessageNode::~MessageNode()
 void MessageNode::SetMessage(Message& msg)
 {
 	//Msg = &msg;
+	Sequence = msg.Sequence;
 
 	byte* buf = (byte*)&msg.Dest;
 	if(!msg.Length)
@@ -611,7 +612,7 @@ void RingQueue::Push(ushort item)
 {
 	Arr[Index++] = item;
 	if(Index == ArrayLength(Arr)) Index = 0;
-	
+
 	// 更新过期时间，10秒
 	Expired = Time.Current() + 10000000;
 }
@@ -630,7 +631,7 @@ bool RingQueue::Check(ushort item)
 {
 	// Expired为0说明还没有添加任何项
 	if(!Expired) return true;
-	
+
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
 	if(Expired < Time.Current())
 	{
