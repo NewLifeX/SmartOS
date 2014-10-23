@@ -427,6 +427,8 @@ void Controller::PreSend(Message& msg)
 	debug_printf("Message Send");
 	if(msg.Error)
 		debug_printf(" Error");
+	else if(msg.Ack)
+		debug_printf(" Ack");
 	else if(msg.Reply)
 		debug_printf(" Reply");
 
