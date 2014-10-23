@@ -94,6 +94,9 @@ private:
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
 	bool Dispatch(MemoryStream& ms, ITransport* port);
 
+	void AckRequest(Message& msg, ITransport* port);	// 处理收到的Ack包
+	void AckResponse(Message& msg, ITransport* port);	// 向对方发出Ack包
+	
 public:
 	byte	Address;	// 本地地址
 	uint	Interval;	// 消息队列发送间隔，10毫秒

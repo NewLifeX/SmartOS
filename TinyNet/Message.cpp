@@ -266,6 +266,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			if(_Ring.Check(seq))
 			{
 				debug_printf("重复消息 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				// 快速响应确认消息，避免对方无休止的重发
+				if(!msg.NoAck) AckResponse(msg, port);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -328,39 +330,13 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	// 如果是确认消息，及时更新请求队列
 	if(msg.Ack)
 	{
-		int i = -1;
-		while(_Queue.MoveNext(i))
-		{
-			MessageNode* node = _Queue[i];
-			if(node->Sequence == msg.Sequence)
-			{
-				// 该传输口收到响应，从就绪队列中删除
-				node->Ports.Remove(port);
-
-				debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
-				return true;
-			}
-		}
-
-		debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
-
+		AckRequest(msg, port);
 		// 如果只是确认消息，不做处理
 		return true;
 	}
 
 	// 快速响应确认消息，避免对方无休止的重发
-	if(!msg.NoAck)
-	{
-		Message msg2(msg);
-		msg2.Dest = msg.Src;
-		msg2.Reply = 1;
-		msg2.Ack = 1;
-		msg2.Length = 0;
-
-		debug_printf("发送Ack确认包 Dest=%d Seq=%d\r\n", msg.Src, msg.Sequence);
-
-		Post(msg2, port);
-	}
+	if(!msg.NoAck) AckResponse(msg, port);
 
 	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)
@@ -386,6 +362,38 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	}
 
 	return true;
+}
+
+void Controller::AckRequest(Message& msg, ITransport* port)
+{
+	int i = -1;
+	while(_Queue.MoveNext(i))
+	{
+		MessageNode* node = _Queue[i];
+		if(node->Sequence == msg.Sequence)
+		{
+			// 该传输口收到响应，从就绪队列中删除
+			node->Ports.Remove(port);
+
+			debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+			return;
+		}
+	}
+
+	debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+}
+
+void Controller::AckResponse(Message& msg, ITransport* port)
+{
+	Message msg2(msg);
+	msg2.Dest = msg.Src;
+	msg2.Reply = 1;
+	msg2.Ack = 1;
+	msg2.Length = 0;
+
+	debug_printf("发送Ack确认包 Dest=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+
+	Post(msg2, port);
 }
 
 void Controller::Register(byte code, MessageHandler handler, void* param)
