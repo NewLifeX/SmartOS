@@ -181,7 +181,7 @@ public:
 		byte Reserved:2;
 		byte TX_EMPTY:1;	// TX FIFO 寄存器空标志 1:TX FIFO 寄存器空 0: TX FIFO 寄存器非空
 		byte TX_FULL:1;		// TX FIFO 寄存器满标志 1:TX FIFO 寄存器满 0: TX FIFO 寄存器未满有可用空间
-		byte TX_REUSE:1;	// 若TX_REUSE=1 则当CE 位高电平状态时不断发送上一数据包TX_REUSE 通过SPI 指令REUSE_TX_PL 设置通过W_TX_PALOAD或FLUSH_TX 复位
+		byte TX_REUSE:1;	// 若TX_REUSE=1 则当CE位高电平状态时不断发送上一数据包TX_REUSE 通过SPI 指令REUSE_TX_PL 设置通过W_TX_PALOAD或FLUSH_TX 复位
 		byte Reserved2:1;
 	}RF_FIFO_STATUS;
 };

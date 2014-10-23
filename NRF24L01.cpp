@@ -42,7 +42,7 @@
 #define RX_PW_P3        0x14  //接收数据通道3有效数据宽度(1~32字节),设置为0则非法
 #define RX_PW_P4        0x15  //接收数据通道4有效数据宽度(1~32字节),设置为0则非法
 #define RX_PW_P5        0x16  //接收数据通道5有效数据宽度(1~32字节),设置为0则非法
-#define NRF_FIFO_STATUS 0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
+#define FIFO_STATUS 	0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
 #endif
 
@@ -51,8 +51,6 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
 
 	// 初始化地址
-	//byte TX_ADDRESS[] = {0x34,0x43,0x10,0x10,0x01};
-	//memcpy(Address, TX_ADDRESS, 5);
 	memset(Address, 0, 5);
 	memcpy(Address1, (byte*)Sys.ID, 5);
 	for(int i=0; i<4; i++) Address2_5[i] = Address1[0] + i + 1;
@@ -79,8 +77,9 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	MaxError = 10;
 	Error = 0;
 
-    WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
-	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
+	// 这里不用急着清空寄存器，Config的时候会清空
+    //WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
+	//WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 
 	//_taskID = 0;
 	//_timer = NULL;
@@ -124,7 +123,7 @@ byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 
 	byte status = _spi->Write(reg);
 	for(byte i=0; i<bytes; i++)
-	  buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
+		buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
 
  	return status;
 }
@@ -162,7 +161,6 @@ bool NRF24L01::Check(void)
 	byte buf2[5];
 
 	// 必须拉低CE后修改配置，然后再拉高
-	//CEDown();
 	PortScope ps(_CE);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
@@ -178,14 +176,12 @@ bool NRF24L01::Check(void)
 	WriteBuf(TX_ADDR, buf1, 5);
 
 	// 比较
-	bool rs = true;
 	for(byte i=0; i<5; i++)
 	{
-		if(buf2[i] != buf[i]) { rs = false; break; } // 连接不正常
+		if(buf2[i] != buf[i]) return false; // 连接不正常
 	}
-	//CEUp();
 
-	return rs; // 成功连接
+	return true; // 成功连接
 }
 
 // 配置
@@ -312,10 +308,8 @@ bool NRF24L01::SetMode(bool isReceive)
         //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
 	// 必须拉低CE后修改配置，然后再拉高
-	//CEDown();
 	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
-	//CEUp();
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -361,10 +355,8 @@ void NRF24L01::OnClose()
 	// 关闭电源
 	config.PWR_UP = 0;
 
-	//CEDown();
 	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
-	//CEUp();
 
 	_spi->Close();
 
@@ -387,18 +379,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	Status = ReadReg(STATUS);
 	if(Status == 0xFF)
 	{
-		//ExitLock();
 		AddError();
 		return 0;
 	}
 	// 判断是否接收到数据
 	RF_STATUS st;
 	st.Init(Status);
-	if(!st.RX_DR || st.RX_P_NO == 0x07)
-	{
-		//ExitLock();
-		return 0;
-	}
+	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
 	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
 	//if(!st.RX_DR) return 0;
 	//debug_printf("NRF24L01::OnRead st=0x%02x\r\n", Status);
@@ -409,23 +396,17 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 
-	//ExitLock();
 	return PayloadWidth;
 }
 
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
-	//if(!EnterLock()) return false;
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
 	// 进入发送模式
-	if(!SetMode(false))
-	{
-		//ExitLock();
-		return false;
-	}
+	if(!SetMode(false)) return false;
 
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
@@ -468,7 +449,6 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
-	//ExitLock();
 	return rs;
 }
 
@@ -529,34 +509,32 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
 	//debug_printf("IRQ down=%d\r\n", down);
 	// 必须在down=true才能读取到正确的状态
-	if(down)
+	if(!down) return;
+
+	NRF24L01* nrf = (NRF24L01*)param;
+	if(!nrf) return;
+
+	nrf->ShowStatus();
+
+	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
+	if(nrf->Opened && nrf->_Lock == 0)
 	{
-		NRF24L01* nrf = (NRF24L01*)param;
-		if(!nrf) return;
-
-		// 读取状态寄存器的值
-		nrf->Status = nrf->ReadReg(STATUS);
-		nrf->ShowStatus();
-
-		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-		if(nrf->Opened && nrf->_Lock == 0)
+		byte buf[32];
+		uint len = nrf->Read(buf, ArrayLength(buf));
+		if(len)
 		{
-			byte buf[32];
-			//nrf->SetMode(true);
-			uint len = nrf->Read(buf, ArrayLength(buf));
-			if(len)
-			{
-				len = nrf->OnReceive(buf, len);
+			len = nrf->OnReceive(buf, len);
 
-				// 如果有返回，说明有数据要回复出去
-				if(len) nrf->Write(buf, len);
-			}
+			// 如果有返回，说明有数据要回复出去
+			if(len) nrf->Write(buf, len);
 		}
 	}
 }
 
 void NRF24L01::ShowStatus()
 {
+	// 读取状态寄存器的值
+	Status = ReadReg(STATUS);
 	RF_STATUS st;
 	st.Init(Status);
 
@@ -583,6 +561,17 @@ void NRF24L01::ShowStatus()
 	}
 	if(st.TX_DS) debug_printf(" TX_DS 数据发送完成中断");
 	if(st.RX_DR) debug_printf(" RX_DR 接收数据中断");
+	debug_printf("\r\n");
+
+	RF_FIFO_STATUS fifo;
+	*(byte*)&fifo = ReadReg(FIFO_STATUS);
+
+	debug_printf("NRF24L01::FIFO_STATUS=0x%02x ", *(byte*)&fifo);
+	if(fifo.RX_EMPTY) debug_printf(" RX FIFO 寄存器空");
+	if(fifo.RX_FULL)  debug_printf(" RX FIFO 寄存器满");
+	if(fifo.TX_EMPTY) debug_printf(" TX FIFO 寄存器空");
+	if(fifo.TX_FULL)  debug_printf(" TX FIFO 寄存器满");
+	if(fifo.TX_REUSE) debug_printf(" 当CE位高电平状态时不断发送上一数据包");
 	debug_printf("\r\n");
 }
 
@@ -659,20 +648,3 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//_Thread = NULL;
 	}
 }
-
-/*bool NRF24L01::EnterLock()
-{
-	// 等待超时时间
-	TimeWheel tw(0, 10, 0);
-	while(_Lock)
-	{
-		// 延迟一下，释放CPU使用权
-		Sys.Sleep(1);
-		if(tw.Expired()) return false;
-	}
-	_Lock++;
-
-	return true;
-}
-
-void NRF24L01::ExitLock() { _Lock--; };*/
