@@ -264,6 +264,7 @@ bool NRF24L01::Config()
 	// 如果电源还是关闭，则表示2401初始化失败
 	if(!config.PWR_UP) return false;
 
+	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
 	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 
@@ -288,7 +289,11 @@ bool NRF24L01::SetMode(bool isReceive)
 	config.Init(mode);
 
 	// 如果本来就是该模式，则不再处理
-	if(!(isReceive ^ config.PRIM_RX)) return true;
+	if(!(isReceive ^ config.PRIM_RX))
+	{
+        //WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
+		return true;
+	}
 
 	// 检查设置
 	/*assert_param(config.PWR_UP);
@@ -297,6 +302,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	// 如果电源关闭，则重新打开电源
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
+	// 不能随便清空FIFO寄存器，否则收到的数据都被清掉了
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
@@ -310,6 +316,9 @@ bool NRF24L01::SetMode(bool isReceive)
 	// 必须拉低CE后修改配置，然后再拉高
 	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
+
+	// 进入发送模式至少等待10us
+	Sys.Delay(10);
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -375,28 +384,35 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 进入接收模式
 	if(!SetMode(true)) return false;
 
+	uint rs = 0;
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
 	if(Status == 0xFF)
 	{
 		AddError();
-		return 0;
 	}
-	// 判断是否接收到数据
-	RF_STATUS st;
-	st.Init(Status);
-	if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
-	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
-	//if(!st.RX_DR) return 0;
-	//debug_printf("NRF24L01::OnRead st=0x%02x\r\n", Status);
+	else
+	{
+		// 判断是否接收到数据
+		RF_STATUS st;
+		st.Init(Status);
+		//if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+		// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
+		if(st.RX_DR)
+		{
+			// 清除中断标志
+			//WriteReg(STATUS, Status);
 
+			rs = PayloadWidth;
+			ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
+		}
+	}
 	// 清除中断标志
 	WriteReg(STATUS, Status);
-
-	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
+	ShowStatus();
 
-	return PayloadWidth;
+	return rs;
 }
 
 // 向NRF的发送缓冲区中写入数据
@@ -408,6 +424,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 进入发送模式
 	if(!SetMode(false)) return false;
 
+	ShowStatus();
+	
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
@@ -435,7 +453,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		{
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
-			WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
+			//WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 			rs = st.TX_DS;
 
@@ -446,6 +464,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 		if(!us) us = Time.Current() + Timeout * 1000;
 	}while(us > Time.Current());
+
+	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
@@ -478,33 +498,6 @@ void NRF24L01::AddError()
 	}
 }
 
-// 注册中断函数  不注册的结果是    有中断 无中断处理代码
-/*void NRF24L01::Register(DataReceived handler, void* param)
-{
-    if(handler)
-	{
-        _Received = handler;
-		_Param = param;
-
-		//if(!_IRQ->Read()) OnReceive();
-	}
-    else
-	{
-        _Received = NULL;
-		_Param = NULL;
-	}
-}
-
-// 由引脚中断函数调用此函数  （nrf24l01的真正中断函数）
-void NRF24L01::OnReceive()
-{
-	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
-	//if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平
-	if(_Received) _Received(this, _Param);
-}*/
-
-// 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个
-// typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
 	//debug_printf("IRQ down=%d\r\n", down);
