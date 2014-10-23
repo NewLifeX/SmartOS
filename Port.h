@@ -202,17 +202,23 @@ class PortScope
 {
 private:
 	OutputPort* _port;
+	bool _value;
 
 public:
-	_force_inline PortScope(OutputPort* port)
+	PortScope(OutputPort* port, bool value = true)
 	{
 		_port = port;
-		if(_port) *_port = true;
+		if(_port)
+		{
+			// 备份数值，析构的时候需要还原
+			_value = port->Read();
+			*_port = value;
+		}
 	}
 
-	_force_inline ~PortScope()
+	~PortScope()
 	{
-		if(_port) *_port = false;
+		if(_port) *_port = _value;
 	}
 };
 
