@@ -144,7 +144,8 @@ public:
 		byte POWER:2;		// 发射功率‘00’ -18dBm‘01’ -12dBm‘10’ -6dBm‘11’ 0dBm
 		byte DR:1;			// 数据传输率‘0’ –1Mbps ‘1’ 2 Mbps
 		byte PLL_LOCK:1;	// PLL_LOCK 允许仅应用于测试模式
-		byte Reserved:3;
+		byte DBM7:1;		// 7dBm。猜测是这个，未确定
+		byte Reserved:2;
 	}RF_SETUP;
 
 	// 状态寄存器0x07

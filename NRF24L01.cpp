@@ -213,7 +213,6 @@ bool NRF24L01::Config()
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
 #endif
 
-	//CEDown();
 	PortScope ps(_CE);
 
 	uint addrLen = ArrayLength(Address);
@@ -240,7 +239,8 @@ bool NRF24L01::Config()
 	WriteReg(SETUP_RETR, (period << 4) | Retry);
 
 	WriteReg(RF_CH, Channel); //设置RF通信频率
-	WriteReg(RF_SETUP, 0x07); //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	//WriteReg(RF_SETUP, 0x07); //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	WriteReg(RF_SETUP, 0x2F); //设置TX发射参数,7db增益,2Mbps,低噪声增益开启
 
 	// 设置6个接收端的数据宽度
 	for(int i = 0; i < addrLen; i++)
@@ -254,13 +254,12 @@ bool NRF24L01::Config()
 	config.PWR_UP = 1;	// 1:上电 0:掉电
 	config.CRCO = 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 	config.EN_CRC = 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	//if(isReceive) config.PRIM_RX = 1;
 	// 默认进入接收模式
 	config.PRIM_RX = 1;
 
-	/*config.MAX_RT = 1;
+	config.MAX_RT = 1;
 	config.TX_DS = 1;
-	config.RX_DR = 1;*/
+	/*config.RX_DR = 1;*/
 
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
@@ -272,7 +271,6 @@ bool NRF24L01::Config()
 	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 
-	//CEUp();
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
 
