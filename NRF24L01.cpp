@@ -436,10 +436,10 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
+	ShowStatus();
+
 	// 进入发送模式
 	if(!SetMode(false)) return false;
-
-	ShowStatus();
 
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
@@ -466,6 +466,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 		if(st.TX_DS || st.MAX_RT)
 		{
+			CEDown();
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
 			//WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
@@ -480,6 +481,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		if(!us) us = Time.Current() + Timeout * 1000;
 	}while(us > Time.Current());
 
+	CEDown();
 	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 	SetMode(true);	// 发送完成以后进入接收模式
