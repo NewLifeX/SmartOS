@@ -7,12 +7,15 @@
 /********************************************************************************/
 //NRF24L01寄存器操作命令
 #define READ_REG_NRF    0x00  //读配置寄存器,低5位为寄存器地址
-#define WRITE_REG_NRF   0x20  //写配置寄存器,低5位为寄存器地址
+#define WRITE_REG_NRF   0x20  //写配置寄存器,低5位为寄存器地址。只允许Shutdown、Standby、Idle-TX模式下操作
 #define RD_RX_PLOAD     0x61  //读RX有效数据,1~32字节
 #define WR_TX_PLOAD     0xA0  //写TX有效数据,1~32字节
 #define FLUSH_TX        0xE1  //清除TX FIFO寄存器.发射模式下用
 #define FLUSH_RX        0xE2  //清除RX FIFO寄存器.接收模式下用
 #define REUSE_TX_PL     0xE3  //重新使用上一包数据,CE为高,数据包被不断发送.
+#define RX_PL_WID		0x60  //动态负载时，读取收到的数据字节数
+#define ACK_PAYLOAD		0xA8  //适用于接收方，1010 1PPP 通过PIPE PPP将数据通过ACK的形式发出去，最多允许三帧数据存于FIFO中
+#define TX_PAYLOAD_NOACK 0xB0 //适用于发射模式，使用这个命令需要将AUTOACK位置1
 #define NOP             0xFF  //空操作,可以用来读状态寄存器
 /********************************************************************************/
 //SPI(NRF24L01)寄存器地址
@@ -145,6 +148,12 @@ byte NRF24L01::ReadReg(byte reg)
 // 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
+#if DEBUG
+	if(_CE && _CE->Read())
+	{
+		debug_printf("NRF24L01::WriteReg 只允许Shutdown、Standby、Idle-TX模式下操作\r\n");
+	}
+#endif
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(WRITE_REG_NRF | reg);
