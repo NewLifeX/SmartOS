@@ -47,6 +47,8 @@
 #define RX_PW_P5        0x16  //接收数据通道5有效数据宽度(1~32字节),设置为0则非法
 #define FIFO_STATUS 	0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
+#define DYNPD			0x1C  //使能动态负载长度，6个字节表示6个通道的动态负载开关
+#define FEATURE			0x1D  //特征寄存器
 #endif
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
@@ -262,7 +264,7 @@ bool NRF24L01::Config()
 	config.Init();
 	config.PWR_UP = 1;							// 1:上电 0:掉电
 	config.CRCO = 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
-	config.EN_CRC = 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	config.PRIM_RX = 1;							// 默认进入接收模式
 
 	config.MAX_RT = 1;

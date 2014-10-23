@@ -84,7 +84,7 @@ public:
 	// 配置寄存器0x00
 	typedef struct : ByteStruct
 	{
-		byte PRIM_RX:1;	// 1:接收模式 0:发射模式
+		byte PRIM_RX:1;	// 1:接收模式 0:发射模式。只能在Shutdown、Standby下更改
 		byte PWR_UP:1;	// 1:上电 0:掉电
 		byte CRCO:1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 		byte EN_CRC:1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
@@ -148,7 +148,7 @@ public:
 		byte POWER:3;		// 台产版发射功率‘000’ -12dBm/-6/-4/0/1/3/4  '111' 7dBm
 		byte DR:1;			// 数据传输率‘0’ –1Mbps ‘1’ 2 Mbps。台产版跟DR_HIGH配合
 		byte PLL_LOCK:1;	// PLL_LOCK 允许仅应用于测试模式。台产必须为0
-		byte DR_HIGH:1;		// 射频数据率 [DR, DR_HIGH]: 00：1Mbps 01：2Mbps 10：250kbps 11：保留
+		byte DR_LOW:1;		// 射频数据率 [DR_LOW, DR]: 00：1Mbps 01：2Mbps 10：250kbps 11：保留
 		byte Reserved:2;
 	}RF_SETUP;
 
@@ -158,7 +158,7 @@ public:
 		byte TX_FULL:1;	// TX FIFO 寄存器满标志, 1:TX FIFO 寄存器满, 0: TX FIFO 寄存器未满,有可用空间
 		byte RX_P_NO:3;	// 接收数据通道号, 000-101:数据通道号, 110:未使用, 111:RX FIFO 寄存器为空
 		byte MAX_RT:1;	// 达到最多次重发中断, 写‘1’清除中断, 如果MAX_RT 中断产生则必须清除后系统才能进行通讯
-		byte TX_DS:1;	// 数据发送完成中断，当数据发送完成后产生中断。如果工作在自动应答模式下，只有当接收到应答信号后此位置一写‘1’清除中断
+		byte TX_DS:1;	// 数据发送完成中断，当数据发送完成后产生中断。如果ACK模式下，只有收到ACK后此位置写‘1’清除中断
 		byte RX_DR:1;	// 接收数据中断，当接收到有效数据后置一, 写‘1’清除中断
 		byte Reserved:1;
 	}RF_STATUS;
@@ -173,7 +173,7 @@ public:
 	// 载波检测0x09
 	typedef struct : ByteStruct
 	{
-		byte CD:1;	// 载波检测
+		byte CD:1;	// 载波检测，接收信号强度RSSI，0表示信号<-60dBm
 		byte Reserved:7;
 	}RF_CD;
 
@@ -188,6 +188,15 @@ public:
 		byte TX_REUSE:1;	// 若TX_REUSE=1 则当CE位高电平状态时不断发送上一数据包TX_REUSE 通过SPI 指令REUSE_TX_PL 设置通过W_TX_PALOAD或FLUSH_TX 复位
 		byte Reserved2:1;
 	}RF_FIFO_STATUS;
+	
+	// 特征寄存器0x1D
+	typedef struct : ByteStruct
+	{
+		byte DYN_ACK:1;		// 使能命令TX_PAYLOAD_NOACK
+		byte ACK_PAYD:1;	// 使能ACK负载（带负载数据的ACK包）
+		byte DPL:1;			// 使能动态负载长度
+		byte Reserved:5;
+	}RF_FEATURE;
 };
 
 #endif
