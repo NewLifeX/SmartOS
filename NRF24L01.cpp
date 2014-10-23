@@ -57,7 +57,11 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	Channel = 0;	// 默认通道0
 
 	_CE = NULL;
-    if(ce != P0) _CE = new OutputPort(ce, true, false);
+    if(ce != P0)
+	{
+		_CE = new OutputPort(ce, false, false);
+		*_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+	}
 	_IRQ = NULL;
     if(irq != P0)
     {
@@ -161,7 +165,7 @@ bool NRF24L01::Check(void)
 	byte buf2[5];
 
 	// 必须拉低CE后修改配置，然后再拉高
-	PortScope ps(_CE);
+	PortScope ps(_CE, false);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
@@ -209,7 +213,7 @@ bool NRF24L01::Config()
 	debug_printf("    Payload: %d\r\n", PayloadWidth);
 #endif
 
-	PortScope ps(_CE);
+	CEDown();
 
 	uint addrLen = ArrayLength(Address);
 
@@ -267,6 +271,8 @@ bool NRF24L01::Config()
 	WriteReg(FLUSH_RX, NOP);					// 清除RX FIFO寄存器
 	WriteReg(FLUSH_TX, NOP);					// 清除TX FIFO寄存器
 
+	CEUp();
+
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
 
@@ -313,11 +319,9 @@ bool NRF24L01::SetMode(bool isReceive)
         //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
 	}
 	// 必须拉低CE后修改配置，然后再拉高
-	PortScope ps(_CE);
+	CEDown();
 	WriteReg(CONFIG, config.ToByte());
-
-	// 切换模式至少等待130us
-	Sys.Delay(130);
+	CEUp();
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -363,7 +367,7 @@ void NRF24L01::OnClose()
 	// 关闭电源
 	config.PWR_UP = 0;
 
-	PortScope ps(_CE);
+	CEDown();
 	WriteReg(CONFIG, config.ToByte());
 
 	_spi->Close();
@@ -425,7 +429,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	if(!SetMode(false)) return false;
 
 	ShowStatus();
-	
+
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
@@ -640,4 +644,20 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//delete _Thread;
 		//_Thread = NULL;
 	}
+}
+
+// 拉高CE，可以由待机模式切换到RX/TX模式
+void NRF24L01::CEUp()
+{
+    if(_CE)
+	{
+		*_CE = true;
+		Sys.Delay(130); // 切换模式，高电平>10us
+	}
+}
+
+// 拉低CE，由收发模式切换回来待机模式
+void NRF24L01::CEDown()
+{
+    if(_CE) *_CE = false;
 }
