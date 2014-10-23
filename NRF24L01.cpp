@@ -375,13 +375,17 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 如果不是异步，等待接收中断
 	//if(!_Received && !WaitForIRQ()) return false;
 
-	if(!EnterLock()) return false;
+	//if(!EnterLock()) return false;
+	Lock lock(_Lock);
+	//if(!lock.Wait(10000)) return false;
+	// 如果拿不到锁，马上退出，不等待。因为一般读取是由定时器中断来驱动，等待没有意义。
+	if(!lock.Success) return false;
 
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
 	if(Status == 0xFF)
 	{
-		ExitLock();
+		//ExitLock();
 		AddError();
 		return 0;
 	}
@@ -390,7 +394,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	st.Init(Status);
 	if(!st.RX_DR || st.RX_P_NO == 0x07)
 	{
-		ExitLock();
+		//ExitLock();
 		return 0;
 	}
 	// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
@@ -403,19 +407,21 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 
-	ExitLock();
+	//ExitLock();
 	return PayloadWidth;
 }
 
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
-	if(!EnterLock()) return false;
+	//if(!EnterLock()) return false;
+	Lock lock(_Lock);
+	if(!lock.Wait(10000)) return false;
 
 	// 进入发送模式
 	if(!SetMode(false))
 	{
-		ExitLock();
+		//ExitLock();
 		return false;
 	}
 
@@ -458,7 +464,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
-	ExitLock();
+	//ExitLock();
 	return rs;
 }
 
@@ -644,7 +650,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	}
 }
 
-bool NRF24L01::EnterLock()
+/*bool NRF24L01::EnterLock()
 {
 	// 等待超时时间
 	TimeWheel tw(0, 10, 0);
@@ -659,4 +665,4 @@ bool NRF24L01::EnterLock()
 	return true;
 }
 
-void NRF24L01::ExitLock() { _Lock--; };
+void NRF24L01::ExitLock() { _Lock--; };*/

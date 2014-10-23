@@ -255,3 +255,69 @@ void FaultHandler()
 		while(true);
 	}
 }
+
+// 智能IRQ，初始化时备份，销毁时还原
+SmartIRQ::SmartIRQ(bool enable)
+{
+	_state = __get_PRIMASK();
+	if(enable)
+		__enable_irq();
+	else
+		__disable_irq();
+}
+
+SmartIRQ::~SmartIRQ()
+{
+	__set_PRIMASK(_state);
+}
+
+// 智能锁。初始化时锁定一个整数，销毁时解锁
+Lock::Lock(int& ref)
+{
+	Success = false;
+	if(ref > 0) return;
+
+	// 加全局锁以后再修改引用
+	SmartIRQ irq;
+	// 再次判断，DoubleLock双锁结构，避免小概率冲突
+	if(ref > 0) return;
+
+	_ref = &ref;
+	ref++;
+	Success = true;
+}
+
+Lock::~Lock()
+{
+	if(Success)
+	{
+		SmartIRQ irq;
+		(*_ref)--;
+	}
+}
+
+bool Lock::Wait(int us)
+{
+	// 可能已经进入成功
+	if(Success) return true;
+
+	int& ref = *_ref;
+	// 等待超时时间
+	TimeWheel tw(0, 0, us);
+	while(ref > 0)
+	{
+		// 延迟一下，释放CPU使用权
+		Sys.Sleep(1);
+		if(tw.Expired()) return false;
+	}
+
+	// 加全局锁以后再修改引用
+	SmartIRQ irq;
+	// 再次判断，DoubleLock双锁结构，避免小概率冲突
+	if(ref > 0) return false;
+
+	ref++;
+	Success = true;
+
+	return true;
+}

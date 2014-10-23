@@ -67,25 +67,30 @@ extern TInterrupt Interrupt;
 // <TSys::TSys()也是构造函数   Sys.TSys()函数 在main（）函数之前被执行>
 
 // 智能IRQ，初始化时备份，销毁时还原
+// SmartIRQ相当霸道，它直接关闭所有中断，再也没有别的任务可以跟当前任务争夺MCU
 class SmartIRQ
 {
 public:
-	_force_inline SmartIRQ(bool enable = false)
-	{
-		_state = __get_PRIMASK();
-		if(enable)
-			__enable_irq();
-		else
-			__disable_irq();
-	}
-
-	_force_inline ~SmartIRQ()
-	{
-		__set_PRIMASK(_state);
-	}
+	SmartIRQ(bool enable = false);
+	~SmartIRQ();
 
 private:
 	uint _state;
+};
+
+// 智能锁。初始化时锁定一个整数，销毁时解锁
+class Lock
+{
+private:
+	int* _ref;		// 被加锁的整数所在指针
+
+public:
+	bool Success;	// 是否成功加锁
+
+	Lock(int& ref);
+	~Lock();
+
+	bool Wait(int us = -1);
 };
 
 extern "C"

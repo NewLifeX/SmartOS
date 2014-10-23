@@ -34,8 +34,8 @@ private:
 	//Thread* _Thread;
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
-	bool EnterLock();	// 进入锁
-	void ExitLock();	// 退出锁
+	//bool EnterLock();	// 进入锁
+	//void ExitLock();	// 退出锁
 
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
