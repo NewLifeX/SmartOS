@@ -249,10 +249,14 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(msg.Sequence != 0)
 #endif
 	{
-		// 处理重复消息。加上来源地址，以免重复
-		ushort seq = (msg.Src << 8) | msg.Sequence;
-		if(!_Ring.Check(seq)) return false;
-		_Ring.Push(seq);
+		// Ack的包有可能重复，不做处理。正式响应包跟前面的Ack有相同的源地址和序列号
+		if(!msg.Ack)
+		{
+			// 处理重复消息。加上来源地址，以免重复
+			ushort seq = (msg.Src << 8) | msg.Sequence;
+			if(!_Ring.Check(seq)) return false;
+			_Ring.Push(seq);
+		}
 	}
 #if MSG_DEBUG
 	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
@@ -263,6 +267,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	debug_printf("%s ", port->ToString());
 	if(msg.Error)
 		debug_printf("Message Error");
+	else if(msg.Ack)
+		debug_printf("Message Ack");
 	else if(msg.Reply)
 		debug_printf("Message Reply");
 	else
@@ -340,7 +346,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 
 		debug_printf("发送Ack确认包 Dest=%d Seq=%d\r\n", msg.Src, msg.Sequence);
 
-		Post(msg2, 0, port);
+		Post(msg2, port);
 	}
 
 	// 选择处理器来处理消息
