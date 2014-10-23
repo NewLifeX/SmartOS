@@ -212,6 +212,7 @@ void Controller::AddTransport(ITransport* port)
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
 {
+	assert_ptr(buf);
 	assert_ptr(param);
 
 	Controller* control = (Controller*)param;
@@ -230,16 +231,24 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 
 bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 {
+	byte* buf = ms.Current();
+	// 代码为0是非法的
+	if(!buf[2]) return 0;
+	// 没有源地址是很不负责任的
+	if(!buf[1]) return 0;
+	// 非广播包时，源地址和目的地址相同也是非法的
+	if(buf[0] == buf[1]) return false;
+	// 只处理本机消息或广播消息。快速处理，高效。
+	//byte dest = ms.Peek();
+	if(buf[0] != Address && buf[0] != 0) return false;
+
 #if MSG_DEBUG
-	byte* p = ms.Current();
+	debug_printf("Dispatch: ");
 	// 输出整条信息
-	Sys.ShowHex(p, ms.Length, '-');
+	Sys.ShowHex(buf, ms.Length, '-');
 	debug_printf("\r\n");
 #endif
 
-	// 只处理本机消息或广播消息。快速处理，高效。
-	byte dest = ms.Peek();
-	if(dest != Address && dest != 0) return false;
 
 	Message msg;
 	if(!msg.Parse(ms)) return false;
@@ -254,14 +263,18 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		{
 			// 处理重复消息。加上来源地址，以免重复
 			ushort seq = (msg.Src << 8) | msg.Sequence;
-			if(_Ring.Check(seq)) return false;
+			if(_Ring.Check(seq))
+			{
+				debug_printf("重复消息 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				return false;
+			}
 			_Ring.Push(seq);
 		}
 	}
 #if MSG_DEBUG
-	assert_param(ms.Current() - p == MESSAGE_SIZE + msg.Length);
+	assert_param(ms.Current() - buf == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
-	/*Sys.ShowHex(p, ms.Current() - p);
+	/*Sys.ShowHex(buf, ms.Current() - buf);
 	debug_printf("\r\n");*/
 
 	debug_printf("%s ", port->ToString());
