@@ -214,8 +214,8 @@ bool NRF24L01::Config()
 	uint addrLen = ArrayLength(Address);
 
 	WriteBuf(TX_ADDR, Address, addrLen);
-	WriteBuf(RX_ADDR_P0, Address, addrLen); // 写接收端0地址
-	WriteBuf(RX_ADDR_P1, Address1, addrLen); // 写接收端1地址
+	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
+	WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
 	// 写其它4个接收端的地址
 	byte addr[ArrayLength(Address1)];
 	memcpy(addr, Address1, addrLen);
@@ -225,33 +225,32 @@ bool NRF24L01::Config()
 	}
 
 	// 使能6个接收端的自动应答和接收
-	WriteReg(EN_AA, AutoAnswer ? 0x15 : 0);	// 使能通道0的自动应答
-	WriteReg(EN_RXADDR, 0x15);		// 使能通道0的接收地址
-	WriteReg(SETUP_AW, addrLen - 2); // 设置地址宽度
+	WriteReg(EN_AA, AutoAnswer ? 0x15 : 0);		// 使能通道0的自动应答
+	WriteReg(EN_RXADDR, 0x15);					// 使能通道0的接收地址
+	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
 
 	//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 	int period = RetryPeriod / 250 - 1;
 	if(period < 0) period = 0;
 	WriteReg(SETUP_RETR, (period << 4) | Retry);
 
-	WriteReg(RF_CH, Channel); //设置RF通信频率
-	//WriteReg(RF_SETUP, 0x07); //设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	WriteReg(RF_SETUP, 0x2F); //设置TX发射参数,7db增益,2Mbps,低噪声增益开启
+	WriteReg(RF_CH, Channel);					// 设置RF通信频率
+	WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	//WriteReg(RF_SETUP, 0x2F);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
 
 	// 设置6个接收端的数据宽度
 	for(int i = 0; i < addrLen; i++)
 	{
-		WriteReg(RX_PW_P0 + i, PayloadWidth); // 选择通道0的有效数据宽度
+		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
 	}
 
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
 	config.Init();
-	config.PWR_UP = 1;	// 1:上电 0:掉电
-	config.CRCO = 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
-	config.EN_CRC = 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	// 默认进入接收模式
-	config.PRIM_RX = 1;
+	config.PWR_UP = 1;							// 1:上电 0:掉电
+	config.CRCO = 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
+	config.EN_CRC = 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	config.PRIM_RX = 1;							// 默认进入接收模式
 
 	config.MAX_RT = 1;
 	config.TX_DS = 1;
@@ -265,8 +264,8 @@ bool NRF24L01::Config()
 	if(!config.PWR_UP) return false;
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
-	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
+	WriteReg(FLUSH_RX, NOP);					// 清除RX FIFO寄存器
+	WriteReg(FLUSH_TX, NOP);					// 清除TX FIFO寄存器
 
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
