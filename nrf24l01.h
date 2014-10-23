@@ -23,19 +23,15 @@ private:
 	bool WaitForIRQ();
 	void AddError();
 
-    //void CEUp();
-    //void CEDown();
-
 	// 接收任务。
 	static void ReceiveTask(void* sender, void* param);
 	//static void ReceiveTask(void* param);
 	//uint _taskID;
-	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
+	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
 	//Thread* _Thread;
+	static void OnIRQ(Pin pin, bool down, void* param);
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
-	//bool EnterLock();	// 进入锁
-	//void ExitLock();	// 退出锁
 
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
@@ -55,15 +51,13 @@ public:
     virtual ~NRF24L01();
 
     bool Check();
-	bool Config();	// 完成基础参数设定，默认初始化为发送模式
+	bool Config();		// 完成基础参数设定，默认初始化为发送模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
+	bool CheckConfig();
 
 	byte Status;
 	void ShowStatus();
 	bool CanReceive();
-
-    //bool Send(byte* data);
-    //bool Receive(byte* data);
 
 	virtual void Register(TransportHandler handler, void* param = NULL);
 

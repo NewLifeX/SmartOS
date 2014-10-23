@@ -66,7 +66,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
 		_IRQ->ShakeTime = 2;
-        //_IRQ->Register(OnReceive, this);
+        _IRQ->Register(OnIRQ, this);
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
@@ -83,7 +83,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
 
 	//_taskID = 0;
-	_timer = NULL;
+	//_timer = NULL;
 	//_Thread = NULL;
 
 	_Lock = 0;
@@ -282,6 +282,11 @@ bool NRF24L01::Config()
 	return config.PWR_UP;
 }
 
+bool NRF24L01::CheckConfig()
+{
+	return true;
+}
+
 bool NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
@@ -372,14 +377,13 @@ void NRF24L01::OnClose()
 // 从NRF的接收缓冲区中读出数据
 uint NRF24L01::OnRead(byte *data, uint len)
 {
-	// 如果不是异步，等待接收中断
-	//if(!_Received && !WaitForIRQ()) return false;
-
-	//if(!EnterLock()) return false;
 	Lock lock(_Lock);
 	//if(!lock.Wait(10000)) return false;
 	// 如果拿不到锁，马上退出，不等待。因为一般读取是由定时器中断来驱动，等待没有意义。
 	if(!lock.Success) return false;
+
+	// 进入接收模式
+	if(!SetMode(true)) return false;
 
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
@@ -434,8 +438,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	//if(!WaitForIRQ()) return false;
 	// IRQ不可靠，改为轮询寄存器
 	// 这里需要延迟一点时间，发送没有那么快完成
-	ulong us = Time.Current() + Timeout * 1000;
-	while(us > Time.Current())
+	ulong us = 0;
+	do
 	{
 		Status = ReadReg(STATUS);
 		if(Status == 0xFF)
@@ -460,7 +464,9 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			break;
 		}
-	}
+
+		if(!us) us = Time.Current() + Timeout * 1000;
+	}while(us > Time.Current());
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
@@ -494,20 +500,6 @@ void NRF24L01::AddError()
 	}
 }
 
-/*void NRF24L01::CEUp()
-{
-    if(_CE)
-	{
-		*_CE = true;
-		Sys.Delay(20); // 进入发送模式，高电平>10us
-	}
-}*/
-
-/*void NRF24L01::CEDown()
-{
-    if(_CE) *_CE = false;
-}*/
-
 // 注册中断函数  不注册的结果是    有中断 无中断处理代码
 /*void NRF24L01::Register(DataReceived handler, void* param)
 {
@@ -531,19 +523,39 @@ void NRF24L01::OnReceive()
 	// 这里需要调整，检查是否有数据到来，如果有数据到来，则调用外部事件，让外部读取
 	//if(down == false && _IRQ->Read() == false)  // 重新检测是否满足中断要求 低电平
 	if(_Received) _Received(this, _Param);
-}
+}*/
 
 // 引脚中断函数调用此函数  在NRF24L01::NRF24L01()构造函数中注册的是他  而不是上面一个
 // typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
-void NRF24L01::OnReceive(Pin pin, bool down, void* param)
+void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
-	debug_printf("IRQ down=%d\r\n", down);
-	if(!down)
+	//debug_printf("IRQ down=%d\r\n", down);
+	// 必须在down=true才能读取到正确的状态
+	if(down)
 	{
 		NRF24L01* nrf = (NRF24L01*)param;
-		if(nrf) nrf->OnReceive();
+		if(!nrf) return;
+
+		// 读取状态寄存器的值
+		nrf->Status = nrf->ReadReg(STATUS);
+		nrf->ShowStatus();
+
+		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
+		if(nrf->Opened && nrf->_Lock == 0)
+		{
+			byte buf[32];
+			//nrf->SetMode(true);
+			uint len = nrf->Read(buf, ArrayLength(buf));
+			if(len)
+			{
+				len = nrf->OnReceive(buf, len);
+
+				// 如果有返回，说明有数据要回复出去
+				if(len) nrf->Write(buf, len);
+			}
+		}
 	}
-}*/
+}
 
 void NRF24L01::ShowStatus()
 {
@@ -624,11 +636,11 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
-		if(!_timer) _timer = Timer::Create();
+		/*if(!_timer) _timer = Timer::Create();
 
 		_timer->SetFrequency(1000);
 		_timer->Register(ReceiveTask, this);
-		_timer->Start();
+		_timer->Start();*/
 
 		/*if(!_Thread)
 		{
@@ -642,8 +654,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	{
 		//if(_taskID) Sys.RemoveTask(_taskID);
 		//_taskID = 0;
-		if(_timer) delete _timer;
-		_timer = NULL;
+		/*if(_timer) delete _timer;
+		_timer = NULL;*/
 
 		//delete _Thread;
 		//_Thread = NULL;
