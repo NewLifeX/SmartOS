@@ -140,11 +140,12 @@ public:
 	// 射频寄存器0x06
 	typedef struct : ByteStruct
 	{
-		byte LNA_HCURR:1;	// 低噪声放大器增益
-		byte POWER:2;		// 发射功率‘00’ -18dBm‘01’ -12dBm‘10’ -6dBm‘11’ 0dBm
-		byte DR:1;			// 数据传输率‘0’ –1Mbps ‘1’ 2 Mbps
-		byte PLL_LOCK:1;	// PLL_LOCK 允许仅应用于测试模式
-		byte DBM7:1;		// 7dBm。猜测是这个，未确定
+		//byte LNA_HCURR:1;	// 低噪声放大器增益
+		//byte POWER:2;		// 发射功率‘00’ -18dBm‘01’ -12dBm‘10’ -6dBm‘11’ 0dBm
+		byte POWER:3;		// 台产版发射功率‘000’ -12dBm/-6/-4/0/1/3/4  '111' 7dBm
+		byte DR:1;			// 数据传输率‘0’ –1Mbps ‘1’ 2 Mbps。台产版跟DR_HIGH配合
+		byte PLL_LOCK:1;	// PLL_LOCK 允许仅应用于测试模式。台产必须为0
+		byte DR_HIGH:1;		// 射频数据率 [DR, DR_HIGH]: 00：1Mbps 01：2Mbps 10：250kbps 11：保留
 		byte Reserved:2;
 	}RF_SETUP;
 

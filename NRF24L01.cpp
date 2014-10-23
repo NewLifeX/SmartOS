@@ -236,7 +236,7 @@ bool NRF24L01::Config()
 
 	WriteReg(RF_CH, Channel);					// 设置RF通信频率
 	WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	//WriteReg(RF_SETUP, 0x2F);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
+	//WriteReg(RF_SETUP, 0x27);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
 
 	// 设置6个接收端的数据宽度
 	for(int i = 0; i < addrLen; i++)
@@ -316,8 +316,8 @@ bool NRF24L01::SetMode(bool isReceive)
 	PortScope ps(_CE);
 	WriteReg(CONFIG, config.ToByte());
 
-	// 进入发送模式至少等待10us
-	Sys.Delay(10);
+	// 切换模式至少等待130us
+	Sys.Delay(130);
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -406,6 +406,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 			ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
 		}
 	}
+
 	// 清除中断标志
 	WriteReg(STATUS, Status);
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
