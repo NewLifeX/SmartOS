@@ -233,8 +233,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 #if MSG_DEBUG
 	byte* p = ms.Current();
 	// 输出整条信息
-	/*Sys.ShowHex(p, ms.Length, '-');
-	debug_printf("\r\n");*/
+	Sys.ShowHex(p, ms.Length, '-');
+	debug_printf("\r\n");
 #endif
 
 	// 只处理本机消息或广播消息。快速处理，高效。
@@ -254,7 +254,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		{
 			// 处理重复消息。加上来源地址，以免重复
 			ushort seq = (msg.Src << 8) | msg.Sequence;
-			if(!_Ring.Check(seq)) return false;
+			if(_Ring.Check(seq)) return false;
 			_Ring.Push(seq);
 		}
 	}
@@ -274,7 +274,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	else
 		debug_printf("Message Request");
 
-	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum);
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
@@ -432,7 +432,7 @@ void Controller::PreSend(Message& msg)
 	else if(msg.Reply)
 		debug_printf(" Reply");
 
-	debug_printf(" %d => %d Code=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Length, msg.Checksum);
+	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum);
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
@@ -457,15 +457,11 @@ bool Controller::Post(Message& msg, ITransport* port)
 		rs |= _ports[i]->Open();
 	if(!rs) return false;
 
-	// 是否需要响应
-	//msg.Confirm = !msg.Reply && msTimeout > 0 ? 1 : 0;
-	// 不去修正Confirm，由外部决定好了
-
 	PreSend(msg);
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
-	uint len = msg.Length;
+	uint len = MESSAGE_SIZE;
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
 	MemoryStream ms(MESSAGE_SIZE + msg.Length);
@@ -655,7 +651,7 @@ int RingQueue::Find(ushort item)
 bool RingQueue::Check(ushort item)
 {
 	// Expired为0说明还没有添加任何项
-	if(!Expired) return true;
+	if(!Expired) return false;
 
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
 	if(Expired < Time.Current())
@@ -665,7 +661,7 @@ bool RingQueue::Check(ushort item)
 		ArrayZero(Arr);
 		Expired = 0;
 
-		return true;
+		return false;
 	}
 
 	// 再检查是否存在
