@@ -391,9 +391,13 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Ack = 1;
 	msg2.Length = 0;
 
-	debug_printf("发送Ack确认包 Dest=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+	debug_printf("发送Ack确认包 Dest=%d Seq=%d", msg.Src, msg.Sequence);
 
-	Post(msg2, port);
+	int count = Post(msg2, port);
+	if(count > 0)
+		debug_printf(" 成功!\r\n");
+	else
+		debug_printf(" 失败!\r\n");
 }
 
 void Controller::Register(byte code, MessageHandler handler, void* param)
@@ -469,7 +473,7 @@ void Controller::PreSend(Message& msg)
 #endif
 }
 
-bool Controller::Post(Message& msg, ITransport* port)
+int Controller::Post(Message& msg, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	bool rs = false;
@@ -494,18 +498,21 @@ bool Controller::Post(Message& msg, ITransport* port)
 		len = ms.Length;
 	}
 
-	rs = true;
 	if(port)
-		rs = port->Write(buf, len);
-	else
 	{
-		// 发往所有端口
-		i = -1;
-		while(_ports.MoveNext(i))
-			rs &= _ports[i]->Write(buf, len);
+		rs = port->Write(buf, len);
+		return rs ? 1 : 0;
 	}
 
-	return rs;
+	int count = 0;
+	// 发往所有端口
+	i = -1;
+	while(_ports.MoveNext(i))
+	{
+		if(_ports[i]->Write(buf, len)) count++;
+	}
+
+	return count;
 }
 
 void SendTask(void* param)
