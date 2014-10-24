@@ -407,7 +407,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 
 	// 进入Standby
 	CEDown();
-	
+
 	uint rs = 0;
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
@@ -438,7 +438,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ShowStatus();
 
 	CEUp();
-	
+
 	return rs;
 }
 
@@ -455,9 +455,17 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	// 进入Standby，写完数据再进入TX发送
 	CEDown();
+
+	// 发送前清空缓冲区和标识位
+	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
+	// 清除TX_DS或MAX_RT中断标志
+	WriteReg(STATUS, 0x30);
+
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
+
+	// 进入TX，维持一段时间
 	CEUp();
 
 	bool rs = false;
