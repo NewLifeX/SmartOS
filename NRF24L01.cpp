@@ -435,7 +435,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 清除中断标志
 	WriteReg(STATUS, Status);
 	Clear(true);
-	ShowStatus();
+	//ShowStatus();
 
 	CEUp();
 
@@ -448,7 +448,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
-	ShowStatus();
+	//ShowStatus();
 
 	// 进入发送模式
 	if(!SetMode(false)) return false;
@@ -629,7 +629,8 @@ void NRF24L01::ShowStatus()
 	}
 	if(st.TX_DS) debug_printf(" TX_DS 数据发送完成中断");
 	if(st.RX_DR) debug_printf(" RX_DR 接收数据中断");
-	debug_printf("\r\n");
+	//debug_printf("\r\n");
+	debug_printf("\t");
 
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
