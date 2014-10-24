@@ -86,10 +86,6 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	MaxError = 10;
 	Error = 0;
 
-	// 这里不用急着清空寄存器，Config的时候会清空
-    //WriteReg(FLUSH_RX, NOP);   // 清除RX FIFO寄存器
-	//WriteReg(FLUSH_TX, NOP);   // 清除TX FIFO寄存器
-
 	//_taskID = 0;
 	//_timer = NULL;
 	//_Thread = NULL;
@@ -274,9 +270,9 @@ bool NRF24L01::Config()
 	config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	config.PRIM_RX = 1;							// 默认进入接收模式
 
-	config.MAX_RT = 1;
+	/*config.MAX_RT = 1;
 	config.TX_DS = 1;
-	/*config.RX_DR = 1;*/
+	config.RX_DR = 1;*/
 
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
@@ -286,8 +282,8 @@ bool NRF24L01::Config()
 	if(!config.PWR_UP) return false;
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	WriteReg(FLUSH_RX, NOP);					// 清除RX FIFO寄存器
-	WriteReg(FLUSH_TX, NOP);					// 清除TX FIFO寄存器
+	Clear(true);
+	Clear(false);
 
 	CEUp();
 
@@ -305,6 +301,14 @@ bool NRF24L01::CheckConfig()
 	return true;
 }
 
+void NRF24L01::Clear(bool rx)
+{
+	if(rx)
+		WriteReg(FLUSH_RX, NOP);
+	else
+		WriteReg(FLUSH_TX, NOP);
+}
+
 bool NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
@@ -312,11 +316,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	config.Init(mode);
 
 	// 如果本来就是该模式，则不再处理
-	if(!(isReceive ^ config.PRIM_RX))
-	{
-        //WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
-		return true;
-	}
+	if(!(isReceive ^ config.PRIM_RX)) return true;
 
 	// 检查设置
 	/*assert_param(config.PWR_UP);
@@ -329,12 +329,12 @@ bool NRF24L01::SetMode(bool isReceive)
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-        //WriteReg(FLUSH_RX, NOP);	//清除RX FIFO寄存器
+        //Clear(true);
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
-        //WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
+        //Clear(false);
 	}
 	// 必须拉低CE后修改配置，然后再拉高
 	CEDown();
@@ -434,7 +434,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
-	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
+	Clear(true);
 	ShowStatus();
 
 	CEUp();
@@ -457,7 +457,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	CEDown();
 
 	// 发送前清空缓冲区和标识位
-	WriteReg(FLUSH_TX, NOP);	//清除TX FIFO寄存器
+	Clear(false);
 	// 清除TX_DS或MAX_RT中断标志
 	WriteReg(STATUS, 0x30);
 
@@ -492,7 +492,6 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			CEDown();
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
-			//WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
 
 			rs = st.TX_DS;
 
@@ -504,10 +503,11 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		if(!us) us = Time.Current() + Timeout * 1000;
 	}while(us > Time.Current());
 
-	CEDown();
-	WriteReg(FLUSH_TX, NOP);    // 清除TX FIFO寄存器
+	// 这里不要清，IRQ中断里面会清
+	//CEDown();
+	//Clear(false);
 
-	SetMode(true);	// 发送完成以后进入接收模式
+	//SetMode(true);	// 发送完成以后进入接收模式
 
 	return rs;
 }
@@ -547,27 +547,62 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 	NRF24L01* nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
-	nrf->ShowStatus();
-
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	if(nrf->Opened && nrf->_Lock == 0)
+	if(!nrf->Opened || nrf->_Lock != 0) return;
+
+	nrf->OnIRQ();
+}
+
+void NRF24L01::OnIRQ()
+{
+	// 读状态寄存器
+	Status = ReadReg(STATUS);
+	FifoStatus = ReadReg(FIFO_STATUS);
+
+	ShowStatus();
+
+	RF_STATUS st;
+	st.Init(Status);
+	RF_FIFO_STATUS fifo;
+	fifo.Init(FifoStatus);
+
+	// 发送完成或最大重试次数以后进入接收模式
+	if(st.TX_DS || st.MAX_RT)
+	{
+		if(st.MAX_RT) Clear(false);
+		SetMode(true);
+		return;
+	}
+
+	if(st.RX_DR)
 	{
 		byte buf[32];
-		uint len = nrf->Read(buf, ArrayLength(buf));
+		uint len = Read(buf, ArrayLength(buf));
 		if(len)
 		{
-			len = nrf->OnReceive(buf, len);
+			len = OnReceive(buf, len);
 
 			// 如果有返回，说明有数据要回复出去
-			if(len) nrf->Write(buf, len);
+			if(len) Write(buf, len);
 		}
+		return;
+	}
+
+	// TX_FIFO 缓冲区满
+	if(fifo.TX_FULL)
+	{
+		SetMode(false);
+	}
+
+	// RX_FIFO 缓冲区满
+	if(fifo.RX_FULL)
+	{
+		SetMode(true);
 	}
 }
 
 void NRF24L01::ShowStatus()
 {
-	// 读取状态寄存器的值
-	Status = ReadReg(STATUS);
 	RF_STATUS st;
 	st.Init(Status);
 
@@ -597,7 +632,7 @@ void NRF24L01::ShowStatus()
 	debug_printf("\r\n");
 
 	RF_FIFO_STATUS fifo;
-	*(byte*)&fifo = ReadReg(FIFO_STATUS);
+	fifo.Init(FifoStatus);
 
 	debug_printf("NRF24L01::FIFO_STATUS=0x%02x ", *(byte*)&fifo);
 	if(fifo.RX_EMPTY) debug_printf(" RX FIFO 寄存器空");

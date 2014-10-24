@@ -33,6 +33,7 @@ private:
 	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
 	//Thread* _Thread;
 	static void OnIRQ(Pin pin, bool down, void* param);
+	void OnIRQ();
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
 
@@ -57,8 +58,10 @@ public:
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	bool CheckConfig();
+	void Clear(bool rx);
 
 	byte Status;
+	byte FifoStatus;
 	void ShowStatus();
 	bool CanReceive();
 
