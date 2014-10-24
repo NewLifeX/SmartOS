@@ -327,8 +327,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		return true;
 	}
 
-	// 如果是确认消息，及时更新请求队列
-	if(msg.Ack)
+	// 如果是确认消息或响应消息，及时更新请求队列
+	if(msg.Ack || msg.Reply)
 	{
 		AckRequest(msg, port);
 		// 如果只是确认消息，不做处理
