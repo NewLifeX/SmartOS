@@ -5,7 +5,7 @@
 #define RF2401_REG
 #ifdef  RF2401_REG
 /********************************************************************************/
-//NRF24L01寄存器操作命令
+// NRF24L01寄存器操作命令
 #define READ_REG_NRF    0x00  //读配置寄存器,低5位为寄存器地址
 #define WRITE_REG_NRF   0x20  //写配置寄存器,低5位为寄存器地址。只允许Shutdown、Standby、Idle-TX模式下操作
 #define RD_RX_PLOAD     0x61  //读RX有效数据,1~32字节
@@ -13,10 +13,11 @@
 #define FLUSH_TX        0xE1  //清除TX FIFO寄存器.发射模式下用
 #define FLUSH_RX        0xE2  //清除RX FIFO寄存器.接收模式下用
 #define REUSE_TX_PL     0xE3  //重新使用上一包数据,CE为高,数据包被不断发送.
+#define NOP             0xFF  //空操作,可以用来读状态寄存器
+// NRF24L01+有下面三个
 #define RX_PL_WID		0x60  //动态负载时，读取收到的数据字节数
 #define ACK_PAYLOAD		0xA8  //适用于接收方，1010 1PPP 通过PIPE PPP将数据通过ACK的形式发出去，最多允许三帧数据存于FIFO中
-#define TX_PAYLOAD_NOACK 0xB0 //适用于发射模式，使用这个命令需要将AUTOACK位置1
-#define NOP             0xFF  //空操作,可以用来读状态寄存器
+#define TX_NOACK		0xB0  //适用于发射模式，使用这个命令需要将AUTOACK位置1
 /********************************************************************************/
 //SPI(NRF24L01)寄存器地址
 #define CONFIG          0x00  //配置收发状态，CRC校验模式及收发状态响应方式;
@@ -47,6 +48,7 @@
 #define RX_PW_P5        0x16  //接收数据通道5有效数据宽度(1~32字节),设置为0则非法
 #define FIFO_STATUS 	0x17  //FIFO状态寄存器;bit0,RX FIFO寄存器空标志;bit1,RX FIFO满标志;bit2,3,保留
                               //bit4,TX FIFO空标志;bit5,TX FIFO满标志;bit6,1,循环发送上一数据包.0,不循环;
+// NRF24L01+有下面
 #define DYNPD			0x1C  //使能动态负载长度，6个字节表示6个通道的动态负载开关
 #define FEATURE			0x1D  //特征寄存器
 #endif
@@ -58,8 +60,9 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	// 初始化地址
 	memset(Address, 0, 5);
 	memcpy(Address1, (byte*)Sys.ID, 5);
-	for(int i=0; i<4; i++) Address2_5[i] = Address1[0] + i + 1;
+	for(int i=0; i<4; i++) Addr2_5[i] = Address1[0] + i + 1;
 	Channel = 0;	// 默认通道0
+	AddrBits = 0x01;// 默认使能地址0
 
 	_CE = NULL;
     if(ce != P0)
@@ -77,14 +80,17 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     }
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-	Timeout = 50;
-	PayloadWidth = 32;
-	AutoAnswer = true;
-	Retry = 15;
-	RetryPeriod = 500;	// 500us
 
-	MaxError = 10;
-	Error = 0;
+	Timeout		= 50;
+	PayloadWidth= 32;
+	AutoAnswer	= true;
+	Retry		= 15;
+	RetryPeriod	= 500;	// 500us
+	Speed		= 250;
+	RadioPower	= 0xFF;
+
+	MaxError	= 10;
+	Error		= 0;
 
 	//_taskID = 0;
 	//_timer = NULL;
@@ -201,23 +207,50 @@ bool NRF24L01::Config()
 #if DEBUG
 	debug_printf("NRF24L01::Config\r\n");
 
-	debug_printf("    Address: ");
+	debug_printf("    本地地址: ");
 	Sys.ShowHex(Address, 5, '-');
 	debug_printf("\r\n");
-	debug_printf("    Addres1: ");
-	Sys.ShowHex(Address1, 5, '-');
-	debug_printf("\r\n");
-	for(int i=0; i<4; i++)
+	
+	// 根据AddrBits决定相应通道是否打开
+	byte bits = AddrBits >> 1;
+	if(bits & 0x01)
 	{
-		debug_printf("    Addres%d: ", i + 2);
-		Sys.ShowHex(Address2_5 + i, 1, '-');
-		debug_printf("-");
-		Sys.ShowHex(Address1 + 1, 4, '-');
+		debug_printf("    Addres1: ");
+		Sys.ShowHex(Address1, 5, '-');
 		debug_printf("\r\n");
 	}
-	debug_printf("    Channel: %d\r\n", Channel);
-	debug_printf("    AutoAns: %d\r\n", AutoAnswer);
-	debug_printf("    Payload: %d\r\n", PayloadWidth);
+	for(int i=0; i<4; i++)
+	{
+		bits >>= 1;
+		if(bits & 0x01)
+		{
+			debug_printf("    Addres%d: ", i + 2);
+			Sys.ShowHex(Addr2_5 + i, 1, '-');
+			debug_printf("-");
+			Sys.ShowHex(Address1 + 1, 4, '-');
+			debug_printf("\r\n");
+		}
+	}
+	static const short powers[] = {-12, -6, -4, 0, 1, 3, 4, 7};
+	if(RadioPower >= ArrayLength(powers)) RadioPower = ArrayLength(powers) - 1;
+	debug_printf("    射频通道: %d  %dMHz %ddBm\r\n", Channel, 2400 + Channel, powers[RadioPower]);
+	debug_printf("    传输速率: ");
+	if(Speed >= 1000)
+		debug_printf("%dMbps\r\n", Speed/1000);
+	else
+		debug_printf("%dkbps\r\n", Speed);
+	debug_printf("    负载大小: %d字节\r\n", PayloadWidth);
+	debug_printf("    自动应答: %s\r\n", AutoAnswer ? "开" : "关");
+	if(AutoAnswer)
+	{
+		debug_printf("    应答重试: %d次\r\n", Retry);
+		int period = RetryPeriod / 250 - 1;
+		if(period < 0) period = 0;
+		RetryPeriod = (period + 1) * 250;
+		debug_printf("    重试周期: %dus + 86us\r\n", RetryPeriod);
+	}
+	debug_printf("    发送超时: %dms\r\n", Timeout);
+	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
 	CEDown();
@@ -232,13 +265,19 @@ bool NRF24L01::Config()
 	memcpy(addr, Address1, addrLen);
 	for(int i = 0; i < 4; i++)
 	{
-		WriteReg(RX_ADDR_P2 + i, Address2_5[i]);
+		WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
 	}
 
 	// 使能6个接收端的自动应答和接收
-	WriteReg(EN_AA, AutoAnswer ? 0x15 : 0);		// 使能通道0的自动应答
-	WriteReg(EN_RXADDR, 0x15);					// 使能通道0的接收地址
+	WriteReg(EN_AA, AutoAnswer ? AddrBits : 0);	// 使能通道0的自动应答
+	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
 	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
+
+	// 设置6个接收端的数据宽度
+	for(int i = 0; i < addrLen; i++)
+	{
+		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
+	}
 
 	if(AutoAnswer)
 	{
@@ -253,14 +292,20 @@ bool NRF24L01::Config()
 	}
 
 	WriteReg(RF_CH, Channel);					// 设置RF通信频率
-	WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	//WriteReg(RF_SETUP, 0x27);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
-
-	// 设置6个接收端的数据宽度
-	for(int i = 0; i < addrLen; i++)
+	
+	ST_RF_SETUP set;
+	set.Init();
+	set.POWER = RadioPower;
+	switch(Speed)
 	{
-		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
+		case 250: {set.DR = 0; set.DR_LOW = 1; break;}
+		case 1000: {set.DR = 0; set.DR_LOW = 0; break;}
+		case 2000: {set.DR = 1; set.DR_LOW = 0; break;}
 	}
+	
+	WriteReg(RF_SETUP, set.ToByte());
+	//WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
+	//WriteReg(RF_SETUP, 0x27);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
 
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
@@ -290,6 +335,8 @@ bool NRF24L01::Config()
 	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
 	Sys.Delay(1500);
 
+	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
+	
 	// 如果电源还是关闭，则表示2401初始化失败
 	mode = ReadReg(CONFIG);
 	config.Init(mode);

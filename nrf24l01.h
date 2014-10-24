@@ -41,13 +41,17 @@ public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
 	byte Address[5];	// 通道0地址
 	byte Address1[5];	// 通道1地址
-	byte Address2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
+	byte Addr2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
+	byte AddrBits;		// 使能通道标识位。默认0x01使能地址0
 
-	uint Timeout;		// 超时时间ms
 	byte PayloadWidth;	// 负载数据宽度，默认32字节
 	bool AutoAnswer;	// 自动应答，默认启用
 	byte Retry;			// 重试次数，最大15次
 	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
+	ushort Speed;		// 射频数据率，单位kbps，默认250kbps，可选1000kbps/2000kbps，速度越低传输越远
+	byte RadioPower;	// 发射功率。共8档，最高0x07代表7dBm最大功率
+	
+	uint Timeout;		// 超时时间ms
 	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
 
@@ -153,7 +157,7 @@ public:
 		byte PLL_LOCK:1;	// PLL_LOCK 允许仅应用于测试模式。台产必须为0
 		byte DR_LOW:1;		// 射频数据率 [DR_LOW, DR]: 00：1Mbps 01：2Mbps 10：250kbps 11：保留
 		byte Reserved:2;
-	}RF_SETUP;
+	}ST_RF_SETUP;
 
 	// 状态寄存器0x07
 	typedef struct : ByteStruct
