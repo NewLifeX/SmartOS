@@ -117,14 +117,10 @@ NRF24L01::~NRF24L01()
 byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 {
 	SpiScope sc(_spi);
-	// 进入Standby，写完数据再进入TX发送
-	CEDown();
 
 	byte status = _spi->Write(WRITE_REG_NRF | reg);
 	for(byte i=0; i<bytes; i++)
 		_spi->Write(*buf++);
-
-	CEUp();
 
   	return status;
 }
@@ -133,13 +129,10 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
 	SpiScope sc(_spi);
-	CEDown();
 
 	byte status = _spi->Write(reg);
 	for(byte i=0; i<bytes; i++)
 		buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
-
-	CEUp();
 
  	return status;
 }
@@ -412,6 +405,9 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 进入接收模式
 	if(!SetMode(true)) return false;
 
+	// 进入Standby
+	CEDown();
+	
 	uint rs = 0;
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
@@ -436,12 +432,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 		}
 	}
 
-	CEDown();
 	// 清除中断标志
 	WriteReg(STATUS, Status);
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
 	ShowStatus();
 
+	CEUp();
+	
 	return rs;
 }
 
@@ -456,9 +453,12 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 进入发送模式
 	if(!SetMode(false)) return false;
 
+	// 进入Standby，写完数据再进入TX发送
+	CEDown();
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
+	CEUp();
 
 	bool rs = false;
 	// 等待发送完成中断
