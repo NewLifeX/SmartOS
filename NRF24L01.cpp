@@ -117,10 +117,14 @@ NRF24L01::~NRF24L01()
 byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 {
 	SpiScope sc(_spi);
+	// 进入Standby，写完数据再进入TX发送
+	CEDown();
 
 	byte status = _spi->Write(WRITE_REG_NRF | reg);
 	for(byte i=0; i<bytes; i++)
 		_spi->Write(*buf++);
+
+	CEUp();
 
   	return status;
 }
@@ -129,10 +133,13 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
 	SpiScope sc(_spi);
+	CEDown();
 
 	byte status = _spi->Write(reg);
 	for(byte i=0; i<bytes; i++)
 		buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
+
+	CEUp();
 
  	return status;
 }
@@ -244,10 +251,17 @@ bool NRF24L01::Config()
 	WriteReg(EN_RXADDR, 0x15);					// 使能通道0的接收地址
 	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
 
-	//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-	int period = RetryPeriod / 250 - 1;
-	if(period < 0) period = 0;
-	WriteReg(SETUP_RETR, (period << 4) | Retry);
+	if(AutoAnswer)
+	{
+		//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+		int period = RetryPeriod / 250 - 1;
+		if(period < 0) period = 0;
+		WriteReg(SETUP_RETR, (period << 4) | Retry);
+	}
+	else
+	{
+		WriteReg(SETUP_RETR, 0);
+	}
 
 	WriteReg(RF_CH, Channel);					// 设置RF通信频率
 	WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
@@ -422,6 +436,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 		}
 	}
 
+	CEDown();
 	// 清除中断标志
 	WriteReg(STATUS, Status);
 	WriteReg(FLUSH_RX, NOP);          // 清除RX FIFO寄存器
