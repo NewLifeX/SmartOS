@@ -285,7 +285,7 @@ bool NRF24L01::Config()
 	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
-	//ShowStatus();
+	ShowStatus();
 	SetPower(false);
 	CEDown();
 
@@ -534,6 +534,7 @@ void ShowStatusTask(void* param)
 {
 	NRF24L01* nrf = (NRF24L01*)param;
 
+	debug_printf("定时 ");
 	nrf->ShowStatus();
 	//nrf->CheckConfig();
 }
@@ -583,9 +584,6 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	// 进入接收模式
 	if(!SetMode(true)) return false;
 
-	// 进入Standby
-	CEDown();
-
 	uint rs = 0;
 	// 读取status寄存器的值
 	Status = ReadReg(STATUS);
@@ -610,8 +608,11 @@ uint NRF24L01::OnRead(byte *data, uint len)
 		}
 	}
 
+	// 进入Standby
+	CEDown();
+
 	// 清除中断标志
-	WriteReg(STATUS, Status);
+	ClearStatus(false, true);
 	ClearFIFO(true);
 	//ShowStatus();
 
@@ -761,21 +762,17 @@ void NRF24L01::OnIRQ()
 	}
 
 	// RX_FIFO 缓冲区满
-	if(fifo.RX_FULL)
+	/*if(fifo.RX_FULL)
 	{
 		PortScope ps(_CE, false);
 		ClearFIFO(true);
 		ClearStatus(false, true);
 		//SetMode(true);
-	}
-	/*if(fifo.TX_FULL || fifo.RX_FULL)
-	{
-		PortScope ps(_CE, false);
-		ClearStatus(fifo.TX_FULL, fifo.RX_FULL);
 	}*/
 
 	if(st.RX_DR)
 	{
+	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 		byte buf[32];
 		uint len = Read(buf, ArrayLength(buf));
 		if(len)
@@ -800,15 +797,12 @@ void NRF24L01::ShowStatus()
 	RF_STATUS st;
 	st.Init(Status);
 
-	debug_printf("NRF24L01::Status=0x%02x ", Status);
+	debug_printf("Status=0x%02x ", Status);
 	if(st.TX_FULL) debug_printf(" TX_FULL TX FIFO寄存器满标志");
 	if(st.RX_P_NO != 6)
 	{
-		byte mode = ReadReg(CONFIG);
-		RF_CONFIG config;
-		config.Init(mode);
 		// 只有接收模式才处理
-		if(config.PRIM_RX)
+		if(GetMode())
 		{
 			if(st.RX_P_NO == 7)
 				debug_printf(" RX_P_NO RX FIFO寄存器为空");
@@ -819,17 +813,17 @@ void NRF24L01::ShowStatus()
 	if(st.MAX_RT)
 	{
 		byte retr = ReadReg(SETUP_RETR);
-		debug_printf(" MAX_RT 达到最多次重发次数%d 延迟%dus", retr & 0x0F, ((retr >> 4) + 1) * 250);
+		debug_printf(" MAX_RT 达到最大重发次数%d 延迟%dus", retr & 0x0F, ((retr >> 4) + 1) * 250);
 	}
-	if(st.TX_DS) debug_printf(" TX_DS 数据发送完成中断");
-	if(st.RX_DR) debug_printf(" RX_DR 接收数据中断");
+	if(st.TX_DS) debug_printf(" TX_DS 发送完成");
+	if(st.RX_DR) debug_printf(" RX_DR 接收数据");
 	//debug_printf("\r\n");
 	debug_printf("\t");
 
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
 
-	debug_printf("NRF24L01::FIFO_STATUS=0x%02x ", *(byte*)&fifo);
+	debug_printf("FIFO_STATUS=0x%02x ", *(byte*)&fifo);
 	if(fifo.RX_EMPTY) debug_printf(" RX FIFO 寄存器空");
 	if(fifo.RX_FULL)  debug_printf(" RX FIFO 寄存器满");
 	if(fifo.TX_EMPTY) debug_printf(" TX FIFO 寄存器空");
