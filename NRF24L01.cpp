@@ -185,10 +185,10 @@ byte NRF24L01::ReadReg(byte reg)
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
 #if DEBUG
-	if(_CE && _CE->Read())
+	/*if(_CE && _CE->Read())
 	{
 		debug_printf("NRF24L01::WriteReg 只允许Shutdown、Standby、Idle-TX模式下操作\r\n");
-	}
+	}*/
 #endif
 	SpiScope sc(_spi);
 
