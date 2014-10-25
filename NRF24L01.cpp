@@ -285,39 +285,10 @@ bool NRF24L01::Config()
 	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
+	SetPower(false);
 	CEDown();
 
-	uint addrLen = ArrayLength(Address);
-
-	WriteBuf(TX_ADDR, Address, addrLen);
-	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
-	bits = AddrBits >> 1;
-	if(bits & 0x01)
-	{
-		WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
-	}
-	// 写其它4个接收端的地址
-	byte addr[ArrayLength(Address1)];
-	memcpy(addr, Address1, addrLen);
-	for(int i = 0; i < 4; i++)
-	{
-		bits >>= 1;
-		if(bits & 0x01)
-		{
-			WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
-		}
-	}
-
-	// 使能6个接收端的自动应答和接收
-	WriteReg(EN_AA, AutoAnswer ? AddrBits : 0);	// 使能通道0的自动应答
-	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
-	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
-
-	// 设置6个接收端的数据宽度
-	for(int i = 0; i < addrLen; i++)
-	{
-		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
-	}
+	SetAddress(true);
 
 	if(AutoAnswer)
 	{
@@ -506,6 +477,45 @@ bool NRF24L01::SetMode(bool isReceive)
 	}
 
 	return true;
+}
+
+// 设置地址。参数指定是否设置0通道地址以外的完整地址
+void NRF24L01::SetAddress(bool full)
+{
+	uint addrLen = ArrayLength(Address);
+
+	WriteBuf(TX_ADDR, Address, addrLen);
+	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
+	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
+
+	if(!full) return;
+
+	byte bits = AddrBits >> 1;
+	if(bits & 0x01)
+	{
+		WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
+	}
+	// 写其它4个接收端的地址
+	byte addr[ArrayLength(Address1)];
+	memcpy(addr, Address1, addrLen);
+	for(int i = 0; i < 4; i++)
+	{
+		bits >>= 1;
+		if(bits & 0x01)
+		{
+			WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
+		}
+	}
+
+	// 使能6个接收端的自动应答和接收
+	WriteReg(EN_AA, AutoAnswer ? AddrBits : 0);	// 使能通道0的自动应答
+	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
+
+	// 设置6个接收端的数据宽度
+	for(int i = 0; i < addrLen; i++)
+	{
+		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
+	}
 }
 
 void ShowStatusTask(void* param)

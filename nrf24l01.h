@@ -64,6 +64,7 @@ public:
 	bool SetPower(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
+	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
 	bool CheckConfig();
 	void Clear(bool rx);
 
