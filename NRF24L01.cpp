@@ -557,7 +557,7 @@ bool NRF24L01::OnOpen()
 	// 如果有注册事件，则启用接收任务
 	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
-	Sys.AddTask(ShowStatusTask, this, 1000000, 1000000);
+	Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 
 	return true;
 }
@@ -716,7 +716,7 @@ void NRF24L01::AddError()
 
 void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
-	debug_printf("IRQ down=%d\r\n", down);
+	//debug_printf("IRQ down=%d\r\n", down);
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;
 
@@ -754,14 +754,25 @@ void NRF24L01::OnIRQ()
 	// TX_FIFO 缓冲区满
 	if(fifo.TX_FULL)
 	{
-		SetMode(false);
+		PortScope ps(_CE, false);
+		ClearFIFO(false);
+		ClearStatus(true, false);
+		//SetMode(false);
 	}
 
 	// RX_FIFO 缓冲区满
 	if(fifo.RX_FULL)
 	{
-		SetMode(true);
+		PortScope ps(_CE, false);
+		ClearFIFO(true);
+		ClearStatus(false, true);
+		//SetMode(true);
 	}
+	/*if(fifo.TX_FULL || fifo.RX_FULL)
+	{
+		PortScope ps(_CE, false);
+		ClearStatus(fifo.TX_FULL, fifo.RX_FULL);
+	}*/
 
 	if(st.RX_DR)
 	{
