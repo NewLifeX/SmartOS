@@ -60,6 +60,9 @@ public:
 
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
+	bool GetPower();	// 获取当前电源状态
+	bool SetPower(bool on);	// 设置当前电源状态。返回是否成功
+	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	bool CheckConfig();
 	void Clear(bool rx);

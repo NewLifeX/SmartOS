@@ -8,13 +8,24 @@
 // NRF24L01寄存器操作命令
 #define READ_REG_NRF    0x00  //读配置寄存器,低5位为寄存器地址
 #define WRITE_REG_NRF   0x20  //写配置寄存器,低5位为寄存器地址。只允许Shutdown、Standby、Idle-TX模式下操作
-#define RD_RX_PLOAD     0x61  //读RX有效数据,1~32字节
+#define RD_RX_PLOAD     0x61  //读RX有效数据,1~32字节。接收模式中使用。从第0字节开始读，读完后数据从缓冲区中删除
 #define WR_TX_PLOAD     0xA0  //写TX有效数据,1~32字节
-#define FLUSH_TX        0xE1  //清除TX FIFO寄存器.发射模式下用
-#define FLUSH_RX        0xE2  //清除RX FIFO寄存器.接收模式下用
-#define REUSE_TX_PL     0xE3  //重新使用上一包数据,CE为高,数据包被不断发送.
+#define FLUSH_TX        0xE1  //清除TX FIFO寄存器。发射模式下用
+#define FLUSH_RX        0xE2  //清除RX FIFO寄存器。接收模式下用。如果在发送应答期间执行，数据应答将不能完成。
+#define REUSE_TX_PL     0xE3  //使发送设备重复使用最后传输的数据。数据包将重复发送直到CE为低。
+							  //TX PAYLOAD一直有效，直到执行W_TX_PAYLOAD或FLUSH_TX。
+							  //在数据传输期间不能使能或禁止TX PAYLOAD REUSE功能。
 #define NOP             0xFF  //空操作,可以用来读状态寄存器
 // NRF24L01+有下面三个
+#define ACTIVATE		0x00  //这个命令后跟随数据0x73激活以下功能：
+							  //R_RX_PL_WID
+							  //W_ACK_PAYLOAD
+							  //W_TX_PAYLOAD_NOACK
+							  //一个新的ACTIVATE命令跟随相同的数据将禁止这些功能。这个命令仅仅可以在掉电模式和省电模式下执行。
+							  //R_RX_PL_WID,W_ACK_PAYLOAD和W_TX_PAYLOAD_NOACK功能寄存器初始状态是不可用的，写命令不起作用，读命令只能读到数据0
+							  //（理解是数据可以写入寄存器，但是在没激活这项功能之前程序的设置不起作用）。
+							  //用ACTIVATE命令后跟随数据0x73来使能这些寄存器。这个时候它们就可以像nRF24L01的其他寄存器那样访问了。
+							  //再一次用相同的命令和数据可以禁止这些功能。
 #define RX_PL_WID		0x60  //动态负载时，读取收到的数据字节数
 #define ACK_PAYLOAD		0xA8  //适用于接收方，1010 1PPP 通过PIPE PPP将数据通过ACK的形式发出去，最多允许三帧数据存于FIFO中
 #define TX_NOACK		0xB0  //适用于发射模式，使用这个命令需要将AUTOACK位置1
@@ -75,7 +86,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
     {
         // 中断引脚初始化
         _IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
-		_IRQ->ShakeTime = 2;
+		//_IRQ->ShakeTime = 2;
         _IRQ->Register(OnIRQ, this);
     }
     // 必须先赋值，后面WriteReg需要用到
@@ -130,6 +141,10 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 // 向NRF的寄存器中写入一串数据
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
+#if DEBUG
+	if(!GetMode())
+		debug_printf("NRF24L01::ReadBuf 只能接收模式下用。\r\n");
+#endif
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(reg);
@@ -210,7 +225,7 @@ bool NRF24L01::Config()
 	debug_printf("    本地地址: ");
 	Sys.ShowHex(Address, 5, '-');
 	debug_printf("\r\n");
-	
+
 	// 根据AddrBits决定相应通道是否打开
 	byte bits = AddrBits >> 1;
 	if(bits & 0x01)
@@ -259,13 +274,21 @@ bool NRF24L01::Config()
 
 	WriteBuf(TX_ADDR, Address, addrLen);
 	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
-	WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
+	bits = AddrBits >> 1;
+	if(bits & 0x01)
+	{
+		WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
+	}
 	// 写其它4个接收端的地址
 	byte addr[ArrayLength(Address1)];
 	memcpy(addr, Address1, addrLen);
 	for(int i = 0; i < 4; i++)
 	{
-		WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
+		bits >>= 1;
+		if(bits & 0x01)
+		{
+			WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
+		}
 	}
 
 	// 使能6个接收端的自动应答和接收
@@ -292,7 +315,7 @@ bool NRF24L01::Config()
 	}
 
 	WriteReg(RF_CH, Channel);					// 设置RF通信频率
-	
+
 	ST_RF_SETUP set;
 	set.Init();
 	set.POWER = RadioPower;
@@ -302,7 +325,7 @@ bool NRF24L01::Config()
 		case 1000: {set.DR = 0; set.DR_LOW = 0; break;}
 		case 2000: {set.DR = 1; set.DR_LOW = 0; break;}
 	}
-	
+
 	WriteReg(RF_SETUP, set.ToByte());
 	//WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
 	//WriteReg(RF_SETUP, 0x27);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
@@ -321,10 +344,8 @@ bool NRF24L01::Config()
 
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
-	mode = ReadReg(CONFIG);
-	//assert_param(mode == config.ToByte());
-	// 如果电源还是关闭，则表示2401初始化失败
-	if(!config.PWR_UP) return false;
+
+	if(!SetPower(true)) return false;
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
 	Clear(true);
@@ -332,28 +353,92 @@ bool NRF24L01::Config()
 
 	CEUp();
 
-	// nRF24L01 在掉电模式下转入发射模式或接收模式前必须经过1.5ms 的待机模式
-	Sys.Delay(1500);
-
 	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
-	
-	// 如果电源还是关闭，则表示2401初始化失败
-	mode = ReadReg(CONFIG);
-	config.Init(mode);
-	return config.PWR_UP;
+	CheckConfig();
+
+	return true;
 }
 
 bool NRF24L01::CheckConfig()
 {
+	for(int i=0; i<0x20; i++)
+	{
+		byte dat = ReadReg(i);
+		debug_printf("Reg 0x%02x = 0x%02x\r\n", i, dat);
+	}
+
 	return true;
 }
 
 void NRF24L01::Clear(bool rx)
 {
+#if DEBUG
+	if(rx)
+	{
+		if(!GetMode()) debug_printf("NRF24L01::Clear 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
+	}
+	else
+	{
+		if(GetMode()) debug_printf("NRF24L01::Clear 清空TX缓冲区只能发送模式下用。\r\n");
+	}
+#endif
 	if(rx)
 		WriteReg(FLUSH_RX, NOP);
 	else
 		WriteReg(FLUSH_TX, NOP);
+}
+
+// 获取当前电源状态
+bool NRF24L01::GetPower()
+{
+	byte mode = ReadReg(CONFIG);
+	RF_CONFIG config;
+	config.Init(mode);
+
+	return config.PWR_UP;
+}
+
+// 获取/设置当前电源状态
+bool NRF24L01::SetPower(bool on)
+{
+	byte mode = ReadReg(CONFIG);
+	RF_CONFIG config;
+	config.Init(mode);
+
+	if(!(on ^ config.PWR_UP)) return true;
+
+	config.PWR_UP = on ? 1 : 0;
+
+	{
+		// 故意缩进，为了让ps提前析构，拉高CE
+		//PortScope ps(_CE, false);
+		WriteReg(CONFIG, config.ToByte());
+	}
+	if(on)
+	{
+		// 如果是上电，需要等待1.5~2ms
+		Sys.Delay(2000);
+
+		// 再次检查是否打开了电源
+		config.Init(ReadReg(CONFIG));
+		if(!config.PWR_UP)
+		{
+			debug_printf("NRF24L01::SetPower 无法打开电源！\r\n");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+// 获取当前模式是否接收模式
+bool NRF24L01::GetMode()
+{
+	byte mode = ReadReg(CONFIG);
+	RF_CONFIG config;
+	config.Init(mode);
+
+	return config.PRIM_RX;
 }
 
 bool NRF24L01::SetMode(bool isReceive)
@@ -377,11 +462,13 @@ bool NRF24L01::SetMode(bool isReceive)
 	{
 		config.PRIM_RX = 1;
         //Clear(true);
+		debug_printf("NRF24L01::SetMode =>RX\r\n");
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
         //Clear(false);
+		debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
 	// 必须拉低CE后修改配置，然后再拉高
 	CEDown();
@@ -397,7 +484,15 @@ bool NRF24L01::SetMode(bool isReceive)
 		Close();
 		return false;
 	}
+
 	return true;
+}
+
+void ShowStatusTask(void* param)
+{
+	NRF24L01* nrf = (NRF24L01*)param;
+	nrf->ShowStatus();
+	nrf->CheckConfig();
 }
 
 bool NRF24L01::OnOpen()
@@ -419,6 +514,7 @@ bool NRF24L01::OnOpen()
 	// 如果有注册事件，则启用接收任务
 	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
+	Sys.AddTask(ShowStatusTask, this, 1000000, 1000000);
 
 	return true;
 }
@@ -521,14 +617,14 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// IRQ不可靠，改为轮询寄存器
 	// 这里需要延迟一点时间，发送没有那么快完成
 	ulong us = 0;
-	do
-	{
+	//do
+	//{
 		Status = ReadReg(STATUS);
 		if(Status == 0xFF)
 		{
 			AddError();
 			// 这里不能直接跳出函数，即使发送失败，也要在后面进入接收模式
-			break;
+			//break;
 		}
 
 		RF_STATUS st;
@@ -544,17 +640,17 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			if(!st.TX_DS && st.MAX_RT) AddError();
 
-			break;
+			//break;
 		}
 
 		if(!us) us = Time.Current() + Timeout * 1000;
-	}while(us > Time.Current());
+	//}while(us > Time.Current());
 
 	// 这里不要清，IRQ中断里面会清
 	//CEDown();
 	//Clear(false);
 
-	//SetMode(true);	// 发送完成以后进入接收模式
+	SetMode(true);	// 发送完成以后进入接收模式
 
 	return rs;
 }
@@ -587,7 +683,7 @@ void NRF24L01::AddError()
 
 void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
-	//debug_printf("IRQ down=%d\r\n", down);
+	debug_printf("IRQ down=%d\r\n", down);
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;
 
@@ -595,7 +691,7 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 	if(!nrf) return;
 
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	if(!nrf->Opened || nrf->_Lock != 0) return;
+	//if(!nrf->Opened || nrf->_Lock != 0) return;
 
 	nrf->OnIRQ();
 }
