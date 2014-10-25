@@ -285,6 +285,7 @@ bool NRF24L01::Config()
 	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
+	ShowStatus();
 	SetPower(false);
 	CEDown();
 
@@ -333,16 +334,17 @@ bool NRF24L01::Config()
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
 
+	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
+	Clear(true);
+	Clear(false);
+	// 清除中断标志
+	WriteReg(STATUS, 0xFF);
+
 	if(!SetPower(true)) return false;
 
 	CEUp();
 
-	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	//Clear(true);
-	//Clear(false);
-
 	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
-	//CheckConfig();
 	ShowStatus();
 
 	return true;
