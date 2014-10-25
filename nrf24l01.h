@@ -66,7 +66,8 @@ public:
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
 	bool CheckConfig();
-	void Clear(bool rx);
+	void ClearFIFO(bool rx);
+	void ClearStatus(bool tx, bool rx);
 
 	byte Status;
 	byte FifoStatus;

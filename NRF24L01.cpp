@@ -285,7 +285,7 @@ bool NRF24L01::Config()
 	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
-	ShowStatus();
+	//ShowStatus();
 	SetPower(false);
 	CEDown();
 
@@ -335,10 +335,10 @@ bool NRF24L01::Config()
 	WriteReg(CONFIG, mode);
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	Clear(true);
-	Clear(false);
+	ClearFIFO(true);
+	ClearFIFO(false);
 	// 清除中断标志
-	WriteReg(STATUS, 0xFF);
+	ClearStatus(true, true);
 
 	if(!SetPower(true)) return false;
 
@@ -361,22 +361,30 @@ bool NRF24L01::CheckConfig()
 	return true;
 }
 
-void NRF24L01::Clear(bool rx)
+void NRF24L01::ClearFIFO(bool rx)
 {
 #if DEBUG
 	if(rx)
 	{
-		if(!GetMode()) debug_printf("NRF24L01::Clear 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
+		if(!GetMode()) debug_printf("NRF24L01::ClearFIFO 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
 	}
 	else
 	{
-		if(GetMode()) debug_printf("NRF24L01::Clear 清空TX缓冲区只能发送模式下用。\r\n");
+		if(GetMode()) debug_printf("NRF24L01::ClearFIFO 清空TX缓冲区只能发送模式下用。\r\n");
 	}
 #endif
 	if(rx)
 		WriteReg(FLUSH_RX, NOP);
 	else
 		WriteReg(FLUSH_TX, NOP);
+}
+
+void NRF24L01::ClearStatus(bool tx, bool rx)
+{
+	// 发送标识位 TX_DS/MAX_RT
+	if(tx) WriteReg(STATUS, 0x30);
+	// 接收标识位 RX_DR
+	if(rx) WriteReg(STATUS, 0x40);
 }
 
 // 获取当前电源状态
@@ -450,21 +458,23 @@ bool NRF24L01::SetMode(bool isReceive)
 	// 如果电源关闭，则重新打开电源
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
+	// 必须拉低CE后修改配置，然后再拉高
+	CEDown();
 	// 不能随便清空FIFO寄存器，否则收到的数据都被清掉了
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-        //Clear(true);
+        //ClearFIFO(true);
+		ClearStatus(false, true);
 		//debug_printf("NRF24L01::SetMode =>RX\r\n");
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
-        //Clear(false);
+        //ClearFIFO(false);
+		ClearStatus(true, false);
 		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
-	// 必须拉低CE后修改配置，然后再拉高
-	CEDown();
 	WriteReg(CONFIG, config.ToByte());
 	CEUp();
 
@@ -602,7 +612,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 
 	// 清除中断标志
 	WriteReg(STATUS, Status);
-	Clear(true);
+	ClearFIFO(true);
 	//ShowStatus();
 
 	CEUp();
@@ -625,9 +635,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	CEDown();
 
 	// 发送前清空缓冲区和标识位
-	Clear(false);
-	// 清除TX_DS或MAX_RT中断标志
-	WriteReg(STATUS, 0x30);
+	ClearFIFO(false);
 
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
@@ -673,7 +681,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	// 这里不要清，IRQ中断里面会清
 	//CEDown();
-	//Clear(false);
+	//ClearFIFO(false);
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
@@ -737,9 +745,22 @@ void NRF24L01::OnIRQ()
 	// 发送完成或最大重试次数以后进入接收模式
 	if(st.TX_DS || st.MAX_RT)
 	{
-		if(st.MAX_RT) Clear(false);
+		// 达到最大重试次数以后，需要清空TX缓冲区
+		if(st.MAX_RT) ClearFIFO(false);
 		SetMode(true);
-		return;
+		//return;
+	}
+
+	// TX_FIFO 缓冲区满
+	if(fifo.TX_FULL)
+	{
+		SetMode(false);
+	}
+
+	// RX_FIFO 缓冲区满
+	if(fifo.RX_FULL)
+	{
+		SetMode(true);
 	}
 
 	if(st.RX_DR)
@@ -754,18 +775,6 @@ void NRF24L01::OnIRQ()
 			if(len) Write(buf, len);
 		}
 		return;
-	}
-
-	// TX_FIFO 缓冲区满
-	if(fifo.TX_FULL)
-	{
-		SetMode(false);
-	}
-
-	// RX_FIFO 缓冲区满
-	if(fifo.RX_FULL)
-	{
-		SetMode(true);
 	}
 }
 
