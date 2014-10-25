@@ -112,8 +112,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
 	// 芯片上电延迟100ms
-	/*ulong end = Sys.StartTime + 100000;
-	while(end < Time.Current()) Sys.Sleep(10);*/
+	ulong end = Sys.StartTime + 100000;
+	while(end < Time.Current()) Sys.Sleep(10);
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
@@ -725,6 +725,7 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	//if(!nrf->Opened || nrf->_Lock != 0) return;
+	if(!nrf->Opened) return;
 
 	nrf->OnIRQ();
 }
@@ -735,12 +736,12 @@ void NRF24L01::OnIRQ()
 	Status = ReadReg(STATUS);
 	FifoStatus = ReadReg(FIFO_STATUS);
 
-	ShowStatus();
-
 	RF_STATUS st;
 	st.Init(Status);
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
+
+	//if(!st.TX_DS) ShowStatus();
 
 	// 发送完成或最大重试次数以后进入接收模式
 	if(st.TX_DS || st.MAX_RT)
@@ -748,7 +749,6 @@ void NRF24L01::OnIRQ()
 		// 达到最大重试次数以后，需要清空TX缓冲区
 		if(st.MAX_RT) ClearFIFO(false);
 		SetMode(true);
-		//return;
 	}
 
 	// TX_FIFO 缓冲区满
