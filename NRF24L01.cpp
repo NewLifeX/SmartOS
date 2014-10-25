@@ -537,6 +537,10 @@ void ShowStatusTask(void* param)
 	debug_printf("定时 ");
 	nrf->ShowStatus();
 	//nrf->CheckConfig();
+	
+	// 可以定时做一些事情，方便调试
+	//nrf->ClearStatus(false, true);
+	nrf->ClearFIFO(true);
 }
 
 bool NRF24L01::OnOpen()
@@ -717,13 +721,13 @@ void NRF24L01::AddError()
 
 void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 {
-	//debug_printf("IRQ down=%d\r\n", down);
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;
 
 	NRF24L01* nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
+	debug_printf("IRQ down=%d\r\n", down);
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	//if(!nrf->Opened || nrf->_Lock != 0) return;
 	if(!nrf->Opened) return;
@@ -742,7 +746,7 @@ void NRF24L01::OnIRQ()
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
 
-	//if(!st.TX_DS) ShowStatus();
+	//ShowStatus();
 
 	// 发送完成或最大重试次数以后进入接收模式
 	if(st.TX_DS || st.MAX_RT)
@@ -775,6 +779,7 @@ void NRF24L01::OnIRQ()
 	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 		byte buf[32];
 		uint len = Read(buf, ArrayLength(buf));
+		ClearStatus(false, true);
 		if(len)
 		{
 			len = OnReceive(buf, len);
