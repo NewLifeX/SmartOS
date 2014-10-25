@@ -108,6 +108,20 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	//_Thread = NULL;
 
 	_Lock = 0;
+
+	// 需要先打开SPI，否则后面可能不能及时得到读数
+	_spi->Open();
+	// 芯片上电延迟100ms
+	/*ulong end = Sys.StartTime + 100000;
+	while(end < Time.Current()) Sys.Sleep(10);*/
+
+	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
+	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
+	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
+	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
+	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
+	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
+	SetPower(false);
 }
 
 NRF24L01::~NRF24L01()
@@ -124,6 +138,9 @@ NRF24L01::~NRF24L01()
 
 	//if(_taskID) Sys.RemoveTask(_taskID);
 	Register(NULL);
+
+	// 关闭电源
+	SetPower(false);
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -333,7 +350,7 @@ bool NRF24L01::Config()
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
 	config.Init();
-	config.PWR_UP = 1;							// 1:上电 0:掉电
+	//config.PWR_UP = 1;							// 1:上电 0:掉电
 	config.CRCO = 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 	config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	config.PRIM_RX = 1;							// 默认进入接收模式
@@ -347,14 +364,15 @@ bool NRF24L01::Config()
 
 	if(!SetPower(true)) return false;
 
-	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	Clear(true);
-	Clear(false);
-
 	CEUp();
 
+	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
+	//Clear(true);
+	//Clear(false);
+
 	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
-	CheckConfig();
+	//CheckConfig();
+	ShowStatus();
 
 	return true;
 }
@@ -406,6 +424,8 @@ bool NRF24L01::SetPower(bool on)
 	config.Init(mode);
 
 	if(!(on ^ config.PWR_UP)) return true;
+
+	debug_printf("NRF24L01::SetPower %s电源\r\n", on ? "打开" : "关闭");
 
 	config.PWR_UP = on ? 1 : 0;
 
@@ -462,13 +482,13 @@ bool NRF24L01::SetMode(bool isReceive)
 	{
 		config.PRIM_RX = 1;
         //Clear(true);
-		debug_printf("NRF24L01::SetMode =>RX\r\n");
+		//debug_printf("NRF24L01::SetMode =>RX\r\n");
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
         //Clear(false);
-		debug_printf("NRF24L01::SetMode =>TX\r\n");
+		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
 	// 必须拉低CE后修改配置，然后再拉高
 	CEDown();
@@ -491,8 +511,9 @@ bool NRF24L01::SetMode(bool isReceive)
 void ShowStatusTask(void* param)
 {
 	NRF24L01* nrf = (NRF24L01*)param;
+
 	nrf->ShowStatus();
-	nrf->CheckConfig();
+	//nrf->CheckConfig();
 }
 
 bool NRF24L01::OnOpen()
@@ -521,15 +542,7 @@ bool NRF24L01::OnOpen()
 
 void NRF24L01::OnClose()
 {
-	byte mode = ReadReg(CONFIG);
-	RF_CONFIG config;
-	config.Init(mode);
-
-	// 关闭电源
-	config.PWR_UP = 0;
-
-	CEDown();
-	WriteReg(CONFIG, config.ToByte());
+	SetPower(false);
 
 	_spi->Close();
 
@@ -746,6 +759,12 @@ void NRF24L01::OnIRQ()
 
 void NRF24L01::ShowStatus()
 {
+#if DEBUG
+	// 读状态寄存器
+	Status = ReadReg(STATUS);
+	FifoStatus = ReadReg(FIFO_STATUS);
+#endif
+
 	RF_STATUS st;
 	st.Init(Status);
 
