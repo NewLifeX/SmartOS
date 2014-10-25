@@ -498,20 +498,23 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 
 	// 默认20us抖动时间
 	uint shakeTime = state->ShakeTime;
-	if(shakeTime == 0) shakeTime = 20;
+	//if(shakeTime == 0) shakeTime = 20;
 
 	do {
 		//value = TIO_Read(state->Pin); // 获取引脚状态
 		EXTI->PR = bit;   // 重置挂起位
 		value = InputPort::Read(state->Pin); // 获取引脚状态
-		// 值必须有变动才触发
-		if(value == state->OldValue) return;
+		if(shakeTime > 0)
+		{
+			// 值必须有变动才触发
+			if(value == state->OldValue) return;
 
-		Time.Sleep(shakeTime); // 避免抖动
+			Time.Sleep(shakeTime); // 避免抖动
+		}
 	} while (EXTI->PR & bit); // 如果再次挂起则重复
 	//EXTI_ClearITPendingBit(line);
 	// 值必须有变动才触发
-	if(value == state->OldValue) return;
+	if(shakeTime > 0 && value == state->OldValue) return;
 	state->OldValue = value;
 	if(state->Handler)
 	{

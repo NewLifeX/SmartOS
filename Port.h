@@ -170,7 +170,9 @@ protected:
         Floating = floating;
 
         _Registed = false;
-        ShakeTime = 20;
+        //ShakeTime = 20;
+		// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
+        ShakeTime = 0;
         Invert = false;
     }
 
