@@ -324,7 +324,8 @@ bool NRF24L01::Config()
 	config.Init();
 	//config.PWR_UP = 1;							// 1:上电 0:掉电
 	config.CRCO = 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
-	config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	//config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	config.EN_CRC = 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	config.PRIM_RX = 1;							// 默认进入接收模式
 
 	config.MAX_RT = 1;
