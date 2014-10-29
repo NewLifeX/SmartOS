@@ -272,7 +272,7 @@ bool NRF24L01::Config()
 	else
 		debug_printf("%dkbps\r\n", Speed);
 	debug_printf("    负载大小: %d字节\r\n", PayloadWidth);
-	debug_printf("    自动应答: %s\r\n", AutoAnswer ? "开" : "关");
+	debug_printf("    自动应答: %s\r\n", AutoAnswer ? "true" : "false");
 	if(AutoAnswer)
 	{
 		debug_printf("    应答重试: %d次\r\n", Retry);
@@ -345,7 +345,7 @@ bool NRF24L01::Config()
 
 	CEUp();
 
-	debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
+	debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 	ShowStatus();
 
 	return true;
@@ -477,6 +477,21 @@ bool NRF24L01::SetMode(bool isReceive)
 		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
 	WriteReg(CONFIG, config.ToByte());
+	
+	if(isReceive)
+	{
+		// 进入接收模式，如果此时接收缓冲区已满，则清空缓冲区。否则无法收到中断
+		RF_FIFO_STATUS fifo;
+		fifo.Init(FifoStatus);
+		if(fifo.RX_FULL) ClearFIFO(true);
+	}
+	else
+	{
+		// 进入发送模式，如果此时发送缓冲区已满，则需要清空缓冲区
+		RF_FIFO_STATUS fifo;
+		fifo.Init(FifoStatus);
+		if(fifo.TX_FULL) ClearFIFO(false);
+	}
 	CEUp();
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
