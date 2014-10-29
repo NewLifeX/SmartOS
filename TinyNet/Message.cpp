@@ -134,7 +134,7 @@ Controller::Controller(ITransport* port)
 {
 	assert_ptr(port);
 
-	debug_printf("微网控制器初始化 传输口：%s\r\n", port->ToString());
+	debug_printf("\r\nTinyNet::Init 传输口：%s\r\n", port->ToString());
 
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
@@ -149,7 +149,7 @@ Controller::Controller(ITransport* ports[], int count)
 	assert_ptr(ports);
 	assert_param(count > 0 && count < ArrayLength(_ports));
 
-	debug_printf("微网控制器初始化 共%d个传输口", count);
+	debug_printf("\r\nTinyNet::Init 共[%d]个传输口", count);
 	for(int i=0; i<count; i++)
 	{
 		assert_ptr(ports[i]);
@@ -183,7 +183,7 @@ void Controller::Init()
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("初始化微网控制器完成 Address=%d (0x%02x) 使用%d个传输接口\r\n", Address, Address, _ports.Count());
+	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
 }
 
 Controller::~Controller()
@@ -197,7 +197,7 @@ Controller::~Controller()
 
 	_ports.DeleteAll().Clear();
 
-	debug_printf("微网控制器销毁\r\n");
+	debug_printf("TinyNet::UnInit\r\n");
 }
 
 void Controller::AddTransport(ITransport* port)
@@ -243,12 +243,11 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(buf[0] != Address && buf[0] != 0) return false;
 
 #if MSG_DEBUG
-	debug_printf("Dispatch: ");
+	debug_printf("TinyNet::Dispatch ");
 	// 输出整条信息
 	Sys.ShowHex(buf, ms.Length, '-');
 	debug_printf("\r\n");
 #endif
-
 
 	Message msg;
 	if(!msg.Parse(ms)) return false;
@@ -281,13 +280,13 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 
 	debug_printf("%s ", port->ToString());
 	if(msg.Error)
-		debug_printf("Message Error");
+		debug_printf("Message::Error");
 	else if(msg.Ack)
-		debug_printf("Message Ack");
+		debug_printf("Message::Ack");
 	else if(msg.Reply)
-		debug_printf("Message Reply");
+		debug_printf("Message::Reply");
 	else
-		debug_printf("Message Request");
+		debug_printf("Message::Request");
 
 	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum);
 	if(msg.Length > 0)
@@ -328,12 +327,14 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	}
 
 	// 如果是确认消息或响应消息，及时更新请求队列
-	if(msg.Ack || msg.Reply)
+	if(msg.Ack)
 	{
 		AckRequest(msg, port);
 		// 如果只是确认消息，不做处理
 		return true;
 	}
+	// 响应消息顺道帮忙消除Ack
+	if(msg.Reply) AckRequest(msg, port);
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!msg.NoAck) AckResponse(msg, port);
@@ -380,7 +381,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		}
 	}
 
-	debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+	if(msg.Ack) debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
 }
 
 void Controller::AckResponse(Message& msg, ITransport* port)
@@ -391,7 +392,7 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Ack = 1;
 	msg2.Length = 0;
 
-	debug_printf("发送Ack确认包 Dest=%d Seq=%d", msg.Src, msg.Sequence);
+	debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
 	int count = Post(msg2, port);
 	if(count > 0)
@@ -449,7 +450,7 @@ void Controller::PreSend(Message& msg)
 	msg.ComputeCrc();
 
 #if MSG_DEBUG
-	debug_printf("Message Send");
+	debug_printf("Message::Send");
 	if(msg.Error)
 		debug_printf(" Error");
 	else if(msg.Ack)
@@ -594,7 +595,7 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 
 	if(!_taskID)
 	{
-		debug_printf("微网控制器消息发送队列 ");
+		debug_printf("TinyNet::微网控制器消息发送队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 	}
 

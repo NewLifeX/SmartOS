@@ -483,14 +483,22 @@ bool NRF24L01::SetMode(bool isReceive)
 		// 进入接收模式，如果此时接收缓冲区已满，则清空缓冲区。否则无法收到中断
 		RF_FIFO_STATUS fifo;
 		fifo.Init(FifoStatus);
-		if(fifo.RX_FULL) ClearFIFO(true);
+		if(fifo.RX_FULL)
+		{
+			debug_printf("RX缓冲区满，需要清空！\r\n");
+			ClearFIFO(true);
+		}
 	}
 	else
 	{
 		// 进入发送模式，如果此时发送缓冲区已满，则需要清空缓冲区
 		RF_FIFO_STATUS fifo;
 		fifo.Init(FifoStatus);
-		if(fifo.TX_FULL) ClearFIFO(false);
+		if(fifo.TX_FULL)
+		{
+			debug_printf("TX缓冲区满，需要清空！\r\n");
+			ClearFIFO(false);
+		}
 	}
 	CEUp();
 
@@ -578,6 +586,7 @@ bool NRF24L01::OnOpen()
 	// 如果有注册事件，则启用接收任务
 	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
+	debug_printf("定时显示状态 ");
 	Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 
 	return true;
@@ -762,6 +771,7 @@ void NRF24L01::OnIRQ()
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
 
+	debug_printf("NRF24L01::OnIRQ ");
 	ShowStatus();
 
 	// 发送完成或最大重试次数以后进入接收模式
@@ -769,7 +779,7 @@ void NRF24L01::OnIRQ()
 	{
 		// 达到最大重试次数以后，需要清空TX缓冲区
 		if(st.MAX_RT) ClearFIFO(false);
-		SetMode(true);
+		//SetMode(true);
 	}
 
 	// TX_FIFO 缓冲区满
@@ -796,7 +806,7 @@ void NRF24L01::OnIRQ()
 		byte buf[32];
 		uint len = Read(buf, ArrayLength(buf));
 		ClearStatus(false, true);
-			debug_printf("收到数据 %d\r\n", len);
+		debug_printf("收到数据 %d\r\n", len);
 		if(len)
 		{
 			len = OnReceive(buf, len);
