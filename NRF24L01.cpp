@@ -337,7 +337,7 @@ bool NRF24L01::Config()
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
 	ClearFIFO(true);
-	ClearFIFO(false);
+	//ClearFIFO(false);
 	// 清除中断标志
 	ClearStatus(true, true);
 

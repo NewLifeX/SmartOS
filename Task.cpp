@@ -46,7 +46,7 @@ uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period)
 	//debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
 	uint dt = dueTime / 1000;
 	int  pd = period > 0 ? period / 1000 : period;
-	debug_printf("%s添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
+	debug_printf("%s::添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
 
 	return task->ID;
 }
@@ -60,7 +60,7 @@ void TaskScheduler::Remove(uint taskid)
 		if(task->ID == taskid)
 		{
 			_Tasks.RemoveAt(i);
-			debug_printf("%s删除任务%d 0x%08x\r\n", Name, task->ID, task->Callback);
+			debug_printf("%s::删除任务%d 0x%08x\r\n", Name, task->ID, task->Callback);
 			// 首先清零ID，避免delete的时候再次删除
 			task->ID = 0;
 			delete task;
@@ -76,7 +76,7 @@ void TaskScheduler::Start()
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
-	debug_printf("%s准备就绪，开始循环处理%d个任务！\r\n", Name, Count);
+	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
 	Running = true;
 	while(Running)
