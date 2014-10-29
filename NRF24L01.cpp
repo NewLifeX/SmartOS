@@ -485,7 +485,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		fifo.Init(FifoStatus);
 		if(fifo.RX_FULL)
 		{
-			debug_printf("RX缓冲区满，需要清空！\r\n");
+			//debug_printf("RX缓冲区满，需要清空！\r\n");
 			ClearFIFO(true);
 		}
 	}
@@ -496,7 +496,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		fifo.Init(FifoStatus);
 		if(fifo.TX_FULL)
 		{
-			debug_printf("TX缓冲区满，需要清空！\r\n");
+			//debug_printf("TX缓冲区满，需要清空！\r\n");
 			ClearFIFO(false);
 		}
 	}
@@ -771,8 +771,9 @@ void NRF24L01::OnIRQ()
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
 
-	debug_printf("NRF24L01::OnIRQ ");
-	ShowStatus();
+	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
+	//debug_printf("NRF24L01::OnIRQ ");
+	//ShowStatus();
 
 	// 发送完成或最大重试次数以后进入接收模式
 	if(st.TX_DS || st.MAX_RT)
@@ -806,7 +807,7 @@ void NRF24L01::OnIRQ()
 		byte buf[32];
 		uint len = Read(buf, ArrayLength(buf));
 		ClearStatus(false, true);
-		debug_printf("收到数据 %d\r\n", len);
+		//debug_printf("收到数据 %d\r\n", len);
 		if(len)
 		{
 			len = OnReceive(buf, len);

@@ -172,8 +172,8 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 10;
-	Timeout		= 50;
+	Interval	= 1;
+	Timeout		= 10;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -243,10 +243,10 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(buf[0] != Address && buf[0] != 0) return false;
 
 #if MSG_DEBUG
-	debug_printf("TinyNet::Dispatch ");
+	/*debug_printf("TinyNet::Dispatch ");
 	// 输出整条信息
 	Sys.ShowHex(buf, ms.Length, '-');
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 #endif
 
 	Message msg;
@@ -264,7 +264,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			ushort seq = (msg.Src << 8) | msg.Sequence;
 			if(_Ring.Check(seq))
 			{
-				debug_printf("重复消息 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				debug_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence);
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!msg.NoAck) AckResponse(msg, port);
 				return false;
@@ -376,12 +376,15 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
-			debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+			if(msg.Ack)
+				debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+			else
+				debug_printf("收到Reply消除Ack确认 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
 			return;
 		}
 	}
 
-	if(msg.Ack) debug_printf("无效Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+	if(msg.Ack) debug_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
 }
 
 void Controller::AckResponse(Message& msg, ITransport* port)
@@ -392,13 +395,13 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Ack = 1;
 	msg2.Length = 0;
 
-	debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
+	//debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
-	int count = Post(msg2, port);
+	/*int count = Post(msg2, port);
 	if(count > 0)
 		debug_printf(" 成功!\r\n");
 	else
-		debug_printf(" 失败!\r\n");
+		debug_printf(" 失败!\r\n");*/
 }
 
 void Controller::Register(byte code, MessageHandler handler, void* param)
@@ -545,7 +548,7 @@ void Controller::Loop()
 		int count = node->Ports.Count();
 		if(count == 0 || node->Expired < Time.Current())
 		{
-			debug_printf("删除消息 Seq=%d 共发送%d次 ", node->Sequence, node->Times);
+			debug_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
 			if(count == 0)
 				debug_printf("已完成！\r\n");
 			else
