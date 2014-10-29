@@ -113,7 +113,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	_spi->Open();
 	// 芯片上电延迟100ms
 	ulong end = Sys.StartTime + 100000;
-	while(end < Time.Current()) Sys.Sleep(10);
+	while(!GetPower() && end > Time.Current()) Sys.Sleep(10);
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
