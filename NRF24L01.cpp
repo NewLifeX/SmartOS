@@ -656,14 +656,14 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// IRQ不可靠，改为轮询寄存器
 	// 这里需要延迟一点时间，发送没有那么快完成
 	ulong us = 0;
-	//do
-	//{
+	do
+	{
 		Status = ReadReg(STATUS);
 		if(Status == 0xFF)
 		{
 			AddError();
 			// 这里不能直接跳出函数，即使发送失败，也要在后面进入接收模式
-			//break;
+			break;
 		}
 
 		RF_STATUS st;
@@ -679,15 +679,15 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			if(!st.TX_DS && st.MAX_RT) AddError();
 
-			//break;
+			break;
 		}
 
 		if(!us) us = Time.Current() + Timeout * 1000;
-	//}while(us > Time.Current());
+	}while(us > Time.Current());
 
 	// 这里不要清，IRQ中断里面会清
-	//CEDown();
-	//ClearFIFO(false);
+	CEDown();
+	ClearFIFO(false);
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
