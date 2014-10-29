@@ -277,7 +277,7 @@ typedef struct
 void TSys::ShowInfo()
 {
 #if DEBUG
-	debug_printf("SmartOS ");
+	debug_printf("SmartOS::");
 	if(IsGD)
 		debug_printf("GD32");
 	else
@@ -345,12 +345,12 @@ void TSys::ShowInfo()
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
     debug_printf("CPUID:0x%08X", CPUID);
-	if(cpu->Implementer == 0x41) debug_printf(" ARM");
+	if(cpu->Implementer == 0x41) debug_printf(" ARM:");
 	if(cpu->Constant == 0x0C)
 		debug_printf(" ARMv6-M");
 	else if(cpu->Constant == 0x0F)
 		debug_printf(" ARMv7-M");
-	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d", cpu->PartNo & 0x0F);
+	if((cpu->PartNo & 0x0FF0) == 0x0C20) debug_printf(" Cortex-M%d:", cpu->PartNo & 0x0F);
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
     debug_printf("ChipID:");
@@ -368,11 +368,11 @@ void TSys::ShowInfo()
 	//end = 0x20000000 + (RAMSize << 10);
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 
-	debug_printf("SystemTime: ");
+	debug_printf("Time : ");
 	debug_printf(Time.Now().ToString());
 	debug_printf("\r\n");
 	// 系统启动时间
-	debug_printf("System Start Cost %dus\r\n", (uint)(Time.Current() - StartTime));
+	debug_printf("Start: %dus\r\n", (uint)(Time.Current() - StartTime));
 
     debug_printf("\r\n");
 #endif
