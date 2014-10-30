@@ -29,7 +29,7 @@ private:
 	// 接收任务。
 	static void ReceiveTask(void* sender, void* param);
 	//static void ReceiveTask(void* param);
-	//uint _taskID;
+	uint _taskID;
 	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
 	//Thread* _Thread;
 	static void OnIRQ(Pin pin, bool down, void* param);
