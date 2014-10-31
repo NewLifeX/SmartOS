@@ -103,7 +103,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	MaxError	= 10;
 	Error		= 0;
 
-	_taskID = 0;
+	//_taskID = 0;
 	//_timer = NULL;
 	//_Thread = NULL;
 
@@ -586,8 +586,8 @@ bool NRF24L01::OnOpen()
 	// 如果有注册事件，则启用接收任务
 	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
-	debug_printf("定时显示状态 ");
-	_taskID = Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
+	//debug_printf("定时显示状态 ");
+	//_taskID = Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 
 	return true;
 }
@@ -598,7 +598,7 @@ void NRF24L01::OnClose()
 
 	_spi->Close();
 
-	if(_taskID) Sys.RemoveTask(_taskID);
+	//if(_taskID) Sys.RemoveTask(_taskID);
 	//_taskID = 0;
 }
 
