@@ -14,6 +14,9 @@ Message::Message(byte code)
 	Code = code;
 	Crc16 = 0;
 	TTL = 0;
+#if DEBUG
+	Retry = 1;
+#endif
 }
 
 Message::Message(Message& msg)
@@ -25,6 +28,9 @@ Message::Message(Message& msg)
 	Crc16 = msg.Crc16;
 	ArrayCopy(Data, msg.Data);
 	TTL = msg.TTL;
+#if DEBUG
+	Retry = msg.Retry;
+#endif
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -260,10 +266,10 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(buf[0] != Address && buf[0] != 0) return false;
 
 #if MSG_DEBUG
-	/*debug_printf("TinyNet::Dispatch ");
+	debug_printf("TinyNet::Dispatch ");
 	// 输出整条信息
 	Sys.ShowHex(buf, ms.Length, '-');
-	debug_printf("\r\n");*/
+	debug_printf("\r\n");
 #endif
 
 	Message msg;
@@ -420,6 +426,9 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Reply = 1;
 	msg2.Ack = 1;
 	msg2.Length = 0;
+#if DEBUG
+	msg2.Retry = 1;
+#endif
 
 	//debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
@@ -493,7 +502,7 @@ void Controller::PreSend(Message& msg)
 		debug_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
-	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x", msg.Crc16);
+	if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
 
 	/*Sys.ShowHex(buf, MESSAGE_SIZE);
