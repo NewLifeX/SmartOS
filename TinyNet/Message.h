@@ -35,6 +35,9 @@ public:
 	byte Data[32];	// 数据部分
 
 	byte TTL;		// 路由生命周期。为方便路由，不参与Crc校验
+#if DEBUG
+	byte Retry;		// 调试诊断模式下该字段表示第几次重发
+#endif
 
 public:
 	// 初始化消息，各字段为0

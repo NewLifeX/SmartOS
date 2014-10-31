@@ -24,7 +24,7 @@ Message::Message(Message& msg)
 
 	Crc16 = msg.Crc16;
 	ArrayCopy(Data, msg.Data);
-	TTL = TTL;
+	TTL = msg.TTL;
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -76,6 +76,13 @@ bool Message::Parse(MemoryStream& ms)
 		else
 			TTL = 0;
 	}
+#if DEBUG
+	// 调试诊断模式下该字段表示第几次重发
+	if(ms.Remain() > 0)
+		Retry = ms.Read<byte>();
+	else
+		Retry = 0;
+#endif
 
 	return true;
 }
@@ -127,6 +134,9 @@ void Message::Write(MemoryStream& ms)
 
 	// 后面可能有TTL
 	if(UseTTL) ms.Write(TTL);
+#if DEBUG
+	ms.Write(Retry);
+#endif
 }
 
 // 构造控制器
@@ -264,7 +274,11 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			ushort seq = (msg.Src << 8) | msg.Sequence;
 			if(_Ring.Check(seq))
 			{
+#if DEBUG
+				debug_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d Retry=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence, msg.Retry);
+#else
 				debug_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence);
+#endif
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!msg.NoAck) AckResponse(msg, port);
 				return false;
@@ -273,7 +287,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		}
 	}
 #if MSG_DEBUG
-	assert_param(ms.Current() - buf == MESSAGE_SIZE + msg.Length);
+	//assert_param(ms.Current() - buf == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
 	/*Sys.ShowHex(buf, ms.Current() - buf);
 	debug_printf("\r\n");*/
@@ -288,7 +302,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	else
 		debug_printf("Message::Request");
 
-	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum);
+	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
@@ -377,9 +391,14 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			node->Ports.Remove(port);
 
 			if(msg.Ack)
-				debug_printf("收到Ack确认包 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				debug_printf("收到Ack确认包 \r\n");
 			else
-				debug_printf("收到Reply消除Ack确认 Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+				debug_printf("收到Reply消除Ack确认 \r\n");
+#if DEBUG
+			debug_printf("Src=%d Seq=%d Retry=%d\r\n", msg.Src, msg.Sequence, msg.Retry);
+#else
+			debug_printf("Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+#endif
 			return;
 		}
 	}
@@ -535,14 +554,19 @@ void Controller::Loop()
 		// 检查时间
 		if(node->Next > Time.Current()) continue;
 
+		node->Times++;
+
+#if DEBUG
+		// 最后一个附加字节记录第几次重发
+		node->Data[node->Length - 1] = node->Times;
+#endif
+
 		// 发送消息
 		int k = -1;
 		while(node->Ports.MoveNext(k))
 		{
 			node->Ports[k]->Write(node->Data, node->Length);
 		}
-
-		node->Times++;
 
 		// 检查是否传输口已完成，是否已过期
 		int count = node->Ports.Count();
@@ -599,7 +623,7 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 	if(!_taskID)
 	{
 		debug_printf("TinyNet::微网控制器消息发送队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+		_taskID = Sys.AddTask(SendTask, this, 0, 100);
 	}
 
 	return true;
@@ -638,13 +662,14 @@ void MessageNode::SetMessage(Message& msg)
 	Sequence = msg.Sequence;
 	Times = 0;
 
-	byte* buf = (byte*)&msg.Dest;
+	// 这种方式不支持后续的TTL等，所以不再使用
+	/*byte* buf = (byte*)&msg.Dest;
 	if(!msg.Length)
 	{
 		Length = MESSAGE_SIZE;
 		memcpy(Data, buf, MESSAGE_SIZE);
 	}
-	else
+	else*/
 	{
 		// 注意，此时指针位于0，而内容长度为缓冲区长度
 		MemoryStream ms(Data, ArrayLength(Data));
