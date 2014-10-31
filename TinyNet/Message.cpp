@@ -397,8 +397,8 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 
 	//debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
-	/*int count = Post(msg2, port);
-	if(count > 0)
+	int count = Post(msg2, port);
+	/*if(count > 0)
 		debug_printf(" 成功!\r\n");
 	else
 		debug_printf(" 失败!\r\n");*/
