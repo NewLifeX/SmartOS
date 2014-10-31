@@ -100,7 +100,14 @@ void Message::ComputeCrc()
 
 	Write(ms);
 
-	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - 2);
+	// 扣除不计算校验码的部分
+	byte ext = 2;
+	if(UseTTL) ext++;
+#if DEBUG
+	ext++;
+#endif
+
+	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - ext);
 }
 
 // 设置数据。
