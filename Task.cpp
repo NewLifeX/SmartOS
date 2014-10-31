@@ -42,11 +42,18 @@ uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period)
 	Count++;
 	_Tasks.Add(task);
 
+#if DEBUG
 	// 输出长整型%ld，无符号长整型%llu
 	//debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
-	uint dt = dueTime / 1000;
-	int  pd = period > 0 ? period / 1000 : period;
-	debug_printf("%s::添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
+	if(period >= 1000)
+	{
+		uint dt = dueTime / 1000;
+		int  pd = period > 0 ? period / 1000 : period;
+		debug_printf("%s::添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
+	}
+	else
+		debug_printf("%s::添加任务%d 0x%08x FirstTime=%uus Period=%dus\r\n", Name, task->ID, func, (uint)dueTime, (int)period);
+#endif
 
 	return task->ID;
 }
