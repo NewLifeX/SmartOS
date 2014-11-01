@@ -112,8 +112,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
 	// 芯片上电延迟100ms
-	ulong end = Sys.StartTime + 100000;
-	while(!GetPower() && end > Time.Current()) Sys.Sleep(10);
+	//ulong end = Sys.StartTime + 100000;
+	//while(!GetPower() && end > Time.Current()) Sys.Sleep(10);
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
@@ -345,6 +345,8 @@ bool NRF24L01::Config()
 
 	CEUp();
 
+	//Sys.Sleep(1000);
+	// 上电后并不能马上使用，需要一段时间才能载波。标称100ms，实测1000ms
 	debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 	ShowStatus();
 
