@@ -9,7 +9,7 @@
 class MemoryStream
 {
 private:
-	byte* _Buffer;	// 数据缓冲区
+	byte* _Buffer;	// 数据缓冲区。扩容后会重新分配缓冲区
 	uint _Capacity;	// 缓冲区容量
 	//bool _needFree;		// 是否自动释放
 	// 又是头疼的对齐问题
@@ -99,10 +99,10 @@ public:
 		return true;
 	}
 
-	// 数据流指针
+	// 数据流指针。注意：扩容后指针会改变！
     byte* GetBuffer() { return _Buffer; }
 
-	// 数据流当前位置指针
+	// 数据流当前位置指针。注意：扩容后指针会改变！
     byte* Current() { return &_Buffer[_Position]; }
 
 	// 从当前位置读取数据
