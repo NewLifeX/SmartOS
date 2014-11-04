@@ -555,7 +555,8 @@ void TSys::RemoveTask(uint taskid)
 
 void TSys::Start()
 {
-	assert_ptr(_Scheduler);
+	if(!_Scheduler) _Scheduler = new TaskScheduler("系统");
+	//assert_ptr(_Scheduler);
 
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
