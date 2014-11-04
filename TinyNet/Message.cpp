@@ -277,10 +277,10 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(buf[0] != Address && buf[0] != 0) return false;
 
 #if MSG_DEBUG
-	debug_printf("TinyNet::Dispatch ");
+	/*debug_printf("TinyNet::Dispatch ");
 	// 输出整条信息
 	Sys.ShowHex(buf, ms.Length, '-');
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 #endif
 
 	Message msg;
@@ -415,9 +415,9 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			node->Ports.Remove(port);
 
 			if(msg.Ack)
-				debug_printf("收到Ack确认包 \r\n");
+				debug_printf("收到Ack确认包 ");
 			else
-				debug_printf("收到Reply消除Ack确认 \r\n");
+				debug_printf("收到Reply确认 ");
 #if DEBUG
 			debug_printf("Src=%d Seq=%d Retry=%d\r\n", msg.Src, msg.Sequence, msg.Retry);
 #else
