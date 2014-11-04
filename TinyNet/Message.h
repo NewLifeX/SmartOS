@@ -30,19 +30,23 @@ public:
 	byte Length;	// 数据长度
 	ushort Checksum;// 16位检验和
 
-	// 负载数据及校验部分，并非内存布局。
-	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
-	byte Data[32];	// 数据部分
-
+	// 可选的附加数据紧跟在头数据后面，可能直接读取内存区域
 	byte TTL;		// 路由生命周期。为方便路由，不参与Crc校验
 #if DEBUG
 	byte Retry;		// 调试诊断模式下该字段表示第几次重发
 #endif
 
+	// 负载数据及校验部分，并非内存布局。
+	ushort Crc16;	// 整个消息的Crc16校验，计算前Checksum清零
+	byte Data[32];	// 数据部分
+
 public:
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
 	Message(Message& msg);
+
+	// 消息所占据的指令数据大小。包括头部、负载数据和附加数据
+	int Size();
 
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 	bool Parse(MemoryStream& ms);
@@ -99,7 +103,7 @@ private:
 
 	void AckRequest(Message& msg, ITransport* port);	// 处理收到的Ack包
 	void AckResponse(Message& msg, ITransport* port);	// 向对方发出Ack包
-	
+
 public:
 	byte	Address;	// 本地地址
 	uint	Interval;	// 消息队列发送间隔，10毫秒

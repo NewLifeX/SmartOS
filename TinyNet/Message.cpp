@@ -101,22 +101,28 @@ bool Message::Verify()
 
 void Message::ComputeCrc()
 {
-	MemoryStream ms(MESSAGE_SIZE + Length);
+	MemoryStream ms(Size());
 	//byte* buf = ms.Current();
 	//!!!! 千万千万不能在这个使用使用数据流的当前指针，因为一旦内容扩容，指针就不对了
 
 	Write(ms);
 
+	//ms.SetPosition(0);
+	//byte* buf = ms.Current();
+	byte* buf = ms.GetBuffer();
 	// 扣除不计算校验码的部分
-	byte ext = 2;
-	if(UseTTL) ext++;
-#if DEBUG
-	ext++;
-#endif
+	Checksum = Crc16 = Sys.Crc16(buf, MESSAGE_SIZE + Length - 2);
+}
 
-	ms.SetPosition(0);
-	byte* buf = ms.Current();
-	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - ext);
+// 消息所占据的指令数据大小。包括头部、负载数据和附加数据
+int Message::Size()
+{
+	int len = MESSAGE_SIZE + Length;
+	if(UseTTL) len++;
+#if DEBUG
+	len++;
+#endif
+	return len;
 }
 
 // 设置数据。
@@ -198,8 +204,8 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 1;
-	Timeout		= 10;
+	Interval	= 5;
+	Timeout		= 50;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -501,11 +507,16 @@ void Controller::PreSend(Message& msg)
 	else if(msg.Reply)
 		debug_printf(" Reply");
 
-	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum);
+	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
 		debug_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
+	}
+	else
+	{
+		// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
+		if(!msg.UseTTL) msg.TTL = msg.Retry;
 	}
 	if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
 	debug_printf("\r\n");
@@ -530,18 +541,22 @@ int Controller::Post(Message& msg, ITransport* port)
 
 	// 指针直接访问消息头。如果没有负载数据，它就是全部
 	byte* buf = (byte*)&msg.Dest;
-	uint len = MESSAGE_SIZE;
+	uint len = msg.Size();
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
-	MemoryStream ms(MESSAGE_SIZE + msg.Length);
+	MemoryStream ms(len);
 	if(msg.Length > 0)
 	{
-		buf = ms.Current();
+		//buf = ms.Current();
 		// 带有负载数据，需要合并成为一段连续的内存
 		msg.Write(ms);
-		len = ms.Length;
+		assert_param(len == ms.Length);
+		// 内存流扩容以后，指针会改变
+		buf = ms.GetBuffer();
 	}
 
+	//Sys.ShowHex(buf, len, '-');
+	//debug_printf("\r\n");
 	if(port)
 	{
 		rs = port->Write(buf, len);
