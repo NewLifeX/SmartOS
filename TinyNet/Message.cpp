@@ -102,7 +102,8 @@ bool Message::Verify()
 void Message::ComputeCrc()
 {
 	MemoryStream ms(MESSAGE_SIZE + Length);
-	byte* buf = ms.Current();
+	//byte* buf = ms.Current();
+	//!!!! 千万千万不能在这个使用使用数据流的当前指针，因为一旦内容扩容，指针就不对了
 
 	Write(ms);
 
@@ -113,6 +114,8 @@ void Message::ComputeCrc()
 	ext++;
 #endif
 
+	ms.SetPosition(0);
+	byte* buf = ms.Current();
 	Checksum = Crc16 = Sys.Crc16(buf, ms.Length - ext);
 }
 
@@ -226,6 +229,8 @@ Controller::~Controller()
 void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
+
+	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
 
 	// 注册收到数据事件
 	port->Register(Dispatch, this);

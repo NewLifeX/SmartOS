@@ -26,7 +26,7 @@ TinyClient::TinyClient(Controller* control)
 void TinyClient::SetDefault()
 {
 #if DEBUG
-	//_control->AddTransport(SerialPort::GetMessagePort());
+	_control->AddTransport(SerialPort::GetMessagePort());
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数

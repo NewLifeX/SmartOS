@@ -86,6 +86,7 @@ void TestMessage(OutputPort* leds)
 	TinyClient* client = new TinyClient(control);
 	client->DeviceType = 0x0101;
 	//client->SetDefault();
+	//control->AddTransport(SerialPort::GetMessagePort());
 
 	// 注册消息。每个消息代码对应一个功能函数
 	control->Register(0x10, OpenLed, leds);
