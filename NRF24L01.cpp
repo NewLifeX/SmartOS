@@ -104,7 +104,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	Error		= 0;
 
 	//_taskID = 0;
-	//_timer = NULL;
+	_timer = NULL;
 	//_Thread = NULL;
 
 	_Lock = 0;
@@ -485,6 +485,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		// 进入接收模式，如果此时接收缓冲区已满，则清空缓冲区。否则无法收到中断
 		RF_FIFO_STATUS fifo;
 		fifo.Init(FifoStatus);
+		//debug_printf("FifoStatus=%d\r\n", FifoStatus);
 		if(fifo.RX_FULL)
 		{
 			//debug_printf("RX缓冲区满，需要清空！\r\n");
@@ -590,6 +591,7 @@ bool NRF24L01::OnOpen()
 	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
 	//debug_printf("定时显示状态 ");
 	//_taskID = Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
+	//Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 
 	return true;
 }
@@ -884,21 +886,22 @@ void NRF24L01::ReceiveTask(void* sender, void* param)
 	assert_ptr(param);
 
 	NRF24L01* nrf = (NRF24L01*)param;
-	byte buf[32];
+	//byte buf[32];
 	//while(true)
 	{
 		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 		if(nrf->Opened && nrf->_Lock == 0)
 		{
 			//nrf->SetMode(true);
-			uint len = nrf->Read(buf, ArrayLength(buf));
+			/*uint len = nrf->Read(buf, ArrayLength(buf));
 			if(len)
 			{
 				len = nrf->OnReceive(buf, len);
 
 				// 如果有返回，说明有数据要回复出去
 				if(len) nrf->Write(buf, len);
-			}
+			}*/
+			nrf->OnIRQ();
 		}
 
 		//Sys.Sleep(1);
@@ -915,11 +918,11 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
-		/*if(!_timer) _timer = Timer::Create();
+		if(!_timer) _timer = Timer::Create();
 
 		_timer->SetFrequency(1000);
 		_timer->Register(ReceiveTask, this);
-		_timer->Start();*/
+		_timer->Start();
 
 		/*if(!_Thread)
 		{
@@ -933,8 +936,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	{
 		//if(_taskID) Sys.RemoveTask(_taskID);
 		//_taskID = 0;
-		/*if(_timer) delete _timer;
-		_timer = NULL;*/
+		if(_timer) delete _timer;
+		_timer = NULL;
 
 		//delete _Thread;
 		//_Thread = NULL;

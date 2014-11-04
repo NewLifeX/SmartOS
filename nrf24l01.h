@@ -30,7 +30,7 @@ private:
 	static void ReceiveTask(void* sender, void* param);
 	//static void ReceiveTask(void* param);
 	//uint _taskID;
-	//Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
+	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
 	//Thread* _Thread;
 	static void OnIRQ(Pin pin, bool down, void* param);
 	void OnIRQ();
@@ -50,7 +50,7 @@ public:
 	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
 	ushort Speed;		// 射频数据率，单位kbps，默认250kbps，可选1000kbps/2000kbps，速度越低传输越远
 	byte RadioPower;	// 发射功率。共8档，最高0x07代表7dBm最大功率
-	
+
 	uint Timeout;		// 超时时间ms
 	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
@@ -200,7 +200,7 @@ public:
 		byte TX_REUSE:1;	// 若TX_REUSE=1 则当CE位高电平状态时不断发送上一数据包TX_REUSE 通过SPI 指令REUSE_TX_PL 设置通过W_TX_PALOAD或FLUSH_TX 复位
 		byte Reserved2:1;
 	}RF_FIFO_STATUS;
-	
+
 	// 特征寄存器0x1D
 	typedef struct : ByteStruct
 	{
