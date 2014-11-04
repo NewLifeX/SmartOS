@@ -204,7 +204,7 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 5;
+	Interval	= 10;
 	Timeout		= 50;
 
 	ArrayZero(_Handlers);
@@ -438,7 +438,7 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Ack = 1;
 	msg2.Length = 0;
 #if DEBUG
-	msg2.Retry = 1;
+	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
 	//debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
@@ -515,11 +515,6 @@ void Controller::PreSend(Message& msg)
 			debug_printf(" 数据：[%d] ", msg.Length);
 			Sys.ShowString(msg.Data, msg.Length, false);
 		}
-		else
-		{
-			// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
-			if(!msg.UseTTL) msg.TTL = msg.Retry;
-		}
 		if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
 		debug_printf("\r\n");
 
@@ -556,6 +551,11 @@ int Controller::Post(Message& msg, ITransport* port)
 		assert_param(len == ms.Length);
 		// 内存流扩容以后，指针会改变
 		buf = ms.GetBuffer();
+	}
+	else
+	{
+		// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
+		if(!msg.UseTTL) msg.TTL = msg.Retry;
 	}
 
 	//Sys.ShowHex(buf, len, '-');
