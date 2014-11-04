@@ -499,32 +499,35 @@ void Controller::PreSend(Message& msg)
 	msg.ComputeCrc();
 
 #if MSG_DEBUG
-	debug_printf("Message::Send");
-	if(msg.Error)
-		debug_printf(" Error");
-	else if(msg.Ack)
-		debug_printf(" Ack");
-	else if(msg.Reply)
-		debug_printf(" Reply");
-
-	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
-	if(msg.Length > 0)
+	if(!msg.Ack)
 	{
-		debug_printf(" 数据：[%d] ", msg.Length);
-		Sys.ShowString(msg.Data, msg.Length, false);
-	}
-	else
-	{
-		// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
-		if(!msg.UseTTL) msg.TTL = msg.Retry;
-	}
-	if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
-	debug_printf("\r\n");
+		debug_printf("Message::Send");
+		if(msg.Error)
+			debug_printf(" Error");
+		else if(msg.Ack)
+			debug_printf(" Ack");
+		else if(msg.Reply)
+			debug_printf(" Reply");
 
-	/*Sys.ShowHex(buf, MESSAGE_SIZE);
-	if(msg.Length > 0)
-		Sys.ShowHex(msg.Data, msg.Length);
-	debug_printf("\r\n");*/
+		debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+		if(msg.Length > 0)
+		{
+			debug_printf(" 数据：[%d] ", msg.Length);
+			Sys.ShowString(msg.Data, msg.Length, false);
+		}
+		else
+		{
+			// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
+			if(!msg.UseTTL) msg.TTL = msg.Retry;
+		}
+		if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
+		debug_printf("\r\n");
+
+		/*Sys.ShowHex(buf, MESSAGE_SIZE);
+		if(msg.Length > 0)
+			Sys.ShowHex(msg.Data, msg.Length);
+		debug_printf("\r\n");*/
+	}
 #endif
 }
 
