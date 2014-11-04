@@ -102,7 +102,7 @@ void Timer::Start()
 #endif
 
 	uint fre = clk / Prescaler / Period;
-	debug_printf("Timer%d Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
+	debug_printf("Timer%d::Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
 #endif
 
 	// 打开时钟
@@ -136,7 +136,7 @@ void Timer::Stop()
 {
 	if(!_started) return;
 
-	debug_printf("Timer%d Stop\r\n", _index + 1);
+	debug_printf("Timer%d::Stop\r\n", _index + 1);
 
 	// 关闭时钟
 	ClockCmd(false);

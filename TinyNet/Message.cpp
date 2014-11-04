@@ -1,7 +1,12 @@
 ﻿#include "Message.h"
 
-#define MSG_DEBUG DEBUG
-//#define MSG_DEBUG 0
+//#define MSG_DEBUG DEBUG
+#define MSG_DEBUG 0
+#if MSG_DEBUG
+	#define msg_printf debug_printf
+#else
+	__inline void msg_printf( const char *format, ... ) {}
+#endif
 
 // 初始化消息，各字段为0
 Message::Message(byte code)
@@ -277,10 +282,10 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(buf[0] != Address && buf[0] != 0) return false;
 
 #if MSG_DEBUG
-	/*debug_printf("TinyNet::Dispatch ");
+	/*msg_printf("TinyNet::Dispatch ");
 	// 输出整条信息
 	Sys.ShowHex(buf, ms.Length, '-');
-	debug_printf("\r\n");*/
+	msg_printf("\r\n");*/
 #endif
 
 	Message msg;
@@ -299,9 +304,9 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			if(_Ring.Check(seq))
 			{
 #if DEBUG
-				debug_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d Retry=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence, msg.Retry);
+				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d Retry=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence, msg.Retry);
 #else
-				debug_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence);
+				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence);
 #endif
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!msg.NoAck) AckResponse(msg, port);
@@ -314,26 +319,26 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	//assert_param(ms.Current() - buf == MESSAGE_SIZE + msg.Length);
 	// 输出整条信息
 	/*Sys.ShowHex(buf, ms.Current() - buf);
-	debug_printf("\r\n");*/
+	msg_printf("\r\n");*/
 
-	debug_printf("%s ", port->ToString());
+	msg_printf("%s ", port->ToString());
 	if(msg.Error)
-		debug_printf("Message::Error");
+		msg_printf("Message::Error");
 	else if(msg.Ack)
-		debug_printf("Message::Ack");
+		msg_printf("Message::Ack");
 	else if(msg.Reply)
-		debug_printf("Message::Reply");
+		msg_printf("Message::Reply");
 	else
-		debug_printf("Message::Request");
+		msg_printf("Message::Request");
 
-	debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
-		debug_printf(" 数据：[%d] ", msg.Length);
+		msg_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
-	if(!msg.Verify()) debug_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
-	debug_printf("\r\n");
+	if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
+	msg_printf("\r\n");
 #endif
 
 	// 广播的响应消息也不要
@@ -415,19 +420,19 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			node->Ports.Remove(port);
 
 			if(msg.Ack)
-				debug_printf("收到Ack确认包 ");
+				msg_printf("收到Ack确认包 ");
 			else
-				debug_printf("收到Reply确认 ");
+				msg_printf("收到Reply确认 ");
 #if DEBUG
-			debug_printf("Src=%d Seq=%d Retry=%d\r\n", msg.Src, msg.Sequence, msg.Retry);
+			msg_printf("Src=%d Seq=%d Retry=%d\r\n", msg.Src, msg.Sequence, msg.Retry);
 #else
-			debug_printf("Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+			msg_printf("Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
 #endif
 			return;
 		}
 	}
 
-	if(msg.Ack) debug_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
+	if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
 }
 
 void Controller::AckResponse(Message& msg, ITransport* port)
@@ -441,13 +446,13 @@ void Controller::AckResponse(Message& msg, ITransport* port)
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
-	//debug_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
+	//msg_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
 	int count = Post(msg2, port);
 	/*if(count > 0)
-		debug_printf(" 成功!\r\n");
+		msg_printf(" 成功!\r\n");
 	else
-		debug_printf(" 失败!\r\n");*/
+		msg_printf(" 失败!\r\n");*/
 }
 
 void Controller::Register(byte code, MessageHandler handler, void* param)
@@ -501,27 +506,27 @@ void Controller::PreSend(Message& msg)
 #if MSG_DEBUG
 	if(!msg.Ack)
 	{
-		debug_printf("Message::Send");
+		msg_printf("Message::Send");
 		if(msg.Error)
-			debug_printf(" Error");
+			msg_printf(" Error");
 		else if(msg.Ack)
-			debug_printf(" Ack");
+			msg_printf(" Ack");
 		else if(msg.Reply)
-			debug_printf(" Reply");
+			msg_printf(" Reply");
 
-		debug_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+		msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 		if(msg.Length > 0)
 		{
-			debug_printf(" 数据：[%d] ", msg.Length);
+			msg_printf(" 数据：[%d] ", msg.Length);
 			Sys.ShowString(msg.Data, msg.Length, false);
 		}
-		if(!msg.Verify()) debug_printf(" My Crc Error 0x%04x", msg.Crc16);
-		debug_printf("\r\n");
+		if(!msg.Verify()) msg_printf(" My Crc Error 0x%04x", msg.Crc16);
+		msg_printf("\r\n");
 
 		/*Sys.ShowHex(buf, MESSAGE_SIZE);
 		if(msg.Length > 0)
 			Sys.ShowHex(msg.Data, msg.Length);
-		debug_printf("\r\n");*/
+		msg_printf("\r\n");*/
 	}
 #endif
 }
@@ -559,7 +564,7 @@ int Controller::Post(Message& msg, ITransport* port)
 	}
 
 	//Sys.ShowHex(buf, len, '-');
-	//debug_printf("\r\n");
+	//msg_printf("\r\n");
 	if(port)
 	{
 		rs = port->Write(buf, len);
@@ -611,11 +616,11 @@ void Controller::Loop()
 		int count = node->Ports.Count();
 		if(count == 0 || node->Expired < Time.Current())
 		{
-			debug_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
+			msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
 			if(count == 0)
-				debug_printf("已完成！\r\n");
+				msg_printf("已完成！\r\n");
 			else
-				debug_printf("超时！\r\n");
+				msg_printf("超时！\r\n");
 
 			_Queue.Remove(node);
 			delete node;
