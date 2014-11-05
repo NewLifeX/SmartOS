@@ -487,7 +487,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
 	WriteReg(CONFIG, config.ToByte());
-	
+
 	if(isReceive)
 	{
 		// 进入接收模式，如果此时接收缓冲区已满，则清空缓冲区。否则无法收到中断
@@ -574,7 +574,7 @@ void ShowStatusTask(void* param)
 	debug_printf("定时 ");
 	nrf->ShowStatus();
 	//nrf->CheckConfig();
-	
+
 	// 可以定时做一些事情，方便调试
 	//nrf->ClearStatus(false, true);
 	//nrf->ClearFIFO(true);
