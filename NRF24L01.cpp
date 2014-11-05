@@ -272,7 +272,7 @@ bool NRF24L01::Config()
 	{
 		if(wifis[i] == Channel)
 		{
-			debug_printf("通道%d与WiFi通道%d的频率相同，可能有干扰！\r\n", Channel, i);
+			debug_printf("通道 %d 与WiFi通道 %d 的频率相同，可能有干扰！\r\n", Channel, i);
 			break;
 		}
 	}
