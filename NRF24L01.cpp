@@ -467,14 +467,12 @@ bool NRF24L01::SetMode(bool isReceive)
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-        //ClearFIFO(true);
 		ClearStatus(false, true);
 		//debug_printf("NRF24L01::SetMode =>RX\r\n");
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
-        //ClearFIFO(false);
 		ClearStatus(true, false);
 		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
@@ -494,14 +492,16 @@ bool NRF24L01::SetMode(bool isReceive)
 	}
 	else
 	{
-		// 进入发送模式，如果此时发送缓冲区已满，则需要清空缓冲区
+		/*// 进入发送模式，如果此时发送缓冲区已满，则需要清空缓冲区
 		RF_FIFO_STATUS fifo;
 		fifo.Init(FifoStatus);
 		if(fifo.TX_FULL)
 		{
 			//debug_printf("TX缓冲区满，需要清空！\r\n");
 			ClearFIFO(false);
-		}
+		}*/
+		// 发送前清空缓冲区和标识位
+		ClearFIFO(false);
 	}
 	CEUp();
 
@@ -668,9 +668,6 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 进入Standby，写完数据再进入TX发送
 	CEDown();
 
-	// 发送前清空缓冲区和标识位
-	ClearFIFO(false);
-
 	// 检查要发送数据的长度
 	assert_param(len <= PayloadWidth);
 	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
@@ -713,7 +710,6 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		if(!us) us = Time.Current() + Timeout * 1000;
 	}while(us > Time.Current());
 
-	// 这里不要清，IRQ中断里面会清
 	CEDown();
 	ClearFIFO(false);
 
@@ -796,15 +792,6 @@ void NRF24L01::OnIRQ()
 		//SetMode(false);
 	}
 
-	// RX_FIFO 缓冲区满
-	/*if(fifo.RX_FULL)
-	{
-		PortScope ps(_CE, false);
-		ClearFIFO(true);
-		ClearStatus(false, true);
-		//SetMode(true);
-	}*/
-
 	if(st.RX_DR)
 	{
 		//debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
@@ -820,6 +807,17 @@ void NRF24L01::OnIRQ()
 			if(len) Write(buf, len);
 		}
 		return;
+	}
+	else
+	{
+		// RX_FIFO 缓冲区满
+		if(fifo.RX_FULL)
+		{
+			PortScope ps(_CE, false);
+			ClearFIFO(true);
+			ClearStatus(false, true);
+			//SetMode(true);
+		}
 	}
 }
 
