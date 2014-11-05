@@ -266,6 +266,16 @@ bool NRF24L01::Config()
 	static const short powers[] = {-12, -6, -4, 0, 1, 3, 4, 7};
 	if(RadioPower >= ArrayLength(powers)) RadioPower = ArrayLength(powers) - 1;
 	debug_printf("    射频通道: %d  %dMHz %ddBm\r\n", Channel, 2400 + Channel, powers[RadioPower]);
+	// 检查WiFi通道
+	static const byte wifis[] = {2, 32, 70, 5, 35, 68, 8, 39, 65, 11, 41, 62};
+	for(int i=0; i<ArrayLength(wifis); i++)
+	{
+		if(wifis[i] == Channel)
+		{
+			debug_printf("通道%d与WiFi通道%d的频率相同，可能有干扰！\r\n", Channel, i);
+			break;
+		}
+	}
 	debug_printf("    传输速率: ");
 	if(Speed >= 1000)
 		debug_printf("%dMbps\r\n", Speed/1000);
