@@ -153,6 +153,7 @@ public:
 	byte		Sequence;	// 序列号
 	byte		Data[32];
 	uint		Length;
+	uint		Interval;	// 延迟间隔。每次逐步递增
 	ulong		Next;		// 下一次重发时间
 	ulong		Expired;	// 过期时间，微秒
 	uint		Times;

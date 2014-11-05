@@ -1,7 +1,7 @@
 ﻿#include "Message.h"
 
-//#define MSG_DEBUG DEBUG
-#define MSG_DEBUG 0
+#define MSG_DEBUG DEBUG
+//#define MSG_DEBUG 0
 #if MSG_DEBUG
 	#define msg_printf debug_printf
 #else
@@ -209,8 +209,8 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 10;
-	Timeout		= 50;
+	Interval	= 2;
+	Timeout		= 200;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -626,7 +626,13 @@ void Controller::Loop()
 			delete node;
 		}
 		else
-			node->Next = Time.Current() + Interval * 1000;
+		{
+			// 随机延迟。随机数1~5。每次延迟递增
+			byte rnd = (uint)Time.Current() % 5;
+			node->Interval += rnd + 1;
+			//msg_printf("随机延迟 %dms\r\n", Interval * node->Interval);
+			node->Next = Time.Current() + Interval * node->Interval * 1000;
+		}
 	}
 }
 
@@ -667,7 +673,7 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 	if(!_taskID)
 	{
 		debug_printf("TinyNet::微网控制器消息发送队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 100);
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 	}
 
 	return true;
@@ -704,6 +710,7 @@ void MessageNode::SetMessage(Message& msg)
 {
 	//Msg = &msg;
 	Sequence = msg.Sequence;
+	Interval = 0;
 	Times = 0;
 
 	// 这种方式不支持后续的TTL等，所以不再使用
