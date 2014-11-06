@@ -209,7 +209,7 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 4;
+	Interval	= 8000;
 	Timeout		= 200;
 
 	ArrayZero(_Handlers);
@@ -437,7 +437,9 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		MessageNode* node = _Queue[i];
 		if(node->Sequence == msg.Sequence)
 		{
-			uint cost = (uint)(Time.Current() - node->LastSend);
+			uint cost = (uint)(Time.Current() - node->StartTime);
+			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
+			Interval = cost;
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
@@ -446,7 +448,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 				msg_printf("收到Ack确认包 ");
 			else
 				msg_printf("收到Reply确认 ");
-				
+
 #if DEBUG
 			msg_printf("Src=%d Seq=%d Cost=%dus Retry=%d\r\n", msg.Src, msg.Sequence, cost, msg.Retry);
 #else
@@ -616,6 +618,7 @@ void Controller::Loop()
 		}
 		//else
 
+		if(node->Times > 0) msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, node->Interval);
 		node->Times++;
 
 #if DEBUG
@@ -624,6 +627,7 @@ void Controller::Loop()
 #endif
 
 		// 发送消息
+		node->LastSend = Time.Current();
 		int k = -1;
 		while(node->Ports.MoveNext(k))
 		{
@@ -631,14 +635,15 @@ void Controller::Loop()
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
 		}
-		node->LastSend = Time.Current();
 
 		{
 			// 随机延迟。随机数1~5。每次延迟递增
 			byte rnd = (uint)Time.Current() % 5;
-			node->Interval += rnd + 1;
-			msg_printf("Seq=%d 随机延迟 %dms\r\n", node->Sequence, Interval * node->Interval);
-			node->Next = Time.Current() + Interval * node->Interval * 1000;
+			node->Interval = (rnd + 1) * Interval;
+			/*msg_printf("Seq=%d 随机延迟 %dms\r\n", node->Sequence, Interval * node->Interval);
+			node->Next = Time.Current() + Interval * node->Interval * 1000;*/
+			//msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, Interval);
+			node->Next = node->LastSend + node->Interval;
 		}
 	}
 }
@@ -657,6 +662,12 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 		if(!rs) return false;
 	}
 
+	if(!_taskID)
+	{
+		debug_printf("TinyNet::微网控制器消息发送队列 ");
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+	}
+
 	if(expire < 0) expire = Timeout;
 	// 需要响应
 	if(expire == 0) msg.NoAck = true;
@@ -671,17 +682,12 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 	else
 		node->Ports.Add(port);
 
+	node->StartTime = Time.Current();
 	node->Next = 0;
 	node->Expired = Time.Current() + expire * 1000;
 
 	// 加入等待队列
 	if(_Queue.Add(node) < 0) return false;
-
-	if(!_taskID)
-	{
-		debug_printf("TinyNet::微网控制器消息发送队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
-	}
 
 	return true;
 }

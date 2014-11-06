@@ -106,7 +106,7 @@ private:
 
 public:
 	byte	Address;	// 本地地址
-	uint	Interval;	// 消息队列发送间隔，10毫秒
+	uint	Interval;	// 消息队列发送间隔，微秒
 	uint	Timeout;	// 消息队列发送消息的默认超时时间，50毫秒
 
 	Controller(ITransport* port);
@@ -154,6 +154,7 @@ public:
 	byte		Data[32];
 	uint		Length;
 	uint		Interval;	// 延迟间隔。每次逐步递增
+	ulong		StartTime;	// 开始时间
 	ulong		Next;		// 下一次重发时间
 	ulong		Expired;	// 过期时间，微秒
 	uint		Times;		// 发送次数
