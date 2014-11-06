@@ -126,7 +126,13 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
 NRF24L01::~NRF24L01()
 {
-    debug_printf("~NRF24L01\r\n");
+    debug_printf("NRF24L01::~NRF24L01\r\n");
+
+	//if(_taskID) Sys.RemoveTask(_taskID);
+	Register(NULL);
+
+	// 关闭电源
+	SetPower(false);
 
 	if(_CE) delete _CE;
 	if(_IRQ) delete _IRQ;
@@ -135,12 +141,6 @@ NRF24L01::~NRF24L01()
 	_spi = NULL;
 	_CE = NULL;
 	_IRQ = NULL;
-
-	//if(_taskID) Sys.RemoveTask(_taskID);
-	Register(NULL);
-
-	// 关闭电源
-	SetPower(false);
 }
 
 // 向NRF的寄存器中写入一串数据

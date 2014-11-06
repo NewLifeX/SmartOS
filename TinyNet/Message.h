@@ -156,7 +156,8 @@ public:
 	uint		Interval;	// 延迟间隔。每次逐步递增
 	ulong		Next;		// 下一次重发时间
 	ulong		Expired;	// 过期时间，微秒
-	uint		Times;
+	uint		Times;		// 发送次数
+	ulong		LastSend;	// 最后一次发送时间
 	//Message*	Reply;	// 匹配的响应消息
 
 	//MessageNode();

@@ -209,7 +209,7 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 8;
+	Interval	= 4;
 	Timeout		= 200;
 
 	ArrayZero(_Handlers);
@@ -272,6 +272,7 @@ void ShowMessage(Message& msg, bool send, ITransport* port = NULL)
 {
 	if(msg.Ack) return;
 
+	//msg_printf("%d ", (uint)Time.Current());
 	if(send)
 		msg_printf("Message::Send ");
 	else
@@ -436,17 +437,20 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		MessageNode* node = _Queue[i];
 		if(node->Sequence == msg.Sequence)
 		{
+			uint cost = (uint)(Time.Current() - node->LastSend);
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
+			//msg_printf("%d ", (uint)Time.Current());
 			if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
 			else
 				msg_printf("收到Reply确认 ");
+				
 #if DEBUG
-			msg_printf("Src=%d Seq=%d Retry=%d\r\n", msg.Src, msg.Sequence, msg.Retry);
+			msg_printf("Src=%d Seq=%d Cost=%dus Retry=%d\r\n", msg.Src, msg.Sequence, cost, msg.Retry);
 #else
-			msg_printf("Src=%d Seq=%d\r\n", msg.Src, msg.Sequence);
+			msg_printf("Src=%d Seq=%d Cost=%dus\r\n", msg.Src, msg.Sequence, cost);
 #endif
 			return;
 		}
@@ -595,20 +599,6 @@ void Controller::Loop()
 		// 检查时间
 		if(node->Next > Time.Current()) continue;
 
-		node->Times++;
-
-#if DEBUG
-		// 最后一个附加字节记录第几次重发
-		node->Data[node->Length - 1] = node->Times;
-#endif
-
-		// 发送消息
-		int k = -1;
-		while(node->Ports.MoveNext(k))
-		{
-			node->Ports[k]->Write(node->Data, node->Length);
-		}
-
 		// 检查是否传输口已完成，是否已过期
 		int count = node->Ports.Count();
 		if(count == 0 || node->Expired < Time.Current())
@@ -621,13 +611,33 @@ void Controller::Loop()
 
 			_Queue.Remove(node);
 			delete node;
+
+			continue;
 		}
-		else
+		//else
+
+		node->Times++;
+
+#if DEBUG
+		// 最后一个附加字节记录第几次重发
+		node->Data[node->Length - 1] = node->Times;
+#endif
+
+		// 发送消息
+		int k = -1;
+		while(node->Ports.MoveNext(k))
+		{
+			//node->Ports[k]->Write(node->Data, node->Length);
+			ITransport* port = node->Ports[k];
+			if(port) port->Write(node->Data, node->Length);
+		}
+		node->LastSend = Time.Current();
+
 		{
 			// 随机延迟。随机数1~5。每次延迟递增
 			byte rnd = (uint)Time.Current() % 5;
 			node->Interval += rnd + 1;
-			msg_printf("随机延迟 %dms\r\n", Interval * node->Interval);
+			msg_printf("Seq=%d 随机延迟 %dms\r\n", node->Sequence, Interval * node->Interval);
 			node->Next = Time.Current() + Interval * node->Interval * 1000;
 		}
 	}
@@ -709,6 +719,7 @@ void MessageNode::SetMessage(Message& msg)
 	Sequence = msg.Sequence;
 	Interval = 0;
 	Times = 0;
+	LastSend = 0;
 
 	// 这种方式不支持后续的TTL等，所以不再使用
 	/*byte* buf = (byte*)&msg.Dest;
