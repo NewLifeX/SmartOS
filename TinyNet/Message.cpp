@@ -440,6 +440,10 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			uint cost = (uint)(Time.Current() - node->StartTime);
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
 			Interval = cost;
+			// 确保小于等于超时时间的四分之一，让其有机会重发
+			uint tt = (Timeout * 1000) >> 2;
+			if(Interval > tt) Interval = tt;
+			
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
@@ -609,7 +613,7 @@ void Controller::Loop()
 			if(count == 0)
 				msg_printf("已完成！\r\n");
 			else
-				msg_printf("超时！\r\n");
+				msg_printf("超时！Interval=%dus\r\n", Interval);
 
 			_Queue.Remove(node);
 			delete node;
@@ -638,7 +642,7 @@ void Controller::Loop()
 
 		{
 			// 随机延迟。随机数1~5。每次延迟递增
-			byte rnd = (uint)Time.Current() % 5;
+			byte rnd = (uint)Time.Current() % 3;
 			node->Interval = (rnd + 1) * Interval;
 			/*msg_printf("Seq=%d 随机延迟 %dms\r\n", node->Sequence, Interval * node->Interval);
 			node->Next = Time.Current() + Interval * node->Interval * 1000;*/
