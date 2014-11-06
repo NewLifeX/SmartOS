@@ -209,7 +209,7 @@ void Controller::Init()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 2;
+	Interval	= 8;
 	Timeout		= 200;
 
 	ArrayZero(_Handlers);
@@ -268,6 +268,41 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 	return 0;
 }
 
+void ShowMessage(Message& msg, bool send, ITransport* port = NULL)
+{
+	if(msg.Ack) return;
+
+	if(send)
+		msg_printf("Message::Send ");
+	else
+	{
+		msg_printf("%s ", port->ToString());
+		msg_printf("Message::");
+	}
+	if(msg.Error)
+		msg_printf("Error");
+	else if(msg.Ack)
+		msg_printf("Ack");
+	else if(msg.Reply)
+		msg_printf("Reply");
+	else if(!send)
+		msg_printf("Request");
+
+	msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	if(msg.Length > 0)
+	{
+		msg_printf(" 数据：[%d] ", msg.Length);
+		Sys.ShowString(msg.Data, msg.Length, false);
+	}
+	if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
+	msg_printf("\r\n");
+
+	/*Sys.ShowHex(buf, MESSAGE_SIZE);
+	if(msg.Length > 0)
+		Sys.ShowHex(msg.Data, msg.Length);
+	msg_printf("\r\n");*/
+}
+
 bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 {
 	byte* buf = ms.Current();
@@ -303,45 +338,22 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			ushort seq = (msg.Src << 8) | msg.Sequence;
 			if(_Ring.Check(seq))
 			{
+				// 快速响应确认消息，避免对方无休止的重发
+				if(!msg.NoAck) AckResponse(msg, port);
 #if DEBUG
 				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d Retry=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence, msg.Retry);
 #else
 				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Sequence);
 #endif
-				// 快速响应确认消息，避免对方无休止的重发
-				if(!msg.NoAck) AckResponse(msg, port);
 				return false;
 			}
 			_Ring.Push(seq);
 		}
 	}
+
 #if MSG_DEBUG
-	//assert_param(ms.Current() - buf == MESSAGE_SIZE + msg.Length);
-	// 输出整条信息
-	/*Sys.ShowHex(buf, ms.Current() - buf);
-	msg_printf("\r\n");*/
-
-	if(!msg.Ack)
-	{
-		msg_printf("%s ", port->ToString());
-		if(msg.Error)
-			msg_printf("Message::Error");
-		else if(msg.Ack)
-			msg_printf("Message::Ack");
-		else if(msg.Reply)
-			msg_printf("Message::Reply");
-		else
-			msg_printf("Message::Request");
-
-		msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
-		if(msg.Length > 0)
-		{
-			msg_printf(" 数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length, false);
-		}
-		if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
-		msg_printf("\r\n");
-	}
+	// 尽量在Ack以后再输出日志，加快Ack处理速度
+	//ShowMessage(msg, false, port);
 #endif
 
 	// 广播的响应消息也不要
@@ -384,6 +396,11 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!msg.NoAck) AckResponse(msg, port);
+
+#if MSG_DEBUG
+	// 尽量在Ack以后再输出日志，加快Ack处理速度
+	ShowMessage(msg, false, port);
+#endif
 
 	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)
@@ -507,30 +524,7 @@ void Controller::PreSend(Message& msg)
 	msg.ComputeCrc();
 
 #if MSG_DEBUG
-	if(!msg.Ack)
-	{
-		msg_printf("Message::Send");
-		if(msg.Error)
-			msg_printf(" Error");
-		else if(msg.Ack)
-			msg_printf(" Ack");
-		else if(msg.Reply)
-			msg_printf(" Reply");
-
-		msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
-		if(msg.Length > 0)
-		{
-			msg_printf(" 数据：[%d] ", msg.Length);
-			Sys.ShowString(msg.Data, msg.Length, false);
-		}
-		if(!msg.Verify()) msg_printf(" My Crc Error 0x%04x", msg.Crc16);
-		msg_printf("\r\n");
-
-		/*Sys.ShowHex(buf, MESSAGE_SIZE);
-		if(msg.Length > 0)
-			Sys.ShowHex(msg.Data, msg.Length);
-		msg_printf("\r\n");*/
-	}
+	ShowMessage(msg, true);
 #endif
 }
 
@@ -633,7 +627,7 @@ void Controller::Loop()
 			// 随机延迟。随机数1~5。每次延迟递增
 			byte rnd = (uint)Time.Current() % 5;
 			node->Interval += rnd + 1;
-			//msg_printf("随机延迟 %dms\r\n", Interval * node->Interval);
+			msg_printf("随机延迟 %dms\r\n", Interval * node->Interval);
 			node->Next = Time.Current() + Interval * node->Interval * 1000;
 		}
 	}
