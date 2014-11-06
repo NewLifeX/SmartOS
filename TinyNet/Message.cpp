@@ -622,7 +622,7 @@ void Controller::Loop()
 		}
 		//else
 
-		if(node->Times > 0) msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, node->Interval);
+		//if(node->Times > 0) msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, node->Interval);
 		node->Times++;
 
 #if DEBUG
