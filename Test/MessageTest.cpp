@@ -73,7 +73,7 @@ void TestMessage(OutputPort* leds)
 
 	NRF24L01* nrf = Create2401();
     //nrf->Timeout = 1000;
-    //nrf->Channel = 0;
+    nrf->Channel = 120;
 	// 如果打开自动应答，繁忙时收不到数据会增加错误计数，达到一定程度会自动重启模块
     nrf->AutoAnswer = false;
 	nrf->Speed = 250;
