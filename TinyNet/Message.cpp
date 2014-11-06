@@ -321,24 +321,27 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	/*Sys.ShowHex(buf, ms.Current() - buf);
 	msg_printf("\r\n");*/
 
-	msg_printf("%s ", port->ToString());
-	if(msg.Error)
-		msg_printf("Message::Error");
-	else if(msg.Ack)
-		msg_printf("Message::Ack");
-	else if(msg.Reply)
-		msg_printf("Message::Reply");
-	else
-		msg_printf("Message::Request");
-
-	msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
-	if(msg.Length > 0)
+	if(!msg.Ack)
 	{
-		msg_printf(" 数据：[%d] ", msg.Length);
-		Sys.ShowString(msg.Data, msg.Length, false);
+		msg_printf("%s ", port->ToString());
+		if(msg.Error)
+			msg_printf("Message::Error");
+		else if(msg.Ack)
+			msg_printf("Message::Ack");
+		else if(msg.Reply)
+			msg_printf("Message::Reply");
+		else
+			msg_printf("Message::Request");
+
+		msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+		if(msg.Length > 0)
+		{
+			msg_printf(" 数据：[%d] ", msg.Length);
+			Sys.ShowString(msg.Data, msg.Length, false);
+		}
+		if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
+		msg_printf("\r\n");
 	}
-	if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
-	msg_printf("\r\n");
 #endif
 
 	// 广播的响应消息也不要
