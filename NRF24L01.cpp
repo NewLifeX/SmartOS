@@ -592,7 +592,7 @@ bool NRF24L01::OnOpen()
 	if(!(Check() && Config()))
 	{
 		// 关闭SPI，可能是因为SPI通讯的问题，下次打开模块的时候会重新打开SPI
-		//_spi->Close();
+		_spi->Close();
 		return false;
 	}
 
