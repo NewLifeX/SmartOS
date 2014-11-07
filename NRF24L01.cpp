@@ -566,6 +566,12 @@ void NRF24L01::SetAddress(bool full)
 	WriteReg(EN_AA, AutoAnswer ? AddrBits : 0);	// 使能通道0的自动应答
 	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
 
+	// 开启隐藏寄存器
+	WriteReg(ACTIVATE, 0x73);
+
+	RF_FEATURE ft;
+	ft.Init(ReadReg(FEATURE));
+
 	// 设置6个接收端的数据宽度
 	if(PayloadWidth > 0)
 	{
@@ -576,21 +582,17 @@ void NRF24L01::SetAddress(bool full)
 	}
 	else
 	{
-		// 开启隐藏寄存器
-		WriteReg(ACTIVATE, 0x73);
-
 		// 动态负载
 		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
 
-		RF_FEATURE ft;
-		ft.Init();
-		if(!AutoAnswer)
-			ft.DYN_ACK = 1;	// 使能命令TX_PAYLOAD_NOACK
-		//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
 		ft.DPL = 1;			// 使能动态负载长度
-
-		WriteReg(FEATURE, ft.ToByte());
 	}
+
+	if(!AutoAnswer)
+		ft.DYN_ACK = 1;	// 使能命令TX_PAYLOAD_NOACK
+	//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
+
+	WriteReg(FEATURE, ft.ToByte());
 }
 
 void ShowStatusTask(void* param)
@@ -708,12 +710,11 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 进入Standby，写完数据再进入TX发送
 	CEDown();
 
+	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
 	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
-	if(PayloadWidth > 0)
-		WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
-	else
-		WriteBuf(WR_TX_PLOAD, data, len);
+	if(PayloadWidth > 0) len = PayloadWidth;
+	WriteBuf(cmd, data, len);
 
 	// 进入TX，维持一段时间
 	CEUp();
