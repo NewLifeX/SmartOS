@@ -17,7 +17,7 @@
 							  //在数据传输期间不能使能或禁止TX PAYLOAD REUSE功能。
 #define NOP             0xFF  //空操作,可以用来读状态寄存器
 // NRF24L01+有下面三个
-#define ACTIVATE		0x00  //这个命令后跟随数据0x73激活以下功能：
+#define ACTIVATE		0x50  //这个命令后跟随数据0x73激活以下功能：
 							  //R_RX_PL_WID
 							  //W_ACK_PAYLOAD
 							  //W_TX_PAYLOAD_NOACK
@@ -238,6 +238,12 @@ bool NRF24L01::Config()
 {
 #if DEBUG
 	debug_printf("NRF24L01::Config\r\n");
+
+	// 检查芯片特征
+	Status = ReadReg(STATUS);
+	RF_STATUS st;
+	st.Init(Status);
+	if(st.Beken) debug_printf("上海Beken芯片\r\n");
 
 	debug_printf("    本地地址: ");
 	Sys.ShowHex(Address, 5, '-');
@@ -570,6 +576,9 @@ void NRF24L01::SetAddress(bool full)
 	}
 	else
 	{
+		// 开启隐藏寄存器
+		WriteReg(ACTIVATE, 0x73);
+
 		// 动态负载
 		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
 
@@ -581,8 +590,6 @@ void NRF24L01::SetAddress(bool full)
 		ft.DPL = 1;			// 使能动态负载长度
 
 		WriteReg(FEATURE, ft.ToByte());
-
-		WriteReg(ACTIVATE, 0x73);
 	}
 }
 
