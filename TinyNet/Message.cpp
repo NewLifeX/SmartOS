@@ -8,6 +8,8 @@
 	__inline void msg_printf( const char *format, ... ) {}
 #endif
 
+void SendTask(void* param);
+
 // 初始化消息，各字段为0
 Message::Message(byte code)
 {
@@ -221,6 +223,12 @@ void Controller::Init()
 	while(!Address) Address = Time.Current();
 
 	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
+
+	if(!_taskID)
+	{
+		debug_printf("TinyNet::微网控制器消息发送队列 ");
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+	}
 }
 
 Controller::~Controller()
@@ -437,7 +445,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		MessageNode* node = _Queue[i];
 		if(node->Sequence == msg.Sequence)
 		{
-			uint cost = (uint)(Time.Current() - node->StartTime);
+			uint cost = (uint)(Time.Current() - node->LastSend);
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
 			Interval = cost;
 			// 确保小于等于超时时间的四分之一，让其有机会重发
@@ -609,11 +617,14 @@ void Controller::Loop()
 		int count = node->Ports.Count();
 		if(count == 0 || node->Expired < Time.Current())
 		{
-			msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
-			if(count == 0)
-				msg_printf("已完成！\r\n");
-			else
-				msg_printf("超时！Interval=%dus\r\n", Interval);
+			if(count > 0)
+			{
+				msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
+				if(count == 0)
+					msg_printf("已完成！\r\n");
+				else
+					msg_printf("超时！Interval=%dus\r\n", Interval);
+			}
 
 			_Queue.Remove(node);
 			delete node;
@@ -631,7 +642,6 @@ void Controller::Loop()
 #endif
 
 		// 发送消息
-		node->LastSend = Time.Current();
 		int k = -1;
 		while(node->Ports.MoveNext(k))
 		{
@@ -639,6 +649,7 @@ void Controller::Loop()
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
 		}
+		node->LastSend = Time.Current();
 
 		{
 			// 随机延迟。随机数1~5。每次延迟递增
@@ -666,11 +677,11 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 		if(!rs) return false;
 	}
 
-	if(!_taskID)
+	/*if(!_taskID)
 	{
 		debug_printf("TinyNet::微网控制器消息发送队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
-	}
+	}*/
 
 	if(expire < 0) expire = Timeout;
 	// 需要响应
@@ -782,6 +793,7 @@ bool RingQueue::Check(ushort item)
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
 	if(Expired < Time.Current())
 	{
+		debug_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始
 		Index = 0;
 		ArrayZero(Arr);
