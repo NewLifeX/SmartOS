@@ -111,15 +111,8 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
-	// 芯片上电延迟100ms
-	//ulong end = Sys.StartTime + 100000;
-	//while(!GetPower() && end > Time.Current()) Sys.Sleep(10);
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
-	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
-	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
-	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
-	//debug_printf("NRF24L01当前电源状态：%s\r\n", GetPower()?"开":"关");
 	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
 	SetPower(false);
 }
@@ -332,8 +325,6 @@ bool NRF24L01::Config()
 	}
 
 	WriteReg(RF_SETUP, set.ToByte());
-	//WriteReg(RF_SETUP, 0x07);					// 设置TX发射参数,0db增益,1Mbps,低噪声增益开启
-	//WriteReg(RF_SETUP, 0x27);					// 设置TX发射参数,7db增益,2Mbps,低噪声增益开启
 
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
@@ -472,27 +463,22 @@ bool NRF24L01::SetMode(bool isReceive)
 	// 如果本来就是该模式，则不再处理
 	if(!(isReceive ^ config.PRIM_RX)) return true;
 
-	// 检查设置
-	/*assert_param(config.PWR_UP);
-	assert_param(config.CRCO);
-	assert_param(config.EN_CRC);*/
 	// 如果电源关闭，则重新打开电源
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
 	// 必须拉低CE后修改配置，然后再拉高
 	CEDown();
+
 	// 不能随便清空FIFO寄存器，否则收到的数据都被清掉了
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
 		ClearStatus(false, true);
-		//debug_printf("NRF24L01::SetMode =>RX\r\n");
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
 		ClearStatus(true, false);
-		//debug_printf("NRF24L01::SetMode =>TX\r\n");
 	}
 	WriteReg(CONFIG, config.ToByte());
 
@@ -501,7 +487,6 @@ bool NRF24L01::SetMode(bool isReceive)
 		// 进入接收模式，如果此时接收缓冲区已满，则清空缓冲区。否则无法收到中断
 		RF_FIFO_STATUS fifo;
 		fifo.Init(FifoStatus);
-		//debug_printf("FifoStatus=%d\r\n", FifoStatus);
 		if(fifo.RX_FULL)
 		{
 			//debug_printf("RX缓冲区满，需要清空！\r\n");
@@ -510,14 +495,6 @@ bool NRF24L01::SetMode(bool isReceive)
 	}
 	else
 	{
-		/*// 进入发送模式，如果此时发送缓冲区已满，则需要清空缓冲区
-		RF_FIFO_STATUS fifo;
-		fifo.Init(FifoStatus);
-		if(fifo.TX_FULL)
-		{
-			//debug_printf("TX缓冲区满，需要清空！\r\n");
-			ClearFIFO(false);
-		}*/
 		// 发送前清空缓冲区和标识位
 		ClearFIFO(false);
 	}
@@ -629,9 +606,6 @@ bool NRF24L01::OnOpen()
 		return false;
 	}
 
-	// 如果有注册事件，则启用接收任务
-	//if(HasHandler()) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
-	// 很多时候不需要异步接收数据，如果这里注册了，会导致编译ReceiveTask函数
 	//debug_printf("定时显示状态 ");
 	//_taskID = Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 	//Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
@@ -644,9 +618,6 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
-
-	//if(_taskID) Sys.RemoveTask(_taskID);
-	//_taskID = 0;
 }
 
 // 从NRF的接收缓冲区中读出数据
@@ -689,14 +660,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	}
 
 	// 进入Standby
-	CEDown();
+	//CEDown();
 
 	// 清除中断标志
 	ClearStatus(false, true);
 	ClearFIFO(true);
-	//ShowStatus();
 
-	CEUp();
+	//CEUp();
 
 	return rs;
 }
@@ -723,9 +693,6 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	CEUp();
 
 	bool rs = false;
-	// 等待发送完成中断
-	//if(!WaitForIRQ()) return false;
-	// IRQ不可靠，改为轮询寄存器
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
 	ulong us = 0;
 	do
@@ -802,8 +769,8 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 
 	//debug_printf("IRQ down=%d\r\n", down);
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	//if(!nrf->Opened || nrf->_Lock != 0) return;
-	if(!nrf->Opened) return;
+	if(!nrf->Opened || nrf->_Lock != 0) return;
+	//if(!nrf->Opened) return;
 
 	nrf->OnIRQ();
 }
@@ -938,15 +905,6 @@ void NRF24L01::ReceiveTask(void* sender, void* param)
 		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 		if(nrf->Opened && nrf->_Lock == 0)
 		{
-			//nrf->SetMode(true);
-			/*uint len = nrf->Read(buf, ArrayLength(buf));
-			if(len)
-			{
-				len = nrf->OnReceive(buf, len);
-
-				// 如果有返回，说明有数据要回复出去
-				if(len) nrf->Write(buf, len);
-			}*/
 			nrf->OnIRQ();
 		}
 
