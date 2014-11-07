@@ -76,7 +76,7 @@ void TestMessage(OutputPort* leds)
     nrf->Channel = 0x28;
 	// 如果打开自动应答，繁忙时收不到数据会增加错误计数，达到一定程度会自动重启模块
     nrf->AutoAnswer = false;
-	nrf->Speed = 1000;
+	nrf->Speed = 2000;
 	byte addr[] = {0x34, 0x43, 0x10, 0x10, 0x01};
 	memcpy(nrf->Address, addr, ArrayLength(addr));
 	nrf->PayloadWidth = 0;	// 使用动态负载

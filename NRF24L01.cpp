@@ -461,6 +461,8 @@ bool NRF24L01::GetMode()
 	return config.PRIM_RX;
 }
 
+// 设置收发模式。
+// 因为CE拉高需要延迟的原因，整个函数大概耗时185us，如果不延迟，大概55us
 bool NRF24L01::SetMode(bool isReceive)
 {
 	byte mode = ReadReg(CONFIG);
@@ -520,6 +522,9 @@ bool NRF24L01::SetMode(bool isReceive)
 		ClearFIFO(false);
 	}
 	CEUp();
+
+	// 进入发射模式等一会
+	if(!isReceive) Sys.Delay(10);
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
@@ -702,12 +707,10 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
-	//ShowStatus();
-
 	// 进入发送模式
 	if(!SetMode(false)) return false;
 
-	// 进入Standby，写完数据再进入TX发送
+	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
 	CEDown();
 
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
@@ -723,7 +726,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 等待发送完成中断
 	//if(!WaitForIRQ()) return false;
 	// IRQ不可靠，改为轮询寄存器
-	// 这里需要延迟一点时间，发送没有那么快完成
+	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
 	ulong us = 0;
 	do
 	{
@@ -754,6 +757,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		if(!us) us = Time.Current() + Timeout * 1000;
 	}while(us > Time.Current());
 
+	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
 	CEDown();
 	ClearFIFO(false);
 
@@ -962,7 +966,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_timer) _timer = new Timer(TIM2);
 		if(!_timer) _timer = Timer::Create();
 
-		_timer->SetFrequency(1000);
+		_timer->SetFrequency(10000);
 		_timer->Register(ReceiveTask, this);
 		_timer->Start();
 
@@ -992,7 +996,8 @@ void NRF24L01::CEUp()
     if(_CE)
 	{
 		*_CE = true;
-		Sys.Delay(130); // 切换模式，高电平>10us
+		// 经过测试，貌似不用延迟130us也可以使用
+		//Sys.Delay(130); // 切换模式，高电平>10us
 	}
 }
 
