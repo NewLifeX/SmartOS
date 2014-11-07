@@ -44,7 +44,7 @@ public:
 	byte Addr2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
 	byte AddrBits;		// 使能通道标识位。默认0x01使能地址0
 
-	byte PayloadWidth;	// 负载数据宽度，默认32字节
+	byte PayloadWidth;	// 负载数据宽度，默认32字节。0表示使用动态负载
 	bool AutoAnswer;	// 自动应答，默认启用
 	byte Retry;			// 重试次数，最大15次
 	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us

@@ -561,9 +561,28 @@ void NRF24L01::SetAddress(bool full)
 	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
 
 	// 设置6个接收端的数据宽度
-	for(int i = 0; i < addrLen; i++)
+	if(PayloadWidth > 0)
 	{
-		WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
+		for(int i = 0; i < addrLen; i++)
+		{
+			WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
+		}
+	}
+	else
+	{
+		// 动态负载
+		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
+
+		RF_FEATURE ft;
+		ft.Init();
+		if(!AutoAnswer)
+			ft.DYN_ACK = 1;	// 使能命令TX_PAYLOAD_NOACK
+		//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
+		ft.DPL = 1;			// 使能动态负载长度
+
+		WriteReg(FEATURE, ft.ToByte());
+
+		WriteReg(ACTIVATE, 0x73);
 	}
 }
 
@@ -646,8 +665,12 @@ uint NRF24L01::OnRead(byte *data, uint len)
 			// 清除中断标志
 			//WriteReg(STATUS, Status);
 
-			rs = PayloadWidth;
-			ReadBuf(RD_RX_PLOAD, data, PayloadWidth); // 读取数据
+			if(PayloadWidth > 0)
+				rs = PayloadWidth;
+			else
+				rs = ReadReg(RX_PL_WID);
+			//debug_printf("len=%d \r\n", rs);
+			ReadBuf(RD_RX_PLOAD, data, rs); // 读取数据
 		}
 	}
 
@@ -679,8 +702,11 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	CEDown();
 
 	// 检查要发送数据的长度
-	assert_param(len <= PayloadWidth);
-	WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
+	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
+	if(PayloadWidth > 0)
+		WriteBuf(WR_TX_PLOAD, data, PayloadWidth);
+	else
+		WriteBuf(WR_TX_PLOAD, data, len);
 
 	// 进入TX，维持一段时间
 	CEUp();
