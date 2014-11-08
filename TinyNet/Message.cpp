@@ -447,7 +447,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		{
 			uint cost = (uint)(Time.Current() - node->LastSend);
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
-			Interval = cost;
+			Interval = (Interval + cost) >> 1;
 			// 确保小于等于超时时间的四分之一，让其有机会重发
 			uint tt = (Timeout * 1000) >> 2;
 			if(Interval > tt) Interval = tt;
