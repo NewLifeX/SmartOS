@@ -354,7 +354,8 @@ bool NRF24L01::Config()
 
 	//Sys.Sleep(1000);
 	// 上电后并不能马上使用，需要一段时间才能载波。标称100ms，实测1000ms
-	debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
+	//debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
+	if(ReadReg(CD) > 0) debug_printf("空间发现载波，可能存在干扰或者拥挤！\r\n");
 	ShowStatus();
 
 	return true;
