@@ -617,7 +617,7 @@ void Controller::Loop()
 		int count = node->Ports.Count();
 		if(count == 0 || node->Expired < Time.Current())
 		{
-			if(count > 0)
+			//if(count > 0)
 			{
 				msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
 				if(count == 0)
