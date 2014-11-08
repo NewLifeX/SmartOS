@@ -9,6 +9,7 @@
 #endif
 
 void SendTask(void* param);
+void StatTask(void* param);
 
 // 初始化消息，各字段为0
 Message::Message(byte code)
@@ -229,6 +230,11 @@ void Controller::Init()
 		debug_printf("TinyNet::微网控制器消息发送队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 	}
+
+	TotalSend = TotalAck = TotalBytes = TotalCost = TotalRetry = TotalMsg = 0;
+	LastSend = LastAck = LastBytes = LastCost = LastRetry = LastMsg = 0;
+
+	Sys.AddTask(StatTask, this, 1000000, 5000000);
 }
 
 Controller::~Controller()
@@ -281,7 +287,7 @@ void ShowMessage(Message& msg, bool send, ITransport* port = NULL)
 	if(msg.Ack) return;
 
 	//msg_printf("%d ", (uint)Time.Current());
-	if(send)
+	/*if(send)
 		msg_printf("Message::Send ");
 	else
 	{
@@ -304,7 +310,7 @@ void ShowMessage(Message& msg, bool send, ITransport* port = NULL)
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
 	if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc16, __REV16(msg.Crc16));
-	msg_printf("\r\n");
+	msg_printf("\r\n");*/
 
 	/*Sys.ShowHex(buf, MESSAGE_SIZE);
 	if(msg.Length > 0)
@@ -446,6 +452,13 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 		if(node->Sequence == msg.Sequence)
 		{
 			uint cost = (uint)(Time.Current() - node->LastSend);
+			if(node->Ports.Count() > 0)
+			{
+				TotalCost += cost;
+				TotalAck++;
+				TotalBytes += node->Length;
+			}
+
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
 			Interval = (Interval + cost) >> 1;
 			// 确保小于等于超时时间的四分之一，让其有机会重发
@@ -455,8 +468,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
-			//msg_printf("%d ", (uint)Time.Current());
-			if(msg.Ack)
+			/*if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
 			else
 				msg_printf("收到Reply确认 ");
@@ -466,11 +478,11 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 #else
 			msg_printf("Src=%d Seq=%d Cost=%dus\r\n", msg.Src, msg.Sequence, cost);
 #endif
-			return;
+			*/return;
 		}
 	}
 
-	if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
+	//if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
 }
 
 void Controller::AckResponse(Message& msg, ITransport* port)
@@ -610,9 +622,9 @@ void Controller::Loop()
 	{
 		MessageNode* node = _Queue[i];
 
-		if(!node->NoAck)
+		// 检查时间。至少发送一次
+		if(node->Next > 0)
 		{
-			// 检查时间。至少发送一次
 			if(node->Next > Time.Current()) continue;
 
 			// 检查是否传输口已完成，是否已过期
@@ -620,13 +632,14 @@ void Controller::Loop()
 			if(count == 0 || node->Expired < Time.Current())
 			{
 				//if(count > 0)
-				{
+				/*{
 					msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
 					if(count == 0)
 						msg_printf("已完成！\r\n");
 					else
 						msg_printf("超时！Interval=%dus\r\n", Interval);
-				}
+				}*/
+				TotalRetry = node->Times;
 
 				_Queue.Remove(node);
 				delete node;
@@ -647,18 +660,30 @@ void Controller::Loop()
 		int k = -1;
 		while(node->Ports.MoveNext(k))
 		{
-			//node->Ports[k]->Write(node->Data, node->Length);
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
+
+			// 增加发送次数统计
+			TotalSend++;
+			//TotalBytes += node->Length;
 		}
 
-		// 仅发送一次的消息
-		if(node->NoAck)
+		// 分组统计
+		if(TotalSend >= 10)
 		{
-			_Queue.Remove(node);
-			delete node;
+			LastSend	= TotalSend;
+			LastAck		= TotalAck;
+			LastBytes	= TotalBytes;
+			LastCost	= TotalCost;
+			LastRetry	= TotalRetry;
+			LastMsg		= TotalMsg;
 
-			continue;
+			TotalSend	= 0;
+			TotalAck	= 0;
+			TotalBytes	= 0;
+			TotalCost	= 0;
+			TotalRetry	= 0;
+			TotalMsg	= 0;
 		}
 
 		node->LastSend = Time.Current();
@@ -667,9 +692,6 @@ void Controller::Loop()
 			// 随机延迟。随机数1~5。每次延迟递增
 			byte rnd = (uint)Time.Current() % 3;
 			node->Interval = (rnd + 1) * Interval;
-			/*msg_printf("Seq=%d 随机延迟 %dms\r\n", node->Sequence, Interval * node->Interval);
-			node->Next = Time.Current() + Interval * node->Interval * 1000;*/
-			//msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, Interval);
 			node->Next = node->LastSend + node->Interval;
 		}
 	}
@@ -689,15 +711,11 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 		if(!rs) return false;
 	}
 
-	/*if(!_taskID)
-	{
-		debug_printf("TinyNet::微网控制器消息发送队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
-	}*/
-
 	if(expire < 0) expire = Timeout;
 	// 需要响应
 	if(expire == 0) msg.NoAck = true;
+	// 如果确定不需要响应，则改用Post
+	if(msg.NoAck) return Post(msg, port);
 
 	PreSend(msg);
 
@@ -712,6 +730,8 @@ bool Controller::Send(Message& msg, int expire, ITransport* port)
 	node->StartTime = Time.Current();
 	node->Next = 0;
 	node->Expired = Time.Current() + expire * 1000;
+
+	TotalMsg++;
 
 	// 加入等待队列
 	if(_Queue.Add(node) < 0) return false;
@@ -735,21 +755,30 @@ bool Controller::Error(Message& msg, ITransport* port)
 	return Send(msg, 0, port);
 }
 
-/*MessageNode::MessageNode()
+void StatTask(void* param)
 {
-	Reply = NULL;
+	Controller* control = (Controller*)param;
+	control->ShowStat();
 }
 
-MessageNode::~MessageNode()
+// 显示统计信息
+void Controller::ShowStat()
 {
-	delete Reply;
-	Reply = NULL;
-}*/
+	static uint last = 0;
+	if(TotalSend == last) return;
+	last = TotalSend;
+
+	uint rate = (LastAck + TotalAck) * 100 / (LastSend + TotalSend);
+	uint cost = (LastCost + TotalCost) / (LastAck + TotalAck);
+	uint speed = (LastBytes + TotalBytes) * 1000000 / (LastCost + TotalCost);
+	uint retry = (LastSend + TotalSend) * 100 / (LastMsg + TotalMsg);
+	msg_printf("Controller::State 成功率=%d%% 平均时间=%dus 速度=%d Byte/s 平均重发=%d.%02d \r\n", rate, cost, speed, retry/100, retry%100);
+}
 
 void MessageNode::SetMessage(Message& msg)
 {
 	Sequence = msg.Sequence;
-	NoAck = msg.NoAck;
+	//NoAck = msg.NoAck;
 	Interval = 0;
 	Times = 0;
 	LastSend = 0;

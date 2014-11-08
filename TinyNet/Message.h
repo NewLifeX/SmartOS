@@ -142,6 +142,23 @@ private:
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
 	void Register(byte code, MessageHandler handler, void* param = NULL);
+
+	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX
+	uint	TotalSend;	// 总次数
+	uint	TotalAck;	// 总成功
+	uint	TotalBytes;	// 总字节数
+	uint	TotalCost;	// 从开销
+	uint	TotalRetry;	// 总重试次数
+	uint	TotalMsg;	// 总消息数
+	uint	LastSend;	// 上一组次数
+	uint	LastAck;	// 上一组成功
+	uint	LastBytes;	// 上一组字节数
+	uint	LastCost;	// 上一组开销
+	uint	LastRetry;	// 上一组重试次数
+	uint	LastMsg;	// 上一组消息数
+
+	// 显示统计信息
+	void ShowStat();
 };
 
 // 消息队列。需要等待响应的消息，进入消息队列处理。
@@ -150,7 +167,7 @@ class MessageNode
 public:
 	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
 	byte		Sequence;	// 序列号
-	byte		NoAck;		// 不需要响应
+	//byte		NoAck;		// 不需要响应
 	byte		Data[32];
 	uint		Length;
 	uint		Interval;	// 延迟间隔。每次逐步递增
