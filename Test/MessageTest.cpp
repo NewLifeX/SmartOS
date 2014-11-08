@@ -57,14 +57,14 @@ void FlashLed(void* param)
 	// 发送广播消息，刷所有人小灯
 	Message msg(0x10);
 
-	byte leds[] = {1, 1, 2};
-	//leds[1] = Time.Current() % 4;
-	//leds[2] = Time.Current() % 4;
+	byte leds[] = {3, 1, 2};
+	leds[1] = Time.Current() % 4;
+	leds[2] = Time.Current() % 4;
 
 	msg.SetData(leds, ArrayLength(leds));
 
-	msg.NoAck = true;
-	control->Send(msg, 0);
+	//msg.NoAck = true;
+	control->Send(msg);
 }
 
 void TestMessage(OutputPort* leds)
@@ -77,7 +77,7 @@ void TestMessage(OutputPort* leds)
     nrf->Channel = 0x28;
 	// 如果打开自动应答，繁忙时收不到数据会增加错误计数，达到一定程度会自动重启模块
     nrf->AutoAnswer = false;
-	nrf->Speed = 2000;
+	nrf->Speed = 1000;
 	byte addr[] = {0x34, 0x43, 0x10, 0x10, 0x01};
 	memcpy(nrf->Address, addr, ArrayLength(addr));
 	nrf->PayloadWidth = 0;	// 使用动态负载
@@ -97,7 +97,7 @@ void TestMessage(OutputPort* leds)
 
 	// 添加定时任务
 	debug_printf("灯光闪烁任务 ");
-	//Sys.AddTask(FlashLed, control, 0, 2000000);
+	Sys.AddTask(FlashLed, control, 0, 2000000);
 
     debug_printf("\r\n TestMessage Finish!\r\n\r\n");
 }
