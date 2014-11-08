@@ -57,13 +57,14 @@ void FlashLed(void* param)
 	// 发送广播消息，刷所有人小灯
 	Message msg(0x10);
 
-	byte leds[] = {3, 2, 1};
-	leds[1] = Time.Current() % 4;
-	leds[2] = Time.Current() % 4;
+	byte leds[] = {1, 1, 2};
+	//leds[1] = Time.Current() % 4;
+	//leds[2] = Time.Current() % 4;
 
 	msg.SetData(leds, ArrayLength(leds));
 
-	control->Send(msg);
+	msg.NoAck = true;
+	control->Send(msg, 0);
 }
 
 void TestMessage(OutputPort* leds)
@@ -95,7 +96,7 @@ void TestMessage(OutputPort* leds)
 	control->Register(0x10, OpenLed, leds);
 
 	// 添加定时任务
-	//debug_printf("灯光闪烁任务 ");
+	debug_printf("灯光闪烁任务 ");
 	//Sys.AddTask(FlashLed, control, 0, 2000000);
 
     debug_printf("\r\n TestMessage Finish!\r\n\r\n");

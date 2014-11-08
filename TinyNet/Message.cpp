@@ -297,7 +297,7 @@ void ShowMessage(Message& msg, bool send, ITransport* port = NULL)
 	else if(!send)
 		msg_printf("Request");
 
-	msg_printf(" %d => %d Code=%d Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf(" %d => %d Code=%d Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
 		msg_printf(" 数据：[%d] ", msg.Length);
@@ -420,10 +420,10 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			// 返回值决定是普通回复还是错误回复
 			bool rs = lookup->Handler(msg, lookup->Param);
 			// 如果本来就是响应，不用回复
-			if(!msg.Reply)
+			if(!msg.Reply && !msg.NoAck)
 			{
 				// 控制器不会把0负载的增强响应传递给业务层
-				if(!msg.NoAck && msg.Length == 0) break;
+				//if(!msg.NoAck && msg.Length == 0) break;
 
 				if(rs)
 					Reply(msg, port);
@@ -451,7 +451,7 @@ void Controller::AckRequest(Message& msg, ITransport* port)
 			// 确保小于等于超时时间的四分之一，让其有机会重发
 			uint tt = (Timeout * 1000) >> 2;
 			if(Interval > tt) Interval = tt;
-			
+
 			// 该传输口收到响应，从就绪队列中删除
 			node->Ports.Remove(port);
 
@@ -610,28 +610,30 @@ void Controller::Loop()
 	{
 		MessageNode* node = _Queue[i];
 
-		// 检查时间
-		if(node->Next > Time.Current()) continue;
-
-		// 检查是否传输口已完成，是否已过期
-		int count = node->Ports.Count();
-		if(count == 0 || node->Expired < Time.Current())
+		if(!node->NoAck)
 		{
-			//if(count > 0)
+			// 检查时间。至少发送一次
+			if(node->Next > Time.Current()) continue;
+
+			// 检查是否传输口已完成，是否已过期
+			int count = node->Ports.Count();
+			if(count == 0 || node->Expired < Time.Current())
 			{
-				msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
-				if(count == 0)
-					msg_printf("已完成！\r\n");
-				else
-					msg_printf("超时！Interval=%dus\r\n", Interval);
+				//if(count > 0)
+				{
+					msg_printf("删除消息 Seq=%d 共发送[%d]次 ", node->Sequence, node->Times);
+					if(count == 0)
+						msg_printf("已完成！\r\n");
+					else
+						msg_printf("超时！Interval=%dus\r\n", Interval);
+				}
+
+				_Queue.Remove(node);
+				delete node;
+
+				continue;
 			}
-
-			_Queue.Remove(node);
-			delete node;
-
-			continue;
 		}
-		//else
 
 		//if(node->Times > 0) msg_printf("Seq=%d 延迟 %dus\r\n", node->Sequence, node->Interval);
 		node->Times++;
@@ -649,6 +651,16 @@ void Controller::Loop()
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
 		}
+
+		// 仅发送一次的消息
+		if(node->NoAck)
+		{
+			_Queue.Remove(node);
+			delete node;
+
+			continue;
+		}
+
 		node->LastSend = Time.Current();
 
 		{
@@ -736,8 +748,8 @@ MessageNode::~MessageNode()
 
 void MessageNode::SetMessage(Message& msg)
 {
-	//Msg = &msg;
 	Sequence = msg.Sequence;
+	NoAck = msg.NoAck;
 	Interval = 0;
 	Times = 0;
 	LastSend = 0;

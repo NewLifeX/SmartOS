@@ -149,8 +149,8 @@ class MessageNode
 {
 public:
 	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
-	//Message*	Msg;	// 消息
 	byte		Sequence;	// 序列号
+	byte		NoAck;		// 不需要响应
 	byte		Data[32];
 	uint		Length;
 	uint		Interval;	// 延迟间隔。每次逐步递增
@@ -159,10 +159,6 @@ public:
 	ulong		Expired;	// 过期时间，微秒
 	uint		Times;		// 发送次数
 	ulong		LastSend;	// 最后一次发送时间
-	//Message*	Reply;	// 匹配的响应消息
-
-	//MessageNode();
-	//~MessageNode();
 
 	void SetMessage(Message& msg);
 };
