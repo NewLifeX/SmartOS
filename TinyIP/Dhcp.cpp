@@ -145,6 +145,7 @@ void Dhcp::Start()
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", s, dhcpid);
 
 	// 创建任务，每秒发送一次Discover
+	debug_printf("Dhcp发送Discover ");
 	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
 
 	// 通过DHCP获取IP期间，关闭Arp响应
@@ -156,7 +157,11 @@ void Dhcp::Start()
 void Dhcp::Stop()
 {
 	Running = false;
-	if(taskID) Sys.RemoveTask(taskID);
+	if(taskID)
+	{
+		debug_printf("Dhcp发送Discover ");
+		Sys.RemoveTask(taskID);
+	}
 	taskID = 0;
 
 	// 通过DHCP获取IP期间，关闭Arp响应
@@ -193,7 +198,7 @@ void Dhcp::SendDiscover(void* param)
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 
 	// 向DHCP服务器广播
-	debug_printf("DHCP Discover...\r\n");
+	debug_printf("DHCP::Discover...\r\n");
 	dhcp->Init(_dhcp->dhcpid, true);
 	_dhcp->Discover(dhcp);
 }
@@ -220,7 +225,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 			// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
-			debug_printf("DHCP Offer IP:");
+			debug_printf("DHCP::Offer IP:");
 			TinyIP::ShowIP(dhcp->YourIP);
 			debug_printf(" From ");
 			TinyIP::ShowIP(Tip->RemoteIP);
@@ -234,7 +239,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
 #if NET_DEBUG
-		debug_printf("DHCP Ack   IP:");
+		debug_printf("DHCP::Ack   IP:");
 		TinyIP::ShowIP(dhcp->YourIP);
 		debug_printf(" From ");
 		TinyIP::ShowIP(Tip->RemoteIP);
@@ -253,7 +258,11 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 				debug_printf("DHCP IPLeaseTime:%ds\r\n", time);
 
 				// DHCP租约过了一半以后重新获取IP地址
-				if(time > 0) Sys.AddTask(RenewDHCP, Tip, (ulong)time / 2 * 1000000, -1);
+				if(time > 0)
+				{
+					debug_printf("Dhcp过期获取 ");
+					Sys.AddTask(RenewDHCP, Tip, (ulong)time / 2 * 1000000, -1);
+				}
 			}
 
 			//return true;
@@ -267,7 +276,7 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 	{
 		// 导致Nak的原因
 		opt = GetOption(data, len, DHCP_OPT_Message);
-		debug_printf("DHCP Nak   IP:");
+		debug_printf("DHCP::Nak   IP:");
 		TinyIP::ShowIP(Tip->IP);
 		debug_printf(" From ");
 		TinyIP::ShowIP(Tip->RemoteIP);
@@ -279,6 +288,6 @@ void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 		debug_printf("\r\n");
 	}
 	else
-		debug_printf("DHCP Unkown Type=%d\r\n", opt->Data);
+		debug_printf("DHCP::Unkown Type=%d\r\n", opt->Data);
 #endif
 }

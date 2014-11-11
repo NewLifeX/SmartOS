@@ -173,13 +173,13 @@ bool TinyIP::Open()
 {
 	if(_port->Open()) return true;
 
-	debug_printf("TinyIP Init Failed!\r\n");
+	debug_printf("TinyIP::Init Failed!\r\n");
 	return false;
 }
 
 bool TinyIP::Init()
 {
-	debug_printf("\r\nTinyIP Init...\r\n");
+	debug_printf("\r\nTinyIP::Init...\r\n");
 
 	// 分配缓冲区。比较大，小心堆空间不够
 	if(!Buffer)
@@ -194,6 +194,7 @@ bool TinyIP::Init()
 	ShowInfo();
 
 	// 添加到系统任务，马上开始，尽可能多被调度
+	debug_printf("以太网轮询 ");
     Sys.AddTask(Work, this);
 
 #if NET_DEBUG

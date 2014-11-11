@@ -68,9 +68,9 @@ bool ArpSocket::Process(MemoryStream* ms)
 	assert_param(arp->Option == 0x0100);
 
 	if(arp->Option == 0x0100)
-		debug_printf("ARP Request For ");
+		debug_printf("ARP::Request For ");
 	else
-		debug_printf("ARP Response For ");
+		debug_printf("ARP::Response For ");
 
 	Tip->ShowIP(arp->DestIP);
 	debug_printf(" <= ");
@@ -89,7 +89,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 	arp->SrcIP   = Tip->IP;
 
 #if NET_DEBUG
-	debug_printf("ARP Response To ");
+	debug_printf("ARP::Response To ");
 	Tip->ShowIP(arp->DestIP);
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
@@ -121,7 +121,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	arp->SrcIP   = Tip->IP;
 
 #if NET_DEBUG
-	debug_printf("ARP Request To ");
+	debug_printf("ARP::Request To ");
 	Tip->ShowIP(arp->DestIP);
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
@@ -231,7 +231,7 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 #if NET_DEBUG
 	if(!item)
 	{
-		debug_printf("Add Arp(");
+		debug_printf("Arp::Add(");
 		TinyIP::ShowIP(ip);
 		debug_printf(", ");
 		TinyIP::ShowMac(mac);

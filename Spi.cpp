@@ -18,7 +18,7 @@ int GetPre(int index, uint* speedHz)
 	}
 	if(pre > SPI_BaudRatePrescaler_256)
 	{
-		debug_printf("Spi%d Init Error! speedHz=%d mush be dived with %d\r\n", index, *speedHz, Sys.Clock);
+		debug_printf("Spi%d::Init Error! speedHz=%d mush be dived with %d\r\n", index, *speedHz, Sys.Clock);
 		return -1;
 	}
 
@@ -61,7 +61,15 @@ Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 	int pre = GetPre(_index, &speedHz);
 	if(pre == -1) return;
 
-    debug_printf("Spi%d %dHz Nss:%d\r\n", _index + 1, speedHz, useNss);
+#if DEBUG
+	int k = speedHz/1000;
+	int m = k/1000;
+	k -= m * 1000;
+	if(k == 0)
+		debug_printf("Spi%d::Init %dMHz Nss:%d\r\n", _index + 1, m, useNss);
+	else
+		debug_printf("Spi%d::Init %d.%dMHz Nss:%d\r\n", _index + 1, m, k, useNss);
+#endif
 
     Speed = speedHz;
     Retry = 200;
@@ -69,7 +77,7 @@ Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 
 Spi::~Spi()
 {
-    debug_printf("~Spi%d\r\n", _index + 1);
+    debug_printf("Spi::~Spi%d\r\n", _index + 1);
 
 	Close();
 }
