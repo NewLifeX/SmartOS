@@ -678,6 +678,18 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
+	// 检查空间载波，避开
+	int retry = 20;
+	while(ReadReg(CD))
+	{
+		if(retry-- <= 0)
+		{
+			debug_printf("空间载波拥挤，发送失败！\r\n");
+			return false;
+		}
+		Sys.Sleep(1);
+	}
+	
 	// 进入发送模式
 	if(!SetMode(false)) return false;
 
