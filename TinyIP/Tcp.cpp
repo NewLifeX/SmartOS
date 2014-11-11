@@ -47,7 +47,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 		}
 
 		//第二次同步应答
-		Head(1, true, false);
+		Head(tcp, 1, true, false);
 
 		// 需要用到MSS，所以采用4个字节的可选段
 		//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
@@ -64,7 +64,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 		{
 			if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 			{
-				Head(1, false, true);
+				Head(tcp, 1, false, true);
 				Send(tcp, 0, TCP_FLAGS_ACK);
 			}
 			return true;
@@ -77,7 +77,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 			if(!rs)
 			{
 				// 发送ACK，通知已收到
-				Head(1, false, true);
+				Head(tcp, 1, false, true);
 				Send(tcp, 0, TCP_FLAGS_ACK);
 				return true;
 			}
@@ -93,7 +93,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 #endif
 		}
 		// 发送ACK，通知已收到
-		Head(len, false, true);
+		Head(tcp, len, false, true);
 		//Send(buf, 0, TCP_FLAGS_ACK);
 
 		//TcpSend(buf, len);
@@ -108,7 +108,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 		// RST是对方紧急关闭，这里啥都不干
 		if(tcp->Flags & TCP_FLAGS_FIN)
 		{
-			Head(1, false, true);
+			Head(tcp, 1, false, true);
 			//Close(tcp, 0);
 			Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 		}
@@ -132,7 +132,7 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
 }
 
-void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
+void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool mss, bool opSeq)
 {
     /*
 	第一次握手：主机A发送位码为SYN＝1，随机产生Seq=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机
@@ -141,7 +141,7 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
 	若正确，主机A会再发送Ack=(主机B的Seq+1)，Ack=1，主机B收到后确认Seq值与Ack=1则连接建立成功。
 	完成三次握手，主机A与主机B开始传送数据。
 	*/
-	TCP_HEADER* tcp = Header;
+	//TCP_HEADER* tcp = Header;
 	int ack = tcp->Ack;
 	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
     if (!opSeq)
@@ -173,23 +173,28 @@ void TcpSocket::Head(uint ackNum, bool mss, bool opSeq)
     }
 }
 
+TCP_HEADER* TcpSocket::Create()
+{
+	return (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+}
+
 void TcpSocket::Ack(uint len)
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
 void TcpSocket::Close()
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
 void TcpSocket::Send(byte* buf, uint len)
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	byte* end = Tip->Buffer + Tip->BufferSize;
 	if(buf < tcp->Next() || buf >= end)
@@ -202,4 +207,16 @@ void TcpSocket::Send(byte* buf, uint len)
 	}
 
 	Send(tcp, len, TCP_FLAGS_PUSH);
+}
+
+// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
+void TcpSocket::Connect(IPAddress ip, ushort port)
+{
+	RemoteIP = ip;
+	RemotePort = port;
+
+	TCP_HEADER* tcp = Create();
+	tcp->Init(true);
+	Head(tcp, 1, true, false);
+	Send(tcp, 0, TCP_FLAGS_SYN);
 }

@@ -16,7 +16,7 @@ TinyIP* tip;
 
 bool OnPing(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len)
 {
-    debug_printf("Ping From ");
+    debug_printf("Ping::From ");
     TinyIP::ShowIP(socket->Tip->RemoteIP);
     debug_printf(" with Payload=%d\r\n", len);
 
@@ -25,18 +25,20 @@ bool OnPing(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len)
 
 bool OnUdpReceived(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len)
 {
-    debug_printf("Udp On %d From ", tip->Port);
+	//if(tip->Port == 137 || tip->Port == 1900) return false;
+
+    debug_printf("Udp::On %d From ", tip->Port);
     TinyIP::ShowIP(tip->RemoteIP);
     debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
-    return true;
+    return tip->Port == 888;
 }
 
 bool OnTcpAccepted(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("TcpAccepted On %d From ", tip->Port);
+    debug_printf("Tcp::Accepted On %d From ", tip->Port);
     TinyIP::ShowIP(tip->RemoteIP);
     debug_printf(":%d with Payload=%d\r\n", tip->RemotePort, len);
 
@@ -45,7 +47,7 @@ bool OnTcpAccepted(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 
 bool OnTcpDisconnected(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("TcpDisconnected From ");
+    debug_printf("Tcp::Disconnected From ");
     TinyIP::ShowIP(tip->RemoteIP);
     debug_printf(":%d with Payload=%d\r\n", tip->RemotePort, len);
 
@@ -54,13 +56,46 @@ bool OnTcpDisconnected(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 
 bool OnTcpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("TcpReceived From ");
+    debug_printf("Tcp::Received From ");
     TinyIP::ShowIP(tip->RemoteIP);
     debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
     return true;
+}
+
+bool HttpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
+{
+    debug_printf("Tcp::Received From ");
+    TinyIP::ShowIP(tip->RemoteIP);
+    debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
+    Sys.ShowString(buf, len);
+    debug_printf(" \r\n");
+
+    return true;
+}
+
+void HttpSend(void* param)
+{
+	TinyIP* tip = (TinyIP*)param;
+    TcpSocket tcp(tip);
+	tcp.Port = 777;
+    tcp.OnReceived = HttpReceived;
+
+	// 连接
+	byte ip[] = {192, 168, 0, 84};
+	tcp.Connect(*(uint*)ip, 80);
+
+	// 发送数据
+	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.1\r\n\r\n";
+	tcp.Send(str, ArrayLength(str));
+
+	// 等待接收
+	Sys.Sleep(3000);
+
+	// 断开
+	tcp.Close();
 }
 
 void OnDhcpStop(void* sender, void* param)
@@ -81,6 +116,9 @@ void OnDhcpStop(void* sender, void* param)
         else
             debug_printf("Ping fail\r\n");
     }
+
+	debug_printf("Http收发测试 ");
+	Sys.AddTask(HttpSend, tip, 0, -1);
 }
 
 void TestEthernet()
