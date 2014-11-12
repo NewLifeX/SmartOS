@@ -245,7 +245,7 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	tcp->Seq = 0;
-	seqnum = 0;
+	//seqnum = 0;
 	Head(tcp, 0, true, false);
 
 	Status = SynSent;

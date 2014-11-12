@@ -157,7 +157,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 	// 等待反馈
 	MacAddress* mac = NULL;
-	if(Tip->LoopWait(RequestCallback, &mac, 1000)) return mac;
+	if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return mac;
 
 	return NULL;
 }
@@ -189,7 +189,7 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 	}
 
 	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
-	const MacAddress* mac = Request(ip, item ? 0 : 3);
+	const MacAddress* mac = Request(ip, item ? 0 : 5);
 	if(!mac) return item ? &item->Mac : NULL;
 
 	Add(ip, *mac);

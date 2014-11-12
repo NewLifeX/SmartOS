@@ -80,15 +80,15 @@ void HttpSend(void* param)
 {
 	TinyIP* tip = (TinyIP*)param;
     TcpSocket tcp(tip);
-	tcp.Port = 25539;
+	tcp.Port = 777;
     tcp.OnReceived = HttpReceived;
 
 	// 连接
-	byte ip[] = {192, 168, 0, 88};
+	byte ip[] = {192, 168, 0, 84};
 	tcp.Connect(*(uint*)ip, 80);
 
 	// 发送数据
-	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.88\r\n\r\n";
+	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.84\r\n\r\n";
 	tcp.Send(str, ArrayLength(str));
 
 	// 等待接收
