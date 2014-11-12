@@ -28,6 +28,12 @@ public:
 	uint v4;
 	ushort v2;
 
+	MacAddress(ulong v = 0)
+	{
+		v4 = v;
+		v2 = v >> 32;
+	}
+	
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
 
@@ -65,6 +71,9 @@ public:
 	}
 };
 //}MacAddress;
+
+#define IP_FULL 0xFFFFFFFF
+#define MAC_FULL 0xFFFFFFFFFFFFFFFFull
 
 // 以太网协议类型
 typedef enum

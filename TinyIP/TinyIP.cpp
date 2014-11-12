@@ -1,4 +1,5 @@
 ﻿#include "TinyIP.h"
+#include "Arp.h"
 
 #define NET_DEBUG DEBUG
 
@@ -234,8 +235,12 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	/*debug_printf("SendEthernet: type=0x%04x, len=%d\r\n", type, len);
-	Sys.ShowHex((byte*)eth, len, '-');
+	debug_printf("SendEthernet: type=0x%04x, len=%d(0x%x) ", type, len, len);
+	ShowMac(Mac);
+	debug_printf(" => ");
+	ShowMac(RemoteMac);
+	debug_printf("\r\n");
+	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
 
 	//assert_param((byte*)eth == Buffer);
@@ -263,6 +268,26 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	// 网络序是大端
 	ip->Checksum = 0;
 	ip->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
+
+	assert_ptr(Arp);
+	ArpSocket* arp = (ArpSocket*)Arp;
+	const MacAddress* mac = arp->Resolve(RemoteIP);
+	if(!mac)
+	{
+#if NET_DEBUG
+		debug_printf("No Mac For ");
+		ShowIP(RemoteIP);
+		debug_printf("\r\n");
+#endif
+		return;
+	}
+	RemoteMac = *mac;
+
+	debug_printf("SendIP: type=0x%04x, len=%d(0x%x) ", type, len, len);
+	ShowIP(IP);
+	debug_printf(" => ");
+	ShowIP(RemoteIP);
+	debug_printf("\r\n");
 
 	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
 }

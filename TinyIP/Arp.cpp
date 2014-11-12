@@ -2,6 +2,8 @@
 
 #define NET_DEBUG DEBUG
 
+const MacAddress mac_full(MAC_FULL);
+
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = ETH_ARP;
@@ -167,7 +169,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 const MacAddress* ArpSocket::Resolve(IPAddress ip)
 {
-	if(Tip->IsBroadcast(ip)) return NULL;
+	if(Tip->IsBroadcast(ip)) return &mac_full;
 
 	// 如果不在本子网，那么应该找网关的Mac
 	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
@@ -202,7 +204,7 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 
 void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 {
-	if(!ip || ip == 0xFFFFFFFF) return;
+	if(!ip || ip == IP_FULL) return;
 
 	if(!_Arps)
 	{

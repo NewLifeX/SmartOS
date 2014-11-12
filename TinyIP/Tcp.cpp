@@ -119,6 +119,8 @@ bool TcpSocket::Process(MemoryStream* ms)
 
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
+	Tip->RemoteIP = RemoteIP;
+
 	tcp->SrcPort = __REV16(Port > 0 ? Port : Tip->Port);
 	tcp->DestPort = __REV16(RemotePort > 0 ? RemotePort : Tip->RemotePort);
     tcp->Flags = flags;
@@ -127,6 +129,8 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	// 网络序是大端
 	tcp->Checksum = 0;
 	tcp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
+
+	debug_printf("SendTcp: Flags=0x%02x, len=%d(0x%x) %d => %d \r\n", flags, tcp->Length, tcp->Length, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
 
 	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
