@@ -80,15 +80,15 @@ void HttpSend(void* param)
 {
 	TinyIP* tip = (TinyIP*)param;
     TcpSocket tcp(tip);
-	tcp.Port = 777;
+	tcp.Port = 25539;
     tcp.OnReceived = HttpReceived;
 
 	// 连接
-	byte ip[] = {192, 168, 0, 84};
+	byte ip[] = {192, 168, 0, 88};
 	tcp.Connect(*(uint*)ip, 80);
 
 	// 发送数据
-	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.1\r\n\r\n";
+	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.88\r\n\r\n";
 	tcp.Send(str, ArrayLength(str));
 
 	// 等待接收
@@ -112,9 +112,9 @@ void OnDhcpStop(void* sender, void* param)
         tip->ShowIP(tip->Gateway);
         debug_printf("\r\n");*/
         if(icmp->Ping(tip->Gateway))
-            debug_printf("Ping seccess\r\n");
+            debug_printf("Ping Success\r\n");
         else
-            debug_printf("Ping fail\r\n");
+            debug_printf("Ping Fail\r\n");
     }
 	byte ip[] = {192, 168, 0, 84};
 	icmp->Ping(*(uint*)ip);

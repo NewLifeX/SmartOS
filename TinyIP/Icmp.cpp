@@ -126,7 +126,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 
 	// 等待时间
 	int ps[] = {ip, id, seq};
-	if(Tip->LoopWait(PingCallback, ps, 3)) return true;
+	if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
 
 	return false;
 }

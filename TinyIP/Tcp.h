@@ -12,9 +12,18 @@ private:
 	TCP_HEADER* Create();
 	
 public:
-	ushort Port;		// 本地端口
-	IPAddress RemoteIP;	// 远程地址
-	ushort RemotePort;	// 远程端口
+	// Tcp状态
+	typedef enum
+	{
+		Closed = 0,
+		SynSent = 1,
+		Established = 2,
+	}TCP_STATUS;
+
+	ushort		Port;		// 本地端口
+	IPAddress	RemoteIP;	// 远程地址
+	ushort		RemotePort;	// 远程端口
+	TCP_STATUS	Status;		// 状态
 
 	TCP_HEADER* Header;
 
@@ -23,7 +32,7 @@ public:
 	// 处理数据包
 	virtual bool Process(MemoryStream* ms);
 
-	void Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
+	bool Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
     void Close();	// 关闭Socket
 	void Ack(uint len);

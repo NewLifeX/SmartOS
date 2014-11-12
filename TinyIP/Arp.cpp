@@ -157,7 +157,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 	// 等待反馈
 	MacAddress* mac = NULL;
-	if(Tip->LoopWait(RequestCallback, &mac, 5)) return mac;
+	if(Tip->LoopWait(RequestCallback, &mac, 1000)) return mac;
 
 	return NULL;
 }

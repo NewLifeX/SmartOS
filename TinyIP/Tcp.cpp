@@ -1,5 +1,7 @@
 ﻿#include "Tcp.h"
 
+bool Callback(TinyIP* tip, void* param);
+
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_TCP;
@@ -8,6 +10,8 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	RemoteIP = 0;
 	RemotePort = 0;
 	seqnum = 0xa;
+
+	Status = Closed;
 }
 
 bool TcpSocket::Process(MemoryStream* ms)
@@ -169,11 +173,11 @@ void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool mss, bool opSeq)
     {
 		uint* p = (uint*)tcp->Next();
         // 使用可选域设置 MSS 到 1460:0x5b4
-		*p++ = __REV(0x020405b4);
-		//*p++ = __REV(0x01030302);
-		//*p++ = __REV(0x01010402);
+		p[0] = __REV(0x020405b4);
+		p[1] = __REV(0x01030302);
+		p[2] = __REV(0x01010402);
 
-		tcp->Length += 1;
+		tcp->Length += 3;
     }
 }
 
@@ -191,6 +195,10 @@ void TcpSocket::Ack(uint len)
 
 void TcpSocket::Close()
 {
+	debug_printf("Tcp::Close ");
+	Tip->ShowIP(RemoteIP);
+	debug_printf(":%d \r\n", RemotePort);
+
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
@@ -198,6 +206,10 @@ void TcpSocket::Close()
 
 void TcpSocket::Send(byte* buf, uint len)
 {
+	debug_printf("Tcp::Send ");
+	Tip->ShowIP(RemoteIP);
+	debug_printf(":%d buf=0x%08x len=%d ...... \r\n", RemotePort, buf, len);
+
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
 	byte* end = Tip->Buffer + Tip->BufferSize;
@@ -211,16 +223,76 @@ void TcpSocket::Send(byte* buf, uint len)
 	}
 
 	Send(tcp, len, TCP_FLAGS_PUSH);
+
+	Tip->LoopWait(Callback, this, 5000);
+
+	if(tcp->Flags & TCP_FLAGS_ACK)
+		debug_printf("发送成功！\r\n");
+	else
+		debug_printf("发送失败！\r\n");
 }
 
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
-void TcpSocket::Connect(IPAddress ip, ushort port)
+bool TcpSocket::Connect(IPAddress ip, ushort port)
 {
+	debug_printf("Tcp::Connect ");
+	Tip->ShowIP(ip);
+	debug_printf(":%d ...... \r\n", port);
+
 	RemoteIP = ip;
 	RemotePort = port;
 
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
-	Head(tcp, 1, true, false);
+	tcp->Seq = 0;
+	seqnum = 0;
+	Head(tcp, 0, true, false);
+
+	Status = SynSent;
 	Send(tcp, 0, TCP_FLAGS_SYN);
+
+	if(Tip->LoopWait(Callback, this, 5000))
+	{
+		if(tcp->Flags & TCP_FLAGS_SYN)
+		{
+			Status = Established;
+			debug_printf("连接成功！\r\n");
+			return true;
+		}
+		Status = Closed;
+		debug_printf("拒绝连接！\r\n");
+		return false;
+	}
+
+	Status = Closed;
+	debug_printf("连接超时！\r\n");
+	return false;
+}
+
+bool Callback(TinyIP* tip, void* param)
+{
+	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
+	if(eth->Type != ETH_IP) return false;
+
+	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+	if(_ip->Protocol != IP_TCP) return false;
+
+	TcpSocket* socket = (TcpSocket*)param;
+	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
+	// 检查端口
+	if(tcp->DestPort != socket->Port) return false;
+
+	socket->Header = tcp;
+
+	//if(Status == SynSent)
+	{
+		// 处理。如果对方回发第二次握手包，或者终止握手
+		MemoryStream ms(tip->Buffer, tip->BufferSize);
+		socket->Process(&ms);
+	}
+	//else
+	{
+	}
+
+	return true;
 }

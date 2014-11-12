@@ -166,11 +166,11 @@ typedef struct _TCP_HEADER
 	byte reserved_1:4;	// 保留6位中的4位首部长度
 	byte Length:4;		// tcp头部长度
 	byte Flags:6;		// 6位标志
-	byte reseverd_2:2;	// 保留6位中的2位
+	byte reserved_2:2;	// 保留6位中的2位
 	#else
 	byte Length:4;		// tcp头部长度
 	byte reserved_1:4;	// 保留6位中的4位首部长度
-	byte reseverd_2:2;	// 保留6位中的2位
+	byte reserved_2:2;	// 保留6位中的2位
 	byte Flags:6;		// 6位标志
 	#endif
 	ushort WindowSize;	// 16位窗口大小
@@ -180,6 +180,10 @@ typedef struct _TCP_HEADER
 	void Init(bool recursion = false)
 	{
 		Length = sizeof(this[0]);
+		reserved_1 = 0;
+		reserved_2 = 0;
+		WindowSize = __REV16(8192);
+		urgt_p = 0;
 
 		if(recursion) Prev()->Init(IP_TCP, recursion);
 	}
