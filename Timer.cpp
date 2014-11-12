@@ -119,13 +119,14 @@ void Timer::Start()
 	//_timer.TIM_ClockDivision = 0x0;
 	_timer.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(_port, &_timer);
-
+	
+//	TIM_PrescalerConfig(_port, _timer.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
 	// 打开中断
 	//TIM_ITConfig(_port, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
 	TIM_ITConfig(_port, TIM_IT_Update, ENABLE);
 	//TIM_UpdateRequestConfig(_port, TIM_UpdateSource_Regular);
-	//TIM_PrescalerConfig(_port, Prescaler - 1, TIM_PSCReloadMode_Update);
-
+	TIM_ClearFlag( _port, TIM_FLAG_Update );					// 清楚标志位  必须要有！！ 否则 开启中断立马中断给你看
+//	TIM_ClearITPendingBit(_port, TIM_IT_Update);
 	// 打开计数
 	TIM_Cmd(_port, ENABLE);
 
