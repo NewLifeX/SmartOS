@@ -1,4 +1,4 @@
-﻿#include "Timer.h"
+#include "Timer.h"
 
 static TIM_TypeDef* const g_Timers[] = TIMS;
 Timer** Timer::Timers = NULL;
@@ -141,6 +141,7 @@ void Timer::Stop()
 	// 关闭时钟
 	ClockCmd(false);
 	TIM_ITConfig(_port, TIM_IT_Update, DISABLE);
+	TIM_ClearITPendingBit(_port, TIM_IT_Update);	// 仅清除中断标志位 关闭不可靠
 	TIM_Cmd(_port, DISABLE);
 
 	_started = false;

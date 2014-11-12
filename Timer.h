@@ -9,7 +9,7 @@ class Timer
 private:
 	TIM_TypeDef* _port;
 	byte _index;	// 第几个定时器，从0开始
-	bool _started;
+	volatile bool _started;			// 可能在中断里关闭自己
 
 	void ClockCmd(bool state);
 public:
