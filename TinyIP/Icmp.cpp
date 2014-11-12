@@ -44,6 +44,30 @@ bool IcmpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
+bool PingCallback(TinyIP* tip, void* param)
+{
+	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
+	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+
+	if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
+	{
+		ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
+		int* ps = (int*)param;
+		uint   ip  = ps[0];
+		ushort id  = ps[1];
+		ushort seq = ps[2];
+
+		if(icmp->Identifier == id && icmp->Sequence == seq
+		&& _ip->DestIP == tip->IP
+		&& _ip->SrcIP == ip)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
@@ -73,8 +97,6 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
 	icmp->Init(true);
 
-	uint count = 0;
-
 	icmp->Type = 8;
 	icmp->Code = 0;
 
@@ -102,35 +124,9 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 #endif
 	Tip->SendIP(IP_ICMP, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
-	// 总等待时间
-	TimeWheel tw(1, 0, 0);
-	while(!tw.Expired())
-	{
-		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Tip->Fetch(buf, bufSize);
-		if(!len)
-		{
-			Sys.Sleep(2);	// 等待一段时间，释放CPU
+	// 等待时间
+	int ps[] = {ip, id, seq};
+	if(Tip->LoopWait(PingCallback, ps, 3)) return true;
 
-			continue;
-		}
-
-		if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
-		{
-			if(icmp->Identifier == id && icmp->Sequence == seq
-			&& _ip->DestIP == Tip->IP
-			&& _ip->SrcIP == ip)
-			{
-				count++;
-				break;
-			}
-		}
-
-		// 用不到数据包交由系统处理
-		ms.SetPosition(0);
-		ms.Length = len;
-		Tip->Process(&ms);
-	}
-
-	return count;
+	return false;
 }

@@ -170,6 +170,35 @@ void TinyIP::Work(void* param)
 	}
 }
 
+bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
+{
+	MemoryStream ms(Buffer, BufferSize);
+
+	// 总等待时间
+	TimeWheel tw(0, msTimeout, 0);
+	while(!tw.Expired())
+	{
+		// 阻塞其它任务，频繁调度OnWork，等待目标数据
+		uint len = Fetch();
+		if(!len)
+		{
+			Sys.Sleep(2);	// 等待一段时间，释放CPU
+
+			continue;
+		}
+
+		// 业务
+		if(filter(this, param)) return true;
+
+		// 用不到数据包交由系统处理
+		ms.SetPosition(0);
+		ms.Length = len;
+		Process(&ms);
+	}
+
+	return false;
+}
+
 bool TinyIP::Open()
 {
 	if(_port->Open()) return true;

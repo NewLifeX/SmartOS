@@ -101,6 +101,28 @@ bool ArpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
+bool RequestCallback(TinyIP* tip, void* param)
+{
+	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
+	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
+
+	// 处理ARP
+	if(eth->Type == ETH_ARP)
+	{
+		// 是否目标发给本机的Arp响应包。
+		if(arp->DestIP == tip->IP
+		// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
+		&& arp->Option == 0x0200)
+		{
+			//return &arp->SrcMac;
+			*(MacAddress**)param = &arp->SrcMac;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 {
@@ -133,36 +155,9 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return NULL;
 
-	// 总等待时间
-	TimeWheel tw(1, 0, 0);
-	while(!tw.Expired())
-	{
-		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Tip->Fetch(buf, bufSize);
-		if(!len)
-		{
-			Sys.Sleep(2);	// 等待一段时间，释放CPU
-
-			continue;
-		}
-
-		// 处理ARP
-		if(eth->Type == ETH_ARP)
-		{
-			// 是否目标发给本机的Arp响应包。注意memcmp相等返回0
-			if(arp->DestIP == Tip->IP
-			// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
-			&& arp->Option == 0x0200)
-			{
-				return &arp->SrcMac;
-			}
-		}
-
-		// 用不到数据包交由系统处理
-		ms.SetPosition(0);
-		ms.Length = len;
-		Tip->Process(&ms);
-	}
+	// 等待反馈
+	MacAddress* mac = NULL;
+	if(Tip->LoopWait(RequestCallback, &mac, 5)) return mac;
 
 	return NULL;
 }

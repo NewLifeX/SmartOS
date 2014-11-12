@@ -32,6 +32,9 @@ public:
 	Socket* FindByType(ushort type);
 };
 
+class TinyIP;
+typedef bool (*LoopFilter)(TinyIP* tip, void* param);
+
 // 精简IP类
 class TinyIP //: protected IEthernetAdapter
 {
@@ -39,13 +42,16 @@ private:
 	ITransport* _port;
 	ulong _StartTime;
 
+	// 循环调度的任务，捕获数据包，返回长度
+	uint Fetch(byte* buf = NULL, uint len = 0);
+
 public:
 	byte* Buffer; // 缓冲区
 
 	// 任务函数
 	static void Work(void* param);
-	// 循环调度的任务，捕获数据包，返回长度
-	uint Fetch(byte* buf = NULL, uint len = 0);
+	// 带过滤器的轮询
+	bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
 	// 处理数据包
 	void Process(MemoryStream* ms);
 
