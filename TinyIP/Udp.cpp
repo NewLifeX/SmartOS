@@ -11,8 +11,8 @@ bool UdpSocket::Process(MemoryStream* ms)
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 
-	Tip->Port = port;
-	Tip->RemotePort = remotePort;
+	RemotePort = remotePort;
+	RemoteIP = udp->Prev()->SrcIP;
 
 #if NET_DEBUG
 	byte* data = udp->Next();
@@ -31,16 +31,16 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 	byte* data = ms.Current();
 	uint len = ms.Remain();
 
+	// 触发ITransport接口事件
+	len = OnReceive(data, len);
+	// 如果有返回，说明有数据要回复出去
+	if(len) Write(data, len);
+
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(this, udp, data, len);
 		if(rs) Send(udp, len, false);
-
-		// 触发ITransport接口事件
-		len = OnReceive(data, len);
-		// 如果有返回，说明有数据要回复出去
-		if(len) Write(data, len);
 	}
 	else
 	{
@@ -71,6 +71,10 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	// 网络序是大端
 	udp->Checksum = 0;
 	if(checksum) udp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+
+	Tip->RemoteIP = RemoteIP;
+
+	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", udp->Length, udp->Length, __REV16(udp->SrcPort), __REV16(udp->DestPort));
 
 	Tip->SendIP(IP_UDP, (byte*)udp, sizeof(UDP_HEADER) + len);
 }
