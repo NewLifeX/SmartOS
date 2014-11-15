@@ -14,13 +14,7 @@ public:
 	IPAddress	RemoteIP;	// 远程地址
 	ushort		RemotePort;	// 远程端口
 
-	UdpSocket(TinyIP* tip) : Socket(tip)
-	{
-		Type = IP_UDP;
-		Port = 0;
-		RemoteIP = 0;
-		RemotePort = 0;
-	}
+	UdpSocket(TinyIP* tip);
 
 	// 处理数据包
 	virtual bool Process(MemoryStream* ms);

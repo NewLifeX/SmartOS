@@ -71,8 +71,10 @@ bool ArpSocket::Process(MemoryStream* ms)
 
 	if(arp->Option == 0x0100)
 		debug_printf("ARP::Request For ");
-	else
+	else if(arp->Option == 0x0200)
 		debug_printf("ARP::Response For ");
+	else
+		debug_printf("ARP::Unkown For ");
 
 	Tip->ShowIP(arp->DestIP);
 	debug_printf(" <= ");
@@ -81,6 +83,9 @@ bool ArpSocket::Process(MemoryStream* ms)
 	Tip->ShowMac(arp->SrcMac);
 	debug_printf("] Payload=%d\r\n", ms->Remain());
 #endif
+
+	// 仅处理ARP请求
+	if(arp->Option != 0x0100) return true;
 
 	// 构造响应包
 	arp->Option = 0x0200;

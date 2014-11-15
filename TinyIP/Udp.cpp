@@ -1,5 +1,13 @@
 ﻿#include "Udp.h"
 
+UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
+{
+	Type = IP_UDP;
+	Port = 0;
+	RemoteIP = 0;
+	RemotePort = 0;
+}
+
 bool UdpSocket::Process(MemoryStream* ms)
 {
 	UDP_HEADER* udp = ms->Retrieve<UDP_HEADER>();
