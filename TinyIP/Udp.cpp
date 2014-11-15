@@ -21,12 +21,12 @@ bool UdpSocket::Process(MemoryStream* ms)
 	assert_param(len + sizeof(UDP_HEADER) == plen);
 #endif
 
-	OnReceive(udp, *ms);
+	OnProcess(udp, *ms);
 
 	return true;
 }
 
-void UdpSocket::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
+void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 {
 	byte* data = ms.Current();
 	uint len = ms.Remain();
@@ -36,6 +36,11 @@ void UdpSocket::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(this, udp, data, len);
 		if(rs) Send(udp, len, false);
+
+		// 触发ITransport接口事件
+		len = OnReceive(data, len);
+		// 如果有返回，说明有数据要回复出去
+		if(len) Write(data, len);
 	}
 	else
 	{
@@ -76,10 +81,13 @@ UDP_HEADER* UdpSocket::Create()
 }
 
 // 发送UDP数据到目标地址
-void UdpSocket::Send(byte* buf, uint len, IPAddress ip, ushort port)
+void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 {
-	RemoteIP = ip;
-	RemotePort = port;
+	if(ip > 0)
+	{
+		RemoteIP = ip;
+		RemotePort = port;
+	}
 
 	UDP_HEADER* udp = Create();
 	udp->Init(true);
@@ -94,4 +102,17 @@ void UdpSocket::Send(byte* buf, uint len, IPAddress ip, ushort port)
 	}
 
 	Send(udp, len, true);
+}
+
+bool UdpSocket::OnWrite(const byte* buf, uint len)
+{
+	Send(buf, len);
+	return len;
+}
+
+uint UdpSocket::OnRead(byte* buf, uint len)
+{
+	// 暂时不支持
+	assert_param(false);
+	return 0;
 }

@@ -203,7 +203,7 @@ void Dhcp::SendDiscover(void* param)
 	_dhcp->Discover(dhcp);
 }
 
-void Dhcp::OnReceive(UDP_HEADER* udp, MemoryStream& ms)
+void Dhcp::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 	if(!dhcp->Valid()) return;

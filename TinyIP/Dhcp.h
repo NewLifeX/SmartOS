@@ -31,7 +31,7 @@ public:
 	EventHandler OnStop;
 
 protected:
-	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);
+	virtual void OnProcess(UDP_HEADER* udp, MemoryStream& ms);
 };
 
 #endif

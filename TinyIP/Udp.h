@@ -4,7 +4,7 @@
 #include "TinyIP.h"
 
 // Udp会话
-class UdpSocket : public Socket
+class UdpSocket : public Socket, ITransport
 {
 private:
 	UDP_HEADER* Create();
@@ -30,11 +30,17 @@ public:
 	UdpHandler OnReceived;
 
 	// 发送UDP数据到目标地址
-	void Send(byte* buf, uint len, IPAddress ip, ushort port);
+	void Send(const byte* buf, uint len, IPAddress ip = 0, ushort port = 0);
 
 protected:
 	void Send(UDP_HEADER* udp, uint len, bool checksum = true);
-	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);
+	virtual void OnProcess(UDP_HEADER* udp, MemoryStream& ms);
+
+	//virtual bool OnOpen() { return _port->Open(); }
+    //virtual void OnClose() { _port->Close(); }
+
+    virtual bool OnWrite(const byte* buf, uint len);
+	virtual uint OnRead(byte* buf, uint len);
 };
 
 #endif
