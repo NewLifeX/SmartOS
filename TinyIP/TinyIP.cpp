@@ -264,11 +264,11 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	debug_printf("SendEthernet: type=0x%04x, len=%d(0x%x) ", type, len, len);
+	/*debug_printf("SendEthernet: type=0x%04x, len=%d(0x%x) ", type, len, len);
 	ShowMac(Mac);
 	debug_printf(" => ");
 	ShowMac(RemoteMac);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
 
@@ -312,11 +312,11 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	}
 	RemoteMac = *mac;
 
-	debug_printf("SendIP: type=0x%04x, len=%d(0x%x) ", type, len, len);
+	/*debug_printf("SendIP: type=0x%04x, len=%d(0x%x) ", type, len, len);
 	ShowIP(IP);
 	debug_printf(" => ");
 	ShowIP(RemoteIP);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 
 	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
 }

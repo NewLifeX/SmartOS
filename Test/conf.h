@@ -12,10 +12,11 @@ void TestEnc28j60();
 void TestEthernet();
 void TestTimer(OutputPort& leds);
 void TestThread(OutputPort& leds);
-void TestMessage(OutputPort* leds);
 
 #include "NRF24L01.h"
 void TestNRF24L01();
 NRF24L01* Create2401();
+
+void TestMessage(OutputPort* leds);
 
 #endif

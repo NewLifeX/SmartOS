@@ -43,7 +43,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
 	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
 
-	Send((byte*)dhcp, sizeof(DHCP_HEADER) + len, false);
+	Send(dhcp->Prev(), sizeof(DHCP_HEADER) + len, false);
 }
 
 // 获取选项，返回数据部分指针

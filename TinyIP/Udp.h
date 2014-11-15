@@ -6,13 +6,20 @@
 // Udp会话
 class UdpSocket : public Socket
 {
+private:
+	UDP_HEADER* Create();
+
 public:
-	ushort Port;	// 本地端口
+	ushort 		Port;		// 本地端口
+	IPAddress	RemoteIP;	// 远程地址
+	ushort		RemotePort;	// 远程端口
 
 	UdpSocket(TinyIP* tip) : Socket(tip)
 	{
 		Type = IP_UDP;
 		Port = 0;
+		RemoteIP = 0;
+		RemotePort = 0;
 	}
 
 	// 处理数据包
@@ -24,9 +31,9 @@ public:
 
 	// 发送UDP数据到目标地址
 	void Send(byte* buf, uint len, IPAddress ip, ushort port);
-	void Send(byte* buf, uint len, bool checksum = true);
 
 protected:
+	void Send(UDP_HEADER* udp, uint len, bool checksum = true);
 	virtual void OnReceive(UDP_HEADER* udp, MemoryStream& ms);
 };
 

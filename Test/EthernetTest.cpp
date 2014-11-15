@@ -9,9 +9,6 @@
 #include "TinyIP\Dhcp.h"
 #include "conf.h"
 
-//static byte mymac[6] = {0x54,0x55,0x58,0x10,0x00,0x24};
-//static byte myip[4] = {192,168,0,87};
-
 TinyIP* tip;
 
 bool OnPing(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len)
@@ -98,6 +95,21 @@ void HttpSend(void* param)
 	tcp.Close();
 }
 
+void UdpSend(void* param)
+{
+	TinyIP* tip = (TinyIP*)param;
+    UdpSocket udp(tip);
+	udp.Port = 777;
+
+	// 连接
+	byte ip[] = {192, 168, 0, 84};
+	udp.RemoteIP = *(uint*)ip;
+
+	// 发送数据
+	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.84\r\n\r\n";
+	udp.Send(str, ArrayLength(str));
+}
+
 void OnDhcpStop(void* sender, void* param)
 {
 	Dhcp* dhcp = (Dhcp*)sender;
@@ -137,12 +149,6 @@ void TestEthernet()
 
 	// 如果不是为了Dhcp，这里可以不用Open，Init里面会Open
     if(!tip->Open()) return;
-
-	/*if(!dhcp.Start())
-	{
-		debug_printf("TinyIP DHCP Fail!\r\n\r\n");
-		return;
-	}*/
 
 	tip->Arp = new ArpSocket(tip);
     tip->Init();
