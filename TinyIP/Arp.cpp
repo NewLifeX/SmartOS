@@ -164,7 +164,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 const MacAddress* ArpSocket::Resolve(IPAddress ip)
 {
-	if(Tip->IsBroadcast(ip)) return &mac_full;
+	if(ip == 0 || Tip->IsBroadcast(ip)) return &mac_full;
 
 	// 如果不在本子网，那么应该找网关的Mac
 	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
