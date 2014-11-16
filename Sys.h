@@ -111,9 +111,12 @@ public:
     uint Crc(const void* buf, uint len, uint crc);
 	ushort Crc16(const void* buf, uint len, ushort crc = 0xFFFF);
 
-	void ShowHex(byte* buf, uint len, char sep = '\0');// 显示十六进制数据，指定分隔字符
-	void ShowString(byte* buf, uint len = 0, bool autoEnd = true);	// 显示字符串，不指定长度时自动找\0
-	void ToHex(byte* buf, byte* src, uint len);	// 源数据转为十六进制字符编码再放入目标字符，比如0x28在目标放两个字节0x02 0x08
+	// 显示十六进制数据，指定分隔字符
+	void ShowHex(byte* buf, uint len, char sep = '\0');
+	// 显示字符串，不指定长度时自动找\0
+	void ShowString(byte* buf, uint len = 0, bool autoEnd = true);
+	// 源数据转为十六进制字符编码再放入目标字符，比如0x28在目标放两个字节0x02 0x08
+	void ToHex(byte* buf, byte* src, uint len);
 private:
 	int _Index;	// MCU在型号表中的索引
 
