@@ -69,12 +69,15 @@ bool UdpSocket::Process(MemoryStream* ms)
 void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 {
 	byte* data = ms.Current();
-	uint len = ms.Remain();
+	//uint len = ms.Remain();
+	// 计算标称的数据长度
+	uint len = __REV16(udp->Length) - sizeof(UDP_HEADER);
+	assert_param(len <= ms.Remain());
 
 	// 触发ITransport接口事件
-	len = OnReceive(data, len);
+	uint len2 = OnReceive(data, len);
 	// 如果有返回，说明有数据要回复出去
-	if(len) Write(data, len);
+	if(len2) Write(data, len2);
 
 	if(OnReceived)
 	{

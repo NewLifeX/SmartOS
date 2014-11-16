@@ -197,10 +197,10 @@ typedef struct _TCP_HEADER
 //UDP头部，总长度8字节，偏移34=0x22
 typedef struct _UDP_HEADER
 {
-	ushort SrcPort; //远端口号
-	ushort DestPort; //目的端口号
-	ushort Length;      //udp头部长度
-	ushort Checksum;  //16位udp检验和
+	ushort SrcPort;		// 远端口号
+	ushort DestPort;	// 目的端口号
+	ushort Length;      // udp头部长度
+	ushort Checksum;	// 16位udp检验和
 
 	void Init(bool recursion = false)
 	{

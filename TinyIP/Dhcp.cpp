@@ -35,8 +35,9 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
 	//dhcp->ClientMac = Tip->Mac;
 
-	Tip->RemoteMac = MAC_FULL;
-	Tip->RemoteIP = IP_FULL;
+	//Tip->RemoteMac = MAC_FULL;
+	//Tip->RemoteIP = IP_FULL;
+	RemoteIP = IP_FULL;
 
 	//UDP_HEADER* udp = dhcp->Prev();
 	//udp->SrcPort = 68;

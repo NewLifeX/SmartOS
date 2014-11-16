@@ -414,7 +414,7 @@ bool TinyIP::IsMyIP(IPAddress ip)
 bool TinyIP::IsBroadcast(IPAddress ip)
 {
 	// 全网广播
-	if(ip == 0xFFFFFFFF) return true;
+	if(ip == IP_FULL) return true;
 
 	if(ip == (IP | ~Mask)) return true;
 

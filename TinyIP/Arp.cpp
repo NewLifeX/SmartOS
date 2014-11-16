@@ -3,6 +3,7 @@
 #define NET_DEBUG DEBUG
 
 const MacAddress mac_full(MAC_FULL);
+const MacAddress mac_empty(0);
 
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -171,7 +172,8 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 const MacAddress* ArpSocket::Resolve(IPAddress ip)
 {
-	if(ip == 0 || Tip->IsBroadcast(ip)) return &mac_full;
+	if(ip == 0) return &mac_empty;
+	if(ip == IP_FULL || Tip->IsBroadcast(ip)) return &mac_full;
 
 	// 如果不在本子网，那么应该找网关的Mac
 	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
