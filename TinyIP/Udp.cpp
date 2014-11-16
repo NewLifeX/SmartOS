@@ -17,7 +17,7 @@ UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 
 string UdpSocket::ToString()
 {
-	static string name = "UDP_65535";
+	static char name[10];
 	sprintf(name, "UDP_%d", Port);
 	return name;
 }
