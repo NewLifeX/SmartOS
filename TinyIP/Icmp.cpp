@@ -3,6 +3,13 @@
 
 #define NET_DEBUG DEBUG
 
+IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
+{
+	Type = IP_ICMP;
+
+	Enable = true;
+}
+
 bool IcmpSocket::Process(MemoryStream* ms)
 {
 	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();

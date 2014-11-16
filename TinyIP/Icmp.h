@@ -10,7 +10,7 @@
 class IcmpSocket : public Socket
 {
 public:
-	IcmpSocket(TinyIP* tip) : Socket(tip) { Type = IP_ICMP; }
+	IcmpSocket(TinyIP* tip);
 
 	// 处理数据包
 	virtual bool Process(MemoryStream* ms);
