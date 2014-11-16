@@ -61,7 +61,7 @@ public:
 	{
 		if(_needFree)
 		{
-			if(_Buffer) delete _Buffer;
+			if(_Buffer) delete[] _Buffer;
 			_Buffer = NULL;
 		}
 	}
