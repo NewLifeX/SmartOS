@@ -106,7 +106,8 @@ void TaskScheduler::Start()
 				task->Callback(task->Param);
 
 				// 如果只是一次性任务，在这里清理
-				if(task->Period < 0) delete task;
+				//if(task->Period < 0) delete task;
+				if(task->Period < 0) Remove(task->ID);
 			}
 		}
 
