@@ -95,10 +95,10 @@ void TinyIP::Process(MemoryStream* ms)
 	// 是否发给本机。注意memcmp相等返回0
 	if(!ip || !IsMyIP(ip->DestIP)) return;
 
-	Sys.ShowHex((byte*)ip, ip->Size(), '-');
+	/*Sys.ShowHex((byte*)ip, ip->Size(), '-');
 	debug_printf("\r\n");
 	Sys.ShowHex((byte*)ip->Next(), __REV16(ip->TotalLength) - ip->Size(), '-');
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 
 #if NET_DEBUG
 	if(eth->Type != ETH_IP)
