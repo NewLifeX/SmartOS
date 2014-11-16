@@ -61,6 +61,8 @@ bool UdpSocket::Process(MemoryStream* ms)
 	uint len = ms->Remain();
 	uint plen = __REV16(udp->Length);
 	assert_param(len + sizeof(UDP_HEADER) == plen);
+	//Sys.ShowHex((byte*)udp, udp->Size(), '-');
+	//debug_printf("\r\n");
 #endif
 
 	OnProcess(udp, *ms);
@@ -78,9 +80,10 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 
 #if NET_DEBUG
 	ushort oldsum = __REV16(udp->Checksum);
-	udp->Checksum = 0;
-	udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
-	debug_printf("UDP::Checksum ori=0x%02x new=0x%02x\r\n", oldsum, __REV16(udp->Checksum));
+	//udp->Checksum = 0;
+	//udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+	ushort newsum = Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1);
+	debug_printf("UDP::Checksum ori=0x%02x new=0x%02x\r\n", oldsum, newsum);
 #endif
 
 	// 触发ITransport接口事件
@@ -116,20 +119,21 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	//UDP_HEADER* udp = (UDP_HEADER*)(buf - sizeof(UDP_HEADER));
 	assert_param(udp);
 
+	uint tlen = sizeof(UDP_HEADER) + len;
 	udp->SrcPort = __REV16(Port > 0 ? Port : LocalPort);
 	udp->DestPort = __REV16(RemotePort);
-	udp->Length = __REV16(sizeof(UDP_HEADER) + len);
+	udp->Length = __REV16(tlen);
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
 	Tip->RemoteIP = RemoteIP;
 
 	// 网络序是大端
 	udp->Checksum = 0;
-	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, tlen, 1));
 
-	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", udp->Length, udp->Length, __REV16(udp->SrcPort), __REV16(udp->DestPort));
+	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", tlen, tlen, __REV16(udp->SrcPort), RemotePort);
 
-	Tip->SendIP(IP_UDP, (byte*)udp, sizeof(UDP_HEADER) + len);
+	Tip->SendIP(IP_UDP, (byte*)udp, tlen);
 }
 
 UDP_HEADER* UdpSocket::Create()

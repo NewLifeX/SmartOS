@@ -95,6 +95,11 @@ void TinyIP::Process(MemoryStream* ms)
 	// 是否发给本机。注意memcmp相等返回0
 	if(!ip || !IsMyIP(ip->DestIP)) return;
 
+	Sys.ShowHex((byte*)ip, ip->Size(), '-');
+	debug_printf("\r\n");
+	Sys.ShowHex((byte*)ip->Next(), __REV16(ip->TotalLength) - ip->Size(), '-');
+	debug_printf("\r\n");
+
 #if NET_DEBUG
 	if(eth->Type != ETH_IP)
 	{
@@ -109,14 +114,8 @@ void TinyIP::Process(MemoryStream* ms)
 	RemoteIP = ip->SrcIP;
 
 	// 移交给ARP处理，为了让它更新ARP表
+	//if(Arp && Arp->Enable) Arp->Process(NULL);
 	if(Arp) Arp->Process(NULL);
-
-	//!!! 太杯具了，收到的数据包可能有多余数据，这两个长度可能不等
-	//assert_param(__REV16(ip->TotalLength) == len);
-	// 数据包是否完整
-	//if(ms->Remain() < __REV16(ip->TotalLength)) return;
-	// 计算负载数据的长度，注意ip可能变长，长度Length的单位是4字节
-	//len -= sizeof(IP_HEADER);
 
 	// 前面的len不准确，必须以这个为准
 	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
@@ -257,7 +256,7 @@ void TinyIP::ShowInfo()
 #endif
 }
 
-void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
+void TinyIP::SendEthernet(ETH_TYPE type, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param(IS_ETH_TYPE(type));
@@ -288,7 +287,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, byte* buf, uint len)
 	_port->Write((byte*)eth, len);
 }
 
-void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
+void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
 	assert_param(ip);
@@ -363,7 +362,7 @@ void TinyIP::ShowMac(const MacAddress& mac)
 		debug_printf("-%02X", *m++);
 }
 
-ushort TinyIP::CheckSum(byte* buf, uint len, byte type)
+ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
 {
     // type 0=ip
     //      1=udp
