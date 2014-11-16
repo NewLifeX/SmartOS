@@ -91,7 +91,7 @@ public:
 	void ShowInfo();
 	static void ShowIP(IPAddress ip);
 	static void ShowMac(const MacAddress& mac);
-	static uint CheckSum(byte* buf, uint len, byte type);
+	ushort CheckSum(byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, byte* buf, uint len);
 	void SendIP(IP_TYPE type, byte* buf, uint len);

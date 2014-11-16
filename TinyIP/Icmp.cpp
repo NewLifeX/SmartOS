@@ -122,7 +122,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	icmp->Sequence = seq;
 
 	icmp->Checksum = 0;
-	icmp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
+	icmp->Checksum = __REV16(Tip->CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
 
 #if NET_DEBUG
 	debug_printf("Ping ");

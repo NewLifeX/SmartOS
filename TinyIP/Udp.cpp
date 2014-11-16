@@ -1,5 +1,7 @@
 ﻿#include "Udp.h"
 
+#define NET_DEBUG DEBUG
+
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_UDP;
@@ -74,6 +76,13 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 	uint len = __REV16(udp->Length) - sizeof(UDP_HEADER);
 	assert_param(len <= ms.Remain());
 
+#if NET_DEBUG
+	ushort oldsum = __REV16(udp->Checksum);
+	udp->Checksum = 0;
+	udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
+	debug_printf("UDP::Checksum ori=0x%02x new=0x%02x\r\n", oldsum, __REV16(udp->Checksum));
+#endif
+
 	// 触发ITransport接口事件
 	uint len2 = OnReceive(data, len);
 	// 如果有返回，说明有数据要回复出去
@@ -111,11 +120,12 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	udp->DestPort = __REV16(RemotePort);
 	udp->Length = __REV16(sizeof(UDP_HEADER) + len);
 
+	// 必须在校验码之前设置，因为计算校验码需要地址
+	Tip->RemoteIP = RemoteIP;
+
 	// 网络序是大端
 	udp->Checksum = 0;
-	if(checksum) udp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
-
-	Tip->RemoteIP = RemoteIP;
+	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 
 	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", udp->Length, udp->Length, __REV16(udp->SrcPort), __REV16(udp->DestPort));
 
@@ -148,7 +158,7 @@ void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 		memcpy(udp->Next(), buf, len);
 	}
 
-	Send(udp, len, false);
+	Send(udp, len, true);
 }
 
 bool UdpSocket::OnWrite(const byte* buf, uint len)

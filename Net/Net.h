@@ -203,8 +203,8 @@ typedef struct _UDP_HEADER
 {
 	ushort SrcPort;		// 远端口号
 	ushort DestPort;	// 目的端口号
-	ushort Length;      // udp头部长度
-	ushort Checksum;	// 16位udp检验和
+	ushort Length;      // 头部加上负载的总长度
+	ushort Checksum;	// 检验和
 
 	void Init(bool recursion = false)
 	{

@@ -127,16 +127,17 @@ bool TcpSocket::Process(MemoryStream* ms)
 
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
-	Tip->RemoteIP = RemoteIP;
-
 	tcp->SrcPort = __REV16(Port);
 	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
+	// 必须在校验码之前设置，因为计算校验码需要地址
+	Tip->RemoteIP = RemoteIP;
+
 	// 网络序是大端
 	tcp->Checksum = 0;
-	tcp->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)tcp - 8, 8 + sizeof(TCP_HEADER) + len, 2));
+	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
 
 	debug_printf("SendTcp: Flags=0x%02x, len=%d(0x%x) %d => %d \r\n", flags, tcp->Length, tcp->Length, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
 

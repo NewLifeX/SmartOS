@@ -306,9 +306,13 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	//ip->TTL = 64;
 	ip->Protocol = type;
 
+	// 报文唯一标识。用于识别重组等
+	static ushort g_Identifier = 1;
+	ip->Identifier = __REV16(g_Identifier++);
+
 	// 网络序是大端
 	ip->Checksum = 0;
-	ip->Checksum = __REV16((ushort)TinyIP::CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum = __REV16(CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
 
 	assert_ptr(Arp);
 	ArpSocket* arp = (ArpSocket*)Arp;
@@ -359,47 +363,52 @@ void TinyIP::ShowMac(const MacAddress& mac)
 		debug_printf("-%02X", *m++);
 }
 
-uint TinyIP::CheckSum(byte* buf, uint len, byte type)
+ushort TinyIP::CheckSum(byte* buf, uint len, byte type)
 {
     // type 0=ip
     //      1=udp
     //      2=tcp
-    unsigned long sum = 0;
+    uint sum = 0;
 
-    if(type == 1)
-    {
-        sum += IP_UDP; // protocol udp
-        // the length here is the length of udp (data+header len)
-        // =length given to this function - (IP.scr+IP.dst length)
-        sum += len - 8; // = real tcp len
-    }
-    if(type == 2)
-    {
-        sum += IP_TCP;
-        // the length here is the length of tcp (data+header len)
-        // =length given to this function - (IP.scr+IP.dst length)
-        sum += len - 8; // = real tcp len
-    }
-    // build the sum of 16bit words
+	// !!谨记网络是大端
+    if(type == 1 || type == 2)
+	{
+        // UDP/TCP的校验和需要计算UDP首部加数据荷载部分，但也需要加上UDP伪首部。
+		// 这个伪首部指，源地址、目的地址、UDP数据长度、协议类型（0x11），协议类型就一个字节，但需要补一个字节的0x0，构成12个字节。
+		// 源地址。其实可以按照4字节累加，反正后面会把高位移位到低位累加，但是得考虑溢出的问题。
+		sum += __REV16(IP & 0xFFFF);
+		sum += __REV16(IP >> 16);
+		sum += __REV16(RemoteIP & 0xFFFF);
+		sum += __REV16(RemoteIP >> 16);
+
+		// 数据长度
+		sum += len;
+
+		// 加上协议类型
+		if(type == 1)
+			sum += IP_UDP;
+		else if(type == 2)
+			sum += IP_TCP;
+	}
+    // 按16位字计算和
     while(len > 1)
     {
         sum += 0xFFFF & (*buf << 8 | *(buf + 1));
         buf += 2;
         len -= 2;
     }
-    // if there is a byte left then add it (padded with zero)
+    // 如果字节个数不是偶数个，这里会剩余1，后面补0
     if (len)
     {
         sum += (0xFF & *buf) << 8;
     }
-    // now calculate the sum over the bytes in the sum
-    // until the result is only 16bit long
-    while (sum>>16)
+    // 现在计算sum字节的和，直到只有16位长
+    while (sum >> 16)
     {
         sum = (sum & 0xFFFF) + (sum >> 16);
     }
-    // build 1's complement:
-    return( (uint) sum ^ 0xFFFF);
+    // 取补码
+    return (ushort)(sum ^ 0xFFFF);
 }
 
 bool TinyIP::IsMyIP(IPAddress ip)
