@@ -32,7 +32,7 @@ TinyIP::TinyIP(ITransport* port)
 	Buffer = NULL;
 	BufferSize = 1500;
 	EnableBroadcast = true;
-	EnableArp = true;
+	//EnableArp = true;
 
 	Sockets.SetCapacity(0x10);
 	// 必须有Arp，否则无法响应别人的IP询问
@@ -79,13 +79,14 @@ void TinyIP::Process(MemoryStream* ms)
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	//if(eth->DestMac != Mac) return;
-	LocalMac  = eth->DestMac;
+	//LocalMac  = eth->DestMac;
 	RemoteMac = eth->SrcMac;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		if(EnableArp && Arp) Arp->Process(ms);
+		//if(EnableArp && Arp) Arp->Process(ms);
+		if(Arp && Arp->Enable) Arp->Process(ms);
 
 		return;
 	}
@@ -104,7 +105,7 @@ void TinyIP::Process(MemoryStream* ms)
 #endif
 
 	// 记录远程信息
-	LocalIP = ip->DestIP;
+	//LocalIP = ip->DestIP;
 	RemoteIP = ip->SrcIP;
 
 	// 移交给ARP处理，为了让它更新ARP表
@@ -132,7 +133,7 @@ void TinyIP::Process(MemoryStream* ms)
 	for(int i=count-1; i>=0; i--)
 	{
 		Socket* socket = Sockets[i];
-		if(socket)
+		if(socket && socket->Enable)
 		{
 			// 必须类型匹配
 			if(socket->Type == ip->Protocol)
@@ -218,6 +219,10 @@ bool TinyIP::Init()
 		assert_param(Buffer);
 		assert_param(Sys.CheckMemory());
 	}
+
+	// 必须有Arp，否则无法响应别人的IP询问
+	if(!Arp) Arp = new ArpSocket(this);
+	Arp->Enable = true;
 
 	if(!Open()) return false;
 
@@ -422,6 +427,7 @@ Socket::Socket(TinyIP* tip)
 	assert_param(tip);
 
 	Tip = tip;
+	Enable = false;
 	// 除了ARP以外，加入到列表
 	if(this->Type != ETH_ARP) tip->Sockets.Add(this);
 }
@@ -430,6 +436,7 @@ Socket::~Socket()
 {
 	assert_param(Tip);
 
+	Enable = false;
 	// 从TinyIP中删除当前Socket
 	Tip->Sockets.Remove(this);
 }

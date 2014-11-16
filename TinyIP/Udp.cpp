@@ -3,9 +3,38 @@
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_UDP;
-	Port = 0;
-	RemoteIP = 0;
-	RemotePort = 0;
+	RemoteIP	= 0;
+	RemotePort	= 0;
+	LocalIP		= 0;
+	LocalPort	= 0;
+
+	// 累加端口
+	static ushort g_udp_port = 1024;
+	Port = g_udp_port++;
+}
+
+string UdpSocket::ToString()
+{
+	static string name = "UDP_65535";
+	sprintf(name, "UDP_%d", Port);
+	return name;
+}
+
+bool UdpSocket::OnOpen()
+{
+	if(Port)
+		debug_printf("Udp::Open %d\r\n", Port);
+	else
+		debug_printf("Udp::Open %d 监听所有端口UDP数据包\r\n", Port);
+
+	Enable = true;
+	return Enable;
+}
+
+void UdpSocket::OnClose()
+{
+	debug_printf("Udp::Close %d\r\n", Port);
+	Enable = false;
 }
 
 bool UdpSocket::Process(MemoryStream* ms)
@@ -19,8 +48,11 @@ bool UdpSocket::Process(MemoryStream* ms)
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 
-	RemotePort = remotePort;
-	RemoteIP = udp->Prev()->SrcIP;
+	IP_HEADER* ip = udp->Prev();
+	RemotePort	= remotePort;
+	RemoteIP	= ip->SrcIP;
+	LocalPort	= port;
+	LocalIP		= ip->DestIP;
 
 #if NET_DEBUG
 	byte* data = udp->Next();
@@ -54,10 +86,10 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 	{
 #if NET_DEBUG
 		debug_printf("UDP ");
-		Tip->ShowIP(Tip->RemoteIP);
-		debug_printf(":%d => ", Tip->RemotePort);
-		Tip->ShowIP(Tip->LocalIP);
-		debug_printf(":%d Payload=%d udp_len=%d \r\n", Tip->Port, len, __REV16(udp->Length));
+		Tip->ShowIP(RemoteIP);
+		debug_printf(":%d => ", RemotePort);
+		Tip->ShowIP(LocalIP);
+		debug_printf(":%d Payload=%d udp_len=%d \r\n", LocalPort, len, __REV16(udp->Length));
 
 		Sys.ShowString(data, len);
 		debug_printf(" \r\n");
@@ -72,8 +104,8 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	//UDP_HEADER* udp = (UDP_HEADER*)(buf - sizeof(UDP_HEADER));
 	assert_param(udp);
 
-	udp->SrcPort = __REV16(Port > 0 ? Port : Tip->Port);
-	udp->DestPort = __REV16(RemotePort > 0 ? RemotePort : Tip->RemotePort);
+	udp->SrcPort = __REV16(Port > 0 ? Port : LocalPort);
+	udp->DestPort = __REV16(RemotePort);
 	udp->Length = __REV16(sizeof(UDP_HEADER) + len);
 
 	// 网络序是大端

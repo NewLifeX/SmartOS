@@ -16,6 +16,8 @@ ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 	Count = 64;
 #endif
 	_Arps = NULL;
+
+	Enable = true;
 }
 
 ArpSocket::~ArpSocket()

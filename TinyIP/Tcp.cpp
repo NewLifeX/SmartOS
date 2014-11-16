@@ -6,10 +6,13 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_TCP;
 
-	Port = 0;
-	RemoteIP = 0;
-	RemotePort = 0;
-	seqnum = 0xa;
+	Port		= 0;
+	RemoteIP	= 0;
+	RemotePort	= 0;
+	LocalIP		= 0;
+	LocalPort	= 0;
+
+	seqnum		= 0xa;
 
 	Status = Closed;
 }
@@ -33,8 +36,9 @@ bool TcpSocket::Process(MemoryStream* ms)
 	// 不能修改主监听Socket的端口，否则可能导致收不到后续连接数据
 	//Port = port;
 	//RemotePort = remotePort;
-	Tip->Port = port;
-	Tip->RemotePort = remotePort;
+	// 
+	//Tip->Port = port;
+	//Tip->RemotePort = remotePort;
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN && !(tcp->Flags & TCP_FLAGS_ACK)) // SYN连接请求标志位，为1表示发起连接的请求数据包
@@ -125,8 +129,8 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
 	Tip->RemoteIP = RemoteIP;
 
-	tcp->SrcPort = __REV16(Port > 0 ? Port : Tip->Port);
-	tcp->DestPort = __REV16(RemotePort > 0 ? RemotePort : Tip->RemotePort);
+	tcp->SrcPort = __REV16(Port);
+	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 

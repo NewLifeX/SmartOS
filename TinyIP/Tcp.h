@@ -20,9 +20,11 @@ public:
 		Established = 2,
 	}TCP_STATUS;
 
-	ushort		Port;		// 本地端口
+	ushort		Port;		// 本地端口。0表示接收所有端口的数据包
 	IPAddress	RemoteIP;	// 远程地址
 	ushort		RemotePort;	// 远程端口
+	IPAddress	LocalIP;	// 本地IP地址
+	ushort		LocalPort;	// 本地端口
 	TCP_STATUS	Status;		// 状态
 
 	TCP_HEADER* Header;

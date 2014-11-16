@@ -6,6 +6,7 @@ Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
 {
 	Type = IP_UDP;
 	Port = 68;
+	RemotePort = 67;
 
 	Running = false;
 	Result = false;
@@ -36,8 +37,10 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 
 	Tip->RemoteMac = MAC_FULL;
 	Tip->RemoteIP = IP_FULL;
-	Tip->Port = 68;
-	Tip->RemotePort = 67;
+
+	//UDP_HEADER* udp = dhcp->Prev();
+	//udp->SrcPort = 68;
+	//udp->DestPort = 67;
 
 	// 如果最后一个字节不是DHCP_OPT_End，则增加End
 	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
@@ -149,13 +152,18 @@ void Dhcp::Start()
 	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
 
 	// 通过DHCP获取IP期间，关闭Arp响应
-	Tip->EnableArp = false;
+	//Tip->EnableArp = false;
+	if(Tip->Arp) Tip->Arp->Enable = false;
 
 	Running = true;
+
+	Open();
 }
 
 void Dhcp::Stop()
 {
+	Close();
+
 	Running = false;
 	if(taskID)
 	{
@@ -165,7 +173,8 @@ void Dhcp::Stop()
 	taskID = 0;
 
 	// 通过DHCP获取IP期间，关闭Arp响应
-	Tip->EnableArp = true;
+	//Tip->EnableArp = true;
+	if(Tip->Arp) Tip->Arp->Enable = true;
 
 	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
