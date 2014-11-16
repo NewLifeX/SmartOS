@@ -9,10 +9,10 @@ Task::Task(TaskScheduler* scheduler)
 	_Scheduler = scheduler;
 }
 
-Task::~Task()
+/*Task::~Task()
 {
 	if(ID) _Scheduler->Remove(ID);
-}
+}*/
 
 TaskScheduler::TaskScheduler(string name)
 {

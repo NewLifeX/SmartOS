@@ -549,8 +549,9 @@ void TSys::RemoveTask(uint taskid)
 {
 	assert_ptr(_Scheduler);
 
-	Task* task = (*_Scheduler)[taskid];
-	delete task;
+	//Task* task = (*_Scheduler)[taskid];
+	//delete task;
+	_Scheduler->Remove(taskid);
 }
 
 void TSys::Start()

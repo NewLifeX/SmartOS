@@ -23,7 +23,7 @@ public:
 	long	Period;		// 周期us
 	ulong	NextTime;	// 下一次执行时间
 
-	~Task();
+	//~Task();
 };
 
 // 任务调度器
@@ -34,8 +34,6 @@ private:
 	uint _gid;	// 总编号
 
 	friend class Task;
-
-	void Remove(uint taskid);
 
 public:
 	string	Name;		// 系统名称
@@ -48,6 +46,7 @@ public:
 	
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 	uint Add(Action func, void* param, ulong dueTime = 0, long period = 0);
+	void Remove(uint taskid);
 
 	void Start();
 	void Stop();
