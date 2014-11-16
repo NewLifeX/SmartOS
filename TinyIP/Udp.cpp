@@ -148,7 +148,7 @@ void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 		memcpy(udp->Next(), buf, len);
 	}
 
-	Send(udp, len, true);
+	Send(udp, len, false);
 }
 
 bool UdpSocket::OnWrite(const byte* buf, uint len)

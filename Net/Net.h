@@ -133,6 +133,10 @@ typedef struct _IP_HEADER
 	{
 		Version = 4;
 		Length = sizeof(this[0]) >> 2;
+		TypeOfService = 0;
+		Flags = 0;
+		FragmentOffset = 0;
+		TTL = 64;
 		Protocol = type;
 
 		if(recursion) Prev()->Type = ETH_IP;

@@ -301,9 +301,9 @@ void TinyIP::SendIP(IP_TYPE type, byte* buf, uint len)
 	//ip->TypeOfService = 0;
 	ip->Length = sizeof(IP_HEADER) / 4;	// 暂时不考虑附加数据
 	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
-	ip->Flags = 0x40;
-	ip->FragmentOffset = 0;
-	ip->TTL = 64;
+	//ip->Flags = 0x40;
+	//ip->FragmentOffset = 0;
+	//ip->TTL = 64;
 	ip->Protocol = type;
 
 	// 网络序是大端
