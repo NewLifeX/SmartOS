@@ -21,7 +21,7 @@ public:
 	//byte			GroupIndex;	// 分组
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
-    void Set(Pin pin);			// 单一引脚初始化
+    Port& Set(Pin pin);			// 设置引脚，并应用配置。
 
     virtual void Config();		// 确定配置,确认用对象内部的参数进行初始化
 
@@ -62,9 +62,8 @@ public:
 	// 普通输出一般采用开漏输出，需要倒置
     OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
-		Set(pin);
 		Init(invert, openDrain, speed);
-		Config();
+		Set(pin);
 	}
 
 	// 整体写入所有包含的引脚
@@ -112,9 +111,8 @@ public:
     AlternatePort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 		: OutputPort()
 	{
-		Set(pin);
 		Init(invert, openDrain, speed);
-		Config();
+		Set(pin);
 	}
 
 protected:
@@ -147,9 +145,8 @@ public:
 	InputPort() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
 	{
-		Set(pin);
 		Init(floating, pupd);
-		Config();
+		Set(pin);
 	}
 
     virtual ~InputPort();
@@ -193,7 +190,7 @@ private:
 class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin) { Set(pin); Config(); }
+    AnalogInPort(Pin pin) { Set(pin); }
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);

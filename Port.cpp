@@ -57,7 +57,7 @@ Port::~Port()
 }
 
 // 单一引脚初始化
-void Port::Set(Pin pin)
+Port& Port::Set(Pin pin)
 {
 	assert_param(pin != P0);
 
@@ -75,6 +75,10 @@ void Port::Set(Pin pin)
 	// 保护引脚
 	OnReserve(_Pin, true);
 #endif
+
+	Config();
+	
+	return *this;
 }
 
 void Port::Config()
