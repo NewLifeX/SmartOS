@@ -73,10 +73,6 @@ void Spi::Init(SPI_TypeDef* spi, uint speedHz, bool useNss)
 
 	if(!useNss) Pins[0] = P0;
 
-	// 自动计算稍低于速度speedHz的分频
-	int pre = GetPre(_index, &speedHz);
-	if(pre == -1) return;
-
 #if DEBUG
 	int k = speedHz/1000;
 	int m = k/1000;
@@ -86,6 +82,10 @@ void Spi::Init(SPI_TypeDef* spi, uint speedHz, bool useNss)
 	else
 		debug_printf("Spi%d::Init %d.%dMHz Nss:%d\r\n", _index + 1, m, k, useNss);
 #endif
+
+	// 自动计算稍低于速度speedHz的分频
+	int pre = GetPre(_index, &speedHz);
+	if(pre == -1) return;
 
     Speed = speedHz;
 }
@@ -110,6 +110,16 @@ void Spi::Open()
 {
 	if(Opened) return;
 
+#if DEBUG
+	int k = Speed/1000;
+	int m = k/1000;
+	k -= m * 1000;
+	if(k == 0)
+		debug_printf("Spi%d::Open %dMHz\r\n", _index + 1, m);
+	else
+		debug_printf("Spi%d::Open %d.%dMHz\r\n", _index + 1, m, k);
+#endif
+
 	// 自动计算稍低于速度speedHz的分频
 	uint speedHz = Speed;
 	int pre = GetPre(_index, &speedHz);
@@ -127,12 +137,8 @@ void Spi::Open()
     if(ps[0] != P0)
     {
 		debug_printf("    NSS : ");
-        //_nss = new OutputPort(ps[0], false, false);
-		_nss.Invert = false;
 		_nss.OpenDrain = false;
 		_nss.Set(ps[0]);
-		// 这里可以不调用，后面有Stop等同效果
-		//*_nss = true; // 拉高进入空闲状态
     }
 
     // 使能SPI时钟
@@ -199,18 +205,10 @@ void Spi::Close()
 	_clk.Set(P0);
 	debug_printf("    MISO: ");
 	_miso.Set(P0);
-	//if(_miso) delete _miso;
 	debug_printf("    MOSI: ");
 	_mosi.Set(P0);
-	//if(_mosi) delete _mosi;
-	//_clk = NULL;
-	//_miso = NULL;
-	//_mosi = NULL;
-
 	debug_printf("    NSS : ");
 	_nss.Set(P0);
-	//if(_nss) delete _nss;
-	//_nss = NULL;
 
 	Opened = false;
 }
