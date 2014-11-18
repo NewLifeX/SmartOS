@@ -18,7 +18,6 @@ class Port
 public:
     GPIO_TypeDef*	Group;		// 针脚组
     Pin				_Pin;		// 针脚
-	//byte			GroupIndex;	// 分组
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
     Port& Set(Pin pin);			// 设置引脚，并应用配置。
@@ -80,8 +79,6 @@ public:
 
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
-
-	//static void Set(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All, bool openDrain = false, uint speed = GPIO_MAX_SPEED);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
     OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }

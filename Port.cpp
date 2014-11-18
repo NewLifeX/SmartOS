@@ -22,7 +22,6 @@ Port::Port()
 {
 	_Pin = P0;
 	Group = NULL;
-	//GroupIndex = 0;
 	PinBit = 0;
 }
 
@@ -59,25 +58,36 @@ Port::~Port()
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {
-	assert_param(pin != P0);
+	//assert_param(pin != P0);
+
+#if DEBUG
+	if(_Pin != P0) OnReserve(_Pin, false);
+#endif
 
     _Pin = pin;
-    Group = IndexToGroup(pin >> 4);
-	//GroupIndex = pin >> 4;
-    PinBit = 1 << (pin & 0x0F);
+	if(_Pin != P0)
+	{
+		Group = IndexToGroup(pin >> 4);
+		PinBit = 1 << (pin & 0x0F);
+	}
+	else
+	{
+		Group = NULL;
+		PinBit = 0;
+	}
 
 #if defined(STM32F1)
 	// 整组引脚的初始状态，析构时有选择恢复
-	InitState = ((ulong)Group->CRH << 32) + Group->CRL;
+	if(_Pin != P0) InitState = ((ulong)Group->CRH << 32) + Group->CRL;
 #endif
 
 #if DEBUG
 	// 保护引脚
-	OnReserve(_Pin, true);
+	if(_Pin != P0) OnReserve(_Pin, true);
 #endif
 
-	Config();
-	
+	if(_Pin != P0) Config();
+
 	return *this;
 }
 
@@ -244,46 +254,6 @@ void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 		dat |= PinBit;
 	GPIO_Write(Group, dat);
 }
-
-/*void OutputPort::Set(GPIO_TypeDef* group, ushort pinbit, bool openDrain, uint speed)
-{
-	GPIO_InitTypeDef gpio;
-	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-	GPIO_StructInit(&gpio);
-
-    // 打开时钟
-    int gi = GroupToIndex(group);
-#ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
-#endif
-
-    gpio.GPIO_Pin = pinbit;
-
-	switch(speed)
-	{
-		case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
-#ifndef STM32F4
-		case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
-#else
-		case 25: gpio.GPIO_Speed = GPIO_Speed_25MHz; break;
-		case 100: gpio.GPIO_Speed = GPIO_Speed_100MHz; break;
-#endif
-		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
-	}
-
-#ifdef STM32F1
-	gpio.GPIO_Mode = openDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
-#else
-	gpio.GPIO_Mode = GPIO_Mode_OUT;
-	gpio.GPIO_OType = openDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-
-    GPIO_Init(group, &gpio);
-}*/
 
 void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
 {
@@ -502,10 +472,8 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 
 	// 默认20us抖动时间
 	uint shakeTime = state->ShakeTime;
-	//if(shakeTime == 0) shakeTime = 20;
 
 	do {
-		//value = TIO_Read(state->Pin); // 获取引脚状态
 		EXTI->PR = bit;   // 重置挂起位
 		value = InputPort::Read(state->Pin); // 获取引脚状态
 		if(shakeTime > 0)
@@ -623,7 +591,6 @@ void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handle
 #if defined(STM32F0) || defined(STM32F4)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
     SYSCFG_EXTILineConfig(groupIndex, pinIndex);
-	//SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource0);
 #elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
     GPIO_EXTILineConfig(groupIndex, pinIndex);
