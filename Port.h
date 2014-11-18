@@ -16,14 +16,14 @@
 class Port
 {
 public:
-    Pin _Pin;			// 针脚
-    GPIO_TypeDef* Group;// 针脚组
-	byte GroupIndex;	// 分组
-    ushort PinBit;		// 组内引脚位。每个引脚一个位
+    GPIO_TypeDef*	Group;		// 针脚组
+    Pin				_Pin;		// 针脚
+	//byte			GroupIndex;	// 分组
+    ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
-    void SetPort(Pin pin);	// 单一引脚初始化
+    void Set(Pin pin);			// 单一引脚初始化
 
-    virtual void Config();	// 确定配置,确认用对象内部的参数进行初始化
+    virtual void Config();		// 确定配置,确认用对象内部的参数进行初始化
 
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
@@ -62,13 +62,13 @@ public:
 	// 普通输出一般采用开漏输出，需要倒置
     OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
-		SetPort(pin);
+		Set(pin);
 		Init(invert, openDrain, speed);
 		Config();
 	}
 
 	// 整体写入所有包含的引脚
-    void Write(bool value); 
+    void Write(bool value);
     void WriteGroup(ushort value);   // 整组写入
 	void Up(uint ms);	// 拉高一段时间后拉低
 	void Blink(uint times, uint ms);	// 闪烁多次
@@ -78,10 +78,10 @@ public:
     bool Read(byte index);
     bool Read();		// Read() ReadReal() 的区别在  前者读输出  一个读输入    在开漏输出的时候有很大区别
 	bool ReadInput();
-	
+
     static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
-	
+
 	//static void Set(GPIO_TypeDef* group, ushort pinbit = GPIO_Pin_All, bool openDrain = false, uint speed = GPIO_MAX_SPEED);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
@@ -112,7 +112,7 @@ public:
     AlternatePort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 		: OutputPort()
 	{
-		SetPort(pin);
+		Set(pin);
 		Init(invert, openDrain, speed);
 		Config();
 	}
@@ -147,7 +147,7 @@ public:
 	InputPort() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
 	{
-		SetPort(pin);
+		Set(pin);
 		Init(floating, pupd);
 		Config();
 	}
@@ -193,7 +193,7 @@ private:
 class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin) { SetPort(pin); Config(); }
+    AnalogInPort(Pin pin) { Set(pin); Config(); }
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);

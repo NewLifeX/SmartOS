@@ -22,7 +22,7 @@ Port::Port()
 {
 	_Pin = P0;
 	Group = NULL;
-	GroupIndex = 0;
+	//GroupIndex = 0;
 	PinBit = 0;
 }
 
@@ -57,13 +57,13 @@ Port::~Port()
 }
 
 // 单一引脚初始化
-void Port::SetPort(Pin pin)
+void Port::Set(Pin pin)
 {
 	assert_param(pin != P0);
 
     _Pin = pin;
     Group = IndexToGroup(pin >> 4);
-	GroupIndex = pin >> 4;
+	//GroupIndex = pin >> 4;
     PinBit = 1 << (pin & 0x0F);
 
 #if defined(STM32F1)
@@ -90,7 +90,7 @@ void Port::Config()
 void Port::OnConfig(GPIO_InitTypeDef& gpio)
 {
     // 打开时钟
-    int gi = GroupIndex;
+    int gi = _Pin >> 4;
 #ifdef STM32F0
     RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
 #elif defined(STM32F1)
@@ -458,7 +458,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
         hasInitState = true;
     }
 
-    byte gi = GroupIndex;
+    byte gi = _Pin >> 4;
     ushort n = PinBit;
     for(int i=0; i<16 && n!=0; i++)
     {
