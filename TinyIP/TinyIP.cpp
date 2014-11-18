@@ -218,12 +218,13 @@ bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 
 bool TinyIP::Open()
 {
+	debug_printf("\r\nTinyIP::Open...\r\n");
+
 	if(!_port->Open())
 	{
 		debug_printf("TinyIP::Open Failed!\r\n");
+		return false;
 	}
-
-	debug_printf("\r\nTinyIP::Open...\r\n");
 
 	// 分配缓冲区。比较大，小心堆空间不够
 	if(!Buffer)
@@ -237,7 +238,7 @@ bool TinyIP::Open()
 	if(!Arp) Arp = new ArpSocket(this);
 	Arp->Enable = true;
 
-	if(!Open()) return false;
+	//if(!Open()) return false;
 
 	ShowInfo();
 
