@@ -6,6 +6,8 @@
 
 #define COM_DEBUG 0
 
+SerialPort::SerialPort() { Init(); }
+
 SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataBits, byte stopBits)
 {
 	assert_param(com);
@@ -21,7 +23,24 @@ SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataB
 		}
 	}
 
+	Init();
 	Init(_index, baudRate, parity, dataBits, stopBits);
+}
+
+// 析构时自动关闭
+SerialPort::~SerialPort()
+{
+	if(RS485) delete RS485;
+	RS485 = NULL;
+}
+
+void SerialPort::Init()
+{
+	_index = 0xFF;
+	RS485 = NULL;
+	Error = 0;
+
+	IsRemap = false;
 }
 
 void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte stopBits)
@@ -36,13 +55,6 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
     _dataBits = dataBits;
     _stopBits = stopBits;
 
-	_tx = NULL;
-	_rx = NULL;
-	RS485 = NULL;
-	Error = 0;
-
-	IsRemap = false;
-
 	// 根据端口实际情况决定打开状态
 	if(_port->CR1 & USART_CR1_UE) Opened = true;
 	
@@ -51,13 +63,6 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 	*(uint*)Name = *(uint*)"COMx";
 	Name[3] = '0' + _index + 1;
 	Name[4] = 0;
-}
-
-// 析构时自动关闭
-SerialPort::~SerialPort()
-{
-	if(RS485) delete RS485;
-	RS485 = NULL;
 }
 
 // 打开串口
@@ -102,11 +107,11 @@ ShowLog:
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
-    _tx = new AlternatePort(tx);
+    _tx.Set(tx);
 #if defined(STM32F0) || defined(STM32F4)
-    _rx = new AlternatePort(rx);
+    _rx.Set(rx);
 #else
-    _rx = new InputPort(rx);
+    _rx.Set(rx);
 #endif
 
 	// 不要关调试口，否则杯具
@@ -190,10 +195,10 @@ void SerialPort::OnClose()
 
     USART_DeInit(_port);
 
-    if(_tx) delete _tx;
+    /*if(_tx) delete _tx;
 	if(_rx) delete _rx;
 	_tx = NULL;
-	_rx = NULL;
+	_rx = NULL;*/
 
 	// 检查重映射
 #ifdef STM32F1XX

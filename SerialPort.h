@@ -16,18 +16,14 @@ private:
 	int _baudRate;
 	
     USART_TypeDef* _port;
-	AlternatePort* _tx;
+	AlternatePort _tx;
 #if defined(STM32F0) || defined(STM32F4)
-	AlternatePort* _rx;
+	AlternatePort _rx;
 #else
-	InputPort* _rx;
+	InputPort _rx;
 #endif
 
-    void Init(byte index, 
-        int baudRate = 115200, 
-        byte parity = USART_Parity_No,       //无奇偶校验
-        byte dataBits = USART_WordLength_8b, //8位数据长度
-        byte stopBits = USART_StopBits_1);    //1位停止位
+	void Init();
 
 public:
 	char 		Name[5];// 名称。COMx，后面1字节\0表示结束
@@ -35,12 +31,14 @@ public:
 	OutputPort* RS485;	// RS485使能引脚
 	int 		Error;	// 错误计数
 
+	SerialPort();
     SerialPort(COM_Def index, 
         int baudRate = 115200, 
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1)    //1位停止位
 	{
+		Init();
 		Init(index, baudRate, parity, dataBits, stopBits);
 	}
 
@@ -51,6 +49,12 @@ public:
         byte stopBits = USART_StopBits_1);    //1位停止位
 	// 析构时自动关闭
     virtual ~SerialPort();
+
+    void Init(byte index, 
+        int baudRate = 115200, 
+        byte parity = USART_Parity_No,       //无奇偶校验
+        byte dataBits = USART_WordLength_8b, //8位数据长度
+        byte stopBits = USART_StopBits_1);    //1位停止位
 
 	void SendData(byte data, uint times = 3000);
 
