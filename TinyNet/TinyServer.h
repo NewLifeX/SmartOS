@@ -18,10 +18,17 @@ public:
 
 	TinyServer(Controller* control);
 
+	// 发送消息
+	void Send(Message& msg);
+
+	// 收到功能消息时触发
+	MessageHandler	Received;
+	void*			Param;
+
 // 常用系统级消息
 public:
 	// 设置默认系统消息
-	void SetDefault();
+	void Start();
 
 	// 广播发现系统
 	void Discover();
@@ -38,7 +45,7 @@ public:
 
 	// 询问系统标识号
 	static bool SysID(Message& msg, void* param);
-	
+
 	// 设置系统模式
 	static bool SysMode(Message& msg, void* param);
 };

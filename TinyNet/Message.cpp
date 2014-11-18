@@ -231,6 +231,9 @@ void Controller::Init()
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 	}
 
+	Received	= NULL;
+	Param		= NULL;
+	
 	TotalSend = TotalAck = TotalBytes = TotalCost = TotalRetry = TotalMsg = 0;
 	LastSend = LastAck = LastBytes = LastCost = LastRetry = LastMsg = 0;
 
@@ -416,6 +419,12 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
 	ShowMessage(msg, false, port);
 #endif
+
+	// 外部公共消息事件
+	if(Received)
+	{
+		if(!Received(msg, Param)) return true;
+	}
 
 	// 选择处理器来处理消息
 	for(int i=0; i<_HandlerCount; i++)

@@ -1,8 +1,10 @@
 ﻿#include "TinyServer.h"
 #include "SerialPort.h"
 
-void DiscoverTask(void* param);
-void PingTask(void* param);
+bool OnServerReceived(Message& msg, void* param);
+
+void DiscoverClientTask(void* param);
+void PingClientTask(void* param);
 
 static uint _taskDiscover = 0;
 static uint _taskPing = 0;
@@ -16,13 +18,33 @@ TinyServer::TinyServer(Controller* control)
 
 	LastActive	= 0;
 
+	_control->Received	= OnServerReceived;
+	_control->Param		= this;
+	Param		= NULL;
+
 	OnDiscover	= NULL;
 	OnPing		= NULL;
 }
 
+void TinyServer::Send(Message& msg)
+{
+	_control->Send(msg);
+}
+
+bool OnServerReceived(Message& msg, void* param)
+{
+	TinyServer* server = (TinyServer*)param;
+	assert_ptr(server);
+	
+	// 消息转发
+	if(server->Received) return server->Received(msg, server->Param);
+
+	return true;
+}
+
 // 常用系统级消息
 
-void TinyServer::SetDefault()
+void TinyServer::Start()
 {
 #if DEBUG
 	_control->AddTransport(SerialPort::GetMessagePort());
@@ -37,13 +59,13 @@ void TinyServer::SetDefault()
 
 	// 发现服务端的任务
 	debug_printf("开始寻找服务端 ");
-	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+	_taskDiscover = Sys.AddTask(DiscoverClientTask, this, 0, 2000000);
 }
 
 // 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
 static byte _lastDiscoverID;
 
-void DiscoverTask(void* param)
+void DiscoverClientTask(void* param)
 {
 	assert_ptr(param);
 	TinyServer* client = (TinyServer*)param;
@@ -89,7 +111,7 @@ bool TinyServer::Discover(Message& msg, void* param)
 		client->Password = ms.Read<ulong>();
 
 	// 记住服务端地址
-	client->Server = msg.Src;
+	//client->Server = msg.Src;
 
 	// 取消Discover任务
 	debug_printf("停止寻找服务端 ");
@@ -98,14 +120,14 @@ bool TinyServer::Discover(Message& msg, void* param)
 
 	// 启动Ping任务
 	debug_printf("开始Ping服务端 ");
-	_taskPing = Sys.AddTask(PingTask, client, 0, 5000000);
+	_taskPing = Sys.AddTask(PingClientTask, client, 0, 5000000);
 
 	if(client->OnDiscover) return client->OnDiscover(msg, param);
 
 	return true;
 }
 
-void PingTask(void* param)
+void PingClientTask(void* param)
 {
 	assert_ptr(param);
 	TinyServer* client = (TinyServer*)param;
@@ -124,9 +146,9 @@ void TinyServer::Ping()
 		Sys.RemoveTask(_taskPing);
 
 		debug_printf("开始寻找服务端 ");
-		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+		_taskDiscover = Sys.AddTask(DiscoverClientTask, this, 0, 2000000);
 
-		Server = 0;
+		//Server = 0;
 		Password = 0;
 
 		return;
@@ -148,7 +170,7 @@ bool TinyServer::Ping(Message& msg, void* param)
 	// 忽略响应消息
 	if(msg.Reply)
 	{
-		if(msg.Src == client->Server) client->LastActive = Time.Current();
+		//if(msg.Src == client->Server) client->LastActive = Time.Current();
 		return true;
 	}
 
@@ -221,7 +243,7 @@ bool TinyServer::SysMode(Message& msg, void* param)
 			Sys.Reset();
 			break;
 	}
-	
+
 	msg.Length = 1;
 	msg.Data[0] = 0;
 

@@ -1,6 +1,8 @@
 ﻿#include "TinyClient.h"
 #include "SerialPort.h"
 
+bool OnClientReceived(Message& msg, void* param);
+
 void DiscoverTask(void* param);
 void PingTask(void* param);
 
@@ -9,6 +11,8 @@ static uint _taskPing = 0;
 
 TinyClient::TinyClient(Controller* control)
 {
+	assert_ptr(control);
+
 	_control = control;
 
 	Server		= 0;
@@ -17,8 +21,28 @@ TinyClient::TinyClient(Controller* control)
 
 	LastActive	= 0;
 
+	_control->Received	= OnClientReceived;
+	_control->Param		= this;
+	Param		= NULL;
+
 	OnDiscover	= NULL;
 	OnPing		= NULL;
+}
+
+void TinyClient::Send(Message& msg)
+{
+	_control->Send(msg);
+}
+
+bool OnClientReceived(Message& msg, void* param)
+{
+	TinyClient* client = (TinyClient*)param;
+	assert_ptr(client);
+	
+	// 消息转发
+	if(client->Received) return client->Received(msg, client->Param);
+
+	return true;
 }
 
 // 常用系统级消息
@@ -222,7 +246,7 @@ bool TinyClient::SysMode(Message& msg, void* param)
 			Sys.Reset();
 			break;
 	}
-	
+
 	msg.Length = 1;
 	msg.Data[0] = 0;
 

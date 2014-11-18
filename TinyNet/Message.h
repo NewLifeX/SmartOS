@@ -143,6 +143,10 @@ public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册
 	void Register(byte code, MessageHandler handler, void* param = NULL);
 
+	// 收到消息时触发
+	MessageHandler	Received;
+	void*			Param;
+
 	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX
 	uint	TotalSend;	// 总次数
 	uint	TotalAck;	// 总成功
