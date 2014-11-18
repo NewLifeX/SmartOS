@@ -87,7 +87,10 @@ bool Button::GetValue() { return _Value; }
 void Button::SetValue(bool value)
 {
 	if(Led) *Led = value;
+#ifdef Door_lock
+	if(Relay) *Relay = !value;
+#else
 	if(Relay) *Relay = value;
-
+#endif
 	_Value = value;
 }
