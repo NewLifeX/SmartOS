@@ -21,6 +21,7 @@ public:
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
     Port& Set(Pin pin);			// 设置引脚，并应用配置。
+	bool Empty() const { return _Pin == P0; }
 
     virtual void Config();		// 确定配置,确认用对象内部的参数进行初始化
 

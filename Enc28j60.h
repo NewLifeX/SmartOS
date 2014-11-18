@@ -10,16 +10,20 @@ class Enc28j60 : public ITransport
 {
 private:
     Spi* _spi;
-    OutputPort* _ce;
+    OutputPort _ce;
 
     uint NextPacketPtr;
 
+	void Init();
+	
 public:
     byte Bank;
 	byte Mac[6];
 
+	Enc28j60();
     Enc28j60(Spi* spi, Pin ce = P0/*, Pin irq = P0*/);
     virtual ~Enc28j60();
+	void Init(Spi* spi, Pin ce = P0);
 
     byte ReadOp(byte op, byte addr);
     void WriteOp(byte op, byte addr, byte data);

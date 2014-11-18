@@ -2,20 +2,39 @@
 
 #define ENC_DEBUG 0
 
+Enc28j60::Enc28j60() { Init(); }
+
 Enc28j60::Enc28j60(Spi* spi, Pin ce/*, Pin irq*/)
 {
-    _spi = spi;
-	_ce = NULL;
-    if(ce != P0) _ce = new OutputPort(ce, false, false);
+    //_spi = spi;
+	//_ce = NULL;
+    //if(ce != P0) _ce = new OutputPort(ce, false, false);
+	Init();
+	Init(spi, ce);
 }
 
 Enc28j60::~Enc28j60()
 {
-	if(_spi) delete _spi;
+	delete _spi;
 	_spi = NULL;
 
-	if(_ce) delete _ce;
-	_ce = NULL;
+	/*if(_ce) delete _ce;
+	_ce = NULL;*/
+}
+
+void Enc28j60::Init()
+{
+	_spi = NULL;
+}
+
+void Enc28j60::Init(Spi* spi, Pin ce)
+{
+	_spi = spi;
+	if(ce != P0)
+	{
+		_ce.OpenDrain = false;
+		_ce.Set(ce);
+	}
 }
 
 byte Enc28j60::ReadOp(byte op, byte addr)
@@ -143,13 +162,13 @@ bool Enc28j60::OnOpen()
 	assert_param(Mac);
 
 	debug_printf("Enc28j60::Open(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
-    if(_ce)
+    if(!_ce.Empty())
     {
-        *_ce = true;
+        _ce = true;
         Sys.Sleep(100);
-        *_ce = false;
+        _ce = false;
         Sys.Sleep(100);
-        *_ce = true;
+        _ce = true;
     }
 
 	// 检查并打开Spi

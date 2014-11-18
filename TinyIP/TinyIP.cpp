@@ -3,7 +3,46 @@
 
 #define NET_DEBUG DEBUG
 
+TinyIP::TinyIP() { Init(); }
+
 TinyIP::TinyIP(ITransport* port)
+{
+	Init();
+	Init(port);
+}
+
+TinyIP::~TinyIP()
+{
+	delete _port;
+    _port = NULL;
+
+	delete Buffer;
+	Buffer = NULL;
+
+	delete Arp;
+	Arp = NULL;
+}
+
+void TinyIP::Init()
+{
+	_port = NULL;
+	_StartTime = 0;
+
+	Mask = 0x00FFFFFF;
+	DHCPServer = Gateway = DNSServer = IP = 0;
+
+	Buffer = NULL;
+	BufferSize = 1500;
+	EnableBroadcast = true;
+	//EnableArp = true;
+
+	Sockets.SetCapacity(0x10);
+	// 必须有Arp，否则无法响应别人的IP询问
+	//Arp = new ArpSocket(this);
+	Arp = NULL;
+}
+
+void TinyIP::Init(ITransport* port)
 {
 	_port = port;
 	_StartTime = Time.Current();
@@ -28,28 +67,6 @@ TinyIP::TinyIP(ITransport* port)
 
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = defip;
-
-	Buffer = NULL;
-	BufferSize = 1500;
-	EnableBroadcast = true;
-	//EnableArp = true;
-
-	Sockets.SetCapacity(0x10);
-	// 必须有Arp，否则无法响应别人的IP询问
-	//Arp = new ArpSocket(this);
-	Arp = NULL;
-}
-
-TinyIP::~TinyIP()
-{
-	if(_port) delete _port;
-    _port = NULL;
-
-	if(Buffer) delete Buffer;
-	Buffer = NULL;
-
-	if(Arp) delete Arp;
-	Arp = NULL;
 }
 
 // 循环调度的任务
@@ -201,15 +218,12 @@ bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 
 bool TinyIP::Open()
 {
-	if(_port->Open()) return true;
+	if(!_port->Open())
+	{
+		debug_printf("TinyIP::Open Failed!\r\n");
+	}
 
-	debug_printf("TinyIP::Init Failed!\r\n");
-	return false;
-}
-
-bool TinyIP::Init()
-{
-	debug_printf("\r\nTinyIP::Init...\r\n");
+	debug_printf("\r\nTinyIP::Open...\r\n");
 
 	// 分配缓冲区。比较大，小心堆空间不够
 	if(!Buffer)

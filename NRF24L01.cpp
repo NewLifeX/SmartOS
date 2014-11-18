@@ -64,9 +64,17 @@
 #define FEATURE			0x1D  //特征寄存器
 #endif
 
+NRF24L01::NRF24L01() { Init(); }
+
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
-    debug_printf("NRF24L01 CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+	Init();
+	Init(spi, ce, irq);
+}
+
+void NRF24L01::Init()
+{
+	_spi = NULL;
 
 	// 初始化地址
 	memset(Address, 0, 5);
@@ -74,23 +82,6 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	for(int i=0; i<4; i++) Addr2_5[i] = Address1[0] + i + 1;
 	Channel = 0;	// 默认通道0
 	AddrBits = 0x01;// 默认使能地址0
-
-	_CE = NULL;
-    if(ce != P0)
-	{
-		_CE = new OutputPort(ce, false, false);
-		*_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
-	}
-	_IRQ = NULL;
-    if(irq != P0)
-    {
-        // 中断引脚初始化
-        _IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
-		//_IRQ->ShakeTime = 2;
-        _IRQ->Register(OnIRQ, this);
-    }
-    // 必须先赋值，后面WriteReg需要用到
-    _spi = spi;
 
 	Timeout		= 50;
 	PayloadWidth= 32;
@@ -108,6 +99,35 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 	//_Thread = NULL;
 
 	_Lock = 0;
+
+}
+
+void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
+{
+    debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+
+	//_CE = NULL;
+    if(ce != P0)
+	{
+		//_CE = new OutputPort(ce, false, false);
+		//*_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+		_CE.OpenDrain = false;
+		_CE.Set(ce);
+		_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+	}
+	//_IRQ = NULL;
+    if(irq != P0)
+    {
+        // 中断引脚初始化
+        //_IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
+		//_IRQ->ShakeTime = 2;
+		_IRQ.Floating = false;
+		_IRQ.PuPd = InputPort::PuPd_UP;
+		_IRQ.Set(irq);
+        _IRQ.Register(OnIRQ, this);
+    }
+    // 必须先赋值，后面WriteReg需要用到
+    _spi = spi;
 
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
@@ -127,13 +147,13 @@ NRF24L01::~NRF24L01()
 	// 关闭电源
 	SetPower(false);
 
-	if(_CE) delete _CE;
-	if(_IRQ) delete _IRQ;
+	//if(_CE) delete _CE;
+	//if(_IRQ) delete _IRQ;
 
-	if(_spi) delete _spi;
+	delete _spi;
 	_spi = NULL;
-	_CE = NULL;
-	_IRQ = NULL;
+	//_CE = NULL;
+	//_IRQ = NULL;
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -203,7 +223,7 @@ bool NRF24L01::Check(void)
 	byte buf2[5];
 
 	// 必须拉低CE后修改配置，然后再拉高
-	PortScope ps(_CE, false);
+	PortScope ps(&_CE, false);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
@@ -689,7 +709,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 		}
 		Sys.Sleep(1);
 	}
-	
+
 	// 进入发送模式
 	if(!SetMode(false)) return false;
 
@@ -749,7 +769,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 bool NRF24L01::WaitForIRQ()
 {
 	ulong us = Time.Current() + Timeout * 1000; // 等待100ms
-	while(_IRQ->Read() && us > Time.Current());
+	while(_IRQ.Read() && us > Time.Current());
 	if(us >= Time.Current()) return true;
 
 	// 读取状态寄存器的值
@@ -814,7 +834,7 @@ void NRF24L01::OnIRQ()
 	// TX_FIFO 缓冲区满
 	if(fifo.TX_FULL)
 	{
-		PortScope ps(_CE, false);
+		PortScope ps(&_CE, false);
 		ClearFIFO(false);
 		ClearStatus(true, false);
 		//SetMode(false);
@@ -841,7 +861,7 @@ void NRF24L01::OnIRQ()
 		// RX_FIFO 缓冲区满
 		if(fifo.RX_FULL)
 		{
-			PortScope ps(_CE, false);
+			PortScope ps(&_CE, false);
 			ClearFIFO(true);
 			ClearStatus(false, true);
 			//SetMode(true);
@@ -964,9 +984,9 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 // 拉高CE，可以由待机模式切换到RX/TX模式
 void NRF24L01::CEUp()
 {
-    if(_CE)
+    if(_CE._Pin != P0)
 	{
-		*_CE = true;
+		_CE = true;
 		// 经过测试，貌似不用延迟130us也可以使用
 		//Sys.Delay(130); // 切换模式，高电平>10us
 	}
@@ -975,5 +995,5 @@ void NRF24L01::CEUp()
 // 拉低CE，由收发模式切换回来待机模式
 void NRF24L01::CEDown()
 {
-    if(_CE) *_CE = false;
+    if(_CE._Pin != P0) _CE = false;
 }

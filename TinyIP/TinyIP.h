@@ -46,6 +46,8 @@ private:
 	// 循环调度的任务，捕获数据包，返回长度
 	uint Fetch(byte* buf = NULL, uint len = 0);
 
+	void Init();
+
 public:
 	byte* Buffer; // 缓冲区
 
@@ -83,11 +85,12 @@ public:
 	//uint SocketCount;
 	SocketList Sockets;
 
+	TinyIP();
     TinyIP(ITransport* port);
     virtual ~TinyIP();
+	void Init(ITransport* port);
 
 	bool Open();
-	bool Init();
 	void ShowInfo();
 	static void ShowIP(IPAddress ip);
 	static void ShowMac(const MacAddress& mac);

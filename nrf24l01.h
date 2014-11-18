@@ -12,8 +12,8 @@ class NRF24L01 : public ITransport
 {
 private:
     Spi*		_spi;
-    OutputPort*	_CE;
-    InputPort*	_IRQ;
+    OutputPort	_CE;
+    InputPort	_IRQ;
 
     byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
     byte ReadBuf(byte reg, byte *pBuf, byte bytes);
@@ -37,6 +37,8 @@ private:
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
 
+	void Init();
+
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
 	byte Address[5];	// 通道0地址
@@ -55,8 +57,10 @@ public:
 	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
 
+	NRF24L01();
     NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
     virtual ~NRF24L01();
+    void Init(Spi* spi, Pin ce = P0, Pin irq = P0);
 
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
