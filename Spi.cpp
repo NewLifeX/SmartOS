@@ -274,7 +274,7 @@ ushort Spi::Write16(ushort data)
 // 拉低NSS，开始传输
 void Spi::Start()
 {
-    if(_nss) _nss = false;
+    if(!_nss.Empty()) _nss = false;
 
     // 开始新一轮事务操作，错误次数清零
     Error = 0;
@@ -283,5 +283,5 @@ void Spi::Start()
 // 拉高NSS，停止传输
 void Spi::Stop()
 {
-    if(_nss) _nss = true;
+    if(!_nss.Empty()) _nss = true;
 }
