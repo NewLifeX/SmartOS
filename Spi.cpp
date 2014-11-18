@@ -2,9 +2,6 @@
 #include "Port.h"
 #include "Spi.h"
 
-//static SPI_TypeDef* const g_Spis[] = SPIS;
-//static const Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
-
 int GetPre(int index, uint* speedHz)
 {
 	// 自动计算稍低于速度speedHz的分频
@@ -103,7 +100,6 @@ void Spi::SetPin(Pin clk, Pin miso, Pin mosi, Pin nss)
 
 void Spi::GetPin(Pin* clk, Pin* miso, Pin* mosi, Pin* nss)
 {
-	//const Pin* ps = g_Spi_Pins_Map[_index];
 	if(nss) *nss = Pins[0];
 	if(clk) *clk = Pins[1];
 	if(miso) *miso = Pins[2];
@@ -200,16 +196,19 @@ void Spi::Close()
 	SPI_I2S_DeInit(SPI);
 
 	debug_printf("    CLK : ");
-	//if(_clk) delete _clk;
+	_clk.Set(P0);
 	debug_printf("    MISO: ");
+	_miso.Set(P0);
 	//if(_miso) delete _miso;
 	debug_printf("    MOSI: ");
+	_mosi.Set(P0);
 	//if(_mosi) delete _mosi;
 	//_clk = NULL;
 	//_miso = NULL;
 	//_mosi = NULL;
 
 	debug_printf("    NSS : ");
+	_nss.Set(P0);
 	//if(_nss) delete _nss;
 	//_nss = NULL;
 

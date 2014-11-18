@@ -4,16 +4,6 @@
 #include "Sys.h"
 #include "Port.h"
 
-/*Spi定义*/
-//SPI1..这种格式与st库冲突
-#define SPI_1	0
-#define SPI_2	1
-#define SPI_3	2
-#define SPI_4	4
-#define SPI_5	5
-#define SPI_6	6
-#define SPI_NONE 0XFF
-
 // Spi类
 class Spi
 {
