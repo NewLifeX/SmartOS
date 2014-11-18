@@ -14,7 +14,7 @@ private:
 	byte _dataBits;
 	byte _stopBits;
 	int _baudRate;
-	
+
     USART_TypeDef* _port;
 	AlternatePort _tx;
 #if defined(STM32F0) || defined(STM32F4)
@@ -32,8 +32,8 @@ public:
 	int 		Error;	// 错误计数
 
 	SerialPort();
-    SerialPort(COM_Def index, 
-        int baudRate = 115200, 
+    SerialPort(COM_Def index,
+        int baudRate = 115200,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1)    //1位停止位
@@ -42,16 +42,16 @@ public:
 		Init(index, baudRate, parity, dataBits, stopBits);
 	}
 
-    SerialPort(USART_TypeDef* com, 
-        int baudRate = 115200, 
+    SerialPort(USART_TypeDef* com,
+        int baudRate = 115200,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
 	// 析构时自动关闭
     virtual ~SerialPort();
 
-    void Init(byte index, 
-        int baudRate = 115200, 
+    void Init(byte index,
+        int baudRate = 115200,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
@@ -65,7 +65,7 @@ public:
     virtual void Register(TransportHandler handler, void* param = NULL);
 
 	virtual string ToString() { return Name; }
-	
+
 	static SerialPort* GetMessagePort();
 protected:
 	virtual bool OnOpen();

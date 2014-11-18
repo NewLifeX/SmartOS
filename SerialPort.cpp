@@ -195,11 +195,6 @@ void SerialPort::OnClose()
 
     USART_DeInit(_port);
 
-    /*if(_tx) delete _tx;
-	if(_rx) delete _rx;
-	_tx = NULL;
-	_rx = NULL;*/
-
 	// 检查重映射
 #ifdef STM32F1XX
 	if(IsRemap)
@@ -346,13 +341,10 @@ extern "C"
         // 检查并打开串口
         if((port->CR1 & USART_CR1_UE) != USART_CR1_UE && _printf_sp == NULL)
         {
-            //if(_printf_sp != NULL) delete _printf_sp;
-
             _printf_sp = new SerialPort(port);
             _printf_sp->Open();
         }
 
-        //TUsart_SendData(port, (byte*)&ch);
 		_printf_sp->SendData((byte)ch);
 
 		isInFPutc = false;
