@@ -26,7 +26,33 @@ int GetPre(int index, uint* speedHz)
 	return pre;
 }
 
+Spi::Spi()
+{
+	Init();
+}
+
 Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
+{
+	Init();
+
+	Init(spi, speedHz, useNss);
+}
+
+Spi::~Spi()
+{
+    debug_printf("Spi::~Spi%d\r\n", _index + 1);
+
+	Close();
+}
+
+void Spi::Init()
+{
+	_index = 0xFF;
+    Retry = 200;
+	Opened = false;
+}
+
+void Spi::Init(SPI_TypeDef* spi, uint speedHz, bool useNss)
 {
 	assert_param(spi);
 
@@ -42,19 +68,12 @@ Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 	}
 	assert_param(_index < ArrayLength(g_Spis));
 
-	Opened = false;
     SPI = g_Spis[_index];
 
 	Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 	Pin* ps = g_Spi_Pins_Map[_index];		//选定spi引脚
 	memcpy(Pins, ps, sizeof(Pins));
 
-	// 为了安全，必须先设置私有成员默认值
-	_nss = NULL;
-	_clk = NULL;
-	_miso = NULL;
-	_mosi = NULL;
-	
 	if(!useNss) Pins[0] = P0;
 
 	// 自动计算稍低于速度speedHz的分频
@@ -72,14 +91,6 @@ Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
 #endif
 
     Speed = speedHz;
-    Retry = 200;
-}
-
-Spi::~Spi()
-{
-    debug_printf("Spi::~Spi%d\r\n", _index + 1);
-
-	Close();
 }
 
 void Spi::SetPin(Pin clk, Pin miso, Pin mosi, Pin nss)
@@ -111,16 +122,19 @@ void Spi::Open()
 	Pin* ps = Pins;
     // 端口配置，销毁Spi对象时才释放
     debug_printf("    CLK : ");
-    _clk = new AlternatePort(ps[1]);
+    _clk.Set(ps[1]);
     debug_printf("    MISO: ");
-    _miso = new AlternatePort(ps[2]);
+    _miso.Set(ps[2]);
     debug_printf("    MOSI: ");
-    _mosi = new AlternatePort(ps[3]);
+    _mosi.Set(ps[3]);
 
     if(ps[0] != P0)
     {
 		debug_printf("    NSS : ");
-        _nss = new OutputPort(ps[0], false, false);
+        //_nss = new OutputPort(ps[0], false, false);
+		_nss.Invert = false;
+		_nss.OpenDrain = false;
+		_nss.Set(ps[0]);
 		// 这里可以不调用，后面有Stop等同效果
 		//*_nss = true; // 拉高进入空闲状态
     }
@@ -186,18 +200,18 @@ void Spi::Close()
 	SPI_I2S_DeInit(SPI);
 
 	debug_printf("    CLK : ");
-	if(_clk) delete _clk;
+	//if(_clk) delete _clk;
 	debug_printf("    MISO: ");
-	if(_miso) delete _miso;
+	//if(_miso) delete _miso;
 	debug_printf("    MOSI: ");
-	if(_mosi) delete _mosi;
-	_clk = NULL;
-	_miso = NULL;
-	_mosi = NULL;
+	//if(_mosi) delete _mosi;
+	//_clk = NULL;
+	//_miso = NULL;
+	//_mosi = NULL;
 
 	debug_printf("    NSS : ");
-	if(_nss) delete _nss;
-	_nss = NULL;
+	//if(_nss) delete _nss;
+	//_nss = NULL;
 
 	Opened = false;
 }
@@ -263,7 +277,7 @@ ushort Spi::Write16(ushort data)
 // 拉低NSS，开始传输
 void Spi::Start()
 {
-    if(_nss) *_nss = false;
+    if(_nss) _nss = false;
 
     // 开始新一轮事务操作，错误次数清零
     Error = 0;
@@ -272,5 +286,5 @@ void Spi::Start()
 // 拉高NSS，停止传输
 void Spi::Stop()
 {
-    if(_nss) *_nss = true;
+    if(_nss) _nss = true;
 }
