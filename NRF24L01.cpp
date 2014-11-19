@@ -314,7 +314,7 @@ bool NRF24L01::Config()
 	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
 #endif
 
-	ShowStatus();
+	//ShowStatus();
 	SetPower(false);
 	CEDown();
 
@@ -376,7 +376,7 @@ bool NRF24L01::Config()
 	// 上电后并不能马上使用，需要一段时间才能载波。标称100ms，实测1000ms
 	//debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 	if(ReadReg(CD) > 0) debug_printf("空间发现载波，可能存在干扰或者拥挤！\r\n");
-	ShowStatus();
+	//ShowStatus();
 
 	return true;
 }
@@ -699,7 +699,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	if(!lock.Wait(10000)) return false;
 
 	// 检查空间载波，避开
-	int retry = 20;
+	int retry = 2000;
 	while(ReadReg(CD))
 	{
 		if(retry-- <= 0)
@@ -707,7 +707,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			debug_printf("空间载波拥挤，发送失败！\r\n");
 			return false;
 		}
-		Sys.Sleep(1);
+		Sys.Delay(50);	// 暂停50微秒
 	}
 
 	// 进入发送模式
@@ -984,7 +984,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 // 拉高CE，可以由待机模式切换到RX/TX模式
 void NRF24L01::CEUp()
 {
-    if(_CE._Pin != P0)
+    if(!_CE.Empty())
 	{
 		_CE = true;
 		// 经过测试，貌似不用延迟130us也可以使用
@@ -995,5 +995,5 @@ void NRF24L01::CEUp()
 // 拉低CE，由收发模式切换回来待机模式
 void NRF24L01::CEDown()
 {
-    if(_CE._Pin != P0) _CE = false;
+    if(!_CE.Empty()) _CE = false;
 }
