@@ -1,12 +1,14 @@
+;!!!全局的类对象构造函数会在SmartOS重设RAM位置之前执行，要确保它们栈充足
+
 ; 栈空间意义不大，SmartOS将会重新设定到RAM最大值，这里分配的栈空间仅用于TSys构造函数重新指定栈之前
-Stack_Size      EQU     0x00000020
+Stack_Size      EQU     0x00000400
 
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
 ; SmartOS将会重新设定堆到RAM最大值，但是在Sys设定堆大小之前，别的地方也可能需要用到堆，特别是类的全局对象
-Heap_Size       EQU     0x00000100
+Heap_Size       EQU     0x00000400
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
