@@ -131,6 +131,7 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	udp->Checksum = 0;
 	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, tlen, 1));
 
+	// 不能注释UDP这行日志，否则DHCP失效
 	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", tlen, tlen, __REV16(udp->SrcPort), RemotePort);
 
 	Tip->SendIP(IP_UDP, (byte*)udp, tlen);

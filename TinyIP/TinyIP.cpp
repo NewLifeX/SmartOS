@@ -283,7 +283,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, const byte* buf, uint len)
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	string name = "Unkown";
+	/*string name = "Unkown";
 	switch(type)
 	{
 		case ETH_ARP: { name = "ARP"; break; }
@@ -294,7 +294,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, const byte* buf, uint len)
 	ShowMac(Mac);
 	debug_printf(" => ");
 	ShowMac(RemoteMac);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
 
@@ -342,7 +342,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 	}
 	RemoteMac = *mac;
 
-	string name = "Unkown";
+	/*string name = "Unkown";
 	switch(type)
 	{
 		case IP_ICMP: { name = "ICMP"; break; }
@@ -354,7 +354,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 	ShowIP(IP);
 	debug_printf(" => ");
 	ShowIP(RemoteIP);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 
 	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
 }
