@@ -245,14 +245,44 @@ void UserHandler()
     isr(num - 16, param);
 }
 
-void FaultHandler()
+extern "C"
 {
-    uint exception = GetIPSR();
-
-	if(!Sys.OnError || Sys.OnError(exception))
+	void FAULT_SubHandler(uint* registers, uint exception)
 	{
-		if(Sys.OnStop) Sys.OnStop();
-		while(true);
+		//uint exception = GetIPSR();
+		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x\r\n", registers[5], registers[6], registers[7]);
+
+		if(!Sys.OnError || Sys.OnError(exception))
+		{
+			if(Sys.OnStop) Sys.OnStop();
+			while(true);
+		}
+	}
+
+	__asm void FaultHandler()
+	{
+		IMPORT FAULT_SubHandler
+
+		//on entry, we have an exception frame on the stack:
+		//SP+00: R0
+		//SP+04: R1
+		//SP+08: R2
+		//SP+12: R3
+		//SP+16: R12
+		//SP+20: LR
+		//SP+24: PC
+		//SP+28: PSR
+		//R0-R12 are not overwritten yet
+		  //add      sp,sp,#16             // remove R0-R3
+		  //push     {r0-r11}              // store R0-R11
+		  mov      r0,sp
+		//R0+00: R0-R12
+		//R0+52: LR
+		//R0+56: PC
+		//R0+60: PSR
+		  mrs      r1,IPSR               // exception number
+		  b        FAULT_SubHandler
+		//never expect to return
 	}
 }
 
