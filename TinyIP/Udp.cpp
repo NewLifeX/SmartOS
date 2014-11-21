@@ -79,11 +79,11 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 	assert_param(len <= ms.Remain());
 
 #if NET_DEBUG
-	ushort oldsum = __REV16(udp->Checksum);
+	/*ushort oldsum = __REV16(udp->Checksum);
 	//udp->Checksum = 0;
 	//udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1));
 	ushort newsum = Tip->CheckSum((byte*)udp, sizeof(UDP_HEADER) + len, 1);
-	debug_printf("UDP::Checksum ori=0x%02x new=0x%02x\r\n", oldsum, newsum);
+	debug_printf("UDP::Checksum ori=0x%02x new=0x%02x\r\n", oldsum, newsum);*/
 #endif
 
 	// 触发ITransport接口事件
