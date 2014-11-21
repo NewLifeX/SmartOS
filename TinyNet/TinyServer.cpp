@@ -20,6 +20,8 @@ TinyServer::TinyServer(Controller* control)
 
 	_control->Received	= OnServerReceived;
 	_control->Param		= this;
+
+	Received	= NULL;
 	Param		= NULL;
 
 	OnDiscover	= NULL;

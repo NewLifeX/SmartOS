@@ -23,6 +23,8 @@ TinyClient::TinyClient(Controller* control)
 
 	_control->Received	= OnClientReceived;
 	_control->Param		= this;
+
+	Received	= NULL;
 	Param		= NULL;
 
 	OnDiscover	= NULL;
@@ -38,7 +40,7 @@ bool OnClientReceived(Message& msg, void* param)
 {
 	TinyClient* client = (TinyClient*)param;
 	assert_ptr(client);
-	
+
 	// 消息转发
 	if(client->Received) return client->Received(msg, client->Param);
 
