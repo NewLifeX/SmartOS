@@ -595,8 +595,10 @@ int Controller::Post(Message& msg, ITransport* port)
 	}
 	else
 	{
+#if DEBUG
 		// 如果没有用到TTL，把Retry前移，让其在一个连续的内存里面
 		if(!msg.UseTTL) msg.TTL = msg.Retry;
+#endif
 	}
 
 	//Sys.ShowHex(buf, len, '-');
