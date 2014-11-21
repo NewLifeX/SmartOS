@@ -4,7 +4,7 @@
 #include "Udp.h"
 
 // DHCP协议
-class Dhcp : UdpSocket
+class Dhcp : public UdpSocket
 {
 private:
 	uint dhcpid;

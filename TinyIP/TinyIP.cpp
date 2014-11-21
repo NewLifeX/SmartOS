@@ -162,11 +162,11 @@ void TinyIP::Process(MemoryStream* ms)
 	}
 
 #if NET_DEBUG
-	debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
+	/*debug_printf("IP Unkown Protocol=%d ", ip->Protocol);
 	ShowIP(ip->SrcIP);
 	debug_printf(" => ");
 	ShowIP(ip->DestIP);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 #endif
 }
 
