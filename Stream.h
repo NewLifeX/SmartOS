@@ -16,7 +16,7 @@ private:
 	uint _needFree;	// 是否自动释放
     uint _Position;	// 游标位置
 
-	//byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
+	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
 public:
 	uint Length;	// 数据长度
 
@@ -25,13 +25,13 @@ public:
 	{
 		//assert_param(len > 0);
 
-		/*if(len <= ArrayLength(_Arr))
+		if(len <= ArrayLength(_Arr))
 		{
 			len = ArrayLength(_Arr);
 			_Buffer = _Arr;
 			_needFree = false;
 		}
-		else*/
+		else
 		{
 			_Buffer = new byte[len];
 			assert_ptr(_Buffer);
