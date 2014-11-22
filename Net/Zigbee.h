@@ -10,42 +10,28 @@
 class Zigbee : public ITransport
 {
 private:
-	ITransport* _port;
-	OutputPort* _rst;
+	ITransport*	_port;
+	OutputPort	_rst;
 
 public:
+	Zigbee();
 	Zigbee(ITransport* port, Pin rst = P0);
 	virtual ~Zigbee();
+	void Init(ITransport* port, Pin rst = P0);
 
 	// 注册回调函数
-	virtual void Register(TransportHandler handler, void* param = NULL)
-	{
-		ITransport::Register(handler, param);
-		
-		_port->Register(OnPortReceive, this);
-	}
+	virtual void Register(TransportHandler handler, void* param = NULL);
 
-	virtual void Rest(void)
-	{
-		*_rst=true;
-		Sys.Delay(100);
-		*_rst=false;
-		Sys.Delay(100);
-		*_rst=true;
-	}
-	
+	virtual void Reset(void);
+
 protected:
 	virtual bool OnOpen() { return _port->Open(); }
     virtual void OnClose() { _port->Close(); }
 
     virtual bool OnWrite(const byte* buf, uint len) { return _port->Write(buf, len); }
 	virtual uint OnRead(byte* buf, uint len) { return _port->Read(buf, len); }
-	
-	static uint OnPortReceive(ITransport* sender, byte* buf, uint len, void* param)
-	{
-		Zigbee* zb = (Zigbee*)param;
-		return zb->OnReceive(buf, len);
-	}
+
+	static uint OnPortReceive(ITransport* sender, byte* buf, uint len, void* param);
 };
 
 #endif
