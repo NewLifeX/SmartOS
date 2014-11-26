@@ -42,7 +42,7 @@ Message::Message(Message& msg)
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-bool Message::Parse(MemoryStream& ms)
+bool Message::Read(MemoryStream& ms)
 {
 	byte* buf = ms.Current();
 	assert_ptr(buf);
@@ -342,7 +342,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 #endif
 
 	Message msg;
-	if(!msg.Parse(ms)) return false;
+	if(!msg.Read(ms)) return false;
 
 #if DEBUG
 	// 调试版不过滤序列号为0的重复消息

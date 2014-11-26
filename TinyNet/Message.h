@@ -49,16 +49,16 @@ public:
 	int Size();
 
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-	bool Parse(MemoryStream& ms);
+	bool Read(MemoryStream& ms);
+	// 写入指定数据流
+	void Write(MemoryStream& ms);
+
 	// 验证消息校验和是否有效
 	bool Verify();
 	// 计算当前消息的Crc
 	void ComputeCrc();
 	// 设置数据
 	void SetData(byte* buf, uint len);
-
-	// 写入指定数据流
-	void Write(MemoryStream& ms);
 };
 
 // 消息头大小
