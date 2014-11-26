@@ -70,14 +70,14 @@ bool ArpSocket::Process(MemoryStream* ms)
 	assert_param(arp->ProtocolType == ETH_IP);
 	assert_param(arp->HardLength == 6);
 	assert_param(arp->ProtocolLength == 4);
-	assert_param(arp->Option == 0x0100);
+	//assert_param(arp->Option == 0x0100);
 
 	if(arp->Option == 0x0100)
 		debug_printf("ARP::Request For ");
 	else if(arp->Option == 0x0200)
 		debug_printf("ARP::Response For ");
 	else
-		debug_printf("ARP::Unkown For ");
+		debug_printf("ARP::Unkown %d For ", arp->Option);
 
 	Tip->ShowIP(arp->DestIP);
 	debug_printf(" <= ");
