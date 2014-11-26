@@ -171,7 +171,6 @@ class MessageNode
 public:
 	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
 	byte		Sequence;	// 序列号
-	//byte		NoAck;		// 不需要响应
 	byte		Data[32];
 	uint		Length;
 	uint		Interval;	// 延迟间隔。每次逐步递增

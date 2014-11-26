@@ -61,6 +61,11 @@ void TokenMessage::Write(MemoryStream& ms)
 	ms.Write(Crc);
 }
 
+uint TokenMessage::Size()
+{
+	return 1 + 1 + Length;
+}
+
 // 设置数据。
 void TokenMessage::SetData(byte* buf, uint len)
 {
@@ -99,10 +104,24 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 	TokenMessage msg;
 	msg.Code = code;
 	
-	return Send(msg, -1);
+	return Send(msg);
 }
 
 // 发送消息，expire毫秒超时时间内，如果对方没有响应，会重复发送
 bool TokenController::Send(TokenMessage& msg, int expire)
 {
+	MemoryStream ms(msg.Size());
+	msg.Write(ms);
+	
+	while(true)
+	{
+		_port->Write(ms.GetBuffer(), ms.Length);
+		
+		if(expire <= 0) break;
+	
+		// 等待响应
+		Sys.Sleep(1);
+		
+		
+	}
 }

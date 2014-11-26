@@ -4,12 +4,17 @@
 #include "Sys.h"
 #include "Stream.h"
 
+// 处理消息，返回是否成功
+typedef bool (*TokenMessageHandler)(TokenMessage& msg, void* param);
+
 // 令牌消息
 class TokenMessage
 {
 private:
 
 public:
+	uint	Token;		// 令牌
+
 	byte	Code:7;		// 功能码
 	byte	Error:1;	// 是否异常
 
@@ -23,6 +28,8 @@ public:
 
 	bool Read(MemoryStream& ms);
 	void Write(MemoryStream& ms);
+
+	uint Size() const;
 
 	// 设置数据
 	void SetData(byte* buf, uint len);
@@ -44,6 +51,10 @@ public:
 	bool Send(byte code, byte* buf = NULL, uint len = 0);
 	// 发送消息，expire毫秒超时时间内，如果对方没有响应，会重复发送
 	bool Send(TokenMessage& msg, int expire = -1);
+
+	// 收到消息时触发
+	TokenMessageHandler	Received;
+	void*			Param;
 
 };
 
