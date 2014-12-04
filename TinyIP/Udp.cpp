@@ -5,6 +5,7 @@
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_UDP;
+	Port		= 0;
 	RemoteIP	= 0;
 	RemotePort	= 0;
 	LocalIP		= 0;
@@ -12,7 +13,7 @@ UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 
 	// 累加端口
 	static ushort g_udp_port = 1024;
-	Port = g_udp_port++;
+	BindPort = g_udp_port++;
 }
 
 string UdpSocket::ToString()
@@ -24,10 +25,12 @@ string UdpSocket::ToString()
 
 bool UdpSocket::OnOpen()
 {
+	if(Port != 0) BindPort = Port;
+
 	if(Port)
-		debug_printf("Udp::Open %d\r\n", Port);
+		debug_printf("Udp::Open %d 过滤 %d\r\n", BindPort, Port);
 	else
-		debug_printf("Udp::Open %d 监听所有端口UDP数据包\r\n", Port);
+		debug_printf("Udp::Open %d 监听所有端口UDP数据包\r\n", BindPort);
 
 	Enable = true;
 	return Enable;
@@ -35,7 +38,7 @@ bool UdpSocket::OnOpen()
 
 void UdpSocket::OnClose()
 {
-	debug_printf("Udp::Close %d\r\n", Port);
+	debug_printf("Udp::Close %d\r\n", BindPort);
 	Enable = false;
 }
 
@@ -162,6 +165,9 @@ void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 
 		memcpy(udp->Next(), buf, len);
 	}
+
+	// 发送的时候采用LocalPort
+	LocalPort = BindPort;
 
 	Send(udp, len, true);
 }

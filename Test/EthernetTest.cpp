@@ -22,22 +22,22 @@ bool OnPing(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len)
 
 bool OnUdpReceived(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len)
 {
-	//if(tip->Port == 137 || tip->Port == 1900) return false;
+	if(socket->LocalPort == 137 || socket->LocalPort == 1900) return false;
 
-    debug_printf("Udp::On %d From ", tip->Port);
-    TinyIP::ShowIP(tip->RemoteIP);
-    debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
+    debug_printf("Udp::On %d From ", socket->LocalPort);
+    TinyIP::ShowIP(socket->RemoteIP);
+    debug_printf(":%d with Payload=%d  ", socket->RemotePort, len);
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
-    return tip->Port == 888;
+    return socket->LocalPort == 888;
 }
 
 bool OnTcpAccepted(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("Tcp::Accepted On %d From ", tip->Port);
-    TinyIP::ShowIP(tip->RemoteIP);
-    debug_printf(":%d with Payload=%d\r\n", tip->RemotePort, len);
+    debug_printf("Tcp::Accepted On %d From ", socket->LocalPort);
+    TinyIP::ShowIP(socket->RemoteIP);
+    debug_printf(":%d with Payload=%d\r\n", socket->RemotePort, len);
 
     return true;
 }
@@ -45,8 +45,8 @@ bool OnTcpAccepted(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 bool OnTcpDisconnected(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
     debug_printf("Tcp::Disconnected From ");
-    TinyIP::ShowIP(tip->RemoteIP);
-    debug_printf(":%d with Payload=%d\r\n", tip->RemotePort, len);
+    TinyIP::ShowIP(socket->RemoteIP);
+    debug_printf(":%d with Payload=%d\r\n", socket->RemotePort, len);
 
     return true;
 }
@@ -54,8 +54,8 @@ bool OnTcpDisconnected(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 bool OnTcpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
     debug_printf("Tcp::Received From ");
-    TinyIP::ShowIP(tip->RemoteIP);
-    debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
+    TinyIP::ShowIP(socket->RemoteIP);
+    debug_printf(":%d with Payload=%d  ", socket->RemotePort, len);
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
@@ -65,8 +65,8 @@ bool OnTcpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 bool HttpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
     debug_printf("Tcp::Received From ");
-    TinyIP::ShowIP(tip->RemoteIP);
-    debug_printf(":%d with Payload=%d  ", tip->RemotePort, len);
+    TinyIP::ShowIP(socket->RemoteIP);
+    debug_printf(":%d with Payload=%d  ", socket->RemotePort, len);
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
@@ -150,14 +150,12 @@ void TestEthernet()
 	// 如果不是为了Dhcp，这里可以不用Open，Init里面会Open
     if(!tip->Open()) return;
 
-	tip->Arp = new ArpSocket(tip);
-    tip->Init();
-
     IcmpSocket* icmp = new IcmpSocket(tip);
     icmp->OnPing = OnPing;
 
     UdpSocket* udp = new UdpSocket(tip);
     udp->OnReceived = OnUdpReceived;
+	udp->Open();
 
     TcpSocket* tcp = new TcpSocket(tip);
     tcp->OnAccepted = OnTcpAccepted;

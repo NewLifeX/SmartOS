@@ -33,12 +33,11 @@ bool TcpSocket::Process(MemoryStream* ms)
 	if(RemotePort != 0 && remotePort != RemotePort) return false;
 	if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
-	// 不能修改主监听Socket的端口，否则可能导致收不到后续连接数据
-	//Port = port;
-	//RemotePort = remotePort;
-	// 
-	//Tip->Port = port;
-	//Tip->RemotePort = remotePort;
+	IP_HEADER* ip = tcp->Prev();
+	RemotePort	= remotePort;
+	RemoteIP	= ip->SrcIP;
+	LocalPort	= port;
+	LocalIP		= ip->DestIP;
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN && !(tcp->Flags & TCP_FLAGS_ACK)) // SYN连接请求标志位，为1表示发起连接的请求数据包
