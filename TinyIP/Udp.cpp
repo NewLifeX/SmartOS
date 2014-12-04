@@ -13,6 +13,7 @@ UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 
 	// 累加端口
 	static ushort g_udp_port = 1024;
+	if(g_udp_port < 1024) g_udp_port = 1024;
 	BindPort = g_udp_port++;
 }
 

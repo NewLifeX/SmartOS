@@ -161,6 +161,7 @@ void TestEthernet()
     tcp->OnAccepted = OnTcpAccepted;
     tcp->OnDisconnected = OnTcpDisconnected;
     tcp->OnReceived = OnTcpReceived;
+	tcp->Open();
 
 	Dhcp* dhcp = new Dhcp(tip);
 	dhcp->OnStop = OnDhcpStop;

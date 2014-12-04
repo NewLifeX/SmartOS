@@ -12,15 +12,46 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	LocalIP		= 0;
 	LocalPort	= 0;
 
+	// 累加端口
+	static ushort g_tcp_port = 1024;
+	if(g_tcp_port < 1024) g_tcp_port = 1024;
+	BindPort = g_tcp_port++;
+
 	seqnum		= 0xa;
 
 	Status = Closed;
 }
 
+string TcpSocket::ToString()
+{
+	static char name[10];
+	sprintf(name, "TCP_%d", Port);
+	return name;
+}
+
+bool TcpSocket::OnOpen()
+{
+	if(Port != 0) BindPort = Port;
+
+	if(Port)
+		debug_printf("Tcp::Open %d 过滤 %d\r\n", BindPort, Port);
+	else
+		debug_printf("Tcp::Open %d 监听所有端口TCP数据包\r\n", BindPort);
+
+	Enable = true;
+	return Enable;
+}
+
+void TcpSocket::OnClose()
+{
+	debug_printf("Tcp::Close %d\r\n", BindPort);
+	Enable = false;
+}
+
 bool TcpSocket::Process(MemoryStream* ms)
 {
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
-	if(!ms->Seek(tcp->Length << 2)) return false;
+	if(!ms->Seek(tcp->Size())) return false;
 
 	Header = tcp;
 	uint len = ms->Remain();
@@ -39,94 +70,150 @@ bool TcpSocket::Process(MemoryStream* ms)
 	LocalPort	= port;
 	LocalIP		= ip->DestIP;
 
-	// 第一次同步应答
-	if (tcp->Flags & TCP_FLAGS_SYN && !(tcp->Flags & TCP_FLAGS_ACK)) // SYN连接请求标志位，为1表示发起连接的请求数据包
-	{
-		if(OnAccepted)
-			OnAccepted(this, tcp, tcp->Next(), len);
-		else
-		{
-#if NET_DEBUG
-			debug_printf("Tcp Accept "); // 打印发送方的ip
-			TinyIP::ShowIP(Tip->RemoteIP);
-			debug_printf("\r\n");
-#endif
-		}
-
-		//第二次同步应答
-		Head(tcp, 1, true, false);
-
-		// 需要用到MSS，所以采用4个字节的可选段
-		//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
-		// 注意tcp->Size()包括头部的扩展数据，这里不用单独填4
-		Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
-
-		return true;
-	}
-	// 第三次同步应答,三次应答后方可传输数据
-	if (tcp->Flags & TCP_FLAGS_ACK) // ACK确认标志位，为1表示此数据包为应答数据包
-	{
-		// 无数据返回ACK
-		if (len == 0)
-		{
-			if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
-			{
-				Head(tcp, 1, false, true);
-				Send(tcp, 0, TCP_FLAGS_ACK);
-			}
-			return true;
-		}
-
-		if(OnReceived)
-		{
-			// 返回值指示是否向对方发送数据包
-			bool rs = OnReceived(this, tcp, tcp->Next(), len);
-			if(!rs)
-			{
-				// 发送ACK，通知已收到
-				Head(tcp, 1, false, true);
-				Send(tcp, 0, TCP_FLAGS_ACK);
-				return true;
-			}
-		}
-		else
-		{
-#if NET_DEBUG
-			debug_printf("Tcp Data(%d) From ", len);
-			TinyIP::ShowIP(RemoteIP);
-			debug_printf(" : ");
-			Sys.ShowString(tcp->Next(), len);
-			debug_printf("\r\n");
-#endif
-		}
-		// 发送ACK，通知已收到
-		Head(tcp, len, false, true);
-		//Send(buf, 0, TCP_FLAGS_ACK);
-
-		//TcpSend(buf, len);
-
-		// 响应Ack和发送数据一步到位
-		Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
-	}
-	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
-	{
-		if(OnDisconnected) OnDisconnected(this, tcp, tcp->Next(), len);
-
-		// RST是对方紧急关闭，这里啥都不干
-		if(tcp->Flags & TCP_FLAGS_FIN)
-		{
-			Head(tcp, 1, false, true);
-			//Close(tcp, 0);
-			Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
-		}
-	}
+	OnProcess(tcp, *ms);
 
 	return true;
 }
 
+void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
+{
+	// 计算标称的数据长度
+	//uint len = tcp->Size() - sizeof(TCP_HEADER);
+	//assert_param(len <= ms.Remain());
+	// TCP好像没有标识数据长度的字段，但是IP里面有，这样子的话，ms里面的长度是准确的
+	uint len = ms.Remain();
+
+	// 第一次同步应答
+	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
+	{
+		if(!(tcp->Flags & TCP_FLAGS_ACK))
+			OnAccept(tcp, len);
+		else
+			OnAccept3(tcp, len);
+	}
+	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
+	{
+		OnDisconnect(tcp, len);
+	}
+	// 第三次同步应答,三次应答后方可传输数据
+	else if (tcp->Flags & TCP_FLAGS_ACK) // ACK确认标志位，为1表示此数据包为应答数据包
+	{
+		OnDataReceive(tcp, len);
+	}
+	else
+		debug_printf("Tcp::Process 未知标识位 0x%02x \r\n", tcp->Flags);
+}
+
+void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
+{
+	if(OnAccepted)
+		OnAccepted(this, tcp, tcp->Next(), len);
+	else
+	{
+#if NET_DEBUG
+		debug_printf("Tcp Accept "); // 打印发送方的ip
+		TinyIP::ShowIP(Tip->RemoteIP);
+		debug_printf("\r\n");
+#endif
+	}
+
+	//第二次同步应答
+	Head(tcp, 1, true, false);
+
+	// 需要用到MSS，所以采用4个字节的可选段
+	//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+	// 注意tcp->Size()包括头部的扩展数据，这里不用单独填4
+	Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+}
+
+void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
+{
+	if(OnAccepted)
+		OnAccepted(this, tcp, tcp->Next(), len);
+	else
+	{
+#if NET_DEBUG
+		debug_printf("Tcp Accept3 "); // 打印发送方的ip
+		TinyIP::ShowIP(Tip->RemoteIP);
+		debug_printf("\r\n");
+#endif
+	}
+
+	//第二次同步应答
+	Head(tcp, 1, true, true);
+
+	Send(tcp, 0, TCP_FLAGS_ACK);
+}
+
+void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
+{
+	// 无数据返回ACK
+	if (len == 0)
+	{
+		if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
+		{
+			Head(tcp, 1, false, true);
+			Send(tcp, 0, TCP_FLAGS_ACK);
+		}
+		else
+		{
+#if NET_DEBUG
+			debug_printf("Tcp Receive(%d) From ", len);
+			TinyIP::ShowIP(RemoteIP);
+			debug_printf("\r\n");
+#endif
+		}
+		return;
+	}
+
+	if(OnReceived)
+	{
+		// 返回值指示是否向对方发送数据包
+		bool rs = OnReceived(this, tcp, tcp->Next(), len);
+		if(!rs)
+		{
+			// 发送ACK，通知已收到
+			Head(tcp, 1, false, true);
+			Send(tcp, 0, TCP_FLAGS_ACK);
+			return;
+		}
+	}
+	else
+	{
+#if NET_DEBUG
+		debug_printf("Tcp Receive(%d) From ", len);
+		TinyIP::ShowIP(RemoteIP);
+		debug_printf(" : ");
+		Sys.ShowString(tcp->Next(), len);
+		debug_printf("\r\n");
+#endif
+	}
+	// 发送ACK，通知已收到
+	Head(tcp, len, false, true);
+	//Send(buf, 0, TCP_FLAGS_ACK);
+
+	//TcpSend(buf, len);
+
+	// 响应Ack和发送数据一步到位
+	Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+}
+
+void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
+{
+	if(OnDisconnected) OnDisconnected(this, tcp, tcp->Next(), len);
+
+	// RST是对方紧急关闭，这里啥都不干
+	if(tcp->Flags & TCP_FLAGS_FIN)
+	{
+		Head(tcp, 1, false, true);
+		//Close(tcp, 0);
+		Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+	}
+}
+
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
-	tcp->SrcPort = __REV16(Port);
+	tcp->SrcPort = __REV16(Port > 0 ? Port : LocalPort);
 	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
@@ -197,9 +284,9 @@ void TcpSocket::Ack(uint len)
 	Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
-void TcpSocket::Close()
+void TcpSocket::Disconnect()
 {
-	debug_printf("Tcp::Close ");
+	debug_printf("Tcp::Disconnect ");
 	Tip->ShowIP(RemoteIP);
 	debug_printf(":%d \r\n", RemotePort);
 
@@ -208,7 +295,7 @@ void TcpSocket::Close()
 	Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-void TcpSocket::Send(byte* buf, uint len)
+void TcpSocket::Send(const byte* buf, uint len)
 {
 	debug_printf("Tcp::Send ");
 	Tip->ShowIP(RemoteIP);
@@ -225,6 +312,9 @@ void TcpSocket::Send(byte* buf, uint len)
 
 		memcpy(tcp->Next(), buf, len);
 	}
+
+	// 发送的时候采用LocalPort
+	LocalPort = BindPort;
 
 	Send(tcp, len, TCP_FLAGS_PUSH);
 
@@ -299,4 +389,17 @@ bool Callback(TinyIP* tip, void* param)
 	}
 
 	return true;
+}
+
+bool TcpSocket::OnWrite(const byte* buf, uint len)
+{
+	Send(buf, len);
+	return len;
+}
+
+uint TcpSocket::OnRead(byte* buf, uint len)
+{
+	// 暂时不支持
+	assert_param(false);
+	return 0;
 }
