@@ -57,6 +57,8 @@ public:
 	bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
 	// 处理数据包
 	void Process(MemoryStream* ms);
+	// 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
+	void FixPayloadLength(IP_HEADER* ip, MemoryStream* ms);
 
 public:
     IPAddress IP;	// 本地IP地址

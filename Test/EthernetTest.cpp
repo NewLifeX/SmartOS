@@ -71,7 +71,7 @@ bool OnTcpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 
 bool HttpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("Http::Received From ");
+    debug_printf("Http:Received From ");
     TinyIP::ShowIP(socket->RemoteIP);
     debug_printf(":%d with Payload=%d  ", socket->RemotePort, len);
     Sys.ShowString(buf, len);
@@ -90,6 +90,7 @@ void HttpSend(void* param)
 	// 连接
 	byte ip[] = {192, 168, 0, 84};
 	tcp.Connect(*(uint*)ip, 80);
+	debug_printf("\r\n");
 
 	// 发送数据
 	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.84\r\n\r\n\r\n";

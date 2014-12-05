@@ -96,10 +96,10 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	uint len = ms.Remain();
 
 #if NET_DEBUG
-	debug_printf("Tcp::Process Flags=0x%02x From ", tcp->Flags);
+	/*debug_printf("Tcp::Process Flags=0x%02x From ", tcp->Flags);
 	TinyIP::ShowIP(RemoteIP);
 	debug_printf(":%d", RemotePort);
-	debug_printf("\r\n");
+	debug_printf("\r\n");*/
 #endif
 
 	// 下次主动发数据时，用该序列号，因为对方Ack确认期望下次得到这个序列号
@@ -449,6 +449,7 @@ bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
 
 			// 处理。如果对方回发第二次握手包，或者终止握手
 			//MemoryStream ms(tip->Buffer, tip->BufferSize);
+			tip->FixPayloadLength(_ip, &ms);
 			socket->Process(&ms);
 
 			return true;

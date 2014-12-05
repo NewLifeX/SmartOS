@@ -134,12 +134,7 @@ void TinyIP::Process(MemoryStream* ms)
 	//if(Arp && Arp->Enable) Arp->Process(NULL);
 	if(Arp) Arp->Process(NULL);
 
-	// 前面的len不准确，必须以这个为准
-	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
-	ms->Length = ms->Position() + size;
-	//len = size;
-	//buf += (ip->Length << 2);
-	ms->Seek((ip->Length << 2) - sizeof(IP_HEADER));
+	FixPayloadLength(ip, ms);
 
 	// 各处理器有可能改变数据流游标，这里备份一下
 	uint p = ms->Position();
@@ -168,6 +163,17 @@ void TinyIP::Process(MemoryStream* ms)
 	ShowIP(ip->DestIP);
 	debug_printf("\r\n");*/
 #endif
+}
+
+// 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
+void TinyIP::FixPayloadLength(IP_HEADER* ip, MemoryStream* ms)
+{
+	// 前面的len不准确，必须以这个为准
+	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
+	ms->Length = ms->Position() + size;
+	//len = size;
+	//buf += (ip->Length << 2);
+	ms->Seek((ip->Length << 2) - sizeof(IP_HEADER));
 }
 
 // 任务函数
