@@ -95,20 +95,25 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	// TCP好像没有标识数据长度的字段，但是IP里面有，这样子的话，ms里面的长度是准确的
 	uint len = ms.Remain();
 
+	uint seq = __REV(tcp->Seq);
+	uint ack = __REV(tcp->Ack);
+	
 #if NET_DEBUG
-	/*debug_printf("Tcp::Process Flags=0x%02x From ", tcp->Flags);
+	debug_printf("Tcp::Process Flags=0x%02x Seq=0x%04x Ack=0x%04x From ", tcp->Flags, seq, ack);
 	TinyIP::ShowIP(RemoteIP);
 	debug_printf(":%d", RemotePort);
-	debug_printf("\r\n");*/
+	debug_printf("\r\n");
 #endif
 
 	// 下次主动发数据时，用该序列号，因为对方Ack确认期望下次得到这个序列号
-	Seq = __REV(tcp->Ack);
-	Ack = __REV(tcp->Seq) + len + 1;
+	Seq = ack;
+	Ack = seq + len;
+	debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
+		Ack++;	// 此时加一
 		if(!(tcp->Flags & TCP_FLAGS_ACK))
 			OnAccept(tcp, len);
 		else
@@ -116,6 +121,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
+		Ack++;	// 此时加一
 		OnDisconnect(tcp, len);
 	}
 	// 第三次同步应答,三次应答后方可传输数据
@@ -137,7 +143,7 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 	else
 	{
 #if NET_DEBUG
-		debug_printf("Tcp Accept "); // 打印发送方的ip
+		debug_printf("Tcp:Accept "); // 打印发送方的ip
 		TinyIP::ShowIP(RemoteIP);
 		debug_printf(":%d", RemotePort);
 		debug_printf("\r\n");
@@ -161,7 +167,7 @@ void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
 	else
 	{
 #if NET_DEBUG
-		debug_printf("Tcp Accept3 "); // 打印发送方的ip
+		debug_printf("Tcp:Accept3 "); // 打印发送方的ip
 		TinyIP::ShowIP(RemoteIP);
 		debug_printf(":%d", RemotePort);
 		debug_printf("\r\n");
@@ -189,7 +195,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 		else
 		{
 #if NET_DEBUG
-			debug_printf("Tcp Receive(%d) From ", len);
+			debug_printf("Tcp:Receive(%d) From ", len);
 			TinyIP::ShowIP(RemoteIP);
 			debug_printf("\r\n");
 #endif
@@ -205,7 +211,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 		if(!rs)
 		{
 			// 发送ACK，通知已收到
-			SetSeqAck(tcp, 1, true);
+			SetSeqAck(tcp, len, true);
 			Send(tcp, 0, TCP_FLAGS_ACK);
 			return;
 		}
@@ -241,10 +247,10 @@ void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 		//Close(tcp, 0);
 		Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 	}
-	else
+	else if(!OnDisconnected)
 	{
 #if NET_DEBUG
-		debug_printf("Tcp OnDisconnect "); // 打印发送方的ip
+		debug_printf("Tcp:OnDisconnect "); // 打印发送方的ip
 		TinyIP::ShowIP(RemoteIP);
 		debug_printf(":%d Flags=0x%02x", RemotePort, tcp->Flags);
 		debug_printf("\r\n");
@@ -268,7 +274,7 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
 
 	uint hlen = tcp->Length << 2;
-	debug_printf("SendTcp: Flags=0x%02x, Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, hlen, hlen, len, len, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
+	debug_printf("SendTcp: Flags=0x%02x Seq=0x%04x Ack=0x%04x Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, __REV(tcp->Seq), __REV(tcp->Ack), hlen, hlen, len, len, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
 
 	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
@@ -369,9 +375,10 @@ void TcpSocket::Send(const byte* buf, uint len)
 	tcp->Seq = __REV(Seq);
 	tcp->Ack = __REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
+	debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	Send(tcp, len, TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
 
-	Tip->LoopWait(Callback, this, 5000);
+	Tip->LoopWait(Callback, this, 3000);
 
 	if(tcp->Flags & TCP_FLAGS_ACK)
 		debug_printf("发送成功！\r\n");
@@ -396,14 +403,16 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
-	tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
-	SetSeqAck(tcp, 0, false);
+	//tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
+	//SetSeqAck(tcp, 0, false);
+	tcp->Seq = __REV(Seq);
+	tcp->Ack = 0;
 	SetMss(tcp);
 
 	Status = SynSent;
 	Send(tcp, 0, TCP_FLAGS_SYN);
 
-	if(Tip->LoopWait(Callback, this, 5000))
+	if(Tip->LoopWait(Callback, this, 3000))
 	{
 		//if(tcp->Flags & TCP_FLAGS_SYN)
 		if(Status == SynAck)
@@ -441,11 +450,12 @@ bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
 
 	socket->Header = tcp;
 
-	if(socket->Status == TcpSocket::SynSent)
+	// 返回所有Ack包
+	//if(socket->Status == TcpSocket::SynSent)
 	{
 		if(tcp->Flags & TCP_FLAGS_ACK)
 		{
-			socket->Status = TcpSocket::SynAck;
+			if(socket->Status == TcpSocket::SynSent) socket->Status = TcpSocket::SynAck;
 
 			// 处理。如果对方回发第二次握手包，或者终止握手
 			//MemoryStream ms(tip->Buffer, tip->BufferSize);

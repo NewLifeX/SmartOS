@@ -71,7 +71,7 @@ bool OnTcpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 
 bool HttpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("Http:Received From ");
+    debug_printf("HttpClient::Received From ");
     TinyIP::ShowIP(socket->RemoteIP);
     debug_printf(":%d with Payload=%d  ", socket->RemotePort, len);
     Sys.ShowString(buf, len);
