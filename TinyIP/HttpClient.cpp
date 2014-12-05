@@ -1,4 +1,4 @@
-﻿#include "Tcp.h"
+﻿#include "HttpClient.h"
 
 #define NET_DEBUG DEBUG
 
@@ -112,7 +112,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 		if(!(tcp->Flags & TCP_FLAGS_ACK))
 			OnAccept(tcp, len);
 		else
-			OnAccept3(tcp, len);
+			Accepted2(tcp, len);
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
@@ -122,7 +122,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	else if (tcp->Flags & TCP_FLAGS_ACK) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
 		if(len == 0 && tcp->Ack <= 1)
-			OnAccept3(tcp, len);
+			Accepted2(tcp, len);
 		else
 			OnDataReceive(tcp, len);
 	}
@@ -154,7 +154,7 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 	Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 }
 
-void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
+void TcpSocket::Accepted2(TCP_HEADER* tcp, uint len)
 {
 	if(OnAccepted)
 		OnAccepted(this, tcp, tcp->Next(), len);
@@ -199,7 +199,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 	{
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(this, tcp, tcp->Next(), len);
-		if(rs)
+		if(!rs)
 		{
 			// 发送ACK，通知已收到
 			SetSeqAck(tcp, 1, true);
@@ -392,7 +392,7 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	if(Tip->LoopWait(Callback, this, 5000))
 	{
 		//if(tcp->Flags & TCP_FLAGS_SYN)
-		if(Status == SynAck)
+		if(Status = SynAck)
 		{
 			Status = Established;
 			debug_printf("连接成功！\r\n");

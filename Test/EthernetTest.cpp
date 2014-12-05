@@ -77,7 +77,7 @@ bool HttpReceived(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
     Sys.ShowString(buf, len);
     debug_printf(" \r\n");
 
-    return true;
+    return false;
 }
 
 void HttpSend(void* param)
