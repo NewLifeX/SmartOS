@@ -15,7 +15,7 @@ private:
     uint NextPacketPtr;
 
 	void Init();
-	
+
 public:
     byte Bank;
 	byte Mac[6];
@@ -87,7 +87,7 @@ protected:
 #define ERXNDH           (0x0B|BANK0)
 #define ERXRDPTL         (0x0C|BANK0)
 #define ERXRDPTH         (0x0D|BANK0)
-// ERXWRPTH:ERXWRPTL 寄存器定义硬件向FIFO 中的哪个位置写入其接收到的字节。 
+// ERXWRPTH:ERXWRPTL 寄存器定义硬件向FIFO 中的哪个位置写入其接收到的字节。
 // 指针是只读的，在成功接收到一个数据包后，硬件会自动更新指针。 指针可用于判断FIFO内剩余空间的大小。
 #define ERXWRPTL         (0x0E|BANK0)
 #define ERXWRPTH         (0x0F|BANK0)

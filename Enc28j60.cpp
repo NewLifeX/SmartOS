@@ -153,7 +153,7 @@ void Enc28j60::ClockOut(byte clock)
 void Enc28j60::Init(byte mac[6])
 {
 	assert_param(mac);
-	
+
 	memcpy(Mac, mac, 6);
 }
 
