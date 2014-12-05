@@ -186,7 +186,8 @@ typedef struct _TCP_HEADER
 		Length = sizeof(this[0]);
 		reserved_1 = 0;
 		reserved_2 = 0;
-		WindowSize = __REV16(8192);
+		//WindowSize = __REV16(8192);
+		WindowSize = __REV16(1024);
 		urgt_p = 0;
 
 		if(recursion) Prev()->Init(IP_TCP, recursion);

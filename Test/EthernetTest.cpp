@@ -22,7 +22,11 @@ bool OnPing(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len)
 
 bool OnUdpReceived(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len)
 {
-	if(socket->LocalPort == 137 || socket->LocalPort == 1900) return false;
+	if(	socket->LocalPort == 137 || 
+		socket->LocalPort == 1900 || 
+		socket->LocalPort == 67 || 
+		socket->LocalPort == 68)
+		return false;
 
     debug_printf("Udp::On %d From ", socket->LocalPort);
     TinyIP::ShowIP(socket->RemoteIP);
