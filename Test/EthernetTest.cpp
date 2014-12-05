@@ -138,7 +138,7 @@ void OnDhcpStop(void* sender, void* param)
 	byte ip[] = {192, 168, 0, 84};
 	icmp->Ping(*(uint*)ip);
 
-	debug_printf("Http收发测试 ");
+	debug_printf("\r\n Http收发测试 ");
 	Sys.AddTask(HttpSend, tip, 0, -1);
 }
 

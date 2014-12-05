@@ -341,6 +341,11 @@ void TcpSocket::Disconnect()
 
 void TcpSocket::Send(const byte* buf, uint len)
 {
+	if(!Enable)
+	{
+		if(!Open()) return;
+	}
+
 	debug_printf("Tcp::Send ");
 	Tip->ShowIP(RemoteIP);
 	debug_printf(":%d buf=0x%08x len=%d ...... \r\n", RemotePort, buf, len);
@@ -377,6 +382,11 @@ void TcpSocket::Send(const byte* buf, uint len)
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
 bool TcpSocket::Connect(IPAddress ip, ushort port)
 {
+	if(!Enable)
+	{
+		if(!Open()) return false;
+	}
+
 	debug_printf("Tcp::Connect ");
 	Tip->ShowIP(ip);
 	debug_printf(":%d ...... \r\n", port);
