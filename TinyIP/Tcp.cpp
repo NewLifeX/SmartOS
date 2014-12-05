@@ -254,6 +254,7 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	tcp->SrcPort = __REV16(Port > 0 ? Port : LocalPort);
 	tcp->DestPort = __REV16(RemotePort);
     tcp->Flags = flags;
+	tcp->WindowSize = __REV16(1024);
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
@@ -358,7 +359,8 @@ void TcpSocket::Send(const byte* buf, uint len)
 	//SetSeqAck(tcp, len, true);
 	tcp->Seq = __REV(Seq);
 	tcp->Ack = __REV(Ack);
-	Send(tcp, len, TCP_FLAGS_PUSH);
+	// 发送数据的时候，需要同时带PUSH和ACK
+	Send(tcp, len, TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
 
 	Tip->LoopWait(Callback, this, 5000);
 
@@ -389,7 +391,8 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 
 	if(Tip->LoopWait(Callback, this, 5000))
 	{
-		if(tcp->Flags & TCP_FLAGS_SYN)
+		//if(tcp->Flags & TCP_FLAGS_SYN)
+		if(Status = SynAck)
 		{
 			Status = Established;
 			debug_printf("连接成功！\r\n");

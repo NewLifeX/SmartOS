@@ -92,7 +92,7 @@ void HttpSend(void* param)
 	tcp.Connect(*(uint*)ip, 80);
 
 	// 发送数据
-	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.84\r\n\r\n";
+	byte str[] = "GET / HTTP/1.1\r\nHost: 192.168.0.84\r\n\r\n\r\n";
 	tcp.Send(str, ArrayLength(str));
 
 	// 等待接收
