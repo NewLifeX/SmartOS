@@ -51,7 +51,7 @@ bool IcmpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-bool PingCallback(TinyIP* tip, void* param)
+bool PingCallback(TinyIP* tip, void* param, MemoryStream& ms)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
 	IP_HEADER* _ip = (IP_HEADER*)eth->Next();

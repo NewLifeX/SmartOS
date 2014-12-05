@@ -3,7 +3,7 @@
 #define NET_DEBUG DEBUG
 
 
-bool Callback(TinyIP* tip, void* param);
+bool Callback(TinyIP* tip, void* param, MemoryStream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -20,9 +20,18 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	if(g_tcp_port < 1024) g_tcp_port = 1024;
 	BindPort = g_tcp_port++;
 
-	seqnum		= 0xa;
+	// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
+	static uint seqnum = 0xa;
+	Seq = seqnum << 8;
+	seqnum += 2;
+
+	Ack = 0;
 
 	Status = Closed;
+	
+	OnAccepted = NULL;
+	OnReceived = NULL;
+	OnDisconnected = NULL;
 }
 
 string TcpSocket::ToString()
@@ -93,6 +102,10 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	debug_printf("\r\n");
 #endif
 
+	// 下次主动发数据时，用该序列号，因为对方Ack确认期望下次得到这个序列号
+	Seq = __REV(tcp->Ack);
+	Ack = __REV(tcp->Seq) + len + 1;
+
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
@@ -132,7 +145,7 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 	}
 
 	//第二次同步应答
-	Head(tcp, 1, false);
+	SetSeqAck(tcp, 1, false);
 	SetMss(tcp);
 
 	// 需要用到MSS，所以采用4个字节的可选段
@@ -156,7 +169,7 @@ void TcpSocket::Accepted2(TCP_HEADER* tcp, uint len)
 	}
 
 	//第二次同步应答
-	Head(tcp, 1, true);
+	SetSeqAck(tcp, 1, true);
 
 	Send(tcp, 0, TCP_FLAGS_ACK);
 }
@@ -168,7 +181,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 	{
 		if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 		{
-			Head(tcp, 1, true);
+			SetSeqAck(tcp, 1, true);
 			Send(tcp, 0, TCP_FLAGS_ACK);
 		}
 		else
@@ -189,7 +202,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 		if(!rs)
 		{
 			// 发送ACK，通知已收到
-			Head(tcp, 1, true);
+			SetSeqAck(tcp, 1, true);
 			Send(tcp, 0, TCP_FLAGS_ACK);
 			return;
 		}
@@ -205,7 +218,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 #endif
 	}
 	// 发送ACK，通知已收到
-	Head(tcp, len, true);
+	SetSeqAck(tcp, len, true);
 	//Send(buf, 0, TCP_FLAGS_ACK);
 
 	//TcpSend(buf, len);
@@ -221,9 +234,18 @@ void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 	// RST是对方紧急关闭，这里啥都不干
 	if(tcp->Flags & TCP_FLAGS_FIN)
 	{
-		Head(tcp, 1, true);
+		SetSeqAck(tcp, 1, true);
 		//Close(tcp, 0);
 		Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+	}
+	else
+	{
+#if NET_DEBUG
+		debug_printf("Tcp OnDisconnect "); // 打印发送方的ip
+		TinyIP::ShowIP(RemoteIP);
+		debug_printf(":%d Flags=0x%02x", RemotePort, tcp->Flags);
+		debug_printf("\r\n");
+#endif
 	}
 }
 
@@ -247,7 +269,7 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
 }
 
-void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool opSeq)
+void TcpSocket::SetSeqAck(TCP_HEADER* tcp, uint ackNum, bool opSeq)
 {
     /*
 	第一次握手：主机A发送位码为SYN＝1，随机产生Seq=x的数据包到服务器，主机B由SYN=1知道，A要求建立联机
@@ -260,22 +282,16 @@ void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool opSeq)
 	Ack 确认号。期望收到对方的下一个报文的数据的第一个字节的序号。
 	*/
 	//TCP_HEADER* tcp = Header;
-	int ack = tcp->Ack;
+	uint ack = tcp->Ack;
 	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
     if (!opSeq)
     {
-		// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
-		tcp->Seq = __REV(seqnum << 8);
-        // step the inititial seq num by something we will not use
-        // during this tcp session:
-        seqnum += 2;
-		/*tcp->Seq = __REV(seqnum);
-		seqnum++;*/
-		//tcp->Seq = 0;
+		tcp->Seq = __REV(Seq);
     }
 	else
 	{
 		tcp->Seq = ack;
+		//tcp->Seq = __REV(Seq);
 	}
 }
 
@@ -300,7 +316,7 @@ TCP_HEADER* TcpSocket::Create()
 	return (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 }
 
-void TcpSocket::Ack(uint len)
+void TcpSocket::SendAck(uint len)
 {
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
@@ -339,7 +355,9 @@ void TcpSocket::Send(const byte* buf, uint len)
 	// 发送的时候采用LocalPort
 	LocalPort = BindPort;
 
-	Head(tcp, len, true);
+	//SetSeqAck(tcp, len, true);
+	tcp->Seq = __REV(Seq);
+	tcp->Ack = __REV(Ack);
 	Send(tcp, len, TCP_FLAGS_PUSH);
 
 	Tip->LoopWait(Callback, this, 5000);
@@ -362,9 +380,8 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
-	tcp->Seq = 0;
-	//seqnum = 0;
-	Head(tcp, 0, false);
+	tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
+	SetSeqAck(tcp, 0, false);
 	SetMss(tcp);
 
 	Status = SynSent;
@@ -388,32 +405,40 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	return false;
 }
 
-bool Callback(TinyIP* tip, void* param)
+bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
 {
-	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
+	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
 	if(eth->Type != ETH_IP) return false;
 
-	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
 	if(_ip->Protocol != IP_TCP) return false;
 
 	TcpSocket* socket = (TcpSocket*)param;
+	
+	// 这里不移动数据流，方便后面调用Process
 	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
+
 	// 检查端口
-	if(tcp->DestPort != socket->Port) return false;
+	ushort port = __REV16(tcp->DestPort);
+	if(port != socket->Port) return false;
 
 	socket->Header = tcp;
 
-	//if(Status == SynSent)
+	if(socket->Status == TcpSocket::SynSent)
 	{
-		// 处理。如果对方回发第二次握手包，或者终止握手
-		MemoryStream ms(tip->Buffer, tip->BufferSize);
-		socket->Process(&ms);
-	}
-	//else
-	{
+		if(tcp->Flags & TCP_FLAGS_ACK)
+		{
+			socket->Status = TcpSocket::SynAck;
+
+			// 处理。如果对方回发第二次握手包，或者终止握手
+			//MemoryStream ms(tip->Buffer, tip->BufferSize);
+			socket->Process(&ms);
+
+			return true;
+		}
 	}
 
-	return true;
+	return false;
 }
 
 bool TcpSocket::OnWrite(const byte* buf, uint len)

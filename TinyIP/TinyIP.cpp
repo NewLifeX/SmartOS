@@ -205,7 +205,9 @@ bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 		}
 
 		// 业务
-		if(filter(this, param)) return true;
+		ms.SetPosition(0);
+		ms.Length = len;
+		if(filter(this, param, ms)) return true;
 
 		// 用不到数据包交由系统处理
 		ms.SetPosition(0);

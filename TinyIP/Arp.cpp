@@ -109,7 +109,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-bool RequestCallback(TinyIP* tip, void* param)
+bool RequestCallback(TinyIP* tip, void* param, MemoryStream& ms)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();

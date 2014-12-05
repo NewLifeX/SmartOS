@@ -34,7 +34,7 @@ public:
 };
 
 class TinyIP;
-typedef bool (*LoopFilter)(TinyIP* tip, void* param);
+typedef bool (*LoopFilter)(TinyIP* tip, void* param, MemoryStream& ms);
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
 class TinyIP

@@ -7,7 +7,9 @@
 class TcpSocket : public Socket, public ITransport
 {
 private:
-	byte seqnum;
+	//byte seqnum;
+	uint		Seq;		// 序列号，本地发出数据包
+	uint		Ack;		// 确认号，对方发送数据包的序列号+1
 
 	TCP_HEADER* Create();
 	
@@ -17,7 +19,8 @@ public:
 	{
 		Closed = 0,
 		SynSent = 1,
-		Established = 2,
+		SynAck = 2,
+		Established = 3,
 	}TCP_STATUS;
 
 	ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
@@ -48,9 +51,9 @@ public:
 	virtual string ToString();
 
 protected:
-	void Ack(uint len);
+	void SendAck(uint len);
 
-	void Head(TCP_HEADER* tcp, uint ackNum, bool cp_seq);
+	void SetSeqAck(TCP_HEADER* tcp, uint ackNum, bool cp_seq);
 	void SetMss(TCP_HEADER* tcp);
 	void Send(TCP_HEADER* tcp, uint len, byte flags);
 
@@ -68,11 +71,11 @@ protected:
 };
 
 // Tcp客户端
-class TcpClient : public TcpSocket
+/*class TcpClient : public TcpSocket
 {
 public:
 
 	TcpClient(TinyIP* tip);
-};
+};*/
 
 #endif
