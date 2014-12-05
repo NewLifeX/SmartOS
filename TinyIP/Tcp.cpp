@@ -64,8 +64,8 @@ bool TcpSocket::Process(MemoryStream* ms)
 
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
-	if(RemotePort != 0 && remotePort != RemotePort) return false;
-	if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
+	//if(RemotePort != 0 && remotePort != RemotePort) return false;
+	//if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
 	IP_HEADER* ip = tcp->Prev();
 	RemotePort	= remotePort;
