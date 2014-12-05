@@ -50,12 +50,13 @@ public:
 protected:
 	void Ack(uint len);
 
-	void Head(TCP_HEADER* tcp, uint ackNum, bool mss, bool cp_seq);
+	void Head(TCP_HEADER* tcp, uint ackNum, bool cp_seq);
+	void SetMss(TCP_HEADER* tcp);
 	void Send(TCP_HEADER* tcp, uint len, byte flags);
 
 	virtual void OnProcess(TCP_HEADER* tcp, MemoryStream& ms);
 	virtual void OnAccept(TCP_HEADER* tcp, uint len);
-	virtual void OnAccept3(TCP_HEADER* tcp, uint len);
+	virtual void Accepted2(TCP_HEADER* tcp, uint len);
 	virtual void OnDataReceive(TCP_HEADER* tcp, uint len);
 	virtual void OnDisconnect(TCP_HEADER* tcp, uint len);
 
@@ -64,6 +65,14 @@ protected:
 
     virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
+};
+
+// Tcp客户端
+class TcpClient : public TcpSocket
+{
+public:
+
+	TcpClient(TinyIP* tip);
 };
 
 #endif

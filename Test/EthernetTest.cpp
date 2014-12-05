@@ -35,7 +35,10 @@ bool OnUdpReceived(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len)
 
 bool OnTcpAccepted(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len)
 {
-    debug_printf("Tcp::Accepted On %d From ", socket->LocalPort);
+	if(tcp->Flags & TCP_FLAGS_ACK)
+		debug_printf("Tcp::Accepted2 On %d From ", socket->LocalPort);
+	else
+		debug_printf("Tcp::Accepted On %d From ", socket->LocalPort);
     TinyIP::ShowIP(socket->RemoteIP);
     debug_printf(":%d with Payload=%d\r\n", socket->RemotePort, len);
 

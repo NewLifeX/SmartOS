@@ -1,5 +1,8 @@
 ﻿#include "Tcp.h"
 
+#define NET_DEBUG DEBUG
+
+
 bool Callback(TinyIP* tip, void* param);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
@@ -83,13 +86,20 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	// TCP好像没有标识数据长度的字段，但是IP里面有，这样子的话，ms里面的长度是准确的
 	uint len = ms.Remain();
 
+#if NET_DEBUG
+	debug_printf("Tcp::Process Flags=0x%02x From ", tcp->Flags);
+	TinyIP::ShowIP(RemoteIP);
+	debug_printf(":%d", RemotePort);
+	debug_printf("\r\n");
+#endif
+
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
 	{
 		if(!(tcp->Flags & TCP_FLAGS_ACK))
 			OnAccept(tcp, len);
 		else
-			OnAccept3(tcp, len);
+			Accepted2(tcp, len);
 	}
 	else if(tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))
 	{
@@ -98,7 +108,10 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	// 第三次同步应答,三次应答后方可传输数据
 	else if (tcp->Flags & TCP_FLAGS_ACK) // ACK确认标志位，为1表示此数据包为应答数据包
 	{
-		OnDataReceive(tcp, len);
+		if(len == 0 && tcp->Ack <= 1)
+			Accepted2(tcp, len);
+		else
+			OnDataReceive(tcp, len);
 	}
 	else
 		debug_printf("Tcp::Process 未知标识位 0x%02x \r\n", tcp->Flags);
@@ -112,13 +125,15 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp Accept "); // 打印发送方的ip
-		TinyIP::ShowIP(Tip->RemoteIP);
+		TinyIP::ShowIP(RemoteIP);
+		debug_printf(":%d", RemotePort);
 		debug_printf("\r\n");
 #endif
 	}
 
 	//第二次同步应答
-	Head(tcp, 1, true, false);
+	Head(tcp, 1, false);
+	SetMss(tcp);
 
 	// 需要用到MSS，所以采用4个字节的可选段
 	//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
@@ -126,7 +141,7 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 	Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 }
 
-void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
+void TcpSocket::Accepted2(TCP_HEADER* tcp, uint len)
 {
 	if(OnAccepted)
 		OnAccepted(this, tcp, tcp->Next(), len);
@@ -134,13 +149,14 @@ void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp Accept3 "); // 打印发送方的ip
-		TinyIP::ShowIP(Tip->RemoteIP);
+		TinyIP::ShowIP(RemoteIP);
+		debug_printf(":%d", RemotePort);
 		debug_printf("\r\n");
 #endif
 	}
 
 	//第二次同步应答
-	Head(tcp, 1, true, true);
+	Head(tcp, 1, true);
 
 	Send(tcp, 0, TCP_FLAGS_ACK);
 }
@@ -152,7 +168,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 	{
 		if (tcp->Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 		{
-			Head(tcp, 1, false, true);
+			Head(tcp, 1, true);
 			Send(tcp, 0, TCP_FLAGS_ACK);
 		}
 		else
@@ -173,7 +189,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 		if(!rs)
 		{
 			// 发送ACK，通知已收到
-			Head(tcp, 1, false, true);
+			Head(tcp, 1, true);
 			Send(tcp, 0, TCP_FLAGS_ACK);
 			return;
 		}
@@ -189,7 +205,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 #endif
 	}
 	// 发送ACK，通知已收到
-	Head(tcp, len, false, true);
+	Head(tcp, len, true);
 	//Send(buf, 0, TCP_FLAGS_ACK);
 
 	//TcpSend(buf, len);
@@ -205,7 +221,7 @@ void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 	// RST是对方紧急关闭，这里啥都不干
 	if(tcp->Flags & TCP_FLAGS_FIN)
 	{
-		Head(tcp, 1, false, true);
+		Head(tcp, 1, true);
 		//Close(tcp, 0);
 		Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 	}
@@ -231,14 +247,17 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
 }
 
-void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool mss, bool opSeq)
+void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool opSeq)
 {
     /*
-	第一次握手：主机A发送位码为SYN＝1，随机产生Seq=1234567的数据包到服务器，主机B由SYN=1知道，A要求建立联机
-	第二次握手：主机B收到请求后要确认联机信息，向A发送Ack=(主机A的Seq+1)，SYN=1，Ack=1，随机产生Seq=7654321的包
-	第三次握手：主机A收到后检查Ack是否正确，即第一次发送的Seq+1，以及位码Ack是否为1，
-	若正确，主机A会再发送Ack=(主机B的Seq+1)，Ack=1，主机B收到后确认Seq值与Ack=1则连接建立成功。
+	第一次握手：主机A发送位码为SYN＝1，随机产生Seq=x的数据包到服务器，主机B由SYN=1知道，A要求建立联机
+	第二次握手：主机B收到请求后要确认联机信息，向A发送Ack=(A.Seq+1)，SYN=1，ACK=1，随机产生Seq=y的包
+	第三次握手：主机A收到后检查Ack是否正确，即A.Seq+1，以及位码ACK是否为1，
+	若正确，主机A会再发送Ack=(B.Seq+1)，ACK=1，主机B收到后确认Seq值与ACK=1则连接建立成功。
 	完成三次握手，主机A与主机B开始传送数据。
+
+	Seq 序列号。每一个字节都编号，本报文所发送数据的第一个字节的序号。
+	Ack 确认号。期望收到对方的下一个报文的数据的第一个字节的序号。
 	*/
 	//TCP_HEADER* tcp = Header;
 	int ack = tcp->Ack;
@@ -253,14 +272,18 @@ void TcpSocket::Head(TCP_HEADER* tcp, uint ackNum, bool mss, bool opSeq)
 		/*tcp->Seq = __REV(seqnum);
 		seqnum++;*/
 		//tcp->Seq = 0;
-    }else
+    }
+	else
 	{
 		tcp->Seq = ack;
 	}
+}
 
+void TcpSocket::SetMss(TCP_HEADER* tcp)
+{
 	tcp->Length = sizeof(TCP_HEADER) / 4;
     // 头部后面可能有可选数据，Length决定头部总长度（4的倍数）
-    if (mss)
+    //if (mss)
     {
 		uint* p = (uint*)tcp->Next();
         // 使用可选域设置 MSS 到 1460:0x5b4
@@ -316,6 +339,7 @@ void TcpSocket::Send(const byte* buf, uint len)
 	// 发送的时候采用LocalPort
 	LocalPort = BindPort;
 
+	Head(tcp, len, true);
 	Send(tcp, len, TCP_FLAGS_PUSH);
 
 	Tip->LoopWait(Callback, this, 5000);
@@ -340,7 +364,8 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	tcp->Init(true);
 	tcp->Seq = 0;
 	//seqnum = 0;
-	Head(tcp, 0, true, false);
+	Head(tcp, 0, false);
+	SetMss(tcp);
 
 	Status = SynSent;
 	Send(tcp, 0, TCP_FLAGS_SYN);
