@@ -168,8 +168,10 @@ void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
 #endif
 	}
 
-	//第二次同步应答
+	// 第二次同步应答
 	SetSeqAck(tcp, 1, true);
+	// 不需要Mss
+	tcp->Length = sizeof(TCP_HEADER) / 4;
 
 	Send(tcp, 0, TCP_FLAGS_ACK);
 }
@@ -199,7 +201,8 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 	{
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(this, tcp, tcp->Next(), len);
-		if(rs)
+		// 如果不需要向对方发数据包，则直接响应ACK
+		if(!rs)
 		{
 			// 发送ACK，通知已收到
 			SetSeqAck(tcp, 1, true);
@@ -264,7 +267,8 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	tcp->Checksum = 0;
 	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
 
-	debug_printf("SendTcp: Flags=0x%02x, len=%d(0x%x) %d => %d \r\n", flags, tcp->Length, tcp->Length, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
+	uint hlen = tcp->Length << 2;
+	debug_printf("SendTcp: Flags=0x%02x, Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, hlen, hlen, len, len, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
 
 	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
