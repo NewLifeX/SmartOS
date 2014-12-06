@@ -698,7 +698,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
-	// 检查空间载波，避开
+	/*// 检查空间载波，避开
 	int retry = 2000;
 	while(ReadReg(CD))
 	{
@@ -708,7 +708,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			return false;
 		}
 		Sys.Delay(50);	// 暂停50微秒
-	}
+	}*/
 
 	// 进入发送模式
 	if(!SetMode(false)) return false;
