@@ -74,12 +74,12 @@ void TestMessage(OutputPort* leds)
 
 	NRF24L01* nrf = Create2401();
     //nrf->Timeout = 1000;
-    nrf->Channel = 0x28;
+    //nrf->Channel = 0x28;
 	// 如果打开自动应答，繁忙时收不到数据会增加错误计数，达到一定程度会自动重启模块
     nrf->AutoAnswer = false;
-	nrf->Speed = 2000;
-	byte addr[] = {0x34, 0x43, 0x10, 0x10, 0x01};
-	memcpy(nrf->Address, addr, ArrayLength(addr));
+	nrf->Speed = 1000;
+	//byte addr[] = {0x34, 0x43, 0x10, 0x10, 0x01};
+	//memcpy(nrf->Address, addr, ArrayLength(addr));
 	nrf->PayloadWidth = 0;	// 使用动态负载
     if(!nrf->Check())
         debug_printf("请检查NRF24L01线路\r\n");
