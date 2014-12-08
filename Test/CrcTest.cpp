@@ -1,4 +1,4 @@
-#include "Sys.h"
+﻿#include "Sys.h"
 #include "conf.h"
 
 static const uint DataBuffer[] =
@@ -78,7 +78,7 @@ void TestCrc()
 	// Sys.Crc是软校验，HardCrc是硬件实现，要求硬件实现的结果跟软件实现一致
 	uint data = 0x12345678;
 	uint crc = Sys.Crc((byte*)&data, 4, 0);
-	uint crc2 = HardCrc(&data, 4, 0);
+	uint crc2 = Sys.Crc(&data, 4);
 	Sys.ShowHex((byte*)&data, 4);
 	debug_printf("\r\n\tSoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 无初值时，两者一样
@@ -86,7 +86,7 @@ void TestCrc()
 	uint temp = crc;
 	// 试试二次计算Crc
 	crc = Sys.Crc((byte*)&crc, 4, 0);
-	crc2 = HardCrc(&crc2, 4, 0);
+	crc2 = Sys.Crc(&crc2, 4);
 	Sys.ShowHex((byte*)&temp, 4);
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -97,7 +97,7 @@ void TestCrc()
 	data2 <<= 32;
 	data2 += data;
 	crc = Sys.Crc((byte*)&data2, 8, 0);
-	crc2 = HardCrc(&data2, 8, 0);
+	crc2 = Sys.Crc(&data2, 8);
 	Sys.ShowHex((byte*)&data2, 8);
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -123,7 +123,7 @@ void TestCrc()
     debug_printf("\r\n");
 
 	crc = Sys.Crc((byte*)DataBuffer, size*4, 0);
-	crc2 = HardCrc(DataBuffer, size*4, 0);
+	crc2 = Sys.Crc(DataBuffer, size*4);
 	Sys.ShowHex((byte*)DataBuffer, 0x20);
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);

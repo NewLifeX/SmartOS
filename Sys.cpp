@@ -441,8 +441,9 @@ uint TSys::Crc(const void* buf, uint len)
 #endif
 
     CRC_ResetDR();
-    // STM32的初值是0xFFFFFFFF，而软Crc初值是0
-	//CRC->DR = __REV(crc ^ 0xFFFFFFFF);
+    // STM32的初值是0xFFFFFFFF，而软Crc初值是0。必须设置初值，否则结果不一样。
+	uint crc = 0;
+	CRC->DR = __REV(crc ^ 0xFFFFFFFF);
     //CRC->DR = 0xFFFFFFFF;
     uint* ptr = (uint*)buf;
     len >>= 2;
@@ -450,7 +451,7 @@ uint TSys::Crc(const void* buf, uint len)
     {
         CRC->DR =__REV(*ptr++);    // 字节顺序倒过来,注意不是位序,不是用__RBIT指令
     }
-    uint crc = CRC->DR;
+    crc = CRC->DR;
 
 #ifdef STM32F4
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, DISABLE);
