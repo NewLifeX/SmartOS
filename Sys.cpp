@@ -432,7 +432,7 @@ uint TSys::Crc(const void* buf, uint len, uint crc)
 }
 
 // 硬件实现的Crc
-uint TSys::Crc(const void* buf, uint len)
+/*uint TSys::Crc(const void* buf, uint len)
 {
 #ifdef STM32F4
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
@@ -460,7 +460,7 @@ uint TSys::Crc(const void* buf, uint len)
 #endif
 
 	return crc;
-}
+}*/
 
 static const ushort c_CRC16Table[] =
 {

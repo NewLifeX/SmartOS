@@ -107,8 +107,8 @@ public:
     Func OnStop;
 
     // CRC32校验
-    uint Crc(const void* buf, uint len);
-    uint Crc(const void* buf, uint len, uint crc);
+    //uint Crc(const void* buf, uint len);
+    uint Crc(const void* buf, uint len, uint crc = 0);
 	ushort Crc16(const void* buf, uint len, ushort crc = 0xFFFF);
 
 	// 显示十六进制数据，指定分隔字符
