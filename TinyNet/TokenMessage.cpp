@@ -2,6 +2,7 @@
 
 TokenMessage::TokenMessage()
 {
+	Token	= 0;
 	Code	= 0;
 	Error	= 0;
 	Length	= 0;
@@ -12,58 +13,45 @@ TokenMessage::TokenMessage()
 
 bool TokenMessage::Read(MemoryStream& ms)
 {
-	if(ms.Remain() < 4) return false;
+	if(ms.Remain() < 10) return false;
 
-	//byte* buf = ms.Current();
-	//assert_ptr(buf);
-	//uint p = ms.Position();
+	//Token = ms.Read<uint>();
+	//*(byte*)&Code = ms.Read<byte>();
+	ms.Read((byte*)&Token, 0, 6);
 
-	*(byte*)&Code = ms.ReadByte();
+	//Length = ms.Read<byte>();
+	if(ms.Remain() - 4 < Length) return false;
 
-	/*if(Code & 0x80)
-	{
-		Code	&= 0x7F;
-		Error	= 1;
-	}*/
+	ms.Read(Data, 0, Length);
 
-	//Length = ms.Remain() - 2;
-	Length = ms.ReadByte();
-	if(ms.Remain() - 2 < Length) return false;
+	Crc = ms.Read<uint>();
 
-	ms.Read(&Data, 0, Length);
-
-	Crc = ms.Read<ushort>();
-
-	// 直接计算Crc16
-	//Crc2 = Sys.Crc16(buf, ms.Position() - p - 2);
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc2 = Sys.Crc16(&Code, 1 + 1 + Length);
+	Crc2 = Sys.Crc(&Token, Size() - 4);
+
+	return true;
 }
 
 void TokenMessage::Write(MemoryStream& ms)
 {
 	uint p = ms.Position();
 
-	//byte code = Code;
-	//if(Error) code |= 0x80;
-	ms.Write(*(byte*)&Code);
+	//ms.Write(Token);
+	//ms.Write(*(byte*)&Code);
+	ms.Write((byte*)&Token, 0, 6);
 
-	ms.Write(Length);
+	//ms.Write(Length);
 	if(Length > 0) ms.Write(Data, 0, Length);
 
-	//byte* buf = ms.Current();
-	//byte len = ms.Position() - p;
-	// 直接计算Crc16
-	//Crc = Crc2 = Sys.Crc16(buf - len, len);
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc = Crc2 = Sys.Crc16(&Code, 1 + 1 + Length);
+	Crc = Crc2 = Sys.Crc(&Token, Size() - 4);
 
 	ms.Write(Crc);
 }
 
-uint TokenMessage::Size()
+uint TokenMessage::Size() const
 {
-	return 1 + 1 + Length;
+	return 4 + 1 + 1 + Length + 4;
 }
 
 // 设置数据。
@@ -81,7 +69,6 @@ void TokenMessage::SetData(byte* buf, uint len)
 
 void TokenMessage::SetError(byte error)
 {
-	//Code |= 0x80;
 	Error = 1;
 	Length = 1;
 	Data[0] = error;
@@ -89,11 +76,19 @@ void TokenMessage::SetError(byte error)
 
 TokenController::TokenController(ITransport* port)
 {
+	assert_ptr(port);
 	_port = port;
+
+	debug_printf("\r\nTokenController::Init 传输口：%s\r\n", port->ToString());
+
+	// 注册收到数据事件
+	port->Register(Dispatch, this);
 }
 
 TokenController::~TokenController()
 {
+	_port->Register(NULL, NULL);
+
 	delete _port;
 	_port = NULL;
 }
@@ -103,7 +98,9 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 {
 	TokenMessage msg;
 	msg.Code = code;
-	
+	msg.Length = len;
+	memcpy(msg.Data, buf, len);
+
 	return Send(msg);
 }
 
@@ -112,16 +109,91 @@ bool TokenController::Send(TokenMessage& msg, int expire)
 {
 	MemoryStream ms(msg.Size());
 	msg.Write(ms);
-	
+
 	while(true)
 	{
 		_port->Write(ms.GetBuffer(), ms.Length);
-		
+
 		if(expire <= 0) break;
-	
+
 		// 等待响应
 		Sys.Sleep(1);
-		
-		
 	}
+
+	return true;
+}
+
+uint TokenController::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
+{
+	assert_ptr(buf);
+	assert_ptr(param);
+
+	TokenController* control = (TokenController*)param;
+
+	// 这里使用数据流，可能多个消息粘包在一起
+	// 注意，此时指针位于0，而内容长度为缓冲区长度
+	MemoryStream ms(buf, len);
+	while(ms.Remain() >= 10)
+	{
+		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
+		if(!control->Dispatch(ms, transport)) break;
+	}
+
+	return 0;
+}
+
+bool TokenController::Dispatch(MemoryStream& ms, ITransport* port)
+{
+	byte* buf = ms.Current();
+	// 代码为0是非法的
+	if(!buf[4]) return 0;
+	// 只处理本机消息或广播消息。快速处理，高效。
+	uint addr = *(uint*)buf;
+	if(addr != Address && addr != 0) return false;
+
+#if MSG_DEBUG
+	/*msg_printf("TokenController::Dispatch ");
+	// 输出整条信息
+	Sys.ShowHex(buf, ms.Length, '-');
+	msg_printf("\r\n");*/
+#endif
+
+	TokenMessage msg;
+	if(!msg.Read(ms)) return false;
+
+	// 校验
+	if(msg.Crc != msg.Crc2)
+	{
+		msg.SetError(1);
+		Send(msg);
+
+		return true;
+	}
+
+#if MSG_DEBUG
+	//ShowMessage(msg, false, port);
+#endif
+
+	// 外部公共消息事件
+	if(Received)
+	{
+		if(!Received(msg, Param)) return true;
+	}
+
+	// 选择处理器来处理消息
+	for(int i=0; i<_HandlerCount; i++)
+	{
+		HandlerLookup* lookup = _Handlers[i];
+		if(lookup && lookup->Code == msg.Code)
+		{
+			// 返回值决定是普通回复还是错误回复
+			bool rs = lookup->Handler(msg, lookup->Param);
+
+			if(rs) Send(msg);
+
+			break;
+		}
+	}
+
+	return true;
 }
