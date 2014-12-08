@@ -28,7 +28,7 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	Ack = 0;
 
 	Status = Closed;
-	
+
 	OnAccepted = NULL;
 	OnReceived = NULL;
 	OnDisconnected = NULL;
@@ -97,7 +97,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 
 	uint seq = __REV(tcp->Seq);
 	uint ack = __REV(tcp->Ack);
-	
+
 #if NET_DEBUG
 	debug_printf("Tcp::Process Flags=0x%02x Seq=0x%04x Ack=0x%04x From ", tcp->Flags, seq, ack);
 	TinyIP::ShowIP(RemoteIP);
@@ -108,7 +108,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
 	// 下次主动发数据时，用该序列号，因为对方Ack确认期望下次得到这个序列号
 	Seq = ack;
 	Ack = seq + len;
-	debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
+	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
@@ -256,6 +256,8 @@ void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 		debug_printf("\r\n");
 #endif
 	}
+
+	Status = Closed;
 }
 
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
@@ -352,6 +354,12 @@ void TcpSocket::Send(const byte* buf, uint len)
 		if(!Open()) return;
 	}
 
+	// 如果连接已关闭，必须重新连接
+	if(Status == Closed)
+	{
+		if(!Connect(RemoteIP, RemotePort)) return;
+	}
+
 	debug_printf("Tcp::Send ");
 	Tip->ShowIP(RemoteIP);
 	debug_printf(":%d buf=0x%08x len=%d ...... \r\n", RemotePort, buf, len);
@@ -375,7 +383,7 @@ void TcpSocket::Send(const byte* buf, uint len)
 	tcp->Seq = __REV(Seq);
 	tcp->Ack = __REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
-	debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
+	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	Send(tcp, len, TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
 
 	Tip->LoopWait(Callback, this, 3000);
@@ -440,7 +448,7 @@ bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
 	if(_ip->Protocol != IP_TCP) return false;
 
 	TcpSocket* socket = (TcpSocket*)param;
-	
+
 	// 这里不移动数据流，方便后面调用Process
 	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
 

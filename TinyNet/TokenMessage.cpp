@@ -37,11 +37,8 @@ void TokenMessage::Write(MemoryStream& ms)
 
 	if(Length > 0) ms.Write(Data, 0, Length);
 
-	Sys.ShowHex(ms.GetBuffer(), ms.Length, '-');
-	debug_printf("\r\n");
 	// 令牌消息是连续的，可以直接计算CRC
 	Crc = Crc2 = Sys.Crc(&Token, Size() - 4);
-	debug_printf("Crc=0x%08X\r\n", Crc);
 
 	ms.Write(Crc);
 }
