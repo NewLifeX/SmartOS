@@ -101,12 +101,6 @@ bool Message::Read(MemoryStream& ms)
 	return true;
 }
 
-// 验证消息校验和是否有效
-bool Message::Verify()
-{
-	return Checksum == Crc16;
-}
-
 void Message::ComputeCrc()
 {
 	MemoryStream ms(Size());
@@ -115,8 +109,6 @@ void Message::ComputeCrc()
 
 	Write(ms);
 
-	//ms.SetPosition(0);
-	//byte* buf = ms.Current();
 	byte* buf = ms.GetBuffer();
 	// 扣除不计算校验码的部分
 	Checksum = Crc16 = Sys.Crc16(buf, MESSAGE_SIZE + Length - 2);
@@ -136,8 +128,6 @@ int Message::Size()
 // 设置数据。
 void Message::SetData(byte* buf, uint len)
 {
-	//assert_ptr(buf);
-	//assert_param(len > 0 && len <= ArrayLength(Data));
 	assert_param(len <= ArrayLength(Data));
 
 	Length = len;
@@ -378,7 +368,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(msg.Dest == 0 && msg.Reply) return true;
 
 	// 校验
-	if(!msg.Verify())
+	if(msg.Checksum != msg.Crc16)
 	{
 		// 错误的响应包直接忽略
 		if(msg.Reply) return true;

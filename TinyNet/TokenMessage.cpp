@@ -15,11 +15,8 @@ bool TokenMessage::Read(MemoryStream& ms)
 {
 	if(ms.Remain() < 10) return false;
 
-	//Token = ms.Read<uint>();
-	//*(byte*)&Code = ms.Read<byte>();
 	ms.Read((byte*)&Token, 0, 6);
 
-	//Length = ms.Read<byte>();
 	if(ms.Remain() - 4 < Length) return false;
 
 	ms.Read(Data, 0, Length);
@@ -27,7 +24,7 @@ bool TokenMessage::Read(MemoryStream& ms)
 	Crc = ms.Read<uint>();
 
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc2 = Sys.Crc(&Token, Size() - 4);
+	Crc2 = Sys.Crc(&Token, Size() - 4, 0);
 
 	return true;
 }
@@ -36,15 +33,15 @@ void TokenMessage::Write(MemoryStream& ms)
 {
 	uint p = ms.Position();
 
-	//ms.Write(Token);
-	//ms.Write(*(byte*)&Code);
 	ms.Write((byte*)&Token, 0, 6);
 
-	//ms.Write(Length);
 	if(Length > 0) ms.Write(Data, 0, Length);
 
+	Sys.ShowHex(ms.GetBuffer(), ms.Length, '-');
+	debug_printf("\r\n");
 	// 令牌消息是连续的，可以直接计算CRC
 	Crc = Crc2 = Sys.Crc(&Token, Size() - 4);
+	debug_printf("Crc=0x%08X\r\n", Crc);
 
 	ms.Write(Crc);
 }

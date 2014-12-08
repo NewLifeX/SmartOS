@@ -53,8 +53,6 @@ public:
 	// 写入指定数据流
 	void Write(MemoryStream& ms);
 
-	// 验证消息校验和是否有效
-	bool Verify();
 	// 计算当前消息的Crc
 	void ComputeCrc();
 	// 设置数据
