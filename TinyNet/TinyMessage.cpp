@@ -120,7 +120,7 @@ bool TinyMessage::Valid() const
 // 消息所占据的指令数据大小。包括头部、负载数据和附加数据
 uint TinyMessage::Size() const
 {
-	uint len = HeaderSize + Length;
+	uint len = MinSize + Length;
 	if(UseTTL) len++;
 #if DEBUG
 	len++;
@@ -195,9 +195,9 @@ TinyController::~TinyController()
 }
 
 // 创建消息
-Message& TinyController::Create() const
+Message* TinyController::Create() const
 {
-	return *(new TinyMessage());
+	return new TinyMessage();
 }
 
 void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)

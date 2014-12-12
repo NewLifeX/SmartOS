@@ -84,7 +84,8 @@ void DiscoverTask(void* param)
 // 格式：2字节设备类型 + 20字节系统ID
 void TinyClient::Discover()
 {
-	TinyMessage& msg = (TinyMessage&)_control->Create();
+	Message* p_msg = _control->Create();
+	TinyMessage& msg = *(TinyMessage*)p_msg;
 	msg.Code = 1;
 
 	// 发送的广播消息，设备类型和系统ID
@@ -98,7 +99,7 @@ void TinyClient::Discover()
 
 	_lastDiscoverID = msg.Sequence;
 
-	delete &msg;
+	delete p_msg;
 }
 
 // Discover响应
@@ -166,12 +167,12 @@ void TinyClient::Ping()
 		return;
 	}
 
-	Message& msg = _control->Create();
-	msg.Code = 2;
+	Message* msg = _control->Create();
+	msg->Code = 2;
 
-	_control->Send(msg);
+	_control->Send(*msg);
 
-	delete &msg;
+	delete msg;
 
 	if(LastActive == 0) LastActive = Time.Current();
 }

@@ -106,9 +106,9 @@ TokenController::~TokenController()
 }
 
 // 创建消息
-Message& TokenController::Create() const
+Message* TokenController::Create() const
 {
-	return *(new TokenMessage());
+	return new TokenMessage();
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息

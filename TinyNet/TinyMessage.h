@@ -114,7 +114,7 @@ public:
 	virtual ~TinyController();
 
 	// 创建消息
-	virtual Message& Create() const;	
+	virtual Message* Create() const;	
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual int Send(Message& msg, ITransport* port = NULL);
 

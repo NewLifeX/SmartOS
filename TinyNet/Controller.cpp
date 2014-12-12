@@ -119,7 +119,8 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	msg_printf("\r\n");*/
 #endif
 
-	Message& msg = Create();
+	auto_ptr<Message> p_msg(Create());
+	Message& msg = *p_msg;
 	if(!msg.Read(ms)) return false;
 
 	// 校验

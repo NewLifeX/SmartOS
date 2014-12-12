@@ -91,6 +91,13 @@ public:
 	}
 
 	// 自动指针拷贝，解除原来自动指针的管理权
+	auto_ptr& operator=(T* p)
+	{
+		_ptr = p;
+		return *this;
+	}
+
+	// 自动指针拷贝，解除原来自动指针的管理权
 	auto_ptr& operator=(auto_ptr& ap)
 	{
 		reset(ap.release());
