@@ -1,7 +1,10 @@
 #include "Gateway.h"
 
+#include "TinyMessage.h"
+#include "TokenMessage.h"
+
 bool OnLocalReceived(Message& msg, void* param);
-bool OnRemoteReceived(TokenMessage& msg, void* param);
+bool OnRemoteReceived(Message& msg, void* param);
 
 Gateway::Gateway(TinyServer* server, TokenController* client)
 {
@@ -57,14 +60,14 @@ bool OnLocalReceived(Message& msg, void* param)
 	// 消息转发
 	//if(msg.Code >= 0x10)
 	{
-		debug_printf("Gateway::Local %d \r\n", msg.Src);
+		//debug_printf("Gateway::Local %d \r\n", msg.Src);
 		//server->Client->Send(msg);
 	}
 
 	return true;
 }
 
-bool OnRemoteReceived(TokenMessage& msg, void* param)
+bool OnRemoteReceived(Message& msg, void* param)
 {
 	Gateway* server = (Gateway*)param;
 	assert_ptr(server);
@@ -72,7 +75,7 @@ bool OnRemoteReceived(TokenMessage& msg, void* param)
 	// 消息转发
 	//if(msg.Code >= 0x10)
 	{
-		debug_printf("Gateway::Remote %d \r\n", msg.Token);
+		//debug_printf("Gateway::Remote %d \r\n", msg.Token);
 		//server->Server->Send(msg);
 	}
 

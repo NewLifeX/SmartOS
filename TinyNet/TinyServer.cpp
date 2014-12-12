@@ -1,6 +1,9 @@
 ﻿#include "TinyServer.h"
 #include "SerialPort.h"
 
+#include "TinyMessage.h"
+#include "TokenMessage.h"
+
 bool OnServerReceived(Message& msg, void* param);
 
 void DiscoverClientTask(void* param);
@@ -78,7 +81,8 @@ void DiscoverClientTask(void* param)
 // 格式：2字节设备类型 + 20字节系统ID
 void TinyServer::Discover()
 {
-	Message msg(1);
+	TinyMessage& msg = (TinyMessage&)_control->Create();
+	msg.Code = 1;
 
 	// 发送的广播消息，设备类型和系统ID
 	MemoryStream ms(msg.Data, ArrayLength(msg.Data));
@@ -90,17 +94,20 @@ void TinyServer::Discover()
 	_control->Send(msg);
 
 	_lastDiscoverID = msg.Sequence;
+
+	delete &msg;
 }
 
 // Discover响应
 // 格式：1字节地址 + 8字节密码
 bool TinyServer::Discover(Message& msg, void* param)
 {
+	TinyMessage& tmsg = (TinyMessage&)msg;
 	// 客户端只处理Discover响应
-	if(!msg.Reply || msg.Error) return true;
+	if(!tmsg.Reply || tmsg.Error) return true;
 
 	// 校验不对
-	if(_lastDiscoverID != msg.Sequence) return true;
+	if(_lastDiscoverID != tmsg.Sequence) return true;
 
 	assert_ptr(param);
 	TinyServer* client = (TinyServer*)param;
@@ -113,7 +120,7 @@ bool TinyServer::Discover(Message& msg, void* param)
 		client->Password = ms.Read<ulong>();
 
 	// 记住服务端地址
-	//client->Server = msg.Src;
+	//client->Server = tmsg.Src;
 
 	// 取消Discover任务
 	debug_printf("停止寻找服务端 ");
@@ -156,10 +163,12 @@ void TinyServer::Ping()
 		return;
 	}
 
-	Message msg(2);
-	msg.Length = 0;
+	Message& msg = _control->Create();
+	msg.Code = 2;
 
 	_control->Send(msg);
+
+	delete &msg;
 
 	if(LastActive == 0) LastActive = Time.Current();
 }
@@ -169,8 +178,9 @@ bool TinyServer::Ping(Message& msg, void* param)
 	assert_ptr(param);
 	TinyServer* client = (TinyServer*)param;
 
+	TinyMessage& tmsg = (TinyMessage&)msg;
 	// 忽略响应消息
-	if(msg.Reply)
+	if(tmsg.Reply)
 	{
 		//if(msg.Src == client->Server) client->LastActive = Time.Current();
 		return true;
@@ -186,8 +196,9 @@ bool TinyServer::Ping(Message& msg, void* param)
 // 系统时间获取与设置
 bool TinyServer::SysTime(Message& msg, void* param)
 {
+	TinyMessage& tmsg = (TinyMessage&)msg;
 	// 忽略响应消息
-	if(msg.Reply) return true;
+	if(tmsg.Reply) return true;
 
 	debug_printf("Message_SysTime Length=%d\r\n", msg.Length);
 
@@ -210,8 +221,9 @@ bool TinyServer::SysTime(Message& msg, void* param)
 
 bool TinyServer::SysID(Message& msg, void* param)
 {
+	TinyMessage& tmsg = (TinyMessage&)msg;
 	// 忽略响应消息
-	if(msg.Reply) return true;
+	if(tmsg.Reply) return true;
 
 	debug_printf("Message_SysID Length=%d\r\n", msg.Length);
 
@@ -231,8 +243,9 @@ bool TinyServer::SysID(Message& msg, void* param)
 
 bool TinyServer::SysMode(Message& msg, void* param)
 {
+	TinyMessage& tmsg = (TinyMessage&)msg;
 	// 忽略响应消息
-	if(msg.Reply) return true;
+	if(tmsg.Reply) return true;
 
 	byte mode = 0;
 	if(msg.Length > 0) mode = msg.Data[0];

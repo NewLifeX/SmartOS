@@ -1,64 +1,80 @@
 #include "TokenMessage.h"
 
-TokenMessage::TokenMessage()
+TokenMessage::TokenMessage(byte code) : Message(code)
 {
-	Token	= 0;
-	Code	= 0;
-	Error	= 0;
-	Length	= 0;
+	Data	= _Data;
 
+	/*Token	= 0;
+	_Code	= 0;
+	Error	= 0;
+	_Length	= 0;*/
+	memset(&Token, 0, HeaderSize);
+
+	Checksum= 0;
 	Crc		= 0;
-	Crc2	= 0;
 }
 
 bool TokenMessage::Read(MemoryStream& ms)
 {
-	if(ms.Remain() < 10) return false;
+	if(ms.Remain() < MinSize) return false;
 
-	ms.Read((byte*)&Token, 0, 6);
+	ms.Read((byte*)&Token, 0, HeaderSize);
+	// 占位符拷贝到实际数据
+	Code = _Code;
+	Length = _Length;
 
-	if(ms.Remain() - 4 < Length) return false;
+	if(ms.Remain() < Length + 4) return false;
 
-	ms.Read(Data, 0, Length);
+	if(Length > 0) ms.Read(Data, 0, Length);
 
-	Crc = ms.Read<uint>();
+	Checksum = ms.Read<uint>();
 
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc2 = Sys.Crc(&Token, Size() - 4, 0);
+	Crc = Sys.Crc(&Token, HeaderSize + Length);
 
 	return true;
 }
 
 void TokenMessage::Write(MemoryStream& ms)
 {
+	// 实际数据拷贝到占位符
+	_Code = Code;
+	_Length = Length;
+
 	uint p = ms.Position();
 
-	ms.Write((byte*)&Token, 0, 6);
+	ms.Write((byte*)&Token, 0, HeaderSize);
 
 	if(Length > 0) ms.Write(Data, 0, Length);
 
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc = Crc2 = Sys.Crc(&Token, Size() - 4);
+	Checksum = Crc = Sys.Crc(&Token, HeaderSize + Length);
 
-	ms.Write(Crc);
+	ms.Write(Checksum);
+}
+
+void TokenMessage::ComputeCrc()
+{
+	MemoryStream ms(Size());
+
+	Write(ms);
+
+	// 扣除不计算校验码的部分
+	Checksum = Crc = Sys.Crc16(ms.GetBuffer(), HeaderSize + Length);
+}
+
+// 验证消息校验码是否有效
+bool TokenMessage::Valid() const
+{
+	if(Checksum == Crc) return true;
+
+	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
+	return false;
 }
 
 uint TokenMessage::Size() const
 {
-	return 4 + 1 + 1 + Length + 4;
-}
-
-// 设置数据。
-void TokenMessage::SetData(byte* buf, uint len)
-{
-	assert_param(len <= ArrayLength(Data));
-
-	Length = len;
-	if(len > 0)
-	{
-		assert_ptr(buf);
-		memcpy(Data, buf, len);
-	}
+	return HeaderSize + Length + 4;
 }
 
 void TokenMessage::SetError(byte error)
@@ -68,23 +84,31 @@ void TokenMessage::SetError(byte error)
 	Data[0] = error;
 }
 
-TokenController::TokenController(ITransport* port)
+TokenController::TokenController(ITransport* port) : Controller(port)
 {
-	assert_ptr(port);
-	_port = port;
+	Init();
+}
 
-	debug_printf("\r\nTokenController::Init 传输口：%s\r\n", port->ToString());
+TokenController::TokenController(ITransport* ports[], int count) : Controller(ports, count)
+{
+	Init();
+}
 
-	// 注册收到数据事件
-	port->Register(Dispatch, this);
+void TokenController::Init()
+{
+	Token	= 0;
+
+	MinSize = TokenMessage::MinSize;
 }
 
 TokenController::~TokenController()
 {
-	_port->Register(NULL, NULL);
+}
 
-	delete _port;
-	_port = NULL;
+// 创建消息
+Message& TokenController::Create() const
+{
+	return *(new TokenMessage());
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
@@ -92,21 +116,20 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 {
 	TokenMessage msg;
 	msg.Code = code;
-	msg.Length = len;
-	memcpy(msg.Data, buf, len);
+	msg.SetData(buf, len);
 
 	return Send(msg);
 }
 
-// 发送消息，expire毫秒超时时间内，如果对方没有响应，会重复发送
-bool TokenController::Send(TokenMessage& msg, int expire)
+// 发送消息
+/*bool TokenController::Send(TokenMessage& msg, int expire)
 {
 	MemoryStream ms(msg.Size());
 	msg.Write(ms);
 
 	while(true)
 	{
-		_port->Write(ms.GetBuffer(), ms.Length);
+		//_port->Write(ms.GetBuffer(), ms.Length);
 
 		if(expire <= 0) break;
 
@@ -115,35 +138,17 @@ bool TokenController::Send(TokenMessage& msg, int expire)
 	}
 
 	return true;
-}
+}*/
 
-uint TokenController::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
+// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
+bool TokenController::OnReceive(Message& msg, ITransport* port)
 {
-	assert_ptr(buf);
-	assert_ptr(param);
+	TokenMessage& tmsg = (TokenMessage&)msg;
 
-	TokenController* control = (TokenController*)param;
-
-	// 这里使用数据流，可能多个消息粘包在一起
-	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	MemoryStream ms(buf, len);
-	while(ms.Remain() >= 10)
-	{
-		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, transport)) break;
-	}
-
-	return 0;
-}
-
-bool TokenController::Dispatch(MemoryStream& ms, ITransport* port)
-{
-	byte* buf = ms.Current();
 	// 代码为0是非法的
-	if(!buf[4]) return 0;
+	if(!msg.Code) return false;
 	// 只处理本机消息或广播消息。快速处理，高效。
-	uint addr = *(uint*)buf;
-	if(addr != Address && addr != 0) return false;
+	if(tmsg.Token != Token && tmsg.Token != 0) return false;
 
 #if MSG_DEBUG
 	/*msg_printf("TokenController::Dispatch ");
@@ -152,42 +157,23 @@ bool TokenController::Dispatch(MemoryStream& ms, ITransport* port)
 	msg_printf("\r\n");*/
 #endif
 
-	TokenMessage msg;
-	if(!msg.Read(ms)) return false;
+	return true;
+}
 
-	// 校验
-	if(msg.Crc != msg.Crc2)
-	{
-		msg.SetError(1);
-		Send(msg);
+// 发送消息，传输口参数为空时向所有传输口发送消息
+int TokenController::Send(Message& msg, ITransport* port)
+{
+	TokenMessage& tmsg = (TokenMessage&)msg;
 
-		return true;
-	}
+	// 附上自己的地址
+	tmsg.Token = Token;
 
 #if MSG_DEBUG
-	//ShowMessage(msg, false, port);
+	// 计算校验
+	msg.ComputeCrc();
+
+	ShowMessage(tmsg, true);
 #endif
 
-	// 外部公共消息事件
-	if(Received)
-	{
-		if(!Received(msg, Param)) return true;
-	}
-
-	// 选择处理器来处理消息
-	for(int i=0; i<_HandlerCount; i++)
-	{
-		HandlerLookup* lookup = _Handlers[i];
-		if(lookup && lookup->Code == msg.Code)
-		{
-			// 返回值决定是普通回复还是错误回复
-			bool rs = lookup->Handler(msg, lookup->Param);
-
-			if(rs) Send(msg);
-
-			break;
-		}
-	}
-
-	return true;
+	return Controller::Send(msg, port);
 }

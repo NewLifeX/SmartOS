@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Message.h"
+#include "Controller.h"
 
 // 微网客户端
 class TinyServer
