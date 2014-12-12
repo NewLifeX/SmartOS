@@ -10,6 +10,7 @@ Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
 
 	Running = false;
 	Result = false;
+	ExpiredTime = 10;
 
 	OnStop = NULL;
 }
@@ -23,7 +24,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId((byte*)&Tip->Mac, 6);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP);
-		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"YWS_SmartOS", 11);
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"WSWL_SmartOS", 11);
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
@@ -142,11 +143,10 @@ void RenewDHCP(void* param)
 
 void Dhcp::Start()
 {
-	int s = 10;
-	_expiredTime = Time.Current() + s * 1000000;
+	_expiredTime = Time.Current() + ExpiredTime * 1000000;
 	dhcpid = (uint)Time.Current();
 
-	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", s, dhcpid);
+	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 创建任务，每秒发送一次Discover
 	debug_printf("Dhcp发送Discover ");

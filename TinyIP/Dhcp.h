@@ -22,6 +22,7 @@ private:
 public:
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
+	uint ExpiredTime;	// 过期时间
 
 	Dhcp(TinyIP* tip);
 
