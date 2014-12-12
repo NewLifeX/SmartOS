@@ -397,6 +397,8 @@ void TcpSocket::Send(const byte* buf, uint len)
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
 bool TcpSocket::Connect(IPAddress ip, ushort port)
 {
+	if(ip == 0 || port == 0) return false;
+
 	if(!Enable)
 	{
 		if(!Open()) return false;
