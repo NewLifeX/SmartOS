@@ -12,7 +12,6 @@
 class TokenMessage : public Message
 {
 private:
-	byte	_Data[256];	// 数据
 
 public:
 	uint	Token;		// 令牌
@@ -21,8 +20,9 @@ public:
 	byte	Error:1;	// 是否异常
 
 	byte	_Length;	// 数据长度
+	byte	_Data[256];	// 数据
 
-	uint	Checksum;		// 校验码
+	uint	Checksum;	// 校验码
 	uint	Crc;		// 动态计算得到的校验码
 
 	static const uint HeaderSize = 4 + 1 + 1;	// 消息头部大小

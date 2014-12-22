@@ -41,8 +41,6 @@ void TokenMessage::Write(MemoryStream& ms)
 	_Code = Code;
 	_Length = Length;
 
-	uint p = ms.Position();
-
 	ms.Write((byte*)&Token, 0, HeaderSize);
 
 	if(Length > 0) ms.Write(Data, 0, Length);
@@ -60,7 +58,7 @@ void TokenMessage::ComputeCrc()
 	Write(ms);
 
 	// 扣除不计算校验码的部分
-	Checksum = Crc = Sys.Crc16(ms.GetBuffer(), HeaderSize + Length);
+	Checksum = Crc = Sys.Crc(ms.GetBuffer(), HeaderSize + Length);
 }
 
 // 验证消息校验码是否有效

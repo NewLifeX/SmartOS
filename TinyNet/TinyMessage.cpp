@@ -42,16 +42,10 @@ TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 bool TinyMessage::Read(MemoryStream& ms)
 {
-	byte* buf = ms.Current();
-	assert_ptr(buf);
-
-	uint len = ms.Remain();
-	assert_param(len > 0);
-
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
-	if(len < MinSize) return false;
+	if(ms.Remain() < MinSize) return false;
 
-	ms.Read(&Dest, 0, MinSize);
+	ms.Read(&Dest, 0, HeaderSize);
 	// 占位符拷贝到实际数据
 	Code = _Code;
 	Length = _Length;
@@ -64,19 +58,15 @@ bool TinyMessage::Read(MemoryStream& ms)
 	if(Dest == Src) return false;
 
 	// 校验剩余长度
-	if(len < MinSize + Length) return false;
+	if(ms.Remain() < Length + 2) return false;
 
-	// 直接计算Crc16
-	Crc = Sys.Crc16(buf, HeaderSize + Length);
+	if(Length > 0) ms.Read(Data, 0, Length);
 
-	if(Length > 0)
-	{
-		// 前面错误地把2字节数据当作校验码
-		ms.Seek(-2);
-		ms.Read(Data, 0, Length);
-		// 读取真正的校验码
-		Checksum = ms.Read<ushort>();
-	}
+	// 读取真正的校验码
+	Checksum = ms.Read<ushort>();
+
+	// 连续的，可以直接计算Crc16
+	Crc = Sys.Crc16(&Dest, HeaderSize + Length);
 
 	// 后面可能有TTL
 	if(UseTTL)

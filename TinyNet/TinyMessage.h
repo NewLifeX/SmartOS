@@ -19,7 +19,6 @@
 class TinyMessage : public Message
 {
 private:
-	byte _Data[32];	// 数据部分
 
 public:
 	// 标准头部，符合内存布局。注意凑够4字节，否则会有很头疼的对齐问题
@@ -34,6 +33,7 @@ public:
 	byte Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
 	byte _Length;	// 数据长度
+	byte _Data[32];	// 数据部分
 	ushort Checksum;// 16位检验和
 
 	// 可选的附加数据紧跟在头数据后面，可能直接读取内存区域
