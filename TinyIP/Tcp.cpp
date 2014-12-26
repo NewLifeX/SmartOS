@@ -1,6 +1,7 @@
 ﻿#include "Tcp.h"
 
-#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
+//#define NET_DEBUG DEBUG
 
 
 bool Callback(TinyIP* tip, void* param, MemoryStream& ms);
@@ -275,8 +276,10 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	tcp->Checksum = 0;
 	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
 
+#if NET_DEBUG
 	uint hlen = tcp->Length << 2;
 	debug_printf("SendTcp: Flags=0x%02x Seq=0x%04x Ack=0x%04x Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, __REV(tcp->Seq), __REV(tcp->Ack), hlen, hlen, len, len, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
+#endif
 
 	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
