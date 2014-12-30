@@ -4,12 +4,15 @@
 #include "TinyNet\Message.h"
 #include "TinyNet\TinyClient.h"
 
+#include "TinyNet\TinyMessage.h"
+
 #include "conf.h"
 
 // 消息处理函数
 bool OpenLed(Message& msg, void* param)
 {
-	if(msg.Reply) return true;
+	TinyMessage& tmsg = (TinyMessage&)msg;
+	if(tmsg.Reply) return true;
 
 	OutputPort* leds = (OutputPort*)param;
 	// 多组开关控制
@@ -55,7 +58,7 @@ void FlashLed(void* param)
 	Controller* control = (Controller*)param;
 
 	// 发送广播消息，刷所有人小灯
-	Message msg(0x10);
+	TinyMessage msg(0x10);
 
 	byte leds[] = {3, 1, 2};
 	leds[1] = Time.Current() % 4;
@@ -85,7 +88,7 @@ void TestMessage(OutputPort* leds)
         debug_printf("请检查NRF24L01线路\r\n");
 
     // 使用nRF24L01+作为链路层
-    Controller* control = new Controller(nrf);
+    Controller* control = new TinyController(nrf);
 
 	TinyClient* client = new TinyClient(control);
 	client->DeviceType = 0x0101;
