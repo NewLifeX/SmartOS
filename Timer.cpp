@@ -139,12 +139,12 @@ void Timer::Stop()
 
 	debug_printf("Timer%d::Stop\r\n", _index + 1);
 
-	// 关闭时钟
-	ClockCmd(false);
+	// 关闭计数器时钟
+	TIM_Cmd(_port, DISABLE);
 	TIM_ITConfig(_port, TIM_IT_Update, DISABLE);
 	TIM_ClearITPendingBit(_port, TIM_IT_Update);	// 仅清除中断标志位 关闭不可靠
-	TIM_Cmd(_port, DISABLE);
-
+	ClockCmd(false);	// 关闭定时器时钟
+	
 	_started = false;
 }
 
@@ -276,3 +276,75 @@ void Timer::OnInterrupt()
 
 	if(_Handler) _Handler(this, _Param);
 }
+
+
+// STM32F030 的   先这么写着 后面再对 103 做调整
+typedef void (*TIM_OCInit)(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct);
+const static TIM_OCInit OCInit[4]={TIM_OC1Init,TIM_OC2Init,TIM_OC3Init,TIM_OC4Init};
+// 外部初始化引脚 ？？  AFIO很头疼
+/*     @arg GPIO_AF_0:TIM15, TIM17, TIM14
+ *     @arg GPIO_AF_1:Tim3, TIM15 
+ *     @arg GPIO_AF_2:TIM2, TIM1, TIM16, TIM17.
+ *     @arg GPIO_AF_3:TIM15,
+ *     @arg GPIO_AF_4:TIM14.
+ *     @arg GPIO_AF_5:TIM16, TIM17.
+ *     @arg GPIO_AF_6:
+ *     @arg GPIO_AF_7:*/
+//const static uint8_t TIM_CH_AFa[8]=
+//{
+//};
+
+PWM::PWM(Timer* timer)
+{
+	_timer = timer;
+	for(int i=0;i<4;i++)
+	{
+		Pulse[i]=0xffff;
+//		_pin[i]=NULL;
+	}
+}
+
+void PWM::Start()
+{
+//	const Pin _Pin[]=TIM_PINS;
+	TIM_Cmd(_timer->_port, DISABLE);		// 关闭计数进行配置
+	
+	TIM_OCInitTypeDef TIM_OCInitStructure;
+	
+	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+	
+	for(int i=0;i<4;i++)
+	{
+		if(Pulse[i]!=0xffff)
+		{
+//			Pin tempPin = _Pin[_timer->_index*4+i];		// 找到对应的引脚
+//			_pin[i] = new AlternatePort(tempPin);		// 初始化引脚
+//			_pin[i]->Set(tempPin);
+//			GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_2);    在此处卡壳！！！！
+			
+			TIM_OCInitStructure.TIM_Pulse=Pulse[i];
+			OCInit[i](_timer->_port,&TIM_OCInitStructure);
+		}
+	}
+	// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
+	TIM_ITConfig(_timer->_port, TIM_IT_Update, DISABLE);
+	TIM_ClearFlag( _timer->_port, TIM_FLAG_Update );
+
+	TIM_ARRPreloadConfig(_timer->_port,ENABLE); // 使能预装载寄存器ARR
+	TIM_Cmd(_timer->_port, ENABLE);
+	TIM_CtrlPWMOutputs(_timer->_port,ENABLE);
+}
+
+void PWM::Stop()
+{
+	TIM_Cmd(_timer->_port, DISABLE);
+	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
+}
+
+
+
+
+
