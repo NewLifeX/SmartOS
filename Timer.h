@@ -47,7 +47,8 @@ private:
 	Timer * _timer;
 //	AlternatePort * _pin[4];
 public:
-	PWM(Timer * timer);
+	PWM(Timer * timer = NULL);
+	~PWM();
 	ushort Pulse[4];
 
 	void Start();
@@ -55,5 +56,29 @@ public:
 //	void SetDuty_Cycle(int oc,int value);
 };
 
+class Capture
+{
+private:
+	Timer * _timer;
+public:
+//	volatile byte HaveCap;		// 用位域可能比较好   低四位分别代表一路
+//	直接使用 stm32 的事件标志  
+//	FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG);
+	volatile int CapValue[4];	// 一个定时器又是四路
+
+	Capture(Timer * timer = NULL);
+	~Capture();
+	uint GetCapture(int channel);
+	
+private :
+	static void OnHandler(void * sender, void* param);
+	void OnInterrupt();
+	EventHandler _Handler;
+	void* _Param;
+
+public :
+	void Register(EventHandler handler, void* param = NULL);
+};
+//void (*EventHandler)(void* sender, void* param);
 
 #endif

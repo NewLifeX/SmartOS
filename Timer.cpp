@@ -307,6 +307,7 @@ PWM::PWM(Timer* timer)
 void PWM::Start()
 {
 //	const Pin _Pin[]=TIM_PINS;
+	_timer->Start();						// 主要是配置时钟基础部分 TIM_TimeBaseInit
 	TIM_Cmd(_timer->_port, DISABLE);		// 关闭计数进行配置
 	
 	TIM_OCInitTypeDef TIM_OCInitStructure;
@@ -332,7 +333,8 @@ void PWM::Start()
 	// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
 	TIM_ITConfig(_timer->_port, TIM_IT_Update, DISABLE);
 	TIM_ClearFlag( _timer->_port, TIM_FLAG_Update );
-
+	
+	TIM_SetCounter(_timer->_port, 0x00000000);	// 清零定时器CNT计数寄存器
 	TIM_ARRPreloadConfig(_timer->_port,ENABLE); // 使能预装载寄存器ARR
 	TIM_Cmd(_timer->_port, ENABLE);
 	TIM_CtrlPWMOutputs(_timer->_port,ENABLE);
@@ -344,7 +346,76 @@ void PWM::Stop()
 	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
 }
 
+PWM::~PWM()
+{
+	free(_timer);
+	TIM_Cmd(_timer->_port, DISABLE);
+	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
+}
 
 
 
+typedef uint32_t (*GetCap)(TIM_TypeDef* TIMx);
+const static GetCap GetCapturex[4]={
+TIM_GetCapture1,
+TIM_GetCapture2,
+TIM_GetCapture3,
+TIM_GetCapture4
+};
+typedef void (*SetICxPres)(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC);
+const static SetICxPres SetICPrescaler[]={
+TIM_SetIC1Prescaler ,
+TIM_SetIC2Prescaler ,
+TIM_SetIC3Prescaler ,
+TIM_SetIC4Prescaler ,
+};
 
+
+Capture::Capture(Timer * timer)
+{
+	if(timer == NULL)return ;
+	_timer = timer;
+//	HaveCap = 0x00;
+	for(int i =0;i<4;i++)
+		CapValue [i]=0x00;	// 其实可以不赋值
+}
+
+uint Capture :: GetCapture (int channel)
+{
+	if(channel >3 || channel <0)return 0;
+	return (GetCapturex[channel])(_timer->_port );
+}
+
+
+void Capture::Register(EventHandler handler, void* param )
+{
+	_Handler = handler;
+	_Param=param;
+	
+	if(handler != NULL)
+		_timer->Register (OnHandler  ,this);
+}
+
+// 直接用指针访问私有成员  不好  
+//void Capture :: OnHandler(void * sender, void* param)
+//{
+//	Capture * cap= (Capture*)param;
+//	if(cap->_Handler != NULL)
+//		cap->_Handler(sender,cap->_Param );
+//}
+
+void Capture :: OnHandler(void * sender, void* param)
+{
+	Capture * cap= (Capture*)param;
+	if(cap != NULL)
+		cap->OnInterrupt();
+}
+
+void Capture::OnInterrupt()
+{
+	if(_Handler) _Handler(this, _Param);
+}
+
+Capture::~Capture()
+{
+}
