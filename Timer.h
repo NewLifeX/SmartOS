@@ -64,20 +64,22 @@ public:
 //	volatile byte HaveCap;		// 用位域可能比较好   低四位分别代表一路
 //	直接使用 stm32 的事件标志  
 //	FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG);
-	volatile int CapValue[4];	// 一个定时器又是四路
+//	volatile int CapValue[4];	// 一个定时器又是四路
 
 	Capture(Timer * timer = NULL);
 	~Capture();
 	uint GetCapture(int channel);
 	
+	void Start(int channel);
+	void Stop(int channel);
 private :
-	static void OnHandler(void * sender, void* param);
+	static void OnHandler(ushort num, void* param);
 	void OnInterrupt();
-	EventHandler _Handler;
-	void* _Param;
+	EventHandler _Handler[4];
+	void* _Param[4];
 
 public :
-	void Register(EventHandler handler, void* param = NULL);
+	void Register(int Index,EventHandler handler, void* param = NULL);
 };
 //void (*EventHandler)(void* sender, void* param);
 

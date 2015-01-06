@@ -377,34 +377,67 @@ Capture::Capture(Timer * timer)
 	_timer = timer;
 //	HaveCap = 0x00;
 	for(int i =0;i<4;i++)
-		CapValue [i]=0x00;	// 其实可以不赋值
+	{
+		_Handler [i]=NULL;	// 其实可以不赋值
+		_Param [i]=NULL;
+	}
 }
+
+
+
+void Start(int channel)
+{
+	
+}
+
+
+void Stop(int channel)
+{
+	
+}
+
 
 uint Capture :: GetCapture (int channel)
 {
-	if(channel >3 || channel <0)return 0;
-	return (GetCapturex[channel])(_timer->_port );
+	if(channel >4 || channel <1)return 0;
+	return (GetCapturex[channel-1])(_timer->_port );
 }
 
-
-void Capture::Register(EventHandler handler, void* param )
+void Capture::Register(int channel,EventHandler handler, void* param )
 {
-	_Handler = handler;
-	_Param=param;
-	
-	if(handler != NULL)
-		_timer->Register (OnHandler  ,this);
+	if(channel<1||channel>4) return ;
+	_Handler[channel-1] = handler;
+	_Param[channel-1]=param;
+//	if(handler != NULL)
+//		_timer->Register (OnHandler  ,this);
+	int irq;
+	if(handler)
+	{
+		if(_timer ->_index == 0)
+			irq = TIM1_CC_IRQn;
+//		else// stm32f103有个TIM8  这里留空
+		Interrupt.SetPriority(irq, 1);
+		Interrupt.Activate(irq, OnHandler, this);
+	}
+	else
+	{
+		_Handler[channel-1] = NULL ;
+		_Param [channel-1]=NULL;
+		for(int i =0 ;i<4;i++)
+			if(_Handler [i] != NULL )return ;
+		Interrupt.Deactivate(irq);
+	}
 }
 
 // 直接用指针访问私有成员  不好  
-//void Capture :: OnHandler(void * sender, void* param)
+/*void Capture :: OnHandler(void * sender, void* param)
 //{
 //	Capture * cap= (Capture*)param;
 //	if(cap->_Handler != NULL)
 //		cap->_Handler(sender,cap->_Param );
-//}
+//}*/
 
-void Capture :: OnHandler(void * sender, void* param)
+void Capture :: OnHandler(ushort num, void* param)
 {
 	Capture * cap= (Capture*)param;
 	if(cap != NULL)
@@ -413,9 +446,19 @@ void Capture :: OnHandler(void * sender, void* param)
 
 void Capture::OnInterrupt()
 {
-	if(_Handler) _Handler(this, _Param);
+	// 找出中断源
+	ushort ccx = TIM_FLAG_CC1;
+	for(int i =0;i<4;i++)
+	{
+		if(TIM_GetFlagStatus(_timer->_port , ccx<<i ))
+			_Handler[i](this,_Param [i]);
+	}
+//	if(_Handler) _Handler[](this, _Param);
 }
 
 Capture::~Capture()
 {
+	for(int i =0;i<4;i++)
+		Register(i,NULL, NULL );
+	free(_timer);
 }
