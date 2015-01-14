@@ -348,7 +348,7 @@ void PWM::Stop()
 
 PWM::~PWM()
 {
-	free(_timer);
+	delete(_timer);
 	TIM_Cmd(_timer->_port, DISABLE);
 	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
 }
@@ -460,5 +460,5 @@ Capture::~Capture()
 {
 	for(int i =0;i<4;i++)
 		Register(i,NULL, NULL );
-	free(_timer);
+	delete(_timer);
 }
