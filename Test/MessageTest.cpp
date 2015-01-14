@@ -31,13 +31,13 @@ bool OpenLed(Message& msg, void* param)
 				led = true;
 				break;
 			}
-			case 2:
+			case 0:
 			{
 				debug_printf("关闭开关%d\r\n", i+1);
 				led = false;
 				break;
 			}
-			case 3:
+			case 2:
 			{
 				debug_printf("闪烁开关%d\r\n", i+1);
 				led = !led;
@@ -60,7 +60,7 @@ void FlashLed(void* param)
 	// 发送广播消息，刷所有人小灯
 	TinyMessage msg(0x10);
 
-	byte leds[] = {3, 1, 2};
+	byte leds[] = {0, 1, 2};
 	leds[1] = Time.Current() % 4;
 	leds[2] = Time.Current() % 4;
 
