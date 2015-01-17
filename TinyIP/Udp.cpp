@@ -136,7 +136,9 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, tlen, 1));
 
 	// 不能注释UDP这行日志，否则DHCP失效
-	debug_printf("SendUdp: len=%d(0x%x) %d => %d \r\n", tlen, tlen, __REV16(udp->SrcPort), RemotePort);
+	debug_printf("SendUdp: len=%d(0x%x) %d => %d ", tlen, tlen, __REV16(udp->SrcPort), RemotePort);
+	if(tlen > 0) Sys.ShowString(udp->Next(), tlen > 64 ? 64 : tlen, false);
+	debug_printf("\r\n");
 
 	Tip->SendIP(IP_UDP, (byte*)udp, tlen);
 }
