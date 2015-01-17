@@ -182,7 +182,8 @@ void TinyController::Init()
 	TotalSend = TotalAck = TotalBytes = TotalCost = TotalRetry = TotalMsg = 0;
 	LastSend = LastAck = LastBytes = LastCost = LastRetry = LastMsg = 0;
 
-	Sys.AddTask(StatTask, this, 1000000, 5000000);
+	// 因为统计不准确，暂时不显示状态统计
+	//Sys.AddTask(StatTask, this, 1000000, 5000000);
 }
 
 TinyController::~TinyController()
