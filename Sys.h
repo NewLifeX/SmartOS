@@ -115,7 +115,7 @@ public:
 	void ShowHex(byte* buf, uint len, char sep = '\0');
 	// 显示字符串，不指定长度时自动找\0
 	void ShowString(byte* buf, uint len = 0, bool autoEnd = true);
-	// 源数据转为十六进制字符编码再放入目标字符，比如0x28在目标放两个字节0x02 0x08
+	// 源数据src转为十六进制字符编码再放入目标字符buf，比如0xA8在目标放两个字节0x41(A) 0x38(8)
 	void ToHex(byte* buf, byte* src, uint len);
 private:
 	int _Index;	// MCU在型号表中的索引

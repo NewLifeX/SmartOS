@@ -511,7 +511,7 @@ void TSys::ShowString(byte* buf, uint len, bool autoEnd)
     }
 }
 
-// 源数据转为十六进制字符编码再放入目标字符，比如0x28在目标放两个字节0x02 0x08
+// 源数据src转为十六进制字符编码再放入目标字符buf，比如0xA8在目标放两个字节0x41(A) 0x38(8)
 void TSys::ToHex(byte* buf, byte* src, uint len)
 {
 	for(int i=0; i < len; i++, src++)
