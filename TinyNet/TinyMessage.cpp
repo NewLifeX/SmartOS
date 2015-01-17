@@ -163,7 +163,13 @@ void TinyController::Init()
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
-	while(!Address) Address = Time.Current();
+	//while(!Address) Address = Time.Current();
+	// 节点地址范围2~254，网关专用0x01，节点让步
+	while(Address < 2 || Address > 254)
+	{
+		Time.Sleep(10);
+		Address = Time.Current();
+	}
 
 	//debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
 
