@@ -24,7 +24,13 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId((byte*)&Tip->Mac, 6);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP);
-		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)"WSWL_SmartOS", 11);
+		
+		// 构造产品名称，把ID第一个字节附到最后
+		string str = "WSWL_SmartOS_xx";
+		char name[15];
+		strncpy(name, str, ArrayLength(name));
+		Sys.ToHex((byte*)name + ArrayLength(name) - 2, &Sys.ID[0], 1);
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)name, ArrayLength(name));
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
