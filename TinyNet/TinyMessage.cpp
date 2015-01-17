@@ -201,7 +201,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 	if(msg.Ack) return;
 
 	//msg_printf("%d ", (uint)Time.Current());
-	/*if(send)
+	if(send)
 		msg_printf("TinyMessage::Send ");
 	else
 	{
@@ -217,14 +217,14 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 	else if(!send)
 		msg_printf("Request");
 
-	msg_printf(" %d => %d Code=%d Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf(" %d => %d Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
 		msg_printf(" 数据：[%d] ", msg.Length);
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
-	if(!msg.Verify()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc, __REV16(msg.Crc));
-	msg_printf("\r\n");*/
+	if(!msg.Valid()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc, __REV16(msg.Crc));
+	msg_printf("\r\n");
 
 	/*Sys.ShowHex(buf, MESSAGE_SIZE);
 	if(msg.Length > 0)
