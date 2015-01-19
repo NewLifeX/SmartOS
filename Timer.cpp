@@ -1,4 +1,4 @@
-#include "Timer.h"
+﻿#include "Timer.h"
 
 static TIM_TypeDef* const g_Timers[] = TIMS;
 Timer** Timer::Timers = NULL;

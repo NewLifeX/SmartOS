@@ -1,4 +1,4 @@
-#ifndef __Memory_H__
+﻿#ifndef __Memory_H__
 #define __Memory_H__
 
 #include "Sys.h"

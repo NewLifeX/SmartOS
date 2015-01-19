@@ -1,4 +1,4 @@
-#ifndef _Delegate_H_
+﻿#ifndef _Delegate_H_
 #define _Delegate_H_
 
 /*

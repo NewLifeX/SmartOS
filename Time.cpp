@@ -1,4 +1,4 @@
-#include "Time.h"
+﻿#include "Time.h"
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 

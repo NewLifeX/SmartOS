@@ -1,4 +1,4 @@
-#ifndef __DMA_H__
+ï»¿#ifndef __DMA_H__
 #define __DMA_H__
 
 #include "Sys.h"
@@ -7,18 +7,18 @@
 class DMA
 {
 private:
-	byte _index;	// µÚ¼¸¸ö¶¨Ê±Æ÷£¬´Ó0¿ªÊ¼
+	byte _index;	// ç¬¬å‡ ä¸ªå®šæ—¶å™¨ï¼Œä»0å¼€å§‹
 	bool _started;
 	
 public:
 	DMA(byte index);
 	~DMA();
 	
-    int Retry;  // µÈ´ıÖØÊÔ´ÎÊı£¬Ä¬ÈÏ200
-    int Error;  // ´íÎó´ÎÊı
+    int Retry;  // ç­‰å¾…é‡è¯•æ¬¡æ•°ï¼Œé»˜è®¤200
+    int Error;  // é”™è¯¯æ¬¡æ•°
 	
-	bool Start();	// ¿ªÊ¼
-	bool WaitForStop();	// Í£Ö¹
+	bool Start();	// å¼€å§‹
+	bool WaitForStop();	// åœæ­¢
 	
 	//typedef void (*TimerHandler)(Timer* tim, void* param);
 	//void Register(TimerHandler handler, void* param = NULL);

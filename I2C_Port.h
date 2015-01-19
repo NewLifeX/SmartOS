@@ -1,4 +1,4 @@
-#ifndef _I2C_PORT_H_
+﻿#ifndef _I2C_PORT_H_
 #define _I2C_PORT_H_
 
 #include "Sys.h"

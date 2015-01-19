@@ -1,4 +1,4 @@
-#ifndef __SerialPort_H__
+﻿#ifndef __SerialPort_H__
 #define __SerialPort_H__
 
 #include "Sys.h"

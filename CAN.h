@@ -1,4 +1,4 @@
-#ifndef __CAN_H__
+﻿#ifndef __CAN_H__
 #define __CAN_H__
 
 #include "Sys.h"

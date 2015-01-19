@@ -1,4 +1,4 @@
-#ifndef __Enc28j60_H__
+﻿#ifndef __Enc28j60_H__
 #define __Enc28j60_H__
 
 #include "Sys.h"

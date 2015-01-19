@@ -1,4 +1,4 @@
-#ifndef __WatchDog_H__
+﻿#ifndef __WatchDog_H__
 #define __WatchDog_H__
 
 #include "Sys.h"

@@ -1,4 +1,4 @@
-#include "I2C_Port.h"
+ï»¿#include "I2C_Port.h"
 
 //static I2C_TypeDef* const g_I2Cs[] = I2CS;
 //static const Pin g_I2C_Pins_Map[][2] =  I2C_PINS_FULLREMAP;
@@ -52,7 +52,7 @@ void I2C_Port::GetPin(Pin* acl , Pin* sda )
 
 void I2C_Port::Open()
 {
-	// gpio  ¸´ÓÃ¿ªÂ©Êä³ö
+	// gpio  å¤ç”¨å¼€æ¼è¾“å‡º
 	SCL = new AlternatePort(Pins[0], true);
 	SDA = new AlternatePort(Pins[1], true);
 
@@ -63,7 +63,7 @@ void I2C_Port::Open()
 	//RCC_APB1PeriphResetCmd(sEE_I2C_CLK, DISABLE);
 
 #if defined(STM32F0)
-	// SPI¶¼ÔÚGPIO_AF_0·Ö×éÄÚ
+	// SPIéƒ½åœ¨GPIO_AF_0åˆ†ç»„å†…
     GPIO_PinAFConfig(_GROUP(Pins[0]), _PIN(Pins[0]), GPIO_AF_0);
     GPIO_PinAFConfig(_GROUP(Pins[1]), _PIN(Pins[1]), GPIO_AF_0);
 #elif defined(STM32F4)
@@ -74,7 +74,7 @@ void I2C_Port::Open()
 
 	I2C_InitTypeDef i2c;
 	I2C_StructInit(&i2c);
-	I2C_DeInit(_IIC);	// ¸´Î»
+	I2C_DeInit(_IIC);	// å¤ä½
 
 //	I2C_Timing
 //	I2C_AnalogFilter
@@ -84,9 +84,9 @@ void I2C_Port::Open()
 //	I2C_Ack
 //	I2C_AcknowledgedAddress
 
-	/*i2c.I2C_AnalogFilter = I2C_AnalogFilter_Disable;	// ¹Ø±ÕÂË²¨Æ÷
-//	i2c.I2C_DigitalFilter		// Êı×ÖÂË²¨Æ÷  ²»ÖªµÀÔõÃ´ÉèÖÃ ¸ú cr1 µÄ8-11Î»ÓĞ¹Ø
-	i2c.I2C_Mode =I2C_Mode_I2C;	// IIC Ä£Ê½
+	/*i2c.I2C_AnalogFilter = I2C_AnalogFilter_Disable;	// å…³é—­æ»¤æ³¢å™¨
+//	i2c.I2C_DigitalFilter		// æ•°å­—æ»¤æ³¢å™¨  ä¸çŸ¥é“æ€ä¹ˆè®¾ç½® è·Ÿ cr1 çš„8-11ä½æœ‰å…³
+	i2c.I2C_Mode =I2C_Mode_I2C;	// IIC æ¨¡å¼
 //	i2c.I2C_OwnAddress1
 	i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
 	if(addressLen == ADDR_LEN_10)
@@ -125,27 +125,27 @@ bool I2C_Port::WaitForEvent(uint event)
 	int retry = Retry;
 	while(!I2C_CheckEvent(_IIC, event));
     {
-        if(--retry <= 0) return ++Error; // ³¬Ê±´¦Àí
+        if(--retry <= 0) return ++Error; // è¶…æ—¶å¤„ç†
     }
 	return retry > 0;
 }
 
 bool I2C_Port::SetID(byte id, bool tx)
 {
-	// ²úÉúÆğÊ¼Ìõ¼ş
+	// äº§ç”Ÿèµ·å§‹æ¡ä»¶
 	I2C_GenerateSTART(_IIC, ENABLE);
-	// µÈ´ıACK
+	// ç­‰å¾…ACK
 	if(!WaitForEvent(I2C_EVENT_MASTER_MODE_SELECT)) return false;
 	if(tx)
 	{
-		// ÏòÉè±¸·¢ËÍÉè±¸µØÖ·
+		// å‘è®¾å¤‡å‘é€è®¾å¤‡åœ°å€
 		I2C_Send7bitAddress(_IIC, id, I2C_Direction_Transmitter);
-		// µÈ´ıACK
+		// ç­‰å¾…ACK
 		if(!WaitForEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) return false;
 	}
 	else
 	{
-		// ·¢ËÍ¶ÁµØÖ·
+		// å‘é€è¯»åœ°å€
 		I2C_Send7bitAddress(_IIC, id, I2C_Direction_Receiver);
 		// EV6
 		if(!WaitForEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) return 0;
@@ -158,37 +158,37 @@ void I2C_Port::Write(byte id, byte addr, byte dat)
 {
 	if(!SetID(id)) return;
 
-	// ¼Ä´æÆ÷µØÖ·
+	// å¯„å­˜å™¨åœ°å€
 	I2C_SendData(_IIC, addr);
-	// µÈ´ıACK
+	// ç­‰å¾…ACK
 	if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return;
-	// ·¢ËÍÊı¾İ
+	// å‘é€æ•°æ®
 	I2C_SendData(_IIC, dat);
-	// ·¢ËÍÍê³É
+	// å‘é€å®Œæˆ
 	if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return;
-	// ²úÉú½áÊøĞÅºÅ
+	// äº§ç”Ÿç»“æŸä¿¡å·
 	I2C_GenerateSTOP(_IIC, ENABLE);
 }
 
 byte I2C_Port::Read(byte id, byte addr)
 {
-	// µÈ´ıI2C
+	// ç­‰å¾…I2C
 	while(I2C_GetFlagStatus(_IIC, I2C_FLAG_BUSY));
 
 	if(!SetID(id)) return 0;
 
-	// ÖØĞÂÉèÖÃ¿ÉÒÔÇå³şEV6
+	// é‡æ–°è®¾ç½®å¯ä»¥æ¸…æ¥šEV6
 	I2C_Cmd(_IIC, ENABLE);
-	// ·¢ËÍ¶ÁµÃµØÖ·
+	// å‘é€è¯»å¾—åœ°å€
 	I2C_SendData(_IIC, addr);
 	// EV8
 	if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return 0;
 
 	if(!SetID(id, false)) return 0;
 
-	// ¹Ø±ÕÓ¦´ğ
+	// å…³é—­åº”ç­”
 	I2C_AcknowledgeConfig(_IIC, DISABLE);
-	// Í£Ö¹Ìõ¼ş²úÉú
+	// åœæ­¢æ¡ä»¶äº§ç”Ÿ
 	I2C_GenerateSTOP(_IIC, ENABLE);
 	if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_RECEIVED)) return 0;
 

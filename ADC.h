@@ -1,4 +1,4 @@
-#ifndef __ADC_H__
+﻿#ifndef __ADC_H__
 #define __ADC_H__
 
 #include "Sys.h"

@@ -1,4 +1,4 @@
-#include "WatchDog.h"
+﻿#include "WatchDog.h"
 
 /*
 独立看门狗IWDG——有独立时钟（内部低速时钟LSI---40KHz），所以不受系统硬件影响的系统故障探测器。主要用于监视硬件错误。 

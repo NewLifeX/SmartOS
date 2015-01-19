@@ -1,4 +1,4 @@
-#ifndef __Timer_H__
+﻿#ifndef __Timer_H__
 #define __Timer_H__
 
 #include "Sys.h"

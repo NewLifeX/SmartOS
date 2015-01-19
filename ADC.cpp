@@ -1,23 +1,23 @@
-#include "ADC.h"
+ï»¿#include "ADC.h"
 #include "sys.h"
 #include "Interrupt.h"
 #include "Pin.h"
 
-ADConverter::ADC_Channel  _PinList[18];  // ¼ÇÂ¼×¢²áË³Ğò Èı¸öADC Ã¿¸öADC×î¶à·ÖÅä6¸öÍ¨µÀ
-//volatile byte  _ADC_ChanelNum[3]={0,0,0};  // ¼ÇÂ¼Ã¿¸öADC ÓĞ¶àÉÙ¸öÍ¨µÀÔÚÏß   ->ADC_NbrOfChannel  ´Ë²ÎÊı¼´¿É
-volatile int _isChangeEvent=0x00000000;	//Ê¹ÓÃ18Î» ±êÖ¾Í¨µÀÊÇ·ñ±»ĞŞ¸ÄË³Ğò
+ADConverter::ADC_Channel  _PinList[18];  // è®°å½•æ³¨å†Œé¡ºåº ä¸‰ä¸ªADC æ¯ä¸ªADCæœ€å¤šåˆ†é…6ä¸ªé€šé“
+//volatile byte  _ADC_ChanelNum[3]={0,0,0};  // è®°å½•æ¯ä¸ªADC æœ‰å¤šå°‘ä¸ªé€šé“åœ¨çº¿   ->ADC_NbrOfChannel  æ­¤å‚æ•°å³å¯
+volatile int _isChangeEvent=0x00000000;	//ä½¿ç”¨18ä½ æ ‡å¿—é€šé“æ˜¯å¦è¢«ä¿®æ”¹é¡ºåº
 
-static ADC_TypeDef * const g_ADCs[3]= {ADC1,ADC2,ADC3};	// flashÄÚ
+static ADC_TypeDef * const g_ADCs[3]= {ADC1,ADC2,ADC3};	// flashå†…
 
-ADC_Stru * adc_IntStrs[3]={NULL,NULL,NULL}; // Èı¸öADCµÄÀà
+ADC_Stru * adc_IntStrs[3]={NULL,NULL,NULL}; // ä¸‰ä¸ªADCçš„ç±»
 
 
 byte ADConverter::isSmall()
-{	// ±ÜÃâ·É³ö
+{	// é¿å…é£å‡º
 	if(adc_IntStrs[0] == NULL)return 0;
 	if(adc_IntStrs[1] == NULL)return 1;
 	if(adc_IntStrs[2] == NULL)return 2;
-	// ÒÑ¾­ÓĞ¶ÔÏóµÄÊ±ºò  ÅĞ¶ÏlineÊıÄ¿
+	// å·²ç»æœ‰å¯¹è±¡çš„æ—¶å€™  åˆ¤æ–­lineæ•°ç›®
 	if(adc_IntStrs[1]->adc_intstr.ADC_NbrOfChannel <= adc_IntStrs[2]->adc_intstr.ADC_NbrOfChannel)
 	{
 		if(adc_IntStrs[0]->adc_intstr.ADC_NbrOfChannel <= adc_IntStrs[1]->adc_intstr.ADC_NbrOfChannel)return 0;
@@ -66,30 +66,30 @@ ADConverter:: ADConverter(ADC_Channel line)
 {
 	assert_param( (line < PA10) || ((PC0 <= line) && (line < PC6)) || (0x80 == line)||(line == 0x81) );
 	ReallyChannel(line);
-	byte _ADC_group = isSmall();	// Ñ¡È¡¸ºµ£×îÇáµÄADC
-	ADC_TypeDef * _ADC = g_ADCs[_ADC_group];	// È¡µÃ¶ÔÏóËù¶ÔÓ¦µÄADCÅäÖÃ¼Ä´æÆ÷µØÖ·  ÅäÖÃ±ØĞë²ÎÊı
+	byte _ADC_group = isSmall();	// é€‰å–è´Ÿæ‹…æœ€è½»çš„ADC
+	ADC_TypeDef * _ADC = g_ADCs[_ADC_group];	// å–å¾—å¯¹è±¡æ‰€å¯¹åº”çš„ADCé…ç½®å¯„å­˜å™¨åœ°å€  é…ç½®å¿…é¡»å‚æ•°
 	
-	if(adc_IntStrs[_ADC_group] == NULL)		//Ã»ÓĞ³õÊ¼»¯ ADC ³õÊ¼»¯²ÎÊıclass
+	if(adc_IntStrs[_ADC_group] == NULL)		//æ²¡æœ‰åˆå§‹åŒ– ADC åˆå§‹åŒ–å‚æ•°class
 	{
-		adc_IntStrs[_ADC_group] = new ADC_Stru(_ADC_group);	// ÉêÇëÒ»¸öADCÅäÖÃÀà½á¹¹Ìåclass   ³õÊ¼»¯²ÎÊıÓÉ¹¹Ôìº¯ÊıÍê³É
-//		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr;	// È¡µÃ¶ÔÏó
-		RCC_ADCCLKConfig(RCC_PCLK2_Div6);// Ê±ÖÓ·ÖÆµÊı	  ĞèÒª¸ù¾İÊ±ÖÓ½øĞĞµ÷Õû    £¡£¡£¡
-		ADC_DeInit(_ADC);	// ¸´Î»µ½Ä¬ÈÏÖµ
+		adc_IntStrs[_ADC_group] = new ADC_Stru(_ADC_group);	// ç”³è¯·ä¸€ä¸ªADCé…ç½®ç±»ç»“æ„ä½“class   åˆå§‹åŒ–å‚æ•°ç”±æ„é€ å‡½æ•°å®Œæˆ
+//		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr;	// å–å¾—å¯¹è±¡
+		RCC_ADCCLKConfig(RCC_PCLK2_Div6);// æ—¶é’Ÿåˆ†é¢‘æ•°	  éœ€è¦æ ¹æ®æ—¶é’Ÿè¿›è¡Œè°ƒæ•´    ï¼ï¼ï¼
+		ADC_DeInit(_ADC);	// å¤ä½åˆ°é»˜è®¤å€¼
 	}
-		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr; // È¡µÃ¶ÔÏó
-		ADC_DeInit(_ADC);	// Ã¿´ÎĞŞ¸ÄÍ¨µÀÊıµÄÊ±ºòÏÈ¸´Î»	// ÊÇ·ñÓĞĞèÒª ²»È·¶¨   £¡£¡£¡
+		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr; // å–å¾—å¯¹è±¡
+		ADC_DeInit(_ADC);	// æ¯æ¬¡ä¿®æ”¹é€šé“æ•°çš„æ—¶å€™å…ˆå¤ä½	// æ˜¯å¦æœ‰éœ€è¦ ä¸ç¡®å®š   ï¼ï¼ï¼
 	
 		/*  ADC_ScanConvMode:
-		 DISABLE	µ¥Í¨µÀÄ£Ê½
-		 ENABLE		¶àÍ¨µÀÄ£Ê½£¨É¨ÃèÄ£Ê½£©*/
+		 DISABLE	å•é€šé“æ¨¡å¼
+		 ENABLE		å¤šé€šé“æ¨¡å¼ï¼ˆæ‰«ææ¨¡å¼ï¼‰*/
 		if(adc_intstr->ADC_NbrOfChannel == 1)
 				adc_intstr->ADC_ScanConvMode=ENABLE;
 	/*	ADC_NbrOfChannel:
-		¿ªÆôÍ¨µÀÊı   */
-		adc_intstr->ADC_NbrOfChannel += 1;			//Ìí¼ÓÒ»¸öÍ¨µÀ						
+		å¼€å¯é€šé“æ•°   */
+		adc_intstr->ADC_NbrOfChannel += 1;			//æ·»åŠ ä¸€ä¸ªé€šé“						
 		ADC_Init(ADC1,adc_intstr);
 		
-		if(line >= Vrefint)	ADC_TempSensorVrefintCmd(ENABLE);	// ÆôÓÃ PVD  ºÍ  ÎÂ¶ÈÍ¨µÀ
+		if(line >= Vrefint)	ADC_TempSensorVrefintCmd(ENABLE);	// å¯ç”¨ PVD  å’Œ  æ¸©åº¦é€šé“
 }
 
 //bool ADConverter::AddLine(ADC_Channel line)
@@ -104,7 +104,7 @@ void ADConverter::OnConfig()
 }
 
 
-int ADConverter::Read()	// ¶ÁÈ¡×ª»»³öÀ´µÄ½á¹û
+int ADConverter::Read()	// è¯»å–è½¬æ¢å‡ºæ¥çš„ç»“æœ
 {
 	return adc_IntStrs[_ADC_group]->_AnalogValue[_ChannelNum];
 }
@@ -115,27 +115,27 @@ ADConverter:: ~ADConverter()
 
 ADC_Stru::ADC_Stru(byte ADC_group)
 {	
-	/*	ADC_Mode   Ä£Ê½:
-		 ADC_Mode_Independent          		¶ÀÁ¢Ä£Ê½         
-		 ADC_Mode_RegInjecSimult           	»ìºÏµÄÍ¬²½¹æÔò ×¢ÈëÍ¬²½Ä£Ê½        
-		 ADC_Mode_RegSimult_AlterTrig    	»ìºÏµÄÍ¬²½¹æÔò ½»Ìæ´¥·¢Ä£Ê½          
-		 ADC_Mode_InjecSimult_FastInterl  	»ìºÏÍ¬²½×¢Èë ¿ìËÙ½»ÌæÄ£Ê½        
-		 ADC_Mode_InjecSimult_SlowInterl   	»ìºÏÍ¬²½×¢Èë ÂıËÙ½»ÌæÄ£Ê½      
-		 ADC_Mode_InjecSimult              	×¢ÈëÍ¬²½Ä£Ê½       
-		 ADC_Mode_RegSimult                	¹æÔòÍ¬²½Ä£Ê½
-		 ADC_Mode_FastInterl               	¿ìËÙ½»ÌæÄ£Ê½
-		 ADC_Mode_SlowInterl              	ÂıËÙ½»ÌæÄ£Ê½  
-		 ADC_Mode_AlterTrig                	½»Ìæ´¥·¢Ä£Ê½	*/
+	/*	ADC_Mode   æ¨¡å¼:
+		 ADC_Mode_Independent          		ç‹¬ç«‹æ¨¡å¼         
+		 ADC_Mode_RegInjecSimult           	æ··åˆçš„åŒæ­¥è§„åˆ™ æ³¨å…¥åŒæ­¥æ¨¡å¼        
+		 ADC_Mode_RegSimult_AlterTrig    	æ··åˆçš„åŒæ­¥è§„åˆ™ äº¤æ›¿è§¦å‘æ¨¡å¼          
+		 ADC_Mode_InjecSimult_FastInterl  	æ··åˆåŒæ­¥æ³¨å…¥ å¿«é€Ÿäº¤æ›¿æ¨¡å¼        
+		 ADC_Mode_InjecSimult_SlowInterl   	æ··åˆåŒæ­¥æ³¨å…¥ æ…¢é€Ÿäº¤æ›¿æ¨¡å¼      
+		 ADC_Mode_InjecSimult              	æ³¨å…¥åŒæ­¥æ¨¡å¼       
+		 ADC_Mode_RegSimult                	è§„åˆ™åŒæ­¥æ¨¡å¼
+		 ADC_Mode_FastInterl               	å¿«é€Ÿäº¤æ›¿æ¨¡å¼
+		 ADC_Mode_SlowInterl              	æ…¢é€Ÿäº¤æ›¿æ¨¡å¼  
+		 ADC_Mode_AlterTrig                	äº¤æ›¿è§¦å‘æ¨¡å¼	*/
 		adc_intstr.ADC_Mode = ADC_Mode_Independent;
-		/*  ADC_ScanConvMode  ×ª»»Ä£Ê½:
-		 DISABLE	µ¥Í¨µÀÄ£Ê½
-		 ENABLE		¶àÍ¨µÀÄ£Ê½£¨É¨ÃèÄ£Ê½£©*/
+		/*  ADC_ScanConvMode  è½¬æ¢æ¨¡å¼:
+		 DISABLE	å•é€šé“æ¨¡å¼
+		 ENABLE		å¤šé€šé“æ¨¡å¼ï¼ˆæ‰«ææ¨¡å¼ï¼‰*/
 		adc_intstr.ADC_ScanConvMode = DISABLE;
-	/*	ADC_ContinuousConvMode   ÊÇ·ñÁ¬Ğø×ª»»£º
-		 DISABLE	µ¥´Î
-		 ENABLE		Á¬Ğø*/
+	/*	ADC_ContinuousConvMode   æ˜¯å¦è¿ç»­è½¬æ¢ï¼š
+		 DISABLE	å•æ¬¡
+		 ENABLE		è¿ç»­*/
 		adc_intstr.ADC_ContinuousConvMode = ENABLE;	
-	/*	ADC_ExternalTrigConv   ´¥·¢·½Ê½:
+	/*	ADC_ExternalTrigConv   è§¦å‘æ–¹å¼:
 		 ADC_ExternalTrigConv_T1_CC1                For ADC1 and ADC2 
 		 ADC_ExternalTrigConv_T1_CC2                For ADC1 and ADC2 
 		 ADC_ExternalTrigConv_T2_CC2                For ADC1 and ADC2 
@@ -143,7 +143,7 @@ ADC_Stru::ADC_Stru(byte ADC_group)
 		 ADC_ExternalTrigConv_T4_CC4                For ADC1 and ADC2 
 		 ADC_ExternalTrigConv_Ext_IT11_TIM8_TRGO    For ADC1 and ADC2 
 		 ADC_ExternalTrigConv_T1_CC3                For ADC1, ADC2 and ADC3
-		 ADC_ExternalTrigConv_None      	Èí¼ş	For ADC1, ADC2 and ADC3
+		 ADC_ExternalTrigConv_None      	è½¯ä»¶	For ADC1, ADC2 and ADC3
 		 ADC_ExternalTrigConv_T3_CC1                For ADC3 only
 		 ADC_ExternalTrigConv_T2_CC3                For ADC3 only
 		 ADC_ExternalTrigConv_T8_CC1                For ADC3 only
@@ -151,11 +151,11 @@ ADC_Stru::ADC_Stru(byte ADC_group)
 		 ADC_ExternalTrigConv_T5_CC1                For ADC3 only
 		 ADC_ExternalTrigConv_T5_CC3                For ADC3 only*/
 		adc_intstr.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-	/*	ADC_DataAlign  ×ª»»½á¹û¶ÔÆë·½Ê½:
+	/*	ADC_DataAlign  è½¬æ¢ç»“æœå¯¹é½æ–¹å¼:
 		 ADC_DataAlign_Right                        
 		 ADC_DataAlign_Left     */
 		adc_intstr.ADC_DataAlign = ADC_DataAlign_Right;
 	/*	ADC_NbrOfChannel:
-		¿ªÆôÍ¨µÀÊı   */
-		adc_intstr.ADC_NbrOfChannel = 0;	// ³õÊ¼»¯ÎªÁã	
+		å¼€å¯é€šé“æ•°   */
+		adc_intstr.ADC_NbrOfChannel = 0;	// åˆå§‹åŒ–ä¸ºé›¶	
 }
