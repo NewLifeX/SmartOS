@@ -1,4 +1,4 @@
-#include "Slave.h"
+﻿#include "Slave.h"
 
 Slave(ITransport* port)
 {

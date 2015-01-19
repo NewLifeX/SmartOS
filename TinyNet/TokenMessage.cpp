@@ -1,4 +1,4 @@
-#include "TokenMessage.h"
+﻿#include "TokenMessage.h"
 
 TokenMessage::TokenMessage(byte code) : Message(code)
 {

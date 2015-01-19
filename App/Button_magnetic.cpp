@@ -1,4 +1,4 @@
-#include "Button_magnetic.h"
+﻿#include "Button_magnetic.h"
 
 void Button_magnetic::Init()
 {

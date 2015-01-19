@@ -1,4 +1,4 @@
-#ifndef __STM32_H
+﻿#ifndef __STM32_H
 #define __STM32_H
 
 #if defined (STM32F0XX_LD) || defined (STM32F030X6) || defined (STM32F0XX_MD) || defined (STM32F030X8)

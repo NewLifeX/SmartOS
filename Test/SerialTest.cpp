@@ -1,4 +1,4 @@
-#include "SerialPort.h"
+﻿#include "SerialPort.h"
 
 uint OnUsartRead(ITransport* transport, byte* buf, uint len, void* param)
 {

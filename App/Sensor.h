@@ -1,4 +1,4 @@
-#ifndef __SENSOR_H__
+ï»¿#ifndef __SENSOR_H__
 #define __SENSOR_H__
 
 #include "Sys.h"
@@ -11,22 +11,22 @@ class Sensor
 public:
 	
 	
-	string Name;  //Ãû×Ö
-	int Index;   //Ë÷ÒıºÅ
+	string Name;  //åå­—
+	int Index;   //ç´¢å¼•å·
 
 	
-	OutputPort* Led;	// Ö¸Ê¾µÆ
-	OutputPort* Buzzer;	// ·äÃùÆ÷
+	OutputPort* Led;	// æŒ‡ç¤ºç¯
+	OutputPort* Buzzer;	// èœ‚é¸£å™¨
 	
-	InputPort* Key;	// ÊäÈë°´¼ü
-	InputPort* Pir;	   //ÈËÌå¸ĞÓ¦
-	InputPort* Mag;	   //ÃÅ´Å
+	InputPort* Key;	// è¾“å…¥æŒ‰é”®
+	InputPort* Pir;	   //äººä½“æ„Ÿåº”
+	InputPort* Mag;	   //é—¨ç£
 	
-	//I2C*   Ifrared    //ºìÍâ×ª·¢
+	//I2C*   Ifrared    //çº¢å¤–è½¬å‘
 	
 	
 
-	// ¹¹Ôìº¯Êı¡£Ö¸Ê¾µÆºÍ¼ÌµçÆ÷Ò»°ã¿ªÂ©Êä³ö£¬ĞèÒªµ¹ÖÃ
+	// æ„é€ å‡½æ•°ã€‚æŒ‡ç¤ºç¯å’Œç»§ç”µå™¨ä¸€èˆ¬å¼€æ¼è¾“å‡ºï¼Œéœ€è¦å€’ç½®
 	Sensor() { Init(); }
 	Sensor(Pin key, Pin led = P0, bool ledInvert = true, Pin buzzer = P0, bool keyInvert=true);
 	Sensor(Pin key, Pin led = P0, Pin buzzer = P0);
@@ -48,7 +48,7 @@ private:
 	void* _Param;
 	
 private:
-	bool _Value; // ×´Ì¬
+	bool _Value; // çŠ¶æ€
 };
 
 #endif

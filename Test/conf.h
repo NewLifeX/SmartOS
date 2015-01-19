@@ -1,4 +1,4 @@
-#ifndef __TEST_CONF__H__
+﻿#ifndef __TEST_CONF__H__
 #define __TEST_CONF__H__
 
 #include "Sys.h"

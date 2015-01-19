@@ -1,4 +1,4 @@
-#ifndef __ITransport_H__
+﻿#ifndef __ITransport_H__
 #define __ITransport_H__
 
 #include "Sys.h"

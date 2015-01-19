@@ -1,4 +1,4 @@
-#ifndef _Net_H_
+﻿#ifndef _Net_H_
 #define _Net_H_
 
 #include "Sys.h"

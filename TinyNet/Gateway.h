@@ -1,4 +1,4 @@
-#ifndef __SERVER__H__
+﻿#ifndef __SERVER__H__
 #define __SERVER__H__
 
 #include "Sys.h"

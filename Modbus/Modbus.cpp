@@ -1,4 +1,4 @@
-#include "Modbus.h"
+﻿#include "Modbus.h"
 
 Modbus::Modbus()
 {

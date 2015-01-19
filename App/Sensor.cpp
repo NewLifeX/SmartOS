@@ -1,12 +1,12 @@
-#include "Sensor.h"
+Ôªø#include "Sensor.h"
 
 void Sensor::Init()
 {
 	Key = NULL;
 	Led = NULL;
 	Buzzer = NULL;
-	Pir=NULL;    //√≈¥≈
-  Pir=NULL;    //»ÀÃÂ∏–”¶
+	Pir=NULL;    //Èó®Á£Å
+  Pir=NULL;    //‰∫∫‰ΩìÊÑüÂ∫î
 	
 	Name = NULL;
 	Index = 0;

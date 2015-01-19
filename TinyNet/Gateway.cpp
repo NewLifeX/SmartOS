@@ -1,4 +1,4 @@
-#include "Gateway.h"
+﻿#include "Gateway.h"
 
 #include "TinyMessage.h"
 #include "TokenMessage.h"
