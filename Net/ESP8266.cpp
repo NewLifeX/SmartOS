@@ -1,20 +1,20 @@
-﻿#include "Zigbee.h"
+#include "Zigbee.h"
 
-Zigbee::Zigbee(ITransport* port, Pin rst)
+ESP8266::ESP8266(ITransport* port, Pin rst)
 {
-	assert_param(port);
+    assert_param(port);
 
-	_port = port;
-	
-	_rst = NULL;
-	if(rst != P0) _rst = new OutputPort(rst);
+    _port = port;
+    
+    _rst = NULL;
+    if(rst != P0) _rst = new OutputPort(rst);
 }
 
-Zigbee::~Zigbee()
+ESP8266::~ESP8266()
 {
-	if(_port) delete _port;
-	_port = NULL;
-	
-	if(_rst) delete _rst;
-	_rst = NULL;
+    if(_port) delete _port;
+    _port = NULL;
+    
+    if(_rst) delete _rst;
+    _rst = NULL;
 }
