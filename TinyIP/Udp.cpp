@@ -113,7 +113,7 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 		Sys.ShowString(data, len);
 		debug_printf(" \r\n");
 
-		Send(udp, len, false);
+		//Send(udp, len, false);
 #endif
 	}
 }
