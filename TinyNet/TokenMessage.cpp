@@ -82,6 +82,18 @@ void TokenMessage::SetError(byte error)
 	Data[0] = error;
 }
 
+void TokenMessage::Show() const
+{
+	debug_printf("Token=0x%08x Code=0x%02x", Token, Code);
+	if(Length > 0)
+	{
+		debug_printf("Data[%d]=", Length);
+		Sys.ShowString(Data, Length, false);
+	}
+	if(!Valid()) debug_printf(" Crc Error 0x%04x [%04X]", Crc, __REV(Crc));
+	debug_printf("\r\n");
+}
+
 TokenController::TokenController(ITransport* port) : Controller(port)
 {
 	Init();

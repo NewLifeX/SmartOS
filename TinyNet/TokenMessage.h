@@ -41,6 +41,11 @@ public:
 	virtual void ComputeCrc();
 
 	void SetError(byte error);
+
+#if DEBUG
+	// 显示消息内容
+	virtual void Show() const;
+#endif
 };
 
 // 令牌控制器

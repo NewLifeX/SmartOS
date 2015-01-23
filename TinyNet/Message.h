@@ -33,6 +33,11 @@ public:
 	virtual void ComputeCrc() = 0;
 	// 设置数据
 	void SetData(byte* buf, uint len);
+
+#if DEBUG
+	// 显示消息内容
+	virtual void Show() const = 0;
+#endif
 };
 
 #endif

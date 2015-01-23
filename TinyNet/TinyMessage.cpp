@@ -142,6 +142,18 @@ void TinyMessage::Write(MemoryStream& ms)
 #endif
 }
 
+void TinyMessage::Show() const
+{
+	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", Src, Dest, Code, *((byte*)&(Code)+1), Sequence, Length, Checksum, Retry);
+	if(Length > 0)
+	{
+		msg_printf(" 数据：[%d] ", Length);
+		Sys.ShowString(Data, Length, false);
+	}
+	if(!Valid()) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
+	msg_printf("\r\n");
+}
+
 // 构造控制器
 TinyController::TinyController(ITransport* port) : Controller(port)
 {

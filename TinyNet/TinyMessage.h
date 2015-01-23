@@ -65,6 +65,11 @@ public:
 	virtual bool Valid() const;
 	// 计算当前消息的Crc
 	virtual void ComputeCrc();
+
+#if DEBUG
+	// 显示消息内容
+	virtual void Show() const;
+#endif
 };
 
 class MessageNode;
