@@ -58,10 +58,12 @@ bool OnLocalReceived(Message& msg, void* param)
 	assert_ptr(server);
 
 	// 消息转发
-	//if(msg.Code >= 0x10)
+	if(msg.Code >= 0x10)
 	{
-		//debug_printf("Gateway::Local %d \r\n", msg.Src);
-		//server->Client->Send(msg);
+		debug_printf("Gateway::Local ");
+		msg.Show();
+		debug_printf("\r\n");
+		server->Client->Send(msg);
 	}
 
 	return true;
@@ -73,10 +75,12 @@ bool OnRemoteReceived(Message& msg, void* param)
 	assert_ptr(server);
 
 	// 消息转发
-	//if(msg.Code >= 0x10)
+	if(msg.Code >= 0x10)
 	{
-		//debug_printf("Gateway::Remote %d \r\n", msg.Token);
-		//server->Server->Send(msg);
+		debug_printf("Gateway::Remote ");
+		msg.Show();
+		debug_printf("\r\n");
+		server->Server->Send(msg);
 	}
 
 	return true;
