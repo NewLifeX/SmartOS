@@ -57,8 +57,9 @@ public:
 	}
 
 	// 销毁数据流
-	virtual ~MemoryStream()
+	~MemoryStream()
 	{
+		assert_ptr(this);
 		if(_needFree)
 		{
 			if(_Buffer) delete[] _Buffer;

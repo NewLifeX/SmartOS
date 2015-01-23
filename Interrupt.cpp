@@ -253,7 +253,7 @@ extern "C"
 		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x SP=0x%08x\r\n", registers[13], registers[14], registers[15], registers[16]);
 		for(int i=0; i<=12; i++)
 		{
-			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
+			debug_printf("R%02d=0x%08x\r\n", i, registers[i]);
 		}
 
 		if(!Sys.OnError || Sys.OnError(exception))
