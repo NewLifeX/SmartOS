@@ -1,6 +1,6 @@
 ﻿#include "Arp.h"
 
-#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
 
 const MacAddress mac_full(MAC_FULL);
 const MacAddress mac_empty(0);
