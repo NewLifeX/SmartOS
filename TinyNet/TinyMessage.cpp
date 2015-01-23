@@ -28,6 +28,8 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 
 TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 {
+	Data = _Data;
+
 	memcpy(&Dest, &msg.Dest, MinSize);
 
 	Crc = msg.Crc;
@@ -354,13 +356,13 @@ void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
-	//msg_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
+	msg_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
 
 	int count = Send(msg2, port);
-	/*if(count > 0)
+	if(count > 0)
 		msg_printf(" 成功!\r\n");
 	else
-		msg_printf(" 失败!\r\n");*/
+		msg_printf(" 失败!\r\n");
 }
 
 uint TinyController::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
