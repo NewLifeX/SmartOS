@@ -276,6 +276,9 @@ typedef struct
 
 void TSys::ShowInfo()
 {
+	// 刚刚初始化完成的时间
+	ulong initedTime = Time.Current();
+
 #if DEBUG
 	debug_printf("SmartOS::");
 	if(IsGD)
@@ -372,7 +375,7 @@ void TSys::ShowInfo()
 	debug_printf(Time.Now().ToString());
 	debug_printf("\r\n");
 	// 系统启动时间
-	debug_printf("Start: %dus\r\n", (uint)(Time.Current() - StartTime));
+	debug_printf("Start: %dus (Inited: %dus)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
 
     debug_printf("\r\n");
 #endif
