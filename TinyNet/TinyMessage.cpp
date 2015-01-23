@@ -220,7 +220,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 	else if(!send)
 		msg_printf("Request");
 
-	msg_printf(" %d => %d Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 	if(msg.Length > 0)
 	{
 		msg_printf(" 数据：[%d] ", msg.Length);
