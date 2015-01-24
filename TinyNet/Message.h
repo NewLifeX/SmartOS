@@ -2,10 +2,7 @@
 #define __Message_H__
 
 #include "Sys.h"
-#include "List.h"
-#include "Net\ITransport.h"
 #include "Stream.h"
-#include "Timer.h"
 
 // 消息基类
 class Message
@@ -22,9 +19,9 @@ public:
 	// 消息所占据的指令数据大小。包括头部、负载数据、校验和附加数据
 	virtual uint Size() const = 0;
 
-	// 分析数据，转为消息。
+	// 从数据流中读取消息
 	virtual bool Read(MemoryStream& ms) = 0;
-	// 写入指定数据流
+	// 把消息写入数据流中
 	virtual void Write(MemoryStream& ms) = 0;
 
 	// 验证消息校验码是否有效
@@ -41,3 +38,9 @@ public:
 };
 
 #endif
+
+/*
+消息的共有部分是消息代码和负载数据，可由微网协议或令牌协议承载传输。
+都是二进制格式传输，所以有Read/Write等操作
+都有Crc校验，用于判断消息是否被篡改过
+*/
