@@ -100,7 +100,7 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 extern uint __heap_base;
 
-bool assert_ptr_(void* p)
+bool assert_ptr_(const void* p)
 {
 	if((uint)p < FLASH_BASE)
 	{

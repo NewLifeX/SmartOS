@@ -155,7 +155,7 @@ __inline void debug_printf( const char *format, ... ) {}
 
 // 验证确保对象不为空，并且在有效的内存范围内
 #define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
-bool assert_ptr_(void* p);
+bool assert_ptr_(const void* p);
 
 #else
 
