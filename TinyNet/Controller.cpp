@@ -18,7 +18,7 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	_ports.Add(port);
+	_ports[_portCount++] = port;
 
 	Init();
 }
@@ -29,12 +29,12 @@ Controller::Controller(ITransport* ports[], int count)
 	assert_param(count > 0 && count < ArrayLength(_ports));
 
 	debug_printf("\r\nTinyNet::Init 共[%d]个传输口", count);
-	for(int i=0; i<count; i++)
+	for(int i=0; i<count && i<4; i++)
 	{
 		assert_ptr(ports[i]);
 
 		debug_printf(" %s", ports[i]->ToString());
-		_ports.Add(ports[i]);
+		_ports[_portCount++] = ports[i];
 	}
 	debug_printf("\r\n");
 
@@ -50,6 +50,9 @@ Controller::Controller(ITransport* ports[], int count)
 void Controller::Init()
 {
 	MinSize = 0;
+	
+	ArrayZero(_ports);
+	_portCount = 0;
 
 	ArrayZero(_Handlers);
 	_HandlerCount = 0;
@@ -59,7 +62,7 @@ void Controller::Init()
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
+	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _portCount);
 
 	Received	= NULL;
 	Param		= NULL;
@@ -72,21 +75,28 @@ Controller::~Controller()
 		if(_Handlers[i]) delete _Handlers[i];
 	}
 
-	_ports.DeleteAll().Clear();
+	//_ports.DeleteAll().Clear();
+	for(int i=0; i<_portCount; i++)
+	{
+		delete _ports[i];
+		_ports[i] = NULL;
+	}
 
 	debug_printf("TinyNet::UnInit\r\n");
 }
 
+// 添加传输口
 void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
+	assert_param(_portCount < 4);
 
 	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
 
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	_ports.Add(port);
+	_ports[_portCount++] = port;
 }
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
@@ -126,7 +136,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	// 校验
 	if(!msg.Valid()) return true;
 
-	if(!OnReceive(msg, port)) return true;
+	if(!Valid(msg, port)) return true;
 	
 	// 外部公共消息事件
 	if(Received)
@@ -151,7 +161,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	return true;
 }
 
-bool Controller::OnReceive(Message& msg, ITransport* port)
+bool Controller::Valid(Message& msg, ITransport* port)
 {
 	return true;
 }
@@ -189,8 +199,10 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 如果没有传输口处于打开状态，则发送失败
 	if(port && !port->Open()) return false;
 	bool rs = false;
-	int i = -1;
-	while(_ports.MoveNext(i))
+	//int i = -1;
+	//while(_ports.MoveNext(i))
+	//	rs |= _ports[i]->Open();
+	for(int i=0; i<_portCount; i++)
 		rs |= _ports[i]->Open();
 	if(!rs) return false;
 
@@ -214,8 +226,9 @@ int Controller::Send(Message& msg, ITransport* port)
 
 	int count = 0;
 	// 发往所有端口
-	i = -1;
-	while(_ports.MoveNext(i))
+	//i = -1;
+	//while(_ports.MoveNext(i))
+	for(int i=0; i<_portCount; i++)
 	{
 		if(_ports[i]->Write(buf, len)) count++;
 	}

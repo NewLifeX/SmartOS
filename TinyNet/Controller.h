@@ -21,11 +21,12 @@ private:
 	bool Dispatch(MemoryStream& ms, ITransport* port);
 
 protected:
-	FixedArray<ITransport, 4>	_ports;	// 数据传输口
+	ITransport*	_ports[4];	// 数据传输口数组
+	byte	_portCount;		// 数据传输口个数
 	byte	MinSize;	// 最小消息大小
 
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool OnReceive(Message& msg, ITransport* port);
+	virtual bool Valid(Message& msg, ITransport* port);
 
 public:
 	byte	Address;	// 地址
@@ -34,6 +35,7 @@ public:
 	Controller(ITransport* ports[], int count);
 	virtual ~Controller();
 
+	// 添加传输口
 	void AddTransport(ITransport* port);
 
 	// 创建消息

@@ -13,7 +13,7 @@ class Gateway
 private:
 
 public:
-	TinyServer* Server;	// 内网服务端
+	TinyServer* Server;			// 内网服务端
 	TokenController* Client;	// 外网客户端
 
 	Gateway(TinyServer* server, TokenController* client);

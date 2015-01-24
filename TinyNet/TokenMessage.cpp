@@ -1,5 +1,6 @@
 ﻿#include "TokenMessage.h"
 
+// 使用指定功能码初始化令牌消息
 TokenMessage::TokenMessage(byte code) : Message(code)
 {
 	Data	= _Data;
@@ -14,8 +15,10 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 	Crc		= 0;
 }
 
+// 从数据流中读取消息
 bool TokenMessage::Read(MemoryStream& ms)
 {
+	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
 
 	ms.Read((byte*)&Token, 0, HeaderSize);
@@ -35,8 +38,10 @@ bool TokenMessage::Read(MemoryStream& ms)
 	return true;
 }
 
+// 把消息写入到数据流中
 void TokenMessage::Write(MemoryStream& ms)
 {
+	assert_ptr(this);
 	// 实际数据拷贝到占位符
 	_Code = Code;
 	_Length = Length;
@@ -70,23 +75,31 @@ bool TokenMessage::Valid() const
 	return false;
 }
 
+// 消息总长度，包括头部、负载数据和校验
 uint TokenMessage::Size() const
 {
 	return HeaderSize + Length + 4;
 }
 
-void TokenMessage::SetError(byte error)
+// 设置错误信息字符串
+void TokenMessage::SetError(byte errorCode, string error, int errLength)
 {
-	Error = 1;
-	Length = 1;
-	Data[0] = error;
+	Length = 1 + errLength;
+	Data[0] = errorCode;
+	if(errLength > 0)
+	{
+		assert_ptr(error);
+		memcpy(Data + 1, error, errLength);
+	}
 }
 
 void TokenMessage::Show() const
 {
+	assert_ptr(this);
 	debug_printf("Token=0x%08x Code=0x%02x", Token, Code);
 	if(Length > 0)
 	{
+		assert_ptr(Data);
 		debug_printf("Data[%d]=", Length);
 		Sys.ShowString(Data, Length, false);
 	}
@@ -151,7 +164,7 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 }*/
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TokenController::OnReceive(Message& msg, ITransport* port)
+bool TokenController::Valid(Message& msg, ITransport* port)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 
@@ -186,4 +199,13 @@ int TokenController::Send(Message& msg, ITransport* port)
 #endif
 
 	return Controller::Send(msg, port);
+}
+
+int TokenController::Reply(Message& msg, ITransport* port)
+{
+	TokenMessage& tmsg = (TokenMessage&)msg;
+
+	tmsg.Reply = 1;
+
+	return Send(msg, port);
 }

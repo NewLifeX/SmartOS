@@ -6,6 +6,7 @@
 bool OnLocalReceived(Message& msg, void* param);
 bool OnRemoteReceived(Message& msg, void* param);
 
+// 本地网和远程网一起实例化网关服务
 Gateway::Gateway(TinyServer* server, TokenController* client)
 {
 	assert_param(server);
@@ -26,6 +27,7 @@ Gateway::~Gateway()
 	Client = NULL;
 }
 
+// 启动网关。挂载本地和远程的消息事件
 void Gateway::Start()
 {
 	if(Running) return;
@@ -40,6 +42,7 @@ void Gateway::Start()
 	Running = true;
 }
 
+// 停止网关。取消本地和远程的消息挂载
 void Gateway::Stop()
 {
 	if(!Running) return;
@@ -52,6 +55,7 @@ void Gateway::Stop()
 	Running = false;
 }
 
+// 本地网收到设备端消息
 bool OnLocalReceived(Message& msg, void* param)
 {
 	Gateway* server = (Gateway*)param;
@@ -69,6 +73,7 @@ bool OnLocalReceived(Message& msg, void* param)
 	return true;
 }
 
+// 远程网收到服务端消息
 bool OnRemoteReceived(Message& msg, void* param)
 {
 	Gateway* server = (Gateway*)param;

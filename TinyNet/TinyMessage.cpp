@@ -33,7 +33,8 @@ TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 	memcpy(&Dest, &msg.Dest, MinSize);
 
 	Crc = msg.Crc;
-	//ArrayCopy(Data, msg.Data);
+	assert_ptr(Data);
+	assert_ptr(msg.Data);
 	if(Length) memcpy(Data, msg.Data, Length);
 	TTL = msg.TTL;
 #if DEBUG
@@ -144,9 +145,11 @@ void TinyMessage::Write(MemoryStream& ms)
 
 void TinyMessage::Show() const
 {
+	assert_ptr(this);
 	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", Src, Dest, Code, *((byte*)&(Code)+1), Sequence, Length, Checksum, Retry);
 	if(Length > 0)
 	{
+		assert_ptr(Data);
 		msg_printf(" 数据：[%d] ", Length);
 		Sys.ShowString(Data, Length, false);
 	}
@@ -248,7 +251,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TinyController::OnReceive(Message& msg, ITransport* port)
+bool TinyController::Valid(Message& msg, ITransport* port)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;
 
@@ -324,7 +327,7 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 		if(node->Sequence == msg.Sequence)
 		{
 			uint cost = (uint)(Time.Current() - node->LastSend);
-			if(node->Ports.Count() > 0)
+			if(node->PortCount > 0)
 			{
 				TotalCost += cost;
 				TotalAck++;
@@ -338,7 +341,8 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 			if(Interval > tt) Interval = tt;
 
 			// 该传输口收到响应，从就绪队列中删除
-			node->Ports.Remove(port);
+			//node->Ports.Remove(port);
+			node->PortCount--;
 
 			/*if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
@@ -409,6 +413,7 @@ int TinyController::Send(Message& msg, ITransport* port)
 
 void SendTask(void* param)
 {
+	assert_ptr(param);
 	TinyController* control = (TinyController*)param;
 	control->Loop();
 }
@@ -426,7 +431,7 @@ void TinyController::Loop()
 			if(node->Next > Time.Current()) continue;
 
 			// 检查是否传输口已完成，是否已过期
-			int count = node->Ports.Count();
+			int count = node->PortCount;
 			if(count == 0 || node->Expired < Time.Current())
 			{
 				//if(count > 0)
@@ -455,8 +460,9 @@ void TinyController::Loop()
 #endif
 
 		// 发送消息
-		int k = -1;
-		while(node->Ports.MoveNext(k))
+		//int k = -1;
+		//while(node->Ports.MoveNext(k))
+		for(int k=0; i<node->PortCount; i++)
 		{
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
@@ -511,9 +517,9 @@ bool TinyController::Send(TinyMessage& msg, int expire, ITransport* port)
 	MessageNode* node = new MessageNode();
 	node->SetMessage(msg);
 	if(!port)
-		node->Ports = _ports;
+		ArrayCopy(node->Ports, _ports);
 	else
-		node->Ports.Add(port);
+		node->Ports[node->PortCount++] = port;
 
 	node->StartTime = Time.Current();
 	node->Next = 0;
@@ -545,6 +551,7 @@ bool TinyController::Error(TinyMessage& msg, ITransport* port)
 
 void StatTask(void* param)
 {
+	assert_ptr(param);
 	TinyController* control = (TinyController*)param;
 	control->ShowStat();
 }

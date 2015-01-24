@@ -107,7 +107,7 @@ private:
 
 protected:
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool OnReceive(Message& msg, ITransport* port);
+	virtual bool Valid(Message& msg, ITransport* port);
 
 public:
 	byte	Address;	// 本地地址
@@ -159,7 +159,8 @@ public:
 class MessageNode
 {
 public:
-	FixedArray<ITransport, 4> Ports;	// 未收到响应消息的传输口
+	ITransport* Ports[4];	// 未收到响应消息的传输口
+	byte		PortCount;	// 传输口数
 	byte		Sequence;	// 序列号
 	byte		Data[32];
 	uint		Length;
