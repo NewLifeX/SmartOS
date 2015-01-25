@@ -250,11 +250,20 @@ extern "C"
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
 		//uint exception = GetIPSR();
+#ifdef STM32F0
+		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x\r\n", registers[5], registers[6], registers[7]);
+		for(int i=0; i<=3; i++)
+		{
+			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
+		}
+		debug_printf("R12=0x%08x\r\n", registers[4]);
+#else
 		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x SP=0x%08x\r\n", registers[13], registers[14], registers[15], registers[16]);
 		for(int i=0; i<=12; i++)
 		{
-			debug_printf("R%02d=0x%08x\r\n", i, registers[i]);
+			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
 		}
+#endif
 
 		if(!Sys.OnError || Sys.OnError(exception))
 		{
@@ -277,8 +286,11 @@ extern "C"
 		//SP+24: PC
 		//SP+28: PSR
 		//R0-R12 are not overwritten yet
+#ifdef STM32F0
+#else
 		add      sp,sp,#16             // remove R0-R3
 		push     {r0-r11}              // store R0-R11
+#endif
 		mov      r0,sp
 		//R0+00: R0-R12
 		//R0+52: LR
