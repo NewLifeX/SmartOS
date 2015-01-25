@@ -100,7 +100,7 @@ void TokenMessage::Show() const
 	if(Length > 0)
 	{
 		assert_ptr(Data);
-		debug_printf("Data[%d]=", Length);
+		debug_printf(" Data[%d]=", Length);
 		Sys.ShowString(Data, Length, false);
 	}
 	if(!Valid()) debug_printf(" Crc Error 0x%04x [%04X]", Crc, __REV(Crc));
