@@ -18,9 +18,9 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	_ports[_portCount++] = port;
-
 	Init();
+
+	_ports[_portCount++] = port;
 }
 
 Controller::Controller(ITransport* ports[], int count)
