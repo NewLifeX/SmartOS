@@ -354,7 +354,7 @@ PWM::~PWM()
 }
 
 
-#if STM32F0
+#ifdef STM32F0
 typedef uint32_t (*GetCap)(TIM_TypeDef* TIMx);
 const static GetCap GetCapturex[4]={
 TIM_GetCapture1,
