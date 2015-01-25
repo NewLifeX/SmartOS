@@ -527,7 +527,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
 	config.Init(mode);
-	if(!config.PWR_UP)
+	if(mode == 0xFF || !config.PWR_UP)
 	{
 		debug_printf("NRF24L01已经断开，准备重新初始化，当前配置Config=0x%02x\r\n", mode);
 		Close();
