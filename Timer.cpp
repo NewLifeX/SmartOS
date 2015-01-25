@@ -354,7 +354,7 @@ PWM::~PWM()
 }
 
 
-
+#if STM32F0
 typedef uint32_t (*GetCap)(TIM_TypeDef* TIMx);
 const static GetCap GetCapturex[4]={
 TIM_GetCapture1,
@@ -369,7 +369,6 @@ TIM_SetIC2Prescaler ,
 TIM_SetIC3Prescaler ,
 TIM_SetIC4Prescaler ,
 };
-
 
 Capture::Capture(Timer * timer)
 {
@@ -402,6 +401,7 @@ uint Capture :: GetCapture (int channel)
 	if(channel >4 || channel <1)return 0;
 	return (GetCapturex[channel-1])(_timer->_port );
 }
+#endif
 
 void Capture::Register(int channel,EventHandler handler, void* param )
 {
