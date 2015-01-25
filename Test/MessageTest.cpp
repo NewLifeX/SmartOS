@@ -61,8 +61,9 @@ void FlashLed(void* param)
 	TinyMessage msg(0x10);
 
 	byte leds[] = {0, 1, 2};
-	leds[1] = Time.Current() % 4;
-	leds[2] = Time.Current() % 4;
+	leds[0] = Time.Current() % 4 - 1;
+	leds[1] = Time.Current() % 4 - 1;
+	leds[2] = Time.Current() % 4 - 1;
 
 	msg.SetData(leds, ArrayLength(leds));
 
@@ -99,8 +100,8 @@ void TestMessage(OutputPort* leds)
 	control->Register(0x10, OpenLed, leds);
 
 	// 添加定时任务
-	debug_printf("灯光闪烁任务 ");
-	Sys.AddTask(FlashLed, control, 0, 2000000);
+	//debug_printf("灯光闪烁任务 ");
+	//Sys.AddTask(FlashLed, control, 0, 2000000);
 
     debug_printf("\r\n TestMessage Finish!\r\n\r\n");
 }
