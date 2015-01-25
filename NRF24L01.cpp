@@ -675,7 +675,12 @@ uint NRF24L01::OnRead(byte *data, uint len)
 				rs = PayloadWidth;
 			else
 				rs = ReadReg(RX_PL_WID);
-			//debug_printf("len=%d \r\n", rs);
+
+			if(rs > len)
+			{
+				debug_printf("NRF24L01::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
+				rs = len;
+			}
 			ReadBuf(RD_RX_PLOAD, data, rs); // 读取数据
 		}
 	}
@@ -842,11 +847,9 @@ void NRF24L01::OnIRQ()
 
 	if(st.RX_DR)
 	{
-		//debug_printf("    载波检测：%s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
-		byte buf[32];
+		byte buf[64];
 		uint len = Read(buf, ArrayLength(buf));
-		ClearStatus(false, true);
-		//debug_printf("收到数据 %d\r\n", len);
+		//ClearStatus(false, true);
 		if(len)
 		{
 			len = OnReceive(buf, len);
@@ -955,11 +958,11 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
-		if(!_timer) _timer = Timer::Create();
+		//if(!_timer) _timer = Timer::Create();
 
-		_timer->SetFrequency(10000);
-		_timer->Register(ReceiveTask, this);
-		_timer->Start();
+		//_timer->SetFrequency(10000);
+		//_timer->Register(ReceiveTask, this);
+		//_timer->Start();
 
 		/*if(!_Thread)
 		{
