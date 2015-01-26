@@ -143,6 +143,7 @@ void TinyMessage::Write(MemoryStream& ms)
 #endif
 }
 
+#if DEBUG
 void TinyMessage::Show() const
 {
 	assert_ptr(this);
@@ -157,6 +158,7 @@ void TinyMessage::Show() const
 	if(!Valid()) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
 	msg_printf("\r\n");
 }
+#endif
 
 // 构造控制器
 TinyController::TinyController(ITransport* port) : Controller(port)
@@ -236,7 +238,11 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 	else if(!send)
 		msg_printf("Request");
 
+#if DEBUG
 	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+#else
+	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum);
+#endif
 	if(msg.Length > 0)
 	{
 		msg_printf(" 数据：[%d] ", msg.Length);
