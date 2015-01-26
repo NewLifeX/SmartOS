@@ -104,7 +104,10 @@ void NRF24L01::Init()
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 {
-    debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+	if(irq != P0)
+		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
+	else
+		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P0\r\n", _PIN_NAME(ce));
 
 	//_CE = NULL;
     if(ce != P0)
