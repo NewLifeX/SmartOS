@@ -134,6 +134,10 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
+#if !DEBUG
+	ulong end = Sys.StartTime + 100000;
+	while(!GetPower() && end > Time.Current()) Sys.Delay(10);
+#endif
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
