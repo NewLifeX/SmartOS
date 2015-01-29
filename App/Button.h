@@ -25,6 +25,9 @@ public:
 	InputPort*  Key;	// 输入按键
 	OutputPort* Led;	// 指示灯
 	OutputPort* Relay;	// 继电器
+	
+	static InputPort*  ACZero;			// 交流过零检测引脚
+	static void SetACZeroPin(Pin aczero);	// 设置过零检测引脚
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button() { Init(); }
