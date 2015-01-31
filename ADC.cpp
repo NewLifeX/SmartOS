@@ -118,11 +118,14 @@ void ADConverter::Open()
 	{
 		if(Channel & dat)
 		{
-			
 			// 第三个参数rank必须连续
-			ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_55Cycles5);
+			if(i < ADC_Channel_TempSensor)
+				ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_55Cycles5);
+			else
+				ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_239Cycles5);
 		}
 	}
+	if(Channel & 0x30000) ADC_TempSensorVrefintCmd(ENABLE);
 
 	/* Enable _ADC DMA */
 	ADC_DMACmd(_ADC, ENABLE);
@@ -192,10 +195,13 @@ ushort ADConverter::Read(Pin pin)
 	int n = 0;
 	for(int i=0; i<ArrayLength(ADC_Pins); i++, dat <<= 1)
 	{
-		if(Channel & dat) n++;
-		if(ADC_Pins[i] == pin)
+		if(Channel & dat)
 		{
-			return Data[n-1];
+			n++;
+			if(ADC_Pins[i] == pin)
+			{
+				return Data[n-1];
+			}
 		}
 	}
 	return 0;
@@ -204,7 +210,7 @@ ushort ADConverter::Read(Pin pin)
 ushort ADConverter::ReadTempSensor()
 {
 	// 先判断有没有打开通道
-	if(!(Channel & ADC_Channel_TempSensor)) return 0;
+	if(!(Channel & (1 << ADC_Channel_TempSensor))) return 0;
 
 	ushort dat = 1;
 	int n = 0;
@@ -218,7 +224,7 @@ ushort ADConverter::ReadTempSensor()
 ushort ADConverter::ReadVrefint()
 {
 	// 先判断有没有打开通道
-	if(!(Channel & ADC_Channel_Vrefint)) return 0;
+	if(!(Channel & (1 << ADC_Channel_Vrefint))) return 0;
 
 	ushort dat = 1;
 	int n = 0;
@@ -226,7 +232,7 @@ ushort ADConverter::ReadVrefint()
 	{
 		if(Channel & dat) n++;
 	}
-	if(Channel & ADC_Channel_TempSensor) n++;
+	if(Channel & (1 << ADC_Channel_TempSensor)) n++;
 	return Data[n];
 }
 
@@ -234,7 +240,7 @@ ushort ADConverter::ReadVrefint()
 ushort ADConverter::ReadVbat()
 {
 	// 先判断有没有打开通道
-	if(!(Channel & ADC_Channel_Vbat)) return 0;
+	if(!(Channel & (1 << ADC_Channel_Vbat))) return 0;
 
 	ushort dat = 1;
 	int n = 0;
@@ -242,8 +248,8 @@ ushort ADConverter::ReadVbat()
 	{
 		if(Channel & dat) n++;
 	}
-	if(Channel & ADC_Channel_TempSensor) n++;
-	if(Channel & ADC_Channel_Vrefint) n++;
+	if(Channel & (1 << ADC_Channel_TempSensor)) n++;
+	if(Channel & (1 << ADC_Channel_Vrefint)) n++;
 	return Data[n];
 }
 #endif

@@ -33,6 +33,7 @@ public :
 	ushort	Data[19];	// 存放数据
 #endif
 
+	// 如果需要读取温度和电压，通道需要设置0x30000
 	ADConverter(byte line = 1, uint channel = 0);
 
 	void Add(Pin pin);
