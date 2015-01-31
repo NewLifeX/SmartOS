@@ -47,7 +47,7 @@ void ADConverter::Open()
 	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
 	dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
 	dma.DMA_DIR = DMA_DIR_PeripheralSRC;
-	dma.DMA_BufferSize = 16;
+	dma.DMA_BufferSize = 2;
 	dma.DMA_PeripheralInc = DMA_PeripheralInc_Disable;	//外设地址固定
 	dma.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//内存地址固定
 	dma.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;	//半字
@@ -66,7 +66,7 @@ void ADConverter::Open()
 	adc.ADC_ContinuousConvMode = ENABLE;			//开启连续转换模式，即不停地进行ADC转换
 	adc.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;	//不使用外部触发转换
 	adc.ADC_DataAlign = ADC_DataAlign_Right; 		//采集数据右对齐
-	adc.ADC_NbrOfChannel = 16;	 	//要转换的通道数目1
+	adc.ADC_NbrOfChannel = 2;	 	//要转换的通道数目1
 	ADC_Init(_ADC, &adc);
 
 	/*配置ADC时钟，为PCLK2的8分频，即9MHz*/
@@ -74,11 +74,13 @@ void ADConverter::Open()
 	/*配置ADC1的通道10 11为55.	5个采样周期，序列为1 */
 	//ADC_RegularChannelConfig(_ADC, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
 	dat = 1;
+	uint n = 1;
 	for(byte i=0; i<0x10; i++, dat <<= 1)
 	{
 		if(Channel & dat)
 		{
-			ADC_RegularChannelConfig(_ADC, i, i + 1, ADC_SampleTime_55Cycles5);
+			// 第三个参数rank必须连续
+			ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_55Cycles5);
 		}
 	}
 
