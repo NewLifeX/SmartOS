@@ -50,8 +50,9 @@ bool TinyMessage::Read(MemoryStream& ms)
 
 	ms.Read(&Dest, 0, HeaderSize);
 	// 占位符拷贝到实际数据
-	Code = _Code;
-	Length = _Length;
+	Code	= _Code;
+	Length	= _Length;
+	Reply	= _Reply;
 
 	// 代码为0是非法的
 	if(!Code) return false;
@@ -91,6 +92,29 @@ bool TinyMessage::Read(MemoryStream& ms)
 	return true;
 }
 
+void TinyMessage::Write(MemoryStream& ms)
+{
+	// 实际数据拷贝到占位符
+	_Code	= Code;
+	_Length	= Length;
+	_Reply	= Reply;
+
+	byte* buf = ms.Current();
+	// 不要写入验证码
+	ms.Write((byte*)&Dest, 0, HeaderSize);
+	if(Length > 0) ms.Write(Data, 0, Length);
+
+	Checksum = Crc = Sys.Crc16(buf, HeaderSize + Length);
+	// 读取真正的校验码
+	ms.Write(Checksum);
+
+	// 后面可能有TTL
+	if(UseTTL) ms.Write(TTL);
+#if DEBUG
+	ms.Write(Retry);
+#endif
+}
+
 void TinyMessage::ComputeCrc()
 {
 	MemoryStream ms(Size());
@@ -119,28 +143,6 @@ uint TinyMessage::Size() const
 	len++;
 #endif
 	return len;
-}
-
-void TinyMessage::Write(MemoryStream& ms)
-{
-	// 实际数据拷贝到占位符
-	_Code = Code;
-	_Length = Length;
-
-	byte* buf = ms.Current();
-	// 不要写入验证码
-	ms.Write((byte*)&Dest, 0, HeaderSize);
-	if(Length > 0) ms.Write(Data, 0, Length);
-
-	Checksum = Crc = Sys.Crc16(buf, HeaderSize + Length);
-	// 读取真正的校验码
-	ms.Write(Checksum);
-
-	// 后面可能有TTL
-	if(UseTTL) ms.Write(TTL);
-#if DEBUG
-	ms.Write(Retry);
-#endif
 }
 
 #if DEBUG
@@ -540,13 +542,15 @@ bool TinyController::Send(TinyMessage& msg, int expire, ITransport* port)
 	return true;
 }
 
-bool TinyController::Reply(TinyMessage& msg, ITransport* port)
+int TinyController::Reply(Message& msg, ITransport* port)
 {
+	TinyMessage& tmsg = (TinyMessage&)msg;
+
 	// 回复信息，源地址变成目的地址
-	msg.Dest = msg.Src;
+	tmsg.Dest = tmsg.Src;
 	msg.Reply = 1;
 
-	return Send(msg, -1, port);
+	return Send(msg, port);
 }
 
 bool TinyController::Error(TinyMessage& msg, ITransport* port)

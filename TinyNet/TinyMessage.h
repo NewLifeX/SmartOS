@@ -30,7 +30,7 @@ public:
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte Error:1;	// 是否错误
-	byte Reply:1;	// 是否响应
+	byte _Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
 	byte _Length;	// 数据长度
 	byte _Data[32];	// 数据部分
@@ -130,7 +130,7 @@ public:
 	// 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送
 	bool Send(TinyMessage& msg, int expire = -1, ITransport* port = NULL);
 	// 回复对方的请求消息
-	bool Reply(TinyMessage& msg, ITransport* port = NULL);
+	virtual int Reply(Message& msg, ITransport* port = NULL);
 	bool Error(TinyMessage& msg, ITransport* port = NULL);
 
 	// 循环处理待发送的消息队列

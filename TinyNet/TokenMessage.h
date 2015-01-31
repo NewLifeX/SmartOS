@@ -17,7 +17,7 @@ public:
 	uint	Token;		// 令牌
 
 	byte	_Code:7;	// 功能码
-	byte	Reply:1;	// 是否响应指令
+	byte	_Reply:1;	// 是否响应指令
 
 	byte	_Length;	// 数据长度
 	byte	_Data[256];	// 数据
@@ -76,7 +76,7 @@ public:
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual bool Send(byte code, byte* buf = NULL, uint len = 0);
 	// 响应消息
-	int Reply(Message& msg, ITransport* port = NULL);
+	//int Reply(Message& msg, ITransport* port = NULL);
 	// 发送消息，expire毫秒超时时间内，如果对方没有响应，会重复发送
 	//bool Send(TokenMessage& msg, int expire = -1);
 };

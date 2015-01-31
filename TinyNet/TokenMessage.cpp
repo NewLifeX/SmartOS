@@ -23,8 +23,9 @@ bool TokenMessage::Read(MemoryStream& ms)
 
 	ms.Read((byte*)&Token, 0, HeaderSize);
 	// 占位符拷贝到实际数据
-	Code = _Code;
-	Length = _Length;
+	Code	= _Code;
+	Length	= _Length;
+	Reply	= _Reply;
 
 	if(ms.Remain() < Length + 4) return false;
 
@@ -43,8 +44,9 @@ void TokenMessage::Write(MemoryStream& ms)
 {
 	assert_ptr(this);
 	// 实际数据拷贝到占位符
-	_Code = Code;
-	_Length = Length;
+	_Code	= Code;
+	_Length	= Length;
+	_Reply	= Reply;
 
 	ms.Write((byte*)&Token, 0, HeaderSize);
 
@@ -201,11 +203,11 @@ int TokenController::Send(Message& msg, ITransport* port)
 	return Controller::Send(msg, port);
 }
 
-int TokenController::Reply(Message& msg, ITransport* port)
+/*int TokenController::Reply(Message& msg, ITransport* port)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 
 	tmsg.Reply = 1;
 
 	return Send(msg, port);
-}
+}*/

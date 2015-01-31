@@ -6,12 +6,14 @@ Message::Message(byte code)
 	Code	= code;
 	Length	= 0;
 	Data	= NULL;
+	Reply	= 0;
 }
 
 Message::Message(Message& msg)
 {
-	Code = msg.Code;
-	Length = msg.Length;
+	Code	= msg.Code;
+	Length	= msg.Length;
+	Reply	= msg.Reply;
 
 	// 基类构造函数先执行，子类来不及赋值Data，所以这里不要拷贝
 	//assert_ptr(Data);

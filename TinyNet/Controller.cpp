@@ -235,3 +235,10 @@ int Controller::Send(Message& msg, ITransport* port)
 
 	return count;
 }
+
+int Controller::Reply(Message& msg, ITransport* port)
+{
+	msg.Reply = 1;
+
+	return Send(msg, port);
+}

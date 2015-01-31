@@ -22,6 +22,7 @@ public:
 
 	// 发送消息
 	void Send(Message& msg);
+	void Reply(Message& msg);
 	
 	// 收到功能消息时触发
 	MessageHandler	Received;
@@ -50,6 +51,11 @@ public:
 
 	// 设置系统模式
 	static bool SysMode(Message& msg, void* param);
+	
+// 通用用户级消息
+public:
+	byte*	Switchs;// 开关指针
+	int*	Regs;	// 寄存器指针
 };
 
 #endif

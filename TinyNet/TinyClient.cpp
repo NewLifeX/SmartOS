@@ -32,11 +32,19 @@ TinyClient::TinyClient(Controller* control)
 
 	OnDiscover	= NULL;
 	OnPing		= NULL;
+
+	Switchs		= NULL;
+	Regs		= NULL;
 }
 
 void TinyClient::Send(Message& msg)
 {
 	_control->Send(msg);
+}
+
+void TinyClient::Reply(Message& msg)
+{
+	_control->Reply(msg);
 }
 
 bool OnClientReceived(Message& msg, void* param)
