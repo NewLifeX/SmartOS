@@ -41,6 +41,8 @@ public :
 	ushort Read(Pin pin);
 	ushort ReadTempSensor();
 	ushort ReadVrefint();
+#ifdef STM32F0
 	ushort ReadVbat();
+#endif
 };
 #endif

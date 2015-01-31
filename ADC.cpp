@@ -230,6 +230,7 @@ ushort ADConverter::ReadVrefint()
 	return Data[n];
 }
 
+#ifdef STM32F0
 ushort ADConverter::ReadVbat()
 {
 	// 先判断有没有打开通道
@@ -245,3 +246,4 @@ ushort ADConverter::ReadVbat()
 	if(Channel & ADC_Channel_Vrefint) n++;
 	return Data[n];
 }
+#endif
