@@ -26,14 +26,21 @@ private:
 public :
 	byte	Line;		// 中断线 1/2/3
 	byte	Count;		// 通道个数
-	ushort	Channel;	// 使用哪些通道，每个通道一位
+	uint	Channel;	// 使用哪些通道，每个通道一位
+#ifdef STM32F1
 	ushort	Data[18];	// 存放数据
+#elif defined(STM32F0)
+	ushort	Data[19];	// 存放数据
+#endif
 
-	ADConverter(byte line, ushort channel = 0);
+	ADConverter(byte line = 1, uint channel = 0);
 
 	void Add(Pin pin);
 	void Remove(Pin pin);
 	void Open();
 	ushort Read(Pin pin);
+	ushort ReadTempSensor();
+	ushort ReadVrefint();
+	ushort ReadVbat();
 };
 #endif
