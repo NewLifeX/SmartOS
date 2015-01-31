@@ -27,7 +27,7 @@ Port::Port()
 
 Port::~Port()
 {
-#if defined(STM32F1)
+/*#if defined(STM32F1)
 	// 恢复为初始化状态
 	ushort bits = PinBit;
 	int config = InitState & 0xFFFFFFFF;
@@ -47,7 +47,7 @@ Port::~Port()
 			}
 		}
 	}
-#endif
+#endif*/
 
 #if DEBUG
 	// 解除保护引脚
@@ -76,10 +76,10 @@ Port& Port::Set(Pin pin)
 		PinBit = 0;
 	}
 
-#if defined(STM32F1)
+/*#if defined(STM32F1)
 	// 整组引脚的初始状态，析构时有选择恢复
 	if(_Pin != P0) InitState = ((ulong)Group->CRH << 32) + Group->CRL;
-#endif
+#endif*/
 
 #if DEBUG
 	// 保护引脚

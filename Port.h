@@ -2,7 +2,6 @@
 #define _Port_H_
 
 #include "Sys.h"
-#include "ADC.h"
 
 #ifdef STM32F4
 	#define GPIO_MAX_SPEED 100
@@ -44,10 +43,10 @@ protected:
 	virtual bool OnReserve(Pin pin, bool flag);
 #endif
 
-private:
+/*private:
 #if defined(STM32F1)
 	ulong InitState;	// 备份引脚初始状态，在析构时还原
-#endif
+#endif*/
 };
 
 // 输出口

@@ -1,161 +1,103 @@
 ﻿#include "ADC.h"
-#include "sys.h"
-#include "Interrupt.h"
-#include "Pin.h"
+#include "Port.h"
 
-ADConverter::ADC_Channel  _PinList[18];  // 记录注册顺序 三个ADC 每个ADC最多分配6个通道
-//volatile byte  _ADC_ChanelNum[3]={0,0,0};  // 记录每个ADC 有多少个通道在线   ->ADC_NbrOfChannel  此参数即可
-volatile int _isChangeEvent=0x00000000;	//使用18位 标志通道是否被修改顺序
+Pin ADC_Pins[] = ADC1_PINS;
 
-static ADC_TypeDef * const g_ADCs[3]= {ADC1,ADC2,ADC3};	// flash内
-
-ADC_Stru * adc_IntStrs[3]={NULL,NULL,NULL}; // 三个ADC的类
-
-
-byte ADConverter::isSmall()
-{	// 避免飞出
-	if(adc_IntStrs[0] == NULL)return 0;
-	if(adc_IntStrs[1] == NULL)return 1;
-	if(adc_IntStrs[2] == NULL)return 2;
-	// 已经有对象的时候  判断line数目
-	if(adc_IntStrs[1]->adc_intstr.ADC_NbrOfChannel <= adc_IntStrs[2]->adc_intstr.ADC_NbrOfChannel)
-	{
-		if(adc_IntStrs[0]->adc_intstr.ADC_NbrOfChannel <= adc_IntStrs[1]->adc_intstr.ADC_NbrOfChannel)return 0;
-		else  return 1;
-	}
-	else
-	{
-		if(adc_IntStrs[0]->adc_intstr.ADC_NbrOfChannel <= adc_IntStrs[2]->adc_intstr.ADC_NbrOfChannel)return 0;
-		else  return 2;
-	}
-}
-
-
-void ADConverter::ReallyChannel(ADC_Channel ParameterChannel)
+ADConverter::ADConverter(byte line, ushort channel)
 {
-	if(ParameterChannel < PA10)
-	{
-		_ReallyChannel=(byte)ParameterChannel;
-		return ;
-	}
-	if(ParameterChannel < PC6)
-	{
-		byte _ReallyChannel = (byte)ParameterChannel ;
-		_ReallyChannel &= 0x0f;
-		_ReallyChannel += 0x0a;
-		return ;
-	}
-	if(ParameterChannel == Vrefint)
-	{
-		_ReallyChannel=0x10;
-		return ;
-	}
-	if(ParameterChannel == Vrefint)
-	{
-		_ReallyChannel=0x10;
-		//return ;
-	}
+	assert_param(line >= 1 && line <= 3);
+
+	Line	= line;
+	Channel	= channel;
+
+	ArrayZero(Data);
+
+	ADC_TypeDef* const g_ADCs[]= {ADC1, ADC2, ADC3};
+	_ADC = g_ADCs[line - 1];
 }
 
-
-void ADConverter:: RegisterDMA(ADC_Channel lime)	
+void ADConverter::Open()
 {
-}
+	debug_printf("ADC::Open %d\r\n", Line);
 
-ADConverter:: ADConverter(ADC_Channel line)
-{
-	assert_param( (line < PA10) || ((PC0 <= line) && (line < PC6)) || (0x80 == line)||(line == 0x81) );
-	ReallyChannel(line);
-	byte _ADC_group = isSmall();	// 选取负担最轻的ADC
-	ADC_TypeDef * _ADC = g_ADCs[_ADC_group];	// 取得对象所对应的ADC配置寄存器地址  配置必须参数
-	
-	if(adc_IntStrs[_ADC_group] == NULL)		//没有初始化 ADC 初始化参数class
+	/* Enable DMA clock */
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+
+	/* Enable ADC1 and GPIOC clock */
+	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC, ENABLE);
+	const int g_ADC_rccs[]= {RCC_APB2Periph_ADC1, RCC_APB2Periph_ADC2, RCC_APB2Periph_ADC3};
+	RCC_APB2PeriphClockCmd(g_ADC_rccs[Line - 1], ENABLE);
+
+	ushort dat = 1;
+	for(int i=0; i<16; i++, dat <<= 1)
 	{
-		adc_IntStrs[_ADC_group] = new ADC_Stru(_ADC_group);	// 申请一个ADC配置类结构体class   初始化参数由构造函数完成
-//		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr;	// 取得对象
-		RCC_ADCCLKConfig(RCC_PCLK2_Div6);// 时钟分频数	  需要根据时钟进行调整    ！！！
-		ADC_DeInit(_ADC);	// 复位到默认值
+		if(Channel & dat)
+		{
+			debug_printf("ADC::Init %d ", i+1);
+			AnalogInPort ai(ADC_Pins[i]);
+		}
 	}
-		ADC_InitTypeDef * adc_intstr = & adc_IntStrs[_ADC_group]->adc_intstr; // 取得对象
-		ADC_DeInit(_ADC);	// 每次修改通道数的时候先复位	// 是否有需要 不确定   ！！！
-	
-		/*  ADC_ScanConvMode:
-		 DISABLE	单通道模式
-		 ENABLE		多通道模式（扫描模式）*/
-		if(adc_intstr->ADC_NbrOfChannel == 1)
-				adc_intstr->ADC_ScanConvMode=ENABLE;
-	/*	ADC_NbrOfChannel:
-		开启通道数   */
-		adc_intstr->ADC_NbrOfChannel += 1;			//添加一个通道						
-		ADC_Init(ADC1,adc_intstr);
-		
-		if(line >= Vrefint)	ADC_TempSensorVrefintCmd(ENABLE);	// 启用 PVD  和  温度通道
-}
 
-//bool ADConverter::AddLine(ADC_Channel line)
-//{
-//	assert_param( (line < PA10) || ((PC0 <= line) && (line < PC6)) || (0x80 == line)||(line == 0x81) );
-//	
-//	return true;
-//}
+	DMA_InitTypeDef dma;
+	ADC_InitTypeDef adc;
 
-void ADConverter::OnConfig()
-{
-}
+	/* DMA channel1 configuration */
+	DMA_DeInit(DMA1_Channel1);
 
+	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
+	dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
+	dma.DMA_DIR = DMA_DIR_PeripheralSRC;
+	dma.DMA_BufferSize = 16;
+	dma.DMA_PeripheralInc = DMA_PeripheralInc_Disable;	//外设地址固定
+	dma.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//内存地址固定
+	dma.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;	//半字
+	dma.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	dma.DMA_Mode = DMA_Mode_Circular;								//循环传输
+	dma.DMA_Priority = DMA_Priority_High;
+	dma.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA1_Channel1, &dma);
 
-int ADConverter::Read()	// 读取转换出来的结果
-{
-	return adc_IntStrs[_ADC_group]->_AnalogValue[_ChannelNum];
-}
+	/* Enable DMA channel1 */
+	DMA_Cmd(DMA1_Channel1, ENABLE);
 
-ADConverter:: ~ADConverter()
-{
-}
+	/* ADC1 configuration */
+	adc.ADC_Mode = ADC_Mode_Independent;			//独立ADC模式
+	adc.ADC_ScanConvMode = ENABLE ; 	 			//禁止扫描模式，扫描模式用于多通道采集
+	adc.ADC_ContinuousConvMode = ENABLE;			//开启连续转换模式，即不停地进行ADC转换
+	adc.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;	//不使用外部触发转换
+	adc.ADC_DataAlign = ADC_DataAlign_Right; 		//采集数据右对齐
+	adc.ADC_NbrOfChannel = 16;	 	//要转换的通道数目1
+	ADC_Init(_ADC, &adc);
 
-ADC_Stru::ADC_Stru(byte ADC_group)
-{	
-	/*	ADC_Mode   模式:
-		 ADC_Mode_Independent          		独立模式         
-		 ADC_Mode_RegInjecSimult           	混合的同步规则 注入同步模式        
-		 ADC_Mode_RegSimult_AlterTrig    	混合的同步规则 交替触发模式          
-		 ADC_Mode_InjecSimult_FastInterl  	混合同步注入 快速交替模式        
-		 ADC_Mode_InjecSimult_SlowInterl   	混合同步注入 慢速交替模式      
-		 ADC_Mode_InjecSimult              	注入同步模式       
-		 ADC_Mode_RegSimult                	规则同步模式
-		 ADC_Mode_FastInterl               	快速交替模式
-		 ADC_Mode_SlowInterl              	慢速交替模式  
-		 ADC_Mode_AlterTrig                	交替触发模式	*/
-		adc_intstr.ADC_Mode = ADC_Mode_Independent;
-		/*  ADC_ScanConvMode  转换模式:
-		 DISABLE	单通道模式
-		 ENABLE		多通道模式（扫描模式）*/
-		adc_intstr.ADC_ScanConvMode = DISABLE;
-	/*	ADC_ContinuousConvMode   是否连续转换：
-		 DISABLE	单次
-		 ENABLE		连续*/
-		adc_intstr.ADC_ContinuousConvMode = ENABLE;	
-	/*	ADC_ExternalTrigConv   触发方式:
-		 ADC_ExternalTrigConv_T1_CC1                For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_T1_CC2                For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_T2_CC2                For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_T3_TRGO               For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_T4_CC4                For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_Ext_IT11_TIM8_TRGO    For ADC1 and ADC2 
-		 ADC_ExternalTrigConv_T1_CC3                For ADC1, ADC2 and ADC3
-		 ADC_ExternalTrigConv_None      	软件	For ADC1, ADC2 and ADC3
-		 ADC_ExternalTrigConv_T3_CC1                For ADC3 only
-		 ADC_ExternalTrigConv_T2_CC3                For ADC3 only
-		 ADC_ExternalTrigConv_T8_CC1                For ADC3 only
-		 ADC_ExternalTrigConv_T8_TRGO               For ADC3 only
-		 ADC_ExternalTrigConv_T5_CC1                For ADC3 only
-		 ADC_ExternalTrigConv_T5_CC3                For ADC3 only*/
-		adc_intstr.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-	/*	ADC_DataAlign  转换结果对齐方式:
-		 ADC_DataAlign_Right                        
-		 ADC_DataAlign_Left     */
-		adc_intstr.ADC_DataAlign = ADC_DataAlign_Right;
-	/*	ADC_NbrOfChannel:
-		开启通道数   */
-		adc_intstr.ADC_NbrOfChannel = 0;	// 初始化为零	
+	/*配置ADC时钟，为PCLK2的8分频，即9MHz*/
+	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+	/*配置ADC1的通道10 11为55.	5个采样周期，序列为1 */
+	//ADC_RegularChannelConfig(_ADC, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
+	dat = 1;
+	for(byte i=0; i<0x10; i++, dat <<= 1)
+	{
+		if(Channel & dat)
+		{
+			ADC_RegularChannelConfig(_ADC, i, i + 1, ADC_SampleTime_55Cycles5);
+		}
+	}
+
+	/* Enable _ADC DMA */
+	ADC_DMACmd(_ADC, ENABLE);
+
+	/* Enable _ADC */
+	ADC_Cmd(_ADC, ENABLE);
+
+	/*复位校准寄存器 */
+	ADC_ResetCalibration(_ADC);
+	/*等待校准寄存器复位完成 */
+	while(ADC_GetResetCalibrationStatus(_ADC));
+
+	/* ADC校准 */
+	ADC_StartCalibration(_ADC);
+	/* 等待校准完成*/
+	while(ADC_GetCalibrationStatus(_ADC));
+
+	/* 由于没有采用外部触发，所以使用软件触发ADC转换 */
+	ADC_SoftwareStartConvCmd(_ADC, ENABLE);
 }
