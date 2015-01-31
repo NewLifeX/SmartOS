@@ -74,6 +74,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
 void NRF24L01::Init()
 {
+	_POWER = NULL;
 	_spi = NULL;
 
 	// 初始化地址
@@ -620,6 +621,8 @@ void ShowStatusTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
+	if(_POWER)
+		*_POWER = true;
 	// 检查并打开Spi
 	_spi->Open();
 
@@ -646,6 +649,8 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
+	if(_POWER)
+		*_POWER = false;
 }
 
 // 从NRF的接收缓冲区中读出数据
