@@ -24,12 +24,16 @@ private:
 	ADC_TypeDef*	_ADC;	// 当前中断线的引用
 
 public :
-	ushort	Line;		// 中断线 1/2/3
+	byte	Line;		// 中断线 1/2/3
+	byte	Count;		// 通道个数
 	ushort	Channel;	// 使用哪些通道，每个通道一位
 	ushort	Data[18];	// 存放数据
 
-	ADConverter(byte line, ushort channel);
+	ADConverter(byte line, ushort channel = 0);
 
+	void Add(Pin pin);
+	void Remove(Pin pin);
 	void Open();
+	ushort Read(Pin pin);
 };
 #endif

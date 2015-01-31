@@ -10,15 +10,53 @@ ADConverter::ADConverter(byte line, ushort channel)
 	Line	= line;
 	Channel	= channel;
 
+	ushort dat = 1;
+	Count = 0;
+	for(int i=0; i<16; i++, dat <<= 1)
+	{
+		if(Channel & dat)
+		{
+			Count++;
+			debug_printf("ADC::Init %d ", i+1);
+			AnalogInPort ai(ADC_Pins[i]);
+		}
+	}
+
 	ArrayZero(Data);
 
 	ADC_TypeDef* const g_ADCs[]= {ADC1, ADC2, ADC3};
 	_ADC = g_ADCs[line - 1];
 }
 
+void ADConverter::Add(Pin pin)
+{
+	for(int i=0; i<ArrayLength(ADC_Pins); i++)
+	{
+		if(ADC_Pins[i] == pin)
+		{
+			Channel |= (1 << i);
+			Count++;
+			return;
+		}
+	}
+}
+
+void ADConverter::Remove(Pin pin)
+{
+	for(int i=0; i<ArrayLength(ADC_Pins); i++)
+	{
+		if(ADC_Pins[i] == pin)
+		{
+			Channel &= ~(1 << i);
+			Count--;
+			return;
+		}
+	}
+}
+
 void ADConverter::Open()
 {
-	debug_printf("ADC::Open %d\r\n", Line);
+	debug_printf("ADC::Open %d 共%d个通道\r\n", Line, Count);
 
 	/* Enable DMA clock */
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -47,7 +85,7 @@ void ADConverter::Open()
 	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
 	dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
 	dma.DMA_DIR = DMA_DIR_PeripheralSRC;
-	dma.DMA_BufferSize = 2;
+	dma.DMA_BufferSize = Count;
 	dma.DMA_PeripheralInc = DMA_PeripheralInc_Disable;	//外设地址固定
 	dma.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//内存地址固定
 	dma.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;	//半字
@@ -66,7 +104,7 @@ void ADConverter::Open()
 	adc.ADC_ContinuousConvMode = ENABLE;			//开启连续转换模式，即不停地进行ADC转换
 	adc.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;	//不使用外部触发转换
 	adc.ADC_DataAlign = ADC_DataAlign_Right; 		//采集数据右对齐
-	adc.ADC_NbrOfChannel = 2;	 	//要转换的通道数目1
+	adc.ADC_NbrOfChannel = Count;	 	//要转换的通道数目1
 	ADC_Init(_ADC, &adc);
 
 	/*配置ADC时钟，为PCLK2的8分频，即9MHz*/
@@ -102,4 +140,19 @@ void ADConverter::Open()
 
 	/* 由于没有采用外部触发，所以使用软件触发ADC转换 */
 	ADC_SoftwareStartConvCmd(_ADC, ENABLE);
+}
+
+ushort ADConverter::Read(Pin pin)
+{
+	ushort dat = 1;
+	int n = 0;
+	for(int i=0; i<ArrayLength(ADC_Pins); i++, dat <<= 1)
+	{
+		if(Channel & dat) n++;
+		if(ADC_Pins[i] == pin)
+		{
+			return Data[n-1];
+		}
+	}
+	return 0;
 }
