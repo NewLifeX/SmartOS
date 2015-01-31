@@ -56,6 +56,7 @@ void ADConverter::Open()
 	/* Enable DMA clock */
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
+	ADC_DeInit(_ADC);
 	/* Enable _ADC and GPIOC clock */
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC, ENABLE);
 	const int g_ADC_rccs[]= ADC_RCCS;
@@ -98,7 +99,7 @@ void ADConverter::Open()
 	/* _ADC configuration */
 	ADC_InitTypeDef adc;
 	ADC_StructInit(&adc);
-	
+
 #ifdef STM32F1
 	adc.ADC_Mode = ADC_Mode_Independent;			//独立ADC模式
 	adc.ADC_ScanConvMode = ENABLE ; 	 			//禁止扫描模式，扫描模式用于多通道采集
@@ -150,27 +151,27 @@ void ADConverter::Open()
 	ADC_DMARequestModeConfig(_ADC, ADC_DMAMode_Circular);
 
 	/* Enable ADC_DMA */
-	ADC_DMACmd(_ADC, ENABLE);  
+	ADC_DMACmd(_ADC, ENABLE);
 
 	/* Configure the _ADC in continous mode withe a resolutuion equal to 12 bits  */
 	adc.ADC_Resolution = ADC_Resolution_12b;
-	adc.ADC_ContinuousConvMode = ENABLE; 
+	adc.ADC_ContinuousConvMode = ENABLE;
 	adc.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
 	adc.ADC_DataAlign = ADC_DataAlign_Right;
 	adc.ADC_ScanDirection = ADC_ScanDirection_Backward;
-	ADC_Init(_ADC, &adc); 
+	ADC_Init(_ADC, &adc);
 
 	dat = 1;
 	for(int i=0; i<ArrayLength(Data); i++, dat <<= 1)
 	{
 		if(Channel & dat)
 		{
-			ADC_ChannelConfig(_ADC, i , ADC_SampleTime_55_5Cycles);
-			if(i == ADC_Channel_TempSensor)
+			ADC_ChannelConfig(_ADC, dat , ADC_SampleTime_55_5Cycles);
+			if(dat == ADC_Channel_TempSensor)
 				ADC_TempSensorCmd(ENABLE);
-			else if(i == ADC_Channel_Vrefint)
+			else if(dat == ADC_Channel_Vrefint)
 				ADC_VrefintCmd(ENABLE);
-			else if(i == ADC_Channel_Vbat)
+			else if(dat == ADC_Channel_Vbat)
 				ADC_VbatCmd(ENABLE);
 		}
 	}
@@ -179,12 +180,15 @@ void ADConverter::Open()
 	ADC_GetCalibrationFactor(_ADC);
 
 	/* Enable _ADC */
-	ADC_Cmd(_ADC, ENABLE);     
+	ADC_Cmd(_ADC, ENABLE);
+	
+	// GD32F130需要20us左右的延时
+	Sys.Delay(2000);
 
 	/* Wait the ADCEN falg */
-	while(!ADC_GetFlagStatus(_ADC, ADC_FLAG_ADEN)); 
+	while(!ADC_GetFlagStatus(_ADC, ADC_FLAG_ADEN));
 
-	/* _ADC regular Software Start Conv */ 
+	/* _ADC regular Software Start Conv */
 	ADC_StartOfConversion(_ADC);
 #endif
 }
@@ -210,7 +214,11 @@ ushort ADConverter::Read(Pin pin)
 ushort ADConverter::ReadTempSensor()
 {
 	// 先判断有没有打开通道
+#ifdef STM32F1
 	if(!(Channel & (1 << ADC_Channel_TempSensor))) return 0;
+#elif defined(STM32F0)
+	if(!(Channel & ADC_Channel_TempSensor)) return 0;
+#endif
 
 	ushort dat = 1;
 	int n = 0;
@@ -224,7 +232,11 @@ ushort ADConverter::ReadTempSensor()
 ushort ADConverter::ReadVrefint()
 {
 	// 先判断有没有打开通道
+#ifdef STM32F1
 	if(!(Channel & (1 << ADC_Channel_Vrefint))) return 0;
+#elif defined(STM32F0)
+	if(!(Channel & ADC_Channel_Vrefint)) return 0;
+#endif
 
 	ushort dat = 1;
 	int n = 0;
@@ -232,7 +244,11 @@ ushort ADConverter::ReadVrefint()
 	{
 		if(Channel & dat) n++;
 	}
+#ifdef STM32F1
 	if(Channel & (1 << ADC_Channel_TempSensor)) n++;
+#elif defined(STM32F0)
+	if(Channel & ADC_Channel_TempSensor) n++;
+#endif
 	return Data[n];
 }
 
@@ -240,7 +256,7 @@ ushort ADConverter::ReadVrefint()
 ushort ADConverter::ReadVbat()
 {
 	// 先判断有没有打开通道
-	if(!(Channel & (1 << ADC_Channel_Vbat))) return 0;
+	if(!(Channel & ADC_Channel_Vbat)) return 0;
 
 	ushort dat = 1;
 	int n = 0;
@@ -248,8 +264,8 @@ ushort ADConverter::ReadVbat()
 	{
 		if(Channel & dat) n++;
 	}
-	if(Channel & (1 << ADC_Channel_TempSensor)) n++;
-	if(Channel & (1 << ADC_Channel_Vrefint)) n++;
+	if(Channel & ADC_Channel_TempSensor) n++;
+	if(Channel & ADC_Channel_Vrefint) n++;
 	return Data[n];
 }
 #endif
