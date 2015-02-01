@@ -65,7 +65,7 @@ public:
 
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
-	void SetPowerPin(OutputPort * pin=NULL){_POWER = pin;};	// 设置控制2401电源的引脚  直接进行对2401的通断电操作 
+	void SetPowerPin(OutputPort *pin){_POWER = pin;};		// 设置控制2401电源的引脚  直接进行对2401的通断电操作 
 															// 以免死机对setPower无效  
 															// 因为power的true false在内部写好  电源是否是取反操作无法设定所以
 															// SetPowerPin(new OutputPort(pin,true/false));

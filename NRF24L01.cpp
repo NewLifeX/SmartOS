@@ -622,7 +622,10 @@ void ShowStatusTask(void* param)
 bool NRF24L01::OnOpen()
 {
 	if(_POWER)
+	{
 		*_POWER = true;
+		debug_printf("打开物理电源开关\r\n");
+	}
 	// 检查并打开Spi
 	_spi->Open();
 
@@ -650,7 +653,10 @@ void NRF24L01::OnClose()
 
 	_spi->Close();
 	if(_POWER)
+	{
 		*_POWER = false;
+		debug_printf("关闭物理电源开关\r\n");
+	}
 }
 
 // 从NRF的接收缓冲区中读出数据
