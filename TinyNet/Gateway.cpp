@@ -67,7 +67,15 @@ bool OnLocalReceived(Message& msg, void* param)
 		debug_printf("Gateway::Local ");
 		msg.Show();
 		debug_printf("\r\n");
-		server->Client->Send(msg);
+		
+		TokenMessage tmsg;
+		tmsg.Code = msg.Code;
+		//tmsg.SetData(msg.Data);
+		// 第一个字节是节点设备地址
+		tmsg.Data[0] = ((TinyMessage&)msg).Src;
+		if(msg.Length > 0) memcpy(&tmsg.Data[1], msg.Data, msg.Length);
+		tmsg.Length = 1 + msg.Length;
+		server->Client->Send(tmsg);
 	}
 
 	return true;
