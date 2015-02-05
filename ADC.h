@@ -42,7 +42,7 @@ public :
 	ushort Read(Pin pin);
 	ushort ReadTempSensor();
 	ushort ReadVrefint();
-#ifdef STM32F0
+#if defined(STM32F0) && !defined(GD32)
 	ushort ReadVbat();
 #endif
 };

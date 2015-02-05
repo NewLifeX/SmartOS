@@ -100,7 +100,10 @@ void ADConverter::Open()
 	ADC_InitTypeDef adc;
 	ADC_StructInit(&adc);
 
-#ifdef STM32F1
+#ifdef GD32
+	#define RCC_PCLK2_Div8 RCC_HCLK_Div8
+#endif
+#if defined(STM32F1) || defined(GD32)
 	adc.ADC_Mode = ADC_Mode_Independent;			//独立ADC模式
 	adc.ADC_ScanConvMode = ENABLE ; 	 			//禁止扫描模式，扫描模式用于多通道采集
 	adc.ADC_ContinuousConvMode = ENABLE;			//开启连续转换模式，即不停地进行ADC转换
@@ -111,6 +114,7 @@ void ADConverter::Open()
 
 	/*配置ADC时钟，为PCLK2的8分频，即9MHz*/
 	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+
 	/*配置ADC1的通道10 11为55.	5个采样周期，序列为1 */
 	//ADC_RegularChannelConfig(_ADC, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
 	dat = 1;
@@ -181,7 +185,7 @@ void ADConverter::Open()
 
 	/* Enable _ADC */
 	ADC_Cmd(_ADC, ENABLE);
-	
+
 	// GD32F130需要20us左右的延时
 	Sys.Delay(2000);
 
@@ -252,7 +256,7 @@ ushort ADConverter::ReadVrefint()
 	return Data[n];
 }
 
-#ifdef STM32F0
+#if defined(STM32F0) && !defined(GD32)
 ushort ADConverter::ReadVbat()
 {
 	// 先判断有没有打开通道

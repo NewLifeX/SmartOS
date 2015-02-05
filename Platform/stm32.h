@@ -43,6 +43,16 @@
     #endif
 #endif
 
+// GD32F1x0最接近STM32F0
+#ifdef GD32F1x0
+    #ifndef STM32F0
+        #define STM32F0
+    #endif
+    #ifndef GD32
+        #define GD32
+    #endif
+#endif
+
 // 默认使用固件库
 #ifndef USE_STDPERIPH_DRIVER
 #define USE_STDPERIPH_DRIVER
