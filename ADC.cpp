@@ -100,9 +100,6 @@ void ADConverter::Open()
 	ADC_InitTypeDef adc;
 	ADC_StructInit(&adc);
 
-#ifdef GD32
-	#define RCC_PCLK2_Div8 RCC_HCLK_Div8
-#endif
 #if defined(STM32F1) || defined(GD32)
 	adc.ADC_Mode = ADC_Mode_Independent;			//独立ADC模式
 	adc.ADC_ScanConvMode = ENABLE ; 	 			//禁止扫描模式，扫描模式用于多通道采集
@@ -112,8 +109,12 @@ void ADConverter::Open()
 	adc.ADC_NbrOfChannel = Count;	 	//要转换的通道数目1
 	ADC_Init(_ADC, &adc);
 
+#if defined(GD32)
+	RCC_ADCCLKConfig(RCC_ADCCLK_APB2_DIV6);
+#else
 	/*配置ADC时钟，为PCLK2的8分频，即9MHz*/
 	RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+#endif
 
 	/*配置ADC1的通道10 11为55.	5个采样周期，序列为1 */
 	//ADC_RegularChannelConfig(_ADC, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
@@ -218,7 +219,7 @@ ushort ADConverter::Read(Pin pin)
 ushort ADConverter::ReadTempSensor()
 {
 	// 先判断有没有打开通道
-#ifdef STM32F1
+#if defined(STM32F1) || defined(GD32)
 	if(!(Channel & (1 << ADC_Channel_TempSensor))) return 0;
 #elif defined(STM32F0)
 	if(!(Channel & ADC_Channel_TempSensor)) return 0;
@@ -236,7 +237,7 @@ ushort ADConverter::ReadTempSensor()
 ushort ADConverter::ReadVrefint()
 {
 	// 先判断有没有打开通道
-#ifdef STM32F1
+#if defined(STM32F1) || defined(GD32)
 	if(!(Channel & (1 << ADC_Channel_Vrefint))) return 0;
 #elif defined(STM32F0)
 	if(!(Channel & ADC_Channel_Vrefint)) return 0;
@@ -248,7 +249,7 @@ ushort ADConverter::ReadVrefint()
 	{
 		if(Channel & dat) n++;
 	}
-#ifdef STM32F1
+#if defined(STM32F1) || defined(GD32)
 	if(Channel & (1 << ADC_Channel_TempSensor)) n++;
 #elif defined(STM32F0)
 	if(Channel & ADC_Channel_TempSensor) n++;
