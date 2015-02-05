@@ -247,6 +247,11 @@ void UserHandler()
 
 extern "C"
 {
+	/*  在GD32F130C8中时常有一个FAULT_SubHandler跳转的错误，
+	经查是因为FAULT_SubHandler和FaultHandler离得太远，导致b跳转无法到达，
+	因此把这两个函数指定到同一个端中，使得它们地址分布上紧挨着
+	*/
+	void FAULT_SubHandler(uint* registers, uint exception) __attribute__((section("SubHandler")));
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
 		//uint exception = GetIPSR();
@@ -272,6 +277,7 @@ extern "C"
 		}
 	}
 
+	__asm void FaultHandler() __attribute__((section("SubHandler")));
 	__asm void FaultHandler()
 	{
 		IMPORT FAULT_SubHandler
