@@ -25,13 +25,8 @@ public:
 	InputPort*  Key;	// 输入按键
 	OutputPort* Led;	// 指示灯
 	OutputPort* Relay;	// 继电器
-	
-	static InputPort*  ACZero;			// 交流过零检测引脚
-	static void SetACZeroPin(Pin aczero);	// 设置过零检测引脚
-private:
-	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300  
+
 public:
-	static void SetACZeroAdjTime(int us){ACZeroAdjTime=us;};	// 设置 过零检测补偿时间
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button() { Init(); }
 	Button(Pin key, Pin led = P0, bool ledInvert = true, Pin relay = P0, bool relayInvert = true);
@@ -42,6 +37,16 @@ public:
 	void SetValue(bool value);
 
 	void Register(EventHandler handler, void* param = NULL);
+
+// 过零检测
+private:
+	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300
+
+public:
+	static InputPort*  ACZero;			// 交流过零检测引脚
+
+	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
+	static void SetACZeroAdjTime(int us){ ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
 
 private:
 	bool _Value; // 状态

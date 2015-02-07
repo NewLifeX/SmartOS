@@ -86,19 +86,26 @@ void Button::Register(EventHandler handler, void* param)
 	}
 }
 
-void Button::SetACZeroPin(Pin aczero)
-{
-	ACZero = new InputPort(aczero);
-}
-
 bool Button::GetValue() { return _Value; }
+
+bool CheckZero(InputPort* port)
+{
+	int retry = 20;
+	while(*port == false && retry-- > 0) Sys.Sleep(1);	// 检测下降沿   先去掉低电平  while（io==false）
+	if(retry <= 0) return false;
+	
+	retry = 20;
+	while(*port == true && retry-- > 0) Sys.Sleep(1);		// 当检测到	     高电平结束  就是下降沿的到来
+	if(retry <= 0) return false;
+	
+	return true;
+}
 
 void Button::SetValue(bool value)
 {
-	if(ACZero!=NULL)
+	if(ACZero)
 	{
-		while(*ACZero == false);	// 检测下降沿   先去掉低电平  while（io==false）
-		while(*ACZero == true);		// 当检测到	     高电平结束  就是下降沿的到来
+		if(!CheckZero(ACZero)) return;
 		Sys.Delay(ACZeroAdjTime);	// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点  
 									// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下  
 									// 故这里添加1ms延时
@@ -111,4 +118,22 @@ void Button::SetValue(bool value)
 	if(Relay) *Relay = value;
 #endif
 	_Value = value;
+}
+
+bool Button::SetACZeroPin(Pin aczero)
+{
+	// 检查参数
+	assert_param(aczero != P0);
+	
+	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
+	if(ACZero) delete ACZero;
+	
+	ACZero = new InputPort(aczero);
+	
+	// 需要检测是否有交流电，否则关闭
+	if(CheckZero(ACZero)) return true;
+
+	delete ACZero;
+	ACZero = NULL;
+	return false;
 }
