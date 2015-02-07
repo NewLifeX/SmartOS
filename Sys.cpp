@@ -59,10 +59,13 @@ _force_inline void InitHeapStack(uint ramSize)
 	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
 	uint top = SRAM_BASE + (ramSize << 10);
 	uint size = (uint)&__initial_sp - (uint)p;
-	__set_MSP(top - size);	// 左移10位，就是乘以1024
+	uint msp = top - size;
 	// 拷贝一部分栈内容到新栈
-	memset((void*)(top - size), 0, size);
-	memcpy((void*)(top - size), (void*)p, size);
+	memset((void*)msp, 0, size);
+	memcpy((void*)msp, (void*)p, size);
+	
+	// 必须先拷贝完成栈，再修改栈指针
+	__set_MSP(msp);	// 左移10位，就是乘以1024
 
 	// 这个时候还没有初始化堆，我们来设置堆到内存最大值，让堆栈共用RAM剩下全部
 	//__microlib_freelist
