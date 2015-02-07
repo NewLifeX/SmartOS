@@ -539,7 +539,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	{
 		debug_printf("NRF24L01已经断开，准备重新初始化，当前配置Config=0x%02x\r\n", mode);
 		Close();
-		return false;
+		return Open();
 	}
 
 	return true;
