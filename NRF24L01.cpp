@@ -64,6 +64,8 @@
 #define FEATURE			0x1D  //特征寄存器
 #endif
 
+void AutoOpenTask(void* param);
+
 NRF24L01::NRF24L01() { Init(); }
 
 NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
@@ -95,7 +97,7 @@ void NRF24L01::Init()
 	MaxError	= 10;
 	Error		= 0;
 
-	//_taskID = 0;
+	_taskID = 0;
 	_timer = NULL;
 	//_Thread = NULL;
 
@@ -149,7 +151,11 @@ NRF24L01::~NRF24L01()
 {
     debug_printf("NRF24L01::~NRF24L01\r\n");
 
-	//if(_taskID) Sys.RemoveTask(_taskID);
+	if(_taskID)
+	{
+		Sys.RemoveTask(_taskID);
+		_taskID = 0;
+	}
 	Register(NULL);
 
 	// 关闭电源
@@ -539,7 +545,11 @@ bool NRF24L01::SetMode(bool isReceive)
 	{
 		debug_printf("NRF24L01已经断开，准备重新初始化，当前配置Config=0x%02x\r\n", mode);
 		Close();
-		return Open();
+		if(Open()) return true;
+
+		debug_printf("定时检查2401热插拔 ");
+		_taskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000);
+		return false;
 	}
 
 	return true;
@@ -619,6 +629,14 @@ void ShowStatusTask(void* param)
 	//nrf->ClearFIFO(true);
 }
 
+void AutoOpenTask(void* param)
+{
+	assert_ptr(param);
+
+	NRF24L01* nrf = (NRF24L01*)param;
+	nrf->Open();
+}
+
 bool NRF24L01::OnOpen()
 {
 	if(_POWER)
@@ -638,6 +656,14 @@ bool NRF24L01::OnOpen()
 		// 关闭SPI，可能是因为SPI通讯的问题，下次打开模块的时候会重新打开SPI
 		_spi->Close();
 		return false;
+	}
+
+	// 打开成功后，关闭定时轮询任务
+	if(_taskID)
+	{
+		debug_printf("关闭2401热插拔检查 ");
+		Sys.RemoveTask(_taskID);
+		_taskID = 0;
 	}
 
 	//debug_printf("定时显示状态 ");
