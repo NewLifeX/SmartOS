@@ -36,7 +36,12 @@ void TSys::Sleep(uint ms)
 	if(OnSleep)
 		OnSleep(ms);
 	else
+	{
+#if DEBUG
+		if(ms >= 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
+#endif
 		Time.Sleep(ms * 1000);
+	}
 }
 
 void TSys::Delay(uint us)
@@ -45,7 +50,12 @@ void TSys::Delay(uint us)
 	if(OnSleep && us >= 2000)
 		OnSleep((us + 500) / 1000);
 	else
+	{
+#if DEBUG
+		if(us >= 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
+#endif
 		Time.Sleep(us);
+	}
 }
 
 void TSys::Reset() { NVIC_SystemReset(); }
