@@ -238,7 +238,6 @@ TSys::TSys()
 
 	Name = "SmartOS";
 	Version = 0x01000000;
-	BuildTime = "yyyy-MM-dd HH:mm:ss";
 
     Interrupt.Init();
 
@@ -301,7 +300,7 @@ void TSys::ShowInfo()
 
 #if DEBUG
 	byte* ver = (byte*)&Version;
-	debug_printf("%s v%x.%x.%x.%x Build: %s\r\n", Name, *ver++, *ver++, *ver++, *ver++, BuildTime);
+	debug_printf("%s v%x.%x.%x.%x Build: %s %s\r\n", Name, *ver++, *ver++, *ver++, *ver++, __DATE__, __TIME__);
 	debug_printf("SmartOS::");
 	if(IsGD)
 		debug_printf("GD32");
