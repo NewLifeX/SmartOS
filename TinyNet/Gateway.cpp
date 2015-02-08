@@ -67,10 +67,9 @@ bool OnLocalReceived(Message& msg, void* param)
 		debug_printf("Gateway::Local ");
 		msg.Show();
 		debug_printf("\r\n");
-		
+
 		TokenMessage tmsg;
 		tmsg.Code = msg.Code;
-		//tmsg.SetData(msg.Data);
 		// 第一个字节是节点设备地址
 		tmsg.Data[0] = ((TinyMessage&)msg).Src;
 		if(msg.Length > 0) memcpy(&tmsg.Data[1], msg.Data, msg.Length);
@@ -93,7 +92,20 @@ bool OnRemoteReceived(Message& msg, void* param)
 		debug_printf("Gateway::Remote ");
 		msg.Show();
 		debug_printf("\r\n");
-		server->Server->Send(msg);
+
+		if(msg.Length > 0)
+		{
+			debug_printf("远程网收到的消息应该带有附加数据\r\n");
+			return false;
+		}
+
+		TinyMessage tmsg;
+		tmsg.Code = msg.Code;
+		// 第一个字节是节点设备地址
+		tmsg.Dest = msg.Data[0];
+		if(msg.Length > 1) memcpy(tmsg.Data, &msg.Data[1], msg.Length - 1);
+		tmsg.Length = msg.Length - 1;
+		server->Server->Send(tmsg);
 	}
 
 	return true;
