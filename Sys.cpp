@@ -73,7 +73,7 @@ _force_inline void InitHeapStack(uint ramSize)
 	// 拷贝一部分栈内容到新栈
 	memset((void*)msp, 0, size);
 	memcpy((void*)msp, (void*)p, size);
-	
+
 	// 必须先拷贝完成栈，再修改栈指针
 	__set_MSP(msp);	// 左移10位，就是乘以1024
 
@@ -236,6 +236,10 @@ TSys::TSys()
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;    //关闭JTAG仿真接口，只打开SW仿真。
 #endif
 
+	Name = "SmartOS";
+	Version = 0x01000000;
+	BuildTime = "yyyy-MM-dd HH:mm:ss";
+
     Interrupt.Init();
 
 	_Scheduler = NULL;
@@ -296,6 +300,8 @@ void TSys::ShowInfo()
 	ulong initedTime = Time.Current();
 
 #if DEBUG
+	byte* ver = (byte*)&Version;
+	debug_printf("%s v%x.%x.%x.%x Build: %s\r\n", Name, *ver++, *ver++, *ver++, *ver++, BuildTime);
 	debug_printf("SmartOS::");
 	if(IsGD)
 		debug_printf("GD32");

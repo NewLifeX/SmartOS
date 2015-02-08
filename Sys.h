@@ -78,7 +78,10 @@ public:
     COM_Def MessagePort;// 消息口，默认0表示USART1
     bool IsGD;			// 是否GD芯片
 
-    uint Clock;  // 系统时钟
+	char* Name;			// 系统名称
+	uint Version;		// 系统版本
+	char* BuildTime;	// 编译时间
+    uint Clock;  		// 系统时钟
     uint CystalClock;	// 晶振时钟
     byte ID[12];		// 芯片ID。
     uint CPUID;			// CPUID
