@@ -27,7 +27,7 @@ uint RamSizes[] = {  4,  4,  8,  16 };
 #elif defined(STM32F4)
 char MemNames[] = "468BCDEFGIK";
 uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
-uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
+uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  192,  192,  192 };
 #endif
 
 void TSys::Sleep(uint ms)
