@@ -46,10 +46,8 @@ public:
 	// 设置错误信息字符串
 	void SetError(byte errorCode, string error, int errLength);
 
-#if DEBUG
 	// 显示消息内容
 	virtual void Show() const;
-#endif
 };
 
 // 令牌控制器

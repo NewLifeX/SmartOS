@@ -97,6 +97,7 @@ void TokenMessage::SetError(byte errorCode, string error, int errLength)
 
 void TokenMessage::Show() const
 {
+#if DEBUG
 	assert_ptr(this);
 	debug_printf("Token=0x%08x Code=0x%02x", Token, Code);
 	if(Length > 0)
@@ -107,6 +108,7 @@ void TokenMessage::Show() const
 	}
 	if(!Valid()) debug_printf(" Crc Error 0x%04x [%04X]", Crc, __REV(Crc));
 	debug_printf("\r\n");
+#endif
 }
 
 TokenController::TokenController(ITransport* port) : Controller(port)
