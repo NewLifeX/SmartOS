@@ -238,6 +238,7 @@ TSys::TSys()
 
 	Name = "SmartOS";
 	Version = 0x01000000;
+	Company = "NewLife_Embedded_Team";
 	BuildTime = "yyyy-MM-dd HH:mm:ss";
 
     Interrupt.Init();
@@ -301,7 +302,7 @@ void TSys::ShowInfo()
 
 #if DEBUG
 	byte* ver = (byte*)&Version;
-	debug_printf("%s v%x.%x.%x.%x Build: %s\r\n", Name, *ver++, *ver++, *ver++, *ver++, BuildTime);
+	debug_printf("%s::%s Ver:%x.%x.%x.%x Build:%s\r\n", Company, Name, *ver++, *ver++, *ver++, *ver++, BuildTime);
 	debug_printf("SmartOS::");
 	if(IsGD)
 		debug_printf("GD32");
@@ -398,6 +399,7 @@ void TSys::ShowInfo()
 	debug_printf("\r\n");
 	// 系统启动时间
 	debug_printf("Start: %dus (Inited: %dus)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
+	debug_printf("技术支持: http://www.NewLifeX.com\r\n");
 
     debug_printf("\r\n");
 #endif

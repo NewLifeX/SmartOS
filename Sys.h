@@ -80,6 +80,7 @@ public:
 
 	char* Name;			// 系统名称
 	uint Version;		// 系统版本
+	char* Company;		// 系统厂商
 	char* BuildTime;	// 编译时间
     uint Clock;  		// 系统时钟
     uint CystalClock;	// 晶振时钟
