@@ -50,7 +50,7 @@ Controller::Controller(ITransport* ports[], int count)
 void Controller::Init()
 {
 	MinSize = 0;
-	
+
 	ArrayZero(_ports);
 	_portCount = 0;
 
@@ -137,12 +137,6 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	if(!msg.Valid()) return true;
 
 	if(!Valid(msg, port)) return true;
-	
-	// 外部公共消息事件
-	if(Received)
-	{
-		if(!Received(msg, Param)) return true;
-	}
 
 	// 选择处理器来处理消息
 	//for(int i=0; i<_HandlerCount; i++)
@@ -156,6 +150,12 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 			bool rs = lookup->Handler(msg, lookup->Param);
 			if(rs) break;
 		}
+	}
+
+	// 外部公共消息事件
+	if(Received)
+	{
+		if(!Received(msg, Param)) return true;
 	}
 
 	return true;
