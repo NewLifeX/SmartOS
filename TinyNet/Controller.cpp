@@ -197,14 +197,14 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 int Controller::Send(Message& msg, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
-	if(port && !port->Open()) return false;
+	if(port && !port->Open()) return -1;
 	bool rs = false;
 	//int i = -1;
 	//while(_ports.MoveNext(i))
 	//	rs |= _ports[i]->Open();
 	for(int i=0; i<_portCount; i++)
 		rs |= _ports[i]->Open();
-	if(!rs) return false;
+	if(!rs) return -1;
 
 	uint len = msg.Size();
 

@@ -122,14 +122,12 @@ public:
 	virtual int Send(Message& msg, ITransport* port = NULL);
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	uint Send(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
-	// 把消息放入发送队列，传输口参数为空时向所有传输口发送消息
-	//int Post(TinyMessage& msg, ITransport* port = NULL);
-	// 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送
-	bool Send(TinyMessage& msg, int expire = -1, ITransport* port = NULL);
+	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
+	// 把消息放入发送队列，timerout毫秒超时时间内，如果对方没有响应，会重复发送
+	bool Post(TinyMessage& msg, int expire = -1, ITransport* port = NULL);
 	// 回复对方的请求消息
 	virtual int Reply(Message& msg, ITransport* port = NULL);
-	bool Error(TinyMessage& msg, ITransport* port = NULL);
+	//bool Error(TinyMessage& msg, ITransport* port = NULL);
 
 	// 循环处理待发送的消息队列
 	void Loop();

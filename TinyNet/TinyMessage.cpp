@@ -389,13 +389,13 @@ void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 		msg_printf(" 失败!\r\n");
 }
 
-uint TinyController::Send(byte dest, byte code, byte* buf, uint len, ITransport* port)
+uint TinyController::Post(byte dest, byte code, byte* buf, uint len, ITransport* port)
 {
 	TinyMessage msg(code);
 	msg.Dest = dest;
 	msg.SetData(buf, len);
 
-	return Send(msg, -1, port);
+	return Send(msg, port);
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
@@ -416,7 +416,9 @@ int TinyController::Send(Message& msg, ITransport* port)
 	ShowMessage(tmsg, true);
 #endif
 
-	return Controller::Send(msg, port);
+	//return Controller::Send(msg, port);
+	
+	return Post(tmsg, -1, port) ? 1 : 0;
 }
 
 void SendTask(void* param)
@@ -470,7 +472,7 @@ void TinyController::Loop()
 		// 发送消息
 		//int k = -1;
 		//while(node->Ports.MoveNext(k))
-		for(int k=0; i<node->PortCount; i++)
+		for(int k=0; k<node->PortCount; k++)
 		{
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
@@ -510,7 +512,7 @@ void TinyController::Loop()
 }
 
 // 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
-bool TinyController::Send(TinyMessage& msg, int expire, ITransport* port)
+bool TinyController::Post(TinyMessage& msg, int expire, ITransport* port)
 {
 	// 如果没有传输口处于打开状态，则发送失败
 	if(port && !port->Open()) return false;
@@ -525,7 +527,10 @@ bool TinyController::Send(TinyMessage& msg, int expire, ITransport* port)
 	MessageNode* node = new MessageNode();
 	node->SetMessage(msg);
 	if(!port)
+	{
 		ArrayCopy(node->Ports, _ports);
+		node->PortCount = _portCount;
+	}
 	else
 		node->Ports[node->PortCount++] = port;
 
@@ -552,12 +557,12 @@ int TinyController::Reply(Message& msg, ITransport* port)
 	return Send(msg, port);
 }
 
-bool TinyController::Error(TinyMessage& msg, ITransport* port)
+/*bool TinyController::Error(TinyMessage& msg, ITransport* port)
 {
 	msg.Error = 1;
 
 	return Send(msg, 0, port);
-}
+}*/
 
 void StatTask(void* param)
 {
