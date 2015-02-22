@@ -16,13 +16,13 @@ typedef bool (*MessageHandler)(Message& msg, void* param);
 class Controller
 {
 private:
-	void Init(int count);
+	void Init();
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
 	bool Dispatch(MemoryStream& ms, ITransport* port);
 
 protected:
-	ITransport*	_ports[4];	// 数据传输口数组
-	byte	_portCount;		// 数据传输口个数
+	List<ITransport*>	_ports;	// 数据传输口数组
+	//byte	_portCount;		// 数据传输口个数
 	byte	MinSize;	// 最小消息大小
 
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
@@ -56,8 +56,8 @@ private:
         MessageHandler	Handler;// 处理函数
 		void*			Param;	// 参数
     };
-	HandlerLookup* _Handlers[16];
-	byte _HandlerCount;
+	List<HandlerLookup*> _Handlers;
+	//byte _HandlerCount;
 
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册

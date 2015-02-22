@@ -18,9 +18,11 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	Init(1);
+	_ports.Add(port);
 
-	_ports[_portCount++] = port;
+	Init();
+
+	//_ports[_portCount++] = port;
 }
 
 Controller::Controller(ITransport* ports[], int count)
@@ -34,7 +36,8 @@ Controller::Controller(ITransport* ports[], int count)
 		assert_ptr(ports[i]);
 
 		debug_printf(" %s", ports[i]->ToString());
-		_ports[_portCount++] = ports[i];
+		//_ports[_portCount++] = ports[i];
+		_ports.Add(ports[i]);
 	}
 	debug_printf("\r\n");
 
@@ -44,25 +47,25 @@ Controller::Controller(ITransport* ports[], int count)
 		ports[i]->Register(Dispatch, this);
 	}
 
-	Init(count);
+	Init();
 }
 
-void Controller::Init(int count)
+void Controller::Init()
 {
 	MinSize = 0;
 
-	ArrayZero(_ports);
-	_portCount = 0;
+	//ArrayZero(_ports);
+	//_portCount = 0;
 
-	ArrayZero(_Handlers);
-	_HandlerCount = 0;
+	//ArrayZero(_Handlers);
+	//_HandlerCount = 0;
 
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, count);
+	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
 
 	Received	= NULL;
 	Param		= NULL;
@@ -70,17 +73,19 @@ void Controller::Init(int count)
 
 Controller::~Controller()
 {
-	for(int i=0; i<_HandlerCount; i++)
+	_Handlers.DeleteAll().Clear();
+	/*for(int i=0; i<_HandlerCount; i++)
 	{
 		if(_Handlers[i]) delete _Handlers[i];
-	}
+	}*/
 
-	//_ports.DeleteAll().Clear();
-	for(int i=0; i<_portCount; i++)
+	_ports.DeleteAll().Clear();
+	/*for(int i=0; i<_ports.Count(); i++)
 	{
 		delete _ports[i];
-		_ports[i] = NULL;
+		//_ports[i] = NULL;
 	}
+	_ports.Clear();*/
 
 	debug_printf("TinyNet::UnInit\r\n");
 }
@@ -89,14 +94,14 @@ Controller::~Controller()
 void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
-	assert_param(_portCount < 4);
+	assert_param(_ports.Count() < 4);
 
 	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
 
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	_ports[_portCount++] = port;
+	_ports.Add(port);
 }
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
@@ -141,7 +146,7 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 	// 选择处理器来处理消息
 	//for(int i=0; i<_HandlerCount; i++)
 	// 倒序选择处理器来处理消息，让后注册处理器有更高优先权
-	for(int i = _HandlerCount - 1; i >= 0; i--)
+	for(int i = _Handlers.Count() - 1; i >= 0; i--)
 	{
 		HandlerLookup* lookup = _Handlers[i];
 		if(lookup && lookup->Code == msg.Code)
@@ -175,7 +180,7 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 
 #if DEBUG
 	// 检查是否已注册。一般指令码是固定的，所以只在DEBUG版本检查
-	for(int i=0; i<_HandlerCount; i++)
+	for(int i=0; i<_Handlers.Count(); i++)
 	{
 		lookup = _Handlers[i];
 		if(lookup && lookup->Code == code)
@@ -191,7 +196,8 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 	lookup->Handler = handler;
 	lookup->Param = param;
 
-	_Handlers[_HandlerCount++] = lookup;
+	//_Handlers[_HandlerCount++] = lookup;
+	_Handlers.Add(lookup);
 }
 
 int Controller::Send(Message& msg, ITransport* port)
@@ -202,7 +208,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	//int i = -1;
 	//while(_ports.MoveNext(i))
 	//	rs |= _ports[i]->Open();
-	for(int i=0; i<_portCount; i++)
+	for(int i=0; i<_ports.Count(); i++)
 		rs |= _ports[i]->Open();
 	if(!rs) return -1;
 
@@ -228,7 +234,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 发往所有端口
 	//i = -1;
 	//while(_ports.MoveNext(i))
-	for(int i=0; i<_portCount; i++)
+	for(int i=0; i<_ports.Count(); i++)
 	{
 		if(_ports[i]->Write(buf, len)) count++;
 	}

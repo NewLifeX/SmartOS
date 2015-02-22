@@ -224,20 +224,20 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 
 	//msg_printf("%d ", (uint)Time.Current());
 	if(send)
-		msg_printf("TinyMessage::Send ");
+		msg_printf("TinyMessage::Send");
 	else
 	{
 		msg_printf("%s ", port->ToString());
 		msg_printf("TinyMessage::");
 	}
 	if(msg.Error)
-		msg_printf("Error");
+		msg_printf(" Error");
 	else if(msg.Ack)
-		msg_printf("Ack");
+		msg_printf(" Ack");
 	else if(msg.Reply)
-		msg_printf("Reply");
+		msg_printf(" Reply");
 	else if(!send)
-		msg_printf("Request");
+		msg_printf(" Request");
 
 #if DEBUG
 	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
@@ -287,9 +287,9 @@ bool TinyController::Valid(Message& msg, ITransport* port)
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!tmsg.NoAck) AckResponse(tmsg, port);
 #if DEBUG
-				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d Retry=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
+				msg_printf("重复消息 Reply=%d Ack=%d Src=0x%02x Seq=%d Retry=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
 #else
-				msg_printf("重复消息 Reply=%d Ack=%d Src=%d Seq=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence);
+				msg_printf("重复消息 Reply=%d Ack=%d Src=0x%02x Seq=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence);
 #endif
 				return false;
 			}
@@ -335,7 +335,7 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 		if(node->Sequence == msg.Sequence)
 		{
 			uint cost = (uint)(Time.Current() - node->LastSend);
-			if(node->PortCount > 0)
+			if(node->Ports.Count() > 0)
 			{
 				TotalCost += cost;
 				TotalAck++;
@@ -349,8 +349,8 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 			if(Interval > tt) Interval = tt;
 
 			// 该传输口收到响应，从就绪队列中删除
-			//node->Ports.Remove(port);
-			node->PortCount--;
+			node->Ports.Remove(port);
+			//node->PortCount--;
 
 			/*if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
@@ -380,7 +380,7 @@ void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
-	msg_printf("发送Ack确认包 Dest=%d Seq=%d ", msg.Src, msg.Sequence);
+	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 
 	int count = Send(msg2, port);
 	if(count > 0)
@@ -441,7 +441,7 @@ void TinyController::Loop()
 			if(node->Next > Time.Current()) continue;
 
 			// 检查是否传输口已完成，是否已过期
-			int count = node->PortCount;
+			int count = node->Ports.Count();
 			if(count == 0 || node->Expired < Time.Current())
 			{
 				//if(count > 0)
@@ -472,7 +472,7 @@ void TinyController::Loop()
 		// 发送消息
 		//int k = -1;
 		//while(node->Ports.MoveNext(k))
-		for(int k=0; k<node->PortCount; k++)
+		for(int k=0; k<node->Ports.Count(); k++)
 		{
 			ITransport* port = node->Ports[k];
 			if(port) port->Write(node->Data, node->Length);
@@ -528,11 +528,12 @@ bool TinyController::Post(TinyMessage& msg, int expire, ITransport* port)
 	node->SetMessage(msg);
 	if(!port)
 	{
-		ArrayCopy(node->Ports, _ports);
-		node->PortCount = _portCount;
+		//ArrayCopy(node->Ports, _ports);
+		//node->PortCount = _portCount;
+		node->Ports = _ports;
 	}
 	else
-		node->Ports[node->PortCount++] = port;
+		node->Ports.Add(port);
 
 	node->StartTime = Time.Current();
 	node->Next = 0;
@@ -644,7 +645,7 @@ bool RingQueue::Check(ushort item)
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
 	if(Expired < Time.Current())
 	{
-		debug_printf("环形队列过期，清空 \r\n");
+		//debug_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始
 		Index = 0;
 		ArrayZero(Arr);

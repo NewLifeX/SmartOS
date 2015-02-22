@@ -155,8 +155,8 @@ public:
 class MessageNode
 {
 public:
-	ITransport* Ports[4];	// 未收到响应消息的传输口
-	byte		PortCount;	// 传输口数
+	List<ITransport*> Ports;	// 未收到响应消息的传输口
+	//byte		PortCount;	// 传输口数
 	byte		Sequence;	// 序列号
 	byte		Data[32];
 	uint		Length;

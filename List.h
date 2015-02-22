@@ -18,7 +18,7 @@
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
 
-// 迭代器
+/*// 迭代器
 template<typename T>
 class IEnumerator
 {
@@ -65,7 +65,7 @@ public:
 	}
 
 // 用于在迭代器中删除当前节点的宏
-#define foreach_remove() et->Remove();
+#define foreach_remove() et->Remove();*/
 
 // 数组
 class Array
@@ -140,18 +140,21 @@ private:
 	T*		Arr[ArraySize];
 
 public:
+	// 默认初始化。大小和数组元素全部清零
 	FixedArray()
 	{
 		_Count = 0;
 		ArrayZero(Arr);
 	}
 
+	// 使用另一个固定数组来初始化
 	FixedArray(FixedArray& arr)
 	{
 		_Count = arr._Count;
 		ArrayCopy(Arr, arr.Arr);
 	}
 
+	// 重载等号运算符，使用另一个固定数组来初始化
     FixedArray& operator=(FixedArray& arr)
 	{
 		_Count = arr._Count;
@@ -160,7 +163,13 @@ public:
 		return *this;
 	}
 
+	~FixedArray() { DeleteAll(); }
+
+	// 实际元素个数
 	uint Count() const { return _Count; }
+
+	// 数组总长度
+	uint Length() const { return ArraySize; }
 
 	// 压入一个元素。返回元素所存储的索引
 	int Add(T* item)
@@ -218,6 +227,7 @@ public:
 		Arr[idx] = NULL;
 	}
 
+	// 清空数组。个数设0，所有元素清零
 	FixedArray& Clear()
 	{
 		_Count = 0;
@@ -279,13 +289,14 @@ public:
 };
 
 // 变长列表模版
+// T一般是指针，列表内部有一个数组用于存放指针
 template<typename T>
-class List : public IEnumerable<T>, public ICollection<T>
+class List //: public IEnumerable<T>, public ICollection<T>
 {
 private:
-    T* _Arr;		// 存储数据的数组
     uint _Count;// 拥有实际元素个数
     uint _total;// 可容纳元素总数
+    T* _Arr;	// 存储数据的数组
 
     void ChangeSize(int newSize)
     {
@@ -347,6 +358,16 @@ public:
 
     ~List() { if(_Arr) delete[] _Arr; _Arr = NULL; }
 
+	// 重载等号运算符，使用另一个列表来初始化
+    List& operator=(List& list)
+	{
+		Clear();
+		for(int i=0; i<list.Count(); i++)
+			Add(list[i]);
+
+		return *this;
+	}
+
 	// 添加单个元素
     virtual void Add(const T& item)
     {
@@ -401,6 +422,17 @@ public:
 		if(index >= 0) RemoveAt(index);
 	}
 
+	// 释放所有指针指向的内存
+	List& DeleteAll()
+	{
+		for(int i=0; i < _Count; i++)
+		{
+			if(_Arr[i]) delete _Arr[i];
+		}
+
+		return *this;
+	}
+
 	virtual void Clear()
 	{
 		_Count = 0;
@@ -431,9 +463,9 @@ public:
 	}
 
 	// 列表转为指针，注意安全
-    T* operator=(List& list) { return list.ToArray(); }
+    //const T* operator=(List& list) { return list.ToArray(); }
 
-private:
+/*private:
 	class ListEnumerator : public IEnumerator<T>
 	{
 	private:
@@ -473,7 +505,7 @@ public:
 	virtual IEnumerator<T>* GetEnumerator()
 	{
 		return new ListEnumerator(this);
-	}
+	}*/
 };
 
 // 双向链表
@@ -541,7 +573,7 @@ public:
 
 // 双向链表
 template <class T>
-class LinkedList : public IEnumerable<T>, public ICollection<T>
+class LinkedList //: public IEnumerable<T>, public ICollection<T>
 {
 public:
     // 链表节点。实体类不需要继承该内部类
@@ -680,7 +712,7 @@ public:
 		}
 	}
 
-private:
+/*private:
 	// 链表迭代器
 	class LinkedListEnumerator : public IEnumerator<T>
 	{
@@ -722,7 +754,7 @@ public:
 	virtual IEnumerator<T>* GetEnumerator()
 	{
 		return new LinkedListEnumerator(this);
-	}
+	}*/
 
 	T& First() { return _Head->Item; }
 	T& Last() { return _Tail->Item; }
