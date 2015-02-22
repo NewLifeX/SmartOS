@@ -149,7 +149,7 @@ void TinyMessage::Show() const
 {
 #if DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d", Src, Dest, Code, *((byte*)&(Code)+1), Sequence, Length, Checksum, Retry);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=%02X Sequence=%d Length=%d Checksum=0x%04x Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Length, Checksum, Retry);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -240,9 +240,9 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 		msg_printf("Request ");
 
 #if DEBUG
-	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 #else
-	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum);
+	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum);
 #endif
 	if(msg.Length > 0)
 	{
