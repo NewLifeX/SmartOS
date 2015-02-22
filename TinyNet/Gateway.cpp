@@ -66,7 +66,7 @@ bool OnLocalReceived(Message& msg, void* param)
 	{
 		debug_printf("Gateway::Local ");
 		msg.Show();
-		debug_printf("\r\n");
+		//debug_printf("\r\n");
 
 		TokenMessage tmsg;
 		tmsg.Code = msg.Code;
@@ -91,7 +91,7 @@ bool OnRemoteReceived(Message& msg, void* param)
 	{
 		debug_printf("Gateway::Remote ");
 		msg.Show();
-		debug_printf("\r\n");
+		//debug_printf("\r\n");
 
 		if(msg.Length <= 0)
 		{
