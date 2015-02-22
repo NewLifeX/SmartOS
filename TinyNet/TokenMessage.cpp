@@ -175,7 +175,7 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 	// 只处理本机消息或广播消息。快速处理，高效。
-	if(tmsg.Token != Token && tmsg.Token != 0) return false;
+	if(Token != 0 && tmsg.Token != Token && tmsg.Token != 0) return false;
 
 #if MSG_DEBUG
 	/*msg_printf("TokenController::Dispatch ");

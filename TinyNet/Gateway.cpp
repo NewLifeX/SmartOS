@@ -93,7 +93,7 @@ bool OnRemoteReceived(Message& msg, void* param)
 		msg.Show();
 		debug_printf("\r\n");
 
-		if(msg.Length > 0)
+		if(msg.Length <= 0)
 		{
 			debug_printf("远程网收到的消息应该带有附加数据\r\n");
 			return false;
