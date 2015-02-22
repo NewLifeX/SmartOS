@@ -224,25 +224,25 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 
 	//msg_printf("%d ", (uint)Time.Current());
 	if(send)
-		msg_printf("TinyMessage::Send");
+		msg_printf("TinyMessage::Send ");
 	else
 	{
 		msg_printf("%s ", port->ToString());
 		msg_printf("TinyMessage::");
 	}
 	if(msg.Error)
-		msg_printf(" Error");
+		msg_printf("Error ");
 	else if(msg.Ack)
-		msg_printf(" Ack");
+		msg_printf("Ack ");
 	else if(msg.Reply)
-		msg_printf(" Reply");
+		msg_printf("Reply ");
 	else if(!send)
-		msg_printf(" Request");
+		msg_printf("Request ");
 
 #if DEBUG
-	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
+	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 #else
-	msg_printf(" 0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum);
+	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg.Code)+1), msg.Sequence, msg.Length, msg.Checksum);
 #endif
 	if(msg.Length > 0)
 	{
