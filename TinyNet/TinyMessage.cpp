@@ -372,6 +372,7 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 {
 	TinyMessage msg2(msg);
+	msg2.Src = Address;
 	msg2.Dest = msg.Src;
 	msg2.Reply = 1;
 	msg2.Ack = 1;
@@ -382,7 +383,7 @@ void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 
 	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 
-	int count = Send(msg2, port);
+	int count = Controller::Send(msg2, port);
 	if(count > 0)
 		msg_printf(" 成功!\r\n");
 	else
@@ -521,7 +522,7 @@ bool TinyController::Post(TinyMessage& msg, int expire, ITransport* port)
 	// 需要响应
 	if(expire == 0) msg.NoAck = true;
 	// 如果确定不需要响应，则改用Post
-	if(msg.NoAck) return Send(msg, port);
+	if(msg.NoAck || msg.Ack) return Controller::Send(msg, port);
 
 	// 准备消息队列
 	MessageNode* node = new MessageNode();
