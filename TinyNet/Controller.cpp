@@ -18,7 +18,7 @@ Controller::Controller(ITransport* port)
 	// 注册收到数据事件
 	port->Register(Dispatch, this);
 
-	Init();
+	Init(1);
 
 	_ports[_portCount++] = port;
 }
@@ -44,10 +44,10 @@ Controller::Controller(ITransport* ports[], int count)
 		ports[i]->Register(Dispatch, this);
 	}
 
-	Init();
+	Init(count);
 }
 
-void Controller::Init()
+void Controller::Init(int count)
 {
 	MinSize = 0;
 
@@ -62,7 +62,7 @@ void Controller::Init()
 	// 如果地址为0，则使用时间来随机一个
 	while(!Address) Address = Time.Current();
 
-	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _portCount);
+	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, count);
 
 	Received	= NULL;
 	Param		= NULL;

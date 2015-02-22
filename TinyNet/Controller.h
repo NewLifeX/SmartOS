@@ -16,7 +16,7 @@ typedef bool (*MessageHandler)(Message& msg, void* param);
 class Controller
 {
 private:
-	void Init();
+	void Init(int count);
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
 	bool Dispatch(MemoryStream& ms, ITransport* port);
 
