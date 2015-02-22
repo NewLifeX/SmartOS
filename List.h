@@ -458,7 +458,10 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T operator[](int i)
 	{
-		assert_param(i >= 0 && i < _Count);
+		//assert_param(i >= 0 && i < _Count);
+		// 有可能多线程冲突
+		if(i < 0 || i >= _Count) return NULL;
+		
 		return _Arr[i];
 	}
 
