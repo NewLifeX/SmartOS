@@ -79,4 +79,11 @@ public:
 	//bool Send(TokenMessage& msg, int expire = -1);
 };
 
+// 令牌会话
+class TokenSession
+{
+public:
+	uint	Token;	// 当前会话的令牌
+};
+
 #endif
