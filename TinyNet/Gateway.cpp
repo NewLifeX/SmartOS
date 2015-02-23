@@ -61,8 +61,10 @@ bool OnLocalReceived(Message& msg, void* param)
 	Gateway* server = (Gateway*)param;
 	assert_ptr(server);
 
+	TinyMessage& msg2 = (TinyMessage&)msg;
+
 	// 消息转发
-	if(msg.Code >= 0x10)
+	if(msg.Code >= 0x10 && msg2.Dest != 0x01)
 	{
 		debug_printf("Gateway::Local ");
 		msg.Show();

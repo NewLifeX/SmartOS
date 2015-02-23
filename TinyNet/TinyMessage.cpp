@@ -149,7 +149,7 @@ void TinyMessage::Show() const
 {
 #if DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=%02X Sequence=%d Length=%d Checksum=0x%04x Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Length, Checksum, Retry);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=%d Length=%d Checksum=0x%04x Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Length, Checksum, Retry);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -239,7 +239,8 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 	else if(!send)
 		msg_printf("Request ");
 
-#if DEBUG
+	msg.Show();
+/*#if DEBUG
 	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
 #else
 	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum);
@@ -250,7 +251,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 		Sys.ShowString(msg.Data, msg.Length, false);
 	}
 	if(!msg.Valid()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc, __REV16(msg.Crc));
-	msg_printf("\r\n");
+	msg_printf("\r\n");*/
 
 	/*Sys.ShowHex(buf, MESSAGE_SIZE);
 	if(msg.Length > 0)
@@ -303,14 +304,14 @@ bool TinyController::Valid(Message& msg, ITransport* port)
 #endif
 
 	// 广播的响应消息也不要
-	if(tmsg.Dest == 0 && tmsg.Reply) return true;
+	if(tmsg.Dest == 0 && tmsg.Reply) return false;
 
 	// 如果是确认消息或响应消息，及时更新请求队列
 	if(tmsg.Ack)
 	{
 		AckRequest(tmsg, port);
 		// 如果只是确认消息，不做处理
-		return true;
+		return false;
 	}
 	// 响应消息顺道帮忙消除Ack
 	if(tmsg.Reply) AckRequest(tmsg, port);
@@ -381,9 +382,10 @@ void TinyController::AckResponse(TinyMessage& msg, ITransport* port)
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
-	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
+	//msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 
 	int count = Controller::Send(msg2, port);
+	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 	if(count > 0)
 		msg_printf(" 成功!\r\n");
 	else
