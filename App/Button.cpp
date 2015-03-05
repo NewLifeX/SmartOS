@@ -1,4 +1,4 @@
-﻿#include "Button.h"
+#include "Button.h"
 
 
 InputPort* Button::ACZero = NULL;
@@ -90,12 +90,12 @@ bool Button::GetValue() { return _Value; }
 
 bool CheckZero(InputPort* port)
 {
-	int retry = 20;
-	while(*port == false && retry-- > 0) Sys.Sleep(1);	// 检测下降沿   先去掉低电平  while（io==false）
+	int retry = 200;
+	while(*port == false && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
 	if(retry <= 0) return false;
 	
-	retry = 20;
-	while(*port == true && retry-- > 0) Sys.Sleep(1);		// 当检测到	     高电平结束  就是下降沿的到来
+	retry = 200;
+	while(*port == true && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
 	if(retry <= 0) return false;
 	
 	return true;
