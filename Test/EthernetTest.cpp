@@ -148,7 +148,9 @@ void TestEthernet()
     debug_printf("\r\n");
     debug_printf("TestEthernet Start......\r\n");
 
-    Spi* spi = new Spi(SPI2);
+    //Spi* spi = new Spi(SPI2);
+    Spi* spi = new Spi(SPI1);		// 网关C
+	
     Enc28j60* enc = new Enc28j60(spi);
 
     //tip = new TinyIP(enc, myip, mymac);
