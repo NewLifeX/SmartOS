@@ -353,7 +353,7 @@ PWM::~PWM()
 	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
 }
 
-
+/*
 #ifdef STM32F0
 typedef uint32_t (*GetCap)(TIM_TypeDef* TIMx);
 const static GetCap GetCapturex[4]={
@@ -384,13 +384,13 @@ Capture::Capture(Timer * timer)
 
 
 
-void Start(int channel)
+void Capture::Start(int channel)
 {
 	
 }
 
 
-void Stop(int channel)
+void Capture::Stop(int channel)
 {
 	
 }
@@ -462,3 +462,4 @@ Capture::~Capture()
 		Register(i,NULL, NULL );
 	delete(_timer);
 }
+*/

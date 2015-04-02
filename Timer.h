@@ -55,7 +55,7 @@ public:
 	void Stop();
 //	void SetDuty_Cycle(int oc,int value);
 };
-
+/*
 class Capture
 {
 private:
@@ -82,5 +82,5 @@ public :
 	void Register(int Index,EventHandler handler, void* param = NULL);
 };
 //void (*EventHandler)(void* sender, void* param);
-
+*/
 #endif
