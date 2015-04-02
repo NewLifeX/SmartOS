@@ -7,12 +7,12 @@
 // 定时器
 class Timer
 {
-private:
+protected:
 	volatile bool _started;			// 可能在中断里关闭自己
+	byte _index;	// 第几个定时器，从0开始
 
 	void ClockCmd(bool state);
 public:
-	byte _index;	// 第几个定时器，从0开始
 	TIM_TypeDef* _port;
 
 	Timer(TIM_TypeDef* timer);
@@ -41,13 +41,13 @@ public:
 	static Timer* Create(byte index = 0xFF);	// 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
 };
 
-class PWM
+class PWM : public Timer
 {
 private:
-	Timer * _timer;
+//	Timer * _timer;
 //	AlternatePort * _pin[4];
 public:
-	PWM(Timer * timer = NULL);
+	PWM(byte index = 0xFF);		// index 定时器编号
 	~PWM();
 	ushort Pulse[4];
 

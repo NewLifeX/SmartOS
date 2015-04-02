@@ -294,24 +294,22 @@ const static TIM_OCInit OCInit[4]={TIM_OC1Init,TIM_OC2Init,TIM_OC3Init,TIM_OC4In
 //{
 //};
 
-PWM::PWM(Timer* timer)
+PWM::PWM(byte index):Timer(g_Timers[index])
 {
-	_timer = timer;
-	for(int i=0;i<4;i++)
-	{
-		Pulse[i]=0xffff;
-//		_pin[i]=NULL;
-	}
+	for(int i=0;i<4;i++)Pulse[i]=0xffff;
+
 }
 
 void PWM::Start()
 {
 //	const Pin _Pin[]=TIM_PINS;
-	_timer->Start();						// 主要是配置时钟基础部分 TIM_TimeBaseInit
-	TIM_Cmd(_timer->_port, DISABLE);		// 关闭计数进行配置
+	if(!_started)
+		Timer::Start();						// 主要是配置时钟基础部分 TIM_TimeBaseInit
+	TIM_Cmd(_port, DISABLE);		// 关闭计数进行配置
 	
 	TIM_OCInitTypeDef TIM_OCInitStructure;
 	
+	TIM_OCStructInit(&TIM_OCInitStructure);
 	TIM_OCInitStructure.TIM_OCMode=TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState=TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
@@ -327,30 +325,30 @@ void PWM::Start()
 //			GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_2);    在此处卡壳！！！！
 			
 			TIM_OCInitStructure.TIM_Pulse=Pulse[i];
-			OCInit[i](_timer->_port,&TIM_OCInitStructure);
+			OCInit[i](_port,&TIM_OCInitStructure);
 		}
 	}
 	// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
-	TIM_ITConfig(_timer->_port, TIM_IT_Update, DISABLE);
-	TIM_ClearFlag( _timer->_port, TIM_FLAG_Update );
+	TIM_ITConfig(_port, TIM_IT_Update, DISABLE);
+	TIM_ClearFlag(_port, TIM_FLAG_Update );
 	
-	TIM_SetCounter(_timer->_port, 0x00000000);	// 清零定时器CNT计数寄存器
-	TIM_ARRPreloadConfig(_timer->_port,ENABLE); // 使能预装载寄存器ARR
-	TIM_Cmd(_timer->_port, ENABLE);
-	TIM_CtrlPWMOutputs(_timer->_port,ENABLE);
+	TIM_SetCounter(_port, 0x00000000);	// 清零定时器CNT计数寄存器
+	TIM_ARRPreloadConfig(_port,ENABLE); // 使能预装载寄存器ARR
+	TIM_Cmd(_port, ENABLE);
+	TIM_CtrlPWMOutputs(_port,ENABLE);
 }
 
 void PWM::Stop()
 {
-	TIM_Cmd(_timer->_port, DISABLE);
-	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
+	TIM_Cmd(_port, DISABLE);
+	TIM_CtrlPWMOutputs(_port,DISABLE);
 }
 
 PWM::~PWM()
 {
-	delete(_timer);
-	TIM_Cmd(_timer->_port, DISABLE);
-	TIM_CtrlPWMOutputs(_timer->_port,DISABLE);
+//	delete(_timer);
+	TIM_Cmd(_port, DISABLE);
+	TIM_CtrlPWMOutputs(_port,DISABLE);
 }
 
 /*
@@ -430,12 +428,12 @@ void Capture::Register(int channel,EventHandler handler, void* param )
 }
 
 // 直接用指针访问私有成员  不好  
-/*void Capture :: OnHandler(void * sender, void* param)
+//void Capture :: OnHandler(void * sender, void* param)
 //{
 //	Capture * cap= (Capture*)param;
 //	if(cap->_Handler != NULL)
 //		cap->_Handler(sender,cap->_Param );
-//}*/
+//}
 
 void Capture :: OnHandler(ushort num, void* param)
 {
