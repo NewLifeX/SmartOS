@@ -335,20 +335,33 @@ void PWM::Start()
 	TIM_SetCounter(_port, 0x00000000);	// 清零定时器CNT计数寄存器
 	TIM_ARRPreloadConfig(_port,ENABLE); // 使能预装载寄存器ARR
 	TIM_Cmd(_port, ENABLE);
-	TIM_CtrlPWMOutputs(_port,ENABLE);
+#if defined(STM32F1)
+	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
+		TIM_CtrlPWMOutputs(_port,ENABLE);
+#elif defined(STM32F1)
+	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
+		TIM_CtrlPWMOutputs(_port,ENABLE);
+#else	//defined(STM32F4)
+#endif
 }
 
 void PWM::Stop()
 {
 	TIM_Cmd(_port, DISABLE);
-	TIM_CtrlPWMOutputs(_port,DISABLE);
+#if defined(STM32F1)
+	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
+		TIM_CtrlPWMOutputs(_port,DISABLE);
+#elif defined(STM32F1)
+	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
+		TIM_CtrlPWMOutputs(_port,DISABLE);
+#else	//defined(STM32F4)
+#endif
 }
 
 PWM::~PWM()
 {
 //	delete(_timer);
-	TIM_Cmd(_port, DISABLE);
-	TIM_CtrlPWMOutputs(_port,DISABLE);
+	Stop();
 }
 
 /*
