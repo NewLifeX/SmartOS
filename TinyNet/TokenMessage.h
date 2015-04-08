@@ -16,10 +16,10 @@ private:
 public:
 	uint	Token;		// 令牌
 
+	byte	_Length;	// 数据长度
 	byte	_Code:7;	// 功能码
 	byte	_Reply:1;	// 是否响应指令
 
-	byte	_Length;	// 数据长度
 	byte	_Data[256];	// 数据
 
 	uint	Checksum;	// 校验码
