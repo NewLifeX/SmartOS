@@ -11,6 +11,7 @@ void TestCrc();
 void TestADC();
 void TestEnc28j60();
 void TestEthernet();
+void IRTest();
 void TestTimer(OutputPort& leds);
 void TestThread(OutputPort& leds);
 
