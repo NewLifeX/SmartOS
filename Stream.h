@@ -128,6 +128,23 @@ public:
 		return count;
 	}
 
+	uint ReadEncodeInt()
+	{
+		uint value = 0;
+		uint temp = 0;
+		for(int i = 0; i < 4; i++)
+		{
+			Read(&temp, 0, 1);
+			if(temp<127)
+			{
+				value |= ( temp << (7*i));
+				return value;
+			}
+			temp &= 0x7f;
+			value |= ( temp << (7*i));
+		}
+	}
+
 	// 把数据写入当前位置
 	void Write(byte* buf, uint offset, uint count)
 	{
@@ -141,6 +158,23 @@ public:
 		//Length += count;
 		// 内容长度不是累加，而是根据位置而扩大
 		if(_Position > Length) Length = _Position;
+	}
+
+	uint WriteEncodeInt(uint value)
+	{
+		byte temp;
+		for( int i = 0 ; i < 4 ; i++ )
+		{
+			temp = (byte)value;
+			if(temp < 127) 
+			{
+				Write(&temp, 0, 1);
+				return i+1;
+			}
+			temp |= 0x80;
+			Write(&temp, 0, 1);
+			value>>=7;
+		}
 	}
 
 	// 取回指定结构体指针，并移动游标位置
