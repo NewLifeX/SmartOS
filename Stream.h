@@ -134,7 +134,7 @@ public:
 		uint temp = 0;
 		for(int i = 0; i < 4; i++)
 		{
-			Read(&temp, 0, 1);
+			temp = (uint)ReadBytes(1);
 			if(temp<127)
 			{
 				value |= ( temp << (7*i));
@@ -143,6 +143,7 @@ public:
 			temp &= 0x7f;
 			value |= ( temp << (7*i));
 		}
+		return 0xffffffff;
 	}
 
 	// 把数据写入当前位置
@@ -175,6 +176,7 @@ public:
 			Write(&temp, 0, 1);
 			value>>=7;
 		}
+		return 0;
 	}
 
 	// 取回指定结构体指针，并移动游标位置
