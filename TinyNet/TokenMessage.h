@@ -14,19 +14,14 @@ class TokenMessage : public Message
 private:
 
 public:
-	uint	Token;		// 令牌
-
 	byte	_Length;	// 数据长度
 	byte	_Code:7;	// 功能码
 	byte	_Reply:1;	// 是否响应指令
 
 	byte	_Data[256];	// 数据
 
-	uint	Checksum;	// 校验码
-	uint	Crc;		// 动态计算得到的校验码
-
-	static const uint HeaderSize = 4 + 1 + 1;	// 消息头部大小
-	static const uint MinSize = HeaderSize + 0 + 4;	// 最小消息大小
+	static const uint HeaderSize = 1 + 1;	// 消息头部大小
+	static const uint MinSize = HeaderSize + 0;	// 最小消息大小
 
 	// 使用指定功能码初始化令牌消息
 	TokenMessage(byte code = 0);
@@ -41,8 +36,6 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	// 计算当前消息的Crc
-	virtual void ComputeCrc();
 	// 设置错误信息字符串
 	void SetError(byte errorCode, string error, int errLength);
 

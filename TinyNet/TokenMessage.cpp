@@ -9,10 +9,8 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 	_Code	= 0;
 	Error	= 0;
 	_Length	= 0;*/
-	memset(&Token, 0, HeaderSize);
-
-	Checksum= 0;
-	Crc		= 0;
+	//memset(&Token, 0, HeaderSize);
+	*(short*)&_Code = 0;
 }
 
 // 从数据流中读取消息
@@ -21,20 +19,21 @@ bool TokenMessage::Read(MemoryStream& ms)
 	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
 
-	ms.Read((byte*)&Token, 0, HeaderSize);
+	//ms.Read((byte*)&Token, 0, HeaderSize);
+	*(short*)&_Code = ms.Read<short>();
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;
 	Reply	= _Reply;
 
-	if(ms.Remain() < Length + 4) return false;
+	if(ms.Remain() < Length) return false;
 
 	if(Length > 0) ms.Read(Data, 0, Length);
 
-	Checksum = ms.Read<uint>();
+	//Checksum = ms.Read<uint>();
 
 	// 令牌消息是连续的，可以直接计算CRC
-	Crc = Sys.Crc(&Token, HeaderSize + Length);
+	//Crc = Sys.Crc(&Token, HeaderSize + Length);
 
 	return true;
 }
@@ -48,17 +47,18 @@ void TokenMessage::Write(MemoryStream& ms)
 	_Length	= Length;
 	_Reply	= Reply;
 
-	ms.Write((byte*)&Token, 0, HeaderSize);
+	//ms.Write((byte*)&Token, 0, HeaderSize);
+	ms.Write(*(short*)&_Code);
 
 	if(Length > 0) ms.Write(Data, 0, Length);
 
 	// 令牌消息是连续的，可以直接计算CRC
-	Checksum = Crc = Sys.Crc(&Token, HeaderSize + Length);
+	//Checksum = Crc = Sys.Crc(&Token, HeaderSize + Length);
 
-	ms.Write(Checksum);
+	//ms.Write(Checksum);
 }
 
-void TokenMessage::ComputeCrc()
+/*void TokenMessage::ComputeCrc()
 {
 	MemoryStream ms(Size());
 
@@ -66,21 +66,23 @@ void TokenMessage::ComputeCrc()
 
 	// 扣除不计算校验码的部分
 	Checksum = Crc = Sys.Crc(ms.GetBuffer(), HeaderSize + Length);
-}
+}*/
 
 // 验证消息校验码是否有效
 bool TokenMessage::Valid() const
 {
-	if(Checksum == Crc) return true;
+	/*if(Checksum == Crc) return true;
 
 	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
-	return false;
+	return false;*/
+
+	return true;
 }
 
 // 消息总长度，包括头部、负载数据和校验
 uint TokenMessage::Size() const
 {
-	return HeaderSize + Length + 4;
+	return HeaderSize + Length;
 }
 
 // 设置错误信息字符串
@@ -99,14 +101,14 @@ void TokenMessage::Show() const
 {
 #if DEBUG
 	assert_ptr(this);
-	debug_printf("Token=0x%08x Code=0x%02x", Token, Code);
+	debug_printf("Code=0x%02x", Token, Code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
 		debug_printf(" Data[%d]=", Length);
 		Sys.ShowString(Data, Length, false);
 	}
-	if(!Valid()) debug_printf(" Crc Error 0x%04x [%04X]", Crc, __REV(Crc));
+	//if(!Valid()) debug_printf(" Crc Error 0x%04x [%04X]", Crc, __REV(Crc));
 	debug_printf("\r\n");
 #endif
 }
@@ -175,7 +177,7 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 	// 只处理本机消息或广播消息。快速处理，高效。
-	if(Token != 0 && tmsg.Token != Token && tmsg.Token != 0) return false;
+	//if(Token != 0 && tmsg.Token != Token && tmsg.Token != 0) return false;
 
 #if MSG_DEBUG
 	/*msg_printf("TokenController::Dispatch ");
@@ -193,11 +195,11 @@ int TokenController::Send(Message& msg, ITransport* port)
 	TokenMessage& tmsg = (TokenMessage&)msg;
 
 	// 附上自己的地址
-	tmsg.Token = Token;
+	//tmsg.Token = Token;
 
 #if MSG_DEBUG
 	// 计算校验
-	msg.ComputeCrc();
+	//msg.ComputeCrc();
 
 	ShowMessage(tmsg, true);
 #endif
