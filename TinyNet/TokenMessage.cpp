@@ -10,7 +10,7 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 	Error	= 0;
 	_Length	= 0;*/
 	//memset(&Token, 0, HeaderSize);
-	*(short*)&_Code = 0;
+	*(byte*)&_Code = 0;
 }
 
 // 从数据流中读取消息
@@ -20,7 +20,7 @@ bool TokenMessage::Read(MemoryStream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	//ms.Read((byte*)&Token, 0, HeaderSize);
-	*(short*)&_Code = ms.Read<short>();
+	*(byte*)&_Code = ms.Read<byte>();
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;
@@ -48,7 +48,7 @@ void TokenMessage::Write(MemoryStream& ms)
 	_Reply	= Reply;
 
 	//ms.Write((byte*)&Token, 0, HeaderSize);
-	ms.Write(*(short*)&_Code);
+	ms.Write(*(byte*)&_Code);
 
 	if(Length > 0) ms.Write(Data, 0, Length);
 
@@ -101,7 +101,7 @@ void TokenMessage::Show() const
 {
 #if DEBUG
 	assert_ptr(this);
-	debug_printf("Code=0x%02x", Token, Code);
+	//debug_printf("Code=0x%02x", Token, Code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -172,7 +172,7 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 bool TokenController::Valid(Message& msg, ITransport* port)
 {
-	TokenMessage& tmsg = (TokenMessage&)msg;
+	//TokenMessage& tmsg = (TokenMessage&)msg;
 
 	// 代码为0是非法的
 	if(!msg.Code) return false;
@@ -192,7 +192,7 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 int TokenController::Send(Message& msg, ITransport* port)
 {
-	TokenMessage& tmsg = (TokenMessage&)msg;
+	//TokenMessage& tmsg = (TokenMessage&)msg;
 
 	// 附上自己的地址
 	//tmsg.Token = Token;
