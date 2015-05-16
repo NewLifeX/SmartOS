@@ -10,7 +10,9 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 	Error	= 0;
 	_Length	= 0;*/
 	//memset(&Token, 0, HeaderSize);
-	*(byte*)&_Code = 0;
+	//*(byte*)((&_Length)+4) = 0;
+	_Code = 0;
+	_Reply = 0;
 }
 
 // 从数据流中读取消息
@@ -20,7 +22,10 @@ bool TokenMessage::Read(MemoryStream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	//ms.Read((byte*)&Token, 0, HeaderSize);
-	*(byte*)&_Code = ms.Read<byte>();
+	//*(byte*)&_Code = ms.Read<byte>();
+	byte temp = ms.Read<byte>();
+	_Code = temp&0x7f;
+	_Reply = temp & 0x80;
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;
@@ -48,7 +53,8 @@ void TokenMessage::Write(MemoryStream& ms)
 	_Reply	= Reply;
 
 	//ms.Write((byte*)&Token, 0, HeaderSize);
-	ms.Write(*(byte*)&_Code);
+	byte temp = _Code + _Reply<<7;
+	ms.Write(temp);
 
 	if(Length > 0) ms.Write(Data, 0, Length);
 
