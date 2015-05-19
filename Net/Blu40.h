@@ -6,6 +6,7 @@
 #include "Port.h"
 #include "Net\ITransport.h"
 
+// 司卡乐 CC2540
 class Blu40 : public ITransport
 {
 private:
@@ -30,4 +31,14 @@ protected:
 	virtual uint OnRead(byte* buf, uint len) { return _port->Read(buf, len); }
 
 	static uint OnPortReceive(ITransport* sender, byte* buf, uint len, void* param);
+	
+	// 设置波特路
+	bool SetBP(uint BP);
+	// 检查设置是否成功 使用大部分指令
+	bool CheckSet();
+	// 设置发送信号强度 DB数
+	const int TPLNum[] = {-23,-6,0,4};
+	bool SetTPL(int TPLDB);
+	// 设置蓝牙名称
+	bool SetName(string name);
 };
