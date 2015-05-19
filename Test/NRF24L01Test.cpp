@@ -19,10 +19,8 @@ void OnSend(void* param)
     //nrf->SetMode(false);
     if(!nrf->Write(tx_buf, ArrayLength(tx_buf)))
     {
-        NRF24L01::RF_STATUS st;
-        st.Init(nrf->Status);
         debug_printf ("Test Send Error 0x%02x\r\n", nrf->Status);
-        if(!st.MAX_RT) nrf->ShowStatus();
+        nrf->ShowStatus();
     }
     //nrf->SetMode(true);
 }

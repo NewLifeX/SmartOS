@@ -29,7 +29,7 @@ void TestADC()
 
 	adc.Open();
 
-	while(true)
+	for(int i=0; i<100; i++)
 	{
 		/*for(int i=0; i<adc.Count; i++)
 			debug_printf("ADC[%d]=%d ", i+1, adc.Data[i]);
