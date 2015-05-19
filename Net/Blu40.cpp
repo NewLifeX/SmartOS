@@ -37,16 +37,22 @@ const byte AT_REN[] = "AT::REN-";
 /*
 "AT:PID-"+Data	自定义产品识别码 数据长度为2byte  默认为0x0000
 */
-
-
-
+const byte AT_PID[] = "AT:PID-";
+/*
+"AT:TPL-"+X  发送功率设置
+X:
+0:-23DB
+1:-6DB
+2:0DB
+3:+4DB
+*/
+const byte AT_TPL[] = "AT:TPL-";
 
 Blu40::Blu40()
 {
 	_rts = NULL;
 	_cts = NULL;
 }
-
 
 Blu40:Blu40(ITransport *port,Pin rts = P0 ,Pin cts = P0, OutputPort * rst = NULL)
 {
