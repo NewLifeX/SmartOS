@@ -44,7 +44,7 @@ namespace NewLife.Reflection
             Clear();
 
             // 更新脚本自己
-            UpdateSelf();
+            //UpdateSelf();
 
             return 0;
         }
