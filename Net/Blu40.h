@@ -41,4 +41,6 @@ protected:
 	bool SetTPL(int TPLDB);
 	// 设置蓝牙名称
 	bool SetName(string name);
+	// 设置产品识别码 硬件类型code
+	bool SetPID(ushort pid);
 };

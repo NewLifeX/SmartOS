@@ -27,18 +27,23 @@ X
 回复
 "AT:BPS SET AFTER 2S \r\n\0"
 "AT:ERR\r\n\0"
+掉电记忆
 */
 const byte AT_BPS[] = "AT:BPS-";
 
 /*以下设置类回复状态 "AT:OK\r\n\0"  "AT:ERR\r\n\0"*/
 /*
-"AT:REN-"+Name 设置蓝牙名称
+"AT:REN-"+Name 设置蓝牙名称  默认 RFScaler
+掉电记忆
 */
 const byte AT_REN[] = "AT::REN-";
+
 /*
 "AT:PID-"+Data	自定义产品识别码 数据长度为2byte  默认为0x0000
+掉电记忆
 */
 const byte AT_PID[] = "AT:PID-";
+
 /*
 "AT:TPL-"+X  发送功率设置
 X:
@@ -90,7 +95,7 @@ bool Blu40::SetBP(uint BP)
 		debug_prinf("Blu不支持如此高的波特率");
 	}
 	//const byte AT_BPSNum[] = {'0','1','2','3','4','5','6','7'};
-	int bpnumIndex;
+	byte bpnumIndex;
 	for( bpnumIndex =0,_bp=1200;_bp == BP;_bp<<=1,bpnumIndex++ );
 	
 	_port->Write(AT_BPS,sizof(AT_BPS));
@@ -134,6 +139,13 @@ bool Blu40::SetName(string name)
 {
 	_port->Write(AT_REN,sizof(AT_REN));
 	_port->Write(name,sizeof(name));
+	return CheckSet();
+}
+
+bool Blu40::SetPID(ushort pid)
+{
+	_port->Write(AT_PID,sizof(AT_REN));
+	_port->Write(&pid,2);
 	return CheckSet();
 }
 
