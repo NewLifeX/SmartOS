@@ -102,7 +102,7 @@ void TokenController::Init()
 {
 	Token	= 0;
 
-	debug_printf("TokenNet::Inited 使用[%d]个传输接口\r\n", _ports.Count());
+	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
 	MinSize = TokenMessage::MinSize;
 }
