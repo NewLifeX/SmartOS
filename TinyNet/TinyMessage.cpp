@@ -271,7 +271,7 @@ bool TinyController::Valid(Message& msg, ITransport* port)
 	// 非广播包时，源地址和目的地址相同也是非法的
 	if(tmsg.Dest == tmsg.Src) return false;
 	// 只处理本机消息或广播消息。快速处理，高效。
-	if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	if(Address != 0 && tmsg.Dest != Address && tmsg.Dest != 0) return false;
 
 #if DEBUG
 	// 调试版不过滤序列号为0的重复消息
