@@ -123,11 +123,12 @@ bool TinyClient::Discover(Message& msg, void* param)
 
 	assert_ptr(param);
 	TinyClient* client = (TinyClient*)param;
+	TinyController* ctrl = (TinyController*)client->_control;
 
 	// 解析数据
 	MemoryStream ms(msg.Data, msg.Length);
 	if(ms.Remain())
-		client->_control->Address = ms.Read<byte>();
+		ctrl->Address = ms.Read<byte>();
 	if(ms.Remain() >= 8)
 		client->Password = ms.Read<ulong>();
 

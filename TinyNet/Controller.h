@@ -29,8 +29,6 @@ protected:
 	virtual bool Valid(Message& msg, ITransport* port);
 
 public:
-	byte	Address;	// 地址
-
 	Controller(ITransport* port);
 	Controller(ITransport* ports[], int count);
 	virtual ~Controller();

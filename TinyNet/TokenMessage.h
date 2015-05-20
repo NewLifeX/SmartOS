@@ -14,9 +14,9 @@ class TokenMessage : public Message
 private:
 
 public:
-	byte	_Length;	// 数据长度
 	byte	_Code:7;	// 功能码
 	byte	_Reply:1;	// 是否响应指令
+	byte	_Length;	// 数据长度
 
 	byte	_Data[256];	// 数据
 
@@ -36,7 +36,7 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	virtual void ComputeCrc(){};
+	virtual void ComputeCrc() { }
 	// 设置错误信息字符串
 	void SetError(byte errorCode, string error, int errLength);
 
@@ -59,7 +59,7 @@ public:
 
 	TokenController(ITransport* port);
 	TokenController(ITransport* ports[], int count);
-	virtual ~TokenController();
+	//virtual ~TokenController();
 
 	// 创建消息
 	virtual Message* Create() const;	

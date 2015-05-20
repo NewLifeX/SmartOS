@@ -60,13 +60,6 @@ void Controller::Init()
 	//ArrayZero(_Handlers);
 	//_HandlerCount = 0;
 
-	// 初始化一个随机地址
-	Address = Sys.ID[0];
-	// 如果地址为0，则使用时间来随机一个
-	while(!Address) Address = Time.Current();
-
-	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
-
 	Received	= NULL;
 	Param		= NULL;
 }
