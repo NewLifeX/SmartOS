@@ -240,23 +240,6 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 		msg_printf("Request ");
 
 	msg.Show();
-/*#if DEBUG
-	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x Retry=%d ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum, msg.Retry);
-#else
-	msg_printf("0x%02x => 0x%02x Code=0x%02x Flag=%02x Sequence=%d Length=%d Checksum=0x%04x ", msg.Src, msg.Dest, msg.Code, *((byte*)&(msg._Code)+1), msg.Sequence, msg.Length, msg.Checksum);
-#endif
-	if(msg.Length > 0)
-	{
-		msg_printf(" 数据：[%d] ", msg.Length);
-		Sys.ShowString(msg.Data, msg.Length, false);
-	}
-	if(!msg.Valid()) msg_printf(" Crc Error 0x%04x [%04X]", msg.Crc, __REV16(msg.Crc));
-	msg_printf("\r\n");*/
-
-	/*Sys.ShowHex(buf, MESSAGE_SIZE);
-	if(msg.Length > 0)
-		Sys.ShowHex(msg.Data, msg.Length);
-	msg_printf("\r\n");*/
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
@@ -592,26 +575,15 @@ void TinyController::ShowStat()
 void MessageNode::SetMessage(TinyMessage& msg)
 {
 	Sequence = msg.Sequence;
-	//NoAck = msg.NoAck;
 	Interval = 0;
 	Times = 0;
 	LastSend = 0;
 
-	// 这种方式不支持后续的TTL等，所以不再使用
-	/*byte* buf = (byte*)&msg.Dest;
-	if(!msg.Length)
-	{
-		Length = MESSAGE_SIZE;
-		memcpy(Data, buf, MESSAGE_SIZE);
-	}
-	else*/
-	{
-		// 注意，此时指针位于0，而内容长度为缓冲区长度
-		MemoryStream ms(Data, ArrayLength(Data));
-		ms.Length = 0;
-		msg.Write(ms);
-		Length = ms.Length;
-	}
+	// 注意，此时指针位于0，而内容长度为缓冲区长度
+	MemoryStream ms(Data, ArrayLength(Data));
+	ms.Length = 0;
+	msg.Write(ms);
+	Length = ms.Length;
 }
 
 RingQueue::RingQueue()
