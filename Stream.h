@@ -167,7 +167,7 @@ public:
 		for( int i = 0 ; i < 4 ; i++ )
 		{
 			temp = (byte)value;
-			if(temp < 127) 
+			if(temp < 127)
 			{
 				Write(&temp, 0, 1);
 				return i+1;
@@ -224,8 +224,11 @@ public:
 		if(_Position > Length) Length = _Position;
 	}
 
-	byte* ReadBytes(uint count)
+	byte* ReadBytes(int count = -1)
 	{
+		// 默认小于0时，读取全部数据
+		if(count < 0) count = Remain();
+
 		byte* p = Current();
 		if(!Seek(count)) return NULL;
 

@@ -85,7 +85,7 @@ public:
 
 	virtual void Register(TransportHandler handler, void* param = NULL);
 
-	virtual string ToString() { return "nRF24L01+"; }
+	virtual string ToString() { return "R24"; }
 
 protected:
 	virtual bool OnOpen();
