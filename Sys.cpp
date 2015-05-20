@@ -38,7 +38,7 @@ void TSys::Sleep(uint ms)
 	else
 	{
 #if DEBUG
-		if(ms >= 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
+		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
 #endif
 		Time.Sleep(ms * 1000);
 	}
@@ -52,7 +52,7 @@ void TSys::Delay(uint us)
 	else
 	{
 #if DEBUG
-		if(us >= 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
+		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
 #endif
 		Time.Sleep(us);
 	}
