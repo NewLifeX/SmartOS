@@ -113,7 +113,13 @@ void TaskScheduler::Start()
 
 		// 如果有最小时间，睡一会吧
 		now = Time.Current();	// 当前时间
-		if(min != UInt64_Max && min > now) Sys.Delay(min - now);
+		if(min != UInt64_Max && min > now)
+		{
+			min -= now;
+			// 最大只允许睡眠1秒，避免Sys.Delay出现设计错误，同时也更人性化
+			if(min > 1000000) min = 1000000;
+			Sys.Delay(min);
+		}
 	}
 	debug_printf("%s停止调度，共有%d个任务！\r\n", Name, Count);
 }
