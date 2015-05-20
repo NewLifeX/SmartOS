@@ -227,8 +227,8 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 		msg_printf("TinyMessage::Send ");
 	else
 	{
-		msg_printf("%s ", port->ToString());
-		msg_printf("TinyMessage::");
+		msg_printf("%s", port->ToString());
+		msg_printf("::");
 	}
 	if(msg.Error)
 		msg_printf("Error ");
