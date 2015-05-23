@@ -265,7 +265,7 @@ bool SerialPort::Flush(uint times)
 	return times > 0;
 }
 
-void SerialPort::SetBaudRate(int baudRate = 115200)
+void SerialPort::SetBaudRate(int baudRate)
 {
 	Init( _index,  baudRate,  _parity,  _dataBits,  _stopBits);
 }
