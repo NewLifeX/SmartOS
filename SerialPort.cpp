@@ -265,6 +265,11 @@ bool SerialPort::Flush(uint times)
 	return times > 0;
 }
 
+void SerialPort::SetBaudRate(int baudRate = 115200)
+{
+	Init( _index,  baudRate,  _parity,  _dataBits,  _stopBits);
+}
+
 void SerialPort::Register(TransportHandler handler, void* param)
 {
 	ITransport::Register(handler, param);

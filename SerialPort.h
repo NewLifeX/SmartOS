@@ -59,6 +59,8 @@ public:
 	void SendData(byte data, uint times = 3000);
 
     bool Flush(uint times = 3000);
+	
+	void SetBaudRate(int baudRate = 115200);
 
     void GetPins(Pin* txPin, Pin* rxPin);
 
