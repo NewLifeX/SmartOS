@@ -76,7 +76,7 @@ Blu40::Blu40(SerialPort *port,Pin rts ,Pin cts, OutputPort * rst )
 
 void Blu40::Init(SerialPort *port ,Pin rts,Pin cts,OutputPort * rst)
 {
-	if(!port) _port = port;
+	if(port) _port = port;
 	if(rts != P0)_rts = new OutputPort(rts);
 	//if(cts != P0)_cts = new InputPort(cts);
 	//_cts.Register();
@@ -101,16 +101,35 @@ void Blu40::Reset()
 	*_rst = true;
 }
 
+
+//0：1200
+//1：2400
+//2：4800
+//3：9600
+//4：19200
+//5：38400
+//6：57600
+//7：115200
+int const BPreserve[] = {1200,2400,4800,9600,19200,38400,57600,115200};
 bool Blu40::SetBP(int BP)
 {
 	if(BP>115200)
 	{
-		debug_printf("Blu不支持如此高的波特率");
+		debug_printf("Blu不支持如此高的波特率\r\n");
 	}
 	//const byte AT_BPSNum[] = {'0','1','2','3','4','5','6','7'};
 	byte bpnumIndex;
-	int _bp;
-	for( bpnumIndex =0, _bp=1200;_bp == BP;_bp*=2,bpnumIndex++ );
+//	int _bp;
+//	for( bpnumIndex =0, _bp=1200;_bp != BP && bpnumIndex<5;_bp*=2,bpnumIndex++);
+//	if(_bp != BP)
+//	{
+//		_bp=57600;
+//		bpnumIndex++;
+//		for( ;_bp != BP && bpnumIndex<8;_bp*=2,bpnumIndex++ );
+//	}
+//	if(_bp != BP)return false;
+	for(bpnumIndex=0;BP!=BPreserve[bpnumIndex] && bpnumIndex<8;bpnumIndex++);
+	if(BPreserve[bpnumIndex] != BP)return false;
 	
 	byte buf[40];
 	byte BPSOK[] = "AT:BPS SET AFTER 2S \r\n\0";
@@ -127,7 +146,7 @@ bool Blu40::SetBP(int BP)
 		{
 			if(buf[j] != BPSOK[j])
 			{
-				debug_printf("设置失败，重新调整波特率进行设置");
+				debug_printf("设置失败，重新调整波特率进行设置\r\n");
 				break;
 			}
 		}
@@ -136,7 +155,7 @@ bool Blu40::SetBP(int BP)
 	}
 	{
 		int portBaudRateTemp = 115200;
-		for(int i = 0;i<7;i++)
+		for(int i = 0;i<8;i++)
 		{
 			_port->SetBaudRate(	portBaudRateTemp);
 			_port->Write(AT_BPS,sizeof(AT_BPS));
@@ -153,12 +172,12 @@ bool Blu40::SetBP(int BP)
 				{
 					if(i==7)
 					{	
-						debug_printf("设置失败，请检查现在使用的波特率是否正确");
+						debug_printf("设置失败，请检查现在使用的波特率是否正确\r\n");
 						_baudRate = 0;
 						return false;
 					}
-					debug_printf("设置失败，重新调整当前波特率进行设置");
-					portBaudRateTemp/=2;
+					debug_printf("设置失败，重新调整当前波特率进行设置\r\n");
+					portBaudRateTemp=BPreserve[8-i];
 					break;
 				}
 			}
@@ -177,7 +196,7 @@ bool Blu40::CheckSet()
 	{
 		if(buf[i] != ATOK[i])
 		{
-			debug_printf("设置失败");
+			debug_printf("设置失败\r\n");
 			return false;
 		}
 	}
