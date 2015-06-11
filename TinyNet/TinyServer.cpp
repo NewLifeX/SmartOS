@@ -115,8 +115,9 @@ bool TinyServer::Discover(Message& msg, void* param)
 
 	// 解析数据
 	MemoryStream ms(msg.Data, msg.Length);
+	TinyController* ctrl = (TinyController*)client->_control;
 	if(ms.Remain())
-		client->_control->Address = ms.Read<byte>();
+		ctrl->Address = ms.Read<byte>();
 	if(ms.Remain() >= 8)
 		client->Password = ms.Read<ulong>();
 

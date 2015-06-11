@@ -200,8 +200,10 @@ void TinyController::Init()
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 	}
 
-	TotalSend = TotalAck = TotalBytes = TotalCost = TotalRetry = TotalMsg = 0;
-	LastSend = LastAck = LastBytes = LastCost = LastRetry = LastMsg = 0;
+	//Total.Send = Total.Ack = Total.Bytes = Total.Cost = TotalRetry = Total.Msg = 0;
+	//Last.Send = Last.Ack = Last.Bytes = Last.Cost = LastRetry = Last.Msg = 0;
+	memset(&Total, 0, sizeof(Total));
+	memset(&Last, 0, sizeof(Last));
 
 	// 因为统计不准确，暂时不显示状态统计
 	Sys.AddTask(StatTask, this, 1000000, 5000000);
@@ -321,9 +323,9 @@ void TinyController::AckRequest(TinyMessage& msg, ITransport* port)
 			uint cost = (uint)(Time.Current() - node->LastSend);
 			if(node->Ports.Count() > 0)
 			{
-				TotalCost += cost;
-				TotalAck++;
-				TotalBytes += node->Length;
+				Total.Cost += cost;
+				Total.Ack++;
+				Total.Bytes += node->Length;
 			}
 
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
@@ -438,7 +440,7 @@ void TinyController::Loop()
 					else
 						msg_printf("超时！Interval=%dus\r\n", Interval);
 				}*/
-				TotalRetry = node->Times;
+				Total.Retry = node->Times;
 
 				_Queue.Remove(node);
 				delete node;
@@ -464,26 +466,15 @@ void TinyController::Loop()
 			if(port) port->Write(node->Data, node->Length);
 
 			// 增加发送次数统计
-			TotalSend++;
-			//TotalBytes += node->Length;
+			Total.Send++;
+			//Total.Bytes += node->Length;
 		}
 
 		// 分组统计
-		if(TotalSend >= 10)
+		if(Total.Send >= 10)
 		{
-			LastSend	= TotalSend;
-			LastAck		= TotalAck;
-			LastBytes	= TotalBytes;
-			LastCost	= TotalCost;
-			LastRetry	= TotalRetry;
-			LastMsg		= TotalMsg;
-
-			TotalSend	= 0;
-			TotalAck	= 0;
-			TotalBytes	= 0;
-			TotalCost	= 0;
-			TotalRetry	= 0;
-			TotalMsg	= 0;
+			memcpy(&Last, &Total, sizeof(Total));
+			memset(&Last, 0, sizeof(Last));
 		}
 
 		node->LastSend = Time.Current();
@@ -525,7 +516,7 @@ bool TinyController::Post(TinyMessage& msg, int expire, ITransport* port)
 	node->Next = 0;
 	node->Expired = Time.Current() + expire * 1000;
 
-	TotalMsg++;
+	Total.Msg++;
 
 	// 加入等待队列
 	if(_Queue.Add(node) < 0) return false;
@@ -562,13 +553,13 @@ void StatTask(void* param)
 void TinyController::ShowStat()
 {
 	static uint last = 0;
-	if(TotalSend == last) return;
-	last = TotalSend;
+	if(Total.Send == last) return;
+	last = Total.Send;
 
-	uint rate = (LastAck + TotalAck) * 100 / (LastSend + TotalSend);
-	uint cost = (LastCost + TotalCost) / (LastAck + TotalAck);
-	uint speed = (LastBytes + TotalBytes) * 1000000 / (LastCost + TotalCost);
-	uint retry = (LastSend + TotalSend) * 100 / (LastMsg + TotalMsg);
+	uint rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + Total.Send);
+	uint cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
+	uint speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
+	uint retry = (Last.Send + Total.Send) * 100 / (Last.Msg + Total.Msg);
 	msg_printf("TinyController::State 成功率=%d%% 平均时间=%dus 速度=%d Byte/s 平均重发=%d.%02d \r\n", rate, cost, speed, retry/100, retry%100);
 }
 

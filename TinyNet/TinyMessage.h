@@ -88,6 +88,23 @@ public:
 	bool Check(ushort item);
 };
 
+// 统计信息
+class Statistics
+{
+public:
+	uint	Send;	// 总次数
+	uint	Ack;	// 总成功
+	uint	Bytes;	// 总字节数
+	uint	Cost;	// 从开销
+	uint	Retry;	// 总重试次数
+	uint	Msg;	// 总消息数
+	
+	Statistics()
+	{
+		memset(this, 0, sizeof(this));
+	}
+};
+
 // 消息控制器。负责发送消息、接收消息、分发消息
 class TinyController : public Controller
 {
@@ -134,18 +151,8 @@ public:
 
 public:
 	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX
-	uint	TotalSend;	// 总次数
-	uint	TotalAck;	// 总成功
-	uint	TotalBytes;	// 总字节数
-	uint	TotalCost;	// 从开销
-	uint	TotalRetry;	// 总重试次数
-	uint	TotalMsg;	// 总消息数
-	uint	LastSend;	// 上一组次数
-	uint	LastAck;	// 上一组成功
-	uint	LastBytes;	// 上一组字节数
-	uint	LastCost;	// 上一组开销
-	uint	LastRetry;	// 上一组重试次数
-	uint	LastMsg;	// 上一组消息数
+	Statistics	Total;	// 总统计
+	Statistics	Last;	// 最后一次统计
 
 	// 显示统计信息
 	void ShowStat();
