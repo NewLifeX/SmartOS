@@ -105,6 +105,8 @@ void TokenController::Init()
 	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
 	MinSize = TokenMessage::MinSize;
+
+	_Response = NULL;
 }
 
 // 创建消息
@@ -170,7 +172,7 @@ int TokenController::Send(Message& msg, ITransport* port)
 bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
 {
 #if DEBUG
-	if(!_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
+	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
 #endif
 
 	if(msg.Reply) return Send(msg) != 0;

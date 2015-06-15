@@ -5,13 +5,13 @@
 
 bool OnTokenClientReceived(Message& msg, void* param);
 
-void DiscoverTask(void* param);
+void HelloTask(void* param);
 void PingTask(void* param);
 
-//static uint _taskDiscover = 0;
+static uint _taskHello = 0;
 //static uint _taskPing = 0;
 
-TokenClient::TokenClient(Controller* control)
+TokenClient::TokenClient(TokenController* control)
 {
 	assert_ptr(control);
 
@@ -30,11 +30,26 @@ TokenClient::TokenClient(Controller* control)
 	Received	= NULL;
 	Param		= NULL;
 
-	//OnDiscover	= NULL;
+	OnHello	= NULL;
 	//OnPing		= NULL;
 
 	Switchs		= NULL;
 	Regs		= NULL;
+
+#if DEBUG
+	_control->AddTransport(SerialPort::GetMessagePort());
+#endif
+
+	// 注册消息。每个消息代码对应一个功能函数
+	_control->Register(1, Hello, this);
+	//_control->Register(2, Ping, this);
+	//_control->Register(3, SysID, this);
+	//_control->Register(4, SysTime, this);
+	//_control->Register(5, SysMode, this);
+
+	// 发现服务端的任务
+	debug_printf("开始寻找服务端 ");
+	_taskHello = Sys.AddTask(HelloTask, this, 0, 2000000);
 }
 
 void TokenClient::Send(Message& msg)
@@ -58,98 +73,81 @@ bool OnTokenClientReceived(Message& msg, void* param)
 	return true;
 }
 
-/*// 常用系统级消息
+// 常用系统级消息
 
-void TokenClient::SetDefault()
-{
-#if DEBUG
-	_control->AddTransport(SerialPort::GetMessagePort());
-#endif
-
-	// 注册消息。每个消息代码对应一个功能函数
-	_control->Register(1, Discover, this);
-	_control->Register(2, Ping, this);
-	_control->Register(3, SysID, this);
-	_control->Register(4, SysTime, this);
-	_control->Register(5, SysMode, this);
-
-	// 发现服务端的任务
-	debug_printf("开始寻找服务端 ");
-	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
-}
-
-// 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
-static byte _lastDiscoverID;
-
-void DiscoverTask(void* param)
+void HelloTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	client->Discover();
+	client->Hello();
 }
 
 // 发送发现消息，告诉大家我在这
-// 格式：2字节设备类型 + 20字节系统ID
-void TokenClient::Discover()
+// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
+// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
+void TokenClient::Hello()
 {
-	Message* p_msg = _control->Create();
-	TinyMessage& msg = *(TinyMessage*)p_msg;
-	msg.Code = 1;
+	TokenMessage msg(1);
 
 	// 发送的广播消息，设备类型和系统ID
-	MemoryStream ms(msg.Data, ArrayLength(msg.Data));
+	MemoryStream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Length = 0;
-	ms.Write(DeviceType);
-	ms.Write(Sys.ID, 0, 20);
+
+	ms.Write(Sys.Version);
+
+	// 注意Code小字节序
+	ushort code = Sys.Code << 8;
+	code |= Sys.Code >> 8;
+	byte type[4];
+	Sys.ToHex(type, (byte*)&code, 2);
+	ms.Write((byte)4);
+	ms.Write(type, 0, 4);
+
+	ms.Write(Sys.Name);
+
+	ms.Write(Time.Now().TotalMicroseconds() * 10);
+
+	ms.Write((int)0);
+	ms.Write((ushort)3377);
+
+	char ds[] = "RC4";
+	ms.Write((byte)1);
+	ms.Write((byte)(ArrayLength(ds) - 1));
+	ms.Write((byte*)ds, 0, ArrayLength(ds) - 1);
+
 	msg.Length = ms.Length;
 
-	_control->Send(msg);
-
-	_lastDiscoverID = msg.Sequence;
-
-	delete p_msg;
+	_control->SendAndReceive(msg, 3, 500);
+	
+	msg.Show();
 }
 
 // Discover响应
 // 格式：1字节地址 + 8字节密码
-bool TokenClient::Discover(Message& msg, void* param)
+bool TokenClient::Hello(Message& msg, void* param)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 客户端只处理Discover响应
-	if(!tmsg.Reply || tmsg.Error) return true;
-
-	// 校验不对
-	if(_lastDiscoverID != tmsg.Sequence) return true;
+	if(!tmsg.Reply) return true;
 
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	TinyController* ctrl = (TinyController*)client->_control;
+	//TokenController* ctrl = (TokenController*)client->_control;
 
 	// 解析数据
 	MemoryStream ms(msg.Data, msg.Length);
-	if(ms.Remain())
-		ctrl->Address = ms.Read<byte>();
-	if(ms.Remain() >= 8)
-		client->Password = ms.Read<ulong>();
-
-	// 记住服务端地址
-	client->Server = tmsg.Src;
 
 	// 取消Discover任务
 	debug_printf("停止寻找服务端 ");
-	Sys.RemoveTask(_taskDiscover);
-	_taskDiscover = 0;
+	Sys.RemoveTask(_taskHello);
+	_taskHello = 0;
 
-	// 启动Ping任务
-	debug_printf("开始Ping服务端 ");
-	_taskPing = Sys.AddTask(PingTask, client, 0, 5000000);
-
-	if(client->OnDiscover) return client->OnDiscover(msg, param);
+	if(client->OnHello) return client->OnHello(msg, param);
 
 	return true;
 }
 
-void PingTask(void* param)
+/*void PingTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
@@ -168,7 +166,7 @@ void TokenClient::Ping()
 		Sys.RemoveTask(_taskPing);
 
 		debug_printf("开始寻找服务端 ");
-		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+		_taskHello = Sys.AddTask(DiscoverTask, this, 0, 2000000);
 
 		Server = 0;
 		Password = 0;
@@ -191,7 +189,7 @@ bool TokenClient::Ping(Message& msg, void* param)
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
 	if(tmsg.Reply)
 	{
@@ -209,7 +207,7 @@ bool TokenClient::Ping(Message& msg, void* param)
 // 系统时间获取与设置
 bool TokenClient::SysTime(Message& msg, void* param)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
 	if(tmsg.Reply) return true;
 
@@ -234,7 +232,7 @@ bool TokenClient::SysTime(Message& msg, void* param)
 
 bool TokenClient::SysID(Message& msg, void* param)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
 	if(tmsg.Reply) return true;
 
@@ -256,7 +254,7 @@ bool TokenClient::SysID(Message& msg, void* param)
 
 bool TokenClient::SysMode(Message& msg, void* param)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
 	if(tmsg.Reply) return true;
 

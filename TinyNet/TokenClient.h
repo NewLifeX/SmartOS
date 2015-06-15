@@ -4,12 +4,13 @@
 #include "Sys.h"
 #include "Message.h"
 #include "Controller.h"
+#include "TokenMessage.h"
 
 // 微网客户端
 class TokenClient
 {
 private:
-	Controller* _control;
+	TokenController* _control;
 
 public:
 	uint	Token;		// 令牌
@@ -19,7 +20,7 @@ public:
 	ulong	LoginTime;	// 登录时间
 	ulong	LastActive;	// 最后活跃时间
 
-	TokenClient(Controller* control);
+	TokenClient(TokenController* control);
 
 	// 发送消息
 	void Send(Message& msg);
@@ -31,15 +32,12 @@ public:
 
 // 常用系统级消息
 public:
-	// 设置默认系统消息
-	void SetDefault();
+	// 握手广播
+	void Hello();
+	MessageHandler OnHello;
+	static bool Hello(Message& msg, void* param);
 
-	// 广播发现系统
-	void Discover();
-	MessageHandler OnDiscover;
-	static bool Discover(Message& msg, void* param);
-
-	// Ping指令用于保持与对方的活动状态
+	/*// Ping指令用于保持与对方的活动状态
 	void Ping();
 	MessageHandler OnPing;
 	static bool Ping(Message& msg, void* param);
@@ -51,7 +49,7 @@ public:
 	static bool SysID(Message& msg, void* param);
 
 	// 设置系统模式
-	static bool SysMode(Message& msg, void* param);
+	static bool SysMode(Message& msg, void* param);*/
 	
 // 通用用户级消息
 public:
