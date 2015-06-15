@@ -388,9 +388,16 @@ void TSys::ShowInfo()
 
 	// 输出堆信息
 	uint start = (uint)&__heap_base;
+	// F4有64k的CCM内存
+#if defined(STM32F4)
+	if(start < 0x20000000) start = 0x20000000;
+#endif
 	uint end = SRAM_BASE + (RAMSize << 10);
 	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 	start = (uint)&__heap_limit;
+#if defined(STM32F4)
+	if(start < 0x20000000) start = 0x20000000;
+#endif
 	//end = 0x20000000 + (RAMSize << 10);
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 

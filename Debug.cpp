@@ -115,6 +115,11 @@ bool assert_ptr_(const void* p)
 		return false;
 	}
 
+	// F4有64k的CCM内存
+#if defined(STM32F4)
+	if((uint)p >= 0x10000000 && (uint)p < 0x10010000) return true;
+#endif
+
 	uint flashEnd = FLASH_BASE + (Sys.FlashSize << 10);
 	if((uint)p >= flashEnd && (uint)p < SRAM_BASE)
 	{
