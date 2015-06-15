@@ -110,7 +110,7 @@ void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
 		Tip->ShowIP(LocalIP);
 		debug_printf(":%d Payload=%d udp_len=%d \r\n", LocalPort, len, __REV16(udp->Length));
 
-		Sys.ShowString(data, len);
+		Sys.ShowHex(data, len);
 		debug_printf(" \r\n");
 
 		//Send(udp, len, false);
@@ -136,8 +136,10 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, tlen, 1));
 
 	// 不能注释UDP这行日志，否则DHCP失效
-	debug_printf("SendUdp: len=%d(0x%x) %d => %d ", tlen, tlen, __REV16(udp->SrcPort), RemotePort);
-	if(tlen > 0) Sys.ShowString(udp->Next(), tlen > 64 ? 64 : tlen, false);
+	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, __REV16(udp->SrcPort));
+	Tip->ShowIP(RemoteIP);
+	debug_printf(":%d ", RemotePort);
+	if(tlen > 0) Sys.ShowHex(udp->Next(), tlen > 64 ? 64 : tlen, false);
 	debug_printf("\r\n");
 
 	Tip->SendIP(IP_UDP, (byte*)udp, tlen);
