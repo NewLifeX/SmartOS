@@ -27,6 +27,8 @@ protected:
 
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 	virtual bool Valid(Message& msg, ITransport* port);
+	// 接收处理
+	virtual bool OnReceive(Message& msg, ITransport* port);
 
 public:
 	Controller(ITransport* port);

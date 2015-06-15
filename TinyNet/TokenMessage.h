@@ -53,6 +53,8 @@ private:
 protected:
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 	virtual bool Valid(Message& msg, ITransport* port);
+	// 接收处理函数
+	virtual bool OnReceive(Message& msg, ITransport* port);
 
 public:
 	uint	Token;	// 令牌
@@ -70,9 +72,7 @@ public:
 
 	// 响应消息
 private:
-	byte	_CodeForResponse;	// 等待响应的指令码
-	byte*	_Response;			// 等待响应的指令数据
-	uint	_ResponseLength;	// 指令数据长度
+	Message*	_Response;	// 等待响应的指令
 
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送

@@ -139,6 +139,21 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 	return true;
 }
 
+// 接收处理函数
+bool TokenController::OnReceive(Message& msg, ITransport* port)
+{
+	// 如果有等待响应，则交给它
+	if(msg.Reply && _Response && msg.Code == _Response->Code)
+	{
+		if(msg.Length > 0) _Response->SetData(msg.Data, msg.Length);
+		_Response->Reply = true;
+
+		return true;
+	}
+
+	return Controller::OnReceive(msg, port);
+}
+
 // 发送消息，传输口参数为空时向所有传输口发送消息
 int TokenController::Send(Message& msg, ITransport* port)
 {
@@ -155,14 +170,12 @@ int TokenController::Send(Message& msg, ITransport* port)
 bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
 {
 #if DEBUG
-	if(!_CodeForResponse) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _CodeForResponse);
+	if(!_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
 #endif
 
 	if(msg.Reply) return Send(msg) != 0;
 
-	_CodeForResponse = msg.Code;
-	_Response = NULL;
-	_ResponseLength = 0;
+	_Response = &msg;
 
 	bool rs = false;
 	while(retry-- >= 0)
@@ -173,10 +186,8 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 		TimeWheel tw(0, msTimeout);
 		while(!tw.Expired())
 		{
-			if(!_Response)
+			if(_Response->Reply)
 			{
-				MemoryStream ms(_Response, _ResponseLength);
-				msg.Read(ms);
 				rs = true;
 				break;
 			}
@@ -184,9 +195,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 		if(rs) break;
 	}
 
-	_CodeForResponse = 0;
 	_Response = NULL;
-	_ResponseLength = 0;
 
 	return rs;
 }

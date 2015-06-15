@@ -136,6 +136,17 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 
 	if(!Valid(msg, port)) return true;
 
+	return OnReceive(msg, port);
+}
+
+bool Controller::Valid(Message& msg, ITransport* port)
+{
+	return true;
+}
+
+// 接收处理
+bool Controller::OnReceive(Message& msg, ITransport* port)
+{
 	// 选择处理器来处理消息
 	//for(int i=0; i<_HandlerCount; i++)
 	// 倒序选择处理器来处理消息，让后注册处理器有更高优先权
@@ -156,11 +167,6 @@ bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
 		if(!Received(msg, Param)) return true;
 	}
 
-	return true;
-}
-
-bool Controller::Valid(Message& msg, ITransport* port)
-{
 	return true;
 }
 
