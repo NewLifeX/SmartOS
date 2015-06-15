@@ -237,7 +237,8 @@ TSys::TSys()
 #endif
 
 	Name = "SmartOS";
-	Version = 0x01000000;
+	Code = 0x0000;
+	Version = 0x0100;
 	Company = "NewLife_Embedded_Team";
 	BuildTime = "yyyy-MM-dd HH:mm:ss";
 
@@ -302,7 +303,8 @@ void TSys::ShowInfo()
 
 #if DEBUG
 	byte* ver = (byte*)&Version;
-	debug_printf("%s::%s Ver:%x.%x.%x.%x Build:%s\r\n", Company, Name, *ver++, *ver++, *ver++, *ver++, BuildTime);
+	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
+	debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
 	debug_printf("SmartOS::");
 	if(IsGD)
 		debug_printf("GD32");

@@ -79,7 +79,8 @@ public:
     bool IsGD;			// 是否GD芯片
 
 	char* Name;			// 系统名称
-	uint Version;		// 系统版本
+	ushort Code;		// 产品代码
+	ushort Version;		// 系统版本
 	char* Company;		// 系统厂商
 	char* BuildTime;	// 编译时间
     uint Clock;  		// 系统时钟
