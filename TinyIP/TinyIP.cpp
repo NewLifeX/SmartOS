@@ -120,7 +120,7 @@ void TinyIP::Process(MemoryStream* ms)
 #if NET_DEBUG
 	if(eth->Type != ETH_IP)
 	{
-		debug_printf("Unkown EthernetType 0x%02X From", eth->Type);
+		debug_printf("Unkown EthernetType 0x%02X From ", eth->Type);
 		ShowIP(ip->SrcIP);
 		debug_printf("\r\n");
 	}
