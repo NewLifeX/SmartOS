@@ -107,10 +107,6 @@ void TokenController::Init()
 	MinSize = TokenMessage::MinSize;
 }
 
-/*TokenController::~TokenController()
-{
-}*/
-
 // 创建消息
 Message* TokenController::Create() const
 {
@@ -126,25 +122,6 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 
 	return Send(msg);
 }
-
-// 发送消息
-/*bool TokenController::Send(TokenMessage& msg, int expire)
-{
-	MemoryStream ms(msg.Size());
-	msg.Write(ms);
-
-	while(true)
-	{
-		//_port->Write(ms.GetBuffer(), ms.Length);
-
-		if(expire <= 0) break;
-
-		// 等待响应
-		Sys.Sleep(1);
-	}
-
-	return true;
-}*/
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 bool TokenController::Valid(Message& msg, ITransport* port)
@@ -174,11 +151,42 @@ int TokenController::Send(Message& msg, ITransport* port)
 	return Controller::Send(msg, port);
 }
 
-/*int TokenController::Reply(Message& msg, ITransport* port)
+// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
+bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
 {
-	TokenMessage& tmsg = (TokenMessage&)msg;
+#if DEBUG
+	if(!_CodeForResponse) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _CodeForResponse);
+#endif
 
-	tmsg.Reply = 1;
+	if(msg.Reply) return Send(msg) != 0;
 
-	return Send(msg, port);
-}*/
+	_CodeForResponse = msg.Code;
+	_Response = NULL;
+	_ResponseLength = 0;
+
+	bool rs = false;
+	while(retry-- >= 0)
+	{
+		if(!Send(msg)) break;
+
+		// 等待响应
+		TimeWheel tw(0, msTimeout);
+		while(!tw.Expired())
+		{
+			if(!_Response)
+			{
+				MemoryStream ms(_Response, _ResponseLength);
+				msg.Read(ms);
+				rs = true;
+				break;
+			}
+		}
+		if(rs) break;
+	}
+
+	_CodeForResponse = 0;
+	_Response = NULL;
+	_ResponseLength = 0;
+
+	return rs;
+}

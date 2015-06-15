@@ -55,22 +55,28 @@ protected:
 	virtual bool Valid(Message& msg, ITransport* port);
 
 public:
-	uint	Token;
+	uint	Token;	// 令牌
 
 	TokenController(ITransport* port);
 	TokenController(ITransport* ports[], int count);
 	//virtual ~TokenController();
 
 	// 创建消息
-	virtual Message* Create() const;	
+	virtual Message* Create() const;
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual int Send(Message& msg, ITransport* port = NULL);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual bool Send(byte code, byte* buf = NULL, uint len = 0);
+
 	// 响应消息
-	//int Reply(Message& msg, ITransport* port = NULL);
-	// 发送消息，expire毫秒超时时间内，如果对方没有响应，会重复发送
-	//bool Send(TokenMessage& msg, int expire = -1);
+private:
+	byte	_CodeForResponse;	// 等待响应的指令码
+	byte*	_Response;			// 等待响应的指令数据
+	uint	_ResponseLength;	// 指令数据长度
+
+public:
+	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
+	bool SendAndReceive(TokenMessage& msg, int retry = 0, int msTimeout = 20);
 };
 
 // 令牌会话
