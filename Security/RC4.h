@@ -7,8 +7,6 @@
 class RC4
 {
 public:
-	static int KeyLength = 256;
-
 	// 加解密
 	static void Encrypt(byte* data, uint len, byte* pass, uint plen);
 };
