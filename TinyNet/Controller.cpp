@@ -110,13 +110,13 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 	while(ms.Remain() >= control->MinSize)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, transport)) break;
+		if(!control->Dispatch(ms, NULL, transport)) break;
 	}
 
 	return 0;
 }
 
-bool Controller::Dispatch(Stream& ms, ITransport* port)
+bool Controller::Dispatch(Stream& ms, Message* pmsg, ITransport* port)
 {
 	byte* buf = ms.Current();
 
@@ -127,8 +127,8 @@ bool Controller::Dispatch(Stream& ms, ITransport* port)
 	msg_printf("\r\n");*/
 #endif
 
-	auto_ptr<Message> p_msg(Create());
-	Message& msg = *p_msg;
+	//auto_ptr<Message> p_msg(Create());
+	Message& msg = *pmsg;
 	if(!msg.Read(ms)) return false;
 
 	// 校验

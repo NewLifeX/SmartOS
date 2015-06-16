@@ -18,13 +18,13 @@ class Controller
 private:
 	void Init();
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
-	bool Dispatch(Stream& ms, ITransport* port);
 
 protected:
 	List<ITransport*>	_ports;	// 数据传输口数组
 	//byte	_portCount;		// 数据传输口个数
 	byte	MinSize;	// 最小消息大小
 
+	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 	virtual bool Valid(Message& msg, ITransport* port);
 	// 接收处理
