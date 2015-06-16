@@ -73,6 +73,9 @@ private:
     T*		_Arr;
 	int		_Count;
 	int		_Capacity;
+	bool	_needFree;
+
+	T		Arr[0x40];	// 内部缓冲区，减少内存分配次数
 
 	OBJECT_INIT
 
@@ -84,16 +87,24 @@ public:
 	// 缓冲区
 	T* GetBuffer() { return _Arr; }
 
-	Array(int capacity = 0x10)
+	Array(int capacity = 0x40)
 	{
-		_Capacity = capacity;
-		_Count = capacity;
+		Init();
 
-		_Arr = new T[capacity];
-		ArrayZero2(_Arr, capacity);
+		_Capacity = capacity;
+		_Count = 0;
+
+		if(capacity <= ArrayLength(Arr))
+			_Arr = Arr;
+		else
+		{
+			_Arr = new T[capacity];
+			ArrayZero2(_Arr, capacity);
+			_needFree = true;
+		}
 	}
 
-	Array(T* data, int len = 0)
+	Array(const T* data, int len = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -105,14 +116,16 @@ public:
 		//memcpy(_Arr, data, len * sizeof(T));
 		_Count		= len;
 		_Capacity	= len;
-		_Arr		= data;
+		_Arr		= (T*)data;
 	}
 
 	Array(Array& arr)
 	{
 		_Count		= arr._Count;
 		_Capacity	= arr._Capacity;
-		ArrayCopy(_Arr, arr._Arr);
+		//ArrayCopy(_Arr, arr._Arr);
+		_Arr		= arr._Arr;
+		_needFree	= arr._needFree;
 	}
 
 	// 重载等号运算符，使用另一个固定数组来初始化
@@ -120,15 +133,20 @@ public:
 	{
 		_Count		= arr._Count;
 		_Capacity	= arr._Capacity;
-		ArrayCopy(_Arr, arr._Arr);
+		//ArrayCopy(_Arr, arr._Arr);
+		_Arr		= arr._Arr;
+		_needFree	= arr._needFree;
 
 		return *this;
 	}
 
 	~Array()
 	{
-		if(_Arr) delete _Arr;
-		_Arr = NULL;
+		if(_needFree)
+		{
+			if(_Arr) delete _Arr;
+			_Arr = NULL;
+		}
 	}
 
 	// 压入一个元素
@@ -168,7 +186,7 @@ class String;
 class ByteArray : public Array<byte>
 {
 public:
-	ByteArray(int capacity = 0x10) : Array(capacity) { }
+	ByteArray(int capacity = 0x40) : Array(capacity) { }
 	ByteArray(String& str);
 
 	// 列表转为指针，注意安全
@@ -179,30 +197,28 @@ public:
 };
 
 // 字符串
-class String : public Object
+class String : public Array<char>
 {
 private:
-	int			_Count;
-    const char*	_Arr;
-
+	
 	OBJECT_INIT
 
 public:
-	// 有效元素个数
-    int Count() const { return _Count; }
-
-	String();
-	String(const char* data, int len = 0);
-	String(String& str);
+	String(int capacity = 0x40) : Array(capacity) { }
+	String(const char* data, int len = 0) : Array(data, len) { }
+	String(String& str) : Array(str) { }
 	// 重载等号运算符，使用另一个固定数组来初始化
-    String& operator=(String& str);
-	~String();
+    //String& operator=(String& str);
+	//~String();
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    char operator[](int i);
+    //char& operator[](int i);
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
+	
+	String& Append(char ch);
+	String& Append(const char* str);
 	
 	// 调试输出字符串
 	void Show(bool newLine = false);
