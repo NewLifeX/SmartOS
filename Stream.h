@@ -179,6 +179,19 @@ public:
 		return 0;
 	}
 
+	// 写入字符串，先写入压缩编码整数表示的长度
+	uint Write(string str)
+	{
+		int len = 0;
+		string p = str;
+		while(*p++) len++;
+
+		WriteEncodeInt(len);
+		Write((byte*)str, 0, len);
+
+		return len;
+	}
+
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
 	T* Retrieve()
