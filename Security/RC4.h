@@ -8,7 +8,7 @@ class RC4
 {
 public:
 	// 加解密
-	static void Encrypt(byte* data, uint len, byte* pass, uint plen);
+	static void Encrypt(ByteArray& data, ByteArray& pass);
 };
 
 #endif

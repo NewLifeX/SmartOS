@@ -65,25 +65,29 @@ public:
 // 数组复制
 #define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
 
-/*// 数组
+// 数组
 template<typename T>
-class Array : Object
+class Array : public Object
 {
 private:
     T*		_Arr;
 	int		_Count;
 	int		_Capacity;
 
+	OBJECT_INIT
+
 public:
 	// 有效元素个数
     int Count() const { return _Count; }
 	// 最大元素个数
     int Capacity() const { return _Capacity; }
+	// 缓冲区
+	T* GetBuffer() { return _Arr; }
 
 	Array(int capacity = 0x10)
 	{
 		_Capacity = capacity;
-		_Count = 0;
+		_Count = capacity;
 
 		_Arr = new T[capacity];
 		ArrayZero2(_Arr, capacity);
@@ -148,7 +152,7 @@ public:
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    T operator[](int i)
+    T& operator[](int i)
 	{
 		assert_param(i >= 0 && i < _Count);
 
@@ -158,13 +162,24 @@ public:
     //T* operator=(Array arr) { return arr.Arr; }
 };
 
+class String;
+
 // 字节数组
-class ByteArray : Array<byte>
+class ByteArray : public Array<byte>
 {
+public:
+	ByteArray(int capacity = 0x10) : Array(capacity) { }
+	ByteArray(String& str);
+
+	// 列表转为指针，注意安全
+    //byte* operator=(ByteArray& arr) { return arr.GetBuffer(); }
+
+	// 显示十六进制数据，指定分隔字符和换行长度
+	String& ToHex(char sep = '\0', int newLine = 0x10);
 };
-*/
+
 // 字符串
-class String : Object
+class String : public Object
 {
 private:
 	int			_Count;
@@ -175,7 +190,6 @@ private:
 public:
 	// 有效元素个数
     int Count() const { return _Count; }
-	const char* GetBuffer() { return _Arr; }
 
 	String();
 	String(const char* data, int len = 0);
@@ -186,6 +200,12 @@ public:
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     char operator[](int i);
+
+	// 输出对象的字符串表示方式
+	virtual const char* ToString();
+	
+	// 调试输出字符串
+	void Show(bool newLine = false);
 };
 
 #endif

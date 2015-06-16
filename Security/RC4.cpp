@@ -2,33 +2,30 @@
 
 #define KeyLength 256
 
-void GetKey(byte* box, uint len, byte* pass, uint plen)
+void GetKey(ByteArray& box, ByteArray& pass)
 {
-	for (int i = 0; i < len; i++)
+	for (int i = 0; i < box.Count(); i++)
 	{
 		box[i] = i;
 	}
 	int j = 0;
-	for (int i = 0; i < len; i++)
+	for (int i = 0; i < box.Count(); i++)
 	{
-		j = (j + box[i] + pass[i % plen]) % len;
+		j = (j + box[i] + pass[i % pass.Count()]) % box.Count();
 		byte temp = box[i];
 		box[i] = box[j];
 		box[j] = temp;
 	}
 }
 
-void RC4::Encrypt(byte* data, uint len, byte* pass, uint plen)
+void RC4::Encrypt(ByteArray& data, ByteArray& pass)
 {
-	assert_ptr(data);
-	assert_ptr(pass);
-
 	int i = 0;
 	int j = 0;
-	byte box[KeyLength];
-	GetKey(box, ArrayLength(box), pass, plen);
+	ByteArray box(KeyLength);
+	GetKey(box, pass);
 	// 加密  
-	for (int k = 0; k < len; k++)
+	for (int k = 0; k < data.Count(); k++)
 	{
 		i = (i + 1) % KeyLength;
 		j = (j + box[i]) % KeyLength;
