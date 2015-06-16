@@ -134,6 +134,7 @@ public:
 		_Count		= len;
 		_Capacity	= len;
 		_Arr		= (T*)data;
+		_needFree	= false;
 	}
 
 	Array(Array& arr)
