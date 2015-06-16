@@ -34,24 +34,27 @@ typedef char*           String;
 #include <typeinfo>
 using namespace ::std;
 
-// 根对象
+// 根对象。
+// 子类通过Init重写指定大小，并对虚表指针以外数据区域全部清零。因无法确定其它虚表指针位置，故不支持多继承
 class Object
 {
 private:
-	int			_Size;		// 当前对象内存大小
-	//type_info*	_Type;
+	int		_Size;		// 当前对象内存大小
 
 protected:
-	Object(int size);
+	// 初始化为指定大小，并对虚表指针以外数据区域全部清零。不支持多继承
+	void Init(int size);
 
 public:
+	// 子类重载，可直接使用OBJECT_INIT宏定义，为了调用Init(size)初始化大小并清零
+	virtual void Init() { };
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
 };
 
 // 子类用于调用Object进行对象初始化的默认写法
-#define OBJECT_INIT Object(sizeof(this[0]))
+#define OBJECT_INIT virtual void Init() { Object::Init(sizeof(this[0])); }
 
 // 数组长度
 #define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
@@ -164,15 +167,15 @@ class ByteArray : Array<byte>
 class String : Object
 {
 private:
-	int		_Count;
-    char*	_Arr;
+	int			_Count;
+    const char*	_Arr;
 
-	//void Ctor();
+	OBJECT_INIT
 
 public:
 	// 有效元素个数
     int Count() const { return _Count; }
-	char* GetBuffer() { return _Arr; }
+	const char* GetBuffer() { return _Arr; }
 
 	String();
 	String(const char* data, int len = 0);

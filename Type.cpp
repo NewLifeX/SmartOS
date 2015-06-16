@@ -1,14 +1,11 @@
 ﻿#include "Sys.h"
 
-Object::Object(int size)
+void Object::Init(int size)
 {
 	// 清空整个对象。跳过最前面的4字节虚表
 	byte* p = (byte*)this;
 	p += 4;
 	memset((void*)p, 0, size - 4);
-	//_Type = type;
-
-	//debug_printf("%s\r\n", ToString());
 }
 
 const char* Object::ToString()
@@ -19,11 +16,12 @@ const char* Object::ToString()
 	return str;
 }
 
-String::String() : OBJECT_INIT { }
+String::String() { Init(); }
 
-String::String(const char* data, int len) : OBJECT_INIT
+String::String(const char* data, int len)
 {
-	//debug_printf("%s\r\n", ToString());
+	Init();
+
 	// 自动计算长度，\0结尾
 	if(!len)
 	{
@@ -32,27 +30,22 @@ String::String(const char* data, int len) : OBJECT_INIT
 	}
 
 	_Count		= len;
-	//_Capacity	= len;
-	_Arr		= (char*)data;
-	//_Arr = new char[len];
-	//memcpy(_Arr, data, len);
+	_Arr		= data;
 }
 
-String::String(String& str) : OBJECT_INIT
+String::String(String& str)
 {
+	Init();
+
 	_Count		= str._Count;
-	//_Capacity	= str._Capacity;
-	_Arr		= (char*)str._Arr;
-	//memcpy(_Arr, str._Arr, _Count);
+	_Arr		= str._Arr;
 }
 
 // 重载等号运算符，使用另一个固定数组来初始化
 String& String::operator=(String& str)
 {
 	_Count		= str._Count;
-	//_Capacity	= str._Capacity;
 	_Arr		= str._Arr;
-	//memcpy(_Arr, str._Arr, _Count);
 
 	return *this;
 }
