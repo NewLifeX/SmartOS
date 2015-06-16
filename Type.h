@@ -79,6 +79,22 @@ private:
 
 	OBJECT_INIT
 
+	void InitCapacity(int capacity)
+	{
+		if(capacity <= ArrayLength(Arr))
+		{
+			_Capacity = ArrayLength(Arr);
+			_Arr = Arr;
+		}
+		else
+		{
+			_Capacity = capacity;
+			_Arr = new T[capacity];
+			ArrayZero2(_Arr, capacity);
+			_needFree = true;
+		}
+	}
+
 public:
 	// 有效元素个数
     int Count() const { return _Count; }
@@ -91,17 +107,18 @@ public:
 	{
 		Init();
 
-		_Capacity = capacity;
-		_Count = 0;
+		InitCapacity(capacity);
+	}
 
-		if(capacity <= ArrayLength(Arr))
-			_Arr = Arr;
-		else
-		{
-			_Arr = new T[capacity];
-			ArrayZero2(_Arr, capacity);
-			_needFree = true;
-		}
+	Array(T item, int count)
+	{
+		Init();
+
+		_Count		= count;
+
+		InitCapacity(count);
+
+		if((byte)item != 0) memset(_Arr, item, count);
 	}
 
 	Array(const T* data, int len = 0)
@@ -169,6 +186,15 @@ public:
 		return _Arr[--_Count];
 	}
 
+	// 附加一组数据
+	void Append(const T* data, int len)
+	{
+		assert_param(_Count + len <= _Capacity);
+
+		// 找到空闲位放置
+		while(len-- > 0) _Arr[_Count++] = *data++;
+	}
+
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
@@ -187,6 +213,7 @@ class ByteArray : public Array<byte>
 {
 public:
 	ByteArray(int capacity = 0x40) : Array(capacity) { }
+	ByteArray(byte item, int count) : Array(item, count) { }
 	ByteArray(String& str);
 
 	// 列表转为指针，注意安全
@@ -200,11 +227,12 @@ public:
 class String : public Array<char>
 {
 private:
-	
+
 	OBJECT_INIT
 
 public:
 	String(int capacity = 0x40) : Array(capacity) { }
+	String(char item, int count) : Array(item, count) { }
 	String(const char* data, int len = 0) : Array(data, len) { }
 	String(String& str) : Array(str) { }
 	// 重载等号运算符，使用另一个固定数组来初始化
@@ -216,10 +244,10 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
-	
+
 	String& Append(char ch);
 	String& Append(const char* str);
-	
+
 	// 调试输出字符串
 	void Show(bool newLine = false);
 };

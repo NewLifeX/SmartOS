@@ -16,7 +16,11 @@ const char* Object::ToString()
 	return str;
 }
 
-ByteArray::ByteArray(String& str) : Array((byte*)str.ToString(), str.Count()) { }
+// 字符串转为字节数组
+ByteArray::ByteArray(String& str) : Array(str.Count())
+{
+	Append((byte*)str.ToString(), str.Count());
+}
 
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(char sep, int newLine)
