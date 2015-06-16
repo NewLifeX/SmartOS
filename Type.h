@@ -196,6 +196,23 @@ public:
 		while(len-- > 0) _Arr[_Count++] = *data++;
 	}
 
+	// 清空已存储数据
+	void Clear()
+	{
+		// 调整使用内部存储
+		if(_needFree)
+		{
+			if(_Arr) delete _Arr;
+		}
+		_Arr = Arr;
+		_Capacity = ArrayLength(Arr);
+		if(_Count > 0)
+		{
+			memset(_Arr, 0, _Count * sizeof(T));
+		}
+		_Count = 0;
+	}
+
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
@@ -221,7 +238,7 @@ public:
     //byte* operator=(ByteArray& arr) { return arr.GetBuffer(); }
 
 	// 显示十六进制数据，指定分隔字符和换行长度
-	String& ToHex(char sep = '\0', int newLine = 0x10);
+	String& ToHex(String& str, char sep = '\0', int newLine = 0x10);
 };
 
 // 字符串

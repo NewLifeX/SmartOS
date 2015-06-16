@@ -23,9 +23,10 @@ ByteArray::ByteArray(String& str) : Array(str.Count())
 }
 
 // 显示十六进制数据，指定分隔字符
-String& ByteArray::ToHex(char sep, int newLine)
+String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
-	String& str = *(new String());
+	//String& str = *(new String());
+	str.Clear();
 	byte* buf = GetBuffer();
 	for(int i=0; i < Count(); i++, buf++)
 	{
