@@ -5,15 +5,6 @@
 #include "Sys.h"
 
 // 数组长度
-#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
-// 数组清零，固定长度
-#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
-// 数组清零，可变长度
-#define ArrayZero2(arr, len) memset(arr, 0, len * sizeof(arr[0]))
-// 数组复制
-#define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
-
-// 数组长度
 //#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
