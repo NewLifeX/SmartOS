@@ -106,7 +106,7 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	MemoryStream ms(buf, len);
+	Stream ms(buf, len);
 	while(ms.Remain() >= control->MinSize)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
@@ -116,7 +116,7 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 	return 0;
 }
 
-bool Controller::Dispatch(MemoryStream& ms, ITransport* port)
+bool Controller::Dispatch(Stream& ms, ITransport* port)
 {
 	byte* buf = ms.Current();
 
@@ -214,7 +214,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	uint len = msg.Size();
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
-	MemoryStream ms(len);
+	Stream ms(len);
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 	assert_param(len == ms.Length);

@@ -18,7 +18,7 @@ class Controller
 private:
 	void Init();
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
-	bool Dispatch(MemoryStream& ms, ITransport* port);
+	bool Dispatch(Stream& ms, ITransport* port);
 
 protected:
 	List<ITransport*>	_ports;	// 数据传输口数组

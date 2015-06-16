@@ -27,7 +27,7 @@ ArpSocket::~ArpSocket()
 	_Arps = NULL;
 }
 
-bool ArpSocket::Process(MemoryStream* ms)
+bool ArpSocket::Process(Stream* ms)
 {
 	// 如果ms为空，可能是纯为了更新ARP表
 	if(!ms)
@@ -109,7 +109,7 @@ bool ArpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-bool RequestCallback(TinyIP* tip, void* param, MemoryStream& ms)
+bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
@@ -138,7 +138,7 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
 	uint bufSize = ArrayLength(buf);
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	MemoryStream ms(buf, bufSize);
+	Stream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();

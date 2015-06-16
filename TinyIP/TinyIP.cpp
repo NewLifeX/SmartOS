@@ -87,7 +87,7 @@ uint TinyIP::Fetch(byte* buf, uint len)
 	return len;
 }
 
-void TinyIP::Process(MemoryStream* ms)
+void TinyIP::Process(Stream* ms)
 {
 	if(!ms) return;
 
@@ -166,7 +166,7 @@ void TinyIP::Process(MemoryStream* ms)
 }
 
 // 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
-void TinyIP::FixPayloadLength(IP_HEADER* ip, MemoryStream* ms)
+void TinyIP::FixPayloadLength(IP_HEADER* ip, Stream* ms)
 {
 	// 前面的len不准确，必须以这个为准
 	uint size = __REV16(ip->TotalLength) - (ip->Length << 2);
@@ -186,7 +186,7 @@ void TinyIP::Work(void* param)
 		if(len)
 		{
 			// 注意，此时指针位于0，而内容长度为缓冲区长度
-			MemoryStream ms(tip->Buffer, tip->BufferSize);
+			Stream ms(tip->Buffer, tip->BufferSize);
 			ms.Length = len;
 			tip->Process(&ms);
 		}
@@ -195,7 +195,7 @@ void TinyIP::Work(void* param)
 
 bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 {
-	MemoryStream ms(Buffer, BufferSize);
+	Stream ms(Buffer, BufferSize);
 
 	// 总等待时间
 	TimeWheel tw(0, msTimeout, 0);

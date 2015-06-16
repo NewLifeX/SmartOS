@@ -19,7 +19,7 @@ void Slave::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
 
 	Slave* slave = (Slave*)param;
 
-	MemoryStream ms(buf, len);
+	Stream ms(buf, len);
 	Modbus entity;
 	if(!entity.Read(ms)) return;
 

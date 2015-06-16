@@ -219,7 +219,7 @@ void Dhcp::SendDiscover(void* param)
 	_dhcp->Discover(dhcp);
 }
 
-void Dhcp::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
+void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 	if(!dhcp->Valid()) return;

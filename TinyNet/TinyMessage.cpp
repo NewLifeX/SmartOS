@@ -43,7 +43,7 @@ TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-bool TinyMessage::Read(MemoryStream& ms)
+bool TinyMessage::Read(Stream& ms)
 {
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
 	if(ms.Remain() < MinSize) return false;
@@ -92,7 +92,7 @@ bool TinyMessage::Read(MemoryStream& ms)
 	return true;
 }
 
-void TinyMessage::Write(MemoryStream& ms)
+void TinyMessage::Write(Stream& ms)
 {
 	// 实际数据拷贝到占位符
 	_Code	= Code;
@@ -117,7 +117,7 @@ void TinyMessage::Write(MemoryStream& ms)
 
 void TinyMessage::ComputeCrc()
 {
-	MemoryStream ms(Size());
+	Stream ms(Size());
 
 	Write(ms);
 
@@ -571,7 +571,7 @@ void MessageNode::SetMessage(TinyMessage& msg)
 	LastSend = 0;
 
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	MemoryStream ms(Data, ArrayLength(Data));
+	Stream ms(Data, ArrayLength(Data));
 	ms.Length = 0;
 	msg.Write(ms);
 	Length = ms.Length;

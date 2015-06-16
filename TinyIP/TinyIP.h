@@ -23,7 +23,7 @@ public:
 	virtual ~Socket();
 
 	// 处理数据包
-	virtual bool Process(MemoryStream* ms) = 0;
+	virtual bool Process(Stream* ms) = 0;
 };
 
 // Socket列表
@@ -34,7 +34,7 @@ public:
 };
 
 class TinyIP;
-typedef bool (*LoopFilter)(TinyIP* tip, void* param, MemoryStream& ms);
+typedef bool (*LoopFilter)(TinyIP* tip, void* param, Stream& ms);
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
 class TinyIP
@@ -56,9 +56,9 @@ public:
 	// 带过滤器的轮询
 	bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
 	// 处理数据包
-	void Process(MemoryStream* ms);
+	void Process(Stream* ms);
 	// 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
-	void FixPayloadLength(IP_HEADER* ip, MemoryStream* ms);
+	void FixPayloadLength(IP_HEADER* ip, Stream* ms);
 
 public:
     IPAddress IP;	// 本地IP地址

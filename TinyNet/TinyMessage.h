@@ -57,9 +57,9 @@ public:
 	virtual uint Size() const;
 
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
-	virtual bool Read(MemoryStream& ms);
+	virtual bool Read(Stream& ms);
 	// 写入指定数据流
-	virtual void Write(MemoryStream& ms);
+	virtual void Write(Stream& ms);
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;

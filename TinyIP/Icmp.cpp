@@ -10,7 +10,7 @@ IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
 	Enable = true;
 }
 
-bool IcmpSocket::Process(MemoryStream* ms)
+bool IcmpSocket::Process(Stream* ms)
 {
 	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();
 	if(!icmp) return false;
@@ -51,7 +51,7 @@ bool IcmpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-bool PingCallback(TinyIP* tip, void* param, MemoryStream& ms)
+bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
 	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
@@ -97,7 +97,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	MemoryStream ms(buf, bufSize);
+	Stream ms(buf, bufSize);
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	IP_HEADER* _ip = (IP_HEADER*)eth->Next();

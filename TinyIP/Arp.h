@@ -24,7 +24,7 @@ public:
 	virtual ~ArpSocket();
 
 	// 处理数据包
-	virtual bool Process(MemoryStream* ms);
+	virtual bool Process(Stream* ms);
 
 	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 	const MacAddress* Request(IPAddress ip, int timeout = 3);

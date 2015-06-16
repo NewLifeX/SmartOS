@@ -43,7 +43,7 @@ void UdpSocket::OnClose()
 	Enable = false;
 }
 
-bool UdpSocket::Process(MemoryStream* ms)
+bool UdpSocket::Process(Stream* ms)
 {
 	UDP_HEADER* udp = ms->Retrieve<UDP_HEADER>();
 	if(!udp) return false;
@@ -74,7 +74,7 @@ bool UdpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-void UdpSocket::OnProcess(UDP_HEADER* udp, MemoryStream& ms)
+void UdpSocket::OnProcess(UDP_HEADER* udp, Stream& ms)
 {
 	byte* data = ms.Current();
 	//uint len = ms.Remain();

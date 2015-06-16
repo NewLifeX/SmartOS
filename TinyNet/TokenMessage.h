@@ -27,9 +27,9 @@ public:
 	TokenMessage(byte code = 0);
 
 	// 从数据流中读取消息
-	virtual bool Read(MemoryStream& ms);
+	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中
-	virtual void Write(MemoryStream& ms);
+	virtual void Write(Stream& ms);
 
 	// 消息总长度，包括头部、负载数据和校验
 	virtual uint Size() const;

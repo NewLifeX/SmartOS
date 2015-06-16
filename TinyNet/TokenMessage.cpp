@@ -11,7 +11,7 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 }
 
 // 从数据流中读取消息
-bool TokenMessage::Read(MemoryStream& ms)
+bool TokenMessage::Read(Stream& ms)
 {
 	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
@@ -34,7 +34,7 @@ bool TokenMessage::Read(MemoryStream& ms)
 }
 
 // 把消息写入到数据流中
-void TokenMessage::Write(MemoryStream& ms)
+void TokenMessage::Write(Stream& ms)
 {
 	assert_ptr(this);
 	// 实际数据拷贝到占位符

@@ -90,7 +90,7 @@ void TokenClient::Hello()
 	TokenMessage msg(1);
 
 	// 发送的广播消息，设备类型和系统ID
-	MemoryStream ms(msg._Data, ArrayLength(msg._Data));
+	Stream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Length = 0;
 
 	ms.Write(Sys.Version);
@@ -135,7 +135,7 @@ bool TokenClient::Hello(Message& msg, void* param)
 	//TokenController* ctrl = (TokenController*)client->_control;
 
 	// 解析数据
-	MemoryStream ms(msg.Data, msg.Length);
+	Stream ms(msg.Data, msg.Length);
 
 	// 取消Discover任务
 	debug_printf("停止寻找服务端 ");

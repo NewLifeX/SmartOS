@@ -11,7 +11,7 @@ public:
 	HttpClient(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(MemoryStream* ms);
+	virtual bool Process(Stream* ms);
 
 	bool Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(const byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
@@ -32,7 +32,7 @@ protected:
 	void SetMss(TCP_HEADER* tcp);
 	void Send(TCP_HEADER* tcp, uint len, byte flags);
 
-	virtual void OnProcess(TCP_HEADER* tcp, MemoryStream& ms);
+	virtual void OnProcess(TCP_HEADER* tcp, Stream& ms);
 	virtual void OnAccept(TCP_HEADER* tcp, uint len);
 	virtual void Accepted2(TCP_HEADER* tcp, uint len);
 	virtual void OnDataReceive(TCP_HEADER* tcp, uint len);

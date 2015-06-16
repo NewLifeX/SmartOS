@@ -97,7 +97,7 @@ void TinyClient::Discover()
 	msg.Code = 1;
 
 	// 发送的广播消息，设备类型和系统ID
-	MemoryStream ms(msg.Data, ArrayLength(msg.Data));
+	Stream ms(msg.Data, ArrayLength(msg.Data));
 	ms.Length = 0;
 	ms.Write(DeviceType);
 	ms.Write(Sys.ID, 0, 20);
@@ -126,7 +126,7 @@ bool TinyClient::Discover(Message& msg, void* param)
 	TinyController* ctrl = (TinyController*)client->_control;
 
 	// 解析数据
-	MemoryStream ms(msg.Data, msg.Length);
+	Stream ms(msg.Data, msg.Length);
 	if(ms.Remain())
 		ctrl->Address = ms.Read<byte>();
 	if(ms.Remain() >= 8)

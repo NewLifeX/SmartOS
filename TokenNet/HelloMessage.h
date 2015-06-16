@@ -23,9 +23,9 @@ public:
 	virtual uint Size() const = 0;
 
 	// 从数据流中读取消息
-	virtual bool Read(MemoryStream& ms) = 0;
+	virtual bool Read(Stream& ms) = 0;
 	// 把消息写入数据流中
-	virtual void Write(MemoryStream& ms) = 0;
+	virtual void Write(Stream& ms) = 0;
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const = 0;

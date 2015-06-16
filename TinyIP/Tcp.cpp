@@ -4,7 +4,7 @@
 //#define NET_DEBUG DEBUG
 
 
-bool Callback(TinyIP* tip, void* param, MemoryStream& ms);
+bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -61,7 +61,7 @@ void TcpSocket::OnClose()
 	Enable = false;
 }
 
-bool TcpSocket::Process(MemoryStream* ms)
+bool TcpSocket::Process(Stream* ms)
 {
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
 	if(!ms->Seek(tcp->Size())) return false;
@@ -88,7 +88,7 @@ bool TcpSocket::Process(MemoryStream* ms)
 	return true;
 }
 
-void TcpSocket::OnProcess(TCP_HEADER* tcp, MemoryStream& ms)
+void TcpSocket::OnProcess(TCP_HEADER* tcp, Stream& ms)
 {
 	// 计算标称的数据长度
 	//uint len = tcp->Size() - sizeof(TCP_HEADER);
@@ -444,7 +444,7 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	return false;
 }
 
-bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
+bool Callback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
 	if(eth->Type != ETH_IP) return false;
@@ -471,7 +471,7 @@ bool Callback(TinyIP* tip, void* param, MemoryStream& ms)
 			if(socket->Status == TcpSocket::SynSent) socket->Status = TcpSocket::SynAck;
 
 			// 处理。如果对方回发第二次握手包，或者终止握手
-			//MemoryStream ms(tip->Buffer, tip->BufferSize);
+			//Stream ms(tip->Buffer, tip->BufferSize);
 			tip->FixPayloadLength(_ip, &ms);
 			socket->Process(&ms);
 

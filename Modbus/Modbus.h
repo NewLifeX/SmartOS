@@ -51,8 +51,8 @@ public:
 
 	Modbus();
 
-	bool Read(MemoryStream& ms);
-	void Write(MemoryStream& ms);
+	bool Read(Stream& ms);
+	void Write(Stream& ms);
 	
 	void SetError(ModbusErrors::Errors error);
 private:

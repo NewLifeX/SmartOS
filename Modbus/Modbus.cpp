@@ -11,7 +11,7 @@ Modbus::Modbus()
 	Crc2	= 0;
 }
 
-bool Modbus::Read(MemoryStream& ms)
+bool Modbus::Read(Stream& ms)
 {
 	if(ms.Remain() < 4) return false;
 
@@ -37,7 +37,7 @@ bool Modbus::Read(MemoryStream& ms)
 	Crc2 = Sys.Crc16(buf, ms.Position() - p - 2);
 }
 
-void Modbus::Write(MemoryStream& ms)
+void Modbus::Write(Stream& ms)
 {
 	uint p = ms.Position();
 
