@@ -68,7 +68,7 @@ public:
 #define foreach_remove() et->Remove();*/
 
 // 数组
-class Array
+class JArray
 {
 private:
     void**	_Arr;
@@ -81,7 +81,7 @@ public:
 	// 最大元素个数
     int Capacity() const { return _Capacity; }
 
-	Array(int capacity = 0x10)
+	JArray(int capacity = 0x10)
 	{
 		_Capacity = capacity;
 		_Count = 0;
@@ -90,7 +90,7 @@ public:
 		ArrayZero2(_Arr, capacity);
 	}
 
-	~Array()
+	~JArray()
 	{
 		if(_Arr) delete _Arr;
 		_Arr = NULL;
