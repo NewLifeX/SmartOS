@@ -32,19 +32,26 @@ typedef char*           String;
 */
 
 #include <typeinfo>
+using namespace ::std;
 
 // 根对象
 class Object
 {
 private:
-	int		_Size;		// 当前对象内存大小
-	//int		_Ref;		// 引用计数
+	int			_Size;		// 当前对象内存大小
+	//type_info*	_Type;
 
-public:
+protected:
 	Object(int size);
 
+public:
+
+	// 输出对象的字符串表示方式
 	virtual const char* ToString();
 };
+
+// 子类用于调用Object进行对象初始化的默认写法
+#define OBJECT_INIT Object(sizeof(this[0]))
 
 // 数组长度
 #define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
@@ -55,7 +62,7 @@ public:
 // 数组复制
 #define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
 
-// 数组
+/*// 数组
 template<typename T>
 class Array : Object
 {
@@ -70,7 +77,7 @@ public:
 	// 最大元素个数
     int Capacity() const { return _Capacity; }
 
-	Array(int capacity = 0x10) : Object(sizeof(this))
+	Array(int capacity = 0x10)
 	{
 		_Capacity = capacity;
 		_Count = 0;
@@ -79,7 +86,7 @@ public:
 		ArrayZero2(_Arr, capacity);
 	}
 
-	Array(T* data, int len = 0) : Object(sizeof(this))
+	Array(T* data, int len = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -94,7 +101,7 @@ public:
 		_Arr		= data;
 	}
 
-	Array(Array& arr) : Object(sizeof(this))
+	Array(Array& arr)
 	{
 		_Count		= arr._Count;
 		_Capacity	= arr._Capacity;
@@ -152,7 +159,7 @@ public:
 class ByteArray : Array<byte>
 {
 };
-
+*/
 // 字符串
 class String : Object
 {
@@ -160,11 +167,14 @@ private:
 	int		_Count;
     char*	_Arr;
 
+	//void Ctor();
+
 public:
 	// 有效元素个数
     int Count() const { return _Count; }
 	char* GetBuffer() { return _Arr; }
 
+	String();
 	String(const char* data, int len = 0);
 	String(String& str);
 	// 重载等号运算符，使用另一个固定数组来初始化

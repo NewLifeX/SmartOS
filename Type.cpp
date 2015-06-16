@@ -6,8 +6,9 @@ Object::Object(int size)
 	byte* p = (byte*)this;
 	p += 4;
 	memset((void*)p, 0, size - 4);
+	//_Type = type;
 
-	_Size = size;
+	//debug_printf("%s\r\n", ToString());
 }
 
 const char* Object::ToString()
@@ -18,8 +19,11 @@ const char* Object::ToString()
 	return str;
 }
 
-String::String(const char* data, int len) : Object(sizeof(this[0]))
+String::String() : OBJECT_INIT { }
+
+String::String(const char* data, int len) : OBJECT_INIT
 {
+	//debug_printf("%s\r\n", ToString());
 	// 自动计算长度，\0结尾
 	if(!len)
 	{
@@ -29,16 +33,17 @@ String::String(const char* data, int len) : Object(sizeof(this[0]))
 
 	_Count		= len;
 	//_Capacity	= len;
-	//_Arr		= data;
-	_Arr = new char[len];
-	memcpy(_Arr, data, len);
+	_Arr		= (char*)data;
+	//_Arr = new char[len];
+	//memcpy(_Arr, data, len);
 }
 
-String::String(String& str) : Object(sizeof(this[0]))
+String::String(String& str) : OBJECT_INIT
 {
 	_Count		= str._Count;
 	//_Capacity	= str._Capacity;
-	memcpy(_Arr, str._Arr, _Count);
+	_Arr		= (char*)str._Arr;
+	//memcpy(_Arr, str._Arr, _Count);
 }
 
 // 重载等号运算符，使用另一个固定数组来初始化
@@ -46,7 +51,8 @@ String& String::operator=(String& str)
 {
 	_Count		= str._Count;
 	//_Capacity	= str._Capacity;
-	memcpy(_Arr, str._Arr, _Count);
+	_Arr		= str._Arr;
+	//memcpy(_Arr, str._Arr, _Count);
 
 	return *this;
 }
