@@ -37,7 +37,7 @@ TokenClient::TokenClient(TokenController* control)
 	Regs		= NULL;
 
 #if DEBUG
-	_control->AddTransport(SerialPort::GetMessagePort());
+	//_control->AddTransport(SerialPort::GetMessagePort());
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
@@ -49,7 +49,7 @@ TokenClient::TokenClient(TokenController* control)
 
 	// 发现服务端的任务
 	debug_printf("开始寻找服务端 ");
-	_taskHello = Sys.AddTask(HelloTask, this, 0, 2000000);
+	_taskHello = Sys.AddTask(HelloTask, this, 0, 5000000);
 }
 
 void TokenClient::Send(Message& msg)
@@ -117,9 +117,9 @@ void TokenClient::Hello()
 
 	msg.Length = ms.Length;
 
-	_control->SendAndReceive(msg, 3, 500);
+	_control->SendAndReceive(msg, 0, 200);
 	
-	msg.Show();
+	if(msg.Reply) msg.Show();
 }
 
 // Discover响应

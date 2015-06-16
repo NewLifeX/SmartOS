@@ -18,7 +18,7 @@ bool TokenMessage::Read(Stream& ms)
 
 	byte temp = ms.Read<byte>();
 	_Code	= temp & 0x7f;
-	_Reply	= temp & 0x80;
+	_Reply	= temp >> 7;
 	_Length	= ms.Read<byte>();
 	// 占位符拷贝到实际数据
 	Code	= _Code;
