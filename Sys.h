@@ -34,10 +34,10 @@ typedef enum
 // 列表集合
 //#include "List.h"
 
-class TaskScheduler;
+//class TaskScheduler;
 
 // 系统类
-class TSys
+class TSys : Object
 {
 public:
     bool Debug;  // 是否调试
@@ -62,7 +62,7 @@ public:
     TSys();				// 构造函数
     ~TSys();			// 析构函数
 
-    void Init();     	// 初始化系统
+    virtual void Init();     	// 初始化系统
 	void ShowInfo();
 
 	ulong StartTime;	// 启动时间，微秒
@@ -93,7 +93,7 @@ private:
 	int _Index;	// MCU在型号表中的索引
 
 	// 任务类
-	TaskScheduler* _Scheduler;
+	//TaskScheduler* _Scheduler;
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
@@ -136,7 +136,7 @@ bool assert_ptr_(const void* p);
 #endif
 
 // 任务
-#include "Task.h"
+//#include "Task.h"
 
 // 内存管理
 #include "Memory.h"

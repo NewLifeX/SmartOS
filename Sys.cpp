@@ -153,7 +153,10 @@ void SysStop()
 
 TSys::TSys()
 {
-    Inited = false;
+	// 清空内存
+	Object::Init(sizeof(this[0]));
+
+    //Inited = false;
 #if DEBUG
     Debug = true;
 #else
@@ -218,16 +221,16 @@ TSys::TSys()
 
 	InitHeapStack(RAMSize);
 
-	StartTime = 0;
-	OnTick = NULL;
-	OnSleep = NULL;
+	//StartTime = 0;
+	//OnTick = NULL;
+	//OnSleep = NULL;
 
 #if DEBUG
     OnError = SysError;
     OnStop = SysStop;
 #else
-    OnError = 0;
-    OnStop = 0;
+    //OnError = 0;
+    //OnStop = 0;
 #endif
 
 #ifdef STM32F10X
@@ -244,8 +247,8 @@ TSys::TSys()
 
     Interrupt.Init();
 
-	_Scheduler = NULL;
-	OnStart = NULL;
+	//_Scheduler = NULL;
+	//OnStart = NULL;
 }
 
 TSys::~TSys()
@@ -571,6 +574,12 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 
 #define __TASK__MODULE__ 1
 #ifdef __TASK__MODULE__
+
+// 任务
+#include "Task.h"
+// 任务类
+TaskScheduler* _Scheduler;
+
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 uint TSys::AddTask(Action func, void* param, ulong dueTime, long period)
 {
