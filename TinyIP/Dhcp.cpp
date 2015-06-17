@@ -205,7 +205,7 @@ void Dhcp::SendDiscover(void* param)
 		return;
 	}
 
-	byte buf[400];
+	byte buf[0x400];
 	//uint bufSize = ArrayLength(buf);
 
 	ETH_HEADER*  eth  = (ETH_HEADER*) buf;
@@ -242,9 +242,9 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
 			debug_printf("DHCP::Offer IP:");
-			TinyIP::ShowIP(dhcp->YourIP);
+			dhcp->YourIP.Show();
 			debug_printf(" From ");
-			TinyIP::ShowIP(Tip->RemoteIP);
+			Tip->RemoteIP.Show();
 			debug_printf("\r\n");
 #endif
 
@@ -256,9 +256,9 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	{
 #if NET_DEBUG
 		debug_printf("DHCP::Ack   IP:");
-		TinyIP::ShowIP(dhcp->YourIP);
+		dhcp->YourIP.Show();
 		debug_printf(" From ");
-		TinyIP::ShowIP(Tip->RemoteIP);
+		Tip->RemoteIP.Show();
 		debug_printf("\r\n");
 #endif
 
@@ -293,9 +293,9 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 		// 导致Nak的原因
 		opt = GetOption(data, len, DHCP_OPT_Message);
 		debug_printf("DHCP::Nak   IP:");
-		TinyIP::ShowIP(Tip->IP);
+		Tip->IP.Show();
 		debug_printf(" From ");
-		TinyIP::ShowIP(Tip->RemoteIP);
+		Tip->RemoteIP.Show();
 		if(opt)
 		{
 			debug_printf(" ");
