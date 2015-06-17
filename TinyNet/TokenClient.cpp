@@ -2,6 +2,7 @@
 #include "SerialPort.h"
 
 #include "TokenMessage.h"
+#include "TokenNet\HelloMessage.h"
 
 bool OnTokenClientReceived(Message& msg, void* param);
 
@@ -138,9 +139,9 @@ bool TokenClient::Hello(Message& msg, void* param)
 	Stream ms(msg.Data, msg.Length);
 
 	// 取消Discover任务
-	debug_printf("停止寻找服务端 ");
-	Sys.RemoveTask(_taskHello);
-	_taskHello = 0;
+	//debug_printf("停止寻找服务端 ");
+	//Sys.RemoveTask(_taskHello);
+	//_taskHello = 0;
 
 	if(client->OnHello) return client->OnHello(msg, param);
 

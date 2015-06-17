@@ -4,7 +4,7 @@
 #include "Sys.h"
 
 // 系统时钟
-struct SystemTime
+struct DateTime
 {
 	ushort Year;
 	byte Month;
@@ -18,7 +18,7 @@ struct SystemTime
 
 	char _Str[19 + 1]; // 内部字符串缓冲区，按最长计算
 
-	SystemTime& Parse(ulong us);
+	DateTime& Parse(ulong us);
 	uint TotalSeconds();
 	ulong TotalMicroseconds();
 
@@ -41,7 +41,7 @@ class TTime
 {
 private:
     static void OnHandler(ushort num, void* param);
-	SystemTime _Now;
+	DateTime _Now;
 	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
 	uint _msUs;		// 计算毫秒时剩下的微秒数
 
@@ -68,7 +68,7 @@ public:
     void Sleep(uint us);
 
 	// 当前时间。外部不要释放该指针
-	SystemTime& Now();
+	DateTime& Now();
 };
 
 extern TTime Time;

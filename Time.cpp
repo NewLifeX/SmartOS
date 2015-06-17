@@ -203,9 +203,9 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
-SystemTime& SystemTime::Parse(ulong us)
+DateTime& DateTime::Parse(ulong us)
 {
-	SystemTime& st = *this;
+	DateTime& st = *this;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
 	uint time = us % 60000000; // 此时会削去高位，ulong=>uint
@@ -250,7 +250,7 @@ SystemTime& SystemTime::Parse(ulong us)
 	return st;
 }
 
-uint SystemTime::TotalSeconds()
+uint DateTime::TotalSeconds()
 {
 	uint s = 0;
 	s += YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
@@ -261,7 +261,7 @@ uint SystemTime::TotalSeconds()
 	return s;
 }
 
-ulong SystemTime::TotalMicroseconds()
+ulong DateTime::TotalMicroseconds()
 {
 	ulong us = (ulong)TotalSeconds();
 	us = us * 1000 + Millisecond;
@@ -279,12 +279,12 @@ ulong SystemTime::TotalMicroseconds()
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 */
-const char* SystemTime::ToString(byte kind, string str)
+const char* DateTime::ToString(byte kind, string str)
 {
 	//assert_param(str);
 	if(!str) str = _Str;
 
-	const SystemTime& st = *this;
+	const DateTime& st = *this;
 	switch(kind)
 	{
 		case 'd':
@@ -314,7 +314,7 @@ const char* SystemTime::ToString(byte kind, string str)
 }
 
 // 当前时间
-SystemTime& TTime::Now()
+DateTime& TTime::Now()
 {
 	_Now.Parse(Current());
 

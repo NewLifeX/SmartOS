@@ -10,17 +10,14 @@
 class HelloMessage
 {
 public:
-	byte	Code;	// 消息代码
-	byte	Length;	// 数据长度
-	byte*	Data;	// 数据。指向子类内部声明的缓冲区
-	byte	Reply;	// 是否响应指令
+	ushort		Version;// 版本
+	String		Type;	// 类型
+	String		Name;	// 名称
+	DateTime	Time;	// 时间
 
 	// 初始化消息，各字段为0
 	HelloMessage(byte code = 0);
 	HelloMessage(HelloMessage& msg);
-
-	// 消息所占据的指令数据大小。包括头部、负载数据、校验和附加数据
-	virtual uint Size() const = 0;
 
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms) = 0;
