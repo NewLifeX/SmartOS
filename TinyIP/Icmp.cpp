@@ -29,7 +29,7 @@ bool IcmpSocket::Process(Stream* ms)
 			debug_printf("Ping From "); // 打印发方的ip
 		else
 			debug_printf("Ping Reply "); // 打印发方的ip
-		Tip->ShowIP(Tip->RemoteIP);
+		Tip->RemoteIP.Show();
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
@@ -126,7 +126,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 
 #if NET_DEBUG
 	debug_printf("Ping ");
-	Tip->ShowIP(ip);
+	ip.Show();
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
 #endif
 	Tip->SendIP(IP_ICMP, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);

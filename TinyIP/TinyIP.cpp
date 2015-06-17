@@ -122,7 +122,7 @@ void TinyIP::Process(Stream* ms)
 	if(eth->Type != ETH_IP)
 	{
 		debug_printf("Unkown EthernetType 0x%02X From ", eth->Type);
-		ShowIP(ip->SrcIP);
+		ip->SrcIP.Show();
 		debug_printf("\r\n");
 	}
 #endif
@@ -346,7 +346,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("No Mac For ");
-		ShowIP(RemoteIP);
+		RemoteIP.Show();
 		debug_printf("\r\n");
 #endif
 		return;
@@ -372,22 +372,6 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 
 #define TinyIP_HELP
 #ifdef TinyIP_HELP
-void TinyIP::ShowIP(IPAddress& ip)
-{
-	byte* ips = (byte*)&ip.Value;
-	debug_printf("%d", *ips++);
-	for(int i=1; i<4; i++)
-		debug_printf(".%d", *ips++);
-}
-
-void TinyIP::ShowMac(const MacAddress& mac)
-{
-	byte* m = (byte*)&mac.v4;
-	debug_printf("%02X", *m++);
-	for(int i=1; i<6; i++)
-		debug_printf("-%02X", *m++);
-}
-
 ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
 {
     // type 0=ip

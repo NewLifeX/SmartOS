@@ -94,8 +94,6 @@ public:
 
 	bool Open();
 	void ShowInfo();
-	static void ShowIP(IPAddress& ip);
-	static void ShowMac(const MacAddress& mac);
 	ushort CheckSum(const byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, const byte* buf, uint len);

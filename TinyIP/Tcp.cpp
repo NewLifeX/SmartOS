@@ -342,7 +342,7 @@ void TcpSocket::SendAck(uint len)
 void TcpSocket::Disconnect()
 {
 	debug_printf("Tcp::Disconnect ");
-	Tip->ShowIP(RemoteIP);
+	RemoteIP.Show();
 	debug_printf(":%d \r\n", RemotePort);
 
 	TCP_HEADER* tcp = Create();
@@ -364,7 +364,7 @@ void TcpSocket::Send(const byte* buf, uint len)
 	}
 
 	debug_printf("Tcp::Send ");
-	Tip->ShowIP(RemoteIP);
+	RemoteIP.Show();
 	debug_printf(":%d buf=0x%08x len=%d ...... \r\n", RemotePort, buf, len);
 
 	TCP_HEADER* tcp = Create();
@@ -408,7 +408,7 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 	}
 
 	debug_printf("Tcp::Connect ");
-	Tip->ShowIP(ip);
+	ip.Show();
 	debug_printf(":%d ...... \r\n", port);
 
 	RemoteIP = ip;
