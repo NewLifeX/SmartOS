@@ -16,26 +16,38 @@ const char* Object::ToString()
 	return str;
 }
 
+String& Object::To(String& str)
+{
+	str.Set(ToString());
+
+	return str;
+}
+
+void Object::Show()
+{
+	String str;
+	To(str);
+	str.Show();
+}
+
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(str.Length())
 {
-	Set((byte*)str.ToString(), str.Length());
+	DeepSet((byte*)str.ToString(), str.Length());
 }
 
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
-	//String& str = *(new String());
 	str.Clear();
 	byte* buf = GetBuffer();
 	for(int i=0, k=0; i < Length(); i++, buf++)
 	{
-		//debug_printf("%02X", *buf++);
 		byte b = *buf >> 4;
 		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
 		b = *buf & 0x0F;
 		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
-		
+
 		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
@@ -74,6 +86,9 @@ String& String::Append(const char* str)
 // 调试输出字符串
 void String::Show(bool newLine)
 {
+	// 截断字符串，避免超长
+	//this[Length()] = '\0';
+
 	debug_printf("%s", ToString());
 	if(newLine) debug_printf("\r\n");
 }
@@ -105,6 +120,18 @@ byte& IPAddress::operator[](int i)
 	return ((byte*)&Value)[i];
 }
 
+String& IPAddress::To(String& str)
+{
+	byte* ips = (byte*)&Value;
+
+	char ss[16];
+	memset(ss, 0, ArrayLength(ss));
+	sprintf(ss, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
+	str.DeepSet(ss, 0);
+
+	return str;
+}
+
 IPEndPoint::IPEndPoint()
 {
 	Port = 0;
@@ -114,6 +141,18 @@ IPEndPoint::IPEndPoint(IPAddress addr, ushort port)
 {
 	Address = addr;
 	Port	= port;
+}
+
+String& IPEndPoint::To(String& str)
+{
+	Address.To(str);
+
+	char ss[5];
+	memset(ss, 0, ArrayLength(ss));
+	sprintf(ss, ":%d", Port);
+	str.DeepSet(ss, 0, str.Length());
+
+	return str;
 }
 
 /* MAC地址 */
@@ -166,3 +205,15 @@ bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
 {
 	return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
 }*/
+
+String& MacAddress::To(String& str)
+{
+	byte* macs = (byte*)&v4;
+
+	char ss[18];
+	memset(ss, 0, ArrayLength(ss));
+	sprintf(ss, "%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
+	str.DeepSet(ss, 0);
+
+	return str;
+}

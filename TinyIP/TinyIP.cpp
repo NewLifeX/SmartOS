@@ -266,16 +266,18 @@ bool TinyIP::Open()
 void TinyIP::ShowInfo()
 {
 #if NET_DEBUG
+	String str;
+	
 	debug_printf("    IP:\t");
-	ShowIP(IP);
+	IP.Show();
 	debug_printf("\r\n    Mask:\t");
-	ShowIP(Mask);
+	Mask.Show();
 	debug_printf("\r\n    Gate:\t");
-	ShowIP(Gateway);
+	Gateway.Show();
 	debug_printf("\r\n    DHCP:\t");
-	ShowIP(DHCPServer);
+	DHCPServer.Show();
 	debug_printf("\r\n    DNS:\t");
-	ShowIP(DNSServer);
+	DNSServer.Show();
 	debug_printf("\r\n");
 #endif
 }

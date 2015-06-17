@@ -34,6 +34,8 @@ typedef char*           String;
 #include <typeinfo>
 using namespace ::std;
 
+class String;
+
 // 根对象。
 // 子类通过Init重写指定大小，并对虚表指针以外数据区域全部清零。因无法确定其它虚表指针位置，故不支持多继承
 class Object
@@ -51,6 +53,10 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
+	
+	virtual String& To(String& str);
+	
+	void Show();
 };
 
 // 子类用于调用Object进行对象初始化的默认写法
@@ -264,8 +270,6 @@ public:
 	}
 };
 
-class String;
-
 // 字节数组
 class ByteArray : public Array<byte>
 {
@@ -305,7 +309,7 @@ public:
 };
 
 // IP地址
-class IPAddress : Object
+class IPAddress : public Object
 {
 public:
 	uint	Value;	// 地址
@@ -327,6 +331,8 @@ public:
 	bool IsBroadcast();
 	uint GetSubNet(IPAddress& mask);	// 获取子网
 	
+	virtual String& To(String& str);
+	
     friend bool operator==(IPAddress& addr1, IPAddress& addr2)
 	{
 		return addr1.Value == addr2.Value;
@@ -341,7 +347,7 @@ public:
 };
 
 // IP结点
-class IPEndPoint : Object
+class IPEndPoint : public Object
 {
 public:
 	IPAddress	Address;	// 地址
@@ -349,6 +355,8 @@ public:
 	
 	IPEndPoint();
 	IPEndPoint(IPAddress addr, ushort port);
+	
+	virtual String& To(String& str);
 
     friend bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
 	{
@@ -363,7 +371,7 @@ public:
 // Mac地址。结构体和类都可以
 //typedef struct _MacAddress MacAddress;
 //struct _MacAddress
-class MacAddress : Object
+class MacAddress : public Object
 {
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
@@ -380,6 +388,8 @@ public:
 
 	// 数值
     ulong Value();
+	
+	virtual String& To(String& str);
 
     friend bool operator==(MacAddress& addr1, MacAddress& addr2)
 	{
