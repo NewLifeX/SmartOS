@@ -247,7 +247,7 @@ public:
 	{
 		// 调整使用内部存储
 		Release();
-		
+
 		_Arr = Arr;
 		_Length = ArrayLength(Arr);
 		memset(_Arr, 0, sizeof(T) * _Length);
@@ -303,5 +303,99 @@ public:
 	// 调试输出字符串
 	void Show(bool newLine = false);
 };
+
+// IP地址
+class IPAddress : Object
+{
+public:
+	uint	Value;	// 地址
+
+	IPAddress(int value)		{ Value = (uint)value; }
+	IPAddress(uint value = 0)	{ Value = value; }
+	IPAddress(IPAddress& addr)	{ Value = addr.Value; }
+	IPAddress(const byte* ips)	{ Value = *(uint*)ips; }
+	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
+
+    IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
+    IPAddress& operator=(uint v)		{ Value = v; return *this; }
+    IPAddress& operator=(const byte* v)	{ Value = *(uint*)v; return *this; }
+
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    byte& operator[](int i);
+
+	bool IsAny();
+	bool IsBroadcast();
+	uint GetSubNet(IPAddress& mask);	// 获取子网
+	
+    friend bool operator==(IPAddress& addr1, IPAddress& addr2)
+	{
+		return addr1.Value == addr2.Value;
+	}
+    friend bool operator!=(IPAddress& addr1, IPAddress& addr2)
+	{
+		return addr1.Value != addr2.Value;
+	}
+
+	static IPAddress Any;
+	static IPAddress Broadcast;
+};
+
+// IP结点
+class IPEndPoint : Object
+{
+public:
+	IPAddress	Address;	// 地址
+	ushort		Port;		// 端口
+	
+	IPEndPoint();
+	IPEndPoint(IPAddress addr, ushort port);
+
+    friend bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
+	{
+		return addr1.Port == addr2.Port && addr1.Address == addr2.Address;
+	}
+    friend bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2)
+	{
+		return addr1.Port != addr2.Port || addr1.Address != addr2.Address;
+	}
+};
+
+// Mac地址。结构体和类都可以
+//typedef struct _MacAddress MacAddress;
+//struct _MacAddress
+class MacAddress : Object
+{
+public:
+	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
+	// 比如Mac地址12-34-56-78-90-12，v4是12-34-56-78，v2是90-12，ulong是0x0000129078563412
+	uint	v4;
+	ushort	v2;
+
+	MacAddress(ulong v = 0);
+
+	// 是否广播地址，全0或全1
+	bool IsBroadcast();
+
+    MacAddress& operator=(ulong v);
+
+	// 数值
+    ulong Value();
+
+    friend bool operator==(MacAddress& addr1, MacAddress& addr2)
+	{
+		return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+	}
+    friend bool operator!=(MacAddress& addr1, MacAddress& addr2)
+	{
+		return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
+	}
+
+	static MacAddress Empty;
+	static MacAddress Full;
+};
+//}MacAddress;
+
+//#define IP_FULL 0xFFFFFFFF
+//#define MAC_FULL 0xFFFFFFFFFFFFFFFFull
 
 #endif

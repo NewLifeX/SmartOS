@@ -77,3 +77,92 @@ void String::Show(bool newLine)
 	debug_printf("%s", ToString());
 	if(newLine) debug_printf("\r\n");
 }
+
+/* IP地址 */
+
+IPAddress IPAddress::Any(0, 0, 0, 0);
+IPAddress IPAddress::Broadcast(255, 255, 255, 255);
+
+IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
+{
+	Value = (ip4 << 24) + (ip3 << 16) + (ip2 << 8) + ip1;
+}
+
+bool IPAddress::IsAny() { return Value == 0; }
+
+bool IPAddress::IsBroadcast() { return Value == 0xFFFFFFFF; }
+
+uint IPAddress::GetSubNet(IPAddress& mask)
+{
+	return Value & mask.Value;
+}
+
+// 重载索引运算符[]，让它可以像数组一样使用下标索引。
+byte& IPAddress::operator[](int i)
+{
+	assert_param(i >= 0 && i < 4);
+
+	return ((byte*)&Value)[i];
+}
+
+IPEndPoint::IPEndPoint()
+{
+	Port = 0;
+}
+
+IPEndPoint::IPEndPoint(IPAddress addr, ushort port)
+{
+	Address = addr;
+	Port	= port;
+}
+
+/* MAC地址 */
+
+MacAddress MacAddress::Empty(0);
+MacAddress MacAddress::Full(0xFFFFFFFFFFFFFFFFull);
+
+MacAddress::MacAddress(ulong v)
+{
+	v4 = v;
+	v2 = v >> 32;
+}
+
+// 是否广播地址，全0或全1
+bool MacAddress::IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
+
+MacAddress& MacAddress::operator=(ulong v)
+{
+	v4 = v;
+	v2 = v >> 32;
+
+	// 下面这个写法很好，一条汇编指令即可完成，但是会覆盖当前结构体后两个字节
+	//*(ulong*)this = v;
+
+	// 下面的写法需要5条汇编指令，先放入内存，再分两次读写
+	/*uint* p = (uint*)&v;
+	v4 = *p++;
+	v2 = *(ushort*)p;*/
+
+	return *this;
+}
+
+// 数值
+ulong MacAddress::Value()
+{
+	ulong v = v4;
+	v |= ((ulong)v2) << 32;
+	return v;
+
+	// 下面这个写法简单，但是会带上后面两个字节，需要做或运算，不划算
+	//return *(ulong*)this | 0x0000FFFFFFFF;
+}
+
+/*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)
+{
+	return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+}
+
+bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
+{
+	return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
+}*/
