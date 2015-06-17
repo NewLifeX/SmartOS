@@ -70,58 +70,142 @@ template<typename T>
 class Array : public Object
 {
 private:
-    T*		_Arr;
-	int		_Count;
-	int		_Capacity;
-	bool	_needFree;
+    T*		_Arr;		// 数据指针
+	int		_Length;	// 数组长度
+	bool	_needFree;	// 是否需要释放
 
 	T		Arr[0x40];	// 内部缓冲区，减少内存分配次数
 
 	OBJECT_INIT
 
-	void InitCapacity(int capacity)
+	// 销毁旧的
+	void Release()
 	{
-		if(capacity <= ArrayLength(Arr))
+		if(_needFree && _Arr && _Arr != Arr) delete _Arr;
+		_Arr = NULL;
+	}
+
+public:
+	// 数组长度
+    int Length() const { return _Length; }
+	// 缓冲区
+	T* GetBuffer() { return _Arr; }
+
+	// 初始化指定长度的数组。默认使用内部缓冲区
+	Array(int length = ArrayLength(Arr))
+	{
+		Init();
+
+		_Length = length;
+		// 超过内部默认缓冲区大小时，另外从堆分配空间
+		if(length <= ArrayLength(Arr))
 		{
-			_Capacity = ArrayLength(Arr);
 			_Arr = Arr;
 		}
 		else
 		{
-			_Capacity = capacity;
-			_Arr = new T[capacity];
-			ArrayZero2(_Arr, capacity);
+			_Arr = new T[length];
+			ArrayZero2(_Arr, length);
 			_needFree = true;
 		}
 	}
 
-public:
-	// 有效元素个数
-    int Count() const { return _Count; }
-	// 最大元素个数
-    int Capacity() const { return _Capacity; }
-	// 缓冲区
-	T* GetBuffer() { return _Arr; }
+	// 重载等号运算符，使用另一个固定数组来初始化
+    Array& operator=(const Array& arr) { return Set(arr); }
 
-	Array(int capacity = 0x40)
+	// 析构。释放资源
+	~Array() { Release(); }
+
+	// 设置长度。优先采用内部空间；外部放大缩小都要重新分配；缩小会丢失数据
+	Array& SetLength(int length, bool copyData = true)
 	{
-		Init();
+		if(length == _Length) return *this;
 
-		InitCapacity(capacity);
+		// 旧缓冲区指针
+		T* old = _Arr;
+		// 计算需要拷贝的数据，取最小值
+		int len = length;
+		if(_Length < len) len = _Length;
+
+		// 超过内部默认缓冲区大小时，另外从堆分配空间
+		if(length <= ArrayLength(Arr))
+		{
+			_Arr = Arr;
+
+			// 拷贝数据并释放旧空间
+			if(old && old != Arr)
+			{
+				if(copyData && len) memcpy(_Arr, old, sizeof(T) * len);
+				if(_needFree) delete old;
+			}
+			_needFree = false;
+		}
+		else
+		{
+			_Arr = new T[length];
+			ArrayZero2(_Arr, length);
+
+			// 拷贝数据并释放旧空间
+			if(old)
+			{
+				if(copyData && len) memcpy(_Arr, old, sizeof(T) * len);
+				if(old != Arr && _needFree) delete old;
+			}
+			_needFree = true;
+		}
+
+		_Length = length;
+
+		return *this;
 	}
 
-	Array(T item, int count)
+	// 设置数组元素为指定值
+	Array& Set(T item, int offset = 0, int count = 0)
 	{
-		Init();
+		// count==0 表示设置全部元素
+		if(!count) count = _Length - offset;
 
-		_Count		= count;
+		// 检查长度是否足够
+		//assert_param(offset + count <= _Length);
+		SetLength(offset + count, offset != 0);
 
-		InitCapacity(count);
+		// 如果元素类型大小为1，那么可以直接调用内存设置函数
+		if(sizeof(T) == 1)
+			memset(_Arr + offset, item, sizeof(T) * count);
+		else
+			while(count-- > 0) _Arr[offset++] = item;
 
-		if((byte)item != 0) memset(_Arr, item, count);
+		return *this;
 	}
 
-	Array(const T* data, int len = 0)
+	// 设置数组。采用浅克隆，不拷贝数据
+	Array& Set(const Array& arr)
+	{
+		// 销毁旧的
+		Release();
+
+		_Arr		= arr._Arr;
+		_Length		= arr._Length;
+		_needFree	= false;
+
+		return *this;
+	}
+
+	// 设置数组。深度克隆，拷贝数据
+	Array& DeepSet(const Array& arr)
+	{
+		int len = arr.Length();
+
+		// 检查长度足够
+		SetLength(len, false);
+
+		memcpy(_Arr, arr._Arr, sizeof(T) * len);
+
+		return *this;
+	}
+
+	// 设置数组。采用浅克隆，不拷贝数据
+	Array& Set(const T* data, int len = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -130,98 +214,54 @@ public:
 			while(*p++) len++;
 		}
 
-		//memcpy(_Arr, data, len * sizeof(T));
-		_Count		= len;
-		_Capacity	= len;
+		// 销毁旧的
+		Release();
+
 		_Arr		= (T*)data;
+		_Length		= len;
 		_needFree	= false;
-	}
-
-	Array(Array& arr)
-	{
-		_Count		= arr._Count;
-		_Capacity	= arr._Capacity;
-		//ArrayCopy(_Arr, arr._Arr);
-		_Arr		= arr._Arr;
-		_needFree	= arr._needFree;
-	}
-
-	// 重载等号运算符，使用另一个固定数组来初始化
-    Array& operator=(Array& arr)
-	{
-		_Count		= arr._Count;
-		_Capacity	= arr._Capacity;
-		//ArrayCopy(_Arr, arr._Arr);
-		_Arr		= arr._Arr;
-		_needFree	= arr._needFree;
 
 		return *this;
 	}
 
-	~Array()
+	// 设置数组。深度克隆，拷贝数据
+	Array& DeepSet(const T* data, int len = 0, int offset = 0)
 	{
-		if(_needFree)
+		// 自动计算长度，\0结尾
+		if(!len)
 		{
-			if(_Arr) delete _Arr;
-			_Arr = NULL;
+			byte* p =(byte*)data;
+			while(*p++) len++;
 		}
-	}
 
-	// 压入一个元素
-	int Push(T item)
-	{
-		assert_param(_Count < _Capacity);
+		// 检查长度足够
+		SetLength(offset + len, offset != 0);
 
-		// 找到空闲位放置
-		int idx = _Count++;
-		_Arr[idx] = item;
+		memcpy(_Arr + offset, data, sizeof(T) * len);
 
-		return idx;
-	}
-
-	// 弹出一个元素
-	const T Pop()
-	{
-		assert_param(_Count > 0);
-
-		return _Arr[--_Count];
-	}
-
-	// 附加一组数据
-	void Append(const T* data, int len)
-	{
-		assert_param(_Count + len <= _Capacity);
-
-		// 找到空闲位放置
-		while(len-- > 0) _Arr[_Count++] = *data++;
+		return *this;
 	}
 
 	// 清空已存储数据
-	void Clear()
+	Array& Clear()
 	{
 		// 调整使用内部存储
-		if(_needFree)
-		{
-			if(_Arr) delete _Arr;
-		}
+		Release();
+		
 		_Arr = Arr;
-		_Capacity = ArrayLength(Arr);
-		if(_Count > 0)
-		{
-			memset(_Arr, 0, _Count * sizeof(T));
-		}
-		_Count = 0;
+		_Length = ArrayLength(Arr);
+		memset(_Arr, 0, sizeof(T) * _Length);
+
+		return *this;
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
-		assert_param(i >= 0 && i < _Count);
+		assert_param(i >= 0 && i < _Length);
 
 		return _Arr[i];
 	}
-	// 列表转为指针，注意安全
-    //T* operator=(Array arr) { return arr.Arr; }
 };
 
 class String;
@@ -230,8 +270,8 @@ class String;
 class ByteArray : public Array<byte>
 {
 public:
-	ByteArray(int capacity = 0x40) : Array(capacity) { }
-	ByteArray(byte item, int count) : Array(item, count) { }
+	ByteArray(int length = 0x40) : Array(length) { }
+	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	ByteArray(String& str);
 
 	// 列表转为指针，注意安全
@@ -249,22 +289,16 @@ private:
 	OBJECT_INIT
 
 public:
-	String(int capacity = 0x40) : Array(capacity) { }
-	String(char item, int count) : Array(item, count) { }
-	String(const char* data, int len = 0) : Array(data, len) { }
+	String(int length = 0x40) : Array(length) { }
+	String(char item, int count) : Array(count) { Set(item, 0, count); }
+	String(const char* data, int len = 0) : Array(len) { Set(data, len); }
 	String(String& str) : Array(str) { }
-	// 重载等号运算符，使用另一个固定数组来初始化
-    //String& operator=(String& str);
-	//~String();
-
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    //char& operator[](int i);
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
 
-	String& Append(char ch);
-	String& Append(const char* str);
+	//String& Append(char ch);
+	//String& Append(const char* str);
 
 	// 调试输出字符串
 	void Show(bool newLine = false);

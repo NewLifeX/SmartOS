@@ -4,14 +4,14 @@
 
 void GetKey(ByteArray& box, ByteArray& pass)
 {
-	for (int i = 0; i < box.Count(); i++)
+	for (int i = 0; i < box.Length(); i++)
 	{
 		box[i] = i;
 	}
 	int j = 0;
-	for (int i = 0; i < box.Count(); i++)
+	for (int i = 0; i < box.Length(); i++)
 	{
-		j = (j + box[i] + pass[i % pass.Count()]) % box.Count();
+		j = (j + box[i] + pass[i % pass.Length()]) % box.Length();
 		byte temp = box[i];
 		box[i] = box[j];
 		box[j] = temp;
@@ -25,7 +25,7 @@ void RC4::Encrypt(ByteArray& data, ByteArray& pass)
 	ByteArray box(0, KeyLength);
 	GetKey(box, pass);
 	// 加密  
-	for (int k = 0; k < data.Count(); k++)
+	for (int k = 0; k < data.Length(); k++)
 	{
 		i = (i + 1) % KeyLength;
 		j = (j + box[i]) % KeyLength;

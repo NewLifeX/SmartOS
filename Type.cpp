@@ -17,9 +17,9 @@ const char* Object::ToString()
 }
 
 // 字符串转为字节数组
-ByteArray::ByteArray(String& str) : Array(str.Count())
+ByteArray::ByteArray(String& str) : Array(str.Length())
 {
-	Append((byte*)str.ToString(), str.Count());
+	Set((byte*)str.ToString(), str.Length());
 }
 
 // 显示十六进制数据，指定分隔字符
@@ -28,88 +28,27 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 	//String& str = *(new String());
 	str.Clear();
 	byte* buf = GetBuffer();
-	for(int i=0; i < Count(); i++, buf++)
+	for(int i=0, k=0; i < Length(); i++, buf++)
 	{
 		//debug_printf("%02X", *buf++);
 		byte b = *buf >> 4;
-		str.Append(b > 9 ? ('A' + b - 10) : ('0' + b));
+		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
 		b = *buf & 0x0F;
-		str.Append(b > 9 ? ('A' + b - 10) : ('0' + b));
+		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
 		
-		if(i < Count() - 1)
+		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
-				str.Append("\r\n");
+			{
+				str[k++] = '\r';
+				str[k++] = '\n';
+			}
 			else if(sep != '\0')
-				str.Append(sep);
+				str[k++] = sep;
 		}
 	}
 	return str;
 }
-
-/*String::String(int capacity)
-{
-	Init();
-
-	if(capacity <= ArrayLength(Arr))
-		_Arr = Arr;
-	else
-	{
-		_Arr = new char[capacity];
-		_needFree = true;
-	}
-}
-
-String::String(const char* data, int len)
-{
-	Init();
-
-	// 自动计算长度，\0结尾
-	if(!len)
-	{
-		char* p = (char*)data;
-		while(*p++) len++;
-	}
-
-	_Count		= len;
-	_Arr		= (char*)data;
-}
-
-String::String(String& str)
-{
-	Init();
-
-	_Count		= str._Count;
-	_Arr		= str._Arr;
-	_needFree	= str._needFree;
-}
-
-// 重载等号运算符，使用另一个固定数组来初始化
-String& String::operator=(String& str)
-{
-	_Count		= str._Count;
-	_Arr		= str._Arr;
-	_needFree	= str._needFree;
-
-	return *this;
-}
-
-String::~String()
-{
-	if(_needFree)
-	{
-		if(_Arr) delete _Arr;
-		_Arr = NULL;
-	}
-}
-
-// 重载索引运算符[]，让它可以像数组一样使用下标索引。
-char& String::operator[](int i)
-{
-	assert_param(i >= 0 && i < _Count);
-
-	return _Arr[i];
-}*/
 
 // 输出对象的字符串表示方式
 const char* String::ToString()
@@ -117,7 +56,7 @@ const char* String::ToString()
 	return GetBuffer();
 }
 
-String& String::Append(char ch)
+/*String& String::Append(char ch)
 {
 	Push(ch);
 
@@ -130,7 +69,7 @@ String& String::Append(const char* str)
 	while(*p) Push(*p++);
 
 	return *this;
-}
+}*/
 
 // 调试输出字符串
 void String::Show(bool newLine)
