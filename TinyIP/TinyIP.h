@@ -94,14 +94,14 @@ public:
 
 	bool Open();
 	void ShowInfo();
-	static void ShowIP(IPAddress ip);
+	static void ShowIP(IPAddress& ip);
 	static void ShowMac(const MacAddress& mac);
 	ushort CheckSum(const byte* buf, uint len, byte type);
 
 	void SendEthernet(ETH_TYPE type, const byte* buf, uint len);
 	void SendIP(IP_TYPE type, const byte* buf, uint len);
-	bool IsMyIP(IPAddress ip);	// 是否发给我的IP地址
-	bool IsBroadcast(IPAddress ip);	// 是否广播地址
+	bool IsMyIP(IPAddress& ip);	// 是否发给我的IP地址
+	bool IsBroadcast(IPAddress& ip);	// 是否广播地址
 };
 
 /*

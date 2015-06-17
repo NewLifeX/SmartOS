@@ -66,7 +66,7 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 
 		if(icmp->Identifier == id && icmp->Sequence == seq
 		&& _ip->DestIP == tip->IP
-		&& _ip->SrcIP == ip)
+		&& _ip->SrcIP.Value == ip)
 		{
 			return true;
 		}
@@ -132,7 +132,7 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	Tip->SendIP(IP_ICMP, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 等待时间
-	int ps[] = {ip, id, seq};
+	int ps[] = {ip.Value, id, seq};
 	if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
 
 	return false;

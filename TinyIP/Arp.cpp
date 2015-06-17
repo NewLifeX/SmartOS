@@ -2,8 +2,8 @@
 
 #define NET_DEBUG 0
 
-const MacAddress mac_full(MAC_FULL);
-const MacAddress mac_empty(0);
+//const MacAddress mac_full(MAC_FULL);
+//const MacAddress mac_empty(0);
 
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -172,11 +172,12 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 
 const MacAddress* ArpSocket::Resolve(IPAddress ip)
 {
-	if(ip == 0) return &mac_empty;
-	if(ip == IP_FULL || Tip->IsBroadcast(ip)) return &mac_full;
+	if(ip.IsAny()) return &MacAddress::Empty;
+	if(ip.IsBroadcast() || Tip->IsBroadcast(ip)) return &MacAddress::Full;
 
 	// 如果不在本子网，那么应该找网关的Mac
-	if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
+	//if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
+	if(ip.GetSubNet(Tip->Mask) != Tip->IP.GetSubNet(Tip->Mask)) ip = Tip->Gateway;
 
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
@@ -208,7 +209,7 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 
 void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 {
-	if(!ip || ip == IP_FULL) return;
+	if(ip.IsAny() || ip.IsBroadcast()) return;
 
 	if(!_Arps)
 	{
@@ -227,7 +228,7 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 			item = arp;
 			break;
 		}
-		if(!empty && arp->IP == 0)
+		if(!empty && arp->IP.IsAny())
 		{
 			empty = arp;
 			break;

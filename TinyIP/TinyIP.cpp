@@ -48,13 +48,14 @@ void TinyIP::Init(ITransport* port)
 	_StartTime = Time.Current();
 
 	const byte defip_[] = {192, 168, 0, 1};
-	IPAddress defip = *(uint*)defip_;
+	IPAddress defip(defip_);
 
 	// 随机IP，取ID最后一个字节
-	IP = defip & 0x00FFFFFF;
+	IP = defip;
 	byte first = Sys.ID[0];
 	if(first <= 1 || first >= 254) first = 2;
-	IP |= first << 24;
+	//IP.Value &= ((first << 24) | 0x00FFFFFF);
+	IP[3] = first;
 
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 	byte* mac = (byte*)&Mac;
@@ -369,9 +370,9 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 
 #define TinyIP_HELP
 #ifdef TinyIP_HELP
-void TinyIP::ShowIP(IPAddress ip)
+void TinyIP::ShowIP(IPAddress& ip)
 {
-	byte* ips = (byte*)&ip;
+	byte* ips = (byte*)&ip.Value;
 	debug_printf("%d", *ips++);
 	for(int i=1; i<4; i++)
 		debug_printf(".%d", *ips++);
@@ -379,7 +380,7 @@ void TinyIP::ShowIP(IPAddress ip)
 
 void TinyIP::ShowMac(const MacAddress& mac)
 {
-	byte* m = (byte*)&mac;
+	byte* m = (byte*)&mac.v4;
 	debug_printf("%02X", *m++);
 	for(int i=1; i<6; i++)
 		debug_printf("-%02X", *m++);
@@ -398,10 +399,10 @@ ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
         // UDP/TCP的校验和需要计算UDP首部加数据荷载部分，但也需要加上UDP伪首部。
 		// 这个伪首部指，源地址、目的地址、UDP数据长度、协议类型（0x11），协议类型就一个字节，但需要补一个字节的0x0，构成12个字节。
 		// 源地址。其实可以按照4字节累加，反正后面会把高位移位到低位累加，但是得考虑溢出的问题。
-		sum += __REV16(IP & 0xFFFF);
-		sum += __REV16(IP >> 16);
-		sum += __REV16(RemoteIP & 0xFFFF);
-		sum += __REV16(RemoteIP >> 16);
+		sum += __REV16(IP.Value & 0xFFFF);
+		sum += __REV16(IP.Value >> 16);
+		sum += __REV16(RemoteIP.Value & 0xFFFF);
+		sum += __REV16(RemoteIP.Value >> 16);
 
 		// 数据长度
 		sum += len;
@@ -433,7 +434,7 @@ ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
     return (ushort)(sum ^ 0xFFFF);
 }
 
-bool TinyIP::IsMyIP(IPAddress ip)
+bool TinyIP::IsMyIP(IPAddress& ip)
 {
 	if(ip == IP) return true;
 
@@ -442,12 +443,12 @@ bool TinyIP::IsMyIP(IPAddress ip)
 	return false;
 }
 
-bool TinyIP::IsBroadcast(IPAddress ip)
+bool TinyIP::IsBroadcast(IPAddress& ip)
 {
 	// 全网广播
-	if(ip == IP_FULL) return true;
+	if(ip.IsBroadcast()) return true;
 
-	if(ip == (IP | ~Mask)) return true;
+	if(ip.Value == (IP.Value | ~Mask.Value)) return true;
 
 	return false;
 }

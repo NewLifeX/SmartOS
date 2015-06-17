@@ -23,7 +23,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId((byte*)&Tip->Mac, 6);
-		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP);
+		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
 		
 		// 构造产品名称，把ID第一个字节附到最后
 		string str = "WSWL_SmartOS_xx";
@@ -44,7 +44,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 
 	//Tip->RemoteMac = MAC_FULL;
 	//Tip->RemoteIP = IP_FULL;
-	RemoteIP = IP_FULL;
+	RemoteIP = IPAddress::Broadcast;
 
 	//UDP_HEADER* udp = dhcp->Prev();
 	//udp->SrcPort = 68;
@@ -96,7 +96,7 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	byte* p = dhcp->Next();
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
-	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer);
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer.Value);
 
 	// 发往DHCP服务器
 	//Tip->RemoteMac = MAC_FULL;

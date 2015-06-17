@@ -153,7 +153,7 @@ UDP_HEADER* UdpSocket::Create()
 // 发送UDP数据到目标地址
 void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 {
-	if(ip > 0)
+	if(!ip.IsAny())
 	{
 		RemoteIP = ip;
 		RemotePort = port;
