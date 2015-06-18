@@ -91,13 +91,14 @@ class Array : public Object
 private:
     T*		_Arr;		// 数据指针
 	int		_Length;	// 数组长度
+	uint	_Capacity;	// 数组最大容量。初始化时决定，后面不允许改变
 	bool	_needFree;	// 是否需要释放
 
 	T		Arr[0x40];	// 内部缓冲区，减少内存分配次数
 
 	OBJECT_INIT
 
-	// 销毁旧的
+	// 销毁旧的缓冲区。使用内部
 	void Release()
 	{
 		if(_needFree && _Arr && _Arr != Arr) delete _Arr;
@@ -107,6 +108,8 @@ private:
 public:
 	// 数组长度
     int Length() const { return _Length; }
+	// 数组最大容量。初始化时决定，后面不允许改变
+	int Capacity() const { return _Capacity; }
 	// 缓冲区
 	T* GetBuffer() { return _Arr; }
 
@@ -115,68 +118,28 @@ public:
 	{
 		Init();
 
-		_Length = length;
+		if(!length) length = ArrayLength(Arr);
+		_Length		= length;
 		// 超过内部默认缓冲区大小时，另外从堆分配空间
 		if(length <= ArrayLength(Arr))
 		{
-			_Arr = Arr;
+			_Arr		= Arr;
+			_Capacity	= ArrayLength(Arr);
 		}
 		else
 		{
 			_Arr = new T[length];
-			ArrayZero2(_Arr, length);
-			_needFree = true;
+			_Capacity	= length;
+			_needFree	= true;
 		}
+		ArrayZero2(_Arr, length);
 	}
-
-	// 重载等号运算符，使用另一个固定数组来初始化
-    Array& operator=(const Array& arr) { return Set(arr); }
 
 	// 析构。释放资源
-	~Array() { Release(); }
+	virtual ~Array() { Release(); }
 
-	// 设置长度。优先采用内部空间；外部放大缩小都要重新分配；缩小会丢失数据
-	Array& SetLength(int length, bool copyData = true)
-	{
-		if(length == _Length) return *this;
-
-		// 旧缓冲区指针
-		T* old = _Arr;
-		// 计算需要拷贝的数据，取最小值
-		int len = length;
-		if(_Length < len) len = _Length;
-
-		// 超过内部默认缓冲区大小时，另外从堆分配空间
-		if(length <= ArrayLength(Arr))
-		{
-			_Arr = Arr;
-
-			// 拷贝数据并释放旧空间
-			if(old && old != Arr)
-			{
-				if(copyData && len) memcpy(_Arr, old, sizeof(T) * len);
-				if(_needFree) delete old;
-			}
-			_needFree = false;
-		}
-		else
-		{
-			_Arr = new T[length];
-			ArrayZero2(_Arr, length);
-
-			// 拷贝数据并释放旧空间
-			if(old)
-			{
-				if(copyData && len) memcpy(_Arr, old, sizeof(T) * len);
-				if(old != Arr && _needFree) delete old;
-			}
-			_needFree = true;
-		}
-
-		_Length = length;
-
-		return *this;
-	}
+	// 重载等号运算符，使用另一个固定数组来初始化
+    Array& operator=(const Array& arr) { return Copy(arr); }
 
 	// 设置数组元素为指定值
 	Array& Set(T item, int offset = 0, int count = 0)
@@ -185,40 +148,13 @@ public:
 		if(!count) count = _Length - offset;
 
 		// 检查长度是否足够
-		//assert_param(offset + count <= _Length);
-		SetLength(offset + count, offset != 0);
+		assert_param(offset + count <= _Capacity);
 
 		// 如果元素类型大小为1，那么可以直接调用内存设置函数
 		if(sizeof(T) == 1)
 			memset(_Arr + offset, item, sizeof(T) * count);
 		else
 			while(count-- > 0) _Arr[offset++] = item;
-
-		return *this;
-	}
-
-	// 设置数组。采用浅克隆，不拷贝数据
-	Array& Set(const Array& arr)
-	{
-		// 销毁旧的
-		Release();
-
-		_Arr		= arr._Arr;
-		_Length		= arr._Length;
-		_needFree	= false;
-
-		return *this;
-	}
-
-	// 设置数组。深度克隆，拷贝数据
-	Array& DeepSet(const Array& arr)
-	{
-		int len = arr.Length();
-
-		// 检查长度足够
-		SetLength(len, false);
-
-		memcpy(_Arr, arr._Arr, sizeof(T) * len);
 
 		return *this;
 	}
@@ -233,18 +169,37 @@ public:
 			while(*p++) len++;
 		}
 
+		// 检查长度是否足够
+		assert_param(len <= _Capacity);
+
 		// 销毁旧的
 		Release();
 
 		_Arr		= (T*)data;
 		_Length		= len;
+		_Capacity	= len;
 		_needFree	= false;
 
 		return *this;
 	}
 
-	// 设置数组。深度克隆，拷贝数据
-	Array& DeepSet(const T* data, int len = 0, int offset = 0)
+	// 复制数组。深度克隆，拷贝数据
+	Array& Copy(const Array& arr, int offset = 0)
+	{
+		int len = arr.Length();
+
+		// 检查长度是否足够
+		assert_param(offset + len <= _Capacity);
+
+		// 拷贝数据
+		memcpy(_Arr + offset, arr._Arr, sizeof(T) * len);
+		_Length = len;
+
+		return *this;
+	}
+
+	// 复制数组。深度克隆，拷贝数据
+	Array& Copy(const T* data, int len = 0, int offset = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -253,10 +208,13 @@ public:
 			while(*p++) len++;
 		}
 
-		// 检查长度足够
-		SetLength(offset + len, offset != 0);
+		// 检查长度是否足够
+		int len2 = offset + len;
+		assert_param(len2 <= _Capacity);
 
+		// 拷贝数据
 		memcpy(_Arr + offset, data, sizeof(T) * len);
+		if(len2 > _Length) _Length = len2;
 
 		return *this;
 	}
@@ -264,11 +222,6 @@ public:
 	// 清空已存储数据
 	Array& Clear()
 	{
-		// 调整使用内部存储
-		Release();
-
-		_Arr = Arr;
-		_Length = ArrayLength(Arr);
 		memset(_Arr, 0, sizeof(T) * _Length);
 
 		return *this;
@@ -277,7 +230,7 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
-		assert_param(i >= 0 && i < _Length);
+		assert_param(_Arr && i >= 0 && i < _Length);
 
 		return _Arr[i];
 	}
@@ -287,12 +240,10 @@ public:
 class ByteArray : public Array<byte>
 {
 public:
-	ByteArray(int length = 0x40) : Array(length) { }
+	ByteArray(int length) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
+	ByteArray(const byte* data, int length) : Array(length) { Set(data, length); }
 	ByteArray(String& str);
-
-	// 列表转为指针，注意安全
-    //byte* operator=(ByteArray& arr) { return arr.GetBuffer(); }
 
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String& ToHex(String& str, char sep = '\0', int newLine = 0x10);

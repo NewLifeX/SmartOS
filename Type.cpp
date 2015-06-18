@@ -33,15 +33,16 @@ void Object::Show()
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(str.Length())
 {
-	DeepSet((byte*)str.ToString(), str.Length());
+	Copy((byte*)str.ToString(), str.Length());
 }
 
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
-	str.Clear();
+	//str.Clear();
 	byte* buf = GetBuffer();
-	for(int i=0, k=0; i < Length(); i++, buf++)
+	int k = 0;
+	for(int i=0; i < Length(); i++, buf++)
 	{
 		byte b = *buf >> 4;
 		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
@@ -59,6 +60,8 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 				str[k++] = sep;
 		}
 	}
+	str[k] = '\0';
+
 	return str;
 }
 
@@ -125,9 +128,8 @@ String& IPAddress::To(String& str)
 	byte* ips = (byte*)&Value;
 
 	char ss[16];
-	memset(ss, 0, ArrayLength(ss));
-	sprintf(ss, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-	str.DeepSet(ss, 0);
+	int len = sprintf(ss, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
+	str.Copy(ss, len);
 
 	return str;
 }
@@ -148,9 +150,8 @@ String& IPEndPoint::To(String& str)
 	Address.To(str);
 
 	char ss[5];
-	memset(ss, 0, ArrayLength(ss));
-	sprintf(ss, ":%d", Port);
-	str.DeepSet(ss, 0, str.Length());
+	int len = sprintf(ss, ":%d", Port);
+	str.Copy(ss, len);
 
 	return str;
 }
@@ -182,7 +183,7 @@ MacAddress& MacAddress::operator=(ulong v)
 	/*uint* p = (uint*)&v;
 	v4 = *p++;
 	v2 = *(ushort*)p;*/
-	
+
 	Value = v;
 
 	return *this;
@@ -214,9 +215,8 @@ String& MacAddress::To(String& str)
 	byte* macs = (byte*)&Value;
 
 	char ss[18];
-	memset(ss, 0, ArrayLength(ss));
-	sprintf(ss, "%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
-	str.DeepSet(ss, 0);
+	int len = sprintf(ss, "%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
+	str.Copy(ss, len);
 
 	return str;
 }
