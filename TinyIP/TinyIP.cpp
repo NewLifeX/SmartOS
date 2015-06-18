@@ -83,7 +83,8 @@ uint TinyIP::Fetch(byte* buf, uint len)
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
-	if(eth->DestMac != Mac && !eth->DestMac.IsBroadcast()) return 0;
+	MacAddress dest = eth->DestMac.Value();
+	if(dest != Mac && !dest.IsBroadcast()) return 0;
 
 	return len;
 }
@@ -98,7 +99,7 @@ void TinyIP::Process(Stream* ms)
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	//if(eth->DestMac != Mac) return;
 	//LocalMac  = eth->DestMac;
-	RemoteMac = eth->SrcMac;
+	RemoteMac = eth->SrcMac.Value();
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -110,8 +111,10 @@ void TinyIP::Process(Stream* ms)
 	}
 
 	IP_HEADER* ip = ms->Retrieve<IP_HEADER>();
-	// 是否发给本机。注意memcmp相等返回0
-	if(!ip || !IsMyIP(ip->DestIP)) return;
+	// 是否发给本机。
+	if(!ip) return;
+	IPAddress addr = ip->DestIP;
+	if(!IsMyIP(addr)) return;
 
 	/*Sys.ShowHex((byte*)ip, ip->Size(), '-');
 	debug_printf("\r\n");
@@ -122,7 +125,7 @@ void TinyIP::Process(Stream* ms)
 	if(eth->Type != ETH_IP)
 	{
 		debug_printf("Unkown EthernetType 0x%02X From ", eth->Type);
-		ip->SrcIP.Show();
+		IPAddress(ip->SrcIP).Show();
 		debug_printf("\r\n");
 	}
 #endif
@@ -319,8 +322,8 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
-	ip->DestIP = RemoteIP;
-	ip->SrcIP = IP;
+	ip->DestIP = RemoteIP.Value;
+	ip->SrcIP = IP.Value;
 
 	ip->Version = 4;
 	//ip->TypeOfService = 0;
@@ -341,8 +344,8 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 
 	assert_ptr(Arp);
 	ArpSocket* arp = (ArpSocket*)Arp;
-	const MacAddress* mac = arp->Resolve(RemoteIP);
-	if(!mac)
+	MacAddress mac;
+	if(!arp->Resolve(RemoteIP, mac))
 	{
 #if NET_DEBUG
 		debug_printf("No Mac For ");
@@ -351,7 +354,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 #endif
 		return;
 	}
-	RemoteMac = *mac;
+	RemoteMac = mac;
 
 	/*string name = "Unkown";
 	switch(type)

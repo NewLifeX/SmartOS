@@ -242,7 +242,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
 			debug_printf("DHCP::Offer IP:");
-			dhcp->YourIP.Show();
+			Tip->IP.Show();
 			debug_printf(" From ");
 			Tip->RemoteIP.Show();
 			debug_printf("\r\n");
@@ -256,7 +256,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	{
 #if NET_DEBUG
 		debug_printf("DHCP::Ack   IP:");
-		dhcp->YourIP.Show();
+		IPAddress(dhcp->YourIP).Show();
 		debug_printf(" From ");
 		Tip->RemoteIP.Show();
 		debug_printf("\r\n");

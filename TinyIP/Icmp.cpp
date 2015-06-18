@@ -65,8 +65,8 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 		ushort seq = ps[2];
 
 		if(icmp->Identifier == id && icmp->Sequence == seq
-		&& _ip->DestIP == tip->IP
-		&& _ip->SrcIP.Value == ip)
+		&& _ip->DestIP == tip->IP.Value
+		&& _ip->SrcIP == ip)
 		{
 			return true;
 		}

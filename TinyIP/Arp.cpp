@@ -62,7 +62,7 @@ bool ArpSocket::Process(Stream* ms)
 	}*/
 
 	// 是否发给本机。
-	if(arp->DestIP != Tip->IP) return true;
+	if(arp->DestIP != Tip->IP.Value) return true;
 
 #if NET_DEBUG
 	// 数据校验
@@ -94,9 +94,9 @@ bool ArpSocket::Process(Stream* ms)
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
 	arp->DestMac = arp->SrcMac;
-	arp->SrcMac  = Tip->Mac;
+	arp->SrcMac  = Tip->Mac.Value;
 	arp->DestIP  = arp->SrcIP;
-	arp->SrcIP   = Tip->IP;
+	arp->SrcIP   = Tip->IP.Value;
 
 #if NET_DEBUG
 	debug_printf("ARP::Response To ");
@@ -118,12 +118,12 @@ bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 	if(eth->Type == ETH_ARP)
 	{
 		// 是否目标发给本机的Arp响应包。
-		if(arp->DestIP == tip->IP
+		if(arp->DestIP == tip->IP.Value
 		// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
 		&& arp->Option == 0x0200)
 		{
 			//return &arp->SrcMac;
-			*(MacAddress**)param = &arp->SrcMac;
+			*(MacAddress*)param = arp->SrcMac.Value();
 			return true;
 		}
 	}
@@ -132,7 +132,7 @@ bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 }
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
+bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 {
 	// 缓冲区必须略大，否则接收数据时可能少一个字节
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
@@ -149,8 +149,8 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	Tip->RemoteMac = 0;
 	arp->DestMac = 0;
 	arp->SrcMac  = Tip->Mac;
-	arp->DestIP  = ip;
-	arp->SrcIP   = Tip->IP;
+	arp->DestIP  = ip.Value;
+	arp->SrcIP   = Tip->IP.Value;
 
 #if NET_DEBUG
 	debug_printf("ARP::Request To ");
@@ -161,16 +161,15 @@ const MacAddress* ArpSocket::Request(IPAddress ip, int timeout)
 	Tip->SendEthernet(ETH_ARP, (byte*)arp, sizeof(ARP_HEADER));
 
 	// 如果没有超时时间，表示异步请求，不用等待结果
-	if(timeout <= 0) return NULL;
+	if(timeout <= 0) return false;
 
 	// 等待反馈
-	MacAddress* mac = NULL;
-	if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return mac;
+	if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return true;
 
-	return NULL;
+	return false;
 }
 
-const MacAddress* ArpSocket::Resolve(IPAddress ip)
+bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 {
 	if(ip.IsAny()) return &MacAddress::Empty;
 	if(ip.IsBroadcast() || Tip->IsBroadcast(ip)) return &MacAddress::Full;
@@ -187,7 +186,7 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 		for(int i=0; i<Count; i++)
 		{
 			ARP_ITEM* arp = &_Arps[i];
-			if(arp->IP == ip)
+			if(arp->IP == ip.Value)
 			{
 				// 如果未过期，则直接使用。否则重新请求
 				if(arp->Time > sNow) return &arp->Mac;
@@ -199,15 +198,21 @@ const MacAddress* ArpSocket::Resolve(IPAddress ip)
 	}
 
 	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
-	const MacAddress* mac = Request(ip, item ? 0 : 1);
-	if(!mac) return item ? &item->Mac : NULL;
+	bool rs = Request(ip, mac, item ? 0 : 1);
+	if(!rs)
+	{
+		if(!item) return false;
+		
+		mac = item->Mac.Value();
+		return true;
+	}
 
-	Add(ip, *mac);
+	Add(ip, mac);
 
-	return mac;
+	return rs;
 }
 
-void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
+void ArpSocket::Add(IPAddress& ip, MacAddress& mac)
 {
 	if(ip.IsAny() || ip.IsBroadcast()) return;
 
@@ -223,12 +228,12 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 	for(int i=0; i<Count; i++)
 	{
 		ARP_ITEM* arp = &_Arps[i];
-		if(arp->IP == ip)
+		if(arp->IP == ip.Value)
 		{
 			item = arp;
 			break;
 		}
-		if(!empty && arp->IP.IsAny())
+		if(!empty && arp->IP == 0)
 		{
 			empty = arp;
 			break;
@@ -257,7 +262,7 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 		{
 			ARP_ITEM* arp = &_Arps[i];
 			// 找最老的一个，待会如果需要覆盖，就先覆盖它。避开网关
-			if(arp->Time < oldTime && arp->IP != Tip->Gateway)
+			if(arp->Time < oldTime && arp->IP != Tip->Gateway.Value)
 			{
 				oldTime = arp->Time;
 				item = arp;
@@ -273,7 +278,7 @@ void ArpSocket::Add(IPAddress ip, const MacAddress& mac)
 	//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 	uint sNow = Time.Current() >> 20;	// 当前时间，秒
 	// 保存
-	item->IP = ip;
-	item->Mac = mac;
-	item->Time = sNow + 60;	// 默认过期时间1分钟
+	item->IP	= ip.Value;
+	item->Mac	= mac;
+	item->Time	= sNow + 60;	// 默认过期时间1分钟
 }

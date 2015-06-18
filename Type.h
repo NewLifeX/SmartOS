@@ -53,9 +53,9 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
-	
+
 	virtual String& To(String& str);
-	
+
 	void Show();
 };
 
@@ -330,17 +330,11 @@ public:
 	bool IsAny();
 	bool IsBroadcast();
 	uint GetSubNet(IPAddress& mask);	// 获取子网
-	
+
 	virtual String& To(String& str);
-	
-    friend bool operator==(IPAddress& addr1, IPAddress& addr2)
-	{
-		return addr1.Value == addr2.Value;
-	}
-    friend bool operator!=(IPAddress& addr1, IPAddress& addr2)
-	{
-		return addr1.Value != addr2.Value;
-	}
+
+    friend bool operator==(IPAddress& addr1, IPAddress& addr2) { return addr1.Value == addr2.Value; }
+    friend bool operator!=(IPAddress& addr1, IPAddress& addr2) { return addr1.Value != addr2.Value; }
 
 	static IPAddress Any;
 	static IPAddress Broadcast;
@@ -352,10 +346,10 @@ class IPEndPoint : public Object
 public:
 	IPAddress	Address;	// 地址
 	ushort		Port;		// 端口
-	
+
 	IPEndPoint();
 	IPEndPoint(IPAddress addr, ushort port);
-	
+
 	virtual String& To(String& str);
 
     friend bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
@@ -376,8 +370,9 @@ class MacAddress : public Object
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
 	// 比如Mac地址12-34-56-78-90-12，v4是12-34-56-78，v2是90-12，ulong是0x0000129078563412
-	uint	v4;
-	ushort	v2;
+	//uint	v4;
+	//ushort	v2;
+	ulong	Value;	// 地址
 
 	MacAddress(ulong v = 0);
 
@@ -387,17 +382,19 @@ public:
     MacAddress& operator=(ulong v);
 
 	// 数值
-    ulong Value();
-	
+    //ulong Value();
+
 	virtual String& To(String& str);
 
     friend bool operator==(MacAddress& addr1, MacAddress& addr2)
 	{
-		return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+		//return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+		return addr1.Value == addr2.Value;
 	}
     friend bool operator!=(MacAddress& addr1, MacAddress& addr2)
 	{
-		return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
+		//return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
+		return addr1.Value != addr2.Value;
 	}
 
 	static MacAddress Empty;

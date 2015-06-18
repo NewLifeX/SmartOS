@@ -162,17 +162,18 @@ MacAddress MacAddress::Full(0xFFFFFFFFFFFFFFFFull);
 
 MacAddress::MacAddress(ulong v)
 {
-	v4 = v;
-	v2 = v >> 32;
+	//v4 = v;
+	//v2 = v >> 32;
+	Value = v;
 }
 
 // 是否广播地址，全0或全1
-bool MacAddress::IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
+bool MacAddress::IsBroadcast() { return !Value || Value == 0xFFFFFFFFFFFFFFFFull; }
 
 MacAddress& MacAddress::operator=(ulong v)
 {
-	v4 = v;
-	v2 = v >> 32;
+	//v4 = v;
+	//v2 = v >> 32;
 
 	// 下面这个写法很好，一条汇编指令即可完成，但是会覆盖当前结构体后两个字节
 	//*(ulong*)this = v;
@@ -181,12 +182,14 @@ MacAddress& MacAddress::operator=(ulong v)
 	/*uint* p = (uint*)&v;
 	v4 = *p++;
 	v2 = *(ushort*)p;*/
+	
+	Value = v;
 
 	return *this;
 }
 
 // 数值
-ulong MacAddress::Value()
+/*ulong MacAddress::Value()
 {
 	ulong v = v4;
 	v |= ((ulong)v2) << 32;
@@ -194,7 +197,7 @@ ulong MacAddress::Value()
 
 	// 下面这个写法简单，但是会带上后面两个字节，需要做或运算，不划算
 	//return *(ulong*)this | 0x0000FFFFFFFF;
-}
+}*/
 
 /*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)
 {
@@ -208,7 +211,7 @@ bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
 
 String& MacAddress::To(String& str)
 {
-	byte* macs = (byte*)&v4;
+	byte* macs = (byte*)&Value;
 
 	char ss[18];
 	memset(ss, 0, ArrayLength(ss));
