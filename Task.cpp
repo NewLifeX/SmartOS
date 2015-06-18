@@ -135,7 +135,7 @@ void TaskScheduler::Execute(uint usMax)
 	{
 		min -= now;
 #if DEBUG
-		debug_printf("TaskScheduler::Execute 等待下一次任务调度 %uus\r\n", (uint)min);
+		//debug_printf("TaskScheduler::Execute 等待下一次任务调度 %uus\r\n", (uint)min);
 #endif
 		//// 最大只允许睡眠1秒，避免Sys.Delay出现设计错误，同时也更人性化
 		//if(min > 1000000) min = 1000000;
