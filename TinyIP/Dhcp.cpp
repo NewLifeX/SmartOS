@@ -22,37 +22,34 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
-		opt = opt->SetClientId((byte*)&Tip->Mac, 6);
+		opt = opt->SetClientId(Tip->Mac);
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
-		
+
 		// 构造产品名称，把ID第一个字节附到最后
-		string str = "WSWL_SmartOS_xx";
-		char name[15];
-		strncpy(name, str, ArrayLength(name));
-		Sys.ToHex((byte*)name + ArrayLength(name) - 2, &Sys.ID[0], 1);
-		opt = opt->Next()->SetData(DHCP_OPT_HostName, (byte*)name, ArrayLength(name));
-		opt = opt->Next()->SetData(DHCP_OPT_Vendor, (byte*)"http://www.NewLifeX.com", 23);
+		static String prefix("WSWL_SmartOS_");
+		//char name[15];
+		//strncpy(name, str, ArrayLength(name));
+		//Sys.ToHex((byte*)name + ArrayLength(name) - 2, &Sys.ID[0], 1);
+		String name = prefix;
+		name.Append(Sys.ID[0]);
+		
+		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
+		String vendor = "http://www.NewLifeX.com";
+		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
-		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, ps, ArrayLength(ps));
+		ByteArray bs(ps, ArrayLength(ps));
+		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, bs);
 		opt = opt->Next()->End();
 
 		len = (byte*)opt + 1 - p;
 	}
 
-	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac, 6);
+	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
 	//dhcp->ClientMac = Tip->Mac;
 
 	//Tip->RemoteMac = MAC_FULL;
 	//Tip->RemoteIP = IP_FULL;
 	RemoteIP = IPAddress::Broadcast;
-
-	//UDP_HEADER* udp = dhcp->Prev();
-	//udp->SrcPort = 68;
-	//udp->DestPort = 67;
-
-	// 如果最后一个字节不是DHCP_OPT_End，则增加End
-	//byte* p = (byte*)dhcp + sizeof(DHCP_HEADER);
-	//if(p[len - 1] != DHCP_OPT_End) p[len++] = DHCP_OPT_End;
 
 	Send(dhcp->Prev(), sizeof(DHCP_HEADER) + len, false);
 }
@@ -74,10 +71,10 @@ DHCP_OPT* GetOption(byte* p, int len, DHCP_OPTION option)
 	return 0;
 }
 
-// 设置选项
+/*// 设置选项
 void SetOption(byte* p, int len)
 {
-}
+}*/
 
 // 找服务器
 void Dhcp::Discover(DHCP_HEADER* dhcp)
@@ -96,6 +93,7 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	byte* p = dhcp->Next();
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
+
 	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer.Value);
 
 	// 发往DHCP服务器
@@ -116,10 +114,10 @@ void Dhcp::PareOption(byte* buf, uint len)
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask: Tip->Mask = *(uint*)p; break;
-			case DHCP_OPT_DNSServer: Tip->DNSServer = *(uint*)p; break;
-			case DHCP_OPT_Router: Tip->Gateway = *(uint*)p; break;
-			case DHCP_OPT_DHCPServer: Tip->DHCPServer = *(uint*)p; break;
+			case DHCP_OPT_Mask:			Tip->Mask		= *(uint*)p; break;
+			case DHCP_OPT_DNSServer:	Tip->DNSServer	= *(uint*)p; break;
+			case DHCP_OPT_Router:		Tip->Gateway	= *(uint*)p; break;
+			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= *(uint*)p; break;
 #if NET_DEBUG
 			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
@@ -205,7 +203,7 @@ void Dhcp::SendDiscover(void* param)
 		return;
 	}
 
-	byte buf[0x400];
+	byte buf[400];
 	//uint bufSize = ArrayLength(buf);
 
 	ETH_HEADER*  eth  = (ETH_HEADER*) buf;
@@ -248,8 +246,17 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 			debug_printf("\r\n");
 #endif
 
-			dhcp->Init(dhcpid, true);
-			Request(dhcp);
+			// 独立分配缓冲区进行操作，避免数据被其它线程篡改
+			byte buf[400];
+			//uint bufSize = ArrayLength(buf);
+
+			ETH_HEADER*  eth  = (ETH_HEADER*) buf;
+			IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
+			UDP_HEADER*  udp2  = (UDP_HEADER*) ip->Next();
+			DHCP_HEADER* dhcp2 = (DHCP_HEADER*)udp2->Next();
+
+			dhcp2->Init(dhcpid, true);
+			Request(dhcp2);
 		}
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)

@@ -399,13 +399,19 @@ typedef struct _DHCP_OPT
 		return this;
 	}
 
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, byte* buf, uint len)
+	struct _DHCP_OPT* SetData(DHCP_OPTION option, ByteArray& bs)
 	{
 		Option = option;
-		Length = len;
-		memcpy(&Data, buf, Length);
+		Length = bs.Length();
+		memcpy(&Data, bs.GetBuffer(), Length);
 
 		return this;
+	}
+
+	struct _DHCP_OPT* SetData(DHCP_OPTION option, String& str)
+	{
+		ByteArray bs(str);
+		return SetData(option, bs);
 	}
 
 	struct _DHCP_OPT* SetData(DHCP_OPTION option, uint value)
@@ -418,12 +424,12 @@ typedef struct _DHCP_OPT
 		return this;
 	}
 
-	struct _DHCP_OPT* SetClientId(byte* mac, uint len = 6)
+	struct _DHCP_OPT* SetClientId(MacAddress& mac)
 	{
 		Option = DHCP_OPT_ClientIdentifier;
-		Length = 1 + len;
+		Length = 1 + 6;
 		Data = 1;	// 类型ETHERNET=1
-		memcpy(&Data + 1, mac, len);
+		memcpy(&Data + 1, &mac.Value, 6);
 
 		return this;
 	}
