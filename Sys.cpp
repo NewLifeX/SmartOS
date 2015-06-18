@@ -30,34 +30,6 @@ uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
 #endif
 
-void TSys::Sleep(uint ms)
-{
-	// 优先使用线程级睡眠
-	if(OnSleep)
-		OnSleep(ms);
-	else
-	{
-#if DEBUG
-		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
-#endif
-		Time.Sleep(ms * 1000);
-	}
-}
-
-void TSys::Delay(uint us)
-{
-	// 如果延迟微秒数太大，则使用线程级睡眠
-	if(OnSleep && us >= 2000)
-		OnSleep((us + 500) / 1000);
-	else
-	{
-#if DEBUG
-		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
-#endif
-		Time.Sleep(us);
-	}
-}
-
 void TSys::Reset() { NVIC_SystemReset(); }
 
 #pragma arm section code
@@ -620,5 +592,54 @@ void TSys::Stop()
 {
 	_Scheduler->Stop();
 }
+
+void TimeSleep(uint us)
+{
+	// 在这段时间里面，去处理一下别的任务
+	if(_Scheduler)
+	{
+#if DEBUG
+		//debug_printf("Sys::Sleep 空闲调度 %dus\r\n", us);
+#endif
+		ulong end = Time.Current() + us;
+		_Scheduler->Execute(us);
+		ulong now = Time.Current();
+#if DEBUG
+		//debug_printf("Sys::Sleep 空闲调度完成\r\n");
+#endif
+		if(now >= end) return;
+		us = end - now;
+	}
+	Time.Sleep(us);
+}
+
+void TSys::Sleep(uint ms)
+{
+	// 优先使用线程级睡眠
+	if(OnSleep)
+		OnSleep(ms);
+	else
+	{
+#if DEBUG
+		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
 #endif
 
+		TimeSleep(ms * 1000);
+	}
+}
+
+void TSys::Delay(uint us)
+{
+	// 如果延迟微秒数太大，则使用线程级睡眠
+	if(OnSleep && us >= 2000)
+		OnSleep((us + 500) / 1000);
+	else
+	{
+#if DEBUG
+		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
+#endif
+
+		TimeSleep(us);
+	}
+}
+#endif

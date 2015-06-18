@@ -88,38 +88,7 @@ void TaskScheduler::Start()
 	Running = true;
 	while(Running)
 	{
-		ulong now = Time.Current() - Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
-		ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
-
-		int i = -1;
-		while(_Tasks.MoveNext(i))
-		{
-			Task* task = _Tasks[i];
-			if(task && task->NextTime <= now)
-			{
-				// 先计算下一次时间
-				//task->NextTime += task->Period;
-				// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-				task->NextTime = now + task->Period;
-				if(task->NextTime < min) min = task->NextTime;
-
-				task->Callback(task->Param);
-
-				// 如果只是一次性任务，在这里清理
-				//if(task->Period < 0) delete task;
-				if(task->Period < 0) Remove(task->ID);
-			}
-		}
-
-		// 如果有最小时间，睡一会吧
-		now = Time.Current();	// 当前时间
-		if(min != UInt64_Max && min > now)
-		{
-			min -= now;
-			// 最大只允许睡眠1秒，避免Sys.Delay出现设计错误，同时也更人性化
-			if(min > 1000000) min = 1000000;
-			Sys.Delay(min);
-		}
+		Execute(0xFFFFFFFF);
 	}
 	debug_printf("%s停止调度，共有%d个任务！\r\n", Name, Count);
 }
@@ -130,6 +99,51 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
+// 执行一次循环。指定最大可用时间
+void TaskScheduler::Execute(uint usMax)
+{
+	ulong now = Time.Current() - Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
+	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
+	ulong end = Time.Current() + usMax;
+
+	int i = -1;
+	while(_Tasks.MoveNext(i))
+	{
+		Task* task = _Tasks[i];
+		if(task && task->NextTime <= now)
+		{
+			// 先计算下一次时间
+			//task->NextTime += task->Period;
+			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
+			task->NextTime = now + task->Period;
+			if(task->NextTime < min) min = task->NextTime;
+
+			task->Callback(task->Param);
+
+			// 如果只是一次性任务，在这里清理
+			//if(task->Period < 0) delete task;
+			if(task->Period < 0) Remove(task->ID);
+		}
+
+		// 如果已经超出最大可用时间，则退出
+		if(Time.Current() > end) return;
+	}
+
+	// 如果有最小时间，睡一会吧
+	now = Time.Current();	// 当前时间
+	if(min != UInt64_Max && min > now)
+	{
+		min -= now;
+#if DEBUG
+		debug_printf("TaskScheduler::Execute 等待下一次任务调度 %uus\r\n", (uint)min);
+#endif
+		//// 最大只允许睡眠1秒，避免Sys.Delay出现设计错误，同时也更人性化
+		//if(min > 1000000) min = 1000000;
+		//Sys.Delay(min);
+		Time.Sleep(min);
+	}
+}
+
 Task* TaskScheduler::operator[](int taskid)
 {
 	int i = -1;
@@ -138,6 +152,6 @@ Task* TaskScheduler::operator[](int taskid)
 		Task* task = _Tasks[i];
 		if(task && task->ID == taskid) return task;
 	}
-	
+
 	return NULL;
 }

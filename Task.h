@@ -50,6 +50,8 @@ public:
 
 	void Start();
 	void Stop();
+	// 执行一次循环。指定最大可用时间
+	void Execute(uint usMax);
 
     Task* operator[](int taskid);
 };
