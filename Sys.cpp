@@ -153,10 +153,7 @@ void SysStop()
 
 TSys::TSys()
 {
-	// 清空内存
-	Object::Init(sizeof(this[0]));
-
-    //Inited = false;
+    Inited = false;
 #if DEBUG
     Debug = true;
 #else
@@ -221,16 +218,16 @@ TSys::TSys()
 
 	InitHeapStack(RAMSize);
 
-	//StartTime = 0;
-	//OnTick = NULL;
-	//OnSleep = NULL;
+	StartTime = 0;
+	OnTick = NULL;
+	OnSleep = NULL;
 
 #if DEBUG
     OnError = SysError;
     OnStop = SysStop;
 #else
-    //OnError = 0;
-    //OnStop = 0;
+    OnError = 0;
+    OnStop = 0;
 #endif
 
 #ifdef STM32F10X
@@ -248,7 +245,7 @@ TSys::TSys()
     Interrupt.Init();
 
 	//_Scheduler = NULL;
-	//OnStart = NULL;
+	OnStart = NULL;
 }
 
 TSys::~TSys()

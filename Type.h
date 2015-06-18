@@ -35,13 +35,14 @@ typedef char*           String;
 using namespace ::std;
 
 class String;
+class Type;
 
 // 根对象。
 // 子类通过Init重写指定大小，并对虚表指针以外数据区域全部清零。因无法确定其它虚表指针位置，故不支持多继承
 class Object
 {
 private:
-	int		_Size;		// 当前对象内存大小
+	//Type*	_Type;		// 类型
 
 protected:
 	// 初始化为指定大小，并对虚表指针以外数据区域全部清零。不支持多继承
@@ -57,7 +58,19 @@ public:
 	virtual String& To(String& str);
 
 	void Show();
+
+	//Type GetType();
 };
+
+/*class Type
+{
+private:
+	type_info* _info;
+
+public:
+	int		Size;	// 大小
+	String	Name;	// 名称
+};*/
 
 // 子类用于调用Object进行对象初始化的默认写法
 #define OBJECT_INIT virtual void Init() { Object::Init(sizeof(this[0])); }

@@ -5,7 +5,7 @@ void Object::Init(int size)
 	// 清空整个对象。跳过最前面的4字节虚表
 	byte* p = (byte*)this;
 	p += 4;
-	memset((void*)p, 0, size - 4);
+	//memset((void*)p, 0, size - 4);
 }
 
 const char* Object::ToString()
