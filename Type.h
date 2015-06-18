@@ -128,14 +128,15 @@ public:
 		{
 			_Arr		= Arr;
 			_Capacity	= ArrayLength(Arr);
+			ArrayZero2(_Arr, _Capacity);
 		}
 		else
 		{
 			_Arr = new T[length];
 			_Capacity	= length;
 			_needFree	= true;
+			ArrayZero2(_Arr, length);
 		}
-		ArrayZero2(_Arr, length);
 	}
 
 	// 析构。释放资源
@@ -223,7 +224,7 @@ public:
 	}
 
 	// 清空已存储数据。长度放大到最大容量
-	Array& Clear()
+	virtual Array& Clear()
 	{
 		_Length = _Capacity;
 
@@ -264,14 +265,22 @@ private:
 public:
 	String(int length = 0x40) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
-	String(const char* data, int len = 0) : Array(len) { Set(data, len); }
+	String(const char* str, int len = 0) : Array(len) { Set(str, len); }
 	String(String& str) : Array(str.Length()) { Copy(str); }
 
+	// 设置字符串长度
+	String& SetLength(int length);
+	
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
+	// 清空已存储数据。长度放大到最大容量
+	virtual String& Clear();
 
-	//String& Append(char ch);
-	//String& Append(const char* str);
+	String& Append(char ch);
+	String& Append(const char* str, int len = 0);
+	String& Append(int value);
+	String& Append(byte bt);		// 十六进制
+	String& Append(ByteArray bs);	// 十六进制
 
 	// 调试输出字符串
 	void Show(bool newLine = false);

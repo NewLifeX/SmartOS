@@ -1,4 +1,7 @@
-﻿#include <stdarg.h>
+﻿#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdarg.h>
 #include "Sys.h"
 
 void Object::Init(int size)
@@ -40,30 +43,41 @@ ByteArray::ByteArray(String& str) : Array(str.Length())
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
-	str.Clear();
+	//str.Clear();
 	byte* buf = GetBuffer();
-	int k = 0;
+	char* ss = str.GetBuffer();
+	int k = str.Length();
 	for(int i=0; i < Length(); i++, buf++)
 	{
 		byte b = *buf >> 4;
-		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+		ss[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
 		b = *buf & 0x0F;
-		str[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+		ss[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
 
 		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
 			{
-				str[k++] = '\r';
-				str[k++] = '\n';
+				ss[k++] = '\r';
+				ss[k++] = '\n';
 			}
 			else if(sep != '\0')
-				str[k++] = sep;
+				ss[k++] = sep;
 		}
 	}
-	str[k] = '\0';
+	ss[k] = '\0';
+	str.SetLength(k);
 
 	return str;
+}
+
+String& String::SetLength(int length)
+{
+	assert_param(length <= _Capacity);
+
+	_Length = length;
+
+	return *this;
 }
 
 // 输出对象的字符串表示方式
@@ -72,20 +86,104 @@ const char* String::ToString()
 	return GetBuffer();
 }
 
-/*String& String::Append(char ch)
+// 清空已存储数据。长度放大到最大容量
+String& String::Clear()
 {
-	Push(ch);
+	Array::Clear();
+
+	_Length = 0;
 
 	return *this;
 }
 
-String& String::Append(const char* str)
+String& String::Append(char ch)
 {
-	char* p = (char*)str;
-	while(*p) Push(*p++);
+	//this[_Length++] = ch;
+
+	//return *this;
+
+	Copy(&ch, 1, Length());
 
 	return *this;
-}*/
+}
+
+String& String::Append(const char* str, int len)
+{
+	//char* p = (char*)str;
+	//while(*p) _Arr[_Length++] = *p++;
+
+	//return *this;
+
+	Copy(str, 0, Length());
+
+	return *this;
+}
+
+char* _itoa(int value, char* string, int radix)
+{
+	char tmp[33];
+	char* tp = tmp;
+	int i;
+	unsigned v;
+	int sign;
+	char* sp;
+	if (radix > 36 || radix <= 1) return 0;
+
+	sign = (radix == 10 && value < 0);
+	if (sign)
+		v = -value;
+	else
+		v = (unsigned)value;
+	while (v || tp == tmp)
+	{
+		i = v % radix;
+		v = v / radix;
+		if (i < 10)
+			*tp++ = i+'0';
+		else
+			*tp++ = i + 'A' - 10;
+	}
+
+	sp = string;
+	if (sign)
+		*sp++ = '-';
+	while (tp > tmp)
+		*sp++ = *--tp;
+	*sp = 0;
+
+	return string;
+}
+
+String& String::Append(int value)
+{
+	char ch[16];
+	_itoa(value, ch, 10);
+
+	return Append(ch);
+}
+
+String& String::Append(byte bt)
+{
+	int k = Length();
+	SetLength(k + 2);
+
+	byte b = bt >> 4;
+	this[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+	b = bt & 0x0F;
+	this[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+
+	return *this;
+
+	/*char ch[2];
+	itoa(bt, ch, 16);
+
+	return Append(ch);*/
+}
+
+String& String::Append(ByteArray bs)
+{
+	return bs.ToHex(*this);
+}
 
 // 调试输出字符串
 void String::Show(bool newLine)
