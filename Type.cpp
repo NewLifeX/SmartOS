@@ -39,7 +39,7 @@ ByteArray::ByteArray(String& str) : Array(str.Length())
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
-	//str.Clear();
+	str.Clear();
 	byte* buf = GetBuffer();
 	int k = 0;
 	for(int i=0; i < Length(); i++, buf++)

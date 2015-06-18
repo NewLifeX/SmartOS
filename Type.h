@@ -98,11 +98,14 @@ private:
 
 	OBJECT_INIT
 
-	// 销毁旧的缓冲区。使用内部
+	// 释放外部缓冲区。使用最大容量的内部缓冲区
 	void Release()
 	{
 		if(_needFree && _Arr && _Arr != Arr) delete _Arr;
-		_Arr = NULL;
+		_Arr		= Arr;
+		_Length		= ArrayLength(Arr);
+		_Capacity	= ArrayLength(Arr);
+		_needFree	= false;
 	}
 
 public:
@@ -142,19 +145,19 @@ public:
     Array& operator=(const Array& arr) { return Copy(arr); }
 
 	// 设置数组元素为指定值
-	Array& Set(T item, int offset = 0, int count = 0)
+	Array& Set(T item, int index = 0, int count = 0)
 	{
 		// count==0 表示设置全部元素
-		if(!count) count = _Length - offset;
+		if(!count) count = _Length - index;
 
 		// 检查长度是否足够
-		assert_param(offset + count <= _Capacity);
+		assert_param(index + count <= _Length);
 
 		// 如果元素类型大小为1，那么可以直接调用内存设置函数
 		if(sizeof(T) == 1)
-			memset(_Arr + offset, item, sizeof(T) * count);
+			memset(_Arr + index, item, sizeof(T) * count);
 		else
-			while(count-- > 0) _Arr[offset++] = item;
+			while(count-- > 0) _Arr[index++] = item;
 
 		return *this;
 	}
@@ -184,22 +187,22 @@ public:
 	}
 
 	// 复制数组。深度克隆，拷贝数据
-	Array& Copy(const Array& arr, int offset = 0)
+	Array& Copy(const Array& arr, int index = 0)
 	{
 		int len = arr.Length();
 
 		// 检查长度是否足够
-		assert_param(offset + len <= _Capacity);
+		assert_param(index + len <= _Capacity);
 
 		// 拷贝数据
-		memcpy(_Arr + offset, arr._Arr, sizeof(T) * len);
+		memcpy(_Arr + index, arr._Arr, sizeof(T) * len);
 		_Length = len;
 
 		return *this;
 	}
 
 	// 复制数组。深度克隆，拷贝数据
-	Array& Copy(const T* data, int len = 0, int offset = 0)
+	Array& Copy(const T* data, int len = 0, int index = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -209,19 +212,21 @@ public:
 		}
 
 		// 检查长度是否足够
-		int len2 = offset + len;
+		int len2 = index + len;
 		assert_param(len2 <= _Capacity);
 
 		// 拷贝数据
-		memcpy(_Arr + offset, data, sizeof(T) * len);
+		memcpy(_Arr + index, data, sizeof(T) * len);
 		if(len2 > _Length) _Length = len2;
 
 		return *this;
 	}
 
-	// 清空已存储数据
+	// 清空已存储数据。长度放大到最大容量
 	Array& Clear()
 	{
+		_Length = _Capacity;
+
 		memset(_Arr, 0, sizeof(T) * _Length);
 
 		return *this;
@@ -260,7 +265,7 @@ public:
 	String(int length = 0x40) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
 	String(const char* data, int len = 0) : Array(len) { Set(data, len); }
-	String(String& str) : Array(str) { }
+	String(String& str) : Array(str.Length()) { Copy(str); }
 
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
