@@ -61,31 +61,30 @@ public:
 	void FixPayloadLength(IP_HEADER* ip, Stream* ms);
 
 public:
-    IPAddress IP;	// 本地IP地址
-    IPAddress Mask;	// 子网掩码
-	MacAddress Mac;	// 本地Mac地址
+    IPAddress	IP;		// 本地IP地址
+    IPAddress	Mask;	// 子网掩码
+	MacAddress	Mac;	// 本地Mac地址
 	//ushort Port;	// 本地端口
 	bool EnableBroadcast;	// 使用广播
-	//bool EnableArp;	// 启用Arp
 
 	//MacAddress LocalMac;// 本地目标Mac地址
 	//IPAddress LocalIP;	// 本地目标IP地址
 	//ushort LocalPort;	// 本地目标端口
-	MacAddress RemoteMac;// 远程Mac地址
-	IPAddress RemoteIP;	// 远程IP地址
+	MacAddress	RemoteMac;	// 远程Mac地址
+	IPAddress	RemoteIP;	// 远程IP地址
 	//ushort RemotePort;	// 远程端口
 
-	ushort BufferSize;	// 缓冲区大小
-	IPAddress DHCPServer;
-	IPAddress DNSServer;
-	IPAddress Gateway;
+	ushort		BufferSize;	// 缓冲区大小
+	IPAddress	DHCPServer;
+	IPAddress	DNSServer;
+	IPAddress	Gateway;
 
 	// Arp套接字
-	Socket* Arp;
+	Socket*		Arp;
 	// 套接字列表。套接字根据类型来识别
 	//Socket* Sockets[0x20];
 	//uint SocketCount;
-	SocketList Sockets;
+	SocketList	Sockets;
 
 	TinyIP();
     TinyIP(ITransport* port);
