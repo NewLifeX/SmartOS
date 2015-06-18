@@ -172,18 +172,20 @@ String& IPEndPoint::To(String& str)
 
 /* MAC地址 */
 
+#define MAC_MASK 0xFFFFFFFFFFFFull
+
 MacAddress MacAddress::Empty(0);
-MacAddress MacAddress::Full(0xFFFFFFFFFFFFFFFFull);
+MacAddress MacAddress::Full(MAC_MASK);
 
 MacAddress::MacAddress(ulong v)
 {
 	//v4 = v;
 	//v2 = v >> 32;
-	Value = v;
+	Value = v & MAC_MASK;
 }
 
 // 是否广播地址，全0或全1
-bool MacAddress::IsBroadcast() { return !Value || Value == 0xFFFFFFFFFFFFFFFFull; }
+bool MacAddress::IsBroadcast() { return Value == Empty.Value || Value == Full.Value; }
 
 MacAddress& MacAddress::operator=(ulong v)
 {
@@ -198,7 +200,7 @@ MacAddress& MacAddress::operator=(ulong v)
 	v4 = *p++;
 	v2 = *(ushort*)p;*/
 
-	Value = v;
+	Value = v & MAC_MASK;
 
 	return *this;
 }

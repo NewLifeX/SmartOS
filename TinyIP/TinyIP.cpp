@@ -82,8 +82,11 @@ uint TinyIP::Fetch(byte* buf, uint len)
 	if(len < sizeof(ETH_HEADER)/* || !_net->Unpack(len)*/) return 0;
 
 	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	ulong v = eth->DestMac.Value();
+	if(!v || v == 0xFFFFFFFFFFFFFFFFull) return len;
+
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
-	MacAddress dest = eth->DestMac.Value();
+	MacAddress dest = v;
 	if(dest != Mac && !dest.IsBroadcast()) return 0;
 
 	return len;
@@ -270,7 +273,7 @@ void TinyIP::ShowInfo()
 {
 #if NET_DEBUG
 	String str;
-	
+
 	debug_printf("    IP:\t");
 	IP.Show();
 	debug_printf("\r\n    Mask:\t");
