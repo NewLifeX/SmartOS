@@ -88,7 +88,7 @@ public:
 template<typename T>
 class Array : public Object
 {
-private:
+protected:
     T*		_Arr;		// 数据指针
 	int		_Length;	// 数组长度
 	uint	_Capacity;	// 数组最大容量。初始化时决定，后面不允许改变
@@ -275,6 +275,8 @@ public:
 
 	// 调试输出字符串
 	void Show(bool newLine = false);
+
+	String& Format(const char* format, ...);
 };
 
 // IP地址

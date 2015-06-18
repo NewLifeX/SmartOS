@@ -1,4 +1,5 @@
-﻿#include "Sys.h"
+﻿#include <stdarg.h>
+#include "Sys.h"
 
 void Object::Init(int size)
 {
@@ -96,6 +97,21 @@ void String::Show(bool newLine)
 	if(newLine) debug_printf("\r\n");
 }
 
+String& String::Format(const char* format, ...)
+{
+	va_list ap;
+
+	//const char* fmt = format.GetBuffer();
+	va_start(ap, format);
+
+	int len = vsnprintf(GetBuffer(), Capacity(), format, ap);
+	_Length = len;
+
+	va_end(ap);
+
+	return *this;
+}
+
 /* IP地址 */
 
 IPAddress IPAddress::Any(0, 0, 0, 0);
@@ -127,9 +143,7 @@ String& IPAddress::To(String& str)
 {
 	byte* ips = (byte*)&Value;
 
-	char ss[16];
-	int len = sprintf(ss, "%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-	str.Copy(ss, len);
+	str.Format("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
 
 	return str;
 }
@@ -149,9 +163,9 @@ String& IPEndPoint::To(String& str)
 {
 	Address.To(str);
 
-	char ss[5];
+	char ss[7];
 	int len = sprintf(ss, ":%d", Port);
-	str.Copy(ss, len);
+	str.Copy(ss, len, str.Length());
 
 	return str;
 }
@@ -214,9 +228,7 @@ String& MacAddress::To(String& str)
 {
 	byte* macs = (byte*)&Value;
 
-	char ss[18];
-	int len = sprintf(ss, "%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
-	str.Copy(ss, len);
+	str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 
 	return str;
 }
