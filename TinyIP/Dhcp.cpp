@@ -34,7 +34,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		//name.Append(Sys.ID[0]);
 		String name;
 		name.Format("WSWL_SmartOS_%02X", Sys.ID[0]);
-		
+
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
 		String vendor = "http://www.NewLifeX.com";
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
@@ -231,35 +231,35 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
 	if(!opt) return;
 
+	// 所有响应都需要检查事务ID
+	if(__REV(dhcp->TransID) == dhcpid) return;
+
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
-		if(__REV(dhcp->TransID) == dhcpid)
-		{
-			Tip->IP = dhcp->YourIP;
-			PareOption(dhcp->Next(), len);
+		Tip->IP = dhcp->YourIP;
+		PareOption(dhcp->Next(), len);
 
-			// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
-			// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
+		// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
+		// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
-			debug_printf("DHCP::Offer IP:");
-			Tip->IP.Show();
-			debug_printf(" From ");
-			Tip->RemoteIP.Show();
-			debug_printf("\r\n");
+		debug_printf("DHCP::Offer IP:");
+		Tip->IP.Show();
+		debug_printf(" From ");
+		Tip->RemoteIP.Show();
+		debug_printf("\r\n");
 #endif
 
-			// 独立分配缓冲区进行操作，避免数据被其它线程篡改
-			byte buf[400];
-			//uint bufSize = ArrayLength(buf);
+		// 独立分配缓冲区进行操作，避免数据被其它线程篡改
+		byte buf[400];
+		//uint bufSize = ArrayLength(buf);
 
-			ETH_HEADER*  eth  = (ETH_HEADER*) buf;
-			IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
-			UDP_HEADER*  udp2  = (UDP_HEADER*) ip->Next();
-			DHCP_HEADER* dhcp2 = (DHCP_HEADER*)udp2->Next();
+		ETH_HEADER*  eth  = (ETH_HEADER*) buf;
+		IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
+		UDP_HEADER*  udp2  = (UDP_HEADER*) ip->Next();
+		DHCP_HEADER* dhcp2 = (DHCP_HEADER*)udp2->Next();
 
-			dhcp2->Init(dhcpid, true);
-			Request(dhcp2);
-		}
+		dhcp2->Init(dhcpid, true);
+		Request(dhcp2);
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
