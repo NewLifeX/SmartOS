@@ -23,7 +23,8 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId(Tip->Mac);
-		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
+		if(!Tip->IP.IsAny())
+			opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
 		//static String prefix("WSWL_SmartOS_");
@@ -51,6 +52,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 
 	//Tip->RemoteMac = MAC_FULL;
 	//Tip->RemoteIP = IP_FULL;
+	Tip->RemoteMac = MacAddress::Full;
 	RemoteIP = IPAddress::Broadcast;
 
 	Send(dhcp->Prev(), sizeof(DHCP_HEADER) + len, false);
@@ -232,7 +234,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	if(!opt) return;
 
 	// 所有响应都需要检查事务ID
-	if(__REV(dhcp->TransID) == dhcpid) return;
+	if(__REV(dhcp->TransID) != dhcpid) return;
 
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
@@ -263,6 +265,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
+		Tip->IP = dhcp->YourIP;
 #if NET_DEBUG
 		debug_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();
