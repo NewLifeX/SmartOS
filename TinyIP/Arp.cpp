@@ -171,8 +171,11 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 
 bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 {
-	if(ip.IsAny()) return &MacAddress::Empty;
-	if(ip.IsBroadcast() || Tip->IsBroadcast(ip)) return &MacAddress::Full;
+	mac = MacAddress::Empty;
+	if(ip.IsAny()) return true;
+
+	mac = MacAddress::Full;
+	if(ip.IsBroadcast() || Tip->IsBroadcast(ip)) return true;
 
 	// 如果不在本子网，那么应该找网关的Mac
 	//if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
@@ -189,7 +192,11 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 			if(arp->IP == ip.Value)
 			{
 				// 如果未过期，则直接使用。否则重新请求
-				if(arp->Time > sNow) return &arp->Mac;
+				if(arp->Time > sNow)
+				{
+					mac = arp->Mac.Value();
+					return true;
+				}
 
 				// 暂时保存，待会可能请求失败，还可以用旧的顶着
 				item = arp;
@@ -202,7 +209,7 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 	if(!rs)
 	{
 		if(!item) return false;
-		
+
 		mac = item->Mac.Value();
 		return true;
 	}
