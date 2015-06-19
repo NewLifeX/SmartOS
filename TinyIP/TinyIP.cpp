@@ -54,17 +54,13 @@ void TinyIP::Init(ITransport* port)
 	IP = defip;
 	byte first = Sys.ID[0];
 	if(first <= 1 || first >= 254) first = 2;
-	//IP.Value &= ((first << 24) | 0x00FFFFFF);
 	IP[3] = first;
 
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	byte* mac = (byte*)&Mac;
-	mac[0] = 'W'; mac[1] = 'S'; mac[2] = 'W'; mac[3] = 'L';
-	//memcpy(Mac, "YWS", 3);
-	memcpy(&mac[4], (byte*)Sys.ID, 6 - 4);
+	Mac[0] = 'P'; Mac[1] = 'M'; //Mac[2] = 'W'; Mac[3] = 'L';
+	for(int i=0; i< 4; i++)
+		Mac[2 + i] = Sys.ID[3 - i];
 	// MAC地址首字节奇数表示组地址，这里用偶数
-	//Mac[0] = 'N'; Mac[1] = 'X';
-	//memcpy(&Mac[2], (byte*)Sys.ID, 6 - 2);
 
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = defip;
