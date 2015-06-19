@@ -26,12 +26,14 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
-		static String prefix("WSWL_SmartOS_");
+		//static String prefix("WSWL_SmartOS_");
 		//char name[15];
 		//strncpy(name, str, ArrayLength(name));
 		//Sys.ToHex((byte*)name + ArrayLength(name) - 2, &Sys.ID[0], 1);
-		String name = prefix;
-		name.Append(Sys.ID[0]);
+		//String name = prefix;
+		//name.Append(Sys.ID[0]);
+		String name;
+		name.Format("WSWL_SmartOS_%02X", Sys.ID[0]);
 		
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
 		String vendor = "http://www.NewLifeX.com";
