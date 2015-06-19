@@ -303,6 +303,14 @@ MacAddress& MacAddress::operator=(ulong v)
 	return *this;
 }
 
+// 重载索引运算符[]，让它可以像数组一样使用下标索引。
+byte& MacAddress::operator[](int i)
+{
+	assert_param(i >= 0 && i < 6);
+
+	return ((byte*)&Value)[i];
+}
+
 // 数值
 /*ulong MacAddress::Value()
 {

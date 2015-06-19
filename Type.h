@@ -361,6 +361,9 @@ public:
 
     MacAddress& operator=(ulong v);
 
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    byte& operator[](int i);
+
 	// 数值
     //ulong Value();
 
