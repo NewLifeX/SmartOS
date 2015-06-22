@@ -55,6 +55,7 @@ public:
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
 	uint Write(string str);
+	void Write(ByteArray& bs);
 
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>

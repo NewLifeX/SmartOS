@@ -217,7 +217,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	Stream ms(len);
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
-	assert_param(len == ms.Length);
+	assert_param(len == ms.Position());
 	// 内存流扩容以后，指针会改变
 	byte* buf = ms.GetBuffer();
 

@@ -84,20 +84,18 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	uint bufSize = ArrayLength(buf);
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(buf, bufSize);
+	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
-	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
-	ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
+	ICMP_HEADER* icmp = ms.Retrieve<ICMP_HEADER>();
 	icmp->Init(true);
 
 	icmp->Type = 8;
 	icmp->Code = 0;
 
-	byte* data = icmp->Next();
 	for(int i=0, k=0; i<payloadLength; i++, k++)
 	{
 		if(k >= 23) k-=23;
-		*data++ = ('a' + k);
+		ms.Write((byte)('a' + k));
 	}
 
 	//ushort now = Time.Current() / 1000;

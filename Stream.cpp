@@ -15,9 +15,9 @@ Stream::Stream(uint len)
 		_needFree = true;
 	}
 
-	_Capacity = len;
-	_Position = 0;
-	Length = 0;
+	_Capacity	= len;
+	_Position	= 0;
+	Length		= len;
 }
 
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
@@ -49,7 +49,7 @@ Stream::~Stream()
 	assert_ptr(this);
 	if(_needFree)
 	{
-		if(_Buffer) delete[] _Buffer;
+		if(_Buffer != _Arr) delete[] _Buffer;
 		_Buffer = NULL;
 	}
 }
@@ -179,6 +179,11 @@ uint Stream::Write(string str)
 	return len;
 }
 
+void Stream::Write(ByteArray& bs)
+{
+	Write(bs.GetBuffer(), 0, bs.Length());
+}
+
 byte* Stream::ReadBytes(int count)
 {
 	// 默认小于0时，读取全部数据
@@ -203,7 +208,7 @@ bool Stream::CheckCapacity(uint count)
 	// 容量不够，需要扩容
 	if(count > remain)
 	{
-		if(!_needFree)
+		if(!_needFree && _Buffer != _Arr)
 		{
 			debug_printf("数据流剩余容量%d不足%d，而外部缓冲区无法扩容！", remain, count);
 			assert_param(false);
@@ -219,7 +224,7 @@ bool Stream::CheckCapacity(uint count)
 		byte* bufNew = new byte[size];
 		if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
 
-		delete[] _Buffer;
+		if(_Buffer != _Arr) delete[] _Buffer;
 
 		_Buffer = bufNew;
 		_Capacity = size;
