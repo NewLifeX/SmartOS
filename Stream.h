@@ -24,6 +24,8 @@ public:
 	Stream(uint len = 0);
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(byte* buf, uint len);
+	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
+	Stream(ByteArray& bs);
 	// 销毁数据流
 	~Stream();
 
@@ -56,10 +58,10 @@ public:
 
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
-	T* Retrieve()
+	T* Retrieve(bool move = true)
 	{
 		T* p = (T*)Current();
-		if(!Seek(sizeof(T))) return NULL;
+		if(move && !Seek(sizeof(T))) return NULL;
 
 		return p;
 	}

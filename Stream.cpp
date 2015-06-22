@@ -33,6 +33,16 @@ Stream::Stream(byte* buf, uint len)
 	Length = len;
 }
 
+// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
+Stream::Stream(ByteArray& bs)
+{
+	_Buffer = bs.GetBuffer();
+	_Capacity = bs.Length();
+	_Position = 0;
+	_needFree = false;
+	Length = bs.Length();
+}
+
 // 销毁数据流
 Stream::~Stream()
 {
