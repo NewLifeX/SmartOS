@@ -103,12 +103,10 @@ void Dhcp::PareOption(Stream& ms)
 			case DHCP_OPT_DNSServer:	Tip->DNSServer	= ms.Read<int>(); break;
 			case DHCP_OPT_Router:		Tip->Gateway	= ms.Read<int>(); break;
 			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= ms.Read<int>(); break;
-#if NET_DEBUG
-			//default:
+			default:
+				ms.Seek(len);
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
-#endif
 		}
-		ms.Seek(len - 4);
 	}
 }
 
