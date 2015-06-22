@@ -27,7 +27,7 @@ ArpSocket::~ArpSocket()
 	_Arps = NULL;
 }
 
-bool ArpSocket::Process(Stream* ms)
+bool ArpSocket::Process(IP_HEADER* ip, Stream* ms)
 {
 	// 前面的数据长度很不靠谱，这里进行小范围修正
 	//uint size = ms->Position + sizeof(ARP_HEADER);

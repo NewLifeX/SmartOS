@@ -23,7 +23,7 @@ public:
 	virtual ~Socket();
 
 	// 处理数据包
-	virtual bool Process(Stream* ms) = 0;
+	virtual bool Process(IP_HEADER* ip, Stream* ms) = 0;
 };
 
 // Socket列表
@@ -65,8 +65,6 @@ public:
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 
-	IPAddress	RemoteIP;	// 远程IP地址
-
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
 	IPAddress	Gateway;
@@ -83,10 +81,10 @@ public:
 
 	bool Open();
 	void ShowInfo();
-	ushort CheckSum(const byte* buf, uint len, byte type);
+	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 
-	void SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint len);
-	void SendIP(IP_TYPE type, const byte* buf, uint len);
+	void SendEthernet(ETH_TYPE type, MacAddress& remote, const byte* buf, uint len);
+	void SendIP(IP_TYPE type, IPAddress& remote, const byte* buf, uint len);
 	bool IsBroadcast(IPAddress& ip);	// 是否广播地址
 };
 

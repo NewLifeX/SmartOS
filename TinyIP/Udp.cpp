@@ -43,7 +43,7 @@ void UdpSocket::OnClose()
 	Enable = false;
 }
 
-bool UdpSocket::Process(Stream* ms)
+bool UdpSocket::Process(IP_HEADER* ip, Stream* ms)
 {
 	UDP_HEADER* udp = ms->Retrieve<UDP_HEADER>();
 	if(!udp) return false;
@@ -54,7 +54,7 @@ bool UdpSocket::Process(Stream* ms)
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 
-	IP_HEADER* ip = udp->Prev();
+	//IP_HEADER* ip = udp->Prev();
 	RemotePort	= remotePort;
 	RemoteIP	= ip->SrcIP;
 	LocalPort	= port;
@@ -69,12 +69,12 @@ bool UdpSocket::Process(Stream* ms)
 	//debug_printf("\r\n");
 #endif
 
-	OnProcess(udp, *ms);
+	OnProcess(ip, udp, *ms);
 
 	return true;
 }
 
-void UdpSocket::OnProcess(UDP_HEADER* udp, Stream& ms)
+void UdpSocket::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
 {
 	byte* data = ms.Current();
 	//uint len = ms.Remain();
@@ -129,11 +129,11 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	udp->Length = __REV16(tlen);
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
-	Tip->RemoteIP = RemoteIP;
+	//Tip->RemoteIP = RemoteIP;
 
 	// 网络序是大端
 	udp->Checksum = 0;
-	if(checksum) udp->Checksum = __REV16(Tip->CheckSum((byte*)udp, tlen, 1));
+	if(checksum) udp->Checksum = __REV16(Tip->CheckSum(&RemoteIP, (byte*)udp, tlen, 1));
 
 	// 不能注释UDP这行日志，否则DHCP失效
 	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, __REV16(udp->SrcPort));
@@ -142,7 +142,7 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 	if(tlen > 0) Sys.ShowHex(udp->Next(), tlen > 64 ? 64 : tlen, false);
 	debug_printf("\r\n");
 
-	Tip->SendIP(IP_UDP, (byte*)udp, tlen);
+	Tip->SendIP(IP_UDP, RemoteIP, (byte*)udp, tlen);
 }
 
 UDP_HEADER* UdpSocket::Create()

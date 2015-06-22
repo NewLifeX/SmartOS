@@ -20,7 +20,7 @@ public:
 	UdpSocket(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(Stream* ms);
+	virtual bool Process(IP_HEADER* ip, Stream* ms);
 
 	// 收到Udp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
 	typedef bool (*UdpHandler)(UdpSocket* socket, UDP_HEADER* udp, byte* buf, uint len);
@@ -33,7 +33,7 @@ public:
 
 protected:
 	void Send(UDP_HEADER* udp, uint len, bool checksum = true);
-	virtual void OnProcess(UDP_HEADER* udp, Stream& ms);
+	virtual void OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms);
 
 	virtual bool OnOpen();
     virtual void OnClose();

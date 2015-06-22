@@ -213,7 +213,7 @@ void Dhcp::SendDiscover(void* param)
 	_dhcp->Discover(dhcp);
 }
 
-void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
+void Dhcp::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
 	if(!dhcp->Valid()) return;
@@ -228,6 +228,8 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 	// 所有响应都需要检查事务ID
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
+	IPAddress remote = ip->SrcIP;
+	
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
 		Tip->IP = dhcp->YourIP;
@@ -239,7 +241,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 		debug_printf("DHCP::Offer IP:");
 		Tip->IP.Show();
 		debug_printf(" From ");
-		Tip->RemoteIP.Show();
+		remote.Show();
 		debug_printf("\r\n");
 #endif
 
@@ -262,7 +264,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 		debug_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();
 		debug_printf(" From ");
-		Tip->RemoteIP.Show();
+		remote.Show();
 		debug_printf("\r\n");
 #endif
 
@@ -299,7 +301,7 @@ void Dhcp::OnProcess(UDP_HEADER* udp, Stream& ms)
 		debug_printf("DHCP::Nak   IP:");
 		Tip->IP.Show();
 		debug_printf(" From ");
-		Tip->RemoteIP.Show();
+		remote.Show();
 		if(opt)
 		{
 			debug_printf(" ");

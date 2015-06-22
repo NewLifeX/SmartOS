@@ -36,7 +36,7 @@ public:
 	TcpSocket(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(Stream* ms);
+	virtual bool Process(IP_HEADER* ip, Stream* ms);
 
 	bool Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(const byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包

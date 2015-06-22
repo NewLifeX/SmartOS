@@ -61,7 +61,7 @@ void TcpSocket::OnClose()
 	Enable = false;
 }
 
-bool TcpSocket::Process(Stream* ms)
+bool TcpSocket::Process(IP_HEADER* ip, Stream* ms)
 {
 	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
 	if(!ms->Seek(tcp->Size())) return false;
@@ -77,7 +77,7 @@ bool TcpSocket::Process(Stream* ms)
 	//if(RemotePort != 0 && remotePort != RemotePort) return false;
 	//if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
-	IP_HEADER* ip = tcp->Prev();
+	//IP_HEADER* ip = tcp->Prev();
 	RemotePort	= remotePort;
 	RemoteIP	= ip->SrcIP;
 	LocalPort	= port;
@@ -270,11 +270,11 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
-	Tip->RemoteIP = RemoteIP;
+	//Tip->RemoteIP = RemoteIP;
 
 	// 网络序是大端
 	tcp->Checksum = 0;
-	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
+	tcp->Checksum = __REV16(Tip->CheckSum(&RemoteIP, (byte*)tcp, tcp->Size() + len, 2));
 
 #if NET_DEBUG
 	uint hlen = tcp->Length << 2;
@@ -282,7 +282,7 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 #endif
 
 	// 注意tcp->Size()包括头部的扩展数据
-	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
+	Tip->SendIP(IP_TCP, RemoteIP, (byte*)tcp, tcp->Size() + len);
 }
 
 void TcpSocket::SetSeqAck(TCP_HEADER* tcp, uint ackNum, bool opSeq)
@@ -473,7 +473,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms)
 			// 处理。如果对方回发第二次握手包，或者终止握手
 			//Stream ms(tip->Buffer, tip->BufferSize);
 			tip->FixPayloadLength(_ip, ms);
-			socket->Process(&ms);
+			socket->Process(_ip, &ms);
 
 			return true;
 		}

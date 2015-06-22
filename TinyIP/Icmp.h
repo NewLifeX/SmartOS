@@ -13,7 +13,7 @@ public:
 	IcmpSocket(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(Stream* ms);
+	virtual bool Process(IP_HEADER* ip, Stream* ms);
 
 	// 收到Ping请求时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
 	typedef bool (*PingHandler)(IcmpSocket* socket, ICMP_HEADER* icmp, byte* buf, uint len);

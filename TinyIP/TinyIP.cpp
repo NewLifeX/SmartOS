@@ -91,7 +91,7 @@ void TinyIP::Process(Stream& ms)
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		if(Arp && Arp->Enable) Arp->Process(&ms);
+		if(Arp && Arp->Enable) Arp->Process(NULL, &ms);
 
 		return;
 	}
@@ -107,28 +107,25 @@ void TinyIP::Process(Stream& ms)
 
 	IP_HEADER* ip = ms.Retrieve<IP_HEADER>();
 	if(!ip) return;
-	
+
 	// 是否发给本机。
-	IPAddress addr = ip->DestIP;
-	if(addr != IP && !IsBroadcast(addr)) return;
+	IPAddress local = ip->DestIP;
+	if(local != IP && !IsBroadcast(local)) return;
 
 	// 记录远程信息
-	//LocalIP = ip->DestIP;
-	RemoteIP = ip->SrcIP;
+	IPAddress remote = ip->SrcIP;
 
 	// 移交给ARP处理，为了让它更新ARP表
 	if(Arp)
 	{
-		//Arp->Process(NULL);
 		ArpSocket* arp = (ArpSocket*)Arp;
-		arp->Add(RemoteIP, mac);
+		arp->Add(remote, mac);
 	}
 
 	FixPayloadLength(ip, ms);
 
 	// 各处理器有可能改变数据流游标，这里备份一下
 	uint p = ms.Position();
-	//for(int i=0; i < Sockets.Count(); i++)
 	// 考虑到可能有通用端口处理器，也可能有专用端口处理器（一般在后面），这里偷懒使用倒序处理
 	uint count = Sockets.Count();
 	for(int i=count-1; i>=0; i--)
@@ -140,7 +137,7 @@ void TinyIP::Process(Stream& ms)
 			if(socket->Type == ip->Protocol)
 			{
 				// 如果处理成功，则中断遍历
-				if(socket->Process(&ms)) return;
+				if(socket->Process(ip, &ms)) return;
 				ms.SetPosition(p);
 			}
 		}
@@ -258,13 +255,13 @@ void TinyIP::ShowInfo()
 #endif
 }
 
-void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint len)
+void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& remote, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
-	eth->DestMac = mac;
+	eth->DestMac = remote;
 	eth->SrcMac  = Mac;
 
 	len += sizeof(ETH_HEADER);
@@ -280,7 +277,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint 
 	debug_printf("SendEthernet: type=0x%04x %s, len=%d(0x%x) ", type, name, len, len);
 	Mac.Show();
 	debug_printf(" => ");
-	mac.Show();
+	remote.Show();
 	debug_printf("\r\n");*/
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
@@ -289,13 +286,13 @@ void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint 
 	_port->Write((byte*)eth, len);
 }
 
-void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
+void TinyIP::SendIP(IP_TYPE type, IPAddress& remote, const byte* buf, uint len)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
 	assert_param(ip);
 	assert_param(IS_IP_TYPE(type));
 
-	ip->DestIP = RemoteIP.Value;
+	ip->DestIP = remote.Value;
 	ip->SrcIP = IP.Value;
 
 	ip->Version = 4;
@@ -313,16 +310,16 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 
 	// 网络序是大端
 	ip->Checksum = 0;
-	ip->Checksum = __REV16(CheckSum((byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum = __REV16(CheckSum(NULL, (byte*)ip, sizeof(IP_HEADER), 0));
 
 	assert_ptr(Arp);
 	ArpSocket* arp = (ArpSocket*)Arp;
 	MacAddress mac;
-	if(!arp->Resolve(RemoteIP, mac))
+	if(!arp->Resolve(remote, mac))
 	{
 #if NET_DEBUG
 		debug_printf("No Mac For ");
-		RemoteIP.Show();
+		remote.Show();
 		debug_printf("\r\n");
 #endif
 		return;
@@ -337,9 +334,9 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 		case IP_UDP: { name = "UDP"; break; }
 	}
 	debug_printf("SendIP: type=0x%04x %s, len=%d(0x%x) ", type, name, len, len);
-	ShowIP(IP);
+	IP.Show();
 	debug_printf(" => ");
-	ShowIP(RemoteIP);
+	remote.Show();
 	debug_printf("\r\n");*/
 
 	SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
@@ -347,7 +344,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 
 #define TinyIP_HELP
 #ifdef TinyIP_HELP
-ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
+ushort TinyIP::CheckSum(IPAddress* remote, const byte* buf, uint len, byte type)
 {
     // type 0=ip
     //      1=udp
@@ -362,8 +359,8 @@ ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
 		// 源地址。其实可以按照4字节累加，反正后面会把高位移位到低位累加，但是得考虑溢出的问题。
 		sum += __REV16(IP.Value & 0xFFFF);
 		sum += __REV16(IP.Value >> 16);
-		sum += __REV16(RemoteIP.Value & 0xFFFF);
-		sum += __REV16(RemoteIP.Value >> 16);
+		sum += __REV16(remote->Value & 0xFFFF);
+		sum += __REV16(remote->Value >> 16);
 
 		// 数据长度
 		sum += len;

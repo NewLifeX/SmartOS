@@ -10,10 +10,12 @@ IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
 	Enable = true;
 }
 
-bool IcmpSocket::Process(Stream* ms)
+bool IcmpSocket::Process(IP_HEADER* ip, Stream* ms)
 {
 	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();
 	if(!icmp) return false;
+
+	IPAddress remote = ip->SrcIP;
 
 	uint len = ms->Remain();
 	if(OnPing)
@@ -29,7 +31,7 @@ bool IcmpSocket::Process(Stream* ms)
 			debug_printf("Ping From "); // 打印发方的ip
 		else
 			debug_printf("Ping Reply "); // 打印发方的ip
-		Tip->RemoteIP.Show();
+		remote.Show();
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
@@ -46,7 +48,7 @@ bool IcmpSocket::Process(Stream* ms)
 	icmp->Checksum += 0x08;
 
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
-    Tip->SendIP(IP_ICMP, (byte*)icmp, icmp->Size() + len);
+    Tip->SendIP(IP_ICMP, remote, (byte*)icmp, icmp->Size() + len);
 
 	return true;
 }
@@ -78,8 +80,6 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
-	Tip->RemoteIP  = ip;
-
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
@@ -108,14 +108,14 @@ bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 	icmp->Sequence = seq;
 
 	icmp->Checksum = 0;
-	icmp->Checksum = __REV16(Tip->CheckSum((byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
+	icmp->Checksum = __REV16(Tip->CheckSum(&ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
 
 #if NET_DEBUG
 	debug_printf("Ping ");
 	ip.Show();
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
 #endif
-	Tip->SendIP(IP_ICMP, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
+	Tip->SendIP(IP_ICMP, ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 等待时间
 	int ps[] = {ip.Value, id, seq};

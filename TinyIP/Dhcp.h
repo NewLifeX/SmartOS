@@ -32,7 +32,7 @@ public:
 	EventHandler OnStop;
 
 protected:
-	virtual void OnProcess(UDP_HEADER* udp, Stream& ms);
+	virtual void OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms);
 };
 
 #endif
