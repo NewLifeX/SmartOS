@@ -100,25 +100,21 @@ void TinyIP::Process(Stream& ms)
 		return;
 	}
 
-	IP_HEADER* ip = ms.Retrieve<IP_HEADER>();
-	// 是否发给本机。
-	if(!ip) return;
-	IPAddress addr = ip->DestIP;
-	if(!IsMyIP(addr)) return;
-
-	/*Sys.ShowHex((byte*)ip, ip->Size(), '-');
-	debug_printf("\r\n");
-	Sys.ShowHex((byte*)ip->Next(), __REV16(ip->TotalLength) - ip->Size(), '-');
-	debug_printf("\r\n");*/
-
 #if NET_DEBUG
 	if(eth->Type != ETH_IP)
 	{
 		debug_printf("Unkown EthernetType 0x%02X From ", eth->Type);
-		IPAddress(ip->SrcIP).Show();
+		RemoteMac.Show();
 		debug_printf("\r\n");
 	}
 #endif
+
+	IP_HEADER* ip = ms.Retrieve<IP_HEADER>();
+	if(!ip) return;
+	
+	// 是否发给本机。
+	IPAddress addr = ip->DestIP;
+	if(addr != IP && !IsBroadcast(addr)) return;
 
 	// 记录远程信息
 	//LocalIP = ip->DestIP;
@@ -397,15 +393,6 @@ ushort TinyIP::CheckSum(const byte* buf, uint len, byte type)
     }
     // 取补码
     return (ushort)(sum ^ 0xFFFF);
-}
-
-bool TinyIP::IsMyIP(IPAddress& ip)
-{
-	if(ip == IP) return true;
-
-	if(EnableBroadcast && IsBroadcast(ip)) return true;
-
-	return false;
 }
 
 bool TinyIP::IsBroadcast(IPAddress& ip)

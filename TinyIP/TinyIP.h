@@ -96,7 +96,6 @@ public:
 
 	void SendEthernet(ETH_TYPE type, const byte* buf, uint len);
 	void SendIP(IP_TYPE type, const byte* buf, uint len);
-	bool IsMyIP(IPAddress& ip);	// 是否发给我的IP地址
 	bool IsBroadcast(IPAddress& ip);	// 是否广播地址
 };
 
@@ -111,6 +110,17 @@ UDP可作为服务端，处理任意端口请求并响应
 UDP也可作为客户端，向任意地址端口发送数据
 
 因为只有一个缓冲区，所有收发数据包不能过大，并且只能有一包数据
+*/
+
+/*
+网络架构：
+1，Init初始化本地Mac地址，以及默认IP地址
+2，Open打开硬件接口，实例化Arp，显示IP地址信息，添加以太网实时轮询Work
+3，Work打包缓冲区Buffer为数据流，交付给Fetch获取数据，然后移交给Process处理数据
+4，Fetch询问硬件接口是否有数据包，并展开以太网头部，检查是否本地MAC地址或者广播地址
+5，Process检查Arp请求，然后检查IP请求、是否本机IP或广播数据包，记录来源IP以及MAC对，加快Arp速度
+6，FixPayloadLength修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
+7，Process最后交给各Socket.Process处理数据包
 */
 
 #endif

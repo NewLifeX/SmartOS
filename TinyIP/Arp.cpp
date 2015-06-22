@@ -175,7 +175,7 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 	if(ip.IsAny()) return true;
 
 	mac = MacAddress::Full;
-	if(ip.IsBroadcast() || Tip->IsBroadcast(ip)) return true;
+	if(ip.IsAny() || Tip->IsBroadcast(ip)) return true;
 
 	// 如果不在本子网，那么应该找网关的Mac
 	//if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
