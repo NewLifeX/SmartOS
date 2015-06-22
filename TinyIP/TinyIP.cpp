@@ -87,7 +87,7 @@ void TinyIP::Process(Stream& ms)
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	MacAddress mac = eth->SrcMac.Value();
-	RemoteMac = mac;
+	//RemoteMac = mac;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -259,13 +259,13 @@ void TinyIP::ShowInfo()
 #endif
 }
 
-void TinyIP::SendEthernet(ETH_TYPE type, const byte* buf, uint len)
+void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param(IS_ETH_TYPE(type));
 
 	eth->Type = type;
-	eth->DestMac = RemoteMac;
+	eth->DestMac = mac;
 	eth->SrcMac  = Mac;
 
 	len += sizeof(ETH_HEADER);
@@ -279,9 +279,9 @@ void TinyIP::SendEthernet(ETH_TYPE type, const byte* buf, uint len)
 		case ETH_IPv6: { name = "IPv6"; break; }
 	}
 	debug_printf("SendEthernet: type=0x%04x %s, len=%d(0x%x) ", type, name, len, len);
-	ShowMac(Mac);
+	Mac.Show();
 	debug_printf(" => ");
-	ShowMac(RemoteMac);
+	mac.Show();
 	debug_printf("\r\n");*/
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
@@ -328,7 +328,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 #endif
 		return;
 	}
-	RemoteMac = mac;
+	//RemoteMac = mac;
 
 	/*string name = "Unkown";
 	switch(type)
@@ -344,7 +344,7 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 	ShowIP(RemoteIP);
 	debug_printf("\r\n");*/
 
-	SendEthernet(ETH_IP, (byte*)ip, sizeof(IP_HEADER) + len);
+	SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
 #define TinyIP_HELP

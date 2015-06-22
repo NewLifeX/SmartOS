@@ -49,7 +49,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
 
-	Tip->RemoteMac = MacAddress::Full;
+	//Tip->RemoteMac = MacAddress::Full;
 	RemoteIP = IPAddress::Broadcast;
 
 	Send(dhcp->Prev(), sizeof(DHCP_HEADER) + len, false);

@@ -83,6 +83,9 @@ bool ArpSocket::Process(Stream* ms)
 	// 仅处理ARP请求
 	if(arp->Option != 0x0100) return true;
 
+	// 目标Mac地址
+	MacAddress mac = arp->SrcMac.Value();
+
 	// 构造响应包
 	arp->Option = 0x0200;
 	// 来源IP和Mac作为目的地址
@@ -97,7 +100,7 @@ bool ArpSocket::Process(Stream* ms)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	Tip->SendEthernet(ETH_ARP, (byte*)arp, sizeof(ARP_HEADER));
+	Tip->SendEthernet(ETH_ARP, mac, (byte*)arp, sizeof(ARP_HEADER));
 
 	return true;
 }
@@ -137,7 +140,7 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
 	arp->Init();
 
-	Tip->RemoteMac = MacAddress::Empty;
+	//Tip->RemoteMac = MacAddress::Empty;
 
 	// 构造请求包
 	arp->Option = 0x0100;
@@ -152,7 +155,7 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	Tip->SendEthernet(ETH_ARP, (byte*)arp, sizeof(ARP_HEADER));
+	Tip->SendEthernet(ETH_ARP, MacAddress::Empty, (byte*)arp, sizeof(ARP_HEADER));
 
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return false;

@@ -65,7 +65,7 @@ public:
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 
-	MacAddress	RemoteMac;	// 远程Mac地址
+	//MacAddress	RemoteMac;	// 远程Mac地址
 	IPAddress	RemoteIP;	// 远程IP地址
 
 	IPAddress	DHCPServer;
@@ -86,7 +86,7 @@ public:
 	void ShowInfo();
 	ushort CheckSum(const byte* buf, uint len, byte type);
 
-	void SendEthernet(ETH_TYPE type, const byte* buf, uint len);
+	void SendEthernet(ETH_TYPE type, MacAddress& mac, const byte* buf, uint len);
 	void SendIP(IP_TYPE type, const byte* buf, uint len);
 	bool IsBroadcast(IPAddress& ip);	// 是否广播地址
 };
