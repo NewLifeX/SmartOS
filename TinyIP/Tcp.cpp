@@ -472,7 +472,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms)
 
 			// 处理。如果对方回发第二次握手包，或者终止握手
 			//Stream ms(tip->Buffer, tip->BufferSize);
-			tip->FixPayloadLength(_ip, &ms);
+			tip->FixPayloadLength(_ip, ms);
 			socket->Process(&ms);
 
 			return true;
