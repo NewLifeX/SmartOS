@@ -7,7 +7,6 @@
 class TcpSocket : public Socket, public ITransport
 {
 private:
-	//byte seqnum;
 	uint		Seq;		// 序列号，本地发出数据包
 	uint		Ack;		// 确认号，对方发送数据包的序列号+1
 
@@ -23,12 +22,6 @@ public:
 		Established = 3,
 	}TCP_STATUS;
 
-	ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
-	ushort		BindPort;	// 绑定端口，用于发出数据包的源端口。默认为Port，若Port为0，则从1024算起，累加
-	IPAddress	RemoteIP;	// 远程地址
-	ushort		RemotePort;	// 远程端口
-	IPAddress	LocalIP;	// 本地IP地址
-	ushort		LocalPort;	// 本地端口，收到数据包的目的端口
 	TCP_STATUS	Status;		// 状态
 
 	TCP_HEADER* Header;
@@ -36,14 +29,14 @@ public:
 	TcpSocket(TinyIP* tip);
 
 	// 处理数据包
-	virtual bool Process(IP_HEADER* ip, Stream* ms);
+	virtual bool Process(IP_HEADER& ip, Stream& ms);
 
 	bool Connect(IPAddress ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
     void Send(const byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
     void Disconnect();	// 关闭Socket
 
 	// 收到Tcp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
-	typedef bool (*TcpHandler)(TcpSocket* socket, TCP_HEADER* tcp, byte* buf, uint len);
+	typedef bool (*TcpHandler)(TcpSocket& socket, TCP_HEADER& tcp, byte* buf, uint len);
 	TcpHandler OnAccepted;
 	TcpHandler OnReceived;
 	TcpHandler OnDisconnected;

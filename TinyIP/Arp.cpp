@@ -4,7 +4,7 @@
 
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
-	Type = ETH_ARP;
+	//Type = ETH_ARP;
 
 #ifdef STM32F0
 	Count = 4;
@@ -24,13 +24,13 @@ ArpSocket::~ArpSocket()
 	_Arps = NULL;
 }
 
-bool ArpSocket::Process(IP_HEADER* ip, Stream* ms)
+bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
 	// 前面的数据长度很不靠谱，这里进行小范围修正
 	//uint size = ms->Position + sizeof(ARP_HEADER);
 	//if(ms->Length < size) ms->Length = size;
 
-	ARP_HEADER* arp = ms->Retrieve<ARP_HEADER>();
+	ARP_HEADER* arp = ms.Retrieve<ARP_HEADER>();
 	if(!arp) return false;
 
 	/*
@@ -74,7 +74,7 @@ bool ArpSocket::Process(IP_HEADER* ip, Stream* ms)
 	Tip->ShowIP(arp->SrcIP);
 	debug_printf(" [");
 	Tip->ShowMac(arp->SrcMac);
-	debug_printf("] Payload=%d\r\n", ms->Remain());
+	debug_printf("] Payload=%d\r\n", ms.Remain());
 #endif
 
 	// 仅处理ARP请求

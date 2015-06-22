@@ -43,9 +43,9 @@ void UdpSocket::OnClose()
 	Enable = false;
 }
 
-bool UdpSocket::Process(IP_HEADER* ip, Stream* ms)
+bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	UDP_HEADER* udp = ms->Retrieve<UDP_HEADER>();
+	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();
 	if(!udp) return false;
 
 	ushort port = __REV16(udp->DestPort);
@@ -56,20 +56,20 @@ bool UdpSocket::Process(IP_HEADER* ip, Stream* ms)
 
 	//IP_HEADER* ip = udp->Prev();
 	RemotePort	= remotePort;
-	RemoteIP	= ip->SrcIP;
+	RemoteIP	= ip.SrcIP;
 	LocalPort	= port;
-	LocalIP		= ip->DestIP;
+	LocalIP		= ip.DestIP;
 
 #if NET_DEBUG
 	byte* data = udp->Next();
-	uint len = ms->Remain();
+	uint len = ms.Remain();
 	uint plen = __REV16(udp->Length);
 	assert_param(len + sizeof(UDP_HEADER) == plen);
 	//Sys.ShowHex((byte*)udp, udp->Size(), '-');
 	//debug_printf("\r\n");
 #endif
 
-	OnProcess(ip, udp, *ms);
+	OnProcess(&ip, udp, ms);
 
 	return true;
 }
@@ -98,7 +98,7 @@ void UdpSocket::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnReceived(this, udp, data, len);
+		bool rs = OnReceived(*this, *udp, data, len);
 		if(rs) Send(udp, len, false);
 	}
 	else

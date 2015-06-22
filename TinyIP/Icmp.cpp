@@ -10,18 +10,18 @@ IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
 	Enable = true;
 }
 
-bool IcmpSocket::Process(IP_HEADER* ip, Stream* ms)
+bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	ICMP_HEADER* icmp = ms->Retrieve<ICMP_HEADER>();
+	ICMP_HEADER* icmp = ms.Retrieve<ICMP_HEADER>();
 	if(!icmp) return false;
 
-	IPAddress remote = ip->SrcIP;
+	IPAddress remote = ip.SrcIP;
 
-	uint len = ms->Remain();
+	uint len = ms.Remain();
 	if(OnPing)
 	{
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnPing(this, icmp, icmp->Next(), len);
+		bool rs = OnPing(*this, *icmp, icmp->Next(), len);
 		if(!rs) return true;
 	}
 	else

@@ -61,13 +61,13 @@ void TcpSocket::OnClose()
 	Enable = false;
 }
 
-bool TcpSocket::Process(IP_HEADER* ip, Stream* ms)
+bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	TCP_HEADER* tcp = (TCP_HEADER*)ms->Current();
-	if(!ms->Seek(tcp->Size())) return false;
+	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	if(!tcp) return false;
 
 	Header = tcp;
-	uint len = ms->Remain();
+	uint len = ms.Remain();
 
 	ushort port = __REV16(tcp->DestPort);
 	ushort remotePort = __REV16(tcp->SrcPort);
@@ -79,11 +79,11 @@ bool TcpSocket::Process(IP_HEADER* ip, Stream* ms)
 
 	//IP_HEADER* ip = tcp->Prev();
 	RemotePort	= remotePort;
-	RemoteIP	= ip->SrcIP;
+	RemoteIP	= ip.SrcIP;
 	LocalPort	= port;
-	LocalIP		= ip->DestIP;
+	LocalIP		= ip.DestIP;
 
-	OnProcess(tcp, *ms);
+	OnProcess(tcp, ms);
 
 	return true;
 }
@@ -140,7 +140,7 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, Stream& ms)
 void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 {
 	if(OnAccepted)
-		OnAccepted(this, tcp, tcp->Next(), len);
+		OnAccepted(*this, *tcp, tcp->Next(), len);
 	else
 	{
 #if NET_DEBUG
@@ -164,7 +164,7 @@ void TcpSocket::OnAccept(TCP_HEADER* tcp, uint len)
 void TcpSocket::OnAccept3(TCP_HEADER* tcp, uint len)
 {
 	if(OnAccepted)
-		OnAccepted(this, tcp, tcp->Next(), len);
+		OnAccepted(*this, *tcp, tcp->Next(), len);
 	else
 	{
 #if NET_DEBUG
@@ -207,7 +207,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnReceived(this, tcp, tcp->Next(), len);
+		bool rs = OnReceived(*this, *tcp, tcp->Next(), len);
 		// 如果不需要向对方发数据包，则直接响应ACK
 		if(!rs)
 		{
@@ -239,7 +239,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 
 void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 {
-	if(OnDisconnected) OnDisconnected(this, tcp, tcp->Next(), len);
+	if(OnDisconnected) OnDisconnected(*this, *tcp, tcp->Next(), len);
 
 	// RST是对方紧急关闭，这里啥都不干
 	if(tcp->Flags & TCP_FLAGS_FIN)
@@ -472,8 +472,8 @@ bool Callback(TinyIP* tip, void* param, Stream& ms)
 
 			// 处理。如果对方回发第二次握手包，或者终止握手
 			//Stream ms(tip->Buffer, tip->BufferSize);
-			tip->FixPayloadLength(_ip, ms);
-			socket->Process(_ip, &ms);
+			tip->FixPayloadLength(*_ip, ms);
+			socket->Process(*_ip, ms);
 
 			return true;
 		}
