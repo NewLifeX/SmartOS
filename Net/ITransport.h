@@ -2,6 +2,7 @@
 #define __ITransport_H__
 
 #include "Sys.h"
+#include "Stream.h"
 #include "Net.h"
 
 class ITransport;
@@ -80,6 +81,17 @@ public:
 		return OnWrite(buf, len);
 	}
 
+	// 发送数据流数据。从当前位置开始，直到结束
+	bool Write(Stream& ms)
+	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
+		if(!Opened && !Open()) return false;
+
+		return OnWrite(ms.Current(), ms.Length - ms.Position());
+	}
+
 	// 接收数据
 	uint Read(byte* buf, uint len)
 	{
@@ -89,6 +101,20 @@ public:
 		if(!Opened && !Open()) return 0;
 
 		return OnRead(buf, len);
+	}
+
+	// 接收数据到数据流。从当前位置开始，指针位于写入数据之后
+	uint Read(Stream& ms)
+	{
+		// 特别是接口要检查this指针
+		assert_ptr(this);
+
+		if(!Opened && !Open()) return 0;
+
+		uint len = OnRead(ms.Current(), ms.Length - ms.Position());
+		// 位置指针前移
+		ms.Seek(len);
+		return len;
 	}
 
 	// 注册回调函数

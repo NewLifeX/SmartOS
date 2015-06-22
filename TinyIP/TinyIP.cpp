@@ -62,12 +62,12 @@ void TinyIP::Init(ITransport* port)
 uint TinyIP::Fetch(Stream& ms)
 {
 	// 获取缓冲区的包
-	int len = _port->Read(ms.GetBuffer(), ms.Length);
+	int len = _port->Read(ms);
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER)) return 0;
 
-	// 设置数据流实际长度
-	ms.Length = len;
+	// 位置指针后移
+	ms.Seek(-len);
 
 	// 获取第一个结构体，不要移动指针
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>(false);
