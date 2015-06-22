@@ -147,7 +147,7 @@ void UdpSocket::Send(UDP_HEADER* udp, uint len, bool checksum)
 
 UDP_HEADER* UdpSocket::Create()
 {
-	return (UDP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	return (UDP_HEADER*)(Tip->Buffer.GetBuffer() + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 }
 
 // 发送UDP数据到目标地址
@@ -161,11 +161,11 @@ void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
 
 	UDP_HEADER* udp = Create();
 	udp->Init(true);
-	byte* end = Tip->Buffer + Tip->BufferSize;
+	byte* end = Tip->Buffer.GetBuffer() + Tip->Buffer.Length();
 	if(buf < udp->Next() || buf >= end)
 	{
 		// 复制数据，确保数据不会溢出
-		uint len2 = Tip->BufferSize - udp->Offset() - udp->Size();
+		uint len2 = Tip->Buffer.Length() - udp->Offset() - udp->Size();
 		assert_param(len <= len2);
 
 		memcpy(udp->Next(), buf, len);

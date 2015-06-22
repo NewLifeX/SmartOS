@@ -111,8 +111,8 @@ bool ArpSocket::Process(Stream* ms)
 
 bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 {
-	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
-	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
+	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
+	ARP_HEADER* arp = ms.Retrieve<ARP_HEADER>();
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)

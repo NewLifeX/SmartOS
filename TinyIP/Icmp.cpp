@@ -53,8 +53,8 @@ bool IcmpSocket::Process(Stream* ms)
 
 bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 {
-	ETH_HEADER* eth = (ETH_HEADER*)tip->Buffer;
-	IP_HEADER* _ip = (IP_HEADER*)eth->Next();
+	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
+	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
 
 	if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
 	{

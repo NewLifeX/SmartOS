@@ -3,9 +3,9 @@
 
 #define NET_DEBUG DEBUG
 
-TinyIP::TinyIP() { Init(); }
+TinyIP::TinyIP() : Buffer(1500) { Init(); }
 
-TinyIP::TinyIP(ITransport* port)
+TinyIP::TinyIP(ITransport* port) : Buffer(1500)
 {
 	Init();
 	Init(port);
@@ -15,9 +15,6 @@ TinyIP::~TinyIP()
 {
 	delete _port;
     _port = NULL;
-
-	delete Buffer;
-	Buffer = NULL;
 
 	delete Arp;
 	Arp = NULL;
@@ -31,14 +28,9 @@ void TinyIP::Init()
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = IP = 0;
 
-	Buffer = NULL;
-	BufferSize = 1500;
 	EnableBroadcast = true;
-	//EnableArp = true;
 
 	Sockets.SetCapacity(0x10);
-	// 必须有Arp，否则无法响应别人的IP询问
-	//Arp = new ArpSocket(this);
 	Arp = NULL;
 }
 
@@ -67,18 +59,20 @@ void TinyIP::Init(ITransport* port)
 }
 
 // 循环调度的任务
-uint TinyIP::Fetch(byte* buf, uint len)
+uint TinyIP::Fetch(Stream& ms)
 {
-	if(!buf) buf = Buffer;
-	if(!len) len = BufferSize;
-
 	// 获取缓冲区的包
-	len = _port->Read(buf, len);
+	int len = _port->Read(ms.GetBuffer(), ms.Length);
 	// 如果缓冲器里面没有数据则转入下一次循环
-	if(len < sizeof(ETH_HEADER)/* || !_net->Unpack(len)*/) return 0;
+	if(len < sizeof(ETH_HEADER)) return 0;
 
-	ETH_HEADER* eth = (ETH_HEADER*)buf;
+	// 设置数据流实际长度
+	ms.Length = len;
+
+	// 获取第一个结构体，不要移动指针
+	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>(false);
 	ulong v = eth->DestMac.Value();
+	// 广播地址有效，直接返回
 	if(!v || v == 0xFFFFFFFFFFFFFFFFull) return len;
 
 	// 只处理发给本机MAC的数据包。此时进行目标Mac地址过滤，可能是广播包
@@ -103,7 +97,6 @@ void TinyIP::Process(Stream* ms)
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
 	{
-		//if(EnableArp && Arp) Arp->Process(ms);
 		if(Arp && Arp->Enable) Arp->Process(ms);
 
 		return;
@@ -134,7 +127,6 @@ void TinyIP::Process(Stream* ms)
 	RemoteIP = ip->SrcIP;
 
 	// 移交给ARP处理，为了让它更新ARP表
-	//if(Arp && Arp->Enable) Arp->Process(NULL);
 	if(Arp) Arp->Process(NULL);
 
 	FixPayloadLength(ip, ms);
@@ -185,12 +177,11 @@ void TinyIP::Work(void* param)
 	TinyIP* tip = (TinyIP*)param;
 	if(tip)
 	{
-		uint len = tip->Fetch();
+		// 注意，此时指针位于0，而内容长度为缓冲区长度
+		Stream ms(tip->Buffer);
+		uint len = tip->Fetch(ms);
 		if(len)
 		{
-			// 注意，此时指针位于0，而内容长度为缓冲区长度
-			Stream ms(tip->Buffer, tip->BufferSize);
-			ms.Length = len;
 			tip->Process(&ms);
 		}
 	}
@@ -198,14 +189,16 @@ void TinyIP::Work(void* param)
 
 bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 {
-	Stream ms(Buffer, BufferSize);
+	// 分配一个同样大小的缓冲区
+	ByteArray bs(Buffer.Length());
+	Stream ms(bs);
 
 	// 总等待时间
 	TimeWheel tw(0, msTimeout, 0);
 	while(!tw.Expired())
 	{
 		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Fetch();
+		uint len = Fetch(ms);
 		if(!len)
 		{
 			Sys.Sleep(2);	// 等待一段时间，释放CPU
@@ -215,12 +208,10 @@ bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 
 		// 业务
 		ms.SetPosition(0);
-		ms.Length = len;
 		if(filter(this, param, ms)) return true;
 
 		// 用不到数据包交由系统处理
 		ms.SetPosition(0);
-		ms.Length = len;
 		Process(&ms);
 	}
 
@@ -237,19 +228,9 @@ bool TinyIP::Open()
 		return false;
 	}
 
-	// 分配缓冲区。比较大，小心堆空间不够
-	if(!Buffer)
-	{
-		Buffer = new byte[BufferSize];
-		assert_param(Buffer);
-		assert_param(Sys.CheckMemory());
-	}
-
 	// 必须有Arp，否则无法响应别人的IP询问
 	if(!Arp) Arp = new ArpSocket(this);
 	Arp->Enable = true;
-
-	//if(!Open()) return false;
 
 	ShowInfo();
 
@@ -268,8 +249,6 @@ bool TinyIP::Open()
 void TinyIP::ShowInfo()
 {
 #if NET_DEBUG
-	String str;
-
 	debug_printf("    IP:\t");
 	IP.Show();
 	debug_printf("\r\n    Mask:\t");

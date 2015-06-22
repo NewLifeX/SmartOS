@@ -44,12 +44,12 @@ private:
 	ulong _StartTime;
 
 	// 循环调度的任务，捕获数据包，返回长度
-	uint Fetch(byte* buf = NULL, uint len = 0);
+	uint Fetch(Stream& ms);
 
 	void Init();
 
 public:
-	byte* Buffer; // 缓冲区
+	ByteArray Buffer; // 缓冲区
 
 	// 任务函数
 	static void Work(void* param);
@@ -74,7 +74,6 @@ public:
 	IPAddress	RemoteIP;	// 远程IP地址
 	//ushort RemotePort;	// 远程端口
 
-	ushort		BufferSize;	// 缓冲区大小
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
 	IPAddress	Gateway;

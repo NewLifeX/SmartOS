@@ -329,7 +329,7 @@ void TcpSocket::SetMss(TCP_HEADER* tcp)
 
 TCP_HEADER* TcpSocket::Create()
 {
-	return (TCP_HEADER*)(Tip->Buffer + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
+	return (TCP_HEADER*)(Tip->Buffer.GetBuffer() + sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 }
 
 void TcpSocket::SendAck(uint len)
@@ -369,11 +369,11 @@ void TcpSocket::Send(const byte* buf, uint len)
 
 	TCP_HEADER* tcp = Create();
 	tcp->Init(true);
-	byte* end = Tip->Buffer + Tip->BufferSize;
+	byte* end = Tip->Buffer.GetBuffer() + Tip->Buffer.Length();
 	if(buf < tcp->Next() || buf >= end)
 	{
 		// 复制数据，确保数据不会溢出
-		uint len2 = Tip->BufferSize - tcp->Offset() - tcp->Size();
+		uint len2 = Tip->Buffer.Length() - tcp->Offset() - tcp->Size();
 		assert_param(len <= len2);
 
 		memcpy(tcp->Next(), buf, len);
