@@ -8,7 +8,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 {
-	Type = IP_TCP;
+	Type		= IP_TCP;
 
 	Port		= 0;
 	RemoteIP	= 0;
@@ -398,7 +398,7 @@ void TcpSocket::Send(const byte* buf, uint len)
 }
 
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
-bool TcpSocket::Connect(IPAddress ip, ushort port)
+bool TcpSocket::Connect(IPAddress& ip, ushort port)
 {
 	if(ip.IsAny() || port == 0) return false;
 

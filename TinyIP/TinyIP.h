@@ -15,19 +15,9 @@ class TinyIP;
 class Socket
 {
 public:
-	TinyIP*		Tip;	// TinyIP控制器
-	IP_TYPE		Type;	// 类型
-	bool		Enable;	// 启用
-
-	IP_HEADER*	IPHeader;
-
-	ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
-	ushort		BindPort;	// 绑定端口，用于发出数据包的源端口。默认为Port，若Port为0，则从1024算起，累加
-
-	IPAddress	RemoteIP;	// 远程地址。当前数据包
-	ushort		RemotePort;	// 远程端口。当前数据包
-	IPAddress	LocalIP;	// 本地IP地址。当前数据包
-	ushort		LocalPort;	// 本地端口，收到数据包的目的端口
+	TinyIP*	Tip;	// TinyIP控制器
+	IP_TYPE	Type;	// 类型
+	bool	Enable;	// 启用
 
 	Socket(TinyIP* tip);
 	virtual ~Socket();

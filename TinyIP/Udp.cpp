@@ -4,7 +4,7 @@
 
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
-	Type = IP_UDP;
+	Type		= IP_UDP;
 	Port		= 0;
 	RemoteIP	= 0;
 	RemotePort	= 0;
@@ -151,7 +151,7 @@ UDP_HEADER* UdpSocket::Create()
 }
 
 // 发送UDP数据到目标地址
-void UdpSocket::Send(const byte* buf, uint len, IPAddress ip, ushort port)
+void UdpSocket::Send(const byte* buf, uint len, IPAddress& ip, ushort port)
 {
 	if(!ip.IsAny())
 	{

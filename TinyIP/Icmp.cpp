@@ -78,7 +78,7 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 }
 
 // Ping目的地址，附带a~z重复的负载数据
-bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
+bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 {
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	uint bufSize = ArrayLength(buf);

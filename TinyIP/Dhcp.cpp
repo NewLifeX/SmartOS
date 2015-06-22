@@ -47,7 +47,9 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 		len = (byte*)opt + 1 - p;
 	}
 
-	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
+	//memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
+	for(int i=0; i<6; i++)
+		dhcp->ClientMac[i] = Tip->Mac[i];
 
 	RemoteIP = IPAddress::Broadcast;
 

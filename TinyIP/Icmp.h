@@ -20,7 +20,7 @@ public:
 	PingHandler OnPing;
 
 	// Ping目的地址，附带a~z重复的负载数据
-	bool Ping(IPAddress ip, uint payloadLength = 32);
+	bool Ping(IPAddress& ip, uint payloadLength = 32);
 };
 
 #endif
