@@ -183,7 +183,8 @@ void Dhcp::SendDiscover(void* param)
 		return;
 	}
 
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100);
+	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100];
+	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
 
 	DHCP_HEADER* dhcp = ms.Retrieve<DHCP_HEADER>();
@@ -228,8 +229,8 @@ void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 #endif
 
 		// 独立分配缓冲区进行操作，避免数据被其它线程篡改
-		//byte buf[400];
-		Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100);
+		byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100];
+		Stream ms(buf, ArrayLength(buf));
 		ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
 
 		DHCP_HEADER* dhcp2 = ms.Retrieve<DHCP_HEADER>();
