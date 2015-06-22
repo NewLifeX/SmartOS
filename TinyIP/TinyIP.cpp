@@ -28,8 +28,6 @@ void TinyIP::Init()
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = IP = 0;
 
-	EnableBroadcast = true;
-
 	Sockets.SetCapacity(0x10);
 	Arp = NULL;
 }
@@ -88,9 +86,8 @@ void TinyIP::Process(Stream& ms)
 	if(!eth) return;
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
-	//if(eth->DestMac != Mac) return;
-	//LocalMac  = eth->DestMac;
-	RemoteMac = eth->SrcMac.Value();
+	MacAddress mac = eth->SrcMac.Value();
+	RemoteMac = mac;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -104,7 +101,7 @@ void TinyIP::Process(Stream& ms)
 	if(eth->Type != ETH_IP)
 	{
 		debug_printf("Unkown EthernetType 0x%02X From ", eth->Type);
-		RemoteMac.Show();
+		mac.Show();
 		debug_printf("\r\n");
 	}
 #endif
@@ -121,7 +118,12 @@ void TinyIP::Process(Stream& ms)
 	RemoteIP = ip->SrcIP;
 
 	// 移交给ARP处理，为了让它更新ARP表
-	if(Arp) Arp->Process(NULL);
+	if(Arp)
+	{
+		//Arp->Process(NULL);
+		ArpSocket* arp = (ArpSocket*)Arp;
+		arp->Add(RemoteIP, mac);
+	}
 
 	FixPayloadLength(ip, ms);
 

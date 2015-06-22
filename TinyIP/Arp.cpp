@@ -29,13 +29,6 @@ ArpSocket::~ArpSocket()
 
 bool ArpSocket::Process(Stream* ms)
 {
-	// 如果ms为空，可能是纯为了更新ARP表
-	if(!ms)
-	{
-		Add(Tip->RemoteIP, Tip->RemoteMac);
-		return false;
-	}
-
 	// 前面的数据长度很不靠谱，这里进行小范围修正
 	//uint size = ms->Position + sizeof(ARP_HEADER);
 	//if(ms->Length < size) ms->Length = size;
@@ -144,9 +137,10 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
 	arp->Init();
 
+	Tip->RemoteMac = MacAddress::Empty;
+
 	// 构造请求包
 	arp->Option = 0x0100;
-	Tip->RemoteMac = 0;
 	arp->DestMac = 0;
 	arp->SrcMac  = Tip->Mac;
 	arp->DestIP  = ip.Value;

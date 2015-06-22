@@ -64,15 +64,9 @@ public:
     IPAddress	IP;		// 本地IP地址
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
-	//ushort Port;	// 本地端口
-	bool EnableBroadcast;	// 使用广播
 
-	//MacAddress LocalMac;// 本地目标Mac地址
-	//IPAddress LocalIP;	// 本地目标IP地址
-	//ushort LocalPort;	// 本地目标端口
 	MacAddress	RemoteMac;	// 远程Mac地址
 	IPAddress	RemoteIP;	// 远程IP地址
-	//ushort RemotePort;	// 远程端口
 
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
@@ -81,8 +75,6 @@ public:
 	// Arp套接字
 	Socket*		Arp;
 	// 套接字列表。套接字根据类型来识别
-	//Socket* Sockets[0x20];
-	//uint SocketCount;
 	SocketList	Sockets;
 
 	TinyIP();

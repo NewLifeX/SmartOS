@@ -78,20 +78,6 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress ip, uint payloadLength)
 {
-	/*assert_ptr(Tip->Arp);
-	ArpSocket* arp = (ArpSocket*)Tip->Arp;
-	const MacAddress* mac = arp->Resolve(ip);
-	if(!mac)
-	{
-#if NET_DEBUG
-		debug_printf("No Mac For ");
-		Tip->ShowIP(ip);
-		debug_printf("\r\n");
-#endif
-		return false;
-	}
-
-	Tip->RemoteMac = *mac;*/
 	Tip->RemoteIP  = ip;
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];

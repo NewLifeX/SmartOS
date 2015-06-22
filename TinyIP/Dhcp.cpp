@@ -48,10 +48,7 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 	}
 
 	memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
-	//dhcp->ClientMac = Tip->Mac;
 
-	//Tip->RemoteMac = MAC_FULL;
-	//Tip->RemoteIP = IP_FULL;
 	Tip->RemoteMac = MacAddress::Full;
 	RemoteIP = IPAddress::Broadcast;
 
@@ -87,8 +84,6 @@ void Dhcp::Discover(DHCP_HEADER* dhcp)
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 
-	//Tip->RemoteMac = MAC_FULL;
-	//Tip->RemoteIP = IP_FULL;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
@@ -101,8 +96,6 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Tip->DHCPServer.Value);
 
 	// 发往DHCP服务器
-	//Tip->RemoteMac = MAC_FULL;
-	//Tip->RemoteIP = Tip->DHCPServer;
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
