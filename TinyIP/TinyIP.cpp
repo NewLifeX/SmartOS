@@ -87,7 +87,6 @@ void TinyIP::Process(Stream& ms)
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	MacAddress mac = eth->SrcMac.Value();
-	//RemoteMac = mac;
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
@@ -328,7 +327,6 @@ void TinyIP::SendIP(IP_TYPE type, const byte* buf, uint len)
 #endif
 		return;
 	}
-	//RemoteMac = mac;
 
 	/*string name = "Unkown";
 	switch(type)

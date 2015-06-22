@@ -140,8 +140,6 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	ARP_HEADER* arp = (ARP_HEADER*)eth->Next();
 	arp->Init();
 
-	//Tip->RemoteMac = MacAddress::Empty;
-
 	// 构造请求包
 	arp->Option = 0x0100;
 	arp->DestMac = 0;

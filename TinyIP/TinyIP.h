@@ -65,7 +65,6 @@ public:
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 
-	//MacAddress	RemoteMac;	// 远程Mac地址
 	IPAddress	RemoteIP;	// 远程IP地址
 
 	IPAddress	DHCPServer;
