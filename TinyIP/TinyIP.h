@@ -40,8 +40,9 @@ typedef bool (*LoopFilter)(TinyIP* tip, void* param, Stream& ms);
 class TinyIP
 {
 private:
-	ITransport* _port;
-	ulong _StartTime;
+	ITransport*	_port;
+	ulong		_StartTime;
+	ByteArray	Buffer; // 缓冲区
 
 	// 循环调度的任务，捕获数据包，返回长度
 	uint Fetch(Stream& ms);
@@ -49,7 +50,6 @@ private:
 	void Init();
 
 public:
-	ByteArray Buffer; // 缓冲区
 
 	// 任务函数
 	static void Work(void* param);

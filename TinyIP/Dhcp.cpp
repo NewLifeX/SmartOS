@@ -15,9 +15,9 @@ Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
 	OnStop = NULL;
 }
 
-void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
+void Dhcp::SendDhcp(DHCP_HEADER& dhcp, uint len)
 {
-	byte* p = dhcp->Next();
+	byte* p = dhcp.Next();
 	if(p[len - 1] != DHCP_OPT_End)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
@@ -27,12 +27,6 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 			opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Tip->IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
-		//static String prefix("WSWL_SmartOS_");
-		//char name[15];
-		//strncpy(name, str, ArrayLength(name));
-		//Sys.ToHex((byte*)name + ArrayLength(name) - 2, &Sys.ID[0], 1);
-		//String name = prefix;
-		//name.Append(Sys.ID[0]);
 		String name;
 		name.Format("WSWL_SmartOS_%02X", Sys.ID[0]);
 
@@ -49,11 +43,11 @@ void Dhcp::SendDhcp(DHCP_HEADER* dhcp, uint len)
 
 	//memcpy(dhcp->ClientMac, (byte*)&Tip->Mac.Value, 6);
 	for(int i=0; i<6; i++)
-		dhcp->ClientMac[i] = Tip->Mac[i];
+		dhcp.ClientMac[i] = Tip->Mac[i];
 
 	RemoteIP = IPAddress::Broadcast;
 
-	Send(dhcp->Prev(), sizeof(DHCP_HEADER) + len, false);
+	Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, false);
 }
 
 // 获取选项，返回数据部分指针
@@ -73,24 +67,19 @@ DHCP_OPT* GetOption(byte* p, int len, DHCP_OPTION option)
 	return 0;
 }
 
-/*// 设置选项
-void SetOption(byte* p, int len)
-{
-}*/
-
 // 找服务器
-void Dhcp::Discover(DHCP_HEADER* dhcp)
+void Dhcp::Discover(DHCP_HEADER& dhcp)
 {
-	byte* p = dhcp->Next();
+	byte* p = dhcp.Next();
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
-void Dhcp::Request(DHCP_HEADER* dhcp)
+void Dhcp::Request(DHCP_HEADER& dhcp)
 {
-	byte* p = dhcp->Next();
+	byte* p = dhcp.Next();
 	DHCP_OPT* opt = (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
 
@@ -100,28 +89,26 @@ void Dhcp::Request(DHCP_HEADER* dhcp)
 	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
-void Dhcp::PareOption(byte* buf, uint len)
+void Dhcp::PareOption(Stream& ms)
 {
-	byte* p = buf;
-	byte* end = p + len;
-	while(p < end)
+	while(ms.Remain())
 	{
-		byte opt = *p++;
+		byte opt = ms.Read<byte>();
 		if(opt == DHCP_OPT_End) break;
-		byte len = *p++;
+		byte len = ms.Read<byte>();
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask:			Tip->Mask		= *(uint*)p; break;
-			case DHCP_OPT_DNSServer:	Tip->DNSServer	= *(uint*)p; break;
-			case DHCP_OPT_Router:		Tip->Gateway	= *(uint*)p; break;
-			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= *(uint*)p; break;
+			case DHCP_OPT_Mask:			Tip->Mask		= ms.Read<int>(); break;
+			case DHCP_OPT_DNSServer:	Tip->DNSServer	= ms.Read<int>(); break;
+			case DHCP_OPT_Router:		Tip->Gateway	= ms.Read<int>(); break;
+			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= ms.Read<int>(); break;
 #if NET_DEBUG
 			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 #endif
 		}
-		p += len;
+		ms.Seek(len - 4);
 	}
 }
 
@@ -135,11 +122,6 @@ void RenewDHCP(void* param)
 		// 不能使用栈分配，因为是异步操作
 		Dhcp* dhcp = new Dhcp(tip);
 		dhcp->Start();
-		/*if(!dhcp.Start())
-		{
-			debug_printf("TinyIP DHCP Fail!\r\n\r\n");
-			return;
-		}*/
 	}
 }
 
@@ -201,23 +183,20 @@ void Dhcp::SendDiscover(void* param)
 		return;
 	}
 
-	byte buf[400];
-	//uint bufSize = ArrayLength(buf);
+	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100);
+	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
 
-	ETH_HEADER*  eth  = (ETH_HEADER*) buf;
-	IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
-	UDP_HEADER*  udp  = (UDP_HEADER*) ip->Next();
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
+	DHCP_HEADER* dhcp = ms.Retrieve<DHCP_HEADER>();
 
 	// 向DHCP服务器广播
 	debug_printf("DHCP::Discover...\r\n");
 	dhcp->Init(_dhcp->dhcpid, true);
-	_dhcp->Discover(dhcp);
+	_dhcp->Discover(*dhcp);
 }
 
-void Dhcp::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
+void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 {
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp->Next();
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp.Next();
 	if(!dhcp->Valid()) return;
 
 	byte* data = dhcp->Next();
@@ -230,12 +209,13 @@ void Dhcp::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
 	// 所有响应都需要检查事务ID
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
-	IPAddress remote = ip->SrcIP;
+	IPAddress remote = ip.SrcIP;
 	
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
 		Tip->IP = dhcp->YourIP;
-		PareOption(dhcp->Next(), len);
+		Stream optData(dhcp->Next(), len);
+		PareOption(optData);
 
 		// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
 		// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
@@ -248,16 +228,14 @@ void Dhcp::OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms)
 #endif
 
 		// 独立分配缓冲区进行操作，避免数据被其它线程篡改
-		byte buf[400];
-		//uint bufSize = ArrayLength(buf);
+		//byte buf[400];
+		Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100);
+		ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
 
-		ETH_HEADER*  eth  = (ETH_HEADER*) buf;
-		IP_HEADER*   ip   = (IP_HEADER*)  eth->Next();
-		UDP_HEADER*  udp2  = (UDP_HEADER*) ip->Next();
-		DHCP_HEADER* dhcp2 = (DHCP_HEADER*)udp2->Next();
+		DHCP_HEADER* dhcp2 = ms.Retrieve<DHCP_HEADER>();
 
 		dhcp2->Init(dhcpid, true);
-		Request(dhcp2);
+		Request(*dhcp2);
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{

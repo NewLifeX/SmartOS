@@ -12,11 +12,11 @@ private:
 	ulong _expiredTime;
 	ulong _nextTime;
 
-	void Discover(DHCP_HEADER* dhcp);
-	void Request(DHCP_HEADER* dhcp);
-	void PareOption(byte* buf, uint len);
+	void Discover(DHCP_HEADER& dhcp);
+	void Request(DHCP_HEADER& dhcp);
+	void PareOption(Stream& bs);
 
-	void SendDhcp(DHCP_HEADER* dhcp, uint len);
+	void SendDhcp(DHCP_HEADER& dhcp, uint len);
 
 	static void SendDiscover(void* param);
 public:
@@ -32,7 +32,7 @@ public:
 	EventHandler OnStop;
 
 protected:
-	virtual void OnProcess(IP_HEADER* ip, UDP_HEADER* udp, Stream& ms);
+	virtual void OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms);
 };
 
 #endif
