@@ -7,11 +7,8 @@
 class TcpSocket : public Socket, public ITransport
 {
 private:
-	//byte seqnum;
 	uint		Seq;		// 序列号，本地发出数据包
 	uint		Ack;		// 确认号，对方发送数据包的序列号+1
-
-	TCP_HEADER* Create();
 	
 public:
 	// Tcp状态
@@ -39,7 +36,7 @@ public:
 	virtual bool Process(IP_HEADER& ip, Stream& ms);
 
 	bool Connect(IPAddress& ip, ushort port);	// 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
-    void Send(const byte* buf, uint len);			// 向Socket发送数据，可能是外部数据包
+    void Send(ByteArray& bs);			// 向Socket发送数据，可能是外部数据包
     void Disconnect();	// 关闭Socket
 
 	// 收到Tcp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
@@ -53,15 +50,15 @@ public:
 protected:
 	void SendAck(uint len);
 
-	void SetSeqAck(TCP_HEADER* tcp, uint ackNum, bool cp_seq);
-	void SetMss(TCP_HEADER* tcp);
-	void Send(TCP_HEADER* tcp, uint len, byte flags);
+	void SetSeqAck(TCP_HEADER& tcp, uint ackNum, bool cp_seq);
+	void SetMss(TCP_HEADER& tcp);
+	void Send(TCP_HEADER& tcp, uint len, byte flags);
 
-	virtual void OnProcess(TCP_HEADER* tcp, Stream& ms);
-	virtual void OnAccept(TCP_HEADER* tcp, uint len);
-	virtual void OnAccept3(TCP_HEADER* tcp, uint len);
-	virtual void OnDataReceive(TCP_HEADER* tcp, uint len);
-	virtual void OnDisconnect(TCP_HEADER* tcp, uint len);
+	virtual void OnProcess(TCP_HEADER& tcp, Stream& ms);
+	virtual void OnAccept(TCP_HEADER& tcp, uint len);
+	virtual void OnAccept3(TCP_HEADER& tcp, uint len);
+	virtual void OnDataReceive(TCP_HEADER& tcp, uint len);
+	virtual void OnDisconnect(TCP_HEADER& tcp, uint len);
 
 	virtual bool OnOpen();
     virtual void OnClose();
