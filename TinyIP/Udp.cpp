@@ -125,6 +125,8 @@ void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool
 	debug_printf(":%d ", port);
 	if(tlen > 0) Sys.ShowHex(udp.Next(), tlen > 64 ? 64 : tlen, false);
 	debug_printf("\r\n");
+#else
+	Sys.Sleep(1);
 #endif
 
 	Tip->SendIP(IP_UDP, ip, (byte*)&udp, tlen);
