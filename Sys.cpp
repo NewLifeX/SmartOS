@@ -599,7 +599,7 @@ void TSys::Stop()
 void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(_Scheduler)
+	if(_Scheduler && (!us || us >= 1000))
 	{
 		// 记录当前正在执行任务
 		Task* task = _Scheduler->Current;
@@ -617,6 +617,9 @@ void TimeSleep(uint us)
 
 			ulong now = Time.Current();
 			cost += (int)(now - start2);
+
+			// us=0 表示释放一下CPU
+			if(!us) return;
 
 			if(now >= end) break;
 		}
