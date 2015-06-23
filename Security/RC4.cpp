@@ -22,7 +22,8 @@ void RC4::Encrypt(ByteArray& data, ByteArray& pass)
 {
 	int i = 0;
 	int j = 0;
-	ByteArray box(KeyLength);
+	byte buf[KeyLength];
+	ByteArray box(buf, KeyLength);
 	GetKey(box, pass);
 	// 加密  
 	for (int k = 0; k < data.Length(); k++)

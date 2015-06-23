@@ -174,7 +174,7 @@ public:
 		}
 
 		// 检查长度是否足够
-		assert_param(len <= _Capacity);
+		//assert_param(len <= _Capacity);
 
 		// 销毁旧的
 		Release();
@@ -248,7 +248,8 @@ class ByteArray : public Array<byte>
 public:
 	ByteArray(int length) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
-	ByteArray(const byte* data, int length) : Array(length) { Set(data, length); }
+	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
+	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
 	ByteArray(String& str);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
@@ -265,7 +266,8 @@ private:
 public:
 	String(int length = 0x40) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
-	String(const char* str, int len = 0) : Array(len) { Set(str, len); }
+	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
+	String(const char* str, int len = 0) : Array(0) { Set(str, len); }
 	String(String& str) : Array(str.Length()) { Copy(str); }
 
 	// 设置字符串长度
