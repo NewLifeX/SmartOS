@@ -96,7 +96,7 @@ void TaskScheduler::Start()
 
 #if DEBUG
 	//Add(ShowTime, NULL, 2000000, 2000000);
-	Add(ShowStatus, this, 10000000, 20000000);
+	Add(ShowStatus, this, 10000000, 30000000);
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
