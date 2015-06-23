@@ -118,19 +118,19 @@ uint Stream::Read(byte* buf, uint offset, int count)
 uint Stream::ReadEncodeInt()
 {
 	uint value = 0;
-	uint temp = 0;
-	for(int i = 0; i < 4; i++)
+	byte temp = 0;
+	for(int i = 0, k = 0; i < 4; i++, k += 7)
 	{
-		temp = (uint)ReadBytes(1);
-		if(temp<127)
+		temp = Read<byte>();
+		if(temp < 0x7F)
 		{
-			value |= ( temp << (7*i));
+			value |= (temp << k);
 			return value;
 		}
-		temp &= 0x7f;
-		value |= ( temp << (7*i));
+		temp &= 0x7F;
+		value |= (temp << k);
 	}
-	return 0xffffffff;
+	return 0xFFFFFFFF;
 }
 
 // 把数据写入当前位置
@@ -154,14 +154,14 @@ uint Stream::WriteEncodeInt(uint value)
 	for( int i = 0 ; i < 4 ; i++ )
 	{
 		temp = (byte)value;
-		if(temp < 127)
+		if(temp < 0x7F)
 		{
 			Write(&temp, 0, 1);
-			return i+1;
+			return i + 1;
 		}
 		temp |= 0x80;
 		Write(&temp, 0, 1);
-		value>>=7;
+		value >>= 7;
 	}
 	return 0;
 }
