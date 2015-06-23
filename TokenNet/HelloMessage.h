@@ -20,6 +20,7 @@ public:
 
 	// 初始化消息，各字段为0
 	HelloMessage();
+	HelloMessage(HelloMessage& msg);
 
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms);

@@ -14,13 +14,24 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	Ciphers[0] = 1;
 }
 
+HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
+{
+	Version		= msg.Version;
+	Type		= msg.Type;
+	Name		= msg.Name;
+	LocalTime	= msg.LocalTime;
+	EndPoint	= msg.EndPoint;
+	Ciphers		= msg.Ciphers;
+	Key			= msg.Key;
+}
+
 // 从数据流中读取消息
 bool HelloMessage::Read(Stream& ms)
 {
 	Version = ms.Read<ushort>();
 
-	ms.ReadString(Type);
-	ms.ReadString(Name);
+	ms.ReadString(Type.Clear());
+	ms.ReadString(Name.Clear());
 
 	LocalTime = ms.Read<ulong>();
 
