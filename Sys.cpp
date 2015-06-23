@@ -604,6 +604,7 @@ void TimeSleep(uint us)
 		ulong start = Time.Current();
 		// 1ms一般不够调度新任务，留给硬件等待
 		ulong end = start + us - 1000;
+		// 如果休眠时间足够长，允许多次调度其它任务
 		int cost = 0;
 		while(true)
 		{

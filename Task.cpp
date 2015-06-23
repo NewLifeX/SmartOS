@@ -134,8 +134,8 @@ void TaskScheduler::Execute(uint usMax)
 
 			// 累加任务执行次数和时间
 			task->Times++;
-			uint cost = (uint)(Time.Current() - now2);
-			task->CpuTime += cost;
+			int cost = (int)(Time.Current() - now2);
+			if(cost > 0) task->CpuTime += cost;
 
 #if DEBUG
 			if(cost > 100000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", task->ID, task->Times, cost, task->SleepTime);
