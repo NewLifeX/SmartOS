@@ -237,6 +237,12 @@ byte& IPAddress::operator[](int i)
 	return ((byte*)&Value)[i];
 }
 
+// 字节数组
+byte* IPAddress::ToArray()
+{
+	return (byte*)&Value;
+}
+
 String& IPAddress::To(String& str)
 {
 	byte* ips = (byte*)&Value;
@@ -309,6 +315,12 @@ byte& MacAddress::operator[](int i)
 	assert_param(i >= 0 && i < 6);
 
 	return ((byte*)&Value)[i];
+}
+
+// 字节数组
+byte* MacAddress::ToArray()
+{
+	return (byte*)&Value;
 }
 
 // 数值

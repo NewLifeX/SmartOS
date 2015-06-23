@@ -309,6 +309,9 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
 
+	// 字节数组
+    byte* ToArray();
+
 	bool IsAny();
 	bool IsBroadcast();
 	uint GetSubNet(IPAddress& mask);	// 获取子网
@@ -366,8 +369,8 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
 
-	// 数值
-    //ulong Value();
+	// 字节数组
+    byte* ToArray();
 
 	virtual String& To(String& str);
 
