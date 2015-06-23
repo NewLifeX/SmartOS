@@ -199,6 +199,8 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 				rs = true;
 				break;
 			}
+			// 睡眠，释放CPU
+			Sys.Sleep(1);
 		}
 		if(rs) break;
 	}
