@@ -232,3 +232,38 @@ bool Stream::CheckCapacity(uint count)
 
 	return true;
 }
+
+uint Stream::ReadArray(ByteArray& bs)
+{
+	uint len = ReadEncodeInt();
+	if(!len) return 0;
+
+	assert_param(len <= bs.Capacity());
+
+	Read(bs.GetBuffer(), 0, len);
+
+	return len;
+}
+
+void Stream::WriteArray(ByteArray& bs)
+{
+	WriteEncodeInt(bs.Length());
+	Write(bs.GetBuffer(), 0, bs.Length());
+}
+
+uint Stream::ReadString(String& str)
+{
+	ByteArray bs(str.Capacity() - str.Length());
+	uint len = ReadArray(bs);
+	if(!len) return 0;
+
+	str.Copy((char*)bs.GetBuffer(), len, str.Length());
+
+	return len;
+}
+
+void Stream::WriteString(String& str)
+{
+	ByteArray bs(str);
+	WriteArray(bs);
+}

@@ -57,6 +57,12 @@ public:
 	uint Write(string str);
 	void Write(ByteArray& bs);
 
+	uint ReadArray(ByteArray& bs);
+	void WriteArray(ByteArray& bs);
+
+	uint ReadString(String& str);
+	void WriteString(String& str);
+
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
 	T* Retrieve(bool move = true)
