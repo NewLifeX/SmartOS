@@ -42,8 +42,8 @@ class TTime
 private:
     static void OnHandler(ushort num, void* param);
 	DateTime _Now;
-	uint _usTicks;	// 计算微秒时剩下的嘀嗒数
-	uint _msUs;		// 计算毫秒时剩下的微秒数
+	volatile uint _usTicks;		// 计算微秒时剩下的嘀嗒数
+	volatile uint _msUs;		// 计算毫秒时剩下的微秒数
 
 public:
     volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。

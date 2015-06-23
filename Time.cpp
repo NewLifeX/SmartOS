@@ -138,7 +138,7 @@ ulong TTime::Current()
 {
 	uint value = (SysTick->LOAD - SysTick->VAL);
 
-	return Microseconds + value / TicksPerMicrosecond;
+	return Microseconds + (_usTicks + value) / TicksPerMicrosecond;
 }
 
 void TTime::SetTime(ulong us)
