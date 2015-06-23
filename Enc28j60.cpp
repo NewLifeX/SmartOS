@@ -1,6 +1,6 @@
 ﻿#include "Enc28j60.h"
 
-#define ENC_DEBUG 0
+#define ENC_DEBUG 1
 
 Enc28j60::Enc28j60() { Init(); }
 
