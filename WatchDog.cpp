@@ -166,7 +166,10 @@ void WatchDog::Start(uint ms)
 	dog.Config(ms);
 
 	// 减小一点，避免来不及喂狗
-	if(ms > 100) ms -= 100;
+	if(ms > 1000)
+		ms = 1000;
+	else if(ms > 100)
+		ms -= 100;
 	uint us = ms * 1000;
 
 	debug_printf("WatchDog::Start ");
