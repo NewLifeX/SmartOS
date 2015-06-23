@@ -136,7 +136,8 @@ void UdpSocket::Send(ByteArray& bs, IPAddress& ip, ushort port)
 		RemotePort = port;
 	}
 
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + bs.Length());
+	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 256];
+	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 	
 	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();

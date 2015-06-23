@@ -81,9 +81,8 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 {
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
-	uint bufSize = ArrayLength(buf);
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream ms(buf, bufSize);
+	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
 	ICMP_HEADER* icmp = ms.Retrieve<ICMP_HEADER>();
@@ -92,6 +91,8 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	icmp->Type = 8;
 	icmp->Code = 0;
 
+	// 限定最大长度64
+	if(payloadLength > 64) payloadLength = 64;
 	for(int i=0, k=0; i<payloadLength; i++, k++)
 	{
 		if(k >= 23) k-=23;

@@ -183,8 +183,8 @@ void TinyIP::Work(void* param)
 bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 {
 	// 分配一个同样大小的缓冲区
-	ByteArray bs(Buffer.Length());
-	Stream ms(bs);
+	byte buf[ArrayLength(Buffer)];
+	Stream ms(buf, ArrayLength(buf));
 
 	// 总等待时间
 	TimeWheel tw(0, msTimeout, 0);
