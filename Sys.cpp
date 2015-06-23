@@ -598,19 +598,37 @@ void TimeSleep(uint us)
 	// 在这段时间里面，去处理一下别的任务
 	if(_Scheduler)
 	{
-#if DEBUG
-		//debug_printf("Sys::Sleep 空闲调度 %dus\r\n", us);
-#endif
-		ulong end = Time.Current() + us;
-		_Scheduler->Execute(us);
-		ulong now = Time.Current();
-#if DEBUG
-		//debug_printf("Sys::Sleep 空闲调度完成\r\n");
-#endif
-		if(now >= end) return;
-		us = end - now;
+		// 记录当前正在执行任务
+		Task* task = _Scheduler->Current;
+
+		ulong start = Time.Current();
+		// 1ms一般不够调度新任务，留给硬件等待
+		ulong end = start + us - 1000;
+		int cost = 0;
+		while(true)
+		{
+			ulong start2 = Time.Current();
+
+			_Scheduler->Execute(us);
+
+			ulong now = Time.Current();
+			cost += (int)(now - start2);
+
+			if(now >= end) break;
+		}
+
+		if(task)
+		{
+			_Scheduler->Current = task;
+			task->SleepTime += cost;
+		}
+
+		cost = (int)(Time.Current() - start);
+		if(cost > 0) return;
+
+		us -= cost;
 	}
-	Time.Sleep(us);
+	if(us) Time.Sleep(us);
 }
 
 void TSys::Sleep(uint ms)

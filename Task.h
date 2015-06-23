@@ -24,6 +24,7 @@ public:
 	ulong	NextTime;	// 下一次执行时间
 	uint	Times;		// 执行次数
 	uint	CpuTime;	// 总耗费时间
+	uint	SleepTime;	// 当前睡眠时间
 
 	//~Task();
 };
@@ -40,6 +41,7 @@ private:
 public:
 	string	Name;		// 系统名称
 	int		Count;		// 任务个数
+	Task*	Current;	// 正在执行的任务
 	bool	Running;	// 是否正在运行
 	byte	Reversed[3];// 保留，避免对齐问题
 
