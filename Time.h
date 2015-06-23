@@ -88,4 +88,16 @@ public:
 	bool Expired();
 };
 
+// 代码执行时间
+class CodeTime
+{
+public:
+	ulong Start;	// 开始时间，微秒
+	
+	CodeTime();
+	
+	uint Elapsed();	// 逝去的时间，微秒
+	void Show(const char* format = NULL);
+};
+
 #endif

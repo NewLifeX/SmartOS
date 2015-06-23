@@ -343,3 +343,20 @@ bool TimeWheel::Expired()
 
 	return false;
 }
+
+CodeTime::CodeTime()
+{
+	Start = Time.Current();
+}
+
+// 逝去的时间，微秒
+uint CodeTime::Elapsed()
+{
+	return (uint)(Time.Current() - Start);
+}
+
+void CodeTime::Show(const char* format)
+{
+	if(!format) format = "执行 %dus";
+	debug_printf(format, Elapsed());
+}

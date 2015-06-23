@@ -141,7 +141,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	ip.Show();
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x", id, seq);
 
-	ulong start = Time.Current();
+	CodeTime ct;
 #endif
 	Tip->SendIP(IP_ICMP, ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
@@ -162,7 +162,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	Session = NULL;
 
 #if NET_DEBUG
-	uint cost = (int)(Time.Current() - start) / 1000;
+	uint cost = ct.Elapsed() / 1000;
 	if(ps.Success)
 		debug_printf(" 成功 %dms\r\n", cost);
 	else
