@@ -10,13 +10,13 @@
 class HelloMessage : Object
 {
 public:
-	ushort		Version;// 版本
-	String		Type;	// 类型
-	String		Name;	// 名称
-	ulong		Time;	// 时间
+	ushort		Version;	// 版本
+	String		Type;		// 类型
+	String		Name;		// 名称
+	ulong		LocalTime;	// 时间
 	IPEndPoint	EndPoint;
 	ByteArray	Ciphers;
-	ByteArray	Key;	// 密钥
+	ByteArray	Key;		// 密钥
 
 	// 初始化消息，各字段为0
 	HelloMessage();

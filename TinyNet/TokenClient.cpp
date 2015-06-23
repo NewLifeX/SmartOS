@@ -94,33 +94,22 @@ void TokenClient::Hello()
 	Stream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Length = 0;
 
-	ms.Write(Sys.Version);
-
-	// 注意Code小字节序
-	ushort code = Sys.Code << 8;
-	code |= Sys.Code >> 8;
-	byte type[4];
-	Sys.ToHex(type, (byte*)&code, 2);
-	ms.Write((byte)4);
-	ms.Write(type, 0, 4);
-
-	ms.Write(Sys.Name);
-
-	ms.Write(Time.Now().TotalMicroseconds() * 10);
-
-	ms.Write((int)0);
-	ms.Write((ushort)3377);
-
-	char ds[] = "RC4";
-	ms.Write((byte)1);
-	ms.Write((byte)(ArrayLength(ds) - 1));
-	ms.Write((byte*)ds, 0, ArrayLength(ds) - 1);
+	HelloMessage hello;
+	hello.Write(ms);
 
 	msg.Length = ms.Length;
 
-	_control->SendAndReceive(msg, 0, 200);
-	
-	if(msg.Reply) msg.Show();
+	bool rs = _control->SendAndReceive(msg, 0, 200);
+
+	// 如果收到响应，解析出来
+	if(rs && msg.Reply)
+	{
+		msg.Show();
+
+		Stream ms2(msg._Data, msg.Length);
+		hello.Read(ms2);
+		hello.Show();
+	}
 }
 
 // Discover响应
