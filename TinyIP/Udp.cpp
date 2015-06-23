@@ -6,10 +6,6 @@ UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type		= IP_UDP;
 	Port		= 0;
-	RemoteIP	= IPAddress::Any;
-	RemotePort	= 0;
-	LocalIP		= IPAddress::Any;
-	LocalPort	= 0;
 
 	// 累加端口
 	static ushort g_udp_port = 1024;
@@ -54,18 +50,16 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 
-	//RemotePort	= remotePort;
-	//RemoteIP	= ip.SrcIP;
-	LocalPort	= port;
-	LocalIP		= ip.DestIP;
+	//Remote.Port		= remotePort;
+	//Remote.Address	= ip.SrcIP;
+	//Local.Port		= port;
+	//Local.Address	= ip.DestIP;
 
 #if NET_DEBUG
 	byte* data	= udp->Next();
 	uint len	= ms.Remain();
 	uint plen	= __REV16(udp->Length);
 	assert_param(len + sizeof(UDP_HEADER) == plen);
-	//Sys.ShowHex((byte*)udp, udp->Size(), '-');
-	//debug_printf("\r\n");
 #endif
 
 	OnProcess(ip, *udp, ms);
@@ -98,11 +92,14 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	else
 	{
 #if NET_DEBUG
+		addr = ip.DestIP;
+		IPEndPoint local(addr, __REV16(udp.DestPort));
+
 		debug_printf("UDP ");
 		remote.Show();
 		debug_printf(" => ");
-		LocalIP.Show();
-		debug_printf(":%d Payload=%d udp_len=%d \r\n", LocalPort, len, __REV16(udp.Length));
+		local.Show();
+		debug_printf(" Payload=%d udp_len=%d \r\n", len, __REV16(udp.Length));
 
 		Sys.ShowHex(data, len);
 		debug_printf(" \r\n");
@@ -113,7 +110,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum)
 {
 	uint tlen		= sizeof(UDP_HEADER) + len;
-	udp.SrcPort		= __REV16(Port > 0 ? Port : LocalPort);
+	udp.SrcPort		= __REV16(BindPort);
 	udp.DestPort	= __REV16(port);
 	udp.Length		= __REV16(tlen);
 
@@ -133,8 +130,8 @@ void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool
 // 发送UDP数据到目标地址
 void UdpSocket::Send(ByteArray& bs, IPAddress& ip, ushort port)
 {
-	if(ip.IsAny()) ip = RemoteIP;
-	if(!port) port = RemotePort;
+	if(ip.IsAny()) ip = Remote.Address;
+	if(!port) port = Remote.Port;
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 256];
 	Stream ms(buf, ArrayLength(buf));
@@ -147,7 +144,7 @@ void UdpSocket::Send(ByteArray& bs, IPAddress& ip, ushort port)
 	ms.Write(bs);
 
 	// 发送的时候采用LocalPort
-	LocalPort = BindPort;
+	//LocalPort = BindPort;
 
 	Send(*udp, bs.Length(), ip, port, true);
 }

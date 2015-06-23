@@ -12,10 +12,8 @@ private:
 public:
 	ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
 	ushort		BindPort;	// 绑定端口，用于发出数据包的源端口。默认为Port，若Port为0，则从1024算起，累加
-	IPAddress	RemoteIP;	// 远程地址
-	ushort		RemotePort;	// 远程端口
-	IPAddress	LocalIP;	// 本地IP地址
-	ushort		LocalPort;	// 本地端口，收到数据包的目的端口
+	IPEndPoint	Remote;		// 远程地址
+	//IPEndPoint	Local;		// 本地地址
 
 	UdpSocket(TinyIP* tip);
 
