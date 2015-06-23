@@ -3,6 +3,26 @@
 
 #define NET_DEBUG DEBUG
 
+class PingSession
+{
+public:
+	IPAddress	Address;
+	ushort		Identifier;
+	ushort		Sequence;
+	bool		Success;
+
+	PingSession(IPAddress& ip, ushort id, ushort seq)
+	{
+		Address		= ip;
+		Identifier	= id;
+		Sequence	= seq;
+		Success		= false;
+	}
+};
+
+// 用于等待Ping响应的会话
+PingSession* Session = NULL;
+
 IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
 {
 	Type = IP_ICMP;
@@ -16,6 +36,13 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	if(!icmp) return false;
 
 	IPAddress remote = ip.SrcIP;
+
+	// 检查有没有会话等待
+	if(icmp->Type == 0 && Session != NULL && remote == Session->Address)
+	{
+		Session->Success = true;
+		return true;
+	}
 
 	uint len = ms.Remain();
 	if(OnPing)
@@ -110,15 +137,37 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	icmp->Checksum = __REV16(Tip->CheckSum(&ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
 
 #if NET_DEBUG
-	debug_printf("Ping ");
+	debug_printf("ICMP::Ping ");
 	ip.Show();
-	debug_printf(" with Identifier=0x%04x Sequence=0x%04x\r\n", id, seq);
+	debug_printf(" with Identifier=0x%04x Sequence=0x%04x", id, seq);
+
+	ulong start = Time.Current();
 #endif
 	Tip->SendIP(IP_ICMP, ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
 	// 等待时间
-	int ps[] = {ip.Value, id, seq};
-	if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
+	//int ps[] = {ip.Value, id, seq};
+	//if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
+
+	PingSession ps(ip, id, seq);
+	Session = &ps;
+
+	// 等待响应
+	TimeWheel tw(0, 1000);
+	tw.Sleep = 1;
+	do{
+		if(ps.Success) break;
+	}while(!tw.Expired());
+
+	Session = NULL;
+
+#if NET_DEBUG
+	uint cost = (int)(Time.Current() - start) / 1000;
+	if(ps.Success)
+		debug_printf(" 成功 %dms\r\n", cost);
+	else
+		debug_printf(" 失败 %dms\r\n", cost);
+#endif
 
 	return false;
 }
