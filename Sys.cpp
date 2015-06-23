@@ -564,15 +564,18 @@ void TSys::RemoveTask(uint taskid)
 {
 	assert_ptr(_Scheduler);
 
-	//Task* task = (*_Scheduler)[taskid];
-	//delete task;
 	_Scheduler->Remove(taskid);
+}
+
+void TSys::SetTask(uint taskid, bool enable)
+{
+	Task* task = (*_Scheduler)[taskid];
+	if(task) task->Enable = enable;
 }
 
 void TSys::Start()
 {
 	if(!_Scheduler) _Scheduler = new TaskScheduler("系统");
-	//assert_ptr(_Scheduler);
 
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);

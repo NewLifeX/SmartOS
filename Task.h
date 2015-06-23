@@ -26,6 +26,8 @@ public:
 	uint	CpuTime;	// 总耗费时间
 	uint	SleepTime;	// 当前睡眠时间
 	uint	Cost;		// 平均执行时间
+	bool	Enable;		// 是否启用
+	byte	Reversed[3];// 保留，避免对齐问题
 
 	//~Task();
 

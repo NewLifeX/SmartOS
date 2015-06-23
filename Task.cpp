@@ -12,6 +12,7 @@ Task::Task(TaskScheduler* scheduler)
 	CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
+	Enable		= true;
 }
 
 /*Task::~Task()
@@ -127,7 +128,7 @@ void TaskScheduler::Execute(uint usMax)
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		if(task && task != _cur && task->NextTime <= now)
+		if(task && task != _cur && task->Enable && task->NextTime <= now)
 		{
 			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 			task->NextTime = now + task->Period;
@@ -151,7 +152,7 @@ void TaskScheduler::Execute(uint usMax)
 			}
 
 #if DEBUG
-			if(cost > 100000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", task->ID, task->Times, cost, task->SleepTime);
+			if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", task->ID, task->Times, cost, task->SleepTime);
 #endif
 
 			// 如果只是一次性任务，在这里清理

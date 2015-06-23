@@ -99,6 +99,7 @@ public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 	uint AddTask(Action func, void* param, ulong dueTime = 0, long period = 0);
 	void RemoveTask(uint taskid);
+	void SetTask(uint taskid, bool enable);
 	void Start();	// 开始系统大循环
 	void StartInternal();
 	Func OnStart;

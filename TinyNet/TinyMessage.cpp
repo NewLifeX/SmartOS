@@ -196,8 +196,10 @@ void TinyController::Init()
 
 	if(!_taskID)
 	{
-		debug_printf("TinyNet::微网控制器消息发送队列 ");
+		debug_printf("TinyNet::微网消息队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+		// 默认禁用，有数据要发送才开启
+		Sys.SetTask(_taskID, false);
 	}
 
 	//Total.Send = Total.Ack = Total.Bytes = Total.Cost = TotalRetry = Total.Msg = 0;
@@ -206,6 +208,7 @@ void TinyController::Init()
 	memset(&Last, 0, sizeof(Last));
 
 	// 因为统计不准确，暂时不显示状态统计
+	debug_printf("TinyNet::统计 ");
 	Sys.AddTask(StatTask, this, 1000000, 5000000);
 }
 
@@ -492,6 +495,12 @@ void TinyController::Loop()
 			node->Next = node->LastSend + node->Interval;
 		}
 	}
+	
+	if(_Queue.Count() == 0)
+	{
+		debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
+		Sys.SetTask(_taskID, false);
+	}
 }
 
 // 发送消息，timerout毫秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
@@ -527,6 +536,8 @@ bool TinyController::Post(TinyMessage& msg, int expire, ITransport* port)
 	// 加入等待队列
 	if(_Queue.Add(node) < 0) return false;
 
+	Sys.SetTask(_taskID, true);
+	
 	return true;
 }
 
