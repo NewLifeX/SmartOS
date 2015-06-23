@@ -4,35 +4,28 @@
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
 
 // 初始化消息，各字段为0
-HelloMessage::HelloMessage(byte code)
+HelloMessage::HelloMessage() : Ciphers(16), Key(16)
 {
-	Code	= code;
-	Length	= 0;
-	Data	= NULL;
-	Reply	= 0;
+	Version	= Sys.Version;
+	ByteArray bs((byte*)&Sys.Code, 2);
+	bs.ToHex(Type);
+	Name.Set(Sys.Name);
 }
 
-HelloMessage::HelloMessage(HelloMessage& msg)
+// 从数据流中读取消息
+bool HelloMessage::Read(Stream& ms)
 {
-	Code	= msg.Code;
-	Length	= msg.Length;
-	Reply	= msg.Reply;
-
-	// 基类构造函数先执行，子类来不及赋值Data，所以这里不要拷贝
-	//assert_ptr(Data);
-	//if(Length) memcpy(Data, msg.Data, Length);
+	return false;
 }
 
-// 设置数据。
-void HelloMessage::SetData(byte* buf, uint len)
+// 把消息写入数据流中
+void HelloMessage::Write(Stream& ms)
 {
-	//assert_param(len <= ArrayLength(Data));
+	
+}
 
-	Length = len;
-	if(len > 0)
-	{
-		assert_ptr(buf);
-		assert_ptr(Data);
-		memcpy(Data, buf, len);
-	}
+// 显示消息内容
+void HelloMessage::Show()
+{
+	
 }
