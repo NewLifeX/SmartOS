@@ -62,5 +62,17 @@ void HelloMessage::Write(Stream& ms)
 // 显示消息内容
 void HelloMessage::Show()
 {
+	debug_printf("Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
+	DateTime dt;
+	dt.Parse(LocalTime / 10);
+	debug_printf("%s ", dt.ToString());
 
+	EndPoint.Show();
+	
+	debug_printf(" Ciphers[%d]=", Ciphers.Length());
+	for(int i=0; i<Ciphers.Length(); i++)
+	{
+		debug_printf("%d ", Ciphers[i]);
+	}
+	debug_printf("\r\n");
 }
