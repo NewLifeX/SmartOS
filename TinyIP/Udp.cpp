@@ -1,6 +1,7 @@
 ﻿#include "Udp.h"
 
-#define NET_DEBUG DEBUG
+//#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
 
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -118,11 +119,13 @@ void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool
 	udp.Checksum	= 0;
 	if(checksum) udp.Checksum = __REV16(Tip->CheckSum(&ip, (byte*)&udp, tlen, 1));
 
+#if NET_DEBUG
 	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, __REV16(udp.SrcPort));
 	ip.Show();
 	debug_printf(":%d ", port);
 	if(tlen > 0) Sys.ShowHex(udp.Next(), tlen > 64 ? 64 : tlen, false);
 	debug_printf("\r\n");
+#endif
 
 	Tip->SendIP(IP_UDP, ip, (byte*)&udp, tlen);
 }
