@@ -48,11 +48,11 @@ void IWDG_SetReload(uint16_t Reload)
 
 */
 
-WatchDog::WatchDog(uint ms)
+/*WatchDog::WatchDog(uint ms)
 {
 	Timeout = ms;
 	Config(ms);
-}
+}*/
 
 WatchDog::~WatchDog()
 {
@@ -152,4 +152,23 @@ void WatchDog::ConfigMax()
 void WatchDog::Feed()
 {
 	IWDG_ReloadCounter();
+}
+
+void FeedDogTask(void* param)
+{
+    WatchDog* dog = (WatchDog*)param;
+    dog->Feed();
+}
+
+void WatchDog::Start(uint ms)
+{
+    static WatchDog dog;
+	dog.Config(ms);
+
+	// 减小一点，避免来不及喂狗
+	if(ms > 100) ms -= 100;
+	uint us = ms * 1000;
+
+	debug_printf("WatchDog::Start ");
+	Sys.AddTask(FeedDogTask, &dog, us, us);
 }
