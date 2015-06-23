@@ -1,4 +1,4 @@
-﻿#include "Time.h"
+#include "Time.h"
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 
@@ -249,6 +249,9 @@ DateTime& DateTime::Parse(ulong us)
 
 	return st;
 }
+
+DateTime::DateTime() { memset(this, 0, sizeof(this[0])); }
+DateTime::DateTime(DateTime& dt)	{ Parse(dt.TotalMicroseconds()); }
 
 uint DateTime::TotalSeconds()
 {
