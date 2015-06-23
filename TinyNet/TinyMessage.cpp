@@ -483,7 +483,7 @@ void TinyController::Loop()
 		if(Total.Send >= 10)
 		{
 			memcpy(&Last, &Total, sizeof(Total));
-			memset(&Last, 0, sizeof(Last));
+			memset(&Total, 0, sizeof(Total));
 		}
 
 		node->LastSend = Time.Current();
@@ -498,7 +498,7 @@ void TinyController::Loop()
 	
 	if(_Queue.Count() == 0)
 	{
-		debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
+		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
 		Sys.SetTask(_taskID, false);
 	}
 }
