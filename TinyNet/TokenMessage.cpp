@@ -179,6 +179,8 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 {
 #if DEBUG
 	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
+	
+	ulong now = Time.Current();
 #endif
 
 	if(msg.Reply) return Send(msg) != 0;
@@ -192,18 +194,21 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 
 		// 等待响应
 		TimeWheel tw(0, msTimeout);
-		while(!tw.Expired())
+		tw.Sleep = 1;
+		do
 		{
 			if(_Response->Reply)
 			{
 				rs = true;
 				break;
 			}
-			// 睡眠，释放CPU
-			Sys.Sleep(1);
-		}
+		}while(!tw.Expired());
 		if(rs) break;
 	}
+	
+#if DEBUG
+	debug_printf("Token::SendAndReceive Len=%d Time=%dus\r\n", msg.Size(), (uint)(Time.Current() - now));
+#endif
 
 	_Response = NULL;
 

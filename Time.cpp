@@ -320,3 +320,26 @@ DateTime& TTime::Now()
 
 	return _Now;
 }
+
+TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
+{
+	Sleep = 0;
+	Reset(seconds, ms, us);
+}
+
+void TimeWheel::Reset(uint seconds, uint ms, uint us)
+{
+	Expire = ((seconds * 1000) + ms) * 1000 + us;
+	Expire += Time.Current();
+}
+
+// 是否已过期
+bool TimeWheel::Expired()
+{
+	if(Time.Current() >= Expire) return true;
+
+	// 睡眠，释放CPU
+	if(Sleep) Sys.Sleep(Sleep);
+
+	return false;
+}

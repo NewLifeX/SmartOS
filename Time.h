@@ -76,26 +76,16 @@ extern TTime Time;
 // 时间轮。用于超时处理
 class TimeWheel
 {
-private:
-	ulong _expire;
-
 public:
-	TimeWheel(uint seconds, uint ms = 0, uint us = 0)
-	{
-		Reset(seconds, ms, us);
-	}
+	ulong	Expire;		// 到期时间，微秒
+	uint	Sleep;		// 睡眠时间，默认0毫秒
 
-	void Reset(uint seconds, uint ms = 0, uint us = 0)
-	{
-		_expire = ((seconds * 1000) + ms) * 1000 + us;
-		_expire += Time.Current();
-	}
+	TimeWheel(uint seconds, uint ms = 0, uint us = 0);
+
+	void Reset(uint seconds, uint ms = 0, uint us = 0);
 
 	// 是否已过期
-	bool Expired()
-	{
-		return Time.Current() >= _expire;
-	}
+	bool Expired();
 };
 
 #endif
