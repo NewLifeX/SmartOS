@@ -7,6 +7,9 @@
 Task::Task(TaskScheduler* scheduler)
 {
 	_Scheduler = scheduler;
+
+	Times	= 0;
+	CpuTime	= 0;
 }
 
 /*Task::~Task()
@@ -112,16 +115,22 @@ void TaskScheduler::Execute(uint usMax)
 		Task* task = _Tasks[i];
 		if(task && task->NextTime <= now)
 		{
-			// 先计算下一次时间
-			//task->NextTime += task->Period;
 			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 			task->NextTime = now + task->Period;
 			if(task->NextTime < min) min = task->NextTime;
 
+			ulong now2 = Time.Current();
+
 			task->Callback(task->Param);
 
+			// 累加任务执行次数和时间
+			task->Times++;
+			uint cost = (uint)(Time.Current() - now2);
+			task->CpuTime += cost;
+
+			if(cost > 100000) debug_printf("Task::Execute 任务%d执行时间过长 %dus\r\n", task->ID, cost);
+
 			// 如果只是一次性任务，在这里清理
-			//if(task->Period < 0) delete task;
 			if(task->Period < 0) Remove(task->ID);
 		}
 

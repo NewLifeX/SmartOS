@@ -22,6 +22,8 @@ public:
 	void*	Param;		// 参数
 	long	Period;		// 周期us
 	ulong	NextTime;	// 下一次执行时间
+	uint	Times;		// 执行次数
+	uint	CpuTime;	// 总耗费时间
 
 	//~Task();
 };
