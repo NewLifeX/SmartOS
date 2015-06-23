@@ -5,6 +5,7 @@
 #include "Message.h"
 #include "Controller.h"
 #include "TokenMessage.h"
+#include "..\TokenNet\HelloMessage.h"
 
 // 微网客户端
 class TokenClient
@@ -33,9 +34,10 @@ public:
 // 常用系统级消息
 public:
 	// 握手广播
-	void Hello();
+	HelloMessage	Hello;
+	void SayHello();
 	MessageHandler OnHello;
-	static bool Hello(Message& msg, void* param);
+	static bool SayHello(Message& msg, void* param);
 
 	/*// Ping指令用于保持与对方的活动状态
 	void Ping();

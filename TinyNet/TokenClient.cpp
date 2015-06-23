@@ -42,7 +42,7 @@ TokenClient::TokenClient(TokenController* control)
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
-	_control->Register(1, Hello, this);
+	_control->Register(1, SayHello, this);
 	//_control->Register(2, Ping, this);
 	//_control->Register(3, SysID, this);
 	//_control->Register(4, SysTime, this);
@@ -80,13 +80,13 @@ void HelloTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	client->Hello();
+	client->SayHello();
 }
 
 // 发送发现消息，告诉大家我在这
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
-void TokenClient::Hello()
+void TokenClient::SayHello()
 {
 	TokenMessage msg(1);
 
@@ -94,8 +94,8 @@ void TokenClient::Hello()
 	Stream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Length = 0;
 
-	HelloMessage hello;
-	hello.Write(ms);
+	HelloMessage ext(Hello);
+	ext.Write(ms);
 
 	msg.Length = ms.Length;
 
@@ -107,14 +107,14 @@ void TokenClient::Hello()
 		msg.Show();
 
 		Stream ms2(msg._Data, msg.Length);
-		hello.Read(ms2);
-		hello.Show();
+		ext.Read(ms2);
+		ext.Show();
 	}
 }
 
 // Discover响应
 // 格式：1字节地址 + 8字节密码
-bool TokenClient::Hello(Message& msg, void* param)
+bool TokenClient::SayHello(Message& msg, void* param)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 客户端只处理Discover响应
