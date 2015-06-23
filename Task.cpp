@@ -122,13 +122,14 @@ void TaskScheduler::Execute(uint usMax)
 	ulong end = Time.Current() + usMax;
 
 	// 需要跳过当前正在执行任务的调度
-	Task* _cur = Current;
+	//Task* _cur = Current;
 
 	int i = -1;
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		if(task && task != _cur && task->Enable && task->NextTime <= now)
+		//if(task && task != _cur && task->Enable && task->NextTime <= now)
+		if(task && task->Enable && task->NextTime <= now)
 		{
 			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 			task->NextTime = now + task->Period;
