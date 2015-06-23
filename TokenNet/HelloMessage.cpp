@@ -45,7 +45,7 @@ void HelloMessage::Write(Stream& ms)
 	ms.Write(EndPoint.Address.ToArray(), 0, 4);
 	ms.Write((ushort)EndPoint.Port);
 
-	ms.Write(Ciphers);
+	ms.WriteArray(Ciphers);
 }
 
 // 显示消息内容
