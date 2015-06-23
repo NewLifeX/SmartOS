@@ -33,8 +33,8 @@ public:
 	Socket* FindByType(ushort type);
 };
 
-class TinyIP;
-typedef bool (*LoopFilter)(TinyIP* tip, void* param, Stream& ms);
+//class TinyIP;
+//typedef bool (*LoopFilter)(TinyIP* tip, void* param, Stream& ms);
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
 class TinyIP
@@ -54,7 +54,7 @@ public:
 	// 任务函数
 	static void Work(void* param);
 	// 带过滤器的轮询
-	bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
+	//bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
 	// 处理数据包
 	void Process(Stream& ms);
 	// 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长

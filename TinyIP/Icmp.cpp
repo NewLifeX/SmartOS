@@ -18,10 +18,19 @@ public:
 		Sequence	= seq;
 		Success		= false;
 	}
+	
+	bool Check(IPAddress& remote, ICMP_HEADER* icmp)
+	{
+		if(remote != Address) return false;
+		if(Identifier != icmp->Identifier) return false;
+		if(Sequence != icmp->Sequence) return false;
+		
+		return true;
+	}
 };
 
 // 用于等待Ping响应的会话
-PingSession* Session = NULL;
+PingSession* _IcmpSession = NULL;
 
 IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip)
 {
@@ -38,9 +47,9 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	IPAddress remote = ip.SrcIP;
 
 	// 检查有没有会话等待
-	if(icmp->Type == 0 && Session != NULL && remote == Session->Address)
+	if(icmp->Type == 0 && _IcmpSession != NULL && _IcmpSession->Check(remote, icmp))
 	{
-		Session->Success = true;
+		_IcmpSession->Success = true;
 		return true;
 	}
 
@@ -80,7 +89,7 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	return true;
 }
 
-bool PingCallback(TinyIP* tip, void* param, Stream& ms)
+/*bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
 	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
@@ -102,7 +111,7 @@ bool PingCallback(TinyIP* tip, void* param, Stream& ms)
 	}
 
 	return false;
-}
+}*/
 
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
@@ -150,7 +159,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	//if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
 
 	PingSession ps(ip, id, seq);
-	Session = &ps;
+	_IcmpSession = &ps;
 
 	// 等待响应
 	TimeWheel tw(0, 1000);
@@ -159,7 +168,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 		if(ps.Success) break;
 	}while(!tw.Expired());
 
-	Session = NULL;
+	_IcmpSession = NULL;
 
 #if NET_DEBUG
 	uint cost = ct.Elapsed() / 1000;

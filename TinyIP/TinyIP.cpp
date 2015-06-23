@@ -180,7 +180,7 @@ void TinyIP::Work(void* param)
 	}
 }
 
-bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
+/*bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 {
 	// 分配一个同样大小的缓冲区
 	byte buf[ArrayLength(Buffer)];
@@ -209,7 +209,7 @@ bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
 	}
 
 	return false;
-}
+}*/
 
 bool TinyIP::Open()
 {

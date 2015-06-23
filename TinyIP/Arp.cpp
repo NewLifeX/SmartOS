@@ -2,6 +2,22 @@
 
 #define NET_DEBUG 0
 
+class ArpSession
+{
+public:
+	IPAddress IP;
+	MacAddress Mac;
+	bool Success;
+
+	ArpSession(IPAddress& ip)
+	{
+		IP = ip;
+		Success = false;
+	}
+};
+
+ArpSession* _ArpSession;
+
 ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
 {
 	//Type = ETH_ARP;
@@ -54,6 +70,13 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	// 是否发给本机。
 	if(arp->DestIP != Tip->IP.Value) return true;
 
+	if(arp->Option == 0x0200 && _ArpSession && _ArpSession->IP.Value == arp->SrcIP)
+	{
+		_ArpSession->Mac = arp->SrcMac.Value();
+		_ArpSession->Success = true;
+		return true;
+	}
+	
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
@@ -102,7 +125,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	return true;
 }
 
-bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
+/*bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
 	ARP_HEADER* arp = ms.Retrieve<ARP_HEADER>();
@@ -122,7 +145,7 @@ bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
 	}
 
 	return false;
-}
+}*/
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
@@ -156,7 +179,25 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	if(timeout <= 0) return false;
 
 	// 等待反馈
-	if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return true;
+	//if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return true;
+
+	ArpSession ss(ip);
+	_ArpSession = &ss;
+
+	// 等待响应
+	TimeWheel tw(0, timeout * 1000);
+	tw.Sleep = 1;
+	do{
+		if(ss.Success) break;
+	}while(!tw.Expired());
+
+	if(ss.Success)
+	{
+		mac = ss.Mac;
+		return true;
+	}
+
+	_ArpSession = NULL;
 
 	return false;
 }

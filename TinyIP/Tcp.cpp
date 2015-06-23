@@ -3,6 +3,8 @@
 #define NET_DEBUG 0
 //#define NET_DEBUG DEBUG
 
+bool* WaitAck;
+
 bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
@@ -81,6 +83,11 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	RemoteIP	= ip.SrcIP;
 	LocalPort	= port;
 	LocalIP		= ip.DestIP;
+
+	if(WaitAck && (tcp->Flags & TCP_FLAGS_ACK))
+	{
+		*WaitAck = true;
+	}
 
 	OnProcess(*tcp, ms);
 
@@ -330,7 +337,7 @@ void TcpSocket::SendAck(uint len)
 {
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + len);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
-	
+
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	Send(*tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
@@ -344,7 +351,7 @@ void TcpSocket::Disconnect()
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
-	
+
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	Send(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
@@ -369,10 +376,10 @@ void TcpSocket::Send(ByteArray& bs)
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
-	
+
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
-	
+
 	// 复制数据，确保数据不会溢出
 	ms.Write(bs);
 
@@ -386,9 +393,21 @@ void TcpSocket::Send(ByteArray& bs)
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	Send(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
 
-	Tip->LoopWait(Callback, this, 3000);
+	//Tip->LoopWait(Callback, this, 3000);
 
-	if(tcp->Flags & TCP_FLAGS_ACK)
+	bool wait = false;
+	WaitAck = &wait;
+
+	// 等待响应
+	TimeWheel tw(0, 3000);
+	tw.Sleep = 1;
+	do{
+		if(wait) break;
+	}while(!tw.Expired());
+
+	WaitAck = NULL;
+
+	if(wait)
 		debug_printf("发送成功！\r\n");
 	else
 		debug_printf("发送失败！\r\n");
@@ -413,7 +432,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
-	
+
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	//tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
@@ -425,9 +444,22 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	Status = SynSent;
 	Send(*tcp, 0, TCP_FLAGS_SYN);
 
-	if(Tip->LoopWait(Callback, this, 3000))
+	//if(Tip->LoopWait(Callback, this, 3000))
+
+	bool wait = false;
+	WaitAck = &wait;
+
+	// 等待响应
+	TimeWheel tw(0, 3000);
+	tw.Sleep = 1;
+	do{
+		if(wait) break;
+	}while(!tw.Expired());
+
+	WaitAck = NULL;
+
+	if(wait)
 	{
-		//if(tcp->Flags & TCP_FLAGS_SYN)
 		if(Status == SynAck)
 		{
 			Status = Established;
@@ -444,7 +476,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	return false;
 }
 
-bool Callback(TinyIP* tip, void* param, Stream& ms)
+/*bool Callback(TinyIP* tip, void* param, Stream& ms)
 {
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
 	if(eth->Type != ETH_IP) return false;
@@ -480,7 +512,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms)
 	}
 
 	return false;
-}
+}*/
 
 bool TcpSocket::OnWrite(const byte* buf, uint len)
 {
