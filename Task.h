@@ -25,8 +25,11 @@ public:
 	uint	Times;		// 执行次数
 	uint	CpuTime;	// 总耗费时间
 	uint	SleepTime;	// 当前睡眠时间
+	uint	Cost;		// 平均执行时间
 
 	//~Task();
+
+	void ShowStatus();	// 显示状态
 };
 
 // 任务调度器
@@ -47,7 +50,7 @@ public:
 
 	TaskScheduler(string name = NULL);
 	~TaskScheduler();
-	
+
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 	uint Add(Action func, void* param, ulong dueTime = 0, long period = 0);
 	void Remove(uint taskid);
@@ -56,6 +59,8 @@ public:
 	void Stop();
 	// 执行一次循环。指定最大可用时间
 	void Execute(uint usMax);
+
+	static void ShowStatus(void* param);	// 显示状态
 
     Task* operator[](int taskid);
 };

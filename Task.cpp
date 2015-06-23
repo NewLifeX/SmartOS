@@ -11,12 +11,19 @@ Task::Task(TaskScheduler* scheduler)
 	Times		= 0;
 	CpuTime		= 0;
 	SleepTime	= 0;
+	Cost		= 0;
 }
 
 /*Task::~Task()
 {
 	if(ID) _Scheduler->Remove(ID);
 }*/
+
+// 显示状态
+void Task::ShowStatus()
+{
+	debug_printf("Task::Status 任务 %d [%d] 执行 %dus 平均 %dus\r\n", ID, Times, CpuTime, Cost);
+}
 
 TaskScheduler::TaskScheduler(string name)
 {
@@ -87,7 +94,8 @@ void TaskScheduler::Start()
 	if(Running) return;
 
 #if DEBUG
-	//AddTask(ShowTime, NULL, 2000000, 2000000);
+	//Add(ShowTime, NULL, 2000000, 2000000);
+	Add(ShowStatus, this, 10000000, 20000000);
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
@@ -135,7 +143,12 @@ void TaskScheduler::Execute(uint usMax)
 			// 累加任务执行次数和时间
 			task->Times++;
 			int cost = (int)(Time.Current() - now2);
-			if(cost > 0) task->CpuTime += cost;
+			if(cost < 0) cost = -cost;
+			//if(cost > 0)
+			{
+				task->CpuTime += cost - task->SleepTime;
+				task->Cost = task->CpuTime / task->Times;
+			}
 
 #if DEBUG
 			if(cost > 100000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", task->ID, task->Times, cost, task->SleepTime);
@@ -161,6 +174,19 @@ void TaskScheduler::Execute(uint usMax)
 		//if(min > 1000000) min = 1000000;
 		//Sys.Delay(min);
 		Time.Sleep(min);
+	}
+}
+
+// 显示状态
+void TaskScheduler::ShowStatus(void* param)
+{
+	TaskScheduler* ts = (TaskScheduler*)param;
+	
+	int i = -1;
+	while(ts->_Tasks.MoveNext(i))
+	{
+		Task* task = ts->_Tasks[i];
+		if(task) task->ShowStatus();
 	}
 }
 
