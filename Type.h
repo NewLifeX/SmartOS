@@ -333,7 +333,7 @@ public:
 	ushort		Port;		// 端口
 
 	IPEndPoint();
-	IPEndPoint(IPAddress addr, ushort port);
+	IPEndPoint(IPAddress& addr, ushort port);
 
 	virtual String& To(String& str);
 

@@ -7,6 +7,7 @@ Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
 	Type = IP_UDP;
 	Port = 68;
 	RemotePort = 67;
+	RemoteIP = IPAddress::Broadcast;
 
 	Running = false;
 	Result = false;
@@ -45,9 +46,9 @@ void Dhcp::SendDhcp(DHCP_HEADER& dhcp, uint len)
 	for(int i=0; i<6; i++)
 		dhcp.ClientMac[i] = Tip->Mac[i];
 
-	RemoteIP = IPAddress::Broadcast;
+	//RemoteIP = IPAddress::Broadcast;
 
-	Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, false);
+	Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, IPAddress::Broadcast, RemotePort, false);
 }
 
 // 获取选项，返回数据部分指针

@@ -23,7 +23,7 @@ public:
 	virtual bool Process(IP_HEADER& ip, Stream& ms);
 
 	// 收到Udp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
-	typedef bool (*UdpHandler)(UdpSocket& socket, UDP_HEADER& udp, Stream& ms);
+	typedef bool (*UdpHandler)(UdpSocket& socket, UDP_HEADER& udp, IPEndPoint& remote, Stream& ms);
 	UdpHandler OnReceived;
 
 	// 发送UDP数据到目标地址
@@ -32,7 +32,7 @@ public:
 	virtual string ToString();
 
 protected:
-	void Send(UDP_HEADER& udp, uint len, bool checksum = true);
+	void Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum = true);
 	virtual void OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms);
 
 	virtual bool OnOpen();

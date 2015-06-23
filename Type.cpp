@@ -254,10 +254,11 @@ String& IPAddress::To(String& str)
 
 IPEndPoint::IPEndPoint()
 {
+	Address = IPAddress::Any;
 	Port = 0;
 }
 
-IPEndPoint::IPEndPoint(IPAddress addr, ushort port)
+IPEndPoint::IPEndPoint(IPAddress& addr, ushort port)
 {
 	Address = addr;
 	Port	= port;
