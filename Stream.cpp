@@ -24,7 +24,7 @@ Stream::Stream(uint len)
 Stream::Stream(byte* buf, uint len)
 {
 	assert_ptr(buf);
-	assert_param(len > 0);
+	assert_param2(len > 0, "不能用0长度缓冲区来初始化数据流");
 
 	_Buffer = buf;
 	_Capacity = len;
@@ -64,7 +64,7 @@ uint Stream::Position() { return _Position; }
 void Stream::SetPosition(uint p)
 {
 	// 允许移动到最后一个字节之后，也就是Length
-	assert_param(p <= Length);
+	assert_param2(p <= Length, "设置的位置超出长度");
 
 	_Position = p;
 }
@@ -96,7 +96,7 @@ byte* Stream::Current() { return &_Buffer[_Position]; }
 // 从当前位置读取数据
 uint Stream::Read(byte* buf, uint offset, int count)
 {
-	assert_param(buf);
+	assert_param2(buf, "从数据流读取数据需要有效的缓冲区");
 
 	if(count == 0) return 0;
 
@@ -136,7 +136,7 @@ uint Stream::ReadEncodeInt()
 // 把数据写入当前位置
 void Stream::Write(byte* buf, uint offset, uint count)
 {
-	assert_param(buf);
+	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
 	if(!CheckCapacity(count)) return;
 
@@ -238,7 +238,11 @@ uint Stream::ReadArray(ByteArray& bs)
 	uint len = ReadEncodeInt();
 	if(!len) return 0;
 
-	assert_param(len <= bs.Capacity());
+	if(len <= bs.Capacity())
+	{
+		debug_printf("准备读取的数据长度是 0x%08X，而缓冲区数组容量是 0x%08X\r\n", len, bs.Capacity());
+		assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
+	}
 
 	Read(bs.GetBuffer(), 0, len);
 

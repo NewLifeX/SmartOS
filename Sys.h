@@ -6,6 +6,37 @@
 #include <string.h>
 #include "Platform\stm32.h"
 
+// 强迫内联
+#define _force_inline __attribute__( ( always_inline ) ) __INLINE
+
+extern "C"
+{
+#if defined(DEBUG) || defined(MSGDEBUG)
+
+#define debug_printf printf
+
+#else
+
+__inline void debug_printf( const char *format, ... ) {}
+
+#endif
+}
+
+#ifdef USE_FULL_ASSERT
+
+// 验证确保对象不为空，并且在有效的内存范围内
+#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
+bool assert_ptr_(const void* p);
+
+void assert_failed(const char* msg, uint8_t* file, uint32_t line);
+#define assert_param2(expr, msg) ((expr) ? (void)0 : assert_failed(msg, (uint8_t *)__FILE__, __LINE__))
+
+#else
+
+#define assert_ptr(expr) ((void)0)
+
+#endif
+
 #include "Type.h"
 
 /* 引脚定义 */
@@ -107,37 +138,6 @@ public:
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
-
-// 强迫内联
-#define _force_inline __attribute__( ( always_inline ) ) __INLINE
-
-extern "C"
-{
-#if defined(DEBUG) || defined(MSGDEBUG)
-
-#define debug_printf printf
-
-#else
-
-__inline void debug_printf( const char *format, ... ) {}
-
-#endif
-}
-
-#ifdef USE_FULL_ASSERT
-
-// 验证确保对象不为空，并且在有效的内存范围内
-#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
-bool assert_ptr_(const void* p);
-
-void assert_failed(const char* msg, uint8_t* file, uint32_t line);
-#define assert_param2(expr, msg) ((expr) ? (void)0 : assert_failed(msg, (uint8_t *)__FILE__, __LINE__))
-
-#else
-
-#define assert_ptr(expr) ((void)0)
-
-#endif
 
 // 任务
 //#include "Task.h"

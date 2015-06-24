@@ -143,16 +143,21 @@ public:
 	virtual ~Array() { Release(); }
 
 	// 重载等号运算符，使用另一个固定数组来初始化
-    Array& operator=(const Array& arr) { return Copy(arr); }
+    Array& operator=(const Array& arr) { Copy(arr); return *this; }
 
 	// 设置数组元素为指定值
-	Array& Set(T item, int index = 0, int count = 0)
+	bool Set(T item, int index = 0, int count = 0)
 	{
-		// count==0 表示设置全部元素
-		if(!count) count = _Length - index;
+		// count<=0 表示设置全部元素
+		if(count <= 0) count = _Length - index;
 
 		// 检查长度是否足够
-		assert_param(index + count <= _Length);
+		//assert_param(index + count <= _Length);
+		if(index + count > _Capacity)
+		{
+			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, count);
+			return false;
+		}
 
 		// 如果元素类型大小为1，那么可以直接调用内存设置函数
 		if(sizeof(T) == 1)
@@ -160,21 +165,23 @@ public:
 		else
 			while(count-- > 0) _Arr[index++] = item;
 
-		return *this;
+		// 扩大长度
+		if(index + count > _Length) _Length = index + count;
+
+		return true;
 	}
 
 	// 设置数组。采用浅克隆，不拷贝数据
-	Array& Set(const T* data, int len = 0)
+	bool Set(const T* data, int len = 0)
 	{
+		if(!data) return false;
+
 		// 自动计算长度，\0结尾
 		if(!len)
 		{
 			byte* p =(byte*)data;
 			while(*p++) len++;
 		}
-
-		// 检查长度是否足够
-		//assert_param(len <= _Capacity);
 
 		// 销毁旧的
 		Release();
@@ -184,26 +191,31 @@ public:
 		_Capacity	= len;
 		_needFree	= false;
 
-		return *this;
+		return true;
 	}
 
 	// 复制数组。深度克隆，拷贝数据
-	Array& Copy(const Array& arr, int index = 0)
+	bool Copy(const Array& arr, int index = 0)
 	{
 		int len = arr.Length();
 
 		// 检查长度是否足够
-		assert_param(index + len <= _Capacity);
+		//assert_param(index + len <= _Capacity);
+		if(index + len > _Capacity)
+		{
+			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, len);
+			return false;
+		}
 
 		// 拷贝数据
 		memcpy(_Arr + index, arr._Arr, sizeof(T) * len);
 		_Length = len;
 
-		return *this;
+		return true;
 	}
 
 	// 复制数组。深度克隆，拷贝数据
-	Array& Copy(const T* data, int len = 0, int index = 0)
+	bool Copy(const T* data, int len = 0, int index = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -213,14 +225,19 @@ public:
 		}
 
 		// 检查长度是否足够
-		int len2 = index + len;
-		assert_param(len2 <= _Capacity);
+		//int len2 = index + len;
+		//assert_param(len2 <= _Capacity);
+		if(index + len > _Capacity)
+		{
+			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, len);
+			return false;
+		}
 
 		// 拷贝数据
 		memcpy(_Arr + index, data, sizeof(T) * len);
-		if(len2 > _Length) _Length = len2;
+		if(index + len > _Length) _Length = index + len;
 
-		return *this;
+		return true;
 	}
 
 	// 清空已存储数据。长度放大到最大容量
@@ -236,7 +253,7 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
-		assert_param(_Arr && i >= 0 && i < _Length);
+		assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
 
 		return _Arr[i];
 	}
@@ -272,7 +289,7 @@ public:
 
 	// 设置字符串长度
 	String& SetLength(int length);
-	
+
 	// 输出对象的字符串表示方式
 	virtual const char* ToString();
 	// 清空已存储数据。长度放大到最大容量
