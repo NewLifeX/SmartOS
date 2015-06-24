@@ -6,11 +6,9 @@
 
 bool OnTokenClientReceived(Message& msg, void* param);
 
-void HelloTask(void* param);
-void PingTask(void* param);
+void LoopTask(void* param);
 
 static uint _taskHello = 0;
-//static uint _taskPing = 0;
 
 TokenClient::TokenClient()
 {
@@ -18,6 +16,7 @@ TokenClient::TokenClient()
 	memset(ID, 0, ArrayLength(ID));
 	memset(Key, 0, ArrayLength(Key));
 
+	Status		= 0;
 	LoginTime	= 0;
 	LastActive	= 0;
 
@@ -45,7 +44,7 @@ void TokenClient::Open()
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
-	Control->Register(1, OnHello, this);
+	//Control->Register(1, OnHello, this);
 	//Control->Register(2, Ping, this);
 	//Control->Register(3, SysID, this);
 	//Control->Register(4, SysTime, this);
@@ -56,21 +55,47 @@ void TokenClient::Open()
 	{
 		Hello.EndPoint.Address	= Udp->Tip->IP;
 		Hello.EndPoint.Port		= Udp->BindPort;
-
-		// 发现服务端的任务
-		debug_printf("TokenClient::Open 握手广播 ");
-		_taskHello = Sys.AddTask(HelloTask, this, 0, 5000000);
 	}
+
+	// 令牌客户端定时任务
+	debug_printf("Token::Open 令牌客户端定时 ");
+	_taskHello = Sys.AddTask(LoopTask, this, 0, 5000000);
 }
 
-void TokenClient::Send(Message& msg)
+void TokenClient::Send(TokenMessage& msg)
 {
 	Control->Send(msg);
 }
 
-void TokenClient::Reply(Message& msg)
+void TokenClient::Reply(TokenMessage& msg)
 {
 	Control->Reply(msg);
+}
+
+bool TokenClient::OnReceive(TokenMessage& msg)
+{
+	LastActive = Time.Current();
+
+	debug_printf("Token::Receive ");
+	msg.Show();
+
+	switch(msg.Code)
+	{
+		case 1:
+			OnHello(msg);
+			break;
+		case 2:
+			OnLogin(msg);
+			break;
+		case 3:
+			OnPing(msg);
+			break;
+	}
+
+	// 消息转发
+	if(Received) Received(msg, Param);
+
+	return true;
 }
 
 bool OnTokenClientReceived(Message& msg, void* param)
@@ -78,22 +103,33 @@ bool OnTokenClientReceived(Message& msg, void* param)
 	TokenClient* client = (TokenClient*)param;
 	assert_ptr(client);
 
-	// 消息转发
-	if(client->Received) return client->Received(msg, client->Param);
-
-	return true;
+	return client->OnReceive((TokenMessage&)msg);
 }
 
 // 常用系统级消息
 
-// 定时广播握手指令
-void HelloTask(void* param)
+// 定时任务
+void LoopTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
 	client->SayHello(true, 3355);
+
+	// 状态。0准备、1握手完成、2登录后
+	switch(client->Status)
+	{
+		case 0:
+			client->SayHello(false);
+			break;
+		case 1:
+			client->Login();
+			break;
+		case 2:
+			client->Ping();
+			break;
+	}
 }
 
 // 发送发现消息，告诉大家我在这
@@ -130,6 +166,9 @@ void TokenClient::SayHello(bool broadcast, int port)
 	// 如果收到响应，解析出来
 	if(rs && msg.Reply)
 	{
+		debug_printf("握手完成，开始登录……\r\n");
+		Status = 1;
+
 		msg.Show();
 
 		ext.Read(msg);
@@ -138,16 +177,8 @@ void TokenClient::SayHello(bool broadcast, int port)
 }
 
 // 握手响应
-bool TokenClient::OnHello(Message& msg, void* param)
+bool TokenClient::OnHello(TokenMessage& msg)
 {
-	//TokenMessage& tmsg = (TokenMessage&)msg;
-	// 客户端只处理Discover响应
-	//if(!tmsg.Reply) return true;
-	msg.Show();
-
-	assert_ptr(param);
-	TokenClient* client = (TokenClient*)param;
-
 	// 解析数据
 	HelloMessage ext;
 	ext.Read(msg);
@@ -158,16 +189,37 @@ bool TokenClient::OnHello(Message& msg, void* param)
 	//Sys.RemoveTask(_taskHello);
 	//_taskHello = 0;
 
-	if(client->OnHello) return client->OnHello(msg, param);
-
 	return true;
 }
 
-/*void PingTask(void* param)
+// 登录
+void TokenClient::Login()
 {
-	assert_ptr(param);
-	TokenClient* client = (TokenClient*)param;
-	client->Ping();
+	TokenMessage msg(2);
+	
+	Send(msg);
+}
+
+bool TokenClient::OnLogin(TokenMessage& msg)
+{
+	Stream ms(msg.Data, msg.Length);
+	byte result = ms.Read<byte>();
+
+	if(!result)
+	{
+		Status = 2;
+		debug_printf("登录成功！\r\n");
+	}
+	else
+	{
+		debug_printf("登录失败，错误码 0x%02X！", result);
+		String str;
+		ms.ReadString(str.Clear());
+		str.Show();
+		debug_printf("\r\n");
+	}
+
+	return true;
 }
 
 // Ping指令用于保持与对方的活动状态
@@ -176,52 +228,30 @@ void TokenClient::Ping()
 	if(LastActive > 0 && LastActive + 30000000 < Time.Current())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务
-		debug_printf("30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务\r\n");
+		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
-		debug_printf("停止Ping服务端 ");
-		Sys.RemoveTask(_taskPing);
-
-		debug_printf("开始寻找服务端 ");
-		_taskHello = Sys.AddTask(DiscoverTask, this, 0, 2000000);
-
-		Server = 0;
-		Password = 0;
+		Status = 0;
 
 		return;
 	}
 
-	Message* msg = Control->Create();
-	msg->Code = 2;
+	TokenMessage msg(3);
 
-	Control->Send(*msg);
-
-	delete msg;
-
-	if(LastActive == 0) LastActive = Time.Current();
+	Send(msg);
 }
 
-bool TokenClient::Ping(Message& msg, void* param)
+bool TokenClient::OnPing(TokenMessage& msg)
 {
-	assert_ptr(param);
-	TokenClient* client = (TokenClient*)param;
-
-	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
-	if(tmsg.Reply)
-	{
-		if(tmsg.Src == client->Server) client->LastActive = Time.Current();
-		return true;
-	}
+	if(msg.Reply) return true;
 
 	debug_printf("Message_Ping Length=%d\r\n", msg.Length);
-
-	if(client->OnPing) return client->OnPing(msg, param);
 
 	return true;
 }
 
-// 系统时间获取与设置
-bool TokenClient::SysTime(Message& msg, void* param)
+/*// 系统时间获取与设置
+bool TokenClient::SysTime(TokenMessage& msg, void* param)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
@@ -246,7 +276,7 @@ bool TokenClient::SysTime(Message& msg, void* param)
 	return true;
 }
 
-bool TokenClient::SysID(Message& msg, void* param)
+bool TokenClient::SysID(TokenMessage& msg, void* param)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
@@ -268,7 +298,7 @@ bool TokenClient::SysID(Message& msg, void* param)
 	return true;
 }
 
-bool TokenClient::SysMode(Message& msg, void* param)
+bool TokenClient::SysMode(TokenMessage& msg, void* param)
 {
 	TokenMessage& tmsg = (TokenMessage&)msg;
 	// 忽略响应消息
