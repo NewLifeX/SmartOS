@@ -115,8 +115,6 @@ private:
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
 
-	void Init();
-
 	void AckRequest(TinyMessage& msg, ITransport* port);	// 处理收到的Ack包
 	void AckResponse(TinyMessage& msg, ITransport* port);	// 向对方发出Ack包
 
@@ -130,9 +128,10 @@ public:
 	uint	Interval;	// 消息队列发送间隔，微秒
 	uint	Timeout;	// 消息队列发送消息的默认超时时间，50毫秒
 
-	TinyController(ITransport* port);
-	TinyController(ITransport* ports[], int count);
+	TinyController();
 	virtual ~TinyController();
+
+	virtual void Open();
 
 	// 创建消息
 	virtual Message* Create() const;	

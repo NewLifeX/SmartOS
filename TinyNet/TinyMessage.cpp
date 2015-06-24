@@ -162,17 +162,7 @@ void TinyMessage::Show() const
 }
 
 // 构造控制器
-TinyController::TinyController(ITransport* port) : Controller(port)
-{
-	Init();
-}
-
-TinyController::TinyController(ITransport* ports[], int count) : Controller(ports, count)
-{
-	Init();
-}
-
-void TinyController::Init()
+TinyController::TinyController() : Controller()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
@@ -191,8 +181,18 @@ void TinyController::Init()
 		Time.Sleep(3);
 		Address = Time.Current();
 	}
+}
 
+TinyController::~TinyController()
+{
+	if(_taskID) Sys.RemoveTask(_taskID);
+}
+
+void TinyController::Open()
+{
 	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
+
+	Controller::Open();
 
 	if(!_taskID)
 	{
@@ -202,19 +202,12 @@ void TinyController::Init()
 		Sys.SetTask(_taskID, false);
 	}
 
-	//Total.Send = Total.Ack = Total.Bytes = Total.Cost = TotalRetry = Total.Msg = 0;
-	//Last.Send = Last.Ack = Last.Bytes = Last.Cost = LastRetry = Last.Msg = 0;
 	memset(&Total, 0, sizeof(Total));
 	memset(&Last, 0, sizeof(Last));
 
 	// 因为统计不准确，暂时不显示状态统计
 	debug_printf("TinyNet::统计 ");
 	Sys.AddTask(StatTask, this, 1000000, 5000000);
-}
-
-TinyController::~TinyController()
-{
-	if(_taskID) Sys.RemoveTask(_taskID);
 }
 
 // 创建消息
@@ -227,7 +220,6 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 {
 	if(msg.Ack) return;
 
-	//msg_printf("%d ", (uint)Time.Current());
 	if(send)
 		msg_printf("TinyMessage::Send ");
 	else
@@ -551,13 +543,6 @@ int TinyController::Reply(Message& msg, ITransport* port)
 
 	return Send(msg, port);
 }
-
-/*bool TinyController::Error(TinyMessage& msg, ITransport* port)
-{
-	msg.Error = 1;
-
-	return Send(msg, 0, port);
-}*/
 
 void StatTask(void* param)
 {

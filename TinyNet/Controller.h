@@ -16,12 +16,10 @@ typedef bool (*MessageHandler)(Message& msg, void* param);
 class Controller
 {
 private:
-	void Init();
 	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
 
 protected:
 	List<ITransport*>	_ports;	// 数据传输口数组
-	//byte	_portCount;		// 数据传输口个数
 	byte	MinSize;	// 最小消息大小
 
 	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
@@ -31,15 +29,15 @@ protected:
 	virtual bool OnReceive(Message& msg, ITransport* port);
 
 public:
-	Controller(ITransport* port);
-	Controller(ITransport* ports[], int count);
+	Controller();
 	virtual ~Controller();
 
 	// 添加传输口
 	void AddTransport(ITransport* port);
+	virtual void Open();
 
 	// 创建消息
-	virtual Message* Create() const = 0;	
+	virtual Message* Create() const = 0;
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual int Send(Message& msg, ITransport* port = NULL);
 	// 回复对方的请求消息
@@ -57,7 +55,6 @@ private:
 		void*			Param;	// 参数
     };
 	List<HandlerLookup*> _Handlers;
-	//byte _HandlerCount;
 
 public:
 	// 注册消息处理器。考虑到业务情况，不需要取消注册

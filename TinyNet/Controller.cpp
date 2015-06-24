@@ -9,56 +9,9 @@
 #endif
 
 // 构造控制器
-Controller::Controller(ITransport* port)
-{
-	assert_ptr(port);
-
-	debug_printf("\r\nTinyNet::Init 传输口：%s\r\n", port->ToString());
-
-	// 注册收到数据事件
-	port->Register(Dispatch, this);
-
-	_ports.Add(port);
-
-	Init();
-
-	//_ports[_portCount++] = port;
-}
-
-Controller::Controller(ITransport* ports[], int count)
-{
-	assert_ptr(ports);
-	assert_param(count > 0 && count < ArrayLength(_ports));
-
-	debug_printf("\r\nTinyNet::Init 共[%d]个传输口", count);
-	for(int i=0; i<count && i<4; i++)
-	{
-		assert_ptr(ports[i]);
-
-		debug_printf(" %s", ports[i]->ToString());
-		//_ports[_portCount++] = ports[i];
-		_ports.Add(ports[i]);
-	}
-	debug_printf("\r\n");
-
-	// 注册收到数据事件
-	for(int i=0; i<count; i++)
-	{
-		ports[i]->Register(Dispatch, this);
-	}
-
-	Init();
-}
-
-void Controller::Init()
+Controller::Controller()
 {
 	MinSize = 0;
-
-	//ArrayZero(_ports);
-	//_portCount = 0;
-
-	//ArrayZero(_Handlers);
-	//_HandlerCount = 0;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -67,18 +20,7 @@ void Controller::Init()
 Controller::~Controller()
 {
 	_Handlers.DeleteAll().Clear();
-	/*for(int i=0; i<_HandlerCount; i++)
-	{
-		if(_Handlers[i]) delete _Handlers[i];
-	}*/
-
 	_ports.DeleteAll().Clear();
-	/*for(int i=0; i<_ports.Count(); i++)
-	{
-		delete _ports[i];
-		//_ports[i] = NULL;
-	}
-	_ports.Clear();*/
 
 	debug_printf("TinyNet::UnInit\r\n");
 }
@@ -91,10 +33,16 @@ void Controller::AddTransport(ITransport* port)
 
 	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
 
-	// 注册收到数据事件
-	port->Register(Dispatch, this);
-
 	_ports.Add(port);
+}
+
+void Controller::Open()
+{
+	assert_param(_ports.Count() > 0);
+
+	// 注册收到数据事件
+	for(int i=0; i<_ports.Count(); i++)
+		_ports[i]->Register(Dispatch, this);
 }
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)

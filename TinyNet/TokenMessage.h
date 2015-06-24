@@ -48,7 +48,6 @@ public:
 class TokenController : public Controller
 {
 private:
-	void Init();
 
 protected:
 	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
@@ -60,9 +59,9 @@ protected:
 public:
 	uint	Token;	// 令牌
 
-	TokenController(ITransport* port);
-	TokenController(ITransport* ports[], int count);
-	//virtual ~TokenController();
+	TokenController();
+
+	virtual void Open();
 
 	// 创建消息
 	virtual Message* Create() const;

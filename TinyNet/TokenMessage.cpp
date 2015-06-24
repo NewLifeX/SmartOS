@@ -88,25 +88,20 @@ void TokenMessage::Show() const
 #endif
 }
 
-TokenController::TokenController(ITransport* port) : Controller(port)
-{
-	Init();
-}
-
-TokenController::TokenController(ITransport* ports[], int count) : Controller(ports, count)
-{
-	Init();
-}
-
-void TokenController::Init()
+TokenController::TokenController() : Controller()
 {
 	Token	= 0;
-
-	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
 	MinSize = TokenMessage::MinSize;
 
 	_Response = NULL;
+}
+
+void TokenController::Open()
+{
+	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
+
+	Controller::Open();
 }
 
 // 创建消息
@@ -179,7 +174,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 {
 #if DEBUG
 	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
-	
+
 	CodeTime ct;
 #endif
 
@@ -205,7 +200,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 		}while(!tw.Expired());
 		if(rs) break;
 	}
-	
+
 #if DEBUG
 	debug_printf("Token::SendAndReceive Len=%d Time=%dus\r\n", msg.Size(), ct.Elapsed());
 #endif
