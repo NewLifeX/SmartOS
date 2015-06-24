@@ -91,9 +91,9 @@ void HelloTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	client->SayHello(true, client->Udp->BindPort);
-	if(client->Udp->BindPort != 3355)
-		client->SayHello(true, 3355);
+	//client->SayHello(false);
+	//if(client->Udp->BindPort != 3355)
+	client->SayHello(true, 3355);
 }
 
 // 发送发现消息，告诉大家我在这
@@ -103,14 +103,9 @@ void TokenClient::SayHello(bool broadcast, int port)
 {
 	TokenMessage msg(1);
 
-	Stream ms(msg._Data, ArrayLength(msg._Data));
-	ms.Length = 0;
-
 	HelloMessage ext(Hello);
 	ext.LocalTime = Time.Current();
-	ext.Write(ms);
-
-	msg.Length = ms.Length;
+	ext.Write(msg);
 
 	// 广播消息直接用UDP发出
 	if(broadcast)
@@ -137,8 +132,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	{
 		msg.Show();
 
-		Stream ms2(msg.Data, msg.Length);
-		ext.Read(ms2);
+		ext.Read(msg);
 		ext.Show();
 	}
 }
@@ -155,10 +149,8 @@ bool TokenClient::OnHello(Message& msg, void* param)
 	TokenClient* client = (TokenClient*)param;
 
 	// 解析数据
-	Stream ms(msg.Data, msg.Length);
-	
 	HelloMessage ext;
-	ext.Read(ms);
+	ext.Read(msg);
 	ext.Show();
 
 	// 取消Discover任务

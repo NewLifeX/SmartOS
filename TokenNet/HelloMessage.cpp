@@ -14,7 +14,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 
 	LocalTime	= Time.Current();
 	Ciphers[0]	= 1;
-	
+
 	Reply		= false;
 }
 
@@ -79,6 +79,22 @@ void HelloMessage::Write(Stream& ms)
 		ms.Write(Ciphers[0]);
 		ms.WriteArray(Key);
 	}
+}
+
+bool HelloMessage::Read(Message& msg)
+{
+	Stream ms(msg.Data, msg.Length);
+	return Read(ms);
+}
+
+void HelloMessage::Write(Message& msg)
+{
+	//Stream ms(msg.Data, ArrayLength(msg._Data));
+	Stream ms(msg.Data, 256);
+
+	Write(ms);
+
+	msg.Length = ms.Position();
 }
 
 // 显示消息内容

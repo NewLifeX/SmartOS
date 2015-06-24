@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Stream.h"
+#include "TinyNet\Message.h"
 
 // 握手消息
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
@@ -28,6 +29,9 @@ public:
 	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms);
+
+	virtual bool Read(Message& msg);
+	virtual void Write(Message& msg);
 
 	// 显示消息内容
 	virtual void Show();
