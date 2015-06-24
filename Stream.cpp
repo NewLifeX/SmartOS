@@ -238,9 +238,9 @@ uint Stream::ReadArray(ByteArray& bs)
 	uint len = ReadEncodeInt();
 	if(!len) return 0;
 
-	if(len <= bs.Capacity())
+	if(len > bs.Capacity())
 	{
-		debug_printf("准备读取的数据长度是 0x%08X，而缓冲区数组容量是 0x%08X\r\n", len, bs.Capacity());
+		debug_printf("准备读取的数据长度是 %d，而缓冲区数组容量是 %d\r\n", len, bs.Capacity());
 		assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
 	}
 
