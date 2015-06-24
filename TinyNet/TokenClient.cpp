@@ -10,11 +10,11 @@ void LoopTask(void* param);
 
 static uint _taskHello = 0;
 
-TokenClient::TokenClient()
+TokenClient::TokenClient() : ID(16), Key(16)
 {
 	Token		= 0;
-	memset(ID, 0, ArrayLength(ID));
-	memset(Key, 0, ArrayLength(Key));
+	//memset(ID, 0, ArrayLength(ID));
+	//memset(Key, 0, ArrayLength(Key));
 
 	Status		= 0;
 	LoginTime	= 0;
@@ -60,6 +60,11 @@ void TokenClient::Open()
 	// 令牌客户端定时任务
 	debug_printf("Token::Open 令牌客户端定时 ");
 	_taskHello = Sys.AddTask(LoopTask, this, 0, 5000000);
+}
+
+void TokenClient::Close()
+{
+	if(_taskHello) Sys.RemoveTask(_taskHello);
 }
 
 void TokenClient::Send(TokenMessage& msg)
@@ -196,7 +201,14 @@ bool TokenClient::OnHello(TokenMessage& msg)
 void TokenClient::Login()
 {
 	TokenMessage msg(2);
-	
+
+	Stream ms(msg.Data, ArrayLength(msg._Data));
+	ms.WriteArray(ID);
+	ms.WriteArray(Key);
+	ms.Write(Time.Current());
+
+	msg.Length = ms.Position();
+
 	Send(msg);
 }
 
