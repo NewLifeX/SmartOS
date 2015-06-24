@@ -6,12 +6,16 @@
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 {
-	Version	= Sys.Version;
+	Version		= Sys.Version;
+
 	ByteArray bs((byte*)&Sys.Code, 2);
 	bs.ToHex(Type.Clear());
 	Name.Set(Sys.Name);
-	LocalTime = Time.Current() * 10;
-	Ciphers[0] = 1;
+
+	LocalTime	= Time.Current();
+	Ciphers[0]	= 1;
+	
+	Reply		= false;
 }
 
 HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
@@ -28,17 +32,25 @@ HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
 // 从数据流中读取消息
 bool HelloMessage::Read(Stream& ms)
 {
-	Version = ms.Read<ushort>();
+	Version		= ms.Read<ushort>();
 
 	ms.ReadString(Type.Clear());
 	ms.ReadString(Name.Clear());
 
-	LocalTime = ms.Read<ulong>();
+	LocalTime	= ms.Read<ulong>() / 10;
 
 	EndPoint.Address = ms.ReadBytes(4);
 	EndPoint.Port = ms.Read<ushort>();
 
-	Ciphers[0] = ms.Read<byte>();
+	if(!Reply)
+	{
+		ms.ReadArray(Ciphers);
+	}
+	else
+	{
+		Ciphers[0]	= ms.Read<byte>();
+		ms.ReadArray(Key);
+	}
 
 	return false;
 }
@@ -51,12 +63,22 @@ void HelloMessage::Write(Stream& ms)
 	ms.WriteString(Type);
 	ms.WriteString(Name);
 
-	ms.Write(LocalTime);
+	ms.Write(LocalTime * 10);
 
 	ms.Write(EndPoint.Address.ToArray(), 0, 4);
 	ms.Write((ushort)EndPoint.Port);
 
 	ms.WriteArray(Ciphers);
+
+	if(!Reply)
+	{
+		ms.WriteArray(Ciphers);
+	}
+	else
+	{
+		ms.Write(Ciphers[0]);
+		ms.WriteArray(Key);
+	}
 }
 
 // 显示消息内容
@@ -68,7 +90,7 @@ void HelloMessage::Show()
 	debug_printf("%s ", dt.ToString());
 
 	EndPoint.Show();
-	
+
 	debug_printf(" Ciphers[%d]=", Ciphers.Length());
 	for(int i=0; i<Ciphers.Length(); i++)
 	{

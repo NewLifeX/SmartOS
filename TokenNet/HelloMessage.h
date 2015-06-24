@@ -18,6 +18,8 @@ public:
 	ByteArray	Ciphers;
 	ByteArray	Key;		// 密钥
 
+	bool		Reply;		// 是否响应
+	
 	// 初始化消息，各字段为0
 	HelloMessage();
 	HelloMessage(HelloMessage& msg);

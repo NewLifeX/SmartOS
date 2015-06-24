@@ -42,8 +42,7 @@ public:
 	// 握手广播
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
-	MessageHandler OnHello;
-	static bool SayHello(Message& msg, void* param);
+	static bool OnHello(Message& msg, void* param);
 
 	/*// Ping指令用于保持与对方的活动状态
 	void Ping();

@@ -27,9 +27,6 @@ TokenClient::TokenClient()
 	Received	= NULL;
 	Param		= NULL;
 
-	OnHello	= NULL;
-	//OnPing		= NULL;
-
 	Switchs		= NULL;
 	Regs		= NULL;
 }
@@ -48,7 +45,7 @@ void TokenClient::Open()
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
-	Control->Register(1, SayHello, this);
+	Control->Register(1, OnHello, this);
 	//Control->Register(2, Ping, this);
 	//Control->Register(3, SysID, this);
 	//Control->Register(4, SysTime, this);
@@ -110,6 +107,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	ms.Length = 0;
 
 	HelloMessage ext(Hello);
+	ext.LocalTime = Time.Current();
 	ext.Write(ms);
 
 	msg.Length = ms.Length;
@@ -139,26 +137,29 @@ void TokenClient::SayHello(bool broadcast, int port)
 	{
 		msg.Show();
 
-		Stream ms2(msg._Data, msg.Length);
+		Stream ms2(msg.Data, msg.Length);
 		ext.Read(ms2);
 		ext.Show();
 	}
 }
 
-// Discover响应
-// 格式：1字节地址 + 8字节密码
-bool TokenClient::SayHello(Message& msg, void* param)
+// 握手响应
+bool TokenClient::OnHello(Message& msg, void* param)
 {
-	TokenMessage& tmsg = (TokenMessage&)msg;
+	//TokenMessage& tmsg = (TokenMessage&)msg;
 	// 客户端只处理Discover响应
-	if(!tmsg.Reply) return true;
+	//if(!tmsg.Reply) return true;
+	msg.Show();
 
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	//TokenController* ctrl = (TokenController*)client->Control;
 
 	// 解析数据
 	Stream ms(msg.Data, msg.Length);
+	
+	HelloMessage ext;
+	ext.Read(ms);
+	ext.Show();
 
 	// 取消Discover任务
 	//debug_printf("停止寻找服务端 ");

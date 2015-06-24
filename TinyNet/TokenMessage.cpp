@@ -1,5 +1,8 @@
 ﻿#include "TokenMessage.h"
 
+#define MSG_DEBUG DEBUG
+//#define MSG_DEBUG 0
+
 // 使用指定功能码初始化令牌消息
 TokenMessage::TokenMessage(byte code) : Message(code)
 {
@@ -75,14 +78,14 @@ void TokenMessage::SetError(byte errorCode, string error, int errLength)
 
 void TokenMessage::Show() const
 {
-#if DEBUG
+#if MSG_DEBUG
 	assert_ptr(this);
 	debug_printf("Code=0x%02x", Code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
 		debug_printf(" Data[%d]=", Length);
-		Sys.ShowString(Data, Length, false);
+		Sys.ShowHex(Data, Length, false);
 	}
 	debug_printf("\r\n");
 #endif
@@ -162,10 +165,9 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 int TokenController::Send(Message& msg, ITransport* port)
 {
-	//TokenMessage& tmsg = (TokenMessage&)msg;
-
 #if MSG_DEBUG
-	ShowMessage(tmsg, true);
+	debug_printf("Token::Send ");
+	msg.Show();
 #endif
 
 	return Controller::Send(msg, port);
@@ -174,7 +176,7 @@ int TokenController::Send(Message& msg, ITransport* port)
 // 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
 bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
 {
-#if DEBUG
+#if MSG_DEBUG
 	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
 
 	CodeTime ct;
@@ -203,7 +205,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 		if(rs) break;
 	}
 
-#if DEBUG
+#if MSG_DEBUG
 	debug_printf("Token::SendAndReceive Len=%d Time=%dus\r\n", msg.Size(), ct.Elapsed());
 #endif
 
