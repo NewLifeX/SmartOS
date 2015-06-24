@@ -12,21 +12,14 @@ void PingTask(void* param);
 static uint _taskHello = 0;
 //static uint _taskPing = 0;
 
-TokenClient::TokenClient(TokenController* control)
+TokenClient::TokenClient()
 {
-	assert_ptr(control);
-
-	_control = control;
-
 	Token		= 0;
 	memset(ID, 0, ArrayLength(ID));
 	memset(Key, 0, ArrayLength(Key));
 
 	LoginTime	= 0;
 	LastActive	= 0;
-
-	_control->Received	= OnTokenClientReceived;
-	_control->Param		= this;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -36,31 +29,39 @@ TokenClient::TokenClient(TokenController* control)
 
 	Switchs		= NULL;
 	Regs		= NULL;
+}
+
+void TokenClient::Open()
+{
+	assert_ptr(Control);
+
+	Control->Received	= OnTokenClientReceived;
+	Control->Param		= this;
 
 #if DEBUG
-	//_control->AddTransport(SerialPort::GetMessagePort());
+	//Control->AddTransport(SerialPort::GetMessagePort());
 #endif
 
 	// 注册消息。每个消息代码对应一个功能函数
-	_control->Register(1, SayHello, this);
-	//_control->Register(2, Ping, this);
-	//_control->Register(3, SysID, this);
-	//_control->Register(4, SysTime, this);
-	//_control->Register(5, SysMode, this);
+	Control->Register(1, SayHello, this);
+	//Control->Register(2, Ping, this);
+	//Control->Register(3, SysID, this);
+	//Control->Register(4, SysTime, this);
+	//Control->Register(5, SysMode, this);
 
 	// 发现服务端的任务
-	debug_printf("开始寻找服务端 ");
+	debug_printf("TokenClient::Open 开始寻找服务端 ");
 	_taskHello = Sys.AddTask(HelloTask, this, 0, 5000000);
 }
 
 void TokenClient::Send(Message& msg)
 {
-	_control->Send(msg);
+	Control->Send(msg);
 }
 
 void TokenClient::Reply(Message& msg)
 {
-	_control->Reply(msg);
+	Control->Reply(msg);
 }
 
 bool OnTokenClientReceived(Message& msg, void* param)
@@ -99,7 +100,7 @@ void TokenClient::SayHello()
 
 	msg.Length = ms.Length;
 
-	bool rs = _control->SendAndReceive(msg, 0, 200);
+	bool rs = Control->SendAndReceive(msg, 0, 200);
 
 	// 如果收到响应，解析出来
 	if(rs && msg.Reply)
@@ -122,7 +123,7 @@ bool TokenClient::SayHello(Message& msg, void* param)
 
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	//TokenController* ctrl = (TokenController*)client->_control;
+	//TokenController* ctrl = (TokenController*)client->Control;
 
 	// 解析数据
 	Stream ms(msg.Data, msg.Length);
@@ -164,10 +165,10 @@ void TokenClient::Ping()
 		return;
 	}
 
-	Message* msg = _control->Create();
+	Message* msg = Control->Create();
 	msg->Code = 2;
 
-	_control->Send(*msg);
+	Control->Send(*msg);
 
 	delete msg;
 

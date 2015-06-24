@@ -7,11 +7,12 @@
 #include "TokenMessage.h"
 #include "..\TokenNet\HelloMessage.h"
 
+#include "..\TinyIP\Udp.h"
+
 // 微网客户端
 class TokenClient
 {
 private:
-	TokenController* _control;
 
 public:
 	uint	Token;		// 令牌
@@ -21,8 +22,13 @@ public:
 	ulong	LoginTime;	// 登录时间
 	ulong	LastActive;	// 最后活跃时间
 
-	TokenClient(TokenController* control);
+	TokenController* Control;
+	UdpSocket*	Udp;	// 用于广播握手消息的UDP
+	
+	TokenClient();
 
+	void Open();		// 打开客户端
+	
 	// 发送消息
 	void Send(Message& msg);
 	void Reply(Message& msg);
