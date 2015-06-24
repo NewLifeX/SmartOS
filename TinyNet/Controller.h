@@ -29,6 +29,8 @@ protected:
 	virtual bool OnReceive(Message& msg, ITransport* port);
 
 public:
+	bool Opened;
+
 	Controller();
 	virtual ~Controller();
 

@@ -99,6 +99,8 @@ TokenController::TokenController() : Controller()
 
 void TokenController::Open()
 {
+	if(Opened) return;
+
 	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
 	Controller::Open();

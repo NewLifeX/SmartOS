@@ -11,7 +11,8 @@
 // 构造控制器
 Controller::Controller()
 {
-	MinSize = 0;
+	MinSize 	= 0;
+	Opened		= false;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -38,11 +39,15 @@ void Controller::AddTransport(ITransport* port)
 
 void Controller::Open()
 {
+	if(Opened) return;
+
 	assert_param2(_ports.Count() > 0, "还没有传输口呢");
 
 	// 注册收到数据事件
 	for(int i=0; i<_ports.Count(); i++)
 		_ports[i]->Register(Dispatch, this);
+
+	Opened = true;
 }
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)

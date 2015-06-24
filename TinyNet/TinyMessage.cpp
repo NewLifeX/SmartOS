@@ -190,6 +190,8 @@ TinyController::~TinyController()
 
 void TinyController::Open()
 {
+	if(Opened) return;
+
 	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用[%d]个传输接口\r\n", Address, Address, _ports.Count());
 
 	Controller::Open();

@@ -21,6 +21,9 @@ TokenClient::TokenClient()
 	LoginTime	= 0;
 	LastActive	= 0;
 
+	Control		= NULL;
+	Udp			= NULL;
+
 	Received	= NULL;
 	Param		= NULL;
 
@@ -33,7 +36,9 @@ TokenClient::TokenClient()
 
 void TokenClient::Open()
 {
-	assert_ptr(Control);
+	assert_param2(Control, "令牌客户端还没设置控制器呢");
+
+	Control->Open();
 
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
@@ -49,9 +54,16 @@ void TokenClient::Open()
 	//Control->Register(4, SysTime, this);
 	//Control->Register(5, SysMode, this);
 
-	// 发现服务端的任务
-	debug_printf("TokenClient::Open 开始寻找服务端 ");
-	_taskHello = Sys.AddTask(HelloTask, this, 0, 5000000);
+	// 设置握手广播的本地地址和端口
+	if(Udp)
+	{
+		Hello.EndPoint.Address	= Udp->Tip->IP;
+		Hello.EndPoint.Port		= Udp->BindPort;
+
+		// 发现服务端的任务
+		debug_printf("TokenClient::Open 握手广播 ");
+		_taskHello = Sys.AddTask(HelloTask, this, 0, 5000000);
+	}
 }
 
 void TokenClient::Send(Message& msg)
@@ -77,21 +89,23 @@ bool OnTokenClientReceived(Message& msg, void* param)
 
 // 常用系统级消息
 
+// 定时广播握手指令
 void HelloTask(void* param)
 {
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
-	client->SayHello();
+	client->SayHello(true, client->Udp->BindPort);
+	if(client->Udp->BindPort != 3355)
+		client->SayHello(true, 3355);
 }
 
 // 发送发现消息，告诉大家我在这
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
-void TokenClient::SayHello()
+void TokenClient::SayHello(bool broadcast, int port)
 {
 	TokenMessage msg(1);
 
-	// 发送的广播消息，设备类型和系统ID
 	Stream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Length = 0;
 
@@ -99,6 +113,24 @@ void TokenClient::SayHello()
 	ext.Write(ms);
 
 	msg.Length = ms.Length;
+
+	// 广播消息直接用UDP发出
+	if(broadcast)
+	{
+		if(!Udp) return;
+
+		// 临时修改远程地址为广播地址
+		IPEndPoint ep = Udp->Remote;
+		Udp->Remote.Address	= IPAddress::Broadcast;
+		Udp->Remote.Port	= port;
+
+		Control->Send(msg, Udp);
+
+		// 还原回来原来的地址端口
+		Udp->Remote = ep;
+
+		return;
+	}
 
 	bool rs = Control->SendAndReceive(msg, 0, 200);
 
