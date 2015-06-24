@@ -1,7 +1,7 @@
 ﻿#include "Sys.h"
 // 仅用于调试使用的一些函数实现，RTM不需要
 
-#define MEM_DEBUG 0
+#define MEM_DEBUG 1
 #if MEM_DEBUG
 	#define mem_printf debug_printf
 #else
@@ -95,6 +95,15 @@ void assert_failed(uint8_t* file, uint32_t line)
 	if(Sys.OnStop) Sys.OnStop();
 
     /* Infinite loop */
+    while (1) { }
+}
+
+void assert_failed(const char* msg, uint8_t* file, uint32_t line)
+{
+    debug_printf("%s Line %d, %s\r\n", msg, line, file);
+
+	if(Sys.OnStop) Sys.OnStop();
+
     while (1) { }
 }
 
