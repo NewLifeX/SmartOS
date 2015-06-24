@@ -259,7 +259,7 @@ void TinyIP::ShowInfo()
 void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& remote, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
-	assert_param(IS_ETH_TYPE(type));
+	assert_param2(IS_ETH_TYPE(type), "这个不是以太网类型");
 
 	eth->Type = type;
 	eth->DestMac = remote;
@@ -283,15 +283,13 @@ void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& remote, const byte* buf, ui
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
 
-	//assert_param((byte*)eth == Buffer);
 	_port->Write((byte*)eth, len);
 }
 
 void TinyIP::SendIP(IP_TYPE type, IPAddress& remote, const byte* buf, uint len)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
-	assert_param(ip);
-	assert_param(IS_IP_TYPE(type));
+	assert_param2(IS_IP_TYPE(type), "这个不是IP消息类型");
 
 	ip->DestIP = remote.Value;
 	ip->SrcIP = IP.Value;
@@ -406,7 +404,7 @@ bool TinyIP::IsBroadcast(IPAddress& ip)
 
 Socket::Socket(TinyIP* tip)
 {
-	assert_param(tip);
+	assert_param2(tip, "空的Tip");
 
 	Tip = tip;
 	Enable = false;
@@ -416,7 +414,7 @@ Socket::Socket(TinyIP* tip)
 
 Socket::~Socket()
 {
-	assert_param(Tip);
+	assert_param2(Tip, "空的Tip");
 
 	Enable = false;
 	// 从TinyIP中删除当前Socket

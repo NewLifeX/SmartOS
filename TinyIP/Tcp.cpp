@@ -98,7 +98,6 @@ void TcpSocket::OnProcess(TCP_HEADER& tcp, Stream& ms)
 {
 	// 计算标称的数据长度
 	//uint len = tcp.Size() - sizeof(TCP_HEADER);
-	//assert_param(len <= ms.Remain());
 	// TCP好像没有标识数据长度的字段，但是IP里面有，这样子的话，ms里面的长度是准确的
 	uint len = ms.Remain();
 
@@ -524,6 +523,5 @@ bool TcpSocket::OnWrite(const byte* buf, uint len)
 uint TcpSocket::OnRead(byte* buf, uint len)
 {
 	// 暂时不支持
-	assert_param(false);
 	return 0;
 }

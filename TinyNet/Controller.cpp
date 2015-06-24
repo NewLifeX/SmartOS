@@ -29,7 +29,7 @@ Controller::~Controller()
 void Controller::AddTransport(ITransport* port)
 {
 	assert_ptr(port);
-	assert_param(_ports.Count() < 4);
+	assert_param2(_ports.Count() < 4, "最多4个传输口");
 
 	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
 
@@ -38,7 +38,7 @@ void Controller::AddTransport(ITransport* port)
 
 void Controller::Open()
 {
-	assert_param(_ports.Count() > 0);
+	assert_param2(_ports.Count() > 0, "还没有传输口呢");
 
 	// 注册收到数据事件
 	for(int i=0; i<_ports.Count(); i++)
@@ -120,8 +120,8 @@ bool Controller::OnReceive(Message& msg, ITransport* port)
 
 void Controller::Register(byte code, MessageHandler handler, void* param)
 {
-	assert_param(code);
-	assert_param(handler);
+	assert_param2(code, "注册指令码不能为空");
+	assert_param2(handler, "注册函数不能为空");
 
 	HandlerLookup* lookup;
 
@@ -165,7 +165,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	Stream ms(len);
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
-	assert_param(len == ms.Position());
+	assert_param2(len == ms.Position(), "消息标称大小和实际大小不符");
 	// 内存流扩容以后，指针会改变
 	byte* buf = ms.GetBuffer();
 

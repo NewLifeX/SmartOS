@@ -27,7 +27,7 @@ bool TokenMessage::Read(Stream& ms)
 
 	if(ms.Remain() < Length) return false;
 
-	assert_param(Length <= ArrayLength(_Data));
+	assert_param2(Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
 	if(Length > 0) ms.Read(Data, 0, Length);
 
 	return true;
