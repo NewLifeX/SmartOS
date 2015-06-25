@@ -74,10 +74,18 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 String& ByteArray::To(String& str)
 {
 	// 另外分配空间，防止空间不足
-	String s2(Length());
-	ToHex(s2.Clear());
-	str.Copy(s2);
-	return str;
+	//String s2(Length() * 3 + Length() / 0x10 + 1);
+	return ToHex(str.Clear(), '-', 0x40);
+	//str.Copy(s2);
+	//return str;
+}
+
+void ByteArray::Show()
+{
+	// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
+	String str(Length() * 3 + Length() / 0x10);
+	To(str);
+	str.Show();
 }
 
 String& String::SetLength(int length)
