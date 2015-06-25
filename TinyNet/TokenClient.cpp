@@ -5,7 +5,6 @@
 #include "TokenNet\HelloMessage.h"
 
 #include "Security\MD5.h"
-#include "Security\RC4.h"
 
 bool OnTokenClientReceived(Message& msg, void* param);
 

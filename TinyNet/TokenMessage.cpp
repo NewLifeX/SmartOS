@@ -1,5 +1,7 @@
 ﻿#include "TokenMessage.h"
 
+#include "Security\RC4.h"
+
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
 
@@ -85,7 +87,9 @@ void TokenMessage::Show() const
 	{
 		assert_ptr(Data);
 		debug_printf(" Data[%d]=", Length);
-		Sys.ShowHex(Data, Length, false);
+		//Sys.ShowHex(Data, Length, false);
+		ByteArray bs(Data, Length);
+		bs.Show();
 	}
 	debug_printf("\r\n");
 #endif
@@ -149,6 +153,17 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 	msg.Show();
 #endif
 
+	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
+	if(!msg.Reply && msg.Code != 0x08)
+	{
+		TokenMessage ack;
+		ack.Code = 0x08;
+		ack.Length = 1;
+		ack.Data[0] = msg.Code;	// 只有请求消息，所以这里不用考虑最高位
+
+		Reply(ack, port);
+	}
+
 	// 如果有等待响应，则交给它
 	if(msg.Reply && _Response && msg.Code == _Response->Code)
 	{
@@ -156,6 +171,20 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 		_Response->Reply = true;
 
 		return true;
+	}
+
+	// 确认指令已完成使命直接跳出
+	if(msg.Code == 0x08)
+	{
+		return true;
+	}
+
+	// 加解密。握手不加密，登录响应不加密
+	if(msg.Length > 0 && (msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
+	{
+		ByteArray bs(msg.Data, msg.Length);
+		ByteArray pass(Key);
+		RC4::Encrypt(bs, pass);
 	}
 
 	return Controller::OnReceive(msg, port);
@@ -168,6 +197,14 @@ int TokenController::Send(Message& msg, ITransport* port)
 	debug_printf("Token::Send ");
 	msg.Show();
 #endif
+
+	// 加解密。握手不加密，登录响应不加密
+	if(msg.Length > 0 && (msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
+	{
+		ByteArray bs(msg.Data, msg.Length);
+		ByteArray pass(Key);
+		RC4::Encrypt(bs, pass);
+	}
 
 	return Controller::Send(msg, port);
 }
