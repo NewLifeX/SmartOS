@@ -80,7 +80,6 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, ITransport* port)
 	msg_printf("\r\n");*/
 #endif
 
-	//auto_ptr<Message> p_msg(Create());
 	Message& msg = *pmsg;
 	if(!msg.Read(ms)) return false;
 
@@ -101,7 +100,6 @@ bool Controller::Valid(Message& msg, ITransport* port)
 bool Controller::OnReceive(Message& msg, ITransport* port)
 {
 	// 选择处理器来处理消息
-	//for(int i=0; i<_HandlerCount; i++)
 	// 倒序选择处理器来处理消息，让后注册处理器有更高优先权
 	for(int i = _Handlers.Count() - 1; i >= 0; i--)
 	{
@@ -148,7 +146,6 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 	lookup->Handler = handler;
 	lookup->Param = param;
 
-	//_Handlers[_HandlerCount++] = lookup;
 	_Handlers.Add(lookup);
 }
 
@@ -157,9 +154,6 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 如果没有传输口处于打开状态，则发送失败
 	if(port && !port->Open()) return -1;
 	bool rs = false;
-	//int i = -1;
-	//while(_ports.MoveNext(i))
-	//	rs |= _ports[i]->Open();
 	for(int i=0; i<_ports.Count(); i++)
 		rs |= _ports[i]->Open();
 	if(!rs) return -1;
@@ -174,8 +168,6 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 内存流扩容以后，指针会改变
 	byte* buf = ms.GetBuffer();
 
-	//Sys.ShowHex(buf, len, '-');
-	//msg_printf("\r\n");
 	if(port)
 	{
 		rs = port->Write(buf, len);
@@ -184,8 +176,6 @@ int Controller::Send(Message& msg, ITransport* port)
 
 	int count = 0;
 	// 发往所有端口
-	//i = -1;
-	//while(_ports.MoveNext(i))
 	for(int i=0; i<_ports.Count(); i++)
 	{
 		if(_ports[i]->Write(buf, len)) count++;

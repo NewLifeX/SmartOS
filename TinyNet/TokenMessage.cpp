@@ -150,6 +150,11 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 // 接收处理函数
 bool TokenController::OnReceive(Message& msg, ITransport* port)
 {
+#if MSG_DEBUG
+	debug_printf("Token::Recv ");
+	msg.Show();
+#endif
+
 	// 如果有等待响应，则交给它
 	if(msg.Reply && _Response && msg.Code == _Response->Code)
 	{

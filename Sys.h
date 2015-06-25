@@ -84,9 +84,9 @@ public:
     uint Clock;  		// 系统时钟
     uint CystalClock;	// 晶振时钟
     byte ID[12];		// 芯片ID。
-    uint CPUID;			// CPUID
     ushort DevID;		// MCU编码。低字设备版本，高字子版本
     ushort RevID;		// MCU编码。低字设备版本，高字子版本
+    uint CPUID;			// CPUID
     ushort FlashSize;	// 芯片Flash容量。
     ushort RAMSize;		// 芯片RAM容量
 

@@ -15,6 +15,7 @@ TokenClient::TokenClient() : ID(16), Key(16)
 	Token		= 0;
 	//memset(ID, 0, ArrayLength(ID));
 	//memset(Key, 0, ArrayLength(Key));
+	ID.Set(Sys.ID);
 
 	Status		= 0;
 	LoginTime	= 0;
@@ -81,9 +82,6 @@ bool TokenClient::OnReceive(TokenMessage& msg)
 {
 	LastActive = Time.Current();
 
-	debug_printf("Token::Receive ");
-	msg.Show();
-
 	switch(msg.Code)
 	{
 		case 1:
@@ -147,6 +145,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	HelloMessage ext(Hello);
 	ext.LocalTime = Time.Current();
 	ext.Write(msg);
+	ext.Show();
 
 	// 广播消息直接用UDP发出
 	if(broadcast)
@@ -173,8 +172,6 @@ void TokenClient::SayHello(bool broadcast, int port)
 	{
 		debug_printf("握手完成，开始登录……\r\n");
 		Status = 1;
-
-		msg.Show();
 
 		ext.Read(msg);
 		ext.Show();
