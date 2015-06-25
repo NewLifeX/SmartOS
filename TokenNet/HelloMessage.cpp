@@ -8,7 +8,8 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 {
 	Version		= Sys.Version;
 
-	ByteArray bs((byte*)&Sys.Code, 2);
+	ushort code = __REV16(Sys.Code);
+	ByteArray bs((byte*)&code, 2);
 	bs.ToHex(Type.Clear());
 	Name.Set(Sys.Name);
 
