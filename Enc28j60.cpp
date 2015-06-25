@@ -287,6 +287,12 @@ byte Enc28j60::GetRevision()
 
 bool Enc28j60::OnWrite(const byte* packet, uint len)
 {
+	if(!Linked())
+	{
+		debug_printf("以太网已断开！\r\n");
+		return false;
+	}
+
     // 设置写指针为传输数据区域的开头
     WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
     WriteReg(EWRPTH, TXSTART_INIT >> 8);
