@@ -75,7 +75,7 @@ String& ByteArray::To(String& str)
 {
 	// 另外分配空间，防止空间不足
 	//String s2(Length() * 3 + Length() / 0x10 + 1);
-	return ToHex(str.Clear(), '-', 0x40);
+	return ToHex(str.Clear(), '-', 0x20);
 	//str.Copy(s2);
 	//return str;
 }
@@ -83,7 +83,9 @@ String& ByteArray::To(String& str)
 void ByteArray::Show()
 {
 	// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
-	String str(Length() * 3 + Length() / 0x10);
+	//String str(Length() * 3 + Length() / 0x10);
+	char cs[256];
+	String str(cs, ArrayLength(cs));
 	To(str);
 	str.Show();
 }
