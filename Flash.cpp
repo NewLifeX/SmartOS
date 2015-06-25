@@ -114,61 +114,51 @@ bool Flash::Write(uint address, byte* buf, uint numBytes, bool readModifyWrite)
     // Flash操作一般需要先擦除然后再写入，由于擦除是按块进行，这就需要先读取出来，修改以后再写回去
 
     // 从地址找到所在扇区
-    uint  offset          = (uint)address % BytesPerBlock;
-    uint  addr            = address;
-    uint  addrEnd         = address + numBytes;
-    uint  index           = 0;
-    uint  startBlock      = 0;
-
+    uint  offset		= (uint)address % BytesPerBlock;
+	byte* pData 		= buf;					// 指向要下一个写入的数据
+	uint remainSize 	= numBytes;		// 剩下数据数量
+	uint addressNow 	= address;		// 下一个要写入数据的位置
+	
     // 分配一块内存，作为读取备份修改使用
-    byte* pData;
     byte* pBuf = (byte*)malloc(BytesPerBlock);
     if(pBuf == NULL) return false;
-
-    // 循环处理所有需要写入的数据
-    bool fRet = true;
-    while(fRet && addr < addrEnd)
-    {
-        // 地址所在区块头部
-        startBlock = addr - offset;
-        // 如果位移为0，并且整体要写入的字节数大于等于每一块大小
-        if(offset == 0 && numBytes >= BytesPerBlock)
-        {
-            // 则直接使用原始地址
-            pData = &buf[index];
-        }
-        else
-        {
-            // 否则，把原始地址的数据拷贝到临时内存
-            int bytes = BytesPerBlock - offset;
-            if(numBytes < bytes) bytes = numBytes;
-
-            // 整块内存原始数据拷贝到临时内存
-            memcpy(&pBuf[0], (void*)startBlock, BytesPerBlock);
-            // 拷贝需要写入的目标数据到临时内存，起到修改作用
-            memcpy(&pBuf[offset], &buf[index], bytes);
-
-            pData = pBuf;
-        }
-
-        // 整块擦除内存区，先检查是否需要擦除，这样性能更好。擦除比较慢
-        if(!IsBlockErased( startBlock, BytesPerBlock ) && !EraseBlock( startBlock ))
-        {
-            // 不能直接返回，稍候需要释放内存
-            fRet = false;
-            break;
-        }
-
-        // 写入数据
-        fRet = WriteBlock(startBlock, pData, BytesPerBlock, true);
-
-        // 重新定位偏移量
-        numBytes -= BytesPerBlock;
-        addr     += BytesPerBlock;
-        index    += BytesPerBlock - offset;
-        offset    = 0;
-    }
-
+	
+	bool fRet = true;
+	
+	if(offset)		// 写入第一个半块
+	{
+		memcpy(pBuf,(byte *)(addressNow-offset),offset);
+		memcpy(pBuf+offset,pData,BytesPerBlock-offset);
+		Erase(addressNow-offset, BytesPerBlock);
+		fRet = WriteBlock(addressNow-offset,pBuf, BytesPerBlock,true);
+		if(!fRet){	free(pBuf);	return false;}
+		
+		remainSize -= (BytesPerBlock - offset);
+		addressNow += (BytesPerBlock - offset);
+		pData += (BytesPerBlock - offset);
+	}
+	
+	for(int i = 0;remainSize > BytesPerBlock;i++)	// 连续整块
+	{
+		
+		Erase(addressNow, BytesPerBlock);
+		fRet = WriteBlock(addressNow,pData, BytesPerBlock,true);
+		if(!fRet){	free(pBuf);	return false;}
+		
+		pData += BytesPerBlock;
+		addressNow += BytesPerBlock;
+		remainSize -= BytesPerBlock;
+	}
+	
+	if(remainSize != 0)		// 最后一个半块
+	{
+		memcpy(pBuf,pData,remainSize);
+		memcpy(&pBuf[remainSize],(byte *)(addressNow+remainSize),BytesPerBlock-remainSize);
+		
+		Erase(addressNow, BytesPerBlock);
+		fRet = WriteBlock(addressNow,pBuf, BytesPerBlock,true);
+	}
+	
     if(pBuf != NULL) free(pBuf);
 
     return fRet;
