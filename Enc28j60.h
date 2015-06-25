@@ -29,8 +29,11 @@ public:
     void WriteOp(byte op, byte addr, byte data);
     void ReadBuffer(byte* buf, uint len);
     void WriteBuffer(const byte* buf, uint len);
+	// 设定寄存器地址区域
     void SetBank(byte addr);
+	// 读取寄存器值 发送读寄存器命令和地址
     byte ReadReg(byte addr);
+	// 写寄存器值 发送写寄存器命令和地址
     void WriteReg(byte addr, byte data);
     uint PhyRead(byte addr);
     bool PhyWrite(byte addr, uint data);

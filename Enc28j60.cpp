@@ -1,6 +1,6 @@
 ﻿#include "Enc28j60.h"
 
-#define ENC_DEBUG 1
+#define ENC_DEBUG 0
 
 Enc28j60::Enc28j60() { Init(); }
 
@@ -41,9 +41,10 @@ byte Enc28j60::ReadOp(byte op, byte addr)
 {
     SpiScope sc(_spi);
 
+	// 操作码和地址
     _spi->Write(op | (addr & ADDR_MASK));
     byte dat = _spi->Write(0xFF);
-    // do dummy read if needed (for mac and mii, see datasheet page 29)
+    // 如果是MAC和MII寄存器，第一个读取的字节无效，该信息包含在地址的最高位
     if(addr & 0x80)
     {
         dat = _spi->Write(0xFF);
@@ -56,6 +57,7 @@ void Enc28j60::WriteOp(byte op, byte addr, byte data)
 {
     SpiScope sc(_spi);
 
+	// 操作码和地址
     _spi->Write(op | (addr & ADDR_MASK));
     _spi->Write(data);
 }
@@ -64,18 +66,20 @@ void Enc28j60::ReadBuffer(byte* buf, uint len)
 {
     SpiScope sc(_spi);
 
+	// 发送读取缓冲区命令
     _spi->Write(ENC28J60_READ_BUF_MEM);
     while(len--)
     {
         *buf++ = _spi->Write(0);
     }
-    *buf='\0';
+    //*buf='\0';
 }
 
 void Enc28j60::WriteBuffer(const byte* buf, uint len)
 {
     SpiScope sc(_spi);
 
+	// 发送写取缓冲区命令
     _spi->Write(ENC28J60_WRITE_BUF_MEM);
     while(len--)
     {
@@ -83,24 +87,29 @@ void Enc28j60::WriteBuffer(const byte* buf, uint len)
     }
 }
 
+// 设定寄存器地址区域
 void Enc28j60::SetBank(byte addr)
 {
-    // set the bank (if needed)
+    // 计算本次寄存器地址在存取区域的位置
     if((addr & BANK_MASK) != Bank)
     {
-        // set the bank
+        // 清除ECON1的BSEL1 BSEL0 详见数据手册15页
         WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, (ECON1_BSEL1 | ECON1_BSEL0));
+		// 请注意寄存器地址的宏定义，bit6 bit5代码寄存器存储区域位置
         WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, (addr & BANK_MASK) >> 5);
+		// 重新确定当前寄存器存储区域
         Bank = (addr & BANK_MASK);
     }
 }
 
+// 读取寄存器值 发送读寄存器命令和地址
 byte Enc28j60::ReadReg(byte addr)
 {
     SetBank(addr);
     return ReadOp(ENC28J60_READ_CTRL_REG, addr);
 }
 
+// 写寄存器值 发送写寄存器命令和地址
 void Enc28j60::WriteReg(byte addr, byte data)
 {
     SetBank(addr);
@@ -127,18 +136,17 @@ uint Enc28j60::PhyRead(byte addr)
 
 bool Enc28j60::PhyWrite(byte addr, uint data)
 {
-    // set the PHY register addr
+    // 向MIREGADR写入地址 详见数据手册19页
     WriteReg(MIREGADR, addr);
-    // write the PHY data
+    // 写入低8位数据
     WriteReg(MIWRL, data);
+	// 写入高8位数据
     WriteReg(MIWRH, data >> 8);
 
-	//ulong us = Time.Current() + 10 * 1000;
-	TimeWheel tw(0, 10, 0);
+	TimeWheel tw(0, 200, 0);
     // 等待 PHY 写完成
     while(ReadReg(MISTAT) & MISTAT_BUSY)
     {
-        //if(us < Time.Current()) return false;
 		if(tw.Expired()) return false;
     }
 	return true;
@@ -176,29 +184,29 @@ bool Enc28j60::OnOpen()
 
     // 系统软重启
     WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
-	Sys.Sleep(3);
+	//Sys.Sleep(3);
 
-    // check CLKRDY bit to see if reset is complete
+    // 查询 CLKRDY 位判断是否重启完成
     // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
-    //while(!(ReadReg(ESTAT) & ESTAT_CLKRDY));
+    while(!(ReadReg(ESTAT) & ESTAT_CLKRDY));
     // do bank 0 stuff
     // initialize receive buffer
     // 16-bit transfers, must write low byte first
-    // 设置接收缓冲区开始地址
+    // 设置接收缓冲区起始地址 该变量用于每次读取缓冲区时保留下一个包的首地址
     NextPacketPtr = RXSTART_INIT;
-    // Rx开始
+    // 设置接收缓冲区 起始指针
     WriteReg(ERXSTL, RXSTART_INIT & 0xFF);
     WriteReg(ERXSTH, RXSTART_INIT >> 8);
-    // 设置接收指针地址
+    // 设置接收缓冲区 读指针
     WriteReg(ERXRDPTL, RXSTART_INIT & 0xFF);
     WriteReg(ERXRDPTH, RXSTART_INIT >> 8);
-    // 设置接收缓冲区的末尾地址 ERXND寄存器默认指向整个缓冲区的最后一个单元
+    // 设置接收缓冲区 结束指针
     WriteReg(ERXNDL, RXSTOP_INIT & 0xFF);
     WriteReg(ERXNDH, RXSTOP_INIT >> 8);
-    // 设置发送缓冲区起始地址 ETXST寄存器默认地址是整个缓冲区的第一个单元
+    // 设置发送缓冲区 起始指针
     WriteReg(ETXSTL, TXSTART_INIT & 0xFF);
     WriteReg(ETXSTH, TXSTART_INIT >> 8);
-    // TX 结束
+    // 设置发送缓冲区 结束指针
     WriteReg(ETXNDL, TXSTOP_INIT & 0xFF);
     WriteReg(ETXNDH, TXSTOP_INIT >> 8);
 
@@ -212,6 +220,7 @@ bool Enc28j60::OnOpen()
     // in binary these poitions are:11 0000 0011 1111
     // This is hex 303F->EPMM0=0x3f,EPMM1=0x30
 
+	// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤
     //WriteReg(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
     WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
     WriteReg(EPMM0, 0x3f);
@@ -219,11 +228,12 @@ bool Enc28j60::OnOpen()
     WriteReg(EPMCSL, 0xf9);
     WriteReg(EPMCSH, 0xf7);
 
-    // Bank 2，打开MAC接收
+    // Bank 2，使能MAC接收 允许MAC发送暂停控制帧 当接收到暂停控制帧时停止发送
     WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
     // MACON2清零，让MAC退出复位状态
     WriteReg(MACON2, 0x00);
-    // 启用自动填充到60字节并进行Crc校验
+    // 启用自动填充到60字节并进行Crc校验 帧长度校验使能 MAC全双工使能
+	// 提示 由于ENC28J60不支持802.3的自动协商机制， 所以对端的网络卡需要强制设置为全双工
     WriteOp(ENC28J60_BIT_FIELD_SET, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
     // 配置非背对背包之间的间隔
     WriteReg(MAIPGL, 0x12);
@@ -259,8 +269,8 @@ bool Enc28j60::OnOpen()
 
     // 切换到bank0
     SetBank(ECON1);
-    // 打开中断
-    WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE);
+    // 使能中断 全局中断 接收中断 接收错误中断
+    WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE | EIE_RXERIE);
     // 新增加，有些例程里面没有
     WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_RXERIE | EIE_TXERIE | EIE_INTIE);
     // 打开包接收
@@ -292,6 +302,8 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 		debug_printf("以太网已断开！\r\n");
 		return false;
 	}
+
+	while((ReadReg(ECON1) & ECON1_TXRTS) != 0);
 
     // 设置写指针为传输数据区域的开头
     WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
@@ -378,9 +390,10 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	}
 #endif
 
-    // Reset the transmit logic problem. See Rev. B4 Silicon Errata point 12.
-    if( (ReadReg(EIR) & EIR_TXERIF) )
+    // 复位发送逻辑的问题
+    if(ReadReg(EIR) & EIR_TXERIF)
     {
+		SetBank(ECON1);
         WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
     }
 
@@ -404,7 +417,7 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
 	}*/
 
 	// 收到的以太网数据包长度
-    if( ReadReg(EPKTCNT) == 0 ) return 0;
+    if(ReadReg(EPKTCNT) == 0) return 0;
 
     // 配置接收缓冲器读指针指向地址
     WriteReg(ERDPTL, (NextPacketPtr));
@@ -418,22 +431,19 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     len  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     len |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
-    len -= 4; // 删除 CRC 计数
+	// 去除CRC校验部分
+    len -= 4;
     // 读接收数据包的状态 (see datasheet page 43)
     rxstat  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
     // 限制获取的长度。有些例程这里不用减一
-    if (len > maxlen - 1)
-    {
-        len = maxlen - 1;
-    }
+    if (len > maxlen - 1) len = maxlen - 1;
 
-    // check CRC and symbol errors (see datasheet page 44, table 7-3):
-    // The ERXFCON.CRCEN is set by default. Normally we should not
-    // need to check this.
-    if ((rxstat & 0x80)==0)
+    // 检查CRC和符号错误
+    // ERXFCON.CRCEN是默认设置。通常我们不需要检查
+    if ((rxstat & 0x80) == 0)
     {
-        // invalid
+        // 无效的
         len = 0;
     }
     else
@@ -441,8 +451,7 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
         // 从缓冲区中将数据包复制到packet中
         ReadBuffer(packet, len);
     }
-    // Move the RX read pointer to the start of the next received packet
-    // This frees the memory we just read out
+    // 移动接收缓冲区 读指针
     WriteReg(ERXRDPTL, (NextPacketPtr));
     WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);
 
