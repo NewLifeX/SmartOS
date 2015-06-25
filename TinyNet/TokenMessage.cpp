@@ -91,7 +91,7 @@ void TokenMessage::Show() const
 #endif
 }
 
-TokenController::TokenController() : Controller()
+TokenController::TokenController() : Controller(), Key(16)
 {
 	Token	= 0;
 
@@ -107,12 +107,6 @@ void TokenController::Open()
 	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
 	Controller::Open();
-}
-
-// 创建消息
-Message* TokenController::Create() const
-{
-	return new TokenMessage();
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息

@@ -212,12 +212,6 @@ void TinyController::Open()
 	Sys.AddTask(StatTask, this, 1000000, 5000000);
 }
 
-// 创建消息
-Message* TinyController::Create() const
-{
-	return new TinyMessage();
-}
-
 void ShowMessage(TinyMessage& msg, bool send, ITransport* port = NULL)
 {
 	if(msg.Ack) return;
