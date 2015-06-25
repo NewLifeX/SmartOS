@@ -314,13 +314,18 @@ Enc28j60::~Enc28j60()
 	_spi = NULL;
 }
 
-void Enc28j60::Init(Spi* spi, Pin ce)
+void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
 {
 	_spi = spi;
 	if(ce != P0)
 	{
 		_ce.OpenDrain = false;
 		_ce.Set(ce);
+	}
+	if(reset != P0)
+	{
+		_reset.OpenDrain = false;
+		_reset.Set(reset);
 	}
 }
 
@@ -457,6 +462,14 @@ bool Enc28j60::OnOpen()
 	assert_param(Mac);
 
 	debug_printf("Enc28j60::Open(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
+	
+	if(!_reset.Empty())
+	{
+		_reset = false;
+		Sys.Sleep(1);
+		_reset = true;
+		Sys.Sleep(1);
+	}
     if(!_ce.Empty())
     {
         _ce = true;
@@ -465,7 +478,7 @@ bool Enc28j60::OnOpen()
         Sys.Sleep(100);
         _ce = true;
     }
-
+	
 	// 检查并打开Spi
 	_spi->Open();
 
