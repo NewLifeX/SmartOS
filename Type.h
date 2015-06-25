@@ -271,6 +271,8 @@ public:
 
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String& ToHex(String& str, char sep = '\0', int newLine = 0x10);
+
+	virtual String& To(String& str);
 };
 
 // 字符串

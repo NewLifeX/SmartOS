@@ -71,6 +71,15 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 	return str;
 }
 
+String& ByteArray::To(String& str)
+{
+	// 另外分配空间，防止空间不足
+	String s2(Length());
+	ToHex(s2.Clear());
+	str.Copy(s2);
+	return str;
+}
+
 String& String::SetLength(int length)
 {
 	assert_param(length <= _Capacity);
