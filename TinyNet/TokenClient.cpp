@@ -4,18 +4,23 @@
 #include "TokenMessage.h"
 #include "TokenNet\HelloMessage.h"
 
+#include "Security\MD5.h"
+#include "Security\RC4.h"
+
 bool OnTokenClientReceived(Message& msg, void* param);
 
 void LoopTask(void* param);
 
 static uint _taskHello = 0;
 
-TokenClient::TokenClient() : ID(16), Key(16)
+TokenClient::TokenClient() : ID(16), Key(8)
 {
 	Token		= 0;
 	//memset(ID, 0, ArrayLength(ID));
 	//memset(Key, 0, ArrayLength(Key));
-	ID.Set(Sys.ID);
+	// 直接拷贝芯片ID和类型作为唯一ID
+	ID.Set(Sys.ID, ID.Length());
+	Key.Set(Sys.ID, Key.Length());
 
 	Status		= 0;
 	LoginTime	= 0;
@@ -201,7 +206,12 @@ void TokenClient::Login()
 
 	Stream ms(msg.Data, ArrayLength(msg._Data));
 	ms.WriteArray(ID);
-	ms.WriteArray(Key);
+
+	// 密码取MD5后传输
+	ByteArray bs(16);
+	MD5::Hash(Key, bs);
+	ms.WriteArray(bs);
+
 	ms.Write(Time.Current());
 
 	msg.Length = ms.Position();
