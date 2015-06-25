@@ -65,7 +65,7 @@ void TokenClient::Open()
 
 	// 令牌客户端定时任务
 	debug_printf("Token::Open 令牌客户端定时 ");
-	_taskHello = Sys.AddTask(LoopTask, this, 0, 5000000);
+	_taskHello = Sys.AddTask(LoopTask, this, 1000000, 5000000);
 }
 
 void TokenClient::Close()
@@ -180,6 +180,8 @@ void TokenClient::SayHello(bool broadcast, int port)
 
 		ext.Read(msg);
 		ext.Show();
+
+		Login();
 	}
 }
 
@@ -209,7 +211,11 @@ void TokenClient::Login()
 
 	// 密码取MD5后传输
 	ByteArray bs(16);
+	Key.Show();
+	debug_printf("\r\n");
 	MD5::Hash(Key, bs);
+	bs.Show();
+	debug_printf("\r\n");
 	ms.WriteArray(bs);
 
 	ms.Write(Time.Current());
