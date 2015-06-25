@@ -1,6 +1,6 @@
 ﻿#include "Arp.h"
 
-#define NET_DEBUG 0
+#define NET_DEBUG 1
 
 class ArpSession
 {
@@ -92,11 +92,11 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	else
 		debug_printf("ARP::Unkown %d For ", arp->Option);
 
-	Tip->ShowIP(arp->DestIP);
+	IPAddress(arp->DestIP).Show();
 	debug_printf(" <= ");
-	Tip->ShowIP(arp->SrcIP);
+	IPAddress(arp->SrcIP).Show();
 	debug_printf(" [");
-	Tip->ShowMac(arp->SrcMac);
+	MacAddress(arp->SrcMac.Value()).Show();
 	debug_printf("] Payload=%d\r\n", ms.Remain());
 #endif
 
@@ -116,7 +116,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 
 #if NET_DEBUG
 	debug_printf("ARP::Response To ");
-	Tip->ShowIP(arp->DestIP);
+	IPAddress(arp->DestIP).Show();
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
@@ -169,7 +169,7 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 
 #if NET_DEBUG
 	debug_printf("ARP::Request To ");
-	Tip->ShowIP(arp->DestIP);
+	IPAddress(arp->DestIP).Show();
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
@@ -284,9 +284,9 @@ void ArpSocket::Add(IPAddress& ip, MacAddress& mac)
 	if(!item)
 	{
 		debug_printf("Arp::Add(");
-		TinyIP::ShowIP(ip);
+		ip.Show();
 		debug_printf(", ");
-		TinyIP::ShowMac(mac);
+		mac.Show();
 		debug_printf(")\r\n");
 	}
 #endif
@@ -310,7 +310,7 @@ void ArpSocket::Add(IPAddress& ip, MacAddress& mac)
 		}
 #if NET_DEBUG
 		debug_printf("Arp Table is full, replace ");
-		TinyIP::ShowIP(item->IP);
+		IPAddress(item->IP).Show();
 		debug_printf("\r\n");
 #endif
 	}
