@@ -211,11 +211,7 @@ void TokenClient::Login()
 
 	// 密码取MD5后传输
 	ByteArray bs(16);
-	Key.Show();
-	debug_printf("\r\n");
 	MD5::Hash(Key, bs);
-	bs.Show();
-	debug_printf("\r\n");
 	ms.WriteArray(bs);
 
 	ms.Write(Time.Current());
