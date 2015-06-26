@@ -102,7 +102,7 @@ protected:
 	bool	_needFree;	// 是否需要释放
 
 	T		Arr[0x40];	// 内部缓冲区
-	
+
 	// 释放外部缓冲区。使用最大容量的内部缓冲区
 	void Release()
 	{
@@ -164,14 +164,25 @@ public:
 		}
 		ArrayZero2(_Arr, _Capacity);
 	}
-	
-	Array(const Array& arr) { Copy(arr); }
+
+	Array(const Array& arr)
+	{
+		_Length = arr.Length();
+
+		Copy(arr);
+	}
 
 	// 析构。释放资源
 	virtual ~Array() { Release(); }
 
 	// 重载等号运算符，使用另一个固定数组来初始化
-    Array& operator=(const Array& arr) { Copy(arr); return *this; }
+    Array& operator=(const Array& arr)
+	{
+		_Length = arr.Length();
+
+		Copy(arr);
+		return *this;
+	}
 
 	// 设置数组元素为指定值，自动扩容
 	bool Set(T item, int index = 0, int count = 0)
