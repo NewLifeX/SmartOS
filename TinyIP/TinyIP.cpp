@@ -180,37 +180,6 @@ void TinyIP::Work(void* param)
 	}
 }
 
-/*bool TinyIP::LoopWait(LoopFilter filter, void* param, uint msTimeout)
-{
-	// 分配一个同样大小的缓冲区
-	byte buf[ArrayLength(Buffer)];
-	Stream ms(buf, ArrayLength(buf));
-
-	// 总等待时间
-	TimeWheel tw(0, msTimeout, 0);
-	while(!tw.Expired())
-	{
-		// 阻塞其它任务，频繁调度OnWork，等待目标数据
-		uint len = Fetch(ms);
-		if(!len)
-		{
-			Sys.Sleep(2);	// 等待一段时间，释放CPU
-
-			continue;
-		}
-
-		// 业务
-		ms.SetPosition(0);
-		if(filter(this, param, ms)) return true;
-
-		// 用不到数据包交由系统处理
-		ms.SetPosition(0);
-		Process(ms);
-	}
-
-	return false;
-}*/
-
 bool TinyIP::Open()
 {
 	debug_printf("\r\nTinyIP::Open...\r\n");
@@ -228,7 +197,7 @@ bool TinyIP::Open()
 	ShowInfo();
 
 	// 添加到系统任务，马上开始，尽可能多被调度
-	debug_printf("以太网轮询 ");
+	debug_printf("TinyIP::以太网轮询 ");
     Sys.AddTask(Work, this, 0, 1000);
 
 #if NET_DEBUG

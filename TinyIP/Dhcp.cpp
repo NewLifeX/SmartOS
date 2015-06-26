@@ -100,14 +100,15 @@ void Dhcp::PareOption(Stream& ms)
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask:			Tip->Mask		= ms.Read<int>(); break;
-			case DHCP_OPT_DNSServer:	Tip->DNSServer	= ms.Read<int>(); break;
-			case DHCP_OPT_Router:		Tip->Gateway	= ms.Read<int>(); break;
-			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= ms.Read<int>(); break;
+			case DHCP_OPT_Mask:			Tip->Mask		= ms.Read<int>(); len -= 4; break;
+			case DHCP_OPT_DNSServer:	Tip->DNSServer	= ms.Read<int>(); len -= 4; break;
+			case DHCP_OPT_Router:		Tip->Gateway	= ms.Read<int>(); len -= 4; break;
+			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= ms.Read<int>(); len -= 4; break;
 			default:
-				ms.Seek(len);
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}
+		// DNS可能有多个IP，就不止4长度了
+		if(len > 0) ms.Seek(len);
 	}
 }
 

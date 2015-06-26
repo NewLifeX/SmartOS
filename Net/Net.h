@@ -17,28 +17,6 @@
 
 // IP地址
 typedef uint IPAddr;
-/*class IPAddr
-{
-public:
-	uint	Value;
-	
-	IPAddr(uint v = 0)
-	{
-		Value = v;
-	}
-
-    IPAddr& operator=(uint v)
-	{
-		Value = v;
-
-		return *this;
-	}
-	
-    IPAddr& operator=(const IPAddress& v) { Value = v.Value; return *this; }
-	
-    friend bool operator==(IPAddr& addr1, IPAddr& addr2) { return addr1.Value == addr2.Value; }
-    friend bool operator!=(IPAddr& addr1, IPAddr& addr2) { return addr1.Value != addr2.Value; }
-};*/
 
 // Mac地址。结构体和类都可以
 //typedef struct _MacAddress MacAddr;
