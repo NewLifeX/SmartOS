@@ -145,6 +145,18 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 	return true;
 }
 
+bool Encrypt(Message& msg, ByteArray& pass)
+{
+	// 加解密。握手不加密，登录响应不加密
+	if(msg.Length > 0 && !(msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
+	{
+		ByteArray bs(msg.Data, msg.Length);
+		RC4::Encrypt(bs, pass);
+		return true;
+	}
+	return false;
+}
+
 // 接收处理函数
 bool TokenController::OnReceive(Message& msg, ITransport* port)
 {
@@ -180,12 +192,7 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 	}
 
 	// 加解密。握手不加密，登录响应不加密
-	if(msg.Length > 0 && (msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
-	{
-		ByteArray bs(msg.Data, msg.Length);
-		ByteArray pass(Key);
-		RC4::Encrypt(bs, pass);
-	}
+	Encrypt(msg, Key);
 
 	return Controller::OnReceive(msg, port);
 }
@@ -199,12 +206,7 @@ int TokenController::Send(Message& msg, ITransport* port)
 #endif
 
 	// 加解密。握手不加密，登录响应不加密
-	if(msg.Length > 0 && (msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
-	{
-		ByteArray bs(msg.Data, msg.Length);
-		ByteArray pass(Key);
-		RC4::Encrypt(bs, pass);
-	}
+	Encrypt(msg, Key);
 
 	return Controller::Send(msg, port);
 }
