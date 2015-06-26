@@ -104,7 +104,7 @@ void Dhcp::PareOption(Stream& ms)
 			case DHCP_OPT_DNSServer:	Tip->DNSServer	= ms.Read<int>(); len -= 4; break;
 			case DHCP_OPT_Router:		Tip->Gateway	= ms.Read<int>(); len -= 4; break;
 			case DHCP_OPT_DHCPServer:	Tip->DHCPServer	= ms.Read<int>(); len -= 4; break;
-			default:
+			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}
 		// DNS可能有多个IP，就不止4长度了

@@ -38,25 +38,18 @@ class String;
 class Type;
 
 // 根对象。
-// 子类通过Init重写指定大小，并对虚表指针以外数据区域全部清零。因无法确定其它虚表指针位置，故不支持多继承
 class Object
 {
 private:
 	//Type*	_Type;		// 类型
 
 protected:
-	// 初始化为指定大小，并对虚表指针以外数据区域全部清零。不支持多继承
-	void Init(int size);
 
 public:
-	// 子类重载，可直接使用OBJECT_INIT宏定义，为了调用Init(size)初始化大小并清零
-	virtual void Init() { };
 
 	// 输出对象的字符串表示方式
-	virtual const char* ToString();
-
-	virtual String& To(String& str);
-
+	virtual String ToString();
+	// 显示对象。默认显示ToString
 	void Show();
 
 	//Type GetType();
@@ -96,8 +89,6 @@ protected:
 
 	T		Arr[0x40];	// 内部缓冲区，减少内存分配次数
 
-	OBJECT_INIT
-
 	// 释放外部缓冲区。使用最大容量的内部缓冲区
 	void Release()
 	{
@@ -119,8 +110,6 @@ public:
 	// 初始化指定长度的数组。默认使用内部缓冲区
 	Array(int length = ArrayLength(Arr))
 	{
-		Init();
-
 		if(!length) length = ArrayLength(Arr);
 		_Length		= length;
 		// 超过内部默认缓冲区大小时，另外从堆分配空间
@@ -128,6 +117,7 @@ public:
 		{
 			_Arr		= Arr;
 			_Capacity	= ArrayLength(Arr);
+			_needFree	= false;
 			ArrayZero2(_Arr, _Capacity);
 		}
 		else
@@ -270,10 +260,10 @@ public:
 	ByteArray(String& str);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
-	String& ToHex(String& str, char sep = '-', int newLine = 0x10);
+	String ToHex(char sep = '-', int newLine = 0x10);
 
-	virtual String& To(String& str);
-	virtual void Show();
+	// 输出对象的字符串表示方式
+	virtual String ToString();
 };
 
 // 字符串
@@ -281,20 +271,18 @@ class String : public Array<char>
 {
 private:
 
-	OBJECT_INIT
-
 public:
 	String(int length = 0x40) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	String(const char* str, int len = 0) : Array(0) { Set(str, len); }
-	String(String& str) : Array(str.Length()) { Copy(str); }
+	String(const String& str) : Array(str.Length()) { Copy(str); }
 
 	// 设置字符串长度
 	String& SetLength(int length);
 
 	// 输出对象的字符串表示方式
-	virtual const char* ToString();
+	virtual String ToString();
 	// 清空已存储数据。长度放大到最大容量
 	virtual String& Clear();
 
@@ -302,10 +290,10 @@ public:
 	String& Append(const char* str, int len = 0);
 	String& Append(int value);
 	String& Append(byte bt);		// 十六进制
-	String& Append(ByteArray bs);	// 十六进制
+	String& Append(ByteArray& bs);	// 十六进制
 
 	// 调试输出字符串
-	void Show(bool newLine = false);
+	void Print(bool newLine = false);
 
 	String& Format(const char* format, ...);
 };
@@ -336,7 +324,8 @@ public:
 	bool IsBroadcast();
 	uint GetSubNet(IPAddress& mask);	// 获取子网
 
-	virtual String& To(String& str);
+	// 输出对象的字符串表示方式
+	virtual String ToString();
 
     friend bool operator==(IPAddress& addr1, IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(IPAddress& addr1, IPAddress& addr2) { return addr1.Value != addr2.Value; }
@@ -355,7 +344,8 @@ public:
 	IPEndPoint();
 	IPEndPoint(IPAddress& addr, ushort port);
 
-	virtual String& To(String& str);
+	// 输出对象的字符串表示方式
+	virtual String ToString();
 
     friend bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
 	{
@@ -392,7 +382,8 @@ public:
 	// 字节数组
     byte* ToArray();
 
-	virtual String& To(String& str);
+	// 输出对象的字符串表示方式
+	virtual String ToString();
 
     friend bool operator==(MacAddress& addr1, MacAddress& addr2)
 	{
