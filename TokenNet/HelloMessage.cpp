@@ -10,7 +10,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 
 	ushort code = __REV16(Sys.Code);
 	ByteArray bs((byte*)&code, 2);
-	Type = bs.ToHex();
+	Type = bs.ToHex('\0');
 	Name.Set(Sys.Name);
 
 	LocalTime	= Time.Current();
@@ -28,6 +28,7 @@ HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
 	EndPoint	= msg.EndPoint;
 	Ciphers		= msg.Ciphers;
 	Key			= msg.Key;
+	Reply		= msg.Reply;
 }
 
 // 从数据流中读取消息
@@ -68,8 +69,6 @@ void HelloMessage::Write(Stream& ms)
 
 	ms.Write(EndPoint.Address.ToArray(), 0, 4);
 	ms.Write((ushort)EndPoint.Port);
-
-	ms.WriteArray(Ciphers);
 
 	if(!Reply)
 	{
@@ -112,6 +111,12 @@ void HelloMessage::Show()
 	for(int i=0; i<Ciphers.Length(); i++)
 	{
 		debug_printf("%d ", Ciphers[i]);
+	}
+
+	if(Reply)
+	{
+		debug_printf(" Key=");
+		Key.Show();
 	}
 	debug_printf("\r\n");
 }

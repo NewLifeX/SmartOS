@@ -122,7 +122,7 @@ void LoopTask(void* param)
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
-	client->SayHello(true, 3355);
+	//client->SayHello(true, 3355);
 
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
@@ -147,6 +147,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	TokenMessage msg(1);
 
 	HelloMessage ext(Hello);
+	ext.Reply = false;
 	ext.LocalTime = Time.Current();
 	ext.Write(msg);
 	ext.Show();
@@ -177,8 +178,12 @@ void TokenClient::SayHello(bool broadcast, int port)
 		debug_printf("握手完成，开始登录……\r\n");
 		Status = 1;
 
+		ext.Reply = true;	// 记得设置为响应，否则下面的读取方式会不一样，导致拿不到通讯密码
 		ext.Read(msg);
 		ext.Show();
+
+		// 通讯密码
+		Control->Key = ext.Key;
 
 		Login();
 	}
@@ -191,11 +196,6 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	HelloMessage ext;
 	ext.Read(msg);
 	ext.Show();
-
-	// 取消Discover任务
-	//debug_printf("停止寻找服务端 ");
-	//Sys.RemoveTask(_taskHello);
-	//_taskHello = 0;
 
 	return true;
 }
@@ -232,6 +232,8 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 	}
 	else
 	{
+		if(result == 0xFF) Status = 0;
+
 		debug_printf("登录失败，错误码 0x%02X！", result);
 		String str;
 		ms.ReadString(str.Clear());

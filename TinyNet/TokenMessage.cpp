@@ -166,7 +166,7 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 #endif
 
 	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
-	if(!msg.Reply && msg.Code != 0x08)
+	if(msg.Reply && msg.Code != 0x08)
 	{
 		TokenMessage ack;
 		ack.Code = 0x08;
