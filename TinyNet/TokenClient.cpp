@@ -213,6 +213,7 @@ void TokenClient::Login()
 	MD5::Hash(Key, bs);
 	ms.WriteArray(bs);
 
+	ms.Write((byte)8);
 	ms.Write(Time.Current());
 
 	msg.Length = ms.Position();
