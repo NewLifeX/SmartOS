@@ -34,6 +34,7 @@ void assert_failed(const char* msg, uint8_t* file, uint32_t line);
 #else
 
 #define assert_ptr(expr) ((void)0)
+#define assert_param2(expr,msg) ((void)0)
 
 #endif
 
