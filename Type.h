@@ -50,7 +50,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String ToString();
 	// 显示对象。默认显示ToString
-	void Show();
+	virtual void Show();
 
 	//Type GetType();
 };
@@ -65,9 +65,6 @@ public:
 	String	Name;	// 名称
 };*/
 
-// 子类用于调用Object进行对象初始化的默认写法
-#define OBJECT_INIT virtual void Init() { Object::Init(sizeof(this[0])); }
-
 // 数组长度
 #define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
 // 数组清零，固定长度
@@ -78,6 +75,23 @@ public:
 #define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
 
 // 数组
+/*
+数组是指针和长度的封装。
+设计本意：
+1，数据处理函数无需同时传递指针和长度
+2，数组下标越界检查，避免指针越界
+3，数组自动扩容，避免因不知道函数内部需要多大缓存空间而带来的设计复杂度
+
+按照指针来源可分为两大用法：
+1，内部分配。随时可以扩容，对象拷贝时共用空间
+2，外部指针。此时认为只是封装，不允许扩容
+
+数组拷贝：
+内=>内 共用数据区
+内=>外 共用数据区
+外=>内 仅复制指针
+外=>外 仅复制指针
+*/
 template<typename T>
 class Array : public Object
 {
@@ -87,16 +101,39 @@ protected:
 	uint	_Capacity;	// 数组最大容量。初始化时决定，后面不允许改变
 	bool	_needFree;	// 是否需要释放
 
-	T		Arr[0x40];	// 内部缓冲区，减少内存分配次数
-
+	T		Arr[0x40];	// 内部缓冲区
+	
 	// 释放外部缓冲区。使用最大容量的内部缓冲区
 	void Release()
 	{
-		if(_needFree && _Arr && _Arr != Arr) delete _Arr;
-		_Arr		= Arr;
-		_Length		= ArrayLength(Arr);
-		_Capacity	= ArrayLength(Arr);
+		if(_needFree && _Arr) delete _Arr;
+		_Arr		= NULL;
+		_Length		= 0;
+		_Capacity	= 0;
 		_needFree	= false;
+	}
+
+	// 检查容量。如果不足则扩大，并备份指定长度的数据
+	void CheckCapacity(int len, int bak = 0)
+	{
+		// 扩大长度
+		if(len > _Length) _Length = len;
+
+		if(len <= _Capacity) return;
+
+		T* p = new T[len];
+		ArrayZero2(p, _Capacity);
+
+		// 是否需要备份数据
+		if(bak > _Length) bak = _Length;
+		if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
+
+		Release();
+
+		_Length		= len;
+		_Capacity	= len;
+		_Arr		= p;
+		_needFree	= p != NULL;
 	}
 
 public:
@@ -108,26 +145,27 @@ public:
 	T* GetBuffer() { return _Arr; }
 
 	// 初始化指定长度的数组。默认使用内部缓冲区
-	Array(int length = ArrayLength(Arr))
+	Array(int length)
 	{
-		if(!length) length = ArrayLength(Arr);
+		if(length <= 0) length = ArrayLength(Arr);
+
 		_Length		= length;
-		// 超过内部默认缓冲区大小时，另外从堆分配空间
 		if(length <= ArrayLength(Arr))
 		{
 			_Arr		= Arr;
 			_Capacity	= ArrayLength(Arr);
 			_needFree	= false;
-			ArrayZero2(_Arr, _Capacity);
 		}
 		else
 		{
-			_Arr = new T[length];
+			_Arr		= new T[length];
 			_Capacity	= length;
 			_needFree	= true;
-			ArrayZero2(_Arr, length);
 		}
+		ArrayZero2(_Arr, _Capacity);
 	}
+	
+	Array(const Array& arr) { Copy(arr); }
 
 	// 析构。释放资源
 	virtual ~Array() { Release(); }
@@ -135,19 +173,15 @@ public:
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr) { Copy(arr); return *this; }
 
-	// 设置数组元素为指定值
+	// 设置数组元素为指定值，自动扩容
 	bool Set(T item, int index = 0, int count = 0)
 	{
 		// count<=0 表示设置全部元素
 		if(count <= 0) count = _Length - index;
 
 		// 检查长度是否足够
-		//assert_param(index + count <= _Length);
-		if(index + count > _Capacity)
-		{
-			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, count);
-			return false;
-		}
+		int len2 = index + count;
+		CheckCapacity(len2, index);
 
 		// 如果元素类型大小为1，那么可以直接调用内存设置函数
 		if(sizeof(T) == 1)
@@ -155,13 +189,10 @@ public:
 		else
 			while(count-- > 0) _Arr[index++] = item;
 
-		// 扩大长度
-		if(index + count > _Length) _Length = index + count;
-
 		return true;
 	}
 
-	// 设置数组。采用浅克隆，不拷贝数据
+	// 设置数组。直接使用指针，不拷贝数据
 	bool Set(const T* data, int len = 0)
 	{
 		if(!data) return false;
@@ -188,23 +219,18 @@ public:
 	bool Copy(const Array& arr, int index = 0)
 	{
 		int len = arr.Length();
+		if(len == 0) return true;
 
 		// 检查长度是否足够
-		//assert_param(index + len <= _Capacity);
-		if(index + len > _Capacity)
-		{
-			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, len);
-			return false;
-		}
+		CheckCapacity(index + len, index);
 
 		// 拷贝数据
 		memcpy(_Arr + index, arr._Arr, sizeof(T) * len);
-		_Length = len;
 
 		return true;
 	}
 
-	// 复制数组。深度克隆，拷贝数据
+	// 复制数组。深度克隆，拷贝数据，自动扩容
 	bool Copy(const T* data, int len = 0, int index = 0)
 	{
 		// 自动计算长度，\0结尾
@@ -215,17 +241,10 @@ public:
 		}
 
 		// 检查长度是否足够
-		//int len2 = index + len;
-		//assert_param(len2 <= _Capacity);
-		if(index + len > _Capacity)
-		{
-			debug_printf("数组容量 %d 不足以从 %d 开始写入 %d\r\n", _Capacity, index, len);
-			return false;
-		}
+		CheckCapacity(index + len, index);
 
 		// 拷贝数据
 		memcpy(_Arr + index, data, sizeof(T) * len);
-		if(index + len > _Length) _Length = index + len;
 
 		return true;
 	}
@@ -257,6 +276,7 @@ public:
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
+	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
 	ByteArray(String& str);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
@@ -326,6 +346,8 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();
+	// 显示对象
+	virtual void Show();
 
     friend bool operator==(IPAddress& addr1, IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(IPAddress& addr1, IPAddress& addr2) { return addr1.Value != addr2.Value; }
@@ -346,27 +368,18 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();
-
-    friend bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
-	{
-		return addr1.Port == addr2.Port && addr1.Address == addr2.Address;
-	}
-    friend bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2)
-	{
-		return addr1.Port != addr2.Port || addr1.Address != addr2.Address;
-	}
+	// 显示对象
+	virtual void Show();
 };
 
-// Mac地址。结构体和类都可以
-//typedef struct _MacAddress MacAddress;
-//struct _MacAddress
+bool operator==(IPEndPoint& addr1, IPEndPoint& addr2);
+bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2);
+
+// Mac地址
 class MacAddress : public Object
 {
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
-	// 比如Mac地址12-34-56-78-90-12，v4是12-34-56-78，v2是90-12，ulong是0x0000129078563412
-	//uint	v4;
-	//ushort	v2;
 	ulong	Value;	// 地址
 
 	MacAddress(ulong v = 0);
@@ -384,24 +397,20 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();
+	// 显示对象
+	virtual void Show();
 
     friend bool operator==(MacAddress& addr1, MacAddress& addr2)
 	{
-		//return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
 		return addr1.Value == addr2.Value;
 	}
     friend bool operator!=(MacAddress& addr1, MacAddress& addr2)
 	{
-		//return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
 		return addr1.Value != addr2.Value;
 	}
 
 	static MacAddress Empty;
 	static MacAddress Full;
 };
-//}MacAddress;
-
-//#define IP_FULL 0xFFFFFFFF
-//#define MAC_FULL 0xFFFFFFFFFFFFFFFFull
 
 #endif

@@ -233,6 +233,12 @@ String IPAddress::ToString()
 	return str;
 }
 
+void IPAddress::Show()
+{
+	byte* ips = (byte*)&Value;
+	debug_printf("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
+}
+
 IPEndPoint::IPEndPoint()
 {
 	Address = IPAddress::Any;
@@ -254,6 +260,21 @@ String IPEndPoint::ToString()
 	str.Copy(ss, len, str.Length());
 
 	return str;
+}
+
+void IPEndPoint::Show()
+{
+	byte* ips = (byte*)&Address.Value;
+	debug_printf("%d.%d.%d.%d:%d", ips[0], ips[1], ips[2], ips[3], Port);
+}
+
+bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
+{
+	return addr1.Port == addr2.Port && addr1.Address == addr2.Address;
+}
+bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2)
+{
+	return addr1.Port != addr2.Port || addr1.Address != addr2.Address;
 }
 
 /* MAC地址 */
@@ -305,17 +326,6 @@ byte* MacAddress::ToArray()
 	return (byte*)&Value;
 }
 
-// 数值
-/*ulong MacAddress::Value()
-{
-	ulong v = v4;
-	v |= ((ulong)v2) << 32;
-	return v;
-
-	// 下面这个写法简单，但是会带上后面两个字节，需要做或运算，不划算
-	//return *(ulong*)this | 0x0000FFFFFFFF;
-}*/
-
 /*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)
 {
 	return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
@@ -334,4 +344,10 @@ String MacAddress::ToString()
 	str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 
 	return str;
+}
+
+void MacAddress::Show()
+{
+	byte* macs = (byte*)&Value;
+	debug_printf("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 }
