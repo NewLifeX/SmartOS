@@ -260,15 +260,28 @@ void TokenClient::Ping()
 
 	TokenMessage msg(3);
 
+	Stream ms(msg.Data, ArrayLength(msg._Data));
+	ms.Write((byte)8);
+	ms.Write(Time.Current());
+	msg.Length = ms.Position();
+
 	Send(msg);
 }
 
 bool TokenClient::OnPing(TokenMessage& msg)
 {
 	// 忽略响应消息
-	if(msg.Reply) return true;
+	//if(msg.Reply) return true;
 
-	debug_printf("Message_Ping Length=%d\r\n", msg.Length);
+	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
+	
+	Stream ms(msg.Data, msg.Length);
+	ByteArray bs;
+	ms.ReadArray(bs);
+	
+	ulong start = *(ulong*)bs.GetBuffer();
+	int ts = (int)(Time.Current() - start);
+	debug_printf("延迟 %dus \r\n", ts);
 
 	return true;
 }

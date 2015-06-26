@@ -148,7 +148,7 @@ bool TokenController::Valid(Message& msg, ITransport* port)
 bool Encrypt(Message& msg, ByteArray& pass)
 {
 	// 加解密。握手不加密，登录响应不加密
-	if(msg.Length > 0 && !(msg.Code == 0x01 || msg.Code == 0x02 && msg.Reply))
+	if(msg.Length > 0 && !(msg.Code == 0x01 || msg.Code == 0x08 || msg.Code == 0x02 && msg.Reply))
 	{
 		ByteArray bs(msg.Data, msg.Length);
 		RC4::Encrypt(bs, pass);
@@ -171,7 +171,7 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 		TokenMessage ack;
 		ack.Code = 0x08;
 		ack.Length = 1;
-		ack.Data[0] = msg.Code;	// 只有请求消息，所以这里不用考虑最高位
+		ack.Data[0] = msg.Code | 0x80;	// 这里考虑最高位
 
 		Reply(ack, port);
 	}
