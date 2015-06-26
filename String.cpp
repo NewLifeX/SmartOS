@@ -2,7 +2,7 @@
 
 char _ChNil = '\0';
 int _InitData[] = { -1, 0, 0, 0 }; //初始化CStringData的地址
-CStringData* _afxDataNil = (CStringData*)&_InitData; //地址转化为CStringData*
+CStringData* _DataNil = (CStringData*)&_InitData; //地址转化为CStringData*
 char* _PchNil = (char*)(((byte*)&_InitData)+sizeof(CStringData));
 
 //建立一个空的CString
@@ -102,7 +102,7 @@ void CString::AllocCopy(CString& dest, int nCopyLen, int nCopyIndex, int nExtraL
 
 CString::~CString()
 {
-	if (GetData() != _afxDataNil)
+	if (GetData() != _DataNil)
 	{
 		if (--(GetData()->nRefs) <= 0) FreeData(GetData());
 	}
@@ -114,7 +114,7 @@ CString::CString(const CString& stringSrc)
 	assert_param(stringSrc.GetData()->nRefs != 0);
 	if (stringSrc.GetData()->nRefs >= 0)
 	{
-		assert_param(stringSrc.GetData() != _afxDataNil);
+		assert_param(stringSrc.GetData() != _DataNil);
 		m_pchData = stringSrc.m_pchData;
 		GetData()->nRefs++;
 	}
@@ -149,7 +149,7 @@ CString::CString(char* lpch, int nLength)
 
 void CString::Release()
 {
-	if (GetData() != _afxDataNil)
+	if (GetData() != _DataNil)
 	{
 		assert_param(GetData()->nRefs != 0);
 		if (--(GetData()->nRefs) <= 0) FreeData(GetData());
@@ -159,7 +159,7 @@ void CString::Release()
 
 void CString::Release(CStringData* pData)
 {
-	if (pData != _afxDataNil)
+	if (pData != _DataNil)
 	{
 		assert_param(pData->nRefs != 0);
 		if (--(pData->nRefs) <= 0) FreeData(pData);
@@ -181,7 +181,7 @@ const CString& CString::operator=(const CString& stringSrc)
 {
 	if (m_pchData != stringSrc.m_pchData)
 	{
-		if ((GetData()->nRefs < 0 && GetData() != _afxDataNil) || stringSrc.GetData()->nRefs < 0)
+		if ((GetData()->nRefs < 0 && GetData() != _DataNil) || stringSrc.GetData()->nRefs < 0)
 		{
 			//新建一快数据
 			AssignCopy(stringSrc.GetData()->nDataLength, stringSrc.m_pchData);
@@ -190,7 +190,7 @@ const CString& CString::operator=(const CString& stringSrc)
 		{
 			//只拷贝指针
 			Release();
-			assert_param(stringSrc.GetData() != _afxDataNil);
+			assert_param(stringSrc.GetData() != _DataNil);
 			m_pchData = stringSrc.m_pchData;
 			GetData()->nRefs++;
 		}
@@ -1041,7 +1041,7 @@ char* CString::LockBuffer()
 void CString::UnlockBuffer()
 {
 	assert_param(GetData()->nRefs == -1);
-	if (GetData() != _afxDataNil) GetData()->nRefs = 1;
+	if (GetData() != _DataNil) GetData()->nRefs = 1;
 }
 
 
