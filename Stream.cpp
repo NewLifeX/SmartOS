@@ -24,7 +24,7 @@ Stream::Stream(uint len)
 Stream::Stream(byte* buf, uint len)
 {
 	assert_ptr(buf);
-	assert_param2(len > 0, "不能用0长度缓冲区来初始化数据流");
+	//assert_param2(len > 0, "不能用0长度缓冲区来初始化数据流");
 
 	_Buffer = buf;
 	_Capacity = len;

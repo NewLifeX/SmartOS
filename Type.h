@@ -283,7 +283,7 @@ public:
 class ByteArray : public Array<byte>
 {
 public:
-	ByteArray(int length) : Array(length) { }
+	ByteArray(int length = 0x40) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
