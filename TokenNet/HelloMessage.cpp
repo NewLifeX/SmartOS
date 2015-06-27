@@ -100,7 +100,7 @@ void HelloMessage::Write(Message& msg)
 // 显示消息内容
 void HelloMessage::Show()
 {
-	debug_printf("Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
+	debug_printf("握手%c Ver=%d.%d Type=%s Name=%s ", Reply ? '#' : ' ', Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
 	DateTime dt;
 	dt.Parse(LocalTime / 10);
 	debug_printf("%s ", dt.ToString());

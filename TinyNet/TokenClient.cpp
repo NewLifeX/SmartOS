@@ -48,13 +48,6 @@ void TokenClient::Open()
 	//Control->AddTransport(SerialPort::GetMessagePort());
 #endif
 
-	// 注册消息。每个消息代码对应一个功能函数
-	//Control->Register(1, OnHello, this);
-	//Control->Register(2, Ping, this);
-	//Control->Register(3, SysID, this);
-	//Control->Register(4, SysTime, this);
-	//Control->Register(5, SysMode, this);
-
 	// 设置握手广播的本地地址和端口
 	if(Udp)
 	{
@@ -140,8 +133,8 @@ void LoopTask(void* param)
 }
 
 // 发送发现消息，告诉大家我在这
-// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
+// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + N支持加密算法列表
+// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + 1加密算法 + N密钥
 void TokenClient::SayHello(bool broadcast, int port)
 {
 	TokenMessage msg(1);
@@ -170,23 +163,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 		return;
 	}
 
-	bool rs = Control->SendAndReceive(msg, 0, 200);
-
-	// 如果收到响应，解析出来
-	if(rs && msg.Reply)
-	{
-		debug_printf("握手完成，开始登录……\r\n");
-		Status = 1;
-
-		ext.Reply = true;	// 记得设置为响应，否则下面的读取方式会不一样，导致拿不到通讯密码
-		ext.Read(msg);
-		ext.Show();
-
-		// 通讯密码
-		Control->Key = ext.Key;
-
-		Login();
-	}
+	Control->Send(msg);
 }
 
 // 握手响应
@@ -194,8 +171,21 @@ bool TokenClient::OnHello(TokenMessage& msg)
 {
 	// 解析数据
 	HelloMessage ext;
+	ext.Reply = msg.Reply;
 	ext.Read(msg);
 	ext.Show();
+
+	// 如果收到响应，并且来自来源服务器
+	if(msg.Reply && (Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast()))
+	{
+		debug_printf("握手完成，开始登录……\r\n");
+		Status = 1;
+
+		// 通讯密码
+		Control->Key = ext.Key;
+
+		Login();
+	}
 
 	return true;
 }
@@ -230,6 +220,11 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 	{
 		Status = 2;
 		debug_printf("登录成功！\r\n");
+		
+		// 得到令牌
+		Token = ms.Read<int>();
+		// 这里可能有通信秘密
+		if(ms.Remain() > 0) ms.ReadArray(Control->Key);
 	}
 	else
 	{

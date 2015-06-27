@@ -147,7 +147,7 @@ public:
 	// 初始化指定长度的数组。默认使用内部缓冲区
 	Array(int length)
 	{
-		if(length <= 0) length = ArrayLength(Arr);
+		if(length < 0) length = ArrayLength(Arr);
 
 		_Length		= length;
 		if(length <= ArrayLength(Arr))
