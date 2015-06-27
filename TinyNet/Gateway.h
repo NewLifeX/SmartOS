@@ -4,8 +4,7 @@
 #include "Sys.h"
 #include "Net\ITransport.h"
 #include "TinyNet\TinyServer.h"
-#include "TinyNet\TinyClient.h"
-#include "TinyNet\TokenMessage.h"
+#include "TinyNet\TokenClient.h"
 
 // 网关服务器
 class Gateway
@@ -13,10 +12,10 @@ class Gateway
 private:
 
 public:
-	TinyServer* Server;			// 内网服务端
-	TokenController* Client;	// 外网客户端
+	TinyServer* Server;		// 内网服务端
+	TokenClient* Client;	// 外网客户端
 
-	Gateway(TinyServer* server, TokenController* client);
+	Gateway(TinyServer* server, TokenClient* client);
 	~Gateway();
 
 	bool Running;

@@ -7,7 +7,7 @@ bool OnLocalReceived(Message& msg, void* param);
 bool OnRemoteReceived(Message& msg, void* param);
 
 // 本地网和远程网一起实例化网关服务
-Gateway::Gateway(TinyServer* server, TokenController* client)
+Gateway::Gateway(TinyServer* server, TokenClient* client)
 {
 	assert_param(server);
 	assert_param(client);
@@ -39,6 +39,8 @@ void Gateway::Start()
 
 	debug_printf("Gateway::Start \r\n");
 
+	Client->Open();
+
 	Running = true;
 }
 
@@ -68,7 +70,6 @@ bool OnLocalReceived(Message& msg, void* param)
 	{
 		debug_printf("Gateway::Local ");
 		msg.Show();
-		//debug_printf("\r\n");
 
 		TokenMessage tmsg;
 		tmsg.Code = msg.Code;
@@ -93,7 +94,6 @@ bool OnRemoteReceived(Message& msg, void* param)
 	{
 		debug_printf("Gateway::Remote ");
 		msg.Show();
-		//debug_printf("\r\n");
 
 		if(msg.Length <= 0)
 		{
