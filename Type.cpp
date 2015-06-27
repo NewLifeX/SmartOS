@@ -192,8 +192,8 @@ String& String::Format(const char* format, ...)
 
 /* IP地址 */
 
-IPAddress IPAddress::Any(0, 0, 0, 0);
-IPAddress IPAddress::Broadcast(255, 255, 255, 255);
+const IPAddress IPAddress::Any(0, 0, 0, 0);
+const IPAddress IPAddress::Broadcast(255, 255, 255, 255);
 
 IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 {
@@ -239,13 +239,15 @@ void IPAddress::Show()
 	debug_printf("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
 }
 
+const IPEndPoint IPEndPoint::Any(IPAddress::Any, 0);
+
 IPEndPoint::IPEndPoint()
 {
 	Address = IPAddress::Any;
 	Port = 0;
 }
 
-IPEndPoint::IPEndPoint(IPAddress& addr, ushort port)
+IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 {
 	Address = addr;
 	Port	= port;
@@ -268,11 +270,11 @@ void IPEndPoint::Show()
 	debug_printf("%d.%d.%d.%d:%d", ips[0], ips[1], ips[2], ips[3], Port);
 }
 
-bool operator==(IPEndPoint& addr1, IPEndPoint& addr2)
+bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2)
 {
 	return addr1.Port == addr2.Port && addr1.Address == addr2.Address;
 }
-bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2)
+bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2)
 {
 	return addr1.Port != addr2.Port || addr1.Address != addr2.Address;
 }
@@ -281,8 +283,8 @@ bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2)
 
 #define MAC_MASK 0xFFFFFFFFFFFFull
 
-MacAddress MacAddress::Empty(0);
-MacAddress MacAddress::Full(MAC_MASK);
+const MacAddress MacAddress::Empty(0);
+const MacAddress MacAddress::Full(MAC_MASK);
 
 MacAddress::MacAddress(ulong v)
 {

@@ -25,7 +25,7 @@ public:
 	UdpHandler OnReceived;
 
 	// 发送UDP数据到目标地址
-	void Send(ByteArray& bs, IPAddress& ip = IPAddress::Any, ushort port = 0);
+	void Send(ByteArray& bs, IPAddress ip = IPAddress::Any, ushort port = 0);
 
 	virtual string ToString();
 

@@ -337,7 +337,7 @@ public:
 
 	IPAddress(int value)		{ Value = (uint)value; }
 	IPAddress(uint value = 0)	{ Value = value; }
-	IPAddress(IPAddress& addr)	{ Value = addr.Value; }
+	//IPAddress(const IPAddress& addr)	{ Value = addr.Value; }
 	IPAddress(const byte* ips)	{ Value = *(uint*)ips; }
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
 
@@ -360,11 +360,11 @@ public:
 	// 显示对象
 	virtual void Show();
 
-    friend bool operator==(IPAddress& addr1, IPAddress& addr2) { return addr1.Value == addr2.Value; }
-    friend bool operator!=(IPAddress& addr1, IPAddress& addr2) { return addr1.Value != addr2.Value; }
+    friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
+    friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }
 
-	static IPAddress Any;
-	static IPAddress Broadcast;
+	static const IPAddress Any;
+	static const IPAddress Broadcast;
 };
 
 // IP结点
@@ -375,16 +375,18 @@ public:
 	ushort		Port;		// 端口
 
 	IPEndPoint();
-	IPEndPoint(IPAddress& addr, ushort port);
+	IPEndPoint(const IPAddress& addr, ushort port);
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();
 	// 显示对象
 	virtual void Show();
+
+	static const IPEndPoint Any;
 };
 
-bool operator==(IPEndPoint& addr1, IPEndPoint& addr2);
-bool operator!=(IPEndPoint& addr1, IPEndPoint& addr2);
+bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2);
+bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2);
 
 // Mac地址
 class MacAddress : public Object
@@ -411,17 +413,17 @@ public:
 	// 显示对象
 	virtual void Show();
 
-    friend bool operator==(MacAddress& addr1, MacAddress& addr2)
+    friend bool operator==(const MacAddress& addr1, const MacAddress& addr2)
 	{
 		return addr1.Value == addr2.Value;
 	}
-    friend bool operator!=(MacAddress& addr1, MacAddress& addr2)
+    friend bool operator!=(const MacAddress& addr1, const MacAddress& addr2)
 	{
 		return addr1.Value != addr2.Value;
 	}
 
-	static MacAddress Empty;
-	static MacAddress Full;
+	static const MacAddress Empty;
+	static const MacAddress Full;
 };
 
 #endif

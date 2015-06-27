@@ -225,7 +225,7 @@ void TinyIP::ShowInfo()
 #endif
 }
 
-void TinyIP::SendEthernet(ETH_TYPE type, MacAddress& remote, const byte* buf, uint len)
+void TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param2(IS_ETH_TYPE(type), "这个不是以太网类型");

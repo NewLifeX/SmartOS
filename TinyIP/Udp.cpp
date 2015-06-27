@@ -133,7 +133,7 @@ void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool
 }
 
 // 发送UDP数据到目标地址
-void UdpSocket::Send(ByteArray& bs, IPAddress& ip, ushort port)
+void UdpSocket::Send(ByteArray& bs, IPAddress ip, ushort port)
 {
 	if(ip.IsAny()) ip = Remote.Address;
 	if(!port) port = Remote.Port;
