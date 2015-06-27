@@ -46,15 +46,15 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 	if(!udp) return false;
 
 	ushort port = __REV16(udp->DestPort);
-	//ushort remotePort = __REV16(udp->SrcPort);
+	ushort remotePort = __REV16(udp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
 
-	//Remote.Port		= remotePort;
-	//Remote.Address	= ip.SrcIP;
-	//Local.Port		= port;
-	//Local.Address	= ip.DestIP;
+	CurRemote.Port		= remotePort;
+	CurRemote.Address	= ip.SrcIP;
+	CurLocal.Port		= port;
+	CurLocal.Address	= ip.DestIP;
 
 #if NET_DEBUG
 	byte* data	= udp->Next();
@@ -79,27 +79,27 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	// 触发ITransport接口事件
 	uint len2 = OnReceive(data, len);
 	// 如果有返回，说明有数据要回复出去
-	if(len2) Write(data, len2);
+	//if(len2) Write(data, len2);
+	if(len2)
+	{
+		ByteArray bs(data, len2);
+		Send(bs, CurRemote.Address, CurRemote.Port);
+	}
 
-	IPAddress addr = ip.SrcIP;
-	IPEndPoint remote(addr, __REV16(udp.SrcPort));
 	if(OnReceived)
 	{
 		
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnReceived(*this, udp, remote, ms);
-		if(rs && ms.Remain() > 0) Send(udp, len, remote.Address, remote.Port, false);
+		bool rs = OnReceived(*this, udp, CurRemote, ms);
+		if(rs && ms.Remain() > 0) Send(udp, len, CurRemote.Address, CurRemote.Port, false);
 	}
 	else
 	{
 #if NET_DEBUG
-		addr = ip.DestIP;
-		IPEndPoint local(addr, __REV16(udp.DestPort));
-
 		debug_printf("UDP ");
-		remote.Show();
+		CurRemote.Show();
 		debug_printf(" => ");
-		local.Show();
+		CurLocal.Show();
 		debug_printf(" Payload=%d udp_len=%d \r\n", len, __REV16(udp.Length));
 
 		Sys.ShowHex(data, len);
