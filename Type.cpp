@@ -4,18 +4,35 @@
 #include <stdarg.h>
 #include "Sys.h"
 
+/******************************** Object ********************************/
+
+// 输出对象的字符串表示方式
+String& Object::ToStr(String& str)
+{
+	const char* name = typeid(*this).name();
+	while(*name >= '0' && *name <= '9') name++;
+
+	str.Set(name);
+
+	return str;
+}
+
 String Object::ToString()
 {
-	const char* str = typeid(*this).name();
-	while(*str >= '0' && *str <= '9') str++;
+	String str;
+	ToStr(str);
 
 	return str;
 }
 
 void Object::Show()
 {
-	ToString().Print();
+	String str;
+	ToStr(str);
+	str.Print();
 }
+
+/******************************** ByteArray ********************************/
 
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(str.Length())
@@ -24,55 +41,76 @@ ByteArray::ByteArray(String& str) : Array(str.Length())
 }
 
 // 显示十六进制数据，指定分隔字符
-String ByteArray::ToHex(char sep, int newLine)
+String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
 	byte* buf = GetBuffer();
 
-	// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
-	int len = Length() * 2;
-	if(sep != '\0') len += Length();
-	if(newLine > 0) len += Length() / newLine;
-
-	String str(len);
-	char* ss = str.GetBuffer();
 	int k = 0;
 	for(int i=0; i < Length(); i++, buf++)
 	{
 		byte b = *buf >> 4;
-		ss[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+		str.SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
 		b = *buf & 0x0F;
-		ss[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+		str.SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
 
 		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
 			{
-				ss[k++] = '\r';
-				ss[k++] = '\n';
+				str.SetAt(k++, '\r');
+				str.SetAt(k++, '\n');
 			}
 			else if(sep != '\0')
-				ss[k++] = sep;
+				str.SetAt(k++, sep);
 		}
 	}
-	ss[k] = '\0';
-	str.SetLength(k);
+	str.SetAt(k, '\0');
+	//str.SetLength(k);
 
 	return str;
 }
 
-String ByteArray::ToString()
+// 显示十六进制数据，指定分隔字符
+String ByteArray::ToHex(char sep, int newLine)
 {
-	return ToHex('-', 0x20);
+	String str;
+
+	return ToHex(str);
 }
 
-String& String::SetLength(int length)
+String& ByteArray::ToStr(String& str)
+{
+	return ToHex(str, '-', 0x20);
+}
+
+// 显示对象。默认显示ToString
+void ByteArray::Show()
+{
+	/*// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
+	int len = Length() * 2;
+	if(sep != '\0') len += Length();
+	if(newLine > 0) len += Length() / newLine;*/
+
+	// 采用栈分配然后复制，避免堆分配
+	char cs[512];
+	String str(cs, ArrayLength(cs));
+
+	// 如果需要的缓冲区超过512，那么让它自己分配好了
+	ToHex(str, '-', 0x20);
+
+	str.Show();
+}
+
+/******************************** String ********************************/
+
+/*String& String::SetLength(int length)
 {
 	assert_param(length <= _Capacity);
 
 	_Length = length;
 
 	return *this;
-}
+}*/
 
 // 输出对象的字符串表示方式
 String String::ToString()
@@ -150,20 +188,21 @@ String& String::Append(int value)
 String& String::Append(byte bt)
 {
 	int k = Length();
-	SetLength(k + 2);
+	//SetLength(k + 2);
 
 	byte b = bt >> 4;
-	this[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+	SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
 	b = bt & 0x0F;
-	this[k++] = b > 9 ? ('A' + b - 10) : ('0' + b);
+	SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
 
 	return *this;
 }
 
 String& String::Append(ByteArray& bs)
 {
-	assert_param2(false, "未实现");
-	bs.ToHex();
+	//assert_param2(false, "未实现");
+	//Copy(bs.ToHex(), Length());
+	bs.ToHex(*this);
 
 	return *this;
 }
@@ -171,8 +210,16 @@ String& String::Append(ByteArray& bs)
 // 调试输出字符串
 void String::Print(bool newLine)
 {
+	if(!Length()) return;
+
 	debug_printf("%s", GetBuffer());
 	if(newLine) debug_printf("\r\n");
+}
+
+// 显示对象。默认显示ToString
+void String::Show()
+{
+	Print(false);
 }
 
 String& String::Format(const char* format, ...)
@@ -190,6 +237,7 @@ String& String::Format(const char* format, ...)
 	return *this;
 }
 
+/******************************** IPAddress ********************************/
 /* IP地址 */
 
 const IPAddress IPAddress::Any(0, 0, 0, 0);
@@ -223,11 +271,10 @@ byte* IPAddress::ToArray()
 	return (byte*)&Value;
 }
 
-String IPAddress::ToString()
+String& IPAddress::ToStr(String& str)
 {
 	byte* ips = (byte*)&Value;
 
-	String str;
 	str.Format("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
 
 	return str;
@@ -238,6 +285,8 @@ void IPAddress::Show()
 	byte* ips = (byte*)&Value;
 	debug_printf("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
 }
+
+/******************************** IPEndPoint ********************************/
 
 const IPEndPoint IPEndPoint::Any(IPAddress::Any, 0);
 
@@ -253,9 +302,9 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 	Port	= port;
 }
 
-String IPEndPoint::ToString()
+String& IPEndPoint::ToStr(String& str)
 {
-	String str = Address.ToString();
+	str = Address.ToString();
 
 	char ss[7];
 	int len = sprintf(ss, ":%d", Port);
@@ -279,6 +328,7 @@ bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2)
 	return addr1.Port != addr2.Port || addr1.Address != addr2.Address;
 }
 
+/******************************** MacAddress ********************************/
 /* MAC地址 */
 
 #define MAC_MASK 0xFFFFFFFFFFFFull
@@ -338,9 +388,8 @@ bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
 	return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
 }*/
 
-String MacAddress::ToString()
+String& MacAddress::ToStr(String& str)
 {
-	String str;
 	byte* macs = (byte*)&Value;
 
 	str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);

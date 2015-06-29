@@ -46,7 +46,8 @@ private:
 protected:
 
 public:
-
+	// 输出对象的字符串表示方式
+	virtual String& ToStr(String& str);
 	// 输出对象的字符串表示方式
 	virtual String ToString();
 	// 显示对象。默认显示ToString
@@ -66,7 +67,7 @@ public:
 };*/
 
 // 数组长度
-#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
+#define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
 // 数组清零，固定长度
 #define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
 // 数组清零，可变长度
@@ -119,9 +120,14 @@ protected:
 		// 扩大长度
 		if(len > _Length) _Length = len;
 
+		// 是否超出容量
 		if(len <= _Capacity) return;
 
-		T* p = new T[len];
+		// 自动计算合适的容量
+		int k = 0x40;
+		while(k < len) k <<= 1;
+
+		T* p = new T[k];
 		ArrayZero2(p, _Capacity);
 
 		// 是否需要备份数据
@@ -130,8 +136,8 @@ protected:
 
 		Release();
 
-		_Length		= len;
-		_Capacity	= len;
+		//_Length		= len;
+		_Capacity	= k;
 		_Arr		= p;
 		_needFree	= p != NULL;
 	}
@@ -270,6 +276,17 @@ public:
 		return *this;
 	}
 
+	// 设置指定位置的值，不足时自动扩容
+	void SetAt(int i, T item)
+	{
+		// 检查长度，不足时扩容
+		CheckCapacity(i + 1, 0);
+
+		if(i >= _Length) _Length = i + 1;
+
+		_Arr[i] = item;
+	}
+
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T& operator[](int i)
 	{
@@ -291,10 +308,16 @@ public:
 	ByteArray(String& str);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
+	String& ToHex(String& str, char sep = '-', int newLine = 0x10);
+	// 显示十六进制数据，指定分隔字符和换行长度
 	String ToHex(char sep = '-', int newLine = 0x10);
 
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String& ToStr(String& str);
+	// 显示对象。默认显示ToString
+	virtual void Show();
+
+private:
 };
 
 // 字符串
@@ -310,7 +333,7 @@ public:
 	String(const String& str) : Array(str.Length()) { Copy(str); }
 
 	// 设置字符串长度
-	String& SetLength(int length);
+	//String& SetLength(int length);
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();
@@ -325,6 +348,8 @@ public:
 
 	// 调试输出字符串
 	void Print(bool newLine = false);
+	// 显示对象。默认显示ToString
+	virtual void Show();
 
 	String& Format(const char* format, ...);
 };
@@ -356,7 +381,7 @@ public:
 	uint GetSubNet(IPAddress& mask);	// 获取子网
 
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String& ToStr(String& str);
 	// 显示对象
 	virtual void Show();
 
@@ -378,7 +403,7 @@ public:
 	IPEndPoint(const IPAddress& addr, ushort port);
 
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String& ToStr(String& str);
 	// 显示对象
 	virtual void Show();
 
@@ -409,7 +434,7 @@ public:
     byte* ToArray();
 
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String& ToStr(String& str);
 	// 显示对象
 	virtual void Show();
 
