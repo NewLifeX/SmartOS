@@ -161,16 +161,18 @@ int Controller::Send(Message& msg, ITransport* port)
 	uint len = msg.Size();
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
-	Stream ms(len);
+	//Stream ms(len);
+	byte buf[512];
+	Stream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 	assert_param2(len == ms.Position(), "消息标称大小和实际大小不符");
 	// 内存流扩容以后，指针会改变
-	byte* buf = ms.GetBuffer();
+	byte* p = ms.GetBuffer();
 
 	if(port)
 	{
-		rs = port->Write(buf, len);
+		rs = port->Write(p, len);
 		return rs ? 1 : 0;
 	}
 
@@ -178,7 +180,7 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 发往所有端口
 	for(int i=0; i<_ports.Count(); i++)
 	{
-		if(_ports[i]->Write(buf, len)) count++;
+		if(_ports[i]->Write(p, len)) count++;
 	}
 
 	return count;
