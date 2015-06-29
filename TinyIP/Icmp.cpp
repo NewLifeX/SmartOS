@@ -63,10 +63,25 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	else
 	{
 #if NET_DEBUG
-		if(icmp->Type != 0)
+		/*if(icmp->Type != 0)
 			debug_printf("Ping From "); // 打印发方的ip
 		else
-			debug_printf("Ping Reply "); // 打印发方的ip
+			debug_printf("Ping Reply "); // 打印发方的ip*/
+		switch(icmp->Type)
+		{
+			case 0:
+				debug_printf("Ping Reply ");
+				break;
+			case 3:
+				debug_printf("ICMP::应用端口不可达 ");
+				break;
+			case 8:
+				debug_printf("Ping From ");
+				break;
+			default:
+				debug_printf("ICMP%d ", icmp->Type);
+				break;
+		}
 		remote.Show();
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
@@ -88,30 +103,6 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 
 	return true;
 }
-
-/*bool PingCallback(TinyIP* tip, void* param, Stream& ms)
-{
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
-	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
-
-	if(eth->Type == ETH_IP && _ip->Protocol == IP_ICMP)
-	{
-		ICMP_HEADER* icmp = (ICMP_HEADER*)_ip->Next();
-		int* ps = (int*)param;
-		uint   ip  = ps[0];
-		ushort id  = ps[1];
-		ushort seq = ps[2];
-
-		if(icmp->Identifier == id && icmp->Sequence == seq
-		&& _ip->DestIP == tip->IP.Value
-		&& _ip->SrcIP == ip)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}*/
 
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
