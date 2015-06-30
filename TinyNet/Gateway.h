@@ -34,10 +34,12 @@ public:
 	bool OnLocal(TinyMessage& msg);
 	bool OnRemote(TokenMessage& msg);
 
-	// 网关业务逻辑
+	// 远程网业务逻辑
+
+	List<Device*> Devices;
+	Device* FindDevice(byte id);
 
 	// 设备列表 0x21
-	List<Device*> Devices;
 	bool OnGetDeviceList(Message& msg);
 	// 设备信息 x025
 	bool OnGetDeviceInfo(Message& msg);
@@ -55,6 +57,8 @@ public:
 
 	// 节点离线 0x24
 	void DeviceOffline(byte id);
+
+	// 本地网业务逻辑
 };
 
 // 设备信息

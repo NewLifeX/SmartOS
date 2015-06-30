@@ -83,6 +83,40 @@ bool OnRemoteReceived(Message& msg, void* param)
 // 数据接收中心
 bool Gateway::OnLocal(TinyMessage& msg)
 {
+	// 本地处理。注册、上线、同步时间等
+	/*switch(msg.Code)
+	{
+		case 0x20:
+			return OnMode(msg);
+		case 0x21:
+			return OnGetDeviceList(msg);
+		case 0x25:
+			return OnGetDeviceInfo(msg);
+	}*/
+
+	// 临时方便调试使用
+	// 如果设备列表没有这个设备，那么加进去
+	byte id = msg.Src;
+	Device* dv = FindDevice(id);
+	if(!dv && id)
+	{
+		dv = new Device();
+		dv->ID = id;
+
+		Devices.Add(dv);
+		
+		// 模拟注册
+		DeviceRegister(id);
+		
+		// 模拟上线
+		DeviceOnline(id);
+	}
+	// 更新设备信息
+	if(dv)
+	{
+		dv->LastTime = Time.Current();
+	}
+
 	// 消息转发
 	if(msg.Code >= 0x10 && msg.Dest != 0x01)
 	{
@@ -167,15 +201,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 	debug_printf("获取节点信息\r\n");
 
 	// 找到对应该ID的设备
-	Device* dv = NULL;
-	for(int i=0; i<Devices.Count(); i++)
-	{
-		if(id == Devices[i]->ID)
-		{
-			dv = Devices[i];
-			break;
-		}
-	}
+	Device* dv = FindDevice(id);
 
 	// 即使找不到设备，也返回空负载数据
 	if(dv)
@@ -251,6 +277,18 @@ void Gateway::DeviceOffline(byte id)
 	debug_printf("节点离线\r\n");
 
 	Client->Send(msg);
+}
+
+Device* Gateway::FindDevice(byte id)
+{
+	if(id == 0) return NULL;
+
+	for(int i=0; i<Devices.Count(); i++)
+	{
+		if(id == Devices[i]->ID) return Devices[i];
+	}
+
+	return NULL;
 }
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
