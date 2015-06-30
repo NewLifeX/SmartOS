@@ -395,7 +395,7 @@ void TokenStat::ClearStat()
 	if (_Total == NULL) _Total = new TokenStat();
 
 	int p = Percent();
-	debug_printf("发：%d.%d2%% %d/%d %dus 收：%d ", p/100, p%100, Success, Send, Speed(), Receive);
+	debug_printf("令牌发：%d.%d2%% %d/%d %dus 收：%d ", p/100, p%100, Success, Send, Speed(), Receive);
 	p = _Total->Percent();
 	debug_printf("总发：%d.%d2%% %d/%d %dus 收：%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->Speed(), _Total->Receive);
 
