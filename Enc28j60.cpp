@@ -303,15 +303,24 @@ typedef union {
 	} bits;
 } TXSTATUS;
 
+// 重启任务
+void ResetTask(void* param);
+
 Enc28j60::Enc28j60()
 {
 	_spi = NULL;
+
+	LastTime	= Time.Current();
+	ResetPeriod	= 6000000;
+	_ResetTask	= 0;
 }
 
 Enc28j60::~Enc28j60()
 {
 	delete _spi;
 	_spi = NULL;
+
+	if(_ResetTask) Sys.RemoveTask(_ResetTask);
 }
 
 void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
@@ -462,7 +471,7 @@ bool Enc28j60::OnOpen()
 	assert_param(Mac);
 
 	debug_printf("Enc28j60::Open(%02X-%02X-%02X-%02X-%02X-%02X)\r\n", Mac[0], Mac[1], Mac[2], Mac[3], Mac[4], Mac[5]);
-	
+
 	if(!_reset.Empty())
 	{
 		_reset = false;
@@ -478,11 +487,13 @@ bool Enc28j60::OnOpen()
         Sys.Sleep(100);
         _ce = true;
     }
-	
+
 	// 检查并打开Spi
 	_spi->Open();
 
     // 系统软重启
+	byte sr = ReadOp(ENC28J60_SOFT_RESET, 0);
+	debug_printf("ENC28J60::SOFT_RESET=%d\r\n", sr);
     WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
 	//Sys.Sleep(3);
 
@@ -586,6 +597,15 @@ bool Enc28j60::OnOpen()
     ClockOut(2);
 
 	debug_printf("Enc28j60::Inited! Revision=%d\r\n", rev);
+
+	LastTime = Time.Current();
+
+	if(!_ResetTask)
+	{
+		debug_printf("Enc28j60::出错检查 ");
+		_ResetTask = Sys.AddTask(ResetTask, this, 500000, 500000);
+	}
+
 	return true;
 }
 
@@ -758,6 +778,9 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     // 数据包个数递减位EPKTCNT减1
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
 
+	// 最后收到数据包的时间
+	LastTime = Time.Current();
+
     return len;
 }
 
@@ -765,4 +788,21 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
 bool Enc28j60::Linked()
 {
 	return PhyRead(PHSTAT1) & PHSTAT1_LLSTAT;
+}
+
+void Enc28j60::CheckError()
+{
+	ulong ts = Time.Current() - LastTime;
+	if(ResetPeriod < ts)
+	{
+		debug_printf("Enc28j60::超过%d秒没有收到任何数据，重新初始化 ", (int)(ts/1000000));
+		Opened = false;
+		Open();
+	}
+}
+
+void ResetTask(void* param)
+{
+	Enc28j60* enc = (Enc28j60*)param;
+	enc->CheckError();
 }
