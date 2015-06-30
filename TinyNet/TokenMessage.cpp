@@ -317,14 +317,15 @@ void TokenController::EndSendStat(byte code, bool success)
 		{
 			if(success)
 			{
-				int ts = (int)(Time.Current() - _Queue[i].Time);
-				if(ts < 1000000)
+				int cost = (int)(Time.Current() - _Queue[i].Time);
+				// 莫名其妙，有时候竟然是负数
+				if(cost < 0) cost = -cost;
+				if(cost < 1000000)
 				{
 					Stat->Success++;
 
-					Stat->Time += ts;
+					Stat->Time += cost;
 				}
-
 			}
 
 			_Queue[i].Code	= 0;
@@ -371,7 +372,7 @@ int TokenStat::Percent()
 		sucs += _Last->Success;
 	}
 	if(send == 0) return 0;
-	
+
 	return sucs * 10000 / send;
 }
 
@@ -385,7 +386,7 @@ int TokenStat::Speed()
 		sucs += _Last->Success;
 	}
 	if(sucs == 0) return 0;
-	
+
 	return time / sucs;
 }
 
