@@ -660,7 +660,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	CEUp();
 
 	// 进入发射模式等一会
-	if(!isReceive) Sys.Delay(10);
+	if(!isReceive) Sys.Delay(200);
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
 	mode = ReadReg(CONFIG);
