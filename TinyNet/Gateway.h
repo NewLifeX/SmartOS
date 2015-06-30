@@ -38,9 +38,9 @@ public:
 
 	// 设备列表 0x21
 	List<Device*> Devices;
-	void OnGetDeviceList(Message& msg);
+	void OnGetDeviceList(TokenMessage& msg);
 	// 设备信息 x025
-	void OnGetDeviceInfo(Message& msg);
+	void OnGetDeviceInfo(TokenMessage& msg);
 
 	// 学习模式 0x20
 	bool	Student;

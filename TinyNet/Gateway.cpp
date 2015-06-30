@@ -106,20 +106,29 @@ void Gateway::OnRemote(TokenMessage& msg)
 		msg.Show();
 
 		// 需要转发给内网的数据，都至少带有节点ID
-		if(msg.Length <= 0)
+	/*	if(msg.Length <= 0)
 		{
 			debug_printf("远程网收到的消息应该带有附加数据\r\n");
 			return;
 		}
-
-		TinyMessage tmsg;
-		TokenToTiny(msg, tmsg);
-		Server->Send(tmsg);
+		*/
+		switch(msg.Code)
+		{
+			case 0x21:OnGetDeviceList(msg);
+			break;
+			case 0x25:OnGetDeviceInfo(msg); 
+			break;
+			default:
+			TinyMessage tmsg;
+		    TokenToTiny(msg, tmsg);
+		    Server->Send(tmsg);
+		 break;
+		}		
 	}
 }
 
 // 设备列表 0x21
-void Gateway::OnGetDeviceList(Message& msg)
+void Gateway::OnGetDeviceList(TokenMessage& msg)
 {
 	// 不管请求内容是什么，都返回设备ID列表
 	TokenMessage rs;
@@ -130,12 +139,12 @@ void Gateway::OnGetDeviceList(Message& msg)
 		rs.Data[i] = Devices[i]->ID;
 
 	rs.Length = i;
-
+   debug_printf(" 获取设备列表\r\n");
 	Client->Reply(rs);
 }
 
 // 设备信息 x025
-void Gateway::OnGetDeviceInfo(Message& msg)
+void Gateway::OnGetDeviceInfo(TokenMessage& msg)
 {
 	TokenMessage rs;
 	rs.Code = msg.Code;
@@ -143,6 +152,7 @@ void Gateway::OnGetDeviceInfo(Message& msg)
 	// 如果未指定设备ID，则默认为1，表示网关自身
 	byte id = 1;
 	if(rs.Length > 0) id = msg.Data[0];
+	debug_printf("获取节点信息\r\n");
 
 	// 找到对应该ID的设备
 	Device* dv = NULL;
@@ -182,6 +192,7 @@ void Gateway::SetMode(bool student)
 	msg.Code = 0x20;
 	msg.Length = 1;
 	msg.Data[0] = student ? 1 : 0;
+	debug_printf("学习模式\r\n");
 
 	Client->Send(msg);
 }
@@ -199,6 +210,7 @@ void Gateway::DeviceRegister(byte id)
 	msg.Code = 0x22;
 	msg.Length = 1;
 	msg.Data[0] = id;
+	debug_printf("节点注册入网\r\n");
 
 	Client->Send(msg);
 }
@@ -210,6 +222,7 @@ void Gateway::DeviceOnline(byte id)
 	msg.Code = 0x23;
 	msg.Length = 1;
 	msg.Data[0] = id;
+	debug_printf("节点上线\r\n");
 
 	Client->Send(msg);
 }
@@ -221,6 +234,7 @@ void Gateway::DeviceOffline(byte id)
 	msg.Code = 0x24;
 	msg.Length = 1;
 	msg.Data[0] = id;
+	debug_printf("节点离线\r\n");
 
 	Client->Send(msg);
 }
@@ -228,6 +242,7 @@ void Gateway::DeviceOffline(byte id)
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 {
 	msg2.Code = msg.Code;
+	if(msg.Length>0)
 	// 第一个字节是节点设备地址
 	msg2.Dest = msg.Data[0];
 	if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
