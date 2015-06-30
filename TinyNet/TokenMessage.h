@@ -52,11 +52,11 @@ class TokenController : public Controller
 private:
 
 protected:
-	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
+	virtual bool Dispatch(Stream& ms, Message* pmsg);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool Valid(Message& msg, ITransport* port);
+	virtual bool Valid(Message& msg);
 	// 接收处理函数
-	virtual bool OnReceive(Message& msg, ITransport* port);
+	virtual bool OnReceive(Message& msg);
 
 public:
 	uint		Token;	// 令牌
@@ -68,7 +68,7 @@ public:
 	virtual void Close();
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	virtual int Send(Message& msg, ITransport* port = NULL);
+	virtual bool Send(Message& msg);
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual bool Send(byte code, byte* buf = NULL, uint len = 0);
 

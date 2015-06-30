@@ -11,6 +11,7 @@
 // 构造控制器
 Controller::Controller()
 {
+	Port		= NULL;
 	MinSize 	= 0;
 	Opened		= false;
 
@@ -23,31 +24,19 @@ Controller::~Controller()
 	Close();
 
 	_Handlers.DeleteAll().Clear();
-	_ports.DeleteAll().Clear();
+	if(Port) delete Port;
 
 	debug_printf("TinyNet::UnInit\r\n");
-}
-
-// 添加传输口
-void Controller::AddTransport(ITransport* port)
-{
-	assert_ptr(port);
-	assert_param2(_ports.Count() < 4, "最多4个传输口");
-
-	debug_printf("\r\nTinyNet::AddTransport 添加传输口：%s\r\n", port->ToString());
-
-	_ports.Add(port);
 }
 
 void Controller::Open()
 {
 	if(Opened) return;
 
-	assert_param2(_ports.Count() > 0, "还没有传输口呢");
+	assert_param2(Port, "还没有传输口呢");
 
 	// 注册收到数据事件
-	for(int i=0; i<_ports.Count(); i++)
-		_ports[i]->Register(Dispatch, this);
+	Port->Register(Dispatch, this);
 
 	Opened = true;
 }
@@ -59,7 +48,7 @@ void Controller::Close()
 	Opened = false;
 }
 
-uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)
+uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 {
 	assert_ptr(buf);
 	assert_ptr(param);
@@ -72,13 +61,13 @@ uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* para
 	while(ms.Remain() >= control->MinSize)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, NULL, transport)) break;
+		if(!control->Dispatch(ms, NULL)) break;
 	}
 
 	return 0;
 }
 
-bool Controller::Dispatch(Stream& ms, Message* pmsg, ITransport* port)
+bool Controller::Dispatch(Stream& ms, Message* pmsg)
 {
 	byte* buf = ms.Current();
 
@@ -95,18 +84,18 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, ITransport* port)
 	// 校验
 	if(!msg.Valid()) return true;
 
-	if(!Valid(msg, port)) return true;
+	if(!Valid(msg)) return true;
 
-	return OnReceive(msg, port);
+	return OnReceive(msg);
 }
 
-bool Controller::Valid(Message& msg, ITransport* port)
+bool Controller::Valid(Message& msg)
 {
 	return true;
 }
 
 // 接收处理
-bool Controller::OnReceive(Message& msg, ITransport* port)
+bool Controller::OnReceive(Message& msg)
 {
 	// 选择处理器来处理消息
 	// 倒序选择处理器来处理消息，让后注册处理器有更高优先权
@@ -158,14 +147,10 @@ void Controller::Register(byte code, MessageHandler handler, void* param)
 	_Handlers.Add(lookup);
 }
 
-int Controller::Send(Message& msg, ITransport* port)
+bool Controller::Send(Message& msg)
 {
 	// 如果没有传输口处于打开状态，则发送失败
-	if(port && !port->Open()) return -1;
-	bool rs = false;
-	for(int i=0; i<_ports.Count(); i++)
-		rs |= _ports[i]->Open();
-	if(!rs) return -1;
+	if(!Port->Open()) return false;
 
 	uint len = msg.Size();
 
@@ -179,25 +164,12 @@ int Controller::Send(Message& msg, ITransport* port)
 	// 内存流扩容以后，指针会改变
 	byte* p = ms.GetBuffer();
 
-	if(port)
-	{
-		rs = port->Write(p, len);
-		return rs ? 1 : 0;
-	}
-
-	int count = 0;
-	// 发往所有端口
-	for(int i=0; i<_ports.Count(); i++)
-	{
-		if(_ports[i]->Write(p, len)) count++;
-	}
-
-	return count;
+	return Port->Write(p, len);
 }
 
-int Controller::Reply(Message& msg, ITransport* port)
+bool Controller::Reply(Message& msg)
 {
 	msg.Reply = 1;
 
-	return Send(msg, port);
+	return Send(msg);
 }

@@ -115,13 +115,13 @@ private:
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
 
-	void AckRequest(TinyMessage& msg, ITransport* port);	// 处理收到的Ack包
-	void AckResponse(TinyMessage& msg, ITransport* port);	// 向对方发出Ack包
+	void AckRequest(TinyMessage& msg);	// 处理收到的Ack包
+	void AckResponse(TinyMessage& msg);	// 向对方发出Ack包
 
 protected:
-	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
+	virtual bool Dispatch(Stream& ms, Message* pmsg);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool Valid(Message& msg, ITransport* port);
+	virtual bool Valid(Message& msg);
 
 public:
 	byte	Address;	// 本地地址
@@ -134,15 +134,15 @@ public:
 	virtual void Open();
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	virtual int Send(Message& msg, ITransport* port = NULL);
+	virtual bool Send(Message& msg);
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0, ITransport* port = NULL);
+	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0);
 	// 把消息放入发送队列，timerout毫秒超时时间内，如果对方没有响应，会重复发送
-	bool Post(TinyMessage& msg, int expire = -1, ITransport* port = NULL);
+	bool Post(TinyMessage& msg, int expire = -1);
 	// 回复对方的请求消息
-	virtual int Reply(Message& msg, ITransport* port = NULL);
-	//bool Error(TinyMessage& msg, ITransport* port = NULL);
+	virtual bool Reply(Message& msg);
+	//bool Error(TinyMessage& msg, ITransport& port = NULL);
 
 	// 循环处理待发送的消息队列
 	void Loop();
@@ -160,8 +160,6 @@ public:
 class MessageNode
 {
 public:
-	List<ITransport*> Ports;	// 未收到响应消息的传输口
-	//byte		PortCount;	// 传输口数
 	byte		Sequence;	// 序列号
 	byte		Data[32];
 	uint		Length;

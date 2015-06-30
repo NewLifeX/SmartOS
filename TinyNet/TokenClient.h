@@ -34,8 +34,8 @@ public:
 	void Close();
 
 	// 发送消息
-	void Send(TokenMessage& msg);
-	void Reply(TokenMessage& msg);
+	bool Send(TokenMessage& msg);
+	bool Reply(TokenMessage& msg);
 	bool OnReceive(TokenMessage& msg);
 
 	// 收到功能消息时触发
@@ -56,15 +56,6 @@ public:
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 	bool OnPing(TokenMessage& msg);
-
-	/*// 询问及设置系统时间
-	static bool SysTime(TokenMessage& msg, void* param);
-
-	// 询问系统标识号
-	static bool SysID(TokenMessage& msg, void* param);
-
-	// 设置系统模式
-	static bool SysMode(TokenMessage& msg, void* param);*/
 
 // 通用用户级消息
 public:

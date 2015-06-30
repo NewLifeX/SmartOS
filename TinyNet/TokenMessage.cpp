@@ -110,7 +110,7 @@ void TokenController::Open()
 {
 	if(Opened) return;
 
-	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
+	debug_printf("TokenNet::Inited 使用传输接口 %s\r\n", Port->ToString());
 
 	if(!Stat)
 	{
@@ -140,14 +140,14 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 	return Send(msg);
 }
 
-bool TokenController::Dispatch(Stream& ms, Message* pmsg, ITransport* port)
+bool TokenController::Dispatch(Stream& ms, Message* pmsg)
 {
 	TokenMessage msg;
-	return Controller::Dispatch(ms, &msg, port);
+	return Controller::Dispatch(ms, &msg);
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TokenController::Valid(Message& msg, ITransport* port)
+bool TokenController::Valid(Message& msg)
 {
 	// 代码为0是非法的
 	if(!msg.Code) return false;
@@ -175,7 +175,7 @@ bool Encrypt(Message& msg, ByteArray& pass)
 }
 
 // 接收处理函数
-bool TokenController::OnReceive(Message& msg, ITransport* port)
+bool TokenController::OnReceive(Message& msg)
 {
 #if MSG_DEBUG
 	debug_printf("Token::Recv ");
@@ -194,7 +194,7 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 		ack.Length = 1;
 		ack.Data[0] = code;	// 这里考虑最高位
 
-		Reply(ack, port);
+		Reply(ack);
 	}
 
 	// 如果有等待响应，则交给它
@@ -221,11 +221,11 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
 
-	return Controller::OnReceive(msg, port);
+	return Controller::OnReceive(msg);
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
-int TokenController::Send(Message& msg, ITransport* port)
+bool TokenController::Send(Message& msg)
 {
 #if MSG_DEBUG
 	debug_printf("Token::Send ");
@@ -238,7 +238,7 @@ int TokenController::Send(Message& msg, ITransport* port)
 	// 加入统计
 	if(!msg.Reply) StartSendStat(msg.Code);
 
-	return Controller::Send(msg, port);
+	return Controller::Send(msg);
 }
 
 // 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送

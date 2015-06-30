@@ -66,9 +66,7 @@ bool OnLocalReceived(Message& msg, void* param)
 	Gateway* server = (Gateway*)param;
 	assert_ptr(server);
 
-	server->OnLocal((TinyMessage&)msg);
-
-	return true;
+	return server->OnLocal((TinyMessage&)msg);
 }
 
 // 远程网收到服务端消息
@@ -77,13 +75,11 @@ bool OnRemoteReceived(Message& msg, void* param)
 	Gateway* server = (Gateway*)param;
 	assert_ptr(server);
 
-	server->OnRemote((TokenMessage&)msg);
-
-	return true;
+	return server->OnRemote((TokenMessage&)msg);
 }
 
 // 数据接收中心
-void Gateway::OnLocal(TinyMessage& msg)
+bool Gateway::OnLocal(TinyMessage& msg)
 {
 	// 消息转发
 	if(msg.Code >= 0x10 && msg.Dest != 0x01)
@@ -95,10 +91,23 @@ void Gateway::OnLocal(TinyMessage& msg)
 		TinyToToken(msg, tmsg);
 		Client->Send(tmsg);
 	}
+
+	return true;
 }
 
-void Gateway::OnRemote(TokenMessage& msg)
+bool Gateway::OnRemote(TokenMessage& msg)
 {
+	// 本地处理
+	switch(msg.Code)
+	{
+		case 0x20:
+			return OnMode(msg);
+		case 0x21:
+			return OnMode(msg);
+		case 0x25:
+			return OnMode(msg);
+	}
+
 	// 消息转发
 	if(msg.Code >= 0x10)
 	{
@@ -109,7 +118,7 @@ void Gateway::OnRemote(TokenMessage& msg)
 	/*	if(msg.Length <= 0)
 		{
 			debug_printf("远程网收到的消息应该带有附加数据\r\n");
-			return;
+			return false;
 		}
 		*/
 		switch(msg.Code)
@@ -125,9 +134,12 @@ void Gateway::OnRemote(TokenMessage& msg)
 		 break;
 		}		
 	}
+
+	return true;
 }
 
 // 设备列表 0x21
+bool Gateway::OnGetDeviceList(Message& msg)
 void Gateway::OnGetDeviceList(TokenMessage& msg)
 {
 	// 不管请求内容是什么，都返回设备ID列表
@@ -149,10 +161,11 @@ void Gateway::OnGetDeviceList(TokenMessage& msg)
 	}
 	
     debug_printf(" 获取设备列表\r\n");
-	Client->Reply(rs);
+	return Client->Reply(rs);
 }
 
 // 设备信息 x025
+bool Gateway::OnGetDeviceInfo(Message& msg)
 void Gateway::OnGetDeviceInfo(TokenMessage& msg)
 {
 	TokenMessage rs;
@@ -186,10 +199,10 @@ void Gateway::OnGetDeviceInfo(TokenMessage& msg)
 		rs.Data = ms.GetBuffer();
 		rs.Length = ms.Position();
 
-		Client->Reply(rs);
+		return Client->Reply(rs);
 	}
 	else
-		Client->Reply(rs);
+		return Client->Reply(rs);
 }
 
 // 学习模式 0x20
@@ -206,10 +219,12 @@ void Gateway::SetMode(bool student)
 	Client->Send(msg);
 }
 
-void Gateway::OnMode(Message& msg)
+bool Gateway::OnMode(Message& msg)
 {
 	bool rs = msg.Data[0] != 0;
 	SetMode(rs);
+
+	return true;
 }
 
 // 节点注册入网 0x22

@@ -64,14 +64,14 @@ void TokenClient::Close()
 	if(_taskHello) Sys.RemoveTask(_taskHello);
 }
 
-void TokenClient::Send(TokenMessage& msg)
+bool TokenClient::Send(TokenMessage& msg)
 {
-	Control->Send(msg);
+	return Control->Send(msg);
 }
 
-void TokenClient::Reply(TokenMessage& msg)
+bool TokenClient::Reply(TokenMessage& msg)
 {
-	Control->Reply(msg);
+	return Control->Reply(msg);
 }
 
 bool TokenClient::OnReceive(TokenMessage& msg)
@@ -154,7 +154,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 		Udp->Remote.Address	= IPAddress::Broadcast;
 		Udp->Remote.Port	= port;
 
-		Control->Send(msg, Udp);
+		Control->Send(msg);
 
 		// 还原回来原来的地址端口
 		Udp->Remote = ep;
@@ -184,6 +184,18 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		Control->Key = ext.Key;
 
 		Login();
+	}
+	else if(!msg.Reply)
+	{
+		TokenMessage rs;
+		rs.Code = msg.Code;
+		
+		HelloMessage ext(Hello);
+		ext.Reply = msg.Reply;
+		ext.LocalTime = Time.Current();
+		ext.Write(rs);
+		
+		Reply(rs);
 	}
 
 	return true;

@@ -31,21 +31,21 @@ public:
 	MessageHandler Received;
 
 	// 数据接收中心
-	void OnLocal(TinyMessage& msg);
-	void OnRemote(TokenMessage& msg);
+	bool OnLocal(TinyMessage& msg);
+	bool OnRemote(TokenMessage& msg);
 
 	// 网关业务逻辑
 
 	// 设备列表 0x21
 	List<Device*> Devices;
-	void OnGetDeviceList(TokenMessage& msg);
+	bool OnGetDeviceList(Message& msg);
 	// 设备信息 x025
-	void OnGetDeviceInfo(TokenMessage& msg);
+	bool OnGetDeviceInfo(Message& msg);
 
 	// 学习模式 0x20
 	bool	Student;
 	void SetMode(bool student);
-	void OnMode(Message& msg);
+	bool OnMode(Message& msg);
 
 	// 节点注册入网 0x22
 	void DeviceRegister(byte id);

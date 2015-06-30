@@ -16,33 +16,31 @@ typedef bool (*MessageHandler)(Message& msg, void* param);
 class Controller
 {
 private:
-	static uint Dispatch(ITransport* transport, byte* buf, uint len, void* param);
+	static uint Dispatch(ITransport* port, byte* buf, uint len, void* param);
 
 protected:
-	List<ITransport*>	_ports;	// 数据传输口数组
-	byte	MinSize;	// 最小消息大小
 
-	virtual bool Dispatch(Stream& ms, Message* pmsg, ITransport* port);
+	virtual bool Dispatch(Stream& ms, Message* pmsg);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool Valid(Message& msg, ITransport* port);
+	virtual bool Valid(Message& msg);
 	// 接收处理
-	virtual bool OnReceive(Message& msg, ITransport* port);
+	virtual bool OnReceive(Message& msg);
 
 public:
-	bool Opened;
+	ITransport*	Port;		// 数据传输口数组
+	byte		MinSize;	// 最小消息大小
+	bool 		Opened;
 
 	Controller();
 	virtual ~Controller();
 
-	// 添加传输口
-	void AddTransport(ITransport* port);
 	virtual void Open();
 	virtual void Close();
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	virtual int Send(Message& msg, ITransport* port = NULL);
+	virtual bool Send(Message& msg);
 	// 回复对方的请求消息
-	virtual int Reply(Message& msg, ITransport* port = NULL);
+	virtual bool Reply(Message& msg);
 
 // 发送核心
 protected:
