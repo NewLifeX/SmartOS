@@ -3,8 +3,13 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-#include "TinyNet\TinyServer.h"
-#include "TinyNet\TokenClient.h"
+#include "TinyServer.h"
+#include "TokenClient.h"
+
+#include "TinyMessage.h"
+#include "TokenMessage.h"
+
+class Device;
 
 // 网关服务器
 class Gateway
@@ -24,6 +29,48 @@ public:
 
 	// 收到功能消息时触发
 	MessageHandler Received;
+	
+	// 数据接收中心
+	void OnLocal(TinyMessage& msg);
+	void OnRemote(TokenMessage& msg);
+	
+	// 网关业务逻辑
+	
+	// 设备列表 0x21
+	List<Device> Devices;
+	void OnGetDeviceList(Message& msg);
+	// 设备信息 x025
+	void OnGetDeviceInfo(Message& msg);
+	
+	// 学习模式 0x20
+	bool	Student;
+	void SetMode(bool student);
+	void OnMode(Message& msg);
+	
+	// 节点注册入网 0x22
+	void DeviceRegister(byte id);
+	
+	// 节点上线 0x23
+	void DeviceOnline(byte id);
+	
+	// 节点离线 0x24
+	void DeviceOffline(byte id);
 };
+
+// 设备信息
+class Device : public Object
+{
+public:
+	byte	ID;			// 节点ID
+	ushort	Type;		// 类型
+	ByteArray	HardID;	// 物理ID
+	ulong	LastTime;	// 活跃时间
+	byte	Switchs;	// 开关数
+	byte	Analogs;	// 通道数
+	String	Name;		// 名称
+};
+
+bool operator==(const Device& d1, const Device& d2);
+bool operator!=(const Device& d1, const Device& d2);
 
 #endif

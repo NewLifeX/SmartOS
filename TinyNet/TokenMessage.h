@@ -105,7 +105,7 @@ public:
 };
 
 // 令牌统计
-class TokenStat : public Object
+class TokenStat
 {
 public:
 	int		Send;

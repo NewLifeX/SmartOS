@@ -4,59 +4,8 @@
 #include <stddef.h>
 #include "Sys.h"
 
-// 数组长度
-//#define ArrayLength(arr) sizeof(arr)/sizeof(arr[0])
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
-
-/*// 迭代器
-template<typename T>
-class IEnumerator
-{
-public:
-	virtual T& Current()	= 0;	// 获取集合中的当前元素
-	virtual bool MoveNext()	= 0;	// 将枚举数推进到集合的下一个元素
-	virtual void Reset()	= 0;	// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
-
-	virtual void Remove()	= 0;	// 从列表中移除当前节点
-};
-
-// 公开枚举数，该枚举数支持在指定类型的集合上进行简单迭代
-template<typename T>
-class IEnumerable
-{
-public:
-	virtual IEnumerator<T>* GetEnumerator() = 0;	// 返回一个循环访问集合的枚举数
-};
-
-// 集合接口
-template<typename T>
-class ICollection
-{
-public:
-	virtual int Count() const			= 0;	// 集合中包含的元素数
-	virtual void Add(const T& item)		= 0;	// 将某项添加到集合
-	virtual void Remove(const T& item)	= 0;	// 从集合中移除特定对象的第一个匹配项
-	virtual bool Contains(const T& item)= 0;	// 确定集合是否包含特定值
-	virtual void Clear()				= 0;	// 从集合中移除所有项
-	virtual void CopyTo(T* arr)			= 0;	// 将集合元素复制到数组中
-};
-
-// foreach宏，用于遍历迭代器接口，必须和foreach_end成对出现
-#define foreach(cls,cur,list)					\
-	{												\
-		IEnumerator<cls>* et = list.GetEnumerator();\
-		while(et->MoveNext())						\
-		{											\
-			cls cur = et->Current();				\
-
-#define foreach_end()	\
-		}					\
-		delete et;			\
-	}
-
-// 用于在迭代器中删除当前节点的宏
-#define foreach_remove() et->Remove();*/
 
 // 数组
 class JArray
@@ -282,7 +231,7 @@ public:
 // 变长列表模版
 // T一般是指针，列表内部有一个数组用于存放指针
 template<typename T>
-class List //: public IEnumerable<T>, public ICollection<T>
+class List
 {
 private:
     uint _Count;// 拥有实际元素个数
@@ -449,57 +398,12 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     T operator[](int i)
 	{
-		//assert_param(i >= 0 && i < _Count);
+		assert_param(i >= 0 && i < _Count);
 		// 有可能多线程冲突
-		if(i < 0 || i >= _Count) return NULL;
+		//if(i < 0 || i >= _Count) return NULL;
 		
 		return _Arr[i];
 	}
-
-	// 列表转为指针，注意安全
-    //const T* operator=(List& list) { return list.ToArray(); }
-
-/*private:
-	class ListEnumerator : public IEnumerator<T>
-	{
-	private:
-		List*	_List;
-		int		_Index;
-
-	public:
-		ListEnumerator(List* list)
-		{
-			_List = list;
-			_Index = -1;
-		}
-
-		// 获取集合中的当前元素
-		virtual T& Current() { return _List->_Arr[_Index]; }
-		// 将枚举数推进到集合的下一个元素
-		virtual bool MoveNext()
-		{
-			_Index++;
-			if(_Index >= _List->_Count) _Index = -1;
-
-			return _Index >= 0;
-		}
-		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
-		virtual void Reset() { _Index = -1; }
-		// 从列表中移除当前节点
-		virtual void Remove()
-		{
-			// 删除当前节点后，索引后移一位，因为后面的数据前移了一位
-			_List->RemoveAt(_Index);
-			_Index--;
-		}
-	};
-
-public:
-	// 返回一个循环访问集合的枚举数。外部释放
-	virtual IEnumerator<T>* GetEnumerator()
-	{
-		return new ListEnumerator(this);
-	}*/
 };
 
 // 双向链表
@@ -567,7 +471,7 @@ public:
 
 // 双向链表
 template <class T>
-class LinkedList //: public IEnumerable<T>, public ICollection<T>
+class LinkedList
 {
 public:
     // 链表节点。实体类不需要继承该内部类
@@ -705,50 +609,6 @@ public:
 			*arr++ = node->Item;
 		}
 	}
-
-/*private:
-	// 链表迭代器
-	class LinkedListEnumerator : public IEnumerator<T>
-	{
-	private:
-		LinkedList* _List;
-		Node*		_Current;	// 当前节点
-		Node*		_Next;		// 下一个节点。考虑到中途可能删节点，必须提前备好下一个
-
-	public:
-		LinkedListEnumerator(LinkedList* list)
-		{
-			_List		= list;
-			_Current	= NULL;
-			_Next		= _List->_Head;
-		}
-
-		// 获取集合中的当前元素
-		virtual T& Current() { return _Current->Item; }
-		// 将枚举数推进到集合的下一个元素
-		virtual bool MoveNext()
-		{
-			// 总是提前计算下一个节点，以免中途当前节点被删除
-			_Current = _Next;
-			if(_Current) _Next = _Current->Next;
-
-			return _Current != NULL;
-		}
-		// 将枚举数设置为其初始位置，该位置位于集合中第一个元素之前
-		virtual void Reset() { _Current = NULL; _Next = _List->_Head; }
-		// 从列表中移除当前节点
-		virtual void Remove()
-		{
-			_List->Remove(_Current);
-		}
-	};
-
-public:
-	// 返回一个循环访问集合的枚举数。外部释放
-	virtual IEnumerator<T>* GetEnumerator()
-	{
-		return new LinkedListEnumerator(this);
-	}*/
 
 	T& First() { return _Head->Item; }
 	T& Last() { return _Tail->Item; }
