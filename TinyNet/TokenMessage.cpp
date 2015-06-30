@@ -102,6 +102,8 @@ TokenController::TokenController() : Controller(), Key(0)
 	MinSize = TokenMessage::MinSize;
 
 	_Response = NULL;
+
+	Stat	= NULL;
 }
 
 void TokenController::Open()
@@ -110,7 +112,22 @@ void TokenController::Open()
 
 	debug_printf("TokenNet::Inited 使用[%d]个传输接口 %s\r\n", _ports.Count(), _ports[0]->ToString());
 
+	if(!Stat)
+	{
+		Stat = new TokenStat();
+		Stat->Start();
+	}
+
 	Controller::Open();
+}
+
+void TokenController::Close()
+{
+	if(!Stat)
+	{
+		delete Stat;
+		Stat = NULL;
+	}
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
@@ -165,6 +182,9 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 	msg.Show();
 #endif
 
+	byte code = msg.Code;
+	if(msg.Reply) code |= 0x80;
+
 	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
 	// 系统指令也不需要确认
 	if(msg.Reply && msg.Code != 0x08 && msg.Code >= 0x10)
@@ -172,25 +192,31 @@ bool TokenController::OnReceive(Message& msg, ITransport* port)
 		TokenMessage ack;
 		ack.Code = 0x08;
 		ack.Length = 1;
-		ack.Data[0] = msg.Code | 0x80;	// 这里考虑最高位
+		ack.Data[0] = code;	// 这里考虑最高位
 
 		Reply(ack, port);
 	}
 
 	// 如果有等待响应，则交给它
-	if(msg.Reply && _Response && msg.Code == _Response->Code)
+	if(msg.Reply && _Response && (msg.Code == _Response->Code || msg.Code == 0x08 && msg.Data[0] == _Response->Code))
 	{
-		if(msg.Length > 0) _Response->SetData(msg.Data, msg.Length);
+		_Response->SetData(msg.Data, msg.Length);
 		_Response->Reply = true;
 
 		return true;
 	}
 
+	if(msg.Reply && msg.Code != 0x08) EndSendStat(code, true);
+
 	// 确认指令已完成使命直接跳出
 	if(msg.Code == 0x08)
 	{
+		if(msg.Length >= 1) EndSendStat(msg.Data[0], true);
+
 		return true;
 	}
+
+	if(!msg.Reply) Stat->Receive++;
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
@@ -209,6 +235,9 @@ int TokenController::Send(Message& msg, ITransport* port)
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
 
+	// 加入统计
+	if(!msg.Reply) StartSendStat(msg.Code);
+
 	return Controller::Send(msg, port);
 }
 
@@ -222,6 +251,11 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 #endif
 
 	if(msg.Reply) return Send(msg) != 0;
+
+	byte code = msg.Code;
+	if(msg.Reply) code |= 0x80;
+	// 加入统计
+	if(!msg.Reply) StartSendStat(msg.Code);
 
 	_Response = &msg;
 
@@ -250,5 +284,133 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 
 	_Response = NULL;
 
+	EndSendStat(code, rs);
+
 	return rs;
+}
+
+void TokenController::StartSendStat(byte code)
+{
+	// 仅统计请求信息，不统计响应信息
+	if ((code & 0x80) != 0) return;
+
+	Stat->Send++;
+
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		if(_Queue[i].Code == 0)
+		{
+			_Queue[i].Code	= code;
+			_Queue[i].Time	= Time.Current();
+			break;
+		}
+	}
+}
+
+void TokenController::EndSendStat(byte code, bool success)
+{
+	code &= 0x7F;
+
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		if(_Queue[i].Code == code)
+		{
+			if(success)
+			{
+				int ts = (int)(Time.Current() - _Queue[i].Time);
+				if(ts < 1000000)
+				{
+					Stat->Success++;
+
+					Stat->Time += ts;
+				}
+
+			}
+
+			_Queue[i].Code	= 0;
+
+			break;
+		}
+	}
+}
+
+/*TokenStat::TokenStat()
+{
+
+}*/
+
+TokenStat::~TokenStat()
+{
+	if (_Last == NULL) delete _Last;
+	if (_Total == NULL) delete _Total;
+
+	if(_taskID) Sys.RemoveTask(_taskID);
+}
+
+void TokenStat::StatTask(void* param)
+{
+	TokenStat* st = (TokenStat*)param;
+	st->ClearStat();
+}
+
+void TokenStat::Start()
+{
+	if(_taskID) return;
+
+	debug_printf("TokenStat::令牌统计 ");
+	_taskID = Sys.AddTask(StatTask, this, 5000000, 10000000);
+}
+
+int TokenStat::Percent()
+{
+	int send = Send;
+	int sucs = Success;
+	if(_Last)
+	{
+		send += _Last->Send;
+		sucs += _Last->Success;
+	}
+	if(send == 0) return 0;
+	
+	return sucs * 10000 / send;
+}
+
+int TokenStat::Speed()
+{
+	int time = Time;
+	int sucs = Success;
+	if(_Last)
+	{
+		time += _Last->Time;
+		sucs += _Last->Success;
+	}
+	if(sucs == 0) return 0;
+	
+	return time / sucs;
+}
+
+void TokenStat::ClearStat()
+{
+	if (_Last == NULL) _Last = new TokenStat();
+	if (_Total == NULL) _Total = new TokenStat();
+
+	int p = Percent();
+	debug_printf("发：%d.%d2%% %d/%d %dus 收：%d ", p/100, p%100, Success, Send, Speed(), Receive);
+	p = _Total->Percent();
+	debug_printf("总发：%d.%d2%% %d/%d %dus 收：%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->Speed(), _Total->Receive);
+
+	_Last->Send = Send;
+	_Last->Success = Success;
+	_Last->Time = Time;
+	_Last->Receive = Receive;
+
+	_Total->Send += Send;
+	_Total->Success += Success;
+	_Total->Time += Time;
+	_Total->Receive += Receive;
+
+	Send = 0;
+	Success = 0;
+	Time = 0;
+	Receive = 0;
 }

@@ -20,6 +20,8 @@ Controller::Controller()
 
 Controller::~Controller()
 {
+	Close();
+
 	_Handlers.DeleteAll().Clear();
 	_ports.DeleteAll().Clear();
 
@@ -48,6 +50,13 @@ void Controller::Open()
 		_ports[i]->Register(Dispatch, this);
 
 	Opened = true;
+}
+
+void Controller::Close()
+{
+	if(!Opened) return;
+
+	Opened = false;
 }
 
 uint Controller::Dispatch(ITransport* transport, byte* buf, uint len, void* param)

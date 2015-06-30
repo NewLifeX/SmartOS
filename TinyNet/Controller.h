@@ -37,6 +37,7 @@ public:
 	// 添加传输口
 	void AddTransport(ITransport* port);
 	virtual void Open();
+	virtual void Close();
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual int Send(Message& msg, ITransport* port = NULL);

@@ -44,6 +44,8 @@ public:
 	virtual void Show() const;
 };
 
+class TokenStat;
+
 // 令牌控制器
 class TokenController : public Controller
 {
@@ -63,6 +65,7 @@ public:
 	TokenController();
 
 	virtual void Open();
+	virtual void Close();
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual int Send(Message& msg, ITransport* port = NULL);
@@ -76,6 +79,22 @@ private:
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
 	bool SendAndReceive(TokenMessage& msg, int retry = 0, int msTimeout = 20);
+	
+	// 统计
+private:
+	TokenStat* Stat;
+	
+	class QueueItem
+	{
+	public:
+		byte	Code;
+		ulong	Time;
+	};
+	
+	QueueItem	_Queue[16];
+	
+	void StartSendStat(byte code);
+	void EndSendStat(byte code, bool success);
 };
 
 // 令牌会话
@@ -83,6 +102,35 @@ class TokenSession
 {
 public:
 	uint	Token;	// 当前会话的令牌
+};
+
+// 令牌统计
+class TokenStat : public Object
+{
+public:
+	int		Send;
+	int		Success;
+	int		Time;
+	int		Receive;
+
+	int Percent();	// 成功率百分比，已乘以10000
+	int Speed();	// 平均速度，指令发出到收到响应的时间
+
+	~TokenStat();
+	
+	void Start();
+
+private:
+	TokenStat*	_Last;
+	TokenStat*	_Total;
+
+	int		_taskID;
+
+	void ClearStat();
+	static void StatTask(void* param);
+
+public:
+
 };
 
 #endif
