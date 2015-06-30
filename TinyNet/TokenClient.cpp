@@ -24,6 +24,7 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	Status		= 0;
 	LoginTime	= 0;
 	LastActive	= 0;
+	Delay		= 0;
 
 	Control		= NULL;
 	Udp			= NULL;
@@ -220,7 +221,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 	{
 		Status = 2;
 		debug_printf("登录成功！\r\n");
-		
+
 		// 得到令牌
 		Token = ms.Read<int>();
 		// 这里可能有通信秘密
@@ -269,14 +270,22 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	//if(msg.Reply) return true;
 
 	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
-	
+
 	Stream ms(msg.Data, msg.Length);
-	ByteArray bs;
-	ms.ReadArray(bs);
-	
-	ulong start = *(ulong*)bs.GetBuffer();
+	//ByteArray bs;
+	//ms.ReadArray(bs);
+
+	//ulong start = *(ulong*)bs.GetBuffer();
+	// 跳过一个字节的长度
+	ms.Seek(1);
+	ulong start = ms.Read<ulong>();
 	int ts = (int)(Time.Current() - start);
-	debug_printf("延迟 %dus \r\n", ts);
+	if(Delay)
+		Delay = (Delay + ts) / 2;
+	else
+		Delay = ts;
+
+	debug_printf("延迟 %dus / %dus \r\n", ts, Delay);
 
 	return true;
 }
