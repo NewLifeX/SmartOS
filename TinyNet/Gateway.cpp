@@ -88,8 +88,6 @@ bool OnRemoteReceived(Message& msg, void* param)
 {
 	Gateway* server = (Gateway*)param;
 	assert_ptr(server);
-	debug_printf("Gateway::Remote ~~~~~");
-	msg.Show();
 
 	// 消息转发
 	if(msg.Code >= 0x10)

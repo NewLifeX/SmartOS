@@ -15,8 +15,6 @@ static uint _taskHello = 0;
 TokenClient::TokenClient() : ID(16), Key(8)
 {
 	Token		= 0;
-	//memset(ID, 0, ArrayLength(ID));
-	//memset(Key, 0, ArrayLength(Key));
 	// 直接拷贝芯片ID和类型作为唯一ID
 	ID.Set(Sys.ID, ID.Length());
 	Key.Set(Sys.ID, Key.Length());
@@ -246,7 +244,7 @@ void TokenClient::Ping()
 {
 	if(LastActive > 0 && LastActive + 30000000 < Time.Current())
 	{
-		// 30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务
+		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
 		Status = 0;
@@ -289,75 +287,3 @@ bool TokenClient::OnPing(TokenMessage& msg)
 
 	return true;
 }
-
-/*// 系统时间获取与设置
-bool TokenClient::SysTime(TokenMessage& msg, void* param)
-{
-	TokenMessage& tmsg = (TokenMessage&)msg;
-	// 忽略响应消息
-	if(tmsg.Reply) return true;
-
-	debug_printf("Message_SysTime Length=%d\r\n", msg.Length);
-
-	// 负载数据决定是读时间还是写时间
-	if(msg.Length >= 8)
-	{
-		// 写时间
-		ulong us = *(ulong*)msg.Data;
-
-		Time.SetTime(us);
-	}
-
-	// 读时间
-	ulong us2 = Time.Current();
-	msg.Length = 8;
-	*(ulong*)msg.Data = us2;
-
-	return true;
-}
-
-bool TokenClient::SysID(TokenMessage& msg, void* param)
-{
-	TokenMessage& tmsg = (TokenMessage&)msg;
-	// 忽略响应消息
-	if(tmsg.Reply) return true;
-
-	debug_printf("Message_SysID Length=%d\r\n", msg.Length);
-
-	if(msg.Length == 0)
-	{
-		// 12字节ID，4字节CPUID，4字节设备ID
-		msg.SetData(Sys.ID, 5 << 2);
-	}
-	else
-	{
-		// 干脆直接输出Sys，前面11个uint
-		msg.SetData((byte*)&Sys, 11 << 2);
-	}
-
-	return true;
-}
-
-bool TokenClient::SysMode(TokenMessage& msg, void* param)
-{
-	TokenMessage& tmsg = (TokenMessage&)msg;
-	// 忽略响应消息
-	if(tmsg.Reply) return true;
-
-	byte mode = 0;
-	if(msg.Length > 0) mode = msg.Data[0];
-
-	debug_printf("Message_SysMode Length=%d Mode=%d\r\n", msg.Length, mode);
-
-	switch(mode)
-	{
-		case 1:	// 系统软重启
-			Sys.Reset();
-			break;
-	}
-
-	msg.Length = 1;
-	msg.Data[0] = 0;
-
-	return true;
-}*/
