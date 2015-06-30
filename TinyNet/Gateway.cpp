@@ -121,13 +121,56 @@ void Gateway::OnRemote(TokenMessage& msg)
 // 设备列表 0x21
 void Gateway::OnGetDeviceList(Message& msg)
 {
+	// 不管请求内容是什么，都返回设备ID列表
+	TokenMessage rs;
+	rs.Code = msg.Code;
 
+	int i = 0;
+	for(i=0; i<Devices.Count(); i++)
+		rs.Data[i] = Devices[i]->ID;
+
+	rs.Length = i;
+
+	Client->Reply(rs);
 }
 
 // 设备信息 x025
 void Gateway::OnGetDeviceInfo(Message& msg)
 {
+	TokenMessage rs;
+	rs.Code = msg.Code;
 
+	// 如果未指定设备ID，则默认为1，表示网关自身
+	byte id = 1;
+	if(rs.Length > 0) id = msg.Data[0];
+
+	// 找到对应该ID的设备
+	Device* dv = NULL;
+	for(int i=0; i<Devices.Count(); i++)
+	{
+		if(id == Devices[i]->ID)
+		{
+			dv = Devices[i];
+			break;
+		}
+	}
+
+	// 即使找不到设备，也返回空负载数据
+	if(dv)
+	{
+		Stream ms(rs.Data, rs.Length);
+		ms.Length = 0;
+
+		dv->Write(ms);
+
+		// 当前作用域，直接使用数据流的指针，内容可能扩容而导致指针改变
+		rs.Data = ms.GetBuffer();
+		rs.Length = ms.Position();
+
+		Client->Reply(rs);
+	}
+	else
+		Client->Reply(rs);
 }
 
 // 学习模式 0x20
@@ -198,6 +241,28 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 	msg2.Data[0] = ((TinyMessage&)msg).Src;
 	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 	msg2.Length = 1 + msg.Length;
+}
+
+void Device::Write(Stream& ms)
+{
+	ms.Write(ID);
+	ms.Write(Type);
+	ms.WriteArray(HardID);
+	ms.Write(LastTime);
+	ms.Write(Switchs);
+	ms.Write(Analogs);
+	ms.WriteString(Name);
+}
+
+void Device::Read(Stream& ms)
+{
+	ID		= ms.Read<byte>();
+	Type	= ms.Read<ushort>();
+	ms.ReadArray(HardID);
+	LastTime= ms.Read<ulong>();
+	Switchs	= ms.Read<byte>();
+	Analogs	= ms.Read<byte>();
+	ms.ReadString(Name);
 }
 
 bool operator==(const Device& d1, const Device& d2)

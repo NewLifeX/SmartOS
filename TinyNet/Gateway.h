@@ -29,30 +29,30 @@ public:
 
 	// 收到功能消息时触发
 	MessageHandler Received;
-	
+
 	// 数据接收中心
 	void OnLocal(TinyMessage& msg);
 	void OnRemote(TokenMessage& msg);
-	
+
 	// 网关业务逻辑
-	
+
 	// 设备列表 0x21
-	List<Device> Devices;
+	List<Device*> Devices;
 	void OnGetDeviceList(Message& msg);
 	// 设备信息 x025
 	void OnGetDeviceInfo(Message& msg);
-	
+
 	// 学习模式 0x20
 	bool	Student;
 	void SetMode(bool student);
 	void OnMode(Message& msg);
-	
+
 	// 节点注册入网 0x22
 	void DeviceRegister(byte id);
-	
+
 	// 节点上线 0x23
 	void DeviceOnline(byte id);
-	
+
 	// 节点离线 0x24
 	void DeviceOffline(byte id);
 };
@@ -68,6 +68,9 @@ public:
 	byte	Switchs;	// 开关数
 	byte	Analogs;	// 通道数
 	String	Name;		// 名称
+
+	void Write(Stream& ms);
+	void Read(Stream& ms);
 };
 
 bool operator==(const Device& d1, const Device& d2);
