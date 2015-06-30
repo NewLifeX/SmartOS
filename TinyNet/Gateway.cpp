@@ -133,13 +133,22 @@ void Gateway::OnGetDeviceList(TokenMessage& msg)
 	// 不管请求内容是什么，都返回设备ID列表
 	TokenMessage rs;
 	rs.Code = msg.Code;
+	
+	if(Devices.Count()==0)
+	{
+		rs.Data[0]=0;
+		rs.Length=1;
+	}
+	else
+	{
 
-	int i = 0;
-	for(i=0; i<Devices.Count(); i++)
-		rs.Data[i] = Devices[i]->ID;
-
-	rs.Length = i;
-   debug_printf(" 获取设备列表\r\n");
+	   int i = 0;
+	   for(i=0; i<Devices.Count(); i++)
+		 rs.Data[i] = Devices[i]->ID;
+	   rs.Length = i;
+	}
+	
+    debug_printf(" 获取设备列表\r\n");
 	Client->Reply(rs);
 }
 
