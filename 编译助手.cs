@@ -46,6 +46,8 @@ namespace NewLife.Reflection
             // 更新脚本自己
             //UpdateSelf();
 
+			"编译完成！".Speak();
+
             return 0;
         }
 

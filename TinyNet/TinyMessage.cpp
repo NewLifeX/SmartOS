@@ -33,8 +33,10 @@ TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 	memcpy(&Dest, &msg.Dest, MinSize);
 
 	Crc = msg.Crc;
+
 	assert_ptr(Data);
 	assert_ptr(msg.Data);
+
 	if(Length) memcpy(Data, msg.Data, Length);
 	TTL = msg.TTL;
 #if DEBUG
@@ -170,7 +172,7 @@ TinyController::TinyController() : Controller()
 	Timeout		= 200;
 
 	MinSize = TinyMessage::MinSize;
-	
+
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
@@ -178,7 +180,7 @@ TinyController::TinyController() : Controller()
 	// 节点地址范围2~254，网关专用0x01，节点让步
 	while(Address < 2 || Address > 254)
 	{
-		Time.Sleep(3);
+		Sys.Sleep(3);
 		Address = Time.Current();
 	}
 }
@@ -400,7 +402,7 @@ bool TinyController::Send(Message& msg)
 #endif
 
 	//return Controller::Send(msg, port);
-	
+
 	return Post(tmsg, -1) ? 1 : 0;
 }
 
@@ -464,7 +466,7 @@ void TinyController::Loop()
 		node->Interval = (rnd + 1) * Interval;
 		node->Next = node->LastSend + node->Interval;
 	}
-	
+
 	if(_Queue.Count() == 0)
 	{
 		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
@@ -497,7 +499,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	if(_Queue.Add(node) < 0) return false;
 
 	Sys.SetTask(_taskID, true);
-	
+
 	return true;
 }
 
