@@ -23,6 +23,8 @@ Gateway::Gateway(TinyServer* server, TokenClient* client)
 
 Gateway::~Gateway()
 {
+	Stop();
+
 	delete Server;
 	Server = NULL;
 
@@ -35,10 +37,10 @@ void Gateway::Start()
 {
 	if(Running) return;
 
-	Server->Received = OnLocalReceived;
-	Server->Param = this;
-	Client->Received = OnRemoteReceived;
-	Client->Param = this;
+	Server->Received	= OnLocalReceived;
+	Server->Param		= this;
+	Client->Received	= OnRemoteReceived;
+	Client->Param		= this;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -52,10 +54,10 @@ void Gateway::Stop()
 {
 	if(!Running) return;
 
-	Server->Received = NULL;
-	Server->Param = NULL;
-	Client->Received = NULL;
-	Client->Param = NULL;
+	Server->Received	= NULL;
+	Server->Param		= NULL;
+	Client->Received	= NULL;
+	Client->Param		= NULL;
 
 	Running = false;
 }
@@ -103,9 +105,9 @@ bool Gateway::OnRemote(TokenMessage& msg)
 		case 0x20:
 			return OnMode(msg);
 		case 0x21:
-			return OnMode(msg);
+			return OnGetDeviceList(msg);
 		case 0x25:
-			return OnMode(msg);
+			return OnGetDeviceInfo(msg);
 	}
 
 	// 消息转发
@@ -121,18 +123,9 @@ bool Gateway::OnRemote(TokenMessage& msg)
 			return false;
 		}
 		*/
-		switch(msg.Code)
-		{
-			case 0x21:OnGetDeviceList(msg);
-			break;
-			case 0x25:OnGetDeviceInfo(msg); 
-			break;
-			default:
-			TinyMessage tmsg;
-		    TokenToTiny(msg, tmsg);
-		    Server->Send(tmsg);
-		 break;
-		}		
+		TinyMessage tmsg;
+		TokenToTiny(msg, tmsg);
+		Server->Send(tmsg);
 	}
 
 	return true;
@@ -140,12 +133,11 @@ bool Gateway::OnRemote(TokenMessage& msg)
 
 // 设备列表 0x21
 bool Gateway::OnGetDeviceList(Message& msg)
-void Gateway::OnGetDeviceList(TokenMessage& msg)
 {
 	// 不管请求内容是什么，都返回设备ID列表
 	TokenMessage rs;
 	rs.Code = msg.Code;
-	
+
 	if(Devices.Count()==0)
 	{
 		rs.Data[0]=0;
@@ -153,20 +145,18 @@ void Gateway::OnGetDeviceList(TokenMessage& msg)
 	}
 	else
 	{
-
 	   int i = 0;
 	   for(i=0; i<Devices.Count(); i++)
 		 rs.Data[i] = Devices[i]->ID;
 	   rs.Length = i;
 	}
-	
+
     debug_printf(" 获取设备列表\r\n");
 	return Client->Reply(rs);
 }
 
 // 设备信息 x025
 bool Gateway::OnGetDeviceInfo(Message& msg)
-void Gateway::OnGetDeviceInfo(TokenMessage& msg)
 {
 	TokenMessage rs;
 	rs.Code = msg.Code;
