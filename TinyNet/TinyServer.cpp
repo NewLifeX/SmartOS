@@ -7,19 +7,16 @@
 bool OnServerReceived(Message& msg, void* param);
 
 void DiscoverClientTask(void* param);
-void PingClientTask(void* param);
+//void PingClientTask(void* param);
 
-static uint _taskDiscover = 0;
-static uint _taskPing = 0;
+//static uint _taskDiscover = 0;
+//static uint _taskPing = 0;
 
-TinyServer::TinyServer(Controller* control)
+TinyServer::TinyServer(TinyController* control)
 {
 	_control = control;
 
-	DeviceType	= 0;
-	Password	= 0;
-
-	LastActive	= 0;
+	DeviceType	= Sys.Code;
 
 	_control->Received	= OnServerReceived;
 	_control->Param		= this;
@@ -31,9 +28,14 @@ TinyServer::TinyServer(Controller* control)
 	OnPing		= NULL;
 }
 
-void TinyServer::Send(Message& msg)
+bool TinyServer::Send(Message& msg)
 {
-	_control->Send(msg);
+	return _control->Send(msg);
+}
+
+bool TinyServer::Reply(Message& msg)
+{
+	return _control->Reply(msg);
 }
 
 bool OnServerReceived(Message& msg, void* param)
@@ -52,19 +54,21 @@ bool OnServerReceived(Message& msg, void* param)
 void TinyServer::Start()
 {
 	// 注册消息。每个消息代码对应一个功能函数
-	_control->Register(1, Discover, this);
-	_control->Register(2, Ping, this);
+	//_control->Register(1, Discover, this);
+	/*_control->Register(2, Ping, this);
 	_control->Register(3, SysID, this);
 	_control->Register(4, SysTime, this);
-	_control->Register(5, SysMode, this);
+	_control->Register(5, SysMode, this);*/
 
 	// 发现服务端的任务
+	debug_printf("开始广播服务端 ");
+	Sys.AddTask(DiscoverClientTask, this, 0, 2000000);
 	debug_printf("开始寻找服务端 ");
 	_taskDiscover = Sys.AddTask(DiscoverClientTask, this, 0, 10000000);
 }
 
 // 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
-static byte _lastDiscoverID;
+//static byte _lastDiscoverID;
 
 void DiscoverClientTask(void* param)
 {
@@ -83,15 +87,15 @@ void TinyServer::Discover()
 	// 发送的广播消息，设备类型和系统ID
 	Stream ms(msg._Data, ArrayLength(msg._Data));
 	ms.Write(DeviceType);
-	ms.Write(Sys.ID, 0, 20);
+	ms.Write(Sys.ID, 0, 16);
 	msg.Length = ms.Position();
 
 	_control->Send(msg);
 
-	_lastDiscoverID = msg.Sequence;
+	//_lastDiscoverID = msg.Sequence;
 }
 
-// Discover响应
+/*// Discover响应
 // 格式：1字节地址 + 8字节密码
 bool TinyServer::Discover(Message& msg, void* param)
 {
@@ -128,9 +132,9 @@ bool TinyServer::Discover(Message& msg, void* param)
 	if(client->OnDiscover) return client->OnDiscover(msg, param);
 
 	return true;
-}
+}*/
 
-void PingClientTask(void* param)
+/*void PingClientTask(void* param)
 {
 	assert_ptr(param);
 	TinyServer* client = (TinyServer*)param;
@@ -255,4 +259,4 @@ bool TinyServer::SysMode(Message& msg, void* param)
 	msg.Data[0] = 0;
 
 	return true;
-}
+}*/
