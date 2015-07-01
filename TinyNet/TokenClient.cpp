@@ -3,8 +3,7 @@
 
 #include "TokenMessage.h"
 #include "TokenNet\HelloMessage.h"
-
-#include "Security\MD5.h"
+#include "TokenNet\LoginMessage.h"
 
 bool OnTokenClientReceived(Message& msg, void* param);
 
@@ -190,12 +189,12 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	{
 		TokenMessage rs;
 		rs.Code = msg.Code;
-		
+
 		HelloMessage ext(Hello);
 		ext.Reply = msg.Reply;
 		ext.LocalTime = Time.Current();
 		ext.Write(rs);
-		
+
 		Reply(rs);
 	}
 
@@ -205,20 +204,18 @@ bool TokenClient::OnHello(TokenMessage& msg)
 // 登录
 void TokenClient::Login()
 {
+	LoginMessage login;
+	login.HardID	= ID;
+	login.Key		= Key;
+
+	if(Udp)
+	{
+		login.Local.Address = Udp->Tip->IP;
+		login.Local.Port	= Udp->BindPort;
+	}
+
 	TokenMessage msg(2);
-
-	Stream ms(msg.Data, ArrayLength(msg._Data));
-	ms.WriteArray(ID);
-
-	// 密码取MD5后传输
-	ByteArray bs(16);
-	MD5::Hash(Key, bs);
-	ms.WriteArray(bs);
-
-	ms.Write((byte)8);
-	ms.Write(Time.Current());
-
-	msg.Length = ms.Position();
+	login.Write(msg);
 
 	Send(msg);
 }

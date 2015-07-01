@@ -1,35 +1,70 @@
 ﻿#include "LoginMessage.h"
 
+#include "Security\MD5.h"
+
 // 初始化消息，各字段为0
-LoginMessage::LoginMessage(byte code)
+LoginMessage::LoginMessage() : HardID(16), Key(6)
 {
-	Code	= code;
-	Length	= 0;
-	Data	= NULL;
-	Reply	= 0;
 }
 
-LoginMessage::LoginMessage(LoginMessage& msg)
+// 从数据流中读取消息
+bool LoginMessage::Read(Stream& ms)
 {
-	Code	= msg.Code;
-	Length	= msg.Length;
-	Reply	= msg.Reply;
+	ms.ReadArray(HardID);
+	ms.ReadArray(Key);
+	ms.ReadArray(Salt);
 
-	// 基类构造函数先执行，子类来不及赋值Data，所以这里不要拷贝
-	//assert_ptr(Data);
-	//if(Length) memcpy(Data, msg.Data, Length);
+	Local.Address = ms.ReadBytes(4);
+	Local.Port = ms.Read<ushort>();
+
+	return false;
 }
 
-// 设置数据。
-void LoginMessage::SetData(byte* buf, uint len)
+// 把消息写入数据流中
+void LoginMessage::Write(Stream& ms)
 {
-	//assert_param(len <= ArrayLength(Data));
+	ms.WriteArray(HardID);
 
-	Length = len;
-	if(len > 0)
-	{
-		assert_ptr(buf);
-		assert_ptr(Data);
-		memcpy(Data, buf, len);
-	}
+	// 密码取MD5后传输
+	ByteArray bs;
+	MD5::Hash(Key, bs);
+	ms.WriteArray(bs);
+
+	ulong now = Time.Current();
+	Salt.Set((byte*)&now, 8);
+	ms.WriteArray(Salt);
+
+	ms.Write(Local.Address.ToArray(), 0, 4);
+	ms.Write((ushort)Local.Port);
+}
+
+bool LoginMessage::Read(Message& msg)
+{
+	Stream ms(msg.Data, msg.Length);
+	return Read(ms);
+}
+
+void LoginMessage::Write(Message& msg)
+{
+	Stream ms(msg.Data, 256);
+
+	Write(ms);
+
+	msg.Length = ms.Position();
+}
+
+// 显示消息内容
+void LoginMessage::Show()
+{
+	debug_printf("登录");
+	if(Reply) debug_printf("#");
+	debug_printf(" HardID=");
+	HardID.Show();
+	debug_printf(" Key=");
+	Key.Show();
+	debug_printf(" Salt=");
+	Salt.Show();
+
+	debug_printf(" ");
+	Local.Show();
 }
