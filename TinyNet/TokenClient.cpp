@@ -113,8 +113,8 @@ void LoopTask(void* param)
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
-	//if(client->Udp->BindPort != 3355)
-	//client->SayHello(true, 3355);
+	if(client->Udp->BindPort != 3355)
+		client->SayHello(true, 3355);
 
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
@@ -154,6 +154,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 		Udp->Remote.Address	= IPAddress::Broadcast;
 		Udp->Remote.Port	= port;
 
+		debug_printf("握手广播 ");
 		Control->Send(msg);
 
 		// 还原回来原来的地址端口
