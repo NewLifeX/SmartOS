@@ -326,7 +326,8 @@ class String : public Array<char>
 private:
 
 public:
-	String(int length = 0x40) : Array(length) { }
+	// 字符串默认0长度，容量0x40
+	String(int length = 0) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	String(const char* str, int len = 0) : Array(0) { Set(str, len); }

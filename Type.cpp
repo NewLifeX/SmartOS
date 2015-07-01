@@ -45,7 +45,8 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 {
 	byte* buf = GetBuffer();
 
-	int k = 0;
+	// 拼接在字符串后面
+	int k = str.Length();
 	for(int i=0; i < Length(); i++, buf++)
 	{
 		byte b = *buf >> 4;
@@ -64,7 +65,7 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 				str.SetAt(k++, sep);
 		}
 	}
-	str.SetAt(k, '\0');
+	//str.SetAt(k, '\0');
 	//str.SetLength(k);
 
 	return str;
@@ -75,7 +76,7 @@ String ByteArray::ToHex(char sep, int newLine)
 {
 	String str;
 
-	return ToHex(str);
+	return ToHex(str, sep, newLine);
 }
 
 String& ByteArray::ToStr(String& str)
@@ -94,6 +95,8 @@ void ByteArray::Show()
 	// 采用栈分配然后复制，避免堆分配
 	char cs[512];
 	String str(cs, ArrayLength(cs));
+	// 清空字符串，变成0长度，因为ToHex内部是附加
+	str.Clear();
 
 	// 如果需要的缓冲区超过512，那么让它自己分配好了
 	ToHex(str, '-', 0x20);
