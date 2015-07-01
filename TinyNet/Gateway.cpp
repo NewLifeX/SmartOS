@@ -116,9 +116,9 @@ bool Gateway::OnLocal(TinyMessage& msg)
 	}
 
 	// 消息转发
-	//if(msg.Code >= 0x10 && msg.Dest != 0x01)
+	if(msg.Code >= 0x10 && msg.Dest != 0x01)
 	// 调试时所有指令上报云端
-	if(msg.Code >= 0x10)
+	//if(msg.Code >= 0x10)
 	{
 		debug_printf("Gateway::Local ");
 		msg.Show();

@@ -337,10 +337,11 @@ void TinyController::AckRequest(TinyMessage& msg)
 			Total.Bytes += node->Length;
 
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
-			Interval = (Interval + cost) >> 1;
+			uint it = (Interval + cost) >> 1;
 			// 确保小于等于超时时间的四分之一，让其有机会重发
 			uint tt = Timeout >> 2;
-			if(Interval > tt) Interval = tt;
+			if(it > tt) it = tt;
+			Interval = it;
 
 			// 该传输口收到响应，从就绪队列中删除
 			_Queue.Remove(node);
@@ -473,12 +474,13 @@ void TinyController::Loop()
 			memset(&Total, 0, sizeof(Total));
 		}
 
-		node->LastSend = Time.Current();
+		ulong now = Time.Current();
+		node->LastSend = now;
 
 		// 随机延迟。随机数1~5。每次延迟递增
-		byte rnd = (uint)Time.Current() % 3;
+		byte rnd = (uint)now % 3;
 		node->Interval = (rnd + 1) * Interval;
-		node->Next = node->LastSend + node->Interval;
+		node->Next = now + node->Interval;
 	}
 
 	if(_Queue.Count() == 0)

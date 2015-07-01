@@ -63,8 +63,6 @@ void TinyServer::Start()
 	// 发现服务端的任务
 	debug_printf("开始广播服务端 ");
 	Sys.AddTask(DiscoverClientTask, this, 0, 2000000);
-	debug_printf("开始寻找服务端 ");
-	_taskDiscover = Sys.AddTask(DiscoverClientTask, this, 0, 10000000);
 }
 
 // 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
