@@ -209,7 +209,6 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 	if(dv)
 	{
 		Stream ms(rs.Data, rs.Length);
-		ms.Length = 0;
 
 		dv->Write(ms);
 

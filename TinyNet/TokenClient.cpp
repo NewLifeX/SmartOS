@@ -289,13 +289,14 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	// 跳过一个字节的长度
 	ms.Seek(1);
 	ulong start = ms.Read<ulong>();
-	int ts = (int)(Time.Current() - start);
+	int cost = (int)(Time.Current() - start);
+	if(cost < 0) cost = -cost;
 	if(Delay)
-		Delay = (Delay + ts) / 2;
+		Delay = (Delay + cost) / 2;
 	else
-		Delay = ts;
+		Delay = cost;
 
-	debug_printf("延迟 %dus / %dus \r\n", ts, Delay);
+	debug_printf("延迟 %dus / %dus \r\n", cost, Delay);
 
 	return true;
 }

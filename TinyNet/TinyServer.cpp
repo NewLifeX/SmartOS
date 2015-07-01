@@ -82,10 +82,9 @@ void TinyServer::Discover()
 
 	// 发送的广播消息，设备类型和系统ID
 	Stream ms(msg._Data, ArrayLength(msg._Data));
-	ms.Length = 0;
 	ms.Write(DeviceType);
 	ms.Write(Sys.ID, 0, 20);
-	msg.Length = ms.Length;
+	msg.Length = ms.Position();
 
 	_control->Send(msg);
 
