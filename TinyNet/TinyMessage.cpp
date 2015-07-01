@@ -371,6 +371,9 @@ void TinyController::AckResponse(TinyMessage& msg)
 
 	bool rs = Controller::Send(msg2);
 	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
+#if DEBUG
+	msg_printf("Retry=%d ", msg.Retry);
+#endif
 	if(rs)
 		msg_printf(" 成功!\r\n");
 	else
@@ -528,13 +531,15 @@ void StatTask(void* param)
 void TinyController::ShowStat()
 {
 	static uint last = 0;
-	if(Total.Send == last) return;
-	last = Total.Send;
+	
+	int tsend = Total.Send;
+	if(tsend == last) return;
+	last = tsend;
 
-	uint rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + Total.Send);
+	uint rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + tsend);
 	uint cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
 	uint speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
-	uint retry = (Last.Send + Total.Send) * 100 / (Last.Msg + Total.Msg);
+	uint retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
 	msg_printf("TinyController::State 成功率=%d%% 平均时间=%dus 速度=%d Byte/s 平均重发=%d.%02d \r\n", rate, cost, speed, retry/100, retry%100);
 }
 
