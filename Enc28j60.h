@@ -43,6 +43,10 @@ public:
 
     void Init(byte mac[6]);
     byte GetRevision();
+	
+	bool Broadcast;
+	// 设置是否接收广播数据包
+	void SetBroadcast(bool flag);
 
 	void CheckError();
 protected:

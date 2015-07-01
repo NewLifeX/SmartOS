@@ -313,6 +313,8 @@ Enc28j60::Enc28j60()
 	LastTime	= Time.Current();
 	ResetPeriod	= 6000000;
 	_ResetTask	= 0;
+	
+	Broadcast	= true;
 }
 
 Enc28j60::~Enc28j60()
@@ -531,16 +533,19 @@ bool Enc28j60::OnOpen()
     // in binary these poitions are:11 0000 0011 1111
     // This is hex 303F->EPMM0=0x3f,EPMM1=0x30
 
-	// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤
-    //WriteReg(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
-    WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
+	if(Broadcast)
+		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_PMEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
+	else
+		// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤
+		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN);
     WriteReg(EPMM0, 0x3f);
     WriteReg(EPMM1, 0x30);
     WriteReg(EPMCSL, 0xf9);
     WriteReg(EPMCSH, 0xf7);
 
     // Bank 2，使能MAC接收 允许MAC发送暂停控制帧 当接收到暂停控制帧时停止发送
-    WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
+    //WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
+    WriteReg(MACON1, MACON1_MARXEN);
     // MACON2清零，让MAC退出复位状态
     WriteReg(MACON2, 0x00);
     // 启用自动填充到60字节并进行Crc校验 帧长度校验使能 MAC全双工使能
@@ -550,7 +555,7 @@ bool Enc28j60::OnOpen()
     WriteReg(MAIPGL, 0x12);
     WriteReg(MAIPGH, 0x0C);
     // 配置背对背包之间的间隔
-    WriteReg(MABBIPG, 0x15);   // 有的例程这里是0x12
+    WriteReg(MABBIPG, 0x15);   // 全双工15，半双工12
     // 设置控制器将接收的最大包大小，不要发送大于该大小的包
     WriteReg(MAMXFLL, MAX_FRAMELEN & 0xFF);
     WriteReg(MAMXFLH, MAX_FRAMELEN >> 8);
@@ -800,6 +805,18 @@ void Enc28j60::CheckError()
 		Open();
 	}
 }
+
+// 设置是否接收广播数据包
+void Enc28j60::SetBroadcast(bool flag)
+{
+	Broadcast = flag;
+	if(flag)
+		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_PMEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
+	else
+		// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤
+		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN);
+}
+
 
 void ResetTask(void* param)
 {
