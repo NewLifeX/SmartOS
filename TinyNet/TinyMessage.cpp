@@ -208,7 +208,7 @@ void TinyController::Open()
 	if(!_taskID)
 	{
 		debug_printf("TinyNet::微网消息队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+		_taskID = Sys.AddTask(SendTask, this, 0, 10000);
 		// 默认禁用，有数据要发送才开启
 		Sys.SetTask(_taskID, false);
 	}
