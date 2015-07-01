@@ -89,17 +89,17 @@ public:
 };
 
 // 统计信息
-class Statistics
+class TinyStat
 {
 public:
-	uint	Send;	// 总次数
-	uint	Ack;	// 总成功
-	uint	Bytes;	// 总字节数
-	uint	Cost;	// 从开销
-	uint	Retry;	// 总重试次数
 	uint	Msg;	// 总消息数
-	
-	Statistics()
+	uint	Send;	// 总次数。每条消息可能发送多次
+	uint	Ack;	// 总成功。有多少消息收到确认，每条消息仅计算一次确认
+	uint	Bytes;	// 总字节数。成功发送消息的字节数
+	uint	Cost;	// 总开销。成功发送消息到收到确认所花费的时间
+	//uint	Retry;	// 总重试次数
+
+	TinyStat()
 	{
 		memset(this, 0, sizeof(this));
 	}
@@ -142,15 +142,14 @@ public:
 	bool Post(TinyMessage& msg, int expire = -1);
 	// 回复对方的请求消息
 	virtual bool Reply(Message& msg);
-	//bool Error(TinyMessage& msg, ITransport& port = NULL);
 
 	// 循环处理待发送的消息队列
 	void Loop();
 
 public:
 	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX
-	Statistics	Total;	// 总统计
-	Statistics	Last;	// 最后一次统计
+	TinyStat	Total;	// 总统计
+	TinyStat	Last;	// 最后一次统计
 
 	// 显示统计信息
 	void ShowStat();

@@ -180,7 +180,7 @@ TinyController::TinyController() : Controller()
 	// 节点地址范围2~254，网关专用0x01，节点让步
 	while(Address < 2 || Address > 254)
 	{
-		Sys.Sleep(3);
+		Sys.Delay(30);
 		Address = Time.Current();
 	}
 }
@@ -311,6 +311,7 @@ bool TinyController::Valid(Message& msg)
 	return true;
 }
 
+// 处理收到的Ack包
 void TinyController::AckRequest(TinyMessage& msg)
 {
 	int i = -1;
@@ -319,7 +320,8 @@ void TinyController::AckRequest(TinyMessage& msg)
 		MessageNode* node = _Queue[i];
 		if(node->Sequence == msg.Sequence)
 		{
-			uint cost = (uint)(Time.Current() - node->LastSend);
+			int cost = (int)(Time.Current() - node->LastSend);
+			if(cost < 0) cost = -cost;
 
 			Total.Cost += cost;
 			Total.Ack++;
@@ -352,6 +354,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 	//if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
 }
 
+// 向对方发出Ack包
 void TinyController::AckResponse(TinyMessage& msg)
 {
 	TinyMessage msg2(msg);
@@ -366,9 +369,9 @@ void TinyController::AckResponse(TinyMessage& msg)
 
 	//msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 
-	int count = Controller::Send(msg2);
+	bool rs = Controller::Send(msg2);
 	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
-	if(count > 0)
+	if(rs)
 		msg_printf(" 成功!\r\n");
 	else
 		msg_printf(" 失败!\r\n");
@@ -423,12 +426,13 @@ void TinyController::Loop()
 		// 检查时间。至少发送一次
 		if(node->Next > 0)
 		{
+			// 下一次发送时间还没到，跳过
 			if(node->Next > Time.Current()) continue;
 
-			// 检查是否已过期
+			// 已过期则删除
 			if(node->Expired < Time.Current())
 			{
-				Total.Retry = node->Times;
+				//Total.Retry = node->Times;
 
 				_Queue.Remove(node);
 				delete node;
@@ -450,7 +454,6 @@ void TinyController::Loop()
 
 		// 增加发送次数统计
 		Total.Send++;
-		//Total.Bytes += node->Length;
 
 		// 分组统计
 		if(Total.Send >= 10)
@@ -546,7 +549,7 @@ void MessageNode::SetMessage(TinyMessage& msg)
 	Stream ms(Data, ArrayLength(Data));
 	ms.Length = 0;
 	msg.Write(ms);
-	Length = ms.Length;
+	Length = ms.Position();
 }
 
 RingQueue::RingQueue()
