@@ -190,6 +190,21 @@ public:
 		return *this;
 	}
 
+	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
+	bool SetLength(int length)
+	{
+		if(length <= _Capacity)
+		{
+			_Length = length;
+			return true;
+		}
+		else
+		{
+			CheckCapacity(length);
+			return false;
+		}
+	}
+
 	// 设置数组元素为指定值，自动扩容
 	bool Set(T item, int index = 0, int count = 0)
 	{
@@ -300,7 +315,7 @@ public:
 class ByteArray : public Array<byte>
 {
 public:
-	ByteArray(int length = 0x40) : Array(length) { }
+	ByteArray(int length = 0) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
@@ -332,9 +347,6 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	String(const char* str, int len = 0) : Array(0) { Set(str, len); }
 	String(const String& str) : Array(str.Length()) { Copy(str); }
-
-	// 设置字符串长度
-	//String& SetLength(int length);
 
 	// 输出对象的字符串表示方式
 	virtual String ToString();

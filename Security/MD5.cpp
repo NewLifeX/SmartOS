@@ -231,6 +231,6 @@ void MD5::Hash(ByteArray& data, ByteArray& hash)
 	md5_context context;
 	md5_starts(&context);
 	md5_update(&context, data.GetBuffer(), data.Length());
-	hash.Set(0, 0, 16);
+	hash.SetLength(16);
 	md5_finish(&context, hash.GetBuffer());
 }
