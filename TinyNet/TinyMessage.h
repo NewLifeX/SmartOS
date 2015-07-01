@@ -98,10 +98,11 @@ public:
 	uint	Bytes;	// 总字节数。成功发送消息的字节数
 	uint	Cost;	// 总开销。成功发送消息到收到确认所花费的时间
 	//uint	Retry;	// 总重试次数
+	int		Receive;// 收到消息数
 
 	TinyStat()
 	{
-		memset(this, 0, sizeof(this));
+		memset(this, 0, sizeof(this[0]));
 	}
 };
 
@@ -125,8 +126,8 @@ protected:
 
 public:
 	byte	Address;	// 本地地址
-	uint	Interval;	// 消息队列发送间隔，微秒
-	uint	Timeout;	// 消息队列发送消息的默认超时时间，50毫秒
+	uint	Interval;	// 消息队列发送间隔，8000微秒
+	uint	Timeout;	// 消息队列发送消息的默认超时时间，50000微秒
 
 	TinyController();
 	virtual ~TinyController();
@@ -138,8 +139,8 @@ public:
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
 	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0);
-	// 把消息放入发送队列，timerout毫秒超时时间内，如果对方没有响应，会重复发送
-	bool Post(TinyMessage& msg, int expire = -1);
+	// 把消息放入发送队列，usTimeout微秒超时时间内，如果对方没有响应，会重复发送
+	bool Post(TinyMessage& msg, int usTimeout = -1);
 	// 回复对方的请求消息
 	virtual bool Reply(Message& msg);
 
