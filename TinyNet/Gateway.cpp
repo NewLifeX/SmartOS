@@ -3,6 +3,8 @@
 #include "TinyMessage.h"
 #include "TokenMessage.h"
 
+#include "Security\MD5.h"
+
 bool OnLocalReceived(Message& msg, void* param);
 bool OnRemoteReceived(Message& msg, void* param);
 
@@ -84,15 +86,11 @@ bool OnRemoteReceived(Message& msg, void* param)
 bool Gateway::OnLocal(TinyMessage& msg)
 {
 	// 本地处理。注册、上线、同步时间等
-	/*switch(msg.Code)
+	switch(msg.Code)
 	{
-		case 0x20:
-			return OnMode(msg);
-		case 0x21:
-			return OnGetDeviceList(msg);
-		case 0x25:
-			return OnGetDeviceInfo(msg);
-	}*/
+		case 0x01:
+			return OnDiscover(msg);
+	}
 
 	// 临时方便调试使用
 	// 如果设备列表没有这个设备，那么加进去
@@ -104,10 +102,10 @@ bool Gateway::OnLocal(TinyMessage& msg)
 		dv->ID = id;
 
 		Devices.Add(dv);
-		
+
 		// 模拟注册
 		DeviceRegister(id);
-		
+
 		// 模拟上线
 		DeviceOnline(id);
 	}
@@ -291,6 +289,63 @@ Device* Gateway::FindDevice(byte id)
 
 	return NULL;
 }
+
+// 设备发现
+// 请求：2字节设备类型 + 20字节系统ID
+// 响应：1字节地址 + 8字节密码
+bool Gateway::OnDiscover(TinyMessage& msg)
+{
+	if(!msg.Reply)
+	{
+		// 如果设备列表没有这个设备，那么加进去
+		byte id = msg.Src;
+		Device* dv = FindDevice(id);
+		if(!dv && id)
+		{
+			Stream ms(msg.Data, msg.Length);
+
+			dv = new Device();
+			dv->ID = id;
+			dv->Type = ms.Read<ushort>();
+			ms.ReadArray(dv->HardID);
+
+			Devices.Add(dv);
+
+			debug_printf("Gateway::Discover ID=0x%02X Type=%04X HardID=", id, dv->Type);
+			dv->HardID.Show();
+			debug_printf("\r\n");
+
+			// 节点注册
+			DeviceRegister(id);
+		}
+		// 更新设备信息
+		if(dv)
+		{
+			// 如果最后活跃时间超过60秒，则认为是设备上线
+			if(dv->LastTime + 60000000 < Time.Current())
+			{
+				// 节点上线
+				DeviceOnline(id);
+			}
+			dv->LastTime = Time.Current();
+
+			// 生成随机密码。当前时间的MD5
+			ulong now = Time.Current();
+			ByteArray bs((byte*)&now, 8);
+			MD5::Hash(bs, dv->Pass);
+
+			// 响应
+			Stream ms(msg.Data, msg.Length);
+			ms.Write(id);
+			ms.WriteArray(dv->Pass);
+
+			Server->Reply(msg);
+		}
+	}
+
+	return true;
+}
+
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 {

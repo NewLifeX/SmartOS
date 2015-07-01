@@ -12,14 +12,14 @@ void PingTask(void* param);
 static uint _taskDiscover = 0;
 static uint _taskPing = 0;
 
-TinyClient::TinyClient(Controller* control)
+TinyClient::TinyClient(TinyController* control)
 {
 	assert_ptr(control);
 
 	_control = control;
 
 	Server		= 0;
-	DeviceType	= 0;
+	DeviceType	= Sys.Code;
 	Password	= 0;
 
 	LastActive	= 0;
@@ -71,7 +71,7 @@ void TinyClient::SetDefault()
 
 	// 发现服务端的任务
 	debug_printf("开始寻找服务端 ");
-	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000);
 }
 
 // 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
@@ -85,7 +85,7 @@ void DiscoverTask(void* param)
 }
 
 // 发送发现消息，告诉大家我在这
-// 格式：2字节设备类型 + 20字节系统ID
+// 格式：2设备类型 + N系统ID
 void TinyClient::Discover()
 {
 	TinyMessage msg;
@@ -97,13 +97,13 @@ void TinyClient::Discover()
 	ms.Write(Sys.ID, 0, 20);
 	msg.Length = ms.Position();
 
-	_control->Send(msg);
+	_control->Broadcast(msg);
 
 	_lastDiscoverID = msg.Sequence;
 }
 
 // Discover响应
-// 格式：1字节地址 + 8字节密码
+// 格式：1地址 + N密码
 bool TinyClient::Discover(Message& msg, void* param)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;

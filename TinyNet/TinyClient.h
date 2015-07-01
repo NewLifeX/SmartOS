@@ -4,21 +4,22 @@
 #include "Sys.h"
 #include "Message.h"
 #include "Controller.h"
+#include "TinyMessage.h"
 
 // 微网客户端
 class TinyClient
 {
 private:
-	Controller* _control;
+	TinyController* _control;
 
 public:
 	byte	Server;		// 服务端地址
 	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
-	ulong	Password;	// 通讯密码
+	ByteArray	Password;	// 通讯密码
 
 	ulong	LastActive;	// 最后活跃时间
 
-	TinyClient(Controller* control);
+	TinyClient(TinyController* control);
 
 	// 发送消息
 	void Send(Message& msg);

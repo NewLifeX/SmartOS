@@ -4,23 +4,22 @@
 #include "Sys.h"
 #include "Message.h"
 #include "Controller.h"
+#include "TinyMessage.h"
 
 // 微网客户端
 class TinyServer
 {
 private:
-	Controller* _control;
+	TinyController* _control;
 
 public:
 	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
-	ulong	Password;	// 通讯密码
 
-	ulong	LastActive;	// 最后活跃时间
-
-	TinyServer(Controller* control);
+	TinyServer(TinyController* control);
 
 	// 发送消息
-	void Send(Message& msg);
+	bool Send(Message& msg);
+	bool Reply(Message& msg);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;

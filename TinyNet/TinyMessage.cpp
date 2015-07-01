@@ -520,6 +520,8 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 // 广播消息，不等待响应和确认
 bool TinyController::Broadcast(TinyMessage& msg)
 {
+	msg.NoAck = true;
+
 	return Post(msg, 0);
 }
 

@@ -34,7 +34,7 @@ public:
 	bool OnLocal(TinyMessage& msg);
 	bool OnRemote(TokenMessage& msg);
 
-	// 远程网业务逻辑
+	/******** 远程网业务逻辑 ********/
 
 	List<Device*> Devices;
 	Device* FindDevice(byte id);
@@ -58,7 +58,9 @@ public:
 	// 节点离线 0x24
 	void DeviceOffline(byte id);
 
-	// 本地网业务逻辑
+	/******** 本地网业务逻辑 ********/
+	// 设备发现
+	bool OnDiscover(TinyMessage& msg);
 };
 
 // 设备信息
@@ -72,6 +74,7 @@ public:
 	byte	Switchs;	// 开关数
 	byte	Analogs;	// 通道数
 	String	Name;		// 名称
+	ByteArray	Pass;	// 通信密码
 
 	void Write(Stream& ms);
 	void Read(Stream& ms);
