@@ -143,6 +143,8 @@ public:
 	bool Post(TinyMessage& msg, int usTimeout = -1);
 	// 回复对方的请求消息
 	virtual bool Reply(Message& msg);
+	// 广播消息，不等待响应和确认
+	bool Broadcast(TinyMessage& msg);
 
 	// 循环处理待发送的消息队列
 	void Loop();

@@ -161,7 +161,9 @@ void TinyMessage::Show() const
 	{
 		assert_ptr(Data);
 		msg_printf(" Data[%d]=", Length);
-		Sys.ShowString(Data, Length, false);
+		//Sys.ShowString(Data, Length, false);
+		ByteArray bs(Data, Length);
+		bs.Show();
 	}
 	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
 	msg_printf("\r\n");
@@ -513,6 +515,12 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	Sys.SetTask(_taskID, true);
 
 	return true;
+}
+
+// 广播消息，不等待响应和确认
+bool TinyController::Broadcast(TinyMessage& msg)
+{
+	return Post(msg, 0);
 }
 
 bool TinyController::Reply(Message& msg)
