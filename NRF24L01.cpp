@@ -222,6 +222,7 @@ void NRF24L01::Init()
 	Error		= 0;
 
 	_taskID = 0;
+	_taskID2 = 0;
 	_timer = NULL;
 	//_Thread = NULL;
 
@@ -1097,8 +1098,8 @@ bool NRF24L01::CanReceive()
 	return st.RX_DR;
 }
 
-void NRF24L01::ReceiveTask(void* sender, void* param)
-//void NRF24L01::ReceiveTask(void* param)
+//void NRF24L01::ReceiveTask(void* sender, void* param)
+void NRF24L01::ReceiveTask(void* param)
 {
 	assert_ptr(param);
 
@@ -1123,7 +1124,7 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		//if(!_taskID) _taskID = Sys.AddTask(ReceiveTask, this, 0, 1000);
+		if(!_taskID2) _taskID2 = Sys.AddTask(ReceiveTask, this, 0, 5000);
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
 		//if(!_timer) _timer = Timer::Create();
@@ -1142,8 +1143,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	}
 	else
 	{
-		//if(_taskID) Sys.RemoveTask(_taskID);
-		//_taskID = 0;
+		if(_taskID2) Sys.RemoveTask(_taskID2);
+		_taskID2 = 0;
 		if(_timer) delete _timer;
 		_timer = NULL;
 
