@@ -87,7 +87,7 @@ void TinyIP::Process(Stream& ms)
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	MacAddress mac = eth->SrcMac.Value();
-#if NET_DEBUG
+#if NET_DEBUG >= 3
 	mac.Show();
 	debug_printf("=>");
 	MacAddress(eth->DestMac.Value()).Show();
@@ -120,12 +120,28 @@ void TinyIP::Process(Stream& ms)
 	IP_HEADER* ip = ms.Retrieve<IP_HEADER>();
 	if(!ip) return;
 
-	// 是否发给本机。
-	IPAddress local = ip->DestIP;
-	if(local != IP && !IsBroadcast(local)) return;
-
 	// 记录远程信息
 	IPAddress remote = ip->SrcIP;
+	IPAddress local = ip->DestIP;
+
+#if NET_DEBUG >= 2
+	remote.Show();
+	debug_printf("=>");
+	local.Show();
+
+	string name = "Unkown";
+	switch(ip->Protocol)
+	{
+		case IP_ICMP: { name = "ICMP"; break; }
+		case IP_IGMP: { name = "IGMP"; break; }
+		case IP_TCP: { name = "TCP"; break; }
+		case IP_UDP: { name = "UDP"; break; }
+	}
+	debug_printf(" Type=%s\r\n", name);
+#endif
+
+	// 是否发给本机。
+	if(local != IP && !IsBroadcast(local)) return;
 
 	// 移交给ARP处理，为了让它更新ARP表
 	if(Arp)
