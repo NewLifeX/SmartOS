@@ -1,6 +1,6 @@
 ﻿#include "Arp.h"
 
-#define NET_DEBUG 0
+#define NET_DEBUG 1
 
 class ArpSession
 {
@@ -169,6 +169,7 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 
 #if NET_DEBUG
 	debug_printf("ARP::Request To ");
+	if(timeout <= 0) debug_printf("异步 ");
 	IPAddress(arp->DestIP).Show();
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif

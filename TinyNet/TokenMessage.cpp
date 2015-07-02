@@ -366,7 +366,7 @@ void TokenStat::Start()
 	if(_taskID) return;
 
 	debug_printf("TokenStat::令牌统计 ");
-	_taskID = Sys.AddTask(StatTask, this, 5000000, 10000000);
+	_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000);
 }
 
 int TokenStat::Percent()
