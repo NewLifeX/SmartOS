@@ -1,6 +1,6 @@
 ﻿#include "Enc28j60.h"
 
-#define ENC_DEBUG 0
+#define ENC_DEBUG 1
 #define NET_DEBUG 1
 
 // ENC28J60 控制寄存器
@@ -278,6 +278,30 @@ typedef union _WORD_VAL
     } bits;
 } WORD_VAL, WORD_BITS;
 
+/*
+63-52 零0
+51 发送VLAN 标记帧帧的长度/ 类型字段包含VLAN 协议标识符8100h。
+50 应用背压流控已应用载波侦听式背压流控
+49 发送暂停控制帧发送的帧是带有有效暂停操作码的控制帧。
+48 发送控制帧发送的帧是控制帧。
+47-32 线上发送的总字节数当前数据包发送在线上的总字节数，包括所有冲突的字节。
+31 发送欠载保留。 该位始终为0。
+30 发送特大帧帧字节数超过MAMXFL。
+29 发送延时冲突冲突发生在冲突窗口（MACLCON2）外。
+28 发送过度冲突冲突数超出最大重发数（MACLCON1）后中止数据包。
+27 发送过度延期数据包延期大于24287 比特时间（2.4287ms）。
+26 发送数据包延期数据包延期至少一次的时间但少于过度延期。
+25 发送广播数据包的目标地址是广播地址。
+24 发送组播数据包的目标地址是组播地址。
+23 发送完成数据包发送完成。
+22 发送长度超出范围表示帧类型/ 长度字段大于1500 字节（类型字段）。
+21 发送长度校验错误表示数据包中帧长度字段的值与实际的数据字节长度不匹配，它不是类
+型字段。 MACON3.FRMLNEN 位必须置1 以便捕获该错误。
+20 发送CRC 错误数据包中附加的CRC 与内部生成的CRC 不匹配。
+19-16 发送冲突数在尝试发送当前数据包的过程中遇到冲突的次数。 适用于成功发送的数
+据包，因此不会是可能发生冲突的最大次数16 次。
+15-0 发送字节数帧中的总字节数，不包括冲突字节。
+*/
 typedef union {
 	byte v[7];
 	struct {
@@ -628,10 +652,10 @@ bool Enc28j60::OnOpen()
     // 切换到bank0
     SetBank(ECON1);
 #if NET_DEBUG
-	debug_printf("ENC28J60::EIE\t= 0x%02X => 0x%02X\r\n", ReadReg(EIE), EIE_INTIE | EIE_PKTIE | EIE_RXERIE);
+	debug_printf("ENC28J60::EIE\t= 0x%02X => 0x%02X\r\n", ReadReg(EIE), EIE_INTIE | EIE_PKTIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);
 #endif
     // 使能中断 全局中断 接收中断 接收错误中断
-    WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE | EIE_RXERIE);
+    WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);
     // 新增加，有些例程里面没有
     //WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_RXERIE | EIE_TXERIE | EIE_INTIE);
 
@@ -674,13 +698,22 @@ byte Enc28j60::GetRevision()
 
 bool Enc28j60::OnWrite(const byte* packet, uint len)
 {
+	assert_param2(len <= MAX_FRAMELEN, "以太网数据帧超大");
+
 	if(!Linked())
 	{
 		debug_printf("以太网已断开！\r\n");
 		return false;
 	}
 
-	while((ReadReg(ECON1) & ECON1_TXRTS) != 0);
+	// ECON1_TXRTS 发送逻辑正在尝试发送数据包
+	int times = 1000;
+	while((ReadReg(ECON1) & ECON1_TXRTS) && times-- > 0);
+	if(times <= 0)
+	{
+		debug_printf("Enc28j60::OnWrite 发送失败，设备正忙于发送数据！");
+		return false;
+	}
 
     // 设置写指针为传输数据区域的开头
     WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
@@ -709,6 +742,9 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 #endif
     // 把传输缓冲区的内容发送到网络
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
+	// 等待发送完成
+	times = 1000;
+	while((ReadReg(ECON1) & ECON1_TXRTS) && times-- > 0);
 
 	/*
 	如果数据包发送完成或因错误/ 取消而中止发送，ECON1.TXRTS 位会被清零，一个7 字节的发送状态向量将被写入由ETXND + 1 指向的单元，
@@ -719,36 +755,78 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	*/
 
 #if ENC_DEBUG
+	// 根据发送中断寄存器，特殊处理发送冲突延迟导致的失败，实现16次出错重发
     if(GetRevision() == 0x05u || GetRevision() == 0x06u)
 	{
-		ushort count = 0;
-		while((ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && (++count < 1000));
-		if((ReadReg(EIR) & EIR_TXERIF) || (count >= 1000))
+		// 如果有 发送错误中断 TXERIF 或者 发送中断 TXIF ，则等待发送结束
+		times = 1000;
+		while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && (times-- > 0));
+
+		// 如果有 发送错误中断 TXERIF 或者 超时
+		//if((ReadReg(EIR) & EIR_TXERIF) || (times <= 0))
+		if((ReadReg(EIR) & EIR_TXERIF) || (ReadReg(ESTAT) & (ESTAT_LATECOL | ESTAT_TXABRT)))
 		{
 			WORD_VAL ReadPtrSave;
 			WORD_VAL TXEnd;
 			TXSTATUS TXStatus;
 			byte i;
 
+			// 取消上一次发送
 			// Cancel the previous transmission if it has become stuck set
 			//BFCReg(ECON1, ECON1_TXRTS);
             WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 
+			// 保存当前读指针
 			// Save the current read pointer (controlled by application)
 			ReadPtrSave.v[0] = ReadReg(ERDPTL);
 			ReadPtrSave.v[1] = ReadReg(ERDPTH);
 
+			// 获取当前发送状态向量的位置
 			// Get the location of the transmit status vector
 			TXEnd.v[0] = ReadReg(ETXNDL);
 			TXEnd.v[1] = ReadReg(ETXNDH);
 			TXEnd.Val++;
 
+			// 读取当前发送状态向量
 			// ReadReg the transmit status vector
 			WriteReg(ERDPTL, TXEnd.v[0]);
 			WriteReg(ERDPTH, TXEnd.v[1]);
 
+			byte* p = (byte*)&TXStatus;
 			ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 
+#if NET_DEBUG
+			MacAddress dest(*(ulong*)packet);
+			MacAddress src(*(ulong*)(packet+6));
+			dest.Show();
+			debug_printf("<=");
+			src.Show();
+			debug_printf(" Type=0x%04X Len=%d \r\n", *(ushort*)(packet + 12), len);
+
+			debug_printf("ENC28J60::EIR\t=0x%02X 发送错误中断 发送状态向量 0x%02X 0x%02X", ReadReg(EIR), *(uint*)(p+4), *(uint*)p);
+			if(TXStatus.bits.ByteCount)			debug_printf(" 字节数=%d/%d", TXStatus.bits.ByteCount, len);
+			if(TXStatus.bits.CollisionCount)	debug_printf(" 冲突数=%d", TXStatus.bits.CollisionCount);
+			if(TXStatus.bits.CRCError)			debug_printf(" CRCError");
+			if(TXStatus.bits.LengthCheckError)	debug_printf(" LengthCheckError=长度校验错误");
+			if(TXStatus.bits.LengthOutOfRange)	debug_printf(" LengthOutOfRange=帧类型/长度字段大于1500字节");
+			//if(TXStatus.bits.Done)				debug_printf(" Done发送完成");
+			if(TXStatus.bits.Multicast)			debug_printf(" Multicast发送组播");
+			if(TXStatus.bits.Broadcast)			debug_printf(" Broadcast发送广播");
+			if(TXStatus.bits.PacketDefer)		debug_printf(" PacketDefer发送数据包延期");
+			if(TXStatus.bits.ExcessiveDefer)	debug_printf(" ExcessiveDefer发送过度延期");
+			if(TXStatus.bits.MaximumCollisions)	debug_printf(" MaximumCollisions过度冲突");
+			if(TXStatus.bits.LateCollision)		debug_printf(" LateCollision延时冲突");
+			if(TXStatus.bits.Giant)				debug_printf(" Giant特大帧字节数超过MAMXFL");
+			if(TXStatus.bits.Underrun)			debug_printf(" Underrun欠载保留");
+			if(TXStatus.bits.BytesTransmittedOnWire)debug_printf(" 线上发送的总字节数=%d", TXStatus.bits.BytesTransmittedOnWire);
+			if(TXStatus.bits.ControlFrame)		debug_printf(" ControlFrame控制帧");
+			if(TXStatus.bits.PAUSEControlFrame)	debug_printf(" PAUSEControlFrame暂停控制帧");
+			if(TXStatus.bits.BackpressureApplied)debug_printf(" BackpressureApplied应用背压流控");
+			if(TXStatus.bits.VLANTaggedFrame)	debug_printf(" VLANTaggedFrame发送VLAN标记帧");
+			debug_printf("\r\n");
+#endif
+
+			// 如果发生延迟冲突，则实现重传。这种情况发生于发送时链接信号同时到达
 			// Implement retransmission if a late collision occured (this can
 			// happen on B5 when certain link pulses arrive at the same time
 			// as the transmission)
@@ -756,18 +834,20 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 			{
 				if((ReadReg(EIR) & EIR_TXERIF) && TXStatus.bits.LateCollision)
 				{
-					// Reset the TX logic
+					// 重置发送逻辑
                     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
                     WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
                     WriteOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF | EIR_TXIF);
 
-					// Transmit the packet again
+					// 再次发送数据包
 					WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 					while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)));
 
+					// 如果被卡住，取消上一次发送
 					// Cancel the previous transmission if it has become stuck set
 					WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 
+					// 读取发送状态向量
 					// ReadReg transmit status vector
 					WriteReg(ERDPTL, TXEnd.v[0]);
 					WriteReg(ERDPTH, TXEnd.v[1]);
@@ -779,6 +859,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 				}
 			}
 
+			// 恢复当前读取指针
 			// Restore the current read pointer
 			WriteReg(ERDPTL, ReadPtrSave.v[0]);
 			WriteReg(ERDPTH, ReadPtrSave.v[1]);
@@ -790,7 +871,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
     if(ReadReg(EIR) & EIR_TXERIF)
     {
 		/*
-		发送错误中断标志（TXERIF）用于指出是否发生了发送被中止的情况。 以下原因可导致发送被中止：
+		发送错误中断标志 TXERIF 用于指出是否发生了发送被中止的情况。 以下原因可导致发送被中止：
 		1. 发生了MACLCON1 寄存器中最大重发次数（RETMAX）位定义的过度冲突。
 		2. 发生了MACLCON2 寄存器中冲突窗口（COLWIN）位定义的延迟冲突。
 		3. 在发送完64 字节后，发生了冲突（ESTAT.LATECOL位置1）。
@@ -802,7 +883,16 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 		debug_printf("ENC28J60::EIR\t= 0x%02X 发送错误中断\r\n", ReadReg(EIR));
 #endif
 		SetBank(ECON1);
-        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+        //WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+		// 参考手册11.3，仅发送复位
+		/*
+		通过SPI 接口向ECON1 寄存器的TXRST 位写入1 可实现仅发送复位。
+		如果在TXRST 位置1 时刚好有数据包在发送，硬件会自动将TXRTS 位清零并中止发送。
+		该行为只能复位发送逻辑。 系统复位会自动执行仅发送复位。
+		其他寄存器和控制模块（如缓冲管理器和主机接口）将不受仅发送复位的影响。
+		主控制器若要恢复正常工作应将TXRST 位清零。
+		*/
+        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
 
 		// 发送数据失败
 		return false;
@@ -812,6 +902,10 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	if(ReadReg(ESTAT) & ESTAT_TXABRT)
 	{
 		debug_printf("ENC28J60::ESTAT_TXABRT 发送中止错误\r\n");
+
+		SetBank(ECON1);
+        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+
 		return false;
 	}
 
@@ -907,6 +1001,8 @@ void Enc28j60::CheckError()
 		if(stat & ESTAT_CLKRDY)		debug_printf(" CLKRDY");
 		debug_printf("\r\n");
 	}
+	byte dat = ReadReg(ECON1);
+	if(dat != 0x04) debug_printf("ENC28J60::ECON1\t= 0x%02X\r\n", dat);
 #endif
 
 	ulong ts = Time.Current() - LastTime;
@@ -914,7 +1010,7 @@ void Enc28j60::CheckError()
 	{
 		Error++;
 
-		debug_printf("Enc28j60::超过%d秒没有收到任何数据，重新初始化 ", (int)(ts/1000000));
+		debug_printf("Enc28j60::超过%d秒没有收到任何数据，重新初始化。共出错 %d 次 ", (int)(ts/1000000), Error);
 		Opened = false;
 		Open();
 	}

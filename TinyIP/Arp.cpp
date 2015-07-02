@@ -1,6 +1,6 @@
 ﻿#include "Arp.h"
 
-#define NET_DEBUG 1
+#define NET_DEBUG 0
 
 class ArpSession
 {
