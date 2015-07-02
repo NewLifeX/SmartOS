@@ -1124,7 +1124,11 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		if(!_taskID2) _taskID2 = Sys.AddTask(ReceiveTask, this, 0, 2000);
+		if(!_taskID2)
+		{
+			debug_printf("R24::接收轮询 ");
+			_taskID2 = Sys.AddTask(ReceiveTask, this, 0, 2000);
+		}
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
 		//if(!_timer) _timer = Timer::Create();
