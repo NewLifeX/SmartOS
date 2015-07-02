@@ -11,7 +11,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	ushort code = __REV16(Sys.Code);
 	ByteArray bs((byte*)&code, 2);
 	Type = bs.ToHex('\0');
-	Name.Set(Sys.Name);
+	Name.Set(Sys.Company);
 
 	LocalTime	= Time.Current();
 	Ciphers[0]	= 1;
