@@ -48,6 +48,7 @@ public:
 	// 设置是否接收广播数据包
 	void SetBroadcast(bool flag);
 
+	int	Error;	// 错误次数
 	void CheckError();
 protected:
 	virtual bool OnOpen();
