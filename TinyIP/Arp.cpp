@@ -57,15 +57,21 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	*/
 
 	// 如果是Arp响应包，自动加入缓存
-	/*if(arp->Option == 0x0200)
+	if(arp->Option == 0x0200)
 	{
-		AddArp(arp->SrcIP, arp->SrcMac);
+		IPAddress addr = arp->SrcIP;
+		MacAddress mac = arp->SrcMac.Value();
+
+		Add(addr, mac);
 	}
 	// 别人的响应包这里收不到呀，还是把请求包也算上吧
 	if(arp->Option == 0x0100)
 	{
-		AddArp(arp->SrcIP, arp->SrcMac);
-	}*/
+		IPAddress addr = arp->SrcIP;
+		MacAddress mac = arp->SrcMac.Value();
+
+		Add(addr, mac);
+	}
 
 	// 是否发给本机。
 	if(arp->DestIP != Tip->IP.Value) return true;
@@ -76,7 +82,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 		_ArpSession->Success = true;
 		return true;
 	}
-	
+
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
@@ -245,6 +251,11 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 		if(!item) return false;
 
 		mac = item->Mac.Value();
+#if NET_DEBUG
+		debug_printf("ARP::异步请求超时 暂时采用旧值 ");
+		mac.Show();
+		debug_printf("\r\n");
+#endif
 		return true;
 	}
 
