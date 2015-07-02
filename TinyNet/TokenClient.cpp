@@ -112,8 +112,8 @@ void LoopTask(void* param)
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
-	if(client->Udp->BindPort != 3355)
-		client->SayHello(true, 3355);
+	//if(client->Udp->BindPort != 3355)
+	//	client->SayHello(true, 3355);
 
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
@@ -144,7 +144,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	ext.Show();
 
 	// 广播消息直接用UDP发出
-	if(broadcast)
+	/*if(broadcast)
 	{
 		if(!Udp) return;
 
@@ -160,7 +160,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 		Udp->Remote = ep;
 
 		return;
-	}
+	}*/
 
 	Control->Send(msg);
 }
@@ -233,7 +233,12 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 得到令牌
 		Token = ms.Read<int>();
 		// 这里可能有通信秘密
-		if(ms.Remain() > 0) ms.ReadArray(Control->Key);
+		if(ms.Remain() > 0)
+		{
+			ByteArray bs;
+			ms.ReadArray(bs);
+			if(bs.Length() > 0) Control->Key = bs;
+		}
 	}
 	else
 	{
