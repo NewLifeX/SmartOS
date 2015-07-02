@@ -104,7 +104,7 @@ void HelloMessage::Show()
 	if(Reply) debug_printf("#");
 	debug_printf(" Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
 	DateTime dt;
-	dt.Parse(LocalTime / 10);
+	dt.Parse(LocalTime);
 	debug_printf("%s ", dt.ToString());
 
 	EndPoint.Show();

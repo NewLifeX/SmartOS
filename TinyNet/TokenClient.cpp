@@ -181,7 +181,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		Status = 1;
 
 		// 通讯密码
-		Control->Key = ext.Key;
+		if(ext.Key.Length() > 0) Control->Key = ext.Key;
 
 		Login();
 	}
@@ -190,10 +190,10 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		TokenMessage rs;
 		rs.Code = msg.Code;
 
-		HelloMessage ext(Hello);
-		ext.Reply = msg.Reply;
-		ext.LocalTime = Time.Current();
-		ext.Write(rs);
+		HelloMessage ext2(Hello);
+		ext2.Reply = msg.Reply;
+		ext2.LocalTime = ext.LocalTime;
+		ext2.Write(rs);
 
 		Reply(rs);
 	}
