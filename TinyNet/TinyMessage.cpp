@@ -548,11 +548,13 @@ void StatTask(void* param)
 // 显示统计信息
 void TinyController::ShowStat()
 {
-	//static uint last = 0;
+	static uint lastSend = 0;
+	static uint lastReceive = 0;
 
 	int tsend = Total.Send;
-	//if(tsend == last) return;
-	//last = tsend;
+	if(tsend == lastSend && Total.Receive == lastReceive) return;
+	lastSend = tsend;
+	lastReceive = Total.Receive;
 
 	uint rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + tsend);
 	uint cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
