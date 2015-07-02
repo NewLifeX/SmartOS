@@ -37,7 +37,7 @@ void TinyIP::Init(ITransport* port)
 	_port = port;
 	_StartTime = Time.Current();
 
-	const byte defip_[] = {192, 168, 0, 1};
+	const byte defip_[] = {192, 168, 1, 1};
 	IPAddress defip(defip_);
 
 	// 随机IP，取ID最后一个字节
@@ -87,6 +87,17 @@ void TinyIP::Process(Stream& ms)
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
 	MacAddress mac = eth->SrcMac.Value();
+#if NET_DEBUG
+	mac.Show();
+	debug_printf("=>");
+	MacAddress(eth->DestMac.Value()).Show();
+	if(eth->Type == ETH_ARP)
+		debug_printf(" Type=ARP\r\n");
+	else if(eth->Type == ETH_IP)
+		debug_printf(" Type=IP\r\n");
+	else
+		debug_printf(" Type=0x%04X\r\n", eth->Type);
+#endif
 
 	// 处理ARP
 	if(eth->Type == ETH_ARP)
