@@ -251,7 +251,14 @@ DateTime& DateTime::Parse(ulong us)
 }
 
 DateTime::DateTime() { memset(this, 0, sizeof(this[0])); }
-DateTime::DateTime(DateTime& dt)	{ Parse(dt.TotalMicroseconds()); }
+
+// 重载等号运算符
+DateTime& DateTime::operator=(ulong v)
+{
+	Parse(v);
+
+	return *this;
+}
 
 uint DateTime::TotalSeconds()
 {

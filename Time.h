@@ -19,7 +19,9 @@ struct DateTime
 	char _Str[19 + 1]; // 内部字符串缓冲区，按最长计算
 
 	DateTime();
-	DateTime(DateTime& dt);
+
+	// 重载等号运算符
+    DateTime& operator=(ulong v);
 
 	DateTime& Parse(ulong us);
 	uint TotalSeconds();
