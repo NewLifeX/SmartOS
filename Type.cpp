@@ -40,6 +40,14 @@ ByteArray::ByteArray(String& str) : Array(str.Length())
 	Copy((byte*)str.ToString().GetBuffer(), str.Length());
 }
 
+// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
+ByteArray& ByteArray::operator=(const byte* data)
+{
+	Set(data, Length());
+
+	return *this;
+}
+
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine)
 {

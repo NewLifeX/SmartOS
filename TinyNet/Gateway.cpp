@@ -46,6 +46,22 @@ void Gateway::Start()
 
 	debug_printf("Gateway::Start \r\n");
 
+	// 添加网关这一条设备信息
+	if(Devices.Count() == 0)
+	{
+		Device* dv = new Device();
+		dv->ID			= 1;
+		dv->Type		= Sys.Code;
+		dv->HardID.SetLength(16);
+		dv->HardID		= Sys.ID;
+		dv->LastTime	= Time.Current();
+		dv->Switchs		= 5;
+		dv->Analogs		= 3;
+		dv->Name		= Sys.Name;
+
+		Devices.Add(dv);
+	}
+
 	Client->Open();
 
 	Running = true;
@@ -168,37 +184,42 @@ bool Gateway::OnRemote(TokenMessage& msg)
 // 设备列表 0x21
 bool Gateway::OnGetDeviceList(Message& msg)
 {
+	if(msg.Reply) return false;
+
 	// 不管请求内容是什么，都返回设备ID列表
 	TokenMessage rs;
 	rs.Code = msg.Code;
 
-	if(Devices.Count()==0)
+	if(Devices.Count() == 0)
 	{
-		rs.Data[0]=0;
-		rs.Length=1;
+		rs.Data[0] = 0;
+		rs.Length = 1;
 	}
 	else
 	{
-	   int i = 0;
-	   for(i=0; i<Devices.Count(); i++)
-		 rs.Data[i] = Devices[i]->ID;
-	   rs.Length = i;
+		int i = 0;
+		for(i=0; i<Devices.Count(); i++)
+			rs.Data[i] = Devices[i]->ID;
+		rs.Length = i;
 	}
 
-    debug_printf(" 获取设备列表\r\n");
+    debug_printf(" 获取设备列表 %d\r\n", Devices.Count());
+
 	return Client->Reply(rs);
 }
 
 // 设备信息 x025
 bool Gateway::OnGetDeviceInfo(Message& msg)
 {
+	if(msg.Reply) return false;
+
 	TokenMessage rs;
 	rs.Code = msg.Code;
 
 	// 如果未指定设备ID，则默认为1，表示网关自身
 	byte id = 1;
 	if(rs.Length > 0) id = msg.Data[0];
-	debug_printf("获取节点信息\r\n");
+	debug_printf("获取节点信息 %d\r\n", id);
 
 	// 找到对应该ID的设备
 	Device* dv = FindDevice(id);
@@ -213,11 +234,9 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 		// 当前作用域，直接使用数据流的指针，内容可能扩容而导致指针改变
 		rs.Data = ms.GetBuffer();
 		rs.Length = ms.Position();
-
-		return Client->Reply(rs);
 	}
-	else
-		return Client->Reply(rs);
+
+	return Client->Reply(rs);
 }
 
 // 学习模式 0x20

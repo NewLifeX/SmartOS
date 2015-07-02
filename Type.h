@@ -322,6 +322,9 @@ public:
 	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
 	ByteArray(String& str);
 
+	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
+    ByteArray& operator=(const byte* data);
+
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String& ToHex(String& str, char sep = '-', int newLine = 0x10);
 	// 显示十六进制数据，指定分隔字符和换行长度
