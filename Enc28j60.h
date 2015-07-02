@@ -36,8 +36,8 @@ public:
     byte ReadReg(byte addr);
 	// 写寄存器值 发送写寄存器命令和地址
     void WriteReg(byte addr, byte data);
-    uint PhyRead(byte addr);
-    bool PhyWrite(byte addr, uint data);
+    ushort PhyRead(byte addr);
+    bool PhyWrite(byte addr, ushort data);
     void ClockOut(byte clock);
 	bool Linked();
 

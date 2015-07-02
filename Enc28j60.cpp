@@ -447,7 +447,7 @@ void Enc28j60::WriteReg(byte addr, byte data)
 }
 
 // 发送ARP请求包到目的地址
-uint Enc28j60::PhyRead(byte addr)
+ushort Enc28j60::PhyRead(byte addr)
 {
 	// 设置PHY寄存器地址
 	WriteReg(MIREGADR, addr);
@@ -464,7 +464,7 @@ uint Enc28j60::PhyRead(byte addr)
 	return (ReadReg(MIRDH) << 8) | ReadReg(MIRDL);
 }
 
-bool Enc28j60::PhyWrite(byte addr, uint data)
+bool Enc28j60::PhyWrite(byte addr, ushort data)
 {
     // 向MIREGADR写入地址 详见数据手册19页
     WriteReg(MIREGADR, addr);
@@ -634,9 +634,9 @@ bool Enc28j60::OnOpen()
     WriteReg(MAADR0, Mac[5]);
 
 #if NET_DEBUG
-	debug_printf("ENC28J60::PHCON1\t= 0x%08X => 0x%08X\r\n", PhyRead(PHCON1), PHCON1_PDPXMD);
-	debug_printf("ENC28J60::PHCON2\t= 0x%08X => 0x%08X\r\n", PhyRead(PHCON2), PHCON2_HDLDIS);
-	debug_printf("ENC28J60::PHLCON\t= 0x%08X => 0x%08X\r\n", PhyRead(PHLCON), 0x476);
+	debug_printf("ENC28J60::PHCON1\t= 0x%04X => 0x%04X\r\n", PhyRead(PHCON1), PHCON1_PDPXMD);
+	debug_printf("ENC28J60::PHCON2\t= 0x%04X => 0x%04X\r\n", PhyRead(PHCON2), PHCON2_HDLDIS);
+	debug_printf("ENC28J60::PHLCON\t= 0x%04X => 0x%04X\r\n", PhyRead(PHLCON), 0x476);
 #endif
 	bool flag = true;
     // 配置PHY为全双工  LEDB为拉电流
@@ -677,7 +677,7 @@ bool Enc28j60::OnOpen()
     ClockOut(2);
 
 #if NET_DEBUG
-	debug_printf("ENC28J60::PHSTAT1\t= 0x%08X\r\n", PhyRead(PHSTAT1));
+	debug_printf("ENC28J60::PHSTAT1\t= 0x%04X\r\n", PhyRead(PHSTAT1));
 #endif
 	debug_printf("Enc28j60::Inited! Revision=%d\r\n", rev);
 
@@ -1007,17 +1007,17 @@ void Enc28j60::ShowStatus()
 	dat = ReadReg(MACON3);
 	if(dat != 0x33) debug_printf("ENC28J60::MACON3\t= 0x%02X\r\n", dat);
 
-	SetBank(ECON1);
+	//SetBank(ECON1);
 	dat = ReadReg(EIE);
 	if(dat != 0xCB) debug_printf("ENC28J60::EIE\t= 0x%02X\r\n", dat);
 
 	dat = ReadReg(EIR);
-	if(dat != 0x00) debug_printf("ENC28J60::EIR\t= 0x%02X\r\n", dat);
+	if(dat != 0x00 && dat != 0x08) debug_printf("ENC28J60::EIR\t= 0x%02X\r\n", dat);
 
 	dat = ReadReg(ESTAT);
 	if(dat != ESTAT_CLKRDY)
 	{
-		debug_printf("Enc28j60::ESTAT=0x%02X", dat);
+		debug_printf("Enc28j60::ESTAT\t=0x%02X", dat);
 		if(dat & ESTAT_INT)		debug_printf(" INT");
 		if(dat & ESTAT_LATECOL)	debug_printf(" LATECOL");
 		if(dat & ESTAT_RXBUSY)		debug_printf(" RXBUSY");
@@ -1027,20 +1027,32 @@ void Enc28j60::ShowStatus()
 	}
 
 	dat = ReadReg(ECON2);
-	if(dat != 0x04) debug_printf("ENC28J60::ECON2\t= 0x%02X\r\n", dat);
+	if(dat != 0x80) debug_printf("ENC28J60::ECON2\t= 0x%02X\r\n", dat);
 	dat = ReadReg(ECON1);
 	if(dat != 0x04) debug_printf("ENC28J60::ECON1\t= 0x%02X\r\n", dat);
 
-	uint pst = PhyRead(PHSTAT1);
-	if(pst != 0x1804) debug_printf("ENC28J60::PHSTAT1\t= 0x%08X\r\n", pst);
+	ushort pst = PhyRead(PHSTAT1);
+	if(pst != 0x1804) debug_printf("ENC28J60::PHSTAT1\t= 0x%04X\r\n", pst);
 	pst = PhyRead(PHSTAT2);
-	if(pst != 0x0400) debug_printf("ENC28J60::PHSTAT2\t= 0x%08X\r\n", pst);
+	if(pst != 0x0400) debug_printf("ENC28J60::PHSTAT2\t= 0x%04X\r\n", pst);
 #endif
 }
 
 void Enc28j60::CheckError()
 {
-	ShowStatus();
+	//ShowStatus();
+
+	// 如果已经被重启，重新初始化
+	/*byte dat = ReadReg(MACON2);
+	if(dat)
+	{
+		Error++;
+
+		debug_printf("Enc28j60::MACON2\t= 0x%02X，重新初始化。共出错 %d 次 ", dat, Error);
+		Opened = false;
+		Open();
+		return;
+	}*/
 
 	ulong ts = Time.Current() - LastTime;
 	if(ResetPeriod < ts)
@@ -1057,7 +1069,7 @@ void Enc28j60::CheckError()
 void Enc28j60::SetBroadcast(bool flag)
 {
 	Broadcast = flag;
-	SetBank(ECON1);
+	//SetBank(ECON1);
 	if(flag)
 		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
 	else
