@@ -1,6 +1,6 @@
 ﻿#include "Enc28j60.h"
 
-#define ENC_DEBUG 1
+#define ENC_DEBUG 0
 #define NET_DEBUG 1
 
 // ENC28J60 控制寄存器
@@ -585,11 +585,11 @@ bool Enc28j60::OnOpen()
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::MACON1\t= 0x%02X => 0x%02X\r\n", ReadReg(MACON1), MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
-	debug_printf("ENC28J60::MACON2\t= 0x%02X => 0x%02X\r\n", ReadReg(MACON2), 0x00);
-	debug_printf("ENC28J60::EFLOCON\t= 0x%02X => 0x%02X\r\n", ReadReg(EFLOCON), 0x02);
 
-	debug_printf("ENC28J60::MACON2");
 	byte dat = ReadReg(MACON2);
+	debug_printf("ENC28J60::MACON2\t= 0x%02X => 0x%02X", dat, 0x00);
+
+	//debug_printf("ENC28J60::MACON2");
 	if(dat & MACON2_MARST)		debug_printf(" MARST");
 	if(dat & MACON2_RNDRST)		debug_printf(" RNDRST");
 	if(dat & MACON2_MARXRST)	debug_printf(" MARXRST");
@@ -597,6 +597,8 @@ bool Enc28j60::OnOpen()
 	if(dat & MACON2_MATXRST)	debug_printf(" MATXRST");
 	if(dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
 	debug_printf("\r\n");
+
+	debug_printf("ENC28J60::EFLOCON\t= 0x%02X => 0x%02X\r\n", ReadReg(EFLOCON), 0x02);
 #endif
     // Bank 2，使能MAC接收 允许MAC发送暂停控制帧 当接收到暂停控制帧时停止发送
     WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
@@ -881,6 +883,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 		*/
 #if NET_DEBUG
 		debug_printf("ENC28J60::EIR\t= 0x%02X 发送错误中断\r\n", ReadReg(EIR));
+		ShowStatus();
 #endif
 		SetBank(ECON1);
         //WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
@@ -902,6 +905,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	if(ReadReg(ESTAT) & ESTAT_TXABRT)
 	{
 		debug_printf("ENC28J60::ESTAT_TXABRT 发送中止错误\r\n");
+		ShowStatus();
 
 		SetBank(ECON1);
         WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
@@ -918,6 +922,9 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
 {
     uint rxstat;
     uint len;
+
+	// 检测并打开包接收
+	if(!(ReadReg(ECON1) & ECON1_RXEN)) WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
     // 检测缓冲区是否收到一个数据包
 	// PKTIF： 接收数据包待处理中断标志位
@@ -987,23 +994,53 @@ bool Enc28j60::Linked()
 	return PhyRead(PHSTAT1) & PHSTAT1_LLSTAT;
 }
 
-void Enc28j60::CheckError()
+// 显示寄存器状态
+void Enc28j60::ShowStatus()
 {
 #if NET_DEBUG
-	byte stat = ReadReg(ESTAT);
-	if(stat != ESTAT_CLKRDY)
+	debug_printf("\r\n寄存器状态：\r\n");
+
+	byte dat = ReadReg(MACON1);
+	if(dat != 0x0D) debug_printf("ENC28J60::MACON1\t= 0x%02X\r\n", dat);
+	dat = ReadReg(MACON2);
+	if(dat != 0x00) debug_printf("ENC28J60::MACON2\t= 0x%02X\r\n", dat);
+	dat = ReadReg(MACON3);
+	if(dat != 0x33) debug_printf("ENC28J60::MACON3\t= 0x%02X\r\n", dat);
+
+	SetBank(ECON1);
+	dat = ReadReg(EIE);
+	if(dat != 0xCB) debug_printf("ENC28J60::EIE\t= 0x%02X\r\n", dat);
+
+	dat = ReadReg(EIR);
+	if(dat != 0x00) debug_printf("ENC28J60::EIR\t= 0x%02X\r\n", dat);
+
+	dat = ReadReg(ESTAT);
+	if(dat != ESTAT_CLKRDY)
 	{
-		debug_printf("Enc28j60::ESTAT=0x%02X", stat);
-		if(stat & ESTAT_INT)		debug_printf(" INT");
-		if(stat & ESTAT_LATECOL)	debug_printf(" LATECOL");
-		if(stat & ESTAT_RXBUSY)		debug_printf(" RXBUSY");
-		if(stat & ESTAT_TXABRT)		debug_printf(" TXABRT");
-		if(stat & ESTAT_CLKRDY)		debug_printf(" CLKRDY");
+		debug_printf("Enc28j60::ESTAT=0x%02X", dat);
+		if(dat & ESTAT_INT)		debug_printf(" INT");
+		if(dat & ESTAT_LATECOL)	debug_printf(" LATECOL");
+		if(dat & ESTAT_RXBUSY)		debug_printf(" RXBUSY");
+		if(dat & ESTAT_TXABRT)		debug_printf(" TXABRT");
+		if(dat & ESTAT_CLKRDY)		debug_printf(" CLKRDY");
 		debug_printf("\r\n");
 	}
-	byte dat = ReadReg(ECON1);
+
+	dat = ReadReg(ECON2);
+	if(dat != 0x04) debug_printf("ENC28J60::ECON2\t= 0x%02X\r\n", dat);
+	dat = ReadReg(ECON1);
 	if(dat != 0x04) debug_printf("ENC28J60::ECON1\t= 0x%02X\r\n", dat);
+
+	uint pst = PhyRead(PHSTAT1);
+	if(pst != 0x1804) debug_printf("ENC28J60::PHSTAT1\t= 0x%08X\r\n", pst);
+	pst = PhyRead(PHSTAT2);
+	if(pst != 0x0400) debug_printf("ENC28J60::PHSTAT2\t= 0x%08X\r\n", pst);
 #endif
+}
+
+void Enc28j60::CheckError()
+{
+	ShowStatus();
 
 	ulong ts = Time.Current() - LastTime;
 	if(ResetPeriod < ts)
@@ -1020,6 +1057,7 @@ void Enc28j60::CheckError()
 void Enc28j60::SetBroadcast(bool flag)
 {
 	Broadcast = flag;
+	SetBank(ECON1);
 	if(flag)
 		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
 	else

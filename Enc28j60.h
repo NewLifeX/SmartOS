@@ -47,6 +47,8 @@ public:
 	bool Broadcast;
 	// 设置是否接收广播数据包
 	void SetBroadcast(bool flag);
+	// 显示寄存器状态
+	void ShowStatus();
 
 	int	Error;	// 错误次数
 	void CheckError();
