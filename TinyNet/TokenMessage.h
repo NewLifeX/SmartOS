@@ -110,8 +110,10 @@ class TokenStat
 public:
 	int		Send;
 	int		Success;
+	int		SendReply;
 	int		Time;
 	int		Receive;
+	int		ReceiveReply;
 
 	int Percent();	// 成功率百分比，已乘以10000
 	int Speed();	// 平均速度，指令发出到收到响应的时间

@@ -216,7 +216,10 @@ bool TokenController::OnReceive(Message& msg)
 		return true;
 	}
 
-	if(!msg.Reply) Stat->Receive++;
+	if(!msg.Reply)
+		Stat->Receive++;
+	else
+		Stat->ReceiveReply++;
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
@@ -292,7 +295,11 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 void TokenController::StartSendStat(byte code)
 {
 	// 仅统计请求信息，不统计响应信息
-	if ((code & 0x80) != 0) return;
+	if ((code & 0x80) != 0)
+	{
+		Stat->SendReply++;
+		return;
+	}
 
 	Stat->Send++;
 
@@ -396,22 +403,28 @@ void TokenStat::ClearStat()
 	if (_Total == NULL) _Total = new TokenStat();
 
 	int p = Percent();
-	debug_printf("令牌发：%d.%d2%% %d/%d %dus 收：%d ", p/100, p%100, Success, Send, Speed(), Receive);
+	debug_printf("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	p = _Total->Percent();
-	debug_printf("总发：%d.%d2%% %d/%d %dus 收：%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->Speed(), _Total->Receive);
+	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);
 
 	_Last->Send = Send;
 	_Last->Success = Success;
+	_Last->SendReply = SendReply;
 	_Last->Time = Time;
 	_Last->Receive = Receive;
+	_Last->ReceiveReply = ReceiveReply;
 
 	_Total->Send += Send;
 	_Total->Success += Success;
+	_Total->SendReply += SendReply;
 	_Total->Time += Time;
 	_Total->Receive += Receive;
+	_Total->ReceiveReply += ReceiveReply;
 
 	Send = 0;
 	Success = 0;
+	SendReply = 0;
 	Time = 0;
 	Receive = 0;
+	ReceiveReply = 0;
 }
