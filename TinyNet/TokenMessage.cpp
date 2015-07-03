@@ -2,8 +2,8 @@
 
 #include "Security\RC4.h"
 
-#define MSG_DEBUG DEBUG
-//#define MSG_DEBUG 0
+//#define MSG_DEBUG DEBUG
+#define MSG_DEBUG 0
 
 // 使用指定功能码初始化令牌消息
 TokenMessage::TokenMessage(byte code) : Message(code)
@@ -82,7 +82,9 @@ void TokenMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
-	debug_printf("Code=0x%02x", Code);
+	byte code = Code;
+	if(Reply) code |= 0x80;
+	debug_printf("Code=0x%02x", code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -436,10 +438,11 @@ void TokenStat::ClearStat()
 	debug_printf("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	p = _Total->Percent();
 	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
-	/*char cs[128];
-	String str(cs);
-	ToStr(str);*/
-	Show();
+	char cs[128];
+	String str(cs, ArrayLength(cs));
+	ToStr(str.Clear());
+	str.Print(true);
+	//Show();
 
 	_Last->Send = Send;
 	_Last->Success = Success;
@@ -466,7 +469,7 @@ void TokenStat::ClearStat()
 String& TokenStat::ToStr(String& str)
 {
 	int p = Percent();
-	str.Format("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
+	str.Format("发：%d.%d2%% %d/%d/%d %dus 收：%d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	/*p = _Total->Percent();
 	str.Format("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
 	if(_Total)
