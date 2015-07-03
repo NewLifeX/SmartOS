@@ -362,10 +362,20 @@ bool TokenController::EndSendStat(byte code, bool success)
 	return false;
 }
 
-/*TokenStat::TokenStat()
+TokenStat::TokenStat()
 {
+	Send		= 0;
+	Success		= 0;
+	SendReply	= 0;
+	Time		= 0;
+	Receive		= 0;
+	ReceiveReply= 0;
 
-}*/
+	_Last		= NULL;
+	_Total		= NULL;
+
+	_taskID		= 0;
+}
 
 TokenStat::~TokenStat()
 {
@@ -422,10 +432,14 @@ void TokenStat::ClearStat()
 	if (_Last == NULL) _Last = new TokenStat();
 	if (_Total == NULL) _Total = new TokenStat();
 
-	int p = Percent();
+	/*int p = Percent();
 	debug_printf("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	p = _Total->Percent();
-	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);
+	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
+	/*char cs[128];
+	String str(cs);
+	ToStr(str);*/
+	Show();
 
 	_Last->Send = Send;
 	_Last->Success = Success;
@@ -447,4 +461,19 @@ void TokenStat::ClearStat()
 	Time = 0;
 	Receive = 0;
 	ReceiveReply = 0;
+}
+
+String& TokenStat::ToStr(String& str)
+{
+	int p = Percent();
+	str.Format("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
+	/*p = _Total->Percent();
+	str.Format("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
+	if(_Total)
+	{
+		str += "总";
+		_Total->ToStr(str);
+	}
+
+	return str;
 }

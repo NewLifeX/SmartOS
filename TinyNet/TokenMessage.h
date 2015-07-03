@@ -79,20 +79,20 @@ private:
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
 	bool SendAndReceive(TokenMessage& msg, int retry = 0, int msTimeout = 20);
-	
+
 	// 统计
 private:
 	TokenStat* Stat;
-	
+
 	class QueueItem
 	{
 	public:
 		byte	Code;
 		ulong	Time;
 	};
-	
+
 	QueueItem	_Queue[16];
-	
+
 	bool StartSendStat(byte code);
 	bool EndSendStat(byte code, bool success);
 };
@@ -105,7 +105,7 @@ public:
 };
 
 // 令牌统计
-class TokenStat
+class TokenStat : Object
 {
 public:
 	int		Send;
@@ -115,11 +115,13 @@ public:
 	int		Receive;
 	int		ReceiveReply;
 
+	TokenStat();
+
 	int Percent();	// 成功率百分比，已乘以10000
 	int Speed();	// 平均速度，指令发出到收到响应的时间
 
 	~TokenStat();
-	
+
 	void Start();
 
 private:
@@ -131,6 +133,7 @@ private:
 	void ClearStat();
 	static void StatTask(void* param);
 
+	virtual String& ToStr(String& str);
 public:
 
 };
