@@ -203,7 +203,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 		rs.Length = i;
 	}
 
-    debug_printf(" 获取设备列表 %d\r\n", Devices.Count());
+    debug_printf(" 获取设备列表 共%d个\r\n", Devices.Count());
 
 	return Client->Reply(rs);
 }
@@ -219,7 +219,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 	// 如果未指定设备ID，则默认为1，表示网关自身
 	byte id = 1;
 	if(rs.Length > 0) id = msg.Data[0];
-	debug_printf("获取节点信息 %d\r\n", id);
+	debug_printf("获取节点信息 ID=0x%02X\r\n", id);
 
 	// 找到对应该ID的设备
 	Device* dv = FindDevice(id);
