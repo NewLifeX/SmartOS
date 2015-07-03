@@ -1,9 +1,12 @@
 ﻿#include "TokenMessage.h"
 
+#include "TinyIP\Udp.h"
 #include "Security\RC4.h"
 
 //#define MSG_DEBUG DEBUG
 #define MSG_DEBUG 0
+
+/******************************** TokenMessage ********************************/
 
 // 使用指定功能码初始化令牌消息
 TokenMessage::TokenMessage(byte code) : Message(code)
@@ -97,6 +100,8 @@ void TokenMessage::Show() const
 #endif
 }
 
+/******************************** TokenController ********************************/
+
 TokenController::TokenController() : Controller(), Key(0)
 {
 	Token	= 0;
@@ -110,6 +115,11 @@ TokenController::TokenController() : Controller(), Key(0)
 	memset(_Queue, 0, ArrayLength(_Queue) * sizeof(_Queue[0]));
 }
 
+TokenController::~TokenController()
+{
+	
+}
+
 void TokenController::Open()
 {
 	if(Opened) return;
@@ -119,7 +129,9 @@ void TokenController::Open()
 	if(!Stat)
 	{
 		Stat = new TokenStat();
-		Stat->Start();
+		//Stat->Start();
+		debug_printf("TokenStat::令牌统计 ");
+		_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000);
 	}
 
 	Controller::Open();
@@ -132,6 +144,7 @@ void TokenController::Close()
 		delete Stat;
 		Stat = NULL;
 	}
+	if(_taskID) Sys.RemoveTask(_taskID);
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
@@ -364,6 +377,33 @@ bool TokenController::EndSendStat(byte code, bool success)
 	return false;
 }
 
+void TokenController::ShowStat()
+{
+	char cs[128];
+	String str(cs, ArrayLength(cs));
+	Stat->ToStr(str.Clear());
+	str.Print(true);
+	
+	Stat->Clear();
+	
+	// 向以太网广播
+	UdpSocket* udp = (UdpSocket*)Port;
+	if(udp && udp->Type == IP_UDP)
+	{
+		ByteArray bs(str);
+		//debug_printf("握手广播 ");
+		udp->Send(bs, IPAddress::Broadcast, 514);
+	}
+}
+
+void TokenController::StatTask(void* param)
+{
+	TokenController* st = (TokenController*)param;
+	st->ShowStat();
+}
+
+/******************************** TokenStat ********************************/
+
 TokenStat::TokenStat()
 {
 	Send		= 0;
@@ -375,30 +415,12 @@ TokenStat::TokenStat()
 
 	_Last		= NULL;
 	_Total		= NULL;
-
-	_taskID		= 0;
 }
 
 TokenStat::~TokenStat()
 {
 	if (_Last == NULL) delete _Last;
 	if (_Total == NULL) delete _Total;
-
-	if(_taskID) Sys.RemoveTask(_taskID);
-}
-
-void TokenStat::StatTask(void* param)
-{
-	TokenStat* st = (TokenStat*)param;
-	st->ClearStat();
-}
-
-void TokenStat::Start()
-{
-	if(_taskID) return;
-
-	debug_printf("TokenStat::令牌统计 ");
-	_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000);
 }
 
 int TokenStat::Percent()
@@ -429,7 +451,7 @@ int TokenStat::Speed()
 	return time / sucs;
 }
 
-void TokenStat::ClearStat()
+void TokenStat::Clear()
 {
 	if (_Last == NULL) _Last = new TokenStat();
 	if (_Total == NULL) _Total = new TokenStat();
@@ -438,10 +460,10 @@ void TokenStat::ClearStat()
 	debug_printf("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	p = _Total->Percent();
 	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
-	char cs[128];
+	/*char cs[128];
 	String str(cs, ArrayLength(cs));
 	ToStr(str.Clear());
-	str.Print(true);
+	str.Print(true);*/
 	//Show();
 
 	_Last->Send = Send;

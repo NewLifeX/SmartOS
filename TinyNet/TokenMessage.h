@@ -63,6 +63,7 @@ public:
 	ByteArray	Key;	// 通信密码
 
 	TokenController();
+	virtual ~TokenController();
 
 	virtual void Open();
 	virtual void Close();
@@ -83,6 +84,11 @@ public:
 	// 统计
 private:
 	TokenStat* Stat;
+
+	int		_taskID;
+
+	void ShowStat();
+	static void StatTask(void* param);
 
 	class QueueItem
 	{
@@ -122,20 +128,13 @@ public:
 
 	~TokenStat();
 
-	void Start();
+	void Clear();
+
+	virtual String& ToStr(String& str);
 
 private:
 	TokenStat*	_Last;
 	TokenStat*	_Total;
-
-	int		_taskID;
-
-	void ClearStat();
-	static void StatTask(void* param);
-
-	virtual String& ToStr(String& str);
-public:
-
 };
 
 #endif
