@@ -1003,7 +1003,17 @@ void Enc28j60::ShowStatus()
 	byte dat = ReadReg(MACON1);
 	if(dat != 0x0D) debug_printf("ENC28J60::MACON1\t= 0x%02X\r\n", dat);
 	dat = ReadReg(MACON2);
-	if(dat != 0x00) debug_printf("ENC28J60::MACON2\t= 0x%02X\r\n", dat);
+	if(dat != 0x00)
+	{
+		debug_printf("ENC28J60::MACON2\t= 0x%02X", dat);
+		if(dat & MACON2_MARST)		debug_printf(" MARST");
+		if(dat & MACON2_RNDRST)		debug_printf(" RNDRST");
+		if(dat & MACON2_MARXRST)	debug_printf(" MARXRST");
+		if(dat & MACON2_RFUNRST)	debug_printf(" RFUNRST");
+		if(dat & MACON2_MATXRST)	debug_printf(" MATXRST");
+		if(dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
+		debug_printf("\r\n");
+	}
 	dat = ReadReg(MACON3);
 	if(dat != 0x33) debug_printf("ENC28J60::MACON3\t= 0x%02X\r\n", dat);
 
@@ -1012,7 +1022,18 @@ void Enc28j60::ShowStatus()
 	if(dat != 0xCB) debug_printf("ENC28J60::EIE\t= 0x%02X\r\n", dat);
 
 	dat = ReadReg(EIR);
-	if(dat != 0x00 && dat != 0x08) debug_printf("ENC28J60::EIR\t= 0x%02X\r\n", dat);
+	if(dat != 0x00 && dat != EIR_TXIF)
+	{
+		debug_printf("ENC28J60::EIR\t= 0x%02X", dat);
+		if(dat & EIR_PKTIF)		debug_printf(" PKTIF");
+		if(dat & EIR_DMAIF)		debug_printf(" DMAIF");
+		if(dat & EIR_LINKIF)	debug_printf(" LINKIF");
+		if(dat & EIR_TXIF)		debug_printf(" TXIF");
+		if(dat & EIR_WOLIF)		debug_printf(" WOLIF");
+		if(dat & EIR_TXERIF)	debug_printf(" TXERIF");
+		if(dat & EIR_RXERIF)	debug_printf(" RXERIF");
+		debug_printf("\r\n");
+	}
 
 	dat = ReadReg(ESTAT);
 	if(dat != ESTAT_CLKRDY)
