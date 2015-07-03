@@ -215,6 +215,9 @@ bool TokenController::OnReceive(Message& msg)
 		_Response->SetData(msg.Data, msg.Length);
 		_Response->Reply = true;
 
+		// 加解密。握手不加密，登录响应不加密
+		Encrypt(msg, Key);
+
 #if MSG_DEBUG
 		debug_printf("Token::RecvSync ");
 		msg.Show();
@@ -223,15 +226,15 @@ bool TokenController::OnReceive(Message& msg)
 		return true;
 	}
 
-#if MSG_DEBUG
-	debug_printf("Token::Recv ");
-	msg.Show();
-#endif
-
 	// 确认指令已完成使命直接跳出
 	if(msg.Code == 0x08)
 	{
 		if(msg.Length >= 1) EndSendStat(msg.Data[0], true);
+
+#if MSG_DEBUG
+		debug_printf("Token::Recv ");
+		msg.Show();
+#endif
 
 		return true;
 	}
@@ -250,6 +253,11 @@ bool TokenController::OnReceive(Message& msg)
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
+
+#if MSG_DEBUG
+	debug_printf("Token::Recv ");
+	msg.Show();
+#endif
 
 	return Controller::OnReceive(msg);
 }
