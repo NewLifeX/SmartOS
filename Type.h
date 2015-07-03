@@ -332,7 +332,8 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
 	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
-	ByteArray(String& str);
+	ByteArray(String& str);			// 直接引用数据缓冲区
+	ByteArray(const String& str);	// 不允许修改，拷贝
 
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
     ByteArray& operator=(const byte* data);

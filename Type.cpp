@@ -37,7 +37,15 @@ void Object::Show()
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(str.Length())
 {
-	Copy((byte*)str.ToString().GetBuffer(), str.Length());
+	char* p = str.GetBuffer();
+	Set((byte*)p, str.Length());
+}
+
+// 不允许修改，拷贝
+ByteArray::ByteArray(const String& str) : Array(str.Length())
+{
+	char* p = ((String&)str).GetBuffer();
+	Copy((byte*)p, str.Length());
 }
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
