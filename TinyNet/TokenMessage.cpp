@@ -3,8 +3,8 @@
 #include "TinyIP\Udp.h"
 #include "Security\RC4.h"
 
-//#define MSG_DEBUG DEBUG
-#define MSG_DEBUG 0
+#define MSG_DEBUG DEBUG
+//#define MSG_DEBUG 0
 
 /******************************** TokenMessage ********************************/
 
@@ -87,7 +87,7 @@ void TokenMessage::Show() const
 	assert_ptr(this);
 	byte code = Code;
 	if(Reply) code |= 0x80;
-	debug_printf("Code=0x%02x", code);
+	debug_printf("Code=0x%02X", code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
