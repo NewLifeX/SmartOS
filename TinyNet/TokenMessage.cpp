@@ -104,6 +104,8 @@ TokenController::TokenController() : Controller(), Key(0)
 	_Response = NULL;
 
 	Stat	= NULL;
+
+	memset(_Queue, 0, ArrayLength(_Queue) * sizeof(_Queue[0]));
 }
 
 void TokenController::Open()
@@ -177,11 +179,6 @@ bool Encrypt(Message& msg, ByteArray& pass)
 // 接收处理函数
 bool TokenController::OnReceive(Message& msg)
 {
-#if MSG_DEBUG
-	debug_printf("Token::Recv ");
-	msg.Show();
-#endif
-
 	byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
 
@@ -203,8 +200,18 @@ bool TokenController::OnReceive(Message& msg)
 		_Response->SetData(msg.Data, msg.Length);
 		_Response->Reply = true;
 
+#if MSG_DEBUG
+		debug_printf("Token::RecvSync ");
+		msg.Show();
+#endif
+
 		return true;
 	}
+
+#if MSG_DEBUG
+	debug_printf("Token::Recv ");
+	msg.Show();
+#endif
 
 	if(msg.Reply && msg.Code != 0x08) EndSendStat(code, true);
 
@@ -282,7 +289,9 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	}
 
 #if MSG_DEBUG
-	debug_printf("Token::SendAndReceive Len=%d Time=%dus\r\n", msg.Size(), ct.Elapsed());
+	debug_printf("Token::SendAndReceive Len=%d Time=%dus ", msg.Size(), ct.Elapsed());
+	if(rs) _Response->Show();
+	debug_printf("\r\n");
 #endif
 
 	_Response = NULL;

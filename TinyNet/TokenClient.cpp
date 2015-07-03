@@ -162,7 +162,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 		return;
 	}*/
 
-	Control->Send(msg);
+	Send(msg);
 }
 
 // 握手响应
@@ -279,8 +279,8 @@ void TokenClient::Ping()
 
 bool TokenClient::OnPing(TokenMessage& msg)
 {
-	// 忽略响应消息
-	//if(msg.Reply) return true;
+	// 忽略
+	if(!msg.Reply) return Reply(msg);
 
 	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
 
