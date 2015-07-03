@@ -367,6 +367,7 @@ public:
 	// 显示对象。默认显示ToString
 	virtual void Show();
 
+	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);
 };
 

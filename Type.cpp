@@ -233,6 +233,7 @@ void String::Show()
 	Print(false);
 }
 
+// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 String& String::Format(const char* format, ...)
 {
 	va_list ap;
@@ -240,8 +241,13 @@ String& String::Format(const char* format, ...)
 	//const char* fmt = format.GetBuffer();
 	va_start(ap, format);
 
-	int len = vsnprintf(GetBuffer(), Capacity(), format, ap);
-	_Length = len;
+	// 无法准确估计长度，大概乘以2处理
+	int len = Length();
+	CheckCapacity(len + (strlen(format) << 1), len);
+	
+	char* p = GetBuffer();
+	len = vsnprintf(p + len, Capacity() - len, format, ap);
+	_Length += len;
 
 	va_end(ap);
 
