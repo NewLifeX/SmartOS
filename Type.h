@@ -369,6 +369,14 @@ public:
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);
+
+    String& Concat(const String& str);
+    String& Concat(const char* str, int len = 0);
+
+    String& operator+=(const String& str);
+    String& operator+=(const char* str);
+    friend String& operator+(String& str1, const String& str2);
+    friend String& operator+(String& str1, const char* str2);
 };
 
 // IP地址

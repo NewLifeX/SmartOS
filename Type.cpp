@@ -244,7 +244,7 @@ String& String::Format(const char* format, ...)
 	// 无法准确估计长度，大概乘以2处理
 	int len = Length();
 	CheckCapacity(len + (strlen(format) << 1), len);
-	
+
 	char* p = GetBuffer();
 	len = vsnprintf(p + len, Capacity() - len, format, ap);
 	_Length += len;
@@ -252,6 +252,40 @@ String& String::Format(const char* format, ...)
 	va_end(ap);
 
 	return *this;
+}
+
+String& String::Concat(const String& str)
+{
+	Copy(str, Length());
+
+	return *this;
+}
+
+String& String::Concat(const char* str, int len)
+{
+	Copy(str, 0, Length());
+
+	return *this;
+}
+
+String& String::operator+=(const String& str)
+{
+	return *this + str;
+}
+
+String& String::operator+=(const char* str)
+{
+	return *this + str;
+}
+
+String& operator+(String& str1, const String& str2)
+{
+	return str1.Concat(str2);
+}
+
+String& operator+(String& str1, const char* str2)
+{
+	return str1.Concat(str2);
 }
 
 /******************************** IPAddress ********************************/
