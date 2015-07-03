@@ -1,6 +1,6 @@
 ﻿#include "Enc28j60.h"
 
-#define ENC_DEBUG 0
+#define ENC_DEBUG 1
 #define NET_DEBUG 1
 
 // ENC28J60 控制寄存器
@@ -636,6 +636,8 @@ bool Enc28j60::OnOpen()
 #if NET_DEBUG
 	debug_printf("ENC28J60::PHCON1\t= 0x%04X => 0x%04X\r\n", PhyRead(PHCON1), PHCON1_PDPXMD);
 	debug_printf("ENC28J60::PHCON2\t= 0x%04X => 0x%04X\r\n", PhyRead(PHCON2), PHCON2_HDLDIS);
+	debug_printf("ENC28J60::PHHID1\t= 0x%04X => 0x%04X\r\n", PhyRead(PHHID1), 0x0083);
+	debug_printf("ENC28J60::PHHID2\t= 0x%04X => 0x%04X\r\n", PhyRead(PHHID2), 0x1400);
 	debug_printf("ENC28J60::PHLCON\t= 0x%04X => 0x%04X\r\n", PhyRead(PHLCON), 0x476);
 #endif
 	bool flag = true;
@@ -644,7 +646,9 @@ bool Enc28j60::OnOpen()
     // 阻止发送回路的自动环回
     if(flag && !PhyWrite(PHCON2, PHCON2_HDLDIS)) flag = false;
     // PHY LED 配置,LED用来指示通信的状态
+	// 0x476 LEDA 0100 显示链接状态; LEDB 0111 显示发送和接收活动；LFRQ 01 延长LED脉冲至大约73ms
     if(flag && !PhyWrite(PHLCON, 0x476)) flag = false;
+    //if(flag && !PhyWrite(PHLCON, 0xE70)) flag = false;
 	if(!flag)
 	{
 		debug_printf("Enc28j60::Init Failed! Can't write Physical, please check Spi!\r\n");
@@ -882,7 +886,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 		在全双工模式下，只有第5 种情况会产生该中断。
 		*/
 #if NET_DEBUG
-		debug_printf("ENC28J60::EIR\t= 0x%02X 发送错误中断\r\n", ReadReg(EIR));
+		debug_printf("ENC28J60::EIR_TXERIF 发送错误中断\r\n");
 		ShowStatus();
 #endif
 		SetBank(ECON1);
