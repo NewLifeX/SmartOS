@@ -11,8 +11,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	ushort code = __REV16(Sys.Code);
 	ByteArray bs((byte*)&code, 2);
 	Type = bs.ToHex('\0');
-	Name.Set(Sys.Company);
-
+	//Name.Set(Sys.Company); 	// Sys.company 是一个字符串   在flash里面   Name.Clear() 会出错
 	LocalTime	= Time.Current();
 	Ciphers[0]	= 1;
 
@@ -63,7 +62,14 @@ void HelloMessage::Write(Stream& ms)
 	ms.Write(Version);
 
 	ms.WriteString(Type);
-	ms.WriteString(Name);
+	if(Name.Length() != 0)
+		ms.WriteString(Name);
+	else
+	{
+		String _name;
+		_name.Set(Sys.Company);
+		ms.WriteString(_name);
+	}
 
 	ms.Write(LocalTime * 10);
 
