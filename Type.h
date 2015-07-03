@@ -117,9 +117,6 @@ protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	void CheckCapacity(int len, int bak = 0)
 	{
-		// 扩大长度
-		if(len > _Length) _Length = len;
-
 		// 是否超出容量
 		if(len <= _Capacity) return;
 
@@ -201,6 +198,10 @@ public:
 		else
 		{
 			CheckCapacity(length);
+
+			// 扩大长度
+			if(length > _Length) _Length = length;
+
 			return false;
 		}
 	}
@@ -220,6 +221,9 @@ public:
 			memset(_Arr + index, item, sizeof(T) * count);
 		else
 			while(count-- > 0) _Arr[index++] = item;
+
+		// 扩大长度
+		if(len2 > _Length) _Length = len2;
 
 		return true;
 	}
@@ -254,10 +258,14 @@ public:
 		if(len == 0) return true;
 
 		// 检查长度是否足够
-		CheckCapacity(index + len, index);
+		int len2 = index + len;
+		CheckCapacity(len2, index);
 
 		// 拷贝数据
 		memcpy(_Arr + index, arr._Arr, sizeof(T) * len);
+
+		// 扩大长度
+		if(len2 > _Length) _Length = len2;
 
 		return true;
 	}
@@ -273,10 +281,14 @@ public:
 		}
 
 		// 检查长度是否足够
-		CheckCapacity(index + len, index);
+		int len2 = index + len;
+		CheckCapacity(len2, index);
 
 		// 拷贝数据
 		memcpy(_Arr + index, data, sizeof(T) * len);
+
+		// 扩大长度
+		if(len2 > _Length) _Length = len2;
 
 		return true;
 	}
