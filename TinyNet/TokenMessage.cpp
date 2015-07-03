@@ -213,8 +213,6 @@ bool TokenController::OnReceive(Message& msg)
 	msg.Show();
 #endif
 
-	if(msg.Reply && msg.Code != 0x08) EndSendStat(code, true);
-
 	// 确认指令已完成使命直接跳出
 	if(msg.Code == 0x08)
 	{
@@ -223,10 +221,17 @@ bool TokenController::OnReceive(Message& msg)
 		return true;
 	}
 
-	if(!msg.Reply)
-		Stat->Receive++;
+	if(msg.Reply)
+	{
+		bool rs = EndSendStat(code, true);
+
+		// 如果匹配了发送队列，那么这里不再作为收到响应
+		if(!rs) Stat->ReceiveReply++;
+	}
 	else
-		Stat->ReceiveReply++;
+	{
+		Stat->Receive++;
+	}
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
@@ -301,13 +306,13 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	return rs;
 }
 
-void TokenController::StartSendStat(byte code)
+bool TokenController::StartSendStat(byte code)
 {
 	// 仅统计请求信息，不统计响应信息
 	if ((code & 0x80) != 0)
 	{
 		Stat->SendReply++;
-		return;
+		return true;
 	}
 
 	Stat->Send++;
@@ -318,12 +323,14 @@ void TokenController::StartSendStat(byte code)
 		{
 			_Queue[i].Code	= code;
 			_Queue[i].Time	= Time.Current();
-			break;
+			return true;
 		}
 	}
+
+	return false;
 }
 
-void TokenController::EndSendStat(byte code, bool success)
+bool TokenController::EndSendStat(byte code, bool success)
 {
 	code &= 0x7F;
 
@@ -331,6 +338,7 @@ void TokenController::EndSendStat(byte code, bool success)
 	{
 		if(_Queue[i].Code == code)
 		{
+			bool rs = false;
 			if(success)
 			{
 				int cost = (int)(Time.Current() - _Queue[i].Time);
@@ -339,16 +347,19 @@ void TokenController::EndSendStat(byte code, bool success)
 				if(cost < 1000000)
 				{
 					Stat->Success++;
-
 					Stat->Time += cost;
+
+					rs = true;
 				}
 			}
 
 			_Queue[i].Code	= 0;
 
-			break;
+			return rs;
 		}
 	}
+
+	return false;
 }
 
 /*TokenStat::TokenStat()

@@ -93,8 +93,8 @@ private:
 	
 	QueueItem	_Queue[16];
 	
-	void StartSendStat(byte code);
-	void EndSendStat(byte code, bool success);
+	bool StartSendStat(byte code);
+	bool EndSendStat(byte code, bool success);
 };
 
 // 令牌会话
