@@ -35,14 +35,14 @@ void Object::Show()
 /******************************** ByteArray ********************************/
 
 // 字符串转为字节数组
-ByteArray::ByteArray(String& str) : Array(str.Length())
+ByteArray::ByteArray(String& str) : Array(0)
 {
 	char* p = str.GetBuffer();
 	Set((byte*)p, str.Length());
 }
 
 // 不允许修改，拷贝
-ByteArray::ByteArray(const String& str) : Array(str.Length())
+ByteArray::ByteArray(const String& str) : Array(0)
 {
 	char* p = ((String&)str).GetBuffer();
 	Copy((byte*)p, str.Length());
