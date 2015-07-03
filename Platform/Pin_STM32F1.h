@@ -9,49 +9,89 @@
 #define _PIN(PIN) (PIN & 0x000F)
 #define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
-/* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
-#define UARTS {USART1, USART2, USART3, UART4, UART5}
-#define UART_IRQs {USART1_IRQn, USART2_IRQn, USART3_IRQn, UART4_IRQn, UART5_IRQn}
-#define UART_PINS {\
- /* TX   RX   CTS  RTS */	\
-	PA9, PA10,PA11,PA12,/* USART1 */	\
-	PA2, PA3, PA0, PA1, /* USART2 */	\
-	PB10,PB11,PB13,PB14,/* USART3 */	\
-	PC10,PC11,P0,  P0,  /* UART4  */	\
-	PC12, PD2,P0,  P0,  /* UART5  */	\
-}
-#define UART_PINS_FULLREMAP {\
- /* TX   RX   CTS  RTS */	\
-	PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
-	PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
-	PD8, PD9, PD11,PD12,/* USART3 AFIO_MAPR_USART3_REMAP_FULLREMAP */	\
-	PC10,PC11,P0,  P0,  /* UART4  */	\
-	PC12, PD2,P0,  P0,  /* UART5  */	\
-}
+#ifdef STM32F10X_HD
+	/* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
+	#define UARTS {USART1, USART2, USART3, UART4, UART5}
+	#define UART_IRQs {USART1_IRQn, USART2_IRQn, USART3_IRQn, UART4_IRQn, UART5_IRQn}
+	#define UART_PINS {\
+	/* TX   RX   CTS  RTS */	\
+		PA9, PA10,PA11,PA12,/* USART1 */	\
+		PA2, PA3, PA0, PA1, /* USART2 */	\
+		PB10,PB11,PB13,PB14,/* USART3 */	\
+		PC10,PC11,P0,  P0,  /* UART4  */	\
+		PC12, PD2,P0,  P0,  /* UART5  */	\
+	}
+	#define UART_PINS_FULLREMAP {\
+	/* TX   RX   CTS  RTS */	\
+		PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
+		PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
+		PD8, PD9, PD11,PD12,/* USART3 AFIO_MAPR_USART3_REMAP_FULLREMAP */	\
+		PC10,PC11,P0,  P0,  /* UART4  */	\
+		PC12, PD2,P0,  P0,  /* UART5  */	\
+	}
+#endif
+#ifdef STM32F10X_MD
+	/* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
+	#define UARTS {USART1, USART2, USART3}
+	#define UART_IRQs {USART1_IRQn, USART2_IRQn, USART3_IRQn}
+	#define UART_PINS {\
+	/* TX   RX   CTS  RTS */	\
+		PA9, PA10,PA11,PA12,/* USART1 */	\
+		PA2, PA3, PA0, PA1, /* USART2 */	\
+		PB10,PB11,PB13,PB14,/* USART3 */	\
+	}
+	#define UART_PINS_FULLREMAP {\
+	/* TX   RX   CTS  RTS */	\
+		PB6, PB7, PA11,PA12,/* USART1 AFIO_MAPR_USART1_REMAP */	\
+		PD5, PD6, PD3, PD4, /* USART2 AFIO_MAPR_USART2_REMAP */	\
+		PD8, PD9, PD11,PD12,/* USART3 AFIO_MAPR_USART3_REMAP_FULLREMAP */	\
+	}
+#endif
 
-/* 定时器针脚 ------------------------------------------------------------------*/
-#define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
-#define TIM_IRQns {TIM1_UP_IRQn, TIM2_IRQn, TIM3_IRQn, TIM4_IRQn, TIM5_IRQn, TIM6_IRQn, TIM7_IRQn, TIM8_UP_IRQn}
-#define TIM_PINS {\
-	PA8, PA9, PA10,PA11,/* TIM1 */	\
-	PA0, PA1, PA2, PA3, /* TIM2 */	\
-	PA6, PA7, PB0, PB1, /* TIM3 */	\
-	PB6, PB7, PB8, PB9, /* TIM4 */	\
-	PA0, PA1, PA2, PA3, /* TIM5 */	\
-	P0,  P0,  P0,  P0,	/* TIM6 */	\
-	P0,  P0,  P0,  P0,	/* TIM7 */	\
-	PC6, PC7, PC8, PC9	/* TIM8 */	\
-}
-#define TIM_PINS_FULLREMAP {\
-	PE9, PE11,PE13,PE14,/* TIM1 AFIO_MAPR_TIM1_REMAP_FULLREMAP */	\
-	PA15,PB3, PB10,PB11,/* TIM2 AFIO_MAPR_TIM2_REMAP_FULLREMAP */	\
-	PC6, PC7, PC8, PC9, /* TIM3 AFIO_MAPR_TIM3_REMAP_FULLREMAP */	\
-	PD12,PD13,PD14,PD15,/* TIM4 AFIO_MAPR_TIM4_REMAP */	\
-	PA0, PA1, PA2, PA3, /* TIM5 */	\
-	P0,  P0,  P0,  P0,	/* TIM6 */	\
-	P0,  P0,  P0,  P0,	/* TIM7 */	\
-	PC6, PC7, PC8, PC9	/* TIM8 */	\
-}
+#ifdef STM32F10X_HD
+	/* 定时器针脚 ------------------------------------------------------------------*/
+	#define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
+	#define TIM_IRQns {TIM1_UP_IRQn, TIM2_IRQn, TIM3_IRQn, TIM4_IRQn, TIM5_IRQn, TIM6_IRQn, TIM7_IRQn, TIM8_UP_IRQn}
+	#define TIM_PINS {\
+		PA8, PA9, PA10,PA11,/* TIM1 */	\
+		PA0, PA1, PA2, PA3, /* TIM2 */	\
+		PA6, PA7, PB0, PB1, /* TIM3 */	\
+		PB6, PB7, PB8, PB9, /* TIM4 */	\
+		PA0, PA1, PA2, PA3, /* TIM5 */	\
+		P0,  P0,  P0,  P0,	/* TIM6 */	\
+		P0,  P0,  P0,  P0,	/* TIM7 */	\
+		PC6, PC7, PC8, PC9	/* TIM8 */	\
+	}
+	#define TIM_PINS_FULLREMAP {\
+		PE9, PE11,PE13,PE14,/* TIM1 AFIO_MAPR_TIM1_REMAP_FULLREMAP */	\
+		PA15,PB3, PB10,PB11,/* TIM2 AFIO_MAPR_TIM2_REMAP_FULLREMAP */	\
+		PC6, PC7, PC8, PC9, /* TIM3 AFIO_MAPR_TIM3_REMAP_FULLREMAP */	\
+		PD12,PD13,PD14,PD15,/* TIM4 AFIO_MAPR_TIM4_REMAP */	\
+		PA0, PA1, PA2, PA3, /* TIM5 */	\
+		P0,  P0,  P0,  P0,	/* TIM6 */	\
+		P0,  P0,  P0,  P0,	/* TIM7 */	\
+		PC6, PC7, PC8, PC9	/* TIM8 */	\
+	}
+#endif
+
+#ifdef STM32F10X_MD
+	/* 定时器针脚 ------------------------------------------------------------------*/
+	#define TIMS {TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8}
+	#define TIM_IRQns {TIM1_UP_IRQn, TIM2_IRQn, TIM3_IRQn, TIM4_IRQn}
+	#define TIM_PINS {\
+		PA8, PA9, PA10,PA11,/* TIM1 */	\
+		PA0, PA1, PA2, PA3, /* TIM2 */	\
+		PA6, PA7, PB0, PB1, /* TIM3 */	\
+		PB6, PB7, PB8, PB9, /* TIM4 */	\
+	}
+	#define TIM_PINS_FULLREMAP {\
+		PE9, PE11,PE13,PE14,/* TIM1 AFIO_MAPR_TIM1_REMAP_FULLREMAP */	\
+		PA15,PB3, PB10,PB11,/* TIM2 AFIO_MAPR_TIM2_REMAP_FULLREMAP */	\
+		PC6, PC7, PC8, PC9, /* TIM3 AFIO_MAPR_TIM3_REMAP_FULLREMAP */	\
+		PD12,PD13,PD14,PD15,/* TIM4 AFIO_MAPR_TIM4_REMAP */	\
+	}
+#endif
+
 
 /* ADC(模拟/数字转换器)针脚 ------------------------------------------------------------------*/
 #define DAC_PINS {PA4,PA5}
