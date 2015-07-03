@@ -70,7 +70,6 @@ public:
 	virtual void Show() const;
 };
 
-class MessageNode;
 class RingQueue;
 
 // 环形队列。记录收到消息的序列号，防止短时间内重复处理消息
@@ -106,11 +105,29 @@ public:
 	}
 };
 
+// 消息队列。需要等待响应的消息，进入消息队列处理。
+class MessageNode
+{
+public:
+	byte	Using;		// 是否在使用
+	byte	Sequence;	// 序列号
+	byte	Data[32];
+	uint	Length;
+	uint	Interval;	// 延迟间隔。每次逐步递增
+	ulong	StartTime;	// 开始时间
+	ulong	Next;		// 下一次重发时间
+	ulong	Expired;	// 过期时间，微秒
+	uint	Times;		// 发送次数
+	ulong	LastSend;	// 最后一次发送时间
+
+	void SetMessage(TinyMessage& msg);
+};
+
 // 消息控制器。负责发送消息、接收消息、分发消息
 class TinyController : public Controller
 {
 private:
-	FixedArray<MessageNode, 16>	_Queue;	// 消息队列。最多允许16个消息同时等待响应
+	MessageNode	_Queue[16];	// 消息队列。最多允许16个消息同时等待响应
 
 	uint		_Sequence;	// 控制器的消息序号
 	RingQueue	_Ring;		// 环形队列
@@ -156,23 +173,6 @@ public:
 
 	// 显示统计信息
 	void ShowStat();
-};
-
-// 消息队列。需要等待响应的消息，进入消息队列处理。
-class MessageNode
-{
-public:
-	byte		Sequence;	// 序列号
-	byte		Data[32];
-	uint		Length;
-	uint		Interval;	// 延迟间隔。每次逐步递增
-	ulong		StartTime;	// 开始时间
-	ulong		Next;		// 下一次重发时间
-	ulong		Expired;	// 过期时间，微秒
-	uint		Times;		// 发送次数
-	ulong		LastSend;	// 最后一次发送时间
-
-	void SetMessage(TinyMessage& msg);
 };
 
 #endif

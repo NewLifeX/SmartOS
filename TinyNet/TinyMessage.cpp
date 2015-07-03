@@ -190,6 +190,8 @@ TinyController::TinyController() : Controller()
 		Sys.Delay(30);
 		Address = Time.Current();
 	}
+
+	ArrayZero(_Queue);
 }
 
 TinyController::~TinyController()
@@ -323,18 +325,17 @@ bool TinyController::Valid(Message& msg)
 // 处理收到的Ack包
 void TinyController::AckRequest(TinyMessage& msg)
 {
-	int i = -1;
-	while(_Queue.MoveNext(i))
+	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
-		MessageNode* node = _Queue[i];
-		if(node->Sequence == msg.Sequence)
+		MessageNode& node = _Queue[i];
+		if(node.Using && node.Sequence == msg.Sequence)
 		{
-			int cost = (int)(Time.Current() - node->LastSend);
+			int cost = (int)(Time.Current() - node.LastSend);
 			if(cost < 0) cost = -cost;
 
 			Total.Cost += cost;
 			Total.Ack++;
-			Total.Bytes += node->Length;
+			Total.Bytes += node.Length;
 
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
 			uint it = (Interval + cost) >> 1;
@@ -344,8 +345,9 @@ void TinyController::AckRequest(TinyMessage& msg)
 			Interval = it;
 
 			// 该传输口收到响应，从就绪队列中删除
-			_Queue.Remove(node);
-			delete node;
+			//_Queue.Remove(node);
+			//delete node;
+			node.Using = 0;
 
 			/*if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
@@ -431,38 +433,41 @@ void SendTask(void* param)
 
 void TinyController::Loop()
 {
-	int i = -1;
-	while(_Queue.MoveNext(i))
+	int count;
+	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
-		MessageNode* node = _Queue[i];
+		MessageNode& node = _Queue[i];
+		if(!node.Using) continue;
 
 		// 检查时间。至少发送一次
-		if(node->Next > 0)
+		if(node.Next > 0)
 		{
 			// 下一次发送时间还没到，跳过
-			if(node->Next > Time.Current()) continue;
+			if(node.Next > Time.Current()) continue;
 
 			// 已过期则删除
-			if(node->Expired < Time.Current())
+			if(node.Expired < Time.Current())
 			{
-				_Queue.Remove(node);
-				delete node;
+				//_Queue.Remove(node);
+				//delete node;
+				node.Using = 0;
 
 				continue;
 			}
 		}
 
-		node->Times++;
+		count++;
+		node.Times++;
 
 #if MSG_DEBUG
 		// 第6个字节表示长度
-		TinyMessage* msg = (TinyMessage*)node->Data;
+		TinyMessage* msg = (TinyMessage*)node.Data;
 		// 最后一个附加字节记录第几次重发
-		if(node->Length > TinyMessage::MinSize + msg->Length) node->Data[node->Length - 1] = node->Times;
+		if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
 #endif
 
 		// 发送消息
-		Port->Write(node->Data, node->Length);
+		Port->Write(node.Data, node.Length);
 
 		// 增加发送次数统计
 		Total.Send++;
@@ -475,15 +480,15 @@ void TinyController::Loop()
 		}
 
 		ulong now = Time.Current();
-		node->LastSend = now;
+		node.LastSend = now;
 
 		// 随机延迟。随机数1~5。每次延迟递增
 		byte rnd = (uint)now % 3;
-		node->Interval = (rnd + 1) * Interval;
-		node->Next = now + node->Interval;
+		node.Interval = (rnd + 1) * Interval;
+		node.Next = now + node.Interval;
 	}
 
-	if(_Queue.Count() == 0)
+	if(count == 0)
 	{
 		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
 		Sys.SetTask(_taskID, false);
@@ -503,7 +508,20 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	if(msg.NoAck || msg.Ack) return Controller::Send(msg);
 
 	// 准备消息队列
-	MessageNode* node = new MessageNode();
+	MessageNode* node = NULL;
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		if(!_Queue[i].Using)
+		{
+			node = &_Queue[i];
+			node->Sequence = 0;
+			node->Using = 1;
+			break;
+		}
+	}
+	// 队列已满
+	if(!node) return false;
+
 	node->SetMessage(msg);
 	node->StartTime = Time.Current();
 	node->Next = 0;
@@ -512,7 +530,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	Total.Msg++;
 
 	// 加入等待队列
-	if(_Queue.Add(node) < 0) return false;
+	//if(_Queue.Add(node) < 0) return false;
 
 	Sys.SetTask(_taskID, true);
 
