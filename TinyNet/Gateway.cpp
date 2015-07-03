@@ -116,6 +116,8 @@ bool Gateway::OnLocal(TinyMessage& msg)
 	{
 		dv = new Device();
 		dv->ID = id;
+		// 默认作为开关
+		dv->Type = 0x0203;
 
 		Devices.Add(dv);
 
@@ -213,12 +215,15 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 {
 	if(msg.Reply) return false;
 
+	// 如果没有给ID，那么返回空负载
+	if(msg.Length == 0) return Client->Reply((TokenMessage&)msg);
+
 	TokenMessage rs;
 	rs.Code = msg.Code;
 
 	// 如果未指定设备ID，则默认为1，表示网关自身
 	byte id = 1;
-	if(rs.Length > 0) id = msg.Data[0];
+	if(msg.Length > 0) id = msg.Data[0];
 	debug_printf("获取节点信息 ID=0x%02X\r\n", id);
 
 	// 找到对应该ID的设备
@@ -226,7 +231,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 
 	// 即使找不到设备，也返回空负载数据
 	if(!dv) return Client->Reply(rs);
-	
+
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
 	//Stream ms(rs.Data, rs.Length);
 	Stream ms;
@@ -269,7 +274,7 @@ void Gateway::DeviceRegister(byte id)
 	msg.Code = 0x22;
 	msg.Length = 1;
 	msg.Data[0] = id;
-	debug_printf("节点注册入网\r\n");
+	debug_printf("节点注册入网 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
 }
@@ -281,7 +286,7 @@ void Gateway::DeviceOnline(byte id)
 	msg.Code = 0x23;
 	msg.Length = 1;
 	msg.Data[0] = id;
-	debug_printf("节点上线\r\n");
+	debug_printf("节点上线 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
 }
@@ -293,7 +298,7 @@ void Gateway::DeviceOffline(byte id)
 	msg.Code = 0x24;
 	msg.Length = 1;
 	msg.Data[0] = id;
-	debug_printf("节点离线\r\n");
+	debug_printf("节点离线 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
 }
