@@ -225,16 +225,17 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 	Device* dv = FindDevice(id);
 
 	// 即使找不到设备，也返回空负载数据
-	if(dv)
-	{
-		Stream ms(rs.Data, rs.Length);
+	if(!dv) return Client->Reply(rs);
+	
+	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
+	//Stream ms(rs.Data, rs.Length);
+	Stream ms;
 
-		dv->Write(ms);
+	dv->Write(ms);
 
-		// 当前作用域，直接使用数据流的指针，内容可能扩容而导致指针改变
-		rs.Data = ms.GetBuffer();
-		rs.Length = ms.Position();
-	}
+	// 当前作用域，直接使用数据流的指针，内容可能扩容而导致指针改变
+	rs.Data = ms.GetBuffer();
+	rs.Length = ms.Position();
 
 	return Client->Reply(rs);
 }
