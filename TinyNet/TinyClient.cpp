@@ -4,6 +4,8 @@
 #include "TinyMessage.h"
 #include "TokenMessage.h"
 
+#include "TokenNet\DiscoverMessage.h"
+
 bool OnClientReceived(Message& msg, void* param);
 
 void DiscoverTask(void* param);
@@ -19,7 +21,7 @@ TinyClient::TinyClient(TinyController* control)
 	_control = control;
 
 	Server		= 0;
-	DeviceType	= Sys.Code;
+	Type		= Sys.Code;
 	Password	= 0;
 
 	LastActive	= 0;
@@ -92,10 +94,10 @@ void TinyClient::Discover()
 	msg.Code = 1;
 
 	// 发送的广播消息，设备类型和系统ID
-	Stream ms(msg._Data, ArrayLength(msg._Data));
-	ms.Write(DeviceType);
-	ms.Write(Sys.ID, 0, 20);
-	msg.Length = ms.Position();
+	DiscoverMessage dm;
+	dm.Type		= Type;
+	dm.HardID	= Sys.ID;
+	dm.WriteMessage(msg);
 
 	_control->Broadcast(msg);
 

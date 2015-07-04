@@ -13,8 +13,8 @@ private:
 	TinyController* _control;
 
 public:
-	byte	Server;		// 服务端地址
-	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
+	byte	Server;	// 服务端地址
+	ushort	Type;	// 设备类型。两个字节可做二级分类
 	ByteArray	Password;	// 通讯密码
 
 	ulong	LastActive;	// 最后活跃时间

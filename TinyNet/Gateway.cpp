@@ -3,6 +3,8 @@
 #include "TinyMessage.h"
 #include "TokenMessage.h"
 
+#include "TokenNet\DiscoverMessage.h"
+
 #include "Security\MD5.h"
 
 bool OnLocalReceived(Message& msg, void* param);
@@ -332,12 +334,13 @@ bool Gateway::OnDiscover(TinyMessage& msg)
 		{
 			isNew = true;
 
-			Stream ms(msg.Data, msg.Length);
+			DiscoverMessage dm;
+			dm.ReadMessage(msg);
 
 			dv = new Device();
-			dv->ID = id;
-			dv->Type = ms.Read<ushort>();
-			ms.ReadArray(dv->HardID);
+			dv->ID		= id;
+			dv->Type	= dm.Type;
+			dv->HardID	= dm.HardID;
 
 			Devices.Add(dv);
 
