@@ -136,7 +136,7 @@ bool TinyClient::Discover(Message& msg, void* param)
 
 	// 启动Ping任务
 	debug_printf("开始Ping服务端 ");
-	_taskPing = Sys.AddTask(PingTask, client, 0, 5000000);
+	_taskPing = Sys.AddTask(PingTask, client, 0, 15000000);
 
 	if(client->OnDiscover) return client->OnDiscover(msg, param);
 

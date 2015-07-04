@@ -227,12 +227,12 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
-	int blank = 13;
+	int blank = 12;
 	msg_printf("%s", port->ToString());
 	if(send)
 	{
 		msg_printf("::Send ");
-		blank -= 5;
+		blank -= 4;
 	}
 	else
 	{
@@ -564,6 +564,17 @@ bool TinyController::Broadcast(TinyMessage& msg)
 {
 	msg.NoAck = true;
 	msg.Src = Address;
+
+	// 附上序列号。响应消息保持序列号不变
+	if(!msg.Reply) msg.Sequence = ++_Sequence;
+
+#if MSG_DEBUG
+	// 计算校验
+	msg.ComputeCrc();
+
+	ShowMessage(msg, true, Port);
+#endif
+
 	return Post(msg, 0);
 }
 
