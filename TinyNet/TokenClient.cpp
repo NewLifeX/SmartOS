@@ -141,7 +141,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	ext.Reply = false;
 	ext.LocalTime = Time.Current();
 	ext.Write(msg);
-	ext.Show();
+	ext.Show(true);
 
 	// 广播消息直接用UDP发出
 	/*if(broadcast)
@@ -172,7 +172,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
 	ext.Read(msg);
-	ext.Show();
+	ext.Show(true);
 
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply && (Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast()))
@@ -247,8 +247,8 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		debug_printf("登录失败，错误码 0x%02X！", result);
 		String str;
 		ms.ReadString(str.Clear());
-		str.Show();
-		debug_printf("\r\n");
+		str.Show(true);
+		//debug_printf("\r\n");
 	}
 
 	return true;

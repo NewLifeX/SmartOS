@@ -241,12 +241,18 @@ uint Stream::ReadArray(ByteArray& bs)
 
 	if(len > bs.Capacity())
 	{
-		debug_printf("准备读取的数据长度是 %d，而缓冲区数组容量是 %d\r\n", len, bs.Capacity());
-		//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
-		//bs.Set(0, 0, len);
-		// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据
-		// 这里在缓冲区不够大时，有多少读取多少
-		len = bs.Capacity();
+		// 在设计时，如果取得的长度超级大，可能是设计错误
+		if(len > 0x40)
+		{
+			debug_printf("准备读取的数据长度是 %d，而缓冲区数组容量是 %d\r\n", len, bs.Capacity());
+			//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
+			//bs.Set(0, 0, len);
+			/*// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据
+			// 这里在缓冲区不够大时，有多少读取多少
+			len = bs.Capacity();*/
+		}
+		// 如果不是设计错误，那么数组直接扩容
+		bs.SetLength(len);
 	}
 
 	Read(bs.GetBuffer(), 0, len);
