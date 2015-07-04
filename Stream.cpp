@@ -251,7 +251,7 @@ uint Stream::ReadArray(ByteArray& bs)
 			// 这里在缓冲区不够大时，有多少读取多少
 			len = bs.Capacity();*/
 			// 为了避免错误数据导致内存溢出，限定最大值
-			if(len > 0x400) return -1;
+			if(len > 0x400) len = bs.Capacity();
 		}
 		// 如果不是设计错误，那么数组直接扩容
 		bs.SetLength(len);
