@@ -302,10 +302,18 @@ String& operator+(String& str1, const char* str2)
 	return str + str2;
 }*/
 
-String& operator+(const char* str1, const Object& obj)
+String& operator+(const char* str, const Object& obj)
 {
-	String str(str1);
-	return str + obj;
+	String s;
+	s = str;
+	return s + obj;
+}
+
+String& operator+(const Object& obj, const char* str)
+{
+	String s;
+	obj.ToStr(s);
+	return s + str;
 }
 
 /******************************** IPAddress ********************************/
