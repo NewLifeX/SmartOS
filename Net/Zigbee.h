@@ -24,6 +24,8 @@ public:
 
 	virtual void Reset(void);
 
+	virtual string ToString() { return "Zigbee"; }
+
 protected:
 	virtual bool OnOpen() { return _port->Open(); }
     virtual void OnClose() { _port->Close(); }
