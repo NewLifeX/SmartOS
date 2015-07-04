@@ -43,7 +43,7 @@ String& LoginMessage::ToStr(String& str) const
 {
 	str += "登录";
 	if(Reply) str += "#";
-	str += " HardID=" + HardID + " Key=" + Key + " Salt=" + Salt + " " + Local;
+	str = str + " HardID=" + HardID + " Key=" + Key + " Salt=" + Salt + " " + Local;
 
 	return str;
 }
