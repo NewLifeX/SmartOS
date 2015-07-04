@@ -14,8 +14,6 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	//Name.Set(Sys.Company); 	// Sys.company 是一个字符串   在flash里面   Name.Clear() 会出错
 	LocalTime	= Time.Current();
 	Ciphers[0]	= 1;
-
-	Reply		= false;
 }
 
 HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
@@ -57,7 +55,7 @@ bool HelloMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void HelloMessage::Write(Stream& ms) const
+void HelloMessage::Write(Stream& ms)
 {
 	ms.Write(Version);
 
@@ -87,22 +85,6 @@ void HelloMessage::Write(Stream& ms) const
 	}
 }
 
-bool HelloMessage::Read(Message& msg)
-{
-	Stream ms(msg.Data, msg.Length);
-	return Read(ms);
-}
-
-void HelloMessage::Write(Message& msg) const
-{
-	//Stream ms(msg.Data, ArrayLength(msg._Data));
-	Stream ms(msg.Data, 256);
-
-	Write(ms);
-
-	msg.Length = ms.Position();
-}
-
 // 显示消息内容
 String& HelloMessage::ToStr(String& str) const
 {
@@ -114,8 +96,7 @@ String& HelloMessage::ToStr(String& str) const
 	//debug_printf("%s ", dt.ToString());
 	str += dt.ToString();
 
-	str += " ";
-	str + EndPoint;
+	str += " " + EndPoint;
 
 	str.Format(" Ciphers[%d]=", Ciphers.Length());
 	for(int i=0; i<Ciphers.Length(); i++)
@@ -123,12 +104,7 @@ String& HelloMessage::ToStr(String& str) const
 		str.Format("%d ", Ciphers[i]);
 	}
 
-	if(Reply)
-	{
-		str.Format(" Key=");
-		str += Key;
-	}
-	//debug_printf("\r\n");
+	if(Reply) str += " Key=" + Key;
 	
 	return str;
 }

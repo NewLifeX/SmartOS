@@ -140,7 +140,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 	HelloMessage ext(Hello);
 	ext.Reply = false;
 	ext.LocalTime = Time.Current();
-	ext.Write(msg);
+	ext.WriteMessage(msg);
 	ext.Show(true);
 
 	// 广播消息直接用UDP发出
@@ -171,7 +171,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
-	ext.Read(msg);
+	ext.ReadMessage(msg);
 	ext.Show(true);
 
 	// 如果收到响应，并且来自来源服务器
@@ -193,7 +193,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		HelloMessage ext2(Hello);
 		ext2.Reply = msg.Reply;
 		ext2.LocalTime = ext.LocalTime;
-		ext2.Write(rs);
+		ext2.WriteMessage(rs);
 
 		Reply(rs);
 	}
@@ -215,7 +215,7 @@ void TokenClient::Login()
 	}
 
 	TokenMessage msg(2);
-	login.Write(msg);
+	login.WriteMessage(msg);
 
 	Send(msg);
 }

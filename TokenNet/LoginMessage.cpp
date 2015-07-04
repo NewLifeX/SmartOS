@@ -38,33 +38,12 @@ void LoginMessage::Write(Stream& ms)
 	ms.Write((ushort)Local.Port);
 }
 
-bool LoginMessage::Read(Message& msg)
-{
-	Stream ms(msg.Data, msg.Length);
-	return Read(ms);
-}
-
-void LoginMessage::Write(Message& msg)
-{
-	Stream ms(msg.Data, 256);
-
-	Write(ms);
-
-	msg.Length = ms.Position();
-}
-
 // 显示消息内容
-void LoginMessage::Show()
+String& LoginMessage::ToStr(String& str) const
 {
-	debug_printf("登录");
-	if(Reply) debug_printf("#");
-	debug_printf(" HardID=");
-	HardID.Show();
-	debug_printf(" Key=");
-	Key.Show();
-	debug_printf(" Salt=");
-	Salt.Show();
+	str += "登录";
+	if(Reply) str += "#";
+	str += " HardID=" + HardID + " Key=" + Key + " Salt=" + Salt + " " + Local;
 
-	debug_printf(" ");
-	Local.Show();
+	return str;
 }

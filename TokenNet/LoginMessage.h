@@ -1,12 +1,10 @@
 ﻿#ifndef __LoginMessage_H__
 #define __LoginMessage_H__
 
-#include "Sys.h"
-#include "Stream.h"
-#include "TinyNet\Message.h"
+#include "MessageBase.h"
 
 // 登录消息
-class LoginMessage
+class LoginMessage : public MessageBase
 {
 public:
 	ByteArray	HardID;	// 硬件ID
@@ -24,11 +22,8 @@ public:
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms);
 
-	virtual bool Read(Message& msg);
-	virtual void Write(Message& msg);
-
 	// 显示消息内容
-	virtual void Show();
+	virtual String& ToStr(String& str) const;
 };
 
 #endif
