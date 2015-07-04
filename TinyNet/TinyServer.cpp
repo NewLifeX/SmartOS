@@ -148,11 +148,13 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			MD5::Hash(bs, dv->Pass);
 
 			// 响应
-			Stream ms(msg.Data, msg.Length);
+			TinyMessage rs = msg;
+			rs.Data = rs._Data;
+			Stream ms(rs.Data, ArrayLength(rs._Data));
 			ms.Write(id);
 			ms.WriteArray(dv->Pass);
 
-			Reply(msg);
+			Reply(rs);
 		}
 	}
 

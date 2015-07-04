@@ -9,7 +9,7 @@ Message::Message(byte code)
 	Reply	= 0;
 }
 
-Message::Message(Message& msg)
+/*Message::Message(Message& msg)
 {
 	Code	= msg.Code;
 	Length	= msg.Length;
@@ -18,7 +18,7 @@ Message::Message(Message& msg)
 	// 基类构造函数先执行，子类来不及赋值Data，所以这里不要拷贝
 	//assert_ptr(Data);
 	//if(Length) memcpy(Data, msg.Data, Length);
-}
+}*/
 
 // 设置数据。
 void Message::SetData(byte* buf, uint len)

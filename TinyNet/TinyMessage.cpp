@@ -26,7 +26,7 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 #endif
 }
 
-TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
+/*TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 {
 	Data = _Data;
 
@@ -42,7 +42,7 @@ TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
 #if MSG_DEBUG
 	Retry = msg.Retry;
 #endif
-}
+}*/
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 bool TinyMessage::Read(Stream& ms)

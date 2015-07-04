@@ -15,7 +15,7 @@ public:
 
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
-	Message(Message& msg);
+	//Message(Message& msg);
 
 	// 消息所占据的指令数据大小。包括头部、负载数据、校验和附加数据
 	virtual uint Size() const = 0;
