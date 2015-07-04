@@ -35,7 +35,7 @@ public:
 	uint Position() const;
 
 	// 设置位置
-	void SetPosition(uint p);
+	bool SetPosition(int p);
 	// 余下的有效数据流长度。0表示已经到达终点
 	uint Remain() const;
 	// 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
@@ -51,17 +51,17 @@ public:
 	uint ReadEncodeInt();
 
 	// 把数据写入当前位置
-	void Write(byte* buf, uint offset, uint count);
+	bool Write(byte* buf, uint offset, uint count);
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
 	uint Write(string str);
-	void Write(ByteArray& bs);
+	bool Write(const ByteArray& bs);
 
 	uint ReadArray(ByteArray& bs);
-	void WriteArray(const ByteArray& bs);
+	bool WriteArray(const ByteArray& bs);
 
 	uint ReadString(String& str);
-	void WriteString(const String& str);
+	bool WriteString(const String& str);
 
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
@@ -95,9 +95,9 @@ public:
 	}
 
 	template<typename T>
-	void Write(T value)
+	bool Write(T value)
 	{
-		if(!CheckCapacity(sizeof(T))) return;
+		if(!CheckRemain(sizeof(T))) return false;
 
 		byte* p = Current();
 
@@ -110,6 +110,8 @@ public:
 		// 移动游标
 		_Position += sizeof(T);
 		if(_Position > Length) Length = _Position;
+
+		return true;
 	}
 
 	byte* ReadBytes(int count = -1);
@@ -118,7 +120,7 @@ public:
 	int Peek() const;
 
 private:
-	bool CheckCapacity(uint count);
+	bool CheckRemain(uint count);
 };
 
 #endif

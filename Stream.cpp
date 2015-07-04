@@ -61,12 +61,18 @@ uint Stream::Capacity() const { return _Capacity; }
 uint Stream::Position() const { return _Position; }
 
 // 设置位置
-void Stream::SetPosition(uint p)
+bool Stream::SetPosition(int p)
 {
 	// 允许移动到最后一个字节之后，也就是Length
-	assert_param2(p <= Length, "设置的位置超出长度");
+	//assert_param2(p <= Length, "设置的位置超出长度");
+	if(p < 0 && p > Length)
+	{
+		debug_printf("设置的位置 %d 超出长度 %d\r\n", p, Length);
+		return false;
+	}
 
 	_Position = p;
+	return true;
 }
 
 // 余下的有效数据流长度。0表示已经到达终点
@@ -77,14 +83,7 @@ bool Stream::Seek(int offset)
 {
 	if(offset == 0) return true;
 
-	int p = offset + _Position;
-	//if(p < 0 || p >= Length) return false;
-	// 允许移动到最后一个字节之后，也就是Length
-	if(p < 0 || p > Length) return false;
-
-	_Position = p;
-
-	return true;
+	return SetPosition(offset + _Position);
 }
 
 // 数据流指针。注意：扩容后指针会改变！
@@ -134,11 +133,11 @@ uint Stream::ReadEncodeInt()
 }
 
 // 把数据写入当前位置
-void Stream::Write(byte* buf, uint offset, uint count)
+bool Stream::Write(byte* buf, uint offset, uint count)
 {
 	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
-	if(!CheckCapacity(count)) return;
+	if(!CheckRemain(count)) return false;
 
 	memcpy(Current(), buf + offset, count);
 
@@ -146,6 +145,8 @@ void Stream::Write(byte* buf, uint offset, uint count)
 	//Length += count;
 	// 内容长度不是累加，而是根据位置而扩大
 	if(_Position > Length) Length = _Position;
+	
+	return true;
 }
 
 uint Stream::WriteEncodeInt(uint value)
@@ -174,14 +175,14 @@ uint Stream::Write(string str)
 	while(*p++) len++;
 
 	WriteEncodeInt(len);
-	Write((byte*)str, 0, len);
+	if(len) Write((byte*)str, 0, len);
 
 	return len;
 }
 
-void Stream::Write(ByteArray& bs)
+bool Stream::Write(const ByteArray& bs)
 {
-	Write(bs.GetBuffer(), 0, bs.Length());
+	return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
 byte* Stream::ReadBytes(int count)
@@ -202,7 +203,7 @@ int Stream::Peek() const
 	return *Current();
 }
 
-bool Stream::CheckCapacity(uint count)
+bool Stream::CheckRemain(uint count)
 {
 	uint remain = _Capacity - _Position;
 	// 容量不够，需要扩容
@@ -210,8 +211,8 @@ bool Stream::CheckCapacity(uint count)
 	{
 		if(!_needFree && _Buffer != _Arr)
 		{
-			debug_printf("数据流剩余容量%d不足%d，而外部缓冲区无法扩容！", remain, count);
-			assert_param(false);
+			debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，而外部缓冲区无法扩容！", this, remain, count);
+			//assert_param(false);
 			return false;
 		}
 
@@ -250,10 +251,10 @@ uint Stream::ReadArray(ByteArray& bs)
 	return len;
 }
 
-void Stream::WriteArray(const ByteArray& bs)
+bool Stream::WriteArray(const ByteArray& bs)
 {
 	WriteEncodeInt(bs.Length());
-	Write(bs.GetBuffer(), 0, bs.Length());
+	return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
 uint Stream::ReadString(String& str)
@@ -267,8 +268,8 @@ uint Stream::ReadString(String& str)
 	return len;
 }
 
-void Stream::WriteString(const String& str)
+bool Stream::WriteString(const String& str)
 {
 	ByteArray bs(str);
-	WriteArray(bs);
+	return WriteArray(bs);
 }
