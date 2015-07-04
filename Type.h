@@ -131,9 +131,11 @@ protected:
 		if(bak > _Length) bak = _Length;
 		if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
 
-		Release();
+		//Release();
+		// 为了保留旧长度，不建议调用Release
+		if(_needFree && _Arr) delete _Arr;
 
-		//_Length		= len;
+		//_Length		= bak;
 		_Capacity	= k;
 		_Arr		= p;
 		_needFree	= p != NULL;
