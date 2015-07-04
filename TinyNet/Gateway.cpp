@@ -327,8 +327,11 @@ bool Gateway::OnDiscover(TinyMessage& msg)
 		// 如果设备列表没有这个设备，那么加进去
 		byte id = msg.Src;
 		Device* dv = FindDevice(id);
+		bool isNew = false;
 		if(!dv && id)
 		{
+			isNew = true;
+
 			Stream ms(msg.Data, msg.Length);
 
 			dv = new Device();
@@ -355,17 +358,21 @@ bool Gateway::OnDiscover(TinyMessage& msg)
 			}
 			dv->LastTime = Time.Current();
 
-			// 生成随机密码。当前时间的MD5
-			ulong now = Time.Current();
-			ByteArray bs((byte*)&now, 8);
-			MD5::Hash(bs, dv->Pass);
+			// 对于已注册的设备，再来发现消息不做处理
+			if(!isNew)
+			{
+				// 生成随机密码。当前时间的MD5
+				ulong now = Time.Current();
+				ByteArray bs((byte*)&now, 8);
+				MD5::Hash(bs, dv->Pass);
 
-			// 响应
-			Stream ms(msg.Data, msg.Length);
-			ms.Write(id);
-			ms.WriteArray(dv->Pass);
+				// 响应
+				Stream ms(msg.Data, msg.Length);
+				ms.Write(id);
+				ms.WriteArray(dv->Pass);
 
-			Server->Reply(msg);
+				Server->Reply(msg);
+			}
 		}
 	}
 
