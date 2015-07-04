@@ -227,11 +227,12 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
+	msg_printf("%s", port->ToString());
 	if(send)
-		msg_printf("TinyMessage::Send ");
+		msg_printf("::Send ");
 	else
 	{
-		msg_printf("%s", port->ToString());
+		//msg_printf("%s", port->ToString());
 		msg_printf("::");
 	}
 	if(msg.Error)

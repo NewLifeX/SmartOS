@@ -205,7 +205,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 		rs.Length = i;
 	}
 
-    debug_printf(" 获取设备列表 共%d个\r\n", Devices.Count());
+    debug_printf("获取设备列表 共%d个\r\n", Devices.Count());
 
 	return Client->Reply(rs);
 }
@@ -231,6 +231,8 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 
 	// 即使找不到设备，也返回空负载数据
 	if(!dv) return Client->Reply(rs);
+
+	dv->Show(true);
 
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
 	//Stream ms(rs.Data, rs.Length);
@@ -391,7 +393,7 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 	msg2.Length = 1 + msg.Length;
 }
 
-void Device::Write(Stream& ms)
+void Device::Write(Stream& ms) const
 {
 	ms.Write(ID);
 	ms.Write(Type);
@@ -411,6 +413,22 @@ void Device::Read(Stream& ms)
 	Switchs	= ms.Read<byte>();
 	Analogs	= ms.Read<byte>();
 	ms.ReadString(Name);
+}
+
+String& Device::ToStr(String& str) const
+{
+	str.Format("ID=0x%02X Type=0x%02X", ID, Type);
+	str.Format(" HardID=");
+	str += HardID;
+	str.Format(" LastTime=");
+	DateTime dt;
+	dt.Parse(LastTime);
+	str += dt.ToString();
+	str.Format(" Switchs=%d Analogs=%d", Switchs, Analogs);
+	str.Format(" Name=");
+	str += Name;
+
+	return str;
 }
 
 bool operator==(const Device& d1, const Device& d2)

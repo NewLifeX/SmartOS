@@ -57,7 +57,7 @@ bool HelloMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void HelloMessage::Write(Stream& ms)
+void HelloMessage::Write(Stream& ms) const
 {
 	ms.Write(Version);
 
@@ -93,7 +93,7 @@ bool HelloMessage::Read(Message& msg)
 	return Read(ms);
 }
 
-void HelloMessage::Write(Message& msg)
+void HelloMessage::Write(Message& msg) const
 {
 	//Stream ms(msg.Data, ArrayLength(msg._Data));
 	Stream ms(msg.Data, 256);
@@ -104,27 +104,31 @@ void HelloMessage::Write(Message& msg)
 }
 
 // 显示消息内容
-void HelloMessage::Show()
+String& HelloMessage::ToStr(String& str) const
 {
-	debug_printf("握手");
-	if(Reply) debug_printf("#");
-	debug_printf(" Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
+	str += "握手";
+	if(Reply) str += "#";
+	str.Format(" Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
 	DateTime dt;
 	dt.Parse(LocalTime);
-	debug_printf("%s ", dt.ToString());
+	//debug_printf("%s ", dt.ToString());
+	str += dt.ToString();
 
-	EndPoint.Show();
+	str += " ";
+	str + EndPoint;
 
-	debug_printf(" Ciphers[%d]=", Ciphers.Length());
+	str.Format(" Ciphers[%d]=", Ciphers.Length());
 	for(int i=0; i<Ciphers.Length(); i++)
 	{
-		debug_printf("%d ", Ciphers[i]);
+		str.Format("%d ", Ciphers[i]);
 	}
 
 	if(Reply)
 	{
-		debug_printf(" Key=");
-		Key.Show();
+		str.Format(" Key=");
+		str += Key;
 	}
-	debug_printf("\r\n");
+	//debug_printf("\r\n");
+	
+	return str;
 }

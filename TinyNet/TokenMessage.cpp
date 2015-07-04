@@ -49,6 +49,10 @@ void TokenMessage::Write(Stream& ms)
 	_Code	= Code;
 	_Reply	= Reply;
 	_Length	= Length;
+	/*TokenMessage* p = (TokenMessage*)this;
+	p->_Code	= Code;
+	p->_Reply	= Reply;
+	p->_Length	= Length;*/
 
 	byte tmp = _Code | (_Reply << 7);
 	ms.Write(tmp);
@@ -117,7 +121,7 @@ TokenController::TokenController() : Controller(), Key(0)
 
 TokenController::~TokenController()
 {
-	
+
 }
 
 void TokenController::Open()
@@ -390,10 +394,10 @@ void TokenController::ShowStat()
 	char cs[128];
 	String str(cs, ArrayLength(cs));
 	Stat->ToStr(str.Clear());
-	str.Print(true);
-	
+	str.Show(true);
+
 	Stat->Clear();
-	
+
 	// 向以太网广播
 	UdpSocket* udp = (UdpSocket*)Port;
 	if(udp && udp->Type == IP_UDP)
@@ -431,7 +435,7 @@ TokenStat::~TokenStat()
 	if (_Total == NULL) delete _Total;
 }
 
-int TokenStat::Percent()
+int TokenStat::Percent() const
 {
 	int send = Send;
 	int sucs = Success;
@@ -445,7 +449,7 @@ int TokenStat::Percent()
 	return sucs * 10000 / send;
 }
 
-int TokenStat::Speed()
+int TokenStat::Speed() const
 {
 	int time = Time;
 	int sucs = Success;
@@ -496,7 +500,7 @@ void TokenStat::Clear()
 	ReceiveReply = 0;
 }
 
-String& TokenStat::ToStr(String& str)
+String& TokenStat::ToStr(String& str) const
 {
 	int p = Percent();
 	str.Format("发：%d.%d2%% %d/%d/%d %dus 收：%d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);

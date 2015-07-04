@@ -76,8 +76,10 @@ public:
 	String	Name;		// 名称
 	ByteArray	Pass;	// 通信密码
 
-	void Write(Stream& ms);
+	void Write(Stream& ms) const;
 	void Read(Stream& ms);
+
+	virtual String& ToStr(String& str) const;
 };
 
 bool operator==(const Device& d1, const Device& d2);

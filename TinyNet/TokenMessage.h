@@ -111,7 +111,7 @@ public:
 };
 
 // 令牌统计
-class TokenStat : Object
+class TokenStat : public Object
 {
 public:
 	int		Send;
@@ -123,14 +123,14 @@ public:
 
 	TokenStat();
 
-	int Percent();	// 成功率百分比，已乘以10000
-	int Speed();	// 平均速度，指令发出到收到响应的时间
+	int Percent() const;	// 成功率百分比，已乘以10000
+	int Speed() const;		// 平均速度，指令发出到收到响应的时间
 
 	~TokenStat();
 
 	void Clear();
 
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 
 private:
 	TokenStat*	_Last;
