@@ -9,9 +9,17 @@ DiscoverMessage::DiscoverMessage() : HardID(0x10)
 bool DiscoverMessage::Read(Stream& ms)
 {
 	Type = ms.Read<ushort>();
+	
+	// 兼容旧版本，固定20字节的ID
+	if(ms.Remain() == 20 && ms.Peek() != ms.Remain() - 1)
+	{
+		ms.Read(HardID.GetBuffer(), 0, HardID.Length());
+		return true;
+	}
+	
 	ms.ReadArray(HardID);
 
-	return false;
+	return true;
 }
 
 // 把消息写入数据流中
