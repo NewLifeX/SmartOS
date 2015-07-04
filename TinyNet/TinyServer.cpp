@@ -107,10 +107,10 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	Device* dv = FindDevice(id);
-	bool isNew = false;
+	//bool isNew = false;
 	if(!dv && id)
 	{
-		isNew = true;
+		//isNew = true;
 
 		DiscoverMessage dm;
 		dm.ReadMessage(msg);
@@ -122,7 +122,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 		Devices.Add(dv);
 
-		debug_printf("TinyServer::Discover ");
+		debug_printf("\r\nTinyServer::Discover ");
 		dv->Show(true);
 
 		// 节点注册
@@ -140,7 +140,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		dv->LastTime = Time.Current();
 
 		// 对于已注册的设备，再来发现消息不做处理
-		if(isNew)
+		//if(isNew)
 		{
 			// 生成随机密码。当前时间的MD5
 			ulong now = Time.Current();
@@ -153,7 +153,9 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			Stream ms(rs.Data, ArrayLength(rs._Data));
 			ms.Write(id);
 			ms.WriteArray(dv->Pass);
+			rs.Length = ms.Position();
 
+			rs.NoAck = false;
 			Reply(rs);
 		}
 	}

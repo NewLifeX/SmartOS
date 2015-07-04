@@ -88,7 +88,10 @@ bool TinyMessage::Read(Stream& ms)
 	if(ms.Remain() > 0)
 		Retry = ms.Read<byte>();
 	else
+	{
+		debug_printf("调试模式下居然没有Retry\r\n");
 		Retry = 0;
+	}
 #endif
 
 	return true;
@@ -227,12 +230,12 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
-	int blank = 12;
+	int blank = 13;
 	msg_printf("%s", port->ToString());
 	if(send)
 	{
 		msg_printf("::Send ");
-		blank -= 4;
+		blank -= 5;
 	}
 	else
 	{
@@ -242,22 +245,22 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	if(msg.Error)
 	{
 		msg_printf("Error ");
-		blank -= 5;
+		blank -= 6;
 	}
 	else if(msg.Ack)
 	{
 		msg_printf("Ack ");
-		blank -= 3;
+		blank -= 4;
 	}
 	else if(msg.Reply)
 	{
 		msg_printf("Reply ");
-		blank -= 5;
+		blank -= 6;
 	}
 	else if(!send)
 	{
 		msg_printf("Request ");
-		blank -= 7;
+		blank -= 8;
 	}
 	if(blank > 0)
 	{
