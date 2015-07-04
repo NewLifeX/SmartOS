@@ -287,6 +287,8 @@ bool TinyController::Valid(Message& msg)
 	if(tmsg.Dest == tmsg.Src) return false;
 	// 只处理本机消息或广播消息。快速处理，高效。
 	if(Address != 0 && tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	// 源地址是自己的广播不要接收
+	if(Address != 0 && tmsg.Dest == 0 && tmsg.Src == Address) return false;
 
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
