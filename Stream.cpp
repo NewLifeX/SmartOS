@@ -55,10 +55,10 @@ Stream::~Stream()
 }
 
 // 数据流容量
-uint Stream::Capacity() { return _Capacity; }
+uint Stream::Capacity() const { return _Capacity; }
 
 // 当前位置
-uint Stream::Position() { return _Position; }
+uint Stream::Position() const { return _Position; }
 
 // 设置位置
 void Stream::SetPosition(uint p)
@@ -70,7 +70,7 @@ void Stream::SetPosition(uint p)
 }
 
 // 余下的有效数据流长度。0表示已经到达终点
-uint Stream::Remain() { return Length - _Position; };
+uint Stream::Remain() const { return Length - _Position; };
 
 // 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
 bool Stream::Seek(int offset)
@@ -88,10 +88,10 @@ bool Stream::Seek(int offset)
 }
 
 // 数据流指针。注意：扩容后指针会改变！
-byte* Stream::GetBuffer() { return _Buffer; }
+byte* Stream::GetBuffer() const { return _Buffer; }
 
 // 数据流当前位置指针。注意：扩容后指针会改变！
-byte* Stream::Current() { return &_Buffer[_Position]; }
+byte* Stream::Current() const { return &_Buffer[_Position]; }
 
 // 从当前位置读取数据
 uint Stream::Read(byte* buf, uint offset, int count)
@@ -196,7 +196,7 @@ byte* Stream::ReadBytes(int count)
 }
 
 // 读取一个字节，不移动游标。如果没有可用数据，则返回-1
-int Stream::Peek()
+int Stream::Peek() const
 {
 	if(!Remain()) return -1;
 	return *Current();
@@ -250,7 +250,7 @@ uint Stream::ReadArray(ByteArray& bs)
 	return len;
 }
 
-void Stream::WriteArray(ByteArray& bs)
+void Stream::WriteArray(const ByteArray& bs)
 {
 	WriteEncodeInt(bs.Length());
 	Write(bs.GetBuffer(), 0, bs.Length());
@@ -267,7 +267,7 @@ uint Stream::ReadString(String& str)
 	return len;
 }
 
-void Stream::WriteString(String& str)
+void Stream::WriteString(const String& str)
 {
 	ByteArray bs(str);
 	WriteArray(bs);

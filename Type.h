@@ -47,11 +47,11 @@ protected:
 
 public:
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String ToString() const;
 	// 显示对象。默认显示ToString
-	virtual void Show(bool newLine = false);
+	virtual void Show(bool newLine = false) const;
 
 	//Type GetType();
 };
@@ -145,7 +145,7 @@ public:
 	// 数组最大容量。初始化时决定，后面不允许改变
 	int Capacity() const { return _Capacity; }
 	// 缓冲区
-	T* GetBuffer() { return _Arr; }
+	T* GetBuffer() const { return _Arr; }
 
 	// 初始化指定长度的数组。默认使用内部缓冲区
 	Array(int length)
@@ -315,7 +315,7 @@ public:
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    T& operator[](int i)
+    T& operator[](int i) const
 	{
 		assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
 
@@ -339,16 +339,14 @@ public:
     ByteArray& operator=(const byte* data);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
-	String& ToHex(String& str, char sep = '-', int newLine = 0x10);
+	String& ToHex(String& str, char sep = '-', int newLine = 0x10) const;
 	// 显示十六进制数据，指定分隔字符和换行长度
-	String ToHex(char sep = '-', int newLine = 0x10);
+	String ToHex(char sep = '-', int newLine = 0x10) const;
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 	// 显示对象。默认显示ToString
-	virtual void Show(bool newLine = false);
-
-private:
+	virtual void Show(bool newLine = false) const;
 };
 
 // 字符串
@@ -365,7 +363,7 @@ public:
 	String(const String& str) : Array(str.Length()) { Copy(str); }
 
 	// 输出对象的字符串表示方式
-	virtual String ToString();
+	virtual String ToString() const;
 	// 清空已存储数据。长度放大到最大容量
 	virtual String& Clear();
 
@@ -376,19 +374,19 @@ public:
 	String& Append(ByteArray& bs);	// 十六进制
 
 	// 调试输出字符串
-	virtual void Show(bool newLine = false);
+	virtual void Show(bool newLine = false) const;
 	// 显示对象。默认显示ToString
 	//virtual void Show();
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);
 
-    String& Concat(const String& str);
+    String& Concat(const Object& obj);
     String& Concat(const char* str, int len = 0);
 
-    String& operator+=(const String& str);
+    String& operator+=(const Object& obj);
     String& operator+=(const char* str);
-    friend String& operator+(String& str1, const String& str2);
+    friend String& operator+(String& str1, const Object& obj);
     friend String& operator+(String& str1, const char* str2);
 };
 
@@ -412,14 +410,14 @@ public:
     byte& operator[](int i);
 
 	// 字节数组
-    byte* ToArray();
+    byte* ToArray() const;
 
 	bool IsAny();
 	bool IsBroadcast();
 	uint GetSubNet(IPAddress& mask);	// 获取子网
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 	// 显示对象
 	//virtual void Show();
 
@@ -441,7 +439,7 @@ public:
 	IPEndPoint(const IPAddress& addr, ushort port);
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 	// 显示对象
 	//virtual void Show();
 
@@ -469,10 +467,10 @@ public:
     byte& operator[](int i);
 
 	// 字节数组
-    byte* ToArray();
+    byte* ToArray() const;
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str);
+	virtual String& ToStr(String& str) const;
 	// 显示对象
 	//virtual void Show();
 

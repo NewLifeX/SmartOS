@@ -30,21 +30,21 @@ public:
 	~Stream();
 
 	// 数据流容量
-	uint Capacity();
+	uint Capacity() const;
 	// 当前位置
-	uint Position();
+	uint Position() const;
 
 	// 设置位置
 	void SetPosition(uint p);
 	// 余下的有效数据流长度。0表示已经到达终点
-	uint Remain();
+	uint Remain() const;
 	// 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
 	bool Seek(int offset);
 
 	// 数据流指针。注意：扩容后指针会改变！
-    byte* GetBuffer();
+    byte* GetBuffer() const;
 	// 数据流当前位置指针。注意：扩容后指针会改变！
-    byte* Current();
+    byte* Current() const;
 
 	// 从当前位置读取数据
 	uint Read(byte* buf, uint offset = 0, int count = -1);
@@ -58,10 +58,10 @@ public:
 	void Write(ByteArray& bs);
 
 	uint ReadArray(ByteArray& bs);
-	void WriteArray(ByteArray& bs);
+	void WriteArray(const ByteArray& bs);
 
 	uint ReadString(String& str);
-	void WriteString(String& str);
+	void WriteString(const String& str);
 
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
@@ -115,7 +115,7 @@ public:
 	byte* ReadBytes(int count = -1);
 
 	// 读取一个字节，不移动游标。如果没有可用数据，则返回-1
-	int Peek();
+	int Peek() const;
 
 private:
 	bool CheckCapacity(uint count);

@@ -7,7 +7,7 @@
 /******************************** Object ********************************/
 
 // 输出对象的字符串表示方式
-String& Object::ToStr(String& str)
+String& Object::ToStr(String& str) const
 {
 	const char* name = typeid(*this).name();
 	while(*name >= '0' && *name <= '9') name++;
@@ -17,7 +17,7 @@ String& Object::ToStr(String& str)
 	return str;
 }
 
-String Object::ToString()
+String Object::ToString() const
 {
 	String str;
 	ToStr(str);
@@ -25,7 +25,7 @@ String Object::ToString()
 	return str;
 }
 
-void Object::Show(bool newLine)
+void Object::Show(bool newLine) const
 {
 	String str;
 	ToStr(str);
@@ -57,7 +57,7 @@ ByteArray& ByteArray::operator=(const byte* data)
 }
 
 // 显示十六进制数据，指定分隔字符
-String& ByteArray::ToHex(String& str, char sep, int newLine)
+String& ByteArray::ToHex(String& str, char sep, int newLine) const
 {
 	byte* buf = GetBuffer();
 
@@ -88,20 +88,20 @@ String& ByteArray::ToHex(String& str, char sep, int newLine)
 }
 
 // 显示十六进制数据，指定分隔字符
-String ByteArray::ToHex(char sep, int newLine)
+String ByteArray::ToHex(char sep, int newLine) const
 {
 	String str;
 
 	return ToHex(str, sep, newLine);
 }
 
-String& ByteArray::ToStr(String& str)
+String& ByteArray::ToStr(String& str) const
 {
 	return ToHex(str, '-', 0x20);
 }
 
 // 显示对象。默认显示ToString
-void ByteArray::Show(bool newLine)
+void ByteArray::Show(bool newLine) const
 {
 	/*// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
 	int len = Length() * 2;
@@ -132,7 +132,7 @@ void ByteArray::Show(bool newLine)
 }*/
 
 // 输出对象的字符串表示方式
-String String::ToString()
+String String::ToString() const
 {
 	return *this;
 }
@@ -227,7 +227,7 @@ String& String::Append(ByteArray& bs)
 }
 
 // 调试输出字符串
-void String::Show(bool newLine)
+void String::Show(bool newLine) const
 {
 	if(!Length()) return;
 
@@ -262,9 +262,11 @@ String& String::Format(const char* format, ...)
 	return *this;
 }
 
-String& String::Concat(const String& str)
+String& String::Concat(const Object& obj)
 {
-	Copy(str, Length());
+	//Copy(str, Length());
+	Object& obj2 = (Object&)obj;
+	obj2.ToStr(*this);
 
 	return *this;
 }
@@ -276,19 +278,19 @@ String& String::Concat(const char* str, int len)
 	return *this;
 }
 
-String& String::operator+=(const String& str)
+String& String::operator+=(const Object& obj)
 {
-	return *this + str;
+	return this->Concat(obj);
 }
 
 String& String::operator+=(const char* str)
 {
-	return *this + str;
+	return this->Concat(str);
 }
 
-String& operator+(String& str1, const String& str2)
+String& operator+(String& str1, const Object& obj)
 {
-	return str1.Concat(str2);
+	return str1.Concat(obj);
 }
 
 String& operator+(String& str1, const char* str2)
@@ -325,12 +327,12 @@ byte& IPAddress::operator[](int i)
 }
 
 // 字节数组
-byte* IPAddress::ToArray()
+byte* IPAddress::ToArray() const
 {
 	return (byte*)&Value;
 }
 
-String& IPAddress::ToStr(String& str)
+String& IPAddress::ToStr(String& str) const
 {
 	byte* ips = (byte*)&Value;
 
@@ -361,7 +363,7 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 	Port	= port;
 }
 
-String& IPEndPoint::ToStr(String& str)
+String& IPEndPoint::ToStr(String& str) const
 {
 	//str = Address.ToString();
 	Address.ToStr(str);
@@ -433,7 +435,7 @@ byte& MacAddress::operator[](int i)
 }
 
 // 字节数组
-byte* MacAddress::ToArray()
+byte* MacAddress::ToArray() const
 {
 	return (byte*)&Value;
 }
@@ -448,7 +450,7 @@ bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
 	return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
 }*/
 
-String& MacAddress::ToStr(String& str)
+String& MacAddress::ToStr(String& str) const
 {
 	byte* macs = (byte*)&Value;
 
