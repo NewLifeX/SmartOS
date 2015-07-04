@@ -365,6 +365,8 @@ public:
 	String(const String& str) : Array(str.Length()) { Copy(str); }
 
 	// 输出对象的字符串表示方式
+	virtual String& ToStr(String& str) const;
+	// 输出对象的字符串表示方式
 	virtual String ToString() const;
 	// 清空已存储数据。长度放大到最大容量
 	virtual String& Clear();
@@ -377,8 +379,6 @@ public:
 
 	// 调试输出字符串
 	virtual void Show(bool newLine = false) const;
-	// 显示对象。默认显示ToString
-	//virtual void Show();
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);

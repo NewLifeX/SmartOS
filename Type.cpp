@@ -122,14 +122,14 @@ void ByteArray::Show(bool newLine) const
 
 /******************************** String ********************************/
 
-/*String& String::SetLength(int length)
+// 输出对象的字符串表示方式
+String& String::ToStr(String& str) const
 {
-	assert_param(length <= _Capacity);
+	// 把当前字符串复制到目标字符串后面
+	str.Copy(*this, str.Length());
 
-	_Length = length;
-
-	return *this;
-}*/
+	return (String&)*this;
+}
 
 // 输出对象的字符串表示方式
 String String::ToString() const
@@ -235,12 +235,6 @@ void String::Show(bool newLine) const
 	if(newLine) debug_printf("\r\n");
 }
 
-// 显示对象。默认显示ToString
-/*void String::Show()
-{
-	Print(false);
-}*/
-
 // 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 String& String::Format(const char* format, ...)
 {
@@ -265,10 +259,10 @@ String& String::Format(const char* format, ...)
 String& String::Concat(const Object& obj)
 {
 	//Copy(str, Length());
-	Object& obj2 = (Object&)obj;
-	obj2.ToStr(*this);
+	//Object& obj2 = (Object&)obj;
+	//obj2.ToStr(*this);
 
-	return *this;
+	return obj.ToStr(*this);
 }
 
 String& String::Concat(const char* str, int len)
