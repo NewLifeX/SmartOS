@@ -243,7 +243,10 @@ uint Stream::ReadArray(ByteArray& bs)
 	{
 		debug_printf("准备读取的数据长度是 %d，而缓冲区数组容量是 %d\r\n", len, bs.Capacity());
 		//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
-		bs.Set(0, 0, len);
+		//bs.Set(0, 0, len);
+		// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据
+		// 这里在缓冲区不够大时，有多少读取多少
+		len = bs.Capacity();
 	}
 
 	Read(bs.GetBuffer(), 0, len);
