@@ -27,7 +27,11 @@ String Object::ToString() const
 
 void Object::Show(bool newLine) const
 {
-	String str;
+	//String str;
+	// 为了减少堆分配，采用较大的栈缓冲区
+	char cs[0x200];
+	String str(cs, ArrayLength(cs));
+	str.SetLength(0);
 	ToStr(str);
 	str.Show(newLine);
 }
