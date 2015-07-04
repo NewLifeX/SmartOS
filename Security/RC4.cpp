@@ -2,7 +2,7 @@
 
 #define KeyLength 256
 
-void GetKey(ByteArray& box, ByteArray& pass)
+void GetKey(ByteArray& box, const ByteArray& pass)
 {
 	for (int i = 0; i < box.Length(); i++)
 	{
@@ -18,7 +18,7 @@ void GetKey(ByteArray& box, ByteArray& pass)
 	}
 }
 
-void RC4::Encrypt(ByteArray& data, ByteArray& pass)
+void RC4::Encrypt(ByteArray& data, const ByteArray& pass)
 {
 	int i = 0;
 	int j = 0;
