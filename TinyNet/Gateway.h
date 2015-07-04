@@ -76,6 +76,8 @@ public:
 	String	Name;		// 名称
 	ByteArray	Pass;	// 通信密码
 
+	Device();
+	
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
 

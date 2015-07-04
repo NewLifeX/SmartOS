@@ -392,6 +392,15 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 	msg2.Length = 1 + msg.Length;
 }
 
+Device::Device() : HardID(0), Name(0), Pass(0)
+{
+	ID			= 0;
+	Type		= 0;
+	LastTime	= 0;
+	Switchs		= 0;
+	Analogs		= 0;
+}
+
 void Device::Write(Stream& ms) const
 {
 	ms.Write(ID);
