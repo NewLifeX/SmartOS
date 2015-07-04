@@ -227,22 +227,43 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
+	int blank = 13;
 	msg_printf("%s", port->ToString());
 	if(send)
+	{
 		msg_printf("::Send ");
+		blank -= 5;
+	}
 	else
 	{
 		//msg_printf("%s", port->ToString());
 		msg_printf("::");
 	}
 	if(msg.Error)
+	{
 		msg_printf("Error ");
+		blank -= 5;
+	}
 	else if(msg.Ack)
+	{
 		msg_printf("Ack ");
+		blank -= 3;
+	}
 	else if(msg.Reply)
+	{
 		msg_printf("Reply ");
+		blank -= 5;
+	}
 	else if(!send)
+	{
 		msg_printf("Request ");
+		blank -= 7;
+	}
+	if(blank > 0)
+	{
+		String str(' ', blank);
+		str.Show();
+	}
 
 	msg.Show();
 }
