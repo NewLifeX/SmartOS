@@ -392,6 +392,9 @@ public:
     friend String& operator+(String& str1, const char* str2);
 };
 
+//String operator+(const char* str1, const char* str2);
+String& operator+(const char* str1, const Object& obj);
+
 // IP地址
 class IPAddress : public Object
 {

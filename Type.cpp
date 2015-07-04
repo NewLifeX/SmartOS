@@ -296,6 +296,18 @@ String& operator+(String& str1, const char* str2)
 	return str1.Concat(str2);
 }
 
+/*String operator+(const char* str1, const char* str2)
+{
+	String str(str1);
+	return str + str2;
+}*/
+
+String& operator+(const char* str1, const Object& obj)
+{
+	String str(str1);
+	return str + obj;
+}
+
 /******************************** IPAddress ********************************/
 /* IP地址 */
 
