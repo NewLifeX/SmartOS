@@ -144,7 +144,7 @@ protected:
 public:
 	byte	Address;	// 本地地址
 	uint	Interval;	// 消息队列发送间隔，8000微秒
-	uint	Timeout;	// 消息队列发送消息的默认超时时间，50000微秒
+	int		Timeout;	// 消息队列发送消息的默认超时时间，50000微秒。如果不需要超时重发，那么直接设置为-1
 
 	TinyController();
 	virtual ~TinyController();

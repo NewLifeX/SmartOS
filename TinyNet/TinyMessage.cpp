@@ -369,8 +369,6 @@ void TinyController::AckRequest(TinyMessage& msg)
 			Interval = it;
 
 			// 该传输口收到响应，从就绪队列中删除
-			//_Queue.Remove(node);
-			//delete node;
 			node.Using = 0;
 
 			/*if(msg.Ack)
@@ -527,10 +525,13 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	if(expire < 0) expire = Timeout;
 	// 需要响应
-	if(expire == 0) msg.NoAck = true;
+	if(expire <= 0) msg.NoAck = true;
 	// 如果确定不需要响应，则改用Post
 	if(msg.NoAck || msg.Ack) return Controller::Send(msg);
 
+	// 针对Zigbee等不需要Ack确认的通道
+	if(Timeout < 0) return Controller::Send(msg);
+	
 	// 准备消息队列
 	MessageNode* node = NULL;
 	for(int i=0; i<ArrayLength(_Queue); i++)
@@ -552,9 +553,6 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	node->Expired = Time.Current() + expire;
 
 	Total.Msg++;
-
-	// 加入等待队列
-	//if(_Queue.Add(node) < 0) return false;
 
 	Sys.SetTask(_taskID, true);
 
