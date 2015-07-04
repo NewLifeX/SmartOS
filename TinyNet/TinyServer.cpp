@@ -122,7 +122,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 		Devices.Add(dv);
 
-		debug_printf("Gateway::Discover ");
+		debug_printf("TinyServer::Discover ");
 		dv->Show(true);
 
 		// 节点注册
@@ -140,7 +140,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		dv->LastTime = Time.Current();
 
 		// 对于已注册的设备，再来发现消息不做处理
-		if(!isNew)
+		if(isNew)
 		{
 			// 生成随机密码。当前时间的MD5
 			ulong now = Time.Current();
