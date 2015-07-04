@@ -374,7 +374,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 			// 该传输口收到响应，从就绪队列中删除
 			node.Using = 0;
 
-			/*if(msg.Ack)
+			if(msg.Ack)
 				msg_printf("收到Ack确认包 ");
 			else
 				msg_printf("收到Reply确认 ");
@@ -384,7 +384,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 #else
 			msg_printf("Src=%d Seq=%d Cost=%dus\r\n", msg.Src, msg.Sequence, cost);
 #endif
-			*/return;
+			return;
 		}
 	}
 
@@ -473,8 +473,6 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.Expired < Time.Current())
 			{
-				//_Queue.Remove(node);
-				//delete node;
 				node.Using = 0;
 
 				continue;
@@ -485,10 +483,13 @@ void TinyController::Loop()
 		node.Times++;
 
 #if MSG_DEBUG
+		debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
 		// 第6个字节表示长度
 		TinyMessage* msg = (TinyMessage*)node.Data;
 		// 最后一个附加字节记录第几次重发
 		if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
+		ByteArray bs(node.Data, node.Length);
+		bs.Show(true);
 #endif
 
 		// 发送消息
@@ -498,7 +499,7 @@ void TinyController::Loop()
 		Total.Send++;
 
 		// 分组统计
-		if(Total.Send >= 10)
+		if(Total.Send >= 100)
 		{
 			memcpy(&Last, &Total, sizeof(Total));
 			memset(&Total, 0, sizeof(Total));
