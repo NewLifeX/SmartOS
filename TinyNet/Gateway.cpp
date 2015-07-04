@@ -338,9 +338,8 @@ bool Gateway::OnDiscover(TinyMessage& msg)
 
 			Devices.Add(dv);
 
-			debug_printf("Gateway::Discover ID=0x%02X Type=%04X HardID=", id, dv->Type);
-			dv->HardID.Show();
-			debug_printf("\r\n");
+			debug_printf("Gateway::Discover ");
+			dv->Show(true);
 
 			// 节点注册
 			DeviceRegister(id);
@@ -417,7 +416,9 @@ void Device::Read(Stream& ms)
 
 String& Device::ToStr(String& str) const
 {
-	str.Format("ID=0x%02X Type=0x%02X", ID, Type);
+	str.Format("ID=0x%02X Type=0x%04X", ID, Type);
+	str.Format(" Name=");
+	str += Name;
 	str.Format(" HardID=");
 	str += HardID;
 	str.Format(" LastTime=");
@@ -425,8 +426,6 @@ String& Device::ToStr(String& str) const
 	dt.Parse(LastTime);
 	str += dt.ToString();
 	str.Format(" Switchs=%d Analogs=%d", Switchs, Analogs);
-	str.Format(" Name=");
-	str += Name;
 
 	return str;
 }
