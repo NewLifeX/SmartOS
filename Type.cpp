@@ -25,11 +25,11 @@ String Object::ToString()
 	return str;
 }
 
-void Object::Show()
+void Object::Show(bool newLine)
 {
 	String str;
 	ToStr(str);
-	str.Print();
+	str.Show(newLine);
 }
 
 /******************************** ByteArray ********************************/
@@ -101,7 +101,7 @@ String& ByteArray::ToStr(String& str)
 }
 
 // 显示对象。默认显示ToString
-void ByteArray::Show()
+void ByteArray::Show(bool newLine)
 {
 	/*// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
 	int len = Length() * 2;
@@ -117,7 +117,7 @@ void ByteArray::Show()
 	// 如果需要的缓冲区超过512，那么让它自己分配好了
 	ToHex(str, '-', 0x20);
 
-	str.Show();
+	str.Show(newLine);
 }
 
 /******************************** String ********************************/
@@ -227,7 +227,7 @@ String& String::Append(ByteArray& bs)
 }
 
 // 调试输出字符串
-void String::Print(bool newLine)
+void String::Show(bool newLine)
 {
 	if(!Length()) return;
 
@@ -236,10 +236,10 @@ void String::Print(bool newLine)
 }
 
 // 显示对象。默认显示ToString
-void String::Show()
+/*void String::Show()
 {
 	Print(false);
-}
+}*/
 
 // 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 String& String::Format(const char* format, ...)
@@ -339,11 +339,11 @@ String& IPAddress::ToStr(String& str)
 	return str;
 }
 
-void IPAddress::Show()
+/*void IPAddress::Show()
 {
 	byte* ips = (byte*)&Value;
 	debug_printf("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-}
+}*/
 
 /******************************** IPEndPoint ********************************/
 
@@ -363,7 +363,8 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 
 String& IPEndPoint::ToStr(String& str)
 {
-	str = Address.ToString();
+	//str = Address.ToString();
+	Address.ToStr(str);
 
 	char ss[7];
 	int len = sprintf(ss, ":%d", Port);
@@ -372,11 +373,11 @@ String& IPEndPoint::ToStr(String& str)
 	return str;
 }
 
-void IPEndPoint::Show()
+/*void IPEndPoint::Show()
 {
 	byte* ips = (byte*)&Address.Value;
 	debug_printf("%d.%d.%d.%d:%d", ips[0], ips[1], ips[2], ips[3], Port);
-}
+}*/
 
 bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2)
 {
@@ -456,8 +457,8 @@ String& MacAddress::ToStr(String& str)
 	return str;
 }
 
-void MacAddress::Show()
+/*void MacAddress::Show()
 {
 	byte* macs = (byte*)&Value;
 	debug_printf("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
-}
+}*/

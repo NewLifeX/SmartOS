@@ -51,7 +51,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String ToString();
 	// 显示对象。默认显示ToString
-	virtual void Show();
+	virtual void Show(bool newLine = false);
 
 	//Type GetType();
 };
@@ -346,7 +346,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str);
 	// 显示对象。默认显示ToString
-	virtual void Show();
+	virtual void Show(bool newLine = false);
 
 private:
 };
@@ -376,9 +376,9 @@ public:
 	String& Append(ByteArray& bs);	// 十六进制
 
 	// 调试输出字符串
-	void Print(bool newLine = false);
+	virtual void Show(bool newLine = false);
 	// 显示对象。默认显示ToString
-	virtual void Show();
+	//virtual void Show();
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);
@@ -421,7 +421,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str);
 	// 显示对象
-	virtual void Show();
+	//virtual void Show();
 
     friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }
@@ -443,7 +443,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str);
 	// 显示对象
-	virtual void Show();
+	//virtual void Show();
 
 	static const IPEndPoint Any;
 };
@@ -474,7 +474,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str);
 	// 显示对象
-	virtual void Show();
+	//virtual void Show();
 
     friend bool operator==(const MacAddress& addr1, const MacAddress& addr2)
 	{
