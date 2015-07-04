@@ -3,8 +3,6 @@
 #include "TinyMessage.h"
 #include "TokenMessage.h"
 
-#include "TokenNet\DiscoverMessage.h"
-
 #include "Security\MD5.h"
 
 bool OnLocalReceived(Message& msg, void* param);
@@ -49,7 +47,7 @@ void Gateway::Start()
 	debug_printf("Gateway::Start \r\n");
 
 	// 添加网关这一条设备信息
-	if(Devices.Count() == 0)
+	if(Server->Devices.Count() == 0)
 	{
 		Device* dv = new Device();
 		dv->ID			= 1;
@@ -61,7 +59,7 @@ void Gateway::Start()
 		dv->Analogs		= 3;
 		dv->Name		= Sys.Name;
 
-		Devices.Add(dv);
+		Server->Devices.Add(dv);
 	}
 
 	Client->Open();
@@ -104,35 +102,20 @@ bool OnRemoteReceived(Message& msg, void* param)
 bool Gateway::OnLocal(TinyMessage& msg)
 {
 	// 本地处理。注册、上线、同步时间等
-	switch(msg.Code)
+	/*switch(msg.Code)
 	{
 		case 0x01:
 			return OnDiscover(msg);
-	}
+	}*/
 
-	// 临时方便调试使用
-	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
-	Device* dv = FindDevice(id);
-	if(!dv && id)
-	{
-		dv = new Device();
-		dv->ID = id;
-		// 默认作为开关
-		dv->Type = 0x0203;
-
-		Devices.Add(dv);
-
-		// 模拟注册
-		DeviceRegister(id);
-
-		// 模拟上线
-		DeviceOnline(id);
-	}
-	// 更新设备信息
+	Device* dv = Server->FindDevice(id);
 	if(dv)
 	{
-		dv->LastTime = Time.Current();
+		// 短时间内注册或者登录
+		ulong now = Time.Current() - 500000;
+		if(dv->RegTime > now) DeviceRegister(id);
+		if(dv->LoginTime > now) DeviceOnline(id);
 	}
 
 	// 消息转发
@@ -194,7 +177,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 	TokenMessage rs;
 	rs.Code = msg.Code;
 
-	if(Devices.Count() == 0)
+	if(Server->Devices.Count() == 0)
 	{
 		rs.Data[0] = 0;
 		rs.Length = 1;
@@ -202,12 +185,12 @@ bool Gateway::OnGetDeviceList(Message& msg)
 	else
 	{
 		int i = 0;
-		for(i=0; i<Devices.Count(); i++)
-			rs.Data[i] = Devices[i]->ID;
+		for(i=0; i<Server->Devices.Count(); i++)
+			rs.Data[i] = Server->Devices[i]->ID;
 		rs.Length = i;
 	}
 
-    debug_printf("获取设备列表 共%d个\r\n", Devices.Count());
+    debug_printf("获取设备列表 共%d个\r\n", Server->Devices.Count());
 
 	return Client->Reply(rs);
 }
@@ -229,7 +212,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 	debug_printf("获取节点信息 ID=0x%02X\r\n", id);
 
 	// 找到对应该ID的设备
-	Device* dv = FindDevice(id);
+	Device* dv = Server->FindDevice(id);
 
 	// 即使找不到设备，也返回空负载数据
 	if(!dv) return Client->Reply(rs);
@@ -307,82 +290,6 @@ void Gateway::DeviceOffline(byte id)
 	Client->Send(msg);
 }
 
-Device* Gateway::FindDevice(byte id)
-{
-	if(id == 0) return NULL;
-
-	for(int i=0; i<Devices.Count(); i++)
-	{
-		if(id == Devices[i]->ID) return Devices[i];
-	}
-
-	return NULL;
-}
-
-// 设备发现
-// 请求：2字节设备类型 + 20字节系统ID
-// 响应：1字节地址 + 8字节密码
-bool Gateway::OnDiscover(TinyMessage& msg)
-{
-	if(!msg.Reply)
-	{
-		// 如果设备列表没有这个设备，那么加进去
-		byte id = msg.Src;
-		Device* dv = FindDevice(id);
-		bool isNew = false;
-		if(!dv && id)
-		{
-			isNew = true;
-
-			DiscoverMessage dm;
-			dm.ReadMessage(msg);
-
-			dv = new Device();
-			dv->ID		= id;
-			dv->Type	= dm.Type;
-			dv->HardID	= dm.HardID;
-
-			Devices.Add(dv);
-
-			debug_printf("Gateway::Discover ");
-			dv->Show(true);
-
-			// 节点注册
-			DeviceRegister(id);
-		}
-		// 更新设备信息
-		if(dv)
-		{
-			// 如果最后活跃时间超过60秒，则认为是设备上线
-			if(dv->LastTime + 60000000 < Time.Current())
-			{
-				// 节点上线
-				DeviceOnline(id);
-			}
-			dv->LastTime = Time.Current();
-
-			// 对于已注册的设备，再来发现消息不做处理
-			if(!isNew)
-			{
-				// 生成随机密码。当前时间的MD5
-				ulong now = Time.Current();
-				ByteArray bs((byte*)&now, 8);
-				MD5::Hash(bs, dv->Pass);
-
-				// 响应
-				Stream ms(msg.Data, msg.Length);
-				ms.Write(id);
-				ms.WriteArray(dv->Pass);
-
-				Server->Reply(msg);
-			}
-		}
-	}
-
-	return true;
-}
-
-
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 {
 	msg2.Code = msg.Code;
@@ -400,61 +307,4 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 	msg2.Data[0] = ((TinyMessage&)msg).Src;
 	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 	msg2.Length = 1 + msg.Length;
-}
-
-Device::Device() : HardID(0), Name(0), Pass(0)
-{
-	ID			= 0;
-	Type		= 0;
-	LastTime	= 0;
-	Switchs		= 0;
-	Analogs		= 0;
-}
-
-void Device::Write(Stream& ms) const
-{
-	ms.Write(ID);
-	ms.Write(Type);
-	ms.WriteArray(HardID);
-	ms.Write(LastTime);
-	ms.Write(Switchs);
-	ms.Write(Analogs);
-	ms.WriteString(Name);
-}
-
-void Device::Read(Stream& ms)
-{
-	ID		= ms.Read<byte>();
-	Type	= ms.Read<ushort>();
-	ms.ReadArray(HardID);
-	LastTime= ms.Read<ulong>();
-	Switchs	= ms.Read<byte>();
-	Analogs	= ms.Read<byte>();
-	ms.ReadString(Name);
-}
-
-String& Device::ToStr(String& str) const
-{
-	str.Format("ID=0x%02X Type=0x%04X", ID, Type);
-	str.Format(" Name=");
-	str += Name;
-	str.Format(" HardID=");
-	str += HardID;
-	str.Format(" LastTime=");
-	DateTime dt;
-	dt.Parse(LastTime);
-	str += dt.ToString();
-	str.Format(" Switchs=%d Analogs=%d", Switchs, Analogs);
-
-	return str;
-}
-
-bool operator==(const Device& d1, const Device& d2)
-{
-	return d1.ID == d2.ID;
-}
-
-bool operator!=(const Device& d1, const Device& d2)
-{
-	return d1.ID != d2.ID;
 }

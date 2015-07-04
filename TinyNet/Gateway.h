@@ -9,8 +9,6 @@
 #include "TinyMessage.h"
 #include "TokenMessage.h"
 
-class Device;
-
 // 网关服务器
 class Gateway
 {
@@ -36,9 +34,6 @@ public:
 
 	/******** 远程网业务逻辑 ********/
 
-	List<Device*> Devices;
-	Device* FindDevice(byte id);
-
 	// 设备列表 0x21
 	bool OnGetDeviceList(Message& msg);
 	// 设备信息 x025
@@ -62,29 +57,5 @@ public:
 	// 设备发现
 	bool OnDiscover(TinyMessage& msg);
 };
-
-// 设备信息
-class Device : public Object
-{
-public:
-	byte	ID;			// 节点ID
-	ushort	Type;		// 类型
-	ByteArray	HardID;	// 物理ID
-	ulong	LastTime;	// 活跃时间
-	byte	Switchs;	// 开关数
-	byte	Analogs;	// 通道数
-	String	Name;		// 名称
-	ByteArray	Pass;	// 通信密码
-
-	Device();
-	
-	void Write(Stream& ms) const;
-	void Read(Stream& ms);
-
-	virtual String& ToStr(String& str) const;
-};
-
-bool operator==(const Device& d1, const Device& d2);
-bool operator!=(const Device& d1, const Device& d2);
 
 #endif
