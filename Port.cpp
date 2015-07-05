@@ -163,32 +163,6 @@ bool Port::Reserve(Pin pin, bool flag)
     return true;
 }
 
-/*bool Port::OnReserve(Pin pin, bool flag)
-{
-	return Reserve(pin, flag);
-}
-
-bool OutputPort::OnReserve(Pin pin, bool flag)
-{
-	debug_printf("Output::");
-
-	return Port::OnReserve(pin, flag);
-}
-
-bool AlternatePort::OnReserve(Pin pin, bool flag)
-{
-	debug_printf("Alternate::");
-
-	return Port::OnReserve(pin, flag);
-}
-
-bool InputPort::OnReserve(Pin pin, bool flag)
-{
-	debug_printf("Input::");
-
-	return Port::OnReserve(pin, flag);
-}*/
-
 // 引脚是否被保护
 bool Port::IsBusy(Pin pin)
 {

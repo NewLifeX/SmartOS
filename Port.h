@@ -39,9 +39,6 @@ protected:
 
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
-#if DEBUG
-	//virtual bool OnReserve(Pin pin, bool flag);
-#endif
 };
 
 // 输出口
@@ -88,10 +85,6 @@ protected:
         Speed = speed;
         Invert = invert;
     }
-
-#if DEBUG
-	//virtual bool OnReserve(Pin pin, bool flag);
-#endif
 };
 
 // 复用输出口
@@ -109,10 +102,6 @@ public:
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
-
-#if DEBUG
-	//virtual bool OnReserve(Pin pin, bool flag);
-#endif
 };
 
 // 输入口
@@ -166,10 +155,6 @@ protected:
     }
 
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
-
-#if DEBUG
-	//virtual bool OnReserve(Pin pin, bool flag);
-#endif
 
 private:
     bool _Registed;
