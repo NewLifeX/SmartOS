@@ -200,7 +200,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
 void NRF24L01::Init()
 {
-	_POWER = NULL;
+	_Power = NULL;
 	_spi = NULL;
 
 	// 初始化地址
@@ -286,13 +286,10 @@ NRF24L01::~NRF24L01()
 	// 关闭电源
 	SetPower(false);
 
-	//if(_CE) delete _CE;
-	//if(_IRQ) delete _IRQ;
-
 	delete _spi;
 	_spi = NULL;
-	//_CE = NULL;
-	//_IRQ = NULL;
+	delete _Power;
+	_Power = NULL;
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -764,9 +761,9 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
-	if(_POWER)
+	if(_Power)
 	{
-		*_POWER = true;
+		*_Power = true;
 		debug_printf("打开物理电源开关\r\n");
 	}
 	// 检查并打开Spi
@@ -803,9 +800,9 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
-	if(_POWER)
+	if(_Power)
 	{
-		*_POWER = false;
+		*_Power = false;
 		debug_printf("关闭物理电源开关\r\n");
 	}
 }
