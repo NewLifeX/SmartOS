@@ -72,6 +72,9 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 {
 	if(msg.Src == Server) LastActive = Time.Current();
 
+	// 不处理来自网关以外的消息
+	if(Server ==0 || Server != msg.Dest) return true;
+
 	// 消息转发
 	if(Received) return Received(msg, Param);
 
@@ -222,6 +225,9 @@ bool TinyClient::Ping(Message& msg, void* param)
 	TinyClient* client = (TinyClient*)param;
 
 	TinyMessage& tmsg = (TinyMessage&)msg;
+	// 仅处理来自网关的消息
+	if(client->Server == 0 || client->Server != tmsg.Dest) return true;
+
 	// 忽略响应消息
 	if(tmsg.Reply)
 	{

@@ -135,11 +135,11 @@ bool TinyMessage::Valid() const
 {
 	if(Checksum == Crc) return true;
 
-	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
+	/*debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
 	debug_printf("校验错误指令 ");
 	Show();
-#endif
+#endif*/
 
 	return false;
 }
