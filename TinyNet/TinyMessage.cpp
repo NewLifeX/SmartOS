@@ -178,7 +178,7 @@ TinyController::TinyController() : Controller()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 8000;
+	Interval	= 1000;
 	Timeout		= 50000;
 
 	MinSize = TinyMessage::MinSize;
@@ -213,9 +213,9 @@ void TinyController::Open()
 	if(!_taskID)
 	{
 		debug_printf("TinyNet::微网消息队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 10000);
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
 		// 默认禁用，有数据要发送才开启
-		Sys.SetTask(_taskID, false);
+		//Sys.SetTask(_taskID, false);
 	}
 
 	memset(&Total, 0, sizeof(Total));
@@ -365,11 +365,11 @@ void TinyController::AckRequest(TinyMessage& msg)
 			Total.Bytes += node.Length;
 
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
-			uint it = (Interval + cost) >> 1;
+			/*uint it = (Interval + cost) >> 1;
 			// 确保小于等于超时时间的四分之一，让其有机会重发
 			uint tt = Timeout >> 2;
 			if(it > tt) it = tt;
-			Interval = it;
+			Interval = it;*/
 
 			// 该传输口收到响应，从就绪队列中删除
 			node.Using = 0;
@@ -473,6 +473,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.Expired < Time.Current())
 			{
+				debug_printf("消息过期 Dest=0x%02X Seq=%d Period=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Period, node.Times);
 				node.Using = 0;
 
 				continue;
@@ -483,13 +484,13 @@ void TinyController::Loop()
 		node.Times++;
 
 #if MSG_DEBUG
-		debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
+		//debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
 		// 第6个字节表示长度
 		TinyMessage* msg = (TinyMessage*)node.Data;
 		// 最后一个附加字节记录第几次重发
 		if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
-		ByteArray bs(node.Data, node.Length);
-		bs.Show(true);
+		//ByteArray bs(node.Data, node.Length);
+		//bs.Show(true);
 #endif
 
 		// 发送消息
@@ -510,14 +511,16 @@ void TinyController::Loop()
 
 		// 随机延迟。随机数1~5。每次延迟递增
 		byte rnd = (uint)now % 3;
-		node.Interval = (rnd + 1) * Interval;
-		node.Next = now + node.Interval;
+		//node.Period = (rnd + 1) * Interval;
+		node.Period = Interval;
+		node.Next = now + node.Period;
+		//debug_printf("下一次 %dus\r\n", node.Period);
 	}
 
 	if(count == 0)
 	{
 		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
-		Sys.SetTask(_taskID, false);
+		//Sys.SetTask(_taskID, false);
 	}
 }
 
@@ -558,7 +561,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	Total.Msg++;
 
-	Sys.SetTask(_taskID, true);
+	//Sys.SetTask(_taskID, true);
 
 	return true;
 }
@@ -621,7 +624,7 @@ void TinyController::ShowStat()
 void MessageNode::SetMessage(TinyMessage& msg)
 {
 	Sequence = msg.Sequence;
-	Interval = 0;
+	Period = 0;
 	Times = 0;
 	LastSend = 0;
 
