@@ -717,7 +717,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	while((ReadReg(ECON1) & ECON1_TXRTS) && times-- > 0);
 	if(times <= 0)
 	{
-		debug_printf("Enc28j60::OnWrite 发送失败，设备正忙于发送数据！");
+		debug_printf("Enc28j60::OnWrite 发送失败，设备正忙于发送数据！\r\n");
 		return false;
 	}
 
