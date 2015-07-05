@@ -200,7 +200,7 @@ NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 
 void NRF24L01::Init()
 {
-	_Power = NULL;
+	Power = NULL;
 	_spi = NULL;
 
 	// 初始化地址
@@ -228,6 +228,8 @@ void NRF24L01::Init()
 
 	_Lock = 0;
 
+	LedTx	= NULL;
+	LedRx	= NULL;
 }
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
@@ -288,8 +290,15 @@ NRF24L01::~NRF24L01()
 
 	delete _spi;
 	_spi = NULL;
-	delete _Power;
-	_Power = NULL;
+
+	delete Power;
+	Power = NULL;
+
+	delete LedTx;
+	LedTx = NULL;
+
+	delete LedRx;
+	LedRx = NULL;
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -761,9 +770,9 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
-	if(_Power)
+	if(Power)
 	{
-		*_Power = true;
+		*Power = true;
 		debug_printf("打开物理电源开关\r\n");
 	}
 	// 检查并打开Spi
@@ -800,9 +809,9 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
-	if(_Power)
+	if(Power)
 	{
-		*_Power = false;
+		*Power = false;
 		debug_printf("关闭物理电源开关\r\n");
 	}
 }
@@ -810,6 +819,9 @@ void NRF24L01::OnClose()
 // 从NRF的接收缓冲区中读出数据
 uint NRF24L01::OnRead(byte *data, uint len)
 {
+	// 亮灯。离开时自动熄灯
+	PortScope ps(LedRx);
+
 	Lock lock(_Lock);
 	//if(!lock.Wait(10000)) return false;
 	// 如果拿不到锁，马上退出，不等待。因为一般读取是由定时器中断来驱动，等待没有意义。
@@ -866,6 +878,9 @@ uint NRF24L01::OnRead(byte *data, uint len)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
+	// 亮灯。离开时自动熄灯
+	PortScope ps(LedTx);
+
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
 
