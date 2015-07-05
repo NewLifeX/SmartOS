@@ -820,7 +820,7 @@ void NRF24L01::OnClose()
 uint NRF24L01::OnRead(byte *data, uint len)
 {
 	// 亮灯。离开时自动熄灯
-	PortScope ps(LedRx);
+	//PortScope ps(LedRx);
 
 	Lock lock(_Lock);
 	//if(!lock.Wait(10000)) return false;
@@ -871,6 +871,7 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	ClearFIFO(true);
 
 	//CEUp();
+	if(rs && LedRx) *LedRx = !*LedRx;
 
 	return rs;
 }
@@ -879,7 +880,8 @@ uint NRF24L01::OnRead(byte *data, uint len)
 bool NRF24L01::OnWrite(const byte* data, uint len)
 {
 	// 亮灯。离开时自动熄灯
-	PortScope ps(LedTx);
+	//PortScope ps(LedTx);
+	if(LedTx) *LedTx = !*LedTx;
 
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
