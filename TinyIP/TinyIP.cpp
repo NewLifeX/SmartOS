@@ -3,9 +3,9 @@
 
 #define NET_DEBUG DEBUG
 
-TinyIP::TinyIP() : Buffer(1500) { Init(); }
+TinyIP::TinyIP() : Buffer(0) { Init(); }
 
-TinyIP::TinyIP(ITransport* port) : Buffer(1500)
+TinyIP::TinyIP(ITransport* port) : Buffer(0)
 {
 	Init();
 	Init(port);
@@ -24,6 +24,9 @@ void TinyIP::Init()
 {
 	_port = NULL;
 	_StartTime = 0;
+
+	// 以太网缓冲区先初始化为0，然后再调整大小
+	Buffer.SetLength(1500);
 
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = IP = 0;
