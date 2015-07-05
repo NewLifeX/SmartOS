@@ -197,6 +197,7 @@ void TinyClient::Ping()
 
 		debug_printf("停止Ping服务端 ");
 		Sys.RemoveTask(_taskPing);
+		_taskPing = 0;
 
 		debug_printf("开始寻找服务端 ");
 		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000);
