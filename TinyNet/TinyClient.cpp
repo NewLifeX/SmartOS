@@ -187,7 +187,7 @@ void PingTask(void* param)
 // Ping指令用于保持与对方的活动状态
 void TinyClient::Ping()
 {
-	if(LastActive > 0 && LastActive + 30000000 < Time.Current())
+	if(LastActive > 0 && LastActive + 60000000 < Time.Current())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务\r\n");
@@ -196,7 +196,7 @@ void TinyClient::Ping()
 		Sys.RemoveTask(_taskPing);
 
 		debug_printf("开始寻找服务端 ");
-		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 2000000);
+		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000);
 
 		Server = 0;
 		Password = 0;
