@@ -221,8 +221,8 @@ void NRF24L01::Init()
 	MaxError	= 10;
 	Error		= 0;
 
-	_taskID = 0;
-	_taskID2 = 0;
+	_AutoOpenTaskID = 0;
+	_ReceiveTaskID = 0;
 	_timer = NULL;
 	//_Thread = NULL;
 
@@ -278,10 +278,10 @@ NRF24L01::~NRF24L01()
 {
     debug_printf("NRF24L01::~NRF24L01\r\n");
 
-	if(_taskID)
+	if(_AutoOpenTaskID)
 	{
-		Sys.RemoveTask(_taskID);
-		_taskID = 0;
+		Sys.RemoveTask(_AutoOpenTaskID);
+		_AutoOpenTaskID = 0;
 	}
 	Register(NULL);
 
@@ -679,7 +679,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		if(Open()) return true;
 
 		debug_printf("定时检查2401热插拔 ");
-		_taskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000);
+		_AutoOpenTaskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000);
 		return false;
 	}
 
@@ -790,11 +790,11 @@ bool NRF24L01::OnOpen()
 	}
 
 	// 打开成功后，关闭定时轮询任务
-	if(_taskID)
+	if(_AutoOpenTaskID)
 	{
 		debug_printf("关闭2401热插拔检查 ");
-		Sys.RemoveTask(_taskID);
-		_taskID = 0;
+		Sys.RemoveTask(_AutoOpenTaskID);
+		_AutoOpenTaskID = 0;
 	}
 
 	//debug_printf("定时显示状态 ");
@@ -1116,16 +1116,10 @@ void NRF24L01::ReceiveTask(void* param)
 	assert_ptr(param);
 
 	NRF24L01* nrf = (NRF24L01*)param;
-	//byte buf[32];
-	//while(true)
+	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
+	if(nrf->Opened && nrf->_Lock == 0)
 	{
-		// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-		if(nrf->Opened && nrf->_Lock == 0)
-		{
-			nrf->OnIRQ();
-		}
-
-		//Sys.Sleep(1);
+		nrf->OnIRQ();
 	}
 }
 
@@ -1136,10 +1130,10 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		if(!_taskID2)
+		if(!_ReceiveTaskID)
 		{
 			debug_printf("R24::接收轮询 ");
-			_taskID2 = Sys.AddTask(ReceiveTask, this, 0, 2000);
+			_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000);
 		}
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);
@@ -1159,8 +1153,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	}
 	else
 	{
-		if(_taskID2) Sys.RemoveTask(_taskID2);
-		_taskID2 = 0;
+		if(_ReceiveTaskID) Sys.RemoveTask(_ReceiveTaskID);
+		_ReceiveTaskID = 0;
 		if(_timer) delete _timer;
 		_timer = NULL;
 
