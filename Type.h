@@ -324,6 +324,30 @@ public:
 
 		return _Arr[i];
 	}
+
+	friend bool operator==(const Array& bs1, const Array& bs2)
+	{
+		if(bs1.Length() != bs2.Length()) return false;
+
+		for(int i=0; i<bs1.Length(); i++)
+		{
+			if(bs1[i] != bs2[i]) return false;
+		}
+
+		return true;
+	}
+
+	friend bool operator!=(const Array& bs1, const Array& bs2)
+	{
+		if(bs1.Length() != bs2.Length()) return true;
+
+		for(int i=0; i<bs1.Length(); i++)
+		{
+			if(bs1[i] != bs2[i]) return true;
+		}
+
+		return false;
+	}
 };
 
 // 字节数组
@@ -350,6 +374,9 @@ public:
 	virtual String& ToStr(String& str) const;
 	// 显示对象。默认显示ToString
 	virtual void Show(bool newLine = false) const;
+
+    //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
+    //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
 };
 
 // 字符串
