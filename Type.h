@@ -152,6 +152,7 @@ public:
 	// 初始化指定长度的数组。默认使用内部缓冲区
 	Array(int length)
 	{
+		assert_param2(length <= 0x400, "禁止分配超过1k的数组");
 		if(length < 0) length = ArrayLength(Arr);
 
 		_Length		= length;
