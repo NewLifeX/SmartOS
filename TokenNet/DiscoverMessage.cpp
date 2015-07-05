@@ -3,6 +3,10 @@
 // 初始化消息，各字段为0
 DiscoverMessage::DiscoverMessage() : HardID(0x10), Pass(0x08)
 {
+	Type	= Sys.Code;
+	Version	= Sys.Version;
+	Switchs	= 0;
+	Analogs	= 0;
 }
 
 // 从数据流中读取消息
@@ -11,24 +15,33 @@ bool DiscoverMessage::Read(Stream& ms)
 	if(!Reply)
 	{
 		Type = ms.Read<ushort>();
-		
+
 		// 兼容旧版本，固定20字节的ID
-		if(ms.Remain() == 20 && ms.Peek() != ms.Remain() - 1)
+		if(ms.Remain() == 20)
 		{
 			HardID.SetLength(20);
 			ms.Read(HardID);
 		}
 		else
+		{
 			ms.ReadArray(HardID);
+			
+			if(ms.Remain() > 0)
+			{
+				Version	= ms.Read<ushort>();
+				Switchs	= ms.Read<byte>();
+				Analogs	= ms.Read<byte>();
+			}
+		}
 	}
 	else
 	{
 		ID = ms.Read<byte>();
-		
+
 		// 兼容旧版本，固定8字节密码
-		if(ms.Remain() == 8 && ms.Peek() != ms.Remain() - 1)
+		if(ms.Remain() == 8)
 		{
-			HardID.SetLength(20);
+			Pass.SetLength(8);
 			ms.Read(Pass);
 		}
 		else
@@ -45,6 +58,9 @@ void DiscoverMessage::Write(Stream& ms)
 	{
 		ms.Write(Type);
 		ms.WriteArray(HardID);
+		ms.Write(Version);
+		ms.Write(Switchs);
+		ms.Write(Analogs);
 	}
 	else
 	{
@@ -61,10 +77,12 @@ String& DiscoverMessage::ToStr(String& str) const
 		str += "#";
 		str.Format(" Type=0x%04X", Type);
 		str += " HardID=" + HardID;
+		str.Format(" Version=%d.%d Switchs=%d Analogs=%d", Version >> 8, Version & 0xFF, Switchs, Analogs);
 	}
 	else
 	{
-		
+		str.Format(" ID=0x%02X", ID);
+		str += " Pass=" + Pass;
 	}
 
 	return str;

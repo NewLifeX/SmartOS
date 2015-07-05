@@ -11,6 +11,9 @@ public:
 	// 请求数据
 	ushort		Type;	// 类型
 	ByteArray	HardID;	// 硬件ID。一般16字节
+	ushort		Version;
+	byte		Switchs;
+	byte		Analogs;
 
 	// 响应数据
 	byte		ID;		// 分配得到的设备ID
