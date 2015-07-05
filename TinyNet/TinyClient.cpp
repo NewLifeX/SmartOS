@@ -35,8 +35,8 @@ TinyClient::TinyClient(TinyController* control)
 	OnDiscover	= NULL;
 	OnPing		= NULL;
 
-	Switchs		= NULL;
-	Regs		= NULL;
+	Switchs		= 0;
+	Analogs		= 0;
 }
 
 void TinyClient::Send(Message& msg)
@@ -112,6 +112,8 @@ void TinyClient::Discover()
 	DiscoverMessage dm;
 	dm.Type		= Type;
 	dm.HardID	= Sys.ID;
+	dm.Switchs	= Switchs;
+	dm.Analogs	= Analogs;
 	dm.WriteMessage(msg);
 	dm.Show(true);
 

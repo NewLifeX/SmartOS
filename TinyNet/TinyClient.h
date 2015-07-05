@@ -56,8 +56,8 @@ public:
 	
 // 通用用户级消息
 public:
-	byte*	Switchs;// 开关指针
-	int*	Regs;	// 寄存器指针
+	byte		Switchs;
+	byte		Analogs;
 };
 
 #endif
