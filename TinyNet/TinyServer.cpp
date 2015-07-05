@@ -157,7 +157,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			dm.Reply = true;
 			dm.ID = id;
 			dm.Pass = dv->Pass;
-			dm.WriteMessage(rs)
+			dm.WriteMessage(rs);
 
 			rs.NoAck = false;
 			Reply(rs);
