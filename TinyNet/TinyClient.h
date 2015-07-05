@@ -22,8 +22,8 @@ public:
 	TinyClient(TinyController* control);
 
 	// 发送消息
-	void Send(Message& msg);
-	void Reply(Message& msg);
+	void Send(TinyMessage& msg);
+	void Reply(TinyMessage& msg);
 	bool OnReceive(TinyMessage& msg);
 	
 	// 收到功能消息时触发

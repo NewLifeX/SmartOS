@@ -178,7 +178,7 @@ TinyController::TinyController() : Controller()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 1000;
+	Interval	= 2000;
 	Timeout		= 50000;
 
 	MinSize = TinyMessage::MinSize;
@@ -511,8 +511,8 @@ void TinyController::Loop()
 
 		// 随机延迟。随机数1~5。每次延迟递增
 		byte rnd = (uint)now % 3;
-		//node.Period = (rnd + 1) * Interval;
-		node.Period = Interval;
+		node.Period = (rnd + 1) * Interval;
+		//node.Period = Interval;
 		node.Next = now + node.Period;
 		//debug_printf("下一次 %dus\r\n", node.Period);
 	}
@@ -571,6 +571,7 @@ bool TinyController::Broadcast(TinyMessage& msg)
 {
 	msg.NoAck = true;
 	msg.Src = Address;
+	msg.Dest = 0;
 
 	// 附上序列号。响应消息保持序列号不变
 	if(!msg.Reply) msg.Sequence = ++_Sequence;

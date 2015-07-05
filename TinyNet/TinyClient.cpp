@@ -39,15 +39,18 @@ TinyClient::TinyClient(TinyController* control)
 	Analogs		= 0;
 }
 
-void TinyClient::Send(Message& msg)
+void TinyClient::Send(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
 	assert_param2(_control, "令牌控制器未初始化");
 
+	// 设置网关地址
+	msg.Dest = Server;
+
 	_control->Send(msg);
 }
 
-void TinyClient::Reply(Message& msg)
+void TinyClient::Reply(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
 	assert_param2(_control, "令牌控制器未初始化");
