@@ -122,17 +122,16 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
 		if(FindDevice(id) != NULL)
 		{
-			id = 2;
-			while(FindDevice(id++) != NULL && id < 0xFF);
+			id = 1;
+			while(FindDevice(++id) != NULL && id < 0xFF);
+			
+			debug_printf("发现ID=0x%02X已分配，为当前节点分配 0x%02X\r\n", msg.Src, id);
 		}
 
 		dv = new Device();
 		dv->ID		= id;
 
 		Devices.Add(dv);
-
-		debug_printf("\r\nTinyServer::Discover ");
-		dv->Show(true);
 
 		// 节点注册
 		dv->RegTime	= Time.Current();
@@ -153,6 +152,9 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			dv->LoginTime = dv->RegTime;
 		}
 		dv->LastTime = Time.Current();
+
+		debug_printf("\r\nTinyServer::Discover ");
+		dv->Show(true);
 
 		// 对于已注册的设备，再来发现消息不做处理
 		//if(isNew)
