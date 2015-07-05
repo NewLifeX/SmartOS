@@ -72,15 +72,15 @@ void DiscoverMessage::Write(Stream& ms)
 String& DiscoverMessage::ToStr(String& str) const
 {
 	str += "发现";
-	if(Reply)
+	if(!Reply)
 	{
-		str += "#";
 		str.Format(" Type=0x%04X", Type);
 		str += " HardID=" + HardID;
 		str.Format(" Version=%d.%d Switchs=%d Analogs=%d", Version >> 8, Version & 0xFF, Switchs, Analogs);
 	}
 	else
 	{
+		str += "#";
 		str.Format(" ID=0x%02X", ID);
 		str += " Pass=" + Pass;
 	}

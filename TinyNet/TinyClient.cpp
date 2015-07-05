@@ -60,8 +60,17 @@ bool OnClientReceived(Message& msg, void* param)
 	TinyClient* client = (TinyClient*)param;
 	assert_ptr(client);
 
+	client->OnReceive((TinyMessage&)msg);
+
+	return true;
+}
+
+bool TinyClient::OnReceive(TinyMessage& msg)
+{
+	if(msg.Src == Server) LastActive = Time.Current();
+
 	// 消息转发
-	if(client->Received) return client->Received(msg, client->Param);
+	if(Received) return Received(msg, Param);
 
 	return true;
 }
@@ -104,6 +113,7 @@ void TinyClient::Discover()
 	dm.Type		= Type;
 	dm.HardID	= Sys.ID;
 	dm.WriteMessage(msg);
+	dm.Show(true);
 
 	_control->Broadcast(msg);
 
@@ -119,7 +129,11 @@ bool TinyClient::Discover(Message& msg, void* param)
 	if(!tmsg.Reply || tmsg.Error) return true;
 
 	// 校验不对
-	if(_lastDiscoverID != tmsg.Sequence) return true;
+	if(_lastDiscoverID != tmsg.Sequence)
+	{
+		debug_printf("发现响应序列号 %d 不等于内部序列号 %d \r\n", tmsg.Sequence, _lastDiscoverID);
+		//return true;
+	}
 
 	assert_ptr(param);
 	TinyClient* client = (TinyClient*)param;
@@ -133,6 +147,8 @@ bool TinyClient::Discover(Message& msg, void* param)
 		ms.ReadArray(client->Password);*/
 	DiscoverMessage dm;
 	dm.ReadMessage(msg);
+	dm.Show(true);
+
 	ctrl->Address		= dm.ID;
 	client->Password	= dm.Pass;
 
@@ -140,13 +156,19 @@ bool TinyClient::Discover(Message& msg, void* param)
 	client->Server = tmsg.Src;
 
 	// 取消Discover任务
-	debug_printf("停止寻找服务端 ");
-	Sys.RemoveTask(_taskDiscover);
-	_taskDiscover = 0;
+	if(_taskDiscover)
+	{
+		debug_printf("停止寻找服务端 ");
+		Sys.RemoveTask(_taskDiscover);
+		_taskDiscover = 0;
+	}
 
 	// 启动Ping任务
-	debug_printf("开始Ping服务端 ");
-	_taskPing = Sys.AddTask(PingTask, client, 0, 15000000);
+	if(!_taskPing)
+	{
+		debug_printf("开始Ping服务端 ");
+		_taskPing = Sys.AddTask(PingTask, client, 0, 15000000);
+	}
 
 	if(client->OnDiscover) return client->OnDiscover(msg, param);
 
