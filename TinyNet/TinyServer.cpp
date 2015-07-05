@@ -82,6 +82,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 		dv->ID = id;
 		// 默认作为开关
 		dv->Type = 0x0203;
+		dv->Switchs = 3;
 
 		Devices.Add(dv);
 
@@ -119,6 +120,9 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		dv->ID		= id;
 		dv->Type	= dm.Type;
 		dv->HardID	= dm.HardID;
+		dv->Version	= dm.Version;
+		dv->Switchs	= dm.Switchs;
+		dv->Analogs	= dm.Analogs;
 
 		Devices.Add(dv);
 

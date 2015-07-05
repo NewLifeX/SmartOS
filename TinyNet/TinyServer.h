@@ -64,6 +64,7 @@ public:
 	ushort	Type;		// 类型
 	ByteArray	HardID;	// 物理ID
 	ulong	LastTime;	// 活跃时间
+	ushort	Version;	// 版本
 	byte	Switchs;	// 开关数
 	byte	Analogs;	// 通道数
 	String	Name;		// 名称
