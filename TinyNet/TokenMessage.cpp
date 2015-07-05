@@ -203,14 +203,18 @@ bool TokenController::OnReceive(Message& msg)
 
 	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
 	// 系统指令也不需要确认
-	if(msg.Reply && msg.Code != 0x08 && msg.Code >= 0x10)
+	if(msg.Code >= 0x10 && msg.Code != 0x08)
 	{
-		TokenMessage ack;
-		ack.Code = 0x08;
-		ack.Length = 1;
-		ack.Data[0] = code;	// 这里考虑最高位
+		// 需要为请求发出确认，因为转发以后不知道还要等多久才能收到另一方的响应
+		//if(msg.Reply)
+		{
+			TokenMessage ack;
+			ack.Code = 0x08;
+			ack.Length = 1;
+			ack.Data[0] = code;	// 这里考虑最高位
 
-		Reply(ack);
+			Reply(ack);
+		}
 	}
 
 	// 如果有等待响应，则交给它
