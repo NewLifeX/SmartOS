@@ -288,10 +288,10 @@ bool TinyController::Valid(Message& msg)
 	if(!tmsg.Src) return false;
 	// 非广播包时，源地址和目的地址相同也是非法的
 	if(tmsg.Dest == tmsg.Src) return false;
-	// 只处理本机消息或广播消息。快速处理，高效。
-	if(Address != 0 && tmsg.Dest != Address && tmsg.Dest != 0) return false;
-	// 源地址是自己的广播不要接收
-	if(Address != 0 && tmsg.Dest == 0 && tmsg.Src == Address) return false;
+	// 源地址是自己不要接收
+	if(tmsg.Src == Address) return false;
+	// 只处理本机消息或广播消息
+	if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
 
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
@@ -394,6 +394,9 @@ void TinyController::AckRequest(TinyMessage& msg)
 // 向对方发出Ack包
 void TinyController::AckResponse(TinyMessage& msg)
 {
+	// 广播消息不要给确认
+	if(msg.Dest == 0) return;
+
 	TinyMessage msg2(msg);
 	msg2.Src = Address;
 	msg2.Dest = msg.Src;
@@ -538,7 +541,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	// 针对Zigbee等不需要Ack确认的通道
 	if(Timeout < 0) return Controller::Send(msg);
-	
+
 	// 准备消息队列
 	MessageNode* node = NULL;
 	for(int i=0; i<ArrayLength(_Queue); i++)
