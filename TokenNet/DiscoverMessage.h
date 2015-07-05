@@ -8,9 +8,14 @@
 class DiscoverMessage : public MessageBase
 {
 public:
+	// 请求数据
 	ushort		Type;	// 类型
-	ByteArray	HardID;	// 硬件ID
+	ByteArray	HardID;	// 硬件ID。一般16字节
 
+	// 响应数据
+	byte		ID;		// 分配得到的设备ID
+	ByteArray	Pass;	// 通信密码。一般8字节
+	
 	// 初始化消息，各字段为0
 	DiscoverMessage();
 

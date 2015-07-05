@@ -126,11 +126,15 @@ bool TinyClient::Discover(Message& msg, void* param)
 	TinyController* ctrl = (TinyController*)client->_control;
 
 	// 解析数据
-	Stream ms(msg.Data, msg.Length);
+	/*Stream ms(msg.Data, msg.Length);
 	if(ms.Remain())
 		ctrl->Address = ms.Read<byte>();
 	if(ms.Remain() >= 8)
-		ms.ReadArray(client->Password);
+		ms.ReadArray(client->Password);*/
+	DiscoverMessage dm;
+	dm.ReadMessage(msg);
+	ctrl->Address		= dm.ID;
+	client->Password	= dm.Pass;
 
 	// 记住服务端地址
 	client->Server = tmsg.Src;
@@ -179,7 +183,7 @@ void TinyClient::Ping()
 	TinyMessage msg;
 	msg.Code = 2;
 
-	_control->Send(msg);
+	_control->Broadcast(msg);
 
 	if(LastActive == 0) LastActive = Time.Current();
 }

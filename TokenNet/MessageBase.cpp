@@ -8,6 +8,8 @@ MessageBase::MessageBase()
 
 bool MessageBase::ReadMessage(Message& msg)
 {
+	Reply = msg.Reply;
+
 	Stream ms(msg.Data, msg.Length);
 	return Read(ms);
 }

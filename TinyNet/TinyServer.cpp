@@ -149,11 +149,15 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 			// 响应
 			TinyMessage rs = msg;
+			// 小心数据区指针不一致
 			rs.Data = rs._Data;
-			Stream ms(rs.Data, ArrayLength(rs._Data));
-			ms.Write(id);
-			ms.WriteArray(dv->Pass);
-			rs.Length = ms.Position();
+
+			// 发现响应
+			DiscoverMessage dm;
+			dm.Reply = true;
+			dm.ID = id;
+			dm.Pass = dv->Pass;
+			dm.WriteMessage(rs)
 
 			rs.NoAck = false;
 			Reply(rs);
