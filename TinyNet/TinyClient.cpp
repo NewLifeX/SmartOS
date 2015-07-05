@@ -41,11 +41,17 @@ TinyClient::TinyClient(TinyController* control)
 
 void TinyClient::Send(Message& msg)
 {
+	assert_param2(this, "令牌客户端未初始化");
+	assert_param2(_control, "令牌控制器未初始化");
+
 	_control->Send(msg);
 }
 
 void TinyClient::Reply(Message& msg)
 {
+	assert_param2(this, "令牌客户端未初始化");
+	assert_param2(_control, "令牌控制器未初始化");
+
 	_control->Reply(msg);
 }
 
