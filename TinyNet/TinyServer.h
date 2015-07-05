@@ -32,6 +32,7 @@ public:
 
 	List<Device*> Devices;
 	Device* FindDevice(byte id);
+	Device* FindDevice(ByteArray& hardid);
 
 // 常用系统级消息
 public:

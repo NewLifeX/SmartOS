@@ -110,11 +110,21 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
-	Device* dv = FindDevice(id);
+	if(!id) return false;
+
+	Device* dv = FindDevice(dm.HardID);
+	//Device* dv = FindDevice(id);
 	//bool isNew = false;
-	if(!dv && id)
+	if(!dv)
 	{
 		//isNew = true;
+
+		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
+		if(FindDevice(id) != NULL)
+		{
+			id = 2;
+			while(FindDevice(id++) != NULL && id < 0xFF);
+		}
 
 		dv = new Device();
 		dv->ID		= id;
@@ -159,12 +169,12 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 			// 发现响应
 			DiscoverMessage dm;
-			dm.Reply = true;
-			dm.ID = id;
-			dm.Pass = dv->Pass;
+			dm.Reply	= true;
+			dm.ID		= dv->ID;
+			dm.Pass		= dv->Pass;
 			dm.WriteMessage(rs);
 
-			rs.NoAck = false;
+			rs.NoAck	= false;
 			Reply(rs);
 		}
 	}
@@ -203,6 +213,18 @@ Device* TinyServer::FindDevice(byte id)
 	for(int i=0; i<Devices.Count(); i++)
 	{
 		if(id == Devices[i]->ID) return Devices[i];
+	}
+
+	return NULL;
+}
+
+Device* TinyServer::FindDevice(ByteArray& hardid)
+{
+	if(hardid.Length() == 0) return NULL;
+
+	for(int i=0; i<Devices.Count(); i++)
+	{
+		if(hardid == Devices[i]->HardID) return Devices[i];
 	}
 
 	return NULL;
