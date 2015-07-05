@@ -114,6 +114,7 @@ uint Stream::Read(byte* buf, uint offset, int count)
 	return count;
 }
 
+// 读取7位压缩编码整数
 uint Stream::ReadEncodeInt()
 {
 	uint value = 0;
@@ -130,6 +131,12 @@ uint Stream::ReadEncodeInt()
 		value |= (temp << k);
 	}
 	return 0xFFFFFFFF;
+}
+
+// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
+uint Stream::Read(ByteArray& bs)
+{
+	return Read(bs.GetBuffer(), 0, bs.Length());
 }
 
 // 把数据写入当前位置
@@ -149,6 +156,7 @@ bool Stream::Write(byte* buf, uint offset, uint count)
 	return true;
 }
 
+// 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
 	byte temp;
@@ -180,11 +188,13 @@ uint Stream::Write(string str)
 	return len;
 }
 
+// 把字节数组的数据写入到数据流。不包含长度前缀
 bool Stream::Write(const ByteArray& bs)
 {
 	return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
+// 读取指定长度的数据并返回首字节指针，移动数据流位置
 byte* Stream::ReadBytes(int count)
 {
 	// 默认小于0时，读取全部数据
@@ -234,6 +244,7 @@ bool Stream::CheckRemain(uint count)
 	return true;
 }
 
+// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
 uint Stream::ReadArray(ByteArray& bs)
 {
 	uint len = ReadEncodeInt();
@@ -262,12 +273,14 @@ uint Stream::ReadArray(ByteArray& bs)
 	return len;
 }
 
+// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 bool Stream::WriteArray(const ByteArray& bs)
 {
 	WriteEncodeInt(bs.Length());
 	return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
+// 从数据流读取变长数据到字符串。以压缩整数开头表示长度
 uint Stream::ReadString(String& str)
 {
 	ByteArray bs(str.Capacity() - str.Length());
@@ -279,6 +292,7 @@ uint Stream::ReadString(String& str)
 	return len;
 }
 
+// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
 bool Stream::WriteString(const String& str)
 {
 	ByteArray bs(str);

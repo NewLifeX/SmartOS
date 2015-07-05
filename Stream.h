@@ -46,21 +46,30 @@ public:
 	// 数据流当前位置指针。注意：扩容后指针会改变！
     byte* Current() const;
 
-	// 从当前位置读取数据
+	// 从当前位置读取数据，填充到目标数组
 	uint Read(byte* buf, uint offset = 0, int count = -1);
+	// 读取7位压缩编码整数
 	uint ReadEncodeInt();
+	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
+	uint Read(ByteArray& bs);
 
 	// 把数据写入当前位置
 	bool Write(byte* buf, uint offset, uint count);
+	// 写入7位压缩编码整数
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
 	uint Write(string str);
+	// 把字节数组的数据写入到数据流。不包含长度前缀
 	bool Write(const ByteArray& bs);
 
+	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
 	uint ReadArray(ByteArray& bs);
+	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteArray(const ByteArray& bs);
 
+	// 从数据流读取变长数据到字符串。以压缩整数开头表示长度
 	uint ReadString(String& str);
+	// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteString(const String& str);
 
 	// 取回指定结构体指针，并移动游标位置
@@ -114,6 +123,7 @@ public:
 		return true;
 	}
 
+	// 读取指定长度的数据并返回首字节指针，移动数据流位置
 	byte* ReadBytes(int count = -1);
 
 	// 读取一个字节，不移动游标。如果没有可用数据，则返回-1
