@@ -20,48 +20,30 @@ static const int PORT_IRQns[] = {
 #ifdef REGION_Port
 Port::Port()
 {
-	_Pin = P0;
-	Group = NULL;
-	PinBit = 0;
+	_Pin	= P0;
+	Group	= NULL;
+	PinBit	= 0;
 }
 
 Port::~Port()
 {
-/*#if defined(STM32F1)
-	// 恢复为初始化状态
-	ushort bits = PinBit;
-	int config = InitState & 0xFFFFFFFF;
-	for(int i=0; i<16 && bits; i++, bits>>=1)
-	{
-		if(i == 7) config = InitState >> 32;
-		if(bits & 1)
-		{
-			uint shift = (i & 7) << 2; // 每引脚4位
-			uint mask = 0xF << shift;  // 屏蔽掉其它位
-
-			GPIO_TypeDef* port = Group;
-			if (i & 0x08) { // bit 8 - 15
-				port->CRH = port->CRH & ~mask | (config & mask);
-			} else { // bit 0-7
-				port->CRL = port->CRL & ~mask | (config & mask);
-			}
-		}
-	}
-#endif*/
-
 #if DEBUG
 	// 解除保护引脚
-	OnReserve(_Pin, false);
+	Show();
+	Reserve(_Pin, false);
 #endif
 }
 
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {
-	//assert_param(pin != P0);
-
 #if DEBUG
-	if(_Pin != P0) OnReserve(_Pin, false);
+	// 释放已有引脚的保护
+	if(_Pin != P0)
+	{
+		Show();
+		Reserve(_Pin, false);
+	}
 #endif
 
     _Pin = pin;
@@ -76,14 +58,13 @@ Port& Port::Set(Pin pin)
 		PinBit = 0;
 	}
 
-/*#if defined(STM32F1)
-	// 整组引脚的初始状态，析构时有选择恢复
-	if(_Pin != P0) InitState = ((ulong)Group->CRH << 32) + Group->CRL;
-#endif*/
-
 #if DEBUG
 	// 保护引脚
-	if(_Pin != P0) OnReserve(_Pin, true);
+	if(_Pin != P0)
+	{
+		Show();
+		Reserve(_Pin, true);
+	}
 #endif
 
 	if(_Pin != P0) Config();
@@ -91,6 +72,7 @@ Port& Port::Set(Pin pin)
 	return *this;
 }
 
+// 确定配置,确认用对象内部的参数进行初始化
 void Port::Config()
 {
 	GPIO_InitTypeDef gpio;
@@ -145,6 +127,7 @@ static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经�
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
 bool Port::Reserve(Pin pin, bool flag)
 {
+	debug_printf("::");
     int port = pin >> 4, bit = 1 << (pin & 0x0F);
     if (flag) {
         if (Reserved[port] & bit) {
@@ -180,7 +163,7 @@ bool Port::Reserve(Pin pin, bool flag)
     return true;
 }
 
-bool Port::OnReserve(Pin pin, bool flag)
+/*bool Port::OnReserve(Pin pin, bool flag)
 {
 	return Reserve(pin, flag);
 }
@@ -204,7 +187,7 @@ bool InputPort::OnReserve(Pin pin, bool flag)
 	debug_printf("Input::");
 
 	return Port::OnReserve(pin, flag);
-}
+}*/
 
 // 引脚是否被保护
 bool Port::IsBusy(Pin pin)

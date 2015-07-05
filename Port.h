@@ -12,7 +12,7 @@
 // 端口基类
 // 用于管理一个端口，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
-class Port
+class Port : public Object
 {
 public:
     GPIO_TypeDef*	Group;		// 针脚组
@@ -40,13 +40,8 @@ protected:
     // 配置过程，由Config调用，最后GPIO_Init
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
 #if DEBUG
-	virtual bool OnReserve(Pin pin, bool flag);
+	//virtual bool OnReserve(Pin pin, bool flag);
 #endif
-
-/*private:
-#if defined(STM32F1)
-	ulong InitState;	// 备份引脚初始状态，在析构时还原
-#endif*/
 };
 
 // 输出口
@@ -95,7 +90,7 @@ protected:
     }
 
 #if DEBUG
-	virtual bool OnReserve(Pin pin, bool flag);
+	//virtual bool OnReserve(Pin pin, bool flag);
 #endif
 };
 
@@ -116,7 +111,7 @@ protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
 
 #if DEBUG
-	virtual bool OnReserve(Pin pin, bool flag);
+	//virtual bool OnReserve(Pin pin, bool flag);
 #endif
 };
 
@@ -173,7 +168,7 @@ protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
 
 #if DEBUG
-	virtual bool OnReserve(Pin pin, bool flag);
+	//virtual bool OnReserve(Pin pin, bool flag);
 #endif
 
 private:
