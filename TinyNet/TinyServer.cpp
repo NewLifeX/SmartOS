@@ -105,6 +105,9 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 {
 	if(msg.Reply) return false;
 
+	DiscoverMessage dm;
+	dm.ReadMessage(msg);
+
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	Device* dv = FindDevice(id);
@@ -113,16 +116,8 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 	{
 		//isNew = true;
 
-		DiscoverMessage dm;
-		dm.ReadMessage(msg);
-
 		dv = new Device();
 		dv->ID		= id;
-		dv->Type	= dm.Type;
-		dv->HardID	= dm.HardID;
-		dv->Version	= dm.Version;
-		dv->Switchs	= dm.Switchs;
-		dv->Analogs	= dm.Analogs;
 
 		Devices.Add(dv);
 
@@ -135,6 +130,12 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 	// 更新设备信息
 	if(dv)
 	{
+		dv->Type	= dm.Type;
+		dv->HardID	= dm.HardID;
+		dv->Version	= dm.Version;
+		dv->Switchs	= dm.Switchs;
+		dv->Analogs	= dm.Analogs;
+
 		// 如果最后活跃时间超过60秒，则认为是设备上线
 		if(dv->LastTime == 5 || dv->LastTime + 60000000 < Time.Current())
 		{
