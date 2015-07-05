@@ -124,7 +124,7 @@ bool TinyClient::Discover(Message& msg, void* param)
 	if(ms.Remain())
 		ctrl->Address = ms.Read<byte>();
 	if(ms.Remain() >= 8)
-		client->Password = ms.Read<ulong>();
+		ms.ReadArray(client->Password);
 
 	// 记住服务端地址
 	client->Server = tmsg.Src;
