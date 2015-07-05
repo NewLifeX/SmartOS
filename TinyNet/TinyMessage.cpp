@@ -591,7 +591,7 @@ bool TinyController::Reply(Message& msg)
 	TinyMessage& tmsg = (TinyMessage&)msg;
 
 	// 回复信息，源地址变成目的地址
-	tmsg.Dest = tmsg.Src;
+	if(tmsg.Dest == Address && tmsg.Src != Address) tmsg.Dest = tmsg.Src;
 	msg.Reply = 1;
 
 	return Send(msg);

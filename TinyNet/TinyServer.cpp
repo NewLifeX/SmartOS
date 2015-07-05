@@ -165,9 +165,9 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			MD5::Hash(bs, dv->Pass);
 
 			// 响应
-			TinyMessage rs = msg;
-			// 小心数据区指针不一致
-			rs.Data = rs._Data;
+			TinyMessage rs;
+			rs.Code = msg.Code;
+			rs.Dest = msg.Src;
 
 			// 发现响应
 			DiscoverMessage dm;
@@ -176,7 +176,6 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			dm.Pass		= dv->Pass;
 			dm.WriteMessage(rs);
 
-			rs.NoAck	= false;
 			Reply(rs);
 		}
 	}

@@ -45,7 +45,7 @@ void TinyClient::Send(TinyMessage& msg)
 	assert_param2(_control, "令牌控制器未初始化");
 
 	// 设置网关地址
-	msg.Dest = Server;
+	if(!msg.Dest) msg.Dest = Server;
 
 	_control->Send(msg);
 }
