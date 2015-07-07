@@ -7,15 +7,11 @@ bool* WaitAck;
 
 bool Callback(TinyIP* tip, void* param, Stream& ms);
 
-TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
+TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip, IP_TCP)
 {
-	Type		= IP_TCP;
+	//Type		= IP_TCP;
 
 	Port		= 0;
-	//RemoteIP	= 0;
-	//RemotePort	= 0;
-	//LocalIP		= 0;
-	//LocalPort	= 0;
 
 	// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
 	static uint seqnum = 0xa;
@@ -55,6 +51,8 @@ void TcpSocket::OnClose()
 {
 	debug_printf("Tcp::Close %d\r\n", BindPort);
 	Enable = false;
+
+	Status = Closed;
 }
 
 bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
@@ -136,8 +134,11 @@ void TcpSocket::OnProcess(TCP_HEADER& tcp, Stream& ms)
 		debug_printf("Tcp::Process 未知标识位 0x%02x \r\n", tcp.Flags);
 }
 
+// 服务端收到握手二，也是首次收到来自客户端的数据
 void TcpSocket::OnAccept(TCP_HEADER& tcp, uint len)
 {
+	if(Status == Closed) Status = SynSent;
+
 	if(OnAccepted)
 		OnAccepted(*this, tcp, tcp.Next(), len);
 	else
@@ -159,8 +160,11 @@ void TcpSocket::OnAccept(TCP_HEADER& tcp, uint len)
 	Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 }
 
+// 客户端收到握手三，也是首次收到来自服务端的数据，或者0数据的ACK
 void TcpSocket::OnAccept3(TCP_HEADER& tcp, uint len)
 {
+	if(Status == SynSent) Status = Established;
+
 	if(OnAccepted)
 		OnAccepted(*this, tcp, tcp.Next(), len);
 	else
@@ -236,6 +240,8 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 
 void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 {
+	Status = Closed;
+
 	if(OnDisconnected) OnDisconnected(*this, tcp, tcp.Next(), len);
 
 	// RST是对方紧急关闭，这里啥都不干
@@ -402,7 +408,7 @@ bool TcpSocket::Send(ByteArray& bs)
 		debug_printf("发送成功！\r\n");
 	else
 		debug_printf("发送失败！\r\n");
-	
+
 	return wait;
 }
 
@@ -448,8 +454,6 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		return false;
 	}
 
-	//if(Tip->LoopWait(Callback, this, 3000))
-
 	bool wait = false;
 	WaitAck = &wait;
 
@@ -464,9 +468,9 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 
 	if(wait)
 	{
-		if(Status == SynAck)
+		if(Status == Established)
 		{
-			Status = Established;
+			//Status = Established;
 			debug_printf("连接成功！\r\n");
 			return true;
 		}
