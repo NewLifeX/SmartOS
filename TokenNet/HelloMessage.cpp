@@ -12,6 +12,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	ByteArray bs((byte*)&code, 2);
 	Type = bs.ToHex('\0');
 	//Name.Set(Sys.Company); 	// Sys.company 是一个字符串   在flash里面   Name.Clear() 会出错
+	Name		= Sys.Company;
 	LocalTime	= Time.Current();
 	Ciphers[0]	= 1;
 }
@@ -64,8 +65,7 @@ void HelloMessage::Write(Stream& ms)
 		ms.WriteString(Name);
 	else
 	{
-		String _name;
-		_name.Set(Sys.Company);
+		String _name(Sys.Company);
 		ms.WriteString(_name);
 	}
 
