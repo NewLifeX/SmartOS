@@ -1,6 +1,6 @@
 ﻿#include "Tcp.h"
 
-#define NET_DEBUG 0
+#define NET_DEBUG 1
 //#define NET_DEBUG DEBUG
 
 bool* WaitAck;
@@ -12,10 +12,10 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	Type		= IP_TCP;
 
 	Port		= 0;
-	RemoteIP	= 0;
-	RemotePort	= 0;
-	LocalIP		= 0;
-	LocalPort	= 0;
+	//RemoteIP	= 0;
+	//RemotePort	= 0;
+	//LocalIP		= 0;
+	//LocalPort	= 0;
 
 	// 累加端口
 	static ushort g_tcp_port = 1024;
@@ -81,8 +81,8 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	//IP_HEADER* ip = tcp->Prev();
 	//RemotePort	= remotePort;
 	//RemoteIP	= ip.SrcIP;
-	LocalPort	= port;
-	LocalIP		= ip.DestIP;
+	Local.Port		= port;
+	Local.Address	= ip.DestIP;
 
 	if(WaitAck && (tcp->Flags & TCP_FLAGS_ACK))
 	{
@@ -106,8 +106,7 @@ void TcpSocket::OnProcess(TCP_HEADER& tcp, Stream& ms)
 
 #if NET_DEBUG
 	debug_printf("Tcp::Process Flags=0x%02x Seq=0x%04x Ack=0x%04x From ", tcp.Flags, seq, ack);
-	TinyIP::ShowIP(RemoteIP);
-	debug_printf(":%d", RemotePort);
+	Remote.Show();
 	debug_printf("\r\n");
 #endif
 
@@ -150,8 +149,7 @@ void TcpSocket::OnAccept(TCP_HEADER& tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp:Accept "); // 打印发送方的ip
-		TinyIP::ShowIP(RemoteIP);
-		debug_printf(":%d", RemotePort);
+		Remote.Show();
 		debug_printf("\r\n");
 #endif
 	}
@@ -174,8 +172,7 @@ void TcpSocket::OnAccept3(TCP_HEADER& tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp:Accept3 "); // 打印发送方的ip
-		TinyIP::ShowIP(RemoteIP);
-		debug_printf(":%d", RemotePort);
+		Remote.Show();
 		debug_printf("\r\n");
 #endif
 	}
@@ -202,7 +199,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		{
 #if NET_DEBUG
 			debug_printf("Tcp:Receive(%d) From ", len);
-			TinyIP::ShowIP(RemoteIP);
+			Remote.Show();
 			debug_printf("\r\n");
 #endif
 		}
@@ -226,8 +223,8 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp Receive(%d) From ", len);
-		TinyIP::ShowIP(RemoteIP);
-		debug_printf(" : ");
+		Remote.Show();
+		debug_printf(" ");
 		Sys.ShowString(tcp.Next(), len);
 		debug_printf("\r\n");
 #endif
@@ -257,8 +254,8 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 	{
 #if NET_DEBUG
 		debug_printf("Tcp:OnDisconnect "); // 打印发送方的ip
-		TinyIP::ShowIP(RemoteIP);
-		debug_printf(":%d Flags=0x%02x", RemotePort, tcp.Flags);
+		Remote.Show();
+		debug_printf(" Flags=0x%02x", tcp.Flags);
 		debug_printf("\r\n");
 #endif
 	}
@@ -268,8 +265,8 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 
 void TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 {
-	tcp.SrcPort = __REV16(Port > 0 ? Port : LocalPort);
-	tcp.DestPort = __REV16(RemotePort);
+	tcp.SrcPort = __REV16(Port > 0 ? Port : Local.Port);
+	tcp.DestPort = __REV16(Remote.Port);
     tcp.Flags = flags;
 	tcp.WindowSize = __REV16(1024);
 	if(tcp.Length < sizeof(TCP_HEADER) / 4) tcp.Length = sizeof(TCP_HEADER) / 4;
@@ -279,7 +276,7 @@ void TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 
 	// 网络序是大端
 	tcp.Checksum = 0;
-	tcp.Checksum = __REV16(Tip->CheckSum(&RemoteIP, (byte*)&tcp, tcp.Size() + len, 2));
+	tcp.Checksum = __REV16(Tip->CheckSum(&Remote.Address, (byte*)&tcp, tcp.Size() + len, 2));
 
 #if NET_DEBUG
 	uint hlen = tcp.Length << 2;
@@ -287,7 +284,7 @@ void TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 #endif
 
 	// 注意tcp->Size()包括头部的扩展数据
-	Tip->SendIP(IP_TCP, RemoteIP, (byte*)&tcp, tcp.Size() + len);
+	Tip->SendIP(IP_TCP, Remote.Address, (byte*)&tcp, tcp.Size() + len);
 }
 
 void TcpSocket::SetSeqAck(TCP_HEADER& tcp, uint ackNum, bool opSeq)
@@ -345,8 +342,8 @@ void TcpSocket::SendAck(uint len)
 void TcpSocket::Disconnect()
 {
 	debug_printf("Tcp::Disconnect ");
-	RemoteIP.Show();
-	debug_printf(":%d \r\n", RemotePort);
+	Remote.Show();
+	debug_printf("\r\n");
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
@@ -366,12 +363,12 @@ void TcpSocket::Send(ByteArray& bs)
 	// 如果连接已关闭，必须重新连接
 	if(Status == Closed)
 	{
-		if(!Connect(RemoteIP, RemotePort)) return;
+		if(!Connect(Remote.Address, Remote.Port)) return;
 	}
 
 	debug_printf("Tcp::Send ");
-	RemoteIP.Show();
-	debug_printf(":%d buf=0x%08x len=%d ...... \r\n", RemotePort, bs.GetBuffer(), bs.Length());
+	Remote.Show();
+	debug_printf(" buf=0x%08x len=%d ...... \r\n", bs.GetBuffer(), bs.Length());
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
@@ -383,7 +380,7 @@ void TcpSocket::Send(ByteArray& bs)
 	ms.Write(bs);
 
 	// 发送的时候采用LocalPort
-	LocalPort = BindPort;
+	Local.Port = BindPort;
 
 	//SetSeqAck(tcp, len, true);
 	tcp->Seq = __REV(Seq);
@@ -426,8 +423,8 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	ip.Show();
 	debug_printf(":%d ...... \r\n", port);
 
-	RemoteIP = ip;
-	RemotePort = port;
+	Remote.Address	= ip;
+	Remote.Port		= port;
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
