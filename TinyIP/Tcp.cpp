@@ -379,11 +379,15 @@ bool TcpSocket::Send(ByteArray& bs)
 		if(!Connect(Remote.Address, Remote.Port)) return false;
 	}
 
+#if NET_DEBUG
 	debug_printf("Tcp::Send ");
 	Remote.Show();
 	debug_printf(" buf=0x%08x len=%d ...... \r\n", bs.GetBuffer(), bs.Length());
+#endif
 
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());
+	//Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());
+	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 256];
+	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
@@ -416,10 +420,12 @@ bool TcpSocket::Send(ByteArray& bs)
 
 	WaitAck = NULL;
 
+#if NET_DEBUG
 	if(wait)
 		debug_printf("发送成功！\r\n");
 	else
 		debug_printf("发送失败！\r\n");
+#endif
 
 	return wait;
 }
