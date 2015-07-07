@@ -79,8 +79,8 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	//if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
 
 	//IP_HEADER* ip = tcp->Prev();
-	RemotePort	= remotePort;
-	RemoteIP	= ip.SrcIP;
+	//RemotePort	= remotePort;
+	//RemoteIP	= ip.SrcIP;
 	LocalPort	= port;
 	LocalIP		= ip.DestIP;
 
