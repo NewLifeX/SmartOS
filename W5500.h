@@ -9,6 +9,16 @@
 #include "Net\ITransport.h"
 //#include "Thread.h"
 
+#if defined(W500DEBUG)
+
+#define w5500_printf printf
+
+#else
+
+__inline void w5500_printf( const char *format, ... ) {}
+
+#endif
+
 
 // 硬件Socket基类
 class HardwareSocket;
@@ -18,11 +28,10 @@ class HardwareSocket;
 typedef struct
 {
 	ushort	Address;
-	byte	Config;
+	byte	BSB;		// 5位    CONFIG_Phase 由底下封装  这里只需要知道BSB就好
 	Stream	Data;
 	void Clear(){ ArrayZero2(this,3);};
 }Frame;
-
 
 class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送能力 所以不是ITransport
 {	
@@ -54,18 +63,19 @@ class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送
 private:
 	Spi* _spi;
     InputPort	_IRQ;
-	
-	HardwareSocket* _socket[8];	// 8个硬件socket
-	
-	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
+	// 8个硬件socket
+	HardwareSocket* _socket[8];	
+	// 收发数据锁，确保同时只有一个对象使用
+	int _Lock;			
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	bool WriteFrame(Frame& fra);
 	bool ReadFrame(Frame& fra,uint length);
-	
-	byte PhaseOM;		// spi 模式（默认变长）
+	// spi 模式（默认变长）
+	byte PhaseOM;		
 public:
 	// 非必要，由外部定义  这里只留一个指针
 	OutputPort* nRest;
+	void SoftwareReset();
 	void Reset();
 	
 	// 构造
@@ -77,10 +87,15 @@ public:
 	void Init();
     void Init(Spi* spi, Pin irq = P0);
 	
-	// 回调
-	//virtual void Register(TransportHandler handler, void* param = NULL);
+	//void SetMac(MacAddress& mac);		// 本地MAC
+	//MacAddress GetMac();
+	//void SetIpMask();		// 子网掩码
+	//void SetGateway();	// 网关地址
+	//void OpenPingACK();	// 开启PING应答
+	//void OpenWol();		// 网络唤醒
 private:
-	static void OnIRQ(Pin pin, bool down, void* param);		// 中断脚回调
+	// 中断脚回调
+	static void OnIRQ(Pin pin, bool down, void* param);		
 	void OnIRQ();
 
 public:
@@ -88,15 +103,7 @@ public:
 	
 	byte GetSocket();
 	void Register(byte Index,HardwareSocket* handler);
-//protected:
-//	virtual bool OnOpen();
-//    virtual void OnClose();
-//
-//    virtual bool OnWrite(const byte* buf, uint len);
-//	virtual uint OnRead(byte* buf, uint len);
-	
 };
-
 
 // 硬件Socket基类s
 class HardwareSocket

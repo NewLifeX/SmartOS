@@ -1,70 +1,118 @@
-
+ï»¿
 #include "W5500.h"
 
 /*
-Ó²¼şÉèÖÃ²¿·Ö
-Òı½Å PMODE[2:0]
-	000		10BI°ëË«¹¤£¬¹Ø±Õ×Ô¶¯Ğ­ÉÌ
-	001		10BIÈ«Ë«¹¤£¬¹Ø±Õ×Ô¶¯Ğ­ÉÌ
-	010		100BI°ëË«¹¤£¬¹Ø±Õ×Ô¶¯Ğ­ÉÌ
-	011		100BIÈ«Ë«¹¤£¬¹Ø±Õ×Ô¶¯Ğ­ÉÌ
-	100		100BI°ëË«¹¤£¬ÆôÓÃ×Ô¶¯Ğ­ÉÌ
-	101		Î´ÆôÓÃ
-	110		Î´ÆôÓÃ
-	111		ËùÓĞ¹¦ÄÜ£¬ÆôÓÃ×Ô¶¯Ğ­ÉÌ
-RSTn	ÖØÖÃ	£¨µÍµçÆ½ÓĞĞ§£¬µÍµçÆ½Ê±¼äÖÁÉÙ500us²ÅÄÜÉúĞ§£©
-InTn	ÖĞ¶ÏÊä³ö	£¨µÍµçÆ½ÓĞĞ§£©--- ³ÌĞòÖĞ IRQ Òı½Å
-Ö§³ÖSPI Ä£Ê½0ºÍÄ£Ê½3
+ç¡¬ä»¶è®¾ç½®éƒ¨åˆ†
+ç¡¬ä»¶:TCP,UDP,ICMP,IPv4,ARP,IGMP,PPPoE
+
+å¼•è„š PMODE[2:0]---- ä¹Ÿå¯ä»¥é€šè¿‡ PHYCFGR å¯„å­˜å™¨è¿›è¡Œé…ç½®
+	000		10BIåŠåŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+	001		10BIå…¨åŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+	010		100BIåŠåŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+	011		100BIå…¨åŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+	100		100BIåŠåŒå·¥ï¼Œå¯ç”¨è‡ªåŠ¨åå•†
+	101		æœªå¯ç”¨
+	110		æœªå¯ç”¨
+	111		æ‰€æœ‰åŠŸèƒ½ï¼Œå¯ç”¨è‡ªåŠ¨åå•†
+RSTn	é‡ç½®	ï¼ˆä½ç”µå¹³æœ‰æ•ˆï¼Œä½ç”µå¹³æ—¶é—´è‡³å°‘500usæ‰èƒ½ç”Ÿæ•ˆï¼‰
+InTn	ä¸­æ–­è¾“å‡º	ï¼ˆä½ç”µå¹³æœ‰æ•ˆï¼‰--- ç¨‹åºä¸­ IRQ å¼•è„š
+æ”¯æŒSPI æ¨¡å¼0å’Œæ¨¡å¼3
 */
+
 /*
-ÄÚ²¿½á¹¹
-Ò»¸öÍ¨ÓÃ¼Ä´æÆ÷Çø
-	0x0000-0x0039	¶ÀÁ¢Ñ°Ö·£¬BSBÑ¡Çø
-	IP MAC µÈÕûÌåĞÅÏ¢
-°Ë¸öSocket¼Ä´æÆ÷Çø
-	0x0000-0x0030	¶ÀÁ¢Ñ°Ö·£¬BSBÑ¡Çø
-8¸öSocketÊÕ·¢»º´æ	×Ü»º´æ32K
-	·¢»º´æÒ»¹²16K(0x0000-0x3fff)  	³õÊ¼»¯·ÖÅäÎª Ã¿¸öSocket 2K
-	ÊÕ»º´æÒ»¹²16K(0x0000-0x3fff)  	³õÊ¼»¯·ÖÅäÎª Ã¿¸öSocket 2K
-	ÔÙ·ÖÅäÊ±  ÊÕ·¢¶¼²»¿ÉÔ½16K ´ó±ß½ç
-
-
+å†…éƒ¨ç»“æ„
+ä¸€ä¸ªé€šç”¨å¯„å­˜å™¨åŒº
+	0x0000-0x0039	ç‹¬ç«‹å¯»å€ï¼ŒBSBé€‰åŒº
+	IP MAC ç­‰æ•´ä½“ä¿¡æ¯
+å…«ä¸ªSocketå¯„å­˜å™¨åŒº
+	0x0000-0x0030	ç‹¬ç«‹å¯»å€ï¼ŒBSBé€‰åŒº
+8ä¸ªSocketæ”¶å‘ç¼“å­˜	æ€»ç¼“å­˜32K
+	å‘ç¼“å­˜ä¸€å…±16K(0x0000-0x3fff)  	åˆå§‹åŒ–åˆ†é…ä¸º æ¯ä¸ªSocket 2K
+	æ”¶ç¼“å­˜ä¸€å…±16K(0x0000-0x3fff)  	åˆå§‹åŒ–åˆ†é…ä¸º æ¯ä¸ªSocket 2K
+	å†åˆ†é…æ—¶  æ”¶å‘éƒ½ä¸å¯è¶Š16K å¤§è¾¹ç•Œ
 */
 
-
-// Êı¾İÖ¡¸ñÊ½
-// 2byte Address + 1byte CONFIG_Phase + nbyte Data Phase
-
-// ¿É±äÊı¾İ³¤¶ÈÄ£Ê½ÏÂ£¬SCSn À­µÍ´ú±íW5500µÄSPI Ö¡¿ªÊ¼£¨µØÖ·¶Î£©£¬À­¸ß±íÊ¾Ö¡½áÊø   £¨¿ÉÄÜ¸úSPI NSS ²»Ò»Ñù£©
 	class ByteStruct
 	{
 	public:
 		void Init(byte data = 0) { *(byte*)this = data; }
 		byte ToByte() { return *(byte*)this; }
 	};
-	// Î»Óò µÍÎ»ÔÚÇ°
-	// ÅäÖÃ¼Ä´æÆ÷0x00
+	
+// æ•°æ®å¸§æ ¼å¼
+// 2byte Address + 1byte CONFIG_Phase + nbyte Data Phase
+// å¯å˜æ•°æ®é•¿åº¦æ¨¡å¼ä¸‹ï¼ŒSCSn æ‹‰ä½ä»£è¡¨W5500çš„SPI å¸§å¼€å§‹ï¼ˆåœ°å€æ®µï¼‰ï¼Œæ‹‰é«˜è¡¨ç¤ºå¸§ç»“æŸ   ï¼ˆå¯èƒ½è·ŸSPI NSS ä¸ä¸€æ ·ï¼‰
+
+	// ä½åŸŸ ä½ä½åœ¨å‰
+	// é…ç½®å¯„å­˜å™¨0x00
 	typedef struct : ByteStruct
 	{
-		byte OM:2;		// SPI ¹¤×÷Ä£Ê½
-						// 00	¿É±äÊı¾İ³¤¶ÈÄ£Ê½£¬N×Ö½ÚÊı¾İ¶Î£¨1<=N£©
-						// 01	¹Ì¶¨Êı¾İ³¤¶ÈÄ£Ê½£¬1×Ö½ÚÊı¾İ³¤¶È£¨N=1£©
-						// 10	¹Ì¶¨Êı¾İ³¤¶ÈÄ£Ê½£¬1×Ö½ÚÊı¾İ³¤¶È£¨N=2£©
-						// 11	¹Ì¶¨Êı¾İ³¤¶ÈÄ£Ê½£¬1×Ö½ÚÊı¾İ³¤¶È£¨N=4£©
-						// ¹Ì¶¨Ä£Ê½²»ĞèÒªNSS £¨Ğ¾Æ¬NSS ½ÓµØ£© ¿É±äÄ£Ê½SPI NSS ÊÜ¿Ø
+		byte OM:2;		// SPI å·¥ä½œæ¨¡å¼
+						// 00	å¯å˜æ•°æ®é•¿åº¦æ¨¡å¼ï¼ŒNå­—èŠ‚æ•°æ®æ®µï¼ˆ1<=Nï¼‰
+						// 01	å›ºå®šæ•°æ®é•¿åº¦æ¨¡å¼ï¼Œ1å­—èŠ‚æ•°æ®é•¿åº¦ï¼ˆN=1ï¼‰
+						// 10	å›ºå®šæ•°æ®é•¿åº¦æ¨¡å¼ï¼Œ1å­—èŠ‚æ•°æ®é•¿åº¦ï¼ˆN=2ï¼‰
+						// 11	å›ºå®šæ•°æ®é•¿åº¦æ¨¡å¼ï¼Œ1å­—èŠ‚æ•°æ®é•¿åº¦ï¼ˆN=4ï¼‰
+						// å›ºå®šæ¨¡å¼ä¸éœ€è¦NSS ï¼ˆèŠ¯ç‰‡NSS æ¥åœ°ï¼‰ å¯å˜æ¨¡å¼SPI NSS å—æ§
 						
-		byte RWB:1;		// 0£º¶Á	1£ºĞ´
+		byte RWB:1;		// 0ï¼šè¯»	1ï¼šå†™
 		
-		byte BSB:5;		// ÇøÓòÑ¡ÔñÎ»Óò		// 1¸öÍ¨ÓÃ¼Ä´æÆ÷   8¸öSocket¼Ä´æÆ÷×é£¨Ñ¡Ôñ£¬Ğ´»º´æ£¬ÊÕ»º´æ£©
-						// 00000	Í¨ÓÃ
-						// XXX01	SocketXXX Ñ¡Ôñ
-						// XXX10	SocketXXX ·¢»º´æ
-						// XXX11	SocketXXX ÊÕ»º´æ
-						// ÆäÓà±£Áô£¬ Èç¹ûÑ¡ÔñÁË±£ÁôµÄ½«»áµ¼ÖÂW5500¹ÊÕÏ
+		byte BSB:5;		// åŒºåŸŸé€‰æ‹©ä½åŸŸ		// 1ä¸ªé€šç”¨å¯„å­˜å™¨   8ä¸ªSocketå¯„å­˜å™¨ç»„ï¼ˆé€‰æ‹©ï¼Œå†™ç¼“å­˜ï¼Œæ”¶ç¼“å­˜ï¼‰
+						// 00000	é€šç”¨
+						// XXX01	SocketXXX é€‰æ‹©
+						// XXX10	SocketXXX å‘ç¼“å­˜
+						// XXX11	SocketXXX æ”¶ç¼“å­˜
+						// å…¶ä½™ä¿ç•™ï¼Œ å¦‚æœé€‰æ‹©äº†ä¿ç•™çš„å°†ä¼šå¯¼è‡´W5500æ•…éšœ
 	}CONFIG_Phase;
 
-
-W5500::W5500() { Init(); };
+	
+//é€šç”¨å¯„å­˜å™¨ç»“æ„
+	typedef struct : ByteStruct
+	{
+		byte Reserved:1;
+		byte FARP:1;		// å¼ºè¿«ARP		0 å…³é—­ï¼Œ1å¼€å¯	å¼ºè¿«ARPæ¨¡å¼ä¸‹ï¼Œæ— è®ºæ˜¯å¦å‘é€æ•°æ®éƒ½ä¼šå¼ºè¿«ARPè¯·æ±‚
+		byte Reserved2:1;
+		byte PPPoE:1;		// PPPoE 		0 å…³é—­ï¼Œ1å¼€å¯
+		byte PB:1;			// Ping å±è”½ä½	1 pingä¸å“åº”ï¼Œ0 ping æœ‰å“åº”
+		byte WOL:1;			// ç½‘ç»œå”¤é†’ 	0å…³é—­ï¼Œ1å¼€å¯ ï¼ˆæ”¶åˆ°å”¤é†’åŒ…å‘ç”Ÿä¸­æ–­ï¼‰
+		byte Reserved3:1;
+		byte RST:1;			// è½¯ä»¶å¤ä½ 1 å¤ä½
+	}T_MR;
+	
+	// IR ä¸ä¸ºé›¶ä¸­æ–­
+	// IMR ä¸ºé›¶å±è”½ä¸­æ–­
+	typedef struct : ByteStruct		// IMR ç»“æ„ä¸€æ · 
+	{
+		byte Reserved:4;
+		byte MP:1;			// æ”¶åˆ°ç½‘ç»œå”¤é†’åŒ…
+		byte PPPoE:1;		// PPPoE è¿æ¥ä¸å¯è¾¾
+		byte UNREACH:1;		// ç›®æ ‡ä¸å¯è¾¾
+		byte CONFLICT:1;	// IPå†²çª
+	}T_IR;
+	
+	// PHY é…ç½®
+	typedef struct : ByteStruct		// IMR ç»“æ„ä¸€æ · 
+	{
+		byte LNK:1;			// è¿æ¥çŠ¶æ€ 1ï¼šå·²è¿æ¥ï¼Œ 0ï¼šè¿æ¥æ–­å¼€
+		byte SPD:1;			// é€Ÿåº¦çŠ¶æ€ 1:100Mpbsï¼Œ 0:10Mbps	ã€åªè¯»ã€‘
+		byte DPX:1;			// åŒå·¥çŠ¶æ€ 1ï¼šå…¨åŒå·¥ï¼Œ 0ï¼šåŠåŒå·¥ 	ã€åªè¯»ã€‘
+		byte OPMDC:3;		// å¦‚ä¸‹OPMD
+		byte OPMD:1;		// 1ï¼šé€šè¿‡OPMDCé…ç½®ï¼Œ0ï¼šé€šè¿‡ç¡¬ä»¶å¼•è„š
+							// é…ç½®å¼•è„š PMODE[2:0]---- ä¹Ÿå¯ä»¥é€šè¿‡ PHYCFGR å¯„å­˜å™¨è¿›è¡Œé…ç½®
+							// 000		10BIåŠåŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+							// 001		10BIå…¨åŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+							// 010		100BIåŠåŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+							// 011		100BIå…¨åŒå·¥ï¼Œå…³é—­è‡ªåŠ¨åå•†
+							// 100		100BIåŠåŒå·¥ï¼Œå¯ç”¨è‡ªåŠ¨åå•†
+							// 101		æœªå¯ç”¨
+							// 110		æœªå¯ç”¨
+							// 111		æ‰€æœ‰åŠŸèƒ½ï¼Œå¯ç”¨è‡ªåŠ¨åå•†
+							
+		byte RST:1;			// é‡å¯ ä¸º0æ—¶ï¼Œå†…éƒ¨PHY é‡å¯
+							// é‡å¯åä¸º1
+	}T_PHYCFGR;
+	
+	
+W5500::W5500() { Init(); }
 
 W5500::W5500(Spi* spi, Pin irq)
 {
@@ -72,14 +120,35 @@ W5500::W5500(Spi* spi, Pin irq)
 	Init(spi, irq);
 }
 
+W5500::~W5500() { }
+
+void W5500::SoftwareReset()
+{
+	Frame frame;
+	frame.Address = 0x00000;
+	frame.BSB =  0x00;	// ç›´æ¥èµ‹å€¼ç®€å•æš´åŠ›
+	
+	T_MR mr;
+	mr.Init();
+	mr.RST = 1 ;
+	frame.Data.Write<byte>(mr.ToByte());
+	
+	WriteFrame(frame);
+	debug_printf("è½¯ä»¶å¤ä½ \r\n");
+}
+
 void W5500::Reset()
 {
 	if(nRest)
 	{
-		*nRest = false;		// µÍµçÆ½ÓĞĞ§
-		Sys.Delay(600);		// ×îÉÙ500us
+		*nRest = false;		// ä½ç”µå¹³æœ‰æ•ˆ
+		Sys.Delay(600);		// æœ€å°‘500us
+		debug_printf("ç¡¬ä»¶å¤ä½ \r\n");
 		*nRest = true;
+		Sys.Sleep(2);
 	}
+	SoftwareReset();
+	Sys.Sleep(10);
 }
 
 void W5500::Init()
@@ -87,7 +156,7 @@ void W5500::Init()
 	_spi = NULL;
 	nRest = NULL;
 	memset(&General_reg,0,sizeof(General_reg));
-	memset(&_socket,NULL,sizeof(_socket)/sizeof(_socket[0]));
+	memset(&_socket,NULL,sizeof(_socket));
 	PhaseOM = 0x00;
 }
 
@@ -95,7 +164,7 @@ void W5500::Init(Spi* spi, Pin irq)
 {
 	if(irq != P0)
 	{	
-		debug_printf("W5500::Init IRQ=P%c%d\r\n",_PIN_NAME(irq));
+		debug_printf("W5500::Init IRQ = P%c%d\r\n",_PIN_NAME(irq));
 		_IRQ.ShakeTime = 0;
 		_IRQ.Floating = false;
 		_IRQ.PuPd = InputPort::PuPd_UP;
@@ -115,56 +184,71 @@ void W5500::Init(Spi* spi, Pin irq)
 	Frame fra;
 	fra.Address = 0x0000;
 	
-	CONFIG_Phase config_temp;
-	config_temp.BSB = 0x00;		// ¼Ä´æÆ÷Çø
-	fra.Config = config_temp.ToByte();
+	//CONFIG_Phase config_temp;
+	//config_temp.BSB = 0x00;		// å¯„å­˜å™¨åŒº
+	//fra.Config = config_temp.ToByte();
+	fra.BSB = 0x00;
 	
 	ReadFrame(fra,sizeof(General_reg));
 	fra.Data.Read((byte *)&General_reg,0,sizeof(General_reg));
 }
 
-
-
 bool W5500::WriteFrame(Frame& frame)
 {
 	SpiScope sc(_spi);
-	byte temp = frame.Address>>8;	// µØÖ·¸ßÎ»ÔÚÇ°
+	byte temp = frame.Address>>8;	// åœ°å€é«˜ä½åœ¨å‰
 	_spi->Write(temp);
 	temp = frame.Address;
 	_spi->Write(temp);
 	
-	CONFIG_Phase config_temp;		// ÅäÖÃ¶ÁĞ´ºÍOM
-	config_temp.Init(frame.Config);
-	config_temp.OM = PhaseOM;
-	config_temp.RWB = 1;
-	frame.Config = config_temp.ToByte();
-	_spi->Write(frame.Config);
+	CONFIG_Phase config_temp;		// é…ç½®è¯»å†™å’ŒOM
+	config_temp.Init(frame.BSB<<3);
+	config_temp.OM = PhaseOM;		// ç±»å†…æ•´ä½“
+	config_temp.RWB = 1;			// å†™
+	//frame.Config = config_temp.ToByte();
+	_spi->Write(config_temp.ToByte());
 	
-	for(uint i = 0;i < frame.Data.Length;i ++)
+	w5500_printf("W5500::WriteFrame Address: 0x%04X CONFIG_Phase: 0x%02X\r\n",frame.Address,config_temp.ToByte());
+	uint len = frame.Data.Position();		// è·å–æ•°æ®æµå†…æœ‰æ•ˆæ•°æ®é•¿åº¦
+	w5500_printf("Data.Length: %d  ",len);
+	w5500_printf("Data:0x");
+	
+	frame.Data.SetPosition(0);				// ç§»åŠ¨æ¸¸æ ‡åˆ°å¤´éƒ¨
+	for(uint i = 0;i < len;i ++)
 	{
-		_spi->Write(frame.Data.Read<byte>());
+		byte temp = frame.Data.Read<byte>();
+		_spi->Write(temp);
+		w5500_printf("-%02X",temp);
 	}
+	w5500_printf("\r\n");
 	return true;
 }
 
 bool W5500::ReadFrame(Frame& frame,uint length)
 {
 	SpiScope sc(_spi);
-	byte temp = frame.Address>>8;	// µØÖ·¸ßÎ»ÔÚÇ°
+	byte temp = frame.Address>>8;	// åœ°å€é«˜ä½åœ¨å‰
 	_spi->Write(temp);
 	temp = frame.Address;
 	_spi->Write(temp);
 	
-	CONFIG_Phase config_temp;		// ÅäÖÃ¶ÁĞ´ºÍOM
-	config_temp.Init(frame.Config);
-	config_temp.OM = PhaseOM;
-	config_temp.RWB = 0;
-	frame.Config = config_temp.ToByte();
-	_spi->Write(frame.Config);
+	CONFIG_Phase config_temp;		// é…ç½®è¯»å†™å’ŒOM
+	config_temp.Init(frame.BSB<<3);
+	config_temp.OM = PhaseOM;		// ç±»å†…é…ç½®
+	config_temp.RWB = 0;			// è¯»
+	//frame.Config = config_temp.ToByte();
+	_spi->Write(config_temp.ToByte());
 
+	w5500_printf("W5500::ReadFrame Address: 0x%04X CONFIG_Phase: 0x%02X\r\n",frame.Address,config_temp.ToByte());
+	w5500_printf("Read Length: %d  Data: 0x",length);
 	for(uint i = 0;i < length; i++)
-		frame.Data.Write<byte>(_spi->Write(0xff));
-		
+	{
+		byte temp = _spi->Write(0xff);
+		w5500_printf("-%02X",temp);
+		frame.Data.Write<byte>(temp);
+	}
+	w5500_printf("\r\n");
+	frame.Data.SetPosition(0);
 	return true;
 }
 
@@ -174,7 +258,7 @@ byte W5500::GetSocket()
 	{
 		if(_socket[i] == NULL)return i ;
 	}
-	debug_printf("Ã»ÓĞ¿ÕÓàµÄSocket¿ÉÓÃÁË !\r\n");
+	debug_printf("æ²¡æœ‰ç©ºä½™çš„Socketå¯ç”¨äº† !\r\n");
 	return 0xff;
 }
 
@@ -182,14 +266,13 @@ void W5500::Register(byte Index,HardwareSocket* handler)
 {
 	if(_socket[Index] == NULL)
 		{
-			debug_printf("Index: %d ±»×¢²á !\r\n",Index);
+			debug_printf("Index: %d è¢«æ³¨å†Œ !\r\n",Index);
 			_socket[Index] = handler;
 		}
 	else
 		_socket[Index] = NULL;
 }
-
-// irq ÖĞ¶Ï´¦Àí²¿·Ö
+// irq ä¸­æ–­å¤„ç†éƒ¨åˆ†
 void W5500::OnIRQ(Pin pin, bool down, void* param)
 {
 	if(!down)return;
