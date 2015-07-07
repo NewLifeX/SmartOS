@@ -175,7 +175,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	ext.Show(true);
 
 	// 如果收到响应，并且来自来源服务器
-	if(msg.Reply && (Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast()))
+	if(msg.Reply && (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast()))
 	{
 		debug_printf("握手完成，开始登录……\r\n");
 		Status = 1;
