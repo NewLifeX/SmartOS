@@ -86,6 +86,8 @@ public:
 	// 初始化
 	void Init();
     void Init(Spi* spi, Pin irq = P0);
+	// 输出 General_reg
+	void StateShow();
 	
 	bool SetMac(MacAddress& mac);		// 本地MAC
 	//MacAddress GetMac();

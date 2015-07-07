@@ -168,14 +168,63 @@ void W5500::Init(Spi* spi, Pin irq)
 	
 	Frame fra;
 	fra.Address = 0x0000;
-	
-	//CONFIG_Phase config_temp;
-	//config_temp.BSB = 0x00;		// 寄存器区
-	//fra.Config = config_temp.ToByte();
 	fra.BSB = 0x00;
 	
 	ReadFrame(fra,sizeof(General_reg));
 	fra.Data.Read((byte *)&General_reg,0,sizeof(General_reg));
+}
+//struct{
+//		byte MR;			// 模式			0x0000
+//		byte GAR[4];		// 网关地址		0x0001
+//		byte SUBR[4];		// 子网掩码		0x0005
+//		byte SHAR[6];		// 源MAC地址	0x0009
+//		byte SIPR[4];		// 源IP地址		0x000f
+//		byte INTLEVEL[2];	// 低电平中断定时器寄存器	0x0013
+//		byte IR;			// 中断寄存器				0x0015
+//		byte IMR;			// 中断屏蔽寄存器			0x0016
+//		byte SIR;			// Socket中断寄存器			0x0017
+//		byte SIMR;			// Socket中断屏蔽寄存器		0x0018
+//		byte RTR[2];		// 重试时间					0x0019
+//		byte RCR;			// 重试计数					0x001b
+//		byte PTIMER;		// PPP 连接控制协议请求定时寄存器	0x001c
+//		byte PMAGIC;		// PPP 连接控制协议幻数寄存器		0x001d
+//		byte PHAR[6];		// PPPoE 模式下目标 MAC 寄存器		0x001e
+//		byte PSID[2];		// PPPoE 模式下会话 ID 寄存器		0x0024
+//		byte PMRU[2];		// PPPoE 模式下最大接收单元			0x0026
+//		byte UIPR[4];		// 无法抵达 IP 地址寄存器【只读】	0x0028
+//		byte UPORTR[2];		// 无法抵达端口寄存器【只读】		0x002c
+//		byte PHYCFGR;		// PHY 配置寄存器					0x002e
+//		//byte VERSIONR		// 芯片版本寄存器【只读】			0x0039	// 地址不连续
+//}General_reg;			// 只有一份 所以直接定义就好
+void W5500::StateShow()
+{
+	debug_printf("\r\nW5500 State:\r\n");
+	
+	debug_printf("MR (模式): 		0x%02X   ",General_reg.MR);
+		T_MR mr;
+		mr.Init(General_reg.MR);
+		debug_printf("WOL: %d   ",mr.WOL);
+		debug_printf("PB: %d   ",mr.PB);
+		debug_printf("PPPoE: %d   ",mr.PPPoE);
+		debug_printf("FARP: %d   ",mr.FARP);
+		debug_printf("\r\n");
+	debug_printf("GAR (网关地址): 	%d.%d.%d.%d\r\n",General_reg.GAR[0],General_reg.GAR[1],General_reg.GAR[2],General_reg.GAR[3]);
+	debug_printf("SUBR (子网掩码): 	%d.%d.%d.%d\r\n",General_reg.SUBR[0],General_reg.SUBR[1],General_reg.SUBR[2],General_reg.SUBR[3]);
+	debug_printf("SHAR (源MAC地址):	%02X-%02X-%02X-%02X-%02X-%02X\r\n",General_reg.SHAR[0],General_reg.SHAR[1],General_reg.SHAR[2],General_reg.SHAR[3],General_reg.SHAR[4],General_reg.SHAR[5]);
+	debug_printf("SIPR (源IP地址): 	%d.%d.%d.%d\r\n",General_reg.SIPR[0],General_reg.SIPR[1],General_reg.SIPR[2],General_reg.SIPR[3]);
+	debug_printf("INTLEVEL(中断低电平时间): 0x%02X%02X\r\n",General_reg.INTLEVEL[1],General_reg.INTLEVEL[0]);	// 回头计算一下
+	debug_printf("IMR (中断屏蔽): 	0x%02X   ",General_reg.IMR);
+		T_IR imr;
+		imr.Init(General_reg.MR);
+		debug_printf("CONFLICT: %d   ",imr.CONFLICT);
+		debug_printf("UNREACH: %d   ",imr.UNREACH);
+		debug_printf("PPPoE: %d   ",imr.PPPoE);
+		debug_printf("MP: %d   ",imr.MP);
+		debug_printf("\r\n");
+	debug_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n",General_reg.SIMR);
+	debug_printf("RTR (重试时间): 	0x%02X%02X\r\n",General_reg.RTR[1],General_reg.RTR[0]);		// 回头计算一下
+	debug_printf("RCR (重试计数): 	%d 次\r\n",General_reg.RCR);
+	
 }
 
 bool W5500::WriteFrame(Frame& frame)
@@ -190,7 +239,6 @@ bool W5500::WriteFrame(Frame& frame)
 	config_temp.Init(frame.BSB<<3);
 	config_temp.OM = PhaseOM;		// 类内整体
 	config_temp.RWB = 1;			// 写
-	//frame.Config = config_temp.ToByte();
 	_spi->Write(config_temp.ToByte());
 	
 	w5500_printf("W5500::WriteFrame Address: 0x%04X CONFIG_Phase: 0x%02X\r\n",frame.Address,config_temp.ToByte());
@@ -205,7 +253,7 @@ bool W5500::WriteFrame(Frame& frame)
 		_spi->Write(temp);
 		w5500_printf("-%02X",temp);
 	}
-	w5500_printf("\r\n\r\n");
+	w5500_printf("\r\n");
 	return true;
 }
 
@@ -232,7 +280,7 @@ bool W5500::ReadFrame(Frame& frame,uint length)
 		w5500_printf("-%02X",temp);
 		frame.Data.Write<byte>(temp);
 	}
-	w5500_printf("\r\n\r\n");
+	w5500_printf("\r\n");
 	frame.Data.SetPosition(0);
 	return true;
 }
