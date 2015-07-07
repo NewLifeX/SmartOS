@@ -329,11 +329,11 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 	Value = (ip4 << 24) + (ip3 << 16) + (ip2 << 8) + ip1;
 }
 
-bool IPAddress::IsAny() { return Value == 0; }
+bool IPAddress::IsAny() const { return Value == 0; }
 
-bool IPAddress::IsBroadcast() { return Value == 0xFFFFFFFF; }
+bool IPAddress::IsBroadcast() const { return Value == 0xFFFFFFFF; }
 
-uint IPAddress::GetSubNet(IPAddress& mask)
+uint IPAddress::GetSubNet(const IPAddress& mask) const
 {
 	return Value & mask.Value;
 }
@@ -426,7 +426,7 @@ MacAddress::MacAddress(ulong v)
 }
 
 // 是否广播地址，全0或全1
-bool MacAddress::IsBroadcast() { return Value == Empty.Value || Value == Full.Value; }
+bool MacAddress::IsBroadcast() const { return Value == Empty.Value || Value == Full.Value; }
 
 MacAddress& MacAddress::operator=(ulong v)
 {

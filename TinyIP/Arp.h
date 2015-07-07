@@ -27,9 +27,9 @@ public:
 	virtual bool Process(IP_HEADER& ip, Stream& ms);
 
 	// 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-	bool Request(IPAddress& ip, MacAddress& mac, int timeout = 3);
-	bool Resolve(IPAddress& ip, MacAddress& mac);
-	void Add(IPAddress& ip, MacAddress& mac);
+	bool Request(const IPAddress& ip, MacAddress& mac, int timeout = 3);
+	bool Resolve(const IPAddress& ip, MacAddress& mac);
+	void Add(const IPAddress& ip, const MacAddress& mac);
 };
 
 #endif

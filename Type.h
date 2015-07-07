@@ -446,9 +446,9 @@ public:
 	// 字节数组
     byte* ToArray() const;
 
-	bool IsAny();
-	bool IsBroadcast();
-	uint GetSubNet(IPAddress& mask);	// 获取子网
+	bool IsAny() const;
+	bool IsBroadcast() const;
+	uint GetSubNet(const IPAddress& mask) const;	// 获取子网
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
@@ -493,7 +493,7 @@ public:
 	MacAddress(ulong v = 0);
 
 	// 是否广播地址，全0或全1
-	bool IsBroadcast();
+	bool IsBroadcast() const;
 
     MacAddress& operator=(ulong v);
 

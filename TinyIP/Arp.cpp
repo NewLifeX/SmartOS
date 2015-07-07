@@ -9,7 +9,7 @@ public:
 	MacAddress Mac;
 	bool Success;
 
-	ArpSession(IPAddress& ip)
+	ArpSession(const IPAddress& ip)
 	{
 		IP = ip;
 		Success = false;
@@ -154,7 +154,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 }*/
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
-bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
+bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 {
 	// 缓冲区必须略大，否则接收数据时可能少一个字节
 	byte buf[sizeof(ETH_HEADER) + sizeof(ARP_HEADER) + 4];
@@ -209,7 +209,7 @@ bool ArpSocket::Request(IPAddress& ip, MacAddress& mac, int timeout)
 	return false;
 }
 
-bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
+bool ArpSocket::Resolve(const IPAddress& ip, MacAddress& mac)
 {
 	mac = MacAddress::Empty;
 	if(ip.IsAny()) return true;
@@ -217,9 +217,10 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 	mac = MacAddress::Full;
 	if(ip.IsAny() || Tip->IsBroadcast(ip)) return true;
 
+	IPAddress dest = ip;
 	// 如果不在本子网，那么应该找网关的Mac
 	//if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
-	if(ip.GetSubNet(Tip->Mask) != Tip->IP.GetSubNet(Tip->Mask)) ip = Tip->Gateway;
+	if(dest.GetSubNet(Tip->Mask) != Tip->IP.GetSubNet(Tip->Mask)) dest = Tip->Gateway;
 
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
@@ -229,7 +230,7 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 		for(int i=0; i<Count; i++)
 		{
 			ARP_ITEM* arp = &_Arps[i];
-			if(arp->IP == ip.Value)
+			if(arp->IP == dest.Value)
 			{
 				// 如果未过期，则直接使用。否则重新请求
 				if(arp->Time > sNow)
@@ -245,7 +246,7 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 	}
 
 	// 找不到则发送Arp请求。如果有旧值，则使用异步请求即可
-	bool rs = Request(ip, mac, item ? 0 : 1);
+	bool rs = Request(dest, mac, item ? 0 : 1);
 	if(!rs)
 	{
 		if(!item) return false;
@@ -259,12 +260,12 @@ bool ArpSocket::Resolve(IPAddress& ip, MacAddress& mac)
 		return true;
 	}
 
-	Add(ip, mac);
+	Add(dest, mac);
 
 	return rs;
 }
 
-void ArpSocket::Add(IPAddress& ip, MacAddress& mac)
+void ArpSocket::Add(const IPAddress& ip, const MacAddress& mac)
 {
 	if(ip.IsAny() || ip.IsBroadcast()) return;
 

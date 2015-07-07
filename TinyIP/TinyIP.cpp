@@ -285,7 +285,7 @@ void TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	_port->Write((byte*)eth, len);
 }
 
-void TinyIP::SendIP(IP_TYPE type, IPAddress& remote, const byte* buf, uint len)
+void TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
 	assert_param2(IS_IP_TYPE(type), "这个不是IP消息类型");
@@ -390,7 +390,7 @@ ushort TinyIP::CheckSum(IPAddress* remote, const byte* buf, uint len, byte type)
     return (ushort)(sum ^ 0xFFFF);
 }
 
-bool TinyIP::IsBroadcast(IPAddress& ip)
+bool TinyIP::IsBroadcast(const IPAddress& ip)
 {
 	// 全网广播
 	if(ip.IsBroadcast()) return true;
