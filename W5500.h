@@ -19,7 +19,6 @@ __inline void w5500_printf( const char *format, ... ) {}
 
 #endif
 
-
 // 硬件Socket基类
 class HardwareSocket;
 
@@ -36,7 +35,7 @@ typedef struct
 class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送能力 所以不是ITransport
 {	
 	// 通用寄存器结构
-	struct{
+	struct T_GenReg{
 		byte MR;			// 模式			0x0000
 		byte GAR[4];		// 网关地址		0x0001
 		byte SUBR[4];		// 子网掩码		0x0005
@@ -65,36 +64,53 @@ private:
     InputPort	_IRQ;
 	// 8个硬件socket
 	HardwareSocket* _socket[8];	
+	// mac对象
+	MacAddress _mac;
 	// 收发数据锁，确保同时只有一个对象使用
-	int _Lock;			
+	volatile byte _Lock;			
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	bool WriteFrame(Frame& fra);
 	bool ReadFrame(Frame& fra,uint length);
 	// spi 模式（默认变长）
 	byte PhaseOM;		
 public:
-	// 非必要，由外部定义  这里只留一个指针
+	// rst引脚可能不是独享的  这里只留一个指针
 	OutputPort* nRest;
+	// 软件复位
 	void SoftwareReset();
+	// 复位 包含硬件复位和软件复位
 	void Reset();
 	
 	// 构造
 	W5500();
-    W5500(Spi* spi, Pin irq = P0);
+    W5500(Spi* spi, Pin irq = P0 ,OutputPort* rst = NULL);	// 必须具备复位引脚 否则寄存器不能读
     ~W5500();
 	
 	// 初始化
 	void Init();
-    void Init(Spi* spi, Pin irq = P0);
-	// 输出 General_reg
+    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);
+	// 网卡状态输出
 	void StateShow();
+	// 输出物理链路层状态
+	void PhyStateShow();
+	// 测试PHY状态  返回是否连接网线
+	bool CheckLnk();
+	// 设置本地MAC
+	bool SetMac(MacAddress& mac);
+	// “随机”一个MAC  并设置
+	void AutoMac();
+	// 返回 MacAddress
+	MacAddress Mac();
+	// 设置网关IP
+	void SetGateway(IPAddress& ip);	
+	// 子网掩码
+	void SetIpMask(IPAddress& mask);
+	// 开启PING应答
+	void OpenPingACK();	
+	void ClosePingACK();	
 	
-	bool SetMac(MacAddress& mac);		// 本地MAC
-	//MacAddress GetMac();
-	//void SetIpMask();		// 子网掩码
-	//void SetGateway();	// 网关地址
-	//void OpenPingACK();	// 开启PING应答
 	//void OpenWol();		// 网络唤醒
+	void Recovery();
 private:
 	// 中断脚回调
 	static void OnIRQ(Pin pin, bool down, void* param);		
@@ -107,19 +123,17 @@ public:
 	void Register(byte Index,HardwareSocket* handler);
 };
 
-// 硬件Socket基类s
+// 硬件Socket控制器
 class HardwareSocket
 {
 private:
-	W5500*	_THard;	// 硬件控制器
+	W5500*	_THard;	// W5500公共部分控制器
 public:
-	//IP_TYPE	Type;	// 类型
 	bool Enable;	// 启用
 	byte Index;		// 使用的硬Socket编号
 
 	HardwareSocket(W5500* thard);
 	virtual ~HardwareSocket();
-
 	// 处理数据包
 	virtual bool Process(Stream& ms) = 0;
 };
