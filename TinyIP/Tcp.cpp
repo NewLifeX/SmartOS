@@ -1,6 +1,6 @@
 ﻿#include "Tcp.h"
 
-#define NET_DEBUG 1
+#define NET_DEBUG 0
 //#define NET_DEBUG DEBUG
 
 bool* WaitAck;
@@ -205,10 +205,24 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		return;
 	}
 
+	byte* data = tcp.Next();
+
+	// 触发ITransport接口事件
+	uint len2 = OnReceive(data, len);
+	// 如果有返回，说明有数据要回复出去
+	if(len2)
+	{
+		// 发送ACK，通知已收到
+		SetSeqAck(tcp, len, true);
+
+		// 响应Ack和发送数据一步到位
+		Send(tcp, len2, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	}
+
 	if(OnReceived)
 	{
 		// 返回值指示是否向对方发送数据包
-		bool rs = OnReceived(*this, tcp, tcp.Next(), len);
+		bool rs = OnReceived(*this, tcp, data, len);
 		// 如果不需要向对方发数据包，则直接响应ACK
 		if(!rs)
 		{
@@ -224,18 +238,16 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		debug_printf("Tcp:Receive(%d) From ", len);
 		Remote.Show();
 		debug_printf(" ");
-		Sys.ShowString(tcp.Next(), len);
+		Sys.ShowString(data, len);
 		debug_printf("\r\n");
 #endif
 	}
 	// 发送ACK，通知已收到
 	SetSeqAck(tcp, len, true);
-	//Send(buf, 0, TCP_FLAGS_ACK);
-
-	//TcpSend(buf, len);
+	Send(tcp, 0, TCP_FLAGS_ACK);
 
 	// 响应Ack和发送数据一步到位
-	Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	//Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
 void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
