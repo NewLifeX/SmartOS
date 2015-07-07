@@ -235,6 +235,10 @@ void String::Show(bool newLine) const
 {
 	if(!Length()) return;
 
+	// C格式字符串以0结尾
+	char* p = GetBuffer();
+	p[Length()] = 0;
+	
 	debug_printf("%s", GetBuffer());
 	if(newLine) debug_printf("\r\n");
 }
