@@ -442,7 +442,11 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	SetMss(*tcp);
 
 	Status = SynSent;
-	if(!Send(*tcp, 0, TCP_FLAGS_SYN)) return false;
+	if(!Send(*tcp, 0, TCP_FLAGS_SYN))
+	{
+		Status = Closed;
+		return false;
+	}
 
 	//if(Tip->LoopWait(Callback, this, 3000))
 
