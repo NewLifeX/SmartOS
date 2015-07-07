@@ -87,7 +87,7 @@ public:
 	void Init();
     void Init(Spi* spi, Pin irq = P0);
 	
-	//void SetMac(MacAddress& mac);		// 本地MAC
+	bool SetMac(MacAddress& mac);		// 本地MAC
 	//MacAddress GetMac();
 	//void SetIpMask();		// 子网掩码
 	//void SetGateway();	// 网关地址

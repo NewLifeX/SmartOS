@@ -122,20 +122,6 @@ W5500::W5500(Spi* spi, Pin irq)
 
 W5500::~W5500() { }
 
-void W5500::SoftwareReset()
-{
-	Frame frame;
-	frame.Address = 0x00000;
-	frame.BSB =  0x00;	// 直接赋值简单暴力
-	
-	T_MR mr;
-	mr.Init();
-	mr.RST = 1 ;
-	frame.Data.Write<byte>(mr.ToByte());
-	
-	WriteFrame(frame);
-	debug_printf("软件复位 \r\n");
-}
 
 void W5500::Reset()
 {
@@ -145,10 +131,9 @@ void W5500::Reset()
 		Sys.Delay(600);		// 最少500us
 		debug_printf("硬件复位 \r\n");
 		*nRest = true;
-		Sys.Sleep(2);
 	}
 	SoftwareReset();
-	Sys.Sleep(10);
+	//Sys.Sleep(1500);
 }
 
 void W5500::Init()
@@ -220,7 +205,7 @@ bool W5500::WriteFrame(Frame& frame)
 		_spi->Write(temp);
 		w5500_printf("-%02X",temp);
 	}
-	w5500_printf("\r\n");
+	w5500_printf("\r\n\r\n");
 	return true;
 }
 
@@ -243,14 +228,58 @@ bool W5500::ReadFrame(Frame& frame,uint length)
 	w5500_printf("Read Length: %d  Data: 0x",length);
 	for(uint i = 0;i < length; i++)
 	{
-		byte temp = _spi->Write(0xff);
+		byte temp = _spi->Write(0x00);
 		w5500_printf("-%02X",temp);
 		frame.Data.Write<byte>(temp);
 	}
-	w5500_printf("\r\n");
+	w5500_printf("\r\n\r\n");
 	frame.Data.SetPosition(0);
 	return true;
 }
+
+void W5500::SoftwareReset()
+{
+	debug_printf("软件复位 \r\n");
+	Frame frame;
+	frame.Address = 0x00000;
+	frame.BSB =  0x00;	// 直接赋值简单暴力
+	
+	T_MR mr;
+	mr.Init();
+	mr.RST = 1 ;
+	frame.Data.Write<byte>(mr.ToByte());
+	
+	WriteFrame(frame);
+}
+
+bool W5500::SetMac(MacAddress& mac)		// 本地MAC
+{
+	Frame frame;
+	frame.Address = (ushort)((uint)General_reg.SHAR - (uint)&General_reg);
+	frame.BSB =  0x00;	// 通用寄存器区
+	// 通用寄存器备份一份
+	memcpy(General_reg.SHAR,&mac.Value,6);
+	
+	frame.Data.Write<ulong>(mac.Value);
+	frame.Data.SetPosition(frame.Data.Position() - 2);	// 多了2字节 这里做个处理
+	
+	WriteFrame(frame);
+	
+	ReadFrame(frame,6);
+	MacAddress mac2(frame.Data.Read<ulong>());
+	if(mac2 == mac)
+	{
+		w5500_printf("MAC设置成功！\r\n");
+		return true;
+	}
+	return false;
+}
+
+
+
+
+
+
 
 byte W5500::GetSocket()
 {
