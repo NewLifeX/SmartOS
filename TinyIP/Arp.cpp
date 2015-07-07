@@ -18,9 +18,9 @@ public:
 
 ArpSession* _ArpSession;
 
-ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip)
+ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip, IP_NONE)
 {
-	//Type = ETH_ARP;
+	//Type = IP_NONE;
 
 #ifdef STM32F0
 	Count = 4;

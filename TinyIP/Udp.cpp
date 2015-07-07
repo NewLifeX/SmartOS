@@ -3,9 +3,9 @@
 //#define NET_DEBUG DEBUG
 #define NET_DEBUG 0
 
-UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip)
+UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip, IP_UDP)
 {
-	Type		= IP_UDP;
+	//Type		= IP_UDP;
 	Port		= 0;
 
 	// 累加端口

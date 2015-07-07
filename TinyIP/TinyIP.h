@@ -19,7 +19,7 @@ public:
 	IP_TYPE	Type;	// 类型
 	bool	Enable;	// 启用
 
-	Socket(TinyIP* tip);
+	Socket(TinyIP* tip, IP_TYPE type);
 	virtual ~Socket();
 
 	// 处理数据包

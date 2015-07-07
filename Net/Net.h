@@ -104,6 +104,7 @@ typedef struct _ETH_HEADER
 // IP协议类型
 typedef enum
 {
+	IP_NONE = 0,
 	IP_ICMP	= 1,
 	IP_IGMP	= 2,
 	IP_TCP	= 6,

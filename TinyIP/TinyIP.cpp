@@ -401,14 +401,16 @@ bool TinyIP::IsBroadcast(const IPAddress& ip)
 }
 #endif
 
-Socket::Socket(TinyIP* tip)
+Socket::Socket(TinyIP* tip, IP_TYPE type)
 {
 	assert_param2(tip, "空的Tip");
 
-	Tip = tip;
-	Enable = false;
+	Tip		= tip;
+	Type	= type;
+	Enable	= false;
+	
 	// 除了ARP以外，加入到列表
-	if(this->Type != ETH_ARP) tip->Sockets.Add(this);
+	if(type != IP_NONE) tip->Sockets.Add(this);
 }
 
 Socket::~Socket()
