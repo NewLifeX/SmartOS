@@ -83,8 +83,8 @@ public:
 	void ShowInfo();
 	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 
-	void SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len);
-	void SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len);
+	bool SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len);
+	bool SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len);
 	bool IsBroadcast(const IPAddress& ip);	// 是否广播地址
 };
 

@@ -255,7 +255,7 @@ void TinyIP::ShowInfo()
 #endif
 }
 
-void TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)
+bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)
 {
 	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param2(IS_ETH_TYPE(type), "这个不是以太网类型");
@@ -282,10 +282,10 @@ void TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
 	debug_printf("\r\n");*/
 
-	_port->Write((byte*)eth, len);
+	return _port->Write((byte*)eth, len);
 }
 
-void TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len)
+bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len)
 {
 	IP_HEADER* ip = (IP_HEADER*)(buf - sizeof(IP_HEADER));
 	assert_param2(IS_IP_TYPE(type), "这个不是IP消息类型");
@@ -320,7 +320,7 @@ void TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 		remote.Show();
 		debug_printf("\r\n");
 #endif
-		return;
+		return false;
 	}
 
 	/*string name = "Unkown";
@@ -337,7 +337,7 @@ void TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	remote.Show();
 	debug_printf("\r\n");*/
 
-	SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
+	return SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
 #define TinyIP_HELP

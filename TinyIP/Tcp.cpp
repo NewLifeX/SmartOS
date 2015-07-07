@@ -17,11 +17,6 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	//LocalIP		= 0;
 	//LocalPort	= 0;
 
-	// 累加端口
-	static ushort g_tcp_port = 1024;
-	if(g_tcp_port < 1024) g_tcp_port = 1024;
-	BindPort = g_tcp_port++;
-
 	// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
 	static uint seqnum = 0xa;
 	Seq = seqnum << 8;
@@ -222,7 +217,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 	else
 	{
 #if NET_DEBUG
-		debug_printf("Tcp Receive(%d) From ", len);
+		debug_printf("Tcp:Receive(%d) From ", len);
 		Remote.Show();
 		debug_printf(" ");
 		Sys.ShowString(tcp.Next(), len);
@@ -263,7 +258,7 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 	Status = Closed;
 }
 
-void TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
+bool TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 {
 	tcp.SrcPort = __REV16(Port > 0 ? Port : Local.Port);
 	tcp.DestPort = __REV16(Remote.Port);
@@ -284,7 +279,7 @@ void TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 #endif
 
 	// 注意tcp->Size()包括头部的扩展数据
-	Tip->SendIP(IP_TCP, Remote.Address, (byte*)&tcp, tcp.Size() + len);
+	return Tip->SendIP(IP_TCP, Remote.Address, (byte*)&tcp, tcp.Size() + len);
 }
 
 void TcpSocket::SetSeqAck(TCP_HEADER& tcp, uint ackNum, bool opSeq)
@@ -339,7 +334,7 @@ void TcpSocket::SendAck(uint len)
 	Send(*tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
-void TcpSocket::Disconnect()
+bool TcpSocket::Disconnect()
 {
 	debug_printf("Tcp::Disconnect ");
 	Remote.Show();
@@ -350,20 +345,20 @@ void TcpSocket::Disconnect()
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
-	Send(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+	return Send(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-void TcpSocket::Send(ByteArray& bs)
+bool TcpSocket::Send(ByteArray& bs)
 {
 	if(!Enable)
 	{
-		if(!Open()) return;
+		if(!Open()) return false;
 	}
 
 	// 如果连接已关闭，必须重新连接
 	if(Status == Closed)
 	{
-		if(!Connect(Remote.Address, Remote.Port)) return;
+		if(!Connect(Remote.Address, Remote.Port)) return false;
 	}
 
 	debug_printf("Tcp::Send ");
@@ -387,7 +382,7 @@ void TcpSocket::Send(ByteArray& bs)
 	tcp->Ack = __REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
-	Send(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
+	if(!Send(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
 
 	//Tip->LoopWait(Callback, this, 3000);
 
@@ -407,6 +402,8 @@ void TcpSocket::Send(ByteArray& bs)
 		debug_printf("发送成功！\r\n");
 	else
 		debug_printf("发送失败！\r\n");
+	
+	return wait;
 }
 
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
@@ -419,7 +416,14 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		if(!Open()) return false;
 	}
 
+	// 累加端口
+	static ushort g_tcp_port = 1024;
+	if(g_tcp_port < 1024) g_tcp_port = 1024;
+	BindPort = g_tcp_port++;
+
 	debug_printf("Tcp::Connect ");
+	Tip->IP.Show();
+	debug_printf(":%d => ", BindPort);
 	ip.Show();
 	debug_printf(":%d ...... \r\n", port);
 
@@ -438,7 +442,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	SetMss(*tcp);
 
 	Status = SynSent;
-	Send(*tcp, 0, TCP_FLAGS_SYN);
+	if(!Send(*tcp, 0, TCP_FLAGS_SYN)) return false;
 
 	//if(Tip->LoopWait(Callback, this, 3000))
 
@@ -522,3 +526,10 @@ uint TcpSocket::OnRead(byte* buf, uint len)
 	// 暂时不支持
 	return 0;
 }
+
+/*
+三次握手过程：
+A=>B SYN
+B=>A SYN+ACK
+A=>B ACK
+*/
