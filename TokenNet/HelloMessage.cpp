@@ -37,7 +37,7 @@ bool HelloMessage::Read(Stream& ms)
 	ms.ReadString(Type.Clear());
 	ms.ReadString(Name.Clear());
 
-	LocalTime	= ms.Read<ulong>() / 10;
+	LocalTime	= ms.Read<ulong>();
 
 	EndPoint.Address = ms.ReadBytes(4);
 	EndPoint.Port = ms.Read<ushort>();
@@ -71,7 +71,7 @@ void HelloMessage::Write(Stream& ms)
 		ms.WriteString(_name);
 	}
 
-	ms.Write(LocalTime * 10);
+	ms.Write(LocalTime);
 
 	ms.Write(EndPoint.Address.ToArray(), 0, 4);
 	ms.Write((ushort)EndPoint.Port);
