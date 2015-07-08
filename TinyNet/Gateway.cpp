@@ -232,7 +232,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 // 发送设备信息
 bool Gateway::SendDeviceInfo(Device* dv)
 {
-	if(dv) return false;
+	if(!dv) return false;
 
 	TokenMessage rs;
 	rs.Code = 0x25;
