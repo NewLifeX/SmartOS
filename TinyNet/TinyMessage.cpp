@@ -230,7 +230,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
-	int blank = 13;
+	int blank = 11;
 	msg_printf("%s", port->ToString());
 	if(send)
 	{
