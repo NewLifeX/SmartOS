@@ -57,7 +57,7 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 		
 		byte BSB:5;		// 区域选择位域		// 1个通用寄存器   8个Socket寄存器组（选择，写缓存，收缓存）
 						// 00000	通用
-						// XXX01	SocketXXX 选择
+						// XXX01	SocketXXX 寄存器
 						// XXX10	SocketXXX 发缓存
 						// XXX11	SocketXXX 收缓存
 						// 其余保留， 如果选择了保留的将会导致W5500故障
@@ -491,7 +491,143 @@ void W5500::OnIRQ()
 {
 }
 
-/******************************************************************/
+/****************************** 硬件Socket控制器 ************************************/
+
+	typedef struct : ByteStruct
+	{
+		byte Protocol:4;		// Socket n 协议模式
+								// 0000		Closed
+								// 0001		TCP
+								// 0010		UDP
+								// 0100		MACRAW	【限定 Socket0 使用】
+								/* MACRAW 格式												*
+								 * |***PACET_INFO**|********DATA_PACKET************** |		*
+								 * | PACKET_SIZE   |DEC MAC|SOU MAC| TYPE | PAYLOAD   |		*
+								 * | 2BYTE		   | 6BYTE | 6BYTE | 2BYTE|46-1500BYTE|		*/
+								 
+		byte UCASTB_MIP6B:1;	// 【UCASTB】【MIP6B】
+								// [UCASTB]	 单播阻撒	条件：【UDP 模式】且MULTI=1
+								//		0：关闭单播阻塞，1：开启单播阻塞
+								// [MIP6B]	IPv6包阻塞	条件：【MACRAW 模式】	
+								//		0：关闭IPv6包阻塞，1：开启IPv6包阻塞
+		
+		byte ND_MC_MMB:1;		// 【ND】【MC】【MMB】
+								// [ND]	使用无延时ACK	条件：【TCP 模式】
+								//		0：关闭无延时ACK选项，需要RTR设定的超时时间做延时
+								//		1：开启无延时ACK选项, 尽量没有延时的回复ACK
+								// [MC]	IGMP版本		条件：【UDP 模式】且MULTI=1
+								//		0：IGMP 版本2，	
+								//		1：IGMP 版本1
+								// [MMB] 多播阻塞		条件：【MACRAW 模式】
+								// 		0：关闭多播阻塞
+								// 		1：开启多播阻塞
+								
+		byte BCASTB:1;			// 广播阻塞		条件：【MACRAW 模式】或者【UDP 模式】
+								// 		0：关闭广播阻塞
+								// 		1：开启广播阻塞
+								
+		byte MULTI_MFEN:1;		// 【MULTI】【MFEN】
+								// [MULTI] UDP多播模式	条件：【UDP 模式】
+								// 		0：关闭多播
+								// 		1：开启多播
+								// 注意：使用多播模式，需要Sn_DIPR  Sn_DPORT 在通过Sn_CR 打开配置命令打开之前，分别配置组播IP地址及端口号
+								// [MFEN] MAC 过滤		条件：【MACRAW 模式】
+								// 		0: 关闭 MAC 过滤，收到网络的所有包
+								//		1：开启 MAC 过滤，只接收广播包和发给自己的包
+	}TSn_MR;
+	// Sn_CR 寄存器比较特殊
+	// 写入后会自动清零，但命令任然在处理中，为验证命令是否完成，需检查Sn_IR或者SnSR寄存器
+	enum ESn_CR
+	{
+		OPEN		= 0x01,	// open 之后，检测 Sn_SR 的值
+							// 	Sn_MR.Protocol		Sn_SR
+							// 		【CLOSE】		-		
+							// 		【TCP】			【SOCK_INT】0X13
+							// 		【UDP】			【SOCK_UDP】0X22
+							// 		【MACRAW】		【SOCK_MACRAW】0X02
+							
+		LISTEN		= 0x02,	// 只在【TCP 模式】下生效	LISTEN 会把 Socket 变成服务端，等待TCP连接
+							// LISTEN 把 SOCK_INIT 变为 SOCK_LISTEN
+							// 当 SOCK 被连接成功 SOCK_LISTEN 变为 SOCK_ESTABLISHE,同时 Sn_IR.CON =1
+							// 		当连接非法断开 Sn_IR.TIMEOUT =1， Sn_SR = SOCK_CLOSED
+		
+		CONNECT 	= 0x04,	// 只在【TCP 模式】下生效	Socket 作为客户端  对 Sn_DIPR:Sn_DPORT 发起连接 
+							// 链接成功时 Sn_SR = SOCK_ESTABLISHE  Sn_IR.CON =1
+							// 三种情况意味着请求失败  Sn_SR = SOCK_CLOSED
+							// 	1.ARP 发生超时(Sn_IR.TIMEOUT =1)
+							//  2.没有收到 SYN/ACK 数据包(Sn_IR.TIMEOUT = 1)
+							//  3.收到RST数据包
+							
+		DISCON		= 0x08,	// 只在【TCP 模式】下生效	FIN/ACK 断开机制断开连接  （不分 客户端，服务端）
+							// Sn_SR = SOCK_CLOSED
+							// 另外 当断开请求没有收到ACK时 Sn_IR.TIMEOUT =1
+							// 使用 CLOSE 命令来代替 DISCON 的话，Sn_SR = SOCK_CLOSED 不再执行 FIN/ACK 断开机制
+							// 收到RST数据包 将无条件 Sn_SR = SOCK_CLOSED
+							
+		CLOSE		= 0x10,	// 关闭Socket   Sn_SR = SOCK_CLOSED
+		
+		SEND		= 0x20,	// 发送 Socket TX内存中的所有缓冲数据
+							// 一般来说，先通常自动ARP获取到MAC才进行传输
+							
+		SEND_MAC	= 0x21,	// 只在【UDP 模式】下生效
+							// 使用Sn_DHAR 中的MAC进行发送（不进行ARP）
+							
+		SEND_KEEP	= 0x22,	// 只在【UDP 模式】下生效	通过发送1字节在线心跳包检查连接状态
+							// 如果对方不能在超时计数期内反馈在线心跳包，这个连接将被关闭并触发中断
+							
+		RECV		= 0x40,	// 通过使用接收读指针寄存器 Sn_RX_RD 来判定 接收缓存是否完成接收处理
+	};	
+	//中断寄存器
+	typedef struct : ByteStruct
+	{
+		byte CON:1;			// 连接成功 	Sn_SR = SOCK_ESTABLISHE 此位生效
+		byte DISCON:1;		// 连接中断		接收到对方 FIN/ACK 断开机制数据包时 此位生效
+		byte RECV:1;		// 无论何时，接收到对方数据包，此位生效
+		byte TIMEOUT:1;		// ARP  TCP 超时被触发
+		byte SEND_OK:1;		// 发送完成
+		byte Reserved:3;
+	}TSn_IR;
+	
+	enum ESn_SR
+	{
+		// 常规状态
+		SOCK_CLOSED		= 0x00,		// 关闭
+		SOCK_INIT		= 0x13,     // TCP 工作模式  OPEN 后状态
+		SOCK_LISTEN		= 0x14,     // TCP 服务端模式   等待 TCP 连接请求
+		SOCK_ESTABLISHE	= 0x17,     // TCP 连接OK    此状态下可以 Send 或者 Recv
+		SOCK_CLOSE_WAIT	= 0x1C,     // TCP 连接成功基础上 收到FIN 包，可以进行数据传输，若要全部关闭，需要使用DISCON命令
+		SOCK_UDP		= 0x22,     // UDP 工作模式
+		SOCK_MACRAW		= 0x02,     // MACRAW 工作模式
+		// 中间状态                 
+		SOCK_SYNSENT	= 0x15,		// CONNECT 指令后(SOCK_INIT 状态后)，SOCK_ESTABLISHE 状态前
+		
+		SOCK_SYNRECV	= 0x16,		// 收到客户端连接请求包，发送了连接应答后，连接建立成功前
+									// SOCK_LISTEN 状态后，SOCK_ESTABLISHE 状态前
+									// 如果超时 Sn_SR = SOCK_CLOSED  Sn_IR.TIMEOUT =1
+									
+		SOCK_FIN_WAIT	= 0x18,		// Socket 正在关闭
+		SOCK_CLOSING	= 0x1A,		// Socket 正在关闭
+		SOCK_TIME_WAIT	= 0x1B,		// Socket 正在关闭
+		
+		SOCK_LAST_ACK	= 0x1D,		// Socket 被动关闭状态下，等待对方断开连接请求做出回应
+									// 超时或者成功收到断开请求都将 SOCK_CLOSED
+	};
+/*	
+	typedef struct : ByteStruct
+	{
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+		byte  :  ;		//
+	}T;
+*/	
+	
+	
+	
 
 HardwareSocket::HardwareSocket(W5500* thard)
 {
@@ -507,5 +643,16 @@ HardwareSocket::HardwareSocket(W5500* thard)
 HardwareSocket::~HardwareSocket()
 {
 }
+
+
+
+
+
+
+
+
+
+
+
 
 

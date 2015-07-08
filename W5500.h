@@ -126,6 +126,45 @@ public:
 // 硬件Socket控制器
 class HardwareSocket
 {
+public:
+	enum Protocol
+	{
+		CLOSE	= 0x00,
+		TCP		= 0x01,
+		UDP		= 0x02,
+		MACRAW	= 0x04,
+	};
+private:	
+	struct T_HSocketReg{
+		byte Sn_MR ;		//0x0000  	// Socket 模式寄存器
+		byte Sn_CR ;		//0x0001  	// 配置寄存器 	【较为特殊】【只写，读为0x00】
+		byte Sn_IR ;		//0x0002  	// 中断寄存器	 写1清0？？
+		byte Sn_SR ;		//0x0003  	// 状态寄存器	【只读】
+		byte Sn_PORT[2] ;	//0x0004  	// TCP UDP 模式下端口号  OPEN之前配置好
+		byte Sn_DHAR[6] ;	//0x0006  	// 目的MAC,SEND_MAC使用;CONNECT/SEND 命令时ARP获取到的MAC
+		byte Sn_DIPR[4] ;	//0x000c  	// 目标IP地址
+		byte Sn_DPORT[2] ;	//0x0010  	// 目标端口
+		byte Sn_MSSR[2] ;	//0x0012  	// TCP UDP 模式下 MTU 最大传输单元大小  默认最大值
+										// TCP:1460; UDP:1472; MACRAW:1514;
+										// MACRAW 模式时 由于MTU 不在内部处理，默认MTU将会生效
+										// PPPoE 模式下 略
+										// TCP UDP 模式下，传输数据比 MTU大时，数据将会自动划分成默认MTU 单元大小
+		byte Reserved ;		//0x0014  	
+		byte Sn_TOS ;		//0x0015  	// 
+		byte Sn_TTL ;		//0x0016  	// 
+		byte Reserved2[7] ;	//0x0017  	-  0x001d
+		byte Sn_RXBUF_SIZE ;//0x001e  	// 
+		byte Sn_TXBUF_SIZE ;//0x001f  	// 
+		byte Sn_TX_FSR[2] ;	//0x0020  	// 
+		byte Sn_TX_RD[2] ;	//0x0022  	// 
+		byte Sn_TX_WR[2] ;	//0x0024  	//
+		byte Sn_RX_RSR[2] ;	//0x0026  	//
+		byte Sn_RX_RD[2] ;	//0x0028  	//
+		byte Sn_RX_WR[2] ;	//0x002a  	//
+		byte Sn_IMR ;		//0x002c  	//
+		byte Sn_FRAG[2] ;	//0x002d  	//
+		byte Sn_KPALVTR ;	//0x002f  	//
+	}HSocketReg;
 private:
 	W5500*	_THard;	// W5500公共部分控制器
 public:
@@ -139,3 +178,10 @@ public:
 };
 
 #endif
+
+
+
+
+
+
+
