@@ -23,6 +23,8 @@ TinyServer::TinyServer(TinyController* control)
 
 	Received	= NULL;
 	Param		= NULL;
+
+	Current		= NULL;
 }
 
 bool TinyServer::Send(Message& msg)
@@ -75,7 +77,8 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	// 临时方便调试使用
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
-	Device* dv = FindDevice(id);
+	Device* dv = Current;
+	if(!dv) dv = FindDevice(id);
 	if(!dv && id)
 	{
 		dv = new Device();
@@ -92,8 +95,13 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	// 更新设备信息
 	if(dv) dv->LastTime = Time.Current();
 
+	// 设置当前设备
+	Current = dv;
+
 	// 消息转发
 	if(Received) return Received(msg, Param);
+
+	Current = NULL;
 
 	return true;
 }
@@ -124,7 +132,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		{
 			id = 1;
 			while(FindDevice(++id) != NULL && id < 0xFF);
-			
+
 			debug_printf("发现ID=0x%02X已分配，为当前节点分配 0x%02X\r\n", msg.Src, id);
 		}
 
@@ -139,6 +147,8 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 	// 更新设备信息
 	if(dv)
 	{
+		Current		= dv;
+
 		dv->Type	= dm.Type;
 		dv->HardID	= dm.HardID;
 		dv->Version	= dm.Version;

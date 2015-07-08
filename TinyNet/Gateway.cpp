@@ -108,14 +108,13 @@ bool Gateway::OnLocal(TinyMessage& msg)
 			return OnDiscover(msg);
 	}*/
 
-	byte id = msg.Src;
-	Device* dv = Server->FindDevice(id);
+	Device* dv = Server->Current;
 	if(dv)
 	{
 		// 短时间内注册或者登录
 		ulong now = Time.Current() - 500000;
-		if(dv->RegTime > now) DeviceRegister(id);
-		if(dv->LoginTime > now) DeviceOnline(id);
+		if(dv->RegTime > now) DeviceRegister(dv->ID);
+		if(dv->LoginTime > now) DeviceOnline(dv->ID);
 	}
 
 	// 消息转发

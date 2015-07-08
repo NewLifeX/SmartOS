@@ -34,6 +34,9 @@ public:
 	Device* FindDevice(byte id);
 	Device* FindDevice(ByteArray& hardid);
 
+	// 当前设备
+	Device* Current;
+	
 // 常用系统级消息
 public:
 	// 设置默认系统消息
