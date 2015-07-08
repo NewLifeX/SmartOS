@@ -33,11 +33,14 @@ public:
 	bool OnRemote(TokenMessage& msg);
 
 	/******** 远程网业务逻辑 ********/
+	bool AutoReport;	// 自动上报
 
 	// 设备列表 0x21
 	bool OnGetDeviceList(Message& msg);
-	// 设备信息 x025
+	// 设备信息 0x25
 	bool OnGetDeviceInfo(Message& msg);
+	// 发送设备信息
+	bool SendDeviceInfo(Device* dv);
 
 	// 学习模式 0x20
 	bool	Student;

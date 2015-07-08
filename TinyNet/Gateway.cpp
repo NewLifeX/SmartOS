@@ -20,7 +20,8 @@ Gateway::Gateway(TinyServer* server, TokenClient* client)
 	Server = server;
 	Client = client;
 
-	Running = false;
+	Running		= false;
+	AutoReport	= false;
 }
 
 Gateway::~Gateway()
@@ -60,6 +61,15 @@ void Gateway::Start()
 		dv->Name		= Sys.Name;
 
 		Server->Devices.Add(dv);
+
+		if(AutoReport)
+		{
+			TokenMessage msg;
+			msg.Code = 0x21;
+			OnGetDeviceList(msg);
+
+			SendDeviceInfo(dv);
+		}
 	}
 
 	Client->Open();
@@ -192,7 +202,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 	return Client->Reply(rs);
 }
 
-// 设备信息 x025
+// 设备信息 0x25
 bool Gateway::OnGetDeviceInfo(Message& msg)
 {
 	if(msg.Reply) return false;
@@ -216,6 +226,16 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 
 	dv->Show(true);
 
+	return SendDeviceInfo(dv);
+}
+
+// 发送设备信息
+bool Gateway::SendDeviceInfo(Device* dv)
+{
+	if(dv) return false;
+
+	TokenMessage rs;
+	rs.Code = 0x25;
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
 	//Stream ms(rs.Data, rs.Length);
 	Stream ms;
@@ -261,6 +281,11 @@ void Gateway::DeviceRegister(byte id)
 	debug_printf("节点注册入网 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
+	if(AutoReport)
+	{
+		Device* dv = Server->FindDevice(id);
+		SendDeviceInfo(dv);
+	}
 }
 
 // 节点上线 0x23
@@ -273,6 +298,11 @@ void Gateway::DeviceOnline(byte id)
 	debug_printf("节点上线 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
+	if(AutoReport)
+	{
+		Device* dv = Server->FindDevice(id);
+		SendDeviceInfo(dv);
+	}
 }
 
 // 节点离线 0x24
@@ -285,6 +315,11 @@ void Gateway::DeviceOffline(byte id)
 	debug_printf("节点离线 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
+	if(AutoReport)
+	{
+		Device* dv = Server->FindDevice(id);
+		SendDeviceInfo(dv);
+	}
 }
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
