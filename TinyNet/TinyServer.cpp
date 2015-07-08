@@ -156,7 +156,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 		dv->Analogs	= dm.Analogs;
 
 		// 如果最后活跃时间超过60秒，则认为是设备上线
-		if(dv->LastTime == 5 || dv->LastTime + 60000000 < Time.Current())
+		if(dv->LastTime == 5 || dv->LastTime + 6000000 < Time.Current())
 		{
 			// 节点上线
 			dv->LoginTime = dv->RegTime;
