@@ -137,9 +137,9 @@ bool Gateway::OnRemote(TokenMessage& msg)
 	// 本地处理
 	switch(msg.Code)
 	{
-		case 0x82:
+		case 0x02:
 			// 登录以后自动发送设备列表和设备信息
-			if(AutoReport && Client->Token != 0)
+			if(AutoReport && msg.Reply && Client->Token != 0)
 			{
 				TokenMessage msg;
 				msg.Code = 0x21;
