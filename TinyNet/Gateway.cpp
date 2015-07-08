@@ -152,6 +152,9 @@ bool Gateway::OnRemote(TokenMessage& msg)
 			return OnGetDeviceList(msg);
 		case 0x25:
 			return OnGetDeviceInfo(msg);
+	    case 0x26:
+           OnDeviceDelete(msg);
+		   break;
 	}
 
 	// 消息转发
@@ -337,10 +340,11 @@ void Gateway::OnDeviceDelete(Message& msg)
 
 	bool success = Server->DeleteDevice(id);
 
-	rs.Length = 0;
+	rs.Length = 1;
 	rs.Data[0] = success ? 0 : 1;
 
 	Client->Reply(rs);
+	
 }
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
