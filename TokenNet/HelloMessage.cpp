@@ -4,7 +4,7 @@
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
 
 // 初始化消息，各字段为0
-HelloMessage::HelloMessage() : Ciphers(1), Key(16)
+HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 {
 	Version		= Sys.Version;
 
@@ -17,7 +17,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(16)
 	Ciphers[0]	= 1;
 }
 
-HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(16)
+HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(0)
 {
 	Version		= msg.Version;
 	Type		= msg.Type;
@@ -49,6 +49,8 @@ bool HelloMessage::Read(Stream& ms)
 	else
 	{
 		Ciphers[0]	= ms.Read<byte>();
+		// 读取数组前，先设置为0，避免实际长度小于数组长度
+		Key.SetLength(0);
 		ms.ReadArray(Key);
 	}
 

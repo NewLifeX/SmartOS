@@ -265,8 +265,10 @@ uint Stream::ReadArray(ByteArray& bs)
 			if(len > 0x400) len = bs.Capacity();
 		}
 		// 如果不是设计错误，那么数组直接扩容
-		bs.SetLength(len);
+		//bs.SetLength(len);
 	}
+	// 不管长度太大还是太小，都要设置一下长度，避免读取长度小于数组长度，导致得到一片空数据
+	bs.SetLength(len);
 
 	Read(bs.GetBuffer(), 0, len);
 
