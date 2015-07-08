@@ -145,7 +145,9 @@ bool Gateway::OnRemote(TokenMessage& msg)
 				msg.Code = 0x21;
 				OnGetDeviceList(msg);
 
-				SendDeviceInfo(dv);
+				//SendDeviceInfo(dv);
+				for(int i=0; i<Server->Devices.Count(); i++)
+					SendDeviceInfo(Server->Devices[i]);
 			}
 			break;
 
