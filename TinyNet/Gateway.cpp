@@ -338,7 +338,7 @@ void Gateway::OnDeviceDelete(Message& msg)
 	bool success = Server->DeleteDevice(id);
 
 	rs.Length = 0;
-	rs.Data[0] = success ? 1 : 0;
+	rs.Data[0] = success ? 0 : 1;
 
 	Client->Reply(rs);
 }
