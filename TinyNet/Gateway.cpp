@@ -61,15 +61,6 @@ void Gateway::Start()
 		dv->Name		= Sys.Name;
 
 		Server->Devices.Add(dv);
-
-		if(AutoReport)
-		{
-			TokenMessage msg;
-			msg.Code = 0x21;
-			OnGetDeviceList(msg);
-
-			SendDeviceInfo(dv);
-		}
 	}
 
 	Client->Open();
@@ -146,6 +137,18 @@ bool Gateway::OnRemote(TokenMessage& msg)
 	// 本地处理
 	switch(msg.Code)
 	{
+		case 0x82:
+			// 登录以后自动发送设备列表和设备信息
+			if(AutoReport && Client->Token != 0)
+			{
+				TokenMessage msg;
+				msg.Code = 0x21;
+				OnGetDeviceList(msg);
+
+				SendDeviceInfo(dv);
+			}
+			break;
+
 		case 0x20:
 			return OnMode(msg);
 		case 0x21:
