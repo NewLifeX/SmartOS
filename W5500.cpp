@@ -137,6 +137,8 @@ void W5500::Init()
 	memset(&General_reg,0,sizeof(General_reg));
 	memset(&_socket,NULL,sizeof(_socket));
 	PhaseOM = 0x00;
+	RX_FREE_SIZE = 0x16;
+	TX_FREE_SIZE = 0x16;
 }
 
 void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
@@ -587,7 +589,7 @@ void W5500::OnIRQ()
 		byte SEND_OK:1;		// 发送完成
 		byte Reserved:3;
 	}TSn_IR;
-	
+	// 状态
 	enum ESn_SR
 	{
 		// 常规状态
@@ -612,28 +614,12 @@ void W5500::OnIRQ()
 		SOCK_LAST_ACK	= 0x1D,		// Socket 被动关闭状态下，等待对方断开连接请求做出回应
 									// 超时或者成功收到断开请求都将 SOCK_CLOSED
 	};
-/*	
-	typedef struct : ByteStruct
-	{
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-		byte  :  ;		//
-	}T;
-*/	
 	
-	
-	
-
-HardwareSocket::HardwareSocket(W5500* thard)
+HardwareSocket::HardwareSocket(W5500* phard)
 {
-	if(!thard)
+	if(!phard)
 	{
-		_THard = thard;
+		_THard = phard;
 		Index = _THard->GetSocket();
 		if(Index < 8)
 			_THard->Register(Index , this);
@@ -643,16 +629,3 @@ HardwareSocket::HardwareSocket(W5500* thard)
 HardwareSocket::~HardwareSocket()
 {
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

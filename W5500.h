@@ -72,7 +72,9 @@ private:
 	bool WriteFrame(Frame& fra);
 	bool ReadFrame(Frame& fra,uint length);
 	// spi 模式（默认变长）
-	byte PhaseOM;		
+	byte PhaseOM;
+	byte RX_FREE_SIZE;	// 剩余接收缓存 kbyte
+	byte TX_FREE_SIZE;	// 剩余发送缓存 kbyte
 public:
 	// rst引脚可能不是独享的  这里只留一个指针
 	OutputPort* nRest;
@@ -150,38 +152,38 @@ private:
 										// PPPoE 模式下 略
 										// TCP UDP 模式下，传输数据比 MTU大时，数据将会自动划分成默认MTU 单元大小
 		byte Reserved ;		//0x0014  	
-		byte Sn_TOS ;		//0x0015  	// 
-		byte Sn_TTL ;		//0x0016  	// 
+		byte Sn_TOS ;		//0x0015  	// IP包头 服务类型 	OPEN之前配置
+		byte Sn_TTL ;		//0x0016  	// 生存时间 TTL 	OPEN之前配置
 		byte Reserved2[7] ;	//0x0017  	-  0x001d
-		byte Sn_RXBUF_SIZE ;//0x001e  	// 
-		byte Sn_TXBUF_SIZE ;//0x001f  	// 
-		byte Sn_TX_FSR[2] ;	//0x0020  	// 
-		byte Sn_TX_RD[2] ;	//0x0022  	// 
-		byte Sn_TX_WR[2] ;	//0x0024  	//
-		byte Sn_RX_RSR[2] ;	//0x0026  	//
-		byte Sn_RX_RD[2] ;	//0x0028  	//
-		byte Sn_RX_WR[2] ;	//0x002a  	//
-		byte Sn_IMR ;		//0x002c  	//
-		byte Sn_FRAG[2] ;	//0x002d  	//
-		byte Sn_KPALVTR ;	//0x002f  	//
+		byte Sn_RXBUF_SIZE ;//0x001e  	// 接收缓存大小   1 2 4 8 16  单位KByte
+		byte Sn_TXBUF_SIZE ;//0x001f  	// 发送缓存大小   1 2 4 8 16  单位KByte
+		byte Sn_TX_FSR[2] ;	//0x0020  	// 空闲发送寄存器大小
+		byte Sn_TX_RD[2] ;	//0x0022  	// 发送读缓存指针
+		byte Sn_TX_WR[2] ;	//0x0024  	// 发送写缓存指针
+		byte Sn_RX_RSR[2] ;	//0x0026  	// 空闲接收寄存器大小
+		byte Sn_RX_RD[2] ;	//0x0028  	// 发送读缓存指针
+		byte Sn_RX_WR[2] ;	//0x002a  	// 发送写缓存指针
+		byte Sn_IMR ;		//0x002c  	// 中断屏蔽寄存器  结构跟Sn_IR一样 0屏蔽  1不屏蔽
+		byte Sn_FRAG[2] ;	//0x002d  	// IP包头 分段部分  分段寄存器
+		
+		byte Sn_KPALVTR ;	//0x002f  	// 只在TCP模式下使用  在线时间寄存器  单位：5s
+										// 为0 时  手动SEND_KEEP
+										// > 0 时  忽略SEND_KEEP操作
 	}HSocketReg;
 private:
 	W5500*	_THard;	// W5500公共部分控制器
 public:
 	bool Enable;	// 启用
 	byte Index;		// 使用的硬Socket编号
-
+	
 	HardwareSocket(W5500* thard);
 	virtual ~HardwareSocket();
+	// 打开Socket
+	virtual bool OpenSocket() = 0;
+	// 恢复配置
+	virtual void Recovery() = 0;
 	// 处理数据包
 	virtual bool Process(Stream& ms) = 0;
 };
 
 #endif
-
-
-
-
-
-
-
