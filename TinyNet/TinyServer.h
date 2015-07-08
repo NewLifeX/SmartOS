@@ -33,6 +33,7 @@ public:
 	List<Device*> Devices;
 	Device* FindDevice(byte id);
 	Device* FindDevice(ByteArray& hardid);
+	bool	DeleteDevice(byte id);
 
 	// 当前设备
 	Device* Current;

@@ -56,6 +56,9 @@ public:
 	// 节点离线 0x24
 	void DeviceOffline(byte id);
 
+	// 节点删除 0x26
+	void OnDeviceDelete(Message& msg);
+
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
 	bool OnDiscover(TinyMessage& msg);

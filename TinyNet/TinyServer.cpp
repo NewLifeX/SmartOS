@@ -241,6 +241,19 @@ Device* TinyServer::FindDevice(ByteArray& hardid)
 	return NULL;
 }
 
+bool TinyServer::DeleteDevice(byte id)
+{
+	Device* dv = FindDevice(id);
+	if(dv && dv->ID == id)
+	{
+		Devices.Remove(dv);
+		delete dv;
+		return true;
+	}
+	
+	return false;
+}
+
 /******************************** Device ********************************/
 
 Device::Device() : HardID(0), Name(0), Pass(0)

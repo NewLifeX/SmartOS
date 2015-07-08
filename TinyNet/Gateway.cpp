@@ -322,6 +322,27 @@ void Gateway::DeviceOffline(byte id)
 	}
 }
 
+// 节点离线 0x26
+void Gateway::OnDeviceDelete(Message& msg)
+{
+	if(msg.Reply) return;
+	if(msg.Length == 0) return;
+
+	byte id = msg.Data[0];
+
+	TokenMessage rs;
+	rs.Code = msg.Code;
+
+	debug_printf("节点删除 ID=0x%02X\r\n", id);
+
+	bool success = Server->DeleteDevice(id);
+
+	rs.Length = 0;
+	rs.Data[0] = success ? 1 : 0;
+
+	Client->Reply(rs);
+}
+
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 {
 	msg2.Code = msg.Code;
