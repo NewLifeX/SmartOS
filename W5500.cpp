@@ -409,14 +409,18 @@ void W5500::SetGateway(IPAddress& ip)
 // 设置默认网关IP
 void W5500::DefGateway()
 {
-	const byte defip_[] = {192, 168, 1, 1};
+	const byte defip_[] = {192, 168, 0, 1};
 	IPAddress defip(defip_);
 	SetGateway(defip);
 }
 // 设置子网掩码
 void W5500::SetIpMask(IPAddress& mask)
 {
-	memcpy(General_reg.SUBR,&mask.Value,4);
+	short temp[2];
+	temp[1] = __REV16(mask.Value);
+	temp[0] = __REV16(mask.Value >> 16);
+	
+	memcpy(General_reg.SUBR,temp,4);
 	Frame frame;
 	frame.Address = (ushort)((uint)General_reg.SUBR - (uint)&General_reg);
 	frame.BSB =  0x00;	// 通用寄存器区
