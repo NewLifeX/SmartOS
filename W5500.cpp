@@ -106,7 +106,7 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 							// 重启后为1
 	}T_PHYCFGR;
 	
-	
+
 W5500::W5500() { Init(); }
 
 W5500::W5500(Spi* spi, Pin irq, OutputPort* rst)
@@ -416,11 +416,10 @@ void W5500::DefGateway()
 // 设置子网掩码
 void W5500::SetIpMask(IPAddress& mask)
 {
-	short temp[2];
-	temp[1] = __REV16(mask.Value);
-	temp[0] = __REV16(mask.Value >> 16);
-	
-	memcpy(General_reg.SUBR,temp,4);
+	//short temp[2];
+	//temp[1] = __REV16(mask.Value);
+	//temp[0] = __REV16(mask.Value >> 16);
+	memcpy(General_reg.SUBR,&mask.Value,4);
 	Frame frame;
 	frame.Address = (ushort)((uint)General_reg.SUBR - (uint)&General_reg);
 	frame.BSB =  0x00;	// 通用寄存器区
@@ -430,8 +429,8 @@ void W5500::SetIpMask(IPAddress& mask)
 // 设置默认子网掩码
 void W5500::DefIpMask()
 {
-	IPAddress defip;
-	defip = 0xFFFFFF00;
+	byte mask[4] = {255,255,255,0};
+	IPAddress defip(mask);
 	SetIpMask(defip);
 }
 // 设置自己的IP
@@ -471,6 +470,22 @@ void W5500::SetRetryCount(byte count)
 	frame.Address = (ushort)((uint)General_reg.RCR - (uint)&General_reg);
 	frame.BSB =  0x00;	// 通用寄存器区
 	frame.Data.Write<byte>(count);
+	
+	WriteFrame(frame);
+}
+// 中断时低电平持续时间
+void W5500::SetIrqLowLevelTime(int us)
+{	// Time = ( INTLEVEL + 1) * PLL_CLK *4     PLL_CLK = 25M？ 还是150M？
+	// 150M/4    	26.67ns
+	// 50M/4 		80ns
+	ushort intlevel = (us * 1000)/27;
+	//ushort intlevel = (us * 1000)/80;
+	
+	memcpy(General_reg.INTLEVEL,&intlevel,2);
+	Frame frame;
+	frame.Address = (ushort)((uint)General_reg.INTLEVEL - (uint)&General_reg);
+	frame.BSB =  0x00;	// 通用寄存器区
+	frame.Data.Write<ushort>(intlevel);
 	
 	WriteFrame(frame);
 }

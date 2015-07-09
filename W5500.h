@@ -136,6 +136,9 @@ public:
 	// 设置重试次数		超时重传的次数			最大256			（默认8次）
 	void SetRetryCount(byte count);
 	
+	// 中断时低电平持续时间
+	void SetIrqLowLevelTime(int us);
+	
 	// 开启PING应答
 	void OpenPingACK();
 	void ClosePingACK();
