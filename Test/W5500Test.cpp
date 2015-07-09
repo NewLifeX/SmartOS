@@ -17,8 +17,17 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	_Net->Init(spi,irq,reset);
 	Sys.Sleep(200);
 	MacAddress mac = 0x000066554433221100;
-	_Net->StateShow();
 	_Net->SetMac(mac);
+	//_Net->AutoMac();
+	_Net->DefGateway();
+	_Net->DefIpMask();
+	
+	byte ip[] = {192,168,0,200};
+	IPAddress myip(ip);
+	
+	_Net->SetMyIp(myip);
+	_Net->OpenPingACK();
+	_Net->StateShow();
 	
 	if(_Net->CheckLnk())
 		debug_printf("OK");

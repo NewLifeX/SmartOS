@@ -66,6 +66,7 @@ private:
 	HardwareSocket* _socket[8];	
 	// mac对象
 	MacAddress _mac;
+	IPAddress _ip;
 	// 收发数据锁，确保同时只有一个对象使用
 	volatile byte _Lock;			
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
@@ -78,6 +79,10 @@ private:
 public:
 	// rst引脚可能不是独享的  这里只留一个指针
 	OutputPort* nRest;
+	// DHCP服务器IP
+	//IPAddress DHCPServer;
+	//IPAddress DNSServer;
+	
 	// 软件复位
 	void SoftwareReset();
 	// 复位 包含硬件复位和软件复位
@@ -93,23 +98,47 @@ public:
     void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);
 	// 网卡状态输出
 	void StateShow();
-	// 输出物理链路层状态
-	void PhyStateShow();
+	
 	// 测试PHY状态  返回是否连接网线
 	bool CheckLnk();
+	// 输出物理链路层状态
+	void PhyStateShow();
+	
 	// 设置本地MAC
 	bool SetMac(MacAddress& mac);
 	// “随机”一个MAC  并设置
 	void AutoMac();
 	// 返回 MacAddress
 	MacAddress Mac();
+	
 	// 设置网关IP
-	void SetGateway(IPAddress& ip);	
+	void SetGateway(IPAddress& ip);
+	// 设置默认网关IP
+	void DefGateway();
+	// 获取网关IP
+	IPAddress GetGateway(){ _ip.Value =  *(uint*)General_reg.GAR; return _ip; };
+	
 	// 子网掩码
 	void SetIpMask(IPAddress& mask);
+	// 设置默认子网掩码
+	void DefIpMask();
+	// 获取子网掩码
+	IPAddress GetIpMask(){ _ip.Value =  *(uint*)General_reg.SUBR; return _ip; };
+	
+	// 设置自己的IP
+	void SetMyIp(IPAddress& ip);
+	// 获取自己的IP
+	IPAddress GetMyIp(){ _ip.Value =  *(uint*)General_reg.SIPR; return _ip; };
+	
+	/* 超时时间 = 重试时间*重试次数  */
+	// 设置重试时间		超时重传/触发超时中断	最大 6553ms		（默认200ms）
+	void SetRetryTime(ushort ms);
+	// 设置重试次数		超时重传的次数			最大256			（默认8次）
+	void SetRetryCount(byte count);
+	
 	// 开启PING应答
-	void OpenPingACK();	
-	void ClosePingACK();	
+	void OpenPingACK();
+	void ClosePingACK();
 	
 	//void OpenWol();		// 网络唤醒
 	void Recovery();

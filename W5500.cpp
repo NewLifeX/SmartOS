@@ -116,6 +116,7 @@ W5500::W5500(Spi* spi, Pin irq, OutputPort* rst)
 }
 
 W5500::~W5500() { }
+// 复位（软硬兼施）
 void W5500::Reset()
 {
 	if(nRest)
@@ -128,7 +129,22 @@ void W5500::Reset()
 	SoftwareReset();
 	//Sys.Sleep(1500);
 }
-
+// 软件复位
+void W5500::SoftwareReset()
+{
+	debug_printf("软件复位 \r\n");
+	Frame frame;
+	frame.Address = 0x00000;
+	frame.BSB =  0x00;	// 直接赋值简单暴力
+	
+	T_MR mr;
+	mr.Init();
+	mr.RST = 1 ;
+	frame.Data.Write<byte>(mr.ToByte());
+	
+	WriteFrame(frame);
+}
+// 初始化
 void W5500::Init()
 {
 	_Lock = 0;
@@ -140,7 +156,7 @@ void W5500::Init()
 	RX_FREE_SIZE = 0x16;
 	TX_FREE_SIZE = 0x16;
 }
-
+// 初始化
 void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
 {
 	if(rst) nRest = rst;
@@ -326,20 +342,6 @@ bool W5500::ReadFrame(Frame& frame,uint length)
 	return true;
 }
 
-void W5500::SoftwareReset()
-{
-	debug_printf("软件复位 \r\n");
-	Frame frame;
-	frame.Address = 0x00000;
-	frame.BSB =  0x00;	// 直接赋值简单暴力
-	
-	T_MR mr;
-	mr.Init();
-	mr.RST = 1 ;
-	frame.Data.Write<byte>(mr.ToByte());
-	
-	WriteFrame(frame);
-}
 // 测试PHY状态  返回是否LNK
 bool W5500::CheckLnk()
 {
@@ -354,7 +356,7 @@ bool W5500::CheckLnk()
 	phy.Init(General_reg.PHYCFGR);
 	return phy.LNK;
 }
-
+// 设置MAC地址
 bool W5500::SetMac(MacAddress& mac)		// 本地MAC
 {
 	Frame frame;
@@ -377,7 +379,7 @@ bool W5500::SetMac(MacAddress& mac)		// 本地MAC
 	}
 	return false;
 }
-// 获取MAC地址
+// “随机”一个MAC  并设置
 void W5500::AutoMac()
 {
 	MacAddress mac;
@@ -391,7 +393,7 @@ void W5500::AutoMac()
 // 获取MAC地址
 MacAddress W5500::Mac()
 {
-	_mac.Value = *(ulong *)* General_reg.SHAR;
+	_mac.Value = (*(ulong *)* General_reg.SHAR) & 0xFFFFFFFFFFFFull;
 	return _mac;
 }
 // 设置网关IP
@@ -404,6 +406,13 @@ void W5500::SetGateway(IPAddress& ip)
 	frame.Data.Write<uint>(ip.Value);
 	WriteFrame(frame);
 }
+// 设置默认网关IP
+void W5500::DefGateway()
+{
+	const byte defip_[] = {192, 168, 1, 1};
+	IPAddress defip(defip_);
+	SetGateway(defip);
+}
 // 设置子网掩码
 void W5500::SetIpMask(IPAddress& mask)
 {
@@ -412,6 +421,53 @@ void W5500::SetIpMask(IPAddress& mask)
 	frame.Address = (ushort)((uint)General_reg.SUBR - (uint)&General_reg);
 	frame.BSB =  0x00;	// 通用寄存器区
 	frame.Data.Write<uint>(mask.Value);
+	WriteFrame(frame);
+}
+// 设置默认子网掩码
+void W5500::DefIpMask()
+{
+	IPAddress defip;
+	defip = 0xFFFFFF00;
+	SetIpMask(defip);
+}
+// 设置自己的IP
+void W5500::SetMyIp(IPAddress& ip)
+{
+	memcpy(General_reg.SIPR,&ip.Value,4);
+	Frame frame;
+	frame.Address = (ushort)((uint)General_reg.SIPR - (uint)&General_reg);
+	frame.BSB =  0x00;	// 通用寄存器区
+	frame.Data.Write<uint>(ip.Value);
+	WriteFrame(frame);
+}
+// 设置超时时间
+void W5500::SetRetryTime(ushort ms)
+{
+	// RTR 单位是100us 所以最大6553ms
+	if(ms > 6553)
+	{
+		debug_printf("不支持的时间范围！\r\n");
+		return;
+	}
+	ushort time = ms*10;
+	
+	memcpy(General_reg.RTR,&time,2);
+	Frame frame;
+	frame.Address = (ushort)((uint)General_reg.RTR - (uint)&General_reg);
+	frame.BSB =  0x00;	// 通用寄存器区
+	frame.Data.Write<ushort>(time);
+	
+	WriteFrame(frame);
+}
+// 设置重试次数
+void W5500::SetRetryCount(byte count)
+{
+	General_reg.RCR = count;
+	Frame frame;
+	frame.Address = (ushort)((uint)General_reg.RCR - (uint)&General_reg);
+	frame.BSB =  0x00;	// 通用寄存器区
+	frame.Data.Write<byte>(count);
+	
 	WriteFrame(frame);
 }
 // 开启PING应答
@@ -442,7 +498,6 @@ void W5500::ClosePingACK()
 	frame.Data.Write<byte>(mr.ToByte());
 	WriteFrame(frame);
 }
-
 // 恢复全部状态
 void W5500::Recovery()
 {
