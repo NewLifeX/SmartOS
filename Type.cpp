@@ -230,10 +230,6 @@ String& String::Append(ByteArray& bs)
 	return *this;
 }
 
-extern  char* Load$$ER_IROM1$$Base;
-extern  int Load$$ER_IROM1$$Length; 
-
-#define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 // 调试输出字符串
 void String::Show(bool newLine) const
 {

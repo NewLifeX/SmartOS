@@ -63,6 +63,9 @@ typedef enum
 // 委托
 #include "Delegate.h"
 
+// 判定指针是否在ROM区
+#define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
+
 // 列表集合
 //#include "List.h"
 
