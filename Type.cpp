@@ -230,14 +230,19 @@ String& String::Append(ByteArray& bs)
 	return *this;
 }
 
+extern  char* Image$$ER_IROM1$$Base;
+extern  int Image$$ER_IROM1$$Length; 
+
+#define IN_ROM_SECTION(p)  ((p > Image$$ER_IROM1$$Base) && (p < (Image$$ER_IROM1$$Base + Image$$ER_IROM1$$Length)))
 // 调试输出字符串
 void String::Show(bool newLine) const
 {
 	if(!Length()) return;
-
+	
 	// C格式字符串以0结尾
 	char* p = GetBuffer();
-	p[Length()] = 0;
+	if(!IN_ROM_SECTION(p))
+		p[Length()] = 0;
 	
 	debug_printf("%s", GetBuffer());
 	if(newLine) debug_printf("\r\n");
