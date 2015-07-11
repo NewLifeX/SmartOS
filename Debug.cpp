@@ -61,6 +61,8 @@ void* operator new[](uint size)
 
 void operator delete(void * p)
 {
+	assert_ptr(p);
+
 	SmartIRQ irq;
 
 	mem_printf(" delete 0x%08x ", p);
@@ -69,6 +71,8 @@ void operator delete(void * p)
 
 void operator delete[](void * p)
 {
+	assert_ptr(p);
+
 	SmartIRQ irq;
 
 	mem_printf(" delete[] 0x%08x ", p);
