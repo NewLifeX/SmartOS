@@ -60,6 +60,11 @@ class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送
 	}General_reg;			// 只有一份 所以直接定义就好
 	
 private:
+	// 收发数据锁，确保同时只有一个对象使用
+	volatile byte _Lock;
+	// 本地 ip 是否是Dhcp得到的 1 是  0 不是
+	//byte IsDhcpIp;
+	
 	Spi* _spi;
     InputPort	_IRQ;
 	// 8个硬件socket
@@ -67,8 +72,6 @@ private:
 	// mac对象
 	MacAddress _mac;
 	IPAddress _ip;
-	// 收发数据锁，确保同时只有一个对象使用
-	volatile byte _Lock;			
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	bool WriteFrame(Frame& fra);
 	bool ReadFrame(Frame& fra,uint length);
@@ -95,7 +98,7 @@ public:
 	
 	// 初始化
 	void Init();
-    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);
+    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);	// 必须给出 rst 控制引脚
 	// 网卡状态输出
 	void StateShow();
 	
@@ -206,7 +209,7 @@ private:
 	W5500*	_THard;	// W5500公共部分控制器
 public:
 	bool Enable;	// 启用
-	byte Index;		// 使用的硬Socket编号
+	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
 	
 	HardwareSocket(W5500* thard);
 	virtual ~HardwareSocket();
@@ -215,7 +218,7 @@ public:
 	// 恢复配置
 	virtual void Recovery() = 0;
 	// 处理数据包
-	virtual bool Process(Stream& ms) = 0;
+	virtual bool Process() = 0;
 };
 
 #endif

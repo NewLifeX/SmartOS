@@ -14,9 +14,9 @@
 	101		未启用
 	110		未启用
 	111		所有功能，启用自动协商
-RSTn	重置	（低电平有效，低电平时间至少500us才能生效）
+RSTn	重置		（低电平有效，低电平时间至少500us才能生效）
 InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
-支持SPI 模式0和模式3
+支持SPI 模式0和模式3 自动识别
 */
 /*
 内部结构
@@ -28,10 +28,10 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 8个Socket收发缓存	总缓存32K
 	发缓存一共16K(0x0000-0x3fff)  	初始化分配为 每个Socket 2K
 	收缓存一共16K(0x0000-0x3fff)  	初始化分配为 每个Socket 2K
-	再分配时  收发都不可越16K 大边界
+	再分配时  收发都不可越16K大边界  地址自动按Socket编号调配
 */
 
-	class ByteStruct
+	class ByteStruct	// 位域基类
 	{
 	public:
 		void Init(byte data = 0) { *(byte*)this = data; }
@@ -43,7 +43,7 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 // 可变数据长度模式下，SCSn 拉低代表W5500的SPI 帧开始（地址段），拉高表示帧结束   （可能跟SPI NSS 不一样）
 
 	// 位域 低位在前
-	// 配置寄存器0x00
+	// 配置寄存器  CONFIG_Phase结构
 	typedef struct : ByteStruct
 	{
 		byte OM:2;		// SPI 工作模式
@@ -63,6 +63,7 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 						// 其余保留， 如果选择了保留的将会导致W5500故障
 	}CONFIG_Phase;
 //通用寄存器结构
+	// 模式寄存器
 	typedef struct : ByteStruct
 	{
 		byte Reserved:1;
@@ -85,7 +86,7 @@ InTn	中断输出	（低电平有效）--- 程序中 IRQ 引脚
 		byte CONFLICT:1;	// IP冲突
 	}T_IR;
 	// PHY 配置
-	typedef struct : ByteStruct		// IMR 结构一样 
+	typedef struct : ByteStruct	
 	{
 		byte LNK:1;			// 连接状态 1：已连接， 0：连接断开
 		byte SPD:1;			// 速度状态 1:100Mpbs， 0:10Mbps	【只读】
@@ -155,6 +156,7 @@ void W5500::Init()
 	PhaseOM = 0x00;
 	RX_FREE_SIZE = 0x16;
 	TX_FREE_SIZE = 0x16;
+	IsDhcpIp = 0;	// IP 本地ip不是dhcp获得的
 }
 // 初始化
 void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
@@ -162,6 +164,7 @@ void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
 	if(rst) nRest = rst;
 	if(irq != P0)
 	{	
+		// 中断引脚初始化
 		debug_printf("\r\nW5500::Init IRQ = P%c%d\r\n",_PIN_NAME(irq));
 		_IRQ.ShakeTime = 0;
 		_IRQ.Floating = false;
@@ -176,22 +179,25 @@ void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
 		debug_printf("SPI ERROR\r\n");
 		return;
 	}
+	// 提前打开 后面少费时间
 	_spi->Open();
+	// 复位
 	Reset();
-	
+	// 读硬件版本
 	Frame frame;
-	frame.Address 	= 0x0039;
+	frame.Address 	= 0x0039;	
 	frame.BSB 		= 0x00;
 	ReadFrame(frame,1);
 	byte version = frame.Data.Read<byte>();
 	debug_printf("Hard Vision: %02X\r\n",version);
-	
+	// 读所有寄存器
 	//Frame frame;
+	//frame.BSB = 0x00;
 	frame.Address = 0x0000;
-	frame.BSB = 0x00;
 	frame.Data.SetPosition(0);
 	
 	ReadFrame(frame,sizeof(General_reg));
+	// 同步寄存器值到 General_reg
 	frame.Data.Read((byte *)&General_reg,0,sizeof(General_reg));
 }
 // 网卡状态输出
@@ -558,13 +564,55 @@ void W5500::Register(byte Index,HardwareSocket* handler)
 // irq 中断处理部分
 void W5500::OnIRQ(Pin pin, bool down, void* param)
 {
-	if(!down)return;
+	if(down)return;	// 低电平中断
 	W5500* send = (W5500*)param;
 	send->OnIRQ();
 }
 
 void W5500::OnIRQ()
 {
+	// 读出中断状态
+	Frame frame;
+	frame.BSB = 0x00;
+	frame.Address = (ushort)((uint)General_reg.IR - (uint)&General_reg);
+	ReadFrame(frame,4);
+	frame.Read((byte *)&General_reg.IR,0,4);
+	// 分析IR
+	//T_IR ir;
+	//ir.Init(General_reg.IR);
+	//if(ir.CONFLICT)
+	//{
+	//	// IP 冲突
+	//}
+	//if(ir.MP)
+	//{
+	//	// 收到网络唤醒包
+	//}
+	//if(ir.UNREACH)
+	//{
+	//	// 读出不可达 IP 的信息
+	//	frame.Address = (ushort)((uint)General_reg.IR - (uint)&General_reg);
+	//	frame.Data.SetPosition(0);	// 丛头开始用
+	//	ReadFrame(frame,6);			// UIPR + UPORTR
+	//	frame.Data.Read((byte *)General_reg.UIPR,0,6);
+	//	debug_printf("IP 不可达： ");
+	//	debug_printf("IP:  %d.%d.%d.%d   ",General_reg.UIPR[0],General_reg.UIPR[1],General_reg.UIPR[2],General_reg.UIPR[3]);
+	//	debug_printf("Port:  %d\r\n",*(ushort*)General_reg.UPORTR);
+	//	// 处理..
+	//}
+	//if(ir.PPPoE) // PPPoE 连接不可达
+	byte temp = General_reg.SIR;
+	for(int i = 0;i < 8; i++)
+	{
+		if(temp & 0x01)
+		{
+			if(_socket[i])
+				_socket[i]->Process();
+		}
+		temp =>> 1;
+		if(temp = 0x00)break;
+	}
+	// 中断位清零 说明书说的不够清晰 有待完善
 }
 
 /****************************** 硬件Socket控制器 ************************************/
@@ -582,7 +630,7 @@ void W5500::OnIRQ()
 								 * | 2BYTE		   | 6BYTE | 6BYTE | 2BYTE|46-1500BYTE|		*/
 								 
 		byte UCASTB_MIP6B:1;	// 【UCASTB】【MIP6B】
-								// [UCASTB]	 单播阻撒	条件：【UDP 模式】且MULTI=1
+								// [UCASTB]	 单播阻塞	条件：【UDP 模式】且MULTI=1
 								//		0：关闭单播阻塞，1：开启单播阻塞
 								// [MIP6B]	IPv6包阻塞	条件：【MACRAW 模式】	
 								//		0：关闭IPv6包阻塞，1：开启IPv6包阻塞
@@ -648,7 +696,7 @@ void W5500::OnIRQ()
 		SEND_MAC	= 0x21,	// 只在【UDP 模式】下生效
 							// 使用Sn_DHAR 中的MAC进行发送（不进行ARP）
 							
-		SEND_KEEP	= 0x22,	// 只在【UDP 模式】下生效	通过发送1字节在线心跳包检查连接状态
+		SEND_KEEP	= 0x22,	// 只在【TCP 模式】下生效	通过发送1字节在线心跳包检查连接状态
 							// 如果对方不能在超时计数期内反馈在线心跳包，这个连接将被关闭并触发中断
 							
 		RECV		= 0x40,	// 通过使用接收读指针寄存器 Sn_RX_RD 来判定 接收缓存是否完成接收处理
