@@ -112,6 +112,11 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	MinSize = TokenMessage::MinSize;
 
+	// 默认屏蔽心跳日志和确认日志
+	ArrayZero(NoLogCodes);
+	NoLogCodes[0] = 0x03;
+	NoLogCodes[1] = 0x08;
+
 	_Response = NULL;
 
 	Stat	= NULL;
@@ -226,10 +231,7 @@ bool TokenController::OnReceive(Message& msg)
 		// 加解密。握手不加密，登录响应不加密
 		Encrypt(msg, Key);
 
-#if MSG_DEBUG
-		debug_printf("Token::RecvSync ");
-		msg.Show();
-#endif
+		ShowMessage("RecvSync", msg);
 
 		return true;
 	}
@@ -239,10 +241,7 @@ bool TokenController::OnReceive(Message& msg)
 	{
 		if(msg.Length >= 1) EndSendStat(msg.Data[0], true);
 
-#if MSG_DEBUG
-		debug_printf("Token::Recv ");
-		msg.Show();
-#endif
+		ShowMessage("Recv", msg);
 
 		return true;
 	}
@@ -262,10 +261,7 @@ bool TokenController::OnReceive(Message& msg)
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
 
-#if MSG_DEBUG
-	debug_printf("Token::Recv ");
-	msg.Show();
-#endif
+	ShowMessage("Recv", msg);
 
 	return Controller::OnReceive(msg);
 }
@@ -273,10 +269,7 @@ bool TokenController::OnReceive(Message& msg)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TokenController::Send(Message& msg)
 {
-#if MSG_DEBUG
-	debug_printf("Token::Send ");
-	msg.Show();
-#endif
+	ShowMessage("Send", msg);
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
@@ -335,6 +328,19 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	EndSendStat(code, rs);
 
 	return rs;
+}
+
+void TokenController::ShowMessage(string action, Message& msg)
+{
+#if MSG_DEBUG
+	for(int i=0; i<ArrayLength(NoLogCodes); i++)
+	{
+		if(msg.Code == NoLogCodes[i] || NoLogCodes[i] == 0) return;
+	}
+	
+	debug_printf("Token::%s ", action);
+	msg.Show();
+#endif
 }
 
 bool TokenController::StartSendStat(byte code)

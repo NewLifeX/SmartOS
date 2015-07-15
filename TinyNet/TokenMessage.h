@@ -62,6 +62,8 @@ public:
 	uint		Token;	// 令牌
 	ByteArray	Key;	// 通信密码
 
+	byte		NoLogCodes[8];	// 没有日志的指令
+
 	TokenController();
 	virtual ~TokenController();
 
@@ -76,6 +78,8 @@ public:
 	// 响应消息
 private:
 	Message*	_Response;	// 等待响应的指令
+
+	void ShowMessage(string action, Message& msg);
 
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
