@@ -139,8 +139,8 @@ void TokenController::Open()
 	{
 		Stat = new TokenStat();
 		//Stat->Start();
-		debug_printf("TokenStat::令牌统计 ");
-		_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000);
+		//debug_printf("TokenStat::令牌统计 ");
+		_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000, "令牌统计");
 	}
 
 	Controller::Open();

@@ -94,8 +94,8 @@ void TinyClient::SetDefault()
 	_control->Register(5, SysMode, this);
 
 	// 发现服务端的任务
-	debug_printf("开始寻找服务端 ");
-	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000);
+	//debug_printf("开始寻找服务端 ");
+	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000, "发现服务");
 }
 
 // 最后发送Discover消息的ID，防止被别人欺骗，直接向我发送Discover响应
@@ -175,8 +175,8 @@ bool TinyClient::Discover(Message& msg, void* param)
 	// 启动Ping任务
 	if(!_taskPing)
 	{
-		debug_printf("开始Ping服务端 ");
-		_taskPing = Sys.AddTask(PingTask, client, 0, 15000000);
+		//debug_printf("开始Ping服务端 ");
+		_taskPing = Sys.AddTask(PingTask, client, 0, 15000000, "心跳");
 	}
 
 	if(client->OnDiscover) return client->OnDiscover(msg, param);

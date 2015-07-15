@@ -212,8 +212,8 @@ void TinyController::Open()
 
 	if(!_taskID)
 	{
-		debug_printf("TinyNet::微网消息队列 ");
-		_taskID = Sys.AddTask(SendTask, this, 0, 1000);
+		//debug_printf("TinyNet::微网消息队列 ");
+		_taskID = Sys.AddTask(SendTask, this, 0, 1000, "微网队列");
 		// 默认禁用，有数据要发送才开启
 		//Sys.SetTask(_taskID, false);
 	}
@@ -222,8 +222,8 @@ void TinyController::Open()
 	memset(&Last, 0, sizeof(Last));
 
 	// 因为统计不准确，暂时不显示状态统计
-	debug_printf("TinyNet::统计 ");
-	Sys.AddTask(StatTask, this, 1000000, 5000000);
+	//debug_printf("TinyNet::统计 ");
+	Sys.AddTask(StatTask, this, 1000000, 5000000, "微网统计");
 }
 
 void ShowMessage(TinyMessage& msg, bool send, ITransport* port)

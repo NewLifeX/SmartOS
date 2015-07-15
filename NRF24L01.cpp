@@ -678,8 +678,8 @@ bool NRF24L01::SetMode(bool isReceive)
 		Close();
 		if(Open()) return true;
 
-		debug_printf("定时检查2401热插拔 ");
-		_AutoOpenTaskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000);
+		//debug_printf("定时检查2401热插拔 ");
+		_AutoOpenTaskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000, "R24热插拔");
 		return false;
 	}
 
@@ -1134,8 +1134,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	{
 		if(!_ReceiveTaskID)
 		{
-			debug_printf("R24::接收轮询 ");
-			_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000);
+			//debug_printf("R24::接收轮询 ");
+			_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000, "R24接收");
 		}
 		// 如果外部没有设定，则内部设定
 		//if(!_timer) _timer = new Timer(TIM2);

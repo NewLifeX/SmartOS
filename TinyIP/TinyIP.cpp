@@ -227,8 +227,8 @@ bool TinyIP::Open()
 	ShowInfo();
 
 	// 添加到系统任务，马上开始，尽可能多被调度
-	debug_printf("TinyIP::以太网轮询 ");
-    Sys.AddTask(Work, this, 0, 1000);
+	//debug_printf("TinyIP::以太网轮询 ");
+    Sys.AddTask(Work, this, 0, 1000, "以太网");
 
 #if NET_DEBUG
 	uint us = Time.Current() - _StartTime;

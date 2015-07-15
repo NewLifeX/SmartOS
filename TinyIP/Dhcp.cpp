@@ -133,8 +133,8 @@ void Dhcp::Start()
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 创建任务，每秒发送一次Discover
-	debug_printf("Dhcp发送Discover ");
-	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000);
+	//debug_printf("Dhcp发送Discover ");
+	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000, "DHCP");
 
 	// 通过DHCP获取IP期间，关闭Arp响应
 	//Tip->EnableArp = false;
@@ -263,8 +263,8 @@ void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 				// DHCP租约过了一半以后重新获取IP地址
 				if(time > 0)
 				{
-					debug_printf("Dhcp过期获取 ");
-					Sys.AddTask(RenewDHCP, Tip, (ulong)time / 2 * 1000000, -1);
+					//debug_printf("Dhcp过期获取 ");
+					Sys.AddTask(RenewDHCP, Tip, (ulong)time / 2 * 1000000, -1, "DHCP超时");
 				}
 			}
 

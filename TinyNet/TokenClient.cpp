@@ -54,8 +54,8 @@ void TokenClient::Open()
 	}
 
 	// 令牌客户端定时任务
-	debug_printf("Token::Open 令牌客户端定时 ");
-	_taskHello = Sys.AddTask(LoopTask, this, 1000000, 5000000);
+	//debug_printf("Token::Open 令牌客户端定时 ");
+	_taskHello = Sys.AddTask(LoopTask, this, 1000000, 5000000, "令牌客户端");
 }
 
 void TokenClient::Close()
