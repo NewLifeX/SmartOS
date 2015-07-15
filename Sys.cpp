@@ -216,7 +216,6 @@ TSys::TSys()
 
     Interrupt.Init();
 
-	//_Scheduler = NULL;
 	OnStart = NULL;
 }
 
@@ -546,63 +545,36 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 
 // 任务
 #include "Task.h"
-// 任务类
-TaskScheduler* _Scheduler;
 
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, ulong dueTime, long period)
+uint TSys::AddTask(Action func, void* param, ulong dueTime, long period, string name)
 {
-	// 屏蔽中断，否则可能有线程冲突
-	SmartIRQ irq;
-
-	if(!_Scheduler) _Scheduler = new TaskScheduler("系统");
-
-	return _Scheduler->Add(func, param, dueTime, period);
+	return Scheduler.Add(func, param, dueTime, period, name);
 }
 
 void TSys::RemoveTask(uint taskid)
 {
-	assert_ptr(_Scheduler);
-
-	_Scheduler->Remove(taskid);
-}
-
-void TSys::SetTask(uint taskid, bool enable)
-{
-	Task* task = (*_Scheduler)[taskid];
-	if(task) task->Enable = enable;
+	Scheduler.Remove(taskid);
 }
 
 void TSys::Start()
 {
-	if(!_Scheduler) _Scheduler = new TaskScheduler("系统");
-
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
 	if(OnStart)
 		OnStart();
 	else
-		_Scheduler->Start();
-}
-
-void TSys::StartInternal()
-{
-	_Scheduler->Start();
-}
-
-void TSys::Stop()
-{
-	_Scheduler->Stop();
+		Scheduler.Start();
 }
 
 void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(_Scheduler && (!us || us >= 1000))
+	if(!us || us >= 1000)
 	{
 		// 记录当前正在执行任务
-		Task* task = _Scheduler->Current;
+		Task* task = Scheduler.Current;
 
 		ulong start = Time.Current();
 		// 1ms一般不够调度新任务，留给硬件等待
@@ -613,7 +585,7 @@ void TimeSleep(uint us)
 		{
 			ulong start2 = Time.Current();
 
-			_Scheduler->Execute(us);
+			Scheduler.Execute(us);
 
 			ulong now = Time.Current();
 			cost += (int)(now - start2);
@@ -626,7 +598,7 @@ void TimeSleep(uint us)
 
 		if(task)
 		{
-			_Scheduler->Current = task;
+			Scheduler.Current = task;
 			task->SleepTime += cost;
 		}
 

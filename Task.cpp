@@ -1,9 +1,13 @@
 ﻿#include "Task.h"
 
+// 全局任务调度器
+TaskScheduler Scheduler("系统");
+
 Task::Task(TaskScheduler* scheduler)
 {
 	_Scheduler = scheduler;
 
+	Name		= NULL;
 	Times		= 0;
 	CpuTime		= 0;
 	SleepTime	= 0;
@@ -11,15 +15,15 @@ Task::Task(TaskScheduler* scheduler)
 	Enable		= true;
 }
 
-/*Task::~Task()
+Task::~Task()
 {
 	if(ID) _Scheduler->Remove(ID);
-}*/
+}
 
 // 显示状态
 void Task::ShowStatus()
 {
-	debug_printf("Task::Status 任务 %d [%d] 执行 %dus 平均 %dus\r\n", ID, Times, CpuTime, Cost);
+	debug_printf("Task::%s %d [%d] 执行 %dus 平均 %dus\r\n", Name, ID, Times, CpuTime, Cost);
 }
 
 TaskScheduler::TaskScheduler(string name)
@@ -40,14 +44,15 @@ TaskScheduler::~TaskScheduler()
 }
 
 // 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period)
+uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period, string name)
 {
-	Task* task = new Task(this);
-	task->ID = _gid++;
-	task->Callback = func;
-	task->Param = param;
-	task->Period = period;
-	task->NextTime = Time.Current() + dueTime;
+	Task* task	= new Task(this);
+	task->ID	= _gid++;
+	task->Name	= name;
+	task->Callback	= func;
+	task->Param		= param;
+	task->Period	= period;
+	task->NextTime	= Time.Current() + dueTime;
 
 	Count++;
 	_Tasks.Add(task);
@@ -59,10 +64,10 @@ uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period)
 	{
 		uint dt = dueTime / 1000;
 		int  pd = period > 0 ? period / 1000 : period;
-		debug_printf("%s::添加任务%d 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, func, dt, pd);
+		debug_printf("%s::添加%d %s 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, name, func, dt, pd);
 	}
 	else
-		debug_printf("%s::添加任务%d 0x%08x FirstTime=%uus Period=%dus\r\n", Name, task->ID, func, (uint)dueTime, (int)period);
+		debug_printf("%s::添加%d %s 0x%08x FirstTime=%uus Period=%dus\r\n", Name, task->ID, name, func, (uint)dueTime, (int)period);
 #endif
 
 	return task->ID;
@@ -77,7 +82,7 @@ void TaskScheduler::Remove(uint taskid)
 		if(task->ID == taskid)
 		{
 			_Tasks.RemoveAt(i);
-			debug_printf("%s::删除任务%d 0x%08x\r\n", Name, task->ID, task->Callback);
+			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
 			// 首先清零ID，避免delete的时候再次删除
 			task->ID = 0;
 			delete task;
@@ -92,7 +97,7 @@ void TaskScheduler::Start()
 
 #if DEBUG
 	//Add(ShowTime, NULL, 2000000, 2000000);
-	Add(ShowStatus, this, 10000000, 120000000);
+	Add(ShowStatus, this, 10000000, 120000000, "任务状态");
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
@@ -179,7 +184,7 @@ void TaskScheduler::Execute(uint usMax)
 void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* ts = (TaskScheduler*)param;
-	
+
 	int i = -1;
 	while(ts->_Tasks.MoveNext(i))
 	{

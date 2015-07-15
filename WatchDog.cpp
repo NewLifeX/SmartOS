@@ -173,5 +173,5 @@ void WatchDog::Start(uint ms)
 	uint us = ms * 1000;
 
 	debug_printf("WatchDog::Start ");
-	Sys.AddTask(FeedDogTask, &dog, us, us);
+	Sys.AddTask(FeedDogTask, &dog, us, us, "看门狗");
 }

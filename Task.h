@@ -6,6 +6,9 @@
 
 class TaskScheduler;
 
+// 全局任务调度器
+extern TaskScheduler Scheduler;
+
 // 任务
 class Task
 {
@@ -18,6 +21,7 @@ private:
 
 public:
 	uint	ID;			// 编号
+	string	Name;		// 名称
 	Action	Callback;	// 回调
 	void*	Param;		// 参数
 	long	Period;		// 周期us
@@ -29,7 +33,7 @@ public:
 	bool	Enable;		// 是否启用
 	byte	Reversed[3];// 保留，避免对齐问题
 
-	//~Task();
+	~Task();
 
 	void ShowStatus();	// 显示状态
 };
@@ -38,7 +42,7 @@ public:
 class TaskScheduler
 {
 private:
-	FixedArray<Task, 32> _Tasks;
+	FixedArray<Task, 16> _Tasks;
 	uint _gid;	// 总编号
 
 	friend class Task;
@@ -54,7 +58,7 @@ public:
 	~TaskScheduler();
 
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-	uint Add(Action func, void* param, ulong dueTime = 0, long period = 0);
+	uint Add(Action func, void* param, ulong dueTime = 0, long period = 0, string name = NULL);
 	void Remove(uint taskid);
 
 	void Start();

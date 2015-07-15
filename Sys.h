@@ -127,24 +127,15 @@ public:
 private:
 	int _Index;	// MCU在型号表中的索引
 
-	// 任务类
-	//TaskScheduler* _Scheduler;
-
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-	uint AddTask(Action func, void* param, ulong dueTime = 0, long period = 0);
+	uint AddTask(Action func, void* param, ulong dueTime = 0, long period = 0, string name = NULL);
 	void RemoveTask(uint taskid);
-	void SetTask(uint taskid, bool enable);
 	void Start();	// 开始系统大循环
-	void StartInternal();
 	Func OnStart;
-	void Stop();
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
-
-// 任务
-//#include "Task.h"
 
 // 内存管理
 #include "Memory.h"

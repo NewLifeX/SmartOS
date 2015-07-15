@@ -1,4 +1,5 @@
 ﻿#include "Thread.h"
+#include "Task.h"
 
 //#define TH_DEBUG DEBUG
 #define TH_DEBUG 0
@@ -608,7 +609,7 @@ void Thread::OnTick()
 }
 
 void Idle_Handler(void* param) { while(1); }
-void Main_Handler(void* param) { Sys.StartInternal(); while(1); }
+void Main_Handler(void* param) { Scheduler.Start(); while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;
