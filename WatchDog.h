@@ -18,8 +18,8 @@ public:
 	void ConfigMax();		// 看门狗无法关闭，只能设置一个最大值
 	void Feed(); // 喂狗
 
-	// 打开看门狗。最长喂狗时间26208ms，默认1000ms
-	static void Start(uint ms = 1000);
+	// 打开看门狗。最长喂狗时间26208ms，默认2000ms
+	static void Start(uint ms = 2000);
 };
 
 #endif
