@@ -12,13 +12,10 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(TinyMessage& msg, TokenMessage& msg2);
 
 // 本地网和远程网一起实例化网关服务
-Gateway::Gateway(TinyServer* server, TokenClient* client)
+Gateway::Gateway()
 {
-	assert_param(server);
-	assert_param(client);
-
-	Server = server;
-	Client = client;
+	Server = NULL;
+	Client = NULL;
 
 	Running		= false;
 	AutoReport	= false;
@@ -39,6 +36,9 @@ Gateway::~Gateway()
 void Gateway::Start()
 {
 	if(Running) return;
+
+	assert_param2(Server, "微网服务端未设置");
+	assert_param2(Client, "令牌客户端未设置");
 
 	Server->Received	= OnLocalReceived;
 	Server->Param		= this;
@@ -63,6 +63,7 @@ void Gateway::Start()
 		Server->Devices.Add(dv);
 	}
 
+	Server->Start();
 	Client->Open();
 
 	Running = true;
@@ -349,7 +350,7 @@ void Gateway::OnDeviceDelete(Message& msg)
 	rs.Data[0] = success ? 0 : 1;
 
 	Client->Reply(rs);
-	
+
 }
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
