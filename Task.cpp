@@ -23,7 +23,18 @@ Task::~Task()
 // 显示状态
 void Task::ShowStatus()
 {
-	debug_printf("Task::%s %d [%d] 执行 %dus 平均 %dus\r\n", Name, ID, Times, CpuTime, Cost);
+	debug_printf("Task::%s \t%d [%d] \t平均 %dus ", Name, ID, Times, Cost);
+	if(Cost < 1000) debug_printf("\t");
+
+	debug_printf("\t周期 ");
+	if(Period >= 1000000)
+		debug_printf("%ds", Period / 1000000);
+	else if(Period >= 1000)
+		debug_printf("%dms", Period / 1000);
+	else
+		debug_printf("%dus", Period);
+	if(!Enable) debug_printf(" 禁用");
+	debug_printf("\r\n");
 }
 
 TaskScheduler::TaskScheduler(string name)
@@ -97,7 +108,7 @@ void TaskScheduler::Start()
 
 #if DEBUG
 	//Add(ShowTime, NULL, 2000000, 2000000);
-	Add(ShowStatus, this, 10000000, 120000000, "任务状态");
+	Add(ShowStatus, this, 10000000, 30000000, "任务状态");
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 

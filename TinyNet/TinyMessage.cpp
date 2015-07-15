@@ -1,4 +1,5 @@
 ﻿#include "TinyMessage.h"
+#include "Task.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -215,7 +216,8 @@ void TinyController::Open()
 		//debug_printf("TinyNet::微网消息队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000, "微网队列");
 		// 默认禁用，有数据要发送才开启
-		//Sys.SetTask(_taskID, false);
+		Task* task = Scheduler[_taskID];
+		task->Enable = false;
 	}
 
 	memset(&Total, 0, sizeof(Total));
@@ -461,7 +463,7 @@ void SendTask(void* param)
 
 void TinyController::Loop()
 {
-	int count;
+	int count = 0;
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
 		MessageNode& node = _Queue[i];
@@ -524,6 +526,8 @@ void TinyController::Loop()
 	{
 		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
 		//Sys.SetTask(_taskID, false);
+		Task* task = Scheduler[_taskID];
+		task->Enable = false;
 	}
 }
 
@@ -564,7 +568,8 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	Total.Msg++;
 
-	//Sys.SetTask(_taskID, true);
+	Task* task = Scheduler[_taskID];
+	task->Enable = true;
 
 	return true;
 }
