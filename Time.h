@@ -47,14 +47,14 @@ class TTime
 private:
     static void OnHandler(ushort num, void* param);
 	DateTime _Now;
-	volatile uint _usTicks;		// 计算微秒时剩下的嘀嗒数
+	volatile uint _usTicks;		// 计算微秒时剩下的滴答数
 	volatile uint _msUs;		// 计算毫秒时剩下的微秒数
 
 public:
     volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
 	volatile ulong Milliseconds;	// 全局毫秒数
-    //volatile ulong NextEvent;    // 下一个计划事件的嘀嗒数
+    //volatile ulong NextEvent;    // 下一个计划事件的滴答数
 
     //uint TicksPerSecond;        // 每秒的时钟滴答数
     //ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
@@ -82,7 +82,7 @@ extern TTime Time;
 class TimeWheel
 {
 public:
-	ulong	Expire;		// 到期时间，微秒
+	ulong	Expire;		// 到期时间，滴答
 	uint	Sleep;		// 睡眠时间，默认0毫秒
 
 	TimeWheel(uint seconds, uint ms = 0, uint us = 0);
@@ -93,14 +93,14 @@ public:
 	bool Expired();
 };
 
-// 代码执行时间
-class CodeTime
+// 时间开支。借助滴答进行精确计算
+class TimeCost
 {
 public:
-	ulong Start;	// 开始时间，微秒
-	
-	CodeTime();
-	
+	ulong Start;	// 开始时间，滴答
+
+	TimeCost();
+
 	uint Elapsed();	// 逝去的时间，微秒
 	void Show(const char* format = NULL);
 };

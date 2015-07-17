@@ -147,7 +147,7 @@ void TaskScheduler::Execute(uint usMax)
 			task->NextTime = now + task->Period;
 			if(task->NextTime < min) min = task->NextTime;
 
-			ulong now2 = Time.Current();
+			TimeCost tc;
 			task->SleepTime = 0;
 
 			Current = task;
@@ -156,7 +156,8 @@ void TaskScheduler::Execute(uint usMax)
 
 			// 累加任务执行次数和时间
 			task->Times++;
-			int cost = (int)(Time.Current() - now2);
+			int cost = tc.Elapsed();
+			if(cost < 0) debug_printf("cost = %d \r\n", cost);
 			if(cost < 0) cost = -cost;
 			//if(cost > 0)
 			{

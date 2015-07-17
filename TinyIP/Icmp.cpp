@@ -144,7 +144,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	ip.Show();
 	debug_printf(" with Identifier=0x%04x Sequence=0x%04x", id, seq);
 
-	CodeTime ct;
+	TimeCost ct;
 #endif
 	Tip->SendIP(IP_ICMP, ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 

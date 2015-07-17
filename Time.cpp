@@ -84,14 +84,27 @@ void TTime::OnHandler(ushort num, void* param)
 
 		Time.Ticks += value;
 
-		Time._usTicks += value;
+		/*Time._usTicks += value;
 		uint us = Time._usTicks / Time.TicksPerMicrosecond;
 		Time.Microseconds += us;
 		Time._usTicks %= Time.TicksPerMicrosecond;
 
 		Time._msUs += us;
 		Time.Milliseconds += Time._msUs / 1000;
-		Time._msUs %= 1000;
+		Time._msUs %= 1000;*/
+
+		// 这次的嘀嗒数加上上一次的剩余量，折算为微秒数
+		volatile uint ts = Time._usTicks + value;
+		uint us = ts / Time.TicksPerMicrosecond;
+
+		// 这次的微秒数加上上一次的剩余量
+		volatile uint ms = Time._msUs + us;
+
+		// 从大到小累加单位，避免出现总时间变小的情况
+		Time.Milliseconds += ms / 1000;
+		Time.Microseconds += us;
+		Time._msUs = ms % 1000;
+		Time._usTicks = ts % Time.TicksPerMicrosecond;
 
 		if(Sys.OnTick) Sys.OnTick();
 	}
@@ -138,6 +151,7 @@ ulong TTime::Current()
 {
 	uint value = (SysTick->LOAD - SysTick->VAL);
 
+	//return (Ticks + value) / TicksPerMicrosecond;
 	return Microseconds + (_usTicks + value) / TicksPerMicrosecond;
 }
 
@@ -354,18 +368,18 @@ bool TimeWheel::Expired()
 	return false;
 }
 
-CodeTime::CodeTime()
+TimeCost::TimeCost()
 {
-	Start = Time.Current();
+	Start = Time.CurrentTicks();
 }
 
 // 逝去的时间，微秒
-uint CodeTime::Elapsed()
+uint TimeCost::Elapsed()
 {
-	return (uint)(Time.Current() - Start);
+	return ((uint)(Time.CurrentTicks() - Start)) / Time.TicksPerMicrosecond;
 }
 
-void CodeTime::Show(const char* format)
+void TimeCost::Show(const char* format)
 {
 	if(!format) format = "执行 %dus";
 	debug_printf(format, Elapsed());

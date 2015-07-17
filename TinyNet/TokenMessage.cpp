@@ -286,7 +286,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 #if MSG_DEBUG
 	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
 
-	CodeTime ct;
+	TimeCost ct;
 #endif
 
 	if(msg.Reply) return Send(msg) != 0;
