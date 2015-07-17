@@ -375,9 +375,9 @@ TimeCost::TimeCost()
 }
 
 // 逝去的时间，微秒
-uint TimeCost::Elapsed()
+int TimeCost::Elapsed()
 {
-	return ((uint)(Time.CurrentTicks() - Start)) / Time.TicksPerMicrosecond;
+	return ((int)(Time.CurrentTicks() - Start)) / Time.TicksPerMicrosecond;
 }
 
 void TimeCost::Show(const char* format)

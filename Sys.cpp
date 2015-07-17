@@ -576,34 +576,30 @@ void TimeSleep(uint us)
 		// 记录当前正在执行任务
 		Task* task = Scheduler.Current;
 
-		ulong start = Time.Current();
-		// 1ms一般不够调度新任务，留给硬件等待
-		ulong end = start + us - 1000;
+		TimeCost tc;
+		// 实际可用时间。1ms一般不够调度新任务，留给硬件等待
+		int total = us - 1000;
 		// 如果休眠时间足够长，允许多次调度其它任务
-		int cost = 0;
 		while(true)
 		{
-			ulong start2 = Time.Current();
+			// 统计这次调度的时间，累加作为当前任务的休眠时间
+			TimeCost tc2;
 
-			Scheduler.Execute(us);
+			Scheduler.Execute(total);
 
-			ulong now = Time.Current();
-			cost += (int)(now - start2);
+			total -= tc2.Elapsed();
 
-			// us=0 表示释放一下CPU
-			if(!us) return;
-
-			if(now >= end) break;
+			if(total <= 0) break;
 		}
 
+		int cost = tc.Elapsed();
 		if(task)
 		{
 			Scheduler.Current = task;
 			task->SleepTime += cost;
 		}
 
-		cost = (int)(Time.Current() - start);
-		if(cost > 0) return;
+		if(cost >= us) return;
 
 		us -= cost;
 	}

@@ -265,8 +265,8 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 	// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
 #if !DEBUG
-	ulong end = Sys.StartTime + 100000;
-	while(!GetPower() && end > Time.Current()) Sys.Delay(10);
+	TimeWheel tw(0, 100);
+	while(!GetPower() && !tw.Expired()) Sys.Sleep(1);
 #endif
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
@@ -915,7 +915,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	bool rs = false;
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
-	ulong us = 0;
+	TimeWheel tw(0, Timeout);
 	do
 	{
 		Status = ReadReg(STATUS);
@@ -941,9 +941,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			break;
 		}
-
-		if(!us) us = Time.Current() + Timeout * 1000;
-	}while(us > Time.Current());
+	}while(!tw.Expired());
 
 	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
 	CEDown();
@@ -956,9 +954,11 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 bool NRF24L01::WaitForIRQ()
 {
-	ulong us = Time.Current() + Timeout * 1000; // 等待100ms
-	while(_IRQ.Read() && us > Time.Current());
-	if(us >= Time.Current()) return true;
+	TimeWheel tw(0, Timeout);
+	while(_IRQ.Read())
+	{
+		if(tw.Expired()) return true;
+	}
 
 	// 读取状态寄存器的值
 	Status = ReadReg(STATUS);

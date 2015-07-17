@@ -101,7 +101,7 @@ public:
 
 	TimeCost();
 
-	uint Elapsed();	// 逝去的时间，微秒
+	int Elapsed();	// 逝去的时间，微秒
 	void Show(const char* format = NULL);
 };
 
