@@ -513,7 +513,13 @@ void TokenStat::Clear()
 String& TokenStat::ToStr(String& str) const
 {
 	int p = Percent();
-	str.Format("发：%d.%d2%% %d/%d/%d %dus 收：%d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
+	int q = p % 100;
+	p /= 100;
+	if(q == 0)
+		str.Format("发：%d%%", p);
+	else
+		str.Format("发：%d.%02d%%", p, q);
+	str.Format(" %d/%d/%d %dus 收：%d/%d ", Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	/*p = _Total->Percent();
 	str.Format("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
 	if(_Total)
