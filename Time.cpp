@@ -354,13 +354,14 @@ TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
 void TimeWheel::Reset(uint seconds, uint ms, uint us)
 {
 	Expire = ((seconds * 1000) + ms) * 1000 + us;
-	Expire += Time.Current();
+	Expire *= Time.TicksPerMicrosecond;
+	Expire += Time.CurrentTicks();
 }
 
 // 是否已过期
 bool TimeWheel::Expired()
 {
-	if(Time.Current() >= Expire) return true;
+	if(Time.CurrentTicks() >= Expire) return true;
 
 	// 睡眠，释放CPU
 	if(Sleep) Sys.Sleep(Sleep);
