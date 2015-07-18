@@ -90,7 +90,7 @@ bool TinyMessage::Read(Stream& ms)
 		Retry = ms.Read<byte>();
 	else
 	{
-		debug_printf("调试模式下居然没有Retry\r\n");
+		//debug_printf("调试模式下居然没有Retry\r\n");
 		Retry = 0;
 	}
 #endif
