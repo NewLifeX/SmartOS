@@ -47,29 +47,31 @@ class TTime
 private:
     static void OnHandler(ushort num, void* param);
 	DateTime _Now;
-	volatile uint _usTicks;		// 计算微秒时剩下的滴答数
-	volatile uint _msUs;		// 计算毫秒时剩下的微秒数
+	volatile uint _usTicks;			// 计算微秒时剩下的滴答数
+	volatile uint _msUs;			// 计算毫秒时剩下的微秒数
 
 public:
     volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。
 	volatile ulong Microseconds;	// 全局微秒数
 	volatile ulong Milliseconds;	// 全局毫秒数
-    //volatile ulong NextEvent;    // 下一个计划事件的滴答数
+    //volatile ulong NextEvent;		// 下一个计划事件的滴答数
 
-    //uint TicksPerSecond;        // 每秒的时钟滴答数
+    //uint TicksPerSecond;			// 每秒的时钟滴答数
     //ushort TicksPerMillisecond;	// 每毫秒的时钟滴答数
-    byte TicksPerMicrosecond;   // 每微秒的时钟滴答数
+    byte TicksPerMicrosecond;		// 每微秒的时钟滴答数
 
-	uint InterruptsPerSecond;	// 每秒的中断数，时间片抢占式系统调度算法基于此值调度，也即是线程时间片，默认1000
+	//uint InterruptsPerSecond;		// 每秒的中断数，时间片抢占式系统调度算法基于此值调度，也即是线程时间片，默认1000
 
     TTime();
     ~TTime();
 
 	void Init();
+	void SetMax(uint usMax);		// 设置多少个微秒发生一次中断。基于时间片抢占式系统基于此调度
     //void SetCompare(ulong compareValue);
+	
     ulong CurrentTicks();	// 当前滴答时钟
-	void SetTime(ulong us);	// 设置时间
 	ulong Current(); 		// 当前微秒数
+	void SetTime(ulong us);	// 设置时间
     void Sleep(uint us);
 
 	// 当前时间。外部不要释放该指针

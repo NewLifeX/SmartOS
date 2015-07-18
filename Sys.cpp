@@ -563,7 +563,11 @@ void TSys::Start()
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
 	if(OnStart)
+	{
+		// 设置重载值，让其每1ms重载一次
+		Time.SetMax(1000);
 		OnStart();
+	}
 	else
 		Scheduler.Start();
 }

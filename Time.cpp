@@ -8,14 +8,14 @@
 TTime::TTime()
 {
 	Ticks = 0;
+	Microseconds = 0;
+	Milliseconds = 0;
 	//NextEvent = TIME_Completion_IdleValue;
 
-	Microseconds = 0;
 	_usTicks = 0;
-	Milliseconds = 0;
 	_msUs = 0;
 
-	InterruptsPerSecond = 100;
+	//InterruptsPerSecond = 100;
 }
 
 TTime::~TTime()
@@ -27,9 +27,6 @@ TTime::~TTime()
 
 void TTime::Init()
 {
-	//RCC_ClocksTypeDef  clock;
-	//RCC_GetClocksFreq(&clock);	// 获得系统时钟频率。
-
 	// 准备使用外部时钟，Systick时钟=HCLK/8
 	uint clk = Sys.Clock / 8;
 	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
@@ -37,10 +34,23 @@ void TTime::Init()
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	//TicksPerSecond = Sys.Clock / 8;		// 每秒的嘀嗒数
-	//TicksPerMillisecond = TicksPerSecond / 1000;	// 每毫秒的嘀嗒数
 	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
 
+	SetMax(0);
+
+	// 必须放在SysTick_Config后面，因为它设为不除以8
+	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
+	// 本身主频已经非常快，除以8分频吧
+	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
+
+	// 需要最高优先级
+    Interrupt.SetPriority(SysTick_IRQn, 0);
+	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
+}
+
+// 设置最大计数，也就是滴答定时器重载值
+void TTime::SetMax(uint usMax)		
+{
 	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
 
@@ -51,19 +61,11 @@ void TTime::Init()
 
 	// InterruptsPerSecond单位：中断每秒，clk单位：滴答每秒，ticks单位：滴答每中断
 	// 默认100，也即是每秒100次中断，10ms一次
-	uint ticks = clk / InterruptsPerSecond;
+	uint ticks = SYSTICK_MAXCOUNT;
+	if(usMax > 0) ticks = usMax * TicksPerMicrosecond;
 	// ticks为每次中断的嘀嗒数，也就是重载值
-	assert_param(ticks > 0 && ticks < SYSTICK_MAXCOUNT);
+	assert_param(ticks > 0 && ticks <= SYSTICK_MAXCOUNT);
 	SysTick_Config(ticks);
-
-	// 必须放在SysTick_Config后面，因为它设为不除以8
-	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
-	// 本身主频已经非常快，除以8分频吧
-	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
-
-	// 需要最高优先级
-    Interrupt.SetPriority(SysTick_IRQn, 0);
-	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
 }
 
 #if defined(STM32F0) || defined(STM32F4)
