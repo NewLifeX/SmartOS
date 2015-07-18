@@ -129,18 +129,15 @@ void TaskScheduler::Stop()
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint usMax)
 {
-	ulong now = Time.Current() - Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
+	ulong now = Time.Current();
+	ulong end = now + usMax;
+	now -= Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
 	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
-	ulong end = Time.Current() + usMax;
-
-	// 需要跳过当前正在执行任务的调度
-	//Task* _cur = Current;
 
 	int i = -1;
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		//if(task && task != _cur && task->Enable && task->NextTime <= now)
 		if(task && task->Enable && task->NextTime <= now)
 		{
 			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整

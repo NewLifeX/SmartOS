@@ -10,7 +10,6 @@ NRF24L01* nrf;
 void OnSend(void* param)
 {
 	// 最后4个字节修改为秒数
-    //uint s = __REV(Time.Current() / 1000000);
 	// 大概4.86%的误差
     uint s = __REV(Time.Current() >> 20);
     byte* p = tx_buf + ArrayLength(tx_buf) - 8;

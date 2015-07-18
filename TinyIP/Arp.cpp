@@ -328,7 +328,6 @@ void ArpSocket::Add(const IPAddress& ip, const MacAddress& mac)
 #endif
 	}
 
-	//uint sNow = Time.Current() / 1000000;	// 当前时间，秒
 	uint sNow = Time.Current() >> 20;	// 当前时间，秒
 	// 保存
 	item->IP	= ip.Value;

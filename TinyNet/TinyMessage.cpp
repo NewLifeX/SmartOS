@@ -187,12 +187,11 @@ TinyController::TinyController() : Controller()
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
-	//while(!Address) Address = Time.Current();
 	// 节点地址范围2~254，网关专用0x01，节点让步
 	while(Address < 2 || Address > 254)
 	{
 		Sys.Delay(30);
-		Address = Time.Current();
+		Address = Time.CurrentTicks();
 	}
 
 	ArrayZero(_Queue);
@@ -472,11 +471,12 @@ void TinyController::Loop()
 		// 检查时间。至少发送一次
 		if(node.Next > 0)
 		{
+			ulong now2 = Time.Current();
 			// 下一次发送时间还没到，跳过
-			if(node.Next > Time.Current()) continue;
+			if(node.Next > now2) continue;
 
 			// 已过期则删除
-			if(node.Expired < Time.Current())
+			if(node.Expired < now2)
 			{
 				debug_printf("消息过期 Dest=0x%02X Seq=%d Period=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Period, node.Times);
 				node.Using = 0;
