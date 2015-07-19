@@ -21,6 +21,39 @@ Task::~Task()
 	if(ID) _Scheduler->Remove(ID);
 }
 
+void Task::Execute(ulong now)
+{
+	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
+	NextTime = now + Period;
+
+	TimeCost tc;
+	SleepTime = 0;
+
+	_Scheduler->Current = this;
+	Callback(Param);
+	_Scheduler->Current = NULL;
+
+	// 累加任务执行次数和时间
+	Times++;
+	int cost = tc.Elapsed();
+	if(cost < 0) debug_printf("cost = %d \r\n", cost);
+	if(cost < 0) cost = -cost;
+	//if(cost > 0)
+	{
+		cost -= SleepTime;
+		if(cost > MaxCost) MaxCost = cost;
+		CpuTime += cost;
+		Cost = CpuTime / Times;
+	}
+
+#if DEBUG
+	if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, cost, SleepTime);
+#endif
+
+	// 如果只是一次性任务，在这里清理
+	if(Period < 0) _Scheduler->Remove(ID);
+}
+
 // 显示状态
 void Task::ShowStatus()
 {
@@ -144,44 +177,13 @@ void TaskScheduler::Execute(uint usMax)
 		Task* task = _Tasks[i];
 		if(task && task->Enable && task->NextTime <= now)
 		{
-			// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-			task->NextTime = now + task->Period;
+			task->Execute(now);
 			if(task->NextTime < min) min = task->NextTime;
 
-			TimeCost tc;
-			task->SleepTime = 0;
-
-			Current = task;
-			task->Callback(task->Param);
-			Current = NULL;
-
-			// 累加任务执行次数和时间
-			task->Times++;
-			int cost = tc.Elapsed();
-			if(cost < 0) debug_printf("cost = %d \r\n", cost);
-			if(cost < 0) cost = -cost;
-			//if(cost > 0)
-			{
-				cost -= task->SleepTime;
-				if(cost > task->MaxCost) task->MaxCost = cost;
-				task->CpuTime += cost;
-				task->Cost = task->CpuTime / task->Times;
-			}
-
-#if DEBUG
-			if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", task->ID, task->Times, cost, task->SleepTime);
-#endif
-
-			// 如果只是一次性任务，在这里清理
-			if(task->Period < 0) Remove(task->ID);
-
+			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出
 			if(!usMax || Time.Current() > end) return;
 		}
-
-		// 为了确保至少被有效调度一次，需要在被调度任务内判断
-		/*// 如果已经超出最大可用时间，则退出
-		if(!usMax || Time.Current() > end) return;*/
 	}
 
 	// 如果有最小时间，睡一会吧
@@ -189,12 +191,6 @@ void TaskScheduler::Execute(uint usMax)
 	if(min != UInt64_Max && min > now)
 	{
 		min -= now;
-#if DEBUG
-		//debug_printf("TaskScheduler::Execute 等待下一次任务调度 %uus\r\n", (uint)min);
-#endif
-		//// 最大只允许睡眠1秒，避免Sys.Delay出现设计错误，同时也更人性化
-		//if(min > 1000000) min = 1000000;
-		//Sys.Delay(min);
 		Time.Sleep(min);
 	}
 }

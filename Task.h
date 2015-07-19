@@ -40,6 +40,7 @@ public:
 
 	~Task();
 
+	void Execute(ulong now);
 	void ShowStatus();	// 显示状态
 };
 
