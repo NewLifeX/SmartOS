@@ -194,6 +194,8 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* ts = (TaskScheduler*)param;
 
+	debug_printf("Task::ShowStatus 系统启动 %s \r\n", Time.Now().ToString());
+
 	int i = -1;
 	while(ts->_Tasks.MoveNext(i))
 	{
