@@ -168,10 +168,14 @@ void TaskScheduler::Execute(uint usMax)
 
 			// 如果只是一次性任务，在这里清理
 			if(task->Period < 0) Remove(task->ID);
+
+			// 如果已经超出最大可用时间，则退出
+			if(!usMax || Time.Current() > end) return;
 		}
 
-		// 如果已经超出最大可用时间，则退出
-		if(!usMax || Time.Current() > end) return;
+		// 为了确保至少被有效调度一次，需要在被调度任务内判断
+		/*// 如果已经超出最大可用时间，则退出
+		if(!usMax || Time.Current() > end) return;*/
 	}
 
 	// 如果有最小时间，睡一会吧

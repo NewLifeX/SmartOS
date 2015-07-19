@@ -581,8 +581,8 @@ void TimeSleep(uint us)
 		Task* task = Scheduler.Current;
 
 		TimeCost tc;
-		// 实际可用时间。1ms一般不够调度新任务，留给硬件等待
-		int total = us - 1000;
+		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
+		int total = us - 100;
 		// 如果休眠时间足够长，允许多次调度其它任务
 		while(true)
 		{
