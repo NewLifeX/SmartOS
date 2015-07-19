@@ -12,6 +12,7 @@ Task::Task(TaskScheduler* scheduler)
 	CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
+	MaxCost		= 0;
 	Enable		= true;
 }
 
@@ -25,6 +26,9 @@ void Task::ShowStatus()
 {
 	debug_printf("Task::%s \t%d [%d] \t平均 %dus ", Name, ID, Times, Cost);
 	if(Cost < 1000) debug_printf("\t");
+
+	debug_printf("\t最大 %dus ", MaxCost);
+	if(MaxCost < 1000) debug_printf("\t");
 
 	debug_printf("\t周期 ");
 	if(Period >= 1000000)
@@ -158,7 +162,9 @@ void TaskScheduler::Execute(uint usMax)
 			if(cost < 0) cost = -cost;
 			//if(cost > 0)
 			{
-				task->CpuTime += cost - task->SleepTime;
+				cost -= task->SleepTime;
+				if(cost > task->MaxCost) task->MaxCost = cost;
+				task->CpuTime += cost;
 				task->Cost = task->CpuTime / task->Times;
 			}
 
