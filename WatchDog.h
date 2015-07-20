@@ -19,7 +19,7 @@ public:
 	void Feed(); // 喂狗
 
 	// 打开看门狗。最长喂狗时间26208ms，默认2000ms
-	static void Start(uint msTimeout = 2000, uint msFeed = 500);
+	static void Start(uint msTimeout = 2000, uint msFeed = 100);
 };
 
 #endif

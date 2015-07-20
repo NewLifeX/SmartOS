@@ -175,7 +175,9 @@ void TaskScheduler::Execute(uint usMax)
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		if(task && task->Enable && task->NextTime <= now)
+		if(task && task->Enable && task->NextTime <= now
+		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
+		&& Time.Current() + task->Cost <= end)
 		{
 			task->Execute(now);
 			if(task->NextTime < min) min = task->NextTime;
