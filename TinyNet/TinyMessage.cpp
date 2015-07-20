@@ -27,24 +27,6 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 #endif
 }
 
-/*TinyMessage::TinyMessage(TinyMessage& msg) : Message(msg)
-{
-	Data = _Data;
-
-	memcpy(&Dest, &msg.Dest, MinSize);
-
-	Crc = msg.Crc;
-
-	assert_ptr(Data);
-	assert_ptr(msg.Data);
-
-	if(Length) memcpy(Data, msg.Data, Length);
-	TTL = msg.TTL;
-#if MSG_DEBUG
-	Retry = msg.Retry;
-#endif
-}*/
-
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 bool TinyMessage::Read(Stream& ms)
 {
@@ -89,10 +71,7 @@ bool TinyMessage::Read(Stream& ms)
 	if(ms.Remain() > 0)
 		Retry = ms.Read<byte>();
 	else
-	{
-		//debug_printf("调试模式下居然没有Retry\r\n");
 		Retry = 0;
-	}
 #endif
 
 	return true;
@@ -136,11 +115,11 @@ bool TinyMessage::Valid() const
 {
 	if(Checksum == Crc) return true;
 
-	/*debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
+	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
 	debug_printf("校验错误指令 ");
 	Show();
-#endif*/
+#endif
 
 	return false;
 }
@@ -165,7 +144,6 @@ void TinyMessage::Show() const
 	{
 		assert_ptr(Data);
 		msg_printf(" Data[%d]=", Length);
-		//Sys.ShowString(Data, Length, false);
 		ByteArray bs(Data, Length);
 		bs.Show();
 	}
@@ -215,16 +193,13 @@ void TinyController::Open()
 		//debug_printf("TinyNet::微网消息队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000, "微网队列");
 		// 默认禁用，有数据要发送才开启
-		Task* task = Scheduler[_taskID];
-		task->Enable = false;
+		Scheduler[_taskID]->Enable = false;
 	}
 
 	memset(&Total, 0, sizeof(Total));
 	memset(&Last, 0, sizeof(Last));
 
-	// 因为统计不准确，暂时不显示状态统计
-	//debug_printf("TinyNet::统计 ");
-	Sys.AddTask(StatTask, this, 1000000, 5000000, "微网统计");
+	Sys.AddTask(StatTask, this, 1000000, 15000000, "微网统计");
 }
 
 void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
@@ -239,10 +214,8 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 		blank -= 5;
 	}
 	else
-	{
-		//msg_printf("%s", port->ToString());
 		msg_printf("::");
-	}
+
 	if(msg.Error)
 	{
 		msg_printf("Error ");
@@ -319,11 +292,6 @@ bool TinyController::Valid(Message& msg)
 		}
 	}
 
-#if MSG_DEBUG
-	// 尽量在Ack以后再输出日志，加快Ack处理速度
-	//ShowMessage(tmsg, false, port);
-#endif
-
 	// 广播的响应消息也不要
 	if(tmsg.Dest == 0 && tmsg.Reply) return false;
 
@@ -389,7 +357,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 		}
 	}
 
-	//if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
+	if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
 }
 
 // 向对方发出Ack包
@@ -407,8 +375,6 @@ void TinyController::AckResponse(TinyMessage& msg)
 #if MSG_DEBUG
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
-
-	//msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
 
 	bool rs = Controller::Send(msg2);
 	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
@@ -524,10 +490,7 @@ void TinyController::Loop()
 
 	if(count == 0)
 	{
-		//debug_printf("TinyNet::Loop 消息队列为空，禁用任务\r\n");
-		//Sys.SetTask(_taskID, false);
-		Task* task = Scheduler[_taskID];
-		task->Enable = false;
+		Scheduler[_taskID]->Enable = false;
 	}
 }
 
@@ -568,8 +531,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	Total.Msg++;
 
-	Task* task = Scheduler[_taskID];
-	task->Enable = true;
+	Scheduler[_taskID]->Enable = true;
 
 	return true;
 }
@@ -627,7 +589,7 @@ void TinyController::ShowStat()
 	uint cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
 	uint speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
 	uint retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
-	msg_printf("TinyController::State 成功率=%d%% 平均时间=%dus 速度=%d Byte/s 平均重发=%d.%02d 收发=%d/%d \r\n", rate, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Msg + Total.Msg);
+	msg_printf("Tiny::State 成功=%d%% 平均=%dus 速度=%d Byte/s 重发=%d.%02d 收发=%d/%d \r\n", rate, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Msg + Total.Msg);
 }
 
 void MessageNode::SetMessage(TinyMessage& msg)
