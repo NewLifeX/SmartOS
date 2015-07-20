@@ -82,7 +82,10 @@ TaskScheduler::TaskScheduler(string name)
 
 	Running = false;
 	Current	= NULL;
-	Count = 0;
+	Count	= 0;
+
+	Cost	= 0;
+	MaxCost	= 0;
 }
 
 TaskScheduler::~TaskScheduler()
@@ -171,6 +174,8 @@ void TaskScheduler::Execute(uint usMax)
 	now -= Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
 	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
 
+	TimeCost tc;
+
 	int i = -1;
 	while(_Tasks.MoveNext(i))
 	{
@@ -188,6 +193,13 @@ void TaskScheduler::Execute(uint usMax)
 		}
 	}
 
+	int cost = tc.Elapsed();
+	if(Cost > 0)
+		Cost = (Cost + cost) / 2;
+	else
+		Cost = cost;
+	if(cost > MaxCost) MaxCost = cost;
+
 	// 如果有最小时间，睡一会吧
 	now = Time.Current();	// 当前时间
 	if(min != UInt64_Max && min > now)
@@ -202,7 +214,7 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* ts = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 系统启动 %s \r\n", Time.Now().ToString());
+	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 %s \r\n", ts->Cost, ts->MaxCost, Time.Now().ToString());
 
 	int i = -1;
 	while(ts->_Tasks.MoveNext(i))

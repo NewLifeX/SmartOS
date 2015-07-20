@@ -60,6 +60,9 @@ public:
 	bool	Running;	// 是否正在运行
 	byte	Reversed[3];// 保留，避免对齐问题
 
+	int		Cost;		// 平均执行时间
+	int		MaxCost;	// 最大执行时间
+
 	TaskScheduler(string name = NULL);
 	~TaskScheduler();
 
