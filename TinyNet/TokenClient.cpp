@@ -242,6 +242,9 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 	}
 	else
 	{
+		// 登录失败，清空令牌
+		Token = 0;
+
 		if(result == 0xFF) Status = 0;
 
 		debug_printf("登录失败，错误码 0x%02X！", result);
