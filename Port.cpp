@@ -72,6 +72,15 @@ Port& Port::Set(Pin pin)
 	return *this;
 }
 
+bool Port::Empty() const
+{
+	if(_Pin != P0) return false;
+
+	if(Group == NULL || PinBit == 0) return true;
+
+	return false;
+}
+
 // 确定配置,确认用对象内部的参数进行初始化
 void Port::Config()
 {
@@ -283,6 +292,8 @@ bool OutputPort::Read(Pin pin)
 
 void OutputPort::Write(bool value)
 {
+	if(Empty()) return;
+
     if(value ^ Invert)
         GPIO_SetBits(Group, PinBit);
     else
@@ -291,11 +302,15 @@ void OutputPort::Write(bool value)
 
 void OutputPort::WriteGroup(ushort value)
 {
+	if(Empty()) return;
+
     GPIO_Write(Group, value);
 }
 
 void OutputPort::Up(uint ms)
 {
+	if(Empty()) return;
+
     Write(true);
 	Sys.Sleep(ms);
     Write(false);
@@ -303,6 +318,8 @@ void OutputPort::Up(uint ms)
 
 void OutputPort::Blink(uint times, uint ms)
 {
+	if(Empty()) return;
+
 	bool flag = true;
     for(int i=0; i<times; i++)
 	{
@@ -316,6 +333,8 @@ void OutputPort::Blink(uint times, uint ms)
 // 设置端口状态
 void OutputPort::Write(Pin pin, bool value)
 {
+	if(pin == P0) return;
+
     if(value)
         GPIO_SetBits(_GROUP(pin), _PORT(pin));
     else
