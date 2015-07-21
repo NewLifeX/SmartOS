@@ -79,7 +79,7 @@
 		byte PWR_UP:1;	// 1:上电 0:掉电
 		byte CRCO:1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
 		byte EN_CRC:1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-		byte MAX_RT:1;	// 可屏蔽中断MAX_RT, 1 IRQ 引脚不显示TX_DS 中断, 0 MAX_RT 中断产生时IRQ 引脚电平为低
+		byte MAX_RT:1;	// 可屏蔽中断MAX_RT, 1 IRQ 引脚不显示MAX_RT 中断, 0 MAX_RT 中断产生时IRQ 引脚电平为低
 		byte TX_DS:1;	// 可屏蔽中断TX_DS, 1 IRQ 引脚不显示TX_DS 中断, 0 TX_DS 中断产生时IRQ 引脚电平为低
 		byte RX_DR:1;	// 可屏蔽中断RX_RD, 1 IRQ 引脚不显示RX_RD 中断, 0 RX_RD 中断产生时IRQ 引脚电平为低
 		byte Reserved:1;
@@ -313,7 +313,7 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 // 向NRF的寄存器中写入一串数据
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
-#if DEBUG
+#if RF_DEBUG
 	if(!GetMode())
 		debug_printf("NRF24L01::ReadBuf 只能接收模式下用。\r\n");
 #endif
@@ -339,7 +339,7 @@ byte NRF24L01::ReadReg(byte reg)
 // 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
-#if DEBUG
+#if RF_DEBUG
 	/*if(_CE && _CE->Read())
 	{
 		debug_printf("NRF24L01::WriteReg 只允许Shutdown、Standby、Idle-TX模式下操作\r\n");
@@ -391,7 +391,7 @@ bool NRF24L01::Check(void)
 // 配置
 bool NRF24L01::Config()
 {
-#if DEBUG
+#if RF_DEBUG
 	debug_printf("NRF24L01::Config\r\n");
 
 	// 检查芯片特征
@@ -497,9 +497,9 @@ bool NRF24L01::Config()
 	config.EN_CRC = 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
 	config.PRIM_RX = 1;							// 默认进入接收模式
 
-	config.MAX_RT = 1;
-	config.TX_DS = 1;
-	/*config.RX_DR = 1;*/
+	config.MAX_RT = 0;
+	config.TX_DS = 0;
+	config.RX_DR = 0;
 
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
@@ -536,7 +536,7 @@ bool NRF24L01::CheckConfig()
 
 void NRF24L01::ClearFIFO(bool rx)
 {
-#if DEBUG
+#if RF_DEBUG
 	if(rx)
 	{
 		if(!GetMode()) debug_printf("NRF24L01::ClearFIFO 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
@@ -675,7 +675,6 @@ bool NRF24L01::SetMode(bool isReceive)
 		Close();
 		if(Open()) return true;
 
-		//debug_printf("定时检查2401热插拔 ");
 		_AutoOpenTaskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000, "R24热插拔");
 		return false;
 	}
@@ -1060,7 +1059,7 @@ void NRF24L01::OnIRQ()
 
 void NRF24L01::ShowStatus()
 {
-#if DEBUG
+#if RF_DEBUG
 	// 读状态寄存器
 	Status = ReadReg(STATUS);
 	FifoStatus = ReadReg(FIFO_STATUS);
@@ -1134,8 +1133,8 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		if(!_ReceiveTaskID)
-			_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000, "R24接收");
+		//if(!_ReceiveTaskID)
+		//	_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000, "R24接收");
 	}
 	else
 	{
