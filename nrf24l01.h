@@ -23,16 +23,10 @@ private:
 	bool WaitForIRQ();
 	void AddError();
 
-    void CEUp();
-    void CEDown();
-
 	// 接收任务。
-	//static void ReceiveTask(void* sender, void* param);
 	static void ReceiveTask(void* param);
 	uint _AutoOpenTaskID;
 	uint _ReceiveTaskID;
-	Timer* _timer;		// 使用硬件定时器，取得比主线程更高的优先级
-	//Thread* _Thread;
 	static void OnIRQ(Pin pin, bool down, void* param);
 	void OnIRQ();
 
@@ -41,7 +35,7 @@ private:
 	void Init();
 
 public:
-    byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加0x28 MHZ
+    byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加
 	byte Address[5];	// 通道0地址
 	byte Address1[5];	// 通道1地址
 	byte Addr2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
@@ -65,11 +59,7 @@ public:
 
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
-	OutputPort* Power;
-	//void SetPowerPin(OutputPort *pin){_Power = pin;};		// 设置控制2401电源的引脚  直接进行对2401的通断电操作
-															// 以免死机对setPower无效
-															// 因为power的true false在内部写好  电源是否是取反操作无法设定所以
-															// SetPowerPin(new OutputPort(pin,true/false));
+	OutputPort* Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
 	bool GetPower();	// 获取当前电源状态
 	bool SetPower(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式

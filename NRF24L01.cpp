@@ -2,6 +2,8 @@
 #include "Port.h"
 #include "NRF24L01.h"
 
+#define RF_DEBUG 1
+
 #define RF2401_REG
 #ifdef  RF2401_REG
 /********************************************************************************/
@@ -223,8 +225,6 @@ void NRF24L01::Init()
 
 	_AutoOpenTaskID = 0;
 	_ReceiveTaskID = 0;
-	_timer = NULL;
-	//_Thread = NULL;
 
 	_Lock = 0;
 
@@ -239,20 +239,17 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 	else
 		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P0\r\n", _PIN_NAME(ce));
 
-	//_CE = NULL;
     if(ce != P0)
 	{
-		//_CE = new OutputPort(ce, false, false);
-		//*_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+		// 拉高CE，可以由待机模式切换到RX/TX模式
+		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
 		_CE.Set(ce);
 		_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
 	}
-	//_IRQ = NULL;
     if(irq != P0)
     {
         // 中断引脚初始化
-        //_IRQ = new InputPort(irq, false, InputPort::PuPd_UP);
 		//_IRQ->ShakeTime = 2;
 		_IRQ.Floating = false;
 		_IRQ.PuPd = InputPort::PuPd_UP;
@@ -461,7 +458,7 @@ bool NRF24L01::Config()
 
 	//ShowStatus();
 	SetPower(false);
-	CEDown();
+	_CE = false;
 
 	SetAddress(true);
 
@@ -515,7 +512,7 @@ bool NRF24L01::Config()
 
 	if(!SetPower(true)) return false;
 
-	CEUp();
+	_CE = true;
 
 	//Sys.Sleep(1000);
 	// 上电后并不能马上使用，需要一段时间才能载波。标称100ms，实测1000ms
@@ -633,7 +630,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
 	// 必须拉低CE后修改配置，然后再拉高
-	CEDown();
+	_CE = false;
 
 	// 不能随便清空FIFO寄存器，否则收到的数据都被清掉了
 	if(isReceive) // 接收模式
@@ -664,7 +661,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		// 发送前清空缓冲区和标识位
 		ClearFIFO(false);
 	}
-	CEUp();
+	_CE = true;
 
 	// 进入发射模式等一会
 	if(!isReceive) Sys.Delay(200);
@@ -864,13 +861,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	}
 
 	// 进入Standby
-	//CEDown();
+	//_CE = false;
 
 	// 清除中断标志
 	ClearStatus(false, true);
 	ClearFIFO(true);
 
-	//CEUp();
+	//_CE = true;
 	if(rs && LedRx) *LedRx = !*LedRx;
 
 	return rs;
@@ -902,7 +899,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	if(!SetMode(false)) return false;
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
-	CEDown();
+	_CE = false;
 
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
@@ -911,7 +908,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	WriteBuf(cmd, data, len);
 
 	// 进入TX，维持一段时间
-	CEUp();
+	_CE = true;
 
 	bool rs = false;
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
@@ -931,20 +928,26 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 		if(st.TX_DS || st.MAX_RT)
 		{
-			CEDown();
+			_CE = false;
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
 
 			rs = st.TX_DS;
 
-			if(!st.TX_DS && st.MAX_RT) AddError();
+			if(!st.TX_DS && st.MAX_RT)
+			{
+#if RF_DEBUG
+				if(st.MAX_RT) debug_printf("发送超过最大重试次数\r\n");
+#endif
+				AddError();
+			}
 
 			break;
 		}
 	}while(!tw.Expired());
 
 	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
-	CEDown();
+	_CE = false;
 	ClearFIFO(false);
 
 	SetMode(true);	// 发送完成以后进入接收模式
@@ -988,10 +991,14 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 	NRF24L01* nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
-	//debug_printf("IRQ down=%d\r\n", down);
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	if(!nrf->Opened || nrf->_Lock != 0) return;
-	//if(!nrf->Opened) return;
+
+#if RF_DEBUG
+	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
+	debug_printf("NRF24L01::OnIRQ ");
+	nrf->ShowStatus();
+#endif
 
 	nrf->OnIRQ();
 }
@@ -1006,10 +1013,6 @@ void NRF24L01::OnIRQ()
 	st.Init(Status);
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
-
-	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
-	//debug_printf("NRF24L01::OnIRQ ");
-	//ShowStatus();
 
 	// 发送完成或最大重试次数以后进入接收模式
 	if(st.TX_DS || st.MAX_RT)
@@ -1112,7 +1115,6 @@ bool NRF24L01::CanReceive()
 	return st.RX_DR;
 }
 
-//void NRF24L01::ReceiveTask(void* sender, void* param)
 void NRF24L01::ReceiveTask(void* param)
 {
 	assert_ptr(param);
@@ -1133,51 +1135,11 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	if(handler)
 	{
 		if(!_ReceiveTaskID)
-		{
-			//debug_printf("R24::接收轮询 ");
 			_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000, "R24接收");
-		}
-		// 如果外部没有设定，则内部设定
-		//if(!_timer) _timer = new Timer(TIM2);
-		//if(!_timer) _timer = Timer::Create();
-
-		//_timer->SetFrequency(10000);
-		//_timer->Register(ReceiveTask, this);
-		//_timer->Start();
-
-		/*if(!_Thread)
-		{
-			// 分配1k大小的栈
-			_Thread = new Thread(ReceiveTask, this, 0x1000);
-			_Thread->Name = "RF2401";
-			_Thread->Start();
-		}*/
 	}
 	else
 	{
 		if(_ReceiveTaskID) Sys.RemoveTask(_ReceiveTaskID);
 		_ReceiveTaskID = 0;
-		if(_timer) delete _timer;
-		_timer = NULL;
-
-		//delete _Thread;
-		//_Thread = NULL;
 	}
-}
-
-// 拉高CE，可以由待机模式切换到RX/TX模式
-void NRF24L01::CEUp()
-{
-    if(!_CE.Empty())
-	{
-		_CE = true;
-		// 经过测试，貌似不用延迟130us也可以使用
-		//Sys.Delay(130); // 切换模式，高电平>10us
-	}
-}
-
-// 拉低CE，由收发模式切换回来待机模式
-void NRF24L01::CEDown()
-{
-    if(!_CE.Empty()) _CE = false;
 }
