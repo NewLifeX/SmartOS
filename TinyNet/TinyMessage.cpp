@@ -158,7 +158,7 @@ TinyController::TinyController() : Controller()
 	_Sequence	= 0;
 	_taskID		= 0;
 	Interval	= 2000;
-	Timeout		= 50000;
+	Timeout		= 200000;
 
 	MinSize = TinyMessage::MinSize;
 
