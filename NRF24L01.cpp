@@ -491,15 +491,15 @@ bool NRF24L01::Config()
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
 	config.Init();
-	//config.PWR_UP = 1;							// 1:上电 0:掉电
-	config.CRCO = 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
-	//config.EN_CRC = AutoAnswer ? 1 : 0;			// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	config.EN_CRC = 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	config.PRIM_RX = 1;							// 默认进入接收模式
+	config.PRIM_RX	= 0;
+	config.PWR_UP	= 0;							// 1:上电 0:掉电
+	config.CRCO		= 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
+	config.EN_CRC	= 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	config.PRIM_RX	= 1;							// 默认进入接收模式
 
-	config.MAX_RT = 0;
-	config.TX_DS = 0;
-	config.RX_DR = 0;
+	config.MAX_RT	= 0;
+	config.TX_DS	= 0;
+	config.RX_DR	= 0;
 
 	byte mode = config.ToByte();
 	WriteReg(CONFIG, mode);
@@ -706,7 +706,9 @@ void NRF24L01::SetAddress(bool full)
 		bits >>= 1;
 		if(bits & 0x01)
 		{
-			WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
+			//WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
+			addr[0] = Addr2_5[i];
+			WriteBuf(RX_ADDR_P2 + i, addr, addrLen);
 		}
 	}
 
