@@ -941,7 +941,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			rs = st.TX_DS;
 
-			if(!st.TX_DS && st.MAX_RT)
+			if(!st.TX_DS && st.MAX_RT && !AutoAnswer)
 			{
 #if RF_DEBUG
 				if(st.MAX_RT)
@@ -1008,8 +1008,8 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 
 #if RF_DEBUG
 	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
-	debug_printf("NRF24L01::OnIRQ %d ", down);
-	nrf->ShowStatus();
+	/*debug_printf("NRF24L01::OnIRQ %d ", down);
+	nrf->ShowStatus();*/
 #endif
 
 	nrf->OnIRQ();
