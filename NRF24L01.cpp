@@ -206,8 +206,8 @@ void NRF24L01::Init()
 	_spi = NULL;
 
 	// 初始化地址
-	memset(Address, 0, 5);
-	memcpy(Address1, (byte*)Sys.ID, 5);
+	memset(Address, 0, ArrayLength(Address));
+	memcpy(Address1, (byte*)Sys.ID, ArrayLength(Address1));
 	for(int i=0; i<4; i++) Addr2_5[i] = Address1[0] + i + 1;
 	Channel = 0;	// 默认通道0
 	AddrBits = 0x01;// 默认使能地址0
@@ -467,7 +467,12 @@ bool NRF24L01::Config()
 		//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 		int period = RetryPeriod / 250 - 1;
 		if(period < 0) period = 0;
-		WriteReg(SETUP_RETR, (period << 4) | Retry);
+		//WriteReg(SETUP_RETR, (period << 4) | Retry);
+		
+		RF_SETUP_RETR retr;
+		retr.ARC = Retry;
+		retr.ARD = period;
+		WriteReg(SETUP_RETR, retr.ToByte());
 	}
 	else
 	{
@@ -913,7 +918,8 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	bool rs = false;
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
-	TimeWheel tw(0, Timeout);
+	//TimeWheel tw(0, Timeout);
+	TimeWheel tw(0, RetryPeriod * Retry);
 	do
 	{
 		Status = ReadReg(STATUS);
@@ -938,7 +944,12 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 			if(!st.TX_DS && st.MAX_RT)
 			{
 #if RF_DEBUG
-				if(st.MAX_RT) debug_printf("发送超过最大重试次数\r\n");
+				if(st.MAX_RT)
+				{
+					//debug_printf("发送超过最大重试次数\r\n");
+					byte retr = ReadReg(SETUP_RETR);
+					debug_printf(" MAX_RT 达到最大重发次数%d 延迟%dus\r\n", retr & 0x0F, ((retr >> 4) + 1) * 250);
+				}
 #endif
 				AddError();
 			}
@@ -997,7 +1008,7 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 
 #if RF_DEBUG
 	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
-	debug_printf("NRF24L01::OnIRQ ");
+	debug_printf("NRF24L01::OnIRQ %d ", down);
 	nrf->ShowStatus();
 #endif
 
