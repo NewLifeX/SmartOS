@@ -588,10 +588,18 @@ void TinyController::ShowStat()
 	lastSend = tsend;
 	lastReceive = Total.Receive;
 
-	uint rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + tsend);
-	uint cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
-	uint speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
-	uint retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
+	uint rate = 100;
+	if(Last.Send + tsend > 0)
+		rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + tsend);
+	uint cost = 0;
+	if(Last.Ack + Total.Ack > 0)
+		cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
+	uint speed = 0;
+	if(Last.Cost + Total.Cost > 0)
+		speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
+	uint retry = 0;
+	if(Last.Msg + Total.Msg > 0)
+		retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
 	msg_printf("Tiny::State 成功=%d%% 平均=%dus 速度=%d Byte/s 重发=%d.%02d 收发=%d/%d \r\n", rate, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Msg + Total.Msg);
 }
 
