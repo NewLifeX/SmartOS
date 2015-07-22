@@ -143,6 +143,7 @@ protected:
 
 public:
 	byte	Address;	// 本地地址
+	bool	NoAck;		// 是否不使用Ack，若为true，即使收到消息要求Ack也不发送Ack。默认false
 	uint	Interval;	// 消息队列发送间隔，8000微秒
 	int		Timeout;	// 消息队列发送消息的默认超时时间，50000微秒。如果不需要超时重发，那么直接设置为-1
 

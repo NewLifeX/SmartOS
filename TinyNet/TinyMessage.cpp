@@ -172,6 +172,8 @@ TinyController::TinyController() : Controller()
 		Address = Time.CurrentTicks();
 	}
 
+	NoAck		= false;
+
 	ArrayZero(_Queue);
 }
 
@@ -363,6 +365,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 // 向对方发出Ack包
 void TinyController::AckResponse(TinyMessage& msg)
 {
+	if(NoAck) return;
 	// 广播消息不要给确认
 	if(msg.Dest == 0) return;
 
