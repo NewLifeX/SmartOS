@@ -5,6 +5,109 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
+//--//
+
+#define RTC_CODE
+#ifdef RTC_CODE
+
+//#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
+#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
+//#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
+
+void RTC_Configuration(void)
+{
+	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
+	BKP_DeInit();
+
+#ifdef RTCClockSource_LSI
+	/* Enable LSI */
+	RCC_LSICmd(ENABLE);
+	/* 等待稳定 */
+	while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
+
+	/* Select LSI as RTC Clock Source */
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+#elif defined	RTCClockSource_LSE
+	/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
+	RCC_LSEConfig(RCC_LSE_ON);
+	/* 等待稳定 */
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
+
+	/* RTC时钟源配置成LSE（外部32.768K） */
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+#endif
+
+	/* 使能RTC时钟 */
+	RCC_RTCCLKCmd(ENABLE);
+
+#ifdef RTCClockOutput_Enable
+	/* Disable the Tamper Pin */
+	BKP_TamperPinCmd(DISABLE); /* To output RTCCLK/64 on Tamper pin, the tamper
+							   functionality must be disabled */
+
+	/* Enable RTC Clock Output on Tamper Pin */
+	BKP_RTCCalibrationClockOutputCmd(ENABLE);
+#endif
+
+	/* 开启后需要等待APB1时钟与RTC时钟同步，才能读写寄存器 */
+	RTC_WaitForSynchro();
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	RTC_WaitForLastTask();
+
+	/* 使能秒中断 */
+	//RTC_ITConfig(RTC_IT_SEC, ENABLE);
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	//RTC_WaitForLastTask();
+
+	/* 设置RTC分频器，使RTC时钟为1Hz */
+#ifdef RTCClockSource_LSI
+	RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
+#elif defined	RTCClockSource_LSE
+	RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
+#endif
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	RTC_WaitForLastTask();
+}
+
+static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
+#if DEBUG_TIME
+	static uint g_Counter = 0;
+#endif
+
+void LoadTicks()
+{
+	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
+	uint counter = RTC_GetCounter();
+#if DEBUG_TIME
+	g_Counter = counter;
+#endif
+	Time.Ticks = (ulong)counter * 1000000ull * Time.TicksPerMicrosecond;
+}
+
+void SaveTicks()
+{
+	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
+	RTC_WaitForSynchro();
+
+	ulong ms = Time.Current() / 1000;
+	// 设置计数器
+	RTC_SetCounter(ms / 1000);
+
+	// 必须打开时钟和后备域，否则写不进去时间
+	// Check if the Power On Reset flag is set
+	//RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+
+    /* Allow access to BKP Domain */
+    //PWR_BackupAccessCmd(ENABLE);
+
+	// 这里对时间要求非常苛刻，不能等待
+	RTC_WaitForLastTask();
+}
+#endif
+
 TTime::TTime()
 {
 	Ticks = 0;
@@ -36,6 +139,39 @@ void TTime::Init()
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
 	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
 
+	/*****************************/
+	/* GD32和STM32最大的区别就是STM32给寄存器默认值，而GD32没有给默认值 */
+	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
+
+	/* 启用PWR和BKP的时钟 */
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+
+	/* 后备域解锁 */
+	PWR_BackupAccessCmd(ENABLE);
+
+	// 下一次保存Ticks的数值，避免频繁保存
+	g_NextSaveTicks = 0;
+
+	if(BKP_ReadBackupRegister(BKP_DR1) != 0xABCD)
+	{
+		RTC_Configuration();
+
+		BKP_WriteBackupRegister(BKP_DR1, 0xABCD);
+	}
+	else
+	{
+		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
+		RTC_WaitForSynchro();
+
+		// 从RTC还原滴答
+		LoadTicks();
+
+		/* 使能RTC中断：RTC_IT_SEC秒中断、RTC_IT_OW溢出中断、RTC_IT_ALR闹钟中断 */
+		//RTC_ITConfig(RTC_IT_SEC, ENABLE);
+		/* 等待最近一次对RTC寄存器的写操作完成 */
+		//RTC_WaitForLastTask();
+	}
+
 	SetMax(0);
 
 	// 必须放在SysTick_Config后面，因为它设为不除以8
@@ -49,7 +185,7 @@ void TTime::Init()
 }
 
 // 设置最大计数，也就是滴答定时器重载值
-void TTime::SetMax(uint usMax)		
+void TTime::SetMax(uint usMax)
 {
 	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
@@ -107,9 +243,26 @@ void TTime::OnHandler(ushort num, void* param)
 		Time.Microseconds += us;
 		Time._msUs = ms % 1000;
 		Time._usTicks = ts % Time.TicksPerMicrosecond;
-
-		if(Sys.OnTick) Sys.OnTick();
 	}
+	// 定期保存Ticks到后备RTC寄存器
+	if(Time.Ticks >= g_NextSaveTicks)
+	{
+#if DEBUG_TIME
+		if(g_Counter > 0)
+		{
+			debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
+			SYSTEMTIME st;
+			Time_ToSystemTime( (INT64)g_Counter * 10000000 + TIME_ZONE_OFFSET, &st );
+			debug_printf("LoadTime %4d-%02d-%02d %02d:%02d:%02d.%03d\r\n", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			g_Counter = 0;
+		}
+#endif
+		SaveTicks();
+		// 每秒钟保存一次
+		g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
+	}
+
+	if(Sys.OnTick) Sys.OnTick();
 }
 
 /*void TTime::SetCompare(ulong compareValue)
@@ -173,6 +326,9 @@ void TTime::SetTime(ulong us)
 
 	Milliseconds = us / 1000;
 	_msUs = us % 1000;
+
+	// 保存到RTC
+	SaveTicks();
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
