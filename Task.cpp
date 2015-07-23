@@ -180,17 +180,19 @@ void TaskScheduler::Execute(uint usMax)
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		if(task && task->Enable && task->NextTime <= now
+		if(!task) continue;
+
+		if(task->Enable && task->NextTime <= now
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Time.Current() + task->Cost <= end)
 		{
 			task->Execute(now);
-			if(task->NextTime < min) min = task->NextTime;
 
 			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出
 			if(!usMax || Time.Current() > end) return;
 		}
+		if(task->NextTime < min) min = task->NextTime;
 	}
 
 	int cost = tc.Elapsed();
@@ -205,6 +207,8 @@ void TaskScheduler::Execute(uint usMax)
 	if(min != UInt64_Max && min > now)
 	{
 		min -= now;
+		// 睡眠时间不能过长，否则可能无法喂狗
+		if(min > 1000) min = 1000;
 		Time.Sleep(min);
 	}
 }
