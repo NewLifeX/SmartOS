@@ -1,4 +1,4 @@
-#include "Time.h"
+﻿#include "Time.h"
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 
@@ -438,6 +438,29 @@ void TTime::Sleep(uint us)
 
     while(CurrentTicks() <= maxDiff);
     //while(Current() <= maxDiff);
+}
+
+// 暂停系统一段时间
+void TTime::Pause(uint ms)
+{
+	int second = ms / 1000;
+	if(second <= 0) return;
+
+	/* Enable the RTC Alarm interrupt */
+	RTC_ITConfig(RTC_IT_ALR, ENABLE);
+    /* Alarm in 3 second */
+    RTC_SetAlarm(RTC_GetCounter()+ second);
+    /* Wait until last write operation on RTC registers has finished */
+    //RTC_WaitForLastTask();
+
+	SaveTicks();
+	debug_printf("进入低功耗模式 \r\n");
+	// 进入低功耗模式
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+
+	LoadTicks();
+	debug_printf("离开低功耗模式 \r\n");
+	Sys.ShowInfo();
 }
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六

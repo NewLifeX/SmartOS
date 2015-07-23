@@ -73,6 +73,7 @@ public:
 	ulong Current(); 		// 当前微秒数
 	void SetTime(ulong us);	// 设置时间
     void Sleep(uint us);
+	void Pause(uint ms);	// 暂停系统一段时间
 
 	// 当前时间。外部不要释放该指针
 	DateTime& Now();

@@ -208,8 +208,15 @@ void TaskScheduler::Execute(uint usMax)
 	{
 		min -= now;
 		// 睡眠时间不能过长，否则可能无法喂狗
-		if(min > 1000) min = 1000;
-		Time.Sleep(min);
+		//if(min > 1000) min = 1000;
+#ifdef STM32F1
+		if(min > 1000000)
+			Time.Pause(min / 1000);
+		else
+#endif
+			Time.Sleep(min);
+		//PWR_EnterSTANDBYMode();
+		//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 	}
 }
 
