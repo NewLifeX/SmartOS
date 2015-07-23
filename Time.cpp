@@ -72,7 +72,7 @@ void RTC_Configuration(void)
 	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
 	RTC_WaitForLastTask();
 }
-#elif defined STM32F4
+#else
 void RTC_Configuration(void)
 {
 	RTC_WriteProtectionCmd(DISABLE);
@@ -214,7 +214,7 @@ void TTime::Init()
 	/* 启用PWR和BKP的时钟 */
 #ifdef STM32F1
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
-#elif defined STM32F4
+#else
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
 #endif
 
@@ -230,7 +230,7 @@ void TTime::Init()
 		RTC_Configuration();
 		BKP_WriteBackupRegister(BKP_DR1, 0xABCD);
 	}
-#elif defined STM32F4
+#else
 	if(RTC_ReadBackupRegister(RTC_BKP_DR0) != 0xABCD)
 	{
 		RTC_Configuration();
