@@ -14,6 +14,7 @@
 #define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
 //#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
 
+#ifdef STM32F1
 void RTC_Configuration(void)
 {
 	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
@@ -71,6 +72,69 @@ void RTC_Configuration(void)
 	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
 	RTC_WaitForLastTask();
 }
+#elif defined STM32F4
+void RTC_Configuration(void)
+{
+	RTC_WriteProtectionCmd(DISABLE);
+
+	RTC_EnterInitMode();
+
+	RTC_InitTypeDef rtc;
+	RTC_StructInit(&rtc);
+	rtc.RTC_HourFormat = RTC_HourFormat_24;
+	rtc.RTC_AsynchPrediv = 0x7D-1;
+	rtc.RTC_SynchPrediv = 0xFF-1;
+	RTC_Init(&rtc);
+
+	RTC_ExitInitMode();
+	RTC_WriteProtectionCmd(ENABLE);	//初始化完成，设置标志
+}
+
+uint RTC_GetCounter()
+{
+	DateTime dt;
+
+	RTC_TimeTypeDef time;
+	RTC_GetTime(RTC_Format_BCD, &time);
+
+	dt.Hour		= time.RTC_Hours;
+	dt.Minute	= time.RTC_Minutes;
+	dt.Second	= time.RTC_Seconds;
+
+	RTC_DateTypeDef date;
+	RTC_GetDate(RTC_Format_BCD, &date);
+
+	dt.Year		= date.RTC_Year;
+	dt.Month	= date.RTC_Month;
+	dt.Day		= date.RTC_Date;
+
+	return dt.TotalSeconds();
+}
+
+void RTC_SetCounter(DateTime& dt)
+{
+	RTC_TimeTypeDef time;
+	RTC_TimeStructInit(&time);
+	time.RTC_Seconds = dt.Second;
+	time.RTC_Minutes = dt.Minute;
+	time.RTC_Hours = dt.Hour;
+	time.RTC_H12 = RTC_H12_AM;
+	RTC_SetTime(RTC_Format_BCD, &time);
+
+	RTC_DateTypeDef date;
+	RTC_DateStructInit(&date);
+	date.RTC_Date = dt.Day;
+	date.RTC_Month = dt.Month;
+	date.RTC_WeekDay= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
+	date.RTC_Year = dt.Year;
+	RTC_SetDate(RTC_Format_BCD, &date);
+}
+
+void RTC_WaitForLastTask()
+{
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
+}
+#endif
 
 static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
 #if DEBUG_TIME
@@ -92,9 +156,13 @@ void SaveTicks()
 	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
 	RTC_WaitForSynchro();
 
+#ifdef STM32F1
 	ulong ms = Time.Current() / 1000;
 	// 设置计数器
 	RTC_SetCounter(ms / 1000);
+#elif defined STM32F4
+	RTC_SetCounter(Time.Now());
+#endif
 
 	// 必须打开时钟和后备域，否则写不进去时间
 	// Check if the Power On Reset flag is set
@@ -144,7 +212,11 @@ void TTime::Init()
 	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
 
 	/* 启用PWR和BKP的时钟 */
+#ifdef STM32F1
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+#elif defined STM32F4
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+#endif
 
 	/* 后备域解锁 */
 	PWR_BackupAccessCmd(ENABLE);
@@ -152,12 +224,19 @@ void TTime::Init()
 	// 下一次保存Ticks的数值，避免频繁保存
 	g_NextSaveTicks = 0;
 
+#ifdef STM32F1
 	if(BKP_ReadBackupRegister(BKP_DR1) != 0xABCD)
 	{
 		RTC_Configuration();
-
 		BKP_WriteBackupRegister(BKP_DR1, 0xABCD);
 	}
+#elif defined STM32F4
+	if(RTC_ReadBackupRegister(RTC_BKP_DR0) != 0xABCD)
+	{
+		RTC_Configuration();
+		RTC_WriteBackupRegister(RTC_BKP_DR0, 0xABCD);
+	}
+#endif
 	else
 	{
 		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
