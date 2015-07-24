@@ -54,6 +54,12 @@ namespace NewLife.Reflection
                 }
 
                 AddIncludes(p);
+
+                // 找找库文件
+                foreach (var item in p.AsDirectory().GetFiles("*.lib"))
+                {
+                    if (!Libs.Contains(item.FullName)) Libs.Add(item.FullName);
+                }
             }
 
             return true;
@@ -104,6 +110,10 @@ namespace NewLife.Reflection
         private ICollection<String> _Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>对象文件集合</summary>
         public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
+
+        private ICollection<String> _Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>库文件集合</summary>
+        public ICollection<String> Libs { get { return _Libs; } set { _Libs = value; } }
         #endregion
 
         #region 主要编译方法
@@ -297,6 +307,12 @@ namespace NewLife.Reflection
                 sb.Append(item);
             }
 
+            foreach (var item in Libs)
+            {
+                sb.Append(" ");
+                sb.Append(item);
+            }
+
             var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             if (rs != 0) return rs;
 
@@ -365,8 +381,10 @@ namespace NewLife.Reflection
                 Words.Add("Enough", "足够");
                 Words.Add("Information", "信息");
                 Words.Add("to", "去");
+                Words.Add("from", "自");
                 Words.Add("list", "列出");
                 Words.Add("image", "镜像");
+                Words.Add("Symbol", "标识");
                 Words.Add("Symbols", "标识");
                 Words.Add("the", "");
                 Words.Add("map", "映射");
@@ -380,6 +398,8 @@ namespace NewLife.Reflection
                 Words.Add("target", "目标");
                 Words.Add("architecture", "架构");
                 Words.Add("processor", "处理器");
+                Words.Add("Undefined", "未定义");
+                Words.Add("referred", "引用");
             }
             #endregion
 
