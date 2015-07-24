@@ -74,7 +74,10 @@ namespace NewLife.Reflection
             {
                 _Cortex = value;
                 CPU = "Cortex-M{0}".F(value);
-                Flash = "STM32F{0}XX".F(value);
+                if (value == 3)
+                    Flash = "STM32F1XX";
+                else
+                    Flash = "STM32F{0}XX".F(value);
             }
         }
 
@@ -338,6 +341,13 @@ namespace NewLife.Reflection
                 Words.Add("Finished", "完成");
                 Words.Add("line", "行");
                 Words.Add("messages", "消息");
+                Words.Add("this", "这个");
+                Words.Add("feature", "功能");
+                Words.Add("supported", "被支持");
+                Words.Add("on", "在");
+                Words.Add("target", "目标");
+                Words.Add("architecture", "架构");
+                Words.Add("processor", "处理器");
             }
             #endregion
 
