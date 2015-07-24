@@ -58,7 +58,11 @@ namespace NewLife.Reflection
                 // 找找库文件
                 foreach (var item in p.AsDirectory().GetFiles("*.lib"))
                 {
-                    if (!Libs.Contains(item.FullName)) Libs.Add(item.FullName);
+                    if (!Libs.Contains(item.FullName))
+                    {
+                        WriteLog("发现静态库：{0}".F(item.FullName));
+                        Libs.Add(item.FullName);
+                    }
                 }
             }
 
@@ -330,7 +334,11 @@ namespace NewLife.Reflection
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
 
-            if (!Includes.Contains(path)) Includes.Add(path);
+            if (!Includes.Contains(path)&&HasHeaderFile(path))
+            {
+                WriteLog("引用目录：{0}".F(path));
+                Includes.Add(path);
+            }
 
             var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (var item in path.AsDirectory().GetDirectories("*", opt))
@@ -338,8 +346,17 @@ namespace NewLife.Reflection
                 if (item.FullName.Contains(".svn")) continue;
                 if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
 
-                if (!Includes.Contains(item.FullName)) Includes.Add(item.FullName);
+                if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
+                {
+                    WriteLog("引用目录：{0}".F(item.FullName));
+                    Includes.Add(item.FullName);
+                }
             }
+        }
+
+        Boolean HasHeaderFile(String path)
+        {
+            return path.AsDirectory().GetFiles("*.h", SearchOption.AllDirectories).Length > 0;
         }
         #endregion
 
