@@ -1,6 +1,6 @@
 ﻿#include "Time.h"
 
-#define TIME_DEBUG DEBUG
+#define TIME_DEBUG 0
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 
@@ -243,6 +243,37 @@ void RTC_Init()
 	}
 }
 
+// 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源
+void SYSCLKConfig_STOP(void)
+{
+  /* Enable HSE */
+  RCC_HSEConfig(RCC_HSE_ON);
+
+  /* Wait till HSE is ready */
+  if(RCC_WaitForHSEStartUp() == SUCCESS)
+  {
+#ifdef STM32F10X_CL
+    /* Enable PLL2 */
+    RCC_PLL2Cmd(ENABLE);
+
+    /* Wait till PLL2 is ready */
+    while(RCC_GetFlagStatus(RCC_FLAG_PLL2RDY) == RESET);
+#endif
+
+    /* Enable PLL */
+    RCC_PLLCmd(ENABLE);
+
+    /* Wait till PLL is ready */
+    while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
+
+    /* Select PLL as system clock source */
+    RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+
+    /* Wait till PLL is used as system clock source */
+    while(RCC_GetSYSCLKSource() != 0x08);
+  }
+}
+
 // 暂停系统一段时间
 void CPU_Sleep(void* param)
 {
@@ -250,32 +281,39 @@ void CPU_Sleep(void* param)
 	int second = ms / 1000;
 	if(second <= 0) return;
 
+	//debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
+	SaveTicks();
+
 	/* Enable the RTC Alarm interrupt */
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
     /* Alarm in 3 second */
-    RTC_SetAlarm(RTC_GetCounter()+ second);
+    RTC_SetAlarm(RTC_GetCounter() + second);
     /* Wait until last write operation on RTC registers has finished */
     RTC_WaitForLastTask();
 
-	SaveTicks();
-	debug_printf("进入低功耗模式 %d毫秒\r\n", ms);
 	// 进入低功耗模式
-	//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	SYSCLKConfig_STOP();
 
 	LoadTicks();
-	debug_printf("离开低功耗模式\r\n");
+	//debug_printf("离开低功耗模式\r\n");
 	//Sys.ShowInfo();
 }
 
 void AlarmHandler(ushort num, void* param)
 {
+	//debug_printf("AlarmHandler");
 	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
 	{
+		//debug_printf(" RTC_IT_ALR\r\n");
 		EXTI_ClearITPendingBit(EXTI_Line17);
+		// 检查唤醒标志是否设置
+		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET) PWR_ClearFlag(PWR_FLAG_WU);
 		RTC_WaitForLastTask();
 		RTC_ClearITPendingBit(RTC_IT_ALR);
 		RTC_WaitForLastTask();
 	}
+	//debug_printf("\r\n");
 }
 #endif
 
@@ -475,7 +513,7 @@ void TTime::Sleep(uint us)
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(OnSleep && Sys.Started && us >= 1000000)
+	if(OnSleep && us >= 1000000)
 	{
 		uint ms = us / 1000;
 		OnSleep(&ms);
@@ -512,12 +550,12 @@ void TTime::LowPower()
 	OnSleep = CPU_Sleep;
 
 	EXTI_ClearITPendingBit(EXTI_Line17);
-	EXTI_InitTypeDef  EXTI_InitStructure;
-	EXTI_InitStructure.EXTI_Line = EXTI_Line17;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStructure);
+	EXTI_InitTypeDef  exit;
+	exit.EXTI_Line = EXTI_Line17;
+	exit.EXTI_Mode = EXTI_Mode_Interrupt;
+	exit.EXTI_Trigger = EXTI_Trigger_Rising;
+	exit.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&exit);
 
 	Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
 }
