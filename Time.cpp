@@ -283,6 +283,10 @@ void SYSCLKConfig_STOP(void)
   }
 }
 
+#ifndef STM32F1
+	#define RTC_IT_ALR RTC_IT_ALRA
+#endif
+
 // 暂停系统一段时间
 void CPU_Sleep(void* param)
 {
@@ -296,7 +300,29 @@ void CPU_Sleep(void* param)
 	/* Enable the RTC Alarm interrupt */
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
     /* Alarm in 3 second */
+#ifdef STM32F1
     RTC_SetAlarm(RTC_GetCounter() + second);
+#else
+	RTC_AlarmTypeDef alr;
+	RTC_AlarmStructInit(&alr);
+
+	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );     /* Disable the Alarm A */
+	alr.RTC_AlarmTime.RTC_H12 = RTC_H12_AM;
+	alr.RTC_AlarmTime.RTC_Hours = second / 60 / 60;
+	alr.RTC_AlarmTime.RTC_Minutes = (second / 60) % 60;
+	alr.RTC_AlarmTime.RTC_Seconds = second % 60;
+
+	/* Set the Alarm A */
+	alr.RTC_AlarmDateWeekDay = 0x31;
+	alr.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_Date;
+	alr.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay;
+
+	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr ); /* Configure the RTC Alarm A register */
+
+	RTC_ITConfig( RTC_IT_ALRA, ENABLE );    /* Enable the RTC Alarm A Interrupt */
+
+	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );    /* Enable the alarm  A */
+#endif
     /* Wait until last write operation on RTC registers has finished */
     RTC_WaitForLastTask();
 
@@ -564,8 +590,10 @@ void TTime::LowPower()
 	exit.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&exit);
 
+#ifdef STM32F1
     Interrupt.SetPriority(RTCAlarm_IRQn, 0);
 	Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
+#endif
 }
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
