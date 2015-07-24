@@ -87,9 +87,9 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg)
 
 	if(!Valid(msg))
 	{
-		debug_printf("消息校验未通过\r\n");
+		/*debug_printf("消息校验未通过\r\n");
 		msg.Show();
-		debug_printf("\r\n");
+		debug_printf("\r\n");*/
 
 		return true;
 	}
