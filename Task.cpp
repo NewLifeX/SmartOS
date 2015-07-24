@@ -180,9 +180,9 @@ void TaskScheduler::Execute(uint usMax)
 	while(_Tasks.MoveNext(i))
 	{
 		Task* task = _Tasks[i];
-		if(!task) continue;
+		if(!task || !task->Enable) continue;
 
-		if(task->Enable && task->NextTime <= now
+		if(task->NextTime <= now
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Time.Current() + task->Cost <= end)
 		{
@@ -209,14 +209,7 @@ void TaskScheduler::Execute(uint usMax)
 		min -= now;
 		// 睡眠时间不能过长，否则可能无法喂狗
 		//if(min > 1000) min = 1000;
-#ifdef STM32F1
-		if(min > 1000000)
-			Time.Pause(min / 1000);
-		else
-#endif
-			Time.Sleep(min);
-		//PWR_EnterSTANDBYMode();
-		//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+		Time.Sleep(min);
 	}
 }
 

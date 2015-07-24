@@ -1,5 +1,7 @@
 ﻿#include "Time.h"
 
+#define TIME_DEBUG DEBUG
+
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
@@ -137,7 +139,7 @@ void RTC_WaitForLastTask()
 #endif
 
 static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
-#if DEBUG_TIME
+#if TIME_DEBUG
 	static uint g_Counter = 0;
 #endif
 
@@ -145,7 +147,7 @@ void LoadTicks()
 {
 	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
 	uint counter = RTC_GetCounter();
-#if DEBUG_TIME
+#if TIME_DEBUG
 	g_Counter = counter;
 #endif
 	Time.Ticks = (ulong)counter * 1000000ull * Time.TicksPerMicrosecond;
@@ -153,6 +155,18 @@ void LoadTicks()
 
 void SaveTicks()
 {
+	if(Time.Ticks < g_NextSaveTicks) return;
+#if TIME_DEBUG
+	if(g_Counter > 0)
+	{
+		debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
+		DateTime dt;
+		dt.Parse((ulong)g_Counter * 1000000ull);
+		debug_printf("LoadTime: %s \r\n", dt.ToString());
+		g_Counter = 0;
+	}
+#endif
+
 	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
 	RTC_WaitForSynchro();
 
@@ -173,40 +187,13 @@ void SaveTicks()
 
 	// 这里对时间要求非常苛刻，不能等待
 	RTC_WaitForLastTask();
-}
-#endif
 
-TTime::TTime()
-{
-	Ticks = 0;
-	Microseconds = 0;
-	Milliseconds = 0;
-	//NextEvent = TIME_Completion_IdleValue;
-
-	_usTicks = 0;
-	_msUs = 0;
-
-	//InterruptsPerSecond = 100;
+	// 每秒钟保存一次
+	g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
 }
 
-TTime::~TTime()
+void RTC_Init()
 {
-    Interrupt.Deactivate(SysTick_IRQn);
-    // 关闭定时器
-	SysTick->CTRL &= ~SYSTICK_ENABLE;
-}
-
-void TTime::Init()
-{
-	// 准备使用外部时钟，Systick时钟=HCLK/8
-	uint clk = Sys.Clock / 8;
-	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
-	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
-	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
-	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
-	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
-
 	/*****************************/
 	/* GD32和STM32最大的区别就是STM32给寄存器默认值，而GD32没有给默认值 */
 	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
@@ -239,6 +226,10 @@ void TTime::Init()
 #endif
 	else
 	{
+		//虽然RTC模块不需要重新配置，且掉电后依靠后备电池依然运行
+		//但是每次上电后，还是要使能RTCCLK
+		RCC_RTCCLKCmd(ENABLE);
+
 		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
 		RTC_WaitForSynchro();
 
@@ -250,6 +241,87 @@ void TTime::Init()
 		/* 等待最近一次对RTC寄存器的写操作完成 */
 		//RTC_WaitForLastTask();
 	}
+}
+
+// 暂停系统一段时间
+void CPU_Sleep(void* param)
+{
+	uint ms = *(uint*)param;
+	int second = ms / 1000;
+	if(second <= 0) return;
+
+	/* Enable the RTC Alarm interrupt */
+	RTC_ITConfig(RTC_IT_ALR, ENABLE);
+    /* Alarm in 3 second */
+    RTC_SetAlarm(RTC_GetCounter()+ second);
+    /* Wait until last write operation on RTC registers has finished */
+    RTC_WaitForLastTask();
+
+	SaveTicks();
+	debug_printf("进入低功耗模式 %d秒\r\n", second);
+	// 进入低功耗模式
+	//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+
+	LoadTicks();
+	debug_printf("离开低功耗模式\r\n");
+	//Sys.ShowInfo();
+}
+
+void AlarmHandler(ushort num, void* param)
+{
+	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line17);
+		RTC_WaitForLastTask();
+		RTC_ClearITPendingBit(RTC_IT_ALR);
+		RTC_WaitForLastTask();
+	}
+}
+#endif
+
+TTime::TTime()
+{
+	Ticks = 0;
+	Microseconds = 0;
+	Milliseconds = 0;
+	//NextEvent = TIME_Completion_IdleValue;
+
+	_usTicks = 0;
+	_msUs = 0;
+
+	OnInit = NULL;
+	OnLoad = NULL;
+	OnSave = NULL;
+	OnSleep = NULL;
+}
+
+TTime::~TTime()
+{
+    Interrupt.Deactivate(SysTick_IRQn);
+    // 关闭定时器
+	SysTick->CTRL &= ~SYSTICK_ENABLE;
+}
+
+// 使用RTC，必须在Init前调用
+void TTime::UseRTC()
+{
+	OnInit = RTC_Init;
+	OnLoad = LoadTicks;
+	OnSave = SaveTicks;
+}
+
+void TTime::Init()
+{
+	// 准备使用外部时钟，Systick时钟=HCLK/8
+	uint clk = Sys.Clock / 8;
+	// 48M时，每秒48M/8=6M个滴答，1us=6滴答
+	// 72M时，每秒72M/8=9M个滴答，1us=9滴答
+	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
+	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
+	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
+	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
+
+	if(OnInit) OnInit();
 
 	SetMax(0);
 
@@ -324,22 +396,7 @@ void TTime::OnHandler(ushort num, void* param)
 		Time._usTicks = ts % Time.TicksPerMicrosecond;
 	}
 	// 定期保存Ticks到后备RTC寄存器
-	if(Time.Ticks >= g_NextSaveTicks)
-	{
-#if DEBUG_TIME
-		if(g_Counter > 0)
-		{
-			debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
-			SYSTEMTIME st;
-			Time_ToSystemTime( (INT64)g_Counter * 10000000 + TIME_ZONE_OFFSET, &st );
-			debug_printf("LoadTime %4d-%02d-%02d %02d:%02d:%02d.%03d\r\n", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-			g_Counter = 0;
-		}
-#endif
-		SaveTicks();
-		// 每秒钟保存一次
-		g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
-	}
+	if(Time.OnSave) Time.OnSave();
 
 	if(Sys.OnTick) Sys.OnTick();
 }
@@ -407,7 +464,7 @@ void TTime::SetTime(ulong us)
 	_msUs = us % 1000;
 
 	// 保存到RTC
-	SaveTicks();
+	if(OnSave) OnSave();
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
@@ -416,6 +473,15 @@ void TTime::Sleep(uint us)
 {
     // 睡眠时间太短
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
+
+	// 较大的睡眠时间直接让CPU停下来
+	if(OnSleep && us >= 1000000)
+	{
+		uint ms = us / 1000;
+		OnSleep(&ms);
+		// CPU睡眠是秒级，还有剩余量
+		us %= 1000000;
+	}
 
 	// 自己关闭中断，简直实在找死！
 	// Sleep的时候，尽量保持中断打开，否则g_Ticks无法累加，从而造成死循环
@@ -440,27 +506,20 @@ void TTime::Sleep(uint us)
     //while(Current() <= maxDiff);
 }
 
-// 暂停系统一段时间
-void TTime::Pause(uint ms)
+// 启用低功耗模式，Sleep时进入睡眠
+void TTime::LowPower()
 {
-	int second = ms / 1000;
-	if(second <= 0) return;
+	OnSleep = CPU_Sleep;
 
-	/* Enable the RTC Alarm interrupt */
-	RTC_ITConfig(RTC_IT_ALR, ENABLE);
-    /* Alarm in 3 second */
-    RTC_SetAlarm(RTC_GetCounter()+ second);
-    /* Wait until last write operation on RTC registers has finished */
-    //RTC_WaitForLastTask();
+	EXTI_ClearITPendingBit(EXTI_Line17);
+	EXTI_InitTypeDef  EXTI_InitStructure;
+	EXTI_InitStructure.EXTI_Line = EXTI_Line17;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
 
-	SaveTicks();
-	debug_printf("进入低功耗模式 \r\n");
-	// 进入低功耗模式
-	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
-
-	LoadTicks();
-	debug_printf("离开低功耗模式 \r\n");
-	Sys.ShowInfo();
+	Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
 }
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
