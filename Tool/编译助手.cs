@@ -44,7 +44,7 @@ namespace NewLife.Reflection
             Clear();
 
             // 更新脚本自己
-            //UpdateSelf();
+            UpdateSelf();
 
 			"完成".SpeakAsync();
 			System.Threading.Thread.Sleep(250);
@@ -267,7 +267,7 @@ namespace NewLife.Reflection
             if (!Directory.Exists(di)) di = "../../../SmartOS".GetFullPath();
             if (!Directory.Exists(di)) return;
 
-            var fi = di.CombinePath("Build.cs");
+            var fi = di.CombinePath("Tool/Build.cs");
             if (!File.Exists(fi)) return;
 
             var my = "Build.cs".GetFullPath();
