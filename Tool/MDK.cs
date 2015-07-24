@@ -43,9 +43,23 @@ namespace NewLife.Reflection
             //if (LibPath.AsDirectory().Exists) Includes.Add(LibPath);
 
             // 扫描当前所有目录，作为头文件引用目录
-            foreach (var item in ".".GetFullPath().AsDirectory().GetDirectories("*", SearchOption.AllDirectories))
+            var ss = new String[] { ".", "..\\Lib" };
+            foreach (var src in ss)
             {
-                Includes.Add(item.FullName);
+                var p = src.GetFullPath();
+                if (src != ".")
+                {
+                    if (!Directory.Exists(p)) p = "..\\" + p;
+                    if (!Directory.Exists(p)) continue;
+                }
+
+                foreach (var item in p.AsDirectory().GetDirectories("*", SearchOption.AllDirectories))
+                {
+                    if (item.FullName.Contains(".svn")) continue;
+                    if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
+
+                    Includes.Add(item.FullName);
+                }
             }
 
             return true;
@@ -171,7 +185,7 @@ namespace NewLife.Reflection
         /// <param name="exts">后缀过滤</param>
         /// <param name="excludes">要排除的文件</param>
         /// <returns></returns>
-        public Int32 CompileAll(String path, String exts = "*.c;*.cpp", String excludes = null)
+        public Int32 CompileAll(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
         {
             var count = 0;
 
@@ -182,14 +196,16 @@ namespace NewLife.Reflection
             var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
 
             path = path.GetFullPath().EnsureEnd("\\");
-            foreach (var item in path.AsDirectory().GetAllFiles(exts, true))
+            foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
                 if (excs.Contains(item.Name)) continue;
+                var flag = true;
                 foreach (var elm in excs)
                 {
-                    if (item.Name.Contains(elm)) continue;
+                    if (item.Name.Contains(elm)) { flag = false; break; }
                 }
+                if (!flag) continue;
 
                 //var file = item.FullName;
                 //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
