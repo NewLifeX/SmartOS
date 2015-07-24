@@ -20,8 +20,7 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
             build.GD32 = true;
-			build.Includes.Add("..\\..\\Lib\\inc");
-			build.Includes.Add("..\\..\\Lib\\cmsis");
+			build.AddIncludes("..\\..\\Lib");
             build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;I2C;Memory;String");
             build.BuildLib("..\\SmartOS_M0");
             //build.Build("");

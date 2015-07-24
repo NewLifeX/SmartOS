@@ -43,7 +43,7 @@ namespace NewLife.Reflection
             //if (LibPath.AsDirectory().Exists) Includes.Add(LibPath);
 
             // 扫描当前所有目录，作为头文件引用目录
-            var ss = new String[] { ".", "..\\Lib" };
+            var ss = new String[] { ".", "..\\Lib", "..\\SmartOS", "..\\SmartOSLib", "..\\SmartOSLib\\inc" };
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
@@ -53,13 +53,7 @@ namespace NewLife.Reflection
                     if (!Directory.Exists(p)) continue;
                 }
 
-                foreach (var item in p.AsDirectory().GetDirectories("*", SearchOption.AllDirectories))
-                {
-                    if (item.FullName.Contains(".svn")) continue;
-                    if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
-
-                    Includes.Add(item.FullName);
-                }
+                AddIncludes(p);
             }
 
             return true;
@@ -99,17 +93,17 @@ namespace NewLife.Reflection
         /// <summary>是否GD32芯片</summary>
         public Boolean GD32 { get { return _GD32; } set { _GD32 = value; } }
 
-        private List<String> _Defines = new List<String>();
+        private ICollection<String> _Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>定义集合</summary>
-        public List<String> Defines { get { return _Defines; } set { _Defines = value; } }
+        public ICollection<String> Defines { get { return _Defines; } set { _Defines = value; } }
 
-        private List<String> _Includes = new List<String>() { "..\\SmartOS", "..\\SmartOSLib", "..\\SmartOSLib\\inc" };
+        private ICollection<String> _Includes = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>引用头文件路径集合</summary>
-        public List<String> Includes { get { return _Includes; } set { _Includes = value; } }
+        public ICollection<String> Includes { get { return _Includes; } set { _Includes = value; } }
 
-        private List<String> _Objs = new List<String>();
+        private ICollection<String> _Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>对象文件集合</summary>
-        public List<String> Objs { get { return _Objs; } set { _Objs = value; } }
+        public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
         #endregion
 
         #region 主要编译方法
@@ -187,6 +181,9 @@ namespace NewLife.Reflection
         /// <returns></returns>
         public Int32 CompileAll(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
         {
+            // 目标目录也加入头文件搜索
+            AddIncludes(path);
+
             var count = 0;
 
             // 提前创建临时目录
@@ -308,6 +305,25 @@ namespace NewLife.Reflection
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
 
             return rs;
+        }
+        #endregion
+
+        #region 辅助方法
+        public void AddIncludes(String path, Boolean allSub = true)
+        {
+            path = path.GetFullPath();
+            if (!Directory.Exists(path)) return;
+
+            if (!Includes.Contains(path)) Includes.Add(path);
+
+            var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            foreach (var item in path.AsDirectory().GetDirectories("*", opt))
+            {
+                if (item.FullName.Contains(".svn")) continue;
+                if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
+
+                if (!Includes.Contains(item.FullName)) Includes.Add(item.FullName);
+            }
         }
         #endregion
 
