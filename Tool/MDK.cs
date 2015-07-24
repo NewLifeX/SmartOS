@@ -20,6 +20,7 @@ namespace NewLife.Reflection
         String Link;
         String Ar;
         String FromELF;
+        String LibPath;
 
         public Boolean Init(String basePath = null)
         {
@@ -37,6 +38,15 @@ namespace NewLife.Reflection
             Link = basePath.CombinePath("armlink.exe");
             Ar = basePath.CombinePath("armar.exe");
             FromELF = basePath.CombinePath("fromelf.exe");
+            LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
+
+            //if (LibPath.AsDirectory().Exists) Includes.Add(LibPath);
+
+            // 扫描当前所有目录，作为头文件引用目录
+            foreach (var item in ".".GetFullPath().AsDirectory().GetDirectories("*", SearchOption.AllDirectories))
+            {
+                Includes.Add(item.FullName);
+            }
 
             return true;
         }
@@ -85,6 +95,7 @@ namespace NewLife.Reflection
         public List<String> Objs { get { return _Objs; } set { _Objs = value; } }
         #endregion
 
+        #region 主要编译方法
         public Int32 CompileCPP(String file)
         {
             /*
@@ -125,10 +136,6 @@ namespace NewLife.Reflection
 
             return Complier.Run(sb.ToString(), 3000, WriteLog);
         }
-
-        //public void CompileC()
-        //{
-        //}
 
         public Int32 Assemble(String file)
         {
@@ -271,7 +278,9 @@ namespace NewLife.Reflection
 
             return rs;
         }
+        #endregion
 
+        #region 日志
         void WriteLog(String msg)
         {
             if (msg.IsNullOrEmpty()) return;
@@ -339,6 +348,7 @@ namespace NewLife.Reflection
             });
             return msg;
         }
+        #endregion
     }
 
     /// <summary>MDK环境</summary>
