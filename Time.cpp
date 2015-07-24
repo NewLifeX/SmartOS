@@ -293,19 +293,16 @@ void CPU_Sleep(void* param)
 
 	// 进入低功耗模式
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
-	SYSCLKConfig_STOP();
 
-	LoadTicks();
 	//debug_printf("离开低功耗模式\r\n");
-	//Sys.ShowInfo();
 }
 
 void AlarmHandler(ushort num, void* param)
 {
-	//debug_printf("AlarmHandler");
+    SmartIRQ irq;
+
 	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
 	{
-		//debug_printf(" RTC_IT_ALR\r\n");
 		EXTI_ClearITPendingBit(EXTI_Line17);
 		// 检查唤醒标志是否设置
 		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET) PWR_ClearFlag(PWR_FLAG_WU);
@@ -313,7 +310,8 @@ void AlarmHandler(ushort num, void* param)
 		RTC_ClearITPendingBit(RTC_IT_ALR);
 		RTC_WaitForLastTask();
 	}
-	//debug_printf("\r\n");
+	SYSCLKConfig_STOP();
+	LoadTicks();
 }
 #endif
 
@@ -557,6 +555,7 @@ void TTime::LowPower()
 	exit.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&exit);
 
+    Interrupt.SetPriority(RTCAlarm_IRQn, 0);
 	Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
 }
 
