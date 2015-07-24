@@ -919,7 +919,14 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	bool rs = false;
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
 	//TimeWheel tw(0, Timeout);
-	TimeWheel tw(0, RetryPeriod * Retry);
+	//TimeWheel tw(0, RetryPeriod * Retry);
+	
+	uint ms = RetryPeriod * Retry;
+	if(ms > 4 && AutoAnswer) ms = 4;
+	// https://devzone.nordicsemi.com/question/17074/nrf24l01-data-loss/
+	// It is important never to keep the nRF24L01+ in TX mode for more than 4ms at a time. 
+	// If the Enhanced ShockBurst™ features are enabled, nRF24L01+ is never in TX mode longer than 4ms
+	TimeWheel tw(0, ms);
 	do
 	{
 		Status = ReadReg(STATUS);
@@ -941,7 +948,7 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 			rs = st.TX_DS;
 
-			if(!st.TX_DS && st.MAX_RT && !AutoAnswer)
+			if(!st.TX_DS && st.MAX_RT)
 			{
 #if RF_DEBUG
 				if(st.MAX_RT)
