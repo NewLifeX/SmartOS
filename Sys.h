@@ -75,8 +75,8 @@ typedef enum
 class TSys : Object
 {
 public:
-    bool Debug;  // 是否调试
-    bool Inited; // 是否已完成初始化
+    bool Inited;		// 是否已完成初始化
+    bool Started;		// 是否调试
     COM_Def MessagePort;// 消息口，默认0表示USART1
     bool IsGD;			// 是否GD芯片
 
@@ -97,7 +97,8 @@ public:
     TSys();				// 构造函数
     ~TSys();			// 析构函数
 
-    virtual void Init();     	// 初始化系统
+	void InitClock();	// 初始化系统时钟
+    void Init();     	// 初始化系统
 	void ShowInfo();
 
 	ulong StartTime;	// 启动时间，微秒

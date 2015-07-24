@@ -125,12 +125,8 @@ void SysStop()
 
 TSys::TSys()
 {
-    Inited = false;
-#if DEBUG
-    Debug = true;
-#else
-    Debug = false;
-#endif
+    Inited	= false;
+	Started	= false;
 
 #ifdef STM32F0
     Clock = 48000000;
@@ -231,7 +227,7 @@ void ShowTime(void* param)
 	debug_printf(" ");
 }
 
-void TSys::Init(void)
+void TSys::InitClock()
 {
     // 获取当前频率
     RCC_ClocksTypeDef clock;
@@ -249,6 +245,11 @@ void TSys::Init(void)
 		Clock = clock.SYSCLK_Frequency;
 		SystemCoreClock = Clock;
 	}
+}
+
+void TSys::Init(void)
+{
+	InitClock();
 
 	// 必须在系统主频率确定以后再初始化时钟
     Time.Init();
@@ -339,7 +340,11 @@ void TSys::ShowInfo()
 	//debug_printf("\r\n");
 
     // 系统信息
-    debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
+    //debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
+    // 获取当前频率
+    RCC_ClocksTypeDef clock;
+    RCC_GetClocksFreq(&clock);
+    debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", clock.SYSCLK_Frequency/1000000, FlashSize, RAMSize);
 	//debug_printf("\r\n");
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
@@ -562,6 +567,7 @@ void TSys::Start()
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
+	Started = true;
 	if(OnStart)
 	{
 		// 设置重载值，让其每1ms重载一次
@@ -575,7 +581,7 @@ void TSys::Start()
 void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(!us || us >= 1000)
+	if(Sys.Started && (!us || us >= 1000))
 	{
 		// 记录当前正在执行任务
 		Task* task = Scheduler.Current;

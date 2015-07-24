@@ -258,7 +258,7 @@ void CPU_Sleep(void* param)
     RTC_WaitForLastTask();
 
 	SaveTicks();
-	debug_printf("进入低功耗模式 %d秒\r\n", second);
+	debug_printf("进入低功耗模式 %d毫秒\r\n", ms);
 	// 进入低功耗模式
 	//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 
@@ -475,7 +475,7 @@ void TTime::Sleep(uint us)
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(OnSleep && us >= 1000000)
+	if(OnSleep && Sys.Started && us >= 1000000)
 	{
 		uint ms = us / 1000;
 		OnSleep(&ms);
