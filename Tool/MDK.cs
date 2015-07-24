@@ -8,7 +8,10 @@ using System.IO;
 using System.Collections.Generic;
 using Microsoft.Win32;
 using NewLife.Log;
+using System.Text.RegularExpressions;
 
+namespace NewLife.Reflection
+{
     public class Builder
     {
         #region 初始化编译器
@@ -170,7 +173,7 @@ using NewLife.Log;
                 //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
 
                 var rs = 0;
-                Console.Write("编译：{0}", item.FullName);
+                Console.WriteLine("编译：{0}", item.FullName);
                 var sw = new Stopwatch();
                 sw.Start();
                 switch (item.Extension.ToLower())
@@ -273,10 +276,11 @@ using NewLife.Log;
         {
             if (msg.IsNullOrEmpty()) return;
 
-            if (msg.StartsWithIgnoreCase("Error"))
+            msg = FixWord(msg);
+            if (msg.StartsWithIgnoreCase("错误"))
                 XTrace.Log.Error(msg);
             else
-                XTrace.WriteLine(FixWord(msg));
+                XTrace.WriteLine(msg);
         }
 
         private Dictionary<String, String> _Words = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
@@ -285,15 +289,55 @@ using NewLife.Log;
 
         public String FixWord(String msg)
         {
-            var sb = new StringBuilder();
-            //var ss = msg.Trim().Split(" ", ":", "(", ")");
-            var ss = msg.Trim().Split(" ");
-            for (int i = 0; i < ss.Length; i++)
+            #region 初始化
+            if (Words.Count == 0)
             {
-                var rs = "";
-                if (Words.TryGetValue(ss[i], out rs)) ss[i] = rs;
+                Words.Add("Error", "错误");
+                Words.Add("Warning", "警告");
+                Words.Add("Warnings", "警告");
+                Words.Add("cannot", "不能");
+                Words.Add("open", "打开");
+                Words.Add("source", "源");
+                Words.Add("input", "输入");
+                Words.Add("file", "文件");
+                Words.Add("No", "没有");
+                Words.Add("Not", "没有");
+                Words.Add("such", "该");
+                Words.Add("or", "或");
+                Words.Add("And", "与");
+                Words.Add("Directory", "目录");
+                Words.Add("Enough", "足够");
+                Words.Add("Information", "信息");
+                Words.Add("to", "去");
+                Words.Add("list", "列出");
+                Words.Add("image", "镜像");
+                Words.Add("Symbols", "标识");
+                Words.Add("the", "");
+                Words.Add("map", "映射");
+                Words.Add("Finished", "完成");
+                Words.Add("line", "行");
+                Words.Add("messages", "消息");
             }
-            return String.Join(" ", ss);
+            #endregion
+
+            //var sb = new StringBuilder();
+            //var ss = msg.Trim().Split(" ", ":", "(", ")");
+            //var ss = msg.Trim().Split(" ");
+            //for (int i = 0; i < ss.Length; i++)
+            //{
+            //    var rs = "";
+            //    if (Words.TryGetValue(ss[i], out rs)) ss[i] = rs;
+            //}
+            //return String.Join(" ", ss);
+            //var ms = Regex.Matches(msg, "");
+            msg = Regex.Replace(msg, "(\\w+\\s?)", match =>
+            {
+                var w = match.Captures[0].Value;
+                var rs = "";
+                if (Words.TryGetValue(w.Trim(), out rs)) w = rs;
+                return w;
+            });
+            return msg;
         }
     }
 
@@ -372,3 +416,4 @@ using NewLife.Log;
         }
         #endregion
     }
+}
