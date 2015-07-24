@@ -163,7 +163,12 @@ namespace NewLife.Reflection
             return Asm.Run(sb.ToString(), 3000, WriteLog);
         }
 
-        public Int32 CompileAll(String path, String exts = "*.c;*.cpp;*.s")
+        /// <summary>编译指定目录所有文件</summary>
+        /// <param name="path">要编译的目录</param>
+        /// <param name="exts">后缀过滤</param>
+        /// <param name="excludes">要排除的文件</param>
+        /// <returns></returns>
+        public Int32 CompileAll(String path, String exts = "*.c;*.cpp", String excludes = null)
         {
             var count = 0;
 
@@ -171,10 +176,17 @@ namespace NewLife.Reflection
             var obj = "Obj".GetFullPath().EnsureDirectory(false);
             "Lst".GetFullPath().EnsureDirectory(false);
 
+            var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
+
             path = path.GetFullPath().EnsureEnd("\\");
             foreach (var item in path.AsDirectory().GetAllFiles(exts, true))
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
+                if (excs.Contains(item.Name)) continue;
+                foreach (var elm in excs)
+                {
+                    if (item.Name.Contains(elm)) continue;
+                }
 
                 //var file = item.FullName;
                 //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
