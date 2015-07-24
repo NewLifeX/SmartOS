@@ -150,7 +150,13 @@ void LoadTicks()
 #if TIME_DEBUG
 	g_Counter = counter;
 #endif
-	Time.Ticks = (ulong)counter * 1000000ull * Time.TicksPerMicrosecond;
+	ulong ms = (ulong)counter * 1000;
+	ulong us = ms * 1000;
+	Time.Ticks = us * Time.TicksPerMicrosecond;
+	Time.Milliseconds = ms;
+	Time.Microseconds = us;
+	//Time._msUs = 0;
+	//Time._usTicks = 0;
 }
 
 void SaveTicks()
@@ -172,8 +178,11 @@ void SaveTicks()
 
 #ifdef STM32F1
 	ulong ms = Time.Current() / 1000;
+#if TIME_DEBUG
+	debug_printf("SaveTicks %dms\r\n", (uint)ms);
+#endif
 	// 设置计数器
-	RTC_SetCounter(ms / 1000);
+	RTC_SetCounter((uint)(ms / 1000));
 #elif defined STM32F4
 	RTC_SetCounter(Time.Now());
 #endif
