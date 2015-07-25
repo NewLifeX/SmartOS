@@ -239,7 +239,7 @@ namespace NewLife.Reflection
             Console.WriteLine();
             Console.WriteLine("清理无用文件");
 
-            var ss = new String[] { "bak", "dep", "txt", "ini" };
+            var ss = new String[] { "bak", "dep", "txt", "ini", "htm" };
             var list = new List<String>(ss);
             list.Add(Environment.UserName);
 

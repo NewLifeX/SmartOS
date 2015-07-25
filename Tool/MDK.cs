@@ -276,8 +276,6 @@ namespace NewLife.Reflection
         {
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
 
-            Console.WriteLine("链接：{0}", name);
-
             /*
              * --cpu Cortex-M3 *.o --library_type=microlib --strict --scatter ".\Obj\SmartOSF1_Debug.sct" 
              * --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
@@ -303,7 +301,8 @@ namespace NewLife.Reflection
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             sb.Append(" --info sizes --info totals --info unused --info veneers");
 
-            sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, name.EnsureEnd(".axf").GetFullPath());
+			var axf = objName.EnsureEnd(".axf").GetFullPath();
+            sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
             foreach (var item in Objs)
             {
@@ -317,11 +316,16 @@ namespace NewLife.Reflection
                 sb.Append(item);
             }
 
+            Console.WriteLine("链接：{0}", axf);
+
             var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             if (rs != 0) return rs;
 
+			var bin = name.EnsureEnd(".bin").GetFullPath();
+            Console.WriteLine("生成：{0}", bin);
+
             sb.Clear();
-            sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", name.EnsureEnd(".bin").GetFullPath(), name.EnsureEnd(".axf").GetFullPath());
+            sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
 
             return rs;
