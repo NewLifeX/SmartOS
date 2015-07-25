@@ -23,7 +23,7 @@
     #endif
 #endif
 
-#ifdef STM32F10X
+#if defined (STM32F10X) || defined (STM32F10X_MD) || defined (STM32F1XX) || defined (STM32F1XX_MD)
     #ifndef STM32F1
         #define STM32F1
     #endif
