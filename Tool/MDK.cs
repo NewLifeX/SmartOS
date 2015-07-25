@@ -41,16 +41,6 @@ namespace NewLife.Reflection
             FromELF = basePath.CombinePath("fromelf.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
-            // 根据Debug控制宏定义
-            if(Debug)
-            {
-                if (!Defines.Contains("DEBUG")) Defines.Add("DEBUG");
-            }
-            else
-            {
-                if (Defines.Contains("DEBUG")) Defines.Remove("DEBUG");
-            }
-
             _Libs.Clear();
             Objs.Clear();
 
