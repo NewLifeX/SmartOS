@@ -24,7 +24,11 @@ namespace NewLife.Reflection
             if (basePath.IsNullOrEmpty())
             {
                 var mdk = new MDK();
-                if (mdk.ToolPath.IsNullOrEmpty() || !Directory.Exists(mdk.ToolPath)) return false;
+                if (mdk.ToolPath.IsNullOrEmpty() || !Directory.Exists(mdk.ToolPath))
+                {
+                    XTrace.WriteLine("未找到MDK！");
+                    return false;
+                }
 
                 XTrace.WriteLine("发现 {0} {1} {2}", mdk.Name, mdk.Version, mdk.ToolPath);
                 basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
@@ -37,10 +41,21 @@ namespace NewLife.Reflection
             FromELF = basePath.CombinePath("fromelf.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
-            //if (LibPath.AsDirectory().Exists) Includes.Add(LibPath);
+            // 根据Debug控制宏定义
+            if(Debug)
+            {
+                if (!Defines.Contains("DEBUG")) Defines.Add("DEBUG");
+            }
+            else
+            {
+                if (Defines.Contains("DEBUG")) Defines.Remove("DEBUG");
+            }
+
+            _Libs.Clear();
+            Objs.Clear();
 
             // 扫描当前所有目录，作为头文件引用目录
-            var ss = new String[] { ".", "..\\Lib", "..\\SmartOS", "..\\SmartOSLib", "..\\SmartOSLib\\inc" };
+            var ss = new String[] { ".", "..\\SmartOS", "..\\SmartOSLib", "..\\SmartOSLib\\inc", "..\\Lib" };
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
@@ -60,11 +75,11 @@ namespace NewLife.Reflection
 
         #region 编译选项
         private Boolean _Debug = true;
-        /// <summary>是否编译调试版</summary>
+        /// <summary>是否编译调试版。默认true</summary>
         public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
         private String _CPU = "Cortex-M0";
-        /// <summary>处理器</summary>
+        /// <summary>处理器。默认M0</summary>
         public String CPU { get { return _CPU; } set { _CPU = value; } }
 
         private String _Flash = "STM32F0XX";
@@ -72,7 +87,7 @@ namespace NewLife.Reflection
         public String Flash { get { return _Flash; } set { _Flash = value; } }
 
         private Int32 _Cortex;
-        /// <summary>Cortex版本</summary>
+        /// <summary>Cortex版本。默认0</summary>
         public Int32 Cortex
         {
             get { return _Cortex; }
@@ -120,10 +135,9 @@ namespace NewLife.Reflection
 
              */
 
-            //var lstName = ".\\Lst\\" + Path.GetFileNameWithoutExtension(file);
-            var objName = ".\\Obj\\" + Path.GetFileNameWithoutExtension(file);
-            //lstName = lstName.GetFullPath();
-            objName = objName.GetFullPath();
+            var objName = "Obj";
+            if (Debug) objName += "D";
+            objName = objName.CombinePath(Path.GetFileNameWithoutExtension(file)).GetFullPath();
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -143,7 +157,6 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -I{0}", item);
             }
 
-            //sb.AppendFormat(" --feedback \"{0}.feedback\"", lstName);
             sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
@@ -158,9 +171,10 @@ namespace NewLife.Reflection
              */
 
             var lstName = ".\\Lst\\" + Path.GetFileNameWithoutExtension(file);
-            var objName = ".\\Obj\\" + Path.GetFileNameWithoutExtension(file);
             lstName = lstName.GetFullPath();
-            objName = objName.GetFullPath();
+            var objName = "Obj";
+            if (Debug) objName += "D";
+            objName = objName.CombinePath(Path.GetFileNameWithoutExtension(file)).GetFullPath();
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -189,7 +203,9 @@ namespace NewLife.Reflection
             var count = 0;
 
             // 提前创建临时目录
-            var obj = "Obj".GetFullPath().EnsureDirectory(false);
+            var obj = "Obj";
+            if (Debug) obj += "D";
+            obj = obj.GetFullPath().EnsureDirectory(false);
             "Lst".GetFullPath().EnsureDirectory(false);
 
             var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
@@ -211,7 +227,7 @@ namespace NewLife.Reflection
                 //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
 
                 var rs = 0;
-                Console.WriteLine("编译：{0}", item.FullName);
+                Console.Write("编译：{0}\t", item.FullName);
                 var sw = new Stopwatch();
                 sw.Start();
                 switch (item.Extension.ToLower())
@@ -251,6 +267,8 @@ namespace NewLife.Reflection
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
             if (Debug) name = name.EnsureEnd("D");
 
+            XTrace.WriteLine("链接：{0}", name);
+
             var sb = new StringBuilder();
             sb.Append("--create -c");
             sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib").GetFullPath());
@@ -270,6 +288,7 @@ namespace NewLife.Reflection
         public Int32 Build(String name = null)
         {
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
+            name = Path.GetFileNameWithoutExtension(name);
             if (Debug) name = name.EnsureEnd("D");
 
             /*
@@ -286,10 +305,11 @@ namespace NewLife.Reflection
              * -o .\Obj\Smart130.axf 
              */
 
-            var lstName = ".\\Lst\\" + Path.GetFileNameWithoutExtension(name);
-            var objName = ".\\Obj\\" + Path.GetFileNameWithoutExtension(name);
-            lstName = lstName.GetFullPath();
-            objName = objName.GetFullPath();
+            var lstName = ".\\Lst\\" + name;
+            lstName = lstName.GetFullPath().EnsureDirectory();
+            var objName = "Obj";
+            if (Debug) objName += "D";
+            objName = objName.CombinePath(name).GetFullPath();
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
@@ -312,13 +332,13 @@ namespace NewLife.Reflection
                 sb.Append(item);
             }
 
-            Console.WriteLine("链接：{0}", axf);
+            XTrace.WriteLine("链接：{0}", axf);
 
             var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             if (rs != 0) return rs;
 
             var bin = name.EnsureEnd(".bin").GetFullPath();
-            Console.WriteLine("生成：{0}", bin);
+            XTrace.WriteLine("生成：{0}", bin);
 
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
