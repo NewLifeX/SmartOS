@@ -24,6 +24,7 @@ namespace NewLife.Reflection
             build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;I2C;Memory;String");
             build.CompileAll("..\\Platform", "Boot_F1.cpp");
             build.CompileAll("..\\Platform", "startup_stm32f10x.s");
+            build.CompileAll("..\\Security");
             build.BuildLib("..\\SmartOS_F1");
             //build.Build("");
         }

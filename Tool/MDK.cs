@@ -71,7 +71,7 @@ namespace NewLife.Reflection
         #endregion
 
         #region 编译选项
-        private Boolean _Debug;
+        private Boolean _Debug = true;
         /// <summary>是否编译调试版</summary>
         public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
@@ -207,6 +207,7 @@ namespace NewLife.Reflection
             var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
 
             path = path.GetFullPath().EnsureEnd("\\");
+			if(String.IsNullOrEmpty(exts)) exts = "*.c;*.cpp";
             foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
