@@ -183,6 +183,8 @@ namespace NewLife.Reflection
                     fs.Write(name.GetBytes());
                     // 多写一个0以截断字符串
                     fs.Write((Byte)0);
+
+                    rs = true;
                 }
             }
 
@@ -192,6 +194,7 @@ namespace NewLife.Reflection
         static String GetKeil()
         {
             var reg = Registry.LocalMachine.OpenSubKey("Software\\Keil\\Products\\MDK");
+            if (reg == null) reg = Registry.LocalMachine.OpenSubKey("Software\\Wow6432Node\\Keil\\Products\\MDK");
             if (reg == null) return null;
 
             return reg.GetValue("Path") + "";
