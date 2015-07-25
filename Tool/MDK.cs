@@ -1,14 +1,11 @@
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Reflection;
-using System.Text;
-using System.Linq;
-using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using NewLife.Log;
-using System.Text.RegularExpressions;
 
 namespace NewLife.Reflection
 {
@@ -54,16 +51,7 @@ namespace NewLife.Reflection
                 }
 
                 AddIncludes(p);
-
-                // 找找库文件
-                foreach (var item in p.AsDirectory().GetFiles("*.lib"))
-                {
-                    if (!Libs.Contains(item.FullName))
-                    {
-                        WriteLog("发现静态库：{0}".F(item.FullName));
-                        Libs.Add(item.FullName);
-                    }
-                }
+                AddLibs(p);
             }
 
             return true;
@@ -93,7 +81,7 @@ namespace NewLife.Reflection
                 _Cortex = value;
                 CPU = "Cortex-M{0}".F(value);
                 if (value == 3)
-                    Flash = "STM32F1XX";
+                    Flash = "STM32F10X";
                 else
                     Flash = "STM32F{0}XX".F(value);
             }
@@ -115,13 +103,13 @@ namespace NewLife.Reflection
         /// <summary>对象文件集合</summary>
         public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
 
-        private ICollection<String> _Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        private IDictionary<String, String> _Libs = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>库文件集合</summary>
-        public ICollection<String> Libs { get { return _Libs; } set { _Libs = value; } }
+        public ICollection<String> Libs { get { return _Libs.Values; } }
         #endregion
 
         #region 主要编译方法
-        public Int32 CompileCPP(String file)
+        public Int32 Compile(String file)
         {
             /*
              * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS 
@@ -207,7 +195,7 @@ namespace NewLife.Reflection
             var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
 
             path = path.GetFullPath().EnsureEnd("\\");
-			if(String.IsNullOrEmpty(exts)) exts = "*.c;*.cpp";
+            if (String.IsNullOrEmpty(exts)) exts = "*.c;*.cpp";
             foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
@@ -230,7 +218,7 @@ namespace NewLife.Reflection
                 {
                     case ".c":
                     case ".cpp":
-                        rs = CompileCPP(item.FullName);
+                        rs = Compile(item.FullName);
                         break;
                     case ".s":
                         rs = Assemble(item.FullName);
@@ -256,9 +244,12 @@ namespace NewLife.Reflection
             return count;
         }
 
+        /// <summary>编译静态库</summary>
+        /// <param name="name"></param>
         public void BuildLib(String name = null)
         {
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
+            if (Debug) name = name.EnsureEnd("D");
 
             var sb = new StringBuilder();
             sb.Append("--create -c");
@@ -273,9 +264,13 @@ namespace NewLife.Reflection
             Ar.Run(sb.ToString(), 3000, WriteLog);
         }
 
+        /// <summary>编译目标文件</summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public Int32 Build(String name = null)
         {
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
+            if (Debug) name = name.EnsureEnd("D");
 
             /*
              * --cpu Cortex-M3 *.o --library_type=microlib --strict --scatter ".\Obj\SmartOSF1_Debug.sct" 
@@ -302,7 +297,7 @@ namespace NewLife.Reflection
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             sb.Append(" --info sizes --info totals --info unused --info veneers");
 
-			var axf = objName.EnsureEnd(".axf").GetFullPath();
+            var axf = objName.EnsureEnd(".axf").GetFullPath();
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
             foreach (var item in Objs)
@@ -322,7 +317,7 @@ namespace NewLife.Reflection
             var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             if (rs != 0) return rs;
 
-			var bin = name.EnsureEnd(".bin").GetFullPath();
+            var bin = name.EnsureEnd(".bin").GetFullPath();
             Console.WriteLine("生成：{0}", bin);
 
             sb.Clear();
@@ -339,7 +334,7 @@ namespace NewLife.Reflection
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
 
-            if (!Includes.Contains(path)&&HasHeaderFile(path))
+            if (!Includes.Contains(path) && HasHeaderFile(path))
             {
                 WriteLog("引用目录：{0}".F(path));
                 Includes.Add(path);
@@ -362,6 +357,63 @@ namespace NewLife.Reflection
         Boolean HasHeaderFile(String path)
         {
             return path.AsDirectory().GetFiles("*.h", SearchOption.AllDirectories).Length > 0;
+        }
+
+        public void AddLibs(String path, Boolean allSub = true)
+        {
+            path = path.GetFullPath();
+            if (!Directory.Exists(path)) return;
+
+            var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            foreach (var item in path.AsDirectory().GetFiles("*.lib", opt))
+            {
+                var lib = new LibFile(item.FullName, Debug);
+                // 调试版/发行版 优先选用最佳匹配版本
+                var old = "";
+                // 不包含，直接增加
+                if (!_Libs.TryGetValue(lib.Name, out old))
+                {
+                    WriteLog("发现静态库：{0, -12} {1}".F(lib.Name, lib.FullName));
+                    _Libs.Add(lib.Name, lib.FullName);
+                }
+                // 已包含，并且新版本更合适，替换
+                else if (lib.Debug == Debug)
+                {
+                    var lib2 = new LibFile(old, Debug);
+                    if (lib2.Debug != Debug)
+                    {
+                        _Libs[lib.Name] = lib.FullName;
+                        WriteLog("替换静态库：{0, -12} {1}".F(lib.Name, lib.FullName));
+                    }
+                }
+            }
+        }
+
+        class LibFile
+        {
+            private String _Name;
+            /// <summary>名称</summary>
+            public String Name { get { return _Name; } set { _Name = value; } }
+
+            private String _FullName;
+            /// <summary>全名</summary>
+            public String FullName { get { return _FullName; } set { _FullName = value; } }
+
+            private Boolean _Debug;
+            /// <summary>是否调试版文件</summary>
+            public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
+
+            public LibFile(String file, Boolean debug)
+            {
+                FullName = file;
+                Name = Path.GetFileNameWithoutExtension(file);
+                Debug = Name.EndsWithIgnoreCase("D");
+
+                if (debug)
+                    Name = Name.EnsureEnd("D");
+                else
+                    Name = Name.TrimEnd("D");
+            }
         }
         #endregion
 
