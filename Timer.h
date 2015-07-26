@@ -30,10 +30,12 @@ public:
 	void Register(EventHandler handler, void* param = NULL);
 
 private:
-	void OnInterrupt();
 	static void OnHandler(ushort num, void* param);
 	EventHandler _Handler;
 	void* _Param;
+
+protected:
+	virtual void OnInterrupt();
 
 public:
 	static Timer**		Timers;		// 已经实例化的定时器对象
@@ -45,20 +47,27 @@ public:
 // 脉冲宽度调制
 class PWM : public Timer
 {
-private:
-//	Timer * _timer;
-//	AlternatePort * _pin[4];
 protected:
 	virtual void Config();
 
 public:
+	ushort Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
+
 	PWM(byte index);		// index 定时器编号
-	virtual ~PWM();
-	ushort Pulse[4];
 
 	virtual void Start();
 	virtual void Stop();
-//	void SetDuty_Cycle(int oc,int value);
+
+// 连续调整占空比
+public:
+	ushort* Pulses;		// 宽度数组
+	byte	PulseCount;	// 宽度个数
+	byte	Channel;	// 需要连续调整的通道。仅支持连续调整1个通道。默认0表示第一个通道
+	byte	PulseIndex;	// 索引。使用数组中哪一个位置的数据
+	bool	Repeated;	// 是否重复
+
+protected:
+	virtual void OnInterrupt();
 };
 /*
 class Capture

@@ -269,16 +269,19 @@ void Timer::Register(EventHandler handler, void* param)
 void Timer::OnHandler(ushort num, void* param)
 {
 	Timer* timer = (Timer*)param;
-	if(timer) timer->OnInterrupt();
+	if(timer)
+	{
+		// 检查指定的 TIM 中断发生
+		if(TIM_GetITStatus(timer->_Timer, TIM_IT_Update) == RESET) return;
+		// 必须清除TIMx的中断待处理位，否则会频繁中断
+		TIM_ClearITPendingBit(timer->_Timer, TIM_IT_Update);
+
+		timer->OnInterrupt();
+	}
 }
 
 void Timer::OnInterrupt()
 {
-	// 检查指定的 TIM 中断发生
-	if(TIM_GetITStatus(_Timer, TIM_IT_Update) == RESET) return;
-	// 必须清除TIMx的中断待处理位，否则会频繁中断
-	TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
-
 	if(_Handler) _Handler(this, _Param);
 }
 
@@ -303,6 +306,12 @@ const static TIM_OCInit OCInits[4]={TIM_OC1Init, TIM_OC2Init, TIM_OC3Init, TIM_O
 PWM::PWM(byte index) : Timer(g_Timers[index])
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
+
+	Pulses		= NULL;
+	PulseCount	= 0;
+	Channel		= 0;
+	PulseIndex	= 0;
+	Repeated	= false;
 }
 
 void PWM::Config()
@@ -331,9 +340,13 @@ void PWM::Config()
 			OCInits[i](_Timer, &oc);
 		}
 	}
-	// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
-	TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
-	TIM_ClearFlag(_Timer, TIM_FLAG_Update);
+
+	if(!Pulses)
+	{
+		// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
+		TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
+		TIM_ClearFlag(_Timer, TIM_FLAG_Update);
+	}
 
 	TIM_SetCounter(_Timer, 0x00000000);		// 清零定时器CNT计数寄存器
 	TIM_ARRPreloadConfig(_Timer, ENABLE);	// 使能预装载寄存器ARR
@@ -367,9 +380,20 @@ void PWM::Stop()
 	Timer::Stop();
 }
 
-PWM::~PWM()
+void PWM::OnInterrupt()
 {
-	Stop();
+	if(!Pulses || !PulseCount || PulseIndex >= PulseCount) return;
+		
+	// 在中断里面切换宽度
+	ushort p = Pulses[PulseIndex++];
+
+	// 动态计算4个寄存器中的某一个，并设置宽度
+	volatile uint* reg = &(_Timer->CCR1);
+	reg += Channel;
+	*reg = p;
+	
+	// 重复
+	if(Repeated && PulseIndex >= PulseCount) PulseIndex = 0;
 }
 
 /*
