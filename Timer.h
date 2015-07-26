@@ -8,21 +8,22 @@
 class Timer
 {
 protected:
-	volatile bool _started;			// 可能在中断里关闭自己
-	byte _index;	// 第几个定时器，从0开始
+	bool	_started;	// 可能在中断里关闭自己
+	byte	_index;		// 第几个定时器，从0开始
 
 	void ClockCmd(bool state);
+	virtual void Config();
 public:
-	TIM_TypeDef* _port;
+	TIM_TypeDef* _Timer;
 
 	Timer(TIM_TypeDef* timer);
-	~Timer();
+	virtual ~Timer();
 
-	ushort Prescaler;	// 预分频。实际值，此时无需减一。默认预分配到1MHz
-	uint Period;	// 周期。实际值，此时无需减一。默认1000个周期
+	ushort	Prescaler;	// 预分频。实际值，此时无需减一。
+	uint	Period;		// 周期。实际值，此时无需减一。
 
-	void Start();	// 开始定时器
-	void Stop();	// 停止定时器
+	virtual void Start();	// 开始定时器
+	virtual void Stop();	// 停止定时器
 	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
@@ -41,18 +42,22 @@ public:
 	static Timer* Create(byte index = 0xFF);	// 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
 };
 
+// 脉冲宽度调制
 class PWM : public Timer
 {
 private:
 //	Timer * _timer;
 //	AlternatePort * _pin[4];
+protected:
+	virtual void Config();
+
 public:
-	PWM(byte index = 0xFF);		// index 定时器编号
-	~PWM();
+	PWM(byte index);		// index 定时器编号
+	virtual ~PWM();
 	ushort Pulse[4];
 
-	void Start();
-	void Stop();
+	virtual void Start();
+	virtual void Stop();
 //	void SetDuty_Cycle(int oc,int value);
 };
 /*
@@ -62,14 +67,14 @@ private:
 	Timer * _timer;
 public:
 //	volatile byte HaveCap;		// 用位域可能比较好   低四位分别代表一路
-//	直接使用 stm32 的事件标志  
+//	直接使用 stm32 的事件标志
 //	FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG);
 //	volatile int CapValue[4];	// 一个定时器又是四路
 
 	Capture(Timer * timer = NULL);
 	~Capture();
 	uint GetCapture(int channel);
-	
+
 	void Start(int channel);
 	void Stop(int channel);
 private :
