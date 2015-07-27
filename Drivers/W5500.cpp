@@ -539,6 +539,11 @@ void W5500::Recovery()
 	frame.Data.SetPosition(0);
 	frame.Data.Write<byte>(phy.ToByte());
 	WriteFrame(frame);
+	for(int i = 0; i < 8; i++)
+	{
+		if(_socket[i] != NULL) 
+			if(_socket[i]->Recovery != NULL)_socket[i]->Recovery();
+	}
 }
 
 byte W5500::GetSocket()

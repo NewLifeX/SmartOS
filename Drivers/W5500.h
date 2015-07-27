@@ -1,4 +1,4 @@
-#ifndef _W5500_H_
+ï»¿#ifndef _W5500_H_
 #define _W5500_H_
 
 #include "Sys.h"
@@ -19,137 +19,137 @@ __inline void w5500_printf( const char *format, ... ) {}
 
 #endif
 
-// Ó²¼şSocket»ùÀà
+// ç¡¬ä»¶SocketåŸºç±»
 class HardwareSocket;
 
-// Êı¾İÖ¡¸ñÊ½
+// æ•°æ®å¸§æ ¼å¼
 // 2byte Address + 1byte CONFIG_Phase + nbyte Data Phase
 typedef struct
 {
 	ushort	Address;
-	byte	BSB;		// 5Î»    CONFIG_Phase ÓÉµ×ÏÂ·â×°  ÕâÀïÖ»ĞèÒªÖªµÀBSB¾ÍºÃ
+	byte	BSB;		// 5ä½    CONFIG_Phase ç”±åº•ä¸‹å°è£…  è¿™é‡Œåªéœ€è¦çŸ¥é“BSBå°±å¥½
 	Stream	Data;
 	void Clear(){ ArrayZero2(this,3);};
 }Frame;
 
-class W5500 //: public ITransport // Ö»¾ß±¸IP ÒÔ¼°Ïà¹ØÕûÌåÅäÖÃ  ²»¾ß±¸Socket·¢ËÍÄÜÁ¦ ËùÒÔ²»ÊÇITransport
+class W5500 //: public ITransport // åªå…·å¤‡IP ä»¥åŠç›¸å…³æ•´ä½“é…ç½®  ä¸å…·å¤‡Socketå‘é€èƒ½åŠ› æ‰€ä»¥ä¸æ˜¯ITransport
 {	
-	// Í¨ÓÃ¼Ä´æÆ÷½á¹¹
+	// é€šç”¨å¯„å­˜å™¨ç»“æ„
 	struct T_GenReg{
-		byte MR;			// Ä£Ê½			0x0000
-		byte GAR[4];		// Íø¹ØµØÖ·		0x0001
-		byte SUBR[4];		// ×ÓÍøÑÚÂë		0x0005
-		byte SHAR[6];		// Ô´MACµØÖ·	0x0009
-		byte SIPR[4];		// Ô´IPµØÖ·		0x000f
-		byte INTLEVEL[2];	// µÍµçÆ½ÖĞ¶Ï¶¨Ê±Æ÷¼Ä´æÆ÷	0x0013
-		byte IR;			// ÖĞ¶Ï¼Ä´æÆ÷				0x0015
-		byte IMR;			// ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷			0x0016
-		byte SIR;			// SocketÖĞ¶Ï¼Ä´æÆ÷			0x0017
-		byte SIMR;			// SocketÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷		0x0018
-		byte RTR[2];		// ÖØÊÔÊ±¼ä					0x0019
-		byte RCR;			// ÖØÊÔ¼ÆÊı					0x001b
-		byte PTIMER;		// PPP Á¬½Ó¿ØÖÆĞ­ÒéÇëÇó¶¨Ê±¼Ä´æÆ÷	0x001c
-		byte PMAGIC;		// PPP Á¬½Ó¿ØÖÆĞ­Òé»ÃÊı¼Ä´æÆ÷		0x001d
-		byte PHAR[6];		// PPPoE Ä£Ê½ÏÂÄ¿±ê MAC ¼Ä´æÆ÷		0x001e
-		byte PSID[2];		// PPPoE Ä£Ê½ÏÂ»á»° ID ¼Ä´æÆ÷		0x0024
-		byte PMRU[2];		// PPPoE Ä£Ê½ÏÂ×î´ó½ÓÊÕµ¥Ôª			0x0026
-		byte UIPR[4];		// ÎŞ·¨µÖ´ï IP µØÖ·¼Ä´æÆ÷¡¾Ö»¶Á¡¿	0x0028
-		byte UPORTR[2];		// ÎŞ·¨µÖ´ï¶Ë¿Ú¼Ä´æÆ÷¡¾Ö»¶Á¡¿		0x002c
-		byte PHYCFGR;		// PHY ÅäÖÃ¼Ä´æÆ÷					0x002e
-		//byte VERSIONR		// Ğ¾Æ¬°æ±¾¼Ä´æÆ÷¡¾Ö»¶Á¡¿			0x0039	// µØÖ·²»Á¬Ğø
-	}General_reg;			// Ö»ÓĞÒ»·İ ËùÒÔÖ±½Ó¶¨Òå¾ÍºÃ
+		byte MR;			// æ¨¡å¼			0x0000
+		byte GAR[4];		// ç½‘å…³åœ°å€		0x0001
+		byte SUBR[4];		// å­ç½‘æ©ç 		0x0005
+		byte SHAR[6];		// æºMACåœ°å€	0x0009
+		byte SIPR[4];		// æºIPåœ°å€		0x000f
+		byte INTLEVEL[2];	// ä½ç”µå¹³ä¸­æ–­å®šæ—¶å™¨å¯„å­˜å™¨	0x0013
+		byte IR;			// ä¸­æ–­å¯„å­˜å™¨				0x0015
+		byte IMR;			// ä¸­æ–­å±è”½å¯„å­˜å™¨			0x0016
+		byte SIR;			// Socketä¸­æ–­å¯„å­˜å™¨			0x0017
+		byte SIMR;			// Socketä¸­æ–­å±è”½å¯„å­˜å™¨		0x0018
+		byte RTR[2];		// é‡è¯•æ—¶é—´					0x0019
+		byte RCR;			// é‡è¯•è®¡æ•°					0x001b
+		byte PTIMER;		// PPP è¿æ¥æ§åˆ¶åè®®è¯·æ±‚å®šæ—¶å¯„å­˜å™¨	0x001c
+		byte PMAGIC;		// PPP è¿æ¥æ§åˆ¶åè®®å¹»æ•°å¯„å­˜å™¨		0x001d
+		byte PHAR[6];		// PPPoE æ¨¡å¼ä¸‹ç›®æ ‡ MAC å¯„å­˜å™¨		0x001e
+		byte PSID[2];		// PPPoE æ¨¡å¼ä¸‹ä¼šè¯ ID å¯„å­˜å™¨		0x0024
+		byte PMRU[2];		// PPPoE æ¨¡å¼ä¸‹æœ€å¤§æ¥æ”¶å•å…ƒ			0x0026
+		byte UIPR[4];		// æ— æ³•æŠµè¾¾ IP åœ°å€å¯„å­˜å™¨ã€åªè¯»ã€‘	0x0028
+		byte UPORTR[2];		// æ— æ³•æŠµè¾¾ç«¯å£å¯„å­˜å™¨ã€åªè¯»ã€‘		0x002c
+		byte PHYCFGR;		// PHY é…ç½®å¯„å­˜å™¨					0x002e
+		//byte VERSIONR		// èŠ¯ç‰‡ç‰ˆæœ¬å¯„å­˜å™¨ã€åªè¯»ã€‘			0x0039	// åœ°å€ä¸è¿ç»­
+	}General_reg;			// åªæœ‰ä¸€ä»½ æ‰€ä»¥ç›´æ¥å®šä¹‰å°±å¥½
 	
 private:
-	// ÊÕ·¢Êı¾İËø£¬È·±£Í¬Ê±Ö»ÓĞÒ»¸ö¶ÔÏóÊ¹ÓÃ
+	// æ”¶å‘æ•°æ®é”ï¼Œç¡®ä¿åŒæ—¶åªæœ‰ä¸€ä¸ªå¯¹è±¡ä½¿ç”¨
 	volatile byte _Lock;
-	// ±¾µØ ip ÊÇ·ñÊÇDhcpµÃµ½µÄ 1 ÊÇ  0 ²»ÊÇ
+	// æœ¬åœ° ip æ˜¯å¦æ˜¯Dhcpå¾—åˆ°çš„ 1 æ˜¯  0 ä¸æ˜¯
 	//byte IsDhcpIp;
 	
 	Spi* _spi;
     InputPort	_IRQ;
-	// 8¸öÓ²¼şsocket
+	// 8ä¸ªç¡¬ä»¶socket
 	HardwareSocket* _socket[8];	
-	// mac¶ÔÏó
+	// macå¯¹è±¡
 	MacAddress _mac;
 	IPAddress _ip;
-	// ¶ÁĞ´Ö¡£¬Ö¡±¾ÉíÓÉÍâ²¿¹¹Ôì   £¨°üÀ¨Ö¡Êı¾İÄÚ²¿µÄ¶ÁĞ´±êÖ¾£©
+	// è¯»å†™å¸§ï¼Œå¸§æœ¬èº«ç”±å¤–éƒ¨æ„é€    ï¼ˆåŒ…æ‹¬å¸§æ•°æ®å†…éƒ¨çš„è¯»å†™æ ‡å¿—ï¼‰
 	bool WriteFrame(Frame& fra);
 	bool ReadFrame(Frame& fra,uint length);
-	// spi Ä£Ê½£¨Ä¬ÈÏ±ä³¤£©
+	// spi æ¨¡å¼ï¼ˆé»˜è®¤å˜é•¿ï¼‰
 	byte PhaseOM;
-	byte RX_FREE_SIZE;	// Ê£Óà½ÓÊÕ»º´æ kbyte
-	byte TX_FREE_SIZE;	// Ê£Óà·¢ËÍ»º´æ kbyte
+	byte RX_FREE_SIZE;	// å‰©ä½™æ¥æ”¶ç¼“å­˜ kbyte
+	byte TX_FREE_SIZE;	// å‰©ä½™å‘é€ç¼“å­˜ kbyte
 public:
-	// rstÒı½Å¿ÉÄÜ²»ÊÇ¶ÀÏíµÄ  ÕâÀïÖ»ÁôÒ»¸öÖ¸Õë
+	// rstå¼•è„šå¯èƒ½ä¸æ˜¯ç‹¬äº«çš„  è¿™é‡Œåªç•™ä¸€ä¸ªæŒ‡é’ˆ
 	OutputPort* nRest;
-	// DHCP·şÎñÆ÷IP
+	// DHCPæœåŠ¡å™¨IP
 	//IPAddress DHCPServer;
 	//IPAddress DNSServer;
 	
-	// Èí¼ş¸´Î»
+	// è½¯ä»¶å¤ä½
 	void SoftwareReset();
-	// ¸´Î» °üº¬Ó²¼ş¸´Î»ºÍÈí¼ş¸´Î»
+	// å¤ä½ åŒ…å«ç¡¬ä»¶å¤ä½å’Œè½¯ä»¶å¤ä½
 	void Reset();
 	
-	// ¹¹Ôì
+	// æ„é€ 
 	W5500();
-    W5500(Spi* spi, Pin irq = P0 ,OutputPort* rst = NULL);	// ±ØĞë¾ß±¸¸´Î»Òı½Å ·ñÔò¼Ä´æÆ÷²»ÄÜ¶Á
+    W5500(Spi* spi, Pin irq = P0 ,OutputPort* rst = NULL);	// å¿…é¡»å…·å¤‡å¤ä½å¼•è„š å¦åˆ™å¯„å­˜å™¨ä¸èƒ½è¯»
     ~W5500();
 	
-	// ³õÊ¼»¯
+	// åˆå§‹åŒ–
 	void Init();
-    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);	// ±ØĞë¸ø³ö rst ¿ØÖÆÒı½Å
-	// Íø¿¨×´Ì¬Êä³ö
+    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);	// å¿…é¡»ç»™å‡º rst æ§åˆ¶å¼•è„š
+	// ç½‘å¡çŠ¶æ€è¾“å‡º
 	void StateShow();
 	
-	// ²âÊÔPHY×´Ì¬  ·µ»ØÊÇ·ñÁ¬½ÓÍøÏß
+	// æµ‹è¯•PHYçŠ¶æ€  è¿”å›æ˜¯å¦è¿æ¥ç½‘çº¿
 	bool CheckLnk();
-	// Êä³öÎïÀíÁ´Â·²ã×´Ì¬
+	// è¾“å‡ºç‰©ç†é“¾è·¯å±‚çŠ¶æ€
 	void PhyStateShow();
 	
-	// ÉèÖÃ±¾µØMAC
+	// è®¾ç½®æœ¬åœ°MAC
 	bool SetMac(MacAddress& mac);
-	// ¡°Ëæ»ú¡±Ò»¸öMAC  ²¢ÉèÖÃ
+	// â€œéšæœºâ€ä¸€ä¸ªMAC  å¹¶è®¾ç½®
 	void AutoMac();
-	// ·µ»Ø MacAddress
+	// è¿”å› MacAddress
 	MacAddress Mac();
 	
-	// ÉèÖÃÍø¹ØIP
+	// è®¾ç½®ç½‘å…³IP
 	void SetGateway(IPAddress& ip);
-	// ÉèÖÃÄ¬ÈÏÍø¹ØIP
+	// è®¾ç½®é»˜è®¤ç½‘å…³IP
 	void DefGateway();
-	// »ñÈ¡Íø¹ØIP
+	// è·å–ç½‘å…³IP
 	IPAddress GetGateway(){ _ip.Value =  *(uint*)General_reg.GAR; return _ip; };
 	
-	// ×ÓÍøÑÚÂë
+	// å­ç½‘æ©ç 
 	void SetIpMask(IPAddress& mask);
-	// ÉèÖÃÄ¬ÈÏ×ÓÍøÑÚÂë
+	// è®¾ç½®é»˜è®¤å­ç½‘æ©ç 
 	void DefIpMask();
-	// »ñÈ¡×ÓÍøÑÚÂë
+	// è·å–å­ç½‘æ©ç 
 	IPAddress GetIpMask(){ _ip.Value =  *(uint*)General_reg.SUBR; return _ip; };
 	
-	// ÉèÖÃ×Ô¼ºµÄIP
+	// è®¾ç½®è‡ªå·±çš„IP
 	void SetMyIp(IPAddress& ip);
-	// »ñÈ¡×Ô¼ºµÄIP
+	// è·å–è‡ªå·±çš„IP
 	IPAddress GetMyIp(){ _ip.Value =  *(uint*)General_reg.SIPR; return _ip; };
 	
-	/* ³¬Ê±Ê±¼ä = ÖØÊÔÊ±¼ä*ÖØÊÔ´ÎÊı  */
-	// ÉèÖÃÖØÊÔÊ±¼ä		³¬Ê±ÖØ´«/´¥·¢³¬Ê±ÖĞ¶Ï	×î´ó 6553ms		£¨Ä¬ÈÏ200ms£©
+	/* è¶…æ—¶æ—¶é—´ = é‡è¯•æ—¶é—´*é‡è¯•æ¬¡æ•°  */
+	// è®¾ç½®é‡è¯•æ—¶é—´		è¶…æ—¶é‡ä¼ /è§¦å‘è¶…æ—¶ä¸­æ–­	æœ€å¤§ 6553ms		ï¼ˆé»˜è®¤200msï¼‰
 	void SetRetryTime(ushort ms);
-	// ÉèÖÃÖØÊÔ´ÎÊı		³¬Ê±ÖØ´«µÄ´ÎÊı			×î´ó256			£¨Ä¬ÈÏ8´Î£©
+	// è®¾ç½®é‡è¯•æ¬¡æ•°		è¶…æ—¶é‡ä¼ çš„æ¬¡æ•°			æœ€å¤§256			ï¼ˆé»˜è®¤8æ¬¡ï¼‰
 	void SetRetryCount(byte count);
 	
-	// ÖĞ¶ÏÊ±µÍµçÆ½³ÖĞøÊ±¼ä
+	// ä¸­æ–­æ—¶ä½ç”µå¹³æŒç»­æ—¶é—´
 	void SetIrqLowLevelTime(int us);
 	
-	// ¿ªÆôPINGÓ¦´ğ
+	// å¼€å¯PINGåº”ç­”
 	void OpenPingACK();
 	void ClosePingACK();
 	
-	//void OpenWol();		// ÍøÂç»½ĞÑ
+	//void OpenWol();		// ç½‘ç»œå”¤é†’
 	void Recovery();
 private:
-	// ÖĞ¶Ï½Å»Øµ÷
+	// ä¸­æ–­è„šå›è°ƒ
 	static void OnIRQ(Pin pin, bool down, void* param);		
 	void OnIRQ();
 
@@ -160,7 +160,7 @@ public:
 	void Register(byte Index,HardwareSocket* handler);
 };
 
-// Ó²¼şSocket¿ØÖÆÆ÷
+// ç¡¬ä»¶Socketæ§åˆ¶å™¨
 class HardwareSocket
 {
 public:
@@ -173,51 +173,51 @@ public:
 	};
 private:	
 	struct T_HSocketReg{
-		byte Sn_MR ;		//0x0000  	// Socket Ä£Ê½¼Ä´æÆ÷
-		byte Sn_CR ;		//0x0001  	// ÅäÖÃ¼Ä´æÆ÷ 	¡¾½ÏÎªÌØÊâ¡¿¡¾Ö»Ğ´£¬¶ÁÎª0x00¡¿
-		byte Sn_IR ;		//0x0002  	// ÖĞ¶Ï¼Ä´æÆ÷	 Ğ´1Çå0£¿£¿
-		byte Sn_SR ;		//0x0003  	// ×´Ì¬¼Ä´æÆ÷	¡¾Ö»¶Á¡¿
-		byte Sn_PORT[2] ;	//0x0004  	// TCP UDP Ä£Ê½ÏÂ¶Ë¿ÚºÅ  OPENÖ®Ç°ÅäÖÃºÃ
-		byte Sn_DHAR[6] ;	//0x0006  	// Ä¿µÄMAC,SEND_MACÊ¹ÓÃ;CONNECT/SEND ÃüÁîÊ±ARP»ñÈ¡µ½µÄMAC
-		byte Sn_DIPR[4] ;	//0x000c  	// Ä¿±êIPµØÖ·
-		byte Sn_DPORT[2] ;	//0x0010  	// Ä¿±ê¶Ë¿Ú
-		byte Sn_MSSR[2] ;	//0x0012  	// TCP UDP Ä£Ê½ÏÂ MTU ×î´ó´«Êäµ¥Ôª´óĞ¡  Ä¬ÈÏ×î´óÖµ
+		byte Sn_MR ;		//0x0000  	// Socket æ¨¡å¼å¯„å­˜å™¨
+		byte Sn_CR ;		//0x0001  	// é…ç½®å¯„å­˜å™¨ 	ã€è¾ƒä¸ºç‰¹æ®Šã€‘ã€åªå†™ï¼Œè¯»ä¸º0x00ã€‘
+		byte Sn_IR ;		//0x0002  	// ä¸­æ–­å¯„å­˜å™¨	 å†™1æ¸…0ï¼Ÿï¼Ÿ
+		byte Sn_SR ;		//0x0003  	// çŠ¶æ€å¯„å­˜å™¨	ã€åªè¯»ã€‘
+		byte Sn_PORT[2] ;	//0x0004  	// TCP UDP æ¨¡å¼ä¸‹ç«¯å£å·  OPENä¹‹å‰é…ç½®å¥½
+		byte Sn_DHAR[6] ;	//0x0006  	// ç›®çš„MAC,SEND_MACä½¿ç”¨;CONNECT/SEND å‘½ä»¤æ—¶ARPè·å–åˆ°çš„MAC
+		byte Sn_DIPR[4] ;	//0x000c  	// ç›®æ ‡IPåœ°å€
+		byte Sn_DPORT[2] ;	//0x0010  	// ç›®æ ‡ç«¯å£
+		byte Sn_MSSR[2] ;	//0x0012  	// TCP UDP æ¨¡å¼ä¸‹ MTU æœ€å¤§ä¼ è¾“å•å…ƒå¤§å°  é»˜è®¤æœ€å¤§å€¼
 										// TCP:1460; UDP:1472; MACRAW:1514;
-										// MACRAW Ä£Ê½Ê± ÓÉÓÚMTU ²»ÔÚÄÚ²¿´¦Àí£¬Ä¬ÈÏMTU½«»áÉúĞ§
-										// PPPoE Ä£Ê½ÏÂ ÂÔ
-										// TCP UDP Ä£Ê½ÏÂ£¬´«ÊäÊı¾İ±È MTU´óÊ±£¬Êı¾İ½«»á×Ô¶¯»®·Ö³ÉÄ¬ÈÏMTU µ¥Ôª´óĞ¡
+										// MACRAW æ¨¡å¼æ—¶ ç”±äºMTU ä¸åœ¨å†…éƒ¨å¤„ç†ï¼Œé»˜è®¤MTUå°†ä¼šç”Ÿæ•ˆ
+										// PPPoE æ¨¡å¼ä¸‹ ç•¥
+										// TCP UDP æ¨¡å¼ä¸‹ï¼Œä¼ è¾“æ•°æ®æ¯” MTUå¤§æ—¶ï¼Œæ•°æ®å°†ä¼šè‡ªåŠ¨åˆ’åˆ†æˆé»˜è®¤MTU å•å…ƒå¤§å°
 		byte Reserved ;		//0x0014  	
-		byte Sn_TOS ;		//0x0015  	// IP°üÍ· ·şÎñÀàĞÍ 	OPENÖ®Ç°ÅäÖÃ
-		byte Sn_TTL ;		//0x0016  	// Éú´æÊ±¼ä TTL 	OPENÖ®Ç°ÅäÖÃ
+		byte Sn_TOS ;		//0x0015  	// IPåŒ…å¤´ æœåŠ¡ç±»å‹ 	OPENä¹‹å‰é…ç½®
+		byte Sn_TTL ;		//0x0016  	// ç”Ÿå­˜æ—¶é—´ TTL 	OPENä¹‹å‰é…ç½®
 		byte Reserved2[7] ;	//0x0017  	-  0x001d
-		byte Sn_RXBUF_SIZE ;//0x001e  	// ½ÓÊÕ»º´æ´óĞ¡   1 2 4 8 16  µ¥Î»KByte
-		byte Sn_TXBUF_SIZE ;//0x001f  	// ·¢ËÍ»º´æ´óĞ¡   1 2 4 8 16  µ¥Î»KByte
-		byte Sn_TX_FSR[2] ;	//0x0020  	// ¿ÕÏĞ·¢ËÍ¼Ä´æÆ÷´óĞ¡
-		byte Sn_TX_RD[2] ;	//0x0022  	// ·¢ËÍ¶Á»º´æÖ¸Õë
-		byte Sn_TX_WR[2] ;	//0x0024  	// ·¢ËÍĞ´»º´æÖ¸Õë
-		byte Sn_RX_RSR[2] ;	//0x0026  	// ¿ÕÏĞ½ÓÊÕ¼Ä´æÆ÷´óĞ¡
-		byte Sn_RX_RD[2] ;	//0x0028  	// ·¢ËÍ¶Á»º´æÖ¸Õë
-		byte Sn_RX_WR[2] ;	//0x002a  	// ·¢ËÍĞ´»º´æÖ¸Õë
-		byte Sn_IMR ;		//0x002c  	// ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷  ½á¹¹¸úSn_IRÒ»Ñù 0ÆÁ±Î  1²»ÆÁ±Î
-		byte Sn_FRAG[2] ;	//0x002d  	// IP°üÍ· ·Ö¶Î²¿·Ö  ·Ö¶Î¼Ä´æÆ÷
+		byte Sn_RXBUF_SIZE ;//0x001e  	// æ¥æ”¶ç¼“å­˜å¤§å°   1 2 4 8 16  å•ä½KByte
+		byte Sn_TXBUF_SIZE ;//0x001f  	// å‘é€ç¼“å­˜å¤§å°   1 2 4 8 16  å•ä½KByte
+		byte Sn_TX_FSR[2] ;	//0x0020  	// ç©ºé—²å‘é€å¯„å­˜å™¨å¤§å°
+		byte Sn_TX_RD[2] ;	//0x0022  	// å‘é€è¯»ç¼“å­˜æŒ‡é’ˆ
+		byte Sn_TX_WR[2] ;	//0x0024  	// å‘é€å†™ç¼“å­˜æŒ‡é’ˆ
+		byte Sn_RX_RSR[2] ;	//0x0026  	// ç©ºé—²æ¥æ”¶å¯„å­˜å™¨å¤§å°
+		byte Sn_RX_RD[2] ;	//0x0028  	// å‘é€è¯»ç¼“å­˜æŒ‡é’ˆ
+		byte Sn_RX_WR[2] ;	//0x002a  	// å‘é€å†™ç¼“å­˜æŒ‡é’ˆ
+		byte Sn_IMR ;		//0x002c  	// ä¸­æ–­å±è”½å¯„å­˜å™¨  ç»“æ„è·ŸSn_IRä¸€æ · 0å±è”½  1ä¸å±è”½
+		byte Sn_FRAG[2] ;	//0x002d  	// IPåŒ…å¤´ åˆ†æ®µéƒ¨åˆ†  åˆ†æ®µå¯„å­˜å™¨
 		
-		byte Sn_KPALVTR ;	//0x002f  	// Ö»ÔÚTCPÄ£Ê½ÏÂÊ¹ÓÃ  ÔÚÏßÊ±¼ä¼Ä´æÆ÷  µ¥Î»£º5s
-										// Îª0 Ê±  ÊÖ¶¯SEND_KEEP
-										// > 0 Ê±  ºöÂÔSEND_KEEP²Ù×÷
+		byte Sn_KPALVTR ;	//0x002f  	// åªåœ¨TCPæ¨¡å¼ä¸‹ä½¿ç”¨  åœ¨çº¿æ—¶é—´å¯„å­˜å™¨  å•ä½ï¼š5s
+										// ä¸º0 æ—¶  æ‰‹åŠ¨SEND_KEEP
+										// > 0 æ—¶  å¿½ç•¥SEND_KEEPæ“ä½œ
 	}HSocketReg;
 private:
-	W5500*	_THard;	// W5500¹«¹²²¿·Ö¿ØÖÆÆ÷
+	W5500*	_THard;	// W5500å…¬å…±éƒ¨åˆ†æ§åˆ¶å™¨
 public:
-	bool Enable;	// ÆôÓÃ
-	byte Index;		// Ê¹ÓÃµÄÓ²Socket±àºÅ   Ò²ÊÇBSBÑ¡ÏîµÄÒ»²¿·Ö
+	bool Enable;	// å¯ç”¨
+	byte Index;		// ä½¿ç”¨çš„ç¡¬Socketç¼–å·   ä¹Ÿæ˜¯BSBé€‰é¡¹çš„ä¸€éƒ¨åˆ†
 	
 	HardwareSocket(W5500* thard);
 	virtual ~HardwareSocket();
-	// ´ò¿ªSocket
+	// æ‰“å¼€Socket
 	virtual bool OpenSocket() = 0;
-	// »Ö¸´ÅäÖÃ
+	// æ¢å¤é…ç½®
 	virtual void Recovery() = 0;
-	// ´¦ÀíÊı¾İ°ü
+	// å¤„ç†æ•°æ®åŒ…
 	virtual bool Process() = 0;
 };
 
