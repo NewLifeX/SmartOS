@@ -304,8 +304,10 @@ namespace NewLife.Reflection
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
             //sb.AppendFormat(" --scatter \"{0}.sct\"", objName);
-            sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
-            sb.Append(" --info sizes --info totals --info unused --info veneers");
+            //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
+            //sb.Append(" --info sizes --info totals --info unused --info veneers");
+            sb.Append(" --summary_stderr --info summarysizes --map --callgraph --symbols");
+            sb.Append(" --info sizes --info totals --info veneers");
 
             var axf = objName.EnsureEnd(".axf").GetFullPath();
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
