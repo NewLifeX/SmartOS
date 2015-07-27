@@ -19,7 +19,8 @@ void TestSerial()
     sp1->Open();
     sp1->Register(OnUsartRead);
     
-    sp1->Write("http://www.NewLifeX.com \r\n", 0);
+	char str[] = "http://www.NewLifeX.com \r\n";
+    sp1->Write((byte*)str, ArrayLength(str));
     //Sys.Sleep(3000);
 
     debug_printf("\r\nTestSerial Finish!\r\n");
