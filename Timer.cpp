@@ -251,19 +251,24 @@ void Timer::SetFrequency(uint frequency)
 	}
 }
 
-void Timer::Register(EventHandler handler, void* param)
+void Timer::SetHandler(bool set)
 {
-	_Handler = handler;
-	_Param = param;
-
 	int irqs[] = TIM_IRQns;
-	if(handler)
+	if(set)
 	{
 		Interrupt.SetPriority(irqs[_index], 1);
 		Interrupt.Activate(irqs[_index], OnHandler, this);
 	}
 	else
 		Interrupt.Deactivate(irqs[_index]);
+}
+
+void Timer::Register(EventHandler handler, void* param)
+{
+	_Handler = handler;
+	_Param = param;
+
+	SetHandler(handler != NULL);
 }
 
 void Timer::OnHandler(ushort num, void* param)
@@ -310,7 +315,7 @@ PWM::PWM(byte index) : Timer(g_Timers[index])
 	Pulses		= NULL;
 	PulseCount	= 0;
 	Channel		= 0;
-	PulseIndex	= 0;
+	PulseIndex	= 0xFF;
 	Repeated	= false;
 }
 
@@ -350,6 +355,9 @@ void PWM::Config()
 
 	TIM_SetCounter(_Timer, 0x00000000);		// 清零定时器CNT计数寄存器
 	TIM_ARRPreloadConfig(_Timer, ENABLE);	// 使能预装载寄存器ARR
+
+	// 如果需要连续调整宽度，那么需要中断
+	if(Pulses) SetHandler(true);
 }
 
 void PWM::Start()
@@ -382,16 +390,26 @@ void PWM::Stop()
 
 void PWM::OnInterrupt()
 {
-	if(!Pulses || !PulseCount || PulseIndex >= PulseCount) return;
-		
-	// 在中断里面切换宽度
-	ushort p = Pulses[PulseIndex++];
+	if(!Pulses || !PulseCount || PulseIndex > PulseCount) return;
 
 	// 动态计算4个寄存器中的某一个，并设置宽度
 	volatile uint* reg = &(_Timer->CCR1);
 	reg += Channel;
+
+	// 发送完成以后，最后一次中断，把占空比调整为一半
+	if(PulseIndex >= PulseCount)
+	{
+		PulseIndex++;
+		*reg = Period >> 1;
+		return;
+	}
+
+	// 在中断里面切换宽度
+	ushort p = Pulses[PulseIndex++];
+
+	// 设置宽度
 	*reg = p;
-	
+
 	// 重复
 	if(Repeated && PulseIndex >= PulseCount) PulseIndex = 0;
 }

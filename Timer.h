@@ -13,6 +13,7 @@ protected:
 
 	void ClockCmd(bool state);
 	virtual void Config();
+	void SetHandler(bool set);
 public:
 	TIM_TypeDef* _Timer;
 
