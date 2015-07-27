@@ -393,7 +393,11 @@ void PWM::OnInterrupt()
 	if(!Pulses || !PulseCount || PulseIndex > PulseCount) return;
 
 	// 动态计算4个寄存器中的某一个，并设置宽度
+#ifdef STM32F1
+	volatile ushort* reg = &(_Timer->CCR1);
+#else
 	volatile uint* reg = &(_Timer->CCR1);
+#endif
 	reg += Channel;
 
 	// 发送完成以后，最后一次中断，把占空比调整为一半
