@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 #include "SerialPort.h"
-#include "NRF24L01.h"
+#include "Drivers\NRF24L01.h"
 #include "TinyNet\Message.h"
 #include "TinyNet\TinyClient.h"
 

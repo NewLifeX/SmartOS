@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Port.h"
+#include "Spi.h"
 
 void TestSerial();
 void TestAT45DB();
