@@ -303,7 +303,8 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
-            //sb.AppendFormat(" --scatter \"{0}.sct\"", objName);
+            //sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --entry RESET");
+            sb.AppendFormat(" --scatter \"{0}.sct\"", name.TrimEnd("D"));
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --callgraph --symbols");
