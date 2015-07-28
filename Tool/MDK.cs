@@ -307,7 +307,7 @@ namespace NewLife.Reflection
             //sb.AppendFormat(" --scatter \"{0}.sct\"", name.TrimEnd("D"));
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
-            sb.Append(" --summary_stderr --info summarysizes --map --callgraph --symbols");
+            sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             sb.Append(" --info sizes --info totals --info veneers");
 
             var axf = objName.EnsureEnd(".axf").GetFullPath();
