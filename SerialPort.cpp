@@ -241,17 +241,20 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 uint SerialPort::OnRead(byte* buf, uint size)
 {
 	// 在100ms内接收数据
-	uint msTimeout = 1;
-	TimeWheel tw(0, msTimeout);
+	//uint msTimeout = 1;
+	//TimeWheel tw(0, msTimeout);
 	uint count = 0; // 收到的字节数
-	while(count < size && !tw.Expired())
+	//while(count < size && !tw.Expired())
+	uint msTimeout = 1000;
+	while(count < size && msTimeout-- > 0)
 	{
 		// 轮询接收寄存器，收到数据则放入缓冲区
 		if(USART_GetFlagStatus(_port, USART_FLAG_RXNE) != RESET)
 		{
 			*buf++ = (byte)USART_ReceiveData(_port);
 			count++;
-			tw.Reset(0, msTimeout);
+			//tw.Reset(0, msTimeout);
+			msTimeout = 1000;
 		}
 	}
 	return count;

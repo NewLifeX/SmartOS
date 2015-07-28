@@ -1,4 +1,5 @@
-﻿#include "Thread.h"
+﻿#include "Time.h"
+#include "Thread.h"
 #include "Task.h"
 
 //#define TH_DEBUG DEBUG

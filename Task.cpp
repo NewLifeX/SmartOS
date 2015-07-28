@@ -1,4 +1,5 @@
 ﻿#include "Task.h"
+#include "Time.h"
 
 // 全局任务调度器
 TaskScheduler Scheduler("系统");

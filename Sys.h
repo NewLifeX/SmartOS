@@ -141,7 +141,7 @@ extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行
 // 内存管理
 #include "Memory.h"
 
-#include "Time.h"
+//#include "Time.h"
 #include "Interrupt.h"
 
 #endif //_Sys_H_

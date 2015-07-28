@@ -245,6 +245,8 @@ void TSys::InitClock()
 		Clock = clock.SYSCLK_Frequency;
 		SystemCoreClock = Clock;
 	}
+
+    Inited = true;
 }
 
 void TSys::Init(void)
@@ -253,8 +255,6 @@ void TSys::Init(void)
 
 	// 必须在系统主频率确定以后再初始化时钟
     Time.Init();
-
-    Inited = true;
 }
 
 #if DEBUG

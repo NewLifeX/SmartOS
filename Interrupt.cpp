@@ -323,6 +323,10 @@ SmartIRQ::~SmartIRQ()
 	__set_PRIMASK(_state);
 }
 
+/*================================ 锁 ================================*/
+
+#include "Time.h"
+
 // 智能锁。初始化时锁定一个整数，销毁时解锁
 Lock::Lock(int& ref)
 {
@@ -356,10 +360,11 @@ bool Lock::Wait(int us)
 	int& ref = *_ref;
 	// 等待超时时间
 	TimeWheel tw(0, 0, us);
+	tw.Sleep = 1;
 	while(ref > 0)
 	{
 		// 延迟一下，释放CPU使用权
-		Sys.Sleep(1);
+		//Sys.Sleep(1);
 		if(tw.Expired()) return false;
 	}
 
