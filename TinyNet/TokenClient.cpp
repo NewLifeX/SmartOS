@@ -1,4 +1,5 @@
-﻿#include "TokenClient.h"
+﻿#include "Time.h"
+#include "TokenClient.h"
 #include "SerialPort.h"
 
 #include "TokenMessage.h"

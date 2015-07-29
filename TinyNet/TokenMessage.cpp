@@ -1,4 +1,5 @@
-﻿#include "TokenMessage.h"
+﻿#include "Time.h"
+#include "TokenMessage.h"
 
 #include "TinyIP\Udp.h"
 #include "Security\RC4.h"

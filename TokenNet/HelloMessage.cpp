@@ -1,4 +1,5 @@
-﻿#include "HelloMessage.h"
+﻿#include "Time.h"
+#include "HelloMessage.h"
 
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
