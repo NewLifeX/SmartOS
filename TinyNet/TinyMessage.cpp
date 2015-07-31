@@ -209,7 +209,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
-	int blank = 11;
+	int blank = 9;
 	msg_printf("%s", port->ToString());
 	if(send)
 	{
@@ -236,8 +236,8 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	}
 	else if(!send)
 	{
-		msg_printf("Request ");
-		blank -= 8;
+		msg_printf("Recv ");
+		blank -= 5;
 	}
 	if(blank > 0)
 	{
