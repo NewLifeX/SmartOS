@@ -156,7 +156,7 @@ void W5500::Init()
 	PhaseOM = 0x00;
 	RX_FREE_SIZE = 0x16;
 	TX_FREE_SIZE = 0x16;
-	IsDhcpIp = 0;	// IP 本地ip不是dhcp获得的
+	//IsDhcpIp = 0;	// IP 本地ip不是dhcp获得的
 }
 // 初始化
 void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
@@ -539,11 +539,11 @@ void W5500::Recovery()
 	frame.Data.SetPosition(0);
 	frame.Data.Write<byte>(phy.ToByte());
 	WriteFrame(frame);
-	for(int i = 0; i < 8; i++)
-	{
-		if(_socket[i] != NULL) 
-			if(_socket[i]->Recovery != NULL)_socket[i]->Recovery();
-	}
+//	for(int i = 0; i < 8; i++)
+//	{
+//		if(_socket[i] != NULL) 
+//			if(_socket[i]->Recovery != NULL)_socket[i]->Recovery();
+//	}
 }
 
 byte W5500::GetSocket()
@@ -581,7 +581,7 @@ void W5500::OnIRQ()
 	frame.BSB = 0x00;
 	frame.Address = (ushort)((uint)General_reg.IR - (uint)&General_reg);
 	ReadFrame(frame,4);
-	frame.Read((byte *)&General_reg.IR,0,4);
+	frame.Data.Read((byte *)&General_reg.IR,0,4);
 	// 分析IR
 	//T_IR ir;
 	//ir.Init(General_reg.IR);
@@ -614,8 +614,8 @@ void W5500::OnIRQ()
 			if(_socket[i])
 				_socket[i]->Process();
 		}
-		temp =>> 1;
-		if(temp = 0x00)break;
+		temp >>= 1;
+		if(temp == 0x00)break;
 	}
 	// 中断位清零 说明书说的不够清晰 有待完善
 }
