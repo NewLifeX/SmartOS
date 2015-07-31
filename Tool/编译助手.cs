@@ -264,13 +264,21 @@ namespace NewLife.Reflection
         /// <summary>更新脚本自己</summary>
         static void UpdateSelf()
         {
+			var deep = 1;
             // 找到SmartOS目录，里面的脚本可用于覆盖自己
             var di = "../SmartOS".GetFullPath();
-            if (!Directory.Exists(di)) di = "../../SmartOS".GetFullPath();
-            if (!Directory.Exists(di)) di = "../../../SmartOS".GetFullPath();
+            if (!Directory.Exists(di)){ deep++; di = "../../SmartOS".GetFullPath();}
+            if (!Directory.Exists(di)){ deep++; di = "../../../SmartOS".GetFullPath();}
             if (!Directory.Exists(di)) return;
-
+			
             var fi = di.CombinePath("Tool/Build.cs");
+			switch(deep)
+			{
+				case 2:fi = di.CombinePath("Tool/Build2.cs");break;
+				case 3:fi = di.CombinePath("Tool/Build3.cs");break;
+				default: break;
+			}
+			
             if (!File.Exists(fi)) return;
 
             var my = "Build.cs".GetFullPath();
