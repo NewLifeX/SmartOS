@@ -362,7 +362,7 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 	msg2.Reply = msg.Reply;
 
 	// 第一个字节是节点设备地址
-	if(msg.Length>0) msg2.Dest = msg.Data[0];
+	if(msg.Length > 0) msg2.Dest = msg.Data[0];
 
 	if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
 
