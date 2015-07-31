@@ -336,7 +336,8 @@ void TokenController::ShowMessage(string action, Message& msg)
 #if MSG_DEBUG
 	for(int i=0; i<ArrayLength(NoLogCodes); i++)
 	{
-		if(msg.Code == NoLogCodes[i] || NoLogCodes[i] == 0) return;
+		if(msg.Code == NoLogCodes[i]) return;
+		if(NoLogCodes[i] == 0) break;
 	}
 	
 	debug_printf("Token::%s ", action);
