@@ -257,7 +257,7 @@ extern "C"
 		//uint exception = GetIPSR();
 #ifdef STM32F0
 		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x\r\n", registers[5], registers[6], registers[7]);
-		for(int i=0; i<=3; i++)
+		for(int i=0; i<=7; i++)
 		{
 			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
 		}
@@ -293,6 +293,8 @@ extern "C"
 		//SP+28: PSR
 		//R0-R12 are not overwritten yet
 #ifdef STM32F0
+		//add      sp,sp,#16             // remove R0-R3
+		push     {r4-r7}              // store R0-R11
 #else
 		add      sp,sp,#16             // remove R0-R3
 		push     {r0-r11}              // store R0-R11
