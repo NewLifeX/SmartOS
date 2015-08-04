@@ -49,12 +49,19 @@ void Controller::Close()
 	Opened = false;
 }
 
+Controller* _my = NULL;
 uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 {
 	assert_ptr(buf);
 	assert_ptr(param);
 
 	Controller* control = (Controller*)param;
+	if(!_my)
+		_my = control;
+	else
+	{
+		assert_param2(_my == control, "控制器指针已被改变");
+	}
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
