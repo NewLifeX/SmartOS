@@ -41,6 +41,8 @@ void SerialPort::Init()
 	Error = 0;
 
 	IsRemap = false;
+
+	_taskidRx	= 0;
 }
 
 void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte stopBits)
@@ -57,7 +59,7 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 
 	// 根据端口实际情况决定打开状态
 	if(_port->CR1 & USART_CR1_UE) Opened = true;
-	
+
 	// 设置名称
 	//Name = "COMx";
 	*(uint*)Name = *(uint*)"COMx";
@@ -163,9 +165,16 @@ ShowLog:
 	p.USART_Parity = _parity;
 	USART_Init(_port, &p);
 
-	USART_ITConfig(_port, USART_IT_RXNE, ENABLE); // 串口接收中断配置
-	// 初始化的时候会关闭所有中断，这里不需要单独关闭发送中断
-	//USART_ITConfig(_port, USART_IT_TXE, DISABLE); // 不需要发送中断
+	// 串口接收中断配置，同时会打开过载错误中断
+	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);
+	//USART_ITConfig(_port, USART_IT_PE, ENABLE);
+	//USART_ITConfig(_port, USART_IT_ERR, ENABLE);
+
+	//USART_ITConfig(_port, USART_IT_TXE, DISABLE);
+
+	// 清空缓冲区
+	Tx.Clear();
+	Rx.Clear();
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
@@ -221,20 +230,35 @@ void SerialPort::SendData(byte data, uint times)
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
 bool SerialPort::OnWrite(const byte* buf, uint size)
 {
+	if(!size) return true;
+
 	if(RS485) *RS485 = true;
 
     if(size > 0)
     {
-        for(int i=0; i<size; i++) SendData(*buf++);
+        for(int i=0; i<size; i++) Tx.Push(*buf++);
     }
     else
     {
-        while(*buf) SendData(*buf++);
+        while(*buf) Tx.Push(*buf++);
     }
 
 	if(RS485) *RS485 = false;
 
+	// 打开串口发送
+	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+
 	return true;
+}
+
+void SerialPort::OnTxHandler()
+{
+	if(!Tx.Empty())
+		USART_SendData(_port, (ushort)Tx.Pop());
+	else
+		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
+
+	USART_ClearITPendingBit(_port, USART_IT_TXE);
 }
 
 // 从某个端口读取数据
@@ -260,6 +284,37 @@ uint SerialPort::OnRead(byte* buf, uint size)
 	return count;
 }
 
+void SerialPort::OnRxHandler()
+{
+	//if(!HasHandler()) return;
+
+	byte dat = (byte)USART_ReceiveData(_port);
+	Rx.Push(dat);
+
+	// 收到数据，开启任务调度
+	if(_taskidRx) Sys.SetTask(_taskidRx, true);
+
+	// 其实内部的USART_ReceiveData可以清除USART_IT_RXNE
+	//USART_ClearITPendingBit(sp->_port, USART_IT_RXNE);
+}
+
+void SerialPort::ReceiveTask(void* param)
+{
+	SerialPort* sp = (SerialPort*)param;
+	assert_param2(sp, "串口参数不能为空 ReceiveTask");
+
+	// 从栈分配，节省内存
+	byte buf[64];
+	uint len = sp->Read(buf, ArrayLength(buf));
+	if(len)
+	{
+		len = sp->OnReceive(buf, len);
+		assert_param(len <= ArrayLength(buf));
+		// 如果有数据，则反馈回去
+		if(len) sp->Write(buf, len);
+	}
+}
+
 // 刷出某个端口中的数据
 bool SerialPort::Flush(uint times)
 {
@@ -283,34 +338,38 @@ void SerialPort::Register(TransportHandler handler, void* param)
 	{
         Interrupt.SetPriority(irq, 1);
 
-		Interrupt.Activate(irq, OnUsartReceive, this);
+		Interrupt.Activate(irq, OnHandler, this);
+
+		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
+		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 	}
     else
 	{
+		if(_taskidRx) Sys.RemoveTask(_taskidRx);
+
 		Interrupt.Deactivate(irq);
 	}
 }
 
 // 真正的串口中断函数
-void SerialPort::OnUsartReceive(ushort num, void* param)
+void SerialPort::OnHandler(ushort num, void* param)
 {
 	SerialPort* sp = (SerialPort*)param;
-	if(sp && sp->HasHandler())
+	assert_param2(sp, "串口参数不能为空 OnHandler");
+
+	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
+	// 接收中断
+	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
+	// 溢出
+	if(USART_GetFlagStatus(sp->_port, USART_FLAG_ORE) != RESET)
 	{
-		if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET)
-		{
-			// 从栈分配，节省内存
-			byte buf[64];
-			uint len = sp->Read(buf, ArrayLength(buf));
-			if(len)
-			{
-				len = sp->OnReceive(buf, len);
-				assert_param(len <= ArrayLength(buf));
-				// 如果有数据，则反馈回去
-				if(len) sp->Write(buf, len);
-			}
-		}
+		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
+		// 读取并扔到错误数据
+		USART_ReceiveData(sp->_port);
 	}
+	if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
+	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
+	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);
 }
 
 // 获取引脚

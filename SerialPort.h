@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Port.h"
+#include "Queue.h"
 #include "Net\ITransport.h"
 
 // 串口类
@@ -22,6 +23,10 @@ private:
 #else
 	InputPort _rx;
 #endif
+
+	// 收发缓冲区
+	Queue Tx;
+	Queue Rx;
 
 	void Init();
 
@@ -59,7 +64,7 @@ public:
 	void SendData(byte data, uint times = 3000);
 
     bool Flush(uint times = 3000);
-	
+
 	void SetBaudRate(int baudRate = 115200);
 
     void GetPins(Pin* txPin, Pin* rxPin);
@@ -77,7 +82,12 @@ protected:
 	virtual uint OnRead(byte* buf, uint size);
 
 private:
-	static void OnUsartReceive(ushort num, void* param);
+	static void OnHandler(ushort num, void* param);
+	void OnTxHandler();
+	void OnRxHandler();
+
+	uint	_taskidRx;
+	static void ReceiveTask(void* param);
 };
 
 #endif
