@@ -15,6 +15,8 @@ Task::Task(TaskScheduler* scheduler)
 	Cost		= 0;
 	MaxCost		= 0;
 	Enable		= true;
+	Deepth		= 0;
+	MaxDeepth	= 1;
 }
 
 Task::~Task()
@@ -22,8 +24,11 @@ Task::~Task()
 	if(ID) _Scheduler->Remove(ID);
 }
 
-void Task::Execute(ulong now)
+bool Task::Execute(ulong now)
 {
+	if(Deepth >= MaxDeepth) return false;
+	Deepth++;
+
 	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 	if(NextTime >= 0)
 		NextTime = now + Period;
@@ -58,6 +63,10 @@ void Task::Execute(ulong now)
 
 	// 如果只是一次性任务，在这里清理
 	if(NextTime >= 0 && Period < 0) _Scheduler->Remove(ID);
+
+	Deepth--;
+
+	return true;
 }
 
 // 显示状态
@@ -199,7 +208,7 @@ void TaskScheduler::Execute(uint usMax)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Time.Current() + task->Cost <= end)
 		{
-			task->Execute(now);
+			if(!task->Execute(now)) continue;
 
 			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出

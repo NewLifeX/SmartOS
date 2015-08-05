@@ -36,11 +36,14 @@ public:
 	int		MaxCost;	// 最大执行时间
 
 	bool	Enable;		// 是否启用
+	byte	Deepth;		// 当前深度
+	byte	MaxDeepth;	// 最大深度。默认1层，不允许重入
 	byte	Reversed[3];// 保留，避免对齐问题
 
 	~Task();
 
-	void Execute(ulong now);
+	// 执行任务。返回是否正常执行。
+	bool Execute(ulong now);
 	void ShowStatus();	// 显示状态
 };
 
