@@ -224,8 +224,8 @@ void NRF24L01::Init()
 	MaxError	= 10;
 	Error		= 0;
 
-	_AutoOpenTaskID = 0;
-	_ReceiveTaskID = 0;
+	_tidOpen = 0;
+	_tidRecv = 0;
 
 	_Lock = 0;
 
@@ -276,10 +276,10 @@ NRF24L01::~NRF24L01()
 {
     debug_printf("NRF24L01::~NRF24L01\r\n");
 
-	if(_AutoOpenTaskID)
+	if(_tidOpen)
 	{
-		Sys.RemoveTask(_AutoOpenTaskID);
-		_AutoOpenTaskID = 0;
+		Sys.RemoveTask(_tidOpen);
+		_tidOpen = 0;
 	}
 	Register(NULL);
 
@@ -469,7 +469,7 @@ bool NRF24L01::Config()
 		int period = RetryPeriod / 250 - 1;
 		if(period < 0) period = 0;
 		//WriteReg(SETUP_RETR, (period << 4) | Retry);
-		
+
 		RF_SETUP_RETR retr;
 		retr.ARC = Retry;
 		retr.ARD = period;
@@ -681,7 +681,10 @@ bool NRF24L01::SetMode(bool isReceive)
 		Close();
 		if(Open()) return true;
 
-		_AutoOpenTaskID = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000, "R24热插拔");
+		if(_tidOpen)
+			Sys.SetTask(_tidOpen, true);
+		else
+			_tidOpen = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000, "R24热插拔");
 		return false;
 	}
 
@@ -794,15 +797,17 @@ bool NRF24L01::OnOpen()
 	}
 
 	// 打开成功后，关闭定时轮询任务
-	if(_AutoOpenTaskID)
+	if(_tidOpen)
 	{
 		debug_printf("关闭2401热插拔检查 ");
-		Sys.RemoveTask(_AutoOpenTaskID);
-		_AutoOpenTaskID = 0;
+		Sys.SetTask(_tidOpen, false);
+		//Sys.RemoveTask(_tidOpen);
+		//_tidOpen = 0;
 	}
 
+	if(_tidRecv) Sys.SetTask(_tidRecv, true);
+
 	//debug_printf("定时显示状态 ");
-	//_taskID = Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 	//Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
 
 	return true;
@@ -810,6 +815,8 @@ bool NRF24L01::OnOpen()
 
 void NRF24L01::OnClose()
 {
+	if(_tidRecv) Sys.SetTask(_tidRecv, false);
+
 	SetPower(false);
 
 	_spi->Close();
@@ -921,11 +928,11 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
 	//TimeWheel tw(0, Timeout);
 	//TimeWheel tw(0, RetryPeriod * Retry);
-	
+
 	uint ms = RetryPeriod * Retry;
 	if(ms > 4 && AutoAnswer) ms = 4;
 	// https://devzone.nordicsemi.com/question/17074/nrf24l01-data-loss/
-	// It is important never to keep the nRF24L01+ in TX mode for more than 4ms at a time. 
+	// It is important never to keep the nRF24L01+ in TX mode for more than 4ms at a time.
 	// If the Enhanced ShockBurst™ features are enabled, nRF24L01+ is never in TX mode longer than 4ms
 	TimeWheel tw(0, ms);
 	do
@@ -1011,16 +1018,8 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 	NRF24L01* nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
-	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	if(!nrf->Opened || nrf->_Lock != 0) return;
-
-#if RF_DEBUG
-	// 为了快速处理消息，除非调试必要，否则尽可能不要输出日志
-	/*debug_printf("NRF24L01::OnIRQ %d ", down);
-	nrf->ShowStatus();*/
-#endif
-
-	nrf->OnIRQ();
+	// 马上调度任务
+	if(nrf->_tidRecv) Sys.SetTask(nrf->_tidRecv, true, 0);
 }
 
 void NRF24L01::OnIRQ()
@@ -1154,12 +1153,16 @@ void NRF24L01::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		//if(!_ReceiveTaskID)
-		//	_ReceiveTaskID = Sys.AddTask(ReceiveTask, this, 0, 2000, "R24接收");
+		if(!_tidRecv)
+		{
+			_tidRecv = Sys.AddTask(ReceiveTask, this, 20000, 20000, "R24接收");
+			// 关闭任务，等打开以后再开
+			if(!Opened) Sys.SetTask(_tidRecv, false);
+		}
 	}
 	else
 	{
-		if(_ReceiveTaskID) Sys.RemoveTask(_ReceiveTaskID);
-		_ReceiveTaskID = 0;
+		if(_tidRecv) Sys.RemoveTask(_tidRecv);
+		_tidRecv = 0;
 	}
 }

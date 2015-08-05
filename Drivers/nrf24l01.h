@@ -25,8 +25,8 @@ private:
 
 	// 接收任务。
 	static void ReceiveTask(void* param);
-	uint _AutoOpenTaskID;
-	uint _ReceiveTaskID;
+	uint _tidOpen;
+	uint _tidRecv;
 	static void OnIRQ(Pin pin, bool down, void* param);
 	void OnIRQ();
 
