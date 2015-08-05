@@ -61,7 +61,8 @@ public:
 	int		Count;		// 任务个数
 	Task*	Current;	// 正在执行的任务
 	bool	Running;	// 是否正在运行
-	byte	Reversed[3];// 保留，避免对齐问题
+	bool	Sleeping;	// 如果当前处于Sleep状态，马上停止并退出
+	byte	Reversed[2];// 保留，避免对齐问题
 
 	int		Cost;		// 平均执行时间
 	int		MaxCost;	// 最大执行时间

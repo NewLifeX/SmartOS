@@ -232,7 +232,9 @@ void TaskScheduler::Execute(uint usMax)
 		min -= now;
 		// 睡眠时间不能过长，否则可能无法喂狗
 		//if(min > 1000) min = 1000;
-		Time.Sleep(min);
+		Sleeping = true;
+		Time.Sleep(min, &Sleeping);
+		Sleeping = false;
 	}
 }
 

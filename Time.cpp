@@ -540,7 +540,7 @@ void TTime::SetTime(ulong us)
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
 
-void TTime::Sleep(uint us)
+void TTime::Sleep(uint us, bool* running)
 {
     // 睡眠时间太短
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
@@ -573,7 +573,7 @@ void TTime::Sleep(uint us)
 
 	maxDiff += current;
 
-    while(CurrentTicks() <= maxDiff);
+    while(CurrentTicks() <= maxDiff && (running == NULL || *running));
     //while(Current() <= maxDiff);
 }
 

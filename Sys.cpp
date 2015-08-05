@@ -573,6 +573,9 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 	if(task->NextTime >= 0 && usNextTime >= 0)
 		task->NextTime = Time.Current() + usNextTime;
 
+	// 如果系统调度器处于Sleep，让它立马退出
+	if(enable) Scheduler.Sleeping = false;
+
 	return true;
 }
 

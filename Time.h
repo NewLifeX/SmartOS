@@ -60,7 +60,7 @@ public:
 	volatile ulong Milliseconds;	// 全局毫秒数
     //volatile ulong NextEvent;		// 下一个计划事件的滴答数
 
-    byte TicksPerMicrosecond;		// 每微秒的时钟滴答数
+    byte	TicksPerMicrosecond;	// 每微秒的时钟滴答数
 
     TTime();
     ~TTime();
@@ -73,7 +73,7 @@ public:
     ulong CurrentTicks();	// 当前滴答时钟
 	ulong Current(); 		// 当前微秒数
 	void SetTime(ulong us);	// 设置时间
-    void Sleep(uint us);
+    void Sleep(uint us, bool* running = NULL);
 	void LowPower();		// 启用低功耗模式，Sleep时进入睡眠
 
 	// 当前时间。外部不要释放该指针
