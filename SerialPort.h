@@ -38,7 +38,7 @@ public:
 
 	SerialPort();
     SerialPort(COM_Def index,
-        int baudRate = 115200,
+        int baudRate = 1024000,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1)    //1位停止位
@@ -48,7 +48,7 @@ public:
 	}
 
     SerialPort(USART_TypeDef* com,
-        int baudRate = 115200,
+        int baudRate = 1024000,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
@@ -56,7 +56,7 @@ public:
     virtual ~SerialPort();
 
     void Init(byte index,
-        int baudRate = 115200,
+        int baudRate = 1024000,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
@@ -65,7 +65,7 @@ public:
 
     bool Flush(uint times = 3000);
 
-	void SetBaudRate(int baudRate = 115200);
+	void SetBaudRate(int baudRate = 1024000);
 
     void GetPins(Pin* txPin, Pin* rxPin);
 

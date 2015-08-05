@@ -135,12 +135,12 @@ uint TaskScheduler::Add(Action func, void* param, long dueTime, long period, str
 	//debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
 	if(period >= 1000)
 	{
-		uint dt = dueTime / 1000;
+		int dt = dueTime / 1000;
 		int  pd = period > 0 ? period / 1000 : period;
-		debug_printf("%s::添加%d %s 0x%08x FirstTime=%ums Period=%dms\r\n", Name, task->ID, name, func, dt, pd);
+		debug_printf("%s::添加%d %s 0x%08x FirstTime=%dms Period=%dms\r\n", Name, task->ID, name, func, dt, pd);
 	}
 	else
-		debug_printf("%s::添加%d %s 0x%08x FirstTime=%uus Period=%dus\r\n", Name, task->ID, name, func, (uint)dueTime, (int)period);
+		debug_printf("%s::添加%d %s 0x%08x FirstTime=%dus Period=%dus\r\n", Name, task->ID, name, func, (int)dueTime, (int)period);
 #endif
 
 	return task->ID;
