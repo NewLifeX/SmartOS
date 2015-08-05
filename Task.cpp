@@ -205,7 +205,8 @@ void TaskScheduler::Execute(uint usMax)
 			// 如果已经超出最大可用时间，则退出
 			if(!usMax || Time.Current() > end) return;
 		}
-		if(task->NextTime < min) min = task->NextTime;
+		// 注意Execute内部可能已经释放了任务
+		if(task->ID && task->NextTime < min) min = task->NextTime;
 	}
 
 	int cost = tc.Elapsed();
