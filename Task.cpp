@@ -30,9 +30,10 @@ void Task::Execute(ulong now)
 	TimeCost tc;
 	SleepTime = 0;
 
+	Task* cur = _Scheduler->Current;
 	_Scheduler->Current = this;
 	Callback(Param);
-	_Scheduler->Current = NULL;
+	_Scheduler->Current = cur;
 
 	// 累加任务执行次数和时间
 	Times++;
@@ -51,8 +52,12 @@ void Task::Execute(ulong now)
 	if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, cost, SleepTime);
 #endif
 
+	// 如果是事件型任务，这里禁用
+	if(NextTime < 0)
+		Enable = false;
 	// 如果只是一次性任务，在这里清理
-	if(Period < 0) _Scheduler->Remove(ID);
+	else if(Period < 0)
+		_Scheduler->Remove(ID);
 }
 
 // 显示状态
@@ -95,8 +100,8 @@ TaskScheduler::~TaskScheduler()
 	_Tasks.DeleteAll().Clear();
 }
 
-// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period, string name)
+// 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
+uint TaskScheduler::Add(Action func, void* param, long dueTime, long period, string name)
 {
 	Task* task	= new Task(this);
 	task->ID	= _gid++;
@@ -104,7 +109,14 @@ uint TaskScheduler::Add(Action func, void* param, ulong dueTime, long period, st
 	task->Callback	= func;
 	task->Param		= param;
 	task->Period	= period;
-	task->NextTime	= Time.Current() + dueTime;
+
+	if(dueTime < 0)
+	{
+		task->NextTime	= dueTime;
+		task->Enable	= false;
+	}
+	else
+		task->NextTime	= Time.Current() + dueTime;
 
 	Count++;
 	_Tasks.Add(task);

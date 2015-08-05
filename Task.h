@@ -27,7 +27,7 @@ public:
 	void*	Param;		// 参数
 
 	long	Period;		// 周期us
-	ulong	NextTime;	// 下一次执行时间
+	long	NextTime;	// 下一次执行时间
 
 	int		Times;		// 执行次数
 	int		CpuTime;	// 总耗费时间
@@ -66,8 +66,8 @@ public:
 	TaskScheduler(string name = NULL);
 	~TaskScheduler();
 
-	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-	uint Add(Action func, void* param, ulong dueTime = 0, long period = 0, string name = NULL);
+	// 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
+	uint Add(Action func, void* param, long dueTime = 0, long period = 0, string name = NULL);
 	void Remove(uint taskid);
 
 	void Start();
