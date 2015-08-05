@@ -264,23 +264,14 @@ void SerialPort::OnTxHandler()
 // 从某个端口读取数据
 uint SerialPort::OnRead(byte* buf, uint size)
 {
-	// 在100ms内接收数据
-	//uint msTimeout = 1;
-	//TimeWheel tw(0, msTimeout);
-	uint count = 0; // 收到的字节数
-	//while(count < size && !tw.Expired())
-	uint msTimeout = 1000;
-	while(count < size && msTimeout-- > 0)
-	{
-		// 轮询接收寄存器，收到数据则放入缓冲区
-		if(USART_GetFlagStatus(_port, USART_FLAG_RXNE) != RESET)
-		{
-			*buf++ = (byte)USART_ReceiveData(_port);
-			count++;
-			//tw.Reset(0, msTimeout);
-			msTimeout = 1000;
-		}
-	}
+	uint count = size; // 收到的字节数
+	if(count > Rx.Length()) count = Rx.Length();
+	for(int i=0; i<count; i++)
+		*buf++ = Rx.Pop();
+
+	// 如果还有数据，打开任务
+	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true);
+
 	return count;
 }
 

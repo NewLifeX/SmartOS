@@ -25,7 +25,11 @@ Task::~Task()
 void Task::Execute(ulong now)
 {
 	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-	NextTime = now + Period;
+	if(NextTime >= 0)
+		NextTime = now + Period;
+	// 如果是事件型任务，这里禁用。任务中可以重新启用
+	else
+		Enable = false;
 
 	TimeCost tc;
 	SleepTime = 0;
@@ -52,12 +56,8 @@ void Task::Execute(ulong now)
 	if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, cost, SleepTime);
 #endif
 
-	// 如果是事件型任务，这里禁用
-	if(NextTime < 0)
-		Enable = false;
 	// 如果只是一次性任务，在这里清理
-	else if(Period < 0)
-		_Scheduler->Remove(ID);
+	if(NextTime >= 0 && Period < 0) _Scheduler->Remove(ID);
 }
 
 // 显示状态
@@ -195,7 +195,7 @@ void TaskScheduler::Execute(uint usMax)
 		Task* task = _Tasks[i];
 		if(!task || !task->Enable) continue;
 
-		if(task->NextTime <= now
+		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Time.Current() + task->Cost <= end)
 		{
