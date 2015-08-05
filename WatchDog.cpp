@@ -166,7 +166,7 @@ void WatchDog::Start(uint ms, uint msFeed)
 	dog.Config(ms);
 
 	// 减小一点，避免来不及喂狗
-	uint us = msFeed * 1000;
+	int us = msFeed * 1000;
 
 	debug_printf("WatchDog::Start ");
 	Sys.AddTask(FeedDogTask, &dog, us, us, "看门狗");
