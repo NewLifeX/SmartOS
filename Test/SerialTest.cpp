@@ -2,8 +2,12 @@
 
 uint OnUsartRead(ITransport* transport, byte* buf, uint len, void* param)
 {
+	debug_printf("收到：");
     Sys.ShowString(buf, len);
     debug_printf("\r\n");
+	
+	if(len > 4)
+		return 0;
     
     return 0;
 }

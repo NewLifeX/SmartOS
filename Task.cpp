@@ -208,14 +208,21 @@ void TaskScheduler::Execute(uint usMax)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Time.Current() + task->Cost <= end)
 		{
-			if(!task->Execute(now)) continue;
+			task->Execute(now);
 
 			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出
 			if(!usMax || Time.Current() > end) return;
 		}
 		// 注意Execute内部可能已经释放了任务
-		if(task->ID && task->NextTime < min) min = task->NextTime;
+		if(task->ID)
+		{
+			// 如果事件型任务还需要执行，那么就不要做任何等待
+			if(task->NextTime < 0 && task->Enable)
+				min = 0;
+			else if(task->NextTime < min)
+				min = task->NextTime;
+		}
 	}
 
 	int cost = tc.Elapsed();
