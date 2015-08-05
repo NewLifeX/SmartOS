@@ -75,24 +75,24 @@ typedef enum
 class TSys : Object
 {
 public:
-    bool Inited;		// 是否已完成初始化
-    bool Started;		// 是否调试
-    COM_Def MessagePort;// 消息口，默认0表示USART1
-    bool IsGD;			// 是否GD芯片
+    bool	Inited;		// 是否已完成初始化
+    bool	Started;	// 是否调试
+    COM_Def	MessagePort;// 消息口，默认0表示USART1
+    bool	IsGD;		// 是否GD芯片
 
-	char* Name;			// 系统名称
-	ushort Code;		// 产品代码
-	ushort Version;		// 系统版本
-	char* Company;		// 系统厂商
-	char* BuildTime;	// 编译时间
-    uint Clock;  		// 系统时钟
-    uint CystalClock;	// 晶振时钟
-    byte ID[12];		// 芯片ID。
-    ushort DevID;		// MCU编码。低字设备版本，高字子版本
-    ushort RevID;		// MCU编码。低字设备版本，高字子版本
-    uint CPUID;			// CPUID
-    ushort FlashSize;	// 芯片Flash容量。
-    ushort RAMSize;		// 芯片RAM容量
+	char*	Name;		// 系统名称
+	ushort	Code;		// 产品代码
+	ushort	Version;	// 系统版本
+	char*	Company;	// 系统厂商
+	char*	BuildTime;	// 编译时间
+    uint	Clock;  	// 系统时钟
+    uint	CystalClock;// 晶振时钟
+    byte	ID[12];		// 芯片ID。
+    ushort	DevID;		// MCU编码。低字设备版本，高字子版本
+    ushort	RevID;		// MCU编码。低字设备版本，高字子版本
+    uint	CPUID;		// CPUID
+    ushort	FlashSize;	// 芯片Flash容量。
+    ushort	RAMSize;	// 芯片RAM容量
 
     TSys();				// 构造函数
     ~TSys();			// 析构函数
@@ -132,7 +132,8 @@ public:
 	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 	uint AddTask(Action func, void* param, long dueTime = 0, long period = 0, string name = NULL);
 	void RemoveTask(uint taskid);
-	bool SetTask(uint taskid, bool enable);
+	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
+	bool SetTask(uint taskid, bool enable, int usNextTime = -1);
 	void Start();	// 开始系统大循环
 	Func OnStart;
 };

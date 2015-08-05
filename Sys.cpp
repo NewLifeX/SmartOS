@@ -562,12 +562,16 @@ void TSys::RemoveTask(uint taskid)
 	Scheduler.Remove(taskid);
 }
 
-bool TSys::SetTask(uint taskid, bool enable)
+bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 {
 	Task* task = Scheduler[taskid];
 	if(!task) return false;
 
 	task->Enable = enable;
+
+	// 如果不是事件型任务，那么可以安排最近一次执行的时间，比如0表示马上调度执行
+	if(task->NextTime >= 0 && usNextTime >= 0)
+		task->NextTime = Time.Current() + usNextTime;
 
 	return true;
 }
