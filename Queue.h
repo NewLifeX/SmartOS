@@ -40,7 +40,7 @@ public:
 	byte Pop();
 	byte Peek() const;
 	
-	uint Write(byte* buf, uint len, bool safe = false);	// 批量写入
+	uint Write(const byte* buf, uint len, bool safe = false);	// 批量写入
 	uint Read(byte* buf, uint len, bool safe = false);		// 批量读取
 };
 

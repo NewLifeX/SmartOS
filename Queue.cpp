@@ -88,7 +88,7 @@ byte Queue::Peek() const
 	return _Buffer[_tail];
 }
 
-uint Queue::Write(byte* buf, uint len, bool safe)
+uint Queue::Write(const byte* buf, uint len, bool safe)
 {
 	uint rs = 0;
 	while(true)
@@ -98,7 +98,7 @@ uint Queue::Write(byte* buf, uint len, bool safe)
 		// 如果要写入的数据足够存放
 		if(len <= count)
 		{
-			memcpy(_Buffer, buf, len);
+			memcpy(_Buffer + _head, buf, len);
 			rs += len;
 			_head += len;
 			_head %= _Capacity;
@@ -107,7 +107,7 @@ uint Queue::Write(byte* buf, uint len, bool safe)
 		}
 
 		// 否则先写一段，指针回到开头
-		memcpy(_Buffer, buf, count);
+		memcpy(_Buffer + _head, buf, count);
 		buf += count;
 		rs += count;
 		len -= count;
@@ -141,7 +141,7 @@ uint Queue::Read(byte* buf, uint len, bool safe)
 		// 如果要写入的数据足够存放
 		if(len <= count)
 		{
-			memcpy(buf, _Buffer, len);
+			memcpy(buf, _Buffer + _tail, len);
 			rs += len;
 			_tail += len;
 			_tail %= _Capacity;
@@ -150,7 +150,7 @@ uint Queue::Read(byte* buf, uint len, bool safe)
 		}
 
 		// 否则先写一段，指针回到开头
-		memcpy(buf, _Buffer, count);
+		memcpy(buf + _tail, _Buffer, count);
 		buf += count;
 		rs += count;
 		len -= count;
