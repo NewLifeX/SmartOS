@@ -1,6 +1,7 @@
 ﻿#include "Sys.h"
 #include "Port.h"
 #include "Thread.h"
+#include "Time.h"
 
 Thread* th;
 

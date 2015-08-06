@@ -1,4 +1,5 @@
 ﻿#include "Sys.h"
+#include "Time.h"
 #include "Drivers\NRF24L01.h"
 
 #include "conf.h"
