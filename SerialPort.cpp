@@ -264,11 +264,15 @@ void SerialPort::OnTxHandler()
 // 从某个端口读取数据
 uint SerialPort::OnRead(byte* buf, uint size)
 {
-	uint count = size; // 收到的字节数
-	if(count > Rx.Length()) count = Rx.Length();
+	/*SmartIRQ irq;
+	uint count = Rx.Length(); // 收到的字节数
+	if(count > size) count = size;
 	for(int i=0; i<count; i++)
-		*buf++ = Rx.Pop();
+		*buf++ = Rx.Pop();*/
 
+	// 从接收队列读取
+	uint count = Rx.Read(buf, size, true);
+	
 	// 如果还有数据，打开任务
 	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true);
 

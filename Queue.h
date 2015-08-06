@@ -14,11 +14,12 @@ private:
 	uint _size;		// 大小
 	uint _head;		// 头部位置
     uint _tail;		// 尾部位置
-	// 又是头疼的对齐问题
-	uint _needFree;	// 是否自动释放
 
 	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
+
+	bool _needFree;	// 是否自动释放
 public:
+	//bool Safe;		// 是否线程安全。默认false
 
 	// 分配指定大小的缓冲区
 	Queue(uint len = 0);
@@ -31,12 +32,16 @@ public:
 	bool Empty() const { return _size == 0; }		// 队列空
 	uint Capacity() const { return _Capacity; }		// 队列容量
 	uint Length() const { return _size; }			// 队列大小
+	void SetLength(uint len);
 
 	void Clear();
 	
 	void Push(byte dat);
 	byte Pop();
 	byte Peek() const;
+	
+	uint Write(byte* buf, uint len, bool safe = false);	// 批量写入
+	uint Read(byte* buf, uint len, bool safe = false);		// 批量读取
 };
 
 #endif
