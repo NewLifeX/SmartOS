@@ -1,6 +1,5 @@
 ﻿#include "Time.h"
 #include "TinyServer.h"
-#include "SerialPort.h"
 
 #include "TinyMessage.h"
 #include "TokenMessage.h"
