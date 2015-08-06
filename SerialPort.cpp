@@ -176,6 +176,11 @@ ShowLog:
 	Tx.Clear();
 	Rx.Clear();
 
+	const byte irqs[] = UART_IRQs;
+	byte irq = irqs[_index];
+	Interrupt.SetPriority(irq, 1);
+	Interrupt.Activate(irq, OnHandler, this);
+
 	USART_Cmd(_port, ENABLE);//使能串口
 
 	if(RS485) *RS485 = false;
@@ -201,6 +206,10 @@ void SerialPort::OnClose()
 
     Pin tx, rx;
     GetPins(&tx, &rx);
+
+	const byte irqs[] = UART_IRQs;
+	byte irq = irqs[_index];
+	Interrupt.Deactivate(irq);
 
     USART_DeInit(_port);
 
@@ -233,7 +242,7 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 	if(!size) return true;
 
 	// 如果队列已满，则强制刷出
-	if(Tx.Length() + size > Tx.Capacity()) Flush();
+	while(Tx.Length() + size > Tx.Capacity()) Flush();
 
     /*if(size > 0)
     {
@@ -261,6 +270,9 @@ bool SerialPort::Flush(uint times)
 {
 	// 打开串口发送
 	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+
+	// 打开中断
+	SmartIRQ irq(true);
 
 	//uint times = 3000;
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
@@ -354,22 +366,14 @@ void SerialPort::Register(TransportHandler handler, void* param)
 {
 	ITransport::Register(handler, param);
 
-	const byte irqs[] = UART_IRQs;
-	byte irq = irqs[_index];
     if(handler)
 	{
-        Interrupt.SetPriority(irq, 1);
-
-		Interrupt.Activate(irq, OnHandler, this);
-
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
 		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 	}
     else
 	{
 		if(_taskidRx) Sys.RemoveTask(_taskidRx);
-
-		Interrupt.Deactivate(irq);
 	}
 }
 
@@ -452,8 +456,17 @@ SerialPort* SerialPort::GetMessagePort()
 		USART_TypeDef* g_Uart_Ports[] = UARTS;
         USART_TypeDef* port = g_Uart_Ports[_index];
 		_printf_sp = new SerialPort(port);
+#if DEBUG
+#if STM32F0
+		_printf_sp->Tx.SetCapacity(256);
+#else
 		_printf_sp->Tx.SetCapacity(1024);
+#endif
+#endif
 		_printf_sp->Open();
+
+		//char str[] = "                                \r\n";
+		//_printf_sp->Write((byte*)str, ArrayLength(str));
 	}
 	return _printf_sp;
 }
