@@ -254,6 +254,14 @@ namespace NewLife.Reflection
         /// <param name="name"></param>
         public void BuildLib(String name = null)
         {
+            if (name.IsNullOrEmpty())
+            {
+                var file = Environment.GetEnvironmentVariable("XScriptFile");
+                if (!file.IsNullOrEmpty())
+                {
+                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
+                }
+            }
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
             if (Debug) name = name.EnsureEnd("D");
 
@@ -277,6 +285,14 @@ namespace NewLife.Reflection
         /// <returns></returns>
         public Int32 Build(String name = null)
         {
+            if (name.IsNullOrEmpty())
+            {
+                var file = Environment.GetEnvironmentVariable("XScriptFile");
+                if (!file.IsNullOrEmpty())
+                {
+                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
+                }
+            }
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
             name = Path.GetFileNameWithoutExtension(name);
             if (Debug) name = name.EnsureEnd("D");
