@@ -232,18 +232,23 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 {
 	if(!size) return true;
 
-	if(RS485) *RS485 = true;
+	// 如果队列已满，则强制刷出
+	if(Tx.Length() + size > Tx.Capacity()) Flush();
 
-    if(size > 0)
+    /*if(size > 0)
     {
         for(int i=0; i<size; i++) Tx.Push(*buf++);
     }
     else
     {
         while(*buf) Tx.Push(*buf++);
-    }
-
-	if(RS485) *RS485 = false;
+    }*/
+	if(size == 0)
+	{
+		const byte* p = buf;
+		while(*p++) size++;
+	}
+	Tx.Write(buf, size, true);
 
 	// 打开串口发送
 	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
@@ -251,14 +256,33 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 	return true;
 }
 
+// 刷出某个端口中的数据
+bool SerialPort::Flush(uint times)
+{
+	// 打开串口发送
+	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+
+	//uint times = 3000;
+    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+
+	return times > 0;
+}
+
 void SerialPort::OnTxHandler()
 {
 	if(!Tx.Empty())
+	{
+		if(RS485) *RS485 = true;
+
 		USART_SendData(_port, (ushort)Tx.Pop());
+
+		if(RS485) *RS485 = false;
+	}
 	else
 		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
-	USART_ClearITPendingBit(_port, USART_IT_TXE);
+	// USART_SendData会清中断，这里不需要
+	//USART_ClearITPendingBit(_port, USART_IT_TXE);
 }
 
 // 从某个端口读取数据
@@ -270,9 +294,20 @@ uint SerialPort::OnRead(byte* buf, uint size)
 	for(int i=0; i<count; i++)
 		*buf++ = Rx.Pop();*/
 
+	// 如果有数据变化，等一会
+	uint count = 0;
+	uint len = Rx.Length();
+	while(len != count)
+	{
+		count = len;
+		// 按照115200波特率计算，传输7200字节每秒，每个毫秒7个字节，大概150微秒差不多可以接收一个新字节
+		Sys.Delay(100);
+		len = Rx.Length();
+	}
+
 	// 从接收队列读取
-	uint count = Rx.Read(buf, size, true);
-	
+	count = Rx.Read(buf, size);
+
 	// 如果还有数据，打开任务
 	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true);
 
@@ -308,14 +343,6 @@ void SerialPort::ReceiveTask(void* param)
 		// 如果有数据，则反馈回去
 		if(len) sp->Write(buf, len);
 	}
-}
-
-// 刷出某个端口中的数据
-bool SerialPort::Flush(uint times)
-{
-	//uint times = 3000;
-    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
-	return times > 0;
 }
 
 void SerialPort::SetBaudRate(int baudRate)
@@ -403,11 +430,12 @@ extern "C"
         // 检查并打开串口
         if((port->CR1 & USART_CR1_UE) != USART_CR1_UE && _printf_sp == NULL)
         {
-            _printf_sp = new SerialPort(port);
-            _printf_sp->Open();
+            _printf_sp = SerialPort::GetMessagePort();
         }
 
-		_printf_sp->SendData((byte)ch);
+		//_printf_sp->SendData((byte)ch);
+		byte bt = (byte)ch;
+		_printf_sp->Write(&bt, 1);
 
 		isInFPutc = false;
         return ch;
@@ -424,6 +452,7 @@ SerialPort* SerialPort::GetMessagePort()
 		USART_TypeDef* g_Uart_Ports[] = UARTS;
         USART_TypeDef* port = g_Uart_Ports[_index];
 		_printf_sp = new SerialPort(port);
+		_printf_sp->Tx.SetCapacity(1024);
 		_printf_sp->Open();
 	}
 	return _printf_sp;

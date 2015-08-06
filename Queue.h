@@ -32,6 +32,7 @@ public:
 	bool Empty() const { return _size == 0; }		// 队列空
 	uint Capacity() const { return _Capacity; }		// 队列容量
 	uint Length() const { return _size; }			// 队列大小
+	void SetCapacity(uint len);
 	void SetLength(uint len);
 
 	void Clear();

@@ -2,23 +2,8 @@
 
 Queue::Queue(uint len)
 {
-	if(len <= ArrayLength(_Arr))
-	{
-		len = ArrayLength(_Arr);
-		_Buffer = _Arr;
-		_needFree = false;
-	}
-	else
-	{
-		_Buffer = new byte[len];
-		_needFree = true;
-	}
-
-	_Capacity	= len;
-	_size		= 0;
-	_head		= 0;
-	_tail		= 0;
-	//Safe		= false;
+	_Buffer = NULL;
+	SetCapacity(len);
 }
 
 // 使用缓冲区初始化缓冲区。注意，此时指针位于0，而内容长度为缓冲区长度
@@ -44,6 +29,29 @@ Queue::~Queue()
 		if(_Buffer != _Arr) delete[] _Buffer;
 		_Buffer = NULL;
 	}
+}
+
+void Queue::SetCapacity(uint len)
+{
+	if(len <= ArrayLength(_Arr))
+	{
+		// 释放旧的
+		if(_needFree && _Buffer && _Buffer != _Arr) delete[] _Buffer;
+
+		len = ArrayLength(_Arr);
+		_Buffer = _Arr;
+		_needFree = false;
+	}
+	else
+	{
+		_Buffer = new byte[len];
+		_needFree = true;
+	}
+
+	_Capacity	= len;
+	_size		= 0;
+	_head		= 0;
+	_tail		= 0;
 }
 
 void Queue::SetLength(uint len)
@@ -76,7 +84,7 @@ byte Queue::Pop()
 	size拿出来减一，然后再保存回去，但是保存回去之前，串口接收中断写入，拿到了旧的size，导致最后的size比原计划要小1。
 	该问题只能通过关闭中断来解决。为了减少关中断时间以提升性能，增加了专门的Read方法。
 	*/
-	
+
 	byte dat = _Buffer[_tail++];
 	_tail %= _Capacity;
 

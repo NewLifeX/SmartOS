@@ -19,7 +19,8 @@ void TestSerial()
     debug_printf("TestSerial Start......\r\n");
 
     // 串口输入
-    sp1 = new SerialPort(COM1);
+    //sp1 = new SerialPort(COM1);
+    sp1 = SerialPort::GetMessagePort();
     sp1->Open();
     sp1->Register(OnUsartRead);
     
