@@ -457,7 +457,7 @@ SerialPort* SerialPort::GetMessagePort()
         USART_TypeDef* port = g_Uart_Ports[_index];
 		_printf_sp = new SerialPort(port);
 #if DEBUG
-#if STM32F0
+#ifdef STM32F0
 		_printf_sp->Tx.SetCapacity(256);
 #else
 		_printf_sp->Tx.SetCapacity(1024);
