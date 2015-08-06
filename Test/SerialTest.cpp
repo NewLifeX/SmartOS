@@ -21,6 +21,10 @@ void TestSerial()
     // 串口输入
     //sp1 = new SerialPort(COM1);
     sp1 = SerialPort::GetMessagePort();
+#ifdef STM32F0
+    sp1->Close();
+	sp1->SetBaudRate(512000);
+#endif
     sp1->Open();
     sp1->Register(OnUsartRead);
     
