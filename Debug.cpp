@@ -16,10 +16,12 @@ extern uint __Vectors_Size;
 
 void* operator new(uint size)
 {
-	SmartIRQ irq;
-
     mem_printf(" new size: %d ", size);
-    void * p = malloc(size);
+	void* p = NULL;
+	{
+		SmartIRQ irq;
+		p = malloc(size);
+	}
 	if(!p)
 		mem_printf("malloc failed! size=%d ", size);
 	else
@@ -39,10 +41,12 @@ void* operator new(uint size)
 
 void* operator new[](uint size)
 {
-	SmartIRQ irq;
-
     mem_printf(" new size[]: %d ", size);
-    void * p = malloc(size);
+	void* p = NULL;
+	{
+		SmartIRQ irq;
+		p = malloc(size);
+	}
 	if(!p)
 		mem_printf("malloc failed! size=%d ", size);
 	else
@@ -63,20 +67,24 @@ void operator delete(void * p)
 {
 	assert_ptr(p);
 
-	SmartIRQ irq;
-
 	mem_printf(" delete 0x%08x ", p);
-    if(p) free(p);
+    if(p)
+	{
+		SmartIRQ irq;
+		free(p);
+	}
 }
 
 void operator delete[](void * p)
 {
 	assert_ptr(p);
 
-	SmartIRQ irq;
-
 	mem_printf(" delete[] 0x%08x ", p);
-    if(p) free(p);
+    if(p)
+	{
+		SmartIRQ irq;
+		free(p);
+	}
 }
 
 #if DEBUG
