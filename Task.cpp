@@ -215,13 +215,13 @@ void TaskScheduler::Execute(uint usMax)
 			if(!usMax || Time.Current() > end) return;
 		}
 		// 注意Execute内部可能已经释放了任务
-		if(task->ID)
+		if(task->ID && task->Enable)
 		{
 			// 如果事件型任务还需要执行，那么就不要做任何等待
-			if(task->NextTime < 0 && task->Enable)
+			if(task->NextTime < 0)
 				min = 0;
-			else if(task->NextTime < min)
-				min = task->NextTime;
+			else if((ulong)task->NextTime < min)
+				min = (ulong)task->NextTime;
 		}
 	}
 
