@@ -552,7 +552,7 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 #include "Task.h"
 
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, long dueTime, long period, string name)
+uint TSys::AddTask(Action func, void* param, Int64 dueTime, Int64 period, string name)
 {
 	return Scheduler.Add(func, param, dueTime, period, name);
 }

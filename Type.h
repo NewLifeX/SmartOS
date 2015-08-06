@@ -30,6 +30,7 @@ typedef long long       Int64;
 typedef unsigned long long  UInt64;
 typedef char*           String;
 */
+typedef long long       Int64;
 
 #include <typeinfo>
 using namespace ::std;

@@ -110,7 +110,7 @@ TaskScheduler::~TaskScheduler()
 }
 
 // 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
-uint TaskScheduler::Add(Action func, void* param, long dueTime, long period, string name)
+uint TaskScheduler::Add(Action func, void* param, Int64 dueTime, Int64 period, string name)
 {
 	Task* task	= new Task(this);
 	task->ID	= _gid++;

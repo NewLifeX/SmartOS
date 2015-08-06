@@ -26,8 +26,8 @@ public:
 	Action	Callback;	// 回调
 	void*	Param;		// 参数
 
-	long	Period;		// 周期us
-	long	NextTime;	// 下一次执行时间
+	Int64	Period;		// 周期us
+	Int64	NextTime;	// 下一次执行时间
 
 	int		Times;		// 执行次数
 	int		CpuTime;	// 总耗费时间
@@ -38,7 +38,7 @@ public:
 	bool	Enable;		// 是否启用
 	byte	Deepth;		// 当前深度
 	byte	MaxDeepth;	// 最大深度。默认1层，不允许重入
-	byte	Reversed[3];// 保留，避免对齐问题
+	byte	Reversed[1];// 保留，避免对齐问题
 
 	~Task();
 
@@ -71,7 +71,7 @@ public:
 	~TaskScheduler();
 
 	// 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
-	uint Add(Action func, void* param, long dueTime = 0, long period = 0, string name = NULL);
+	uint Add(Action func, void* param, Int64 dueTime = 0, Int64 period = 0, string name = NULL);
 	void Remove(uint taskid);
 
 	void Start();
