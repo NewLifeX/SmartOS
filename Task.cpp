@@ -80,11 +80,11 @@ void Task::ShowStatus()
 
 	debug_printf("\t周期 ");
 	if(Period >= 1000000)
-		debug_printf("%ds", Period / 1000000);
+		debug_printf("%ds", (int)(Period / 1000000));
 	else if(Period >= 1000)
-		debug_printf("%dms", Period / 1000);
+		debug_printf("%dms", (int)(Period / 1000));
 	else
-		debug_printf("%dus", Period);
+		debug_printf("%dus", (int)Period);
 	if(!Enable) debug_printf(" 禁用");
 	debug_printf("\r\n");
 }
