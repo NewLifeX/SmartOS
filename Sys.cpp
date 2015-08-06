@@ -205,7 +205,7 @@ TSys::TSys()
 #endif
 
 	Name = "SmartOS";
-	Code = 0x0000;
+	Code = 0x0300;
 	Version = 0x0100;
 	Company = "NewLife_Embedded_Team";
 	BuildTime = "yyyy-MM-dd HH:mm:ss";
