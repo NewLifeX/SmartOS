@@ -211,7 +211,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 
 	int blank = 9;
 	msg_printf("%s", port->ToString());
-	if(send)
+	if(send && !msg.Reply)
 	{
 		msg_printf("::Send ");
 		blank -= 5;
