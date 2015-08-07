@@ -28,24 +28,14 @@ Port::Port()
 
 Port::~Port()
 {
-#if DEBUG
-	// 解除保护引脚
-	Show();
-	Reserve(_Pin, false);
-#endif
+	Config(false);
 }
 
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {
-#if DEBUG
 	// 释放已有引脚的保护
-	if(_Pin != P0)
-	{
-		Show();
-		Reserve(_Pin, false);
-	}
-#endif
+	if(_Pin != P0) Config(false);
 
     _Pin = pin;
 	if(_Pin != P0)
@@ -59,16 +49,7 @@ Port& Port::Set(Pin pin)
 		PinBit = 0;
 	}
 
-#if DEBUG
-	// 保护引脚
-	if(_Pin != P0)
-	{
-		Show();
-		Reserve(_Pin, true);
-	}
-#endif
-
-	if(_Pin != P0) Config();
+	//if(_Pin != P0) Config();
 
 	return *this;
 }
@@ -83,8 +64,30 @@ bool Port::Empty() const
 }
 
 // 确定配置,确认用对象内部的参数进行初始化
-void Port::Config()
+void Port::Config(bool enable)
 {
+	if(_Pin == P0) return;
+	
+	FunctionalState st = enable ? ENABLE : DISABLE;
+    // 先打开时钟才能配置
+    int gi = _Pin >> 4;
+#ifdef STM32F0
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, st);
+#elif defined(STM32F1)
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, st);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, st);
+#endif
+
+#if DEBUG
+	// 保护引脚
+	Show();
+	Reserve(_Pin, true);
+#endif
+
+	// 如果是关闭端口，那么不再需要初始化
+	if(!enable) return;
+
 	GPIO_InitTypeDef gpio;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
@@ -95,16 +98,6 @@ void Port::Config()
 
 void Port::OnConfig(GPIO_InitTypeDef& gpio)
 {
-    // 打开时钟
-    int gi = _Pin >> 4;
-#ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
-#endif
-
     gpio.GPIO_Pin = PinBit;
 
 #ifdef STM32F1

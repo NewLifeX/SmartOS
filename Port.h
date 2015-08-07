@@ -19,15 +19,16 @@ public:
     Pin				_Pin;		// 针脚
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
-    Port& Set(Pin pin);			// 设置引脚，并应用配置。
+    Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
 
-    virtual void Config();		// 确定配置,确认用对象内部的参数进行初始化
+	// 确定配置,确认用对象内部的参数进行初始化
+    virtual void Config(bool enable = true);
 
 #if defined(STM32F0) || defined(STM32F4)
 	void AFConfig(byte GPIO_AF);
 #endif
-	
+
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
@@ -59,6 +60,7 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
+		Config();
 	}
 
 	// 整体写入所有包含的引脚
@@ -102,6 +104,7 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
+		Config();
 	}
 
 protected:
@@ -132,6 +135,7 @@ public:
 	{
 		Init(floating, pupd);
 		Set(pin);
+		Config();
 	}
 
     virtual ~InputPort();
@@ -171,7 +175,7 @@ private:
 class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin) { Set(pin); }
+    AnalogInPort(Pin pin) { Set(pin); Config(); }
 
 protected:
     virtual void OnConfig(GPIO_InitTypeDef& gpio);
