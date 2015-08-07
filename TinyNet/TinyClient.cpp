@@ -86,6 +86,9 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 
 void TinyClient::SetDefault()
 {
+	// 打开传输口
+	_control->Open();
+
 	// 注册消息。每个消息代码对应一个功能函数
 	_control->Register(1, Discover, this);
 	_control->Register(2, Ping, this);
