@@ -45,8 +45,8 @@ void HardI2C::Init(byte index, uint speedHz)
 	SCL.OpenDrain = true;
 	SDA.OpenDrain = true;
 	Pin pins[][2] =  I2C_PINS;
-	SCL.Set(pins[_index][0]);
-	SDA.Set(pins[_index][1]);
+	SCL.Set(pins[_index][0]).Config();
+	SDA.Set(pins[_index][1]).Config();
 
 	Speed	= speedHz;
 
@@ -60,8 +60,8 @@ HardI2C::~HardI2C()
 
 void HardI2C::SetPin(Pin scl , Pin sda )
 {
-	SCL.Set(scl);
-	SDA.Set(sda);
+	SCL.Set(scl).Config();
+	SDA.Set(sda).Config();
 }
 
 void HardI2C::GetPin(Pin* scl , Pin* sda )
@@ -233,8 +233,8 @@ SoftI2C::~SoftI2C()
 
 void SoftI2C::SetPin(Pin scl , Pin sda )
 {
-	SCL.Set(scl);
-	SDA.Set(sda);
+	SCL.Set(scl).Config();
+	SDA.Set(sda).Config();
 }
 
 void SoftI2C::GetPin(Pin* scl , Pin* sda )
