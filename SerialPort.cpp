@@ -109,11 +109,11 @@ ShowLog:
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
-    _tx.Set(tx);
+    _tx.Set(tx).Config(true);
 #if defined(STM32F0) || defined(STM32F4)
-    _rx.Set(rx);
+    _rx.Set(rx).Config(true);
 #else
-    _rx.Set(rx);
+    _rx.Set(rx).Config(true);
 #endif
 
 	// 不要关调试口，否则杯具
@@ -169,13 +169,13 @@ ShowLog:
 	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);
 	//USART_ITConfig(_port, USART_IT_PE, ENABLE);
 	//USART_ITConfig(_port, USART_IT_ERR, ENABLE);
-
 	//USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 	// 清空缓冲区
 	Tx.Clear();
 	Rx.Clear();
 
+	// 打开中断，收发都要使用
 	const byte irqs[] = UART_IRQs;
 	byte irq = irqs[_index];
 	Interrupt.SetPriority(irq, 1);
@@ -204,14 +204,15 @@ void SerialPort::OnClose()
 {
     debug_printf("~Serial%d Close\r\n", _index + 1);
 
-    Pin tx, rx;
-    GetPins(&tx, &rx);
+	USART_Cmd(_port, DISABLE);
+    USART_DeInit(_port);
+
+    _tx.Config(false);
+	_rx.Config(false);
 
 	const byte irqs[] = UART_IRQs;
 	byte irq = irqs[_index];
 	Interrupt.Deactivate(irq);
-
-    USART_DeInit(_port);
 
 	// 检查重映射
 #ifdef STM32F1XX
@@ -242,16 +243,8 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 	if(!size) return true;
 
 	// 如果队列已满，则强制刷出
-	while(Tx.Length() + size > Tx.Capacity()) Flush();
+	if(Tx.Length() + size > Tx.Capacity()) Flush();
 
-    /*if(size > 0)
-    {
-        for(int i=0; i<size; i++) Tx.Push(*buf++);
-    }
-    else
-    {
-        while(*buf) Tx.Push(*buf++);
-    }*/
 	if(size == 0)
 	{
 		const byte* p = buf;
@@ -260,6 +253,7 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 	Tx.Write(buf, size, true);
 
 	// 打开串口发送
+	if(RS485) *RS485 = true;
 	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
 	return true;
@@ -269,12 +263,12 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 bool SerialPort::Flush(uint times)
 {
 	// 打开串口发送
+	if(RS485) *RS485 = true;
 	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
 	// 打开中断
 	SmartIRQ irq(true);
 
-	//uint times = 3000;
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
 
 	return times > 0;
@@ -284,14 +278,14 @@ void SerialPort::OnTxHandler()
 {
 	if(!Tx.Empty())
 	{
-		if(RS485) *RS485 = true;
-
 		USART_SendData(_port, (ushort)Tx.Pop());
+	}
+	else
+	{
+		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 		if(RS485) *RS485 = false;
 	}
-	else
-		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 	// USART_SendData会清中断，这里不需要
 	//USART_ClearITPendingBit(_port, USART_IT_TXE);
@@ -328,13 +322,13 @@ uint SerialPort::OnRead(byte* buf, uint size)
 
 void SerialPort::OnRxHandler()
 {
-	//if(!HasHandler()) return;
-
 	byte dat = (byte)USART_ReceiveData(_port);
 	Rx.Push(dat);
 
 	// 收到数据，开启任务调度
 	if(_taskidRx) Sys.SetTask(_taskidRx, true);
+
+	if(!HasHandler()) return;
 
 	// 其实内部的USART_ReceiveData可以清除USART_IT_RXNE
 	//USART_ClearITPendingBit(sp->_port, USART_IT_RXNE);
