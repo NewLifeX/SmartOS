@@ -241,16 +241,16 @@ void SerialPort::SendData(byte data, uint times)
 bool SerialPort::OnWrite(const byte* buf, uint size)
 {
 	if(!size) return true;
-
+	
 	// 如果队列已满，则强制刷出
-	if(Tx.Length() + size > Tx.Capacity()) Flush();
+	if(Tx.Length() + size > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
 	if(size == 0)
 	{
 		const byte* p = buf;
 		while(*p++) size++;
 	}
-	Tx.Write(buf, size, true);
+	Tx.Write(buf, size, false);
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
@@ -431,9 +431,12 @@ extern "C"
             _printf_sp = SerialPort::GetMessagePort();
         }
 
-		//_printf_sp->SendData((byte)ch);
-		byte bt = (byte)ch;
-		_printf_sp->Write(&bt, 1);
+		if(_printf_sp)
+		{
+			//_printf_sp->SendData((byte)ch);
+			byte bt = (byte)ch;
+			_printf_sp->Write(&bt, 1);
+		}
 
 		isInFPutc = false;
         return ch;

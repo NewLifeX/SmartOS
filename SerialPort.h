@@ -63,7 +63,7 @@ public:
 
 	void SendData(byte data, uint times = 3000);
 
-    bool Flush(uint times = 3000);
+    bool Flush(uint times);
 
 	void SetBaudRate(int baudRate = 1024000);
 
