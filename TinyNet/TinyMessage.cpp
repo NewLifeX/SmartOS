@@ -187,7 +187,7 @@ void TinyController::Open()
 {
 	if(Opened) return;
 
-	debug_printf("TinyNet::Inited Address=%d (0x%02x) 使用传输接口 %s\r\n", Address, Address, Port->ToString());
+	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, Port->ToString());
 
 	Controller::Open();
 

@@ -777,7 +777,7 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
-	if(Power)
+	if(Power && !*Power)
 	{
 		*Power = true;
 		debug_printf("打开物理电源开关\r\n");
@@ -787,11 +787,15 @@ bool NRF24L01::OnOpen()
 
 	Error = 0;
 
-	//return Check() && Config() && Check();
 	// 配置完成以后，无需再次检查
-	if(!(Check() && Config()))
+	if(!Check())
 	{
-		// 关闭SPI，可能是因为SPI通讯的问题，下次打开模块的时候会重新打开SPI
+		debug_printf("查找模块失败，请检查是否已安装或者通信线路是否畅通\r\n");
+		_spi->Close();
+		return false;
+	}
+	if(!Config())
+	{
 		_spi->Close();
 		return false;
 	}
@@ -801,8 +805,6 @@ bool NRF24L01::OnOpen()
 	{
 		debug_printf("关闭2401热插拔检查 ");
 		Sys.SetTask(_tidOpen, false);
-		//Sys.RemoveTask(_tidOpen);
-		//_tidOpen = 0;
 	}
 
 	if(_tidRecv) Sys.SetTask(_tidRecv, true);

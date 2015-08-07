@@ -34,6 +34,9 @@ Port::~Port()
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {
+	// 如果引脚不变，则不做处理
+	if(pin == _Pin) return *this;
+
 	// 释放已有引脚的保护
 	if(_Pin != P0) Config(false);
 
@@ -67,7 +70,7 @@ bool Port::Empty() const
 void Port::Config(bool enable)
 {
 	if(_Pin == P0) return;
-	
+
 	FunctionalState st = enable ? ENABLE : DISABLE;
     // 先打开时钟才能配置
     int gi = _Pin >> 4;
@@ -82,7 +85,7 @@ void Port::Config(bool enable)
 #if DEBUG
 	// 保护引脚
 	Show();
-	Reserve(_Pin, true);
+	Reserve(_Pin, enable);
 #endif
 
 	// 如果是关闭端口，那么不再需要初始化
@@ -108,7 +111,7 @@ void Port::OnConfig(GPIO_InitTypeDef& gpio)
 		case PB3:
 		case PB4:
 		{
-			debug_printf("Close JTAG for P%c%d\r\n", _PIN_NAME(_Pin));
+			debug_printf("关闭 JTAG 为 P%c%d\r\n", _PIN_NAME(_Pin));
 
 			// PA15是jtag接口中的一员 想要使用 必须开启remap
 			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -140,12 +143,12 @@ bool Port::Reserve(Pin pin, bool flag)
     if (flag) {
         if (Reserved[port] & bit) {
 			// 增加针脚已经被保护的提示，很多地方调用ReservePin而不写日志，得到False后直接抛异常
-			debug_printf("ReservePin P%c%d already reserved\r\n", _PIN_NAME(pin));
+			debug_printf("打开 P%c%d 失败！该引脚已被打开\r\n", _PIN_NAME(pin));
 			return false; // already reserved
 		}
         Reserved[port] |= bit;
 
-		debug_printf("ReservePin P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("打开 P%c%d\r\n", _PIN_NAME(pin));
     } else {
         Reserved[port] &= ~bit;
 
@@ -162,9 +165,9 @@ bool Port::Reserve(Pin pin, bool flag)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		debug_printf("UnReservePin P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
+		debug_printf("关闭 P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
 #else
-		debug_printf("UnReservePin P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("关闭 P%c%d\r\n", _PIN_NAME(pin));
 #endif
 	}
 
