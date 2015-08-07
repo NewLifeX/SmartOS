@@ -205,19 +205,33 @@ namespace NewLife.Reflection
             foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
-                if (excs.Contains(item.Name)) continue;
+
+                Console.Write("编译：{0}\t", item.FullName);
+
                 var flag = true;
-                foreach (var elm in excs)
-                {
-                    if (item.Name.Contains(elm)) { flag = false; break; }
-                }
-                if (!flag) continue;
+				var ex = "";
+                if (excs.Contains(item.Name)) { flag = false; ex = item.Name; }
+				if(flag)
+				{
+					foreach (var elm in excs)
+					{
+						if (item.Name.Contains(elm)) { flag = false; ex = elm; break; }
+					}
+				}
+                if (!flag)
+				{
+					var old2 = Console.ForegroundColor;
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("\t 跳过 {0}", ex);
+					Console.ForegroundColor = old2;
+
+					continue;
+				}
 
                 //var file = item.FullName;
                 //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
 
                 var rs = 0;
-                Console.Write("编译：{0}\t", item.FullName);
                 var sw = new Stopwatch();
                 sw.Start();
                 switch (item.Extension.ToLower())
