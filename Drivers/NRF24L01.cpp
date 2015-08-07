@@ -245,7 +245,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 		// 拉高CE，可以由待机模式切换到RX/TX模式
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
-		_CE.Set(ce);
+		_CE.Set(ce).Config();
 		_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
 	}
     if(irq != P0)
@@ -254,7 +254,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 		//_IRQ->ShakeTime = 2;
 		_IRQ.Floating = false;
 		_IRQ.PuPd = InputPort::PuPd_UP;
-		_IRQ.Set(irq);
+		_IRQ.Set(irq).Config();
         _IRQ.Register(OnIRQ, this);
     }
     // 必须先赋值，后面WriteReg需要用到
