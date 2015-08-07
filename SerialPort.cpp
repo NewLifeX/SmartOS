@@ -150,12 +150,12 @@ ShowLog:
 #endif
 
 #ifdef STM32F0
-    GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), GPIO_AF_1);//将IO口映射为USART接口
-    GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), GPIO_AF_1);
+	_tx.AFConfig(GPIO_AF_1);
+	_rx.AFConfig(GPIO_AF_1);
 #elif defined(STM32F4)
 	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
-    GPIO_PinAFConfig(_GROUP(tx), _PIN(tx), afs[_index]);
-    GPIO_PinAFConfig(_GROUP(rx), _PIN(rx), afs[_index]);
+	_tx.AFConfig(afs[_index]);
+	_rx.AFConfig(afs[_index]);
 #endif
 
     USART_StructInit(&p);

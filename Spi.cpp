@@ -158,14 +158,14 @@ void Spi::Open()
 
 #if defined(STM32F0)
 	// SPI都在GPIO_AF_0分组内
-    GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), GPIO_AF_0);
-    GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), GPIO_AF_0);
-    GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), GPIO_AF_0);
+	_clk.AFConfig(GPIO_AF_0);
+	_miso.AFConfig(GPIO_AF_0);
+	_mosi.AFConfig(GPIO_AF_0);
 #elif defined(STM32F4)
-	byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6 };
-    GPIO_PinAFConfig(_GROUP(ps[1]), _PIN(ps[1]), afs[_index]);
-    GPIO_PinAFConfig(_GROUP(ps[2]), _PIN(ps[2]), afs[_index]);
-    GPIO_PinAFConfig(_GROUP(ps[3]), _PIN(ps[3]), afs[_index]);
+	const byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6 };
+	_clk.AFConfig(afs[_index]);
+	_miso.AFConfig(afs[_index]);
+	_mosi.AFConfig(afs[_index]);
 #endif
 
 	Stop();

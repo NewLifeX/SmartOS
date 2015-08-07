@@ -126,6 +126,11 @@ void Port::OnConfig(GPIO_InitTypeDef& gpio)
 #endif
 }
 
+void Port::AFConfig(byte GPIO_AF)
+{
+	GPIO_PinAFConfig(Group, _PIN(_Pin), GPIO_AF);
+}
+
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
 #endif

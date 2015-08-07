@@ -24,6 +24,10 @@ public:
 
     virtual void Config();		// 确定配置,确认用对象内部的参数进行初始化
 
+#if defined(STM32F0) || defined(STM32F4)
+	void AFConfig(byte GPIO_AF);
+#endif
+	
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
