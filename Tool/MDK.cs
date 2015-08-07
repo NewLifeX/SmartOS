@@ -259,6 +259,7 @@ namespace NewLife.Reflection
                 var file = Environment.GetEnvironmentVariable("XScriptFile");
                 if (!file.IsNullOrEmpty())
                 {
+                    file = Path.GetFileNameWithoutExtension(file);
                     name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
                 }
             }
@@ -290,6 +291,7 @@ namespace NewLife.Reflection
                 var file = Environment.GetEnvironmentVariable("XScriptFile");
                 if (!file.IsNullOrEmpty())
                 {
+                    file = Path.GetFileNameWithoutExtension(file);
                     name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
                 }
             }
