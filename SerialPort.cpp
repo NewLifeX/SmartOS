@@ -250,7 +250,7 @@ bool SerialPort::OnWrite(const byte* buf, uint size)
 		const byte* p = buf;
 		while(*p++) size++;
 	}
-	Tx.Write(buf, size, false);
+	Tx.Write(buf, size, true);
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
