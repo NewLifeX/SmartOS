@@ -124,6 +124,8 @@ void Timer::Start()
 	debug_printf("Timer%d::Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
 #endif
 
+	assert_param2(fre > 0, "频率超出允许的范围");
+
 	// 打开时钟
 	ClockCmd(true);
 
@@ -211,7 +213,7 @@ void Timer::SetFrequency(uint frequency)
 	uint clk = clock.PCLK_Frequency << 1;
 #endif
 
-	assert_param(frequency > 0 && frequency <= clk);
+	assert_param2(frequency > 0 && frequency <= clk, "频率超出允许的范围");
 
 	uint s = 1;
 	uint p = s / frequency;
