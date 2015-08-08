@@ -122,10 +122,12 @@ void Port::OnConfig(GPIO_InitTypeDef& gpio)
 #endif
 }
 
+#if defined(STM32F0) || defined(STM32F4)
 void Port::AFConfig(byte GPIO_AF)
 {
 	GPIO_PinAFConfig(Group, _PIN(_Pin), GPIO_AF);
 }
+#endif
 
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
