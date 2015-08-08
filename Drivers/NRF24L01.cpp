@@ -3,7 +3,7 @@
 #include "Port.h"
 #include "NRF24L01.h"
 
-#define RF_DEBUG 1
+#define RF_DEBUG DEBUG
 
 #define RF2401_REG
 #ifdef  RF2401_REG
@@ -727,6 +727,9 @@ void NRF24L01::SetAddress(bool full)
 
 	// 开启隐藏寄存器
 	WriteReg(ACTIVATE, 0x73);
+#if RF_DEBUG
+	debug_printf("R24::ACTIVATE\t= 0x%02X\r\n", ReadReg(ACTIVATE));
+#endif
 
 	RF_FEATURE ft;
 	ft.Init(ReadReg(FEATURE));
@@ -743,6 +746,9 @@ void NRF24L01::SetAddress(bool full)
 	{
 		// 动态负载
 		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
+#if RF_DEBUG
+		debug_printf("R24::DYNPD\t= 0x%02X\r\n", ReadReg(DYNPD));
+#endif
 
 		ft.DPL = 1;			// 使能动态负载长度
 	}
@@ -752,6 +758,9 @@ void NRF24L01::SetAddress(bool full)
 	//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
 
 	WriteReg(FEATURE, ft.ToByte());
+#if RF_DEBUG
+	debug_printf("R24::FEATURE\t= 0x%02X => 0x%02X\r\n", ft.ToByte(), ReadReg(FEATURE));
+#endif
 }
 
 void ShowStatusTask(void* param)
