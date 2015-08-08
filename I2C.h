@@ -27,7 +27,7 @@ public:
 	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL) = 0;
 
 	virtual void Open();		// 打开设备
-	virtual void Close();		// 外部设备
+	virtual void Close();		// 关闭设备
 
 	virtual void Start() = 0;	// 开始会话
 	virtual void Stop() = 0;	// 停止会话
