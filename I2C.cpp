@@ -42,7 +42,7 @@ bool I2C::Write(byte addr, byte* buf, uint len)
 
 	I2CScope ics(this);
 
-    WriteByte(Address);   //发送设备地址+写信号
+    WriteByte(addr);   //发送设备地址+写信号
 	if(!WaitAck()) return false;
 
 	for(int i=0; i<len; i++)
@@ -61,7 +61,7 @@ uint I2C::Read(byte addr, byte* buf, uint len)
 
 	I2CScope ics(this);
 
-    WriteByte(Address);   //发送设备地址+写信号
+    WriteByte(addr);   //发送设备地址+写信号
 	if(!WaitAck()) return 0;
 
 	uint rs = 0;
@@ -334,6 +334,10 @@ void SoftI2C::OnOpen()
 	assert_param2(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
 	debug_printf("I2C::Open Address=0x%02X \r\n", Address);
+
+	// 开漏输出
+	SCL.OpenDrain = true;
+	SDA.OpenDrain = true;
 
 	SCL.Config(true);
 	SDA.Config(true);
