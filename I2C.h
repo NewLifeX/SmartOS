@@ -11,18 +11,20 @@
 class I2C
 {
 public:
-    int Speed;		// 速度
-    int Retry;		// 等待重试次数，默认200
-    int Error;		// 错误次数
-	ushort Address;	// 7位地址或10位地址
+    int		Speed;		// 速度
+    int		Retry;		// 等待重试次数，默认200
+    int		Error;		// 错误次数
+	ushort	Address;	// 7位地址或10位地址
+	bool	Opened;		// 是否已经打开
 
 	I2C();
+	virtual ~I2C();
 
 	virtual void SetPin(Pin scl, Pin sda) = 0;
 	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL) = 0;
 
-	virtual void Open() = 0;	// 打开设备
-	virtual void Close() = 0;	// 外部设备
+	virtual void Open();		// 打开设备
+	virtual void Close();		// 外部设备
 
 	virtual void Start() = 0;	// 开始会话
 	virtual void Stop() = 0;	// 停止会话
@@ -34,6 +36,10 @@ public:
 
 	virtual bool Write(byte addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
 	virtual uint Read(byte addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
+	
+protected:
+	virtual void OnOpen() = 0;	// 打开设备
+	virtual void OnClose() = 0;	// 外部设备
 };
 
 // I2C会话类。初始化时打开，超出作用域析构时关闭
@@ -70,9 +76,6 @@ public:
 	virtual void SetPin(Pin scl, Pin sda);
 	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL);
 
-	virtual void Open();
-	virtual void Close();
-
 	virtual void Start();
 	virtual void Stop();
 
@@ -90,6 +93,9 @@ private:
 
 	bool WaitForEvent(uint event);
 	bool SetID(byte id, bool tx = true);
+
+	virtual void OnOpen();
+	virtual void OnClose();
 };
 
 // 软件模拟I2C
@@ -105,9 +111,6 @@ public:
 	virtual void SetPin(Pin scl, Pin sda);
 	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL);
 
-	virtual void Open();
-	virtual void Close();
-
 	virtual void Start();
 	virtual void Stop();
 
@@ -121,6 +124,9 @@ private:
 
 	OutputPort SCL;
 	OutputPort SDA;
+
+	virtual void OnOpen();
+	virtual void OnClose();
 };
 
 #endif

@@ -9,11 +9,37 @@ I2C::I2C()
 	Retry	= 200;
 	Error	= 0;
 	Address	= 0x00;
+	Opened	= false;
+}
+
+I2C::~I2C()
+{
+	Close();
+}
+
+void I2C::Open()
+{
+	if(Opened) return;
+
+	OnOpen();
+
+	Opened = true;
+}
+
+void I2C::Close()
+{
+	if(!Opened) return;
+
+	OnClose();
+
+	Opened = false;
 }
 
 // 新会话向指定地址写入多个字节
 bool I2C::Write(byte addr, byte* buf, uint len)
 {
+	Open();
+
 	I2CScope ics(this);
 
     WriteByte(Address);   //发送设备地址+写信号
@@ -31,6 +57,8 @@ bool I2C::Write(byte addr, byte* buf, uint len)
 // 新会话从指定地址读取多个字节
 uint I2C::Read(byte addr, byte* buf, uint len)
 {
+	Open();
+
 	I2CScope ics(this);
 
     WriteByte(Address);   //发送设备地址+写信号
@@ -105,7 +133,7 @@ void HardI2C::GetPin(Pin* scl , Pin* sda )
 	if(sda) *sda = SDA._Pin;
 }
 
-void HardI2C::Open()
+void HardI2C::OnOpen()
 {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1 << _index, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -158,7 +186,7 @@ void HardI2C::Open()
 	I2C_Init(_IIC, &i2c);
 }
 
-void HardI2C::Close()
+void HardI2C::OnClose()
 {
 	// sEE_I2C Peripheral Disable
 	I2C_Cmd(_IIC, DISABLE);
@@ -183,14 +211,14 @@ void HardI2C::Start()
 void HardI2C::Stop()
 {
 	// 最后一位后要关闭应答
-	I2C_AcknowledgeConfig(_IIC, DISABLE);	
+	I2C_AcknowledgeConfig(_IIC, DISABLE);
 	// 产生结束信号
 	I2C_GenerateSTOP(_IIC, ENABLE);
 }
 
 void HardI2C::Ack(bool ack)
 {
-	
+
 }
 
 bool HardI2C::WaitAck(int retry)
@@ -291,8 +319,8 @@ SoftI2C::~SoftI2C()
 
 void SoftI2C::SetPin(Pin scl , Pin sda )
 {
-	SCL.Set(scl).Config();
-	SDA.Set(sda).Config();
+	SCL.Set(scl);
+	SDA.Set(sda);
 }
 
 void SoftI2C::GetPin(Pin* scl , Pin* sda )
@@ -301,13 +329,15 @@ void SoftI2C::GetPin(Pin* scl , Pin* sda )
 	if(sda) *sda = SDA._Pin;
 }
 
-void SoftI2C::Open()
+void SoftI2C::OnOpen()
 {
+	assert_param2(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
+
 	SCL.Config(true);
 	SDA.Config(true);
 }
 
-void SoftI2C::Close()
+void SoftI2C::OnClose()
 {
 	SCL.Config(false);
 	SDA.Config(false);
