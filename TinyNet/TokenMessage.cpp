@@ -112,6 +112,7 @@ TokenController::TokenController() : Controller(), Key(0)
 	Token	= 0;
 
 	MinSize = TokenMessage::MinSize;
+	MaxSize = 1500;
 
 	// 默认屏蔽心跳日志和确认日志
 	ArrayZero(NoLogCodes);

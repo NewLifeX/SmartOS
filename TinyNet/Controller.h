@@ -29,6 +29,7 @@ protected:
 public:
 	ITransport*	Port;		// 数据传输口数组
 	byte		MinSize;	// 最小消息大小
+	byte		MaxSize;	// 最大消息大小
 	bool 		Opened;
 
 	Controller();

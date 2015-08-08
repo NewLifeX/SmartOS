@@ -55,12 +55,14 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 	assert_ptr(buf);
 	assert_ptr(param);
 
+	assert_param2(len > MaxSize, "数据长度超过控制器可接受最大长度");
+
 	Controller* control = (Controller*)param;
 	if(!_my)
 		_my = control;
 	else
 	{
-		assert_param2(_my == control, "控制器指针已被改变");
+		assert_param2(_my == control, "控制器指针已被改变1");
 	}
 
 	// 这里使用数据流，可能多个消息粘包在一起
@@ -68,10 +70,10 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 	Stream ms(buf, len);
 	while(ms.Remain() >= control->MinSize)
 	{
-		assert_param2(_my == control, "控制器指针已被改变");
+		assert_param2(_my == control, "控制器指针已被改变2");
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
 		if(!control->Dispatch(ms, NULL)) break;
-		assert_param2(_my == control, "控制器指针已被改变");
+		assert_param2(_my == control, "控制器指针已被改变3");
 	}
 
 	return 0;
