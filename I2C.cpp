@@ -10,7 +10,7 @@ I2C::I2C()
 	Error	= 0;
 
 	Address	= 0x00;
-	SubAddr = 0;
+	SubWidth= 0;
 
 	Opened	= false;
 }
@@ -38,6 +38,31 @@ void I2C::Close()
 	Opened = false;
 }
 
+bool I2C::SendAddress(int addr, bool tx)
+{
+	// 发送设备地址
+    WriteByte(Address);
+	if(!WaitAck()) return false;
+
+	return SendSubAddr(addr);
+}
+
+bool I2C::SendSubAddr(int addr)
+{
+	// 发送子地址
+	if(SubWidth > 0)
+	{
+		// 逐字节发送
+		for(int k=SubWidth-1; k>=0; k--)
+		{
+			WriteByte(addr >> (k << 3));
+			if(!WaitAck()) return false;
+		}
+	}
+
+	return true;
+}
+
 // 新会话向指定地址写入多个字节
 bool I2C::Write(int addr, byte* buf, uint len)
 {
@@ -46,19 +71,7 @@ bool I2C::Write(int addr, byte* buf, uint len)
 	I2CScope ics(this);
 
 	// 发送设备地址
-    WriteByte(Address);   
-	if(!WaitAck()) return false;
-
-	// 发送子地址
-	if(SubAddr > 0)
-	{
-		// 逐字节发送
-		for(int k=SubAddr-1; k>=0; k--)
-		{
-			WriteByte(addr >> (k << 3));   
-			if(!WaitAck()) return false;
-		}
-	}
+    if(!SendAddress(addr)) return false;
 
 	for(int i=0; i<len; i++)
 	{
@@ -77,19 +90,7 @@ uint I2C::Read(int addr, byte* buf, uint len)
 	I2CScope ics(this);
 
 	// 发送设备地址
-    WriteByte(Address);   
-	if(!WaitAck()) return 0;
-
-	// 发送子地址
-	if(SubAddr > 0)
-	{
-		// 逐字节发送
-		for(int k=SubAddr-1; k>=0; k--)
-		{
-			WriteByte(addr >> (k << 3));   
-			if(!WaitAck()) return false;
-		}
-	}
+    if(!SendAddress(addr)) return false;
 
 	uint rs = 0;
 	for(int i=0; i<len; i++)
@@ -204,10 +205,14 @@ void HardI2C::OnOpen()
 #ifndef STM32F0
     i2c.I2C_DutyCycle	= I2C_DutyCycle_2;	//设置I2C接口的高低电平周期
 #endif
-	i2c.I2C_OwnAddress1	= Address;			//设置I2C接口的主机地址
+	i2c.I2C_OwnAddress1	= Address;			//设置I2C接口的主机地址。从设备需要设定的主机地址，而对于主机而言这里无所谓
 	i2c.I2C_Ack			= I2C_Ack_Enable;	//设置是否开启ACK响应
-	i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
 	i2c.I2C_ClockSpeed	= Speed;			//速度
+
+	if(Address > 0xFF)
+		i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_10bit;
+	else
+		i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
 
 	I2C_Cmd(_IIC, ENABLE);
 	I2C_Init(_IIC, &i2c);
@@ -250,7 +255,12 @@ void HardI2C::Ack(bool ack)
 
 bool HardI2C::WaitAck(int retry)
 {
-	return true;
+	if(!retry) retry = Retry;
+	while(!I2C_CheckEvent(_IIC, _Event));
+    {
+        if(--retry <= 0) return ++Error; // 超时处理
+    }
+	return retry > 0;
 }
 
 bool HardI2C::WaitForEvent(uint event)
@@ -263,71 +273,112 @@ bool HardI2C::WaitForEvent(uint event)
 	return retry > 0;
 }
 
-bool HardI2C::SetID(byte id, bool tx)
+bool HardI2C::SendAddress(int addr, bool tx)
 {
-	// 产生起始条件
-	I2C_GenerateSTART(_IIC, ENABLE);
-	// 等待ACK
-	if(!WaitForEvent(I2C_EVENT_MASTER_MODE_SELECT)) return false;
 	if(tx)
 	{
 		// 向设备发送设备地址
-		I2C_Send7bitAddress(_IIC, id, I2C_Direction_Transmitter);
-		// 等待ACK
-		if(!WaitForEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) return false;
+		I2C_Send7bitAddress(_IIC, Address, I2C_Direction_Transmitter);
+
+		_Event = I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED;
+		if(!WaitAck()) return false;
+
+		_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
+		return I2C::SendSubAddr(addr);
 	}
 	else
 	{
+		// 如果有子地址，需要先发送子地址。而子地址作为数据发送，需要首先设置为发送模式
+		if(SubWidth > 0)
+		{
+			if(!SendAddress(addr, true)) return false;
+
+			// 重启会话
+			Start();
+		}
+
 		// 发送读地址
-		I2C_Send7bitAddress(_IIC, id, I2C_Direction_Receiver);
-		// EV6
-		if(!WaitForEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) return 0;
+		I2C_Send7bitAddress(_IIC, Address, I2C_Direction_Receiver);
+
+		_Event = I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED;
+		if(!WaitAck()) return false;
+
+		return true;
+	}
+}
+
+void HardI2C::WriteByte(byte dat)
+{
+	_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
+	// 发送数据
+	I2C_SendData(_IIC, dat);
+}
+
+byte HardI2C::ReadByte()
+{
+	_Event = I2C_EVENT_MASTER_BYTE_RECEIVED;
+
+	return I2C_ReceiveData(_IIC);
+}
+
+// 新会话向指定地址写入多个字节
+bool HardI2C::Write(int addr, byte* buf, uint len)
+{
+	Open();
+
+	I2CScope ics(this);
+
+	_Event = I2C_EVENT_MASTER_MODE_SELECT;
+	if(!WaitAck()) return false;
+
+	// 发送设备地址
+	SendAddress(addr, true);
+
+	_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
+
+	//发送数据
+	while(len--){
+	  	I2C_SendData(_IIC, *buf++);
+
+		if(!WaitAck()) return false;
 	}
 
 	return true;
 }
 
-void HardI2C::WriteByte(byte dat)
+// 新会话从指定地址读取多个字节
+uint HardI2C::Read(int addr, byte* buf, uint len)
 {
-	// 寄存器地址
-	//I2C_SendData(_IIC, addr);
-	// 等待ACK
-	//if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return;
-	// 发送数据
-	I2C_SendData(_IIC, dat);
-	// 发送完成
-	//if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return;
-	// 产生结束信号
-	//I2C_GenerateSTOP(_IIC, ENABLE);
-}
+	_Event = I2C_FLAG_BUSY;
+	if(!WaitAck()) return false;
 
-byte HardI2C::ReadByte()
-{
-	// 等待I2C
-	while(I2C_GetFlagStatus(_IIC, I2C_FLAG_BUSY));
+	I2CScope ics(this);
 
-	//if(!SetID(id)) return 0;
+	_Event = I2C_EVENT_MASTER_MODE_SELECT;
+	if(!WaitAck()) return false;
 
-	// 重新设置可以清楚EV6
-	//I2C_Cmd(_IIC, ENABLE);
-	// 发送读得地址
-	//I2C_SendData(_IIC, addr);
-	// EV8
-	//if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED)) return 0;
+	// 发送设备地址
+	SendAddress(addr, false);
 
-	//if(!SetID(id, false)) return 0;
+	//读取数据
+	_Event = I2C_EVENT_MASTER_BYTE_RECEIVED;
+    while (len)
+    {
+		if(len==1)
+		{
+     		I2C_AcknowledgeConfig(_IIC, DISABLE);
+    		I2C_GenerateSTOP(_IIC, ENABLE);
+		}
+		if(!WaitAck()) return false;
 
-	// 关闭应答
-	//I2C_AcknowledgeConfig(_IIC, DISABLE);
-	// 停止条件产生
-	//I2C_GenerateSTOP(_IIC, ENABLE);
-	//if(!WaitForEvent(I2C_EVENT_MASTER_BYTE_RECEIVED)) return 0;
+	    *buf++ = I2C_ReceiveData(_IIC);
 
-	byte dat = I2C_ReceiveData(_IIC);
+	    len--;
+    }
 
-	//I2C_AcknowledgeConfig(_IIC, ENABLE);
+	I2C_AcknowledgeConfig(_IIC, ENABLE);
 
-	return dat;
+	return 0;
 }
 
 SoftI2C::SoftI2C(uint speedHz) : I2C()

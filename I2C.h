@@ -16,7 +16,7 @@ public:
     int		Error;		// 错误次数
 
 	ushort	Address;	// 设备地址。7位或10位
-	byte	SubAddr;	// 子地址占字节数
+	byte	SubWidth;	// 子地址占字节数
 
 	bool	Opened;		// 是否已经打开
 
@@ -43,6 +43,9 @@ public:
 protected:
 	virtual void OnOpen() = 0;	// 打开设备
 	virtual void OnClose() = 0;	// 外部设备
+
+	virtual bool SendAddress(int addr, bool tx = true);
+	virtual bool SendSubAddr(int addr);
 };
 
 // I2C会话类。初始化时打开，超出作用域析构时关闭
@@ -87,15 +90,19 @@ public:
 	virtual void Ack(bool ack);
 	virtual bool WaitAck(int retry=0);	// 等待Ack，默认0表示采用全局Retry
 
+	virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
+	virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
+
 private:
-    byte _index;
-	I2C_TypeDef* _IIC;
+    byte			_index;
+	I2C_TypeDef*	_IIC;
+	uint			_Event;
 
 	AlternatePort SCL;
 	AlternatePort SDA;
 
 	bool WaitForEvent(uint event);
-	bool SetID(byte id, bool tx = true);
+	virtual bool SendAddress(int addr, bool tx = true);
 
 	virtual void OnOpen();
 	virtual void OnClose();

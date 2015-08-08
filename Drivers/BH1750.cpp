@@ -41,16 +41,18 @@ void BH1750::Init()
 ushort BH1750::Read()
 {
 	ushort n = 0;
-	IIC->Read(Address | 0x01, (byte*)&n, 2);
-	
+	IIC->Address = Address | 0x01;
+	IIC->Read(0, (byte*)&n, 2);
+
 	Sys.Sleep(5);
-	
+
 	return n;
 }
 
 void BH1750::Write(byte cmd)
 {
-	IIC->Write(Address & 0xFE, &cmd, 1);
-	
+	IIC->Address = Address & 0xFE;
+	IIC->Write(0, &cmd, 1);
+
 	Sys.Sleep(5);
 }
