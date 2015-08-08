@@ -6,6 +6,8 @@
 #include "Queue.h"
 #include "Net\ITransport.h"
 
+#define SERIAL_BAUDRATE 1024000
+
 // 串口类
 class SerialPort : public ITransport
 {
@@ -38,7 +40,7 @@ public:
 
 	SerialPort();
     SerialPort(COM_Def index,
-        int baudRate = 1024000,
+        int baudRate = SERIAL_BAUDRATE,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1)    //1位停止位
@@ -48,7 +50,7 @@ public:
 	}
 
     SerialPort(USART_TypeDef* com,
-        int baudRate = 1024000,
+        int baudRate = SERIAL_BAUDRATE,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
@@ -56,7 +58,7 @@ public:
     virtual ~SerialPort();
 
     void Init(byte index,
-        int baudRate = 1024000,
+        int baudRate = SERIAL_BAUDRATE,
         byte parity = USART_Parity_No,       //无奇偶校验
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
@@ -65,7 +67,7 @@ public:
 
     bool Flush(uint times);
 
-	void SetBaudRate(int baudRate = 1024000);
+	void SetBaudRate(int baudRate = SERIAL_BAUDRATE);
 
     void GetPins(Pin* txPin, Pin* rxPin);
 
