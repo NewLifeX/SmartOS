@@ -51,7 +51,7 @@ ushort BH1750::Read()
 	Sys.Sleep(5);*/
 	
 	ushort n = 0;
-	IIC->Read(Address, (byte*)&n, 2);
+	IIC->Read(Address | 0x01, (byte*)&n, 2);
 	
 	Sys.Sleep(5);
 	
@@ -72,7 +72,7 @@ void BH1750::Write(byte cmd)
 	IIC->Stop();
 	Sys.Sleep(5);*/
 	
-	IIC->Write(Address, &cmd, 1);
+	IIC->Write(Address & 0xFE, &cmd, 1);
 	
 	Sys.Sleep(5);
 }

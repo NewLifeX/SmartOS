@@ -333,6 +333,8 @@ void SoftI2C::OnOpen()
 {
 	assert_param2(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
+	debug_printf("I2C::Open Address=0x%02X \r\n", Address);
+
 	SCL.Config(true);
 	SDA.Config(true);
 }
