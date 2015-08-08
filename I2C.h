@@ -14,7 +14,10 @@ public:
     int		Speed;		// 速度
     int		Retry;		// 等待重试次数，默认200
     int		Error;		// 错误次数
-	ushort	Address;	// 7位地址或10位地址
+
+	ushort	Address;	// 设备地址。7位或10位
+	byte	SubAddr;	// 子地址占字节数
+
 	bool	Opened;		// 是否已经打开
 
 	I2C();
@@ -34,9 +37,9 @@ public:
 	virtual void Ack(bool ack) = 0;
 	virtual bool WaitAck(int retry=0) = 0;	// 等待Ack，默认0表示采用全局Retry
 
-	virtual bool Write(byte addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
-	virtual uint Read(byte addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
-	
+	virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
+	virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
+
 protected:
 	virtual void OnOpen() = 0;	// 打开设备
 	virtual void OnClose() = 0;	// 外部设备

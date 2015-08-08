@@ -8,7 +8,10 @@ I2C::I2C()
 	Speed	= 10000;
 	Retry	= 200;
 	Error	= 0;
+
 	Address	= 0x00;
+	SubAddr = 0;
+
 	Opened	= false;
 }
 
@@ -36,14 +39,26 @@ void I2C::Close()
 }
 
 // 新会话向指定地址写入多个字节
-bool I2C::Write(byte addr, byte* buf, uint len)
+bool I2C::Write(int addr, byte* buf, uint len)
 {
 	Open();
 
 	I2CScope ics(this);
 
-    WriteByte(addr);   //发送设备地址+写信号
+	// 发送设备地址
+    WriteByte(Address);   
 	if(!WaitAck()) return false;
+
+	// 发送子地址
+	if(SubAddr > 0)
+	{
+		// 逐字节发送
+		for(int k=SubAddr-1; k>=0; k--)
+		{
+			WriteByte(addr >> (k << 3));   
+			if(!WaitAck()) return false;
+		}
+	}
 
 	for(int i=0; i<len; i++)
 	{
@@ -55,14 +70,26 @@ bool I2C::Write(byte addr, byte* buf, uint len)
 }
 
 // 新会话从指定地址读取多个字节
-uint I2C::Read(byte addr, byte* buf, uint len)
+uint I2C::Read(int addr, byte* buf, uint len)
 {
 	Open();
 
 	I2CScope ics(this);
 
-    WriteByte(addr);   //发送设备地址+写信号
+	// 发送设备地址
+    WriteByte(Address);   
 	if(!WaitAck()) return 0;
+
+	// 发送子地址
+	if(SubAddr > 0)
+	{
+		// 逐字节发送
+		for(int k=SubAddr-1; k>=0; k--)
+		{
+			WriteByte(addr >> (k << 3));   
+			if(!WaitAck()) return false;
+		}
+	}
 
 	uint rs = 0;
 	for(int i=0; i<len; i++)
