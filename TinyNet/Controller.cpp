@@ -71,6 +71,7 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 		Sys.ShowHex(buf, len, '-');
 		msg_printf("\r\n");
 #endif
+		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->MaxSize);
 		assert_param2(len <= control->MaxSize, "数据长度超过控制器可接受最大长度");
 	}
 
