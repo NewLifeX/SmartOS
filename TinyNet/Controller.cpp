@@ -63,7 +63,16 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 		assert_param2(_my == control, "控制器指针已被改变1");
 	}
 
-	assert_param2(len > control->MaxSize, "数据长度超过控制器可接受最大长度");
+	if(len > control->MaxSize)
+	{
+#if MSG_DEBUG
+		msg_printf("TinyNet::Dispatch ");
+		// 输出整条信息
+		Sys.ShowHex(buf, len, '-');
+		msg_printf("\r\n");
+#endif
+		assert_param2(len > control->MaxSize, "数据长度超过控制器可接受最大长度");
+	}
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
@@ -82,13 +91,6 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 bool Controller::Dispatch(Stream& ms, Message* pmsg)
 {
 	byte* buf = ms.Current();
-
-#if MSG_DEBUG
-	/*msg_printf("TinyNet::Dispatch ");
-	// 输出整条信息
-	Sys.ShowHex(buf, ms.Length, '-');
-	msg_printf("\r\n");*/
-#endif
 
 	Message& msg = *pmsg;
 	if(!msg.Read(ms)) return false;
