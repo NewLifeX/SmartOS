@@ -238,6 +238,9 @@ void HardI2C::Start()
 	// 允许1字节1应答模式
 	I2C_AcknowledgeConfig(_IIC, ENABLE);
     I2C_GenerateSTART(_IIC, ENABLE);
+
+	_Event = I2C_EVENT_MASTER_MODE_SELECT;
+	WaitAck();
 }
 
 void HardI2C::Stop()
@@ -250,23 +253,13 @@ void HardI2C::Stop()
 
 void HardI2C::Ack(bool ack)
 {
-
+	I2C_AcknowledgeConfig(_IIC, ack ? ENABLE : DISABLE);
 }
 
 bool HardI2C::WaitAck(int retry)
 {
 	if(!retry) retry = Retry;
 	while(!I2C_CheckEvent(_IIC, _Event));
-    {
-        if(--retry <= 0) return ++Error; // 超时处理
-    }
-	return retry > 0;
-}
-
-bool HardI2C::WaitForEvent(uint event)
-{
-	int retry = Retry;
-	while(!I2C_CheckEvent(_IIC, event));
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
@@ -310,7 +303,7 @@ bool HardI2C::SendAddress(int addr, bool tx)
 void HardI2C::WriteByte(byte dat)
 {
 	_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
-	// 发送数据
+
 	I2C_SendData(_IIC, dat);
 }
 
@@ -321,7 +314,7 @@ byte HardI2C::ReadByte()
 	return I2C_ReceiveData(_IIC);
 }
 
-// 新会话向指定地址写入多个字节
+/*// 新会话向指定地址写入多个字节
 bool HardI2C::Write(int addr, byte* buf, uint len)
 {
 	Open();
@@ -379,7 +372,7 @@ uint HardI2C::Read(int addr, byte* buf, uint len)
 	I2C_AcknowledgeConfig(_IIC, ENABLE);
 
 	return 0;
-}
+}*/
 
 SoftI2C::SoftI2C(uint speedHz) : I2C()
 {

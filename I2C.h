@@ -90,8 +90,8 @@ public:
 	virtual void Ack(bool ack);
 	virtual bool WaitAck(int retry=0);	// 等待Ack，默认0表示采用全局Retry
 
-	virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
-	virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
+	//virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
+	//virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
 
 private:
     byte			_index;
@@ -101,7 +101,6 @@ private:
 	AlternatePort SCL;
 	AlternatePort SDA;
 
-	bool WaitForEvent(uint event);
 	virtual bool SendAddress(int addr, bool tx = true);
 
 	virtual void OnOpen();
