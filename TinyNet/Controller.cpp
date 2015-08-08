@@ -72,7 +72,7 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 		msg_printf("\r\n");
 #endif
 		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->MaxSize);
-		assert_param2(len <= control->MaxSize, "数据长度超过控制器可接受最大长度");
+		//assert_param2(len <= control->MaxSize, "数据长度超过控制器可接受最大长度");
 	}
 
 	// 这里使用数据流，可能多个消息粘包在一起
