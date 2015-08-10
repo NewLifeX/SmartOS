@@ -192,7 +192,7 @@ public:
 	}
 
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
-	bool SetLength(int length)
+	bool SetLength(int length, bool bak = false)
 	{
 		if(length <= _Capacity)
 		{
@@ -201,7 +201,7 @@ public:
 		}
 		else
 		{
-			CheckCapacity(length);
+			CheckCapacity(length, bak ? _Length : 0);
 
 			// 扩大长度
 			if(length > _Length) _Length = length;

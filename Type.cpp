@@ -85,8 +85,6 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 				str.SetAt(k++, sep);
 		}
 	}
-	//str.SetAt(k, '\0');
-	//str.SetLength(k);
 
 	return str;
 }
@@ -211,7 +209,6 @@ String& String::Append(int value)
 String& String::Append(byte bt)
 {
 	int k = Length();
-	//SetLength(k + 2);
 
 	byte b = bt >> 4;
 	SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
