@@ -37,9 +37,14 @@ public:
 	void Open();
 	void Close();
 
+	// 基础读写
     byte Write(byte data);
     ushort Write16(ushort data);
 
+	// 批量读写。以字节数组长度为准
+	void Write(ByteArray& bs);
+	void Read(ByteArray& bs);
+	
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输
 };

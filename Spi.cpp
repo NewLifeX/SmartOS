@@ -271,6 +271,23 @@ ushort Spi::Write16(ushort data)
 #endif
 }
 
+// 批量读写。以字节数组长度为准
+void Spi::Write(ByteArray& bs)
+{
+	for(int i=0; i<bs.Length(); i++)
+	{
+		Write(bs[i]);
+	}
+}
+
+void Spi::Read(ByteArray& bs)
+{
+	for(int i=0; i<bs.Length(); i++)
+	{
+		bs[i] = Write(0x00);
+	}
+}
+
 // 拉低NSS，开始传输
 void Spi::Start()
 {
