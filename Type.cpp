@@ -231,12 +231,12 @@ String& String::Append(ByteArray& bs)
 void String::Show(bool newLine) const
 {
 	if(!Length()) return;
-	
+
 	// C格式字符串以0结尾
 	char* p = GetBuffer();
 	if(!IN_ROM_SECTION(p))
 		p[Length()] = 0;
-	
+
 	debug_printf("%s", GetBuffer());
 	if(newLine) debug_printf("\r\n");
 }
@@ -349,9 +349,10 @@ byte& IPAddress::operator[](int i)
 }
 
 // 字节数组
-byte* IPAddress::ToArray() const
+ByteArray IPAddress::ToArray() const
 {
-	return (byte*)&Value;
+	ByteArray bs((byte*)&Value, 4);
+	return bs;
 }
 
 String& IPAddress::ToStr(String& str) const
@@ -427,6 +428,12 @@ MacAddress::MacAddress(ulong v)
 	Value = v & MAC_MASK;
 }
 
+MacAddress::MacAddress(const ByteArray& arr)
+{
+	Value = *(ulong*)arr.GetBuffer();
+	Value &= MAC_MASK;
+}
+
 // 是否广播地址，全0或全1
 bool MacAddress::IsBroadcast() const { return Value == Empty.Value || Value == Full.Value; }
 
@@ -448,6 +455,13 @@ MacAddress& MacAddress::operator=(ulong v)
 	return *this;
 }
 
+MacAddress& MacAddress::operator=(byte* buf)
+{
+	Value = *(ulong*)buf & MAC_MASK;
+
+	return *this;
+}
+
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& MacAddress::operator[](int i)
 {
@@ -457,9 +471,11 @@ byte& MacAddress::operator[](int i)
 }
 
 // 字节数组
-byte* MacAddress::ToArray() const
+ByteArray MacAddress::ToArray() const
 {
-	return (byte*)&Value;
+	//return (byte*)&Value;
+	
+	return ByteArray((byte*)&Value, 6);
 }
 
 /*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)

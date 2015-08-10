@@ -297,6 +297,19 @@ public:
 		return true;
 	}
 
+	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
+	int CopyTo(T* data, int len = 0, int index = 0)
+	{
+		// 数据长度可能不足
+		if(_Length - index < len || len == 0) len = _Length - index;
+		if(len <= 0) return 0;
+
+		// 拷贝数据
+		memcpy(data, _Arr + index, sizeof(T) * len);
+
+		return len;
+	}
+
 	// 清空已存储数据。长度放大到最大容量
 	virtual Array& Clear()
 	{
@@ -436,6 +449,7 @@ public:
 	//IPAddress(const IPAddress& addr)	{ Value = addr.Value; }
 	IPAddress(const byte* ips)	{ Value = *(uint*)ips; }
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
+	IPAddress(const ByteArray& arr) { Value = *(uint*)arr.GetBuffer(); }
 
     IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
@@ -445,7 +459,7 @@ public:
     byte& operator[](int i);
 
 	// 字节数组
-    byte* ToArray() const;
+    ByteArray ToArray() const;
 
 	bool IsAny() const;
 	bool IsBroadcast() const;
@@ -492,17 +506,19 @@ public:
 	ulong	Value;	// 地址
 
 	MacAddress(ulong v = 0);
+	MacAddress(const ByteArray& arr);
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() const;
 
     MacAddress& operator=(ulong v);
+    MacAddress& operator=(byte* buf);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
 
 	// 字节数组
-    byte* ToArray() const;
+    ByteArray ToArray() const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
