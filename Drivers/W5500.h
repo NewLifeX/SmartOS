@@ -62,8 +62,9 @@ private:
 	HardwareSocket* _sockets[8];
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
-	bool WriteFrame(Frame& fra);
-	bool ReadFrame(Frame& fra,uint length);
+	void SetAddress(ushort addr, byte reg, byte rw);
+	bool WriteFrame(ushort addr, byte reg, const ByteArray& bs);
+	bool ReadFrame(ushort addr, byte reg, ByteArray& bs);
 
 	// spi 模式（默认变长）
 	byte PhaseOM;
