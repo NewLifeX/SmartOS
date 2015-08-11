@@ -154,7 +154,10 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -I{0}", item);
             }
 
-            sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
+			sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\"", objName);
+			// 中文目录不要输出临时文件，MDK不支持
+			if(Encoding.ASCII.GetByteCount(objName) == Encoding.UTF8.GetByteCount(objName))
+				sb.AppendFormat(" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
             return Complier.Run(sb.ToString(), 3000, WriteLog);
