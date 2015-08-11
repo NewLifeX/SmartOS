@@ -45,17 +45,24 @@ namespace NewLife.Reflection
             Objs.Clear();
 
             // 扫描当前所有目录，作为头文件引用目录
-            var ss = new String[] { ".", "..\\SmartOS", "..\\SmartOSLib", "..\\SmartOSLib\\inc", "..\\Lib" };
+            var ss = new String[] { ".", "..\\SmartOS" };
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
-                if (src != ".")
-                {
-                    if (!Directory.Exists(p)) p = "..\\" + p;
-                    if (!Directory.Exists(p)) continue;
-                }
+				if (!Directory.Exists(p)) p = "..\\" + p;
+				if (!Directory.Exists(p)) continue;
 
-                AddIncludes(p);
+                AddIncludes(p, false);
+                AddLibs(p);
+            }
+            ss = new String[] { "..\\SmartOSLib", "..\\SmartOSLib\\inc", "..\\Lib" };
+            foreach (var src in ss)
+            {
+                var p = src.GetFullPath();
+				if (!Directory.Exists(p)) p = "..\\" + p;
+				if (!Directory.Exists(p)) continue;
+
+                AddIncludes(p, true);
                 AddLibs(p);
             }
 
@@ -374,7 +381,7 @@ namespace NewLife.Reflection
         #endregion
 
         #region 辅助方法
-        public void AddIncludes(String path, Boolean allSub = true)
+        public void AddIncludes(String path, Boolean sub = true, Boolean allSub = true)
         {
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
@@ -385,18 +392,21 @@ namespace NewLife.Reflection
                 Includes.Add(path);
             }
 
-            var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            foreach (var item in path.AsDirectory().GetDirectories("*", opt))
-            {
-                if (item.FullName.Contains(".svn")) continue;
-                if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
+			if(sub)
+			{
+				var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+				foreach (var item in path.AsDirectory().GetDirectories("*", opt))
+				{
+					if (item.FullName.Contains(".svn")) continue;
+					if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
 
-                if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
-                {
-                    WriteLog("引用目录：{0}".F(item.FullName));
-                    Includes.Add(item.FullName);
-                }
-            }
+					if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
+					{
+						WriteLog("引用目录：{0}".F(item.FullName));
+						Includes.Add(item.FullName);
+					}
+				}
+			}
         }
 
         Boolean HasHeaderFile(String path)
@@ -467,8 +477,8 @@ namespace NewLife.Reflection
         {
             if (msg.IsNullOrEmpty()) return;
 
-            msg = FixWord(msg);
-            if (msg.StartsWithIgnoreCase("错误"))
+            //msg = FixWord(msg);
+            if (msg.StartsWithIgnoreCase("错误", "Error") || msg.Contains("Error:"))
                 XTrace.Log.Error(msg);
             else
                 XTrace.WriteLine(msg);
@@ -486,7 +496,7 @@ namespace NewLife.Reflection
                 Words.Add("Error", "错误");
                 Words.Add("Warning", "警告");
                 Words.Add("Warnings", "警告");
-                Words.Add("cannot", "不能");
+                /*Words.Add("cannot", "不能");
                 Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
@@ -518,7 +528,7 @@ namespace NewLife.Reflection
                 Words.Add("architecture", "架构");
                 Words.Add("processor", "处理器");
                 Words.Add("Undefined", "未定义");
-                Words.Add("referred", "引用");
+                Words.Add("referred", "引用");*/
             }
             #endregion
 
