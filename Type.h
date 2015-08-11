@@ -104,7 +104,9 @@ protected:
     T*		_Arr;		// 数据指针
 	int		_Length;	// 数组长度
 	uint	_Capacity;	// 数组最大容量。初始化时决定，后面不允许改变
-	bool	_needFree;	// 是否需要释放
+	//bool	_needFree;	// 是否需要释放
+	// 又是头疼的对齐问题
+	int		_needFree;	// 是否需要释放
 
 	T		Arr[0x40];	// 内部缓冲区
 

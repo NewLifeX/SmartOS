@@ -17,6 +17,12 @@ extern uint __Vectors_Size;
 void* operator new(uint size)
 {
     mem_printf(" new size: %d ", size);
+	// 内存大小向4字节对齐
+	if(size & 0x03)
+	{
+		size += 4 - (size & 0x03);
+		mem_printf("=> size: %d ", size);
+	}
 	void* p = NULL;
 	{
 		SmartIRQ irq;
@@ -42,6 +48,12 @@ void* operator new(uint size)
 void* operator new[](uint size)
 {
     mem_printf(" new size[]: %d ", size);
+	// 内存大小向4字节对齐
+	if(size & 0x03)
+	{
+		size += 4 - (size & 0x03);
+		mem_printf("=> size[]: %d ", size);
+	}
 	void* p = NULL;
 	{
 		SmartIRQ irq;
