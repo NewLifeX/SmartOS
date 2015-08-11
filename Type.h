@@ -499,6 +499,7 @@ public:
 
 	IPEndPoint();
 	IPEndPoint(const IPAddress& addr, ushort port);
+	IPEndPoint(const ByteArray& arr);
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;

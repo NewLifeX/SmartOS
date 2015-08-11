@@ -480,6 +480,13 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 	Port	= port;
 }
 
+IPEndPoint::IPEndPoint(const ByteArray& arr)
+{
+	byte* p = arr.GetBuffer();
+	Address = p;
+	Port	= *(ushort*)(p + 4);
+}
+
 String& IPEndPoint::ToStr(String& str) const
 {
 	Address.ToStr(str);

@@ -81,6 +81,41 @@ typedef struct
 	//byte VERSIONR		// 芯片版本寄存器【只读】			0x0039	// 地址不连续
 }TGeneral;			// 只有一份 所以直接定义就好
 
+typedef struct
+{
+	byte MR ;		//0x0000  	// Socket 模式寄存器
+	byte CR ;		//0x0001  	// 配置寄存器 	【较为特殊】【只写，读为0x00】
+	byte IR ;		//0x0002  	// 中断寄存器	 写1清0？？
+	byte SR ;		//0x0003  	// 状态寄存器	【只读】
+	byte PORT[2] ;	//0x0004  	// TCP UDP 模式下端口号  OPEN之前配置好
+	byte DHAR[6] ;	//0x0006  	// 目的MAC,SEND_MAC使用;CONNECT/SEND 命令时ARP获取到的MAC
+	byte DIPR[4] ;	//0x000c  	// 目标IP地址
+	byte DPORT[2] ;	//0x0010  	// 目标端口
+	byte MSSR[2] ;	//0x0012  	// TCP UDP 模式下 MTU 最大传输单元大小  默认最大值
+									// TCP:1460; UDP:1472; MACRAW:1514;
+									// MACRAW 模式时 由于MTU 不在内部处理，默认MTU将会生效
+									// PPPoE 模式下 略
+									// TCP UDP 模式下，传输数据比 MTU大时，数据将会自动划分成默认MTU 单元大小
+	byte Reserved ;		//0x0014
+	byte TOS ;		//0x0015  	// IP包头 服务类型 	OPEN之前配置
+	byte TTL ;		//0x0016  	// 生存时间 TTL 	OPEN之前配置
+	byte Reserved2[7] ;	//0x0017  	-  0x001d
+	byte RXBUF_SIZE ;//0x001e  	// 接收缓存大小   1 2 4 8 16  单位KByte
+	byte TXBUF_SIZE ;//0x001f  	// 发送缓存大小   1 2 4 8 16  单位KByte
+	byte TX_FSR[2] ;	//0x0020  	// 空闲发送寄存器大小
+	byte TX_RD[2] ;	//0x0022  	// 发送读缓存指针
+	byte TX_WR[2] ;	//0x0024  	// 发送写缓存指针
+	byte RX_RSR[2] ;	//0x0026  	// 空闲接收寄存器大小
+	byte RX_RD[2] ;	//0x0028  	// 发送读缓存指针
+	byte RX_WR[2] ;	//0x002a  	// 发送写缓存指针
+	byte IMR ;		//0x002c  	// 中断屏蔽寄存器  结构跟IR一样 0屏蔽  1不屏蔽
+	byte FRAG[2] ;	//0x002d  	// IP包头 分段部分  分段寄存器
+
+	byte KPALVTR ;	//0x002f  	// 只在TCP模式下使用  在线时间寄存器  单位：5s
+									// 为0 时  手动SEND_KEEP
+									// > 0 时  忽略SEND_KEEP操作
+} TSocket;
+
 #pragma pack(pop)	// 恢复对齐状态
 
 // 位域 低位在前
@@ -178,8 +213,8 @@ void W5500::Init()
 	//RX_FREE_SIZE = 0x16;
 	//TX_FREE_SIZE = 0x16;
 
-	RetryTime		= 0;
-	RetryCount		= 0;
+	RetryTime		= 200;
+	RetryCount		= 8;
 	LowLevelTime	= 0;
 	PingACK			= true;
 	EnableDHCP		= true;
@@ -243,7 +278,7 @@ bool W5500::Open()
 	ByteArray bs(sizeof(gen));
 
 	// 一次性全部读出
-	ReadFrame(0, 0, bs);
+	ReadFrame(0, bs);
 	bs.CopyTo((byte*)&gen);
 
 	// 修改各个字段值
@@ -252,15 +287,8 @@ bool W5500::Open()
 	Mac.ToArray().CopyTo(gen.SHAR);
 	IP.ToArray().CopyTo(gen.SIPR);
 
-	if(RetryTime > 0)
-		gen.RTR = RetryTime;
-	else
-		RetryTime = gen.RTR;
-
-	if(RetryCount > 0)
-		gen.RCR = RetryCount;
-	else
-		RetryCount = gen.RCR;
+	gen.RTR = RetryTime / 10;
+	gen.RCR = RetryCount;
 
 	if(LowLevelTime > 0)
 		gen.INTLEVEL = LowLevelTime;
@@ -272,8 +300,24 @@ bool W5500::Open()
 	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
 	gen.MR = mr.ToByte();
 
+	T_IR ir;
+	ir.Init(gen.IMR);
+	ir.UNREACH = 1;		// 目标不可达
+	ir.CONFLICT = 1;	// IP冲突
+	gen.IMR = ir.ToByte();
+
+	gen.SIMR = 0x01;
+
 	// 一次性全部写入
-	WriteFrame(0, 0, ByteArray((byte*)&gen, sizeof(gen)));
+	WriteFrame(0, ByteArray((byte*)&gen, sizeof(gen)));
+
+	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
+	for(int i=0; i<8; i++)
+	{
+		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Rx memory size=2k
+		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
+	}
+	//WriteByte(IMR, IMR_SENDOK | IMR_TIMEOUT | IMR_RECV | IMR_DISCON | IMR_CON);
 
 	Opened = true;
 
@@ -315,7 +359,6 @@ void W5500::Reset()
 	mr.Init();
 	mr.RST = 1;
 
-	//WriteFrame(offsetof(TGeneral, MR), 0, ByteArray(mr.ToByte(), 1));
 	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
 }
 
@@ -326,7 +369,7 @@ void W5500::StateShow()
 	ByteArray bs(sizeof(gen));
 
 	// 一次性全部读出
-	ReadFrame(0, 0, bs);
+	ReadFrame(0, bs);
 	bs.CopyTo((byte*)&gen);
 
 	debug_printf("\r\nW5500::State\r\n");
@@ -407,61 +450,61 @@ void W5500::PhyStateShow()
 	}
 }
 
-bool W5500::WriteByte(ushort addr, byte dat)
+bool W5500::WriteByte(ushort addr, byte dat, byte socket)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 0, 1);
+	SetAddress(addr, 1, socket);
 	_spi->Write(dat);
 
 	return true;
 }
 
-byte W5500::ReadByte(ushort addr)
+byte W5500::ReadByte(ushort addr, byte socket)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 0, 0);
+	SetAddress(addr, 0, socket);
 
 	return _spi->Write(0x00);
 }
 
-void W5500::SetAddress(ushort addr, byte reg, byte rw)
+void W5500::SetAddress(ushort addr, byte rw, byte socket)
 {
 	// 地址高位在前
 	_spi->Write(addr >> 8);
 	_spi->Write(addr & 0xFF);
 
 	TConfig cfg;
-	cfg.Socket		= 0;
-	cfg.BlockSelect	= reg;		// 寄存器区域选择
+	cfg.Socket		= socket;
+	cfg.BlockSelect	= 0;		// 寄存器区域选择
 	cfg.OpMode		= PhaseOM;	// 类内整体
 	cfg.ReadWrite	= rw;		// 读写
 	_spi->Write(cfg.ToByte());
 }
 
-bool W5500::WriteFrame(ushort addr, byte reg, const ByteArray& bs)
+bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
 
 	SpiScope sc(_spi);
 
-	SetAddress(addr, reg, 1);
+	SetAddress(addr, 1, socket);
 	_spi->Write(bs);
 
 	_Lock = 0;
 	return true;
 }
 
-bool W5500::ReadFrame(ushort addr, byte reg, ByteArray& bs)
+bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
 
 	SpiScope sc(_spi);
 
-	SetAddress(addr, reg, 0);
+	SetAddress(addr, 0, socket);
 	_spi->Read(bs);
 
 	_Lock = 0;
@@ -491,7 +534,7 @@ byte W5500::GetSocket()
 }
 
 // 注册 Socket
-void W5500::Register(byte Index,HardwareSocket* handler)
+void W5500::Register(byte Index,HardSocket* handler)
 {
 	if(_sockets[Index] == NULL)
 	{
@@ -514,184 +557,273 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 void W5500::OnIRQ()
 {
 	// 读出中断状态
-	//ushort addr = (ushort)((uint)General_reg.IR - (uint)&General_reg);
-
-	ByteArray bs(4);
-	ReadFrame(offsetof(TGeneral, IR), 0, bs);
-	//bs.CopyTo((byte*)&General_reg.IR);
+	byte dat = ReadByte(offsetof(TGeneral, IR));
 
 	// 分析IR
-	//T_IR ir;
-	//ir.Init(General_reg.IR);
-	//if(ir.CONFLICT)
-	//{
-	//	// IP 冲突
-	//}
-	//if(ir.MP)
-	//{
-	//	// 收到网络唤醒包
-	//}
-	//if(ir.UNREACH)
-	//{
-	//	// 读出不可达 IP 的信息
-	//	frame.Address = (ushort)((uint)General_reg.IR - (uint)&General_reg);
-	//	frame.Data.SetPosition(0);	// 丛头开始用
-	//	ReadFrame(frame,6);			// UIPR + UPORTR
-	//	frame.Data.Read((byte *)General_reg.UIPR,0,6);
-	//	debug_printf("IP 不可达： ");
-	//	debug_printf("IP:  %d.%d.%d.%d   ",General_reg.UIPR[0],General_reg.UIPR[1],General_reg.UIPR[2],General_reg.UIPR[3]);
-	//	debug_printf("Port:  %d\r\n",*(ushort*)General_reg.UPORTR);
-	//	// 处理..
-	//}
-	//if(ir.PPPoE) // PPPoE 连接不可达
-	//byte temp = General_reg.SIR;
-	byte temp = bs[2];
+	T_IR ir;
+	ir.Init(dat);
+	if(ir.CONFLICT)
+	{
+		// IP 冲突
+	}
+	if(ir.MP)
+	{
+		// 收到网络唤醒包
+	}
+	if(ir.UNREACH)
+	{
+		// 读出不可达 IP 的信息
+		ByteArray bs(6);
+		ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
+		debug_printf("IP 不可达：%s \r\n", IPEndPoint(bs).ToString().GetBuffer());
+		// 处理..
+	}
+	// PPPoE 连接不可达
+	if(ir.PPPoE)
+	{
+
+	}
+
+	dat = ReadByte(offsetof(TGeneral, SIR));
 	for(int i = 0;i < 8; i++)
 	{
-		if(temp & 0x01)
+		if(dat & 0x01)
 		{
-			if(_sockets[i])
-				_sockets[i]->Process();
+			if(_sockets[i]) _sockets[i]->Process();
 		}
-		temp >>= 1;
-		if(temp == 0x00)break;
+		dat >>= 1;
+		if(dat == 0x00) break;
 	}
 	// 中断位清零 说明书说的不够清晰 有待完善
 }
 
 /****************************** 硬件Socket控制器 ************************************/
 
-	typedef struct : ByteStruct
-	{
-		byte Protocol:4;		// Socket n 协议模式
-								// 0000		Closed
-								// 0001		TCP
-								// 0010		UDP
-								// 0100		MACRAW	【限定 Socket0 使用】
-								/* MACRAW 格式												*
-								 * |***PACET_INFO**|********DATA_PACKET************** |		*
-								 * | PACKET_SIZE   |DEC MAC|SOU MAC| TYPE | PAYLOAD   |		*
-								 * | 2BYTE		   | 6BYTE | 6BYTE | 2BYTE|46-1500BYTE|		*/
-
-		byte UCASTB_MIP6B:1;	// 【UCASTB】【MIP6B】
-								// [UCASTB]	 单播阻塞	条件：【UDP 模式】且MULTI=1
-								//		0：关闭单播阻塞，1：开启单播阻塞
-								// [MIP6B]	IPv6包阻塞	条件：【MACRAW 模式】
-								//		0：关闭IPv6包阻塞，1：开启IPv6包阻塞
-
-		byte ND_MC_MMB:1;		// 【ND】【MC】【MMB】
-								// [ND]	使用无延时ACK	条件：【TCP 模式】
-								//		0：关闭无延时ACK选项，需要RTR设定的超时时间做延时
-								//		1：开启无延时ACK选项, 尽量没有延时的回复ACK
-								// [MC]	IGMP版本		条件：【UDP 模式】且MULTI=1
-								//		0：IGMP 版本2，
-								//		1：IGMP 版本1
-								// [MMB] 多播阻塞		条件：【MACRAW 模式】
-								// 		0：关闭多播阻塞
-								// 		1：开启多播阻塞
-
-		byte BCASTB:1;			// 广播阻塞		条件：【MACRAW 模式】或者【UDP 模式】
-								// 		0：关闭广播阻塞
-								// 		1：开启广播阻塞
-
-		byte MULTI_MFEN:1;		// 【MULTI】【MFEN】
-								// [MULTI] UDP多播模式	条件：【UDP 模式】
-								// 		0：关闭多播
-								// 		1：开启多播
-								// 注意：使用多播模式，需要Sn_DIPR  Sn_DPORT 在通过Sn_CR 打开配置命令打开之前，分别配置组播IP地址及端口号
-								// [MFEN] MAC 过滤		条件：【MACRAW 模式】
-								// 		0: 关闭 MAC 过滤，收到网络的所有包
-								//		1：开启 MAC 过滤，只接收广播包和发给自己的包
-	}TSn_MR;
-	// Sn_CR 寄存器比较特殊
-	// 写入后会自动清零，但命令任然在处理中，为验证命令是否完成，需检查Sn_IR或者SnSR寄存器
-	enum ESn_CR
-	{
-		OPEN		= 0x01,	// open 之后，检测 Sn_SR 的值
-							// 	Sn_MR.Protocol		Sn_SR
-							// 		【CLOSE】		-
-							// 		【TCP】			【SOCK_INT】0X13
-							// 		【UDP】			【SOCK_UDP】0X22
-							// 		【MACRAW】		【SOCK_MACRAW】0X02
-
-		LISTEN		= 0x02,	// 只在【TCP 模式】下生效	LISTEN 会把 Socket 变成服务端，等待TCP连接
-							// LISTEN 把 SOCK_INIT 变为 SOCK_LISTEN
-							// 当 SOCK 被连接成功 SOCK_LISTEN 变为 SOCK_ESTABLISHE,同时 Sn_IR.CON =1
-							// 		当连接非法断开 Sn_IR.TIMEOUT =1， Sn_SR = SOCK_CLOSED
-
-		CONNECT 	= 0x04,	// 只在【TCP 模式】下生效	Socket 作为客户端  对 Sn_DIPR:Sn_DPORT 发起连接
-							// 链接成功时 Sn_SR = SOCK_ESTABLISHE  Sn_IR.CON =1
-							// 三种情况意味着请求失败  Sn_SR = SOCK_CLOSED
-							// 	1.ARP 发生超时(Sn_IR.TIMEOUT =1)
-							//  2.没有收到 SYN/ACK 数据包(Sn_IR.TIMEOUT = 1)
-							//  3.收到RST数据包
-
-		DISCON		= 0x08,	// 只在【TCP 模式】下生效	FIN/ACK 断开机制断开连接  （不分 客户端，服务端）
-							// Sn_SR = SOCK_CLOSED
-							// 另外 当断开请求没有收到ACK时 Sn_IR.TIMEOUT =1
-							// 使用 CLOSE 命令来代替 DISCON 的话，Sn_SR = SOCK_CLOSED 不再执行 FIN/ACK 断开机制
-							// 收到RST数据包 将无条件 Sn_SR = SOCK_CLOSED
-
-		CLOSE		= 0x10,	// 关闭Socket   Sn_SR = SOCK_CLOSED
-
-		SEND		= 0x20,	// 发送 Socket TX内存中的所有缓冲数据
-							// 一般来说，先通常自动ARP获取到MAC才进行传输
-
-		SEND_MAC	= 0x21,	// 只在【UDP 模式】下生效
-							// 使用Sn_DHAR 中的MAC进行发送（不进行ARP）
-
-		SEND_KEEP	= 0x22,	// 只在【TCP 模式】下生效	通过发送1字节在线心跳包检查连接状态
-							// 如果对方不能在超时计数期内反馈在线心跳包，这个连接将被关闭并触发中断
-
-		RECV		= 0x40,	// 通过使用接收读指针寄存器 Sn_RX_RD 来判定 接收缓存是否完成接收处理
-	};
-	//中断寄存器
-	typedef struct : ByteStruct
-	{
-		byte CON:1;			// 连接成功 	Sn_SR = SOCK_ESTABLISHE 此位生效
-		byte DISCON:1;		// 连接中断		接收到对方 FIN/ACK 断开机制数据包时 此位生效
-		byte RECV:1;		// 无论何时，接收到对方数据包，此位生效
-		byte TIMEOUT:1;		// ARP  TCP 超时被触发
-		byte SEND_OK:1;		// 发送完成
-		byte Reserved:3;
-	}TSn_IR;
-	// 状态
-	enum ESn_SR
-	{
-		// 常规状态
-		SOCK_CLOSED		= 0x00,		// 关闭
-		SOCK_INIT		= 0x13,     // TCP 工作模式  OPEN 后状态
-		SOCK_LISTEN		= 0x14,     // TCP 服务端模式   等待 TCP 连接请求
-		SOCK_ESTABLISHE	= 0x17,     // TCP 连接OK    此状态下可以 Send 或者 Recv
-		SOCK_CLOSE_WAIT	= 0x1C,     // TCP 连接成功基础上 收到FIN 包，可以进行数据传输，若要全部关闭，需要使用DISCON命令
-		SOCK_UDP		= 0x22,     // UDP 工作模式
-		SOCK_MACRAW		= 0x02,     // MACRAW 工作模式
-		// 中间状态
-		SOCK_SYNSENT	= 0x15,		// CONNECT 指令后(SOCK_INIT 状态后)，SOCK_ESTABLISHE 状态前
-
-		SOCK_SYNRECV	= 0x16,		// 收到客户端连接请求包，发送了连接应答后，连接建立成功前
-									// SOCK_LISTEN 状态后，SOCK_ESTABLISHE 状态前
-									// 如果超时 Sn_SR = SOCK_CLOSED  Sn_IR.TIMEOUT =1
-
-		SOCK_FIN_WAIT	= 0x18,		// Socket 正在关闭
-		SOCK_CLOSING	= 0x1A,		// Socket 正在关闭
-		SOCK_TIME_WAIT	= 0x1B,		// Socket 正在关闭
-
-		SOCK_LAST_ACK	= 0x1D,		// Socket 被动关闭状态下，等待对方断开连接请求做出回应
-									// 超时或者成功收到断开请求都将 SOCK_CLOSED
-	};
-
-HardwareSocket::HardwareSocket(W5500* phard)
+typedef struct : ByteStruct
 {
-	if(!phard)
+	byte Protocol:4;		// Socket n 协议模式
+							// 0000		Closed
+							// 0001		TCP
+							// 0010		UDP
+							// 0100		MACRAW	【限定 Socket0 使用】
+							/* MACRAW 格式												*
+							 * |***PACET_INFO**|********DATA_PACKET************** |		*
+							 * | PACKET_SIZE   |DEC MAC|SOU MAC| TYPE | PAYLOAD   |		*
+							 * | 2BYTE		   | 6BYTE | 6BYTE | 2BYTE|46-1500BYTE|		*/
+
+	byte UCASTB_MIP6B:1;	// 【UCASTB】【MIP6B】
+							// [UCASTB]	 单播阻塞	条件：【UDP 模式】且MULTI=1
+							//		0：关闭单播阻塞，1：开启单播阻塞
+							// [MIP6B]	IPv6包阻塞	条件：【MACRAW 模式】
+							//		0：关闭IPv6包阻塞，1：开启IPv6包阻塞
+
+	byte ND_MC_MMB:1;		// 【ND】【MC】【MMB】
+							// [ND]	使用无延时ACK	条件：【TCP 模式】
+							//		0：关闭无延时ACK选项，需要RTR设定的超时时间做延时
+							//		1：开启无延时ACK选项, 尽量没有延时的回复ACK
+							// [MC]	IGMP版本		条件：【UDP 模式】且MULTI=1
+							//		0：IGMP 版本2，
+							//		1：IGMP 版本1
+							// [MMB] 多播阻塞		条件：【MACRAW 模式】
+							// 		0：关闭多播阻塞
+							// 		1：开启多播阻塞
+
+	byte BCASTB:1;			// 广播阻塞		条件：【MACRAW 模式】或者【UDP 模式】
+							// 		0：关闭广播阻塞
+							// 		1：开启广播阻塞
+
+	byte MULTI_MFEN:1;		// 【MULTI】【MFEN】
+							// [MULTI] UDP多播模式	条件：【UDP 模式】
+							// 		0：关闭多播
+							// 		1：开启多播
+							// 注意：使用多播模式，需要DIPR  DPORT 在通过CR 打开配置命令打开之前，分别配置组播IP地址及端口号
+							// [MFEN] MAC 过滤		条件：【MACRAW 模式】
+							// 		0: 关闭 MAC 过滤，收到网络的所有包
+							//		1：开启 MAC 过滤，只接收广播包和发给自己的包
+}TMR;
+
+// CR 寄存器比较特殊
+// 写入后会自动清零，但命令任然在处理中，为验证命令是否完成，需检查IR或者SnSR寄存器
+enum ECR
+{
+	OPEN		= 0x01,	// open 之后，检测 SR 的值
+						// 	MR.Protocol		SR
+						// 		【CLOSE】		-
+						// 		【TCP】			【SOCK_INT】0X13
+						// 		【UDP】			【SOCK_UDP】0X22
+						// 		【MACRAW】		【SOCK_MACRAW】0X02
+
+	LISTEN		= 0x02,	// 只在【TCP 模式】下生效	LISTEN 会把 Socket 变成服务端，等待TCP连接
+						// LISTEN 把 SOCK_INIT 变为 SOCK_LISTEN
+						// 当 SOCK 被连接成功 SOCK_LISTEN 变为 SOCK_ESTABLISHE,同时 IR.CON =1
+						// 		当连接非法断开 IR.TIMEOUT =1， SR = SOCK_CLOSED
+
+	CONNECT 	= 0x04,	// 只在【TCP 模式】下生效	Socket 作为客户端  对 DIPR:DPORT 发起连接
+						// 链接成功时 SR = SOCK_ESTABLISHE  IR.CON =1
+						// 三种情况意味着请求失败  SR = SOCK_CLOSED
+						// 	1.ARP 发生超时(IR.TIMEOUT =1)
+						//  2.没有收到 SYN/ACK 数据包(IR.TIMEOUT = 1)
+						//  3.收到RST数据包
+
+	DISCON		= 0x08,	// 只在【TCP 模式】下生效	FIN/ACK 断开机制断开连接  （不分 客户端，服务端）
+						// SR = SOCK_CLOSED
+						// 另外 当断开请求没有收到ACK时 IR.TIMEOUT =1
+						// 使用 CLOSE 命令来代替 DISCON 的话，SR = SOCK_CLOSED 不再执行 FIN/ACK 断开机制
+						// 收到RST数据包 将无条件 SR = SOCK_CLOSED
+
+	CLOSE		= 0x10,	// 关闭Socket   SR = SOCK_CLOSED
+
+	SEND		= 0x20,	// 发送 Socket TX内存中的所有缓冲数据
+						// 一般来说，先通常自动ARP获取到MAC才进行传输
+
+	SEND_MAC	= 0x21,	// 只在【UDP 模式】下生效
+						// 使用DHAR 中的MAC进行发送（不进行ARP）
+
+	SEND_KEEP	= 0x22,	// 只在【TCP 模式】下生效	通过发送1字节在线心跳包检查连接状态
+						// 如果对方不能在超时计数期内反馈在线心跳包，这个连接将被关闭并触发中断
+
+	RECV		= 0x40,	// 通过使用接收读指针寄存器 RX_RD 来判定 接收缓存是否完成接收处理
+};
+
+//中断寄存器
+typedef struct : ByteStruct
+{
+	byte CON:1;			// 连接成功 	SR = SOCK_ESTABLISHE 此位生效
+	byte DISCON:1;		// 连接中断		接收到对方 FIN/ACK 断开机制数据包时 此位生效
+	byte RECV:1;		// 无论何时，接收到对方数据包，此位生效
+	byte TIMEOUT:1;		// ARP  TCP 超时被触发
+	byte SEND_OK:1;		// 发送完成
+	byte Reserved:3;
+}TIR;
+
+// 状态
+enum ESR
+{
+	// 常规状态
+	SOCK_CLOSED		= 0x00,		// 关闭
+	SOCK_INIT		= 0x13,     // TCP 工作模式  OPEN 后状态
+	SOCK_LISTEN		= 0x14,     // TCP 服务端模式   等待 TCP 连接请求
+	SOCK_ESTABLISHE	= 0x17,     // TCP 连接OK    此状态下可以 Send 或者 Recv
+	SOCK_CLOSE_WAIT	= 0x1C,     // TCP 连接成功基础上 收到FIN 包，可以进行数据传输，若要全部关闭，需要使用DISCON命令
+	SOCK_UDP		= 0x22,     // UDP 工作模式
+	SOCK_MACRAW		= 0x02,     // MACRAW 工作模式
+	// 中间状态
+	SOCK_SYNSENT	= 0x15,		// CONNECT 指令后(SOCK_INIT 状态后)，SOCK_ESTABLISHE 状态前
+
+	SOCK_SYNRECV	= 0x16,		// 收到客户端连接请求包，发送了连接应答后，连接建立成功前
+								// SOCK_LISTEN 状态后，SOCK_ESTABLISHE 状态前
+								// 如果超时 Sn_SR = SOCK_CLOSED  Sn_IR.TIMEOUT =1
+
+	SOCK_FIN_WAIT	= 0x18,		// Socket 正在关闭
+	SOCK_CLOSING	= 0x1A,		// Socket 正在关闭
+	SOCK_TIME_WAIT	= 0x1B,		// Socket 正在关闭
+
+	SOCK_LAST_ACK	= 0x1D,		// Socket 被动关闭状态下，等待对方断开连接请求做出回应
+								// 超时或者成功收到断开请求都将 SOCK_CLOSED
+};
+
+#define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
+#define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
+#define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
+
+HardSocket::HardSocket(W5500* host, byte protocol)
+{
+	Protocol = protocol;
+	if(!host)
 	{
-		_THard = phard;
-		Index = _THard->GetSocket();
+		Host = host;
+		Index = host->GetSocket();
 		if(Index < 8)
-			_THard->Register(Index , this);
+			host->Register(Index , this);
 	}
 }
 
-HardwareSocket::~HardwareSocket()
+HardSocket::~HardSocket()
 {
+}
+
+bool HardSocket::Open()
+{
+	//设置分片长度，参考W5500数据手册，该值可以不修改
+	ByteArray bs(2);
+	bs.Write(1460);
+	SocketWrites(MSSR, bs);
+
+	//设置端口0的端口号
+	bs.Write(Local.Port);
+	SocketWrites(PORT, bs);
+	//设置端口0目的(远程)端口号
+	bs.Write(Remote.Port);
+	SocketWrites(DPORT, bs);
+	//设置端口0目的(远程)IP地址
+	SocketWrites(DIPR, Remote.Address.ToArray());
+
+	SocketWrite(MR, Protocol);	// 设置Socket为UDP模式
+	SocketWrite(CR, OPEN);		// 打开Socket
+
+	Sys.Sleep(5);	//延时5ms
+
+	//如果Socket打开失败
+	byte sr = SocketRead(SR);
+	if(Protocol == 0x01 && sr != SOCK_INIT || Protocol == 0x02 && sr != SOCK_UDP)
+	{
+		SocketWrite(CR, CLOSE);	//打开不成功,关闭Socket
+
+		return false;
+	}
+
+	return true;
+}
+
+bool HardSocket::Close()
+{
+	SocketWrite(CR, CLOSE);	//打开不成功,关闭Socket
+
+	return true;
+}
+
+bool TcpClient::Open()
+{
+	//SocketWrites(DIPR, Remote.Address.ToArray());
+
+	if(!HardSocket::Open()) return false;
+
+	SocketWrite(CR, CONNECT);
+
+	/*do
+	{
+		byte dat = SocketRead(IR);//读取Socket0中断标志寄存器
+		if(dat != 0) SocketWrite(IR, dat);
+		Sys.Sleep(5);	//延时5ms
+
+		TIR ir;
+		ir.Init(dat);
+
+		if(ir.TIMEOUT) return false;
+
+		if(SocketRead(DHAR) != 0xff)
+		{
+			SocketWrite(CR, CLOSE);	//关闭Socket
+			return true;
+		}
+	}while(1);*/
+
+	return true;
+}
+
+bool TcpClient::Listen()
+{
+	if(!HardSocket::Open()) return false;
+
+	SocketWrite(CR, LISTEN);	//设置Socket为侦听模式
+	Sys.Sleep(5);	//延时5ms
+
+	//如果socket设置失败
+	if(SocketRead(SR) != SOCK_LISTEN)
+	{
+		SocketWrite(CR, CLOSE);	//关闭Socket
+		return false;
+	}
+
+	return true;
 }
