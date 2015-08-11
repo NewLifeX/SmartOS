@@ -118,6 +118,9 @@ public:
 	virtual bool Open();
 	virtual bool Close();
 
+	bool Write(const ByteArray& bs);
+	int Read(ByteArray& bs);
+	
 	// 恢复配置
 	virtual void Recovery() = 0;
 	// 处理数据包

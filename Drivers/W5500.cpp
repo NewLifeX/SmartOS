@@ -725,6 +725,7 @@ enum ESR
 #define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
 #define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
 #define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
+#define SocketReads(P, bs) Host->ReadFrame(offsetof(TSocket, P), bs, Index)
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
@@ -781,6 +782,109 @@ bool HardSocket::Close()
 
 	return true;
 }
+
+/*int HardSocket::Read(ByteArray& bs)
+{
+	ByteArray bs2(2);
+	SocketReads(RX_RSR, bs2);
+
+	ushort size = bs.ToUInt16();
+	if(size == 0) return 0;	//没接收到数据则返回
+	if(size > 1460) size = 1460;
+
+	SocketReads(RX_RD, bs2);
+	ushort offset = bs2.ToUInt16();
+	ushort offset1 = offset;
+	offset &= S_RX_SIZE - 1;	//计算实际的物理地址
+
+	SPI1_Send_Short(offset);//写16位地址
+	SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
+	j = SPI_I2S_ReceiveData(SPI1);
+
+	if((offset+size)<S_RX_SIZE)//如果最大地址未超过W5500接收缓冲区寄存器的最大地址
+	{
+		for(i=0;i<size;i++)//循环读取rx_size个字节数据
+		{
+			SPI1_Send_Byte(0x00);//发送一个哑数据
+			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
+			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
+			dat_ptr++;//数据保存缓冲区指针地址自增1
+		}
+	}
+	else//如果最大地址超过W5500接收缓冲区寄存器的最大地址
+	{
+		offset=S_RX_SIZE-offset;
+		for(i=0;i<offset;i++)//循环读取出前offset个字节数据
+		{
+			SPI1_Send_Byte(0x00);//发送一个哑数据
+			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
+			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
+			dat_ptr++;//数据保存缓冲区指针地址自增1
+		}
+		GPIO_SetBits(W5500_SCS_PORT, W5500_SCS); //置W5500的SCS为高电平
+
+		GPIO_ResetBits(W5500_SCS_PORT, W5500_SCS);//置W5500的SCS为低电平
+
+		SPI1_Send_Short(0x00);//写16位地址
+		SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
+		j=SPI_I2S_ReceiveData(SPI1);
+
+		for(;i<size;i++)//循环读取后rx_size-offset个字节数据
+		{
+			SPI1_Send_Byte(0x00);//发送一个哑数据
+			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
+			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
+			dat_ptr++;//数据保存缓冲区指针地址自增1
+		}
+	}
+	GPIO_SetBits(W5500_SCS_PORT, W5500_SCS); //置W5500的SCS为高电平
+
+	offset1+=size;//更新实际物理地址,即下次读取接收到的数据的起始地址
+	Write_W5500_SOCK_2Byte(s, Sn_RX_RD, offset1);
+	Write_W5500_SOCK_1Byte(s, Sn_CR, RECV);//发送启动接收命令
+	return size;//返回接收到数据的长度
+}
+
+bool HardSocket::Write(const ByteArray& bs)
+{
+	//如果是UDP模式,可以在此设置目的主机的IP和端口号
+	if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//如果Socket打开失败
+	{
+		Write_W5500_SOCK_4Byte(s, Sn_DIPR, UDP_DIPR);//设置目的主机IP
+		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
+	}
+
+	ByteArray bs2(2);
+	SocketReads(TX_WR, bs2);
+	ushort offset = bs2.ToUInt16();
+	ushort offset1 = offset;
+	offset &= (S_TX_SIZE - 1);	//计算实际的物理地址
+
+	//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
+
+	// 如果最大地址超过发送缓冲区寄存器的最大地址
+	if((offset + size) >= S_TX_SIZE)
+		offset = S_TX_SIZE - offset;
+		SocketWrites(offset, bs);
+
+		//SPI1_Send_Short(0x00);//写16位地址
+		//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
+
+		ByteArray bs2(size);
+		bs2.Copy(bs, size, 0);
+		bs.SetLength(0);
+		bs = bs2;
+
+		offset = 0x00;
+	}
+	SocketWrites(offset, bs);
+
+	offset1 += size;//更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
+	bs.SetLength(2);
+	bs.Write(offset1);
+	SocketWrites(TX_WR, bs);
+	SocketWrite(CR, SEND);
+}*/
 
 bool TcpClient::Open()
 {
