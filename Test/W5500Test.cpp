@@ -8,21 +8,13 @@ void TestTask(void* param)
 
 void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 {
-	W5500* _Net = new W5500();
-	_Net->Init(spi, irq, reset);
+	W5500* net = new W5500();
+	net->Init(spi, irq, reset);
 
-	//Sys.Sleep(200);
-	//_Net->Mac = 0x000066554433221100;
-	//_Net->AutoMac();
-	//_Net->DefGateway();
-	//_Net->DefIpMask();
+	net->IP = IPAddress(192, 168, 0, 200);
 
-	_Net->IP = IPAddress(192, 168, 0, 200);
-	//_Net->SetMyIp(myip);
-	//_Net->OpenPingACK();
+	if(net->CheckLink()) debug_printf("OK");
+	net->StateShow();
 
-	if(_Net->CheckLink()) debug_printf("OK");
-	_Net->StateShow();
-
-	Sys.AddTask(TestTask, _Net, 10000000, 10000000, "TestW5500");
+	Sys.AddTask(TestTask, net, 10000000, 10000000, "TestW5500");
 }

@@ -34,6 +34,9 @@ private:
 	// 8个硬件socket
 	HardwareSocket* _sockets[8];
 
+	bool WriteByte(ushort addr, byte dat);
+	byte ReadByte(ushort addr);
+	
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	void SetAddress(ushort addr, byte reg, byte rw);
 	bool WriteFrame(ushort addr, byte reg, const ByteArray& bs);

@@ -235,11 +235,8 @@ bool W5500::Open()
 	Reset();
 
 	// 读硬件版本
-	ByteArray ver(1);
-	ReadFrame(0x0039, 0, ver);
-
-	byte version = ver[0];
-	debug_printf("Hard Vision: %02X\r\n", version);
+	byte ver = ReadByte(0x0039);
+	debug_printf("Hard Vision: %02X\r\n", ver);
 
 	// 读所有寄存器
 	TGeneral gen;
@@ -288,7 +285,7 @@ bool W5500::Close()
 	if(!Opened) return true;
 
 	_spi->Close();
-	
+
 	if(nRest)
 	{
 		*nRest = false;
@@ -318,7 +315,8 @@ void W5500::Reset()
 	mr.Init();
 	mr.RST = 1;
 
-	WriteFrame(offsetof(TGeneral, MR), 0, ByteArray(mr.ToByte(), 1));
+	//WriteFrame(offsetof(TGeneral, MR), 0, ByteArray(mr.ToByte(), 1));
+	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
 }
 
 // 网卡状态输出
@@ -372,11 +370,8 @@ void W5500::StateShow()
 // 输出物理链路层状态
 void W5500::PhyStateShow()
 {
-	ByteArray bs(1);
-	ReadFrame(offsetof(TGeneral, PHYCFGR), 0, bs);
-
 	T_PHYCFGR phy;
-	phy.Init(bs[0]);
+	phy.Init(ReadByte(offsetof(TGeneral, PHYCFGR)));
 	if(phy.OPMD)
 	{
 		debug_printf("PHY 模式由 OPMDC 配置\r\n");
@@ -410,6 +405,25 @@ void W5500::PhyStateShow()
 	{
 		debug_printf("连接已断开\r\n");
 	}
+}
+
+bool W5500::WriteByte(ushort addr, byte dat)
+{
+	SpiScope sc(_spi);
+
+	SetAddress(addr, 0, 1);
+	_spi->Write(dat);
+
+	return true;
+}
+
+byte W5500::ReadByte(ushort addr)
+{
+	SpiScope sc(_spi);
+
+	SetAddress(addr, 0, 0);
+
+	return _spi->Write(0x00);
 }
 
 void W5500::SetAddress(ushort addr, byte reg, byte rw)
@@ -459,33 +473,11 @@ bool W5500::CheckLink()
 {
 	if(!Open()) return false;
 
-	ByteArray bs(1);
-	ReadFrame(offsetof(TGeneral, PHYCFGR), 0, bs);
-
 	T_PHYCFGR phy;
-	phy.Init(bs[0]);
+	phy.Init(ReadByte(offsetof(TGeneral, PHYCFGR)));
 
 	return phy.LNK;
 }
-
-/*
-// 恢复全部状态
-void W5500::Recovery()
-{
-	ByteArray bs((byte*)&General_reg, sizeof(General_reg));
-	WriteFrame(0x00, 0, bs);
-
-	// PHY   配置后要重启特殊处理
-	ushort addr = (ushort)((uint)General_reg.PHYCFGR - (uint)&General_reg);
-
-	T_PHYCFGR phy;
-	phy.Init(General_reg.PHYCFGR);
-	phy.RST = 0;	// 0重启
-
-	bs.SetLength(1);
-	bs[0] = phy.ToByte();
-	WriteFrame(addr, 0, bs);
-}*/
 
 byte W5500::GetSocket()
 {
