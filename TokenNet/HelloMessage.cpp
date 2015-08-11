@@ -74,7 +74,7 @@ void HelloMessage::Write(Stream& ms)
 
 	ms.Write(LocalTime);
 
-	ms.Write(EndPoint.Address.ToArray(), 0, 4);
+	ms.Write(EndPoint.Address.ToArray());
 	ms.Write((ushort)EndPoint.Port);
 
 	if(!Reply)

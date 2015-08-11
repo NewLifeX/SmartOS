@@ -88,10 +88,7 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 	int k = str.Length();
 	for(int i=0; i < Length(); i++, buf++)
 	{
-		byte b = *buf >> 4;
-		str.SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
-		b = *buf & 0x0F;
-		str.SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
+		str.Append(*buf);
 
 		if(i < Length() - 1)
 		{
@@ -239,8 +236,6 @@ String& String::Append(byte bt)
 
 String& String::Append(ByteArray& bs)
 {
-	//assert_param2(false, "未实现");
-	//Copy(bs.ToHex(), Length());
 	bs.ToHex(*this);
 
 	return *this;
@@ -249,14 +244,14 @@ String& String::Append(ByteArray& bs)
 // 调试输出字符串
 void String::Show(bool newLine) const
 {
-	if(!Length()) return;
+	int len = Length();
+	if(!len) return;
 
 	// C格式字符串以0结尾
 	char* p = GetBuffer();
-	if(!IN_ROM_SECTION(p))
-		p[Length()] = 0;
+	if(p[len] != 0 && !IN_ROM_SECTION(p)) p[len] = 0;
 
-	debug_printf("%s", GetBuffer());
+	debug_printf("%s", p);
 	if(newLine) debug_printf("\r\n");
 }
 
@@ -283,10 +278,6 @@ String& String::Format(const char* format, ...)
 
 String& String::Concat(const Object& obj)
 {
-	//Copy(str, Length());
-	//Object& obj2 = (Object&)obj;
-	//obj2.ToStr(*this);
-
 	return obj.ToStr(*this);
 }
 
@@ -493,7 +484,7 @@ byte& MacAddress::operator[](int i)
 ByteArray MacAddress::ToArray() const
 {
 	//return (byte*)&Value;
-	
+
 	return ByteArray((byte*)&Value, 6);
 }
 

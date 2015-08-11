@@ -35,7 +35,7 @@ void LoginMessage::Write(Stream& ms)
 	Salt.Set((byte*)&now, 8);
 	ms.WriteArray(Salt);
 
-	ms.Write(Local.Address.ToArray(), 0, 4);
+	ms.Write(Local.Address.ToArray());
 	ms.Write((ushort)Local.Port);
 }
 
