@@ -43,14 +43,6 @@ public:
 		v4 = v;
 		v2 = v >> 32;
 
-		// 下面这个写法很好，一条汇编指令即可完成，但是会覆盖当前结构体后两个字节
-		//*(ulong*)this = v;
-
-		// 下面的写法需要5条汇编指令，先放入内存，再分两次读写
-		/*uint* p = (uint*)&v;
-		v4 = *p++;
-		v2 = *(ushort*)p;*/
-
 		return *this;
 	}
     ulong Value()
@@ -58,9 +50,6 @@ public:
 		ulong v = v4;
 		v |= ((ulong)v2) << 32;
 		return v;
-
-		// 下面这个写法简单，但是会带上后面两个字节，需要做或运算，不划算
-		//return *(ulong*)this | 0x0000FFFFFFFF;
 	}
 	
     MacAddr& operator=(const MacAddress& v) { *this = v.Value; return *this; }
@@ -397,8 +386,9 @@ typedef struct _DHCP_OPT
 	{
 		Option = option;
 		Length = 4;
-		//memcpy(&Data, (byte*)&value, Length);
-		*(uint*)&Data = value;
+		memcpy(&Data, (byte*)&value, Length);
+		// 需要考虑地址对齐问题，只有4字节对齐，才可以直接使用整数赋值
+		//*(uint*)&Data = value;
 
 		return this;
 	}

@@ -152,9 +152,7 @@ void W5500::SoftwareReset()
 	mr.Init();
 	mr.RST = 1;
 
-	ByteArray bs(1);
-	bs[0] = mr.ToByte();
-
+	ByteArray bs(mr.ToByte(), 1);
 	WriteFrame(0, 0, bs);
 }
 
@@ -379,9 +377,9 @@ void W5500::AutoMac()
 // 获取MAC地址
 MacAddress W5500::Mac()
 {
-	_mac.Value = (*(ulong*)* General_reg.SHAR) & 0xFFFFFFFFFFFFull;
+	ByteArray bs(General_reg.SHAR, 6);
 
-	return _mac;
+	return MacAddress(bs.ToUInt64());
 }
 // 设置网关IP
 void W5500::SetGateway(IPAddress& ip)

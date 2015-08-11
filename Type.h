@@ -392,6 +392,15 @@ public:
 	// 显示对象。默认显示ToString
 	virtual void Show(bool newLine = false) const;
 
+	ushort	ToUInt16() const;
+	uint	ToUInt32() const;
+	ulong	ToUInt64() const;
+	void Write(ushort value, int index = 0);
+	void Write(short value, int index = 0);
+	void Write(uint value, int index = 0);
+	void Write(int value, int index = 0);
+	void Write(ulong value, int index = 0);
+
     //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
 };
@@ -449,13 +458,13 @@ public:
 
 	IPAddress(int value)		{ Value = (uint)value; }
 	IPAddress(uint value = 0)	{ Value = value; }
-	IPAddress(const byte* ips)	{ Value = *(uint*)ips; }
+	IPAddress(const byte* ips);
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
-	IPAddress(const ByteArray& arr) { Value = *(uint*)arr.GetBuffer(); }
+	IPAddress(const ByteArray& arr);
 
     IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
-    IPAddress& operator=(const byte* v)	{ Value = *(uint*)v; return *this; }
+    IPAddress& operator=(const byte* v);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
@@ -504,13 +513,14 @@ public:
 	ulong	Value;	// 地址
 
 	MacAddress(ulong v = 0);
+	MacAddress(const byte* macs);
 	MacAddress(const ByteArray& arr);
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() const;
 
     MacAddress& operator=(ulong v);
-    MacAddress& operator=(byte* buf);
+    MacAddress& operator=(const byte* buf);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);

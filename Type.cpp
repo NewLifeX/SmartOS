@@ -142,6 +142,62 @@ void ByteArray::Show(bool newLine) const
 	str.Show(newLine);
 }
 
+ushort	ByteArray::ToUInt16() const
+{
+	byte* p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x01) == 0) return *(ushort*)p;
+
+	return p[0] | (p[1] << 8);
+}
+
+uint	ByteArray::ToUInt32() const
+{
+	byte* p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x03) == 0) return *(uint*)p;
+
+	return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+}
+
+ulong	ByteArray::ToUInt64() const
+{
+	byte* p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x07) == 0) return *(ulong*)p;
+
+	uint n1 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+	p += 4;
+	uint n2 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+
+	return n1 | ((ulong)n2 << 0x20);
+}
+
+void ByteArray::Write(ushort value, int index)
+{
+	Copy((byte*)&value, sizeof(ushort), index);
+}
+
+void ByteArray::Write(short value, int index)
+{
+	Copy((byte*)&value, sizeof(short), index);
+}
+
+void ByteArray::Write(uint value, int index)
+{
+	Copy((byte*)&value, sizeof(uint), index);
+}
+
+void ByteArray::Write(int value, int index)
+{
+	Copy((byte*)&value, sizeof(int), index);
+}
+
+void ByteArray::Write(ulong value, int index)
+{
+	Copy((byte*)&value, sizeof(ulong), index);
+}
+
 /******************************** String ********************************/
 
 // 输出对象的字符串表示方式
@@ -340,9 +396,19 @@ String operator+(const Object& obj, const char* str)
 const IPAddress IPAddress::Any(0, 0, 0, 0);
 const IPAddress IPAddress::Broadcast(255, 255, 255, 255);
 
+IPAddress::IPAddress(const byte* ips)
+{
+	memcpy((byte*)&Value, ips, 4);
+}
+
 IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 {
 	Value = (ip4 << 24) + (ip3 << 16) + (ip2 << 8) + ip1;
+}
+
+IPAddress::IPAddress(const ByteArray& arr)
+{
+	memcpy((byte*)&Value, arr.GetBuffer(), 4);
 }
 
 bool IPAddress::IsAny() const { return Value == 0; }
@@ -352,6 +418,14 @@ bool IPAddress::IsBroadcast() const { return Value == 0xFFFFFFFF; }
 uint IPAddress::GetSubNet(const IPAddress& mask) const
 {
 	return Value & mask.Value;
+}
+
+IPAddress& IPAddress::operator=(const byte* v)
+{
+	//Value = *(uint*)v;
+	memcpy((byte*)&Value, v, 4);
+
+	return *this;
 }
 
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
@@ -421,7 +495,7 @@ bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2)
 
 #define MAC_MASK 0xFFFFFFFFFFFFull
 
-const MacAddress MacAddress::Empty(0);
+const MacAddress MacAddress::Empty(0x0ull);
 const MacAddress MacAddress::Full(MAC_MASK);
 
 MacAddress::MacAddress(ulong v)
@@ -429,9 +503,16 @@ MacAddress::MacAddress(ulong v)
 	Value = v & MAC_MASK;
 }
 
+MacAddress::MacAddress(const byte* macs)
+{
+	/*ByteArray bs(macs, 6);
+	Value = bs.ToUInt64() & MAC_MASK;*/
+	memcpy((byte*)&Value, macs, 6);
+}
+
 MacAddress::MacAddress(const ByteArray& arr)
 {
-	Value = *(ulong*)arr.GetBuffer();
+	Value = arr.ToUInt64();
 	Value &= MAC_MASK;
 }
 
@@ -445,9 +526,11 @@ MacAddress& MacAddress::operator=(ulong v)
 	return *this;
 }
 
-MacAddress& MacAddress::operator=(byte* buf)
+MacAddress& MacAddress::operator=(const byte* buf)
 {
-	Value = *(ulong*)buf & MAC_MASK;
+	/*ByteArray bs(buf, 6);
+	Value = bs.ToUInt64() & MAC_MASK;*/
+	memcpy((byte*)&Value, buf, 6);
 
 	return *this;
 }

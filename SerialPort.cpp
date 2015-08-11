@@ -62,7 +62,7 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 
 	// 设置名称
 	//Name = "COMx";
-	*(uint*)Name = *(uint*)"COMx";
+	memcpy((byte*)Name, (byte*)"COMx", 4);
 	Name[3] = '0' + _index + 1;
 	Name[4] = 0;
 }

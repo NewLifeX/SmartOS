@@ -1,8 +1,8 @@
 ﻿#include "Time.h"
 #include "Enc28j60.h"
 
-#define ENC_DEBUG 1
-#define NET_DEBUG 1
+#define ENC_DEBUG DEBUG
+#define NET_DEBUG DEBUG
 
 // ENC28J60 控制寄存器
 // 控制寄存器是地址、Bank和Ethernet/MAC/PHY 的组合地址
@@ -803,8 +803,8 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 			ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 
 #if NET_DEBUG
-			MacAddress dest(*(ulong*)packet);
-			MacAddress src(*(ulong*)(packet+6));
+			MacAddress dest = packet;
+			MacAddress src = packet + 6;
 			dest.Show();
 			debug_printf("<=");
 			src.Show();

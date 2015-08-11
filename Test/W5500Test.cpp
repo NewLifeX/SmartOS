@@ -18,9 +18,7 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	_Net->DefGateway();
 	_Net->DefIpMask();
 
-	byte ip[] = {192,168,0,200};
-	IPAddress myip(ip);
-
+	IPAddress myip(192, 168, 0, 200);
 	_Net->SetMyIp(myip);
 	_Net->OpenPingACK();
 	_Net->StateShow();

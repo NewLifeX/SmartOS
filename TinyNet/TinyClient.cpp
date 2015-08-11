@@ -256,10 +256,11 @@ bool TinyClient::SysTime(Message& msg, void* param)
 	debug_printf("Message_SysTime Length=%d\r\n", msg.Length);
 
 	// 负载数据决定是读时间还是写时间
+	ByteArray bs(msg.Data, msg.Length);
 	if(msg.Length >= 8)
 	{
 		// 写时间
-		ulong us = *(ulong*)msg.Data;
+		ulong us = bs.ToUInt64();
 
 		Time.SetTime(us);
 	}
@@ -267,7 +268,7 @@ bool TinyClient::SysTime(Message& msg, void* param)
 	// 读时间
 	ulong us2 = Time.Current();
 	msg.Length = 8;
-	*(ulong*)msg.Data = us2;
+	bs.Write(us2);
 
 	return true;
 }

@@ -288,13 +288,10 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
 
 	Stream ms(msg.Data, msg.Length);
-	//ByteArray bs;
-	//ms.ReadArray(bs);
+	ByteArray bs;
+	ms.ReadArray(bs);
 
-	//ulong start = *(ulong*)bs.GetBuffer();
-	// 跳过一个字节的长度
-	ms.Seek(1);
-	ulong start = ms.Read<ulong>();
+	ulong start = bs.ToUInt64();
 	int cost = (int)(Time.Current() - start);
 	if(cost < 0) cost = -cost;
 	if(Delay)
