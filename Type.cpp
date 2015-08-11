@@ -57,6 +57,14 @@ void Object::Show(bool newLine) const
 
 /******************************** ByteArray ********************************/
 
+ByteArray::ByteArray(const byte* data, int length, bool copy) : Array(0)
+{
+	if(copy)
+		Copy(data, length);
+	else
+		Set(data, length);
+}
+
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(0)
 {
@@ -85,7 +93,6 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 	byte* buf = GetBuffer();
 
 	// 拼接在字符串后面
-	int k = str.Length();
 	for(int i=0; i < Length(); i++, buf++)
 	{
 		str.Append(*buf);
@@ -93,12 +100,9 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
-			{
-				str.SetAt(k++, '\r');
-				str.SetAt(k++, '\n');
-			}
+				str += "\r\n";
 			else if(sep != '\0')
-				str.SetAt(k++, sep);
+				str.Append(sep);
 		}
 	}
 
@@ -361,8 +365,10 @@ byte& IPAddress::operator[](int i)
 // 字节数组
 ByteArray IPAddress::ToArray() const
 {
-	ByteArray bs((byte*)&Value, 4);
-	return bs;
+	//return ByteArray((byte*)&Value, 4);
+
+	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
+	return ByteArray((byte*)&Value, 4, true);
 }
 
 String& IPAddress::ToStr(String& str) const
@@ -373,12 +379,6 @@ String& IPAddress::ToStr(String& str) const
 
 	return str;
 }
-
-/*void IPAddress::Show()
-{
-	byte* ips = (byte*)&Value;
-	debug_printf("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
-}*/
 
 /******************************** IPEndPoint ********************************/
 
@@ -398,7 +398,6 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 
 String& IPEndPoint::ToStr(String& str) const
 {
-	//str = Address.ToString();
 	Address.ToStr(str);
 
 	char ss[7];
@@ -407,12 +406,6 @@ String& IPEndPoint::ToStr(String& str) const
 
 	return str;
 }
-
-/*void IPEndPoint::Show()
-{
-	byte* ips = (byte*)&Address.Value;
-	debug_printf("%d.%d.%d.%d:%d", ips[0], ips[1], ips[2], ips[3], Port);
-}*/
 
 bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2)
 {
@@ -433,8 +426,6 @@ const MacAddress MacAddress::Full(MAC_MASK);
 
 MacAddress::MacAddress(ulong v)
 {
-	//v4 = v;
-	//v2 = v >> 32;
 	Value = v & MAC_MASK;
 }
 
@@ -449,17 +440,6 @@ bool MacAddress::IsBroadcast() const { return Value == Empty.Value || Value == F
 
 MacAddress& MacAddress::operator=(ulong v)
 {
-	//v4 = v;
-	//v2 = v >> 32;
-
-	// 下面这个写法很好，一条汇编指令即可完成，但是会覆盖当前结构体后两个字节
-	//*(ulong*)this = v;
-
-	// 下面的写法需要5条汇编指令，先放入内存，再分两次读写
-	/*uint* p = (uint*)&v;
-	v4 = *p++;
-	v2 = *(ushort*)p;*/
-
 	Value = v & MAC_MASK;
 
 	return *this;
@@ -483,9 +463,10 @@ byte& MacAddress::operator[](int i)
 // 字节数组
 ByteArray MacAddress::ToArray() const
 {
-	//return (byte*)&Value;
+	//return ByteArray((byte*)&Value, 6);
 
-	return ByteArray((byte*)&Value, 6);
+	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
+	return ByteArray((byte*)&Value, 6, true);
 }
 
 /*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)

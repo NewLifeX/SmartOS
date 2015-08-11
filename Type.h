@@ -374,7 +374,7 @@ public:
 	ByteArray(int length = 0) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	ByteArray(const byte* data, int length) : Array(0) { Set(data, length); }
+	ByteArray(const byte* data, int length, bool copy = false);
 	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
@@ -449,7 +449,6 @@ public:
 
 	IPAddress(int value)		{ Value = (uint)value; }
 	IPAddress(uint value = 0)	{ Value = value; }
-	//IPAddress(const IPAddress& addr)	{ Value = addr.Value; }
 	IPAddress(const byte* ips)	{ Value = *(uint*)ips; }
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
 	IPAddress(const ByteArray& arr) { Value = *(uint*)arr.GetBuffer(); }
@@ -470,8 +469,6 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
-	// 显示对象
-	//virtual void Show();
 
     friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }
@@ -492,8 +489,6 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
-	// 显示对象
-	//virtual void Show();
 
 	static const IPEndPoint Any;
 };
@@ -525,8 +520,6 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
-	// 显示对象
-	//virtual void Show();
 
     friend bool operator==(const MacAddress& addr1, const MacAddress& addr2)
 	{
