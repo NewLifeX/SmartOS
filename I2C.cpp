@@ -164,7 +164,9 @@ void HardI2C::GetPin(Pin* scl , Pin* sda )
 void HardI2C::OnOpen()
 {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1 << _index, ENABLE);
+#ifdef STM32F0
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+#endif
 
 	//RCC_APB1PeriphResetCmd(sEE_I2C_CLK, ENABLE);
 	//RCC_APB1PeriphResetCmd(sEE_I2C_CLK, DISABLE);

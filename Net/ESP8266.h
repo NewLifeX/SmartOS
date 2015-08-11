@@ -1,5 +1,5 @@
-#ifndef __Zigbee_H__
-#define __Zigbee_H__
+#ifndef __ESP8266_H__
+#define __ESP8266_H__
 
 #include "Sys.h"
 #include "Port.h"
@@ -14,8 +14,8 @@ private:
     OutputPort* _rst;
 
 public:
-    Zigbee(ITransport* port, Pin rst = P0);
-    virtual ~Zigbee();
+    ESP8266(ITransport* port, Pin rst = P0);
+    virtual ~ESP8266();
 
     // 注册回调函数
     virtual void Register(TransportHandler handler, void* param = NULL)
