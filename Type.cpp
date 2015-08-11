@@ -17,6 +17,8 @@ String& Object::ToStr(String& str) const
 	return str;
 }
 
+// 输出对象的字符串表示方式。支持RVO优化。
+// 该方法直接返回给另一个String作为初始值，只有一次构造，没有多余构造、拷贝和析构。
 String Object::ToString() const
 {
 	String str;
@@ -35,6 +37,23 @@ void Object::Show(bool newLine) const
 	ToStr(str);
 	str.Show(newLine);
 }
+
+/*Type Object::GetType() const
+{
+	return Type(&typeid(*this));
+}*/
+
+/******************************** Type ********************************/
+
+/*Type::Type(type_info* ti)
+{
+	_info = ti;
+
+	const char* name = typeid(*this).name();
+	while(*name >= '0' && *name <= '9') name++;
+
+	Name.Set(name);
+}*/
 
 /******************************** ByteArray ********************************/
 

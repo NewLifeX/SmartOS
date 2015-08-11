@@ -38,7 +38,7 @@ using namespace ::std;
 class String;
 class Type;
 
-// 根对象。
+// 根对象
 class Object
 {
 private:
@@ -54,10 +54,11 @@ public:
 	// 显示对象。默认显示ToString
 	virtual void Show(bool newLine = false) const;
 
-	//Type GetType();
+	//Type GetType() const;
 };
 
-/*class Type
+/*// 类型
+class Type
 {
 private:
 	type_info* _info;
@@ -65,6 +66,8 @@ private:
 public:
 	int		Size;	// 大小
 	String	Name;	// 名称
+
+	Type(type_info* ti);
 };*/
 
 // 数组长度
