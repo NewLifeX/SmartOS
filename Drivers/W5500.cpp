@@ -47,29 +47,57 @@ public:
 };
 
 // 数据帧格式
-// 2byte Address + 1byte CONFIG_Phase + nbyte Data Phase
+// 2byte Address + 1byte TConfig + nbyte Data Phase
 // 可变数据长度模式下，SCSn 拉低代表W5500的SPI 帧开始（地址段），拉高表示帧结束   （可能跟SPI NSS 不一样）
+
+// 通用寄存器结构
+typedef struct : ByteStruct
+{
+	byte MR;			// 模式			0x0000
+	byte GAR[4];		// 网关地址		0x0001
+	byte SUBR[4];		// 子网掩码		0x0005
+	byte SHAR[6];		// 源MAC地址	0x0009
+	byte SIPR[4];		// 源IP地址		0x000f
+	ushort INTLEVEL;	// 低电平中断定时器寄存器	0x0013
+	byte IR;			// 中断寄存器				0x0015
+	byte IMR;			// 中断屏蔽寄存器			0x0016
+	byte SIR;			// Socket中断寄存器			0x0017
+	byte SIMR;			// Socket中断屏蔽寄存器		0x0018
+	ushort RTR;			// 重试时间					0x0019
+	byte RCR;			// 重试计数					0x001b
+	byte PTIMER;		// PPP 连接控制协议请求定时寄存器	0x001c
+	byte PMAGIC;		// PPP 连接控制协议幻数寄存器		0x001d
+	byte PHAR[6];		// PPPoE 模式下目标 MAC 寄存器		0x001e
+	byte PSID[2];		// PPPoE 模式下会话 ID 寄存器		0x0024
+	byte PMRU[2];		// PPPoE 模式下最大接收单元			0x0026
+	byte UIPR[4];		// 无法抵达 IP 地址寄存器【只读】	0x0028
+	byte UPORTR[2];		// 无法抵达端口寄存器【只读】		0x002c
+	byte PHYCFGR;		// PHY 配置寄存器					0x002e
+	//byte VERSIONR		// 芯片版本寄存器【只读】			0x0039	// 地址不连续
+}TGeneral;			// 只有一份 所以直接定义就好
 
 // 位域 低位在前
 // 配置寄存器  CONFIG_Phase结构
 typedef struct : ByteStruct
 {
-	byte OM:2;		// SPI 工作模式
+	byte OpMode:2;		// SPI 工作模式
 					// 00	可变数据长度模式，N字节数据段（1<=N）
 					// 01	固定数据长度模式，1字节数据长度（N=1）
 					// 10	固定数据长度模式，1字节数据长度（N=2）
 					// 11	固定数据长度模式，1字节数据长度（N=4）
 					// 固定模式不需要NSS （芯片NSS 接地） 可变模式SPI NSS 受控
 
-	byte ReadWrite:1;		// 0：读	1：写
+	byte ReadWrite:1;	// 0：读	1：写
 
-	byte BSB:5;		// 区域选择位域		// 1个通用寄存器   8个Socket寄存器组（选择，写缓存，收缓存）
+	byte Socket:3;		// Socket组，0表示通用寄存器
+
+	byte BlockSelect:2;	// 区域选择位域		// 1个通用寄存器   8个Socket寄存器组（选择，写缓存，收缓存）
 					// 00000	通用
 					// XXX01	SocketXXX 寄存器
 					// XXX10	SocketXXX 发缓存
 					// XXX11	SocketXXX 收缓存
 					// 其余保留， 如果选择了保留的将会导致W5500故障
-}CONFIG_Phase;
+}TConfig;
 
 // 通用寄存器结构
 // 模式寄存器
@@ -129,6 +157,121 @@ W5500::W5500(Spi* spi, Pin irq, OutputPort* rst)
 
 W5500::~W5500() { }
 
+// 初始化
+void W5500::Init()
+{
+	_Lock	= 0;
+	_spi	= NULL;
+	nRest	= NULL;
+
+	//memset(&General_reg, 0, sizeof(General_reg));
+	//memset(&_sockets, NULL, sizeof(_sockets));
+	ArrayZero(_sockets);
+
+	PhaseOM = 0x00;
+	RX_FREE_SIZE = 0x16;
+	TX_FREE_SIZE = 0x16;
+
+	const byte defip_[] = {192, 168, 1, 1};
+	IPAddress defip(defip_);
+
+	// 随机IP，取ID最后一个字节
+	IP = defip;
+	byte first = Sys.ID[0];
+	if(first <= 1 || first >= 254) first = 2;
+	IP[3] = first;
+
+	Mask = IPAddress(255, 255, 255, 0);
+	//Mask = 0x00FFFFFF;
+	DHCPServer = Gateway = DNSServer = defip;
+
+	MacAddress& mac = Mac;
+	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
+	mac[0] = 'P'; mac[1] = 'M'; //mac[2] = 'W'; mac[3] = 'L';
+	for(int i=0; i< 4; i++)
+		mac[2 + i] = Sys.ID[3 - i];
+}
+
+// 初始化
+void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
+{
+	assert_ptr(spi);
+
+	if(rst) nRest = rst;
+	if(irq != P0)
+	{
+		// 中断引脚初始化
+		debug_printf("\r\nW5500::Init IRQ = P%c%d\r\n", _PIN_NAME(irq));
+		_IRQ.ShakeTime	= 0;
+		_IRQ.Floating	= false;
+		_IRQ.PuPd		= InputPort::PuPd_UP;
+		_IRQ.Set(irq).Config();
+		_IRQ.Register(OnIRQ, this);
+	}
+
+	_spi = spi;
+}
+
+bool W5500::Open()
+{
+	if(Opened) return true;
+
+	_spi->Open();
+
+	// 复位
+	Reset();
+
+	// 读硬件版本
+	ByteArray bs(1);
+	ReadFrame(0x0039, 0, bs);
+
+	byte version = bs[0];
+	debug_printf("Hard Vision: %02X\r\n", version);
+
+	// 读所有寄存器
+	TGeneral gen;
+	bs.SetLength(sizeof(gen));
+
+	// 一次性全部读出
+	ReadFrame(0, 0, bs);
+	bs.CopyTo((byte*)&gen);
+
+	// 修改各个字段值
+	Gateway.ToArray().CopyTo(gen.GAR);
+	//gen.GAR = Gateway.ToArray();
+	Mask.ToArray().CopyTo(gen.SUBR);
+	//WriteFrame(offsetof(TGeneral, SHAR), 0, Mac.ToArray());
+	Mac.ToArray().CopyTo(gen.SHAR);
+	IP.ToArray().CopyTo(gen.SIPR);
+	
+	gen.RTR = RetryTime;
+	gen.RCR = RetryCount;
+	gen.INTLEVEL = LowLevelTime;
+
+	T_MR mr;
+	mr.Init(gen.MR);
+	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
+	gen.MR = mr.ToByte();
+
+	// 一次性全部写入
+	WriteFrame(0, 0, ByteArray((byte*)&gen, sizeof(gen)));
+
+	Opened = true;
+
+	return true;
+}
+
+bool W5500::Close()
+{
+	if(!Opened) return true;
+
+	_spi->Close();
+
+	Opened = false;
+
+	return true;
+}
+
 // 复位（软硬兼施）
 void W5500::Reset()
 {
@@ -156,91 +299,37 @@ void W5500::SoftwareReset()
 	WriteFrame(0, 0, bs);
 }
 
-// 初始化
-void W5500::Init()
-{
-	_Lock	= 0;
-	_spi	= NULL;
-	nRest	= NULL;
-
-	memset(&General_reg, 0, sizeof(General_reg));
-	//memset(&_sockets, NULL, sizeof(_sockets));
-	ArrayZero(_sockets);
-
-	PhaseOM = 0x00;
-	RX_FREE_SIZE = 0x16;
-	TX_FREE_SIZE = 0x16;
-	//IsDhcpIp = 0;	// IP 本地ip不是dhcp获得的
-}
-
-// 初始化
-void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
-{
-	assert_ptr(spi);
-
-	if(rst) nRest = rst;
-	if(irq != P0)
-	{
-		// 中断引脚初始化
-		debug_printf("\r\nW5500::Init IRQ = P%c%d\r\n", _PIN_NAME(irq));
-		_IRQ.ShakeTime	= 0;
-		_IRQ.Floating	= false;
-		_IRQ.PuPd		= InputPort::PuPd_UP;
-		_IRQ.Set(irq).Config();
-		_IRQ.Register(OnIRQ, this);
-	}
-
-	_spi = spi;
-	// 提前打开 后面少费时间
-	_spi->Open();
-
-	// 复位
-	Reset();
-
-	// 读硬件版本
-	ByteArray bs(1);
-	ReadFrame(0x0039, 0, bs);
-
-	byte version = bs[0];
-	debug_printf("Hard Vision: %02X\r\n", version);
-
-	// 读所有寄存器
-	bs.SetLength(sizeof(General_reg));
-
-	ReadFrame(0, 0, bs);
-	// 同步寄存器值到 General_reg
-	bs.CopyTo((byte*)&General_reg);
-}
-
 // 网卡状态输出
 void W5500::StateShow()
 {
+	TGeneral gen;
+
 	debug_printf("\r\nW5500 State:\r\n");
 
-	debug_printf("MR (模式): 		0x%02X   ",General_reg.MR);
+	debug_printf("MR (模式): 		0x%02X   ", gen.MR);
 		T_MR mr;
-		mr.Init(General_reg.MR);
+		mr.Init(gen.MR);
 		debug_printf("WOL: %d   ",mr.WOL);
 		debug_printf("PB: %d   ",mr.PB);
 		debug_printf("PPPoE: %d   ",mr.PPPoE);
 		debug_printf("FARP: %d   ",mr.FARP);
 		debug_printf("\r\n");
-	debug_printf("GAR (网关地址): 	%d.%d.%d.%d\r\n",General_reg.GAR[0],General_reg.GAR[1],General_reg.GAR[2],General_reg.GAR[3]);
-	debug_printf("SUBR (子网掩码): 	%d.%d.%d.%d\r\n",General_reg.SUBR[0],General_reg.SUBR[1],General_reg.SUBR[2],General_reg.SUBR[3]);
-	debug_printf("SHAR (源MAC地址):	%02X-%02X-%02X-%02X-%02X-%02X\r\n",General_reg.SHAR[0],General_reg.SHAR[1],General_reg.SHAR[2],General_reg.SHAR[3],General_reg.SHAR[4],General_reg.SHAR[5]);
-	debug_printf("SIPR (源IP地址): 	%d.%d.%d.%d\r\n",General_reg.SIPR[0],General_reg.SIPR[1],General_reg.SIPR[2],General_reg.SIPR[3]);
-	debug_printf("INTLEVEL(中断低电平时间): 0x%02X%02X\r\n",General_reg.INTLEVEL[1],General_reg.INTLEVEL[0]);	// 回头计算一下
-	debug_printf("IMR (中断屏蔽): 	0x%02X   ",General_reg.IMR);
+	debug_printf("GAR (网关地址): 	%s\r\n", Gateway.ToString().GetBuffer());
+	debug_printf("SUBR (子网掩码): 	%s\r\n", Mask.ToString().GetBuffer());
+	debug_printf("SHAR (源MAC地址):	%s\r\n", Mac.ToString().GetBuffer());
+	debug_printf("SIPR (源IP地址): 	%s\r\n", IP.ToString().GetBuffer());
+	debug_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
+	debug_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
 		T_IR imr;
-		imr.Init(General_reg.MR);
+		imr.Init(gen.MR);
 		debug_printf("CONFLICT: %d   ",imr.CONFLICT);
 		debug_printf("UNREACH: %d   ",imr.UNREACH);
 		debug_printf("PPPoE: %d   ",imr.PPPoE);
 		debug_printf("MP: %d   ",imr.MP);
 		debug_printf("\r\n");
-	debug_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n",General_reg.SIMR);
-	debug_printf("RTR (重试时间): 	0x%02X%02X\r\n",General_reg.RTR[1],General_reg.RTR[0]);		// 回头计算一下
-	debug_printf("RCR (重试计数): 	%d 次\r\n",General_reg.RCR);
+	debug_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n", gen.SIMR);
+	debug_printf("RTR (重试时间): 	%d\r\n", RetryTime);		// 回头计算一下
+	debug_printf("RCR (重试计数): 	%d 次\r\n", RetryCount);
 
 // 暂且不输出的
 //		byte PTIMER;		// PPP 连接控制协议请求定时寄存器	0x001c
@@ -257,7 +346,7 @@ void W5500::StateShow()
 void W5500::PhyStateShow()
 {
 	T_PHYCFGR phy;
-	phy.Init(General_reg.PHYCFGR);
+	//phy.Init(General_reg.PHYCFGR);
 	if(phy.OPMD)
 	{
 		debug_printf("PHY 模式由 OPMDC 配置\r\n");
@@ -299,9 +388,10 @@ void W5500::SetAddress(ushort addr, byte reg, byte rw)
 	_spi->Write(addr >> 8);
 	_spi->Write(addr & 0xFF);
 
-	CONFIG_Phase cfg;
-	cfg.BSB			= reg;		// 寄存器区域选择
-	cfg.OM			= PhaseOM;	// 类内整体
+	TConfig cfg;
+	cfg.Socket		= 0;
+	cfg.BlockSelect	= reg;		// 寄存器区域选择
+	cfg.OpMode		= PhaseOM;	// 类内整体
 	cfg.ReadWrite	= rw;		// 读写
 	_spi->Write(cfg.ToByte());
 }
@@ -335,151 +425,22 @@ bool W5500::ReadFrame(ushort addr, byte reg, ByteArray& bs)
 }
 
 // 测试PHY状态  返回是否LNK
-bool W5500::CheckLnk()
+bool W5500::CheckLink()
 {
+	if(!Open()) return false;
+
 	ByteArray bs(1);
 	ReadFrame(0x002e, 0, bs);
 
-	General_reg.PHYCFGR = bs[0];
+	//General_reg.PHYCFGR = bs[0];
 
 	T_PHYCFGR phy;
-	phy.Init(General_reg.PHYCFGR);
+	phy.Init(bs[0]);
 
 	return phy.LNK;
 }
 
-// 设置MAC地址
-bool W5500::SetMac(MacAddress& mac)		// 本地MAC
-{
-	ushort addr = (ushort)((uint)General_reg.SHAR - (uint)&General_reg);
-
-	ByteArray bs = mac.ToArray();
-	bs.CopyTo(General_reg.SHAR);
-
-	WriteFrame(addr, 0, bs);
-	ReadFrame(addr, 0, bs);
-
-	MacAddress mac2(bs);
-	return mac2 == mac;
-}
-// “随机”一个MAC  并设置
-void W5500::AutoMac()
-{
-	MacAddress mac;
-	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	mac[0] = 'P'; mac[1] = 'M'; //mac[2] = 'W'; mac[3] = 'L';
-	for(int i=0; i< 4; i++)
-		mac[2 + i] = Sys.ID[3 - i];
-
-	// MAC地址首字节奇数表示组地址，这里用偶数
-	SetMac(mac);
-}
-// 获取MAC地址
-MacAddress W5500::Mac()
-{
-	ByteArray bs(General_reg.SHAR, 6);
-
-	return MacAddress(bs.ToUInt64());
-}
-// 设置网关IP
-void W5500::SetGateway(IPAddress& ip)
-{
-	memcpy(General_reg.GAR,&ip.Value,4);
-
-	ushort addr = (ushort)((uint)General_reg.GAR - (uint)&General_reg);
-	WriteFrame(addr, 0, ip.ToArray());
-}
-// 设置默认网关IP
-void W5500::DefGateway()
-{
-	const byte defip_[] = {192, 168, 0, 1};
-	IPAddress defip(defip_);
-	SetGateway(defip);
-}
-// 设置子网掩码
-void W5500::SetIpMask(IPAddress& mask)
-{
-	memcpy(General_reg.SUBR,&mask.Value,4);
-
-	ushort addr = (ushort)((uint)General_reg.SUBR - (uint)&General_reg);
-	WriteFrame(addr, 0, mask.ToArray());
-}
-// 设置默认子网掩码
-void W5500::DefIpMask()
-{
-	byte mask[4] = {255, 255, 255, 0};
-	IPAddress defip(mask);
-	SetIpMask(defip);
-}
-// 设置自己的IP
-void W5500::SetMyIp(IPAddress& ip)
-{
-	memcpy(General_reg.SIPR,&ip.Value,4);
-
-	ushort addr = (ushort)((uint)General_reg.SIPR - (uint)&General_reg);
-	WriteFrame(addr, 0, ip.ToArray());
-}
-// 设置超时时间
-void W5500::SetRetryTime(ushort ms)
-{
-	// RTR 单位是100us 所以最大6553ms
-	assert_param2(ms > 6553, "不支持的时间范围！\r\n");
-
-	ushort time = ms * 10;
-
-	memcpy(General_reg.RTR, &time, 2);
-
-	ushort addr = (ushort)((uint)General_reg.RTR - (uint)&General_reg);
-	ByteArray bs((byte*)&time, 2);
-	WriteFrame(addr, 0, bs);
-}
-// 设置重试次数
-void W5500::SetRetryCount(byte count)
-{
-	General_reg.RCR = count;
-
-	ushort addr = (ushort)((uint)General_reg.RCR - (uint)&General_reg);
-	ByteArray bs(count, 1);
-	WriteFrame(addr, 0, bs);
-}
-// 中断时低电平持续时间
-void W5500::SetIrqLowLevelTime(int us)
-{	// Time = ( INTLEVEL + 1) * PLL_CLK *4     PLL_CLK = 25M？ 还是150M？
-	// 150M/4    	26.67ns
-	// 50M/4 		80ns
-	ushort intlevel = (us * 1000) / 27;
-	//ushort intlevel = (us * 1000)/80;
-
-	memcpy(General_reg.INTLEVEL,&intlevel,2);
-
-	ushort addr = (ushort)((uint)General_reg.INTLEVEL - (uint)&General_reg);
-	ByteArray bs((byte*)&intlevel, 2);
-	WriteFrame(addr, 0, bs);
-}
-// 开启PING应答
-void W5500::OpenPingACK()
-{
-	T_MR mr;
-	mr.Init(General_reg.MR);
-	mr.PB = 0;		// 0 是有响应
-	General_reg.MR = mr.ToByte();
-
-	ByteArray bs(mr.ToByte(), 1);
-	WriteFrame(0x00, 0, bs);
-}
-
-// 开启PING应答
-void W5500::ClosePingACK()
-{
-	T_MR mr;
-	mr.Init(General_reg.MR);
-	mr.PB = 1;		// 0 是有响应
-	General_reg.MR = mr.ToByte();
-
-	ByteArray bs(mr.ToByte(), 1);
-	WriteFrame(0x00, 0, bs);
-}
-
+/*
 // 恢复全部状态
 void W5500::Recovery()
 {
@@ -496,7 +457,7 @@ void W5500::Recovery()
 	bs.SetLength(1);
 	bs[0] = phy.ToByte();
 	WriteFrame(addr, 0, bs);
-}
+}*/
 
 byte W5500::GetSocket()
 {
@@ -533,11 +494,11 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 void W5500::OnIRQ()
 {
 	// 读出中断状态
-	ushort addr = (ushort)((uint)General_reg.IR - (uint)&General_reg);
+	//ushort addr = (ushort)((uint)General_reg.IR - (uint)&General_reg);
 
 	ByteArray bs(4);
-	ReadFrame(addr, 0, bs);
-	bs.CopyTo((byte*)&General_reg.IR);
+	ReadFrame(offsetof(TGeneral, IR), 0, bs);
+	//bs.CopyTo((byte*)&General_reg.IR);
 
 	// 分析IR
 	//T_IR ir;
@@ -563,7 +524,8 @@ void W5500::OnIRQ()
 	//	// 处理..
 	//}
 	//if(ir.PPPoE) // PPPoE 连接不可达
-	byte temp = General_reg.SIR;
+	//byte temp = General_reg.SIR;
+	byte temp = bs[2];
 	for(int i = 0;i < 8; i++)
 	{
 		if(temp & 0x01)

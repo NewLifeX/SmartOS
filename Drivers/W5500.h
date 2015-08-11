@@ -22,42 +22,15 @@ typedef struct
 
 class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送能力 所以不是ITransport
 {
-	// 通用寄存器结构
-	struct T_GenReg{
-		byte MR;			// 模式			0x0000
-		byte GAR[4];		// 网关地址		0x0001
-		byte SUBR[4];		// 子网掩码		0x0005
-		byte SHAR[6];		// 源MAC地址	0x0009
-		byte SIPR[4];		// 源IP地址		0x000f
-		byte INTLEVEL[2];	// 低电平中断定时器寄存器	0x0013
-		byte IR;			// 中断寄存器				0x0015
-		byte IMR;			// 中断屏蔽寄存器			0x0016
-		byte SIR;			// Socket中断寄存器			0x0017
-		byte SIMR;			// Socket中断屏蔽寄存器		0x0018
-		byte RTR[2];		// 重试时间					0x0019
-		byte RCR;			// 重试计数					0x001b
-		byte PTIMER;		// PPP 连接控制协议请求定时寄存器	0x001c
-		byte PMAGIC;		// PPP 连接控制协议幻数寄存器		0x001d
-		byte PHAR[6];		// PPPoE 模式下目标 MAC 寄存器		0x001e
-		byte PSID[2];		// PPPoE 模式下会话 ID 寄存器		0x0024
-		byte PMRU[2];		// PPPoE 模式下最大接收单元			0x0026
-		byte UIPR[4];		// 无法抵达 IP 地址寄存器【只读】	0x0028
-		byte UPORTR[2];		// 无法抵达端口寄存器【只读】		0x002c
-		byte PHYCFGR;		// PHY 配置寄存器					0x002e
-		//byte VERSIONR		// 芯片版本寄存器【只读】			0x0039	// 地址不连续
-	}General_reg;			// 只有一份 所以直接定义就好
-
 private:
 	// 收发数据锁，确保同时只有一个对象使用
 	volatile byte _Lock;
-	// 本地 ip 是否是Dhcp得到的 1 是  0 不是
-	//byte IsDhcpIp;
 
 	Spi*		_spi;
     InputPort	_IRQ;
-	// mac对象
-	MacAddress	_mac;
-	IPAddress	_ip;
+	// rst引脚可能不是独享的  这里只留一个指针
+	OutputPort* nRest;
+
 	// 8个硬件socket
 	HardwareSocket* _sockets[8];
 
@@ -71,16 +44,20 @@ private:
 	byte RX_FREE_SIZE;	// 剩余接收缓存 kbyte
 	byte TX_FREE_SIZE;	// 剩余发送缓存 kbyte
 public:
-	// rst引脚可能不是独享的  这里只留一个指针
-	OutputPort* nRest;
-	// DHCP服务器IP
-	//IPAddress DHCPServer;
-	//IPAddress DNSServer;
+	bool		Opened;	// 是否已经打开
 
-	// 软件复位
-	void SoftwareReset();
-	// 复位 包含硬件复位和软件复位
-	void Reset();
+	IPAddress	IP;		// 本地IP地址
+    IPAddress	Mask;	// 子网掩码
+	MacAddress	Mac;	// 本地Mac地址
+
+	IPAddress	DHCPServer;
+	IPAddress	DNSServer;
+	IPAddress	Gateway;
+
+	ushort		RetryTime;
+	byte		RetryCount;
+	ushort		LowLevelTime;
+	bool		PingACK;
 
 	// 构造
 	W5500();
@@ -90,39 +67,40 @@ public:
 	// 初始化
 	void Init();
     void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);	// 必须给出 rst 控制引脚
+
+	bool Open();
+	bool Close();
+
+	// 软件复位
+	void SoftwareReset();
+	// 复位 包含硬件复位和软件复位
+	void Reset();
+
 	// 网卡状态输出
 	void StateShow();
-
 	// 测试PHY状态  返回是否连接网线
-	bool CheckLnk();
+	bool CheckLink();
 	// 输出物理链路层状态
 	void PhyStateShow();
-
-	// 设置本地MAC
-	bool SetMac(MacAddress& mac);
-	// “随机”一个MAC  并设置
-	void AutoMac();
-	// 返回 MacAddress
-	MacAddress Mac();
 
 	// 设置网关IP
 	void SetGateway(IPAddress& ip);
 	// 设置默认网关IP
 	void DefGateway();
 	// 获取网关IP
-	IPAddress GetGateway(){ _ip.Value =  *(uint*)General_reg.GAR; return _ip; };
+	//IPAddress GetGateway(){ _ip.Value =  *(uint*)General_reg.GAR; return _ip; };
 
 	// 子网掩码
 	void SetIpMask(IPAddress& mask);
 	// 设置默认子网掩码
 	void DefIpMask();
 	// 获取子网掩码
-	IPAddress GetIpMask(){ _ip.Value =  *(uint*)General_reg.SUBR; return _ip; };
+	//IPAddress GetIpMask(){ _ip.Value =  *(uint*)General_reg.SUBR; return _ip; };
 
 	// 设置自己的IP
 	void SetMyIp(IPAddress& ip);
 	// 获取自己的IP
-	IPAddress GetMyIp(){ _ip.Value =  *(uint*)General_reg.SIPR; return _ip; };
+	//IPAddress GetMyIp(){ _ip.Value =  *(uint*)General_reg.SIPR; return _ip; };
 
 	/* 超时时间 = 重试时间*重试次数  */
 	// 设置重试时间		超时重传/触发超时中断	最大 6553ms		（默认200ms）
