@@ -50,13 +50,18 @@ public:
 // 2byte Address + 1byte TConfig + nbyte Data Phase
 // 可变数据长度模式下，SCSn 拉低代表W5500的SPI 帧开始（地址段），拉高表示帧结束   （可能跟SPI NSS 不一样）
 
+// 必须设定为1字节对齐，否则offsetof会得到错误的位置
+#pragma pack(push)	// 保存对齐状态
+// 强制结构体紧凑分配空间
+#pragma pack(1)
+
 // 通用寄存器结构
-typedef struct : ByteStruct
+typedef struct
 {
 	byte MR;			// 模式			0x0000
 	byte GAR[4];		// 网关地址		0x0001
 	byte SUBR[4];		// 子网掩码		0x0005
-	byte SHAR[6];		// 源MAC地址	0x0009
+	byte SHAR[6];		// 源MAC地址		0x0009
 	byte SIPR[4];		// 源IP地址		0x000f
 	ushort INTLEVEL;	// 低电平中断定时器寄存器	0x0013
 	byte IR;			// 中断寄存器				0x0015
@@ -76,8 +81,10 @@ typedef struct : ByteStruct
 	//byte VERSIONR		// 芯片版本寄存器【只读】			0x0039	// 地址不连续
 }TGeneral;			// 只有一份 所以直接定义就好
 
+#pragma pack(pop)	// 恢复对齐状态
+
 // 位域 低位在前
-// 配置寄存器  CONFIG_Phase结构
+// 配置寄存器  TConfig 结构
 typedef struct : ByteStruct
 {
 	byte OpMode:2;		// SPI 工作模式
@@ -164,13 +171,19 @@ void W5500::Init()
 	_spi	= NULL;
 	nRest	= NULL;
 
-	//memset(&General_reg, 0, sizeof(General_reg));
 	//memset(&_sockets, NULL, sizeof(_sockets));
 	ArrayZero(_sockets);
 
 	PhaseOM = 0x00;
-	RX_FREE_SIZE = 0x16;
-	TX_FREE_SIZE = 0x16;
+	//RX_FREE_SIZE = 0x16;
+	//TX_FREE_SIZE = 0x16;
+
+	RetryTime		= 0;
+	RetryCount		= 0;
+	LowLevelTime	= 0;
+	PingACK			= true;
+	EnableDHCP		= true;
+	Opened			= false;
 
 	const byte defip_[] = {192, 168, 1, 1};
 	IPAddress defip(defip_);
@@ -222,15 +235,15 @@ bool W5500::Open()
 	Reset();
 
 	// 读硬件版本
-	ByteArray bs(1);
-	ReadFrame(0x0039, 0, bs);
+	ByteArray ver(1);
+	ReadFrame(0x0039, 0, ver);
 
-	byte version = bs[0];
+	byte version = ver[0];
 	debug_printf("Hard Vision: %02X\r\n", version);
 
 	// 读所有寄存器
 	TGeneral gen;
-	bs.SetLength(sizeof(gen));
+	ByteArray bs(sizeof(gen));
 
 	// 一次性全部读出
 	ReadFrame(0, 0, bs);
@@ -238,15 +251,24 @@ bool W5500::Open()
 
 	// 修改各个字段值
 	Gateway.ToArray().CopyTo(gen.GAR);
-	//gen.GAR = Gateway.ToArray();
 	Mask.ToArray().CopyTo(gen.SUBR);
-	//WriteFrame(offsetof(TGeneral, SHAR), 0, Mac.ToArray());
 	Mac.ToArray().CopyTo(gen.SHAR);
 	IP.ToArray().CopyTo(gen.SIPR);
-	
-	gen.RTR = RetryTime;
-	gen.RCR = RetryCount;
-	gen.INTLEVEL = LowLevelTime;
+
+	if(RetryTime > 0)
+		gen.RTR = RetryTime;
+	else
+		RetryTime = gen.RTR;
+
+	if(RetryCount > 0)
+		gen.RCR = RetryCount;
+	else
+		RetryCount = gen.RCR;
+
+	if(LowLevelTime > 0)
+		gen.INTLEVEL = LowLevelTime;
+	else
+		LowLevelTime = gen.INTLEVEL;
 
 	T_MR mr;
 	mr.Init(gen.MR);
@@ -266,6 +288,13 @@ bool W5500::Close()
 	if(!Opened) return true;
 
 	_spi->Close();
+	
+	if(nRest)
+	{
+		*nRest = false;
+		delete nRest;
+	}
+	nRest = NULL;
 
 	Opened = false;
 
@@ -277,34 +306,32 @@ void W5500::Reset()
 {
 	if(nRest)
 	{
+		debug_printf("硬件复位 \r\n");
 		*nRest = false;		// 低电平有效
 		Sys.Delay(600);		// 最少500us
-		debug_printf("硬件复位 \r\n");
 		*nRest = true;
 	}
-	SoftwareReset();
-	//Sys.Sleep(1500);
-}
 
-// 软件复位
-void W5500::SoftwareReset()
-{
 	debug_printf("软件复位 \r\n");
 
 	T_MR mr;
 	mr.Init();
 	mr.RST = 1;
 
-	ByteArray bs(mr.ToByte(), 1);
-	WriteFrame(0, 0, bs);
+	WriteFrame(offsetof(TGeneral, MR), 0, ByteArray(mr.ToByte(), 1));
 }
 
 // 网卡状态输出
 void W5500::StateShow()
 {
 	TGeneral gen;
+	ByteArray bs(sizeof(gen));
 
-	debug_printf("\r\nW5500 State:\r\n");
+	// 一次性全部读出
+	ReadFrame(0, 0, bs);
+	bs.CopyTo((byte*)&gen);
+
+	debug_printf("\r\nW5500::State\r\n");
 
 	debug_printf("MR (模式): 		0x%02X   ", gen.MR);
 		T_MR mr;
@@ -345,8 +372,11 @@ void W5500::StateShow()
 // 输出物理链路层状态
 void W5500::PhyStateShow()
 {
+	ByteArray bs(1);
+	ReadFrame(offsetof(TGeneral, PHYCFGR), 0, bs);
+
 	T_PHYCFGR phy;
-	//phy.Init(General_reg.PHYCFGR);
+	phy.Init(bs[0]);
 	if(phy.OPMD)
 	{
 		debug_printf("PHY 模式由 OPMDC 配置\r\n");
@@ -430,9 +460,7 @@ bool W5500::CheckLink()
 	if(!Open()) return false;
 
 	ByteArray bs(1);
-	ReadFrame(0x002e, 0, bs);
-
-	//General_reg.PHYCFGR = bs[0];
+	ReadFrame(offsetof(TGeneral, PHYCFGR), 0, bs);
 
 	T_PHYCFGR phy;
 	phy.Init(bs[0]);

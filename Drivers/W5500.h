@@ -40,10 +40,16 @@ private:
 	bool ReadFrame(ushort addr, byte reg, ByteArray& bs);
 
 	// spi 模式（默认变长）
-	byte PhaseOM;
-	byte RX_FREE_SIZE;	// 剩余接收缓存 kbyte
-	byte TX_FREE_SIZE;	// 剩余发送缓存 kbyte
+	ushort		PhaseOM;
+	//byte RX_FREE_SIZE;	// 剩余接收缓存 kbyte
+	//byte TX_FREE_SIZE;	// 剩余发送缓存 kbyte
 public:
+	ushort		RetryTime;
+	ushort		LowLevelTime;
+	byte		RetryCount;
+	bool		PingACK;
+	bool		EnableDHCP;
+
 	bool		Opened;	// 是否已经打开
 
 	IPAddress	IP;		// 本地IP地址
@@ -53,11 +59,6 @@ public:
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
 	IPAddress	Gateway;
-
-	ushort		RetryTime;
-	byte		RetryCount;
-	ushort		LowLevelTime;
-	bool		PingACK;
 
 	// 构造
 	W5500();
@@ -71,8 +72,6 @@ public:
 	bool Open();
 	bool Close();
 
-	// 软件复位
-	void SoftwareReset();
 	// 复位 包含硬件复位和软件复位
 	void Reset();
 

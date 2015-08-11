@@ -20,9 +20,9 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	_Net->IP = IPAddress(192, 168, 0, 200);
 	//_Net->SetMyIp(myip);
 	//_Net->OpenPingACK();
-	_Net->StateShow();
 
 	if(_Net->CheckLink()) debug_printf("OK");
+	_Net->StateShow();
 
 	Sys.AddTask(TestTask, _Net, 10000000, 10000000, "TestW5500");
 }
