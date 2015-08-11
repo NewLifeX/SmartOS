@@ -87,6 +87,16 @@ ByteArray& ByteArray::operator=(const byte* data)
 	return *this;
 }
 
+byte* ByteArray::operator=(ByteArray& arr) const
+{
+	return arr.GetBuffer();
+}
+
+/*const byte* ByteArray::operator=(ByteArray& arr) const
+{
+	return (const byte*)arr.GetBuffer();
+}*/
+
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine) const
 {
