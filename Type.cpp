@@ -582,7 +582,6 @@ String& MacAddress::ToStr(String& str) const
 {
 	byte* macs = (byte*)&Value;
 
-	//str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 	for(int i=0; i<6; i++)
 	{
 		if(i > 0) str.Append('-');

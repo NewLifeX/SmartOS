@@ -522,7 +522,6 @@ String& TokenStat::ToStr(String& str) const
 		str = str + "发：" + p + "%";
 	else
 		str = str + "发：" + p + "." + p + "%";
-	//str.Format(" %d/%d/%d %dus 收：%d/%d ", Success, Send, SendReply, Speed(), Receive, ReceiveReply);
 	str = str + " " + Success + "/" + Send + "/" + SendReply + " " + Speed() + "us 收：" + Receive + "/" + ReceiveReply;
 	if(_Total)
 	{

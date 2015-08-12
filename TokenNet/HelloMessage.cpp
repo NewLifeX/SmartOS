@@ -93,16 +93,13 @@ String& HelloMessage::ToStr(String& str) const
 {
 	str += "握手";
 	if(Reply) str += "#";
-	//str.Format(" Ver=%d.%d Type=%s Name=%s ", Version >> 8, Version & 0xFF, Type.GetBuffer(), Name.GetBuffer());
 	str = str + " Ver=" + (Version >> 8) + "." + (Version & 0xFF) + Type + Name;
 	DateTime dt;
 	dt.Parse(LocalTime);
-	//debug_printf("%s ", dt.ToString());
 	str += dt.ToString();
 
 	str = str + " " + EndPoint;
 
-	//str.Format(" Ciphers[%d]=", Ciphers.Length());
 	str = str + " Ciphers[" + Ciphers.Length() + "]=";
 	for(int i=0; i<Ciphers.Length(); i++)
 	{
