@@ -181,7 +181,7 @@ bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 	debug_printf(" size=%d\r\n", sizeof(ARP_HEADER));
 #endif
 
-	Tip->SendEthernet(ETH_ARP, MacAddress::Empty, (byte*)arp, sizeof(ARP_HEADER));
+	Tip->SendEthernet(ETH_ARP, MacAddress::Empty(), (byte*)arp, sizeof(ARP_HEADER));
 
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return false;
@@ -212,10 +212,10 @@ bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 
 bool ArpSocket::Resolve(const IPAddress& ip, MacAddress& mac)
 {
-	mac = MacAddress::Empty;
+	mac = MacAddress::Empty();
 	if(ip.IsAny()) return true;
 
-	mac = MacAddress::Full;
+	mac = MacAddress::Full();
 	if(ip.IsAny() || Tip->IsBroadcast(ip)) return true;
 
 	IPAddress dest = ip;

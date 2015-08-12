@@ -8,7 +8,7 @@ Dhcp::Dhcp(TinyIP* tip) : UdpSocket(tip)
 	Type = IP_UDP;
 	Port = 68;
 	Remote.Port = 67;
-	Remote.Address = IPAddress::Broadcast;
+	Remote.Address = IPAddress::Broadcast();
 
 	Running = false;
 	Result = false;

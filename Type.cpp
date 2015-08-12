@@ -424,6 +424,18 @@ uint IPAddress::GetSubNet(const IPAddress& mask) const
 	return Value & mask.Value;
 }
 
+const IPAddress& IPAddress::Any()
+{
+	static const IPAddress _Any(0, 0, 0, 0);
+	return _Any;
+}
+
+const IPAddress& IPAddress::Broadcast()
+{
+	static const IPAddress _Broadcast(255, 255, 255, 255);
+	return _Broadcast;
+}
+
 IPAddress& IPAddress::operator=(const byte* v)
 {
 	//Value = *(uint*)v;
@@ -497,6 +509,12 @@ String& IPEndPoint::ToStr(String& str) const
 	return str;
 }
 
+const IPEndPoint& IPEndPoint::Any()
+{
+	static const IPEndPoint _Any(IPAddress::Any(), 0);
+	return _Any;
+}
+
 bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2)
 {
 	return addr1.Port == addr2.Port && addr1.Address == addr2.Address;
@@ -534,6 +552,18 @@ MacAddress::MacAddress(const ByteArray& arr)
 
 // 是否广播地址，全0或全1
 bool MacAddress::IsBroadcast() const { return Value == 0 || Value == MAC_MASK; }
+
+const MacAddress& MacAddress::Empty()
+{
+	static const MacAddress _Empty(0x0ull);
+	return _Empty;
+}
+
+const MacAddress& MacAddress::Full()
+{
+	static const MacAddress _Full(MAC_MASK);
+	return _Full;
+}
 
 MacAddress& MacAddress::operator=(ulong v)
 {

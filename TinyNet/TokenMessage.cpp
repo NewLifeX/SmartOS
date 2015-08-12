@@ -417,7 +417,7 @@ void TokenController::ShowStat()
 	{
 		ByteArray bs(str);
 		//debug_printf("握手广播 ");
-		udp->Send(bs, IPAddress::Broadcast, 514);
+		udp->Send(bs, IPAddress::Broadcast(), 514);
 	}
 }
 
