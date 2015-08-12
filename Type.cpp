@@ -468,7 +468,7 @@ String& IPAddress::ToStr(String& str) const
 	for(int i=0; i<4; i++)
 	{
 		if(i > 0) str.Append('.');
-		str.Append(ips[i]);
+		str.Append((int)ips[i]);
 	}
 
 	return str;
