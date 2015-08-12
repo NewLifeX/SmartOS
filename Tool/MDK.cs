@@ -49,7 +49,7 @@ namespace NewLife.Reflection
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
-				if (!Directory.Exists(p)) p = "..\\" + p;
+				if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
 				if (!Directory.Exists(p)) continue;
 
                 AddIncludes(p, false);
@@ -59,7 +59,7 @@ namespace NewLife.Reflection
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
-				if (!Directory.Exists(p)) p = "..\\" + p;
+				if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
 				if (!Directory.Exists(p)) continue;
 
                 AddIncludes(p, true);
@@ -134,7 +134,7 @@ namespace NewLife.Reflection
 
             var objName = "Obj";
             if (Debug) objName += "D";
-            objName = objName.CombinePath(Path.GetFileNameWithoutExtension(file)).GetFullPath();
+            objName = objName + "\\" + Path.GetFileNameWithoutExtension(file);
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -154,10 +154,13 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -I{0}", item);
             }
 
-			sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\"", objName);
-			// 中文目录不要输出临时文件，MDK不支持
+			/*// 中文目录不要输出临时文件，MDK不支持
 			if(Encoding.ASCII.GetByteCount(objName) == Encoding.UTF8.GetByteCount(objName))
+			{
+				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\"", objName);
 				sb.AppendFormat(" --depend \"{0}.d\"", objName);
+			}*/
+			sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
             return Complier.Run(sb.ToString(), 3000, WriteLog);
@@ -170,11 +173,10 @@ namespace NewLife.Reflection
              * --pd "__UVISION_VERSION SETA 515" --pd "STM32F10X_HD SETA 1" --list ".\Lis\*.lst" --xref -o "*.o" --depend "*.d" 
              */
 
-            var lstName = ".\\Lst\\" + Path.GetFileNameWithoutExtension(file);
-            lstName = lstName.GetFullPath();
+            var lstName = "Lst\\" + Path.GetFileNameWithoutExtension(file);
             var objName = "Obj";
             if (Debug) objName += "D";
-            objName = objName.CombinePath(Path.GetFileNameWithoutExtension(file)).GetFullPath();
+            objName = objName + "\\" + Path.GetFileNameWithoutExtension(file);
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -205,7 +207,7 @@ namespace NewLife.Reflection
             // 提前创建临时目录
             var obj = "Obj";
             if (Debug) obj += "D";
-            obj = obj.GetFullPath().EnsureDirectory(false);
+            obj.GetFullPath().EnsureDirectory(false);
             "Lst".GetFullPath().EnsureDirectory(false);
 
             var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
@@ -294,7 +296,7 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.Append("--create -c");
-            sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib").GetFullPath());
+            sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib"));
 
             foreach (var item in Objs)
             {
@@ -337,11 +339,11 @@ namespace NewLife.Reflection
              * -o .\Obj\Smart130.axf 
              */
 
-            var lstName = ".\\Lst\\" + name;
-            lstName = lstName.GetFullPath().EnsureDirectory();
+            var lstName = "Lst\\" + name;
+            lstName.EnsureDirectory();
             var objName = "Obj";
             if (Debug) objName += "D";
-            objName = objName.CombinePath(name).GetFullPath();
+            objName = objName.CombinePath(name);
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
@@ -352,7 +354,7 @@ namespace NewLife.Reflection
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             sb.Append(" --info sizes --info totals --info veneers");
 
-            var axf = objName.EnsureEnd(".axf").GetFullPath();
+            var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
             foreach (var item in Objs)
@@ -372,7 +374,7 @@ namespace NewLife.Reflection
             var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             if (rs != 0) return rs;
 
-            var bin = name.EnsureEnd(".bin").GetFullPath();
+            var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
 
             sb.Clear();
