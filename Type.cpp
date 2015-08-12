@@ -239,45 +239,56 @@ String& String::Append(const char* str, int len)
 	return *this;
 }
 
-char* _itoa(int value, char* string, int radix)
+char* _itoa(int value, char* str, int radix, int width = 0)
 {
-	char tmp[33];
-	char* tp = tmp;
-	int i;
-	unsigned v;
-	int sign;
-	char* sp;
 	if (radix > 36 || radix <= 1) return 0;
 
-	sign = (radix == 10 && value < 0);
+	// 先处理符号
+	uint v;
+	bool sign = (radix == 10 && value < 0);
 	if (sign)
 		v = -value;
 	else
-		v = (unsigned)value;
+		v = (uint)value;
+
+	// 从低位数字开始，转为字符以后写入临时字符数组
+	char tmp[33];
+	char* tp = tmp;
 	while (v || tp == tmp)
 	{
-		i = v % radix;
+		int i = v % radix;
 		v = v / radix;
 		if (i < 10)
-			*tp++ = i+'0';
+			*tp++ = i + '0';
 		else
 			*tp++ = i + 'A' - 10;
 	}
 
-	sp = string;
-	if (sign)
-		*sp++ = '-';
+	char* sp = str;
+	// 修正宽度
+	if(width > 0)
+	{
+		width -= tp - tmp;
+		if (sign) width--;
+		while(width-- > 0) *sp++ = '0';
+	}
+
+	// 写入符号
+	if (sign) *sp++ = '-';
+
+	// 倒序写入目标字符串
 	while (tp > tmp)
 		*sp++ = *--tp;
 	*sp = 0;
 
-	return string;
+	return str;
 }
 
-String& String::Append(int value)
+// 写入整数，第二参数指定宽带，不足时补零
+String& String::Append(int value, int width)
 {
 	char ch[16];
-	_itoa(value, ch, 10);
+	_itoa(value, ch, 10, width);
 
 	return Append(ch);
 }
