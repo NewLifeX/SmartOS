@@ -285,10 +285,10 @@ char* _itoa(int value, char* str, int radix, int width = 0)
 }
 
 // 写入整数，第二参数指定宽带，不足时补零
-String& String::Append(int value, int width)
+String& String::Append(int value, int radix, int width)
 {
 	char ch[16];
-	_itoa(value, ch, 10, width);
+	_itoa(value, ch, radix, width);
 
 	return Append(ch);
 }

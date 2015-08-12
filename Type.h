@@ -429,7 +429,7 @@ public:
 
 	String& Append(char ch);
 	String& Append(const char* str, int len = 0);
-	String& Append(int value, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
+	String& Append(int value, int radix = 10, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
 	String& Append(byte bt);		// 十六进制
 	String& Append(ByteArray& bs);	// 十六进制
 

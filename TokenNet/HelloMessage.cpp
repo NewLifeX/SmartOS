@@ -94,7 +94,8 @@ String& HelloMessage::ToStr(String& str) const
 {
 	str += "握手";
 	if(Reply) str += "#";
-	str = str + " Ver=" + (Version >> 8) + "." + (Version & 0xFF) + Type + Name;
+	str.Append(" Ver=").Append(Version, 16, 4);
+	str = str + " " + Type + " " + Name;
 	DateTime dt;
 	dt.Parse(LocalTime);
 	str += dt.ToString();
@@ -108,7 +109,7 @@ String& HelloMessage::ToStr(String& str) const
 	}
 
 	if(Reply) str += " Key=" + Key;
-	
+
 	return str;
 }
 #endif

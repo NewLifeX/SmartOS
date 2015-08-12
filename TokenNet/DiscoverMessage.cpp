@@ -25,7 +25,7 @@ bool DiscoverMessage::Read(Stream& ms)
 		else
 		{
 			ms.ReadArray(HardID);
-			
+
 			if(ms.Remain() > 0)
 			{
 				Version	= ms.Read<ushort>();
@@ -75,9 +75,9 @@ String& DiscoverMessage::ToStr(String& str) const
 	str += "发现";
 	if(!Reply)
 	{
-		str = str + " Type=" + (byte)(Type >> 8) + (byte)(Type & 0xFF);
+		str.Append(" Type=").Append(Type, 16, 4);
 		str = str + " HardID=" + HardID;
-		str = str + " Version=" + (Version >> 8) + "." + (Version & 0xFF);
+		str.Append(" Ver=").Append(Version, 16, 4);
 		str = str + " Switchs=" + Switchs;
 		str = str + " Analogs=" + Analogs;
 	}
