@@ -19,7 +19,8 @@ private:
 	uint	ResetPeriod;	// 重启间隔，默认6秒
 	int		_ResetTask;		// 重启任务
 public:
-	byte Mac[6];
+	//byte Mac[6];
+	MacAddress Mac;
     byte Bank;
 
 	Enc28j60();
@@ -41,7 +42,7 @@ public:
     void ClockOut(byte clock);
 	bool Linked();
 
-    void Init(byte mac[6]);
+    //void Init(byte mac[6]);
     byte GetRevision();
 	
 	bool Broadcast;
