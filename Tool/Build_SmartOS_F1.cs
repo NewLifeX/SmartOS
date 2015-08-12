@@ -22,8 +22,8 @@ namespace NewLife.Reflection
 			build.Cortex = 3;
 			build.AddIncludes("..\\..\\Lib");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
-            build.AddFiles("..\\Platform", "Boot_F0.cpp");
-            build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
+            build.AddFiles("..\\Platform", "Boot_F1.cpp");
+            build.AddFiles("..\\Platform", "startup_stm32f10x.s");
             build.AddFiles("..\\Security");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
