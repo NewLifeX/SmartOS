@@ -19,11 +19,11 @@ namespace NewLife.Reflection
 
             var build = new Builder();
             build.Init();
-			build.Cortex = 3;
+			build.Cortex = 4;
 			build.AddIncludes("..\\..\\Lib");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
-            build.AddFiles("..\\Platform", "Boot_F0.cpp");
-            build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
+            build.AddFiles("..\\Platform", "Boot_F4.cpp");
+            build.AddFiles("..\\Platform", "startup_stm32f4xx.s");
             build.AddFiles("..\\Security");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
