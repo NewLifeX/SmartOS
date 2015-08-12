@@ -597,8 +597,13 @@ void HardRTC::Init()
 
 	Opened = true;
 
+#if DEBUG
+	// 这句可以清零RTC
+	//RTC_Configuration();
+#endif
 	if(ReadBackup(0) != 0xABCD)
 	{
+		RTC_Configuration();
 		WriteBackup(0, 0xABCD);
 	}
 	else
@@ -711,7 +716,7 @@ void HardRTC::SaveTicks()
 	RTC_WaitForLastTask();
 
 	// 每秒钟保存一次
-	g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
+	g_NextSaveTicks = Time.Ticks + 5000000ull * Time.TicksPerMicrosecond;
 }
 
 // 暂停系统一段时间
@@ -719,8 +724,9 @@ void HardRTC::Sleep(uint& ms)
 {
 	if(!Opened) return;
 
-	int second = ms / 1000;
-	if(second <= 0) return;
+	if(ms <= 0) return;
+	//int second = ms / 1000;
+	//if(second <= 0) return;
 
 	//debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
 	SaveTicks();
@@ -729,10 +735,14 @@ void HardRTC::Sleep(uint& ms)
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
     /* Alarm in 3 second */
 #ifdef STM32F1
-    RTC_SetAlarm(RTC_GetCounter() + second);
+    //RTC_SetAlarm(RTC_GetCounter() + ms);
+	RTC_SetCounter(0);
+	RTC_SetAlarm(ms);
 #else
 	RTC_AlarmTypeDef alr;
 	RTC_AlarmStructInit(&alr);
+
+	int second = ms / 1000;
 
 	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );     /* Disable the Alarm A */
 	alr.RTC_AlarmTime.RTC_H12 = RTC_H12_AM;
