@@ -1,6 +1,6 @@
 ﻿#include "Time.h"
 
-#define TIME_DEBUG 0
+#define TIME_DEBUG 1
 
 /************************************************ TTime ************************************************/
 
@@ -565,7 +565,7 @@ void RTC_WaitForLastTask()
 
 static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
 #if TIME_DEBUG
-	static uint g_Counter = 0;
+	static ulong g_Counter = 0;
 #endif
 
 void AlarmHandler(ushort num, void* param);
@@ -594,6 +594,8 @@ void HardRTC::Init()
 
 	// 下一次保存Ticks的数值，避免频繁保存
 	g_NextSaveTicks = 0;
+
+	Opened = true;
 
 	if(ReadBackup(0) != 0xABCD)
 	{
@@ -632,8 +634,6 @@ void HardRTC::Init()
 		Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
 #endif
 	}
-
-	Opened = true;
 }
 
 #ifndef STM32F1
@@ -649,10 +649,10 @@ void HardRTC::LoadTicks()
 	uint counter = RTC_GetCounter();
 	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
 	uint sec = ReadBackup(1);
-#if TIME_DEBUG
-	g_Counter = counter;
-#endif
 	ulong ms = (ulong)sec * 1000 + counter;
+#if TIME_DEBUG
+	g_Counter = ms;
+#endif
 #else
 	DateTime dt = RTC_GetCounter();
 	ulong ms = dt.TotalMicroseconds();
@@ -674,9 +674,11 @@ void HardRTC::SaveTicks()
 	if(g_Counter > 0)
 	{
 		debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
-		DateTime dt;
-		dt.Parse((ulong)g_Counter * 1000000ull);
-		debug_printf("LoadTime: %s \r\n", dt.ToString());
+
+		DateTime dt(g_Counter * 1000ull);
+		debug_printf("LoadTime: ");
+		dt.Show(true);
+
 		g_Counter = 0;
 	}
 #endif
@@ -686,13 +688,14 @@ void HardRTC::SaveTicks()
 
 #ifdef STM32F1
 	ulong ms = Time.Current() / 1000;
-#if TIME_DEBUG
-	debug_printf("SaveTicks %dms\r\n", (uint)ms);
-#endif
 	uint sec = (uint)(ms / 1000);
+	uint ms2 = (uint)(ms % 1000);
+#if TIME_DEBUG
+	debug_printf("SaveTicks %ds %dms\r\n", sec, ms2);
+#endif
 	WriteBackup(1, sec);
 	// 设置计数器
-	RTC_SetCounter((uint)(ms % 1000));
+	RTC_SetCounter(ms2);
 #else
 	RTC_SetCounter(Time.Now());
 #endif
