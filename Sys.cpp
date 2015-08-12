@@ -223,7 +223,7 @@ TSys::~TSys()
 void ShowTime(void* param)
 {
 	debug_printf("\r");
-	debug_printf(Time.Now().ToString());
+	Time.Now().Show();
 	debug_printf(" ");
 }
 
@@ -380,8 +380,7 @@ void TSys::ShowInfo()
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, end - start, (end - start) / 1024);
 
 	debug_printf("Time : ");
-	debug_printf(Time.Now().ToString());
-	debug_printf("\r\n");
+	Time.Now().Show(true);
 	// 系统启动时间
 	debug_printf("Start: %dus (Inited: %dus)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
 	debug_printf("技术支持: http://www.NewLifeX.com\r\n");

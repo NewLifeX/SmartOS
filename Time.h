@@ -3,41 +3,7 @@
 
 #include "Sys.h"
 
-// 系统时钟
-struct DateTime
-{
-	ushort Year;
-	byte Month;
-	byte DayOfWeek;
-	byte Day;
-	byte Hour;
-	byte Minute;
-	byte Second;
-	ushort Millisecond;
-	ushort Microsecond;
-
-	char _Str[19 + 1]; // 内部字符串缓冲区，按最长计算
-
-	DateTime();
-
-	// 重载等号运算符
-    DateTime& operator=(ulong v);
-
-	DateTime& Parse(ulong us);
-	uint TotalSeconds();
-	ulong TotalMicroseconds();
-
-	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
-	/*
-	d短日期 M/d/yy
-	D长日期 yyyy-MM-dd
-	t短时间 mm:ss
-	T长时间 HH:mm:ss
-	f短全部 M/d/yy HH:mm
-	F长全部 yyyy-MM-dd HH:mm:ss
-	*/
-	const char* ToString(byte kind = 'F', string str = NULL);
-};
+class DateTime;
 
 // 时间类
 // 使用双计数时钟，Ticks累加滴答，Microseconds累加微秒，_usTicks作为累加微秒时的滴答余数
@@ -46,7 +12,6 @@ class TTime
 {
 private:
     static void OnHandler(ushort num, void* param);
-	DateTime _Now;
 	volatile uint _usTicks;			// 计算微秒时剩下的滴答数
 	volatile uint _msUs;			// 计算毫秒时剩下的微秒数
 	Func OnInit;
@@ -76,8 +41,8 @@ public:
     void Sleep(uint us, bool* running = NULL);
 	void LowPower();		// 启用低功耗模式，Sleep时进入睡眠
 
-	// 当前时间。外部不要释放该指针
-	DateTime& Now();
+	// 当前时间。
+	DateTime Now();
 };
 
 extern TTime Time;
@@ -107,6 +72,43 @@ public:
 
 	int Elapsed();	// 逝去的时间，微秒
 	void Show(const char* format = NULL);
+};
+
+// 系统时钟
+class DateTime : public Object
+{
+public:
+	ushort Year;
+	byte Month;
+	byte DayOfWeek;
+	byte Day;
+	byte Hour;
+	byte Minute;
+	byte Second;
+	ushort Millisecond;
+	ushort Microsecond;
+
+	DateTime(ulong us = 0);
+
+	// 重载等号运算符
+    DateTime& operator=(ulong v);
+
+	DateTime& Parse(ulong us);
+	uint TotalSeconds();
+	ulong TotalMicroseconds();
+
+	virtual String& ToStr(String& str) const;
+	
+	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
+	/*
+	d短日期 M/d/yy
+	D长日期 yyyy-MM-dd
+	t短时间 mm:ss
+	T长时间 HH:mm:ss
+	f短全部 M/d/yy HH:mm
+	F长全部 yyyy-MM-dd HH:mm:ss
+	*/
+	const char* GetString(byte kind = 'F', string str = NULL);
 };
 
 #endif

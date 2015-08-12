@@ -657,7 +657,13 @@ DateTime& DateTime::Parse(ulong us)
 	return st;
 }
 
-DateTime::DateTime() { memset(this, 0, sizeof(this[0])); }
+DateTime::DateTime(ulong us)
+{
+	if(us == 0)
+		memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
+	else
+		Parse(us);
+}
 
 // 重载等号运算符
 DateTime& DateTime::operator=(ulong v)
@@ -680,11 +686,23 @@ uint DateTime::TotalSeconds()
 
 ulong DateTime::TotalMicroseconds()
 {
-	ulong us = (ulong)TotalSeconds();
-	us = us * 1000 + Millisecond;
-	us = us * 1000 + Microsecond;
+	ulong sec = (ulong)TotalSeconds();
+	uint us = (uint)Millisecond * 1000 + Microsecond;
 
-	return us;
+	return sec * 1000 + us;
+}
+
+String& DateTime::ToStr(String& str) const
+{
+	// F长全部 yyyy-MM-dd HH:mm:ss
+	str.Append(Year, 10, 4).Append('-');
+	str.Append(Month, 10, 2).Append('-');
+	str.Append(Day, 10, 2).Append(' ');
+	str.Append(Hour, 10, 2).Append(':');
+	str.Append(Minute, 10, 2).Append(':');
+	str.Append(Second, 10, 2);
+
+	return str;
 }
 
 // 默认格式化时间为yyyy-MM-dd HH:mm:ss
@@ -696,10 +714,10 @@ ulong DateTime::TotalMicroseconds()
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 */
-const char* DateTime::ToString(byte kind, string str)
+const char* DateTime::GetString(byte kind, string str)
 {
-	//assert_param(str);
-	if(!str) str = _Str;
+	assert_param(str);
+	//if(!str) str = _Str;
 
 	const DateTime& st = *this;
 	switch(kind)
@@ -731,11 +749,15 @@ const char* DateTime::ToString(byte kind, string str)
 }
 
 // 当前时间
-DateTime& TTime::Now()
+DateTime TTime::Now()
 {
+	/*DateTime _Now;
+
 	_Now.Parse(Current());
 
-	return _Now;
+	return _Now;*/
+	
+	return DateTime(Current());
 }
 
 TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
