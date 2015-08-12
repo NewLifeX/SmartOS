@@ -194,12 +194,12 @@ void TTime::Sleep(uint us, bool* running)
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(_RTC && us >= 1000000)
+	if(_RTC && us >= 10000)
 	{
 		uint ms = us / 1000;
 		_RTC->Sleep(ms);
 		// CPU睡眠是秒级，还有剩余量
-		us %= 1000000;
+		us %= 10000;
 	}
 
 	// 自己关闭中断，简直实在找死！
@@ -728,7 +728,7 @@ void HardRTC::Sleep(uint& ms)
 	//int second = ms / 1000;
 	//if(second <= 0) return;
 
-	//debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
+	debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
 	SaveTicks();
 
 	/* Enable the RTC Alarm interrupt */
@@ -767,7 +767,7 @@ void HardRTC::Sleep(uint& ms)
 	// 进入低功耗模式
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 
-	//debug_printf("离开低功耗模式\r\n");
+	debug_printf("离开低功耗模式\r\n");
 }
 
 uint HardRTC::ReadBackup(byte addr)
