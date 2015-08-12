@@ -4,6 +4,7 @@
 #include "Sys.h"
 
 class DateTime;
+class HardRTC;
 
 // 时间类
 // 使用双计数时钟，Ticks累加滴答，Microseconds累加微秒，_usTicks作为累加微秒时的滴答余数
@@ -14,10 +15,6 @@ private:
     static void OnHandler(ushort num, void* param);
 	volatile uint _usTicks;			// 计算微秒时剩下的滴答数
 	volatile uint _msUs;			// 计算毫秒时剩下的微秒数
-	Func OnInit;
-	Func OnLoad;
-	Func OnSave;
-	Action OnSleep;
 
 public:
     volatile ulong Ticks;			// 全局滴答中断数，0xFFFF次滴答一个中断。
@@ -26,6 +23,8 @@ public:
     //volatile ulong NextEvent;		// 下一个计划事件的滴答数
 
     byte	TicksPerMicrosecond;	// 每微秒的时钟滴答数
+	
+	HardRTC* _RTC;
 
     TTime();
     ~TTime();
@@ -98,7 +97,7 @@ public:
 	ulong TotalMicroseconds();
 
 	virtual String& ToStr(String& str) const;
-	
+
 	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
 	/*
 	d短日期 M/d/yy
@@ -109,6 +108,24 @@ public:
 	F长全部 yyyy-MM-dd HH:mm:ss
 	*/
 	const char* GetString(byte kind = 'F', string str = NULL);
+};
+
+// 实时时钟
+class HardRTC
+{
+public:
+	bool LowPower;	// 是否使用低功耗休眠
+	bool Opened;
+
+	HardRTC(bool lowpower = true);
+
+	void Init();
+	void LoadTicks();
+	void SaveTicks();
+	void Sleep(uint& ms);
+
+	uint ReadBackup(byte addr);
+	void WriteBackup(byte addr, uint value);
 };
 
 #endif

@@ -2,368 +2,24 @@
 
 #define TIME_DEBUG 0
 
+/************************************************ TTime ************************************************/
+
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
 
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-//--//
-
-#define RTC_CODE
-#ifdef RTC_CODE
-
-//#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
-#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
-//#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
-
-#ifdef STM32F1
-void RTC_Configuration(void)
-{
-	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
-	BKP_DeInit();
-
-#ifdef RTCClockSource_LSI
-	/* Enable LSI */
-	RCC_LSICmd(ENABLE);
-	/* 等待稳定 */
-	while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
-
-	/* Select LSI as RTC Clock Source */
-	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
-#elif defined	RTCClockSource_LSE
-	/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
-	RCC_LSEConfig(RCC_LSE_ON);
-	/* 等待稳定 */
-	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
-
-	/* RTC时钟源配置成LSE（外部32.768K） */
-	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
-#endif
-
-	/* 使能RTC时钟 */
-	RCC_RTCCLKCmd(ENABLE);
-
-#ifdef RTCClockOutput_Enable
-	/* Disable the Tamper Pin */
-	BKP_TamperPinCmd(DISABLE); /* To output RTCCLK/64 on Tamper pin, the tamper
-							   functionality must be disabled */
-
-	/* Enable RTC Clock Output on Tamper Pin */
-	BKP_RTCCalibrationClockOutputCmd(ENABLE);
-#endif
-
-	/* 开启后需要等待APB1时钟与RTC时钟同步，才能读写寄存器 */
-	RTC_WaitForSynchro();
-
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	RTC_WaitForLastTask();
-
-	/* 使能秒中断 */
-	//RTC_ITConfig(RTC_IT_SEC, ENABLE);
-
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	//RTC_WaitForLastTask();
-
-	/* 设置RTC分频器，使RTC时钟为1Hz */
-#ifdef RTCClockSource_LSI
-	RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
-#elif defined	RTCClockSource_LSE
-	RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
-#endif
-
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	RTC_WaitForLastTask();
-}
-#else
-void RTC_Configuration(void)
-{
-	RTC_WriteProtectionCmd(DISABLE);
-
-	RTC_EnterInitMode();
-
-	RTC_InitTypeDef rtc;
-	RTC_StructInit(&rtc);
-	rtc.RTC_HourFormat = RTC_HourFormat_24;
-	rtc.RTC_AsynchPrediv = 0x7D-1;
-	rtc.RTC_SynchPrediv = 0xFF-1;
-	RTC_Init(&rtc);
-
-	RTC_ExitInitMode();
-	RTC_WriteProtectionCmd(ENABLE);	//初始化完成，设置标志
-}
-
-uint RTC_GetCounter()
-{
-	DateTime dt;
-
-	RTC_TimeTypeDef time;
-	RTC_GetTime(RTC_Format_BCD, &time);
-
-	dt.Hour		= time.RTC_Hours;
-	dt.Minute	= time.RTC_Minutes;
-	dt.Second	= time.RTC_Seconds;
-
-	RTC_DateTypeDef date;
-	RTC_GetDate(RTC_Format_BCD, &date);
-
-	dt.Year		= date.RTC_Year;
-	dt.Month	= date.RTC_Month;
-	dt.Day		= date.RTC_Date;
-
-	return dt.TotalSeconds();
-}
-
-void RTC_SetCounter(DateTime& dt)
-{
-	RTC_TimeTypeDef time;
-	RTC_TimeStructInit(&time);
-	time.RTC_Seconds = dt.Second;
-	time.RTC_Minutes = dt.Minute;
-	time.RTC_Hours = dt.Hour;
-	time.RTC_H12 = RTC_H12_AM;
-	RTC_SetTime(RTC_Format_BCD, &time);
-
-	RTC_DateTypeDef date;
-	RTC_DateStructInit(&date);
-	date.RTC_Date = dt.Day;
-	date.RTC_Month = dt.Month;
-	date.RTC_WeekDay= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
-	date.RTC_Year = dt.Year;
-	RTC_SetDate(RTC_Format_BCD, &date);
-}
-
-void RTC_WaitForLastTask()
-{
-	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
-}
-#endif
-
-static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
-#if TIME_DEBUG
-	static uint g_Counter = 0;
-#endif
-
-void LoadTicks()
-{
-	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
-	uint counter = RTC_GetCounter();
-#if TIME_DEBUG
-	g_Counter = counter;
-#endif
-	ulong ms = (ulong)counter * 1000;
-	ulong us = ms * 1000;
-	Time.Ticks = us * Time.TicksPerMicrosecond;
-	Time.Milliseconds = ms;
-	Time.Microseconds = us;
-	//Time._msUs = 0;
-	//Time._usTicks = 0;
-}
-
-void SaveTicks()
-{
-	if(Time.Ticks < g_NextSaveTicks) return;
-#if TIME_DEBUG
-	if(g_Counter > 0)
-	{
-		debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
-		DateTime dt;
-		dt.Parse((ulong)g_Counter * 1000000ull);
-		debug_printf("LoadTime: %s \r\n", dt.ToString());
-		g_Counter = 0;
-	}
-#endif
-
-	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
-	RTC_WaitForSynchro();
-
-#ifdef STM32F1
-	ulong ms = Time.Current() / 1000;
-#if TIME_DEBUG
-	debug_printf("SaveTicks %dms\r\n", (uint)ms);
-#endif
-	// 设置计数器
-	RTC_SetCounter((uint)(ms / 1000));
-#elif defined STM32F4
-	RTC_SetCounter(Time.Now());
-#endif
-
-	// 必须打开时钟和后备域，否则写不进去时间
-	// Check if the Power On Reset flag is set
-	//RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-
-    /* Allow access to BKP Domain */
-    //PWR_BackupAccessCmd(ENABLE);
-
-	// 这里对时间要求非常苛刻，不能等待
-	RTC_WaitForLastTask();
-
-	// 每秒钟保存一次
-	g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
-}
-
-void RTC_Init()
-{
-	/*****************************/
-	/* GD32和STM32最大的区别就是STM32给寄存器默认值，而GD32没有给默认值 */
-	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
-
-	/* 启用PWR和BKP的时钟 */
-#ifdef STM32F1
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
-#else
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-#endif
-
-	/* 后备域解锁 */
-	PWR_BackupAccessCmd(ENABLE);
-
-	// 下一次保存Ticks的数值，避免频繁保存
-	g_NextSaveTicks = 0;
-
-#ifdef STM32F1
-	if(BKP_ReadBackupRegister(BKP_DR1) != 0xABCD)
-	{
-		RTC_Configuration();
-		BKP_WriteBackupRegister(BKP_DR1, 0xABCD);
-	}
-#else
-	if(RTC_ReadBackupRegister(RTC_BKP_DR0) != 0xABCD)
-	{
-		RTC_Configuration();
-		RTC_WriteBackupRegister(RTC_BKP_DR0, 0xABCD);
-	}
-#endif
-	else
-	{
-		//虽然RTC模块不需要重新配置，且掉电后依靠后备电池依然运行
-		//但是每次上电后，还是要使能RTCCLK
-		RCC_RTCCLKCmd(ENABLE);
-
-		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
-		RTC_WaitForSynchro();
-
-		// 从RTC还原滴答
-		LoadTicks();
-
-		/* 使能RTC中断：RTC_IT_SEC秒中断、RTC_IT_OW溢出中断、RTC_IT_ALR闹钟中断 */
-		//RTC_ITConfig(RTC_IT_SEC, ENABLE);
-		/* 等待最近一次对RTC寄存器的写操作完成 */
-		//RTC_WaitForLastTask();
-	}
-}
-
-// 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源
-void SYSCLKConfig_STOP(void)
-{
-  /* Enable HSE */
-  RCC_HSEConfig(RCC_HSE_ON);
-
-  /* Wait till HSE is ready */
-  if(RCC_WaitForHSEStartUp() == SUCCESS)
-  {
-#ifdef STM32F10X_CL
-    /* Enable PLL2 */
-    RCC_PLL2Cmd(ENABLE);
-
-    /* Wait till PLL2 is ready */
-    while(RCC_GetFlagStatus(RCC_FLAG_PLL2RDY) == RESET);
-#endif
-
-    /* Enable PLL */
-    RCC_PLLCmd(ENABLE);
-
-    /* Wait till PLL is ready */
-    while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
-
-    /* Select PLL as system clock source */
-    RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
-
-    /* Wait till PLL is used as system clock source */
-    while(RCC_GetSYSCLKSource() != 0x08);
-  }
-}
-
-#ifndef STM32F1
-	#define RTC_IT_ALR RTC_IT_ALRA
-#endif
-
-// 暂停系统一段时间
-void CPU_Sleep(void* param)
-{
-	uint ms = *(uint*)param;
-	int second = ms / 1000;
-	if(second <= 0) return;
-
-	//debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
-	SaveTicks();
-
-	/* Enable the RTC Alarm interrupt */
-	RTC_ITConfig(RTC_IT_ALR, ENABLE);
-    /* Alarm in 3 second */
-#ifdef STM32F1
-    RTC_SetAlarm(RTC_GetCounter() + second);
-#else
-	RTC_AlarmTypeDef alr;
-	RTC_AlarmStructInit(&alr);
-
-	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );     /* Disable the Alarm A */
-	alr.RTC_AlarmTime.RTC_H12 = RTC_H12_AM;
-	alr.RTC_AlarmTime.RTC_Hours = second / 60 / 60;
-	alr.RTC_AlarmTime.RTC_Minutes = (second / 60) % 60;
-	alr.RTC_AlarmTime.RTC_Seconds = second % 60;
-
-	/* Set the Alarm A */
-	alr.RTC_AlarmDateWeekDay = 0x31;
-	alr.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_Date;
-	alr.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay;
-
-	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr ); /* Configure the RTC Alarm A register */
-
-	RTC_ITConfig( RTC_IT_ALRA, ENABLE );    /* Enable the RTC Alarm A Interrupt */
-
-	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );    /* Enable the alarm  A */
-#endif
-    /* Wait until last write operation on RTC registers has finished */
-    RTC_WaitForLastTask();
-
-	// 进入低功耗模式
-	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
-
-	//debug_printf("离开低功耗模式\r\n");
-}
-
-void AlarmHandler(ushort num, void* param)
-{
-    SmartIRQ irq;
-
-	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
-	{
-		EXTI_ClearITPendingBit(EXTI_Line17);
-		// 检查唤醒标志是否设置
-		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET) PWR_ClearFlag(PWR_FLAG_WU);
-		RTC_WaitForLastTask();
-		RTC_ClearITPendingBit(RTC_IT_ALR);
-		RTC_WaitForLastTask();
-	}
-	SYSCLKConfig_STOP();
-	LoadTicks();
-}
-#endif
-
 TTime::TTime()
 {
-	Ticks = 0;
-	Microseconds = 0;
-	Milliseconds = 0;
+	Ticks			= 0;
+	Microseconds	= 0;
+	Milliseconds	= 0;
 	//NextEvent = TIME_Completion_IdleValue;
 
-	_usTicks = 0;
-	_msUs = 0;
+	_RTC	= NULL;
 
-	OnInit = NULL;
-	OnLoad = NULL;
-	OnSave = NULL;
-	OnSleep = NULL;
+	_usTicks= 0;
+	_msUs	= 0;
 }
 
 TTime::~TTime()
@@ -371,14 +27,6 @@ TTime::~TTime()
     Interrupt.Deactivate(SysTick_IRQn);
     // 关闭定时器
 	SysTick->CTRL &= ~SYSTICK_ENABLE;
-}
-
-// 使用RTC，必须在Init前调用
-void TTime::UseRTC()
-{
-	OnInit = RTC_Init;
-	OnLoad = LoadTicks;
-	OnSave = SaveTicks;
 }
 
 void TTime::Init()
@@ -392,7 +40,7 @@ void TTime::Init()
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
 	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
 
-	if(OnInit) OnInit();
+	if(_RTC) _RTC->Init();
 
 	SetMax(0);
 
@@ -467,7 +115,7 @@ void TTime::OnHandler(ushort num, void* param)
 		Time._usTicks = ts % Time.TicksPerMicrosecond;
 	}
 	// 定期保存Ticks到后备RTC寄存器
-	if(Time.OnSave) Time.OnSave();
+	if(Time._RTC) Time._RTC->SaveTicks();
 
 	if(Sys.OnTick) Sys.OnTick();
 }
@@ -535,7 +183,7 @@ void TTime::SetTime(ulong us)
 	_msUs = us % 1000;
 
 	// 保存到RTC
-	if(OnSave) OnSave();
+	if(_RTC) _RTC->SaveTicks();
 }
 
 #define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
@@ -546,10 +194,10 @@ void TTime::Sleep(uint us, bool* running)
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(OnSleep && us >= 1000000)
+	if(_RTC && us >= 1000000)
 	{
 		uint ms = us / 1000;
-		OnSleep(&ms);
+		_RTC->Sleep(ms);
 		// CPU睡眠是秒级，还有剩余量
 		us %= 1000000;
 	}
@@ -577,24 +225,7 @@ void TTime::Sleep(uint us, bool* running)
     //while(Current() <= maxDiff);
 }
 
-// 启用低功耗模式，Sleep时进入睡眠
-void TTime::LowPower()
-{
-	OnSleep = CPU_Sleep;
-
-	EXTI_ClearITPendingBit(EXTI_Line17);
-	EXTI_InitTypeDef  exit;
-	exit.EXTI_Line = EXTI_Line17;
-	exit.EXTI_Mode = EXTI_Mode_Interrupt;
-	exit.EXTI_Trigger = EXTI_Trigger_Rising;
-	exit.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&exit);
-
-#ifdef STM32F1
-    Interrupt.SetPriority(RTCAlarm_IRQn, 0);
-	Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
-#endif
-}
+/************************************************ DateTime ************************************************/
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
 #define BASE_YEAR                   2000
@@ -756,9 +387,11 @@ DateTime TTime::Now()
 	_Now.Parse(Current());
 
 	return _Now;*/
-	
+
 	return DateTime(Current());
 }
+
+/************************************************ TimeWheel ************************************************/
 
 TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
 {
@@ -799,4 +432,399 @@ void TimeCost::Show(const char* format)
 {
 	if(!format) format = "执行 %dus";
 	debug_printf(format, Elapsed());
+}
+
+/************************************************ HardRTC ************************************************/
+
+//#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
+#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
+//#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
+
+#ifdef STM32F1
+void RTC_Configuration(void)
+{
+	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
+	BKP_DeInit();
+
+#ifdef RTCClockSource_LSI
+	/* Enable LSI */
+	RCC_LSICmd(ENABLE);
+	/* 等待稳定 */
+	while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
+
+	/* Select LSI as RTC Clock Source */
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+#elif defined	RTCClockSource_LSE
+	/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
+	RCC_LSEConfig(RCC_LSE_ON);
+	/* 等待稳定 */
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
+
+	/* RTC时钟源配置成LSE（外部32.768K） */
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+#endif
+
+	/* 使能RTC时钟 */
+	RCC_RTCCLKCmd(ENABLE);
+
+#ifdef RTCClockOutput_Enable
+	/* Disable the Tamper Pin */
+	BKP_TamperPinCmd(DISABLE); /* To output RTCCLK/64 on Tamper pin, the tamper
+							   functionality must be disabled */
+
+	/* Enable RTC Clock Output on Tamper Pin */
+	BKP_RTCCalibrationClockOutputCmd(ENABLE);
+#endif
+
+	/* 开启后需要等待APB1时钟与RTC时钟同步，才能读写寄存器 */
+	RTC_WaitForSynchro();
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	RTC_WaitForLastTask();
+
+	/* 使能秒中断 */
+	//RTC_ITConfig(RTC_IT_SEC, ENABLE);
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	//RTC_WaitForLastTask();
+
+	/* 设置RTC分频器，使RTC时钟为1Hz */
+#ifdef RTCClockSource_LSI
+	//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
+#elif defined	RTCClockSource_LSE
+	//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
+#endif
+	RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
+
+	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+	RTC_WaitForLastTask();
+}
+#else
+void RTC_Configuration(void)
+{
+	RTC_WriteProtectionCmd(DISABLE);
+
+	RTC_EnterInitMode();
+
+	RTC_InitTypeDef rtc;
+	RTC_StructInit(&rtc);
+	rtc.RTC_HourFormat = RTC_HourFormat_24;
+	rtc.RTC_AsynchPrediv = 0x7D-1;
+	rtc.RTC_SynchPrediv = 0xFF-1;
+	RTC_Init(&rtc);
+
+	RTC_ExitInitMode();
+	RTC_WriteProtectionCmd(ENABLE);	//初始化完成，设置标志
+}
+
+DateTime RTC_GetCounter()
+{
+	DateTime dt;
+
+	RTC_TimeTypeDef time;
+	RTC_GetTime(RTC_Format_BCD, &time);
+
+	dt.Hour		= time.RTC_Hours;
+	dt.Minute	= time.RTC_Minutes;
+	dt.Second	= time.RTC_Seconds;
+
+	RTC_DateTypeDef date;
+	RTC_GetDate(RTC_Format_BCD, &date);
+
+	dt.Year		= date.RTC_Year;
+	dt.Month	= date.RTC_Month;
+	dt.Day		= date.RTC_Date;
+
+	return dt;
+}
+
+void RTC_SetCounter(DateTime& dt)
+{
+	RTC_TimeTypeDef time;
+	RTC_TimeStructInit(&time);
+	time.RTC_Seconds = dt.Second;
+	time.RTC_Minutes = dt.Minute;
+	time.RTC_Hours = dt.Hour;
+	time.RTC_H12 = RTC_H12_AM;
+	RTC_SetTime(RTC_Format_BCD, &time);
+
+	RTC_DateTypeDef date;
+	RTC_DateStructInit(&date);
+	date.RTC_Date = dt.Day;
+	date.RTC_Month = dt.Month;
+	date.RTC_WeekDay= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
+	date.RTC_Year = dt.Year;
+	RTC_SetDate(RTC_Format_BCD, &date);
+}
+
+void RTC_WaitForLastTask()
+{
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
+}
+#endif
+
+static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
+#if TIME_DEBUG
+	static uint g_Counter = 0;
+#endif
+
+void AlarmHandler(ushort num, void* param);
+
+HardRTC::HardRTC(bool lowpower)
+{
+	LowPower	= lowpower;
+	Opened		= false;
+}
+
+void HardRTC::Init()
+{
+	/*****************************/
+	/* GD32和STM32最大的区别就是STM32给寄存器默认值，而GD32没有给默认值 */
+	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
+
+	/* 启用PWR和BKP的时钟 */
+#ifdef STM32F1
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+#else
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+#endif
+
+	/* 后备域解锁 */
+	PWR_BackupAccessCmd(ENABLE);
+
+	// 下一次保存Ticks的数值，避免频繁保存
+	g_NextSaveTicks = 0;
+
+	if(ReadBackup(0) != 0xABCD)
+	{
+		WriteBackup(0, 0xABCD);
+	}
+	else
+	{
+		//虽然RTC模块不需要重新配置，且掉电后依靠后备电池依然运行
+		//但是每次上电后，还是要使能RTCCLK
+		RCC_RTCCLKCmd(ENABLE);
+
+		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
+		RTC_WaitForSynchro();
+
+		// 从RTC还原滴答
+		LoadTicks();
+
+		/* 使能RTC中断：RTC_IT_SEC秒中断、RTC_IT_OW溢出中断、RTC_IT_ALR闹钟中断 */
+		//RTC_ITConfig(RTC_IT_SEC, ENABLE);
+		/* 等待最近一次对RTC寄存器的写操作完成 */
+		//RTC_WaitForLastTask();
+	}
+
+	if(LowPower)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line17);
+		EXTI_InitTypeDef  exit;
+		exit.EXTI_Line = EXTI_Line17;
+		exit.EXTI_Mode = EXTI_Mode_Interrupt;
+		exit.EXTI_Trigger = EXTI_Trigger_Rising;
+		exit.EXTI_LineCmd = ENABLE;
+		EXTI_Init(&exit);
+
+#ifdef STM32F1
+		Interrupt.SetPriority(RTCAlarm_IRQn, 0);
+		Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
+#endif
+	}
+
+	Opened = true;
+}
+
+#ifndef STM32F1
+	#define RTC_IT_ALR RTC_IT_ALRA
+#endif
+
+void HardRTC::LoadTicks()
+{
+	if(!Opened) return;
+
+#ifdef STM32F1
+	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
+	uint counter = RTC_GetCounter();
+	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
+	uint sec = ReadBackup(1);
+#if TIME_DEBUG
+	g_Counter = counter;
+#endif
+	ulong ms = (ulong)sec * 1000 + counter;
+#else
+	DateTime dt = RTC_GetCounter();
+	ulong ms = dt.TotalMicroseconds();
+#endif
+	ulong us = ms * 1000;
+	Time.Ticks = us * Time.TicksPerMicrosecond;
+	Time.Milliseconds = ms;
+	Time.Microseconds = us;
+	//Time._msUs = 0;
+	//Time._usTicks = 0;
+}
+
+void HardRTC::SaveTicks()
+{
+	if(!Opened) return;
+
+	if(Time.Ticks < g_NextSaveTicks) return;
+#if TIME_DEBUG
+	if(g_Counter > 0)
+	{
+		debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
+		DateTime dt;
+		dt.Parse((ulong)g_Counter * 1000000ull);
+		debug_printf("LoadTime: %s \r\n", dt.ToString());
+		g_Counter = 0;
+	}
+#endif
+
+	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
+	RTC_WaitForSynchro();
+
+#ifdef STM32F1
+	ulong ms = Time.Current() / 1000;
+#if TIME_DEBUG
+	debug_printf("SaveTicks %dms\r\n", (uint)ms);
+#endif
+	uint sec = (uint)(ms / 1000);
+	WriteBackup(1, sec);
+	// 设置计数器
+	RTC_SetCounter((uint)(ms % 1000));
+#else
+	RTC_SetCounter(Time.Now());
+#endif
+
+	// 必须打开时钟和后备域，否则写不进去时间
+	// Check if the Power On Reset flag is set
+	//RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+
+    /* Allow access to BKP Domain */
+    //PWR_BackupAccessCmd(ENABLE);
+
+	// 这里对时间要求非常苛刻，不能等待
+	RTC_WaitForLastTask();
+
+	// 每秒钟保存一次
+	g_NextSaveTicks = Time.Ticks + 1000000ull * Time.TicksPerMicrosecond;
+}
+
+// 暂停系统一段时间
+void HardRTC::Sleep(uint& ms)
+{
+	if(!Opened) return;
+
+	int second = ms / 1000;
+	if(second <= 0) return;
+
+	//debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
+	SaveTicks();
+
+	/* Enable the RTC Alarm interrupt */
+	RTC_ITConfig(RTC_IT_ALR, ENABLE);
+    /* Alarm in 3 second */
+#ifdef STM32F1
+    RTC_SetAlarm(RTC_GetCounter() + second);
+#else
+	RTC_AlarmTypeDef alr;
+	RTC_AlarmStructInit(&alr);
+
+	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );     /* Disable the Alarm A */
+	alr.RTC_AlarmTime.RTC_H12 = RTC_H12_AM;
+	alr.RTC_AlarmTime.RTC_Hours = second / 60 / 60;
+	alr.RTC_AlarmTime.RTC_Minutes = (second / 60) % 60;
+	alr.RTC_AlarmTime.RTC_Seconds = second % 60;
+
+	/* Set the Alarm A */
+	alr.RTC_AlarmDateWeekDay = 0x31;
+	alr.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_Date;
+	alr.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay;
+
+	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr ); /* Configure the RTC Alarm A register */
+
+	RTC_ITConfig( RTC_IT_ALRA, ENABLE );    /* Enable the RTC Alarm A Interrupt */
+
+	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );    /* Enable the alarm  A */
+#endif
+    /* Wait until last write operation on RTC registers has finished */
+    RTC_WaitForLastTask();
+
+	// 进入低功耗模式
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+
+	//debug_printf("离开低功耗模式\r\n");
+}
+
+uint HardRTC::ReadBackup(byte addr)
+{
+	if(!Opened) return 0;
+
+#ifdef STM32F1
+	return BKP_ReadBackupRegister(BKP_DR1 + (addr << 2));
+#else
+	return RTC_ReadBackupRegister(RTC_BKP_DR0 + (addr << 2));
+#endif
+}
+
+void HardRTC::WriteBackup(byte addr, uint value)
+{
+	if(!Opened) return;
+
+#ifdef STM32F1
+	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value);
+#else
+	RTC_WriteBackupRegister(RTC_BKP_DR0 + (addr << 2), value);
+#endif
+}
+
+// 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源
+void SYSCLKConfig_STOP(void)
+{
+  /* Enable HSE */
+  RCC_HSEConfig(RCC_HSE_ON);
+
+  /* Wait till HSE is ready */
+  if(RCC_WaitForHSEStartUp() == SUCCESS)
+  {
+#ifdef STM32F10X_CL
+    /* Enable PLL2 */
+    RCC_PLL2Cmd(ENABLE);
+
+    /* Wait till PLL2 is ready */
+    while(RCC_GetFlagStatus(RCC_FLAG_PLL2RDY) == RESET);
+#endif
+
+    /* Enable PLL */
+    RCC_PLLCmd(ENABLE);
+
+    /* Wait till PLL is ready */
+    while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
+
+    /* Select PLL as system clock source */
+    RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+
+    /* Wait till PLL is used as system clock source */
+    while(RCC_GetSYSCLKSource() != 0x08);
+  }
+}
+
+void AlarmHandler(ushort num, void* param)
+{
+    SmartIRQ irq;
+
+	//HardRTC* rtc = (HardRTC*)param;
+
+	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line17);
+		// 检查唤醒标志是否设置
+		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET) PWR_ClearFlag(PWR_FLAG_WU);
+		RTC_WaitForLastTask();
+		RTC_ClearITPendingBit(RTC_IT_ALR);
+		RTC_WaitForLastTask();
+	}
+	SYSCLKConfig_STOP();
+	//rtc->LoadTicks();
 }

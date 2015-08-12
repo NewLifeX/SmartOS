@@ -250,7 +250,8 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* ts = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 %s \r\n", ts->Cost, ts->MaxCost, Time.Now().ToString());
+	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 ", ts->Cost, ts->MaxCost);
+	Time.Now().Show(true);
 
 	int i = -1;
 	while(ts->_Tasks.MoveNext(i))
