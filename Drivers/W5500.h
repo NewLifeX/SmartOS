@@ -10,18 +10,8 @@
 // 硬件Socket基类
 class HardSocket;
 
-// 数据帧格式
-// 2byte Address + 1byte CONFIG_Phase + nbyte Data Phase
-typedef struct
-{
-	ushort	Address;
-	byte	BSB;		// 5位    CONFIG_Phase 由底下封装  这里只需要知道BSB就好
-	Stream	Data;
-
-	void Clear(){ ArrayZero2(this, 3); }
-}Frame;
-
-class W5500 //: public ITransport // 只具备IP 以及相关整体配置  不具备Socket发送能力 所以不是ITransport
+// W5500以太网驱动
+class W5500
 {
 private:
 	// 收发数据锁，确保同时只有一个对象使用
@@ -97,7 +87,7 @@ public:
 };
 
 // 硬件Socket控制器
-class HardSocket
+class HardSocket : public ITransport
 {
 private:
 
@@ -120,7 +110,7 @@ public:
 
 	bool Write(const ByteArray& bs);
 	int Read(ByteArray& bs);
-	
+
 	// 恢复配置
 	virtual void Recovery() = 0;
 	// 处理数据包
