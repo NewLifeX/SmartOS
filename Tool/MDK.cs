@@ -111,13 +111,17 @@ namespace NewLife.Reflection
         /// <summary>引用头文件路径集合</summary>
         public ICollection<String> Includes { get { return _Includes; } set { _Includes = value; } }
 
+        private ICollection<String> _Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        /// <summary>源文件集合</summary>
+        public ICollection<String> Files { get { return _Files; } set { _Files = value; } }
+
         private ICollection<String> _Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>对象文件集合</summary>
         public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
 
         private IDictionary<String, String> _Libs = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>库文件集合</summary>
-        public ICollection<String> Libs { get { return _Libs.Values; } }
+        public IDictionary<String, String> Libs { get { return _Libs; } }
         #endregion
 
         #region 主要编译方法
@@ -192,16 +196,9 @@ namespace NewLife.Reflection
             return Asm.Run(sb.ToString(), 3000, WriteLog);
         }
 
-        /// <summary>编译指定目录所有文件</summary>
-        /// <param name="path">要编译的目录</param>
-        /// <param name="exts">后缀过滤</param>
-        /// <param name="excludes">要排除的文件</param>
-        /// <returns></returns>
-        public Int32 CompileAll(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
+        public Int32 CompileAll()
         {
-            // 目标目录也加入头文件搜索
-            AddIncludes(path);
-
+			Objs.Clear();
             var count = 0;
 
             // 提前创建临时目录
@@ -210,50 +207,21 @@ namespace NewLife.Reflection
             obj.GetFullPath().EnsureDirectory(false);
             "Lst".GetFullPath().EnsureDirectory(false);
 
-            var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
-
-            path = path.GetFullPath().EnsureEnd("\\");
-            if (String.IsNullOrEmpty(exts)) exts = "*.c;*.cpp";
-            foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
+            foreach (var item in Files)
             {
-                if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
-
-                Console.Write("编译：{0}\t", item.FullName);
-
-                var flag = true;
-				var ex = "";
-                if (excs.Contains(item.Name)) { flag = false; ex = item.Name; }
-				if(flag)
-				{
-					foreach (var elm in excs)
-					{
-						if (item.Name.Contains(elm)) { flag = false; ex = elm; break; }
-					}
-				}
-                if (!flag)
-				{
-					var old2 = Console.ForegroundColor;
-					Console.ForegroundColor = ConsoleColor.Yellow;
-					Console.WriteLine("\t 跳过 {0}", ex);
-					Console.ForegroundColor = old2;
-
-					continue;
-				}
-
-                //var file = item.FullName;
-                //if (file.StartsWithIgnoreCase(path)) file = file.TrimStart(path);
+                Console.Write("编译：{0}\t", item);
 
                 var rs = 0;
                 var sw = new Stopwatch();
                 sw.Start();
-                switch (item.Extension.ToLower())
+                switch (Path.GetExtension(item).ToLower())
                 {
                     case ".c":
                     case ".cpp":
-                        rs = Compile(item.FullName);
+                        rs = Compile(item);
                         break;
                     case ".s":
-                        rs = Assemble(item.FullName);
+                        rs = Assemble(item);
                         break;
                     default:
                         break;
@@ -269,7 +237,7 @@ namespace NewLife.Reflection
                 {
                     count++;
 
-                    Objs.Add(obj.CombinePath(Path.GetFileNameWithoutExtension(item.FullName) + ".o"));
+                    Objs.Add(obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o"));
                 }
             }
 
@@ -365,8 +333,12 @@ namespace NewLife.Reflection
 
             foreach (var item in Libs)
             {
-                sb.Append(" ");
-                sb.Append(item);
+				var d = item.Key.EndsWithIgnoreCase("D");
+				if(Debug == d)
+				{
+					sb.Append(" ");
+					sb.Append(item.Value);
+				}
             }
 
             XTrace.WriteLine("链接：{0}", axf);
@@ -386,6 +358,59 @@ namespace NewLife.Reflection
         #endregion
 
         #region 辅助方法
+		/// <summary>添加指定目录所有文件</summary>
+        /// <param name="path">要编译的目录</param>
+        /// <param name="exts">后缀过滤</param>
+        /// <param name="excludes">要排除的文件</param>
+        /// <returns></returns>
+        public Int32 AddFiles(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
+		{
+            // 目标目录也加入头文件搜索
+            AddIncludes(path);
+
+            var count = 0;
+
+            var excs = new HashSet<String>((excludes + "").Split(",", ";"), StringComparer.OrdinalIgnoreCase);
+
+            path = path.GetFullPath().EnsureEnd("\\");
+            if (String.IsNullOrEmpty(exts)) exts = "*.c;*.cpp";
+            foreach (var item in path.AsDirectory().GetAllFiles(exts, allSub))
+            {
+                if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
+
+                Console.Write("添加：{0}\t", item.FullName);
+
+                var flag = true;
+				var ex = "";
+                if (excs.Contains(item.Name)) { flag = false; ex = item.Name; }
+				if(flag)
+				{
+					foreach (var elm in excs)
+					{
+						if (item.Name.Contains(elm)) { flag = false; ex = elm; break; }
+					}
+				}
+                if (!flag)
+				{
+					var old2 = Console.ForegroundColor;
+					Console.ForegroundColor = ConsoleColor.Yellow;
+					Console.WriteLine("\t 跳过 {0}", ex);
+					Console.ForegroundColor = old2;
+
+					continue;
+				}
+				Console.WriteLine();
+
+                if(!Files.Contains(item.FullName))
+				{
+					count++;
+					Files.Add(item.FullName);
+				}
+            }
+			
+			return count;
+		}
+		
         public void AddIncludes(String path, Boolean sub = true, Boolean allSub = true)
         {
             path = path.GetFullPath();
@@ -427,7 +452,7 @@ namespace NewLife.Reflection
             var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (var item in path.AsDirectory().GetFiles("*.lib", opt))
             {
-                var lib = new LibFile(item.FullName, Debug);
+                var lib = new LibFile(item.FullName);
                 // 调试版/发行版 优先选用最佳匹配版本
                 var old = "";
                 // 不包含，直接增加
@@ -437,9 +462,9 @@ namespace NewLife.Reflection
                     _Libs.Add(lib.Name, lib.FullName);
                 }
                 // 已包含，并且新版本更合适，替换
-                else if (lib.Debug == Debug)
+                else //if (lib.Debug == Debug)
                 {
-                    var lib2 = new LibFile(old, Debug);
+                    var lib2 = new LibFile(old);
                     if (lib2.Debug != Debug)
                     {
                         _Libs[lib.Name] = lib.FullName;
@@ -463,16 +488,11 @@ namespace NewLife.Reflection
             /// <summary>是否调试版文件</summary>
             public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
-            public LibFile(String file, Boolean debug)
+            public LibFile(String file)
             {
                 FullName = file;
                 Name = Path.GetFileNameWithoutExtension(file);
                 Debug = Name.EndsWithIgnoreCase("D");
-
-                if (debug)
-                    Name = Name.EnsureEnd("D");
-                else
-                    Name = Name.TrimEnd("D");
             }
         }
         #endregion

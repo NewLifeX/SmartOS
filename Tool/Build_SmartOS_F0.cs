@@ -21,18 +21,21 @@ namespace NewLife.Reflection
             build.Init();
             build.GD32 = true;
 			build.AddIncludes("..\\..\\Lib");
-            build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;I2C;Memory;String");
-            build.CompileAll("..\\Platform", "Boot_F0.cpp");
-            build.CompileAll("..\\Platform", "startup_stm32f0xx.s");
-            build.CompileAll("..\\Security");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
+            build.AddFiles("..\\Platform", "Boot_F0.cpp");
+            build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
+            build.AddFiles("..\\Security");
+            build.AddFiles("..\\App");
+            build.AddFiles("..\\Drivers");
+            build.AddFiles("..\\Net");
+            build.AddFiles("..\\TinyIP", "HttpClient");
+            build.AddFiles("..\\TinyNet");
+            build.AddFiles("..\\TokenNet");
+            build.CompileAll();
             build.BuildLib("..\\SmartOS_F0");
 
 			build.Debug = false;
-            build.Init();
-            build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;I2C;Memory;String");
-            build.CompileAll("..\\Platform", "Boot_F0.cpp");
-            build.CompileAll("..\\Platform", "startup_stm32f0xx.s");
-            build.CompileAll("..\\Security");
+            build.CompileAll();
             build.BuildLib("..\\SmartOS_F0");
         }
     }

@@ -21,30 +21,21 @@ namespace NewLife.Reflection
             build.Init();
 			build.Cortex = 3;
 			build.AddIncludes("..\\..\\Lib");
-            build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
-            build.CompileAll("..\\Platform", "Boot_F1.cpp");
-            build.CompileAll("..\\Platform", "startup_stm32f10x.s");
-            build.CompileAll("..\\Security");
-            build.CompileAll("..\\App");
-            build.CompileAll("..\\Drivers");
-            build.CompileAll("..\\Net");
-            build.CompileAll("..\\TinyIP", "HttpClient");
-            build.CompileAll("..\\TinyNet");
-            build.CompileAll("..\\TokenNet");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
+            build.AddFiles("..\\Platform", "Boot_F0.cpp");
+            build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
+            build.AddFiles("..\\Security");
+            build.AddFiles("..\\App");
+            build.AddFiles("..\\Drivers");
+            build.AddFiles("..\\Net");
+            build.AddFiles("..\\TinyIP", "HttpClient");
+            build.AddFiles("..\\TinyNet");
+            build.AddFiles("..\\TokenNet");
+            build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
 
 			build.Debug = false;
-            build.Init();
-            build.CompileAll("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
-            build.CompileAll("..\\Platform", "Boot_F1.cpp");
-            build.CompileAll("..\\Platform", "startup_stm32f10x.s");
-            build.CompileAll("..\\Security");
-            build.CompileAll("..\\App");
-            build.CompileAll("..\\Drivers");
-            build.CompileAll("..\\Net");
-            build.CompileAll("..\\TinyIP", "HttpClient");
-            build.CompileAll("..\\TinyNet");
-            build.CompileAll("..\\TokenNet");
+            build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
         }
     }
