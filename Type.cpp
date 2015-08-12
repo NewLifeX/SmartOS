@@ -390,6 +390,10 @@ String operator+(const Object& obj, const char* str)
 	return s;
 }
 
+String& operator+(String& str, char ch) { return str.Append(ch); }
+String& operator+(String& str, byte bt) { return str.Append(bt); }
+String& operator+(String& str, int value) { return str.Append(value); }
+
 /******************************** IPAddress ********************************/
 /* IP地址 */
 
@@ -449,7 +453,11 @@ String& IPAddress::ToStr(String& str) const
 {
 	byte* ips = (byte*)&Value;
 
-	str.Format("%d.%d.%d.%d", ips[0], ips[1], ips[2], ips[3]);
+	for(int i=0; i<4; i++)
+	{
+		if(i > 0) str.Append('.');
+		str.Append(ips[i]);
+	}
 
 	return str;
 }
@@ -481,9 +489,10 @@ String& IPEndPoint::ToStr(String& str) const
 {
 	Address.ToStr(str);
 
-	char ss[7];
-	int len = sprintf(ss, ":%d", Port);
-	str.Copy(ss, len, str.Length());
+	//char ss[7];
+	//int len = sprintf(ss, ":%d", Port);
+	//str.Copy(ss, len, str.Length());
+	str.Append(':').Append(Port);
 
 	return str;
 }
@@ -573,7 +582,12 @@ String& MacAddress::ToStr(String& str) const
 {
 	byte* macs = (byte*)&Value;
 
-	str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
+	//str.Format("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
+	for(int i=0; i<6; i++)
+	{
+		if(i > 0) str.Append('-');
+		str.Append(macs[i]);
+	}
 
 	return str;
 }

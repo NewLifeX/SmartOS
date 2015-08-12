@@ -444,8 +444,11 @@ public:
 
     String& operator+=(const Object& obj);
     String& operator+=(const char* str);
-    friend String& operator+(String& str1, const Object& obj);
-    friend String& operator+(String& str1, const char* str2);
+    friend String& operator+(String& str, const Object& obj);
+    friend String& operator+(String& str, const char* str2);
+    friend String& operator+(String& str, char ch);
+    friend String& operator+(String& str, byte bt);
+    friend String& operator+(String& str, int value);
 };
 
 //String operator+(const char* str1, const char* str2);

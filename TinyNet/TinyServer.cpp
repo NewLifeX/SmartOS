@@ -292,16 +292,17 @@ void Device::Read(Stream& ms)
 
 String& Device::ToStr(String& str) const
 {
-	str.Format("ID=0x%02X Type=0x%04X", ID, Type);
-	str.Format(" Name=");
-	str += Name;
-	str.Format(" HardID=");
-	str += HardID;
-	str.Format(" LastTime=");
+	str = str + "ID=0x" + ID;
+	str = str + " Type=" + (byte)(Type >> 8) + (byte)(Type & 0xFF);
+	str = str + " Name=" + Name;
+	str = str + " HardID=" + HardID;
+
 	DateTime dt;
 	dt.Parse(LastTime);
-	str += dt.ToString();
-	str.Format(" Switchs=%d Analogs=%d", Switchs, Analogs);
+	str = str + " LastTime=" + dt.ToString();
+
+	str = str + " Switchs=" + Switchs;
+	str = str + " Analogs=" + Analogs;
 
 	return str;
 }

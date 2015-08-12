@@ -74,15 +74,17 @@ String& DiscoverMessage::ToStr(String& str) const
 	str += "发现";
 	if(!Reply)
 	{
-		str.Format(" Type=%04X", Type);
-		str += " HardID=" + HardID;
-		str.Format(" Version=%d.%d Switchs=%d Analogs=%d", Version >> 8, Version & 0xFF, Switchs, Analogs);
+		str = str + " Type=" + (byte)(Type >> 8) + (byte)(Type & 0xFF);
+		str = str + " HardID=" + HardID;
+		str = str + " Version=" + (Version >> 8) + "." + (Version & 0xFF);
+		str = str + " Switchs=" + Switchs;
+		str = str + " Analogs=" + Analogs;
 	}
 	else
 	{
 		str += "#";
-		str.Format(" ID=0x%02X", ID);
-		str += " Pass=" + Pass;
+		str = str + " ID=" + ID;
+		str = str + " Pass=" + Pass;
 	}
 
 	return str;
