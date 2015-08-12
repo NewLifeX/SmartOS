@@ -397,8 +397,8 @@ String& operator+(String& str, int value) { return str.Append(value); }
 /******************************** IPAddress ********************************/
 /* IP地址 */
 
-const IPAddress IPAddress::Any(0, 0, 0, 0);
-const IPAddress IPAddress::Broadcast(255, 255, 255, 255);
+//const IPAddress IPAddress::Any(0, 0, 0, 0);
+//const IPAddress IPAddress::Broadcast(255, 255, 255, 255);
 
 IPAddress::IPAddress(const byte* ips)
 {
@@ -464,11 +464,11 @@ String& IPAddress::ToStr(String& str) const
 
 /******************************** IPEndPoint ********************************/
 
-const IPEndPoint IPEndPoint::Any(IPAddress::Any, 0);
+//const IPEndPoint IPEndPoint::Any(IPAddress::Any, 0);
 
 IPEndPoint::IPEndPoint()
 {
-	Address = IPAddress::Any;
+	Address = 0;
 	Port = 0;
 }
 
@@ -511,8 +511,8 @@ bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2)
 
 #define MAC_MASK 0xFFFFFFFFFFFFull
 
-const MacAddress MacAddress::Empty(0x0ull);
-const MacAddress MacAddress::Full(MAC_MASK);
+//const MacAddress MacAddress::Empty(0x0ull);
+//const MacAddress MacAddress::Full(MAC_MASK);
 
 MacAddress::MacAddress(ulong v)
 {
@@ -533,7 +533,7 @@ MacAddress::MacAddress(const ByteArray& arr)
 }
 
 // 是否广播地址，全0或全1
-bool MacAddress::IsBroadcast() const { return Value == Empty.Value || Value == Full.Value; }
+bool MacAddress::IsBroadcast() const { return Value == 0 || Value == MAC_MASK; }
 
 MacAddress& MacAddress::operator=(ulong v)
 {

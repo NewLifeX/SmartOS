@@ -487,8 +487,8 @@ public:
     friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }
 
-	static const IPAddress Any;
-	static const IPAddress Broadcast;
+	//static const IPAddress Any;
+	//static const IPAddress Broadcast;
 };
 
 // IP结点
@@ -505,7 +505,7 @@ public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
 
-	static const IPEndPoint Any;
+	//static const IPEndPoint Any;
 };
 
 bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2);
@@ -546,8 +546,8 @@ public:
 		return addr1.Value != addr2.Value;
 	}
 
-	static const MacAddress Empty;
-	static const MacAddress Full;
+	//static const MacAddress Empty;
+	//static const MacAddress Full;
 };
 
 #endif

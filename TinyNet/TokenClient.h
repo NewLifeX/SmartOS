@@ -26,7 +26,7 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 
 	TokenController* Control;
-	UdpSocket*	Udp;	// 用于广播握手消息的UDP
+	//UdpSocket*	Udp;	// 用于广播握手消息的UDP
 
 	TokenClient();
 

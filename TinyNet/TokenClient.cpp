@@ -24,7 +24,7 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	Delay		= 0;
 
 	Control		= NULL;
-	Udp			= NULL;
+	//Udp			= NULL;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -47,11 +47,11 @@ void TokenClient::Open()
 #endif
 
 	// 设置握手广播的本地地址和端口
-	if(Udp)
+	/*if(Udp)
 	{
 		Hello.EndPoint.Address	= Udp->Tip->IP;
 		Hello.EndPoint.Port		= Udp->BindPort;
-	}
+	}*/
 
 	// 令牌客户端定时任务
 	//debug_printf("Token::Open 令牌客户端定时 ");
@@ -175,7 +175,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	ext.Show(true);
 
 	// 如果收到响应，并且来自来源服务器
-	if(msg.Reply && (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast()))
+	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
 	{
 		debug_printf("握手完成，开始登录……\r\n");
 		Status = 1;
@@ -208,11 +208,11 @@ void TokenClient::Login()
 	login.HardID	= ID;
 	login.Key		= Key;
 
-	if(Udp)
+	/*if(Udp)
 	{
 		login.Local.Address = Udp->Tip->IP;
 		login.Local.Port	= Udp->BindPort;
-	}
+	}*/
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
