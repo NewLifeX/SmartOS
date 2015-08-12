@@ -27,7 +27,9 @@ public:
 	virtual void Write(Stream& ms);
 
 	// 显示消息内容
+#if DEBUG
 	virtual String& ToStr(String& str) const;
+#endif
 };
 
 #endif

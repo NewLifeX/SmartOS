@@ -88,6 +88,7 @@ void HelloMessage::Write(Stream& ms)
 	}
 }
 
+#if DEBUG
 // 显示消息内容
 String& HelloMessage::ToStr(String& str) const
 {
@@ -110,3 +111,4 @@ String& HelloMessage::ToStr(String& str) const
 	
 	return str;
 }
+#endif

@@ -69,6 +69,7 @@ void DiscoverMessage::Write(Stream& ms)
 	}
 }
 
+#if DEBUG
 String& DiscoverMessage::ToStr(String& str) const
 {
 	str += "发现";
@@ -89,3 +90,4 @@ String& DiscoverMessage::ToStr(String& str) const
 
 	return str;
 }
+#endif

@@ -39,6 +39,7 @@ void LoginMessage::Write(Stream& ms)
 	ms.Write((ushort)Local.Port);
 }
 
+#if DEBUG
 // 显示消息内容
 String& LoginMessage::ToStr(String& str) const
 {
@@ -48,3 +49,4 @@ String& LoginMessage::ToStr(String& str) const
 
 	return str;
 }
+#endif
