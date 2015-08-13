@@ -534,7 +534,7 @@ DateTime RTC_GetCounter()
 	return dt;
 }
 
-void RTC_SetCounter(DateTime& dt)
+void RTC_SetCounter(DateTime dt)
 {
 	RTC_TimeTypeDef time;
 	RTC_TimeStructInit(&time);
