@@ -114,10 +114,12 @@ public:
 class HardRTC
 {
 public:
-	bool LowPower;	// 是否使用低功耗休眠
+	bool LowPower;	// 是否使用低功耗休眠。默认true
+	bool External;	// 是否使用外部时钟。默认false
 	bool Opened;
+	byte Reversed;
 
-	HardRTC(bool lowpower = true);
+	HardRTC(bool lowpower = true, bool external = false);
 
 	void Init();
 	void LoadTicks();

@@ -439,45 +439,35 @@ void TimeCost::Show(const char* format)
 
 /************************************************ HardRTC ************************************************/
 
-#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
-//#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
-//#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
-
 #ifdef STM32F1
-void RTC_Configuration(bool init)
+void RTC_Configuration(bool init, bool ext)
 {
 	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
 	if(init) BKP_DeInit();
 
-#ifdef RTCClockSource_LSI
-	/* Enable LSI */
-	RCC_LSICmd(ENABLE);
-	/* 等待稳定 */
-	while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
+	if(!ext)
+	{
+		/* Enable LSI */
+		RCC_LSICmd(ENABLE);
+		/* 等待稳定 */
+		while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
 
-	/* Select LSI as RTC Clock Source */
-	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
-#elif defined	RTCClockSource_LSE
-	/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
-	RCC_LSEConfig(RCC_LSE_ON);
-	/* 等待稳定 */
-	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
+		// 使用内部 32 KHz 晶振作为 RTC 时钟源
+		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+	}
+	else
+	{
+		/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
+		RCC_LSEConfig(RCC_LSE_ON);
+		/* 等待稳定 */
+		while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
 
-	/* RTC时钟源配置成LSE（外部32.768K） */
-	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
-#endif
+		// RTC时钟源配置成LSE（外部32.768K）
+		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+	}
 
 	/* 使能RTC时钟 */
 	RCC_RTCCLKCmd(ENABLE);
-
-#ifdef RTCClockOutput_Enable
-	/* Disable the Tamper Pin */
-	BKP_TamperPinCmd(DISABLE); /* To output RTCCLK/64 on Tamper pin, the tamper
-							   functionality must be disabled */
-
-	/* Enable RTC Clock Output on Tamper Pin */
-	BKP_RTCCalibrationClockOutputCmd(ENABLE);
-#endif
 
 	/* 开启后需要等待APB1时钟与RTC时钟同步，才能读写寄存器 */
 	RTC_WaitForSynchro();
@@ -494,11 +484,11 @@ void RTC_Configuration(bool init)
 	if(init)
 	{
 		/* 设置RTC分频器，使RTC时钟为1Hz */
-#ifdef RTCClockSource_LSI
-		//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
-#elif defined	RTCClockSource_LSE
-		//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
-#endif
+		//if(!ext)
+			//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
+		//else
+			//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
+
 		RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
 
 		/* 每一次读写寄存器前，要确定上一个操作已经结束 */
@@ -506,7 +496,7 @@ void RTC_Configuration(bool init)
 	}
 }
 #else
-void RTC_Configuration(void)
+void RTC_Configuration(bool init, bool ext)
 {
 	RTC_WriteProtectionCmd(DISABLE);
 
@@ -576,9 +566,10 @@ static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保
 
 void AlarmHandler(ushort num, void* param);
 
-HardRTC::HardRTC(bool lowpower)
+HardRTC::HardRTC(bool lowpower, bool external)
 {
 	LowPower	= lowpower;
+	External	= external;
 	Opened		= false;
 }
 
@@ -605,7 +596,7 @@ void HardRTC::Init()
 
 	if(ReadBackup(0) != 0xABCD)
 	{
-		RTC_Configuration(true);
+		RTC_Configuration(true, External);
 
 		WriteBackup(0, 0xABCD);
 	}
@@ -613,7 +604,7 @@ void HardRTC::Init()
 	{
 		//虽然RTC模块不需要重新配置，且掉电后依靠后备电池依然运行
 		//但是每次上电后，还是要使能RTCCLK
-		RTC_Configuration(false);
+		RTC_Configuration(false, External);
 
 		// 从RTC还原滴答
 		LoadTicks();
