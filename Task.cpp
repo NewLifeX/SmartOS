@@ -237,6 +237,7 @@ void TaskScheduler::Execute(uint usMax)
 	if(min != UInt64_Max && min > now)
 	{
 		min -= now;
+		//debug_printf("任务空闲休眠 %d ms \r\n", (uint)(min/1000));
 		// 睡眠时间不能过长，否则可能无法喂狗
 		//if(min > 1000) min = 1000;
 		Sleeping = true;

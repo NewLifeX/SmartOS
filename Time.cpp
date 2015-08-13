@@ -194,13 +194,16 @@ void TTime::Sleep(uint us, bool* running)
     if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(_RTC && us >= 10000)
+	if(_RTC && _RTC->LowPower && us >= 10000)
 	{
 		uint ms = us / 1000;
 		_RTC->Sleep(ms);
 		// CPU睡眠是秒级，还有剩余量
 		us %= 1000;
+		us += ms * 1000;
 	}
+    // 睡眠时间太短
+    if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS || !*running) return ;
 
 	// 自己关闭中断，简直实在找死！
 	// Sleep的时候，尽量保持中断打开，否则g_Ticks无法累加，从而造成死循环
@@ -441,10 +444,10 @@ void TimeCost::Show(const char* format)
 //#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
 
 #ifdef STM32F1
-void RTC_Configuration(void)
+void RTC_Configuration(bool init)
 {
 	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
-	BKP_DeInit();
+	if(init) BKP_DeInit();
 
 #ifdef RTCClockSource_LSI
 	/* Enable LSI */
@@ -488,16 +491,19 @@ void RTC_Configuration(void)
 	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
 	//RTC_WaitForLastTask();
 
-	/* 设置RTC分频器，使RTC时钟为1Hz */
+	if(init)
+	{
+		/* 设置RTC分频器，使RTC时钟为1Hz */
 #ifdef RTCClockSource_LSI
-	//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
+		//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
 #elif defined	RTCClockSource_LSE
-	//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
+		//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
 #endif
-	RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
+		RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
 
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	RTC_WaitForLastTask();
+		/* 每一次读写寄存器前，要确定上一个操作已经结束 */
+		RTC_WaitForLastTask();
+	}
 }
 #else
 void RTC_Configuration(void)
@@ -597,31 +603,20 @@ void HardRTC::Init()
 
 	Opened = true;
 
-#if DEBUG
-	// 这句可以清零RTC
-	//RTC_Configuration();
-#endif
 	if(ReadBackup(0) != 0xABCD)
 	{
-		RTC_Configuration();
+		RTC_Configuration(true);
+
 		WriteBackup(0, 0xABCD);
 	}
 	else
 	{
 		//虽然RTC模块不需要重新配置，且掉电后依靠后备电池依然运行
 		//但是每次上电后，还是要使能RTCCLK
-		RCC_RTCCLKCmd(ENABLE);
-
-		/* 等待最近一次对RTC寄存器的写操作完成，也即等待ＲＴＣ寄存器同步 */
-		RTC_WaitForSynchro();
+		RTC_Configuration(false);
 
 		// 从RTC还原滴答
 		LoadTicks();
-
-		/* 使能RTC中断：RTC_IT_SEC秒中断、RTC_IT_OW溢出中断、RTC_IT_ALR闹钟中断 */
-		//RTC_ITConfig(RTC_IT_SEC, ENABLE);
-		/* 等待最近一次对RTC寄存器的写操作完成 */
-		//RTC_WaitForLastTask();
 	}
 
 	if(LowPower)
@@ -678,7 +673,7 @@ void HardRTC::SaveTicks()
 #if TIME_DEBUG
 	if(g_Counter > 0)
 	{
-		debug_printf("LoadTicks 0x%08x\r\n", g_Counter);
+		debug_printf("LoadTicks %llu\r\n", g_Counter);
 
 		DateTime dt(g_Counter * 1000ull);
 		debug_printf("LoadTime: ");
@@ -731,13 +726,13 @@ void HardRTC::Sleep(uint& ms)
 	debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
 	SaveTicks();
 
-	/* Enable the RTC Alarm interrupt */
+	// 打开RTC报警中断
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
-    /* Alarm in 3 second */
+    // 设定报警时间
 #ifdef STM32F1
-    //RTC_SetAlarm(RTC_GetCounter() + ms);
-	RTC_SetCounter(0);
-	RTC_SetAlarm(ms);
+    RTC_SetAlarm(RTC_GetCounter() + ms);
+	//RTC_SetCounter(0);
+	//RTC_SetAlarm(ms);
 #else
 	RTC_AlarmTypeDef alr;
 	RTC_AlarmStructInit(&alr);
@@ -767,7 +762,9 @@ void HardRTC::Sleep(uint& ms)
 	// 进入低功耗模式
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 
-	debug_printf("离开低功耗模式\r\n");
+	ms = 0;
+
+	//debug_printf("离开低功耗模式\r\n");
 }
 
 uint HardRTC::ReadBackup(byte addr)
@@ -827,7 +824,7 @@ void AlarmHandler(ushort num, void* param)
 {
     SmartIRQ irq;
 
-	//HardRTC* rtc = (HardRTC*)param;
+	HardRTC* rtc = (HardRTC*)param;
 
 	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
 	{
@@ -839,5 +836,7 @@ void AlarmHandler(ushort num, void* param)
 		RTC_WaitForLastTask();
 	}
 	SYSCLKConfig_STOP();
-	//rtc->LoadTicks();
+	rtc->LoadTicks();
+
+	//debug_printf("离开低功耗模式\r\n");
 }
