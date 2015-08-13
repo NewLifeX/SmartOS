@@ -29,7 +29,7 @@ public :
 	uint	Channel;	// 使用哪些通道，每个通道一位
 #ifdef STM32F1
 	ushort	Data[18];	// 存放数据
-#elif defined(STM32F0)
+#else
 	ushort	Data[19];	// 存放数据
 #endif
 

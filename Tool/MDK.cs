@@ -96,6 +96,7 @@ namespace NewLife.Reflection
                     Flash = "STM32F10X";
                 else
                     Flash = "STM32F{0}XX".F(value);
+				if (value == 4) CPU += ".fp";
             }
         }
 
