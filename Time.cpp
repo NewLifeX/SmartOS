@@ -1,6 +1,6 @@
 ﻿#include "Time.h"
 
-#define TIME_DEBUG 1
+#define TIME_DEBUG 0
 
 /************************************************ TTime ************************************************/
 
@@ -714,7 +714,9 @@ void HardRTC::Sleep(uint& ms)
 	//int second = ms / 1000;
 	//if(second <= 0) return;
 
+#if TIME_DEBUG
 	debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
+#endif
 	SaveTicks();
 
 	// 打开RTC报警中断
