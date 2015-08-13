@@ -54,9 +54,15 @@ void ADConverter::Open()
 	debug_printf("ADC::Open %d 共%d个通道\r\n", Line, Count);
 
 	/* Enable DMA clock */
+#ifdef STM32F4
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
+
+	ADC_DeInit();
+#else
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
 	ADC_DeInit(_ADC);
+#endif
 	/* Enable _ADC and GPIOC clock */
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC, ENABLE);
 	const int g_ADC_rccs[]= ADC_RCCS;
@@ -76,6 +82,27 @@ void ADConverter::Open()
 	}
 
 	/* DMA channel1 configuration */
+#ifdef STM32F4
+	DMA_DeInit(DMA1_Stream0);
+
+	DMA_InitTypeDef dma;
+	DMA_StructInit(&dma);
+	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
+	//dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
+	//dma.DMA_DIR = DMA_DIR_PeripheralSRC;
+	dma.DMA_BufferSize = Count;
+	dma.DMA_PeripheralInc = DMA_PeripheralInc_Disable;	//外设地址固定
+	dma.DMA_MemoryInc = DMA_MemoryInc_Enable;  			//内存地址固定
+	dma.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;	//半字
+	dma.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	dma.DMA_Mode = DMA_Mode_Circular;								//循环传输
+	dma.DMA_Priority = DMA_Priority_High;
+	//dma.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA1_Stream0, &dma);
+
+	/* Enable DMA channel1 */
+	DMA_Cmd(DMA1_Stream0, ENABLE);
+#else
 	DMA_DeInit(DMA1_Channel1);
 
 	DMA_InitTypeDef dma;
@@ -95,6 +122,7 @@ void ADConverter::Open()
 
 	/* Enable DMA channel1 */
 	DMA_Cmd(DMA1_Channel1, ENABLE);
+#endif
 
 	/* _ADC configuration */
 	ADC_InitTypeDef adc;
