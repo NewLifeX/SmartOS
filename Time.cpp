@@ -199,7 +199,7 @@ void TTime::Sleep(uint us, bool* running)
 		uint ms = us / 1000;
 		_RTC->Sleep(ms);
 		// CPU睡眠是秒级，还有剩余量
-		us %= 10000;
+		us %= 1000;
 	}
 
 	// 自己关闭中断，简直实在找死！
@@ -436,8 +436,8 @@ void TimeCost::Show(const char* format)
 
 /************************************************ HardRTC ************************************************/
 
-//#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
-#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
+#define RTCClockSource_LSI   /* 使用内部 32 KHz 晶振作为 RTC 时钟源 */
+//#define RTCClockSource_LSE   /* 使用外部 32.768 KHz 晶振作为 RTC 时钟源 */
 //#define RTCClockOutput_Enable  /* RTC Clock/64 is output on tamper pin(PC.13) */
 
 #ifdef STM32F1
