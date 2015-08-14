@@ -133,17 +133,15 @@ namespace NewLife.Reflection
         public Int32 Compile(String file)
         {
             /*
-             * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS 
-             * -DSTM32F030 -DUSE_STDPERIPH_DRIVER -DSTM32F0XX -DGD32 -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d" 
-             * 
-             * -c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I..\STM32F1Lib\inc -I..\STM32F1Lib\CMSIS -I..\SmartOS 
-             * -DSTM32F10X_HD -DDEBUG -DUSE_FULL_ASSERT -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d" 
+             * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS
+             * -DSTM32F030 -DUSE_STDPERIPH_DRIVER -DSTM32F0XX -DGD32 -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
+             *
+             * -c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I..\STM32F1Lib\inc -I..\STM32F1Lib\CMSIS -I..\SmartOS
+             * -DSTM32F10X_HD -DDEBUG -DUSE_FULL_ASSERT -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
 
              */
 
-            var objName = "Obj";
-            if (Debug) objName += "D";
-            objName = objName + "\\" + Path.GetFileNameWithoutExtension(file);
+            var objName = GetObjPath(file);
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -163,16 +161,10 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -I{0}", item);
             }
 
-			/*// 中文目录不要输出临时文件，MDK不支持
-			if(Encoding.ASCII.GetByteCount(objName) == Encoding.UTF8.GetByteCount(objName))
-			{
-				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\"", objName);
-				sb.AppendFormat(" --depend \"{0}.d\"", objName);
-			}*/
 			if(Preprocess)
 			{
 				sb.AppendFormat(" -E");
-				sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file));
+				sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file).TrimStart("."));
 			}
 			else
 				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
@@ -184,14 +176,12 @@ namespace NewLife.Reflection
         public Int32 Assemble(String file)
         {
             /*
-             * --cpu Cortex-M3 -g --apcs=interwork --pd "__MICROLIB SETA 1" 
-             * --pd "__UVISION_VERSION SETA 515" --pd "STM32F10X_HD SETA 1" --list ".\Lis\*.lst" --xref -o "*.o" --depend "*.d" 
+             * --cpu Cortex-M3 -g --apcs=interwork --pd "__MICROLIB SETA 1"
+             * --pd "__UVISION_VERSION SETA 515" --pd "STM32F10X_HD SETA 1" --list ".\Lis\*.lst" --xref -o "*.o" --depend "*.d"
              */
 
-            var lstName = "Lst\\" + Path.GetFileNameWithoutExtension(file);
-            var objName = "Obj";
-            if (Debug) objName += "D";
-            objName = objName + "\\" + Path.GetFileNameWithoutExtension(file);
+            var lstName = GetListPath(file);
+            var objName = GetObjPath(file);
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
@@ -213,10 +203,7 @@ namespace NewLife.Reflection
             var count = 0;
 
             // 提前创建临时目录
-            var obj = "Obj";
-            if (Debug) obj += "D";
-            obj.GetFullPath().EnsureDirectory(false);
-            "Lst".GetFullPath().EnsureDirectory(false);
+            var obj = GetObjPath(null);
 
             foreach (var item in Files)
             {
@@ -259,18 +246,7 @@ namespace NewLife.Reflection
         /// <param name="name"></param>
         public void BuildLib(String name = null)
         {
-            if (name.IsNullOrEmpty())
-            {
-                var file = Environment.GetEnvironmentVariable("XScriptFile");
-                if (!file.IsNullOrEmpty())
-                {
-                    file = Path.GetFileNameWithoutExtension(file);
-                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
-                }
-            }
-            if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
-            if (Debug) name = name.EnsureEnd("D");
-
+			name = GetOutputName(name);
             XTrace.WriteLine("链接：{0}", name);
 
             var sb = new StringBuilder();
@@ -291,38 +267,25 @@ namespace NewLife.Reflection
         /// <returns></returns>
         public Int32 Build(String name = null)
         {
-            if (name.IsNullOrEmpty())
-            {
-                var file = Environment.GetEnvironmentVariable("XScriptFile");
-                if (!file.IsNullOrEmpty())
-                {
-                    file = Path.GetFileNameWithoutExtension(file);
-                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
-                }
-            }
-            if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
-            name = Path.GetFileNameWithoutExtension(name);
-            if (Debug) name = name.EnsureEnd("D");
+			name = GetOutputName(name);
+            XTrace.WriteLine("生成：{0}", name);
 
             /*
-             * --cpu Cortex-M3 *.o --library_type=microlib --strict --scatter ".\Obj\SmartOSF1_Debug.sct" 
-             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
-             * --info sizes --info totals --info unused --info veneers 
-             * --list ".\Lis\SmartOSF1_Debug.map" 
-             * -o .\Obj\SmartOSF1_Debug.axf 
-             * 
-             * --cpu Cortex-M0 *.o --library_type=microlib --diag_suppress 6803 --strict --scatter ".\Obj\Smart130.sct" 
-             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
-             * --info sizes --info totals --info unused --info veneers 
-             * --list ".\Lis\Smart130.map" 
-             * -o .\Obj\Smart130.axf 
+             * --cpu Cortex-M3 *.o --library_type=microlib --strict --scatter ".\Obj\SmartOSF1_Debug.sct"
+             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+             * --info sizes --info totals --info unused --info veneers
+             * --list ".\Lis\SmartOSF1_Debug.map"
+             * -o .\Obj\SmartOSF1_Debug.axf
+             *
+             * --cpu Cortex-M0 *.o --library_type=microlib --diag_suppress 6803 --strict --scatter ".\Obj\Smart130.sct"
+             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+             * --info sizes --info totals --info unused --info veneers
+             * --list ".\Lis\Smart130.map"
+             * -o .\Obj\Smart130.axf
              */
 
-            var lstName = "Lst\\" + name;
-            lstName.EnsureDirectory();
-            var objName = "Obj";
-            if (Debug) objName += "D";
-            objName = objName.CombinePath(name);
+            var lstName = GetListPath(name);
+            var objName = GetObjPath(name);
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
@@ -418,10 +381,10 @@ namespace NewLife.Reflection
 					Files.Add(item.FullName);
 				}
             }
-			
+
 			return count;
 		}
-		
+
         public void AddIncludes(String path, Boolean sub = true, Boolean allSub = true)
         {
             path = path.GetFullPath();
@@ -439,7 +402,7 @@ namespace NewLife.Reflection
 				foreach (var item in path.AsDirectory().GetDirectories("*", opt))
 				{
 					if (item.FullName.Contains(".svn")) continue;
-					if (item.Name.EqualIgnoreCase("Lst", "Obj", "Log")) continue;
+					if (item.Name.EqualIgnoreCase("List", "Obj", "ObjRelease", "Log")) continue;
 
 					if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
 					{
@@ -506,7 +469,45 @@ namespace NewLife.Reflection
                 Debug = Name.EndsWithIgnoreCase("D");
             }
         }
-        #endregion
+
+		private String GetOutputName(String name)
+		{
+            if (name.IsNullOrEmpty())
+            {
+                var file = Environment.GetEnvironmentVariable("XScriptFile");
+                if (!file.IsNullOrEmpty())
+                {
+                    file = Path.GetFileNameWithoutExtension(file);
+                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
+                }
+            }
+            if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
+            if (Debug) name = name.EnsureEnd("D");
+
+			return name;
+		}
+
+		private String GetObjPath(String file)
+		{
+            var objName = "Obj";
+            if (!Debug) objName += "Release";
+			objName.GetFullPath().EnsureDirectory(false);
+			if(!file.IsNullOrEmpty())
+				objName += "\\" + Path.GetFileNameWithoutExtension(file);
+
+			return objName;
+		}
+
+		private String GetListPath(String file)
+		{
+            var lstName = "List";
+			lstName.GetFullPath().EnsureDirectory(false);
+			if(!file.IsNullOrEmpty())
+				lstName += "\\" + Path.GetFileNameWithoutExtension(file);
+
+			return lstName;
+		}
+		#endregion
 
         #region 日志
         void WriteLog(String msg)
