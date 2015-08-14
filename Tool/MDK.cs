@@ -148,7 +148,9 @@ namespace NewLife.Reflection
             if (obj.Exists && obj.LastWriteTime > file.AsFile().LastWriteTime) return 0;
 
             var sb = new StringBuilder();
-            sb.AppendFormat("-c --cpp --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
+			sb.Append("-c");
+			if(file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp");
+            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
             sb.AppendFormat(" -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
@@ -317,7 +319,31 @@ namespace NewLife.Reflection
 
             XTrace.WriteLine("链接：{0}", axf);
 
-            var rs = Link.Run(sb.ToString(), 3000, WriteLog);
+            //var rs = Link.Run(sb.ToString(), 3000, WriteLog);
+            var rs = Link.Run(sb.ToString(), 3000, msg =>
+			{
+				if (msg.IsNullOrEmpty()) return;
+				
+				// 引用错误可以删除obj文件，下次编译将会得到解决
+				var p = msg.IndexOf("Undefined symbol");
+				if(p >= 0)
+				{
+					/*var obj = msg.Substring("referred from", ")").Trim();
+					obj = GetObjPath(obj).EnsureEnd(".o");
+					XTrace.WriteLine(obj);*/
+					
+					foreach(var obj in Objs)
+					{
+						if(File.Exists(obj)) File.Delete(obj);
+						var crf = Path.ChangeExtension(obj, ".crf");
+						if(File.Exists(crf)) File.Delete(crf);
+						var dep = Path.ChangeExtension(obj, ".d");
+						if(File.Exists(dep)) File.Delete(dep);
+					}
+				}
+
+				WriteLog(msg);
+			});
             if (rs != 0) return rs;
 
             var bin = name.EnsureEnd(".bin");
@@ -514,12 +540,16 @@ namespace NewLife.Reflection
         {
             if (msg.IsNullOrEmpty()) return;
 
-            //msg = FixWord(msg);
-            if (msg.StartsWithIgnoreCase("错误", "Error") || msg.Contains("Error:"))
+            msg = FixWord(msg);
+            if (msg.StartsWithIgnoreCase("错误", "Error", "致命错误", "Fatal error") || msg.Contains("Error:"))
                 XTrace.Log.Error(msg);
             else
                 XTrace.WriteLine(msg);
         }
+
+        private Dictionary<String, String> _Sections = new Dictionary<String, String>();
+        /// <summary>片段字典集合</summary>
+        public Dictionary<String, String> Sections { get { return _Sections; } set { _Sections = value; } }
 
         private Dictionary<String, String> _Words = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>字典集合</summary>
@@ -528,12 +558,24 @@ namespace NewLife.Reflection
         public String FixWord(String msg)
         {
             #region 初始化
+			if(Sections.Count == 0)
+			{
+				Sections.Add("Fatal error", "致命错误");
+				Sections.Add("fatal error", "致命错误");
+				Sections.Add("Could not open file", "无法打开文件");
+				Sections.Add("No such file or directory", "文件或目录不存在");
+				Sections.Add("Undefined symbol", "未定义标记");
+				Sections.Add("referred from", "引用自");
+				Sections.Add("Program Size", "程序大小");
+				Sections.Add("Finished", "程序大小");
+			}
+			
             if (Words.Count == 0)
             {
                 Words.Add("Error", "错误");
                 Words.Add("Warning", "警告");
                 Words.Add("Warnings", "警告");
-                /*Words.Add("cannot", "不能");
+                Words.Add("cannot", "不能");
                 Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
@@ -565,10 +607,15 @@ namespace NewLife.Reflection
                 Words.Add("architecture", "架构");
                 Words.Add("processor", "处理器");
                 Words.Add("Undefined", "未定义");
-                Words.Add("referred", "引用");*/
+                Words.Add("referred", "引用");
             }
             #endregion
 
+			foreach(var item in Sections)
+			{
+				msg = msg.Replace(item.Key, item.Value);
+			}
+			
             //var sb = new StringBuilder();
             //var ss = msg.Trim().Split(" ", ":", "(", ")");
             //var ss = msg.Trim().Split(" ");
