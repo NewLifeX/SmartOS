@@ -466,6 +466,25 @@ byte W5500::ReadByte(ushort addr, byte socket)
 	return _spi->Write(0x00);
 }
 
+bool W5500::WriteByte2(ushort addr, ushort dat, byte socket)
+{
+	SpiScope sc(_spi);
+
+	SetAddress(addr, 1, socket);
+	_spi->Write16(dat);
+
+	return true;
+}
+
+ushort W5500::ReadByte2(ushort addr, byte socket)
+{
+	SpiScope sc(_spi);
+
+	SetAddress(addr, 0, socket);
+
+	return _spi->Write16(0x00);
+}
+
 void W5500::SetAddress(ushort addr, byte rw, byte socket)
 {
 	// 地址高位在前
@@ -721,6 +740,8 @@ enum S_Status
 
 #define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
 #define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
+#define SocketWrite2(P, D) Host->WriteByte2(offsetof(TSocket, P), D, Index)
+#define SocketRead2(P) Host->ReadByte2(offsetof(TSocket, P), Index)
 #define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
 #define SocketReads(P, bs) Host->ReadFrame(offsetof(TSocket, P), bs, Index)
 
@@ -751,16 +772,12 @@ bool HardSocket::Open()
 	}
 
 	//设置分片长度，参考W5500数据手册，该值可以不修改
-	ByteArray bs(2);
-	bs.Write((ushort)1460);
-	SocketWrites(MSSR, bs);
+	SocketWrite2(MSSR, 1460);
 
 	//设置端口的端口号
-	bs.Write(Local.Port);
-	SocketWrites(PORT, bs);
+	SocketWrite2(PORT, Local.Port);
 	//设置端口目的(远程)端口号
-	bs.Write(Remote.Port);
-	SocketWrites(DPORT, bs);
+	SocketWrite2(DPORT, Remote.Port);
 	//设置端口目的(远程)IP地址
 	SocketWrites(DIPR, Remote.Address.ToArray());
 
@@ -791,24 +808,13 @@ bool HardSocket::Close()
 
 int HardSocket::Read(ByteArray& bs)
 {
-	ushort size = 0;
-	{
-		ByteArray bs2(2);
-		SocketReads(RX_RSR, bs2);
+	ushort size = SocketRead2(RX_RSR);
+	// 没接收到数据则返回
+	if(size == 0) return 0;	
+	
+	if(size > 1460) size = 1460;
 
-		size = bs2.ToUInt16();
-		// 没接收到数据则返回
-		if(size == 0) return 0;	
-		
-		if(size > 1460) size = 1460;
-	}
-
-	ushort offset = 0;
-	{
-		ByteArray bs2(2);
-		SocketReads(RX_RD, bs2);
-		ushort offset = bs2.ToUInt16();
-	}
+	ushort offset = SocketRead2(RX_RD);
 
 	//SPI1_Send_Short(offset);//写16位地址
 	//SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
@@ -818,11 +824,7 @@ int HardSocket::Read(ByteArray& bs)
 	Host->ReadFrame(offset, bs, Index);
 
 	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	{
-		ByteArray bs2(2);
-		bs.Write(offset);
-		SocketWrites(RX_RD, bs);
-	}
+	SocketWrite2(RX_RD, offset);
 	
 	// 启动接收
 	SocketWrite(CR, RECV);
@@ -842,31 +844,16 @@ bool HardSocket::Write(const ByteArray& bs)
 		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
 	}*/
 
+	byte st = SocketRead(SR);
+	if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT) return false;
+
 	bool rs = true;
 
 	// 计算空闲大小
-	ushort size = 0;
-	//while(bs.Length > size)
-	{
-		ByteArray bs2(2);
-		SocketReads(TX_FSR, bs2);
-		size = bs2.ToUInt16();
-
-		byte st = SocketRead(SR);
-		if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT)
-		{
-			rs = false;
-			//break;
-		}
-	}
+	ushort size = SocketRead2(TX_FSR);
 
 	// 数据指针
-	ushort offset = 0;
-	{
-		ByteArray bs2(2);
-		SocketReads(TX_WR, bs2);
-		offset = bs2.ToUInt16();
-	}
+	ushort offset = SocketRead2(TX_WR);
 
 	//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
@@ -896,11 +883,7 @@ bool HardSocket::Write(const ByteArray& bs)
 	}
 
 	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	{
-		ByteArray bs2(2);
-		bs2.Write(offset);
-		SocketWrites(TX_WR, bs2);
-	}
+	SocketWrite2(TX_WR, offset);
 
 	// 启动发送
 	SocketWrite(CR, SEND);

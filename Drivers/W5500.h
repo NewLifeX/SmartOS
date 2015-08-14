@@ -58,6 +58,8 @@ public:
 
 	bool WriteByte(ushort addr, byte dat, byte socket = 0);
 	byte ReadByte(ushort addr, byte socket = 0);
+	bool WriteByte2(ushort addr, ushort dat, byte socket = 0);
+	ushort ReadByte2(ushort addr, byte socket = 0);
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	void SetAddress(ushort addr, byte rw, byte socket = 0);
