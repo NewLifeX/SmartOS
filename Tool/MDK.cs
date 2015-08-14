@@ -55,7 +55,7 @@ namespace NewLife.Reflection
                 AddIncludes(p, false);
                 AddLibs(p);
             }
-            ss = new String[] { "..\\SmartOSLib", "..\\SmartOSLib\\inc", "..\\Lib" };
+            ss = new String[] { "..\\Lib", "..\\SmartOSLib", "..\\SmartOSLib\\inc" };
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
@@ -74,6 +74,10 @@ namespace NewLife.Reflection
         private Boolean _Debug = true;
         /// <summary>是否编译调试版。默认true</summary>
         public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
+
+        private Boolean _Preprocess = false;
+        /// <summary>是否仅预处理文件，不编译。默认false</summary>
+        public Boolean Preprocess { get { return _Preprocess; } set { _Preprocess = value; } }
 
         private String _CPU = "Cortex-M0";
         /// <summary>处理器。默认M0</summary>
@@ -146,7 +150,7 @@ namespace NewLife.Reflection
             if (obj.Exists && obj.LastWriteTime > file.AsFile().LastWriteTime) return 0;
 
             var sb = new StringBuilder();
-            sb.AppendFormat("-c --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
+            sb.AppendFormat("-c --cpp --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
             sb.AppendFormat(" -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
@@ -165,7 +169,13 @@ namespace NewLife.Reflection
 				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\"", objName);
 				sb.AppendFormat(" --depend \"{0}.d\"", objName);
 			}*/
-			sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
+			if(Preprocess)
+			{
+				sb.AppendFormat(" -E");
+				sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file));
+			}
+			else
+				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
             return Complier.Run(sb.ToString(), 3000, WriteLog);
@@ -238,7 +248,7 @@ namespace NewLife.Reflection
                 {
                     count++;
 
-                    Objs.Add(obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o"));
+                    if(!Preprocess) Objs.Add(obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o"));
                 }
             }
 
