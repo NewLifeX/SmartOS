@@ -83,38 +83,38 @@ typedef struct
 
 typedef struct
 {
-	byte MR ;		//0x0000  	// Socket 模式寄存器
-	byte CR ;		//0x0001  	// 配置寄存器 	【较为特殊】【只写，读为0x00】
-	byte IR ;		//0x0002  	// 中断寄存器	 写1清0？？
-	byte SR ;		//0x0003  	// 状态寄存器	【只读】
-	byte PORT[2] ;	//0x0004  	// TCP UDP 模式下端口号  OPEN之前配置好
-	byte DHAR[6] ;	//0x0006  	// 目的MAC,SEND_MAC使用;CONNECT/SEND 命令时ARP获取到的MAC
-	byte DIPR[4] ;	//0x000c  	// 目标IP地址
-	byte DPORT[2] ;	//0x0010  	// 目标端口
-	byte MSSR[2] ;	//0x0012  	// TCP UDP 模式下 MTU 最大传输单元大小  默认最大值
+	byte MR;		//0x0000  	// Socket 模式寄存器
+	byte CR;		//0x0001  	// 配置寄存器 	【较为特殊】【只写，读为0x00】
+	byte IR;		//0x0002  	// 中断寄存器	 写1清0？？
+	byte SR;		//0x0003  	// 状态寄存器	【只读】
+	byte PORT[2];	//0x0004  	// TCP UDP 模式下端口号  OPEN之前配置好
+	byte DHAR[6];	//0x0006  	// 目的MAC,SEND_MAC使用;CONNECT/SEND 命令时ARP获取到的MAC
+	byte DIPR[4];	//0x000c  	// 目标IP地址
+	byte DPORT[2];	//0x0010  	// 目标端口
+	byte MSSR[2];	//0x0012  	// TCP UDP 模式下 MTU 最大传输单元大小  默认最大值
 									// TCP:1460; UDP:1472; MACRAW:1514;
 									// MACRAW 模式时 由于MTU 不在内部处理，默认MTU将会生效
 									// PPPoE 模式下 略
 									// TCP UDP 模式下，传输数据比 MTU大时，数据将会自动划分成默认MTU 单元大小
-	byte Reserved ;		//0x0014
-	byte TOS ;		//0x0015  	// IP包头 服务类型 	OPEN之前配置
-	byte TTL ;		//0x0016  	// 生存时间 TTL 	OPEN之前配置
-	byte Reserved2[7] ;	//0x0017  	-  0x001d
-	byte RXBUF_SIZE ;//0x001e  	// 接收缓存大小   1 2 4 8 16  单位KByte
-	byte TXBUF_SIZE ;//0x001f  	// 发送缓存大小   1 2 4 8 16  单位KByte
-	byte TX_FSR[2] ;	//0x0020  	// 空闲发送寄存器大小
-	byte TX_RD[2] ;	//0x0022  	// 发送读缓存指针
-	byte TX_WR[2] ;	//0x0024  	// 发送写缓存指针
-	byte RX_RSR[2] ;	//0x0026  	// 空闲接收寄存器大小
-	byte RX_RD[2] ;	//0x0028  	// 发送读缓存指针
-	byte RX_WR[2] ;	//0x002a  	// 发送写缓存指针
-	byte IMR ;		//0x002c  	// 中断屏蔽寄存器  结构跟IR一样 0屏蔽  1不屏蔽
-	byte FRAG[2] ;	//0x002d  	// IP包头 分段部分  分段寄存器
+	byte Reserved;		//0x0014
+	byte TOS;		//0x0015  	// IP包头 服务类型 	OPEN之前配置
+	byte TTL;		//0x0016  	// 生存时间 TTL 	OPEN之前配置
+	byte Reserved2[7];	//0x0017  	-  0x001d
+	byte RXBUF_SIZE;//0x001e  	// 接收缓存大小   1 2 4 8 16  单位KByte
+	byte TXBUF_SIZE;//0x001f  	// 发送缓存大小   1 2 4 8 16  单位KByte
+	byte TX_FSR[2];	//0x0020  	// 空闲发送寄存器大小
+	byte TX_RD[2];	//0x0022  	// 发送读缓存指针
+	byte TX_WR[2];	//0x0024  	// 发送写缓存指针
+	byte RX_RSR[2];	//0x0026  	// 空闲接收寄存器大小
+	byte RX_RD[2];	//0x0028  	// 发送读缓存指针
+	byte RX_WR[2];	//0x002a  	// 发送写缓存指针
+	byte IMR;		//0x002c  	// 中断屏蔽寄存器  结构跟IR一样 0屏蔽  1不屏蔽
+	byte FRAG[2];	//0x002d  	// IP包头 分段部分  分段寄存器
 
-	byte KPALVTR ;	//0x002f  	// 只在TCP模式下使用  在线时间寄存器  单位：5s
+	byte KPALVTR;	//0x002f  	// 只在TCP模式下使用  在线时间寄存器  单位：5s
 									// 为0 时  手动SEND_KEEP
 									// > 0 时  忽略SEND_KEEP操作
-} TSocket;
+}TSocket;
 
 #pragma pack(pop)	// 恢复对齐状态
 
@@ -153,7 +153,7 @@ typedef struct : ByteStruct
 	byte WOL:1;			// 网络唤醒 	0关闭，1开启 （收到唤醒包发生中断）
 	byte Reserved3:1;
 	byte RST:1;			// 软件复位 1 复位
-}T_MR;
+}T_Mode;
 
 // IR 不为零中断
 // IMR 为零屏蔽中断
@@ -164,7 +164,7 @@ typedef struct : ByteStruct		// IMR 结构一样
 	byte PPPoE:1;		// PPPoE 连接不可达
 	byte UNREACH:1;		// 目标不可达
 	byte CONFLICT:1;	// IP冲突
-}T_IR;
+}T_Interrupt;
 
 // PHY 配置
 typedef struct : ByteStruct
@@ -275,11 +275,8 @@ bool W5500::Open()
 
 	// 读所有寄存器
 	TGeneral gen;
-	ByteArray bs(sizeof(gen));
-
-	// 一次性全部读出
+	ByteArray bs((byte*)&gen, sizeof(gen));
 	ReadFrame(0, bs);
-	bs.CopyTo((byte*)&gen);
 
 	// 修改各个字段值
 	Gateway.ToArray().CopyTo(gen.GAR);
@@ -295,12 +292,12 @@ bool W5500::Open()
 	else
 		LowLevelTime = gen.INTLEVEL;
 
-	T_MR mr;
+	T_Mode mr;
 	mr.Init(gen.MR);
 	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
 	gen.MR = mr.ToByte();
 
-	T_IR ir;
+	T_Interrupt ir;
 	ir.Init(gen.IMR);
 	ir.UNREACH = 1;		// 目标不可达
 	ir.CONFLICT = 1;	// IP冲突
@@ -355,7 +352,7 @@ void W5500::Reset()
 
 	debug_printf("软件复位 \r\n");
 
-	T_MR mr;
+	T_Mode mr;
 	mr.Init();
 	mr.RST = 1;
 
@@ -375,7 +372,7 @@ void W5500::StateShow()
 	debug_printf("\r\nW5500::State\r\n");
 
 	debug_printf("MR (模式): 		0x%02X   ", gen.MR);
-		T_MR mr;
+		T_Mode mr;
 		mr.Init(gen.MR);
 		debug_printf("WOL: %d   ",mr.WOL);
 		debug_printf("PB: %d   ",mr.PB);
@@ -388,7 +385,7 @@ void W5500::StateShow()
 	debug_printf("SIPR (源IP地址): 	%s\r\n", IP.ToString().GetBuffer());
 	debug_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
 	debug_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
-		T_IR imr;
+		T_Interrupt imr;
 		imr.Init(gen.MR);
 		debug_printf("CONFLICT: %d   ",imr.CONFLICT);
 		debug_printf("UNREACH: %d   ",imr.UNREACH);
@@ -526,7 +523,7 @@ byte W5500::GetSocket()
 {
 	for(byte i = 0;i < 8;i ++)
 	{
-		if(_sockets[i] == NULL)return i ;
+		if(_sockets[i] == NULL)return i;
 	}
 	debug_printf("没有空余的Socket可用了 !\r\n");
 
@@ -534,11 +531,11 @@ byte W5500::GetSocket()
 }
 
 // 注册 Socket
-void W5500::Register(byte Index,HardSocket* handler)
+void W5500::Register(byte Index, HardSocket* handler)
 {
 	if(_sockets[Index] == NULL)
 	{
-		debug_printf("Index: %d 被注册 !\r\n",Index);
+		debug_printf("Index: %d 被注册 !\r\n", Index);
 		_sockets[Index] = handler;
 	}
 	else
@@ -560,7 +557,7 @@ void W5500::OnIRQ()
 	byte dat = ReadByte(offsetof(TGeneral, IR));
 
 	// 分析IR
-	T_IR ir;
+	T_Interrupt ir;
 	ir.Init(dat);
 	if(ir.CONFLICT)
 	{
@@ -640,11 +637,11 @@ typedef struct : ByteStruct
 							// [MFEN] MAC 过滤		条件：【MACRAW 模式】
 							// 		0: 关闭 MAC 过滤，收到网络的所有包
 							//		1：开启 MAC 过滤，只接收广播包和发给自己的包
-}TMR;
+}S_Mode;
 
 // CR 寄存器比较特殊
 // 写入后会自动清零，但命令任然在处理中，为验证命令是否完成，需检查IR或者SnSR寄存器
-enum ECR
+enum S_Command
 {
 	OPEN		= 0x01,	// open 之后，检测 SR 的值
 						// 	MR.Protocol		SR
@@ -694,10 +691,10 @@ typedef struct : ByteStruct
 	byte TIMEOUT:1;		// ARP  TCP 超时被触发
 	byte SEND_OK:1;		// 发送完成
 	byte Reserved:3;
-}TIR;
+}S_Interrupt;
 
 // 状态
-enum ESR
+enum S_Status
 {
 	// 常规状态
 	SOCK_CLOSED		= 0x00,		// 关闭
@@ -729,34 +726,42 @@ enum ESR
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
+	Host = host;
 	Protocol = protocol;
 	if(!host)
 	{
-		Host = host;
 		Index = host->GetSocket();
-		if(Index < 8)
-			host->Register(Index , this);
+		if(Index < 8) host->Register(Index, this);
 	}
 }
 
 HardSocket::~HardSocket()
 {
+	Host->Register(Index, NULL);
 }
 
 bool HardSocket::Open()
 {
+	if(!Local.Port)
+	{
+		// 累加端口
+		static ushort g_port = 1024;
+		if(g_port < 1024) g_port = 1024;
+		Local.Port = g_port++;
+	}
+
 	//设置分片长度，参考W5500数据手册，该值可以不修改
 	ByteArray bs(2);
-	bs.Write(1460);
+	bs.Write((ushort)1460);
 	SocketWrites(MSSR, bs);
 
-	//设置端口0的端口号
+	//设置端口的端口号
 	bs.Write(Local.Port);
 	SocketWrites(PORT, bs);
-	//设置端口0目的(远程)端口号
+	//设置端口目的(远程)端口号
 	bs.Write(Remote.Port);
 	SocketWrites(DPORT, bs);
-	//设置端口0目的(远程)IP地址
+	//设置端口目的(远程)IP地址
 	SocketWrites(DIPR, Remote.Address.ToArray());
 
 	SocketWrite(MR, Protocol);	// 设置Socket为UDP模式
@@ -779,112 +784,149 @@ bool HardSocket::Open()
 bool HardSocket::Close()
 {
 	SocketWrite(CR, CLOSE);	//打开不成功,关闭Socket
+	SocketWrite(IR, 0xFF);
 
 	return true;
 }
 
-/*int HardSocket::Read(ByteArray& bs)
+int HardSocket::Read(ByteArray& bs)
 {
-	ByteArray bs2(2);
-	SocketReads(RX_RSR, bs2);
-
-	ushort size = bs.ToUInt16();
-	if(size == 0) return 0;	//没接收到数据则返回
-	if(size > 1460) size = 1460;
-
-	SocketReads(RX_RD, bs2);
-	ushort offset = bs2.ToUInt16();
-	ushort offset1 = offset;
-	offset &= S_RX_SIZE - 1;	//计算实际的物理地址
-
-	SPI1_Send_Short(offset);//写16位地址
-	SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
-	j = SPI_I2S_ReceiveData(SPI1);
-
-	if((offset+size)<S_RX_SIZE)//如果最大地址未超过W5500接收缓冲区寄存器的最大地址
+	ushort size = 0;
 	{
-		for(i=0;i<size;i++)//循环读取rx_size个字节数据
-		{
-			SPI1_Send_Byte(0x00);//发送一个哑数据
-			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
-			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
-			dat_ptr++;//数据保存缓冲区指针地址自增1
-		}
+		ByteArray bs2(2);
+		SocketReads(RX_RSR, bs2);
+
+		size = bs2.ToUInt16();
+		// 没接收到数据则返回
+		if(size == 0) return 0;	
+		
+		if(size > 1460) size = 1460;
 	}
-	else//如果最大地址超过W5500接收缓冲区寄存器的最大地址
+
+	ushort offset = 0;
 	{
-		offset=S_RX_SIZE-offset;
-		for(i=0;i<offset;i++)//循环读取出前offset个字节数据
-		{
-			SPI1_Send_Byte(0x00);//发送一个哑数据
-			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
-			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
-			dat_ptr++;//数据保存缓冲区指针地址自增1
-		}
-		GPIO_SetBits(W5500_SCS_PORT, W5500_SCS); //置W5500的SCS为高电平
-
-		GPIO_ResetBits(W5500_SCS_PORT, W5500_SCS);//置W5500的SCS为低电平
-
-		SPI1_Send_Short(0x00);//写16位地址
-		SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
-		j=SPI_I2S_ReceiveData(SPI1);
-
-		for(;i<size;i++)//循环读取后rx_size-offset个字节数据
-		{
-			SPI1_Send_Byte(0x00);//发送一个哑数据
-			j=SPI_I2S_ReceiveData(SPI1);//读取1个字节数据
-			*dat_ptr=j;//将读取到的数据保存到数据保存缓冲区
-			dat_ptr++;//数据保存缓冲区指针地址自增1
-		}
+		ByteArray bs2(2);
+		SocketReads(RX_RD, bs2);
+		ushort offset = bs2.ToUInt16();
 	}
-	GPIO_SetBits(W5500_SCS_PORT, W5500_SCS); //置W5500的SCS为高电平
 
-	offset1+=size;//更新实际物理地址,即下次读取接收到的数据的起始地址
-	Write_W5500_SOCK_2Byte(s, Sn_RX_RD, offset1);
-	Write_W5500_SOCK_1Byte(s, Sn_CR, RECV);//发送启动接收命令
+	//SPI1_Send_Short(offset);//写16位地址
+	//SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
+	//j = SPI_I2S_ReceiveData(SPI1);
+
+	// 这里需要考虑收到的数据被截成前后两段的情况
+	Host->ReadFrame(offset, bs, Index);
+
+	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
+	{
+		ByteArray bs2(2);
+		bs.Write(offset);
+		SocketWrites(RX_RD, bs);
+	}
+	
+	// 启动接收
+	SocketWrite(CR, RECV);
+
+	// 等待操作完成
+	while(SocketRead(CR));
+	
 	return size;//返回接收到数据的长度
 }
 
 bool HardSocket::Write(const ByteArray& bs)
 {
-	//如果是UDP模式,可以在此设置目的主机的IP和端口号
+	/*//如果是UDP模式,可以在此设置目的主机的IP和端口号
 	if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//如果Socket打开失败
 	{
 		Write_W5500_SOCK_4Byte(s, Sn_DIPR, UDP_DIPR);//设置目的主机IP
 		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
+	}*/
+
+	bool rs = true;
+
+	// 计算空闲大小
+	ushort size = 0;
+	//while(bs.Length > size)
+	{
+		ByteArray bs2(2);
+		SocketReads(TX_FSR, bs2);
+		size = bs2.ToUInt16();
+
+		byte st = SocketRead(SR);
+		if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT)
+		{
+			rs = false;
+			//break;
+		}
 	}
 
-	ByteArray bs2(2);
-	SocketReads(TX_WR, bs2);
-	ushort offset = bs2.ToUInt16();
-	ushort offset1 = offset;
-	offset &= (S_TX_SIZE - 1);	//计算实际的物理地址
+	// 数据指针
+	ushort offset = 0;
+	{
+		ByteArray bs2(2);
+		SocketReads(TX_WR, bs2);
+		offset = bs2.ToUInt16();
+	}
 
 	//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
 	// 如果最大地址超过发送缓冲区寄存器的最大地址
-	if((offset + size) >= S_TX_SIZE)
-		offset = S_TX_SIZE - offset;
-		SocketWrites(offset, bs);
+	uint len = bs.Length();
+	if((offset + len) > size)
+	{
+		// 只写前面一截数据
+		ByteArray bs2(bs.GetBuffer(), size);
+		//SocketWrites(offset, bs2);
+		Host->WriteFrame(offset, bs2, Index);
 
 		//SPI1_Send_Short(0x00);//写16位地址
 		//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
-		ByteArray bs2(size);
-		bs2.Copy(bs, size, 0);
-		bs.SetLength(0);
-		bs = bs2;
+		// 后面的数据
+		bs2.Set(bs.GetBuffer() + size, len - size);
+		Host->WriteFrame(offset, bs2, Index);
 
-		offset = 0x00;
+		offset = len - size;
 	}
-	SocketWrites(offset, bs);
+	else
+	{
+		Host->WriteFrame(offset, bs, Index);
 
-	offset1 += size;//更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	bs.SetLength(2);
-	bs.Write(offset1);
-	SocketWrites(TX_WR, bs);
+		offset += len;
+	}
+
+	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
+	{
+		ByteArray bs2(2);
+		bs2.Write(offset);
+		SocketWrites(TX_WR, bs2);
+	}
+
+	// 启动发送
 	SocketWrite(CR, SEND);
-}*/
+
+	// 等待操作完成
+	while(SocketRead(CR));
+
+	S_Interrupt ir;
+	while(true)
+	{
+		ir.Init(SocketRead(IR));
+		if(ir.SEND_OK) break;
+		
+		byte st = SocketRead(SR);
+		if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT)
+		{
+			debug_printf("SEND_OK Problem!!\r\n");
+			Close();
+
+			return 0;
+		}
+	}
+	SocketWrite(IR, ir.ToByte());
+
+	return rs;
+}
 
 bool TcpClient::Open()
 {
@@ -894,25 +936,31 @@ bool TcpClient::Open()
 
 	SocketWrite(CR, CONNECT);
 
-	/*do
+	// 等待操作完成
+	while(SocketRead(CR));
+
+	while(SocketRead(SR) != SOCK_SYNSENT)
 	{
-		byte dat = SocketRead(IR);//读取Socket0中断标志寄存器
-		if(dat != 0) SocketWrite(IR, dat);
-		Sys.Sleep(5);	//延时5ms
+		if(SocketRead(SR) == SOCK_ESTABLISHE) return true;
 
-		TIR ir;
-		ir.Init(dat);
-
-		if(ir.TIMEOUT) return false;
-
-		if(SocketRead(DHAR) != 0xff)
+		S_Interrupt ir;
+		ir.Init(SocketRead(IR));
+		if(ir.TIMEOUT)
 		{
-			SocketWrite(CR, CLOSE);	//关闭Socket
-			return true;
+			// 清除超时中断
+			SocketWrite(IR, ir.TIMEOUT);
+			return false;
 		}
-	}while(1);*/
+	}
 
 	return true;
+}
+
+bool TcpClient::Close()
+{
+	SocketWrite(CR, DISCON);
+
+	return HardSocket::Close();
 }
 
 bool TcpClient::Listen()

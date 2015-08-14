@@ -123,6 +123,7 @@ public:
 	TcpClient(W5500* host) : HardSocket(host, 0x01) { }
 
 	virtual bool Open();
+	virtual bool Close();
 	bool Listen();
 };
 
