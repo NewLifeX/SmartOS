@@ -178,7 +178,7 @@ namespace NewLife.Reflection
 				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
-            return Complier.Run(sb.ToString(), 3000, WriteLog);
+            return Complier.Run(sb.ToString(), 100, WriteLog);
         }
 
         public Int32 Assemble(String file)
@@ -204,7 +204,7 @@ namespace NewLife.Reflection
             sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
             sb.AppendFormat(" \"{0}\"", file);
 
-            return Asm.Run(sb.ToString(), 3000, WriteLog);
+            return Asm.Run(sb.ToString(), 100, WriteLog);
         }
 
         public Int32 CompileAll()
