@@ -54,7 +54,7 @@ void Music::Sound()
 	}
 }
 
-void Music::Sound(Tune *tune,int num)
+void Music::Sound(const Tune* tune,int num)
 {
 	SetTuneSet(tune,num);
 	Sound();
@@ -66,13 +66,13 @@ void Music::Unsound()
 	Sounding = false;
 }
 
-void Music::SetTuneSet(Tune * tune,int num)
+void Music::SetTuneSet(const Tune* tune,int num)
 {
-	if(Sounding)
-		Unsound();
+	if(Sounding) Unsound();
+	
 	if(tune != NULL && num != NULL)
 	{
-		_tuneSet = tune;
+		_tuneSet = (Tune*)tune;
 		_tuneNum = num;
 	}
 }
