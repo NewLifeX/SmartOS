@@ -211,8 +211,8 @@ namespace NewLife.Reflection
                 var fromelf = mdk.CombinePath("ARMCC\\bin\\fromelf.exe");
                 //var bin = Path.GetFileNameWithoutExtension(axf) + ".bin";
                 var prj = Path.GetFileNameWithoutExtension(GetProjectFile());
-                if (Path.GetFileNameWithoutExtension(axf).EndsWithIgnoreCase("_Debug"))
-                    prj += "_Debug";
+                if (Path.GetFileNameWithoutExtension(axf).EndsWithIgnoreCase("D"))
+                    prj += "D";
                 var bin = prj + ".bin";
                 var bin2 = bin.GetFullPath();
                 //Process.Start(fromelf, String.Format("--bin {0} -o {1}", axf, bin2));
