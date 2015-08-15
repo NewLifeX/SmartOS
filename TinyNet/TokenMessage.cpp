@@ -370,12 +370,9 @@ void TokenController::ShowMessage(string action, Message& msg)
 			Stream ms(msg.Data + 1, msg.Length - 1);
 			ms.ReadString().Show(false);
 		}
-		debug_printf("\r\n");
 	}
-	else
-	{
-		msg.Show();
-	}
+
+	msg.Show();
 #endif
 }
 

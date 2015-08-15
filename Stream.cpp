@@ -306,7 +306,7 @@ uint Stream::ReadString(String& str)
 String Stream::ReadString()
 {
 	String str;
-	WriteString(str);
+	ReadString(str);
 
 	return str;
 }
