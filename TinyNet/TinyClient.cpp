@@ -218,7 +218,8 @@ void TinyClient::Ping()
 	TinyMessage msg;
 	msg.Code = 2;
 
-	_control->Broadcast(msg);
+	//_control->Broadcast(msg);
+	Send(msg);
 
 	if(LastActive == 0) LastActive = Time.Current();
 }
