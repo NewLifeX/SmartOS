@@ -223,9 +223,11 @@ void TokenClient::Login()
 bool TokenClient::OnLogin(TokenMessage& msg)
 {
 	Stream ms(msg.Data, msg.Length);
-	byte result = ms.Read<byte>();
+	
+	//新令牌已经没有状态字节 
+	// byte result = ms.Read<byte>();
 
-	if(!result)
+	if(!msg.Error)
 	{
 		Status = 2;
 		debug_printf("登录成功！\r\n");
@@ -245,6 +247,8 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 登录失败，清空令牌
 		Token = 0;
 
+		byte result = ms.Read<byte>();
+		
 		if(result == 0xFF) Status = 0;
 
 		debug_printf("登录失败，错误码 0x%02X！", result);
