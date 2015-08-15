@@ -22,8 +22,8 @@ bool DiscoverMessage::Read(Stream& ms)
 	}
 	else
 	{
-		ID = ms.Read<byte>();
-		Pass = ms.ReadArray();
+		Address	= ms.Read<byte>();
+		Pass	= ms.ReadArray();
 	}
 
 	return true;
@@ -42,7 +42,7 @@ void DiscoverMessage::Write(Stream& ms)
 	}
 	else
 	{
-		ms.Write(ID);
+		ms.Write(Address);
 		ms.WriteArray(Pass);
 	}
 }
@@ -62,7 +62,7 @@ String& DiscoverMessage::ToStr(String& str) const
 	else
 	{
 		str += "#";
-		str = str + " ID=" + ID;
+		str = str + " Address=" + Address;
 		str = str + " Pass=" + Pass;
 	}
 

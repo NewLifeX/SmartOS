@@ -156,7 +156,7 @@ bool TinyClient::Discover(Message& msg, void* param)
 	dm.ReadMessage(msg);
 	dm.Show(true);
 
-	ctrl->Address		= dm.ID;
+	ctrl->Address		= dm.Address;
 	client->Password	= dm.Pass;
 
 	// 记住服务端地址

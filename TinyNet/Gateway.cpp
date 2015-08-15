@@ -52,7 +52,7 @@ void Gateway::Start()
 	if(Server->Devices.Count() == 0)
 	{
 		Device* dv = new Device();
-		dv->ID			= 1;
+		dv->Address		= 1;
 		dv->Type		= Sys.Code;
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
@@ -116,8 +116,8 @@ bool Gateway::OnLocal(TinyMessage& msg)
 	{
 		// 短时间内注册或者登录
 		ulong now = Time.Current() - 500000;
-		if(dv->RegTime > now) DeviceRegister(dv->ID);
-		if(dv->LoginTime > now) DeviceOnline(dv->ID);
+		if(dv->RegTime > now) DeviceRegister(dv->Address);
+		if(dv->LoginTime > now) DeviceOnline(dv->Address);
 	}
 
 	// 消息转发
@@ -203,7 +203,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 	{
 		int i = 0;
 		for(i=0; i<Server->Devices.Count(); i++)
-			rs.Data[i] = Server->Devices[i]->ID;
+			rs.Data[i] = Server->Devices[i]->Address;
 		rs.Length = i;
 	}
 
