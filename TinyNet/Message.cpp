@@ -6,7 +6,8 @@ Message::Message(byte code)
 	Code	= code;
 	Length	= 0;
 	Data	= NULL;
-	Reply	= 0;
+	Reply	= false;
+	Error	= false;
 }
 
 /*Message::Message(Message& msg)
