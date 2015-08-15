@@ -178,7 +178,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			TinyMessage rs;
 			rs.Code = msg.Code;
 			rs.Dest = msg.Src;
-			rs.Seq	= msg.Req;
+			rs.Sequence	= msg.Sequence;
 
 			// 发现响应
 			DiscoverMessage dm;
@@ -197,6 +197,8 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(TinyMessage& msg)
 {
+	if(!msg.Reply) Reply(msg);
+
 	return true;
 }
 
