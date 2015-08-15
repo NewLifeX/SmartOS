@@ -291,11 +291,11 @@ void Gateway::DeviceRegister(byte id)
 	debug_printf("节点注册入网 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
-	if(AutoReport)
-	{
-		Device* dv = Server->FindDevice(id);
-		SendDeviceInfo(dv);
-	}
+	//if(AutoReport)
+	//{
+	//	Device* dv = Server->FindDevice(id);
+	//	SendDeviceInfo(dv);
+	//}
 }
 
 // 节点上线 0x23
@@ -308,11 +308,11 @@ void Gateway::DeviceOnline(byte id)
 	debug_printf("节点上线 ID=0x%02X\r\n", id);
 
 	Client->Send(msg);
-	if(AutoReport)
-	{
-		Device* dv = Server->FindDevice(id);
-		SendDeviceInfo(dv);
-	}
+	//if(AutoReport)
+	//{
+	//	Device* dv = Server->FindDevice(id);
+	//	SendDeviceInfo(dv);
+	//}
 }
 
 // 节点离线 0x24
@@ -332,7 +332,7 @@ void Gateway::DeviceOffline(byte id)
 	}
 }
 
-// 节点离线 0x26
+// 节点删除 0x26
 void Gateway::OnDeviceDelete(Message& msg)
 {
 	if(msg.Reply) return;
