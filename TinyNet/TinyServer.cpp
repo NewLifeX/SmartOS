@@ -178,6 +178,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			TinyMessage rs;
 			rs.Code = msg.Code;
 			rs.Dest = msg.Src;
+			rs.Seq	= msg.Req;
 
 			// 发现响应
 			DiscoverMessage dm;
