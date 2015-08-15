@@ -64,11 +64,13 @@ public:
 
 	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
 	uint ReadArray(ByteArray& bs);
+	ByteArray ReadArray();
 	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteArray(const ByteArray& bs);
 
 	// 从数据流读取变长数据到字符串。以压缩整数开头表示长度
 	uint ReadString(String& str);
+	String ReadString();
 	// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteString(const String& str);
 

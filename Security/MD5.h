@@ -8,7 +8,7 @@ class MD5
 {
 public:
 	// 散列
-	static void Hash(const ByteArray& data, ByteArray& hash);
+	static ByteArray Hash(const ByteArray& data);
 };
 
 #endif

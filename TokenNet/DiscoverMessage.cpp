@@ -14,38 +14,16 @@ bool DiscoverMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{
-		Type = ms.Read<ushort>();
-
-		// 兼容旧版本，固定20字节的ID
-		if(ms.Remain() == 20)
-		{
-			HardID.SetLength(20);
-			ms.Read(HardID);
-		}
-		else
-		{
-			ms.ReadArray(HardID);
-
-			if(ms.Remain() > 0)
-			{
-				Version	= ms.Read<ushort>();
-				Switchs	= ms.Read<byte>();
-				Analogs	= ms.Read<byte>();
-			}
-		}
+		Type	= ms.Read<ushort>();
+		HardID	= ms.ReadArray();
+		Version	= ms.Read<ushort>();
+		Switchs	= ms.Read<byte>();
+		Analogs	= ms.Read<byte>();
 	}
 	else
 	{
 		ID = ms.Read<byte>();
-
-		// 兼容旧版本，固定8字节密码
-		if(ms.Remain() == 8)
-		{
-			Pass.SetLength(8);
-			ms.Read(Pass);
-		}
-		else
-			ms.ReadArray(Pass);
+		Pass = ms.ReadArray();
 	}
 
 	return true;

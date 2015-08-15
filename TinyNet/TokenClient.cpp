@@ -237,8 +237,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 这里可能有通信秘密
 		if(ms.Remain() > 0)
 		{
-			ByteArray bs;
-			ms.ReadArray(bs);
+			ByteArray bs = ms.ReadArray();
 			if(bs.Length() > 0) Control->Key = bs;
 		}
 	}
@@ -292,10 +291,8 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
 
 	Stream ms(msg.Data, msg.Length);
-	ByteArray bs;
-	ms.ReadArray(bs);
 
-	ulong start = bs.ToUInt64();
+	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(Time.Current() - start);
 	if(cost < 0) cost = -cost;
 	if(Delay)

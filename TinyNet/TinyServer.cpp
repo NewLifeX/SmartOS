@@ -179,7 +179,7 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			// 生成随机密码。当前时间的MD5
 			ulong now = Time.Current();
 			ByteArray bs((byte*)&now, 8);
-			MD5::Hash(bs, dv->Pass);
+			dv->Pass = MD5::Hash(bs);
 
 			// 响应
 			TinyMessage rs;
@@ -293,11 +293,12 @@ void Device::Read(Stream& ms)
 {
 	ID		= ms.Read<byte>();
 	Type	= ms.Read<ushort>();
-	ms.ReadArray(HardID);
+	//ms.ReadArray(HardID);
+	HardID	= ms.ReadArray();
 	LastTime= ms.Read<ulong>();
 	Switchs	= ms.Read<byte>();
 	Analogs	= ms.Read<byte>();
-	ms.ReadString(Name);
+	Name	= ms.ReadString();
 }
 
 String& Device::ToStr(String& str) const

@@ -367,13 +367,8 @@ void TokenController::ShowMessage(string action, Message& msg)
 		debug_printf("Code=0x%02X Error=0x%02X ", msg.Code, msg.Data[0]);
 		if(msg.Data[0] == 0x01)
 		{
-			//String str((char*)&msg.Data[1], msg.Length - 1);
-			//str.Show(false);
-			Stream ms(msg.Data, msg.Length);
-			ms.SetPosition(1);
-			String str;
-			ms.ReadString(str);
-			str.Show(false);
+			Stream ms(msg.Data + 1, msg.Length - 1);
+			ms.ReadString().Show(false);
 		}
 		debug_printf("\r\n");
 	}

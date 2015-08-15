@@ -152,11 +152,6 @@ bool TinyClient::Discover(Message& msg, void* param)
 	TinyController* ctrl = (TinyController*)client->_control;
 
 	// 解析数据
-	/*Stream ms(msg.Data, msg.Length);
-	if(ms.Remain())
-		ctrl->Address = ms.Read<byte>();
-	if(ms.Remain() >= 8)
-		ms.ReadArray(client->Password);*/
 	DiscoverMessage dm;
 	dm.ReadMessage(msg);
 	dm.Show(true);

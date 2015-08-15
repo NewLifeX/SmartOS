@@ -27,9 +27,7 @@ void LoginMessage::Write(Stream& ms)
 	ms.WriteArray(HardID);
 
 	// 密码取MD5后传输
-	ByteArray bs;
-	MD5::Hash(Key, bs);
-	ms.WriteArray(bs);
+	ms.WriteArray(MD5::Hash(Key));
 
 	ulong now = Time.Current();
 	Salt.Set((byte*)&now, 8);

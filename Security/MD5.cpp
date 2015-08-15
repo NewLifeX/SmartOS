@@ -112,7 +112,7 @@ void md5_process(md5_context *ctx, byte data[64] )
     P( B, C, D, A, 12, 20, 0x8D2A4C8A );
 
 #undef F
-    
+
 #define F(x,y,z) (x ^ y ^ z)
 
     P( A, B, C, D,  5,  4, 0xFFFA3942 );
@@ -226,11 +226,15 @@ void md5_finish(md5_context *ctx, byte digest[16] )
     PUT_UINT32( ctx->state[3], digest, 12 );
 }
 
-void MD5::Hash(const ByteArray& data, ByteArray& hash)
+ByteArray MD5::Hash(const ByteArray& data)
 {
 	md5_context context;
 	md5_starts(&context);
 	md5_update(&context, data.GetBuffer(), data.Length());
+
+	ByteArray hash;
 	hash.SetLength(16);
 	md5_finish(&context, hash.GetBuffer());
+
+	return hash;
 }

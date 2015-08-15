@@ -152,7 +152,7 @@ bool Stream::Write(byte* buf, uint offset, uint count)
 	//Length += count;
 	// 内容长度不是累加，而是根据位置而扩大
 	if(_Position > Length) Length = _Position;
-	
+
 	return true;
 }
 
@@ -275,6 +275,15 @@ uint Stream::ReadArray(ByteArray& bs)
 	return len;
 }
 
+// 读取字节数组返回。不用担心有临时变量的构造和析构，RVO会为我们排忧解难
+ByteArray Stream::ReadArray()
+{
+	ByteArray bs;
+	ReadArray(bs);
+
+	return bs;
+}
+
 // 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 bool Stream::WriteArray(const ByteArray& bs)
 {
@@ -294,6 +303,13 @@ uint Stream::ReadString(String& str)
 	return len;
 }
 
+String Stream::ReadString()
+{
+	String str;
+	WriteString(str);
+
+	return str;
+}
 // 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
 bool Stream::WriteString(const String& str)
 {

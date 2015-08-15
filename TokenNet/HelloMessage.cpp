@@ -45,14 +45,14 @@ bool HelloMessage::Read(Stream& ms)
 
 	if(!Reply)
 	{
-		ms.ReadArray(Ciphers);
+		Ciphers = ms.ReadArray();
 	}
 	else
 	{
 		Ciphers[0]	= ms.Read<byte>();
 		// 读取数组前，先设置为0，避免实际长度小于数组长度
 		Key.SetLength(0);
-		ms.ReadArray(Key);
+		Key = ms.ReadArray();
 	}
 
 	return false;
