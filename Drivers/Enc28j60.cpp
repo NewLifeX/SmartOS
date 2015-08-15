@@ -1,8 +1,8 @@
 ﻿#include "Time.h"
 #include "Enc28j60.h"
 
-#define ENC_DEBUG DEBUG
-#define NET_DEBUG DEBUG
+#define ENC_DEBUG 0
+#define NET_DEBUG 0
 
 // ENC28J60 控制寄存器
 // 控制寄存器是地址、Bank和Ethernet/MAC/PHY 的组合地址
