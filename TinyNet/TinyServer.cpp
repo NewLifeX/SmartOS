@@ -135,6 +135,13 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 
 			debug_printf("发现ID=0x%02X已分配，为当前节点分配 0x%02X\r\n", msg.Src, id);
 		}
+		else
+		{
+			id = Devices.Count() + 1;
+			// 注意，网关可能来不及添加
+			if(id <= 1) id = 2;
+			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", msg.Src, id);
+		}
 
 		dv = new Device();
 		dv->ID		= id;
