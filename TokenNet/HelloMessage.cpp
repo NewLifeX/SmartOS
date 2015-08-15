@@ -35,8 +35,8 @@ bool HelloMessage::Read(Stream& ms)
 {
 	Version		= ms.Read<ushort>();
 
-	ms.ReadString(Type.Clear());
-	ms.ReadString(Name.Clear());
+	Type		= ms.ReadString();
+	Name		= ms.ReadString();
 
 	LocalTime	= ms.Read<ulong>();
 
