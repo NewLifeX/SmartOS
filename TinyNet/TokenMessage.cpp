@@ -94,20 +94,21 @@ void TokenMessage::Show() const
 #if MSG_DEBUG
 	assert_ptr(this);
 
-	debug_printf("Code=0x%02X", Code);
 
 	byte code = Code;
-	if(Reply)
+	if(Reply) code |= 0x80;
+	if(Error) code |= 0x40;
+
+	debug_printf("Code=0x%02X", code);
+	if(Reply || Error)
 	{
-		code |= 0x80;
-		debug_printf("Reply ");
+		if(Error)
+			debug_printf(" Error");
+		else if(Reply)
+			debug_printf(" Reply");
+		debug_printf(" _Code=0x%02X", Code);
 	}
-	if(Error)
-	{
-		code |= 0x40;
-		debug_printf("Error ");
-	}
-	if(Reply || Error) debug_printf("_Code=0x%02X", code);
+
 	if(Length > 0)
 	{
 		assert_ptr(Data);
