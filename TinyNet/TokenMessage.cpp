@@ -16,6 +16,7 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 
 	_Code	= 0;
 	_Reply	= 0;
+	_Error	= 0;
 	_Length	= 0;
 }
 
@@ -26,13 +27,16 @@ bool TokenMessage::Read(Stream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	byte temp = ms.Read<byte>();
-	_Code	= temp & 0x7f;
+	_Code	= temp & 0x3f;
 	_Reply	= temp >> 7;
+	_Error	= (temp >> 6) & 0x01;
 	_Length	= ms.Read<byte>();
+
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;
 	Reply	= _Reply;
+	Error	= _Error;
 
 	if(ms.Remain() < Length) return false;
 
@@ -46,16 +50,14 @@ bool TokenMessage::Read(Stream& ms)
 void TokenMessage::Write(Stream& ms)
 {
 	assert_ptr(this);
+
 	// 实际数据拷贝到占位符
 	_Code	= Code;
 	_Reply	= Reply;
+	_Error	= Error;
 	_Length	= Length;
-	/*TokenMessage* p = (TokenMessage*)this;
-	p->_Code	= Code;
-	p->_Reply	= Reply;
-	p->_Length	= Length;*/
 
-	byte tmp = _Code | (_Reply << 7);
+	byte tmp = _Code | (_Reply << 7) | (_Error << 6);
 	ms.Write(tmp);
 	ms.Write(_Length);
 
@@ -77,6 +79,7 @@ uint TokenMessage::Size() const
 // 设置错误信息字符串
 void TokenMessage::SetError(byte errorCode, string error, int errLength)
 {
+	Error = errorCode != 0;
 	Length = 1 + errLength;
 	Data[0] = errorCode;
 	if(errLength > 0)
@@ -90,9 +93,21 @@ void TokenMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
+
+	debug_printf("Code=0x%02X", Code);
+
 	byte code = Code;
-	if(Reply) code |= 0x80;
-	debug_printf("Code=0x%02X", code);
+	if(Reply)
+	{
+		code |= 0x80;
+		debug_printf("Reply ");
+	}
+	if(Error)
+	{
+		code |= 0x40;
+		debug_printf("Error ");
+	}
+	if(Reply || Error) debug_printf("_Code=0x%02X", code);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -207,6 +222,7 @@ bool TokenController::OnReceive(Message& msg)
 {
 	byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
+	if(msg.Error) code |= 0x40;
 
 	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
 	// 系统指令也不需要确认
@@ -295,6 +311,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 
 	byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
+	if(msg.Error) code |= 0x40;
 	// 加入统计
 	if(!msg.Reply) StartSendStat(msg.Code);
 
@@ -372,7 +389,7 @@ bool TokenController::StartSendStat(byte code)
 
 bool TokenController::EndSendStat(byte code, bool success)
 {
-	code &= 0x7F;
+	code &= 0x3F;
 
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -480,16 +497,6 @@ void TokenStat::Clear()
 {
 	if (_Last == NULL) _Last = new TokenStat();
 	if (_Total == NULL) _Total = new TokenStat();
-
-	/*int p = Percent();
-	debug_printf("令牌发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d ", p/100, p%100, Success, Send, SendReply, Speed(), Receive, ReceiveReply);
-	p = _Total->Percent();
-	debug_printf("总发：%d.%d2%% 成功/请求/响应 %d/%d/%d %dus 收：请求/响应 %d/%d\r\n", p/100, p%100, _Total->Success, _Total->Send, _Total->SendReply, _Total->Speed(), _Total->Receive, _Total->ReceiveReply);*/
-	/*char cs[128];
-	String str(cs, ArrayLength(cs));
-	ToStr(str.Clear());
-	str.Print(true);*/
-	//Show();
 
 	_Last->Send = Send;
 	_Last->Success = Success;

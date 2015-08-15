@@ -14,7 +14,8 @@ class TokenMessage : public Message
 private:
 
 public:
-	byte	_Code:7;	// 功能码
+	byte	_Code:6;	// 功能码
+	byte	_Error:1;	// 是否错误
 	byte	_Reply:1;	// 是否响应指令
 	byte	_Length;	// 数据长度
 

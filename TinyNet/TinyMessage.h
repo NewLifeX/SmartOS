@@ -29,7 +29,7 @@ public:
 	byte UseTTL:1;	// 使用TTL。具体TTL值位于数据包最后
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
-	byte Error:1;	// 是否错误
+	byte _Error:1;	// 是否错误
 	byte _Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
 	byte _Length;	// 数据长度

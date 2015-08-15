@@ -35,10 +35,12 @@ bool TinyMessage::Read(Stream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	ms.Read(&Dest, 0, HeaderSize);
+	
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;
 	Reply	= _Reply;
+	Error	= _Error;
 
 	// 代码为0是非法的
 	if(!Code) return false;
@@ -84,6 +86,7 @@ void TinyMessage::Write(Stream& ms)
 	_Code	= Code;
 	_Length	= Length;
 	_Reply	= Reply;
+	_Error	= Error;
 
 	byte* buf = ms.Current();
 	// 不要写入验证码
