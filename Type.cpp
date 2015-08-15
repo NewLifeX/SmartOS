@@ -349,7 +349,9 @@ String& String::Format(const char* format, ...)
 
 String& String::Concat(const Object& obj)
 {
-	return obj.ToStr(*this);
+	obj.ToStr(*this);
+
+	return *this;
 }
 
 String& String::Concat(const char* str, int len)
@@ -387,6 +389,7 @@ String& operator+(String& str1, const char* str2)
 
 String operator+(const char* str, const Object& obj)
 {
+	// 要把字符串拷贝过来
 	String s;
 	s = str;
 	s += obj;
@@ -395,6 +398,7 @@ String operator+(const char* str, const Object& obj)
 
 String operator+(const Object& obj, const char* str)
 {
+	// 要把字符串拷贝过来
 	String s;
 	obj.ToStr(s);
 	s += str;
