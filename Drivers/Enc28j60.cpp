@@ -533,7 +533,11 @@ bool Enc28j60::OnOpen()
 
     // 查询 CLKRDY 位判断是否重启完成
     // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
-    while(!(ReadReg(ESTAT) & ESTAT_CLKRDY));
+	TimeWheel tw(0, 3, 0);
+    while(ReadReg(ESTAT) & ESTAT_CLKRDY)
+    {
+		if(tw.Expired()) break;
+    }
     // do bank 0 stuff
     // initialize receive buffer
     // 16-bit transfers, must write low byte first
