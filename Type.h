@@ -190,6 +190,9 @@ public:
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr)
 	{
+		// 不要自己拷贝给自己
+		if(&arr == this) return *this;
+		
 		_Length = arr.Length();
 
 		Copy(arr);
@@ -261,10 +264,13 @@ public:
 	}
 
 	// 复制数组。深度克隆，拷贝数据
-	bool Copy(const Array& arr, int index = 0)
+	int Copy(const Array& arr, int index = 0)
 	{
+		// 不要自己拷贝给自己
+		if(&arr == this) return 0;
+		
 		int len = arr.Length();
-		if(len == 0) return true;
+		if(len == 0) return 0;
 
 		// 检查长度是否足够
 		int len2 = index + len;
@@ -276,11 +282,11 @@ public:
 		// 扩大长度
 		if(len2 > _Length) _Length = len2;
 
-		return true;
+		return len;
 	}
 
 	// 复制数组。深度克隆，拷贝数据，自动扩容
-	bool Copy(const T* data, int len = 0, int index = 0)
+	int Copy(const T* data, int len = 0, int index = 0)
 	{
 		// 自动计算长度，\0结尾
 		if(!len)
@@ -299,7 +305,7 @@ public:
 		// 扩大长度
 		if(len2 > _Length) _Length = len2;
 
-		return true;
+		return len;
 	}
 
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
