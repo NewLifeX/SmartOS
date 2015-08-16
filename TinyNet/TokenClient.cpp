@@ -177,13 +177,29 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
 	{
-		debug_printf("握手完成，开始登录……\r\n");
-		Status = 1;
+		if(!msg.Error)
+		{
+			debug_printf("握手完成，开始登录……\r\n");
+			Status = 1;
 
-		// 通讯密码
-		if(ext.Key.Length() > 0) Control->Key = ext.Key;
+			// 通讯密码
+			if(ext.Key.Length() > 0)
+			{
+				Control->Key = ext.Key;
+				debug_printf("握手得到通信密码：");
+				ext.Key.Show(true);
+			}
 
-		Login();
+			Login();
+		}
+		else
+		{
+			Status	= 0;
+			Token	= 0;
+			Stream ms(msg.Data, msg.Length);
+			debug_printf("握手失败，错误码=0x%02X ", ms.Read<byte>());
+			ms.ReadString().Show(true);
+		}
 	}
 	else if(!msg.Reply)
 	{
@@ -230,16 +246,23 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 	if(!msg.Error)
 	{
 		Status = 2;
-		debug_printf("登录成功！\r\n");
+		debug_printf("登录成功！ ");
 
 		// 得到令牌
 		Token = ms.Read<int>();
+		debug_printf("令牌：0x%08X ", Token);
 		// 这里可能有通信秘密
 		if(ms.Remain() > 0)
 		{
 			ByteArray bs = ms.ReadArray();
-			if(bs.Length() > 0) Control->Key = bs;
+			if(bs.Length() > 0)
+			{
+				Control->Key = bs;
+				debug_printf("通信密码：");
+				bs.Show();
+			}
 		}
+		debug_printf("\r\n");
 	}
 	else
 	{
