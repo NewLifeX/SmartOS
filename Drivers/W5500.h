@@ -99,6 +99,7 @@ public:
 	byte Protocol;	// 协议
 
 	W5500*	Host;	// W5500公共部分控制器
+	uint _tidRecv;	// 收数据线程
 
 	IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
 	IPEndPoint	Local;		// 本地地址
@@ -112,11 +113,18 @@ public:
 
 	bool Write(const ByteArray& bs);
 	int Read(ByteArray& bs);
-
+	
+	virtual bool OnWrite(const byte* buf, uint len);
+	virtual uint OnRead(byte* buf, uint len);
+	
+	static void ReceiveTask(void* param);
+	virtual void Register(TransportHandler handler, void* param);
+	
 	// 恢复配置
-	virtual void Recovery() = 0;
+	virtual void Recovery();
 	// 处理数据包
-	virtual bool Process() = 0;
+	bool IRQ_Process();
+	virtual void OnIRQ() = 0;
 };
 
 class TcpClient : public HardSocket
@@ -127,12 +135,17 @@ public:
 	virtual bool Open();
 	virtual bool Close();
 	bool Listen();
+	// 恢复配置，还要维护连接问题
+	virtual void Recovery();
+	virtual void OnIRQ();
 };
 
 class UdpClient : public HardSocket
 {
 public:
 	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
+	
+	virtual void OnIRQ();
 };
 
 #endif

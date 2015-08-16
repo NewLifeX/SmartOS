@@ -605,7 +605,7 @@ void W5500::OnIRQ()
 	{
 		if(dat & 0x01)
 		{
-			if(_sockets[i]) _sockets[i]->Process();
+			if(_sockets[i]) _sockets[i]->IRQ_Process();
 		}
 		dat >>= 1;
 		if(dat == 0x00) break;
@@ -911,6 +911,44 @@ bool HardSocket::Write(const ByteArray& bs)
 	return rs;
 }
 
+bool HardSocket::OnWrite(const byte* buf, uint len)
+{
+	ByteArray bs(buf,len);
+	return Write(bs);
+}
+
+uint HardSocket::OnRead(byte* buf, uint len)
+{
+	ByteArray bs(buf,len);
+	return Read(bs);
+}
+
+bool HardSocket::IRQ_Process()
+{
+	// 启动异步接收
+	if(_tidRecv) 
+	{
+		// 激活异步线程
+		Sys.SetTask(_tidRecv, true, 0);
+		return true;
+	}
+	return false;
+}
+void HardSocket::Recovery()
+{
+	Close();
+	// 直接重新打开好了
+	Open();
+}
+
+void HardSocket::ReceiveTask(void* param)
+{
+	assert_ptr(param);
+
+	HardSocket* socket = (HardSocket*)param;
+	socket->OnIRQ();
+}
+
 bool TcpClient::Open()
 {
 	//SocketWrites(DIPR, Remote.Address.ToArray());
@@ -962,3 +1000,41 @@ bool TcpClient::Listen()
 
 	return true;
 }
+	// 恢复配置，还要维护连接问题
+void TcpClient::Recovery(){}
+void TcpClient::OnIRQ(){}
+
+void UdpClient::OnIRQ()
+{
+	if(Opened)
+	{
+		// 收到数据
+		ByteArray bs;
+		int size = Read(bs);
+		OnReceive(bs.GetBuffer(),size);
+		//其他处理..
+	}
+}
+
+void HardSocket::Register(TransportHandler handler, void* param)
+{
+	ITransport::Register(handler, param);
+
+	// 如果有注册事件，则启用接收任务
+	if(handler)
+	{
+		if(!_tidRecv)
+		{
+			// 事件型，只调用一次型
+			_tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
+			// 关闭任务，等打开以后再开
+			if(!Opened) Sys.SetTask(_tidRecv, false);
+		}
+	}
+	else
+	{
+		if(_tidRecv) Sys.RemoveTask(_tidRecv);
+		_tidRecv = 0;
+	}
+}
+
