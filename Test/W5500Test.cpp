@@ -15,6 +15,9 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 
 	if(net->CheckLink()) debug_printf("OK");
 	net->StateShow();
+	
+	UdpClient udp(net);
+	udp.Open();
 
 	Sys.AddTask(TestTask, net, 10000000, 10000000, "TestW5500");
 }
