@@ -306,8 +306,6 @@ bool W5500::Open()
 	ir.CONFLICT = 1;	// IP冲突
 	gen.IMR = ir.ToByte();
 
-	gen.SIMR = 0x01;
-
 	// 一次性全部写入
 	WriteFrame(0, ByteArray((byte*)&gen, sizeof(gen)));
 
@@ -569,7 +567,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 // irq 中断处理部分
 void W5500::OnIRQ(Pin pin, bool down, void* param)
 {
-	if(down)return;	// 低电平中断
+	if(!down)return;	// 低电平中断
 
 	W5500* send = (W5500*)param;
 	send->OnIRQ();
@@ -578,43 +576,53 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 void W5500::OnIRQ()
 {
 	// 读出中断状态
-	byte dat = ReadByte(offsetof(TGeneral, IR));
-
 	// 分析IR
 	T_Interrupt ir;
-	ir.Init(dat);
-	if(ir.CONFLICT)
+	ir.Init(ReadByte(offsetof(TGeneral, IR)));
+	if(ir.ToByte() != 0x00)
 	{
-		// IP 冲突
-	}
-	if(ir.MP)
-	{
-		// 收到网络唤醒包
-	}
-	if(ir.UNREACH)
-	{
-		// 读出不可达 IP 的信息
-		ByteArray bs(6);
-		ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
-		debug_printf("IP 不可达：%s \r\n", IPEndPoint(bs).ToString().GetBuffer());
-		// 处理..
-	}
-	// PPPoE 连接不可达
-	if(ir.PPPoE)
-	{
-
-	}
-
-	dat = ReadByte(offsetof(TGeneral, SIR));
-	for(int i = 0;i < 8; i++)
-	{
-		if(dat & 0x01)
+		if(ir.CONFLICT)
 		{
-			if(_sockets[i]) _sockets[i]->IRQ_Process();
+			// IP 冲突
 		}
-		dat >>= 1;
-		if(dat == 0x00) break;
+		if(ir.MP)
+		{
+			// 收到网络唤醒包
+		}
+		if(ir.UNREACH)
+		{
+			// 读出不可达 IP 的信息
+			ByteArray bs(6);
+			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
+			debug_printf("IP 不可达：%s \r\n", IPEndPoint(bs).ToString().GetBuffer());
+			// 处理..
+		}
+		// PPPoE 连接不可达
+		if(ir.PPPoE)
+		{
+	
+		}
+		// 清空 IR 中断
+		WriteByte(offsetof(TGeneral, IR),ir.ToByte());
 	}
+
+	byte dat = ReadByte(offsetof(TGeneral, SIR));
+	if(dat != 0x00)
+	{
+		byte dat2 = dat;
+		for(int i = 0;i < 8; i++)
+		{
+			if(dat2 & 0x01)
+			{
+				if(_sockets[i]) _sockets[i]->IRQ_Process();
+			}
+			dat2 >>= 1;
+			if(dat2 == 0x00) break;
+		}
+		// 清空 SIR 中断
+		WriteByte(offsetof(TGeneral, SIR),dat);
+	}
+	
 	// 中断位清零 说明书说的不够清晰 有待完善
 }
 
@@ -1052,15 +1060,21 @@ uint HardSocket::OnRead(byte* buf, uint len)
 	return ReadByteArray(bs);
 }
 
-bool HardSocket::IRQ_Process()
+bool HardSocket::IRQ_Process()	// 按照UDP写  tcp virtual重写就好
 {
 	// 启动异步接收
-	if(_tidRecv) 
+	S_Interrupt ir;
+	ir.Init(SocRegRead(IR));
+	if(ir.RECV)
 	{
 		// 激活异步线程
-		Sys.SetTask(_tidRecv, true, 0);
+		if(_tidRecv) 
+			Sys.SetTask(_tidRecv, true, 0);
 		return true;
 	}
+	//	SEND OK   不需要处理
+	// 清空中断位
+	SocRegWrite(IR,ir.ToByte());
 	return false;
 }
 
