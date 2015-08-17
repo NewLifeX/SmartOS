@@ -250,7 +250,7 @@ void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
 	{
 		// 中断引脚初始化
 		debug_printf("\r\nW5500::Init IRQ = P%c%d\r\n", _PIN_NAME(irq));
-		_IRQ.ShakeTime	= 0;
+		//_IRQ.ShakeTime	= 0;
 		_IRQ.Floating	= false;
 		_IRQ.PuPd		= InputPort::PuPd_UP;
 		_IRQ.Set(irq).Config();
@@ -286,7 +286,9 @@ bool W5500::Open()
 
 	gen.RTR = RetryTime / 10;
 	gen.RCR = RetryCount;
-
+	// 启用所有Socket中断
+	gen.SIMR = 0xff;	
+	
 	if(LowLevelTime > 0)
 		gen.INTLEVEL = LowLevelTime;
 	else
@@ -900,6 +902,14 @@ bool HardSocket::OnOpen()
 	SocRegWrite2(DPORT, __REV16(Remote.Port));	
 	// 设置Socket为UDP模式
 	SocRegWrite(MR, Protocol);	
+	
+	S_Interrupt ir;
+	ir.Init(0xFF);
+	// 清空所有中断位
+	SocRegWrite(IR, ir.ToByte());	
+	// 打开所有中断形式
+	SocRegWrite(IMR, ir.ToByte());	
+	
 	// 打开Socket
 	SocRegWrite(CR, OPEN);		
 
@@ -976,57 +986,57 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 	// 启动发送
 	SocRegWrite(CR, SEND);
 
-	S_Interrupt ir;
-	while(true)
-	{
-		Sys.Sleep(60);
-		ir.Init(SocRegRead(IR));
-		
-#ifdef DEBUG		
-		debug_printf("IR (中断状态):	0x%02X\r\n",ir.ToByte());
-			debug_printf("	CON:		%d\r\n",ir.CON);
-			debug_printf("	DISCON:	%d\r\n",ir.DISCON);
-			debug_printf("	RECV:		%d\r\n",ir.RECV);
-			debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
-			debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
-#endif	
-		if(ir.SEND_OK) break;
-		byte st = SocRegRead(SR);
-		
-#ifdef DEBUG
-			switch(st)
-			{
-				// 公共
-				case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
-				case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
-				case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
-				// TCP
-				case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
-				case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
-				case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
-				case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
-				case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
-				case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
-				case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
-				case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
-				// UDP
-				case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
-				
-				case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
-				default:break;
-			}
-#endif
-
-		if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))
-		{
-			debug_printf("SEND_OK Problem!!\r\n");
-			
-			Close();
-			return false;
-		}
-	}
-	
-	SocRegWrite(IR, ir.ToByte());
+//	S_Interrupt ir;
+//	while(true)
+//	{
+//		Sys.Sleep(60);
+//		ir.Init(SocRegRead(IR));
+//		
+//#ifdef DEBUG		
+//		debug_printf("IR (中断状态):	0x%02X\r\n",ir.ToByte());
+//			debug_printf("	CON:		%d\r\n",ir.CON);
+//			debug_printf("	DISCON:	%d\r\n",ir.DISCON);
+//			debug_printf("	RECV:		%d\r\n",ir.RECV);
+//			debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
+//			debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+//#endif	
+//		if(ir.SEND_OK) break;
+//		byte st = SocRegRead(SR);
+//		
+//#ifdef DEBUG
+//			switch(st)
+//			{
+//				// 公共
+//				case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
+//				case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
+//				case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
+//				// TCP
+//				case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
+//				case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
+//				case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
+//				case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
+//				case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
+//				case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
+//				case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
+//				case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
+//				// UDP
+//				case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
+//				
+//				case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
+//				default:break;
+//			}
+//#endif
+//
+//		if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))
+//		{
+//			debug_printf("SEND_OK Problem!!\r\n");
+//			
+//			Close();
+//			return false;
+//		}
+//	}
+//	
+//	SocRegWrite(IR, ir.ToByte());
 	return true;
 }
 
