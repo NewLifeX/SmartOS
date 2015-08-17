@@ -1,7 +1,7 @@
 ﻿#ifndef __DiscoverMessage_H__
 #define __DiscoverMessage_H__
 
-#include "MessageBase.h"
+#include "Message\MessageBase.h"
 
 // 发现消息
 //格式：2设备类型 + N系统ID

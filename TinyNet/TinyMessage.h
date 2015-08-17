@@ -5,10 +5,8 @@
 #include "List.h"
 #include "Net\ITransport.h"
 #include "Stream.h"
-#include "Timer.h"
 
-#include "Message.h"
-#include "Controller.h"
+#include "Message\Controller.h"
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是

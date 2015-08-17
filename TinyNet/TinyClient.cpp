@@ -1,10 +1,7 @@
 ﻿#include "Time.h"
 #include "TinyClient.h"
 
-#include "TinyMessage.h"
-#include "TokenMessage.h"
-
-#include "TokenNet\DiscoverMessage.h"
+#include "DiscoverMessage.h"
 
 bool OnClientReceived(Message& msg, void* param);
 

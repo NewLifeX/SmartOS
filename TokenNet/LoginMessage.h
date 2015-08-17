@@ -1,7 +1,7 @@
 ﻿#ifndef __LoginMessage_H__
 #define __LoginMessage_H__
 
-#include "MessageBase.h"
+#include "Message\MessageBase.h"
 
 // 登录消息
 class LoginMessage : public MessageBase

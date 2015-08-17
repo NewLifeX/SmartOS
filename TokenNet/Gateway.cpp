@@ -1,9 +1,6 @@
 ﻿#include "Time.h"
 #include "Gateway.h"
 
-#include "TinyMessage.h"
-#include "TokenMessage.h"
-
 #include "Security\MD5.h"
 
 bool OnLocalReceived(Message& msg, void* param);

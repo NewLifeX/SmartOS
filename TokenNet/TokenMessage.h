@@ -5,8 +5,7 @@
 #include "Stream.h"
 #include "Net\ITransport.h"
 
-#include "Message.h"
-#include "Controller.h"
+#include "Message\Controller.h"
 
 // 令牌消息
 class TokenMessage : public Message

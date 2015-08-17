@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Stream.h"
-#include "TinyNet\Message.h"
+#include "Message.h"
 
 // 应用消息基类
 class MessageBase : public Object

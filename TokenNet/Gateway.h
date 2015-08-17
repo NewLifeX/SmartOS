@@ -3,11 +3,10 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-#include "TinyServer.h"
+
 #include "TokenClient.h"
 
-#include "TinyMessage.h"
-#include "TokenMessage.h"
+#include "TinyNet\TinyServer.h"
 
 // 网关服务器
 class Gateway

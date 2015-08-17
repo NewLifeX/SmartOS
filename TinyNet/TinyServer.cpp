@@ -1,10 +1,7 @@
 ﻿#include "Time.h"
 #include "TinyServer.h"
 
-#include "TinyMessage.h"
-#include "TokenMessage.h"
-
-#include "TokenNet\DiscoverMessage.h"
+#include "DiscoverMessage.h"
 
 #include "Security\MD5.h"
 

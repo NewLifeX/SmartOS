@@ -1,7 +1,7 @@
 ﻿#ifndef __HelloMessage_H__
 #define __HelloMessage_H__
 
-#include "MessageBase.h"
+#include "Message\MessageBase.h"
 
 // 握手消息
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表

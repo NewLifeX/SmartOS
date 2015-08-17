@@ -2,8 +2,6 @@
 #define __TinyClient_H__
 
 #include "Sys.h"
-#include "Message.h"
-#include "Controller.h"
 #include "TinyMessage.h"
 
 // 微网客户端

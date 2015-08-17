@@ -2,10 +2,10 @@
 #define __TinyServer_H__
 
 #include "Sys.h"
-#include "Message.h"
-#include "Controller.h"
+
 #include "TinyMessage.h"
-#include "Device.h"
+
+#include "TinyNet\Device.h"
 
 /******************************** TinyServer ********************************/
 

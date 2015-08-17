@@ -2,10 +2,9 @@
 #define __TokenClient_H__
 
 #include "Sys.h"
+
 #include "TokenMessage.h"
-#include "Controller.h"
-#include "TokenMessage.h"
-#include "..\TokenNet\HelloMessage.h"
+#include "HelloMessage.h"
 
 #include "..\TinyIP\Udp.h"
 

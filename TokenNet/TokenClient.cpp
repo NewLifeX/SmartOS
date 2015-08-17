@@ -2,8 +2,8 @@
 #include "TokenClient.h"
 
 #include "TokenMessage.h"
-#include "TokenNet\HelloMessage.h"
-#include "TokenNet\LoginMessage.h"
+#include "HelloMessage.h"
+#include "LoginMessage.h"
 
 bool OnTokenClientReceived(Message& msg, void* param);
 
