@@ -35,7 +35,7 @@ bool TinyMessage::Read(Stream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	ms.Read(&Dest, 0, HeaderSize);
-	
+
 	// 占位符拷贝到实际数据
 	Code	= _Code;
 	Length	= _Length;

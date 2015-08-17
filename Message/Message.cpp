@@ -10,17 +10,6 @@ Message::Message(byte code)
 	Error	= false;
 }
 
-/*Message::Message(Message& msg)
-{
-	Code	= msg.Code;
-	Length	= msg.Length;
-	Reply	= msg.Reply;
-
-	// 基类构造函数先执行，子类来不及赋值Data，所以这里不要拷贝
-	//assert_ptr(Data);
-	//if(Length) memcpy(Data, msg.Data, Length);
-}*/
-
 // 设置数据。
 void Message::SetData(byte* buf, uint len)
 {
@@ -33,4 +22,16 @@ void Message::SetData(byte* buf, uint len)
 		assert_ptr(Data);
 		memcpy(Data, buf, len);
 	}
+}
+
+// 负载数据转数据流
+Stream Message::ToStream()
+{
+	return Stream(Data, Length);
+}
+
+// 负载数据转字节数组
+ByteArray Message::ToArray()
+{
+	return ByteArray(Data, Length);
 }

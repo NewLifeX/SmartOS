@@ -29,8 +29,13 @@ public:
 	virtual bool Valid() const = 0;
 	// 计算当前消息的Crc
 	virtual void ComputeCrc() = 0;
+	
 	// 设置数据
 	void SetData(byte* buf, uint len);
+	// 负载数据转数据流
+	Stream ToStream();
+	// 负载数据转字节数组
+	ByteArray ToArray();
 
 	// 显示消息内容
 	virtual void Show() const = 0;
