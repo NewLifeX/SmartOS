@@ -29,6 +29,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\Drivers");
             build.AddFiles("..\\Net");
             build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
+            build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
             build.CompileAll();
