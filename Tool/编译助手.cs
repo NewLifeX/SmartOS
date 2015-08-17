@@ -44,7 +44,16 @@ namespace NewLife.Reflection
             Clear();
 
             // 更新脚本自己
-            UpdateSelf();
+            //UpdateSelf();
+
+			// 编译SmartOS
+			var path = ".".GetFullPath().ToUpper();
+			if(path.Contains("STM32F0"))
+				"XScript".Run("..\\..\\SmartOS\\Tool\\Build_SmartOS_F0.cs /NoLogo /NoStop");
+			else if(path.Contains("STM32F1"))
+				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F1.cs /NoLogo /NoStop");
+			else if(path.Contains("STM32F4"))
+				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F4.cs /NoLogo /NoStop");
 
 			"完成".SpeakAsync();
 			System.Threading.Thread.Sleep(250);
@@ -270,7 +279,7 @@ namespace NewLife.Reflection
             if (!Directory.Exists(di)){ deep++; di = "../../SmartOS".GetFullPath();}
             if (!Directory.Exists(di)){ deep++; di = "../../../SmartOS".GetFullPath();}
             if (!Directory.Exists(di)) return;
-			
+
             var fi = di.CombinePath("Tool/Build.cs");
 			switch(deep)
 			{
@@ -278,7 +287,7 @@ namespace NewLife.Reflection
 				case 3:fi = di.CombinePath("Tool/Build3.cs");break;
 				default: break;
 			}
-			
+
             if (!File.Exists(fi)) return;
 
             var my = "Build.cs".GetFullPath();
