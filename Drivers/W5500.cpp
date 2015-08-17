@@ -973,17 +973,11 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 
 bool HardSocket::WriteByteArray(const ByteArray& bs)
 {
-	/*//如果是UDP模式,可以在此设置目的主机的IP和端口号
-	if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//如果Socket打开失败
-	{
-		Write_W5500_SOCK_4Byte(s, Sn_DIPR, UDP_DIPR);//设置目的主机IP
-		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
-	}*/
-	bs.Show(true);
+	// bs.Show(true);
+	// 读取状态
 	byte st = SocRegRead(SR);
 	// 不在UDP  不在TCP连接OK 状态下返回
 	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
-
 
 	// 如果最大地址超过发送缓冲区寄存器的最大地址
 	ushort addr = __REV16(SocRegRead2(TX_WR));
@@ -991,60 +985,8 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,__REV16(addr));
 	
-	// 启动发送
+	// 启动发送 异步中断处理发送异常等
 	SocRegWrite(CR, SEND);
-
-//	S_Interrupt ir;
-//	while(true)
-//	{
-//		Sys.Sleep(60);
-//		ir.Init(SocRegRead(IR));
-//		
-//#ifdef DEBUG		
-//		debug_printf("IR (中断状态):	0x%02X\r\n",ir.ToByte());
-//			debug_printf("	CON:		%d\r\n",ir.CON);
-//			debug_printf("	DISCON:	%d\r\n",ir.DISCON);
-//			debug_printf("	RECV:		%d\r\n",ir.RECV);
-//			debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
-//			debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
-//#endif	
-//		if(ir.SEND_OK) break;
-//		byte st = SocRegRead(SR);
-//		
-//#ifdef DEBUG
-//			switch(st)
-//			{
-//				// 公共
-//				case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
-//				case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
-//				case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
-//				// TCP
-//				case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
-//				case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
-//				case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
-//				case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
-//				case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
-//				case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
-//				case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
-//				case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
-//				// UDP
-//				case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
-//				
-//				case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
-//				default:break;
-//			}
-//#endif
-//
-//		if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))
-//		{
-//			debug_printf("SEND_OK Problem!!\r\n");
-//			
-//			Close();
-//			return false;
-//		}
-//	}
-//	
-//	SocRegWrite(IR, ir.ToByte());
 	return true;
 }
 
