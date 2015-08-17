@@ -541,7 +541,7 @@ bool W5500::CheckLink()
 
 byte W5500::GetSocket()
 {
-	for(byte i = 0;i < 8;i ++)
+	for(byte i = 1;i < 8;i ++)
 	{
 		if(_sockets[i] == NULL)return i;
 	}
@@ -555,7 +555,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 {
 	if(_sockets[Index] == NULL)
 	{
-		debug_printf("Index: %d 被注册 !\r\n", Index);
+		debug_printf("Index: %d 被启用 !\r\n", Index);
 		_sockets[Index] = handler;
 	}
 	else
@@ -758,10 +758,14 @@ HardSocket::HardSocket(W5500* host, byte protocol)
 {
 	Host = host;
 	Protocol = protocol;
-	if(!host)
+	if(host)
 	{
 		Index = host->GetSocket();
 		if(Index < 8) host->Register(Index, this);
+	}
+	else
+	{
+		Index = 0xff;
 	}
 }
 
@@ -772,6 +776,10 @@ HardSocket::~HardSocket()
 
 bool HardSocket::OnOpen()
 {
+	if(Index == 0xff)
+	{
+		debug_printf("Socket 0x%02X 编号不正确，打开失败\r\n",Index);
+	}
 	if(!Local.Port)
 	{
 		// 累加端口
