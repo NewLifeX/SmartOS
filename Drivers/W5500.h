@@ -106,6 +106,9 @@ public:
 
 	HardSocket(W5500* host, byte protocol);
 	virtual ~HardSocket();
+	
+	// 网卡状态输出
+	void StateShow();
 
 	// 打开Socket
 	virtual bool OnOpen();

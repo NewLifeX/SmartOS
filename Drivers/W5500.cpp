@@ -774,6 +774,96 @@ HardSocket::~HardSocket()
 	Host->Register(Index, NULL);
 }
 
+void HardSocket::StateShow()
+{
+	TSocket soc;
+	ByteArray bs(sizeof(soc));
+
+	// 一次性全部读出
+	Host->ReadFrame(0, bs, Index, 0x01);
+	bs.CopyTo((byte*)&soc);
+
+	debug_printf("\r\nW5500::Socket %d::State\r\n",Index);
+	
+	debug_printf("MR (模式): 		0x%02X\r\n", soc.MR);
+		S_Mode mr;
+		mr.Init(soc.MR);
+		debug_printf("	Protocol:");
+		switch(mr.Protocol)
+		{
+			case 0x00:debug_printf("		Closed\r\n");break;
+			case 0x01:debug_printf("		TCP\r\n");break;
+			case 0x02:debug_printf("		UDP\r\n");break;
+			case 0x03:
+				{
+					if(Index == 0x00)debug_printf("		MACRAW");
+					else	debug_printf("		ERROR！！！\r\n");
+					break;
+				}
+			default:break;
+		}
+		debug_printf("	UCASTB_MIP6B:	%d\r\n",mr.UCASTB_MIP6B);
+		debug_printf("	ND_MC_MMB:		%d\r\n",mr.ND_MC_MMB);
+		debug_printf("	BCASTB:		%d\r\n",mr.BCASTB);
+		debug_printf("	MULTI_MFEN:		%d\r\n",mr.MULTI_MFEN);
+		//switch(mr.Protocol)		// 不输出这么详细
+		//{
+		//	case 0x00:break;
+		//	case 0x01:break;
+		//	case 0x02:
+		//		if(mr.MULTI_MFEN)
+		//		{
+		//			debug_printf("UDP	");
+		//			if(mr.MULTI_MFEN)
+		//			{
+		//				debug_printf("开启多播	");
+		//				if(mr.UCASTB_MIP6B)
+		//					debug_printf("开启单播阻塞	");
+		//				if(mr.ND_MC_MMB)
+		//					debug_printf("IGMP 版本1	");
+		//				else
+		//					debug_printf("IGMP 版本0	");
+		//			}
+		//			debug_printf("\r\n");
+		//		}
+		//		break;
+		//	case 0x03:break;
+		//}
+	
+	enum S_Status stat= *(enum S_Status*) &soc.SR;
+	debug_printf("SR (状态):	");
+	switch(stat)
+	{
+		// 公共
+		case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
+		case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
+		case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
+		// TCP
+		case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
+		case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
+		case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
+		case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
+		case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
+		case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
+		case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
+		case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
+		// UDP
+		case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
+		
+		case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
+		default:break;
+	}
+	
+	S_Interrupt irqStat;
+	irqStat.Init(soc.IR);
+	debug_printf("IR (中断状态):	0x%02X\r\n",soc.IR);
+		debug_printf("	CON:		%d\r\n",irqStat.CON);
+		debug_printf("	DISCON:	%d\r\n",irqStat.DISCON);
+		debug_printf("	RECV:		%d\r\n",irqStat.RECV);
+		debug_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
+		debug_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
+}
+
 bool HardSocket::OnOpen()
 {
 	if(Index == 0xff)
@@ -861,7 +951,8 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 	}*/
 
 	byte st = SocRegRead(SR);
-	if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT) return false;
+	// 不在UDP  不在TCP连接OK 状态下返回
+	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
 
 	bool rs = true;
 
@@ -910,15 +1001,49 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 	S_Interrupt ir;
 	while(true)
 	{
+		Sys.Sleep(60);
 		ir.Init(SocRegRead(IR));
-		if(ir.SEND_OK) break;
 		
+#ifdef DEBUG		
+		debug_printf("IR (中断状态):	0x%02X\r\n",ir.ToByte());
+			debug_printf("	CON:		%d\r\n",ir.CON);
+			debug_printf("	DISCON:	%d\r\n",ir.DISCON);
+			debug_printf("	RECV:		%d\r\n",ir.RECV);
+			debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
+			debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+#endif	
+		if(ir.SEND_OK) break;
 		byte st = SocRegRead(SR);
-		if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT)
+		
+#ifdef DEBUG
+			switch(st)
+			{
+				// 公共
+				case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
+				case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
+				case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
+				// TCP
+				case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
+				case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
+				case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
+				case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
+				case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
+				case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
+				case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
+				case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
+				// UDP
+				case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
+				
+				case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
+				default:break;
+			}
+#endif
+
+		if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))
 		{
 			debug_printf("SEND_OK Problem!!\r\n");
+			
 			Close();
-
 			return 0;
 		}
 	}
@@ -950,6 +1075,7 @@ bool HardSocket::IRQ_Process()
 	}
 	return false;
 }
+
 void HardSocket::Recovery()
 {
 	Close();
