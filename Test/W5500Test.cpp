@@ -38,23 +38,23 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	// 定时检查网络状况
 	//Sys.AddTask(TestTask, net, 10000000, 10000000, "TestW5500");
 	net->Open();
-	
+
 	net->StateShow();
-	
+
 	UdpClient *udp = new UdpClient(net);
-	IPAddress RemoteIP(192,168,0,16);
+	IPAddress RemoteIP(255, 255, 255, 255);
 
 	udp->Remote.Address = RemoteIP;
 	udp->Remote.Port = 65500;
 	udp->StateShow();
 	udp->Open();
 	udp->StateShow();
-	
+
 	Sys.AddTask(TestTask2, udp, 9000000, 10000000, "TestUdpClient");
 	Sys.Sleep(1000);
 	byte buf[]  = "hello";
 	udp->Write(buf,sizeof(buf));
 
 	//Sys.AddTask(SocketShow, udp, 9000000, 10000000, "show");
-	
+
 }
