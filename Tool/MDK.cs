@@ -179,7 +179,10 @@ namespace NewLife.Reflection
 				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
-            return Complier.Run(sb.ToString(), 100, WriteLog);
+			// 先删除目标文件
+            if (obj.Exists) obj.Delete();
+
+            return Complier.Run(sb.ToString(), 1000, WriteLog);
         }
 
         public Int32 Assemble(String file)
@@ -210,7 +213,10 @@ namespace NewLife.Reflection
             sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
             sb.AppendFormat(" \"{0}\"", file);
 
-            return Asm.Run(sb.ToString(), 100, WriteLog);
+			// 先删除目标文件
+            if (obj.Exists) obj.Delete();
+
+            return Asm.Run(sb.ToString(), 1000, WriteLog);
         }
 
         public Int32 CompileAll()
@@ -249,9 +255,15 @@ namespace NewLife.Reflection
 
                 if (rs == 0)
                 {
-                    count++;
-
-                    if(!Preprocess) Objs.Add(obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o"));
+                    if(!Preprocess)
+					{
+						var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+						if(File.Exists(fi))
+						{
+							count++;
+							Objs.Add(fi);
+						}
+					}
                 }
             }
 
@@ -337,7 +349,7 @@ namespace NewLife.Reflection
             var rs = Link.Run(sb.ToString(), 3000, msg =>
 			{
 				if (msg.IsNullOrEmpty()) return;
-				
+
 				// 引用错误可以删除obj文件，下次编译将会得到解决
 				var p = msg.IndexOf("Undefined symbol");
 				if(p >= 0)
@@ -345,7 +357,7 @@ namespace NewLife.Reflection
 					/*var obj = msg.Substring("referred from", ")").Trim();
 					obj = GetObjPath(obj).EnsureEnd(".o");
 					XTrace.WriteLine(obj);*/
-					
+
 					foreach(var obj in Objs)
 					{
 						if(File.Exists(obj)) File.Delete(obj);
@@ -583,7 +595,7 @@ namespace NewLife.Reflection
 				Sections.Add("Program Size", "程序大小");
 				Sections.Add("Finished", "程序大小");
 			}
-			
+
             if (Words.Count == 0)
             {
                 Words.Add("Error", "错误");
@@ -629,7 +641,7 @@ namespace NewLife.Reflection
 			{
 				msg = msg.Replace(item.Key, item.Value);
 			}
-			
+
             //var sb = new StringBuilder();
             //var ss = msg.Trim().Split(" ", ":", "(", ")");
             //var ss = msg.Trim().Split(" ");

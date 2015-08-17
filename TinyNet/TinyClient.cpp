@@ -39,8 +39,6 @@ void TinyClient::Open()
 	_control->Param		= this;
 
 	_control->Open();
-
-	InitReport();
 }
 
 void TinyClient::Close()
@@ -137,24 +135,16 @@ void TinyClient::OnRead(Message& msg)
 	Store.Write(offset, bs);
 }
 
-void TinyClient::Report()
+void TinyClient::Report(TinyMessage& msg)
 {
 	// 没有服务端时不要上报
 	if(!Server) return;
 
-	TinyMessage msg;
-}
-
-void TinyClient::InitReport()
-{
-	_tidReport = Sys.AddTask(Report, this, 5000000, 5000000, "定时上报");
-}
-
-void TinyClient::Report(void* param)
-{
-	assert_ptr(param);
-
-	((TinyClient*)param)->Report();
+	Stream ms(msg.Data, ArrayLength(msg._Data));
+	ms.Write((byte)0x01);	// 子功能码
+	ms.Write((byte)0x00);	// 起始地址
+	ms.Write(Store.Data);
+	msg.Length = ms.Position();
 }
 
 /******************************** 常用系统级消息 ********************************/
@@ -169,7 +159,6 @@ void TinyClient::SetDefault()
 	_control->Register(5, SysMode, this);
 
 	// 发现服务端的任务
-	//debug_printf("开始寻找服务端 ");
 	_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000, "发现服务");
 }
 
@@ -241,16 +230,14 @@ bool TinyClient::Discover(Message& msg, void* param)
 	if(_taskDiscover)
 	{
 		debug_printf("停止寻找服务端 ");
-		Sys.RemoveTask(_taskDiscover);
-		_taskDiscover = 0;
+		Sys.SetTask(_taskDiscover, false);
 	}
 
 	// 启动Ping任务
 	if(!_taskPing)
-	{
-		//debug_printf("开始Ping服务端 ");
 		_taskPing = Sys.AddTask(PingTask, client, 0, 15000000, "心跳");
-	}
+	else
+		Sys.SetTask(_taskPing, true);
 
 	if(client->OnDiscover) return client->OnDiscover(msg, param);
 
@@ -273,29 +260,22 @@ void TinyClient::Ping()
 		debug_printf("30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务\r\n");
 
 		debug_printf("停止Ping服务端 ");
-		Sys.RemoveTask(_taskPing);
-		_taskPing = 0;
+		Sys.SetTask(_taskPing, true);
 
 		debug_printf("开始寻找服务端 ");
-		_taskDiscover = Sys.AddTask(DiscoverTask, this, 0, 5000000);
+		Sys.SetTask(_taskDiscover, false, 0);
 
-		Server = 0;
-		Password = 0;
+		Server		= 0;
+		Password	= 0;
 
 		return;
 	}
 
 	TinyMessage msg;
 	msg.Code = 2;
-	
+
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
-	{
-		Stream ms(msg.Data, ArrayLength(msg._Data));
-		ms.Write((byte)0x01);	// 子功能码
-		ms.Write((byte)0x00);	// 起始地址
-		ms.Write(Store.Data);
-		msg.Length = ms.Position();
-	}
+	Report(msg);
 
 	Send(msg);
 

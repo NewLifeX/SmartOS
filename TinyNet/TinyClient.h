@@ -36,17 +36,12 @@ public:
 // 数据区
 public:
 	DataStore	Store;		// 数据存储区
-	int		_tidReport;		// 定时上报任务。定时上报数据存储区的数据
-	int		ReportOffset;	// 下次上报位置。因为可能无法一次完成全部数据上报
 
-	void Report();
+	void Report(TinyMessage& msg);
 
 private:
 	void OnWrite(Message& msg);
 	void OnRead(Message& msg);
-
-	void InitReport();
-	static void Report(void* param);
 
 // 常用系统级消息
 public:
