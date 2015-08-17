@@ -295,6 +295,7 @@ bool W5500::Open()
 	T_Mode mr;
 	mr.Init(gen.MR);
 	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
+	//mr.FARP = 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
 	gen.MR = mr.ToByte();
 
 	T_Interrupt ir;
