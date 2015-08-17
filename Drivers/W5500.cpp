@@ -447,45 +447,45 @@ void W5500::PhyStateShow()
 	}
 }
 
-bool W5500::WriteByte(ushort addr, byte dat, byte socket)
+bool W5500::WriteByte(ushort addr, byte dat, byte socket ,byte block)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 1, socket);
+	SetAddress(addr, 1, socket, block);
 	_spi->Write(dat);
 
 	return true;
 }
 
-byte W5500::ReadByte(ushort addr, byte socket)
+byte W5500::ReadByte(ushort addr, byte socket ,byte block)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 0, socket);
+	SetAddress(addr, 0, socket, block);
 
 	return _spi->Write(0x00);
 }
 
-bool W5500::WriteByte2(ushort addr, ushort dat, byte socket)
+bool W5500::WriteByte2(ushort addr, ushort dat, byte socket ,byte block)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 1, socket);
+	SetAddress(addr, 1, socket, block);
 	_spi->Write16(dat);
 
 	return true;
 }
 
-ushort W5500::ReadByte2(ushort addr, byte socket)
+ushort W5500::ReadByte2(ushort addr, byte socket ,byte block)
 {
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 0, socket);
+	SetAddress(addr, 0, socket, block);
 
 	return _spi->Write16(0x00);
 }
 
-void W5500::SetAddress(ushort addr, byte rw, byte socket)
+void W5500::SetAddress(ushort addr, byte rw, byte socket ,byte block)
 {
 	// 地址高位在前
 	_spi->Write(addr >> 8);
@@ -493,34 +493,34 @@ void W5500::SetAddress(ushort addr, byte rw, byte socket)
 
 	TConfig cfg;
 	cfg.Socket		= socket;
-	cfg.BlockSelect	= 0;		// 寄存器区域选择
+	cfg.BlockSelect	= block;	// 寄存器区域选择
 	cfg.OpMode		= PhaseOM;	// 类内整体
 	cfg.ReadWrite	= rw;		// 读写
 	_spi->Write(cfg.ToByte());
 }
 
-bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket)
+bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket ,byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
 
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 1, socket);
+	SetAddress(addr, 1, socket, block);
 	_spi->Write(bs);
 
 	_Lock = 0;
 	return true;
 }
 
-bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket)
+bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket ,byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
 
 	SpiScope sc(_spi);
 
-	SetAddress(addr, 0, socket);
+	SetAddress(addr, 0, socket, block);
 	_spi->Read(bs);
 
 	_Lock = 0;
@@ -738,12 +738,20 @@ enum S_Status
 								// 超时或者成功收到断开请求都将 SOCK_CLOSED
 };
 
-#define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
-#define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
-#define SocketWrite2(P, D) Host->WriteByte2(offsetof(TSocket, P), D, Index)
-#define SocketRead2(P) Host->ReadByte2(offsetof(TSocket, P), Index)
-#define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
-#define SocketReads(P, bs) Host->ReadFrame(offsetof(TSocket, P), bs, Index)
+//#define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
+//#define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
+//#define SocketWrite2(P, D) Host->WriteByte2(offsetof(TSocket, P), D, Index)
+//#define SocketRead2(P) Host->ReadByte2(offsetof(TSocket, P), Index)
+//#define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
+//#define SocketReads(P, bs) Host->ReadFrame(offsetof(TSocket, P), bs, Index)
+
+#define SocRegWrite(P, D) 	Host->WriteByte(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead(P) 		Host->ReadByte(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrite2(P, D) 	Host->WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead2(P) 		Host->ReadByte2(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrites(P, D) 	Host->WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegReads(P, bs) 	Host->ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
+
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
@@ -761,7 +769,7 @@ HardSocket::~HardSocket()
 	Host->Register(Index, NULL);
 }
 
-bool HardSocket::Open()
+bool HardSocket::OnOpen()
 {
 	if(!Local.Port)
 	{
@@ -772,65 +780,64 @@ bool HardSocket::Open()
 	}
 
 	//设置分片长度，参考W5500数据手册，该值可以不修改
-	SocketWrite2(MSSR, 1460);
+	SocRegWrite2(MSSR, 1460);
 
 	//设置端口的端口号
-	SocketWrite2(PORT, Local.Port);
+	SocRegWrite2(PORT, Local.Port);
 	//设置端口目的(远程)端口号
-	SocketWrite2(DPORT, Remote.Port);
+	SocRegWrite2(DPORT, Remote.Port);
 	//设置端口目的(远程)IP地址
-	SocketWrites(DIPR, Remote.Address.ToArray());
+	SocRegWrites(DIPR, Remote.Address.ToArray());
 
-	SocketWrite(MR, Protocol);	// 设置Socket为UDP模式
-	SocketWrite(CR, OPEN);		// 打开Socket
+	SocRegWrite(MR, Protocol);	// 设置Socket为UDP模式
+	SocRegWrite(CR, OPEN);		// 打开Socket
 
 	Sys.Sleep(5);	//延时5ms
 
 	//如果Socket打开失败
-	byte sr = SocketRead(SR);
+	byte sr = SocRegRead(SR);
 	if(Protocol == 0x01 && sr != SOCK_INIT || Protocol == 0x02 && sr != SOCK_UDP)
 	{
-		SocketWrite(CR, CLOSE);	//打开不成功,关闭Socket
-
+		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n",Index,sr);
+		//SocRegWrite(CR, CLOSE);	//打开不成功,关闭Socket
+		OnClose();
 		return false;
 	}
 
 	return true;
 }
 
-bool HardSocket::Close()
+void HardSocket::OnClose()
 {
-	SocketWrite(CR, CLOSE);	//打开不成功,关闭Socket
-	SocketWrite(IR, 0xFF);
-
-	return true;
+	SocRegWrite(CR, CLOSE);	//打开不成功,关闭Socket
+	SocRegWrite(IR, 0xFF);
 }
 
 int HardSocket::ReadByteArray(ByteArray& bs)
 {
-	ushort size = SocketRead2(RX_RSR);
+	ushort size = SocRegRead2(RX_RSR);
 	// 没接收到数据则返回
 	if(size == 0) return 0;	
 	
 	if(size > 1460) size = 1460;
 
-	ushort offset = SocketRead2(RX_RD);
+	ushort offset = SocRegRead2(RX_RD);
 
 	//SPI1_Send_Short(offset);//写16位地址
 	//SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
 	//j = SPI_I2S_ReceiveData(SPI1);
 
 	// 这里需要考虑收到的数据被截成前后两段的情况
-	Host->ReadFrame(offset, bs, Index);
+	Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	SocketWrite2(RX_RD, offset);
+	SocRegWrite2(RX_RD, offset);
 	
 	// 启动接收
-	SocketWrite(CR, RECV);
+	SocRegWrite(CR, RECV);
 
 	// 等待操作完成
-	while(SocketRead(CR));
+	while(SocRegRead(CR));
 	
 	return size;//返回接收到数据的长度
 }
@@ -844,16 +851,16 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
 	}*/
 
-	byte st = SocketRead(SR);
+	byte st = SocRegRead(SR);
 	if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT) return false;
 
 	bool rs = true;
 
 	// 计算空闲大小
-	ushort size = SocketRead2(TX_FSR);
+	ushort size = SocRegRead2(TX_FSR);
 
 	// 数据指针
-	ushort offset = SocketRead2(TX_WR);
+	ushort offset = SocRegRead2(TX_WR);
 
 	//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
@@ -864,40 +871,40 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 		// 只写前面一截数据
 		ByteArray bs2(bs.GetBuffer(), size);
 		//SocketWrites(offset, bs2);
-		Host->WriteFrame(offset, bs2, Index);
+		Host->WriteFrame(offset, bs2, Index, 0x02);
 
 		//SPI1_Send_Short(0x00);//写16位地址
 		//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
 		// 后面的数据
 		bs2.Set(bs.GetBuffer() + size, len - size);
-		Host->WriteFrame(offset, bs2, Index);
+		Host->WriteFrame(offset, bs2, Index, 0x02);
 
 		offset = len - size;
 	}
 	else
 	{
-		Host->WriteFrame(offset, bs, Index);
+		Host->WriteFrame(offset, bs, Index ,0x02);
 
 		offset += len;
 	}
 
 	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	SocketWrite2(TX_WR, offset);
+	SocRegWrite2(TX_WR, offset);
 
 	// 启动发送
-	SocketWrite(CR, SEND);
+	SocRegWrite(CR, SEND);
 
 	// 等待操作完成
-	while(SocketRead(CR));
+	while(SocRegRead(CR));
 
 	S_Interrupt ir;
 	while(true)
 	{
-		ir.Init(SocketRead(IR));
+		ir.Init(SocRegRead(IR));
 		if(ir.SEND_OK) break;
 		
-		byte st = SocketRead(SR);
+		byte st = SocRegRead(SR);
 		if(st != SOCK_ESTABLISHE && st != SOCK_CLOSE_WAIT)
 		{
 			debug_printf("SEND_OK Problem!!\r\n");
@@ -906,7 +913,7 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 			return 0;
 		}
 	}
-	SocketWrite(IR, ir.ToByte());
+	SocRegWrite(IR, ir.ToByte());
 
 	return rs;
 }
@@ -949,27 +956,27 @@ void HardSocket::ReceiveTask(void* param)
 	socket->OnIRQ();
 }
 
-bool TcpClient::Open()
+bool TcpClient::OnOpen()
 {
 	//SocketWrites(DIPR, Remote.Address.ToArray());
 
 	if(!HardSocket::Open()) return false;
 
-	SocketWrite(CR, CONNECT);
+	SocRegWrite(CR, CONNECT);
 
 	// 等待操作完成
-	while(SocketRead(CR));
+	while(SocRegRead(CR));
 
-	while(SocketRead(SR) != SOCK_SYNSENT)
+	while(SocRegRead(SR) != SOCK_SYNSENT)
 	{
-		if(SocketRead(SR) == SOCK_ESTABLISHE) return true;
+		if(SocRegRead(SR) == SOCK_ESTABLISHE) return true;
 
 		S_Interrupt ir;
-		ir.Init(SocketRead(IR));
+		ir.Init(SocRegRead(IR));
 		if(ir.TIMEOUT)
 		{
 			// 清除超时中断
-			SocketWrite(IR, ir.TIMEOUT);
+			SocRegWrite(IR, ir.TIMEOUT);
 			return false;
 		}
 	}
@@ -977,24 +984,24 @@ bool TcpClient::Open()
 	return true;
 }
 
-bool TcpClient::Close()
+void TcpClient::OnClose()
 {
-	SocketWrite(CR, DISCON);
+	SocRegWrite(CR, DISCON);
 
-	return HardSocket::Close();
+	HardSocket::Close();
 }
 
 bool TcpClient::Listen()
 {
 	if(!HardSocket::Open()) return false;
 
-	SocketWrite(CR, LISTEN);	//设置Socket为侦听模式
+	SocRegWrite(CR, LISTEN);	//设置Socket为侦听模式
 	Sys.Sleep(5);	//延时5ms
 
 	//如果socket设置失败
-	if(SocketRead(SR) != SOCK_LISTEN)
+	if(SocRegRead(SR) != SOCK_LISTEN)
 	{
-		SocketWrite(CR, CLOSE);	//关闭Socket
+		SocRegWrite(CR, CLOSE);	//关闭Socket
 		return false;
 	}
 

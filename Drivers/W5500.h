@@ -56,15 +56,15 @@ public:
 	bool Open();
 	bool Close();
 
-	bool WriteByte(ushort addr, byte dat, byte socket = 0);
-	byte ReadByte(ushort addr, byte socket = 0);
-	bool WriteByte2(ushort addr, ushort dat, byte socket = 0);
-	ushort ReadByte2(ushort addr, byte socket = 0);
+	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
+	byte ReadByte(ushort addr, byte socket = 0 ,byte block = 0);
+	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
+	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
-	void SetAddress(ushort addr, byte rw, byte socket = 0);
-	bool WriteFrame(ushort addr, const ByteArray& bs, byte socket = 0);
-	bool ReadFrame(ushort addr, ByteArray& bs, byte socket = 0);
+	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
+	bool WriteFrame(ushort addr, const ByteArray& bs, byte socket = 0 ,byte block = 0);
+	bool ReadFrame(ushort addr, ByteArray& bs, byte socket = 0 ,byte block = 0);
 
 	// 复位 包含硬件复位和软件复位
 	void Reset();
@@ -108,8 +108,8 @@ public:
 	virtual ~HardSocket();
 
 	// 打开Socket
-	virtual bool Open();
-	virtual bool Close();
+	virtual bool OnOpen();
+	virtual void OnClose();
 
 	bool WriteByteArray(const ByteArray& bs);
 	int ReadByteArray(ByteArray& bs);
@@ -132,8 +132,8 @@ class TcpClient : public HardSocket
 public:
 	TcpClient(W5500* host) : HardSocket(host, 0x01) { }
 
-	virtual bool Open();
-	virtual bool Close();
+	virtual bool OnOpen();
+	virtual void OnClose();
 	bool Listen();
 	// 恢复配置，还要维护连接问题
 	virtual void Recovery();
