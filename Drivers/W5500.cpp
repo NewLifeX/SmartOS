@@ -106,8 +106,8 @@ typedef struct
 	byte TX_RD[2];	//0x0022  	// 发送读缓存指针
 	byte TX_WR[2];	//0x0024  	// 发送写缓存指针
 	byte RX_RSR[2];	//0x0026  	// 空闲接收寄存器大小
-	byte RX_RD[2];	//0x0028  	// 发送读缓存指针
-	byte RX_WR[2];	//0x002a  	// 发送写缓存指针
+	byte RX_RD[2];	//0x0028  	// 接收读缓存指针
+	byte RX_WR[2];	//0x002a  	// 接收写缓存指针
 	byte IMR;		//0x002c  	// 中断屏蔽寄存器  结构跟IR一样 0屏蔽  1不屏蔽
 	byte FRAG[2];	//0x002d  	// IP包头 分段部分  分段寄存器
 
@@ -131,7 +131,6 @@ typedef struct : ByteStruct
 
 	byte ReadWrite:1;	// 0：读	1：写
 
-	byte Socket:3;		// Socket组，0表示通用寄存器
 
 	byte BlockSelect:2;	// 区域选择位域		// 1个通用寄存器   8个Socket寄存器组（选择，写缓存，收缓存）
 					// 00000	通用
@@ -139,6 +138,7 @@ typedef struct : ByteStruct
 					// XXX10	SocketXXX 发缓存
 					// XXX11	SocketXXX 收缓存
 					// 其余保留， 如果选择了保留的将会导致W5500故障
+	byte Socket:3;		// Socket组，0表示通用寄存器
 }TConfig;
 
 // 通用寄存器结构
@@ -883,28 +883,25 @@ bool HardSocket::OnOpen()
 		Local.Port = g_port++;
 	}
 
-	//设置分片长度，参考W5500数据手册，该值可以不修改
-	if(Protocol == 0x02)
+	// 设置分片长度，参考W5500数据手册，该值可以不修改
+	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
+	if(Protocol == 0x02)		
 		SocRegWrite2(MSSR, 1472);
-	else if(Protocol == 0x01)
+	if(Protocol == 0x01)		
 		SocRegWrite2(MSSR, 1460);
 
 	// 设置自己的端口号 // 不知道为什么写进去就是错的，少一字节
 	SocRegWrite2(PORT, __REV16(Local.Port));	
-	//Host->WriteByte(0x04,(Local.Port)>>8,Index,0x01);
-	//Host->WriteByte(0x05,(Local.Port),Index,0x01);
-	
 	
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
 	
 	// 设置端口目的(远程)端口号 // 不知道为什么写进去就是错的，少一字节
 	SocRegWrite2(DPORT, __REV16(Remote.Port));	
-	//Host->WriteByte(0x10,(Remote.Port)>>8,Index,0x01);
-	//Host->WriteByte(0x11,(Remote.Port),Index,0x01);
-
-	SocRegWrite(MR, Protocol);	// 设置Socket为UDP模式
-	SocRegWrite(CR, OPEN);		// 打开Socket
+	// 设置Socket为UDP模式
+	SocRegWrite(MR, Protocol);	
+	// 打开Socket
+	SocRegWrite(CR, OPEN);		
 
 	Sys.Sleep(5);	//延时5ms
 
@@ -913,7 +910,6 @@ bool HardSocket::OnOpen()
 	if(Protocol == 0x01 && sr != SOCK_INIT || Protocol == 0x02 && sr != SOCK_UDP)
 	{
 		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n",Index,sr);
-		//SocRegWrite(CR, CLOSE);	//打开不成功,关闭Socket
 		OnClose();
 		return false;
 	}
@@ -929,13 +925,14 @@ void HardSocket::OnClose()
 
 int HardSocket::ReadByteArray(ByteArray& bs)
 {
-	ushort size = SocRegRead2(RX_RSR);
+
+	ushort size = __REV16(SocRegRead2(RX_RSR));
 	// 没接收到数据则返回
 	if(size == 0) return 0;	
 	
 	if(size > 1460) size = 1460;
 
-	ushort offset = SocRegRead2(RX_RD);
+	ushort offset = __REV16(SocRegRead2(RX_RD));
 
 	//SPI1_Send_Short(offset);//写16位地址
 	//SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
@@ -945,7 +942,7 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 	Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	SocRegWrite2(RX_RD, offset);
+	SocRegWrite2(RX_RD, __REV16(offset));
 	
 	// 启动接收
 	SocRegWrite(CR, RECV);
@@ -964,54 +961,20 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 		Write_W5500_SOCK_4Byte(s, Sn_DIPR, UDP_DIPR);//设置目的主机IP
 		Write_W5500_SOCK_2Byte(s, Sn_DPORTR, UDP_DPORT[0]*256+UDP_DPORT[1]);//设置目的主机端口号
 	}*/
-
+	bs.Show(true);
 	byte st = SocRegRead(SR);
 	// 不在UDP  不在TCP连接OK 状态下返回
 	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
 
-	bool rs = true;
-
-	// 计算空闲大小
-	ushort size = SocRegRead2(TX_FSR);
-
-	// 数据指针
-	ushort offset = SocRegRead2(TX_WR);
-
-	//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
 
 	// 如果最大地址超过发送缓冲区寄存器的最大地址
-	uint len = bs.Length();
-	if((offset + len) > size)
-	{
-		// 只写前面一截数据
-		ByteArray bs2(bs.GetBuffer(), size);
-		//SocketWrites(offset, bs2);
-		Host->WriteFrame(offset, bs2, Index, 0x02);
-
-		//SPI1_Send_Short(0x00);//写16位地址
-		//SPI1_Send_Byte(VDM|RWB_WRITE|(s*0x20+0x10));//写控制字节,N个字节数据长度,写数据,选择端口s的寄存器
-
-		// 后面的数据
-		bs2.Set(bs.GetBuffer() + size, len - size);
-		Host->WriteFrame(offset, bs2, Index, 0x02);
-
-		offset = len - size;
-	}
-	else
-	{
-		Host->WriteFrame(offset, bs, Index ,0x02);
-
-		offset += len;
-	}
-
-	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	SocRegWrite2(TX_WR, offset);
-
+	ushort addr = __REV16(SocRegRead2(TX_WR));
+	Host->WriteFrame(addr, bs, Index ,0x02);
+	addr += bs.Length();
+	SocRegWrite2(TX_WR,__REV16(addr));
+	
 	// 启动发送
 	SocRegWrite(CR, SEND);
-
-	// 等待操作完成
-	while(SocRegRead(CR));
 
 	S_Interrupt ir;
 	while(true)
@@ -1059,12 +1022,12 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 			debug_printf("SEND_OK Problem!!\r\n");
 			
 			Close();
-			return 0;
+			return false;
 		}
 	}
+	
 	SocRegWrite(IR, ir.ToByte());
-
-	return rs;
+	return true;
 }
 
 bool HardSocket::OnWrite(const byte* buf, uint len)
