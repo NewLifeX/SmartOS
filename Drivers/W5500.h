@@ -111,8 +111,8 @@ public:
 	virtual bool Open();
 	virtual bool Close();
 
-	bool Write(const ByteArray& bs);
-	int Read(ByteArray& bs);
+	bool WriteByteArray(const ByteArray& bs);
+	int ReadByteArray(ByteArray& bs);
 	
 	virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);

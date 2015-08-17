@@ -806,7 +806,7 @@ bool HardSocket::Close()
 	return true;
 }
 
-int HardSocket::Read(ByteArray& bs)
+int HardSocket::ReadByteArray(ByteArray& bs)
 {
 	ushort size = SocketRead2(RX_RSR);
 	// 没接收到数据则返回
@@ -835,7 +835,7 @@ int HardSocket::Read(ByteArray& bs)
 	return size;//返回接收到数据的长度
 }
 
-bool HardSocket::Write(const ByteArray& bs)
+bool HardSocket::WriteByteArray(const ByteArray& bs)
 {
 	/*//如果是UDP模式,可以在此设置目的主机的IP和端口号
 	if((Read_W5500_SOCK_1Byte(s,Sn_MR)&0x0f) != SOCK_UDP)//如果Socket打开失败
@@ -914,13 +914,13 @@ bool HardSocket::Write(const ByteArray& bs)
 bool HardSocket::OnWrite(const byte* buf, uint len)
 {
 	ByteArray bs(buf,len);
-	return Write(bs);
+	return WriteByteArray(bs);
 }
 
 uint HardSocket::OnRead(byte* buf, uint len)
 {
 	ByteArray bs(buf,len);
-	return Read(bs);
+	return ReadByteArray(bs);
 }
 
 bool HardSocket::IRQ_Process()
@@ -1010,7 +1010,7 @@ void UdpClient::OnIRQ()
 	{
 		// 收到数据
 		ByteArray bs;
-		int size = Read(bs);
+		int size = ReadByteArray(bs);
 		OnReceive(bs.GetBuffer(),size);
 		//其他处理..
 	}
