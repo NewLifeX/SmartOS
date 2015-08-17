@@ -23,9 +23,6 @@ TinyClient::TinyClient(TinyController* control)
 
 	LastActive	= 0;
 
-	_control->Received	= OnClientReceived;
-	_control->Param		= this;
-
 	Received	= NULL;
 	Param		= NULL;
 
@@ -34,6 +31,24 @@ TinyClient::TinyClient(TinyController* control)
 
 	Switchs		= 0;
 	Analogs		= 0;
+}
+
+void TinyClient::Open()
+{
+	_control->Received	= OnClientReceived;
+	_control->Param		= this;
+
+	_control->Open();
+
+	InitReport();
+}
+
+void TinyClient::Close()
+{
+	_control->Received	= NULL;
+	_control->Param		= NULL;
+
+	_control->Close();
 }
 
 void TinyClient::Send(TinyMessage& msg)
@@ -73,19 +88,79 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	//if(Server == 0 || Server != msg.Dest) return true;
 	if(Server != 0 && Server != msg.Dest) return true;
 
+	switch(msg.Code)
+	{
+		case 0x05:
+			OnRead(msg);
+			break;
+		case 0x06:
+			OnWrite(msg);
+			break;
+	}
+
 	// 消息转发
 	if(Received) return Received(msg, Param);
 
 	return true;
 }
 
-// 常用系统级消息
+/******************************** 数据区 ********************************/
+/*
+请求：1起始 + N数据
+响应：1起始 + 1大小
+*/
+void TinyClient::OnWrite(Message& msg)
+{
+	if(msg.Reply) return;
+	if(msg.Length < 2) return;
+
+	// 起始地址为7位压缩编码整数
+	Stream ms = msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+
+	ByteArray bs(ms.Current(), ms.Remain());
+	Store.Write(offset, bs);
+}
+
+/*
+请求：1起始 + 1大小
+响应：1起始 + N数据
+*/
+void TinyClient::OnRead(Message& msg)
+{
+	if(msg.Reply) return;
+	if(msg.Length < 2) return;
+
+	uint offset = msg.Data[0];
+
+	ByteArray bs(msg.Data + 1, msg.Length - 1);
+	Store.Write(offset, bs);
+}
+
+void TinyClient::Report()
+{
+	// 没有服务端时不要上报
+	if(!Server) return;
+
+	TinyMessage msg;
+}
+
+void TinyClient::InitReport()
+{
+	_tidReport = Sys.AddTask(Report, this, 5000000, 5000000, "定时上报");
+}
+
+void TinyClient::Report(void* param)
+{
+	assert_ptr(param);
+
+	((TinyClient*)param)->Report();
+}
+
+/******************************** 常用系统级消息 ********************************/
 
 void TinyClient::SetDefault()
 {
-	// 打开传输口
-	_control->Open();
-
 	// 注册消息。每个消息代码对应一个功能函数
 	_control->Register(1, Discover, this);
 	_control->Register(2, Ping, this);
@@ -159,6 +234,9 @@ bool TinyClient::Discover(Message& msg, void* param)
 	// 记住服务端地址
 	client->Server = tmsg.Src;
 
+	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，密码：", client->Server, ctrl->Address, 0);
+	client->Password.Show(true);
+
 	// 取消Discover任务
 	if(_taskDiscover)
 	{
@@ -209,8 +287,16 @@ void TinyClient::Ping()
 
 	TinyMessage msg;
 	msg.Code = 2;
+	
+	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
+	{
+		Stream ms(msg.Data, ArrayLength(msg._Data));
+		ms.Write((byte)0x01);	// 子功能码
+		ms.Write((byte)0x00);	// 起始地址
+		ms.Write(Store.Data);
+		msg.Length = ms.Position();
+	}
 
-	//_control->Broadcast(msg);
 	Send(msg);
 
 	if(LastActive == 0) LastActive = Time.Current();

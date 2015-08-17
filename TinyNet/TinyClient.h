@@ -4,6 +4,8 @@
 #include "Sys.h"
 #include "TinyMessage.h"
 
+#include "Message\DataStore.h"
+
 // 微网客户端
 class TinyClient
 {
@@ -19,14 +21,32 @@ public:
 
 	TinyClient(TinyController* control);
 
+	void Open();
+	void Close();
+	
 	// 发送消息
 	void Send(TinyMessage& msg);
 	void Reply(TinyMessage& msg);
 	bool OnReceive(TinyMessage& msg);
-	
+
 	// 收到功能消息时触发
 	MessageHandler	Received;
 	void*			Param;
+
+// 数据区
+public:
+	DataStore	Store;		// 数据存储区
+	int		_tidReport;		// 定时上报任务。定时上报数据存储区的数据
+	int		ReportOffset;	// 下次上报位置。因为可能无法一次完成全部数据上报
+
+	void Report();
+
+private:
+	void OnWrite(Message& msg);
+	void OnRead(Message& msg);
+
+	void InitReport();
+	static void Report(void* param);
 
 // 常用系统级消息
 public:
@@ -51,7 +71,7 @@ public:
 
 	// 设置系统模式
 	static bool SysMode(Message& msg, void* param);
-	
+
 // 通用用户级消息
 public:
 	byte		Switchs;
