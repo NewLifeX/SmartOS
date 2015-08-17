@@ -96,7 +96,7 @@ typedef struct
 									// MACRAW 模式时 由于MTU 不在内部处理，默认MTU将会生效
 									// PPPoE 模式下 略
 									// TCP UDP 模式下，传输数据比 MTU大时，数据将会自动划分成默认MTU 单元大小
-	byte Reserved;		//0x0014
+	byte Reserved;	//0x0014
 	byte TOS;		//0x0015  	// IP包头 服务类型 	OPEN之前配置
 	byte TTL;		//0x0016  	// 生存时间 TTL 	OPEN之前配置
 	byte Reserved2[7];	//0x0017  	-  0x001d
@@ -295,7 +295,7 @@ bool W5500::Open()
 	T_Mode mr;
 	mr.Init(gen.MR);
 	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
-	//mr.FARP = 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
+	mr.FARP = 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
 	gen.MR = mr.ToByte();
 
 	T_Interrupt ir;
@@ -472,7 +472,8 @@ bool W5500::WriteByte2(ushort addr, ushort dat, byte socket ,byte block)
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 1, socket, block);
-	_spi->Write16(dat);
+	_spi->Write(dat);
+	_spi->Write(dat>>8);
 
 	return true;
 }
@@ -482,8 +483,9 @@ ushort W5500::ReadByte2(ushort addr, byte socket ,byte block)
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 0, socket, block);
-
-	return _spi->Write16(0x00);
+	ushort temp = _spi->Write(0x00);
+	temp += _spi->Write(0x00)<<8;
+	return temp;
 }
 
 void W5500::SetAddress(ushort addr, byte rw, byte socket ,byte block)
@@ -862,6 +864,9 @@ void HardSocket::StateShow()
 		debug_printf("	RECV:		%d\r\n",irqStat.RECV);
 		debug_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
 		debug_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
+		
+	debug_printf("DPORT = 0x%02X%02X\r\n",soc.DPORT[1],soc.DPORT[0]);
+	
 }
 
 bool HardSocket::OnOpen()
@@ -879,14 +884,24 @@ bool HardSocket::OnOpen()
 	}
 
 	//设置分片长度，参考W5500数据手册，该值可以不修改
-	SocRegWrite2(MSSR, 1460);
+	if(Protocol == 0x02)
+		SocRegWrite2(MSSR, 1472);
+	else if(Protocol == 0x01)
+		SocRegWrite2(MSSR, 1460);
 
-	//设置端口的端口号
-	SocRegWrite2(PORT, Local.Port);
-	//设置端口目的(远程)端口号
-	SocRegWrite2(DPORT, Remote.Port);
-	//设置端口目的(远程)IP地址
+	// 设置自己的端口号 // 不知道为什么写进去就是错的，少一字节
+	SocRegWrite2(PORT, __REV16(Local.Port));	
+	//Host->WriteByte(0x04,(Local.Port)>>8,Index,0x01);
+	//Host->WriteByte(0x05,(Local.Port),Index,0x01);
+	
+	
+	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
+	
+	// 设置端口目的(远程)端口号 // 不知道为什么写进去就是错的，少一字节
+	SocRegWrite2(DPORT, __REV16(Remote.Port));	
+	//Host->WriteByte(0x10,(Remote.Port)>>8,Index,0x01);
+	//Host->WriteByte(0x11,(Remote.Port),Index,0x01);
 
 	SocRegWrite(MR, Protocol);	// 设置Socket为UDP模式
 	SocRegWrite(CR, OPEN);		// 打开Socket
