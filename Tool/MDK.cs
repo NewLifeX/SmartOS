@@ -145,7 +145,14 @@ namespace NewLife.Reflection
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
-            if (obj.Exists && obj.LastWriteTime > file.AsFile().LastWriteTime) return 0;
+            if (obj.Exists)
+			{
+				if(obj.LastWriteTime > file.AsFile().LastWriteTime)
+				{
+					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
+					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return 0;
+				}
+			}
 
             var sb = new StringBuilder();
 			sb.Append("-c");
@@ -187,7 +194,14 @@ namespace NewLife.Reflection
 
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
-            if (obj.Exists && obj.LastWriteTime > file.AsFile().LastWriteTime) return 0;
+            if (obj.Exists)
+			{
+				if(obj.LastWriteTime > file.AsFile().LastWriteTime)
+				{
+					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
+					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return 0;
+				}
+			}
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
