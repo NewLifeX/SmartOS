@@ -764,7 +764,7 @@ void NRF24L01::SetAddress(bool full)
 
 	WriteReg(FEATURE, ft.ToByte());
 #if RF_DEBUG
-	debug_printf("R24::FEATURE\t= 0x%02X => 0x%02X\r\n", ft.ToByte(), ReadReg(FEATURE));
+	//debug_printf("R24::FEATURE\t= 0x%02X => 0x%02X\r\n", ft.ToByte(), ReadReg(FEATURE));
 #endif
 }
 
