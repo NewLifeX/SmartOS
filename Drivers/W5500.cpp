@@ -301,7 +301,7 @@ bool W5500::Open()
 	gen.MR = mr.ToByte();
 
 	T_Interrupt ir;
-	ir.Init(gen.IMR);
+	ir.Init(gen.IMR);	// 中断屏蔽  0：屏蔽
 	ir.UNREACH = 1;		// 目标不可达
 	ir.CONFLICT = 1;	// IP冲突
 	gen.IMR = ir.ToByte();
@@ -315,8 +315,7 @@ bool W5500::Open()
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Rx memory size=2k
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
 	}
-	//WriteByte(IMR, IMR_SENDOK | IMR_TIMEOUT | IMR_RECV | IMR_DISCON | IMR_CON);
-
+	
 	Opened = true;
 
 	return true;
@@ -614,6 +613,7 @@ void W5500::OnIRQ()
 		{
 			if(dat2 & 0x01)
 			{
+				debug_printf("Socket %d 中断\r\n",i+1);
 				if(_sockets[i]) _sockets[i]->IRQ_Process();
 			}
 			dat2 >>= 1;
@@ -751,20 +751,12 @@ enum S_Status
 								// 超时或者成功收到断开请求都将 SOCK_CLOSED
 };
 
-//#define SocketWrite(P, D) Host->WriteByte(offsetof(TSocket, P), D, Index)
-//#define SocketRead(P) Host->ReadByte(offsetof(TSocket, P), Index)
-//#define SocketWrite2(P, D) Host->WriteByte2(offsetof(TSocket, P), D, Index)
-//#define SocketRead2(P) Host->ReadByte2(offsetof(TSocket, P), Index)
-//#define SocketWrites(P, D) Host->WriteFrame(offsetof(TSocket, P), D, Index)
-//#define SocketReads(P, bs) Host->ReadFrame(offsetof(TSocket, P), bs, Index)
-
 #define SocRegWrite(P, D) 	Host->WriteByte(offsetof(TSocket, P), D, Index, 0x01)
 #define SocRegRead(P) 		Host->ReadByte(offsetof(TSocket, P), Index, 0x01)
 #define SocRegWrite2(P, D) 	Host->WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
 #define SocRegRead2(P) 		Host->ReadByte2(offsetof(TSocket, P), Index, 0x01)
 #define SocRegWrites(P, D) 	Host->WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
 #define SocRegReads(P, bs) 	Host->ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
-
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
@@ -918,6 +910,16 @@ bool HardSocket::OnOpen()
 	// 打开所有中断形式
 	SocRegWrite(IMR, ir.ToByte());	
 	
+	ir.Init(SocRegRead(IMR));
+	
+	//debug_printf("IMR(中断屏蔽寄存器):		0x%02X\r\n",ir.ToByte());
+	//	debug_printf("	CON:		%d\r\n",ir.CON);
+	//	debug_printf("	DISCON:	%d\r\n",ir.DISCON);
+	//	debug_printf("	RECV:		%d\r\n",ir.RECV);
+	//	debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
+	//	debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+		
+	SocRegWrite(CR, RECV);	
 	// 打开Socket
 	SocRegWrite(CR, OPEN);		
 
@@ -943,45 +945,50 @@ void HardSocket::OnClose()
 
 int HardSocket::ReadByteArray(ByteArray& bs)
 {
-
+	// 读取收到数据容量 
 	ushort size = __REV16(SocRegRead2(RX_RSR));
 	// 没接收到数据则返回
 	if(size == 0) return 0;	
-	
-	if(size > 1460) size = 1460;
-
+	// 读取收到数据的首地址
 	ushort offset = __REV16(SocRegRead2(RX_RD));
 
-	//SPI1_Send_Short(offset);//写16位地址
-	//SPI1_Send_Byte(VDM|RWB_READ|(s*0x20+0x18));//写控制字节,N个字节数据长度,读数据,选择端口s的寄存器
-	//j = SPI_I2S_ReceiveData(SPI1);
-
-	// 这里需要考虑收到的数据被截成前后两段的情况
-	Host->ReadFrame(offset, bs, Index, 0x03);
-
-	// 更新实际物理地址,即下次写待发送数据到发送数据缓冲区的起始地址
-	SocRegWrite2(RX_RD, __REV16(offset));
-	
-	// 启动接收
+	// 读取全部数据
+	if(bs.SetLength(size))
+	{
+		Host->ReadFrame(offset, bs, Index, 0x03);
+	}
+	else
+	{
+		// 设置接收长度失败  清空接收区
+		debug_printf("ByteArray.SetLength(%d) 失败\r\n",size);
+		debug_printf("等待下次接收\r\n");
+		size = 0;
+	}
+	// 更新实际物理地址,
+	SocRegWrite2(RX_RD, __REV16(offset + size));
+	// 生效 RX_RD 
 	SocRegWrite(CR, RECV);
-
-	// 等待操作完成
-	while(SocRegRead(CR));
 	
-	return size;//返回接收到数据的长度
+	// 等待操作完成
+	// while(SocRegRead(CR));
+	//返回接收到数据的长度
+	return size;
 }
 
 bool HardSocket::WriteByteArray(const ByteArray& bs)
 {
-	// bs.Show(true);
 	// 读取状态
 	byte st = SocRegRead(SR);
 	// 不在UDP  不在TCP连接OK 状态下返回
 	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
+	// 读取缓冲区空闲大小 硬件内部自动计算好空闲大小
+	ushort remain = __REV16(SocRegRead2(TX_FSR));
+	if( remain < bs.Length())return false;
 
-	// 如果最大地址超过发送缓冲区寄存器的最大地址
+	// 读取发送缓冲区写指针
 	ushort addr = __REV16(SocRegRead2(TX_WR));
 	Host->WriteFrame(addr, bs, Index ,0x02);
+	// 更新发送缓存写指针位置
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,__REV16(addr));
 	
@@ -1004,14 +1011,24 @@ uint HardSocket::OnRead(byte* buf, uint len)
 
 bool HardSocket::IRQ_Process()	// 按照UDP写  tcp virtual重写就好
 {
-	// 启动异步接收
 	S_Interrupt ir;
 	ir.Init(SocRegRead(IR));
+	
+	debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
+		debug_printf("	CON:		%d\r\n",ir.CON);
+		debug_printf("	DISCON:	%d\r\n",ir.DISCON);
+		debug_printf("	RECV:		%d\r\n",ir.RECV);
+		debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
+		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+		
 	if(ir.RECV)
 	{
 		// 激活异步线程
 		if(_tidRecv) 
+		{
+			debug_printf("激活异步接收线程\r\n");
 			Sys.SetTask(_tidRecv, true, 0);
+		}
 		return true;
 	}
 	//	SEND OK   不需要处理
