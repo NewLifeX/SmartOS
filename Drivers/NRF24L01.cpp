@@ -281,6 +281,11 @@ NRF24L01::~NRF24L01()
 		Sys.RemoveTask(_tidOpen);
 		_tidOpen = 0;
 	}
+	if(_tidOpen)
+	{
+		Sys.RemoveTask(_tidOpen);
+		_tidOpen = 0;
+	}
 	Register(NULL);
 
 	// 关闭电源
@@ -728,7 +733,7 @@ void NRF24L01::SetAddress(bool full)
 	// 开启隐藏寄存器
 	WriteReg(ACTIVATE, 0x73);
 #if RF_DEBUG
-	debug_printf("R24::ACTIVATE\t= 0x%02X\r\n", ReadReg(ACTIVATE));
+	//debug_printf("R24::ACTIVATE\t= 0x%02X\r\n", ReadReg(ACTIVATE));
 #endif
 
 	RF_FEATURE ft;
@@ -747,7 +752,7 @@ void NRF24L01::SetAddress(bool full)
 		// 动态负载
 		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
 #if RF_DEBUG
-		debug_printf("R24::DYNPD\t= 0x%02X\r\n", ReadReg(DYNPD));
+		//debug_printf("R24::DYNPD\t= 0x%02X\r\n", ReadReg(DYNPD));
 #endif
 
 		ft.DPL = 1;			// 使能动态负载长度
@@ -815,8 +820,10 @@ bool NRF24L01::OnOpen()
 		debug_printf("关闭2401热插拔检查 ");
 		Sys.SetTask(_tidOpen, false);
 	}
-
-	if(_tidRecv) Sys.SetTask(_tidRecv, true);
+	if(!_tidRecv)
+		_tidRecv = Sys.AddTask(ReceiveTask, this, 200000, 200000, "R24接收");
+	else
+		Sys.SetTask(_tidRecv, true);
 
 	//debug_printf("定时显示状态 ");
 	//Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
@@ -1154,26 +1161,5 @@ void NRF24L01::ReceiveTask(void* param)
 	if(nrf->Opened && nrf->_Lock == 0)
 	{
 		nrf->OnIRQ();
-	}
-}
-
-void NRF24L01::Register(TransportHandler handler, void* param)
-{
-	ITransport::Register(handler, param);
-
-	// 如果有注册事件，则启用接收任务
-	if(handler)
-	{
-		if(!_tidRecv)
-		{
-			_tidRecv = Sys.AddTask(ReceiveTask, this, 20000, 20000, "R24接收");
-			// 关闭任务，等打开以后再开
-			if(!Opened) Sys.SetTask(_tidRecv, false);
-		}
-	}
-	else
-	{
-		if(_tidRecv) Sys.RemoveTask(_tidRecv);
-		_tidRecv = 0;
 	}
 }

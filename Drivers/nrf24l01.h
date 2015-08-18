@@ -77,8 +77,6 @@ public:
 	void ShowStatus();
 	bool CanReceive();
 
-	virtual void Register(TransportHandler handler, void* param = NULL);
-
 	virtual string ToString() { return "R24"; }
 
 protected:
