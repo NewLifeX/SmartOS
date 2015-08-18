@@ -439,6 +439,13 @@ void TimeCost::Show(const char* format)
 
 /************************************************ HardRTC ************************************************/
 
+bool RTC_WaitForLastTask2(uint retry = 300)
+{
+	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET && --retry);
+
+	return retry > 0;
+}
+
 #ifdef STM32F1
 void RTC_Configuration(bool init, bool ext)
 {
@@ -473,13 +480,13 @@ void RTC_Configuration(bool init, bool ext)
 	RTC_WaitForSynchro();
 
 	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	RTC_WaitForLastTask();
+	RTC_WaitForLastTask2();
 
 	/* 使能秒中断 */
 	//RTC_ITConfig(RTC_IT_SEC, ENABLE);
 
 	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	//RTC_WaitForLastTask();
+	//RTC_WaitForLastTask2();
 
 	if(init)
 	{
@@ -492,7 +499,7 @@ void RTC_Configuration(bool init, bool ext)
 		RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
 
 		/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-		RTC_WaitForLastTask();
+		RTC_WaitForLastTask2();
 	}
 }
 #else
@@ -551,11 +558,6 @@ void RTC_SetCounter(DateTime dt)
 	date.RTC_WeekDay= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
 	date.RTC_Year = dt.Year;
 	RTC_SetDate(RTC_Format_BCD, &date);
-}
-
-void RTC_WaitForLastTask()
-{
-	while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
 }
 #endif
 
@@ -688,7 +690,7 @@ void HardRTC::SaveTicks()
 	// 设置计数器
 	RTC_SetCounter(ms2);
 #else
-	RTC_SetCounter(Time.Now());
+	//RTC_SetCounter(Time.Now());
 #endif
 
 	// 必须打开时钟和后备域，否则写不进去时间
@@ -699,7 +701,7 @@ void HardRTC::SaveTicks()
     //PWR_BackupAccessCmd(ENABLE);
 
 	// 这里对时间要求非常苛刻，不能等待
-	RTC_WaitForLastTask();
+	RTC_WaitForLastTask2();
 
 	// 每秒钟保存一次
 	g_NextSaveTicks = Time.Ticks + 5000000ull * Time.TicksPerMicrosecond;
@@ -750,7 +752,7 @@ void HardRTC::Sleep(uint& ms)
 	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );    /* Enable the alarm  A */
 #endif
     /* Wait until last write operation on RTC registers has finished */
-    RTC_WaitForLastTask();
+    RTC_WaitForLastTask2();
 
 	// 进入低功耗模式
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
@@ -824,9 +826,9 @@ void AlarmHandler(ushort num, void* param)
 		EXTI_ClearITPendingBit(EXTI_Line17);
 		// 检查唤醒标志是否设置
 		if(PWR_GetFlagStatus(PWR_FLAG_WU) != RESET) PWR_ClearFlag(PWR_FLAG_WU);
-		RTC_WaitForLastTask();
+		RTC_WaitForLastTask2();
 		RTC_ClearITPendingBit(RTC_IT_ALR);
-		RTC_WaitForLastTask();
+		RTC_WaitForLastTask2();
 	}
 	SYSCLKConfig_STOP();
 	rtc->LoadTicks();
