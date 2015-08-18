@@ -125,8 +125,9 @@ public:
 	
 	// 恢复配置
 	virtual void Recovery();
-	// 处理数据包
-	bool IRQ_Process();
+	// 中断分发  维护状态
+	virtual void IRQ_Process() = 0;
+	// 用户注册的中断事件处理 异步调用
 	virtual void OnIRQ() = 0;
 };
 
@@ -140,14 +141,19 @@ public:
 	bool Listen();
 	// 恢复配置，还要维护连接问题
 	virtual void Recovery();
+	// 中断分发  维护状态
+	virtual void IRQ_Process();
+	// 用户注册的中断事件处理 异步调用
 	virtual void OnIRQ();
 };
-
+// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 class UdpClient : public HardSocket
 {
 public:
 	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
-	
+	// 中断分发  维护状态
+	virtual void IRQ_Process();
+	// 用户注册的中断事件处理 异步调用
 	virtual void OnIRQ();
 };
 

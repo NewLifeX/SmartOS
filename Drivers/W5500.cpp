@@ -1009,34 +1009,6 @@ uint HardSocket::OnRead(byte* buf, uint len)
 	return ReadByteArray(bs);
 }
 
-bool HardSocket::IRQ_Process()	// 按照UDP写  tcp virtual重写就好
-{
-	S_Interrupt ir;
-	ir.Init(SocRegRead(IR));
-	
-	debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
-		debug_printf("	CON:		%d\r\n",ir.CON);
-		debug_printf("	DISCON:	%d\r\n",ir.DISCON);
-		debug_printf("	RECV:		%d\r\n",ir.RECV);
-		debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
-		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
-		
-	if(ir.RECV)
-	{
-		// 激活异步线程
-		if(_tidRecv) 
-		{
-			debug_printf("激活异步接收线程\r\n");
-			Sys.SetTask(_tidRecv, true, 0);
-		}
-		return true;
-	}
-	//	SEND OK   不需要处理
-	// 清空中断位
-	SocRegWrite(IR,ir.ToByte());
-	return false;
-}
-
 void HardSocket::Recovery()
 {
 	Close();
@@ -1105,18 +1077,59 @@ bool TcpClient::Listen()
 }
 	// 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
+void TcpClient::IRQ_Process(){}
 void TcpClient::OnIRQ(){}
+
+void UdpClient::IRQ_Process()
+{
+	S_Interrupt ir;
+	ir.Init(SocRegRead(IR));
+	// UDP 模式下只处理 SendOK  Recv 两种情况
+	debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
+		debug_printf("	RECV:		%d\r\n",ir.RECV);
+		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+		
+	if(ir.RECV)
+	{
+		// 激活异步线程
+		if(_tidRecv) 
+		{
+			debug_printf("激活异步接收线程\r\n");
+			Sys.SetTask(_tidRecv, true, 0);
+			ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
+		}
+#ifdef DEBUG
+		else
+		{
+			ByteArray bs;
+			int size = ReadByteArray(bs);
+			debug_printf("收到数据：");
+			bs.Show();
+			debug_printf("\r\n");
+		}
+#endif
+	}
+	//	SEND OK   不需要处理 但要清空中断位
+	// 清空中断位
+	SocRegWrite(IR,ir.ToByte());
+}
 
 void UdpClient::OnIRQ()
 {
-	if(Opened)
-	{
-		// 收到数据
-		ByteArray bs;
-		int size = ReadByteArray(bs);
-		OnReceive(bs.GetBuffer(),size);
-		//其他处理..
-	}
+	// UDP 异步只有一种情况  收到数据  可能有多个数据包
+	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
+	ByteArray bs;
+	ushort size = ReadByteArray(bs);
+	// 拆包等。。
+	//ushort offset = 0;
+	//do
+	//{
+	//	// 拿到第一个数据包长度 大端
+	//	ushort size2 = bs[offset + 7]<<8 + bs[offset + 8];
+	//	if(size2 < size)
+	//	buf[size2]
+	//	
+	//}while(offset < size);
 }
 
 void HardSocket::Register(TransportHandler handler, void* param)
