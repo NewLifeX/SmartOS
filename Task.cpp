@@ -15,6 +15,7 @@ Task::Task(TaskScheduler* scheduler)
 	Cost		= 0;
 	MaxCost		= 0;
 	Enable		= true;
+	Event		= false;
 	Deepth		= 0;
 	MaxDeepth	= 1;
 }
@@ -29,12 +30,12 @@ bool Task::Execute(ulong now)
 	if(Deepth >= MaxDeepth) return false;
 	Deepth++;
 
-	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-	if(NextTime >= 0)
-		NextTime = now + Period;
 	// 如果是事件型任务，这里禁用。任务中可以重新启用
-	else
+	if(Event)
 		Enable = false;
+	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
+	else
+		NextTime = now + Period;
 
 	TimeCost tc;
 	SleepTime = 0;
@@ -62,7 +63,7 @@ bool Task::Execute(ulong now)
 #endif
 
 	// 如果只是一次性任务，在这里清理
-	if(NextTime >= 0 && Period < 0) _Scheduler->Remove(ID);
+	if(!Event && Period < 0) _Scheduler->Remove(ID);
 
 	Deepth--;
 
@@ -123,6 +124,7 @@ uint TaskScheduler::Add(Action func, void* param, Int64 dueTime, Int64 period, s
 	{
 		task->NextTime	= dueTime;
 		task->Enable	= false;
+		task->Event		= true;
 	}
 	else
 		task->NextTime	= Time.Current() + dueTime;

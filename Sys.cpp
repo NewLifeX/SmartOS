@@ -568,9 +568,8 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 
 	task->Enable = enable;
 
-	// 如果不是事件型任务，那么可以安排最近一次执行的时间，比如0表示马上调度执行
-	if(task->NextTime >= 0 && usNextTime >= 0)
-		task->NextTime = Time.Current() + usNextTime;
+	// 可以安排最近一次执行的时间，比如0表示马上调度执行
+	if(usNextTime >= 0) task->NextTime = Time.Current() + usNextTime;
 
 	// 如果系统调度器处于Sleep，让它立马退出
 	if(enable) Scheduler.Sleeping = false;
