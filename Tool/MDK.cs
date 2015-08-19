@@ -328,7 +328,7 @@ namespace NewLife.Reflection
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
-            sb.Append(" --info sizes --info totals --info veneers");
+            sb.Append(" --info sizes --info totals --info veneers --diag_suppress L6803W");
 
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
