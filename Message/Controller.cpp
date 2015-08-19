@@ -5,7 +5,7 @@
 #if MSG_DEBUG
 	#define msg_printf debug_printf
 #else
-	__inline void msg_printf( const char *format, ... ) {}
+	#define msg_printf(format, ...)
 #endif
 
 // 构造控制器
