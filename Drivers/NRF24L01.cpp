@@ -720,7 +720,6 @@ void NRF24L01::SetAddress(bool full)
 		bits >>= 1;
 		if(bits & 0x01)
 		{
-			//WriteReg(RX_ADDR_P2 + i, Addr2_5[i]);
 			addr[0] = Addr2_5[i];
 			WriteBuf(RX_ADDR_P2 + i, addr, addrLen);
 		}

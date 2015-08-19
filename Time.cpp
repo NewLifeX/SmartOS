@@ -291,6 +291,11 @@ DateTime& DateTime::Parse(ulong us)
 	return st;
 }
 
+DateTime::DateTime()
+{
+	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));	
+}
+
 DateTime::DateTime(ulong us)
 {
 	if(us == 0)

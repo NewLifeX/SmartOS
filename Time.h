@@ -87,7 +87,8 @@ public:
 	ushort Millisecond;
 	ushort Microsecond;
 
-	DateTime(ulong us = 0);
+	DateTime();
+	DateTime(ulong us);
 
 	// 重载等号运算符
     DateTime& operator=(ulong v);
