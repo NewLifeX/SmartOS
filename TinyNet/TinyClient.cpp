@@ -260,10 +260,10 @@ void TinyClient::Ping()
 		debug_printf("30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务\r\n");
 
 		debug_printf("停止Ping服务端 ");
-		Sys.SetTask(_taskPing, true);
+		Sys.SetTask(_taskPing, false);
 
 		debug_printf("开始寻找服务端 ");
-		Sys.SetTask(_taskDiscover, false, 0);
+		Sys.SetTask(_taskDiscover, true, 0);
 
 		Server		= 0;
 		Password	= 0;
