@@ -38,6 +38,7 @@ void Device::Read(Stream& ms)
 	Name	= ms.ReadString();
 }
 
+#if DEBUG
 String& Device::ToStr(String& str) const
 {
 	str = str + "Address=0x" + Address;
@@ -54,6 +55,7 @@ String& Device::ToStr(String& str) const
 
 	return str;
 }
+#endif
 
 bool operator==(const Device& d1, const Device& d2)
 {

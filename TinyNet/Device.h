@@ -28,7 +28,9 @@ public:
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
 
+#if DEBUG
 	virtual String& ToStr(String& str) const;
+#endif
 };
 
 bool operator==(const Device& d1, const Device& d2);
