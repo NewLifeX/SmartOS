@@ -125,7 +125,7 @@ public:
 	
 	// 恢复配置
 	virtual void Recovery();
-	// 中断分发  维护状态
+	// 处理一些不需要异步处理的中断 减少异步次数 
 	virtual void IRQ_Process() = 0;
 	// 用户注册的中断事件处理 异步调用
 	virtual void OnIRQ() = 0;

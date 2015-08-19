@@ -1024,6 +1024,30 @@ void HardSocket::ReceiveTask(void* param)
 	socket->OnIRQ();
 }
 
+void HardSocket::Register(TransportHandler handler, void* param)
+{
+	ITransport::Register(handler, param);
+
+	// 如果有注册事件，则启用接收任务
+	if(handler)
+	{
+		if(!_tidRecv)
+		{
+			// 事件型，只调用一次型
+			_tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
+			// 关闭任务，等打开以后再开
+			if(!Opened) Sys.SetTask(_tidRecv, false);
+		}
+	}
+	else
+	{
+		if(_tidRecv) Sys.RemoveTask(_tidRecv);
+		_tidRecv = 0;
+	}
+}
+
+/****************************** TcpClient ************************************/
+
 bool TcpClient::OnOpen()
 {
 	//SocketWrites(DIPR, Remote.Address.ToArray());
@@ -1075,10 +1099,14 @@ bool TcpClient::Listen()
 
 	return true;
 }
-	// 恢复配置，还要维护连接问题
+// 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
+// 
 void TcpClient::IRQ_Process(){}
+// 异步中断
 void TcpClient::OnIRQ(){}
+
+/****************************** UdpClient ************************************/
 
 void UdpClient::IRQ_Process()
 {
@@ -1128,29 +1156,8 @@ void UdpClient::OnIRQ()
 	//	ushort size2 = bs[offset + 7]<<8 + bs[offset + 8];
 	//	if(size2 < size)
 	//	buf[size2]
-	//	
+	//	// 回调中断
+	//	len = OnReceive(buf, len);
 	//}while(offset < size);
-}
-
-void HardSocket::Register(TransportHandler handler, void* param)
-{
-	ITransport::Register(handler, param);
-
-	// 如果有注册事件，则启用接收任务
-	if(handler)
-	{
-		if(!_tidRecv)
-		{
-			// 事件型，只调用一次型
-			_tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
-			// 关闭任务，等打开以后再开
-			if(!Opened) Sys.SetTask(_tidRecv, false);
-		}
-	}
-	else
-	{
-		if(_tidRecv) Sys.RemoveTask(_tidRecv);
-		_tidRecv = 0;
-	}
 }
 
