@@ -270,10 +270,10 @@ typedef struct
 
 void TSys::ShowInfo()
 {
+#if DEBUG
 	// 刚刚初始化完成的时间
 	ulong initedTime = Time.Current();
 
-#if DEBUG
 	byte* ver = (byte*)&Version;
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);

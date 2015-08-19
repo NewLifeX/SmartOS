@@ -7,7 +7,7 @@
 #if MSG_DEBUG
 	#define msg_printf debug_printf
 #else
-	__inline void msg_printf( const char *format, ... ) {}
+	#define msg_printf(format, ...)
 #endif
 
 void SendTask(void* param);
@@ -585,6 +585,7 @@ void StatTask(void* param)
 // 显示统计信息
 void TinyController::ShowStat()
 {
+#if MSG_DEBUG
 	static uint lastSend = 0;
 	static uint lastReceive = 0;
 
@@ -606,6 +607,7 @@ void TinyController::ShowStat()
 	if(Last.Msg + Total.Msg > 0)
 		retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
 	msg_printf("Tiny::State 成功=%d%% 平均=%dus 速度=%d Byte/s 重发=%d.%02d 收发=%d/%d \r\n", rate, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Msg + Total.Msg);
+#endif
 }
 
 void MessageNode::SetMessage(TinyMessage& msg)

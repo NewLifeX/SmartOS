@@ -1,11 +1,11 @@
 ﻿#include "Sys.h"
 // 仅用于调试使用的一些函数实现，RTM不需要
 
-#define MEM_DEBUG 1
+#define MEM_DEBUG DEBUG
 #if MEM_DEBUG
 	#define mem_printf debug_printf
 #else
-	__inline void mem_printf( const char *format, ... ) {}
+	#define mem_printf(format, ...)
 #endif
 
 extern uint __heap_base;

@@ -1,7 +1,7 @@
 ﻿#include "Flash.h"
 #include <stdlib.h>
 
-#define FLASH_DEBUG 1
+#define FLASH_DEBUG DEBUG
 
 //static const uint STM32_FLASH_KEY1 = 0x45670123;
 //static const uint STM32_FLASH_KEY2 = 0xcdef89ab;

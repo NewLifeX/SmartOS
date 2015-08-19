@@ -17,7 +17,7 @@ extern "C"
 
 #else
 
-__inline void debug_printf( const char *format, ... ) {}
+#define debug_printf(format, ...)
 
 #endif
 }
