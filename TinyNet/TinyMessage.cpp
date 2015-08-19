@@ -374,12 +374,13 @@ void TinyController::AckResponse(TinyMessage& msg)
 	// 广播消息不要给确认
 	if(msg.Dest == 0) return;
 
-	TinyMessage msg2(msg);
-	msg2.Src = Address;
-	msg2.Dest = msg.Src;
-	msg2.Reply = 1;
-	msg2.Ack = 1;
-	msg2.Length = 0;
+	TinyMessage msg2;
+	msg2.Code	= msg.Code;
+	msg2.Src	= Address;
+	msg2.Dest	= msg.Src;
+	msg2.Reply	= 1;
+	msg2.Ack	= 1;
+	msg2.Length	= 0;
 #if MSG_DEBUG
 	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif

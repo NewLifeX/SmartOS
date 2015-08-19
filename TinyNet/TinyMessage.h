@@ -49,7 +49,6 @@ public:
 public:
 	// 初始化消息，各字段为0
 	TinyMessage(byte code = 0);
-	//TinyMessage(TinyMessage& msg);
 
 	// 消息所占据的指令数据大小。包括头部、负载数据和附加数据
 	virtual uint Size() const;
