@@ -215,10 +215,10 @@ TSys::TSys()
 	OnStart = NULL;
 }
 
-TSys::~TSys()
+/*TSys::~TSys()
 {
 	if(OnStop) OnStop();
-}
+}*/
 
 void ShowTime(void* param)
 {

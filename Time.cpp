@@ -22,12 +22,12 @@ TTime::TTime()
 	_msUs	= 0;
 }
 
-TTime::~TTime()
+/*TTime::~TTime()
 {
     Interrupt.Deactivate(SysTick_IRQn);
     // 关闭定时器
 	SysTick->CTRL &= ~SYSTICK_ENABLE;
-}
+}*/
 
 void TTime::Init()
 {

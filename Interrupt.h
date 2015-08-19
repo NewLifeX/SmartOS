@@ -17,15 +17,12 @@ typedef void (*InterruptCallback)(ushort num, void* param);
 // 中断管理类
 class TInterrupt
 {
-private:
-	//static uint GetIPSR();		// 获取中断号
-	//static void FaultHandler();	// 错误处理程序
 public:
     InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
     void* Params[VectorySize];       // 每一个中断向量对应的参数
 
     void Init();    // 初始化中断向量表
-    ~TInterrupt();
+    //~TInterrupt();
 
     // 注册中断函数（中断号，函数，参数）
     bool Activate(short irq, InterruptCallback isr, void* param = NULL);
@@ -101,3 +98,11 @@ extern "C"
 }
 
 #endif
+
+/*
+完全接管中断，在RAM中开辟中断向量表，做到随时可换。
+由于中断向量表要求128对齐，这里多分配128字节，找到对齐点后给向量表使用
+
+为了增强中断函数处理，我们使用_Vectors作为真正的中断向量表，全部使用OnHandler作为中断处理函数。
+然后在OnHandler内部获取中断号，再调用Vectors中保存的用户委托，并向它传递中断号和参数。
+*/

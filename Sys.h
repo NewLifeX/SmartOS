@@ -66,11 +66,6 @@ typedef enum
 // 判定指针是否在ROM区
 #define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 
-// 列表集合
-//#include "List.h"
-
-//class TaskScheduler;
-
 // 系统类
 class TSys : Object
 {
@@ -80,13 +75,14 @@ public:
     COM_Def	MessagePort;// 消息口，默认0表示USART1
     bool	IsGD;		// 是否GD芯片
 
-	char*	Name;		// 系统名称
-	ushort	Code;		// 产品代码
-	ushort	Version;	// 系统版本
-	char*	Company;	// 系统厂商
-	char*	BuildTime;	// 编译时间
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟
+
+	char*	Name;		// 系统名称
+	char*	Company;	// 系统厂商
+	char*	BuildTime;	// 编译时间
+	ushort	Code;		// 产品代码
+	ushort	Version;	// 系统版本
     byte	ID[12];		// 芯片ID。
     ushort	DevID;		// MCU编码。低字设备版本，高字子版本
     ushort	RevID;		// MCU编码。低字设备版本，高字子版本
@@ -95,7 +91,7 @@ public:
     ushort	RAMSize;	// 芯片RAM容量
 
     TSys();				// 构造函数
-    ~TSys();			// 析构函数
+    //~TSys();			// 析构函数
 
 	void InitClock();	// 初始化系统时钟
     void Init();     	// 初始化系统
