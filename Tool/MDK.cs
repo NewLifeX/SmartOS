@@ -210,6 +210,12 @@ namespace NewLife.Reflection
             sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
             sb.AppendFormat(" --pd \"{0} SETA 1\"", Flash);
 
+            if (GD32) sb.Append(" --pd \"GD32 SETA 1\"");
+            foreach (var item in Defines)
+            {
+                sb.AppendFormat(" --pd \"{0} SETA 1\"", item);
+            }
+
             sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
             sb.AppendFormat(" \"{0}\"", file);
 
@@ -548,7 +554,8 @@ namespace NewLife.Reflection
 		private String GetObjPath(String file)
 		{
             var objName = "Obj";
-            if (!Debug) objName += "Release";
+            if (!Debug) objName += "R";
+			if(Defines.Contains("TINY")) objName += "T";
 			objName.GetFullPath().EnsureDirectory(false);
 			if(!file.IsNullOrEmpty())
 				objName += "\\" + Path.GetFileNameWithoutExtension(file);

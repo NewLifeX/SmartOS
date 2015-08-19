@@ -37,6 +37,8 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     FaultHandler ; Bus Fault Handler
                 DCD     FaultHandler ; Usage Fault Handler
 
+				IF :DEF:TINY
+				ELSE
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
@@ -80,6 +82,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     0           ; Reserved
                 DCD     UserHandler ; CEC
                 DCD     0           ; Reserved
+				ENDIF
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
