@@ -256,6 +256,8 @@ void TinyClient::Ping()
 {
 	if(LastActive > 0 && LastActive + 60000000 < Time.Current())
 	{
+		if(Server == 0) return;
+
 		// 30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重启Discover任务，关闭Ping任务\r\n");
 
