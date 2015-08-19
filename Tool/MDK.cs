@@ -182,7 +182,7 @@ namespace NewLife.Reflection
 			// 先删除目标文件
             if (obj.Exists) obj.Delete();
 
-            return Complier.Run(sb.ToString(), 1000, WriteLog);
+            return Complier.Run(sb.ToString(), 100, WriteLog);
         }
 
         public Int32 Assemble(String file)
@@ -216,7 +216,7 @@ namespace NewLife.Reflection
 			// 先删除目标文件
             if (obj.Exists) obj.Delete();
 
-            return Asm.Run(sb.ToString(), 1000, WriteLog);
+            return Asm.Run(sb.ToString(), 100, WriteLog);
         }
 
         public Int32 CompileAll()
@@ -226,6 +226,7 @@ namespace NewLife.Reflection
 
             // 提前创建临时目录
             var obj = GetObjPath(null);
+			var list = new List<String>();
 
             foreach (var item in Files)
             {
@@ -258,14 +259,19 @@ namespace NewLife.Reflection
                     if(!Preprocess)
 					{
 						var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
-						if(File.Exists(fi))
-						{
-							count++;
-							Objs.Add(fi);
-						}
+						list.Add(fi);
 					}
                 }
             }
+
+			for(int i=0; i<list.Count; i++)
+			{
+				if(File.Exists(list[i]))
+				{
+					count++;
+					Objs.Add(list[i]);
+				}
+			}
 
             return count;
         }
