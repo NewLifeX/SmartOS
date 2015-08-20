@@ -104,10 +104,47 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 
 /******************************** 数据区 ********************************/
 /*
+请求：1起始 + 1大小
+响应：1起始 + N数据
+错误：1起始
+*/
+void TinyClient::OnRead(TinyMessage& msg)
+{
+	if(msg.Reply) return;
+	if(msg.Length < 2) return;
+
+	// 起始地址为7位压缩编码整数
+	Stream ms = msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+	uint len	= ms.ReadEncodeInt();
+
+	// 重新一个数据流，避免前面的不够
+	Stream ms2(4 + len);
+	ms2.WriteEncodeInt(offset);
+
+	ByteArray bs(ms2.Current(), len);
+	int rs = Store.Read(offset, bs);
+
+	if(rs < 0)
+	{
+		// 出错，使用原来的数据区即可，只需要返回一个起始位置
+		msg.Error = true;
+		msg.Length = ms2.Position();
+	}
+	else
+	{
+		msg.SetData(ms2.GetBuffer(), ms2.Length);
+	}
+
+	Reply(msg);
+}
+
+/*
 请求：1起始 + N数据
 响应：1起始 + 1大小
+错误：1起始
 */
-void TinyClient::OnWrite(Message& msg)
+void TinyClient::OnWrite(TinyMessage& msg)
 {
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
@@ -117,22 +154,18 @@ void TinyClient::OnWrite(Message& msg)
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray bs(ms.Current(), ms.Remain());
-	Store.Write(offset, bs);
-}
+	int rs = Store.Write(offset, bs);
 
-/*
-请求：1起始 + 1大小
-响应：1起始 + N数据
-*/
-void TinyClient::OnRead(Message& msg)
-{
-	if(msg.Reply) return;
-	if(msg.Length < 2) return;
+	// 准备响应数据
+	ms.Length = ms.Position();
+	if(rs < 0)
+		msg.Error = true;
+	else
+		ms.WriteEncodeInt(rs);
 
-	uint offset = msg.Data[0];
+	msg.Length = ms.Length;
 
-	ByteArray bs(msg.Data + 1, msg.Length - 1);
-	Store.Write(offset, bs);
+	Reply(msg);
 }
 
 void TinyClient::Report(TinyMessage& msg)

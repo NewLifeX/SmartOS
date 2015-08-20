@@ -40,8 +40,8 @@ public:
 	void Report(TinyMessage& msg);
 
 private:
-	void OnWrite(Message& msg);
-	void OnRead(Message& msg);
+	void OnWrite(TinyMessage& msg);
+	void OnRead(TinyMessage& msg);
 
 // 常用系统级消息
 public:

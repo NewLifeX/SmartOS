@@ -13,45 +13,16 @@ int DataStore::Write(uint offset, ByteArray& bs)
 	if(size == 0) return 0;
 
 	// 检查是否越界
-	if(Strict)
-	{
-		if(offset + size > Data.Length()) return -1;
-	}
+	if(Strict && offset + size > Data.Length()) return -1;
 
 	// 执行钩子函数
-	for(int i=0; i<ArrayLength(Areas); i++)
-	{
-		Area& ar = Areas[i];
-		if(ar.Offset == 0 && ar.Size == 0) break;
-
-		if(ar.Writing)
-		{
-			if (ar.Offset <= offset && offset <= ar.Offset + ar.Size ||
-				ar.Offset >= offset && ar.Offset <= offset + size)
-			{
-				if(!ar.Writing(*this, offset, size, bs)) return -1;
-			}
-		}
-	}
+	if(!OnHook(offset, size, 0)) return -1;
 
 	// 从数据区读取数据
 	uint rs = Data.Copy(bs, offset);
 
 	// 执行钩子函数
-	for(int i=0; i<ArrayLength(Areas); i++)
-	{
-		Area& ar = Areas[i];
-		if(ar.Offset == 0 && ar.Size == 0) break;
-
-		if(ar.Wrote)
-		{
-			if (ar.Offset <= offset && offset <= ar.Offset + ar.Size ||
-				ar.Offset >= offset && ar.Offset <= offset + size)
-			{
-				ar.Wrote(*this, offset, size, bs);
-			}
-		}
-	}
+	if(!OnHook(offset, size, 1)) return -1;
 
 	return rs;
 }
@@ -63,33 +34,36 @@ int DataStore::Read(uint offset, ByteArray& bs)
 	if(size == 0) return 0;
 
 	// 检查是否越界
-	if(Strict)
-	{
-		if(offset + size > Data.Length()) return -1;
-	}
+	if(Strict && offset + size > Data.Length()) return -1;
 
 	// 执行钩子函数
-	for(int i=0; i<ArrayLength(Areas); i++)
-	{
-		Area& ar = Areas[i];
-		if(ar.Offset == 0 && ar.Size == 0) break;
-
-		if(ar.Read)
-		{
-			if (ar.Offset <= offset && offset <= ar.Offset + ar.Size ||
-				ar.Offset >= offset && ar.Offset <= offset + size)
-			{
-				if(!ar.Read(*this, offset, size, bs)) return -1;
-			}
-		}
-	}
+	if(!OnHook(offset, size, 2)) return -1;
 
 	// 从数据区读取数据
 	return bs.Copy(Data.GetBuffer() + offset, size);
 }
 
+bool DataStore::OnHook(uint offset, uint size, int mode)
+{
+	for(int i=0; i<ArrayLength(Areas); i++)
+	{
+		Area& ar = Areas[i];
+		if(ar.Offset == 0 && ar.Size == 0) break;
+
+		if(ar.Hook && ar.Contain(offset, size))
+		{
+			if(!ar.Hook(offset, size, mode)) return false;
+			
+			// 只命中第一个钩子，缩短时间
+			break;
+		}
+	}
+	
+	return true;
+}
+
 // 注册某一块区域的读写钩子函数
-void DataStore::Register(uint offset, uint size, Handler writing, Handler wrote, Handler read)
+void DataStore::Register(uint offset, uint size, Handler hook)
 {
 	// 找一个空位
 	int i=0;
@@ -105,16 +79,18 @@ void DataStore::Register(uint offset, uint size, Handler writing, Handler wrote,
 
 	Areas[i].Offset	= offset;
 	Areas[i].Size	= size;
-	Areas[i].Writing= writing;
-	Areas[i].Wrote	= wrote;
-	Areas[i].Read	= read;
+	Areas[i].Hook	= hook;
 }
 
 DataStore::Area::Area()
 {
 	Offset	= 0;
 	Size	= 0;
-	Writing	= NULL;
-	Wrote	= NULL;
-	Read	= NULL;
+	Hook	= NULL;
+}
+
+bool DataStore::Area::Contain(uint offset, uint size)
+{
+	return (Offset <= offset && offset <= Offset + Size ||
+			Offset >= offset && Offset <= offset + size);
 }

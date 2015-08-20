@@ -19,24 +19,26 @@ public:
 	// 读取数据
 	int Read(uint offset, ByteArray& bs);
 
-	typedef bool (*Handler)(DataStore& ds, uint offset, uint size, ByteArray& bs);
+	typedef bool (*Handler)(uint offset, uint size, int mode);
+	// 注册某一块区域的读写钩子函数
+	void Register(uint offset, uint size, Handler hook);
+	
+private:
 	class Area
 	{
 	public:
 		uint	Offset;
 		uint	Size;
 
-		Handler	Writing;	// 写入之前
-		Handler Wrote;		// 写入之后
-		Handler Read;		// 读取之前
+		Handler	Hook;
 		
 		Area();
+		bool Contain(uint offset, uint size);
 	};
 
 	Area Areas[0x10];
 
-	// 注册某一块区域的读写钩子函数
-	void Register(uint offset, uint size, Handler writing, Handler wrote, Handler read);
+	bool OnHook(uint offset, uint size, int mode);
 };
 
 #endif
