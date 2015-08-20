@@ -3,8 +3,7 @@
 // 初始化消息，各字段为0
 JoinMessage::JoinMessage() : HardID(0x10), Password(0x08)
 {
-	HardVer	= Sys.Version >> 8;
-	SoftVer	= Sys.Version & 0xFF;
+	Version	= 1;
 	Kind	= Sys.Code;
 	TranID	= 0;
 
@@ -19,11 +18,10 @@ bool JoinMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{
-		HardVer	= ms.Read<byte>();
-		SoftVer	= ms.Read<byte>();
+		Version	= ms.Read<byte>();
 		Kind	= ms.Read<ushort>();
+		TranID	= ms.Read<uint>();
 		HardID	= ms.ReadArray();
-		TranID	= ms.Read<ushort>();
 	}
 	else
 	{
@@ -31,7 +29,9 @@ bool JoinMessage::Read(Stream& ms)
 		Channel	= ms.Read<byte>();
 		Speed	= ms.Read<byte>();
 		Address	= ms.Read<byte>();
-		Password	= ms.ReadArray();
+		Password= ms.ReadArray();
+		TranID	= ms.Read<uint>();
+		HardID	= ms.ReadArray();
 	}
 
 	return true;
@@ -42,11 +42,10 @@ void JoinMessage::Write(Stream& ms)
 {
 	if(!Reply)
 	{
-		ms.Write(HardVer);
-		ms.Write(SoftVer);
+		ms.Write(Version);
 		ms.Write(Kind);
-		ms.WriteArray(HardID);
 		ms.Write(TranID);
+		ms.WriteArray(HardID);
 	}
 	else
 	{
@@ -55,6 +54,8 @@ void JoinMessage::Write(Stream& ms)
 		ms.Write(Speed);
 		ms.Write(Address);
 		ms.WriteArray(Password);
+		ms.Write(TranID);
+		ms.WriteArray(HardID);
 	}
 }
 
@@ -64,11 +65,10 @@ String& JoinMessage::ToStr(String& str) const
 	str += "组网";
 	if(!Reply)
 	{
-		str = str + " HardVer=" + HardVer;
-		str = str + " SoftVer=" + SoftVer;
+		str = str + " Version=" + Version;
 		str.Append(" Kind=").Append(Kind, 16, 4);
+		str.Append(" TranID=").Append(TranID, 16, 8);
 		str = str + " HardID=" + HardID;
-		str.Append(" TranID=").Append(TranID, 16, 4);
 	}
 	else
 	{
@@ -78,6 +78,8 @@ String& JoinMessage::ToStr(String& str) const
 		str = str + " Speed=" + Speed;
 		str = str + " Address=" + Address;
 		str = str + " Password=" + Password;
+		str.Append(" TranID=").Append(TranID, 16, 8);
+		str = str + " HardID=" + HardID;
 	}
 
 	return str;
