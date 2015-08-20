@@ -98,9 +98,9 @@ void TinyMessage::Write(Stream& ms)
 	ms.Write(Checksum);
 
 	// 后面可能有TTL
-	if(UseTTL) ms.Write(TTL);
+	if(UseTTL && ms.Position() < 24) ms.Write(TTL);
 #if MSG_DEBUG
-	ms.Write(Retry);
+	if(ms.Position() < 24) ms.Write(Retry);
 #endif
 }
 
