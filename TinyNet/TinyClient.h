@@ -51,6 +51,7 @@ public:
 	ushort		TranID;		// 组网会话
 	void Join();
 	bool OnJoin(TinyMessage& msg);
+	bool OnDisjoin(TinyMessage& msg);
 
 	// 心跳
 	void Ping();

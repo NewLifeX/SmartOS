@@ -94,6 +94,9 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 			OnJoin(msg);
 			break;
 		case 0x02:
+			OnDisjoin(msg);
+			break;
+		case 0x03:
 			OnPing(msg);
 			break;
 		case 0x05:
@@ -219,8 +222,7 @@ void TinyClient::Join()
 	Control->Broadcast(msg);
 }
 
-// Discover响应
-// 格式：1地址 + N密码
+// 组网
 bool TinyClient::OnJoin(TinyMessage& msg)
 {
 	// 客户端只处理Discover响应
@@ -251,6 +253,12 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 	Task* task = Scheduler[_TaskID];
 	task->Period = 15000000;
 
+	return true;
+}
+
+// 离网
+bool TinyClient::OnDisjoin(TinyMessage& msg)
+{
 	return true;
 }
 
