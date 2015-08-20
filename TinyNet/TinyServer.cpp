@@ -1,7 +1,7 @@
 ﻿#include "Time.h"
 #include "TinyServer.h"
 
-#include "DiscoverMessage.h"
+#include "JoinMessage.h"
 
 #include "Security\MD5.h"
 
@@ -55,19 +55,19 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	switch(msg.Code)
 	{
 		case 1:
-			OnDiscover(msg);
+			OnJoin(msg);
 			break;
 		case 2:
-			OnPing(msg);
+			OnDisjoin(msg);
 			break;
 		case 3:
-			OnSysTime(msg);
-			break;
-		case 4:
-			OnSysID(msg);
+			OnPing(msg);
 			break;
 		case 5:
-			OnSysMode(msg);
+			OnRead(msg);
+			break;
+		case 6:
+			OnWrite(msg);
 			break;
 	}
 
@@ -103,14 +103,12 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	return true;
 }
 
-// 设备发现
-// 请求：2字节设备类型 + 20字节系统ID
-// 响应：1字节地址 + 8字节密码
-bool TinyServer::OnDiscover(TinyMessage& msg)
+// 组网
+bool TinyServer::OnJoin(TinyMessage& msg)
 {
 	if(msg.Reply) return false;
 
-	DiscoverMessage dm;
+	JoinMessage dm;
 	dm.ReadMessage(msg);
 
 	// 如果设备列表没有这个设备，那么加进去
@@ -153,11 +151,11 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 	{
 		Current		= dv;
 
-		dv->Type	= dm.Type;
+		dv->Type	= dm.Kind;
 		dv->HardID	= dm.HardID;
 		dv->Version	= dm.Version;
-		dv->Switchs	= dm.Switchs;
-		dv->Analogs	= dm.Analogs;
+		//dv->Switchs	= dm.Switchs;
+		//dv->Analogs	= dm.Analogs;
 
 		// 如果最后活跃时间超过60秒，则认为是设备上线
 		if(dv->LastTime == 5 || dv->LastTime + 6000000 < Time.Current())
@@ -185,16 +183,22 @@ bool TinyServer::OnDiscover(TinyMessage& msg)
 			rs.Sequence	= msg.Sequence;
 
 			// 发现响应
-			DiscoverMessage dm;
+			JoinMessage dm;
 			dm.Reply	= true;
 			dm.Address	= dv->Address;
-			dm.Pass		= dv->Pass;
+			dm.Password	= dv->Pass;
 			dm.WriteMessage(rs);
 
 			Reply(rs);
 		}
 	}
 
+	return true;
+}
+
+// 读取
+bool TinyServer::OnDisjoin(TinyMessage& msg)
+{
 	return true;
 }
 
@@ -206,20 +210,14 @@ bool TinyServer::OnPing(TinyMessage& msg)
 	return true;
 }
 
-// 询问及设置系统时间
-bool TinyServer::OnSysTime(TinyMessage& msg)
+// 读取
+bool TinyServer::OnRead(TinyMessage& msg)
 {
 	return true;
 }
 
-// 询问系统标识号
-bool TinyServer::OnSysID(TinyMessage& msg)
-{
-	return true;
-}
-
-// 设置系统模式
-bool TinyServer::OnSysMode(TinyMessage& msg)
+// 写入
+bool TinyServer::OnWrite(TinyMessage& msg)
 {
 	return true;
 }

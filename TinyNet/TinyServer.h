@@ -13,9 +13,10 @@
 class TinyServer
 {
 private:
-	TinyController* Control;
 
 public:
+	TinyController* Control;
+
 	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
 
 	TinyServer(TinyController* control);
@@ -42,20 +43,19 @@ public:
 	// 设置默认系统消息
 	void Start();
 
-	// 广播发现系统
-	bool OnDiscover(TinyMessage& msg);
+	// 组网
+	bool OnJoin(TinyMessage& msg);
 
-	// 心跳保持与对方的活动状态
+	bool OnDisjoin(TinyMessage& msg);
+	
+	// 心跳
 	bool OnPing(TinyMessage& msg);
 
-	// 询问及设置系统时间
-	bool OnSysTime(TinyMessage& msg);
+	// 读取
+	bool OnRead(TinyMessage& msg);
 
-	// 询问系统标识号
-	bool OnSysID(TinyMessage& msg);
-
-	// 设置系统模式
-	bool OnSysMode(TinyMessage& msg);
+	// 写入
+	bool OnWrite(TinyMessage& msg);
 };
 
 #endif
