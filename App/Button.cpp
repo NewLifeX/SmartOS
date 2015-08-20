@@ -1,4 +1,4 @@
-#include "Button.h"
+﻿#include "Button.h"
 
 
 InputPort* Button::ACZero = NULL;
@@ -98,12 +98,9 @@ void Button::SetValue(bool value)
 									// 故这里添加1ms延时
 									// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
 	}
-	Led = value;       // if(Led) Led = value;  原
-#ifdef Door_lock
-	Relay = !value;   // 如上
-#else
-	Relay = value;    // 如上
-#endif
+	Led = value;
+	Relay = value;
+	
 	_Value = value;
 }
 
