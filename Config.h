@@ -10,15 +10,17 @@
 #pragma pack(1)
 
 // 配置信息
-class Config
+class TConfig
 {
 public:
 	int		Length;	// 数据长度
 
 	// 初始化，各字段为0
-	Config();
+	TConfig();
 };
 
 #pragma pack(pop)	// 恢复对齐状态
+
+extern TConfig Config;
 
 #endif

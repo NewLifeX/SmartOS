@@ -1,7 +1,9 @@
 ﻿#include "Config.h"
 
+TConfig Config;
+
 // 初始化，各字段为0
-Config::Config()
+TConfig::TConfig()
 {
 	// 实际内存大小，减去头部大小
 	Length = sizeof(this) - (int)&Length - (int)this;
