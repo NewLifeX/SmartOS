@@ -4,8 +4,6 @@
 #include "Sys.h"
 #include "List.h"
 #include "Net\ITransport.h"
-#include "Stream.h"
-#include "Timer.h"
 
 #include "Message.h"
 
@@ -42,23 +40,6 @@ public:
 	virtual bool Send(Message& msg);
 	// 回复对方的请求消息
 	virtual bool Reply(Message& msg);
-
-// 发送核心
-protected:
-
-// 处理器部分
-private:
-    struct HandlerLookup
-    {
-        uint			Code;	// 代码
-        MessageHandler	Handler;// 处理函数
-		void*			Param;	// 参数
-    };
-	List<HandlerLookup*> _Handlers;
-
-public:
-	// 注册消息处理器。考虑到业务情况，不需要取消注册
-	void Register(byte code, MessageHandler handler, void* param = NULL);
 
 	// 收到消息时触发
 	MessageHandler	Received;

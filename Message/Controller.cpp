@@ -23,7 +23,6 @@ Controller::~Controller()
 {
 	Close();
 
-	_Handlers.DeleteAll().Clear();
 	if(Port) delete Port;
 
 	debug_printf("TinyNet::UnInit\r\n");
@@ -45,6 +44,8 @@ void Controller::Open()
 void Controller::Close()
 {
 	if(!Opened) return;
+
+	Port->Close();
 
 	Opened = false;
 }
@@ -75,6 +76,7 @@ uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
 		if(!control->Dispatch(ms, NULL)) break;
+
 		assert_param2(control, "控制器指针已被改变3");
 		assert_ptr(control);
 	}
@@ -112,19 +114,6 @@ bool Controller::Valid(Message& msg)
 // 接收处理
 bool Controller::OnReceive(Message& msg)
 {
-	// 选择处理器来处理消息
-	// 倒序选择处理器来处理消息，让后注册处理器有更高优先权
-	for(int i = _Handlers.Count() - 1; i >= 0; i--)
-	{
-		HandlerLookup* lookup = _Handlers[i];
-		if(lookup && lookup->Code == msg.Code)
-		{
-			// 返回值决定是否成功处理，如果未成功处理，则技术遍历下一个处理器
-			bool rs = lookup->Handler(msg, lookup->Param);
-			if(rs) break;
-		}
-	}
-
 	// 外部公共消息事件
 	if(Received)
 	{
@@ -132,34 +121,6 @@ bool Controller::OnReceive(Message& msg)
 	}
 
 	return true;
-}
-
-void Controller::Register(byte code, MessageHandler handler, void* param)
-{
-	assert_param2(code, "注册指令码不能为空");
-	assert_param2(handler, "注册函数不能为空");
-
-	HandlerLookup* lookup;
-
-#if DEBUG
-	// 检查是否已注册。一般指令码是固定的，所以只在DEBUG版本检查
-	for(int i=0; i<_Handlers.Count(); i++)
-	{
-		lookup = _Handlers[i];
-		if(lookup && lookup->Code == code)
-		{
-			debug_printf("Controller::Register Error! Code=%d was Registered to 0x%08x\r\n", code, lookup->Handler);
-			//return;
-		}
-	}
-#endif
-
-	lookup = new HandlerLookup();
-	lookup->Code = code;
-	lookup->Handler = handler;
-	lookup->Param = param;
-
-	_Handlers.Add(lookup);
 }
 
 bool Controller::Send(Message& msg)
