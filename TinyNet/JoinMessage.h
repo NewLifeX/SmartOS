@@ -12,16 +12,16 @@ class JoinMessage : public MessageBase
 {
 public:
 	// 请求数据
-	byte		Version;
+	byte		Version;	// 组网指令的版本。与系统版本无关
 	ushort		Kind;		// 类型
-	uint		TranID;		// 会话ID
-	ByteArray	HardID;		// 硬件ID
+	uint		TranID;		// 会话
+	ByteArray	HardID;		// 硬件编码。一般12~16字节
 
 	// 响应数据
-	byte		Server;		// 网关ID
+	byte		Server;		// 网关地址
 	byte		Channel;	// 通道
 	byte		Speed;		// 传输速度
-	byte		Address;	// 分配得到的设备ID
+	byte		Address;	// 分配得到的设备地址
 	ByteArray	Password;	// 通信密码。一般8字节
 
 	// 初始化消息，各字段为0
