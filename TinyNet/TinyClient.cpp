@@ -51,24 +51,29 @@ void TinyClient::Close()
 
 /******************************** 收发中心 ********************************/
 
-void TinyClient::Send(TinyMessage& msg)
+bool TinyClient::Send(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
 	assert_param2(Control, "令牌控制器未初始化");
-	
+
+	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
+	if(!Server) return false;
+
 	// 设置网关地址
-	if(!Server)return;
 	if(!msg.Dest) msg.Dest = Server;
-	
-	Control->Send(msg);
+
+	return Control->Send(msg);
 }
 
-void TinyClient::Reply(TinyMessage& msg)
+bool TinyClient::Reply(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
 	assert_param2(Control, "令牌控制器未初始化");
 
-	Control->Reply(msg);
+	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
+	if(!Server) return false;
+
+	return Control->Reply(msg);
 }
 
 bool OnClientReceived(Message& msg, void* param)

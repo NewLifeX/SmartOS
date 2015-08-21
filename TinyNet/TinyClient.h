@@ -27,8 +27,8 @@ public:
 	void Close();
 
 	// 发送消息
-	void Send(TinyMessage& msg);
-	void Reply(TinyMessage& msg);
+	bool Send(TinyMessage& msg);
+	bool Reply(TinyMessage& msg);
 	bool OnReceive(TinyMessage& msg);
 
 	// 收到功能消息时触发
