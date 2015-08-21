@@ -13,5 +13,5 @@ void TConfig::Init()
 
 void TConfig::LoadDefault()
 {
-	
+	Type	= Sys.Code;
 }

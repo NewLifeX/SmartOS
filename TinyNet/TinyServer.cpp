@@ -3,6 +3,8 @@
 
 #include "JoinMessage.h"
 
+#include "Config.h"
+
 #include "Security\MD5.h"
 
 /******************************** TinyServer ********************************/
@@ -64,9 +66,11 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			OnPing(msg);
 			break;
 		case 5:
+		case 0x15:
 			OnRead(msg);
 			break;
 		case 6:
+		case 0x16:
 			OnWrite(msg);
 			break;
 	}
@@ -182,10 +186,17 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 			// 发现响应
 			//JoinMessage dm;
 			dm.Reply	= true;
+
+			dm.Server	= Config.Address;
+			dm.Channel	= Config.Channel;
+			dm.Speed	= Config.Speed;
+
 			dm.Address	= dv->Address;
 			dm.Password	= dv->Pass;
+
 			dm.HardID.SetLength(6);	// 小心不要超长
 			dm.HardID	= Sys.ID;
+
 			dm.WriteMessage(rs);
 
 			Reply(rs);
@@ -254,6 +265,6 @@ bool TinyServer::DeleteDevice(byte id)
 		delete dv;
 		return true;
 	}
-	
+
 	return false;
 }

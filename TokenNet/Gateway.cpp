@@ -1,5 +1,6 @@
 ﻿#include "Time.h"
 #include "Gateway.h"
+#include "Config.h"
 
 #include "Security\MD5.h"
 
@@ -55,6 +56,8 @@ void Gateway::Start()
 		dv->HardID		= Sys.ID;
 		dv->LastTime	= Time.Current();
 		dv->Name		= Sys.Name;
+
+		Config.Address	= dv->Address;
 
 		Server->Devices.Add(dv);
 	}

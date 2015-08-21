@@ -101,9 +101,11 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 			OnPing(msg);
 			break;
 		case 0x05:
+		case 0x15:
 			OnRead(msg);
 			break;
 		case 0x06:
+		case 0x16:
 			OnWrite(msg);
 			break;
 	}
