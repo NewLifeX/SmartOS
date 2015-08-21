@@ -10,13 +10,13 @@
 class Device : public Object
 {
 public:
-	byte	Address;	// 节点ID
+	byte	Address;	// 节点地址
 	ushort	Type;		// 类型
-	ByteArray	HardID;	// 物理ID
+	ByteArray	HardID;	// 硬件编码
 	ulong	LastTime;	// 活跃时间
 	ushort	Version;	// 版本
-	byte	Switchs;	// 开关数
-	byte	Analogs;	// 通道数
+	byte	DataSize;	// 数据大小
+	byte	ConfigSize;	// 配置大小
 	String	Name;		// 名称
 	ByteArray	Pass;	// 通信密码
 

@@ -54,8 +54,6 @@ void Gateway::Start()
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
 		dv->LastTime	= Time.Current();
-		dv->Switchs		= 5;
-		dv->Analogs		= 3;
 		dv->Name		= Sys.Name;
 
 		Server->Devices.Add(dv);
