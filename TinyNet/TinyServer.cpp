@@ -187,7 +187,7 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 			//JoinMessage dm;
 			dm.Reply	= true;
 
-			dm.Server	= Config.Address;
+			dm.Server	= Config.Server;
 			dm.Channel	= Config.Channel;
 			dm.Speed	= Config.Speed;
 

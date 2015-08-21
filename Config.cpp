@@ -14,4 +14,5 @@ void TConfig::Init()
 void TConfig::LoadDefault()
 {
 	Type	= Sys.Code;
+	Server	= 0x01;
 }
