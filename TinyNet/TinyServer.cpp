@@ -116,12 +116,8 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 	if(!id) return false;
 
 	Device* dv = FindDevice(dm.HardID);
-	//Device* dv = FindDevice(id);
-	//bool isNew = false;
 	if(!dv)
 	{
-		//isNew = true;
-
 		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
 		if(FindDevice(id) != NULL)
 		{
@@ -175,6 +171,7 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 			ulong now = Time.Current();
 			ByteArray bs((byte*)&now, 8);
 			dv->Pass = MD5::Hash(bs);
+			dv->Pass.SetLength(8);	// 小心不要超长
 
 			// 响应
 			TinyMessage rs;
@@ -183,10 +180,12 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 			rs.Sequence	= msg.Sequence;
 
 			// 发现响应
-			JoinMessage dm;
+			//JoinMessage dm;
 			dm.Reply	= true;
 			dm.Address	= dv->Address;
 			dm.Password	= dv->Pass;
+			dm.HardID.SetLength(6);	// 小心不要超长
+			dm.HardID	= Sys.ID;
 			dm.WriteMessage(rs);
 
 			Reply(rs);

@@ -3,9 +3,15 @@
 TConfig Config;
 
 // 初始化，各字段为0
-TConfig::TConfig()
+void TConfig::Init()
 {
 	// 实际内存大小，减去头部大小
-	Length = sizeof(this) - (int)&Length - (int)this;
-	memset(&Length, 0, Length);
+	uint len = sizeof(this) - (int)&Length - (int)this;
+	memset(&Length, 0, len);
+	Length = len;
+}
+
+void TConfig::LoadDefault()
+{
+	
 }

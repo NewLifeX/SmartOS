@@ -13,10 +13,20 @@
 class TConfig
 {
 public:
-	int		Length;	// 数据长度
+	ushort		Length;		// 数据长度
+
+	byte		HardVer;	// 硬件版本
+	byte		SoftVer;	// 软件版本
+	ushort		Type;		// 类型
+	byte		Address;	// 分配得到的设备地址
+	byte		Server;		// 网关ID
+	byte		Channel;	// 通道
+	byte		Speed;		// 传输速度
+	ByteArray	ServerKey;	// 服务端组网密码，退网时使用。一般6字节
 
 	// 初始化，各字段为0
-	TConfig();
+	void Init();
+	void LoadDefault();
 };
 
 #pragma pack(pop)	// 恢复对齐状态
