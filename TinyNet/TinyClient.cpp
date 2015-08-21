@@ -55,10 +55,11 @@ void TinyClient::Send(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
 	assert_param2(Control, "令牌控制器未初始化");
-
+	
 	// 设置网关地址
+	if(!Server)return;
 	if(!msg.Dest) msg.Dest = Server;
-
+	
 	Control->Send(msg);
 }
 
