@@ -109,16 +109,11 @@ void Timer::Start()
 {
 #if DEBUG
     // 获取当前频率
-    RCC_ClocksTypeDef clock;
-    RCC_GetClocksFreq(&clock);
-
+	uint clk = RCC_GetPCLK();
 #if defined(STM32F1) || defined(STM32F4)
-	uint clk = clock.PCLK1_Frequency;
-	if((uint)_Timer & 0x00010000) clk = clock.PCLK2_Frequency;
-	clk <<= 1;
-#elif defined(STM32F0)
-	uint clk = clock.PCLK_Frequency << 1;
+	if((uint)_Timer & 0x00010000) clk = RCC_GetPCLK2();
 #endif
+	clk <<= 1;
 
 	uint fre = clk / Prescaler / Period;
 	debug_printf("Timer%d::Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
@@ -202,16 +197,11 @@ void Timer::ClockCmd(bool state)
 void Timer::SetFrequency(uint frequency)
 {
     // 获取当前频率
-    RCC_ClocksTypeDef clock;
-    RCC_GetClocksFreq(&clock);
-
+	uint clk = RCC_GetPCLK();
 #if defined(STM32F1) || defined(STM32F4)
-	uint clk = clock.PCLK1_Frequency;
-	if((uint)_Timer & 0x00010000) clk = clock.PCLK2_Frequency;
-	clk <<= 1;
-#elif defined(STM32F0)
-	uint clk = clock.PCLK_Frequency << 1;
+	if((uint)_Timer & 0x00010000) clk = RCC_GetPCLK2();
 #endif
+	clk <<= 1;
 
 	assert_param2(frequency > 0 && frequency <= clk, "频率超出允许的范围");
 

@@ -230,19 +230,16 @@ void ShowTime(void* param)
 void TSys::InitClock()
 {
     // 获取当前频率
-    RCC_ClocksTypeDef clock;
-
-    RCC_GetClocksFreq(&clock);
+    uint clock = RCC_GetSysClock();
     // 如果当前频率不等于配置，则重新配置时钟
-	if(Clock != clock.SYSCLK_Frequency || CystalClock != HSE_VALUE)
+	if(Clock != clock || CystalClock != HSE_VALUE)
 	{
 		SetSysClock(Clock, CystalClock);
 
 #ifdef STM32F4
 		HSE_VALUE = CystalClock;
 #endif
-		RCC_GetClocksFreq(&clock);
-		Clock = clock.SYSCLK_Frequency;
+		Clock = RCC_GetSysClock();
 		SystemCoreClock = Clock;
 	}
 
@@ -342,9 +339,7 @@ void TSys::ShowInfo()
     // 系统信息
     //debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", Clock/1000000, FlashSize, RAMSize);
     // 获取当前频率
-    RCC_ClocksTypeDef clock;
-    RCC_GetClocksFreq(&clock);
-    debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", clock.SYSCLK_Frequency/1000000, FlashSize, RAMSize);
+    debug_printf(" %dMHz Flash:%dk RAM:%dk\r\n", RCC_GetSysClock()/1000000, FlashSize, RAMSize);
 	//debug_printf("\r\n");
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
