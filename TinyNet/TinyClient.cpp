@@ -1,5 +1,7 @@
 ﻿#include "Time.h"
 #include "Task.h"
+#include "Config.h"
+
 #include "TinyClient.h"
 
 #include "JoinMessage.h"
@@ -37,6 +39,9 @@ void TinyClient::Open()
 	TranID	= (int)Time.Current();
 
 	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000000, "客户端服务");
+
+	if(Config.Address > 0) Control->Address = Config.Address;
+	if(Config.Server > 0) Server = Config.Server;
 }
 
 void TinyClient::Close()
