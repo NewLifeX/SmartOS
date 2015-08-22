@@ -610,7 +610,7 @@ void Thread::OnTick()
 }
 
 void Idle_Handler(void* param) { while(1); }
-void Main_Handler(void* param) { Scheduler.Start(); while(1); }
+void Main_Handler(void* param) { Task::Scheduler()->Start(); while(1); }
 
 bool Thread::Inited = false;
 uint Thread::g_ID = 0;

@@ -1,6 +1,5 @@
 ﻿#include "Time.h"
 #include "TinyMessage.h"
-#include "Task.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -204,7 +203,7 @@ void TinyController::Open()
 		//debug_printf("TinyNet::微网消息队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1000, "微网队列");
 		// 默认禁用，有数据要发送才开启
-		Scheduler[_taskID]->Enable = false;
+		Sys.SetTask(_taskID, false);
 	}
 
 	memset(&Total, 0, sizeof(Total));
@@ -501,10 +500,7 @@ void TinyController::Loop()
 		//debug_printf("下一次 %dus\r\n", node.Period);
 	}
 
-	if(count == 0)
-	{
-		Scheduler[_taskID]->Enable = false;
-	}
+	if(count == 0) Sys.SetTask(_taskID, false);
 }
 
 // 发送消息，usTimeout微秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
@@ -544,7 +540,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 
 	Total.Msg++;
 
-	Scheduler[_taskID]->Enable = true;
+	Sys.SetTask(_taskID, true, 0);
 
 	return true;
 }

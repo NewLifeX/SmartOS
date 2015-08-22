@@ -1,9 +1,6 @@
 ﻿#include "Task.h"
 #include "Time.h"
 
-// 全局任务调度器
-TaskScheduler Scheduler("系统");
-
 Task::Task(TaskScheduler* scheduler)
 {
 	_Scheduler = scheduler;
@@ -88,6 +85,19 @@ void Task::ShowStatus()
 		debug_printf("%dus", (int)Period);
 	if(!Enable) debug_printf(" 禁用");
 	debug_printf("\r\n");
+}
+
+// 全局任务调度器
+TaskScheduler* Task::Scheduler()
+{
+	static TaskScheduler _sc("Sys");
+
+	return &_sc;
+}
+
+Task* Task::Get(int taskid)
+{
+	return (*Scheduler())[taskid];
 }
 
 TaskScheduler::TaskScheduler(string name)

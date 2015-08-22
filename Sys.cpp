@@ -160,6 +160,7 @@ TSys::TSys()
     if(IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 
 	_Index = 0;
+#ifndef TINY
 #ifdef STM32F0
 	if(IsGD)
 		FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
@@ -185,6 +186,7 @@ TSys::TSys()
 	}
 
 	InitHeapStack(RAMSize);
+#endif
 
 	StartTime = 0;
 	OnTick = NULL;
@@ -548,17 +550,17 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 // 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
 uint TSys::AddTask(Action func, void* param, Int64 dueTime, Int64 period, string name)
 {
-	return Scheduler.Add(func, param, dueTime, period, name);
+	return Task::Scheduler()->Add(func, param, dueTime, period, name);
 }
 
 void TSys::RemoveTask(uint taskid)
 {
-	Scheduler.Remove(taskid);
+	Task::Scheduler()->Remove(taskid);
 }
 
 bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 {
-	Task* task = Scheduler[taskid];
+	Task* task = Task::Get(taskid);
 	if(!task) return false;
 
 	task->Enable = enable;
@@ -567,7 +569,7 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 	if(usNextTime >= 0) task->NextTime = Time.Current() + usNextTime;
 
 	// 如果系统调度器处于Sleep，让它立马退出
-	if(enable) Scheduler.Sleeping = false;
+	if(enable) Task::Scheduler()->Sleeping = false;
 
 	return true;
 }
@@ -585,7 +587,7 @@ void TSys::Start()
 		OnStart();
 	}
 	else
-		Scheduler.Start();
+		Task::Scheduler()->Start();
 }
 
 void TimeSleep(uint us)
@@ -593,8 +595,9 @@ void TimeSleep(uint us)
 	// 在这段时间里面，去处理一下别的任务
 	if(Sys.Started && (!us || us >= 1000))
 	{
+		TaskScheduler* sc = Task::Scheduler();
 		// 记录当前正在执行任务
-		Task* task = Scheduler.Current;
+		Task* task = sc->Current;
 
 		TimeCost tc;
 		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
@@ -605,7 +608,7 @@ void TimeSleep(uint us)
 			// 统计这次调度的时间，累加作为当前任务的休眠时间
 			TimeCost tc2;
 
-			Scheduler.Execute(total);
+			sc->Execute(total);
 
 			total -= tc2.Elapsed();
 
@@ -615,7 +618,7 @@ void TimeSleep(uint us)
 		int cost = tc.Elapsed();
 		if(task)
 		{
-			Scheduler.Current = task;
+			sc->Current = task;
 			task->SleepTime += cost;
 		}
 

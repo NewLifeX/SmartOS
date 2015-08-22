@@ -6,9 +6,6 @@
 
 class TaskScheduler;
 
-// 全局任务调度器
-extern TaskScheduler Scheduler;
-
 // 任务
 class Task
 {
@@ -46,6 +43,10 @@ public:
 	// 执行任务。返回是否正常执行。
 	bool Execute(ulong now);
 	void ShowStatus();	// 显示状态
+	
+	// 全局任务调度器
+	static TaskScheduler* Scheduler();
+	static Task* Get(int taskid);
 };
 
 // 任务调度器

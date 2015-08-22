@@ -232,7 +232,7 @@ bool TinyIP::Open()
 	// 添加到系统任务，马上开始，尽可能多被调度
 	//debug_printf("TinyIP::以太网轮询 ");
     uint tid = Sys.AddTask(Work, this, 0, 1000, "以太网");
-	Task* task = Scheduler[tid];
+	Task* task = Task::Get(tid);
 	task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 
 #if NET_DEBUG
