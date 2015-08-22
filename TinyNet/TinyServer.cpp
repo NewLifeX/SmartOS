@@ -167,7 +167,7 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 		}
 		dv->LastTime = Time.Current();
 
-		debug_printf("\r\nTinyServer::新设备 ");
+		debug_printf("\r\nTinyServer::新设备组网 0x%08X \r\n", dm.TranID);
 		dv->Show(true);
 
 		// 对于已注册的设备，再来发现消息不做处理

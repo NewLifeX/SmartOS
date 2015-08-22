@@ -15,4 +15,7 @@ void TConfig::LoadDefault()
 {
 	Type	= Sys.Code;
 	//Server	= 0x01;
+	
+	PingTime	= 15;
+	OfflineTime	= 60;
 }

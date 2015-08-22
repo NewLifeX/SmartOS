@@ -22,7 +22,11 @@ public:
 	byte		Server;		// 网关ID
 	byte		Channel;	// 通道
 	byte		Speed;		// 传输速度
-	ByteArray	ServerKey;	// 服务端组网密码，退网时使用。一般6字节
+	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
+
+	ushort		PingTime;	// 心跳时间。秒
+	ushort		OfflineTime;	// 离线阀值时间。秒
+	ushort		SleepTime;	// 睡眠时间。秒
 
 	// 初始化，各字段为0
 	void Init();

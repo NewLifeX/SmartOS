@@ -241,17 +241,17 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 	// 客户端只处理Discover响应
 	if(!msg.Reply || msg.Error) return true;
 
-	// 校验不对
-	if(TranID != msg.Sequence)
-	{
-		debug_printf("发现响应序列号 %d 不等于内部序列号 %d \r\n", msg.Sequence, TranID);
-		//return true;
-	}
-
 	// 解析数据
 	JoinMessage dm;
 	dm.ReadMessage(msg);
 	dm.Show(true);
+
+	// 校验不对
+	if(TranID != dm.TranID)
+	{
+		debug_printf("发现响应序列号 0x%08X 不等于内部序列号 0x%08X \r\n", dm.TranID, TranID);
+		//return true;
+	}
 
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
@@ -259,12 +259,15 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 	// 记住服务端地址
 	Server = dm.Server;
 
-	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，密码：", Server, dm.Address, 0);
+	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，密码：", Server, dm.Address, dm.Channel);
 	Password.Show(true);
 
 	// 取消Join任务，启动Ping任务
 	Task* task = Scheduler[_TaskID];
-	task->Period = 15000000;
+	task->Period = Config.PingTime;
+
+	// 组网成功更新一次最后活跃时间
+	LastActive = Time.Current();
 
 	return true;
 }
@@ -278,11 +281,11 @@ bool TinyClient::OnDisjoin(TinyMessage& msg)
 // 心跳
 void TinyClient::Ping()
 {
-	if(LastActive > 0 && LastActive + 60000000 < Time.Current())
+	if(LastActive > 0 && LastActive + Config.OfflineTime * 1000000 < Time.Current())
 	{
 		if(Server == 0) return;
 
-		debug_printf("30秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n");
+		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", Config.OfflineTime);
 
 		Task* task = Scheduler[_TaskID];
 		task->Period = 5000000;
