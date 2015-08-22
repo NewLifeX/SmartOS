@@ -363,13 +363,9 @@ namespace NewLife.Reflection
 				if (msg.IsNullOrEmpty()) return;
 
 				// 引用错误可以删除obj文件，下次编译将会得到解决
-				var p = msg.IndexOf("Undefined symbol");
+				/*var p = msg.IndexOf("Undefined symbol");
 				if(p >= 0)
 				{
-					/*var obj = msg.Substring("referred from", ")").Trim();
-					obj = GetObjPath(obj).EnsureEnd(".o");
-					XTrace.WriteLine(obj);*/
-
 					foreach(var obj in Objs)
 					{
 						if(File.Exists(obj)) File.Delete(obj);
@@ -378,7 +374,7 @@ namespace NewLife.Reflection
 						var dep = Path.ChangeExtension(obj, ".d");
 						if(File.Exists(dep)) File.Delete(dep);
 					}
-				}
+				}*/
 
 				WriteLog(msg);
 			});

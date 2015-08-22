@@ -1,5 +1,4 @@
 ﻿#include "Port.h"
-#include "Time.h"
 
 #if defined(STM32F1) || defined(STM32F4)
 static const int PORT_IRQns[] = {
@@ -461,7 +460,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 			// 值必须有变动才触发
 			if(value == state->OldValue) return;
 
-			Time.Sleep(shakeTime); // 避免抖动
+			Sys.Delay(shakeTime); // 避免抖动
 		}
 	} while (EXTI->PR & bit); // 如果再次挂起则重复
 	//EXTI_ClearITPendingBit(line);

@@ -206,13 +206,15 @@ TSys::TSys()
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;    //关闭JTAG仿真接口，只打开SW仿真。
 #endif
 
-	Name = "SmartOS";
-	Code = 0x0000;
-	Version = 0x0300;
-	Company = "NewLife_Embedded_Team";
+	Code	= 0x0000;
+	Version	= 0x0300;
+#ifndef TINY
+	Name	= "SmartOS";
+	Company	= "NewLife_Embedded_Team";
 	BuildTime = "yyyy-MM-dd HH:mm:ss";
 
     Interrupt.Init();
+#endif
 
 	OnStart = NULL;
 }

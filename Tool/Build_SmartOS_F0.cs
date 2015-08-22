@@ -32,6 +32,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
+			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F0");
 
