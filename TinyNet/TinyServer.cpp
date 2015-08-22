@@ -122,19 +122,21 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 	Device* dv = FindDevice(dm.HardID);
 	if(!dv)
 	{
+		// 以网关地址为基准，进行递增分配
+		byte addr = Config.Address;
 		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
 		if(FindDevice(id) != NULL)
 		{
-			id = 1;
+			id = addr;
 			while(FindDevice(++id) != NULL && id < 0xFF);
 
 			debug_printf("发现ID=0x%02X已分配，为当前节点分配 0x%02X\r\n", msg.Src, id);
 		}
 		else
 		{
-			id = Devices.Count() + 1;
+			id = Devices.Count() + addr;
 			// 注意，网关可能来不及添加
-			if(id <= 1) id = 2;
+			if(id <= addr) id = addr + 1;
 			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", msg.Src, id);
 		}
 
