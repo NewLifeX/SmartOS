@@ -21,7 +21,7 @@ public:
 	byte		Address;	// 分配得到的设备地址
 	byte		Server;		// 网关ID
 	byte		Channel;	// 通道
-	byte		Speed;		// 传输速度
+	ushort		Speed;		// 传输速度
 	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
 
 	ushort		PingTime;	// 心跳时间。秒

@@ -258,13 +258,17 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 
 	// 记住服务端地址
 	Server = dm.Server;
+	Config.Channel	= dm.Channel;
+	Config.Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);;
 
-	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，密码：", Server, dm.Address, dm.Channel);
+	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Config.Speed);
 	Password.Show(true);
 
 	// 取消Join任务，启动Ping任务
 	Task* task = Scheduler[_TaskID];
-	task->Period = Config.PingTime;
+	ushort time = Config.PingTime;
+	if(time < 5) time = 5;
+	task->Period = time * 1000000;
 
 	// 组网成功更新一次最后活跃时间
 	LastActive = Time.Current();
@@ -281,11 +285,13 @@ bool TinyClient::OnDisjoin(TinyMessage& msg)
 // 心跳
 void TinyClient::Ping()
 {
-	if(LastActive > 0 && LastActive + Config.OfflineTime * 1000000 < Time.Current())
+	ushort off = Config.OfflineTime;
+	if(off < 10) off = 10;
+	if(LastActive > 0 && LastActive + off * 1000000 < Time.Current())
 	{
 		if(Server == 0) return;
 
-		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", Config.OfflineTime);
+		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", off);
 
 		Task* task = Scheduler[_TaskID];
 		task->Period = 5000000;

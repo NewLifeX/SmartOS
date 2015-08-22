@@ -191,7 +191,7 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 
 			dm.Server	= Config.Address;
 			dm.Channel	= Config.Channel;
-			dm.Speed	= Config.Speed;
+			dm.Speed	= Config.Speed == 250 ? 0 : (Config.Speed == 1000 ? 1 : 2);;
 
 			dm.Address	= dv->Address;
 			dm.Password	= dv->Pass;
