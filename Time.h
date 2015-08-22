@@ -4,7 +4,6 @@
 #include "Sys.h"
 
 class DateTime;
-class HardRTC;
 
 // 时间类
 // 使用双计数时钟，Ticks累加滴答，Microseconds累加微秒，_usTicks作为累加微秒时的滴答余数
@@ -23,8 +22,12 @@ public:
     //volatile ulong NextEvent;		// 下一个计划事件的滴答数
 
     byte	TicksPerMicrosecond;	// 每微秒的时钟滴答数
-	
-	HardRTC* _RTC;
+
+	Func OnInit;
+	Func OnLoad;
+	Func OnSave;
+	typedef int (*FuncInt)(int);
+	FuncInt OnSleep;
 
     TTime();
     //~TTime();
@@ -109,26 +112,6 @@ public:
 	F长全部 yyyy-MM-dd HH:mm:ss
 	*/
 	const char* GetString(byte kind = 'F', string str = NULL);
-};
-
-// 实时时钟
-class HardRTC
-{
-public:
-	bool LowPower;	// 是否使用低功耗休眠。默认true
-	bool External;	// 是否使用外部时钟。默认false
-	bool Opened;
-	byte Reversed;
-
-	HardRTC(bool lowpower = true, bool external = false);
-
-	void Init();
-	void LoadTicks();
-	void SaveTicks();
-	void Sleep(uint& ms);
-
-	uint ReadBackup(byte addr);
-	void WriteBackup(byte addr, uint value);
 };
 
 #endif

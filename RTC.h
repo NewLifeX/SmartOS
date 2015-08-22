@@ -4,26 +4,27 @@
 #include "Sys.h"
 #include "Interrupt.h"
 
-
-// RTC
-class RTClock
+// 实时时钟
+class HardRTC
 {
-    typedef void (*RTCHandler)(void* param);
-	
-	RTClock();
-	RTClock(int s);
-	int _TickTime;  // 几秒中断一次
-	
 public:
-	void Register(RTCHandler handler, void* param = NULL);
-	int GetTime();
-	void SerTime(int );
+	bool LowPower;	// 是否使用低功耗休眠。默认true
+	bool External;	// 是否使用外部时钟。默认false
+	bool Opened;
+	byte Reversed;
 
-	RTCHandler  _Handler;
-	void * _param;
-private:
+	HardRTC();
+
+	void Init();
+	void LoadTicks();
+	void SaveTicks();
+	int Sleep(int ms);
+
+	uint ReadBackup(byte addr);
+	void WriteBackup(byte addr, uint value);
 	
+	static HardRTC* Instance();
+	static void Start(bool lowpower = true, bool external = false);
 };
-
 
 #endif
