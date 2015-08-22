@@ -130,6 +130,8 @@ public:
 	void RemoveTask(uint taskid);
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	bool SetTask(uint taskid, bool enable, int usNextTime = -1);
+	// 改变任务周期
+	bool SetTaskPeriod(uint taskid, Int64 period);
 	void Start();	// 开始系统大循环
 	Func OnStart;
 };

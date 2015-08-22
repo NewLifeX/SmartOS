@@ -574,6 +574,17 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 	return true;
 }
 
+// 改变任务周期
+bool TSys::SetTaskPeriod(uint taskid, Int64 period)
+{
+	Task* task = Task::Get(taskid);
+	if(!task) return false;
+
+	task->Period = period;
+
+	return true;
+}
+
 void TSys::Start()
 {
 #if DEBUG

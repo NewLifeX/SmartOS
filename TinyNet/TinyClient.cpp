@@ -279,10 +279,9 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 	Password.Show(true);
 
 	// 取消Join任务，启动Ping任务
-	Task* task = Task::Get(_TaskID);
 	ushort time = Config.PingTime;
 	if(time < 5) time = 5;
-	task->Period = time * 1000000;
+	Sys.SetTaskPeriod(_TaskID, time * 1000000);
 
 	// 组网成功更新一次最后活跃时间
 	LastActive = Time.Current();
@@ -307,8 +306,7 @@ void TinyClient::Ping()
 
 		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", off);
 
-		Task* task = Task::Get(_TaskID);
-		task->Period = 5000000;
+		Sys.SetTaskPeriod(_TaskID, 5000000);
 
 		Server		= 0;
 		Password	= 0;
