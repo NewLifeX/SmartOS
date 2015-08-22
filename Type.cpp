@@ -117,6 +117,37 @@ String ByteArray::ToHex(char sep, int newLine) const
 	return ToHex(str, sep, newLine);
 }
 
+// 保存到普通字节数组，首字节为长度
+int ByteArray::Load(const byte* data, int maxsize)
+{
+	/*// 压缩编码整数最大4字节
+	Stream ms(data, 4);
+	_Length = ms.ReadEncodeInt();
+
+	return Copy(data + ms.Position(), _Length);*/
+
+	_Length = data[0] <= maxsize ? data[0] : maxsize;
+
+	return Copy(data + 1, _Length);
+}
+
+// 从普通字节数据组加载，首字节为长度
+int ByteArray::Save(byte* data, int maxsize)
+{
+	/*// 压缩编码整数最大4字节
+	Stream ms(data, 4);
+	ms.WriteEncodeInt(_Length);
+
+	return CopyTo(data + ms.Position(), _Length);*/
+
+	assert_param(_Length <= 0xFF);
+
+	int len = _Length <= maxsize ? _Length : maxsize;
+	data[0] = len;
+
+	return CopyTo(data + 1, len);
+}
+
 String& ByteArray::ToStr(String& str) const
 {
 	return ToHex(str, '-', 0x20);

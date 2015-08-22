@@ -40,8 +40,13 @@ void TinyClient::Open()
 
 	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000000, "客户端服务");
 
-	if(Config.Address > 0) Control->Address = Config.Address;
-	if(Config.Server > 0) Server = Config.Server;
+	if(Config.Address > 0 && Config.Server > 0)
+	{
+		Control->Address = Config.Address;
+		Server = Config.Server;
+		
+		Password.Load(Config.Password, ArrayLength(Config.Password));
+	}
 }
 
 void TinyClient::Close()
@@ -259,11 +264,16 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
+	Password.Save(Config.Password, ArrayLength(Config.Password));
 
 	// 记住服务端地址
 	Server = dm.Server;
 	Config.Channel	= dm.Channel;
-	Config.Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);;
+	Config.Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
+
+	// 服务端组网密码，退网使用
+	Config.ServerKey[0] = dm.HardID.Length();
+	dm.HardID.Save(Config.ServerKey, ArrayLength(Config.ServerKey));
 
 	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Config.Speed);
 	Password.Show(true);

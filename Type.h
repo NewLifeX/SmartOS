@@ -192,7 +192,7 @@ public:
 	{
 		// 不要自己拷贝给自己
 		if(&arr == this) return *this;
-		
+
 		_Length = arr.Length();
 
 		Copy(arr);
@@ -268,7 +268,7 @@ public:
 	{
 		// 不要自己拷贝给自己
 		if(&arr == this) return 0;
-		
+
 		int len = arr.Length();
 		if(len == 0) return 0;
 
@@ -394,6 +394,11 @@ public:
 	String& ToHex(String& str, char sep = '-', int newLine = 0x10) const;
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String ToHex(char sep = '-', int newLine = 0x10) const;
+
+	// 保存到普通字节数组，首字节为长度
+	int Load(const byte* data, int maxsize = -1);
+	// 从普通字节数据组加载，首字节为长度
+	int Save(byte* data, int maxsize = -1);
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
