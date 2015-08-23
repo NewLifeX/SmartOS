@@ -217,6 +217,8 @@ bool TinyServer::OnDisjoin(TinyMessage& msg)
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(TinyMessage& msg)
 {
+	// 网关内没有相关节点信息时不鸟他
+	if(FindDevice(msg.Src) == NULL)return false;
 	if(!msg.Reply) Reply(msg);
 
 	return true;
