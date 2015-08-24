@@ -77,10 +77,10 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 
 	// 临时方便调试使用
 	// 如果设备列表没有这个设备，那么加进去
-	//byte id = msg.Src;
+	byte id = msg.Src;
 	Device* dv = Current;
-	/*if(!dv) dv = FindDevice(id);
-	if(!dv && id)
+	if(!dv) dv = FindDevice(id);
+	/*if(!dv && id)
 	{
 		dv = new Device();
 		dv->Address = id;
@@ -104,6 +104,33 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 
 	Current = NULL;
 
+	return true;
+}
+
+// 分发消息
+bool TinyServer::Dispatch(TinyMessage& msg)
+{
+	// 先找到设备
+	Device* dv = FindDevice(msg.Dest);
+	if(!dv) return false;
+
+	// 缓存内存操作指令
+	switch(msg.Code)
+	{
+		case 5:
+		case 0x15:
+			OnRead(msg);
+			break;
+		case 6:
+		case 0x16:
+			OnWrite(msg);
+			break;
+	}
+
+	// 非休眠设备直接发送
+	if(!dv->CanSleep())	return Send(msg);
+
+	// 休眠设备进入发送队列
 	return true;
 }
 

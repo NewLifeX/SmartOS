@@ -177,7 +177,7 @@ bool Gateway::OnRemote(TokenMessage& msg)
 		*/
 		TinyMessage tmsg;
 		TokenToTiny(msg, tmsg);
-		Server->Send(tmsg);
+		Server->Dispatch(tmsg);
 	}
 
 	return true;
@@ -358,6 +358,7 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 
 	// 处理Reply标记
 	msg2.Reply = msg.Reply;
+	msg2.Error = msg.Error;
 
 	// 第一个字节是节点设备地址
 	if(msg.Length > 0) msg2.Dest = msg.Data[0];
@@ -373,6 +374,7 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 
 	// 处理Reply标记
 	msg2.Reply = msg.Reply;
+	msg2.Error = msg.Error;
 
 	// 第一个字节是节点设备地址
 	msg2.Data[0] = ((TinyMessage&)msg).Src;

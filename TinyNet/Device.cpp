@@ -11,6 +11,10 @@ Device::Device() : HardID(0), Name(0), Pass(0)
 	DataSize	= 0;
 	ConfigSize	= 0;
 
+	PingTime	= 0;
+	OfflineTime	= 0;
+	SleepTime	= 0;
+
 	RegTime		= 0;
 	LoginTime	= 0;
 }

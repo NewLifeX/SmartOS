@@ -25,6 +25,8 @@ public:
 	bool Send(Message& msg);
 	bool Reply(Message& msg);
 	bool OnReceive(TinyMessage& msg);
+	// 分发消息
+	bool Dispatch(TinyMessage& msg);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
