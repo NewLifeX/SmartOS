@@ -53,6 +53,7 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 
     _port = g_Uart_Ports[_index];
     _baudRate = baudRate;
+	_byteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
@@ -307,7 +308,7 @@ uint SerialPort::OnRead(byte* buf, uint size)
 	{
 		count = len;
 		// 按照115200波特率计算，传输7200字节每秒，每个毫秒7个字节，大概150微秒差不多可以接收一个新字节
-		Sys.Delay(100);
+		Sys.Delay(_byteTime);
 		len = Rx.Length();
 	}
 
