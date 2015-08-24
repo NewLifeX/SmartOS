@@ -315,7 +315,7 @@ void TinyClient::Ping()
 	}
 
 	TinyMessage msg;
-	msg.Code = 2;
+	msg.Code = 3;
 
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
 	Report(msg);
