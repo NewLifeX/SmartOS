@@ -20,9 +20,8 @@ private:
 	volatile byte _Lock;
 
 	Spi*		_spi;
-    InputPort	_IRQ;
-	// rst引脚可能不是独享的  这里只留一个指针
-	OutputPort* nRest;
+    InputPort	Irq;
+	OutputPort	Rst;
 
 	// 8个硬件socket
 	HardSocket* _sockets[8];
@@ -36,6 +35,7 @@ private:
 	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
 
 	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
+	void OnClose();
 
 public:
 	ushort		RetryTime;
@@ -56,12 +56,12 @@ public:
 
 	// 构造
 	W5500();
-    W5500(Spi* spi, Pin irq = P0 ,OutputPort* rst = NULL);	// 必须具备复位引脚 否则寄存器不能读
+    W5500(Spi* spi, Pin irq = P0 ,Pin rst = P0);	// 必须具备复位引脚 否则寄存器不能读
     ~W5500();
 
 	// 初始化
 	void Init();
-    void Init(Spi* spi, Pin irq = P0, OutputPort* rst = NULL);	// 必须给出 rst 控制引脚
+    void Init(Spi* spi, Pin irq = P0, Pin rst = P0);	// 必须给出 rst 控制引脚
 
 	bool Open();
 	bool Close();

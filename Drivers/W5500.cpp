@@ -1,4 +1,5 @@
 ﻿#include "W5500.h"
+#include "Time.h"
 
 #define NET_DEBUG DEBUG
 
@@ -191,20 +192,24 @@ typedef struct : ByteStruct
 
 W5500::W5500() { Init(); }
 
-W5500::W5500(Spi* spi, Pin irq, OutputPort* rst)
+W5500::W5500(Spi* spi, Pin irq, Pin rst)
 {
 	Init();
 	Init(spi, irq, rst);
 }
 
-W5500::~W5500() { }
+W5500::~W5500()
+{
+	Close();
+
+	delete _spi;
+}
 
 // 初始化
 void W5500::Init()
 {
 	_Lock	= 0;
 	_spi	= NULL;
-	nRest	= NULL;
 
 	//memset(&_sockets, NULL, sizeof(_sockets));
 	ArrayZero(_sockets);
@@ -230,7 +235,6 @@ void W5500::Init()
 	IP[3] = first;
 
 	Mask = IPAddress(255, 255, 255, 0);
-	//Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = defip;
 
 	MacAddress& mac = Mac;
@@ -241,20 +245,20 @@ void W5500::Init()
 }
 
 // 初始化
-void W5500::Init(Spi* spi, Pin irq, OutputPort* rst)
+void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
 	assert_ptr(spi);
 
-	if(rst) nRest = rst;
+	if(rst != P0) Rst.Set(rst);
 	if(irq != P0)
 	{
 		// 中断引脚初始化
-		debug_printf("\r\nW5500::Init IRQ = P%c%d\r\n", _PIN_NAME(irq));
-		//_IRQ.ShakeTime	= 0;
-		_IRQ.Floating	= false;
-		_IRQ.PuPd		= InputPort::PuPd_UP;
-		_IRQ.Set(irq).Config();
-		_IRQ.Register(OnIRQ, this);
+		debug_printf("\r\nW5500::Init IRQ = P%c%d RST = P%c%d\r\n", _PIN_NAME(irq), _PIN_NAME(rst));
+		//Irq.ShakeTime	= 0;
+		Irq.Floating	= false;
+		Irq.PuPd		= InputPort::PuPd_UP;
+		Irq.Set(irq);
+		Irq.Register(OnIRQ, this);
 	}
 
 	_spi = spi;
@@ -264,6 +268,10 @@ bool W5500::Open()
 {
 	if(Opened) return true;
 
+	Rst.Config(true);
+	Irq.Config(true);
+
+	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
 
 	// 复位
@@ -271,6 +279,13 @@ bool W5500::Open()
 
 	// 读硬件版本
 	byte ver = ReadByte(0x0039);
+	if(!ver)
+	{
+		OnClose();
+		debug_printf("W5500::Open 打开失败！无法识别硬件版本！\r\n");
+
+		return false;
+	}
 	debug_printf("Hard Vision: %02X\r\n", ver);
 
 	// 读所有寄存器
@@ -278,7 +293,7 @@ bool W5500::Open()
 	ByteArray bs((byte*)&gen, sizeof(gen));
 	ReadFrame(0, bs);
 
-	// 修改各个字段值
+	// 设置地址、网关、掩码、MAC等
 	Gateway.ToArray().CopyTo(gen.GAR);
 	Mask.ToArray().CopyTo(gen.SUBR);
 	Mac.ToArray().CopyTo(gen.SHAR);
@@ -287,19 +302,21 @@ bool W5500::Open()
 	gen.RTR = RetryTime / 10;
 	gen.RCR = RetryCount;
 	// 启用所有Socket中断
-	gen.SIMR = 0xff;
+	gen.SIMR = 0xFF;
 
 	if(LowLevelTime > 0)
 		gen.INTLEVEL = LowLevelTime;
 	else
 		LowLevelTime = gen.INTLEVEL;
 
+	// 工作模式
 	T_Mode mr;
 	mr.Init(gen.MR);
 	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
 	mr.FARP = 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
 	gen.MR = mr.ToByte();
 
+	// 打开中断
 	T_Interrupt ir;
 	ir.Init(gen.IMR);	// 中断屏蔽  0：屏蔽
 	ir.UNREACH = 1;		// 目标不可达
@@ -307,7 +324,7 @@ bool W5500::Open()
 	gen.IMR = ir.ToByte();
 
 	// 一次性全部写入
-	WriteFrame(0, ByteArray((byte*)&gen, sizeof(gen)));
+	WriteFrame(0, bs);
 
 	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
 	for(int i=0; i<8; i++)
@@ -318,6 +335,10 @@ bool W5500::Open()
 
 	Opened = true;
 
+#if NET_DEBUG
+	StateShow();
+#endif
+
 	return true;
 }
 
@@ -325,29 +346,32 @@ bool W5500::Close()
 {
 	if(!Opened) return true;
 
-	_spi->Close();
-
-	if(nRest)
-	{
-		*nRest = false;
-		delete nRest;
-	}
-	nRest = NULL;
+	OnClose();
 
 	Opened = false;
 
 	return true;
 }
 
+void W5500::OnClose()
+{
+	_spi->Close();
+
+	Rst = false;
+
+	Rst.Config(false);
+	Irq.Config(false);
+}
+
 // 复位（软硬兼施）
 void W5500::Reset()
 {
-	if(nRest)
+	if(!Rst.Empty())
 	{
 		debug_printf("硬件复位 \r\n");
-		*nRest = false;		// 低电平有效
+		Rst = false;		// 低电平有效
 		Sys.Delay(600);		// 最少500us
-		*nRest = true;
+		Rst = true;
 	}
 
 	debug_printf("软件复位 \r\n");
@@ -357,6 +381,10 @@ void W5500::Reset()
 	mr.RST = 1;
 
 	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
+	// 必须要等一会，否则初始化会失败
+	//Sys.Delay(600);		// 最少500us
+	TimeWheel tw(0, 0, 600);
+	while(!ReadByte(0x0039) && !tw.Expired());
 }
 
 // 网卡状态输出
@@ -548,7 +576,7 @@ byte W5500::GetSocket()
 	}
 	debug_printf("没有空余的Socket可用了 !\r\n");
 
-	return 0xff;
+	return 0xFF;
 }
 
 // 注册 Socket
@@ -769,7 +797,7 @@ HardSocket::HardSocket(W5500* host, byte protocol)
 	}
 	else
 	{
-		Index = 0xff;
+		Index = 0xFF;
 	}
 }
 
