@@ -995,17 +995,9 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 	ushort offset = __REV16(SocRegRead2(RX_RD));
 
 	// 读取全部数据
-	if(bs.SetLength(size))
-	{
-		Host->ReadFrame(offset, bs, Index, 0x03);
-	}
-	else
-	{
-		// 设置接收长度失败  清空接收区
-		debug_printf("ByteArray.SetLength(%d) 失败\r\n",size);
-		debug_printf("等待下次接收\r\n");
-		size = 0;
-	}
+	bs.SetLength(size);
+	Host->ReadFrame(offset, bs, Index, 0x03);
+
 	// 更新实际物理地址,
 	SocRegWrite2(RX_RD, __REV16(offset + size));
 	// 生效 RX_RD
