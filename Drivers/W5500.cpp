@@ -1186,16 +1186,20 @@ void UdpClient::OnIRQ()
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	ByteArray bs;
 	ushort size = ReadByteArray(bs);
-	// 拆包等。。
-	//ushort offset = 0;
-	//do
-	//{
-	//	// 拿到第一个数据包长度 大端
-	//	ushort size2 = bs[offset + 7]<<8 + bs[offset + 8];
-	//	if(size2 < size)
-	//	buf[size2]
-	//	// 回调中断
-	//	len = OnReceive(buf, len);
-	//}while(offset < size);
-}
+	Stream ms(bs.GetBuffer(), bs.Length());
 
+	// 拆包
+	while(ms.Remain())
+	{
+		ByteArray bs2(6);
+		ms.Read(bs2);
+		IPEndPoint ep(bs2);
+		ep.Port = __REV16(ep.Port);
+
+		ushort len = ms.Read<ushort>();
+		len = __REV16(len);
+
+		// 回调中断
+		len = OnReceive(ms.ReadBytes(len), len);
+	};
+}
