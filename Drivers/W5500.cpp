@@ -344,6 +344,7 @@ bool W5500::Open()
 
 #if NET_DEBUG
 	StateShow();
+	PhyStateShow();
 #endif
 
 	return true;
@@ -386,12 +387,10 @@ void W5500::Reset()
 // 网卡状态输出
 void W5500::StateShow()
 {
-	TGeneral gen;
-	ByteArray bs(sizeof(gen));
-
 	// 一次性全部读出
+	TGeneral gen;
+	ByteArray bs((byte*)&gen, sizeof(gen));
 	ReadFrame(0, bs);
-	bs.CopyTo((byte*)&gen);
 
 	debug_printf("\r\nW5500::State\r\n");
 
@@ -471,7 +470,7 @@ void W5500::PhyStateShow()
 	}
 }
 
-bool W5500::WriteByte(ushort addr, byte dat, byte socket ,byte block)
+bool W5500::WriteByte(ushort addr, byte dat, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
@@ -481,7 +480,7 @@ bool W5500::WriteByte(ushort addr, byte dat, byte socket ,byte block)
 	return true;
 }
 
-byte W5500::ReadByte(ushort addr, byte socket ,byte block)
+byte W5500::ReadByte(ushort addr, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
@@ -490,28 +489,28 @@ byte W5500::ReadByte(ushort addr, byte socket ,byte block)
 	return _spi->Write(0x00);
 }
 
-bool W5500::WriteByte2(ushort addr, ushort dat, byte socket ,byte block)
+bool W5500::WriteByte2(ushort addr, ushort dat, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 1, socket, block);
 	_spi->Write(dat);
-	_spi->Write(dat>>8);
+	_spi->Write(dat >> 8);
 
 	return true;
 }
 
-ushort W5500::ReadByte2(ushort addr, byte socket ,byte block)
+ushort W5500::ReadByte2(ushort addr, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 0, socket, block);
 	ushort temp = _spi->Write(0x00);
-	temp += _spi->Write(0x00)<<8;
+	temp += _spi->Write(0x00) << 8;
 	return temp;
 }
 
-void W5500::SetAddress(ushort addr, byte rw, byte socket ,byte block)
+void W5500::SetAddress(ushort addr, byte rw, byte socket, byte block)
 {
 	// 地址高位在前
 	_spi->Write(addr >> 8);
@@ -525,7 +524,7 @@ void W5500::SetAddress(ushort addr, byte rw, byte socket ,byte block)
 	_spi->Write(cfg.ToByte());
 }
 
-bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket ,byte block)
+bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket, byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
@@ -539,7 +538,7 @@ bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket ,byte block
 	return true;
 }
 
-bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket ,byte block)
+bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket, byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
@@ -566,9 +565,9 @@ bool W5500::CheckLink()
 
 byte W5500::GetSocket()
 {
-	for(byte i = 1;i < 8;i ++)
+	for(byte i = 0;i < 8;i ++)
 	{
-		if(_sockets[i] == NULL)return i;
+		if(_sockets[i] == NULL) return i;
 	}
 	debug_printf("没有空余的Socket可用了 !\r\n");
 
@@ -578,9 +577,11 @@ byte W5500::GetSocket()
 // 注册 Socket
 void W5500::Register(byte Index, HardSocket* handler)
 {
+	if(Index >= 8) return;
+
 	if(_sockets[Index] == NULL)
 	{
-		debug_printf("Index: %d 被启用 !\r\n", Index);
+		debug_printf("W5500::Register %d 被启用 !\r\n", Index);
 		_sockets[Index] = handler;
 	}
 	else
@@ -590,7 +591,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 // irq 中断处理部分
 void W5500::OnIRQ(Pin pin, bool down, void* param)
 {
-	if(!down)return;	// 低电平中断
+	if(!down) return;	// 低电平中断
 
 	W5500* send = (W5500*)param;
 	send->OnIRQ();
@@ -599,11 +600,12 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 void W5500::OnIRQ()
 {
 	// 读出中断状态
-	// 分析IR
-	T_Interrupt ir;
-	ir.Init(ReadByte(offsetof(TGeneral, IR)));
-	if(ir.ToByte() != 0x00)
+	byte dat = ReadByte(offsetof(TGeneral, IR));
+	if(dat != 0x00)
 	{
+		// 分析IR
+		T_Interrupt ir;
+		ir.Init(dat);
 		if(ir.CONFLICT)
 		{
 			// IP 冲突
@@ -614,6 +616,7 @@ void W5500::OnIRQ()
 		}
 		if(ir.UNREACH)
 		{
+#if NET_DEBUG
 			// 读出不可达 IP 的信息
 			ByteArray bs(6);
 			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
@@ -621,6 +624,7 @@ void W5500::OnIRQ()
 			ep.Port = __REV16(ep.Port);
 			debug_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
 			// 处理..
+#endif
 		}
 		// PPPoE 连接不可达
 		if(ir.PPPoE)
@@ -628,10 +632,10 @@ void W5500::OnIRQ()
 
 		}
 		// 清空 IR 中断
-		WriteByte(offsetof(TGeneral, IR),ir.ToByte());
+		WriteByte(offsetof(TGeneral, IR), ir.ToByte());
 	}
 
-	byte dat = ReadByte(offsetof(TGeneral, SIR));
+	dat = ReadByte(offsetof(TGeneral, SIR));
 	if(dat != 0x00)
 	{
 		byte dat2 = dat;
@@ -639,14 +643,14 @@ void W5500::OnIRQ()
 		{
 			if(dat2 & 0x01)
 			{
-				debug_printf("Socket %d 中断\r\n",i+1);
+				//debug_printf("W5500::Socket[%d] 中断\r\n", i);
 				if(_sockets[i]) _sockets[i]->IRQ_Process();
 			}
 			dat2 >>= 1;
 			if(dat2 == 0x00) break;
 		}
 		// 清空 SIR 中断
-		WriteByte(offsetof(TGeneral, SIR),dat);
+		WriteByte(offsetof(TGeneral, SIR), dat);
 	}
 
 	// 中断位清零 说明书说的不够清晰 有待完善
@@ -1025,7 +1029,7 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 
 	// 读取发送缓冲区写指针
 	ushort addr = __REV16(SocRegRead2(TX_WR));
-	Host->WriteFrame(addr, bs, Index ,0x02);
+	Host->WriteFrame(addr, bs, Index, 0x02);
 	// 更新发送缓存写指针位置
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,__REV16(addr));
@@ -1151,18 +1155,18 @@ void UdpClient::IRQ_Process()
 	S_Interrupt ir;
 	ir.Init(ReadInterrupt());
 	// UDP 模式下只处理 SendOK  Recv 两种情况
-	debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
+	/*debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
 		debug_printf("	RECV:		%d\r\n",ir.RECV);
-		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);*/
 
 	if(ir.RECV)
 	{
 		// 激活异步线程
 		if(_tidRecv)
 		{
-			debug_printf("激活异步接收线程\r\n");
+			//debug_printf("激活异步接收线程\r\n");
 			Sys.SetTask(_tidRecv, true, 0);
-			ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
+			//ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
 		}
 #ifdef DEBUG
 		else
@@ -1186,7 +1190,7 @@ void UdpClient::OnIRQ()
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	ByteArray bs;
 	ushort size = ReadByteArray(bs);
-	Stream ms(bs.GetBuffer(), bs.Length());
+	Stream ms(bs.GetBuffer(), size);
 
 	// 拆包
 	while(ms.Remain())
