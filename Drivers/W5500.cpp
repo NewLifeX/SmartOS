@@ -409,7 +409,7 @@ void W5500::StateShow()
 	debug_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
 	debug_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
 		T_Interrupt imr;
-		imr.Init(gen.MR);
+		imr.Init(gen.IMR);
 		debug_printf("CONFLICT: %d   ",imr.CONFLICT);
 		debug_printf("UNREACH: %d   ",imr.UNREACH);
 		debug_printf("PPPoE: %d   ",imr.PPPoE);
@@ -427,7 +427,6 @@ void W5500::StateShow()
 //		byte PMRU[2];		// PPPoE 模式下最大接收单元			0x0026
 //		byte UIPR[4];		// 无法抵达 IP 地址寄存器【只读】	0x0028
 //		byte UPORTR[2];		// 无法抵达端口寄存器【只读】		0x002c
-	PhyStateShow();
 }
 
 // 输出物理链路层状态
