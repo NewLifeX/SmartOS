@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Stream.h"
-#include "Net.h"
+//#include "Net.h"
 
 class ITransport;
 
