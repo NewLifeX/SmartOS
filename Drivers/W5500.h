@@ -14,6 +14,8 @@ class HardSocket;
 class W5500
 {
 private:
+	friend class HardSocket;
+
 	// 收发数据锁，确保同时只有一个对象使用
 	volatile byte _Lock;
 
@@ -27,6 +29,14 @@ private:
 
 	// spi 模式（默认变长）
 	ushort		PhaseOM;
+
+	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
+	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
+	byte ReadByte(ushort addr, byte socket = 0 ,byte block = 0);
+	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
+
+	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
+
 public:
 	ushort		RetryTime;
 	ushort		LowLevelTime;
@@ -56,13 +66,7 @@ public:
 	bool Open();
 	bool Close();
 
-	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
-	byte ReadByte(ushort addr, byte socket = 0 ,byte block = 0);
-	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
-	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
-
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
-	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
 	bool WriteFrame(ushort addr, const ByteArray& bs, byte socket = 0 ,byte block = 0);
 	bool ReadFrame(ushort addr, ByteArray& bs, byte socket = 0 ,byte block = 0);
 
@@ -92,6 +96,12 @@ public:
 class HardSocket : public ITransport
 {
 private:
+protected:
+	byte ReadConfig();
+	void WriteConfig(byte dat);
+	byte ReadStatus();
+	byte ReadInterrupt();
+	void WriteInterrupt(byte dat);
 
 public:
 	bool Enable;	// 启用
@@ -106,7 +116,7 @@ public:
 
 	HardSocket(W5500* host, byte protocol);
 	virtual ~HardSocket();
-	
+
 	// 网卡状态输出
 	void StateShow();
 
@@ -116,16 +126,16 @@ public:
 
 	bool WriteByteArray(const ByteArray& bs);
 	int ReadByteArray(ByteArray& bs);
-	
+
 	virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
-	
+
 	static void ReceiveTask(void* param);
 	virtual void Register(TransportHandler handler, void* param);
-	
+
 	// 恢复配置
 	virtual void Recovery();
-	// 处理一些不需要异步处理的中断 减少异步次数 
+	// 处理一些不需要异步处理的中断 减少异步次数
 	virtual void IRQ_Process() = 0;
 	// 用户注册的中断事件处理 异步调用
 	virtual void OnIRQ() = 0;

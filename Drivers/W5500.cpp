@@ -287,8 +287,8 @@ bool W5500::Open()
 	gen.RTR = RetryTime / 10;
 	gen.RCR = RetryCount;
 	// 启用所有Socket中断
-	gen.SIMR = 0xff;	
-	
+	gen.SIMR = 0xff;
+
 	if(LowLevelTime > 0)
 		gen.INTLEVEL = LowLevelTime;
 	else
@@ -315,7 +315,7 @@ bool W5500::Open()
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Rx memory size=2k
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
 	}
-	
+
 	Opened = true;
 
 	return true;
@@ -599,7 +599,7 @@ void W5500::OnIRQ()
 		// PPPoE 连接不可达
 		if(ir.PPPoE)
 		{
-	
+
 		}
 		// 清空 IR 中断
 		WriteByte(offsetof(TGeneral, IR),ir.ToByte());
@@ -622,7 +622,7 @@ void W5500::OnIRQ()
 		// 清空 SIR 中断
 		WriteByte(offsetof(TGeneral, SIR),dat);
 	}
-	
+
 	// 中断位清零 说明书说的不够清晰 有待完善
 }
 
@@ -778,6 +778,12 @@ HardSocket::~HardSocket()
 	Host->Register(Index, NULL);
 }
 
+byte HardSocket::ReadConfig() { return SocRegRead(CR); }
+void HardSocket::WriteConfig(byte dat) { SocRegWrite(CR, dat); }
+byte HardSocket::ReadStatus() { return SocRegRead(SR); }
+byte HardSocket::ReadInterrupt() { return SocRegRead(IR); }
+void HardSocket::WriteInterrupt(byte dat) { SocRegWrite(IR, dat); }
+
 void HardSocket::StateShow()
 {
 	TSocket soc;
@@ -788,7 +794,7 @@ void HardSocket::StateShow()
 	bs.CopyTo((byte*)&soc);
 
 	debug_printf("\r\nW5500::Socket %d::State\r\n",Index);
-	
+
 	debug_printf("MR (模式): 		0x%02X\r\n", soc.MR);
 		S_Mode mr;
 		mr.Init(soc.MR);
@@ -833,7 +839,7 @@ void HardSocket::StateShow()
 		//		break;
 		//	case 0x03:break;
 		//}
-	
+
 	enum S_Status stat= *(enum S_Status*) &soc.SR;
 	debug_printf("SR (状态):	");
 	switch(stat)
@@ -853,11 +859,11 @@ void HardSocket::StateShow()
 		case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
 		// UDP
 		case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
-		
+
 		case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
 		default:break;
 	}
-	
+
 	S_Interrupt irqStat;
 	irqStat.Init(soc.IR);
 	debug_printf("IR (中断状态):	0x%02X\r\n",soc.IR);
@@ -866,17 +872,22 @@ void HardSocket::StateShow()
 		debug_printf("	RECV:		%d\r\n",irqStat.RECV);
 		debug_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
 		debug_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
-		
+
 	debug_printf("DPORT = 0x%02X%02X\r\n",soc.DPORT[1],soc.DPORT[0]);
-	
+
 }
 
 bool HardSocket::OnOpen()
 {
-	if(Index == 0xff)
+	if(Index >= 8)
 	{
-		debug_printf("Socket 0x%02X 编号不正确，打开失败\r\n",Index);
+		debug_printf("Socket 0x%02X 编号不正确，打开失败\r\n", Index);
+		return false;
 	}
+	// 确保宿主打开
+	Host->Open();
+
+	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)
 	{
 		// 累加端口
@@ -887,50 +898,51 @@ bool HardSocket::OnOpen()
 
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
-	if(Protocol == 0x02)		
+	if(Protocol == 0x02)
 		SocRegWrite2(MSSR, 1472);
-	if(Protocol == 0x01)		
+	else if(Protocol == 0x01)
 		SocRegWrite2(MSSR, 1460);
 
 	// 设置自己的端口号 // 不知道为什么写进去就是错的，少一字节
-	SocRegWrite2(PORT, __REV16(Local.Port));	
-	
+	SocRegWrite2(PORT, __REV16(Local.Port));
+
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
-	
+
 	// 设置端口目的(远程)端口号 // 不知道为什么写进去就是错的，少一字节
-	SocRegWrite2(DPORT, __REV16(Remote.Port));	
+	SocRegWrite2(DPORT, __REV16(Remote.Port));
 	// 设置Socket为UDP模式
-	SocRegWrite(MR, Protocol);	
-	
+	SocRegWrite(MR, Protocol);
+
 	S_Interrupt ir;
 	ir.Init(0xFF);
 	// 清空所有中断位
-	SocRegWrite(IR, ir.ToByte());	
+	WriteInterrupt(ir.ToByte());
 	// 打开所有中断形式
-	SocRegWrite(IMR, ir.ToByte());	
-	
+	SocRegWrite(IMR, ir.ToByte());
+
 	ir.Init(SocRegRead(IMR));
-	
+
 	//debug_printf("IMR(中断屏蔽寄存器):		0x%02X\r\n",ir.ToByte());
 	//	debug_printf("	CON:		%d\r\n",ir.CON);
 	//	debug_printf("	DISCON:	%d\r\n",ir.DISCON);
 	//	debug_printf("	RECV:		%d\r\n",ir.RECV);
 	//	debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
 	//	debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
-		
-	SocRegWrite(CR, RECV);	
+
+	WriteConfig(RECV);
 	// 打开Socket
-	SocRegWrite(CR, OPEN);		
+	WriteConfig(OPEN);
 
 	Sys.Sleep(5);	//延时5ms
 
 	//如果Socket打开失败
-	byte sr = SocRegRead(SR);
+	byte sr = ReadStatus();
 	if(Protocol == 0x01 && sr != SOCK_INIT || Protocol == 0x02 && sr != SOCK_UDP)
 	{
-		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n",Index,sr);
+		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n", Index, sr);
 		OnClose();
+
 		return false;
 	}
 
@@ -939,16 +951,16 @@ bool HardSocket::OnOpen()
 
 void HardSocket::OnClose()
 {
-	SocRegWrite(CR, CLOSE);	//打开不成功,关闭Socket
-	SocRegWrite(IR, 0xFF);
+	WriteConfig(CLOSE);	//打开不成功,关闭Socket
+	WriteInterrupt(0xFF);
 }
 
 int HardSocket::ReadByteArray(ByteArray& bs)
 {
-	// 读取收到数据容量 
+	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
 	// 没接收到数据则返回
-	if(size == 0) return 0;	
+	if(size == 0) return 0;
 	// 读取收到数据的首地址
 	ushort offset = __REV16(SocRegRead2(RX_RD));
 
@@ -966,11 +978,11 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 	}
 	// 更新实际物理地址,
 	SocRegWrite2(RX_RD, __REV16(offset + size));
-	// 生效 RX_RD 
-	SocRegWrite(CR, RECV);
-	
+	// 生效 RX_RD
+	WriteConfig(RECV);
+
 	// 等待操作完成
-	// while(SocRegRead(CR));
+	// while(ReadConfig());
 	//返回接收到数据的长度
 	return size;
 }
@@ -978,7 +990,7 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 bool HardSocket::WriteByteArray(const ByteArray& bs)
 {
 	// 读取状态
-	byte st = SocRegRead(SR);
+	byte st = ReadStatus();
 	// 不在UDP  不在TCP连接OK 状态下返回
 	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
 	// 读取缓冲区空闲大小 硬件内部自动计算好空闲大小
@@ -991,9 +1003,9 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 	// 更新发送缓存写指针位置
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,__REV16(addr));
-	
+
 	// 启动发送 异步中断处理发送异常等
-	SocRegWrite(CR, SEND);
+	WriteConfig(SEND);
 	return true;
 }
 
@@ -1054,21 +1066,21 @@ bool TcpClient::OnOpen()
 
 	if(!HardSocket::Open()) return false;
 
-	SocRegWrite(CR, CONNECT);
+	WriteConfig(CONNECT);
 
 	// 等待操作完成
-	while(SocRegRead(CR));
+	while(ReadConfig());
 
-	while(SocRegRead(SR) != SOCK_SYNSENT)
+	while(ReadStatus() != SOCK_SYNSENT)
 	{
-		if(SocRegRead(SR) == SOCK_ESTABLISHE) return true;
+		if(ReadStatus() == SOCK_ESTABLISHE) return true;
 
 		S_Interrupt ir;
-		ir.Init(SocRegRead(IR));
+		ir.Init(ReadInterrupt());
 		if(ir.TIMEOUT)
 		{
 			// 清除超时中断
-			SocRegWrite(IR, ir.TIMEOUT);
+			WriteInterrupt(ir.TIMEOUT);
 			return false;
 		}
 	}
@@ -1078,7 +1090,7 @@ bool TcpClient::OnOpen()
 
 void TcpClient::OnClose()
 {
-	SocRegWrite(CR, DISCON);
+	WriteConfig(DISCON);
 
 	HardSocket::Close();
 }
@@ -1087,13 +1099,13 @@ bool TcpClient::Listen()
 {
 	if(!HardSocket::Open()) return false;
 
-	SocRegWrite(CR, LISTEN);	//设置Socket为侦听模式
+	WriteConfig(LISTEN);	//设置Socket为侦听模式
 	Sys.Sleep(5);	//延时5ms
 
 	//如果socket设置失败
-	if(SocRegRead(SR) != SOCK_LISTEN)
+	if(ReadStatus() != SOCK_LISTEN)
 	{
-		SocRegWrite(CR, CLOSE);	//关闭Socket
+		WriteConfig(CLOSE);	//关闭Socket
 		return false;
 	}
 
@@ -1101,7 +1113,7 @@ bool TcpClient::Listen()
 }
 // 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
-// 
+//
 void TcpClient::IRQ_Process(){}
 // 异步中断
 void TcpClient::OnIRQ(){}
@@ -1111,16 +1123,16 @@ void TcpClient::OnIRQ(){}
 void UdpClient::IRQ_Process()
 {
 	S_Interrupt ir;
-	ir.Init(SocRegRead(IR));
+	ir.Init(ReadInterrupt());
 	// UDP 模式下只处理 SendOK  Recv 两种情况
 	debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
 		debug_printf("	RECV:		%d\r\n",ir.RECV);
 		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
-		
+
 	if(ir.RECV)
 	{
 		// 激活异步线程
-		if(_tidRecv) 
+		if(_tidRecv)
 		{
 			debug_printf("激活异步接收线程\r\n");
 			Sys.SetTask(_tidRecv, true, 0);
@@ -1139,7 +1151,7 @@ void UdpClient::IRQ_Process()
 	}
 	//	SEND OK   不需要处理 但要清空中断位
 	// 清空中断位
-	SocRegWrite(IR,ir.ToByte());
+	WriteInterrupt(ir.ToByte());
 }
 
 void UdpClient::OnIRQ()
