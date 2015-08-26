@@ -249,7 +249,15 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
 	assert_ptr(spi);
 
-	if(rst != P0) Rst.Set(rst);
+	if(rst != P0)
+	{
+		Rst.Set(rst).Config(true);
+
+		debug_printf("硬件复位 \r\n");
+		Rst = false;		// 低电平有效
+		Sys.Delay(600);		// 最少500us
+		Rst = true;
+	}
 	if(irq != P0)
 	{
 		// 中断引脚初始化
@@ -268,7 +276,6 @@ bool W5500::Open()
 {
 	if(Opened) return true;
 
-	Rst.Config(true);
 	Irq.Config(true);
 
 	// 先开SPI再复位，否则可能有问题
@@ -357,23 +364,12 @@ void W5500::OnClose()
 {
 	_spi->Close();
 
-	Rst = false;
-
-	Rst.Config(false);
 	Irq.Config(false);
 }
 
 // 复位（软硬兼施）
 void W5500::Reset()
 {
-	if(!Rst.Empty())
-	{
-		debug_printf("硬件复位 \r\n");
-		Rst = false;		// 低电平有效
-		Sys.Delay(600);		// 最少500us
-		Rst = true;
-	}
-
 	debug_printf("软件复位 \r\n");
 
 	T_Mode mr;
@@ -621,7 +617,9 @@ void W5500::OnIRQ()
 			// 读出不可达 IP 的信息
 			ByteArray bs(6);
 			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
-			debug_printf("IP 不可达：%s \r\n", IPEndPoint(bs).ToString().GetBuffer());
+			IPEndPoint ep(bs);
+			ep.Port = __REV16(ep.Port);
+			debug_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
 			// 处理..
 		}
 		// PPPoE 连接不可达
@@ -913,7 +911,7 @@ bool HardSocket::OnOpen()
 		return false;
 	}
 	// 确保宿主打开
-	Host->Open();
+	if(!Host->Open()) return false;
 
 	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)
