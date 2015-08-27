@@ -292,6 +292,36 @@ bool TinyServer::OnReadReply(TinyMessage& msg, Device& dv)
 // 写入
 bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 {
+	if(msg.Reply) return false;
+	if(msg.Length < 2) return false;
+
+	// 起始地址为7位压缩编码整数
+	Stream ms = msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+
+	ByteArray& bs = dv.Store;
+	
+	int remain = bs.Length() - offset;
+	if(remain < 0)
+	{
+		// 出错，使用原来的数据区即可，只需要返回一个起始位置
+		msg.Error = true;
+	}
+	else
+	{
+		uint len = ms.Remain();
+		if(len > remain) len = remain;
+		// 保存一份到缓冲区
+		if(len > 0)
+		{
+			bs.Copy(ms.Current(), len, offset);
+			// 实际写入的长度
+			ms.WriteEncodeInt(len);
+		}
+	}
+	msg.Length = ms.Position();
+	msg.Reply = true;
+
 	return true;
 }
 
