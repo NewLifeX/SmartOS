@@ -16,7 +16,7 @@ void Message::SetData(byte* buf, uint len)
 	//assert_param(len <= ArrayLength(Data));
 
 	Length = len;
-	if(len > 0)
+	if(len > 0 && buf != Data)
 	{
 		assert_ptr(buf);
 		assert_ptr(Data);
