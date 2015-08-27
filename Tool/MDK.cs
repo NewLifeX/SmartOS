@@ -299,7 +299,12 @@ namespace NewLife.Reflection
                 sb.Append(item);
             }
 
-            Ar.Run(sb.ToString(), 3000, WriteLog);
+            var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
+			if(name.Contains("\\")) name = name.Substring("\\", "_");
+			if(rs == 0)
+				"链接静态库{0}完成".F(name).SpeakAsync();
+			else
+				"链接静态库{0}失败".F(name).SpeakAsync();
         }
 
         /// <summary>编译目标文件</summary>
@@ -386,6 +391,11 @@ namespace NewLife.Reflection
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
+			if(name.Contains("\\")) name = name.Substring("\\", "_");
+			if(rs == 0)
+				"编译目标{0}完成".F(name).SpeakAsync();
+			else
+				"编译目标{0}失败".F(name).SpeakAsync();
 
             return rs;
         }
