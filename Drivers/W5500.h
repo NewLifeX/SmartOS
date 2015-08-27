@@ -5,7 +5,7 @@
 #include "Stream.h"
 #include "Spi.h"
 #include "Net\ITransport.h"
-//#include "Net\Net.h"
+#include "Net\Net.h"
 
 // 硬件Socket基类
 class HardSocket;

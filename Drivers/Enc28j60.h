@@ -4,6 +4,7 @@
 #include "Sys.h"
 #include "Spi.h"
 #include "Net\ITransport.h"
+#include "Net\Net.h"
 
 // Enc28j60类
 class Enc28j60 : public ITransport

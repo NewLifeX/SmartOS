@@ -2,6 +2,7 @@
 #define __LoginMessage_H__
 
 #include "Message\MessageBase.h"
+#include "Net\Net.h"
 
 // 登录消息
 class LoginMessage : public MessageBase

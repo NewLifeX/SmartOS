@@ -8,6 +8,7 @@
 #include "Stream.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
+#include "Net\Ethernet.h"
 
 class TinyIP;
 

@@ -3,414 +3,99 @@
 
 #include "Sys.h"
 
-// TCP/IP协议头部结构体
-
-
-// 字节序
-#ifndef LITTLE_ENDIAN
-	#define LITTLE_ENDIAN   1
-#endif
-
-#pragma pack(push)	// 保存对齐状态
-// 强制结构体紧凑分配空间
-#pragma pack(1)
-
 // IP地址
-typedef uint IPAddr;
+class IPAddress : public Object
+{
+public:
+	uint	Value;	// 地址
 
-// Mac地址。结构体和类都可以
-//typedef struct _MacAddress MacAddr;
-//struct _MacAddress
-class MacAddr
+	IPAddress(int value)		{ Value = (uint)value; }
+	IPAddress(uint value = 0)	{ Value = value; }
+	IPAddress(const byte* ips);
+	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
+	IPAddress(const ByteArray& arr);
+
+    IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
+    IPAddress& operator=(uint v)		{ Value = v; return *this; }
+    IPAddress& operator=(const byte* v);
+
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    byte& operator[](int i);
+
+	// 字节数组
+    ByteArray ToArray() const;
+
+	bool IsAny() const;
+	bool IsBroadcast() const;
+	uint GetSubNet(const IPAddress& mask) const;	// 获取子网
+
+	// 输出对象的字符串表示方式
+	virtual String& ToStr(String& str) const;
+
+    friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
+    friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }
+
+	static const IPAddress& Any();
+	static const IPAddress& Broadcast();
+};
+
+// IP结点
+class IPEndPoint : public Object
+{
+public:
+	IPAddress	Address;	// 地址
+	ushort		Port;		// 端口
+
+	IPEndPoint();
+	IPEndPoint(const IPAddress& addr, ushort port);
+	IPEndPoint(const ByteArray& arr);
+
+	// 输出对象的字符串表示方式
+	virtual String& ToStr(String& str) const;
+
+	static const IPEndPoint& Any();
+};
+
+bool operator==(const IPEndPoint& addr1, const IPEndPoint& addr2);
+bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2);
+
+// Mac地址
+class MacAddress : public Object
 {
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
-	// 比如Mac地址12-34-56-78-90-12，v4是12-34-56-78，v2是90-12，ulong是0x0000129078563412
-	uint v4;
-	ushort v2;
+	ulong	Value;	// 地址
 
-	MacAddr(ulong v = 0)
-	{
-		v4 = v;
-		v2 = v >> 32;
-	}
-	
+	MacAddress(ulong v = 0);
+	MacAddress(const byte* macs);
+	MacAddress(const ByteArray& arr);
+
 	// 是否广播地址，全0或全1
-	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
+	bool IsBroadcast() const;
 
-    MacAddr& operator=(ulong v)
-	{
-		v4 = v;
-		v2 = v >> 32;
+    MacAddress& operator=(ulong v);
+    MacAddress& operator=(const byte* buf);
 
-		return *this;
-	}
-    ulong Value()
+    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    byte& operator[](int i);
+
+	// 字节数组
+    ByteArray ToArray() const;
+
+	// 输出对象的字符串表示方式
+	virtual String& ToStr(String& str) const;
+
+    friend bool operator==(const MacAddress& addr1, const MacAddress& addr2)
 	{
-		ulong v = v4;
-		v |= ((ulong)v2) << 32;
-		return v;
+		return addr1.Value == addr2.Value;
 	}
-	
-    MacAddr& operator=(const MacAddress& v) { *this = v.Value; return *this; }
-	
-    friend bool operator==(MacAddr& addr1, MacAddr& addr2)
+    friend bool operator!=(const MacAddress& addr1, const MacAddress& addr2)
 	{
-		return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
+		return addr1.Value != addr2.Value;
 	}
-    friend bool operator!=(MacAddr& addr1, MacAddr& addr2)
-	{
-		return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
-	}
+
+	static const MacAddress& Empty();
+	static const MacAddress& Full();
 };
-//}MacAddr;
-
-#define IP_FULL 0xFFFFFFFF
-#define MAC_FULL 0xFFFFFFFFFFFFFFFFull
-
-// 以太网协议类型
-typedef enum
-{
-	ETH_ARP		= 0x0608,
-	ETH_IP		= 0x0008,
-	ETH_IPv6	= 0xDD86,
-}ETH_TYPE;
-
-#define IS_ETH_TYPE(type) (type == ETH_ARP || type == ETH_IP || type == ETH_IPv6)
-
-//Mac头部，总长度14字节
-typedef struct _ETH_HEADER
-{
-	MacAddr		DestMac;	// 目标mac地址
-	MacAddr		SrcMac;		// 源mac地址
-	ETH_TYPE	Type;		// 以太网类型
-
-	uint Size()		{ return sizeof(this[0]); }
-	uint Offset()	{ return Size(); }
-	byte* Next()	{ return (byte*)this + Size(); }
-}ETH_HEADER;
-
-// IP协议类型
-typedef enum
-{
-	IP_NONE = 0,
-	IP_ICMP	= 1,
-	IP_IGMP	= 2,
-	IP_TCP	= 6,
-	IP_UDP	= 17,
-}IP_TYPE;
-
-#define IS_IP_TYPE(type) (type == IP_ICMP || type == IP_IGMP || type == IP_TCP || type == IP_UDP)
-
-// IP头部，总长度20=0x14字节，偏移14=0x0E。后面可能有可选数据，Length决定头部总长度（4的倍数）
-typedef struct _IP_HEADER
-{
-	#if LITTLE_ENDIAN
-	byte	Length:4;		// 首部长度
-	byte	Version:4;		// 版本
-	#else
-	byte	Version:4;		// 版本
-	byte	Length:4;		// 首部长度。每个单位4个字节
-	#endif
-	byte	TypeOfService;	// 服务类型
-	ushort	TotalLength;	// 总长度
-	ushort	Identifier;		// 标志
-	byte	Flags;			// 标识是否对数据包进行分段
-	byte	FragmentOffset;	// 记录分段的偏移值。接收者会根据这个值进行数据包的重新组和
-	byte	TTL;			// 生存时间
-	IP_TYPE	Protocol;		// 协议
-	ushort	Checksum;		// 检验和
-	IPAddr	SrcIP;			// 源IP地址
-	IPAddr	DestIP;			// 目的IP地址
-
-	void Init(IP_TYPE type, bool recursion = false)
-	{
-		Version = 4;
-		Length = sizeof(this[0]) >> 2;
-		TypeOfService = 0;
-		Flags = 0;
-		FragmentOffset = 0;
-		TTL = 64;
-		Protocol = type;
-
-		if(recursion) Prev()->Type = ETH_IP;
-	}
-
-	uint Size()			{ return (Length <= 5) ? sizeof(this[0]) : (Length << 2); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	ETH_HEADER* Prev()	{ return (ETH_HEADER*)((byte*)this - sizeof(ETH_HEADER)); }
-	//byte* Next()		{ return (byte*)this + sizeof(&this[0]); }
-	byte* Next()		{ return (byte*)this + Size(); }
-}IP_HEADER;
-
-typedef enum
-{
-	TCP_FLAGS_FIN	= 1,		// 结束连接请求标志位。为1表示结束连接请求数据包
-	TCP_FLAGS_SYN	= 2,		// 连接请求标志位。为1表示发起连接的请求数据包
-	TCP_FLAGS_RST	= 4,
-	TCP_FLAGS_PUSH	= 8,		// 标志位，为1表示此数据包应立即进行传递
-	TCP_FLAGS_ACK	= 0x10,		// 应答标志位，为1表示确认，数据包为应答数据包
-	TCP_FLAGS_URG	= 0x20,
-}TCP_FLAGS;
-
-//TCP头部，总长度20=0x14字节，偏移34=0x22。后面可能有可选数据，Length决定头部总长度（4的倍数）
-typedef struct _TCP_HEADER
-{
-	ushort	SrcPort;		// 源端口号
-	ushort	DestPort;    	// 目的端口号
-	uint	Seq;			// 序列号
-	uint	Ack;	        // 确认号
-	#if LITTLE_ENDIAN
-	byte	reserved_1:4;	// 保留6位中的4位首部长度
-	byte	Length:4;		// tcp头部长度
-	byte	Flags:6;		// 6位标志
-	byte	reserved_2:2;	// 保留6位中的2位
-	#else
-	byte	Length:4;		// tcp头部长度
-	byte	reserved_1:4;	// 保留6位中的4位首部长度
-	byte	reserved_2:2;	// 保留6位中的2位
-	byte	Flags:6;		// 6位标志
-	#endif
-	ushort	WindowSize;		// 16位窗口大小
-	ushort	Checksum;		// 16位TCP检验和
-	ushort	urgt_p;			// 16为紧急指针
-
-	void Init(bool recursion = false)
-	{
-		Length = sizeof(this[0]);
-		reserved_1 = 0;
-		reserved_2 = 0;
-		//WindowSize = __REV16(8192);
-		WindowSize = __REV16(1024);
-		urgt_p = 0;
-
-		if(recursion) Prev()->Init(IP_TCP, recursion);
-	}
-
-	uint Size()			{ return (Length <= 5) ? sizeof(this[0]) : (Length << 2); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	IP_HEADER* Prev()	{ return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
-	byte* Next()		{ return (byte*)this + Size(); }
-}TCP_HEADER;
-
-//UDP头部，总长度8字节，偏移34=0x22
-typedef struct _UDP_HEADER
-{
-	ushort SrcPort;		// 远端口号
-	ushort DestPort;	// 目的端口号
-	ushort Length;      // 头部加上负载的总长度
-	ushort Checksum;	// 检验和
-
-	void Init(bool recursion = false)
-	{
-		Length = sizeof(this[0]);
-
-		if(recursion) Prev()->Init(IP_UDP, recursion);
-	}
-
-	uint Size()			{ return sizeof(this[0]); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	IP_HEADER* Prev()	{ return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
-	byte* Next()		{ return (byte*)this + Size(); }
-}UDP_HEADER;
-
-//ICMP头部，总长度8字节，偏移34=0x22
-typedef struct _ICMP_HEADER
-{
-	byte	Type;			// 类型
-	byte	Code;			// 代码
-	ushort	Checksum;		// 16位检验和
-	ushort	Identifier;		// 标识，仅用于Ping
-	ushort	Sequence;		// 序列号，仅用于Ping
-
-	void Init(bool recursion = false)
-	{
-		Type = 8;
-		Code = 0;
-
-		if(recursion) Prev()->Init(IP_ICMP, recursion);
-	}
-
-	uint Size()			{ return sizeof(this[0]); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	IP_HEADER* Prev()	{ return (IP_HEADER*)((byte*)this - sizeof(IP_HEADER)); }
-	byte* Next()		{ return (byte*)this + Size(); }
-}ICMP_HEADER;
-
-// ARP头部，总长度28=0x1C字节，偏移14=0x0E，可能加18字节填充
-typedef struct _ARP_HEADER
-{
-	ushort	HardType;		// 硬件类型
-	ushort	ProtocolType;	// 协议类型
-	byte	HardLength;		// 硬件地址长度
-	byte	ProtocolLength;	// 协议地址长度
-	ushort	Option;			// 选项
-	MacAddr	SrcMac;
-	IPAddr	SrcIP;			// 源IP地址
-	MacAddr	DestMac;
-	IPAddr	DestIP;			// 目的IP地址
-	//byte	Padding[18];	// 填充凑够60字节
-
-	void Init(bool recursion = false)
-	{
-		HardType = 0x0100;
-		ProtocolType = 0x08;
-		HardLength = 6;
-		ProtocolLength = 4;
-
-		if(recursion) Prev()->Type = ETH_ARP;
-	}
-
-	uint Size()			{ return sizeof(this[0]); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	ETH_HEADER* Prev()	{ return (ETH_HEADER*)((byte*)this - sizeof(ETH_HEADER)); }
-	byte* Next()		{ return (byte*)this + Size(); }
-}ARP_HEADER;
-
-// DHCP头部，总长度240=0xF0字节，偏移42=0x2A，后面可选数据偏移282=0x11A
-typedef struct _DHCP_HEADER
-{
-	byte	MsgType;		// 若是client送给server的封包，设为1，反向为2
-	byte	HardType;		// 以太网1
-	byte	HardLength;		// 以太网6
-	byte	Hops;			// 若数据包需经过router传送，每站加1，若在同一网内，为0
-	uint	TransID;		// 事务ID，是个随机数，用于客户和服务器之间匹配请求和相应消息
-	ushort	Seconds;		// 由用户指定的时间，指开始地址获取和更新进行后的时间
-	ushort	Flags;			// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
-	IPAddr	ClientIP;		// 客户机IP
-	IPAddr	YourIP;			// 你的IP
-	IPAddr	ServerIP;		// 服务器IP
-	IPAddr	RelayIP;		// 中继代理IP
-	byte	ClientMac[16];	// 客户端硬件地址
-	byte	ServerName[64];	// 服务器名
-	byte	BootFile[128];	// 启动文件名
-	uint	Magic;			// 幻数0x63825363，小端0x63538263
-
-	void Init(uint dhcpid, bool recursion = false)
-	{
-		// 为了安全，清空一次
-		memset(this, 0, sizeof(this[0]));
-
-		MsgType = 1;
-		HardType = 1;
-		HardLength = 6;
-		Hops = 0;
-		TransID = __REV(dhcpid);
-		Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
-		SetMagic();
-
-		if(recursion) Prev()->Init(recursion);
-	}
-
-	uint Size()			{ return sizeof(this[0]); }
-	uint Offset()		{ return Prev()->Offset() + Size(); }
-	UDP_HEADER* Prev()	{ return (UDP_HEADER*)((byte*)this - sizeof(UDP_HEADER)); }
-	byte* Next()		{ return (byte*)this + Size(); }
-
-	void SetMagic()		{ Magic = 0x63538263; }
-	bool Valid()		{ return Magic == 0x63538263; }
-}DHCP_HEADER;
-
-// DHCP后面可选数据格式为“代码+长度+数据”
-
-typedef enum
-{
-	DHCP_OPT_Mask = 1,
-	DHCP_OPT_Router = 3,
-	DHCP_OPT_TimeServer = 4,
-	DHCP_OPT_NameServer = 5,
-	DHCP_OPT_DNSServer = 6,
-	DHCP_OPT_LOGServer = 7,
-	DHCP_OPT_HostName = 12,
-	DHCP_OPT_MTU = 26,				// 0x1A
-	DHCP_OPT_StaticRout = 33,		// 0x21
-	DHCP_OPT_ARPCacheTimeout = 35,	// 0x23
-	DHCP_OPT_NTPServer = 42,		// 0x2A
-	DHCP_OPT_RequestedIP = 50,		// 0x32
-	DHCP_OPT_IPLeaseTime = 51,		// 0x33
-	DHCP_OPT_MessageType = 53,		// 0x35
-	DHCP_OPT_DHCPServer = 54,		// 0x36
-	DHCP_OPT_ParameterList = 55,	// 0x37
-	DHCP_OPT_Message = 56,			// 0x38
-	DHCP_OPT_MaxMessageSize = 57,	// 0x39
-	DHCP_OPT_Vendor = 60,			// 0x3C
-	DHCP_OPT_ClientIdentifier = 61,	// 0x3D
-	DHCP_OPT_End = 255,
-}DHCP_OPTION;
-
-typedef enum
-{
-	DHCP_TYPE_Discover = 1,
-	DHCP_TYPE_Offer = 2,
-	DHCP_TYPE_Request = 3,
-	DHCP_TYPE_Decline = 4,
-	DHCP_TYPE_Ack = 5,
-	DHCP_TYPE_Nak = 6,
-	DHCP_TYPE_Release = 7,
-	DHCP_TYPE_Inform = 8,
-}DHCP_MSGTYPE;
-
-typedef struct _DHCP_OPT
-{
-	DHCP_OPTION	Option;	// 代码
-	byte		Length;	// 长度
-	byte		Data;	// 数据
-
-	struct _DHCP_OPT* Next() { return (struct _DHCP_OPT*)((byte*)this + 2 + Length); }
-
-	struct _DHCP_OPT* SetType(DHCP_MSGTYPE type)
-	{
-		Option = DHCP_OPT_MessageType;
-		Length = 1;
-		Data = type;
-
-		return this;
-	}
-
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, ByteArray& bs)
-	{
-		Option = option;
-		Length = bs.Length();
-		bs.CopyTo(&Data);
-
-		return this;
-	}
-
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, String& str)
-	{
-		ByteArray bs(str);
-		return SetData(option, bs);
-	}
-
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, uint value)
-	{
-		Option = option;
-		Length = 4;
-		memcpy(&Data, (byte*)&value, Length);
-		// 需要考虑地址对齐问题，只有4字节对齐，才可以直接使用整数赋值
-		//*(uint*)&Data = value;
-
-		return this;
-	}
-
-	struct _DHCP_OPT* SetClientId(MacAddress& mac)
-	{
-		Option = DHCP_OPT_ClientIdentifier;
-		Length = 1 + 6;
-		Data = 1;	// 类型ETHERNET=1
-		memcpy(&Data + 1, &mac.Value, 6);
-
-		return this;
-	}
-
-	struct _DHCP_OPT* End()
-	{
-		Option = DHCP_OPT_End;
-
-		return this;
-	}
-}DHCP_OPT;
-
-#pragma pack(pop)	// 恢复对齐状态
 
 #endif
