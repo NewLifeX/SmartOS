@@ -162,12 +162,8 @@ void TinyClient::OnRead(TinyMessage& msg)
 	{
 		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		msg.Error = true;
-		msg.Length = ms2.Position();
 	}
-	else
-	{
-		msg.SetData(ms2.GetBuffer(), ms2.Length);
-	}
+	msg.SetData(ms2.GetBuffer(), ms2.Position());
 
 	Reply(msg);
 }

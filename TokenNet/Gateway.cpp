@@ -177,7 +177,12 @@ bool Gateway::OnRemote(TokenMessage& msg)
 		*/
 		TinyMessage tmsg;
 		TokenToTiny(msg, tmsg);
-		Server->Dispatch(tmsg);
+		bool rs = Server->Dispatch(tmsg);
+		if(rs)
+		{
+			TinyToToken(tmsg, msg);
+			return Client->Reply(msg);
+		}
 	}
 
 	return true;

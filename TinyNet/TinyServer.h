@@ -24,8 +24,9 @@ public:
 	// 发送消息
 	bool Send(Message& msg);
 	bool Reply(Message& msg);
+	// 收到本地无线网消息
 	bool OnReceive(TinyMessage& msg);
-	// 分发消息
+	// 分发外网过来的消息。返回值表示是否有响应
 	bool Dispatch(TinyMessage& msg);
 
 	// 收到功能消息时触发
@@ -54,10 +55,12 @@ public:
 	bool OnPing(TinyMessage& msg);
 
 	// 读取
-	bool OnRead(TinyMessage& msg);
+	bool OnRead(TinyMessage& msg, Device& dv);
+	bool OnReadReply(TinyMessage& msg, Device& dv);
 
 	// 写入
-	bool OnWrite(TinyMessage& msg);
+	bool OnWrite(TinyMessage& msg, Device& dv);
+	bool OnWriteReply(TinyMessage& msg, Device& dv);
 };
 
 #endif

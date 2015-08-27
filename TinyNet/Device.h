@@ -23,9 +23,11 @@ public:
 	ushort		PingTime;	// 心跳时间。秒
 	ushort		OfflineTime;// 离线阀值时间。秒
 	ushort		SleepTime;	// 睡眠时间。秒
-	
+
 	ulong		RegTime;	// 注册时间
 	ulong		LoginTime;	// 登录时间
+
+	ByteArray	Store;		// 数据存储区
 
 	Device();
 
@@ -33,7 +35,7 @@ public:
 	void Read(Stream& ms);
 
 	bool CanSleep() const { return SleepTime > 0; }
-	
+
 #if DEBUG
 	virtual String& ToStr(String& str) const;
 #endif

@@ -52,12 +52,19 @@ void TinyServer::Start()
 	Control->Open();
 }
 
+// 收到本地无线网消息
 bool TinyServer::OnReceive(TinyMessage& msg)
 {
+	// 如果设备列表没有这个设备，那么加进去
+	byte id = msg.Src;
+	Device* dv = Current;
+	if(!dv) dv = FindDevice(id);
+
 	switch(msg.Code)
 	{
 		case 1:
 			OnJoin(msg);
+			dv = Current;
 			break;
 		case 2:
 			OnDisjoin(msg);
@@ -67,32 +74,14 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			break;
 		case 5:
 		case 0x15:
-			OnRead(msg);
+			OnReadReply(msg, *dv);
 			break;
 		case 6:
 		case 0x16:
-			OnWrite(msg);
+			OnWriteReply(msg, *dv);
 			break;
 	}
 
-	// 临时方便调试使用
-	// 如果设备列表没有这个设备，那么加进去
-	byte id = msg.Src;
-	Device* dv = Current;
-	if(!dv) dv = FindDevice(id);
-	/*if(!dv && id)
-	{
-		dv = new Device();
-		dv->Address = id;
-		// 默认作为开关
-		dv->Type = 0x0203;
-		dv->Switchs = 3;
-
-		Devices.Add(dv);
-
-		dv->RegTime	= Time.Current();
-		dv->LoginTime = dv->RegTime;
-	}*/
 	// 更新设备信息
 	if(dv) dv->LastTime = Time.Current();
 
@@ -107,31 +96,40 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	return true;
 }
 
-// 分发消息
+// 分发外网过来的消息。返回值表示是否有响应
 bool TinyServer::Dispatch(TinyMessage& msg)
 {
 	// 先找到设备
 	Device* dv = FindDevice(msg.Dest);
 	if(!dv) return false;
 
+	bool rs = false;
+	
 	// 缓存内存操作指令
 	switch(msg.Code)
 	{
 		case 5:
 		case 0x15:
-			OnRead(msg);
+			rs = OnRead(msg, *dv);
 			break;
 		case 6:
 		case 0x16:
-			OnWrite(msg);
+			rs = OnWrite(msg, *dv);
 			break;
 	}
 
 	// 非休眠设备直接发送
-	if(!dv->CanSleep())	return Send(msg);
-
+	if(!dv->CanSleep())
+	{
+		Send(msg);
+	}
 	// 休眠设备进入发送队列
-	return true;
+	else
+	{
+		
+	}
+	
+	return rs;
 }
 
 // 组网
@@ -252,13 +250,53 @@ bool TinyServer::OnPing(TinyMessage& msg)
 }
 
 // 读取
-bool TinyServer::OnRead(TinyMessage& msg)
+bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
+{
+	if(msg.Reply) return false;
+	if(msg.Length < 2) return false;
+
+	// 起始地址为7位压缩编码整数
+	Stream ms = msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+	uint len	= ms.ReadEncodeInt();
+
+	ByteArray& bs = dv.Store;
+	
+	// 重新一个数据流，避免前面的不够
+	Stream ms2(4 + len);
+	ms2.WriteEncodeInt(offset);
+
+	int remain = bs.Length() - offset;
+	if(remain < 0)
+	{
+		// 出错，使用原来的数据区即可，只需要返回一个起始位置
+		msg.Error = true;
+	}
+	else
+	{
+		if(len > remain) len = remain;
+		if(len > 0) ms2.Write(bs.GetBuffer(), offset, len);
+	}
+	msg.SetData(ms2.GetBuffer(), ms2.Position());
+	msg.Reply = true;
+
+	return true;
+}
+
+// 读取响应，服务端趁机缓存一份
+bool TinyServer::OnReadReply(TinyMessage& msg, Device& dv)
 {
 	return true;
 }
 
 // 写入
-bool TinyServer::OnWrite(TinyMessage& msg)
+bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
+{
+	return true;
+}
+
+// 写入响应
+bool TinyServer::OnWriteReply(TinyMessage& msg, Device& dv)
 {
 	return true;
 }
