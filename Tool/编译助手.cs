@@ -47,13 +47,13 @@ namespace NewLife.Reflection
             //UpdateSelf();
 
 			// 编译SmartOS
-			var path = ".".GetFullPath().ToUpper();
+			/*var path = ".".GetFullPath().ToUpper();
 			if(path.Contains("STM32F0"))
 				"XScript".Run("..\\..\\SmartOS\\Tool\\Build_SmartOS_F0.cs /NoLogo /NoStop");
 			else if(path.Contains("STM32F1"))
 				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F1.cs /NoLogo /NoStop");
 			else if(path.Contains("STM32F4"))
-				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F4.cs /NoLogo /NoStop");
+				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F4.cs /NoLogo /NoStop");*/
 
 			"完成".SpeakAsync();
 			System.Threading.Thread.Sleep(250);
@@ -74,8 +74,9 @@ namespace NewLife.Reflection
             }
             if (fs.Length > 1)
             {
-                Console.WriteLine("找到项目文件{0}个，无法定夺采用哪一个！", fs.Length);
-                return null;
+                //Console.WriteLine("找到项目文件{0}个，无法定夺采用哪一个！", fs.Length);
+                //return null;
+                Console.WriteLine("找到项目文件{0}个，选择第一个{1}！", fs.Length, fs[0]);
             }
 
             return Path.GetFileName(fs[0]);
@@ -113,7 +114,7 @@ namespace NewLife.Reflection
                 xn.InnerText = "1";
                 xn = node.SelectSingleNode("UserProg1Name");
 
-                var bat = "XScript.exe Build.cs /NoLogo /NoTime /NoStop";
+                var bat = "XScript.exe Build.cs /NoLogo /NoTime /NoStop /Hide";
                 if (xn.InnerText != bat)
                 {
                     xn.InnerText = bat;
