@@ -643,7 +643,7 @@ void W5500::OnIRQ()
 			if(dat2 & 0x01)
 			{
 				//debug_printf("W5500::Socket[%d] 中断\r\n", i);
-				if(_sockets[i]) _sockets[i]->IRQ_Process();
+				if(_sockets[i]) _sockets[i]->Process();
 			}
 			dat2 >>= 1;
 			if(dat2 == 0x00) break;
@@ -1049,12 +1049,22 @@ void HardSocket::Recovery()
 	Open();
 }
 
+void HardSocket::Process()
+{
+	byte reg = ReadInterrupt();
+
+	OnProcess(reg);
+
+	// 清空中断位
+	WriteInterrupt(reg);
+}
+
 void HardSocket::ReceiveTask(void* param)
 {
 	assert_ptr(param);
 
 	HardSocket* socket = (HardSocket*)param;
-	socket->OnIRQ();
+	socket->Receive();
 }
 
 void HardSocket::Register(TransportHandler handler, void* param)
@@ -1135,16 +1145,16 @@ bool TcpClient::Listen()
 // 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
 //
-void TcpClient::IRQ_Process(){}
+void TcpClient::OnProcess(byte reg){}
 // 异步中断
-void TcpClient::OnIRQ(){}
+void TcpClient::Receive(){}
 
 /****************************** UdpClient ************************************/
 
-void UdpClient::IRQ_Process()
+void UdpClient::OnProcess(byte reg)
 {
 	S_Interrupt ir;
-	ir.Init(ReadInterrupt());
+	ir.Init(reg);
 	// UDP 模式下只处理 SendOK  Recv 两种情况
 	/*debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
 		debug_printf("	RECV:		%d\r\n",ir.RECV);
@@ -1171,15 +1181,14 @@ void UdpClient::IRQ_Process()
 #endif
 	}
 	//	SEND OK   不需要处理 但要清空中断位
-	// 清空中断位
-	WriteInterrupt(ir.ToByte());
 }
 
-void UdpClient::OnIRQ()
+void UdpClient::Receive()
 {
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
-	ByteArray bs;
+	byte buf[512];
+	ByteArray bs(buf, ArrayLength(buf));
 	ushort size = ReadByteArray(bs);
 	Stream ms(bs.GetBuffer(), size);
 
@@ -1195,6 +1204,6 @@ void UdpClient::OnIRQ()
 		len = __REV16(len);
 
 		// 回调中断
-		len = OnReceive(ms.ReadBytes(len), len);
+		OnReceive(ms.ReadBytes(len), len);
 	};
 }
