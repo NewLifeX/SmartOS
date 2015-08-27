@@ -60,7 +60,6 @@ public:
 
 	// 写入
 	bool OnWrite(TinyMessage& msg, Device& dv);
-	bool OnWriteReply(TinyMessage& msg, Device& dv);
 };
 
 #endif

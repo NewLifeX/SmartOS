@@ -73,12 +73,14 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			OnPing(msg);
 			break;
 		case 5:
+			// 系统指令不会被转发，这里修改为用户指令
+			msg.Code = 0x15;
 		case 0x15:
 			OnReadReply(msg, *dv);
 			break;
 		case 6:
 		case 0x16:
-			OnWriteReply(msg, *dv);
+			//OnWriteReply(msg, *dv);
 			break;
 	}
 
@@ -283,9 +285,29 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	return true;
 }
 
-// 读取响应，服务端趁机缓存一份
+// 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
 bool TinyServer::OnReadReply(TinyMessage& msg, Device& dv)
 {
+	if(!msg.Reply || msg.Error) return false;
+	if(msg.Length < 2) return false;
+
+	// 起始地址为7位压缩编码整数
+	Stream ms = msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+
+	ByteArray& bs = dv.Store;
+	
+	int remain = bs.Length() - offset;
+	if(remain < 0) return false;
+
+	uint len = ms.Remain();
+	if(len > remain) len = remain;
+	// 保存一份到缓冲区
+	if(len > 0)
+	{
+		bs.Copy(ms.Current(), len, offset);
+	}
+
 	return true;
 }
 
@@ -322,12 +344,6 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	msg.Length = ms.Position();
 	msg.Reply = true;
 
-	return true;
-}
-
-// 写入响应
-bool TinyServer::OnWriteReply(TinyMessage& msg, Device& dv)
-{
 	return true;
 }
 
