@@ -98,4 +98,13 @@ public:
 	static const MacAddress& Full();
 };
 
+// Socket接口
+class ISocket
+{
+public:
+	//ushort		Port;	// 本地端口。用于过滤数据，默认0表示接收所有端口的数据
+	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
+	IPEndPoint	Remote;	// 远程地址
+};
+
 #endif

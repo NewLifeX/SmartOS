@@ -10,9 +10,13 @@ bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip, IP_TCP)
 {
-	//Type		= IP_TCP;
+	//Port		= 0;
 
-	Port		= 0;
+	// 累加端口
+	static ushort g_tcp_port = 1024;
+	if(g_tcp_port < 1024) g_tcp_port = 1024;
+	Local.Port = g_tcp_port++;
+	Local.Address = tip->IP;
 
 	// 我们仅仅递增第二个字节，这将允许我们以256或者512字节来发包
 	static uint seqnum = 0xa;
@@ -31,18 +35,13 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip, IP_TCP)
 string TcpSocket::ToString()
 {
 	static char name[10];
-	sprintf(name, "TCP_%d", Port);
+	sprintf(name, "TCP_%d", Local.Port);
 	return name;
 }
 
 bool TcpSocket::OnOpen()
 {
-	if(Port != 0) BindPort = Port;
-
-	if(Port)
-		debug_printf("Tcp::Open %d 过滤 %d\r\n", BindPort, Port);
-	else
-		debug_printf("Tcp::Open %d 监听所有端口TCP数据包\r\n", BindPort);
+	debug_printf("Tcp::Open %d\r\n", Local.Port);
 
 	Enable = true;
 	return Enable;
@@ -50,7 +49,7 @@ bool TcpSocket::OnOpen()
 
 void TcpSocket::OnClose()
 {
-	debug_printf("Tcp::Close %d\r\n", BindPort);
+	debug_printf("Tcp::Close %d\r\n", Local.Port);
 	Enable = false;
 
 	Status = Closed;
@@ -68,15 +67,10 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	ushort remotePort = __REV16(tcp->SrcPort);
 
 	// 仅处理本连接的IP和端口
-	if(Port != 0 && port != Port) return false;
-	//if(RemotePort != 0 && remotePort != RemotePort) return false;
-	//if(RemoteIP != 0 && Tip->RemoteIP != RemoteIP) return false;
+	if(port != Local.Port) return false;
 
-	//IP_HEADER* ip = tcp->Prev();
-	//RemotePort	= remotePort;
-	//RemoteIP	= ip.SrcIP;
-	Local.Port		= port;
-	Local.Address	= ip.DestIP;
+	//Local.Port		= port;
+	//Local.Address	= ip.DestIP;
 
 	if(WaitAck && (tcp->Flags & TCP_FLAGS_ACK))
 	{
@@ -279,7 +273,7 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 
 bool TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
 {
-	tcp.SrcPort = __REV16(Port > 0 ? Port : Local.Port);
+	tcp.SrcPort = __REV16(Local.Port);
 	tcp.DestPort = __REV16(Remote.Port);
     tcp.Flags = flags;
 	tcp.WindowSize = __REV16(1024);
@@ -397,17 +391,12 @@ bool TcpSocket::Send(ByteArray& bs)
 	// 复制数据，确保数据不会溢出
 	ms.Write(bs);
 
-	// 发送的时候采用LocalPort
-	Local.Port = BindPort;
-
 	//SetSeqAck(tcp, len, true);
 	tcp->Seq = __REV(Seq);
 	tcp->Ack = __REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	if(!Send(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
-
-	//Tip->LoopWait(Callback, this, 3000);
 
 	bool wait = false;
 	WaitAck = &wait;
@@ -441,19 +430,14 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		if(!Open()) return false;
 	}
 
-	// 累加端口
-	static ushort g_tcp_port = 1024;
-	if(g_tcp_port < 1024) g_tcp_port = 1024;
-	BindPort = g_tcp_port++;
-
-	debug_printf("Tcp::Connect ");
-	Tip->IP.Show();
-	debug_printf(":%d => ", BindPort);
-	ip.Show();
-	debug_printf(":%d ...... \r\n", port);
-
 	Remote.Address	= ip;
 	Remote.Port		= port;
+
+	debug_printf("Tcp::Connect ");
+	Local.Show();
+	debug_printf(" => ");
+	Remote.Show();
+	debug_printf(" ...... \r\n");
 
 	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
@@ -502,44 +486,6 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	debug_printf("连接超时！\r\n");
 	return false;
 }
-
-/*bool Callback(TinyIP* tip, void* param, Stream& ms)
-{
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
-	if(eth->Type != ETH_IP) return false;
-
-	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
-	if(_ip->Protocol != IP_TCP) return false;
-
-	TcpSocket* socket = (TcpSocket*)param;
-
-	// 这里不移动数据流，方便后面调用Process
-	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
-
-	// 检查端口
-	ushort port = __REV16(tcp->DestPort);
-	if(port != socket->Port) return false;
-
-	socket->Header = tcp;
-
-	// 返回所有Ack包
-	//if(socket->Status == TcpSocket::SynSent)
-	{
-		if(tcp->Flags & TCP_FLAGS_ACK)
-		{
-			if(socket->Status == TcpSocket::SynSent) socket->Status = TcpSocket::SynAck;
-
-			// 处理。如果对方回发第二次握手包，或者终止握手
-			//Stream ms(tip->Buffer, tip->BufferSize);
-			tip->FixPayloadLength(*_ip, ms);
-			socket->Process(*_ip, ms);
-
-			return true;
-		}
-	}
-
-	return false;
-}*/
 
 bool TcpSocket::OnWrite(const byte* buf, uint len)
 {

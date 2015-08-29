@@ -5,30 +5,25 @@
 
 UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip, IP_UDP)
 {
-	//Type		= IP_UDP;
-	Port		= 0;
+	//Port		= 0;
 
 	// 累加端口
 	static ushort g_udp_port = 1024;
 	if(g_udp_port < 1024) g_udp_port = 1024;
-	BindPort = g_udp_port++;
+	Local.Port	= g_udp_port++;
+	Local.Address = tip->IP;
 }
 
 string UdpSocket::ToString()
 {
 	static char name[10];
-	sprintf(name, "UDP_%d", Port);
+	sprintf(name, "UDP_%d", Local.Port);
 	return name;
 }
 
 bool UdpSocket::OnOpen()
 {
-	if(Port != 0) BindPort = Port;
-
-	if(Port)
-		debug_printf("Udp::Open %d 过滤 %d\r\n", BindPort, Port);
-	else
-		debug_printf("Udp::Open %d 监听所有端口UDP数据包\r\n", BindPort);
+	debug_printf("Udp::Open %d\r\n", Local.Port);
 
 	Enable = true;
 	return Enable;
@@ -36,7 +31,7 @@ bool UdpSocket::OnOpen()
 
 void UdpSocket::OnClose()
 {
-	debug_printf("Udp::Close %d\r\n", BindPort);
+	debug_printf("Udp::Close %d\r\n", Local.Port);
 	Enable = false;
 }
 
@@ -49,7 +44,7 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 	ushort remotePort = __REV16(udp->SrcPort);
 
 	// 仅处理本连接的IP和端口
-	if(Port != 0 && port != Port) return false;
+	if(port != Local.Port) return false;
 
 	CurRemote.Port		= remotePort;
 	CurRemote.Address	= ip.SrcIP;
@@ -111,7 +106,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum)
 {
 	uint tlen		= sizeof(UDP_HEADER) + len;
-	udp.SrcPort		= __REV16(BindPort);
+	udp.SrcPort		= __REV16(Local.Port);
 	udp.DestPort	= __REV16(port);
 	udp.Length		= __REV16(tlen);
 
@@ -147,9 +142,6 @@ void UdpSocket::Send(ByteArray& bs, IPAddress ip, ushort port)
 
 	// 复制数据，确保数据不会溢出
 	ms.Write(bs);
-
-	// 发送的时候采用LocalPort
-	//LocalPort = BindPort;
 
 	Send(*udp, bs.Length(), ip, port, true);
 }

@@ -4,7 +4,7 @@
 #include "TinyIP.h"
 
 // Tcp会话
-class TcpSocket : public Socket, public ITransport
+class TcpSocket : public Socket, public ITransport, public ISocket
 {
 private:
 	uint		Seq;		// 序列号，本地发出数据包
@@ -20,10 +20,10 @@ public:
 		Established = 3,
 	}TCP_STATUS;
 
-	ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
-	ushort		BindPort;	// 绑定端口，用于发出数据包的源端口。默认为Port，若Port为0，则从1024算起，累加
-	IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
-	IPEndPoint	Local;		// 本地地址
+	//ushort 		Port;		// 本地端口，接收该端口数据包。0表示接收所有端口的数据包
+	//ushort		BindPort;	// 绑定端口，用于发出数据包的源端口。默认为Port，若Port为0，则从1024算起，累加
+	//IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
+	//IPEndPoint	Local;		// 本地地址
 
 	TCP_STATUS	Status;		// 状态
 
