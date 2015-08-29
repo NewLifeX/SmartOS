@@ -1,4 +1,4 @@
-﻿#include "Time.h"
+#include "Time.h"
 #include "TinyServer.h"
 
 #include "JoinMessage.h"
@@ -328,6 +328,8 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	{
 		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		msg.Error = true;
+		ms.Write(1);
+		ms.Write(0);
 	}
 	else
 	{
