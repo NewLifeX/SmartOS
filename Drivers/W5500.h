@@ -93,7 +93,7 @@ public:
 };
 
 // 硬件Socket控制器
-class HardSocket : public ITransport
+class HardSocket : public ITransport, public ISocket
 {
 private:
 protected:
@@ -111,8 +111,8 @@ public:
 	W5500*	Host;	// W5500公共部分控制器
 	uint _tidRecv;	// 收数据线程
 
-	IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
-	IPEndPoint	Local;		// 本地地址
+	//IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
+	//IPEndPoint	Local;		// 本地地址
 
 	HardSocket(W5500* host, byte protocol);
 	virtual ~HardSocket();

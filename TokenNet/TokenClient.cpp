@@ -1,4 +1,6 @@
 ﻿#include "Time.h"
+
+#include "Net\Net.h"
 #include "TokenClient.h"
 
 #include "TokenMessage.h"
@@ -47,6 +49,10 @@ void TokenClient::Open()
 #endif
 
 	// 设置握手广播的本地地址和端口
+	ITransport* port = Control->Port;
+	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
+	ISocket* sock = (ISocket*)(port + 1);
+	Hello.EndPoint = sock->Local;
 	/*if(Udp)
 	{
 		Hello.EndPoint.Address	= Udp->Tip->IP;
@@ -54,7 +60,6 @@ void TokenClient::Open()
 	}*/
 
 	// 令牌客户端定时任务
-	//debug_printf("Token::Open 令牌客户端定时 ");
 	_taskHello = Sys.AddTask(LoopTask, this, 1000000, 5000000, "令牌客户端");
 }
 

@@ -924,6 +924,7 @@ bool HardSocket::OnOpen()
 		if(g_port < 1024) g_port = 1024;
 		Local.Port = g_port++;
 	}
+	Local.Address = Host->IP;
 
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
