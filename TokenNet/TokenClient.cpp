@@ -49,9 +49,10 @@ void TokenClient::Open()
 #endif
 
 	// 设置握手广播的本地地址和端口
-	ITransport* port = Control->Port;
+	//ITransport* port = Control->Port;
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
-	ISocket* sock = (ISocket*)(port + 1);
+	//ISocket* sock = (ISocket*)(port + 1);
+	ISocket* sock = dynamic_cast<ISocket*>(Control->Port);
 	Hello.EndPoint = sock->Local;
 	/*if(Udp)
 	{
