@@ -107,6 +107,17 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 
 	bool rs = false;
 	
+	// 非休眠设备直接发送
+	if(!dv->CanSleep())
+	{
+		Send(msg);
+	}
+	// 休眠设备进入发送队列
+	else
+	{
+		
+	}
+	
 	// 缓存内存操作指令
 	switch(msg.Code)
 	{
@@ -118,17 +129,6 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		case 0x16:
 			rs = OnWrite(msg, *dv);
 			break;
-	}
-
-	// 非休眠设备直接发送
-	if(!dv->CanSleep())
-	{
-		Send(msg);
-	}
-	// 休眠设备进入发送队列
-	else
-	{
-		
 	}
 	
 	return rs;
@@ -328,6 +328,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	{
 		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		msg.Error = true;
+		debug_printf("读写指令错误");
 		ms.Write(1);
 		ms.Write(0);
 	}
@@ -341,10 +342,12 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 			bs.Copy(ms.Current(), len, offset);
 			// 实际写入的长度
 			ms.WriteEncodeInt(len);
+			debug_printf("读写指令转换");
 		}
 	}
 	msg.Length = ms.Position();
 	msg.Reply = true;
+	msg.Show();
 
 	return true;
 }
