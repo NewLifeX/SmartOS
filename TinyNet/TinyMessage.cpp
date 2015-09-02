@@ -262,7 +262,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg)
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TinyController::Valid(Message& msg)
+bool TinyController::Valid(const Message& msg)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;
 
@@ -329,7 +329,7 @@ bool TinyController::Valid(Message& msg)
 }
 
 // 处理收到的Ack包
-void TinyController::AckRequest(TinyMessage& msg)
+void TinyController::AckRequest(const TinyMessage& msg)
 {
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -371,7 +371,7 @@ void TinyController::AckRequest(TinyMessage& msg)
 }
 
 // 向对方发出Ack包
-void TinyController::AckResponse(TinyMessage& msg)
+void TinyController::AckResponse(const TinyMessage& msg)
 {
 	if(NoAck) return;
 	// 广播消息不要给确认

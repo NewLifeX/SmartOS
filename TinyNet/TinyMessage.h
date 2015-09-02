@@ -130,13 +130,13 @@ private:
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
 
-	void AckRequest(TinyMessage& msg);	// 处理收到的Ack包
-	void AckResponse(TinyMessage& msg);	// 向对方发出Ack包
+	void AckRequest(const TinyMessage& msg);	// 处理收到的Ack包
+	void AckResponse(const TinyMessage& msg);	// 向对方发出Ack包
 
 protected:
 	virtual bool Dispatch(Stream& ms, Message* pmsg);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool Valid(Message& msg);
+	virtual bool Valid(const Message& msg);
 
 public:
 	byte	Address;	// 本地地址
