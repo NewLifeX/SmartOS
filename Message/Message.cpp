@@ -11,7 +11,7 @@ Message::Message(byte code)
 }
 
 // 设置数据。
-void Message::SetData(byte* buf, uint len)
+void Message::SetData(const byte* buf, uint len)
 {
 	//assert_param(len <= ArrayLength(Data));
 
@@ -24,7 +24,7 @@ void Message::SetData(byte* buf, uint len)
 	}
 }
 
-// 负载数据转数据流
+/*// 负载数据转数据流
 Stream Message::ToStream()
 {
 	return Stream(Data, Length);
@@ -34,4 +34,4 @@ Stream Message::ToStream()
 ByteArray Message::ToArray()
 {
 	return ByteArray(Data, Length);
-}
+}*/

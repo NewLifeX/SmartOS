@@ -31,11 +31,11 @@ public:
 	virtual void ComputeCrc() = 0;
 	
 	// 设置数据
-	void SetData(byte* buf, uint len);
+	void SetData(const byte* buf, uint len);
 	// 负载数据转数据流
-	Stream ToStream();
+	//Stream ToStream();
 	// 负载数据转字节数组
-	ByteArray ToArray();
+	//ByteArray ToArray();
 
 	// 显示消息内容
 	virtual void Show() const = 0;
