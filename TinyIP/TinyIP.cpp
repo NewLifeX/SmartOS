@@ -66,7 +66,8 @@ void TinyIP::Init(ITransport* port)
 uint TinyIP::Fetch(Stream& ms)
 {
 	// 获取缓冲区的包
-	int len = _port->Read(ms);
+	//int len = _port->Read(ms);
+	int len = _port->Read(ms.Current(), ms.Remain());
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER)) return 0;
 

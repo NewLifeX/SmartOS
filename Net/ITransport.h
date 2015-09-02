@@ -2,8 +2,6 @@
 #define __ITransport_H__
 
 #include "Sys.h"
-#include "Stream.h"
-//#include "Net.h"
 
 class ITransport;
 
@@ -21,16 +19,14 @@ private:
 public:
 	bool Opening;	// 是否正在打开
     bool Opened;    // 是否打开
-	uint FrameSize;	// 读取的期望帧长度，小于该长度为未满一帧，读取不做返回
 
 	// 初始化
 	ITransport()
 	{
-		Opening = false;
-		Opened = false;
-		_handler = NULL;
-		_param = NULL;
-		FrameSize = 0;
+		Opening		= false;
+		Opened		= false;
+		_handler	= NULL;
+		_param		= NULL;
 	}
 
 	// 析构函数确保关闭
@@ -49,9 +45,9 @@ public:
 
 		if(Opened || Opening) return true;
 
-		Opening = true;
-		Opened = OnOpen();
-		Opening = false;
+		Opening	= true;
+		Opened	= OnOpen();
+		Opening	= false;
 
 		return Opened;
 	}
@@ -64,10 +60,10 @@ public:
 
 		if(!Opened || Opening) return;
 
-		Opening = true;
+		Opening	= true;
 		OnClose();
-		Opening = false;
-		Opened = false;
+		Opening	= false;
+		Opened	= false;
 	}
 
 	// 发送数据
@@ -81,15 +77,15 @@ public:
 		return OnWrite(buf, len);
 	}
 
-	// 发送数据流数据。从当前位置开始，直到结束
-	bool Write(Stream& ms)
+	// 发送数据
+	bool Write(const ByteArray& bs)
 	{
 		// 特别是接口要检查this指针
 		assert_ptr(this);
 
 		if(!Opened && !Open()) return false;
 
-		return OnWrite(ms.Current(), ms.Length - ms.Position());
+		return OnWrite(bs.GetBuffer(), bs.Length());
 	}
 
 	// 接收数据
@@ -103,18 +99,15 @@ public:
 		return OnRead(buf, len);
 	}
 
-	// 接收数据到数据流。从当前位置开始，指针位于写入数据之后
-	uint Read(Stream& ms)
+	// 接收数据
+	uint Read(ByteArray& bs)
 	{
 		// 特别是接口要检查this指针
 		assert_ptr(this);
 
 		if(!Opened && !Open()) return 0;
 
-		uint len = OnRead(ms.Current(), ms.Length - ms.Position());
-		// 位置指针前移
-		ms.Seek(len);
-		return len;
+		return OnRead(bs.GetBuffer(), bs.Length());
 	}
 
 	// 注册回调函数
@@ -125,15 +118,15 @@ public:
 
 		if(handler)
 		{
-			_handler = handler;
-			_param = param;
+			_handler	= handler;
+			_param		= param;
 
 			if(!Opened) Open();
 		}
 		else
 		{
-			_handler = NULL;
-			_param = NULL;
+			_handler	= NULL;
+			_param		= NULL;
 		}
 	}
 
