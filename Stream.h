@@ -11,9 +11,10 @@ class Stream
 private:
 	byte* _Buffer;	// 数据缓冲区。扩容后会重新分配缓冲区
 	uint _Capacity;	// 缓冲区容量
-	//bool _needFree;		// 是否自动释放
+	bool _needFree;	// 是否自动释放
+	bool _canWrite;	// 是否可写
 	// 又是头疼的对齐问题
-	uint _needFree;	// 是否自动释放
+	ushort	_Reserved;
     uint _Position;	// 游标位置
 
 	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
@@ -24,6 +25,7 @@ public:
 	Stream(uint len = 0);
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(byte* buf, uint len);
+	Stream(const byte* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(ByteArray& bs);
 	// 销毁数据流

@@ -18,6 +18,7 @@ Stream::Stream(uint len)
 	_Capacity	= len;
 	_Position	= 0;
 	Length		= len;
+	_canWrite	= true;
 }
 
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
@@ -26,21 +27,34 @@ Stream::Stream(byte* buf, uint len)
 	assert_ptr(buf);
 	//assert_param2(len > 0, "不能用0长度缓冲区来初始化数据流");
 
-	_Buffer = buf;
-	_Capacity = len;
-	_Position = 0;
-	_needFree = false;
-	Length = len;
+	_Buffer		= buf;
+	_Capacity	= len;
+	_Position	= 0;
+	_needFree	= false;
+	_canWrite	= true;
+	Length		= len;
+}
+
+Stream::Stream(const byte* buf, uint len)
+{
+	assert_ptr(buf);
+
+	_Buffer		= (byte*)buf;
+	_Capacity	= len;
+	_Position	= 0;
+	_needFree	= false;
+	_canWrite	= false;
+	Length		= len;
 }
 
 // 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(ByteArray& bs)
 {
-	_Buffer = bs.GetBuffer();
-	_Capacity = bs.Length();
-	_Position = 0;
-	_needFree = false;
-	Length = bs.Length();
+	_Buffer		= bs.GetBuffer();
+	_Capacity	= bs.Length();
+	_Position	= 0;
+	_needFree	= false;
+	Length		= bs.Length();
 }
 
 // 销毁数据流
@@ -144,6 +158,7 @@ bool Stream::Write(byte* buf, uint offset, uint count)
 {
 	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
+	if(!_canWrite) return false;
 	if(!CheckRemain(count)) return false;
 
 	memcpy(Current(), buf + offset, count);
@@ -159,6 +174,8 @@ bool Stream::Write(byte* buf, uint offset, uint count)
 // 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
+	if(!_canWrite) return false;
+
 	byte temp;
 	for( int i = 0 ; i < 4 ; i++ )
 	{
@@ -178,6 +195,8 @@ uint Stream::WriteEncodeInt(uint value)
 // 写入字符串，先写入压缩编码整数表示的长度
 uint Stream::Write(string str)
 {
+	if(!_canWrite) return false;
+
 	int len = 0;
 	string p = str;
 	while(*p++) len++;
