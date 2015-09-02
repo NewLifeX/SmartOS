@@ -15,6 +15,8 @@ class W5500
 {
 private:
 	friend class HardSocket;
+	friend class TcpClient;
+	friend class UdpClient;
 
 	// 收发数据锁，确保同时只有一个对象使用
 	volatile byte _Lock;
@@ -125,7 +127,8 @@ public:
 	virtual void OnClose();
 
 	bool WriteByteArray(const ByteArray& bs);
-	int ReadByteArray(ByteArray& bs);
+	// 读取数据流，lenBybs ：长度受制于 bs
+	int ReadByteArray(ByteArray& bs, bool lenBybs = false);
 
 	virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
@@ -140,6 +143,8 @@ public:
 	virtual void OnProcess(byte reg) = 0;
 	// 用户注册的中断事件处理 异步调用
 	virtual void Receive() = 0;
+	// 清空所有接收缓冲区
+	void ClearRX();
 };
 
 class TcpClient : public HardSocket
@@ -164,12 +169,18 @@ public:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
+	UdpClient(W5500* host) : HardSocket(host, 0x02) { DataLength = 0;}
 
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void Receive();
+	
+private:	
+	// 数据包头和数据分开读取
+	// 解包头得到数据长度，由DataLength传递长度
+	// 如果剩余数据不够 DataLength 则放弃本次读取
+	ushort DataLength;
 };
 
 #endif

@@ -995,28 +995,38 @@ void HardSocket::OnClose()
 	Remote.Show(true);
 }
 
-int HardSocket::ReadByteArray(ByteArray& bs)
+int HardSocket::ReadByteArray(ByteArray& bs, bool lenBybs)
 {
 	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
+	ushort readsize = size;
 	// 没接收到数据则返回
 	if(size == 0) return 0;
 	// 读取收到数据的首地址
 	ushort offset = __REV16(SocRegRead2(RX_RD));
 
-	// 读取全部数据
-	bs.SetLength(size);
+	// 长度受 bs 限制时 最大读取bs.Lenth
+	if(lenBybs)
+	{
+		if(size > bs.Length())
+			readsize = bs.Length();
+		else
+			readsize = size;
+	}
+	// 设置 实际要读的长度
+	bs.SetLength(readsize);
+			
 	Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
-	SocRegWrite2(RX_RD, __REV16(offset + size));
+	SocRegWrite2(RX_RD, __REV16(offset + readsize));
 	// 生效 RX_RD
 	WriteConfig(RECV);
 
 	// 等待操作完成
 	// while(ReadConfig());
 	//返回接收到数据的长度
-	return size;
+	return readsize;
 }
 
 bool HardSocket::WriteByteArray(const ByteArray& bs)
@@ -1050,7 +1060,18 @@ bool HardSocket::OnWrite(const byte* buf, uint len)
 uint HardSocket::OnRead(byte* buf, uint len)
 {
 	ByteArray bs(buf,len);
-	return ReadByteArray(bs);
+	// 不容 ByteArray 偷梁换柱把buf换掉
+	return ReadByteArray(bs, true);
+}
+
+void HardSocket::ClearRX()
+{
+	// 读取收到数据容量
+	ushort size = __REV16(SocRegRead2(RX_RSR));
+	// 读取收到数据的首地址
+	ushort offset = __REV16(SocRegRead2(RX_RD));
+	// 读指针直接 = 接收指针，即让数据区无效
+	SocRegWrite2(RX_RD, __REV16(offset + size));
 }
 
 void HardSocket::Recovery()
@@ -1196,6 +1217,7 @@ void UdpClient::OnProcess(byte reg)
 
 void UdpClient::Receive()
 {
+/*
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	byte buf[1024];
@@ -1223,4 +1245,70 @@ void UdpClient::Receive()
 		// 回调中断
 		OnReceive(ms.ReadBytes(len), len);
 	};
+*/ // 拆包出错率太大 ，在处理这个包的时候下一个包来了半截，读取出来被丢就会造成后面包的不全。
+
+	// UDP 异步只有一种情况  收到数据  
+	// 可能有多个数据包
+	// 数据结构： 
+	// 	RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
+	byte packetHead[8];	// 数据头
+	byte dataBuf[1472];	// 最大udp单元大小
+	while(true)
+	{
+		if(DataLength == 0)
+		{	
+			// 读取包头
+			ByteArray bsHead(packetHead, ArrayLength(packetHead));
+			ushort size = ReadByteArray(bsHead, true);
+			if(size == ArrayLength(packetHead))
+			{
+				// 解析头
+				Stream ms(bsHead.GetBuffer(), size);
+				ByteArray bs2(6);
+				ms.Read(bs2);
+	
+				ushort len = ms.Read<ushort>();
+				len = __REV16(len);
+				// 数据长度不对可能是数据错位引起的，直接丢弃数据包
+				if(len > 1472)
+				{
+					debug_printf("W5500 UDP数据接收有误,Length: %d \r\n",len);
+					// 丢弃所有数据
+					ClearRX();
+					DataLength = 0;
+					return;
+				}
+				// 确认数据长度在合理范围才将正确 Endpoint 记录下来
+				IPEndPoint ep(bs2);
+				ep.Port = __REV16(ep.Port);
+				DataLength = len;
+			}
+			else if(size == 0)
+			{
+				DataLength = 0;
+				return ;
+			}
+			else
+			{	// 没有读出完整头部  直接丢弃所有数据
+				ClearRX();
+				DataLength = 0;
+				return ;
+			}
+		}
+		else	// 根据数据长度读取数据并处理
+		{
+			// 读取当前RX数据区内剩余量
+			ushort RemainLength = __REV16(SocRegRead2(RX_RSR));
+			// W5500 未接收数据不足包 放弃不读
+			if(RemainLength < DataLength) return;	
+			// 读取数据
+			ByteArray bsData(dataBuf, DataLength);
+			ushort datasize = ReadByteArray(bsData, true);
+			Stream ms(bsData.GetBuffer(), datasize);
+			// 数据向上层发送
+			OnReceive(ms.ReadBytes(DataLength), DataLength);
+			// 这个数据包的数据都拿到了并处理了
+			DataLength = 0;	
+		}
+	}
 }
