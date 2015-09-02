@@ -101,22 +101,23 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 // 分发外网过来的消息。返回值表示是否有响应
 bool TinyServer::Dispatch(TinyMessage& msg)
 {
+	// 非休眠设备直接发送
+	//if(!dv->CanSleep())
+	//{
+		Send(msg);
+	//}
+	// 休眠设备进入发送队列
+	//else
+	//{
+		
+	//}
 	// 先找到设备
 	Device* dv = FindDevice(msg.Dest);
 	if(!dv) return false;
 
 	bool rs = false;
 	
-	// 非休眠设备直接发送
-	if(!dv->CanSleep())
-	{
-		Send(msg);
-	}
-	// 休眠设备进入发送队列
-	else
-	{
-		
-	}
+	
 	
 	// 缓存内存操作指令
 	switch(msg.Code)
