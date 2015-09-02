@@ -926,6 +926,11 @@ bool HardSocket::OnOpen()
 	}
 	Local.Address = Host->IP;
 
+	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
+	Local.Show(false);
+	debug_printf(" => ");
+	Remote.Show(true);
+	
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
 	if(Protocol == 0x02)
@@ -983,6 +988,11 @@ void HardSocket::OnClose()
 {
 	WriteConfig(CLOSE);	//打开不成功,关闭Socket
 	WriteInterrupt(0xFF);
+
+	debug_printf("%s::Close ", Protocol == 0x01 ? "Tcp" : "Udp");
+	Local.Show(false);
+	debug_printf(" => ");
+	Remote.Show(true);
 }
 
 int HardSocket::ReadByteArray(ByteArray& bs)
