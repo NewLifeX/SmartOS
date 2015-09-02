@@ -6,7 +6,7 @@ MessageBase::MessageBase()
 	Reply	= false;
 }
 
-bool MessageBase::ReadMessage(Message& msg)
+bool MessageBase::ReadMessage(const Message& msg)
 {
 	Reply = msg.Reply;
 
@@ -17,9 +17,11 @@ bool MessageBase::ReadMessage(Message& msg)
 void MessageBase::WriteMessage(Message& msg)
 {
 	// 如果是令牌消息，这里就要自己小心了
-	Stream ms(msg.Data, 256);
+	//Stream ms(msg.Data, 256);
+	Stream ms;
 
 	Write(ms);
 
-	msg.Length = ms.Position();
+	//msg.Length = ms.Position();
+	msg.SetData(ms.GetBuffer(), ms.Position());
 }

@@ -106,7 +106,7 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg)
 	return OnReceive(msg);
 }
 
-bool Controller::Valid(Message& msg)
+bool Controller::Valid(const Message& msg)
 {
 	return true;
 }

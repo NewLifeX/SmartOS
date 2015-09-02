@@ -19,7 +19,7 @@ public:
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms) = 0;
 
-	virtual bool ReadMessage(Message& msg);
+	virtual bool ReadMessage(const Message& msg);
 	virtual void WriteMessage(Message& msg);
 };
 
