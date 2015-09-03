@@ -1123,6 +1123,34 @@ void HardSocket::Register(TransportHandler handler, void* param)
 
 /****************************** TcpClient ************************************/
 
+void TcpClient::Init()
+{ 
+	Linked = 0;
+	_tidRecv = 0;
+	
+	// 事件型，只调用一次型
+	_tidRecv = Sys.AddTask(RodyguardTask, this, -1, -1, "W5500TCP 维护");
+	// 关闭任务，等打开以后再开
+	if(!Opened) Sys.SetTask(_tidRodyguard, false);
+}
+
+TcpClient::~TcpClient() //: ~HardSockets()
+{
+	HardSocket::~HardSocket();
+	if(_tidRodyguard) Sys.RemoveTask(_tidRodyguard);
+	_tidRodyguard = 0;
+}
+
+void TcpClient::RodyguardTask(void* param)
+{
+	TcpClient * tcp = (TcpClient*)param;
+	// 做一下判断，防止多线程状态不统一 
+	if(!tcp->Linked)
+	{
+		
+	}
+}
+
 bool TcpClient::OnOpen()
 {
 	//SocketWrites(DIPR, Remote.Address.ToArray());
@@ -1177,9 +1205,66 @@ bool TcpClient::Listen()
 // 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
 //
-void TcpClient::OnProcess(byte reg){}
+void TcpClient::OnProcess(byte reg)
+{
+	S_Interrupt ir;
+	ir.Init(reg);
+	if(ir.RECV)
+	{		
+		// 激活异步线程
+		if(_tidRecv)
+		{
+			//debug_printf("激活异步接收线程\r\n");
+			Sys.SetTask(_tidRecv, true, 0);
+			//ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
+		}
+#ifdef DEBUG
+		else
+		{
+			ByteArray bs;
+			int size = ReadByteArray(bs);
+			debug_printf("收到数据：");
+			bs.Show();
+			debug_printf("\r\n");
+		}
+#endif
+	}
+	if(ir.CON)
+	{
+		Linked = true;
+		debug_printf("W5500::OnProcess IRQ:CON\r\n");
+	}
+	if(ir.DISCON)
+	{
+		Linked = false;
+		debug_printf("W5500::OnProcess IRQ:DISCON\r\n");
+	}
+	// 超时直接判定掉线
+	if(ir.TIMEOUT)
+	{
+		Linked = false;
+		debug_printf("W5500::OnProcess IRQ:Timeout\r\n");
+	}
+	if(Opened && !Linked)
+	{
+	/*
+		//debug_printf("激活异步维护线程\r\n");
+		if(_tidRodyguard)
+			Sys.SetTask(_tidRodyguard, true, 0);
+	*/
+	}
+	// ir.SEND_OK 忽略不管
+}
 // 异步中断
-void TcpClient::Receive(){}
+void TcpClient::Receive()
+{
+	ByteArray bs;
+	int size = ReadByteArray(bs, false);
+	if(size > 1500)return;
+	Stream ms(bs.GetBuffer(),size);
+	// 回调中断
+	OnReceive(ms.ReadBytes(size), size);
+}
 
 /****************************** UdpClient ************************************/
 

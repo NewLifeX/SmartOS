@@ -150,8 +150,9 @@ public:
 class TcpClient : public HardSocket
 {
 public:
-	TcpClient(W5500* host) : HardSocket(host, 0x01) { }
-
+	TcpClient(W5500* host): HardSocket(host, 0x01){ Init(); };
+	void Init();
+	virtual ~TcpClient();
 	virtual bool OnOpen();
 	virtual void OnClose();
 	
@@ -163,6 +164,11 @@ public:
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void Receive();
+	
+private:
+	bool Linked;
+	uint _tidRodyguard;	// 维护 Link 状态的任务
+	static void RodyguardTask(void* param);
 };
 
 // UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
