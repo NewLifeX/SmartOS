@@ -79,24 +79,25 @@ bool TinyMessage::Read(Stream& ms)
 	return true;
 }
 
-void TinyMessage::Write(Stream& ms)
+void TinyMessage::Write(Stream& ms) const
 {
 	assert_param2(Code, "微网指令码不能为空");
 	assert_param2(Src, "微网源地址不能为空");
 	assert_param2(Src != Dest, "微网目的地址不能等于源地址");
 
 	// 实际数据拷贝到占位符
-	_Code	= Code;
-	_Length	= Length;
-	_Reply	= Reply;
-	_Error	= Error;
+	TinyMessage* p = (TinyMessage*)this;
+	p->_Code	= Code;
+	p->_Length	= Length;
+	p->_Reply	= Reply;
+	p->_Error	= Error;
 
 	byte* buf = ms.Current();
 	// 不要写入验证码
 	ms.Write((byte*)&Dest, 0, HeaderSize);
 	if(Length > 0) ms.Write(Data, 0, Length);
 
-	Checksum = Crc = Sys.Crc16(buf, HeaderSize + Length);
+	p->Checksum = p->Crc = Sys.Crc16(buf, HeaderSize + Length);
 	// 写入真正的校验码
 	ms.Write(Checksum);
 

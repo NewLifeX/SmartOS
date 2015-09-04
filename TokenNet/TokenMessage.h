@@ -13,10 +13,10 @@ class TokenMessage : public Message
 private:
 
 public:
-	byte	_Code:6;	// 功能码
+	/*byte	_Code:6;	// 功能码
 	byte	_Error:1;	// 是否错误
 	byte	_Reply:1;	// 是否响应指令
-	byte	_Length;	// 数据长度
+	byte	_Length;	// 数据长度*/
 
 	byte	_Data[256];	// 数据
 
@@ -29,7 +29,7 @@ public:
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中
-	virtual void Write(Stream& ms);
+	virtual void Write(Stream& ms) const;
 
 	// 消息总长度，包括头部、负载数据和校验
 	virtual uint Size() const;
@@ -54,7 +54,7 @@ private:
 protected:
 	virtual bool Dispatch(Stream& ms, Message* pmsg);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-	virtual bool Valid(Message& msg);
+	virtual bool Valid(const Message& msg);
 	// 接收处理函数
 	virtual bool OnReceive(Message& msg);
 

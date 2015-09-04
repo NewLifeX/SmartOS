@@ -14,10 +14,10 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 {
 	Data	= _Data;
 
-	_Code	= 0;
+	/*_Code	= 0;
 	_Reply	= 0;
 	_Error	= 0;
-	_Length	= 0;
+	_Length	= 0;*/
 }
 
 // 从数据流中读取消息
@@ -27,41 +27,51 @@ bool TokenMessage::Read(Stream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	byte temp = ms.Read<byte>();
-	_Code	= temp & 0x3f;
-	_Reply	= temp >> 7;
-	_Error	= (temp >> 6) & 0x01;
-	_Length	= ms.Read<byte>();
+	Code	= temp & 0x3f;
+	Reply	= temp >> 7;
+	Error	= (temp >> 6) & 0x01;
+	Length	= ms.Read<byte>();
 
 	// 占位符拷贝到实际数据
-	Code	= _Code;
+	/*Code	= _Code;
 	Length	= _Length;
 	Reply	= _Reply;
-	Error	= _Error;
+	Error	= _Error;*/
 
 	if(ms.Remain() < Length) return false;
 
-	assert_param2(Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
+	assert_param2(Data != _Data || Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
 	if(Length > 0) ms.Read(Data, 0, Length);
 
 	return true;
 }
 
 // 把消息写入到数据流中
-void TokenMessage::Write(Stream& ms)
+void TokenMessage::Write(Stream& ms) const
 {
 	assert_ptr(this);
 
 	// 实际数据拷贝到占位符
-	_Code	= Code;
-	_Reply	= Reply;
-	_Error	= Error;
-	_Length	= Length;
+	/*TokenMessage* p = (TokenMessage*)this;
+	p->_Code	= Code;
+	p->_Reply	= Reply;
+	p->_Error	= Error;
+	p->_Length	= Length;
 
 	byte tmp = _Code | (_Reply << 7) | (_Error << 6);
 	ms.Write(tmp);
-	ms.Write(_Length);
-
-	if(Length > 0) ms.Write(Data, 0, Length);
+	ms.Write(_Length);*/
+	
+	byte tmp = Code | (Reply << 7) | (Error << 6);
+	ms.Write(tmp);
+	
+	if(!Data)
+		ms.Write((byte)0);
+	else
+	{
+		ms.Write(Length);
+		if(Length > 0) ms.Write(Data, 0, Length);
+	}
 }
 
 // 验证消息校验码是否有效
@@ -191,7 +201,7 @@ bool TokenController::Dispatch(Stream& ms, Message* pmsg)
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TokenController::Valid(Message& msg)
+bool TokenController::Valid(const Message& msg)
 {
 	// 代码为0是非法的
 	if(!msg.Code) return false;
@@ -206,7 +216,7 @@ bool TokenController::Valid(Message& msg)
 	return true;
 }
 
-bool Encrypt(Message& msg, ByteArray& pass)
+bool Encrypt(Message& msg, const ByteArray& pass)
 {
 	// 加解密。握手不加密，登录响应不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x08||msg.Code==0x2C))
