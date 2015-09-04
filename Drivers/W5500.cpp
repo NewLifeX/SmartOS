@@ -1302,40 +1302,6 @@ void UdpClient::OnProcess(byte reg)
 
 void UdpClient::Receive()
 {
-/*
-	// UDP 异步只有一种情况  收到数据  可能有多个数据包
-	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
-	byte buf[1024];
-	ByteArray bs(buf, ArrayLength(buf));
-	ushort size = ReadByteArray(bs);
-	Stream ms(bs.GetBuffer(), size);
-
-	// 拆包
-	while(ms.Remain())
-	{
-		ByteArray bs2(6);
-		ms.Read(bs2);
-
-		ushort len = ms.Read<ushort>();
-		len = __REV16(len);
-		// 数据长度不对可能是数据错位引起的，直接丢弃数据包
-		if(len > 1500)
-		{
-			debug_printf("W5500 UDP数据接收有误,Length: %d \r\n",len);
-			return;
-		}
-		// 确认数据长度在合理范围才将正确 Endpoint 记录下来
-		IPEndPoint ep(bs2);
-		ep.Port = __REV16(ep.Port);
-		// 回调中断
-		OnReceive(ms.ReadBytes(len), len);
-	};
-*/ // 拆包出错率太大 ，在处理这个包的时候下一个包来了半截，读取出来被丢就会造成后面包的不全。
-
-	// UDP 异步只有一种情况  收到数据  
-	// 可能有多个数据包
-	// 数据结构： 
-	// 	RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	byte packetHead[8];	// 数据头
 	byte dataBuf[1472];	// 最大udp单元大小
 	while(true)
@@ -1354,6 +1320,9 @@ void UdpClient::Receive()
 	
 				ushort len = ms.Read<ushort>();
 				len = __REV16(len);
+				
+				// debug_printf("W5500 UDP,Length: %d 	",len);
+				
 				// 数据长度不对可能是数据错位引起的，直接丢弃数据包
 				if(len > 1472)
 				{
@@ -1389,6 +1358,10 @@ void UdpClient::Receive()
 			// 读取数据
 			ByteArray bsData(dataBuf, DataLength);
 			ushort datasize = ReadByteArray(bsData, true);
+			
+			// debug_printf("Data: ");
+			// bsData.Show();
+			// debug_printf("\r\n");
 			Stream ms(bsData.GetBuffer(), datasize);
 			// 数据向上层发送
 			OnReceive(ms.ReadBytes(DataLength), DataLength);
