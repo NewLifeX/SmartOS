@@ -1,6 +1,6 @@
 ﻿#include "Config.h"
 
-TConfig Config;
+//TConfig Config;
 
 // 初始化，各字段为0
 void TConfig::Init()

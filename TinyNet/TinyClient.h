@@ -14,6 +14,7 @@ private:
 
 public:
 	TinyController* Control;
+	TConfig*	Config;
 
 	byte		Server;		// 服务端地址
 	ushort		Type;		// 设备类型。两个字节可做二级分类

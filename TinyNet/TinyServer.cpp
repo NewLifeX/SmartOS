@@ -9,12 +9,12 @@
 
 /******************************** TinyServer ********************************/
 
-bool OnServerReceived(Message& msg, void* param);
+static bool OnServerReceived(Message& msg, void* param);
 
 TinyServer::TinyServer(TinyController* control)
 {
 	Control 	= control;
-
+	Config		= NULL;
 	DeviceType	= Sys.Code;
 
 	Control->Received	= OnServerReceived;
@@ -149,7 +149,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
-		byte addr = Config.Address;
+		byte addr = Config->Address;
 		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
 		if(FindDevice(id) != NULL)
 		{
@@ -215,9 +215,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			//JoinMessage dm;
 			dm.Reply	= true;
 
-			dm.Server	= Config.Address;
-			dm.Channel	= Config.Channel;
-			dm.Speed	= Config.Speed == 250 ? 0 : (Config.Speed == 1000 ? 1 : 2);;
+			dm.Server	= Config->Address;
+			dm.Channel	= Config->Channel;
+			dm.Speed	= Config->Speed == 250 ? 0 : (Config->Speed == 1000 ? 1 : 2);;
 
 			dm.Address	= dv->Address;
 			dm.Password	= dv->Pass;

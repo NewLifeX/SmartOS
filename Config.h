@@ -36,6 +36,6 @@ public:
 
 #pragma pack(pop)	// 恢复对齐状态
 
-extern TConfig Config;
+//extern TConfig Config;
 
 #endif

@@ -2,6 +2,7 @@
 #define __TinyServer_H__
 
 #include "Sys.h"
+#include "Config.h"
 
 #include "TinyMessage.h"
 
@@ -16,6 +17,7 @@ private:
 
 public:
 	TinyController* Control;
+	TConfig*	Config;
 
 	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
 

@@ -50,14 +50,12 @@ void Gateway::Start()
 	if(Server->Devices.Count() == 0)
 	{
 		Device* dv = new Device();
-		dv->Address		= Config.Address;
+		dv->Address		= Server->Config->Address;
 		dv->Type		= Sys.Code;
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
 		dv->LastTime	= Time.Current();
 		dv->Name		= Sys.Name;
-
-		Config.Address	= dv->Address;
 
 		Server->Devices.Add(dv);
 	}
