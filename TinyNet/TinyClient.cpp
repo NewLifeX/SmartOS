@@ -141,31 +141,35 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 响应：1起始 + N数据
 错误：1起始
 */
-void TinyClient::OnRead(TinyMessage& msg)
+void TinyClient::OnRead(const TinyMessage& msg)
 {
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms = msg.ToStream();
+	Stream ms(msg.Data, msg.Length);
 	uint offset = ms.ReadEncodeInt();
 	uint len	= ms.ReadEncodeInt();
 
-	// 重新一个数据流，避免前面的不够
-	Stream ms2(4 + len);
+	// 准备响应数据
+	TinyMessage rs;
+	rs.Code	= msg.Code;
+	Stream ms2(rs.Data, ArrayLength(rs._Data));
 	ms2.WriteEncodeInt(offset);
 
+	if(len > ms2.Remain()) len = ms2.Remain();
 	ByteArray bs(ms2.Current(), len);
-	int rs = Store.Read(offset, bs);
+	int count = Store.Read(offset, bs);
 
-	if(rs < 0)
+	if(count < 0)
 	{
 		// 出错，使用原来的数据区即可，只需要返回一个起始位置
-		msg.Error = true;
+		rs.Error = true;
 	}
-	msg.SetData(ms2.GetBuffer(), ms2.Position());
+	//rs.Length = ms2.Position();
+	rs.SetData(ms2.GetBuffer(), ms2.Position());
 
-	Reply(msg);
+	Reply(rs);
 }
 
 /*
@@ -173,28 +177,32 @@ void TinyClient::OnRead(TinyMessage& msg)
 响应：1起始 + 1大小
 错误：1起始
 */
-void TinyClient::OnWrite(TinyMessage& msg)
+void TinyClient::OnWrite(const TinyMessage& msg)
 {
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms = msg.ToStream();
+	Stream ms(msg.Data, msg.Length);
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray bs(ms.Current(), ms.Remain());
-	int rs = Store.Write(offset, bs);
+	int count = Store.Write(offset, bs);
 
 	// 准备响应数据
-	ms.Length = ms.Position();
-	if(rs < 0)
-		msg.Error = true;
+	TinyMessage rs;
+	rs.Code	= msg.Code;
+	Stream ms2(rs.Data, ArrayLength(rs._Data));
+	ms2.WriteEncodeInt(offset);
+
+	if(count < 0)
+		rs.Error = true;
 	else
-		ms.WriteEncodeInt(rs);
+		ms2.WriteEncodeInt(count);
 
-	msg.Length = ms.Length;
+	rs.Length = ms2.Position();
 
-	Reply(msg);
+	Reply(rs);
 }
 
 void TinyClient::Report(TinyMessage& msg)
@@ -241,7 +249,7 @@ void TinyClient::Join()
 }
 
 // 组网
-bool TinyClient::OnJoin(TinyMessage& msg)
+bool TinyClient::OnJoin(const TinyMessage& msg)
 {
 	// 客户端只处理Discover响应
 	if(!msg.Reply || msg.Error) return true;
@@ -286,7 +294,7 @@ bool TinyClient::OnJoin(TinyMessage& msg)
 }
 
 // 离网
-bool TinyClient::OnDisjoin(TinyMessage& msg)
+bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
 	return true;
 }
@@ -321,7 +329,7 @@ void TinyClient::Ping()
 	if(LastActive == 0) LastActive = Time.Current();
 }
 
-bool TinyClient::OnPing(TinyMessage& msg)
+bool TinyClient::OnPing(const TinyMessage& msg)
 {
 	// 仅处理来自网关的消息
 	if(Server == 0 || Server != msg.Dest) return true;

@@ -42,20 +42,20 @@ public:
 	void Report(TinyMessage& msg);
 
 private:
-	void OnWrite(TinyMessage& msg);
-	void OnRead(TinyMessage& msg);
+	void OnWrite(const TinyMessage& msg);
+	void OnRead(const TinyMessage& msg);
 
 // 常用系统级消息
 public:
 	// 组网
 	ushort		TranID;		// 组网会话
 	void Join();
-	bool OnJoin(TinyMessage& msg);
-	bool OnDisjoin(TinyMessage& msg);
+	bool OnJoin(const TinyMessage& msg);
+	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳
 	void Ping();
-	bool OnPing(TinyMessage& msg);
+	bool OnPing(const TinyMessage& msg);
 };
 
 #endif

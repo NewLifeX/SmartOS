@@ -35,7 +35,7 @@ public:
 
 	List<Device*> Devices;
 	Device* FindDevice(byte id);
-	Device* FindDevice(ByteArray& hardid);
+	Device* FindDevice(const ByteArray& hardid);
 	bool	DeleteDevice(byte id);
 
 	// 当前设备
@@ -47,16 +47,16 @@ public:
 	void Start();
 
 	// 组网
-	bool OnJoin(TinyMessage& msg);
+	bool OnJoin(const TinyMessage& msg);
 
-	bool OnDisjoin(TinyMessage& msg);
+	bool OnDisjoin(const TinyMessage& msg);
 	
 	// 心跳
-	bool OnPing(TinyMessage& msg);
+	bool OnPing(const TinyMessage& msg);
 
 	// 读取
 	bool OnRead(TinyMessage& msg, Device& dv);
-	bool OnReadReply(TinyMessage& msg, Device& dv);
+	bool OnReadReply(const TinyMessage& msg, Device& dv);
 
 	// 写入
 	bool OnWrite(TinyMessage& msg, Device& dv);

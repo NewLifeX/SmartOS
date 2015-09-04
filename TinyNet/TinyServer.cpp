@@ -109,16 +109,14 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	// 休眠设备进入发送队列
 	//else
 	//{
-		
+
 	//}
 	// 先找到设备
 	Device* dv = FindDevice(msg.Dest);
 	if(!dv) return false;
 
 	bool rs = false;
-	
-	
-	
+
 	// 缓存内存操作指令
 	switch(msg.Code)
 	{
@@ -131,12 +129,12 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 			rs = OnWrite(msg, *dv);
 			break;
 	}
-	
+
 	return rs;
 }
 
 // 组网
-bool TinyServer::OnJoin(TinyMessage& msg)
+bool TinyServer::OnJoin(const TinyMessage& msg)
 {
 	if(msg.Reply) return false;
 
@@ -237,17 +235,17 @@ bool TinyServer::OnJoin(TinyMessage& msg)
 }
 
 // 读取
-bool TinyServer::OnDisjoin(TinyMessage& msg)
+bool TinyServer::OnDisjoin(const TinyMessage& msg)
 {
 	return true;
 }
 
 // 心跳保持与对方的活动状态
-bool TinyServer::OnPing(TinyMessage& msg)
+bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	// 网关内没有相关节点信息时不鸟他
 	if(FindDevice(msg.Src) == NULL)return false;
-	if(!msg.Reply) Reply(msg);
+	//if(!msg.Reply) Reply(msg);
 
 	return true;
 }
@@ -259,12 +257,12 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms = msg.ToStream();
+	Stream ms(msg.Data, msg.Length);
 	uint offset = ms.ReadEncodeInt();
 	uint len	= ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
-	
+
 	// 重新一个数据流，避免前面的不够
 	Stream ms2(4 + len);
 	ms2.WriteEncodeInt(offset);
@@ -287,17 +285,17 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 }
 
 // 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
-bool TinyServer::OnReadReply(TinyMessage& msg, Device& dv)
+bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 {
 	if(!msg.Reply || msg.Error) return false;
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms = msg.ToStream();
+	Stream ms(msg.Data, msg.Length);
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
-	
+
 	int remain = bs.Length() - offset;
 	if(remain < 0) return false;
 
@@ -319,11 +317,11 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms = msg.ToStream();
+	Stream ms(msg.Data, msg.Length);
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
-	
+
 	int remain = bs.Length() - offset;
 	if(remain < 0)
 	{
@@ -365,7 +363,7 @@ Device* TinyServer::FindDevice(byte id)
 	return NULL;
 }
 
-Device* TinyServer::FindDevice(ByteArray& hardid)
+Device* TinyServer::FindDevice(const ByteArray& hardid)
 {
 	if(hardid.Length() == 0) return NULL;
 
