@@ -14,6 +14,7 @@ private:
     Spi*		_spi;
     OutputPort	_CE;
     InputPort	_IRQ;
+	OutputPort Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
 
     byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
     byte ReadBuf(byte reg, byte *pBuf, byte bytes);
@@ -53,13 +54,12 @@ public:
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
 
 	NRF24L01();
-    NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0);
+    //NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0, Pin power = P0);
     virtual ~NRF24L01();
-    void Init(Spi* spi, Pin ce = P0, Pin irq = P0);
+    void Init(Spi* spi, Pin ce = P0, Pin irq = P0, Pin power = P0);
 
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
-	OutputPort* Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
 	bool GetPower();	// 获取当前电源状态
 	bool SetPower(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式

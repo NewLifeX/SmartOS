@@ -33,6 +33,7 @@ Port::~Port()
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {
+	pin = (Pin)(pin & 0x7F);
 	// 如果引脚不变，则不做处理
 	if(pin == _Pin) return *this;
 
@@ -54,6 +55,18 @@ Port& Port::Set(Pin pin)
 	//if(_Pin != P0) Config();
 
 	return *this;
+}
+
+Port& OutputPort::Set(Pin pin)
+{
+	Invert = (pin & 0x80) != 0;
+	return Port::Set(pin);
+}
+
+Port& InputPort::Set(Pin pin)
+{
+	Invert = (pin & 0x80) != 0;
+	return Port::Set(pin);
 }
 
 bool Port::Empty() const

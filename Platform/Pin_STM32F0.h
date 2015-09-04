@@ -7,7 +7,7 @@
 #define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))
 #define _PORT(PIN) (1 << ((PIN) & (uint16_t)0x0F))
 #define _PIN(PIN) (PIN & 0x000F)
-#define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
+#define _PIN_NAME(pin) ('A' + ((pin & 0x7F) >> 4)), (pin & 0x0F)
 
 /* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
 /*STM32F030C8T6串口针脚*/

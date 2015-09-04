@@ -195,11 +195,11 @@ void AutoOpenTask(void* param);
 
 NRF24L01::NRF24L01() { Init(); }
 
-NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
+/*NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
 {
 	Init();
 	Init(spi, ce, irq);
-}
+}*/
 
 void NRF24L01::Init()
 {
@@ -233,12 +233,12 @@ void NRF24L01::Init()
 	LedRx	= NULL;
 }
 
-void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
+void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 {
-	if(irq != P0)
-		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq));
-	else
-		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P0\r\n", _PIN_NAME(ce));
+	//if(irq != P0)
+		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d POWER=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq), _PIN_NAME(power));
+	//else
+	//	debug_printf("NRF24L01::Init CE=P%c%d IRQ=P0\r\n", _PIN_NAME(ce));
 
     if(ce != P0)
 	{
@@ -257,6 +257,12 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq)
 		_IRQ.Set(irq).Config();
         _IRQ.Register(OnIRQ, this);
     }
+	if(power != P0)
+	{
+		Power.Set(power).Config();
+		debug_printf("打开物理电源开关\r\n");
+	}
+
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
 
@@ -293,9 +299,6 @@ NRF24L01::~NRF24L01()
 
 	delete _spi;
 	_spi = NULL;
-
-	delete Power;
-	Power = NULL;
 
 	delete LedTx;
 	LedTx = NULL;
@@ -362,6 +365,11 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 // 主要用于NRF与MCU是否正常连接
 bool NRF24L01::Check(void)
 {
+	if(!Power.Read())
+	{
+		Power = true;
+		debug_printf("打开物理电源开关\r\n");
+	}
 	// 检查并打开Spi
 	_spi->Open();
 
@@ -790,14 +798,6 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
-	if(Power && !*Power)
-	{
-		*Power = true;
-		debug_printf("打开物理电源开关\r\n");
-	}
-	// 检查并打开Spi
-	_spi->Open();
-
 	Error = 0;
 
 	// 配置完成以后，无需再次检查
@@ -837,9 +837,9 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
-	if(Power)
+	if(Power.Read())
 	{
-		*Power = false;
+		Power = false;
 		debug_printf("关闭物理电源开关\r\n");
 	}
 }

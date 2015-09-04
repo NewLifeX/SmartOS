@@ -1,6 +1,6 @@
 ﻿#ifndef _PIN_H_
 #define _PIN_H_
-	
+
 /* 针脚 ------------------------------------------------------------------*/
 enum Pin
 {
@@ -132,7 +132,9 @@ enum Pin
     PH12 = 0x7C,
     PH13 = 0x7D,
     PH14 = 0x7E,
-    PH15 = 0x7F
+    PH15 = 0x7F,
+
+	PinInvert = 0x80
 };
 
 #if defined(STM32F4)
