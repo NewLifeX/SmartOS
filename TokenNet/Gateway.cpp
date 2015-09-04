@@ -51,7 +51,7 @@ void Gateway::Start()
 	{
 		Device* dv = new Device();
 		dv->Address		= Server->Config->Address;
-		dv->Type		= Sys.Code;
+		dv->Kind		= Sys.Code;
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
 		dv->LastTime	= Time.Current();

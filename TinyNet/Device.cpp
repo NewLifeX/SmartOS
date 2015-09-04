@@ -6,7 +6,7 @@
 Device::Device() : HardID(0), Name(0), Pass(0)
 {
 	Address		= 0;
-	Type		= 0;
+	Kind		= 0;
 	LastTime	= 0;
 	DataSize	= 0;
 	ConfigSize	= 0;
@@ -22,7 +22,7 @@ Device::Device() : HardID(0), Name(0), Pass(0)
 void Device::Write(Stream& ms) const
 {
 	ms.Write(Address);
-	ms.Write(Type);
+	ms.Write(Kind);
 	ms.WriteArray(HardID);
 	ms.Write(LastTime);
 	ms.Write(DataSize);
@@ -33,7 +33,7 @@ void Device::Write(Stream& ms) const
 void Device::Read(Stream& ms)
 {
 	Address	= ms.Read<byte>();
-	Type	= ms.Read<ushort>();
+	Kind	= ms.Read<ushort>();
 	//ms.ReadArray(HardID);
 	HardID	= ms.ReadArray();
 	LastTime= ms.Read<ulong>();
@@ -46,7 +46,7 @@ void Device::Read(Stream& ms)
 String& Device::ToStr(String& str) const
 {
 	str = str + "Address=0x" + Address;
-	str = str + " Type=" + (byte)(Type >> 8) + (byte)(Type & 0xFF);
+	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	str = str + " Name=" + Name;
 	str = str + " HardID=" + HardID;
 

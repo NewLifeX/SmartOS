@@ -145,29 +145,21 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	byte id = msg.Src;
 	if(!id) return false;
 
+	// 根据硬件编码找设备
 	Device* dv = FindDevice(dm.HardID);
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
 		byte addr = Config->Address;
-		// 查找该ID是否存在，如果不同设备有相同ID，则从0x02开始主动分配
-		if(FindDevice(id) != NULL)
 		{
 			id = addr;
 			while(FindDevice(++id) != NULL && id < 0xFF);
 
-			debug_printf("发现ID=0x%02X已分配，为当前节点分配 0x%02X\r\n", msg.Src, id);
-		}
-		else
-		{
-			id = Devices.Count() + addr;
-			// 注意，网关可能来不及添加
-			if(id <= addr) id = addr + 1;
-			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", msg.Src, id);
+			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", dm.Kind, id);
 		}
 
 		dv = new Device();
-		dv->Address		= id;
+		dv->Address	= id;
 
 		Devices.Add(dv);
 
@@ -179,11 +171,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	{
 		Current		= dv;
 
-		dv->Type	= dm.Kind;
+		dv->Kind	= dm.Kind;
 		dv->HardID	= dm.HardID;
 		dv->Version	= dm.Version;
-		//dv->Switchs	= dm.Switchs;
-		//dv->Analogs	= dm.Analogs;
 
 		// 如果最后活跃时间超过60秒，则认为是设备上线
 		if(dv->LastTime == 5 || dv->LastTime + 6000000 < Time.Current())

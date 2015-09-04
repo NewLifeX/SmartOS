@@ -17,7 +17,7 @@ public:
 
 	byte		HardVer;	// 硬件版本
 	byte		SoftVer;	// 软件版本
-	ushort		Type;		// 类型
+	ushort		Kind;		// 类型
 	byte		Address;	// 分配得到的设备地址
 	byte		Password[16];	// 通信密码
 	byte		Server;		// 网关ID

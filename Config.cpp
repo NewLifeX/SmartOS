@@ -13,7 +13,7 @@ void TConfig::Init()
 
 void TConfig::LoadDefault()
 {
-	Type	= Sys.Code;
+	Kind	= Sys.Code;
 	//Server	= 0x01;
 	
 	PingTime	= 15;

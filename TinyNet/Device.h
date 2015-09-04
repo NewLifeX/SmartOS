@@ -11,7 +11,7 @@ class Device : public Object
 {
 public:
 	byte		Address;	// 节点地址
-	ushort		Type;		// 类型
+	ushort		Kind;		// 类型
 	ByteArray	HardID;		// 硬件编码
 	ulong		LastTime;	// 活跃时间
 	ushort		Version;	// 版本
