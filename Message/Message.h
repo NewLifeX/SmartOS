@@ -10,9 +10,9 @@ class Message
 public:
 	byte	Code;	// 消息代码
 	byte	Length;	// 数据长度
-	byte*	Data;	// 数据。指向子类内部声明的缓冲区
 	bool	Reply;	// 是否响应指令
 	bool	Error;	// 是否错误
+	byte*	Data;	// 数据。指向子类内部声明的缓冲区
 
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
@@ -23,13 +23,15 @@ public:
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms) = 0;
 	// 把消息写入数据流中
-	virtual void Write(Stream& ms) = 0;
+	virtual void Write(Stream& ms) const = 0;
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const = 0;
 	// 计算当前消息的Crc
 	virtual void ComputeCrc() = 0;
-	
+	// 克隆对象
+	virtual bool Clone(const Message& msg);
+
 	// 设置数据
 	void SetData(const byte* buf, uint len);
 	// 负载数据转数据流

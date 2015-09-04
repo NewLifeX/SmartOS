@@ -24,6 +24,16 @@ void Message::SetData(const byte* buf, uint len)
 	}
 }
 
+bool Message::Clone(const Message& msg)
+{
+	Stream ms;
+	msg.Write(ms);
+
+	ms.SetPosition(0);
+
+	return Read(ms);
+}
+
 /*// 负载数据转数据流
 Stream Message::ToStream()
 {
