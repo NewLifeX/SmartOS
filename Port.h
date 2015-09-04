@@ -19,7 +19,7 @@ public:
     Pin				_Pin;		// 针脚
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
-    virtual Port& Set(Pin pin);			// 设置引脚
+    virtual Port& Set(const Pin pin);			// 设置引脚
 	bool Empty() const;
 
 	// 确定配置,确认用对象内部的参数进行初始化
@@ -60,10 +60,12 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
+		if(pin < 0x80)
+			Invert = invert;
 		Config();
 	}
 
-    virtual Port& Set(Pin pin);			// 设置引脚
+    virtual Port& Set(const Pin pin);			// 设置引脚
 	// 整体写入所有包含的引脚
     void Write(bool value);
     void WriteGroup(ushort value);   // 整组写入
@@ -105,6 +107,8 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
+		if(pin < 0x80)
+			Invert = invert;
 		Config();
 	}
 
@@ -141,7 +145,7 @@ public:
 
     virtual ~InputPort();
 
-    virtual Port& Set(Pin pin);			// 设置引脚
+    virtual Port& Set(const Pin pin);			// 设置引脚
     ushort ReadGroup();			// 整组读取
     bool Read();				// 读取状态
     static bool Read(Pin pin);	// 读取某个引脚

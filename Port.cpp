@@ -31,20 +31,20 @@ Port::~Port()
 }
 
 // 单一引脚初始化
-Port& Port::Set(Pin pin)
+Port& Port::Set(const Pin pin)
 {
-	pin = (Pin)(pin & 0x7F);
+	Pin pin2 = (Pin)(pin & 0x7F);
 	// 如果引脚不变，则不做处理
-	if(pin == _Pin) return *this;
+	if(pin2 == _Pin) return *this;
 
 	// 释放已有引脚的保护
 	if(_Pin != P0) Config(false);
 
-    _Pin = pin;
+    _Pin = pin2;
 	if(_Pin != P0)
 	{
-		Group = IndexToGroup(pin >> 4);
-		PinBit = 1 << (pin & 0x0F);
+		Group = IndexToGroup(pin2 >> 4);
+		PinBit = 1 << (pin2 & 0x0F);
 	}
 	else
 	{
@@ -57,13 +57,13 @@ Port& Port::Set(Pin pin)
 	return *this;
 }
 
-Port& OutputPort::Set(Pin pin)
+Port& OutputPort::Set(const Pin pin)
 {
 	Invert = (pin & 0x80) != 0;
 	return Port::Set(pin);
 }
 
-Port& InputPort::Set(Pin pin)
+Port& InputPort::Set(const Pin pin)
 {
 	Invert = (pin & 0x80) != 0;
 	return Port::Set(pin);
