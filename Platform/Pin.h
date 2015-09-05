@@ -132,9 +132,7 @@ enum Pin
     PH12 = 0x7C,
     PH13 = 0x7D,
     PH14 = 0x7E,
-    PH15 = 0x7F,
-
-	PinInvert = 0x80
+    PH15 = 0x7F
 };
 
 #if defined(STM32F4)

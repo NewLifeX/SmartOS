@@ -19,7 +19,7 @@ public:
     Pin				_Pin;		// 针脚
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
-    virtual Port& Set(const Pin pin);			// 设置引脚
+    virtual Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
 
 	// 确定配置,确认用对象内部的参数进行初始化
@@ -28,7 +28,7 @@ public:
 #if defined(STM32F0) || defined(STM32F4)
 	void AFConfig(byte GPIO_AF);
 #endif
-
+	
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
@@ -55,17 +55,14 @@ public:
     uint Speed;		// 速度
 
     OutputPort() { Init(); }
-	// 普通输出一般采用开漏输出，需要倒置
     OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
-		if(pin < 0x80)
-			Invert = invert;
 		Config();
 	}
 
-    virtual Port& Set(const Pin pin);			// 设置引脚
+    virtual Port& Set(Pin pin);			// 设置引脚
 	// 整体写入所有包含的引脚
     void Write(bool value);
     void WriteGroup(ushort value);   // 整组写入
@@ -90,9 +87,9 @@ protected:
 
     void Init(bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
-        OpenDrain = openDrain;
-        Speed = speed;
-        Invert = invert;
+        OpenDrain	= openDrain;
+        Speed		= speed;
+        Invert		= invert;
     }
 };
 
@@ -101,14 +98,12 @@ class AlternatePort : public OutputPort
 {
 public:
 	AlternatePort() : OutputPort() { Init(false, false); }
-	// 复用输出一般采用推挽输出，不需要倒置
     AlternatePort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
 		: OutputPort()
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
-		if(pin < 0x80)
-			Invert = invert;
+		if((pin & 0x80) == 0) Invert = invert;
 		Config();
 	}
 
@@ -145,7 +140,7 @@ public:
 
     virtual ~InputPort();
 
-    virtual Port& Set(const Pin pin);			// 设置引脚
+    virtual Port& Set(Pin pin);			// 设置引脚
     ushort ReadGroup();			// 整组读取
     bool Read();				// 读取状态
     static bool Read(Pin pin);	// 读取某个引脚
