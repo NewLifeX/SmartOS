@@ -841,11 +841,11 @@ void HardSocket::WriteInterrupt(byte dat) { SocRegWrite(IR, dat); }
 void HardSocket::StateShow()
 {
 	TSocket soc;
-	ByteArray bs(sizeof(soc));
+	ByteArray bs((byte*)&soc, sizeof(soc));
 
 	// 一次性全部读出
 	Host->ReadFrame(0, bs, Index, 0x01);
-	bs.CopyTo((byte*)&soc);
+	//bs.CopyTo((byte*)&soc);
 
 	debug_printf("\r\nW5500::Socket %d::State\r\n",Index);
 
@@ -927,7 +927,7 @@ void HardSocket::StateShow()
 		debug_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
 		debug_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
 
-	debug_printf("DPORT = 0x%02X%02X\r\n",soc.DPORT[1],soc.DPORT[0]);
+	debug_printf("DPORT = 0x%02X%02X\r\n", soc.DPORT[1], soc.DPORT[0]);
 
 }
 
@@ -963,14 +963,13 @@ bool HardSocket::OnOpen()
 	else if(Protocol == 0x01)
 		SocRegWrite2(MSSR, 1460);
 
-	// 设置自己的端口号 // 不知道为什么写进去就是错的，少一字节
+	// 设置自己的端口号
 	SocRegWrite2(PORT, __REV16(Local.Port));
-
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
-
-	// 设置端口目的(远程)端口号 // 不知道为什么写进去就是错的，少一字节
+	// 设置端口目的(远程)端口号
 	SocRegWrite2(DPORT, __REV16(Remote.Port));
+
 	// 设置Socket为UDP模式
 	SocRegWrite(MR, Protocol);
 
@@ -1020,38 +1019,33 @@ void HardSocket::OnClose()
 	Remote.Show(true);
 }
 
-int HardSocket::ReadByteArray(ByteArray& bs, bool lenBybs)
+int HardSocket::ReadByteArray(ByteArray& bs)
 {
 	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
-	ushort readsize = size;
-	// 没接收到数据则返回
 	if(size == 0) return 0;
+
 	// 读取收到数据的首地址
 	ushort offset = __REV16(SocRegRead2(RX_RD));
 
 	// 长度受 bs 限制时 最大读取bs.Lenth
-	if(lenBybs)
-	{
-		if(size > bs.Length())
-			readsize = bs.Length();
-		else
-			readsize = size;
-	}
+	if(size > bs.Length()) size = bs.Length();
+
 	// 设置 实际要读的长度
-	bs.SetLength(readsize);
+	bs.SetLength(size);
 
 	Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
-	SocRegWrite2(RX_RD, __REV16(offset + readsize));
+	SocRegWrite2(RX_RD, __REV16(offset + size));
 	// 生效 RX_RD
 	WriteConfig(RECV);
 
 	// 等待操作完成
 	// while(ReadConfig());
+
 	//返回接收到数据的长度
-	return readsize;
+	return size;
 }
 
 bool HardSocket::WriteByteArray(const ByteArray& bs)
@@ -1073,6 +1067,7 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 
 	// 启动发送 异步中断处理发送异常等
 	WriteConfig(SEND);
+	
 	return true;
 }
 
@@ -1084,9 +1079,10 @@ bool HardSocket::OnWrite(const byte* buf, uint len)
 
 uint HardSocket::OnRead(byte* buf, uint len)
 {
-	ByteArray bs(buf,len);
+	ByteArray bs(buf, len);
+
 	// 不容 ByteArray 偷梁换柱把buf换掉
-	return ReadByteArray(bs, true);
+	return ReadByteArray(bs);
 }
 
 void HardSocket::ClearRX()
@@ -1282,15 +1278,16 @@ void TcpClient::OnProcess(byte reg)
 	}
 	// ir.SEND_OK 忽略不管
 }
+
 // 异步中断
 void TcpClient::Receive()
 {
 	ByteArray bs;
-	int size = ReadByteArray(bs, false);
+	int size = ReadByteArray(bs);
 	if(size > 1500)return;
-	Stream ms(bs.GetBuffer(),size);
+
 	// 回调中断
-	OnReceive(ms.ReadBytes(size), size);
+	OnReceive(bs.GetBuffer(), size);
 }
 
 /****************************** UdpClient ************************************/
@@ -1327,6 +1324,8 @@ void UdpClient::OnProcess(byte reg)
 	//	SEND OK   不需要处理 但要清空中断位
 }
 
+// UDP 异步只有一种情况  收到数据  可能有多个数据包
+// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 void UdpClient::Receive()
 {
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包

@@ -128,8 +128,7 @@ public:
 	virtual void OnClose();
 
 	bool WriteByteArray(const ByteArray& bs);
-	// 读取数据流，lenBybs ：长度受制于 bs
-	int ReadByteArray(ByteArray& bs, bool lenBybs = false);
+	int ReadByteArray(ByteArray& bs);
 
 	virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
