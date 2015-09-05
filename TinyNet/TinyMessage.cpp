@@ -195,6 +195,8 @@ void TinyController::Open()
 {
 	if(Opened) return;
 
+	assert_param2(Port, "还没有传输口呢");
+
 	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, Port->ToString());
 
 	Controller::Open();
