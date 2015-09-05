@@ -99,12 +99,14 @@ bool Port::Open()
 #endif
 
 	Opened = true;
+
 	return true;
 }
 
 void Port::Close()
 {
 	if(!Opened) return;
+	if(_Pin == P0) return;
 
     // 先打开时钟才能配置
     int gi = _Pin >> 4;
@@ -316,6 +318,8 @@ ushort OutputPort::ReadGroup()    // 整组读取
 
 bool OutputPort::Read()
 {
+	if(Empty()) return false;
+
 	// 转为bool时会转为0/1
 	bool rs = GPIO_ReadOutputData(Group) & PinBit;
 	return rs ^ Invert;
@@ -323,6 +327,8 @@ bool OutputPort::Read()
 
 bool OutputPort::ReadInput()
 {
+	if(Empty()) return false;
+
 	bool rs = GPIO_ReadInputData(Group) & PinBit;
 	return rs ^ Invert;
 }

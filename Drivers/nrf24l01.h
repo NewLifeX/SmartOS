@@ -11,11 +11,6 @@
 class NRF24L01 : public ITransport
 {
 private:
-    Spi*		_spi;
-    OutputPort	_CE;
-    InputPort	_IRQ;
-	OutputPort Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
-
     byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
     byte ReadBuf(byte reg, byte *pBuf, byte bytes);
     byte ReadReg(byte reg);
@@ -36,6 +31,11 @@ private:
 	void Init();
 
 public:
+    Spi*		_spi;
+    OutputPort	_CE;
+    InputPort	_IRQ;
+	OutputPort	Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
+
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加
 	byte Address[5];	// 通道0地址
 	byte Address1[5];	// 通道1地址

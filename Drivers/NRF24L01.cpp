@@ -235,18 +235,15 @@ void NRF24L01::Init()
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 {
-	//if(irq != P0)
-		debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d POWER=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq), _PIN_NAME(power));
-	//else
-	//	debug_printf("NRF24L01::Init CE=P%c%d IRQ=P0\r\n", _PIN_NAME(ce));
+	debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d POWER=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq), _PIN_NAME(power));
 
     if(ce != P0)
 	{
 		// 拉高CE，可以由待机模式切换到RX/TX模式
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
-		_CE.Set(ce).Open();
-		_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+		_CE.Set(ce);
+		//_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
 	}
     if(irq != P0)
     {
@@ -254,19 +251,18 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		//_IRQ->ShakeTime = 2;
 		_IRQ.Floating = false;
 		_IRQ.PuPd = InputPort::PuPd_UP;
-		_IRQ.Set(irq).Open();
+		_IRQ.Set(irq);
         _IRQ.Register(OnIRQ, this);
     }
 	if(power != P0)
 	{
-		Power.Set(power).Open();
-		debug_printf("打开物理电源开关\r\n");
+		Power.Set(power);
 	}
 
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
 
-	// 需要先打开SPI，否则后面可能不能及时得到读数
+	/*// 需要先打开SPI，否则后面可能不能及时得到读数
 	_spi->Open();
 #if !DEBUG
 	TimeWheel tw(0, 100);
@@ -275,7 +271,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
-	SetPower(false);
+	SetPower(false);*/
 }
 
 NRF24L01::~NRF24L01()
@@ -365,13 +361,7 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 // 主要用于NRF与MCU是否正常连接
 bool NRF24L01::Check(void)
 {
-	if(!Power.Read())
-	{
-		Power = true;
-		debug_printf("打开物理电源开关\r\n");
-	}
-	// 检查并打开Spi
-	_spi->Open();
+	if(!Open()) return false;
 
 	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
@@ -798,6 +788,16 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
+	if(Power.Open() && !Power.Read())
+	{
+		Power = true;
+		debug_printf("打开物理电源开关\r\n");
+	}
+	_CE.Open();
+	_IRQ.Open();
+	// 检查并打开Spi
+	_spi->Open();
+
 	Error = 0;
 
 	// 配置完成以后，无需再次检查
@@ -837,11 +837,14 @@ void NRF24L01::OnClose()
 	SetPower(false);
 
 	_spi->Close();
+	_CE.Close();
+	_IRQ.Close();
 	if(Power.Read())
 	{
 		Power = false;
 		debug_printf("关闭物理电源开关\r\n");
 	}
+	Power.Close();
 }
 
 // 从NRF的接收缓冲区中读出数据
