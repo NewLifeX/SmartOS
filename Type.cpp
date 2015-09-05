@@ -132,7 +132,7 @@ int ByteArray::Load(const byte* data, int maxsize)
 }
 
 // 从普通字节数据组加载，首字节为长度
-int ByteArray::Save(byte* data, int maxsize)
+int ByteArray::Save(byte* data, int maxsize) const
 {
 	/*// 压缩编码整数最大4字节
 	Stream ms(data, 4);

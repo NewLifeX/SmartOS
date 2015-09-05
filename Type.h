@@ -309,7 +309,7 @@ public:
 	}
 
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	int CopyTo(T* data, int len = 0, int index = 0)
+	int CopyTo(T* data, int len = 0, int index = 0) const
 	{
 		// 数据长度可能不足
 		if(_Length - index < len || len == 0) len = _Length - index;
@@ -398,7 +398,7 @@ public:
 	// 保存到普通字节数组，首字节为长度
 	int Load(const byte* data, int maxsize = -1);
 	// 从普通字节数据组加载，首字节为长度
-	int Save(byte* data, int maxsize = -1);
+	int Save(byte* data, int maxsize = -1) const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
