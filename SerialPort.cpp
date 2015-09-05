@@ -229,13 +229,15 @@ void SerialPort::OnClose()
 }
 
 // 发送单一字节数据
-void SerialPort::SendData(byte data, uint times)
+uint SerialPort::SendData(byte data, uint times)
 {
     while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
     if(times > 0)
 		USART_SendData(_port, (ushort)data);
 	else
 		Error++;
+	
+	return times;
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
@@ -265,12 +267,13 @@ bool SerialPort::Flush(uint times)
 {
 	// 打开串口发送
 	if(RS485) *RS485 = true;
-	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+	//USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
 	// 打开中断
-	SmartIRQ irq(true);
+	//SmartIRQ irq(true);
 
-    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+    //while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
+	while(!Tx.Empty() && times > 0) times = SendData(Tx.Pop(), times);
 
 	return times > 0;
 }

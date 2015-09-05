@@ -1,6 +1,7 @@
 ﻿#include "Sys.h"
 
 #include "Time.h"
+#include "SerialPort.h"
 
 TSys Sys;
 TTime Time;
@@ -113,6 +114,9 @@ bool SysError(uint code)
 
 #if DEBUG
 	ShowFault(code);
+	
+	SerialPort* sp = SerialPort::GetMessagePort();
+	if(sp) sp->Flush();
 #endif
 
     return true;
@@ -121,6 +125,7 @@ bool SysError(uint code)
 void SysStop()
 {
 	debug_printf("系统停止！\r\n");
+	while(true);
 }
 
 TSys::TSys()

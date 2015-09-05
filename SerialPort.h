@@ -64,9 +64,9 @@ public:
         byte dataBits = USART_WordLength_8b, //8位数据长度
         byte stopBits = USART_StopBits_1);    //1位停止位
 
-	void SendData(byte data, uint times = 3000);
+	uint SendData(byte data, uint times = 3000);
 
-    bool Flush(uint times);
+    bool Flush(uint times = 3000);
 
 	void SetBaudRate(int baudRate = SERIAL_BAUDRATE);
 
