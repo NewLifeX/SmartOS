@@ -128,17 +128,17 @@ void Spi::Open()
 	Pin* ps = Pins;
     // 端口配置，销毁Spi对象时才释放
     debug_printf("    CLK : ");
-    _clk.Set(ps[1]).Config(true);
+    _clk.Set(ps[1]).Open();
     debug_printf("    MISO: ");
-    _miso.Set(ps[2]).Config(true);
+    _miso.Set(ps[2]).Open();
     debug_printf("    MOSI: ");
-    _mosi.Set(ps[3]).Config(true);
+    _mosi.Set(ps[3]).Open();
 
     if(ps[0] != P0)
     {
 		debug_printf("    NSS : ");
 		_nss.OpenDrain = false;
-		_nss.Set(ps[0]).Config(true);
+		_nss.Set(ps[0]).Open();
     }
 
     // 使能SPI时钟
@@ -202,13 +202,13 @@ void Spi::Close()
 	SPI_I2S_DeInit(SPI);
 
 	debug_printf("    CLK : ");
-	_clk.Config(false);
+	_clk.Close();
 	debug_printf("    MISO: ");
-	_miso.Config(false);
+	_miso.Close();
 	debug_printf("    MOSI: ");
-	_mosi.Config(false);
+	_mosi.Close();
 	debug_printf("    NSS : ");
-	_nss.Config(false);
+	_nss.Close();
 
 	Opened = false;
 }

@@ -136,8 +136,8 @@ void HardI2C::Init(byte index, uint speedHz)
 	SCL.OpenDrain = true;
 	SDA.OpenDrain = true;
 	Pin pins[][2] =  I2C_PINS;
-	SCL.Set(pins[_index][0]).Config();
-	SDA.Set(pins[_index][1]).Config();
+	SCL.Set(pins[_index][0]);
+	SDA.Set(pins[_index][1]);
 
 	Speed	= speedHz;
 
@@ -151,8 +151,8 @@ HardI2C::~HardI2C()
 
 void HardI2C::SetPin(Pin scl , Pin sda )
 {
-	SCL.Set(scl).Config();
-	SDA.Set(sda).Config();
+	SCL.Set(scl);
+	SDA.Set(sda);
 }
 
 void HardI2C::GetPin(Pin* scl , Pin* sda )
@@ -180,8 +180,8 @@ void HardI2C::OnOpen()
 	SCL.AFConfig(afs[_index]);
 	SDA.AFConfig(afs[_index]);
 #endif
-	SCL.Config(true);
-	SDA.Config(true);
+	SCL.Open();
+	SDA.Open();
 
 	I2C_InitTypeDef i2c;
 	I2C_StructInit(&i2c);
@@ -231,8 +231,8 @@ void HardI2C::OnClose()
 	// sEE_I2C Periph clock disable
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1 << _index, DISABLE);
 
-	SCL.Config(false);
-	SDA.Config(false);
+	SCL.Close();
+	SDA.Close();
 }
 
 void HardI2C::Start()
@@ -412,14 +412,14 @@ void SoftI2C::OnOpen()
 	SCL.OpenDrain = true;
 	SDA.OpenDrain = true;
 
-	SCL.Config(true);
-	SDA.Config(true);
+	SCL.Open();
+	SDA.Open();
 }
 
 void SoftI2C::OnClose()
 {
-	SCL.Config(false);
-	SDA.Config(false);
+	SCL.Close();
+	SDA.Close();
 }
 
 /*

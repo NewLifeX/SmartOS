@@ -251,7 +251,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 
 	if(rst != P0)
 	{
-		Rst.Set(rst).Config(true);
+		Rst.Set(rst).Open();
 
 		debug_printf("硬件复位 \r\n");
 		Rst = false;		// 低电平有效
@@ -276,7 +276,7 @@ bool W5500::Open()
 {
 	if(Opened) return true;
 
-	Irq.Config(true);
+	Irq.Open();
 
 	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
@@ -365,7 +365,7 @@ void W5500::OnClose()
 {
 	_spi->Close();
 
-	Irq.Config(false);
+	Irq.Close();
 }
 
 // 复位（软硬兼施）

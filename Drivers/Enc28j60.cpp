@@ -359,12 +359,12 @@ void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
 	if(ce != P0)
 	{
 		_ce.OpenDrain = false;
-		_ce.Set(ce).Config();
+		_ce.Set(ce).Open();
 	}
 	if(reset != P0)
 	{
 		_reset.OpenDrain = false;
-		_reset.Set(reset).Config();
+		_reset.Set(reset).Open();
 	}
 }
 

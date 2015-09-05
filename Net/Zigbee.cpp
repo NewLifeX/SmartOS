@@ -29,7 +29,7 @@ void Zigbee::Init(ITransport* port, Pin rst)
 	if(rst != P0)
 	{
 		//_rst = new OutputPort(rst);
-		_rst.Set(rst).Config();
+		_rst.Set(rst).Open();
 		Reset();
 	}
 }

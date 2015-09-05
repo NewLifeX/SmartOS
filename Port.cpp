@@ -27,7 +27,7 @@ Port::Port()
 
 Port::~Port()
 {
-	Config(false);
+	Close();
 }
 
 // 单一引脚初始化
@@ -37,7 +37,7 @@ Port& Port::Set(Pin pin)
 	if(pin == _Pin) return *this;
 
 	// 释放已有引脚的保护
-	if(_Pin != P0) Config(false);
+	if(_Pin != P0) Close();
 
     _Pin = pin;
 	if(_Pin != P0)
@@ -51,7 +51,7 @@ Port& Port::Set(Pin pin)
 		PinBit = 0;
 	}
 
-	//if(_Pin != P0) Config();
+	//if(_Pin != P0) Open();
 
 	return *this;
 }
@@ -66,43 +66,67 @@ bool Port::Empty() const
 }
 
 // 确定配置,确认用对象内部的参数进行初始化
-void Port::Config(bool enable)
+bool Port::Open()
 {
-	if(_Pin == P0) return;
+	if(_Pin == P0) return false;
+	if(Opened) return true;
 
-	FunctionalState st = enable ? ENABLE : DISABLE;
     // 先打开时钟才能配置
     int gi = _Pin >> 4;
 #ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, st);
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
 #elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, st);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
 #elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, st);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
 #endif
 
 #if DEBUG
 	// 保护引脚
 	Show();
-	Reserve(_Pin, enable);
+	Reserve(_Pin, true);
 #endif
-
-	// 如果是关闭端口，那么不再需要初始化
-	if(!enable) return;
 
 	GPIO_InitTypeDef gpio;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
 
-    OnConfig(gpio);
+    OnOpen(gpio);
     GPIO_Init(Group, &gpio);
 
 #if DEBUG
 	debug_printf("\r\n");
 #endif
+
+	Opened = true;
+	return true;
 }
 
-void Port::OnConfig(GPIO_InitTypeDef& gpio)
+void Port::Close()
+{
+	if(!Opened) return;
+
+    // 先打开时钟才能配置
+    int gi = _Pin >> 4;
+#ifdef STM32F0
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, DISABLE);
+#elif defined(STM32F1)
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, DISABLE);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, DISABLE);
+#endif
+
+#if DEBUG
+	// 保护引脚
+	Show();
+	Reserve(_Pin, false);
+	debug_printf("\r\n");
+#endif
+
+	Opened = false;
+}
+
+void Port::OnOpen(GPIO_InitTypeDef& gpio)
 {
     gpio.GPIO_Pin = PinBit;
 
@@ -190,7 +214,7 @@ bool Port::IsBusy(Pin pin)
 // 引脚配置
 #define REGION_Config 1
 #ifdef REGION_Config
-void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
+void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 #ifndef STM32F4
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
@@ -204,7 +228,7 @@ void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 	if(Invert) debug_printf(" 倒置");
 #endif
 
-	Port::OnConfig(gpio);
+	Port::OnOpen(gpio);
 
 	switch(Speed)
 	{
@@ -234,9 +258,9 @@ void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 	GPIO_Write(Group, dat);
 }
 
-void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
+void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
 {
-	OutputPort::OnConfig(gpio);
+	OutputPort::OnOpen(gpio);
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
@@ -246,7 +270,7 @@ void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
 #endif
 }
 
-void InputPort::OnConfig(GPIO_InitTypeDef& gpio)
+void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 #if DEBUG
 	debug_printf(" 抖动=%dus", ShakeTime);
@@ -254,7 +278,7 @@ void InputPort::OnConfig(GPIO_InitTypeDef& gpio)
 	if(Invert) debug_printf(" 倒置");
 #endif
 
-	Port::OnConfig(gpio);
+	Port::OnOpen(gpio);
 
 #ifdef STM32F1
 	if(Floating)
@@ -269,9 +293,9 @@ void InputPort::OnConfig(GPIO_InitTypeDef& gpio)
 #endif
 }
 
-void AnalogInPort::OnConfig(GPIO_InitTypeDef& gpio)
+void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
-	Port::OnConfig(gpio);
+	Port::OnOpen(gpio);
 
 #ifdef STM32F1
 	gpio.GPIO_Mode = GPIO_Mode_AIN; //

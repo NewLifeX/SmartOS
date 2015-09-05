@@ -17,13 +17,14 @@ class Port : public Object
 public:
     GPIO_TypeDef*	Group;		// 针脚组
     Pin				_Pin;		// 针脚
+	bool			Opened;		// 是否已经打开
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 
     Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
 
-	// 确定配置,确认用对象内部的参数进行初始化
-    virtual void Config(bool enable = true);
+	bool Open();
+	void Close();
 
 #if defined(STM32F0) || defined(STM32F4)
 	void AFConfig(byte GPIO_AF);
@@ -43,7 +44,7 @@ protected:
 	virtual ~Port();
 
     // 配置过程，由Config调用，最后GPIO_Init
-    virtual void OnConfig(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
 
 // 输出口
@@ -59,7 +60,7 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
-		Config();
+		Open();
 	}
 
 	// 整体写入所有包含的引脚
@@ -82,7 +83,7 @@ public:
     operator bool() { return Read(); }
 
 protected:
-    virtual void OnConfig(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(GPIO_InitTypeDef& gpio);
 
     void Init(bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
     {
@@ -103,11 +104,11 @@ public:
 		Init(invert, openDrain, speed);
 		Set(pin);
 		if((pin & 0x80) == 0) Invert = invert;
-		Config();
+		Open();
 	}
 
 protected:
-    virtual void OnConfig(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
 
 // 输入口
@@ -134,7 +135,7 @@ public:
 	{
 		Init(floating, pupd);
 		Set(pin);
-		Config();
+		Open();
 	}
 
     virtual ~InputPort();
@@ -161,7 +162,7 @@ protected:
         Invert = false;
     }
 
-    virtual void OnConfig(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(GPIO_InitTypeDef& gpio);
 
 private:
     bool _Registed;
@@ -174,10 +175,10 @@ private:
 class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin) { Set(pin); Config(); }
+    AnalogInPort(Pin pin) { Set(pin); Open(); }
 
 protected:
-    virtual void OnConfig(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
 
 // 输出端口会话类。初始化时打开端口，超出作用域析构时关闭。反向操作可配置端口为倒置

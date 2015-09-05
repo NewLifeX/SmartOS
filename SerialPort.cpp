@@ -110,11 +110,11 @@ ShowLog:
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
-    _tx.Set(tx).Config(true);
+    _tx.Set(tx).Open();
 #if defined(STM32F0) || defined(STM32F4)
-    _rx.Set(rx).Config(true);
+    _rx.Set(rx).Open();
 #else
-    _rx.Set(rx).Config(true);
+    _rx.Set(rx).Open();
 #endif
 
 	// 不要关调试口，否则杯具
@@ -208,8 +208,8 @@ void SerialPort::OnClose()
 	USART_Cmd(_port, DISABLE);
     USART_DeInit(_port);
 
-    _tx.Config(false);
-	_rx.Config(false);
+    _tx.Close();
+	_rx.Close();
 
 	const byte irqs[] = UART_IRQs;
 	byte irq = irqs[_index];
