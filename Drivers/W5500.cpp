@@ -347,8 +347,8 @@ bool W5500::Open()
 	Opened = true;
 
 #if NET_DEBUG
-	StateShow();
-	PhyStateShow();
+	//StateShow();
+	//PhyStateShow();
 #endif
 
 	return true;
@@ -357,7 +357,9 @@ bool W5500::Open()
 void W5500::ShowInfo()
 {
 #if NET_DEBUG
-	debug_printf("    IP:\t");
+	debug_printf("    MAC:\t");
+	Mac.Show();
+	debug_printf("\r\n    IP:\t");
 	IP.Show();
 	debug_printf("\r\n    Mask:\t");
 	Mask.Show();
