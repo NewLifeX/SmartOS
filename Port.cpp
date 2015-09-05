@@ -109,6 +109,10 @@ void Port::Config(bool enable)
 
     OnConfig(gpio);
     GPIO_Init(Group, &gpio);
+
+#if DEBUG
+	debug_printf("\r\n");
+#endif
 }
 
 void Port::OnConfig(GPIO_InitTypeDef& gpio)
@@ -123,7 +127,7 @@ void Port::OnConfig(GPIO_InitTypeDef& gpio)
 		case PB3:
 		case PB4:
 		{
-			debug_printf("关闭 JTAG 为 P%c%d\r\n", _PIN_NAME(_Pin));
+			debug_printf("关闭 JTAG 为 P%c%d", _PIN_NAME(_Pin));
 
 			// PA15是jtag接口中的一员 想要使用 必须开启remap
 			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -157,12 +161,12 @@ bool Port::Reserve(Pin pin, bool flag)
     if (flag) {
         if (Reserved[port] & bit) {
 			// 增加针脚已经被保护的提示，很多地方调用ReservePin而不写日志，得到False后直接抛异常
-			debug_printf("打开 P%c%d 失败！该引脚已被打开\r\n", _PIN_NAME(pin));
+			debug_printf("打开 P%c%d 失败！该引脚已被打开", _PIN_NAME(pin));
 			return false; // already reserved
 		}
         Reserved[port] |= bit;
 
-		debug_printf("打开 P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("打开 P%c%d", _PIN_NAME(pin));
     } else {
         Reserved[port] &= ~bit;
 
@@ -179,9 +183,9 @@ bool Port::Reserve(Pin pin, bool flag)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		debug_printf("关闭 P%c%d Config=0x%02x\r\n", _PIN_NAME(pin), config);
+		debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
 #else
-		debug_printf("关闭 P%c%d\r\n", _PIN_NAME(pin));
+		debug_printf("关闭 P%c%d", _PIN_NAME(pin));
 #endif
 	}
 
@@ -205,6 +209,12 @@ void OutputPort::OnConfig(GPIO_InitTypeDef& gpio)
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
 #else
 	assert_param(Speed == 2 || Speed == 25 || Speed == 50 || Speed == 100);
+#endif
+
+#if DEBUG
+	debug_printf(" %dM", Speed);
+	if(OpenDrain) debug_printf(" 开漏");
+	if(Invert) debug_printf(" 倒置");
 #endif
 
 	Port::OnConfig(gpio);
@@ -251,6 +261,12 @@ void AlternatePort::OnConfig(GPIO_InitTypeDef& gpio)
 
 void InputPort::OnConfig(GPIO_InitTypeDef& gpio)
 {
+#if DEBUG
+	debug_printf(" 抖动=%dus", ShakeTime);
+	if(Floating) debug_printf(" 浮空");
+	if(Invert) debug_printf(" 倒置");
+#endif
+
 	Port::OnConfig(gpio);
 
 #ifdef STM32F1
