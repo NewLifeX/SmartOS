@@ -319,8 +319,8 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
 #if RF_DEBUG
-	if(!GetMode())
-		debug_printf("NRF24L01::ReadBuf 只能接收模式下用。\r\n");
+	/*if(!GetMode())
+		debug_printf("NRF24L01::ReadBuf 只能接收模式下用。\r\n");*/
 #endif
 	SpiScope sc(_spi);
 
@@ -791,7 +791,7 @@ bool NRF24L01::OnOpen()
 	if(Power.Open() && !Power.Read())
 	{
 		Power = true;
-		debug_printf("打开物理电源开关\r\n");
+		debug_printf("NRF24L01::打开 物理电源开关\r\n");
 	}
 	_CE.Open();
 	_IRQ.Open();
@@ -816,7 +816,7 @@ bool NRF24L01::OnOpen()
 	// 打开成功后，关闭定时轮询任务
 	if(_tidOpen)
 	{
-		debug_printf("关闭2401热插拔检查 ");
+		debug_printf("NRF24L01::关闭 2401热插拔检查 ");
 		Sys.SetTask(_tidOpen, false);
 	}
 	if(!_tidRecv)
@@ -842,7 +842,7 @@ void NRF24L01::OnClose()
 	if(Power.Read())
 	{
 		Power = false;
-		debug_printf("关闭物理电源开关\r\n");
+		debug_printf("NRF24L01::关闭 物理电源开关\r\n");
 	}
 	Power.Close();
 }

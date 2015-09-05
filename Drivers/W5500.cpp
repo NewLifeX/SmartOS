@@ -251,12 +251,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 
 	if(rst != P0)
 	{
-		Rst.Set(rst).Open();
-
-		debug_printf("硬件复位 \r\n");
-		Rst = false;		// 低电平有效
-		Sys.Delay(600);		// 最少500us
-		Rst = true;
+		Rst.Set(rst);
 	}
 	if(irq != P0)
 	{
@@ -275,6 +270,15 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 bool W5500::Open()
 {
 	if(Opened) return true;
+
+	debug_printf("W5500::Open\r\n");
+	ShowInfo();
+
+	if(!Rst.Open()) return false;
+	debug_printf("硬件复位 \r\n");
+	Rst = false;		// 低电平有效
+	Sys.Delay(600);		// 最少500us
+	Rst = true;
 
 	Irq.Open();
 
@@ -350,10 +354,28 @@ bool W5500::Open()
 	return true;
 }
 
+void W5500::ShowInfo()
+{
+#if NET_DEBUG
+	debug_printf("    IP:\t");
+	IP.Show();
+	debug_printf("\r\n    Mask:\t");
+	Mask.Show();
+	debug_printf("\r\n    Gate:\t");
+	Gateway.Show();
+	debug_printf("\r\n    DHCP:\t");
+	DHCPServer.Show();
+	debug_printf("\r\n    DNS:\t");
+	DNSServer.Show();
+	debug_printf("\r\n");
+#endif
+}
+
 bool W5500::Close()
 {
 	if(!Opened) return true;
 
+	debug_printf("W5500::Close \r\n");
 	OnClose();
 
 	Opened = false;
@@ -366,6 +388,7 @@ void W5500::OnClose()
 	_spi->Close();
 
 	Irq.Close();
+	Rst.Close();
 }
 
 // 复位（软硬兼施）
@@ -930,7 +953,7 @@ bool HardSocket::OnOpen()
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);
-	
+
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
 	if(Protocol == 0x02)
@@ -1015,7 +1038,7 @@ int HardSocket::ReadByteArray(ByteArray& bs, bool lenBybs)
 	}
 	// 设置 实际要读的长度
 	bs.SetLength(readsize);
-			
+
 	Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
@@ -1124,10 +1147,10 @@ void HardSocket::Register(TransportHandler handler, void* param)
 /****************************** TcpClient ************************************/
 
 void TcpClient::Init()
-{ 
+{
 	Linked = 0;
 	_tidRecv = 0;
-	
+
 	// 事件型，只调用一次型
 	_tidRecv = Sys.AddTask(RodyguardTask, this, -1, -1, "W5500TCP 维护");
 	// 关闭任务，等打开以后再开
@@ -1144,10 +1167,10 @@ TcpClient::~TcpClient() //: ~HardSockets()
 void TcpClient::RodyguardTask(void* param)
 {
 	TcpClient * tcp = (TcpClient*)param;
-	// 做一下判断，防止多线程状态不统一 
+	// 做一下判断，防止多线程状态不统一
 	if(!tcp->Linked)
 	{
-		
+
 	}
 }
 
@@ -1210,7 +1233,7 @@ void TcpClient::OnProcess(byte reg)
 	S_Interrupt ir;
 	ir.Init(reg);
 	if(ir.RECV)
-	{		
+	{
 		// 激活异步线程
 		if(_tidRecv)
 		{
@@ -1307,7 +1330,7 @@ void UdpClient::Receive()
 	while(true)
 	{
 		if(DataLength == 0)
-		{	
+		{
 			// 读取包头
 			ByteArray bsHead(packetHead, ArrayLength(packetHead));
 			ushort size = ReadByteArray(bsHead, true);
@@ -1317,12 +1340,12 @@ void UdpClient::Receive()
 				Stream ms(bsHead.GetBuffer(), size);
 				ByteArray bs2(6);
 				ms.Read(bs2);
-	
+
 				ushort len = ms.Read<ushort>();
 				len = __REV16(len);
-				
+
 				// debug_printf("W5500 UDP,Length: %d 	",len);
-				
+
 				// 数据长度不对可能是数据错位引起的，直接丢弃数据包
 				if(len > 1472)
 				{
@@ -1354,11 +1377,11 @@ void UdpClient::Receive()
 			// 读取当前RX数据区内剩余量
 			ushort RemainLength = __REV16(SocRegRead2(RX_RSR));
 			// W5500 未接收数据不足包 放弃不读
-			if(RemainLength < DataLength) return;	
+			if(RemainLength < DataLength) return;
 			// 读取数据
 			ByteArray bsData(dataBuf, DataLength);
 			ushort datasize = ReadByteArray(bsData, true);
-			
+
 			// debug_printf("Data: ");
 			// bsData.Show();
 			// debug_printf("\r\n");
@@ -1366,7 +1389,7 @@ void UdpClient::Receive()
 			// 数据向上层发送
 			OnReceive(ms.ReadBytes(DataLength), DataLength);
 			// 这个数据包的数据都拿到了并处理了
-			DataLength = 0;	
+			DataLength = 0;
 		}
 	}
 }
