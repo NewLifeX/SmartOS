@@ -34,6 +34,7 @@ public:
 
 	// 设置数据
 	void SetData(const byte* buf, uint len);
+	void SetData(const ByteArray& bs);
 	// 负载数据转数据流
 	//Stream ToStream();
 	// 负载数据转字节数组

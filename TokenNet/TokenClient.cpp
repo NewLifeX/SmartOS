@@ -7,11 +7,9 @@
 #include "HelloMessage.h"
 #include "LoginMessage.h"
 
-bool OnTokenClientReceived(Message& msg, void* param);
+static bool OnTokenClientReceived(Message& msg, void* param);
 
-void LoopTask(void* param);
-
-static uint _taskHello = 0;
+static void LoopTask(void* param);
 
 TokenClient::TokenClient() : ID(16), Key(8)
 {
@@ -26,13 +24,9 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	Delay		= 0;
 
 	Control		= NULL;
-	//Udp			= NULL;
 
 	Received	= NULL;
 	Param		= NULL;
-
-	Switchs		= NULL;
-	Regs		= NULL;
 }
 
 void TokenClient::Open()
@@ -44,29 +38,24 @@ void TokenClient::Open()
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
 
-#if DEBUG
-	//Control->AddTransport(SerialPort::GetMessagePort());
-#endif
-
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
 	//ISocket* sock = (ISocket*)(port + 1);
 	ISocket* sock = dynamic_cast<ISocket*>(Control->Port);
-	Hello.EndPoint = sock->Local;
-	/*if(Udp)
-	{
-		Hello.EndPoint.Address	= Udp->Tip->IP;
-		Hello.EndPoint.Port		= Udp->BindPort;
-	}*/
+	if(sock) Hello.EndPoint = sock->Local;
 
 	// 令牌客户端定时任务
-	_taskHello = Sys.AddTask(LoopTask, this, 1000000, 5000000, "令牌客户端");
+	_task = Sys.AddTask(LoopTask, this, 1000000, 5000000, "令牌客户端");
 }
 
 void TokenClient::Close()
 {
-	if(_taskHello) Sys.RemoveTask(_taskHello);
+	if(_task)
+	{
+		Sys.RemoveTask(_task);
+		_task = 0;
+	}
 }
 
 bool TokenClient::Send(TokenMessage& msg)
@@ -85,13 +74,13 @@ bool TokenClient::OnReceive(TokenMessage& msg)
 
 	switch(msg.Code)
 	{
-		case 1:
+		case 0x01:
 			OnHello(msg);
 			break;
-		case 2:
+		case 0x02:
 			OnLogin(msg);
 			break;
-		case 3:
+		case 0x03:
 			OnPing(msg);
 			break;
 	}
@@ -141,7 +130,7 @@ void LoopTask(void* param)
 // 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + 1加密算法 + N密钥
 void TokenClient::SayHello(bool broadcast, int port)
 {
-	TokenMessage msg(1);
+	TokenMessage msg(0x01);
 
 	HelloMessage ext(Hello);
 	ext.Reply = false;
@@ -183,7 +172,15 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
 	{
-		if(!msg.Error)
+		if(msg.Error)
+		{
+			Status	= 0;
+			Token	= 0;
+			Stream ms(msg.Data, msg.Length);
+			debug_printf("握手失败，错误码=0x%02X ", ms.Read<byte>());
+			ms.ReadString().Show(true);
+		}
+		else
 		{
 			debug_printf("握手完成，开始登录……\r\n");
 			Status = 1;
@@ -197,14 +194,6 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			}
 
 			Login();
-		}
-		else
-		{
-			Status	= 0;
-			Token	= 0;
-			Stream ms(msg.Data, msg.Length);
-			debug_printf("握手失败，错误码=0x%02X ", ms.Read<byte>());
-			ms.ReadString().Show(true);
 		}
 	}
 	else if(!msg.Reply)
@@ -230,12 +219,6 @@ void TokenClient::Login()
 	login.HardID	= ID;
 	login.Key		= Key;
 
-	/*if(Udp)
-	{
-		login.Local.Address = Udp->Tip->IP;
-		login.Local.Port	= Udp->BindPort;
-	}*/
-
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
 
@@ -244,12 +227,24 @@ void TokenClient::Login()
 
 bool TokenClient::OnLogin(TokenMessage& msg)
 {
+	if(!msg.Reply) return false;
+
 	Stream ms(msg.Data, msg.Length);
 
-	//新令牌已经没有状态字节
-	// byte result = ms.Read<byte>();
+	if(msg.Error)
+	{
+		// 登录失败，清空令牌
+		Token = 0;
 
-	if(!msg.Error)
+		byte result = ms.Read<byte>();
+		//if(result == 0xFF) Status = 0;
+		// 任何错误，重新握手
+		Status = 0;
+
+		debug_printf("登录失败，错误码 0x%02X！", result);
+		ms.ReadString().Show(true);
+	}
+	else
 	{
 		Status = 2;
 		debug_printf("登录成功！ ");
@@ -257,7 +252,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 得到令牌
 		Token = ms.Read<int>();
 		debug_printf("令牌：0x%08X ", Token);
-		// 这里可能有通信秘密
+		// 这里可能有通信密码
 		if(ms.Remain() > 0)
 		{
 			ByteArray bs = ms.ReadArray();
@@ -269,18 +264,6 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 			}
 		}
 		debug_printf("\r\n");
-	}
-	else
-	{
-		// 登录失败，清空令牌
-		Token = 0;
-
-		byte result = ms.Read<byte>();
-
-		if(result == 0xFF) Status = 0;
-
-		debug_printf("登录失败，错误码 0x%02X！", result);
-		ms.ReadString().Show(true);
 	}
 
 	return true;
@@ -301,9 +284,10 @@ void TokenClient::Ping()
 
 	TokenMessage msg(3);
 
+	ulong time = Time.Current();
+	ByteArray bs((byte*)&time, 8);
 	Stream ms(msg.Data, ArrayLength(msg._Data));
-	ms.Write((byte)8);
-	ms.Write(Time.Current());
+	ms.WriteArray(bs);
 	msg.Length = ms.Position();
 
 	Send(msg);
@@ -313,8 +297,6 @@ bool TokenClient::OnPing(TokenMessage& msg)
 {
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
-
-	//debug_printf("Message_Ping Length=%d\r\n", msg.Length);
 
 	Stream ms(msg.Data, msg.Length);
 

@@ -24,6 +24,12 @@ void Message::SetData(const byte* buf, uint len)
 	}
 }
 
+void Message::SetData(const ByteArray& bs)
+{
+	Length = bs.Length();
+	if(Length > 0 && bs.GetBuffer() != Data) bs.CopyTo(Data, 0, Length);
+}
+
 bool Message::Clone(const Message& msg)
 {
 	Stream ms;

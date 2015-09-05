@@ -6,12 +6,11 @@
 #include "TokenMessage.h"
 #include "HelloMessage.h"
 
-#include "..\TinyIP\Udp.h"
-
 // 微网客户端
 class TokenClient
 {
 private:
+	uint	_task;
 
 public:
 	uint	Token;		// 令牌
@@ -25,7 +24,6 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 
 	TokenController* Control;
-	//UdpSocket*	Udp;	// 用于广播握手消息的UDP
 
 	TokenClient();
 
@@ -55,11 +53,6 @@ public:
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 	bool OnPing(TokenMessage& msg);
-
-// 通用用户级消息
-public:
-	byte*	Switchs;// 开关指针
-	int*	Regs;	// 寄存器指针
 };
 
 #endif
