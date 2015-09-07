@@ -49,6 +49,8 @@ bool OnServerReceived(Message& msg, void* param)
 
 void TinyServer::Start()
 {
+	assert_param2(Config, "未指定微网服务器的配置");
+
 	Control->Open();
 }
 
@@ -138,12 +140,14 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 {
 	if(msg.Reply) return false;
 
-	JoinMessage dm;
-	dm.ReadMessage(msg);
-
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	if(!id) return false;
+
+	ulong now = Time.Current();
+
+	JoinMessage dm;
+	dm.ReadMessage(msg);
 
 	// 根据硬件编码找设备
 	Device* dv = FindDevice(dm.HardID);
@@ -156,6 +160,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			while(FindDevice(++id) != NULL && id < 0xFF);
 
 			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", dm.Kind, id);
+			if(id == 0xFF) return false;
 		}
 
 		dv = new Device();
@@ -164,62 +169,49 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		Devices.Add(dv);
 
 		// 节点注册
-		dv->RegTime	= Time.Current();
+		dv->RegTime	= now;
 	}
+
 	// 更新设备信息
-	if(dv)
-	{
-		Current		= dv;
+	Current		= dv;
 
-		dv->Kind	= dm.Kind;
-		dv->HardID	= dm.HardID;
-		dv->Version	= dm.Version;
+	dv->Kind	= dm.Kind;
+	dv->HardID	= dm.HardID;
+	dv->Version	= dm.Version;
 
-		// 如果最后活跃时间超过60秒，则认为是设备上线
-		if(dv->LastTime == 5 || dv->LastTime + 6000000 < Time.Current())
-		{
-			// 节点上线
-			dv->LoginTime = dv->RegTime;
-		}
-		dv->LastTime = Time.Current();
+	if(dv->Logins++ == 0) dv->LoginTime = now;
+	dv->LastTime = now;
 
-		debug_printf("\r\nTinyServer::新设备组网 0x%08X \r\n", dm.TranID);
-		dv->Show(true);
+	debug_printf("\r\nTinyServer::新设备第 %d 次组网 TranID=0x%08X \r\n", dv->Logins, dm.TranID);
+	dv->Show(true);
 
-		// 对于已注册的设备，再来发现消息不做处理
-		//if(isNew)
-		{
-			// 生成随机密码。当前时间的MD5
-			ulong now = Time.Current();
-			ByteArray bs((byte*)&now, 8);
-			dv->Pass = MD5::Hash(bs);
-			dv->Pass.SetLength(8);	// 小心不要超长
+	// 生成随机密码。当前时间的MD5
+	ByteArray bs((byte*)&now, 8);
+	dv->Pass = MD5::Hash(bs);
+	dv->Pass.SetLength(8);	// 小心不要超长
 
-			// 响应
-			TinyMessage rs;
-			rs.Code = msg.Code;
-			rs.Dest = msg.Src;
-			rs.Sequence	= msg.Sequence;
+	// 响应
+	TinyMessage rs;
+	rs.Code = msg.Code;
+	rs.Dest = msg.Src;
+	rs.Sequence	= msg.Sequence;
 
-			// 发现响应
-			//JoinMessage dm;
-			dm.Reply	= true;
+	// 发现响应
+	dm.Reply	= true;
 
-			dm.Server	= Config->Address;
-			dm.Channel	= Config->Channel;
-			dm.Speed	= Config->Speed == 250 ? 0 : (Config->Speed == 1000 ? 1 : 2);;
+	dm.Server	= Config->Address;
+	dm.Channel	= Config->Channel;
+	dm.Speed	= Config->Speed / 10;
 
-			dm.Address	= dv->Address;
-			dm.Password	= dv->Pass;
+	dm.Address	= dv->Address;
+	dm.Password	= dv->Pass;
 
-			dm.HardID.SetLength(6);	// 小心不要超长
-			dm.HardID	= Sys.ID;
+	dm.HardID.SetLength(6);	// 小心不要超长
+	dm.HardID	= Sys.ID;
 
-			dm.WriteMessage(rs);
+	dm.WriteMessage(rs);
 
-			Reply(rs);
-		}
-	}
+	Reply(rs);
 
 	return true;
 }

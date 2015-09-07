@@ -8,6 +8,7 @@ Device::Device() : HardID(0), Name(0), Pass(0)
 	Address		= 0;
 	Kind		= 0;
 	LastTime	= 0;
+	Logins		= 0;
 	DataSize	= 0;
 	ConfigSize	= 0;
 

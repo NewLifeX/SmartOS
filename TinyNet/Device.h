@@ -14,6 +14,7 @@ public:
 	ushort		Kind;		// 类型
 	ByteArray	HardID;		// 硬件编码
 	ulong		LastTime;	// 活跃时间
+	uint		Logins;		// 登录次数
 	ushort		Version;	// 版本
 	byte		DataSize;	// 数据大小
 	byte		ConfigSize;	// 配置大小
