@@ -1,10 +1,12 @@
 ﻿#include "BlinkPort.h"
 #include "Task.h"
 
-void BlinkTask(void* param);
+static void BlinkTask(void* param);
 
 BlinkPort::BlinkPort()
 {
+	_tid	= 0;
+
 	ArrayZero(Ports);
 	Count	= 0;
 
@@ -13,8 +15,6 @@ BlinkPort::BlinkPort()
 	Interval1	= 100000;
 	Interval2	= 300000;
 	Index		= 0;
-
-	_tid	= Sys.AddTask(BlinkTask, this, -1, -1, "闪烁端口");
 }
 
 BlinkPort::~BlinkPort()
@@ -29,8 +29,17 @@ void BlinkPort::Add(OutputPort* port)
 
 void BlinkPort::Start()
 {
+	if(!Count) return;
+
 	Current	= First;
 	Index	= 0;
+
+	for(int i=0; i<Count; i++)
+	{
+		Ports[i]->Open();
+	}
+
+	if(!_tid) _tid = Sys.AddTask(BlinkTask, this, -1, -1, "闪烁端口");
 
 	// 开启一次任务
 	Sys.SetTask(_tid, true);
