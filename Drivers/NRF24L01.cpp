@@ -203,15 +203,15 @@ NRF24L01::NRF24L01() { Init(); }
 
 void NRF24L01::Init()
 {
-	Power = NULL;
-	_spi = NULL;
+	Power	= NULL;
+	_spi	= NULL;
 
 	// 初始化地址
 	memset(Address, 0, ArrayLength(Address));
 	memcpy(Address1, (byte*)Sys.ID, ArrayLength(Address1));
-	for(int i=0; i<4; i++) Addr2_5[i] = Address1[0] + i + 1;
-	Channel = 0;	// 默认通道0
-	AddrBits = 0x01;// 默认使能地址0
+	for(int i=0; i<ArrayLength(Addr2_5); i++) Addr2_5[i] = Address1[0] + i + 1;
+	Channel		= 0;	// 默认通道0
+	AddrBits	= 0x01;	// 默认使能地址0
 
 	Timeout		= 50;
 	PayloadWidth= 32;
@@ -227,7 +227,7 @@ void NRF24L01::Init()
 	_tidOpen = 0;
 	_tidRecv = 0;
 
-	_Lock = 0;
+	_Lock	= 0;
 
 	LedTx	= NULL;
 	LedRx	= NULL;
@@ -278,16 +278,9 @@ NRF24L01::~NRF24L01()
 {
     debug_printf("NRF24L01::~NRF24L01\r\n");
 
-	if(_tidOpen)
-	{
-		Sys.RemoveTask(_tidOpen);
-		_tidOpen = 0;
-	}
-	if(_tidOpen)
-	{
-		Sys.RemoveTask(_tidOpen);
-		_tidOpen = 0;
-	}
+	Sys.RemoveTask(_tidOpen);
+	Sys.RemoveTask(_tidOpen);
+
 	Register(NULL);
 
 	// 关闭电源

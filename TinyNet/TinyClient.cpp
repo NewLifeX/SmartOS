@@ -53,11 +53,7 @@ void TinyClient::Open()
 
 void TinyClient::Close()
 {
-	if(_TaskID)
-	{
-		Sys.RemoveTask(_TaskID);
-		_TaskID = 0;
-	}
+	Sys.RemoveTask(_TaskID);
 
 	Control->Received	= NULL;
 	Control->Param		= NULL;

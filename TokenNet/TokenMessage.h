@@ -87,9 +87,9 @@ public:
 
 	// 统计
 private:
-	TokenStat* Stat;
+	TokenStat*	Stat;
 
-	int		_taskID;
+	uint		_taskID;
 
 	void ShowStat();
 	static void StatTask(void* param);

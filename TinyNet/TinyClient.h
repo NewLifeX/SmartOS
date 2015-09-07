@@ -11,7 +11,7 @@
 class TinyClient
 {
 private:
-	int			_TaskID;
+	uint		_TaskID;
 
 public:
 	TinyController* Control;

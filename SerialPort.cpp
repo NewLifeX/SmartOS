@@ -371,7 +371,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 	}
     else
 	{
-		if(_taskidRx) Sys.RemoveTask(_taskidRx);
+		Sys.RemoveTask(_taskidRx);
 	}
 }
 

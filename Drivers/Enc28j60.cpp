@@ -350,7 +350,7 @@ Enc28j60::~Enc28j60()
 	delete _spi;
 	_spi = NULL;
 
-	if(_ResetTask) Sys.RemoveTask(_ResetTask);
+	Sys.RemoveTask(_ResetTask);
 }
 
 void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)

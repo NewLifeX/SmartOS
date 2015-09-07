@@ -188,7 +188,7 @@ TinyController::TinyController() : Controller()
 
 TinyController::~TinyController()
 {
-	if(_taskID) Sys.RemoveTask(_taskID);
+	Sys.RemoveTask(_taskID);
 }
 
 void TinyController::Open()

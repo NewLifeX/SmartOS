@@ -114,7 +114,7 @@ bool SysError(uint code)
 
 #if DEBUG
 	ShowFault(code);
-	
+
 	SerialPort* sp = SerialPort::GetMessagePort();
 	if(sp) sp->Flush();
 #endif
@@ -560,13 +560,16 @@ uint TSys::AddTask(Action func, void* param, Int64 dueTime, Int64 period, string
 	return Task::Scheduler()->Add(func, param, dueTime, period, name);
 }
 
-void TSys::RemoveTask(uint taskid)
+void TSys::RemoveTask(uint& taskid)
 {
-	Task::Scheduler()->Remove(taskid);
+	if(taskid) Task::Scheduler()->Remove(taskid);
+	taskid = 0;
 }
 
 bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 {
+	if(!taskid) return false;
+
 	Task* task = Task::Get(taskid);
 	if(!task) return false;
 
@@ -584,6 +587,8 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 // 改变任务周期
 bool TSys::SetTaskPeriod(uint taskid, Int64 period)
 {
+	if(!taskid) return false;
+
 	Task* task = Task::Get(taskid);
 	if(!task) return false;
 

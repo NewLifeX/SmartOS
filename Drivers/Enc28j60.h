@@ -18,7 +18,7 @@ private:
 
 	ulong	LastTime;		// 记录最后一次收到数据的时间，超时重启
 	uint	ResetPeriod;	// 重启间隔，默认6秒
-	int		_ResetTask;		// 重启任务
+	uint	_ResetTask;		// 重启任务
 public:
 	//byte Mac[6];
 	MacAddress Mac;

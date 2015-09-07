@@ -178,12 +178,10 @@ void TokenController::Open()
 
 void TokenController::Close()
 {
-	if(!Stat)
-	{
-		delete Stat;
-		Stat = NULL;
-	}
-	if(_taskID) Sys.RemoveTask(_taskID);
+	delete Stat;
+	Stat = NULL;
+
+	Sys.RemoveTask(_taskID);
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息

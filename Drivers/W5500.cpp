@@ -1139,8 +1139,7 @@ void HardSocket::Register(TransportHandler handler, void* param)
 	}
 	else
 	{
-		if(_tidRecv) Sys.RemoveTask(_tidRecv);
-		_tidRecv = 0;
+		Sys.RemoveTask(_tidRecv);
 	}
 }
 
@@ -1160,8 +1159,7 @@ void TcpClient::Init()
 TcpClient::~TcpClient() //: ~HardSockets()
 {
 	HardSocket::~HardSocket();
-	if(_tidRodyguard) Sys.RemoveTask(_tidRodyguard);
-	_tidRodyguard = 0;
+	Sys.RemoveTask(_tidRodyguard);
 }
 
 void TcpClient::RodyguardTask(void* param)

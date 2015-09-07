@@ -51,11 +51,7 @@ void TokenClient::Open()
 
 void TokenClient::Close()
 {
-	if(_task)
-	{
-		Sys.RemoveTask(_task);
-		_task = 0;
-	}
+	Sys.RemoveTask(_task);
 }
 
 bool TokenClient::Send(TokenMessage& msg)
