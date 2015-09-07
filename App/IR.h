@@ -1,4 +1,4 @@
-
+﻿
 #include "Timer.h"
 #include "Port.h"
 
@@ -23,9 +23,9 @@ class IR
 public :
 	typedef enum 
 	{
-		send,
-		receive,
-		idle,
+		send = 0x01,
+		receive = 0x02,
+		idle	= 0x00,
 	}IRMode;
 	typedef enum
 	{
@@ -69,7 +69,7 @@ private :
 public :
 	// 发送完成return true； 发送失败 return false；
 	bool Send(byte *,int length);
-	// return 长度   超时 return -1   出错 return -2  （接收到的数据过分短也是出错）
+	// return 长度   收发冲突 return 0   超时 return -1   出错 return -2  （接收到的数据过分短也是出错）
 	int Receive(byte *);
 	
 	void static _timerHandler(void* sender, void* param);

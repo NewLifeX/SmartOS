@@ -1,19 +1,19 @@
-
+ï»¿
 #include "IR.h"
 
 IR::IR(PWM * pwm ,Pin Outio,Pin Inio)
 {
 	_irf = NULL;
 	_Outio= NULL;
-	
+
 	_stat = Over;
 	_mode = idle;
-	
+
 	_timer = NULL;
 	_timerTick = 0x00000;
 	_buff = NULL;
 	_length = 0;
-	
+
 	if(pwm)_irf = pwm;
 	if(Outio!=P0) _Outio = new OutputPort(Outio,false,true);
 	if(Inio != P0) _Inio = new InputPort(Inio);
@@ -25,16 +25,16 @@ bool IR::SetMode(IRMode mode)
 	if(_mode == mode)return true;
 	if(mode != idle)
 	{
-		// ÉêÇëÒ»¸ö¶¨Ê±Æ÷
+		// ç”³è¯·ä¸€ä¸ªå®šæ—¶å™¨
 		if(_timer==NULL)
 			_timer = Timer::Create();
-		// ÅäÖÃ¶¨Ê±Æ÷µÄ²ÎÊı
+		// é…ç½®å®šæ—¶å™¨çš„å‚æ•°
 		if(_timer==NULL)return false;
 		_timer->SetFrequency(20000);  // 50us
 		_timer->Register(_timerHandler,this);
-		
+
 		_mode = mode;
-		
+
 		if(mode == receive)	_stat = WaitRec;
 		else 				_stat = WaitSend;
 	}
@@ -44,8 +44,9 @@ bool IR::SetMode(IRMode mode)
 		{
 			_timer->Stop();
 			_timer->Register((EventHandler)NULL,NULL);
-//			delete(_timer);		// ²»Ò»¶¨ÒªÊÍ·Åµô
+//			delete(_timer);		// ä¸ä¸€å®šè¦é‡Šæ”¾æ‰
 			_stat=Over;
+			_mode = mode;
 		}
 	}
 	return true;
@@ -57,117 +58,142 @@ bool IR::Send(byte *sendbuf,int length)
 	if(!_irf)return false;
 	if(length<2)return false;
 	if(*sendbuf != (byte)length)return false;
-	
+
 	_timerTick=0x00000;
 	_buff = sendbuf+1;
 	_length = length-1;
+	if(_mode != idle)return false;
 	if(!SetMode(send))return false;
 	//_mode = send;
-	
+
 	_nestOut = true;
 	_irf->Start();
-//Å²µ½ºóÃæÒ»µã	SetIRH();
-	_timer->Start();	// ÕâÒ»¾äÖ´ĞĞÊ±¼ä±È½Ï³¤   Ó°ÏìµÚÒ»¸ö²¨ĞÎ ÔõÃ´Õû
-	/*SetIRH();*/*_Outio=true;		// ·Åµ½ºóÃæÀ´ ¶¨Ê±Æ÷Æô¶¯´úÂëÖ´ĞĞÊ±¼äÔì³ÉµÄÓ°ÏìÃ÷ÏÔ±äĞ¡
+//æŒªåˆ°åé¢ä¸€ç‚¹	SetIRH();
+	_timer->Start();	// è¿™ä¸€å¥æ‰§è¡Œæ—¶é—´æ¯”è¾ƒé•¿   å½±å“ç¬¬ä¸€ä¸ªæ³¢å½¢ æ€ä¹ˆæ•´
+	/*SetIRH();*/*_Outio=true;		// æ”¾åˆ°åé¢æ¥ å®šæ—¶å™¨å¯åŠ¨ä»£ç æ‰§è¡Œæ—¶é—´é€ æˆçš„å½±å“æ˜æ˜¾å˜å°
 	_stat = Sending;
-	
-	// µÈ´ı·¢ËÍÍê³É
-	for(int i=0;i<2;i++) 
+
+	// ç­‰å¾…å‘é€å®Œæˆ
+	for(int i=0;i<2;i++)
 	{
-		Sys.Sleep(500);  // µÈ500ms
+		Sys.Sleep(500);  // ç­‰500ms
 		if(_stat == Over)break;
 	}
 	if(_stat == Sending)
-		Sys.Sleep(200);  // Èç¹û»¹ÔÚ½ÓÊÜÖĞ ÔÙµÈËû200ms
-	if(_stat == Sending)	
+		Sys.Sleep(200);  // å¦‚æœè¿˜åœ¨æ¥å—ä¸­ å†ç­‰ä»–200ms
+	if(_stat == Sending)
 	{
-		_stat = SendError;	// »¹ÔÚ½ÓÊÕ ±íÊ¾³ö´í
+		_stat = SendError;	// è¿˜åœ¨æ¥æ”¶ è¡¨ç¤ºå‡ºé”™
 		_timer->Stop();
 		return false;
 	}
 	*_Outio=false;
 	_irf->Stop();
-	
+
 	return true;
 }
 
 int IR::Receive(byte *buff)
 {
 	if(!_Inio)return -2;
+	if(_mode != idle)return 0;
 	SetMode(receive);
 	_timerTick = 0x0000;
-	
+
 	_buff = buff;
 	_length = 0;
 	_timer->Start();
-	// µÈ´ı5s  Èç¹ûÃ»ÓĞĞÅºÅ ÅĞ¶ÏÎª³¬Ê±
-	for(int i=0;i<10;i++) 
+	// ç­‰å¾…5s  å¦‚æœæ²¡æœ‰ä¿¡å· åˆ¤æ–­ä¸ºè¶…æ—¶
+	for(int i=0;i<10;i++)
 	{
-		Sys.Sleep(500);  // µÈ500ms
+		Sys.Sleep(500);  // ç­‰500ms
 		if(_stat == Over)break;
 	}
+	
 	if(_stat == Recing)
-		Sys.Sleep(500);  // Èç¹û»¹ÔÚ½ÓÊÜÖĞ ÔÙµÈËû500ms
-	if(_stat == Recing)	
-		_stat = RecError;	// »¹ÔÚ½ÓÊÕ ±íÊ¾³ö´í
+		Sys.Sleep(500);  // å¦‚æœè¿˜åœ¨æ¥å—ä¸­ å†ç­‰ä»–500ms
+		
+	if(_stat == Recing)
+		_stat = RecError;	// è¿˜åœ¨æ¥æ”¶ è¡¨ç¤ºå‡ºé”™
+
+	SetMode(idle);
 
 	if(_stat == RecError) return -2;
-	
-	buff[0] = _length;					// µÚÒ»¸ö×Ö½Ú·Å³¤¶È
+
+	buff[0] = _length;					// ç¬¬ä¸€ä¸ªå­—èŠ‚æ”¾é•¿åº¦
 	if(_length == 0)return -1;
-	if(_length <=5)return -2;			// Êı¾İÌ«¶Ì Ò²±íÊ¾ ½ÓÊÕ³ö´í
+	if(_length <=5)return -2;			// æ•°æ®å¤ªçŸ­ ä¹Ÿè¡¨ç¤º æ¥æ”¶å‡ºé”™
 	return _length;
 }
 
-// ¾²Ì¬ÖĞ¶Ï²¿·Ö
+// é™æ€ä¸­æ–­éƒ¨åˆ†
 void  IR::_timerHandler(void* sender, void* param)
 {
 	IR* ir = (IR*)param;
 	ir->SendReceHandler(sender,NULL);
 }
 
-// ÕæÕıµÄÖĞ¶Ïº¯Êı  ºìÍâµÄÖ÷Òª²¿·Ö
+// çœŸæ­£çš„ä¸­æ–­å‡½æ•°  çº¢å¤–çš„ä¸»è¦éƒ¨åˆ†
 const bool ioIdleStat = true;
+
 void IR::SendReceHandler(void* sender, void* param)
 {
-	volatile static bool ioOldStat = ioIdleStat;
-	// µÈ´ı½ÓÊÕµÄÊ±ºò  Ö»ÓÃÅĞ¶ÏÒ»ÏÂµçÆ½×´Ì¬ Èç¹ûÃ»ÓĞĞÅºÅÖ±½ÓÍË³ö
-	// ³¬Ê± ÔÚÖĞ¶ÏÍâ´¦Àí
-	if(_stat == WaitRec)	
-	{
-		if(*_Inio == ioIdleStat)	return;
-		else 			_stat = Recing;
-	}
+	volatile static bool ioOldStat;
 	
-	_timerTick++;
 	switch(_mode)
 	{
 		case receive:
 		{
-			if(*_Inio != ioOldStat)
+			// è·å–å¼•è„šçŠ¶æ€
+			bool s = _Inio->Read();
+			
+			// ç­‰å¾…æ¥æ”¶å¼€å§‹çŠ¶æ€
+			if(_stat == WaitRec)
 			{
-				ioOldStat = *_Inio;
+				if(s != ioIdleStat)
+				{
+				// ç­‰å¾…åˆ°ç¬¬ä¸€æ¬¡çŠ¶æ€
+					_stat = Recing;
+					_timerTick = 0x0000;
+					ioOldStat = s;
+				}
+				else
+				{
+					return;
+				}
+			}
+			
+			// æ¥æ”¶
+			_timerTick++;
+			if(s != ioOldStat)
+			{
+				ioOldStat = s;
+				
 				*_buff++ = (byte)_timerTick;
+				
+				_timerTick = 0x0000;
 				_length ++;
-				if(_length>500)	// ´óÓÚ500¸öÌø±äÑØ ±íÊ¾³ö´í
+				
+				// å¤§äº500ä¸ªè·³å˜æ²¿ è¡¨ç¤ºå‡ºé”™
+				if(_length>500)	
 				{
 					_timer ->Stop();
 					_stat = RecError;
 				}
-				_timerTick = 0x0000;
-				break;
 			}
-		}break;
-		
+			break;
+		}
+
 		case send:
 		{
+			_timerTick++;
 			if(*_buff == _timerTick)
 			{
 				if(_nestOut)	/*SetIRH();*/*_Outio=false;
 				else 			/*SetIRL();*/*_Outio=true;
-				
+
 				_nestOut = !_nestOut;
-				
+
 				_timerTick = 0x0000;
 				_buff ++;
 				_length --;
@@ -179,22 +205,23 @@ void IR::SendReceHandler(void* sender, void* param)
 					_stat = Over;
 				}
 			}
-			else return;
+			else 
+				return;
 		}break;
-		default: _mode = idle;break ;
+		
+		default:_mode = idle;	break ;
 	}
-	
-	// ²»ÔÊĞí ³¬¹ı 25.5ms µÄ¶«Î÷  ²»ÂÛ·¢ËÍ»¹ÊÇ½ÓÊÕ
-	// ¿ÕÏĞÄ£Ê½Ö±½Ó ¹Ø±Õ¶¨Ê±Æ÷
-	if(_timerTick >254 || _mode == idle)	
+
+	// ä¸å…è®¸ è¶…è¿‡ 25.5ms çš„ä¸œè¥¿  ä¸è®ºå‘é€è¿˜æ˜¯æ¥æ”¶
+	// ç©ºé—²æ¨¡å¼ç›´æ¥ å…³é—­å®šæ—¶å™¨
+	if(_timerTick > 1000 || _mode == idle)
 	{
 		_timerTick=0x0000;
 		_timer ->Stop();
 		if(_stat == Recing)
 		{
-			_stat = Over;		// ½ÓÊÕÊ±³¬Ê±¾Í±íÊ¾½ÓÊÕ½áÊø
+			_stat = Over;		// æ¥æ”¶æ—¶è¶…æ—¶å°±è¡¨ç¤ºæ¥æ”¶ç»“æŸ
 		}
 	}
 }
-
 
