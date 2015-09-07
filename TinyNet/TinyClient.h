@@ -2,6 +2,7 @@
 #define __TinyClient_H__
 
 #include "Sys.h"
+#include "Config.h"
 #include "TinyMessage.h"
 
 #include "Message\DataStore.h"
