@@ -19,7 +19,7 @@ BlinkPort::BlinkPort()
 
 BlinkPort::~BlinkPort()
 {
-	if(_tid) Sys.RemoveTask(_tid);
+	Sys.RemoveTask(_tid);
 }
 
 void BlinkPort::Add(OutputPort* port)
