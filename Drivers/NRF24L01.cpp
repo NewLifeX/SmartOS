@@ -191,17 +191,9 @@
 	}RF_FEATURE;
 #endif
 
-void AutoOpenTask(void* param);
+static void AutoOpenTask(void* param);
 
-NRF24L01::NRF24L01() { Init(); }
-
-/*NRF24L01::NRF24L01(Spi* spi, Pin ce, Pin irq)
-{
-	Init();
-	Init(spi, ce, irq);
-}*/
-
-void NRF24L01::Init()
+NRF24L01::NRF24L01()
 {
 	Power	= NULL;
 	_spi	= NULL;
@@ -224,8 +216,8 @@ void NRF24L01::Init()
 	MaxError	= 10;
 	Error		= 0;
 
-	_tidOpen = 0;
-	_tidRecv = 0;
+	_tidOpen	= 0;
+	_tidRecv	= 0;
 
 	_Lock	= 0;
 
@@ -235,7 +227,7 @@ void NRF24L01::Init()
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 {
-	debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d POWER=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq), _PIN_NAME(power));
+	debug_printf("NRF24L01::Init CE=P%c%d IRQ=P%c%d Power=P%c%d\r\n", _PIN_NAME(ce), _PIN_NAME(irq), _PIN_NAME(power));
 
     if(ce != P0)
 	{
@@ -279,7 +271,7 @@ NRF24L01::~NRF24L01()
     debug_printf("NRF24L01::~NRF24L01\r\n");
 
 	Sys.RemoveTask(_tidOpen);
-	Sys.RemoveTask(_tidOpen);
+	Sys.RemoveTask(_tidRecv);
 
 	Register(NULL);
 
@@ -493,11 +485,11 @@ bool NRF24L01::Config()
 	// 编译器会优化下面的代码为一个常数
 	RF_CONFIG config;
 	config.Init();
-	config.PRIM_RX	= 0;
-	config.PWR_UP	= 0;							// 1:上电 0:掉电
-	config.CRCO		= 1;							// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
-	config.EN_CRC	= 1;							// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
-	config.PRIM_RX	= 1;							// 默认进入接收模式
+	//config.PRIM_RX	= 0;
+	config.PWR_UP	= 0;	// 1:上电 0:掉电
+	config.CRCO		= 1;	// CRC 模式‘0’-8 位CRC 校验‘1’-16 位CRC 校验
+	config.EN_CRC	= 1;	// CRC 使能如果EN_AA 中任意一位为高则EN_CRC 强迫为高
+	config.PRIM_RX	= 1;	// 默认进入接收模式
 
 	config.MAX_RT	= 0;
 	config.TX_DS	= 0;
@@ -508,7 +500,7 @@ bool NRF24L01::Config()
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
 	ClearFIFO(true);
-	//ClearFIFO(false);
+	ClearFIFO(false);
 	// 清除中断标志
 	ClearStatus(true, true);
 
@@ -525,7 +517,7 @@ bool NRF24L01::Config()
 	return true;
 }
 
-bool NRF24L01::CheckConfig()
+/*bool NRF24L01::CheckConfig()
 {
 	for(int i=0; i<0x20; i++)
 	{
@@ -534,7 +526,7 @@ bool NRF24L01::CheckConfig()
 	}
 
 	return true;
-}
+}*/
 
 void NRF24L01::ClearFIFO(bool rx)
 {
@@ -995,28 +987,12 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 	return rs;
 }
 
-bool NRF24L01::WaitForIRQ()
-{
-	TimeWheel tw(0, Timeout);
-	while(_IRQ.Read())
-	{
-		if(tw.Expired()) return true;
-	}
-
-	// 读取状态寄存器的值
-	Status = ReadReg(STATUS);
-	if(Status == 0xFF) return false;
-	debug_printf("NRF24L01::WaitForIRQ Timeout %dms\r\n", Timeout);
-
-	return false;
-}
-
 void NRF24L01::AddError()
 {
 	Error++;
 	if(MaxError > 0 && Error >= MaxError)
 	{
-		debug_printf("nRF24L01+出错%d次，超过最大次数%d，准备重启模块\r\n", Error, MaxError);
+		debug_printf("RF24::Error 出错%d次，超过最大次数%d，准备重启模块\r\n", Error, MaxError);
 
 		Close();
 		Open();
@@ -1032,7 +1008,7 @@ void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
 	if(!nrf) return;
 
 	// 马上调度任务
-	if(nrf->_tidRecv) Sys.SetTask(nrf->_tidRecv, true, 0);
+	Sys.SetTask(nrf->_tidRecv, true, 0);
 }
 
 void NRF24L01::OnIRQ()
@@ -1134,17 +1110,6 @@ void NRF24L01::ShowStatus()
 	if(fifo.TX_FULL)  debug_printf(" TX FIFO 寄存器满");
 	if(fifo.TX_REUSE) debug_printf(" 当CE位高电平状态时不断发送上一数据包");
 	debug_printf("\r\n");
-}
-
-bool NRF24L01::CanReceive()
-{
-	// 读取状态寄存器的值
-	Status = ReadReg(STATUS);
-	if(Status == 0xFF) return false;
-
-	RF_STATUS st;
-	st.Init(Status);
-	return st.RX_DR;
 }
 
 void NRF24L01::ReceiveTask(void* param)

@@ -16,7 +16,6 @@ private:
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 
-	bool WaitForIRQ();
 	void AddError();
 
 	// 接收任务。
@@ -27,8 +26,6 @@ private:
 	void OnIRQ();
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
-
-	void Init();
 
 public:
     Spi*		_spi;
@@ -54,7 +51,6 @@ public:
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
 
 	NRF24L01();
-    //NRF24L01(Spi* spi, Pin ce = P0, Pin irq = P0, Pin power = P0);
     virtual ~NRF24L01();
     void Init(Spi* spi, Pin ce = P0, Pin irq = P0, Pin power = P0);
 
@@ -65,7 +61,7 @@ public:
 	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
-	bool CheckConfig();
+	//bool CheckConfig();
 	void ClearFIFO(bool rx);
 	void ClearStatus(bool tx, bool rx);
 
@@ -75,7 +71,6 @@ public:
 	byte Status;
 	byte FifoStatus;
 	void ShowStatus();
-	bool CanReceive();
 
 	virtual string ToString() { return "R24"; }
 
