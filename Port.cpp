@@ -230,6 +230,14 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	if(Invert) debug_printf(" 倒置");
 #endif
 
+	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
+	ushort dat = GPIO_ReadOutputData(Group);
+	if(!Invert)
+		dat &= ~PinBit;
+	else
+		dat |= PinBit;
+	GPIO_Write(Group, dat);
+
 	Port::OnOpen(gpio);
 
 	switch(Speed)
@@ -250,14 +258,6 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	gpio.GPIO_Mode = GPIO_Mode_OUT;
 	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
-
-	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
-	ushort dat = GPIO_ReadOutputData(Group);
-	if(!Invert)
-		dat &= ~PinBit;
-	else
-		dat |= PinBit;
-	GPIO_Write(Group, dat);
 }
 
 void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
