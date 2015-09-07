@@ -455,7 +455,8 @@ ushort Enc28j60::PhyRead(byte addr)
 	WriteReg(MICMD, MICMD_MIIRD);
 
 	// 循环等待PHY寄存器被MII读取，需要10.24us
-	while((ReadReg(MISTAT) & MISTAT_BUSY));
+	int times = 100;
+	while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0);
 
 	// 停止读取
 	//WriteReg(MICMD, MICMD_MIIRD);
@@ -474,13 +475,11 @@ bool Enc28j60::PhyWrite(byte addr, ushort data)
 	// 写入高8位数据
     WriteReg(MIWRH, data >> 8);
 
-	TimeWheel tw(0, 200, 0);
     // 等待 PHY 写完成
-    while(ReadReg(MISTAT) & MISTAT_BUSY)
-    {
-		if(tw.Expired()) return false;
-    }
-	return true;
+	int times = 100;
+    while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0);
+
+	return times > 0;
 }
 
 void Enc28j60::ClockOut(byte clock)
@@ -533,11 +532,9 @@ bool Enc28j60::OnOpen()
 
     // 查询 CLKRDY 位判断是否重启完成
     // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
-	TimeWheel tw(0, 3, 0);
-    while(ReadReg(ESTAT) & ESTAT_CLKRDY)
-    {
-		if(tw.Expired()) break;
-    }
+	int times = 100;
+    while((ReadReg(ESTAT) & ESTAT_CLKRDY) && --times > 0);
+
     // do bank 0 stuff
     // initialize receive buffer
     // 16-bit transfers, must write low byte first
@@ -719,7 +716,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 
 	// ECON1_TXRTS 发送逻辑正在尝试发送数据包
 	int times = 1000;
-	while((ReadReg(ECON1) & ECON1_TXRTS) && times-- > 0);
+	while((ReadReg(ECON1) & ECON1_TXRTS) && --times > 0);
 	if(times <= 0)
 	{
 		debug_printf("Enc28j60::OnWrite 发送失败，设备正忙于发送数据！\r\n");
@@ -755,7 +752,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 	// 等待发送完成
 	times = 1000;
-	while((ReadReg(ECON1) & ECON1_TXRTS) && times-- > 0);
+	while((ReadReg(ECON1) & ECON1_TXRTS) && --times > 0);
 
 	/*
 	如果数据包发送完成或因错误/ 取消而中止发送，ECON1.TXRTS 位会被清零，一个7 字节的发送状态向量将被写入由ETXND + 1 指向的单元，
@@ -771,7 +768,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 	{
 		// 如果有 发送错误中断 TXERIF 或者 发送中断 TXIF ，则等待发送结束
 		times = 1000;
-		while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && (times-- > 0));
+		while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
 
 		// 如果有 发送错误中断 TXERIF 或者 超时
 		//if((ReadReg(EIR) & EIR_TXERIF) || (times <= 0))
@@ -852,7 +849,8 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 
 					// 再次发送数据包
 					WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
-					while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)));
+					int times = 100;
+					while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
 
 					// 如果被卡住，取消上一次发送
 					// Cancel the previous transmission if it has become stuck set

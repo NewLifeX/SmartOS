@@ -161,6 +161,8 @@ void TokenController::Open()
 {
 	if(Opened) return;
 
+	assert_param2(Port, "还没有传输口呢");
+
 	debug_printf("TokenNet::Inited 使用传输接口 %s\r\n", Port->ToString());
 
 	if(!Stat)
