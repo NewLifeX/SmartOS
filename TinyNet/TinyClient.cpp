@@ -104,7 +104,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
-	if(Server != 0 && Server != msg.Dest) return true;
+	if(Server != 0 && Server != msg.Src) return true;
 
 	switch(msg.Code)
 	{
