@@ -137,7 +137,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	if(rs)
 	{
 		msg.Dest	= msg.Src;
-		msg.Src		= dv.Address;
+		msg.Src		= dv->Address;
 	}
 
 	return rs;
