@@ -357,18 +357,41 @@ void Gateway::OnDeviceDelete(Message& msg)
 
 void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 {
-	msg2.Code = msg.Code;
-
-	// 处理Reply标记
+	
 	msg2.Reply = msg.Reply;
 	msg2.Error = msg.Error;
 
 	// 第一个字节是节点设备地址
 	if(msg.Length > 0) msg2.Dest = msg.Data[0];
+	
+	if(msg.Code==0x10)//0x10指令转为写入指令
+	{
 
-	if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
-
-	msg2.Length = msg.Length - 1;
+      msg2.Code = 0x16;
+	  
+      for(int i=1;i<msg.Length;i++)
+	   {
+		   
+		if(msg.Data[i]!=0xFF)
+		{
+		 	msg2.Data[2]=(byte)i;//起始地址
+			break;
+		}
+		
+		 if(msg.Length > 2) memcpy(msg2.Data, &msg.Data[1], msg.Length -1);
+	     msg2.Length = msg.Length - 1;
+		
+	   }
+	}
+    else
+	{
+		
+ 	  msg2.Code = msg.Code;
+	 //处理Reply标记
+	  if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
+	  msg2.Length = msg.Length - 1;
+	  
+	}
 }
 
 void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
