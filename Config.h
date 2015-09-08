@@ -30,7 +30,7 @@ public:
 	ushort		SleepTime;	// 睡眠时间。秒
 
 	// 初始化，各字段为0
-	void Init();
+	TConfig();
 	void LoadDefault();
 };
 
