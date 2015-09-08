@@ -15,7 +15,7 @@ IR::IR(PWM * pwm ,Pin Outio,Pin Inio)
 	_length = 0;
 
 	if(pwm)_irf = pwm;
-	if(Outio!=P0) _Outio = new OutputPort(Outio,false,true);
+	if(Outio!=P0) _Outio = new OutputPort(Outio,true);
 	if(Inio != P0) _Inio = new InputPort(Inio);
 	SetIRL();
 }
@@ -58,38 +58,50 @@ bool IR::Send(byte *sendbuf,int length)
 	if(!_irf)return false;
 	if(length<2)return false;
 	if(*sendbuf != (byte)length)return false;
-
+	
+	// Tick清零
 	_timerTick=0x00000;
-	_buff = sendbuf+1;
-	_length = length-1;
+	
+	// 去掉头字节长度
+	_buff = sendbuf++;
+	_length = length--;
+	
+	// 模式切换
 	if(_mode != idle)return false;
 	if(!SetMode(send))return false;
-	//_mode = send;
 
-	_nestOut = true;
+	_nextOut = false;
 	_irf->Start();
-//挪到后面一点	SetIRH();
-	_timer->Start();	// 这一句执行时间比较长   影响第一个波形 怎么整
-	/*SetIRH();*/*_Outio=true;		// 放到后面来 定时器启动代码执行时间造成的影响明显变小
+	//挪到后面一点	SetIRH();
+	// 这一句执行时间比较长   影响第一个波形 怎么整
+	_timer->Start();	
+	// 放到后面来 定时器启动代码执行时间造成的影响明显变小
+	*_Outio=true;
+	// 更新状态
 	_stat = Sending;
 
 	// 等待发送完成
 	for(int i=0;i<2;i++)
 	{
-		Sys.Sleep(500);  // 等500ms
+		// 等500ms
+		Sys.Sleep(500);  
 		if(_stat == Over)break;
 	}
+	// 如果还在发送中 再等他200ms
 	if(_stat == Sending)
-		Sys.Sleep(200);  // 如果还在接受中 再等他200ms
+		Sys.Sleep(200);  
+	// 还在发送 表示出错
 	if(_stat == Sending)
 	{
-		_stat = SendError;	// 还在接收 表示出错
+		_stat = SendError;	
 		_timer->Stop();
-		return false;
 	}
+	
 	*_Outio=false;
 	_irf->Stop();
-
+	// 放开模式
+	if(!SetMode(idle))return false;
+	
 	return true;
 }
 
@@ -156,6 +168,9 @@ void IR::SendReceHandler(void* sender, void* param)
 					_stat = Recing;
 					_timerTick = 0x0000;
 					ioOldStat = s;
+					// 留空第一个字节
+					_buff++;
+					_length ++;
 				}
 				else
 				{
@@ -189,10 +204,10 @@ void IR::SendReceHandler(void* sender, void* param)
 			_timerTick++;
 			if(*_buff == _timerTick)
 			{
-				if(_nestOut)	/*SetIRH();*/*_Outio=false;
+				if(_nextOut)	/*SetIRH();*/*_Outio=false;
 				else 			/*SetIRL();*/*_Outio=true;
 
-				_nestOut = !_nestOut;
+				_nextOut = !_nextOut;
 
 				_timerTick = 0x0000;
 				_buff ++;

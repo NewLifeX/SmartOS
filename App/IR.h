@@ -65,7 +65,7 @@ private :
 	// pmos管驱动  低电平导通
 	void SetIRH(){*_Outio=false;/*_irf->Start();*/}
 	void SetIRL(){*_Outio=true; /*_irf->Stop ();*/}
-	bool _nestOut;	// 下一个输出状态 
+	bool _nextOut;	// 下一个输出状态 
 public :
 	// 发送完成return true； 发送失败 return false；
 	bool Send(byte *,int length);
@@ -74,5 +74,6 @@ public :
 	
 	void static _timerHandler(void* sender, void* param);
 	void SendReceHandler(void* sender, void* param);
+	
 };
 
