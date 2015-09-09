@@ -52,6 +52,8 @@ public:
 
 	// 消息所占据的指令数据大小。包括头部、负载数据和附加数据
 	virtual uint Size() const;
+	// 数据缓冲区大小
+	virtual uint MaxDataSize() const;
 
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 	virtual bool Read(Stream& ms);

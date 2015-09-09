@@ -19,6 +19,8 @@ public:
 
 	// 消息所占据的指令数据大小。包括头部、负载数据、校验和附加数据
 	virtual uint Size() const = 0;
+	// 数据缓冲区大小
+	virtual uint MaxDataSize() const = 0;
 
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms) = 0;
@@ -36,7 +38,8 @@ public:
 	void SetData(const byte* buf, uint len, uint offset = 0);
 	void SetData(const ByteArray& bs, uint offset = 0);
 	// 负载数据转数据流
-	//Stream ToStream();
+	Stream ToStream();
+	Stream ToStream() const;
 	// 负载数据转字节数组
 	//ByteArray ToArray();
 

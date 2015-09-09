@@ -61,10 +61,10 @@ void TokenMessage::Write(Stream& ms) const
 	byte tmp = _Code | (_Reply << 7) | (_Error << 6);
 	ms.Write(tmp);
 	ms.Write(_Length);*/
-	
+
 	byte tmp = Code | (Reply << 7) | (Error << 6);
 	ms.Write(tmp);
-	
+
 	if(!Data)
 		ms.Write((byte)0);
 	else
@@ -84,6 +84,11 @@ bool TokenMessage::Valid() const
 uint TokenMessage::Size() const
 {
 	return HeaderSize + Length;
+}
+
+uint TokenMessage::MaxDataSize() const
+{
+	return Data == _Data ? ArrayLength(_Data) : Length;
 }
 
 // 设置错误信息字符串
@@ -368,7 +373,7 @@ void TokenController::ShowMessage(string action, Message& msg)
 		if(msg.Code == NoLogCodes[i]) return;
 		if(NoLogCodes[i] == 0) break;
 	}
-	
+
 	debug_printf("Token::%s ", action);
 
 	// 如果是错误，显示错误信息

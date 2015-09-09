@@ -143,6 +143,11 @@ uint TinyMessage::Size() const
 	return len;
 }
 
+uint TinyMessage::MaxDataSize() const
+{
+	return Data == _Data ? ArrayLength(_Data) : Length;
+}
+
 void TinyMessage::Show() const
 {
 #if MSG_DEBUG

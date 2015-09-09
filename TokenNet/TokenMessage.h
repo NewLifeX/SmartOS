@@ -33,6 +33,8 @@ public:
 
 	// 消息总长度，包括头部、负载数据和校验
 	virtual uint Size() const;
+	// 数据缓冲区大小
+	virtual uint MaxDataSize() const;
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;

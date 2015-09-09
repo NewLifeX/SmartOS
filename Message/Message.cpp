@@ -15,7 +15,7 @@ void Message::SetData(const byte* buf, uint len, uint offset)
 {
 	//assert_param(len <= ArrayLength(Data));
 
-	Length = len;
+	Length = len + offset;
 	if(len > 0 && buf != Data + offset)
 	{
 		assert_ptr(buf);
@@ -26,7 +26,7 @@ void Message::SetData(const byte* buf, uint len, uint offset)
 
 void Message::SetData(const ByteArray& bs, uint offset)
 {
-	Length = bs.Length();
+	Length = bs.Length() + offset;
 	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(Data + offset, Length);
 }
 
@@ -40,13 +40,18 @@ bool Message::Clone(const Message& msg)
 	return Read(ms);
 }
 
-/*// 负载数据转数据流
+// 负载数据转数据流
 Stream Message::ToStream()
 {
-	return Stream(Data, Length);
+	return Stream(Data, MaxDataSize());
 }
 
-// 负载数据转字节数组
+Stream Message::ToStream() const
+{
+	return Stream((const byte*)Data, MaxDataSize());
+}
+
+/*// 负载数据转字节数组
 ByteArray Message::ToArray()
 {
 	return ByteArray(Data, Length);
