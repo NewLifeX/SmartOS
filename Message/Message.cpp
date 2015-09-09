@@ -11,23 +11,23 @@ Message::Message(byte code)
 }
 
 // 设置数据。
-void Message::SetData(const byte* buf, uint len)
+void Message::SetData(const byte* buf, uint len, uint offset)
 {
 	//assert_param(len <= ArrayLength(Data));
 
 	Length = len;
-	if(len > 0 && buf != Data)
+	if(len > 0 && buf != Data + offset)
 	{
 		assert_ptr(buf);
 		assert_ptr(Data);
-		memcpy(Data, buf, len);
+		memcpy(Data + offset, buf, len);
 	}
 }
 
-void Message::SetData(const ByteArray& bs)
+void Message::SetData(const ByteArray& bs, uint offset)
 {
 	Length = bs.Length();
-	if(Length > 0 && bs.GetBuffer() != Data) bs.CopyTo(Data, 0, Length);
+	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(Data + offset, Length);
 }
 
 bool Message::Clone(const Message& msg)

@@ -33,8 +33,8 @@ public:
 	virtual bool Clone(const Message& msg);
 
 	// 设置数据
-	void SetData(const byte* buf, uint len);
-	void SetData(const ByteArray& bs);
+	void SetData(const byte* buf, uint len, uint offset = 0);
+	void SetData(const ByteArray& bs, uint offset = 0);
 	// 负载数据转数据流
 	//Stream ToStream();
 	// 负载数据转字节数组
