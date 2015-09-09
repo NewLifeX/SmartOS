@@ -22,7 +22,7 @@ void TestTask2(void* param)
 	udp->Write(buf,sizeof(buf));
 }
 
-void SocketShow(void *param)
+void SocketShow(void* param)
 {
 	UdpClient* udp = (UdpClient*)param;
 	udp->StateShow();

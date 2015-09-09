@@ -75,7 +75,7 @@ void* operator new[](uint size)
     return p;
 }
 
-void operator delete(void * p)
+void operator delete(void* p)
 {
 	assert_ptr(p);
 
@@ -87,7 +87,7 @@ void operator delete(void * p)
 	}
 }
 
-void operator delete[](void * p)
+void operator delete[](void* p)
 {
 	assert_ptr(p);
 

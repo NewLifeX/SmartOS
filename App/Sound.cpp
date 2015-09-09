@@ -82,7 +82,7 @@ bool Music::getStat()
 	return Sounding;
 }
 
-void Music::TimerHander(void *sender,void *param)
+void Music::TimerHander(void* sender,void* param)
 {
 	if(param == NULL)return;
 	Music * music = (Music * )param;

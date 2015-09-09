@@ -487,7 +487,7 @@ void Capture::Register(int channel,EventHandler handler, void* param )
 }
 
 // 直接用指针访问私有成员  不好
-//void Capture :: OnHandler(void * sender, void* param)
+//void Capture :: OnHandler(void* sender, void* param)
 //{
 //	Capture * cap= (Capture*)param;
 //	if(cap->_Handler != NULL)
