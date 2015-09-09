@@ -198,8 +198,11 @@ uint Stream::Write(string str)
 	if(!_canWrite) return false;
 
 	int len = 0;
-	string p = str;
-	while(*p++) len++;
+	if(str)
+	{
+		string p = str;
+		while(*p++) len++;
+	}
 
 	WriteEncodeInt(len);
 	if(len) Write((byte*)str, 0, len);

@@ -139,7 +139,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 /*
 请求：1起始 + 1大小
 响应：1起始 + N数据
-错误：1起始
+错误：错误码2 + 1起始 + 1大小
 */
 void TinyClient::OnRead(const TinyMessage& msg)
 {
@@ -147,29 +147,32 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms(msg.Data, msg.Length);
+	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 	uint len	= ms.ReadEncodeInt();
 
 	// 准备响应数据
 	TinyMessage rs;
-	rs.Code	= msg.Code;
-	Stream ms2(rs.Data, ArrayLength(rs._Data));
-	ms2.WriteEncodeInt(offset);
+	rs.Code		= msg.Code;
+	Stream ms2	= rs.ToStream();
 
-	if(len > ms2.Remain()) len = ms2.Remain();
-	ByteArray bs(ms2.Current(), len);
-	int count = Store.Read(offset, bs);
+	ByteArray& bs = Store.Data;
 
-	if(count < 0)
+	int remain = bs.Length() - offset;
+	if(remain < 0)
 	{
-		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		rs.Error = true;
+		ms2.Write((byte)2);
+		ms2.WriteEncodeInt(offset);
+		ms2.WriteEncodeInt(len);
 	}
 	else
-		ms2.Seek(count);
-	//rs.Length = ms2.Position();
-	rs.SetData(ms2.GetBuffer(), ms2.Position());
+	{
+		ms2.WriteEncodeInt(offset);
+		if(len > remain) len = remain;
+		if(len > 0) ms2.Write(bs.GetBuffer(), offset, len);
+	}
+	rs.Length	= ms2.Position();
 
 	Reply(rs);
 }
@@ -177,7 +180,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 /*
 请求：1起始 + N数据
 响应：1起始 + 1大小
-错误：1起始
+错误：错误码2 + 1起始 + 1大小
 */
 void TinyClient::OnWrite(const TinyMessage& msg)
 {
@@ -185,24 +188,34 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms(msg.Data, msg.Length);
+	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-
-	ByteArray bs(ms.Current(), ms.Remain());
-	int count = Store.Write(offset, bs);
 
 	// 准备响应数据
 	TinyMessage rs;
-	rs.Code	= msg.Code;
-	Stream ms2(rs.Data, ArrayLength(rs._Data));
-	ms2.WriteEncodeInt(offset);
+	rs.Code		= msg.Code;
+	Stream ms2	= rs.ToStream();
 
-	if(count < 0)
+	// 剩余可写字节数
+	uint len = ms.Remain();
+	int remain = Store.Data.Length() - offset;
+	if(remain < 0)
+	{
 		rs.Error = true;
+		ms2.Write((byte)2);
+		ms2.WriteEncodeInt(offset);
+		ms2.WriteEncodeInt(len);
+	}
 	else
-		ms2.WriteEncodeInt(count);
+	{
+		ms2.WriteEncodeInt(offset);
 
-	rs.Length = ms2.Position();
+		if(len > remain) len = remain;
+		ByteArray bs(ms.Current(), len);
+		int count = Store.Write(offset, bs);
+		ms2.WriteEncodeInt(count);
+	}
+	rs.Length	= ms2.Position();
 
 	Reply(rs);
 }

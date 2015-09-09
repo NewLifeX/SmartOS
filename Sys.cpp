@@ -485,6 +485,7 @@ static const ushort c_CRC16Table[] =
 
 ushort TSys::Crc16(const void* buf, uint len, ushort crc)
 {
+	assert_param2(buf, "Crc16校验目标地址不能为空");
     if (!buf || !len) return 0;
 
     for (int i = 0; i < len; i++)
