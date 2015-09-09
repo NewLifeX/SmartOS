@@ -255,13 +255,14 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	uint offset = ms.ReadEncodeInt();
 	uint len	= ms.ReadEncodeInt();
 
-	ByteArray& bs = dv.Store;
-
+	// 指针归零，准备写入响应数据
 	ms.SetPosition(0);
 
-	int remain = bs.Length() - offset;
+	// 计算还有多少数据可读
+	int remain = dv.Store.Length() - offset;
 	if(remain < 0)
 	{
+		// 可读数据不够时出错
 		msg.Error = true;
 		ms.Write((byte)2);
 		ms.WriteEncodeInt(offset);
@@ -270,8 +271,9 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	else
 	{
 		ms.WriteEncodeInt(offset);
+		// 限制可以读取的大小，不允许越界
 		if(len > remain) len = remain;
-		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
+		if(len > 0) ms.Write(dv.Store.GetBuffer(), offset, len);
 	}
 	msg.Length	= ms.Position();
 	msg.Reply	= true;
@@ -289,9 +291,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	ByteArray& bs = dv.Store;
-
-	int remain = bs.Length() - offset;
+	int remain = dv.Store.Capacity() - offset;
 	if(remain < 0) return false;
 
 	uint len = ms.Remain();
@@ -299,7 +299,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	// 保存一份到缓冲区
 	if(len > 0)
 	{
-		bs.Copy(ms.Current(), len, offset);
+		dv.Store.Copy(ms.Current(), len, offset);
 	}
 
 	return true;
@@ -319,13 +319,16 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	ByteArray& bs = dv.Store;
-
+	// 计算还有多少数据可写
 	uint len = ms.Remain();
-	int remain = bs.Length() - offset;
+	int remain = dv.Store.Capacity() - offset;
 	if(remain < 0)
 	{
 		msg.Error = true;
+
+		// 指针归零，准备写入响应数据
+		ms.SetPosition(0);
+
 		ms.Write((byte)2);
 		ms.WriteEncodeInt(offset);
 		ms.WriteEncodeInt(len);
@@ -338,7 +341,11 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 		// 保存一份到缓冲区
 		if(len > 0)
 		{
-			bs.Copy(ms.Current(), len, offset);
+			dv.Store.Copy(ms.Current(), len, offset);
+
+			// 指针归零，准备写入响应数据
+			ms.SetPosition(0);
+			ms.WriteEncodeInt(offset);
 			// 实际写入的长度
 			ms.WriteEncodeInt(len);
 
