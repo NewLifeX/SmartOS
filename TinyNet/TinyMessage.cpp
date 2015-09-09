@@ -33,6 +33,7 @@ bool TinyMessage::Read(Stream& ms)
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
 	if(ms.Remain() < MinSize) return false;
 
+	const byte* p = ms.Current();
 	ms.Read(&Dest, 0, HeaderSize);
 
 	// 占位符拷贝到实际数据
@@ -57,7 +58,7 @@ bool TinyMessage::Read(Stream& ms)
 	Checksum = ms.Read<ushort>();
 
 	// 连续的，可以直接计算Crc16
-	Crc = Sys.Crc16(&Dest, HeaderSize + Length);
+	Crc = Sys.Crc16(p, HeaderSize + Length);
 
 	// 后面可能有TTL
 	if(UseTTL)

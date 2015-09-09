@@ -240,36 +240,41 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	return true;
 }
 
-// 读取
+/*
+请求：1起始 + 1大小
+响应：1起始 + N数据
+错误：错误码2 + 1起始 + 1大小
+*/
 bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms(msg.Data, msg.Length);
+	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 	uint len	= ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
 
-	// 重新一个数据流，避免前面的不够
-	Stream ms2(4 + len);
-	ms2.WriteEncodeInt(offset);
+	ms.SetPosition(0);
 
 	int remain = bs.Length() - offset;
 	if(remain < 0)
 	{
-		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		msg.Error = true;
+		ms.Write((byte)2);
+		ms.WriteEncodeInt(offset);
+		ms.WriteEncodeInt(len);
 	}
 	else
 	{
+		ms.WriteEncodeInt(offset);
 		if(len > remain) len = remain;
-		if(len > 0) ms2.Write(bs.GetBuffer(), offset, len);
+		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
 	}
-	msg.SetData(ms2.GetBuffer(), ms2.Position());
-	msg.Reply = true;
+	msg.Length	= ms.Position();
+	msg.Reply	= true;
 
 	return true;
 }
@@ -281,7 +286,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms(msg.Data, msg.Length);
+	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
@@ -300,30 +305,35 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	return true;
 }
 
-// 写入
+/*
+请求：1起始 + N数据
+响应：1起始 + 1大小
+错误：错误码2 + 1起始 + 1大小
+*/
 bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms(msg.Data, msg.Length);
+	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
 	ByteArray& bs = dv.Store;
 
+	uint len = ms.Remain();
 	int remain = bs.Length() - offset;
 	if(remain < 0)
 	{
-		// 出错，使用原来的数据区即可，只需要返回一个起始位置
 		msg.Error = true;
+		ms.Write((byte)2);
+		ms.WriteEncodeInt(offset);
+		ms.WriteEncodeInt(len);
+
 		debug_printf("读写指令错误");
-		ms.Write(1);
-		ms.Write(0);
 	}
 	else
 	{
-		uint len = ms.Remain();
 		if(len > remain) len = remain;
 		// 保存一份到缓冲区
 		if(len > 0)
@@ -331,11 +341,12 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 			bs.Copy(ms.Current(), len, offset);
 			// 实际写入的长度
 			ms.WriteEncodeInt(len);
+
 			debug_printf("读写指令转换");
 		}
 	}
-	msg.Length = ms.Position();
-	msg.Reply = true;
+	msg.Length	= ms.Position();
+	msg.Reply	= true;
 	msg.Show();
 
 	return true;
