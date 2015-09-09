@@ -30,6 +30,24 @@ void Message::SetData(const ByteArray& bs, uint offset)
 	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(Data + offset, Length);
 }
 
+void Message::SetError(byte errorCode, const char* msg)
+{
+	/*byte* p	= Data;
+	*p++	= errorCode;
+
+	while(msg) *p++ = (byte)*msg++;
+
+	Length	= p - Data;*/
+
+	Error	= true;
+
+	Stream ms(Data, MaxDataSize());
+	ms.Write(errorCode);
+	ms.Write(msg);
+
+	Length	= ms.Position();
+}
+
 bool Message::Clone(const Message& msg)
 {
 	Stream ms;
@@ -43,12 +61,18 @@ bool Message::Clone(const Message& msg)
 // 负载数据转数据流
 Stream Message::ToStream()
 {
-	return Stream(Data, MaxDataSize());
+	Stream ms(Data, MaxDataSize());
+	ms.Length = Length;
+
+	return ms;
 }
 
 Stream Message::ToStream() const
 {
-	return Stream((const byte*)Data, MaxDataSize());
+	Stream ms((const byte*)Data, MaxDataSize());
+	ms.Length = Length;
+
+	return ms;
 }
 
 /*// 负载数据转字节数组
