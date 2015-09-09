@@ -41,7 +41,9 @@ public:
 public:
 	DataStore	Store;		// 数据存储区
 
-	void Report(TinyMessage& msg);
+	void Report(Message& msg);
+	bool Report(uint offset, byte dat);
+	bool Report(uint offset, const ByteArray& bs);
 
 private:
 	void OnWrite(const TinyMessage& msg);

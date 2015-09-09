@@ -27,7 +27,7 @@ TinyClient::TinyClient(TinyController* control)
 	Param		= NULL;
 
 	Config		= NULL;
-	
+
 	_TaskID		= 0;
 }
 
@@ -46,7 +46,7 @@ void TinyClient::Open()
 	{
 		Control->Address = Config->Address;
 		Server = Config->Server;
-		
+
 		Password.Load(Config->Password, ArrayLength(Config->Password));
 	}
 }
@@ -84,6 +84,8 @@ bool TinyClient::Reply(TinyMessage& msg)
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
 	if(!Server) return false;
+
+	if(!msg.Dest) msg.Dest = Server;
 
 	return Control->Reply(msg);
 }
@@ -205,16 +207,42 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	Reply(rs);
 }
 
-void TinyClient::Report(TinyMessage& msg)
+void TinyClient::Report(Message& msg)
 {
 	// 没有服务端时不要上报
 	if(!Server) return;
 
-	Stream ms(msg.Data, ArrayLength(msg._Data));
+	Stream ms = msg.ToStream();
 	ms.Write((byte)0x01);	// 子功能码
 	ms.Write((byte)0x00);	// 起始地址
 	ms.Write(Store.Data);
 	msg.Length = ms.Position();
+}
+
+bool TinyClient::Report(uint offset, byte dat)
+{
+	TinyMessage msg;
+	msg.Code	= 0x05;
+
+	Stream ms = msg.ToStream();
+	ms.WriteEncodeInt(offset);
+	ms.Write(dat);
+	msg.Length	= ms.Position();
+
+	return Reply(msg);
+}
+
+bool TinyClient::Report(uint offset, const ByteArray& bs)
+{
+	TinyMessage msg;
+	msg.Code	= 0x05;
+
+	Stream ms = msg.ToStream();
+	ms.WriteEncodeInt(offset);
+	ms.Write(bs);
+	msg.Length	= ms.Position();
+
+	return Reply(msg);
 }
 
 /******************************** 常用系统级消息 ********************************/
