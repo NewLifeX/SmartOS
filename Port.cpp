@@ -15,6 +15,8 @@ static const int PORT_IRQns[] = {
 };
 #endif
 
+/******************************** Port ********************************/
+
 // 端口基本功能
 #define REGION_Port 1
 #ifdef REGION_Port
@@ -306,7 +308,27 @@ void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
 	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
+
+OutputPort& OutputPort::Init(Pin pin, bool invert)
+{
+	Port::Set(pin);
+
+	Invert	= invert;
+
+	return *this;
+}
+
+InputPort& InputPort::Init(Pin pin, bool invert)
+{
+	Port::Set(pin);
+
+	Invert	= invert;
+
+	return *this;
+}
 #endif
+
+/******************************** OutputPort ********************************/
 
 // 输出端口
 #define REGION_Output 1
@@ -390,6 +412,8 @@ void OutputPort::Write(Pin pin, bool value)
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
 #endif
+
+/******************************** InputPort ********************************/
 
 // 输入端口
 #define REGION_Input 1

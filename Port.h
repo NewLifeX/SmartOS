@@ -9,6 +9,8 @@
 	#define GPIO_MAX_SPEED 50
 #endif
 
+/******************************** Port ********************************/
+
 // 端口基类
 // 用于管理一个端口，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
@@ -47,6 +49,8 @@ protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
 
+/******************************** OutputPort ********************************/
+
 // 输出口
 class OutputPort : public Port
 {
@@ -63,6 +67,8 @@ public:
 		Open();
 	}
 
+	OutputPort& Init(Pin pin, bool invert);
+	
 	// 整体写入所有包含的引脚
     void Write(bool value);
     void WriteGroup(ushort value);   // 整组写入
@@ -93,6 +99,8 @@ protected:
     }
 };
 
+/******************************** AlternatePort ********************************/
+
 // 复用输出口
 class AlternatePort : public OutputPort
 {
@@ -110,6 +118,8 @@ public:
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
+
+/******************************** InputPort ********************************/
 
 // 输入口
 class InputPort : public Port
@@ -139,6 +149,8 @@ public:
 	}
 
     virtual ~InputPort();
+
+	InputPort& Init(Pin pin, bool invert);
 
     ushort ReadGroup();			// 整组读取
     bool Read();				// 读取状态
@@ -171,6 +183,8 @@ private:
     void UnRegisterInput(int pinIndex);
 };
 
+/******************************** AnalogInPort ********************************/
+
 // 模拟输入输出口
 class AnalogInPort : public Port
 {
@@ -180,6 +194,8 @@ public:
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 };
+
+/******************************** PortScope ********************************/
 
 // 输出端口会话类。初始化时打开端口，超出作用域析构时关闭。反向操作可配置端口为倒置
 class PortScope
