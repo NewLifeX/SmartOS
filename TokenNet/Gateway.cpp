@@ -367,22 +367,17 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 
 	if(msg.Code==0x10)
 	{
-	  msg2.Code = 0x16;
-
-	  for(int i=2;i<msg.Length;i++)
-	  {
-		  if(msg.Data[i]!=0xFF) msg2.Data[1]=(byte)i;
-		   break;
-	  }
+	  msg2.Code = 0x16;	 
 
 	  if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length);
 	  msg2.Length = msg.Length;
+	   msg2.Data[0]=1;
 	}
 	else
 	{
       msg2.Code = msg.Code;
 	  if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
-	  msg2.Length = msg.Length - 1;
+	  msg2.Length = msg.Length - 1;	 
 	}
 }
 
