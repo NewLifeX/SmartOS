@@ -375,9 +375,20 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 	}
 	else
 	{
-      msg2.Code = msg.Code;
-	  if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
-	  msg2.Length = msg.Length - 1;	 
+	  if(msg.Code==0x12)
+	  {
+	    msg2.Code = 0x16;	 
+
+	    if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
+	    msg2.Length = msg.Length;
+	    msg2.Data[0]=1;
+	  }
+	  else
+	  {
+        msg2.Code = msg.Code;
+	    if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
+	     msg2.Length = msg.Length - 1;
+	  }	  
 	}
 }
 
