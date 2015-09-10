@@ -381,7 +381,6 @@ void TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 
 	    if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
 	    msg2.Length = msg.Length;
-	    msg2.Data[0]=1;
 	  }
 	  else
 	  {
