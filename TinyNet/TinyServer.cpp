@@ -284,6 +284,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 // 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
 bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 {
+	debug_printf("备份数据到网关") ;
 	if(!msg.Reply || msg.Error) return false;
 	if(msg.Length < 2) return false;
 
@@ -292,6 +293,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	uint offset = ms.ReadEncodeInt();
 
 	int remain = dv.Store.Capacity() - offset;
+	
 	if(remain < 0) return false;
 
 	uint len = ms.Remain();
