@@ -434,14 +434,14 @@ void OldTinyToToken(TinyMessage& msg, TokenMessage& msg2)
 	   }
 	   else
 	   {
-		   if(msg.Length==2)//返回数据等于2的，一般是模拟量写入，除非是单个开关量的返回
+		   if(msg.Length==2)
 		   {
-			    msg2.Code=0x12;
+			    msg2.Code=0x10;
 				if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 		   }		  
 		   else
 		   {
-			   msg2.Code=0x10;
+			   msg2.Code=0x12;
 			   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);		   
 		   }
 		    msg2.Reply = msg.Reply;
