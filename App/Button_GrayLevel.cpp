@@ -47,7 +47,7 @@ void Button_GrayLevel::Set(PWM* drive, byte pulseIndex)
 		_GrayLevelDrive = drive;
 		_PulseIndex = pulseIndex;
 		// 刷新输出
-		SetValue(_Value);
+		RenewGrayLevel();
 	}
 }
 
