@@ -67,6 +67,13 @@ bool Port::Empty() const
 	return false;
 }
 
+void Port::Clear()
+{
+	Group	= NULL;
+	_Pin	= P0;
+	PinBit	= 0;
+}
+
 // 确定配置,确认用对象内部的参数进行初始化
 bool Port::Open()
 {
@@ -158,7 +165,7 @@ void Port::OnOpen(GPIO_InitTypeDef& gpio)
 }
 
 #if defined(STM32F0) || defined(STM32F4)
-void Port::AFConfig(byte GPIO_AF)
+void Port::AFConfig(byte GPIO_AF) const
 {
 	GPIO_PinAFConfig(Group, _PIN(_Pin), GPIO_AF);
 }

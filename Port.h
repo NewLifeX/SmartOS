@@ -27,9 +27,10 @@ public:
 
 	bool Open();
 	void Close();
+	void Clear();
 
 #if defined(STM32F0) || defined(STM32F4)
-	void AFConfig(byte GPIO_AF);
+	void AFConfig(byte GPIO_AF) const;
 #endif
 
     // 辅助函数

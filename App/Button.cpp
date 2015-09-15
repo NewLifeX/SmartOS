@@ -97,11 +97,11 @@ void Button::SetValue(bool value)
 		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
 		// 故这里添加1ms延时
 		// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
-		Sys.Delay(ACZeroAdjTime);	
+		Sys.Delay(ACZeroAdjTime);
 	}
 	Led		= value;
 	Relay	= value;
-	
+
 	_Value	= value;
 }
 
@@ -110,15 +110,18 @@ bool Button::SetACZeroPin(Pin aczero)
 	// 检查参数
 	assert_param(aczero != P0);
 
-	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
-	if(!ACZero.Empty()) ACZero.Close();
+	InputPort& port = ACZero;
 
-	ACZero.Set(aczero).Open();
+	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
+	if(!port.Empty()) port.Close();
+
+	port.Set(aczero).Open();
 
 	// 需要检测是否有交流电，否则关闭
-	if(CheckZero(ACZero)) return true;
+	if(CheckZero(port)) return true;
 
-	ACZero.Close();
+	port.Close();
+	port.Clear();
 
 	return false;
 }
