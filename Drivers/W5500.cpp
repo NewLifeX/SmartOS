@@ -1130,13 +1130,8 @@ void HardSocket::Register(TransportHandler handler, void* param)
 	// 如果有注册事件，则启用接收任务
 	if(handler)
 	{
-		if(!_tidRecv)
-		{
-			// 事件型，只调用一次型
-			_tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
-			// 关闭任务，等打开以后再开
-			if(!Opened) Sys.SetTask(_tidRecv, false);
-		}
+		// 事件型，只调用一次型
+		if(!_tidRecv) _tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
 	}
 	else
 	{
