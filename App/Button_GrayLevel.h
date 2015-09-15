@@ -27,9 +27,9 @@ public:
 
 	InputPort	Key;	// 输入按键
 	OutputPort	Relay;	// 继电器
+	static byte OnGrayLevel;			// 开灯时 led 灰度
+	static byte OffGrayLevel;			// 关灯时 led 灰度
 
-	static byte OnGrayLevel;	// 开灯时 led 灰度
-	static byte OffGrayLevel;	// 关灯时 led 灰度
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();

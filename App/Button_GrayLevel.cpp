@@ -2,6 +2,8 @@
 
 
 InputPort* Button_GrayLevel::ACZero = NULL;
+byte Button_GrayLevel::OnGrayLevel	= 0x00;			// 开灯时 led 灰度
+byte Button_GrayLevel::OffGrayLevel	= 0xff;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime=2300;
 
 Button_GrayLevel::Button_GrayLevel()
@@ -55,7 +57,7 @@ void Button_GrayLevel::RenewGrayLevel()
 {
 	if(_GrayLevelDrive)
 	{
-		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? OnGrayLevel:OffGrayLevel;
+		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? OnGrayLevel : OffGrayLevel;
 		_GrayLevelDrive->Start();
 	}
 }
