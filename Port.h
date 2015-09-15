@@ -31,7 +31,7 @@ public:
 #if defined(STM32F0) || defined(STM32F4)
 	void AFConfig(byte GPIO_AF);
 #endif
-	
+
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
@@ -45,8 +45,9 @@ protected:
 	Port();
 	virtual ~Port();
 
-    // 配置过程，由Config调用，最后GPIO_Init
+    // 配置过程，由Open调用，最后GPIO_Init
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
+	virtual void OnClose();
 };
 
 /******************************** OutputPort ********************************/
@@ -68,7 +69,7 @@ public:
 	}
 
 	OutputPort& Init(Pin pin, bool invert);
-	
+
 	// 整体写入所有包含的引脚
     void Write(bool value);
     void WriteGroup(ushort value);   // 整组写入
@@ -111,7 +112,6 @@ public:
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
-		if((pin & 0x80) == 0) Invert = invert;
 		Open();
 	}
 
@@ -140,6 +140,8 @@ public:
     bool Floating;      // 是否浮空输入
     bool Invert;		// 是否倒置输入输出
 
+	bool HardEvent;		// 是否使用硬件事件。默认false
+
 	InputPort() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
 	{
@@ -152,35 +154,29 @@ public:
 
 	InputPort& Init(Pin pin, bool invert);
 
-    ushort ReadGroup();			// 整组读取
-    bool Read();				// 读取状态
+    ushort ReadGroup() const;			// 整组读取
+    bool Read() const;				// 读取状态
     static bool Read(Pin pin);	// 读取某个引脚
 
     void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
 
     operator bool() { return Read(); }
 
-protected:
-    // 函数命名为Init，而不作为构造函数，主要是因为用构造函数会导致再实例化一个对象，然后这个函数在那个新对象里面执行
-    void Init(bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
-    {
-		PuPd = pupd;
-        Floating = floating;
+	void OnPress(bool down);
 
-        _Registed = false;
-        //ShakeTime = 20;
-		// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
-        ShakeTime = 0;
-        Invert = false;
-    }
+protected:
+    void Init(bool floating = true, PuPd_TypeDef pupd = PuPd_UP);
 
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
+	virtual void OnClose();
 
 private:
-    bool _Registed;
+    IOReadHandler	Handler;
+	void*			Param;
 
-    void RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler, void* param);
-    void UnRegisterInput(int pinIndex);
+	bool _Value;
+	uint _taskInput;		// 输入任务
+	static void InputTask(void* param);
 };
 
 /******************************** AnalogInPort ********************************/

@@ -44,13 +44,13 @@ Port& Port::Set(Pin pin)
     _Pin = pin;
 	if(_Pin != P0)
 	{
-		Group = IndexToGroup(pin >> 4);
-		PinBit = 1 << (pin & 0x0F);
+		Group	= IndexToGroup(pin >> 4);
+		PinBit	= 1 << (pin & 0x0F);
 	}
 	else
 	{
-		Group = NULL;
-		PinBit = 0;
+		Group	= NULL;
+		PinBit	= 0;
 	}
 
 	//if(_Pin != P0) Open();
@@ -110,15 +110,7 @@ void Port::Close()
 	if(!Opened) return;
 	if(_Pin == P0) return;
 
-    // 先打开时钟才能配置
-    int gi = _Pin >> 4;
-#ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, DISABLE);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, DISABLE);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, DISABLE);
-#endif
+	OnClose();
 
 #if DEBUG
 	// 保护引脚
@@ -128,6 +120,18 @@ void Port::Close()
 #endif
 
 	Opened = false;
+}
+
+void Port::OnClose()
+{
+    int gi = _Pin >> 4;
+#ifdef STM32F0
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, DISABLE);
+#elif defined(STM32F1)
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, DISABLE);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, DISABLE);
+#endif
 }
 
 void Port::OnOpen(GPIO_InitTypeDef& gpio)
@@ -274,29 +278,6 @@ void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 }
 
-void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
-{
-#if DEBUG
-	debug_printf(" 抖动=%dus", ShakeTime);
-	if(Floating) debug_printf(" 浮空");
-	if(Invert) debug_printf(" 倒置");
-#endif
-
-	Port::OnOpen(gpio);
-
-#ifdef STM32F1
-	if(Floating)
-		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	else if(PuPd == PuPd_UP)
-		gpio.GPIO_Mode = GPIO_Mode_IPU;
-	else if(PuPd == PuPd_DOWN)
-		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
-#else
-	gpio.GPIO_Mode = GPIO_Mode_IN;
-	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-}
-
 void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 	Port::OnOpen(gpio);
@@ -310,15 +291,6 @@ void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
 }
 
 OutputPort& OutputPort::Init(Pin pin, bool invert)
-{
-	Port::Set(pin);
-
-	Invert	= invert;
-
-	return *this;
-}
-
-InputPort& InputPort::Init(Pin pin, bool invert)
 {
 	Port::Set(pin);
 
@@ -422,35 +394,63 @@ void OutputPort::Write(Pin pin, bool value)
 /* 一共16条中断线，意味着同一条线每一组只能有一个引脚使用中断 */
 typedef struct TIntState
 {
-    Pin Pin;
-    InputPort::IOReadHandler Handler;	// 委托事件
-	void* Param;	// 事件参数，一般用来作为事件挂载者的对象，然后借助静态方法调用成员方法
-    bool OldValue;
-
-    uint ShakeTime;     // 抖动时间
-    int Used;   // 被使用次数。对于前5行中断来说，这个只会是1，对于后面的中断线来说，可能多个
+    InputPort*	Port;
+    bool	OldValue;
+    uint	ShakeTime;	// 抖动时间
 } IntState;
 
 // 16条中断线
-static IntState State[16];
+static IntState States[16];
 static bool hasInitState = false;
 
-void RegisterInput(int groupIndex, int pinIndex, InputPort::IOReadHandler handler);
-void UnRegisterInput(int pinIndex);
+int Bits2Index(ushort value)
+{
+    for(int i=0; i<16; i++)
+    {
+        if(value & 0x01) return i;
+        value >>= 1;
+    }
+
+	return -1;
+}
+
+void InputPort::Init(bool floating, PuPd_TypeDef pupd)
+{
+	PuPd		= pupd;
+	Floating	= floating;
+
+	//ShakeTime = 20;
+	// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
+	ShakeTime	= 0;
+	Invert		= false;
+	HardEvent	= false;
+	_taskInput	= 0;
+
+	Handler		= NULL;
+	Param		= NULL;
+}
 
 InputPort::~InputPort()
 {
-    // 取消所有中断
-    if(_Registed) Register(NULL);
+	Sys.RemoveTask(_taskInput);
 }
 
-ushort InputPort::ReadGroup()    // 整组读取
+InputPort& InputPort::Init(Pin pin, bool invert)
+{
+	Port::Set(pin);
+
+	Invert	= invert;
+
+	return *this;
+}
+
+ushort InputPort::ReadGroup() const    // 整组读取
 {
 	return GPIO_ReadInputData(Group);
 }
 
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
-bool InputPort::Read()
+bool InputPort::Read() const
 {
 	// 转为bool时会转为0/1
 	bool rs = GPIO_ReadInputData(Group) & PinBit;
@@ -463,45 +463,23 @@ bool InputPort::Read(Pin pin)
 	return (group->IDR >> (pin & 0xF)) & 1;
 }
 
-// 注册回调  及中断使能
-void InputPort::Register(IOReadHandler handler, void* param)
+void InputPort::OnPress(bool down)
 {
-    if(!PinBit) return;
+	if(HardEvent)
+	{
+		if(Handler) Handler(_Pin, down, Param);
+	}
+	else
+	{
+		_Value	= down;
+		Sys.SetTask(_taskInput, true, 0);
+	}
+}
 
-    // 检查并初始化中断线数组
-    if(!hasInitState)
-    {
-        for(int i=0; i<16; i++)
-        {
-            IntState* state = &State[i];
-            state->Pin = P0;
-            state->Handler = NULL;
-            state->Used = 0;
-        }
-        hasInitState = true;
-    }
-
-    byte gi = _Pin >> 4;
-    ushort n = PinBit;
-    for(int i=0; i<16 && n!=0; i++)
-    {
-        // 如果设置了这一位，则注册事件
-        if(n & 0x01)
-        {
-            // 注册中断事件
-            if(handler)
-            {
-                IntState* state = &State[i];
-                state->ShakeTime = ShakeTime;
-                RegisterInput(gi, i, handler, param);
-            }
-            else
-                UnRegisterInput(i);
-        }
-        n >>= 1;
-    }
-
-    _Registed = handler != NULL;
+void InputPort::InputTask(void* param)
+{
+	InputPort* port = (InputPort*)param;
+	if(port->Handler) port->Handler(port->_Pin, port->_Value, port->Param);
 }
 
 #define IT 1
@@ -510,38 +488,40 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 {
 	if(!hasInitState) return;
 
-	IntState* state = State + num;
-	if(!state) return;
+	IntState* st = States + num;
+	if(!st) return;
 
 	uint bit = 1 << num;
 	bool value;
 	//byte line = EXTI_Line0 << num;
 	// 如果未指定委托，则不处理
-	if(!state->Handler) return;
+	if(!st->Port) return;
 
 	// 默认20us抖动时间
-	uint shakeTime = state->ShakeTime;
+	uint shakeTime = st->ShakeTime;
 
 	do {
 		EXTI->PR = bit;   // 重置挂起位
-		value = InputPort::Read(state->Pin); // 获取引脚状态
+		//value = InputPort::Read(st->Pin); // 获取引脚状态
+		value = st->Port->Read(); // 获取引脚状态
 		if(shakeTime > 0)
 		{
 			// 值必须有变动才触发
-			if(value == state->OldValue) return;
+			if(value == st->OldValue) return;
 
 			Sys.Delay(shakeTime); // 避免抖动
 		}
 	} while (EXTI->PR & bit); // 如果再次挂起则重复
 	//EXTI_ClearITPendingBit(line);
 	// 值必须有变动才触发
-	if(shakeTime > 0 && value == state->OldValue) return;
-	state->OldValue = value;
-	if(state->Handler)
+	if(shakeTime > 0 && value == st->OldValue) return;
+	st->OldValue = value;
+	/*if(st->Handler)
 	{
 		// 新值value为true，说明是上升，第二个参数是down，所以取非
-		state->Handler(state->Pin, !value, state->Param);
-	}
+		st->Handler(st->Pin, !value, st->Param);
+	}*/
+	st->Port->OnPress(!value);
 }
 
 void EXTI_IRQHandler(ushort num, void* param)
@@ -611,65 +591,107 @@ void SetEXIT(int pinIndex, bool enable)
     /* 配置EXTI中断线 */
     EXTI_InitTypeDef ext;
     EXTI_StructInit(&ext);
-    ext.EXTI_Line = EXTI_Line0 << pinIndex;
-    ext.EXTI_Mode = EXTI_Mode_Interrupt;
-    ext.EXTI_Trigger = EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
-    ext.EXTI_LineCmd = enable ? ENABLE : DISABLE;
+    ext.EXTI_Line		= EXTI_Line0 << pinIndex;
+    ext.EXTI_Mode		= EXTI_Mode_Interrupt;
+    ext.EXTI_Trigger	= EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
+    ext.EXTI_LineCmd	= enable ? ENABLE : DISABLE;
     EXTI_Init(&ext);
 }
 
-// 申请引脚中断托管
-void InputPort::RegisterInput(int groupIndex, int pinIndex, IOReadHandler handler, void* param)
+void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
-    IntState* state = &State[pinIndex];
-    Pin pin = (Pin)((groupIndex << 4) + pinIndex);
+#if DEBUG
+	debug_printf(" 抖动=%dus", ShakeTime);
+	if(Floating) debug_printf(" 浮空");
+	if(Invert) debug_printf(" 倒置");
+#endif
+
+	Port::OnOpen(gpio);
+
+#ifdef STM32F1
+	if(Floating)
+		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	else if(PuPd == PuPd_UP)
+		gpio.GPIO_Mode = GPIO_Mode_IPU;
+	else if(PuPd == PuPd_DOWN)
+		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+#else
+	gpio.GPIO_Mode = GPIO_Mode_IN;
+	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+#endif
+}
+
+void InputPort::OnClose()
+{
+	Port::OnClose();
+
+	int idx = Bits2Index(PinBit);
+
+    IntState* st = &States[idx];
+	if(st->Port == this)
+	{
+		st->Port = NULL;
+
+		SetEXIT(idx, false);
+
+		Interrupt.Deactivate(PORT_IRQns[idx]);
+	}
+}
+
+// 注册回调  及中断使能
+void InputPort::Register(IOReadHandler handler, void* param)
+{
+    //if(!PinBit) return;
+	assert_param2(_Pin != P0, "输入注册必须先设置引脚");
+
+    Handler	= handler;
+	Param	= param;
+
+    // 检查并初始化中断线数组
+    if(!hasInitState)
+    {
+        for(int i=0; i<16; i++)
+        {
+            IntState* st = &States[i];
+            st->Port	= NULL;
+        }
+        hasInitState = true;
+    }
+
+	byte gi = _Pin >> 4;
+	int idx = Bits2Index(PinBit);
+	IntState* st = &States[idx];
+	st->ShakeTime = ShakeTime;
+
+	InputPort* port	= st->Port;
     // 检查是否已经注册到别的引脚上
-    if(state->Pin != pin && state->Pin != P0)
+    if(port != this && port != NULL)
     {
 #if DEBUG
-        debug_printf("EXTI%d can't register to P%c%d, it has register to P%c%d\r\n", groupIndex, _PIN_NAME(pin), _PIN_NAME(state->Pin));
+        debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
 #endif
         return;
     }
-    state->Pin = pin;
-    state->Handler = handler;
-	state->Param = param;
-	state->OldValue = Read(pin); // 预先保存当前状态值，后面跳变时触发中断
+    st->Port		= this;
+	st->OldValue	= Read(); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #if defined(STM32F0) || defined(STM32F4)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-    SYSCFG_EXTILineConfig(groupIndex, pinIndex);
+    SYSCFG_EXTILineConfig(gi, idx);
 #elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    GPIO_EXTILineConfig(groupIndex, pinIndex);
+    GPIO_EXTILineConfig(gi, idx);
 #endif
 
-	SetEXIT(pinIndex, true);
+	SetEXIT(idx, true);
 
     // 打开并设置EXTI中断为低优先级
-    Interrupt.SetPriority(PORT_IRQns[pinIndex], 1);
+    Interrupt.SetPriority(PORT_IRQns[idx], 1);
 
-    state->Used++;
-    if(state->Used == 1)
-    {
-        Interrupt.Activate(PORT_IRQns[pinIndex], EXTI_IRQHandler, this);
-    }
+    Interrupt.Activate(PORT_IRQns[idx], EXTI_IRQHandler, this);
+
+	if(!_taskInput && !HardEvent) _taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
 }
 
-void InputPort::UnRegisterInput(int pinIndex)
-{
-    IntState* state = &State[pinIndex];
-    // 取消注册
-    state->Pin = P0;
-    state->Handler = 0;
-
-	SetEXIT(pinIndex, false);
-
-    state->Used--;
-    if(state->Used == 0)
-    {
-        Interrupt.Deactivate(PORT_IRQns[pinIndex]);
-    }
-}
 #endif
