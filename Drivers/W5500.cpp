@@ -260,6 +260,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		//Irq.ShakeTime	= 0;
 		Irq.Floating	= false;
 		Irq.PuPd		= InputPort::PuPd_UP;
+		Irq.HardEvent	= true;
 		Irq.Set(irq);
 		Irq.Register(OnIRQ, this);
 	}
