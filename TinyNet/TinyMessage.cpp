@@ -153,7 +153,7 @@ void TinyMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=%d Length=%d Checksum=0x%04x Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Length, Checksum, Retry);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=%d Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Retry);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
