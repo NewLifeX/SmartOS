@@ -91,6 +91,8 @@ public:
 class HardSocket : public ITransport, public ISocket
 {
 private:
+	W5500*	_Host;	// W5500公共部分控制器
+
 protected:
 	byte ReadConfig();
 	void WriteConfig(byte dat);
@@ -103,7 +105,6 @@ public:
 	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
 	byte Protocol;	// 协议
 
-	W5500*	Host;	// W5500公共部分控制器
 	uint _tidRecv;	// 收数据线程
 
 	HardSocket(W5500* host, byte protocol);

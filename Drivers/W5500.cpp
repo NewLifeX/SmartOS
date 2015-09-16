@@ -604,13 +604,8 @@ void W5500::Register(byte Index, HardSocket* handler)
 {
 	if(Index >= 8) return;
 
-	if(_sockets[Index] == NULL)
-	{
-		debug_printf("W5500::Register %d 被启用 !\r\n", Index);
-		_sockets[Index] = handler;
-	}
-	else
-		_sockets[Index] = NULL;
+	debug_printf("W5500::Register %d 0x%08X\r\n", Index, handler);
+	_sockets[Index] = handler;
 }
 
 // irq 中断处理部分
@@ -806,16 +801,17 @@ enum S_Status
 								// 超时或者成功收到断开请求都将 SOCK_CLOSED
 };
 
-#define SocRegWrite(P, D) 	Host->WriteByte(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegRead(P) 		Host->ReadByte(offsetof(TSocket, P), Index, 0x01)
-#define SocRegWrite2(P, D) 	Host->WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegRead2(P) 		Host->ReadByte2(offsetof(TSocket, P), Index, 0x01)
-#define SocRegWrites(P, D) 	Host->WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegReads(P, bs) 	Host->ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
+#define SocRegWrite(P, D) 	_Host->WriteByte(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead(P) 		_Host->ReadByte(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrite2(P, D) 	_Host->WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead2(P) 		_Host->ReadByte2(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrites(P, D) 	_Host->WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegReads(P, bs) 	_Host->ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
-	Host = host;
+	_Host	= host;
+	Host	= host;
 	Protocol = protocol;
 	if(host)
 	{
@@ -830,7 +826,7 @@ HardSocket::HardSocket(W5500* host, byte protocol)
 
 HardSocket::~HardSocket()
 {
-	Host->Register(Index, NULL);
+	_Host->Register(Index, NULL);
 }
 
 byte HardSocket::ReadConfig() { return SocRegRead(CR); }
@@ -845,7 +841,7 @@ void HardSocket::StateShow()
 	ByteArray bs((byte*)&soc, sizeof(soc));
 
 	// 一次性全部读出
-	Host->ReadFrame(0, bs, Index, 0x01);
+	_Host->ReadFrame(0, bs, Index, 0x01);
 	//bs.CopyTo((byte*)&soc);
 
 	debug_printf("\r\nW5500::Socket %d::State\r\n",Index);
@@ -940,7 +936,7 @@ bool HardSocket::OnOpen()
 		return false;
 	}
 	// 确保宿主打开
-	if(!Host->Open()) return false;
+	if(!_Host->Open()) return false;
 
 	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)
@@ -950,7 +946,7 @@ bool HardSocket::OnOpen()
 		if(g_port < 1024) g_port = 1024;
 		Local.Port = g_port++;
 	}
-	Local.Address = Host->IP;
+	Local.Address = _Host->IP;
 
 	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
 	Local.Show(false);
@@ -1036,7 +1032,7 @@ uint HardSocket::Receive(ByteArray& bs)
 	// 设置 实际要读的长度
 	bs.SetLength(size);
 
-	Host->ReadFrame(offset, bs, Index, 0x03);
+	_Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
 	SocRegWrite2(RX_RD, __REV16(offset + size));
@@ -1053,6 +1049,9 @@ uint HardSocket::Receive(ByteArray& bs)
 // 发送数据
 bool HardSocket::Send(const ByteArray& bs)
 {
+	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
+	bs.Show(true);*/
+
 	// 读取状态
 	byte st = ReadStatus();
 	// 不在UDP  不在TCP连接OK 状态下返回
@@ -1063,14 +1062,14 @@ bool HardSocket::Send(const ByteArray& bs)
 
 	// 读取发送缓冲区写指针
 	ushort addr = __REV16(SocRegRead2(TX_WR));
-	Host->WriteFrame(addr, bs, Index, 0x02);
+	_Host->WriteFrame(addr, bs, Index, 0x02);
 	// 更新发送缓存写指针位置
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,__REV16(addr));
 
 	// 启动发送 异步中断处理发送异常等
 	WriteConfig(SEND);
-	
+
 	return true;
 }
 
@@ -1351,72 +1350,4 @@ void UdpClient::RaiseReceive()
 		// 回调中断
 		OnReceive(ms.ReadBytes(len), len);
 	};
-
-	//byte packetHead[8];	// 数据头
-	//byte dataBuf[1472];	// 最大udp单元大小
-	//while(true)
-	//{
-	//	if(DataLength == 0)
-	//	{
-	//		// 读取包头
-	//		ByteArray bsHead(packetHead, ArrayLength(packetHead));
-	//		ushort size = Receive(bsHead, true);
-	//		if(size == ArrayLength(packetHead))
-	//		{
-	//			// 解析头
-	//			Stream ms(bsHead.GetBuffer(), size);
-	//			ByteArray bs2(6);
-	//			ms.Read(bs2);
-    //
-	//			ushort len = ms.Read<ushort>();
-	//			len = __REV16(len);
-    //
-	//			// debug_printf("W5500 UDP,Length: %d 	",len);
-    //
-	//			// 数据长度不对可能是数据错位引起的，直接丢弃数据包
-	//			if(len > 1472)
-	//			{
-	//				debug_printf("W5500 UDP数据接收有误,Length: %d \r\n",len);
-	//				// 丢弃所有数据
-	//				ClearRX();
-	//				DataLength = 0;
-	//				return;
-	//			}
-	//			// 确认数据长度在合理范围才将正确 Endpoint 记录下来
-	//			IPEndPoint ep(bs2);
-	//			ep.Port = __REV16(ep.Port);
-	//			DataLength = len;
-	//		}
-	//		else if(size == 0)
-	//		{
-	//			DataLength = 0;
-	//			return ;
-	//		}
-	//		else
-	//		{	// 没有读出完整头部  直接丢弃所有数据
-	//			ClearRX();
-	//			DataLength = 0;
-	//			return ;
-	//		}
-	//	}
-	//	else	// 根据数据长度读取数据并处理
-	//	{
-	//		// 读取当前RX数据区内剩余量
-	//		ushort RemainLength = __REV16(SocRegRead2(RX_RSR));
-	//		// W5500 未接收数据不足包 放弃不读
-	//		if(RemainLength < DataLength) return;
-	//		// 读取数据
-	//		ByteArray bsData(dataBuf, DataLength);
-	//		ushort datasize = Receive(bsData, true);
-    //
-	//		// debug_printf("Data: ");
-	//		// bsData.Show();
-	//		// debug_printf("\r\n");
-	//		Stream ms(bsData.GetBuffer(), datasize);
-	//		// 数据向上层发送
-	//		OnReceive(ms.ReadBytes(DataLength), DataLength);
-	//		// 这个数据包的数据都拿到了并处理了
-	//		DataLength = 0;
-	//	}
-	//}
 }

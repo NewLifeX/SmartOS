@@ -121,7 +121,7 @@ public:
 			_handler	= handler;
 			_param		= param;
 
-			if(!Opened) Open();
+			//if(!Opened) Open();
 		}
 		else
 		{

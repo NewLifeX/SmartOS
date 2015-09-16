@@ -3,6 +3,7 @@
 #include "ITransport.h"
 
 #include "Dhcp.h"
+#include "Ethernet.h"
 
 #define NET_DEBUG DEBUG
 
@@ -20,11 +21,22 @@ Dhcp::Dhcp(ISocket* socket)
 	ExpiredTime	= 10;
 
 	OnStop	= NULL;
+	taskID	= 0;
+
+	//ITransport* port = (ITransport*)socket;
+	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	port->Register(OnReceive, this);
 }
 
-void Dhcp::SendDhcp(DHCP_HEADER& dhcp, uint len)
+Dhcp::~Dhcp()
 {
-	byte* p = dhcp.Next();
+	Sys.RemoveTask(taskID);
+}
+
+void Dhcp::SendDhcp(byte* buf, uint len)
+{
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
+	byte* p = dhcp->Next();
 	if(p[len - 1] != DHCP_OPT_End)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
@@ -50,11 +62,107 @@ void Dhcp::SendDhcp(DHCP_HEADER& dhcp, uint len)
 	}
 
 	for(int i=0; i<6; i++)
-		dhcp.ClientMac[i] = Host->Mac[i];
+		dhcp->ClientMac[i] = Host->Mac[i];
 
 	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
-	ByteArray bs((byte*)&dhcp, sizeof(DHCP_HEADER) + len);
+	ByteArray bs((byte*)dhcp, sizeof(DHCP_HEADER) + len);
 	Socket->Send(bs);
+}
+
+// 找服务器
+void Dhcp::Discover()
+{
+	byte buf[sizeof(DHCP_HEADER) + 200];
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
+
+	debug_printf("DHCP::Discover...\r\n");
+	dhcp->Init(dhcpid, false);
+
+	byte* p = dhcp->Next();
+	DHCP_OPT* opt = (DHCP_OPT*)p;
+	opt->SetType(DHCP_TYPE_Discover);
+
+	SendDhcp(buf, (byte*)opt->Next() - p);
+}
+
+void Dhcp::Request()
+{
+	byte buf[sizeof(DHCP_HEADER) + 200];
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
+
+	debug_printf("DHCP::Request...\r\n");
+	dhcp->Init(dhcpid, false);
+
+	byte* p = dhcp->Next();
+	DHCP_OPT* opt = (DHCP_OPT*)p;
+	opt->SetType(DHCP_TYPE_Request);
+
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Host->DHCPServer.Value);
+
+	// 发往DHCP服务器
+	SendDhcp(buf, (byte*)opt->Next() - p);
+}
+
+void RenewDHCP(void* param)
+{
+	ISocket* socket = (ISocket*)param;
+	if(socket)
+	{
+		// 不能使用栈分配，因为是异步操作
+		Dhcp* dhcp = new Dhcp(socket);
+		dhcp->Start();
+	}
+}
+
+void Dhcp::Start()
+{
+	_expiredTime = Time.Current() + ExpiredTime * 1000000;
+	dhcpid = (uint)Time.Current();
+
+	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
+
+	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	if(port) port->Open();
+
+	// 创建任务，每秒发送一次Discover
+	if(!taskID)
+		taskID = Sys.AddTask(SendDiscover, this, 0, 1000000, "DHCP");
+	else
+		Sys.SetTask(taskID, true);
+
+	Running = true;
+}
+
+void Dhcp::Stop()
+{
+	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	if(port) port->Close();
+
+	Running	= false;
+	Sys.SetTask(taskID, false);
+
+	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
+
+	if(OnStop) OnStop(this, NULL);
+
+	// 销毁自己
+	//delete this;
+}
+
+void Dhcp::SendDiscover(void* param)
+{
+	Dhcp* _dhcp = (Dhcp*)param;
+	if(!_dhcp->Running) return;
+
+	// 检查总等待时间
+	if(_dhcp->_expiredTime < Time.Current())
+	{
+		_dhcp->Stop();
+		return;
+	}
+
+	// 向DHCP服务器广播
+	_dhcp->Discover();
 }
 
 // 获取选项，返回数据部分指针
@@ -72,28 +180,6 @@ DHCP_OPT* GetOption(byte* p, int len, DHCP_OPTION option)
 	}
 
 	return 0;
-}
-
-// 找服务器
-void Dhcp::Discover(DHCP_HEADER& dhcp)
-{
-	byte* p = dhcp.Next();
-	DHCP_OPT* opt = (DHCP_OPT*)p;
-	opt->SetType(DHCP_TYPE_Discover);
-
-	SendDhcp(dhcp, (byte*)opt->Next() - p);
-}
-
-void Dhcp::Request(DHCP_HEADER& dhcp)
-{
-	byte* p = dhcp.Next();
-	DHCP_OPT* opt = (DHCP_OPT*)p;
-	opt->SetType(DHCP_TYPE_Request);
-
-	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Host->DHCPServer.Value);
-
-	// 发往DHCP服务器
-	SendDhcp(dhcp, (byte*)opt->Next() - p);
 }
 
 void Dhcp::PareOption(Stream& ms)
@@ -118,81 +204,21 @@ void Dhcp::PareOption(Stream& ms)
 	}
 }
 
-void RenewDHCP(void* param)
+uint Dhcp::OnReceive(ITransport* port, byte* buf, uint len, void* param)
 {
-	ISocket* socket = (ISocket*)param;
-	if(socket)
-	{
-		// 不能使用栈分配，因为是异步操作
-		Dhcp* dhcp = new Dhcp(socket);
-		dhcp->Start();
-	}
+	ByteArray bs(buf, len);
+	((Dhcp*)param)->Process(bs);
+
+	return 0;
 }
 
-void Dhcp::Start()
+void Dhcp::Process(ByteArray& bs)
 {
-	_expiredTime = Time.Current() + ExpiredTime * 1000000;
-	dhcpid = (uint)Time.Current();
-
-	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
-
-	// 创建任务，每秒发送一次Discover
-	taskID = Sys.AddTask(SendDiscover, this, 0, 1000000, "DHCP");
-
-	Running = true;
-
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
-	if(port) port->Open();
-}
-
-void Dhcp::Stop()
-{
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
-	if(port) port->Close();
-
-	Running	= false;
-	Sys.RemoveTask(taskID);
-	taskID	= 0;
-
-	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
-
-	if(OnStop) OnStop(this, NULL);
-
-	// 销毁自己
-	delete this;
-}
-
-void Dhcp::SendDiscover(void* param)
-{
-	Dhcp* _dhcp = (Dhcp*)param;
-	if(!_dhcp->Running) return;
-
-	// 检查总等待时间
-	if(_dhcp->_expiredTime < Time.Current())
-	{
-		_dhcp->Stop();
-		return;
-	}
-
-	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100];
-	Stream ms(buf, ArrayLength(buf));
-	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
-
-	DHCP_HEADER* dhcp = ms.Retrieve<DHCP_HEADER>();
-
-	// 向DHCP服务器广播
-	debug_printf("DHCP::Discover...\r\n");
-	dhcp->Init(_dhcp->dhcpid, true);
-	_dhcp->Discover(*dhcp);
-}
-
-void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
-{
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)udp.Next();
+	DHCP_HEADER* dhcp = (DHCP_HEADER*)bs.GetBuffer();
 	if(!dhcp->Valid()) return;
 
 	byte* data = dhcp->Next();
-	uint len = ms.Remain();
+	uint len = bs.Length() - sizeof(DHCP_HEADER);
 
 	// 获取DHCP消息类型
 	DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
@@ -201,37 +227,31 @@ void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	// 所有响应都需要检查事务ID
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
-	IPAddress remote = ip.SrcIP;
+	IPAddress& remote	= Socket->Remote.Address;
+	ISocketHost& host	= *(Socket->Host);
 
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
-		Host->IP = dhcp->YourIP;
+		host.IP = dhcp->YourIP;
 		Stream optData(dhcp->Next(), len);
 		PareOption(optData);
 
 		// 向网络宣告已经确认使用哪一个DHCP服务器提供的IP地址
-		// 这里其实还应该发送ARP包确认IP是否被占用，如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
+		// 这里其实还应该发送ARP包确认IP是否被占用，
+		// 如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
 		debug_printf("DHCP::Offer IP:");
-		Host->IP.Show();
+		host.IP.Show();
 		debug_printf(" From ");
 		remote.Show();
 		debug_printf("\r\n");
 #endif
 
-		// 独立分配缓冲区进行操作，避免数据被其它线程篡改
-		byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + sizeof(DHCP_HEADER) + 100];
-		Stream ms(buf, ArrayLength(buf));
-		ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER));
-
-		DHCP_HEADER* dhcp2 = ms.Retrieve<DHCP_HEADER>();
-
-		dhcp2->Init(dhcpid, true);
-		Request(*dhcp2);
+		Request();
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
-		Host->IP = dhcp->YourIP;
+		host.IP = dhcp->YourIP;
 #if NET_DEBUG
 		debug_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();
@@ -240,7 +260,7 @@ void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 		debug_printf("\r\n");
 #endif
 
-		//if(dhcp->YourIP == Host->IP)
+		//if(dhcp->YourIP == host.IP)
 		{
 			// 查找租约时间，提前续约
 			opt = GetOption(data, len, DHCP_OPT_IPLeaseTime);
@@ -271,7 +291,7 @@ void Dhcp::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 		// 导致Nak的原因
 		opt = GetOption(data, len, DHCP_OPT_Message);
 		debug_printf("DHCP::Nak   IP:");
-		Host->IP.Show();
+		host.IP.Show();
 		debug_printf(" From ");
 		remote.Show();
 		if(opt)
