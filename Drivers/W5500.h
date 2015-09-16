@@ -11,7 +11,7 @@
 class HardSocket;
 
 // W5500以太网驱动
-class W5500
+class W5500 : public ISocketHost
 {
 private:
 	friend class HardSocket;
@@ -47,14 +47,6 @@ public:
 	bool		EnableDHCP;
 
 	bool		Opened;	// 是否已经打开
-
-	IPAddress	IP;		// 本地IP地址
-    IPAddress	Mask;	// 子网掩码
-	MacAddress	Mac;	// 本地Mac地址
-
-	IPAddress	DHCPServer;
-	IPAddress	DNSServer;
-	IPAddress	Gateway;
 
 	// 构造
 	W5500();
@@ -114,9 +106,6 @@ public:
 	W5500*	Host;	// W5500公共部分控制器
 	uint _tidRecv;	// 收数据线程
 
-	//IPEndPoint	Remote;		// 远程地址。默认发送数据的目标地址
-	//IPEndPoint	Local;		// 本地地址
-
 	HardSocket(W5500* host, byte protocol);
 	virtual ~HardSocket();
 
@@ -127,11 +116,13 @@ public:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
-	bool WriteByteArray(const ByteArray& bs);
-	int ReadByteArray(ByteArray& bs);
-
 	virtual bool OnWrite(const byte* buf, uint len);
 	virtual uint OnRead(byte* buf, uint len);
+
+	// 发送数据
+	virtual bool Send(const ByteArray& bs);
+	// 接收数据
+	virtual uint Receive(ByteArray& bs);
 
 	static void ReceiveTask(void* param);
 	virtual void Register(TransportHandler handler, void* param);
@@ -142,7 +133,7 @@ public:
 	void Process();
 	virtual void OnProcess(byte reg) = 0;
 	// 用户注册的中断事件处理 异步调用
-	virtual void Receive() = 0;
+	virtual void RaiseReceive() = 0;
 	// 清空所有接收缓冲区
 	void ClearRX();
 };
@@ -163,7 +154,7 @@ public:
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
-	virtual void Receive();
+	virtual void RaiseReceive();
 	
 private:
 	bool Linked;
@@ -180,7 +171,7 @@ public:
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
-	virtual void Receive();
+	virtual void RaiseReceive();
 	
 private:	
 	// 数据包头和数据分开读取

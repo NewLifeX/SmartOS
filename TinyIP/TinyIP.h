@@ -13,25 +13,25 @@
 class TinyIP;
 
 // 网络数据处理Socket基类
-class Socket
+class TinySocket
 {
 public:
 	TinyIP*	Tip;	// TinyIP控制器
 	IP_TYPE	Type;	// 类型
 	bool	Enable;	// 启用
 
-	Socket(TinyIP* tip, IP_TYPE type);
-	virtual ~Socket();
+	TinySocket(TinyIP* tip, IP_TYPE type);
+	virtual ~TinySocket();
 
 	// 处理数据包
 	virtual bool Process(IP_HEADER& ip, Stream& ms) = 0;
 };
 
 // Socket列表
-class SocketList : public List<Socket*>
+class SocketList : public List<TinySocket*>
 {
 public:
-	Socket* FindByType(ushort type);
+	TinySocket* FindByType(ushort type);
 };
 
 //class TinyIP;
@@ -71,7 +71,7 @@ public:
 	IPAddress	Gateway;
 
 	// Arp套接字
-	Socket*		Arp;
+	TinySocket*		Arp;
 	// 套接字列表。套接字根据类型来识别
 	SocketList	Sockets;
 

@@ -98,13 +98,33 @@ public:
 	static const MacAddress& Full();
 };
 
+// Socket主机
+class ISocketHost
+{
+public:
+	IPAddress	IP;		// 本地IP地址
+    IPAddress	Mask;	// 子网掩码
+	MacAddress	Mac;	// 本地Mac地址
+
+	IPAddress	DHCPServer;
+	IPAddress	DNSServer;
+	IPAddress	Gateway;
+};
+
 // Socket接口
 class ISocket
 {
 public:
+	ISocketHost*	Host;	// 主机
+
 	//ushort		Port;	// 本地端口。用于过滤数据，默认0表示接收所有端口的数据
 	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
 	IPEndPoint	Remote;	// 远程地址
+
+	// 发送数据
+	virtual bool Send(const ByteArray& bs) = 0;
+	// 接收数据
+	virtual uint Receive(ByteArray& bs) = 0;
 };
 
 #endif

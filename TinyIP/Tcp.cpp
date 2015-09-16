@@ -8,7 +8,7 @@ bool* WaitAck;
 
 bool Callback(TinyIP* tip, void* param, Stream& ms);
 
-TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip, IP_TCP)
+TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 {
 	//Port		= 0;
 
@@ -150,9 +150,9 @@ void TcpSocket::OnAccept(TCP_HEADER& tcp, uint len)
 	SetMss(tcp);
 
 	// 需要用到MSS，所以采用4个字节的可选段
-	//Send(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+	//SendPacket(tcp, 4, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 	// 注意tcp->Size()包括头部的扩展数据，这里不用单独填4
-	Send(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
+	SendPacket(tcp, 0, TCP_FLAGS_SYN | TCP_FLAGS_ACK);
 }
 
 // 客户端收到握手三，也是首次收到来自服务端的数据，或者0数据的ACK
@@ -176,7 +176,7 @@ void TcpSocket::OnAccept3(TCP_HEADER& tcp, uint len)
 	// 不需要Mss
 	tcp.Length = sizeof(TCP_HEADER) / 4;
 
-	Send(tcp, 0, TCP_FLAGS_ACK);
+	SendPacket(tcp, 0, TCP_FLAGS_ACK);
 }
 
 void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
@@ -187,7 +187,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		if (tcp.Flags & (TCP_FLAGS_FIN | TCP_FLAGS_RST))      //FIN结束连接请求标志位。为1表示是结束连接的请求数据包
 		{
 			SetSeqAck(tcp, 1, true);
-			Send(tcp, 0, TCP_FLAGS_ACK);
+			SendPacket(tcp, 0, TCP_FLAGS_ACK);
 		}
 		else
 		{
@@ -211,7 +211,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		SetSeqAck(tcp, len, true);
 
 		// 响应Ack和发送数据一步到位
-		Send(tcp, len2, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+		SendPacket(tcp, len2, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 	}
 
 	if(OnReceived)
@@ -223,7 +223,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		{
 			// 发送ACK，通知已收到
 			SetSeqAck(tcp, len, true);
-			Send(tcp, 0, TCP_FLAGS_ACK);
+			SendPacket(tcp, 0, TCP_FLAGS_ACK);
 			return;
 		}
 	}
@@ -239,10 +239,10 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 	}
 	// 发送ACK，通知已收到
 	SetSeqAck(tcp, len, true);
-	Send(tcp, 0, TCP_FLAGS_ACK);
+	SendPacket(tcp, 0, TCP_FLAGS_ACK);
 
 	// 响应Ack和发送数据一步到位
-	//Send(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	//SendPacket(tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
 void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
@@ -256,7 +256,7 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 	{
 		SetSeqAck(tcp, 1, true);
 		//Close(tcp, 0);
-		Send(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+		SendPacket(tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 	}
 	else if(!OnDisconnected)
 	{
@@ -271,7 +271,7 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 	Status = Closed;
 }
 
-bool TcpSocket::Send(TCP_HEADER& tcp, uint len, byte flags)
+bool TcpSocket::SendPacket(TCP_HEADER& tcp, uint len, byte flags)
 {
 	tcp.SrcPort = __REV16(Local.Port);
 	tcp.DestPort = __REV16(Remote.Port);
@@ -344,7 +344,7 @@ void TcpSocket::SendAck(uint len)
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
-	Send(*tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
+	SendPacket(*tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
 
 bool TcpSocket::Disconnect()
@@ -358,10 +358,10 @@ bool TcpSocket::Disconnect()
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
-	return Send(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
+	return SendPacket(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-bool TcpSocket::Send(ByteArray& bs)
+bool TcpSocket::Send(const ByteArray& bs)
 {
 	if(!Enable)
 	{
@@ -396,7 +396,7 @@ bool TcpSocket::Send(ByteArray& bs)
 	tcp->Ack = __REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
-	if(!Send(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
+	if(!SendPacket(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
 
 	bool wait = false;
 	WaitAck = &wait;
@@ -418,6 +418,11 @@ bool TcpSocket::Send(ByteArray& bs)
 #endif
 
 	return wait;
+}
+
+uint TcpSocket::Receive(ByteArray& bs)
+{
+	return 0;
 }
 
 // 连接远程服务器，记录远程服务器IP和端口，后续发送数据和关闭连接需要
@@ -451,7 +456,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	SetMss(*tcp);
 
 	Status = SynSent;
-	if(!Send(*tcp, 0, TCP_FLAGS_SYN))
+	if(!SendPacket(*tcp, 0, TCP_FLAGS_SYN))
 	{
 		Status = Closed;
 		return false;

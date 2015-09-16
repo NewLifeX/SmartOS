@@ -19,7 +19,7 @@ public:
 
 ArpSession* _ArpSession;
 
-ArpSocket::ArpSocket(TinyIP* tip) : Socket(tip, IP_NONE)
+ArpSocket::ArpSocket(TinyIP* tip) : TinySocket(tip, IP_NONE)
 {
 	//Type = IP_NONE;
 

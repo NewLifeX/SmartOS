@@ -462,7 +462,12 @@ void TokenController::ShowStat()
 	{
 		ByteArray bs(str);
 		//debug_printf("握手广播 ");
-		udp->Send(bs, IPAddress::Broadcast(), 514);
+		//udp->Send(bs, IPAddress::Broadcast(), 514);
+		IPEndPoint ep = udp->Remote;
+		udp->Remote.Port	= 514;
+		udp->Remote.Address	= IPAddress::Broadcast();
+		udp->Send(bs);
+		udp->Remote	= ep;
 	}
 }
 

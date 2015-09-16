@@ -33,7 +33,7 @@ public:
 // 用于等待Ping响应的会话
 PingSession* _IcmpSession = NULL;
 
-IcmpSocket::IcmpSocket(TinyIP* tip) : Socket(tip, IP_ICMP)
+IcmpSocket::IcmpSocket(TinyIP* tip) : TinySocket(tip, IP_ICMP)
 {
 	//Type = IP_ICMP;
 

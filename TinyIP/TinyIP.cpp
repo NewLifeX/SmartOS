@@ -165,7 +165,7 @@ void TinyIP::Process(Stream& ms)
 	uint count = Sockets.Count();
 	for(int i=count-1; i>=0; i--)
 	{
-		Socket* socket = Sockets[i];
+		TinySocket* socket = Sockets[i];
 		if(socket && socket->Enable)
 		{
 			// 必须类型匹配
@@ -407,7 +407,7 @@ bool TinyIP::IsBroadcast(const IPAddress& ip)
 }
 #endif
 
-Socket::Socket(TinyIP* tip, IP_TYPE type)
+TinySocket::TinySocket(TinyIP* tip, IP_TYPE type)
 {
 	assert_param2(tip, "空的Tip");
 
@@ -419,7 +419,7 @@ Socket::Socket(TinyIP* tip, IP_TYPE type)
 	if(type != IP_NONE) tip->Sockets.Add(this);
 }
 
-Socket::~Socket()
+TinySocket::~TinySocket()
 {
 	assert_param2(Tip, "空的Tip");
 
@@ -428,12 +428,12 @@ Socket::~Socket()
 	Tip->Sockets.Remove(this);
 }
 
-Socket* SocketList::FindByType(ushort type)
+TinySocket* SocketList::FindByType(ushort type)
 {
 	uint count = Count();
 	for(int i=count-1; i>=0; i--)
 	{
-		Socket* socket = (*this)[i];
+		TinySocket* socket = (*this)[i];
 		if(socket)
 		{
 			// 必须类型匹配

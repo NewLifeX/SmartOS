@@ -7,7 +7,7 @@
 #include "TinyIP.h"
 
 // ICMP协议
-class IcmpSocket : public Socket
+class IcmpSocket : public TinySocket
 {
 public:
 	IcmpSocket(TinyIP* tip);

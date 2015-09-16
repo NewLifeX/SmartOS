@@ -1020,7 +1020,8 @@ void HardSocket::OnClose()
 	Remote.Show(true);
 }
 
-int HardSocket::ReadByteArray(ByteArray& bs)
+// 接收数据
+uint HardSocket::Receive(ByteArray& bs)
 {
 	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
@@ -1049,7 +1050,8 @@ int HardSocket::ReadByteArray(ByteArray& bs)
 	return size;
 }
 
-bool HardSocket::WriteByteArray(const ByteArray& bs)
+// 发送数据
+bool HardSocket::Send(const ByteArray& bs)
 {
 	// 读取状态
 	byte st = ReadStatus();
@@ -1075,7 +1077,7 @@ bool HardSocket::WriteByteArray(const ByteArray& bs)
 bool HardSocket::OnWrite(const byte* buf, uint len)
 {
 	ByteArray bs(buf,len);
-	return WriteByteArray(bs);
+	return Send(bs);
 }
 
 uint HardSocket::OnRead(byte* buf, uint len)
@@ -1083,7 +1085,7 @@ uint HardSocket::OnRead(byte* buf, uint len)
 	ByteArray bs(buf, len);
 
 	// 不容 ByteArray 偷梁换柱把buf换掉
-	return ReadByteArray(bs);
+	return Receive(bs);
 }
 
 void HardSocket::ClearRX()
@@ -1120,7 +1122,7 @@ void HardSocket::ReceiveTask(void* param)
 	assert_ptr(param);
 
 	HardSocket* socket = (HardSocket*)param;
-	socket->Receive();
+	socket->RaiseReceive();
 }
 
 void HardSocket::Register(TransportHandler handler, void* param)
@@ -1239,7 +1241,7 @@ void TcpClient::OnProcess(byte reg)
 		else
 		{
 			ByteArray bs;
-			int size = ReadByteArray(bs);
+			int size = Receive(bs);
 			debug_printf("收到数据：");
 			bs.Show();
 			debug_printf("\r\n");
@@ -1274,10 +1276,10 @@ void TcpClient::OnProcess(byte reg)
 }
 
 // 异步中断
-void TcpClient::Receive()
+void TcpClient::RaiseReceive()
 {
 	ByteArray bs;
-	int size = ReadByteArray(bs);
+	int size = Receive(bs);
 	if(size > 1500)return;
 
 	// 回调中断
@@ -1308,7 +1310,7 @@ void UdpClient::OnProcess(byte reg)
 		else
 		{
 			ByteArray bs;
-			int size = ReadByteArray(bs);
+			int size = Receive(bs);
 			debug_printf("收到数据：");
 			bs.Show();
 			debug_printf("\r\n");
@@ -1320,13 +1322,13 @@ void UdpClient::OnProcess(byte reg)
 
 // UDP 异步只有一种情况  收到数据  可能有多个数据包
 // UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
-void UdpClient::Receive()
+void UdpClient::RaiseReceive()
 {
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	byte buf[1024];
 	ByteArray bs(buf, ArrayLength(buf));
-	ushort size = ReadByteArray(bs);
+	ushort size = Receive(bs);
 	Stream ms(bs.GetBuffer(), size);
 
 	// 拆包
@@ -1358,7 +1360,7 @@ void UdpClient::Receive()
 	//	{
 	//		// 读取包头
 	//		ByteArray bsHead(packetHead, ArrayLength(packetHead));
-	//		ushort size = ReadByteArray(bsHead, true);
+	//		ushort size = Receive(bsHead, true);
 	//		if(size == ArrayLength(packetHead))
 	//		{
 	//			// 解析头
@@ -1405,7 +1407,7 @@ void UdpClient::Receive()
 	//		if(RemainLength < DataLength) return;
 	//		// 读取数据
 	//		ByteArray bsData(dataBuf, DataLength);
-	//		ushort datasize = ReadByteArray(bsData, true);
+	//		ushort datasize = Receive(bsData, true);
     //
 	//		// debug_printf("Data: ");
 	//		// bsData.Show();

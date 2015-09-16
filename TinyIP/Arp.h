@@ -4,7 +4,7 @@
 #include "TinyIP.h"
 
 // ARP协议
-class ArpSocket : public Socket
+class ArpSocket : public TinySocket
 {
 private:
 	// ARP表

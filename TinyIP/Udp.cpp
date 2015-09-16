@@ -3,7 +3,7 @@
 //#define NET_DEBUG DEBUG
 #define NET_DEBUG 0
 
-UdpSocket::UdpSocket(TinyIP* tip) : Socket(tip, IP_UDP)
+UdpSocket::UdpSocket(TinyIP* tip) : TinySocket(tip, IP_UDP)
 {
 	//Port		= 0;
 
@@ -77,16 +77,17 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	//if(len2) Write(data, len2);
 	if(len2)
 	{
+		Remote = CurRemote;
 		ByteArray bs(data, len2);
-		Send(bs, CurRemote.Address, CurRemote.Port);
+		Send(bs);
 	}
 
 	if(OnReceived)
 	{
-		
+
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnReceived(*this, udp, CurRemote, ms);
-		if(rs && ms.Remain() > 0) Send(udp, len, CurRemote.Address, CurRemote.Port, false);
+		if(rs && ms.Remain() > 0) SendPacket(udp, len, CurRemote.Address, CurRemote.Port, false);
 	}
 	else
 	{
@@ -103,7 +104,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	}
 }
 
-void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum)
+void UdpSocket::SendPacket(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum)
 {
 	uint tlen		= sizeof(UDP_HEADER) + len;
 	udp.SrcPort		= __REV16(Local.Port);
@@ -128,22 +129,24 @@ void UdpSocket::Send(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool
 }
 
 // 发送UDP数据到目标地址
-void UdpSocket::Send(ByteArray& bs, IPAddress ip, ushort port)
+bool UdpSocket::Send(const ByteArray& bs)
 {
-	if(ip.IsAny()) ip = Remote.Address;
-	if(!port) port = Remote.Port;
+	//if(ip.IsAny()) ip = Remote.Address;
+	//if(!port) port = Remote.Port;
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 256];
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
-	
+
 	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();
 	udp->Init(true);
 
 	// 复制数据，确保数据不会溢出
 	ms.Write(bs);
 
-	Send(*udp, bs.Length(), ip, port, true);
+	SendPacket(*udp, bs.Length(), Remote.Address, Remote.Port, true);
+
+	return true;
 }
 
 bool UdpSocket::OnWrite(const byte* buf, uint len)
@@ -151,6 +154,11 @@ bool UdpSocket::OnWrite(const byte* buf, uint len)
 	ByteArray bs(buf, len);
 	Send(bs);
 	return len;
+}
+
+uint UdpSocket::Receive(ByteArray& bs)
+{
+	return 0;
 }
 
 uint UdpSocket::OnRead(byte* buf, uint len)

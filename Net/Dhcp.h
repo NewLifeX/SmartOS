@@ -1,10 +1,11 @@
 ﻿#ifndef _TinyIP_DHCP_H_
 #define _TinyIP_DHCP_H_
 
-#include "Udp.h"
+#include "Net.h"
+#include "Ethernet.h"
 
 // DHCP协议
-class Dhcp : public UdpSocket
+class Dhcp
 {
 private:
 	uint dhcpid;
@@ -20,11 +21,14 @@ private:
 
 	static void SendDiscover(void* param);
 public:
+	ISocket*	Socket;
+	ISocketHost*	Host;	// 主机
+
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
 	uint ExpiredTime;	// 过期时间
 
-	Dhcp(TinyIP* tip);
+	Dhcp(ISocket* socket);
 
 	void Start();	// 开始
 	void Stop();	// 停止
