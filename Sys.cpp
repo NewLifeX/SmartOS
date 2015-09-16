@@ -125,7 +125,7 @@ bool SysError(uint code)
 void SysStop()
 {
 	debug_printf("系统停止！\r\n");
-	while(true);
+	//while(true);
 }
 
 TSys::TSys()

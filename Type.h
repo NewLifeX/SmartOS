@@ -321,10 +321,10 @@ public:
 		return len;
 	}
 
-	// 清空已存储数据。长度放大到最大容量
+	// 清空已存储数据。
 	virtual Array& Clear()
 	{
-		_Length = _Capacity;
+		//_Length = _Capacity;
 
 		memset(_Arr, 0, sizeof(T) * _Length);
 
@@ -335,7 +335,7 @@ public:
 	void SetAt(int i, T item)
 	{
 		// 检查长度，不足时扩容
-		CheckCapacity(i + 1, 0);
+		CheckCapacity(i + 1, _Length);
 
 		if(i >= _Length) _Length = i + 1;
 
