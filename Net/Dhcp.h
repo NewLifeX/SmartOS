@@ -10,7 +10,6 @@ private:
 	uint dhcpid;
 	uint taskID;
 	ulong _expiredTime;
-	ulong _nextTime;
 
 	void Discover();
 	void Request();
