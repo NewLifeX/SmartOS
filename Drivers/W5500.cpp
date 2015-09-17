@@ -1349,6 +1349,6 @@ void UdpClient::RaiseReceive()
 		ep.Port = __REV16(ep.Port);
 		// 回调中断
 		ByteArray bs3(ms.ReadBytes(len), len);
-		OnReceive(bs3, NULL);
+		OnReceive(bs3, &ep);
 	};
 }

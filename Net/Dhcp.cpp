@@ -195,6 +195,13 @@ void Dhcp::PareOption(Stream& ms)
 
 uint Dhcp::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
 {
+	/*IPEndPoint* ep = (IPEndPoint*)param2;
+	if(ep)
+	{
+		debug_printf("收到数据，来自 ");
+		ep->Show(true);
+	}*/
+	
 	((Dhcp*)param)->Process(bs);
 
 	return 0;
