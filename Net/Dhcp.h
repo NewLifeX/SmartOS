@@ -35,7 +35,7 @@ public:
 	EventHandler OnStop;
 
 private:
-	static uint OnReceive(ITransport* port, byte* buf, uint len, void* param);
+	static uint OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2);
 	void Process(ByteArray& bs);
 };
 

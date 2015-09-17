@@ -834,7 +834,7 @@ void NRF24L01::OnClose()
 }
 
 // 从NRF的接收缓冲区中读出数据
-uint NRF24L01::OnRead(byte *data, uint len)
+uint NRF24L01::OnRead(ByteArray& bs)
 {
 	// 亮灯。离开时自动熄灯
 	//PortScope ps(LedRx);
@@ -871,12 +871,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 			else
 				rs = ReadReg(RX_PL_WID);
 
+			uint len = bs.Capacity();
 			if(rs > len)
 			{
 				debug_printf("NRF24L01::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
 				rs = len;
 			}
-			ReadBuf(RD_RX_PLOAD, data, rs); // 读取数据
+			ReadBuf(RD_RX_PLOAD, bs.GetBuffer(), rs); // 读取数据
 		}
 	}
 
@@ -890,11 +891,13 @@ uint NRF24L01::OnRead(byte *data, uint len)
 	//_CE = true;
 	if(rs && LedRx) *LedRx = !*LedRx;
 
+	bs.SetLength(rs);
+
 	return rs;
 }
 
 // 向NRF的发送缓冲区中写入数据
-bool NRF24L01::OnWrite(const byte* data, uint len)
+bool NRF24L01::OnWrite(const ByteArray& bs)
 {
 	// 亮灯。离开时自动熄灯
 	//PortScope ps(LedTx);
@@ -923,9 +926,10 @@ bool NRF24L01::OnWrite(const byte* data, uint len)
 
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
+	uint len = bs.Length();
 	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
 	if(PayloadWidth > 0) len = PayloadWidth;
-	WriteBuf(cmd, data, len);
+	WriteBuf(cmd, bs.GetBuffer(), len);
 
 	// 进入TX，维持一段时间
 	_CE = true;
@@ -1042,15 +1046,20 @@ void NRF24L01::OnIRQ()
 
 	if(st.RX_DR)
 	{
-		byte buf[64];
-		uint len = Read(buf, ArrayLength(buf));
+		ByteArray bs;
+		uint len = Read(bs);
 		//ClearStatus(false, true);
 		if(len)
 		{
-			len = OnReceive(buf, len);
+			uint addr = st.RX_P_NO;
+			len = OnReceive(bs, (void*)addr);
 
 			// 如果有返回，说明有数据要回复出去
-			if(len) Write(buf, len);
+			if(len)
+			{
+				bs.SetLength(len, true);
+				Write(bs);
+			}
 		}
 		return;
 	}

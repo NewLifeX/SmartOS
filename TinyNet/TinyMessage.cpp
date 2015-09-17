@@ -486,7 +486,8 @@ void TinyController::Loop()
 #endif
 
 		// 发送消息
-		Port->Write(node.Data, node.Length);
+		ByteArray bs(node.Data, node.Length);
+		Port->Write(bs);
 
 		// 增加发送次数统计
 		Total.Send++;

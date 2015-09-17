@@ -704,8 +704,9 @@ byte Enc28j60::GetRevision()
     return ReadReg(EREVID);
 }
 
-bool Enc28j60::OnWrite(const byte* packet, uint len)
+bool Enc28j60::OnWrite(const ByteArray& bs)
 {
+	uint len = bs.Length();
 	assert_param2(len <= MAX_FRAMELEN, "以太网数据帧超大");
 
 	if(!Linked())
@@ -735,7 +736,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
     WriteOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
 
     // 复制数据包到传输缓冲区
-    WriteBuffer(packet, len);
+    WriteBuffer(bs.GetBuffer(), len);
 
 	/*
 	仅发送复位通过SPI接口向ECON1寄存器的 TXRST 位写入1可实现仅发送复位。
@@ -804,6 +805,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 			ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 
 #if NET_DEBUG
+			byte* packet = bs.GetBuffer();
 			MacAddress dest = packet;
 			MacAddress src = packet + 6;
 			dest.Show();
@@ -925,7 +927,7 @@ bool Enc28j60::OnWrite(const byte* packet, uint len)
 
 // 从网络接收缓冲区获取一个数据包，该包开头是以太网头
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
-uint Enc28j60::OnRead(byte* packet, uint maxlen)
+uint Enc28j60::OnRead(ByteArray& bs)
 {
     uint rxstat;
     uint len;
@@ -965,7 +967,7 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     rxstat  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
     rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
     // 限制获取的长度。有些例程这里不用减一
-    if (len > maxlen - 1) len = maxlen - 1;
+    if (len > bs.Length() - 1) len = bs.Length() - 1;
 
     // 检查CRC和符号错误
     // ERXFCON.CRCEN是默认设置。通常我们不需要检查
@@ -977,8 +979,9 @@ uint Enc28j60::OnRead(byte* packet, uint maxlen)
     else
     {
         // 从缓冲区中将数据包复制到packet中
-        ReadBuffer(packet, len);
+        ReadBuffer(bs.GetBuffer(), len);
     }
+	bs.SetLength(len);
     // 移动接收缓冲区 读指针
     WriteReg(ERXRDPTL, (NextPacketPtr));
     WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);

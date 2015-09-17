@@ -67,16 +67,8 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const byte* buf, uint len);
-	virtual uint OnRead(byte* buf, uint len);
+    virtual bool OnWrite(const ByteArray& bs);
+	virtual uint OnRead(ByteArray& bs);
 };
-
-// Tcp客户端
-/*class TcpClient : public TcpSocket
-{
-public:
-
-	TcpClient(TinyIP* tip);
-};*/
 
 #endif

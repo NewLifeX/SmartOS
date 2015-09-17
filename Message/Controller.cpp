@@ -50,8 +50,11 @@ void Controller::Close()
 	Opened = false;
 }
 
-uint Controller::Dispatch(ITransport* port, byte* buf, uint len, void* param)
+uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* param2)
 {
+	byte* buf	= bs.GetBuffer();
+	uint len	= bs.Length();
+
 	assert_ptr(buf);
 	assert_ptr(param);
 
@@ -137,11 +140,12 @@ bool Controller::Send(Message& msg)
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 	//assert_param2(len == ms.Position(), "消息标称大小和实际大小不符");
-	uint len = ms.Position();
+	/*uint len = ms.Position();
 	// 内存流扩容以后，指针会改变
-	byte* p = ms.GetBuffer();
+	byte* p = ms.GetBuffer();*/
 
-	return Port->Write(p, len);
+	ByteArray bs(ms.GetBuffer(), ms.Position());
+	return Port->Write(bs);
 }
 
 bool Controller::Reply(Message& msg)

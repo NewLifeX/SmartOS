@@ -236,24 +236,24 @@ uint SerialPort::SendData(byte data, uint times)
 		USART_SendData(_port, (ushort)data);
 	else
 		Error++;
-	
+
 	return times;
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-bool SerialPort::OnWrite(const byte* buf, uint size)
+bool SerialPort::OnWrite(const ByteArray& bs)
 {
-	if(!size) return true;
-	
-	// 如果队列已满，则强制刷出
-	if(Tx.Length() + size > Tx.Capacity()) Flush(Sys.Clock / 40000);
+	if(!bs.Length()) return true;
 
-	if(size == 0)
+	// 如果队列已满，则强制刷出
+	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
+
+	/*if(size == 0)
 	{
 		const byte* p = buf;
 		while(*p++) size++;
-	}
-	Tx.Write(buf, size, true);
+	}*/
+	Tx.Write(bs, true);
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
@@ -296,14 +296,8 @@ void SerialPort::OnTxHandler()
 }
 
 // 从某个端口读取数据
-uint SerialPort::OnRead(byte* buf, uint size)
+uint SerialPort::OnRead(ByteArray& bs)
 {
-	/*SmartIRQ irq;
-	uint count = Rx.Length(); // 收到的字节数
-	if(count > size) count = size;
-	for(int i=0; i<count; i++)
-		*buf++ = Rx.Pop();*/
-
 	// 如果有数据变化，等一会
 	uint count = 0;
 	uint len = Rx.Length();
@@ -316,7 +310,8 @@ uint SerialPort::OnRead(byte* buf, uint size)
 	}
 
 	// 从接收队列读取
-	count = Rx.Read(buf, size);
+	count = Rx.Read(bs);
+	bs.SetLength(count);
 
 	// 如果还有数据，打开任务
 	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true);
@@ -344,14 +339,14 @@ void SerialPort::ReceiveTask(void* param)
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
 
 	// 从栈分配，节省内存
-	byte buf[64];
-	uint len = sp->Read(buf, ArrayLength(buf));
+	ByteArray bs;
+	uint len = sp->Read(bs);
 	if(len)
 	{
-		len = sp->OnReceive(buf, len);
-		assert_param(len <= ArrayLength(buf));
+		len = sp->OnReceive(bs, NULL);
+		//assert_param(len <= ArrayLength(buf));
 		// 如果有数据，则反馈回去
-		if(len) sp->Write(buf, len);
+		if(len) sp->Write(bs);
 	}
 }
 
@@ -438,8 +433,10 @@ extern "C"
 		if(_printf_sp)
 		{
 			//_printf_sp->SendData((byte)ch);
-			byte bt = (byte)ch;
-			_printf_sp->Write(&bt, 1);
+			//byte bt = (byte)ch;
+			//_printf_sp->Write(&bt, 1);
+			ByteArray bs(ch, 1);
+			_printf_sp->Write(bs);
 		}
 
 		isInFPutc = false;

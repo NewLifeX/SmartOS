@@ -1,21 +1,12 @@
 ﻿#include "ShunCom.h"
 
-ShunCom::ShunCom()
-{
-	Port = NULL;
-}
-
-ShunCom::~ShunCom()
-{
-	delete Port;
-	Port = NULL;
-}
+ShunCom::ShunCom() { }
 
 void ShunCom::Init(ITransport* port, Pin rst)
 {
 	assert_ptr(port);
 
-	Port = port;
+	Set(port);
 
 	if(rst != P0) Reset.Set(rst);
 }
@@ -37,7 +28,7 @@ bool ShunCom::OnOpen()
 	Sys.Delay(100);
 	Reset	= true;
 
-	return Port->Open();
+	return PackPort::OnOpen();
 }
 
 void ShunCom::OnClose()
@@ -48,27 +39,5 @@ void ShunCom::OnClose()
 
 	Reset.Close();
 
-	Port->Close();
-}
-
-bool ShunCom::OnWrite(const byte* buf, uint len) { return Port->Write(buf, len); }
-uint ShunCom::OnRead(byte* buf, uint len) { return Port->Read(buf, len); }
-
-// 注册回调函数
-void ShunCom::Register(TransportHandler handler, void* param)
-{
-	ITransport::Register(handler, param);
-
-	if(handler)
-		Port->Register(OnPortReceive, this);
-	else
-		Port->Register(NULL);
-}
-
-uint ShunCom::OnPortReceive(ITransport* sender, byte* buf, uint len, void* param)
-{
-	assert_ptr(param);
-
-	ShunCom* zb = (ShunCom*)param;
-	return zb->OnReceive(buf, len);
+	PackPort::OnClose();
 }

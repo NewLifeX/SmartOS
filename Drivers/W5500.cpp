@@ -1077,17 +1077,13 @@ bool HardSocket::Send(const ByteArray& bs)
 	return true;
 }
 
-bool HardSocket::OnWrite(const byte* buf, uint len)
+bool HardSocket::OnWrite(const ByteArray& bs)
 {
-	ByteArray bs(buf,len);
 	return Send(bs);
 }
 
-uint HardSocket::OnRead(byte* buf, uint len)
+uint HardSocket::OnRead(ByteArray& bs)
 {
-	ByteArray bs(buf, len);
-
-	// 不容 ByteArray 偷梁换柱把buf换掉
 	return Receive(bs);
 }
 
@@ -1286,7 +1282,7 @@ void TcpClient::RaiseReceive()
 	if(size > 1500)return;
 
 	// 回调中断
-	OnReceive(bs.GetBuffer(), size);
+	OnReceive(bs, NULL);
 }
 
 /****************************** UdpClient ************************************/
@@ -1352,6 +1348,7 @@ void UdpClient::RaiseReceive()
 		IPEndPoint ep(bs2);
 		ep.Port = __REV16(ep.Port);
 		// 回调中断
-		OnReceive(ms.ReadBytes(len), len);
+		ByteArray bs3(ms.ReadBytes(len), len);
+		OnReceive(bs3, NULL);
 	};
 }

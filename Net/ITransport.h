@@ -6,7 +6,7 @@
 class ITransport;
 
 // 传输口数据到达委托。传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
-typedef uint (*TransportHandler)(ITransport* transport, byte* buf, uint len, void* param);
+typedef uint (*TransportHandler)(ITransport* port, ByteArray& bs, void* param, void* param2);
 
 // 帧数据传输接口
 // 实现者确保数据以包的形式传输，屏蔽数据的粘包和拆包
@@ -67,17 +67,6 @@ public:
 	}
 
 	// 发送数据
-	bool Write(const byte* buf, uint len)
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(!Opened && !Open()) return false;
-
-		return OnWrite(buf, len);
-	}
-
-	// 发送数据
 	bool Write(const ByteArray& bs)
 	{
 		// 特别是接口要检查this指针
@@ -85,18 +74,7 @@ public:
 
 		if(!Opened && !Open()) return false;
 
-		return OnWrite(bs.GetBuffer(), bs.Length());
-	}
-
-	// 接收数据
-	uint Read(byte* buf, uint len)
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(!Opened && !Open()) return 0;
-
-		return OnRead(buf, len);
+		return OnWrite(bs);
 	}
 
 	// 接收数据
@@ -107,7 +85,7 @@ public:
 
 		if(!Opened && !Open()) return 0;
 
-		return OnRead(bs.GetBuffer(), bs.Length());
+		return OnRead(bs);
 	}
 
 	// 注册回调函数
@@ -116,18 +94,8 @@ public:
 		// 特别是接口要检查this指针
 		assert_ptr(this);
 
-		if(handler)
-		{
-			_handler	= handler;
-			_param		= param;
-
-			//if(!Opened) Open();
-		}
-		else
-		{
-			_handler	= NULL;
-			_param		= NULL;
-		}
+		_handler	= handler;
+		_param		= param;
 	}
 
 #if DEBUG
@@ -139,18 +107,61 @@ public:
 protected:
 	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
-	virtual bool OnWrite(const byte* buf, uint len) = 0;
-	virtual uint OnRead(byte* buf, uint len) = 0;
+	virtual bool OnWrite(const ByteArray& bs) = 0;
+	virtual uint OnRead(ByteArray& bs) = 0;
 
 	// 是否有回调函数
 	bool HasHandler() { return _handler != NULL; }
 
 	// 引发数据到达事件
-	virtual uint OnReceive(byte* buf, uint len)
+	virtual uint OnReceive(ByteArray& bs, void* param)
 	{
-		if(_handler) return _handler(this, buf, len, _param);
+		if(_handler) return _handler(this, bs, _param, param);
 
 		return 0;
+	}
+};
+
+// 数据口包装
+class PackPort : public ITransport
+{
+private:
+	//ITransport*	_port;
+
+public:
+	ITransport*	Port;	// 传输口
+
+	virtual ~PackPort()
+	{
+		if(Port) Port->Register(NULL);
+		delete Port;
+	}
+
+	virtual void Set(ITransport* port)
+	{
+		if(Port) Port->Register(NULL);
+
+		Port = port;
+
+		if(Port) Port->Register(OnPortReceive, this);
+	}
+
+	virtual string ToString() { return "PackPort"; }
+
+protected:
+	virtual bool OnOpen() { return Port->Open(); }
+    virtual void OnClose() { Port->Close(); }
+
+    virtual bool OnWrite(const ByteArray& bs) { return Port->Write(bs); }
+	virtual uint OnRead(ByteArray& bs) { return Port->Read(bs); }
+
+	static uint OnPortReceive(ITransport* sender, ByteArray& bs, void* param, void* param2)
+	{
+		assert_ptr(param);
+
+		//PackPort* pp = (PackPort*)param;
+		PackPort* pp = dynamic_cast<PackPort*>((PackPort*)param);
+		return pp->OnReceive(bs, param2);
 	}
 };
 

@@ -24,7 +24,7 @@ public:
 	// 分配指定大小的缓冲区
 	Queue(uint len = 0);
 	// 使用缓冲区初始化缓冲区。注意，此时指针位于0，而内容长度为缓冲区长度
-	Queue(byte* buf, uint len);
+	Queue(ByteArray& bs);
 	// 销毁缓冲区
 	~Queue();
 
@@ -41,8 +41,8 @@ public:
 	byte Pop();
 	byte Peek() const;
 	
-	uint Write(const byte* buf, uint len, bool safe = false);	// 批量写入
-	uint Read(byte* buf, uint len, bool safe = false);		// 批量读取
+	uint Write(const ByteArray& bs, bool safe = false);	// 批量写入
+	uint Read(ByteArray& bs, bool safe = false);		// 批量读取
 };
 
 #endif

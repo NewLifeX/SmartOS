@@ -193,9 +193,8 @@ void Dhcp::PareOption(Stream& ms)
 	}
 }
 
-uint Dhcp::OnReceive(ITransport* port, byte* buf, uint len, void* param)
+uint Dhcp::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
 {
-	ByteArray bs(buf, len);
 	((Dhcp*)param)->Process(bs);
 
 	return 0;

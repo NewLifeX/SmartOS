@@ -7,13 +7,10 @@ Queue::Queue(uint len)
 }
 
 // 使用缓冲区初始化缓冲区。注意，此时指针位于0，而内容长度为缓冲区长度
-Queue::Queue(byte* buf, uint len)
+Queue::Queue(ByteArray& bs)
 {
-	assert_ptr(buf);
-	//assert_param2(len > 0, "不能用0长度缓冲区来初始化缓冲区");
-
-	_Buffer		= buf;
-	_Capacity	= len;
+	_Buffer		= bs.GetBuffer();
+	_Capacity	= bs.Length();
 	_size		= 0;
 	_head		= 0;
 	_tail		= 0;
@@ -96,8 +93,11 @@ byte Queue::Peek() const
 	return _Buffer[_tail];
 }
 
-uint Queue::Write(const byte* buf, uint len, bool safe)
+uint Queue::Write(const ByteArray& bs, bool safe)
 {
+	byte* buf	= bs.GetBuffer();
+	uint len	= bs.Length();
+
 	uint rs = 0;
 	while(true)
 	{
@@ -135,9 +135,12 @@ uint Queue::Write(const byte* buf, uint len, bool safe)
 	return rs;
 }
 
-uint Queue::Read(byte* buf, uint len, bool safe)
+uint Queue::Read(ByteArray& bs, bool safe)
 {
 	if(_size == 0) return 0;
+
+	byte* buf	= bs.GetBuffer();
+	uint len	= bs.Length();
 
 	if(len > _size) len = _size;
 
@@ -176,6 +179,8 @@ uint Queue::Read(byte* buf, uint len, bool safe)
 		_size -= rs;
 		if(_size == 0) _tail = _head;
 	}
+
+	bs.SetLength(rs, true);
 
 	return rs;
 }

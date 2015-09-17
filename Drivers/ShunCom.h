@@ -7,12 +7,11 @@
 
 // 上海顺舟Zigbee协议
 // 主站发送所有从站收到，从站发送只有主站收到
-class ShunCom : public ITransport
+class ShunCom : public PackPort
 {
 private:
 
 public:
-	ITransport*	Port;	// 传输口
 	OutputPort	Reset;	// 复位
 
 	OutputPort	Power;	// 电源
@@ -24,23 +23,14 @@ public:
 	InputPort	Alarm;	// 警告错误
 
 	ShunCom();
-	virtual ~ShunCom();
 
 	void Init(ITransport* port, Pin rst = P0);
-
-	// 注册回调函数
-	virtual void Register(TransportHandler handler, void* param = NULL);
 
 	virtual string ToString() { return "ShunCom"; }
 
 protected:
 	virtual bool OnOpen();
     virtual void OnClose();
-
-    virtual bool OnWrite(const byte* buf, uint len);
-	virtual uint OnRead(byte* buf, uint len);
-
-	static uint OnPortReceive(ITransport* sender, byte* buf, uint len, void* param);
 };
 
 #endif

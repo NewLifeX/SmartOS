@@ -78,8 +78,8 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const byte* buf, uint len);
-	virtual uint OnRead(byte* buf, uint len);
+    virtual bool OnWrite(const ByteArray& bs);
+	virtual uint OnRead(ByteArray& bs);
 };
 
 #endif
