@@ -968,7 +968,11 @@ bool HardSocket::OnOpen()
 	SocRegWrite2(DPORT, __REV16(Remote.Port));
 
 	// 设置Socket为UDP模式
-	SocRegWrite(MR, Protocol);
+	S_Mode mode;
+	mode.Init();
+	mode.Protocol	= Protocol;
+	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
+	SocRegWrite(MR, mode.ToByte());
 
 	S_Interrupt ir;
 	ir.Init(0xFF);
