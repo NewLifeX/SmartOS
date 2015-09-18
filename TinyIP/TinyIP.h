@@ -34,11 +34,8 @@ public:
 	TinySocket* FindByType(ushort type);
 };
 
-//class TinyIP;
-//typedef bool (*LoopFilter)(TinyIP* tip, void* param, Stream& ms);
-
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
-class TinyIP
+class TinyIP : public ISocketHost
 {
 private:
 	ITransport*	_port;
@@ -54,22 +51,12 @@ public:
 
 	// 任务函数
 	static void Work(void* param);
-	// 带过滤器的轮询
-	//bool LoopWait(LoopFilter filter, void* param, uint msTimeout);
 	// 处理数据包
 	void Process(Stream& ms);
 	// 修正IP包负载数据的长度。物理层送来的长度可能有误，一般超长
 	void FixPayloadLength(IP_HEADER& ip, Stream& ms);
 
 public:
-    IPAddress	IP;		// 本地IP地址
-    IPAddress	Mask;	// 子网掩码
-	MacAddress	Mac;	// 本地Mac地址
-
-	IPAddress	DHCPServer;
-	IPAddress	DNSServer;
-	IPAddress	Gateway;
-
 	// Arp套接字
 	TinySocket*		Arp;
 	// 套接字列表。套接字根据类型来识别

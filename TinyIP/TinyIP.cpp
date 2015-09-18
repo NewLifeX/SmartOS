@@ -72,7 +72,7 @@ uint TinyIP::Fetch(Stream& ms)
 	if(len < sizeof(ETH_HEADER)) return 0;
 
 	// 位置指针后移
-	ms.Seek(-len);
+	//ms.Seek(-len);
 
 	// 获取第一个结构体，不要移动指针
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>(false);
@@ -415,7 +415,7 @@ TinySocket::TinySocket(TinyIP* tip, IP_TYPE type)
 	Tip		= tip;
 	Type	= type;
 	Enable	= false;
-	
+
 	// 除了ARP以外，加入到列表
 	if(type != IP_NONE) tip->Sockets.Add(this);
 }

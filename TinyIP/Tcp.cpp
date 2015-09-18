@@ -10,7 +10,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 {
-	//Port		= 0;
+	Host	= tip;
 
 	// 累加端口
 	static ushort g_tcp_port = 1024;
@@ -382,7 +382,8 @@ bool TcpSocket::Send(const ByteArray& bs)
 #endif
 
 	//Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());
-	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 256];
+	//byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 256];
+	byte buf[1500];
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 

@@ -5,7 +5,7 @@
 
 UdpSocket::UdpSocket(TinyIP* tip) : TinySocket(tip, IP_UDP)
 {
-	//Port		= 0;
+	Host	= tip;
 
 	// 累加端口
 	static ushort g_udp_port = 1024;
@@ -134,7 +134,8 @@ bool UdpSocket::Send(const ByteArray& bs)
 	//if(ip.IsAny()) ip = Remote.Address;
 	//if(!port) port = Remote.Port;
 
-	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 256];
+	//byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 1024];
+	byte buf[1500];
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
