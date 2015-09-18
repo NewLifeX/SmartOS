@@ -17,9 +17,11 @@ public:
 	Zigbee(ITransport* port, Pin rst = P0);
 	void Init(ITransport* port, Pin rst = P0);
 
-	virtual void Reset(void);
-
 	virtual string ToString() { return "Zigbee"; }
+
+protected:
+	virtual bool OnOpen();
+	virtual void OnClose();
 };
 
 #endif

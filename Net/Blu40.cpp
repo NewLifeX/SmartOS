@@ -1,6 +1,6 @@
 ﻿
 #include "Blu40.h"
-// 司卡乐 CC2540
+// 思卡乐 CC2540
 
 /*
 默认情况
@@ -127,7 +127,8 @@ bool Blu40::SetBP(int BP)
 	for(bpnumIndex=0;BP!=BPreserve[bpnumIndex] && bpnumIndex<8;bpnumIndex++);
 	if(BPreserve[bpnumIndex] != BP)return false;
 	
-	byte buf[40];
+	//byte buf[40];
+	ByteArray ds;
 	//byte BPSOK[] = "AT:BPS SET AFTER 2S \r\n\0"; // 坑人的需要ASIIC
 	byte const BPSOK[] = {0x41,0x54,0x3A,0x42,0x50,0x53,0x20,0x45,0x54,0x20,0x41,0x46,0x54,0x45,0x52,0x20,0x32,0x53,0x0D,0x0A,0x00};
 	if(_baudRate != 0)
@@ -140,17 +141,19 @@ bool Blu40::SetBP(int BP)
 		
 		*_rts = false;
 		Sys.Delay(150);
-		_port->Write(AT_BPS,sizeof(AT_BPS));
-		_port->Write(&bpnumIndex,1);	// 晕死，AT指令里面放非字符
+		
+		const ByteArray bs(AT_BPS, sizeof(AT_BPS));
+		_port->Write(bs);
+		_port->Write(ByteArray(&bpnumIndex, 1));	// 晕死，AT指令里面放非字符
 		//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 		*_rts = true;
 		
 		Sys.Delay(500);
-		_port->Read(buf,40);
+		_port->Read(ds);
 
 		for(int j=0;j<sizeof(BPSOK);j++)
 		{
-			if(buf[j] != BPSOK[j])
+			if(ds[j] != BPSOK[j])
 			{
 				debug_printf("设置失败，重新调整波特率进行设置\r\n");
 				break;
@@ -174,18 +177,21 @@ bool Blu40::SetBP(int BP)
 			
 			*_rts = false;
 			Sys.Delay(170);
-			_port->Write(AT_BPS,sizeof(AT_BPS));
-			_port->Write(&bpnumIndex,1);	// 晕死，AT指令里面放非字符
+			//_port->Write(AT_BPS,sizeof(AT_BPS));
+			//_port->Write(&bpnumIndex,1);	// 晕死，AT指令里面放非字符
+			const ByteArray bs(AT_BPS, sizeof(AT_BPS));
+			_port->Write(bs);
+			_port->Write(ByteArray(&bpnumIndex, 1));
 			//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 			*_rts = true;
 			
 			Sys.Delay(500);
-			_port->Read(buf,40);
+			_port->Read(ds);
 			//"AT:BPS SET AFTER 2S \r\n\0"
 			//"AT:ERR\r\n\0"
 			for(int j=0;j<sizeof(BPSOK);j++)
 			{
-				if(buf[j] != BPSOK[j])
+				if(ds[j] != BPSOK[j])
 				{
 					if(i==7)
 					{	
@@ -207,11 +213,12 @@ bool Blu40::SetBP(int BP)
 
 bool Blu40::CheckSet()
 {
-	byte buf[40];
-	_port->Read(buf,40);
+	//byte buf[40];
+	ByteArray bs;
+	_port->Read(bs);
 	for(int i=0;i<sizeof(ATOK);i++)
 	{
-		if(buf[i] != ATOK[i])
+		if(bs[i] != ATOK[i])
 		{
 			debug_printf("设置失败\r\n");
 			return false;
@@ -225,8 +232,8 @@ bool Blu40::SetName(string name)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(AT_REN,sizeof(AT_REN));
-	_port->Write((byte*)name,sizeof(name));
+	_port->Write(ByteArray(AT_REN, sizeof(AT_REN)));
+	_port->Write(ByteArray((byte*)name, sizeof(name)));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -236,8 +243,8 @@ bool Blu40::SetPID(ushort pid)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(AT_PID,sizeof(AT_REN));
-	_port->Write((byte *)pid,2);
+	_port->Write(ByteArray(AT_PID, sizeof(AT_PID)));
+	_port->Write(ByteArray((byte*)pid, 2));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -253,29 +260,10 @@ bool Blu40::SetTPL(int TPLDB)
 	}
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(AT_TPL,sizeof(AT_TPL));
+	_port->Write(ByteArray(AT_TPL, sizeof(AT_TPL)));
 	//byte temp = TPLNumIndex+'0';// 又是坑人的 非字符
-	_port->Write(&TPLNumIndex,1);
+	_port->Write(ByteArray(&TPLNumIndex,1));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
-}
-
-// 注册回调函数
-void Blu40::Register(TransportHandler handler, void* param)
-{
-	ITransport::Register(handler, param);
-
-	if(handler)
-		_port->Register(OnPortReceive, this);
-	else
-		_port->Register(NULL);
-}
-
-uint Blu40::OnPortReceive(ITransport* sender, byte* buf, uint len, void* param)
-{
-	assert_ptr(param);
-
-	Blu40* blu = (Blu40*)param;
-	return blu->OnReceive(buf, len);
 }

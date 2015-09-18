@@ -1,5 +1,4 @@
-﻿
-#ifndef __BLU40_H__
+﻿#ifndef __BLU40_H__
 #define __BLU40_H__
 
 #include "Sys.h"
@@ -7,8 +6,8 @@
 #include "Net\ITransport.h"
 #include "SerialPort.h"
 
-// 司卡乐 CC2540
-class Blu40 : public ITransport
+// 思卡乐 CC2540
+class Blu40 : public PackPort
 {
 private:
 	SerialPort *_port;
@@ -17,13 +16,14 @@ private:
 	OutputPort *_rst;
 	OutputPort *_sleep;	// 拉低时蓝牙工作，否则睡眠不工作
 	int _baudRate;
+
 public:
 	Blu40();
 	Blu40(SerialPort *port,Pin rts = P0 ,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = NULL);
 	virtual ~Blu40();
 	void Init();
 	void Init(SerialPort *port ,Pin rts = P0,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = NULL);
-	
+
 	virtual void Register(TransportHandler handler, void* param = NULL);
 	virtual void Reset(void);
 
@@ -37,23 +37,11 @@ public:
 	bool SetName(string name);
 	// 设置产品识别码 硬件类型code
 	bool SetPID(ushort pid);
-	
-	virtual string ToString() { return "Blutooth4.0"; }
+
+	virtual string ToString() { return "BLE4"; }
+
 protected:
-	virtual bool OnOpen() { return _port->Open(); }
-    virtual void OnClose() { _port->Close(); }
-
-    virtual bool OnWrite(const byte* buf, uint len) 
-	{
-		if(_rts==NULL)return false;
-		*_rts = false;
-		Sys.Delay(150);
-		bool ret = _port->Write(buf, len);
-		*_rts = true;
-		return ret; 
-	}
-	virtual uint OnRead(byte* buf, uint len) { return _port->Read(buf, len); }
-
-	static uint OnPortReceive(ITransport* sender, byte* buf, uint len, void* param);
+	virtual bool OnOpen();
+	virtual void OnClose();
 };
 #endif

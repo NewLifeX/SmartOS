@@ -222,7 +222,9 @@ void Dhcp::Process(ByteArray& bs)
 	// 所有响应都需要检查事务ID
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
+#if NET_DEBUG
 	IPAddress& remote	= Socket->Remote.Address;
+#endif
 
 	if(opt->Data == DHCP_TYPE_Offer)
 	{

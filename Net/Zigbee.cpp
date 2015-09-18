@@ -1,6 +1,9 @@
 ﻿#include "Zigbee.h"
 
-Zigbee::Zigbee() { }
+Zigbee::Zigbee()
+{
+	Set(NULL);
+}
 
 Zigbee::Zigbee(ITransport* port, Pin rst)
 {
@@ -13,20 +16,30 @@ void Zigbee::Init(ITransport* port, Pin rst)
 
 	Set(port);
 
-	if(rst != P0)
-	{
-		_rst.Set(rst).Open();
-		Reset();
-	}
+	if(rst != P0) _rst.Set(rst);
 }
 
-void Zigbee::Reset(void)
+bool Zigbee::OnOpen()
 {
-	if(_rst.Empty()) return;
+	if(!PackPort::OnOpen()) return false;
 
-	_rst = true;
-	Sys.Delay(100);
-	_rst = false;
-	Sys.Delay(100);
-	_rst = true;
+	if(!_rst.Empty())
+	{
+		_rst.Open();
+
+		_rst = true;
+		Sys.Delay(100);
+		_rst = false;
+		Sys.Delay(100);
+		_rst = true;
+	}
+
+	return true;
+}
+
+void Zigbee::OnClose()
+{
+	_rst.Close();
+
+	PackPort::OnClose();
 }
