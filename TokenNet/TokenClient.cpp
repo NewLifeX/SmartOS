@@ -304,7 +304,7 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	else
 		Delay = cost;
 
-	debug_printf("延迟 %dus / %dus \r\n", cost, Delay);
+	debug_printf("心跳延迟 %dus / %dus \r\n", cost, Delay);
 
 	return true;
 }
