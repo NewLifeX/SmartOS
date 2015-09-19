@@ -79,6 +79,15 @@ public:
 // 数组复制
 #define ArrayCopy(dst, src) memcpy(dst, src, ArrayLength(src) * sizeof(src[0]))
 
+template<typename T>
+class IArray
+{
+public:
+	virtual int Length() const = 0;
+	virtual void SetAt(int i, T item) = 0;
+	virtual T& operator[](int i) const = 0;
+};
+
 // 数组
 /*
 数组是指针和长度的封装。
@@ -98,7 +107,7 @@ public:
 外=>外 仅复制指针
 */
 template<typename T, int ArraySize = 0x40>
-class Array : public Object
+class Array : public Object, public IArray<T>
 {
 protected:
     T*		_Arr;		// 数据指针
@@ -136,14 +145,14 @@ protected:
 
 public:
 	// 数组长度
-    int Length() const { return _Length; }
+    virtual int Length() const { return _Length; }
 	// 数组最大容量。初始化时决定，后面不允许改变
 	int Capacity() const { return _Capacity; }
 	// 缓冲区
 	T* GetBuffer() const { return _Arr; }
 
 	// 初始化指定长度的数组。默认使用内部缓冲区
-	Array(int length)
+	Array(int length = ArraySize)
 	{
 		assert_param2(length <= 0x400, "禁止分配超过1k的数组");
 		if(length < 0) length = ArrayLength(Arr);
@@ -329,7 +338,7 @@ public:
 	}
 
 	// 设置指定位置的值，不足时自动扩容
-	void SetAt(int i, T item)
+	virtual void SetAt(int i, T item)
 	{
 		assert_param2(_canWrite, "禁止修改数组数据");
 		// 检查长度，不足时扩容
@@ -341,7 +350,7 @@ public:
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    T& operator[](int i) const
+    virtual T& operator[](int i) const
 	{
 		assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
 
