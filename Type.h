@@ -97,28 +97,18 @@ public:
 外=>内 仅复制指针
 外=>外 仅复制指针
 */
-template<typename T>
+template<typename T, int ArraySize = 0x40>
 class Array : public Object
 {
 protected:
     T*		_Arr;		// 数据指针
 	int		_Length;	// 数组长度
-	uint	_Capacity;	// 数组最大容量。初始化时决定，后面不允许改变
-	//bool	_needFree;	// 是否需要释放
-	// 又是头疼的对齐问题
-	int		_needFree;	// 是否需要释放
+	uint	_Capacity;	// 数组最大容量
+	bool	_needFree;	// 是否需要释放
+	bool	_canWrite;	// 是否可写
+	byte	Reversed[3];// 又是头疼的对齐问题
 
-	T		Arr[0x40];	// 内部缓冲区
-
-	// 释放外部缓冲区。使用最大容量的内部缓冲区
-	void Release()
-	{
-		if(_needFree && _Arr) delete _Arr;
-		_Arr		= NULL;
-		_Length		= 0;
-		_Capacity	= 0;
-		_needFree	= false;
-	}
+	T		Arr[ArraySize];	// 内部缓冲区
 
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	void CheckCapacity(int len, int bak = 0)
@@ -131,20 +121,17 @@ protected:
 		while(k < len) k <<= 1;
 
 		T* p = new T[k];
-		ArrayZero2(p, _Capacity);
+		//ArrayZero2(p, _Capacity);
 
 		// 是否需要备份数据
 		if(bak > _Length) bak = _Length;
 		if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
 
-		//Release();
-		// 为了保留旧长度，不建议调用Release
 		if(_needFree && _Arr) delete _Arr;
 
-		//_Length		= bak;
 		_Capacity	= k;
 		_Arr		= p;
-		_needFree	= p != NULL;
+		_needFree	= true;
 	}
 
 public:
@@ -174,18 +161,23 @@ public:
 			_Capacity	= length;
 			_needFree	= true;
 		}
-		ArrayZero2(_Arr, _Capacity);
+		//ArrayZero2(_Arr, _Capacity);
+		_canWrite	= true;
 	}
 
 	Array(const Array& arr)
 	{
 		_Length = arr.Length();
+		_canWrite	= true;
 
 		Copy(arr);
 	}
 
 	// 析构。释放资源
-	virtual ~Array() { Release(); }
+	virtual ~Array()
+	{
+		if(_needFree && _Arr) delete _Arr;
+	}
 
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr)
@@ -193,9 +185,10 @@ public:
 		// 不要自己拷贝给自己
 		if(&arr == this) return *this;
 
-		_Length = arr.Length();
+		_Length = 0;
 
 		Copy(arr);
+
 		return *this;
 	}
 
@@ -221,6 +214,7 @@ public:
 	// 设置数组元素为指定值，自动扩容
 	bool Set(T item, int index = 0, int count = 0)
 	{
+		assert_param2(_canWrite, "禁止修改数组数据");
 		// count<=0 表示设置全部元素
 		if(count <= 0) count = _Length - index;
 
@@ -241,24 +235,39 @@ public:
 	}
 
 	// 设置数组。直接使用指针，不拷贝数据
+	bool Set(T* data, int len = 0)
+	{
+		if(!Set((const T*)data, len)) return false;
+
+		_canWrite	= true;
+
+		return true;
+	}
+
+	// 设置数组。直接使用指针，不拷贝数据
 	bool Set(const T* data, int len = 0)
 	{
-		if(!data) return false;
-
+		int max	= len;
+		if(!data)
+		{
+			data	= Arr;
+			max		= ArrayLength(Arr);
+		}
 		// 自动计算长度，\0结尾
-		if(!len)
+		else if(!len)
 		{
 			byte* p =(byte*)data;
 			while(*p++) len++;
 		}
 
 		// 销毁旧的
-		Release();
+		if(_needFree && _Arr) delete _Arr;
 
 		_Arr		= (T*)data;
 		_Length		= len;
-		_Capacity	= len;
+		_Capacity	= max;
 		_needFree	= false;
+		_canWrite	= false;
 
 		return true;
 	}
@@ -266,28 +275,17 @@ public:
 	// 复制数组。深度克隆，拷贝数据
 	int Copy(const Array& arr, int index = 0)
 	{
-		// 不要自己拷贝给自己
+		assert_param2(_canWrite, "禁止修改数组数据");
 		if(&arr == this) return 0;
+		if(arr.Length() == 0) return 0;
 
-		int len = arr.Length();
-		if(len == 0) return 0;
-
-		// 检查长度是否足够
-		int len2 = index + len;
-		CheckCapacity(len2, index);
-
-		// 拷贝数据
-		memcpy(_Arr + index, arr._Arr, sizeof(T) * len);
-
-		// 扩大长度
-		if(len2 > _Length) _Length = len2;
-
-		return len;
+		return Copy(arr._Arr, arr.Length(), index);
 	}
 
 	// 复制数组。深度克隆，拷贝数据，自动扩容
 	int Copy(const T* data, int len = 0, int index = 0)
 	{
+		assert_param2(_canWrite, "禁止修改数组数据");
 		// 自动计算长度，\0结尾
 		if(!len)
 		{
@@ -324,8 +322,7 @@ public:
 	// 清空已存储数据。
 	virtual Array& Clear()
 	{
-		//_Length = _Capacity;
-
+		assert_param2(_canWrite, "禁止修改数组数据");
 		memset(_Arr, 0, sizeof(T) * _Length);
 
 		return *this;
@@ -334,6 +331,7 @@ public:
 	// 设置指定位置的值，不足时自动扩容
 	void SetAt(int i, T item)
 	{
+		assert_param2(_canWrite, "禁止修改数组数据");
 		// 检查长度，不足时扩容
 		CheckCapacity(i + 1, _Length);
 
@@ -428,6 +426,7 @@ public:
 	String(int length = 0) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
+	String(char* str, int len = 0) : Array(0) { Set(str, len); }
 	String(const char* str, int len = 0) : Array(0) { Set(str, len); }
 	String(const String& str) : Array(str.Length()) { Copy(str); }
 

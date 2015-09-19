@@ -75,8 +75,9 @@ ByteArray::ByteArray(String& str) : Array(0)
 // 不允许修改，拷贝
 ByteArray::ByteArray(const String& str) : Array(0)
 {
-	char* p = ((String&)str).GetBuffer();
-	Copy((byte*)p, str.Length());
+	const char* p = str.GetBuffer();
+	//Copy((const byte*)p, str.Length());
+	Set((const byte*)p, str.Length());
 }
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
