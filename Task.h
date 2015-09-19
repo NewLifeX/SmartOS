@@ -10,13 +10,11 @@ class TaskScheduler;
 class Task
 {
 private:
-	TaskScheduler* _Scheduler;
-
 	friend class TaskScheduler;
 
-	Task(TaskScheduler* scheduler);
-
 public:
+	TaskScheduler* Host;
+
 	uint	ID;			// 编号
 	string	Name;		// 名称
 
@@ -38,6 +36,7 @@ public:
 	byte	MaxDeepth;	// 最大深度。默认1层，不允许重入
 	//byte	Reversed[1];// 保留，避免对齐问题
 
+	Task();
 	~Task();
 
 	// 执行任务。返回是否正常执行。
@@ -53,7 +52,7 @@ public:
 class TaskScheduler
 {
 private:
-	FixedArray<Task, 16> _Tasks;
+	IArray<Task>*	_Tasks;
 	uint _gid;	// 总编号
 
 	friend class Task;
@@ -72,6 +71,8 @@ public:
 	TaskScheduler(string name = NULL);
 	~TaskScheduler();
 
+	void Set(IArray<Task>* tasks);
+	
 	// 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
 	uint Add(Action func, void* param, Int64 dueTime = 0, Int64 period = 0, string name = NULL);
 	void Remove(uint taskid);

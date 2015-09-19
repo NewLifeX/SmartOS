@@ -1,10 +1,11 @@
 ﻿#include "Task.h"
 #include "Time.h"
 
-Task::Task(TaskScheduler* scheduler)
+Task::Task()
 {
-	_Scheduler = scheduler;
+	Host		= NULL;
 
+	ID			= 0;
 	Name		= NULL;
 	Times		= 0;
 	CpuTime		= 0;
@@ -19,7 +20,7 @@ Task::Task(TaskScheduler* scheduler)
 
 Task::~Task()
 {
-	if(ID) _Scheduler->Remove(ID);
+	if(ID) Host->Remove(ID);
 }
 
 bool Task::Execute(ulong now)
@@ -37,10 +38,10 @@ bool Task::Execute(ulong now)
 	TimeCost tc;
 	SleepTime = 0;
 
-	Task* cur = _Scheduler->Current;
-	_Scheduler->Current = this;
+	Task* cur = Host->Current;
+	Host->Current = this;
 	Callback(Param);
-	_Scheduler->Current = cur;
+	Host->Current = cur;
 
 	// 累加任务执行次数和时间
 	Times++;
@@ -60,7 +61,7 @@ bool Task::Execute(ulong now)
 #endif
 
 	// 如果只是一次性任务，在这里清理
-	if(!Event && Period < 0) _Scheduler->Remove(ID);
+	if(!Event && Period < 0) Host->Remove(ID);
 
 	Deepth--;
 
@@ -117,13 +118,37 @@ TaskScheduler::TaskScheduler(string name)
 TaskScheduler::~TaskScheduler()
 {
 	Current = NULL;
-	_Tasks.DeleteAll().Clear();
+	//_Tasks.DeleteAll().Clear();
+	if(_Tasks) delete _Tasks;
+}
+
+void TaskScheduler::Set(IArray<Task>* tasks)
+{
+	_Tasks = tasks;
 }
 
 // 创建任务，返回任务编号。dueTime首次调度时间us，-1表示事件型任务，period调度间隔us，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, Int64 dueTime, Int64 period, string name)
 {
-	Task* task	= new Task(this);
+	if(!_Tasks) _Tasks = new Array<Task, 0x10>();
+
+	Task* task	= NULL;
+	IArray<Task>& ts = *_Tasks;
+	for(int i=0; i<ts.Length(); i++)
+	{
+		if(ts[i].ID == 0)
+		{
+			task = &ts[i];
+			break;
+		}
+	}
+	if(!task)
+	{
+		debug_printf("TaskScheduler::Add 以达到最大任务数 %d\r\n", ts.Length());
+		return 0;
+	}
+
+	task->Host	= this;
 	task->ID	= _gid++;
 	task->Name	= name;
 	task->Callback	= func;
@@ -140,7 +165,6 @@ uint TaskScheduler::Add(Action func, void* param, Int64 dueTime, Int64 period, s
 		task->NextTime	= Time.Current() + dueTime;
 
 	Count++;
-	_Tasks.Add(task);
 
 #if DEBUG
 	// 输出长整型%ld，无符号长整型%llu
@@ -160,17 +184,17 @@ uint TaskScheduler::Add(Action func, void* param, Int64 dueTime, Int64 period, s
 
 void TaskScheduler::Remove(uint taskid)
 {
-	int i = -1;
-	while(_Tasks.MoveNext(i))
+	if(!_Tasks) return;
+
+	IArray<Task>& ts = *_Tasks;
+	for(int i=0; i<ts.Length(); i++)
 	{
-		Task* task = _Tasks[i];
-		if(task->ID == taskid)
+		Task& task = ts[i];
+		if(task.ID == taskid)
 		{
-			_Tasks.RemoveAt(i);
-			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
+			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task.ID, task.Name, task.Callback);
 			// 首先清零ID，避免delete的时候再次删除
-			task->ID = 0;
-			delete task;
+			task.ID = 0;
 			break;
 		}
 	}
@@ -210,11 +234,11 @@ void TaskScheduler::Execute(uint usMax)
 
 	TimeCost tc;
 
-	int i = -1;
-	while(_Tasks.MoveNext(i))
+	IArray<Task>& ts = *_Tasks;
+	for(int i=0; i<ts.Length(); i++)
 	{
-		Task* task = _Tasks[i];
-		if(!task || !task->Enable) continue;
+		Task* task = &ts[i];
+		if(task->ID == 0 || !task->Enable) continue;
 
 		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
@@ -261,26 +285,26 @@ void TaskScheduler::Execute(uint usMax)
 // 显示状态
 void TaskScheduler::ShowStatus(void* param)
 {
-	TaskScheduler* ts = (TaskScheduler*)param;
+	TaskScheduler* host = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 ", ts->Cost, ts->MaxCost);
+	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 ", host->Cost, host->MaxCost);
 	Time.Now().Show(true);
 
-	int i = -1;
-	while(ts->_Tasks.MoveNext(i))
+	IArray<Task>& ts = *(host->_Tasks);
+	for(int i=0; i<ts.Length(); i++)
 	{
-		Task* task = ts->_Tasks[i];
-		if(task) task->ShowStatus();
+		Task& task = ts[i];
+		if(task.ID) task.ShowStatus();
 	}
 }
 
 Task* TaskScheduler::operator[](int taskid)
 {
-	int i = -1;
-	while(_Tasks.MoveNext(i))
+	IArray<Task>& ts = *_Tasks;
+	for(int i=0; i<ts.Length(); i++)
 	{
-		Task* task = _Tasks[i];
-		if(task && task->ID == taskid) return task;
+		Task& task = ts[i];
+		if(task.ID == taskid) return &task;
 	}
 
 	return NULL;
