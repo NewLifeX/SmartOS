@@ -124,6 +124,8 @@ TaskScheduler::~TaskScheduler()
 
 void TaskScheduler::Set(IArray<Task>* tasks)
 {
+	assert_param2(_Tasks == NULL, "已设置任务数组，禁止覆盖！");
+
 	_Tasks = tasks;
 }
 
