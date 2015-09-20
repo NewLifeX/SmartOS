@@ -1058,6 +1058,23 @@ void HardSocket::Change(const IPEndPoint& remote)
 	// 设置端口目的(远程)端口号
 	SocRegWrite2(DPORT, __REV16(remote.Port));
 
+	// 设置Socket为UDP模式
+	S_Mode mode;
+	mode.Init();
+	mode.Protocol	= Protocol;
+	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
+	SocRegWrite(MR, mode.ToByte());
+
+	S_Interrupt ir;
+	ir.Init(0xFF);
+	// 清空所有中断位
+	WriteInterrupt(ir.ToByte());
+	// 打开所有中断形式
+	SocRegWrite(IMR, ir.ToByte());
+
+	ir.Init(SocRegRead(IMR));
+
+	WriteConfig(RECV);
 	WriteConfig(OPEN);
 }
 
@@ -1290,7 +1307,14 @@ bool UdpClient::SendTo(const ByteArray& bs, const IPEndPoint& remote)
 	if(remote == Remote) return Send(bs);
 
 	Change(remote);
+	/*IPEndPoint ep = Remote;
+	Close();
+	Remote = remote;
+	Open();*/
 	bool rs = Send(bs);
+	/*Close();
+	Remote = ep;
+	Open();*/
 	Change(Remote);
 
 	return rs;
