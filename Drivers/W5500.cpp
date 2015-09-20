@@ -3,12 +3,6 @@
 
 #define NET_DEBUG DEBUG
 
-#if NET_DEBUG==1
-	#define w5500_printf debug_printf
-#else
-	__inline void w5500_printf( const char *format, ... ) {}
-#endif
-
 /*
 硬件设置部分
 硬件:TCP,UDP,ICMP,IPv4,ARP,IGMP,PPPoE
@@ -213,23 +207,19 @@ void W5500::Init()
 	_Lock	= 0;
 	_spi	= NULL;
 
-	//memset(&_sockets, NULL, sizeof(_sockets));
 	ArrayZero(_sockets);
 
 	PhaseOM = 0x00;
-	//RX_FREE_SIZE = 0x16;
-	//TX_FREE_SIZE = 0x16;
 
-	RetryTime		= 200;
-	RetryCount		= 8;
-	LowLevelTime	= 0;
-	PingACK			= true;
-	EnableDHCP		= true;
-	Opened			= false;
-	TaskID			= 0;
+	RetryTime	= 200;
+	RetryCount	= 8;
+	LowLevelTime= 0;
+	PingACK		= true;
+	EnableDHCP	= true;
+	Opened		= false;
+	TaskID		= 0;
 
-	const byte defip_[] = {192, 168, 1, 1};
-	IPAddress defip(defip_);
+	IPAddress defip(192, 168, 1, 1);
 
 	// 随机IP，取ID最后一个字节
 	IP = defip;
@@ -252,10 +242,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
 	assert_ptr(spi);
 
-	if(rst != P0)
-	{
-		Rst.Set(rst);
-	}
+	if(rst != P0) Rst.Set(rst);
 	if(irq != P0)
 	{
 		// 中断引脚初始化
@@ -279,7 +266,7 @@ bool W5500::Open()
 	ShowInfo();
 
 	if(!Rst.Open()) return false;
-	debug_printf("硬件复位 \r\n");
+	//debug_printf("硬件复位 \r\n");
 	Rst = false;		// 低电平有效
 	Sys.Delay(600);		// 最少500us
 	Rst = true;
@@ -312,13 +299,15 @@ bool W5500::Open()
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
 	}
 
-	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
+	//if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
+	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
+	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, 0, 1000000, "W5500中断");
 
 	Opened = true;
 
 #if NET_DEBUG
-	//StateShow();
-	//PhyStateShow();
+	StateShow();
+	PhyStateShow();
 #endif
 
 	return true;
@@ -356,15 +345,15 @@ void W5500::Config()
 	// 工作模式
 	T_Mode mr;
 	mr.Init(gen.MR);
-	mr.PB = PingACK ? 0 : 1;	// 0 是有响应
-	mr.FARP = 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
-	gen.MR = mr.ToByte();
+	mr.PB	= PingACK ? 0 : 1;	// 0 是有响应
+	mr.FARP	= 1;				// 强迫ARP模式下，无论是否发送数据都会强迫ARP请求
+	gen.MR	= mr.ToByte();
 
 	// 打开中断
 	T_Interrupt ir;
 	ir.Init(gen.IMR);	// 中断屏蔽  0：屏蔽
-	ir.UNREACH = 1;		// 目标不可达
-	ir.CONFLICT = 1;	// IP冲突
+	ir.UNREACH	= 1;		// 目标不可达
+	ir.CONFLICT	= 1;	// IP冲突
 	gen.IMR = ir.ToByte();
 
 	// 一次性全部写入
@@ -410,10 +399,10 @@ void W5500::OnClose()
 	Rst.Close();
 }
 
-// 复位（软硬兼施）
+// 复位
 void W5500::Reset()
 {
-	debug_printf("软件复位 \r\n");
+	//debug_printf("软件复位 \r\n");
 
 	T_Mode mr;
 	mr.Init();
@@ -422,7 +411,7 @@ void W5500::Reset()
 	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
 	// 必须要等一会，否则初始化会失败
 	//Sys.Delay(600);		// 最少500us
-	TimeWheel tw(0, 0, 600);
+	TimeWheel tw(0, 10, 0);
 	while(!ReadByte(0x0039) && !tw.Expired());
 }
 
@@ -444,10 +433,10 @@ void W5500::StateShow()
 		debug_printf("PPPoE: %d   ",mr.PPPoE);
 		debug_printf("FARP: %d   ",mr.FARP);
 		debug_printf("\r\n");
-	debug_printf("GAR (网关地址): 	%s\r\n", Gateway.ToString().GetBuffer());
-	debug_printf("SUBR (子网掩码): 	%s\r\n", Mask.ToString().GetBuffer());
-	debug_printf("SHAR (源MAC地址):	%s\r\n", Mac.ToString().GetBuffer());
-	debug_printf("SIPR (源IP地址): 	%s\r\n", IP.ToString().GetBuffer());
+	debug_printf("GAR (网关地址): 	");	Gateway.Show(true);
+	debug_printf("SUBR (子网掩码): 	");	Mask.Show(true);
+	debug_printf("SHAR (源MAC地址):	");	Mac.Show(true);
+	debug_printf("SIPR (源IP地址): 	");	IP.Show(true);
 	debug_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
 	debug_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
 		T_Interrupt imr;
@@ -460,15 +449,6 @@ void W5500::StateShow()
 	debug_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n", gen.SIMR);
 	debug_printf("RTR (重试时间): 	%d\r\n", RetryTime);		// 回头计算一下
 	debug_printf("RCR (重试计数): 	%d 次\r\n", RetryCount);
-
-// 暂且不输出的
-//		byte PTIMER;		// PPP 连接控制协议请求定时寄存器	0x001c
-//		byte PMAGIC;		// PPP 连接控制协议幻数寄存器		0x001d
-//		byte PHAR[6];		// PPPoE 模式下目标 MAC 寄存器		0x001e
-//		byte PSID[2];		// PPPoE 模式下会话 ID 寄存器		0x0024
-//		byte PMRU[2];		// PPPoE 模式下最大接收单元			0x0026
-//		byte UIPR[4];		// 无法抵达 IP 地址寄存器【只读】	0x0028
-//		byte UPORTR[2];		// 无法抵达端口寄存器【只读】		0x002c
 }
 
 // 输出物理链路层状态
@@ -631,6 +611,7 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 
 	W5500* net = (W5500*)param;
 	//net->OnIRQ();
+	//debug_printf("OnIRQ \r\n");
 	Sys.SetTask(net->TaskID, true, 0);
 }
 
@@ -640,6 +621,8 @@ void W5500::OnIRQ()
 	byte dat = ReadByte(offsetof(TGeneral, IR));
 	if(dat != 0x00)
 	{
+		debug_printf("W5500::OnIRQ 0x%02X \r\n", dat);
+
 		// 分析IR
 		T_Interrupt ir;
 		ir.Init(dat);
@@ -688,6 +671,13 @@ void W5500::OnIRQ()
 		}
 		// 清空 SIR 中断
 		WriteByte(offsetof(TGeneral, SIR), dat);
+	}
+	else
+	{
+#if NET_DEBUG
+		//StateShow();
+		//PhyStateShow();
+#endif
 	}
 
 	// 中断位清零 说明书说的不够清晰 有待完善
@@ -993,21 +983,10 @@ bool HardSocket::OnOpen()
 	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
 	SocRegWrite(MR, mode.ToByte());
 
-	S_Interrupt ir;
-	ir.Init(0xFF);
 	// 清空所有中断位
-	WriteInterrupt(ir.ToByte());
+	WriteInterrupt(0xFF);
 	// 打开所有中断形式
-	SocRegWrite(IMR, ir.ToByte());
-
-	ir.Init(SocRegRead(IMR));
-
-	//debug_printf("IMR(中断屏蔽寄存器):		0x%02X\r\n",ir.ToByte());
-	//	debug_printf("	CON:		%d\r\n",ir.CON);
-	//	debug_printf("	DISCON:	%d\r\n",ir.DISCON);
-	//	debug_printf("	RECV:		%d\r\n",ir.RECV);
-	//	debug_printf("	TIMEOUT:	%d\r\n",ir.TIMEOUT);
-	//	debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);
+	SocRegWrite(IMR, 0xFF);
 
 	WriteConfig(RECV);
 	// 打开Socket
@@ -1049,33 +1028,10 @@ void HardSocket::Change(const IPEndPoint& remote)
 	remote.Show(true);
 #endif
 
-	WriteConfig(CLOSE);
-
-	// 设置自己的端口号
-	SocRegWrite2(PORT, __REV16(Local.Port));
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, remote.Address.ToArray());
 	// 设置端口目的(远程)端口号
 	SocRegWrite2(DPORT, __REV16(remote.Port));
-
-	// 设置Socket为UDP模式
-	S_Mode mode;
-	mode.Init();
-	mode.Protocol	= Protocol;
-	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
-	SocRegWrite(MR, mode.ToByte());
-
-	S_Interrupt ir;
-	ir.Init(0xFF);
-	// 清空所有中断位
-	WriteInterrupt(ir.ToByte());
-	// 打开所有中断形式
-	SocRegWrite(IMR, ir.ToByte());
-
-	ir.Init(SocRegRead(IMR));
-
-	WriteConfig(RECV);
-	WriteConfig(OPEN);
 }
 
 // 接收数据
@@ -1167,6 +1123,7 @@ void HardSocket::Recovery()
 void HardSocket::Process()
 {
 	byte reg = ReadInterrupt();
+	//debug_printf("Interrupt 0x%02X \r\n", reg);
 
 	OnProcess(reg);
 
@@ -1220,7 +1177,7 @@ bool TcpClient::OnOpen()
 		if(ir.TIMEOUT)
 		{
 			// 清除超时中断
-			WriteInterrupt(ir.TIMEOUT);
+			WriteInterrupt(ir.ToByte());
 			return false;
 		}
 	}
