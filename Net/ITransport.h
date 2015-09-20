@@ -139,9 +139,11 @@ public:
 
 	virtual void Set(ITransport* port)
 	{
-		if(Port) Port->Register(NULL);
-
-		Port = port;
+		if(port) 
+		{
+			Port = port;
+			Port->Register(NULL);
+		}
 
 		if(Port) Port->Register(OnPortReceive, this);
 	}
