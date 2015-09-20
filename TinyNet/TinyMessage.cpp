@@ -1,4 +1,7 @@
 ﻿#include "Time.h"
+
+#include "Security\Crc.h"
+
 #include "TinyMessage.h"
 
 #define MSG_DEBUG DEBUG
@@ -58,7 +61,7 @@ bool TinyMessage::Read(Stream& ms)
 	Checksum = ms.Read<ushort>();
 
 	// 连续的，可以直接计算Crc16
-	Crc = Sys.Crc16(p, HeaderSize + Length);
+	Crc = Crc::Hash16(p, HeaderSize + Length);
 
 	// 后面可能有TTL
 	if(UseTTL)
@@ -98,7 +101,7 @@ void TinyMessage::Write(Stream& ms) const
 	ms.Write((byte*)&Dest, 0, HeaderSize);
 	if(Length > 0) ms.Write(Data, 0, Length);
 
-	p->Checksum = p->Crc = Sys.Crc16(buf, HeaderSize + Length);
+	p->Checksum = p->Crc = Crc::Hash16(buf, HeaderSize + Length);
 	// 写入真正的校验码
 	ms.Write(Checksum);
 
@@ -116,7 +119,7 @@ void TinyMessage::ComputeCrc()
 	Write(ms);
 
 	// 扣除不计算校验码的部分
-	Checksum = Crc = Sys.Crc16(ms.GetBuffer(), HeaderSize + Length);
+	Checksum = Crc = Crc::Hash16(ms.GetBuffer(), HeaderSize + Length);
 }
 
 // 验证消息校验码是否有效

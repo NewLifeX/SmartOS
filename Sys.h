@@ -110,11 +110,6 @@ public:
     bool (*OnError)(uint code);  // 系统出错时引发，返回值决定是否停止系统
     Func OnStop;
 
-    // CRC32校验
-    //uint Crc(const void* buf, uint len);
-    uint Crc(const void* buf, uint len, uint crc = 0);
-	ushort Crc16(const void* buf, uint len, ushort crc = 0xFFFF);
-
 	// 显示十六进制数据，指定分隔字符
 	void ShowHex(byte* buf, uint len, char sep = '\0');
 	// 显示字符串，不指定长度时自动找\0
