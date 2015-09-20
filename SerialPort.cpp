@@ -339,7 +339,7 @@ void SerialPort::ReceiveTask(void* param)
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
 
 	// 从栈分配，节省内存
-	ByteArray bs;
+	ByteArray bs(0x40);
 	uint len = sp->Read(bs);
 	if(len)
 	{

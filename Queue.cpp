@@ -140,7 +140,7 @@ uint Queue::Read(ByteArray& bs, bool safe)
 	if(_size == 0) return 0;
 
 	byte* buf	= bs.GetBuffer();
-	uint len	= bs.Length();
+	uint len	= bs.Capacity();
 
 	if(len > _size) len = _size;
 
