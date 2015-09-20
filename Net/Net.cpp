@@ -67,6 +67,11 @@ ByteArray IPAddress::ToArray() const
 	return ByteArray((byte*)&Value, 4, true);
 }
 
+void IPAddress::CopyTo(byte* ips) const
+{
+	if(ips) memcpy(ips, (byte*)&Value, 4);
+}
+
 String& IPAddress::ToStr(String& str) const
 {
 	byte* ips = (byte*)&Value;
@@ -202,6 +207,11 @@ ByteArray MacAddress::ToArray() const
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
 	return ByteArray((byte*)&Value, 6, true);
+}
+
+void MacAddress::CopyTo(byte* macs) const
+{
+	if(macs) memcpy(macs, (byte*)&Value, 6);
 }
 
 /*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)

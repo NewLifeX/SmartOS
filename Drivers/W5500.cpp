@@ -306,10 +306,10 @@ bool W5500::Open()
 	ReadFrame(0, bs);
 
 	// 设置地址、网关、掩码、MAC等
-	Gateway.ToArray().CopyTo(gen.GAR);
-	Mask.ToArray().CopyTo(gen.SUBR);
-	Mac.ToArray().CopyTo(gen.SHAR);
-	IP.ToArray().CopyTo(gen.SIPR);
+	Gateway	.CopyTo(gen.GAR);
+	Mask	.CopyTo(gen.SUBR);
+	Mac		.CopyTo(gen.SHAR);
+	IP		.CopyTo(gen.SIPR);
 
 	gen.RTR = RetryTime / 10;
 	gen.RCR = RetryCount;
