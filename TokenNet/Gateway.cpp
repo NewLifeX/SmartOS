@@ -7,9 +7,9 @@
 bool OnLocalReceived(Message& msg, void* param);
 bool OnRemoteReceived(Message& msg, void* param);
 
-void TokenToTiny(TokenMessage& msg, TinyMessage& msg2);
-void TinyToToken(TinyMessage& msg, TokenMessage& msg2);
-void OldTinyToToken(TinyMessage& msg, TokenMessage& msg2);
+void TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
+void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
+void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2);
 
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
@@ -100,7 +100,7 @@ bool OnRemoteReceived(Message& msg, void* param)
 }
 
 // 数据接收中心
-bool Gateway::OnLocal(TinyMessage& msg)
+bool Gateway::OnLocal(const TinyMessage& msg)
 {
 	// 本地处理。注册、上线、同步时间等
 	/*switch(msg.Code)
@@ -129,7 +129,7 @@ bool Gateway::OnLocal(TinyMessage& msg)
 		if(IsOldOrder)			
 		   OldTinyToToken(msg, tmsg);
 	    else
-		   TinyToToken(msg,tmsg);
+		   TinyToToken(msg, tmsg);
 	
 		Client->Send(tmsg);
 	}
@@ -137,7 +137,7 @@ bool Gateway::OnLocal(TinyMessage& msg)
 	return true;
 }
 
-bool Gateway::OnRemote(TokenMessage& msg)
+bool Gateway::OnRemote(const TokenMessage& msg)
 {
 	// 本地处理
 	switch(msg.Code)
@@ -146,9 +146,11 @@ bool Gateway::OnRemote(TokenMessage& msg)
 			// 登录以后自动发送设备列表和设备信息
 			if(AutoReport && msg.Reply && Client->Token != 0)
 			{
-				TokenMessage msg;
-				msg.Code = 0x21;
-				OnGetDeviceList(msg);
+				Sys.Sleep(1000);
+				
+				TokenMessage rs;
+				rs.Code = 0x21;
+				OnGetDeviceList(rs);
 
 				//SendDeviceInfo(dv);
 				for(int i=0; i<Server->Devices.Count(); i++)
@@ -173,20 +175,14 @@ bool Gateway::OnRemote(TokenMessage& msg)
 		debug_printf("Gateway::Remote ");
 		msg.Show();
 
-		// 需要转发给内网的数据，都至少带有节点ID
-	/*	if(msg.Length <= 0)
-		{
-			debug_printf("远程网收到的消息应该带有附加数据\r\n");
-			return false;
-		}
-		*/
 		TinyMessage tmsg;
 		TokenToTiny(msg, tmsg);
 		bool rs = Server->Dispatch(tmsg);
 		if(rs)
 		{
-			TinyToToken(tmsg, msg);
-			return Client->Reply(msg);
+			TokenMessage msg2;
+			TinyToToken(tmsg, msg2);
+			return Client->Reply(msg2);
 		}
 	}
 
@@ -194,7 +190,7 @@ bool Gateway::OnRemote(TokenMessage& msg)
 }
 
 // 设备列表 0x21
-bool Gateway::OnGetDeviceList(Message& msg)
+bool Gateway::OnGetDeviceList(const Message& msg)
 {
 	if(msg.Reply) return false;
 
@@ -221,7 +217,7 @@ bool Gateway::OnGetDeviceList(Message& msg)
 }
 
 // 设备信息 0x25
-bool Gateway::OnGetDeviceInfo(Message& msg)
+bool Gateway::OnGetDeviceInfo(const Message& msg)
 {
 	if(msg.Reply) return false;
 
@@ -248,7 +244,7 @@ bool Gateway::OnGetDeviceInfo(Message& msg)
 }
 
 // 发送设备信息
-bool Gateway::SendDeviceInfo(Device* dv)
+bool Gateway::SendDeviceInfo(const Device* dv)
 {
 	if(!dv) return false;
 
@@ -281,7 +277,7 @@ void Gateway::SetMode(bool student)
 	Client->Send(msg);
 }
 
-bool Gateway::OnMode(Message& msg)
+bool Gateway::OnMode(const Message& msg)
 {
 	bool rs = msg.Data[0] != 0;
 	SetMode(rs);
@@ -341,7 +337,7 @@ void Gateway::DeviceOffline(byte id)
 }
 
 // 节点删除 0x26
-void Gateway::OnDeviceDelete(Message& msg)
+void Gateway::OnDeviceDelete(const Message& msg)
 {
 	if(msg.Reply) return;
 	if(msg.Length == 0) return;
@@ -362,7 +358,7 @@ void Gateway::OnDeviceDelete(Message& msg)
 
 }
 
-void  TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
+void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 {
 
 	// 处理Reply标记
@@ -405,7 +401,7 @@ void  TokenToTiny(TokenMessage& msg, TinyMessage& msg2)
 	}	
 }
 
-void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
+void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 {
 		// 处理Reply标记	
 	
@@ -420,7 +416,7 @@ void TinyToToken(TinyMessage& msg, TokenMessage& msg2)
 		msg2.Length = 1 + msg.Length;
 }
 
-void OldTinyToToken(TinyMessage& msg, TokenMessage& msg2)
+void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 {	// 处理Reply标记	
 	  if((msg.Length-1)%4==0)//整除4为模拟量读取
 	   {

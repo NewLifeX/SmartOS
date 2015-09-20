@@ -28,24 +28,24 @@ public:
 	MessageHandler Received;
 
 	// 数据接收中心
-	bool OnLocal(TinyMessage& msg);
-	bool OnRemote(TokenMessage& msg);
+	bool OnLocal(const TinyMessage& msg);
+	bool OnRemote(const TokenMessage& msg);
 
 	/******** 远程网业务逻辑 ********/
 	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
 
 	// 设备列表 0x21
-	bool OnGetDeviceList(Message& msg);
+	bool OnGetDeviceList(const Message& msg);
 	// 设备信息 0x25
-	bool OnGetDeviceInfo(Message& msg);
+	bool OnGetDeviceInfo(const Message& msg);
 	// 发送设备信息
-	bool SendDeviceInfo(Device* dv);
+	bool SendDeviceInfo(const Device* dv);
 
 	// 学习模式 0x20
-	bool	Student;
+	bool Student;
 	void SetMode(bool student);
-	bool OnMode(Message& msg);
+	bool OnMode(const Message& msg);
 
 	// 节点注册入网 0x22
 	void DeviceRegister(byte id);
@@ -57,11 +57,11 @@ public:
 	void DeviceOffline(byte id);
 
 	// 节点删除 0x26
-	void OnDeviceDelete(Message& msg);
+	void OnDeviceDelete(const Message& msg);
 
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
-	bool OnDiscover(TinyMessage& msg);
+	bool OnDiscover(const TinyMessage& msg);
 };
 
 #endif
