@@ -131,6 +131,7 @@ private:
 public:
 	ITransport*	Port;	// 传输口
 
+	PackPort(){ Port = NULL; }
 	virtual ~PackPort()
 	{
 		if(Port) Port->Register(NULL);
@@ -139,12 +140,8 @@ public:
 
 	virtual void Set(ITransport* port)
 	{
-		if(port) 
-		{
-			Port = port;
-			Port->Register(NULL);
-		}
-
+		if(Port) Port->Register(NULL);
+		Port = port;
 		if(Port) Port->Register(OnPortReceive, this);
 	}
 
