@@ -447,6 +447,7 @@ InputPort& InputPort::Init(Pin pin, bool invert)
 	Port::Set(pin);
 
 	Invert	= invert;
+	Mode	= 0x03;
 
 	return *this;
 }
@@ -472,6 +473,15 @@ bool InputPort::Read(Pin pin)
 
 void InputPort::OnPress(bool down)
 {
+	if(down)
+	{
+		if(Mode & 0x01 == 0) return;
+	}
+	else
+	{
+		if(Mode & 0x02 == 0) return;
+	}
+
 	if(HardEvent)
 	{
 		if(Handler) Handler(_Pin, down, Param);

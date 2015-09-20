@@ -19,8 +19,8 @@ class Port : public Object
 public:
     GPIO_TypeDef*	Group;		// 针脚组
     Pin				_Pin;		// 针脚
-	bool			Opened;		// 是否已经打开
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
+	bool			Opened;		// 是否已经打开
 
     Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
@@ -142,6 +142,7 @@ public:
     bool Invert;		// 是否倒置输入输出
 
 	bool HardEvent;		// 是否使用硬件事件。默认false
+	byte Mode;			// 触发模式，避免事件被覆盖。0x01按下，0x02弹起，默认0x03
 
 	InputPort() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
