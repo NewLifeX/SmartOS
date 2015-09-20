@@ -118,6 +118,9 @@ public:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
+	// 应用配置，修改远程地址和端口
+	void Change(const IPEndPoint& remote);
+
 	virtual bool OnWrite(const ByteArray& bs);
 	virtual uint OnRead(ByteArray& bs);
 
@@ -168,7 +171,9 @@ private:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500* host) : HardSocket(host, 0x02) { DataLength = 0;}
+	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
+
+	virtual bool SendTo(const ByteArray& bs, const IPEndPoint& remote);
 
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
@@ -176,10 +181,6 @@ public:
 	virtual void RaiseReceive();
 
 private:
-	// 数据包头和数据分开读取
-	// 解包头得到数据长度，由DataLength传递长度
-	// 如果剩余数据不够 DataLength 则放弃本次读取
-	ushort DataLength;
 };
 
 #endif

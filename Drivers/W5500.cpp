@@ -953,10 +953,12 @@ bool HardSocket::OnOpen()
 	}
 	Local.Address = _Host->IP;
 
+#if DEBUG
 	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);
+#endif
 
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
@@ -1016,13 +1018,35 @@ bool HardSocket::OnOpen()
 
 void HardSocket::OnClose()
 {
-	WriteConfig(CLOSE);	//打开不成功,关闭Socket
+	WriteConfig(CLOSE);
 	WriteInterrupt(0xFF);
 
 	debug_printf("%s::Close ", Protocol == 0x01 ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);
+}
+
+// 应用配置，修改远程地址和端口
+void HardSocket::Change(const IPEndPoint& remote)
+{
+#if DEBUG
+	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
+	Local.Show(false);
+	debug_printf(" => ");
+	remote.Show(true);
+#endif
+
+	WriteConfig(CLOSE);
+
+	// 设置自己的端口号
+	SocRegWrite2(PORT, __REV16(Local.Port));
+	// 设置端口目的(远程)IP地址
+	SocRegWrites(DIPR, remote.Address.ToArray());
+	// 设置端口目的(远程)端口号
+	SocRegWrite2(DPORT, __REV16(remote.Port));
+
+	WriteConfig(OPEN);
 }
 
 // 接收数据
@@ -1291,6 +1315,17 @@ void TcpClient::RaiseReceive()
 }
 
 /****************************** UdpClient ************************************/
+
+bool UdpClient::SendTo(const ByteArray& bs, const IPEndPoint& remote)
+{
+	if(remote == Remote) return Send(bs);
+
+	Change(remote);
+	bool rs = Send(bs);
+	Change(Remote);
+
+	return rs;
+}
 
 void UdpClient::OnProcess(byte reg)
 {

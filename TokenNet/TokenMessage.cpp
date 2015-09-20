@@ -463,13 +463,8 @@ void TokenController::ShowStat()
 	if(sock)
 	{
 		ByteArray bs(str);
-		//debug_printf("握手广播 ");
-		//udp->Send(bs, IPAddress::Broadcast(), 514);
-		IPEndPoint ep		= sock->Remote;
-		sock->Remote.Port	= 514;
-		sock->Remote.Address= IPAddress::Broadcast();
-		sock->Send(bs);
-		sock->Remote		= ep;
+		IPEndPoint ep(IPAddress::Broadcast(), 514);
+		sock->SendTo(bs, ep);
 	}
 }
 

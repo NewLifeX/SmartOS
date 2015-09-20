@@ -124,6 +124,7 @@ public:
 
 	// 发送数据
 	virtual bool Send(const ByteArray& bs) = 0;
+	virtual bool SendTo(const ByteArray& bs, const IPEndPoint& remote) { return Send(bs); }
 	// 接收数据
 	virtual uint Receive(ByteArray& bs) = 0;
 };
