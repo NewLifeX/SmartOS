@@ -202,6 +202,8 @@ W5500::~W5500()
 {
 	Close();
 
+	Sys.RemoveTask(TaskID);
+
 	delete _spi;
 }
 
@@ -224,6 +226,7 @@ void W5500::Init()
 	PingACK			= true;
 	EnableDHCP		= true;
 	Opened			= false;
+	TaskID			= 0;
 
 	const byte defip_[] = {192, 168, 1, 1};
 	IPAddress defip(defip_);
@@ -309,6 +312,8 @@ bool W5500::Open()
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
 	}
 
+	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
+
 	Opened = true;
 
 #if NET_DEBUG
@@ -317,6 +322,12 @@ bool W5500::Open()
 #endif
 
 	return true;
+}
+
+void W5500::IRQTask(void* param)
+{
+	W5500* net = (W5500*)param;
+	net->OnIRQ();
 }
 
 void W5500::Config()
@@ -618,8 +629,9 @@ void W5500::OnIRQ(Pin pin, bool down, void* param)
 {
 	if(!down) return;	// 低电平中断
 
-	W5500* send = (W5500*)param;
-	send->OnIRQ();
+	W5500* net = (W5500*)param;
+	//net->OnIRQ();
+	Sys.SetTask(net->TaskID, true, 0);
 }
 
 void W5500::OnIRQ()
@@ -1145,39 +1157,12 @@ void HardSocket::Process()
 	WriteInterrupt(reg);
 }
 
-void HardSocket::ReceiveTask(void* param)
-{
-	assert_ptr(param);
-
-	HardSocket* socket = (HardSocket*)param;
-	socket->RaiseReceive();
-}
-
-void HardSocket::Register(TransportHandler handler, void* param)
-{
-	ITransport::Register(handler, param);
-
-	// 如果有注册事件，则启用接收任务
-	if(handler)
-	{
-		// 事件型，只调用一次型
-		if(!_tidRecv) _tidRecv = Sys.AddTask(ReceiveTask, this, -1, -1, "W5500接收");
-	}
-	else
-	{
-		Sys.RemoveTask(_tidRecv);
-	}
-}
-
 /****************************** TcpClient ************************************/
 
 void TcpClient::Init()
 {
 	Linked = 0;
-	_tidRecv = 0;
 
-	// 事件型，只调用一次型
-	_tidRecv = Sys.AddTask(RodyguardTask, this, -1, -1, "W5500TCP 维护");
 	// 关闭任务，等打开以后再开
 	if(!Opened) Sys.SetTask(_tidRodyguard, false);
 }
@@ -1258,23 +1243,7 @@ void TcpClient::OnProcess(byte reg)
 	ir.Init(reg);
 	if(ir.RECV)
 	{
-		// 激活异步线程
-		if(_tidRecv)
-		{
-			//debug_printf("激活异步接收线程\r\n");
-			Sys.SetTask(_tidRecv, true, 0);
-			//ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
-		}
-#ifdef DEBUG
-		else
-		{
-			ByteArray bs;
-			int size = Receive(bs);
-			debug_printf("收到数据：");
-			bs.Show();
-			debug_printf("\r\n");
-		}
-#endif
+		RaiseReceive();
 	}
 	if(ir.CON)
 	{
@@ -1338,23 +1307,7 @@ void UdpClient::OnProcess(byte reg)
 
 	if(ir.RECV)
 	{
-		// 激活异步线程
-		if(_tidRecv)
-		{
-			//debug_printf("激活异步接收线程\r\n");
-			Sys.SetTask(_tidRecv, true, 0);
-			//ir.RECV = 0;	// 接收位不清空  方便异步线程判断状态
-		}
-#ifdef DEBUG
-		else
-		{
-			ByteArray bs;
-			int size = Receive(bs);
-			debug_printf("收到数据：");
-			bs.Show();
-			debug_printf("\r\n");
-		}
-#endif
+		RaiseReceive();
 	}
 	//	SEND OK   不需要处理 但要清空中断位
 }

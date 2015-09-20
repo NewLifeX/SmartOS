@@ -47,6 +47,7 @@ public:
 	bool		EnableDHCP;
 
 	bool		Opened;	// 是否已经打开
+	uint		TaskID;
 
 	// 构造
 	W5500();
@@ -79,6 +80,7 @@ public:
 private:
 	// 中断脚回调
 	static void OnIRQ(Pin pin, bool down, void* param);
+	static void IRQTask(void* param);
 	void OnIRQ();
 
 public:
@@ -106,8 +108,6 @@ public:
 	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
 	byte Protocol;	// 协议
 
-	uint _tidRecv;	// 收数据线程
-
 	HardSocket(W5500* host, byte protocol);
 	virtual ~HardSocket();
 
@@ -128,9 +128,6 @@ public:
 	virtual bool Send(const ByteArray& bs);
 	// 接收数据
 	virtual uint Receive(ByteArray& bs);
-
-	static void ReceiveTask(void* param);
-	virtual void Register(TransportHandler handler, void* param);
 
 	// 恢复配置
 	virtual void Recovery();
