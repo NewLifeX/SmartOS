@@ -2,8 +2,8 @@
 
 
 InputPort* Button_GrayLevel::ACZero = NULL;
-byte Button_GrayLevel::OnGrayLevel	= 0x00;			// 开灯时 led 灰度
-byte Button_GrayLevel::OffGrayLevel	= 0xff;			// 关灯时 led 灰度
+byte Button_GrayLevel::OnGrayLevel	= 0xff;			// 开灯时 led 灰度
+byte Button_GrayLevel::OffGrayLevel	= 0x00;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime=2300;
 
 Button_GrayLevel::Button_GrayLevel()
@@ -31,9 +31,10 @@ void Button_GrayLevel::Set(Pin key, Pin relay)
 void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 {
 	assert_param(key != P0);
-
-	Key.Set(key).Open();
+	Key.HardEvent = true;
+	Key.Set(key);
 	Key.Register(OnPress, this);
+	Key.Open();
 
 	if(relay != P0)
 	{
@@ -57,7 +58,7 @@ void Button_GrayLevel::RenewGrayLevel()
 {
 	if(_GrayLevelDrive)
 	{
-		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? OnGrayLevel : OffGrayLevel;
+		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? (0xff-OnGrayLevel) : (0xff-OffGrayLevel);
 		_GrayLevelDrive->Start();
 	}
 }
@@ -74,7 +75,6 @@ void Button_GrayLevel::OnPress(Pin pin, bool down)
 	if(!down)
 	{
 		SetValue(!_Value);
-
 		if(_Handler) _Handler(this, _Param);
 	}
 }

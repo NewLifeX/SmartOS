@@ -25,9 +25,11 @@ void Button::Set(Pin key, Pin led, Pin relay)
 void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 {
 	assert_param(key != P0);
-
-	Key.Set(key).Open();
+	
+	Key.HardEvent = true;
+	Key.Set(key);
 	Key.Register(OnPress, this);
+	Key.Open();
 
 	if(led != P0)
 	{
