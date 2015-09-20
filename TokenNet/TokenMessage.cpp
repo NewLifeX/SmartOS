@@ -1,7 +1,7 @@
 ﻿#include "Time.h"
 #include "TokenMessage.h"
 
-#include "TinyIP\Udp.h"
+#include "Net\Net.h"
 #include "Security\RC4.h"
 
 #define MSG_DEBUG DEBUG
@@ -175,7 +175,9 @@ void TokenController::Open()
 		Stat = new TokenStat();
 		//Stat->Start();
 		//debug_printf("TokenStat::令牌统计 ");
+#if DEBUG
 		_taskID = Sys.AddTask(StatTask, this, 5000000, 30000000, "令牌统计");
+#endif
 	}
 
 	Controller::Open();
@@ -457,17 +459,17 @@ void TokenController::ShowStat()
 	Stat->Clear();
 
 	// 向以太网广播
-	UdpSocket* udp = (UdpSocket*)Port;
-	if(udp && udp->Type == IP_UDP)
+	ISocket* sock = dynamic_cast<ISocket*>(Port);
+	if(sock)
 	{
 		ByteArray bs(str);
 		//debug_printf("握手广播 ");
 		//udp->Send(bs, IPAddress::Broadcast(), 514);
-		IPEndPoint ep = udp->Remote;
-		udp->Remote.Port	= 514;
-		udp->Remote.Address	= IPAddress::Broadcast();
-		udp->Send(bs);
-		udp->Remote	= ep;
+		IPEndPoint ep		= sock->Remote;
+		sock->Remote.Port	= 514;
+		sock->Remote.Address= IPAddress::Broadcast();
+		sock->Send(bs);
+		sock->Remote		= ep;
 	}
 }
 
