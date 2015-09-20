@@ -300,6 +300,27 @@ bool W5500::Open()
 	}
 	debug_printf("Hard Vision: %02X\r\n", ver);
 
+	Config();
+
+	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
+	for(int i=0; i<8; i++)
+	{
+		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Rx memory size=2k
+		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
+	}
+
+	Opened = true;
+
+#if NET_DEBUG
+	//StateShow();
+	//PhyStateShow();
+#endif
+
+	return true;
+}
+
+void W5500::Config()
+{
 	// 读所有寄存器
 	TGeneral gen;
 	ByteArray bs((byte*)&gen, sizeof(gen));
@@ -337,22 +358,6 @@ bool W5500::Open()
 
 	// 一次性全部写入
 	WriteFrame(0, bs);
-
-	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
-	for(int i=0; i<8; i++)
-	{
-		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Rx memory size=2k
-		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
-	}
-
-	Opened = true;
-
-#if NET_DEBUG
-	//StateShow();
-	//PhyStateShow();
-#endif
-
-	return true;
 }
 
 void W5500::ShowInfo()

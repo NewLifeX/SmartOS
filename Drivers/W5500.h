@@ -59,6 +59,7 @@ public:
 
 	bool Open();
 	bool Close();
+	void Config();
 	void ShowInfo();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
@@ -147,16 +148,16 @@ public:
 	virtual ~TcpClient();
 	virtual bool OnOpen();
 	virtual void OnClose();
-	
+
 	bool Listen();
-	
+
 	// 恢复配置，还要维护连接问题
 	virtual void Recovery();
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void RaiseReceive();
-	
+
 private:
 	bool Linked;
 	uint _tidRodyguard;	// 维护 Link 状态的任务
@@ -173,8 +174,8 @@ public:
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void RaiseReceive();
-	
-private:	
+
+private:
 	// 数据包头和数据分开读取
 	// 解包头得到数据长度，由DataLength传递长度
 	// 如果剩余数据不够 DataLength 则放弃本次读取
