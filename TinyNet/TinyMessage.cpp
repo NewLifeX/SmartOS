@@ -88,6 +88,7 @@ void TinyMessage::Write(Stream& ms) const
 	assert_param2(Code, "微网指令码不能为空");
 	assert_param2(Src, "微网源地址不能为空");
 	//assert_param2(Src != Dest, "微网目的地址不能等于源地址");
+	if(Src == Dest) return;
 
 	// 实际数据拷贝到占位符
 	TinyMessage* p = (TinyMessage*)this;
