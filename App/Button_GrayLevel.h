@@ -18,12 +18,15 @@ private:
 	void* _Param;
 	// 指示灯灰度驱动器 PWM;
 	PWM* 	_GrayLevelDrive;
-	byte	_PulseIndex;
 	
+	byte	_PulseIndex;
+private:
+	bool _Value; // 状态
+	ushort Reserved;	// 补足对齐问题
 	
 public:
-	string	Name;		// 按钮名称
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
+	string	Name;		// 按钮名称
 
 	InputPort	Key;	// 输入按键
 	OutputPort	Relay;	// 继电器
@@ -54,8 +57,6 @@ public:
 	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
 	static void SetACZeroAdjTime(int us){ ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
 
-private:
-	bool _Value; // 状态
 };
 
 #endif
