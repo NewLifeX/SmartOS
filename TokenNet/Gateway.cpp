@@ -170,7 +170,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	}
 
 	// 消息转发
-	if(msg.Code >= 0x10&&!msg.Error&&!msg.Length<25)
+	if(msg.Code >= 0x10&&!msg.Error&&msg.Length<25)
 	{
 		//debug_printf("Gateway::Remote ");
 		msg.Show();
