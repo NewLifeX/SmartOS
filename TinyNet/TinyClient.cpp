@@ -319,9 +319,10 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	// 服务端组网密码，退网使用
 	Config->ServerKey[0] = dm.HardID.Length();
 	dm.HardID.Save(Config->ServerKey, ArrayLength(Config->ServerKey));
-
-	debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Config->Speed);
-	Password.Show(true);
+	
+	debug_printf("组网成功！\r\n");
+	//debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Config->Speed);
+	//Password.Show(true); // 这里出错  问题未知
 
 	// 取消Join任务，启动Ping任务
 	ushort time = Config->PingTime;
@@ -354,7 +355,7 @@ void TinyClient::Ping()
 		Sys.SetTaskPeriod(_TaskID, 5000000);
 
 		Server		= 0;
-		Password	= 0;
+		Password.SetLength(0);
 
 		return;
 	}
