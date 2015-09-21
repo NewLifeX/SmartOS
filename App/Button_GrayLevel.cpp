@@ -28,10 +28,10 @@ void Button_GrayLevel::Set(Pin key, Pin relay)
 	Set(key, relay, true);
 }
 
-void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
+void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert, bool hardEvent)
 {
 	assert_param(key != P0);
-	//Key.HardEvent = true;
+	Key.HardEvent = true;
 	Key.Set(key);
 	Key.Register(OnPress, this);
 	Key.Open();

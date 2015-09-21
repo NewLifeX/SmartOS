@@ -38,7 +38,7 @@ public:
 	Button_GrayLevel();
 	~Button_GrayLevel();
 	
-	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
+	void Set(Pin key, Pin relay = P0, bool relayInvert = true, bool hardEvent = false);
 	void Set(Pin key, Pin relay);
 	// led 驱动器设置
 	void Set(PWM* drive, byte pulseIndex);
