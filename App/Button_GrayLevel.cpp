@@ -28,10 +28,12 @@ void Button_GrayLevel::Set(Pin key, Pin relay)
 	Set(key, relay, true);
 }
 
-void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert, bool hardEvent)
+void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 {
 	assert_param(key != P0);
-	Key.HardEvent = hardEvent;
+
+	// 中断过滤模式，0x01表示使用按下，0x02表示使用弹起
+	Key.Mode = 0x02;
 	Key.Set(key);
 	Key.Register(OnPress, this);
 	Key.Open();
