@@ -235,7 +235,12 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	// 网关内没有相关节点信息时不鸟他
 	if(FindDevice(msg.Src) == NULL)return false;
-	//if(!msg.Reply) Reply(msg);
+	// 响应 Ping 指令
+	TinyMessage rs;
+	rs.Code = msg.Code;
+	rs.Dest = msg.Src;
+	rs.Sequence	= msg.Sequence;
+	Reply(rs);
 
 	return true;
 }
