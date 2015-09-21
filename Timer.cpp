@@ -107,6 +107,8 @@ void Timer::Config()
 
 void Timer::Start()
 {
+	if(_started) return;
+
 #if DEBUG
     // 获取当前频率
 	uint clk = RCC_GetPCLK();

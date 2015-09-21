@@ -12,7 +12,6 @@ protected:
 	byte	_index;		// 第几个定时器，从0开始
 
 	void ClockCmd(bool state);
-	virtual void Config();
 	void SetHandler(bool set);
 public:
 	TIM_TypeDef* _Timer;
@@ -25,6 +24,7 @@ public:
 
 	virtual void Start();	// 开始定时器
 	virtual void Stop();	// 停止定时器
+	virtual void Config();
 	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
@@ -49,7 +49,6 @@ public:
 class PWM : public Timer
 {
 protected:
-	virtual void Config();
 
 public:
 	ushort Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
@@ -58,6 +57,7 @@ public:
 
 	virtual void Start();
 	virtual void Stop();
+	virtual void Config();
 
 // 连续调整占空比
 public:

@@ -59,7 +59,7 @@ void Button_GrayLevel::RenewGrayLevel()
 	if(_GrayLevelDrive)
 	{
 		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? (0xff-OnGrayLevel) : (0xff-OffGrayLevel);
-		_GrayLevelDrive->Start();
+		_GrayLevelDrive->Config();
 	}
 }
 
