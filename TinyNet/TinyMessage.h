@@ -126,7 +126,7 @@ public:
 class TinyController : public Controller
 {
 private:
-	MessageNode	_Queue[16];	// 消息队列。最多允许16个消息同时等待响应
+	MessageNode	_Queue[4];	// 消息队列。最多允许16个消息同时等待响应
 
 	uint		_Sequence;	// 控制器的消息序号
 	RingQueue	_Ring;		// 环形队列
