@@ -1,4 +1,4 @@
-﻿#include "Crc.h"
+#include "Crc.h"
 
 //
 // CRC 32 table for use under ZModem protocol, IEEE 802

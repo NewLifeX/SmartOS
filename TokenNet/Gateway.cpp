@@ -170,9 +170,9 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	}
 
 	// 消息转发
-	if(msg.Code >= 0x10&&!msg.Error)
+	if(msg.Code >= 0x10&&!msg.Error&&!msg.Length<25)
 	{
-		debug_printf("Gateway::Remote ");
+		//debug_printf("Gateway::Remote ");
 		msg.Show();
 
 		TinyMessage tmsg;
@@ -392,6 +392,7 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 
 	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
 	             msg2.Length = msg.Length;
+				 break;
         default:
 				 msg2.Code = msg.Code;
 				 if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
