@@ -1,4 +1,5 @@
 ﻿#include "Button_GrayLevel.h"
+#include "Time.h"
 
 #define BTN_DEBUG DEBUG
 //#define BTN_DEBUG 0
@@ -215,19 +216,19 @@ void Button_GrayLevel::SetValue(bool value)
 {
 	if(ACZero)
 	{
-		int time = ACZeroAdjTime;
-		if(!CheckZero(ACZero)) return;
-		//Sys.Delay(ACZeroAdjTime);		Sys.Dlay() 参数>=1000 就会切换任务  中断里面不允许
-		while(time > 700)
+		//int time = ACZeroAdjTime;
+		if(CheckZero(ACZero)) Time.Sleep(ACZeroAdjTime);
+		//Sys.Dlay() 参数>=1000 就会切换任务  中断里面不允许
+		/*while(time > 700)
 		{
 			Sys.Delay(700);
 			time-=700;
 		}
-		Sys.Delay(time);
-									// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
-									// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
-									// 故这里添加1ms延时
-									// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
+		Sys.Delay(time);*/
+		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
+		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
+		// 故这里添加1ms延时
+		// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
 	}
 
 	Relay = value;
