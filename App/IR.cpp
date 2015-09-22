@@ -63,8 +63,8 @@ bool IR::Send(byte *sendbuf,int length)
 	_timerTick=0x00000;
 	
 	// 去掉头字节长度
-	_buff = sendbuf++;
-	_length = length--;
+	_buff = sendbuf;
+	_length = length;
 	
 	// 模式切换
 	if(_mode != idle)return false;
@@ -76,7 +76,7 @@ bool IR::Send(byte *sendbuf,int length)
 	// 这一句执行时间比较长   影响第一个波形 怎么整
 	_timer->Start();	
 	// 放到后面来 定时器启动代码执行时间造成的影响明显变小
-	*_Outio=true;
+	*_Outio=false;
 	// 更新状态
 	_stat = Sending;
 
