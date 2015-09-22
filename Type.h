@@ -84,7 +84,7 @@ class IArray
 {
 public:
 	virtual int Length() const = 0;
-	virtual void SetAt(int i, T item) = 0;
+	virtual void SetAt(int i, const T& item) = 0;
 	virtual T& operator[](int i) const = 0;
 };
 
@@ -221,7 +221,7 @@ public:
 	}
 
 	// 设置数组元素为指定值，自动扩容
-	bool Set(T item, int index = 0, int count = 0)
+	bool Set(const T& item, int index = 0, int count = 0)
 	{
 		assert_param2(_canWrite, "禁止修改数组数据");
 		// count<=0 表示设置全部元素
@@ -338,7 +338,7 @@ public:
 	}
 
 	// 设置指定位置的值，不足时自动扩容
-	virtual void SetAt(int i, T item)
+	virtual void SetAt(int i, const T& item)
 	{
 		assert_param2(_canWrite, "禁止修改数组数据");
 		// 检查长度，不足时扩容
@@ -347,6 +347,44 @@ public:
 		if(i >= _Length) _Length = i + 1;
 
 		_Arr[i] = item;
+	}
+
+	// 加入一个数据到末尾
+	virtual int Push(T& item)
+	{
+		assert_param2(_canWrite, "禁止修改数组数据");
+
+		int i = _Length;
+		// 检查长度，不足时扩容
+		CheckCapacity(i + 1, _Length);
+
+		_Length++;
+
+		_Arr[i] = item;
+
+		return i;
+	}
+
+	// 末尾加入一个空数据，并返回引用，允许外部修改
+	virtual T& Push()
+	{
+		assert_param2(_canWrite, "禁止修改数组数据");
+
+		int i = _Length;
+		// 检查长度，不足时扩容
+		CheckCapacity(i + 1, _Length);
+
+		_Length++;
+
+		return _Arr[i];
+	}
+
+	// 弹出最后一个数组元素，长度减一
+	virtual T& Pop()
+	{
+		assert_param2(_canWrite, "禁止修改数组数据");
+
+		return _Arr[--_Length];
 	}
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
