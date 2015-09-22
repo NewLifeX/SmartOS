@@ -16,6 +16,7 @@ bool ShunCom::OnOpen()
 	Power.Open();
 	Sleep.Open();
 	Config.Open();
+	Led.Open();
 
 	Power	= true;
 	Sleep	= false;
@@ -36,8 +37,23 @@ void ShunCom::OnClose()
 	Power.Close();
 	Sleep.Close();
 	Config.Close();
+	Led.Close();
 
 	Reset.Close();
 
 	PackPort::OnClose();
+}
+
+bool ShunCom::OnWrite(const ByteArray& bs)
+{
+	Led = !Led;
+
+	return PackPort::OnWrite(bs);
+}
+
+uint ShunCom::OnRead(ByteArray& bs)
+{
+	Led = !Led;
+
+	return PackPort::OnRead(bs);
 }

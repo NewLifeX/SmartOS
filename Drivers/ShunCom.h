@@ -13,6 +13,7 @@ private:
 
 public:
 	OutputPort	Reset;	// 复位
+	OutputPort	Led;	// 收发指示灯
 
 	OutputPort	Power;	// 电源
 	OutputPort	Sleep;	// 睡眠
@@ -25,6 +26,9 @@ public:
 	ShunCom();
 
 	void Init(ITransport* port, Pin rst = P0);
+
+    virtual bool OnWrite(const ByteArray& bs);
+	virtual uint OnRead(ByteArray& bs);
 
 	virtual string ToString() { return "ShunCom"; }
 
