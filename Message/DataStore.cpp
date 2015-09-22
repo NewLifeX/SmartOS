@@ -65,9 +65,6 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 		if(ar.Hook && ar.Contain(offset, size))
 		{
 			if(!ar.Hook(offset, size, mode)) return false;
-
-			// 只命中第一个钩子，缩短时间
-			break;
 		}
 	}
 
@@ -77,18 +74,6 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 // 注册某一块区域的读写钩子函数
 void DataStore::Register(uint offset, uint size, Handler hook)
 {
-	// 找一个空位
-	/*int i=0;
-	for(i=0; i<ArrayLength(Areas); i++)
-	{
-		if(Areas[i].Size == 0) break;
-	}
-	if(i >= ArrayLength(Areas))
-	{
-		debug_printf("数据存储区的读写钩子函数已满\r\n");
-		return;
-	}*/
-
 	Area& ar = Areas.Push();
 
 	ar.Offset	= offset;
