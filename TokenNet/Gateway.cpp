@@ -264,6 +264,12 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 	return Client->Reply(rs);
 }
 
+void ExitStudentMode(void* param)
+{
+	Gateway* gw = (Gateway*)param;
+	gw->SetMode(false);
+}
+
 // 学习模式 0x20
 void Gateway::SetMode(bool student)
 {
@@ -275,7 +281,13 @@ void Gateway::SetMode(bool student)
 	msg.Code = 0x20;
 	msg.Length = 1;
 	msg.Data[0] = student ? 1 : 0;
-	debug_printf("学习模式\r\n");
+	debug_printf("%s 学习模式\r\n", student ? "进入" : "退出");
+
+	// 定时退出学习模式
+	if(student)
+	{
+		Sys.AddTask(ExitStudentMode, this, 30000, -1, "退出学习");
+	}
 
 	Client->Send(msg);
 }
