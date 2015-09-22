@@ -1,14 +1,16 @@
-#ifndef __BUTTON_GRAY_LEVEL_H__
+﻿#ifndef __BUTTON_GRAY_LEVEL_H__
 #define __BUTTON_GRAY_LEVEL_H__
 
 #include "Sys.h"
 #include "Port.h"
 #include "Timer.h"
+#include "Message\DataStore.h"
+
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
 // 干脆把_Value挪到最后解决问题
-class Button_GrayLevel
+class Button_GrayLevel : public IDataPort
 {
 private:
 	static void OnPress(Pin pin, bool down, void* param);
@@ -18,15 +20,17 @@ private:
 	void* _Param;
 	// 指示灯灰度驱动器 PWM;
 	PWM* 	_GrayLevelDrive;
-	
+
 	byte	_PulseIndex;
 private:
 	bool _Value; // 状态
 	ushort Reserved;	// 补足对齐问题
-	
+
 public:
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
+#if DEBUG
 	string	Name;		// 按钮名称
+#endif
 
 	InputPort	Key;	// 输入按键
 	OutputPort	Relay;	// 继电器
@@ -37,7 +41,7 @@ public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
 	~Button_GrayLevel();
-	
+
 	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
 	void Set(Pin key, Pin relay);
 	// led 驱动器设置
@@ -46,6 +50,14 @@ public:
 	void SetValue(bool value);
 	void RenewGrayLevel();
 	void Register(EventHandler handler, void* param = NULL);
+
+	virtual int Size() const;
+	virtual int Write(byte* data);
+	virtual int Read(byte* data);
+
+	byte	Next;	// 开关延迟后的下一个状态
+	uint	_tid;
+	void StartAsync(int second);
 
 // 过零检测
 private:
@@ -56,7 +68,6 @@ public:
 
 	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
 	static void SetACZeroAdjTime(int us){ ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
-
 };
 
 #endif

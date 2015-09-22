@@ -1,7 +1,7 @@
 ﻿#include "DataStore.h"
 
 // 初始化
-DataStore::DataStore()
+DataStore::DataStore() : Areas(0)
 {
 	Strict	= true;
 }
@@ -45,20 +45,32 @@ int DataStore::Read(uint offset, ByteArray& bs)
 
 bool DataStore::OnHook(uint offset, uint size, int mode)
 {
-	for(int i=0; i<ArrayLength(Areas); i++)
+	for(int i=0; i<Areas.Length(); i++)
 	{
 		Area& ar = Areas[i];
-		if(ar.Offset == 0 && ar.Size == 0) break;
+		if(ar.Size == 0) break;
 
+		// 数据操作口只认可完整的当前区域
+		if(ar.Port && offset <= ar.Offset && offset + size >= ar.Offset + ar.Size)
+		{
+			if(mode == 1)
+			{
+				if(ar.Port->Write(&Data[ar.Offset]) <= 0) return false;
+			}
+			else if(mode == 0 || mode == 2)
+			{
+				if(ar.Port->Read(&Data[ar.Offset]) <= 0) return false;
+			}
+		}
 		if(ar.Hook && ar.Contain(offset, size))
 		{
 			if(!ar.Hook(offset, size, mode)) return false;
-			
+
 			// 只命中第一个钩子，缩短时间
 			break;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -66,20 +78,31 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 void DataStore::Register(uint offset, uint size, Handler hook)
 {
 	// 找一个空位
-	int i=0;
+	/*int i=0;
 	for(i=0; i<ArrayLength(Areas); i++)
 	{
-		if(Areas[i].Offset == 0 && Areas[i].Size == 0) break;
+		if(Areas[i].Size == 0) break;
 	}
 	if(i >= ArrayLength(Areas))
 	{
 		debug_printf("数据存储区的读写钩子函数已满\r\n");
 		return;
-	}
+	}*/
 
-	Areas[i].Offset	= offset;
-	Areas[i].Size	= size;
-	Areas[i].Hook	= hook;
+	Area& ar = Areas.Push();
+
+	ar.Offset	= offset;
+	ar.Size	= size;
+	ar.Hook	= hook;
+}
+
+void DataStore::Register(uint offset, IDataPort& port)
+{
+	Area& ar = Areas.Push();
+
+	ar.Offset	= offset;
+	ar.Size	= port.Size();
+	ar.Port	= &port;
 }
 
 DataStore::Area::Area()

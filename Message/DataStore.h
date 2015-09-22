@@ -4,6 +4,8 @@
 #include "Sys.h"
 #include "Stream.h"
 
+class IDataPort;
+
 // 数据存储适配器
 class DataStore
 {
@@ -22,7 +24,8 @@ public:
 	typedef bool (*Handler)(uint offset, uint size, int mode);
 	// 注册某一块区域的读写钩子函数
 	void Register(uint offset, uint size, Handler hook);
-	
+	void Register(uint offset, IDataPort& port);
+
 private:
 	class Area
 	{
@@ -31,14 +34,24 @@ private:
 		uint	Size;
 
 		Handler	Hook;
-		
+		IDataPort*	Port;
+
 		Area();
 		bool Contain(uint offset, uint size);
 	};
 
-	Area Areas[0x10];
+	Array<Area, 0x08> Areas;
 
 	bool OnHook(uint offset, uint size, int mode);
+};
+
+// 数据操作接口。提供字节数据的读写能力
+class IDataPort
+{
+public:
+	virtual int Size() const = 0;
+	virtual int Write(byte* data) = 0;
+	virtual int Read(byte* data) = 0;
 };
 
 #endif
