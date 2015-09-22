@@ -49,9 +49,22 @@ private:
 class IDataPort
 {
 public:
-	virtual int Size() const = 0;
-	virtual int Write(byte* data) = 0;
-	virtual int Read(byte* data) = 0;
+	virtual int Size() const { return 1; };
+	virtual int Write(byte* data) { return 1; };
+	virtual int Read(byte* data) { return 1; };
+
+	int Write(int data) { return Write((byte*)&data); }
+};
+
+#include "Port.h"
+
+// 数据输出口
+class DataOutputPort : public OutputPort, public IDataPort
+{
+public:
+	DataOutputPort(Pin pin, bool invert = false) : OutputPort(pin, invert) { }
+	virtual int Write(byte* data) { OutputPort::Write(*data); return Read(data); };
+	virtual int Read(byte* data) { *data = OutputPort::Read() ? 1 : 0; return *data; };
 };
 
 #endif

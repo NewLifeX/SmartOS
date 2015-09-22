@@ -35,8 +35,8 @@ void Controller::Open()
 	assert_param2(Port, "还没有传输口呢");
 
 	// 注册收到数据事件
-	Port->Open();
 	Port->Register(Dispatch, this);
+	Port->Open();
 
 	Opened = true;
 }

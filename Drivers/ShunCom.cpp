@@ -1,6 +1,9 @@
 ﻿#include "ShunCom.h"
 
-ShunCom::ShunCom() { }
+ShunCom::ShunCom()
+{
+	Led	= NULL;
+}
 
 void ShunCom::Init(ITransport* port, Pin rst)
 {
@@ -16,7 +19,6 @@ bool ShunCom::OnOpen()
 	Power.Open();
 	Sleep.Open();
 	Config.Open();
-	Led.Open();
 
 	Power	= true;
 	Sleep	= false;
@@ -37,7 +39,6 @@ void ShunCom::OnClose()
 	Power.Close();
 	Sleep.Close();
 	Config.Close();
-	Led.Close();
 
 	Reset.Close();
 
@@ -51,9 +52,11 @@ bool ShunCom::OnWrite(const ByteArray& bs)
 	return PackPort::OnWrite(bs);
 }
 
-uint ShunCom::OnRead(ByteArray& bs)
+// 引发数据到达事件
+uint ShunCom::OnReceive(ByteArray& bs, void* param)
 {
-	Led = !Led;
+	//Led = !Led;
+	if(Led) Led->Write(1000);
 
-	return PackPort::OnRead(bs);
+	return ITransport::OnReceive(bs, param);
 }

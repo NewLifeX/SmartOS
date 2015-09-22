@@ -4,6 +4,7 @@
 #include "Sys.h"
 #include "Port.h"
 #include "Net\ITransport.h"
+#include "Message\DataStore.h"
 
 // 上海顺舟Zigbee协议
 // 主站发送所有从站收到，从站发送只有主站收到
@@ -13,7 +14,7 @@ private:
 
 public:
 	OutputPort	Reset;	// 复位
-	OutputPort	Led;	// 指示灯
+	IDataPort*	Led;	// 指示灯
 
 	OutputPort	Power;	// 电源
 	OutputPort	Sleep;	// 睡眠
@@ -28,7 +29,8 @@ public:
 	void Init(ITransport* port, Pin rst = P0);
 
     virtual bool OnWrite(const ByteArray& bs);
-	virtual uint OnRead(ByteArray& bs);
+	// 引发数据到达事件
+	virtual uint OnReceive(ByteArray& bs, void* param);
 
 	virtual string ToString() { return "ShunCom"; }
 

@@ -206,6 +206,7 @@ void W5500::Init()
 {
 	_Lock	= 0;
 	_spi	= NULL;
+	Led		= NULL;
 
 	ArrayZero(_sockets);
 
@@ -273,7 +274,6 @@ bool W5500::Open()
 	Rst = true;
 
 	Irq.Open();
-	Led.Open();
 
 	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
@@ -399,7 +399,6 @@ void W5500::OnClose()
 
 	Irq.Close();
 	Rst.Close();
-	Led.Close();
 }
 
 // 复位
@@ -661,7 +660,7 @@ void W5500::OnIRQ()
 	dat = ReadByte(offsetof(TGeneral, SIR));
 	if(dat != 0x00)
 	{
-		Led = !Led;
+		if(Led) Led->Write(500);
 
 		byte dat2 = dat;
 		for(int i = 0;i < 8; i++)

@@ -14,12 +14,13 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2);
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
 {
-	Server = NULL;
-	Client = NULL;
+	Server	= NULL;
+	Client	= NULL;
+	Led		= NULL;
 
 	Running		= false;
 	AutoReport	= false;
-	IsOldOrder	=false;
+	IsOldOrder	= false;
 }
 
 Gateway::~Gateway()
@@ -125,12 +126,12 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		//msg.Show();
 
 		TokenMessage tmsg;
-		
-		if(IsOldOrder)			
+
+		if(IsOldOrder)
 		   OldTinyToToken(msg, tmsg);
 	    else
 		   TinyToToken(msg, tmsg);
-	
+
 		Client->Send(tmsg);
 	}
 
@@ -147,7 +148,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			if(AutoReport && msg.Reply && Client->Token != 0)
 			{
 				Sys.Sleep(1000);
-				
+
 				TokenMessage rs;
 				rs.Code = 0x21;
 				OnGetDeviceList(rs);
@@ -268,6 +269,8 @@ void Gateway::SetMode(bool student)
 {
 	Student = student;
 
+	if(Led) Led->Write(student ? 30000 : 100);
+
 	TokenMessage msg;
 	msg.Code = 0x20;
 	msg.Length = 1;
@@ -367,11 +370,11 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 
 	// 第一个字节是节点设备地址
 	if(msg.Length > 0) msg2.Dest = msg.Data[0];
-	
+
 	switch(msg.Code)
 	{
 		case 0x10:
-		         msg2.Code = 0x16;	 
+		         msg2.Code = 0x16;
 
 	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length);
 	             msg2.Length = msg.Length;
@@ -384,11 +387,11 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 				  else
 					 msg.Data[1]=4*(msg.Data[1]-1);  //通道号*4-4为读取的起始地址
 				 if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
-				 
+
 				 msg2.Length = msg.Length - 1;
 				 break;
 		case 0x12:
-				  msg2.Code = 0x16;	 
+				  msg2.Code = 0x16;
 
 	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
 	             msg2.Length = msg.Length;
@@ -398,36 +401,36 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 				 if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
 				 msg2.Length = msg.Length - 1;
 				 break;
-							
-	}	
+
+	}
 }
 
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 {
-		// 处理Reply标记	
-	
+		// 处理Reply标记
+
 		msg2.Code = msg.Code;
 		msg2.Reply = msg.Reply;
-		msg2.Error = msg.Error;		
+		msg2.Error = msg.Error;
 		// 第一个字节是节点设备地址
 		msg2.Data[0] = ((TinyMessage&)msg).Src;
-	
+
 		if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
-	
+
 		msg2.Length = 1 + msg.Length;
 }
 
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2)
-{	// 处理Reply标记	
+{	// 处理Reply标记
 	  if((msg.Length-1)%4==0)//整除4为模拟量读取
 	   {
-		   msg2.Code=0x11;		  
+		   msg2.Code=0x11;
 		   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
-		   
-		   int i=msg.Data[0]/4;//起始地址除4得通道号 
+
+		   int i=msg.Data[0]/4;//起始地址除4得通道号
 		   if(i==0)i=1;
-		   
-		   msg2.Data[1]=i;	//Data[1]修改通道号 		   	   
+
+		   msg2.Data[1]=i;	//Data[1]修改通道号
 	   }
 	   else
 	   {
@@ -435,15 +438,15 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 		   {
 			    msg2.Code=0x10;
 				if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
-		   }		  
+		   }
 		   else
 		   {
 			   msg2.Code=0x12;
-			   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);		   
+			   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 		   }
 		    msg2.Reply = msg.Reply;
 			msg2.Error = msg.Error;
-		   
-	   }	   	   				 		
+
+	   }
 }
 

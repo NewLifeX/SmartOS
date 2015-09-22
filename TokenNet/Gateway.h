@@ -2,7 +2,9 @@
 #define __SERVER__H__
 
 #include "Sys.h"
+#include "Port.h"
 #include "Net\ITransport.h"
+#include "Message\DataStore.h"
 
 #include "TokenClient.h"
 
@@ -16,6 +18,7 @@ private:
 public:
 	TinyServer* Server;		// 内网服务端
 	TokenClient* Client;	// 外网客户端
+	IDataPort*	Led;		// 指示灯
 
 	Gateway();
 	~Gateway();

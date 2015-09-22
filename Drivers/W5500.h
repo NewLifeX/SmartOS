@@ -6,6 +6,7 @@
 #include "Spi.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
+#include "Message\DataStore.h"
 
 // 硬件Socket基类
 class HardSocket;
@@ -49,7 +50,7 @@ public:
 	bool		Opened;	// 是否已经打开
 	uint		TaskID;
 
-	OutputPort	Led;	// 指示灯
+	IDataPort*	Led;	// 指示灯
 
 	// 构造
 	W5500();
