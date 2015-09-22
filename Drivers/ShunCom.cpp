@@ -46,7 +46,7 @@ void ShunCom::OnClose()
 
 bool ShunCom::OnWrite(const ByteArray& bs)
 {
-	Led = !Led;
+	//Led = !Led;
 
 	return PackPort::OnWrite(bs);
 }

@@ -13,7 +13,7 @@ private:
 
 public:
 	OutputPort	Reset;	// 复位
-	OutputPort	Led;	// 收发指示灯
+	OutputPort	Led;	// 指示灯
 
 	OutputPort	Power;	// 电源
 	OutputPort	Sleep;	// 睡眠

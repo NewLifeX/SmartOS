@@ -49,6 +49,8 @@ public:
 	bool		Opened;	// 是否已经打开
 	uint		TaskID;
 
+	OutputPort	Led;	// 指示灯
+
 	// 构造
 	W5500();
     W5500(Spi* spi, Pin irq = P0 ,Pin rst = P0);	// 必须具备复位引脚 否则寄存器不能读

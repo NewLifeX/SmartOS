@@ -252,6 +252,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		Irq.PuPd		= InputPort::PuPd_UP;
 		Irq.HardEvent	= true;
 		Irq.Set(irq);
+		Irq.Mode		= 0x02;	// 只要弹起事件
 		Irq.Register(OnIRQ, this);
 	}
 
@@ -272,6 +273,7 @@ bool W5500::Open()
 	Rst = true;
 
 	Irq.Open();
+	Led.Open();
 
 	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
@@ -397,6 +399,7 @@ void W5500::OnClose()
 
 	Irq.Close();
 	Rst.Close();
+	Led.Close();
 }
 
 // 复位
@@ -658,6 +661,8 @@ void W5500::OnIRQ()
 	dat = ReadByte(offsetof(TGeneral, SIR));
 	if(dat != 0x00)
 	{
+		Led = !Led;
+
 		byte dat2 = dat;
 		for(int i = 0;i < 8; i++)
 		{
