@@ -286,7 +286,7 @@ void Gateway::SetMode(bool student)
 	// 定时退出学习模式
 	if(student)
 	{
-		Sys.AddTask(ExitStudentMode, this, 30000, -1, "退出学习");
+		Sys.AddTask(ExitStudentMode, this, 30000000, -1, "退出学习");
 	}
 
 	Client->Send(msg);
