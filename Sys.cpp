@@ -44,7 +44,7 @@ _force_inline void InitHeapStack(uint ramSize)
 	uint size = (uint)&__initial_sp - (uint)p;
 	uint msp = top - size;
 	// 拷贝一部分栈内容到新栈
-	memset((void*)msp, 0, size);
+	//memset((void*)msp, 0, size);
 	memcpy((void*)msp, (void*)p, size);
 
 	// 必须先拷贝完成栈，再修改栈指针

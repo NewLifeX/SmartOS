@@ -103,9 +103,10 @@ Task* Task::Get(int taskid)
 
 TaskScheduler::TaskScheduler(string name)
 {
-	Name = name;
+	_Tasks	= NULL;
+	Name 	= name;
 
-	_gid = 1;
+	_gid 	= 1;
 
 	Running = false;
 	Current	= NULL;
