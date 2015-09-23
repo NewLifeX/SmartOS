@@ -52,11 +52,11 @@ extern "C"
 		RCC->CR |= ((uint32_t)RCC_CR_HSEON);
 
 		/* Wait till HSE is ready and if Time out is reached exit */
+		StartUpCounter = HSE_STARTUP_TIMEOUT;
 		do
 		{
 			HSEStatus = RCC->CR & RCC_CR_HSERDY;
-			StartUpCounter++;
-		} while((HSEStatus == 0) && (StartUpCounter != HSE_STARTUP_TIMEOUT));
+		} while((HSEStatus == 0) && StartUpCounter--);
 
 		if ((RCC->CR & RCC_CR_HSERDY) != RESET)
 		{
@@ -91,13 +91,15 @@ extern "C"
 		RCC->CR |= RCC_CR_PLLON;
 
 		/* Wait till PLL is ready */
-		while((RCC->CR & RCC_CR_PLLRDY) == 0) { }
+		StartUpCounter = HSE_STARTUP_TIMEOUT;
+		while((RCC->CR & RCC_CR_PLLRDY) == 0 && StartUpCounter--) { }
 
 		/* Select PLL as system clock source */
 		RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
 		RCC->CFGR |= (uint32_t)RCC_CFGR_SW_PLL;
 
 		/* Wait till PLL is used as system clock source */
-		while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)RCC_CFGR_SWS_PLL) { }
+		StartUpCounter = HSE_STARTUP_TIMEOUT;
+		while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) != (uint32_t)RCC_CFGR_SWS_PLL && StartUpCounter--) { }
 	}
 }
