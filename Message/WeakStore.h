@@ -4,21 +4,24 @@
 #include "Sys.h"
 #include "Stream.h"
 
-// 弱存储
+// 弱存储。
+// 采用全局变量或者堆分配的变量在系统启动时会被清空。
+// 弱存储在main函数内栈分配，位于栈的最后部分，不会因为重启而被清空
 class WeakStore
 {
 public:
-	int			Magic;	// 幻数。用于唯一标识
+	string		Magic;	// 幻数。用于唯一标识
+	uint		MagicLength;
 	ByteArray	Data;	// 数据
 
 	// 初始化
-	WeakStore(int magic = 0, byte* ptr = NULL, uint len = 0);
+	WeakStore(string magic = NULL, byte* ptr = NULL, uint len = 0);
 
 	// 检查并确保初始化，返回原来是否已初始化
 	bool Check();
 	void Init();
 
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
+    // 重载索引运算符[]，定位到数据部分的索引。
     byte& operator[](int i) const;
 };
 
