@@ -60,7 +60,7 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 
 	Controller* control = (Controller*)param;
 
-	if(len > control->MaxSize)
+	if(len > control->Port->MaxSize)
 	{
 #if MSG_DEBUG
 		msg_printf("TinyNet::Dispatch ");
@@ -68,8 +68,8 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 		Sys.ShowHex(buf, len, '-');
 		msg_printf("\r\n");
 #endif
-		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->MaxSize);
-		//assert_param2(len <= control->MaxSize, "数据长度超过控制器可接受最大长度");
+		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->Port->MaxSize);
+		//assert_param2(len <= control->Port->MaxSize, "数据长度超过控制器可接受最大长度");
 	}
 
 	// 这里使用数据流，可能多个消息粘包在一起

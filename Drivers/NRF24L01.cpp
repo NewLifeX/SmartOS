@@ -195,6 +195,8 @@ static void AutoOpenTask(void* param);
 
 NRF24L01::NRF24L01()
 {
+	MaxSize	= 32;
+
 	Power	= NULL;
 	_spi	= NULL;
 

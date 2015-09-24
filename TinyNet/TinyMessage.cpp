@@ -179,7 +179,7 @@ TinyController::TinyController() : Controller()
 	Timeout		= 200000;
 
 	MinSize = TinyMessage::MinSize;
-	MaxSize = 32;
+	//MaxSize = 32;
 
 	// 初始化一个随机地址
 	Address = Sys.ID[0];

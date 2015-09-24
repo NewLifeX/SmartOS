@@ -20,83 +20,26 @@ public:
 	bool Opening;	// 是否正在打开
     bool Opened;    // 是否打开
 
+	//ushort	MinSize;	// 数据包最小大小
+	ushort	MaxSize;	// 数据包最大大小
+
 	// 初始化
-	ITransport()
-	{
-		Opening		= false;
-		Opened		= false;
-		_handler	= NULL;
-		_param		= NULL;
-	}
-
+	ITransport();
 	// 析构函数确保关闭
-	virtual ~ITransport()
-	{
-		if(Opened) Close();
-
-		Register(NULL);
-	}
+	virtual ~ITransport();
 
 	// 打开传输口
-	bool Open()
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(Opened || Opening) return true;
-
-		Opening	= true;
-		Opened	= OnOpen();
-		Opening	= false;
-
-		return Opened;
-	}
-
+	bool Open();
 	// 关闭传输口
-	void Close()
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(!Opened || Opening) return;
-
-		Opening	= true;
-		OnClose();
-		Opening	= false;
-		Opened	= false;
-	}
+	void Close();
 
 	// 发送数据
-	bool Write(const ByteArray& bs)
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(!Opened && !Open()) return false;
-
-		return OnWrite(bs);
-	}
-
+	bool Write(const ByteArray& bs);
 	// 接收数据
-	uint Read(ByteArray& bs)
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		if(!Opened && !Open()) return 0;
-
-		return OnRead(bs);
-	}
+	uint Read(ByteArray& bs);
 
 	// 注册回调函数
-	virtual void Register(TransportHandler handler, void* param = NULL)
-	{
-		// 特别是接口要检查this指针
-		assert_ptr(this);
-
-		_handler	= handler;
-		_param		= param;
-	}
+	virtual void Register(TransportHandler handler, void* param = NULL);
 
 #if DEBUG
 	virtual string ToString() { return "ITransport"; }
@@ -114,54 +57,32 @@ protected:
 	bool HasHandler() { return _handler != NULL; }
 
 	// 引发数据到达事件
-	virtual uint OnReceive(ByteArray& bs, void* param)
-	{
-		if(_handler) return _handler(this, bs, _param, param);
-
-		return 0;
-	}
+	virtual uint OnReceive(ByteArray& bs, void* param);
 };
 
 // 数据口包装
 class PackPort : public ITransport
 {
 private:
-	//ITransport*	_port;
 
 public:
 	ITransport*	Port;	// 传输口
 
-	PackPort(){ Port = NULL; }
-	virtual ~PackPort()
-	{
-		if(Port) Port->Register(NULL);
-		delete Port;
-	}
+	PackPort();
+	virtual ~PackPort();
 
-	virtual void Set(ITransport* port)
-	{
-		if(Port) Port->Register(NULL);
-		Port = port;
-		if(Port) Port->Register(OnPortReceive, this);
-	}
+	virtual void Set(ITransport* port);
 
 	virtual string ToString() { return "PackPort"; }
 
 protected:
-	virtual bool OnOpen() { return Port->Open(); }
-    virtual void OnClose() { Port->Close(); }
+	virtual bool OnOpen();
+    virtual void OnClose();
 
-    virtual bool OnWrite(const ByteArray& bs) { return Port->Write(bs); }
-	virtual uint OnRead(ByteArray& bs) { return Port->Read(bs); }
+    virtual bool OnWrite(const ByteArray& bs);
+	virtual uint OnRead(ByteArray& bs);
 
-	static uint OnPortReceive(ITransport* sender, ByteArray& bs, void* param, void* param2)
-	{
-		assert_ptr(param);
-
-		//PackPort* pp = (PackPort*)param;
-		PackPort* pp = dynamic_cast<PackPort*>((PackPort*)param);
-		return pp->OnReceive(bs, param2);
-	}
+	static uint OnPortReceive(ITransport* sender, ByteArray& bs, void* param, void* param2);
 };
 
 #endif

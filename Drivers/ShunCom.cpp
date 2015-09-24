@@ -2,7 +2,7 @@
 
 ShunCom::ShunCom()
 {
-	Led	= NULL;
+	Led		= NULL;
 }
 
 void ShunCom::Init(ITransport* port, Pin rst)
@@ -10,6 +10,7 @@ void ShunCom::Init(ITransport* port, Pin rst)
 	assert_ptr(port);
 
 	Set(port);
+	MaxSize	= 82;
 
 	if(rst != P0) Reset.Set(rst);
 }

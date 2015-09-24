@@ -821,6 +821,8 @@ enum S_Status
 
 HardSocket::HardSocket(W5500* host, byte protocol)
 {
+	MaxSize	= 1500;
+
 	_Host	= host;
 	Host	= host;
 	Protocol = protocol;

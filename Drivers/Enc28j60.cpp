@@ -334,7 +334,9 @@ void ResetTask(void* param);
 
 Enc28j60::Enc28j60()
 {
-	_spi = NULL;
+	MaxSize	= 1500;
+
+	_spi	= NULL;
 
 	LastTime	= Time.Current();
 	ResetPeriod	= 6000000;

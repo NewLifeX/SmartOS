@@ -15,6 +15,7 @@ void Zigbee::Init(ITransport* port, Pin rst)
 	assert_ptr(port);
 
 	Set(port);
+	MaxSize	= 64;
 
 	if(rst != P0) _rst.Set(rst);
 }
