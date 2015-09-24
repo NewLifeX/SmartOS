@@ -25,6 +25,7 @@ Port::Port()
 	_Pin	= P0;
 	Group	= NULL;
 	PinBit	= 0;
+	Opened	= false;
 }
 
 Port::~Port()

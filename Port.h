@@ -61,8 +61,8 @@ public:
     bool Invert;	// 是否倒置输入输出
     uint Speed;		// 速度
 
-    OutputPort() { Init(); }
-    OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    OutputPort() : Port() { Init(); }
+    OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : Port()
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
@@ -144,8 +144,8 @@ public:
 	bool HardEvent;		// 是否使用硬件事件。默认false
 	byte Mode;			// 触发模式，避免事件被覆盖。0x01按下，0x02弹起，默认0x03
 
-	InputPort() { Init(); }
-    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP)
+	InputPort() : Port() { Init(); }
+    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) : Port()
 	{
 		Init(floating, pupd);
 		Set(pin);
@@ -187,7 +187,7 @@ private:
 class AnalogInPort : public Port
 {
 public:
-    AnalogInPort(Pin pin) { Set(pin); Open(); }
+    AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
