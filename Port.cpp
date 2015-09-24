@@ -178,7 +178,9 @@ byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA
 
 // 端口引脚保护
 #if DEBUG
-static ushort Reserved[8];		// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
+// 引脚保留位，记录每个引脚是否已经被保留，禁止别的模块使用
+// !!!注意，不能全零，否则可能会被当作zeroinit而不是copy，导致得不到初始化
+static ushort Reserved[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
 
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
 bool Port::Reserve(Pin pin, bool flag)
