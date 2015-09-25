@@ -53,10 +53,14 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 
     _port = g_Uart_Ports[_index];
     _baudRate = baudRate;
-	_byteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
     _parity = parity;
     _dataBits = dataBits;
     _stopBits = stopBits;
+
+	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
+	//_byteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
+	_byteTime	= 1000000 / (baudRate >> 3 >> 1);
+	_byteTime	<<= 1;
 
 	// 根据端口实际情况决定打开状态
 	if(_port->CR1 & USART_CR1_UE) Opened = true;
@@ -309,8 +313,9 @@ uint SerialPort::OnRead(ByteArray& bs)
 		len = Rx.Length();
 	}
 
+	debug_printf("串口接收 %d 间隔 %dus \r\n", len, _byteTime);
 	// 从接收队列读取
-	count = Rx.Read(bs);
+	count = Rx.Read(bs, true);
 	bs.SetLength(count);
 
 	// 如果还有数据，打开任务

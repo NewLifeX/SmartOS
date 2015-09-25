@@ -35,6 +35,7 @@ public:
 	uint Capacity() const;
 	// 当前位置
 	uint Position() const;
+	void SetCapacity(uint len);
 
 	// 设置位置
 	bool SetPosition(int p);

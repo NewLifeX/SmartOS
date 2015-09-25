@@ -70,6 +70,7 @@ Stream::~Stream()
 
 // 数据流容量
 uint Stream::Capacity() const { return _Capacity; }
+void Stream::SetCapacity(uint len) { CheckRemain(len - _Position); }
 
 // 当前位置
 uint Stream::Position() const { return _Position; }
