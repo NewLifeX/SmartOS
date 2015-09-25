@@ -28,6 +28,8 @@ public:
 
 	void Init(ITransport* port, Pin rst = P0);
 
+	void ShowConfig();
+
     virtual bool OnWrite(const ByteArray& bs);
 	// 引发数据到达事件
 	virtual uint OnReceive(ByteArray& bs, void* param);

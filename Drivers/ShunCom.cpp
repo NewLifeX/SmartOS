@@ -32,6 +32,8 @@ bool ShunCom::OnOpen()
 	Sys.Delay(100);
 	Reset	= true;
 
+	Port->MinSize	= MinSize;
+
 	return PackPort::OnOpen();
 }
 
@@ -44,6 +46,24 @@ void ShunCom::OnClose()
 	Reset.Close();
 
 	PackPort::OnClose();
+}
+
+void ShunCom::ShowConfig()
+{
+	if(!Open()) return;
+
+	Config	= true;
+	Sys.Sleep(3000);
+
+	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
+	ByteArray bs(buf, ArrayLength(buf));
+	Write(bs);
+
+	Sys.Sleep(300);
+
+	ByteArray rs;
+	Read(rs);
+	rs.Show(true);
 }
 
 bool ShunCom::OnWrite(const ByteArray& bs)

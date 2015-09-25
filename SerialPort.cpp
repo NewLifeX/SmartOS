@@ -36,11 +36,12 @@ SerialPort::~SerialPort()
 
 void SerialPort::Init()
 {
-	_index = 0xFF;
-	RS485 = NULL;
-	Error = 0;
+	_index	= 0xFF;
+	RS485	= NULL;
+	Error	= 0;
 
-	IsRemap = false;
+	IsRemap	= false;
+	MinSize	= 1;
 
 	_taskidRx	= 0;
 }
@@ -51,11 +52,11 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 	_index = index;
 	assert_param(_index < ArrayLength(g_Uart_Ports));
 
-    _port = g_Uart_Ports[_index];
-    _baudRate = baudRate;
-    _parity = parity;
-    _dataBits = dataBits;
-    _stopBits = stopBits;
+    _port		= g_Uart_Ports[_index];
+    _baudRate	= baudRate;
+    _parity		= parity;
+    _dataBits	= dataBits;
+    _stopBits	= stopBits;
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
 	//_byteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
@@ -312,8 +313,10 @@ uint SerialPort::OnRead(ByteArray& bs)
 		Sys.Delay(_byteTime);
 		len = Rx.Length();
 	}
+	// 如果数据大小不足，等下次吧
+	if(len < MinSize) return 0;
 
-	debug_printf("串口接收 %d 间隔 %dus \r\n", len, _byteTime);
+	debug_printf("串口接收 %d 间隔 %dus 最小 %d \r\n", len, _byteTime, MinSize);
 	// 从接收队列读取
 	count = Rx.Read(bs, true);
 	bs.SetLength(count);
@@ -328,11 +331,12 @@ void SerialPort::OnRxHandler()
 {
 	byte dat = (byte)USART_ReceiveData(_port);
 	Rx.Push(dat);
+	//debug_printf(" 0x%02X ", dat);
 
 	// 收到数据，开启任务调度
 	if(_taskidRx) Sys.SetTask(_taskidRx, true);
 
-	if(!HasHandler()) return;
+	//if(!HasHandler()) return;
 
 	// 其实内部的USART_ReceiveData可以清除USART_IT_RXNE
 	//USART_ClearITPendingBit(sp->_port, USART_IT_RXNE);
@@ -391,9 +395,9 @@ void SerialPort::OnHandler(ushort num, void* param)
 		// 读取并扔到错误数据
 		USART_ReceiveData(sp->_port);
 	}
-	if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
+	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
-	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);
+	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);*/
 }
 
 // 获取引脚

@@ -34,6 +34,7 @@ void Controller::Open()
 
 	assert_param2(Port, "还没有传输口呢");
 
+	Port->MinSize	= MinSize;
 	// 注册收到数据事件
 	Port->Register(Dispatch, this);
 	Port->Open();
@@ -60,10 +61,16 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 
 	Controller* control = (Controller*)param;
 
+#if MSG_DEBUG
+		msg_printf("TinyNet::Dispatch[%d] ", len);
+		// 输出整条信息
+		Sys.ShowHex(buf, len, '-');
+		msg_printf("\r\n");
+#endif
 	if(len > control->Port->MaxSize)
 	{
 #if MSG_DEBUG
-		msg_printf("TinyNet::Dispatch ");
+		msg_printf("TinyNet::Dispatch[%d] ", len);
 		// 输出整条信息
 		Sys.ShowHex(buf, len, '-');
 		msg_printf("\r\n");

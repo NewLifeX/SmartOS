@@ -8,7 +8,7 @@ ITransport::ITransport()
 	Opening		= false;
 	Opened		= false;
 
-	//MinSize		= 0;
+	MinSize		= 0;
 	MaxSize		= 0;
 
 	_handler	= NULL;
