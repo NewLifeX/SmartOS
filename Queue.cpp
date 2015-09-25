@@ -2,38 +2,37 @@
 
 Queue::Queue(uint len) : _s(len)
 {
-	_s.SetPosition(0);
-	_s.Length	= 0;
-	_head		= 0;
-	_tail		= 0;
+	Clear();
 }
 
 void Queue::SetCapacity(uint len)
 {
-	_s.SetCapacity(len);
+	_s.SetLength(len);
 }
 
 void Queue::Clear()
 {
-	_s.Length	= 0;
-	_s.SetPosition(0);
+	_s.SetLength(_s.Capacity());
 	_head	= 0;
 	_tail	= 0;
+	_size	= 0;
 }
 
 void Queue::Push(byte dat)
 {
-	byte* buf = _s.GetBuffer();
-	buf[_head++] = dat;
-	_head++;
+	SmartIRQ irq;
+
+	_s[_head++] = dat;
 	_head %= _s.Capacity();
-	_s.Length++;
+	_size++;
 }
 
 byte Queue::Pop()
 {
-	if(_s.Length == 0) return 0;
-	_s.Length--;
+	SmartIRQ irq;
+
+	if(_size == 0) return 0;
+	_size--;
 
 	/*
 	昨晚发现串口频繁收发一段数据后出现丢数据现象，也即是size为0，然后tail比head小，刚开始小一个字节，然后会逐步拉大。
@@ -42,32 +41,36 @@ byte Queue::Pop()
 	该问题只能通过关闭中断来解决。为了减少关中断时间以提升性能，增加了专门的Read方法。
 	*/
 
-	byte* buf	= _s.GetBuffer();
-	byte dat	= buf[_tail++];
+	byte dat	= _s[_tail++];
 	_tail		%= _s.Capacity();
 
 	return dat;
 }
 
-/*byte Queue::Peek() const
-{
-	return _s.GetBuffer()[_tail];
-}*/
-
 uint Queue::Write(const ByteArray& bs, bool safe)
 {
-	byte* buf	= bs.GetBuffer();
-	uint len	= bs.Length();
+	SmartIRQ irq;
+
+	/*
+	1，数据写入队列末尾
+	2，如果还剩有数据，则从开头开始写入
+	3，循环处理2
+	4，如果队列过小，很有可能后来数据会覆盖前面数据
+	*/
+
+	byte*	buf	= bs.GetBuffer();
+	uint	len	= bs.Length();
 
 	uint rs = 0;
 	while(true)
 	{
 		// 计算这一个循环剩下的位置
-		uint count = _s.Capacity() - _head;
+		uint remain = _s.Capacity() - _head;
 		// 如果要写入的数据足够存放
-		if(len <= count)
+		if(len <= remain)
 		{
-			memcpy(_s.GetBuffer() + _head, buf, len);
+			//memcpy(_s.GetBuffer() + _head, buf, len);
+			_s.Copy(buf, len, _head);
 			rs		+= len;
 			_head	+= len;
 			_head	%= _s.Capacity();
@@ -76,72 +79,69 @@ uint Queue::Write(const ByteArray& bs, bool safe)
 		}
 
 		// 否则先写一段，指针回到开头
-		memcpy(_s.GetBuffer() + _head, buf, count);
-		buf		+= count;
-		rs		+= count;
-		len		-= count;
+		//memcpy(_s.GetBuffer() + _head, buf, remain);
+		_s.Copy(buf, remain, _head);
+		buf		+= remain;
+		len		-= remain;
+		rs		+= remain;
 		_head	= 0;
 	}
 
-	if(safe)
-	{
-		SmartIRQ irq;
-		_s.Length += rs;
-	}
-	else
-	{
-		_s.Length += rs;
-	}
+	_size += rs;
 
 	return rs;
 }
 
 uint Queue::Read(ByteArray& bs, bool safe)
 {
-	if(_s.Length == 0) return 0;
+	if(_size == 0) return 0;
 
-	byte* buf	= bs.GetBuffer();
-	uint len	= bs.Capacity();
+	//debug_printf("_head=%d _tail=%d _size=%d \r\n", _head, _tail, _size);
 
-	if(len > _s.Length) len = _s.Length;
+	SmartIRQ irq;
+
+	/*
+	1，读取当前数据到末尾
+	2，如果还剩有数据，则从头开始读取
+	3，循环处理2
+	4，如果队列过小，很有可能后来数据会覆盖前面数据
+	*/
+
+	byte*	buf	= bs.GetBuffer();
+	uint	len	= bs.Capacity();
+
+	if(len > _size) len = _size;
 
 	uint rs = 0;
 	while(true)
 	{
 		// 计算这一个循环剩下的位置
-		uint count = _s.Capacity() - _tail;
-		// 如果要写入的数据足够存放
-		if(len <= count)
+		uint remain = _s.Capacity() - _tail;
+		// 如果要读取的数据都在这里
+		if(len <= remain)
 		{
-			memcpy(buf, _s.GetBuffer() + _tail, len);
-			rs += len;
-			_tail += len;
-			_tail %= _s.Capacity();
+			//memcpy(buf, _s.GetBuffer() + _tail, len);
+			_s.CopyTo(buf, len, _tail);
+			rs		+= len;
+			_tail	+= len;
+			_tail	%= _s.Capacity();
 
 			break;
 		}
 
-		// 否则先写一段，指针回到开头
-		memcpy(buf + _tail, _s.GetBuffer(), count);
-		buf += count;
-		rs += count;
-		len -= count;
-		_tail = 0;
+		// 否则先读一段，指针回到开头
+		//memcpy(buf + _tail, _s.GetBuffer(), remain);
+		_s.CopyTo(buf, remain, _tail);
+		buf		+= remain;
+		len		-= remain;
+		rs		+= remain;
+		_tail	= 0;
 	}
 
-	if(safe)
-	{
-		SmartIRQ irq;
-		_s.Length -= rs;
-		if(_s.Length == 0) _tail = _head;
-	}
-	else
-	{
-		_s.Length -= rs;
-		if(_s.Length == 0) _tail = _head;
-	}
+	_size -= rs;
+	//if(_size == 0) _tail = _head;
 
-	bs.SetLength(rs, true);
+	bs.SetLength(rs, false);
 
 	return rs;
 }
