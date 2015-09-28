@@ -51,7 +51,6 @@ public:
 	void RenewGrayLevel();
 	void Register(EventHandler handler, void* param = NULL);
 
-	virtual int Size() const;
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
