@@ -28,8 +28,8 @@ public:
 	void Push(byte dat);
 	byte Pop();
 
-	uint Write(const ByteArray& bs, bool safe);	// 批量写入
-	uint Read(ByteArray& bs, bool safe);		// 批量读取
+	uint Write(const ByteArray& bs);	// 批量写入
+	uint Read(ByteArray& bs);		// 批量读取
 };
 
 #endif

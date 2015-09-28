@@ -20,19 +20,20 @@ void Queue::Clear()
 
 void Queue::Push(byte dat)
 {
-	SmartIRQ irq;
-
 	_s[_head++] = dat;
 	_head %= _s.Capacity();
+
+	SmartIRQ irq;
 	_size++;
 }
 
 byte Queue::Pop()
 {
-	SmartIRQ irq;
-
 	if(_size == 0) return 0;
-	_size--;
+	{
+		SmartIRQ irq;
+		_size--;
+	}
 
 	/*
 	昨晚发现串口频繁收发一段数据后出现丢数据现象，也即是size为0，然后tail比head小，刚开始小一个字节，然后会逐步拉大。
@@ -47,10 +48,8 @@ byte Queue::Pop()
 	return dat;
 }
 
-uint Queue::Write(const ByteArray& bs, bool safe)
+uint Queue::Write(const ByteArray& bs)
 {
-	SmartIRQ irq;
-
 	/*
 	1，数据写入队列末尾
 	2，如果还剩有数据，则从开头开始写入
@@ -87,18 +86,21 @@ uint Queue::Write(const ByteArray& bs, bool safe)
 		_head	= 0;
 	}
 
+	SmartIRQ irq;
+
 	_size += rs;
 
 	return rs;
 }
 
-uint Queue::Read(ByteArray& bs, bool safe)
+uint Queue::Read(ByteArray& bs)
 {
 	if(_size == 0) return 0;
 
 	//debug_printf("_head=%d _tail=%d _size=%d \r\n", _head, _tail, _size);
+	//Sys.Sleep(0);
 
-	SmartIRQ irq;
+	//SmartIRQ irq;
 
 	/*
 	1，读取当前数据到末尾
@@ -138,10 +140,11 @@ uint Queue::Read(ByteArray& bs, bool safe)
 		_tail	= 0;
 	}
 
+	bs.SetLength(rs, false);
+
+	SmartIRQ irq;
 	_size -= rs;
 	//if(_size == 0) _tail = _head;
-
-	bs.SetLength(rs, false);
 
 	return rs;
 }

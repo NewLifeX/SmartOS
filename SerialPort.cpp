@@ -258,7 +258,7 @@ bool SerialPort::OnWrite(const ByteArray& bs)
 		const byte* p = buf;
 		while(*p++) size++;
 	}*/
-	Tx.Write(bs, true);
+	Tx.Write(bs);
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
@@ -316,9 +316,10 @@ uint SerialPort::OnRead(ByteArray& bs)
 	// 如果数据大小不足，等下次吧
 	if(len < MinSize) return 0;
 
-	debug_printf("串口接收 %d 间隔 %dus 最小 %d \r\n", len, _byteTime, MinSize);
+	//debug_printf("串口接收缓冲区 %d 间隔 %dus 最小 %d ", len, _byteTime, MinSize);
 	// 从接收队列读取
-	count = Rx.Read(bs, true);
+	count = Rx.Read(bs);
+	//debug_printf(" 读取 %d \r\n", count);
 	bs.SetLength(count);
 
 	// 如果还有数据，打开任务
@@ -333,8 +334,8 @@ void SerialPort::OnRxHandler()
 	Rx.Push(dat);
 	//debug_printf(" 0x%02X ", dat);
 
-	// 收到数据，开启任务调度
-	if(_taskidRx) Sys.SetTask(_taskidRx, true);
+	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
+	if(_taskidRx) Sys.SetTask(_taskidRx, true, _byteTime);
 
 	//if(!HasHandler()) return;
 
