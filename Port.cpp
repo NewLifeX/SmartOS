@@ -33,6 +33,21 @@ Port::~Port()
 	Close();
 }
 
+String& Port::ToStr(String& str) const
+{
+	str.SetAt(0, 'P');
+	if(_Pin == P0)
+	{
+		str.SetAt(1, '0');
+	}
+	else
+	{
+		str.SetAt(1, 'A' + (_Pin >> 4));
+		str.Append(_Pin & 0x0F);
+	}
+	return str;
+}
+
 // 单一引脚初始化
 Port& Port::Set(Pin pin)
 {

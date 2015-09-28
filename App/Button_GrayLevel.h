@@ -40,7 +40,7 @@ public:
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
-	~Button_GrayLevel();
+	virtual ~Button_GrayLevel();
 
 	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
 	void Set(Pin key, Pin relay);

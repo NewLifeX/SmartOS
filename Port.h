@@ -42,6 +42,8 @@ public:
 	static bool IsBusy(Pin pin);	// 引脚是否被保护
 #endif
 
+	virtual String& ToStr(String& str) const;
+
 protected:
 	Port();
 	virtual ~Port();

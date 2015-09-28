@@ -181,7 +181,10 @@ int ByteDataPort::Write(byte* data)
 	//Show(true);
 	Object* obj = dynamic_cast<Object*>(this);
 	if(obj)
+	{
+		debug_printf(" ");
 		obj->Show(true);
+	}
 	else
 		debug_printf("\r\n");
 #endif

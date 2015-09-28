@@ -82,7 +82,7 @@ protected:
 #include "Port.h"
 
 // 数据输出口
-class DataOutputPort : public ByteDataPort
+class DataOutputPort : public ByteDataPort, public Object
 {
 public:
 	OutputPort*	Port;
@@ -92,6 +92,8 @@ public:
 protected:
 	virtual int OnWrite(byte data) { Port->Write(data); return OnRead(); };
 	virtual byte OnRead() { return Port->Read() ? 1 : 0; };
+
+	virtual String& ToStr(String& str) const { return Port->ToStr(str); }
 };
 
 #endif
