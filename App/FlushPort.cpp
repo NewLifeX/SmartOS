@@ -21,27 +21,30 @@ static void FlushPortTask(void* param)
 	bp->Flush();
 }
 
-void FlushPort::Start(int ms)
+void FlushPort::Start(int speed)
 {
 	if(!Port || !Port->Open()) return;
 
 	if(!_tid) _tid = Sys.AddTask(FlushPortTask, this, Slow, Slow, "闪烁端口");
 
 	// 设置任务时间
-	Count = ms * 1000 / Fast;
-	if(Count < 2) Count = 2;
-	Sys.SetTaskPeriod(_tid, Fast);
+	// Count = ms * 1000 / Fast;
+	// if(Count < 2) Count = 2;
+	ifI(speed == 0)
+		Sys.SetTaskPeriod(_tid, Slow);
+	else
+		Sys.SetTaskPeriod(_tid, Fast);
 }
 
 void FlushPort::Flush()
 {
 	*Port = !*Port;
 
-	if(Count > 0 && --Count == 0)
-	{
-		// 切换任务执行时间
-		Sys.SetTaskPeriod(_tid, Slow);
-	}
+	// if(Count > 0 && --Count == 0)
+	// {
+	// 	// 切换任务执行时间
+	// 	Sys.SetTaskPeriod(_tid, Slow);
+	// }
 }
 
 int FlushPort::Write(byte* data)

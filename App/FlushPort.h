@@ -21,7 +21,7 @@ public:
 	FlushPort();
 	~FlushPort();
 
-	void Start(int ms = 1000);
+	void Start(int speed);
 	void Flush();
 	
 	virtual int Write(byte* data);
