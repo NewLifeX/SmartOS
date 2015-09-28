@@ -96,4 +96,18 @@ protected:
 	virtual String& ToStr(String& str) const { return Port->ToStr(str); }
 };
 
+// 数据输入口
+class DataInputPort : public IDataPort, public Object
+{
+public:
+	InputPort*	Port;
+
+	DataInputPort(InputPort* port = false) { Port = port; }
+
+	virtual int Write(byte* data) { return Read(data); };
+	virtual int Read(byte* data) { *data = Port->Read() ? 1 : 0; return Size(); };
+
+	virtual String& ToStr(String& str) const { return Port->ToStr(str); }
+};
+
 #endif
