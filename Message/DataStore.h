@@ -45,26 +45,53 @@ private:
 	bool OnHook(uint offset, uint size, int mode);
 };
 
+/****************************** 数据操作接口 ************************************/
+
 // 数据操作接口。提供字节数据的读写能力
 class IDataPort
 {
 public:
 	virtual int Size() const { return 1; };
-	virtual int Write(byte* data) { return 1; };
-	virtual int Read(byte* data) { return 1; };
+	virtual int Write(byte* data) { return Size(); };
+	virtual int Read(byte* data) { return Size(); };
 
 	int Write(int data) { return Write((byte*)&data); }
+};
+
+/****************************** 字节数据操作接口 ************************************/
+
+// 字节数据操作接口
+class ByteDataPort : public IDataPort
+{
+public:
+	virtual ~ByteDataPort();
+
+	virtual int Write(byte* data); //{ return OnWrite(*data); };
+	virtual int Read(byte* data) { *data = OnRead(); return Size(); };
+
+protected:
+	byte	Next;	// 开关延迟后的下一个状态
+	uint	_tid;
+	void StartAsync(int ms);
+	static void AsyncTask(void* param);
+
+	virtual int OnWrite(byte data) { return OnRead(); };
+	virtual byte OnRead() { return Size(); };
 };
 
 #include "Port.h"
 
 // 数据输出口
-class DataOutputPort : public OutputPort, public IDataPort
+class DataOutputPort : public ByteDataPort
 {
 public:
-	DataOutputPort(Pin pin, bool invert = false) : OutputPort(pin, invert) { }
-	virtual int Write(byte* data) { OutputPort::Write(*data); return Read(data); };
-	virtual int Read(byte* data) { *data = OutputPort::Read() ? 1 : 0; return *data; };
+	OutputPort*	Port;
+
+	DataOutputPort(OutputPort* port = false) { Port = port; }
+
+protected:
+	virtual int OnWrite(byte data) { Port->Write(data); return OnRead(); };
+	virtual byte OnRead() { return Port->Read() ? 1 : 0; };
 };
 
 #endif

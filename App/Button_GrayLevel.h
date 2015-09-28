@@ -10,7 +10,7 @@
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
 // 干脆把_Value挪到最后解决问题
-class Button_GrayLevel : public IDataPort
+class Button_GrayLevel : public ByteDataPort
 {
 private:
 	static void OnPress(Pin pin, bool down, void* param);
@@ -52,12 +52,8 @@ public:
 	void Register(EventHandler handler, void* param = NULL);
 
 	virtual int Size() const;
-	virtual int Write(byte* data);
-	virtual int Read(byte* data);
-
-	byte	Next;	// 开关延迟后的下一个状态
-	uint	_tid;
-	void StartAsync(int second);
+	virtual int OnWrite(byte data);
+	virtual byte OnRead();
 
 // 过零检测
 private:
