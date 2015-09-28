@@ -1,5 +1,4 @@
 ﻿#include "ADC.h"
-#include "Port.h"
 
 Pin ADC_Pins[] = ADC1_PINS;
 
@@ -75,7 +74,7 @@ void ADConverter::Open()
 		{
 			debug_printf("ADC::Init %d ", i+1);
 			if(i < ArrayLength(ADC_Pins))
-				AnalogInPort ai(ADC_Pins[i]);
+				_port[i] = new AnalogInPort(ADC_Pins[i]);
 			else
 				debug_printf("\r\n");
 		}
