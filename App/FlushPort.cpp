@@ -30,7 +30,7 @@ void FlushPort::Start(int speed)
 	// 设置任务时间
 	// Count = ms * 1000 / Fast;
 	// if(Count < 2) Count = 2;
-	ifI(speed == 0)
+	if(speed == 0)
 		Sys.SetTaskPeriod(_tid, Slow);
 	else
 		Sys.SetTaskPeriod(_tid, Fast);
