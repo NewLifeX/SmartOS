@@ -487,7 +487,10 @@ bool TSys::SetTaskPeriod(uint taskid, Int64 period)
 	Task* task = Task::Get(taskid);
 	if(!task) return false;
 
-	task->Period = period;
+	if(period)
+		task->Period = period;
+	else
+		task->Enable = false;
 
 	return true;
 }

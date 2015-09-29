@@ -660,6 +660,7 @@ void W5500::OnIRQ()
 	dat = ReadByte(offsetof(TGeneral, SIR));
 	if(dat != 0x00)
 	{
+		// 设定小灯快闪时间，单位毫秒
 		if(Led) Led->Write(500);
 
 		byte dat2 = dat;

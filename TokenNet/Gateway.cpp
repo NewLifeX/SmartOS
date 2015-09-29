@@ -275,6 +275,7 @@ void Gateway::SetMode(bool student)
 {
 	Student = student;
 
+	// 设定小灯快闪时间，单位毫秒
 	if(Led) Led->Write(student ? 30000 : 100);
 
 	TokenMessage msg;
