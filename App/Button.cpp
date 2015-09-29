@@ -77,6 +77,19 @@ void Button::Register(EventHandler handler, void* param)
 
 bool Button::GetValue() { return _Value; }
 
+int Button::OnWrite(byte data)
+{
+	SetValue(data);
+
+	return OnRead();
+}
+
+byte Button::OnRead()
+{
+	return _Value ? 1 : 0;
+}
+
+
 bool CheckZero(const InputPort& port)
 {
 	int retry = 200;

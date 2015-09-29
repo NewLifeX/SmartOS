@@ -66,8 +66,16 @@ class ByteDataPort : public IDataPort
 public:
 	virtual ~ByteDataPort();
 
-	virtual int Write(byte* data); //{ return OnWrite(*data); };
+	virtual int Write(byte* data);
 	virtual int Read(byte* data) { *data = OnRead(); return Size(); };
+
+	// 让父类的所有Write函数在这里可见
+	using IDataPort::Write;
+
+	void Flush(int second);
+	void FlushMs(int ms);
+	void DelayOpen(int second);
+	void DelayClose(int second);
 
 protected:
 	byte	Next;	// 开关延迟后的下一个状态

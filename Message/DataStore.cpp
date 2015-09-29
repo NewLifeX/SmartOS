@@ -192,6 +192,30 @@ int ByteDataPort::Write(byte* data)
 	return Read(data);
 }
 
+void ByteDataPort::Flush(int second)
+{
+	int cmd = 0x10 + second;
+	Write(cmd);
+}
+
+void ByteDataPort::FlushMs(int ms)
+{
+	int cmd = 0x20 + ms;
+	Write(cmd);
+}
+
+void ByteDataPort::DelayOpen(int second)
+{
+	int cmd = 0x80 + second;
+	Write(cmd);
+}
+
+void ByteDataPort::DelayClose(int second)
+{
+	int cmd = 0x40 + second;
+	Write(cmd);
+}
+
 void ByteDataPort::AsyncTask(void* param)
 {
 	ByteDataPort* dp = (ByteDataPort*)param;

@@ -3,12 +3,13 @@
 
 #include "Sys.h"
 #include "Port.h"
+#include "Message\DataStore.h"
 
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
 // 干脆把_Value挪到最后解决问题
-class Button
+class Button : public ByteDataPort
 {
 private:
 	static void OnPress(Pin pin, bool down, void* param);
@@ -27,7 +28,7 @@ public:
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button();
-	~Button();
+	virtual ~Button();
 
 	void Set(Pin key, Pin led = P0, bool ledInvert = true, Pin relay = P0, bool relayInvert = true);
 	void Set(Pin key, Pin led, Pin relay);
@@ -35,6 +36,9 @@ public:
 	void SetValue(bool value);
 
 	void Register(EventHandler handler, void* param = NULL);
+
+	virtual int OnWrite(byte data);
+	virtual byte OnRead();
 
 // 过零检测
 private:
