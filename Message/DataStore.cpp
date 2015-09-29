@@ -133,6 +133,7 @@ int ByteDataPort::Write(byte* data)
 		default:
 			break;
 	}
+	int s = 0;
 	switch(cmd>>4)
 	{
 		// 普通指令
@@ -142,37 +143,41 @@ int ByteDataPort::Write(byte* data)
 			break;
 		// 开关闪烁
 		case 1:
-			debug_printf("闪烁 %d 秒", cmd - 0x10);
+			s = cmd - 0x10;
+			debug_printf("闪烁 %d 秒", s);
 			OnWrite(!OnRead());
 			Next = cmd;
-			StartAsync((cmd - 0x10) * 1000);
+			StartAsync(s * 1000);
 			break;
 		// 开关闪烁（毫秒级）
 		case 2:
-			debug_printf("闪烁 %d 毫秒", (cmd - 0x20) * 100);
+			s = (cmd - 0x20) * 100;
+			debug_printf("闪烁 %d 毫秒", s);
 			OnWrite(!OnRead());
 			Next = cmd;
-			StartAsync((cmd - 0x20) * 100);
+			StartAsync(s);
 			break;
 		// 打开，延迟一段时间后关闭
 		case 4:
 		case 5:
 		case 6:
 		case 7:
-			debug_printf("延迟 %d 秒关闭", cmd - 0x40);
+			s = cmd - 0x40;
+			debug_printf("延迟 %d 秒关闭", s);
 			//OnWrite(1);
 			Next = 0;
-			StartAsync(cmd - 0x40);
+			StartAsync(s * 1000);
 			break;
 		// 关闭，延迟一段时间后打开
 		case 8:
 		case 9:
 		case 10:
 		case 11:
-			debug_printf("延迟 %d 秒打开", cmd - 0x80);
+			s = cmd - 0x80;
+			debug_printf("延迟 %d 秒打开", s);
 			//OnWrite(0);
 			Next = 1;
-			StartAsync(cmd - 0x80);
+			StartAsync(s * 1000);
 			break;
 	}
 #if DEBUG

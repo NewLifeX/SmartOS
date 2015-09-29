@@ -89,6 +89,15 @@ byte Button::OnRead()
 	return _Value ? 1 : 0;
 }
 
+String& Button::ToStr(String& str) const
+{
+	if(Name)
+		str += Name;
+	else
+		Object::ToStr(str);
+
+	return str;
+}
 
 bool CheckZero(const InputPort& port)
 {
