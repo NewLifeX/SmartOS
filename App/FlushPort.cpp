@@ -36,6 +36,11 @@ void FlushPort::Start(int speed)
 		Sys.SetTaskPeriod(_tid, Fast);
 }
 
+void FlushPort::Stop()
+{
+	SetTaskPeriod(_tid, false);
+}
+
 void FlushPort::Flush()
 {
 	*Port = !*Port;
