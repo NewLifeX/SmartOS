@@ -251,18 +251,19 @@ bool SerialPort::OnWrite(const ByteArray& bs)
 	if(!bs.Length()) return true;
 
 	// 如果队列已满，则强制刷出
-	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
+	//if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
-	/*if(size == 0)
+	//Tx.Write(bs);
+
+	// 中断发送过于频繁，采用循环阻塞发送。后面考虑独立发送任务
+	for(int i=0; i<bs.Length(); i++)
 	{
-		const byte* p = buf;
-		while(*p++) size++;
-	}*/
-	Tx.Write(bs);
+		SendData(bs[i], 300);
+	}
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
-	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+	//USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
 	return true;
 }
