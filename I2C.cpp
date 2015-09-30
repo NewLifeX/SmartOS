@@ -141,7 +141,7 @@ void HardI2C::Init(byte index, uint speedHz)
 
 	Speed	= speedHz;
 
-    debug_printf("HardI2C%d %dHz \r\n", _index + 1, speedHz);
+    debug_printf("HardI2C_%d::Init %dHz \r\n", _index + 1, speedHz);
 }
 
 HardI2C::~HardI2C()
@@ -261,7 +261,7 @@ void HardI2C::Ack(bool ack)
 bool HardI2C::WaitAck(int retry)
 {
 	if(!retry) retry = Retry;
-	while(!I2C_CheckEvent(_IIC, _Event));
+	while(!I2C_CheckEvent(_IIC, _Event))
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
