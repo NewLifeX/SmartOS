@@ -334,20 +334,12 @@ void SerialPort::OnRxHandler()
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
 	// 缓冲区里面别用%，那会产生非常耗时的除法运算
-	//while(USART_GetITStatus(_port, USART_IT_RXNE) != RESET)
-	{
-		byte dat = (byte)USART_ReceiveData(_port);
-		Rx.Push(dat);
-		//Sys.Delay(300);
-	}
+	byte dat = (byte)USART_ReceiveData(_port);
+	Rx.Push(dat);
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
-	if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, _byteTime);
-
-	//if(!HasHandler()) return;
-
-	// 其实内部的USART_ReceiveData可以清除USART_IT_RXNE
-	//USART_ClearITPendingBit(sp->_port, USART_IT_RXNE);
+	//!!! 暂时注释任务唤醒，避免丢数据问题
+	//if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, _byteTime);
 }
 
 void SerialPort::ReceiveTask(void* param)
@@ -379,7 +371,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
     if(handler)
 	{
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
-		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, 1000000, 1000000, "串口接收");
+		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, 1000000, 500000, "串口接收");
 	}
     else
 	{
@@ -402,7 +394,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
 		// 读取并扔到错误数据
 		//USART_ReceiveData(sp->_port);
-		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
+		debug_printf("Serial%d 溢出 MinSize=%d \r\n", sp->_index + 1, sp->MinSize);
 	}
 	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
