@@ -41,7 +41,7 @@ void SerialPort::Init()
 	Error	= 0;
 
 	IsRemap	= false;
-	MinSize	= 1;
+	MinSize	= 8;
 
 	_taskidRx	= 0;
 }
@@ -255,7 +255,7 @@ bool SerialPort::OnWrite(const ByteArray& bs)
 
 	//Tx.Write(bs);
 
-	// 中断发送过于频繁，采用循环阻塞发送。后面考虑独立发送任务
+	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
 	for(int i=0; i<bs.Length(); i++)
 	{
 		SendData(bs[i], 300);
@@ -331,12 +331,18 @@ uint SerialPort::OnRead(ByteArray& bs)
 
 void SerialPort::OnRxHandler()
 {
-	byte dat = (byte)USART_ReceiveData(_port);
-	Rx.Push(dat);
-	//debug_printf(" 0x%02X ", dat);
+	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
+	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
+	// 缓冲区里面别用%，那会产生非常耗时的除法运算
+	//while(USART_GetITStatus(_port, USART_IT_RXNE) != RESET)
+	{
+		byte dat = (byte)USART_ReceiveData(_port);
+		Rx.Push(dat);
+		//Sys.Delay(300);
+	}
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
-	if(_taskidRx) Sys.SetTask(_taskidRx, true, _byteTime);
+	if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, _byteTime);
 
 	//if(!HasHandler()) return;
 
@@ -373,7 +379,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
     if(handler)
 	{
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
-		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
+		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, 1000000, 1000000, "串口接收");
 	}
     else
 	{
@@ -385,9 +391,9 @@ void SerialPort::Register(TransportHandler handler, void* param)
 void SerialPort::OnHandler(ushort num, void* param)
 {
 	SerialPort* sp = (SerialPort*)param;
-	assert_param2(sp, "串口参数不能为空 OnHandler");
+	//assert_param2(sp, "串口参数不能为空 OnHandler");
 
-	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
+	//if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
 	// 接收中断
 	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
@@ -395,7 +401,8 @@ void SerialPort::OnHandler(ushort num, void* param)
 	{
 		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
 		// 读取并扔到错误数据
-		USART_ReceiveData(sp->_port);
+		//USART_ReceiveData(sp->_port);
+		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
 	}
 	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
@@ -467,9 +474,9 @@ SerialPort* SerialPort::GetMessagePort()
 		_printf_sp = new SerialPort(port);
 #if DEBUG
 #ifdef STM32F0
-		_printf_sp->Tx.SetCapacity(256);
+		//_printf_sp->Tx.SetCapacity(256);
 #else
-		_printf_sp->Tx.SetCapacity(1024);
+		//_printf_sp->Tx.SetCapacity(1024);
 #endif
 #endif
 		_printf_sp->Open();

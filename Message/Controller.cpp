@@ -62,10 +62,10 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	Controller* control = (Controller*)param;
 
 #if MSG_DEBUG
-		/*msg_printf("TinyNet::Dispatch[%d] ", len);
-		// 输出整条信息
-		Sys.ShowHex(buf, len, '-');
-		msg_printf("\r\n");*/
+	msg_printf("TinyNet::Dispatch[%d] ", len);
+	// 输出整条信息
+	Sys.ShowHex(buf, len, '-');
+	msg_printf("\r\n");
 #endif
 	if(len > control->Port->MaxSize)
 	{
