@@ -30,21 +30,25 @@ BH1750::~BH1750()
 
 void BH1750::Init()
 {
+	debug_printf("BH1750::Init Address=0x%02X \r\n", Address);
+
 	Write(CMD_PWN_ON);	// 打开电源
 	Write(CMD_RESET);	// 软重启
-	Write(0x42);
-	Write(0x65);		// 设置透光率为100%
+	//Write(0x42);
+	//Write(0x65);		// 设置透光率为100%
 	//Write(CMD_HRES);	// 设置为高精度模式
 	Write(CMD_ORES);	// 设置为高精度模式
 }
 
 ushort BH1750::Read()
 {
+	if(!IIC) return 0;
+
 	ushort n = 0;
 	IIC->Address = Address | 0x01;
-	IIC->Read(0, (byte*)&n, 2);
+	if(!IIC->Read(0, (byte*)&n, 2)) return 0;
 
-	Sys.Sleep(5);
+	//Sys.Sleep(5);
 
 	return n;
 }

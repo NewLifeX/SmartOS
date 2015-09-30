@@ -90,7 +90,7 @@ uint I2C::Read(int addr, byte* buf, uint len)
 	I2CScope ics(this);
 
 	// 发送设备地址
-    if(!SendAddress(addr)) return false;
+    if(!SendAddress(addr)) return 0;
 
 	uint rs = 0;
 	for(int i=0; i<len; i++)

@@ -27,9 +27,11 @@ SHT30::~SHT30()
 
 ushort SHT30::Read()
 {
+	if(!IIC) return 0;
+
 	ushort n = 0;
 	IIC->Address = Address | 0x01;
-	IIC->Read(0, (byte*)&n, 5);
+	IIC->Read(0, (byte*)&n, 2);
 
 	Sys.Sleep(5);
 
