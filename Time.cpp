@@ -82,7 +82,8 @@ void TTime::SetMax(uint usMax)
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
-	SmartIRQ irq;
+	// 嘀嗒时钟中断不需要关中断，因为它有最高优先级
+	//SmartIRQ irq;
 
 	//uint value = (SysTick->LOAD - SysTick->VAL);
 	//SysTick->VAL = 0;
