@@ -21,7 +21,9 @@ void Queue::Clear()
 void Queue::Push(byte dat)
 {
 	_s[_head++] = dat;
-	_head %= _s.Capacity();
+	//_head %= _s.Capacity();
+	// 除法运算是一个超级大祸害，它浪费了大量时间，导致串口中断接收丢数据
+	if(_head >= _s.Capacity()) _head -= _s.Capacity();
 
 	SmartIRQ irq;
 	_size++;
@@ -43,7 +45,8 @@ byte Queue::Pop()
 	*/
 
 	byte dat	= _s[_tail++];
-	_tail		%= _s.Capacity();
+	//_tail		%= _s.Capacity();
+	if(_tail >= _s.Capacity()) _tail -= _s.Capacity();
 
 	return dat;
 }
@@ -72,7 +75,8 @@ uint Queue::Write(const ByteArray& bs)
 			_s.Copy(buf, len, _head);
 			rs		+= len;
 			_head	+= len;
-			_head	%= _s.Capacity();
+			//_head	%= _s.Capacity();
+			if(_head >= _s.Capacity()) _head -= _s.Capacity();
 
 			break;
 		}
@@ -126,7 +130,8 @@ uint Queue::Read(ByteArray& bs)
 			_s.CopyTo(buf, len, _tail);
 			rs		+= len;
 			_tail	+= len;
-			_tail	%= _s.Capacity();
+			//_tail	%= _s.Capacity();
+			if(_tail >= _s.Capacity()) _tail -= _s.Capacity();
 
 			break;
 		}
