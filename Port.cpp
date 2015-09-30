@@ -26,6 +26,9 @@ Port::Port()
 	Group	= NULL;
 	PinBit	= 0;
 	Opened	= false;
+#if DEBUG
+	Debug	= true;
+#endif
 }
 
 Port::~Port()
@@ -108,8 +111,8 @@ bool Port::Open()
 
 #if DEBUG
 	// 保护引脚
-	Show();
-	Reserve(_Pin, true);
+	if(Debug) Show();
+	Reserve(_Pin, true, Debug);
 #endif
 
 	GPIO_InitTypeDef gpio;
@@ -120,7 +123,7 @@ bool Port::Open()
     GPIO_Init(Group, &gpio);
 
 #if DEBUG
-	debug_printf("\r\n");
+	if(Debug) debug_printf("\r\n");
 #endif
 
 	Opened = true;
@@ -137,9 +140,9 @@ void Port::Close()
 
 #if DEBUG
 	// 保护引脚
-	Show();
-	Reserve(_Pin, false);
-	debug_printf("\r\n");
+	if(Debug) Show();
+	Reserve(_Pin, false, Debug);
+	if(Debug) debug_printf("\r\n");
 #endif
 
 	Opened = false;
@@ -198,9 +201,9 @@ byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA
 static ushort Reserved[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
 
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
-bool Port::Reserve(Pin pin, bool flag)
+bool Port::Reserve(Pin pin, bool flag, bool debug)
 {
-	debug_printf("::");
+	if(debug) debug_printf("::");
     int port = pin >> 4, bit = 1 << (pin & 0x0F);
     if (flag) {
         if (Reserved[port] & bit) {
@@ -210,7 +213,7 @@ bool Port::Reserve(Pin pin, bool flag)
 		}
         Reserved[port] |= bit;
 
-		debug_printf("打开 P%c%d", _PIN_NAME(pin));
+		if(debug) debug_printf("打开 P%c%d", _PIN_NAME(pin));
     } else {
         Reserved[port] &= ~bit;
 
@@ -227,9 +230,9 @@ bool Port::Reserve(Pin pin, bool flag)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
+		if(debug) debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
 #else
-		debug_printf("关闭 P%c%d", _PIN_NAME(pin));
+		if(debug) debug_printf("关闭 P%c%d", _PIN_NAME(pin));
 #endif
 	}
 
@@ -256,9 +259,15 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 
 #if DEBUG
-	debug_printf(" %dM", Speed);
-	if(OpenDrain) debug_printf(" 开漏");
-	if(Invert) debug_printf(" 倒置");
+	if(Debug)
+	{
+		debug_printf(" %dM", Speed);
+		if(OpenDrain)
+			debug_printf(" 开漏");
+		else
+			debug_printf(" 推挽");
+		if(Invert) debug_printf(" 倒置");
+	}
 #endif
 
 	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
@@ -636,9 +645,17 @@ void SetEXIT(int pinIndex, bool enable)
 void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 #if DEBUG
-	debug_printf(" 抖动=%dus", ShakeTime);
-	if(Floating) debug_printf(" 浮空");
-	if(Invert) debug_printf(" 倒置");
+	if(Debug)
+	{
+		debug_printf(" 抖动=%dus", ShakeTime);
+		if(Floating)
+			debug_printf(" 浮空");
+		else if(PuPd == PuPd_UP)
+			debug_printf(" 上拉");
+		else if(PuPd == PuPd_DOWN)
+			debug_printf(" 下拉");
+		if(Invert) debug_printf(" 倒置");
+	}
 #endif
 
 	Port::OnOpen(gpio);

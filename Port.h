@@ -21,6 +21,9 @@ public:
     Pin				_Pin;		// 针脚
     ushort			PinBit;		// 组内引脚位。每个引脚一个位
 	bool			Opened;		// 是否已经打开
+#if DEBUG
+	bool			Debug;		// 是否打开调试日志。默认打开
+#endif
 
     Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
@@ -38,7 +41,8 @@ public:
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
 
 #if DEBUG
-	static bool Reserve(Pin pin, bool flag);	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
+	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
+	static bool Reserve(Pin pin, bool flag, bool debug);
 	static bool IsBusy(Pin pin);	// 引脚是否被保护
 #endif
 
