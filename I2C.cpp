@@ -127,11 +127,10 @@ uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
 		if(!WaitAck()) return 0;
 	}
 
-	// 发送设备地址
-	//Address |= 0x01;
-    if(!SendAddress(addr, false)) return 0;
-
 	Start();
+
+	// 发送设备地址
+    if(!SendAddress(addr, false)) return 0;
 
 	uint count = 0;
 	len = rs.Length();
@@ -421,11 +420,11 @@ uint HardI2C::Read(int addr, byte* buf, uint len)
 
 SoftI2C::SoftI2C(uint speedHz) : I2C()
 {
-	Speed = speedHz;
-	_delay = Sys.Clock / speedHz;
-	Retry = 200;
-	Error = 0;
-	Address = 0x00;
+	Speed	= speedHz;
+	_delay	= Sys.Clock / speedHz;
+	Retry	= 50;
+	Error	= 0;
+	Address	= 0x00;
 }
 
 SoftI2C::~SoftI2C()
@@ -475,11 +474,13 @@ scl		___--------____
 void SoftI2C::Start()
 {
 	SDA = true;		//发送起始条件的数据信号
+	Sys.Delay(1);
 	SCL = true;		//起始条件建立时间大于4.7us,延时
-	Sys.Delay(4);
+	Sys.Delay(1);
 	SDA = false;	//发送起始信号
-	Sys.Delay(4);
+	Sys.Delay(10);
 	SCL = false;	//钳住I2C总线，准备发送或接收数据
+	Sys.Delay(10);
 }
 
 /*
@@ -489,23 +490,26 @@ scl		____----
 void SoftI2C::Stop()
 {
 	SCL = false;	//发送结束条件的时钟信号
+	Sys.Delay(1);
 	SDA = false;    //发送结束条件的数据信号
-	Sys.Delay(4);
+	Sys.Delay(1);
 	SCL = true;    //结束条件建立时间大于4μ
+	Sys.Delay(10);
 	SDA = true;    //发送I2C总线结束信号
-	Sys.Delay(4);
+	Sys.Delay(10);
 }
 
 // 等待Ack
 bool SoftI2C::WaitAck(int retry)
 {
+	if(!retry) retry = Retry;
+
 	SDA = true;
 	Sys.Delay(1);
 	SCL = true;
 	Sys.Delay(1);
 
 	// 等待SDA低电平
-	if(!retry) retry = Retry;
 	while(SDA.ReadInput())
 	{
 		if(retry-- <= 0)
@@ -517,6 +521,7 @@ bool SoftI2C::WaitAck(int retry)
 	}
 
 	SCL = false;
+	Sys.Delay(20);
 
 	return true;
 }
@@ -527,10 +532,12 @@ void SoftI2C::Ack(bool ack)
 	SCL = false;	//时钟低电平周期大于4μ
 
 	SDA = !ack;
-	Sys.Delay(2);
+	Sys.Delay(1);
 	SCL = true;		//清时钟线，钳住I2C总线以便继续接收
-	Sys.Delay(2);
+	Sys.Delay(5);
 	SCL = false;
+	SDA = true;
+	Sys.Delay(20);
 }
 
 void SoftI2C::WriteByte(byte dat)
@@ -543,7 +550,7 @@ void SoftI2C::WriteByte(byte dat)
 
 		Sys.Delay(1);
 		SCL = true;               //置时钟线为高，通知被控器开始接收数据位
-		Sys.Delay(2);
+		Sys.Delay(5);
 		SCL = false;
 		Sys.Delay(1);
     }
@@ -555,12 +562,18 @@ byte SoftI2C::ReadByte()
 	byte rs = 0;
 	for(int i=0; i<8; i++)
 	{
-		SCL = false;	// 置时钟线为低，准备接收数据位
-		Sys.Delay(2);
 		SCL = true;		// 置时钟线为高使数据线上数据有效
 		Sys.Delay(2);
+		// 等SCL变高
+		uint retry = 50;
+		while(!SCL.ReadInput())
+		{
+			if(retry-- <= 0) break;
+		}
+
 		rs <<= 1;
 		if(SDA.ReadInput()) rs |= 0x01;	//读数据位
+		SCL = false;	// 置时钟线为低，准备接收数据位
 		Sys.Delay(1);
 	}
 

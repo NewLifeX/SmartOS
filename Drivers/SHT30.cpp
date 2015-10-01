@@ -111,38 +111,24 @@ SHT30::~SHT30()
 
 void SHT30::Init()
 {
-	//Write(0xFE);	// 软重启
-	//Write(0xE6);	// 写用户寄存器
-	//Write(0x83);	// 设置分辨率   11bit RH% 测量时间：12ms(typ.) & 11bit T℃ 测量时间：9ms(typ.)
+	IIC->Address = Address << 1;
 
-	byte bs[3];
-	bs[0] = 0xFE;	// 软重启
-	bs[1] = 0xE6;	// 写用户寄存器
-	bs[2] = 0x83;	// 设置分辨率   11bit RH% 测量时间：12ms(typ.) & 11bit T℃ 测量时间：9ms(typ.)
-
-	IIC->Address = Address & 0xFE;
-	IIC->Write(0, bs, ArrayLength(bs));
+	Write(CMD_SOFT_RESET);	// 软重启
+	Sys.Sleep(15);
 
 	ushort sn = ReadSerialNumber();
-	debug_printf("SHT30::Init SN=0x%04X \r\n", sn);
+	ushort st = ReadStatus();
+	debug_printf("SHT30::Init SerialNumber=0x%04X Status=0x%04X \r\n", sn, st);
 }
 
 ushort SHT30::ReadSerialNumber()
 {
-	/*error = SHT3X_StartWriteAccess();
-
-	// write "read serial number" command
-	error |= SHT3X_WriteCommand(CMD_READ_SERIALNBR);
-	// if no error, start read access
-	if(error == NO_ERROR) error = SHT3X_StartReadAccess();
-	// if no error, read first serial number word
-	if(error == NO_ERROR) error = SHT3X_Read2BytesAndCrc(&serialNumWords[0], ACK, 100);
-	// if no error, read second serial number word
-	if(error == NO_ERROR) error = SHT3X_Read2BytesAndCrc(&serialNumWords[1], NACK, 0);
-
-	SHT3X_StopAccess();*/
-
 	return WriteRead(CMD_READ_SERIALNBR);
+}
+
+ushort SHT30::ReadStatus()
+{
+	return WriteRead(CMD_READ_STATUS);
 }
 
 ushort SHT30::ReadTemperature()
@@ -151,13 +137,7 @@ ushort SHT30::ReadTemperature()
 
 	//Write(0xF3);
 
-	byte buf[3];
-	IIC->Address = Address | 0x01;
-	IIC->Read(0, buf, ArrayLength(buf));
-
-	buf[1] &= 0xFC;	// Data (LSB) 的后两位在进行物理计算前前须置‘0’
-
-	ushort n = (buf[0] << 8) | buf[1];
+	ushort n = WriteRead(CMD_MEAS_CLOCKSTR_H) >> 16;
 	// 公式:T= -46.85 + 175.72 * ST/2^16
 	/*n = n * 17572 / 65535 - 4685;
 	n /= 100;*/
@@ -171,25 +151,25 @@ ushort SHT30::ReadHumidity()
 
 	//Write(0xF5);
 
-	byte buf[3];
-	IIC->Address = Address | 0x01;
-	IIC->Read(0, buf, ArrayLength(buf));
-
-	buf[1] &= 0xFC;	// Data (LSB) 的后两位在进行物理计算前前须置‘0’
-
-	ushort n = (buf[0] << 8) | buf[1];
+	ushort n = WriteRead(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
 	// 公式: RH%= -6 + 125 * SRH/2^16
 	//n = n * 125 / 65535 - 6;
 
 	return n;
 }
 
+bool SHT30::Write(ushort cmd)
+{
+	ByteArray bs(2);
+	bs[0] = cmd >> 8;
+	bs[1] = cmd & 0xFF;
+
+	return IIC->Write(0, bs);
+}
+
 ushort SHT30::WriteRead(ushort cmd)
 {
-	//cmd = __REV16(cmd);
-
-	IIC->Address = Address << 1;
-	//IIC->Write(0, &cmd, 2);
+	//IIC->Address = Address << 1;
 
 	ByteArray bs(2);
 	bs[0] = cmd >> 8;
@@ -199,4 +179,24 @@ ushort SHT30::WriteRead(ushort cmd)
 	if(IIC->WriteRead(0, bs, rs) == 0) return 0;
 
 	return (rs[0] << 8) | rs[1];
+}
+
+// 同时读取温湿度并校验Crc
+uint SHT30::ReadAndCrc(ushort cmd)
+{
+	//IIC->Address = Address << 1;
+
+	ByteArray bs(2);
+	bs[0] = cmd >> 8;
+	bs[1] = cmd & 0xFF;
+
+	ByteArray rs(6);
+	if(IIC->WriteRead(0, bs, rs) == 0) return 0;
+
+	// 分解数据，暂时不进行CRC校验
+	byte* p = rs.GetBuffer();
+	ushort temp = __REV16(*(ushort*)p);
+	ushort humi = __REV16(*(ushort*)(p + 3));
+
+	return (temp << 16) | humi;
 }

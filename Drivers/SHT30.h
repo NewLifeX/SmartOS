@@ -15,11 +15,14 @@ public:
 
 	void Init();
 	ushort ReadSerialNumber();
+	ushort ReadStatus();
 	ushort ReadTemperature();
 	ushort ReadHumidity();
 
 private:
+	bool Write(ushort cmd);
 	ushort WriteRead(ushort cmd);
+	uint ReadAndCrc(ushort cmd);	// 同时读取温湿度并校验Crc
 };
 
 #endif

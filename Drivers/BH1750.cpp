@@ -32,6 +32,8 @@ void BH1750::Init()
 {
 	debug_printf("BH1750::Init Address=0x%02X \r\n", Address);
 
+	IIC->Address = Address & 0xFE;
+
 	Write(CMD_PWN_ON);	// 打开电源
 	Write(CMD_RESET);	// 软重启
 	//Write(0x42);
@@ -45,18 +47,13 @@ ushort BH1750::Read()
 	if(!IIC) return 0;
 
 	ushort n = 0;
-	IIC->Address = Address | 0x01;
-	if(!IIC->Read(0, (byte*)&n, 2)) return 0;
-
-	//Sys.Sleep(5);
+	ByteArray bs((byte*)&n, 2);
+	if(IIC->Read(0, bs) == 0) return 0;
 
 	return n;
 }
 
 void BH1750::Write(byte cmd)
 {
-	IIC->Address = Address & 0xFE;
-	IIC->Write(0, &cmd, 1);
-
-	Sys.Sleep(5);
+	IIC->Write(0, ByteArray(&cmd, 1));
 }
