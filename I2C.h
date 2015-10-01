@@ -39,6 +39,7 @@ public:
 
 	virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
 	virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
+	virtual uint WriteRead(int addr, const ByteArray& bs, ByteArray& rs);	// 先写入再读取
 
 protected:
 	virtual void OnOpen() = 0;	// 打开设备
@@ -131,8 +132,11 @@ public:
 private:
 	int _delay;			// 根据速度匹配的延时
 
-	OutputPort SCL;
-	OutputPort SDA;
+	OutputPort	SCL;	// 时钟。开漏输出
+	OutputPort	SDA;	// 数据。开漏输出，直接具备读写功能
+	//InputPort	SDA2;
+
+	void SetSDA(bool out);
 
 	virtual void OnOpen();
 	virtual void OnClose();

@@ -66,6 +66,8 @@ bool I2C::SendSubAddr(int addr)
 // 新会话向指定地址写入多个字节
 bool I2C::Write(int addr, byte* buf, uint len)
 {
+	//debug_printf("I2C::Write addr=0x%02X \r\n", addr);
+
 	Open();
 
 	I2CScope ics(this);
@@ -85,6 +87,8 @@ bool I2C::Write(int addr, byte* buf, uint len)
 // 新会话从指定地址读取多个字节
 uint I2C::Read(int addr, byte* buf, uint len)
 {
+	//debug_printf("I2C::Read addr=0x%02X \r\n", addr);
+
 	Open();
 
 	I2CScope ics(this);
@@ -92,6 +96,9 @@ uint I2C::Read(int addr, byte* buf, uint len)
 	// 发送设备地址
     if(!SendAddress(addr)) return 0;
 
+	Start();
+
+	debug_printf("I2C::Read addr=0x%02X len=%d \r\n", addr, len);
 	uint rs = 0;
 	for(int i=0; i<len; i++)
 	{
@@ -99,7 +106,43 @@ uint I2C::Read(int addr, byte* buf, uint len)
 		rs++;
 		Ack(i < len - 1);	// 最后一次不需要发送Ack
 	}
+	debug_printf("I2C::Read val=0x%04X rs=%d\r\n", *(ushort*)(buf-len), rs);
 	return rs;
+}
+
+// 先写入再读取
+uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
+{
+	Open();
+
+	I2CScope ics(this);
+
+	// 发送设备地址
+    if(!SendAddress(addr)) return 0;
+
+	uint len = bs.Length();
+	for(int i=0; i<len; i++)
+	{
+		WriteByte(bs[i]);
+		if(!WaitAck()) return 0;
+	}
+
+	// 发送设备地址
+	Address |= 0x01;
+    if(!SendAddress(addr)) return 0;
+
+	Start();
+
+	uint count = 0;
+	len = rs.Length();
+	for(int i=0; i<len; i++)
+	{
+		rs[i] = ReadByte();
+		count++;
+		Ack(i < len - 1);	// 最后一次不需要发送Ack
+	}
+
+	return count;
 }
 
 HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
@@ -394,6 +437,7 @@ void SoftI2C::SetPin(Pin scl , Pin sda )
 {
 	SCL.Set(scl);
 	SDA.Set(sda);
+	//SDA2.Set(sda);
 }
 
 void SoftI2C::GetPin(Pin* scl , Pin* sda )
@@ -414,12 +458,46 @@ void SoftI2C::OnOpen()
 
 	SCL.Open();
 	SDA.Open();
+
+#if DEBUG
+	SDA.Debug	= false;
+	//SDA2.Debug	= false;
+#endif
+
+	SCL = true;
+	SDA = true;
+
+	/*for(int i=0; i<32; i++)
+	{
+		debug_printf("SDA=%d \r\n", SDA.Read());
+		Sys.Sleep(1000);
+	}*/
 }
 
 void SoftI2C::OnClose()
 {
+#if DEBUG
+	SDA.Debug	= true;
+	//SDA2.Debug	= true;
+#endif
+
 	SCL.Close();
 	SDA.Close();
+	//SDA2.Close();
+}
+
+void SoftI2C::SetSDA(bool out)
+{
+	/*if(out)
+	{
+		SDA2.Close();
+		SDA.Open();
+	}
+	else
+	{
+		SDA.Close();
+		SDA2.Open();
+	}*/
 }
 
 /*
@@ -428,19 +506,15 @@ scl		___--------____
 */
 void SoftI2C::Start()
 {
+	SetSDA(true);
+
 	SDA = true;		//发送起始条件的数据信号
-	__nop();
-	__nop();
-	__nop();
 	SCL = true;		//起始条件建立时间大于4.7us,延时
-	Sys.Delay(4);
+	Sys.Delay(5);
 	SDA = false;	//发送起始信号
-	Sys.Delay(4);
+	Sys.Delay(5);
 	SCL = false;	//钳住I2C总线，准备发送或接收数据
-	__nop();
-	__nop();
-	__nop();
-	__nop();
+	Sys.Delay(5);
 }
 
 /*
@@ -449,34 +523,44 @@ scl		____----
 */
 void SoftI2C::Stop()
 {
+	SetSDA(true);
+
 	SCL = false;	//发送结束条件的时钟信号
 	SDA = false;    //发送结束条件的数据信号
-	Sys.Delay(4);
+	Sys.Delay(5);
 	SCL = true;    //结束条件建立时间大于4μ
+	Sys.Delay(5);
 	SDA = true;    //发送I2C总线结束信号
-	Sys.Delay(4);
+	Sys.Delay(5);
 }
 
 // 等待Ack
 bool SoftI2C::WaitAck(int retry)
 {
+	//SetSDA(true);
+
 	SDA = true;
 	Sys.Delay(1);
 	SCL = true;
-	Sys.Delay(1);
+	Sys.Delay(5);
+
+	// 修改SDA为输入口
+	//SetSDA(false);
 
 	// 等待SDA低电平
 	if(!retry) retry = Retry;
-	while(SDA)
+	while(SDA.ReadInput())
 	{
 		if(retry-- <= 0)
 		{
 			Stop();
+	debug_printf("SoftI2C::WaitAck Retry=%d \r\n", Retry);
 			return false;
 		}
 	}
 
 	SCL = false;
+	Sys.Delay(15);
 
 	return true;
 }
@@ -485,40 +569,53 @@ bool SoftI2C::WaitAck(int retry)
 void SoftI2C::Ack(bool ack)
 {
 	SCL = false;	//时钟低电平周期大于4μ
+
+	SetSDA(true);
+
 	SDA = !ack;
-	Sys.Delay(2);
+	Sys.Delay(3);
 	SCL = true;		//清时钟线，钳住I2C总线以便继续接收
-	Sys.Delay(2);
+	Sys.Delay(5);
 	SCL = false;
+	Sys.Delay(15);
 }
 
 void SoftI2C::WriteByte(byte dat)
 {
+	SetSDA(true);
+
 	SCL = false;	//拉低时钟开始数据传输
 	for(int i=0; i<8; i++)  //要传送的数据长度为8位
     {
 		SDA = (dat & 0x80) >> 7;   //判断发送位
 		dat <<= 1;
 
-		Sys.Delay(2);
+		Sys.Delay(1);
 		SCL = true;               //置时钟线为高，通知被控器开始接收数据位
-		Sys.Delay(2);
+		Sys.Delay(5);
 		SCL = false;
-		Sys.Delay(2);
+		Sys.Delay(1);
     }
+	SDA = true;
+	Sys.Delay(5);
+	SDA = false;
 }
 
 byte SoftI2C::ReadByte()
 {
+	SetSDA(false);
+
+	SCL = false;		// 置时钟线为低，准备接收数据位
+	SDA = true;			// 释放总线,置数据线为输入方式
 	byte rs = 0;
-	SDA = true;             // 开
 	for(int i=0; i<8; i++)
 	{
 		SCL = false;	// 置时钟线为低，准备接收数据位
-		Sys.Delay(2);
+		Sys.Delay(6);
 		SCL = true;		// 置时钟线为高使数据线上数据有效
-		rs = rs << 1;
-		if(SDA) rs++;	//读数据位,接收的数据位放入retc中
+		Sys.Delay(2);
+		rs <<= 1;
+		if(SDA.ReadInput()) rs |= 0x01;	//读数据位
 		Sys.Delay(1);
 	}
 
