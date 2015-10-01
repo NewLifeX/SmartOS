@@ -16,9 +16,9 @@
 BH1750::BH1750()
 {
 	IIC		= NULL;
-	//Address	= 0;
-	//Address	= 0xb8;
-	Address	= 0x46;
+	
+	// 7位地址，到了I2C那里，需要左移1位
+	Address	= 0x5C;
 	//Address	= 0x23;
 }
 
@@ -32,7 +32,7 @@ void BH1750::Init()
 {
 	debug_printf("BH1750::Init Address=0x%02X \r\n", Address);
 
-	IIC->Address = Address & 0xFE;
+	IIC->Address = Address << 1;
 
 	Write(CMD_PWN_ON);	// 打开电源
 	Write(CMD_RESET);	// 软重启
@@ -46,9 +46,10 @@ ushort BH1750::Read()
 {
 	if(!IIC) return 0;
 
-	ushort n = 0;
-	ByteArray bs((byte*)&n, 2);
+	ByteArray bs(2);
 	if(IIC->Read(0, bs) == 0) return 0;
+
+	ushort n = (bs[0] << 8) | bs[1];
 
 	return n;
 }
