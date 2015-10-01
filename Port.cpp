@@ -24,7 +24,7 @@ Port::Port()
 {
 	_Pin	= P0;
 	Group	= NULL;
-	PinBit	= 0;
+	Mask	= 0;
 	Opened	= false;
 #if DEBUG
 	Debug	= true;
@@ -64,12 +64,12 @@ Port& Port::Set(Pin pin)
 	if(_Pin != P0)
 	{
 		Group	= IndexToGroup(pin >> 4);
-		PinBit	= 1 << (pin & 0x0F);
+		Mask	= 1 << (pin & 0x0F);
 	}
 	else
 	{
 		Group	= NULL;
-		PinBit	= 0;
+		Mask	= 0;
 	}
 
 	//if(_Pin != P0) Open();
@@ -81,7 +81,7 @@ bool Port::Empty() const
 {
 	if(_Pin != P0) return false;
 
-	if(Group == NULL || PinBit == 0) return true;
+	if(Group == NULL || Mask == 0) return true;
 
 	return false;
 }
@@ -90,7 +90,7 @@ void Port::Clear()
 {
 	Group	= NULL;
 	_Pin	= P0;
-	PinBit	= 0;
+	Mask	= 0;
 }
 
 // 确定配置,确认用对象内部的参数进行初始化
@@ -162,7 +162,7 @@ void Port::OnClose()
 
 void Port::OnOpen(GPIO_InitTypeDef& gpio)
 {
-    gpio.GPIO_Pin = PinBit;
+    gpio.GPIO_Pin = Mask;
 
 #ifdef STM32F1
 	// PA15/PB3/PB4 需要关闭JTAG
@@ -273,9 +273,9 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
 	ushort dat = GPIO_ReadOutputData(Group);
 	if(!Invert)
-		dat &= ~PinBit;
+		dat &= ~Mask;
 	else
-		dat |= PinBit;
+		dat |= Mask;
 	GPIO_Write(Group, dat);
 
 	Port::OnOpen(gpio);
@@ -349,7 +349,7 @@ bool OutputPort::Read()
 	if(Empty()) return false;
 
 	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadOutputData(Group) & PinBit;
+	bool rs = GPIO_ReadOutputData(Group) & Mask;
 	return rs ^ Invert;
 }
 
@@ -357,7 +357,7 @@ bool OutputPort::ReadInput()
 {
 	if(Empty()) return false;
 
-	bool rs = GPIO_ReadInputData(Group) & PinBit;
+	bool rs = GPIO_ReadInputData(Group) & Mask;
 	return rs ^ Invert;
 }
 
@@ -372,9 +372,9 @@ void OutputPort::Write(bool value)
 	if(Empty()) return;
 
     if(value ^ Invert)
-        GPIO_SetBits(Group, PinBit);
+        GPIO_SetBits(Group, Mask);
     else
-        GPIO_ResetBits(Group, PinBit);
+        GPIO_ResetBits(Group, Mask);
 }
 
 void OutputPort::WriteGroup(ushort value)
@@ -488,7 +488,7 @@ ushort InputPort::ReadGroup() const    // 整组读取
 bool InputPort::Read() const
 {
 	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadInputData(Group) & PinBit;
+	bool rs = GPIO_ReadInputData(Group) & Mask;
 	return rs ^ Invert;
 }
 
@@ -677,7 +677,7 @@ void InputPort::OnClose()
 {
 	Port::OnClose();
 
-	int idx = Bits2Index(PinBit);
+	int idx = Bits2Index(Mask);
 
     IntState* st = &States[idx];
 	if(st->Port == this)
@@ -693,7 +693,7 @@ void InputPort::OnClose()
 // 注册回调  及中断使能
 void InputPort::Register(IOReadHandler handler, void* param)
 {
-    //if(!PinBit) return;
+    //if(!Mask) return;
 	assert_param2(_Pin != P0, "输入注册必须先设置引脚");
 
     Handler	= handler;
@@ -711,7 +711,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
     }
 
 	byte gi = _Pin >> 4;
-	int idx = Bits2Index(PinBit);
+	int idx = Bits2Index(Mask);
 	IntState* st = &States[idx];
 	st->ShakeTime = ShakeTime;
 

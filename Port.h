@@ -19,7 +19,7 @@ class Port : public Object
 public:
     GPIO_TypeDef*	Group;		// 针脚组
     Pin				_Pin;		// 针脚
-    ushort			PinBit;		// 组内引脚位。每个引脚一个位
+    ushort			Mask;		// 组内引脚位。每个引脚一个位
 	bool			Opened;		// 是否已经打开
 #if DEBUG
 	bool			Debug;		// 是否打开调试日志。默认打开
