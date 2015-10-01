@@ -56,5 +56,8 @@ ushort BH1750::Read()
 
 void BH1750::Write(byte cmd)
 {
+	if(!IIC) return;
+
 	IIC->Write(0, ByteArray(&cmd, 1));
+	Sys.Sleep(5);
 }
