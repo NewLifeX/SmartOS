@@ -13,11 +13,13 @@ public:
     SHT30();
     virtual ~SHT30();
 
-	//void Init();
-	ushort Read();
+	void Init();
+	ushort ReadSerialNumber();
+	ushort ReadTemperature();
+	ushort ReadHumidity();
 
 private:
-	void Write(byte cmd);
+	ushort WriteRead(ushort cmd);
 };
 
 #endif
