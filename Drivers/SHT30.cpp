@@ -1,5 +1,7 @@
 #include "SHT30.h"
 
+#define LITTLE_ENDIAN
+
 //-- Enumerations -------------------------------------------------------------
 // Sensor Commands
 typedef enum{
@@ -116,28 +118,28 @@ void SHT30::Init()
 	Write(CMD_SOFT_RESET);	// 软重启
 	Sys.Sleep(15);
 
-	ushort sn = ReadSerialNumber();
+	uint sn = ReadSerialNumber();
 	ushort st = ReadStatus();
-	debug_printf("SHT30::Init SerialNumber=0x%04X Status=0x%04X \r\n", sn, st);
+	//regStatus pst;
+	//pst.u16 = st;
+	debug_printf("SHT30::Init SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
 }
 
-ushort SHT30::ReadSerialNumber()
+uint SHT30::ReadSerialNumber()
 {
-	return WriteRead(CMD_READ_SERIALNBR);
+	return Read4(CMD_READ_SERIALNBR);
 }
 
 ushort SHT30::ReadStatus()
 {
-	return WriteRead(CMD_READ_STATUS);
+	return Read2(CMD_READ_STATUS);
 }
 
 ushort SHT30::ReadTemperature()
 {
 	if(!IIC) return 0;
 
-	//Write(0xF3);
-
-	ushort n = WriteRead(CMD_MEAS_CLOCKSTR_H) >> 16;
+	ushort n = Read4(CMD_MEAS_CLOCKSTR_H) >> 16;
 	// 公式:T= -46.85 + 175.72 * ST/2^16
 	/*n = n * 17572 / 65535 - 4685;
 	n /= 100;*/
@@ -149,9 +151,7 @@ ushort SHT30::ReadHumidity()
 {
 	if(!IIC) return 0;
 
-	//Write(0xF5);
-
-	ushort n = WriteRead(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
+	ushort n = Read4(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
 	// 公式: RH%= -6 + 125 * SRH/2^16
 	//n = n * 125 / 65535 - 6;
 
@@ -167,25 +167,21 @@ bool SHT30::Write(ushort cmd)
 	return IIC->Write(0, bs);
 }
 
-ushort SHT30::WriteRead(ushort cmd)
+ushort SHT30::Read2(ushort cmd)
 {
-	//IIC->Address = Address << 1;
-
 	ByteArray bs(2);
 	bs[0] = cmd >> 8;
 	bs[1] = cmd & 0xFF;
 
-	ByteArray rs(2);
+	ByteArray rs(3);
 	if(IIC->WriteRead(0, bs, rs) == 0) return 0;
 
 	return (rs[0] << 8) | rs[1];
 }
 
 // 同时读取温湿度并校验Crc
-uint SHT30::ReadAndCrc(ushort cmd)
+uint SHT30::Read4(ushort cmd)
 {
-	//IIC->Address = Address << 1;
-
 	ByteArray bs(2);
 	bs[0] = cmd >> 8;
 	bs[1] = cmd & 0xFF;
@@ -197,6 +193,8 @@ uint SHT30::ReadAndCrc(ushort cmd)
 	byte* p = rs.GetBuffer();
 	ushort temp = __REV16(*(ushort*)p);
 	ushort humi = __REV16(*(ushort*)(p + 3));
+
+	Sys.Sleep(10);
 
 	return (temp << 16) | humi;
 }

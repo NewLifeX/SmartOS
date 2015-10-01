@@ -41,12 +41,15 @@ void I2C::Close()
 bool I2C::SendAddress(int addr, bool tx)
 {
 	// 发送设备地址
-    WriteByte(tx ? Address : (Address | 0x01));
+	ushort d = tx ? Address : (Address | 0x01);
+    WriteByte(d);
 	if(!WaitAck())
 	{
-		debug_printf("I2C::SendAddress 可能设备未连接，或地址 0x%02X 不对 \r\n", Address);
+		debug_printf("I2C::SendAddress 可能设备未连接，或地址 0x%02X 不对 \r\n", d);
 		return false;
 	}
+
+	if(!SubWidth) return true;
 
 	return SendSubAddr(addr);
 }
@@ -132,6 +135,7 @@ uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
 	// 发送设备地址
     if(!SendAddress(addr, false)) return 0;
 
+	debug_printf("I2C::WriteRead ");
 	uint count = 0;
 	len = rs.Length();
 	for(int i=0; i<len; i++)
@@ -140,6 +144,7 @@ uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
 		count++;
 		Ack(i < len - 1);	// 最后一次不需要发送Ack
 	}
+	rs.Show(true);
 
 	return count;
 }
@@ -422,7 +427,7 @@ SoftI2C::SoftI2C(uint speedHz) : I2C()
 {
 	Speed	= speedHz;
 	_delay	= Sys.Clock / speedHz;
-	Retry	= 50;
+	Retry	= 10;
 	Error	= 0;
 	Address	= 0x00;
 }
@@ -505,16 +510,15 @@ bool SoftI2C::WaitAck(int retry)
 	if(!retry) retry = Retry;
 
 	SDA = true;
-	Sys.Delay(1);
 	SCL = true;
-	Sys.Delay(1);
+	//Sys.Delay(1);
 
 	// 等待SDA低电平
 	while(SDA.ReadInput())
 	{
 		if(retry-- <= 0)
 		{
-			Stop();
+			//Stop();
 			debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
 			return false;
 		}
@@ -560,7 +564,7 @@ byte SoftI2C::ReadByte()
 {
 	SDA = true;			// 释放总线,置数据线为输入方式
 	byte rs = 0;
-	for(int i=0; i<8; i++)
+	for(byte mask=0x80; mask>0; mask>>=1)
 	{
 		SCL = true;		// 置时钟线为高使数据线上数据有效
 		Sys.Delay(2);
@@ -571,8 +575,7 @@ byte SoftI2C::ReadByte()
 			if(retry-- <= 0) break;
 		}
 
-		rs <<= 1;
-		if(SDA.ReadInput()) rs |= 0x01;	//读数据位
+		if(SDA.ReadInput()) rs |= mask;	//读数据位
 		SCL = false;	// 置时钟线为低，准备接收数据位
 		Sys.Delay(1);
 	}

@@ -14,15 +14,15 @@ public:
     virtual ~SHT30();
 
 	void Init();
-	ushort ReadSerialNumber();
+	uint ReadSerialNumber();
 	ushort ReadStatus();
 	ushort ReadTemperature();
 	ushort ReadHumidity();
 
 private:
 	bool Write(ushort cmd);
-	ushort WriteRead(ushort cmd);
-	uint ReadAndCrc(ushort cmd);	// 同时读取温湿度并校验Crc
+	ushort Read2(ushort cmd);
+	uint Read4(ushort cmd);	// 同时读取温湿度并校验Crc
 };
 
 #endif
