@@ -4,13 +4,13 @@
 #define	CMD_PWN_ON	0x01
 #define	CMD_RESET	0x07
 
-// 连续分辨率
+// 连续分辨率。数值连续变化
 #define CMD_HRES	0x10	// 高解析度 1	测量时间120ms
 #define CMD_HRES2	0x11	// 高解析度 0.5	测量时间120ms
 //#define CMD_MRES	0x13
 #define CMD_LRES	0x13	// 高解析度 4	测量时间16ms
 
-// 一次分辨率
+// 一次分辨率。只能读取一次，数值不会变化
 #define CMD_ORES	0x20	// 高解析度 1	测量时间120ms
 
 BH1750::BH1750()
@@ -38,8 +38,8 @@ void BH1750::Init()
 	Write(CMD_RESET);	// 软重启
 	//Write(0x42);
 	//Write(0x65);		// 设置透光率为100%
-	//Write(CMD_HRES);	// 设置为高精度模式
-	Write(CMD_ORES);	// 设置为高精度模式
+	Write(CMD_HRES);	// 设置为高精度模式
+	//Write(CMD_ORES);	// 设置为高精度模式
 }
 
 ushort BH1750::Read()
@@ -58,6 +58,6 @@ void BH1750::Write(byte cmd)
 {
 	if(!IIC) return;
 
-	IIC->Write(0, ByteArray(&cmd, 1));
+	IIC->Write(0, cmd);
 	Sys.Sleep(5);
 }

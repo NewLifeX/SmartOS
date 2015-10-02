@@ -599,12 +599,12 @@ byte SoftI2C::ReadByte()
 	{
 		SCL = true;		// 置时钟线为高使数据线上数据有效
 		Sys.Delay(2);
-		// 等SCL变高
+		/*// 等SCL变高
 		uint retry = 50;
 		while(!SCL.ReadInput())
 		{
 			if(retry-- <= 0) break;
-		}
+		}*/
 
 		if(SDA.ReadInput()) rs |= mask;	//读数据位
 		SCL = false;	// 置时钟线为低，准备接收数据位

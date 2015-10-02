@@ -113,7 +113,8 @@ SHT30::~SHT30()
 
 void SHT30::Init()
 {
-	IIC->Address = Address << 1;
+	IIC->SubWidth	= 2;
+	IIC->Address	= Address << 1;
 
 	Write(CMD_SOFT_RESET);	// 软重启
 	Sys.Sleep(15);
@@ -160,21 +161,15 @@ ushort SHT30::ReadHumidity()
 
 bool SHT30::Write(ushort cmd)
 {
-	ByteArray bs(2);
-	bs[0] = cmd >> 8;
-	bs[1] = cmd & 0xFF;
+	ByteArray bs(0);
 
-	return IIC->Write(0, bs);
+	return IIC->Write(cmd, bs);
 }
 
 ushort SHT30::Read2(ushort cmd)
 {
-	ByteArray bs(2);
-	bs[0] = cmd >> 8;
-	bs[1] = cmd & 0xFF;
-
 	ByteArray rs(3);
-	if(IIC->WriteRead(0, bs, rs) == 0) return 0;
+	if(IIC->Read(cmd, rs) == 0) return 0;
 
 	return (rs[0] << 8) | rs[1];
 }
@@ -182,12 +177,8 @@ ushort SHT30::Read2(ushort cmd)
 // 同时读取温湿度并校验Crc
 uint SHT30::Read4(ushort cmd)
 {
-	ByteArray bs(2);
-	bs[0] = cmd >> 8;
-	bs[1] = cmd & 0xFF;
-
 	ByteArray rs(6);
-	if(IIC->WriteRead(0, bs, rs) == 0) return 0;
+	if(IIC->Read(cmd, rs) == 0) return 0;
 
 	// 分解数据，暂时不进行CRC校验
 	byte* p = rs.GetBuffer();
