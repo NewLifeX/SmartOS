@@ -1,13 +1,11 @@
 ﻿#include "SerialPort.h"
 
-uint OnUsartRead(ITransport* transport, byte* buf, uint len, void* param)
+uint OnUsartRead(ITransport* transport, ByteArray& bs, void* param, void* param2)
 {
 	debug_printf("收到：");
-    Sys.ShowString(buf, len);
-    debug_printf("\r\n");
-	
-	if(len > 4)
-		return 0;
+    //Sys.ShowString(buf, len);
+    //debug_printf("\r\n");
+	bs.Show(true);
     
     return 0;
 }
@@ -29,7 +27,7 @@ void TestSerial()
     sp1->Register(OnUsartRead);
     
 	char str[] = "http://www.NewLifeX.com \r\n";
-    sp1->Write((byte*)str, ArrayLength(str));
+    sp1->Write(ByteArray((byte*)str, ArrayLength(str)));
     //Sys.Sleep(3000);
 
     debug_printf("\r\nTestSerial Finish!\r\n");
