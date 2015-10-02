@@ -40,6 +40,19 @@ void I2C::Close()
 
 bool I2C::SendAddress(int addr, bool tx)
 {
+	// 1，写入模式，不管有没有子地址，先发送写地址，再发送子地址
+	// 2，读取模式，如果没有子地址，先发送读地址，再直接读取
+	// 3，读取模式，如果有子地址，先发送写地址，再发送子地址，然后重新开始并发送读地址
+	if(!tx && SubWidth)
+	{
+		WriteByte(Address);
+		if(!WaitAck()) return false;
+
+		if(!SendSubAddr(addr)) return false;
+
+		Start();
+	}
+
 	// 发送设备地址
 	ushort d = tx ? Address : (Address | 0x01);
     WriteByte(d);
@@ -49,7 +62,7 @@ bool I2C::SendAddress(int addr, bool tx)
 		return false;
 	}
 
-	if(!SubWidth) return true;
+	if(!SubWidth || !tx) return true;
 
 	return SendSubAddr(addr);
 }
@@ -100,7 +113,7 @@ uint I2C::Read(int addr, ByteArray& bs)
 	// 发送设备地址
     if(!SendAddress(addr, false)) return 0;
 
-	Start();
+	//Start();
 
 	uint rs = 0;
 	uint len = bs.Length();
@@ -114,6 +127,17 @@ uint I2C::Read(int addr, ByteArray& bs)
 }
 
 // 先写入再读取
+/*
+主机与从机进行通信时，有时需要切换数据的收发方向。例如，访问某一具有I2C 总线
+接口的E2PROM 存储器时，主机先向存储器输入存储单元的地址信息（发送数据），然后再
+读取其中的存储内容（接收数据）。
+在切换数据的传输方向时，可以不必先产生停止条件再开始下次传输，而是直接再一次
+产生开始条件。I2C 总线在已经处于忙的状态下，再一次直接产生起始条件的情况被称为重
+复起始条件。重复起始条件常常简记为Sr。
+正常的起始条件和重复起始条件在物理波形上并没有什么不同，区别仅仅是在逻辑方
+面。在进行多字节数据传输过程中，只要数据的收发方向发生了切换，就要用到重复起始条
+件。
+*/
 uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
 {
 	Open();
@@ -462,6 +486,7 @@ void SoftI2C::OnOpen()
 	SCL.Open();
 	SDA.Open();
 
+	// 当总线空闲时这两条线路都是高电平
 	SCL = true;
 	SDA = true;
 }
@@ -472,36 +497,42 @@ void SoftI2C::OnClose()
 	SDA.Close();
 }
 
+// 起始条件 当 SCL 处于高电平期间时，SDA 从高电平向低电平跳变时产生起始条件。
+// 总线在起始条件产生后便处于忙的状态。起始条件常常简记为S。
 /*
 sda		   ----____
 scl		___--------____
 */
 void SoftI2C::Start()
 {
-	SDA = true;		//发送起始条件的数据信号
+	// 在SCL高电平期间，SDA产生下降沿
+	SCL = true;
+
+	// 下降沿
+	SDA = true;
 	Sys.Delay(1);
-	SCL = true;		//起始条件建立时间大于4.7us,延时
-	Sys.Delay(1);
-	SDA = false;	//发送起始信号
+	SDA = false;
+
 	Sys.Delay(10);
-	SCL = false;	//钳住I2C总线，准备发送或接收数据
-	Sys.Delay(10);
+	SCL = false;
 }
 
+// 停止条件 当 SCL 处于高电平期间时，SDA 从低电平向高电平跳变时产生停止条件。
+// 总线在停止条件产生后处于空闲状态。停止条件简记为P。
 /*
 sda		____----
 scl		____----
 */
 void SoftI2C::Stop()
 {
-	SCL = false;	//发送结束条件的时钟信号
+	// 在SCL高电平期间，SDA产生上升沿
+	SCL = false;
+	SDA = false;
 	Sys.Delay(1);
-	SDA = false;    //发送结束条件的数据信号
-	Sys.Delay(1);
-	SCL = true;    //结束条件建立时间大于4μ
+
+	SCL = true;
 	Sys.Delay(10);
-	SDA = true;    //发送I2C总线结束信号
-	Sys.Delay(10);
+	SDA = true;
 }
 
 // 等待Ack
@@ -509,9 +540,10 @@ bool SoftI2C::WaitAck(int retry)
 {
 	if(!retry) retry = Retry;
 
+	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SDA = true;
 	SCL = true;
-	//Sys.Delay(1);
+	Sys.Delay(1);
 
 	// 等待SDA低电平
 	while(SDA.ReadInput())
@@ -531,38 +563,52 @@ bool SoftI2C::WaitAck(int retry)
 }
 
 // 发送Ack
+/*
+在 I2C 总线传输数据过程中，每传输一个字节，都要跟一个应答状态位。接收器接收数
+据的情况可以通过应答位来告知发送器。应答位的时钟脉冲仍由主机产生，而应答位的数据
+状态则遵循“谁接收谁产生”的原则，即总是由接收器产生应答位。主机向从机发送数据时，
+应答位由从机产生；主机从从机接收数据时，应答位由主机产生。I2C 总线标准规定：应答
+位为0 表示接收器应答（ACK），常常简记为A；为1 则表示非应答（NACK），常常简记为
+A。发送器发送完LSB 之后，应当释放SDA 线（拉高SDA，输出晶体管截止），以等待接
+收器产生应答位。
+*/
 void SoftI2C::Ack(bool ack)
 {
-	SCL = false;	//时钟低电平周期大于4μ
+	// SDA 线上的数据必须在时钟的高电平周期保持稳定
+	SCL = false;
 
 	SDA = !ack;
 	Sys.Delay(1);
-	SCL = true;		//清时钟线，钳住I2C总线以便继续接收
+
+	SCL = true;
 	Sys.Delay(5);
 	SCL = false;
+
 	SDA = true;
 	Sys.Delay(20);
 }
 
 void SoftI2C::WriteByte(byte dat)
 {
-	SCL = false;	//拉低时钟开始数据传输
-	for(int i=0; i<8; i++)  //要传送的数据长度为8位
+	// SDA 线上的数据必须在时钟的高电平周期保持稳定
+	SCL = false;
+	for(int i=0; i<8; i++)
     {
-		SDA = (dat & 0x80) >> 7;   //判断发送位
+		SDA = (dat & 0x80) >> 7;
 		dat <<= 1;
-
 		Sys.Delay(1);
-		SCL = true;               //置时钟线为高，通知被控器开始接收数据位
+
+		// 置时钟线为高，通知被控器开始接收数据位
+		SCL = true;
 		Sys.Delay(5);
 		SCL = false;
-		Sys.Delay(1);
     }
 }
 
 byte SoftI2C::ReadByte()
 {
-	SDA = true;			// 释放总线,置数据线为输入方式
+	// SDA 线上的数据必须在时钟的高电平周期保持稳定
+	SDA = true;
 	byte rs = 0;
 	for(byte mask=0x80; mask>0; mask>>=1)
 	{
@@ -582,3 +628,12 @@ byte SoftI2C::ReadByte()
 
 	return rs;
 }
+
+/*
+SDA 和SCL 都是双向线路都通过一个电流源或上拉电阻连接到正的电源电压。
+当总线空闲时这两条线路都是高电平。
+
+SDA 线上的数据必须在时钟的高电平周期保持稳定。
+数据线的高或低电平状态只有在SCL线的时钟信号是低电平时才能改变。
+起始和停止例外，因此从机很容易区分起始和停止信号。
+*/

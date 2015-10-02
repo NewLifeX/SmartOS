@@ -76,8 +76,8 @@ private:
 
 public:
 	// 使用端口和最大速度初始化，因为需要分频，实际速度小于等于该速度
-    HardI2C(I2C_TypeDef* iic = I2C1, uint speedHz = 10000);
-	HardI2C(byte index, uint speedHz = 10000);
+    HardI2C(I2C_TypeDef* iic = I2C1, uint speedHz = 100000);
+	HardI2C(byte index, uint speedHz = 100000);
     virtual ~HardI2C();
 
 	virtual void SetPin(Pin scl, Pin sda);
@@ -115,7 +115,7 @@ public:
 	bool HasSecAddress;	// 设备是否有子地址
 
 	// 使用端口和最大速度初始化，因为需要分频，实际速度小于等于该速度
-    SoftI2C(uint speedHz = 10000);
+    SoftI2C(uint speedHz = 100000);
     virtual ~SoftI2C();
 
 	virtual void SetPin(Pin scl, Pin sda);
