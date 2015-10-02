@@ -38,6 +38,17 @@ void I2C::Close()
 	Opened = false;
 }
 
+/*
+主机与从机进行通信时，有时需要切换数据的收发方向。例如，访问某一具有I2C 总线
+接口的E2PROM 存储器时，主机先向存储器输入存储单元的地址信息（发送数据），然后再
+读取其中的存储内容（接收数据）。
+在切换数据的传输方向时，可以不必先产生停止条件再开始下次传输，而是直接再一次
+产生开始条件。I2C 总线在已经处于忙的状态下，再一次直接产生起始条件的情况被称为重
+复起始条件。重复起始条件常常简记为Sr。
+正常的起始条件和重复起始条件在物理波形上并没有什么不同，区别仅仅是在逻辑方
+面。在进行多字节数据传输过程中，只要数据的收发方向发生了切换，就要用到重复起始条
+件。
+*/
 bool I2C::SendAddress(int addr, bool tx)
 {
 	// 1，写入模式，不管有没有子地址，先发送写地址，再发送子地址
@@ -113,8 +124,6 @@ uint I2C::Read(int addr, ByteArray& bs)
 	// 发送设备地址
     if(!SendAddress(addr, false)) return 0;
 
-	//Start();
-
 	uint rs = 0;
 	uint len = bs.Length();
 	for(int i=0; i<len; i++)
@@ -126,51 +135,27 @@ uint I2C::Read(int addr, ByteArray& bs)
 	return rs;
 }
 
-// 先写入再读取
-/*
-主机与从机进行通信时，有时需要切换数据的收发方向。例如，访问某一具有I2C 总线
-接口的E2PROM 存储器时，主机先向存储器输入存储单元的地址信息（发送数据），然后再
-读取其中的存储内容（接收数据）。
-在切换数据的传输方向时，可以不必先产生停止条件再开始下次传输，而是直接再一次
-产生开始条件。I2C 总线在已经处于忙的状态下，再一次直接产生起始条件的情况被称为重
-复起始条件。重复起始条件常常简记为Sr。
-正常的起始条件和重复起始条件在物理波形上并没有什么不同，区别仅仅是在逻辑方
-面。在进行多字节数据传输过程中，只要数据的收发方向发生了切换，就要用到重复起始条
-件。
-*/
-uint I2C::WriteRead(int addr, const ByteArray& bs, ByteArray& rs)
+bool I2C::Write(int addr, byte data) { return Write(addr, ByteArray(&data, 1)); }
+byte I2C::Read(int addr)
 {
-	Open();
+	ByteArray bs(1);
+	if(!Read(addr, bs)) return 0;
 
-	I2CScope ics(this);
+	return bs[0];
+}
+ushort I2C::Read2(int addr)
+{
+	ByteArray bs(2);
+	if(!Read(addr, bs)) return 0;
 
-	// 发送设备地址
-    if(!SendAddress(addr, true)) return 0;
+	return (bs[0] << 8) | bs[1];
+}
+uint I2C::Read4(int addr)
+{
+	ByteArray bs(4);
+	if(!Read(addr, bs)) return 0;
 
-	uint len = bs.Length();
-	for(int i=0; i<len; i++)
-	{
-		WriteByte(bs[i]);
-		if(!WaitAck()) return 0;
-	}
-
-	Start();
-
-	// 发送设备地址
-    if(!SendAddress(addr, false)) return 0;
-
-	debug_printf("I2C::WriteRead ");
-	uint count = 0;
-	len = rs.Length();
-	for(int i=0; i<len; i++)
-	{
-		rs[i] = ReadByte();
-		count++;
-		Ack(i < len - 1);	// 最后一次不需要发送Ack
-	}
-	rs.Show(true);
-
-	return count;
+	return (bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3];
 }
 
 HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()

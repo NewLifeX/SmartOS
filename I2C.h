@@ -37,9 +37,14 @@ public:
 	virtual void Ack(bool ack) = 0;
 	virtual bool WaitAck(int retry = 0) = 0;	// 等待Ack，默认0表示采用全局Retry
 
-	virtual bool Write(int addr, const ByteArray& bs);	// 新会话向指定地址写入多个字节
-	virtual uint Read(int addr, ByteArray& bs);	// 新会话从指定地址读取多个字节
-	virtual uint WriteRead(int addr, const ByteArray& bs, ByteArray& rs);	// 先写入再读取
+	// 新会话向指定地址写入
+	virtual bool Write(int addr, const ByteArray& bs);
+	virtual bool Write(int addr, byte data);
+	// 新会话从指定地址读取
+	virtual uint Read(int addr, ByteArray& bs);
+	virtual byte Read(int addr);
+	virtual ushort Read2(int addr);
+	virtual uint Read4(int addr);
 
 protected:
 	virtual void OnOpen() = 0;	// 打开设备
