@@ -116,8 +116,10 @@ void SHT30::Init()
 	IIC->SubWidth	= 2;
 	IIC->Address	= Address << 1;
 
-	Write(CMD_SOFT_RESET);	// 软重启
+	Write(CMD_SOFT_RESET);		// 软重启
 	Sys.Sleep(15);
+	Write(CMD_CLEAR_STATUS);	// 清楚所有状态
+	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
 
 	uint sn = ReadSerialNumber();
 	ushort st = ReadStatus();
@@ -140,10 +142,12 @@ ushort SHT30::ReadTemperature()
 {
 	if(!IIC) return 0;
 
-	ushort n = Read4(CMD_MEAS_CLOCKSTR_H) >> 16;
+	//ushort n = Read4(CMD_MEAS_CLOCKSTR_H) >> 16;
+	ushort n = Read4(CMD_MEAS_POLLING_H) >> 16;
+	//ushort n = Read4(CMD_FETCH_DATA) >> 16;
 	// 公式:T= -46.85 + 175.72 * ST/2^16
-	/*n = n * 17572 / 65535 - 4685;
-	n /= 100;*/
+	n = ((n * 17572) >> 16) - 4685;
+	//n /= 100;
 
 	return n;
 }
@@ -152,9 +156,11 @@ ushort SHT30::ReadHumidity()
 {
 	if(!IIC) return 0;
 
-	ushort n = Read4(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
+	//ushort n = Read4(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
+	ushort n = Read4(CMD_MEAS_POLLING_H) & 0xFFFF;
+	//ushort n = Read4(CMD_FETCH_DATA) & 0xFFFF;
 	// 公式: RH%= -6 + 125 * SRH/2^16
-	//n = n * 125 / 65535 - 6;
+	n = ((n * 125) >> 16) - 6;
 
 	return n;
 }
