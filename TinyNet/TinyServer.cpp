@@ -72,6 +72,8 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			OnDisjoin(msg);
 			break;
 		case 3:
+			// 设置当前设备
+			Current = dv;
 			OnPing(msg);
 			break;
 		case 5:
@@ -235,11 +237,39 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	// 网关内没有相关节点信息时不鸟他
 	if(FindDevice(msg.Src) == NULL)return false;
-	// 响应 Ping 指令
+
+	// 子操作码
+	switch(msg.Data[0])
+	{
+		// 同步数据
+		case 0x01:
+		{
+			Device* dv = Current;
+			if(dv && msg.Length >= 4)
+			{
+				byte offset	= msg.Data[1];
+				byte len	= msg.Data[2];
+				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
+
+				int remain = dv->Store.Capacity() - offset;
+				if(len > remain) len = remain;
+				// 保存一份到缓冲区
+				if(len > 0)
+				{
+					dv->Store.Copy(&msg.Data[3], len, offset);
+				}
+			}
+		}
+	}
+
+	// 响应 Ping 指令，告诉客户端有多少指令需要等待执行
 	TinyMessage rs;
 	rs.Code = msg.Code;
 	rs.Dest = msg.Src;
 	rs.Sequence	= msg.Sequence;
+
+	//todo。告诉客户端有多少待处理指令
+
 	Reply(rs);
 
 	return true;
@@ -298,7 +328,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	uint offset = ms.ReadEncodeInt();
 
 	int remain = dv.Store.Capacity() - offset;
-	
+
 	if(remain < 0) return false;
 
 	uint len = ms.Remain();

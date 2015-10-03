@@ -228,6 +228,7 @@ void TinyClient::Report(Message& msg)
 	Stream ms = msg.ToStream();
 	ms.Write((byte)0x01);	// 子功能码
 	ms.Write((byte)0x00);	// 起始地址
+	ms.Write((byte)Store.Data.Length());	// 长度
 	ms.Write(Store.Data);
 	msg.Length = ms.Position();
 }
