@@ -122,6 +122,12 @@ void SHT30::Init()
 	ushort st = ReadStatus();
 	Write(CMD_CLEAR_STATUS);	// 清楚所有状态
 
+	/*
+	SHT30三种采集数据方式：
+	1，Stretch阻塞模式，发送命令后采集，需要长时间等待SCL拉高，才能发送读取头然后读取数据
+	2，Polling非阻塞模式，发送命令后采集，需要反复多次启动并发送读取头，得到ACK以后才能读取数据
+	3，内部定期采集模式，启动时发送Periodic命令，读取时发送FetchData命令后直接读取数据
+	*/
 	//Read4(CMD_MEAS_CLOCKSTR_H);
 	//Read4(CMD_MEAS_POLLING_H);
 	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
@@ -174,9 +180,15 @@ ushort SHT30::ReadHumidity()
 
 bool SHT30::Read(ushort& temp, ushort& humi)
 {
+	/*
+	SHT30三种采集数据方式：
+	1，Stretch阻塞模式，发送命令后采集，需要长时间等待SCL拉高，才能发送读取头然后读取数据
+	2，Polling非阻塞模式，发送命令后采集，需要反复多次启动并发送读取头，得到ACK以后才能读取数据
+	3，内部定期采集模式，启动时发送Periodic命令，读取时发送FetchData命令后直接读取数据
+	*/
 	//uint data = Read4(CMD_MEAS_CLOCKSTR_H);
-	uint data = Read4(CMD_MEAS_POLLING_H);
-	//uint data = Read4(CMD_FETCH_DATA);
+	//uint data = Read4(CMD_MEAS_POLLING_H);
+	uint data = Read4(CMD_FETCH_DATA);
 	if(!data) return false;
 
 	temp = data >> 16;
