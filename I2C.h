@@ -142,6 +142,8 @@ private:
 
 	virtual void OnOpen();
 	virtual void OnClose();
+	
+	void Delay(int us);
 };
 
 #endif

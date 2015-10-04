@@ -482,6 +482,11 @@ void SoftI2C::OnClose()
 	SDA.Close();
 }
 
+void SoftI2C::Delay(int us)
+{
+	Sys.Delay(us);
+}
+
 // 起始条件 当 SCL 处于高电平期间时，SDA 从高电平向低电平跳变时产生起始条件。
 // 总线在起始条件产生后便处于忙的状态。起始条件常常简记为S。
 /*
@@ -495,10 +500,10 @@ void SoftI2C::Start()
 
 	// 下降沿
 	SDA = true;
-	Sys.Delay(1);
+	Delay(1);
 	SDA = false;
 
-	Sys.Delay(10);
+	Delay(1);
 	SCL = false;
 }
 
@@ -513,10 +518,10 @@ void SoftI2C::Stop()
 	// 在SCL高电平期间，SDA产生上升沿
 	SCL = false;
 	SDA = false;
-	Sys.Delay(1);
+	Delay(1);
 
 	SCL = true;
-	Sys.Delay(10);
+	Delay(1);
 	SDA = true;
 }
 
@@ -528,7 +533,7 @@ bool SoftI2C::WaitAck(int retry)
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SDA = true;
 	SCL = true;
-	Sys.Delay(1);
+	Delay(1);
 
 	// 等待SDA低电平
 	while(SDA.ReadInput())
@@ -542,7 +547,7 @@ bool SoftI2C::WaitAck(int retry)
 	}
 
 	SCL = false;
-	Sys.Delay(20);
+	Delay(1);
 
 	return true;
 }
@@ -563,30 +568,30 @@ void SoftI2C::Ack(bool ack)
 	SCL = false;
 
 	SDA = !ack;
-	Sys.Delay(1);
+	Delay(1);
 
 	SCL = true;
-	Sys.Delay(5);
+	Delay(1);
 	SCL = false;
 
 	SDA = true;
-	Sys.Delay(20);
+	Delay(1);
 }
 
 void SoftI2C::WriteByte(byte dat)
 {
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SCL = false;
-	for(int i=0; i<8; i++)
+	for(byte mask=0x80; mask>0; mask>>=1)
     {
-		SDA = (dat & 0x80) >> 7;
-		dat <<= 1;
-		Sys.Delay(1);
+		SDA = dat & mask;
+		Delay(1);
 
 		// 置时钟线为高，通知被控器开始接收数据位
 		SCL = true;
-		Sys.Delay(5);
+		Delay(1);
 		SCL = false;
+		Delay(1);
     }
 }
 
@@ -598,17 +603,18 @@ byte SoftI2C::ReadByte()
 	for(byte mask=0x80; mask>0; mask>>=1)
 	{
 		SCL = true;		// 置时钟线为高使数据线上数据有效
-		Sys.Delay(2);
-		/*// 等SCL变高
+		//Delay(2);
+		// 等SCL变高
 		uint retry = 50;
 		while(!SCL.ReadInput())
 		{
 			if(retry-- <= 0) break;
-		}*/
+			Sys.Sleep(1);
+		}
 
 		if(SDA.ReadInput()) rs |= mask;	//读数据位
 		SCL = false;	// 置时钟线为低，准备接收数据位
-		Sys.Delay(1);
+		Delay(1);
 	}
 
 	return rs;

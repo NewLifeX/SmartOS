@@ -118,11 +118,14 @@ void SHT30::Init()
 
 	Write(CMD_SOFT_RESET);		// 软重启
 	Sys.Sleep(15);
-	Write(CMD_CLEAR_STATUS);	// 清楚所有状态
-	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
-
 	uint sn = ReadSerialNumber();
 	ushort st = ReadStatus();
+	Write(CMD_CLEAR_STATUS);	// 清楚所有状态
+
+	//Read4(CMD_MEAS_CLOCKSTR_H);
+	//Read4(CMD_MEAS_POLLING_H);
+	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
+
 	//regStatus pst;
 	//pst.u16 = st;
 	debug_printf("SHT30::Init SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
@@ -138,7 +141,7 @@ ushort SHT30::ReadStatus()
 	return Read2(CMD_READ_STATUS);
 }
 
-ushort SHT30::ReadTemperature()
+/*ushort SHT30::ReadTemperature()
 {
 	if(!IIC) return 0;
 
@@ -167,6 +170,25 @@ ushort SHT30::ReadHumidity()
 	n = ((n * 125 * 100) >> 16) - 6 * 100;
 
 	return n;
+}*/
+
+bool SHT30::Read(ushort& temp, ushort& humi)
+{
+	//uint data = Read4(CMD_MEAS_CLOCKSTR_H);
+	uint data = Read4(CMD_MEAS_POLLING_H);
+	//uint data = Read4(CMD_FETCH_DATA);
+	if(!data) return false;
+
+	temp = data >> 16;
+	// 公式:T= -46.85 + 175.72 * ST/2^16
+	temp = ((temp * 17572) >> 16) - 4685;
+	//temp /= 100;
+
+	humi = data & 0xFFFF;
+	// 公式: RH%= -6 + 125 * SRH/2^16
+	humi = ((humi * 125 * 100) >> 16) - 6 * 100;
+
+	return true;
 }
 
 bool SHT30::Write(ushort cmd)

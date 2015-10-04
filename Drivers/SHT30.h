@@ -16,8 +16,9 @@ public:
 	void Init();
 	uint ReadSerialNumber();
 	ushort ReadStatus();
-	ushort ReadTemperature();
-	ushort ReadHumidity();
+	//ushort ReadTemperature();
+	//ushort ReadHumidity();
+	bool Read(ushort& temp, ushort& humi);
 
 private:
 	bool Write(ushort cmd);
