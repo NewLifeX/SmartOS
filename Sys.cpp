@@ -449,8 +449,8 @@ void TSys::ToHex(byte* buf, byte* src, uint len)
 // 任务
 #include "Task.h"
 
-// 创建任务，返回任务编号。priority优先级，dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, Int64 dueTime, Int64 period, string name)
+// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
+uint TSys::AddTask(Action func, void* param, int dueTime, int period, string name)
 {
 	return Task::Scheduler()->Add(func, param, dueTime, period, name);
 }
@@ -461,7 +461,7 @@ void TSys::RemoveTask(uint& taskid)
 	taskid = 0;
 }
 
-bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
+bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
 {
 	if(!taskid) return false;
 
@@ -471,7 +471,7 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 	task->Enable = enable;
 
 	// 可以安排最近一次执行的时间，比如0表示马上调度执行
-	if(usNextTime >= 0) task->NextTime = Time.Current() + usNextTime;
+	if(msNextTime >= 0) task->NextTime = Time.Current() + msNextTime;
 
 	// 如果系统调度器处于Sleep，让它立马退出
 	if(enable) Task::Scheduler()->Sleeping = false;
@@ -480,7 +480,7 @@ bool TSys::SetTask(uint taskid, bool enable, int usNextTime)
 }
 
 // 改变任务周期
-bool TSys::SetTaskPeriod(uint taskid, Int64 period)
+bool TSys::SetTaskPeriod(uint taskid, int period)
 {
 	if(!taskid) return false;
 
@@ -511,10 +511,10 @@ void TSys::Start()
 		Task::Scheduler()->Start();
 }
 
-void TimeSleep(uint ms)
+void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(Sys.Started)
+	if(Sys.Started && us != 0 && us >= 50)
 	{
 		TaskScheduler* sc = Task::Scheduler();
 		// 记录当前正在执行任务
@@ -522,32 +522,32 @@ void TimeSleep(uint ms)
 
 		TimeCost tc;
 		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
-		int total = ms;
+		int total = us;
 		// 如果休眠时间足够长，允许多次调度其它任务
 		while(true)
 		{
 			// 统计这次调度的时间，累加作为当前任务的休眠时间
 			TimeCost tc2;
 
-			sc->Execute(total);
+			sc->Execute(total / 1000);
 
 			total -= tc2.Elapsed();
 
 			if(total <= 0) break;
 		}
 
-		int cost = tc.Elapsed();
+		int ct = tc.Elapsed();
 		if(task)
 		{
 			sc->Current = task;
-			task->SleepTime += cost;
+			task->SleepTime += ct;
 		}
 
-		if(cost >= ms) return;
+		if(ct >= us) return;
 
-		ms -= cost;
+		us -= ct;
 	}
-	if(ms) Time.Sleep(ms);
+	if(us) Time.Delay(us);
 }
 
 void TSys::Sleep(uint ms)
@@ -558,10 +558,10 @@ void TSys::Sleep(uint ms)
 	else
 	{
 #if DEBUG
-		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
+		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长！", ms);
 #endif
 
-		TimeSleep(ms);
+		TimeSleep(ms * 1000);
 	}
 }
 
@@ -573,10 +573,13 @@ void TSys::Delay(uint us)
 	else
 	{
 #if DEBUG
-		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
+		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长！", us);
 #endif
 
-		Time.Delay(us);
+		if(us < 50)
+			Time.Delay(us);
+		else
+			TimeSleep(us);
 	}
 }
 #endif

@@ -120,13 +120,13 @@ private:
 	int _Index;	// MCU在型号表中的索引
 
 public:
-	// 创建任务，返回任务编号。dueTime首次调度时间us，period调度间隔us，-1表示仅处理一次
-	uint AddTask(Action func, void* param, Int64 dueTime = 0, Int64 period = 0, string name = NULL);
+	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
+	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, string name = NULL);
 	void RemoveTask(uint& taskid);
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
-	bool SetTask(uint taskid, bool enable, int usNextTime = -1);
+	bool SetTask(uint taskid, bool enable, int msNextTime = -1);
 	// 改变任务周期
-	bool SetTaskPeriod(uint taskid, Int64 period);
+	bool SetTaskPeriod(uint taskid, int period);
 	void Start();	// 开始系统大循环
 	Func OnStart;
 };

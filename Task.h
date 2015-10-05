@@ -25,10 +25,11 @@ public:
 	Int64	NextTime;	// 下一次执行时间ms
 
 	int		Times;		// 执行次数
-	int		CpuTime;	// 总耗费时间
-	int		SleepTime;	// 当前睡眠时间
-	int		Cost;		// 平均执行时间
-	int		MaxCost;	// 最大执行时间
+	int		CpuTime;	// 总耗费时间us
+	int		SleepTime;	// 当前睡眠时间us
+	int		Cost;		// 平均执行时间us
+	int		CostMs;		// 平均执行时间ms
+	int		MaxCost;	// 最大执行时间us
 
 	bool	Enable;		// 是否启用
 	bool	Event;		// 是否只执行一次后暂停的事件型任务
@@ -63,8 +64,8 @@ public:
 	bool	Running;	// 是否正在运行
 	bool	Sleeping;	// 如果当前处于Sleep状态，马上停止并退出
 
-	int		Cost;		// 平均执行时间
-	int		MaxCost;	// 最大执行时间
+	int		Cost;		// 平均执行时间us
+	int		MaxCost;	// 最大执行时间us
 
 	TaskScheduler(string name = NULL);
 	~TaskScheduler();

@@ -11,6 +11,7 @@ Task::Task()
 	CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
+	CostMs		= 0;
 	MaxCost		= 0;
 	Enable		= true;
 	Event		= false;
@@ -45,19 +46,20 @@ bool Task::Execute(ulong now)
 
 	// 累加任务执行次数和时间
 	Times++;
-	int cost = tc.Elapsed();
-	if(cost < 0) debug_printf("cost = %d \r\n", cost);
-	if(cost < 0) cost = -cost;
-	//if(cost > 0)
+	int ct = tc.Elapsed();
+	if(ct < 0) debug_printf("cost = %d \r\n", ct);
+	if(ct < 0) ct = -ct;
+	//if(ct > 0)
 	{
-		cost -= SleepTime;
-		if(cost > MaxCost) MaxCost = cost;
-		CpuTime += cost;
+		ct -= SleepTime;
+		if(ct > MaxCost) MaxCost = ct;
+		CpuTime += ct;
 		Cost = CpuTime / Times;
+		CostMs = Cost / 1000;
 	}
 
 #if DEBUG
-	if(cost > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dms 睡眠 %dms\r\n", ID, Times, cost, SleepTime);
+	if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
 #endif
 
 	// 如果只是一次性任务，在这里清理
@@ -71,17 +73,17 @@ bool Task::Execute(ulong now)
 // 显示状态
 void Task::ShowStatus()
 {
-	debug_printf("Task::%s \t%d [%d] \t平均 %dms ", Name, ID, Times, Cost);
+	debug_printf("Task::%s \t%d [%d] \t平均 %dus ", Name, ID, Times, Cost);
 	if(Cost < 1000) debug_printf("\t");
 
-	debug_printf("\t最大 %dms ", MaxCost);
+	debug_printf("\t最大 %dus ", MaxCost);
 	if(MaxCost < 1000) debug_printf("\t");
 
 	debug_printf("\t周期 ");
 	if(Period >= 1000)
-		debug_printf("%ds", (int)(Period / 1000));
+		debug_printf("%ds", Period / 1000);
 	else
-		debug_printf("%dms", (int)Period);
+		debug_printf("%dms", Period);
 	if(!Enable) debug_printf(" 禁用");
 	debug_printf("\r\n");
 }
@@ -236,7 +238,7 @@ void TaskScheduler::Execute(uint msMax)
 
 		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-		&& Time.Current() + task->Cost <= end)
+		&& Time.Current() + task->CostMs <= end)
 		{
 			task->Execute(now);
 
@@ -255,12 +257,12 @@ void TaskScheduler::Execute(uint msMax)
 		}
 	}
 
-	int cost = tc.Elapsed();
+	int ct = tc.Elapsed();
 	if(Cost > 0)
-		Cost = (Cost + cost) / 2;
+		Cost = (Cost + ct) >> 1;
 	else
-		Cost = cost;
-	if(cost > MaxCost) MaxCost = cost;
+		Cost = ct;
+	if(ct > MaxCost) MaxCost = ct;
 
 	// 如果有最小时间，睡一会吧
 	now = Time.Current();	// 当前时间
@@ -281,7 +283,7 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* host = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 平均 %dms 最大 %dms 系统启动 ", host->Cost, host->MaxCost);
+	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 ", host->Cost, host->MaxCost);
 	Time.Now().Show(true);
 
 	IArray<Task>& ts = *(host->_Tasks);
