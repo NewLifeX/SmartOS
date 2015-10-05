@@ -504,7 +504,7 @@ void TSys::Start()
 	if(OnStart)
 	{
 		// 设置重载值，让其每1ms重载一次
-		Time.SetMax(1000);
+		//Time.SetMax(1000);
 		OnStart();
 	}
 	else
@@ -576,7 +576,7 @@ void TSys::Delay(uint us)
 		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长，超过1000ms建议使用多线程Thread！", us);
 #endif
 
-		TimeSleep(us);
+		Time.Delay(us);
 	}
 }
 #endif

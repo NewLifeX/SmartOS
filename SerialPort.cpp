@@ -339,7 +339,7 @@ void SerialPort::OnRxHandler()
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
-	//if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, _byteTime);
+	if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, _byteTime);
 }
 
 void SerialPort::ReceiveTask(void* param)

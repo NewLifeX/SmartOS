@@ -125,7 +125,7 @@ void RTC_SetCounter(DateTime dt)
 }
 #endif
 
-static ulong g_NextSaveTicks;	// 下一次保存Ticks的数值，避免频繁保存
+static uint g_NextSave;	// 下一次保存Ticks的时间，避免频繁保存
 #if TIME_DEBUG
 	static ulong g_Counter = 0;
 #endif
@@ -156,7 +156,7 @@ void HardRTC::Init()
 	PWR_BackupAccessCmd(ENABLE);
 
 	// 下一次保存Ticks的数值，避免频繁保存
-	g_NextSaveTicks = 0;
+	g_NextSave = 0;
 
 	Opened = true;
 
@@ -214,19 +214,15 @@ void HardRTC::LoadTicks()
 	DateTime dt = RTC_GetCounter();
 	ulong ms = dt.TotalMicroseconds();
 #endif
-	ulong us = ms * 1000;
-	Time.Ticks = us * Time.TicksPerMicrosecond;
-	Time.Milliseconds = ms;
-	Time.Microseconds = us;
-	//Time._msUs = 0;
-	//Time._usTicks = 0;
+	Time.Seconds		= ms % 1000;
+	Time.Milliseconds	= ms;
 }
 
 void HardRTC::SaveTicks()
 {
 	if(!Opened) return;
 
-	if(Time.Ticks < g_NextSaveTicks) return;
+	if(Time.Seconds < g_NextSave) return;
 #if TIME_DEBUG
 	if(g_Counter > 0)
 	{
@@ -268,7 +264,7 @@ void HardRTC::SaveTicks()
 	RTC_WaitForLastTask2();
 
 	// 每秒钟保存一次
-	g_NextSaveTicks = Time.Ticks + 5000000ull * Time.TicksPerMicrosecond;
+	g_NextSave = Time.Seconds + 5;
 }
 
 // 暂停系统一段时间

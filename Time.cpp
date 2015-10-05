@@ -9,20 +9,22 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
+static TIM_TypeDef* const g_Timers[] = TIMS;
+
 TTime::TTime()
 {
-	Ticks			= 0;
-	Microseconds	= 0;
-	Milliseconds	= 0;
-	//NextEvent = TIME_Completion_IdleValue;
+	Seconds	= 0;
+	Ticks	= 0;
+#ifdef STM32F0
+	Index	= 13;
+#else
+	Index	= 5;
+#endif
 
-	_usTicks= 0;
-	_msUs	= 0;
-
-	OnInit = NULL;
-	OnLoad = NULL;
-	OnSave = NULL;
-	OnSleep = NULL;
+	OnInit	= NULL;
+	OnLoad	= NULL;
+	OnSave	= NULL;
+	OnSleep	= NULL;
 }
 
 /*TTime::~TTime()
@@ -41,40 +43,49 @@ void TTime::Init()
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	TicksPerMicrosecond = clk / 1000000;	// 每微秒的时钟滴答数
+	Ticks = clk / 1000000;	// 每微秒的时钟滴答数
 
-	//if(_RTC) _RTC->Init();
-
-	SetMax(0);
+	//uint ticks = SYSTICK_MAXCOUNT;
+	// ticks为每次中断的嘀嗒数，也就是重载值
+	//SysTick_Config(ticks);
+	// 上面的函数会打开中断
+	SysTick->LOAD  = SYSTICK_MAXCOUNT - 1; 
+	SysTick->VAL   = 0;
+	SysTick->CTRL  = SysTick_CTRL_ENABLE_Msk;
+	Interrupt.Disable(SysTick_IRQn);
 
 	// 必须放在SysTick_Config后面，因为它设为不除以8
 	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
 	// 本身主频已经非常快，除以8分频吧
-	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
+	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
 
-	// 需要最高优先级
-    Interrupt.SetPriority(SysTick_IRQn, 0);
-	Interrupt.Activate(SysTick_IRQn, OnHandler, this);
-}
+	TIM_TypeDef* tim = g_Timers[Index];
+#ifdef STM32F0
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
+#else
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+#endif
 
-// 设置最大计数，也就是滴答定时器重载值
-void TTime::SetMax(uint usMax)
-{
-	/*SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;	// 选择外部时钟，每秒有个HCLK/8滴答
-	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;		// 开启定时器减到0后的中断请求
+	// 配置时钟。1毫秒计时，1000毫秒中断
+	TIM_TimeBaseInitTypeDef tr;
+	TIM_TimeBaseStructInit(&tr);
+	tr.TIM_Period = 1000 - 1;
+	tr.TIM_Prescaler = Sys.Clock / 1000 - 1;
+	//tr.TIM_ClockDivision = 0x0;
+	tr.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(tim, &tr);
 
-	// 加载嘀嗒数，72M时~=0x00FFFFFF/9M=1864135us，96M时~=0x00FFFFFF/12M=1398101us
-	SysTick->LOAD = SYSTICK_MAXCOUNT - 1;
-	SysTick->VAL = 0;
-	SysTick->CTRL |= SYSTICK_ENABLE;	// SysTick使能*/
+	// 打开中断
+	TIM_ITConfig(tim, TIM_IT_Update, ENABLE);
+	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
+	TIM_ClearFlag(tim, TIM_FLAG_Update);
 
-	// InterruptsPerSecond单位：中断每秒，clk单位：滴答每秒，ticks单位：滴答每中断
-	// 默认100，也即是每秒100次中断，10ms一次
-	uint ticks = SYSTICK_MAXCOUNT;
-	if(usMax > 0) ticks = usMax * TicksPerMicrosecond;
-	// ticks为每次中断的嘀嗒数，也就是重载值
-	assert_param(ticks > 0 && ticks <= SYSTICK_MAXCOUNT);
-	SysTick_Config(ticks);
+	const int irqs[] = TIM_IRQns;
+	Interrupt.SetPriority(irqs[Index], 0);
+	Interrupt.Activate(irqs[Index], OnHandler, tim);
+
+	// 打开计数
+	TIM_Cmd(tim, ENABLE);
 }
 
 #if defined(STM32F0) || defined(STM32F4)
@@ -82,158 +93,111 @@ void TTime::SetMax(uint usMax)
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
-	// 嘀嗒时钟中断不需要关中断，因为它有最高优先级
-	//SmartIRQ irq;
+	TIM_TypeDef* timer = (TIM_TypeDef*)param;
+	if(!timer) return;
 
-	//uint value = (SysTick->LOAD - SysTick->VAL);
-	//SysTick->VAL = 0;
-	// 此时若修改寄存器VAL，将会影响SysTick_CTRL_COUNTFLAG标识位
+	// 检查指定的 TIM 中断发生
+	if(TIM_GetITStatus(timer, TIM_IT_Update) == RESET) return;
 
 	// 累加计数
-	if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
-	{
-		uint value = SysTick->LOAD + 1;
+	Time.Seconds++;
+	Time.Milliseconds += 1000;
+	// 必须清除TIMx的中断待处理位，否则会频繁中断
+	TIM_ClearITPendingBit(timer, TIM_IT_Update);
+	debug_printf("TTime::OnHandler CNT=%d Seconds=%d Milliseconds=%d\r\n", timer->CNT, Time.Seconds, (uint)Time.Milliseconds);
 
-		Time.Ticks += value;
-
-		/*Time._usTicks += value;
-		uint us = Time._usTicks / Time.TicksPerMicrosecond;
-		Time.Microseconds += us;
-		Time._usTicks %= Time.TicksPerMicrosecond;
-
-		Time._msUs += us;
-		Time.Milliseconds += Time._msUs / 1000;
-		Time._msUs %= 1000;*/
-
-		// 这次的嘀嗒数加上上一次的剩余量，折算为微秒数
-		volatile uint ts = Time._usTicks + value;
-		uint us = ts / Time.TicksPerMicrosecond;
-
-		// 这次的微秒数加上上一次的剩余量
-		volatile uint ms = Time._msUs + us;
-
-		// 从大到小累加单位，避免出现总时间变小的情况
-		Time.Milliseconds += ms / 1000;
-		Time.Microseconds += us;
-		Time._msUs = ms % 1000;
-		Time._usTicks = ts % Time.TicksPerMicrosecond;
-	}
 	// 定期保存Ticks到后备RTC寄存器
-	//if(Time._RTC) Time._RTC->SaveTicks();
 	if(Time.OnSave) Time.OnSave();
 
 	if(Sys.OnTick) Sys.OnTick();
 }
 
-/*void TTime::SetCompare(ulong compareValue)
+// 当前滴答时钟
+uint TTime::CurrentTicks()
 {
-    SmartIRQ irq;
-
-    NextEvent = compareValue;
-
-	ulong curTicks = CurrentTicks();
-
-	uint diff;
-
-	// 如果已经超过计划比较值，那么安排最小滴答，准备马上中断
-	if(curTicks >= NextEvent)
-		diff = 1;
-	// 计算下一次中断的间隔，最大为SYSTICK_MAXCOUNT
-	else if((compareValue - curTicks) > SYSTICK_MAXCOUNT)
-		diff = SYSTICK_MAXCOUNT;
-	else
-		diff = (uint)(compareValue - curTicks);
-
-	// 把时钟里面的剩余量累加到g_Ticks
-	Ticks = CurrentTicks();
-
-	// 重新设定重载值，下一次将在该值处中断
-	SysTick->LOAD = diff;
-	SysTick->VAL = 0x00;
-}*/
-
-ulong TTime::CurrentTicks()
-{
-    //SmartIRQ irq;
-
-	uint value = (SysTick->LOAD - SysTick->VAL);
-
-	return Ticks + value;
+	return SysTick->LOAD - SysTick->VAL;
 }
 
-// 当前微秒数
+// 当前毫秒数
 ulong TTime::Current()
 {
-	uint value = (SysTick->LOAD - SysTick->VAL);
-
-	//return (Ticks + value) / TicksPerMicrosecond;
-	return Microseconds + (_usTicks + value) / TicksPerMicrosecond;
+	return Milliseconds + g_Timers[Index]->CNT;
 }
 
-void TTime::SetTime(ulong us)
+void TTime::SetTime(ulong ms)
 {
     SmartIRQ irq;
 
-	SysTick->VAL = 0;
-	SysTick->CTRL &= ~SysTick_CTRL_COUNTFLAG;
-	Ticks = us * TicksPerMicrosecond;
+	Seconds			= ms / 1000;
 
 	// 修改系统启动时间
-	Sys.StartTime += us - Microseconds;
+	Sys.StartTime += ms - Milliseconds;
 
-	Microseconds = us;
-	_usTicks = 0;
-
-	Milliseconds = us / 1000;
-	_msUs = us % 1000;
+	Milliseconds	= ms;
 
 	// 保存到RTC
-	//if(_RTC) _RTC->SaveTicks();
 	if(OnSave) OnSave();
 }
 
-#define STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS 3
-
-void TTime::Sleep(uint us, bool* running)
+void TTime::Sleep(uint ms, bool* running)
 {
     // 睡眠时间太短
-    if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS) return ;
+    if(!ms) return;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(OnSleep && us >= 10000)
+	if(OnSleep && ms >= 10)
 	{
-		uint ms = us / 1000;
-		if(OnSleep(ms) == 0)
+		uint ms2 = ms;
+		if(OnSleep(ms2) == 0)
 		{
 			// CPU睡眠是秒级，还有剩余量
-			us %= 1000;
-			//us += ms * 1000;
+			if(ms >= ms2)
+				ms -= ms2;
+			else
+				ms = 0;
 		}
 	}
     // 睡眠时间太短
-    if(us <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS || !*running) return ;
+    if(!ms || !*running) return;
 
-	// 自己关闭中断，简直实在找死！
-	// Sleep的时候，尽量保持中断打开，否则g_Ticks无法累加，从而造成死循环
-	// 记录现在的中断状态
-    SmartIRQ irq(true);
+	TIM_TypeDef* tim = g_Timers[Index];
+	// 无需关闭中断，也能实现延迟
+    uint end	= Seconds + (ms / 1000);
+	uint end2	= tim->CNT + (ms % 1000);
+	if(end2 >= 1000)
+	{
+		end++;
+		end2 -= 1000;
+	}
 
-	// 时钟滴答需要采用UINT64
-    ulong maxDiff = (ulong)us * TicksPerMicrosecond;
-    ulong current = CurrentTicks();
-    //ulong maxDiff = (ulong)us;
-    //ulong current = Current();
+    while((Seconds < end || tim->CNT <= end2) && (running == NULL || *running));
+}
 
-	// 减去误差指令周期，在获取当前时间以后多了几个指令
-    if(maxDiff <= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS)
-		maxDiff  = 0;
-    else
-		maxDiff -= STM32_SLEEP_USEC_FIXED_OVERHEAD_CLOCKS;
+void TTime::Delay(uint us)
+{
+    // 睡眠时间太短
+    if(!us) return;
 
-	maxDiff += current;
+	// 较大的时间，按毫秒休眠
+	if(us >= 1000)
+	{
+		Sleep(us / 1000);
+		us %= 1000;
+	}
+    // 睡眠时间太短
+    if(!us) return;
 
-    while(CurrentTicks() <= maxDiff && (running == NULL || *running));
-    //while(Current() <= maxDiff);
+	//SysTick->VAL = 0;
+
+	ulong end	= Current();
+	uint end2	= CurrentTicks() + us * Ticks;
+	if(end2 >= 1000)
+	{
+		end++;
+		end2 -= 1000;
+	}
+
+    while(Current() < end || CurrentTicks() <= end2);
 }
 
 /************************************************ DateTime ************************************************/
@@ -301,7 +265,7 @@ DateTime& DateTime::Parse(ulong us)
 
 DateTime::DateTime()
 {
-	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));	
+	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
 }
 
 DateTime::DateTime(ulong us)
@@ -418,7 +382,7 @@ TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
 void TimeWheel::Reset(uint seconds, uint ms, uint us)
 {
 	Expire = ((seconds * 1000) + ms) * 1000 + us;
-	Expire *= Time.TicksPerMicrosecond;
+	Expire *= Time.Ticks;
 	Expire += Time.CurrentTicks();
 }
 
@@ -433,15 +397,20 @@ bool TimeWheel::Expired()
 	return false;
 }
 
+/************************************************ TimeCost ************************************************/
+
 TimeCost::TimeCost()
 {
-	Start = Time.CurrentTicks();
+	Start		= Time.Current();
+	StartTicks	= Time.CurrentTicks();
 }
 
 // 逝去的时间，微秒
 int TimeCost::Elapsed()
 {
-	return ((int)(Time.CurrentTicks() - Start)) / Time.TicksPerMicrosecond;
+	int v = Time.Current() - Start;
+	if(v) v *= 1000;
+	return v + ((int)(Time.CurrentTicks() - Start)) / Time.Ticks;
 }
 
 void TimeCost::Show(const char* format)
