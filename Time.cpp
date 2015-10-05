@@ -49,7 +49,8 @@ void TTime::Init()
 	// ticks为每次中断的嘀嗒数，也就是重载值
 	//SysTick_Config(ticks);
 	// 上面的函数会打开中断
-	SysTick->LOAD  = SYSTICK_MAXCOUNT - 1; 
+	uint ticks = Ticks * 1000;	// 1000微秒，便于跟毫秒叠加
+	SysTick->LOAD  = ticks - 1;
 	SysTick->VAL   = 0;
 	SysTick->CTRL  = SysTick_CTRL_ENABLE_Msk;
 	Interrupt.Disable(SysTick_IRQn);
@@ -104,7 +105,7 @@ void TTime::OnHandler(ushort num, void* param)
 	Time.Milliseconds += 1000;
 	// 必须清除TIMx的中断待处理位，否则会频繁中断
 	TIM_ClearITPendingBit(timer, TIM_IT_Update);
-	debug_printf("TTime::OnHandler CNT=%d Seconds=%d Milliseconds=%d\r\n", timer->CNT, Time.Seconds, (uint)Time.Milliseconds);
+	//debug_printf("TTime::OnHandler CNT=%d Seconds=%d Milliseconds=%d\r\n", timer->CNT, Time.Seconds, (uint)Time.Milliseconds);
 
 	// 定期保存Ticks到后备RTC寄存器
 	if(Time.OnSave) Time.OnSave();
@@ -158,19 +159,25 @@ void TTime::Sleep(uint ms, bool* running)
 		}
 	}
     // 睡眠时间太短
-    if(!ms || !*running) return;
+    if(!ms || running != NULL && !*running) return;
 
 	TIM_TypeDef* tim = g_Timers[Index];
-	// 无需关闭中断，也能实现延迟
+
     uint end	= Seconds + (ms / 1000);
 	uint end2	= tim->CNT + (ms % 1000);
-	if(end2 >= 1000)
+	if(end2 >= 1000 - 1)
 	{
 		end++;
-		end2 -= 1000;
+		end2 -= 1000 - 1;
 	}
 
-    while((Seconds < end || tim->CNT <= end2) && (running == NULL || *running));
+    while(true)
+	{
+		if(Seconds > end) break;
+		if(Seconds == end && tim->CNT > end2) break;
+
+		if(running != NULL && !*running) break;
+	}
 }
 
 void TTime::Delay(uint us)
@@ -187,17 +194,21 @@ void TTime::Delay(uint us)
     // 睡眠时间太短
     if(!us) return;
 
-	//SysTick->VAL = 0;
-
+	// 无需关闭中断，也能实现延迟
 	ulong end	= Current();
 	uint end2	= CurrentTicks() + us * Ticks;
-	if(end2 >= 1000)
+	if(end2 >= 1000 - 1)
 	{
 		end++;
-		end2 -= 1000;
+		end2 -= 1000 - 1;
 	}
 
-    while(Current() < end || CurrentTicks() <= end2);
+    while(true)
+	{
+		int ms = Current();
+		if(ms > end) break;
+		if(ms == end && CurrentTicks() > end2) break;
+	}
 }
 
 /************************************************ DateTime ************************************************/
@@ -408,9 +419,10 @@ TimeCost::TimeCost()
 // 逝去的时间，微秒
 int TimeCost::Elapsed()
 {
-	int v = Time.Current() - Start;
-	if(v) v *= 1000;
-	return v + ((int)(Time.CurrentTicks() - Start)) / Time.Ticks;
+	int ts = Time.CurrentTicks() - StartTicks;
+	int ms = Time.Current() - Start;
+
+	return ms * 1000 + ts / Time.Ticks;
 }
 
 void TimeCost::Show(const char* format)
