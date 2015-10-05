@@ -40,7 +40,9 @@ void SerialPort::Init()
 	RS485	= NULL;
 	Error	= 0;
 
+#ifdef STM32F1XX
 	IsRemap	= false;
+#endif
 	MinSize	= 8;
 
 	_taskidRx	= 0;
@@ -143,7 +145,7 @@ ShowLog:
 #ifdef STM32F0XX
 	switch(_index)
 	{
-		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;//开启时钟
+		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;
 		case COM2:	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);	break;
 		default:	break;
 	}
@@ -407,9 +409,11 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
     *rxPin = *txPin = P0;
 
 	const Pin g_Uart_Pins[] = UART_PINS;
-	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 	const Pin* p = g_Uart_Pins;
+#ifdef STM32F1XX
+	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 	if(IsRemap) p = g_Uart_Pins_Map;
+#endif
 
 	int n = _index << 2;
 	*txPin  = p[n];

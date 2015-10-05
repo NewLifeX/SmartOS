@@ -35,7 +35,9 @@ private:
 
 public:
 	char 		Name[5];// 名称。COMx，后面1字节\0表示结束
+#ifdef STM32F1XX
     bool		IsRemap;// 是否重映射
+#endif
 	OutputPort* RS485;	// RS485使能引脚
 	int 		Error;	// 错误计数
 
