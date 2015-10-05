@@ -413,11 +413,14 @@ int TimeCost::Elapsed()
 	short ts	= Time.CurrentTicks() - StartTicks;
 	int ms		= Time.Current() - Start;
 
-	return ms * 1000 + ts / Time.Ticks;
+	ts /= Time.Ticks;
+	if(ts <= 0) ts += 1000;
+
+	return ms * 1000 + ts;
 }
 
 void TimeCost::Show(const char* format)
 {
-	if(!format) format = "执行 %dus";
+	if(!format) format = "执行 %dus\r\n";
 	debug_printf(format, Elapsed());
 }

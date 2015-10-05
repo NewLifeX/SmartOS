@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Port.h"
+#include "Task.h"
 #include "Queue.h"
 #include "Net\ITransport.h"
 
@@ -91,6 +92,7 @@ private:
 	void OnTxHandler();
 	void OnRxHandler();
 
+	Task*	_task;
 	uint	_taskidRx;
 	static void ReceiveTask(void* param);
 };

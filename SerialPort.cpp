@@ -1,5 +1,6 @@
 ﻿#include "Sys.h"
 #include <stdio.h>
+#include "Time.h"
 
 #include "Port.h"
 #include "SerialPort.h"
@@ -341,7 +342,14 @@ void SerialPort::OnRxHandler()
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
-	if(_taskidRx && Rx.Length() >= MinSize) Sys.SetTask(_taskidRx, true, (_byteTime >> 10) + 1);
+	if(_taskidRx && Rx.Length() >= MinSize)
+	{
+		//Sys.SetTask(_taskidRx, true, (_byteTime >> 10) + 1);
+		_task->NextTime	= Time.Current() + 1;
+		_task->Enable	= true;
+		// 如果系统调度器处于Sleep，让它立马退出
+		//Task::Scheduler()->Sleeping = false;
+	}
 }
 
 void SerialPort::ReceiveTask(void* param)
@@ -373,7 +381,11 @@ void SerialPort::Register(TransportHandler handler, void* param)
     if(handler)
 	{
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
-		if(!_taskidRx) _taskidRx = Sys.AddTask(ReceiveTask, this, 1000, 500, "串口接收");
+		if(!_taskidRx)
+		{
+			_taskidRx = Sys.AddTask(ReceiveTask, this, 1000, 500, "串口接收");
+			_task = Task::Get(_taskidRx);
+		}
 	}
     else
 	{

@@ -47,7 +47,8 @@ bool Task::Execute(ulong now)
 	// 累加任务执行次数和时间
 	Times++;
 	int ct = tc.Elapsed();
-	if(ct < 0) debug_printf("cost = %d \r\n", ct);
+	if(ct < 0)
+		debug_printf("cost = %d \r\n", ct);
 	if(ct < 0) ct = -ct;
 	//if(ct > 0)
 	{
