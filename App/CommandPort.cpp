@@ -86,6 +86,6 @@ static void CommandTask(void* param)
 void CommandPort::StartAsync(int second)
 {
 	if(!_tid) _tid = Sys.AddTask(CommandTask, this, -1, -1, "命令端口");
-	//Sys.SetTaskPeriod(second * 1000000);
-	Sys.SetTask(_tid, true, second * 1000000);
+	//Sys.SetTaskPeriod(second * 1000);
+	Sys.SetTask(_tid, true, second * 1000);
 }

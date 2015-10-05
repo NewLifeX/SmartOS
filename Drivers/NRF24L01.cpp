@@ -675,7 +675,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		if(_tidOpen)
 			Sys.SetTask(_tidOpen, true);
 		else
-			_tidOpen = Sys.AddTask(AutoOpenTask, this, 5000000, 5000000, "R24热插拔");
+			_tidOpen = Sys.AddTask(AutoOpenTask, this, 5000, 5000, "R24热插拔");
 		return false;
 	}
 
@@ -808,12 +808,12 @@ bool NRF24L01::OnOpen()
 		Sys.SetTask(_tidOpen, false);
 	}
 	if(!_tidRecv)
-		_tidRecv = Sys.AddTask(ReceiveTask, this, 200000, 200000, "R24接收");
+		_tidRecv = Sys.AddTask(ReceiveTask, this, 200, 200, "R24接收");
 	else
 		Sys.SetTask(_tidRecv, true);
 
 	//debug_printf("定时显示状态 ");
-	//Sys.AddTask(ShowStatusTask, this, 5000000, 5000000);
+	//Sys.AddTask(ShowStatusTask, this, 5000, 5000);
 
 	return true;
 }

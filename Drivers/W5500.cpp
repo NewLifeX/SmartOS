@@ -303,7 +303,7 @@ bool W5500::Open()
 
 	//if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
 	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
-	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, 0, 1000000, "W5500中断");
+	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, 0, 1000, "W5500中断");
 
 	Opened = true;
 

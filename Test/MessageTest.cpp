@@ -101,7 +101,7 @@ void TestMessage(OutputPort* leds)
 
 	// 添加定时任务
 	//debug_printf("灯光闪烁任务 ");
-	//Sys.AddTask(FlashLed, control, 0, 2000000);
+	//Sys.AddTask(FlashLed, control, 0, 2000);
 
     debug_printf("\r\n TestMessage Finish!\r\n\r\n");
 }

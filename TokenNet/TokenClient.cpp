@@ -46,7 +46,7 @@ void TokenClient::Open()
 	if(sock) Hello.EndPoint = sock->Local;
 
 	// 令牌客户端定时任务
-	_task = Sys.AddTask(LoopTask, this, 1000000, 5000000, "令牌客户端");
+	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
 }
 
 void TokenClient::Close()

@@ -694,7 +694,7 @@ bool Enc28j60::OnOpen()
 	if(!_ResetTask)
 	{
 		//debug_printf("Enc28j60::出错检查 ");
-		_ResetTask = Sys.AddTask(ResetTask, this, 500000, 500000, "守护2860");
+		_ResetTask = Sys.AddTask(ResetTask, this, 500, 500, "守护2860");
 	}
 
 	return true;

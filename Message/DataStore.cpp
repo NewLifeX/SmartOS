@@ -231,5 +231,5 @@ void ByteDataPort::AsyncTask(void* param)
 void ByteDataPort::StartAsync(int ms)
 {
 	if(!_tid) _tid = Sys.AddTask(AsyncTask, this, -1, -1, "定时开关");
-	Sys.SetTask(_tid, true, ms * 1000);
+	Sys.SetTask(_tid, true, ms);
 }

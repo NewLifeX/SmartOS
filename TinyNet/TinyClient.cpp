@@ -40,7 +40,7 @@ void TinyClient::Open()
 
 	TranID	= (int)Time.Current();
 
-	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000000, "客户端服务");
+	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "客户端服务");
 
 	if(Config->Address > 0 && Config->Server > 0)
 	{
@@ -329,7 +329,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	ushort time = Config->PingTime;
 	if(time < 5)	time	= 5;
 	if(time > 60)	time	= 60;
-	Sys.SetTaskPeriod(_TaskID, time * 1000000);
+	Sys.SetTaskPeriod(_TaskID, time * 1000);
 
 	// 组网成功更新一次最后活跃时间
 	LastActive = Time.Current();
@@ -354,7 +354,7 @@ void TinyClient::Ping()
 
 		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", off);
 
-		Sys.SetTaskPeriod(_TaskID, 5000000);
+		Sys.SetTaskPeriod(_TaskID, 5000);
 
 		Server		= 0;
 		Password.SetLength(0);

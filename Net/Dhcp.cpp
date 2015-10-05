@@ -115,10 +115,10 @@ void Dhcp::Start()
 
 	// 创建任务，每秒发送一次Discover
 	if(!taskID)
-		taskID = Sys.AddTask(SendDiscover, this, 0, 1000000, "DHCP获取");
+		taskID = Sys.AddTask(SendDiscover, this, 0, 1000, "DHCP获取");
 	else
 	{
-		Sys.SetTaskPeriod(taskID, 1000000);
+		Sys.SetTaskPeriod(taskID, 1000);
 		Sys.SetTask(taskID, true);
 	}
 
@@ -272,9 +272,7 @@ void Dhcp::Process(ByteArray& bs)
 			// DHCP租约过了一半以后重新获取IP地址
 			if(time > 0)
 			{
-				//debug_printf("Dhcp过期获取 ");
-				//Sys.AddTask(RenewDHCP, this, (ulong)time / 2 * 1000000, -1, "DHCP超时");
-				Sys.SetTaskPeriod(taskID, (ulong)time / 2 * 1000000);
+				Sys.SetTaskPeriod(taskID, (ulong)time / 2 * 1000);
 				Sys.SetTask(taskID, true);
 			}
 		}

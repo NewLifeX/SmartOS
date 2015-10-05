@@ -36,7 +36,7 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	net->IP = IPAddress(192, 168, 0, 200);
 	net->Gateway = IPAddress(192,168,0,1);
 	// 定时检查网络状况
-	//Sys.AddTask(TestTask, net, 10000000, 10000000, "TestW5500");
+	//Sys.AddTask(TestTask, net, 10000, 10000, "TestW5500");
 	net->Open();
 
 	net->StateShow();
@@ -50,11 +50,11 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 	udp->Open();
 	udp->StateShow();
 
-	Sys.AddTask(TestTask2, udp, 9000000, 10000000, "TestUdpClient");
+	Sys.AddTask(TestTask2, udp, 9000, 10000, "TestUdpClient");
 	Sys.Sleep(1000);
 	byte buf[]  = "hello";
 	udp->Write(buf,sizeof(buf));
 
-	//Sys.AddTask(SocketShow, udp, 9000000, 10000000, "show");
+	//Sys.AddTask(SocketShow, udp, 9000, 10000, "show");
 
 }
