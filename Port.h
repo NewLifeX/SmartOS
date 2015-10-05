@@ -50,7 +50,9 @@ public:
 
 protected:
 	Port();
+#ifndef TINY
 	virtual ~Port();
+#endif
 
     // 配置过程，由Open调用，最后GPIO_Init
     virtual void OnOpen(GPIO_InitTypeDef& gpio);

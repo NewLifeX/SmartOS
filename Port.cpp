@@ -31,10 +31,12 @@ Port::Port()
 #endif
 }
 
+#ifndef TINY
 Port::~Port()
 {
 	Close();
 }
+#endif
 
 String& Port::ToStr(String& str) const
 {
@@ -57,8 +59,10 @@ Port& Port::Set(Pin pin)
 	// 如果引脚不变，则不做处理
 	if(pin == _Pin) return *this;
 
+#ifndef TINY
 	// 释放已有引脚的保护
 	if(_Pin != P0) Close();
+#endif
 
     _Pin = pin;
 	if(_Pin != P0)
