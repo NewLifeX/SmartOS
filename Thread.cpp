@@ -215,7 +215,7 @@ void Thread::Sleep(uint ms)
 {
 	SmartIRQ irq;	// 关闭全局中断
 
-	DelayExpire = Time.Current() + ms * 1000;
+	DelayExpire = Time.Current() + ms;
 
 	assert_param(State == Running || State == Ready);
 

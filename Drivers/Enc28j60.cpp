@@ -1092,7 +1092,7 @@ void Enc28j60::CheckError()
 	{
 		Error++;
 
-		debug_printf("Enc28j60::超过%d微秒没有收到任何数据，重新初始化。共出错 %d 次 ", ts, Error);
+		debug_printf("Enc28j60::超过%d毫秒没有收到任何数据，重新初始化。共出错 %d 次 ", ts, Error);
 		Opened = false;
 		Open();
 	}

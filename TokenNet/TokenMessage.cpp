@@ -433,7 +433,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 				int cost = (int)(Time.Current() - _Queue[i].Time);
 				// 莫名其妙，有时候竟然是负数
 				if(cost < 0) cost = -cost;
-				if(cost < 1000000)
+				if(cost < 1000)
 				{
 					Stat->Success++;
 					Stat->Time += cost;

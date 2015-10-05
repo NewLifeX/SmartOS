@@ -94,7 +94,7 @@ public:
 	uint	Send;	// 总次数。每条消息可能发送多次
 	uint	Ack;	// 总成功。有多少消息收到确认，每条消息仅计算一次确认
 	uint	Bytes;	// 总字节数。成功发送消息的字节数
-	uint	Cost;	// 总开销。成功发送消息到收到确认所花费的时间
+	uint	Cost;	// 总开销ms。成功发送消息到收到确认所花费的时间
 	//uint	Retry;	// 总重试次数
 	int		Receive;// 收到消息数
 
@@ -112,12 +112,12 @@ public:
 	byte	Sequence;	// 序列号
 	byte	Data[32];
 	uint	Length;
-	uint	Period;		// 延迟间隔。每次逐步递增
-	ulong	StartTime;	// 开始时间
-	ulong	Next;		// 下一次重发时间
-	ulong	Expired;	// 过期时间，微秒
+	uint	Period;		// 延迟间隔ms。每次逐步递增
+	ulong	StartTime;	// 开始时间ms
+	ulong	Next;		// 下一次重发时间ms
+	ulong	Expired;	// 过期时间ms
 	uint	Times;		// 发送次数
-	ulong	LastSend;	// 最后一次发送时间
+	ulong	LastSend;	// 最后一次发送时间ms
 
 	void SetMessage(TinyMessage& msg);
 };
@@ -143,8 +143,8 @@ protected:
 public:
 	byte	Address;	// 本地地址
 	bool	NoAck;		// 是否不使用Ack，若为true，即使收到消息要求Ack也不发送Ack。默认false
-	uint	Interval;	// 消息队列发送间隔，8000微秒
-	int		Timeout;	// 消息队列发送消息的默认超时时间，50000微秒。如果不需要超时重发，那么直接设置为-1
+	uint	Interval;	// 消息队列发送间隔ms
+	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
 
 	TinyController();
 	virtual ~TinyController();

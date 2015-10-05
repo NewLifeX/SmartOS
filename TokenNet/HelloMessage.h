@@ -13,7 +13,7 @@ public:
 	ushort		Version;	// 版本
 	String		Type;		// 类型
 	String		Name;		// 名称
-	ulong		LocalTime;	// 时间
+	ulong		LocalTime;	// 时间ms
 	IPEndPoint	EndPoint;
 	ByteArray	Ciphers;
 	ByteArray	Key;		// 密钥

@@ -105,8 +105,9 @@ void Dhcp::Request()
 
 void Dhcp::Start()
 {
-	_expiredTime = Time.Current() + ExpiredTime;
-	dhcpid = Time.CurrentTicks();
+	ulong now = Time.Current();
+	_expiredTime = now + ExpiredTime;
+	dhcpid = now;
 
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 

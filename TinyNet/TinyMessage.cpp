@@ -175,8 +175,8 @@ TinyController::TinyController() : Controller()
 {
 	_Sequence	= 0;
 	_taskID		= 0;
-	Interval	= 2000;
-	Timeout		= 200000;
+	Interval	= 2;
+	Timeout		= 200;
 
 	MinSize = TinyMessage::MinSize;
 	//MaxSize = 32;
@@ -349,7 +349,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		MessageNode& node = _Queue[i];
 		if(node.Using && node.Sequence == msg.Sequence)
 		{
-			int cost = (int)(Time.Current() - node.LastSend);
+			int cost = Time.Current() - node.LastSend;
 			if(cost < 0) cost = -cost;
 
 			Total.Cost += cost;
@@ -651,7 +651,7 @@ void RingQueue::Push(ushort item)
 	if(Index == ArrayLength(Arr)) Index = 0;
 
 	// 更新过期时间，10秒
-	Expired = Time.Current() + 10000000;
+	Expired = Time.Current() + 10000;
 }
 
 int RingQueue::Find(ushort item)

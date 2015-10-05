@@ -19,8 +19,8 @@ public:
 
 	int		Status;		// 状态。0准备、1握手完成、2登录后
 	
-	ulong	LoginTime;	// 登录时间
-	ulong	LastActive;	// 最后活跃时间
+	ulong	LoginTime;	// 登录时间ms
+	ulong	LastActive;	// 最后活跃时间ms
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 
 	TokenController* Control;

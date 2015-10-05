@@ -8,7 +8,7 @@ Thread* th;
 void ThreadTask(void* param)
 {
     OutputPort* leds = (OutputPort*)param;
-    uint m = Time.Current() % 2000;
+    uint m = Time.Current() % 2;
     uint n = 100;
     while(--n)
     //while(true)

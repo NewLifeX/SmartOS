@@ -242,13 +242,13 @@ void HardRTC::SaveTicks()
 #ifdef STM32F1
 	uint sec = Time.Seconds;
 	uint ms = Time.Current() - sec;
-	uint ms2 = ms % 1000;
+	while(ms > 1000) ms -= 1000;
 #if TIME_DEBUG
-	debug_printf("SaveTicks %ds %dms\r\n", sec, ms2);
+	debug_printf("SaveTicks %ds %dms\r\n", sec, ms);
 #endif
 	WriteBackup(1, sec);
 	// 设置计数器
-	RTC_SetCounter(ms2);
+	RTC_SetCounter(ms);
 #else
 	//RTC_SetCounter(Time.Now());
 #endif

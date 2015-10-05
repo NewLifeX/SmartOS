@@ -270,7 +270,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 // Ping指令用于保持与对方的活动状态
 void TokenClient::Ping()
 {
-	if(LastActive > 0 && LastActive + 30000000 < Time.Current())
+	if(LastActive > 0 && LastActive + 30000 < Time.Current())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");

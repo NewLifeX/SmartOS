@@ -100,7 +100,7 @@ private:
 	{
 	public:
 		byte	Code;
-		ulong	Time;
+		ulong	Time;	// 时间ms
 	};
 
 	QueueItem	_Queue[16];

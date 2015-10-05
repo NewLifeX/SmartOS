@@ -348,7 +348,7 @@ void TinyClient::Ping()
 {
 	ushort off = Config->OfflineTime;
 	if(off < 10) off = 10;
-	if(LastActive > 0 && LastActive + off * 1000000 < Time.Current())
+	if(LastActive > 0 && LastActive + off * 1000 < Time.Current())
 	{
 		if(Server == 0) return;
 

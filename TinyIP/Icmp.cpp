@@ -130,8 +130,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 		ms.Write((byte)('a' + k));
 	}
 
-	//ushort now = Time.Current() / 1000;
-	ushort now = Time.Current() >> 10;
+	ushort now = Time.Current();
 	ushort id = __REV16(Sys.ID[0]);
 	ushort seq = __REV16(now);
 	icmp->Identifier = id;

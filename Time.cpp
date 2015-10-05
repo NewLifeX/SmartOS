@@ -368,7 +368,9 @@ const char* DateTime::GetString(byte kind, string str)
 // 当前时间
 DateTime TTime::Now()
 {
-	return DateTime(Seconds);
+	DateTime dt(Seconds);
+	dt.Millisecond = Milliseconds;
+	return dt;
 }
 
 /************************************************ TimeWheel ************************************************/

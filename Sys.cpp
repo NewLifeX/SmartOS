@@ -386,7 +386,7 @@ void TSys::ShowInfo()
 	debug_printf("Time : ");
 	Time.Now().Show(true);
 	// 系统启动时间
-	debug_printf("Start: %dus (Inited: %dus)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
+	debug_printf("Start: %dms (Inited: %dms)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
 	debug_printf("技术支持: http://www.NewLifeX.com\r\n");
 
     debug_printf("\r\n");

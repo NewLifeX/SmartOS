@@ -13,7 +13,7 @@ public:
 	byte		Address;	// 节点地址
 	ushort		Kind;		// 类型
 	ByteArray	HardID;		// 硬件编码
-	ulong		LastTime;	// 活跃时间
+	ulong		LastTime;	// 活跃时间ms
 	uint		Logins;		// 登录次数
 	ushort		Version;	// 版本
 	byte		DataSize;	// 数据大小
@@ -25,8 +25,8 @@ public:
 	ushort		OfflineTime;// 离线阀值时间。秒
 	ushort		SleepTime;	// 睡眠时间。秒
 
-	ulong		RegTime;	// 注册时间
-	ulong		LoginTime;	// 登录时间
+	ulong		RegTime;	// 注册时间ms
+	ulong		LoginTime;	// 登录时间ms
 
 	ByteArray	Store;		// 数据存储区
 

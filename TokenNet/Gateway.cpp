@@ -114,7 +114,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	if(dv)
 	{
 		// 短时间内注册或者登录
-		ulong now = Time.Current() - 500000;
+		ulong now = Time.Current() - 500;
 		if(dv->RegTime > now) DeviceRegister(dv->Address);
 		if(dv->LoginTime > now) DeviceOnline(dv->Address);
 	}
