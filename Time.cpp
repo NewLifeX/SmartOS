@@ -227,19 +227,14 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
-DateTime& DateTime::Parse(ulong us)
+DateTime& DateTime::Parse(uint seconds)
 {
 	DateTime& st = *this;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
-	uint time = us % 60000000; // 此时会削去高位，ulong=>uint
-    st.Microsecond = time % 1000;
-    time /= 1000;
-    st.Millisecond = time % 1000;
-    time /= 1000;
+	uint time = seconds;
     st.Second = time % 60;
-    //time /= 60;
-	time = us / 60000000;	// 用一次大整数除法，重新计算高位
+    time /= 60;
     st.Minute = time % 60;
     time /= 60;
     st.Hour = time % 24;
@@ -279,18 +274,18 @@ DateTime::DateTime()
 	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
 }
 
-DateTime::DateTime(ulong us)
+DateTime::DateTime(uint seconds)
 {
-	if(us == 0)
+	if(seconds == 0)
 		memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
 	else
-		Parse(us);
+		Parse(seconds);
 }
 
 // 重载等号运算符
-DateTime& DateTime::operator=(ulong v)
+DateTime& DateTime::operator=(uint seconds)
 {
-	Parse(v);
+	Parse(seconds);
 
 	return *this;
 }
@@ -373,13 +368,7 @@ const char* DateTime::GetString(byte kind, string str)
 // 当前时间
 DateTime TTime::Now()
 {
-	/*DateTime _Now;
-
-	_Now.Parse(Current());
-
-	return _Now;*/
-
-	return DateTime(Current());
+	return DateTime(Seconds);
 }
 
 /************************************************ TimeWheel ************************************************/
@@ -419,8 +408,8 @@ TimeCost::TimeCost()
 // 逝去的时间，微秒
 int TimeCost::Elapsed()
 {
-	int ts = Time.CurrentTicks() - StartTicks;
-	int ms = Time.Current() - Start;
+	short ts	= Time.CurrentTicks() - StartTicks;
+	int ms		= Time.Current() - Start;
 
 	return ms * 1000 + ts / Time.Ticks;
 }

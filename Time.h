@@ -66,7 +66,7 @@ class TimeCost
 {
 public:
 	ulong	Start;		// 开始时间，毫秒
-	uint	StartTicks;	// 开始滴答
+	ushort	StartTicks;	// 开始滴答
 
 	TimeCost();
 
@@ -89,12 +89,12 @@ public:
 	ushort Microsecond;
 
 	DateTime();
-	DateTime(ulong us);
+	DateTime(uint seconds);
 
 	// 重载等号运算符
-    DateTime& operator=(ulong v);
+    DateTime& operator=(uint seconds);
 
-	DateTime& Parse(ulong us);
+	DateTime& Parse(uint seconds);
 	uint TotalSeconds();
 	ulong TotalMicroseconds();
 
