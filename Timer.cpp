@@ -101,7 +101,8 @@ void Timer::Config()
 	//TIM_ITConfig(_Timer, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
 	TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 	//TIM_UpdateRequestConfig(_Timer, TIM_UpdateSource_Regular);
-	TIM_ClearFlag(_Timer, TIM_FLAG_Update);					// 清楚标志位  必须要有！！ 否则 开启中断立马中断给你看
+	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
+	TIM_ClearFlag(_Timer, TIM_FLAG_Update);
 //	TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
 }
 
