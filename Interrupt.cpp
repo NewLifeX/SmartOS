@@ -175,7 +175,8 @@ void UserHandler()
 {
     uint num = GetIPSR();
 	assert_param(num < VectorySize);
-	assert_param(Interrupt.Vectors[num]);
+	//assert_param(Interrupt.Vectors[num]);
+	if(!Interrupt.Vectors[num]) return;
 
 	// 内存检查
 #if DEBUG
