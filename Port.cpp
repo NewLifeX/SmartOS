@@ -276,7 +276,8 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 
 	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
 	ushort dat = GPIO_ReadOutputData(Group);
-	if(!Invert)
+	bool v = InitValue ^ Invert;
+	if(!v)
 		dat &= ~Mask;
 	else
 		dat |= Mask;

@@ -67,6 +67,7 @@ class OutputPort : public Port
 public:
     bool OpenDrain;	// 是否开漏输出
     bool Invert;	// 是否倒置输入输出
+	bool InitValue;	// 初始值，在Open之前控制。默认false，受Invert影响
     uint Speed;		// 速度
 
     OutputPort() : Port() { Init(); }
@@ -106,6 +107,7 @@ protected:
         OpenDrain	= openDrain;
         Speed		= speed;
         Invert		= invert;
+		InitValue	= false;
     }
 };
 
