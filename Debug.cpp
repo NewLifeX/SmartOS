@@ -142,7 +142,7 @@ bool assert_ptr_(const void* p)
 	}
 
 	uint ramEnd = SRAM_BASE + (Sys.RAMSize << 10);
-	if((uint)p >= ramEnd)
+	if(Sys.RAMSize > 0 && (uint)p >= ramEnd)
 	{
 		debug_printf("ptr:0x%08x >= SRAM_END:0x%08x\r\n", p, ramEnd);
 		return false;
@@ -154,7 +154,7 @@ bool assert_ptr_(const void* p)
 #endif
 
 	uint flashEnd = FLASH_BASE + (Sys.FlashSize << 10);
-	if((uint)p >= flashEnd && (uint)p < SRAM_BASE)
+	if(Sys.FlashSize > 0 && (uint)p >= flashEnd && (uint)p < SRAM_BASE)
 	{
 		debug_printf("ptr:0x%08x >= FLASH_END:0x%08x\r\n", p, flashEnd);
 		return false;
@@ -185,7 +185,7 @@ void ShowFault(uint exception)
 			debug_printf("是总线fault，存储器管理fault 或是用法fault 上访的结果\r\n");
 			// GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1
 			// __Vectors_Size只是一个标记，需要先取地址，才得到它的值
-			if(Sys.IsGD && (uint)&__Vectors_Size <= 7 * 4)
+			//if(Sys.IsGD && (uint)&__Vectors_Size <= 7 * 4)
 			{
 				debug_printf("GD不能映射中断向量表，必须使用Flash开头的那个默认中断向量表，而这需要在Keil的ARM属性页设置GD32=1\r\n");
 			}

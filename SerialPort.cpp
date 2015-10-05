@@ -428,7 +428,7 @@ extern "C"
     /* 重载fputc可以让用户程序使用printf函数 */
     int fputc(int ch, FILE *f)
     {
-        if(!Sys.Inited) return ch;
+        if(Sys.Clock == 0) return ch;
 
         int _index = Sys.MessagePort;
         if(_index == COM_NONE) return ch;
@@ -446,11 +446,7 @@ extern "C"
 
 		if(_printf_sp)
 		{
-			//_printf_sp->SendData((byte)ch);
-			//byte bt = (byte)ch;
-			//_printf_sp->Write(&bt, 1);
-			ByteArray bs(ch, 1);
-			_printf_sp->Write(bs);
+			_printf_sp->Write(ByteArray(ch, 1));
 		}
 
 		isInFPutc = false;

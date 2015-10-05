@@ -70,10 +70,7 @@ typedef enum
 class TSys : Object
 {
 public:
-    bool	Inited;		// 是否已完成初始化
-    bool	Started;	// 是否调试
     COM_Def	MessagePort;// 消息口，默认0表示USART1
-    bool	IsGD;		// 是否GD芯片
 
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟

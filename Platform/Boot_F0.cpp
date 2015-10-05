@@ -82,7 +82,14 @@ extern "C"
 		RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL));
 		//RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLMULL6);
 		// 支持多种倍频
-		mull = clock / cystalClock;
+		//mull = clock / cystalClock;
+		// 干掉除法
+		mull = 0;
+		while(clock > cystalClock)
+		{
+			clock -= cystalClock;
+			mull++;
+		}
 		pll = ((mull - 2) * 4) << 16;
 		RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_PREDIV1 | RCC_CFGR_PLLXTPRE_PREDIV1 | pll);
 		//SystemCoreClock = cystalClock * mull;

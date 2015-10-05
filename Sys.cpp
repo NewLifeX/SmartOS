@@ -130,9 +130,6 @@ void SysStop()
 
 TSys::TSys()
 {
-    Inited	= false;
-	Started	= false;
-
 #ifdef STM32F0
     Clock = 48000000;
 #elif defined(STM32F1)
@@ -144,7 +141,7 @@ TSys::TSys()
     CystalClock = HSE_VALUE;    // 晶振时钟
     MessagePort = COM1; // COM1;
 
-    IsGD = Get_JTAG_ID() == 0x7A3;
+    bool IsGD = Get_JTAG_ID() == 0x7A3;
 
 #ifdef STM32F0
 	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
@@ -251,8 +248,6 @@ void TSys::InitClock()
 		Clock = RCC_GetSysClock();
 		SystemCoreClock = Clock;
 	}
-
-    Inited = true;
 }
 
 void TSys::Init(void)
@@ -284,6 +279,7 @@ void TSys::ShowInfo()
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
 	debug_printf("SmartOS::");
+    bool IsGD = Get_JTAG_ID() == 0x7A3;
 	if(IsGD)
 		debug_printf("GD32");
 	else
@@ -500,7 +496,6 @@ void TSys::Start()
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
-	Started = true;
 	if(OnStart)
 	{
 		// 设置重载值，让其每1ms重载一次
@@ -514,7 +509,7 @@ void TSys::Start()
 void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(Sys.Started && us != 0 && us >= 50)
+	if(Sys.Clock > 0 && us != 0 && us >= 50)
 	{
 		TaskScheduler* sc = Task::Scheduler();
 		// 记录当前正在执行任务
