@@ -16,8 +16,8 @@ private:
 public:
 	OutputPort*	Port;
 
-	int		Fast;	// 快闪间隔，默认50000微秒
-	int		Slow;	// 慢闪间隔，默认1000000微秒
+	int		Fast;	// 快闪间隔，默认50毫秒
+	int		Slow;	// 慢闪间隔，默认1000毫秒
 	int		Count;	// 剩余快闪次数
 
 	FlushPort();

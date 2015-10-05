@@ -18,7 +18,7 @@ Dhcp::Dhcp(ISocket* socket)
 
 	Running	= false;
 	Result	= false;
-	ExpiredTime	= 10;
+	ExpiredTime	= 10000;
 
 	OnStop	= NULL;
 	taskID	= 0;
@@ -105,8 +105,8 @@ void Dhcp::Request()
 
 void Dhcp::Start()
 {
-	_expiredTime = Time.Current() + ExpiredTime * 1000000;
-	dhcpid = (uint)Time.Current();
+	_expiredTime = Time.Current() + ExpiredTime;
+	dhcpid = Time.CurrentTicks();
 
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 

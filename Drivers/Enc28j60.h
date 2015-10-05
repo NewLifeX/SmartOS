@@ -17,7 +17,7 @@ private:
     uint NextPacketPtr;
 
 	ulong	LastTime;		// 记录最后一次收到数据的时间，超时重启
-	uint	ResetPeriod;	// 重启间隔，默认6秒
+	uint	ResetPeriod;	// 重启间隔，默认6000微秒
 	uint	_ResetTask;		// 重启任务
 public:
 	//byte Mac[6];

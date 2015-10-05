@@ -339,7 +339,7 @@ Enc28j60::Enc28j60()
 	_spi	= NULL;
 
 	LastTime	= Time.Current();
-	ResetPeriod	= 6000000;
+	ResetPeriod	= 6000;
 	_ResetTask	= 0;
 
 	Broadcast	= true;
@@ -1087,12 +1087,12 @@ void Enc28j60::CheckError()
 		return;
 	}*/
 
-	ulong ts = Time.Current() - LastTime;
+	uint ts = Time.Current() - LastTime;
 	if(ResetPeriod < ts)
 	{
 		Error++;
 
-		debug_printf("Enc28j60::超过%d秒没有收到任何数据，重新初始化。共出错 %d 次 ", (int)(ts/1000000), Error);
+		debug_printf("Enc28j60::超过%d微秒没有收到任何数据，重新初始化。共出错 %d 次 ", ts, Error);
 		Opened = false;
 		Open();
 	}

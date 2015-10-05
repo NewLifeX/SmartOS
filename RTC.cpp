@@ -240,9 +240,9 @@ void HardRTC::SaveTicks()
 	RTC_WaitForSynchro();
 
 #ifdef STM32F1
-	ulong ms = Time.Current() / 1000;
-	uint sec = (uint)(ms / 1000);
-	uint ms2 = (uint)(ms % 1000);
+	uint sec = Time.Seconds;
+	uint ms = Time.Current() - sec;
+	uint ms2 = ms % 1000;
 #if TIME_DEBUG
 	debug_printf("SaveTicks %ds %dms\r\n", sec, ms2);
 #endif

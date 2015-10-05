@@ -5,8 +5,8 @@ FlushPort::FlushPort()
 {
 	_tid	= 0;
 	Port	= NULL;
-	Fast	= 50000;
-	Slow	= 1000000;
+	Fast	= 50;
+	Slow	= 1000;
 	Count	= 0;
 }
 
@@ -30,7 +30,7 @@ void FlushPort::Start(int ms)
 	// 设置任务时间
 	if(ms > 0)
 	{
-		Count = ms * 1000 / Fast;
+		Count = ms / Fast;
 		if(Count < 2) Count = 2;
 	}
 	else

@@ -7,9 +7,9 @@
 class Dhcp
 {
 private:
-	uint dhcpid;
-	uint taskID;
-	ulong _expiredTime;
+	uint dhcpid;		// 事务ID
+	uint taskID;		// 任务ID
+	ulong _expiredTime;	// 目标过期时间，毫秒
 
 	void Discover();
 	void Request();
@@ -24,7 +24,7 @@ public:
 
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
-	uint ExpiredTime;	// 过期时间
+	uint ExpiredTime;	// 过期时间，默认10000毫秒
 
 	Dhcp(ISocket* socket);
 	~Dhcp();

@@ -511,10 +511,10 @@ void TSys::Start()
 		Task::Scheduler()->Start();
 }
 
-void TimeSleep(uint us)
+void TimeSleep(uint ms)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(Sys.Started && (!us || us >= 1000))
+	if(Sys.Started)
 	{
 		TaskScheduler* sc = Task::Scheduler();
 		// 记录当前正在执行任务
@@ -522,7 +522,7 @@ void TimeSleep(uint us)
 
 		TimeCost tc;
 		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
-		int total = us - 100;
+		int total = ms;
 		// 如果休眠时间足够长，允许多次调度其它任务
 		while(true)
 		{
@@ -543,11 +543,11 @@ void TimeSleep(uint us)
 			task->SleepTime += cost;
 		}
 
-		if(cost >= us) return;
+		if(cost >= ms) return;
 
-		us -= cost;
+		ms -= cost;
 	}
-	if(us) Time.Sleep(us);
+	if(ms) Time.Sleep(ms);
 }
 
 void TSys::Sleep(uint ms)
@@ -561,7 +561,7 @@ void TSys::Sleep(uint ms)
 		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长，超过1000ms建议使用多线程Thread！", ms);
 #endif
 
-		TimeSleep(ms * 1000);
+		TimeSleep(ms);
 	}
 }
 
