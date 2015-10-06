@@ -59,5 +59,5 @@ void BH1750::Write(byte cmd)
 	if(!IIC) return;
 
 	IIC->Write(0, cmd);
-	Sys.Sleep(5);
+	//Sys.Sleep(5);
 }

@@ -117,7 +117,7 @@ void SHT30::Init()
 	IIC->Address	= Address << 1;
 
 	Write(CMD_SOFT_RESET);		// 软重启
-	Sys.Sleep(15);
+	//Sys.Sleep(15);
 	uint sn = ReadSerialNumber();
 	ushort st = ReadStatus();
 	Write(CMD_CLEAR_STATUS);	// 清楚所有状态
@@ -146,37 +146,6 @@ ushort SHT30::ReadStatus()
 {
 	return Read2(CMD_READ_STATUS);
 }
-
-/*ushort SHT30::ReadTemperature()
-{
-	if(!IIC) return 0;
-
-	//ushort n = Read4(CMD_MEAS_CLOCKSTR_H) >> 16;
-	ushort n = Read4(CMD_MEAS_POLLING_H) >> 16;
-	//ushort n = Read4(CMD_FETCH_DATA) >> 16;
-	if(!n) return 0;
-
-	// 公式:T= -46.85 + 175.72 * ST/2^16
-	n = ((n * 17572) >> 16) - 4685;
-	//n /= 100;
-
-	return n;
-}
-
-ushort SHT30::ReadHumidity()
-{
-	if(!IIC) return 0;
-
-	//ushort n = Read4(CMD_MEAS_CLOCKSTR_H) & 0xFFFF;
-	ushort n = Read4(CMD_MEAS_POLLING_H) & 0xFFFF;
-	//ushort n = Read4(CMD_FETCH_DATA) & 0xFFFF;
-	if(!n) return 0;
-
-	// 公式: RH%= -6 + 125 * SRH/2^16
-	n = ((n * 125 * 100) >> 16) - 6 * 100;
-
-	return n;
-}*/
 
 bool SHT30::Read(ushort& temp, ushort& humi)
 {
@@ -229,7 +198,7 @@ uint SHT30::Read4(ushort cmd)
 	ushort temp = __REV16(*(ushort*)p);
 	ushort humi = __REV16(*(ushort*)(p + 3));
 
-	Sys.Sleep(10);
+	//Sys.Sleep(10);
 
 	return (temp << 16) | humi;
 }
