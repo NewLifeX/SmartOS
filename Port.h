@@ -197,6 +197,7 @@ private:
 class AnalogInPort : public Port
 {
 public:
+    AnalogInPort() : Port() { }
     AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:

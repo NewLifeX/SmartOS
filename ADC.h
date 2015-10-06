@@ -23,7 +23,7 @@ class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不
 {
 private:
 	ADC_TypeDef*	_ADC;	// 当前中断线的引用
-	AnalogInPort*	_port[16]; 
+	AnalogInPort	_ports[16]; 
 public :
 	byte	Line;		// 中断线 1/2/3
 	byte	Count;		// 通道个数

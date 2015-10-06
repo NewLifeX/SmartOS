@@ -74,7 +74,7 @@ void ADConverter::Open()
 		{
 			debug_printf("ADC::Init %d ", i+1);
 			if(i < ArrayLength(ADC_Pins))
-				_port[i] = new AnalogInPort(ADC_Pins[i]);
+				_ports[i].Set(ADC_Pins[i]).Open();
 			else
 				debug_printf("\r\n");
 		}
