@@ -6,40 +6,51 @@ void TestFlash()
     debug_printf("\r\n\r\n");
     debug_printf("TestFlash Start......\r\n");
 
-    uint addr = 0x08004000;
-    
-    Flash flash;
-    debug_printf("FlashSize: %d Bytes  BytesPerBlock: %d Bytes\r\n", flash.Size, flash.BytesPerBlock);
-    flash.Erase(addr, 0x100);
-    
     byte buf[] = "STM32F10x SPI Firmware Library Example: communication with an AT45DB SPI FLASH";
     uint size = ArrayLength(buf);
+
+    Flash flash;
+	// 凑一个横跨两页的地址
+    uint addr = 0x0800C000 + flash.Block - size + 7;
+	debug_printf("Address: 0x%08x 凑一个横跨两页的地址\r\n", addr);
+
+    debug_printf("FlashSize: %d(0x%08x) Bytes  Block: %d Bytes\r\n", flash.Size, flash.Size, flash.Block);
+    flash.Erase(addr, 0x100);
+
     flash.WriteBlock(addr, buf, size);
-    
-    byte* rx = (byte*)malloc(size);
-    flash.Read(addr, rx, size);
+
+	byte bb[0x100];
+    ByteArray bs;
+	bs.Set(bb, ArrayLength(bb));
+	bs.SetLength(size);
+
+    flash.Read(addr, bs);
 
     int n = 0;
     for(int i=0; i<size; i++)
     {
-        if(buf[i] != rx[i]) n++;
+        if(buf[i] != bs[i]) n++;
     }
-    debug_printf("diffent %d\r\n", n);
+	if(n)
+		debug_printf("分块测试失败 不同点： %d\r\n", n);
+	else
+		debug_printf("分块测试通过！\r\n");
 
     // 集成测试
     //flash.Erase(addr, 0x100);
-    flash.Write(addr, buf, size);
+    flash.Write(addr, ByteArray(buf, size));
 
-    flash.Read(addr, rx, size);
+    flash.Read(addr, bs);
 
     n = 0;
     for(int i=0; i<size; i++)
     {
-        if(buf[i] != rx[i]) n++;
+        if(buf[i] != bs[i]) n++;
     }
-    debug_printf("diffent %d\r\n", n);
-    
-    free(rx);
-    
+	if(n)
+		debug_printf("整体测试失败 不同点： %d\r\n", n);
+	else
+		debug_printf("整体测试通过！\r\n");
+
     debug_printf("\r\nTestFlash Finish!\r\n");
 }
