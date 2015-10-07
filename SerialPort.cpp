@@ -44,7 +44,7 @@ void SerialPort::Init()
 #ifdef STM32F1XX
 	IsRemap	= false;
 #endif
-	MinSize	= 8;
+	MinSize	= 1;
 
 	_taskidRx	= 0;
 }
