@@ -2,6 +2,9 @@
 
 #define TIME_DEBUG 0
 
+// 截止2000-01-01的所有秒数
+#define BASE_YEAR_US				63082281600UL
+
 /************************************************ TTime ************************************************/
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
@@ -20,6 +23,7 @@ TTime::TTime()
 #else
 	Index	= 5;
 #endif
+	BaseSeconds = 0;
 
 	OnInit	= NULL;
 	OnLoad	= NULL;
@@ -125,16 +129,19 @@ ulong TTime::Current()
 	return Milliseconds + g_Timers[Index]->CNT;
 }
 
-void TTime::SetTime(ulong ms)
+void TTime::SetTime(ulong seconds)
 {
-    SmartIRQ irq;
+    /*SmartIRQ irq;
 
 	Seconds			= ms / 1000;
 
 	// 修改系统启动时间
 	Sys.StartTime += ms - Milliseconds;
 
-	Milliseconds	= ms;
+	Milliseconds	= ms % 1000;*/
+
+	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
+	BaseSeconds = seconds;
 
 	// 保存到RTC
 	if(OnSave) OnSave();
@@ -217,6 +224,7 @@ void TTime::Delay(uint us)
 #define BASE_YEAR                   2000
 #define BASE_YEAR_LEAPYEAR_ADJUST   484
 #define BASE_YEAR_DAYOFWEEK_SHIFT   6		// 星期偏移
+//#define BASE_YEAR_US				63082281600UL
 
 const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
 
@@ -227,9 +235,11 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
-DateTime& DateTime::Parse(uint seconds)
+DateTime& DateTime::Parse(ulong seconds)
 {
 	DateTime& st = *this;
+
+	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
 	uint time = seconds;
@@ -269,12 +279,22 @@ DateTime& DateTime::Parse(uint seconds)
 	return st;
 }
 
+DateTime& DateTime::ParseUs(ulong us)
+{
+	Parse(us / 1000000ULL);
+	uint n = us % 1000000ULL;
+	Millisecond	= n / 1000;
+	Microsecond	= n % 1000;
+
+	return *this;
+}
+
 DateTime::DateTime()
 {
 	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
 }
 
-DateTime::DateTime(uint seconds)
+DateTime::DateTime(ulong seconds)
 {
 	if(seconds == 0)
 		memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
@@ -283,7 +303,7 @@ DateTime::DateTime(uint seconds)
 }
 
 // 重载等号运算符
-DateTime& DateTime::operator=(uint seconds)
+DateTime& DateTime::operator=(ulong seconds)
 {
 	Parse(seconds);
 
@@ -368,7 +388,7 @@ const char* DateTime::GetString(byte kind, string str)
 // 当前时间
 DateTime TTime::Now()
 {
-	DateTime dt(Seconds);
+	DateTime dt(Seconds + BaseSeconds);
 	dt.Millisecond = Milliseconds;
 	return dt;
 }

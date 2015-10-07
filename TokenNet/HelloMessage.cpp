@@ -96,8 +96,9 @@ String& HelloMessage::ToStr(String& str) const
 	if(Reply) str += "#";
 	str.Append(" Ver=").Append(Version, 16, 4);
 	str = str + " " + Type + " " + Name + " ";
+
 	DateTime dt;
-	dt.Parse(LocalTime / 1000);
+	dt.Parse(LocalTime / 1000000);
 	str += dt.ToString();
 
 	str = str + " " + EndPoint;

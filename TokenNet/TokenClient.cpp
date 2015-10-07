@@ -193,6 +193,9 @@ bool TokenClient::OnHello(TokenMessage& msg)
 
 			if(ext.Version == 0x00) Token = 0;
 
+			// 同步本地时间
+			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
+
 			Login();
 		}
 	}
@@ -203,7 +206,9 @@ bool TokenClient::OnHello(TokenMessage& msg)
 
 		HelloMessage ext2(Hello);
 		ext2.Reply = msg.Reply;
-		ext2.LocalTime = ext.LocalTime;
+		//ext2.LocalTime = ext.LocalTime;
+		// 使用当前时间
+		ext2.LocalTime = Time.Current() * 1000;
 		ext2.WriteMessage(rs);
 
 		Reply(rs);

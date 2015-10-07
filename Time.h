@@ -18,6 +18,7 @@ public:
 	ulong	Milliseconds;	// 全局毫秒数。累加
     byte	Ticks;			// 每微秒的时钟滴答数
 	byte	Index;			// 定时器
+    uint	BaseSeconds;	// 基准秒数。时间调节，影响Now()
 
 	Func OnInit;
 	Func OnLoad;
@@ -33,7 +34,7 @@ public:
 
     uint CurrentTicks();	// 当前滴答时钟
 	ulong Current(); 		// 当前毫秒数
-	void SetTime(ulong ms);	// 设置时间
+	void SetTime(ulong seconds);	// 设置时间
 
 	void Sleep(uint ms, bool* running = NULL);
 	// 微秒级延迟
@@ -89,12 +90,13 @@ public:
 	ushort Microsecond;
 
 	DateTime();
-	DateTime(uint seconds);
+	DateTime(ulong seconds);
 
 	// 重载等号运算符
-    DateTime& operator=(uint seconds);
+    DateTime& operator=(ulong seconds);
 
-	DateTime& Parse(uint seconds);
+	DateTime& Parse(ulong seconds);
+	DateTime& ParseUs(ulong us);
 	uint TotalSeconds();
 	ulong TotalMicroseconds();
 
