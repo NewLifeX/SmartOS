@@ -51,7 +51,7 @@ class TimeWheel
 {
 public:
 	uint	Expire;		// 到期时间，毫秒
-	ushort	Expire2;	// 到期时间，微秒
+	ushort	Expire2;	// 到期时间，滴答
 	ushort	Sleep;		// 睡眠时间，默认0毫秒
 
 	TimeWheel(uint seconds, uint ms = 0, uint us = 0);

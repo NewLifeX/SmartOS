@@ -403,15 +403,16 @@ TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
 
 void TimeWheel::Reset(uint seconds, uint ms, uint us)
 {
-	Expire = ((seconds * 1000) + ms) * 1000 + us;
-	Expire *= Time.Ticks;
-	Expire += Time.CurrentTicks();
+	Expire	= Time.Current() + seconds * 1000 + ms;
+	Expire2	= Time.CurrentTicks() + us * Time.Ticks;
 }
 
 // 是否已过期
 bool TimeWheel::Expired()
 {
-	if(Time.CurrentTicks() >= Expire) return true;
+	ulong now = Time.Current();
+	if(now > Expire) return true;
+	if(now == Expire && Time.CurrentTicks() >= Expire2) return true;
 
 	// 睡眠，释放CPU
 	if(Sleep) Sys.Sleep(Sleep);
