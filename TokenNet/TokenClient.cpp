@@ -22,6 +22,8 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	LoginTime	= 0;
 	LastActive	= 0;
 	Delay		= 0;
+	
+   IsOldOrder=false;	//是否旧指令
 
 	Control		= NULL;
 
@@ -247,6 +249,10 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
+		if(IsOldOrder)
+		{
+			byte stat=ms.Read<byte>();
+		}
 		// 得到令牌
 		Token = ms.Read<int>();
 		debug_printf("令牌：0x%08X ", Token);

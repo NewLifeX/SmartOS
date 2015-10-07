@@ -23,7 +23,7 @@ Gateway::Gateway()
 
 	Running		= false;
 	AutoReport	= false;
-	IsOldOrder	= true;
+	IsOldOrder	= false;
 }
 
 Gateway::~Gateway()
@@ -49,6 +49,8 @@ void Gateway::Start()
 	Server->Param		= this;
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
+	
+    Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 

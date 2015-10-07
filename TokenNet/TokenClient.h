@@ -22,6 +22,8 @@ public:
 	ulong	LoginTime;	// 登录时间ms
 	ulong	LastActive;	// 最后活跃时间ms
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
+	
+	bool IsOldOrder; 	//是否旧指令
 
 	TokenController* Control;
 
