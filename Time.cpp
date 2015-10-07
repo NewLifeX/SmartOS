@@ -18,6 +18,7 @@ TTime::TTime()
 {
 	Seconds	= 0;
 	Ticks	= 0;
+	Div		= 0;
 #ifdef STM32F0
 	Index	= 13;
 #else
@@ -71,13 +72,31 @@ void TTime::Init()
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
 #endif
 
+    // 获取当前频率
+	clk = RCC_GetPCLK();
+#if defined(STM32F1) || defined(STM32F4)
+	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
+#endif
+	clk <<= 1;
+	
+	// 120M时，分频系数必须是120K才能得到1k的时钟，超过了最大值64k
+	// 因此，需要增加系数
+	uint period = 1000;
+	uint psc	= clk / 1000;
+	while(psc > 0xFFFF)
+	{
+		period	<<= 1;
+		psc		>>= 1;
+		Div++;
+	}
+
 	// 配置时钟。1毫秒计时，1000毫秒中断
 	TIM_TimeBaseInitTypeDef tr;
 	TIM_TimeBaseStructInit(&tr);
-	tr.TIM_Period = 1000 - 1;
-	tr.TIM_Prescaler = Sys.Clock / 1000 - 1;
+	tr.TIM_Period		= period - 1;
+	tr.TIM_Prescaler	= psc - 1;
 	//tr.TIM_ClockDivision = 0x0;
-	tr.TIM_CounterMode = TIM_CounterMode_Up;
+	tr.TIM_CounterMode	= TIM_CounterMode_Up;
 	TIM_TimeBaseInit(tim, &tr);
 
 	// 打开中断
@@ -126,7 +145,7 @@ uint TTime::CurrentTicks()
 // 当前毫秒数
 ulong TTime::Current()
 {
-	return Milliseconds + g_Timers[Index]->CNT;
+	return Milliseconds + (g_Timers[Index]->CNT >> Div);
 }
 
 void TTime::SetTime(ulong seconds)
@@ -171,7 +190,7 @@ void TTime::Sleep(uint ms, bool* running)
 	TIM_TypeDef* tim = g_Timers[Index];
 
     uint end	= Seconds + (ms / 1000);
-	uint end2	= tim->CNT + (ms % 1000);
+	uint end2	= (tim->CNT >> Div) + (ms % 1000);
 	if(end2 >= 1000 - 1)
 	{
 		end++;
@@ -181,7 +200,7 @@ void TTime::Sleep(uint ms, bool* running)
     while(true)
 	{
 		if(Seconds > end) break;
-		if(Seconds == end && tim->CNT > end2) break;
+		if(Seconds == end && (tim->CNT >> Div) > end2) break;
 
 		if(running != NULL && !*running) break;
 	}
