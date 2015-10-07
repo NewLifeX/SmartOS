@@ -84,10 +84,22 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	Stream ms(buf, len);
 	while(ms.Remain() >= control->MinSize)
 	{
+#if MSG_DEBUG
+		uint p = ms.Position();
+		buf = ms.Current();
+		len = ms.Remain();
+#endif
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
 		if(!control->Dispatch(ms, NULL))
 		{
 #if MSG_DEBUG
+			// 兼容性处理，如果0x00 0x01 0x02开头，则重新来一次
+			if(buf[0] == 0x00 || buf[0] == 0x01 || buf[0] == 0x02 || buf[0] == 0x03)
+			{
+				ms.SetPosition(p + 1);
+				continue;
+			}
+			
 			msg_printf("TinyNet::DispatchError[%d] ", len);
 			// 输出整条信息
 			Sys.ShowHex(buf, len, '-');

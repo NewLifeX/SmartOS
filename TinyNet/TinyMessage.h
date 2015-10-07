@@ -23,8 +23,8 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte _Code;		// 功能代码
-	byte Flags:3;	// 标识位。也可以用来做二级命令
-	byte UseTTL:1;	// 使用TTL。具体TTL值位于数据包最后
+	byte Retry:2;	// 标识位。也可以用来做二级命令
+	byte TTL:2;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误
@@ -33,12 +33,6 @@ public:
 	byte _Length;	// 数据长度
 	byte _Data[32];	// 数据部分
 	ushort Checksum;// 16位检验和
-
-	// 可选的附加数据紧跟在头数据后面，可能直接读取内存区域
-	byte TTL;		// 路由生命周期。为方便路由，不参与Crc校验
-#if DEBUG
-	byte Retry;		// 调试诊断模式下该字段表示第几次重发
-#endif
 
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc;		// 整个消息的Crc16校验，计算前Checksum清零
@@ -95,7 +89,6 @@ public:
 	uint	Ack;	// 总成功。有多少消息收到确认，每条消息仅计算一次确认
 	uint	Bytes;	// 总字节数。成功发送消息的字节数
 	uint	Cost;	// 总开销ms。成功发送消息到收到确认所花费的时间
-	//uint	Retry;	// 总重试次数
 	int		Receive;// 收到消息数
 
 	TinyStat()

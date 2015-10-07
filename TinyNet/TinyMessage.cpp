@@ -24,10 +24,6 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 	memset(&Dest, 0, MinSize);
 
 	Crc = 0;
-	TTL = 0;
-#if MSG_DEBUG
-	Retry = 1;
-#endif
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
@@ -36,7 +32,7 @@ bool TinyMessage::Read(Stream& ms)
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
 	if(ms.Remain() < MinSize) return false;
 
-	const byte* p = ms.Current();
+	byte* p = ms.Current();
 	ms.Read(&Dest, 0, HeaderSize);
 
 	// 占位符拷贝到实际数据
@@ -60,25 +56,15 @@ bool TinyMessage::Read(Stream& ms)
 	// 读取真正的校验码
 	Checksum = ms.Read<ushort>();
 
+	// 计算Crc之前，需要清零TTL和Retry
+	byte fs = p[3];
+	TinyMessage* msg = (TinyMessage*)p;
+	msg->TTL	= 0;
+	msg->Retry	= 0;
 	// 连续的，可以直接计算Crc16
 	Crc = Crc::Hash16(p, HeaderSize + Length);
-
-	// 后面可能有TTL
-	if(UseTTL)
-	{
-		// 必须严格检查，否则可能成为溢出漏洞
-		if(ms.Remain() > 0)
-			TTL = ms.Read<byte>();
-		else
-			TTL = 0;
-	}
-#if MSG_DEBUG
-	// 调试诊断模式下该字段表示第几次重发
-	if(ms.Remain() > 0)
-		Retry = ms.Read<byte>();
-	else
-		Retry = 0;
-#endif
+	// 还原数据
+	p[3] = fs;
 
 	return true;
 }
@@ -102,15 +88,19 @@ void TinyMessage::Write(Stream& ms) const
 	ms.Write((byte*)&Dest, 0, HeaderSize);
 	if(Length > 0) ms.Write(Data, 0, Length);
 
+	// 计算Crc之前，需要清零TTL和Retry
+	byte fs = buf[3];
+	TinyMessage* msg = (TinyMessage*)buf;
+	msg->TTL	= 0;
+	msg->Retry	= 0;
+
 	p->Checksum = p->Crc = Crc::Hash16(buf, HeaderSize + Length);
+
+	// 还原数据
+	buf[3] = fs;
+
 	// 写入真正的校验码
 	ms.Write(Checksum);
-
-	// 后面可能有TTL
-	if(UseTTL && ms.Position() < 24) ms.Write(TTL);
-#if MSG_DEBUG
-	if(ms.Position() < 24) ms.Write(Retry);
-#endif
 }
 
 void TinyMessage::ComputeCrc()
@@ -141,10 +131,6 @@ bool TinyMessage::Valid() const
 uint TinyMessage::Size() const
 {
 	uint len = MinSize + Length;
-	if(UseTTL) len++;
-#if MSG_DEBUG
-	len++;
-#endif
 	return len;
 }
 
@@ -304,11 +290,8 @@ bool TinyController::Valid(const Message& msg)
 			{
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!tmsg.NoAck) AckResponse(tmsg);
-#if MSG_DEBUG
+
 				msg_printf("重复消息 Reply=%d Ack=%d Src=0x%02x Seq=%d Retry=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
-#else
-				msg_printf("重复消息 Reply=%d Ack=%d Src=0x%02x Seq=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence);
-#endif
 				return false;
 			}
 			_Ring.Push(seq);
@@ -371,11 +354,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			else
 				msg_printf("收到Reply确认 ");
 
-#if MSG_DEBUG
 			msg_printf("Src=%d Seq=%d Cost=%dus Retry=%d\r\n", msg.Src, msg.Sequence, cost, msg.Retry);
-#else
-			msg_printf("Src=%d Seq=%d Cost=%dus\r\n", msg.Src, msg.Sequence, cost);
-#endif
 			return;
 		}
 	}
@@ -402,10 +381,7 @@ void TinyController::AckResponse(const TinyMessage& msg)
 #endif
 
 	bool rs = Controller::Send(msg2);
-	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d ", msg.Src, msg.Sequence);
-#if MSG_DEBUG
-	msg_printf("Retry=%d ", msg.Retry);
-#endif
+	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d Retry=%d ", msg.Src, msg.Sequence, msg.Retry);
 	if(rs)
 		msg_printf(" 成功!\r\n");
 	else
@@ -483,8 +459,9 @@ void TinyController::Loop()
 		//debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
 		// 第6个字节表示长度
 		TinyMessage* msg = (TinyMessage*)node.Data;
+		msg->Retry++;
 		// 最后一个附加字节记录第几次重发
-		if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
+		//if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
 		//ByteArray bs(node.Data, node.Length);
 		//bs.Show(true);
 #endif

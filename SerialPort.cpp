@@ -348,7 +348,7 @@ void SerialPort::OnRxHandler()
 		_task->NextTime	= Time.Current() + 1;
 		_task->Enable	= true;
 		// 如果系统调度器处于Sleep，让它立马退出
-		//Task::Scheduler()->Sleeping = false;
+		Task::Scheduler()->Sleeping = false;
 	}
 }
 
