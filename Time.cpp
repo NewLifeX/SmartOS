@@ -81,19 +81,21 @@ void TTime::Init()
 	
 	// 120M时，分频系数必须是120K才能得到1k的时钟，超过了最大值64k
 	// 因此，需要增加系数
-	uint period = 1000;
+	uint prd	= 1000;
 	uint psc	= clk / 1000;
+#ifndef STM32F0
 	while(psc > 0xFFFF)
 	{
-		period	<<= 1;
-		psc		>>= 1;
+		prd	<<= 1;
+		psc	>>= 1;
 		Div++;
 	}
+#endif
 
 	// 配置时钟。1毫秒计时，1000毫秒中断
 	TIM_TimeBaseInitTypeDef tr;
 	TIM_TimeBaseStructInit(&tr);
-	tr.TIM_Period		= period - 1;
+	tr.TIM_Period		= prd - 1;
 	tr.TIM_Prescaler	= psc - 1;
 	//tr.TIM_ClockDivision = 0x0;
 	tr.TIM_CounterMode	= TIM_CounterMode_Up;
@@ -145,7 +147,11 @@ uint TTime::CurrentTicks()
 // 当前毫秒数
 ulong TTime::Current()
 {
+#ifndef STM32F0
 	return Milliseconds + (g_Timers[Index]->CNT >> Div);
+#else
+	return Milliseconds + g_Timers[Index]->CNT;
+#endif
 }
 
 void TTime::SetTime(ulong seconds)
@@ -190,7 +196,11 @@ void TTime::Sleep(uint ms, bool* running)
 	TIM_TypeDef* tim = g_Timers[Index];
 
     uint end	= Seconds + (ms / 1000);
+#ifdef STM32F0
+	uint end2	= tim->CNT + (ms % 1000);
+#else
 	uint end2	= (tim->CNT >> Div) + (ms % 1000);
+#endif
 	if(end2 >= 1000 - 1)
 	{
 		end++;
@@ -200,7 +210,11 @@ void TTime::Sleep(uint ms, bool* running)
     while(true)
 	{
 		if(Seconds > end) break;
+#ifdef STM32F0
+		if(Seconds == end && tim->CNT > end2) break;
+#else
 		if(Seconds == end && (tim->CNT >> Div) > end2) break;
+#endif
 
 		if(running != NULL && !*running) break;
 	}

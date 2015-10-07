@@ -19,7 +19,9 @@ public:
     uint	BaseSeconds;	// 基准秒数。时间调节，影响Now()
     byte	Ticks;			// 每微秒的时钟滴答数
 	byte	Index;			// 定时器
+#ifndef STM32F0
 	byte	Div;			// 分频系数。最大分频64k，无法让大于64M主频的芯片分配得到1k时钟
+#endif
 
 	Func OnInit;
 	Func OnLoad;
