@@ -10,6 +10,9 @@ bool OnRemoteReceived(Message& msg, void* param);
 void TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2);
+void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2);
+void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2);
+void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2);
 
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
@@ -20,7 +23,7 @@ Gateway::Gateway()
 
 	Running		= false;
 	AutoReport	= false;
-	IsOldOrder	= false;
+	IsOldOrder	= true;
 }
 
 Gateway::~Gateway()
@@ -431,6 +434,35 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 		if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 
 		msg2.Length = 1 + msg.Length;
+}
+void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2)
+{
+	msg2.Code=0x10;
+	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	
+	 msg2.Reply = msg.Reply;
+	 msg2.Error = msg.Error;
+}
+void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2)
+{
+	msg2.Code=0x11;
+    if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	
+     int i=msg.Data[0]/4;//起始地址除4得通道号
+	 if(i==0)i=1;
+     msg2.Data[1]=i;//Data[1]修改通道号
+	 
+	 msg2.Reply = msg.Reply;
+	 msg2.Error = msg.Error;
+	   
+}
+void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
+{	
+       msg2.Code=0x12;
+	 if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);	
+	 
+	 msg2.Reply = msg.Reply;
+	 msg2.Error = msg.Error;
 }
 
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2)
