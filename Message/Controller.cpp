@@ -62,10 +62,10 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	Controller* control = (Controller*)param;
 
 #if MSG_DEBUG
-	msg_printf("TinyNet::Dispatch[%d] ", len);
+	/*msg_printf("TinyNet::Dispatch[%d] ", len);
 	// 输出整条信息
 	Sys.ShowHex(buf, len, '-');
-	msg_printf("\r\n");
+	msg_printf("\r\n");*/
 #endif
 	if(len > control->Port->MaxSize)
 	{
@@ -85,7 +85,16 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	while(ms.Remain() >= control->MinSize)
 	{
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, NULL)) break;
+		if(!control->Dispatch(ms, NULL))
+		{
+#if MSG_DEBUG
+			msg_printf("TinyNet::DispatchError[%d] ", len);
+			// 输出整条信息
+			Sys.ShowHex(buf, len, '-');
+			msg_printf("\r\n");
+#endif
+			break;
+		}
 
 		assert_param2(control, "控制器指针已被改变3");
 		assert_ptr(control);

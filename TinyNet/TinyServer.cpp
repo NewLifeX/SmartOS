@@ -169,7 +169,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			id = addr;
 			while(FindDevice(++id) != NULL && id < 0xFF);
 
-			debug_printf("发现节点设备 0x%02X ，为其分配 0x%02X\r\n", dm.Kind, id);
+			debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 			if(id == 0xFF) return false;
 		}
 

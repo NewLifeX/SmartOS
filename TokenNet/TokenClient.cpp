@@ -188,9 +188,9 @@ bool TokenClient::OnHello(TokenMessage& msg)
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
 			}
-			
-           if(ext.Version==0x00)Token=0;
-		   
+
+			if(ext.Version == 0x00) Token = 0;
+
 			Login();
 		}
 	}
@@ -306,7 +306,7 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	else
 		Delay = cost;
 
-	debug_printf("心跳延迟 %dus / %dus \r\n", cost, Delay);
+	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 
 	return true;
 }
