@@ -438,6 +438,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		if(!Open()) return false;
 	}
 
+	Local.Address	= Tip->IP;
 	Remote.Address	= ip;
 	Remote.Port		= port;
 

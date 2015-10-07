@@ -134,6 +134,7 @@ bool UdpSocket::Send(const ByteArray& bs)
 {
 	//if(ip.IsAny()) ip = Remote.Address;
 	//if(!port) port = Remote.Port;
+	Local.Address	= Tip->IP;
 
 	//byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(UDP_HEADER) + 1024];
 	byte buf[1500];
