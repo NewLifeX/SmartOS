@@ -9,7 +9,7 @@ bool OnRemoteReceived(Message& msg, void* param);
 
 void TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
-void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2);
+void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,  ushort kind);
 void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2);
@@ -131,7 +131,11 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		TokenMessage tmsg;
 
 		if(IsOldOrder)
-		   OldTinyToToken(msg, tmsg);
+		{	
+          Device* dv1 = Server->FindDevice(msg.Src);
+		
+		  OldTinyToToken(msg, tmsg, dv1->Kind);
+		}
 	    else
 		   TinyToToken(msg, tmsg);
 
@@ -465,33 +469,121 @@ void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
 	 msg2.Error = msg.Error;
 }
 
-void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2)
+void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 {	// 处理Reply标记
-	  if((msg.Length-1)%4==0)//整除4为模拟量读取
-	   {
-		   msg2.Code=0x11;
-		   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	  switch(kind)
+	  {
+	   case 0x0101:
+        /// <summary>网关B</summary>
+       case 0x0102:
+        /// <summary>网关C</summary>
+       case 0x0103:
 
-		   int i=msg.Data[0]/4;//起始地址除4得通道号
-		   if(i==0)i=1;
+        /// <summary>无线中继</summary>
+       case 0x01C8:
+   
 
-		   msg2.Data[1]=i;	//Data[1]修改通道号
-	   }
-	   else
-	   {
-		   if(msg.Length==2)
-		   {
-			    msg2.Code=0x10;
-				if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
-		   }
-		   else
-		   {
-			   msg2.Code=0x12;
-			   if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
-		   }
-		    msg2.Reply = msg.Reply;
-			msg2.Error = msg.Error;
+        /// <summary>触摸开关(1位)</summary>
+       case 0x0201:
+        /// <summary>触摸开关(2位)</summary>
+       case 0x0202:
+        /// <summary>触摸开关(3位)</summary>
+       case 0x0203:
+        /// <summary>触摸开关(4位)</summary>
+       case  0x0204:
 
-	   }
+        /// <summary>情景面板(1位)</summary>
+       case 0x0211:
+        /// <summary>情景面板(2位)</summary>
+       case 0x0212:
+        /// <summary>情景面板(3位)</summary>
+       case 0x0213:
+        /// <summary>情景面板(4位)</summary>
+       case 0x0214:
+
+        /// <summary>智能继电器(1位)</summary>
+       case 0x0221:
+        /// <summary>智能继电器(2位)</summary>
+       case 0x0222:
+        /// <summary>智能继电器(3位)</summary>
+        case 0x0223:
+        /// <summary>智能继电器(4位)</summary>
+       case 0x0224:
+
+        /// <summary>单火线取电开关(1位)</summary>
+       case 0x0231:
+        /// <summary>单火线取电开关(2位)</summary>
+       case 0x0232:
+        /// <summary>单火线取电开关(位)</summary>
+       case 0x0233:
+        /// <summary>单火线取电开关(4位)</summary>
+        case 0x0234:
+
+        /// <summary>调光开关</summary>
+       case 0x0241:
+
+        /// <summary>调色开关</summary>
+       case  0x0251:
+
+        /// <summary>无线遥控插座(1位)</summary>
+        case 0x0261:
+        /// <summary>无线遥控插座(2位)</summary>
+       case 0x0262:
+        /// <summary>无线遥控插座(3位)</summary>
+        case 0x0263:
+   
+
+        /// <summary>环境探测器</summary>
+       case 0x0311:
+
+        /// <summary>PM2.5检测器</summary>
+        case 0x0321:
+
+        /// <summary>红外转发器</summary>
+        case 0x0331:
+
+     
+        /// <summary>智能门锁</summary>
+       case 0x0411:
+
+        /// <summary>机械手</summary>
+        case 0x0421:
+
+        /// <summary>电动窗帘</summary>
+        case 0x0431:
+
+      
+
+        /// <summary>燃气探测器</summary>
+       case 0x0501:
+
+        /// <summary>火焰烟雾探测器</summary>
+       case 0x0521:
+
+        /// <summary>门窗磁</summary>
+        case  0x0531:
+
+        /// <summary>红外感应器</summary>
+       case 0x0541:
+
+        /// <summary>摄像头</summary>
+       case 0x0551:
+
+        /// <summary>声光报警器</summary>
+       case 0x0561:
+     
+
+        /// <summary>温控面板</summary>
+       case 0x0601:
+
+        /// <summary>调色控制器</summary>
+       case 0x0611:
+
+        /// <summary>背景音乐控制器</summary>
+       case 0x0621:
+	   
+	   break;
+		  
+	  }
 }
 
