@@ -5,6 +5,7 @@
 
 UdpSocket::UdpSocket(TinyIP* tip) : TinySocket(tip, IP_UDP)
 {
+	MaxSize	= 1500;
 	Host	= tip;
 
 	// 累加端口

@@ -10,6 +10,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms);
 
 TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 {
+	MaxSize	= 1500;
 	Host	= tip;
 
 	// 累加端口
