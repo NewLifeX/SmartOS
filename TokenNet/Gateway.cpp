@@ -481,6 +481,8 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 
         /// <summary>无线中继</summary>
        case 0x01C8:
+	       TinyToToken(msg,msg2);
+	   break;
    
 
         /// <summary>触摸开关(1位)</summary>
@@ -519,19 +521,23 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
         /// <summary>单火线取电开关(4位)</summary>
         case 0x0234:
 
-        /// <summary>调光开关</summary>
-       case 0x0241:
-
-        /// <summary>调色开关</summary>
-       case  0x0251:
-
         /// <summary>无线遥控插座(1位)</summary>
         case 0x0261:
         /// <summary>无线遥控插座(2位)</summary>
        case 0x0262:
         /// <summary>无线遥控插座(3位)</summary>
-        case 0x0263:
-   
+       case 0x0263:
+	         /// <summary>智能门锁</summary>
+       case 0x0411:
+
+        /// <summary>机械手</summary>
+       case 0x0421:
+
+        /// <summary>电动窗帘</summary>
+       case 0x0431:
+
+	   OldTinyToToken0x10( msg, msg2);
+	   break;
 
         /// <summary>环境探测器</summary>
        case 0x0311:
@@ -541,18 +547,13 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 
         /// <summary>红外转发器</summary>
         case 0x0331:
+   
+  
+          /// <summary>调光开关</summary>
+       case 0x0241:
 
-     
-        /// <summary>智能门锁</summary>
-       case 0x0411:
-
-        /// <summary>机械手</summary>
-        case 0x0421:
-
-        /// <summary>电动窗帘</summary>
-        case 0x0431:
-
-      
+        /// <summary>调色开关</summary>
+       case  0x0251:
 
         /// <summary>燃气探测器</summary>
        case 0x0501:
@@ -581,9 +582,12 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 
         /// <summary>背景音乐控制器</summary>
        case 0x0621:
-	   
+	    OldTinyToToken0x11( msg, msg2);	   
 	   break;
-		  
+	   
+	   default:
+	     TinyToToken(msg,msg2);
+		 break;	  
 	  }
 }
 
