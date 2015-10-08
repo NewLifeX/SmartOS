@@ -131,8 +131,8 @@ void TokenClient::SayHello(bool broadcast, int port)
 	TokenMessage msg(0x01);
 
 	HelloMessage ext(Hello);
-	ext.Reply = false;
-	ext.LocalTime = Time.Current();
+	ext.Reply		= false;
+	ext.LocalTime	= Time.Now().TotalMicroseconds();
 	ext.WriteMessage(msg);
 	ext.Show(true);
 

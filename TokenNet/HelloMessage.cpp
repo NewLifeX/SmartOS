@@ -2,7 +2,7 @@
 #include "HelloMessage.h"
 
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
+// 响应：2版本 + S类型 + S名称 + 8本地时间 + 对方IP端口 + S加密算法 + N密钥
 
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Ciphers(1), Key(0)
@@ -14,7 +14,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Type = bs.ToHex('\0');
 	//Name.Set(Sys.Company); 	// Sys.company 是一个字符串   在flash里面   Name.Clear() 会出错
 	Name		= Sys.Company;
-	LocalTime	= Time.Current();
+	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
 }
 
@@ -98,7 +98,7 @@ String& HelloMessage::ToStr(String& str) const
 	str = str + " " + Type + " " + Name + " ";
 
 	DateTime dt;
-	dt.Parse(LocalTime / 1000000);
+	dt.ParseUs(LocalTime);
 	str += dt.ToString();
 
 	str = str + " " + EndPoint;

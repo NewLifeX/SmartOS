@@ -109,26 +109,23 @@ void RTC_SetCounter(DateTime dt)
 {
 	RTC_TimeTypeDef time;
 	RTC_TimeStructInit(&time);
-	time.RTC_Seconds = dt.Second;
-	time.RTC_Minutes = dt.Minute;
-	time.RTC_Hours = dt.Hour;
-	time.RTC_H12 = RTC_H12_AM;
+	time.RTC_Seconds	= dt.Second;
+	time.RTC_Minutes	= dt.Minute;
+	time.RTC_Hours		= dt.Hour;
+	time.RTC_H12		= RTC_H12_AM;
 	RTC_SetTime(RTC_Format_BCD, &time);
 
 	RTC_DateTypeDef date;
 	RTC_DateStructInit(&date);
-	date.RTC_Date = dt.Day;
-	date.RTC_Month = dt.Month;
-	date.RTC_WeekDay= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
-	date.RTC_Year = dt.Year;
+	date.RTC_Date		= dt.Day;
+	date.RTC_Month		= dt.Month;
+	date.RTC_WeekDay	= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
+	date.RTC_Year		= dt.Year;
 	RTC_SetDate(RTC_Format_BCD, &date);
 }
 #endif
 
 static uint g_NextSave;	// 下一次保存Ticks的时间，避免频繁保存
-#if TIME_DEBUG
-	static ulong g_Counter = 0;
-#endif
 
 void AlarmHandler(ushort num, void* param);
 
@@ -180,10 +177,10 @@ void HardRTC::Init()
 	{
 		EXTI_ClearITPendingBit(EXTI_Line17);
 		EXTI_InitTypeDef  exit;
-		exit.EXTI_Line = EXTI_Line17;
-		exit.EXTI_Mode = EXTI_Mode_Interrupt;
-		exit.EXTI_Trigger = EXTI_Trigger_Rising;
-		exit.EXTI_LineCmd = ENABLE;
+		exit.EXTI_Line		= EXTI_Line17;
+		exit.EXTI_Mode		= EXTI_Mode_Interrupt;
+		exit.EXTI_Trigger	= EXTI_Trigger_Rising;
+		exit.EXTI_LineCmd	= ENABLE;
 		EXTI_Init(&exit);
 
 #ifdef STM32F1
@@ -203,34 +200,28 @@ void HardRTC::LoadTicks()
 
 #ifdef STM32F1
 	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
-	uint counter = RTC_GetCounter();
+	ulong ms	= RTC_GetCounter();
 	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
-	uint sec = ReadBackup(1);
-	ulong ms = (ulong)sec * 1000 + counter;
-#if TIME_DEBUG
-	g_Counter = ms;
-#endif
-#else
-	DateTime dt = RTC_GetCounter();
-	ulong ms = dt.TotalMicroseconds();
-#endif
-	Time.Seconds		= ms % 1000;
+	uint sec	= ReadBackup(1);
+	Time.Seconds		= sec;
 	Time.Milliseconds	= ms;
+#else
+	DateTime dt	= RTC_GetCounter();
+	Time.Seconds		= dt.TotalSeconds();
+	Time.Milliseconds	= dt.Millisecond;
+#endif
 }
 
 void HardRTC::SaveTicks()
 {
 	if(!Opened) return;
 
-	if(Time.Seconds < g_NextSave) return;
+	if(g_NextSave == 0 || Time.Seconds < g_NextSave) return;
 #if TIME_DEBUG
-	if(g_Counter > 0)
+	if(g_NextSave == 0)
 	{
-		debug_printf("LoadTicks %llu\r\n", g_Counter);
-
-		DateTime dt(g_Counter * 1000ull);
 		debug_printf("LoadTime: ");
-		dt.Show(true);
+		Time.Now.Show(true);
 
 		g_Counter = 0;
 	}
@@ -240,8 +231,8 @@ void HardRTC::SaveTicks()
 	RTC_WaitForSynchro();
 
 #ifdef STM32F1
-	uint sec = Time.Seconds;
-	uint ms = Time.Current() - sec;
+	uint sec	= Time.Seconds;
+	uint ms		= Time.Current() - sec;
 	while(ms > 1000) ms -= 1000;
 #if TIME_DEBUG
 	debug_printf("SaveTicks %ds %dms\r\n", sec, ms);
@@ -250,7 +241,7 @@ void HardRTC::SaveTicks()
 	// 设置计数器
 	RTC_SetCounter(ms);
 #else
-	//RTC_SetCounter(Time.Now());
+	RTC_SetCounter(Time.Now());
 #endif
 
 	// 必须打开时钟和后备域，否则写不进去时间

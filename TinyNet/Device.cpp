@@ -52,7 +52,7 @@ String& Device::ToStr(String& str) const
 	str = str + " HardID=" + HardID;
 
 	DateTime dt;
-	dt.Parse(LastTime);
+	dt.ParseUs(LastTime);
 	str = str + " LastTime=" + dt.ToString();
 
 	str = str + " DataSize=" + DataSize;

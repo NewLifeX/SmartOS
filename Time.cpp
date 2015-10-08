@@ -18,10 +18,10 @@ TTime::TTime()
 {
 	Seconds	= 0;
 	Ticks	= 0;
-	Div		= 0;
 #ifdef STM32F0
 	Index	= 13;
 #else
+	Div		= 0;
 	Index	= 5;
 #endif
 	BaseSeconds = 0;
