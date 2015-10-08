@@ -1,5 +1,13 @@
 ﻿#include "DataStore.h"
 
+#define DS_DEBUG DEBUG
+//#define DS_DEBUG 0
+#if DS_DEBUG
+	#define ds_printf debug_printf
+#else
+	#define ds_printf(format, ...)
+#endif
+
 // 初始化
 DataStore::DataStore() : Areas(0)
 {
@@ -115,19 +123,19 @@ int ByteDataPort::Write(byte* data)
 	byte cmd = *data;
 	if(cmd == 0xFF) return Read(data);
 
-	debug_printf("控制0x%02X ", cmd);
+	ds_printf("控制0x%02X ", cmd);
 	switch(cmd)
 	{
 		case 1:
-			debug_printf("打开");
+			ds_printf("打开");
 			OnWrite(1);
 			break;
 		case 0:
-			debug_printf("关闭");
+			ds_printf("关闭");
 			OnWrite(0);
 			break;
 		case 2:
-			debug_printf("反转");
+			ds_printf("反转");
 			OnWrite(!OnRead());
 			break;
 		default:
@@ -144,7 +152,7 @@ int ByteDataPort::Write(byte* data)
 		// 开关闪烁
 		case 1:
 			s = cmd - 0x10;
-			debug_printf("闪烁 %d 秒", s);
+			ds_printf("闪烁 %d 秒", s);
 			OnWrite(!OnRead());
 			Next = cmd;
 			StartAsync(s * 1000);
@@ -152,7 +160,7 @@ int ByteDataPort::Write(byte* data)
 		// 开关闪烁（毫秒级）
 		case 2:
 			s = (cmd - 0x20) * 100;
-			debug_printf("闪烁 %d 毫秒", s);
+			ds_printf("闪烁 %d 毫秒", s);
 			OnWrite(!OnRead());
 			Next = cmd;
 			StartAsync(s);
@@ -163,7 +171,7 @@ int ByteDataPort::Write(byte* data)
 		case 6:
 		case 7:
 			s = cmd - 0x40;
-			debug_printf("延迟 %d 秒关闭", s);
+			ds_printf("延迟 %d 秒关闭", s);
 			//OnWrite(1);
 			Next = 0;
 			StartAsync(s * 1000);
@@ -174,24 +182,24 @@ int ByteDataPort::Write(byte* data)
 		case 10:
 		case 11:
 			s = cmd - 0x80;
-			debug_printf("延迟 %d 秒打开", s);
+			ds_printf("延迟 %d 秒打开", s);
 			//OnWrite(0);
 			Next = 1;
 			StartAsync(s * 1000);
 			break;
 	}
-#if DEBUG
+#if DS_DEBUG
 	//Name.Show(true);
-	//debug_printf(" %s\r\n", Name);
+	//ds_printf(" %s\r\n", Name);
 	//Show(true);
 	Object* obj = dynamic_cast<Object*>(this);
 	if(obj)
 	{
-		debug_printf(" ");
+		ds_printf(" ");
 		obj->Show(true);
 	}
 	else
-		debug_printf("\r\n");
+		ds_printf("\r\n");
 #endif
 
 	return Read(data);

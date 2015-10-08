@@ -46,7 +46,8 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	assert_param(key != P0);
 
 	// 中断过滤模式，0x01表示使用按下，0x02表示使用弹起
-	Key.Mode = 0x02;
+	Key.Mode		= 0x02;
+	Key.ShakeTime	= 10;
 	Key.Set(key);
 	Key.Register(OnPress, this);
 	Key.Open();
