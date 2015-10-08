@@ -50,7 +50,7 @@ void Gateway::Start()
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
 	
-    Client->IsOldOrder  = IsOldOrder;
+   // Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -131,9 +131,10 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		//msg.Show();
 
 		TokenMessage tmsg;
-
+		
 		if(IsOldOrder)
-		{	
+		{
+		 
           Device* dv1 = Server->FindDevice(msg.Src);
 		
 		  OldTinyToToken(msg, tmsg, dv1->Kind);
@@ -191,7 +192,16 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		if(rs)
 		{
 			TokenMessage msg2;
-			TinyToToken(tmsg, msg2);
+			
+			if(IsOldOrder)
+		    {		 
+              Device* dv1 = Server->FindDevice(tmsg.Src);
+		
+		      OldTinyToToken(tmsg, msg2, dv1->Kind);
+		    }
+	        else
+		       TinyToToken(tmsg, msg2);
+		   
 			return Client->Reply(msg2);
 		}
 	}
@@ -432,8 +442,7 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 {
-		// 处理Reply标记
-
+		// 处理Reply标记	
 		msg2.Code = msg.Code;
 		msg2.Reply = msg.Reply;
 		msg2.Error = msg.Error;
@@ -445,37 +454,61 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 		msg2.Length = 1 + msg.Length;
 }
 void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2)
-{
+{	
+   	
 	msg2.Code=0x10;
+	msg2.Data[0] = ((TinyMessage&)msg).Src;
+	
 	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 	
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
+	 
+	  debug_printf(" 10指令转换\r\n");	
+	  msg2.Show();
 }
 void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2)
 {
 	msg2.Code=0x11;
+	msg2.Data[0] = ((TinyMessage&)msg).Src;
+	
     if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 	
-     int i=msg.Data[0]/4;//起始地址除4得通道号
-	 if(i==0)i=1;
+     int i=(msg.Data[0]-1)/4+1;//起始地址-1除4+1得通道号
+	 
      msg2.Data[1]=i;//Data[1]修改通道号
 	 
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
+	 
+	 debug_printf(" 11指令转换\r\n");	
+	 msg2.Show();
 	   
 }
 void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
 {	
-       msg2.Code=0x12;
+      
+      msg2.Code=0x12;
+	  msg2.Data[0] = ((TinyMessage&)msg).Src;
+	  int i=(msg.Data[0]-1)/4+1;//起始地址-1除4+1得通道号
+	 
+     msg2.Data[1]=i;//Data[1]修改通道号
+	 
+	  
 	 if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);	
 	 
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
+	 
+	 debug_printf(" 12指令转换\r\n");	
+	 msg2.Show();
 }
 
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 {	// 处理Reply标记
+
+     debug_printf(" 指令转换:0x%02X\r\n",kind);	
+	 msg2.Show();
 	  switch(kind)
 	  {
 	   case 0x0101:
@@ -483,13 +516,10 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
        case 0x0102:
         /// <summary>网关C</summary>
        case 0x0103:
-
         /// <summary>无线中继</summary>
        case 0x01C8:
 	       TinyToToken(msg,msg2);
 	   break;
-   
-
         /// <summary>触摸开关(1位)</summary>
        case 0x0201:
         /// <summary>触摸开关(2位)</summary>
@@ -525,7 +555,6 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
        case 0x0233:
         /// <summary>单火线取电开关(4位)</summary>
         case 0x0234:
-
         /// <summary>无线遥控插座(1位)</summary>
         case 0x0261:
         /// <summary>无线遥控插座(2位)</summary>
@@ -534,14 +563,22 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
        case 0x0263:
 	         /// <summary>智能门锁</summary>
        case 0x0411:
-
         /// <summary>机械手</summary>
        case 0x0421:
-
         /// <summary>电动窗帘</summary>
-       case 0x0431:
+       case 0x0431:	   
+	      /// <summary>门窗磁</summary>
+       case  0x0531:
+        /// <summary>红外感应器</summary>
+       case 0x0541:
 
-	   OldTinyToToken0x10( msg, msg2);
+        /// <summary>摄像头</summary>
+       case 0x0551:
+
+        /// <summary>声光报警器</summary>
+       case 0x0561:
+
+	     OldTinyToToken0x10(msg, msg2);
 	   break;
 
         /// <summary>环境探测器</summary>
@@ -565,20 +602,8 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 
         /// <summary>火焰烟雾探测器</summary>
        case 0x0521:
-
-        /// <summary>门窗磁</summary>
-        case  0x0531:
-
-        /// <summary>红外感应器</summary>
-       case 0x0541:
-
-        /// <summary>摄像头</summary>
-       case 0x0551:
-
-        /// <summary>声光报警器</summary>
-       case 0x0561:
+    
      
-
         /// <summary>温控面板</summary>
        case 0x0601:
 

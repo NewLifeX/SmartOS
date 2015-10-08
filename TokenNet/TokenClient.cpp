@@ -254,10 +254,10 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-		//if(IsOldOrder)
-		//{
-		//	byte stat=ms.Read<byte>();
-		//}
+		if(IsOldOrder)
+		{
+			byte stat=ms.Read<byte>();//旧指令，读走状态码
+		}
 		// 得到令牌
 		Token = ms.Read<int>();
 		debug_printf("令牌：0x%08X ", Token);
