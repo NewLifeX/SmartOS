@@ -587,7 +587,10 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 
         /// <summary>背景音乐控制器</summary>
        case 0x0621:
-	    OldTinyToToken0x11( msg, msg2);	   
+	      if(msg.Code==0x15)
+	         OldTinyToToken0x11( msg, msg2);	 
+          else
+            OldTinyToToken0x12( msg, msg2);			
 	   break;
 	   
 	   default:
