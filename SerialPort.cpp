@@ -254,19 +254,19 @@ bool SerialPort::OnWrite(const ByteArray& bs)
 	if(!bs.Length()) return true;
 
 	// 如果队列已满，则强制刷出
-	//if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
+	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
-	//Tx.Write(bs);
+	Tx.Write(bs);
 
-	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
+	/*// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
 	for(int i=0; i<bs.Length(); i++)
 	{
-		SendData(bs[i], 300);
-	}
+		SendData(bs[i], 3000);
+	}*/
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
-	//USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
 	return true;
 }
@@ -399,7 +399,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 	SerialPort* sp = (SerialPort*)param;
 	//assert_param2(sp, "串口参数不能为空 OnHandler");
 
-	//if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
+	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
 	// 接收中断
 	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
