@@ -124,6 +124,8 @@ public:
 	bool SetTask(uint taskid, bool enable, int msNextTime = -1);
 	// 改变任务周期
 	bool SetTaskPeriod(uint taskid, int period);
+
+	bool Started;
 	void Start();	// 开始系统大循环
 	Func OnStart;
 };

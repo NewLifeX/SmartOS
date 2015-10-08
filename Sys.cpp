@@ -218,6 +218,7 @@ TSys::TSys()
     Interrupt.Init();
 #endif
 
+	Started	= false;
 	OnStart = NULL;
 }
 
@@ -493,6 +494,7 @@ bool TSys::SetTaskPeriod(uint taskid, int period)
 
 void TSys::Start()
 {
+	Started = true;
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
@@ -509,7 +511,7 @@ void TSys::Start()
 void TimeSleep(uint us)
 {
 	// 在这段时间里面，去处理一下别的任务
-	if(Sys.Clock > 0 && us != 0 && us >= 50)
+	if(Sys.Started && us != 0 && us >= 50)
 	{
 		TaskScheduler* sc = Task::Scheduler();
 		// 记录当前正在执行任务
