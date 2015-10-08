@@ -1,4 +1,4 @@
-#include "Time.h"
+﻿#include "Time.h"
 #include "Gateway.h"
 #include "Config.h"
 
@@ -406,15 +406,16 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 				 msg2.Data[0]=1;				 
 				 break;
 		case 0x11:
-		          msg2.Code=0x15;				  
+		          msg2.Code=0x15;
+				  
 				 msg.Data[1]=4*(msg.Data[1]-1)+1;  //通道号*4-4为读取的起始地址
-				 if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
+				 if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);//
 
 				 msg2.Length = msg.Length - 1;
 				 break;
 		case 0x12:
 				  msg2.Code = 0x16;
-				  msg2.Length = msg.Length-1;
+				  msg2.Length = msg.Length;
 				  msg2.Data[0]=(msg.Data[1]-1)*4+1;
 
 	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
