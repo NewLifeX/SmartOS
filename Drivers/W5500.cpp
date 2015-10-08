@@ -1046,7 +1046,12 @@ uint HardSocket::Receive(ByteArray& bs)
 {
 	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
-	if(size == 0) return 0;
+	if(size == 0)
+	{
+		// 没有收到数据时，需要给缓冲区置零，否则系统逻辑会混乱
+		bs.SetLength(0);
+		return 0;
+	}
 
 	// 读取收到数据的首地址
 	ushort offset = __REV16(SocRegRead2(RX_RD));

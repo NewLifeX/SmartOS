@@ -148,7 +148,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, strin
 	}
 	if(!task)
 	{
-		debug_printf("TaskScheduler::Add 以达到最大任务数 %d\r\n", ts.Length());
+		debug_printf("TaskScheduler::Add 已达到最大任务数 %d\r\n", ts.Length());
 		return 0;
 	}
 
