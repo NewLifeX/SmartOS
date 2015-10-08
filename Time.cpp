@@ -73,6 +73,10 @@ void TTime::Init()
 #endif
 
     // 获取当前频率
+#ifdef STM32F0
+	uint prd	= 1000;
+	uint psc	= Sys.Clock / 1000;
+#else
 	clk = RCC_GetPCLK();
 #if defined(STM32F1) || defined(STM32F4)
 	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
@@ -83,7 +87,6 @@ void TTime::Init()
 	// 因此，需要增加系数
 	uint prd	= 1000;
 	uint psc	= clk / 1000;
-#ifndef STM32F0
 	while(psc > 0xFFFF)
 	{
 		prd	<<= 1;
