@@ -252,21 +252,24 @@ uint SerialPort::SendData(byte data, uint times)
 bool SerialPort::OnWrite(const ByteArray& bs)
 {
 	if(!bs.Length()) return true;
-
+#ifdef STM32F0
+	if(RS485) *RS485 = true;
+	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
+	for(int i=0; i<bs.Length(); i++)
+	{
+		SendData(bs[i], 3000);
+	}
+	if(RS485) *RS485 = false;
+#else
 	// 如果队列已满，则强制刷出
 	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
 	Tx.Write(bs);
 
-	/*// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
-	for(int i=0; i<bs.Length(); i++)
-	{
-		SendData(bs[i], 3000);
-	}*/
-
 	// 打开串口发送
 	if(RS485) *RS485 = true;
 	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+#endif
 
 	return true;
 }
