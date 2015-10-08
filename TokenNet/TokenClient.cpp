@@ -180,8 +180,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		}
 		else
 		{
-			debug_printf("握手完成，开始登录……\r\n");
-			Status = 1;
+			debug_printf("握手完成，开始登录……\r\n");		
 
 			// 通讯密码
 			if(ext.Key.Length() > 0)
@@ -189,6 +188,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 				Control->Key = ext.Key;
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
+				Status = 1;
 			}
 
 			if(ext.Version == 0x00) Token = 0;
@@ -196,7 +196,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
 
-			Login();
+			Login();		
 		}
 	}
 	else if(!msg.Reply)
@@ -254,10 +254,10 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-		if(IsOldOrder)
-		{
-			byte stat=ms.Read<byte>();
-		}
+		//if(IsOldOrder)
+		//{
+		//	byte stat=ms.Read<byte>();
+		//}
 		// 得到令牌
 		Token = ms.Read<int>();
 		debug_printf("令牌：0x%08X ", Token);

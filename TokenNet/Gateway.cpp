@@ -396,10 +396,10 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 	switch(msg.Code)
 	{
 		case 0x10:
-		         msg2.Code = 0x16;
+		         msg2.Code = 0x16;				 
+				 msg2.Length = msg.Length;
 
-	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length);
-	             msg2.Length = msg.Length;
+	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length);            
 	             msg2.Data[0]=1;
 				 break;
 		case 0x11:
