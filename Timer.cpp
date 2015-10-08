@@ -359,13 +359,17 @@ void PWM::Start()
 {
 	Timer::Start();
 
-#if defined(STM32F1)
+#if defined(STM32F0)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs(_Timer, ENABLE);
-#elif defined(STM32F1)
+#endif
+
+#if defined(STM32F1)
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs(_Timer, ENABLE);
-#else	//defined(STM32F4)
+#endif
+
+#if	defined(STM32F4)
 #endif
 }
 
