@@ -15,6 +15,15 @@
 void SendTask(void* param);
 void StatTask(void* param);
 
+typedef struct{
+	byte Retry:2;	// 标识位。也可以用来做二级命令
+	byte TTL:2;		// 路由TTL。最多3次转发
+	byte NoAck:1;	// 是否不需要确认包
+	byte Ack:1;		// 确认包
+	byte _Error:1;	// 是否错误
+	byte _Reply:1;	// 是否响应
+} TFlags;
+
 // 初始化消息，各字段为0
 TinyMessage::TinyMessage(byte code) : Message(code)
 {
@@ -65,9 +74,10 @@ bool TinyMessage::Read(Stream& ms)
 
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs = p[3];
-	TinyMessage* msg = (TinyMessage*)p;
-	msg->TTL	= 0;
-	msg->Retry	= 0;
+	//p[3] &= 0xF0;
+	TFlags* f = (TFlags*)&p[3];
+	f->TTL		= 0;
+	f->Retry	= 0;
 	// 连续的，可以直接计算Crc16
 	Crc = Crc::Hash16(p, HeaderSize + Length);
 	// 还原数据
@@ -96,10 +106,10 @@ void TinyMessage::Write(Stream& ms) const
 	if(Length > 0) ms.Write(Data, 0, Length);
 
 	// 计算Crc之前，需要清零TTL和Retry
-	byte fs = buf[3];
-	TinyMessage* msg = (TinyMessage*)buf;
-	msg->TTL	= 0;
-	msg->Retry	= 0;
+	byte fs 	= buf[3];
+	TFlags* f = (TFlags*)&buf[3];
+	f->TTL		= 0;
+	f->Retry	= 0;
 
 	p->Checksum = p->Crc = Crc::Hash16(buf, HeaderSize + Length);
 
@@ -462,11 +472,17 @@ void TinyController::Loop()
 		count++;
 		node.Times++;
 
+		ByteArray bs(node.Data, node.Length);
+		bs.Show(true);
 #if MSG_DEBUG
 		//debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
 		// 第6个字节表示长度
-		TinyMessage* msg = (TinyMessage*)node.Data;
-		msg->Retry++;
+		/*byte retry = node.Data[3] & 0x03;
+		retry++;
+		node.Data[3] &= ~0x03;
+		node.Data[3] |= retry & 0x03;*/
+		TFlags* f = (TFlags*)&node.Data[3];
+		f->Retry++;
 		// 最后一个附加字节记录第几次重发
 		//if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
 		//ByteArray bs(node.Data, node.Length);
@@ -474,7 +490,6 @@ void TinyController::Loop()
 #endif
 
 		// 发送消息
-		ByteArray bs(node.Data, node.Length);
 		Port->Write(bs);
 
 		// 增加发送次数统计
