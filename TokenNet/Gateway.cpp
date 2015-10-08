@@ -415,7 +415,7 @@ void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 				 break;
 		case 0x12:
 				  msg2.Code = 0x16;
-				  msg2.Length = msg.Length;
+				  msg2.Length = msg.Length-1;
 				  msg2.Data[0]=(msg.Data[1]-1)*4+1;
 
 	             if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
