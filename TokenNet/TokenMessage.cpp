@@ -40,7 +40,14 @@ bool TokenMessage::Read(Stream& ms)
 
 	if(ms.Remain() < Length) return false;
 
-	assert_param2(Data != _Data || Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
+	//assert_param2(Data != _Data || Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
+	// 避免错误指令超长，导致溢出
+	if(Data == _Data && Length > ArrayLength(_Data))
+	{
+		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", Length, ArrayLength(_Data));
+		assert_param(false);
+		return false;
+	}
 	if(Length > 0) ms.Read(Data, 0, Length);
 
 	return true;
