@@ -84,7 +84,7 @@ extern "C"
 		// 支持多种倍频
 		//mull = clock / cystalClock;
 		// 干掉除法
-		mull = 0;
+		mull = 1;
 		while(clock > cystalClock)
 		{
 			clock -= cystalClock;
