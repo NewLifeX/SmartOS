@@ -140,7 +140,7 @@ void Button_GrayLevel::SetValue(bool value)
 	if(ACZero)
 	{
 		//int time = ACZeroAdjTime;
-		if(CheckZero(ACZero)) Time.Sleep(ACZeroAdjTime);
+		if(CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
 		//Sys.Dlay() 参数>=1000 就会切换任务  中断里面不允许
 		/*while(time > 700)
 		{

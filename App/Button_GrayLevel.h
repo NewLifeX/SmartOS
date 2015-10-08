@@ -56,7 +56,7 @@ public:
 
 // 过零检测
 private:
-	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300
+	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us
 
 public:
 	static InputPort*  ACZero;			// 交流过零检测引脚

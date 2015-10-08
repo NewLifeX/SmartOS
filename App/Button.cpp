@@ -116,7 +116,7 @@ void Button::SetValue(bool value)
 {
 	if(!ACZero.Empty())
 	{
-		if(CheckZero(ACZero)) Time.Sleep(ACZeroAdjTime);
+		if(CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
 
 		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
 		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
