@@ -402,7 +402,9 @@ void SerialPort::OnHandler(ushort num, void* param)
 	SerialPort* sp = (SerialPort*)param;
 	//assert_param2(sp, "串口参数不能为空 OnHandler");
 
+#ifndef STM32F0
 	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
+#endif
 	// 接收中断
 	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
