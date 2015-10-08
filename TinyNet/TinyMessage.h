@@ -136,6 +136,7 @@ protected:
 public:
 	byte	Address;	// 本地地址
 	bool	NoAck;		// 是否不使用Ack，若为true，即使收到消息要求Ack也不发送Ack。默认false
+	byte	Mode;		// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	uint	Interval;	// 消息队列发送间隔ms
 	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
 

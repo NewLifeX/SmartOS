@@ -20,6 +20,8 @@ TinyServer::TinyServer(TinyController* control)
 	Control->Received	= OnServerReceived;
 	Control->Param		= this;
 
+	Control->Mode		= 2;	// 服务端接收所有消息
+
 	Received	= NULL;
 	Param		= NULL;
 

@@ -194,6 +194,8 @@ TinyController::TinyController() : Controller()
 		Address = Time.CurrentTicks();
 	}
 
+	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
+	Mode		= 0;
 	NoAck		= false;
 
 	ArrayZero(_Queue);
@@ -291,7 +293,22 @@ bool TinyController::Valid(const Message& msg)
 	// 源地址是自己不要接收
 	if(tmsg.Src == Address) return false;
 	// 只处理本机消息或广播消息
-	if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	//if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	switch(Mode)
+	{
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
+	}
+	// 不是自己的消息，并且没有设置接收全部
+	if(Mode < 2 && tmsg.Dest != Address)
+	{
+		// 如果不是广播或者不允许广播
+		if(Mode != 1 || tmsg.Dest != 0) return false;
+	}
 
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
@@ -472,24 +489,11 @@ void TinyController::Loop()
 		count++;
 		node.Times++;
 
-		ByteArray bs(node.Data, node.Length);
-		bs.Show(true);
-#if MSG_DEBUG
-		//debug_printf("重发消息 Dest=0x%02X Seq=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Times);
-		// 第6个字节表示长度
-		/*byte retry = node.Data[3] & 0x03;
-		retry++;
-		node.Data[3] &= ~0x03;
-		node.Data[3] |= retry & 0x03;*/
 		TFlags* f = (TFlags*)&node.Data[3];
 		f->Retry++;
-		// 最后一个附加字节记录第几次重发
-		//if(node.Length > TinyMessage::MinSize + msg->Length) node.Data[node.Length - 1] = node.Times;
-		//ByteArray bs(node.Data, node.Length);
-		//bs.Show(true);
-#endif
 
 		// 发送消息
+		ByteArray bs(node.Data, node.Length);
 		Port->Write(bs);
 
 		// 增加发送次数统计

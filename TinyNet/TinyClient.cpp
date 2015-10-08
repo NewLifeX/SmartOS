@@ -36,6 +36,7 @@ void TinyClient::Open()
 	Control->Received	= OnClientReceived;
 	Control->Param		= this;
 
+	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
 
 	TranID	= (int)Time.Current();
