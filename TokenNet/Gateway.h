@@ -42,6 +42,8 @@ public:
 	bool OnGetDeviceList(const Message& msg);
 	// 设备信息 0x25
 	bool OnGetDeviceInfo(const Message& msg);
+	
+	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
 	// 发送设备信息
 	bool SendDeviceInfo(const Device* dv);
 

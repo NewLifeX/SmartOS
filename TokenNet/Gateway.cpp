@@ -188,6 +188,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 
 		TinyMessage tmsg;
 		TokenToTiny(msg, tmsg);
+		
 		bool rs = Server->Dispatch(tmsg);
 		if(rs)
 		{
@@ -195,13 +196,80 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			
 			if(IsOldOrder)
 		    {		 
-              Device* dv1 = Server->FindDevice(tmsg.Src);
-		
-		      OldTinyToToken(tmsg, msg2, dv1->Kind);
+              Device* dv1 = Server->FindDevice(tmsg.Src);		  
+			 		  
+			   switch(dv1->Kind)
+	           {	            
+                  /// <summary>触摸开关(1位)</summary>
+                 case 0x0201:
+                  /// <summary>触摸开关(2位)</summary>
+                 case 0x0202:
+                  /// <summary>触摸开关(3位)</summary>
+                 case 0x0203:
+                  /// <summary>触摸开关(4位)</summary>
+                 case  0x0204:
+              
+                  /// <summary>情景面板(1位)</summary>
+                 case 0x0211:
+                  /// <summary>情景面板(2位)</summary>
+                 case 0x0212:
+                  /// <summary>情景面板(3位)</summary>
+                 case 0x0213:
+                  /// <summary>情景面板(4位)</summary>
+                 case 0x0214:
+              
+                  /// <summary>智能继电器(1位)</summary>
+                 case 0x0221:
+                  /// <summary>智能继电器(2位)</summary>
+                 case 0x0222:
+                  /// <summary>智能继电器(3位)</summary>
+                  case 0x0223:
+                  /// <summary>智能继电器(4位)</summary>
+                 case 0x0224:
+              
+                  /// <summary>单火线取电开关(1位)</summary>
+                 case 0x0231:
+                  /// <summary>单火线取电开关(2位)</summary>
+                 case 0x0232:
+                  /// <summary>单火线取电开关(位)</summary>
+                 case 0x0233:
+                  /// <summary>单火线取电开关(4位)</summary>
+                  case 0x0234:
+                  /// <summary>无线遥控插座(1位)</summary>
+                  case 0x0261:
+                  /// <summary>无线遥控插座(2位)</summary>
+                 case 0x0262:
+                  /// <summary>无线遥控插座(3位)</summary>
+                 case 0x0263:
+	                   /// <summary>智能门锁</summary>
+                 case 0x0411:
+                  /// <summary>机械手</summary>
+                 case 0x0421:
+                  /// <summary>电动窗帘</summary>
+                 case 0x0431:	   
+	                /// <summary>门窗磁</summary>
+                 case  0x0531:
+                  /// <summary>红外感应器</summary>
+                 case 0x0541:
+              
+                  /// <summary>摄像头</summary>
+                 case 0x0551:
+              
+                  /// <summary>声光报警器</summary>
+                 case 0x0561:            
+	              Gateway::OldTinyToToken10(tmsg, msg2);
+	             break; 
+                 default:
+				 OldTinyToToken(tmsg, msg2,dv1->Kind);
+				 break;			 
+	            }
+	          		      
 		    }
 	        else
 		       TinyToToken(tmsg, msg2);
 		   
+		   
+		   // TinyToToken(tmsg, msg2);
 			return Client->Reply(msg2);
 		}
 	}
@@ -393,6 +461,64 @@ void Gateway::OnDeviceDelete(const Message& msg)
 
 }
 
+void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
+{
+	
+	
+	
+	if(msg.Code==0x16)
+	{
+		TinyMessage tmsg;
+			
+		//交换目标和源地址
+	     tmsg.Code=0x15; 		 
+		 tmsg.Src  = msg.Dest;
+		 tmsg.Dest = msg.Src;
+
+         tmsg.Length=2;
+		 
+		 tmsg.Data[0]=1;
+		 tmsg.Data[1]=8;   
+		 
+	   //tmsg.Length=msg.Length;	
+	 // if(msg.Length > 0) memcpy(&tmsg.Data, msg.Data, msg.Length);	
+	  debug_printf(" 微网10指令转换\r\n");	
+	  tmsg.Show();
+	  
+	  bool rs = Server->Dispatch(tmsg);
+	  if(rs)
+	  {	  
+	     msg2.Code=0x10;
+	     msg2.Data[0] = ((TinyMessage&)tmsg).Src;
+	
+	     msg2.Length=msg.Length+1;
+	
+	    if(msg.Length > 0) memcpy(&msg2.Data[1], tmsg.Data, tmsg.Length);
+	
+	     msg2.Reply = tmsg.Reply;
+	      msg2.Error = tmsg.Error;
+	 
+	    debug_printf(" 10指令转换\r\n");	
+	    msg2.Show();	 
+	  return ;
+	  }	 
+	}
+	
+	msg2.Code=0x10;
+	msg2.Data[0] = ((TinyMessage&)msg).Src;
+	
+	msg2.Length=msg.Length+1;
+	
+	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	
+	 msg2.Reply = msg.Reply;
+	 msg2.Error = msg.Error;
+	 
+	 debug_printf("网关10指令转换\r\n");	
+	 msg2.Show();
+	
+}
+
 void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
 {
 
@@ -453,11 +579,19 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 
 		msg2.Length = 1 + msg.Length;
 }
+
 void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2)
 {	
    	
+	if(msg.Code==0x16)
+	{
+		msg.Data[2]=5;		
+	}
+	
 	msg2.Code=0x10;
 	msg2.Data[0] = ((TinyMessage&)msg).Src;
+	
+	msg2.Length=msg.Length+1;
 	
 	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
 	
@@ -470,6 +604,8 @@ void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2)
 void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2)
 {
 	msg2.Code=0x11;
+	msg2.Length=msg.Length+1;
+
 	msg2.Data[0] = ((TinyMessage&)msg).Src;
 	
     if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
@@ -489,6 +625,8 @@ void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
 {	
       
       msg2.Code=0x12;
+	  msg2.Length=msg.Length+1;
+	  
 	  msg2.Data[0] = ((TinyMessage&)msg).Src;
 	  int i=(msg.Data[0]-1)/4+1;//起始地址-1除4+1得通道号
 	 
@@ -520,67 +658,7 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
        case 0x01C8:
 	       TinyToToken(msg,msg2);
 	   break;
-        /// <summary>触摸开关(1位)</summary>
-       case 0x0201:
-        /// <summary>触摸开关(2位)</summary>
-       case 0x0202:
-        /// <summary>触摸开关(3位)</summary>
-       case 0x0203:
-        /// <summary>触摸开关(4位)</summary>
-       case  0x0204:
-
-        /// <summary>情景面板(1位)</summary>
-       case 0x0211:
-        /// <summary>情景面板(2位)</summary>
-       case 0x0212:
-        /// <summary>情景面板(3位)</summary>
-       case 0x0213:
-        /// <summary>情景面板(4位)</summary>
-       case 0x0214:
-
-        /// <summary>智能继电器(1位)</summary>
-       case 0x0221:
-        /// <summary>智能继电器(2位)</summary>
-       case 0x0222:
-        /// <summary>智能继电器(3位)</summary>
-        case 0x0223:
-        /// <summary>智能继电器(4位)</summary>
-       case 0x0224:
-
-        /// <summary>单火线取电开关(1位)</summary>
-       case 0x0231:
-        /// <summary>单火线取电开关(2位)</summary>
-       case 0x0232:
-        /// <summary>单火线取电开关(位)</summary>
-       case 0x0233:
-        /// <summary>单火线取电开关(4位)</summary>
-        case 0x0234:
-        /// <summary>无线遥控插座(1位)</summary>
-        case 0x0261:
-        /// <summary>无线遥控插座(2位)</summary>
-       case 0x0262:
-        /// <summary>无线遥控插座(3位)</summary>
-       case 0x0263:
-	         /// <summary>智能门锁</summary>
-       case 0x0411:
-        /// <summary>机械手</summary>
-       case 0x0421:
-        /// <summary>电动窗帘</summary>
-       case 0x0431:	   
-	      /// <summary>门窗磁</summary>
-       case  0x0531:
-        /// <summary>红外感应器</summary>
-       case 0x0541:
-
-        /// <summary>摄像头</summary>
-       case 0x0551:
-
-        /// <summary>声光报警器</summary>
-       case 0x0561:
-
-	     OldTinyToToken0x10(msg, msg2);
-	   break;
-
+      
         /// <summary>环境探测器</summary>
        case 0x0311:
 
@@ -616,8 +694,7 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 	         OldTinyToToken0x11( msg, msg2);	 
           else
             OldTinyToToken0x12( msg, msg2);			
-	   break;
-	   
+	   break;	   
 	   default:
 	     TinyToToken(msg,msg2);
 		 break;	  
