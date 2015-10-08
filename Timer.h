@@ -28,6 +28,8 @@ public:
 	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
+	void SetCounter(uint cnt);		// 设置计数器值
+	
 	void Register(EventHandler handler, void* param = NULL);
 
 private:

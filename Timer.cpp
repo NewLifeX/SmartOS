@@ -246,6 +246,11 @@ void Timer::SetFrequency(uint frequency)
 	}
 }
 
+void Timer::SetCounter(uint cnt)
+{
+	TIM_SetCounter(_Timer, cnt);
+}
+
 void Timer::SetHandler(bool set)
 {
 	int irqs[] = TIM_IRQns;
