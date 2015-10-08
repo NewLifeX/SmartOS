@@ -96,14 +96,14 @@ void Timer::Config()
 	tr.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(_Timer, &tr);
 
-//	TIM_PrescalerConfig(_Timer, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
+	//TIM_PrescalerConfig(_Timer, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
 	// 打开中断
 	//TIM_ITConfig(_Timer, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
-	TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
+	//TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 	//TIM_UpdateRequestConfig(_Timer, TIM_UpdateSource_Regular);
 	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
 	TIM_ClearFlag(_Timer, TIM_FLAG_Update);
-//	TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
+	//TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
 }
 
 void Timer::Start()
@@ -258,15 +258,20 @@ void Timer::SetHandler(bool set)
 	{
 		Interrupt.SetPriority(irqs[_index], 1);
 		Interrupt.Activate(irqs[_index], OnHandler, this);
+		// 打开中断
+		TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 	}
 	else
+	{
+		TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
 		Interrupt.Deactivate(irqs[_index]);
+	}
 }
 
 void Timer::Register(EventHandler handler, void* param)
 {
-	_Handler = handler;
-	_Param = param;
+	_Handler	= handler;
+	_Param		= param;
 
 	SetHandler(handler != NULL);
 }
