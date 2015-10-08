@@ -1168,13 +1168,15 @@ bool TcpClient::OnOpen()
 {
 	//SocketWrites(DIPR, Remote.Address.ToArray());
 
-	if(!HardSocket::Open()) return false;
+	if(!HardSocket::OnOpen()) return false;
 
 	WriteConfig(CONNECT);
 
 	// 等待操作完成
 	while(ReadConfig());
 
+	// 等待3秒
+	TimeWheel tw(3);
 	while(ReadStatus() != SOCK_SYNSENT)
 	{
 		if(ReadStatus() == SOCK_ESTABLISHE) return true;
@@ -1185,6 +1187,12 @@ bool TcpClient::OnOpen()
 		{
 			// 清除超时中断
 			WriteInterrupt(ir.ToByte());
+			return false;
+		}
+
+		if(tw.Expired())
+		{
+			debug_printf("TcpClient::OnOpen 连接超时 Status=0x%02X Interrupt=0x%02X \r\n", ReadStatus(), ReadInterrupt());
 			return false;
 		}
 	}
@@ -1215,13 +1223,16 @@ bool TcpClient::Listen()
 
 	return true;
 }
+
 // 恢复配置，还要维护连接问题
 void TcpClient::Recovery(){}
+
 //
 void TcpClient::OnProcess(byte reg)
 {
 	S_Interrupt ir;
 	ir.Init(reg);
+	
 	if(ir.RECV)
 	{
 		RaiseReceive();
@@ -1229,18 +1240,23 @@ void TcpClient::OnProcess(byte reg)
 	if(ir.CON)
 	{
 		Linked = true;
-		debug_printf("W5500::OnProcess IRQ:CON\r\n");
+		debug_printf("W5500::OnProcess 连接成功\r\n");
 	}
 	if(ir.DISCON)
 	{
+		Opened = false;
 		Linked = false;
-		debug_printf("W5500::OnProcess IRQ:DISCON\r\n");
+		debug_printf("W5500::OnProcess 断开\r\n");
 	}
+	/*if(ir.SEND_OK)
+	{
+		debug_printf("W5500::OnProcess 发送完成\r\n");
+	}*/
 	// 超时直接判定掉线
 	if(ir.TIMEOUT)
 	{
 		Linked = false;
-		debug_printf("W5500::OnProcess IRQ:Timeout\r\n");
+		debug_printf("W5500::OnProcess 超时\r\n");
 	}
 	if(Opened && !Linked)
 	{
@@ -1256,7 +1272,8 @@ void TcpClient::OnProcess(byte reg)
 // 异步中断
 void TcpClient::RaiseReceive()
 {
-	ByteArray bs;
+	byte buf[1500];
+	ByteArray bs(buf, ArrayLength(buf));
 	int size = Receive(bs);
 	if(size > 1500)return;
 
@@ -1306,7 +1323,7 @@ void UdpClient::RaiseReceive()
 {
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
-	byte buf[1024];
+	byte buf[1500];
 	ByteArray bs(buf, ArrayLength(buf));
 	ushort size = Receive(bs);
 	Stream ms(bs.GetBuffer(), size);
