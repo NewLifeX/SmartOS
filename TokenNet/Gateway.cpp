@@ -67,7 +67,7 @@ void Gateway::Start()
 
 		Server->Devices.Add(dv);
 	}
-
+	
 	Server->Start();
 	Client->Open();
 
@@ -195,13 +195,12 @@ bool Gateway::OnLocal(const TinyMessage& msg)
               
                   /// <summary>声光报警器</summary>
                  case 0x0561:            
-	              Gateway::OldTinyToToken10(msg, tmsg);
+	                   Gateway::OldTinyToToken10(msg, tmsg);
 	             break; 
                  default:
-				 OldTinyToToken(msg, tmsg,dv1->Kind);
+				   OldTinyToToken(msg, tmsg,dv1->Kind);
 				 break;			 
-	            }
-				 
+	            }				 
 		}
 	    else
 		   TinyToToken(msg, tmsg);
@@ -534,7 +533,7 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	     tmsg.Code=0x15; 		 
 		 tmsg.Src  = msg.Dest;
 		 tmsg.Dest = msg.Src;
-		 tmsg.Sequence=msg.Sequence+1;
+		 //tmsg.Sequence=msg.Sequence+1;
 
          tmsg.Length=2;
 		 
@@ -543,10 +542,12 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 		 
 	   //tmsg.Length=msg.Length;	
 	   //if(msg.Length > 0) memcpy(&tmsg.Data, msg.Data, msg.Length);	
-	   // debug_printf(" 微网10指令转换\r\n");	
-	   // tmsg.Show();
+	  // debug_printf(" 微网10指令转换\r\n");	
+	   tmsg.Show();
 	  
 	  bool rs = Server->Dispatch(tmsg);
+	  //  debug_printf("2微网10指令转换\r\n");
+	   tmsg.Show();
 	  if(rs)
 	  {	  
 	     msg2.Code=0x10;
@@ -557,10 +558,10 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	    if(msg.Length > 0) memcpy(&msg2.Data[1], &tmsg.Data[1], tmsg.Length);
 	
 	     msg2.Reply = tmsg.Reply;
-	      msg2.Error = tmsg.Error;
+	     msg2.Error = tmsg.Error;
 	 
-	    //debug_printf(" 10指令转换\r\n");	
-	    // msg2.Show();	 
+	   // debug_printf("指令转换\r\n");	
+	     msg2.Show();	 
 	  }	 
 			
 }

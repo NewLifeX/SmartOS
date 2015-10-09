@@ -286,6 +286,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
+	if(msg.Error) return false;
 
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
@@ -299,6 +300,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	int remain = dv.Store.Length() - offset;
 	if(remain < 0)
 	{
+		debug_printf("读取数据出错") ;
 		// 可读数据不够时出错
 		msg.Error = true;
 		ms.Write((byte)2);
@@ -320,8 +322,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 
 // 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
 bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
-{
-	debug_printf("备份数据到网关") ;
+{	
 	if(!msg.Reply || msg.Error) return false;
 	if(msg.Length < 2) return false;
 

@@ -134,7 +134,7 @@ void TinyMessage::ComputeCrc()
 bool TinyMessage::Valid() const
 {
 	if(Checksum == Crc) return true;
-
+	
 	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
 	debug_printf("校验错误指令 ");
