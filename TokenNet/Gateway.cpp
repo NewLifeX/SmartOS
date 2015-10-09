@@ -474,11 +474,12 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	     tmsg.Code=0x15; 		 
 		 tmsg.Src  = msg.Dest;
 		 tmsg.Dest = msg.Src;
+		 tmsg.Sequence=msg.Sequence+1;
 
          tmsg.Length=2;
 		 
 		 tmsg.Data[0]=1;
-		 tmsg.Data[1]=8;   
+		 tmsg.Data[1]=6;   
 		 
 	   //tmsg.Length=msg.Length;	
 	 // if(msg.Length > 0) memcpy(&tmsg.Data, msg.Data, msg.Length);	
@@ -491,9 +492,9 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	     msg2.Code=0x10;
 	     msg2.Data[0] = ((TinyMessage&)tmsg).Src;
 	
-	     msg2.Length=msg.Length+1;
+	     msg2.Length=msg.Length+8;
 	
-	    if(msg.Length > 0) memcpy(&msg2.Data[1], tmsg.Data, tmsg.Length);
+	    if(msg.Length > 0) memcpy(&msg2.Data[1], &tmsg.Data[1], tmsg.Length);
 	
 	     msg2.Reply = tmsg.Reply;
 	      msg2.Error = tmsg.Error;
@@ -509,7 +510,7 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	
 	msg2.Length=msg.Length+1;
 	
-	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	if(msg.Length > 0) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length);
 	
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
