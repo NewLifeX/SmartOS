@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Microsoft.Win32;
 using NewLife.Log;
 
@@ -270,6 +271,32 @@ namespace NewLife.Reflection
                 }
             }
 
+			Console.WriteLine("等待编译完成：");
+			var left = Console.CursorLeft;
+			var list2 = new List<String>(list);
+			var end = DateTime.Now.AddSeconds(20);
+			var fs = 0;
+			while(fs < Files.Count)
+			{
+				for(int i=list2.Count-1; i>=0; i--)
+				{
+					if(File.Exists(list[i]))
+					{
+						fs++;
+						list2.RemoveAt(i);
+					}
+				}
+				Console.CursorLeft = left;
+				Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, fs / Files.Count);
+				if(DateTime.Now > end)
+				{
+					Console.Write(" 等待超时！");
+					break;
+				}
+				Thread.Sleep(500);
+			}
+			Console.WriteLine();
+
 			for(int i=0; i<list.Count; i++)
 			{
 				if(File.Exists(list[i]))
@@ -293,13 +320,14 @@ namespace NewLife.Reflection
             sb.Append("--create -c");
             sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib"));
 
-            XTrace.WriteLine("使用对象文件：");
+            Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                XTrace.WriteLine("\t{0}", item);
+                Console.Write(" {0}", item);
             }
+			Console.WriteLine();
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
 			if(name.Contains("\\")) name = name.Substring("\\", "_");
@@ -346,15 +374,16 @@ namespace NewLife.Reflection
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
-            XTrace.WriteLine("使用对象文件：");
+            Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                XTrace.WriteLine("\t{0}", item);
+                Console.Write(" {0}", item);
             }
+			Console.WriteLine();
 
-            XTrace.WriteLine("使用静态库：");
+            Console.WriteLine("使用静态库：");
             foreach (var item in Libs)
             {
 				var d = item.Key.EndsWithIgnoreCase("D");
@@ -362,7 +391,7 @@ namespace NewLife.Reflection
 				{
 					sb.Append(" ");
 					sb.Append(item.Value);
-					XTrace.WriteLine("\t{0}\t{1}", item.Key, item.Value);
+					Console.WriteLine("\t{0}\t{1}", item.Key, item.Value);
 				}
             }
 
