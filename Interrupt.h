@@ -43,7 +43,7 @@ public:
     // 获取优先级
     void GetPriority(short irq);
 
-#ifdef STM32F10X
+#ifdef STM32F1
     // 编码优先级
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
     // 解码优先级

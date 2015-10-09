@@ -101,7 +101,7 @@ ShowLog:
         }
         switch(_stopBits)
         {
-#ifdef STM32F10X
+#ifdef STM32F1
             case USART_StopBits_0_5: debug_printf(", StopBits_0_5"); break;
 #endif
             case USART_StopBits_1: debug_printf(", StopBits_1"); break;
@@ -143,7 +143,7 @@ ShowLog:
 #endif
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
-#ifdef STM32F0XX
+#ifdef STM32F0
 	switch(_index)
 	{
 		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;

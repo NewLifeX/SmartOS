@@ -150,7 +150,7 @@ void TInterrupt::GlobalEnable() { __enable_irq(); }
 void TInterrupt::GlobalDisable() { __disable_irq(); }
 bool TInterrupt::GlobalState() { return __get_PRIMASK(); }
 
-#ifdef STM32F10X
+#ifdef STM32F1
 uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority)
 {
     return NVIC_EncodePriority(priorityGroup, preemptPriority, subPriority);

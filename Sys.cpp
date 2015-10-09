@@ -202,7 +202,7 @@ TSys::TSys()
     OnStop = 0;
 #endif
 
-#ifdef STM32F10X
+#ifdef STM32F1
 	// 关闭JTAG仿真接口，只打开SW仿真。
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // 打开时钟
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;    //关闭JTAG仿真接口，只打开SW仿真。
