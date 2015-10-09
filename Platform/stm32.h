@@ -1,4 +1,4 @@
-﻿#ifndef __STM32_H
+#ifndef __STM32_H
 #define __STM32_H
 
 #if !defined(STM32F0) && !defined(STM32F1) && !defined(STM32F4)

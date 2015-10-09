@@ -545,9 +545,21 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	  // debug_printf(" 微网10指令转换\r\n");	
 	   tmsg.Show();
 	  
-	  bool rs = Server->Dispatch(tmsg);
+	  // bool rs = Server->Dispatch(tmsg);
 	  //  debug_printf("2微网10指令转换\r\n");
-	   tmsg.Show();
+	  
+	    Device* dv = Server->FindDevice(tmsg.Dest); 
+	   
+	    bool rs= Server->OnRead(tmsg,*dv);
+		
+		if(rs)
+		{
+	      tmsg.Dest	= tmsg.Src;
+	      tmsg.Src	= dv->Address;
+		   debug_printf("2微网10指令转换\r\n");
+	      tmsg.Show();
+	     }
+		
 	  if(rs)
 	  {	  
 	     msg2.Code=0x10;
