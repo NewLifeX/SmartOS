@@ -293,10 +293,12 @@ namespace NewLife.Reflection
             sb.Append("--create -c");
             sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib"));
 
+            XTrace.WriteLine("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
+                XTrace.WriteLine("\t{0}", item);
             }
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
@@ -344,12 +346,15 @@ namespace NewLife.Reflection
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
+            XTrace.WriteLine("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
+                XTrace.WriteLine("\t{0}", item);
             }
 
+            XTrace.WriteLine("使用静态库：");
             foreach (var item in Libs)
             {
 				var d = item.Key.EndsWithIgnoreCase("D");
@@ -357,6 +362,7 @@ namespace NewLife.Reflection
 				{
 					sb.Append(" ");
 					sb.Append(item.Value);
+					XTrace.WriteLine("\t{0}\t{1}", item.Key, item.Value);
 				}
             }
 
