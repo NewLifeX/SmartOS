@@ -84,7 +84,7 @@ namespace NewLife.Reflection
         /// <summary>处理器。默认M0</summary>
         public String CPU { get { return _CPU; } set { _CPU = value; } }
 
-        private String _Flash = "STM32F0XX";
+        private String _Flash = "STM32F0";
         /// <summary>Flash容量</summary>
         public String Flash { get { return _Flash; } set { _Flash = value; } }
 
@@ -98,9 +98,9 @@ namespace NewLife.Reflection
                 _Cortex = value;
                 CPU = "Cortex-M{0}".F(value);
                 if (value == 3)
-                    Flash = "STM32F10X";
+                    Flash = "STM32F1";
                 else
-                    Flash = "STM32F{0}XX".F(value);
+                    Flash = "STM32F{0}".F(value);
 				if (value == 4) CPU += ".fp";
             }
         }
