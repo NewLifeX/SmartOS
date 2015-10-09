@@ -482,9 +482,9 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 		 tmsg.Data[1]=6;   
 		 
 	   //tmsg.Length=msg.Length;	
-	 // if(msg.Length > 0) memcpy(&tmsg.Data, msg.Data, msg.Length);	
-	  debug_printf(" 微网10指令转换\r\n");	
-	  tmsg.Show();
+	   //if(msg.Length > 0) memcpy(&tmsg.Data, msg.Data, msg.Length);	
+	   // debug_printf(" 微网10指令转换\r\n");	
+	   // tmsg.Show();
 	  
 	  bool rs = Server->Dispatch(tmsg);
 	  if(rs)
@@ -499,8 +499,8 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	     msg2.Reply = tmsg.Reply;
 	      msg2.Error = tmsg.Error;
 	 
-	    debug_printf(" 10指令转换\r\n");	
-	    msg2.Show();	 
+	    //debug_printf(" 10指令转换\r\n");	
+	    // msg2.Show();	 
 	  return ;
 	  }	 
 	}
@@ -515,8 +515,8 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
 	 
-	 debug_printf("网关10指令转换\r\n");	
-	 msg2.Show();
+	// debug_printf("网关10指令转换\r\n");	
+   // msg2.Show();
 	
 }
 
@@ -599,8 +599,8 @@ void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2)
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
 	 
-	  debug_printf(" 10指令转换\r\n");	
-	  msg2.Show();
+	 // debug_printf(" 10指令转换\r\n");	
+	 // msg2.Show();
 }
 void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2)
 {
@@ -618,8 +618,8 @@ void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2)
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
 	 
-	 debug_printf(" 11指令转换\r\n");	
-	 msg2.Show();
+	// debug_printf(" 11指令转换\r\n");	
+	// msg2.Show();
 	   
 }
 void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
@@ -639,15 +639,15 @@ void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2)
 	 msg2.Reply = msg.Reply;
 	 msg2.Error = msg.Error;
 	 
-	 debug_printf(" 12指令转换\r\n");	
-	 msg2.Show();
+	// debug_printf(" 12指令转换\r\n");	
+	// msg2.Show();
 }
 
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,ushort kind)
 {	// 处理Reply标记
 
-     debug_printf(" 指令转换:0x%02X\r\n",kind);	
-	 msg2.Show();
+    //  debug_printf(" 指令转换:0x%02X\r\n",kind);	
+	// msg2.Show();
 	  switch(kind)
 	  {
 	   case 0x0101:
