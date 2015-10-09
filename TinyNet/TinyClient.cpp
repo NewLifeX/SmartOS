@@ -260,6 +260,13 @@ bool TinyClient::Report(uint offset, const ByteArray& bs)
 	return Reply(msg);
 }
 
+void TinyClient::ReportAsync(uint offset)
+{
+	NextReport = offset;
+
+	Sys.SetTask(_TaskID, true, 500);
+}
+
 /******************************** 常用系统级消息 ********************************/
 
 void TinyClientTask(void* param)
@@ -267,6 +274,13 @@ void TinyClientTask(void* param)
 	assert_ptr(param);
 
 	TinyClient* client = (TinyClient*)param;
+	uint offset = client->NextReport;
+	if(offset)
+	{
+		client->Report(offset, client->Store.Data[offset]);
+		client->NextReport = 0;
+		return;
+	}
 	if(client->Server == 0)
 		client->Join();
 	else
