@@ -316,9 +316,10 @@ namespace NewLife.Reflection
 			name = GetOutputName(name);
             XTrace.WriteLine("链接：{0}", name);
 
+			var lib = name.EnsureEnd(".lib");
             var sb = new StringBuilder();
             sb.Append("--create -c");
-            sb.AppendFormat(" -r \"{0}\"", name.EnsureEnd(".lib"));
+            sb.AppendFormat(" -r \"{0}\"", lib);
 
             Console.Write("使用对象文件：");
             foreach (var item in Objs)
@@ -331,6 +332,7 @@ namespace NewLife.Reflection
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
 			if(name.Contains("\\")) name = name.Substring("\\", "_");
+			XTrace.WriteLine("链接完成 {0} {1}", rs, lib);
 			if(rs == 0)
 				"链接静态库{0}完成".F(name).SpeakAsync();
 			else
