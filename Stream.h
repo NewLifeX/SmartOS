@@ -28,6 +28,7 @@ public:
 	Stream(const byte* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(ByteArray& bs);
+	Stream(const ByteArray& bs);
 	// 销毁数据流
 	~Stream();
 
@@ -57,11 +58,11 @@ public:
 	uint Read(ByteArray& bs);
 
 	// 把数据写入当前位置
-	bool Write(byte* buf, uint offset, uint count);
+	bool Write(const byte* buf, uint offset, uint count);
 	// 写入7位压缩编码整数
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
-	uint Write(string str);
+	uint Write(const string str);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
 	bool Write(const ByteArray& bs);
 

@@ -54,6 +54,17 @@ Stream::Stream(ByteArray& bs)
 	_Capacity	= bs.Length();
 	_Position	= 0;
 	_needFree	= false;
+	_canWrite	= true;
+	Length		= bs.Length();
+}
+
+Stream::Stream(const ByteArray& bs)
+{
+	_Buffer		= bs.GetBuffer();
+	_Capacity	= bs.Length();
+	_Position	= 0;
+	_needFree	= false;
+	_canWrite	= false;
 	Length		= bs.Length();
 }
 
@@ -155,7 +166,7 @@ uint Stream::Read(ByteArray& bs)
 }
 
 // 把数据写入当前位置
-bool Stream::Write(byte* buf, uint offset, uint count)
+bool Stream::Write(const byte* buf, uint offset, uint count)
 {
 	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
@@ -194,7 +205,7 @@ uint Stream::WriteEncodeInt(uint value)
 }
 
 // 写入字符串，先写入压缩编码整数表示的长度
-uint Stream::Write(string str)
+uint Stream::Write(const string str)
 {
 	if(!_canWrite) return false;
 
