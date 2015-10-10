@@ -241,6 +241,17 @@ namespace NewLife.Reflection
             var obj = GetObjPath(null);
 			var list = new List<String>();
 
+            var sb = new StringBuilder();
+            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
+            sb.AppendFormat(" -D{0}", Flash);
+            if (GD32) sb.Append(" -DGD32");
+            foreach (var item in Defines)
+            {
+                sb.AppendFormat(" -D{0}", item);
+            }
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+			Console.WriteLine("命令参数：{0}", sb);
+
             foreach (var item in Files)
             {
                 Console.Write("编译：{0}\t", item);
