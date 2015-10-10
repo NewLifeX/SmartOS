@@ -20,6 +20,7 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
 			build.Cortex = 3;
+			build.Output = "F1";
 			build.AddIncludes("..\\..\\Lib");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
             build.AddFiles("..\\Platform", "Boot_F1.cpp");

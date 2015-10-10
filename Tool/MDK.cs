@@ -600,11 +600,15 @@ namespace NewLife.Reflection
 			return name;
 		}
 
+		// 输出目录。obj/list等位于该目录下，默认当前目录
+		public String Output = "";
+		
 		private String GetObjPath(String file)
 		{
             var objName = "Obj";
             if (!Debug) objName += "R";
 			if(Defines.Contains("TINY")) objName += "T";
+			objName = Output.CombinePath(objName);
 			objName.GetFullPath().EnsureDirectory(false);
 			if(!file.IsNullOrEmpty())
 				objName += "\\" + Path.GetFileNameWithoutExtension(file);
@@ -615,6 +619,7 @@ namespace NewLife.Reflection
 		private String GetListPath(String file)
 		{
             var lstName = "List";
+			lstName = Output.CombinePath(lstName);
 			lstName.GetFullPath().EnsureDirectory(false);
 			if(!file.IsNullOrEmpty())
 				lstName += "\\" + Path.GetFileNameWithoutExtension(file);
