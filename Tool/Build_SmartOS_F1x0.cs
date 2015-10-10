@@ -15,8 +15,6 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            XTrace.UseConsole();
-
             var build = new Builder();
             build.Init();
             build.GD32 = true;
