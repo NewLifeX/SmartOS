@@ -96,7 +96,10 @@ namespace NewLife.Reflection
             set
             {
                 _Cortex = value;
-                CPU = "Cortex-M{0}".F(value);
+				if(GD32 && value == 0)
+					CPU = "Cortex-M{0}".F(3);
+				else
+					CPU = "Cortex-M{0}".F(value);
                 if (value == 3)
                     Flash = "STM32F1";
                 else
@@ -230,6 +233,9 @@ namespace NewLife.Reflection
         {
 			Objs.Clear();
             var count = 0;
+
+			// 特殊处理GD32F130
+			if(GD32) Cortex = Cortex;
 
             // 提前创建临时目录
             var obj = GetObjPath(null);
