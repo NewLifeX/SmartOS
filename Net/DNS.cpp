@@ -170,7 +170,7 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 	int len = parse_name(ms, name, MAXCNAME);
 	if (len == -1) return 0;
 
-	int type = ms.Read<ushort>();
+	int type = ms.ReadUInt16();
 	//cp += 2;		/* type */
 	//cp += 2;		/* class */
 	//cp += 4;		/* ttl */
@@ -196,9 +196,9 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 
 		break;
 	case TYPE_HINFO:
-		len = ms.Read<byte>();
+		len = ms.ReadByte();
 		ms.Seek(len);
-		len = ms.Read<byte>();
+		len = ms.ReadByte();
 		ms.Seek(len);
 
 		break;
@@ -236,11 +236,12 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
 {
 	Stream ms(bs);
+	ms.Little = false;
 
 	memset(hdr, 0, sizeof(hdr));
 
-	hdr->id = ms.Read<ushort>();
-	ushort tmp = ms.Read<ushort>();
+	hdr->id = ms.ReadUInt16();
+	ushort tmp = ms.ReadUInt16();
 	if (tmp & 0x8000) hdr->qr = 1;
 
 	hdr->opcode = (tmp >> 11) & 0xf;
@@ -251,10 +252,10 @@ bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
 	if (tmp & 0x0080) hdr->ra = 1;
 
 	hdr->rcode = tmp & 0xf;
-	hdr->qdcount = ms.Read<ushort>();
-	hdr->ancount = ms.Read<ushort>();
-	hdr->nscount = ms.Read<ushort>();
-	hdr->arcount = ms.Read<ushort>();
+	hdr->qdcount = ms.ReadUInt16();
+	hdr->ancount = ms.ReadUInt16();
+	hdr->nscount = ms.ReadUInt16();
+	hdr->arcount = ms.ReadUInt16();
 
 	// 开始分析变长部分
 
@@ -284,14 +285,14 @@ bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
 short dns_makequery(short op, const String& name, ByteArray& bs)
 {
 	Stream ms(bs);
+	ms.Little = false;
 
-	static short DNS_MSGID = 1;
-	ms.Write((short)DNS_MSGID++);
-	ms.Write((short)((op << 11) | 0x0100));	// Recursion desired
-	ms.Write((short)1);
-	ms.Write((short)0);
-	ms.Write((short)0);
-	ms.Write((short)0);
+	ms.Write((ushort)Time.Seconds);
+	ms.Write((ushort)((op << 11) | 0x0100));	// Recursion desired
+	ms.Write((ushort)1);
+	ms.Write((ushort)0);
+	ms.Write((ushort)0);
+	ms.Write((ushort)0);
 
 	const char* dname = name.GetBuffer();
 	ushort dlen = strlen(dname);
@@ -326,8 +327,8 @@ short dns_makequery(short op, const String& name, ByteArray& bs)
 		dlen -= len+1;
 	}
 
-	ms.Write((short)0x0001);				/* type */
-	ms.Write((short)0x0001);				/* class */
+	ms.Write((ushort)0x0001);				/* type */
+	ms.Write((ushort)0x0001);				/* class */
 
 	bs.SetLength(ms.Position());
 
