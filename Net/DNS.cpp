@@ -181,7 +181,10 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 	{
 	case TYPE_A:
 		/* Just read the address directly into the structure */
+		//!!! 不知道为什么偏移了2个字节，这里临时后退
+		ms.Seek(-2);
 		ms.Read(ip_from_dns, 0, 4);
+		debug_printf("DNA::A %08X \r\n", *(uint*)ip_from_dns);
 		break;
 	case TYPE_CNAME:
 	case TYPE_MB:
@@ -193,6 +196,7 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* convert it to ascii format */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
+		debug_printf("DNA::PTR %s \r\n", name);
 
 		break;
 	case TYPE_HINFO:
@@ -207,16 +211,19 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* Get domain name of exchanger */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
+		debug_printf("DNA::MX %s \r\n", name);
 
 		break;
 	case TYPE_SOA:
 		/* Get domain name of name server */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
+		debug_printf("DNA::SOA %s \r\n", name);
 
 		/* Get domain name of responsible person */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
+		debug_printf("DNA::SOA %s \r\n", name);
 
 		ms.Seek(4 + 4 + 4 + 4 + 4);
 
@@ -225,6 +232,7 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* Just stash */
 		break;
 	default:
+		debug_printf("DNA::ANS type=0x%02X \r\n", type);
 		/* Ignore */
 		break;
 	}
