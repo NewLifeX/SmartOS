@@ -6,6 +6,7 @@
 #include "Net\ITransport.h"
 #include "Timer.h"
 #include "Thread.h"
+#include "Message\DataStore.h"
 
 // NRF24L01类
 class NRF24L01 : public ITransport
@@ -65,8 +66,7 @@ public:
 	void ClearFIFO(bool rx);
 	void ClearStatus(bool tx, bool rx);
 
-	OutputPort* LedTx;	// 发送数据灯
-	OutputPort* LedRx;	// 接收数据灯
+	IDataPort* Led;	// 数据灯
 
 	byte Status;
 	byte FifoStatus;

@@ -223,8 +223,7 @@ NRF24L01::NRF24L01()
 
 	_Lock	= 0;
 
-	LedTx	= NULL;
-	LedRx	= NULL;
+	Led		= NULL;
 }
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
@@ -283,12 +282,6 @@ NRF24L01::~NRF24L01()
 
 	delete _spi;
 	_spi = NULL;
-
-	delete LedTx;
-	LedTx = NULL;
-
-	delete LedRx;
-	LedRx = NULL;
 }
 
 // 向NRF的寄存器中写入一串数据
@@ -891,7 +884,7 @@ uint NRF24L01::OnRead(ByteArray& bs)
 	ClearFIFO(true);
 
 	//_CE = true;
-	if(rs && LedRx) *LedRx = !*LedRx;
+	if(rs && Led) Led->Write(500);
 
 	bs.SetLength(rs);
 
@@ -901,9 +894,8 @@ uint NRF24L01::OnRead(ByteArray& bs)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const ByteArray& bs)
 {
-	// 亮灯。离开时自动熄灯
-	//PortScope ps(LedTx);
-	if(LedTx) *LedTx = !*LedTx;
+	// 设定小灯快闪时间，单位毫秒
+	if(Led) Led->Write(500);
 
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
