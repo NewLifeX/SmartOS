@@ -65,6 +65,14 @@ ByteArray::ByteArray(const byte* data, int length, bool copy) : Array(0)
 		Set(data, length);
 }
 
+ByteArray::ByteArray(byte* data, int length, bool copy) : Array(0)
+{
+	if(copy)
+		Copy(data, length);
+	else
+		Set(data, length);
+}
+
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(0)
 {

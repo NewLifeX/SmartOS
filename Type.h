@@ -115,7 +115,6 @@ protected:
 	uint	_Capacity;	// 数组最大容量
 	bool	_needFree;	// 是否需要释放
 	bool	_canWrite;	// 是否可写
-	byte	Reversed[3];// 又是头疼的对齐问题
 
 	T		Arr[ArraySize];	// 内部缓冲区
 
@@ -428,6 +427,7 @@ public:
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const byte* data, int length, bool copy = false);
+	ByteArray(byte* data, int length, bool copy = false);
 	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
