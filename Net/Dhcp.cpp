@@ -203,12 +203,12 @@ uint Dhcp::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
 		ep->Show(true);
 	}*/
 	
-	((Dhcp*)param)->Process(bs);
+	((Dhcp*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;
 }
 
-void Dhcp::Process(ByteArray& bs)
+void Dhcp::Process(ByteArray& bs, const IPEndPoint& ep)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)bs.GetBuffer();
 	if(!dhcp->Valid()) return;
@@ -224,7 +224,7 @@ void Dhcp::Process(ByteArray& bs)
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
 #if NET_DEBUG
-	IPAddress& remote	= Socket->Remote.Address;
+	const IPAddress& remote	= ep.Address;
 #endif
 
 	if(opt->Data == DHCP_TYPE_Offer)

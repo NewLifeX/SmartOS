@@ -16,7 +16,7 @@ public:
 	
 private:
 	static uint OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2);
-	void Process(ByteArray& bs, const IPAddress& server);
+	void Process(ByteArray& bs, const IPEndPoint& server);
 	
 	ByteArray*	_Buffer;
 };

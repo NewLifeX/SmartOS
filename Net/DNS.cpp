@@ -367,21 +367,28 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 			break;
 		}
 	}
+	_Buffer = NULL;
 
 	return ip;
 }
 
 uint DNS::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
 {
-	((DNS*)param)->Process(bs, *(const IPAddress*)param2);
+	((DNS*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;
 }
 
-void DNS::Process(ByteArray& bs, const IPAddress& server)
+void DNS::Process(ByteArray& bs, const IPEndPoint& server)
 {
 	// 只要来自服务器的
-	if(server != Socket->Host->DNSServer) return;
+	if(server.Address != Socket->Host->DNSServer) return;
 
-	if(_Buffer) _Buffer->Copy(bs);
+	if(_Buffer)
+		_Buffer->Copy(bs);
+	else
+	{
+		debug_printf("DNS::Process \r\n");
+		server.Show(true);
+	}
 }
