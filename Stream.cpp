@@ -19,6 +19,7 @@ Stream::Stream(uint len)
 	_Position	= 0;
 	Length		= len;
 	_canWrite	= true;
+	Little		= true;
 }
 
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
@@ -33,6 +34,7 @@ Stream::Stream(byte* buf, uint len)
 	_needFree	= false;
 	_canWrite	= true;
 	Length		= len;
+	Little		= true;
 }
 
 Stream::Stream(const byte* buf, uint len)
@@ -45,6 +47,7 @@ Stream::Stream(const byte* buf, uint len)
 	_needFree	= false;
 	_canWrite	= false;
 	Length		= len;
+	Little		= true;
 }
 
 // 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
@@ -56,6 +59,7 @@ Stream::Stream(ByteArray& bs)
 	_needFree	= false;
 	_canWrite	= true;
 	Length		= bs.Length();
+	Little		= true;
 }
 
 Stream::Stream(const ByteArray& bs)
@@ -66,6 +70,7 @@ Stream::Stream(const ByteArray& bs)
 	_needFree	= false;
 	_canWrite	= false;
 	Length		= bs.Length();
+	Little		= true;
 }
 
 // 销毁数据流
@@ -147,7 +152,7 @@ uint Stream::ReadEncodeInt()
 	byte temp = 0;
 	for(int i = 0, k = 0; i < 4; i++, k += 7)
 	{
-		temp = Read<byte>();
+		temp = ReadByte();
 		if(temp < 0x7F)
 		{
 			value |= (temp << k);
@@ -350,3 +355,62 @@ bool Stream::WriteString(const String& str)
 	ByteArray bs(str);
 	return WriteArray(bs);
 }
+
+byte	Stream::ReadByte()
+{
+	byte* p = Current();
+	if(!Seek(1)) return 0;
+
+	return *p;
+}
+
+ushort	Stream::ReadUInt16()
+{
+	byte* p = ReadBytes(2);
+	ushort v = *(ushort*)p;
+	if(!Little) v = __REV16(v);
+	return v;
+}
+
+uint	Stream::ReadUInt32()
+{
+	byte* p = ReadBytes(4);
+	uint v = *(uint*)p;
+	if(!Little) v = __REV(v);
+	return v;
+}
+
+ulong	Stream::ReadUInt64()
+{
+	byte* p = ReadBytes(8);
+	ulong v = *(ulong*)p;
+	if(!Little) v = __REV(v >> 32) | ((ulong)__REV(v & 0xFFFFFFFF) << 32);
+	return v;
+}
+
+bool Stream::Write(byte value)
+{
+	return Write((byte*)&value, 0, 1);
+}
+
+bool Stream::Write(ushort value)
+{
+	if(!Little) value = __REV16(value);
+
+	return Write((byte*)&value, 0, 2);
+}
+
+bool Stream::Write(uint value)
+{
+	if(!Little) value = __REV(value);
+
+	return Write((byte*)&value, 0, 4);
+}
+
+bool Stream::Write(ulong value)
+{
+	if(!Little) value = __REV(value >> 32) | ((ulong)__REV(value & 0xFFFFFFFF) << 32);
+
+	return Write((byte*)&value, 0, 8);
+}
+

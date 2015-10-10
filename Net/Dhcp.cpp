@@ -176,16 +176,16 @@ void Dhcp::PareOption(Stream& ms)
 {
 	while(ms.Remain())
 	{
-		byte opt = ms.Read<byte>();
+		byte opt = ms.ReadByte();
 		if(opt == DHCP_OPT_End) break;
-		byte len = ms.Read<byte>();
+		byte len = ms.ReadByte();
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask:			Host->Mask		= ms.Read<int>(); len -= 4; break;
-			case DHCP_OPT_DNSServer:	Host->DNSServer	= ms.Read<int>(); len -= 4; break;
-			case DHCP_OPT_Router:		Host->Gateway	= ms.Read<int>(); len -= 4; break;
-			case DHCP_OPT_DHCPServer:	Host->DHCPServer	= ms.Read<int>(); len -= 4; break;
+			case DHCP_OPT_Mask:			Host->Mask		= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DNSServer:	Host->DNSServer	= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_Router:		Host->Gateway	= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DHCPServer:	Host->DHCPServer= ms.ReadUInt32(); len -= 4; break;
 			//default:
 			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}

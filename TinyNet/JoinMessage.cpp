@@ -18,19 +18,19 @@ bool JoinMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{
-		Version	= ms.Read<byte>();
-		Kind	= ms.Read<ushort>();
-		TranID	= ms.Read<uint>();
+		Version	= ms.ReadByte();
+		Kind	= ms.ReadUInt16();
+		TranID	= ms.ReadUInt32();
 		HardID	= ms.ReadArray();
 	}
 	else
 	{
-		Server	= ms.Read<byte>();
-		Channel	= ms.Read<byte>();
-		Speed	= ms.Read<byte>();
-		Address	= ms.Read<byte>();
+		Server	= ms.ReadByte();
+		Channel	= ms.ReadByte();
+		Speed	= ms.ReadByte();
+		Address	= ms.ReadByte();
 		Password= ms.ReadArray();
-		TranID	= ms.Read<uint>();
+		TranID	= ms.ReadUInt32();
 		HardID	= ms.ReadArray();
 	}
 

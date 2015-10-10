@@ -70,7 +70,7 @@ bool TinyMessage::Read(Stream& ms)
 	if(Length > 0) ms.Read(Data, 0, Length);
 
 	// 读取真正的校验码
-	Checksum = ms.Read<ushort>();
+	Checksum = ms.ReadUInt16();
 
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs = p[3];

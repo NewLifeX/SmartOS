@@ -31,7 +31,7 @@ bool Modbus::Read(Stream& ms)
 	Length = ms.Remain() - 2;
 	ms.Read(&Data, 0, Length);
 
-	Crc = ms.Read<ushort>();
+	Crc = ms.ReadUInt16();
 
 	// 直接计算Crc16
 	Crc2 = Sys.Crc16(buf, ms.Position() - p - 2);

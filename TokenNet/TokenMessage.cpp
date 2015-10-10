@@ -26,11 +26,11 @@ bool TokenMessage::Read(Stream& ms)
 	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
 
-	byte temp = ms.Read<byte>();
+	byte temp = ms.ReadByte();
 	Code	= temp & 0x3f;
 	Reply	= temp >> 7;
 	Error	= (temp >> 6) & 0x01;
-	Length	= ms.Read<byte>();
+	Length	= ms.ReadByte();
 
 	// 占位符拷贝到实际数据
 	/*Code	= _Code;

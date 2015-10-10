@@ -14,15 +14,15 @@ bool DiscoverMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{
-		Type	= ms.Read<ushort>();
+		Type	= ms.ReadUInt16();
 		HardID	= ms.ReadArray();
-		Version	= ms.Read<ushort>();
-		Switchs	= ms.Read<byte>();
-		Analogs	= ms.Read<byte>();
+		Version	= ms.ReadUInt16();
+		Switchs	= ms.ReadByte();
+		Analogs	= ms.ReadByte();
 	}
 	else
 	{
-		Address	= ms.Read<byte>();
+		Address	= ms.ReadByte();
 		Pass	= ms.ReadArray();
 	}
 

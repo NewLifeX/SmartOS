@@ -33,15 +33,15 @@ HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(0)
 // 从数据流中读取消息
 bool HelloMessage::Read(Stream& ms)
 {
-	Version		= ms.Read<ushort>();
+	Version		= ms.ReadUInt16();
 
 	Type		= ms.ReadString();
 	Name		= ms.ReadString();
 
-	LocalTime	= ms.Read<ulong>();
+	LocalTime	= ms.ReadUInt64();
 
 	EndPoint.Address = ms.ReadBytes(4);
-	EndPoint.Port = ms.Read<ushort>();
+	EndPoint.Port = ms.ReadUInt16();
 
 	if(!Reply)
 	{
@@ -49,7 +49,7 @@ bool HelloMessage::Read(Stream& ms)
 	}
 	else
 	{
-		Ciphers[0]	= ms.Read<byte>();
+		Ciphers[0]	= ms.ReadByte();
 		// 读取数组前，先设置为0，避免实际长度小于数组长度
 		Key.SetLength(0);
 		Key = ms.ReadArray();

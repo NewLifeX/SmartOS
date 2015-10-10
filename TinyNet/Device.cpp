@@ -33,13 +33,13 @@ void Device::Write(Stream& ms) const
 
 void Device::Read(Stream& ms)
 {
-	Address	= ms.Read<byte>();
-	Kind	= ms.Read<ushort>();
+	Address	= ms.ReadByte();
+	Kind	= ms.ReadUInt16();
 	//ms.ReadArray(HardID);
 	HardID	= ms.ReadArray();
-	LastTime= ms.Read<ulong>();
-	DataSize	= ms.Read<byte>();
-	ConfigSize	= ms.Read<byte>();
+	LastTime= ms.ReadUInt64();
+	DataSize	= ms.ReadByte();
+	ConfigSize	= ms.ReadByte();
 	Name	= ms.ReadString();
 }
 

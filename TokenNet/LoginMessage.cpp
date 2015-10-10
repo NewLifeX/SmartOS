@@ -16,7 +16,7 @@ bool LoginMessage::Read(Stream& ms)
 	ms.ReadArray(Salt);
 
 	Local.Address = ms.ReadBytes(4);
-	Local.Port = ms.Read<ushort>();
+	Local.Port = ms.ReadUInt16();
 
 	return false;
 }

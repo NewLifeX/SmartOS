@@ -1,5 +1,6 @@
 ﻿#include "W5500.h"
 #include "Time.h"
+#include "Task.h"
 
 #define NET_DEBUG DEBUG
 
@@ -303,7 +304,12 @@ bool W5500::Open()
 
 	//if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
 	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
-	if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, 0, 1000, "W5500中断");
+	if(!TaskID)
+	{
+		TaskID = Sys.AddTask(IRQTask, this, 0, 1000, "W5500中断");
+		Task* task = Task::Get(TaskID);
+		task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
+	}
 
 	Opened = true;
 
@@ -1339,7 +1345,7 @@ void UdpClient::RaiseReceive()
 		ByteArray bs2(6);
 		ms.Read(bs2);
 
-		ushort len = ms.Read<ushort>();
+		ushort len = ms.ReadUInt16();
 		len = __REV16(len);
 		// 数据长度不对可能是数据错位引起的，直接丢弃数据包
 		if(len > 1500)

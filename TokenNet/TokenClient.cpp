@@ -175,7 +175,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			Status	= 0;
 			Token	= 0;
 			Stream ms(msg.Data, msg.Length);
-			debug_printf("握手失败，错误码=0x%02X ", ms.Read<byte>());
+			debug_printf("握手失败，错误码=0x%02X ", ms.ReadByte());
 			ms.ReadString().Show(true);
 		}
 		else
@@ -241,7 +241,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 登录失败，清空令牌
 		Token = 0;
 
-		byte result = ms.Read<byte>();
+		byte result = ms.ReadByte();
 		//if(result == 0xFF) Status = 0;
 		// 任何错误，重新握手
 		Status = 0;
@@ -256,10 +256,10 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 
 		if(IsOldOrder)
 		{
-			byte stat=ms.Read<byte>();//旧指令，读走状态码
+			byte stat=ms.ReadByte();//旧指令，读走状态码
 		}
 		// 得到令牌
-		Token = ms.Read<int>();
+		Token = ms.ReadUInt32();
 		debug_printf("令牌：0x%08X ", Token);
 		// 这里可能有通信密码
 		if(ms.Remain() > 0)

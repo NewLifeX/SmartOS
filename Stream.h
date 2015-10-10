@@ -11,14 +11,14 @@ class Stream
 private:
 	byte* _Buffer;	// 数据缓冲区。扩容后会重新分配缓冲区
 	uint _Capacity;	// 缓冲区容量
-	bool _needFree;	// 是否自动释放
-	bool _canWrite;	// 是否可写
-	// 又是头疼的对齐问题
-	ushort	_Reserved;
     uint _Position;	// 游标位置
 
 	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
+
+	bool _needFree;	// 是否自动释放
+	bool _canWrite;	// 是否可写
 public:
+	bool Little;	// 默认小字节序。仅影响数据读写操作
 	uint Length;	// 数据长度
 
 	// 分配指定大小的数据流
@@ -78,6 +78,16 @@ public:
 	// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteString(const String& str);
 
+	byte	ReadByte();
+	ushort	ReadUInt16();
+	uint	ReadUInt32();
+	ulong	ReadUInt64();
+
+	bool Write(byte value);
+	bool Write(ushort value);
+	bool Write(uint value);
+	bool Write(ulong value);
+
 	// 取回指定结构体指针，并移动游标位置
 	template<typename T>
 	T* Retrieve(bool move = true)
@@ -92,7 +102,7 @@ public:
 		return pt;
 	}
 
-	// 常用读写整数方法
+	/*// 常用读写整数方法
 	template<typename T>
 	T Read()
 	{
@@ -112,6 +122,7 @@ public:
 	template<typename T>
 	bool Write(T value)
 	{
+		if(!_canWrite) return false;
 		if(!CheckRemain(sizeof(T))) return false;
 
 		byte* p = Current();
@@ -127,7 +138,7 @@ public:
 		if(_Position > Length) Length = _Position;
 
 		return true;
-	}
+	}*/
 
 	// 读取指定长度的数据并返回首字节指针，移动数据流位置
 	byte* ReadBytes(int count = -1);
