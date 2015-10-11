@@ -12,7 +12,7 @@ public:
 	DNS(ISocket* socket);
 	~DNS();
 
-	IPAddress Query(const String& domain, int msTimeout = 3000);	// 解析
+	IPAddress Query(const String& domain, int msTimeout = 1000);	// 解析
 	
 private:
 	static uint OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2);

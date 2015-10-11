@@ -7,16 +7,7 @@
 
 #define NET_DEBUG DEBUG
 
-#define	MAX_DNS_BUF_SIZE	256		///< maximum size of DNS buffer. */
-/*
- * @brief Maxium length of your queried Domain name
- * @todo SHOULD BE defined it equal as or greater than your Domain name lenght + null character(1)
- * @note SHOULD BE careful to stack overflow because it is allocated 1.5 times as MAX_DOMAIN_NAME in stack.
- */
 #define  MAX_DOMAIN_NAME   16       // for example "www.google.com"
-
-#define	MAX_DNS_RETRY     2        ///< Requery Count
-#define	DNS_WAIT_TIME     3        ///< Wait response time. unit 1s.
 
 #define	IPPORT_DOMAIN     53       ///< DNS server port number
 
@@ -28,23 +19,23 @@
 #define	TYPE_MD		3	   /* Mail destination (obsolete) */
 #define	TYPE_MF		4	   /* Mail forwarder (obsolete) */
 #define	TYPE_CNAME	5	   /* Canonical name */
-#define	TYPE_SOA	   6	   /* Start of Authority */
+#define	TYPE_SOA	6	   /* Start of Authority */
 #define	TYPE_MB		7	   /* Mailbox name (experimental) */
 #define	TYPE_MG		8	   /* Mail group member (experimental) */
 #define	TYPE_MR		9	   /* Mail rename name (experimental) */
 #define	TYPE_NULL	10	   /* Null (experimental) */
-#define	TYPE_WKS	   11	   /* Well-known sockets */
-#define	TYPE_PTR	   12	   /* Pointer record */
+#define	TYPE_WKS	11	   /* Well-known sockets */
+#define	TYPE_PTR	12	   /* Pointer record */
 #define	TYPE_HINFO	13	   /* Host information */
 #define	TYPE_MINFO	14	   /* Mailbox information (experimental)*/
 #define	TYPE_MX		15	   /* Mail exchanger */
-#define	TYPE_TXT	   16	   /* Text strings */
-#define	TYPE_ANY	   255	/* Matches any type */
+#define	TYPE_TXT	16	   /* Text strings */
+#define	TYPE_ANY	255		/* Matches any type */
 
-#define	CLASS_IN	   1	   /* The ARPA Internet */
+#define	CLASS_IN	1	   /* The ARPA Internet */
 
 /* Round trip timing parameters */
-#define	AGAIN	      8     /* Average RTT gain = 1/8 */
+#define	AGAIN	    8     /* Average RTT gain = 1/8 */
 #define	LAGAIN      3     /* Log2(AGAIN) */
 #define	DGAIN       4     /* Mean deviation gain = 1/4 */
 #define	LDGAIN      2     /* log2(DGAIN) */
@@ -62,6 +53,7 @@ typedef struct dhdr
 	byte	tc;      /* Truncation */
 	byte	rd;      /* Recursion desired */
 	byte	ra;      /* Recursion available */
+	byte	z;
 	byte	rcode;   /* Response code */
 #define	NO_ERROR       0
 #define	FORMAT_ERROR   1
@@ -175,16 +167,15 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 	//cp += 2;		/* class */
 	//cp += 4;		/* ttl */
 	//cp += 2;		/* len */
-	ms.Seek(2 + 2 + 4 + 2);
+	//ms.Seek(2 + 2 + 4 + 2);
+	// 上面已经读取了type
+	ms.Seek(2 + 4 + 2);
 
 	switch (type)
 	{
 	case TYPE_A:
 		/* Just read the address directly into the structure */
-		//!!! 不知道为什么偏移了2个字节，这里临时后退
-		ms.Seek(-2);
 		ms.Read(ip_from_dns, 0, 4);
-		debug_printf("DNA::A %08X \r\n", *(uint*)ip_from_dns);
 		break;
 	case TYPE_CNAME:
 	case TYPE_MB:
@@ -196,7 +187,6 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* convert it to ascii format */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
-		debug_printf("DNA::PTR %s \r\n", name);
 
 		break;
 	case TYPE_HINFO:
@@ -211,19 +201,16 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* Get domain name of exchanger */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
-		debug_printf("DNA::MX %s \r\n", name);
 
 		break;
 	case TYPE_SOA:
 		/* Get domain name of name server */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
-		debug_printf("DNA::SOA %s \r\n", name);
 
 		/* Get domain name of responsible person */
 		len = parse_name(ms, name, MAXCNAME);
 		if (len == -1) return 0;
-		debug_printf("DNA::SOA %s \r\n", name);
 
 		ms.Seek(4 + 4 + 4 + 4 + 4);
 
@@ -232,7 +219,6 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 		/* Just stash */
 		break;
 	default:
-		debug_printf("DNA::ANS type=0x%02X \r\n", type);
 		/* Ignore */
 		break;
 	}
@@ -264,6 +250,7 @@ bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
 	hdr->ancount = ms.ReadUInt16();
 	hdr->nscount = ms.ReadUInt16();
 	hdr->arcount = ms.ReadUInt16();
+	//ms.Read((byte*)hdr, 0, sizeof(TDNS));
 
 	// 开始分析变长部分
 
@@ -368,8 +355,6 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	{
 		if(rs.Length() > 0)
 		{
-			debug_printf("DNS::Receive len = %d\r\n", rs.Length());
-
 			TDNS dns;
 			parseDNSMSG(&dns, rs, (byte*)&ip.Value);
 			break;
@@ -396,7 +381,9 @@ void DNS::Process(ByteArray& bs, const IPEndPoint& server)
 		_Buffer->Copy(bs);
 	else
 	{
+#if NET_DEBUG
 		debug_printf("DNS::Process \r\n");
 		server.Show(true);
+#endif
 	}
 }
