@@ -29,6 +29,8 @@ TinyClient::TinyClient(TinyController* control)
 	Config		= NULL;
 
 	_TaskID		= 0;
+
+	NextReport	= 0;
 }
 
 void TinyClient::Open()
@@ -275,6 +277,7 @@ void TinyClientTask(void* param)
 
 	TinyClient* client = (TinyClient*)param;
 	uint offset = client->NextReport;
+	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 	if(offset)
 	{
 		client->Report(offset, client->Store.Data[offset]);
