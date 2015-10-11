@@ -3,6 +3,7 @@
 #include "Task.h"
 
 #define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
 
 /*
 硬件设置部分
@@ -314,8 +315,8 @@ bool W5500::Open()
 	Opened = true;
 
 #if NET_DEBUG
-	StateShow();
-	PhyStateShow();
+	//StateShow();
+	//PhyStateShow();
 #endif
 
 	return true;
