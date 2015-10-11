@@ -46,6 +46,9 @@ namespace NewLife.Reflection
             FromELF = basePath.CombinePath("fromelf.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
+			// 特殊处理GD32F1x0
+			if(GD32) Cortex = Cortex;
+
             _Libs.Clear();
             Objs.Clear();
 
@@ -239,7 +242,7 @@ namespace NewLife.Reflection
             var count = 0;
 
 			// 特殊处理GD32F130
-			if(GD32) Cortex = Cortex;
+			//if(GD32) Cortex = Cortex;
 
             // 提前创建临时目录
             var obj = GetObjPath(null);
@@ -552,8 +555,8 @@ namespace NewLife.Reflection
             if (!Directory.Exists(path)) return;
 
 			if(filter.IsNullOrEmpty()) filter = "*.lib";
-            var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            foreach (var item in path.AsDirectory().GetFiles(filter, opt))
+            //var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            foreach (var item in path.AsDirectory().GetAllFiles(filter, allSub))
             {
                 var lib = new LibFile(item.FullName);
                 // 调试版/发行版 优先选用最佳匹配版本
