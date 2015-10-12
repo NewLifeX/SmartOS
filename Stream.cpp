@@ -366,24 +366,30 @@ byte	Stream::ReadByte()
 
 ushort	Stream::ReadUInt16()
 {
-	byte* p = ReadBytes(2);
-	ushort v = *(ushort*)p;
+	//byte* p = ReadBytes(2);
+	//ushort v = *(ushort*)p;
+	ushort v;
+	if(!Read((byte*)&v, 0, 2)) return 0;
 	if(!Little) v = __REV16(v);
 	return v;
 }
 
 uint	Stream::ReadUInt32()
 {
-	byte* p = ReadBytes(4);
-	uint v = *(uint*)p;
+	//byte* p = ReadBytes(4);
+	//uint v = *(uint*)p;
+	uint v;
+	if(!Read((byte*)&v, 0, 4)) return 0;
 	if(!Little) v = __REV(v);
 	return v;
 }
 
 ulong	Stream::ReadUInt64()
 {
-	byte* p = ReadBytes(8);
-	ulong v = *(ulong*)p;
+	//byte* p = ReadBytes(8);
+	//ulong v = *(ulong*)p;
+	ulong v;
+	if(!Read((byte*)&v, 0, 8)) return 0;
 	if(!Little) v = __REV(v >> 32) | ((ulong)__REV(v & 0xFFFFFFFF) << 32);
 	return v;
 }
