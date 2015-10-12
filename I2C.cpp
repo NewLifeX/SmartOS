@@ -54,18 +54,9 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 1，写入模式，不管有没有子地址，先发送写地址，再发送子地址
 	// 2，读取模式，如果没有子地址，先发送读地址，再直接读取
 	// 3，读取模式，如果有子地址，先发送写地址，再发送子地址，然后重新开始并发送读地址
-	if(!tx && SubWidth)
-	{
-		WriteByte(Address);
-		if(!WaitAck()) return false;
 
-		if(!SendSubAddr(addr)) return false;
-
-		Start();
-	}
-
-	// 发送设备地址
-	ushort d = tx ? Address : (Address | 0x01);
+	// 发送写入地址
+	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
     WriteByte(d);
 	if(!WaitAck())
 	{
@@ -73,9 +64,34 @@ bool I2C::SendAddress(int addr, bool tx)
 		return false;
 	}
 
-	if(!SubWidth || !tx) return true;
+	if(!SubWidth) return true;
 
-	return SendSubAddr(addr);
+	// 发送子地址
+	if(!SendSubAddr(addr))
+	{
+		debug_printf("I2C::SendAddress 发送子地址 0x%02X 失败 \r\n", addr);
+		return false;
+	}
+
+	if(tx) return true;
+
+	d = Address | 0x01;
+	// 多次尝试启动并发送读取地址
+	uint retry = 10;
+	bool rs = false;
+	while(retry-- && !rs)
+	{
+		Start();
+		WriteByte(d);
+		rs = WaitAck();
+	}
+	if(!rs)
+	{
+		debug_printf("I2C::SendAddress 发送读取地址 0x%02X 失败 \r\n", d);
+		return false;
+	}
+
+	return rs;
 }
 
 bool I2C::SendSubAddr(int addr)
@@ -97,6 +113,9 @@ bool I2C::SendSubAddr(int addr)
 // 新会话向指定地址写入多个字节
 bool I2C::Write(int addr, const ByteArray& bs)
 {
+	/*debug_printf("I2C::Write addr=0x%02X ", addr);
+	bs.Show(true);*/
+
 	Open();
 
 	I2CScope ics(this);
@@ -108,7 +127,8 @@ bool I2C::Write(int addr, const ByteArray& bs)
 	for(int i=0; i<len; i++)
 	{
 		WriteByte(bs[i]);
-		if(!WaitAck()) return false;
+		// 最后一次不要等待Ack
+		if(i < len - 1 && !WaitAck()) return false;
 	}
 
 	return true;
@@ -436,7 +456,7 @@ SoftI2C::SoftI2C(uint speedHz) : I2C()
 {
 	Speed	= speedHz;
 	_delay	= Sys.Clock / speedHz;
-	Retry	= 10;
+	Retry	= 100;
 	Error	= 0;
 	Address	= 0x00;
 }
@@ -540,8 +560,7 @@ bool SoftI2C::WaitAck(int retry)
 	{
 		if(retry-- <= 0)
 		{
-			//Stop();
-			debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
+			//debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
 			return false;
 		}
 	}
@@ -609,7 +628,7 @@ byte SoftI2C::ReadByte()
 		while(!SCL.ReadInput())
 		{
 			if(retry-- <= 0) break;
-			Sys.Sleep(1);
+			Delay(1);
 		}
 
 		if(SDA.ReadInput()) rs |= mask;	//读数据位
