@@ -58,6 +58,6 @@ void BH1750::Write(byte cmd)
 {
 	if(!IIC) return;
 
-	IIC->Write(0, cmd);
+	if(!IIC->Write(0, cmd)) debug_printf("BH1750::Write 0x%02X 失败\r\n", cmd);
 	//Sys.Sleep(5);
 }
