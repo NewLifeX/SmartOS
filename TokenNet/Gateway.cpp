@@ -7,7 +7,7 @@
 bool OnLocalReceived(Message& msg, void* param);
 bool OnRemoteReceived(Message& msg, void* param);
 
-void TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
+bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2,  ushort kind);
 void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2);
@@ -245,7 +245,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		msg.Show();
 
 		TinyMessage tmsg;
-		TokenToTiny(msg, tmsg);
+		if(!TokenToTiny(msg, tmsg)) return true;
 
 		bool rs = Server->Dispatch(tmsg);
 		if(rs)
@@ -574,49 +574,56 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	}
 }
 
-void  TokenToTiny(const TokenMessage& msg, TinyMessage& msg2)
+bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 {
+	if(msg.Length == 0) return false;
+
 	// 处理Reply标记
-	msg2.Reply = msg.Reply;
-	msg2.Error = msg.Error;
+	tny.Reply	= msg.Reply;
+	tny.Error	= msg.Error;
 
 	// 第一个字节是节点设备地址
-	if(msg.Length > 0) msg2.Dest = msg.Data[0];
+	tny.Dest	= msg.Data[0];
 
 	switch(msg.Code)
 	{
 		case 0x10:
-			msg2.Code = 0x16;
+			tny.Code	= 0x16;
+			tny.Length	= msg.Length;
 
-			msg2.Length = msg.Length;
+			if(msg.Length > 1) memcpy(&tny.Data[1], &msg.Data[1], msg.Length - 1);
 
-			//  msg.Show();
-			if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[1], msg.Length-1);
+			// 从偏移1开始，数据区偏移0是长度
+			tny.Data[0]	= 1;
 
-			msg2.Data[0]=1;
 			break;
 		case 0x11:
-			msg2.Code=0x15;
+			tny.Code	= 0x15;
 
-			msg.Data[1]=4*(msg.Data[1]-1)+1;  //通道号*4-4为读取的起始地址
-			if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);//
+			// 通道号*4-4为读取的起始地址
+			tny.Data[0]	= 4 * (msg.Data[1] - 1) + 1;
+			tny.Data[1]	= msg.Data[2] * 4;
 
-			msg2.Length = msg.Length - 1;
+			tny.Length	= 2;
+
 			break;
 		case 0x12:
-			msg2.Code = 0x16;
-			msg2.Length = msg.Length-1;
-			msg2.Data[0]=(msg.Data[1]-1)*4+1;
+			tny.Code	= 0x16;
+			tny.Length	= msg.Length - 1;
+			tny.Data[0]	=(msg.Data[1] - 1) * 4 + 1;
 
-			if(msg.Length > 2) memcpy(&msg2.Data[1], &msg.Data[2], msg.Length);//去掉通道号
+			if(msg.Length > 2) memcpy(&tny.Data[1], &msg.Data[2], msg.Length);//去掉通道号
 
 			break;
         default:
-			msg2.Code = msg.Code;
-			if(msg.Length > 1) memcpy(msg2.Data, &msg.Data[1], msg.Length - 1);
-			msg2.Length = msg.Length - 1;
+			tny.Code	= msg.Code;
+			if(msg.Length > 1) memcpy(tny.Data, &msg.Data[1], msg.Length - 1);
+			tny.Length	= msg.Length - 1;
+
 			break;
 	}
+
+	return true;
 }
 
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
