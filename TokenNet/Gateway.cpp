@@ -48,8 +48,7 @@ void Gateway::Start()
 	Server->Received	= OnLocalReceived;
 	Server->Param		= this;
 	Client->Received	= OnRemoteReceived;
-	Client->Param		= this;
-	
+	Client->Param		= this;	
     Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
@@ -136,6 +135,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		{
 		 
           Device* dv1 = Server->FindDevice(msg.Src);
+		  
 		  switch(dv1->Kind)
 	           {	            
                   /// <summary>触摸开关(1位)</summary>
@@ -255,14 +255,18 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		bool rs = Server->Dispatch(tmsg);
 		if(rs)
 		{
+		    debug_printf("rs = Server->Dispatch(tmsg)\r\n");
+			
 			TokenMessage msg2;
 			
 			if(IsOldOrder)
-		    {		 
-              Device* dv1 = Server->FindDevice(tmsg.Src);		  
-			 		  
+		    {		
+               Device* dv1 = Server->FindDevice(tmsg.Src);	
+			   
+			 // if(!dv1) return false;
+			   		  
 			   switch(dv1->Kind)
-	           {	            
+	           {	                
                   /// <summary>触摸开关(1位)</summary>
                  case 0x0201:
                   /// <summary>触摸开关(2位)</summary>
@@ -286,7 +290,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
                   /// <summary>智能继电器(2位)</summary>
                  case 0x0222:
                   /// <summary>智能继电器(3位)</summary>
-                  case 0x0223:
+                 case 0x0223:
                   /// <summary>智能继电器(4位)</summary>
                  case 0x0224:
               
@@ -325,8 +329,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
                  default:
 				 OldTinyToToken(tmsg, msg2,dv1->Kind);
 				 break;			 
-	            }
-	          		      
+	            }	          		      
 		    }
 	        else
 		       TinyToToken(tmsg, msg2);
@@ -398,7 +401,11 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 bool Gateway::SendDeviceInfo(const Device* dv)
 {
 	if(!dv) return false;
-
+	
+     //旧指令的开个位先用数据长度替代
+	// if(IsOldOrder)
+		// dv->Logins=dv->Store.Length();
+	 
 	TokenMessage rs;
 	rs.Code = 0x25;
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
@@ -556,7 +563,6 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 		{
 	      tmsg.Dest	= tmsg.Src;
 	      tmsg.Src	= dv->Address;
-		   debug_printf("2微网10指令转换\r\n");
 	      tmsg.Show();
 	     }
 		
