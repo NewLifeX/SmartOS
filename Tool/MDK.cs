@@ -311,7 +311,7 @@ namespace NewLife.Reflection
 					}
 				}
 				Console.CursorLeft = left;
-				Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, fs / Files.Count);
+				Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, (Double)fs / Files.Count);
 				if(DateTime.Now > end)
 				{
 					Console.Write(" 等待超时！");
