@@ -310,9 +310,12 @@ void SerialPort::OnTxHandler()
 // 从某个端口读取数据
 uint SerialPort::OnRead(ByteArray& bs)
 {
-	// 如果有数据变化，等一会
 	uint count = 0;
 	uint len = Rx.Length();
+	// 如果没有数据，立刻返回，不要等待浪费时间
+	if(!len) return 0;
+
+	// 如果有数据变化，等一会
 	while(len != count)
 	{
 		count = len;
@@ -359,6 +362,8 @@ void SerialPort::ReceiveTask(void* param)
 {
 	SerialPort* sp = (SerialPort*)param;
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
+
+	if(sp->Rx.Length() == 0) return;
 
 	// 从栈分配，节省内存
 	ByteArray bs(0x40);
