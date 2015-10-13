@@ -119,6 +119,10 @@ namespace NewLife.Reflection
         /// <summary>是否GD32芯片</summary>
         public Boolean GD32 { get { return _GD32; } set { _GD32 = value; } }
 
+        private Int32 _RebuildTime = 60;
+        /// <summary>重新编译时间，默认60分钟</summary>
+        public Int32 RebuildTime { get { return _RebuildTime; } set { _RebuildTime = value; } }
+
         private ICollection<String> _Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>定义集合</summary>
         public ICollection<String> Defines { get { return _Defines; } set { _Defines = value; } }
@@ -158,10 +162,10 @@ namespace NewLife.Reflection
             var obj = (objName + ".o").AsFile();
             if (obj.Exists)
 			{
-				if(obj.LastWriteTime > file.AsFile().LastWriteTime)
+				if(RebuildTime > 0 && obj.LastWriteTime > file.AsFile().LastWriteTime)
 				{
 					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
-					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return 0;
+					if(obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return 0;
 				}
 			}
 
