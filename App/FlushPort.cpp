@@ -38,12 +38,15 @@ void FlushPort::Start(int ms)
 
 	// 设置任务间隔后，马上启动任务
 	Sys.SetTaskPeriod(_tid, Fast);
-	Sys.SetTask(_tid, true, 0);
+	Sys.SetTask(_tid, Count > 0, 0);
 }
 
 void FlushPort::Stop()
 {
-	Sys.SetTaskPeriod(_tid, Slow);
+	if(Slow)
+		Sys.SetTaskPeriod(_tid, Slow);
+	else
+		Sys.SetTask(_tid, false, 0);
 }
 
 void FlushPort::Flush()
@@ -53,7 +56,10 @@ void FlushPort::Flush()
 	if(Count > 0 && --Count == 0)
 	{
 		// 切换任务执行时间
-		Sys.SetTaskPeriod(_tid, Slow);
+		if(Slow)
+			Sys.SetTaskPeriod(_tid, Slow);
+		else
+			Sys.SetTask(_tid, false, 0);
 	}
 }
 
