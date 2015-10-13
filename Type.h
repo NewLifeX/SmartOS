@@ -225,6 +225,7 @@ public:
 		assert_param2(_canWrite, "禁止修改数组数据");
 		// count<=0 表示设置全部元素
 		if(count <= 0) count = _Length - index;
+		assert_param2(count > 0, "Array::Set的个数必须大于0");
 
 		// 检查长度是否足够
 		int len2 = index + count;
