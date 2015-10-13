@@ -391,7 +391,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
 		if(!_taskidRx)
 		{
-			_taskidRx = Sys.AddTask(ReceiveTask, this, 1000, 500, "串口接收");
+			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
 		}
 	}
