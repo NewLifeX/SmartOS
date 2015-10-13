@@ -82,48 +82,11 @@ bool SerialPort::OnOpen()
     Pin rx, tx;
     GetPins(&tx, &rx);
 
-    //debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits);
-#if COM_DEBUG
-    if(_index != Sys.MessagePort)
-    {
-ShowLog:
-        debug_printf("Serial%d Open(%d", _index + 1, _baudRate);
-        switch(_parity)
-        {
-            case USART_Parity_No: debug_printf(", Parity_None"); break;
-            case USART_Parity_Even: debug_printf(", Parity_Even"); break;
-            case USART_Parity_Odd: debug_printf(", Parity_Odd"); break;
-        }
-        switch(_dataBits)
-        {
-            case USART_WordLength_8b: debug_printf(", WordLength_8b"); break;
-            case USART_WordLength_9b: debug_printf(", WordLength_9b"); break;
-        }
-        switch(_stopBits)
-        {
-#ifdef STM32F1
-            case USART_StopBits_0_5: debug_printf(", StopBits_0_5"); break;
-#endif
-            case USART_StopBits_1: debug_printf(", StopBits_1"); break;
-            case USART_StopBits_1_5: debug_printf(", StopBits_1_5"); break;
-            case USART_StopBits_2: debug_printf(", StopBits_2"); break;
-        }
-        debug_printf(") TX=P%c%d RX=P%c%d\r\n", _PIN_NAME(tx), _PIN_NAME(rx));
-
-        // 有可能是打开串口完成以后跳回来
-        if(Opened) return true;
-    }
-#endif
-
 	USART_InitTypeDef  p;
 
 	//串口引脚初始化
     _tx.Set(tx).Open();
-#if defined(STM32F0) || defined(STM32F4)
     _rx.Set(rx).Open();
-#else
-    _rx.Set(rx).Open();
-#endif
 
 	// 不要关调试口，否则杯具
     if(_index != Sys.MessagePort) USART_DeInit(_port);
@@ -187,23 +150,12 @@ ShowLog:
 	// 打开中断，收发都要使用
 	const byte irqs[] = UART_IRQs;
 	byte irq = irqs[_index];
-	Interrupt.SetPriority(irq, 1);
+	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
 	if(RS485) *RS485 = false;
-
-    //Opened = true;
-
-#if COM_DEBUG
-    if(_index == Sys.MessagePort)
-	{
-		// 提前设置为已打开端口，ShowLog里面需要判断
-		Opened = true;
-		goto ShowLog;
-	}
-#endif
 
 	return true;
 }
@@ -279,13 +231,10 @@ bool SerialPort::Flush(uint times)
 {
 	// 打开串口发送
 	if(RS485) *RS485 = true;
-	//USART_ITConfig(_port, USART_IT_TXE, ENABLE);
 
-	// 打开中断
-	//SmartIRQ irq(true);
-
-    //while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
 	while(!Tx.Empty() && times > 0) times = SendData(Tx.Pop(), times);
+
+	if(RS485) *RS485 = false;
 
 	return times > 0;
 }
@@ -293,18 +242,13 @@ bool SerialPort::Flush(uint times)
 void SerialPort::OnTxHandler()
 {
 	if(!Tx.Empty())
-	{
 		USART_SendData(_port, (ushort)Tx.Pop());
-	}
 	else
 	{
 		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 		if(RS485) *RS485 = false;
 	}
-
-	// USART_SendData会清中断，这里不需要
-	//USART_ClearITPendingBit(_port, USART_IT_TXE);
 }
 
 // 从某个端口读取数据
@@ -326,25 +270,26 @@ uint SerialPort::OnRead(ByteArray& bs)
 	// 如果数据大小不足，等下次吧
 	if(len < MinSize) return 0;
 
-	//debug_printf("串口接收缓冲区 %d 间隔 %dus 最小 %d ", len, _byteTime, MinSize);
 	// 从接收队列读取
 	count = Rx.Read(bs);
-	//debug_printf(" 读取 %d \r\n", count);
 	bs.SetLength(count);
 
 	// 如果还有数据，打开任务
-	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true);
+	if(!Rx.Empty()) Sys.SetTask(_taskidRx, true, 0);
 
 	return count;
 }
 
 void SerialPort::OnRxHandler()
 {
+	//TimeCost tc;
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
 	// 缓冲区里面别用%，那会产生非常耗时的除法运算
 	byte dat = (byte)USART_ReceiveData(_port);
 	Rx.Push(dat);
+	//if(tc.Elapsed() > 900000) 
+	//	tc.Show();
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
@@ -404,8 +349,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 // 真正的串口中断函数
 void SerialPort::OnHandler(ushort num, void* param)
 {
+	//TimeCost tc;
 	SerialPort* sp = (SerialPort*)param;
-	//assert_param2(sp, "串口参数不能为空 OnHandler");
 
 #ifndef STM32F0
 	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
@@ -417,9 +362,14 @@ void SerialPort::OnHandler(ushort num, void* param)
 	{
 		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
 		// 读取并扔到错误数据
-		//USART_ReceiveData(sp->_port);
-		debug_printf("Serial%d 溢出 MinSize=%d \r\n", sp->_index + 1, sp->MinSize);
+		USART_ReceiveData(sp->_port);
+		//tc.Show();
+		sp->Error++;
+		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
+		//debug_printf("Serial%d 溢出 MinSize=%d _byteTime=%dus \r\n", sp->_index + 1, sp->MinSize, sp->_byteTime);
 	}
+	//else
+	//tc.Show();
 	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);*/
