@@ -266,7 +266,8 @@ void TinyClient::ReportAsync(uint offset)
 {
 	NextReport = offset;
 
-	Sys.SetTask(_TaskID, true, 500);
+	// 延迟200ms上报，期间有其它上报任务到来将会覆盖
+	Sys.SetTask(_TaskID, true, 200);
 }
 
 /******************************** 常用系统级消息 ********************************/
