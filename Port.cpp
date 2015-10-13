@@ -435,7 +435,6 @@ typedef struct TIntState
 {
     InputPort*	Port;
     bool	OldValue;
-    uint	ShakeTime;	// 抖动时间
 } IntState;
 
 // 16条中断线
@@ -458,6 +457,7 @@ void InputPort::Init(bool floating, PuPd_TypeDef pupd)
 	PuPd		= pupd;
 	Floating	= floating;
 
+	Mode		= 0x03;
 	//ShakeTime = 20;
 	// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
 	ShakeTime	= 0;
@@ -467,6 +467,7 @@ void InputPort::Init(bool floating, PuPd_TypeDef pupd)
 
 	Handler		= NULL;
 	Param		= NULL;
+	_Value		= 0;
 }
 
 InputPort::~InputPort()
@@ -479,7 +480,6 @@ InputPort& InputPort::Init(Pin pin, bool invert)
 	Port::Set(pin);
 
 	Invert	= invert;
-	Mode	= 0x03;
 
 	return *this;
 }
@@ -520,15 +520,26 @@ void InputPort::OnPress(bool down)
 	}
 	else
 	{
-		_Value	= down;
-		Sys.SetTask(_taskInput, true, 0);
+		// 允许两个值并存
+		_Value	|= down ? 0x01 : 0x02;
+		Sys.SetTask(_taskInput, true, ShakeTime);
 	}
 }
 
 void InputPort::InputTask(void* param)
 {
 	InputPort* port = (InputPort*)param;
-	if(port->Handler) port->Handler(port->_Pin, port->_Value, port->Param);
+	if(port->Handler)
+	{
+		byte v = port->_Value;
+		if(v)
+		{
+			port->_Value = 0;
+			v &= port->Mode;
+			if(v & 0x01) port->Handler(port->_Pin, true, port->Param);
+			if(v & 0x02) port->Handler(port->_Pin, false, port->Param);
+		}
+	}
 }
 
 #define IT 1
@@ -546,30 +557,14 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 	// 如果未指定委托，则不处理
 	if(!st->Port) return;
 
-	// 默认20us抖动时间
-	uint shakeTime = st->ShakeTime;
-
 	do {
 		EXTI->PR = bit;   // 重置挂起位
-		//value = InputPort::Read(st->Pin); // 获取引脚状态
 		value = st->Port->Read(); // 获取引脚状态
-		if(shakeTime > 0)
-		{
-			// 值必须有变动才触发
-			if(value == st->OldValue) return;
-
-			Sys.Delay(shakeTime); // 避免抖动
-		}
 	} while (EXTI->PR & bit); // 如果再次挂起则重复
 	//EXTI_ClearITPendingBit(line);
 	// 值必须有变动才触发
-	if(shakeTime > 0 && value == st->OldValue) return;
+	//if(shakeTime > 0 && value == st->OldValue) return;
 	st->OldValue = value;
-	/*if(st->Handler)
-	{
-		// 新值value为true，说明是上升，第二个参数是down，所以取非
-		st->Handler(st->Pin, !value, st->Param);
-	}*/
 	st->Port->OnPress(!value);
 }
 
@@ -718,7 +713,6 @@ void InputPort::Register(IOReadHandler handler, void* param)
 	byte gi = _Pin >> 4;
 	int idx = Bits2Index(Mask);
 	IntState* st = &States[idx];
-	st->ShakeTime = ShakeTime;
 
 	InputPort* port	= st->Port;
     // 检查是否已经注册到别的引脚上

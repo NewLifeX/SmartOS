@@ -146,7 +146,7 @@ public:
     // 读取委托
     typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 
-    uint ShakeTime;     // 抖动时间
+    uint ShakeTime;     // 抖动时间。毫秒
     PuPd_TypeDef PuPd;  // 上拉下拉电阻
     bool Floating;      // 是否浮空输入
     bool Invert;		// 是否倒置输入输出
@@ -186,7 +186,7 @@ private:
     IOReadHandler	Handler;
 	void*			Param;
 
-	bool _Value;
+	byte _Value;
 	uint _taskInput;		// 输入任务
 	static void InputTask(void* param);
 };
@@ -230,5 +230,13 @@ public:
 		if(_port) *_port = _value;
 	}
 };
+
+/*
+输入口防抖原理：
+1，中断时，通过循环读取来避免极快的中断触发。
+实际上不知道是否有效果，太快了无从测试，这样子可能导致丢失按下或弹起事件，将来考虑是否需要改进。
+2，按下和弹起事件允许同时并存于_Value，然后启动一个任务来处理，任务支持毫秒级防抖延迟
+3，因为_Value可能同时存在按下和弹起，任务处理时需要同时考虑两者。
+*/
 
 #endif //_Port_H_
