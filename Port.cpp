@@ -644,6 +644,8 @@ void SetEXIT(int pinIndex, bool enable)
 
 void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
+	// 如果不是硬件事件，则默认使用20ms抖动
+	if(!HardEvent) ShakeTime = 20;
 #if DEBUG
 	if(Debug)
 	{
