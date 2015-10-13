@@ -74,19 +74,18 @@ void TTime::Init()
 
     // 获取当前频率
 #ifdef STM32F0
-	uint prd	= 1000;
-	uint psc	= Sys.Clock / 1000;
+	ushort prd	= 10000;
+	ushort psc	= Sys.Clock / 1000;
 #else
 	clk = RCC_GetPCLK();
-#if defined(STM32F1) || defined(STM32F4)
 	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
-#endif
 	clk <<= 1;
-	
+
 	// 120M时，分频系数必须是120K才能得到1k的时钟，超过了最大值64k
 	// 因此，需要增加系数
-	uint prd	= 1000;
-	uint psc	= clk / 1000;
+	ushort prd	= 10000;
+	ushort psc	= clk / 1000;
+	Div = 0;
 	while(psc > 0xFFFF)
 	{
 		prd	<<= 1;
@@ -129,8 +128,8 @@ void TTime::OnHandler(ushort num, void* param)
 	if(TIM_GetITStatus(timer, TIM_IT_Update) == RESET) return;
 
 	// 累加计数
-	Time.Seconds++;
-	Time.Milliseconds += 1000;
+	Time.Seconds += 10;
+	Time.Milliseconds += 10000;
 	// 必须清除TIMx的中断待处理位，否则会频繁中断
 	TIM_ClearITPendingBit(timer, TIM_IT_Update);
 	//debug_printf("TTime::OnHandler CNT=%d Seconds=%d Milliseconds=%d\r\n", timer->CNT, Time.Seconds, (uint)Time.Milliseconds);
@@ -150,29 +149,28 @@ uint TTime::CurrentTicks()
 // 当前毫秒数
 ulong TTime::Current()
 {
+	uint cnt = g_Timers[Index]->CNT;
 #ifndef STM32F0
-	return Milliseconds + (g_Timers[Index]->CNT >> Div);
-#else
-	return Milliseconds + g_Timers[Index]->CNT;
+	if(Div) cnt >>= Div;
 #endif
+	return Milliseconds + cnt;
 }
 
 void TTime::SetTime(ulong seconds)
 {
-    /*SmartIRQ irq;
-
-	Seconds			= ms / 1000;
-
-	// 修改系统启动时间
-	Sys.StartTime += ms - Milliseconds;
-
-	Milliseconds	= ms % 1000;*/
-
 	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
-	BaseSeconds = seconds;
+	BaseSeconds = seconds - Seconds;
 
 	// 保存到RTC
 	if(OnSave) OnSave();
+}
+
+// 当前时间
+DateTime TTime::Now()
+{
+	DateTime dt(Seconds + BaseSeconds);
+	//dt.Millisecond = Milliseconds;
+	return dt;
 }
 
 void TTime::Sleep(uint ms, bool* running)
@@ -196,28 +194,11 @@ void TTime::Sleep(uint ms, bool* running)
     // 睡眠时间太短
     if(!ms || running != NULL && !*running) return;
 
-	TIM_TypeDef* tim = g_Timers[Index];
-
-    uint end	= Seconds + (ms / 1000);
-#ifdef STM32F0
-	uint end2	= tim->CNT + (ms % 1000);
-#else
-	uint end2	= (tim->CNT >> Div) + (ms % 1000);
-#endif
-	if(end2 >= 1000 - 1)
-	{
-		end++;
-		end2 -= 1000 - 1;
-	}
+	uint me	= Current() + ms;
 
     while(true)
 	{
-		if(Seconds > end) break;
-#ifdef STM32F0
-		if(Seconds == end && tim->CNT > end2) break;
-#else
-		if(Seconds == end && (tim->CNT >> Div) > end2) break;
-#endif
+		if(Current() >= me) break;
 
 		if(running != NULL && !*running) break;
 	}
@@ -238,19 +219,19 @@ void TTime::Delay(uint us)
     if(!us) return;
 
 	// 无需关闭中断，也能实现延迟
-	ulong end	= Current();
-	uint end2	= CurrentTicks() + us * Ticks;
-	if(end2 >= 1000 - 1)
+	ulong ms	= Current();
+	uint ticks	= CurrentTicks() + us * Ticks;
+	if(ticks >= (1000 - 1) * Ticks)
 	{
-		end++;
-		end2 -= 1000 - 1;
+		ms++;
+		ticks -= (1000 - 1) * Ticks;
 	}
 
     while(true)
 	{
-		int ms = Current();
-		if(ms > end) break;
-		if(ms == end && CurrentTicks() > end2) break;
+		int n = Current() - ms;
+		if(n > 0) break;
+		if(n == 0 && CurrentTicks() >= ticks) break;
 	}
 }
 
@@ -419,14 +400,6 @@ const char* DateTime::GetString(byte kind, string str)
 	}
 
 	return str;
-}
-
-// 当前时间
-DateTime TTime::Now()
-{
-	DateTime dt(Seconds + BaseSeconds);
-	dt.Millisecond = Milliseconds;
-	return dt;
 }
 
 /************************************************ TimeWheel ************************************************/
