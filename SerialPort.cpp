@@ -308,7 +308,8 @@ void SerialPort::ReceiveTask(void* param)
 	SerialPort* sp = (SerialPort*)param;
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
 
-	if(sp->Rx.Length() == 0) return;
+	//!!! 只要注释这一行，四位触摸开关就不会有串口溢出错误
+	//if(sp->Rx.Length() == 0) return;
 
 	// 从栈分配，节省内存
 	ByteArray bs(0x40);
