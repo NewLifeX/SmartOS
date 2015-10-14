@@ -3,6 +3,41 @@
 
 #include "Sys.h"
 #include "Stream.h"
+#include "..\Storage\Storage.h"
+
+class ConfigBlock
+{
+private:
+    static const uint c_Version = 0x534F5453; // STOS
+
+public:
+	static Storage*	Device;
+	static void*	BaseAddress;
+
+public:
+	uint	Signature;
+	ushort	HeaderCRC;
+	ushort	DataCRC;
+	uint	Size;
+	char	Name[16];
+
+    bool IsGoodBlock() const;
+    bool IsGoodData () const;
+
+    const ConfigBlock*	Next() const;
+    const void*			Data() const;
+
+    bool Init(const char* name, const ByteArray& bs);
+    const ConfigBlock* Find(const char* name, bool fAppend = false) const;
+    bool Write(const void* addr, const ByteArray& bs);
+	
+    // 废弃
+	static bool Invalid(const char* name, const void* addr = NULL);
+    // 设置配置数据
+    static bool Set(const char* name, const ByteArray& bs, const void* addr = NULL);
+	// 获取配置数据
+    static bool Get(const char* name, ByteArray& bs, const void* addr = NULL);
+};
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 #pragma pack(push)	// 保存对齐状态
@@ -37,5 +72,12 @@ public:
 #pragma pack(pop)	// 恢复对齐状态
 
 //extern TConfig Config;
+
+/*
+配置子系统，链式保存管理多配置段。
+1，每个配置段都有固定长度的头部，包括签名、校验、名称等，数据紧跟其后
+2，借助签名和双校验确保是有效配置段
+3，根据名称查找更新配置段
+*/
 
 #endif
