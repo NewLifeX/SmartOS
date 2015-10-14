@@ -38,7 +38,7 @@ protected:
     // 擦除块
     virtual bool EraseBlock(uint address) = 0;
     // 指定块是否被擦除
-    virtual bool IsBlockErased(uint address, uint len);
+    virtual bool IsErased(uint address, uint len);
 };
 
 #endif

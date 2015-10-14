@@ -133,23 +133,32 @@ bool BlockStorage::Erase(uint address, uint len)
 	// 该地址所在的块
 	uint addr = address - ((uint)address % Block);
 	uint end  = address + len;
+	// 需要检查是否擦除的范围，从第一段开始
+	uint addr2	= address;
+	uint len2	= addr + Block - address;
+	// 如果还不够一段，则直接长度
+	if(len2 > len) len2 = len;
 	while(addr < end)
 	{
-		EraseBlock(addr);
+		if(!IsErased(addr2, len2)) EraseBlock(addr);
 
-		addr += Block;
+		addr	+= Block;
+		// 下一段肯定紧跟着人家开始
+		addr2	= addr;
+		len2	= end - addr;
+		if(len2 > Block) len2 = Block;
 	}
 
 	return true;
 }
 
 /* 指定块是否被擦除 */
-bool BlockStorage::IsBlockErased(uint address, uint len)
+bool BlockStorage::IsErased(uint address, uint len)
 {
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-	debug_printf("BlockStorage::IsBlockErased(0x%08x, %d )\r\n", address, len);
+	//debug_printf("BlockStorage::IsErased(0x%08x, %d)\r\n", address, len);
 #endif
 
     ushort* p	= (ushort*)address;
