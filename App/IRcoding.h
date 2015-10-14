@@ -3,7 +3,7 @@
 #define __IRCODING_H__
 
 #include "Sys.h"
-#include "..\Drivers\FlashFace.h"
+#include "..\Storage\Storage.h"
 
 /*	
 	红外编码的处理，
@@ -19,7 +19,7 @@
 class IRcoding
 {
 private:
-	FlashFace * _Medium;	// 存储区控制器
+	Storage* _Medium;	// 存储区控制器
 	uint _BlockSize;	// 存储区块大小
 	uint _OrigAddr;		// 存储区首地址
 public:	
@@ -29,7 +29,7 @@ public:
 	// 此位置存在不对齐问题  需要注意
 	
 public:
-	IRcoding(FlashFace * flash = NULL, uint blockSize = 0);
+	IRcoding(Storage* flash = NULL, uint blockSize = 0);
 	//~IRcoding();
 	// 设置配置区所在位置
 	void SetCfgAddr(uint addr);

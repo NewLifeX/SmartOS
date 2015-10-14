@@ -3,7 +3,7 @@
 
 ushort IRcoding::CodingSize = 255; 
 
-IRcoding::IRcoding(FlashFace * flash, uint blockSize)
+IRcoding::IRcoding(Storage* flash, uint blockSize)
 {
 	assert_param2(flash, "必须给出存储介质");
 	assert_param2(blockSize, "必须给出具体块大小");

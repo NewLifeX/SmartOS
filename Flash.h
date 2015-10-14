@@ -3,32 +3,18 @@
 
 #include "Sys.h"
 #include "Port.h"
-#include "Drivers\FlashFace.h"
+#include "..\Storage\Storage.h"
 
 // Flash类
-class Flash : public FlashFace
+class Flash : public BlockStorage
 {
-public:
-	bool WriteBlock(uint address, const byte* buf, uint len, bool inc = true);
+protected:
+	virtual bool WriteBlock(uint address, const byte* buf, uint len, bool inc);
     // 擦除块 （段地址）
-    bool EraseBlock(uint address);
-    // 指定块是否被擦除
-    bool IsBlockErased(uint address, uint numBytes);
+    virtual bool EraseBlock(uint address);
 
 public:
-	uint Size;		// 容量大小，字节
-    uint Block;		// 每块字节数
-    uint Start;		// 起始地址
-
 	Flash();
-
-    // 擦除块。起始地址，字节数量默认0表示擦除全部
-    bool Erase(uint address = 0, uint numBytes = 0);
-    // 读取段数据 （起始段，字节数量，目标缓冲区）
-    virtual bool Read(uint address, ByteArray& bs);
-    // 写入段数据 （起始段，段数量，目标缓冲区，读改写）
-    virtual bool Write(uint address, const ByteArray& bs, bool readModifyWrite = true);
-    bool Memset(uint address, byte data, uint numBytes);
 };
 
 #endif

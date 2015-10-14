@@ -56,7 +56,7 @@ byte AT24CXX::Read(ushort addr)
 	return IIC->Read(addr & 0xFF);
 }
 
-bool AT24CXX::Write(uint addr, const ByteArray& bs, bool readModifyWrite)
+bool AT24CXX::Write(uint addr, const ByteArray& bs)
 {
 	if(!IIC) return false;
 	
@@ -67,7 +67,7 @@ bool AT24CXX::Write(uint addr, const ByteArray& bs, bool readModifyWrite)
 
 bool AT24CXX::Read(uint addr, ByteArray& bs)
 {
-	if(!IIC) return 0;
+	if(!IIC) return false;
 
 	IIC->Address = Address << 1;
 	
