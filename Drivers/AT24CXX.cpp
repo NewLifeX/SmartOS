@@ -56,20 +56,24 @@ byte AT24CXX::Read(ushort addr)
 	return IIC->Read(addr & 0xFF);
 }
 
-bool AT24CXX::Write(ushort addr, const ByteArray& bs)
+bool AT24CXX::Write(uint addr, const ByteArray& bs, bool readModifyWrite)
 {
 	if(!IIC) return false;
-
+	
 	IIC->Address = Address << 1;
 
-	return IIC->Write(addr, bs);
+	return IIC->Write((ushort)addr, bs);
 }
 
-uint AT24CXX::Read(ushort addr, ByteArray& bs)
+bool AT24CXX::Read(uint addr, ByteArray& bs)
 {
 	if(!IIC) return 0;
 
 	IIC->Address = Address << 1;
+	
+	uint len = IIC->Read((ushort)addr, bs);
+	if(len == 0)return false;
+	if(len != bs.Length()) bs.SetLength(len);
 
-	return IIC->Read(addr, bs);
+	return true;
 }

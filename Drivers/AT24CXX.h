@@ -2,9 +2,10 @@
 #define _AT24CXX_H_
 
 #include "I2C.h"
+#include "FlashFace.h"
 
 // 光强传感器
-class AT24CXX
+class AT24CXX : public FlashFace
 {
 public:
     I2C* IIC;		// I2C通信口
@@ -17,8 +18,8 @@ public:
 	bool Write(ushort addr, byte data);
 	byte Read(ushort addr);
 
-	bool Write(ushort addr, const ByteArray& bs);
-	uint Read(ushort addr, ByteArray& bs);
+	virtual bool Write(uint addr, const ByteArray& bs, bool readModifyWrite = true);
+	virtual bool Read(uint addr, ByteArray& bs);
 };
 
 #endif
