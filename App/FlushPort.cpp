@@ -25,7 +25,12 @@ void FlushPort::Start(int ms)
 {
 	if(!Port || !Port->Open()) return;
 
-	if(!_tid) _tid = Sys.AddTask(FlushPortTask, this, Slow, Slow, "闪烁端口");
+	if(!_tid)
+	{
+		int speed = Slow;
+		if(speed <= 0) speed = Fast;
+		_tid = Sys.AddTask(FlushPortTask, this, speed, speed, "闪烁端口");
+	}
 
 	// 设置任务时间
 	if(ms > 0)
