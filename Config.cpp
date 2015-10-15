@@ -96,7 +96,7 @@ const ConfigBlock* ConfigBlock::Find(const char* name, bool fAppend) const
 }
 
 // 更新块
-bool ConfigBlock::Write(const void* addr, const ByteArray& bs)
+bool ConfigBlock::Write(Storage* storage, const void* addr, const ByteArray& bs)
 {
 	if(bs.Length() > Size) return false;
 
@@ -104,25 +104,27 @@ bool ConfigBlock::Write(const void* addr, const ByteArray& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Signature);
-	rs &= Device->Write((uint)addr, ByteArray((byte*)&Signature, len));
+	rs &= storage->Write((uint)addr, ByteArray((byte*)&Signature, len));
 	if(bs.Length() > 0)
-		rs &= Device->Write((uint)addr + len, ByteArray(bs.GetBuffer(), Size));
+		rs &= storage->Write((uint)addr + len, ByteArray(bs.GetBuffer(), Size));
 
     return rs;
 }
 
 // 废弃
-bool ConfigBlock::Invalid(const char* name, const void* addr)
+bool ConfigBlock::Invalid(const char* name, const void* addr, Storage* storage)
 {
-    return Set(name, ByteArray(0), addr);
+    return Set(name, ByteArray(0), addr, storage);
 }
 
 // 根据名称更新块
-bool ConfigBlock::Set(const char* name, const ByteArray& bs, const void* addr)
+const void* ConfigBlock::Set(const char* name, const ByteArray& bs, const void* addr, Storage* storage)
 {
-    if(name == NULL) return false;
+    if(name == NULL) return NULL;
 
 	if(!addr) addr = BaseAddress;
+	if(!storage) storage = Device;
+
 	const ConfigBlock* cfg = (const ConfigBlock*)addr;
 
     if(cfg) cfg = cfg->Find(name, true);
@@ -131,11 +133,12 @@ bool ConfigBlock::Set(const char* name, const ByteArray& bs, const void* addr)
 		// 重新搞一个配置头，使用新的数据去重新初始化
 		ConfigBlock header;
 		header.Init(name, bs);
+		header.Write(storage, cfg, bs);
 
-		return header.Write(cfg, bs);
+		return cfg->Data();
 	}
 
-    return false;
+    return NULL;
 }
 
 // 获取配置数据
@@ -159,6 +162,19 @@ bool ConfigBlock::Get(const char* name, ByteArray& bs, const void* addr)
     }
 
     return false;
+}
+
+const void* ConfigBlock::Get(const char* name, const void* addr)
+{
+    if(name == NULL) return NULL;
+
+	if(!addr) addr = BaseAddress;
+	const ConfigBlock* cfg = (const ConfigBlock*)addr;
+
+    if(cfg) cfg = cfg->Find(name, false);
+    if(cfg) return cfg->Data();
+
+    return NULL;
 }
 
 // 初始化

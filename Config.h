@@ -29,14 +29,16 @@ public:
 
     bool Init(const char* name, const ByteArray& bs);
     const ConfigBlock* Find(const char* name, bool fAppend = false) const;
-    bool Write(const void* addr, const ByteArray& bs);
-	
+    bool Write(Storage* storage, const void* addr, const ByteArray& bs);
+
     // 废弃
-	static bool Invalid(const char* name, const void* addr = NULL);
+	static bool Invalid(const char* name, const void* addr = NULL, Storage* storage = NULL);
     // 设置配置数据
-    static bool Set(const char* name, const ByteArray& bs, const void* addr = NULL);
+    static const void* Set(const char* name, const ByteArray& bs, const void* addr = NULL, Storage* storage = NULL);
 	// 获取配置数据
     static bool Get(const char* name, ByteArray& bs, const void* addr = NULL);
+	// 获取配置数据
+    static const void* Get(const char* name, const void* addr = NULL);
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
