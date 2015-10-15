@@ -82,11 +82,13 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 const ConfigBlock* ConfigBlock::Find(const char* name, bool fAppend) const
 {
     const ConfigBlock* ptr = this;
+	uint slen = strlen(name);
+	assert_param2(slen <= sizeof(ptr->Name), "配置段名称最大4个字符");
 
 	// 遍历链表，找到同名块
     while(ptr->IsGoodBlock())
     {
-        if(ptr->IsGoodData() && name && strcmp(name, ptr->Name) == 0)
+        if(ptr->IsGoodData() && name && memcmp(name, ptr->Name, slen) == 0)
         {
             return ptr;
         }
@@ -132,6 +134,7 @@ const void* ConfigBlock::Set(const char* name, const ByteArray& bs, uint addr, S
 
 	if(!addr) addr = BaseAddress;
 	if(!storage) storage = Device;
+	assert_param2(storage, "未指定配置段的存储设备");
 
 	const ConfigBlock* cfg = (const ConfigBlock*)addr;
 
