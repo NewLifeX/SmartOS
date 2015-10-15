@@ -86,6 +86,7 @@ public:
     uint	CPUID;		// CPUID
     ushort	FlashSize;	// 芯片Flash容量。
     ushort	RAMSize;	// 芯片RAM容量
+    ushort	RAM;		// 系统静态分配内存大小
 
     TSys();				// 构造函数
     //~TSys();			// 析构函数

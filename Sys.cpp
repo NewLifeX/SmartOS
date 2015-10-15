@@ -189,6 +189,7 @@ TSys::TSys()
 
 	InitHeapStack(RAMSize);
 #endif
+	RAM = (uint)&__heap_base;
 
 	StartTime = 0;
 	OnTick = NULL;
