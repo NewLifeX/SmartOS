@@ -47,7 +47,7 @@ void Message::SetError(byte errorCode, const char* msg)
 
 bool Message::Clone(const Message& msg)
 {
-	Stream ms;
+	MemoryStream ms;
 	msg.Write(ms);
 
 	ms.SetPosition(0);

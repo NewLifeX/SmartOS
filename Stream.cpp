@@ -1,87 +1,55 @@
 ﻿#include "Stream.h"
 
-Stream::Stream(uint len)
-{
-	if(len <= ArrayLength(_Arr))
-	{
-		len = ArrayLength(_Arr);
-		_Buffer = _Arr;
-		_needFree = false;
-	}
-	else
-	{
-		_Buffer = new byte[len];
-		assert_ptr(_Buffer);
-		_needFree = true;
-	}
-
-	_Capacity	= len;
-	_Position	= 0;
-	Length		= len;
-	_canWrite	= true;
-	Little		= true;
-}
-
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(byte* buf, uint len)
 {
-	assert_ptr(buf);
-	//assert_param2(len > 0, "不能用0长度缓冲区来初始化数据流");
-
-	_Buffer		= buf;
-	_Capacity	= len;
-	_Position	= 0;
-	_needFree	= false;
-	_canWrite	= true;
-	Length		= len;
-	Little		= true;
+	Init(buf, len);
 }
 
 Stream::Stream(const byte* buf, uint len)
 {
-	assert_ptr(buf);
+	Init((byte*)buf, len);
 
-	_Buffer		= (byte*)buf;
-	_Capacity	= len;
-	_Position	= 0;
-	_needFree	= false;
-	_canWrite	= false;
-	Length		= len;
-	Little		= true;
+	CanWrite	= false;
 }
 
 // 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(ByteArray& bs)
 {
-	_Buffer		= bs.GetBuffer();
-	_Capacity	= bs.Length();
-	_Position	= 0;
-	_needFree	= false;
-	_canWrite	= true;
-	Length		= bs.Length();
-	Little		= true;
+	Init(bs.GetBuffer(), bs.Length());
 }
 
 Stream::Stream(const ByteArray& bs)
 {
-	_Buffer		= bs.GetBuffer();
-	_Capacity	= bs.Length();
+	Init((byte*)bs.GetBuffer(), bs.Length());
+
+	CanWrite	= false;
+}
+
+void Stream::Init(byte* buf, uint len)
+{
+	assert_ptr(buf);
+
+	_Buffer		= buf;
+	_Capacity	= len;
 	_Position	= 0;
-	_needFree	= false;
-	_canWrite	= false;
-	Length		= bs.Length();
+	CanWrite	= true;
+	Length		= len;
 	Little		= true;
 }
 
-// 销毁数据流
-Stream::~Stream()
+bool Stream::CheckRemain(uint count)
 {
-	assert_ptr(this);
-	if(_needFree)
+	uint remain = _Capacity - _Position;
+	// 容量不够，需要扩容
+	if(count > remain)
 	{
-		if(_Buffer != _Arr) delete[] _Buffer;
-		_Buffer = NULL;
+		debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，无法扩容！\r\n", this, remain, count);
+		assert_param(false);
+		return false;
 	}
+
+	return true;
 }
 
 // 数据流容量
@@ -175,13 +143,12 @@ bool Stream::Write(const byte* buf, uint offset, uint count)
 {
 	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
-	if(!_canWrite) return false;
+	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;
 
 	memcpy(Current(), buf + offset, count);
 
 	_Position += count;
-	//Length += count;
 	// 内容长度不是累加，而是根据位置而扩大
 	if(_Position > Length) Length = _Position;
 
@@ -191,7 +158,7 @@ bool Stream::Write(const byte* buf, uint offset, uint count)
 // 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
-	if(!_canWrite) return false;
+	if(!CanWrite) return false;
 
 	byte temp;
 	for( int i = 0 ; i < 4 ; i++ )
@@ -212,7 +179,7 @@ uint Stream::WriteEncodeInt(uint value)
 // 写入字符串，先写入压缩编码整数表示的长度
 uint Stream::Write(const string str)
 {
-	if(!_canWrite) return false;
+	if(!CanWrite) return false;
 
 	int len = 0;
 	if(str)
@@ -250,37 +217,6 @@ int Stream::Peek() const
 {
 	if(!Remain()) return -1;
 	return *Current();
-}
-
-bool Stream::CheckRemain(uint count)
-{
-	uint remain = _Capacity - _Position;
-	// 容量不够，需要扩容
-	if(count > remain)
-	{
-		if(!_needFree && _Buffer != _Arr)
-		{
-			debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，而外部缓冲区无法扩容！\r\n", this, remain, count);
-			//assert_param(false);
-			return false;
-		}
-
-		// 原始容量成倍扩容
-		uint total = _Position + count;
-		uint size = _Capacity;
-		while(size < total) size <<= 1;
-
-		// 申请新的空间，并复制数据
-		byte* bufNew = new byte[size];
-		if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
-
-		if(_Buffer != _Arr) delete[] _Buffer;
-
-		_Buffer = bufNew;
-		_Capacity = size;
-	}
-
-	return true;
 }
 
 // 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
@@ -366,8 +302,6 @@ byte	Stream::ReadByte()
 
 ushort	Stream::ReadUInt16()
 {
-	//byte* p = ReadBytes(2);
-	//ushort v = *(ushort*)p;
 	ushort v;
 	if(!Read((byte*)&v, 0, 2)) return 0;
 	if(!Little) v = __REV16(v);
@@ -376,8 +310,6 @@ ushort	Stream::ReadUInt16()
 
 uint	Stream::ReadUInt32()
 {
-	//byte* p = ReadBytes(4);
-	//uint v = *(uint*)p;
 	uint v;
 	if(!Read((byte*)&v, 0, 4)) return 0;
 	if(!Little) v = __REV(v);
@@ -386,8 +318,6 @@ uint	Stream::ReadUInt32()
 
 ulong	Stream::ReadUInt64()
 {
-	//byte* p = ReadBytes(8);
-	//ulong v = *(ulong*)p;
 	ulong v;
 	if(!Read((byte*)&v, 0, 8)) return 0;
 	if(!Little) v = __REV(v >> 32) | ((ulong)__REV(v & 0xFFFFFFFF) << 32);
@@ -418,5 +348,58 @@ bool Stream::Write(ulong value)
 	if(!Little) value = __REV(value >> 32) | ((ulong)__REV(value & 0xFFFFFFFF) << 32);
 
 	return Write((byte*)&value, 0, 8);
+}
+
+MemoryStream::MemoryStream(uint len) : Stream(_Arr, ArrayLength(_Arr))
+{
+	_needFree	= false;
+	if(len > ArrayLength(_Arr))
+	{
+		byte* buf	= new byte[len];
+		Init(buf, len);
+		_needFree	= true;
+	}
+}
+
+// 销毁数据流
+MemoryStream::~MemoryStream()
+{
+	assert_ptr(this);
+	if(_needFree)
+	{
+		if(_Buffer != _Arr) delete[] _Buffer;
+		_Buffer = NULL;
+	}
+}
+
+bool MemoryStream::CheckRemain(uint count)
+{
+	uint remain = _Capacity - _Position;
+	// 容量不够，需要扩容
+	if(count > remain)
+	{
+		if(!_needFree && _Buffer != _Arr)
+		{
+			debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，而外部缓冲区无法扩容！\r\n", this, remain, count);
+			//assert_param(false);
+			return false;
+		}
+
+		// 原始容量成倍扩容
+		uint total = _Position + count;
+		uint size = _Capacity;
+		while(size < total) size <<= 1;
+
+		// 申请新的空间，并复制数据
+		byte* bufNew = new byte[size];
+		if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
+
+		if(_Buffer != _Arr) delete[] _Buffer;
+
+		_Buffer = bufNew;
+		_Capacity = size;
+	}
+
+	return true;
 }
 

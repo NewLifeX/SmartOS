@@ -18,7 +18,7 @@ void MessageBase::WriteMessage(Message& msg)
 {
 	// 如果是令牌消息，这里就要自己小心了
 	//Stream ms(msg.Data, 256);
-	Stream ms;
+	MemoryStream ms;
 
 	Write(ms);
 

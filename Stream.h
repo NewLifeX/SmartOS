@@ -4,40 +4,34 @@
 #include <stddef.h>
 #include "Sys.h"
 
-// 内存数据流
+// 数据流
 // 数据流内有一个缓冲区，游标位置，数据长度。实际有效数据仅占用缓冲区中间部分，头尾都可能有剩余
 class Stream
 {
-private:
+protected:
 	byte* _Buffer;	// 数据缓冲区。扩容后会重新分配缓冲区
 	uint _Capacity;	// 缓冲区容量
     uint _Position;	// 游标位置
 
-	byte _Arr[64];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
-
-	bool _needFree;	// 是否自动释放
-	bool _canWrite;	// 是否可写
+	void Init(byte* buf, uint len);
+	virtual bool CheckRemain(uint count);
 public:
-	bool Little;	// 默认小字节序。仅影响数据读写操作
 	uint Length;	// 数据长度
+	bool Little;	// 默认小字节序。仅影响数据读写操作
+	bool CanWrite;	// 是否可写
 
-	// 分配指定大小的数据流
-	Stream(uint len = 0);
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(byte* buf, uint len);
 	Stream(const byte* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(ByteArray& bs);
 	Stream(const ByteArray& bs);
-	// 销毁数据流
-	~Stream();
 
 	// 数据流容量
 	uint Capacity() const;
+	void SetCapacity(uint len);
 	// 当前位置
 	uint Position() const;
-	void SetCapacity(uint len);
-
 	// 设置位置
 	bool SetPosition(int p);
 	// 余下的有效数据流长度。0表示已经到达终点
@@ -102,52 +96,27 @@ public:
 		return pt;
 	}
 
-	/*// 常用读写整数方法
-	template<typename T>
-	T Read()
-	{
-		byte* p = Current();
-		if(!Seek(sizeof(T))) return 0;
-
-		// 检查地址对齐
-		if((uint)p % sizeof(T) == 0)
-			return *(T*)p;
-
-		T obj;
-		memcpy(&obj, p, sizeof(T));
-
-		return obj;
-	}
-
-	template<typename T>
-	bool Write(T value)
-	{
-		if(!_canWrite) return false;
-		if(!CheckRemain(sizeof(T))) return false;
-
-		byte* p = Current();
-
-		// 检查地址对齐
-		if((uint)p % sizeof(T) == 0)
-			*(T*)p = value;
-		else
-			memcpy(p, &value, sizeof(T));
-
-		// 移动游标
-		_Position += sizeof(T);
-		if(_Position > Length) Length = _Position;
-
-		return true;
-	}*/
-
 	// 读取指定长度的数据并返回首字节指针，移动数据流位置
 	byte* ReadBytes(int count = -1);
 
 	// 读取一个字节，不移动游标。如果没有可用数据，则返回-1
 	int Peek() const;
+};
 
+// 内存数据流。预分配空间，自动扩容
+class MemoryStream : public Stream
+{
 private:
-	bool CheckRemain(uint count);
+	byte _Arr[0x40];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
+	bool _needFree;		// 是否自动释放
+
+	virtual bool CheckRemain(uint count);
+
+public:
+	// 分配指定大小的数据流
+	MemoryStream(uint len = 0);
+	// 销毁数据流
+	~MemoryStream();
 };
 
 #endif

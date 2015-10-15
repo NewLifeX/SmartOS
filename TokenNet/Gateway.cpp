@@ -402,7 +402,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 	rs.Code = 0x25;
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
 	//Stream ms(rs.Data, rs.Length);
-	Stream ms;
+	MemoryStream ms;
 
 	dv->Write(ms);
 
