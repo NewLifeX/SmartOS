@@ -1,5 +1,5 @@
 ﻿#include "Config.h"
-#include "..\Security\Crc.h"
+#include "Security\Crc.h"
 
 Storage*	ConfigBlock::Device			= NULL;
 void*		ConfigBlock::BaseAddress	= NULL;

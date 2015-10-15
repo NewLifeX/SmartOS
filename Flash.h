@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Port.h"
-#include "..\Storage\Storage.h"
+#include "Storage\Storage.h"
 
 // Flash类
 class Flash : public BlockStorage
