@@ -26,7 +26,7 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Write(0x%08x, %d, 0x%08x, %d)", address, len, bs.GetBuffer());
+    debug_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, bs.GetBuffer());
     int len2 = 0x10;
     if(len < len2) len2 = len;
     //debug_printf("    Data: ");
@@ -170,4 +170,18 @@ bool BlockStorage::IsErased(uint address, uint len)
     }
 
     return true;
+}
+
+bool CharStorage::Read(uint address, ByteArray& bs)
+{
+	bs.Copy((byte*)address);
+
+	return true;
+}
+
+bool CharStorage::Write(uint address, const ByteArray& bs)
+{
+	bs.CopyTo((byte*)address);
+
+	return true;
 }

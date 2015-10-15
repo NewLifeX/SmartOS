@@ -9,9 +9,9 @@ class Storage
 {
 public:
     // 读取
-    virtual bool Read(uint address, ByteArray& bs);
+    virtual bool Read(uint address, ByteArray& bs) = 0;
     // 写入
-    virtual bool Write(uint address, const ByteArray& bs);
+    virtual bool Write(uint address, const ByteArray& bs) = 0;
 };
 
 // 块存储接口
@@ -39,6 +39,16 @@ protected:
     virtual bool EraseBlock(uint address) = 0;
     // 指定块是否被擦除
     virtual bool IsErased(uint address, uint len);
+};
+
+// 字符存储接口
+class CharStorage : public Storage
+{
+public:
+    // 读取
+    virtual bool Read(uint address, ByteArray& bs);
+    // 写入
+    virtual bool Write(uint address, const ByteArray& bs);
 };
 
 #endif
