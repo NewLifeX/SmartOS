@@ -373,6 +373,7 @@ namespace NewLife.Reflection
         public Int32 Build(String name = null)
         {
 			name = GetOutputName(name);
+            Console.WriteLine();
             XTrace.WriteLine("生成：{0}", name);
 
             /*
@@ -452,10 +453,16 @@ namespace NewLife.Reflection
 
             var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
-
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
+
+            var hex = name.EnsureEnd(".hex");
+            XTrace.WriteLine("生成：{0}", hex);
+            sb.Clear();
+            sb.AppendFormat("--i32  -o \"{0}\" \"{1}\"", hex, axf);
+            rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
+
 			if(name.Contains("\\")) name = name.Substring("\\", "_");
 			if(rs == 0)
 				"编译目标{0}完成".F(name).SpeakAsync();
