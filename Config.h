@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Stream.h"
-#include "..\Storage\Storage.h"
+#include "Storage\Storage.h"
 
 class ConfigBlock
 {
