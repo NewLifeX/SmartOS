@@ -15,7 +15,7 @@ DataStore::DataStore() : Areas(0)
 }
 
 // 写入数据
-int DataStore::Write(uint offset, ByteArray& bs)
+int DataStore::Write(uint offset, const ByteArray& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;

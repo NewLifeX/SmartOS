@@ -17,7 +17,7 @@ public:
 	DataStore();
 
 	// 写入数据
-	int Write(uint offset, ByteArray& bs);
+	int Write(uint offset, const ByteArray& bs);
 	// 读取数据
 	int Read(uint offset, ByteArray& bs);
 
