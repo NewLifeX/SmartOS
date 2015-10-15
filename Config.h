@@ -12,14 +12,14 @@ private:
 
 public:
 	static Storage*	Device;
-	static void*	BaseAddress;
+	static uint		BaseAddress;
 
 public:
 	uint	Signature;
 	ushort	HeaderCRC;
 	ushort	DataCRC;
 	uint	Size;
-	char	Name[16];
+	char	Name[4];
 
     bool IsGoodBlock() const;
     bool IsGoodData () const;
@@ -29,16 +29,16 @@ public:
 
     bool Init(const char* name, const ByteArray& bs);
     const ConfigBlock* Find(const char* name, bool fAppend = false) const;
-    bool Write(Storage* storage, const void* addr, const ByteArray& bs);
+    bool Write(Storage* storage, uint addr, const ByteArray& bs);
 
     // 废弃
-	static bool Invalid(const char* name, const void* addr = NULL, Storage* storage = NULL);
+	static bool Invalid(const char* name, uint addr = NULL, Storage* storage = NULL);
     // 设置配置数据
-    static const void* Set(const char* name, const ByteArray& bs, const void* addr = NULL, Storage* storage = NULL);
+    static const void* Set(const char* name, const ByteArray& bs, uint addr = NULL, Storage* storage = NULL);
 	// 获取配置数据
-    static bool Get(const char* name, ByteArray& bs, const void* addr = NULL);
+    static bool Get(const char* name, ByteArray& bs, uint addr = NULL);
 	// 获取配置数据
-    static const void* Get(const char* name, const void* addr = NULL);
+    static const void* Get(const char* name, uint addr = NULL);
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置

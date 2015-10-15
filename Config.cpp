@@ -2,7 +2,7 @@
 #include "Security\Crc.h"
 
 Storage*	ConfigBlock::Device			= NULL;
-void*		ConfigBlock::BaseAddress	= NULL;
+uint		ConfigBlock::BaseAddress	= NULL;
 
 bool ConfigBlock::IsGoodBlock() const
 {
@@ -43,7 +43,9 @@ const void* ConfigBlock::Data() const
 // 构造一个新的配置块
 bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 {
-    if(name == NULL || strlen(name) >= sizeof(Name)) return false;
+    if(name == NULL) return false;
+	uint slen = strlen(name);
+    if(slen > sizeof(Name)) return false;
 
     //memset(this, 0, sizeof(*this));
 
@@ -63,8 +65,9 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 		Signature = c_Version;
 		Size      = bs.Length();
 
+		if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
 		memset(Name, 0, ArrayLength(Name));
-		memcpy(Name, name, ArrayLength(Name));
+		memcpy(Name, name, slen);
 	}
 
 	// 计算头部CRC。包括数据CRC、大小、名称
@@ -96,7 +99,7 @@ const ConfigBlock* ConfigBlock::Find(const char* name, bool fAppend) const
 }
 
 // 更新块
-bool ConfigBlock::Write(Storage* storage, const void* addr, const ByteArray& bs)
+bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
 {
 	if(bs.Length() > Size) return false;
 
@@ -104,21 +107,26 @@ bool ConfigBlock::Write(Storage* storage, const void* addr, const ByteArray& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Signature);
-	rs &= storage->Write((uint)addr, ByteArray((byte*)&Signature, len));
+	rs &= storage->Write(addr, ByteArray((byte*)&Signature, len));
 	if(bs.Length() > 0)
-		rs &= storage->Write((uint)addr + len, ByteArray(bs.GetBuffer(), Size));
+	{
+		uint offset = len;
+		len = bs.Length();
+		if(len > Size) len = Size;
+		rs &= storage->Write(addr + offset, ByteArray(bs.GetBuffer(), len));
+	}
 
     return rs;
 }
 
 // 废弃
-bool ConfigBlock::Invalid(const char* name, const void* addr, Storage* storage)
+bool ConfigBlock::Invalid(const char* name, uint addr, Storage* storage)
 {
     return Set(name, ByteArray(0), addr, storage);
 }
 
 // 根据名称更新块
-const void* ConfigBlock::Set(const char* name, const ByteArray& bs, const void* addr, Storage* storage)
+const void* ConfigBlock::Set(const char* name, const ByteArray& bs, uint addr, Storage* storage)
 {
     if(name == NULL) return NULL;
 
@@ -133,7 +141,7 @@ const void* ConfigBlock::Set(const char* name, const ByteArray& bs, const void* 
 		// 重新搞一个配置头，使用新的数据去重新初始化
 		ConfigBlock header;
 		header.Init(name, bs);
-		header.Write(storage, cfg, bs);
+		header.Write(storage, (uint)cfg, bs);
 
 		return cfg->Data();
 	}
@@ -142,7 +150,7 @@ const void* ConfigBlock::Set(const char* name, const ByteArray& bs, const void* 
 }
 
 // 获取配置数据
-bool ConfigBlock::Get(const char* name, ByteArray& bs, const void* addr)
+bool ConfigBlock::Get(const char* name, ByteArray& bs, uint addr)
 {
     if(name == NULL) return false;
 
@@ -164,7 +172,7 @@ bool ConfigBlock::Get(const char* name, ByteArray& bs, const void* addr)
     return false;
 }
 
-const void* ConfigBlock::Get(const char* name, const void* addr)
+const void* ConfigBlock::Get(const char* name, uint addr)
 {
     if(name == NULL) return NULL;
 
