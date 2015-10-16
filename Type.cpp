@@ -57,7 +57,7 @@ void Object::Show(bool newLine) const
 
 /******************************** ByteArray ********************************/
 
-ByteArray::ByteArray(const byte* data, int length, bool copy) : Array(0)
+ByteArray::ByteArray(const void* data, int length, bool copy) : Array(0)
 {
 	if(copy)
 		Copy(data, length);
@@ -65,7 +65,7 @@ ByteArray::ByteArray(const byte* data, int length, bool copy) : Array(0)
 		Set(data, length);
 }
 
-ByteArray::ByteArray(byte* data, int length, bool copy) : Array(0)
+ByteArray::ByteArray(void* data, int length, bool copy) : Array(0)
 {
 	if(copy)
 		Copy(data, length);
@@ -89,7 +89,7 @@ ByteArray::ByteArray(const String& str) : Array(0)
 }
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-ByteArray& ByteArray::operator=(const byte* data)
+ByteArray& ByteArray::operator=(const void* data)
 {
 	Set(data, Length());
 
@@ -127,7 +127,7 @@ String ByteArray::ToHex(char sep, int newLine) const
 }
 
 // 保存到普通字节数组，首字节为长度
-int ByteArray::Load(const byte* data, int maxsize)
+int ByteArray::Load(const void* data, int maxsize)
 {
 	/*// 压缩编码整数最大4字节
 	Stream ms(data, 4);
@@ -135,13 +135,14 @@ int ByteArray::Load(const byte* data, int maxsize)
 
 	return Copy(data + ms.Position(), _Length);*/
 
-	_Length = data[0] <= maxsize ? data[0] : maxsize;
+	const byte* p = (const byte*)data;
+	_Length = p[0] <= maxsize ? p[0] : maxsize;
 
-	return Copy(data + 1, _Length);
+	return Copy(p + 1, _Length);
 }
 
 // 从普通字节数据组加载，首字节为长度
-int ByteArray::Save(byte* data, int maxsize) const
+int ByteArray::Save(void* data, int maxsize) const
 {
 	/*// 压缩编码整数最大4字节
 	Stream ms(data, 4);
@@ -151,10 +152,11 @@ int ByteArray::Save(byte* data, int maxsize) const
 
 	assert_param(_Length <= 0xFF);
 
+	byte* p = (byte*)data;
 	int len = _Length <= maxsize ? _Length : maxsize;
-	data[0] = len;
+	p[0] = len;
 
-	return CopyTo(data + 1, len);
+	return CopyTo(p + 1, len);
 }
 
 String& ByteArray::ToStr(String& str) const
@@ -165,11 +167,6 @@ String& ByteArray::ToStr(String& str) const
 // 显示对象。默认显示ToString
 void ByteArray::Show(bool newLine) const
 {
-	/*// 每个字节后面带一个横杠，有换行的时候两个字符，不带横杠
-	int len = Length() * 2;
-	if(sep != '\0') len += Length();
-	if(newLine > 0) len += Length() / newLine;*/
-
 	// 采用栈分配然后复制，避免堆分配
 	char cs[256];
 	String str(cs, ArrayLength(cs));

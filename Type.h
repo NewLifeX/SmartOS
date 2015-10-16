@@ -129,7 +129,6 @@ protected:
 		while(k < len) k <<= 1;
 
 		T* p = new T[k];
-		//ArrayZero2(p, _Capacity);
 
 		// 是否需要备份数据
 		if(bak > _Length) bak = _Length;
@@ -169,7 +168,6 @@ public:
 			_Capacity	= length;
 			_needFree	= true;
 		}
-		//ArrayZero2(_Arr, _Capacity);
 		_canWrite	= true;
 	}
 
@@ -244,9 +242,9 @@ public:
 	}
 
 	// 设置数组。直接使用指针，不拷贝数据
-	bool Set(T* data, int len = 0)
+	bool Set(void* data, int len = 0)
 	{
-		if(!Set((const T*)data, len)) return false;
+		if(!Set((const void*)data, len)) return false;
 
 		_canWrite	= true;
 
@@ -254,7 +252,7 @@ public:
 	}
 
 	// 设置数组。直接使用指针，不拷贝数据
-	bool Set(const T* data, int len = 0)
+	bool Set(const void* data, int len = 0)
 	{
 		int max	= len;
 		if(!data)
@@ -292,7 +290,7 @@ public:
 	}
 
 	// 复制数组。深度克隆，拷贝数据，自动扩容
-	int Copy(const T* data, int len = 0, int index = 0)
+	int Copy(const void* data, int len = 0, int index = 0)
 	{
 		assert_param2(_canWrite, "禁止修改数组数据");
 		// 自动计算长度，\0结尾
@@ -316,7 +314,7 @@ public:
 	}
 
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	int CopyTo(T* data, int len = 0, int index = 0) const
+	int CopyTo(void* data, int len = 0, int index = 0) const
 	{
 		// 数据长度可能不足
 		if(_Length - index < len || len == 0) len = _Length - index;
@@ -427,14 +425,14 @@ public:
 	ByteArray(int length = 0) : Array(length) { }
 	ByteArray(byte item, int length) : Array(length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	ByteArray(const byte* data, int length, bool copy = false);
-	ByteArray(byte* data, int length, bool copy = false);
+	ByteArray(const void* data, int length, bool copy = false);
+	ByteArray(void* data, int length, bool copy = false);
 	ByteArray(const ByteArray& arr) : Array(arr.Length()) { Copy(arr); }
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-    ByteArray& operator=(const byte* data);
+    ByteArray& operator=(const void* data);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String& ToHex(String& str, char sep = '-', int newLine = 0x10) const;
@@ -442,9 +440,9 @@ public:
 	String ToHex(char sep = '-', int newLine = 0x10) const;
 
 	// 保存到普通字节数组，首字节为长度
-	int Load(const byte* data, int maxsize = -1);
+	int Load(const void* data, int maxsize = -1);
 	// 从普通字节数据组加载，首字节为长度
-	int Save(byte* data, int maxsize = -1) const;
+	int Save(void* data, int maxsize = -1) const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;

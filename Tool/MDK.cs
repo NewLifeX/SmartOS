@@ -302,7 +302,7 @@ namespace NewLife.Reflection
 			Console.WriteLine("等待编译完成：");
 			var left = Console.CursorLeft;
 			var list2 = new List<String>(list);
-			var end = DateTime.Now.AddSeconds(5);
+			var end = DateTime.Now.AddSeconds(10);
 			var fs = 0;
 			while(fs < Files.Count)
 			{
