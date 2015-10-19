@@ -12,8 +12,8 @@ BlinkPort::BlinkPort()
 
 	First	= true;
 	Times	= 10;
-	Interval1	= 100000;
-	Interval2	= 300000;
+	Interval1	= 100;
+	Interval2	= 300;
 	Index		= 0;
 }
 
