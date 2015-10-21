@@ -235,6 +235,8 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" --pd \"{0} SETA 1\"", item);
             }
+            if(Debug) sb.Append(" --pd \"DEBUG SETA 1\"");
+			if(Tiny) sb.Append(" --pd \"TINY SETA 1\"");
 
             sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
             sb.AppendFormat(" \"{0}\"", file);
