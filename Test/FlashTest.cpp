@@ -17,8 +17,6 @@ void TestFlash()
     debug_printf("FlashSize: %d(0x%08x) Bytes  Block: %d Bytes\r\n", flash.Size, flash.Size, flash.Block);
     flash.Erase(addr, 0x100);
 
-    flash.WriteBlock(addr, buf, size);
-
 	byte bb[0x100];
     ByteArray bs;
 	bs.Set(bb, ArrayLength(bb));
