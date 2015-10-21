@@ -83,6 +83,10 @@ namespace NewLife.Reflection
         /// <summary>是否编译调试版。默认true</summary>
         public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
+        private Boolean _Tiny;
+        /// <summary>是否精简版。默认false</summary>
+        public Boolean Tiny { get { return _Tiny; } set { _Tiny = value; } }
+
         private Boolean _Preprocess = false;
         /// <summary>是否仅预处理文件，不编译。默认false</summary>
         public Boolean Preprocess { get { return _Preprocess; } set { _Preprocess = value; } }
@@ -174,12 +178,13 @@ namespace NewLife.Reflection
 			if(file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp");
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
             sb.AppendFormat(" -D{0}", Flash);
-            if (GD32) sb.Append(" -DGD32");
+            if(GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if(Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+			if(Tiny) sb.Append(" -DTINY");
             foreach (var item in Includes)
             {
                 sb.AppendFormat(" -I{0}", item);
@@ -261,6 +266,7 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -D{0}", item);
             }
             if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+			if(Tiny) sb.Append(" -DTINY");
 			Console.WriteLine("命令参数：{0}", sb);
 
             foreach (var item in Files)
@@ -418,7 +424,8 @@ namespace NewLife.Reflection
             foreach (var item in Libs)
             {
 				var d = item.Key.EndsWithIgnoreCase("D");
-				if(Debug == d)
+				var t = item.Key.EndsWithIgnoreCase("T");
+				if(Debug == d && Tiny == t)
 				{
 					sb.Append(" ");
 					sb.Append(item.Value);
@@ -582,7 +589,7 @@ namespace NewLife.Reflection
                 else //if (lib.Debug == Debug)
                 {
                     var lib2 = new LibFile(old);
-                    if (lib2.Debug != Debug)
+                    if (lib2.Debug != Debug || lib2.Tiny != Tiny)
                     {
                         _Libs[lib.Name] = lib.FullName;
                         WriteLog("替换静态库：{0, -12} {1}".F(lib.Name, lib.FullName));
@@ -605,11 +612,16 @@ namespace NewLife.Reflection
             /// <summary>是否调试版文件</summary>
             public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
+            private Boolean _Tiny;
+            /// <summary>是否精简版文件</summary>
+            public Boolean Tiny { get { return _Tiny; } set { _Tiny = value; } }
+
             public LibFile(String file)
             {
                 FullName = file;
                 Name = Path.GetFileNameWithoutExtension(file);
                 Debug = Name.EndsWithIgnoreCase("D");
+                Tiny = Name.EndsWithIgnoreCase("T");
             }
         }
 
@@ -625,19 +637,24 @@ namespace NewLife.Reflection
                 }
             }
             if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
-            if (Debug) name = name.EnsureEnd("D");
+            if (Tiny)
+				name = name.EnsureEnd("T");
+            else if (Debug)
+				name = name.EnsureEnd("D");
 
 			return name;
 		}
 
 		// 输出目录。obj/list等位于该目录下，默认当前目录
 		public String Output = "";
-		
+
 		private String GetObjPath(String file)
 		{
             var objName = "Obj";
-            if (!Debug) objName += "R";
-			if(Defines.Contains("TINY")) objName += "T";
+			if(Tiny)
+				objName += "T";
+            else if (Debug)
+				objName += "D";
 			objName = Output.CombinePath(objName);
 			objName.GetFullPath().EnsureDirectory(false);
 			if(!file.IsNullOrEmpty())
@@ -845,7 +862,7 @@ namespace NewLife.Reflection
  * 4，清理无用垃圾文件
  * 5，从SmartOS目录更新脚本自己
  */
-	
+
     public class Helper
     {
         static Int32 Main2(String[] args)
