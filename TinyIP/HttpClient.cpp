@@ -213,8 +213,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER* tcp, uint len)
 		debug_printf("Tcp Receive(%d) From ", len);
 		TinyIP::ShowIP(RemoteIP);
 		debug_printf(" : ");
-		Sys.ShowString(tcp->Next(), len);
-		debug_printf("\r\n");
+		String(tcp->Next(), len).Show(true);
 #endif
 	}
 	// 发送ACK，通知已收到

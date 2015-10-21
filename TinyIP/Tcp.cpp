@@ -235,8 +235,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 		debug_printf("Tcp:Receive(%d) From ", len);
 		Remote.Show();
 		debug_printf(" ");
-		Sys.ShowString(data, len);
-		debug_printf("\r\n");
+		String(data, len).Show(true);
 #endif
 	}
 	// 发送ACK，通知已收到

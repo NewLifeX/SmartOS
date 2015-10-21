@@ -285,8 +285,7 @@ bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	debug_printf(" => ");
 	remote.Show();
 	debug_printf("\r\n");*/
-	/*Sys.ShowHex((byte*)eth->Next(), len, '-');
-	debug_printf("\r\n");*/
+	/*ByteArray((byte*)eth->Next(), len).Show(true);*/
 
 	ByteArray bs((byte*)eth, len);
 	return _port->Write(bs);

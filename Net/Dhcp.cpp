@@ -290,7 +290,7 @@ void Dhcp::Process(ByteArray& bs, const IPEndPoint& ep)
 		if(opt)
 		{
 			debug_printf(" ");
-			Sys.ShowString(&opt->Data, opt->Length);
+			String(&opt->Data, opt->Length).Show(true);
 		}
 		debug_printf("\r\n");
 	}

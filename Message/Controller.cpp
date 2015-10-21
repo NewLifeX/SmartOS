@@ -64,16 +64,14 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 #if MSG_DEBUG
 	/*msg_printf("TinyNet::Dispatch[%d] ", len);
 	// 输出整条信息
-	Sys.ShowHex(buf, len, '-');
-	msg_printf("\r\n");*/
+	ByteArray(buf, len).Show(true);*/
 #endif
 	if(len > control->Port->MaxSize)
 	{
 #if MSG_DEBUG
 		msg_printf("TinyNet::Dispatch[%d] ", len);
 		// 输出整条信息
-		Sys.ShowHex(buf, len, '-');
-		msg_printf("\r\n");
+		ByteArray(buf, len).Show(true);
 #endif
 		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->Port->MaxSize);
 		//assert_param2(len <= control->Port->MaxSize, "数据长度超过控制器可接受最大长度");
@@ -102,8 +100,7 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 			
 			msg_printf("TinyNet::DispatchError[%d] ", len);
 			// 输出整条信息
-			Sys.ShowHex(buf, len, '-');
-			msg_printf("\r\n");
+			ByteArray(buf, len).Show(true);
 #endif
 			break;
 		}

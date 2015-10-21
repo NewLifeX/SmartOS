@@ -80,7 +80,7 @@ void TestCrc()
 	uint data = 0x12345678;
 	uint crc = Crc::Hash((byte*)&data, 4, 0);
 	uint crc2 = Crc::Hash(&data, 4);
-	Sys.ShowHex((byte*)&data, 4);
+	ByteArray((byte*)&data, 4)).Show();
 	debug_printf("\r\n\tSoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 无初值时，两者一样
 
@@ -88,7 +88,7 @@ void TestCrc()
 	// 试试二次计算Crc
 	crc = Crc::Hash((byte*)&crc, 4, 0);
 	crc2 = Crc::Hash(&crc2, 4);
-	Sys.ShowHex((byte*)&temp, 4);
+	ByteArray((byte*)&temp, 4)).Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果相同，但都不是0
@@ -99,7 +99,7 @@ void TestCrc()
 	data2 += data;
 	crc = Crc::Hash((byte*)&data2, 8, 0);
 	crc2 = Crc::Hash(&data2, 8);
-	Sys.ShowHex((byte*)&data2, 8);
+	ByteArray((byte*)&data2, 8)).Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果相同，但都不是0
@@ -108,14 +108,14 @@ void TestCrc()
 	// 实际上就是数字为初值，对它自身进行校验码计算
 	crc = Crc::Hash((byte*)&temp, 4, data);
 	crc2 = HardCrc(&temp, 4, data);
-	Sys.ShowHex((byte*)&temp, 4);
+	ByteArray((byte*)&temp, 4)).Show();
 	debug_printf(" <= 0x%08x\r\n\t", data);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果不同，HardCrc结果跟8字节测试相同
 
 	crc = Crc::Hash((byte*)&temp, 4, temp);
 	crc2 = HardCrc(&temp, 4, temp);
-	Sys.ShowHex((byte*)&temp, 4);
+	ByteArray((byte*)&temp, 4)).Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果不同，SoftCrc结果跟8字节测试相同
@@ -125,7 +125,7 @@ void TestCrc()
 
 	crc = Crc::Hash((byte*)DataBuffer, size*4, 0);
 	crc2 = Crc::Hash(DataBuffer, size*4);
-	Sys.ShowHex((byte*)DataBuffer, 0x20);
+	ByteArray((byte*)DataBuffer, 0x20)).Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 无初值时，两者一样
@@ -135,7 +135,7 @@ void TestCrc()
 	// 实际应用中，先计算数据的校验，然后接着附加校验码部分
 	crc = Crc::Hash((byte*)&temp, 4, temp);
 	crc2 = HardCrc((byte*)&temp, 4, temp);
-	Sys.ShowHex((byte*)&temp, 4);
+	ByteArray((byte*)&temp, 4)).Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 有初值时，两者不一样
@@ -146,7 +146,7 @@ void TestCrc()
 	crc = Crc::Hash((byte*)&crc, 4, crc);
 	crc2 = HardCrc(DataBuffer, size*4, 0);
 	crc2 = HardCrc((byte*)&crc2, 4, crc2);
-	Sys.ShowHex((byte*)DataBuffer, 0x20);
+	ByteArray((byte*)DataBuffer, 0x20).Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 

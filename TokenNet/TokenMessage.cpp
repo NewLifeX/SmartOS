@@ -135,9 +135,7 @@ void TokenMessage::Show() const
 	{
 		assert_ptr(Data);
 		debug_printf(" Data[%d]=", Length);
-		//Sys.ShowHex(Data, Length, false);
-		ByteArray bs(Data, Length);
-		bs.Show();
+		ByteArray(Data, Length).Show();
 	}
 	debug_printf("\r\n");
 #endif
@@ -223,8 +221,7 @@ bool TokenController::Valid(const Message& msg)
 #if MSG_DEBUG
 	/*msg_printf("TokenController::Dispatch ");
 	// 输出整条信息
-	Sys.ShowHex(buf, ms.Length, '-');
-	msg_printf("\r\n");*/
+	ByteArray(buf, ms.Length).Show(true);*/
 #endif
 
 	return true;

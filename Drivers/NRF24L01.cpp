@@ -386,16 +386,14 @@ bool NRF24L01::Config()
 	if(st.Beken) debug_printf("上海Beken芯片\r\n");
 
 	debug_printf("    本地地址: ");
-	Sys.ShowHex(Address, 5, '-');
-	debug_printf("\r\n");
+	ByteArray(Address, 5).Show(true);
 
 	// 根据AddrBits决定相应通道是否打开
 	byte bits = AddrBits >> 1;
 	if(bits & 0x01)
 	{
 		debug_printf("    Addres1: ");
-		Sys.ShowHex(Address1, 5, '-');
-		debug_printf("\r\n");
+		ByteArray(Address1, 5).Show(true);
 	}
 	for(int i=0; i<4; i++)
 	{
@@ -403,10 +401,8 @@ bool NRF24L01::Config()
 		if(bits & 0x01)
 		{
 			debug_printf("    Addres%d: ", i + 2);
-			Sys.ShowHex(Addr2_5 + i, 1, '-');
-			debug_printf("-");
-			Sys.ShowHex(Address1 + 1, 4, '-');
-			debug_printf("\r\n");
+			ByteArray(Addr2_5 + i, 1).Show(true);
+			ByteArray(Address1 + 1, 4).Show(true);
 		}
 	}
 	static const short powers[] = {-12, -6, -4, 0, 1, 3, 4, 7};

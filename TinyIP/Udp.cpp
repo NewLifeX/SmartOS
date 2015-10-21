@@ -99,8 +99,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 		CurLocal.Show();
 		debug_printf(" Payload=%d udp_len=%d \r\n", len, __REV16(udp.Length));
 
-		Sys.ShowHex(data, len);
-		debug_printf(" \r\n");
+		ByteArray(data, len).Show(true);
 #endif
 	}
 }
@@ -120,7 +119,7 @@ void UdpSocket::SendPacket(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port
 	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, __REV16(udp.SrcPort));
 	ip.Show();
 	debug_printf(":%d ", port);
-	if(tlen > 0) Sys.ShowHex(udp.Next(), tlen > 64 ? 64 : tlen, false);
+	if(tlen > 0) ByteArray(udp.Next(), tlen > 64 ? 64 : tlen).Show();
 	debug_printf("\r\n");
 #else
 	Sys.Sleep(1);

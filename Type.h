@@ -472,8 +472,8 @@ public:
 	String(int length = 0) : Array(length) { }
 	String(char item, int count) : Array(count) { Set(item, 0, count); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	String(char* str, int len = 0) : Array(0) { Set(str, len); }
-	String(const char* str, int len = 0) : Array(0) { Set(str, len); }
+	String(void* str, int len = 0) : Array(0) { Set(str, len); }
+	String(const void* str, int len = 0) : Array(0) { Set(str, len); }
 	String(const String& str) : Array(str.Length()) { Copy(str); }
 
 	// 输出对象的字符串表示方式

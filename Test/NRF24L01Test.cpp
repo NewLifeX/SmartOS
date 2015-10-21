@@ -31,19 +31,12 @@ void OnReceive(void* param)
 	uint len = nrf->Read(bs);
     if(len)
     {
-        //Sys.ShowString(buf, len);
-        //debug_printf("\r\n");
 		bs.Show(true);
     }
 }
 
 uint OnReceive(ITransport* transport, ByteArray& bs, void* param, void* param2)
 {
-	/*if(len)
-	{
-        Sys.ShowString(buf, len);
-        debug_printf("\r\n");
-	}*/
 	bs.Show(true);
 
 	return 0;

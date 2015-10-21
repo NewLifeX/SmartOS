@@ -368,11 +368,10 @@ void TSys::ShowInfo()
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
     debug_printf("ChipID:");
-	ShowHex(ID, ArrayLength(ID), '-');
+	ByteArray(ID, ArrayLength(ID)).Show(true);
 
 	debug_printf("\t");
-	ShowString(ID, 12, false);
-    debug_printf("\r\n");
+	String(ID, 12).Show(true);
 
 	// 输出堆信息
 	uint start = (uint)&__heap_base;
@@ -393,61 +392,11 @@ void TSys::ShowInfo()
 	Time.Now().Show(true);
 	// 系统启动时间
 	debug_printf("Start: %dms (Inited: %dms)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
-	debug_printf("技术支持: http://www.NewLifeX.com\r\n");
+	debug_printf("Support: http://www.NewLifeX.com\r\n");
 
     debug_printf("\r\n");
 #endif
 }
-
-#define __HELP__MODULE__ 1
-#ifdef __HELP__MODULE__
-// 显示十六进制数据，指定分隔字符
-void TSys::ShowHex(byte* buf, uint len, char sep)
-{
-	for(int i=0; i < len; i++)
-	{
-		debug_printf("%02X", *buf++);
-		if(i < len - 1 && sep != '\0') debug_printf("%c", sep);
-		//if(((i + 1) & 0xF) == 0) debug_printf("\r\n");
-	}
-	//debug_printf("\r\n");
-}
-
-// 显示字符串，不指定长度时自动找\0
-void TSys::ShowString(byte* buf, uint len, bool autoEnd)
-{
-	if(len == 0) len = 1000;
-    for(int i=0; i<len; i++)
-    {
-		if(buf[i] == 0 && autoEnd) return;
-		if(buf[i] >= 32 && buf[i] <= 126 || buf[i] == 0x0A || buf[i] == 0x0D || buf[i] == 0x09)
-			debug_printf("%c", buf[i]);
-		else
-			debug_printf("%02X", buf[i]);
-    }
-}
-
-// 源数据src转为十六进制字符编码再放入目标字符buf，比如0xA8在目标放两个字节0x41(A) 0x38(8)
-void TSys::ToHex(byte* buf, byte* src, uint len)
-{
-	for(int i=0; i < len; i++, src++)
-	{
-		byte n = *src >> 4;
-		if(n < 10)
-			n += '0';
-		else
-			n += 'A' - 10;
-		*buf++ = n;
-
-		n = *src & 0x0F;
-		if(n < 10)
-			n += '0';
-		else
-			n += 'A' - 10;
-		*buf++ = n;
-	}
-}
-#endif
 
 #define __TASK__MODULE__ 1
 #ifdef __TASK__MODULE__

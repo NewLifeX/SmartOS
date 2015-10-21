@@ -3,8 +3,6 @@
 uint OnUsartRead(ITransport* transport, ByteArray& bs, void* param, void* param2)
 {
 	debug_printf("收到：");
-    //Sys.ShowString(buf, len);
-    //debug_printf("\r\n");
 	bs.Show(true);
     
     return 0;
