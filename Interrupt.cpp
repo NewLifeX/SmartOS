@@ -171,6 +171,9 @@ __asm uint GetIPSR()
 // 是否在中断里面
 bool TInterrupt::IsHandler() { return GetIPSR() & 0x01; }
 
+#ifdef TINY
+__asm void FaultHandler() { }
+#else
 void UserHandler()
 {
     uint num = GetIPSR();
@@ -252,6 +255,7 @@ extern "C"
 		//never expect to return
 	}
 }
+#endif
 
 // 智能IRQ，初始化时备份，销毁时还原
 SmartIRQ::SmartIRQ(bool enable)

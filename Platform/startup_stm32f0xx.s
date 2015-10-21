@@ -30,7 +30,6 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
 
                 IMPORT FaultHandler
-                IMPORT UserHandler
                 DCD     FaultHandler ; NMI Handler
                 DCD     FaultHandler ; Hard Fault Handler
                 DCD     FaultHandler ; MPU Fault Handler
@@ -39,6 +38,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
 
 				IF :DEF:TINY
 				ELSE
+                IMPORT UserHandler
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved

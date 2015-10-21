@@ -141,6 +141,7 @@ TSys::TSys()
     CystalClock = HSE_VALUE;    // 晶振时钟
     MessagePort = COM1; // COM1;
 
+#ifndef TINY
     bool IsGD = Get_JTAG_ID() == 0x7A3;
 
 #ifdef STM32F0
@@ -162,7 +163,6 @@ TSys::TSys()
     if(IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 
 	_Index = 0;
-#ifndef TINY
 #ifdef STM32F0
 	if(IsGD)
 		FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
