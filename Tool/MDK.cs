@@ -169,7 +169,7 @@ namespace NewLife.Reflection
 				if(RebuildTime > 0 && obj.LastWriteTime > file.AsFile().LastWriteTime)
 				{
 					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
-					if(obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return 0;
+					if(obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return -2;
 				}
 			}
 
@@ -222,7 +222,7 @@ namespace NewLife.Reflection
 				if(obj.LastWriteTime > file.AsFile().LastWriteTime)
 				{
 					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
-					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return 0;
+					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return -2;
 				}
 			}
 
@@ -273,8 +273,6 @@ namespace NewLife.Reflection
 
             foreach (var item in Files)
             {
-                Console.Write("编译：{0}\t", item);
-
                 var rs = 0;
                 var sw = new Stopwatch();
                 sw.Start();
@@ -292,12 +290,17 @@ namespace NewLife.Reflection
                 }
 
                 sw.Stop();
-                var old = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\t {0:n0}毫秒", sw.ElapsedMilliseconds);
-                Console.ForegroundColor = old;
 
-                if (rs == 0)
+				if(rs == 0 || rs == -1)
+				{
+					Console.Write("编译：{0}\t", item);
+					var old = Console.ForegroundColor;
+					Console.ForegroundColor = ConsoleColor.Green;
+					Console.WriteLine("\t {0:n0}毫秒", sw.ElapsedMilliseconds);
+					Console.ForegroundColor = old;
+				}
+
+                if(rs <= 0)
                 {
                     if(!Preprocess)
 					{
@@ -357,14 +360,14 @@ namespace NewLife.Reflection
             sb.Append("--create -c");
             sb.AppendFormat(" -r \"{0}\"", lib);
 
-            Console.Write("使用对象文件：");
+            if(Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                Console.Write(" {0}", item);
+                if(Objs.Count < 6) Console.Write(" {0}", item);
             }
-			Console.WriteLine();
+			if(Objs.Count < 6) Console.WriteLine();
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
 			if(name.Contains("\\")) name = name.Substring("\\", "_");
@@ -413,14 +416,14 @@ namespace NewLife.Reflection
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
-            Console.Write("使用对象文件：");
+            if(Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                Console.Write(" {0}", item);
+                if(Objs.Count < 6) Console.Write(" {0}", item);
             }
-			Console.WriteLine();
+			if(Objs.Count < 6) Console.WriteLine();
 
             Console.WriteLine("使用静态库：");
             foreach (var item in Libs)
