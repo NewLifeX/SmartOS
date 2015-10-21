@@ -7,12 +7,14 @@ extern "C"
 
 	void SystemInit(void)
 	{
+#ifndef TINY
 		SystemCoreClock = 48000000;
 
 		/* Configure the System clock frequency, AHB/APBx prescalers and Flash settings */
 		SetSysClock(SystemCoreClock, 8000000);
 
 		SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_Flash);
+#endif
 	}
 
 	void SetSysClock(unsigned int clock, unsigned int cystalClock)

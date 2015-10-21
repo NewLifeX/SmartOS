@@ -237,6 +237,7 @@ void ShowTime(void* param)
 
 void TSys::InitClock()
 {
+#ifndef TINY
     // 获取当前频率
     uint clock = RCC_GetSysClock();
     // 如果当前频率不等于配置，则重新配置时钟
@@ -250,6 +251,7 @@ void TSys::InitClock()
 		Clock = RCC_GetSysClock();
 		SystemCoreClock = Clock;
 	}
+#endif
 }
 
 void TSys::Init(void)
