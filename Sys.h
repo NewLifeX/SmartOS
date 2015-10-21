@@ -86,7 +86,6 @@ public:
     uint	CPUID;		// CPUID
     ushort	FlashSize;	// 芯片Flash容量。
     ushort	RAMSize;	// 芯片RAM容量
-    ushort	RAM;		// 系统静态分配内存大小
 
     TSys();				// 构造函数
     //~TSys();			// 析构函数
@@ -94,6 +93,8 @@ public:
 	void InitClock();	// 初始化系统时钟
     void Init();     	// 初始化系统
 	void ShowInfo();
+	uint HeapBase();	// 堆起始地址，前面是静态分配内存
+	uint StackTop();	// 栈顶，后面是初始化不清零区域
 
 	ulong StartTime;	// 启动时间，微秒
 	Func OnTick;

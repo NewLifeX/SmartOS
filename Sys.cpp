@@ -31,24 +31,19 @@ uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
 #endif
 
-void TSys::Reset() { NVIC_SystemReset(); }
-
 #pragma arm section code
 
-_force_inline void InitHeapStack(uint ramSize)
+_force_inline void InitHeapStack(uint top)
 {
 	uint* p = (uint*)__get_MSP();
 
-	// 直接使用RAM最后，需要减去一点，因为TSys构造函数有压栈，待会需要把压栈数据也拷贝过来
-	uint top = SRAM_BASE + (ramSize << 10);
 	uint size = (uint)&__initial_sp - (uint)p;
 	uint msp = top - size;
 	// 拷贝一部分栈内容到新栈
-	//memset((void*)msp, 0, size);
 	memcpy((void*)msp, (void*)p, size);
 
 	// 必须先拷贝完成栈，再修改栈指针
-	__set_MSP(msp);	// 左移10位，就是乘以1024
+	__set_MSP(msp);
 
 	// 这个时候还没有初始化堆，我们来设置堆到内存最大值，让堆栈共用RAM剩下全部
 	//__microlib_freelist
@@ -187,20 +182,19 @@ TSys::TSys()
 		RAMSize = RamSizes[_Index];
 	}
 
-	InitHeapStack(RAMSize);
+	InitHeapStack(StackTop());
 #endif
-	RAM = (uint)&__heap_base;
 
-	StartTime = 0;
-	OnTick = NULL;
-	OnSleep = NULL;
+	StartTime	= 0;
+	OnTick		= NULL;
+	OnSleep		= NULL;
 
 #if DEBUG
-    OnError = SysError;
-    OnStop = SysStop;
+    OnError		= SysError;
+    OnStop		= SysStop;
 #else
-    OnError = 0;
-    OnStop = 0;
+    OnError		= 0;
+    OnStop		= 0;
 #endif
 
 #ifdef STM32F1
@@ -262,11 +256,23 @@ void TSys::Init(void)
     Time.Init();
 }
 
+// 堆起始地址，前面是静态分配内存
+uint TSys::HeapBase()
+{
+	return (uint)&__heap_base;	
+}
+
+// 栈顶，后面是初始化不清零区域
+uint TSys::StackTop()
+{
+	return SRAM_BASE + (RAMSize << 10) - 0x40;
+}
+
 #if DEBUG
 typedef struct
 {
 	byte Revision:4;	// The p value in the Rnpn product revision identifier, indicates patch release.0x0: patch 0
-	ushort PartNo:12;		// Part number of the processor. 0xC20: Cortex-M0
+	ushort PartNo:12;	// Part number of the processor. 0xC20: Cortex-M0
 	byte Constant:4;	// Constant that defines the architecture of the processor. 0xC: ARMv6-M architecture
 	byte Variant:4;		// Variant number: The r value in the Rnpn product revision identifier. 0x0: revision 0
 	byte Implementer;	// Implementer code. 0x41 ARM
@@ -494,6 +500,8 @@ bool TSys::SetTaskPeriod(uint taskid, int period)
 
 	return true;
 }
+
+void TSys::Reset() { NVIC_SystemReset(); }
 
 void TSys::Start()
 {
