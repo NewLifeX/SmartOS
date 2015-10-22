@@ -86,9 +86,17 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
 
 //--//
 
+Config::Config(Storage* st, uint addr)
+{
+	Device	= st;
+	Address	= addr;
+}
+
 // 循环查找配置块
 const void* Config::Find(const char* name, bool fAppend)
 {
+    uint c_Version = 0x534F5453; // STOS
+
 	assert_param2(name, "配置段名称不能为空");
 
 	uint addr = Address;
@@ -172,15 +180,43 @@ const void* Config::Get(const char* name)
 }
 
 // Flash最后一块作为配置区
-Config* Config::CreateFlash()
+Config& Config::CreateFlash()
 {
 	// 最后一块作为配置区
 	static Flash flash;
-	static Config cfg;
-	cfg.Device		= &flash;
-	cfg.Address		= flash.Start + flash.Size - flash.Block;
+	static Config cfg(&flash, flash.Start + flash.Size - flash.Block);
+	//cfg.Device		= &flash;
+	//cfg.Address		= flash.Start + flash.Size - flash.Block;
 
-	return &cfg;
+	return cfg;
+}
+
+// RAM最后一小段作为热启动配置区
+Config& Config::CreateRAM()
+{
+	// 最后一块作为配置区
+	static CharStorage cs;
+	static Config cfg(&cs, Sys.StackTop());
+	//cfg.Device		= &cs;
+	//cfg.Address		= Sys.StackTop();
+
+	return cfg;
+}
+
+void* HotConfig::Next() const
+{
+	return (void*)&this[1];
+}
+
+HotConfig& HotConfig::Current()
+{
+	static Config& cfg = Config::CreateRAM();
+
+	// 查找配置数据，如果不存在，则清空
+	const void* dat = cfg.Get("Hot");
+	if(!dat) dat = cfg.Set("Hot", ByteArray((byte)0, sizeof(HotConfig)));
+
+	return *(HotConfig*)dat;
 }
 
 // 初始化

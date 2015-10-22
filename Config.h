@@ -10,11 +10,12 @@
 class Config
 {
 private:
-    static const uint c_Version = 0x534F5453; // STOS
 
 public:
 	Storage*	Device;
 	uint		Address;
+
+	Config(Storage* st, uint addr);
 
 	// 查找
     const void* Find(const char* name, bool fAppend = false);
@@ -30,13 +31,33 @@ public:
 	// 当前
 	static Config* Current;
 	// Flash最后一块作为配置区
-	static Config* CreateFlash();
+	static Config& CreateFlash();
+	// RAM最后一小段作为热启动配置区
+	static Config& CreateRAM();
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 #pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
 #pragma pack(1)
+
+// 系统配置信息
+class HotConfig
+{
+public:
+	ushort	Times;		// 启动次数
+
+	void* Next() const;
+
+	static HotConfig& Current();
+};
+
+// 系统配置信息
+class SysConfig
+{
+public:
+
+};
 
 // 配置信息
 class TConfig
