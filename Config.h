@@ -5,41 +5,32 @@
 #include "Stream.h"
 #include "Storage\Storage.h"
 
-class ConfigBlock
+// 配置管理
+// 配置区以指定签名开头，后续链式跟随各配置块
+class Config
 {
 private:
     static const uint c_Version = 0x534F5453; // STOS
 
 public:
-	static Storage*	Device;
-	static uint		BaseAddress;
-
-public:
-	uint	Signature;
-	ushort	HeaderCRC;
-	ushort	DataCRC;
-	uint	Size;
-	char	Name[4];
-
-    bool IsGoodBlock() const;
-    bool IsGoodData () const;
-
-    const ConfigBlock*	Next() const;
-    const void*			Data() const;
-
-    bool Init(const char* name, const ByteArray& bs);
-    bool Write(Storage* storage, uint addr, const ByteArray& bs);
+	Storage*	Device;
+	uint		Address;
 
 	// 查找
-    static const ConfigBlock* Find(const char* name, uint addr = NULL, bool fAppend = false);
-    // 废弃
-	static bool Invalid(const char* name, uint addr = NULL, Storage* storage = NULL);
+    const void* Find(const char* name, bool fAppend = false);
+    // 废弃。仅清空名称，并不删除数据区
+	bool Invalid(const char* name);
     // 设置配置数据
-    static const void* Set(const char* name, const ByteArray& bs, uint addr = NULL, Storage* storage = NULL);
+    const void* Set(const char* name, const ByteArray& bs);
 	// 获取配置数据
-    static bool Get(const char* name, ByteArray& bs, uint addr = NULL);
+    bool Get(const char* name, ByteArray& bs);
 	// 获取配置数据
-    static const void* Get(const char* name, uint addr = NULL);
+    const void* Get(const char* name);
+
+	// 当前
+	static Config* Current;
+	// Flash最后一块作为配置区
+	static Config* CreateFlash();
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
