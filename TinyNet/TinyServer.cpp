@@ -151,11 +151,17 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 // 组网
 bool TinyServer::OnJoin(const TinyMessage& msg)
 {
-	if(msg.Reply||!Student)
+	if(msg.Reply)
 	{
         if(!Student) debug_printf("非学习模式禁止加入\r\n");
 		return false;
 	}
+	  if(!Student)
+	  {
+		  debug_printf("非学习模式禁止加入\r\n");
+		  return false;
+	  }
+
 
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
