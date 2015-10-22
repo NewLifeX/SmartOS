@@ -24,6 +24,7 @@ Gateway::Gateway()
 	Running		= false;
 	AutoReport	= false;
 	IsOldOrder	= false;
+	ExitStudyTaskID = 0;
 }
 
 Gateway::~Gateway()
@@ -428,7 +429,9 @@ void Gateway::SetMode(bool student)
 	// 定时退出学习模式
 	if(student)
 	{		
-		Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
+		//Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
+		if(ExitStudyTaskID)Sys.SetTask(ExitStudyTaskID, true, 90000);
+		else ExitStudyTaskID = Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 	}
 
 	Client->Send(msg);

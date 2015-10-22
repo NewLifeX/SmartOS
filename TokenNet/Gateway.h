@@ -19,6 +19,7 @@ public:
 	TinyServer* Server;		// 内网服务端
 	TokenClient* Client;	// 外网客户端
 	IDataPort*	Led;		// 指示灯
+	uint 		ExitStudyTaskID;
 
 	Gateway();
 	~Gateway();
