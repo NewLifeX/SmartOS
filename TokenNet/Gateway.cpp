@@ -51,7 +51,7 @@ void Gateway::Start()
 	
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-    Client->IsOldOrder  = IsOldOrder;
+  //  Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -405,8 +405,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 }
 
 void ExitStudentMode(void* param)
-{
-	
+{ 
 	Gateway* gw = (Gateway*)param;
 	gw->SetMode(false);
 }
@@ -429,7 +428,7 @@ void Gateway::SetMode(bool student)
 	// 定时退出学习模式
 	if(student)
 	{		
-		Sys.AddTask(ExitStudentMode, this, 30000, -1, "退出学习");
+		Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 	}
 
 	Client->Send(msg);
@@ -446,6 +445,8 @@ bool Gateway::OnMode(const Message& msg)
 // 节点注册入网 0x22
 void Gateway::DeviceRegister(byte id)
 {
+	if(!Student) return;
+	
 	TokenMessage msg;
 	msg.Code	= 0x22;
 	msg.Length	= 1;
