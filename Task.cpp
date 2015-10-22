@@ -283,8 +283,11 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	TaskScheduler* host = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 系统启动 ", host->Cost, host->MaxCost);
-	Time.Now().Show(true);
+	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
+	Time.Now().Show();
+	debug_printf(" 启动 ");
+	DateTime dt(Time.Current() / 1000);
+	dt.Show(true);
 
 	IArray<Task>& ts = *(host->_Tasks);
 	for(int i=0; i<ts.Length(); i++)
