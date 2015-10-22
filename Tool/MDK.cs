@@ -269,7 +269,10 @@ namespace NewLife.Reflection
             }
             if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
 			if(Tiny) sb.Append(" -DTINY");
-			Console.WriteLine("命令参数：{0}", sb);
+			Console.Write("命令参数：");
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine(sb);
+			Console.ResetColor();
 
             foreach (var item in Files)
             {
