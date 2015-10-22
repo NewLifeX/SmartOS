@@ -32,13 +32,6 @@ TTime::TTime()
 	OnSleep	= NULL;
 }
 
-/*TTime::~TTime()
-{
-    Interrupt.Deactivate(SysTick_IRQn);
-    // 关闭定时器
-	SysTick->CTRL &= ~SYSTICK_ENABLE;
-}*/
-
 void TTime::Init()
 {
 	// 准备使用外部时钟，Systick时钟=HCLK/8
@@ -60,11 +53,6 @@ void TTime::Init()
 	SysTick->CTRL  = SysTick_CTRL_ENABLE_Msk;
 	Interrupt.Disable(SysTick_IRQn);
 
-	// 必须放在SysTick_Config后面，因为它设为不除以8
-	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
-	// 本身主频已经非常快，除以8分频吧
-	//SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
-
 	TIM_TypeDef* tim = g_Timers[Index];
 #ifdef STM32F0
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
@@ -74,8 +62,8 @@ void TTime::Init()
 
     // 获取当前频率
 #ifdef STM32F0
-	ushort prd	= 10000;
-	ushort psc	= Sys.Clock / 1000;
+	uint prd	= 1000;
+	uint psc	= Sys.Clock / 1000;
 #else
 	clk = RCC_GetPCLK();
 	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
@@ -83,8 +71,8 @@ void TTime::Init()
 
 	// 120M时，分频系数必须是120K才能得到1k的时钟，超过了最大值64k
 	// 因此，需要增加系数
-	ushort prd	= 10000;
-	ushort psc	= clk / 1000;
+	uint prd	= 1000;
+	uint psc	= clk / 1000;
 	Div = 0;
 	while(psc > 0xFFFF)
 	{
@@ -128,11 +116,11 @@ void TTime::OnHandler(ushort num, void* param)
 	if(TIM_GetITStatus(timer, TIM_IT_Update) == RESET) return;
 
 	// 累加计数
-	Time.Seconds += 10;
-	Time.Milliseconds += 10000;
+	Time.Seconds += 1;
+	Time.Milliseconds += 1000;
 	// 必须清除TIMx的中断待处理位，否则会频繁中断
 	TIM_ClearITPendingBit(timer, TIM_IT_Update);
-	//debug_printf("TTime::OnHandler CNT=%d Seconds=%d Milliseconds=%d\r\n", timer->CNT, Time.Seconds, (uint)Time.Milliseconds);
+	//debug_printf("TTime::OnHandler Seconds=%d Milliseconds=%d\r\n", Time.Seconds, (uint)Time.Milliseconds);
 
 	// 定期保存Ticks到后备RTC寄存器
 	if(Time.OnSave) Time.OnSave();

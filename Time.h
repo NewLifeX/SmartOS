@@ -30,7 +30,6 @@ public:
 	FuncInt OnSleep;
 
     TTime();
-    //~TTime();
 
 	void UseRTC();			// 使用RTC，必须在Init前调用
 	void Init();
