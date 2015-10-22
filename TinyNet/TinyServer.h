@@ -42,6 +42,7 @@ public:
 
 	// 当前设备
 	Device* Current;
+	bool Student;		//学习模式
 	
 // 常用系统级消息
 public:

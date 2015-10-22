@@ -26,6 +26,7 @@ TinyServer::TinyServer(TinyController* control)
 	Param		= NULL;
 
 	Current		= NULL;
+	Student	= false;
 }
 
 bool TinyServer::Send(Message& msg)
@@ -150,7 +151,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 // 组网
 bool TinyServer::OnJoin(const TinyMessage& msg)
 {
-	if(msg.Reply) return false;
+	if(msg.Reply&&!Student) return false;
 
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
