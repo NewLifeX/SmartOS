@@ -21,29 +21,45 @@ bool BlockStorage::Read(uint address, ByteArray& bs)
 
 bool BlockStorage::Write(uint address, const ByteArray& bs)
 {
-	uint len = bs.Length();
+	byte* buf	= bs.GetBuffer();
+	uint len	= bs.Length();
     if (!len) return false;
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, bs.GetBuffer());
+    debug_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, buf);
     int len2 = 0x10;
     if(len < len2) len2 = len;
     //debug_printf("    Data: ");
     //!!! 必须另起一个指针，否则移动原来的指针可能造成重大失误
-    byte* p = bs.GetBuffer();
+    byte* p = buf;
     for(int i=0; i<len2; i++) debug_printf(" %02X", *p++);
     debug_printf("\r\n");
 #endif
 
+	// 比较跳过相同数据
+	while(len)
+	{
+		if(*(ushort*)address != *(ushort*)buf) break;
+		
+		address	+= 2;
+		buf		+= 2;
+		len		-= 2;
+	}
+	if(!len)
+	{
+		debug_printf("数据相同，无需写入！");
+		return true;
+	}
+	
     // 如果没有读改写，直接执行
-    if(!ReadModifyWrite) return WriteBlock(address, bs.GetBuffer(), len, true);
+    if(!ReadModifyWrite) return WriteBlock(address, buf, len, true);
 
     // Flash操作一般需要先擦除然后再写入，由于擦除是按块进行，这就需要先读取出来，修改以后再写回去
 
     // 从地址找到所在扇区
     int  offset		= address % Block;
-	byte* pData 	= bs.GetBuffer();	// 指向要下一个写入的数据
+	byte* pData 	= buf;	// 指向要下一个写入的数据
 	int remainSize	= len;		// 剩下数据数量
 	int addressNow	= address;	// 下一个要写入数据的位置
 
@@ -64,16 +80,15 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 		uint size = Block - offset;
 		// 前段原始数据，中段来源数据，末段原始数据
 		ms.Write((byte*)addr, 0, offset);
-		if(remainSize > size)
-			ms.Write(pData, 0, size);
-		else
-		{
-			ms.Write(pData, 0, remainSize);
-			ms.Write((byte*)addr, ms.Position(), size - remainSize);
-		}
+		if(size > remainSize) size = remainSize;
+		ms.Write(pData, 0, size);
+		
+		int remain = Block - (offset + size);
+		if(remain) ms.Write((byte*)addr, ms.Position(), remain);
 
 		// 整块擦除，然后整体写入
-		Erase(addr, Block);
+		//Erase(addr, Block);
+		Erase(addr + offset, size);
 		if(!WriteBlock(addr, ms.GetBuffer(), Block, true)) return false;
 
 		remainSize -= size;
