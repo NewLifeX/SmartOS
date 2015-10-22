@@ -42,38 +42,39 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
     // Flash操作一般需要先擦除然后再写入，由于擦除是按块进行，这就需要先读取出来，修改以后再写回去
 
     // 从地址找到所在扇区
-    uint  offset		= (uint)address % Block;
-	byte* pData 		= bs.GetBuffer();					// 指向要下一个写入的数据
-	uint remainSize 	= len;		// 剩下数据数量
-	uint addressNow 	= address;		// 下一个要写入数据的位置
+    int  offset		= address % Block;
+	byte* pData 	= bs.GetBuffer();	// 指向要下一个写入的数据
+	int remainSize	= len;		// 剩下数据数量
+	int addressNow	= address;	// 下一个要写入数据的位置
 
     // 分配一块内存，作为读取备份修改使用
-    //byte* pBuf = (byte*)malloc(Block);
-    //if(pBuf == NULL) return false;
 #ifdef STM32F0
 	byte bb[0x400];
 #else
 	byte bb[0x800];
 #endif
-	ByteArray bf;
-	bf.Set(bb, ArrayLength(bb));
-	bf.SetLength(Block);
+	Stream ms(bb, ArrayLength(bb));
+	ms.SetCapacity(Block);
 
 	// 写入第一个半块
 	if(offset)
 	{
-		//memcpy(pBuf,(byte *)(addressNow-offset),offset);
-		//memcpy(pBuf+offset,pData,Block-offset);
 		// 计算块起始地址和剩余大小
 		uint addr = addressNow - offset;
 		uint size = Block - offset;
-		// 先读取偏移之前的原始数据，再从来源数据拷贝半块数据，凑够一块
-		bf.Copy((byte*)addr, offset);
-		bf.Copy(pData, size, offset);
+		// 前段原始数据，中段来源数据，末段原始数据
+		ms.Write((byte*)addr, 0, offset);
+		if(remainSize > size)
+			ms.Write(pData, 0, size);
+		else
+		{
+			ms.Write(pData, 0, remainSize);
+			ms.Write((byte*)addr, ms.Position(), size - remainSize);
+		}
 
 		// 整块擦除，然后整体写入
 		Erase(addr, Block);
-		if(!WriteBlock(addr, bf.GetBuffer(), Block, true)) return false;
+		if(!WriteBlock(addr, ms.GetBuffer(), Block, true)) return false;
 
 		remainSize -= size;
 		addressNow += size;
@@ -81,7 +82,7 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 	}
 
 	// 连续整块
-	for(int i = 0; remainSize > Block; i++)
+	for(int i = 0; remainSize > (int)Block; i++)
 	{
 		Erase(addressNow, Block);
 		if(!WriteBlock(addressNow, pData, Block, true)) return false;
@@ -92,16 +93,15 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 	}
 
 	// 最后一个半块
-	if(remainSize != 0)
+	if(remainSize > 0)
 	{
-		//memcpy(pBuf, pData, remainSize);
-		//memcpy(&pBuf[remainSize], (byte *)(addressNow+remainSize), Block-remainSize);
-		// 从来源数据拷贝半块数据，再读取半块原始数据，凑够一块
-		bf.Copy(pData, remainSize);
-		bf.Copy((byte*)(addressNow + remainSize), Block - remainSize, remainSize);
+		// 前段来源数据，末段原始数据
+		ms.SetPosition(0);
+		ms.Write(pData, 0, remainSize);
+		ms.Write((byte*)addressNow, remainSize, Block - remainSize);
 
 		Erase(addressNow, Block);
-		if(!WriteBlock(addressNow, bf.GetBuffer(), Block, true)) return false;
+		if(!WriteBlock(addressNow, ms.GetBuffer(), Block, true)) return false;
 	}
 
     return true;

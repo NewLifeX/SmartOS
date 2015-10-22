@@ -294,9 +294,8 @@ void TokenClient::Ping()
 	TokenMessage msg(3);
 
 	ulong time = Time.Current();
-	ByteArray bs((byte*)&time, 8);
-	Stream ms(msg.Data, ArrayLength(msg._Data));
-	ms.WriteArray(bs);
+	Stream ms = msg.ToStream();
+	ms.WriteArray(ByteArray(&time, 8));
 	msg.Length = ms.Position();
 
 	Send(msg);
@@ -307,7 +306,7 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
 
-	Stream ms(msg.Data, msg.Length);
+	Stream ms = msg.ToStream();
 
 	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(Time.Current() - start);

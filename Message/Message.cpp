@@ -11,7 +11,7 @@ Message::Message(byte code)
 }
 
 // 设置数据。
-void Message::SetData(const byte* buf, uint len, uint offset)
+void Message::SetData(const void* buf, uint len, uint offset)
 {
 	//assert_param(len <= ArrayLength(Data));
 
