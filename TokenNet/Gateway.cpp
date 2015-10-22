@@ -51,7 +51,7 @@ void Gateway::Start()
 	
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-    Client->IsOldOrder  = IsOldOrder;
+  //  Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -417,7 +417,7 @@ void Gateway::SetMode(bool student)
 	Server->Student = Student;
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(student ? 30000 : 100);
+	if(Led) Led->Write(student ? 90000 : 100);
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
