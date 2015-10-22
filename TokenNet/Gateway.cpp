@@ -376,7 +376,7 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	 //旧指令的开个位先用数据长度替代
 	 if(IsOldOrder)
 	 {
-		dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度		 
+		//dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度		 
 		//dv->ConfigSize=2;		 
 	 }
 
