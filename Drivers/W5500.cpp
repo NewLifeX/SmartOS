@@ -255,7 +255,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		Irq.PuPd		= InputPort::PuPd_UP;
 		Irq.HardEvent	= true;
 		Irq.Set(irq);
-		Irq.Mode		= 0x02;	// 只要弹起事件
+		Irq.Mode		= 0x01;
 		Irq.Register(OnIRQ, this);
 	}
 
@@ -307,7 +307,7 @@ bool W5500::Open()
 	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
 	if(!TaskID)
 	{
-		TaskID = Sys.AddTask(IRQTask, this, 0, 1000, "W5500中断");
+		TaskID = Sys.AddTask(IRQTask, this, 1000, 1000, "W5500中断");
 		Task* task = Task::Get(TaskID);
 		task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 	}
