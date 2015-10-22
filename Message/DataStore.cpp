@@ -65,7 +65,9 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 			{
 				if(ar.Port->Write(&Data[ar.Offset]) <= 0) return false;
 			}
-			else if(mode == 0 || mode == 2)
+			//else if(mode == 0 || mode == 2)
+			// 使用Data数据写入时，本来是为了强制修改，结果因为预读取而被覆盖
+			else if(mode == 2)
 			{
 				if(ar.Port->Read(&Data[ar.Offset]) <= 0) return false;
 			}
@@ -238,6 +240,9 @@ void ByteDataPort::AsyncTask(void* param)
 
 void ByteDataPort::StartAsync(int ms)
 {
+	// 不允许0毫秒的异步事件
+	if(!ms) return;
+
 	if(!_tid) _tid = Sys.AddTask(AsyncTask, this, -1, -1, "定时开关");
 	Sys.SetTask(_tid, true, ms);
 }
