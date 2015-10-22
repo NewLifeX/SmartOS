@@ -153,7 +153,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 {
 	if(msg.Reply||!Student)
 	{
-        debug_printf("非学习模式禁止加入\r\n");
+        if(!Student) debug_printf("非学习模式禁止加入\r\n");
 		return false;
 	}
 
