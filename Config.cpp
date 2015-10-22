@@ -138,7 +138,7 @@ const void* Config::Set(const char* name, const ByteArray& bs)
 
 	assert_param2(Device, "未指定配置段的存储设备");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, true);
+	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, bs.Length() > 0);
     if(cfg)
 	{
 		// 重新搞一个配置头，使用新的数据去重新初始化
@@ -158,7 +158,7 @@ bool Config::Get(const char* name, ByteArray& bs)
     if(name == NULL) return false;
 
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, false);
-    if(cfg && cfg->Size <= bs.Capacity())
+    if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
 	{
 		bs.Copy(cfg->Data(), 0, cfg->Size);
 		bs.SetLength(cfg->Size);
@@ -174,7 +174,7 @@ const void* Config::Get(const char* name)
     if(name == NULL) return NULL;
 
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, false);
-    if(cfg) return cfg->Data();
+    if(cfg && cfg->Size) return cfg->Data();
 
     return NULL;
 }
