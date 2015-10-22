@@ -79,25 +79,25 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 //--//
 
 // 循环查找配置块
-const ConfigBlock* ConfigBlock::Find(const char* name, bool fAppend) const
+const ConfigBlock* ConfigBlock::Find(const char* name, uint addr, bool fAppend)
 {
-    const ConfigBlock* ptr = this;
+    const ConfigBlock* cfg = (const ConfigBlock*)addr;
 	uint slen = strlen(name);
-	assert_param2(slen <= sizeof(ptr->Name), "配置段名称最大4个字符");
+	assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
 
 	// 遍历链表，找到同名块
-    while(ptr->IsGoodBlock())
+    while(cfg->IsGoodBlock())
     {
-        if(ptr->IsGoodData() && name && memcmp(name, ptr->Name, slen) == 0)
+        if(cfg->IsGoodData() && name && memcmp(name, cfg->Name, slen) == 0)
         {
-            return ptr;
+            return cfg;
         }
 
-        ptr = ptr->Next();
+        cfg = cfg->Next();
     }
 
 	// 如果需要添加，返回最后一个非法块的地址
-    return fAppend ? ptr : NULL;
+    return fAppend ? cfg : NULL;
 }
 
 // 更新块
@@ -136,9 +136,7 @@ const void* ConfigBlock::Set(const char* name, const ByteArray& bs, uint addr, S
 	if(!storage) storage = Device;
 	assert_param2(storage, "未指定配置段的存储设备");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)addr;
-
-    if(cfg) cfg = cfg->Find(name, true);
+	const ConfigBlock* cfg = Find(name, addr, true);
     if(cfg)
 	{
 		// 重新搞一个配置头，使用新的数据去重新初始化
@@ -158,14 +156,12 @@ bool ConfigBlock::Get(const char* name, ByteArray& bs, uint addr)
     if(name == NULL) return false;
 
 	if(!addr) addr = BaseAddress;
-	const ConfigBlock* cfg = (const ConfigBlock*)addr;
-
-    if(cfg) cfg = cfg->Find(name, false);
+	const ConfigBlock* cfg = Find(name, addr, false);
     if(cfg)
     {
         if(cfg->Size <= bs.Capacity())
         {
-			bs.Copy((byte*)cfg->Data(), 0, cfg->Size);
+			bs.Copy(cfg->Data(), 0, cfg->Size);
 			bs.SetLength(cfg->Size);
 
             return true;
@@ -180,9 +176,7 @@ const void* ConfigBlock::Get(const char* name, uint addr)
     if(name == NULL) return NULL;
 
 	if(!addr) addr = BaseAddress;
-	const ConfigBlock* cfg = (const ConfigBlock*)addr;
-
-    if(cfg) cfg = cfg->Find(name, false);
+	const ConfigBlock* cfg = Find(name, addr, false);
     if(cfg) return cfg->Data();
 
     return NULL;

@@ -28,9 +28,10 @@ public:
     const void*			Data() const;
 
     bool Init(const char* name, const ByteArray& bs);
-    const ConfigBlock* Find(const char* name, bool fAppend = false) const;
     bool Write(Storage* storage, uint addr, const ByteArray& bs);
 
+	// 查找
+    static const ConfigBlock* Find(const char* name, uint addr = NULL, bool fAppend = false);
     // 废弃
 	static bool Invalid(const char* name, uint addr = NULL, Storage* storage = NULL);
     // 设置配置数据
