@@ -48,11 +48,11 @@ void Gateway::Start()
 
 	Server->Received	= OnLocalReceived;
 	Server->Param		= this;
-	Server->Student		= Student;
+	Server->Study		= Study;
 	
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-    Client->IsOldOrder  = IsOldOrder;
+   // Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -412,22 +412,22 @@ void ExitStudentMode(void* param)
 }
 
 // 学习模式 0x20
-void Gateway::SetMode(bool student)
+void Gateway::SetMode(bool study)
 {
-	Student  		= student;
-	Server->Student = Student;
+	Study  		  = study;
+	Server->Study = Study;
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(student ? 90000 : 100);
+	if(Led) Led->Write(study ? 90000 : 100);
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
 	msg.Length	= 1;
-	msg.Data[0]	= student ? 1 : 0;
-	debug_printf("%s 学习模式\r\n", student ? "进入" : "退出");
+	msg.Data[0]	= study ? 1 : 0;
+	debug_printf("%s 学习模式\r\n", study ? "进入" : "退出");
 
 	// 定时退出学习模式
-	if(student)
+	if(study)
 	{		
 		//Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 		if(ExitStudyTaskID)
@@ -450,7 +450,7 @@ bool Gateway::OnMode(const Message& msg)
 // 节点注册入网 0x22
 void Gateway::DeviceRegister(byte id)
 {
-	if(!Student) return;
+	if(!Study) return;
 	
 	TokenMessage msg;
 	msg.Code	= 0x22;

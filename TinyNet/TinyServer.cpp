@@ -26,7 +26,7 @@ TinyServer::TinyServer(TinyController* control)
 	Param		= NULL;
 
 	Current		= NULL;
-	Student		= false;
+	Study		= false;
 }
 
 bool TinyServer::Send(Message& msg)
@@ -152,11 +152,10 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 bool TinyServer::OnJoin(const TinyMessage& msg)
 {
 	if(msg.Reply)
-	{
-        if(!Student) debug_printf("非学习模式禁止加入\r\n");
+	{      
 		return false;
 	}
-	  if(!Student)
+	  if(!Study)
 	  {
 		  debug_printf("非学习模式禁止加入\r\n");
 		  return false;

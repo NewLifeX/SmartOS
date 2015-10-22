@@ -50,7 +50,7 @@ public:
 	bool SendDeviceInfo(const Device* dv);
 
 	// 学习模式 0x20
-	bool Student;
+	bool Study;	
 	void SetMode(bool student);
 	bool OnMode(const Message& msg);
 
