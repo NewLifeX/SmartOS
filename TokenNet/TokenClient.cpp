@@ -293,10 +293,10 @@ void TokenClient::Ping()
 
 	TokenMessage msg(3);
 
-	ulong time = Time.Current();
-	Stream ms = msg.ToStream();
+	ulong time	= Time.Current();
+	Stream ms	= msg.ToStream();
 	ms.WriteArray(ByteArray(&time, 8));
-	msg.Length = ms.Position();
+	msg.Length	= ms.Position();
 
 	Send(msg);
 }
@@ -308,8 +308,9 @@ bool TokenClient::OnPing(TokenMessage& msg)
 
 	Stream ms = msg.ToStream();
 
+	ulong now = Time.Current();
 	ulong start = ms.ReadArray().ToUInt64();
-	int cost = (int)(Time.Current() - start);
+	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(Delay)
 		Delay = (Delay + cost) / 2;
