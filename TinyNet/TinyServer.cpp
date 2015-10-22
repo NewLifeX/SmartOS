@@ -153,7 +153,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 
 // 组网
 bool TinyServer::OnJoin(const TinyMessage& msg)
-{	
+{
 	if(msg.Reply)
 	{
 		return false;
@@ -247,23 +247,23 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 //网关重置节点通信密码
 bool TinyServer::ResetPassword(byte id)
 {
-	
+
 	ulong now = Time.Current();
 
 	JoinMessage dm;
 
 	// 根据硬件编码找设备
 	Device* dv = FindDevice(id);
-	
+
 	if(!dv) return false;
-		
+
 	// 更新设备信息
 	//Current		= dv;
-	
+
 	//if(dv->Logins++ == 0) dv->LoginTime = now;
 	//dv->LastTime = now;
 
-	
+
 	// 生成随机密码。当前时间的MD5
 	ByteArray bs((byte*)&now, 8);
 	dv->Pass = MD5::Hash(bs);
@@ -293,7 +293,7 @@ bool TinyServer::ResetPassword(byte id)
 	Reply(rs);
 
 	return true;
-	
+
 }
 
 // 读取
@@ -575,5 +575,9 @@ void TinyServer::ClearDevices()
 	Flash flash;
 	Config cfg(&flash, addr);
 
+	debug_printf("TinyServer::ClearDevices 重置设备列表 0x%08X \r\n", addr);
+
 	cfg.Invalid("Devs");
+
+	Devices.Clear();
 }
