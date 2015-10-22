@@ -332,7 +332,7 @@ void TSys::ShowInfo()
 	debug_printf(" R%dp%d", cpu->Revision, cpu->Variant);
     debug_printf("\r\n");
     debug_printf("ChipID:");
-	ByteArray(ID, ArrayLength(ID)).Show(true);
+	ByteArray(ID, ArrayLength(ID)).Show();
 
 	debug_printf("\t");
 	String(ID, 12).Show(true);
