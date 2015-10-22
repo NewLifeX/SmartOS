@@ -51,7 +51,7 @@ void Gateway::Start()
 	
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-  //  Client->IsOldOrder  = IsOldOrder;
+    Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
