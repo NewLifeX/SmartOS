@@ -53,6 +53,8 @@ public:
 
 	// 组网
 	bool OnJoin(const TinyMessage& msg);
+	
+	bool ResetPassword(byte id);
 
 	bool OnDisjoin(const TinyMessage& msg);
 	

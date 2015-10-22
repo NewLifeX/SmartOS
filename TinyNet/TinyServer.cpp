@@ -153,7 +153,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 
 // 组网
 bool TinyServer::OnJoin(const TinyMessage& msg)
-{
+{	
 	if(msg.Reply)
 	{      
 		return false;
@@ -242,6 +242,58 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	Reply(rs);
 
 	return true;
+}
+
+//网关重置节点通信密码
+bool TinyServer::ResetPassword(byte id)
+{
+	
+	ulong now = Time.Current();
+
+	JoinMessage dm;
+
+	// 根据硬件编码找设备
+	Device* dv = FindDevice(id);
+	
+	if(!dv) return false;
+		
+	// 更新设备信息
+	//Current		= dv;
+	
+	//if(dv->Logins++ == 0) dv->LoginTime = now;
+	//dv->LastTime = now;
+
+	
+	// 生成随机密码。当前时间的MD5
+	ByteArray bs((byte*)&now, 8);
+	dv->Pass = MD5::Hash(bs);
+	dv->Pass.SetLength(8);	// 小心不要超长
+
+	// 响应
+	TinyMessage rs;
+	rs.Code = 0x01;
+	rs.Dest = id;
+	rs.Sequence	= id;
+
+	// 发现响应
+	dm.Reply	= true;
+
+	dm.Server	= Cfg->Address;
+	dm.Channel	= Cfg->Channel;
+	dm.Speed	= Cfg->Speed / 10;
+
+	dm.Address	= dv->Address;
+	dm.Password	= dv->Pass;
+
+	dm.HardID.SetLength(6);	// 小心不要超长
+	dm.HardID	= Sys.ID;
+
+	dm.WriteMessage(rs);
+
+	Reply(rs);
+
+	return true;
+	
 }
 
 // 读取
@@ -464,6 +516,7 @@ bool TinyServer::DeleteDevice(byte id)
 
 int TinyServer::LoadDevices()
 {
+	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
