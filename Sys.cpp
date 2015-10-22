@@ -1,7 +1,6 @@
 ﻿#include "Sys.h"
 
 #include "Time.h"
-#include "SerialPort.h"
 
 TSys Sys;
 TTime Time;
@@ -14,6 +13,10 @@ extern uint __microlib_freelist_initialised;
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
+#endif
+
+#ifndef TINY
+static int _Index;	// MCU在型号表中的索引
 #endif
 
 #ifdef STM32F1
@@ -103,26 +106,6 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
-bool SysError(uint code)
-{
-	debug_printf("系统错误！0x%02x\r\n", code);
-
-#if DEBUG
-	ShowFault(code);
-
-	SerialPort* sp = SerialPort::GetMessagePort();
-	if(sp) sp->Flush();
-#endif
-
-    return true;
-}
-
-void SysStop()
-{
-	debug_printf("系统停止！\r\n");
-	//while(true);
-}
-
 TSys::TSys()
 {
 #ifdef STM32F0
@@ -185,17 +168,7 @@ TSys::TSys()
 	InitHeapStack(StackTop());
 #endif
 
-	StartTime	= 0;
-	OnTick		= NULL;
 	OnSleep		= NULL;
-
-#if DEBUG
-    OnError		= SysError;
-    OnStop		= SysStop;
-#else
-    OnError		= 0;
-    OnStop		= 0;
-#endif
 
 #ifdef STM32F1
 	// 关闭JTAG仿真接口，只打开SW仿真。
@@ -214,13 +187,7 @@ TSys::TSys()
 #endif
 
 	Started	= false;
-	OnStart = NULL;
 }
-
-/*TSys::~TSys()
-{
-	if(OnStop) OnStop();
-}*/
 
 void ShowTime(void* param)
 {
@@ -282,9 +249,6 @@ typedef struct
 void TSys::ShowInfo()
 {
 #if DEBUG
-	// 刚刚初始化完成的时间
-	ulong initedTime = Time.Current();
-
 	byte* ver = (byte*)&Version;
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
@@ -390,8 +354,6 @@ void TSys::ShowInfo()
 
 	debug_printf("Time : ");
 	Time.Now().Show(true);
-	// 系统启动时间
-	debug_printf("Start: %dms (Inited: %dms)\r\n", (uint)(Time.Current() - StartTime), (uint)(initedTime - StartTime));
 	debug_printf("Support: http://www.NewLifeX.com\r\n");
 
     debug_printf("\r\n");
@@ -458,14 +420,7 @@ void TSys::Start()
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif
-	if(OnStart)
-	{
-		// 设置重载值，让其每1ms重载一次
-		//Time.SetMax(1000);
-		OnStart();
-	}
-	else
-		Task::Scheduler()->Start();
+	Task::Scheduler()->Start();
 }
 
 void TimeSleep(uint us)

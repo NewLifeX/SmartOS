@@ -137,7 +137,7 @@ void TTime::OnHandler(ushort num, void* param)
 	// 定期保存Ticks到后备RTC寄存器
 	if(Time.OnSave) Time.OnSave();
 
-	if(Sys.OnTick) Sys.OnTick();
+	//if(Sys.OnTick) Sys.OnTick();
 }
 
 // 当前滴答时钟

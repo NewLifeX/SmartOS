@@ -1,4 +1,5 @@
 ﻿#include "Interrupt.h"
+#include "SerialPort.h"
 
 TInterrupt Interrupt;
 
@@ -216,11 +217,13 @@ extern "C"
 		}
 #endif
 
-		if(!Sys.OnError || Sys.OnError(exception))
-		{
-			if(Sys.OnStop) Sys.OnStop();
-			while(true);
-		}
+#if DEBUG
+		ShowFault(exception);
+
+		SerialPort* sp = SerialPort::GetMessagePort();
+		if(sp) sp->Flush();
+#endif
+		while(true);
 	}
 
 	__asm void FaultHandler() __attribute__((section("SubHandler")));

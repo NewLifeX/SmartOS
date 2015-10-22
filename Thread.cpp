@@ -420,7 +420,7 @@ void Thread::Schedule()
 	//SmartIRQ irq;
 	__disable_irq();
 
-	Sys.OnTick = OnTick;
+	//Sys.OnTick = OnTick;
 	Sys.OnSleep = OnSleep;
 
 	// 先切换好了才换栈，因为里面有很多层调用，不确定新栈空间是否足够
@@ -651,8 +651,6 @@ void Thread::Init()
 	Main = main;
 
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
-
-	Sys.OnStart = Schedule;
 }
 
 // 每个线程结束时执行该方法，销毁线程

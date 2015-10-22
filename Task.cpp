@@ -226,7 +226,6 @@ void TaskScheduler::Execute(uint msMax)
 {
 	ulong now = Time.Current();
 	ulong end = now + msMax;
-	now -= Sys.StartTime;	// 当前时间。减去系统启动时间，避免修改系统时间后导致调度停摆
 	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
 
 	TimeCost tc;

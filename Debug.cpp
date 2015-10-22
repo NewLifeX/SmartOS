@@ -103,30 +103,16 @@ void operator delete[](void* p)
 
 #ifdef  USE_FULL_ASSERT
 
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *   where the assert_param error has occurred.
-  * @param file: pointer to the source file name
-  * @param line: assert_param error line source number
-  * @retval : None
-  */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-    /* User can add his own implementation to report the file name and line number,
-    ex: debug_printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-    /*if(_printf_sp) */debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
+    debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
-	if(Sys.OnStop) Sys.OnStop();
-
-    /* Infinite loop */
     while (1) { }
 }
 
 void assert_failed(const char* msg, uint8_t* file, uint32_t line)
 {
     debug_printf("%s Line %d, %s\r\n", msg, line, file);
-
-	if(Sys.OnStop) Sys.OnStop();
 
     while (1) { }
 }

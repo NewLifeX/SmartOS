@@ -88,7 +88,6 @@ public:
     ushort	RAMSize;	// 芯片RAM容量
 
     TSys();				// 构造函数
-    //~TSys();			// 析构函数
 
 	void InitClock();	// 初始化系统时钟
     void Init();     	// 初始化系统
@@ -96,8 +95,6 @@ public:
 	uint HeapBase();	// 堆起始地址，前面是静态分配内存
 	uint StackTop();	// 栈顶，后面是初始化不清零区域
 
-	ulong StartTime;	// 启动时间，微秒
-	Func OnTick;
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
 	typedef void (*FuncU32)(uint param);
@@ -106,10 +103,6 @@ public:
 	bool CheckMemory();
 
     void Reset();   // 重启系统
-    bool (*OnError)(uint code);  // 系统出错时引发，返回值决定是否停止系统
-    Func OnStop;
-private:
-	int _Index;	// MCU在型号表中的索引
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
@@ -122,7 +115,6 @@ public:
 
 	bool Started;
 	void Start();	// 开始系统大循环
-	Func OnStart;
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
