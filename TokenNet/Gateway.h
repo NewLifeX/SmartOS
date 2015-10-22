@@ -38,6 +38,7 @@ public:
 	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
 
+
 	// 设备列表 0x21
 	bool OnGetDeviceList(const Message& msg);
 	// 设备信息 0x25

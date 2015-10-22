@@ -47,9 +47,10 @@ void Gateway::Start()
 
 	Server->Received	= OnLocalReceived;
 	Server->Param		= this;
+	Server->Student		= Student;
+	
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-
     Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
@@ -114,7 +115,6 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		case 0x01:
 			return OnDiscover(msg);
 	}*/
-
 	Device* dv = Server->Current;
 	if(dv)
 	{
@@ -141,7 +141,6 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				case 0x0203:
 				/// <summary>触摸开关(4位)</summary>
 				case 0x0204:
-
 				/// <summary>情景面板(1位)</summary>
 				case 0x0211:
 				/// <summary>情景面板(2位)</summary>
@@ -150,7 +149,6 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				case 0x0213:
 				/// <summary>情景面板(4位)</summary>
 				case 0x0214:
-
 				/// <summary>智能继电器(1位)</summary>
 				case 0x0221:
 				/// <summary>智能继电器(2位)</summary>
@@ -159,7 +157,6 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				case 0x0223:
 				/// <summary>智能继电器(4位)</summary>
 				case 0x0224:
-
 				/// <summary>单火线取电开关(1位)</summary>
 				case 0x0231:
 				/// <summary>单火线取电开关(2位)</summary>
@@ -184,10 +181,8 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				case 0x0531:
 				/// <summary>红外感应器</summary>
 				case 0x0541:
-
 				/// <summary>摄像头</summary>
 				case 0x0551:
-
 				/// <summary>声光报警器</summary>
 				case 0x0561:
 					OldTinyToToken10(msg, tmsg);
@@ -216,11 +211,9 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			if(AutoReport && msg.Reply && Client->Token != 0)
 			{
 				//Sys.Sleep(1000);
-
 				TokenMessage rs;
 				rs.Code = 0x21;
 				OnGetDeviceList(rs);
-
 				// 遍历发送所有设备信息
 				for(int i=0; i<Server->Devices.Count(); i++)
 					SendDeviceInfo(Server->Devices[i]);
@@ -268,7 +261,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 					case 0x0203:
 					/// <summary>触摸开关(4位)</summary>
 					case 0x0204:
-
 					/// <summary>情景面板(1位)</summary>
 					case 0x0211:
 					/// <summary>情景面板(2位)</summary>
@@ -277,7 +269,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 					case 0x0213:
 					/// <summary>情景面板(4位)</summary>
 					case 0x0214:
-
 					/// <summary>智能继电器(1位)</summary>
 					case 0x0221:
 					/// <summary>智能继电器(2位)</summary>
@@ -286,7 +277,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 					case 0x0223:
 					/// <summary>智能继电器(4位)</summary>
 					case 0x0224:
-
 					/// <summary>单火线取电开关(1位)</summary>
 					case 0x0231:
 					/// <summary>单火线取电开关(2位)</summary>
@@ -311,10 +301,8 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 					case  0x0531:
 					/// <summary>红外感应器</summary>
 					case 0x0541:
-
 					/// <summary>摄像头</summary>
 					case 0x0551:
-
 					/// <summary>声光报警器</summary>
 					case 0x0561:
 						OldTinyToToken10(tmsg, msg2);
@@ -326,7 +314,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		    }
 	        else
 		       TinyToToken(tmsg, msg2);
-
 			// TinyToToken(tmsg, msg2);
 			return Client->Reply(msg2);
 		}
@@ -385,6 +372,13 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	if(!dv) return Client->Reply(rs);
 
 	dv->Show(true);
+	
+	 //旧指令的开个位先用数据长度替代
+	 if(IsOldOrder)
+	 {
+		dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度		 
+		//dv->ConfigSize=2;		 
+	 }
 
 	return SendDeviceInfo(dv);
 }
@@ -394,10 +388,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 {
 	if(!dv) return false;
 
-     //旧指令的开个位先用数据长度替代
-	// if(IsOldOrder)
-		// dv->Logins=dv->Store.Length();
-
+   
 	TokenMessage rs;
 	rs.Code = 0x25;
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
@@ -415,6 +406,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 
 void ExitStudentMode(void* param)
 {
+	
 	Gateway* gw = (Gateway*)param;
 	gw->SetMode(false);
 }
@@ -422,7 +414,8 @@ void ExitStudentMode(void* param)
 // 学习模式 0x20
 void Gateway::SetMode(bool student)
 {
-	Student = student;
+	Student  		= student;
+	Server->Student = Student;
 
 	// 设定小灯快闪时间，单位毫秒
 	if(Led) Led->Write(student ? 30000 : 100);
@@ -435,7 +428,7 @@ void Gateway::SetMode(bool student)
 
 	// 定时退出学习模式
 	if(student)
-	{
+	{		
 		Sys.AddTask(ExitStudentMode, this, 30000, -1, "退出学习");
 	}
 
@@ -526,7 +519,6 @@ void Gateway::OnDeviceDelete(const Message& msg)
 void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 {
 	TinyMessage tmsg;
-
 	//交换目标和源地址
 	tmsg.Code	= 0x15;
 	tmsg.Src	= msg.Dest;
@@ -534,7 +526,6 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 	//tmsg.Sequence=msg.Sequence+1;
 
 	tmsg.Length	= 2;
-
 	tmsg.Data[0]	= 1;
 	tmsg.Data[1]	= 6;
 
@@ -545,9 +536,7 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 
 	// bool rs = Server->Dispatch(tmsg);
 	//  debug_printf("2微网10指令转换\r\n");
-
 	Device* dv = Server->FindDevice(tmsg.Dest);
-
 	bool rs = Server->OnRead(tmsg, *dv);
 
 	if(rs)
@@ -592,7 +581,6 @@ bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 			tny.Length	= msg.Length;
 
 			if(msg.Length > 1) memcpy(&tny.Data[1], &msg.Data[1], msg.Length - 1);
-
 			// 从偏移1开始，数据区偏移0是长度
 			tny.Data[0]	= 1;
 
@@ -605,7 +593,6 @@ bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 			tny.Data[1]	= msg.Data[2] * 4;
 
 			tny.Length	= 2;
-
 			break;
 		case 0x12:
 			tny.Code	= 0x16;
@@ -715,36 +702,24 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2, ushort kind)
 		case 0x01C8:
 			TinyToToken(msg,msg2);
 			break;
-
 		/// <summary>环境探测器</summary>
 		case 0x0311:
-
 		/// <summary>PM2.5检测器</summary>
 		case 0x0321:
-
 		/// <summary>红外转发器</summary>
 		case 0x0331:
-
-
 		/// <summary>调光开关</summary>
 		case 0x0241:
-
 		/// <summary>调色开关</summary>
 		case  0x0251:
-
 		/// <summary>燃气探测器</summary>
 		case 0x0501:
-
 		/// <summary>火焰烟雾探测器</summary>
 		case 0x0521:
-
-
 		/// <summary>温控面板</summary>
 		case 0x0601:
-
 		/// <summary>调色控制器</summary>
 		case 0x0611:
-
 		/// <summary>背景音乐控制器</summary>
 		case 0x0621:
 			if(msg.Code == 0x15)
