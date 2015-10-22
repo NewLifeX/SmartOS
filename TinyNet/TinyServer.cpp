@@ -1,4 +1,5 @@
 ﻿#include "Time.h"
+#include "Flash.h"
 #include "TinyServer.h"
 
 #include "JoinMessage.h"
@@ -14,7 +15,7 @@ static bool OnServerReceived(Message& msg, void* param);
 TinyServer::TinyServer(TinyController* control)
 {
 	Control 	= control;
-	Config		= NULL;
+	Cfg			= NULL;
 	DeviceType	= Sys.Code;
 
 	Control->Received	= OnServerReceived;
@@ -52,7 +53,9 @@ bool OnServerReceived(Message& msg, void* param)
 
 void TinyServer::Start()
 {
-	assert_param2(Config, "未指定微网服务器的配置");
+	assert_param2(Cfg, "未指定微网服务器的配置");
+
+	LoadDevices();
 
 	Control->Open();
 }
@@ -176,7 +179,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
-		byte addr = Config->Address;
+		byte addr = Cfg->Address;
 		{
 			id = addr;
 			while(FindDevice(++id) != NULL && id < 0xFF);
@@ -189,10 +192,12 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->Address	= id;
 		dv->Logins= dv->Store.Length();
 
-		Devices.Add(dv);
-
 		// 节点注册
 		dv->RegTime	= now;
+
+		Devices.Add(dv);
+
+		SaveDevices();
 	}
 
 	// 更新设备信息
@@ -222,9 +227,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	// 发现响应
 	dm.Reply	= true;
 
-	dm.Server	= Config->Address;
-	dm.Channel	= Config->Channel;
-	dm.Speed	= Config->Speed / 10;
+	dm.Server	= Cfg->Address;
+	dm.Channel	= Cfg->Channel;
+	dm.Speed	= Cfg->Speed / 10;
 
 	dm.Address	= dv->Address;
 	dm.Password	= dv->Pass;
@@ -309,18 +314,18 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 
 	// 计算还有多少数据可读
 	int remain = dv.Store.Length() - offset;
-	
+
 	  while(remain<0)
 	  {
 		  debug_printf("读取数据出错Store.Length(=%d",dv.Store.Length()) ;
 		  debug_printf("读取数据出错Store.Length(=%d",offset) ;
 		  offset--;
-		  
+
 		  remain = dv.Store.Length() - offset;
 	  }
-	
+
 	if(remain < 0)
-	{		
+	{
 		// 可读数据不够时出错
 		msg.Error = true;
 		ms.Write((byte)2);
@@ -455,4 +460,57 @@ bool TinyServer::DeleteDevice(byte id)
 	}
 
 	return false;
+}
+
+int TinyServer::LoadDevices()
+{
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	byte* data = (byte*)cfg.Get("Devs");
+	if(!data) return 0;
+
+	Stream ms(data, 4 << 10);
+	// 设备个数
+	int count = ms.ReadByte();
+	int i = 0;
+	for(; i<count; i++)
+	{
+		byte id = ms.Peek();
+		Device* dv = FindDevice(id);
+		if(!dv) dv = new Device();
+		dv->Read(ms);
+
+		Devices.Add(dv);
+	}
+
+	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", addr, i);
+
+	return i;
+}
+
+void TinyServer::SaveDevices()
+{
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	byte buf[0x800];
+
+	Stream ms(buf, ArrayLength(buf));
+	// 设备个数
+	int count = Devices.Count();
+	ms.Write((byte)count);
+	for(int i = 0; i<count; i++)
+	{
+		Device* dv = Devices[i];
+		dv->Write(ms);
+	}
+
+	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
+
+	cfg.Set("Devs", ByteArray(ms.GetBuffer(), ms.Position()));
 }

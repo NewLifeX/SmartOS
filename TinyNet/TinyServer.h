@@ -2,11 +2,11 @@
 #define __TinyServer_H__
 
 #include "Sys.h"
-#include "Config.h"
 
 #include "TinyMessage.h"
 
 #include "TinyNet\Device.h"
+#include "TinyNet\TinyConfig.h"
 
 /******************************** TinyServer ********************************/
 
@@ -17,7 +17,7 @@ private:
 
 public:
 	TinyController* Control;
-	TConfig*	Config;
+	TinyConfig*	Cfg;
 
 	ushort	DeviceType;	// 设备类型。两个字节可做二级分类
 
@@ -39,6 +39,8 @@ public:
 	Device* FindDevice(byte id);
 	Device* FindDevice(const ByteArray& hardid);
 	bool	DeleteDevice(byte id);
+	int LoadDevices();
+	void SaveDevices();
 
 	// 当前设备
 	Device* Current;

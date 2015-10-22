@@ -11,9 +11,11 @@ class Device : public Object
 {
 public:
 	byte		Address;	// 节点地址
+	bool		Logined;	// 是否在线
+
 	ushort		Kind;		// 类型
 	ByteArray	HardID;		// 硬件编码
-	ulong		LastTime;	// 活跃时间ms
+	uint		LastTime;	// 活跃时间。秒
 	uint		Logins;		// 登录次数
 	ushort		Version;	// 版本
 	byte		DataSize;	// 数据大小
@@ -25,15 +27,20 @@ public:
 	ushort		OfflineTime;// 离线阀值时间。秒
 	ushort		SleepTime;	// 睡眠时间。秒
 
-	ulong		RegTime;	// 注册时间ms
-	ulong		LoginTime;	// 登录时间ms
+	uint		RegTime;	// 注册时间。秒
+	uint		LoginTime;	// 登录时间。秒
 
 	ByteArray	Store;		// 数据存储区
 
 	Device();
 
+	// 序列化到消息数据流
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
+
+	// 保存到存储设备数据流
+	void Save(Stream& ms) const;
+	void Load(Stream& ms);
 
 	bool CanSleep() const { return SleepTime > 0; }
 

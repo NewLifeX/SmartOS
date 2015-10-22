@@ -49,18 +49,20 @@ void Gateway::Start()
 	Server->Received	= OnLocalReceived;
 	Server->Param		= this;
 	Server->Study		= Study;
-	
+
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
    // Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
+	Server->Start();
+
 	// 添加网关这一条设备信息
 	if(Server->Devices.Count() == 0)
 	{
 		Device* dv = new Device();
-		dv->Address		= Server->Config->Address;
+		dv->Address		= Server->Cfg->Address;
 		dv->Kind		= Sys.Code;
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
@@ -68,9 +70,9 @@ void Gateway::Start()
 		dv->Name		= Sys.Name;
 
 		Server->Devices.Add(dv);
+		Server->SaveDevices();
 	}
 
-	Server->Start();
 	Client->Open();
 
 	Running = true;
@@ -126,7 +128,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	}
 
 	// 消息转发
-	if(msg.Code >= 0x10 && msg.Dest == Server->Config->Address)
+	if(msg.Code >= 0x10 && msg.Dest == Server->Cfg->Address)
 	{
 		TokenMessage tmsg;
 
@@ -373,12 +375,12 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	if(!dv) return Client->Reply(rs);
 
 	dv->Show(true);
-	
+
 	 //旧指令的开个位先用数据长度替代
 	 if(IsOldOrder)
 	 {
-		//dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度		 
-		//dv->ConfigSize=2;		 
+		//dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度
+		//dv->ConfigSize=2;
 	 }
 
 	return SendDeviceInfo(dv);
@@ -389,7 +391,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 {
 	if(!dv) return false;
 
-   
+
 	TokenMessage rs;
 	rs.Code = 0x25;
 	// 担心rs.Data内部默认缓冲区不够大，这里直接使用数据流。必须小心，ms生命结束以后，它的缓冲区也将无法使用
@@ -406,7 +408,7 @@ bool Gateway::SendDeviceInfo(const Device* dv)
 }
 
 void ExitStudentMode(void* param)
-{ 
+{
 	Gateway* gw = (Gateway*)param;
 	gw->SetMode(false);
 }
@@ -428,11 +430,11 @@ void Gateway::SetMode(bool study)
 
 	// 定时退出学习模式
 	if(study)
-	{		
+	{
 		//Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 		if(ExitStudyTaskID)
 			Sys.SetTask(ExitStudyTaskID, true, 90000);
-		else 
+		else
 			ExitStudyTaskID = Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 	}
 
@@ -451,7 +453,7 @@ bool Gateway::OnMode(const Message& msg)
 void Gateway::DeviceRegister(byte id)
 {
 	if(!Study) return;
-	
+
 	TokenMessage msg;
 	msg.Code	= 0x22;
 	msg.Length	= 1;
