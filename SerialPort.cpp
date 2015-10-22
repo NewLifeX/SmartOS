@@ -264,7 +264,8 @@ uint SerialPort::OnRead(ByteArray& bs)
 	{
 		count = len;
 		// 按照115200波特率计算，传输7200字节每秒，每个毫秒7个字节，大概150微秒差不多可以接收一个新字节
-		Sys.Delay(_byteTime);
+		//Sys.Delay(_byteTime);
+		Sys.Sleep(2);
 		len = Rx.Length();
 	}
 	// 如果数据大小不足，等下次吧
