@@ -155,7 +155,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 bool TinyServer::OnJoin(const TinyMessage& msg)
 {	
 	if(msg.Reply)
-	{      
+	{
 		return false;
 	}
 	  if(!Study)
@@ -566,4 +566,14 @@ void TinyServer::SaveDevices()
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
 
 	cfg.Set("Devs", ByteArray(ms.GetBuffer(), ms.Position()));
+}
+
+void TinyServer::ClearDevices()
+{
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	cfg.Invalid("Devs");
 }

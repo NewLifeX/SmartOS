@@ -41,11 +41,12 @@ public:
 	bool	DeleteDevice(byte id);
 	int LoadDevices();
 	void SaveDevices();
+	void ClearDevices();
 
 	// 当前设备
 	Device* Current;
 	bool Study;		//学习模式
-	
+
 // 常用系统级消息
 public:
 	// 设置默认系统消息
@@ -57,7 +58,7 @@ public:
 	bool ResetPassword(byte id);
 
 	bool OnDisjoin(const TinyMessage& msg);
-	
+
 	// 心跳
 	bool OnPing(const TinyMessage& msg);
 
