@@ -29,11 +29,12 @@ void Device::Write(Stream& ms) const
 	ms.Write(LastTime);
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
-	ms.WriteString(Name);
+	
 
 	ms.Write(PingTime);
 	ms.Write(OfflineTime);
 	ms.Write(SleepTime);
+	ms.WriteString(Name);
 }
 
 void Device::Read(Stream& ms)
@@ -43,12 +44,12 @@ void Device::Read(Stream& ms)
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
 	DataSize	= ms.ReadByte();
-	ConfigSize	= ms.ReadByte();
-	Name	= ms.ReadString();
+	ConfigSize	= ms.ReadByte();	
 
 	PingTime	= ms.ReadUInt16();
 	OfflineTime	= ms.ReadUInt16();
 	SleepTime	= ms.ReadUInt16();
+	Name		= ms.ReadString();
 }
 
 void Device::Save(Stream& ms) const

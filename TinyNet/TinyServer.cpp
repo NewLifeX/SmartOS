@@ -570,6 +570,7 @@ void TinyServer::SaveDevices()
 
 void TinyServer::ClearDevices()
 {
+	debug_printf("TinyServer::ClearDevices：设备区清零！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
