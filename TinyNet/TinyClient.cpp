@@ -178,6 +178,9 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	rs.Length	= ms2.Position();
 
 	Reply(rs);
+	
+	Report(rs);//接受写入一次，刷新服务端
+
 }
 
 /*
