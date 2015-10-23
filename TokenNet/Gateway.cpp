@@ -424,8 +424,10 @@ void Gateway::SetMode(bool study)
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
-	msg.Length	= 1;
-	msg.Data[0]	= study ? 1 : 0;
+	msg.Length	= 2;
+	msg.Data[0]	= study ? 0 : 1;
+	msg.Data[1]	= study ? 1 : 0;
+
 	debug_printf("%s 学习模式\r\n", study ? "进入" : "退出");
 
 	// 定时退出学习模式
@@ -443,15 +445,54 @@ void Gateway::SetMode(bool study)
 			Sys.SetTask(ExitStudyTaskID, false);
 	}
 
-	Client->Send(msg);
+	Client->Reply(msg);
 }
 
 bool Gateway::OnMode(const Message& msg)
 {
-	bool rs = msg.Data[0] != 0;
-	SetMode(rs);
-
-	return true;
+	msg.Show();
+    if(msg.Length<1)
+    {
+    	SetMode(true);	
+         return true;	 
+    }	
+    //自动学习模式
+    if(msg.Data[0]==0)
+    {
+       SetMode(true);	
+        return true;	 
+		 
+    }	
+    
+     //手动学习模式
+     if(msg.Data[0]==1)	
+     {
+       
+     Study  	  = true;
+     Server->Study = Study;
+    
+    // 设定小灯快闪时间，单位毫秒
+     if(Led) Led->Write(900000);
+    
+    TokenMessage msg;
+    msg.Code	= 0x20;
+    msg.Length	= 2;
+    msg.Data[0]	= 1;
+    msg.Data[1] = 1;
+    debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
+	Client->Reply(msg);
+	
+     }	   
+     
+     //退出学习模式
+     if(msg.Data[0]==2)
+     {
+      SetMode(false);	
+      return true;	
+	  
+     }
+    
+	  return true;
 }
 
 // 节点注册入网 0x22
