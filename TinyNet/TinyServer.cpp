@@ -54,7 +54,8 @@ bool OnServerReceived(Message& msg, void* param)
 void TinyServer::Start()
 {
 	assert_param2(Cfg, "未指定微网服务器的配置");
-
+	
+	//LoadConfig();
 	LoadDevices();
 
 	Control->Open();
@@ -582,3 +583,61 @@ void TinyServer::ClearDevices()
 
 	Devices.Clear();
 }
+
+bool TinyServer::LoadConfig() 
+{
+	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	byte* data = (byte*)cfg.Get("TCfg");
+	if(!data) 
+	{
+		SaveConfig();	// 没有就保存默认配置
+		return true;
+	}
+
+	Stream ms(data, sizeof(TinyConfig));
+	// 读取配置信息
+	Cfg->Read(ms);
+
+	debug_printf("TinyServer::LoadConfig 从 0x%08X 加载成功 ！\r\n", addr);
+
+	return true;
+}
+
+void TinyServer::SaveConfig() 
+{
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	byte buf[sizeof(TinyConfig)];
+
+	Stream ms(buf, ArrayLength(buf));
+	Cfg->Write(ms);
+	
+	debug_printf("TinyServer::SaveConfig 保存到 0x%08X！\r\n", addr);
+
+	cfg.Set("TCfg", ByteArray(ms.GetBuffer(), ms.Position()));
+}
+
+void TinyServer::ClearConfig()
+{
+	debug_printf("TinyServer::ClearDevices：设备区清零！\r\n");
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Flash flash;
+	Config cfg(&flash, addr);
+
+	debug_printf("TinyServer::ClearConfig 重置配置信息 0x%08X \r\n", addr);
+
+	cfg.Invalid("TCfg");
+
+	Devices.Clear();
+}
+
+

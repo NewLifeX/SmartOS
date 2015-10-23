@@ -39,9 +39,14 @@ public:
 	Device* FindDevice(byte id);
 	Device* FindDevice(const ByteArray& hardid);
 	bool	DeleteDevice(byte id);
+	
 	int LoadDevices();
 	void SaveDevices();
 	void ClearDevices();
+	
+	bool LoadConfig();
+	void SaveConfig();
+	void ClearConfig();
 
 	// 当前设备
 	Device* Current;
