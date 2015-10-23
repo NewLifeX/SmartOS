@@ -236,3 +236,13 @@ void TConfig::LoadDefault()
 	PingTime	= 15;
 	OfflineTime	= 60;
 }
+
+void TConfig::Write(Stream& ms)const
+{
+	ms.Write((byte *)this, 0, sizeof(this[0]));
+}
+
+void TConfig::Read(Stream& ms)
+{
+	memcpy((byte *)this, ms.GetBuffer(), sizeof(this[0]));
+}

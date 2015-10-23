@@ -82,6 +82,10 @@ public:
 	// 初始化，各字段为0
 	TConfig();
 	void LoadDefault();
+	
+	// 序列化到消息数据流
+	void Write(Stream& ms) const;
+	void Read(Stream& ms);
 };
 
 #pragma pack(pop)	// 恢复对齐状态
