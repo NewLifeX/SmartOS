@@ -424,9 +424,9 @@ void Gateway::SetMode(bool study)
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
-	msg.Length	= 2;
-	msg.Data[0]	= study ? 0 : 1;
-	msg.Data[1]	= study ? 1 : 0;
+	msg.Length	= 1;
+	msg.Data[0]	= study ? 2 : 0;
+	//msg.Data[1]	= study ? 1 : 0;
 
 	debug_printf("%s 学习模式\r\n", study ? "进入" : "退出");
 
@@ -457,9 +457,9 @@ bool Gateway::OnMode(const Message& msg)
          return true;	 
     }	
     //自动学习模式
-    if(msg.Data[0]==0)
+    if(msg.Data[0]==2)
     {
-       SetMode(true);	
+        SetMode(true);	
         return true;	 
 		 
     }	
@@ -476,16 +476,16 @@ bool Gateway::OnMode(const Message& msg)
     
     TokenMessage msg;
     msg.Code	= 0x20;
-    msg.Length	= 2;
+    msg.Length	= 1;
     msg.Data[0]	= 1;
-    msg.Data[1] = 1;
+   // msg.Data[1] = 1;
     debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
 	Client->Reply(msg);
 	
      }	   
      
      //退出学习模式
-     if(msg.Data[0]==2)
+     if(msg.Data[0]==0)
      {
       SetMode(false);	
       return true;	
