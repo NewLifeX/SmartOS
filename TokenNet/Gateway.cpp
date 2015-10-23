@@ -437,6 +437,11 @@ void Gateway::SetMode(bool study)
 		else
 			ExitStudyTaskID = Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
 	}
+	else
+	{
+		if(ExitStudyTaskID)
+			Sys.SetTask(ExitStudyTaskID, false);
+	}
 
 	Client->Send(msg);
 }
