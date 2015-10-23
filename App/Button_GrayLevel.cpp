@@ -126,11 +126,11 @@ bool Button_GrayLevel::GetValue() { return _Value; }
 bool CheckZero(InputPort* port)
 {
 	int retry = 200;
-	while(*port == false && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
+	while(*port == false && retry-- > 0) Time.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
 	if(retry <= 0) return false;
 
 	retry = 200;
-	while(*port == true && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
+	while(*port == true && retry-- > 0) Time.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
 	if(retry <= 0) return false;
 
 	return true;
@@ -141,7 +141,7 @@ void Button_GrayLevel::SetValue(bool value)
 	if(ACZero)
 	{
 		//int time = ACZeroAdjTime;
-		if(CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
+		if(CheckZero(ACZero)) Time.Delay(ACZeroAdjTime);
 		//Sys.Dlay() 参数>=1000 就会切换任务  中断里面不允许
 		/*while(time > 700)
 		{
