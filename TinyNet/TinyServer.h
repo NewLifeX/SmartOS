@@ -4,9 +4,9 @@
 #include "Sys.h"
 
 #include "TinyMessage.h"
+#include "TinyConfig.h"
 
 #include "TinyNet\Device.h"
-#include "TinyNet\TinyConfig.h"
 
 /******************************** TinyServer ********************************/
 

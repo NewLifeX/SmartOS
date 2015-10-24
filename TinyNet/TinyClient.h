@@ -2,8 +2,9 @@
 #define __TinyClient_H__
 
 #include "Sys.h"
-#include "Config.h"
+
 #include "TinyMessage.h"
+#include "TinyConfig.h"
 
 #include "Message\DataStore.h"
 
@@ -15,7 +16,7 @@ private:
 
 public:
 	TinyController* Control;
-	TConfig*	Config;
+	TinyConfig*	Cfg;
 
 	byte		Server;		// 服务端地址
 	ushort		Type;		// 设备类型。两个字节可做二级分类

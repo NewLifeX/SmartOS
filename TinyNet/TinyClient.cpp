@@ -1,6 +1,5 @@
 ﻿#include "Time.h"
 #include "Task.h"
-#include "Config.h"
 
 #include "TinyClient.h"
 
@@ -26,7 +25,7 @@ TinyClient::TinyClient(TinyController* control)
 	Received	= NULL;
 	Param		= NULL;
 
-	Config		= NULL;
+	Cfg			= NULL;
 
 	_TaskID		= 0;
 
@@ -45,12 +44,12 @@ void TinyClient::Open()
 
 	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "客户端服务");
 
-	if(Config->Address > 0 && Config->Server > 0)
+	if(Cfg->Address > 0 && Cfg->Server > 0)
 	{
-		Control->Address = Config->Address;
-		Server = Config->Server;
+		Control->Address = Cfg->Address;
+		Server = Cfg->Server;
 
-		Password.Load(Config->Password, ArrayLength(Config->Password));
+		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
 }
 
@@ -332,23 +331,23 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
-	Password.Save(Config->Password, ArrayLength(Config->Password));
+	Password.Save(Cfg->Password, ArrayLength(Cfg->Password));
 
 	// 记住服务端地址
 	Server = dm.Server;
-	Config->Channel	= dm.Channel;
-	Config->Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
+	Cfg->Channel	= dm.Channel;
+	Cfg->Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
 
 	// 服务端组网密码，退网使用
-	Config->ServerKey[0] = dm.HardID.Length();
-	dm.HardID.Save(Config->ServerKey, ArrayLength(Config->ServerKey));
+	Cfg->ServerKey[0] = dm.HardID.Length();
+	dm.HardID.Save(Cfg->ServerKey, ArrayLength(Cfg->ServerKey));
 
 	debug_printf("组网成功！\r\n");
-	//debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Config->Speed);
+	//debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Cfg->Speed);
 	//Password.Show(true); // 这里出错  问题未知
 
 	// 取消Join任务，启动Ping任务
-	ushort time = Config->PingTime;
+	ushort time = Cfg->PingTime;
 	if(time < 5)	time	= 5;
 	if(time > 60)	time	= 60;
 	Sys.SetTaskPeriod(_TaskID, time * 1000);
@@ -368,7 +367,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 // 心跳
 void TinyClient::Ping()
 {
-	ushort off = Config->OfflineTime;
+	ushort off = Cfg->OfflineTime;
 	if(off < 10) off = 10;
 	if(LastActive > 0 && LastActive + off * 1000 < Time.Current())
 	{
