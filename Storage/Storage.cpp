@@ -41,9 +41,16 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 	while(len)
 	{
 		if(*(ushort*)address != *(ushort*)buf) break;
-		
+
 		address	+= 2;
 		buf		+= 2;
+		len		-= 2;
+	}
+	// 从后面比较相同数据
+	while(len)
+	{
+		if(*(ushort*)(address + len - 2) != *(ushort*)(buf + len - 2)) break;
+
 		len		-= 2;
 	}
 	if(!len)
@@ -51,17 +58,17 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 		debug_printf("数据相同，无需写入！");
 		return true;
 	}
-	
+
     // 如果没有读改写，直接执行
     if(!ReadModifyWrite) return WriteBlock(address, buf, len, true);
 
     // Flash操作一般需要先擦除然后再写入，由于擦除是按块进行，这就需要先读取出来，修改以后再写回去
 
     // 从地址找到所在扇区
-    int  offset		= address % Block;
-	byte* pData 	= buf;	// 指向要下一个写入的数据
-	int remainSize	= len;		// 剩下数据数量
-	int addressNow	= address;	// 下一个要写入数据的位置
+    int  offset	= address % Block;
+	byte* pData = buf;		// 指向要下一个写入的数据
+	int remain	= len;		// 剩下数据数量
+	int addr	= address;	// 下一个要写入数据的位置
 
     // 分配一块内存，作为读取备份修改使用
 #ifdef STM32F0
@@ -76,47 +83,48 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 	if(offset)
 	{
 		// 计算块起始地址和剩余大小
-		uint addr = addressNow - offset;
-		uint size = Block - offset;
+		uint blk	= addr - offset;
+		uint size	= Block - offset;
 		// 前段原始数据，中段来源数据，末段原始数据
-		ms.Write((byte*)addr, 0, offset);
-		if(size > remainSize) size = remainSize;
+		ms.Write((byte*)blk, 0, offset);
+		if(size > remain) size = remain;
 		ms.Write(pData, 0, size);
-		
-		int remain = Block - (offset + size);
-		if(remain) ms.Write((byte*)addr, ms.Position(), remain);
+
+		int last = Block - (offset + size);
+		if(last > 0) ms.Write((byte*)blk, offset + size, last);
 
 		// 整块擦除，然后整体写入
-		//Erase(addr, Block);
-		Erase(addr + offset, size);
-		if(!WriteBlock(addr, ms.GetBuffer(), Block, true)) return false;
+		//if(!IsErased(blk + offset, size)) Erase(blk, Block);
+		Erase(blk + offset, size);
+		if(!WriteBlock(blk, ms.GetBuffer(), Block, true)) return false;
 
-		remainSize -= size;
-		addressNow += size;
-		pData += size;
+		remain	-= size;
+		addr	+= size;
+		pData	+= size;
 	}
 
 	// 连续整块
-	for(int i = 0; remainSize > (int)Block; i++)
+	for(int i = 0; remain > (int)Block; i++)
 	{
-		Erase(addressNow, Block);
-		if(!WriteBlock(addressNow, pData, Block, true)) return false;
+		Erase(addr, Block);
+		if(!WriteBlock(addr, pData, Block, true)) return false;
 
-		pData += Block;
-		addressNow += Block;
-		remainSize -= Block;
+		remain	-= Block;
+		addr	+= Block;
+		pData	+= Block;
 	}
 
 	// 最后一个半块
-	if(remainSize > 0)
+	if(remain > 0)
 	{
 		// 前段来源数据，末段原始数据
 		ms.SetPosition(0);
-		ms.Write(pData, 0, remainSize);
-		ms.Write((byte*)addressNow, remainSize, Block - remainSize);
+		ms.Write(pData, 0, remain);
+		ms.Write((byte*)addr, remain, Block - remain);
 
-		Erase(addressNow, Block);
-		if(!WriteBlock(addressNow, ms.GetBuffer(), Block, true)) return false;
+		//if(!IsErased(addr, remain)) Erase(addr, Block);
+		Erase(addr, remain);
+		if(!WriteBlock(addr, ms.GetBuffer(), Block, true)) return false;
 	}
 
     return true;
@@ -140,27 +148,27 @@ bool BlockStorage::Erase(uint address, uint len)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Erase(0x%08x, 0x%08x)\r\n", address, len);
+    debug_printf("BlockStorage::Erase(0x%08x, %d)\r\n", address, len);
 #endif
 
 	if(len == 0) len = Start + Size - address;
 
 	// 该地址所在的块
-	uint addr = address - ((uint)address % Block);
-	uint end  = address + len;
+	uint blk	= address - ((uint)address % Block);
+	uint end	= address + len;
 	// 需要检查是否擦除的范围，从第一段开始
-	uint addr2	= address;
-	uint len2	= addr + Block - address;
+	uint addr	= address;
+	uint len2	= blk + Block - address;
 	// 如果还不够一段，则直接长度
 	if(len2 > len) len2 = len;
-	while(addr < end)
+	while(blk < end)
 	{
-		if(!IsErased(addr2, len2)) EraseBlock(addr);
+		if(!IsErased(addr, len2)) EraseBlock(blk);
 
-		addr	+= Block;
+		blk		+= Block;
 		// 下一段肯定紧跟着人家开始
-		addr2	= addr;
-		len2	= end - addr;
+		addr	= blk;
+		len2	= end - blk;
 		if(len2 > Block) len2 = Block;
 	}
 
