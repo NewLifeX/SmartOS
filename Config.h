@@ -17,8 +17,8 @@ public:
 
 	Config(Storage* st, uint addr);
 
-	// 查找
-    const void* Find(const char* name, bool fAppend = false);
+	// 查找。size不为0时表示要查找该大小的合适配置块
+    const void* Find(const char* name, int size = 0);
     // 废弃。仅清空名称，并不删除数据区
 	bool Invalid(const char* name);
     // 设置配置数据

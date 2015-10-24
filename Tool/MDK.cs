@@ -1101,7 +1101,7 @@ namespace NewLife.Reflection
 
             var ss = new String[] { "bak", "dep", "txt", "ini", "htm" };
             var list = new List<String>(ss);
-            list.Add(Environment.UserName);
+            //list.Add(Environment.UserName);
 
             foreach (var item in list)
             {

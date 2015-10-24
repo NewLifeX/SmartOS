@@ -571,13 +571,12 @@ void TinyServer::SaveDevices()
 
 void TinyServer::ClearDevices()
 {
-	debug_printf("TinyServer::ClearDevices：设备区清零！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
 	Config cfg(&flash, addr);
 
-	debug_printf("TinyServer::ClearDevices 重置设备列表 0x%08X \r\n", addr);
+	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", addr);
 
 	cfg.Invalid("Devs");
 
@@ -627,7 +626,7 @@ void TinyServer::SaveConfig()
 
 void TinyServer::ClearConfig()
 {
-	debug_printf("TinyServer::ClearDevices：设备区清零！\r\n");
+	debug_printf("TinyServer::ClearDevices 设备区清零！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
@@ -639,5 +638,3 @@ void TinyServer::ClearConfig()
 
 	Devices.Clear();
 }
-
-

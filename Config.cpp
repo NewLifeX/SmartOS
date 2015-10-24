@@ -56,11 +56,17 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 	uint slen = strlen(name);
     if(slen > sizeof(Name)) return false;
 
-	Size	= bs.Length();
+	//Size	= bs.Length();
 
 	if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
 	memset(Name, 0, ArrayLength(Name));
-	memcpy(Name, name, slen);
+
+	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
+	if(bs.Length() > 0)
+	{
+		Size	= bs.Length();
+		memcpy(Name, name, slen);
+	}
 
     HeaderCRC = GetHash();
 
@@ -96,7 +102,7 @@ Config::Config(Storage* st, uint addr)
 }
 
 // 循环查找配置块
-const void* Config::Find(const char* name, bool fAppend)
+const void* Config::Find(const char* name, int size)
 {
     uint c_Version = 0x534F5453; // STOS
 
@@ -106,7 +112,7 @@ const void* Config::Find(const char* name, bool fAppend)
 	// 检查签名，如果不存在则写入
 	if(*(uint*)addr != c_Version)
 	{
-		if(!fAppend) return NULL;
+		if(!size) return NULL;
 
 		Device->Write(addr, ByteArray(&c_Version, sizeof(c_Version)));
 	}
@@ -125,7 +131,19 @@ const void* Config::Find(const char* name, bool fAppend)
     }
 
 	// 如果需要添加，返回最后一个非法块的地址
-    return fAppend ? cfg : NULL;
+    //return fAppend ? cfg : NULL;
+
+	if(!size) return NULL;
+
+	// 找一块合适的区域
+    while(cfg->Valid())
+    {
+        if(cfg->Name[0] && cfg->Size == size) return cfg;
+
+        cfg = cfg->Next();
+    }
+
+	return cfg;
 }
 
 // 废弃
@@ -141,7 +159,7 @@ const void* Config::Set(const char* name, const ByteArray& bs)
 
 	assert_param2(Device, "未指定配置段的存储设备");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, bs.Length() > 0);
+	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, bs.Length());
     if(cfg)
 	{
 		// 重新搞一个配置头，使用新的数据去重新初始化
@@ -160,7 +178,7 @@ bool Config::Get(const char* name, ByteArray& bs)
 {
     if(name == NULL) return false;
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, false);
+	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
 	{
 		bs.Copy(cfg->Data(), 0, cfg->Size);
@@ -176,7 +194,7 @@ const void* Config::Get(const char* name)
 {
     if(name == NULL) return NULL;
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, false);
+	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size) return cfg->Data();
 
     return NULL;
