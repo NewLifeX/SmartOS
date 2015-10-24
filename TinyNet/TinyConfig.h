@@ -11,9 +11,8 @@
 #pragma pack(1)
 
 // 配置信息
-class TinyConfig
+struct TinyConfig
 {
-public:
 	ushort		Length;		// 数据长度
 
 	byte		HardVer;	// 硬件版本
@@ -31,7 +30,7 @@ public:
 	ushort		SleepTime;	// 睡眠时间。秒
 
 	// 初始化，各字段为0
-	TinyConfig();
+	//TinyConfig();
 	void LoadDefault();
 	
 	// 序列化到消息数据流
