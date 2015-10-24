@@ -5,13 +5,13 @@
 Config* Config::Current	= NULL;
 
 // 配置块。名称、长度、头部校验，数据部分不做校验，方便外部修改
-class ConfigBlock
+struct ConfigBlock
 {
-public:
 	ushort	HeaderCRC;
 	ushort	Size;
 	char	Name[4];
 
+	ushort GetHash() const;
     bool Valid() const;
 
     const ConfigBlock*	Next() const;
@@ -21,12 +21,15 @@ public:
     bool Write(Storage* storage, uint addr, const ByteArray& bs);
 };
 
-bool ConfigBlock::Valid() const
+ushort ConfigBlock::GetHash() const
 {
     // 计算头部 CRC。从数据CRC开始，包括大小和名称
-    ushort crc = Crc::Hash16(&Size, sizeof(*this) - offsetof(ConfigBlock, Size));
+    return Crc::Hash16(&Size, sizeof(*this) - offsetof(ConfigBlock, Size));
+}
 
-    return crc == HeaderCRC;
+bool ConfigBlock::Valid() const
+{
+    return GetHash() == HeaderCRC;
 }
 
 const ConfigBlock* ConfigBlock::Next() const
@@ -34,7 +37,7 @@ const ConfigBlock* ConfigBlock::Next() const
     if(!Valid()) return NULL;
 
 	// 确保数据部分2字节对齐，便于Flash操作
-	uint s = (Size + 1) & ~1;
+	uint s = (Size + 1) & 0xFFFE;
 
 	return (const ConfigBlock*)((byte*)Data() + s);
 }
@@ -49,6 +52,7 @@ const void* ConfigBlock::Data() const
 bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 {
     if(name == NULL) return false;
+
 	uint slen = strlen(name);
     if(slen > sizeof(Name)) return false;
 
@@ -58,8 +62,7 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 	memset(Name, 0, ArrayLength(Name));
 	memcpy(Name, name, slen);
 
-	// 计算头部CRC。包括数据CRC、大小、名称
-    HeaderCRC = Crc::Hash16(&Size, sizeof(*this) - offsetof(ConfigBlock, Size));
+    HeaderCRC = GetHash();
 
     return true;
 }
