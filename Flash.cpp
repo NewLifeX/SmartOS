@@ -15,7 +15,7 @@
 Flash::Flash()
 {
 	//Size = *(__IO ushort *)(0x1FFFF7E0) << 10;  // 里面的单位是k，要转为字节
-	Size	= Sys.FlashSize << 20;
+	Size	= Sys.FlashSize << 10;
 	Block	= FLASH_PAGE_SIZE;
     Start	= 0x8000000;
 	ReadModifyWrite	= true;
