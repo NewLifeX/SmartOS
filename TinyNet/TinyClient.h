@@ -18,6 +18,7 @@ public:
 	TinyController* Control;
 	TinyConfig*	Cfg;
 
+	bool		Joining;	// 是否正在组网
 	byte		Server;		// 服务端地址
 	ushort		Type;		// 设备类型。两个字节可做二级分类
 	ByteArray	Password;	// 通讯密码

@@ -17,6 +17,7 @@ TinyClient::TinyClient(TinyController* control)
 
 	Control 	= control;
 
+	Joining		= false;
 	Server		= 0;
 	Type		= Sys.Code;
 
@@ -108,7 +109,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
-	if(Server != 0 && Server != msg.Src) return true;
+	if(msg.Code != 0x01 && Server != 0 && Server != msg.Src) return true;
 
 	switch(msg.Code)
 	{
@@ -177,7 +178,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	rs.Length	= ms2.Position();
 
 	Reply(rs);
-	
+
 	Report(rs);//接受写入一次，刷新服务端
 
 }
@@ -287,10 +288,8 @@ void TinyClientTask(void* param)
 		client->NextReport = 0;
 		return;
 	}
-	if(client->Server == 0)
-		client->Join();
-	else
-		client->Ping();
+	if(client->Server == 0 || client->Joining) client->Join();
+	if(client->Server != 0) client->Ping();
 }
 
 // 发送发现消息，告诉大家我在这
@@ -329,6 +328,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 		//return true;
 	}
 
+	Joining		= false;
+
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
 	Password.Save(Cfg->Password, ArrayLength(Cfg->Password));
@@ -336,7 +337,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	// 记住服务端地址
 	Server = dm.Server;
 	Cfg->Channel	= dm.Channel;
-	Cfg->Speed	= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
+	Cfg->Speed		= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
 
 	// 服务端组网密码，退网使用
 	Cfg->ServerKey[0] = dm.HardID.Length();
@@ -344,17 +345,20 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	debug_printf("组网成功！\r\n");
 	//debug_printf("组网成功！由网关 0x%02X 分配得到节点地址 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Cfg->Speed);
-	//Password.Show(true); // 这里出错  问题未知
 
 	// 取消Join任务，启动Ping任务
-	ushort time = Cfg->PingTime;
+	ushort time		= Cfg->PingTime;
 	if(time < 5)	time	= 5;
 	if(time > 60)	time	= 60;
+	Cfg->PingTime	= time;
 	Sys.SetTaskPeriod(_TaskID, time * 1000);
 
 	// 组网成功更新一次最后活跃时间
 	LastActive = Time.Current();
 
+	// 保存配置
+	Cfg->Save();
+	
 	return true;
 }
 
@@ -377,10 +381,13 @@ void TinyClient::Ping()
 
 		Sys.SetTaskPeriod(_TaskID, 5000);
 
-		Server		= 0;
-		Password.SetLength(0);
+		// 掉线以后，重发组网信息，基本功能继续执行
+		Joining	= true;
 
-		return;
+		//Server		= 0;
+		//Password.SetLength(0);
+
+		//return;
 	}
 
 	TinyMessage msg;
