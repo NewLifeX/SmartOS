@@ -13,10 +13,15 @@
 // 配置信息
 struct TinyConfig
 {
-	ushort		Length;		// 数据长度
+	byte		Length;		// 数据长度
 
 	byte		HardVer;	// 硬件版本
 	byte		SoftVer;	// 软件版本
+
+	byte		PingTime;	// 心跳时间。秒
+	byte		OfflineTime;// 离线阀值时间。秒
+	byte		SleepTime;	// 睡眠时间。秒
+
 	ushort		Kind;		// 类型
 	byte		Address;	// 分配得到的设备地址
 	byte		Password[16];	// 通信密码
@@ -25,14 +30,11 @@ struct TinyConfig
 	ushort		Speed;		// 传输速度
 	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
 
-	ushort		PingTime;	// 心跳时间。秒
-	ushort		OfflineTime;	// 离线阀值时间。秒
-	ushort		SleepTime;	// 睡眠时间。秒
-
 	// 初始化，各字段为0
 	//TinyConfig();
+	//const TinyConfig& Default();
 	void LoadDefault();
-	
+
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);

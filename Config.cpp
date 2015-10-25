@@ -190,6 +190,20 @@ bool Config::Get(const char* name, ByteArray& bs)
     return false;
 }
 
+// 获取配置数据，如果不存在则覆盖
+bool Config::GetOrSet(const char* name, ByteArray& bs)
+{
+    if(name == NULL) return false;
+
+	// 输入数据已存在，直接返回
+	if(Get(name, bs)) return true;
+
+	// 否则，用这块数据去覆盖吧
+	Set(name, bs);
+
+    return false;
+}
+
 const void* Config::Get(const char* name)
 {
     if(name == NULL) return NULL;

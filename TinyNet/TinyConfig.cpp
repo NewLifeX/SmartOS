@@ -9,12 +9,38 @@
 	Length = len;
 }*/
 
+/*const TinyConfig& Default()
+{
+	const TinyConfig tc =
+	{
+		sizeof(TinyConfig),
+
+		1,
+		1,
+
+		10,
+		60,
+		5,
+
+		120,
+		250,
+		60,
+	};
+
+	return tc;
+}*/
+
 void TinyConfig::LoadDefault()
 {
+	// 实际内存大小，减去头部大小
+	uint len = sizeof(this) - ((int)&Length - (int)this);
+	memset(&Length, 0, len);
+	Length = len;
+
 	Kind	= Sys.Code;
 	//Server	= 0x01;
 
-	PingTime	= 15;
+	PingTime	= 10;
 	OfflineTime	= 60;
 }
 

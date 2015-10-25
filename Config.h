@@ -25,6 +25,8 @@ public:
     const void* Set(const char* name, const ByteArray& bs);
 	// 获取配置数据
     bool Get(const char* name, ByteArray& bs);
+	// 获取配置数据，如果不存在则覆盖
+    bool GetOrSet(const char* name, ByteArray& bs);
 	// 获取配置数据
     const void* Get(const char* name);
 
