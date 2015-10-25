@@ -357,7 +357,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	LastActive = Time.Current();
 
 	// 保存配置
-	Cfg->Save();
+	//Cfg->Save();
 	
 	return true;
 }
