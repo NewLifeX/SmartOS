@@ -55,9 +55,9 @@ void TinyConfig::Load()
 	if(!len) len = sizeof(this[0]);
 	ByteArray bs(&Length, len);
 	if(!Config::Current->GetOrSet("TCFG", bs))
-	{
-		debug_printf("首次运行，创建配置区！");
-	}
+		debug_printf("TinyConfig::Load 首次运行，创建配置区！");
+	else
+		debug_printf("TinyConfig::Load 从配置区加载配置");
 }
 
 void TinyConfig::Save()

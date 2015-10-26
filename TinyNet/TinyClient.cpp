@@ -330,12 +330,14 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	Joining		= false;
 
+	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
 	Password.Save(Cfg->Password, ArrayLength(Cfg->Password));
 
 	// 记住服务端地址
 	Server = dm.Server;
+	Cfg->Server		= dm.Server;
 	Cfg->Channel	= dm.Channel;
 	Cfg->Speed		= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
 
