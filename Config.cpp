@@ -189,7 +189,7 @@ bool Config::Get(const char* name, ByteArray& bs)
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
 	{
-		bs.Copy(cfg->Data(), 0, cfg->Size);
+		bs.Copy(cfg->Data(), cfg->Size);
 		bs.SetLength(cfg->Size);
 
 		return true;
