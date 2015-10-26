@@ -339,7 +339,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Server = dm.Server;
 	Cfg->Server		= dm.Server;
 	Cfg->Channel	= dm.Channel;
-	Cfg->Speed		= dm.Speed == 0 ? 250 : (dm.Speed == 1 ? 1000 : 2000);
+	Cfg->Speed		= dm.Speed * 10;
 
 	// 服务端组网密码，退网使用
 	Cfg->ServerKey[0] = dm.HardID.Length();
@@ -379,7 +379,7 @@ void TinyClient::Ping()
 	{
 		if(Server == 0) return;
 
-		debug_printf("%d 秒无法联系，服务端可能已经掉线，重启Join任务，关闭Ping任务\r\n", off);
+		debug_printf("%d 秒无法联系网关，无线网可能已经掉线，重新组网，其它任务正常处理\r\n", off);
 
 		Sys.SetTaskPeriod(_TaskID, 5000);
 
