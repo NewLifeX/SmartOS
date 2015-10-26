@@ -246,7 +246,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		bool rs = Server->Dispatch(tmsg);
 		if(rs)
 		{
-		    debug_printf("rs = Server->Dispatch(tmsg)\r\n");
+		  //  debug_printf("rs = Server->Dispatch(tmsg)\r\n");
 
 			TokenMessage msg2;
 
