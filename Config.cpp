@@ -51,7 +51,7 @@ const void* ConfigBlock::Data() const
 // 构造一个新的配置块
 bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 {
-    if(name == NULL) return false;
+    assert_param2(name, "配置块名称不能为空");
 
 	uint slen = strlen(name);
     if(slen > sizeof(Name)) return false;
@@ -76,7 +76,10 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 // 更新块
 bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
 {
-	if(bs.Length() > Size) return false;
+	assert_ptr(storage);
+
+	// 如果大小超标，那么需要下一块无效，否则会出现配置覆盖
+	if(bs.Length() <= Size || Next()->Valid() == false) return false;
 
     bool rs = true;
 
@@ -104,7 +107,7 @@ Config::Config(Storage* st, uint addr)
 // 循环查找配置块
 const void* Config::Find(const char* name, int size)
 {
-    uint c_Version = 0x534F5453; // STOS
+    const uint c_Version = 0x534F5453; // STOS
 
 	assert_param2(name, "配置段名称不能为空");
 
@@ -155,8 +158,8 @@ bool Config::Invalid(const char* name)
 // 根据名称更新块
 const void* Config::Set(const char* name, const ByteArray& bs)
 {
-    if(name == NULL) return NULL;
-
+    //if(name == NULL) return NULL;
+    assert_param2(name, "配置块名称不能为空");
 	assert_param2(Device, "未指定配置段的存储设备");
 
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, bs.Length());
@@ -176,7 +179,8 @@ const void* Config::Set(const char* name, const ByteArray& bs)
 // 获取配置数据
 bool Config::Get(const char* name, ByteArray& bs)
 {
-    if(name == NULL) return false;
+    //if(name == NULL) return false;
+    assert_param2(name, "配置块名称不能为空");
 
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
@@ -193,7 +197,8 @@ bool Config::Get(const char* name, ByteArray& bs)
 // 获取配置数据，如果不存在则覆盖
 bool Config::GetOrSet(const char* name, ByteArray& bs)
 {
-    if(name == NULL) return false;
+    //if(name == NULL) return false;
+    assert_param2(name, "配置块名称不能为空");
 
 	// 输入数据已存在，直接返回
 	if(Get(name, bs)) return true;
@@ -206,7 +211,8 @@ bool Config::GetOrSet(const char* name, ByteArray& bs)
 
 const void* Config::Get(const char* name)
 {
-    if(name == NULL) return NULL;
+    //if(name == NULL) return NULL;
+    assert_param2(name, "配置块名称不能为空");
 
 	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size) return cfg->Data();

@@ -7,7 +7,8 @@
 bool BlockStorage::Read(uint address, ByteArray& bs)
 {
 	uint len = bs.Length();
-    if (!len) return false;
+    if (!len) return true;
+
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
@@ -21,9 +22,12 @@ bool BlockStorage::Read(uint address, ByteArray& bs)
 
 bool BlockStorage::Write(uint address, const ByteArray& bs)
 {
+    assert_param2(address & 0x01 == 0x00, "Write起始地址必须是2字节对齐");
+
 	byte* buf	= bs.GetBuffer();
 	uint len	= bs.Length();
-    if (!len) return false;
+    if (!len) return true;
+
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
@@ -132,6 +136,8 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 
 bool BlockStorage::Memset(uint address, byte data, uint len)
 {
+    assert_param2(address & 0x01 == 0x00, "Memset起始地址必须是2字节对齐");
+
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
@@ -145,6 +151,8 @@ bool BlockStorage::Memset(uint address, byte data, uint len)
 // 擦除块。起始地址，字节数量默认0表示擦除全部
 bool BlockStorage::Erase(uint address, uint len)
 {
+    assert_param2(address & 0x01 == 0x00, "Erase起始地址必须是2字节对齐");
+
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
@@ -178,6 +186,8 @@ bool BlockStorage::Erase(uint address, uint len)
 /* 指定块是否被擦除 */
 bool BlockStorage::IsErased(uint address, uint len)
 {
+    assert_param2(address & 0x01 == 0x00, "IsErased起始地址必须是2字节对齐");
+
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
