@@ -78,8 +78,12 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
 {
 	assert_ptr(storage);
 
-	// 如果大小超标，那么需要下一块无效，否则会出现配置覆盖
-	if(bs.Length() <= Size || Next()->Valid() == false) return false;
+	// 如果大小超标，并且下一块有效，那么这是非法操作
+	if(bs.Length() > Size && Next()->Valid())
+	{
+		debug_printf("ConfigBlock::Write 配置块 %s 大小 %d 小于要写入的数据库大小 %d，并且下一块是有效配置块，不能覆盖！ \r\n", Name, Size, bs.Length());
+		return false;
+	}
 
     bool rs = true;
 
