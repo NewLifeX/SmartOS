@@ -52,7 +52,7 @@ void Gateway::Start()
 
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
-   // Client->IsOldOrder  = IsOldOrder;
+    Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -233,7 +233,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
            OnDeviceDelete(msg);
 		   break;
 	}
-
+	
 	// 消息转发
 	if(msg.Code >= 0x10 && !msg.Error && msg.Length < 25)
 	{
@@ -375,13 +375,7 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	if(!dv) return Client->Reply(rs);
 
 	dv->Show(true);
-
-	 //旧指令的开个位先用数据长度替代
-	 if(IsOldOrder)
-	 {
-		//dv->DataSize=dv->Store[0];//数据区的第一长度为主数据区长度
-		//dv->ConfigSize=2;
-	 }
+	 
 
 	return SendDeviceInfo(dv);
 }
