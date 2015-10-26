@@ -29,7 +29,9 @@ private:
 #endif
 
 	// 收发缓冲区
+#ifndef STM32F0
 	Queue Tx;
+#endif
 	Queue Rx;
 
 	void Init();

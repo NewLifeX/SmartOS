@@ -7,6 +7,8 @@
 
 #define COM_DEBUG 0
 
+const byte uart_irqs[] = UART_IRQs;
+
 SerialPort::SerialPort() { Init(); }
 
 SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataBits, byte stopBits)
@@ -144,12 +146,14 @@ bool SerialPort::OnOpen()
 	//USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 	// 清空缓冲区
+#ifndef STM32F0
 	Tx.Clear();
+#endif
 	Rx.Clear();
 
 	// 打开中断，收发都要使用
-	const byte irqs[] = UART_IRQs;
-	byte irq = irqs[_index];
+	//const byte irqs[] = UART_IRQs;
+	byte irq = uart_irqs[_index];
 	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
 
@@ -171,8 +175,8 @@ void SerialPort::OnClose()
     _tx.Close();
 	_rx.Close();
 
-	const byte irqs[] = UART_IRQs;
-	byte irq = irqs[_index];
+	//const byte irqs[] = UART_IRQs;
+	byte irq = uart_irqs[_index];
 	Interrupt.Deactivate(irq);
 
 	// 检查重映射
@@ -229,6 +233,7 @@ bool SerialPort::OnWrite(const ByteArray& bs)
 // 刷出某个端口中的数据
 bool SerialPort::Flush(uint times)
 {
+#ifndef STM32F0
 	// 打开串口发送
 	if(RS485) *RS485 = true;
 
@@ -237,10 +242,14 @@ bool SerialPort::Flush(uint times)
 	if(RS485) *RS485 = false;
 
 	return times > 0;
+#else
+	return true;
+#endif
 }
 
 void SerialPort::OnTxHandler()
 {
+#ifndef STM32F0
 	if(!Tx.Empty())
 		USART_SendData(_port, (ushort)Tx.Pop());
 	else
@@ -249,6 +258,7 @@ void SerialPort::OnTxHandler()
 
 		if(RS485) *RS485 = false;
 	}
+#endif
 }
 
 // 从某个端口读取数据
