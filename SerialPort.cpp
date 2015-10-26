@@ -9,6 +9,12 @@
 
 const byte uart_irqs[] = UART_IRQs;
 
+//#define RTM_Serial_Debug 1
+#ifdef RTM_Serial_Debug
+Pin ErrorPin = PB14;
+OutputPort ErrorPort;
+#endif
+
 SerialPort::SerialPort() { Init(); }
 
 SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataBits, byte stopBits)
@@ -85,7 +91,12 @@ bool SerialPort::OnOpen()
     GetPins(&tx, &rx);
 
 	USART_InitTypeDef  p;
-
+	
+#ifdef RTM_Serial_Debug
+	ErrorPort.Set(ErrorPin);
+	ErrorPort.Open();
+#endif
+	
 	//串口引脚初始化
     _tx.Set(tx).Open();
     _rx.Set(rx).Open();
@@ -377,6 +388,9 @@ void SerialPort::OnHandler(ushort num, void* param)
 		USART_ReceiveData(sp->_port);
 		//tc.Show();
 		sp->Error++;
+#ifdef RTM_Serial_Debug
+		ErrorPort = !ErrorPort;
+#endif
 		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
 		//debug_printf("Serial%d 溢出 MinSize=%d _byteTime=%dus \r\n", sp->_index + 1, sp->MinSize, sp->_byteTime);
 	}
