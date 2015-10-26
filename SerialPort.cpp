@@ -162,11 +162,13 @@ bool SerialPort::OnOpen()
 #endif
 	Rx.Clear();
 
+#ifndef STM32F0
 	// 打开中断，收发都要使用
 	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
+#endif
 
 	USART_Cmd(_port, ENABLE);//使能串口
 
@@ -362,6 +364,12 @@ void SerialPort::Register(TransportHandler handler, void* param)
 			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
 		}
+#ifdef STM32F0
+		// 打开中断
+		byte irq = uart_irqs[_index];
+		Interrupt.SetPriority(irq, 0);
+		Interrupt.Activate(irq, OnHandler, this);
+#endif
 	}
     else
 	{
