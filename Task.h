@@ -41,7 +41,10 @@ public:
 
 	// 执行任务。返回是否正常执行。
 	bool Execute(ulong now);
-	void ShowStatus();	// 显示状态
+	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
+	void Set(bool enable, int msNextTime = -1);
+	// 显示状态
+	void ShowStatus();	
 
 	// 全局任务调度器
 	static TaskScheduler* Scheduler();

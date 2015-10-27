@@ -89,8 +89,6 @@ bool SerialPort::OnOpen()
 {
     Pin rx, tx;
     GetPins(&tx, &rx);
-
-	USART_InitTypeDef  p;
 	
 #ifdef RTM_Serial_Debug
 	ErrorPort.Set(ErrorPin);
@@ -143,11 +141,12 @@ bool SerialPort::OnOpen()
 	_rx.AFConfig(afs[_index]);
 #endif
 
+	USART_InitTypeDef  p;
     USART_StructInit(&p);
-	p.USART_BaudRate = _baudRate;
-	p.USART_WordLength = _dataBits;
-	p.USART_StopBits = _stopBits;
-	p.USART_Parity = _parity;
+	p.USART_BaudRate	= _baudRate;
+	p.USART_WordLength	= _dataBits;
+	p.USART_StopBits	= _stopBits;
+	p.USART_Parity		= _parity;
 	USART_Init(_port, &p);
 
 	// 串口接收中断配置，同时会打开过载错误中断
@@ -306,24 +305,18 @@ uint SerialPort::OnRead(ByteArray& bs)
 
 void SerialPort::OnRxHandler()
 {
-	//TimeCost tc;
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
 	// 缓冲区里面别用%，那会产生非常耗时的除法运算
 	byte dat = (byte)USART_ReceiveData(_port);
 	Rx.Push(dat);
-	//if(tc.Elapsed() > 900000) 
-	//	tc.Show();
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
 	if(_taskidRx && Rx.Length() >= MinSize)
 	{
 		//Sys.SetTask(_taskidRx, true, (_byteTime >> 10) + 1);
-		_task->NextTime	= Time.Current() + 1;
-		_task->Enable	= true;
-		// 如果系统调度器处于Sleep，让它立马退出
-		Task::Scheduler()->Sleeping = false;
+		_task->Set(true, 1);
 	}
 }
 
@@ -333,7 +326,7 @@ void SerialPort::ReceiveTask(void* param)
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
 
 	//!!! 只要注释这一行，四位触摸开关就不会有串口溢出错误
-	//if(sp->Rx.Length() == 0) return;
+	if(sp->Rx.Length() == 0) return;
 
 	// 从栈分配，节省内存
 	ByteArray bs(0x40);
@@ -380,7 +373,6 @@ void SerialPort::Register(TransportHandler handler, void* param)
 // 真正的串口中断函数
 void SerialPort::OnHandler(ushort num, void* param)
 {
-	//TimeCost tc;
 	SerialPort* sp = (SerialPort*)param;
 
 #ifndef STM32F0
@@ -394,16 +386,14 @@ void SerialPort::OnHandler(ushort num, void* param)
 		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
 		// 读取并扔到错误数据
 		USART_ReceiveData(sp->_port);
+		//sp->OnRxHandler();
 		//tc.Show();
 		sp->Error++;
 #ifdef RTM_Serial_Debug
 		ErrorPort = !ErrorPort;
 #endif
 		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
-		//debug_printf("Serial%d 溢出 MinSize=%d _byteTime=%dus \r\n", sp->_index + 1, sp->MinSize, sp->_byteTime);
 	}
-	//else
-	//tc.Show();
 	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);*/

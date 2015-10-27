@@ -385,13 +385,7 @@ bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
 	Task* task = Task::Get(taskid);
 	if(!task) return false;
 
-	task->Enable = enable;
-
-	// 可以安排最近一次执行的时间，比如0表示马上调度执行
-	if(msNextTime >= 0) task->NextTime = Time.Current() + msNextTime;
-
-	// 如果系统调度器处于Sleep，让它立马退出
-	if(enable) Task::Scheduler()->Sleeping = false;
+	task->Set(enable, msNextTime);
 
 	return true;
 }

@@ -71,6 +71,18 @@ bool Task::Execute(ulong now)
 	return true;
 }
 
+// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
+void Task::Set(bool enable, int msNextTime)
+{
+	Enable = enable;
+
+	// 可以安排最近一次执行的时间，比如0表示马上调度执行
+	if(msNextTime >= 0) NextTime = Time.Current() + msNextTime;
+
+	// 如果系统调度器处于Sleep，让它立马退出
+	if(enable) Scheduler()->Sleeping = false;
+}
+
 // 显示状态
 void Task::ShowStatus()
 {
