@@ -89,12 +89,12 @@ bool SerialPort::OnOpen()
 {
     Pin rx, tx;
     GetPins(&tx, &rx);
-	
+
 #ifdef RTM_Serial_Debug
 	ErrorPort.Set(ErrorPin);
 	ErrorPort.Open();
 #endif
-	
+
 	//串口引脚初始化
     _tx.Set(tx).Open();
     _rx.Set(rx).Open();
@@ -207,11 +207,16 @@ void SerialPort::OnClose()
 // 发送单一字节数据
 uint SerialPort::SendData(byte data, uint times)
 {
-    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);//等待发送完毕
-    if(times > 0)
-		USART_SendData(_port, (ushort)data);
-	else
-		Error++;
+	/*
+	在USART_DR寄存器中写入了最后一个数据字后，在关闭USART模块之前或设置微控制器进入低功耗模式之前，
+	必须先等待TC=1。使用下列软件过程清除TC位：
+	1．读一次USART_SR寄存器；
+	2．写一次USART_DR寄存器。
+	*/
+	USART_SendData(_port, (ushort)data);
+	// 等待发送完毕
+    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);
+    if(!times) Error++;
 
 	return times;
 }
