@@ -41,6 +41,8 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
     debug_printf("\r\n");
 #endif
 
+	// 长度也必须2字节对齐
+	if(len & 0x01) len++;
 	// 比较跳过相同数据
 	while(len)
 	{
