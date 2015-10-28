@@ -1,7 +1,12 @@
 ﻿#include "Config.h"
 
-#define STORAGE_DEBUG DEBUG
-//#define STORAGE_DEBUG 0
+//#define STORAGE_DEBUG DEBUG
+#define STORAGE_DEBUG 0
+#if STORAGE_DEBUG
+	#define st_printf debug_printf
+#else
+	#define st_printf(format, ...)
+#endif
 
 /* 读取段数据 （起始段，字节数量，目标缓冲区） */
 bool BlockStorage::Read(uint address, ByteArray& bs)
@@ -12,7 +17,7 @@ bool BlockStorage::Read(uint address, ByteArray& bs)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Read(0x%08x, %d, 0x%08x)\r\n", address, len, bs.GetBuffer());
+    st_printf("BlockStorage::Read(0x%08x, %d, 0x%08x)\r\n", address, len, bs.GetBuffer());
 #endif
 
 	bs.Copy((byte*)address);
@@ -31,14 +36,14 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, buf);
+    st_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, buf);
     int len2 = 0x10;
     if(len < len2) len2 = len;
-    //debug_printf("    Data: ");
+    //st_printf("    Data: ");
     //!!! 必须另起一个指针，否则移动原来的指针可能造成重大失误
     byte* p = buf;
-    for(int i=0; i<len2; i++) debug_printf(" %02X", *p++);
-    debug_printf("\r\n");
+    for(int i=0; i<len2; i++) st_printf(" %02X", *p++);
+    st_printf("\r\n");
 #endif
 
 	// 长度也必须2字节对齐
@@ -61,7 +66,7 @@ bool BlockStorage::Write(uint address, const ByteArray& bs)
 	}
 	if(!len)
 	{
-		debug_printf("数据相同，无需写入！");
+		st_printf("数据相同，无需写入！");
 		return true;
 	}
 
@@ -143,7 +148,7 @@ bool BlockStorage::Memset(uint address, byte data, uint len)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Memset(0x%08x, %d, 0x%02x)\r\n", address, len, data);
+    st_printf("BlockStorage::Memset(0x%08x, %d, 0x%02x)\r\n", address, len, data);
 #endif
 
 	// 这里还没有考虑超过一块的情况，将来补上
@@ -158,7 +163,7 @@ bool BlockStorage::Erase(uint address, uint len)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    debug_printf("BlockStorage::Erase(0x%08x, %d)\r\n", address, len);
+    st_printf("BlockStorage::Erase(0x%08x, %d)\r\n", address, len);
 #endif
 
 	if(len == 0) len = Start + Size - address;
@@ -193,7 +198,7 @@ bool BlockStorage::IsErased(uint address, uint len)
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-	//debug_printf("BlockStorage::IsErased(0x%08x, %d)\r\n", address, len);
+	//st_printf("BlockStorage::IsErased(0x%08x, %d)\r\n", address, len);
 #endif
 
     ushort* p	= (ushort*)address;

@@ -1,7 +1,7 @@
 ﻿#include "DataStore.h"
 
-#define DS_DEBUG DEBUG
-//#define DS_DEBUG 0
+//#define DS_DEBUG DEBUG
+#define DS_DEBUG 0
 #if DS_DEBUG
 	#define ds_printf debug_printf
 #else
@@ -194,13 +194,13 @@ int ByteDataPort::Write(byte* data)
 	//Name.Show(true);
 	//ds_printf(" %s\r\n", Name);
 	//Show(true);
-	Object* obj = dynamic_cast<Object*>(this);
+	/*Object* obj = dynamic_cast<Object*>(this);
 	if(obj)
 	{
 		ds_printf(" ");
 		obj->Show(true);
 	}
-	else
+	else*/
 		ds_printf("\r\n");
 #endif
 
