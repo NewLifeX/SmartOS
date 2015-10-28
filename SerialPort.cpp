@@ -161,7 +161,10 @@ bool SerialPort::OnOpen()
 #endif
 	Rx.Clear();
 
-#ifndef STM32F0
+#ifdef STM32F0
+	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
+	USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
+#else
 	// 打开中断，收发都要使用
 	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
@@ -384,7 +387,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
 #endif
 	// 接收中断
-	while(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
+	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_ORE) != RESET)
 	{
