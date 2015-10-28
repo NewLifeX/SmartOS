@@ -54,6 +54,8 @@ public:
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
+	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, Pin* pins, byte* level, byte* state);
+	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 // 过零检测
 private:
 	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us

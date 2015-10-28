@@ -180,3 +180,111 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 
 	return false;
 }
+
+void ACZeroReset(void *param)
+{
+	if(!Button_GrayLevel::ACZero) Sys.Reset();
+}
+
+void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, Pin* pins, byte* level, byte* state)
+{
+	debug_printf("\r\n初始化开关按钮 \r\n");
+
+	// 配置PWM来源
+	static PWM LedPWM(tim);
+	// 设置分频 尽量不要改 Prescaler * Period 就是 PWM 周期
+	LedPWM.Prescaler	= 0x04;		// 随便改  只要肉眼看不到都没问题
+	LedPWM.Period		= 0xff;		// 对应灰度调节范围
+	LedPWM.Start();
+
+	// 配置 LED 引脚
+	static AlternatePort Leds[4];
+
+	for(int i = 0; i < count; i++)
+	{
+		Leds[i].Set(pins[i]);
+		Leds[i].AFConfig(GPIO_AF_1);
+		Leds[i].Open();
+	}
+
+	// 设置默认灰度
+	if(level[0] == 0x00)
+	{
+		// 使用默认灰度
+		Button_GrayLevel::OnGrayLevel	= 250;
+		Button_GrayLevel::OffGrayLevel	= 20;
+		level[0]	=	Button_GrayLevel::OnGrayLevel	;
+		level[1]	=	Button_GrayLevel::OffGrayLevel	;
+	}
+	else
+	{
+		// 使用 Data 记录的灰度
+		Button_GrayLevel::OnGrayLevel 	= level[0];
+		Button_GrayLevel::OffGrayLevel 	= level[1];
+	}
+
+	// 配置 Button 主体
+	Pin* pkeys		= &pins[count];
+	Pin* prelays	= &pins[count << 1];
+	for(int i = 0; i < count; i++)
+	{
+		btns[i].Set(pkeys[i], prelays[i], false);
+	}
+
+#if DEBUG
+	const string names[] = {"一号", "二号", "三号", "四号"};
+#endif
+
+	for(int i=0; i < count; i++)
+	{
+		btns[i].Index	= i;
+#if DEBUG
+		btns[i].Name	= names[i];
+#endif
+		btns[i].Register(onpress);
+
+		// 如果是热启动，恢复开关状态数据
+		if(state[i]) btns[i].SetValue(true);
+	}
+
+	// 灰度 LED 绑定到 Button
+	for(int i = 0; i < count; i++)
+	{
+		btns[i].Set(&LedPWM, i);
+	}
+
+	debug_printf("\r\n过零检测引脚PB12探测\r\n");
+	Button_GrayLevel::SetACZeroAdjTime(2300);
+	
+	Pin* zero = &pins[count * 3];
+	if(Button_GrayLevel::SetACZeroPin(zero[0]))
+		debug_printf("已连接交流电！\r\n");
+	else
+		debug_printf("未连接交流电或没有使用过零检测电路\r\n");
+
+    debug_printf("所有开关按钮准备就绪！\r\n\r\n");
+
+	Sys.AddTask(ACZeroReset, NULL, 60000, 60000, "ACZero");
+}
+
+bool Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte count)
+{
+	bool rs = false;
+	if(OnGrayLevel != level[0])
+	{
+		OnGrayLevel = level[0];
+		rs = true;
+	}
+	if(OnGrayLevel != level[1])
+	{
+		OnGrayLevel = level[1];
+		rs = true;
+	}
+	if(rs)
+	{
+		debug_printf("指示灯灰度调整\r\n");
+		for(int i = 0; i < count; i++)
+			btns[i].RenewGrayLevel();
+	}
+	return rs;
+}
