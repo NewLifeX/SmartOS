@@ -199,8 +199,8 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	for(int i = 0; i < count; i++)
 	{
 		Leds[i].Set(pins[i].Led);
-		Leds[i].AFConfig(GPIO_AF_1);
 		Leds[i].Open();
+		Leds[i].AFConfig(GPIO_AF_1);
 	}
 
 	// 设置默认灰度
