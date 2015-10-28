@@ -1,5 +1,7 @@
 ﻿#include "Queue.h"
 
+#pragma arm section code = "SectionForSys"
+
 Queue::Queue(uint len) : _s(len)
 {
 	Clear();

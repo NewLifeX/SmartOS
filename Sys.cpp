@@ -34,7 +34,7 @@ uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
 #endif
 
-#pragma arm section code
+#pragma arm section code = "SectionForBoot"
 
 _force_inline void InitHeapStack(uint top)
 {

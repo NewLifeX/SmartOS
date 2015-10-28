@@ -7,6 +7,8 @@
 
 #define COM_DEBUG 0
 
+#pragma arm section code = "SectionForSys"
+
 const byte uart_irqs[] = UART_IRQs;
 
 //#define RTM_Serial_Debug 1
@@ -163,7 +165,7 @@ bool SerialPort::OnOpen()
 
 #ifdef STM32F0
 	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
-	USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
+	//USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
 #else
 	// 打开中断，收发都要使用
 	//const byte irqs[] = UART_IRQs;

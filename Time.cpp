@@ -12,6 +12,8 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
+#pragma arm section code = "SectionForSys"
+
 static TIM_TypeDef* const g_Timers[] = TIMS;
 
 TTime::TTime()

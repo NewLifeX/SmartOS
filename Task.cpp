@@ -1,6 +1,8 @@
 ﻿#include "Task.h"
 #include "Time.h"
 
+#pragma arm section code = "SectionForSys"
+
 Task::Task()
 {
 	Host		= NULL;
