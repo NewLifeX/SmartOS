@@ -181,12 +181,8 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 	return false;
 }
 
-void ACZeroReset(void *param)
-{
-	if(!Button_GrayLevel::ACZero) Sys.Reset();
-}
-
-void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, Pin* pins, byte* level, byte* state)
+void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress
+	, ButtonPin* pins, byte* level, byte* state)
 {
 	debug_printf("\r\n初始化开关按钮 \r\n");
 
@@ -202,7 +198,7 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 
 	for(int i = 0; i < count; i++)
 	{
-		Leds[i].Set(pins[i]);
+		Leds[i].Set(pins[i].Led);
 		Leds[i].AFConfig(GPIO_AF_1);
 		Leds[i].Open();
 	}
@@ -224,11 +220,9 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	}
 
 	// 配置 Button 主体
-	Pin* pkeys		= &pins[count];
-	Pin* prelays	= &pins[count << 1];
 	for(int i = 0; i < count; i++)
 	{
-		btns[i].Set(pkeys[i], prelays[i], false);
+		btns[i].Set(pins[i].Key, pins[i].Relay, pins[i].Invert);
 	}
 
 #if DEBUG
@@ -243,26 +237,32 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 #endif
 		btns[i].Register(onpress);
 
+		// 灰度 LED 绑定到 Button
+		btns[i].Set(&LedPWM, pins[i].PwmIndex);
+
 		// 如果是热启动，恢复开关状态数据
 		if(state[i]) btns[i].SetValue(true);
 	}
+}
 
-	// 灰度 LED 绑定到 Button
-	for(int i = 0; i < count; i++)
-	{
-		btns[i].Set(&LedPWM, i);
-	}
+void ACZeroReset(void *param)
+{
+	if(!Button_GrayLevel::ACZero) Sys.Reset();
+}
+
+void Button_GrayLevel::InitZero(Pin zero, int us)
+{
+	if(zero == P0) return;
 
 	debug_printf("\r\n过零检测引脚PB12探测\r\n");
-	Button_GrayLevel::SetACZeroAdjTime(2300);
-	
-	Pin* zero = &pins[count * 3];
-	if(Button_GrayLevel::SetACZeroPin(zero[0]))
+	Button_GrayLevel::SetACZeroAdjTime(us);
+
+	if(Button_GrayLevel::SetACZeroPin(zero))
 		debug_printf("已连接交流电！\r\n");
 	else
 		debug_printf("未连接交流电或没有使用过零检测电路\r\n");
 
-    debug_printf("所有开关按钮准备就绪！\r\n\r\n");
+	debug_printf("所有开关按钮准备就绪！\r\n\r\n");
 
 	Sys.AddTask(ACZeroReset, NULL, 60000, 60000, "ACZero");
 }

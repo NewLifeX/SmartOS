@@ -6,6 +6,15 @@
 #include "Timer.h"
 #include "Message\DataStore.h"
 
+struct ButtonPin
+{
+	Pin Led;
+	Pin Key;
+	Pin Relay;
+	bool Invert;
+	byte PwmIndex;
+};
+
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
@@ -54,7 +63,8 @@ public:
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
-	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, Pin* pins, byte* level, byte* state);
+	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, ButtonPin* pins, byte* level, byte* state);
+	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 // 过零检测
 private:
