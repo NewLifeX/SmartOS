@@ -1,6 +1,8 @@
 ﻿#include "TinyConfig.h"
 #include "Config.h"
 
+TinyConfig* TinyConfig::Current	= NULL;
+
 // 初始化
 /*TinyConfig::TinyConfig()
 {

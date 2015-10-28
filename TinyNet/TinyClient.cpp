@@ -5,6 +5,8 @@
 
 #include "JoinMessage.h"
 
+TinyClient* TinyClient::Current	= NULL;
+
 static bool OnClientReceived(Message& msg, void* param);
 
 static void TinyClientTask(void* param);

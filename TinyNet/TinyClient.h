@@ -39,6 +39,8 @@ public:
 	MessageHandler	Received;
 	void*			Param;
 
+	static TinyClient* Current;
+
 // 数据区
 public:
 	DataStore	Store;		// 数据存储区

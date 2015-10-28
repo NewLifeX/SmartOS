@@ -34,13 +34,15 @@ struct TinyConfig
 	//TinyConfig();
 	//const TinyConfig& Default();
 	void LoadDefault();
-	
+
 	void Load();
 	void Save();
 
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
+
+	static TinyConfig* Current;
 };
 
 #pragma pack(pop)	// 恢复对齐状态
