@@ -384,7 +384,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
 #endif
 	// 接收中断
-	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
+	while(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_ORE) != RESET)
 	{
@@ -392,7 +392,6 @@ void SerialPort::OnHandler(ushort num, void* param)
 		// 读取并扔到错误数据
 		USART_ReceiveData(sp->_port);
 		//sp->OnRxHandler();
-		//tc.Show();
 		sp->Error++;
 #ifdef RTM_Serial_Debug
 		ErrorPort = !ErrorPort;
