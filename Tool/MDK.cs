@@ -99,6 +99,10 @@ namespace NewLife.Reflection
         /// <summary>Flash容量</summary>
         public String Flash { get { return _Flash; } set { _Flash = value; } }
 
+        private String _Scatter;
+        /// <summary>分散加载文件</summary>
+        public String Scatter { get { return _Scatter; } set { _Scatter = value; } }
+
         private Int32 _Cortex;
         /// <summary>Cortex版本。默认0</summary>
         public Int32 Cortex
@@ -409,12 +413,14 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
-            sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
-            //sb.AppendFormat(" --scatter \"{0}.sct\"", name.TrimEnd("D"));
+			if(!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
+				sb.AppendFormat(" --scatter \"{0}\"", Scatter);
+			else
+				sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
-            sb.Append(" --info sizes --info totals --info veneers --diag_suppress L6803W");
+            sb.Append(" --info sizes --info totals --info veneers --diag_suppress L6803 --diag_suppress L6314");
 
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
