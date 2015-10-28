@@ -143,9 +143,9 @@ namespace NewLife.Reflection
         /// <summary>对象文件集合</summary>
         public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
 
-        private IDictionary<String, String> _Libs = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
+        private ICollection<String> _Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>库文件集合</summary>
-        public IDictionary<String, String> Libs { get { return _Libs; } }
+        public ICollection<String> Libs { get { return _Libs; } }
         #endregion
 
         #region 主要编译方法
@@ -428,17 +428,36 @@ namespace NewLife.Reflection
             }
 			if(Objs.Count < 6) Console.WriteLine();
 
-            Console.WriteLine("使用静态库：");
+			var dic = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in Libs)
             {
-				var d = item.Key.EndsWithIgnoreCase("D");
-				var t = item.Key.EndsWithIgnoreCase("T");
-				if(Debug == d && Tiny == t)
-				{
-					sb.Append(" ");
-					sb.Append(item.Value);
-					Console.WriteLine("\t{0}\t{1}", item.Key, item.Value);
-				}
+				var lib = new LibFile(item);
+                // 调试版/发行版 优先选用最佳匹配版本
+                var old = "";
+                // 不包含，直接增加
+                if (!dic.TryGetValue(lib.Name, out old))
+                {
+                    dic.Add(lib.Name, lib.FullName);
+                }
+                // 已包含，并且新版本更合适，替换
+                else
+                {
+					Console.WriteLine("{0} Debug={1} Tiny={2}", lib.FullName, lib.Debug, lib.Tiny);
+                    var lib2 = new LibFile(old);
+                    if (!(lib2.Debug == Debug && lib2.Tiny == Tiny) &&
+					(lib.Debug == Debug && lib.Tiny == Tiny))
+                    {
+                        dic[lib.Name] = lib.FullName;
+                    }
+                }
+            }
+				
+            Console.WriteLine("使用静态库：");
+            foreach (var item in dic)
+            {
+				sb.Append(" ");
+				sb.Append(item.Value);
+				Console.WriteLine("\t{0}\t{1}", item.Key, item.Value);
             }
 
             XTrace.WriteLine("链接：{0}", axf);
@@ -584,24 +603,12 @@ namespace NewLife.Reflection
             //var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (var item in path.AsDirectory().GetAllFiles(filter, allSub))
             {
-                var lib = new LibFile(item.FullName);
-                // 调试版/发行版 优先选用最佳匹配版本
-                var old = "";
                 // 不包含，直接增加
-                if (!_Libs.TryGetValue(lib.Name, out old))
+                if (!_Libs.Contains(item.FullName))
                 {
-                    WriteLog("发现静态库：{0, -12} {1}".F(lib.Name, lib.FullName));
-                    _Libs.Add(lib.Name, lib.FullName);
-                }
-                // 已包含，并且新版本更合适，替换
-                else //if (lib.Debug == Debug)
-                {
-                    var lib2 = new LibFile(old);
-                    if (lib2.Debug != Debug || lib2.Tiny != Tiny)
-                    {
-                        _Libs[lib.Name] = lib.FullName;
-                        WriteLog("替换静态库：{0, -12} {1}".F(lib.Name, lib.FullName));
-                    }
+					var lib = new LibFile(item.FullName);
+                    WriteLog("发现静态库：{0, -12} {1}".F(lib.Name, item.FullName));
+                    _Libs.Add(item.FullName);
                 }
             }
         }
@@ -630,6 +637,7 @@ namespace NewLife.Reflection
                 Name = Path.GetFileNameWithoutExtension(file);
                 Debug = Name.EndsWithIgnoreCase("D");
                 Tiny = Name.EndsWithIgnoreCase("T");
+                Name = Name.TrimEnd("D", "T");
             }
         }
 
