@@ -1,7 +1,5 @@
 ﻿#include "Stream.h"
 
-#pragma arm section code = "SectionForSys"
-
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(byte* buf, uint len)
 {

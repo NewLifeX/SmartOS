@@ -12,8 +12,6 @@
 #define SYSTICK_MAXCOUNT       SysTick_LOAD_RELOAD_Msk	//((1<<24) - 1)	/* SysTick MaxCount */
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
-#pragma arm section code = "SectionForSys"
-
 static TIM_TypeDef* const g_Timers[] = TIMS;
 
 TTime::TTime()
@@ -106,6 +104,8 @@ void TTime::Init()
 	TIM_Cmd(tim, ENABLE);
 }
 
+#pragma arm section code = "SectionForSys"
+
 #if defined(STM32F0) || defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
@@ -155,6 +155,8 @@ void TTime::SetTime(ulong seconds)
 	if(OnSave) OnSave();
 }
 
+#pragma arm section code
+
 // 当前时间
 DateTime TTime::Now()
 {
@@ -162,6 +164,8 @@ DateTime TTime::Now()
 	//dt.Millisecond = Milliseconds;
 	return dt;
 }
+
+#pragma arm section code = "SectionForSys"
 
 void TTime::Sleep(uint ms, bool* running)
 {
@@ -224,6 +228,8 @@ void TTime::Delay(uint us)
 		if(n == 0 && CurrentTicks() >= ticks) break;
 	}
 }
+
+#pragma arm section code
 
 /************************************************ DateTime ************************************************/
 

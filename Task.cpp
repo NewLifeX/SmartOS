@@ -185,8 +185,6 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, strin
 	Count++;
 
 #if DEBUG
-	// 输出长整型%ld，无符号长整型%llu
-	//debug_printf("%s添加任务%d 0x%08x FirstTime=%lluus Period=%ldus\r\n", Name, task->ID, func, dueTime, period);
 	debug_printf("%s::添加%d %s First=%dms Period=%dms\r\n", Name, task->ID, name, dueTime, period);
 #endif
 

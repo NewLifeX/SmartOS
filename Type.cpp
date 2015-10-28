@@ -4,8 +4,6 @@
 #include <stdarg.h>
 #include "Sys.h"
 
-#pragma arm section code = "SectionForSys"
-
 /******************************** Object ********************************/
 
 // 输出对象的字符串表示方式

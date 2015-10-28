@@ -1,7 +1,5 @@
 ﻿#include "Queue.h"
 
-#pragma arm section code = "SectionForSys"
-
 Queue::Queue(uint len) : _s(len)
 {
 	Clear();
@@ -19,6 +17,8 @@ void Queue::Clear()
 	_tail	= 0;
 	_size	= 0;
 }
+
+#pragma arm section code = "SectionForSys"
 
 void Queue::Push(byte dat)
 {
@@ -52,6 +52,8 @@ byte Queue::Pop()
 
 	return dat;
 }
+
+#pragma arm section code
 
 uint Queue::Write(const ByteArray& bs)
 {
