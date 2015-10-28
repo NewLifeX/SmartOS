@@ -50,19 +50,19 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert)
 {
-	static Spi spi(spi_, 10000000, true);
-	static NRF24L01 nrf;
-	nrf.Init(&spi, ce, irq, power);
-	nrf.Power.Invert = powerInvert;
+	Spi* spi = new Spi(spi_, 10000000, true);
+	NRF24L01* nrf = new NRF24L01();
+	nrf->Init(spi, ce, irq, power);
+	nrf->Power.Invert = powerInvert;
 
-	nrf.AutoAnswer	= false;
-	nrf.PayloadWidth= 32;
-	nrf.Channel		= TinyConfig::Current->Channel;
-	nrf.Speed		= TinyConfig::Current->Speed;
+	nrf->AutoAnswer		= false;
+	nrf->PayloadWidth	= 32;
+	nrf->Channel		= TinyConfig::Current->Channel;
+	nrf->Speed			= TinyConfig::Current->Speed;
 
 	//if(!nrf.Check()) debug_printf("请检查NRF24L01线路\r\n");
 
-	return &nrf;
+	return nrf;
 }
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg)
