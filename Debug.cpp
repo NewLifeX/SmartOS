@@ -8,6 +8,8 @@
 	#define mem_printf(format, ...)
 #endif
 
+#pragma arm section code = "SectionForSys"
+
 extern uint __heap_base;
 extern uint __heap_limit;
 extern uint __Vectors;
@@ -100,6 +102,8 @@ void operator delete[](void* p)
 }
 
 #if DEBUG
+
+#pragma arm section code
 
 #ifdef  USE_FULL_ASSERT
 

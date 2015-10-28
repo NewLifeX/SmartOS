@@ -34,7 +34,7 @@ const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 
 const uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
 #endif
 
-#pragma arm section code = "SectionForBoot"
+#pragma arm section code = "SectionForSys"
 
 _force_inline void InitHeapStack(uint top)
 {
@@ -188,6 +188,8 @@ TSys::TSys()
 
 	Started	= false;
 }
+
+#pragma arm section code
 
 void ShowTime(void* param)
 {
@@ -377,6 +379,8 @@ void TSys::RemoveTask(uint& taskid)
 	if(taskid) Task::Scheduler()->Remove(taskid);
 	taskid = 0;
 }
+
+#pragma arm section code = "SectionForSys"
 
 bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
 {

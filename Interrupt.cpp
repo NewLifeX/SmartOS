@@ -163,6 +163,8 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 }
 #endif
 
+#pragma arm section code = "SectionForSys"
+
 __asm uint GetIPSR()
 {
     mrs     r0,IPSR               // exception number
@@ -199,7 +201,6 @@ extern "C"
 	经查是因为FAULT_SubHandler和FaultHandler离得太远，导致b跳转无法到达，
 	因此把这两个函数指定到同一个端中，使得它们地址分布上紧挨着
 	*/
-	void FAULT_SubHandler(uint* registers, uint exception) __attribute__((section("SubHandler")));
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
 #ifdef STM32F0
@@ -226,7 +227,6 @@ extern "C"
 		while(true);
 	}
 
-	__asm void FaultHandler() __attribute__((section("SubHandler")));
 	__asm void FaultHandler()
 	{
 		IMPORT FAULT_SubHandler
@@ -274,6 +274,8 @@ SmartIRQ::~SmartIRQ()
 {
 	__set_PRIMASK(_state);
 }
+
+#pragma arm section code
 
 /*================================ 锁 ================================*/
 

@@ -7,8 +7,6 @@
 
 #define COM_DEBUG 0
 
-#pragma arm section code = "SectionForSys"
-
 const byte uart_irqs[] = UART_IRQs;
 
 //#define RTM_Serial_Debug 1
@@ -269,6 +267,8 @@ bool SerialPort::Flush(uint times)
 #endif
 }
 
+#pragma arm section code = "SectionForSys"
+
 void SerialPort::OnTxHandler()
 {
 #ifndef STM32F0
@@ -282,6 +282,8 @@ void SerialPort::OnTxHandler()
 	}
 #endif
 }
+
+#pragma arm section code
 
 // 从某个端口读取数据
 uint SerialPort::OnRead(ByteArray& bs)
@@ -313,6 +315,8 @@ uint SerialPort::OnRead(ByteArray& bs)
 	return count;
 }
 
+#pragma arm section code = "SectionForSys"
+
 void SerialPort::OnRxHandler()
 {
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
@@ -329,6 +333,8 @@ void SerialPort::OnRxHandler()
 		_task->Set(true, 1);
 	}
 }
+
+#pragma arm section code
 
 void SerialPort::ReceiveTask(void* param)
 {
@@ -380,6 +386,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 	}
 }
 
+#pragma arm section code = "SectionForSys"
+
 // 真正的串口中断函数
 void SerialPort::OnHandler(ushort num, void* param)
 {
@@ -407,6 +415,8 @@ void SerialPort::OnHandler(ushort num, void* param)
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
 	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);*/
 }
+
+#pragma arm section code
 
 // 获取引脚
 void SerialPort::GetPins(Pin* txPin, Pin* rxPin)

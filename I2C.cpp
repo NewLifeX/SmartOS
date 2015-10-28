@@ -38,6 +38,8 @@ void I2C::Close()
 	Opened = false;
 }
 
+#pragma arm section code = "SectionForSys"
+
 /*
 主机与从机进行通信时，有时需要切换数据的收发方向。例如，访问某一具有I2C 总线
 接口的E2PROM 存储器时，主机先向存储器输入存储单元的地址信息（发送数据），然后再
@@ -177,6 +179,8 @@ uint I2C::Read4(int addr)
 
 	return (bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3];
 }
+
+#pragma arm section code
 
 HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
 {
@@ -501,6 +505,8 @@ void SoftI2C::OnClose()
 	SCL.Close();
 	SDA.Close();
 }
+
+#pragma arm section code = "SectionForSys"
 
 void SoftI2C::Delay(int us)
 {
