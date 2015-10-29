@@ -38,9 +38,8 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 	{
 		sp->Close();
 		sp->SetBaudRate(baudRate);
-		sp->Register(OnSerial);
-		sp->Open();
 	}
+	sp->Register(OnSerial);
 
 	WatchDog::Start(20000);
 #else
@@ -118,7 +117,7 @@ void* InitConfig(void* data, uint size)
 	tc.LoadDefault();
 	tc.Channel	= 120;
 	tc.Speed	= 250;
-	tc.HardVer	= 0x08;
+	//tc.HardVer	= 0x08;
 
 	// 尝试加载配置区设置
 	tc.Load();
