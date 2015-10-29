@@ -21,12 +21,13 @@ public:
 
 	bool 	Current;	// 当前值
 	int		Index;		// 当前闪烁次数
-	
+
 	BlinkPort();
 	~BlinkPort();
 
 	void Add(OutputPort* port);
 	void Start();
+	void Stop();
 	void Blink();
 };
 

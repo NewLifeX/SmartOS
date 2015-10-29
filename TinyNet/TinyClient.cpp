@@ -269,6 +269,8 @@ bool TinyClient::Report(uint offset, const ByteArray& bs)
 
 void TinyClient::ReportAsync(uint offset)
 {
+	if(this == NULL) return;
+
 	NextReport = offset;
 
 	// 延迟200ms上报，期间有其它上报任务到来将会覆盖
@@ -362,7 +364,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	// 保存配置
 	Cfg->Save();
-	
+
 	return true;
 }
 

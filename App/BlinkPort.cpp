@@ -45,6 +45,15 @@ void BlinkPort::Start()
 	Sys.SetTask(_tid, true);
 }
 
+void BlinkPort::Stop()
+{
+	Sys.SetTask(_tid, false);
+	for(int i=0; i<Count; i++)
+	{
+		Ports[i]->Write(!First);
+	}
+}
+
 void BlinkPort::Blink()
 {
 	bool f = Current;
