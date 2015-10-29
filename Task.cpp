@@ -301,11 +301,18 @@ void TaskScheduler::ShowStatus(void* param)
 	DateTime dt(Time.Current() / 1000);
 	dt.Show(true);
 
+	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
+	int ms = host->Cost / 1000;
+
 	IArray<Task>& ts = *(host->_Tasks);
 	for(int i=0; i<ts.Length(); i++)
 	{
 		Task& task = ts[i];
-		if(task.ID) task.ShowStatus();
+		if(task.ID)
+		{
+			task.ShowStatus();
+			Sys.Sleep(ms);
+		}
 	}
 }
 
