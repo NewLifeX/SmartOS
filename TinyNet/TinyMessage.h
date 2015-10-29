@@ -2,7 +2,6 @@
 #define __TinyMessage_H__
 
 #include "Sys.h"
-#include "List.h"
 #include "Net\ITransport.h"
 #include "Stream.h"
 

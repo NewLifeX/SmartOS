@@ -38,6 +38,11 @@ private:
 
 		Area();
 		bool Contain(uint offset, uint size);
+
+		friend bool operator==(const Area& a1, const Area& a2)
+		{
+			return a1.Offset == a2.Offset && a1.Size == a2.Size;
+		}
 	};
 
 	Array<Area, 0x08> Areas;

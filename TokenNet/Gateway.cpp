@@ -59,7 +59,7 @@ void Gateway::Start()
 	Server->Start();
 
 	// 添加网关这一条设备信息
-	if(Server->Devices.Count() == 0)
+	if(Server->Devices.Length() == 0)
 	{
 		Device* dv = new Device();
 		dv->Address		= Server->Cfg->Address;
@@ -69,7 +69,7 @@ void Gateway::Start()
 		dv->LastTime	= Time.Current();
 		dv->Name		= Sys.Name;
 
-		Server->Devices.Add(dv);
+		Server->Devices.Push(dv);
 		Server->SaveDevices();
 	}
 
@@ -218,7 +218,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 				rs.Code = 0x21;
 				OnGetDeviceList(rs);
 				// 遍历发送所有设备信息
-				for(int i=0; i<Server->Devices.Count(); i++)
+				for(int i=0; i<Server->Devices.Length(); i++)
 					SendDeviceInfo(Server->Devices[i]);
 			}
 			break;
@@ -334,7 +334,7 @@ bool Gateway::OnGetDeviceList(const Message& msg)
 	TokenMessage rs;
 	rs.Code = msg.Code;
 
-	if(Server->Devices.Count() == 0)
+	if(Server->Devices.Length() == 0)
 	{
 		rs.Data[0] = 0;
 		rs.Length = 1;
@@ -342,12 +342,12 @@ bool Gateway::OnGetDeviceList(const Message& msg)
 	else
 	{
 		int i = 0;
-		for(i=0; i<Server->Devices.Count(); i++)
+		for(i=0; i<Server->Devices.Length(); i++)
 			rs.Data[i] = Server->Devices[i]->Address;
 		rs.Length = i;
 	}
 
-    debug_printf("获取设备列表 共%d个\r\n", Server->Devices.Count());
+    debug_printf("获取设备列表 共%d个\r\n", Server->Devices.Length());
 
 	return Client->Reply(rs);
 }

@@ -2,7 +2,6 @@
 #define __Task_H__
 
 #include "Sys.h"
-#include "List.h"
 
 class TaskScheduler;
 
@@ -45,6 +44,8 @@ public:
 	void Set(bool enable, int msNextTime = -1);
 	// 显示状态
 	void ShowStatus();	
+
+	friend bool operator==(const Task& t1, const Task& t2) { return &t1 == &t2; }
 
 	// 全局任务调度器
 	static TaskScheduler* Scheduler();

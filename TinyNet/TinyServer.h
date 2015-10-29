@@ -35,15 +35,15 @@ public:
 	MessageHandler	Received;
 	void*			Param;
 
-	List<Device*> Devices;
+	Array<Device*> Devices;
 	Device* FindDevice(byte id);
 	Device* FindDevice(const ByteArray& hardid);
 	bool	DeleteDevice(byte id);
-	
+
 	int LoadDevices();
 	void SaveDevices();
 	void ClearDevices();
-	
+
 	bool LoadConfig();
 	void SaveConfig();
 	void ClearConfig();
@@ -59,7 +59,7 @@ public:
 
 	// 组网
 	bool OnJoin(const TinyMessage& msg);
-	
+
 	bool ResetPassword(byte id);
 
 	bool OnDisjoin(const TinyMessage& msg);

@@ -196,7 +196,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		// 节点注册
 		dv->RegTime	= now;
 
-		Devices.Add(dv);
+		Devices.Push(dv);
 
 		SaveDevices();
 	}
@@ -482,7 +482,7 @@ Device* TinyServer::FindDevice(byte id)
 {
 	if(id == 0) return NULL;
 
-	for(int i=0; i<Devices.Count(); i++)
+	for(int i=0; i<Devices.Length(); i++)
 	{
 		if(id == Devices[i]->Address) return Devices[i];
 	}
@@ -494,7 +494,7 @@ Device* TinyServer::FindDevice(const ByteArray& hardid)
 {
 	if(hardid.Length() == 0) return NULL;
 
-	for(int i=0; i<Devices.Count(); i++)
+	for(int i=0; i<Devices.Length(); i++)
 	{
 		if(hardid == Devices[i]->HardID) return Devices[i];
 	}
@@ -507,7 +507,9 @@ bool TinyServer::DeleteDevice(byte id)
 	Device* dv = FindDevice(id);
 	if(dv && dv->Address == id)
 	{
-		Devices.Remove(dv);
+		//Devices.Remove(dv);
+		int idx = Devices.FindIndex(dv);
+		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;
 		return true;
 	}
@@ -537,7 +539,9 @@ int TinyServer::LoadDevices()
 		if(!dv) dv = new Device();
 		dv->Read(ms);
 
-		Devices.Add(dv);
+		//Devices.Add(dv);
+		int idx = Devices.FindIndex(NULL);
+		if(idx >= 0) Devices[idx] = dv;
 	}
 
 	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", addr, i);
@@ -556,7 +560,7 @@ void TinyServer::SaveDevices()
 
 	Stream ms(buf, ArrayLength(buf));
 	// 设备个数
-	int count = Devices.Count();
+	int count = Devices.Length();
 	ms.Write((byte)count);
 	for(int i = 0; i<count; i++)
 	{
