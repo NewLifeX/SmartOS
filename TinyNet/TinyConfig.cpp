@@ -60,6 +60,14 @@ void TinyConfig::Load()
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！");
 	else
 		debug_printf("TinyConfig::Load 从配置区加载配置");
+
+	if(Kind != Sys.Code)
+	{
+		debug_printf("TinyConfig::Load 设备类型变更");
+
+		Kind	= Sys.Code;
+		Config::Current->Set("TCFG", bs);
+	}
 }
 
 void TinyConfig::Save()
