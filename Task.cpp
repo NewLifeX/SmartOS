@@ -148,7 +148,7 @@ void TaskScheduler::Set(IArray<Task>* tasks)
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, string name)
 {
-	if(!_Tasks) _Tasks = new Array<Task, 0x10>();
+	if(!_Tasks) _Tasks = new TArray<Task, 0x10>();
 
 	Task* task	= NULL;
 	IArray<Task>& ts = *_Tasks;

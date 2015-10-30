@@ -459,7 +459,8 @@ void TokenController::ShowStat()
 {
 	char cs[128];
 	String str(cs, ArrayLength(cs));
-	Stat->ToStr(str.Clear());
+	str.Clear();
+	Stat->ToStr(str);
 	str.Show(true);
 
 	Stat->Clear();

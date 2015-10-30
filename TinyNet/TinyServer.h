@@ -35,7 +35,7 @@ public:
 	MessageHandler	Received;
 	void*			Param;
 
-	Array<Device*> Devices;
+	TArray<Device*> Devices;
 	Device* FindDevice(byte id);
 	Device* FindDevice(const ByteArray& hardid);
 	bool	DeleteDevice(byte id);

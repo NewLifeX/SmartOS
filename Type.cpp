@@ -55,9 +55,264 @@ void Object::Show(bool newLine) const
 	Name.Set(name);
 }*/
 
+/******************************** TArray ********************************/
+// 数组长度
+int Array::Length() const { return _Length; }
+// 数组最大容量。初始化时决定，后面不允许改变
+int Array::Capacity() const { return _Capacity; }
+// 缓冲区
+void* Array::GetBuffer() const { return _Arr; }
+
+int memlen(const void* data)
+{
+	// 自动计算长度，\0结尾，单字节大小时才允许
+	int len = 0;
+	byte* p =(byte*)data;
+	while(*p++) len++;
+	return len;
+}
+
+Array::Array(void* data, int len)
+{
+	_Size	= 1;
+
+	if(!len) len = memlen(data);
+
+	_Arr		= data;
+	_Length		= len;
+	_Capacity	= len;
+	_needFree	= false;
+	_canWrite	= true;
+}
+
+Array::Array(const void* data, int len)
+{
+	_Size	= 1;
+
+	if(!len) len = memlen(data);
+
+	_Arr		= (void*)data;
+	_Length		= len;
+	_Capacity	= len;
+	_needFree	= false;
+	_canWrite	= false;
+}
+
+// 析构。释放资源
+Array::~Array()
+{
+	if(_needFree && _Arr) delete _Arr;
+}
+
+// 重载等号运算符，使用另一个固定数组来初始化
+Array& Array::operator=(const Array& arr)
+{
+	// 不要自己拷贝给自己
+	if(&arr == this) return *this;
+
+	_Length = 0;
+
+	Copy(arr);
+
+	return *this;
+}
+
+// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
+bool Array::SetLength(int length, bool bak)
+{
+	if(length <= _Capacity)
+	{
+		_Length = length;
+	}
+	else
+	{
+		if(!CheckCapacity(length, bak ? _Length : 0)) return false;
+
+		// 扩大长度
+		if(length > _Length) _Length = length;
+	}
+	return true;
+}
+
+// 设置数组元素为指定值，自动扩容
+bool Array::SetItem(const void* data, int index, int count)
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+	// count<=0 表示设置全部元素
+	if(count <= 0) count = _Length - index;
+	assert_param2(count > 0, "TArray::Set的个数必须大于0");
+
+	// 检查长度是否足够
+	int len2 = index + count;
+	CheckCapacity(len2, index);
+
+	byte* buf = (byte*)GetBuffer();
+	// 如果元素类型大小为1，那么可以直接调用内存设置函数
+	if(_Size == 1)
+		memset(&buf[index], *(byte*)data, count);
+	else
+	{
+		while(count-- > 0)
+		{
+			memcpy(buf, data, _Size);
+			buf += _Size;
+		}
+	}
+
+	// 扩大长度
+	if(len2 > _Length) _Length = len2;
+
+	return true;
+}
+
+// 设置数组。直接使用指针，不拷贝数据
+bool Array::Set(void* data, int len)
+{
+	if(!Set((const void*)data, len)) return false;
+
+	_canWrite	= true;
+
+	return true;
+}
+
+// 设置数组。直接使用指针，不拷贝数据
+bool Array::Set(const void* data, int len)
+{
+	if(!len) len = memlen(data);
+
+	// 销毁旧的
+	if(_needFree && _Arr && _Arr != data) delete _Arr;
+
+	_Arr		= (void*)data;
+	_Length		= len;
+	_Capacity	= len;
+	_needFree	= false;
+	_canWrite	= false;
+
+	return true;
+}
+
+// 复制数组。深度克隆，拷贝数据，自动扩容
+int Array::Copy(const void* data, int len, int index)
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+	if(!len) len = memlen(data);
+
+	// 检查长度是否足够
+	int len2 = index + len;
+	CheckCapacity(len2, index);
+
+	// 拷贝数据
+	memcpy((byte*)_Arr + _Size * index, data, _Size * len);
+
+	// 扩大长度
+	if(len2 > _Length) _Length = len2;
+
+	return len;
+}
+
+// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
+int Array::CopyTo(void* data, int len, int index) const
+{
+	// 数据长度可能不足
+	if(_Length - index < len || len == 0) len = _Length - index;
+	if(len <= 0) return 0;
+
+	// 拷贝数据
+	memcpy(data, (byte*)_Arr + _Size * index, _Size * len);
+
+	return len;
+}
+
+// 清空已存储数据。
+void Array::Clear()
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+	memset(_Arr, 0, _Size * _Length);
+}
+
+// 复制数组。深度克隆，拷贝数据
+int Array::Copy(const Array& arr, int index)
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+	if(&arr == this) return 0;
+	if(arr.Length() == 0) return 0;
+
+	return Copy(arr._Arr, arr.Length(), index);
+}
+
+// 设置指定位置的值，不足时自动扩容
+void Array::SetItemAt(int i, const void* item)
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+	// 检查长度，不足时扩容
+	CheckCapacity(i + 1, _Length);
+
+	if(i >= _Length) _Length = i + 1;
+
+	//_Arr[i] = item;
+	memcpy((byte*)_Arr + _Size * i, item, _Size);
+}
+
+// 检查容量。如果不足则扩大，并备份指定长度的数据
+bool Array::CheckCapacity(int len, int bak)
+{
+	// 是否超出容量
+	if(len <= _Capacity) return true;
+
+	// 自动计算合适的容量
+	int k = 0x40;
+	while(k < len) k <<= 1;
+
+	void* p = Alloc(k);
+	if(!p) return false;
+
+	// 是否需要备份数据
+	if(bak > _Length) bak = _Length;
+	if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
+
+	if(_needFree && _Arr && _Arr != p) delete _Arr;
+
+	_Capacity	= k;
+	_Arr		= p;
+	_needFree	= true;
+
+	return true;
+}
+
+void* Array::Alloc(int len) { return new byte[_Size * len];}
+
+bool operator==(const Array& bs1, const Array& bs2)
+{
+	if(bs1.Length() != bs2.Length()) return false;
+
+	/*for(int i=0; i<bs1.Length(); i++)
+	{
+		if(bs1[i] != bs2[i]) return false;
+	}
+
+	return true;*/
+
+	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) == 0;
+}
+
+bool operator!=(const Array& bs1, const Array& bs2)
+{
+	if(bs1.Length() != bs2.Length()) return true;
+
+	/*for(int i=0; i<bs1.Length(); i++)
+	{
+		if(bs1[i] != bs2[i]) return true;
+	}
+
+	return false;*/
+
+	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
+}
+
 /******************************** ByteArray ********************************/
 
-ByteArray::ByteArray(const void* data, int length, bool copy) : Array(0)
+ByteArray::ByteArray(const void* data, int length, bool copy) : TArray(0)
 {
 	if(copy)
 		Copy(data, length);
@@ -65,7 +320,7 @@ ByteArray::ByteArray(const void* data, int length, bool copy) : Array(0)
 		Set(data, length);
 }
 
-ByteArray::ByteArray(void* data, int length, bool copy) : Array(0)
+ByteArray::ByteArray(void* data, int length, bool copy) : TArray(0)
 {
 	if(copy)
 		Copy(data, length);
@@ -74,14 +329,14 @@ ByteArray::ByteArray(void* data, int length, bool copy) : Array(0)
 }
 
 // 字符串转为字节数组
-ByteArray::ByteArray(String& str) : Array(0)
+ByteArray::ByteArray(String& str) : TArray(0)
 {
 	char* p = str.GetBuffer();
 	Set((byte*)p, str.Length());
 }
 
 // 不允许修改，拷贝
-ByteArray::ByteArray(const String& str) : Array(0)
+ByteArray::ByteArray(const String& str) : TArray(0)
 {
 	const char* p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
@@ -253,13 +508,11 @@ String String::ToString() const
 }
 
 // 清空已存储数据。长度放大到最大容量
-String& String::Clear()
+void String::Clear()
 {
-	Array::Clear();
+	TArray::Clear();
 
 	_Length = 0;
-
-	return *this;
 }
 
 String& String::Append(char ch)

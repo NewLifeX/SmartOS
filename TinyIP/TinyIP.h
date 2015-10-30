@@ -27,7 +27,7 @@ public:
 };
 
 // Socket列表
-class SocketList : public Array<TinySocket*>
+class SocketList : public TArray<TinySocket*>
 {
 public:
 	TinySocket* FindByType(ushort type);

@@ -45,7 +45,7 @@ private:
 		}
 	};
 
-	Array<Area, 0x08> Areas;
+	TArray<Area, 0x08> Areas;
 
 	bool OnHook(uint offset, uint size, int mode);
 };
