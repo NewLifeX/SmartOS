@@ -746,144 +746,46 @@ public:
 	}
 };
 
-// 变长列表模版
+/*// 变长列表模版
 // T一般是指针，列表内部有一个数组用于存放指针
 template<typename T>
-class List
+class List : public Array<T*>
 {
-private:
-    uint _Count;// 拥有实际元素个数
-    uint _total;// 可容纳元素总数
-    T* _Arr;	// 存储数据的数组
-
-    void ChangeSize(int newSize)
-    {
-        if(_total == newSize) return;
-
-        T* arr2 = new T[newSize];
-        if(_Arr)
-        {
-            // 如果新数组较小，则直接复制；如果新数组较大，则先复制，再清空余下部分
-            if(newSize < _Count)
-			{
-				// 此时有数据丢失
-                memcpy(arr2, _Arr, newSize * sizeof(T));
-				_Count = newSize;
-			}
-            else
-            {
-                memcpy(arr2, _Arr, _Count * sizeof(T));
-                memset(&arr2[_Count], 0, (newSize - _Count) * sizeof(T));
-            }
-            delete[] _Arr;
-        }
-		else
-			ArrayZero2(arr2, newSize);
-        _Arr = arr2;
-		_total = newSize;
-    }
-
-    void CheckSize()
-    {
-        // 如果数组空间已用完，则两倍扩容
-        if(_Count >= _total) ChangeSize(_Count > 0 ? _Count * 2 : 4);
-    }
-
 public:
-    List(int size = 0)
-    {
-        _Count = 0;
-        _total = size;
-		_Arr = NULL;
-		if(size)
-		{
-			_Arr = new T[size];
-			ArrayZero2(_Arr, size);
-		}
-    }
-
-    List(T* items, uint count)
-    {
-        _Arr = new T[count];
-
-        _Count = 0;
-        _total = count;
-        for(int i=0; i<count; i++)
-        {
-            _Arr[_Count++] = *items++;
-        }
-    }
-
-    ~List() { if(_Arr) delete[] _Arr; _Arr = NULL; }
-
-	// 重载等号运算符，使用另一个列表来初始化
-    List& operator=(List& list)
-	{
-		Clear();
-		for(int i=0; i<list.Count(); i++)
-			Add(list[i]);
-
-		return *this;
-	}
+    List(int size = 0) : Array(size) { _Length = 0; }
+    List(T* items, uint count) { Set(items, count); }
 
 	// 添加单个元素
-    virtual void Add(const T& item)
-    {
-        // 检查大小
-        CheckSize();
-
-        _Arr[_Count++] = item;
-    }
+    virtual void Add(const T& item) { Push(item); }
 
 	// 添加多个元素
     void Add(T* items, int count)
     {
-        int size = _Count + count;
-        if(size >= _total) ChangeSize(_Count > 0 ? _Count * 2 : 4);
-
-        for(int i=0; i<count; i++)
-        {
-            _Arr[_Count++] = *items++;
-        }
+        for(int i=0; i<count; i++) Push(*items++);
     }
-
-	// 查找元素
-	int Find(const T& item)
-	{
-        for(int i=0; i<_Count; i++)
-        {
-            if(_Arr[i] == item) return i;
-        }
-
-		return -1;
-	}
-
-	virtual bool Contains(const T& item)
-	{
-		return Find(item) > -1;
-	}
 
 	// 删除指定位置元素
 	void RemoveAt(int index)
 	{
-		if(_Count <= 0 || index >= _Count) return;
+		int len = Length();
+		if(len <= 0 || index >= len) return;
 
 		// 复制元素
-		if(index < _Count - 1) memcpy(&_Arr[index], &_Arr[index + 1], (_Count - index - 1) * sizeof(T));
-		_Count--;
+		if(index < len - 1) memmove(&_Arr[index], &_Arr[index + 1], (len - index - 1) * sizeof(T));
+		_Length--;
 	}
 
 	// 删除指定元素
 	virtual void Remove(const T& item)
 	{
-		int index = Find(item);
+		int index = FindIndex(item);
 		if(index >= 0) RemoveAt(index);
 	}
 
 	// 释放所有指针指向的内存
 	List& DeleteAll()
 	{
-		for(int i=0; i < _Count; i++)
+		for(int i=0; i < Length(); i++)
 		{
 			if(_Arr[i]) delete _Arr[i];
 		}
@@ -891,38 +793,11 @@ public:
 		return *this;
 	}
 
-	virtual void Clear()
-	{
-		_Count = 0;
-	}
-
-	virtual void CopyTo(T* arr)
-	{
-		assert_ptr(arr);
-		if(!_Count) return;
-
-		memcpy(arr, _Arr, _Count * sizeof(T));
-	}
+	virtual void Clear() { _Length = 0; }
 
 	// 返回内部指针
     const T* ToArray() { return _Arr; }
-
-	// 有效元素个数
-    virtual int Count() const { return _Count; }
-
-	// 设置新的容量，如果容量比元素个数小，则会丢失数据
-	void SetCapacity(int capacity) { ChangeSize(capacity); }
-
-    // 重载索引运算符[]，让它可以像数组一样使用下标索引。
-    T operator[](int i)
-	{
-		assert_param(i >= 0 && i < _Count);
-		// 有可能多线程冲突
-		//if(i < 0 || i >= _Count) return NULL;
-
-		return _Arr[i];
-	}
-};
+};*/
 
 // 双向链表
 template <class T> class LinkedList;
