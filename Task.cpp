@@ -1,8 +1,6 @@
 ﻿#include "Task.h"
 #include "Time.h"
 
-#pragma arm section code = "SectionForSys"
-
 Task::Task()
 {
 	Host		= NULL;
@@ -25,6 +23,8 @@ Task::~Task()
 {
 	if(ID) Host->Remove(ID);
 }
+
+#pragma arm section code = "SectionForSys"
 
 bool Task::Execute(ulong now)
 {
@@ -85,6 +85,8 @@ void Task::Set(bool enable, int msNextTime)
 	if(enable) Scheduler()->Sleeping = false;
 }
 
+#pragma arm section code
+
 // 显示状态
 void Task::ShowStatus()
 {
@@ -103,6 +105,8 @@ void Task::ShowStatus()
 	debug_printf("\r\n");
 }
 
+#pragma arm section code = "SectionForSys"
+
 // 全局任务调度器
 TaskScheduler* Task::Scheduler()
 {
@@ -115,6 +119,8 @@ Task* Task::Get(int taskid)
 {
 	return (*Scheduler())[taskid];
 }
+
+#pragma arm section code
 
 TaskScheduler::TaskScheduler(string name)
 {
@@ -233,6 +239,8 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
+#pragma arm section code = "SectionForSys"
+
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint msMax)
 {
@@ -290,6 +298,8 @@ void TaskScheduler::Execute(uint msMax)
 	}
 }
 
+#pragma arm section code
+
 // 显示状态
 void TaskScheduler::ShowStatus(void* param)
 {
@@ -316,6 +326,8 @@ void TaskScheduler::ShowStatus(void* param)
 	}
 }
 
+#pragma arm section code = "SectionForSys"
+
 Task* TaskScheduler::operator[](int taskid)
 {
 	IArray<Task>& ts = *_Tasks;
@@ -327,3 +339,5 @@ Task* TaskScheduler::operator[](int taskid)
 
 	return NULL;
 }
+
+#pragma arm section code

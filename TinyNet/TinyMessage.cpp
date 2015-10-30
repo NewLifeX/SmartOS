@@ -227,7 +227,9 @@ void TinyController::Open()
 	memset(&Total, 0, sizeof(Total));
 	memset(&Last, 0, sizeof(Last));
 
+#if MSG_DEBUG
 	Sys.AddTask(StatTask, this, 1000, 15000, "微网统计");
+#endif
 }
 
 void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
