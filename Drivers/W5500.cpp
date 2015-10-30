@@ -284,7 +284,9 @@ bool W5500::Open()
 	Reset();
 
 	// 读硬件版本
-	byte ver = ReadByte(0x0039);
+	byte ver = 0;
+	TimeWheel tw(1);
+	while(!tw.Expired() && !ver) ver = ReadByte(0x0039);
 	if(!ver)
 	{
 		OnClose();
@@ -292,7 +294,7 @@ bool W5500::Open()
 
 		return false;
 	}
-	debug_printf("Hard Vision: %02X\r\n", ver);
+	debug_printf("硬件版本: %02X\r\n", ver);
 
 	Config();
 
@@ -1244,7 +1246,7 @@ void TcpClient::OnProcess(byte reg)
 {
 	S_Interrupt ir;
 	ir.Init(reg);
-	
+
 	if(ir.RECV)
 	{
 		RaiseReceive();
