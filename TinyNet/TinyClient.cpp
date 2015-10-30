@@ -112,7 +112,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	//if(Server == 0 || Server != msg.Dest) return true;
 	debug_printf("源地址: 0x%08X 网关地址:0x%08X \r\n",Server, msg.Src);
 	
-	if(msg.Code != 0x01 && Server != msg.Src && Type != 0x01C8) return true;//不是无线中继，不是组网消息。不是被组网网关消息，不受其它消息设备控制.
+	if(msg.Code != 0x01 && Server != 0 && Server != msg.Src) return true;//不是无线中继，不是组网消息。不是被组网网关消息，不受其它消息设备控制.
 	
 	if(msg.Src == Server) LastActive = Time.Current();
 
