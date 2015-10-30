@@ -49,10 +49,8 @@ public:
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
-	virtual ~Button_GrayLevel();
 
 	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
-	void Set(Pin key, Pin relay);
 	// led 驱动器设置
 	void Set(PWM* drive, byte pulseIndex);
 	bool GetValue();
@@ -63,7 +61,7 @@ public:
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
-	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, ButtonPin* pins, byte* level, byte* state);
+	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 // 过零检测

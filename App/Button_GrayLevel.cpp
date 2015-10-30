@@ -32,21 +32,12 @@ Button_GrayLevel::Button_GrayLevel()
 	Next	= 0xFF;
 }
 
-Button_GrayLevel::~Button_GrayLevel()
-{
-}
-
-void Button_GrayLevel::Set(Pin key, Pin relay)
-{
-	Set(key, relay, true);
-}
-
 void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 {
 	assert_param(key != P0);
 
 	// 中断过滤模式，0x01表示使用按下，0x02表示使用弹起
-	Key.Mode		= 0x02;
+	Key.Mode		= 0x01;
 	Key.ShakeTime	= 10;
 	Key.Set(key);
 	Key.Register(OnPress, this);
@@ -88,7 +79,7 @@ void Button_GrayLevel::OnPress(Pin pin, bool down, void* param)
 void Button_GrayLevel::OnPress(Pin pin, bool down)
 {
 	// 每次按下弹起，都取反状态
-	if(!down)
+	if(down)
 	{
 		SetValue(!_Value);
 		if(_Handler) _Handler(this, _Param);
@@ -138,26 +129,18 @@ bool CheckZero(InputPort* port)
 
 void Button_GrayLevel::SetValue(bool value)
 {
+	_Value	= value;
+
 	if(ACZero)
 	{
-		//int time = ACZeroAdjTime;
 		if(CheckZero(ACZero)) Time.Delay(ACZeroAdjTime);
-		//Sys.Dlay() 参数>=1000 就会切换任务  中断里面不允许
-		/*while(time > 700)
-		{
-			Sys.Delay(700);
-			time-=700;
-		}
-		Sys.Delay(time);*/
 		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
 		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
 		// 故这里添加1ms延时
 		// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
 	}
 
-	Relay = value;
-
-	_Value = value;
+	Relay	= value;
 
 	RenewGrayLevel();
 }
@@ -182,7 +165,7 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 }
 
 void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress
-	, ButtonPin* pins, byte* level, byte* state)
+	, const ButtonPin* pins, byte* level, const byte* state)
 {
 	debug_printf("\r\n初始化开关按钮 \r\n");
 
