@@ -190,6 +190,8 @@ void Port::OnOpen(GPIO_InitTypeDef& gpio)
 #if defined(STM32F0) || defined(STM32F4)
 void Port::AFConfig(byte GPIO_AF) const
 {
+	assert_param2(Opened, "必须打开端口以后才能配置AF");
+
 	GPIO_PinAFConfig(Group, _PIN(_Pin), GPIO_AF);
 }
 #endif
