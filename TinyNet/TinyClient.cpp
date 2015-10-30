@@ -111,7 +111,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
 	
-	if(msg.Code != 0x01 && Server != 0 && Server != msg.Src) return true;
+	if(msg.Code != 0x01 && Server != 0 && Server != msg.Dest) return true;
 	
 	if(msg.Src == Server) LastActive = Time.Current();
 
