@@ -27,13 +27,13 @@ void TinyConfig::Load()
 	if(!len) len = sizeof(this[0]);
 	ByteArray bs(&Length, len);
 	if(!Config::Current->GetOrSet("TCFG", bs))
-		debug_printf("TinyConfig::Load 首次运行，创建配置区！");
+		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
-		debug_printf("TinyConfig::Load 从配置区加载配置");
+		debug_printf("TinyConfig::Load 从配置区加载配置\r\n");
 
 	if(Kind != Sys.Code)
 	{
-		debug_printf("TinyConfig::Load 设备类型变更");
+		debug_printf("TinyConfig::Load 设备类型变更\r\n");
 
 		Kind	= Sys.Code;
 		Config::Current->Set("TCFG", bs);
@@ -44,6 +44,9 @@ void TinyConfig::Save()
 {
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
+
+	debug_printf("TinyConfig::Save \r\n");
+
 	ByteArray bs(&Length, len);
 	Config::Current->Set("TCFG", bs);
 }
