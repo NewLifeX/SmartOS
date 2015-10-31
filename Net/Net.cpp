@@ -1,4 +1,5 @@
 #include "Net.h"
+#include "Config.h"
 
 /******************************** IPAddress ********************************/
 /* IP地址 */
@@ -242,3 +243,52 @@ String& MacAddress::ToStr(String& str) const
 	byte* macs = (byte*)&Value;
 	debug_printf("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 }*/
+
+/******************************** ISocketHost ********************************/
+
+struct NetConfig
+{
+	uint	IP;		// 本地IP地址
+    uint	Mask;	// 子网掩码
+	byte	Mac[6];	// 本地Mac地址
+
+	uint	DHCPServer;
+	uint	DNSServer;
+	uint	Gateway;
+};
+
+bool ISocketHost::LoadConfig()
+{
+	if(!Config::Current) return false;
+
+	NetConfig nc;
+	ByteArray bs(&nc, sizeof(nc));
+	if(!Config::Current->Get("NET", bs)) return false;
+
+	IP			= nc.IP;
+	Mask		= nc.Mask;
+	Mac			= nc.Mac;
+
+	DHCPServer	= nc.DHCPServer;
+	DNSServer	= nc.DNSServer;
+	Gateway		= nc.Gateway;
+
+	return true;
+}
+
+bool ISocketHost::SaveConfig()
+{
+	if(!Config::Current) return false;
+
+	NetConfig nc;
+	nc.IP	= IP.Value;
+	nc.Mask	= Mask.Value;
+	Mac.CopyTo(nc.Mac);
+
+	nc.DHCPServer	= DHCPServer.Value;
+	nc.DNSServer	= DNSServer.Value;
+	nc.Gateway		= Gateway.Value;
+
+	ByteArray bs(&nc, sizeof(nc));
+	return Config::Current->Set("NET", bs);
+}

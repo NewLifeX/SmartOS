@@ -111,6 +111,10 @@ public:
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
 	IPAddress	Gateway;
+
+	// 保存和加载动态获取的网络配置到存储设备
+	bool LoadConfig();
+	bool SaveConfig();
 };
 
 // Socket接口
