@@ -491,6 +491,9 @@ namespace NewLife.Reflection
 			});
             if (rs != 0) return rs;
 
+			// 预处理axf。修改编译信息
+			if (Helper.WriteBuildInfo(axf)) Helper.MakeBin(axf);
+			
             var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
@@ -655,10 +658,13 @@ namespace NewLife.Reflection
                 if (!file.IsNullOrEmpty())
                 {
                     file = Path.GetFileNameWithoutExtension(file);
-                    name = file.TrimStart("Build", "编译", "_").TrimEnd(".cs");
+                    name = file.TrimStart("Build_", "编译_", "Build", "编译").TrimEnd(".cs");
                 }
             }
-            if (name.IsNullOrEmpty()) name = ".".GetFullPath().AsDirectory().Name;
+            if (name.IsNullOrEmpty())
+				name = ".".GetFullPath().AsDirectory().Name;
+			else if(name.StartsWith("_"))
+				name = ".".GetFullPath().AsDirectory().Name + name.TrimStart("_");
             if (Tiny)
 				name = name.EnsureEnd("T");
             else if (Debug)
