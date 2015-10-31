@@ -19,19 +19,29 @@ extern uint __microlib_freelist_initialised;
 static int _Index;	// MCU在型号表中的索引
 #endif
 
+#ifndef TINY
+
 #ifdef STM32F1
-const char MemNames[] = "468BCDEFGIK";
-const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
-const uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
+#if DEBUG
+	const char MemNames[] = "468BCDEFGIK";
+#endif
+	const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
+	const uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
 #elif defined(STM32F0)
-const char MemNames[] = "468B";
-const uint MemSizes[] = { 16, 32, 64, 128 };
-//uint RamSizes[] = {  4,  6,  8,  16 }; // 150x6有6kRAM
-const uint RamSizes[] = {  4,  4,  8,  16 };
+#if DEBUG
+	const char MemNames[] = "468B";
+#endif
+	const uint MemSizes[] = { 16, 32, 64, 128 };
+	//uint RamSizes[] = {  4,  6,  8,  16 }; // 150x6有6kRAM
+	const uint RamSizes[] = {  4,  4,  8,  16 };
 #elif defined(STM32F4)
-const char MemNames[] = "468BCDEFGIK";
-const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
-const uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
+#if DEBUG
+	const char MemNames[] = "468BCDEFGIK";
+#endif
+	const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
+	const uint RamSizes[] = {  6, 10, 20,  20,  48,  48, 128, 192,  128,  192,  192 };
+#endif
+
 #endif
 
 #pragma arm section code = "SectionForSys"
