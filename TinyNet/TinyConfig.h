@@ -43,6 +43,7 @@ struct TinyConfig
 	void Read(Stream& ms);
 
 	static TinyConfig* Current;
+	static TinyConfig*	Init();
 };
 
 #pragma pack(pop)	// 恢复对齐状态

@@ -111,16 +111,10 @@ void* InitConfig(void* data, uint size)
 		((byte*)data)[0] = size;
 	}
 
-	// 默认出厂设置
-	static TinyConfig tc;
-	TinyConfig::Current = &tc;
-	tc.LoadDefault();
-	tc.Channel	= 120;
-	tc.Speed	= 250;
-	//tc.HardVer	= 0x08;
+	TinyConfig* tc = TinyConfig::Init();
 
 	// 尝试加载配置区设置
-	tc.Load();
+	tc->Load();
 
 	return data;
 }

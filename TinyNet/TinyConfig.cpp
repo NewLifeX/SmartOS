@@ -3,36 +3,6 @@
 
 TinyConfig* TinyConfig::Current	= NULL;
 
-// 初始化
-/*TinyConfig::TinyConfig()
-{
-	// 实际内存大小，减去头部大小
-	uint len = sizeof(this) - ((int)&Length - (int)this);
-	//memset(&Length, 0, len);
-	Length = len;
-}*/
-
-/*const TinyConfig& Default()
-{
-	const TinyConfig tc =
-	{
-		sizeof(TinyConfig),
-
-		1,
-		1,
-
-		10,
-		60,
-		5,
-
-		120,
-		250,
-		60,
-	};
-
-	return tc;
-}*/
-
 void TinyConfig::LoadDefault()
 {
 	// 实际内存大小，减去头部大小
@@ -86,4 +56,16 @@ void TinyConfig::Write(Stream& ms)const
 void TinyConfig::Read(Stream& ms)
 {
 	memcpy((byte *)this, ms.GetBuffer(), sizeof(this[0]));
+}
+
+TinyConfig* TinyConfig::Init()
+{
+	// 默认出厂设置
+	static TinyConfig tc;
+	TinyConfig::Current = &tc;
+	tc.LoadDefault();
+	tc.Channel	= 120;
+	tc.Speed	= 250;
+
+	return &tc;
 }
