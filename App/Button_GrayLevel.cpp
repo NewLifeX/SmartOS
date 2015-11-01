@@ -131,7 +131,7 @@ void Button_GrayLevel::SetValue(bool value)
 {
 	_Value	= value;
 
-	if(ACZero)
+	if(ACZero && ACZero->Opened)
 	{
 		if(CheckZero(ACZero)) Time.Delay(ACZeroAdjTime);
 		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
@@ -151,15 +151,12 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 	assert_param(aczero != P0);
 
 	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
-	if(ACZero) delete ACZero;
-
-	ACZero = new InputPort(aczero);
+	if(!ACZero) ACZero = new InputPort(aczero);
 
 	// 需要检测是否有交流电，否则关闭
 	if(CheckZero(ACZero)) return true;
 
-	delete ACZero;
-	ACZero = NULL;
+	ACZero->Close();
 
 	return false;
 }
@@ -232,7 +229,17 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 
 void ACZeroReset(void *param)
 {
-	if(!Button_GrayLevel::ACZero) Sys.Reset();
+	InputPort* port = Button_GrayLevel::ACZero;
+	if(port)
+	{
+		//Sys.Reset();
+		debug_printf("定时检查过零检测\r\n");
+
+		// 需要检测是否有交流电，否则关闭
+		if(CheckZero(port)) return;
+
+		port->Close();
+	}
 }
 
 void Button_GrayLevel::InitZero(Pin zero, int us)
@@ -249,7 +256,7 @@ void Button_GrayLevel::InitZero(Pin zero, int us)
 
 	debug_printf("所有开关按钮准备就绪！\r\n\r\n");
 
-	Sys.AddTask(ACZeroReset, NULL, 60000, 60000, "ACZero");
+	Sys.AddTask(ACZeroReset, NULL, 60000, 60000, "定时过零");
 }
 
 bool Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte count)
