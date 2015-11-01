@@ -124,7 +124,7 @@ Task* Task::Get(int taskid)
 
 TaskScheduler::TaskScheduler(string name)
 {
-	_Tasks	= NULL;
+	_Tasks.SetLength(0);
 	Name 	= name;
 
 	_gid 	= 1;
@@ -137,7 +137,7 @@ TaskScheduler::TaskScheduler(string name)
 	MaxCost	= 0;
 }
 
-TaskScheduler::~TaskScheduler()
+/*TaskScheduler::~TaskScheduler()
 {
 	Current = NULL;
 	//_Tasks.DeleteAll().Clear();
@@ -149,35 +149,19 @@ void TaskScheduler::Set(IArray<Task>* tasks)
 	assert_param2(_Tasks == NULL, "已设置任务数组，禁止覆盖！");
 
 	_Tasks = tasks;
-}
+}*/
 
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, string name)
 {
-	if(!_Tasks) _Tasks = new TArray<Task, 0x10>();
-
-	Task* task	= NULL;
-	IArray<Task>& ts = *_Tasks;
-	for(int i=0; i<ts.Length(); i++)
-	{
-		if(ts[i].ID == 0)
-		{
-			task = &ts[i];
-			break;
-		}
-	}
-	if(!task)
-	{
-		debug_printf("TaskScheduler::Add 已达到最大任务数 %d\r\n", ts.Length());
-		return 0;
-	}
-
+	Task* task	= new Task();
 	task->Host	= this;
 	task->ID	= _gid++;
 	task->Name	= name;
 	task->Callback	= func;
 	task->Param		= param;
 	task->Period	= period;
+	_Tasks.Push(task);
 
 	if(dueTime < 0)
 	{
@@ -199,17 +183,19 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, strin
 
 void TaskScheduler::Remove(uint taskid)
 {
-	if(!_Tasks) return;
+	if(!taskid) return;
 
-	IArray<Task>& ts = *_Tasks;
-	for(int i=0; i<ts.Length(); i++)
+	for(int i=0; i<_Tasks.Length(); i++)
 	{
-		Task& task = ts[i];
-		if(task.ID == taskid)
+		Task* task = _Tasks[i];
+		if(task->ID == taskid)
 		{
-			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task.ID, task.Name, task.Callback);
+			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
 			// 首先清零ID，避免delete的时候再次删除
-			task.ID = 0;
+			task->ID = 0;
+
+			delete task;
+
 			break;
 		}
 	}
@@ -250,10 +236,9 @@ void TaskScheduler::Execute(uint msMax)
 
 	TimeCost tc;
 
-	IArray<Task>& ts = *_Tasks;
-	for(int i=0; i<ts.Length(); i++)
+	for(int i=0; i<_Tasks.Length(); i++)
 	{
-		Task* task = &ts[i];
+		Task* task = _Tasks[i];
 		if(task->ID == 0 || !task->Enable) continue;
 
 		if((task->NextTime <= now || task->NextTime < 0)
@@ -313,14 +298,14 @@ void TaskScheduler::ShowStatus(void* param)
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
 	int ms = host->Cost / 1000;
+	if(ms > 10) ms = 10;
 
-	IArray<Task>& ts = *(host->_Tasks);
-	for(int i=0; i<ts.Length(); i++)
+	for(int i=0; i<host->_Tasks.Length(); i++)
 	{
-		Task& task = ts[i];
-		if(task.ID)
+		Task* task = host->_Tasks[i];
+		if(task->ID)
 		{
-			task.ShowStatus();
+			task->ShowStatus();
 			Sys.Sleep(ms);
 		}
 	}
@@ -330,11 +315,10 @@ void TaskScheduler::ShowStatus(void* param)
 
 Task* TaskScheduler::operator[](int taskid)
 {
-	IArray<Task>& ts = *_Tasks;
-	for(int i=0; i<ts.Length(); i++)
+	for(int i=0; i<_Tasks.Length(); i++)
 	{
-		Task& task = ts[i];
-		if(task.ID == taskid) return &task;
+		Task* task = _Tasks[i];
+		if(task->ID == taskid) return task;
 	}
 
 	return NULL;
