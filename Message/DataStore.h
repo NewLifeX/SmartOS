@@ -69,6 +69,9 @@ public:
 class ByteDataPort : public IDataPort
 {
 public:
+	bool Busy;	// 是否忙于处理异步动作
+
+	ByteDataPort();
 	virtual ~ByteDataPort();
 
 	virtual int Write(byte* data);

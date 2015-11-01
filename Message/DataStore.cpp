@@ -115,6 +115,11 @@ bool DataStore::Area::Contain(uint offset, uint size)
 
 /****************************** 数据操作接口 ************************************/
 
+ByteDataPort::ByteDataPort()
+{
+	Busy	= false;
+}
+
 ByteDataPort::~ByteDataPort()
 {
 	Sys.RemoveTask(_tid);
@@ -122,6 +127,8 @@ ByteDataPort::~ByteDataPort()
 
 int ByteDataPort::Write(byte* data)
 {
+	Busy	= false;
+
 	byte cmd = *data;
 	if(cmd == 0xFF) return Read(data);
 
@@ -234,7 +241,8 @@ void ByteDataPort::DelayClose(int second)
 void ByteDataPort::AsyncTask(void* param)
 {
 	ByteDataPort* dp = (ByteDataPort*)param;
-	byte cmd = dp->Next;
+	dp->Busy	= false;
+	byte cmd	= dp->Next;
 	if(cmd != 0xFF) dp->Write(&cmd);
 }
 
@@ -243,6 +251,7 @@ void ByteDataPort::StartAsync(int ms)
 	// 不允许0毫秒的异步事件
 	if(!ms) return;
 
+	Busy	= true;
 	if(!_tid) _tid = Sys.AddTask(AsyncTask, this, -1, -1, "定时开关");
 	Sys.SetTask(_tid, true, ms);
 }

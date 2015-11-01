@@ -14,7 +14,7 @@ byte Button_GrayLevel::OnGrayLevel	= 0xff;			// 开灯时 led 灰度
 byte Button_GrayLevel::OffGrayLevel	= 0x00;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime=2300;
 
-Button_GrayLevel::Button_GrayLevel()
+Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 {
 #if DEBUG
 	Name	= NULL;
