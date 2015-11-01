@@ -252,10 +252,10 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		debug_printf("\r\nW5500::Init IRQ = P%c%d RST = P%c%d\r\n", _PIN_NAME(irq), _PIN_NAME(rst));
 		//Irq.ShakeTime	= 0;
 		Irq.Floating	= false;
-		Irq.PuPd		= InputPort::PuPd_UP;
+		Irq.Pull		= InputPort::UP;
+		Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		Irq.Set(irq);
-		Irq.Mode		= 0x01;
 		Irq.Register(OnIRQ, this);
 	}
 

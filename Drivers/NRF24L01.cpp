@@ -243,7 +243,8 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
         // 中断引脚初始化
 		//_IRQ->ShakeTime = 2;
 		_IRQ.Floating	= false;
-		_IRQ.PuPd		= InputPort::PuPd_UP;
+		_IRQ.Pull		= InputPort::UP;
+		_IRQ.Mode		= InputPort::Rising;
 		_IRQ.HardEvent	= true;
 		_IRQ.Set(irq);
         _IRQ.Register(OnIRQ, this);

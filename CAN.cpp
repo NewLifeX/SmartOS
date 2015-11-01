@@ -36,7 +36,7 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
         p = g_CAN_Pins_Map3;
     
     AlternatePort tx(p[0]);
-    InputPort rx(p[1], false, InputPort::PuPd_UP);
+    InputPort rx(p[1], false, InputPort::UP);
 #endif
 
 #ifdef STM32F1

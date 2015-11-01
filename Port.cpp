@@ -454,12 +454,12 @@ int Bits2Index(ushort value)
 	return -1;
 }
 
-void InputPort::Init(bool floating, PuPd_TypeDef pupd)
+void InputPort::Init(bool floating, PuPd pull)
 {
-	PuPd		= pupd;
+	Pull		= pull;
 	Floating	= floating;
 
-	Mode		= 0x03;
+	Mode		= Both;
 	//ShakeTime = 20;
 	// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
 	ShakeTime	= 0;
@@ -509,11 +509,11 @@ void InputPort::OnPress(bool down)
 {
 	if(down)
 	{
-		if((Mode & 0x01) == 0) return;
+		if((Mode & Rising) == 0) return;
 	}
 	else
 	{
-		if((Mode & 0x02) == 0) return;
+		if((Mode & Falling) == 0) return;
 	}
 
 	if(HardEvent)
@@ -523,7 +523,7 @@ void InputPort::OnPress(bool down)
 	else
 	{
 		// 允许两个值并存
-		_Value	|= down ? 0x01 : 0x02;
+		_Value	|= down ? Rising : Falling;
 		Sys.SetTask(_taskInput, true, ShakeTime);
 	}
 }
@@ -538,8 +538,8 @@ void InputPort::InputTask(void* param)
 		{
 			port->_Value = 0;
 			v &= port->Mode;
-			if(v & 0x01) port->Handler(port->_Pin, true, port->Param);
-			if(v & 0x02) port->Handler(port->_Pin, false, port->Param);
+			if(v & Rising)	port->Handler(port->_Pin, true, port->Param);
+			if(v & Falling)	port->Handler(port->_Pin, false, port->Param);
 		}
 	}
 }
@@ -567,7 +567,7 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 	// 值必须有变动才触发
 	//if(shakeTime > 0 && value == st->OldValue) return;
 	st->OldValue = value;
-	st->Port->OnPress(!value);
+	st->Port->OnPress(value ^ st->Port->Invert);
 }
 
 void EXTI_IRQHandler(ushort num, void* param)
@@ -632,15 +632,21 @@ void EXTI_IRQHandler(ushort num, void* param)
 }
 #endif
 
-void SetEXIT(int pinIndex, bool enable)
+void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode)
 {
     /* 配置EXTI中断线 */
     EXTI_InitTypeDef ext;
     EXTI_StructInit(&ext);
     ext.EXTI_Line		= EXTI_Line0 << pinIndex;
     ext.EXTI_Mode		= EXTI_Mode_Interrupt;
-    ext.EXTI_Trigger	= EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
-    ext.EXTI_LineCmd	= enable ? ENABLE : DISABLE;
+	if(mode == InputPort::Rising)
+		ext.EXTI_Trigger	= EXTI_Trigger_Rising; // 上升沿触发
+	else if(mode == InputPort::Falling)
+		ext.EXTI_Trigger	= EXTI_Trigger_Falling; // 下降沿触发
+	else
+		ext.EXTI_Trigger	= EXTI_Trigger_Rising_Falling; // 上升沿下降沿触发
+
+	ext.EXTI_LineCmd	= enable ? ENABLE : DISABLE;
     EXTI_Init(&ext);
 }
 
@@ -654,10 +660,12 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		debug_printf(" 抖动=%dus", ShakeTime);
 		if(Floating)
 			debug_printf(" 浮空");
-		else if(PuPd == PuPd_UP)
+		else if(Pull == UP)
 			debug_printf(" 上拉");
-		else if(PuPd == PuPd_DOWN)
+		else if(Pull == DOWN)
 			debug_printf(" 下拉");
+		if(Mode & Rising) debug_printf(" 上升沿");
+		if(Mode & Falling) debug_printf(" 下降沿");
 		if(Invert) debug_printf(" 倒置");
 	}
 #endif
@@ -667,9 +675,9 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #ifdef STM32F1
 	if(Floating)
 		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	else if(PuPd == PuPd_UP)
+	else if(Pull == UP)
 		gpio.GPIO_Mode = GPIO_Mode_IPU;
-	else if(PuPd == PuPd_DOWN)
+	else if(Pull == DOWN)
 		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
 #else
 	gpio.GPIO_Mode = GPIO_Mode_IN;
@@ -688,7 +696,7 @@ void InputPort::OnClose()
 	{
 		st->Port = NULL;
 
-		SetEXIT(idx, false);
+		SetEXIT(idx, false, Mode);
 
 		Interrupt.Deactivate(PORT_IRQns[idx]);
 	}
@@ -739,7 +747,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
     GPIO_EXTILineConfig(gi, idx);
 #endif
 
-	SetEXIT(idx, true);
+	SetEXIT(idx, true, Mode);
 
     // 打开并设置EXTI中断为低优先级
     Interrupt.SetPriority(PORT_IRQns[idx], 1);

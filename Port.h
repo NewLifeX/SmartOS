@@ -68,10 +68,10 @@ public:
     bool OpenDrain;	// 是否开漏输出
     bool Invert;	// 是否倒置输入输出
 	bool InitValue;	// 初始值，在Open之前控制。默认false，受Invert影响
-    uint Speed;		// 速度
+    byte Speed;		// 速度
 
     OutputPort() : Port() { Init(); }
-    OutputPort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED) : Port()
+    OutputPort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED) : Port()
 	{
 		Init(invert, openDrain, speed);
 		Set(pin);
@@ -102,7 +102,7 @@ public:
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 
-    void Init(bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    void Init(bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED)
     {
         OpenDrain	= openDrain;
         Speed		= speed;
@@ -118,7 +118,7 @@ class AlternatePort : public OutputPort
 {
 public:
 	AlternatePort() : OutputPort() { Init(false, false); }
-    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, uint speed = GPIO_MAX_SPEED)
+    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED)
 		: OutputPort()
 	{
 		Init(invert, openDrain, speed);
@@ -138,26 +138,32 @@ class InputPort : public Port
 public:
     typedef enum
     {
-        PuPd_NOPULL = 0x00,
-        PuPd_UP     = 0x01,
-        PuPd_DOWN   = 0x02
-    }PuPd_TypeDef;
+        NOPULL	= 0x00,
+        UP		= 0x01,	// 上拉电阻
+        DOWN	= 0x02,	// 下拉电阻
+    }PuPd;
+    typedef enum
+    {
+        Rising	= 0x01,	// 上升沿
+        Falling	= 0x02,	// 下降沿
+		Both	= 0x03	// 上升下降沿
+    }Trigger;
 
     // 读取委托
     typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
 
-    uint ShakeTime;     // 抖动时间。毫秒
-    PuPd_TypeDef PuPd;  // 上拉下拉电阻
-    bool Floating;      // 是否浮空输入
-    bool Invert;		// 是否倒置输入输出
+    ushort	ShakeTime;	// 抖动时间。毫秒
+    PuPd	Pull;		// 上拉下拉电阻
+	Trigger	Mode;		// 触发模式，上升沿下降沿
+    bool	Floating;	// 是否浮空输入
+    bool	Invert;		// 是否倒置输入输出
 
-	bool HardEvent;		// 是否使用硬件事件。默认false
-	byte Mode;			// 触发模式，避免事件被覆盖。0x01按下，0x02弹起，默认0x03
+	bool	HardEvent;	// 是否使用硬件事件。默认false
 
 	InputPort() : Port() { Init(); }
-    InputPort(Pin pin, bool floating = true, PuPd_TypeDef pupd = PuPd_UP) : Port()
+    InputPort(Pin pin, bool floating = true, PuPd pull = UP) : Port()
 	{
-		Init(floating, pupd);
+		Init(floating, pull);
 		Set(pin);
 		Open();
 	}
@@ -177,7 +183,7 @@ public:
 	void OnPress(bool down);
 
 protected:
-    void Init(bool floating = true, PuPd_TypeDef pupd = PuPd_UP);
+    void Init(bool floating = true, PuPd pull = UP);
 
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 	virtual void OnClose();
