@@ -107,14 +107,14 @@ bool OnClientReceived(Message& msg, void* param)
 
 bool TinyClient::OnReceive(TinyMessage& msg)
 {
-	
+
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
 	//debug_printf("源地址: 0x%08X 网关地址:0x%08X \r\n",Server, msg.Src);
-	
-	if(Type != 0x01C8)	
+
+	if(Type != 0x01C8)
 	   if(msg.Code != 0x01&& Server != msg.Src) return true;//不是无线中继，不是组网消息。不是被组网网关消息，不受其它消息设备控制.
-	
+
 	if(msg.Src == Server) LastActive = Time.Current();
 
 	switch(msg.Code)
@@ -274,6 +274,7 @@ bool TinyClient::Report(uint offset, const ByteArray& bs)
 void TinyClient::ReportAsync(uint offset)
 {
 	if(this == NULL) return;
+	if(offset >= Store.Data.Length()) return;
 
 	NextReport = offset;
 
@@ -292,7 +293,9 @@ void TinyClientTask(void* param)
 	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 	if(offset)
 	{
-		client->Report(offset, client->Store.Data[offset]);
+		// 检查索引，否则数组越界
+		ByteArray& bs = client->Store.Data;
+		if(bs.Length() > offset) client->Report(offset, bs[offset]);
 		client->NextReport = 0;
 		return;
 	}
