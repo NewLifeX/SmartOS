@@ -167,8 +167,10 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
+
 	ext.ReadMessage(msg);
 	ext.Show(true);
+	
 	
 	//SetTokenConfig(msg);
 
@@ -224,17 +226,25 @@ bool TokenClient::OnHello(TokenMessage& msg)
 void TokenClient::SetTokenConfig(TokenMessage& msg)
 {  
     // 解析数据
-	HelloMessage ext;
-	ext.Reply = msg.Reply;
-	ext.ReadMessage(msg);
-	ext.Show(true);	
+	Stream ms(msg.Data, msg.Length);
 	
-	strcpy(TokenConfig->Server, "s1.peacemoon.cn");
-	IPAddress svr(139, 196, 5, 2);
+	if(ms.ReadByte()!=2) return;
 	
-    TokenConfig->ServerIP	= svr.Value;	
-	TokenConfig->ServerPort	= 3388;
-	TokenConfig->Port		= 3377;
+	  TokenConfig->Protocol =  ms.ReadByte();  
+	  TokenConfig->Port	 = 	ms.ReadUInt16();
+	  TokenConfig->ServerIP = 	ms.ReadUInt32();
+	
+	  TokenConfig->ServerPort = ms.ReadUInt16();
+    //  TokenConfig-> Server     = ms.ReadString();
+	  
+	  // strcpy(TokenConfig->Server, ms.ReadString());
+    	
+	//strcpy(TokenConfig->Server, "s1.peacemoon.cn");
+	
+	//IPAddress svr(139, 196, 5, 2);	
+    //TokenConfig->ServerIP	= svr.Value;	
+	//TokenConfig->ServerPort	= 3388;
+	//TokenConfig->Port		= 3377;
 
 	TokenConfig->Save();	
     TokenConfig->Show();     

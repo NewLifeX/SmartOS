@@ -14,6 +14,7 @@ public:
 	String		Type;		// 类型
 	String		Name;		// 名称
 	ulong		LocalTime;	// 时间ms
+	byte		ErrCode;	//错误碼
 	IPEndPoint	EndPoint;
 	ByteArray	Ciphers;
 	ByteArray	Key;		// 密钥
