@@ -179,6 +179,9 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	{
 		if(msg.Error)
 		{
+			if(SetTokenConfig(msg))
+				return false;
+			
 			Status	= 0;
 			Token	= 0;
 			Stream ms(msg.Data, msg.Length);
@@ -223,12 +226,12 @@ bool TokenClient::OnHello(TokenMessage& msg)
 
 	return true;
 }
-void TokenClient::SetTokenConfig(TokenMessage& msg)
+bool TokenClient::SetTokenConfig(TokenMessage& msg)
 {  
     // 解析数据
 	Stream ms(msg.Data, msg.Length);
 	
-	if(ms.ReadByte()!=2) return;
+	if(ms.ReadByte()!=2) return false;
 	
 	  TokenConfig->Protocol =  ms.ReadByte();  
 	  TokenConfig->Port	 = 	ms.ReadUInt16();
@@ -247,7 +250,9 @@ void TokenClient::SetTokenConfig(TokenMessage& msg)
 	//TokenConfig->Port		= 3377;
 
 	TokenConfig->Save();	
-    TokenConfig->Show();     
+    TokenConfig->Show();    
+	
+	return true;
 	
 	
 	

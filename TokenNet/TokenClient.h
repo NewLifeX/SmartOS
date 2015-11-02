@@ -54,7 +54,7 @@ public:
 	void Login();
 	bool OnLogin(TokenMessage& msg);
 	//设置网络配置
-	void SetTokenConfig(TokenMessage& msg);
+	bool SetTokenConfig(TokenMessage& msg);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
