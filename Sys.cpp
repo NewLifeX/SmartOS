@@ -44,7 +44,9 @@ static int _Index;	// MCU在型号表中的索引
 
 #endif
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 _force_inline void InitHeapStack(uint top)
 {
@@ -390,7 +392,9 @@ void TSys::RemoveTask(uint& taskid)
 	taskid = 0;
 }
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
 {

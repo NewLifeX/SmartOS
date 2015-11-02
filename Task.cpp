@@ -24,7 +24,9 @@ Task::~Task()
 	if(ID) Host->Remove(ID);
 }
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 bool Task::Execute(ulong now)
 {
@@ -105,7 +107,9 @@ void Task::ShowStatus()
 	debug_printf("\r\n");
 }
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 // 全局任务调度器
 TaskScheduler* Task::Scheduler()
@@ -225,7 +229,9 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint msMax)
@@ -311,7 +317,9 @@ void TaskScheduler::ShowStatus(void* param)
 	}
 }
 
-#pragma arm section code = "SectionForSys"
+#ifndef TINY
+	#pragma arm section code = "SectionForSys"
+#endif
 
 Task* TaskScheduler::operator[](int taskid)
 {
