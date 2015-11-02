@@ -5,7 +5,6 @@
 #include "Port.h"
 #include "Net\ITransport.h"
 #include "Message\DataStore.h"
-
 #include "TokenClient.h"
 
 #include "TinyNet\TinyServer.h"
@@ -38,6 +37,7 @@ public:
 	/******** 远程网业务逻辑 ********/
 	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
+	
 
 
 	// 设备列表 0x21

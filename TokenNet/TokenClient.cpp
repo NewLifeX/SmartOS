@@ -29,6 +29,7 @@ TokenClient::TokenClient() : ID(16), Key(8)
 
 	Received	= NULL;
 	Param		= NULL;
+	TokenConfig	= NULL;
 }
 
 void TokenClient::Open()
@@ -39,6 +40,8 @@ void TokenClient::Open()
 
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
+	
+	TokenConfig			= TokenConfig::Init();
 
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;

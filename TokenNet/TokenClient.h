@@ -2,7 +2,7 @@
 #define __TokenClient_H__
 
 #include "Sys.h"
-
+#include "TokenNet\TokenConfig.h"
 #include "TokenMessage.h"
 #include "HelloMessage.h"
 
@@ -24,8 +24,10 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	
 	bool IsOldOrder; 	//是否旧指令
-
+	
+	TokenConfig* TokenConfig;	//网络配置
 	TokenController* Control;
+	
 
 	TokenClient();
 
@@ -51,6 +53,8 @@ public:
 	// 登录
 	void Login();
 	bool OnLogin(TokenMessage& msg);
+	//设置网络配置
+	void SetTokenConfig(TokenMessage& msg);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();

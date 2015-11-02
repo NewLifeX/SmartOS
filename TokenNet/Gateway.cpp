@@ -20,11 +20,12 @@ Gateway::Gateway()
 	Server	= NULL;
 	Client	= NULL;
 	Led		= NULL;
-
+	
 	Running		= false;
 	AutoReport	= false;
 	IsOldOrder	= false;
 	ExitStudyTaskID = 0;
+
 }
 
 Gateway::~Gateway()
@@ -53,6 +54,7 @@ void Gateway::Start()
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
     Client->IsOldOrder  = IsOldOrder;
+	
 
 	debug_printf("Gateway::Start \r\n");
 
