@@ -169,6 +169,8 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	ext.Reply = msg.Reply;
 	ext.ReadMessage(msg);
 	ext.Show(true);
+	
+	//SetTokenConfig(msg);
 
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
@@ -219,7 +221,27 @@ bool TokenClient::OnHello(TokenMessage& msg)
 
 	return true;
 }
+void TokenClient::SetTokenConfig(TokenMessage& msg)
+{  
+    // 解析数据
+	HelloMessage ext;
+	ext.Reply = msg.Reply;
+	ext.ReadMessage(msg);
+	ext.Show(true);	
+	
+	strcpy(TokenConfig->Server, "s1.peacemoon.cn");
+	IPAddress svr(139, 196, 5, 2);
+	
+    TokenConfig->ServerIP	= svr.Value;	
+	TokenConfig->ServerPort	= 3388;
+	TokenConfig->Port		= 3377;
 
+	TokenConfig->Save();	
+    TokenConfig->Show();     
+	
+	
+	
+}
 // 登录
 void TokenClient::Login()
 {
