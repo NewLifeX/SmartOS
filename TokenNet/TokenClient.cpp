@@ -255,8 +255,7 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
     TokenConfig->Show();    
 	
 	return true;
-	
-	
+		
 	
 }
 // 登录
