@@ -470,6 +470,9 @@ void InputPort::Init(bool floating, PuPd pull)
 	Handler		= NULL;
 	Param		= NULL;
 	_Value		= 0;
+
+	_PressStart = 0;
+	PressTime	= 0;
 }
 
 InputPort::~InputPort()
@@ -510,13 +513,14 @@ void InputPort::OnPress(bool down)
 	if(down)
 	{
 		if((Mode & Rising) == 0) return;
-		_PressStart	= Sys.Ms();
 	}
 	else
 	{
 		if((Mode & Falling) == 0) return;
-		PressTime	= Sys.Ms() - _PressStart;
+		if (_PressStart > 0) PressTime	= Sys.Ms() - _PressStart;
 	}
+	_PressStart	= Sys.Ms();
+
 
 	if(HardEvent)
 	{
