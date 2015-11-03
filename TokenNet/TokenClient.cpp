@@ -164,12 +164,6 @@ void TokenClient::SayHello(bool broadcast, int port)
 // 握手响应
 bool TokenClient::OnHello(TokenMessage& msg)
 {
-	// 解析数据
-	HelloMessage ext;
-	ext.Reply = msg.Reply;
-
-	ext.ReadMessage(msg);
-	ext.Show(true);
 	
 	
 	//SetTokenConfig(msg);
@@ -190,8 +184,14 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		}
 		else
 		{
-			debug_printf("握手完成，开始登录……\r\n");		
-
+			debug_printf("握手完成，开始登录……\r\n");	
+			// 解析数据
+	        HelloMessage ext;
+	        ext.Reply = msg.Reply;
+            
+	        ext.ReadMessage(msg);
+	        ext.Show(true);
+            
 			// 通讯密码
 			if(ext.Key.Length() > 0)
 			{
@@ -238,11 +238,25 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 	  TokenConfig->ServerIP = 	ms.ReadUInt32();
 	
 	  TokenConfig->ServerPort = ms.ReadUInt16();
+	  
+	 
     //  TokenConfig-> Server     = ms.ReadString();
 	  
-	  // strcpy(TokenConfig->Server, ms.ReadString());
+	//  strcpy(TokenConfig->Server, ms.ReadString());
+   // String str = ms.ReadString();
+	uint len =ms.ReadByte();
+	
+	if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
+	
+	for(int i=0;i!=len;i++)
+	{
+		TokenConfig-> Server[i]=ms.ReadByte();
+    }
+	//if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
+	
+	//str.CopytTo(TokenConfig->Server, len);
     	
-	//strcpy(TokenConfig->Server, "s1.peacemoon.cn");
+   // strcpy(TokenConfig->Server, str);
 	
 	//IPAddress svr(139, 196, 5, 2);	
     //TokenConfig->ServerIP	= svr.Value;	
