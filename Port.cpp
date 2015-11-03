@@ -517,9 +517,7 @@ void InputPort::OnPress(bool down)
 	else
 	{
 		if((Mode & Falling) == 0) return;
-		if (_PressStart > 0) PressTime	= Sys.Ms() - _PressStart;
 	}
-	_PressStart	= Sys.Ms();
 
 
 	if(HardEvent)
@@ -537,16 +535,21 @@ void InputPort::OnPress(bool down)
 void InputPort::InputTask(void* param)
 {
 	InputPort* port = (InputPort*)param;
+	byte v = port->_Value;
+	if(!v) return;
+
+	if(v & Falling)
+	{
+		if (port->_PressStart > 0) port->PressTime	= Sys.Ms() - port->_PressStart;
+	}
+	port->_PressStart	= Sys.Ms();
+
 	if(port->Handler)
 	{
-		byte v = port->_Value;
-		if(v)
-		{
-			port->_Value = 0;
-			v &= port->Mode;
-			if(v & Rising)	port->Handler(port, true, port->Param);
-			if(v & Falling)	port->Handler(port, false, port->Param);
-		}
+		port->_Value = 0;
+		v &= port->Mode;
+		if(v & Rising)	port->Handler(port, true, port->Param);
+		if(v & Falling)	port->Handler(port, false, port->Param);
 	}
 }
 
