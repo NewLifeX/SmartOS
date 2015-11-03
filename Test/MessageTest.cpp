@@ -61,9 +61,9 @@ void FlashLed(void* param)
 	TinyMessage msg(0x10);
 
 	byte leds[] = {0, 1, 2};
-	leds[0] = Time.CurrentTicks() % 4 - 1;
-	leds[1] = Time.CurrentTicks() % 4 - 1;
-	leds[2] = Time.CurrentTicks() % 4 - 1;
+	leds[0] = Sys.Ms() % 4 - 1;
+	leds[1] = Sys.Ms() % 4 - 1;
+	leds[2] = Sys.Ms() % 4 - 1;
 
 	msg.SetData(leds, ArrayLength(leds));
 

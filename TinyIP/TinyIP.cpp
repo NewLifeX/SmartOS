@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "TinyIP.h"
+﻿#include "TinyIP.h"
 #include "Arp.h"
 
 #include "Task.h"
@@ -41,7 +40,7 @@ void TinyIP::Init()
 void TinyIP::Init(ITransport* port)
 {
 	_port = port;
-	_StartTime = Time.Current();
+	_StartTime = Sys.Ms();
 
 	const byte defip_[] = {192, 168, 1, 1};
 	IPAddress defip(defip_);
@@ -237,7 +236,7 @@ bool TinyIP::Open()
 	task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 
 #if NET_DEBUG
-	uint us = Time.Current() - _StartTime;
+	uint us = Sys.Ms() - _StartTime;
 	debug_printf("TinyIP Ready! Cost:%dms\r\n\r\n", us / 1000);
 #endif
 

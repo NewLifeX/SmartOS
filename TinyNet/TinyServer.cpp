@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Flash.h"
+﻿#include "Flash.h"
 #include "TinyServer.h"
 
 #include "JoinMessage.h"
@@ -98,7 +97,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	}
 
 	// 更新设备信息
-	if(dv) dv->LastTime = Time.Current();
+	if(dv) dv->LastTime = Sys.Ms();
 
 	// 设置当前设备
 	Current = dv;
@@ -172,7 +171,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	byte id = msg.Src;
 	if(!id) return false;
 
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 
 	JoinMessage dm;
 	dm.ReadMessage(msg);
@@ -251,7 +250,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 bool TinyServer::ResetPassword(byte id)
 {
 
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 
 	JoinMessage dm;
 

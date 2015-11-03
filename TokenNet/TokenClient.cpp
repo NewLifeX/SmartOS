@@ -71,7 +71,7 @@ bool TokenClient::Reply(TokenMessage& msg)
 
 bool TokenClient::OnReceive(TokenMessage& msg)
 {
-	LastActive = Time.Current();
+	LastActive = Sys.Ms();
 
 	switch(msg.Code)
 	{
@@ -218,7 +218,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		ext2.Reply = msg.Reply;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
-		ext2.LocalTime = Time.Current() * 1000;
+		ext2.LocalTime = Sys.Ms() * 1000;
 		ext2.WriteMessage(rs);
 
 		Reply(rs);
@@ -321,7 +321,7 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 // Ping指令用于保持与对方的活动状态
 void TokenClient::Ping()
 {
-	if(LastActive > 0 && LastActive + 30000 < Time.Current())
+	if(LastActive > 0 && LastActive + 30000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
@@ -333,7 +333,7 @@ void TokenClient::Ping()
 
 	TokenMessage msg(3);
 
-	ulong time	= Time.Current();
+	ulong time	= Sys.Ms();
 	Stream ms	= msg.ToStream();
 	ms.WriteArray(ByteArray(&time, 8));
 	msg.Length	= ms.Position();
@@ -348,7 +348,7 @@ bool TokenClient::OnPing(TokenMessage& msg)
 
 	Stream ms = msg.ToStream();
 
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;

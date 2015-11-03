@@ -240,7 +240,7 @@ void TSys::Init(void)
 // 堆起始地址，前面是静态分配内存
 uint TSys::HeapBase()
 {
-	return (uint)&__heap_base;	
+	return (uint)&__heap_base;
 }
 
 // 栈顶，后面是初始化不清零区域
@@ -473,6 +473,9 @@ void TimeSleep(uint us)
 	}
 	if(us) Time.Delay(us);
 }
+
+// 系统启动后的毫秒数
+ulong	Ms() { return Time.Current(); }
 
 void TSys::Sleep(uint ms)
 {

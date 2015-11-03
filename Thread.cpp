@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Thread.h"
+﻿#include "Thread.h"
 #include "Task.h"
 
 //#define TH_DEBUG DEBUG
@@ -217,7 +216,7 @@ void Thread::Sleep(uint ms)
 {
 	SmartIRQ irq;	// 关闭全局中断
 
-	DelayExpire = Time.Current() + ms;
+	DelayExpire = Sys.Ms() + ms;
 
 	assert_param(State == Running || State == Ready);
 
@@ -239,7 +238,7 @@ void Thread::Sleep(uint ms)
 // 检查Sleep是否过期
 bool Thread::CheckExpire()
 {
-	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Time.Current())
+	if(State == Suspended && DelayExpire > 0 && DelayExpire <= Sys.Ms())
 	{
 		//Resume();
 		State = Ready;

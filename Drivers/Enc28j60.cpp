@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Enc28j60.h"
+﻿#include "Enc28j60.h"
 
 #define ENC_DEBUG DEBUG
 #define NET_DEBUG DEBUG
@@ -338,7 +337,7 @@ Enc28j60::Enc28j60()
 
 	_spi	= NULL;
 
-	LastTime	= Time.Current();
+	LastTime	= Sys.Ms();
 	ResetPeriod	= 6000;
 	_ResetTask	= 0;
 
@@ -689,7 +688,7 @@ bool Enc28j60::OnOpen()
 #endif
 	debug_printf("Enc28j60::Inited! Revision=%d\r\n", rev);
 
-	LastTime = Time.Current();
+	LastTime = Sys.Ms();
 
 	if(!_ResetTask)
 	{
@@ -995,7 +994,7 @@ uint Enc28j60::OnRead(ByteArray& bs)
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
 
 	// 最后收到数据包的时间
-	LastTime = Time.Current();
+	LastTime = Sys.Ms();
 
     return len;
 }
@@ -1087,7 +1086,7 @@ void Enc28j60::CheckError()
 		return;
 	}*/
 
-	uint ts = Time.Current() - LastTime;
+	uint ts = Sys.Ms() - LastTime;
 	if(ResetPeriod < ts)
 	{
 		Error++;

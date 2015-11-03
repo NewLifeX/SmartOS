@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Stream.h"
+﻿#include "Stream.h"
 #include "ITransport.h"
 
 #include "Dhcp.h"
@@ -105,9 +104,9 @@ void Dhcp::Request()
 
 void Dhcp::Start()
 {
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 	_expiredTime = now + ExpiredTime;
-	if(!dhcpid) dhcpid = (now << 16) | Time.CurrentTicks();
+	if(!dhcpid) dhcpid = now;
 
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
@@ -145,7 +144,7 @@ void Dhcp::SendDiscover(void* param)
 	if(!_dhcp->Running) return;
 
 	// 检查总等待时间
-	if(_dhcp->_expiredTime < Time.Current())
+	if(_dhcp->_expiredTime < Sys.Ms())
 	{
 		_dhcp->Stop();
 		return;

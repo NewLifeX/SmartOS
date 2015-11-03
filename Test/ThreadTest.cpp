@@ -1,14 +1,13 @@
 ﻿#include "Sys.h"
 #include "Port.h"
 #include "Thread.h"
-#include "Time.h"
 
 Thread* th;
 
 void ThreadTask(void* param)
 {
     OutputPort* leds = (OutputPort*)param;
-    uint m = Time.Current() % 2;
+    uint m = Sys.Ms() % 2;
     uint n = 100;
     while(--n)
     //while(true)

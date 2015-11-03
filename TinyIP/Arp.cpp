@@ -193,7 +193,7 @@ bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 	_ArpSession = &ss;
 
 	// 等待响应
-	TimeWheel tw(0, timeout * 1000);
+	TimeWheel tw(timeout);
 	tw.Sleep = 1;
 	do{
 		if(ss.Success) break;
@@ -226,7 +226,7 @@ bool ArpSocket::Resolve(const IPAddress& ip, MacAddress& mac)
 	ARP_ITEM* item = NULL;	// 匹配项
 	if(_Arps)
 	{
-		uint sNow = Time.Current() >> 10;	// 当前时间，秒
+		uint sNow = Sys.Ms() >> 10;	// 当前时间，秒
 		// 在表中查找
 		for(int i=0; i<Count; i++)
 		{
@@ -329,7 +329,7 @@ void ArpSocket::Add(const IPAddress& ip, const MacAddress& mac)
 #endif
 	}
 
-	uint sNow = Time.Current() >> 10;	// 当前时间，秒
+	uint sNow = Sys.Ms() >> 10;	// 当前时间，秒
 	// 保存
 	item->IP	= ip.Value;
 	item->Mac	= mac;

@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Gateway.h"
+﻿#include "Gateway.h"
 #include "Config.h"
 
 #include "Security\MD5.h"
@@ -68,7 +67,7 @@ void Gateway::Start()
 		dv->Kind		= Sys.Code;
 		dv->HardID.SetLength(16);
 		dv->HardID		= Sys.ID;
-		dv->LastTime	= Time.Current();
+		dv->LastTime	= Sys.Ms();
 		dv->Name		= Sys.Name;
 
 		Server->Devices.Push(dv);
@@ -124,7 +123,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	if(dv)
 	{
 		// 短时间内注册或者登录
-		ulong now = Time.Current() - 500;
+		ulong now = Sys.Ms() - 500;
 		if(dv->RegTime > now) DeviceRegister(dv->Address);
 		if(dv->LoginTime > now) DeviceOnline(dv->Address);
 	}

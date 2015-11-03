@@ -1,6 +1,4 @@
-﻿#include "Time.h"
-
-#include "Security\Crc.h"
+﻿#include "Security\Crc.h"
 
 #include "TinyMessage.h"
 
@@ -191,7 +189,7 @@ TinyController::TinyController() : Controller()
 	while(Address < 2 || Address > 254)
 	{
 		Sys.Delay(30);
-		Address = Time.CurrentTicks();
+		Address = Sys.Ms();
 	}
 
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
@@ -368,7 +366,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		MessageNode& node = _Queue[i];
 		if(node.Using && node.Sequence == msg.Sequence)
 		{
-			int cost = Time.Current() - node.LastSend;
+			int cost = Sys.Ms() - node.LastSend;
 			if(cost < 0) cost = -cost;
 
 			Total.Cost += cost;
@@ -474,7 +472,7 @@ void TinyController::Loop()
 		// 检查时间。至少发送一次
 		if(node.Next > 0)
 		{
-			ulong now2 = Time.Current();
+			ulong now2 = Sys.Ms();
 			// 下一次发送时间还没到，跳过
 			if(node.Next > now2) continue;
 
@@ -508,7 +506,7 @@ void TinyController::Loop()
 			memset(&Total, 0, sizeof(Total));
 		}
 
-		ulong now = Time.Current();
+		ulong now = Sys.Ms();
 		node.LastSend = now;
 
 		// 随机延迟。随机数1~5。每次延迟递增
@@ -553,9 +551,9 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	if(!node) return false;
 
 	node->SetMessage(msg);
-	node->StartTime = Time.Current();
+	node->StartTime = Sys.Ms();
 	node->Next = 0;
-	node->Expired = Time.Current() + expire;
+	node->Expired = Sys.Ms() + expire;
 
 	Total.Msg++;
 
@@ -656,7 +654,7 @@ void RingQueue::Push(ushort item)
 	if(Index == ArrayLength(Arr)) Index = 0;
 
 	// 更新过期时间，10秒
-	Expired = Time.Current() + 10000;
+	Expired = Sys.Ms() + 10000;
 }
 
 int RingQueue::Find(ushort item)
@@ -675,7 +673,7 @@ bool RingQueue::Check(ushort item)
 	if(!Expired) return false;
 
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
-	if(Expired < Time.Current())
+	if(Expired < Sys.Ms())
 	{
 		//debug_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始

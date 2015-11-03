@@ -415,7 +415,7 @@ bool TokenController::StartSendStat(byte code)
 		if(_Queue[i].Code == 0)
 		{
 			_Queue[i].Code	= code;
-			_Queue[i].Time	= Time.Current();
+			_Queue[i].Time	= Sys.Ms();
 			return true;
 		}
 	}
@@ -434,7 +434,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 			bool rs = false;
 			if(success)
 			{
-				int cost = (int)(Time.Current() - _Queue[i].Time);
+				int cost = (int)(Sys.Ms() - _Queue[i].Time);
 				// 莫名其妙，有时候竟然是负数
 				if(cost < 0) cost = -cost;
 				if(cost < 1000)

@@ -95,6 +95,8 @@ public:
 	uint HeapBase();	// 堆起始地址，前面是静态分配内存
 	uint StackTop();	// 栈顶，后面是初始化不清零区域
 
+	ulong	Ms();		// 系统启动后的毫秒数
+
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟
 	typedef void (*FuncU32)(uint param);

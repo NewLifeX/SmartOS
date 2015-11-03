@@ -1,6 +1,4 @@
-﻿#include "Sys.h"
-#include "Time.h"
-#include "Drivers\NRF24L01.h"
+﻿#include "Drivers\NRF24L01.h"
 
 #include "conf.h"
 
@@ -12,7 +10,7 @@ void OnSend(void* param)
 {
 	// 最后4个字节修改为秒数
 	// 大概4.86%的误差
-    uint s = __REV(Time.Current() >> 10);
+    uint s = __REV(Sys.Ms() >> 10);
     byte* p = tx_buf + ArrayLength(tx_buf) - 8;
     Sys.ToHex(p, (byte*)&s, 4);
 

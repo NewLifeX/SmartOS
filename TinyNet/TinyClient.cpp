@@ -1,7 +1,4 @@
-﻿#include "Time.h"
-#include "Task.h"
-
-#include "TinyClient.h"
+﻿#include "TinyClient.h"
 
 #include "JoinMessage.h"
 
@@ -40,7 +37,7 @@ void TinyClient::Open()
 	Control->Received	= OnClientReceived;
 	Control->Param		= this;
 
-	TranID	= (int)Time.Current();
+	TranID	= (int)Sys.Ms();
 
 	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "客户端服务");
 
@@ -115,7 +112,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	if(Type != 0x01C8)
 	   if(msg.Code != 0x01&& Server != msg.Src) return true;//不是无线中继，不是组网消息。不是被组网网关消息，不受其它消息设备控制.
 
-	if(msg.Src == Server) LastActive = Time.Current();
+	if(msg.Src == Server) LastActive = Sys.Ms();
 
 	switch(msg.Code)
 	{
@@ -367,7 +364,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Sys.SetTaskPeriod(_TaskID, time * 1000);
 
 	// 组网成功更新一次最后活跃时间
-	LastActive = Time.Current();
+	LastActive = Sys.Ms();
 
 	// 保存配置
 	Cfg->Save();
@@ -386,7 +383,7 @@ void TinyClient::Ping()
 {
 	ushort off = Cfg->OfflineTime;
 	if(off < 10) off = 10;
-	if(LastActive > 0 && LastActive + off * 1000 < Time.Current())
+	if(LastActive > 0 && LastActive + off * 1000 < Sys.Ms())
 	{
 		if(Server == 0) return;
 
@@ -411,7 +408,7 @@ void TinyClient::Ping()
 
 	Send(msg);
 
-	if(LastActive == 0) LastActive = Time.Current();
+	if(LastActive == 0) LastActive = Sys.Ms();
 }
 
 bool TinyClient::OnPing(const TinyMessage& msg)
@@ -422,7 +419,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	// 忽略响应消息
 	if(msg.Reply)
 	{
-		if(msg.Src == Server) LastActive = Time.Current();
+		if(msg.Src == Server) LastActive = Sys.Ms();
 		return true;
 	}
 

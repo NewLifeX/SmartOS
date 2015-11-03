@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "LoginMessage.h"
+﻿#include "LoginMessage.h"
 
 #include "Security\MD5.h"
 
@@ -29,7 +28,7 @@ void LoginMessage::Write(Stream& ms)
 	// 密码取MD5后传输
 	ms.WriteArray(MD5::Hash(Key));
 
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 	Salt.Set((byte*)&now, 8);
 	ms.WriteArray(Salt);
 

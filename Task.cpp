@@ -81,7 +81,7 @@ void Task::Set(bool enable, int msNextTime)
 	Enable = enable;
 
 	// 可以安排最近一次执行的时间，比如0表示马上调度执行
-	if(msNextTime >= 0) NextTime = Time.Current() + msNextTime;
+	if(msNextTime >= 0) NextTime = Sys.Ms() + msNextTime;
 
 	// 如果系统调度器处于Sleep，让它立马退出
 	if(enable) Scheduler()->Sleeping = false;
@@ -174,7 +174,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, strin
 		task->Event		= true;
 	}
 	else
-		task->NextTime	= Time.Current() + dueTime;
+		task->NextTime	= Sys.Ms() + dueTime;
 
 	Count++;
 
@@ -236,7 +236,7 @@ void TaskScheduler::Stop()
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint msMax)
 {
-	ulong now = Time.Current();
+	ulong now = Sys.Ms();
 	ulong end = now + msMax;
 	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
 
@@ -249,13 +249,13 @@ void TaskScheduler::Execute(uint msMax)
 
 		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-		&& Time.Current() + task->CostMs <= end)
+		&& Sys.Ms() + task->CostMs <= end)
 		{
 			task->Execute(now);
 
 			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出
-			if(!msMax || Time.Current() > end) return;
+			if(!msMax || Sys.Ms() > end) return;
 		}
 		// 注意Execute内部可能已经释放了任务
 		if(task->ID && task->Enable)
@@ -276,7 +276,7 @@ void TaskScheduler::Execute(uint msMax)
 	if(ct > MaxCost) MaxCost = ct;
 
 	// 如果有最小时间，睡一会吧
-	now = Time.Current();	// 当前时间
+	now = Sys.Ms();	// 当前时间
 	if(min != UInt64_Max && min > now)
 	{
 		min -= now;
@@ -299,7 +299,7 @@ void TaskScheduler::ShowStatus(void* param)
 	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
 	Time.Now().Show();
 	debug_printf(" 启动 ");
-	DateTime dt(Time.Current() / 1000);
+	DateTime dt(Sys.Ms() / 1000);
 	dt.Show(true);
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
