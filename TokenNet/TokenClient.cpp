@@ -238,12 +238,8 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 	  TokenConfig->ServerIP = 	ms.ReadUInt32();
 	
 	  TokenConfig->ServerPort = ms.ReadUInt16();
-	  
-	 
-    //  TokenConfig-> Server     = ms.ReadString();
-	  
-	//  strcpy(TokenConfig->Server, ms.ReadString());
-   // String str = ms.ReadString();
+	  	 
+  
 	uint len =ms.ReadByte();
 	
 	if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
@@ -252,16 +248,8 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 	{
 		TokenConfig-> Server[i]=ms.ReadByte();
     }
-	//if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
+	strcpy(TokenConfig->Vendor, "s3.peacemoon.cn");
 	
-	//str.CopytTo(TokenConfig->Server, len);
-    	
-   // strcpy(TokenConfig->Server, str);
-	
-	//IPAddress svr(139, 196, 5, 2);	
-    //TokenConfig->ServerIP	= svr.Value;	
-	//TokenConfig->ServerPort	= 3388;
-	//TokenConfig->Port		= 3377;
 
 	TokenConfig->Save();	
     TokenConfig->Show();    
