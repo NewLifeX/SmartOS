@@ -381,6 +381,24 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	return true;
 }
 
+void TinyClient::DisJoin()
+{
+	debug_printf("TinyClient::DisJoin 退网 \r\n");
+
+	TinyMessage msg;
+	msg.Code = 2;
+
+	// 发送的广播消息，设备类型和系统ID
+	JoinMessage dm;
+	dm.Kind		= Type;
+	dm.HardID	= Sys.ID;
+	dm.TranID	= TranID;
+	dm.WriteMessage(msg);
+	dm.Show(true);
+
+	Send(msg);
+}
+
 // 离网
 bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {

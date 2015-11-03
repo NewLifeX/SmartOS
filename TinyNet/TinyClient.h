@@ -63,6 +63,7 @@ public:
 	ushort		TranID;		// 组网会话
 	void Join();
 	bool OnJoin(const TinyMessage& msg);
+	void DisJoin();
 	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳

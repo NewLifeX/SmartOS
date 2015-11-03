@@ -119,6 +119,18 @@ void* InitConfig(void* data, uint size)
 	return data;
 }
 
+void ClearConfig()
+{
+	TinyConfig* tc = TinyConfig::Current;
+	if(tc) tc->Clear();
+
+	// 退网
+	TinyClient* client = TinyClient::Current;
+	if(client) client->DisJoin();
+
+	Sys.Reset();
+}
+
 /*void NoUsed()
 {
 	Setup(1234, "");

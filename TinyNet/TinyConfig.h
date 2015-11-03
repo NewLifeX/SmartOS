@@ -37,6 +37,7 @@ struct TinyConfig
 
 	void Load();
 	void Save();
+	void Clear();
 
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;

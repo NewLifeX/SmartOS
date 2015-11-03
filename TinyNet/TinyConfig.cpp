@@ -51,6 +51,16 @@ void TinyConfig::Save()
 	Config::Current->Set("TCFG", bs);
 }
 
+void TinyConfig::Clear()
+{
+	LoadDefault();
+
+	debug_printf("TinyConfig::Clear \r\n");
+
+	ByteArray bs(&Length, Length);
+	Config::Current->Set("TCFG", bs);
+}
+
 void TinyConfig::Write(Stream& ms)const
 {
 	ms.Write((byte *)this, 0, sizeof(this[0]));

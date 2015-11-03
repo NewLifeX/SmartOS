@@ -9,6 +9,7 @@
 void Setup(ushort code, const char* name, COM_Def message = COM1, int baudRate = 1024000);
 
 void* InitConfig(void* data, uint size);
+void ClearConfig();
 
 ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false);
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg);
