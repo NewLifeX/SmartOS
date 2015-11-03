@@ -11,13 +11,11 @@
 // 微网客户端
 class TinyClient
 {
-private:
-	uint		_TaskID;
-
 public:
 	TinyController* Control;
 	TinyConfig*	Cfg;
 
+	bool		Opened;		// 是否已经打开
 	bool		Joining;	// 是否正在组网
 	byte		Server;		// 服务端地址
 	ushort		Type;		// 设备类型。两个字节可做二级分类
@@ -48,9 +46,12 @@ public:
 	void Report(Message& msg);
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const ByteArray& bs);
-	
+
 	uint		NextReport;	// 下次上报偏移，0不动
 	void ReportAsync(uint offset);
+
+private:
+	uint		_TaskID;
 
 private:
 	void OnWrite(const TinyMessage& msg);

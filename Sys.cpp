@@ -475,7 +475,7 @@ void TimeSleep(uint us)
 }
 
 // 系统启动后的毫秒数
-ulong	Ms() { return Time.Current(); }
+ulong TSys::Ms() { return Time.Current(); }
 
 void TSys::Sleep(uint ms)
 {

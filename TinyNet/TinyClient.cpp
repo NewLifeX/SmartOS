@@ -16,6 +16,7 @@ TinyClient::TinyClient(TinyController* control)
 
 	Control 	= control;
 
+	Opened		= false;
 	Joining		= false;
 	Server		= 0;
 	Type		= Sys.Code;
@@ -34,6 +35,8 @@ TinyClient::TinyClient(TinyController* control)
 
 void TinyClient::Open()
 {
+	if(Opened) return;
+
 	Control->Received	= OnClientReceived;
 	Control->Param		= this;
 
@@ -51,16 +54,22 @@ void TinyClient::Open()
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
+
+	Opened	= true;
 }
 
 void TinyClient::Close()
 {
+	if(!Opened) return;
+
 	Sys.RemoveTask(_TaskID);
 
 	Control->Received	= NULL;
 	Control->Param		= NULL;
 
 	Control->Close();
+
+	Opened	= false;
 }
 
 /******************************** 收发中心 ********************************/
