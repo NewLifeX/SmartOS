@@ -23,7 +23,7 @@ private:
 	static void ReceiveTask(void* param);
 	uint _tidOpen;
 	uint _tidRecv;
-	static void OnIRQ(Pin pin, bool down, void* param);
+	static void OnIRQ(InputPort* port, bool down, void* param);
 	void OnIRQ();
 
 	int _Lock;			// 收发数据锁，确保同时只有一个对象使用

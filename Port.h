@@ -82,14 +82,19 @@ public:
 
 	// 整体写入所有包含的引脚
     void Write(bool value);
-    void WriteGroup(ushort value);   // 整组写入
-	void Up(uint ms);	// 拉高一段时间后拉低
-	void Blink(uint times, uint ms);	// 闪烁多次
+	// 整组写入
+    void WriteGroup(ushort value);
+	// 拉高一段时间后拉低
+	void Up(uint ms);
+	// 闪烁多次
+	void Blink(uint times, uint ms);
 
-    ushort ReadGroup();    // 整组读取
+	// 整组读取
+    ushort ReadGroup();
 	// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
     bool Read(byte index);
-    bool Read();		// Read() ReadReal() 的区别在  前者读输出  一个读输入    在开漏输出的时候有很大区别
+	// Read/ReadInput 的区别在于，前者读输出后者，读输入，在开漏输出的时候有很大区别
+    bool Read();
 	bool ReadInput();
 
     static bool Read(Pin pin);
@@ -150,7 +155,7 @@ public:
     }Trigger;
 
     // 读取委托
-    typedef void (*IOReadHandler)(Pin pin, bool down, void* param);
+    typedef void (*IOReadHandler)(InputPort* port, bool down, void* param);
 
     ushort	ShakeTime;	// 抖动时间。毫秒
     PuPd	Pull;		// 上拉下拉电阻
@@ -159,6 +164,7 @@ public:
     bool	Invert;		// 是否倒置输入输出
 
 	bool	HardEvent;	// 是否使用硬件事件。默认false
+	ushort	PressTime;	// 长按时间
 
 	InputPort() : Port() { Init(); }
     InputPort(Pin pin, bool floating = true, PuPd pull = UP) : Port()
@@ -194,6 +200,7 @@ private:
 
 	byte _Value;
 	uint _taskInput;		// 输入任务
+	ulong	_PressStart;	// 开始按下时间
 	static void InputTask(void* param);
 };
 

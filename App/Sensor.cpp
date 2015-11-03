@@ -53,10 +53,10 @@ Sensor::~Sensor()
 	Mag = NULL;
 }
 
-void Sensor::OnPress(Pin pin, bool down, void* param)
+void Sensor::OnPress(InputPort* port, bool down, void* param)
 {
 	Sensor* btn = (Sensor*)param;
-	if(btn) btn->OnPress(pin, down);
+	if(btn) btn->OnPress(port->_Pin, down);
 }
 
 void Sensor::OnPress(Pin pin, bool down)

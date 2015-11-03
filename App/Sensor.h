@@ -41,7 +41,7 @@ public:
 private:
 	void Init();
 
-	static void OnPress(Pin pin, bool down, void* param);
+	static void OnPress(InputPort* port, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
 	EventHandler _Handler;

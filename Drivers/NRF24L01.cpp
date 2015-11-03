@@ -995,7 +995,7 @@ void NRF24L01::AddError()
 	}
 }
 
-void NRF24L01::OnIRQ(Pin pin, bool down, void* param)
+void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
 {
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;

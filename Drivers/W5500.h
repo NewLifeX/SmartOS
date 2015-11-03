@@ -82,7 +82,7 @@ public:
 
 private:
 	// 中断脚回调
-	static void OnIRQ(Pin pin, bool down, void* param);
+	static void OnIRQ(InputPort* port, bool down, void* param);
 	static void IRQTask(void* param);
 	void OnIRQ();
 

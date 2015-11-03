@@ -70,10 +70,10 @@ void Button_GrayLevel::RenewGrayLevel()
 	}
 }
 
-void Button_GrayLevel::OnPress(Pin pin, bool down, void* param)
+void Button_GrayLevel::OnPress(InputPort* port, bool down, void* param)
 {
 	Button_GrayLevel* btn = (Button_GrayLevel*)param;
-	if(btn) btn->OnPress(pin, down);
+	if(btn) btn->OnPress(port->_Pin, down);
 }
 
 void Button_GrayLevel::OnPress(Pin pin, bool down)

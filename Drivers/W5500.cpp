@@ -616,7 +616,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 }
 
 // irq 中断处理部分
-void W5500::OnIRQ(Pin pin, bool down, void* param)
+void W5500::OnIRQ(InputPort* port, bool down, void* param)
 {
 	if(!down) return;	// 低电平中断
 

@@ -44,10 +44,10 @@ void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 	}
 }
 
-void Button::OnPress(Pin pin, bool down, void* param)
+void Button::OnPress(InputPort* port, bool down, void* param)
 {
 	Button* btn = (Button*)param;
-	if(btn) btn->OnPress(pin, down);
+	if(btn) btn->OnPress(port->_Pin, down);
 }
 
 void Button::OnPress(Pin pin, bool down)

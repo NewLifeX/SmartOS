@@ -61,10 +61,10 @@ Button_magnetic::~Button_magnetic()
 }
 
 
-void Button_magnetic::OnPress(Pin pin, bool down, void* param)
+void Button_magnetic::OnPress(InputPort* port, bool down, void* param)
 {
 	Button_magnetic * btn = (Button_magnetic*)param;
-	if(btn) btn->OnPress(pin, down);
+	if(btn) btn->OnPress(port->_Pin, down);
 }
 
 void Button_magnetic::OnPress(Pin pin, bool down)
