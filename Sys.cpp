@@ -539,8 +539,7 @@ void TSys::Trace(int times)
 //#if DEBUG
 	if(_trace)
 	{
-		for(int i=0; i<times; i++)
-			*_trace = !*_trace;
+		while(times--) *_trace = !*_trace;
 	}
 //#endif
 }
