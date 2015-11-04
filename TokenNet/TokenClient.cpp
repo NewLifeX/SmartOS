@@ -248,7 +248,7 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 	{
 		TokenConfig-> Server[i]=ms.ReadByte();
     }
-	strcpy(TokenConfig->Vendor, "s3.peacemoon.cn");
+	//strcpy(TokenConfig->Vendor, "s1.peacemoon.cn");
 	
 
 	TokenConfig->Save();	
