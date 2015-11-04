@@ -244,83 +244,81 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		TinyMessage tmsg;
 		if(!TokenToTiny(msg, tmsg)) return true;
 
-		bool rs = Server->Dispatch(tmsg);
-		if(rs)
+		bool rs = Server->Dispatch(tmsg);		
+		if(rs) return false;
+				
+		TokenMessage msg2;
+
+		if(IsOldOrder)
 		{
-		  //  debug_printf("rs = Server->Dispatch(tmsg)\r\n");
+			Device* dv1 = Server->FindDevice(tmsg.Src);
 
-			TokenMessage msg2;
-
-			if(IsOldOrder)
-		    {
-				Device* dv1 = Server->FindDevice(tmsg.Src);
-
-				switch(dv1->Kind)
-				{
-					/// <summary>触摸开关(1位)</summary>
-					case 0x0201:
-					/// <summary>触摸开关(2位)</summary>
-					case 0x0202:
-					/// <summary>触摸开关(3位)</summary>
-					case 0x0203:
-					/// <summary>触摸开关(4位)</summary>
-					case 0x0204:
-					/// <summary>情景面板(1位)</summary>
-					case 0x0211:
-					/// <summary>情景面板(2位)</summary>
-					case 0x0212:
-					/// <summary>情景面板(3位)</summary>
-					case 0x0213:
-					/// <summary>情景面板(4位)</summary>
-					case 0x0214:
-					/// <summary>智能继电器(1位)</summary>
-					case 0x0221:
-					/// <summary>智能继电器(2位)</summary>
-					case 0x0222:
-					/// <summary>智能继电器(3位)</summary>
-					case 0x0223:
-					/// <summary>智能继电器(4位)</summary>
-					case 0x0224:
-					/// <summary>单火线取电开关(1位)</summary>
-					case 0x0231:
-					/// <summary>单火线取电开关(2位)</summary>
-					case 0x0232:
-					/// <summary>单火线取电开关(位)</summary>
-					case 0x0233:
-					/// <summary>单火线取电开关(4位)</summary>
-					case 0x0234:
-					/// <summary>无线遥控插座(1位)</summary>
-					case 0x0261:
-					/// <summary>无线遥控插座(2位)</summary>
-					case 0x0262:
-					/// <summary>无线遥控插座(3位)</summary>
-					case 0x0263:
-					/// <summary>智能门锁</summary>
-					case 0x0411:
-					/// <summary>机械手</summary>
-					case 0x0421:
-					/// <summary>电动窗帘</summary>
-					case 0x0431:
-					/// <summary>门窗磁</summary>
-					case  0x0531:
-					/// <summary>红外感应器</summary>
-					case 0x0541:
-					/// <summary>摄像头</summary>
-					case 0x0551:
-					/// <summary>声光报警器</summary>
-					case 0x0561:
-						OldTinyToToken10(tmsg, msg2);
-					break;
-					default:
-						OldTinyToToken(tmsg, msg2, dv1->Kind);
-					break;
-				}
-		    }
-	        else
-		       TinyToToken(tmsg, msg2);
-			// TinyToToken(tmsg, msg2);
-			return Client->Reply(msg2);
+			switch(dv1->Kind)
+			{
+				/// <summary>触摸开关(1位)</summary>
+				case 0x0201:
+				/// <summary>触摸开关(2位)</summary>
+				case 0x0202:
+				/// <summary>触摸开关(3位)</summary>
+				case 0x0203:
+				/// <summary>触摸开关(4位)</summary>
+				case 0x0204:
+				/// <summary>情景面板(1位)</summary>
+				case 0x0211:
+				/// <summary>情景面板(2位)</summary>
+				case 0x0212:
+				/// <summary>情景面板(3位)</summary>
+				case 0x0213:
+				/// <summary>情景面板(4位)</summary>
+				case 0x0214:
+				/// <summary>智能继电器(1位)</summary>
+				case 0x0221:
+				/// <summary>智能继电器(2位)</summary>
+				case 0x0222:
+				/// <summary>智能继电器(3位)</summary>
+				case 0x0223:
+				/// <summary>智能继电器(4位)</summary>
+				case 0x0224:
+				/// <summary>单火线取电开关(1位)</summary>
+				case 0x0231:
+				/// <summary>单火线取电开关(2位)</summary>
+				case 0x0232:
+				/// <summary>单火线取电开关(位)</summary>
+				case 0x0233:
+				/// <summary>单火线取电开关(4位)</summary>
+				case 0x0234:
+				/// <summary>无线遥控插座(1位)</summary>
+				case 0x0261:
+				/// <summary>无线遥控插座(2位)</summary>
+				case 0x0262:
+				/// <summary>无线遥控插座(3位)</summary>
+				case 0x0263:
+				/// <summary>智能门锁</summary>
+				case 0x0411:
+				/// <summary>机械手</summary>
+				case 0x0421:
+				/// <summary>电动窗帘</summary>
+				case 0x0431:
+				/// <summary>门窗磁</summary>
+				case  0x0531:
+				/// <summary>红外感应器</summary>
+				case 0x0541:
+				/// <summary>摄像头</summary>
+				case 0x0551:
+				/// <summary>声光报警器</summary>
+				case 0x0561:
+					OldTinyToToken10(tmsg, msg2);
+				break;
+				default:
+					OldTinyToToken(tmsg, msg2, dv1->Kind);
+				break;
+		    }	       
+			// TinyToToken(tmsg, msg2);			
 		}
+		 else
+		      TinyToToken(tmsg, msg2);
+		  
+		return Client->Reply(msg2);
 	}
 
 	return true;

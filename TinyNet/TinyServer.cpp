@@ -371,8 +371,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 
 	  while(remain<0)
 	  {
-		  debug_printf("读取数据出错Store.Length(=%d",dv.Store.Length()) ;
-		  debug_printf("读取数据出错Store.Length(=%d",offset) ;
+		  debug_printf("读取数据出错Store.Length=%d \r\n",dv.Store.Length()) ;		  
 		  offset--;
 
 		  remain = dv.Store.Length() - offset;
@@ -401,11 +400,11 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 
 // 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
 bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
-{	 debug_printf("响应读取写入数据") ;
+{
 	if(!msg.Reply || msg.Error) return false;
 	if(msg.Length < 2) return false;
 
-	 debug_printf("响应读取写入数据") ;
+	 debug_printf("响应读取写入数据 \r\n") ;
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
