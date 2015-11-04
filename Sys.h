@@ -106,6 +106,10 @@ public:
 
     void Reset();   // 重启系统
 
+	// 系统跟踪
+	void InitTrace(void* port);
+	void Trace(int times = 1);
+
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
 	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, string name = NULL);

@@ -89,23 +89,6 @@ _force_inline void InitHeapStack(uint top)
 	}
 }
 
-bool TSys::CheckMemory()
-{
-#if DEBUG
-	uint msp = __get_MSP();
-
-	//if(__microlib_freelist >= msp) return false;
-	assert_param2(__microlib_freelist + 0x40 < msp, "堆栈相互穿透，内存已用完！可能是堆分配或野指针带来了内存泄漏！");
-
-	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	//uint end = SRAM_BASE + (RAMSize << 10);
-	//if(__microlib_freelist + 0x40 >= end) return false;
-	assert_param2(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10), "堆栈相互穿透，内存已用完！一定是堆分配带来了内存泄漏！");
-#endif
-
-	return true;
-}
-
 // 获取JTAG编号，ST是0x041，GD是0x7A3
 uint16_t Get_JTAG_ID()
 {
@@ -248,6 +231,29 @@ uint TSys::StackTop()
 {
 	return SRAM_BASE + (RAMSize << 10) - 0x40;
 }
+
+#ifdef DEBUG
+	#pragma arm section code = "SectionForSys"
+#endif
+
+bool TSys::CheckMemory()
+{
+#if DEBUG
+	uint msp = __get_MSP();
+
+	//if(__microlib_freelist >= msp) return false;
+	assert_param2(__microlib_freelist + 0x40 < msp, "堆栈相互穿透，内存已用完！可能是堆分配或野指针带来了内存泄漏！");
+
+	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
+	//uint end = SRAM_BASE + (RAMSize << 10);
+	//if(__microlib_freelist + 0x40 >= end) return false;
+	assert_param2(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10), "堆栈相互穿透，内存已用完！一定是堆分配带来了内存泄漏！");
+#endif
+
+	return true;
+}
+
+#pragma arm section code
 
 #if DEBUG
 typedef struct
@@ -510,3 +516,31 @@ void TSys::Delay(uint us)
 	}
 }
 #endif
+
+#ifndef TINY
+	#pragma arm section code
+#endif
+
+/****************系统跟踪****************/
+
+//#if DEBUG
+	#include "Port.h"
+	static OutputPort* _trace = NULL;
+//#endif
+void TSys::InitTrace(void* port)
+{
+//#if DEBUG
+	_trace	= (OutputPort*)port;
+//#endif
+}
+
+void TSys::Trace(int times)
+{
+//#if DEBUG
+	if(_trace)
+	{
+		for(int i=0; i<times; i++)
+			*_trace = !*_trace;
+	}
+//#endif
+}

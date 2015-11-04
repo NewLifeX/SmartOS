@@ -27,9 +27,11 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
     // 初始化系统
     //Sys.Clock = 48000000;
-    Sys.MessagePort = message; // 指定printf输出的串口
     Sys.Init();
+#if DEBUG
+    Sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
+#endif
 
 #if DEBUG
 	// 打开串口输入便于调试数据操作，但是会影响性能
