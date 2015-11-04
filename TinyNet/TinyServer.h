@@ -14,6 +14,7 @@
 class TinyServer
 {
 private:
+	byte DataStoreLent;
 
 public:
 	TinyController* Control;

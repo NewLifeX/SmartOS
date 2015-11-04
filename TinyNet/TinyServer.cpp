@@ -21,6 +21,7 @@ TinyServer::TinyServer(TinyController* control)
 	Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
+	DataStoreLent		=64;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -437,7 +438,11 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-
+	
+	if(offset>DataStoreLent)
+	{
+		return true;
+	}
 	// 计算还有多少数据可写
 	uint len = ms.Remain();
 	int remain = dv.Store.Capacity() - offset;
