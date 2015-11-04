@@ -250,7 +250,6 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
     }
 	//strcpy(TokenConfig->Vendor, "s1.peacemoon.cn");
 	
-
 	TokenConfig->Save();	
     TokenConfig->Show();    
 	

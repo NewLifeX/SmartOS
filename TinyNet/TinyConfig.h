@@ -24,11 +24,12 @@ struct TinyConfig
 
 	ushort		Kind;		// 类型
 	byte		Address;	// 分配得到的设备地址
-	byte		Password[16];	// 通信密码
+	byte		Password[16]; // 通信密码
 	byte		Server;		// 网关ID
 	byte		Channel;	// 通道
 	ushort		Speed;		// 传输速度
 	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
+	char		Name[8];		// 设备名称
 
 	// 初始化，各字段为0
 	//TinyConfig();
