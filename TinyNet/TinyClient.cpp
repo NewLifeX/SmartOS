@@ -7,6 +7,7 @@ TinyClient* TinyClient::Current	= NULL;
 static bool OnClientReceived(Message& msg, void* param);
 
 static void TinyClientTask(void* param);
+static void TinyClientReset();
 
 /******************************** 初始化和开关 ********************************/
 
@@ -250,6 +251,10 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
 
 	Cfg->Save();
 	
+	 TinyClientReset();
+	//Sys.Reset();
+	
+	//修改配置区，重启系统	
 	//debug_printf("修改后的设备ID 0x%08X ,偏移量 %d\r\n", Cfg->Address,offset);
 	//cfg.Show();
 	
@@ -324,6 +329,13 @@ void TinyClientTask(void* param)
 	}
 	if(client->Server == 0 || client->Joining) client->Join();
 	if(client->Server != 0) client->Ping();
+}
+void TinyClientReset()
+{
+	//上报一条信息，让网关得一修改
+	Join();
+	
+	Sys.Reset();
 }
 
 // 发送发现消息，告诉大家我在这
