@@ -333,7 +333,7 @@ void TinyClientTask(void* param)
 void TinyClientReset()
 {
 	//上报一条信息，让网关得一修改
-	Join();
+	//Join();
 	
 	Sys.Reset();
 }
