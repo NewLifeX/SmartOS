@@ -492,7 +492,7 @@ namespace NewLife.Reflection
             if (rs != 0) return rs;
 
 			// 预处理axf。修改编译信息
-			if (Helper.WriteBuildInfo(axf)) Helper.MakeBin(axf);
+			Helper.WriteBuildInfo(axf);
 			
             var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
