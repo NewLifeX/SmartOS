@@ -208,7 +208,8 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-
+	
+	if(WriteCfg(offset,ms)) return;			
 	// 准备响应数据
 	TinyMessage rs;
 	rs.Code		= msg.Code;
@@ -238,6 +239,20 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	Reply(rs);
 }
 
+bool TinyClient::WriteCfg(uint offset,	Stream ms)
+{
+	if(offset<64) return false;
+	
+	ByteArray cfg(&Cfg, Cfg->Length);
+	
+	uint len = ms.Remain();
+	ByteArray bs(ms.Current(), len);	
+	bs.CopyTo(&cfg[offset-64],len);
+
+	Cfg->Save();
+	
+	return true;
+}
 void TinyClient::Report(Message& msg)
 {
 	// 没有服务端时不要上报

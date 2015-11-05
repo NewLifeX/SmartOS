@@ -57,6 +57,7 @@ private:
 	void OnWrite(const TinyMessage& msg);
 	void OnRead(const TinyMessage& msg);
 
+
 // 常用系统级消息
 public:
 	// 组网
@@ -65,6 +66,7 @@ public:
 	bool OnJoin(const TinyMessage& msg);
 	void DisJoin();
 	bool OnDisjoin(const TinyMessage& msg);
+	bool WriteCfg(uint offset,	Stream ms);
 
 	// 心跳
 	void Ping();
