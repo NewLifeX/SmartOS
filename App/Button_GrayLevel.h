@@ -21,20 +21,6 @@ struct ButtonPin
 // 干脆把_Value挪到最后解决问题
 class Button_GrayLevel : public ByteDataPort
 {
-private:
-	static void OnPress(InputPort* port, bool down, void* param);
-	void OnPress(Pin pin, bool down);
-
-	EventHandler _Handler;
-	void* _Param;
-	// 指示灯灰度驱动器 PWM;
-	PWM* 	_GrayLevelDrive;
-
-	byte	_PulseIndex;
-private:
-	bool _Value; // 状态
-	ushort Reserved;	// 补足对齐问题
-
 public:
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
 #if DEBUG
@@ -43,8 +29,9 @@ public:
 
 	InputPort	Key;	// 输入按键
 	OutputPort	Relay;	// 继电器
-	static byte OnGrayLevel;			// 开灯时 led 灰度
-	static byte OffGrayLevel;			// 关灯时 led 灰度
+
+	// 长按事件。
+	InputPort::IOReadHandler	OnPress;
 
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
@@ -61,9 +48,28 @@ public:
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
+private:
+	// 指示灯灰度驱动器 PWM;
+	PWM* 	_Pwm;
+	byte	_Channel;
+
+	bool _Value; // 状态
+	ushort Reserved;	// 补足对齐问题
+
+	EventHandler _Handler;
+	void* _Param;
+
+	static void OnKeyPress(InputPort* port, bool down, void* param);
+	void OnKeyPress(InputPort* port, bool down);
+
+public:
+	static byte OnGrayLevel;			// 开灯时 led 灰度
+	static byte OffGrayLevel;			// 关灯时 led 灰度
+
 	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
+
 // 过零检测
 private:
 	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us

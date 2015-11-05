@@ -10,7 +10,7 @@
 #endif
 
 InputPort* Button_GrayLevel::ACZero = NULL;
-byte Button_GrayLevel::OnGrayLevel	= 0xff;			// 开灯时 led 灰度
+byte Button_GrayLevel::OnGrayLevel	= 0xFF;			// 开灯时 led 灰度
 byte Button_GrayLevel::OffGrayLevel	= 0x00;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime=2300;
 
@@ -22,40 +22,45 @@ Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 	Index	= 0;
 	_Value	= false;
 
-	_GrayLevelDrive = NULL;
-	_PulseIndex = 0xff;
+	_Pwm		= NULL;
+	_Channel	= 0;
 
 	_Handler	= NULL;
 	_Param		= NULL;
 
 	_tid	= 0;
 	Next	= 0xFF;
+
+	OnPress	= NULL;
 }
 
 void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 {
 	assert_param(key != P0);
 
-	// 中断过滤模式
-	Key.Mode		= InputPort::Rising;
-	Key.ShakeTime	= 10;
 	Key.Set(key);
-	Key.Register(OnPress, this);
+
+	// 中断过滤模式
+	if(!OnPress)
+		Key.Mode	= InputPort::Rising;
+
+	// 自动识别倒置
+	if(Key.Read())
+		Key.Invert	= true;
+
+	Key.ShakeTime	= 10;
+	Key.Register(OnKeyPress, this);
 	Key.Open();
 
-	if(relay != P0)
-	{
-		Relay.Invert = relayInvert;
-		Relay.Set(relay).Open();
-	}
+	if(relay != P0) Relay.Init(relay, relayInvert).Open();
 }
 
 void Button_GrayLevel::Set(PWM* drive, byte pulseIndex)
 {
 	if(drive && pulseIndex < 4)
 	{
-		_GrayLevelDrive = drive;
-		_PulseIndex = pulseIndex;
+		_Pwm		= drive;
+		_Channel	= pulseIndex;
 		// 刷新输出
 		RenewGrayLevel();
 	}
@@ -63,26 +68,30 @@ void Button_GrayLevel::Set(PWM* drive, byte pulseIndex)
 
 void Button_GrayLevel::RenewGrayLevel()
 {
-	if(_GrayLevelDrive)
+	if(_Pwm)
 	{
-		_GrayLevelDrive->Pulse[_PulseIndex] = _Value? (0xff-OnGrayLevel) : (0xff-OffGrayLevel);
-		_GrayLevelDrive->Config();
+		_Pwm->Pulse[_Channel] = _Value? (0xFF - OnGrayLevel) : (0xFF - OffGrayLevel);
+		_Pwm->Config();
 	}
 }
 
-void Button_GrayLevel::OnPress(InputPort* port, bool down, void* param)
+void Button_GrayLevel::OnKeyPress(InputPort* port, bool down, void* param)
 {
 	Button_GrayLevel* btn = (Button_GrayLevel*)param;
-	if(btn) btn->OnPress(port->_Pin, down);
+	if(btn) btn->OnKeyPress(port, down);
 }
 
-void Button_GrayLevel::OnPress(Pin pin, bool down)
+void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 {
 	// 每次按下弹起，都取反状态
 	if(down)
 	{
 		SetValue(!_Value);
 		if(_Handler) _Handler(this, _Param);
+	}
+	else
+	{
+		if(OnPress) OnPress(port, down, this);
 	}
 }
 
@@ -170,7 +179,7 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	static PWM LedPWM(tim);
 	// 设置分频 尽量不要改 Prescaler * Period 就是 PWM 周期
 	LedPWM.Prescaler	= 0x04;		// 随便改  只要肉眼看不到都没问题
-	LedPWM.Period		= 0xff;		// 对应灰度调节范围
+	LedPWM.Period		= 0xFF;		// 对应灰度调节范围
 	LedPWM.Start();
 
 	// 配置 LED 引脚

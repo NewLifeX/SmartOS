@@ -133,6 +133,28 @@ void ClearConfig()
 	Sys.Reset();
 }
 
+void CheckUserPress(InputPort* port, bool down, void* param)
+{
+	if(down) return;
+
+	debug_printf("长按 %d 毫秒 \r\n", port->PressTime);
+
+	// 按下5秒，清空设置并重启
+	if(port->PressTime >= 5000)
+		ClearConfig();
+	// 按下3秒，重启
+	else if(port->PressTime >= 3000)
+		Sys.Reset();
+}
+
+void InitButtonPress(Button_GrayLevel* btns, byte count)
+{
+	for(int i=0; i<count; i++)
+	{
+		btns[i].OnPress	= CheckUserPress;
+	}
+}
+
 /*void NoUsed()
 {
 	Setup(1234, "");

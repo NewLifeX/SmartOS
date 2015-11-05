@@ -6,6 +6,8 @@
 
 #include "TinyNet\TinyClient.h"
 
+#include "App\Button_GrayLevel.h"
+
 void Setup(ushort code, const char* name, COM_Def message = COM1, int baudRate = 1024000);
 
 void* InitConfig(void* data, uint size);
@@ -15,6 +17,9 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power = P0, bool 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg);
 
 TinyClient* CreateTinyClient(ITransport* port);
+
+void CheckUserPress(InputPort* port, bool down, void* param = NULL);
+void InitButtonPress(Button_GrayLevel* btns, byte count);
 
 //void NoUsed();
 

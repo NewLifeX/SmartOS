@@ -514,7 +514,7 @@ void InputPort::OnPress(bool down)
 		_PressStart	= Sys.Ms();
 	else
 		if (_PressStart > 0) PressTime	= Sys.Ms() - _PressStart;
-	debug_printf("OnPress P%c%d down=%d Invert=%d 时间=%d\r\n", _PIN_NAME(_Pin), down, Invert, PressTime);
+	//debug_printf("OnPress P%c%d down=%d Invert=%d 时间=%d\r\n", _PIN_NAME(_Pin), down, Invert, PressTime);
 
 	if(down)
 	{
