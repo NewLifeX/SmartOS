@@ -46,7 +46,10 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 
 	// 自动识别倒置
 	if(Key.Read())
+	{
+		debug_printf("自动识别倒置  P%c%d \r\n", _PIN_NAME(key));
 		Key.Invert	= true;
+	}
 
 	Key.ShakeTime	= 10;
 	Key.Register(OnKeyPress, this);

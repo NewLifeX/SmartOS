@@ -70,7 +70,10 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 {
 	static SerialPort sp(index, baudRate);
 	static ShunCom zb;
-	zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
+	//zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
+	zb.Power.Set(power);
+	if(zb.Power) zb.Power.Invert = true;
+
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
 	zb.Init(&sp, rst);
@@ -137,7 +140,7 @@ void CheckUserPress(InputPort* port, bool down, void* param)
 {
 	if(down) return;
 
-	debug_printf("长按 %d 毫秒 \r\n", port->PressTime);
+	debug_printf("按下 P%c%d 时间=%d 毫秒 \r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	// 按下5秒，清空设置并重启
 	if(port->PressTime >= 5000)
