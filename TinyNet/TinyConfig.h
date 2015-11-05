@@ -35,6 +35,8 @@ struct TinyConfig
 	// 初始化，各字段为0
 	//TinyConfig();
 	//const TinyConfig& Default();
+	byte	StartSet;
+	
 	void LoadDefault();
 
 	void Load();

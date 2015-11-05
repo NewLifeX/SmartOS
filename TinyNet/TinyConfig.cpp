@@ -15,6 +15,7 @@ void TinyConfig::LoadDefault()
 
 	PingTime	= 10;
 	OfflineTime	= 60;
+	StartSet	=64;
 }
 
 void TinyConfig::Load()

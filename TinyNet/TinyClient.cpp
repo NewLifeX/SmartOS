@@ -241,7 +241,7 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 bool TinyClient::WriteCfg(uint offset,	Stream ms)
 {
-	if(offset < 64) return false;
+	if(offset < Cfg->StartSet) return false;
 	
 	ByteArray cfg(Cfg, Cfg->Length);
 	
