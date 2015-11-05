@@ -511,6 +511,12 @@ bool InputPort::Read(Pin pin)
 void InputPort::OnPress(bool down)
 {
 	if(down)
+		_PressStart	= Sys.Ms();
+	else
+		if (_PressStart > 0) PressTime	= Sys.Ms() - _PressStart;
+	debug_printf("OnPress P%c%d down=%d Invert=%d 时间=%d\r\n", _PIN_NAME(_Pin), down, Invert, PressTime);
+
+	if(down)
 	{
 		if((Mode & Rising) == 0) return;
 	}
@@ -518,7 +524,6 @@ void InputPort::OnPress(bool down)
 	{
 		if((Mode & Falling) == 0) return;
 	}
-
 
 	if(HardEvent)
 	{
@@ -536,13 +541,14 @@ void InputPort::InputTask(void* param)
 {
 	InputPort* port = (InputPort*)param;
 	byte v = port->_Value;
-	if(!v) return;
+	//if(!v) return;
 
-	if(v & Falling)
+	/*if(v & Falling)
 	{
 		if (port->_PressStart > 0) port->PressTime	= Sys.Ms() - port->_PressStart;
 	}
-	port->_PressStart	= Sys.Ms();
+	port->_PressStart	= Sys.Ms();*/
+	if(!v) return;
 
 	if(port->Handler)
 	{
@@ -576,7 +582,9 @@ void GPIO_ISR (int num)  // 0 <= num <= 15
 	// 值必须有变动才触发
 	//if(shakeTime > 0 && value == st->OldValue) return;
 	st->OldValue = value;
-	st->Port->OnPress(value ^ st->Port->Invert);
+	//st->Port->OnPress(value ^ st->Port->Invert);
+	// Read的时候已经计算倒置，这里不必重复计算
+	st->Port->OnPress(value);
 }
 
 void EXTI_IRQHandler(ushort num, void* param)
@@ -666,7 +674,7 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #if DEBUG
 	if(Debug)
 	{
-		debug_printf(" 抖动=%dus", ShakeTime);
+		debug_printf(" 抖动=%dms", ShakeTime);
 		if(Floating)
 			debug_printf(" 浮空");
 		else if(Pull == UP)
@@ -675,7 +683,11 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 			debug_printf(" 下拉");
 		if(Mode & Rising) debug_printf(" 上升沿");
 		if(Mode & Falling) debug_printf(" 下降沿");
-		if(Invert) debug_printf(" 倒置");
+
+		if(Invert)
+			debug_printf(" 倒置");
+		else if(Read())
+			debug_printf(" 倒置错误（可能需要Invert=true） ");
 	}
 #endif
 
