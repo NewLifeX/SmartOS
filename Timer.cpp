@@ -116,10 +116,10 @@ void Timer::Start()
 #if defined(STM32F1) || defined(STM32F4)
 	if((uint)_Timer & 0x00010000) clk = RCC_GetPCLK2();
 #endif
-	clk <<= 1;
+	if(clk < Sys.Clock) clk <<= 1;
 
 	uint fre = clk / Prescaler / Period;
-	debug_printf("Timer%d::Start Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, Prescaler, Period, fre);
+	debug_printf("Timer%d::Start clk=%d Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
 #endif
 
 	assert_param2(fre > 0, "频率超出允许的范围");
@@ -200,50 +200,47 @@ void Timer::ClockCmd(bool state)
 void Timer::SetFrequency(uint frequency)
 {
     // 获取当前频率
+#ifdef STM32F0
+	uint clk	= Sys.Clock;
+#else
 	uint clk = RCC_GetPCLK();
-#if defined(STM32F1) || defined(STM32F4)
-	if((uint)_Timer & 0x00010000) clk = RCC_GetPCLK2();
-#endif
+	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
 	clk <<= 1;
+#endif
+
+	// 120M时，分频系数必须是120K才能得到1k的时钟，超过了最大值64k
+	// 因此，需要增加系数
+	uint prd	= clk / frequency;
+	uint psc	= 1;
+	uint Div	= 0;
+	while(prd > 0xFFFF)
+	{
+		prd	>>= 1;
+		psc	<<= 1;
+		Div++;
+	}
 
 	assert_param2(frequency > 0 && frequency <= clk, "频率超出允许的范围");
 
-	uint s = 1;
-	uint p = s / frequency;
-
-    uint pre = clk / s; // prescaler
-
-	//while (pre >= 0x10000 || p == 0) { // prescaler 太大
-	// 周期刚好为1也不行，配置的时候需要先减去1，就变成了0
-	while (pre >= 0x10000 || p <= 1) { // prescaler 太大
-		if (p >= 0x80000000) return;
-		s *= 10;
-		pre /= 10;
-		p = s / frequency;
-	}
-
-    if (_index+1 != 2 && _index+1 != 5) { // 16 bit timer
-        while (p >= 0x10000) { // period too large
-            if (pre > 0x8000) return;
-            pre <<= 1;
-            p >>= 1;
-        }
-    }
-
-	Prescaler = pre;
-	Period = p;
+	Prescaler	= psc;
+	Period		= prd;
 
 	// 如果已启动定时器，则重新配置一下，让新设置生效
 	if(_started)
 	{
 		TIM_TimeBaseInitTypeDef tr;
 		TIM_TimeBaseStructInit(&tr);
-		tr.TIM_Period = Period - 1;
-		tr.TIM_Prescaler = Prescaler - 1;
+		tr.TIM_Period		= Period - 1;
+		tr.TIM_Prescaler	= Prescaler - 1;
 		//tr.TIM_ClockDivision = 0x0;
 		tr.TIM_CounterMode = TIM_CounterMode_Up;
 		TIM_TimeBaseInit(_Timer, &tr);
 	}
+}
+
+uint Timer::GetCounter()
+{
+	return TIM_GetCounter(_Timer);
 }
 
 void Timer::SetCounter(uint cnt)
@@ -334,7 +331,7 @@ void PWM::Config()
 	TIM_OCStructInit(&oc);
 	oc.TIM_OCMode		= TIM_OCMode_PWM1;
 	oc.TIM_OutputState	= TIM_OutputState_Enable;
-	oc.TIM_OCPolarity	= TIM_OCPolarity_High;
+	oc.TIM_OCPolarity	= TIM_OCPolarity_Low;
 	oc.TIM_OCIdleState	= TIM_OCIdleState_Set;
 
 	for(int i=0; i<4; i++)
@@ -395,6 +392,18 @@ void PWM::Stop()
 #endif
 
 	Timer::Stop();
+}
+
+void PWM::SetPulse(int idx, ushort pulse)
+{
+	if(Pulse[idx] == pulse) return;
+
+	Pulse[idx] = pulse;
+
+	if(_started)
+		Config();
+	else
+		Start();
 }
 
 void PWM::OnInterrupt()

@@ -28,6 +28,7 @@ public:
 	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
+	uint GetCounter();
 	void SetCounter(uint cnt);		// 设置计数器值
 	
 	void Register(EventHandler handler, void* param = NULL);
@@ -60,6 +61,7 @@ public:
 	virtual void Start();
 	virtual void Stop();
 	virtual void Config();
+	void SetPulse(int idx, ushort pulse);
 
 // 连续调整占空比
 public:
