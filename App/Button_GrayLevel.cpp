@@ -200,18 +200,12 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	// 设置默认灰度
 	if(level[0] == 0x00)
 	{
-		// 使用默认灰度
-		Button_GrayLevel::OnGrayLevel	= 250;
-		Button_GrayLevel::OffGrayLevel	= 20;
-		level[0]	=	Button_GrayLevel::OnGrayLevel	;
-		level[1]	=	Button_GrayLevel::OffGrayLevel	;
+		level[0] = 250;
+		level[1] = 20;
 	}
-	else
-	{
-		// 使用 Data 记录的灰度
-		Button_GrayLevel::OnGrayLevel 	= level[0];
-		Button_GrayLevel::OffGrayLevel 	= level[1];
-	}
+	// 使用 Data 记录的灰度
+	OnGrayLevel 	= level[0];
+	OffGrayLevel 	= level[1];
 
 	// 配置 Button 主体
 	for(int i = 0; i < count; i++)
@@ -235,7 +229,7 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 		btns[i].Set(&LedPWM, pins[i].PwmIndex);
 
 		// 如果是热启动，恢复开关状态数据
-		if(state[i]) btns[i].SetValue(true);
+		if(state && state[i]) btns[i].SetValue(true);
 	}
 }
 
