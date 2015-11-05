@@ -73,7 +73,6 @@ void TinyClient::Close()
 }
 
 /******************************** 收发中心 ********************************/
-
 bool TinyClient::Send(TinyMessage& msg)
 {
 	assert_param2(this, "令牌客户端未初始化");
@@ -241,17 +240,18 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 bool TinyClient::WriteCfg(uint offset,	Stream ms)
 {
-	if(offset<64) return false;
+	if(offset < 64) return false;
 	
-	ByteArray cfg(&Cfg, Cfg->Length);
+	ByteArray cfg(Cfg, Cfg->Length);
 	
 	uint len = ms.Remain();
 	ByteArray bs(ms.Current(), len);	
-	bs.CopyTo(&cfg[offset-64],len);
+	bs.CopyTo(&cfg[offset - 64],len);
 
 	Cfg->Save();
 	
-	debug_printf("修改后的设备ID 0x%08X ", Cfg->Address);
+	//debug_printf("修改后的设备ID 0x%08X ,偏移量 %d\r\n", Cfg->Address,offset);
+	//cfg.Show();
 	
 	return true;
 }
