@@ -251,6 +251,8 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
 
 	Cfg->Save();
 	
+	debug_printf("修改后的设备ID 0x%08X ", Cfg->Address);
+	
 	return true;
 }
 void TinyClient::Report(Message& msg)
