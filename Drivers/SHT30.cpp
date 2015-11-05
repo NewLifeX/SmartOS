@@ -120,8 +120,16 @@ void SHT30::Init()
 
 	Write(CMD_SOFT_RESET);		// 软重启
 	//Sys.Sleep(15);
-	uint sn = ReadSerialNumber();
-	ushort st = ReadStatus();
+
+#if DEBUG
+	uint sn		= ReadSerialNumber();
+	ushort st	= ReadStatus();
+
+	//regStatus pst;
+	//pst.u16 = st;
+	debug_printf("SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
+#endif
+
 	Write(CMD_CLEAR_STATUS);	// 清除所有状态
 
 	/*
@@ -133,10 +141,6 @@ void SHT30::Init()
 	//Read4(CMD_MEAS_CLOCKSTR_H);
 	//Read4(CMD_MEAS_POLLING_H);
 	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
-
-	//regStatus pst;
-	//pst.u16 = st;
-	debug_printf("SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
 }
 
 uint SHT30::ReadSerialNumber()
