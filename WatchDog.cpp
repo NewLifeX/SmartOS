@@ -59,13 +59,8 @@ WatchDog::~WatchDog()
 	ConfigMax();
 }
 
-bool WatchDog::Config(uint ms)
+void OpenWatchDog()
 {
-	if(ms == 0)
-	{
-		debug_printf("WatchDog msTimeout %dms must larger than 0ms\r\n", ms);
-		return false;
-	}
 	RCC_LSICmd(ENABLE);
 	/* 检查系统是否从IWDG重置恢复 */
 	if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST) != RESET)
@@ -75,6 +70,49 @@ bool WatchDog::Config(uint ms)
 	}
 	/* 打开IWDG_PR和IWDG_RLR寄存器的写访问 */
 	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+}
+
+void SetWatchDog(byte pre, uint reload)
+{
+	IWDG_SetPrescaler(pre);
+	/*if(ms < (0x0FFF * 32 / 40))
+	{
+		// IWDG计数器时钟: LSI/32=40KHz/32=1250Hz，每周期0.8ms
+		IWDG_SetPrescaler(IWDG_Prescaler_32);
+	}
+	else
+	{
+		// IWDG计数器时钟: LSI/64=40KHz/64=625Hz，每周期0.4ms
+		IWDG_SetPrescaler(IWDG_Prescaler_64);
+
+		// 直接除以2，后面不用重复计算
+		ms >>= 2;
+	}*/
+
+	/* 设置计数器重载值为超时时间
+	 Counter Reload Value = ms / 1000 / IWDG计数器时钟周期
+						  = ms / 1000 / (1/(LSI/mul))
+						  = ms * LSI / (mul * 1000)
+						  = ms * 40k / (mul * 1000)
+						  = ms * 40 / mul
+	*/
+	IWDG_SetReload(reload);
+
+	/* 重载 IWDG 计数器 */
+	IWDG_ReloadCounter();
+
+	/* 打开 IWDG (LSI将由硬件打开) */
+	IWDG_Enable();
+}
+
+bool WatchDog::Config(uint ms)
+{
+	if(ms == 0)
+	{
+		debug_printf("WatchDog msTimeout %dms must larger than 0ms\r\n", ms);
+		return false;
+	}
+	OpenWatchDog();
 
 	byte pre = IWDG_Prescaler_4;
 	int mul = 4;
@@ -103,20 +141,6 @@ bool WatchDog::Config(uint ms)
 		debug_printf("WatchDog msTimeout must smaller than %dms\r\n", 0x0FFF * 256 / 40);
 		return false;
 	}
-	IWDG_SetPrescaler(pre);
-	/*if(ms < (0x0FFF * 32 / 40))
-	{
-		// IWDG计数器时钟: LSI/32=40KHz/32=1250Hz，每周期0.8ms
-		IWDG_SetPrescaler(IWDG_Prescaler_32);
-	}
-	else
-	{
-		// IWDG计数器时钟: LSI/64=40KHz/64=625Hz，每周期0.4ms
-		IWDG_SetPrescaler(IWDG_Prescaler_64);
-
-		// 直接除以2，后面不用重复计算
-		ms >>= 2;
-	}*/
 
 	/* 设置计数器重载值为超时时间
 	 Counter Reload Value = ms / 1000 / IWDG计数器时钟周期
@@ -125,13 +149,7 @@ bool WatchDog::Config(uint ms)
 						  = ms * 40k / (mul * 1000)
 						  = ms * 40 / mul
 	*/
-	IWDG_SetReload(ms * 40 / mul);
-
-	/* 重载 IWDG 计数器 */
-	IWDG_ReloadCounter();
-
-	/* 打开 IWDG (LSI将由硬件打开) */
-	IWDG_Enable();
+	SetWatchDog(pre, ms * 40 / mul);
 
 	Timeout = ms;
 
@@ -140,13 +158,11 @@ bool WatchDog::Config(uint ms)
 
 void WatchDog::ConfigMax()
 {
-	/* 打开IWDG_PR和IWDG_RLR寄存器的写访问 */
-	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+	OpenWatchDog();
 
-	// 独立看门狗无法关闭
-	IWDG_SetPrescaler(IWDG_Prescaler_256);
-	IWDG_SetReload(0x0FFF);
-	IWDG_ReloadCounter();
+	SetWatchDog(IWDG_Prescaler_256, 0x0FFF);
+
+	Timeout = 0x0FFF * 256 / 40;
 }
 
 void WatchDog::Feed()
@@ -163,11 +179,16 @@ void FeedDogTask(void* param)
 void WatchDog::Start(uint ms, uint msFeed)
 {
     static WatchDog dog;
-	dog.Config(ms);
+	static uint		tid = 0;
 
-	// 减小一点，避免来不及喂狗
-	//int us = msFeed * 1000;
+	if(ms > 0x0FFF)
+		dog.ConfigMax();
+	else
+		dog.Config(ms);
 
-	debug_printf("WatchDog::Start ");
-	Sys.AddTask(FeedDogTask, &dog, msFeed, msFeed, "看门狗");
+	if(!tid && msFeed > 0 && msFeed <= 26000)
+	{
+		debug_printf("WatchDog::Start ");
+		tid = Sys.AddTask(FeedDogTask, &dog, msFeed, msFeed, "看门狗");
+	}
 }

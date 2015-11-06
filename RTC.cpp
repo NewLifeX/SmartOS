@@ -284,27 +284,32 @@ int HardRTC::Sleep(int ms)
 	RTC_AlarmStructInit(&alr);
 
 	int second = ms / 1000;
+	int minute = second / 60;
 
-	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );     /* Disable the Alarm A */
-	alr.RTC_AlarmTime.RTC_H12 = RTC_H12_AM;
-	alr.RTC_AlarmTime.RTC_Hours = second / 60 / 60;
-	alr.RTC_AlarmTime.RTC_Minutes = (second / 60) % 60;
-	alr.RTC_AlarmTime.RTC_Seconds = second % 60;
+	// 关闭警报
+	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );
+	alr.RTC_AlarmTime.RTC_H12		= RTC_H12_AM;
+	alr.RTC_AlarmTime.RTC_Hours		= minute / 60;
+	alr.RTC_AlarmTime.RTC_Minutes	= minute % 60;
+	alr.RTC_AlarmTime.RTC_Seconds	= second % 60;
 
-	/* Set the Alarm A */
-	alr.RTC_AlarmDateWeekDay = 0x31;
-	alr.RTC_AlarmDateWeekDaySel = RTC_AlarmDateWeekDaySel_Date;
+	// 设置警报
+	alr.RTC_AlarmDateWeekDay	= 31;
+	alr.RTC_AlarmDateWeekDaySel	= RTC_AlarmDateWeekDaySel_Date;
 	alr.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay;
 
-	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr ); /* Configure the RTC Alarm A register */
+	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr );
 
-	RTC_ITConfig( RTC_IT_ALRA, ENABLE );    /* Enable the RTC Alarm A Interrupt */
+	// 打开警报中断
+	RTC_ITConfig( RTC_IT_ALRA, ENABLE );
 
-	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );    /* Enable the alarm  A */
+	// 打开警报
+	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );
 #endif
-    /* Wait until last write operation on RTC registers has finished */
+	// 等待写入操作完成
     RTC_WaitForLastTask2();
 
+	Sys.Trace(1);
 	// 进入低功耗模式
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 
@@ -370,6 +375,7 @@ void AlarmHandler(ushort num, void* param)
 {
     SmartIRQ irq;
 
+	Sys.Trace(4);
 	HardRTC* rtc = (HardRTC*)param;
 
 	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
@@ -384,7 +390,7 @@ void AlarmHandler(ushort num, void* param)
 	SYSCLKConfig_STOP();
 	rtc->LoadTicks();
 
-	//debug_printf("离开低功耗模式\r\n");
+	debug_printf("离开低功耗模式\r\n");
 }
 
 HardRTC* HardRTC::Instance()

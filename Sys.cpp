@@ -432,6 +432,33 @@ bool TSys::SetTaskPeriod(uint taskid, int period)
 
 void TSys::Reset() { NVIC_SystemReset(); }
 
+#include "WatchDog.h"
+
+void TSys::Stop(uint msTime)
+{
+	debug_printf("TSys::Stop Time=%d \r\n", msTime);
+
+	if(!msTime) msTime = 0xFFFF;
+	WatchDog::Start(msTime);
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+}
+
+void TSys::DeepSleep(uint msTime)
+{
+	debug_printf("TSys::DeepSleep Time=%d \r\n", msTime);
+
+	PWR_EnterSleepMode(PWR_SLEEPEntry_WFI);
+}
+
+void TSys::Standby(uint msTime)
+{
+	debug_printf("TSys::Standby Time=%d \r\n", msTime);
+
+	if(!msTime) msTime = 0xFFFF;
+	WatchDog::Start(msTime);
+	PWR_EnterSTANDBYMode();
+}
+
 void TSys::Start()
 {
 	Started = true;
