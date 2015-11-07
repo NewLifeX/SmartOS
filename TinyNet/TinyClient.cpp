@@ -438,6 +438,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	Joining		= false;
 
+	Cfg->SoftVer	= dm.Version;
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
@@ -454,7 +455,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	dm.HardID.Save(Cfg->ServerKey, ArrayLength(Cfg->ServerKey));
 
 	//debug_printf("组网成功！\r\n");
-	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：", Server, dm.Address, dm.Channel, Cfg->Speed);
+	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：,版本:0x%02X", Server, dm.Address, dm.Channel, Cfg->Speed, dm.Version);
 
 	// 取消Join任务，启动Ping任务
 	ushort time		= Cfg->PingTime;
@@ -522,8 +523,10 @@ void TinyClient::Ping()
 	msg.Code = 3;
 
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
-	ReportPing(msg);
-
+	if(Cfg->SoftVer!=0)
+	  ReportPing(msg);
+    else
+	   Report(msg);	  
 	Send(msg);
 
 	if(LastActive == 0) LastActive = Sys.Ms();
