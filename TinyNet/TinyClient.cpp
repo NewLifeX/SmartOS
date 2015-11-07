@@ -195,7 +195,33 @@ void TinyClient::OnRead(const TinyMessage& msg)
 }
 bool TinyClient::ReadCfg(uint offset,	Stream ms)
 {
-	return false;
+	if(offset < Cfg->StartSet) return false;
+	
+	//响应一条数据
+	TinyMessage rs;
+	rs.Code		= 0x15;
+	Stream ms2	= rs.ToStream();
+	
+	ByteArray cfg(Cfg, Cfg->Length);	
+	uint adrr=offset-Cfg->StartSet;
+	uint len = ms.Remain();
+	
+    if((adrr+len)>Cfg->Length)
+	{
+		rs.Error = true;
+		ms2.Write((byte)2);
+		ms2.WriteEncodeInt(offset);
+		ms2.WriteEncodeInt(len);
+	}
+	else
+	{
+		ms2.WriteEncodeInt(offset);
+		if(len > 0) ms2.Write(cfg.GetBuffer(), offset, len);
+	}
+	rs.Length	= ms2.Position();
+
+	Reply(rs);
+	return true;
 }
 /*
 请求：1起始 + N数据
