@@ -1,4 +1,6 @@
 ﻿#include "TinyClient.h"
+#include "Security\Crc.h"
+
 
 #include "JoinMessage.h"
 
@@ -53,6 +55,8 @@ void TinyClient::Open()
 
 		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
+	//算硬件ID的CRC
+	HardCrc=Crc::Hash16(&Sys.ID,12);
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
