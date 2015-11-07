@@ -66,6 +66,14 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	return nrf;
 }
 
+uint OnZig(ITransport* port, ByteArray& bs, void* param, void* param2)
+{
+	debug_printf("配置信息\r\n");
+	bs.Show(true);
+
+	return 0;
+}
+
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg)
 {
 	static SerialPort sp(index, baudRate);
@@ -77,6 +85,31 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
 	zb.Init(&sp, rst);
+
+	/*zb.Register(OnZig, &zb);
+	zb.Open();
+
+	zb.Config	= true;
+	Sys.Sleep(1200);
+
+	debug_printf("进入配置模式\r\n");
+
+	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34};
+	zb.Write(ByteArray(buf, ArrayLength(buf)));*/
+
+	/*ByteArray bs;
+	int n=10000;
+	while(n--)
+	{
+		zb.Read(bs);
+		if(bs.Length() > 0)
+		{
+			bs.Show(true);
+			break;
+		}
+	}
+	debug_printf("退出配置模式\r\n");
+	zb.Config	= false;*/
 
 	return &zb;
 }
