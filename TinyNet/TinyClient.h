@@ -22,7 +22,7 @@ public:
 	ByteArray	Password;	// 通讯密码
 
 	ulong		LastActive;	// 最后活跃时间
-	uint		HardCrc;	//硬件ID校验
+	ushort		HardCrc;	//硬件ID校验
 	bool		Encryption;	//是否加密 
 
 	TinyClient(TinyController* control);

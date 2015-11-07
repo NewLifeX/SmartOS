@@ -500,6 +500,10 @@ void TinyClient::DisJoin()
 // 离网
 bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
+	Stream ms(msg.Data, msg.Length);
+	
+	ushort crc=ms.ReadEncodeInt();
+	
 	return true;
 }
 
