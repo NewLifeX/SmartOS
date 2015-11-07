@@ -19,7 +19,15 @@ void ShunCom::Init(ITransport* port, Pin rst)
 void ShunComLowPower(void* sender, void* param)
 {
 	ShunCom* sc = (ShunCom*)param;
-	if(sc) sc->Close();
+	//if(sc) sc->Close();
+	if(sc)
+	{
+		sc->Reset	= false;
+
+		sc->Power	= false;
+		sc->Sleep	= false;
+		sc->Config	= false;
+	}
 }
 
 bool ShunCom::OnOpen()
@@ -34,10 +42,10 @@ bool ShunCom::OnOpen()
 
 	Reset.Open();
 	Reset	= true;
-	Sys.Delay(100);
+	/*Sys.Delay(100);
 	Reset	= false;
 	Sys.Delay(100);
-	Reset	= true;
+	Reset	= true;*/
 
 	Port->MinSize	= MinSize;
 
