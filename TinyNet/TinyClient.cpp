@@ -32,6 +32,7 @@ TinyClient::TinyClient(TinyController* control)
 	_TaskID		= 0;
 
 	NextReport	= 0;
+	Encryption	= false;
 }
 
 void TinyClient::Open()
@@ -439,6 +440,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Joining		= false;
 
 	Cfg->SoftVer	= dm.Version;
+	if(Cfg->SoftVer > 1) Encryption=true;//大于1的版本加密		
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
@@ -523,8 +525,8 @@ void TinyClient::Ping()
 	msg.Code = 3;
 
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
-	if(Cfg->SoftVer!=0)
-	  ReportPing(msg);
+	if(Encryption)
+	   ReportPing(msg);
     else
 	   Report(msg);	  
 	Send(msg);
