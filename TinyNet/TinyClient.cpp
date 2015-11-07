@@ -321,6 +321,20 @@ void TinyClient::Report(Message& msg)
 	msg.Length = ms.Position();
 }
 
+void TinyClient::ReportPing(Message& msg)
+{
+	// 没有服务端时不要上报
+	if(!Server) return;
+
+	Stream ms = msg.ToStream();
+	ms.Write((byte)0x01);	// 子功能码
+	ms.Write(HardCrc);		//硬件CRC
+	ms.Write((byte)0x00);	// 起始地址
+	ms.Write((byte)Store.Data.Length());	// 长度
+	ms.Write(Store.Data);
+	msg.Length = ms.Position();
+}
+
 bool TinyClient::Report(uint offset, byte dat)
 {
 	TinyMessage msg;
@@ -508,7 +522,7 @@ void TinyClient::Ping()
 	msg.Code = 3;
 
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
-	Report(msg);
+	ReportPing(msg);
 
 	Send(msg);
 
