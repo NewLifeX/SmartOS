@@ -14,7 +14,6 @@ extern uint __microlib_freelist_initialised;
 #ifndef BIT
     #define BIT(x)	(1 << (x))
 #endif
-
 #ifndef TINY
 static int _Index;	// MCU在型号表中的索引
 #endif
@@ -447,7 +446,9 @@ void TSys::DeepSleep(uint msTime)
 {
 	debug_printf("TSys::DeepSleep Time=%d \r\n", msTime);
 
+#ifdef STM32F0
 	PWR_EnterSleepMode(PWR_SLEEPEntry_WFI);
+#endif
 }
 
 void TSys::Standby(uint msTime)

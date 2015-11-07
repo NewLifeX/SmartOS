@@ -458,23 +458,21 @@ bool Gateway::OnMode(const Message& msg)
     }	
     
      //手动学习模式
-     if(msg.Data[0]==1)	
-     {
-       
-     Study  	  = true;
-     Server->Study = Study;
-    
-    // 设定小灯快闪时间，单位毫秒
-     if(Led) Led->Write(900000);
-    
-    TokenMessage msg;
-    msg.Code	= 0x20;
-    msg.Length	= 1;
-    msg.Data[0]	= 1;
-   // msg.Data[1] = 1;
-    debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
-	Client->Reply(msg);
-	
+   if(msg.Data[0]==1)	
+    {        
+       Study  	  = true;
+       Server->Study = Study;
+      
+      // 设定小灯快闪时间，单位毫秒
+       if(Led) Led->Write(900000);
+      
+      TokenMessage msg;
+      msg.Code	= 0x20;
+      msg.Length	= 1;
+      msg.Data[0]	= 1;
+     // msg.Data[1] = 1;
+      debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
+	  Client->Reply(msg);	
      }	   
      
      //退出学习模式
