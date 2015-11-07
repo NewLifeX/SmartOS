@@ -22,6 +22,7 @@ public:
 	ByteArray	Password;	// 通讯密码
 
 	ulong		LastActive;	// 最后活跃时间
+	uint		HardCrc;	//硬件ID校验
 
 	TinyClient(TinyController* control);
 
@@ -46,6 +47,7 @@ public:
 	void Report(Message& msg);
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const ByteArray& bs);
+	void ReportPing(Message& msg);
 
 	uint		NextReport;	// 下次上报偏移，0不动
 	void ReportAsync(uint offset);
