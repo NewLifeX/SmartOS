@@ -204,7 +204,7 @@ public:
 	}
 
 	// 加入一个数据到末尾
-	virtual int Push(T& item)
+	virtual int Push(const T& item)
 	{
 		SetItemAt(_Length, &item);
 
