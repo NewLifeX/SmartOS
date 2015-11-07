@@ -500,10 +500,19 @@ void TinyClient::DisJoin()
 // 离网
 bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
-	Stream ms(msg.Data, msg.Length);
+	if(msg.Length < 2) return false;
 	
-	ushort crc=ms.ReadEncodeInt();
+	Stream ms(msg.Data, msg.Length);	
+	ushort crc=ms.ReadUInt16();
 	
+	if(crc!=HardCrc) return false;
+
+	Cfg->LoadDefault();
+	Cfg->Save();
+    debug_printf("设备退网3秒后重启\r\n");
+   
+    Sys.Sleep(3000);
+    Sys.Reset();
 	return true;
 }
 
