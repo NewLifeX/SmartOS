@@ -433,6 +433,9 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 #include "WatchDog.h"
 
+// 低功耗处理器
+static TArray<int, 0x40> _LowPowerHandlers(0);
+
 void TSys::Stop(uint msTime)
 {
 	debug_printf("TSys::Stop Time=%d \r\n", msTime);
@@ -455,9 +458,29 @@ void TSys::Standby(uint msTime)
 {
 	debug_printf("TSys::Standby Time=%d \r\n", msTime);
 
+	for(int i=0; i<_LowPowerHandlers.Length(); i+=2)
+	{
+		EventHandler handler = (EventHandler)_LowPowerHandlers[i];
+		if(handler)
+		{
+			void* param = (void*)_LowPowerHandlers[i+1];
+			debug_printf("TSys::LowPower 0x%08X 0x%08X\r\n", handler, param);
+			handler(this, param);
+		}
+	}
+	
 	if(!msTime) msTime = 0xFFFF;
 	WatchDog::Start(msTime);
 	PWR_EnterSTANDBYMode();
+}
+
+// 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
+void TSys::AddLowPower(EventHandler handler, void* param)
+{
+	debug_printf("TSys::AddLowPower 0x%08X 0x%08X\r\n", handler, param);
+	
+	_LowPowerHandlers.Push((int)handler);
+	_LowPowerHandlers.Push((int)param);
 }
 
 void TSys::Start()

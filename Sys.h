@@ -122,9 +122,12 @@ public:
 	bool Started;
 	void Start();	// 开始系统大循环
 
+	// 低功耗相关
     void Stop(uint msTime = 0);
 	void DeepSleep(uint msTime = 0);
 	void Standby(uint msTime = 0);
+	// 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
+	void AddLowPower(EventHandler handler, void* param);
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
