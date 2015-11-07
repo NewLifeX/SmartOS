@@ -32,10 +32,10 @@ struct TinyConfig
 	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
 	
 
-	// 初始化，各字段为0
+	//初始化，各字段为0
 	//TinyConfig();
 	//const TinyConfig& Default();
-	byte	StartSet;
+	byte  StartSet;
 	
 	void LoadDefault();
 

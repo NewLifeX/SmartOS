@@ -1,5 +1,6 @@
 ﻿#include "Flash.h"
 #include "TinyServer.h"
+#include "Security\Crc.h"
 
 #include "JoinMessage.h"
 
@@ -300,11 +301,28 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 	return true;
 }
 
+bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
+{	
+	msg.Code = 0x02;
+	Stream ms = msg.ToStream();	
+	ms.Write(crc);
+	msg.Length = ms.Position();	
+	
+	Reply(msg);
+	
+	return true;
+}
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	// 网关内没有相关节点信息时不鸟他
 	if(FindDevice(msg.Src) == NULL)return false;
+	
+	// 准备一条响应指令	
+	TinyMessage rs;
+	rs.Code = msg.Code;
+	rs.Dest = msg.Src;
+	rs.Sequence	= msg.Sequence;
 
 	// 子操作码
 	switch(msg.Data[0])
@@ -312,11 +330,27 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		// 同步数据
 		case 0x01:
 		{
-			Device* dv = Current;
-			if(dv && msg.Length >= 4)
+			Device* dv = Current;			
+			byte ver = 0;			
+			if(dv->Version > 1)
+			{   
+		      Stream ms(msg.Data, msg.Length);	
+	          ushort crc  = ms.ReadUInt16();
+			  ushort crc1 = Crc::Hash16(&dv->HardID, dv->HardID.Length());
+			  if(crc ==crc1) ver = 2;		 			    
+			  else
+			  {
+				 debug_printf("设备硬件Crc:%0x%08X,对比Crc：%0x%08X \r\n",crc,crc1); 
+				 debug_printf("设备硬件ID"); 
+				 dv->HardID.Show();			 
+				 Disjoin(rs,crc);
+				 return false;
+			  }
+			}			
+			if(dv && msg.Length >= ver + 4)
 			{
-				byte offset	= msg.Data[1];
-				byte len	= msg.Data[2];
+				byte offset	= msg.Data[ver + 1];
+				byte len	= msg.Data[ver + 2];
 				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
 
 				int remain = dv->Store.Capacity() - offset;
@@ -330,12 +364,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		}
 	}
 
-	// 响应 Ping 指令，告诉客户端有多少指令需要等待执行
-	TinyMessage rs;
-	rs.Code = msg.Code;
-	rs.Dest = msg.Src;
-	rs.Sequence	= msg.Sequence;
-
+	
 	//todo。告诉客户端有多少待处理指令
 
 	Reply(rs);

@@ -62,7 +62,8 @@ public:
 	bool OnJoin(const TinyMessage& msg);
 
 	bool ResetPassword(byte id);
-
+	
+    bool Disjoin(TinyMessage& msg,uint crc);
 	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳
