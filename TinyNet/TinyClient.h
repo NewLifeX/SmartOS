@@ -67,6 +67,7 @@ public:
 	void DisJoin();
 	bool OnDisjoin(const TinyMessage& msg);
 	bool WriteCfg(uint offset,	Stream ms);
+	bool ReadCfg(uint offset,	Stream ms);
 
 	// 心跳
 	void Ping();

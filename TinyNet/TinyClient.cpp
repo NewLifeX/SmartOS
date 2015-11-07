@@ -191,10 +191,12 @@ void TinyClient::OnRead(const TinyMessage& msg)
 
 	Reply(rs);
 
-	Report(rs);//接受写入一次，刷新服务端
-
+	//Report(rs);//接受写入一次，刷新服务端
 }
-
+bool TinyClient::ReadCfg(uint offset,	Stream ms)
+{
+	return false;
+}
 /*
 请求：1起始 + N数据
 响应：1起始 + 1大小
@@ -243,21 +245,41 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
 {
 	if(offset < Cfg->StartSet) return false;
 	
-	ByteArray cfg(Cfg, Cfg->Length);
+	//响应一条数据
+	TinyMessage rs;
+	rs.Code		= 0x16;
+	Stream ms2	= rs.ToStream();
 	
+	ByteArray cfg(Cfg, Cfg->Length);	
+	uint adrr=offset-Cfg->StartSet;
 	uint len = ms.Remain();
+    if((adrr+len)>Cfg->Length)
+   	{
+   		rs.Error = true;
+   		ms2.Write((byte)2);
+   		ms2.WriteEncodeInt(offset);
+   		ms2.WriteEncodeInt(len);
+		Reply(rs);		
+		return  true;//操作成功的意思
+   	}
+	
 	ByteArray bs(ms.Current(), len);	
-	bs.CopyTo(&cfg[offset - 64],len);
+	bs.CopyTo(&cfg[adrr],len);
 
 	Cfg->Save();
 	
-	 TinyClientReset();
+	ms2.WriteEncodeInt(offset);
+	ms2.WriteEncodeInt(len);
+	rs.Length	= ms2.Position();
+
+	Reply(rs);
+	
+	TinyClientReset();
 	//Sys.Reset();
 	
 	//修改配置区，重启系统	
 	//debug_printf("修改后的设备ID 0x%08X ,偏移量 %d\r\n", Cfg->Address,offset);
-	//cfg.Show();
-	
+	//cfg.Show();	
 	return true;
 }
 void TinyClient::Report(Message& msg)

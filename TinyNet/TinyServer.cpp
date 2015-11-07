@@ -166,8 +166,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		  debug_printf("非学习模式禁止加入\r\n");
 		  return false;
 	  }
-
-
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	if(!id) return false;
@@ -176,7 +174,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	JoinMessage dm;
 	dm.ReadMessage(msg);
-
 	// 根据硬件编码找设备
 	Device* dv = FindDevice(dm.HardID);
 	if(!dv)
@@ -186,11 +183,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		{
 			id = addr;
 			while(FindDevice(++id) != NULL && id < 0xFF);
-
 			debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 			if(id == 0xFF) return false;
 		}
-
 		dv = new Device();
 		dv->Address	= id;
 		dv->Logins= dv->Store.Length();
@@ -572,9 +567,7 @@ void TinyServer::SaveDevices()
 		Device* dv = Devices[i];
 		dv->Write(ms);
 	}
-
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
-
 	cfg.Set("Devs", ByteArray(ms.GetBuffer(), ms.Position()));
 }
 
