@@ -699,6 +699,12 @@ bool Enc28j60::OnOpen()
 	return true;
 }
 
+void Enc28j60::ChangePower(int level)
+{
+	// 进入低功耗时，直接关闭
+	if(level) Close();
+}
+
 byte Enc28j60::GetRevision()
 {
     // 在EREVID 内也存储了版本信息。 EREVID 是一个只读控制寄存器，包含一个5 位标识符，用来标识器件特定硅片的版本号

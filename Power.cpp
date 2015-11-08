@@ -34,7 +34,7 @@ void Power::Standby(uint msTime)
 {
 	debug_printf("Power::Standby Time=%d \r\n", msTime);
 
-	for(int i=0; i<_powers.Length(); i+=2)
+	for(int i=0; i<_powers.Length(); i++)
 	{
 		Power* pwr = _powers[i];
 		if(pwr)

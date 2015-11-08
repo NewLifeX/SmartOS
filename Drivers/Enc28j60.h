@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Spi.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
 
@@ -42,6 +43,9 @@ public:
     bool PhyWrite(byte addr, ushort data);
     void ClockOut(byte clock);
 	bool Linked();
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
     //void Init(byte mac[6]);
     byte GetRevision();

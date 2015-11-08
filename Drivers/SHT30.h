@@ -2,6 +2,7 @@
 #define _SHT30_H_
 
 #include "I2C.h"
+#include "Power.h"
 
 // 光强传感器
 class SHT30
@@ -19,6 +20,9 @@ public:
 	//ushort ReadTemperature();
 	//ushort ReadHumidity();
 	bool Read(ushort& temp, ushort& humi);
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
 private:
 	bool Write(ushort cmd);

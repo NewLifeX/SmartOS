@@ -218,3 +218,10 @@ uint SHT30::Read4(ushort cmd)
 
 	return (temp << 16) | humi;
 }
+
+void SHT30::ChangePower(int level)
+{
+	if(!level) Write(CMD_NO_SLEEP);
+	// 进入低功耗时，直接关闭
+	//if(level) Close();
+}

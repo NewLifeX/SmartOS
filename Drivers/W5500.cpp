@@ -402,6 +402,12 @@ bool W5500::Close()
 	return true;
 }
 
+void W5500::ChangePower(int level)
+{
+	// 进入低功耗时，直接关闭
+	if(level) Close();
+}
+
 void W5500::OnClose()
 {
 	_spi->Close();

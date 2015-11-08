@@ -4,6 +4,7 @@
 #include "Sys.h"
 #include "Stream.h"
 #include "Spi.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
 #include "Message\DataStore.h"
@@ -72,6 +73,9 @@ public:
 
 	// 复位 包含硬件复位和软件复位
 	void Reset();
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
 	// 网卡状态输出
 	void StateShow();

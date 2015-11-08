@@ -2,6 +2,7 @@
 #define _BH1750_H_
 
 #include "I2C.h"
+#include "Power.h"
 
 // 光强传感器
 class BH1750
@@ -15,6 +16,9 @@ public:
 
 	void Init();
 	ushort Read();
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
 private:
 	void Write(byte cmd);
