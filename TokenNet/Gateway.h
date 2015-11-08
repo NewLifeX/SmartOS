@@ -12,13 +12,11 @@
 // 网关服务器
 class Gateway
 {
-private:
-
 public:
-	TinyServer* Server;		// 内网服务端
-	TokenClient* Client;	// 外网客户端
-	IDataPort*	Led;		// 指示灯
-	uint 		ExitStudyTaskID;
+	TinyServer*		Server;		// 内网服务端
+	TokenClient*	Client;	// 外网客户端
+	IDataPort*		Led;		// 指示灯
+	uint 			ExitStudyTaskID;
 
 	Gateway();
 	~Gateway();
@@ -37,20 +35,18 @@ public:
 	/******** 远程网业务逻辑 ********/
 	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
-	
-
 
 	// 设备列表 0x21
 	bool OnGetDeviceList(const Message& msg);
 	// 设备信息 0x25
 	bool OnGetDeviceInfo(const Message& msg);
-	
+
 	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
 	// 发送设备信息
 	bool SendDeviceInfo(const Device* dv);
 
 	// 学习模式 0x20
-	bool Study;	
+	bool Study;
 	void SetMode(bool student);
 	bool OnMode(const Message& msg);
 
@@ -69,6 +65,9 @@ public:
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
 	bool OnDiscover(const TinyMessage& msg);
+
+	static Gateway*	Current;
+	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
 };
 
 #endif

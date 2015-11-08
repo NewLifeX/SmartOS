@@ -13,13 +13,15 @@ void OldTinyToToken0x10(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken0x11(const TinyMessage& msg, TokenMessage& msg2);
 void OldTinyToToken0x12(const TinyMessage& msg, TokenMessage& msg2);
 
+Gateway* Gateway::Current	= NULL;
+
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
 {
 	Server	= NULL;
 	Client	= NULL;
 	Led		= NULL;
-	
+
 	Running		= false;
 	AutoReport	= false;
 	IsOldOrder	= false;
@@ -53,7 +55,7 @@ void Gateway::Start()
 	Client->Received	= OnRemoteReceived;
 	Client->Param		= this;
     Client->IsOldOrder  = IsOldOrder;
-	
+
 
 	debug_printf("Gateway::Start \r\n");
 
@@ -234,7 +236,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
            OnDeviceDelete(msg);
 		   break;
 	}
-	
+
 	// 消息转发
 	if(msg.Code >= 0x10 && !msg.Error && msg.Length < 25)
 	{
@@ -244,9 +246,9 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		TinyMessage tmsg;
 		if(!TokenToTiny(msg, tmsg)) return true;
 
-		bool rs = Server->Dispatch(tmsg);		
+		bool rs = Server->Dispatch(tmsg);
 		if(rs) return false;
-				
+
 		TokenMessage msg2;
 
 		if(IsOldOrder)
@@ -312,12 +314,12 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 				default:
 					OldTinyToToken(tmsg, msg2, dv1->Kind);
 				break;
-		    }	       
-			// TinyToToken(tmsg, msg2);			
+		    }
+			// TinyToToken(tmsg, msg2);
 		}
 		 else
 		      TinyToToken(tmsg, msg2);
-		  
+
 		return Client->Reply(msg2);
 	}
 
@@ -374,7 +376,7 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	if(!dv) return Client->Reply(rs);
 
 	dv->Show(true);
-	 
+
 
 	return SendDeviceInfo(dv);
 }
@@ -446,43 +448,43 @@ bool Gateway::OnMode(const Message& msg)
 	msg.Show();
     if(msg.Length<1)
     {
-    	SetMode(true);	
-         return true;	 
-    }	
+    	SetMode(true);
+         return true;
+    }
     //自动学习模式
     if(msg.Data[0]==2)
     {
-        SetMode(true);	
-        return true;	 
-		 
-    }	
-    
+        SetMode(true);
+        return true;
+
+    }
+
      //手动学习模式
-   if(msg.Data[0]==1)	
-    {        
+   if(msg.Data[0]==1)
+    {
        Study  	  = true;
        Server->Study = Study;
-      
+
       // 设定小灯快闪时间，单位毫秒
        if(Led) Led->Write(900000);
-      
+
       TokenMessage msg;
       msg.Code	= 0x20;
       msg.Length	= 1;
       msg.Data[0]	= 1;
      // msg.Data[1] = 1;
       debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
-	  Client->Reply(msg);	
-     }	   
-     
+	  Client->Reply(msg);
+     }
+
      //退出学习模式
      if(msg.Data[0]==0)
      {
-      SetMode(false);	
-      return true;	
-	  
+      SetMode(false);
+      return true;
+
      }
-    
+
 	  return true;
 }
 
@@ -776,4 +778,24 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2, ushort kind)
 			TinyToToken(msg,msg2);
 		break;
 	}
+}
+
+Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
+{
+	Gateway* gw	= Current;
+	if(gw)
+	{
+		if((client == NULL || gw->Client == client) &&
+		(server == NULL || gw->Server == server)) return gw;
+
+		delete gw;
+	}
+
+	gw = new Gateway();
+	gw->Client	= client;
+	gw->Server	= server;
+
+	Current		= gw;
+
+	return gw;
 }
