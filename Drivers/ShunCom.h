@@ -3,12 +3,13 @@
 
 #include "Sys.h"
 #include "Port.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 #include "Message\DataStore.h"
 
 // 上海顺舟Zigbee协议
 // 主站发送所有从站收到，从站发送只有主站收到
-class ShunCom : public PackPort
+class ShunCom : public PackPort, public Power
 {
 private:
 

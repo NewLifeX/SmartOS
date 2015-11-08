@@ -35,13 +35,6 @@ bool ITransport::Open()
 	Opened	= OnOpen();
 	Opening	= false;
 
-	/*// 设置电源管理
-	if(Opened)
-	{
-		Power* pwr	= dynamic_cast<Power*>(this);
-		if(pwr) pwr->SetPower();
-	}*/
-
 	return Opened;
 }
 
@@ -135,10 +128,4 @@ uint PackPort::OnPortReceive(ITransport* sender, ByteArray& bs, void* param, voi
 	//PackPort* pp = (PackPort*)param;
 	PackPort* pp = dynamic_cast<PackPort*>((PackPort*)param);
 	return pp->OnReceive(bs, param2);
-}
-
-void PackPort::ChangePower(int level)
-{
-	Power* pwr	= dynamic_cast<Power*>(Port);
-	if(pwr) pwr->ChangePower(level);
 }

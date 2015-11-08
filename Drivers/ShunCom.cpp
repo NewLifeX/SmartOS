@@ -74,8 +74,6 @@ void ShunCom::ChangePower(int level)
 	Power	= false;
 	Sleep	= false;
 	Config	= false;
-	
-	PackPort::ChangePower(level);
 }
 
 bool ShunCom::OnWrite(const ByteArray& bs)

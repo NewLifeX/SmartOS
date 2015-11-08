@@ -6,10 +6,11 @@
 #include "Net\ITransport.h"
 #include "Timer.h"
 #include "Thread.h"
+#include "Power.h"
 #include "Message\DataStore.h"
 
 // NRF24L01类
-class NRF24L01 : public ITransport
+class NRF24L01 : public ITransport, public Power
 {
 private:
     byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
@@ -58,13 +59,16 @@ public:
     bool Check();
 	bool Config();		// 完成基础参数设定，默认初始化为发送模式
 	bool GetPower();	// 获取当前电源状态
-	bool SetPower(bool on);	// 设置当前电源状态。返回是否成功
+	bool SetPowerMode(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
 	//bool CheckConfig();
 	void ClearFIFO(bool rx);
 	void ClearStatus(bool tx, bool rx);
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
 	IDataPort* Led;	// 数据灯
 

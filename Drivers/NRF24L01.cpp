@@ -266,7 +266,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 
 	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
 	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
-	SetPower(false);*/
+	SetPowerMode(false);*/
 }
 
 NRF24L01::~NRF24L01()
@@ -279,7 +279,7 @@ NRF24L01::~NRF24L01()
 	Register(NULL);
 
 	// 关闭电源
-	SetPower(false);
+	SetPowerMode(false);
 
 	delete _spi;
 	_spi = NULL;
@@ -439,7 +439,7 @@ bool NRF24L01::Config()
 #endif
 
 	//ShowStatus();
-	SetPower(false);
+	SetPowerMode(false);
 	_CE = false;
 
 	SetAddress(true);
@@ -497,7 +497,7 @@ bool NRF24L01::Config()
 	// 清除中断标志
 	ClearStatus(true, true);
 
-	if(!SetPower(true)) return false;
+	if(!SetPowerMode(true)) return false;
 
 	_CE = true;
 
@@ -558,7 +558,7 @@ bool NRF24L01::GetPower()
 }
 
 // 获取/设置当前电源状态
-bool NRF24L01::SetPower(bool on)
+bool NRF24L01::SetPowerMode(bool on)
 {
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
@@ -566,7 +566,7 @@ bool NRF24L01::SetPower(bool on)
 
 	if(!(on ^ config.PWR_UP)) return true;
 
-	debug_printf("NRF24L01::SetPower %s电源\r\n", on ? "打开" : "关闭");
+	debug_printf("NRF24L01::SetPowerMode %s电源\r\n", on ? "打开" : "关闭");
 
 	config.PWR_UP = on ? 1 : 0;
 
@@ -584,12 +584,26 @@ bool NRF24L01::SetPower(bool on)
 		config.Init(ReadReg(CONFIG));
 		if(!config.PWR_UP)
 		{
-			debug_printf("NRF24L01::SetPower 无法打开电源！\r\n");
+			debug_printf("NRF24L01::SetPowerMode 无法打开电源！\r\n");
 			return false;
 		}
 	}
 
 	return true;
+}
+
+void NRF24L01::ChangePower(int level)
+{
+	if(level == 1)
+	{
+		// 芯片内部关闭电源
+		SetPowerMode(false);		
+	}
+	else if(level > 1)
+	{
+		// 整个模块断电
+		Power	= false;
+	}
 }
 
 // 获取当前模式是否接收模式
@@ -812,7 +826,7 @@ void NRF24L01::OnClose()
 {
 	if(_tidRecv) Sys.SetTask(_tidRecv, false);
 
-	SetPower(false);
+	SetPowerMode(false);
 
 	_spi->Close();
 	_CE.Close();

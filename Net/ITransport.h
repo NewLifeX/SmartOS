@@ -2,7 +2,6 @@
 #define __ITransport_H__
 
 #include "Sys.h"
-#include "Power.h"
 
 class ITransport;
 
@@ -73,9 +72,6 @@ public:
 	virtual ~PackPort();
 
 	virtual void Set(ITransport* port);
-
-	// 电源等级变更（如进入低功耗模式）时调用
-	virtual void ChangePower(int level);
 
 	virtual string ToString() { return "PackPort"; }
 

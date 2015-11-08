@@ -11,7 +11,7 @@
 #define SERIAL_BAUDRATE 1024000
 
 // 串口类
-class SerialPort : public ITransport
+class SerialPort : public ITransport, public Power
 {
 private:
 	byte _index;
