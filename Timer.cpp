@@ -204,7 +204,7 @@ void Timer::SetFrequency(uint frequency)
 	uint clk	= Sys.Clock;
 #else
 	uint clk = RCC_GetPCLK();
-	if((uint)tim & 0x00010000) clk = RCC_GetPCLK2();
+	if((uint)_Timer & 0x00010000) clk = RCC_GetPCLK2();
 	clk <<= 1;
 #endif
 
