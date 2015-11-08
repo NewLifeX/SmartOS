@@ -5,6 +5,7 @@
 #include "Port.h"
 #include "Task.h"
 #include "Queue.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 
 #define SERIAL_BAUDRATE 1024000
@@ -78,6 +79,9 @@ public:
     void GetPins(Pin* txPin, Pin* rxPin);
 
     virtual void Register(TransportHandler handler, void* param = NULL);
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
 
 	virtual string ToString() { return Name; }
 

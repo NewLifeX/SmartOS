@@ -30,6 +30,9 @@ public:
 
 	void ShowConfig();
 
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
+
     virtual bool OnWrite(const ByteArray& bs);
 	// 引发数据到达事件
 	virtual uint OnReceive(ByteArray& bs, void* param);

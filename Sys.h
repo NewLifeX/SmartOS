@@ -121,13 +121,6 @@ public:
 
 	bool Started;
 	void Start();	// 开始系统大循环
-
-	// 低功耗相关
-    void Stop(uint msTime = 0);
-	void DeepSleep(uint msTime = 0);
-	void Standby(uint msTime = 0);
-	// 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
-	void AddLowPower(EventHandler handler, void* param);
 };
 
 extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
@@ -138,6 +131,8 @@ extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行
 #endif //_Sys_H_
 
 /*
+v3.1.2015.1108	增加系统配置存储模块，增加电源管理模块
+
 v3.0.2015.0806	增强系统调度器，支持无阻塞多任务调度
 
 v2.8.2014.0927	完成微网通讯架构，封装消息协议，串口及nRF24L01+测试通过

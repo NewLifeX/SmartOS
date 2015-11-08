@@ -361,6 +361,12 @@ void SerialPort::SetBaudRate(int baudRate)
 	Init( _index,  baudRate,  _parity,  _dataBits,  _stopBits);
 }
 
+void SerialPort::ChangePower(int level)
+{
+	// 串口进入低功耗时，直接关闭
+	if(level) Close();
+}
+
 void SerialPort::Register(TransportHandler handler, void* param)
 {
 	ITransport::Register(handler, param);

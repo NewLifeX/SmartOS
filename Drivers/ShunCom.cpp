@@ -15,21 +15,6 @@ void ShunCom::Init(ITransport* port, Pin rst)
 	if(rst != P0) Reset.Set(rst);
 }
 
-// 模块进入低功耗模式时需要处理的事情
-void ShunComLowPower(void* sender, void* param)
-{
-	ShunCom* sc = (ShunCom*)param;
-	//if(sc) sc->Close();
-	if(sc)
-	{
-		sc->Reset	= false;
-
-		sc->Power	= false;
-		sc->Sleep	= false;
-		sc->Config	= false;
-	}
-}
-
 bool ShunCom::OnOpen()
 {
 	Power.Open();
@@ -48,8 +33,6 @@ bool ShunCom::OnOpen()
 	Reset	= true;*/
 
 	Port->MinSize	= MinSize;
-
-	Sys.AddLowPower(ShunComLowPower, this);
 
 	return PackPort::OnOpen();
 }
@@ -81,6 +64,18 @@ void ShunCom::ShowConfig()
 	ByteArray rs;
 	Read(rs);
 	rs.Show(true);
+}
+
+// 模块进入低功耗模式时需要处理的事情
+void ShunCom::ChangePower(int level)
+{
+	Reset	= false;
+
+	Power	= false;
+	Sleep	= false;
+	Config	= false;
+	
+	PackPort::ChangePower(level);
 }
 
 bool ShunCom::OnWrite(const ByteArray& bs)

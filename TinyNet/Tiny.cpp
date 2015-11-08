@@ -55,6 +55,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	NRF24L01* nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 	nrf->Power.Invert = powerInvert;
+	nrf->SetPower();
 
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
@@ -76,15 +77,16 @@ uint OnZig(ITransport* port, ByteArray& bs, void* param, void* param2)
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg)
 {
-	static SerialPort sp(index, baudRate);
-	static ShunCom zb;
+	SerialPort* sp = new SerialPort(index, baudRate);
+	ShunCom* zb = new ShunCom();
 	//zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
-	zb.Power.Set(power);
-	if(zb.Power) zb.Power.Invert = true;
+	zb->Power.Set(power);
+	if(zb->Power) zb->Power.Invert = true;
 
-	zb.Sleep.Init(slp, true);
-	zb.Config.Init(cfg, true);
-	zb.Init(&sp, rst);
+	zb->Sleep.Init(slp, true);
+	zb->Config.Init(cfg, true);
+	zb->Init(&sp, rst);
+	zb->SetPower();
 
 	/*zb.Register(OnZig, &zb);
 	zb.Open();
@@ -111,7 +113,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	debug_printf("退出配置模式\r\n");
 	zb.Config	= false;*/
 
-	return &zb;
+	return zb;
 }
 
 TinyClient* CreateTinyClient(ITransport* port)
