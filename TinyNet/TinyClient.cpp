@@ -57,7 +57,11 @@ void TinyClient::Open()
 	}
 	//算硬件ID的CRC
 	HardCrc=Crc::Hash16(&Sys.ID,12);
-
+	
+	debug_printf("ID :0x%08X ,计算得CRC 0x%08X \r\n",Sys.ID, HardCrc);
+	
+	if(Sys.Version > 1) Encryption = true;
+	
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
 
@@ -414,6 +418,8 @@ void TinyClient::Join()
 
 	// 发送的广播消息，设备类型和系统ID
 	JoinMessage dm;
+	
+	dm.Version	= Sys.Version;
 	dm.Kind		= Type;
 	dm.HardID	= Sys.ID;
 	dm.TranID	= TranID;
