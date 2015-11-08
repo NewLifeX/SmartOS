@@ -80,7 +80,6 @@ bool TinyMessage::Read(Stream& ms)
 	Crc = Crc::Hash16(p, HeaderSize + Length);
 	// 还原数据
 	p[3] = fs;
-
 	return true;
 }
 

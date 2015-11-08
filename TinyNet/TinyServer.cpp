@@ -22,7 +22,7 @@ TinyServer::TinyServer(TinyController* control)
 	Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
-	DataStoreLent		=64;
+	DataStoreLent		= 64;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -336,9 +336,11 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			{   
 		      Stream ms(msg.Data, msg.Length);	
 			  
+			  ms.ReadByte();
 	          ushort crc  = ms.ReadUInt16();
 			  
-			  ushort crc1 = Crc::Hash16(&dv->HardID, 12);
+			  ushort crc1 = Crc::Hash16(dv->HardID.GetBuffer(), 12);
+			  
 			  if(crc ==crc1) ver = 2;		 			    
 			  else
 			  {
