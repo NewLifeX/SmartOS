@@ -30,6 +30,7 @@ Dhcp::Dhcp(ISocket* socket)
 Dhcp::~Dhcp()
 {
 	Sys.RemoveTask(taskID);
+	delete Socket;
 }
 
 void Dhcp::SendDhcp(byte* buf, uint len)
