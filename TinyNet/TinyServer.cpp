@@ -308,7 +308,7 @@ bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
 	ms.Write(crc);
 	msg.Length = ms.Position();	
 	
-	Reply(msg);
+	Send(msg);
 	
 	return true;
 }
@@ -335,12 +335,14 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			if(dv->Version > 1)
 			{   
 		      Stream ms(msg.Data, msg.Length);	
+			  
 	          ushort crc  = ms.ReadUInt16();
-			  ushort crc1 = Crc::Hash16(&dv->HardID, dv->HardID.Length());
+			  
+			  ushort crc1 = Crc::Hash16(&dv->HardID, 12);
 			  if(crc ==crc1) ver = 2;		 			    
 			  else
 			  {
-				 debug_printf("设备硬件Crc: 0x%08X , 对比Crc：0x%08X \r\n",crc,crc1); 
+				 debug_printf("设备硬件Crc:%08X,对比Crc：%08X \r\n",crc,crc1); 
 				 debug_printf("设备硬件ID"); 
 				 dv->HardID.Show();			 
 				 Disjoin(rs,crc);
