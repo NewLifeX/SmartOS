@@ -340,7 +340,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			  if(crc ==crc1) ver = 2;		 			    
 			  else
 			  {
-				 debug_printf("设备硬件Crc:%0x%08X,对比Crc：%0x%08X \r\n",crc,crc1); 
+				 debug_printf("设备硬件Crc: 0x%08X , 对比Crc：0x%08X \r\n",crc,crc1); 
 				 debug_printf("设备硬件ID"); 
 				 dv->HardID.Show();			 
 				 Disjoin(rs,crc);
