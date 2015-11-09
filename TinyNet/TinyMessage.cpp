@@ -119,7 +119,8 @@ void TinyMessage::Write(Stream& ms) const
 
 void TinyMessage::ComputeCrc()
 {
-	Stream ms(Size());
+	byte buf[0x40];
+	Stream ms(buf, ArrayLength(buf));
 
 	Write(ms);
 

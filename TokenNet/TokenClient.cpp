@@ -22,7 +22,7 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	LoginTime	= 0;
 	LastActive	= 0;
 	Delay		= 0;
-	
+
 	IsOldOrder	= false;	//是否旧指令
 
 	Control		= NULL;
@@ -40,7 +40,7 @@ void TokenClient::Open()
 
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
-	
+
 	TokenConfig			= TokenConfig::Current;
 
 	// 设置握手广播的本地地址和端口
@@ -164,10 +164,6 @@ void TokenClient::SayHello(bool broadcast, int port)
 // 握手响应
 bool TokenClient::OnHello(TokenMessage& msg)
 {
-	
-	
-	//SetTokenConfig(msg);
-
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
 	{
@@ -175,23 +171,23 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		{
 			if(SetTokenConfig(msg))
 				return false;
-			
+
 			Status	= 0;
 			Token	= 0;
-			Stream ms(msg.Data, msg.Length);
+			Stream ms = msg.ToStream();
 			debug_printf("握手失败，错误码=0x%02X ", ms.ReadByte());
 			ms.ReadString().Show(true);
 		}
 		else
 		{
-			debug_printf("握手完成，开始登录……\r\n");	
+			debug_printf("握手完成，开始登录……\r\n");
 			// 解析数据
 	        HelloMessage ext;
 	        ext.Reply = msg.Reply;
-            
+
 	        ext.ReadMessage(msg);
 	        ext.Show(true);
-            
+
 			// 通讯密码
 			if(ext.Key.Length() > 0)
 			{
@@ -206,7 +202,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
 
-			Login();		
+			Login();
 		}
 	}
 	else if(!msg.Reply)
@@ -227,37 +223,37 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	return true;
 }
 bool TokenClient::SetTokenConfig(TokenMessage& msg)
-{  
+{
     // 解析数据
 	Stream ms(msg.Data, msg.Length);
-	
+
 	if(ms.ReadByte()!=2) return false;
-	
-	  TokenConfig->Protocol =  ms.ReadByte();  
+
+	  TokenConfig->Protocol =  ms.ReadByte();
 	  TokenConfig->Port	 = 	ms.ReadUInt16();
 	  TokenConfig->ServerIP = 	ms.ReadUInt32();
-	
+
 	  TokenConfig->ServerPort = ms.ReadUInt16();
-	  	 
-  
+
+
 	uint len =ms.ReadByte();
-	
+
 	if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
-	
+
 	for(int i=0;i!=len;i++)
 	{
 		TokenConfig-> Server[i]=ms.ReadByte();
     }
 	strcpy(TokenConfig->Vendor, "s1.peacemoon.cn");
-	
-	TokenConfig->Save();	
-    TokenConfig->Show(); 
-	
+
+	TokenConfig->Save();
+    TokenConfig->Show();
+
 	Sys.Reset();
-	
+
 	return true;
-		
-	
+
+
 }
 // 登录
 void TokenClient::Login()

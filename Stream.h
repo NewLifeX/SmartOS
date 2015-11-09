@@ -13,7 +13,7 @@ protected:
 	uint _Capacity;	// 缓冲区容量
     uint _Position;	// 游标位置
 
-	void Init(byte* buf, uint len);
+	void Init(void* buf, uint len);
 	virtual bool CheckRemain(uint count);
 public:
 	uint Length;	// 数据长度
@@ -21,11 +21,11 @@ public:
 	bool CanWrite;	// 是否可写
 
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream(byte* buf, uint len);
-	Stream(const byte* buf, uint len);
+	Stream(void* buf, uint len);
+	Stream(const void* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream(ByteArray& bs);
-	Stream(const ByteArray& bs);
+	Stream(Array& bs);
+	Stream(const Array& bs);
 
 	// 数据流容量
 	uint Capacity() const;
@@ -45,32 +45,28 @@ public:
     byte* Current() const;
 
 	// 从当前位置读取数据，填充到目标数组
-	uint Read(byte* buf, uint offset = 0, int count = -1);
+	uint Read(void* buf, uint offset = 0, int count = -1);
 	// 读取7位压缩编码整数
 	uint ReadEncodeInt();
 	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
-	uint Read(ByteArray& bs);
+	uint Read(Array& bs);
 
 	// 把数据写入当前位置
-	bool Write(const byte* buf, uint offset, uint count);
+	bool Write(const void* buf, uint offset, uint count);
 	// 写入7位压缩编码整数
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
 	uint Write(const string str);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
-	bool Write(const ByteArray& bs);
+	bool Write(const Array& bs);
 
 	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
-	uint ReadArray(ByteArray& bs);
-	ByteArray ReadArray();
+	uint ReadArray(Array& bs);
 	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
-	bool WriteArray(const ByteArray& bs);
+	bool WriteArray(const Array& bs);
 
-	// 从数据流读取变长数据到字符串。以压缩整数开头表示长度
-	uint ReadString(String& str);
+	ByteArray ReadArray();
 	String ReadString();
-	// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
-	bool WriteString(const String& str);
 
 	byte	ReadByte();
 	ushort	ReadUInt16();

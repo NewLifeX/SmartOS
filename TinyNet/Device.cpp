@@ -34,7 +34,7 @@ void Device::Write(Stream& ms) const
 	ms.Write(PingTime);
 	ms.Write(OfflineTime);
 	ms.Write(SleepTime);
-	ms.WriteString(Name);
+	ms.WriteArray(Name);
 }
 
 void Device::Read(Stream& ms)
@@ -62,7 +62,7 @@ void Device::Save(Stream& ms) const
 	ms.Write(Version);
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
-	ms.WriteString(Name);
+	ms.WriteArray(Name);
 	ms.WriteArray(Pass);
 
 	ms.Write(PingTime);

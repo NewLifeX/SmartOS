@@ -61,11 +61,11 @@ void HelloMessage::Write(Stream& ms)
 {
 	ms.Write(Version);
 
-	ms.WriteString(Type);
+	ms.WriteArray(Type);
 	if(Name.Length() != 0)
-		ms.WriteString(Name);
+		ms.WriteArray(Name);
 	else
-		ms.WriteString(String(Sys.Company));
+		ms.WriteArray(String(Sys.Company));
 
 	ms.Write(LocalTime);
 

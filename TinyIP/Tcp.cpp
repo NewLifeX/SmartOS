@@ -340,7 +340,8 @@ void TcpSocket::SetMss(TCP_HEADER& tcp)
 
 void TcpSocket::SendAck(uint len)
 {
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + len);
+	byte buf[1500];
+	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + len);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
@@ -354,7 +355,8 @@ bool TcpSocket::Disconnect()
 	Remote.Show();
 	debug_printf("\r\n");
 
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER));
+	byte buf[1500];
+	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
@@ -447,7 +449,8 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	Remote.Show();
 	debug_printf(" ...... \r\n");
 
-	Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
+	byte buf[100];
+	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
 	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();

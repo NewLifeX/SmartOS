@@ -1,36 +1,36 @@
 ﻿#include "Stream.h"
 
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-Stream::Stream(byte* buf, uint len)
+Stream::Stream(void* buf, uint len)
 {
 	Init(buf, len);
 }
 
-Stream::Stream(const byte* buf, uint len)
+Stream::Stream(const void* buf, uint len)
 {
-	Init((byte*)buf, len);
+	Init((void*)buf, len);
 
 	CanWrite	= false;
 }
 
 // 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-Stream::Stream(ByteArray& bs)
+Stream::Stream(Array& bs)
 {
 	Init(bs.GetBuffer(), bs.Length());
 }
 
-Stream::Stream(const ByteArray& bs)
+Stream::Stream(const Array& bs)
 {
-	Init((byte*)bs.GetBuffer(), bs.Length());
+	Init((void*)bs.GetBuffer(), bs.Length());
 
 	CanWrite	= false;
 }
 
-void Stream::Init(byte* buf, uint len)
+void Stream::Init(void* buf, uint len)
 {
 	assert_ptr(buf);
 
-	_Buffer		= buf;
+	_Buffer		= (byte*)buf;
 	_Capacity	= len;
 	_Position	= 0;
 	CanWrite	= true;
@@ -92,7 +92,7 @@ byte* Stream::GetBuffer() const { return _Buffer; }
 byte* Stream::Current() const { return &_Buffer[_Position]; }
 
 // 从当前位置读取数据
-uint Stream::Read(byte* buf, uint offset, int count)
+uint Stream::Read(void* buf, uint offset, int count)
 {
 	assert_param2(buf, "从数据流读取数据需要有效的缓冲区");
 
@@ -105,7 +105,7 @@ uint Stream::Read(byte* buf, uint offset, int count)
 		count = remain;
 
 	// 复制需要的数据
-	memcpy(buf + offset, Current(), count);
+	memcpy((byte*)buf + offset, Current(), count);
 
 	// 游标移动
 	_Position += count;
@@ -133,20 +133,20 @@ uint Stream::ReadEncodeInt()
 }
 
 // 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
-uint Stream::Read(ByteArray& bs)
+uint Stream::Read(Array& bs)
 {
 	return Read(bs.GetBuffer(), 0, bs.Length());
 }
 
 // 把数据写入当前位置
-bool Stream::Write(const byte* buf, uint offset, uint count)
+bool Stream::Write(const void* buf, uint offset, uint count)
 {
 	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
 
 	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;
 
-	memcpy(Current(), buf + offset, count);
+	memcpy(Current(), (byte*)buf + offset, count);
 
 	_Position += count;
 	// 内容长度不是累加，而是根据位置而扩大
@@ -195,7 +195,7 @@ uint Stream::Write(const string str)
 }
 
 // 把字节数组的数据写入到数据流。不包含长度前缀
-bool Stream::Write(const ByteArray& bs)
+bool Stream::Write(const Array& bs)
 {
 	return Write(bs.GetBuffer(), 0, bs.Length());
 }
@@ -220,7 +220,7 @@ int Stream::Peek() const
 }
 
 // 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
-uint Stream::ReadArray(ByteArray& bs)
+uint Stream::ReadArray(Array& bs)
 {
 	uint len = ReadEncodeInt();
 	if(!len) return 0;
@@ -260,36 +260,18 @@ ByteArray Stream::ReadArray()
 }
 
 // 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
-bool Stream::WriteArray(const ByteArray& bs)
+bool Stream::WriteArray(const Array& bs)
 {
 	WriteEncodeInt(bs.Length());
 	return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
-// 从数据流读取变长数据到字符串。以压缩整数开头表示长度
-uint Stream::ReadString(String& str)
-{
-	ByteArray bs(str.Capacity() - str.Length());
-	uint len = ReadArray(bs);
-	if(!len) return 0;
-
-	str.Copy((char*)bs.GetBuffer(), len, str.Length());
-
-	return len;
-}
-
 String Stream::ReadString()
 {
 	String str;
-	ReadString(str);
+	ReadArray(str);
 
 	return str;
-}
-// 把字符串作为变长数据写入到数据流。以压缩整数开头表示长度
-bool Stream::WriteString(const String& str)
-{
-	ByteArray bs(str);
-	return WriteArray(bs);
 }
 
 byte	Stream::ReadByte()
