@@ -26,9 +26,6 @@ Port::Port()
 	Group	= NULL;
 	Mask	= 0;
 	Opened	= false;
-#if DEBUG
-	Debug	= true;
-#endif
 }
 
 #ifndef TINY
@@ -115,8 +112,8 @@ bool Port::Open()
 
 #if DEBUG
 	// 保护引脚
-	if(Debug) Show();
-	Reserve(_Pin, true, Debug);
+	Show();
+	Reserve(_Pin, true);
 #endif
 
 	GPIO_InitTypeDef gpio;
@@ -127,7 +124,7 @@ bool Port::Open()
     GPIO_Init(Group, &gpio);
 
 #if DEBUG
-	if(Debug) debug_printf("\r\n");
+	debug_printf("\r\n");
 #endif
 
 	Opened = true;
@@ -144,9 +141,9 @@ void Port::Close()
 
 #if DEBUG
 	// 保护引脚
-	if(Debug) Show();
-	Reserve(_Pin, false, Debug);
-	if(Debug) debug_printf("\r\n");
+	Show();
+	Reserve(_Pin, false);
+	debug_printf("\r\n");
 #endif
 
 	Opened = false;
@@ -207,9 +204,9 @@ byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA
 static ushort Reserved[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
 
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
-bool Port::Reserve(Pin pin, bool flag, bool debug)
+bool Port::Reserve(Pin pin, bool flag)
 {
-	if(debug) debug_printf("::");
+	debug_printf("::");
     int port = pin >> 4, bit = 1 << (pin & 0x0F);
     if (flag) {
         if (Reserved[port] & bit) {
@@ -219,7 +216,7 @@ bool Port::Reserve(Pin pin, bool flag, bool debug)
 		}
         Reserved[port] |= bit;
 
-		if(debug) debug_printf("打开 P%c%d", _PIN_NAME(pin));
+		debug_printf("打开 P%c%d", _PIN_NAME(pin));
     } else {
         Reserved[port] &= ~bit;
 
@@ -236,9 +233,9 @@ bool Port::Reserve(Pin pin, bool flag, bool debug)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		if(debug) debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
+		debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
 #else
-		if(debug) debug_printf("关闭 P%c%d", _PIN_NAME(pin));
+		debug_printf("关闭 P%c%d", _PIN_NAME(pin));
 #endif
 	}
 
@@ -253,9 +250,38 @@ bool Port::IsBusy(Pin pin)
 }
 #endif
 
-// 引脚配置
-#define REGION_Config 1
-#ifdef REGION_Config
+/******************************** OutputPort ********************************/
+
+// 输出端口
+#define REGION_Output 1
+#ifdef REGION_Output
+
+OutputPort::OutputPort() : Port() { Init(); }
+
+OutputPort::OutputPort(Pin pin, bool invert, bool openDrain, byte speed) : Port()
+{
+	Init(invert, openDrain, speed);
+	Set(pin);
+	Open();
+}
+
+OutputPort& OutputPort::Init(Pin pin, bool invert)
+{
+	Port::Set(pin);
+
+	Invert	= invert;
+
+	return *this;
+}
+
+void OutputPort::Init(bool invert, bool openDrain, byte speed)
+{
+	OpenDrain	= openDrain;
+	Speed		= speed;
+	Invert		= invert;
+	InitValue	= false;
+}
+
 void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 #ifndef STM32F4
@@ -265,15 +291,12 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 
 #if DEBUG
-	if(Debug)
-	{
-		debug_printf(" %dM", Speed);
-		if(OpenDrain)
-			debug_printf(" 开漏");
-		else
-			debug_printf(" 推挽");
-		if(Invert) debug_printf(" 倒置");
-	}
+	debug_printf(" %dM", Speed);
+	if(OpenDrain)
+		debug_printf(" 开漏");
+	else
+		debug_printf(" 推挽");
+	if(Invert) debug_printf(" 倒置");
 #endif
 
 	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
@@ -289,63 +312,24 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 
 	switch(Speed)
 	{
-		case 2: gpio.GPIO_Speed = GPIO_Speed_2MHz; break;
+		case 2:		gpio.GPIO_Speed = GPIO_Speed_2MHz;	break;
 #ifndef STM32F4
-		case 10: gpio.GPIO_Speed = GPIO_Speed_10MHz; break;
+		case 10:	gpio.GPIO_Speed = GPIO_Speed_10MHz;	break;
 #else
-		case 25: gpio.GPIO_Speed = GPIO_Speed_25MHz; break;
-		case 100: gpio.GPIO_Speed = GPIO_Speed_100MHz; break;
+		case 25:	gpio.GPIO_Speed = GPIO_Speed_25MHz;	break;
+		case 100:	gpio.GPIO_Speed = GPIO_Speed_100MHz;break;
 #endif
-		case 50: gpio.GPIO_Speed = GPIO_Speed_50MHz; break;
+		case 50:	gpio.GPIO_Speed = GPIO_Speed_50MHz;	break;
 	}
 
 #ifdef STM32F1
-	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+	gpio.GPIO_Mode	= OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
 #else
-	gpio.GPIO_Mode = GPIO_Mode_OUT;
-	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+	gpio.GPIO_Mode	= GPIO_Mode_OUT;
+	gpio.GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
 
-void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
-{
-	OutputPort::OnOpen(gpio);
-
-#ifdef STM32F1
-	gpio.GPIO_Mode = OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
-#else
-	gpio.GPIO_Mode = GPIO_Mode_AF;
-	gpio.GPIO_OType = OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-}
-
-void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
-{
-	Port::OnOpen(gpio);
-
-#ifdef STM32F1
-	gpio.GPIO_Mode = GPIO_Mode_AIN; //
-#else
-	gpio.GPIO_Mode = GPIO_Mode_AN;
-	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-}
-
-OutputPort& OutputPort::Init(Pin pin, bool invert)
-{
-	Port::Set(pin);
-
-	Invert	= invert;
-
-	return *this;
-}
-#endif
-
-/******************************** OutputPort ********************************/
-
-// 输出端口
-#define REGION_Output 1
-#ifdef REGION_Output
 ushort OutputPort::ReadGroup()    // 整组读取
 {
 	return GPIO_ReadOutputData(Group);
@@ -424,6 +408,30 @@ void OutputPort::Write(Pin pin, bool value)
     else
         GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
+
+/******************************** AlternatePort ********************************/
+
+AlternatePort::AlternatePort() : OutputPort() { Init(false, false); }
+AlternatePort::AlternatePort(Pin pin, bool invert, bool openDrain, byte speed)
+	: OutputPort()
+{
+	Init(invert, openDrain, speed);
+	Set(pin);
+	Open();
+}
+
+void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
+{
+	OutputPort::OnOpen(gpio);
+
+#ifdef STM32F1
+	gpio.GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+#else
+	gpio.GPIO_Mode	= GPIO_Mode_AF;
+	gpio.GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+#endif
+}
+
 #endif
 
 /******************************** InputPort ********************************/
@@ -672,23 +680,20 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	// 如果不是硬件事件，则默认使用20ms抖动
 	if(!HardEvent) ShakeTime = 20;
 #if DEBUG
-	if(Debug)
-	{
-		debug_printf(" 抖动=%dms", ShakeTime);
-		if(Floating)
-			debug_printf(" 浮空");
-		else if(Pull == UP)
-			debug_printf(" 上拉");
-		else if(Pull == DOWN)
-			debug_printf(" 下拉");
-		if(Mode & Rising) debug_printf(" 上升沿");
-		if(Mode & Falling) debug_printf(" 下降沿");
+	debug_printf(" 抖动=%dms", ShakeTime);
+	if(Floating)
+		debug_printf(" 浮空");
+	else if(Pull == UP)
+		debug_printf(" 上拉");
+	else if(Pull == DOWN)
+		debug_printf(" 下拉");
+	if(Mode & Rising) debug_printf(" 上升沿");
+	if(Mode & Falling) debug_printf(" 下降沿");
 
-		if(Invert)
-			debug_printf(" 倒置");
-		else if(Read())
-			debug_printf(" 倒置错误（可能需要Invert=true） ");
-	}
+	if(Invert)
+		debug_printf(" 倒置");
+	else if(Read())
+		debug_printf(" 倒置错误（可能需要Invert=true） ");
 #endif
 
 	Port::OnOpen(gpio);
@@ -779,3 +784,17 @@ void InputPort::Register(IOReadHandler handler, void* param)
 }
 
 #endif
+
+/******************************** AnalogInPort ********************************/
+
+void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
+{
+	Port::OnOpen(gpio);
+
+#ifdef STM32F1
+	gpio.GPIO_Mode	= GPIO_Mode_AIN; //
+#else
+	gpio.GPIO_Mode	= GPIO_Mode_AN;
+	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+#endif
+}

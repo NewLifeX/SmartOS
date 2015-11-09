@@ -21,9 +21,6 @@ public:
     Pin				_Pin;		// 针脚
     ushort			Mask;		// 组内引脚位。每个引脚一个位
 	bool			Opened;		// 是否已经打开
-#if DEBUG
-	bool			Debug;		// 是否打开调试日志。默认打开
-#endif
 
     Port& Set(Pin pin);			// 设置引脚
 	bool Empty() const;
@@ -42,7 +39,7 @@ public:
 
 #if DEBUG
 	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
-	static bool Reserve(Pin pin, bool flag, bool debug);
+	static bool Reserve(Pin pin, bool flag);
 	static bool IsBusy(Pin pin);	// 引脚是否被保护
 #endif
 
@@ -70,13 +67,8 @@ public:
 	bool InitValue;	// 初始值，在Open之前控制。默认false，受Invert影响
     byte Speed;		// 速度
 
-    OutputPort() : Port() { Init(); }
-    OutputPort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED) : Port()
-	{
-		Init(invert, openDrain, speed);
-		Set(pin);
-		Open();
-	}
+    OutputPort();
+    OutputPort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 	OutputPort& Init(Pin pin, bool invert);
 
@@ -107,13 +99,7 @@ public:
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 
-    void Init(bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED)
-    {
-        OpenDrain	= openDrain;
-        Speed		= speed;
-        Invert		= invert;
-		InitValue	= false;
-    }
+    void Init(bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 };
 
 /******************************** AlternatePort ********************************/
@@ -122,14 +108,8 @@ protected:
 class AlternatePort : public OutputPort
 {
 public:
-	AlternatePort() : OutputPort() { Init(false, false); }
-    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED)
-		: OutputPort()
-	{
-		Init(invert, openDrain, speed);
-		Set(pin);
-		Open();
-	}
+	AlternatePort();
+    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
