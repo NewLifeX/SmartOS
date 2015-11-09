@@ -330,15 +330,14 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		// 同步数据
 		case 0x01:
 		{
-			Device* dv = Current;			
+			Device* dv = FindDevice(msg.Src);			
 			byte ver = 0;			
 			if(dv->Version > 1)
 			{   
 		      Stream ms(msg.Data, msg.Length);	
 			  
 			  ms.ReadByte();
-	          ushort crc  = ms.ReadUInt16();
-			  
+	          ushort crc  = ms.ReadUInt16();				  
 			  ushort crc1 = Crc::Hash16(dv->HardID.GetBuffer(), 12);
 			  
 			  if(crc ==crc1) ver = 2;		 			    
