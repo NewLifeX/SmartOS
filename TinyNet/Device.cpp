@@ -19,6 +19,7 @@ Device::Device() : HardID(0), Name(0), Pass(0)
 
 	RegTime		= 0;
 	LoginTime	= 0;
+	pingLenth	= 0;
 }
 
 void Device::Write(Stream& ms) const

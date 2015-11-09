@@ -31,6 +31,8 @@ public:
 	uint		LoginTime;	// 登录时间。秒
 
 	ByteArray	Store;		// 数据存储区
+	
+	byte		pingLent;	// ping指令长度
 
 	Device();
 
