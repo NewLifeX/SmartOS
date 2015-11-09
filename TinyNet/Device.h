@@ -32,8 +32,6 @@ public:
 
 	ByteArray	Store;		// 数据存储区
 	
-	byte		pingLent;	// ping指令长度
-
 	Device();
 
 	// 序列化到消息数据流
