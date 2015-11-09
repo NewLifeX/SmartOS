@@ -29,7 +29,6 @@ String Object::ToString() const
 
 void Object::Show(bool newLine) const
 {
-	//String str;
 	// 为了减少堆分配，采用较大的栈缓冲区
 	char cs[0x200];
 	String str(cs, ArrayLength(cs));
@@ -65,9 +64,11 @@ void* Array::GetBuffer() const { return _Arr; }
 
 int memlen(const void* data)
 {
+	if(!data) return 0;
+
 	// 自动计算长度，\0结尾，单字节大小时才允许
 	int len = 0;
-	byte* p =(byte*)data;
+	const byte* p =(const byte*)data;
 	while(*p++) len++;
 	return len;
 }
@@ -138,9 +139,11 @@ bool Array::SetLength(int length, bool bak)
 bool Array::SetItem(const void* data, int index, int count)
 {
 	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(data, "SetItem数据不能为空指针");
+
 	// count<=0 表示设置全部元素
 	if(count <= 0) count = _Length - index;
-	assert_param2(count > 0, "TArray::Set的个数必须大于0");
+	assert_param2(count > 0, "Array::SetItem的个数必须大于0");
 
 	// 检查长度是否足够
 	int len2 = index + count;
@@ -196,6 +199,8 @@ bool Array::Set(const void* data, int len)
 int Array::Copy(const void* data, int len, int index)
 {
 	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(data, "Copy数据不能为空指针");
+
 	if(!len) len = memlen(data);
 
 	// 检查长度是否足够
@@ -214,6 +219,8 @@ int Array::Copy(const void* data, int len, int index)
 // 把当前数组复制到目标缓冲区。未指定长度len时复制全部
 int Array::CopyTo(void* data, int len, int index) const
 {
+	assert_param2(data, "CopyTo数据不能为空指针");
+
 	// 数据长度可能不足
 	if(_Length - index < len || len == 0) len = _Length - index;
 	if(len <= 0) return 0;
@@ -228,6 +235,8 @@ int Array::CopyTo(void* data, int len, int index) const
 void Array::Clear()
 {
 	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_Arr, "Clear数据不能为空指针");
+
 	memset(_Arr, 0, _Size * _Length);
 }
 
@@ -235,6 +244,7 @@ void Array::Clear()
 int Array::Copy(const Array& arr, int index)
 {
 	assert_param2(_canWrite, "禁止修改数组数据");
+
 	if(&arr == this) return 0;
 	if(arr.Length() == 0) return 0;
 
@@ -245,6 +255,7 @@ int Array::Copy(const Array& arr, int index)
 void Array::SetItemAt(int i, const void* item)
 {
 	assert_param2(_canWrite, "禁止修改数组数据");
+
 	// 检查长度，不足时扩容
 	CheckCapacity(i + 1, _Length);
 
@@ -286,26 +297,12 @@ bool operator==(const Array& bs1, const Array& bs2)
 {
 	if(bs1.Length() != bs2.Length()) return false;
 
-	/*for(int i=0; i<bs1.Length(); i++)
-	{
-		if(bs1[i] != bs2[i]) return false;
-	}
-
-	return true;*/
-
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) == 0;
 }
 
 bool operator!=(const Array& bs1, const Array& bs2)
 {
 	if(bs1.Length() != bs2.Length()) return true;
-
-	/*for(int i=0; i<bs1.Length(); i++)
-	{
-		if(bs1[i] != bs2[i]) return true;
-	}
-
-	return false;*/
 
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
 }
@@ -384,12 +381,6 @@ String ByteArray::ToHex(char sep, int newLine) const
 // 保存到普通字节数组，首字节为长度
 int ByteArray::Load(const void* data, int maxsize)
 {
-	/*// 压缩编码整数最大4字节
-	Stream ms(data, 4);
-	_Length = ms.ReadEncodeInt();
-
-	return Copy(data + ms.Position(), _Length);*/
-
 	const byte* p = (const byte*)data;
 	_Length = p[0] <= maxsize ? p[0] : maxsize;
 
@@ -399,12 +390,6 @@ int ByteArray::Load(const void* data, int maxsize)
 // 从普通字节数据组加载，首字节为长度
 int ByteArray::Save(void* data, int maxsize) const
 {
-	/*// 压缩编码整数最大4字节
-	Stream ms(data, 4);
-	ms.WriteEncodeInt(_Length);
-
-	return CopyTo(data + ms.Position(), _Length);*/
-
 	assert_param(_Length <= 0xFF);
 
 	byte* p = (byte*)data;

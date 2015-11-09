@@ -14,18 +14,20 @@ public:
 	String		Type;		// 类型
 	String		Name;		// 名称
 	ulong		LocalTime;	// 时间ms
-	byte		ErrCode;	//错误碼
 	IPEndPoint	EndPoint;
 	ByteArray	Ciphers;
+
 	ByteArray	Key;		// 密钥
-	
+
+	byte		ErrCode;	// 错误码
+
 	byte	Protocol;		// 协议，UDP=0/TCP=1
 	ushort	Port;			// 本地端口
-	
+
 	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
 	ushort	ServerPort;		// 服务器端口
 	char	Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
-	
+
 	// 初始化消息，各字段为0
 	HelloMessage();
 	HelloMessage(HelloMessage& msg);

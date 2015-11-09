@@ -164,7 +164,7 @@ protected:
 	T		Arr[ArraySize];	// 内部缓冲区
 
 	virtual void* Alloc(int len) { return new T[len]; }
-	
+
 public:
 	// 数组长度
     virtual int Length() const { return _Length; }
@@ -186,6 +186,14 @@ public:
 		}
 
 		_Size	= sizeof(T);
+	}
+
+	// 重载等号运算符，使用另一个固定数组来初始化
+    TArray& operator=(const TArray& arr)
+	{
+		Array::operator=(arr);
+
+		return *this;
 	}
 
 	// 让父类的所有Set函数在这里可见

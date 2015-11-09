@@ -2,7 +2,7 @@
 #include "HelloMessage.h"
 
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8本地时间 + 对方IP端口 + S加密算法 + N密钥
+// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
 
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Ciphers(1), Key(0)
@@ -11,8 +11,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 
 	ushort code = __REV16(Sys.Code);
 	ByteArray bs((byte*)&code, 2);
-	Type = bs.ToHex('\0');
-	//Name.Set(Sys.Company); 	// Sys.company 是一个字符串   在flash里面   Name.Clear() 会出错
+	Type		= bs.ToHex('\0');
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
@@ -39,20 +38,19 @@ bool HelloMessage::Read(Stream& ms)
 
 	LocalTime	= ms.ReadUInt64();
 
-	EndPoint.Address = ms.ReadBytes(4);
-	EndPoint.Port = ms.ReadUInt16();
+	EndPoint.Address	= ms.ReadBytes(4);
+	EndPoint.Port		= ms.ReadUInt16();
 
 	if(!Reply)
 	{
-		Ciphers = ms.ReadArray();
+		Ciphers	= ms.ReadArray();
 	}
 	else
 	{
-		//if()
 		Ciphers[0]	= ms.ReadByte();
 		// 读取数组前，先设置为0，避免实际长度小于数组长度
 		Key.SetLength(0);
-		Key = ms.ReadArray();
+		Key		= ms.ReadArray();
 	}
 
 	return false;
@@ -67,10 +65,7 @@ void HelloMessage::Write(Stream& ms)
 	if(Name.Length() != 0)
 		ms.WriteString(Name);
 	else
-	{
-		String _name(Sys.Company);
-		ms.WriteString(_name);
-	}
+		ms.WriteString(String(Sys.Company));
 
 	ms.Write(LocalTime);
 
