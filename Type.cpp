@@ -423,7 +423,7 @@ String& ByteArray::ToStr(String& str) const
 void ByteArray::Show(bool newLine) const
 {
 	// 采用栈分配然后复制，避免堆分配
-	char cs[256];
+	char cs[0x200];
 	String str(cs, ArrayLength(cs));
 	// 清空字符串，变成0长度，因为ToHex内部是附加
 	str.Clear();
