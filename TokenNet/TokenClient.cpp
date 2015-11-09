@@ -23,7 +23,7 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	LastActive	= 0;
 	Delay		= 0;
 	
-   IsOldOrder=false;	//是否旧指令
+	IsOldOrder	= false;	//是否旧指令
 
 	Control		= NULL;
 
@@ -41,7 +41,7 @@ void TokenClient::Open()
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
 	
-	TokenConfig			= TokenConfig::Init();
+	TokenConfig			= TokenConfig::Current;
 
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;

@@ -29,7 +29,7 @@ struct TokenConfig
 	
 	void LoadDefault();
 
-	void Load();
+	bool Load();
 	void Save();
 	void Show();
 
@@ -38,7 +38,7 @@ struct TokenConfig
 	void Read(Stream& ms);
 
 	static TokenConfig* Current;
-	static TokenConfig*	Init();
+	static TokenConfig*	Init(const char* vendor, byte protocol, ushort sport, ushort port);
 };
 
 #pragma pack(pop)	// 恢复对齐状态

@@ -27,7 +27,6 @@ public:
 	static TinyServer* CreateServer(ITransport* port);
 };
 
-void* InitConfig(void* data, uint size);
 void ClearConfig();
 
 void CheckUserPress(InputPort* port, bool down, void* param = NULL);

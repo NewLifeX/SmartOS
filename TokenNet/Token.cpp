@@ -158,6 +158,9 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 #else
 	WatchDog::Start();
 #endif
+
+	// Flash最后一块作为配置区
+	Config::Current	= &Config::CreateFlash();
 }
 
 ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert)
@@ -204,30 +207,6 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	return zb;
 }
 
-void* InitConfig(void* data, uint size)
-{
-	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
-
-	// 启动信息
-	HotConfig* hot	= &HotConfig::Current();
-	hot->Times++;
-
-	data = hot->Next();
-	if(hot->Times == 1)
-	{
-		memset(data, 0x00, size);
-		((byte*)data)[0] = size;
-	}
-
-	TinyConfig* tc = TinyConfig::Init();
-
-	// 尝试加载配置区设置
-	tc->Load();
-
-	return data;
-}
-
 void ClearConfig()
 {
 	//TokenConfig* cfg = TokenConfig::Current;
@@ -256,35 +235,38 @@ void CheckUserPress(InputPort* port, bool down, void* param)
 
 void StartGateway(void* param)
 {
-	W5500* net	= (W5500*)param;
-	// 根据DNS获取云端IP地址
-	UdpClient udp(net);
-	DNS dns(&udp);
-	udp.Open();
-
-	TokenConfig* tk = TokenConfig::Current;
-
-	IPAddress ip = dns.Query(tk->Server);
-	ip.Show(true);
-
 	ISocket* socket	= NULL;
 	Gateway* gw	= Gateway::Current;
 	if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
 
-	if(ip != IPAddress::Any())
+	TokenConfig* tk = TokenConfig::Current;
+
+	if(tk && tk->Server[0])
 	{
-		tk->ServerIP = ip.Value;
+		W5500* net	= (W5500*)param;
+		// 根据DNS获取云端IP地址
+		UdpClient udp(net);
+		DNS dns(&udp);
+		udp.Open();
 
-		if(socket) socket->Remote.Address = ip;
+		IPAddress ip = dns.Query(tk->Server, 2000);
+		ip.Show(true);
+
+		if(ip != IPAddress::Any())
+		{
+			tk->ServerIP = ip.Value;
+
+			if(socket) socket->Remote.Address = ip;
+		}
+
+		tk->Save();
 	}
-
-	tk->Save();
-
-	debug_printf("\r\n");
 
 	// 此时启动网关服务
 	if(gw)
 	{
+		debug_printf("\r\n");
+
 		IPEndPoint& ep = gw->Client->Hello.EndPoint;
 		if(socket) ep.Address = socket->Host->IP;
 

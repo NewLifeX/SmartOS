@@ -15,7 +15,7 @@ void TokenConfig::LoadDefault()
 	PingTime	= 10;
 }
 
-void TokenConfig::Load()
+bool TokenConfig::Load()
 {
 	// Flash最后一块作为配置区
 	if(!Config::Current) Config::Current = &Config::CreateFlash();
@@ -24,10 +24,17 @@ void TokenConfig::Load()
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
 	ByteArray bs(&Length, len);
-	if(!Config::Current->GetOrSet("TKCF", bs))
+	/*if(!Config::Current->GetOrSet("TKCF", bs))
 		debug_printf("TokenConfig::Load 首次运行，创建配置区！\r\n");
 	else
+		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");*/
+	if(Config::Current->Get("TKCF", bs))
+	{
 		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");
+		return true;
+	}
+
+	return false;
 }
 
 void TokenConfig::Save()
@@ -73,11 +80,35 @@ void TokenConfig::Read(Stream& ms)
 	ms.Read(&Length, 0, len);
 }
 
-TokenConfig* TokenConfig::Init()
+TokenConfig* TokenConfig::Init(const char* vendor, byte protocol, ushort sport, ushort port)
 {
 	static TokenConfig tc;
 	TokenConfig::Current = &tc;
 	tc.LoadDefault();
+
+	//strcpy(tc.Vendor, vendor);
+	bool rs = tc.Load();
+
+	if(tc.Vendor[0] == 0)
+	{
+		strncpy(tc.Vendor, vendor, ArrayLength(tc.Vendor));
+
+		rs	= false;
+	}
+
+	if(tc.Server[0] == 0)
+	{
+		strncpy(tc.Server, tc.Vendor, ArrayLength(tc.Server));
+
+		//tc.ServerIP		= svr.Value;
+		tc.ServerPort	= sport;
+		tc.Port			= port;
+
+		rs	= false;
+	}
+	if(!rs) tc.Save();
+
+	tc.Show();
 
 	return &tc;
 }
