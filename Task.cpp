@@ -30,6 +30,15 @@ Task::~Task()
 
 bool Task::Execute(ulong now)
 {
+	Action func = Callback;
+	if(!func)
+	{
+		//debug_printf("任务 %d %s Enable=%d 委托不能为空 \r\n", ID, Name, Enable);
+		ShowStatus();
+		assert_param2(func, "任务委托不能为空");
+		//if(!func) return false;
+	}
+
 	if(Deepth >= MaxDeepth) return false;
 	Deepth++;
 
@@ -45,7 +54,7 @@ bool Task::Execute(ulong now)
 
 	Task* cur = Host->Current;
 	Host->Current = this;
-	Callback(Param);
+	func(Param);
 	Host->Current = cur;
 
 	// 累加任务执行次数和时间
@@ -179,7 +188,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, strin
 	Count++;
 
 #if DEBUG
-	debug_printf("%s::添加%d %s First=%dms Period=%dms\r\n", Name, task->ID, name, dueTime, period);
+	debug_printf("%s::添加%d %s First=%dms Period=%dms 0x%08x\r\n", Name, task->ID, name, dueTime, period, func);
 #endif
 
 	return task->ID;
