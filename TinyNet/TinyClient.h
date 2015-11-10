@@ -48,7 +48,7 @@ public:
 	void Report(Message& msg);
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const ByteArray& bs);
-	void ReportPing(Message& msg);
+	bool ReportPing(Message& msg);
 
 	uint		NextReport;	// 下次上报偏移，0不动
 	void ReportAsync(uint offset);
