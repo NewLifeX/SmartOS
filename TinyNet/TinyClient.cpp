@@ -55,10 +55,6 @@ void TinyClient::Open()
 
 		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
-	//算硬件ID的CRC
-	HardCrc=Crc::Hash16(&Sys.ID,12);
-	
-	debug_printf("ID :0x%08X ,计算得CRC 0x%08X \r\n",Sys.ID, HardCrc);
 	
 	if(Sys.Version > 1) Encryption = true;
 	
@@ -330,13 +326,14 @@ void TinyClient::Report(Message& msg)
 	msg.Length = ms.Position();
 }
 
-void TinyClient::ReportPing(Message& msg)
+bool TinyClient::ReportPing(Message& msg)
 {
 	// 没有服务端时不要上报
-	if(!Server) return;
+	if(!Server) return false;
+	if(Store.Data.Length() > 18) return false;//主数据区长度超过18字节不带CRC校验
 
 	Stream ms = msg.ToStream();
-	ms.Write((byte)0x01);	// 子功能码
+	ms.Write((byte)0x02);	// 子功能码
 	ms.Write(HardCrc);		//硬件CRC
 	ms.Write((byte)0x00);	// 起始地址
 	ms.Write((byte)Store.Data.Length());	// 长度
@@ -450,7 +447,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Joining		= false;
 
 	Cfg->SoftVer	= dm.Version;
-	if(Cfg->SoftVer > 1) Encryption=true;//大于1的版本加密		
+	if(Cfg->SoftVer < 2) Encryption=false;//小于2的版本加不加密
+	
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
@@ -549,9 +547,11 @@ void TinyClient::Ping()
 
 	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
 	if(Encryption)
-	   ReportPing(msg);
+	  if(!ReportPing(msg));
+          Report(msg);	
     else
-	   Report(msg);	  
+	   Report(msg);	
+   
 	Send(msg);
 
 	if(LastActive == 0) LastActive = Sys.Ms();

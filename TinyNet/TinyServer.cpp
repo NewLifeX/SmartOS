@@ -315,22 +315,21 @@ bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {
+	Device* dv = FindDevice(msg.Src);	
 	// 网关内没有相关节点信息时不鸟他
-	if(FindDevice(msg.Src) == NULL)return false;
+	if(dv == NULL)return false;
 	
 	// 准备一条响应指令	
 	TinyMessage rs;
 	rs.Code = msg.Code;
 	rs.Dest = msg.Src;
-	rs.Sequence	= msg.Sequence;
-
+	rs.Sequence	= msg.Sequence;					
 	// 子操作码
 	switch(msg.Data[0])
 	{
 		// 同步数据
 		case 0x01:
-		{
-			Device* dv = FindDevice(msg.Src);			
+		{						
 			byte ver = 0;			
 			if(dv->Version > 1)
 			{   
@@ -365,9 +364,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				}
 			}
 		}
-	}
-
-	
+	}	
 	//todo。告诉客户端有多少待处理指令
 
 	Reply(rs);
