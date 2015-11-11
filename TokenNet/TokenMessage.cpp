@@ -116,7 +116,6 @@ void TokenMessage::Show() const
 #if MSG_DEBUG
 	assert_ptr(this);
 
-
 	byte code = Code;
 	if(Reply) code |= 0x80;
 	if(Error) code |= 0x40;
@@ -135,6 +134,8 @@ void TokenMessage::Show() const
 	{
 		assert_ptr(Data);
 		debug_printf(" Data[%d]=", Length);
+		// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
+		if(Length > 32) debug_printf("\r\n");
 		ByteArray(Data, Length).Show();
 	}
 	debug_printf("\r\n");
@@ -427,11 +428,12 @@ void TokenController::ShowMessage(string action, Message& msg)
 	if(msg.Error)
 	{
 		debug_printf("Error=0x%02X ", msg.Data[0]);
-		if(msg.Data[0] == 0x01)
+		if(msg.Data[0] == 0x01 && msg.Length - 1 < 0x40)
 		{
 			Stream ms(msg.Data + 1, msg.Length - 1);
 			ms.ReadString().Show(false);
 		}
+		debug_printf("\r\n");
 	}
 #endif
 }
