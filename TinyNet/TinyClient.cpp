@@ -169,6 +169,9 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
+	
+	if(ReadCfg(offset,ms)) return;
+	
 	uint len	= ms.ReadEncodeInt();
 
 	// 准备响应数据
