@@ -35,6 +35,7 @@ public:
 
 	// 发送数据
 	bool Write(const ByteArray& bs);
+	bool Write(const ByteArray& bs, void* opt);
 	// 接收数据
 	uint Read(ByteArray& bs);
 
@@ -51,6 +52,7 @@ protected:
 	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
 	virtual bool OnWrite(const ByteArray& bs) = 0;
+	virtual bool OnWriteEx(const ByteArray& bs, void* opt);
 	virtual uint OnRead(ByteArray& bs) = 0;
 
 	// 是否有回调函数

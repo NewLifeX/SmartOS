@@ -185,6 +185,7 @@ public:
 	virtual void RaiseReceive();
 
 private:
+	virtual bool OnWriteEx(const ByteArray& bs, void* opt);
 };
 
 #endif

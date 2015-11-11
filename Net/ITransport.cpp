@@ -63,6 +63,17 @@ bool ITransport::Write(const ByteArray& bs)
 	return OnWrite(bs);
 }
 
+// 发送数据
+bool ITransport::Write(const ByteArray& bs, void* opt)
+{
+	// 特别是接口要检查this指针
+	assert_ptr(this);
+
+	if(!Opened && !Open()) return false;
+
+	return OnWriteEx(bs, opt);
+}
+
 // 接收数据
 uint ITransport::Read(ByteArray& bs)
 {
@@ -90,6 +101,11 @@ uint ITransport::OnReceive(ByteArray& bs, void* param)
 	if(_handler) return _handler(this, bs, _param, param);
 
 	return 0;
+}
+
+bool ITransport::OnWriteEx(const ByteArray& bs, void* opt)
+{
+	return OnWrite(bs);
 }
 
 /******************************** PackPort ********************************/

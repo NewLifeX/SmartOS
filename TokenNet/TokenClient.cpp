@@ -208,14 +208,17 @@ bool TokenClient::OnHello(TokenMessage& msg)
 	else if(!msg.Reply)
 	{
 		TokenMessage rs;
-		rs.Code = msg.Code;
+		rs.Code		= msg.Code;
 
 		HelloMessage ext2(Hello);
-		ext2.Reply = msg.Reply;
+		ext2.Reply	= msg.Reply;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
 		ext2.LocalTime = Sys.Ms() * 1000;
 		ext2.WriteMessage(rs);
+
+		// 源地址发回去
+		rs.State	= msg.State;
 
 		Reply(rs);
 	}

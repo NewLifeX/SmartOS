@@ -1321,6 +1321,14 @@ bool UdpClient::SendTo(const ByteArray& bs, const IPEndPoint& remote)
 	return rs;
 }
 
+bool UdpClient::OnWriteEx(const ByteArray& bs, void* opt)
+{
+	IPEndPoint* ep = (IPEndPoint*)opt;
+	if(!ep) return OnWrite(bs);
+
+	return SendTo(bs, *ep);
+}
+
 void UdpClient::OnProcess(byte reg)
 {
 	S_Interrupt ir;

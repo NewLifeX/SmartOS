@@ -171,7 +171,7 @@ bool Controller::Send(Message& msg)
 	byte* p = ms.GetBuffer();*/
 
 	ByteArray bs(ms.GetBuffer(), ms.Position());
-	return Port->Write(bs);
+	return Port->Write(bs, msg.State);
 }
 
 bool Controller::Reply(Message& msg)
