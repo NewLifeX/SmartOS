@@ -62,14 +62,14 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	Controller* control = (Controller*)param;
 
 #if MSG_DEBUG
-	/*msg_printf("TinyNet::Dispatch[%d] ", len);
+	/*msg_printf("Controller::Dispatch[%d] ", len);
 	// 输出整条信息
 	ByteArray(buf, len).Show(true);*/
 #endif
 	if(len > control->Port->MaxSize)
 	{
 #if MSG_DEBUG
-		msg_printf("TinyNet::Dispatch[%d] ", len);
+		msg_printf("Controller::Dispatch[%d] ", len);
 		// 输出整条信息
 		ByteArray(buf, len).Show(true);
 #endif
@@ -88,7 +88,7 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 		len = ms.Remain();
 #endif
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, NULL))
+		if(!control->Dispatch(ms, NULL, param2))
 		{
 #if MSG_DEBUG
 			// 兼容性处理，如果0x00 0x01 0x02开头，则重新来一次
@@ -97,8 +97,8 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 				ms.SetPosition(p + 1);
 				continue;
 			}
-			
-			msg_printf("TinyNet::DispatchError[%d] ", len);
+
+			msg_printf("Controller::DispatchError[%d] ", len);
 			// 输出整条信息
 			ByteArray(buf, len).Show(true);
 #endif
@@ -112,11 +112,12 @@ uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* pa
 	return 0;
 }
 
-bool Controller::Dispatch(Stream& ms, Message* pmsg)
+bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	byte* buf = ms.Current();
 
-	Message& msg = *pmsg;
+	Message& msg	= *pmsg;
+	msg.State		= param;
 	if(!msg.Read(ms)) return false;
 
 	// 校验

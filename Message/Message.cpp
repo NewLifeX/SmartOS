@@ -8,6 +8,7 @@ Message::Message(byte code)
 	Data	= NULL;
 	Reply	= false;
 	Error	= false;
+	State	= NULL;
 }
 
 // 设置数据。

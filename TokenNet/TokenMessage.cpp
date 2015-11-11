@@ -150,6 +150,8 @@ TokenController::TokenController() : Controller(), Key(0)
 	MinSize = TokenMessage::MinSize;
 	//MaxSize = 1500;
 
+	Server	= NULL;
+
 	// 默认屏蔽心跳日志和确认日志
 	ArrayZero(NoLogCodes);
 	NoLogCodes[0] = 0x03;
@@ -174,6 +176,12 @@ void TokenController::Open()
 	assert_param2(Port, "还没有传输口呢");
 
 	debug_printf("TokenNet::Inited 使用传输接口 %s\r\n", Port->ToString());
+
+	ISocket* sock = dynamic_cast<ISocket*>(Port);
+	if(sock)
+	{
+		Server	= &sock->Remote;
+	}
 
 	if(!Stat)
 	{
@@ -206,10 +214,10 @@ bool TokenController::Send(byte code, byte* buf, uint len)
 	return Send(msg);
 }
 
-bool TokenController::Dispatch(Stream& ms, Message* pmsg)
+bool TokenController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	TokenMessage msg;
-	return Controller::Dispatch(ms, &msg);
+	return Controller::Dispatch(ms, &msg, param);
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
@@ -217,6 +225,24 @@ bool TokenController::Valid(const Message& msg)
 {
 	// 代码为0是非法的
 	if(!msg.Code) return false;
+
+	// 握手和登录指令可直接通过
+	if(msg.Code <= 0x02) return true;
+
+	// 合法来源验证，暂时验证云平台，其它连接将来验证
+	if(Server)
+	{
+		IPEndPoint* svr	= (IPEndPoint*)Server;
+		IPEndPoint* rmt	= (IPEndPoint*)msg.State;
+
+		if(!rmt || *svr != *rmt)
+		{
+			debug_printf("Token::Valid 非法来源 ");
+			if(rmt) rmt->Show();
+			debug_printf("\r\n");
+			return false;
+		}
+	}
 
 #if MSG_DEBUG
 	/*msg_printf("TokenController::Dispatch ");
@@ -383,6 +409,17 @@ void TokenController::ShowMessage(string action, Message& msg)
 	}
 
 	debug_printf("Token::%s ", action);
+
+	if(msg.State)
+	{
+		IPEndPoint* svr	= (IPEndPoint*)Server;
+		IPEndPoint* rmt	= (IPEndPoint*)msg.State;
+		if(!svr || *svr != *rmt)
+		{
+			rmt->Show();
+			debug_printf(" ");
+		}
+	}
 
 	msg.Show();
 

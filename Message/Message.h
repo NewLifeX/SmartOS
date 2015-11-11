@@ -14,6 +14,8 @@ public:
 	bool	Error;	// 是否错误
 	byte*	Data;	// 数据。指向子类内部声明的缓冲区
 
+	void*	State;	// 其它状态数据
+
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
 

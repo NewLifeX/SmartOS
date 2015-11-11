@@ -273,10 +273,10 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	msg.Show();
 }
 
-bool TinyController::Dispatch(Stream& ms, Message* pmsg)
+bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	TinyMessage msg;
-	return Controller::Dispatch(ms, &msg);
+	return Controller::Dispatch(ms, &msg, param);
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理

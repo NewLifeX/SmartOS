@@ -17,7 +17,7 @@ private:
 
 protected:
 
-	virtual bool Dispatch(Stream& ms, Message* pmsg);
+	virtual bool Dispatch(Stream& ms, Message* pmsg, void* param);
 	// 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 	virtual bool Valid(const Message& msg);
 	// 接收处理
