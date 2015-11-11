@@ -330,10 +330,29 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		// 同步数据
 		case 0x01:
 		{											
-			if(dv && msg.Length >= 4)
+			byte ver = 0;			
+			if(dv->Version > 1)
+			{   
+		      Stream ms(msg.Data, msg.Length);	
+			  
+			  ms.ReadByte();
+	          ushort crc  = ms.ReadUInt16();				  
+			  ushort crc1 = Crc::Hash16(dv->HardID.GetBuffer(), 12);
+			  
+			  if(crc ==crc1) ver = 2;		 			    
+			  else
+			  {
+				 debug_printf("设备硬件Crc:%08X,对比Crc：%08X \r\n",crc,crc1); 
+				 debug_printf("设备硬件ID"); 
+				 dv->HardID.Show();			 
+				 Disjoin(rs,crc);
+				 return false;
+			  }
+			}			
+			if(dv && msg.Length >= ver + 4)
 			{
-				byte offset	= msg.Data[1];
-				byte len	= msg.Data[2];
+				byte offset	= msg.Data[ver + 1];
+				byte len	= msg.Data[ver + 2];
 				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
 
 				int remain = dv->Store.Capacity() - offset;
@@ -341,7 +360,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				// 保存一份到缓冲区
 				if(len > 0)
 				{
-					dv->Store.Copy(&msg.Data[3], len, offset);
+					dv->Store.Copy(&msg.Data[3+ver], len, offset);
 				}
 			}
 		}
@@ -372,6 +391,23 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				if(len > 0)
 				{
 				  dv->Store.Copy(&msg.Data[5], len, offset);
+				}
+			}			
+		}		
+		case 0x03:
+		{
+			if(dv && msg.Length >= 4)
+			{
+				byte offset	= msg.Data[1];
+				byte len	= msg.Data[2];
+				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
+
+				int remain = dv->Store.Capacity() - offset;
+				if(len > remain) len = remain;
+				// 保存一份到缓冲区
+				if(len > 0)
+				{
+					dv->Store.Copy(&msg.Data[3], len, offset);
 				}
 			}
 			
