@@ -257,6 +257,7 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 		ms2.Write((byte)2);
 		ms2.WriteEncodeInt(offset);
 		ms2.WriteEncodeInt(len);
+		
 	}
 	else
 	{
