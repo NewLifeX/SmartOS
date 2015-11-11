@@ -176,7 +176,11 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			Token	= 0;
 			Stream ms = msg.ToStream();
 			debug_printf("握手失败，错误码=0x%02X ", ms.ReadByte());
-			ms.ReadString().Show(true);
+			//ms.ReadString().Show(true);
+			char cs[0x100];
+			String str(cs, ArrayLength(cs));
+			ms.ReadArray(str);
+			str.Show(true);
 		}
 		else
 		{

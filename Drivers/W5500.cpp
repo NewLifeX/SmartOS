@@ -1118,15 +1118,8 @@ bool HardSocket::Send(const ByteArray& bs)
 	return true;
 }
 
-bool HardSocket::OnWrite(const ByteArray& bs)
-{
-	return Send(bs);
-}
-
-uint HardSocket::OnRead(ByteArray& bs)
-{
-	return Receive(bs);
-}
+bool HardSocket::OnWrite(const ByteArray& bs) {	return Send(bs); }
+uint HardSocket::OnRead(ByteArray& bs) { return Receive(bs); }
 
 void HardSocket::ClearRX()
 {
