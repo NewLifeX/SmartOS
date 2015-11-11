@@ -8,13 +8,13 @@
 class Message
 {
 public:
-	byte	Code;	// 消息代码
-	byte	Length;	// 数据长度
-	bool	Reply;	// 是否响应指令
-	bool	Error;	// 是否错误
-	byte*	Data;	// 数据。指向子类内部声明的缓冲区
+	byte	Code;		// 消息代码
+	byte	Reply:1;	// 是否响应指令
+	byte	Error:1;	// 是否错误
+	ushort	Length;		// 数据长度
+	byte*	Data;		// 数据。指向子类内部声明的缓冲区
 
-	void*	State;	// 其它状态数据
+	void*	State;		// 其它状态数据
 
 	// 初始化消息，各字段为0
 	Message(byte code = 0);
