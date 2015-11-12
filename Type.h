@@ -41,11 +41,6 @@ class Type;
 // 根对象
 class Object
 {
-private:
-	//Type*	_Type;		// 类型
-
-protected:
-
 public:
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
@@ -54,21 +49,25 @@ public:
 	// 显示对象。默认显示ToString
 	virtual void Show(bool newLine = false) const;
 
-	//Type GetType() const;
+	const Type GetType() const;
 };
 
-/*// 类型
+// 类型
 class Type
 {
 private:
-	type_info* _info;
+	const type_info* _info;
+
+	friend class Object;
+
+	Type(const type_info* ti, int size);
 
 public:
 	int		Size;	// 大小
-	String	Name;	// 名称
+	//String	Name;	// 名称
 
-	Type(type_info* ti);
-};*/
+	const String Name() const;	// 名称
+};
 
 // 数组长度
 #define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))

@@ -37,22 +37,27 @@ void Object::Show(bool newLine) const
 	str.Show(newLine);
 }
 
-/*Type Object::GetType() const
+const Type Object::GetType() const
 {
-	return Type(&typeid(*this));
-}*/
+	return Type(&typeid(*this), sizeof(this[0]));
+}
 
 /******************************** Type ********************************/
 
-/*Type::Type(type_info* ti)
+Type::Type(const type_info* ti, int size)
 {
-	_info = ti;
+	_info	= ti;
 
-	const char* name = typeid(*this).name();
+	Size	= size;
+}
+
+const String Type::Name() const
+{
+	const char* name = _info->name();
 	while(*name >= '0' && *name <= '9') name++;
 
-	Name.Set(name);
-}*/
+	return String(name);
+}
 
 /******************************** TArray ********************************/
 // 数组长度
