@@ -38,6 +38,8 @@ public:
 	bool Write(const ByteArray& bs, void* opt);
 	// 接收数据
 	uint Read(ByteArray& bs);
+	// 控制命令
+	int Control(int cmd, int arg);
 
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = NULL);
