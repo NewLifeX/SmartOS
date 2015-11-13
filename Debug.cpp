@@ -111,12 +111,16 @@ void assert_failed(uint8_t* file, uint32_t line)
 {
     debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
+	TraceStack::Show();
+
     while (1) { }
 }
 
 void assert_failed(const char* msg, uint8_t* file, uint32_t line)
 {
     debug_printf("%s Line %d, %s\r\n", msg, line, file);
+
+	TraceStack::Show();
 
     while (1) { }
 }

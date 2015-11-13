@@ -442,6 +442,8 @@ void TSys::Start()
 
 void TimeSleep(uint us)
 {
+	TS("Sys::TimeSleep");
+
 	// 在这段时间里面，去处理一下别的任务
 	if(Sys.Started && us != 0 && us >= 50)
 	{

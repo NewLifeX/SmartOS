@@ -30,10 +30,12 @@ Task::~Task()
 
 bool Task::Execute(ulong now)
 {
+	TS("Task::Execute");
+
 	Action func = Callback;
 	if(!func)
 	{
-		//debug_printf("任务 %d %s Enable=%d 委托不能为空 \r\n", ID, Name, Enable);
+		debug_printf("任务 %d %s Enable=%d 委托不能为空 0x%08x \r\n", ID, Name, Enable, this);
 		ShowStatus();
 		assert_param2(func, "任务委托不能为空");
 		//if(!func) return false;
@@ -207,6 +209,8 @@ void TaskScheduler::Remove(uint taskid)
 			// 首先清零ID，避免delete的时候再次删除
 			task->ID = 0;
 
+			_Tasks.Remove(task);
+
 			delete task;
 
 			break;
@@ -245,6 +249,8 @@ void TaskScheduler::Stop()
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint msMax)
 {
+	TS("TaskScheduler::Execute");
+
 	ulong now = Sys.Ms();
 	ulong end = now + msMax;
 	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来

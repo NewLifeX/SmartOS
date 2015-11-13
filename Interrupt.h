@@ -97,6 +97,26 @@ extern "C"
 	void ShowFault(uint exception);
 }
 
+#if DEBUG
+// 函数栈。
+// 进入函数时压栈函数名，离开时弹出。便于异常时获取主线程调用列表
+class TraceStack
+{
+public:
+	TraceStack(string name);
+	~TraceStack();
+
+	static void Show();
+};
+
+#define TS(name) TraceStack __ts(name)
+
+#else
+
+#define TS(name) ((void)0)
+
+#endif
+
 #endif
 
 /*

@@ -221,6 +221,8 @@ extern "C"
 #if DEBUG
 		ShowFault(exception);
 
+		TraceStack::Show();
+
 		SerialPort* sp = SerialPort::GetMessagePort();
 		if(sp) sp->Flush();
 #endif
@@ -332,3 +334,23 @@ bool Lock::Wait(int us)
 
 	return true;
 }
+
+/*================================ 跟踪栈 ================================*/
+
+#if DEBUG
+
+static TArray<string, 0x40> _TS(0);
+
+TraceStack::TraceStack(string name) { _TS.Push(name); }
+TraceStack::~TraceStack() { _TS.Pop(); }
+
+void TraceStack::Show()
+{
+	debug_printf("TraceStack::Show:\r\n");
+	for(int i=_TS.Length() - 1; i>=0; i--)
+	{
+		debug_printf("\t<=%s \r\n", _TS[i]);
+	}
+}
+
+#endif
