@@ -51,7 +51,7 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 		Key.Invert	= true;
 	}
 
-	Key.ShakeTime	= 10;
+	Key.ShakeTime	= 40;
 	Key.Register(OnKeyPress, this);
 	Key.Open();
 
