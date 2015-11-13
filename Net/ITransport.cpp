@@ -53,7 +53,7 @@ void ITransport::Close()
 }
 
 // 发送数据
-bool ITransport::Write(const ByteArray& bs)
+bool ITransport::Write(const Array& bs)
 {
 	// 特别是接口要检查this指针
 	assert_ptr(this);
@@ -64,7 +64,7 @@ bool ITransport::Write(const ByteArray& bs)
 }
 
 // 发送数据
-bool ITransport::Write(const ByteArray& bs, void* opt)
+bool ITransport::Write(const Array& bs, void* opt)
 {
 	// 特别是接口要检查this指针
 	assert_ptr(this);
@@ -75,7 +75,7 @@ bool ITransport::Write(const ByteArray& bs, void* opt)
 }
 
 // 接收数据
-uint ITransport::Read(ByteArray& bs)
+uint ITransport::Read(Array& bs)
 {
 	// 特别是接口要检查this指针
 	assert_ptr(this);
@@ -96,14 +96,14 @@ void ITransport::Register(TransportHandler handler, void* param)
 }
 
 // 引发数据到达事件
-uint ITransport::OnReceive(ByteArray& bs, void* param)
+uint ITransport::OnReceive(Array& bs, void* param)
 {
 	if(_handler) return _handler(this, bs, _param, param);
 
 	return 0;
 }
 
-bool ITransport::OnWriteEx(const ByteArray& bs, void* opt)
+bool ITransport::OnWriteEx(const Array& bs, void* opt)
 {
 	return OnWrite(bs);
 }
@@ -134,10 +134,10 @@ void PackPort::Set(ITransport* port)
 bool PackPort::OnOpen() { return Port->Open(); }
 void PackPort::OnClose() { Port->Close(); }
 
-bool PackPort::OnWrite(const ByteArray& bs) { return Port->Write(bs); }
-uint PackPort::OnRead(ByteArray& bs) { return Port->Read(bs); }
+bool PackPort::OnWrite(const Array& bs) { return Port->Write(bs); }
+uint PackPort::OnRead(Array& bs) { return Port->Read(bs); }
 
-uint PackPort::OnPortReceive(ITransport* sender, ByteArray& bs, void* param, void* param2)
+uint PackPort::OnPortReceive(ITransport* sender, Array& bs, void* param, void* param2)
 {
 	assert_ptr(param);
 

@@ -35,8 +35,8 @@ public:
 	EventHandler OnStop;
 
 private:
-	static uint OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2);
-	void Process(ByteArray& bs, const IPEndPoint& ep);
+	static uint OnReceive(ITransport* port, Array& bs, void* param, void* param2);
+	void Process(Array& bs, const IPEndPoint& ep);
 };
 
 #endif

@@ -225,7 +225,7 @@ uint SerialPort::SendData(byte data, uint times)
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-bool SerialPort::OnWrite(const ByteArray& bs)
+bool SerialPort::OnWrite(const Array& bs)
 {
 	if(!bs.Length()) return true;
 #ifdef STM32F0
@@ -286,7 +286,7 @@ void SerialPort::OnTxHandler()
 #pragma arm section code
 
 // 从某个端口读取数据
-uint SerialPort::OnRead(ByteArray& bs)
+uint SerialPort::OnRead(Array& bs)
 {
 	uint count = 0;
 	uint len = Rx.Length();
@@ -467,7 +467,8 @@ extern "C"
 
 		if(_printf_sp)
 		{
-			_printf_sp->Write(ByteArray(ch, 1));
+			byte b = ch;
+			_printf_sp->Write(Array(&b, 1));
 		}
 
 		isInFPutc = false;

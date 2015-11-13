@@ -9,7 +9,7 @@
 #include "Net\Zigbee.h"
 #include "TinyNet\TinyClient.h"
 
-uint OnSerial(ITransport* transport, ByteArray& bs, void* param, void* param2)
+uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 {
 	debug_printf("OnSerial len=%d \t", bs.Length());
 	bs.Show(true);
@@ -67,7 +67,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	return nrf;
 }
 
-uint OnZig(ITransport* port, ByteArray& bs, void* param, void* param2)
+uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
 {
 	debug_printf("配置信息\r\n");
 	bs.Show(true);
@@ -106,7 +106,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	debug_printf("进入配置模式\r\n");
 
 	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34};
-	zb.Write(ByteArray(buf, ArrayLength(buf)));*/
+	zb.Write(CArray(buf));*/
 
 	/*ByteArray bs;
 	int n=10000;

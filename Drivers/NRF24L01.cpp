@@ -840,7 +840,7 @@ void NRF24L01::OnClose()
 }
 
 // 从NRF的接收缓冲区中读出数据
-uint NRF24L01::OnRead(ByteArray& bs)
+uint NRF24L01::OnRead(Array& bs)
 {
 	// 亮灯。离开时自动熄灯
 	//PortScope ps(LedRx);
@@ -883,7 +883,7 @@ uint NRF24L01::OnRead(ByteArray& bs)
 				debug_printf("NRF24L01::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
 				rs = len;
 			}
-			ReadBuf(RD_RX_PLOAD, bs.GetBuffer(), rs); // 读取数据
+			ReadBuf(RD_RX_PLOAD, (byte*)bs.GetBuffer(), rs); // 读取数据
 		}
 	}
 
@@ -903,7 +903,7 @@ uint NRF24L01::OnRead(ByteArray& bs)
 }
 
 // 向NRF的发送缓冲区中写入数据
-bool NRF24L01::OnWrite(const ByteArray& bs)
+bool NRF24L01::OnWrite(const Array& bs)
 {
 	// 设定小灯快闪时间，单位毫秒
 	if(Led) Led->Write(500);
@@ -934,7 +934,7 @@ bool NRF24L01::OnWrite(const ByteArray& bs)
 	uint len = bs.Length();
 	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
 	if(PayloadWidth > 0) len = PayloadWidth;
-	WriteBuf(cmd, bs.GetBuffer(), len);
+	WriteBuf(cmd, (const byte*)bs.GetBuffer(), len);
 
 	// 进入TX，维持一段时间
 	_CE = true;

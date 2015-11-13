@@ -66,8 +66,8 @@ const String Type::Name() const
 int Array::Length() const { return _Length; }
 // 数组最大容量。初始化时决定，后面不允许改变
 int Array::Capacity() const { return _Capacity; }
-// 缓冲区
-void* Array::GetBuffer() const { return _Arr; }
+// 缓冲区。按字节指针返回
+byte* Array::GetBuffer() const { return (byte*)_Arr; }
 
 int memlen(const void* data)
 {
@@ -270,6 +270,15 @@ void Array::SetItemAt(int i, const void* item)
 
 	//_Arr[i] = item;
 	memcpy((byte*)_Arr + _Size * i, item, _Size);
+}
+
+// 重载索引运算符[]，返回指定元素的第一个字节
+byte& Array::operator[](int i) const
+{
+	assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
+
+	byte* buf = (byte*)_Arr;
+	return buf[i * _Size];
 }
 
 // 检查容量。如果不足则扩大，并备份指定长度的数据

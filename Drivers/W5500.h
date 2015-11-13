@@ -68,8 +68,8 @@ public:
 	void ShowInfo();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
-	bool WriteFrame(ushort addr, const ByteArray& bs, byte socket = 0 ,byte block = 0);
-	bool ReadFrame(ushort addr, ByteArray& bs, byte socket = 0 ,byte block = 0);
+	bool WriteFrame(ushort addr, const Array& bs, byte socket = 0 ,byte block = 0);
+	bool ReadFrame(ushort addr, Array& bs, byte socket = 0 ,byte block = 0);
 
 	// 复位 包含硬件复位和软件复位
 	void Reset();
@@ -128,13 +128,13 @@ public:
 	// 应用配置，修改远程地址和端口
 	void Change(const IPEndPoint& remote);
 
-	virtual bool OnWrite(const ByteArray& bs);
-	virtual uint OnRead(ByteArray& bs);
+	virtual bool OnWrite(const Array& bs);
+	virtual uint OnRead(Array& bs);
 
 	// 发送数据
-	virtual bool Send(const ByteArray& bs);
+	virtual bool Send(const Array& bs);
 	// 接收数据
-	virtual uint Receive(ByteArray& bs);
+	virtual uint Receive(Array& bs);
 
 	// 恢复配置
 	virtual void Recovery();
@@ -177,7 +177,7 @@ class UdpClient : public HardSocket
 public:
 	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
 
-	virtual bool SendTo(const ByteArray& bs, const IPEndPoint& remote);
+	virtual bool SendTo(const Array& bs, const IPEndPoint& remote);
 
 	// 中断分发  维护状态
 	virtual void OnProcess(byte reg);
@@ -185,7 +185,7 @@ public:
 	virtual void RaiseReceive();
 
 private:
-	virtual bool OnWriteEx(const ByteArray& bs, void* opt);
+	virtual bool OnWriteEx(const Array& bs, void* opt);
 };
 
 #endif

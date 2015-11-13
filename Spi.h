@@ -29,7 +29,7 @@ public:
 	// 使用端口和最大速度初始化Spi，因为需要分频，实际速度小于等于该速度
     Spi(SPI_TypeDef* spi, uint speedHz = 9000000, bool useNss = true);
     ~Spi();
-	
+
 	void Init(SPI_TypeDef* spi, uint speedHz = 9000000, bool useNss = true);
 
 	void SetPin(Pin clk = P0, Pin miso = P0, Pin mosi = P0, Pin nss = P0);
@@ -42,9 +42,9 @@ public:
     ushort Write16(ushort data);
 
 	// 批量读写。以字节数组长度为准
-	void Write(const ByteArray& bs);
-	void Read(ByteArray& bs);
-	
+	void Write(const Array& bs);
+	void Read(Array& bs);
+
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输
 };

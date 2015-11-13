@@ -39,9 +39,9 @@ public:
     bool Disconnect();	// 关闭Socket
 
 	// 发送数据
-	virtual bool Send(const ByteArray& bs);
+	virtual bool Send(const Array& bs);
 	// 接收数据
-	virtual uint Receive(ByteArray& bs);
+	virtual uint Receive(Array& bs);
 
 	// 收到Tcp数据时触发，传递结构体和负载数据长度。返回值指示是否向对方发送数据包
 	typedef bool (*TcpHandler)(TcpSocket& socket, TCP_HEADER& tcp, byte* buf, uint len);
@@ -67,8 +67,8 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const ByteArray& bs);
-	virtual uint OnRead(ByteArray& bs);
+    virtual bool OnWrite(const Array& bs);
+	virtual uint OnRead(Array& bs);
 };
 
 #endif

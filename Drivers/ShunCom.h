@@ -34,9 +34,9 @@ public:
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-    virtual bool OnWrite(const ByteArray& bs);
+    virtual bool OnWrite(const Array& bs);
 	// 引发数据到达事件
-	virtual uint OnReceive(ByteArray& bs, void* param);
+	virtual uint OnReceive(Array& bs, void* param);
 
 	virtual string ToString() { return "ShunCom"; }
 

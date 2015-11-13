@@ -562,7 +562,7 @@ void W5500::SetAddress(ushort addr, byte rw, byte socket, byte block)
 	_spi->Write(cfg.ToByte());
 }
 
-bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket, byte block)
+bool W5500::WriteFrame(ushort addr, const Array& bs, byte socket, byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
@@ -576,7 +576,7 @@ bool W5500::WriteFrame(ushort addr, const ByteArray& bs, byte socket, byte block
 	return true;
 }
 
-bool W5500::ReadFrame(ushort addr, ByteArray& bs, byte socket, byte block)
+bool W5500::ReadFrame(ushort addr, Array& bs, byte socket, byte block)
 {
 	while(_Lock != 0) Sys.Sleep(0);
 	_Lock = 1;
@@ -1057,7 +1057,7 @@ void HardSocket::Change(const IPEndPoint& remote)
 }
 
 // 接收数据
-uint HardSocket::Receive(ByteArray& bs)
+uint HardSocket::Receive(Array& bs)
 {
 	// 读取收到数据容量
 	ushort size = __REV16(SocRegRead2(RX_RSR));
@@ -1092,7 +1092,7 @@ uint HardSocket::Receive(ByteArray& bs)
 }
 
 // 发送数据
-bool HardSocket::Send(const ByteArray& bs)
+bool HardSocket::Send(const Array& bs)
 {
 	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
 	bs.Show(true);*/
@@ -1118,8 +1118,8 @@ bool HardSocket::Send(const ByteArray& bs)
 	return true;
 }
 
-bool HardSocket::OnWrite(const ByteArray& bs) {	return Send(bs); }
-uint HardSocket::OnRead(ByteArray& bs) { return Receive(bs); }
+bool HardSocket::OnWrite(const Array& bs) {	return Send(bs); }
+uint HardSocket::OnRead(Array& bs) { return Receive(bs); }
 
 void HardSocket::ClearRX()
 {
@@ -1296,7 +1296,7 @@ void TcpClient::RaiseReceive()
 
 /****************************** UdpClient ************************************/
 
-bool UdpClient::SendTo(const ByteArray& bs, const IPEndPoint& remote)
+bool UdpClient::SendTo(const Array& bs, const IPEndPoint& remote)
 {
 	if(remote == Remote) return Send(bs);
 
@@ -1314,7 +1314,7 @@ bool UdpClient::SendTo(const ByteArray& bs, const IPEndPoint& remote)
 	return rs;
 }
 
-bool UdpClient::OnWriteEx(const ByteArray& bs, void* opt)
+bool UdpClient::OnWriteEx(const Array& bs, void* opt)
 {
 	IPEndPoint* ep = (IPEndPoint*)opt;
 	if(!ep) return OnWrite(bs);

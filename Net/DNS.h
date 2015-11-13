@@ -13,11 +13,11 @@ public:
 	~DNS();
 
 	IPAddress Query(const String& domain, int msTimeout = 2000);	// 解析
-	
+
 private:
-	static uint OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2);
-	void Process(ByteArray& bs, const IPEndPoint& server);
-	
+	static uint OnReceive(ITransport* port, Array& bs, void* param, void* param2);
+	void Process(Array& bs, const IPEndPoint& server);
+
 	ByteArray*	_Buffer;
 };
 

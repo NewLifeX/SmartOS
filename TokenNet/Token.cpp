@@ -120,7 +120,7 @@ TinyServer* Token::CreateServer(ITransport* port)
 	return server;
 }
 
-uint OnSerial(ITransport* transport, ByteArray& bs, void* param, void* param2)
+uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 {
 	debug_printf("OnSerial len=%d \t", bs.Length());
 	bs.Show(true);
@@ -181,7 +181,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	return nrf;
 }
 
-uint OnZig(ITransport* port, ByteArray& bs, void* param, void* param2)
+uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
 {
 	debug_printf("配置信息\r\n");
 	bs.Show(true);

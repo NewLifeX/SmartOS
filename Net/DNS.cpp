@@ -227,7 +227,7 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 }
 
 // 分析响应
-bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
+bool parseDNSMSG(TDNS* hdr, const Array& bs, byte* ip_from_dns)
 {
 	Stream ms(bs);
 	ms.Little = false;
@@ -277,7 +277,7 @@ bool parseDNSMSG(TDNS* hdr, const ByteArray& bs, byte* ip_from_dns)
 }
 
 // DNS查询消息
-short dns_makequery(short op, const String& name, ByteArray& bs)
+short dns_makequery(short op, const String& name, Array& bs)
 {
 	Stream ms(bs);
 	ms.Little = false;
@@ -365,14 +365,14 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	return ip;
 }
 
-uint DNS::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
+uint DNS::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 {
 	((DNS*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;
 }
 
-void DNS::Process(ByteArray& bs, const IPEndPoint& server)
+void DNS::Process(Array& bs, const IPEndPoint& server)
 {
 	// 只要来自服务器的
 	if(server.Address != Socket->Host->DNSServer) return;

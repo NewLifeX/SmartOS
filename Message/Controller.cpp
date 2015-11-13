@@ -51,7 +51,7 @@ void Controller::Close()
 	Opened = false;
 }
 
-uint Controller::Dispatch(ITransport* port, ByteArray& bs, void* param, void* param2)
+uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2)
 {
 	byte* buf	= bs.GetBuffer();
 	uint len	= bs.Length();
@@ -170,7 +170,7 @@ bool Controller::Send(Message& msg)
 	// 内存流扩容以后，指针会改变
 	byte* p = ms.GetBuffer();*/
 
-	ByteArray bs(ms.GetBuffer(), ms.Position());
+	Array bs(ms.GetBuffer(), ms.Position());
 	return Port->Write(bs, msg.State);
 }
 

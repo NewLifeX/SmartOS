@@ -711,7 +711,7 @@ byte Enc28j60::GetRevision()
     return ReadReg(EREVID);
 }
 
-bool Enc28j60::OnWrite(const ByteArray& bs)
+bool Enc28j60::OnWrite(const Array& bs)
 {
 	uint len = bs.Length();
 	assert_param2(len <= MAX_FRAMELEN, "以太网数据帧超大");
@@ -743,7 +743,7 @@ bool Enc28j60::OnWrite(const ByteArray& bs)
     WriteOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
 
     // 复制数据包到传输缓冲区
-    WriteBuffer(bs.GetBuffer(), len);
+    WriteBuffer((const byte*)bs.GetBuffer(), len);
 
 	/*
 	仅发送复位通过SPI接口向ECON1寄存器的 TXRST 位写入1可实现仅发送复位。
@@ -812,7 +812,7 @@ bool Enc28j60::OnWrite(const ByteArray& bs)
 			ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 
 #if NET_DEBUG
-			byte* packet = bs.GetBuffer();
+			const byte* packet = (const byte*)bs.GetBuffer();
 			MacAddress dest = packet;
 			MacAddress src = packet + 6;
 			dest.Show();
@@ -934,7 +934,7 @@ bool Enc28j60::OnWrite(const ByteArray& bs)
 
 // 从网络接收缓冲区获取一个数据包，该包开头是以太网头
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
-uint Enc28j60::OnRead(ByteArray& bs)
+uint Enc28j60::OnRead(Array& bs)
 {
     uint rxstat;
     uint len;
@@ -986,7 +986,7 @@ uint Enc28j60::OnRead(ByteArray& bs)
     else
     {
         // 从缓冲区中将数据包复制到packet中
-        ReadBuffer(bs.GetBuffer(), len);
+        ReadBuffer((byte*)bs.GetBuffer(), len);
     }
 	bs.SetLength(len);
     // 移动接收缓冲区 读指针

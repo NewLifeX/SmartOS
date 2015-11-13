@@ -76,7 +76,7 @@ void ShunCom::ChangePower(int level)
 	Config	= false;
 }
 
-bool ShunCom::OnWrite(const ByteArray& bs)
+bool ShunCom::OnWrite(const Array& bs)
 {
 	//Led = !Led;
 
@@ -84,7 +84,7 @@ bool ShunCom::OnWrite(const ByteArray& bs)
 }
 
 // 引发数据到达事件
-uint ShunCom::OnReceive(ByteArray& bs, void* param)
+uint ShunCom::OnReceive(Array& bs, void* param)
 {
 	//Led = !Led;
 	if(Led) Led->Write(1000);

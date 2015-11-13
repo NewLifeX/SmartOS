@@ -194,7 +194,7 @@ void Dhcp::PareOption(Stream& ms)
 	}
 }
 
-uint Dhcp::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
+uint Dhcp::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 {
 	/*IPEndPoint* ep = (IPEndPoint*)param2;
 	if(ep)
@@ -208,7 +208,7 @@ uint Dhcp::OnReceive(ITransport* port, ByteArray& bs, void* param, void* param2)
 	return 0;
 }
 
-void Dhcp::Process(ByteArray& bs, const IPEndPoint& ep)
+void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 {
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)bs.GetBuffer();
 	if(!dhcp->Valid()) return;

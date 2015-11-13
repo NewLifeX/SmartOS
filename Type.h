@@ -87,6 +87,7 @@ public:
 	virtual T& operator[](int i) const = 0;
 };
 
+// 数组。包括指针和最大长度，支持实际长度
 class Array : public Object
 {
 protected:
@@ -102,8 +103,8 @@ public:
     int Length() const;
 	// 数组最大容量。初始化时决定，后面不允许改变
 	int Capacity() const;
-	// 缓冲区
-	void* GetBuffer() const;
+	// 缓冲区。按字节指针返回
+	byte* GetBuffer() const;
 
 	Array(void* data, int len = 0);
 	Array(const void* data, int len = 0);
@@ -130,6 +131,9 @@ public:
 	// 设置指定位置的值，不足时自动扩容
 	virtual void SetItemAt(int i, const void* item);
 
+    // 重载索引运算符[]，返回指定元素的第一个字节
+    byte& operator[](int i) const;
+
 	friend bool operator==(const Array& bs1, const Array& bs2);
 	friend bool operator!=(const Array& bs1, const Array& bs2);
 protected:
@@ -137,6 +141,9 @@ protected:
 	bool CheckCapacity(int len, int bak = 0);
 	virtual void* Alloc(int len);
 };
+
+// 使用常量数组来定义一个指针数组
+#define CArray(arr) (Array(arr, ArrayLength(arr)))
 
 // 数组
 /*

@@ -55,7 +55,7 @@ byte Queue::Pop()
 
 #pragma arm section code
 
-uint Queue::Write(const ByteArray& bs)
+uint Queue::Write(const Array& bs)
 {
 	/*
 	1，数据写入队列末尾
@@ -64,7 +64,7 @@ uint Queue::Write(const ByteArray& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	byte*	buf	= bs.GetBuffer();
+	byte*	buf	= (byte*)bs.GetBuffer();
 	uint	len	= bs.Length();
 
 	uint rs = 0;
@@ -101,7 +101,7 @@ uint Queue::Write(const ByteArray& bs)
 	return rs;
 }
 
-uint Queue::Read(ByteArray& bs)
+uint Queue::Read(Array& bs)
 {
 	if(_size == 0) return 0;
 
@@ -117,7 +117,7 @@ uint Queue::Read(ByteArray& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	byte*	buf	= bs.GetBuffer();
+	byte*	buf	= (byte*)bs.GetBuffer();
 	uint	len	= bs.Capacity();
 
 	if(len > _size) len = _size;
