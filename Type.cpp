@@ -39,7 +39,9 @@ void Object::Show(bool newLine) const
 
 const Type Object::GetType() const
 {
-	return Type(&typeid(*this), sizeof(this[0]));
+	int* p = (int*)this;
+
+	return Type(&typeid(*this), *(p - 1));
 }
 
 /******************************** Type ********************************/
