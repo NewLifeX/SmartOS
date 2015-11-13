@@ -12,7 +12,7 @@ Timer::Timer(TIM_TypeDef* timer)
 	if(!Timers)
 	{
 		Timers = new Timer*[TimerCount];
-		ArrayZero2(Timers, TimerCount);
+		memset(Timers, 0, TimerCount * sizeof(Timers[0]));
 	}
 
 	byte idx = 0xFF;
@@ -61,7 +61,7 @@ Timer* Timer::Create(byte index)
 		if(!Timers)
 		{
 			Timers = new Timer*[TimerCount];
-			ArrayZero2(Timers, TimerCount);
+			memset(Timers, 0, TimerCount * sizeof(Timers[0]));
 		}
 
 		// 找到第一个可用的位置，没有被使用，并且该位置定时器存在

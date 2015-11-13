@@ -11,20 +11,7 @@ Message::Message(byte code)
 	State	= NULL;
 }
 
-/*// 设置数据。
-void Message::SetData(const void* buf, uint len, uint offset)
-{
-	//assert_param(len <= ArrayLength(Data));
-
-	Length = len + offset;
-	if(len > 0 && buf != Data + offset)
-	{
-		assert_ptr(buf);
-		assert_ptr(Data);
-		memcpy(Data + offset, buf, len);
-	}
-}*/
-
+// 设置数据。
 void Message::SetData(const Array& bs, uint offset)
 {
 	Length = bs.Length() + offset;

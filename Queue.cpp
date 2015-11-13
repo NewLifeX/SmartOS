@@ -75,18 +75,15 @@ uint Queue::Write(const Array& bs)
 		// 如果要写入的数据足够存放
 		if(len <= remain)
 		{
-			//memcpy(_s.GetBuffer() + _head, buf, len);
 			_s.Copy(buf, len, _head);
 			rs		+= len;
 			_head	+= len;
-			//_head	%= _s.Capacity();
 			if(_head >= _s.Capacity()) _head -= _s.Capacity();
 
 			break;
 		}
 
 		// 否则先写一段，指针回到开头
-		//memcpy(_s.GetBuffer() + _head, buf, remain);
 		_s.Copy(buf, remain, _head);
 		buf		+= remain;
 		len		-= remain;
@@ -130,18 +127,15 @@ uint Queue::Read(Array& bs)
 		// 如果要读取的数据都在这里
 		if(len <= remain)
 		{
-			//memcpy(buf, _s.GetBuffer() + _tail, len);
 			_s.CopyTo(buf, len, _tail);
 			rs		+= len;
 			_tail	+= len;
-			//_tail	%= _s.Capacity();
 			if(_tail >= _s.Capacity()) _tail -= _s.Capacity();
 
 			break;
 		}
 
 		// 否则先读一段，指针回到开头
-		//memcpy(buf + _tail, _s.GetBuffer(), remain);
 		_s.CopyTo(buf, remain, _tail);
 		buf		+= remain;
 		len		-= remain;

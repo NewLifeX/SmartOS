@@ -386,7 +386,7 @@ typedef struct _DHCP_OPT
 	{
 		Option = option;
 		Length = 4;
-		memcpy(&Data, (byte*)&value, Length);
+		memcpy(&Data, &value, Length);
 		// 需要考虑地址对齐问题，只有4字节对齐，才可以直接使用整数赋值
 		//*(uint*)&Data = value;
 

@@ -492,17 +492,8 @@ void Enc28j60::ClockOut(byte clock)
     WriteReg(ECOCON, clock & 0x7);
 }
 
-/*void Enc28j60::Init(byte mac[6])
-{
-	assert_param(mac);
-
-	memcpy(Mac, mac, 6);
-}*/
-
 bool Enc28j60::OnOpen()
 {
-	//assert_param(Mac);
-
 	debug_printf("Enc28j60::Open(%s)\r\n", Mac.ToString().GetBuffer());
 
 	if(!_reset.Empty())

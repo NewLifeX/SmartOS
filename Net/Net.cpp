@@ -9,7 +9,7 @@
 
 IPAddress::IPAddress(const byte* ips)
 {
-	memcpy((byte*)&Value, ips, 4);
+	Array(ips, 4).CopyTo(&Value, 4);
 }
 
 IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
@@ -19,7 +19,7 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 
 IPAddress::IPAddress(const Array& arr)
 {
-	memcpy((byte*)&Value, arr.GetBuffer(), 4);
+	arr.CopyTo(&Value, 4);
 }
 
 bool IPAddress::IsAny() const { return Value == 0; }
@@ -45,8 +45,7 @@ const IPAddress& IPAddress::Broadcast()
 
 IPAddress& IPAddress::operator=(const byte* v)
 {
-	//Value = *(uint*)v;
-	memcpy((byte*)&Value, v, 4);
+	Array(v, 4).CopyTo(&Value, 4);
 
 	return *this;
 }
@@ -70,7 +69,7 @@ ByteArray IPAddress::ToArray() const
 
 void IPAddress::CopyTo(byte* ips) const
 {
-	if(ips) memcpy(ips, (byte*)&Value, 4);
+	if(ips) Array(&Value, 4).CopyTo(ips, 4);
 }
 
 String& IPAddress::ToStr(String& str) const
@@ -187,9 +186,7 @@ MacAddress& MacAddress::operator=(ulong v)
 
 MacAddress& MacAddress::operator=(const byte* buf)
 {
-	/*Array bs(buf, 6);
-	Value = bs.ToUInt64() & MAC_MASK;*/
-	memcpy((byte*)&Value, buf, 6);
+	Array(buf, 6).CopyTo(&Value, 6);
 
 	return *this;
 }
@@ -213,18 +210,8 @@ ByteArray MacAddress::ToArray() const
 
 void MacAddress::CopyTo(byte* macs) const
 {
-	if(macs) memcpy(macs, (byte*)&Value, 6);
+	if(macs) Array(&Value, 6).CopyTo(macs, 6);
 }
-
-/*bool MacAddress::operator==(MacAddress& addr1, MacAddress& addr2)
-{
-	return addr1.v4 == addr2.v4 && addr1.v2 == addr2.v2;
-}
-
-bool MacAddress::operator!=(MacAddress& addr1, MacAddress& addr2)
-{
-	return addr1.v4 != addr2.v4 || addr1.v2 != addr2.v2;
-}*/
 
 String& MacAddress::ToStr(String& str) const
 {
