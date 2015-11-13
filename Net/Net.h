@@ -13,7 +13,7 @@ public:
 	IPAddress(uint value = 0)	{ Value = value; }
 	IPAddress(const byte* ips);
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
-	IPAddress(const ByteArray& arr);
+	IPAddress(const Array& arr);
 
     IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
@@ -49,7 +49,7 @@ public:
 
 	IPEndPoint();
 	IPEndPoint(const IPAddress& addr, ushort port);
-	IPEndPoint(const ByteArray& arr);
+	IPEndPoint(const Array& arr);
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
@@ -69,7 +69,7 @@ public:
 
 	MacAddress(ulong v = 0);
 	MacAddress(const byte* macs);
-	MacAddress(const ByteArray& arr);
+	MacAddress(const Array& arr);
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() const;

@@ -111,7 +111,7 @@ bool I2C::SendSubAddr(int addr)
 }
 
 // 新会话向指定地址写入多个字节
-bool I2C::Write(int addr, const ByteArray& bs)
+bool I2C::Write(int addr, const Array& bs)
 {
 	/*debug_printf("I2C::Write addr=0x%02X ", addr);
 	bs.Show(true);*/
@@ -135,7 +135,7 @@ bool I2C::Write(int addr, const ByteArray& bs)
 }
 
 // 新会话从指定地址读取多个字节
-uint I2C::Read(int addr, ByteArray& bs)
+uint I2C::Read(int addr, Array& bs)
 {
 	Open();
 
@@ -155,7 +155,7 @@ uint I2C::Read(int addr, ByteArray& bs)
 	return rs;
 }
 
-bool I2C::Write(int addr, byte data) { return Write(addr, ByteArray(&data, 1)); }
+bool I2C::Write(int addr, byte data) { return Write(addr, Array(&data, 1)); }
 byte I2C::Read(int addr)
 {
 	ByteArray bs(1);

@@ -55,9 +55,9 @@ void TinyClient::Open()
 
 		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
-	
+
 	if(Sys.Version > 1) Encryption = true;
-	
+
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
 
@@ -169,9 +169,9 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-	
+
 	if(ReadCfg(offset,ms)) return;
-	
+
 	uint len	= ms.ReadEncodeInt();
 
 	// 准备响应数据
@@ -204,16 +204,16 @@ void TinyClient::OnRead(const TinyMessage& msg)
 bool TinyClient::ReadCfg(uint offset,	Stream ms)
 {
 	if(offset < Cfg->StartSet) return false;
-	
+
 	//响应一条数据
 	TinyMessage rs;
 	rs.Code		= 0x15;
 	Stream ms2	= rs.ToStream();
-	
-	ByteArray cfg(Cfg, Cfg->Length);	
+
+	ByteArray cfg(Cfg, Cfg->Length);
 	uint adrr=offset-Cfg->StartSet;
 	uint len = ms.Remain();
-	
+
     if((adrr+len)>Cfg->Length)
 	{
 		rs.Error = true;
@@ -244,8 +244,8 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-	
-	if(WriteCfg(offset,ms)) return;			
+
+	if(WriteCfg(offset,ms)) return;
 	// 准备响应数据
 	TinyMessage rs;
 	rs.Code		= msg.Code;
@@ -260,14 +260,14 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 		ms2.Write((byte)2);
 		ms2.WriteEncodeInt(offset);
 		ms2.WriteEncodeInt(len);
-		
+
 	}
 	else
 	{
 		ms2.WriteEncodeInt(offset);
 
 		if(len > remain) len = remain;
-		ByteArray bs(ms.Current(), len);
+		Array bs(ms.Current(), len);
 		int count = Store.Write(offset, bs);
 		ms2.WriteEncodeInt(count);
 	}
@@ -279,13 +279,13 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 bool TinyClient::WriteCfg(uint offset,	Stream ms)
 {
 	if(offset < Cfg->StartSet) return false;
-	
+
 	//响应一条数据
 	TinyMessage rs;
 	rs.Code		= 0x16;
 	Stream ms2	= rs.ToStream();
-	
-	ByteArray cfg(Cfg, Cfg->Length);	
+
+	ByteArray cfg(Cfg, Cfg->Length);
 	uint adrr=offset-Cfg->StartSet;
 	uint len = ms.Remain();
     if((adrr+len)>Cfg->Length)
@@ -294,27 +294,27 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
    		ms2.Write((byte)2);
    		ms2.WriteEncodeInt(offset);
    		ms2.WriteEncodeInt(len);
-		Reply(rs);		
+		Reply(rs);
 		return  true;//操作成功的意思
    	}
-	
-	ByteArray bs(ms.Current(), len);	
+
+	Array bs(ms.Current(), len);
 	bs.CopyTo(&cfg[adrr],len);
 
 	Cfg->Save();
-	
+
 	ms2.WriteEncodeInt(offset);
 	ms2.WriteEncodeInt(len);
 	rs.Length	= ms2.Position();
 
 	Reply(rs);
-	
+
 	TinyClientReset();
 	//Sys.Reset();
-	
-	//修改配置区，重启系统	
+
+	//修改配置区，重启系统
 	//debug_printf("修改后的设备ID 0x%08X ,偏移量 %d\r\n", Cfg->Address,offset);
-	//cfg.Show();	
+	//cfg.Show();
 	return true;
 }
 void TinyClient::Report(Message& msg)
@@ -362,7 +362,7 @@ void TinyClient::ReportPing0x03(Message& msg)
 	ms.Write((byte)Store.Data.Length());	// 长度
 	ms.Write(Store.Data);
 	msg.Length = ms.Position();
-	
+
 }
 bool TinyClient::Report(uint offset, byte dat)
 {
@@ -377,7 +377,7 @@ bool TinyClient::Report(uint offset, byte dat)
 	return Reply(msg);
 }
 
-bool TinyClient::Report(uint offset, const ByteArray& bs)
+bool TinyClient::Report(uint offset, const Array& bs)
 {
 	TinyMessage msg;
 	msg.Code	= 0x05;
@@ -425,7 +425,7 @@ void TinyClientReset()
 {
 	//上报一条信息，让网关得一修改
 	//Join();
-	
+
 	Sys.Reset();
 }
 
@@ -438,7 +438,7 @@ void TinyClient::Join()
 
 	// 发送的广播消息，设备类型和系统ID
 	JoinMessage dm;
-	
+
 	dm.Version	= Sys.Version;
 	dm.Kind		= Type;
 	dm.HardID	= Sys.ID;
@@ -471,7 +471,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	Cfg->SoftVer	= dm.Version;
 	if(Cfg->SoftVer < 2) Encryption=false;//小于2的版本加不加密
-	
+
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
 	Password	= dm.Password;
@@ -528,16 +528,16 @@ void TinyClient::DisJoin()
 bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
 	if(msg.Length < 2) return false;
-	
-	Stream ms(msg.Data, msg.Length);	
+
+	Stream ms(msg.Data, msg.Length);
 	ushort crc=ms.ReadUInt16();
-	
+
 	if(crc!=HardCrc) return false;
 
 	Cfg->LoadDefault();
 	Cfg->Save();
     debug_printf("设备退网3秒后重启\r\n");
-   
+
     Sys.Sleep(3000);
     Sys.Reset();
 	return true;
@@ -575,17 +575,17 @@ void TinyClient::Ping()
 		{
 			ReportPing0x01(msg);
 		}
-		else  
+		else
 		{
 			if(Store.Data.Length()<20)
 			   ReportPing0x02(msg);
 		   else
 			   ReportPing0x03(msg);
 		}
-	}	  	
+	}
     else
-	   Report(msg);	
-   
+	   Report(msg);
+
 	Send(msg);
 
 	if(LastActive == 0) LastActive = Sys.Ms();

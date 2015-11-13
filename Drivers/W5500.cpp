@@ -334,7 +334,7 @@ void W5500::Config()
 {
 	// 读所有寄存器
 	TGeneral gen;
-	ByteArray bs((byte*)&gen, sizeof(gen));
+	ByteArray bs(&gen, sizeof(gen));
 	ReadFrame(0, bs);
 
 	// 设置地址、网关、掩码、MAC等
@@ -437,7 +437,7 @@ void W5500::StateShow()
 {
 	// 一次性全部读出
 	TGeneral gen;
-	ByteArray bs((byte*)&gen, sizeof(gen));
+	ByteArray bs(&gen, sizeof(gen));
 	ReadFrame(0, bs);
 
 	debug_printf("\r\nW5500::State\r\n");
@@ -867,7 +867,7 @@ void HardSocket::WriteInterrupt(byte dat) { SocRegWrite(IR, dat); }
 void HardSocket::StateShow()
 {
 	TSocket soc;
-	ByteArray bs((byte*)&soc, sizeof(soc));
+	ByteArray bs(&soc, sizeof(soc));
 
 	// 一次性全部读出
 	_Host->ReadFrame(0, bs, Index, 0x01);
@@ -1286,7 +1286,7 @@ void TcpClient::OnProcess(byte reg)
 void TcpClient::RaiseReceive()
 {
 	byte buf[1500];
-	ByteArray bs(buf, ArrayLength(buf));
+	Array bs(buf, ArrayLength(buf));
 	int size = Receive(bs);
 	if(size > 1500)return;
 
@@ -1345,7 +1345,7 @@ void UdpClient::RaiseReceive()
 	// UDP 异步只有一种情况  收到数据  可能有多个数据包
 	// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
 	byte buf[1500];
-	ByteArray bs(buf, ArrayLength(buf));
+	Array bs(buf, ArrayLength(buf));
 	ushort size = Receive(bs);
 	Stream ms(bs.GetBuffer(), size);
 

@@ -37,8 +37,8 @@ public:
 	virtual bool Clone(const Message& msg);
 
 	// 设置数据
-	void SetData(const void* buf, uint len, uint offset = 0);
-	void SetData(const ByteArray& bs, uint offset = 0);
+	//void SetData(const void* buf, uint len, uint offset = 0);
+	void SetData(const Array& bs, uint offset = 0);
 	void SetError(byte errorCode, const char* msg = NULL);
 
 	// 负载数据转数据流

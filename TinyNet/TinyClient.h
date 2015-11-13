@@ -47,7 +47,7 @@ public:
 
 	void Report(Message& msg);
 	bool Report(uint offset, byte dat);
-	bool Report(uint offset, const ByteArray& bs);
+	bool Report(uint offset, const Array& bs);
 	//特色心跳上报
 	void ReportPing0x01(Message& msg);
 	void ReportPing0x02(Message& msg);

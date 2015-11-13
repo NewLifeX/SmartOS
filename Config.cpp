@@ -17,8 +17,8 @@ struct ConfigBlock
     const ConfigBlock*	Next() const;
     const void*			Data() const;
 
-    bool Init(const char* name, const ByteArray& bs);
-    bool Write(Storage* storage, uint addr, const ByteArray& bs);
+    bool Init(const char* name, const Array& bs);
+    bool Write(Storage* storage, uint addr, const Array& bs);
 };
 
 ushort ConfigBlock::GetHash() const
@@ -49,7 +49,7 @@ const void* ConfigBlock::Data() const
 }
 
 // 构造一个新的配置块
-bool ConfigBlock::Init(const char* name, const ByteArray& bs)
+bool ConfigBlock::Init(const char* name, const Array& bs)
 {
     assert_param2(name, "配置块名称不能为空");
 
@@ -74,7 +74,7 @@ bool ConfigBlock::Init(const char* name, const ByteArray& bs)
 }
 
 // 更新块
-bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
+bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
 {
 	assert_ptr(storage);
 
@@ -89,12 +89,12 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const ByteArray& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, HeaderCRC);
-	if(!storage->Write(addr, ByteArray(&HeaderCRC, len))) return false;
+	if(!storage->Write(addr, Array(&HeaderCRC, len))) return false;
 	if(bs.Length() > 0)
 	{
 		uint len2 = bs.Length();
 		if(len2 > Size) len2 = Size;
-		if(!storage->Write(addr + len, ByteArray(bs.GetBuffer(), len2))) return false;
+		if(!storage->Write(addr + len, Array(bs.GetBuffer(), len2))) return false;
 	}
 
     return rs;
@@ -121,7 +121,7 @@ const void* Config::Find(const char* name, int size)
 	{
 		if(!size) return NULL;
 
-		Device->Write(addr, ByteArray(&c_Version, sizeof(c_Version)));
+		Device->Write(addr, Array(&c_Version, sizeof(c_Version)));
 	}
 
 	addr += sizeof(c_Version);
@@ -160,7 +160,7 @@ bool Config::Invalid(const char* name)
 }
 
 // 根据名称更新块
-const void* Config::Set(const char* name, const ByteArray& bs)
+const void* Config::Set(const char* name, const Array& bs)
 {
     //if(name == NULL) return NULL;
     assert_param2(name, "配置块名称不能为空");
@@ -181,7 +181,7 @@ const void* Config::Set(const char* name, const ByteArray& bs)
 }
 
 // 获取配置数据
-bool Config::Get(const char* name, ByteArray& bs)
+bool Config::Get(const char* name, Array& bs)
 {
     //if(name == NULL) return false;
     assert_param2(name, "配置块名称不能为空");
@@ -199,7 +199,7 @@ bool Config::Get(const char* name, ByteArray& bs)
 }
 
 // 获取配置数据，如果不存在则覆盖
-bool Config::GetOrSet(const char* name, ByteArray& bs)
+bool Config::GetOrSet(const char* name, Array& bs)
 {
     //if(name == NULL) return false;
     assert_param2(name, "配置块名称不能为空");

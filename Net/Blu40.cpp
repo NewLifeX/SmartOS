@@ -142,9 +142,9 @@ bool Blu40::SetBP(int BP)
 		*_rts = false;
 		Sys.Delay(150);
 		
-		const ByteArray bs(AT_BPS, sizeof(AT_BPS));
+		const Array bs(AT_BPS, sizeof(AT_BPS));
 		_port->Write(bs);
-		_port->Write(ByteArray(&bpnumIndex, 1));	// 晕死，AT指令里面放非字符
+		_port->Write(Array(&bpnumIndex, 1));	// 晕死，AT指令里面放非字符
 		//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 		*_rts = true;
 		
@@ -179,9 +179,9 @@ bool Blu40::SetBP(int BP)
 			Sys.Delay(170);
 			//_port->Write(AT_BPS,sizeof(AT_BPS));
 			//_port->Write(&bpnumIndex,1);	// 晕死，AT指令里面放非字符
-			const ByteArray bs(AT_BPS, sizeof(AT_BPS));
+			const Array bs(AT_BPS, sizeof(AT_BPS));
 			_port->Write(bs);
-			_port->Write(ByteArray(&bpnumIndex, 1));
+			_port->Write(Array(&bpnumIndex, 1));
 			//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 			*_rts = true;
 			
@@ -232,8 +232,8 @@ bool Blu40::SetName(string name)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(ByteArray(AT_REN, sizeof(AT_REN)));
-	_port->Write(ByteArray((byte*)name, sizeof(name)));
+	_port->Write(Array(AT_REN, sizeof(AT_REN)));
+	_port->Write(Array((byte*)name, sizeof(name)));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -243,8 +243,8 @@ bool Blu40::SetPID(ushort pid)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(ByteArray(AT_PID, sizeof(AT_PID)));
-	_port->Write(ByteArray((byte*)pid, 2));
+	_port->Write(Array(AT_PID, sizeof(AT_PID)));
+	_port->Write(Array((byte*)pid, 2));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -260,9 +260,9 @@ bool Blu40::SetTPL(int TPLDB)
 	}
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(ByteArray(AT_TPL, sizeof(AT_TPL)));
+	_port->Write(Array(AT_TPL, sizeof(AT_TPL)));
 	//byte temp = TPLNumIndex+'0';// 又是坑人的 非字符
-	_port->Write(ByteArray(&TPLNumIndex,1));
+	_port->Write(Array(&TPLNumIndex,1));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;

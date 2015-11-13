@@ -38,7 +38,7 @@ public:
 
 	TArray<Device*> Devices;
 	Device* FindDevice(byte id);
-	Device* FindDevice(const ByteArray& hardid);
+	Device* FindDevice(const Array& hardid);
 	bool	DeleteDevice(byte id);
 
 	int LoadDevices();

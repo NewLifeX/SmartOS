@@ -226,7 +226,7 @@ void md5_finish(md5_context *ctx, byte digest[16] )
     PUT_UINT32( ctx->state[3], digest, 12 );
 }
 
-ByteArray MD5::Hash(const ByteArray& data)
+ByteArray MD5::Hash(const Array& data)
 {
 	md5_context context;
 	md5_starts(&context);

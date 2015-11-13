@@ -56,7 +56,7 @@ byte AT24CXX::Read(ushort addr)
 	return IIC->Read(addr & 0xFF);
 }
 
-bool AT24CXX::Write(uint addr, const ByteArray& bs)
+bool AT24CXX::Write(uint addr, const Array& bs)
 {
 	if(!IIC) return false;
 	
@@ -65,7 +65,7 @@ bool AT24CXX::Write(uint addr, const ByteArray& bs)
 	return IIC->Write((ushort)addr, bs);
 }
 
-bool AT24CXX::Read(uint addr, ByteArray& bs)
+bool AT24CXX::Read(uint addr, Array& bs)
 {
 	if(!IIC) return false;
 

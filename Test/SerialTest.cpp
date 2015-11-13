@@ -1,6 +1,6 @@
 ﻿#include "SerialPort.h"
 
-uint OnUsartRead(ITransport* transport, ByteArray& bs, void* param, void* param2)
+uint OnUsartRead(ITransport* transport, Array& bs, void* param, void* param2)
 {
 	debug_printf("收到：");
 	bs.Show(true);
@@ -25,7 +25,7 @@ void TestSerial()
     sp1->Register(OnUsartRead);
     
 	char str[] = "http://www.NewLifeX.com \r\n";
-    sp1->Write(ByteArray((byte*)str, ArrayLength(str)));
+    sp1->Write(CArray(str));
     //Sys.Sleep(3000);
 
     debug_printf("\r\nTestSerial Finish!\r\n");

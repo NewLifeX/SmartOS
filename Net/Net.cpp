@@ -17,7 +17,7 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 	Value = (ip4 << 24) + (ip3 << 16) + (ip2 << 8) + ip1;
 }
 
-IPAddress::IPAddress(const ByteArray& arr)
+IPAddress::IPAddress(const Array& arr)
 {
 	memcpy((byte*)&Value, arr.GetBuffer(), 4);
 }
@@ -65,7 +65,7 @@ ByteArray IPAddress::ToArray() const
 	//return ByteArray((byte*)&Value, 4);
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
-	return ByteArray((byte*)&Value, 4, true);
+	return ByteArray(&Value, 4, true);
 }
 
 void IPAddress::CopyTo(byte* ips) const
@@ -102,7 +102,7 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 	Port	= port;
 }
 
-IPEndPoint::IPEndPoint(const ByteArray& arr)
+IPEndPoint::IPEndPoint(const Array& arr)
 {
 	byte* p = arr.GetBuffer();
 	Address = p;
@@ -153,12 +153,13 @@ MacAddress::MacAddress(const byte* macs)
 {
 	/*ByteArray bs(macs, 6);
 	Value = bs.ToUInt64() & MAC_MASK;*/
-	memcpy((byte*)&Value, macs, 6);
+	memcpy(&Value, macs, 6);
 }
 
-MacAddress::MacAddress(const ByteArray& arr)
+MacAddress::MacAddress(const Array& arr)
 {
-	Value = arr.ToUInt64();
+	ByteArray bs(arr.GetBuffer(), arr.Length());
+	Value = bs.ToUInt64();
 	Value &= MAC_MASK;
 }
 
@@ -186,7 +187,7 @@ MacAddress& MacAddress::operator=(ulong v)
 
 MacAddress& MacAddress::operator=(const byte* buf)
 {
-	/*ByteArray bs(buf, 6);
+	/*Array bs(buf, 6);
 	Value = bs.ToUInt64() & MAC_MASK;*/
 	memcpy((byte*)&Value, buf, 6);
 
@@ -207,7 +208,7 @@ ByteArray MacAddress::ToArray() const
 	//return ByteArray((byte*)&Value, 6);
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
-	return ByteArray((byte*)&Value, 6, true);
+	return ByteArray(&Value, 6, true);
 }
 
 void MacAddress::CopyTo(byte* macs) const
@@ -262,7 +263,7 @@ bool ISocketHost::LoadConfig()
 	if(!Config::Current) return false;
 
 	NetConfig nc;
-	ByteArray bs(&nc, sizeof(nc));
+	Array bs(&nc, sizeof(nc));
 	if(!Config::Current->Get("NET", bs)) return false;
 
 	IP			= nc.IP;
@@ -289,6 +290,6 @@ bool ISocketHost::SaveConfig()
 	nc.DNSServer	= DNSServer.Value;
 	nc.Gateway		= Gateway.Value;
 
-	ByteArray bs(&nc, sizeof(nc));
+	Array bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
 }

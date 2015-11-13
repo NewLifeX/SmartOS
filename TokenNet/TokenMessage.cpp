@@ -254,12 +254,12 @@ bool TokenController::Valid(const Message& msg)
 	return true;
 }
 
-bool Encrypt(Message& msg, const ByteArray& pass)
+bool Encrypt(Message& msg, const Array& pass)
 {
 	// 加解密。握手不加密，握手响应不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x08))
 	{
-		ByteArray bs(msg.Data, msg.Length);
+		Array bs(msg.Data, msg.Length);
 		RC4::Encrypt(bs, pass);
 		return true;
 	}

@@ -22,11 +22,11 @@ public:
     // 废弃。仅清空名称，并不删除数据区
 	bool Invalid(const char* name);
     // 设置配置数据
-    const void* Set(const char* name, const ByteArray& bs);
+    const void* Set(const char* name, const Array& bs);
 	// 获取配置数据
-    bool Get(const char* name, ByteArray& bs);
+    bool Get(const char* name, Array& bs);
 	// 获取配置数据，如果不存在则覆盖
-    bool GetOrSet(const char* name, ByteArray& bs);
+    bool GetOrSet(const char* name, Array& bs);
 	// 获取配置数据
     const void* Get(const char* name);
 

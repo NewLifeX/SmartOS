@@ -339,8 +339,8 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 #endif
 
 	byte buf[1024];
-	ByteArray bs(buf, ArrayLength(buf));
-	ByteArray rs(buf, ArrayLength(buf));
+	Array bs(buf, ArrayLength(buf));
+	Array rs(buf, ArrayLength(buf));
 	// 同时作为响应缓冲区，别浪费了
 	rs.SetLength(0);
 	_Buffer = &rs;

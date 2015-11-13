@@ -278,7 +278,9 @@ byte& Array::operator[](int i) const
 	assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
 
 	byte* buf = (byte*)_Arr;
-	return buf[i * _Size];
+	if(_Size > 1) i *= _Size;
+
+	return buf[i];
 }
 
 // 检查容量。如果不足则扩大，并备份指定长度的数据

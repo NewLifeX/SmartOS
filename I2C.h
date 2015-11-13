@@ -38,10 +38,10 @@ public:
 	virtual bool WaitAck(int retry = 0) = 0;	// 等待Ack，默认0表示采用全局Retry
 
 	// 新会话向指定地址写入
-	virtual bool Write(int addr, const ByteArray& bs);
+	virtual bool Write(int addr, const Array& bs);
 	virtual bool Write(int addr, byte data);
 	// 新会话从指定地址读取
-	virtual uint Read(int addr, ByteArray& bs);
+	virtual uint Read(int addr, Array& bs);
 	virtual byte Read(int addr);
 	virtual ushort Read2(int addr);
 	virtual uint Read4(int addr);

@@ -38,7 +38,7 @@ void IRcoding::SetCfgAddr(uint addr)
 	}
 }
 
-bool IRcoding::SaveCoding(byte index, const ByteArray& bs)
+bool IRcoding::SaveCoding(byte index, const Array& bs)
 {
 	if(bs.Length() > CodingSize)return false;
 	if(!_Medium)return false;
@@ -46,7 +46,7 @@ bool IRcoding::SaveCoding(byte index, const ByteArray& bs)
 	return	_Medium->Write(address, bs);
 }
 
-bool IRcoding::GetCoding(byte index, ByteArray& bs)
+bool IRcoding::GetCoding(byte index, Array& bs)
 {
 	if(bs.Length() > CodingSize)return false;
 	if(!_Medium)return false;

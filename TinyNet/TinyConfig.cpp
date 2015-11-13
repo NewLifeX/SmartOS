@@ -26,7 +26,7 @@ void TinyConfig::Load()
 	// 尝试加载配置区设置
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
-	ByteArray bs(&Length, len);
+	Array bs(&Length, len);
 	if(!Config::Current->GetOrSet("TCFG", bs))
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
@@ -48,7 +48,7 @@ void TinyConfig::Save()
 
 	debug_printf("TinyConfig::Save \r\n");
 
-	ByteArray bs(&Length, len);
+	Array bs(&Length, len);
 	Config::Current->Set("TCFG", bs);
 }
 
@@ -58,7 +58,7 @@ void TinyConfig::Clear()
 
 	debug_printf("TinyConfig::Clear \r\n");
 
-	ByteArray bs(&Length, Length);
+	Array bs(&Length, Length);
 	Config::Current->Set("TCFG", bs);
 }
 

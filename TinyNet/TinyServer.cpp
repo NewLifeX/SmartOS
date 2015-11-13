@@ -213,8 +213,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Show(true);
 
 	// 生成随机密码。当前时间的MD5
-	ByteArray bs((byte*)&now, 8);
-	dv->Pass = MD5::Hash(bs);
+	dv->Pass = MD5::Hash(Array(&now, 8));
 	dv->Pass.SetLength(8);	// 小心不要超长
 
 	// 响应
@@ -264,8 +263,7 @@ bool TinyServer::ResetPassword(byte id)
 
 
 	// 生成随机密码。当前时间的MD5
-	ByteArray bs((byte*)&now, 8);
-	dv->Pass = MD5::Hash(bs);
+	dv->Pass = MD5::Hash(Array(&now, 8));
 	dv->Pass.SetLength(8);	// 小心不要超长
 
 	// 响应
@@ -567,7 +565,7 @@ Device* TinyServer::FindDevice(byte id)
 	return NULL;
 }
 
-Device* TinyServer::FindDevice(const ByteArray& hardid)
+Device* TinyServer::FindDevice(const Array& hardid)
 {
 	if(hardid.Length() == 0) return NULL;
 
@@ -645,7 +643,7 @@ void TinyServer::SaveDevices()
 		dv->Write(ms);
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
-	cfg.Set("Devs", ByteArray(ms.GetBuffer(), ms.Position()));
+	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));
 }
 
 void TinyServer::ClearDevices()
@@ -702,7 +700,7 @@ void TinyServer::SaveConfig()
 
 	debug_printf("TinyServer::SaveConfig 保存到 0x%08X！\r\n", addr);
 
-	cfg.Set("TCfg", ByteArray(ms.GetBuffer(), ms.Position()));
+	cfg.Set("TCfg", Array(ms.GetBuffer(), ms.Position()));
 }
 
 void TinyServer::ClearConfig()

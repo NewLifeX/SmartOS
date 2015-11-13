@@ -65,7 +65,7 @@ void TinyIP::Init(ITransport* port)
 uint TinyIP::Fetch(Stream& ms)
 {
 	// 获取缓冲区的包
-	ByteArray bs(ms.Current(), ms.Remain());
+	Array bs(ms.Current(), ms.Remain());
 	int len = _port->Read(bs);
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER)) return 0;
@@ -286,8 +286,7 @@ bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	debug_printf("\r\n");*/
 	/*ByteArray((byte*)eth->Next(), len).Show(true);*/
 
-	ByteArray bs((byte*)eth, len);
-	return _port->Write(bs);
+	return _port->Write(Array(eth, len));
 }
 
 bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len)

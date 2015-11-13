@@ -11,7 +11,7 @@ Message::Message(byte code)
 	State	= NULL;
 }
 
-// 设置数据。
+/*// 设置数据。
 void Message::SetData(const void* buf, uint len, uint offset)
 {
 	//assert_param(len <= ArrayLength(Data));
@@ -23,9 +23,9 @@ void Message::SetData(const void* buf, uint len, uint offset)
 		assert_ptr(Data);
 		memcpy(Data + offset, buf, len);
 	}
-}
+}*/
 
-void Message::SetData(const ByteArray& bs, uint offset)
+void Message::SetData(const Array& bs, uint offset)
 {
 	Length = bs.Length() + offset;
 	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(Data + offset, Length);

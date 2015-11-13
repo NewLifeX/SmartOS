@@ -54,8 +54,8 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		String vendor = "http://www.NewLifeX.com";
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
-		ByteArray bs(ps, ArrayLength(ps));
-		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, bs);
+		//ByteArray bs(ps, ArrayLength(ps));
+		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, CArray(ps));
 		opt = opt->Next()->End();
 
 		len = (byte*)opt + 1 - p;
@@ -65,7 +65,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		dhcp->ClientMac[i] = Host->Mac[i];
 
 	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
-	ByteArray bs((byte*)dhcp, sizeof(DHCP_HEADER) + len);
+	Array bs(dhcp, sizeof(DHCP_HEADER) + len);
 	Socket->Send(bs);
 }
 

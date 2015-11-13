@@ -10,7 +10,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Version		= Sys.Version;
 
 	ushort code = __REV16(Sys.Code);
-	ByteArray bs((byte*)&code, 2);
+	ByteArray bs(&code, 2);
 	Type		= bs.ToHex('\0');
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();

@@ -9,7 +9,7 @@
 #endif
 
 /* 读取段数据 （起始段，字节数量，目标缓冲区） */
-bool BlockStorage::Read(uint address, ByteArray& bs)
+bool BlockStorage::Read(uint address, Array& bs)
 {
 	uint len = bs.Length();
     if (!len) return true;
@@ -25,7 +25,7 @@ bool BlockStorage::Read(uint address, ByteArray& bs)
     return true;
 }
 
-bool BlockStorage::Write(uint address, const ByteArray& bs)
+bool BlockStorage::Write(uint address, const Array& bs)
 {
     assert_param2((address & 0x01) == 0x00, "Write起始地址必须是2字节对齐");
 
@@ -212,14 +212,14 @@ bool BlockStorage::IsErased(uint address, uint len)
     return true;
 }
 
-bool CharStorage::Read(uint address, ByteArray& bs)
+bool CharStorage::Read(uint address, Array& bs)
 {
 	bs.Copy((byte*)address);
 
 	return true;
 }
 
-bool CharStorage::Write(uint address, const ByteArray& bs)
+bool CharStorage::Write(uint address, const Array& bs)
 {
 	bs.CopyTo((byte*)address);
 

@@ -23,7 +23,7 @@ bool TokenConfig::Load()
 	// 尝试加载配置区设置
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
-	ByteArray bs(&Length, len);
+	Array bs(&Length, len);
 	/*if(!Config::Current->GetOrSet("TKCF", bs))
 		debug_printf("TokenConfig::Load 首次运行，创建配置区！\r\n");
 	else
@@ -44,7 +44,7 @@ void TokenConfig::Save()
 
 	debug_printf("TokenConfig::Save \r\n");
 
-	ByteArray bs(&Length, len);
+	Array bs(&Length, len);
 	Config::Current->Set("TKCF", bs);
 }
 

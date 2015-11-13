@@ -56,8 +56,7 @@ void ShunCom::ShowConfig()
 	Sys.Sleep(3000);
 
 	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
-	ByteArray bs(buf, ArrayLength(buf));
-	Write(bs);
+	Write(CArray(buf));
 
 	Sys.Sleep(300);
 

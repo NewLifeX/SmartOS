@@ -163,8 +163,7 @@ void TinyMessage::Show() const
 	{
 		assert_ptr(Data);
 		msg_printf(" Data[%d]=", Length);
-		ByteArray bs(Data, Length);
-		bs.Show();
+		ByteArray(Data, Length).Show();
 	}
 	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
 	msg_printf("\r\n");
@@ -493,7 +492,7 @@ void TinyController::Loop()
 		f->Retry++;
 
 		// 发送消息
-		ByteArray bs(node.Data, node.Length);
+		Array bs(node.Data, node.Length);
 		Port->Write(bs);
 
 		// 增加发送次数统计

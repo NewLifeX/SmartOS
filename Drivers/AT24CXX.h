@@ -18,8 +18,8 @@ public:
 	bool Write(ushort addr, byte data);
 	byte Read(ushort addr);
 
-	virtual bool Write(uint addr, const ByteArray& bs);
-	virtual bool Read(uint addr, ByteArray& bs);
+	virtual bool Write(uint addr, const Array& bs);
+	virtual bool Read(uint addr, Array& bs);
 };
 
 #endif

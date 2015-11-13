@@ -8,7 +8,7 @@ class RC4
 {
 public:
 	// 加解密
-	static ByteArray Encrypt(const ByteArray& data, const ByteArray& pass);
+	static ByteArray Encrypt(const Array& data, const Array& pass);
 };
 
 #endif

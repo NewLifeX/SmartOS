@@ -340,7 +340,7 @@ void TokenClient::Ping()
 
 	ulong time	= Sys.Ms();
 	Stream ms	= msg.ToStream();
-	ms.WriteArray(ByteArray(&time, 8));
+	ms.WriteArray(Array(&time, 8));
 	msg.Length	= ms.Position();
 
 	Send(msg);

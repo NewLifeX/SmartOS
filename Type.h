@@ -144,6 +144,7 @@ protected:
 
 // 使用常量数组来定义一个指针数组
 #define CArray(arr) (Array(arr, ArrayLength(arr)))
+#define SArray(obj) (Array(&obj, sizeof(obj)))
 
 // 数组
 /*

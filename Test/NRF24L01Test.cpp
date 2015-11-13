@@ -15,7 +15,7 @@ void OnSend(void* param)
     Sys.ToHex(p, (byte*)&s, 4);
 
     //nrf->SetMode(false);
-    if(!nrf->Write(ByteArray(tx_buf, ArrayLength(tx_buf))))
+    if(!nrf->Write(CArray(tx_buf)))
     {
         debug_printf ("Test Send Error 0x%02x\r\n", nrf->Status);
         nrf->ShowStatus();
@@ -33,7 +33,7 @@ void OnReceive(void* param)
     }
 }
 
-uint OnReceive(ITransport* transport, ByteArray& bs, void* param, void* param2)
+uint OnReceive(ITransport* transport, Array& bs, void* param, void* param2)
 {
 	bs.Show(true);
 
