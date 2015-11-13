@@ -56,7 +56,7 @@ public:
 class TaskScheduler
 {
 private:
-	TArray<Task*, 0x10>	_Tasks;
+	TArray<Task*, 0x20>	_Tasks;
 	uint _gid;	// 总编号
 
 	friend class Task;

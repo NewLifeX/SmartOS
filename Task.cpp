@@ -139,6 +139,7 @@ Task* Task::Get(int taskid)
 
 TaskScheduler::TaskScheduler(string name)
 {
+	_Tasks.Clear();
 	_Tasks.SetLength(0);
 	Name 	= name;
 
@@ -169,14 +170,20 @@ void TaskScheduler::Set(IArray<Task>* tasks)
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, string name)
 {
-	Task* task	= new Task();
+	// 查找是否有可用空闲任务
+	Task* task	= NULL;
+	int idx = _Tasks.FindIndex(NULL);
+	if(idx >= 0)
+		task	= _Tasks[idx];
+	else
+		_Tasks.Push(task = new Task());
+
 	task->Host	= this;
 	task->ID	= _gid++;
 	task->Name	= name;
 	task->Callback	= func;
 	task->Param		= param;
 	task->Period	= period;
-	_Tasks.Push(task);
 
 	if(dueTime < 0)
 	{
@@ -209,9 +216,11 @@ void TaskScheduler::Remove(uint taskid)
 			// 首先清零ID，避免delete的时候再次删除
 			task->ID = 0;
 
-			_Tasks.Remove(task);
+			//_Tasks.Remove(task);
+			//int idx = _Tasks.FindIndex(task);
+			//if(idx >= 0)
 
-			delete task;
+			//delete task;
 
 			break;
 		}
