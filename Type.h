@@ -102,8 +102,8 @@ public:
 	// 缓冲区。按字节指针返回
 	byte* GetBuffer() const;
 
-	Array(void* data, int len = 0);
-	Array(const void* data, int len = 0);
+	Array(void* data, int len);
+	Array(const void* data, int len);
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr);
 	virtual ~Array();

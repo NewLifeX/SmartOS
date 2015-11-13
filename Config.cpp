@@ -24,7 +24,7 @@ struct ConfigBlock
 ushort ConfigBlock::GetHash() const
 {
     // 计算头部 CRC。从数据CRC开始，包括大小和名称
-    return Crc::Hash16(&Size, sizeof(*this) - offsetof(ConfigBlock, Size));
+    return Crc::Hash16(Array(&Size, sizeof(*this) - offsetof(ConfigBlock, Size)));
 }
 
 bool ConfigBlock::Valid() const

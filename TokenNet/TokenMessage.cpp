@@ -206,11 +206,11 @@ void TokenController::Close()
 }
 
 // 发送消息，传输口参数为空时向所有传输口发送消息
-bool TokenController::Send(byte code, byte* buf, uint len)
+bool TokenController::Send(byte code, const Array& arr)
 {
 	TokenMessage msg;
 	msg.Code = code;
-	msg.SetData(buf, len);
+	msg.SetData(arr);
 
 	return Send(msg);
 }
@@ -292,7 +292,7 @@ bool TokenController::OnReceive(Message& msg)
 	// 如果有等待响应，则交给它
 	if(msg.Reply && _Response && (msg.Code == _Response->Code || msg.Code == 0x08 && msg.Data[0] == _Response->Code))
 	{
-		_Response->SetData(msg.Data, msg.Length);
+		_Response->SetData(Array(msg.Data, msg.Length));
 		_Response->Reply = true;
 
 		// 加解密。握手不加密，登录响应不加密

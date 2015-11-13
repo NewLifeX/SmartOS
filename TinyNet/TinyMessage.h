@@ -148,7 +148,7 @@ public:
 	virtual bool Send(Message& msg);
 
 	// 发送消息，传输口参数为空时向所有传输口发送消息
-	uint Post(byte dest, byte code, byte* buf = NULL, uint len = 0);
+	uint Post(byte dest, byte code, const Array& arr);
 	// 把消息放入发送队列，usTimeout微秒超时时间内，如果对方没有响应，会重复发送
 	bool Post(TinyMessage& msg, int usTimeout = -1);
 	// 回复对方的请求消息

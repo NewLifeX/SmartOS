@@ -23,5 +23,5 @@ void MessageBase::WriteMessage(Message& msg)
 	Write(ms);
 
 	//msg.Length = ms.Position();
-	msg.SetData(ms.GetBuffer(), ms.Position());
+	msg.SetData(Array(ms.GetBuffer(), ms.Position()));
 }

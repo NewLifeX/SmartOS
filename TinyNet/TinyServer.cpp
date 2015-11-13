@@ -335,7 +335,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			  
 			  ms.ReadByte();
 	          ushort crc  = ms.ReadUInt16();				  
-			  ushort crc1 = Crc::Hash16(dv->HardID.GetBuffer(), 12);
+			  ushort crc1 = Crc::Hash16(dv->HardID);
 			  
 			  if(crc ==crc1) ver = 2;		 			    
 			  else
@@ -367,7 +367,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
            Stream ms(msg.Data, msg.Length);				  
 		   ms.ReadByte();
 	       ushort crc  = ms.ReadUInt16();				  
-		   ushort crc1 = Crc::Hash16(dv->HardID.GetBuffer(), 12);
+		   ushort crc1 = Crc::Hash16(dv->HardID);
 		   
 			if(crc !=crc1)
 			{			

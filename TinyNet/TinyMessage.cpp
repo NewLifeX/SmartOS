@@ -77,7 +77,7 @@ bool TinyMessage::Read(Stream& ms)
 	f->TTL		= 0;
 	f->Retry	= 0;
 	// 连续的，可以直接计算Crc16
-	Crc = Crc::Hash16(p, HeaderSize + Length);
+	Crc = Crc::Hash16(Array(p, HeaderSize + Length));
 	// 还原数据
 	p[3] = fs;
 	return true;
@@ -108,7 +108,7 @@ void TinyMessage::Write(Stream& ms) const
 	f->TTL		= 0;
 	f->Retry	= 0;
 
-	p->Checksum = p->Crc = Crc::Hash16(buf, HeaderSize + Length);
+	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + Length));
 
 	// 还原数据
 	buf[3] = fs;
@@ -125,7 +125,7 @@ void TinyMessage::ComputeCrc()
 	Write(ms);
 
 	// 扣除不计算校验码的部分
-	Checksum = Crc = Crc::Hash16(ms.GetBuffer(), HeaderSize + Length);
+	Checksum = Crc = Crc::Hash16(Array(ms.GetBuffer(), HeaderSize + Length));
 }
 
 // 验证消息校验码是否有效
@@ -421,11 +421,11 @@ void TinyController::AckResponse(const TinyMessage& msg)
 		msg_printf(" 失败!\r\n");
 }
 
-uint TinyController::Post(byte dest, byte code, byte* buf, uint len)
+uint TinyController::Post(byte dest, byte code, const Array& arr)
 {
 	TinyMessage msg(code);
 	msg.Dest = dest;
-	msg.SetData(buf, len);
+	msg.SetData(arr);
 
 	return Send(msg);
 }
