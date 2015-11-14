@@ -30,7 +30,7 @@ public:
 	byte _Reply:1;	// 是否响应
 	byte Sequence;	// 序列号
 	byte _Length;	// 数据长度
-	byte _Data[32];	// 数据部分
+	byte _Data[64];	// 数据部分
 	ushort Checksum;// 16位检验和
 
 	// 负载数据及校验部分，并非内存布局。
