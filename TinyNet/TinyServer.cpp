@@ -300,117 +300,73 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 }
 
 bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
-{	
+{
 	msg.Code = 0x02;
-	Stream ms = msg.ToStream();	
+	Stream ms = msg.ToStream();
 	ms.Write(crc);
-	msg.Length = ms.Position();	
-	
+	msg.Length = ms.Position();
+
 	Send(msg);
-	
+
 	return true;
 }
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {
-	Device* dv = FindDevice(msg.Src);	
+	Device* dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL)return false;
-	
-	// 准备一条响应指令	
+
+	// 准备一条响应指令
 	TinyMessage rs;
 	rs.Code = msg.Code;
 	rs.Dest = msg.Src;
-	rs.Sequence	= msg.Sequence;					
+	rs.Sequence	= msg.Sequence;
+
+	Stream ms	= msg.ToStream();
 	// 子操作码
-	switch(msg.Data[0])
+	while(ms.Remain())
 	{
-		// 同步数据
-		case 0x01:
-		{											
-			byte ver = 0;			
-			if(dv->Version > 1)
-			{   
-		      Stream ms(msg.Data, msg.Length);	
-			  
-			  ms.ReadByte();
-	          ushort crc  = ms.ReadUInt16();				  
-			  ushort crc1 = Crc::Hash16(dv->HardID);
-			  
-			  if(crc ==crc1) ver = 2;		 			    
-			  else
-			  {
-				 debug_printf("设备硬件Crc:%08X,对比Crc：%08X \r\n",crc,crc1); 
-				 debug_printf("设备硬件ID"); 
-				 dv->HardID.Show();			 
-				 Disjoin(rs,crc);
-				 return false;
-			  }
-			}			
-			if(dv && msg.Length >= ver + 4)
+		switch(ms.ReadByte())
+		{
+			// 同步数据
+			case 0x01:
 			{
-				byte offset	= msg.Data[ver + 1];
-				byte len	= msg.Data[ver + 2];
+				byte offset	= ms.ReadByte();
+				byte len	= ms.ReadByte();
 				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
 
-				int remain = dv->Store.Capacity() - offset;
-				if(len > remain) len = remain;
+				int remain	= dv->Store.Capacity() - offset;
+				int len2	= len;
+				if(len2 > remain) len2 = remain;
 				// 保存一份到缓冲区
-				if(len > 0)
+				if(len2 > 0)
 				{
-					dv->Store.Copy(&msg.Data[3+ver], len, offset);
+					dv->Store.Copy(ms.ReadBytes(len), len2, offset);
+				}
+			}
+			case 0x02:
+			{
+			}
+			case 0x03:
+			{
+				ushort crc  = ms.ReadUInt16();
+				ushort crc1 = Crc::Hash16(dv->HardID);
+				// 下一行仅调试使用
+				debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
+				if(crc != crc1)
+				{
+					debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
+					debug_printf("设备硬件ID: ");
+					dv->HardID.Show(true);
+
+					Disjoin(rs, crc);
+
+					return false;
 				}
 			}
 		}
-		case 0x02:
-		{
-           Stream ms(msg.Data, msg.Length);				  
-		   ms.ReadByte();
-	       ushort crc  = ms.ReadUInt16();				  
-		   ushort crc1 = Crc::Hash16(dv->HardID);
-		   
-			if(crc !=crc1)
-			{			
-			  debug_printf("设备硬件Crc:%08X,对比Crc：%08X \r\n",crc,crc1); 
-			  debug_printf("设备硬件ID"); 
-			  dv->HardID.Show();			 
-			  Disjoin(rs,crc);
-			  return false;
-			}
-			if(dv && msg.Length >= 6)
-			{
-				byte offset	= msg.Data[3];
-				byte len	= msg.Data[4];
-				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
-
-				int remain = dv->Store.Capacity() - offset;
-				if(len > remain) len = remain;
-				// 保存一份到缓冲区
-				if(len > 0)
-				{
-				  dv->Store.Copy(&msg.Data[5], len, offset);
-				}
-			}			
-		}		
-		case 0x03:
-		{
-			if(dv && msg.Length >= 4)
-			{
-				byte offset	= msg.Data[1];
-				byte len	= msg.Data[2];
-				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
-
-				int remain = dv->Store.Capacity() - offset;
-				if(len > remain) len = remain;
-				// 保存一份到缓冲区
-				if(len > 0)
-				{
-					dv->Store.Copy(&msg.Data[3], len, offset);
-				}
-			}
-			
-		}
-	}	
+	}
 	//todo。告诉客户端有多少待处理指令
 
 	Reply(rs);
@@ -442,7 +398,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 
 	  while(remain<0)
 	  {
-		  debug_printf("读取数据出错Store.Length=%d \r\n",dv.Store.Length()) ;		  
+		  debug_printf("读取数据出错Store.Length=%d \r\n",dv.Store.Length()) ;
 		  offset--;
 
 		  remain = dv.Store.Length() - offset;
@@ -508,7 +464,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-	
+
 	if(offset>DataStoreLent)
 	{
 		return true;
