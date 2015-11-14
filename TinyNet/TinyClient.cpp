@@ -317,6 +317,7 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
 	//cfg.Show();
 	return true;
 }
+
 void TinyClient::Report(Message& msg)
 {
 	// 没有服务端时不要上报
@@ -324,46 +325,59 @@ void TinyClient::Report(Message& msg)
 
 	Stream ms = msg.ToStream();
 	ms.Write((byte)0x01);	// 子功能码
-	ms.Write((byte)0x00);	// 起始地址
-	ms.Write((byte)Store.Data.Length());	// 长度
-	ms.Write(Store.Data);
+	ms.Write((byte)0x01);	// 起始地址。跳过第一个字节
+
+	byte len = Store.Data.Length() - 1;
+	ms.Write(len);	// 长度
+	ms.Write(Array(Store.Data.GetBuffer(), len));
 	msg.Length = ms.Position();
 }
 
+// 0x01子功能，主数据区
 void TinyClient::ReportPing0x01(Message& msg)
 {
-	if(!Server) return ;
+	if(!Server) return;
+
 	Stream ms = msg.ToStream();
 	ms.Write((byte)0x01);	// 子功能码
-	ms.Write(HardCrc);		//硬件CRC
-	ms.Write((byte)0x00);	// 起始地址
-	ms.Write((byte)Store.Data.Length());	// 长度
-	ms.Write(Store.Data);
-	msg.Length = ms.Position();
+	ms.Write((byte)0x01);	// 起始地址
+
+	byte len = Store.Data.Length() - 1;
+	ms.Write(len);	// 长度
+	ms.Write(Array(Store.Data.GetBuffer(), len));
+	msg.Length += ms.Position();
 }
+
+// 0x02子功能，配置区
 void TinyClient::ReportPing0x02(Message& msg)
 {
 	// 没有服务端时不要上报
-	if(!Server) return ;
+	if(!Server) return;
+
+	byte len = Store.Data.Length() - 1;
+	if(msg.Size() + 3 + len > Control->Port->MaxSize) return;
+
 	//主数据区长度超过18字节不带CRC校验
 	Stream ms = msg.ToStream();
 	ms.Write((byte)0x02);	// 子功能码
-	ms.Write(HardCrc);		//硬件CRC
-	ms.Write((byte)0x00);	// 起始地址
-	ms.Write((byte)Store.Data.Length());	// 长度
-	ms.Write(Store.Data);
-	msg.Length = ms.Position();
+	ms.Write((byte)0x01);	// 起始地址
+
+	ms.Write(len);	// 长度
+	ms.Write(Array(Store.Data.GetBuffer(), len));
+	msg.Length += ms.Position();
 }
+
+// 0x03子功能，硬件校验码
 void TinyClient::ReportPing0x03(Message& msg)
 {
+	if(msg.Size() + 3 > Control->Port->MaxSize) return;
+
 	Stream ms = msg.ToStream();
 	ms.Write((byte)0x03);	// 子功能码
-	ms.Write((byte)0x00);	// 起始地址
-	ms.Write((byte)Store.Data.Length());	// 长度
-	ms.Write(Store.Data);
-	msg.Length = ms.Position();
-
+	ms.Write(HardCrc);		//硬件CRC
+	msg.Length += ms.Position();
 }
+
 bool TinyClient::Report(uint offset, byte dat)
 {
 	TinyMessage msg;
@@ -568,23 +582,9 @@ void TinyClient::Ping()
 	TinyMessage msg;
 	msg.Code = 3;
 
-	// 没事的时候，心跳指令承载0x01子功能码，作为数据上报
-	if(Encryption)
-	{
-		if(Store.Data.Length()<18)
-		{
-			ReportPing0x01(msg);
-		}
-		else
-		{
-			if(Store.Data.Length()<20)
-			   ReportPing0x02(msg);
-		   else
-			   ReportPing0x03(msg);
-		}
-	}
-    else
-	   Report(msg);
+	Report(msg);
+	ReportPing0x03(msg);
+	ReportPing0x02(msg);
 
 	Send(msg);
 
