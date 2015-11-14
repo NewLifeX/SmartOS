@@ -49,9 +49,9 @@ public:
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const Array& bs);
 	//特色心跳上报
-	void ReportPing0x01(Message& msg);
-	void ReportPing0x02(Message& msg);
-	void ReportPing0x03(Message& msg);
+	void ReportPing0x01(Stream& ms);
+	void ReportPing0x02(Stream& ms);
+	void ReportPing0x03(Stream& ms);
 
 	uint		NextReport;	// 下次上报偏移，0不动
 	void ReportAsync(uint offset);
