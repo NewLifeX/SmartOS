@@ -21,6 +21,8 @@ TinyClient* CreateTinyClient(ITransport* port);
 void CheckUserPress(InputPort* port, bool down, void* param = NULL);
 void InitButtonPress(Button_GrayLevel* btns, byte count);
 
+void SetPower(ITransport* port);
+
 //void NoUsed();
 
 #endif

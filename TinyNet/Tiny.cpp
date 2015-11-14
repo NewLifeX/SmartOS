@@ -55,7 +55,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	NRF24L01* nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 	nrf->Power.Invert = powerInvert;
-	nrf->SetPower();
+	//nrf->SetPower();
 
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
@@ -67,60 +67,20 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	return nrf;
 }
 
-uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
-{
-	debug_printf("配置信息\r\n");
-	bs.Show(true);
-
-	return 0;
-}
-
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg)
 {
 	SerialPort* sp = new SerialPort(index, baudRate);
 	ShunCom* zb = new ShunCom();
-	//zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
-	//InputPort temp;
-	//temp.Set(power).Open();
-	//bool dd = temp;
-	//temp.Close();
-	
+
 	zb->Power.Set(power).Open();
-	
 	if(zb->Power) zb->Power.Invert = true;
-	//if(dd) zb->Power.Invert = true;
 
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
 
-	sp->SetPower();
-	zb->SetPower();
-
-	/*zb.Register(OnZig, &zb);
-	zb.Open();
-
-	zb.Config	= true;
-	Sys.Sleep(1200);
-
-	debug_printf("进入配置模式\r\n");
-
-	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34};
-	zb.Write(CArray(buf));*/
-
-	/*ByteArray bs;
-	int n=10000;
-	while(n--)
-	{
-		zb.Read(bs);
-		if(bs.Length() > 0)
-		{
-			bs.Show(true);
-			break;
-		}
-	}
-	debug_printf("退出配置模式\r\n");
-	zb.Config	= false;*/
+	//sp->SetPower();
+	//zb->SetPower();
 
 	return zb;
 }
@@ -202,10 +162,9 @@ void InitButtonPress(Button_GrayLevel* btns, byte count)
 	}
 }
 
-/*void NoUsed()
+void SetPower(ITransport* port)
 {
-	Setup(1234, "");
-	Create2401(SPI1, P0, P0);
-	CreateShunCom(COM2, 38400, P0, P0, P0, P0);
-	CreateTinyClient(NULL);
-}*/
+	Power* pwr	= dynamic_cast<Power*>(port);
+	if(pwr) pwr->SetPower();
+}
+

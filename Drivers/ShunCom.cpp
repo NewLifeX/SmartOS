@@ -73,6 +73,10 @@ void ShunCom::ChangePower(int level)
 	Power	= false;
 	Sleep	= false;
 	Config	= false;
+
+	//Power* pwr	= dynamic_cast<Power*>(Port);
+	//if(pwr) pwr->ChangePower(level);
+	PackPort::OnClose();
 }
 
 bool ShunCom::OnWrite(const Array& bs)
