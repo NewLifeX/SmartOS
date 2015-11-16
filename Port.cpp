@@ -112,7 +112,8 @@ bool Port::Open()
 
 #if DEBUG
 	// 保护引脚
-	Show();
+	//Show();
+	GetType().Name().Show();
 	Reserve(_Pin, true);
 #endif
 
@@ -141,7 +142,8 @@ void Port::Close()
 
 #if DEBUG
 	// 保护引脚
-	Show();
+	//Show();
+	GetType().Name().Show();
 	Reserve(_Pin, false);
 	debug_printf("\r\n");
 #endif
