@@ -71,16 +71,22 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 {
 	SerialPort* sp = new SerialPort(index, baudRate);
 	ShunCom* zb = new ShunCom();
-
-	zb->Power.Set(power).Open();
-	if(zb->Power) zb->Power.Invert = true;
+	//zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
+	InputPort temp;
+	temp.Set(power).Open();
+	bool dd = temp;
+	temp.Close();
+	
+	zb->Power.Set(power);
+	//if(zb->Power) zb->Power.Invert = true;
+	if(dd) zb->Power.Invert = true;
 
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
 
-	//sp->SetPower();
-	//zb->SetPower();
+	sp->SetPower();
+	zb->SetPower();
 
 	return zb;
 }
