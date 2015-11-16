@@ -1,22 +1,23 @@
 ﻿#include "Timer.h"
 
 static TIM_TypeDef* const g_Timers[] = TIMS;
-Timer** Timer::Timers = NULL;
 const byte Timer::TimerCount = ArrayLength(g_Timers);
+
+// 已经实例化的定时器对象
+static Timer* Timers[16] = {
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+};
 
 Timer::Timer(TIM_TypeDef* timer)
 {
 	assert_param(timer);
 
-	// 初始化静态数组
-	if(!Timers)
-	{
-		Timers = new Timer*[TimerCount];
-		memset(Timers, 0, TimerCount * sizeof(Timers[0]));
-	}
-
-	byte idx = 0xFF;
-	for(int i=0; i<ArrayLength(g_Timers); i++)
+	byte idx	= 0xFF;
+	byte tcount	= ArrayLength(g_Timers);
+	for(int i=0; i<tcount; i++)
 	{
 		if(g_Timers[i] == timer)
 		{
@@ -24,22 +25,22 @@ Timer::Timer(TIM_TypeDef* timer)
 			break;
 		}
 	}
-	assert_param(idx <= ArrayLength(g_Timers));
+	assert_param(idx <= tcount);
 
-	Timers[idx] = this;
+	Timers[idx]	= this;
 
-	_index = idx;
-	_Timer = g_Timers[idx];
+	_index		= idx;
+	_Timer		= g_Timers[idx];
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次
 	/*Prescaler = Sys.Clock / 1000000;
 	Period = 1000;*/
 	SetFrequency(10);
 
-	_started = false;
+	_started	= false;
 
-	_Handler = NULL;
-	_Param = NULL;
+	_Handler	= NULL;
+	_Param		= NULL;
 }
 
 Timer::~Timer()
@@ -54,21 +55,15 @@ Timer::~Timer()
 // 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
 Timer* Timer::Create(byte index)
 {
+	byte tcount	= ArrayLength(g_Timers);
 	// 特殊处理随机分配
 	if(index == 0xFF)
 	{
-		// 初始化静态数组
-		if(!Timers)
-		{
-			Timers = new Timer*[TimerCount];
-			memset(Timers, 0, TimerCount * sizeof(Timers[0]));
-		}
-
 		// 找到第一个可用的位置，没有被使用，并且该位置定时器存在
 		byte i = 0;
-		for(; i<TimerCount && (Timers[i] || !g_Timers[i]); i++);
+		for(; i<tcount && (Timers[i] || !g_Timers[i]); i++);
 
-		if(i >= TimerCount)
+		if(i >= tcount)
 		{
 			debug_printf("Timer::Create 失败！没有空闲定时器可用！\r\n");
 			return NULL;
@@ -77,7 +72,7 @@ Timer* Timer::Create(byte index)
 		index = i;
 	}
 
-	assert_param(index < TimerCount);
+	assert_param(index < tcount);
 
 	if(Timers[index])
 		return Timers[index];
@@ -90,10 +85,10 @@ void Timer::Config()
 	// 配置时钟
 	TIM_TimeBaseInitTypeDef tr;
 	TIM_TimeBaseStructInit(&tr);
-	tr.TIM_Period = Period - 1;
-	tr.TIM_Prescaler = Prescaler - 1;
+	tr.TIM_Period		= Period - 1;
+	tr.TIM_Prescaler	= Prescaler - 1;
 	//tr.TIM_ClockDivision = 0x0;
-	tr.TIM_CounterMode = TIM_CounterMode_Up;
+	tr.TIM_CounterMode	= TIM_CounterMode_Up;
 	TIM_TimeBaseInit(_Timer, &tr);
 
 	//TIM_PrescalerConfig(_Timer, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
