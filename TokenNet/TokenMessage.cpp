@@ -338,6 +338,8 @@ bool TokenController::OnReceive(Message& msg)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TokenController::Send(Message& msg)
 {
+	TS("TokenController::Send");
+
 	ShowMessage("Send", msg);
 
 	// 加解密。握手不加密，登录响应不加密

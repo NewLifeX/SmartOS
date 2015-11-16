@@ -61,11 +61,15 @@ void TokenClient::Close()
 
 bool TokenClient::Send(TokenMessage& msg)
 {
+	assert_param2(Control, "TokenClient::Send");
+
 	return Control->Send(msg);
 }
 
 bool TokenClient::Reply(TokenMessage& msg)
 {
+	assert_param2(Control, "TokenClient::Reply");
+
 	return Control->Reply(msg);
 }
 

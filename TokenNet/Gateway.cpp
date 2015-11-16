@@ -411,6 +411,8 @@ void ExitStudentMode(void* param)
 // 学习模式 0x20
 void Gateway::SetMode(bool study)
 {
+	TS("Gateway::SetMode");
+
 	Study  		  = study;
 	Server->Study = Study;
 
