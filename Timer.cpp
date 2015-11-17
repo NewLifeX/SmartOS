@@ -94,7 +94,7 @@ void Timer::Config()
 	//TIM_PrescalerConfig(_Timer, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
 	// 打开中断
 	//TIM_ITConfig(_Timer, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
-	//TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
+	TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 	//TIM_UpdateRequestConfig(_Timer, TIM_UpdateSource_Regular);
 	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
 	TIM_ClearFlag(_Timer, TIM_FLAG_Update);
@@ -248,10 +248,10 @@ void Timer::SetHandler(bool set)
 	int irqs[] = TIM_IRQns;
 	if(set)
 	{
+		// 打开中断
+		//TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 		Interrupt.SetPriority(irqs[_index], 1);
 		Interrupt.Activate(irqs[_index], OnHandler, this);
-		// 打开中断
-		TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
 	}
 	else
 	{
