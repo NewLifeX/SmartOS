@@ -324,18 +324,23 @@ void TinyClient::Report(Message& msg)
 	// 没有服务端时不要上报
 	if(!Server) return;
 
-	Stream ms = msg.ToStream();
+	//Stream ms = msg.ToStream();
 
-	ReportPing0x01(ms);
-	ReportPing0x03(ms);
-	ReportPing0x02(ms);
+	ReportPing0x01();
+	ReportPing0x03();
+	ReportPing0x02();
 
-	msg.Length = ms.Position();
+	//msg.Length = ms.Position();
 }
 
 // 0x01子功能，主数据区
-void TinyClient::ReportPing0x01(Stream& ms)
+void TinyClient::ReportPing0x01()
 {
+	
+	TinyMessage msg;
+	msg.Code = 3;
+	Stream ms = msg.ToStream();
+	
 	byte len = Store.Data.Length() - 1;
 	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
 
@@ -344,11 +349,18 @@ void TinyClient::ReportPing0x01(Stream& ms)
 
 	ms.Write(len);	// 长度
 	ms.Write(Array(Store.Data.GetBuffer(), len));
+	msg.Length = ms.Position();
+	
+	Send(msg);
 }
 
 // 0x02子功能，配置区
-void TinyClient::ReportPing0x02(Stream& ms)
+void TinyClient::ReportPing0x02()
 {
+	TinyMessage msg;
+	msg.Code = 3;
+	Stream ms = msg.ToStream();
+	
 	byte len = Store.Data.Length() - 1;
 	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
 
@@ -357,15 +369,24 @@ void TinyClient::ReportPing0x02(Stream& ms)
 
 	ms.Write(len);	// 长度
 	ms.Write(Array(Store.Data.GetBuffer(), len));
+	msg.Length = ms.Position();
+	
+	Send(msg);
 }
 
 // 0x03子功能，硬件校验码
-void TinyClient::ReportPing0x03(Stream& ms)
+void TinyClient::ReportPing0x03()
 {
+	TinyMessage msg;
+	msg.Code = 3;
+	Stream ms = msg.ToStream();
 	if(ms.Position() + 3 > Control->Port->MaxSize) return;
 
 	ms.Write((byte)0x03);	// 子功能码
 	ms.Write(HardCrc);		//硬件CRC
+	msg.Length = ms.Position();
+	
+	Send(msg);
 }
 
 bool TinyClient::Report(uint offset, byte dat)
