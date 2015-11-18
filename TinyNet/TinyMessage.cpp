@@ -136,7 +136,7 @@ void TinyMessage::ComputeCrc()
 bool TinyMessage::Valid() const
 {
 	if(Checksum == Crc) return true;
-	
+
 	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
 	debug_printf("校验错误指令 ");
@@ -278,6 +278,25 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
+	byte* buf	= ms.Current();
+
+	// 代码为0是非法的
+	if(!buf[2]) return true;
+	// 没有源地址是很不负责任的
+	if(!buf[1]) return true;
+	// 非广播包时，源地址和目的地址相同也是非法的
+	if(buf[0] == buf[1]) return false;
+	// 源地址是自己不要接收
+	if(buf[1] == Address) return true;
+	// 只处理本机消息或广播消息
+	//if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	// 不是自己的消息，并且没有设置接收全部
+	if(Mode < 2 && buf[0] != Address)
+	{
+		// 如果不是广播或者不允许广播
+		if(Mode != 1 || buf[0] != 0) return true;
+	}
+
 	TinyMessage msg;
 	return Controller::Dispatch(ms, &msg, param);
 }
@@ -286,32 +305,6 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 bool TinyController::Valid(const Message& msg)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;
-
-	// 代码为0是非法的
-	if(!msg.Code) return false;
-	// 没有源地址是很不负责任的
-	if(!tmsg.Src) return false;
-	// 非广播包时，源地址和目的地址相同也是非法的
-	if(tmsg.Dest == tmsg.Src) return false;
-	// 源地址是自己不要接收
-	if(tmsg.Src == Address) return false;
-	// 只处理本机消息或广播消息
-	//if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
-	switch(Mode)
-	{
-		case 0:
-			break;
-		case 1:
-			break;
-		case 2:
-			break;
-	}
-	// 不是自己的消息，并且没有设置接收全部
-	if(Mode < 2 && tmsg.Dest != Address)
-	{
-		// 如果不是广播或者不允许广播
-		if(Mode != 1 || tmsg.Dest != 0) return false;
-	}
 
 	TS("TinyController::Valid");
 
