@@ -39,6 +39,8 @@ bool TinyMessage::Read(Stream& ms)
 	// 消息至少4个头部字节、2字节长度和2字节校验，没有负载数据的情况下
 	if(ms.Remain() < MinSize) return false;
 
+	TS("TinyMessage::Read");
+
 	byte* p = ms.Current();
 	ms.Read(&Dest, 0, HeaderSize);
 
@@ -89,6 +91,8 @@ void TinyMessage::Write(Stream& ms) const
 	assert_param2(Src, "微网源地址不能为空");
 	//assert_param2(Src != Dest, "微网目的地址不能等于源地址");
 	if(Src == Dest) return;
+
+	TS("TinyMessage::Write");
 
 	// 实际数据拷贝到占位符
 	TinyMessage* p = (TinyMessage*)this;
@@ -309,6 +313,8 @@ bool TinyController::Valid(const Message& msg)
 		if(Mode != 1 || tmsg.Dest != 0) return false;
 	}
 
+	TS("TinyController::Valid");
+
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
 	if(tmsg.Sequence != 0)
@@ -402,6 +408,8 @@ void TinyController::AckResponse(const TinyMessage& msg)
 	// 广播消息不要给确认
 	if(msg.Dest == 0) return;
 
+	TS("TinyController::AckResponse");
+
 	TinyMessage msg2;
 	msg2.Code	= msg.Code;
 	msg2.Src	= Address;
@@ -462,6 +470,8 @@ void SendTask(void* param)
 
 void TinyController::Loop()
 {
+	TS("TinyController::Loop");
+
 	int count = 0;
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -522,6 +532,8 @@ void TinyController::Loop()
 // 发送消息，usTimeout微秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
 bool TinyController::Post(TinyMessage& msg, int expire)
 {
+	TS("TinyController::Post");
+
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
 
@@ -564,6 +576,8 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 // 广播消息，不等待响应和确认
 bool TinyController::Broadcast(TinyMessage& msg)
 {
+	TS("TinyController::Broadcast");
+
 	msg.NoAck = true;
 	msg.Src = Address;
 	msg.Dest = 0;

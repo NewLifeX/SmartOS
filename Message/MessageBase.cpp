@@ -8,6 +8,8 @@ MessageBase::MessageBase()
 
 bool MessageBase::ReadMessage(const Message& msg)
 {
+	TS("MessageBase::ReadMessage");
+
 	Reply = msg.Reply;
 
 	Stream ms(msg.Data, msg.Length);
@@ -16,6 +18,8 @@ bool MessageBase::ReadMessage(const Message& msg)
 
 void MessageBase::WriteMessage(Message& msg)
 {
+	TS("MessageBase::WriteMessage");
+
 	// 如果是令牌消息，这里就要自己小心了
 	//Stream ms(msg.Data, 256);
 	MemoryStream ms;

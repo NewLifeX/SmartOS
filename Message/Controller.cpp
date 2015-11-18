@@ -53,6 +53,8 @@ void Controller::Close()
 
 uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2)
 {
+	TS("Controller::Dispatch");
+
 	byte* buf	= bs.GetBuffer();
 	uint len	= bs.Length();
 
@@ -114,6 +116,8 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 
 bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
+	TS("Controller::DispatchMsg");
+
 	byte* buf = ms.Current();
 
 	Message& msg	= *pmsg;
@@ -154,6 +158,8 @@ bool Controller::OnReceive(Message& msg)
 
 bool Controller::Send(Message& msg)
 {
+	TS("Controller::Send");
+
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
 
