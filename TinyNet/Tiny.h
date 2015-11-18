@@ -2,6 +2,7 @@
 #define _Tiny_H_
 
 #include "Sys.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 
 #include "TinyNet\TinyClient.h"
