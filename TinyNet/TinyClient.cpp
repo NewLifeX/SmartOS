@@ -324,23 +324,18 @@ void TinyClient::Report(Message& msg)
 	// 没有服务端时不要上报
 	if(!Server) return;
 
-	//Stream ms = msg.ToStream();
+	Stream ms = msg.ToStream();
 
-	ReportPing0x01();
-	ReportPing0x03();
-	ReportPing0x02();
+	ReportPing0x01(ms);
+	ReportPing0x03(ms);
+	ReportPing0x02(ms);
 
-	//msg.Length = ms.Position();
+	msg.Length = ms.Position();
 }
 
 // 0x01子功能，主数据区
-void TinyClient::ReportPing0x01()
+void TinyClient::ReportPing0x01(Stream& ms)
 {
-	
-	TinyMessage msg;
-	msg.Code = 3;
-	Stream ms = msg.ToStream();
-	
 	byte len = Store.Data.Length() - 1;
 	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
 
@@ -348,45 +343,30 @@ void TinyClient::ReportPing0x01()
 	ms.Write((byte)0x01);	// 起始地址
 
 	ms.Write(len);	// 长度
-	ms.Write(Array(Store.Data.GetBuffer(), len));
-	msg.Length = ms.Position();
-	
-	Send(msg);
+	ms.Write(Array(Store.Data.GetBuffer() + 1, len));
 }
 
 // 0x02子功能，配置区
-void TinyClient::ReportPing0x02()
+void TinyClient::ReportPing0x02(Stream& ms)
 {
-	TinyMessage msg;
-	msg.Code = 3;
-	Stream ms = msg.ToStream();
-	
-	byte len = Store.Data.Length() - 1;
-	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
+	byte len2	= sizeof(Cfg->Length);
+	byte len	= Cfg->Length - len2;
+	if(ms.Position() + 1 + len2 + 1 + len > Control->Port->MaxSize) return;
 
 	ms.Write((byte)0x02);	// 子功能码
-	ms.Write((byte)0x01);	// 起始地址
+	ms.Write((byte)len2);	// 起始地址
 
 	ms.Write(len);	// 长度
-	ms.Write(Array(Store.Data.GetBuffer(), len));
-	msg.Length = ms.Position();
-	
-	Send(msg);
+	ms.Write(Array((byte*)Cfg + len2, len));
 }
 
 // 0x03子功能，硬件校验码
-void TinyClient::ReportPing0x03()
+void TinyClient::ReportPing0x03(Stream& ms)
 {
-	TinyMessage msg;
-	msg.Code = 3;
-	Stream ms = msg.ToStream();
 	if(ms.Position() + 3 > Control->Port->MaxSize) return;
 
 	ms.Write((byte)0x03);	// 子功能码
 	ms.Write(HardCrc);		//硬件CRC
-	msg.Length = ms.Position();
-	
-	Send(msg);
 }
 
 bool TinyClient::Report(uint offset, byte dat)
@@ -458,6 +438,8 @@ void TinyClientReset()
 // 格式：2设备类型 + N系统ID
 void TinyClient::Join()
 {
+	TS("TinyClient::Join");
+
 	TinyMessage msg;
 	msg.Code = 1;
 
@@ -479,6 +461,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 {
 	// 客户端只处理Discover响应
 	if(!msg.Reply || msg.Error) return true;
+
+	TS("TinyClient::OnJoin");
 
 	// 解析数据
 	JoinMessage dm;
@@ -533,6 +517,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 void TinyClient::DisJoin()
 {
+	TS("TinyClient::DisJoin");
+
 	debug_printf("TinyClient::DisJoin 退网 \r\n");
 
 	TinyMessage msg;
@@ -554,6 +540,8 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
 	if(msg.Length < 2) return false;
 
+	TS("TinyClient::OnDisJoin");
+
 	Stream ms(msg.Data, msg.Length);
 	ushort crc=ms.ReadUInt16();
 
@@ -571,6 +559,8 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 // 心跳
 void TinyClient::Ping()
 {
+	TS("TinyClient::Ping");
+
 	ushort off = Cfg->OfflineTime;
 	if(off < 10) off = 10;
 	if(LastActive > 0 && LastActive + off * 1000 < Sys.Ms())
@@ -604,6 +594,8 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 {
 	// 仅处理来自网关的消息
 	if(Server == 0 || Server != msg.Dest) return true;
+
+	TS("TinyClient::OnPing");
 
 	// 忽略响应消息
 	if(msg.Reply)
