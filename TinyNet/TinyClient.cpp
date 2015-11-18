@@ -336,6 +336,8 @@ void TinyClient::Report(Message& msg)
 // 0x01子功能，主数据区
 void TinyClient::ReportPing0x01(Stream& ms)
 {
+	TS("TinyClient::ReportPing0x01");
+
 	byte len = Store.Data.Length() - 1;
 	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
 
@@ -349,8 +351,11 @@ void TinyClient::ReportPing0x01(Stream& ms)
 // 0x02子功能，配置区
 void TinyClient::ReportPing0x02(Stream& ms)
 {
+	TS("TinyClient::ReportPing0x02");
+
 	byte len2	= sizeof(Cfg->Length);
 	byte len	= Cfg->Length - len2;
+	if(len > 0x10) len = 0x10;
 	if(ms.Position() + 1 + len2 + 1 + len > Control->Port->MaxSize) return;
 
 	ms.Write((byte)0x02);	// 子功能码
@@ -363,6 +368,8 @@ void TinyClient::ReportPing0x02(Stream& ms)
 // 0x03子功能，硬件校验码
 void TinyClient::ReportPing0x03(Stream& ms)
 {
+	TS("TinyClient::ReportPing0x03");
+
 	if(ms.Position() + 3 > Control->Port->MaxSize) return;
 
 	ms.Write((byte)0x03);	// 子功能码
