@@ -353,7 +353,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				ushort crc  = ms.ReadUInt16();
 				ushort crc1 = Crc::Hash16(dv->HardID);
 				// 下一行仅调试使用
-				debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
+				//debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
 				if(crc != crc1)
 				{
 					debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
@@ -542,6 +542,7 @@ bool TinyServer::DeleteDevice(byte id)
 		int idx = Devices.FindIndex(dv);
 		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;
+		SaveDevices();
 		return true;
 	}
 
