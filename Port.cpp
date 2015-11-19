@@ -73,8 +73,6 @@ Port& Port::Set(Pin pin)
 		Mask	= 0;
 	}
 
-	//if(_Pin != P0) Open();
-
 	return *this;
 }
 
@@ -94,6 +92,34 @@ void Port::Clear()
 	Mask	= 0;
 }
 
+// 分组时钟
+static byte _GroupClock[10];
+
+void OpenClock(Pin pin, bool flag)
+{
+    int gi = pin >> 4;
+
+	if(flag)
+	{
+		// 增加计数，首次打开时钟
+		if(_GroupClock[gi]++) return;
+	}
+	else
+	{
+		// 减少计数，最后一次关闭时钟
+		if(_GroupClock[gi]-- > 1) return;
+	}
+
+	FunctionalState fs = flag ? ENABLE : DISABLE;
+#ifdef STM32F0
+    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, fs);
+#elif defined(STM32F1)
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, fs);
+#elif defined(STM32F4)
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, fs);
+#endif
+}
+
 // 确定配置,确认用对象内部的参数进行初始化
 bool Port::Open()
 {
@@ -101,14 +127,7 @@ bool Port::Open()
 	if(Opened) return true;
 
     // 先打开时钟才能配置
-    int gi = _Pin >> 4;
-#ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, ENABLE);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, ENABLE);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, ENABLE);
-#endif
+	OpenClock(_Pin, true);
 
 #if DEBUG
 	// 保护引脚
@@ -153,14 +172,8 @@ void Port::Close()
 
 void Port::OnClose()
 {
-    int gi = _Pin >> 4;
-#ifdef STM32F0
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, DISABLE);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, DISABLE);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, DISABLE);
-#endif
+	// 不能随便关闭时钟，否则可能会影响别的引脚
+	OpenClock(_Pin, false);
 }
 
 void Port::OnOpen(GPIO_InitTypeDef& gpio)
@@ -197,6 +210,10 @@ void Port::AFConfig(byte GPIO_AF) const
 
 bool Port::Read(Pin pin)
 {
+	if(pin == P0) return false;
+	// 先打开时钟才能读取
+	OpenClock(pin, true);
+
 	GPIO_TypeDef* group = _GROUP(pin);
 	return (group->IDR >> (pin & 0xF)) & 1;
 }
@@ -287,7 +304,6 @@ void OutputPort::Init(bool invert, bool openDrain, byte speed)
 	OpenDrain	= openDrain;
 	Speed		= speed;
 	Invert		= invert;
-	InitValue	= false;
 }
 
 void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
@@ -304,17 +320,28 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		debug_printf(" 开漏");
 	else
 		debug_printf(" 推挽");
-	if(Invert) debug_printf(" 倒置");
+	bool fg	= false;
 #endif
 
-	// 配置之前，需要根据倒置情况来设定初始状态，也就是在打开端口之前必须明确端口高低状态
-	ushort dat = GPIO_ReadOutputData(Group);
-	bool v = InitValue ^ Invert;
-	if(!v)
-		dat &= ~Mask;
-	else
-		dat |= Mask;
-	GPIO_Write(Group, dat);
+	// 根据倒置情况来获取初始状态，自动判断是否倒置
+	bool rs = GPIO_ReadInputData(Group) & Mask;
+	if(!Invert && rs)
+	{
+		Invert	= true;
+#if DEBUG
+		fg		= true;
+#endif
+	}
+
+#if DEBUG
+	if(Invert)
+	{
+		if(fg)
+			debug_printf(" 自动倒置");
+		else
+			debug_printf(" 倒置");
+	}
+#endif
 
 	Port::OnOpen(gpio);
 
@@ -669,10 +696,27 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	if(Mode & Rising) debug_printf(" 上升沿");
 	if(Mode & Falling) debug_printf(" 下降沿");
 
+	bool fg	= false;
+#endif
+
+	// 根据倒置情况来获取初始状态，自动判断是否倒置
+	bool rs = GPIO_ReadInputData(Group) & Mask;
+	if(!Invert && rs)
+	{
+		Invert	= true;
+#if DEBUG
+		fg		= true;
+#endif
+	}
+
+#if DEBUG
 	if(Invert)
-		debug_printf(" 倒置");
-	else if(Read())
-		debug_printf(" 倒置错误（可能需要Invert=true） ");
+	{
+		if(fg)
+			debug_printf(" 自动倒置");
+		else
+			debug_printf(" 倒置");
+	}
 #endif
 
 	Port::OnOpen(gpio);

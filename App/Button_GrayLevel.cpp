@@ -44,13 +44,6 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	if(!OnPress)
 		Key.Mode	= InputPort::Rising;
 
-	// 自动识别倒置
-	if(Key.Read())
-	{
-		debug_printf("自动识别倒置  P%c%d \r\n", _PIN_NAME(key));
-		Key.Invert	= true;
-	}
-
 	Key.ShakeTime	= 40;
 	Key.Register(OnKeyPress, this);
 	Key.Open();
@@ -162,7 +155,7 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 	// 检查参数
 	assert_param(aczero != P0);
 
-	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
+	// 该方法需要检查并释放旧的，避免内存泄漏
 	if(!ACZero) ACZero = new InputPort(aczero);
 
 	// 需要检测是否有交流电，否则关闭

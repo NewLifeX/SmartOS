@@ -17,8 +17,8 @@
 class Port : public Object
 {
 public:
-    GPIO_TypeDef*	Group;		// 针脚组
-    Pin				_Pin;		// 针脚
+    GPIO_TypeDef*	Group;		// 引脚组
+    Pin				_Pin;		// 引脚
     ushort			Mask;		// 组内引脚位。每个引脚一个位
 	bool			Opened;		// 是否已经打开
 
@@ -66,7 +66,6 @@ class OutputPort : public Port
 public:
     bool OpenDrain;	// 是否开漏输出
     bool Invert;	// 是否倒置输入输出
-	bool InitValue;	// 初始值，在Open之前控制。默认false，受Invert影响
     byte Speed;		// 速度
 
     OutputPort();
