@@ -500,11 +500,11 @@ namespace NewLife.Reflection
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
 
-            var hex = name.EnsureEnd(".hex");
+            /*var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
             sb.Clear();
             sb.AppendFormat("--i32  -o \"{0}\" \"{1}\"", hex, axf);
-            rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
+            rs = FromELF.Run(sb.ToString(), 3000, WriteLog);*/
 
 			if(name.Contains("\\")) name = name.Substring("\\", "_");
 			if(rs == 0)
