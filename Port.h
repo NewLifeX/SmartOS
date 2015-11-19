@@ -33,6 +33,8 @@ public:
 	void AFConfig(byte GPIO_AF) const;
 #endif
 
+    static bool Read(Pin pin);	// 读取某个引脚
+
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
     _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
@@ -72,29 +74,21 @@ public:
 
 	OutputPort& Init(Pin pin, bool invert);
 
-	// 整体写入所有包含的引脚
-    void Write(bool value);
-	// 整组写入
-    void WriteGroup(ushort value);
+    void Write(bool value) const;
 	// 拉高一段时间后拉低
-	void Up(uint ms);
+	void Up(uint ms) const;
 	// 闪烁多次
-	void Blink(uint times, uint ms);
+	void Blink(uint times, uint ms) const;
 
-	// 整组读取
-    ushort ReadGroup();
-	// 读取指定索引引脚。索引按照从小到大，0xFF表示任意脚为true则返回true
-    bool Read(byte index);
-	// Read/ReadInput 的区别在于，前者读输出后者，读输入，在开漏输出的时候有很大区别
-    bool Read();
-	bool ReadInput();
+	// Read/ReadInput 的区别在于，前者读输出后者读输入，在开漏输出的时候有很大区别
+    bool Read() const;
+	bool ReadInput() const;
 
-    static bool Read(Pin pin);
     static void Write(Pin pin, bool value);
 
     OutputPort& operator=(bool value) { Write(value); return *this; }
     OutputPort& operator=(OutputPort& port) { Write(port.Read()); return *this; }
-    operator bool() { return Read(); }
+    operator bool() const { return Read(); }
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
@@ -158,15 +152,15 @@ public:
 
 	InputPort& Init(Pin pin, bool invert);
 
-    ushort ReadGroup() const;			// 整组读取
-    bool Read() const;				// 读取状态
-    static bool Read(Pin pin);	// 读取某个引脚
+	// 读取状态
+    bool Read() const;
 
-    void Register(IOReadHandler handler, void* param = NULL);   // 注册事件
-
-    operator bool() { return Read(); }
+	// 注册事件
+    void Register(IOReadHandler handler, void* param = NULL);
 
 	void OnPress(bool down);
+
+    operator bool() const { return Read(); }
 
 protected:
     void Init(bool floating = true, PuPd pull = UP);
@@ -178,8 +172,8 @@ private:
     IOReadHandler	Handler;
 	void*			Param;
 
-	byte _Value;
-	uint _taskInput;		// 输入任务
+	byte	_Value;
+	uint	_taskInput;		// 输入任务
 	ulong	_PressStart;	// 开始按下时间
 	static void InputTask(void* param);
 };

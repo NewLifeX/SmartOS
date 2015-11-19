@@ -195,6 +195,12 @@ void Port::AFConfig(byte GPIO_AF) const
 }
 #endif
 
+bool Port::Read(Pin pin)
+{
+	GPIO_TypeDef* group = _GROUP(pin);
+	return (group->IDR >> (pin & 0xF)) & 1;
+}
+
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
 #endif
@@ -332,12 +338,7 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 }
 
-ushort OutputPort::ReadGroup()    // 整组读取
-{
-	return GPIO_ReadOutputData(Group);
-}
-
-bool OutputPort::Read()
+bool OutputPort::Read() const
 {
 	if(Empty()) return false;
 
@@ -346,7 +347,7 @@ bool OutputPort::Read()
 	return rs ^ Invert;
 }
 
-bool OutputPort::ReadInput()
+bool OutputPort::ReadInput() const
 {
 	if(Empty()) return false;
 
@@ -354,13 +355,7 @@ bool OutputPort::ReadInput()
 	return rs ^ Invert;
 }
 
-bool OutputPort::Read(Pin pin)
-{
-	GPIO_TypeDef* group = _GROUP(pin);
-	return (group->IDR >> (pin & 0xF)) & 1;
-}
-
-void OutputPort::Write(bool value)
+void OutputPort::Write(bool value) const
 {
 	if(Empty()) return;
 
@@ -370,14 +365,7 @@ void OutputPort::Write(bool value)
         GPIO_ResetBits(Group, Mask);
 }
 
-void OutputPort::WriteGroup(ushort value)
-{
-	if(Empty()) return;
-
-    GPIO_Write(Group, value);
-}
-
-void OutputPort::Up(uint ms)
+void OutputPort::Up(uint ms) const
 {
 	if(Empty()) return;
 
@@ -386,7 +374,7 @@ void OutputPort::Up(uint ms)
     Write(false);
 }
 
-void OutputPort::Blink(uint times, uint ms)
+void OutputPort::Blink(uint times, uint ms) const
 {
 	if(Empty()) return;
 
@@ -499,23 +487,12 @@ InputPort& InputPort::Init(Pin pin, bool invert)
 	return *this;
 }
 
-ushort InputPort::ReadGroup() const    // 整组读取
-{
-	return GPIO_ReadInputData(Group);
-}
-
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
 bool InputPort::Read() const
 {
 	// 转为bool时会转为0/1
 	bool rs = GPIO_ReadInputData(Group) & Mask;
 	return rs ^ Invert;
-}
-
-bool InputPort::Read(Pin pin)
-{
-	GPIO_TypeDef* group = _GROUP(pin);
-	return (group->IDR >> (pin & 0xF)) & 1;
 }
 
 void InputPort::OnPress(bool down)
@@ -571,7 +548,7 @@ void InputPort::InputTask(void* param)
 
 #define IT 1
 #ifdef IT
-void GPIO_ISR (int num)  // 0 <= num <= 15
+void GPIO_ISR(int num)  // 0 <= num <= 15
 {
 	if(!hasInitState) return;
 
