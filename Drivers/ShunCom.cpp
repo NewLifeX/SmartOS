@@ -71,7 +71,7 @@ void ShunCom::ChangePower(int level)
 	Reset	= false;
 
 	Power	= false;
-	Sleep	= false;
+	Sleep	= true;
 	Config	= false;
 
 	//Power* pwr	= dynamic_cast<Power*>(Port);
