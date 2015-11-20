@@ -35,10 +35,6 @@ public:
 
     virtual bool Read() const;
 
-    // 辅助函数
-    _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
-    _force_inline static byte GroupToIndex(GPIO_TypeDef* group);
-
 #if DEBUG
 	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
 	static bool Reserve(Pin pin, bool flag);
@@ -64,8 +60,8 @@ protected:
 class OutputPort : public Port
 {
 public:
-    byte Invert:2;		// 是否倒置输入输出。默认2表示自动检测
-    bool OpenDrain:1;	// 是否开漏输出
+    byte Invert;		// 是否倒置输入输出。默认2表示自动检测
+    bool OpenDrain;		// 是否开漏输出
     byte Speed;			// 速度
 
     OutputPort();
@@ -133,13 +129,12 @@ public:
     typedef void (*IOReadHandler)(InputPort* port, bool down, void* param);
 
     ushort	ShakeTime;	// 抖动时间。毫秒
+	ushort	PressTime;	// 长按时间。毫秒
     bool	Invert:2;	// 是否倒置输入输出。默认2表示自动检测
     bool	Floating:1;	// 是否浮空输入
     PuPd	Pull:2;		// 上拉下拉电阻
 	Trigger	Mode:2;		// 触发模式，上升沿下降沿
-
-	bool	HardEvent;	// 是否使用硬件事件。默认false
-	ushort	PressTime;	// 长按时间
+	bool	HardEvent:1;	// 是否使用硬件事件。默认false
 
 	InputPort();
     InputPort(Pin pin, bool floating = true, PuPd pull = UP);
@@ -164,13 +159,13 @@ protected:
 	virtual void OnClose();
 
 private:
-    IOReadHandler	Handler;
-	void*			Param;
-
 	byte	_Value;
 	uint	_taskInput;		// 输入任务
 	ulong	_PressStart;	// 开始按下时间
 	static void InputTask(void* param);
+
+    IOReadHandler	Handler;
+	void*			Param;
 };
 
 /******************************** AnalogInPort ********************************/

@@ -15,6 +15,9 @@ static const int PORT_IRQns[] = {
 };
 #endif
 
+_force_inline GPIO_TypeDef* IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+_force_inline byte GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
+
 /******************************** Port ********************************/
 
 // 端口基本功能
@@ -208,9 +211,6 @@ bool Port::Read() const
 {
 	return GPIO_ReadInputData(Group) & Mask;
 }
-
-GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
-byte Port::GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
 #endif
 
 // 端口引脚保护
@@ -773,7 +773,6 @@ void InputPort::OnClose()
 // 注册回调  及中断使能
 void InputPort::Register(IOReadHandler handler, void* param)
 {
-    //if(!Mask) return;
 	assert_param2(_Pin != P0, "输入注册必须先设置引脚");
 
     Handler	= handler;
