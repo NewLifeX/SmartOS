@@ -162,7 +162,7 @@ void TinyMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=%d Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Retry);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Retry);
 	if(Length > 0)
 	{
 		assert_ptr(Data);
@@ -279,6 +279,8 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	byte* buf	= ms.Current();
+	// 前移一个字节，确保不是自己的消息时，数据流能够移动
+	ms.Seek(1);
 
 	// 代码为0是非法的
 	if(!buf[2]) return true;
@@ -296,6 +298,9 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 		// 如果不是广播或者不允许广播
 		if(Mode != 1 || buf[0] != 0) return true;
 	}
+
+	// 后移一个字节来弥补
+	ms.Seek(-1);
 
 	TinyMessage msg;
 	return Controller::Dispatch(ms, &msg, param);
