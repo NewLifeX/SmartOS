@@ -72,8 +72,8 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	SerialPort* sp = new SerialPort(index, baudRate);
 	ShunCom* zb = new ShunCom();
 
-	zb->Power.Set(power).Open();
-	if(zb->Power.ReadInput()) zb->Power.Invert = true;
+	zb->Power.Set(power);
+	//if(zb->Power.ReadInput()) zb->Power.Invert = true;
 
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
