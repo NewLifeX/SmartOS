@@ -271,11 +271,12 @@ bool W5500::Open()
 
 	if(!Rst.Open()) return false;
 	//debug_printf("硬件复位 \r\n");
-	Rst = false;		// 低电平有效
-	Sys.Delay(600);		// 最少500us
-	Rst = true;
+	Rst = true;		// 低电平有效
+	Sys.Delay(600);	// 最少500us
+	Rst = false;
 
 	Irq.Open();
+	debug_printf("Reset=%d Irq=%d \r\n", Rst.Read(), Irq.Read());
 
 	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
