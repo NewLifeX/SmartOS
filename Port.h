@@ -18,11 +18,11 @@ class Port : public Object
 {
 public:
     GPIO_TypeDef*	Group;		// 引脚组
-    Pin				_Pin;		// 引脚
-    ushort			Mask;		// 组内引脚位。每个引脚一个位
-	bool			Opened;		// 是否已经打开
+    ushort	Mask;		// 组内引脚位。每个引脚一个位
+    Pin		_Pin;		// 引脚
+	bool	Opened;		// 是否已经打开
 
-    Port& Set(Pin pin);			// 设置引脚
+    Port& Set(Pin pin);	// 设置引脚
 	bool Empty() const;
 
 	bool Open();
@@ -33,7 +33,7 @@ public:
 	void AFConfig(byte GPIO_AF) const;
 #endif
 
-    static bool Read(Pin pin);	// 读取某个引脚
+    virtual bool Read() const;
 
     // 辅助函数
     _force_inline static GPIO_TypeDef* IndexToGroup(byte index);
@@ -64,12 +64,13 @@ protected:
 class OutputPort : public Port
 {
 public:
-    bool OpenDrain;	// 是否开漏输出
-    bool Invert;	// 是否倒置输入输出
-    byte Speed;		// 速度
+    byte Invert:2;		// 是否倒置输入输出。默认2表示自动检测
+    bool OpenDrain:1;	// 是否开漏输出
+    byte Speed;			// 速度
 
     OutputPort();
-    OutputPort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    OutputPort(Pin pin);
+    OutputPort(Pin pin, bool invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 	OutputPort& Init(Pin pin, bool invert);
 
@@ -80,7 +81,7 @@ public:
 	void Blink(uint times, uint ms) const;
 
 	// Read/ReadInput 的区别在于，前者读输出后者读输入，在开漏输出的时候有很大区别
-    bool Read() const;
+    virtual bool Read() const;
 	bool ReadInput() const;
 
     static void Write(Pin pin, bool value);
@@ -92,7 +93,7 @@ public:
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 
-    void Init(bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    void Init(byte invert = 2, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 };
 
 /******************************** AlternatePort ********************************/
@@ -102,7 +103,8 @@ class AlternatePort : public OutputPort
 {
 public:
 	AlternatePort();
-    AlternatePort(Pin pin, bool invert = false, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    AlternatePort(Pin pin);
+    AlternatePort(Pin pin, bool invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
@@ -131,28 +133,22 @@ public:
     typedef void (*IOReadHandler)(InputPort* port, bool down, void* param);
 
     ushort	ShakeTime;	// 抖动时间。毫秒
-    PuPd	Pull;		// 上拉下拉电阻
-	Trigger	Mode;		// 触发模式，上升沿下降沿
-    bool	Floating;	// 是否浮空输入
-    bool	Invert;		// 是否倒置输入输出
+    bool	Invert:2;	// 是否倒置输入输出。默认2表示自动检测
+    bool	Floating:1;	// 是否浮空输入
+    PuPd	Pull:2;		// 上拉下拉电阻
+	Trigger	Mode:2;		// 触发模式，上升沿下降沿
 
 	bool	HardEvent;	// 是否使用硬件事件。默认false
 	ushort	PressTime;	// 长按时间
 
-	InputPort() : Port() { Init(); }
-    InputPort(Pin pin, bool floating = true, PuPd pull = UP) : Port()
-	{
-		Init(floating, pull);
-		Set(pin);
-		Open();
-	}
-
+	InputPort();
+    InputPort(Pin pin, bool floating = true, PuPd pull = UP);
     virtual ~InputPort();
 
 	InputPort& Init(Pin pin, bool invert);
 
 	// 读取状态
-    bool Read() const;
+    virtual bool Read() const;
 
 	// 注册事件
     void Register(IOReadHandler handler, void* param = NULL);

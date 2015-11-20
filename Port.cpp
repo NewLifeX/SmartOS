@@ -143,10 +143,6 @@ bool Port::Open()
     OnOpen(gpio);
     GPIO_Init(Group, &gpio);
 
-#if DEBUG
-	debug_printf("\r\n");
-#endif
-
 	Opened = true;
 
 	return true;
@@ -208,14 +204,9 @@ void Port::AFConfig(byte GPIO_AF) const
 }
 #endif
 
-bool Port::Read(Pin pin)
+bool Port::Read() const
 {
-	if(pin == P0) return false;
-	// 先打开时钟才能读取
-	OpenClock(pin, true);
-
-	GPIO_TypeDef* group = _GROUP(pin);
-	return (group->IDR >> (pin & 0xF)) & 1;
+	return GPIO_ReadInputData(Group) & Mask;
 }
 
 GPIO_TypeDef* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
@@ -283,6 +274,13 @@ bool Port::IsBusy(Pin pin)
 
 OutputPort::OutputPort() : Port() { Init(); }
 
+OutputPort::OutputPort(Pin pin) : Port()
+{
+	Init();
+	Set(pin);
+	Open();
+}
+
 OutputPort::OutputPort(Pin pin, bool invert, bool openDrain, byte speed) : Port()
 {
 	Init(invert, openDrain, speed);
@@ -299,7 +297,7 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 	return *this;
 }
 
-void OutputPort::Init(bool invert, bool openDrain, byte speed)
+void OutputPort::Init(byte invert, bool openDrain, byte speed)
 {
 	OpenDrain	= openDrain;
 	Speed		= speed;
@@ -324,10 +322,10 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 
 	// 根据倒置情况来获取初始状态，自动判断是否倒置
-	bool rs = GPIO_ReadInputData(Group) & Mask;
-	if(!Invert && rs)
+	bool rs = Port::Read();
+	if(Invert > 1)
 	{
-		Invert	= true;
+		Invert	= rs;
 #if DEBUG
 		fg		= true;
 #endif
@@ -341,6 +339,10 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		else
 			debug_printf(" 倒置");
 	}
+#endif
+
+#if DEBUG
+	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
 	Port::OnOpen(gpio);
@@ -378,8 +380,7 @@ bool OutputPort::ReadInput() const
 {
 	if(Empty()) return false;
 
-	bool rs = GPIO_ReadInputData(Group) & Mask;
-	return rs ^ Invert;
+	return Port::Read() ^ Invert;
 }
 
 void OutputPort::Write(bool value) const
@@ -429,6 +430,13 @@ void OutputPort::Write(Pin pin, bool value)
 /******************************** AlternatePort ********************************/
 
 AlternatePort::AlternatePort() : OutputPort() { Init(false, false); }
+AlternatePort::AlternatePort(Pin pin)
+	: OutputPort()
+{
+	Init(false, false);
+	Set(pin);
+	Open();
+}
 AlternatePort::AlternatePort(Pin pin, bool invert, bool openDrain, byte speed)
 	: OutputPort()
 {
@@ -479,16 +487,25 @@ int Bits2Index(ushort value)
 	return -1;
 }
 
+InputPort::InputPort() : Port() { Init(); }
+InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
+{
+	Init(floating, pull);
+	Set(pin);
+	Open();
+}
+
 void InputPort::Init(bool floating, PuPd pull)
 {
 	Pull		= pull;
 	Floating	= floating;
 
+	Invert		= 2;
+
 	Mode		= Both;
 	//ShakeTime = 20;
 	// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
 	ShakeTime	= 0;
-	Invert		= false;
 	HardEvent	= false;
 	_taskInput	= 0;
 
@@ -517,9 +534,7 @@ InputPort& InputPort::Init(Pin pin, bool invert)
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
 bool InputPort::Read() const
 {
-	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadInputData(Group) & Mask;
-	return rs ^ Invert;
+	return Port::Read() ^ Invert;
 }
 
 void InputPort::OnPress(bool down)
@@ -693,17 +708,17 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		debug_printf(" 上拉");
 	else if(Pull == DOWN)
 		debug_printf(" 下拉");
-	if(Mode & Rising) debug_printf(" 上升沿");
-	if(Mode & Falling) debug_printf(" 下降沿");
+	if(Mode & Rising)	debug_printf(" 上升沿");
+	if(Mode & Falling)	debug_printf(" 下降沿");
 
 	bool fg	= false;
 #endif
 
 	// 根据倒置情况来获取初始状态，自动判断是否倒置
-	bool rs = GPIO_ReadInputData(Group) & Mask;
-	if(!Invert && rs)
+	bool rs = Port::Read();
+	if(Invert > 1)
 	{
-		Invert	= true;
+		Invert	= rs;
 #if DEBUG
 		fg		= true;
 #endif
@@ -717,6 +732,10 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		else
 			debug_printf(" 倒置");
 	}
+#endif
+
+#if DEBUG
+	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
 	Port::OnOpen(gpio);
