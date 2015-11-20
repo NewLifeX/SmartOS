@@ -26,11 +26,8 @@ bool ShunCom::OnOpen()
 	Config	= false;
 
 	Reset.Open();
-	Reset	= true;
-	/*Sys.Delay(100);
 	Reset	= false;
-	Sys.Delay(100);
-	Reset	= true;*/
+	debug_printf("Power=%d Sleep=%d Config=%d Reset=%d \r\n", Power.Read(), Sleep.Read(), Config.Read(), Reset.Read());
 
 	Port->MinSize	= MinSize;
 
@@ -39,6 +36,9 @@ bool ShunCom::OnOpen()
 
 void ShunCom::OnClose()
 {
+	Power	= false;
+	Reset	= true;
+
 	Power.Close();
 	Sleep.Close();
 	Config.Close();
@@ -68,11 +68,12 @@ void ShunCom::ShowConfig()
 // 模块进入低功耗模式时需要处理的事情
 void ShunCom::ChangePower(int level)
 {
-	Reset	= false;
+	//Power	= false;
 
-	Power	= false;
 	Sleep	= true;
 	Config	= false;
+
+	Reset	= true;
 
 	//Power* pwr	= dynamic_cast<Power*>(Port);
 	//if(pwr) pwr->ChangePower(level);
