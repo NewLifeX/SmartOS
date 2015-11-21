@@ -998,6 +998,8 @@ namespace NewLife.Reflection
              */
 
             var file = GetProjectFile();
+			if(file.IsNullOrEmpty()) return;
+
             Console.WriteLine("加载项目：{0}", file);
             file = file.GetFullPath();
 
