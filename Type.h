@@ -665,10 +665,10 @@ public:
     }
 };
 
-void* operator new(uint size);
-void* operator new[](uint size);
-void operator delete(void* p);
-void operator delete [] (void* p);
+/*void* operator new(uint size) throw(std::bad_alloc);
+void* operator new[](uint size) throw(std::bad_alloc);
+void operator delete(void* p) throw();
+void operator delete[](void* p) throw();*/
 
 //#define DEBUG_NEW new(__FILE__, __LINE__)
 //#define new DEBUG_NEW

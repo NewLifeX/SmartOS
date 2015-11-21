@@ -397,7 +397,7 @@ void TSys::RemoveTask(uint& taskid)
 	taskid = 0;
 }
 
-#ifndef TINY
+#ifdef DEBUG
 	#pragma arm section code = "SectionForSys"
 #endif
 

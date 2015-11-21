@@ -8,6 +8,8 @@
 	#define mem_printf(format, ...)
 #endif
 
+#if DEBUG
+
 #pragma arm section code = "SectionForSys"
 
 extern uint __heap_base;
@@ -100,8 +102,6 @@ void operator delete[](void* p)
 		free(p);
 	}
 }
-
-#if DEBUG
 
 #pragma arm section code
 

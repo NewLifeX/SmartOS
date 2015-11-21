@@ -51,7 +51,7 @@ void TTime::Init()
 	SysTick->LOAD  = ticks - 1;
 	SysTick->VAL   = 0;
 	SysTick->CTRL  = SysTick_CTRL_ENABLE_Msk;
-	Interrupt.Disable(SysTick_IRQn);
+	//Interrupt.Disable(SysTick_IRQn);
 
 	TIM_TypeDef* tim = g_Timers[Index];
 #ifdef STM32F0
