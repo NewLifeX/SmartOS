@@ -356,7 +356,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				//debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
 				if(crc != crc1)
 				{
-					debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
+					debug_printf("设备硬件Crc: %04X, 本地Crc：%04X \r\n", crc, crc1);
 					debug_printf("设备硬件ID: ");
 					dv->HardID.Show(true);
 
