@@ -603,7 +603,7 @@ void InputPort::OnPress(bool down)
 
 void InputPort::InputTask(void* param)
 {
-	InputPort* port = (InputPort*)param;
+	auto port = (InputPort*)param;
 	byte v = port->_Value;
 	if(!v) return;
 

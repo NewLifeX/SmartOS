@@ -1,13 +1,17 @@
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Diagnostics;
-using System.IO;
+using System.Reflection;
 using System.Text;
+using System.Linq;
+using System.IO;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using Microsoft.Win32;
 using NewLife.Log;
+using NewLife.Web;
 
 //【XScript】C#脚本引擎v1.8源码（2015/2/9更新）
 //http://www.newlifex.com/showtopic-369.aspx
@@ -46,8 +50,8 @@ namespace NewLife.Reflection
             FromELF = basePath.CombinePath("fromelf.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
-			// 特殊处理GD32F1x0
-			if(GD32) Cortex = Cortex;
+            // 特殊处理GD32F1x0
+            if (GD32) Cortex = Cortex;
 
             _Libs.Clear();
             Objs.Clear();
@@ -57,21 +61,21 @@ namespace NewLife.Reflection
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
-				if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
-				if (!Directory.Exists(p)) continue;
+                if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
+                if (!Directory.Exists(p)) continue;
 
                 AddIncludes(p, false);
-                if(addlib) AddLibs(p);
+                if (addlib) AddLibs(p);
             }
             ss = new String[] { "..\\Lib", "..\\SmartOSLib", "..\\SmartOSLib\\inc" };
             foreach (var src in ss)
             {
                 var p = src.GetFullPath();
-				if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
-				if (!Directory.Exists(p)) continue;
+                if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
+                if (!Directory.Exists(p)) continue;
 
                 AddIncludes(p, true);
-                if(addlib) AddLibs(p);
+                if (addlib) AddLibs(p);
             }
 
             return true;
@@ -111,15 +115,15 @@ namespace NewLife.Reflection
             set
             {
                 _Cortex = value;
-				if(GD32 && value == 0)
-					CPU = "Cortex-M{0}".F(3);
-				else
-					CPU = "Cortex-M{0}".F(value);
+                if (GD32 && value == 0)
+                    CPU = "Cortex-M{0}".F(3);
+                else
+                    CPU = "Cortex-M{0}".F(value);
                 if (value == 3)
                     Flash = "STM32F1";
                 else
                     Flash = "STM32F{0}".F(value);
-				if (value == 4) CPU += ".fp";
+                if (value == 4) CPU += ".fp";
             }
         }
 
@@ -169,41 +173,41 @@ namespace NewLife.Reflection
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
             if (obj.Exists)
-			{
-				if(RebuildTime > 0 && obj.LastWriteTime > file.AsFile().LastWriteTime)
-				{
-					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
-					if(obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return -2;
-				}
-			}
+            {
+                if (RebuildTime > 0 && obj.LastWriteTime > file.AsFile().LastWriteTime)
+                {
+                    // 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
+                    if (obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return -2;
+                }
+            }
 
             var sb = new StringBuilder();
-			sb.Append("-c");
-			if(file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp");
+            sb.Append("-c");
+            if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
             sb.AppendFormat(" -D{0}", Flash);
-            if(GD32) sb.Append(" -DGD32");
+            if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if(Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-			if(Tiny) sb.Append(" -DTINY");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if (Tiny) sb.Append(" -DTINY");
             foreach (var item in Includes)
             {
                 sb.AppendFormat(" -I{0}", item);
             }
 
-			if(Preprocess)
-			{
-				sb.AppendFormat(" -E");
-				sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file).TrimStart("."));
-			}
-			else
-				sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
+            if (Preprocess)
+            {
+                sb.AppendFormat(" -E");
+                sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file).TrimStart("."));
+            }
+            else
+                sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
-			// 先删除目标文件
+            // 先删除目标文件
             if (obj.Exists) obj.Delete();
 
             return Complier.Run(sb.ToString(), 100, WriteLog);
@@ -222,13 +226,13 @@ namespace NewLife.Reflection
             // 如果文件太新，则不参与编译
             var obj = (objName + ".o").AsFile();
             if (obj.Exists)
-			{
-				if(obj.LastWriteTime > file.AsFile().LastWriteTime)
-				{
-					// 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
-					if(obj.LastWriteTime.AddHours(1) > DateTime.Now) return -2;
-				}
-			}
+            {
+                if (obj.LastWriteTime > file.AsFile().LastWriteTime)
+                {
+                    // 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
+                    if (obj.LastWriteTime.AddHours(1) > DateTime.Now) return -2;
+                }
+            }
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
@@ -239,13 +243,13 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" --pd \"{0} SETA 1\"", item);
             }
-            if(Debug) sb.Append(" --pd \"DEBUG SETA 1\"");
-			if(Tiny) sb.Append(" --pd \"TINY SETA 1\"");
+            if (Debug) sb.Append(" --pd \"DEBUG SETA 1\"");
+            if (Tiny) sb.Append(" --pd \"TINY SETA 1\"");
 
             sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
             sb.AppendFormat(" \"{0}\"", file);
 
-			// 先删除目标文件
+            // 先删除目标文件
             if (obj.Exists) obj.Delete();
 
             return Asm.Run(sb.ToString(), 100, WriteLog);
@@ -253,15 +257,15 @@ namespace NewLife.Reflection
 
         public Int32 CompileAll()
         {
-			Objs.Clear();
+            Objs.Clear();
             var count = 0;
 
-			// 特殊处理GD32F130
-			//if(GD32) Cortex = Cortex;
+            // 特殊处理GD32F130
+            //if(GD32) Cortex = Cortex;
 
             // 提前创建临时目录
             var obj = GetObjPath(null);
-			var list = new List<String>();
+            var list = new List<String>();
 
             var sb = new StringBuilder();
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
@@ -272,11 +276,11 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -D{0}", item);
             }
             if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-			if(Tiny) sb.Append(" -DTINY");
-			Console.Write("命令参数：");
-			Console.ForegroundColor = ConsoleColor.Magenta;
-			Console.WriteLine(sb);
-			Console.ResetColor();
+            if (Tiny) sb.Append(" -DTINY");
+            Console.Write("命令参数：");
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine(sb);
+            Console.ResetColor();
 
             foreach (var item in Files)
             {
@@ -298,59 +302,59 @@ namespace NewLife.Reflection
 
                 sw.Stop();
 
-				if(rs == 0 || rs == -1)
-				{
-					Console.Write("编译：{0}\t", item);
-					var old = Console.ForegroundColor;
-					Console.ForegroundColor = ConsoleColor.Green;
-					Console.WriteLine("\t {0:n0}毫秒", sw.ElapsedMilliseconds);
-					Console.ForegroundColor = old;
-				}
-
-                if(rs <= 0)
+                if (rs == 0 || rs == -1)
                 {
-                    if(!Preprocess)
-					{
-						var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
-						list.Add(fi);
-					}
+                    Console.Write("编译：{0}\t", item);
+                    var old = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\t {0:n0}毫秒", sw.ElapsedMilliseconds);
+                    Console.ForegroundColor = old;
+                }
+
+                if (rs <= 0)
+                {
+                    if (!Preprocess)
+                    {
+                        var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+                        list.Add(fi);
+                    }
                 }
             }
 
-			Console.WriteLine("等待编译完成：");
-			var left = Console.CursorLeft;
-			var list2 = new List<String>(list);
-			var end = DateTime.Now.AddSeconds(10);
-			var fs = 0;
-			while(fs < Files.Count)
-			{
-				for(int i=list2.Count-1; i>=0; i--)
-				{
-					if(File.Exists(list[i]))
-					{
-						fs++;
-						list2.RemoveAt(i);
-					}
-				}
-				Console.CursorLeft = left;
-				Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, (Double)fs / Files.Count);
-				if(DateTime.Now > end)
-				{
-					Console.Write(" 等待超时！");
-					break;
-				}
-				Thread.Sleep(500);
-			}
-			Console.WriteLine();
+            Console.WriteLine("等待编译完成：");
+            var left = Console.CursorLeft;
+            var list2 = new List<String>(list);
+            var end = DateTime.Now.AddSeconds(10);
+            var fs = 0;
+            while (fs < Files.Count)
+            {
+                for (int i = list2.Count - 1; i >= 0; i--)
+                {
+                    if (File.Exists(list[i]))
+                    {
+                        fs++;
+                        list2.RemoveAt(i);
+                    }
+                }
+                Console.CursorLeft = left;
+                Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, (Double)fs / Files.Count);
+                if (DateTime.Now > end)
+                {
+                    Console.Write(" 等待超时！");
+                    break;
+                }
+                Thread.Sleep(500);
+            }
+            Console.WriteLine();
 
-			for(int i=0; i<list.Count; i++)
-			{
-				if(File.Exists(list[i]))
-				{
-					count++;
-					Objs.Add(list[i]);
-				}
-			}
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (File.Exists(list[i]))
+                {
+                    count++;
+                    Objs.Add(list[i]);
+                }
+            }
 
             return count;
         }
@@ -359,30 +363,30 @@ namespace NewLife.Reflection
         /// <param name="name"></param>
         public void BuildLib(String name = null)
         {
-			name = GetOutputName(name);
+            name = GetOutputName(name);
             XTrace.WriteLine("链接：{0}", name);
 
-			var lib = name.EnsureEnd(".lib");
+            var lib = name.EnsureEnd(".lib");
             var sb = new StringBuilder();
             sb.Append("--create -c");
             sb.AppendFormat(" -r \"{0}\"", lib);
 
-            if(Objs.Count < 6) Console.Write("使用对象文件：");
+            if (Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                if(Objs.Count < 6) Console.Write(" {0}", item);
+                if (Objs.Count < 6) Console.Write(" {0}", item);
             }
-			if(Objs.Count < 6) Console.WriteLine();
+            if (Objs.Count < 6) Console.WriteLine();
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
-			if(name.Contains("\\")) name = name.Substring("\\", "_");
-			XTrace.WriteLine("链接完成 {0} {1}", rs, lib);
-			if(rs == 0)
-				"链接静态库{0}完成".F(name).SpeakAsync();
-			else
-				"链接静态库{0}失败".F(name).SpeakAsync();
+            if (name.Contains("\\")) name = name.Substring("\\", "_");
+            XTrace.WriteLine("链接完成 {0} {1}", rs, lib);
+            if (rs == 0)
+                "链接静态库{0}完成".F(name).SpeakAsync();
+            else
+                "链接静态库{0}失败".F(name).SpeakAsync();
         }
 
         /// <summary>编译目标文件</summary>
@@ -390,7 +394,7 @@ namespace NewLife.Reflection
         /// <returns></returns>
         public Int32 Build(String name = null)
         {
-			name = GetOutputName(name);
+            name = GetOutputName(name);
             Console.WriteLine();
             XTrace.WriteLine("生成：{0}", name);
 
@@ -413,10 +417,10 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
-			if(!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
-				sb.AppendFormat(" --scatter \"{0}\"", Scatter);
-			else
-				sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
+            if (!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
+                sb.AppendFormat(" --scatter \"{0}\"", Scatter);
+            else
+                sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
@@ -425,19 +429,19 @@ namespace NewLife.Reflection
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
 
-            if(Objs.Count < 6) Console.Write("使用对象文件：");
+            if (Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
             {
                 sb.Append(" ");
                 sb.Append(item);
-                if(Objs.Count < 6) Console.Write(" {0}", item);
+                if (Objs.Count < 6) Console.Write(" {0}", item);
             }
-			if(Objs.Count < 6) Console.WriteLine();
+            if (Objs.Count < 6) Console.WriteLine();
 
-			var dic = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
+            var dic = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
             foreach (var item in Libs)
             {
-				var lib = new LibFile(item);
+                var lib = new LibFile(item);
                 // 调试版/发行版 优先选用最佳匹配版本
                 var old = "";
                 // 不包含，直接增加
@@ -448,52 +452,52 @@ namespace NewLife.Reflection
                 // 已包含，并且新版本更合适，替换
                 else
                 {
-					Console.WriteLine("{0} Debug={1} Tiny={2}", lib.FullName, lib.Debug, lib.Tiny);
+                    Console.WriteLine("{0} Debug={1} Tiny={2}", lib.FullName, lib.Debug, lib.Tiny);
                     var lib2 = new LibFile(old);
                     if (!(lib2.Debug == Debug && lib2.Tiny == Tiny) &&
-					(lib.Debug == Debug && lib.Tiny == Tiny))
+                    (lib.Debug == Debug && lib.Tiny == Tiny))
                     {
                         dic[lib.Name] = lib.FullName;
                     }
                 }
             }
-				
+
             Console.WriteLine("使用静态库：");
             foreach (var item in dic)
             {
-				sb.Append(" ");
-				sb.Append(item.Value);
-				Console.WriteLine("\t{0}\t{1}", item.Key, item.Value);
+                sb.Append(" ");
+                sb.Append(item.Value);
+                Console.WriteLine("\t{0}\t{1}", item.Key, item.Value);
             }
 
             XTrace.WriteLine("链接：{0}", axf);
 
             //var rs = Link.Run(sb.ToString(), 3000, WriteLog);
             var rs = Link.Run(sb.ToString(), 3000, msg =>
-			{
-				if (msg.IsNullOrEmpty()) return;
+            {
+                if (msg.IsNullOrEmpty()) return;
 
-				// 引用错误可以删除obj文件，下次编译将会得到解决
-				/*var p = msg.IndexOf("Undefined symbol");
-				if(p >= 0)
-				{
-					foreach(var obj in Objs)
-					{
-						if(File.Exists(obj)) File.Delete(obj);
-						var crf = Path.ChangeExtension(obj, ".crf");
-						if(File.Exists(crf)) File.Delete(crf);
-						var dep = Path.ChangeExtension(obj, ".d");
-						if(File.Exists(dep)) File.Delete(dep);
-					}
-				}*/
+                // 引用错误可以删除obj文件，下次编译将会得到解决
+                /*var p = msg.IndexOf("Undefined symbol");
+                if(p >= 0)
+                {
+                    foreach(var obj in Objs)
+                    {
+                        if(File.Exists(obj)) File.Delete(obj);
+                        var crf = Path.ChangeExtension(obj, ".crf");
+                        if(File.Exists(crf)) File.Delete(crf);
+                        var dep = Path.ChangeExtension(obj, ".d");
+                        if(File.Exists(dep)) File.Delete(dep);
+                    }
+                }*/
 
-				WriteLog(msg);
-			});
+                WriteLog(msg);
+            });
             if (rs != 0) return rs;
 
-			// 预处理axf。修改编译信息
-			Helper.WriteBuildInfo(axf);
-			
+            // 预处理axf。修改编译信息
+            Helper.WriteBuildInfo(axf);
+
             var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
@@ -506,24 +510,24 @@ namespace NewLife.Reflection
             sb.AppendFormat("--i32  -o \"{0}\" \"{1}\"", hex, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);*/
 
-			if(name.Contains("\\")) name = name.Substring("\\", "_");
-			if(rs == 0)
-				"编译目标{0}完成".F(name).SpeakAsync();
-			else
-				"编译目标{0}失败".F(name).SpeakAsync();
+            if (name.Contains("\\")) name = name.Substring("\\", "_");
+            if (rs == 0)
+                "编译目标{0}完成".F(name).SpeakAsync();
+            else
+                "编译目标{0}失败".F(name).SpeakAsync();
 
             return rs;
         }
         #endregion
 
         #region 辅助方法
-		/// <summary>添加指定目录所有文件</summary>
+        /// <summary>添加指定目录所有文件</summary>
         /// <param name="path">要编译的目录</param>
         /// <param name="exts">后缀过滤</param>
         /// <param name="excludes">要排除的文件</param>
         /// <returns></returns>
         public Int32 AddFiles(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
-		{
+        {
             // 目标目录也加入头文件搜索
             AddIncludes(path);
 
@@ -540,35 +544,35 @@ namespace NewLife.Reflection
                 Console.Write("添加：{0}\t", item.FullName);
 
                 var flag = true;
-				var ex = "";
+                var ex = "";
                 if (excs.Contains(item.Name)) { flag = false; ex = item.Name; }
-				if(flag)
-				{
-					foreach (var elm in excs)
-					{
-						if (item.Name.Contains(elm)) { flag = false; ex = elm; break; }
-					}
-				}
+                if (flag)
+                {
+                    foreach (var elm in excs)
+                    {
+                        if (item.Name.Contains(elm)) { flag = false; ex = elm; break; }
+                    }
+                }
                 if (!flag)
-				{
-					var old2 = Console.ForegroundColor;
-					Console.ForegroundColor = ConsoleColor.Yellow;
-					Console.WriteLine("\t 跳过 {0}", ex);
-					Console.ForegroundColor = old2;
+                {
+                    var old2 = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("\t 跳过 {0}", ex);
+                    Console.ForegroundColor = old2;
 
-					continue;
-				}
-				Console.WriteLine();
+                    continue;
+                }
+                Console.WriteLine();
 
-                if(!Files.Contains(item.FullName))
-				{
-					count++;
-					Files.Add(item.FullName);
-				}
+                if (!Files.Contains(item.FullName))
+                {
+                    count++;
+                    Files.Add(item.FullName);
+                }
             }
 
-			return count;
-		}
+            return count;
+        }
 
         public void AddIncludes(String path, Boolean sub = true, Boolean allSub = true)
         {
@@ -581,21 +585,21 @@ namespace NewLife.Reflection
                 Includes.Add(path);
             }
 
-			if(sub)
-			{
-				var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-				foreach (var item in path.AsDirectory().GetDirectories("*", opt))
-				{
-					if (item.FullName.Contains(".svn")) continue;
-					if (item.Name.EqualIgnoreCase("List", "Obj", "ObjRelease", "Log")) continue;
+            if (sub)
+            {
+                var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                foreach (var item in path.AsDirectory().GetDirectories("*", opt))
+                {
+                    if (item.FullName.Contains(".svn")) continue;
+                    if (item.Name.EqualIgnoreCase("List", "Obj", "ObjRelease", "Log")) continue;
 
-					if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
-					{
-						WriteLog("引用目录：{0}".F(item.FullName));
-						Includes.Add(item.FullName);
-					}
-				}
-			}
+                    if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
+                    {
+                        WriteLog("引用目录：{0}".F(item.FullName));
+                        Includes.Add(item.FullName);
+                    }
+                }
+            }
         }
 
         Boolean HasHeaderFile(String path)
@@ -608,14 +612,14 @@ namespace NewLife.Reflection
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
 
-			if(filter.IsNullOrEmpty()) filter = "*.lib";
+            if (filter.IsNullOrEmpty()) filter = "*.lib";
             //var opt = allSub ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             foreach (var item in path.AsDirectory().GetAllFiles(filter, allSub))
             {
                 // 不包含，直接增加
                 if (!_Libs.Contains(item.FullName))
                 {
-					var lib = new LibFile(item.FullName);
+                    var lib = new LibFile(item.FullName);
                     WriteLog("发现静态库：{0, -12} {1}".F(lib.Name, item.FullName));
                     _Libs.Add(item.FullName);
                 }
@@ -650,8 +654,8 @@ namespace NewLife.Reflection
             }
         }
 
-		private String GetOutputName(String name)
-		{
+        private String GetOutputName(String name)
+        {
             if (name.IsNullOrEmpty())
             {
                 var file = Environment.GetEnvironmentVariable("XScriptFile");
@@ -662,46 +666,46 @@ namespace NewLife.Reflection
                 }
             }
             if (name.IsNullOrEmpty())
-				name = ".".GetFullPath().AsDirectory().Name;
-			else if(name.StartsWith("_"))
-				name = ".".GetFullPath().AsDirectory().Name + name.TrimStart("_");
+                name = ".".GetFullPath().AsDirectory().Name;
+            else if (name.StartsWith("_"))
+                name = ".".GetFullPath().AsDirectory().Name + name.TrimStart("_");
             if (Tiny)
-				name = name.EnsureEnd("T");
+                name = name.EnsureEnd("T");
             else if (Debug)
-				name = name.EnsureEnd("D");
+                name = name.EnsureEnd("D");
 
-			return name;
-		}
+            return name;
+        }
 
-		// 输出目录。obj/list等位于该目录下，默认当前目录
-		public String Output = "";
+        // 输出目录。obj/list等位于该目录下，默认当前目录
+        public String Output = "";
 
-		private String GetObjPath(String file)
-		{
+        private String GetObjPath(String file)
+        {
             var objName = "Obj";
-			if(Tiny)
-				objName += "T";
+            if (Tiny)
+                objName += "T";
             else if (Debug)
-				objName += "D";
-			objName = Output.CombinePath(objName);
-			objName.GetFullPath().EnsureDirectory(false);
-			if(!file.IsNullOrEmpty())
-				objName += "\\" + Path.GetFileNameWithoutExtension(file);
+                objName += "D";
+            objName = Output.CombinePath(objName);
+            objName.GetFullPath().EnsureDirectory(false);
+            if (!file.IsNullOrEmpty())
+                objName += "\\" + Path.GetFileNameWithoutExtension(file);
 
-			return objName;
-		}
+            return objName;
+        }
 
-		private String GetListPath(String file)
-		{
+        private String GetListPath(String file)
+        {
             var lstName = "List";
-			lstName = Output.CombinePath(lstName);
-			lstName.GetFullPath().EnsureDirectory(false);
-			if(!file.IsNullOrEmpty())
-				lstName += "\\" + Path.GetFileNameWithoutExtension(file);
+            lstName = Output.CombinePath(lstName);
+            lstName.GetFullPath().EnsureDirectory(false);
+            if (!file.IsNullOrEmpty())
+                lstName += "\\" + Path.GetFileNameWithoutExtension(file);
 
-			return lstName;
-		}
-		#endregion
+            return lstName;
+        }
+        #endregion
 
         #region 日志
         void WriteLog(String msg)
@@ -726,17 +730,17 @@ namespace NewLife.Reflection
         public String FixWord(String msg)
         {
             #region 初始化
-			if(Sections.Count == 0)
-			{
-				Sections.Add("Fatal error", "致命错误");
-				Sections.Add("fatal error", "致命错误");
-				Sections.Add("Could not open file", "无法打开文件");
-				Sections.Add("No such file or directory", "文件或目录不存在");
-				Sections.Add("Undefined symbol", "未定义标记");
-				Sections.Add("referred from", "引用自");
-				Sections.Add("Program Size", "程序大小");
-				Sections.Add("Finished", "程序大小");
-			}
+            if (Sections.Count == 0)
+            {
+                Sections.Add("Fatal error", "致命错误");
+                Sections.Add("fatal error", "致命错误");
+                Sections.Add("Could not open file", "无法打开文件");
+                Sections.Add("No such file or directory", "文件或目录不存在");
+                Sections.Add("Undefined symbol", "未定义标记");
+                Sections.Add("referred from", "引用自");
+                Sections.Add("Program Size", "程序大小");
+                Sections.Add("Finished", "程序大小");
+            }
 
             if (Words.Count == 0)
             {
@@ -779,10 +783,10 @@ namespace NewLife.Reflection
             }
             #endregion
 
-			foreach(var item in Sections)
-			{
-				msg = msg.Replace(item.Key, item.Value);
-			}
+            foreach (var item in Sections)
+            {
+                msg = msg.Replace(item.Key, item.Value);
+            }
 
             //var sb = new StringBuilder();
             //var ss = msg.Trim().Split(" ", ":", "(", ")");
@@ -814,9 +818,9 @@ namespace NewLife.Reflection
         /// <summary>名称</summary>
         public String Name { get { return _Name; } set { _Name = value; } }
 
-        private String _Version;
+        private Version _Version = new Version();
         /// <summary>版本</summary>
-        public String Version { get { return _Version; } set { _Version = value; } }
+        public Version Version { get { return _Version; } set { _Version = value; } }
 
         private String _ToolPath;
         /// <summary>工具目录</summary>
@@ -835,7 +839,9 @@ namespace NewLife.Reflection
                 if (reg != null)
                 {
                     ToolPath = reg.GetValue("Path") + "";
-                    if (String.IsNullOrEmpty(Version)) Version = (reg.GetValue("Version") + "").Trim('V', 'v', 'a', 'b', 'c');
+                    var s = (reg.GetValue("Version") + "").Trim('V', 'v', 'a', 'b', 'c');
+                    var ss = s.SplitAsInt(".");
+                    Version = new Version(ss[0], ss[1]);
 
                     //if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从注册表得到路径{0} {1}！", ToolPath, Version);
                 }
@@ -843,7 +849,7 @@ namespace NewLife.Reflection
             #endregion
 
             #region 扫描所有根目录，获取MDK安装目录
-            if (String.IsNullOrEmpty(ToolPath))
+            //if (String.IsNullOrEmpty(ToolPath))
             {
                 foreach (var item in DriveInfo.GetDrives())
                 {
@@ -852,44 +858,70 @@ namespace NewLife.Reflection
                     var p = Path.Combine(item.RootDirectory.FullName, "Keil\\ARM");
                     if (Directory.Exists(p))
                     {
-                        ToolPath = p;
-                        break;
-                    }
-                }
-            }
-            if (String.IsNullOrEmpty(ToolPath)) throw new Exception("无法获取MDK安装目录！");
-            #endregion
-
-            #region 自动获取版本
-            if (String.IsNullOrEmpty(Version))
-            {
-                var p = Path.Combine(ToolPath, "..\\Tools.ini");
-                if (File.Exists(p))
-                {
-                    foreach (var item in File.ReadAllLines(p))
-                    {
-                        if (String.IsNullOrEmpty(item)) continue;
-                        if (item.StartsWith("VERSION=", StringComparison.OrdinalIgnoreCase))
+                        var ver = GetVer(p);
+                        if (ver > Version)
                         {
-                            Version = item.Substring("VERSION=".Length).Trim().Trim('V', 'v', 'a', 'b', 'c');
+                            ToolPath = p;
+                            Version = ver;
+
                             break;
                         }
                     }
                 }
             }
+            if (Version < new Version(5, 17))
+            {
+                var url = "http://www.newlifex.com/showtopic-1456.aspx";
+                var client = new WebClientX(true, true);
+                client.Log = XTrace.Log;
+                var dir = Environment.SystemDirectory.CombinePath("..\\..\\Keil").GetFullPath();
+                var file = client.DownloadLinkAndExtract(url, "MDK", dir);
+                var p = dir.CombinePath("ARM");
+                if (Directory.Exists(p))
+                {
+                    var ver = GetVer(p);
+                    if (ver > Version)
+                    {
+                        ToolPath = p;
+                        Version = ver;
+                    }
+                }
+            }
+            if (String.IsNullOrEmpty(ToolPath)) throw new Exception("无法获取MDK安装目录！");
             #endregion
+        }
+
+        Version GetVer(String path)
+        {
+            var p = Path.Combine(path, "..\\Tools.ini");
+            if (File.Exists(p))
+            {
+                foreach (var item in File.ReadAllLines(p))
+                {
+                    if (String.IsNullOrEmpty(item)) continue;
+                    if (item.StartsWith("VERSION=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var s = item.Substring("VERSION=".Length).Trim().Trim('V', 'v', 'a', 'b', 'c');
+                        var ss = s.SplitAsInt(".");
+                        return new Version(ss[0], ss[1]);
+                        //break;
+                    }
+                }
+            }
+
+            return new Version();
         }
         #endregion
     }
 
-/*
- * 脚本功能：
- * 1，向固件写入编译时间、编译机器等编译信息
- * 2，生成bin文件，显示固件大小
- * 3，直接双击使用时，设置项目编译后脚本为本脚本
- * 4，清理无用垃圾文件
- * 5，从SmartOS目录更新脚本自己
- */
+    /*
+     * 脚本功能：
+     * 1，向固件写入编译时间、编译机器等编译信息
+     * 2，生成bin文件，显示固件大小
+     * 3，直接双击使用时，设置项目编译后脚本为本脚本
+     * 4，清理无用垃圾文件
+     * 5，从SmartOS目录更新脚本自己
+     */
 
     public class Helper
     {
@@ -916,17 +948,17 @@ namespace NewLife.Reflection
             // 更新脚本自己
             //UpdateSelf();
 
-			// 编译SmartOS
-			/*var path = ".".GetFullPath().ToUpper();
-			if(path.Contains("STM32F0"))
-				"XScript".Run("..\\..\\SmartOS\\Tool\\Build_SmartOS_F0.cs /NoLogo /NoStop");
-			else if(path.Contains("STM32F1"))
-				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F1.cs /NoLogo /NoStop");
-			else if(path.Contains("STM32F4"))
-				"XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F4.cs /NoLogo /NoStop");*/
+            // 编译SmartOS
+            /*var path = ".".GetFullPath().ToUpper();
+            if(path.Contains("STM32F0"))
+                "XScript".Run("..\\..\\SmartOS\\Tool\\Build_SmartOS_F0.cs /NoLogo /NoStop");
+            else if(path.Contains("STM32F1"))
+                "XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F1.cs /NoLogo /NoStop");
+            else if(path.Contains("STM32F4"))
+                "XScript".Run("..\\SmartOS\\Tool\\Build_SmartOS_F4.cs /NoLogo /NoStop");*/
 
-			"完成".SpeakAsync();
-			System.Threading.Thread.Sleep(250);
+            "完成".SpeakAsync();
+            System.Threading.Thread.Sleep(250);
 
             return 0;
         }
@@ -1144,20 +1176,20 @@ namespace NewLife.Reflection
         /// <summary>更新脚本自己</summary>
         public static void UpdateSelf()
         {
-			var deep = 1;
+            var deep = 1;
             // 找到SmartOS目录，里面的脚本可用于覆盖自己
             var di = "../SmartOS".GetFullPath();
-            if (!Directory.Exists(di)){ deep++; di = "../../SmartOS".GetFullPath();}
-            if (!Directory.Exists(di)){ deep++; di = "../../../SmartOS".GetFullPath();}
+            if (!Directory.Exists(di)) { deep++; di = "../../SmartOS".GetFullPath(); }
+            if (!Directory.Exists(di)) { deep++; di = "../../../SmartOS".GetFullPath(); }
             if (!Directory.Exists(di)) return;
 
             var fi = di.CombinePath("Tool/Build.cs");
-			switch(deep)
-			{
-				case 2:fi = di.CombinePath("Tool/Build2.cs");break;
-				case 3:fi = di.CombinePath("Tool/Build3.cs");break;
-				default: break;
-			}
+            switch (deep)
+            {
+                case 2: fi = di.CombinePath("Tool/Build2.cs"); break;
+                case 3: fi = di.CombinePath("Tool/Build3.cs"); break;
+                default: break;
+            }
 
             if (!File.Exists(fi)) return;
 
