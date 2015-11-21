@@ -22,7 +22,7 @@ void StartGateway(void* param);
 
 void OnDhcpStop5500(void* sender, void* param)
 {
-	Dhcp* dhcp = (Dhcp*)sender;
+	auto dhcp = (Dhcp*)sender;
 	if(!dhcp->Result)
 	{
 		// 失败后重新开始DHCP，等待网络连接
@@ -32,7 +32,7 @@ void OnDhcpStop5500(void* sender, void* param)
 	}
 
 	// 获取IP成功，重新设置参数
-	W5500* net = (W5500*)dhcp->Host;
+	auto net = (W5500*)dhcp->Host;
 	net->Config();
 	net->ShowInfo();
 	net->SaveConfig();
@@ -44,21 +44,21 @@ ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, 
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	Spi* spi = new Spi(spi_, 36000000);
+	auto spi = new Spi(spi_, 36000000);
 
-	OutputPort* pwr = new OutputPort(power, true);
+	auto pwr = new OutputPort(power, true);
 	*pwr = true;
 
 	//TokenConfig* tk = TokenConfig::Current;
 
-	W5500* net = new W5500();
+	auto net = new W5500();
 	net->LoadConfig();
 	net->Init(spi, irq, rst);
 	net->Led = led;
 
 	// 打开DHCP
-	UdpClient* udp	= new UdpClient(net);
-	Dhcp* dhcp		= new Dhcp(udp);
+	auto udp	= new UdpClient(net);
+	auto dhcp	= new Dhcp(udp);
 	dhcp->OnStop	= OnDhcpStop5500;
 	dhcp->Start();
 
@@ -67,7 +67,7 @@ ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, 
 
 ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
 {
-	UdpClient* udp	= new UdpClient((W5500*)host);
+	auto udp	= new UdpClient((W5500*)host);
 	udp->Local.Port	= tk->Port;
 	udp->Remote.Port	= tk->ServerPort;
 	udp->Remote.Address	= IPAddress(tk->ServerIP);
@@ -77,7 +77,7 @@ ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
 
 ISocket* CreateW5500TCP(ISocketHost* host, TokenConfig* tk)
 {
-	TcpClient* tcp	= new TcpClient((W5500*)host);
+	auto tcp	= new TcpClient((W5500*)host);
 	tcp->Local.Port	= tk->Port;
 	tcp->Remote.Port	= tk->ServerPort;
 	tcp->Remote.Address	= IPAddress(tk->ServerIP);
@@ -89,9 +89,9 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 {
 	debug_printf("\r\nCreateClient \r\n");
 
-	TokenController* token	= new TokenController();
+	auto token	= new TokenController();
 
-	TokenConfig* tk = TokenConfig::Current;
+	auto tk = TokenConfig::Current;
 	ISocket* socket	= NULL;
 	if(tk->Protocol == 0)
 		socket = CreateW5500UDP(host, tk);
@@ -99,7 +99,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 		socket = CreateW5500TCP(host, tk);
 	token->Port = dynamic_cast<ITransport*>(socket);
 
-	TokenClient* client	= new TokenClient();
+	auto client	= new TokenClient();
 	client->Control	= token;
 	client->Local	= token;
 
@@ -123,16 +123,16 @@ TinyServer* Token::CreateServer(ITransport* port)
 {
 	debug_printf("\r\nCreateServer \r\n");
 
-	TinyController* ctrl	= new TinyController();
+	auto ctrl	= new TinyController();
 	ctrl->Port = port;
 
 	// 只有2401需要打开重发机制
 	if(strcmp(port->ToString(), "R24")) ctrl->Timeout = -1;
 
-	TinyConfig* tc = TinyConfig::Current;
+	auto tc = TinyConfig::Current;
 	tc->Address = ctrl->Address;
 
-	TinyServer* server	= new TinyServer(ctrl);
+	auto server	= new TinyServer(ctrl);
 	server->Cfg	= tc;
 
 	return server;
@@ -164,7 +164,7 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 #if DEBUG
 	// 打开串口输入便于调试数据操作，但是会影响性能
-	SerialPort* sp = SerialPort::GetMessagePort();
+	auto sp = SerialPort::GetMessagePort();
 	if(baudRate != 1024000)
 	{
 		sp->Close();
@@ -183,8 +183,8 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
-	Spi* spi = new Spi(spi_, 10000000, true);
-	NRF24L01* nrf = new NRF24L01();
+	auto spi = new Spi(spi_, 10000000, true);
+	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 	nrf->Power.Invert = powerInvert;
 
@@ -209,8 +209,8 @@ uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
 
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	SerialPort* sp = new SerialPort(index, baudRate);
-	ShunCom* zb = new ShunCom();
+	auto sp = new SerialPort(index, baudRate);
+	auto zb = new ShunCom();
 	zb->Power.Set(power);
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
@@ -224,10 +224,10 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 void StartGateway(void* param)
 {
 	ISocket* socket	= NULL;
-	Gateway* gw	= Gateway::Current;
+	auto gw	= Gateway::Current;
 	if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
 
-	TokenConfig* tk = TokenConfig::Current;
+	auto tk = TokenConfig::Current;
 
 	if(tk && tk->Server[0])
 	{
@@ -269,6 +269,6 @@ void StartGateway(void* param)
 
 void Token::SetPower(ITransport* port)
 {
-	Power* pwr	= dynamic_cast<Power*>(port);
+	auto pwr	= dynamic_cast<Power*>(port);
 	if(pwr) pwr->SetPower();
 }
