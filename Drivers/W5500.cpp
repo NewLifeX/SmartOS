@@ -245,6 +245,8 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
 	assert_ptr(spi);
 
+	debug_printf("\r\n");
+
 	if(rst != P0) Rst.Set(rst);
 	if(irq != P0)
 	{
@@ -266,7 +268,7 @@ bool W5500::Open()
 {
 	if(Opened) return true;
 
-	debug_printf("W5500::Open\r\n");
+	debug_printf("\r\nW5500::Open\r\n");
 	ShowInfo();
 
 	if(!Rst.Open()) return false;

@@ -360,12 +360,12 @@ void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
 	if(ce != P0)
 	{
 		_ce.OpenDrain = false;
-		_ce.Set(ce).Open();
+		_ce.Set(ce);
 	}
 	if(reset != P0)
 	{
 		_reset.OpenDrain = false;
-		_reset.Set(reset).Open();
+		_reset.Set(reset);
 	}
 }
 
@@ -494,10 +494,11 @@ void Enc28j60::ClockOut(byte clock)
 
 bool Enc28j60::OnOpen()
 {
-	debug_printf("Enc28j60::Open(%s)\r\n", Mac.ToString().GetBuffer());
+	debug_printf("\r\nEnc28j60::Open(%s)\r\n", Mac.ToString().GetBuffer());
 
 	if(!_reset.Empty())
 	{
+		_reset.Open();
 		_reset = false;
 		Sys.Sleep(1);
 		_reset = true;
@@ -505,6 +506,7 @@ bool Enc28j60::OnOpen()
 	}
     if(!_ce.Empty())
     {
+		_ce.Open();
         _ce = true;
         Sys.Sleep(100);
         _ce = false;

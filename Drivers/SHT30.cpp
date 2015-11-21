@@ -113,7 +113,7 @@ SHT30::~SHT30()
 
 void SHT30::Init()
 {
-	debug_printf("SHT30::Init Address=0x%02X \r\n", Address);
+	debug_printf("\r\nSHT30::Init Address=0x%02X \r\n", Address);
 
 	IIC->SubWidth	= 2;
 	IIC->Address	= Address << 1;

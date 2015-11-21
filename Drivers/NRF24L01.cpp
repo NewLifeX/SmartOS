@@ -780,6 +780,10 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
+	debug_printf("\r\n");
+
+	debug_printf("R24::Open\r\n");
+
 	if(Power.Open() && !Power.Read())
 	{
 		Power = true;

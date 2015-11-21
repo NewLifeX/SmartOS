@@ -32,7 +32,7 @@ AT24CXX::~AT24CXX()
 
 void AT24CXX::Init()
 {
-	debug_printf("AT24CXX::Init Address=0x%02X \r\n", Address);
+	debug_printf("\r\nAT24CXX::Init Address=0x%02X \r\n", Address);
 
 	IIC->SubWidth	= 1;
 	IIC->Address	= Address << 1;

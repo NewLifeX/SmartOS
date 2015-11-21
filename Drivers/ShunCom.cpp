@@ -17,6 +17,8 @@ void ShunCom::Init(ITransport* port, Pin rst)
 
 bool ShunCom::OnOpen()
 {
+	debug_printf("\r\nShunCom::Open \r\n");
+
 	Power.Open();
 	Sleep.Open();
 	Config.Open();

@@ -7,6 +7,8 @@
 
 AT45DB::AT45DB(Spi* spi)
 {
+	debug_printf("\r\nAT45DB::Init \r\n");
+
     _spi = spi;
     _spi->Stop();
 
