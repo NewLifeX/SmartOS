@@ -696,6 +696,20 @@ void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode)
     EXTI_Init(&ext);
 }
 
+InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
+{
+	if(invert && mode != InputPort::Both)
+	{
+		// 把上升沿下降沿换过来
+		if(mode == InputPort::Rising)
+			mode	= InputPort::Falling;
+		else if(mode == InputPort::Falling)
+			mode	= InputPort::Rising;
+	}
+
+	return mode;
+}
+
 void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
 	// 如果不是硬件事件，则默认使用20ms抖动
@@ -708,8 +722,8 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 		debug_printf(" 上拉");
 	else if(Pull == DOWN)
 		debug_printf(" 下拉");
-	if(Mode & Rising)	debug_printf(" 上升沿");
-	if(Mode & Falling)	debug_printf(" 下降沿");
+	if(Mode & Rising)	debug_printf(" 按下");
+	if(Mode & Falling)	debug_printf(" 弹起");
 
 	bool fg	= false;
 #endif
@@ -764,7 +778,7 @@ void InputPort::OnClose()
 	{
 		st->Port = NULL;
 
-		SetEXIT(idx, false, Mode);
+		SetEXIT(idx, false, GetTrigger(Mode, Invert));
 
 		Interrupt.Deactivate(PORT_IRQns[idx]);
 	}
@@ -814,7 +828,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
     GPIO_EXTILineConfig(gi, idx);
 #endif
 
-	SetEXIT(idx, true, Mode);
+	SetEXIT(idx, true, GetTrigger(Mode, Invert));
 
     // 打开并设置EXTI中断为低优先级
     Interrupt.SetPriority(PORT_IRQns[idx], 1);
