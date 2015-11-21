@@ -507,8 +507,6 @@ void InputPort::Init(bool floating, PuPd pull)
 	Invert		= 2;
 
 	Mode		= Both;
-	//ShakeTime = 20;
-	// 有些应用的输入口需要极高的灵敏度，这个时候不需要抖动检测
 	ShakeTime	= 0;
 	HardEvent	= false;
 	_taskInput	= 0;
@@ -518,7 +516,9 @@ void InputPort::Init(bool floating, PuPd pull)
 	_Value		= 0;
 
 	_PressStart = 0;
+	_PressStart2 = 0;
 	PressTime	= 0;
+	_PressLast	= 0;
 }
 
 InputPort::~InputPort()
@@ -543,11 +543,37 @@ bool InputPort::Read() const
 
 void InputPort::OnPress(bool down)
 {
-	if(down)
-		_PressStart	= Sys.Ms();
-	else
-		if (_PressStart > 0) PressTime	= Sys.Ms() - _PressStart;
 	//debug_printf("OnPress P%c%d down=%d Invert=%d 时间=%d\r\n", _PIN_NAME(_Pin), down, Invert, PressTime);
+	/*
+	！！！注意：
+	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
+	解决思路：
+	1，预处理抖动，先把上一次干掉（可能已经被处理）
+	2，记录最近两次按下的时间，如果出现抖动且时间相差不是非常大，则使用上一次按下时间
+	3，也可能出现100抖动
+	*/
+	ulong	now	= Sys.Ms();
+	// 预处理抖动。如果相邻两次间隔小于抖动时间，那么忽略上一次未处理的值（可能失败）
+	bool shake	= false;
+	if(ShakeTime && ShakeTime > now - _PressLast)
+	{
+		_Value	= 0;
+		shake	= true;
+	}
+
+	if(down)
+	{
+		_PressStart2	= _PressStart;
+		_PressStart		= now;
+	}
+	else
+	{
+		// 如果这次是弹起，倒退按下的时间。为了避免较大的误差，限定10秒内
+		if(shake && _PressStart2 > 0 && _PressStart2 + 10000 >= _PressStart) _PressStart	= _PressStart2;
+
+		if (_PressStart > 0) PressTime	= now - _PressStart;
+	}
+	_PressLast	= now;
 
 	if(down)
 	{
@@ -565,7 +591,8 @@ void InputPort::OnPress(bool down)
 	else
 	{
 		// 允许两个值并存
-		_Value	|= down ? Rising : Falling;
+		//_Value	|= down ? Rising : Falling;
+		_Value	= down ? Rising : Falling;
 		Sys.SetTask(_taskInput, true, ShakeTime);
 	}
 }
@@ -574,13 +601,6 @@ void InputPort::InputTask(void* param)
 {
 	InputPort* port = (InputPort*)param;
 	byte v = port->_Value;
-	//if(!v) return;
-
-	/*if(v & Falling)
-	{
-		if (port->_PressStart > 0) port->PressTime	= Sys.Ms() - port->_PressStart;
-	}
-	port->_PressStart	= Sys.Ms();*/
 	if(!v) return;
 
 	if(port->Handler)

@@ -162,6 +162,8 @@ private:
 	byte	_Value;
 	uint	_taskInput;		// 输入任务
 	ulong	_PressStart;	// 开始按下时间
+	ulong	_PressStart2;	// 开始按下时间
+	ulong	_PressLast;		// 最后一次按下时间
 	static void InputTask(void* param);
 
     IOReadHandler	Handler;
