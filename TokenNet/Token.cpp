@@ -169,7 +169,6 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	NRF24L01* nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 	nrf->Power.Invert = powerInvert;
-	nrf->SetPower();
 
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
@@ -193,44 +192,12 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 {
 	SerialPort* sp = new SerialPort(index, baudRate);
 	ShunCom* zb = new ShunCom();
-	//zb.Power.Init(power, TinyConfig::Current->HardVer < 0x08);
 	zb->Power.Set(power);
-	if(zb->Power) zb->Power.Invert = true;
-
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
 
-	sp->SetPower();
-	zb->SetPower();
-
 	return zb;
-}
-
-void ClearConfig()
-{
-	//TokenConfig* cfg = TokenConfig::Current;
-	//if(cfg) cfg->Clear();
-
-	// 退网
-	//TokenClient* client = TokenClient::Current;
-	//if(client) client->Logout();
-
-	Sys.Reset();
-}
-
-void CheckUserPress(InputPort* port, bool down, void* param)
-{
-	if(down) return;
-
-	debug_printf("按下 P%c%d 时间=%d 毫秒 \r\n", _PIN_NAME(port->_Pin), port->PressTime);
-
-	// 按下5秒，清空设置并重启
-	if(port->PressTime >= 5000)
-		ClearConfig();
-	// 按下3秒，重启
-	else if(port->PressTime >= 3000)
-		Sys.Reset();
 }
 
 void StartGateway(void* param)
@@ -278,4 +245,10 @@ void StartGateway(void* param)
 			gw->SetMode(true);
 		}
 	}
+}
+
+void Token::SetPower(ITransport* port)
+{
+	Power* pwr	= dynamic_cast<Power*>(port);
+	if(pwr) pwr->SetPower();
 }

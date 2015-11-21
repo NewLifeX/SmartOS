@@ -25,10 +25,8 @@ public:
 	
 	static TokenClient* CreateClient(ISocketHost* host);
 	static TinyServer* CreateServer(ITransport* port);
+
+	void SetPower(ITransport* port);
 };
-
-void ClearConfig();
-
-void CheckUserPress(InputPort* port, bool down, void* param = NULL);
 
 #endif

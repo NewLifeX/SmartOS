@@ -167,4 +167,3 @@ void SetPower(ITransport* port)
 	Power* pwr	= dynamic_cast<Power*>(port);
 	if(pwr) pwr->SetPower();
 }
-
