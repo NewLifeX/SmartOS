@@ -23,13 +23,13 @@ _force_inline byte GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group
 // 端口基本功能
 #define REGION_Port 1
 #ifdef REGION_Port
-Port::Port()
+/* Port::Port()
 {
 	_Pin	= P0;
 	Group	= NULL;
 	Mask	= 0;
 	Opened	= false;
-}
+} */
 
 #ifndef TINY
 Port::~Port()
@@ -276,7 +276,7 @@ bool Port::IsBusy(Pin pin)
 #define REGION_Output 1
 #ifdef REGION_Output
 
-OutputPort::OutputPort() : OutputPort(P0, 2) { }
+OutputPort::OutputPort() : Port() { }
 OutputPort::OutputPort(Pin pin) : OutputPort(pin, 2) { }
 OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port()
 {
@@ -475,14 +475,14 @@ int Bits2Index(ushort value)
 InputPort::InputPort() : InputPort(P0) { }
 InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 {
-	Pull		= pull;
+	/* Pull		= pull;
 	Floating	= floating;
 
 	Invert		= 2;
 
 	Mode		= Both;
 	ShakeTime	= 0;
-	HardEvent	= false;
+	HardEvent	= false; */
 	_taskInput	= 0;
 
 	Handler		= NULL;

@@ -185,6 +185,7 @@ namespace NewLife.Reflection
             sb.Append("-c");
             if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
+			sb.Append(" --multibyte_chars --locale \"chinese\"");
             sb.AppendFormat(" -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)

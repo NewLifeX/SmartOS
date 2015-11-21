@@ -17,10 +17,10 @@
 class Port : public Object
 {
 public:
-    GPIO_TypeDef*	Group;		// 引脚组
-    ushort	Mask;		// 组内引脚位。每个引脚一个位
-    Pin		_Pin;		// 引脚
-	bool	Opened;		// 是否已经打开
+    GPIO_TypeDef*	Group	= NULL;		// 引脚组
+    ushort	Mask	= 0;		// 组内引脚位。每个引脚一个位
+    Pin		_Pin	= P0;		// 引脚
+	bool	Opened	= false;		// 是否已经打开
 
     Port& Set(Pin pin);	// 设置引脚
 	bool Empty() const;
@@ -44,7 +44,7 @@ public:
 	virtual String& ToStr(String& str) const;
 
 protected:
-	Port();
+	//Port() = default;
 #ifndef TINY
 	virtual ~Port();
 #endif
@@ -60,9 +60,9 @@ protected:
 class OutputPort : public Port
 {
 public:
-    byte Invert;		// 是否倒置输入输出。默认2表示自动检测
-    bool OpenDrain;		// 是否开漏输出
-    byte Speed;			// 速度
+    byte Invert		= 2;		// 是否倒置输入输出。默认2表示自动检测
+    bool OpenDrain	= false;	// 是否开漏输出
+    byte Speed		= GPIO_MAX_SPEED;			// 速度
 
     OutputPort();
     OutputPort(Pin pin);
@@ -126,13 +126,13 @@ public:
     // 读取委托
     typedef void (*IOReadHandler)(InputPort* port, bool down, void* param);
 
-    ushort	ShakeTime;	// 抖动时间。毫秒
-	ushort	PressTime;	// 长按时间。毫秒
-    bool	Invert:2;	// 是否倒置输入输出。默认2表示自动检测
-    bool	Floating:1;	// 是否浮空输入
-    PuPd	Pull:2;		// 上拉下拉电阻
-	Trigger	Mode:2;		// 触发模式，上升沿下降沿
-	bool	HardEvent:1;	// 是否使用硬件事件。默认false
+    ushort	ShakeTime	= 0;	// 抖动时间。毫秒
+	ushort	PressTime	= 0;	// 长按时间。毫秒
+    byte	Invert	= 2;	// 是否倒置输入输出。默认2表示自动检测
+    bool	Floating	= true;	// 是否浮空输入
+    PuPd	Pull		= UP;		// 上拉下拉电阻
+	Trigger	Mode		= Both;		// 触发模式，上升沿下降沿
+	bool	HardEvent	= false;	// 是否使用硬件事件。默认false
 
 	InputPort();
     InputPort(Pin pin, bool floating = true, PuPd pull = UP);
@@ -155,15 +155,15 @@ protected:
 	virtual void OnClose();
 
 private:
-	byte	_Value;
-	uint	_taskInput;		// 输入任务
-	ulong	_PressStart;	// 开始按下时间
-	ulong	_PressStart2;	// 开始按下时间
-	ulong	_PressLast;		// 最后一次按下时间
+	byte	_Value	= 0;
+	uint	_taskInput	= 0;		// 输入任务
+	ulong	_PressStart	= 0;	// 开始按下时间
+	ulong	_PressStart2	= 0;	// 开始按下时间
+	ulong	_PressLast	= 0;		// 最后一次按下时间
 	static void InputTask(void* param);
 
-    IOReadHandler	Handler;
-	void*			Param;
+    IOReadHandler	Handler	= NULL;
+	void*			Param	= NULL;
 };
 
 /******************************** AnalogInPort ********************************/
