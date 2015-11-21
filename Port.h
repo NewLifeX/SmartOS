@@ -116,6 +116,7 @@ public:
         UP		= 0x01,	// 上拉电阻
         DOWN	= 0x02,	// 下拉电阻
     }PuPd;
+    //enum class Trigger	// 强类型枚举
     typedef enum
     {
         Rising	= 0x01,	// 上升沿
