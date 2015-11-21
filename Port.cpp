@@ -569,7 +569,11 @@ void InputPort::OnPress(bool down)
 	else
 	{
 		// 如果这次是弹起，倒退按下的时间。为了避免较大的误差，限定10秒内
-		if(shake && _PressStart2 > 0 && _PressStart2 + 10000 >= _PressStart) _PressStart	= _PressStart2;
+		if(shake && _PressStart2 > 0 && _PressStart2 + 10000 >= _PressStart)
+		{
+			_PressStart	= _PressStart2;
+			_PressStart2	= 0;
+		}
 
 		if (_PressStart > 0) PressTime	= now - _PressStart;
 	}
