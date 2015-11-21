@@ -49,7 +49,7 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 #endif
 }
 
-ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert)
+ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	Spi* spi = new Spi(spi_, 10000000, true);
 	NRF24L01* nrf = new NRF24L01();
@@ -62,25 +62,24 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	nrf->Channel		= TinyConfig::Current->Channel;
 	nrf->Speed			= TinyConfig::Current->Speed;
 
+	nrf->Led	= led;
+
 	//if(!nrf.Check()) debug_printf("请检查NRF24L01线路\r\n");
 
 	return nrf;
 }
 
-ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg)
+ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
 	SerialPort* sp = new SerialPort(index, baudRate);
 	ShunCom* zb = new ShunCom();
 
 	zb->Power.Set(power);
-	//if(zb->Power.ReadInput()) zb->Power.Invert = true;
-
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
 
-	//sp->SetPower();
-	//zb->SetPower();
+	zb->Led	= led;
 
 	return zb;
 }

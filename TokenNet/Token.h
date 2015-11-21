@@ -20,8 +20,8 @@ public:
 
 	static ISocketHost* CreateW5500(SPI_TypeDef* spi, Pin irq, Pin rst = P0, Pin power = P0, IDataPort* led = NULL);
 
-	static ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false);
-	static ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg);
+	static ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = NULL);
+	static ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = NULL);
 	
 	static TokenClient* CreateClient(ISocketHost* host);
 	static TinyServer* CreateServer(ITransport* port);
