@@ -110,13 +110,6 @@ private:
 	bool EndSendStat(byte code, bool success);
 };
 
-// 令牌会话
-class TokenSession
-{
-public:
-	uint	Token;	// 当前会话的令牌
-};
-
 // 令牌统计
 class TokenStat : public Object
 {

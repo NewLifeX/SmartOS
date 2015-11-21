@@ -30,16 +30,24 @@ TokenClient::TokenClient() : ID(16), Key(8)
 	Received	= NULL;
 	Param		= NULL;
 	TokenConfig	= NULL;
+
+	Local		= NULL;
 }
 
 void TokenClient::Open()
 {
 	assert_param2(Control, "令牌客户端还没设置控制器呢");
 
-	Control->Open();
-
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
+	Control->Open();
+
+	if(Local && Local != Control)
+	{
+		Local->Received	= OnTokenClientReceived;
+		Local->Param	= this;
+		Local->Open();
+	}
 
 	TokenConfig			= TokenConfig::Current;
 

@@ -53,6 +53,7 @@ void TokenConfig::Show()
 #if DEBUG
 	debug_printf("TokenConfig::令牌配置：\r\n");
 
+	debug_printf("\t协议: %s \r\n", Protocol == 0 ? "UDP" : "TCP");
 	debug_printf("\t端口: %d \r\n", Port);
 
 	debug_printf("\t远程: ");
@@ -82,6 +83,8 @@ void TokenConfig::Read(Stream& ms)
 
 TokenConfig* TokenConfig::Init(const char* vendor, byte protocol, ushort sport, ushort port)
 {
+	debug_printf("\r\n");
+
 	static TokenConfig tc;
 	TokenConfig::Current = &tc;
 	tc.LoadDefault();

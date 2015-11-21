@@ -42,7 +42,7 @@ void OnDhcpStop5500(void* sender, void* param)
 
 ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
 {
-	debug_printf("W5500::Create \r\n");
+	debug_printf("\r\nW5500::Create \r\n");
 
 	Spi* spi = new Spi(spi_, 36000000);
 
@@ -87,11 +87,13 @@ ISocket* CreateW5500TCP(ISocketHost* host, TokenConfig* tk)
 
 TokenClient* Token::CreateClient(ISocketHost* host)
 {
+	debug_printf("\r\nCreateClient \r\n");
+
 	TokenController* token	= new TokenController();
 
 	TokenConfig* tk = TokenConfig::Current;
 	ISocket* socket	= NULL;
-	if(!tk->Protocol)
+	if(tk->Protocol == 0)
 		socket = CreateW5500UDP(host, tk);
 	else
 		socket = CreateW5500TCP(host, tk);
@@ -99,12 +101,28 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 	TokenClient* client	= new TokenClient();
 	client->Control	= token;
+	client->Local	= token;
+
+	// 如果是TCP，需要再建立一个本地UDP
+	if(tk->Protocol == 1)
+	{
+		TokenConfig tc;
+		tc.Port			= tk->Port;
+		tc.ServerIP		= IPAddress::Broadcast().Value;
+		tc.ServerPort	= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
+
+		socket	= CreateW5500UDP(host, &tc);
+		token	= new TokenController();
+		client->Local	= token;
+	}
 
 	return client;
 }
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
+	debug_printf("\r\nCreateServer \r\n");
+
 	TinyController* ctrl	= new TinyController();
 	ctrl->Port = port;
 
@@ -235,8 +253,6 @@ void StartGateway(void* param)
 	// 此时启动网关服务
 	if(gw)
 	{
-		debug_printf("\r\n");
-
 		IPEndPoint& ep = gw->Client->Hello.EndPoint;
 		if(socket) ep.Address = socket->Host->IP;
 
@@ -244,6 +260,7 @@ void StartGateway(void* param)
 		{
 			gw->Start();
 
+			debug_printf("\r\n");
 			// 启动时首先进入学习模式
 			gw->SetMode(true);
 		}

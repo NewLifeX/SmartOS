@@ -57,7 +57,7 @@ void Gateway::Start()
     Client->IsOldOrder  = IsOldOrder;
 
 
-	debug_printf("Gateway::Start \r\n");
+	debug_printf("\r\nGateway::Start \r\n");
 
 	Server->Start();
 
@@ -784,6 +784,8 @@ void OldTinyToToken(const TinyMessage& msg, TokenMessage& msg2, ushort kind)
 
 Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 {
+	debug_printf("\r\nGateway::CreateGateway \r\n");
+
 	Gateway* gw	= Current;
 	if(gw)
 	{
