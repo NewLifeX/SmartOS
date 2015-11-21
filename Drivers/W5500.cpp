@@ -1119,6 +1119,9 @@ bool HardSocket::Send(const Array& bs)
 	// 启动发送 异步中断处理发送异常等
 	WriteConfig(SEND);
 
+	// 控制轮询任务，加快处理
+	Sys.SetTask(_Host->TaskID, true, 20);
+
 	return true;
 }
 

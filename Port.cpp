@@ -129,6 +129,8 @@ bool Port::Open()
 	if(_Pin == P0) return false;
 	if(Opened) return true;
 
+	TS("Port::Open");
+
     // 先打开时钟才能配置
 	OpenClock(_Pin, true);
 
@@ -209,6 +211,8 @@ void Port::AFConfig(byte GPIO_AF) const
 
 bool Port::Read() const
 {
+	if(_Pin == P0) return false;
+
 	return GPIO_ReadInputData(Group) & Mask;
 }
 #endif
