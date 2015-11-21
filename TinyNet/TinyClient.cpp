@@ -480,7 +480,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	if(TranID != dm.TranID)
 	{
 		debug_printf("发现响应序列号 0x%08X 不等于内部序列号 0x%08X \r\n", dm.TranID, TranID);
-		//return true;
+		return true;
 	}
 
 	Joining		= false;
