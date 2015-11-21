@@ -276,20 +276,19 @@ bool Port::IsBusy(Pin pin)
 #define REGION_Output 1
 #ifdef REGION_Output
 
-OutputPort::OutputPort() : Port() { Init(); }
-
-OutputPort::OutputPort(Pin pin) : Port()
+OutputPort::OutputPort() : OutputPort(P0, 2) { }
+OutputPort::OutputPort(Pin pin) : OutputPort(pin, 2) { }
+OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port()
 {
-	Init();
-	Set(pin);
-	Open();
-}
-
-OutputPort::OutputPort(Pin pin, bool invert, bool openDrain, byte speed) : Port()
-{
-	Init(invert, openDrain, speed);
-	Set(pin);
-	Open();
+	OpenDrain	= openDrain;
+	Speed		= speed;
+	Invert		= invert;
+	
+	if(pin != P0)
+	{
+		Set(pin);
+		Open();
+	}
 }
 
 OutputPort& OutputPort::Init(Pin pin, bool invert)
@@ -299,13 +298,6 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 	Invert	= invert;
 
 	return *this;
-}
-
-void OutputPort::Init(byte invert, bool openDrain, byte speed)
-{
-	OpenDrain	= openDrain;
-	Speed		= speed;
-	Invert		= invert;
 }
 
 void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
@@ -433,21 +425,10 @@ void OutputPort::Write(Pin pin, bool value)
 
 /******************************** AlternatePort ********************************/
 
-AlternatePort::AlternatePort() : OutputPort() { Init(false, false); }
-AlternatePort::AlternatePort(Pin pin)
-	: OutputPort()
-{
-	Init(false, false);
-	Set(pin);
-	Open();
-}
-AlternatePort::AlternatePort(Pin pin, bool invert, bool openDrain, byte speed)
-	: OutputPort()
-{
-	Init(invert, openDrain, speed);
-	Set(pin);
-	Open();
-}
+AlternatePort::AlternatePort() : OutputPort(P0, false, false) { }
+AlternatePort::AlternatePort(Pin pin) : OutputPort(pin, false, false) { }
+AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
+	: OutputPort(pin, invert, openDrain, speed) { }
 
 void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
 {
@@ -491,15 +472,8 @@ int Bits2Index(ushort value)
 	return -1;
 }
 
-InputPort::InputPort() : Port() { Init(); }
+InputPort::InputPort() : InputPort(P0) { }
 InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
-{
-	Init(floating, pull);
-	Set(pin);
-	Open();
-}
-
-void InputPort::Init(bool floating, PuPd pull)
 {
 	Pull		= pull;
 	Floating	= floating;
@@ -519,6 +493,12 @@ void InputPort::Init(bool floating, PuPd pull)
 	_PressStart2 = 0;
 	PressTime	= 0;
 	_PressLast	= 0;
+
+	if(pin != P0)
+	{
+		Set(pin);
+		Open();
+	}
 }
 
 InputPort::~InputPort()

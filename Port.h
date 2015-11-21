@@ -66,7 +66,7 @@ public:
 
     OutputPort();
     OutputPort(Pin pin);
-    OutputPort(Pin pin, bool invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    OutputPort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 	OutputPort& Init(Pin pin, bool invert);
 
@@ -88,8 +88,6 @@ public:
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
-
-    void Init(byte invert = 2, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 };
 
 /******************************** AlternatePort ********************************/
@@ -100,7 +98,7 @@ class AlternatePort : public OutputPort
 public:
 	AlternatePort();
     AlternatePort(Pin pin);
-    AlternatePort(Pin pin, bool invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
@@ -153,8 +151,6 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    void Init(bool floating = true, PuPd pull = UP);
-
     virtual void OnOpen(GPIO_InitTypeDef& gpio);
 	virtual void OnClose();
 
