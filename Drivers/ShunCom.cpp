@@ -12,23 +12,23 @@ void ShunCom::Init(ITransport* port, Pin rst)
 	Set(port);
 	MaxSize	= 82;
 
-	if(rst != P0) Reset.Set(rst);
+	if(rst != P0) Reset.Init(rst, true);
 }
 
 bool ShunCom::OnOpen()
 {
 	debug_printf("\r\nShunCom::Open \r\n");
 
-	Power.Open();
 	Sleep.Open();
 	Config.Open();
+	Reset.Open();
+	Power.Open();
 
 	Power	= true;
 	Sleep	= false;
 	Config	= false;
-
-	Reset.Open();
 	Reset	= false;
+
 	debug_printf("Power=%d Sleep=%d Config=%d Reset=%d \r\n", Power.Read(), Sleep.Read(), Config.Read(), Reset.Read());
 
 	Port->MinSize	= MinSize;
