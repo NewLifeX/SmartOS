@@ -131,6 +131,8 @@ void Dhcp::Start()
 
 void Dhcp::Stop()
 {
+	if(!Running) return;
+
 	ITransport* port = dynamic_cast<ITransport*>(Socket);
 	if(port) port->Close();
 
