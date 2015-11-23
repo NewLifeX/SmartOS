@@ -51,10 +51,9 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		name.Append(Sys.ID[0]);
 
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
-		String vendor = "http://www.NewLifeX.com";
+		String vendor = "www.NewLifeX.com";
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
-		//ByteArray bs(ps, ArrayLength(ps));
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, CArray(ps));
 		opt = opt->Next()->End();
 
@@ -76,6 +75,7 @@ void Dhcp::Discover()
 	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
 
 	debug_printf("DHCP::Discover...\r\n");
+	dhcpid	= Sys.Ms();
 	dhcp->Init(dhcpid, false);
 
 	byte* p = dhcp->Next();
@@ -113,6 +113,9 @@ void Dhcp::Start()
 
 	ITransport* port = dynamic_cast<ITransport*>(Socket);
 	if(port) port->Open();
+
+	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
+	Host->IP	= IPAddress::Any();
 
 	// 创建任务，每秒发送一次Discover
 	if(!taskID)
@@ -202,7 +205,7 @@ uint Dhcp::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 		debug_printf("收到数据，来自 ");
 		ep->Show(true);
 	}*/
-	
+
 	((Dhcp*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;

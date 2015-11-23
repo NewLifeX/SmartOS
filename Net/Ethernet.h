@@ -296,7 +296,7 @@ typedef struct _DHCP_HEADER
 		HardLength = 6;
 		Hops = 0;
 		TransID = __REV(dhcpid);
-		Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
+		//Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
 		SetMagic();
 
 		if(recursion) Prev()->Init(recursion);
