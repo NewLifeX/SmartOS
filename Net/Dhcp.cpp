@@ -111,11 +111,11 @@ void Dhcp::Start()
 
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
-	if(port) port->Open();
-
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	Host->IP	= IPAddress::Any();
+	
+	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	if(port) port->Open();
 
 	// 创建任务，每秒发送一次Discover
 	if(!taskID)
