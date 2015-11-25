@@ -227,7 +227,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		rs.Code		= msg.Code;
 
 		HelloMessage ext2(Hello);
-		ext2.Reply	= msg.Reply;
+		ext2.Reply	= true;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
 		ext2.LocalTime = Sys.Ms() * 1000;
