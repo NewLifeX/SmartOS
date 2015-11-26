@@ -71,7 +71,9 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	byte id = msg.Src;
 	Device* dv = Current;
 	if(!dv) dv = FindDevice(id);
-
+	// 不响应不在设备列表设备的 非Join指令
+	if((!dv) && (msg.Code > 2))return false;
+	
 	switch(msg.Code)
 	{
 		case 1:
