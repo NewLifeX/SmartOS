@@ -29,12 +29,6 @@ private:
 	InputPort _rx;
 #endif
 
-	// 收发缓冲区
-#ifndef STM32F0
-	Queue Tx;
-#endif
-	Queue Rx;
-
 	void Init();
 
 public:
@@ -44,6 +38,12 @@ public:
 #endif
 	OutputPort* RS485;	// RS485使能引脚
 	int 		Error;	// 错误计数
+
+	// 收发缓冲区
+#ifndef STM32F0
+	Queue Tx;
+#endif
+	Queue Rx;
 
 	SerialPort();
     SerialPort(COM_Def index,

@@ -71,8 +71,10 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	SerialPort* sp = new SerialPort(index, baudRate);
-	ShunCom* zb = new ShunCom();
+	auto sp = new SerialPort(index, baudRate);
+	auto zb = new ShunCom();
+
+	sp->Rx.SetCapacity(512);
 
 	zb->Power.Set(power);
 	zb->Sleep.Init(slp, true);

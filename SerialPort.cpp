@@ -159,6 +159,7 @@ bool SerialPort::OnOpen()
 #ifndef STM32F0
 	Tx.Clear();
 #endif
+	Rx.SetCapacity(0x80);
 	Rx.Clear();
 
 #ifdef STM32F0
@@ -330,7 +331,7 @@ void SerialPort::OnRxHandler()
 	if(_taskidRx && Rx.Length() >= MinSize)
 	{
 		//Sys.SetTask(_taskidRx, true, (_byteTime >> 10) + 1);
-		_task->Set(true, 1);
+		_task->Set(true, 10);
 	}
 }
 
@@ -345,7 +346,9 @@ void SerialPort::ReceiveTask(void* param)
 	if(sp->Rx.Length() == 0) return;
 
 	// 从栈分配，节省内存
-	ByteArray bs(0x40);
+	//ByteArray bs(0x40);
+	byte buf[0x80];
+	Array bs(buf, ArrayLength(buf));
 	uint len = sp->Read(bs);
 	if(len)
 	{
