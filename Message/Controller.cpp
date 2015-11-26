@@ -64,9 +64,9 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 	Controller* control = (Controller*)param;
 
 #if MSG_DEBUG
-	/*msg_printf("Controller::Dispatch[%d] ", len);
+	msg_printf("Controller::Dispatch[%d] ", len);
 	// 输出整条信息
-	ByteArray(buf, len).Show(true);*/
+	ByteArray(buf, len).Show(true);
 #endif
 	if(len > control->Port->MaxSize)
 	{
@@ -94,11 +94,11 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 		{
 #if MSG_DEBUG
 			// 兼容性处理，如果0x00 0x01 0x02开头，则重新来一次
-			if(buf[0] == 0x00 || buf[0] == 0x01 || buf[0] == 0x02 || buf[0] == 0x03)
+			/*if(buf[0] == 0x00 || buf[0] == 0x01 || buf[0] == 0x02 || buf[0] == 0x03)
 			{
 				ms.SetPosition(p + 1);
 				continue;
-			}
+			}*/
 
 			msg_printf("Controller::DispatchError[%d] ", len);
 			// 输出整条信息
