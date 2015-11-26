@@ -40,13 +40,9 @@ namespace NewLife.Reflection
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1x0");
 
-			build.Tiny = true;
+			/*build.Tiny = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_F1x0");
-
-			//build.Defines.Add("TINY");
-            //build.CompileAll();
-            //build.BuildLib("..\\SmartOS_F0T");
+            build.BuildLib("..\\SmartOS_F1x0");*/
         }
     }
 
