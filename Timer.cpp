@@ -55,6 +55,8 @@ Timer::~Timer()
 // 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
 Timer* Timer::Create(byte index)
 {
+	TS("Timer::Create");
+
 	byte tcount	= ArrayLength(g_Timers);
 	// 特殊处理随机分配
 	if(index == 0xFF)
@@ -82,6 +84,8 @@ Timer* Timer::Create(byte index)
 
 void Timer::Config()
 {
+	TS("Timer::Config");
+
 	// 配置时钟
 	TIM_TimeBaseInitTypeDef tr;
 	TIM_TimeBaseStructInit(&tr);
@@ -104,6 +108,8 @@ void Timer::Config()
 void Timer::Open()
 {
 	if(Opened) return;
+
+	TS("Timer::Open");
 
 #if DEBUG
     // 获取当前频率
@@ -136,6 +142,8 @@ void Timer::Open()
 void Timer::Close()
 {
 	if(!Opened) return;
+
+	TS("Timer::Close");
 
 	debug_printf("Timer%d::Close\r\n", _index + 1);
 
@@ -318,6 +326,8 @@ PWM::PWM(byte index) : Timer(g_Timers[index])
 
 void PWM::Config()
 {
+	TS("PWM::Config");
+
 //	const Pin _Pin[]=TIM_PINS;
 	Timer::Config();	// 主要是配置时钟基础部分 TIM_TimeBaseInit
 

@@ -19,10 +19,13 @@ bool IR::Open()
 {
 	if(Opened) return true;
 
+	TS("IR::Open");
+
 	// 申请一个定时器
 	if(_Tim == NULL) _Tim = Timer::Create();
 	// 配置定时器的参数
-	if(_Tim == NULL) return false;
+	//if(_Tim == NULL) return false;
+	assert_param2(_Tim, "无法申请得到定时器");
 
 	Tx	= true;
 
@@ -46,6 +49,8 @@ bool IR::Close()
 {
 	if(!Opened) return true;
 
+	TS("IR::Close");
+
 	if(_Tim != NULL) _Tim->Close();
 
 	Opened	= false;
@@ -57,6 +62,8 @@ bool IR::Send(const Array& bs)
 {
 	if(bs.Length() < 2) return false;
 	if(!Open()) return false;
+
+	TS("IR::Send");
 
 	_Arr	= (Array*)&bs;
 	_Index	= 0;
@@ -100,6 +107,8 @@ void IR::OnSend()
 int IR::Receive(Array& bs)
 {
 	if(!Open()) return false;
+
+	TS("IR::Receive");
 
 	bs.SetLength(0);
 	_Arr	= &bs;

@@ -53,6 +53,8 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 {
     assert_param2(name, "配置块名称不能为空");
 
+	TS("ConfigBlock::Init");
+
 	uint slen = strlen(name);
     if(slen > sizeof(Name)) return false;
 
@@ -77,6 +79,8 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
 {
 	assert_ptr(storage);
+
+	TS("ConfigBlock::Write");
 
 	// 如果大小超标，并且下一块有效，那么这是非法操作
 	if(bs.Length() > Size && Next()->Valid())
@@ -111,6 +115,8 @@ Config::Config(Storage* st, uint addr)
 // 循环查找配置块
 const void* Config::Find(const char* name, int size)
 {
+	TS("Config::Find");
+
     const uint c_Version = 0x534F5453; // STOS
 
 	assert_param2(name, "配置段名称不能为空");
@@ -162,6 +168,8 @@ bool Config::Invalid(const char* name)
 // 根据名称更新块
 const void* Config::Set(const char* name, const Array& bs)
 {
+	TS("Config::Set");
+
     //if(name == NULL) return NULL;
     assert_param2(name, "配置块名称不能为空");
 	assert_param2(Device, "未指定配置段的存储设备");
@@ -183,6 +191,8 @@ const void* Config::Set(const char* name, const Array& bs)
 // 获取配置数据
 bool Config::Get(const char* name, Array& bs)
 {
+	TS("Config::Get");
+
     //if(name == NULL) return false;
     assert_param2(name, "配置块名称不能为空");
 
@@ -201,6 +211,8 @@ bool Config::Get(const char* name, Array& bs)
 // 获取配置数据，如果不存在则覆盖
 bool Config::GetOrSet(const char* name, Array& bs)
 {
+	TS("Config::GetOrSet");
+
     //if(name == NULL) return false;
     assert_param2(name, "配置块名称不能为空");
 
@@ -215,6 +227,8 @@ bool Config::GetOrSet(const char* name, Array& bs)
 
 const void* Config::Get(const char* name)
 {
+	TS("Config::GetByName");
+
     //if(name == NULL) return NULL;
     assert_param2(name, "配置块名称不能为空");
 
