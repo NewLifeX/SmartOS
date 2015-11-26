@@ -64,7 +64,7 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 	Controller* control = (Controller*)param;
 
 #if MSG_DEBUG
-	msg_printf("Controller::Dispatch[%d] ", len);
+	msg_printf("Controller::Receive[%d] ", len);
 	// 输出整条信息
 	ByteArray(buf, len).Show(true);
 #endif
@@ -100,7 +100,7 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 				continue;
 			}*/
 
-			msg_printf("Controller::DispatchError[%d] ", len);
+			msg_printf("Controller::Error[%d] ", len);
 			// 输出整条信息
 			ByteArray(buf, len).Show(true);
 #endif
