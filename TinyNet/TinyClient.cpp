@@ -56,7 +56,7 @@ void TinyClient::Open()
 		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
 
-	HardCrc	= Crc::Hash16(Array(&Sys.ID, 12));
+	HardCrc	= Crc::Hash16(Array(Sys.ID, 16));
 	if(Sys.Version > 1) Encryption = true;
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
