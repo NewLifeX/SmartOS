@@ -1048,10 +1048,10 @@ void HardSocket::OnClose()
 void HardSocket::Change(const IPEndPoint& remote)
 {
 #if DEBUG
-	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
+	/*debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
-	remote.Show(true);
+	remote.Show(true);*/
 #endif
 
 	// 设置端口目的(远程)IP地址
