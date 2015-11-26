@@ -8,13 +8,13 @@
 class Timer
 {
 protected:
-	bool	_started;	// 可能在中断里关闭自己
 	byte	_index;		// 第几个定时器，从0开始
 
 	void ClockCmd(bool state);
 	void SetHandler(bool set);
 public:
 	TIM_TypeDef* _Timer;
+	bool	Opened;	// 可能在中断里关闭自己
 
 	Timer(TIM_TypeDef* timer);
 	virtual ~Timer();
@@ -22,15 +22,15 @@ public:
 	ushort	Prescaler;	// 预分频。实际值，此时无需减一。
 	uint	Period;		// 周期。实际值，此时无需减一。
 
-	virtual void Start();	// 开始定时器
-	virtual void Stop();	// 停止定时器
+	virtual void Open();	// 开始定时器
+	virtual void Close();	// 停止定时器
 	virtual void Config();
 	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
 	uint GetCounter();
 	void SetCounter(uint cnt);		// 设置计数器值
-	
+
 	void Register(EventHandler handler, void* param = NULL);
 
 private:
@@ -59,8 +59,8 @@ public:
 
 	PWM(byte index);		// index 定时器编号
 
-	virtual void Start();
-	virtual void Stop();
+	virtual void Open();
+	virtual void Close();
 	virtual void Config();
 	void SetPulse(int idx, ushort pulse);
 

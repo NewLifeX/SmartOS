@@ -3,13 +3,13 @@
 
 IR::IR(PWM* pwm, Pin tx, Pin rx)
 {
-	_Pwm	= pwm;
+	/*_Pwm	= pwm;
 	_Tim	= NULL;
 	_Arr	= NULL;
 	_Index	= 0;
 	_Ticks	= 0;
 
-	Opened	= false;
+	Opened	= false;*/
 
 	if(tx != P0) Tx.Set(tx).Open();
 	if(rx != P0) Rx.Set(rx).Open();
@@ -17,7 +17,7 @@ IR::IR(PWM* pwm, Pin tx, Pin rx)
 
 bool IR::Open()
 {
-	if(Opened) return false;
+	if(Opened) return true;
 
 	// 申请一个定时器
 	if(_Tim == NULL) _Tim = Timer::Create();
@@ -44,9 +44,9 @@ bool IR::Open()
 
 bool IR::Close()
 {
-	if(!Opened) return false;
+	if(!Opened) return true;
 
-	if(_Tim != NULL) _Tim->Stop();
+	if(_Tim != NULL) _Tim->Close();
 
 	Opened	= false;
 
@@ -61,19 +61,19 @@ bool IR::Send(const Array& bs)
 	_Arr	= (Array*)&bs;
 	_Index	= 0;
 	_Ticks	= bs[0];
-	_Mode	= true;	// 发送模式，完成时为false
+	_Mode	= true;	// 发送模式
 
-	_Pwm->Start();
-	_Tim->Start();
+	_Pwm->Open();
+	_Tim->Open();
 	// 放到后面来 定时器启动代码执行时间造成的影响明显变小
 	Tx	= false;
 
 	// 等待发送完成
 	TimeWheel tw(1);
-	while(_Mode && !tw.Expired());
+	while(_Tim->Opened && !tw.Expired());
 
-	_Tim->Stop();
-	_Pwm->Stop();
+	_Tim->Close();
+	_Pwm->Close();
 	Tx	= false;
 
 	return true;
@@ -89,10 +89,8 @@ void IR::OnSend()
 
 	if(++_Index >= _Arr->Length())
 	{
-		_Pwm->Stop();
-		_Tim->Stop();
-
-		_Mode	= false;
+		_Pwm->Close();
+		_Tim->Close();
 	}
 	else
 		// 使用下一个元素
@@ -106,13 +104,13 @@ int IR::Receive(Array& bs)
 	bs.SetLength(0);
 	_Arr	= &bs;
 	_Index	= -1;
-	_Mode	= false;	// 接收模式，完成时为true
+	_Mode	= false;	// 接收模式
 
-	_Tim->Start();
+	_Tim->Open();
 
 	// 等待发送完成
 	TimeWheel tw(1);
-	while(!_Mode && !tw.Expired());
+	while(_Tim->Opened && !tw.Expired());
 
 	return bs.Length();
 }
@@ -143,10 +141,6 @@ void IR::OnReceive()
 		_Last	= val;
 
 		// 大于500个跳变沿 表示出错
-		if(_Index > 500)
-		{
-			_Tim ->Stop();
-			_Mode	= true;
-		}
+		if(_Index > 500) _Tim->Close();
 	}
 }

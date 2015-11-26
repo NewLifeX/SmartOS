@@ -26,7 +26,7 @@ void Music::Disposable()
 {
 	if(_timer)
 	{
-		_timer->Stop();
+		_timer->Close();
 		delete(_timer);
 	}
 	if(_phonatePin)delete(_phonatePin);
@@ -38,7 +38,7 @@ Music::~Music()
 {
 	_tuneSet = NULL;
 	_tuneNum = NULL;
-	_timer->Stop();
+	_timer->Close();
 	Sounding = false;
 	_timer = NULL;
 }
@@ -48,8 +48,8 @@ void Music::Sound()
 	if(_timer!= NULL && _phonatePin != NULL && _tuneSet != NULL && _tuneNum != 0)
 	{
 		_timer->SetFrequency(100000);
-		_timer->Register(TimerHander,this);
-		_timer->Start();
+		_timer->Register(TimerHander, this);
+		_timer->Open();
 		Sounding = true;
 	}
 }
@@ -62,7 +62,7 @@ void Music::Sound(const Tune* tune,int num)
 
 void Music::Unsound()
 {
-	_timer->Stop();
+	_timer->Close();
 	Sounding = false;
 }
 

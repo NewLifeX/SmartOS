@@ -21,9 +21,9 @@
 class IR
 {
 private:
-	PWM*	_Pwm;
-	Timer*	_Tim;
-	Array*	_Arr;
+	PWM*	_Pwm	= NULL;
+	Timer*	_Tim	= NULL;
+	Array*	_Arr	= NULL;
 	short	_Index;
 	short	_Ticks;
 	bool	_Last;
@@ -32,7 +32,7 @@ private:
 public:
 	OutputPort	Tx;	// 发数据
 	InputPort	Rx;	// 接收
-	bool		Opened;
+	bool		Opened	= false;
 
 	IR(PWM* pwm, Pin tx, Pin rx);
 
@@ -43,6 +43,9 @@ public:
 	int Receive(Array& bs);
 
 private:
+	/*typedef void (IR::*IRFunc)();
+	IRFunc	_func	= NULL;*/
+
 	void OnSend();
 	void OnReceive();
 };

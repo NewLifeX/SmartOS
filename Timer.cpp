@@ -37,7 +37,7 @@ Timer::Timer(TIM_TypeDef* timer)
 	Period = 1000;*/
 	SetFrequency(10);
 
-	_started	= false;
+	Opened	= false;
 
 	_Handler	= NULL;
 	_Param		= NULL;
@@ -45,7 +45,7 @@ Timer::Timer(TIM_TypeDef* timer)
 
 Timer::~Timer()
 {
-	if(_started) Stop();
+	Close();
 
 	if(_Handler) Register(NULL);
 
@@ -101,9 +101,9 @@ void Timer::Config()
 	//TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
 }
 
-void Timer::Start()
+void Timer::Open()
 {
-	if(_started) return;
+	if(Opened) return;
 
 #if DEBUG
     // 获取当前频率
@@ -114,7 +114,7 @@ void Timer::Start()
 	if(clk < Sys.Clock) clk <<= 1;
 
 	uint fre = clk / Prescaler / Period;
-	debug_printf("Timer%d::Start clk=%d Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
+	debug_printf("Timer%d::Open clk=%d Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
 #endif
 
 	assert_param2(fre > 0, "频率超出允许的范围");
@@ -130,14 +130,14 @@ void Timer::Start()
 	// 打开计数
 	TIM_Cmd(_Timer, ENABLE);
 
-	_started = true;
+	Opened = true;
 }
 
-void Timer::Stop()
+void Timer::Close()
 {
-	if(!_started) return;
+	if(!Opened) return;
 
-	debug_printf("Timer%d::Stop\r\n", _index + 1);
+	debug_printf("Timer%d::Close\r\n", _index + 1);
 
 	// 关闭计数器时钟
 	TIM_Cmd(_Timer, DISABLE);
@@ -145,7 +145,7 @@ void Timer::Stop()
 	TIM_ClearITPendingBit(_Timer, TIM_IT_Update);	// 仅清除中断标志位 关闭不可靠
 	ClockCmd(false);	// 关闭定时器时钟
 
-	_started = false;
+	Opened = false;
 }
 
 void Timer::ClockCmd(bool state)
@@ -221,7 +221,7 @@ void Timer::SetFrequency(uint frequency)
 	Period		= prd;
 
 	// 如果已启动定时器，则重新配置一下，让新设置生效
-	if(_started)
+	if(Opened)
 	{
 		TIM_TimeBaseInitTypeDef tr;
 		TIM_TimeBaseStructInit(&tr);
@@ -357,9 +357,9 @@ void PWM::Config()
 	if(Pulses) SetHandler(true);
 }
 
-void PWM::Start()
+void PWM::Open()
 {
-	Timer::Start();
+	Timer::Open();
 
 #if defined(STM32F0)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
@@ -375,7 +375,7 @@ void PWM::Start()
 #endif
 }
 
-void PWM::Stop()
+void PWM::Close()
 {
 #if defined(STM32F1)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
@@ -386,7 +386,7 @@ void PWM::Stop()
 #else	//defined(STM32F4)
 #endif
 
-	Timer::Stop();
+	Timer::Close();
 }
 
 void PWM::SetPulse(int idx, ushort pulse)
@@ -395,10 +395,10 @@ void PWM::SetPulse(int idx, ushort pulse)
 
 	Pulse[idx] = pulse;
 
-	if(_started)
+	if(Opened)
 		Config();
 	else
-		Start();
+		Open();
 }
 
 void PWM::OnInterrupt()
