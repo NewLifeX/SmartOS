@@ -346,9 +346,11 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				{
 					dv->Store.Copy(ms.ReadBytes(len), len2, offset);
 				}
+				break;
 			}
 			case 0x02:
 			{
+				break;
 			}
 			case 0x03:
 			{
@@ -366,7 +368,9 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 
 					return false;
 				}
+				break;
 			}
+			default:break;
 		}
 	}
 	//todo。告诉客户端有多少待处理指令
