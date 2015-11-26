@@ -176,6 +176,7 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	// 设置分频 尽量不要改 Prescaler * Period 就是 PWM 周期
 	LedPWM.Prescaler	= 0x04;		// 随便改  只要肉眼看不到都没问题
 	LedPWM.Period		= 0xFF;		// 对应灰度调节范围
+	LedPWM.Polarity		= true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
 	LedPWM.Start();
 
 	// 配置 LED 引脚
