@@ -1,242 +1,152 @@
-﻿
-#include "IR.h"
+﻿#include "IR.h"
+#include "Time.h"
 
-IR::IR(PWM * pwm ,Pin Outio,Pin Inio)
+IR::IR(PWM* pwm, Pin tx, Pin rx)
 {
-	_irf = NULL;
-	_Outio= NULL;
+	_Pwm	= pwm;
+	_Tim	= NULL;
+	_Arr	= NULL;
+	_Index	= 0;
+	_Ticks	= 0;
 
-	_stat = Over;
-	_mode = idle;
+	Opened	= false;
 
-	_timer = NULL;
-	_timerTick = 0x00000;
-	_buff = NULL;
-	_length = 0;
-
-	if(pwm)_irf = pwm;
-	if(Outio!=P0) _Outio = new OutputPort(Outio,true);
-	if(Inio != P0) _Inio = new InputPort(Inio);
-	SetIRL();
+	if(tx != P0) Tx.Set(tx).Open();
+	if(rx != P0) Rx.Set(rx).Open();
 }
 
-bool IR::SetMode(IRMode mode)
+bool IR::Open()
 {
-	if(_mode == mode)return true;
-	if(mode != idle)
-	{
-		// 申请一个定时器
-		if(_timer==NULL)
-			_timer = Timer::Create();
-		// 配置定时器的参数
-		if(_timer==NULL)return false;
-		_timer->SetFrequency(20000);  // 50us
-		_timer->Register(_timerHandler,this);
+	if(Opened) return false;
 
-		_mode = mode;
+	// 申请一个定时器
+	if(_Tim == NULL) _Tim = Timer::Create();
+	// 配置定时器的参数
+	if(_Tim == NULL) return false;
 
-		if(mode == receive)	_stat = WaitRec;
-		else 				_stat = WaitSend;
-	}
-	else
-	{
-		if(_timer!=NULL)
-		{
-			_timer->Stop();
-			_timer->Register((EventHandler)NULL,NULL);
-//			delete(_timer);		// 不一定要释放掉
-			_stat=Over;
-			_mode = mode;
+	Tx	= true;
+
+	_Tim->SetFrequency(20000);  // 50us
+	_Tim->Register(
+		[](void* s, void* e){
+			auto ir = (IR*)s;
+			if(ir->_Mode)
+				ir->OnSend();
+			else
+				ir->OnReceive();
 		}
-	}
+		, this);
+
+	Opened	= true;
+
 	return true;
 }
 
-bool IR::Send(byte *sendbuf,int length)
+bool IR::Close()
 {
-	if(!_Outio)return false;
-	if(!_irf)return false;
-	if(length<2)return false;
-	if(*sendbuf != (byte)length)return false;
-	
-	// Tick清零
-	_timerTick=0x00000;
-	
-	// 去掉头字节长度
-	_buff = sendbuf;
-	_length = length;
-	
-	// 模式切换
-	if(_mode != idle)return false;
-	if(!SetMode(send))return false;
+	if(!Opened) return false;
 
-	_nextOut = false;
-	_irf->Start();
-	//挪到后面一点	SetIRH();
-	// 这一句执行时间比较长   影响第一个波形 怎么整
-	_timer->Start();	
+	if(_Tim != NULL) _Tim->Stop();
+
+	Opened	= false;
+
+	return true;
+}
+
+bool IR::Send(const Array& bs)
+{
+	if(bs.Length() < 2) return false;
+	if(!Open()) return false;
+
+	_Arr	= (Array*)&bs;
+	_Index	= 0;
+	_Ticks	= bs[0];
+	_Mode	= true;	// 发送模式，完成时为false
+
+	_Pwm->Start();
+	_Tim->Start();
 	// 放到后面来 定时器启动代码执行时间造成的影响明显变小
-	*_Outio=false;
-	// 更新状态
-	_stat = Sending;
+	Tx	= false;
 
 	// 等待发送完成
-	for(int i=0;i<2;i++)
-	{
-		// 等500ms
-		Sys.Sleep(500);  
-		if(_stat == Over)break;
-	}
-	// 如果还在发送中 再等他200ms
-	if(_stat == Sending)
-		Sys.Sleep(200);  
-	// 还在发送 表示出错
-	if(_stat == Sending)
-	{
-		_stat = SendError;	
-		_timer->Stop();
-	}
-	
-	*_Outio=false;
-	_irf->Stop();
-	// 放开模式
-	if(!SetMode(idle))return false;
-	
+	TimeWheel tw(1);
+	while(_Mode && !tw.Expired());
+
+	_Tim->Stop();
+	_Pwm->Stop();
+	Tx	= false;
+
 	return true;
 }
 
-int IR::Receive(byte *buff)
+void IR::OnSend()
 {
-	if(!_Inio)return -2;
-	if(_mode != idle)return 0;
-	SetMode(receive);
-	_timerTick = 0x0000;
+	// 当前小周期数是否发完
+	if(_Ticks-- > 0) return;
 
-	_buff = buff;
-	_length = 0;
-	_timer->Start();
-	// 等待5s  如果没有信号 判断为超时
-	for(int i=0;i<10;i++)
+	// 倒转
+	Tx	= !Tx;
+
+	if(++_Index >= _Arr->Length())
 	{
-		Sys.Sleep(500);  // 等500ms
-		if(_stat == Over)break;
+		_Pwm->Stop();
+		_Tim->Stop();
+
+		_Mode	= false;
 	}
-	
-	if(_stat == Recing)
-		Sys.Sleep(500);  // 如果还在接受中 再等他500ms
-		
-	if(_stat == Recing)
-		_stat = RecError;	// 还在接收 表示出错
-
-	SetMode(idle);
-
-	if(_stat == RecError) return -2;
-
-	buff[0] = _length;					// 第一个字节放长度
-	if(_length == 0)return -1;
-	if(_length <=5)return -2;			// 数据太短 也表示 接收出错
-	return _length;
+	else
+		// 使用下一个元素
+		_Ticks = (*_Arr)[_Index];
 }
 
-// 静态中断部分
-void  IR::_timerHandler(void* sender, void* param)
+int IR::Receive(Array& bs)
 {
-	IR* ir = (IR*)param;
-	ir->SendReceHandler(sender,NULL);
+	if(!Open()) return false;
+
+	bs.SetLength(0);
+	_Arr	= &bs;
+	_Index	= -1;
+	_Mode	= false;	// 接收模式，完成时为true
+
+	_Tim->Start();
+
+	// 等待发送完成
+	TimeWheel tw(1);
+	while(!_Mode && !tw.Expired());
+
+	return bs.Length();
 }
 
-// 真正的中断函数  红外的主要部分
-const bool ioIdleStat = true;
-
-void IR::SendReceHandler(void* sender, void* param)
+void IR::OnReceive()
 {
-	volatile static bool ioOldStat;
-	
-	switch(_mode)
+	// 获取引脚状态
+	bool val = Rx.Read();
+
+	// 等待接收开始状态
+	if(_Index == -1)
 	{
-		case receive:
-		{
-			// 获取引脚状态
-			bool s = _Inio->Read();
-			
-			// 等待接收开始状态
-			if(_stat == WaitRec)
-			{
-				if(s != ioIdleStat)
-				{
-				// 等待到第一次状态
-					_stat = Recing;
-					_timerTick = 0x0000;
-					ioOldStat = s;
-					// 留空第一个字节
-					_buff++;
-					_length ++;
-				}
-				else
-				{
-					return;
-				}
-			}
-			
-			// 接收
-			_timerTick++;
-			if(s != ioOldStat)
-			{
-				ioOldStat = s;
-				
-				*_buff++ = (byte)_timerTick;
-				
-				_timerTick = 0x0000;
-				_length ++;
-				
-				// 大于500个跳变沿 表示出错
-				if(_length>500)	
-				{
-					_timer ->Stop();
-					_stat = RecError;
-				}
-			}
-			break;
-		}
+		if(val) return;
 
-		case send:
-		{
-			_timerTick++;
-			if(*_buff == _timerTick)
-			{
-				if(_nextOut)	/*SetIRH();*/*_Outio=false;
-				else 			/*SetIRL();*/*_Outio=true;
-
-				_nextOut = !_nextOut;
-
-				_timerTick = 0x0000;
-				_buff ++;
-				_length --;
-				if(_length == 0)
-				{
-					_timerTick=0x0000;
-					_irf->Stop();
-					_timer ->Stop();
-					_stat = Over;
-				}
-			}
-			else 
-				return;
-		}break;
-		
-		default:_mode = idle;	break ;
+		_Index	= 0;
+		_Ticks	= 0;
+		_Last	= val;
 	}
 
-	// 不允许 超过 25.5ms 的东西  不论发送还是接收
-	// 空闲模式直接 关闭定时器
-	if(_timerTick > 1000 || _mode == idle)
+	// 接收
+	_Ticks++;
+	if(val != _Last)
 	{
-		_timerTick=0x0000;
-		_timer ->Stop();
-		if(_stat == Recing)
+		// 产生跳变，记录当前小周期数
+		_Arr->SetItemAt(_Index++, &_Ticks);
+
+		_Ticks	= 0;
+		_Last	= val;
+
+		// 大于500个跳变沿 表示出错
+		if(_Index > 500)
 		{
-			_stat = Over;		// 接收时超时就表示接收结束
+			_Tim ->Stop();
+			_Mode	= true;
 		}
 	}
 }
-
