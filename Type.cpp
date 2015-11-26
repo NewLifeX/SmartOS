@@ -125,6 +125,14 @@ Array& Array::operator=(const Array& arr)
 	return *this;
 }
 
+// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
+Array& Array::operator=(const void* data)
+{
+	if(Length() > 0) Copy(data, Length());
+
+	return *this;
+}
+
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 bool Array::SetLength(int length, bool bak)
 {
@@ -361,7 +369,7 @@ ByteArray::ByteArray(const String& str) : TArray(0)
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
 ByteArray& ByteArray::operator=(const void* data)
 {
-	Set(data, Length());
+	if(Length() > 0) Copy(data, Length());
 
 	return *this;
 }

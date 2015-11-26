@@ -104,8 +104,12 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
+
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr);
+	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
+    Array& operator=(const void* data);
+
 	virtual ~Array();
 
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
