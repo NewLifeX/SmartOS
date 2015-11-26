@@ -19,9 +19,13 @@ bool ShunCom::OnOpen()
 {
 	debug_printf("\r\nShunCom::Open \r\n");
 
+    debug_printf("    Sleep : ");
 	Sleep.Open();
+    debug_printf("    Config: ");
 	Config.Open();
+    debug_printf("    Reset : ");
 	Reset.Open();
+    debug_printf("    Power : ");
 	Power.Open();
 
 	Power	= true;
