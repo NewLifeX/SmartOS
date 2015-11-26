@@ -332,6 +332,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		switch(ms.ReadByte())
 		{
 			// 同步数据
+			// 没有功能也要把数据读完，否则无线循环下去，必然出错
 			case 0x01:
 			{
 				byte offset	= ms.ReadByte();
@@ -350,6 +351,9 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			}
 			case 0x02:
 			{
+				byte offset = ms.ReadByte();
+				byte len	= ms.ReadByte();
+				ms.SetPosition(ms.Position() + len);
 				break;
 			}
 			case 0x03:
