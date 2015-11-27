@@ -1,7 +1,6 @@
 ﻿#include "TinyClient.h"
 #include "Security\Crc.h"
 
-
 #include "JoinMessage.h"
 
 TinyClient* TinyClient::Current	= NULL;
@@ -419,7 +418,7 @@ void TinyClientTask(void* param)
 {
 	assert_ptr(param);
 
-	TinyClient* client = (TinyClient*)param;
+	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
 	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 	if(offset)
@@ -433,6 +432,7 @@ void TinyClientTask(void* param)
 	if(client->Server == 0 || client->Joining) client->Join();
 	if(client->Server != 0) client->Ping();
 }
+
 void TinyClientReset()
 {
 	//上报一条信息，让网关得一修改
@@ -455,7 +455,7 @@ void TinyClient::Join()
 
 	dm.Version	= Sys.Version;
 	dm.Kind		= Type;
-	dm.HardID	= Sys.ID;
+	dm.HardID.Copy(Sys.ID, 16);
 	dm.TranID	= TranID;
 	dm.WriteMessage(msg);
 	dm.Show(true);
@@ -479,14 +479,15 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	// 校验不对
 	if(TranID != dm.TranID)
 	{
-		debug_printf("发现响应序列号 0x%08X 不等于内部序列号 0x%08X \r\n", dm.TranID, TranID);
+		debug_printf("组网响应序列号 0x%04X 不等于内部序列号 0x%04X \r\n", dm.TranID, TranID);
 		return true;
 	}
 
 	Joining		= false;
 
 	Cfg->SoftVer	= dm.Version;
-	if(Cfg->SoftVer < 2) Encryption=false;//小于2的版本加不加密
+	// 小于2的版本加不加密
+	if(dm.Version < 2) Encryption	= false;
 
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
@@ -503,8 +504,12 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Cfg->ServerKey[0] = dm.HardID.Length();
 	dm.HardID.Save(Cfg->ServerKey, ArrayLength(Cfg->ServerKey));
 
+#if DEBUG
 	//debug_printf("组网成功！\r\n");
-	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：,版本:0x%02X", Server, dm.Address, dm.Channel, Cfg->Speed, dm.Version);
+	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：", dm.Server, dm.Address, dm.Channel, Cfg->Speed);
+	Password.Show();
+	debug_printf(", 版本: 0x%02X\r\n", dm.Version);
+#endif
 
 	// 取消Join任务，启动Ping任务
 	ushort time		= Cfg->PingTime;

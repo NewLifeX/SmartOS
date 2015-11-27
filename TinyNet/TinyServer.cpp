@@ -45,7 +45,7 @@ bool TinyServer::Reply(Message& msg)
 
 bool OnServerReceived(Message& msg, void* param)
 {
-	TinyServer* server = (TinyServer*)param;
+	auto server = (TinyServer*)param;
 	assert_ptr(server);
 
 	// 消息转发
@@ -61,7 +61,7 @@ void TinyServer::Start()
 	//LoadConfig();
 	LoadDevices();
 #if DEBUG
-	Sys.AddTask(DeviceShow,& Devices,1000,60000,"节点列表");
+	Sys.AddTask(DeviceShow, &Devices, 1000, 60000,"节点列表");
 #endif
 
 	Control->Open();
@@ -72,7 +72,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 {
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
-	Device* dv = Current;
+	auto dv = Current;
 	if(!dv) dv = FindDevice(id);
 	// 不响应不在设备列表设备的 非Join指令
 	if((!dv) && (msg.Code > 2))return false;
@@ -132,10 +132,13 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	//}
 
 	// 先找到设备
-	Device* dv = FindDevice(msg.Dest);
+	auto dv = FindDevice(msg.Dest);
 	if(!dv) return false;
 
 	bool rs = false;
+	
+	// 先记好来源地址，避免待会被修改
+	byte src	= msg.Src;
 
 	// 缓存内存操作指令
 	switch(msg.Code)
@@ -153,7 +156,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	// 如果有返回，需要设置目标地址，让网关以为该信息来自设备
 	if(rs)
 	{
-		msg.Dest	= msg.Src;
+		msg.Dest	= src;
 		msg.Src		= dv->Address;
 	}
 
@@ -163,15 +166,14 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 // 组网
 bool TinyServer::OnJoin(const TinyMessage& msg)
 {
-	if(msg.Reply)
+	if(msg.Reply) return false;
+
+	if(!Study)
 	{
+		debug_printf("非学习模式禁止加入\r\n");
 		return false;
 	}
-	  if(!Study)
-	  {
-		  debug_printf("非学习模式禁止加入\r\n");
-		  return false;
-	  }
+	
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	if(!id) return false;
@@ -181,20 +183,22 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	JoinMessage dm;
 	dm.ReadMessage(msg);
 	// 根据硬件编码找设备
-	Device* dv = FindDevice(dm.HardID);
+	auto dv = FindDevice(dm.HardID);
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
-		byte addr = Cfg->Address;
+		//byte addr = Cfg->Address;
 		{
-			id = addr;
+			//id = addr;
+			// 从1开始派ID
+			id	= 1;
 			while(FindDevice(++id) != NULL && id < 0xFF);
 			debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 			if(id == 0xFF) return false;
 		}
 		dv = new Device();
 		dv->Address	= id;
-		dv->Logins= dv->Store.Length();
+		dv->Logins	= 0;
 
 		// 节点注册
 		dv->RegTime	= now;
@@ -214,7 +218,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	if(dv->Logins++ == 0) dv->LoginTime = now;
 	dv->LastTime = now;
 
-	debug_printf("\r\nTinyServer::新设备第 %d 次组网 TranID=0x%08X \r\n", dv->Logins, dm.TranID);
+	debug_printf("\r\nTinyServer::设备第 %d 次组网 TranID=0x%04X \r\n", dv->Logins, dm.TranID);
 	dv->Show(true);
 
 	// 生成随机密码。当前时间的MD5
@@ -250,14 +254,12 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 //网关重置节点通信密码
 bool TinyServer::ResetPassword(byte id)
 {
-
 	ulong now = Sys.Ms();
 
 	JoinMessage dm;
 
 	// 根据硬件编码找设备
-	Device* dv = FindDevice(id);
-
+	auto dv = FindDevice(id);
 	if(!dv) return false;
 
 	// 更新设备信息
