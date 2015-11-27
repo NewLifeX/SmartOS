@@ -32,7 +32,7 @@ bool IR::Open()
 	_Tim->SetFrequency(20000);  // 50us
 	_Tim->Register(
 		[](void* s, void* e){
-			auto ir = (IR*)s;
+			auto ir = (IR*)e;
 			if(ir->_Mode)
 				ir->OnSend();
 			else
