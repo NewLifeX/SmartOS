@@ -60,6 +60,9 @@ void TinyServer::Start()
 
 	//LoadConfig();
 	LoadDevices();
+#if DEBUG
+	Sys.AddTask(DeviceShow,& Devices,1000,60000,"节点列表");
+#endif
 
 	Control->Open();
 }
@@ -686,3 +689,19 @@ void TinyServer::ClearConfig()
 		delete Devices[i];
 	Devices.SetLength(0);
 }
+
+#if DEBUG
+// 输出所有设备
+void TinyServer::DeviceShow(void * param)
+{
+	TArray<Device*> &dv = *(TArray<Device*> *) param;
+	byte len = dv.Length();
+	debug_printf("\r\n\r\n 节点列表 \r\n");
+	for(int i = 0; i < len; i++) 
+	{
+		(*dv[i]).Show();
+		debug_printf("\r\n");
+	}
+	debug_printf("\r\n\r\n");
+}
+#endif

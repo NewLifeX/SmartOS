@@ -75,6 +75,11 @@ public:
 
 	// 写入
 	bool OnWrite(TinyMessage& msg, Device& dv);
+
+#if DEBUG
+	// 输出所有设备
+	static void DeviceShow(void * param);
+#endif
 };
 
 #endif

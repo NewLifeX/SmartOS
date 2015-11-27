@@ -95,6 +95,10 @@ void Device::Load(Stream& ms)
 #if DEBUG
 String& Device::ToStr(String& str) const
 {
+	str = str + "Addr=0x" + Address;
+	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
+	str = str + " ID=" + HardID;
+/*	
 	str = str + "Address=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	str = str + " Name=" + Name;
@@ -106,7 +110,7 @@ String& Device::ToStr(String& str) const
 
 	str = str + " DataSize=" + DataSize;
 	str = str + " ConfigSize=" + ConfigSize;
-
+*/
 	return str;
 }
 #endif
