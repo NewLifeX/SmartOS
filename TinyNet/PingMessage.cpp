@@ -27,6 +27,7 @@ void PingMessage::ReadData(Stream& ms, Array& bs)
 	byte offset	= ms.ReadByte();
 	byte len	= ms.ReadByte();
 	//debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
+	debug_printf(" 同步数据（%d, %d）到网关缓存 \r\n", offset, len);
 
 	int remain	= bs.Capacity() - offset;
 	int len2	= len;
