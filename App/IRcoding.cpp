@@ -29,7 +29,7 @@ void IRcoding::SetCfgAddr(uint addr)
 {
 	_OrigAddr = addr;
 	// 获取第一个 block 的描述信息，知道有多少编码在存
-	Array bs(CodingSize);
+	ByteArray bs(CodingSize);
 	GetCoding(0, bs);
 	if(!bs.Length())
 	{
