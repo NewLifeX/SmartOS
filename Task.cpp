@@ -301,7 +301,7 @@ void TaskScheduler::Execute(uint msMax)
 
 	// 如果有最小时间，睡一会吧
 	now = Sys.Ms();	// 当前时间
-	if(min != UInt64_Max && min > now)
+	if(msMax == 0xFFFFFFFF && min != UInt64_Max && min > now)
 	{
 		min -= now;
 		//debug_printf("任务空闲休眠 %d ms \r\n", (uint)(min/1000));
