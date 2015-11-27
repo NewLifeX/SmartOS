@@ -67,7 +67,7 @@ void TinyServer::Start()
 	//LoadConfig();
 	LoadDevices();
 #if DEBUG
-	Sys.AddTask(DeviceShow, this, 1000, 60000, "节点列表");
+	Sys.AddTask(DeviceShow, this, 1000, 30000, "节点列表");
 #endif
 
 	Control->Open();
