@@ -3,6 +3,7 @@
 #include "Security\Crc.h"
 
 #include "JoinMessage.h"
+#include "PingMessage.h"
 
 #include "Config.h"
 
@@ -11,6 +12,11 @@
 /******************************** TinyServer ********************************/
 
 static bool OnServerReceived(Message& msg, void* param);
+
+#if DEBUG
+// 输出所有设备
+static void DeviceShow(void* param);
+#endif
 
 TinyServer::TinyServer(TinyController* control)
 {
@@ -61,7 +67,7 @@ void TinyServer::Start()
 	//LoadConfig();
 	LoadDevices();
 #if DEBUG
-	Sys.AddTask(DeviceShow, &Devices, 1000, 60000,"节点列表");
+	Sys.AddTask(DeviceShow, this, 1000, 60000, "节点列表");
 #endif
 
 	Control->Open();
@@ -76,7 +82,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	if(!dv) dv = FindDevice(id);
 	// 不响应不在设备列表设备的 非Join指令
 	if((!dv) && (msg.Code > 2))return false;
-	
+
 	switch(msg.Code)
 	{
 		case 1:
@@ -136,7 +142,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	if(!dv) return false;
 
 	bool rs = false;
-	
+
 	// 先记好来源地址，避免待会被修改
 	byte src	= msg.Src;
 
@@ -173,7 +179,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		debug_printf("非学习模式禁止加入\r\n");
 		return false;
 	}
-	
+
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	if(!id) return false;
@@ -251,7 +257,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	return true;
 }
 
-//网关重置节点通信密码
+// 网关重置节点通信密码
 bool TinyServer::ResetPassword(byte id)
 {
 	ulong now = Sys.Ms();
@@ -306,10 +312,10 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 	return true;
 }
 
-bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
+bool TinyServer::Disjoin(TinyMessage& msg, uint crc)
 {
 	msg.Code = 0x02;
-	Stream ms = msg.ToStream();
+	auto ms = msg.ToStream();
 	ms.Write(crc);
 	msg.Length = ms.Position();
 
@@ -317,10 +323,11 @@ bool TinyServer::Disjoin(TinyMessage& msg,uint crc)
 
 	return true;
 }
+
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {
-	Device* dv = FindDevice(msg.Src);
+	auto dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL)return false;
 
@@ -330,59 +337,44 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	rs.Dest = msg.Src;
 	rs.Sequence	= msg.Sequence;
 
-	Stream ms	= msg.ToStream();
+	auto ms	= msg.ToStream();
+	PingMessage pm;
+	pm.MaxSize	= Control->Port->MaxSize;
 	// 子操作码
 	while(ms.Remain())
 	{
 		switch(ms.ReadByte())
 		{
-			// 同步数据
-			// 没有功能也要把数据读完，否则无线循环下去，必然出错
 			case 0x01:
 			{
-				byte offset	= ms.ReadByte();
-				byte len	= ms.ReadByte();
-				debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
-
-				int remain	= dv->Store.Capacity() - offset;
-				int len2	= len;
-				if(len2 > remain) len2 = remain;
-				// 保存一份到缓冲区
-				if(len2 > 0)
-				{
-					dv->Store.Copy(ms.ReadBytes(len), len2, offset);
-				}
+				pm.ReadData(ms, dv->Store);
 				break;
 			}
 			case 0x02:
 			{
-				byte offset = ms.ReadByte();
-				byte len	= ms.ReadByte();
-				ms.SetPosition(ms.Position() + len);
+				Array bs(dv->Cfg, sizeof(dv->Cfg[0]));
+				pm.ReadData(ms, bs);
 				break;
 			}
 			case 0x03:
 			{
-				ushort crc  = ms.ReadUInt16();
-				ushort crc1 = Crc::Hash16(dv->HardID);
-				// 下一行仅调试使用
-				//debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
-				if(crc != crc1)
+				ushort crc	= 0;
+				if(!pm.ReadHardCrc(ms, dv, crc))
 				{
-					debug_printf("设备硬件Crc: %04X, 本地Crc：%04X \r\n", crc, crc1);
-					debug_printf("设备硬件ID: ");
-					dv->HardID.Show(true);
-
 					Disjoin(rs, crc);
-
 					return false;
 				}
 				break;
 			}
-			default:break;
+			default:
+				break;
 		}
 	}
-	//todo。告诉客户端有多少待处理指令
+	// 告诉客户端有多少待处理指令
+	
+	// 0x02给客户端同步时间，4字节的秒
+	auto ms2	= rs.ToStream();
+	pm.WriteTime(ms2, Sys.Ms() / 1000);
 
 	Reply(rs);
 
@@ -692,20 +684,20 @@ void TinyServer::ClearConfig()
 	Devices.SetLength(0);
 }
 
-#if DEBUG
 // 输出所有设备
-void TinyServer::DeviceShow(void * param)
+void DeviceShow(void* param)
 {
-	TArray<Device*> &dv = *(TArray<Device*> *) param;
-	
-	byte len = dv.Length();
-	debug_printf("\r\n已有节点 %d 个\r\n",len);
-	for(int i = 0; i < len; i++) 
+	auto svr	= (TinyServer*)param;
+
+	byte len = svr->Devices.Length();
+	debug_printf("\r\n已有节点 %d 个\r\n", len);
+	for(int i = 0; i < len; i++)
 	{
-		(*dv[i]).Show();
-		Sys.Delay(100);
+		auto dv	= svr->Devices[i];
+		dv->Show();
 		debug_printf("\r\n");
+
+		Sys.Sleep(0);
 	}
 	debug_printf("\r\n\r\n");
 }
-#endif

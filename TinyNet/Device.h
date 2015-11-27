@@ -4,6 +4,8 @@
 #include "Sys.h"
 #include "Stream.h"
 
+#include "TinyConfig.h"
+
 /******************************** Device ********************************/
 
 // 设备信息
@@ -31,7 +33,8 @@ public:
 	uint		LoginTime;	// 登录时间。秒
 
 	ByteArray	Store;		// 数据存储区
-	
+	TinyConfig*	Cfg	= NULL;
+
 	Device();
 
 	// 序列化到消息数据流

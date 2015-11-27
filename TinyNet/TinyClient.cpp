@@ -1,7 +1,10 @@
-﻿#include "TinyClient.h"
+﻿#include "Time.h"
+
+#include "TinyClient.h"
 #include "Security\Crc.h"
 
 #include "JoinMessage.h"
+#include "PingMessage.h"
 
 TinyClient* TinyClient::Current	= NULL;
 
@@ -323,56 +326,15 @@ void TinyClient::Report(Message& msg)
 	// 没有服务端时不要上报
 	if(!Server) return;
 
-	Stream ms = msg.ToStream();
+	auto ms = msg.ToStream();
+	PingMessage pm;
+	pm.MaxSize	= Control->Port->MaxSize;
 
-	ReportPing0x01(ms);
-	ReportPing0x03(ms);
-	ReportPing0x02(ms);
+	pm.WriteData(ms, 0x01, Store.Data);
+	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
+	pm.WriteHardCrc(ms, HardCrc);
 
 	msg.Length = ms.Position();
-}
-
-// 0x01子功能，主数据区
-void TinyClient::ReportPing0x01(Stream& ms)
-{
-	TS("TinyClient::ReportPing0x01");
-
-	byte len = Store.Data.Length() - 1;
-	if(ms.Position() + 3 + len > Control->Port->MaxSize) return;
-
-	ms.Write((byte)0x01);	// 子功能码
-	ms.Write((byte)0x01);	// 起始地址
-
-	ms.Write(len);	// 长度
-	ms.Write(Array(Store.Data.GetBuffer() + 1, len));
-}
-
-// 0x02子功能，配置区
-void TinyClient::ReportPing0x02(Stream& ms)
-{
-	TS("TinyClient::ReportPing0x02");
-
-	byte len2	= sizeof(Cfg->Length);
-	byte len	= Cfg->Length - len2;
-	if(len > 0x10) len = 0x10;
-	if(ms.Position() + 1 + len2 + 1 + len > Control->Port->MaxSize) return;
-
-	ms.Write((byte)0x02);	// 子功能码
-	ms.Write((byte)len2);	// 起始地址
-
-	ms.Write(len);	// 长度
-	ms.Write(Array((byte*)Cfg + len2, len));
-}
-
-// 0x03子功能，硬件校验码
-void TinyClient::ReportPing0x03(Stream& ms)
-{
-	TS("TinyClient::ReportPing0x03");
-
-	if(ms.Position() + 3 > Control->Port->MaxSize) return;
-
-	ms.Write((byte)0x03);	// 子功能码
-	ms.Write(HardCrc);		//硬件CRC
 }
 
 bool TinyClient::Report(uint offset, byte dat)
@@ -380,7 +342,7 @@ bool TinyClient::Report(uint offset, byte dat)
 	TinyMessage msg;
 	msg.Code	= 0x05;
 
-	Stream ms = msg.ToStream();
+	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(dat);
 	msg.Length	= ms.Position();
@@ -393,7 +355,7 @@ bool TinyClient::Report(uint offset, const Array& bs)
 	TinyMessage msg;
 	msg.Code	= 0x05;
 
-	Stream ms = msg.ToStream();
+	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(bs);
 	msg.Length	= ms.Position();
@@ -612,7 +574,34 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	// 忽略响应消息
 	if(msg.Reply)
 	{
-		if(msg.Src == Server) LastActive = Sys.Ms();
+		if(msg.Src == Server)
+		{
+			LastActive = Sys.Ms();
+			
+			// 处理消息
+			auto ms	= msg.ToStream();
+			PingMessage pm;
+			pm.MaxSize	= Control->Port->MaxSize;
+			// 子操作码
+			while(ms.Remain())
+			{
+				switch(ms.ReadByte())
+				{
+					case 0x04:
+					{
+						uint seconds = 0;
+						if(pm.ReadTime(ms, seconds))
+						{
+							Time.SetTime(seconds);
+						}
+						break;
+					}
+					default:
+						break;
+				}
+			}
+		}
+
 		return true;
 	}
 
