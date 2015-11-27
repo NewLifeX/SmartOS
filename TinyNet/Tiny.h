@@ -19,7 +19,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 
 TinyClient* CreateTinyClient(ITransport* port);
 
-void CheckUserPress(InputPort* port, bool down, void* param = NULL);
+bool CheckUserPress(InputPort* port, bool down, void* param = NULL);
 void InitButtonPress(Button_GrayLevel* btns, byte count);
 
 void SetPower(ITransport* port);

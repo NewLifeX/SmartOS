@@ -141,25 +141,40 @@ void ClearConfig()
 	Sys.Reset();
 }
 
-void CheckUserPress(InputPort* port, bool down, void* param)
+bool CheckUserPress(InputPort* port, bool down, void* param)
 {
-	if(down) return;
+	if(down || port->PressTime < 1000) return false;
 
 	debug_printf("按下 P%c%d 时间=%d 毫秒 \r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	// 按下5秒，清空设置并重启
 	if(port->PressTime >= 5000)
+	{
 		ClearConfig();
+
+		return true;
+	}
 	// 按下3秒，重启
 	else if(port->PressTime >= 3000)
+	{
 		Sys.Reset();
+
+		return true;
+	}
+
+	return false;
+}
+
+void CheckUserPress2(InputPort* port, bool down, void* param)
+{
+	CheckUserPress(port, down, param);
 }
 
 void InitButtonPress(Button_GrayLevel* btns, byte count)
 {
 	for(int i=0; i<count; i++)
 	{
-		btns[i].OnPress	= CheckUserPress;
+		btns[i].OnPress	= CheckUserPress2;
 	}
 }
 
