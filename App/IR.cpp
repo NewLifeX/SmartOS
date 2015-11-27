@@ -87,7 +87,7 @@ bool IR::Send(const Array& bs)
 	Tx	= false;
 	_Tim->Close();
 	_Pwm->Close();
-	
+
 	_Arr	= NULL;
 
 	return true;
@@ -112,7 +112,7 @@ void IR::OnSend()
 		_Ticks = (*_Arr)[_Index];
 }
 
-int IR::Receive(Array& bs)
+int IR::Receive(Array& bs, int sTimeout)
 {
 	if(!Open()) return false;
 
@@ -124,10 +124,13 @@ int IR::Receive(Array& bs)
 	_Mode	= false;	// 接收模式
 	_Last	= Rx.Read();
 
+	// 超时个数，每微秒两个周期
+	_Timeout	= sTimeout * 1000 * 2;
+
 	_Tim->Open();
 
 	// 等待发送完成
-	TimeWheel tw(1);
+	TimeWheel tw(sTimeout);
 	while(_Tim->Opened && !tw.Expired());
 
 	return bs.Length();
@@ -135,6 +138,12 @@ int IR::Receive(Array& bs)
 
 void IR::OnReceive()
 {
+	if(_Timeout-- == 0)
+	{
+		_Tim->Close();
+		return;
+	}
+
 	// 获取引脚状态
 	bool val = Rx.Read();
 

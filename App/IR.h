@@ -28,11 +28,12 @@ private:
 	short	_Ticks;
 	bool	_Last;
 	bool	_Mode;
+	short	_Timeout;	// 接收超时个数
 
 public:
 	OutputPort	Tx;	// 发数据
 	InputPort	Rx;	// 接收
-	bool		Opened	= false;
+	bool	Opened	= false;
 
 	IR(PWM* pwm, Pin tx, Pin rx);
 
@@ -40,7 +41,7 @@ public:
 	bool Close();
 
 	bool Send(const Array& bs);
-	int Receive(Array& bs);
+	int Receive(Array& bs, int sTimeout = 10);
 
 private:
 	/*typedef void (IR::*IRFunc)();
