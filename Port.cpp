@@ -283,7 +283,7 @@ OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port(
 	OpenDrain	= openDrain;
 	Speed		= speed;
 	Invert		= invert;
-	
+
 	if(pin != P0)
 	{
 		Set(pin);
@@ -302,6 +302,8 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 
 void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
+	TS("OutputPort::OnOpen");
+
 #ifndef STM32F4
 	assert_param(Speed == 2 || Speed == 10 || Speed == 50);
 #else
@@ -720,6 +722,8 @@ InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 
 void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
+	TS("InputPort::OnOpen");
+
 	// 如果不是硬件事件，则默认使用20ms抖动
 	if(!HardEvent) ShakeTime = 20;
 #if DEBUG
