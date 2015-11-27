@@ -697,11 +697,13 @@ void TinyServer::ClearConfig()
 void TinyServer::DeviceShow(void * param)
 {
 	TArray<Device*> &dv = *(TArray<Device*> *) param;
+	
 	byte len = dv.Length();
-	debug_printf("\r\n\r\n 节点列表 \r\n");
+	debug_printf("\r\n已有节点 %d 个\r\n",len);
 	for(int i = 0; i < len; i++) 
 	{
 		(*dv[i]).Show();
+		Sys.Delay(100);
 		debug_printf("\r\n");
 	}
 	debug_printf("\r\n\r\n");
