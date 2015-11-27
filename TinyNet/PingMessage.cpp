@@ -43,7 +43,9 @@ void PingMessage::WriteData(Stream& ms, byte code, const Array& bs)
 	TS("PingMessage::WriteData");
 
 	byte len = bs.Length() - 1;
-	if(ms.Position() + 3 + len > MaxSize) return;
+	//if(ms.Position() + 3 + len > MaxSize) return;
+	byte remain	= MaxSize - ms.Position() - 3;
+	if(len > remain) len = remain;
 
 	ms.Write(code);	// 子功能码
 	ms.Write((byte)0x01);	// 起始地址
