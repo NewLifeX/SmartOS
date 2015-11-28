@@ -229,7 +229,10 @@ bool TokenClient::OnHello(TokenMessage& msg)
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
-		ext2.Name.Copy(Sys.ID, 16);
+		//ext2.Name.Copy(Sys.ID, 16);
+		// 使用系统ID作为Key
+		ext2.Key.Copy(Sys.ID, 16);
+		ext2.Ciphers[0]	= 0xFF;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
 		ext2.LocalTime = Sys.Ms() * 1000;
