@@ -573,17 +573,26 @@ int TinyServer::LoadDevices()
 	int i = 0;
 	for(; i<count; i++)
 	{
+		debug_printf("\t加载设备:");
 		byte id = ms.Peek();
 		Device* dv = FindDevice(id);
 		if(!dv) dv = new Device();
 		dv->Read(ms);
+		dv->Show();
 
-		//Devices.Add(dv);
 		int idx = Devices.FindIndex(NULL);
-		if(idx >= 0) Devices[idx] = dv;
+		if(idx == -1)
+		{
+			Devices.Push(dv);
+			debug_printf("/t Push");
+		}
+		debug_printf("\r\n");
 	}
 
 	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", addr, i);
+	
+	byte len = Devices.Length();
+	debug_printf("Devices内已有节点 %d 个\r\n", len);
 
 	return i;
 }
