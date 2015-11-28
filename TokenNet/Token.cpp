@@ -237,16 +237,21 @@ void StartGateway(void* param)
 		DNS dns(&udp);
 		udp.Open();
 
-		//IPAddress ip =IPAddress(192, 168, 0, 6);
-		IPAddress ip = dns.Query(tk->Server, 2000);
-		//dns.Query(tk->Server, 2000);
-		ip.Show(true);
-
-		if(ip != IPAddress::Any())
+		for(int i=0; i<10; i++)
 		{
-			tk->ServerIP = ip.Value;
+			//IPAddress ip =IPAddress(192, 168, 0, 6);
+			auto ip = dns.Query(tk->Server, 2000);
+			//dns.Query(tk->Server, 2000);
+			ip.Show(true);
 
-			if(socket) socket->Remote.Address = ip;
+			if(ip != IPAddress::Any())
+			{
+				tk->ServerIP = ip.Value;
+
+				if(socket) socket->Remote.Address = ip;
+
+				break;
+			}
 		}
 
 		tk->Save();
