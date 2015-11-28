@@ -371,12 +371,23 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;
+	if(cost > 1000)Time.SetTime(start / 1000);
+	
 	if(Delay)
 		Delay = (Delay + cost) / 2;
 	else
 		Delay = cost;
-
+	
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
-
+	debug_printf("start: ");
+	DateTime dt(start / 1000);
+	dt.Show();
+	debug_printf("\r\n");
+	
+	debug_printf("TimeNow: ");
+	DateTime dt2(Sys.Ms() / 1000);
+	dt2.Show();
+	debug_printf("\r\n");
+	
 	return true;
 }
