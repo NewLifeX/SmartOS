@@ -237,7 +237,8 @@ void StartGateway(void* param)
 		DNS dns(&udp);
 		udp.Open();
 
-		IPAddress ip = dns.Query(tk->Server, 2000);
+		IPAddress ip =IPAddress(192, 168, 0, 6);
+		//dns.Query(tk->Server, 2000);
 		ip.Show(true);
 
 		if(ip != IPAddress::Any())

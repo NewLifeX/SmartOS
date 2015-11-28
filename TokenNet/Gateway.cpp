@@ -368,7 +368,13 @@ bool Gateway::OnGetDeviceInfo(const Message& msg)
 	byte id = 1;
 	if(msg.Length > 0) id = msg.Data[0];
 	debug_printf("获取节点信息 ID=0x%02X\r\n", id);
-
+	
+	if(id==0xff)
+	{
+	  debug_printf("获取所有节点信息\r\n");	 
+	  
+	  return true;
+	}
 	// 找到对应该ID的设备
 	Device* dv = Server->FindDevice(id);
 
@@ -444,6 +450,18 @@ void Gateway::SetMode(bool study)
 
 	Client->Reply(msg);
 }
+
+// 学习模式 0x20
+void Gateway::Clear()
+{
+	TS("Gateway::Clear()");	
+	TokenMessage msg;
+	msg.Code	= 0x35;
+	msg.Length	= 1;
+	msg.Data[0]	= 0;
+	Client->Reply(msg);
+}
+
 
 bool Gateway::OnMode(const Message& msg)
 {

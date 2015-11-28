@@ -48,6 +48,7 @@ public:
 	// 学习模式 0x20
 	bool Study;
 	void SetMode(bool student);
+	void Clear();
 	bool OnMode(const Message& msg);
 
 	// 节点注册入网 0x22
