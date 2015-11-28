@@ -11,7 +11,7 @@
 
 /******************************** TinyServer ********************************/
 
-static bool OnServerReceived(Message& msg, void* param);
+static bool OnServerReceived(void* sender, Message& msg, void* param);
 
 #if DEBUG
 // 输出所有设备
@@ -49,7 +49,7 @@ bool TinyServer::Reply(Message& msg)
 	return Control->Reply(msg);
 }
 
-bool OnServerReceived(Message& msg, void* param)
+bool OnServerReceived(void* sender, Message& msg, void* param)
 {
 	auto server = (TinyServer*)param;
 	assert_ptr(server);
@@ -116,7 +116,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	Current = dv;
 
 	// 消息转发
-	if(Received) return Received(msg, Param);
+	if(Received) return Received(this, msg, Param);
 
 	Current = NULL;
 

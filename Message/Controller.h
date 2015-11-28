@@ -7,7 +7,7 @@
 #include "Message.h"
 
 // 处理消息，返回是否成功
-typedef bool (*MessageHandler)(Message& msg, void* param);
+typedef bool (*MessageHandler)(void* sender, Message& msg, void* param);
 
 // 消息控制器。负责发送消息、接收消息、分发消息
 class Controller

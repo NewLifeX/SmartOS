@@ -28,7 +28,7 @@ public:
 	bool IsOldOrder; 	//是否旧指令
 
 	TokenConfig* TokenConfig;	//网络配置
-	TokenController* Control;
+	Controller* Control;
 
 	TokenClient();
 
@@ -36,9 +36,9 @@ public:
 	void Close();
 
 	// 发送消息
-	bool Send(TokenMessage& msg);
-	bool Reply(TokenMessage& msg);
-	bool OnReceive(TokenMessage& msg);
+	bool Send(TokenMessage& msg, Controller* ctrl = NULL);
+	bool Reply(TokenMessage& msg, Controller* ctrl = NULL);
+	bool OnReceive(TokenMessage& msg, Controller* ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
@@ -46,7 +46,7 @@ public:
 
 // 本地网络支持
 public:
-	TokenController* Local;			// 本地网络控制器
+	Controller* Local;			// 本地网络控制器
 	TArray<TokenSession*> Sessions;	// 会话集合
 
 // 常用系统级消息
@@ -54,17 +54,17 @@ public:
 	// 握手广播
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
-	bool OnHello(TokenMessage& msg);
+	bool OnHello(TokenMessage& msg, Controller* ctrl);
 
 	// 登录
 	void Login();
-	bool OnLogin(TokenMessage& msg);
+	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 	//设置网络配置
 	bool SetTokenConfig(TokenMessage& msg);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
-	bool OnPing(TokenMessage& msg);
+	bool OnPing(TokenMessage& msg, Controller* ctrl);
 };
 
 // 令牌会话

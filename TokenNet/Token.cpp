@@ -68,7 +68,7 @@ ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, 
 ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
 {
 	auto udp	= new UdpClient((W5500*)host);
-	udp->Local.Port	= tk->Port;
+	//udp->Local.Port	= tk->Port;
 	udp->Remote.Port	= tk->ServerPort;
 	udp->Remote.Address	= IPAddress(tk->ServerIP);
 
@@ -78,7 +78,7 @@ ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
 ISocket* CreateW5500TCP(ISocketHost* host, TokenConfig* tk)
 {
 	auto tcp	= new TcpClient((W5500*)host);
-	tcp->Local.Port	= tk->Port;
+	//tcp->Local.Port	= tk->Port;
 	tcp->Remote.Port	= tk->ServerPort;
 	tcp->Remote.Address	= IPAddress(tk->ServerIP);
 
@@ -101,18 +101,20 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 	auto client	= new TokenClient();
 	client->Control	= token;
-	client->Local	= token;
+	//client->Local	= token;
 
 	// 如果是TCP，需要再建立一个本地UDP
-	if(tk->Protocol == 1)
+	//if(tk->Protocol == 1)
 	{
 		TokenConfig tc;
-		tc.Port			= tk->Port;
+		//tc.Port			= tk->Port;
 		tc.ServerIP		= IPAddress::Broadcast().Value;
 		tc.ServerPort	= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
 
 		socket	= CreateW5500UDP(host, &tc);
+		socket->Local.Port	= tk->Port;
 		token	= new TokenController();
+		token->Port = dynamic_cast<ITransport*>(socket);
 		client->Local	= token;
 	}
 

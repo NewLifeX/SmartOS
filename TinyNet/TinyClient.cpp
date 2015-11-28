@@ -8,7 +8,7 @@
 
 TinyClient* TinyClient::Current	= NULL;
 
-static bool OnClientReceived(Message& msg, void* param);
+static bool OnClientReceived(void* sender, Message& msg, void* param);
 
 static void TinyClientTask(void* param);
 static void TinyClientReset();
@@ -109,9 +109,9 @@ bool TinyClient::Reply(TinyMessage& msg)
 	return Control->Reply(msg);
 }
 
-bool OnClientReceived(Message& msg, void* param)
+bool OnClientReceived(void* sender, Message& msg, void* param)
 {
-	TinyClient* client = (TinyClient*)param;
+	auto client = (TinyClient*)param;
 	assert_ptr(client);
 
 	client->OnReceive((TinyMessage&)msg);
@@ -121,7 +121,6 @@ bool OnClientReceived(Message& msg, void* param)
 
 bool TinyClient::OnReceive(TinyMessage& msg)
 {
-
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
 	//debug_printf("源地址: 0x%08X 网关地址:0x%08X \r\n",Server, msg.Src);
@@ -153,7 +152,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	}
 
 	// 消息转发
-	if(Received) return Received(msg, Param);
+	if(Received) return Received(this, msg, Param);
 
 	return true;
 }

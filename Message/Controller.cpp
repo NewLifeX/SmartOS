@@ -150,7 +150,7 @@ bool Controller::OnReceive(Message& msg)
 	// 外部公共消息事件
 	if(Received)
 	{
-		if(!Received(msg, Param)) return true;
+		if(!Received(this, msg, Param)) return true;
 	}
 
 	return true;

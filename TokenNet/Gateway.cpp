@@ -3,8 +3,8 @@
 
 #include "Security\MD5.h"
 
-bool OnLocalReceived(Message& msg, void* param);
-bool OnRemoteReceived(Message& msg, void* param);
+bool OnLocalReceived(void* sender, Message& msg, void* param);
+bool OnRemoteReceived(void* sender, Message& msg, void* param);
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
@@ -95,18 +95,18 @@ void Gateway::Stop()
 }
 
 // 本地网收到设备端消息
-bool OnLocalReceived(Message& msg, void* param)
+bool OnLocalReceived(void* sender, Message& msg, void* param)
 {
-	Gateway* server = (Gateway*)param;
+	auto server = (Gateway*)param;
 	assert_ptr(server);
 
 	return server->OnLocal((TinyMessage&)msg);
 }
 
 // 远程网收到服务端消息
-bool OnRemoteReceived(Message& msg, void* param)
+bool OnRemoteReceived(void* sender, Message& msg, void* param)
 {
-	Gateway* server = (Gateway*)param;
+	auto server = (Gateway*)param;
 	assert_ptr(server);
 
 	return server->OnRemote((TokenMessage&)msg);

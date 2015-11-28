@@ -7,7 +7,7 @@
 #include "HelloMessage.h"
 #include "LoginMessage.h"
 
-static bool OnTokenClientReceived(Message& msg, void* param);
+static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
 
@@ -67,49 +67,53 @@ void TokenClient::Close()
 	Sys.RemoveTask(_task);
 }
 
-bool TokenClient::Send(TokenMessage& msg)
+bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 {
-	assert_param2(Control, "TokenClient::Send");
+	if(!ctrl) ctrl	= Control;
+	assert_param2(ctrl, "TokenClient::Send");
 
-	return Control->Send(msg);
+	return ctrl->Send(msg);
 }
 
-bool TokenClient::Reply(TokenMessage& msg)
+bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 {
-	assert_param2(Control, "TokenClient::Reply");
+	if(!ctrl) ctrl	= Control;
+	assert_param2(ctrl, "TokenClient::Reply");
 
-	return Control->Reply(msg);
+	return ctrl->Reply(msg);
 }
 
-bool TokenClient::OnReceive(TokenMessage& msg)
+bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 {
 	LastActive = Sys.Ms();
 
 	switch(msg.Code)
 	{
 		case 0x01:
-			OnHello(msg);
+			OnHello(msg, ctrl);
 			break;
 		case 0x02:
-			OnLogin(msg);
+			OnLogin(msg, ctrl);
 			break;
 		case 0x03:
-			OnPing(msg);
+			OnPing(msg, ctrl);
 			break;
 	}
 
 	// 消息转发
-	if(Received) Received(msg, Param);
+	if(Received) Received(ctrl, msg, Param);
 
 	return true;
 }
 
-bool OnTokenClientReceived(Message& msg, void* param)
+bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 {
-	TokenClient* client = (TokenClient*)param;
+	auto ctrl = (Controller*)sender;
+	assert_ptr(ctrl);
+	auto client = (TokenClient*)param;
 	assert_ptr(client);
 
-	return client->OnReceive((TokenMessage&)msg);
+	return client->OnReceive((TokenMessage&)msg, ctrl);
 }
 
 // 常用系统级消息
@@ -174,16 +178,16 @@ void TokenClient::SayHello(bool broadcast, int port)
 }
 
 // 握手响应
-bool TokenClient::OnHello(TokenMessage& msg)
+bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 {
 	// 如果收到响应，并且来自来源服务器
-	if(msg.Reply /*&& (Udp == NULL || Udp->CurRemote == Udp->Remote || Udp->Remote.Address.IsBroadcast())*/)
+	if(msg.Reply && ctrl == Control)
 	{
 		if(msg.Error)
 		{
 			if(SetTokenConfig(msg))
 				return false;
-			
+
 			Stream ms = msg.ToStream();
 			byte err  = ms.ReadByte();
 			if(err==0xff)
@@ -212,7 +216,9 @@ bool TokenClient::OnHello(TokenMessage& msg)
 			// 通讯密码
 			if(ext.Key.Length() > 0)
 			{
-				Control->Key = ext.Key;
+				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
+				if(ctrl2) ctrl2->Key = ext.Key;
+
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
 				Status = 1;
@@ -251,6 +257,7 @@ bool TokenClient::OnHello(TokenMessage& msg)
 
 	return true;
 }
+
 bool TokenClient::SetTokenConfig(TokenMessage& msg)
 {
     // 解析数据
@@ -284,6 +291,7 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 
 
 }
+
 // 登录
 void TokenClient::Login()
 {
@@ -297,7 +305,7 @@ void TokenClient::Login()
 	Send(msg);
 }
 
-bool TokenClient::OnLogin(TokenMessage& msg)
+bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
 	if(!msg.Reply) return false;
 
@@ -331,10 +339,12 @@ bool TokenClient::OnLogin(TokenMessage& msg)
 		// 这里可能有通信密码
 		if(ms.Remain() > 0)
 		{
-			ByteArray bs = ms.ReadArray();
+			auto bs = ms.ReadArray();
 			if(bs.Length() > 0)
 			{
-				Control->Key = bs;
+				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
+				if(ctrl2) ctrl2->Key = bs;
+
 				debug_printf("通信密码：");
 				bs.Show();
 			}
@@ -368,7 +378,7 @@ void TokenClient::Ping()
 	Send(msg);
 }
 
-bool TokenClient::OnPing(TokenMessage& msg)
+bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 {
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
@@ -380,19 +390,19 @@ bool TokenClient::OnPing(TokenMessage& msg)
 	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(cost > 1000)Time.SetTime(start / 1000);
-	
+
 	if(Delay)
 		Delay = (Delay + cost) / 2;
 	else
 		Delay = cost;
-	
+
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 #if DEBUG
 	debug_printf("start: ");
 	DateTime dt(start / 1000);
 	dt.Show();
 	debug_printf("\r\n");
-	
+
 	debug_printf("TimeNow: ");
 	DateTime dt2(Sys.Ms() / 1000);
 	dt2.Show();
