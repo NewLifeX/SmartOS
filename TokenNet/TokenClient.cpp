@@ -397,16 +397,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 		Delay = cost;
 
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
-#if DEBUG
-	debug_printf("start: ");
-	DateTime dt(start / 1000);
-	dt.Show();
-	debug_printf("\r\n");
 
-	debug_printf("TimeNow: ");
-	DateTime dt2(Sys.Ms() / 1000);
-	dt2.Show();
-	debug_printf("\r\n");
-#endif
 	return true;
 }

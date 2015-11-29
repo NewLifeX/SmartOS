@@ -96,6 +96,7 @@ public:
 	uint StackTop();	// 栈顶，后面是初始化不清零区域
 
 	ulong	Ms();		// 系统启动后的毫秒数
+	uint	Seconds();	// 系统绝对当前时间，秒
 
     void Sleep(uint ms); // 毫秒级延迟
     void Delay(uint us); // 微秒级延迟

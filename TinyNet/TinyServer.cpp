@@ -374,7 +374,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	
 	// 0x02给客户端同步时间，4字节的秒
 	auto ms2	= rs.ToStream();
-	pm.WriteTime(ms2, Sys.Ms() / 1000);
+	pm.WriteTime(ms2, Sys.Seconds());
 
 	Reply(rs);
 
