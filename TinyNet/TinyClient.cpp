@@ -331,8 +331,8 @@ void TinyClient::Report(Message& msg)
 	pm.MaxSize	= ms.Remain();
 
 	pm.WriteData(ms, 0x01, Store.Data);
-	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
 	pm.WriteHardCrc(ms, HardCrc);
+	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
 
 	msg.Length = ms.Position();
 }
