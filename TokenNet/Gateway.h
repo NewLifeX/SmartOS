@@ -9,6 +9,8 @@
 
 #include "TinyNet\TinyServer.h"
 
+#include "DeviceMessage.h"
+
 // 网关服务器
 class Gateway
 {
@@ -36,14 +38,7 @@ public:
 	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
 
-	// 设备列表 0x21
-	bool OnGetDeviceList(const Message& msg);
-	// 设备信息 0x25
-	bool OnGetDeviceInfo(const Message& msg);
-
 	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
-	// 发送设备信息
-	bool SendDeviceInfo(const Device* dv);
 
 	// 学习模式 0x20
 	bool Study;
@@ -51,17 +46,11 @@ public:
 	void Clear();
 	bool OnMode(const Message& msg);
 
-	// 节点注册入网 0x22
-	void DeviceRegister(byte id);
-
-	// 节点上线 0x23
-	void DeviceOnline(byte id);
-
-	// 节点离线 0x24
-	void DeviceOffline(byte id);
-
-	// 节点删除 0x26
-	void OnDeviceDelete(const Message& msg);
+	// 节点消息处理 0x21
+	void DeviceRequest(DeviceAtions act, const Device* dv);
+	bool DeviceProcess(const Message& msg);
+	// 发送设备信息
+	bool SendDevices(DeviceAtions act, const Device* dv);
 
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
