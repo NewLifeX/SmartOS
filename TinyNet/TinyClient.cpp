@@ -322,12 +322,13 @@ bool TinyClient::WriteCfg(uint offset,	Stream ms)
 
 void TinyClient::Report(Message& msg)
 {
+	TS("TinyMessage::Report");
 	// 没有服务端时不要上报
 	if(!Server) return;
 
 	auto ms = msg.ToStream();
 	PingMessage pm;
-	pm.MaxSize	= Control->Port->MaxSize;
+	pm.MaxSize	= ms.Remain();
 
 	pm.WriteData(ms, 0x01, Store.Data);
 	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
