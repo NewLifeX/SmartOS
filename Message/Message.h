@@ -11,7 +11,7 @@ public:
 	byte	Code;		// 消息代码
 	byte	Reply:1;	// 是否响应指令
 	byte	Error:1;	// 是否错误
-	uint	Length;		// 数据长度
+	ushort	Length;		// 数据长度
 	byte*	Data;		// 数据。指向子类内部声明的缓冲区
 
 	void*	State;		// 其它状态数据

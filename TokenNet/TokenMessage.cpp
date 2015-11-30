@@ -30,25 +30,20 @@ bool TokenMessage::Read(Stream& ms)
 	Code	= temp & 0x3f;
 	Reply	= temp >> 7;
 	Error	= (temp >> 6) & 0x01;
-	Length	= ms.ReadByte();
+	//Length	= ms.ReadByte();
+	ushort len	= ms.ReadEncodeInt();
+	Length	= len;
 
-	// 占位符拷贝到实际数据
-	/*Code	= _Code;
-	Length	= _Length;
-	Reply	= _Reply;
-	Error	= _Error;*/
+	if(ms.Remain() < len) return false;
 
-	if(ms.Remain() < Length) return false;
-
-	//assert_param2(Data != _Data || Length <= ArrayLength(_Data), "令牌消息太大，缓冲区无法放下");
 	// 避免错误指令超长，导致溢出
-	if(Data == _Data && Length > ArrayLength(_Data))
+	if(Data == _Data && len > ArrayLength(_Data))
 	{
-		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", Length, ArrayLength(_Data));
+		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", len, ArrayLength(_Data));
 		//assert_param(false);
 		return false;
 	}
-	if(Length > 0) ms.Read(Data, 0, Length);
+	if(len > 0) ms.Read(Data, 0, len);
 
 	return true;
 }
@@ -58,17 +53,6 @@ void TokenMessage::Write(Stream& ms) const
 {
 	assert_ptr(this);
 
-	// 实际数据拷贝到占位符
-	/*TokenMessage* p = (TokenMessage*)this;
-	p->_Code	= Code;
-	p->_Reply	= Reply;
-	p->_Error	= Error;
-	p->_Length	= Length;
-
-	byte tmp = _Code | (_Reply << 7) | (_Error << 6);
-	ms.Write(tmp);
-	ms.Write(_Length);*/
-
 	byte tmp = Code | (Reply << 7) | (Error << 6);
 	ms.Write(tmp);
 
@@ -76,8 +60,9 @@ void TokenMessage::Write(Stream& ms) const
 		ms.Write((byte)0);
 	else
 	{
-		ms.WriteEncodeInt(Length);
-		if(Length > 0) ms.Write(Data, 0, Length);
+		ushort len	= Length;
+		ms.WriteEncodeInt(len);
+		if(len > 0) ms.Write(Data, 0, len);
 	}
 }
 
@@ -130,13 +115,14 @@ void TokenMessage::Show() const
 		debug_printf(" _Code=0x%02X", Code);
 	}
 
-	if(Length > 0)
+	ushort len	= Length;
+	if(len > 0)
 	{
 		assert_ptr(Data);
-		debug_printf(" Data[%d]=", Length);
+		debug_printf(" Data[%d]=", len);
 		// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
-		if(Length > 32) debug_printf("\r\n");
-		ByteArray(Data, Length).Show();
+		if(len > 32) debug_printf("\r\n");
+		ByteArray(Data, len).Show();
 	}
 	debug_printf("\r\n");
 #endif
@@ -233,8 +219,8 @@ bool TokenController::Valid(const Message& msg)
 	// 合法来源验证，暂时验证云平台，其它连接将来验证
 	if(Server)
 	{
-		IPEndPoint* svr	= (IPEndPoint*)Server;
-		IPEndPoint* rmt	= (IPEndPoint*)msg.State;
+		auto svr	= (IPEndPoint*)Server;
+		auto rmt	= (IPEndPoint*)msg.State;
 
 		if(!rmt || *svr != *rmt)
 		{

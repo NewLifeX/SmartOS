@@ -58,16 +58,17 @@ bool TinyMessage::Read(Stream& ms)
 	if(Dest == Src) return false;
 
 	// 校验剩余长度
-	if(ms.Remain() < Length + 2) return false;
+	ushort len	= Length;
+	if(ms.Remain() < len + 2) return false;
 
 	// 避免错误指令超长，导致溢出
-	if(Data == _Data && Length > ArrayLength(_Data))
+	if(Data == _Data && len > ArrayLength(_Data))
 	{
-		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", Length, ArrayLength(_Data));
+		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", len, ArrayLength(_Data));
 		//assert_param(false);
 		return false;
 	}
-	if(Length > 0) ms.Read(Data, 0, Length);
+	if(len > 0) ms.Read(Data, 0, len);
 
 	// 读取真正的校验码
 	Checksum = ms.ReadUInt16();
@@ -94,25 +95,26 @@ void TinyMessage::Write(Stream& ms) const
 
 	TS("TinyMessage::Write");
 
+	ushort len	= Length;
 	// 实际数据拷贝到占位符
-	TinyMessage* p = (TinyMessage*)this;
+	auto p = (TinyMessage*)this;
 	p->_Code	= Code;
-	p->_Length	= Length;
+	p->_Length	= len;
 	p->_Reply	= Reply;
 	p->_Error	= Error;
 
-	byte* buf = ms.Current();
+	auto buf = ms.Current();
 	// 不要写入验证码
-	ms.Write((byte*)&Dest, 0, HeaderSize);
-	if(Length > 0) ms.Write(Data, 0, Length);
+	ms.Write(&Dest, 0, HeaderSize);
+	if(len > 0) ms.Write(Data, 0, len);
 
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs 	= buf[3];
-	TFlags* f = (TFlags*)&buf[3];
+	auto f = (TFlags*)&buf[3];
 	f->TTL		= 0;
 	f->Retry	= 0;
 
-	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + Length));
+	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + len));
 
 	// 还原数据
 	buf[3] = fs;
@@ -165,11 +167,12 @@ void TinyMessage::Show() const
 #if MSG_DEBUG
 	assert_ptr(this);
 	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Retry);
-	if(Length > 0)
+	ushort len	= Length;
+	if(len > 0)
 	{
 		assert_ptr(Data);
-		msg_printf(" Data[%d]=", Length);
-		ByteArray(Data, Length).Show();
+		msg_printf(" Data[%d]=", len);
+		ByteArray(Data, len).Show();
 	}
 	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
 	msg_printf("\r\n");
@@ -660,10 +663,10 @@ void TinyController::ShowStat()
 
 void MessageNode::SetMessage(TinyMessage& msg)
 {
-	Sequence = msg.Sequence;
-	Period = 0;
-	Times = 0;
-	LastSend = 0;
+	Sequence	= msg.Sequence;
+	Period		= 0;
+	Times		= 0;
+	LastSend	= 0;
 
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(Data, ArrayLength(Data));
