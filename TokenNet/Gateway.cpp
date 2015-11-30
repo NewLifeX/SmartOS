@@ -97,9 +97,11 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	if(dv)
 	{
 		// 短时间内重复活动的 上报注册和上线
-		auto now = Sys.Seconds() - 3;
-		if(dv->RegTime > now) DeviceRequest(DeviceAtions::Register, dv);
-		if(dv->LoginTime > now) DeviceRequest(DeviceAtions::Online, dv);
+		auto now = Sys.Seconds();
+		if(dv->RegTime > now - 3) DeviceRequest(DeviceAtions::Register, dv);
+		if(dv->LoginTime > now - 3) DeviceRequest(DeviceAtions::Online, dv);
+		dv->LastTime = now;
+		dv->Logined = true;
 	}
 
 	// 消息转发
