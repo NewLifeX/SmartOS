@@ -159,10 +159,10 @@ bool Stream::Write(const void* buf, uint offset, uint count)
 uint Stream::WriteEncodeInt(uint value)
 {
 	if(!CanWrite) return false;
-
-	byte temp;
+	
 	for( int i = 0 ; i < 4 ; i++ )
 	{
+		byte temp;
 		temp = (byte)value;
 		if(temp < 0x7F)
 		{
