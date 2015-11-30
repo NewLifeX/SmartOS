@@ -184,7 +184,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	byte id = msg.Src;
 	if(!id) return false;
 
-	ulong now = Sys.Ms();
+	auto now = Sys.Seconds();
 
 	JoinMessage dm;
 	dm.ReadMessage(msg);
@@ -261,7 +261,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 // 网关重置节点通信密码
 bool TinyServer::ResetPassword(byte id)
 {
-	ulong now = Sys.Ms();
+	ulong nowMs = Sys.Ms();
+	auto  nowSec = Sys.Seconds();
 
 	JoinMessage dm;
 
@@ -272,12 +273,12 @@ bool TinyServer::ResetPassword(byte id)
 	// 更新设备信息
 	//Current		= dv;
 
-	//if(dv->Logins++ == 0) dv->LoginTime = now;
-	//dv->LastTime = now;
+	//if(dv->Logins++ == 0) dv->LoginTime = nowSec;
+	//dv->LastTime = nowSec;
 
 
 	// 生成随机密码。当前时间的MD5
-	dv->Pass = MD5::Hash(Array(&now, 8));
+	dv->Pass = MD5::Hash(Array(&nowMs, 8));
 	dv->Pass.SetLength(8);	// 小心不要超长
 
 	// 响应
@@ -331,6 +332,8 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	auto dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL)return false;
+	
+	dv->LastTime = Sys.Seconds();
 
 	// 准备一条响应指令
 	TinyMessage rs;
