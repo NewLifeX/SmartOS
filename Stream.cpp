@@ -338,6 +338,11 @@ MemoryStream::MemoryStream(uint len) : Stream(_Arr, ArrayLength(_Arr))
 	}
 }
 
+MemoryStream::MemoryStream(void* buf, uint len) : Stream(buf, len)
+{
+	_needFree	= false;
+}
+
 // 销毁数据流
 MemoryStream::~MemoryStream()
 {

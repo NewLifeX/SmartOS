@@ -167,6 +167,8 @@ bool Controller::Send(Message& msg)
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
 	//Stream ms(len);
+	byte buf[128];
+	MemoryStream ms(buf, ArrayLength(buf));
 #if defined(STM32F0)
 	byte buf[512];	// 0.5K
 #esle
@@ -175,10 +177,6 @@ bool Controller::Send(Message& msg)
 	Stream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
-	//assert_param2(len == ms.Position(), "消息标称大小和实际大小不符");
-	/*uint len = ms.Position();
-	// 内存流扩容以后，指针会改变
-	byte* p = ms.GetBuffer();*/
 
 	Array bs(ms.GetBuffer(), ms.Position());
 	return Port->Write(bs, msg.State);

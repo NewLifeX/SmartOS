@@ -111,6 +111,8 @@ private:
 public:
 	// 分配指定大小的数据流
 	MemoryStream(uint len = 0);
+	// 使用缓冲区初始化数据流，支持自动扩容
+	MemoryStream(void* buf, uint len);
 	// 销毁数据流
 	~MemoryStream();
 };
