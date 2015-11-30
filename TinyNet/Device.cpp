@@ -87,7 +87,7 @@ void Device::WriteMessage(Stream& ms) const
 void Device::ReadMessage(Stream& ms)
 {
 	byte size	= ms.ReadByte();
-	uint p		= ms.Position() + size;
+	uint p		= ms.Position();
 
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
@@ -105,7 +105,7 @@ void Device::ReadMessage(Stream& ms)
 	Name		= ms.ReadString();
 
 	// 最后位置
-	ms.SetPosition(p);
+	ms.SetPosition(p + size - 1);
 }
 
 void Device::Save(Stream& ms) const
