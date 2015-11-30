@@ -167,7 +167,7 @@ bool Controller::Send(Message& msg)
 
 	// ms需要在外面这里声明，否则离开大括号作用域以后变量被销毁，导致缓冲区不可用
 	//Stream ms(len);
-	byte buf[512];
+	byte buf[1536];	// 1.5K
 	Stream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
