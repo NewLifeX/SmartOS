@@ -121,6 +121,14 @@ void Device::Load(Stream& ms)
 	LoginTime	= ms.ReadUInt32();
 }
 
+bool Device::Valid() const
+{
+	if(Address 	== 0x00)	return false;
+	if(Kind		== 0x0000)	return false;
+	if(HardID.Length() == 0)return false;
+	return true;
+}
+
 #if DEBUG
 String& Device::ToStr(String& str) const
 {

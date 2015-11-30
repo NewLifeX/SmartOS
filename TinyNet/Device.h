@@ -48,6 +48,7 @@ public:
 	void Load(Stream& ms);
 
 	bool CanSleep() const { return SleepTime > 0; }
+	bool Valid() const;
 
 #if DEBUG
 	virtual String& ToStr(String& str) const;

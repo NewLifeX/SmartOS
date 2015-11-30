@@ -205,12 +205,10 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv = new Device();
 		dv->Address	= id;
 		dv->Logins	= 0;
-
 		// 节点注册
 		dv->RegTime	= now;
-
+		
 		Devices.Push(dv);
-
 		SaveDevices();
 	}
 
@@ -231,6 +229,12 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Pass = MD5::Hash(Array(&now, 8));
 	dv->Pass.SetLength(8);	// 小心不要超长
 	dv->Name = "新设备";
+	
+	if(!dv->Valid())
+	{
+		Devices.Pop();
+		delete dv;
+	}
 
 	// 响应
 	TinyMessage rs;
