@@ -234,6 +234,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	{
 		Devices.Pop();
 		delete dv;
+		SaveDevices();
 	}
 
 	// 响应
