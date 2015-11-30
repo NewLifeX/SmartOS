@@ -58,6 +58,7 @@ public:
 
 	static Gateway*	Current;
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
+	static void UpdateOnlneOfflne(void* param);
 };
 
 #endif

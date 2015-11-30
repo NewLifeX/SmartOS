@@ -71,6 +71,7 @@ void Gateway::Start()
 	}
 
 	Client->Open();
+	Sys.AddTask(UpdateOnlneOfflne, this, 20000, 20000, "Offline汇报");
 
 	Running = true;
 }
@@ -94,8 +95,8 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	auto dv = Server->Current;
 	if(dv)
 	{
-		// 短时间内注册或者登录
-		auto now = Sys.Seconds()-5;
+		// 短时间内重复活动的 上报注册和上线
+		auto now = Sys.Seconds() - 3;
 		if(dv->RegTime > now) DeviceRequest(DeviceAtions::Register, dv);
 		if(dv->LoginTime > now) DeviceRequest(DeviceAtions::Online, dv);
 	}
@@ -315,8 +316,22 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 
 	msg.Length 	= ms.Position();
 	msg.Data 	= ms.GetBuffer(); 
-
-    debug_printf("发送设备列表 共%d个\r\n", count);
+	
+#if DEBUG
+	switch(act)
+	{
+		case DeviceAtions::List:
+			debug_printf("发送设备列表 共%d个\r\n", count);
+			break;
+		case DeviceAtions::Online:
+			debug_printf("节点上线 ID=0x%02X \t", dv->Address);
+			break;
+		case DeviceAtions::Offline:
+			debug_printf("节点下线 ID=0x%02X \t", dv->Address);
+			break;
+		default: break;
+	}
+#endif
 
 	if(act == DeviceAtions::List)
 		return Client->Reply(msg);
@@ -765,4 +780,25 @@ Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 	Current		= gw;
 
 	return gw;
+}
+
+// 设备上线下线报备
+void Gateway::UpdateOnlneOfflne(void* param)
+{
+	auto gt		= 	(Gateway*)param;
+	auto svr	=	gt->Server; 
+	byte len	= 	svr->Devices.Length();
+	
+	auto now = Sys.Seconds();
+	for(int i = 0; i < len; i++)
+	{
+		auto dv = svr->Devices[i];
+		ushort OfflineTime = (dv->OfflineTime)? dv->OfflineTime : 60;
+
+		if(dv->LastTime + OfflineTime > now)
+			gt->SendDevices(DeviceAtions::Offline, dv);
+		else
+			gt->SendDevices(DeviceAtions::Online, dv);
+
+	}
 }
