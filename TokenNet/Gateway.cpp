@@ -95,7 +95,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	if(dv)
 	{
 		// 短时间内注册或者登录
-		ulong now = Sys.Ms() - 500;
+		auto now = Sys.Seconds()-5;
 		if(dv->RegTime > now) DeviceRequest(DeviceAtions::Register, dv);
 		if(dv->LoginTime > now) DeviceRequest(DeviceAtions::Online, dv);
 	}
