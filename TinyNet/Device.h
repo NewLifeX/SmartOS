@@ -40,6 +40,8 @@ public:
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
+	void Write2(Stream& ms) const;
+	void Read2(Stream& ms);
 
 	// 保存到存储设备数据流
 	void Save(Stream& ms) const;

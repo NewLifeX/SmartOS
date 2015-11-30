@@ -303,11 +303,11 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	if(count > 0)
 	{
 		if(dv)
-			dv->Write(ms);
+			dv->Write2(ms);
 		else
 		{
 			for(int i=0; i<count; i++)
-				Server->Devices[i]->Write(ms);
+				Server->Devices[i]->Write2(ms);
 		}
 	}
 
@@ -494,7 +494,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 				auto ms	= msg.ToStream();
 				ms.Seek(2);
 
-				dv->Read(ms);
+				dv->Read2(ms);
 				Server->SaveDevices();
 			}
 

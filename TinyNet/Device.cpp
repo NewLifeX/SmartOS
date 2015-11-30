@@ -30,10 +30,24 @@ void Device::Write(Stream& ms) const
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
 	
-
 	ms.Write(PingTime);
 	ms.Write(OfflineTime);
 	ms.Write(SleepTime);
+	ms.WriteArray(Name);
+}
+
+void Device::Write2(Stream& ms) const
+{
+	ms.Write(Address);
+	ms.Write(Kind);
+	ms.WriteArray(HardID);
+	ms.Write(LastTime);
+	//ms.Write(DataSize);
+	//ms.Write(ConfigSize);
+	
+	ms.Write(SleepTime);
+	ms.Write(OfflineTime);
+	ms.Write(PingTime);
 	ms.WriteArray(Name);
 }
 
@@ -49,6 +63,21 @@ void Device::Read(Stream& ms)
 	PingTime	= ms.ReadUInt16();
 	OfflineTime	= ms.ReadUInt16();
 	SleepTime	= ms.ReadUInt16();
+	Name		= ms.ReadString();
+}
+
+void Device::Read2(Stream& ms)
+{
+	Address	= ms.ReadByte();
+	Kind	= ms.ReadUInt16();
+	HardID	= ms.ReadArray();
+	LastTime= ms.ReadUInt32();
+	//DataSize	= ms.ReadByte();
+	//ConfigSize	= ms.ReadByte();	
+
+	SleepTime	= ms.ReadUInt16();
+	OfflineTime	= ms.ReadUInt16();
+	PingTime	= ms.ReadUInt16();
 	Name		= ms.ReadString();
 }
 
