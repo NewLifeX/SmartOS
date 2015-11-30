@@ -335,6 +335,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	if(dv == NULL)return false;
 	
 	dv->LastTime = Sys.Seconds();
+	dv->Logined  = true;
 
 	// 准备一条响应指令
 	TinyMessage rs;
