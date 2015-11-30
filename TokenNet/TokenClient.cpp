@@ -77,6 +77,8 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 {
+	if(Status < 2) return false;
+
 	if(!ctrl) ctrl	= Control;
 	assert_param2(ctrl, "TokenClient::Reply");
 
@@ -221,7 +223,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
-				Status = 1;
+				Status	= 1;
 			}
 
 			if(ext.Version == 0x00) Token = 0;

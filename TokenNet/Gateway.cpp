@@ -22,7 +22,7 @@ Gateway::Gateway()
 	Running		= false;
 	AutoReport	= false;
 	IsOldOrder	= false;
-	ExitStudyTaskID = 0;
+	_taskStudy	= 0;
 }
 
 Gateway::~Gateway()
@@ -324,11 +324,11 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 		return Client->Send(msg);
 }
 
-void ExitStudentMode(void* param)
+/*void ExitStudentMode(void* param)
 {
 	Gateway* gw = (Gateway*)param;
 	gw->SetMode(false);
-}
+}*/
 
 // 学习模式 0x20
 void Gateway::SetMode(bool study)
@@ -353,15 +353,15 @@ void Gateway::SetMode(bool study)
 	if(study)
 	{
 		//Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
-		if(ExitStudyTaskID)
-			Sys.SetTask(ExitStudyTaskID, true, 90000);
+		if(_taskStudy)
+			Sys.SetTask(_taskStudy, true, 90000);
 		else
-			ExitStudyTaskID = Sys.AddTask(ExitStudentMode, this, 90000, -1, "退出学习");
+			_taskStudy = Sys.AddTask([](void* p){ ((Gateway*)p)->SetMode(false); }, this, 90000, -1, "退出学习");
 	}
 	else
 	{
-		if(ExitStudyTaskID)
-			Sys.SetTask(ExitStudyTaskID, false);
+		if(_taskStudy)
+			Sys.SetTask(_taskStudy, false);
 	}
 
 	Client->Reply(msg);
