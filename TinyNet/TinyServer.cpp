@@ -207,9 +207,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->Logins	= 0;
 		// 节点注册
 		dv->RegTime	= now;
-		
-		Devices.Push(dv);
-		SaveDevices();
 	}
 
 	// 更新设备信息
@@ -230,11 +227,10 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Pass.SetLength(8);	// 小心不要超长
 	dv->Name = "新设备";
 	
-	if(!dv->Valid())
+	if(dv->Valid())
 	{
-		Devices.Pop();
-		delete dv;
-		SaveDevices();
+		Devices.Push(dv);
+		SaveDevices();	// 写好相关数据 校验通过才能存flash  
 	}
 
 	// 响应
@@ -592,7 +588,10 @@ int TinyServer::LoadDevices()
 		int idx = Devices.FindIndex(NULL);
 		if(idx == -1)
 		{
-			Devices.Push(dv);
+			if(dv->Valid())
+				Devices.Push(dv);
+			else
+				delete dv;
 			debug_printf("/t Push");
 		}
 		debug_printf("\r\n");
