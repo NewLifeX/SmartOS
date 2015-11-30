@@ -18,6 +18,7 @@ public:
     IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
     IPAddress& operator=(const byte* v);
+    IPAddress& operator=(const Array& arr);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
@@ -51,6 +52,12 @@ public:
 	IPEndPoint(const IPAddress& addr, ushort port);
 	IPEndPoint(const Array& arr);
 
+    IPEndPoint& operator=(const Array& arr);
+
+	// 字节数组
+    ByteArray ToArray() const;
+	void CopyTo(byte* ips) const;
+
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
 
@@ -76,6 +83,7 @@ public:
 
     MacAddress& operator=(ulong v);
     MacAddress& operator=(const byte* buf);
+    MacAddress& operator=(const Array& arr);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);

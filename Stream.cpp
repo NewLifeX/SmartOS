@@ -245,6 +245,14 @@ uint Stream::ReadArray(Array& bs)
 	return len;
 }
 
+ByteArray Stream::ReadArray(int count)
+{
+	ByteArray bs(count);
+	Read(bs.GetBuffer(), 0, bs.Length());
+
+	return bs;
+}
+
 // 读取字节数组返回。不用担心有临时变量的构造和析构，RVO会为我们排忧解难
 ByteArray Stream::ReadArray()
 {

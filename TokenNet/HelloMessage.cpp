@@ -38,8 +38,9 @@ bool HelloMessage::Read(Stream& ms)
 
 	LocalTime	= ms.ReadUInt64();
 
-	EndPoint.Address	= ms.ReadBytes(4);
-	EndPoint.Port		= ms.ReadUInt16();
+	//EndPoint.Address	= ms.ReadBytes(4);
+	//EndPoint.Port		= ms.ReadUInt16();
+	EndPoint	= ms.ReadArray(6);
 
 	if(!Reply)
 	{
@@ -69,8 +70,9 @@ void HelloMessage::Write(Stream& ms)
 
 	ms.Write(LocalTime);
 
-	ms.Write(EndPoint.Address.ToArray());
-	ms.Write((ushort)EndPoint.Port);
+	//ms.Write(EndPoint.Address.ToArray());
+	//ms.Write((ushort)EndPoint.Port);
+	ms.Write(EndPoint.ToArray());
 
 	if(!Reply)
 	{

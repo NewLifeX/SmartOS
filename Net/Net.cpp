@@ -50,6 +50,13 @@ IPAddress& IPAddress::operator=(const byte* v)
 	return *this;
 }
 
+IPAddress& IPAddress::operator=(const Array& arr)
+{
+	arr.CopyTo(&Value, 4);
+
+	return *this;
+}
+
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& IPAddress::operator[](int i)
 {
@@ -103,9 +110,35 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 
 IPEndPoint::IPEndPoint(const Array& arr)
 {
-	byte* p = arr.GetBuffer();
+	/*byte* p = arr.GetBuffer();
 	Address = p;
-	Port	= *(ushort*)(p + 4);
+	Port	= *(ushort*)(p + 4);*/
+	*this	= arr;
+}
+
+IPEndPoint& IPEndPoint::operator=(const Array& arr)
+{
+	Address	= arr;
+	arr.CopyTo(&Port, 2, 4);
+
+	return *this;
+}
+
+// 字节数组
+ByteArray IPEndPoint::ToArray() const
+{
+	//return ByteArray((byte*)&Value, 4);
+
+	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
+	ByteArray bs(&Address.Value, 4, true);
+	bs.Copy(&Port, 2, 4);
+
+	return bs;
+}
+
+void IPEndPoint::CopyTo(byte* ips) const
+{
+	if(ips) ToArray().CopyTo(ips, 6);
 }
 
 String& IPEndPoint::ToStr(String& str) const
@@ -187,6 +220,13 @@ MacAddress& MacAddress::operator=(ulong v)
 MacAddress& MacAddress::operator=(const byte* buf)
 {
 	Array(buf, 6).CopyTo(&Value, 6);
+
+	return *this;
+}
+
+MacAddress& MacAddress::operator=(const Array& arr)
+{
+	arr.CopyTo(&Value, 6);
 
 	return *this;
 }

@@ -45,7 +45,7 @@ public:
     byte* Current() const;
 
 	// 从当前位置读取数据，填充到目标数组
-	uint Read(void* buf, uint offset = 0, int count = -1);
+	uint Read(void* buf, uint offset, int count);
 	// 读取7位压缩编码整数
 	uint ReadEncodeInt();
 	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
@@ -62,6 +62,7 @@ public:
 
 	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
 	uint ReadArray(Array& bs);
+	ByteArray ReadArray(int count);
 	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteArray(const Array& bs);
 
