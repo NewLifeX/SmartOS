@@ -95,12 +95,18 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 		case 3:
 			// 设置当前设备
 			Current = dv;
+			dv->Logined = true;
+			dv->LastTime = Sys.Seconds();
 			OnPing(msg);
 			break;
 		case 5:
 			// 系统指令不会被转发，这里修改为用户指令
+			dv->Logined = true;
+			dv->LastTime = Sys.Seconds();
 			msg.Code = 0x15;
 		case 0x15:
+			dv->Logined = true;
+			dv->LastTime = Sys.Seconds();
 			OnReadReply(msg, *dv);
 			break;
 		case 6:
