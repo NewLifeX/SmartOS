@@ -7,9 +7,9 @@
 class Dhcp
 {
 private:
-	uint dhcpid;		// 事务ID
-	uint taskID;		// 任务ID
-	ulong _expiredTime;	// 目标过期时间，毫秒
+	uint dhcpid;	// 事务ID
+	uint taskID;	// 任务ID
+	ulong _expired;	// 目标过期时间，毫秒
 
 	void Discover();
 	void Request();
@@ -17,14 +17,15 @@ private:
 
 	void SendDhcp(byte* buf, uint len);
 
-	static void SendDiscover(void* param);
+	static void Loop(void* param);
 public:
 	ISocket*	Socket;
 	ISocketHost*	Host;	// 主机
 
+	uint ExpiredTime;	// 过期时间，默认10000毫秒
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
-	uint ExpiredTime;	// 过期时间，默认10000毫秒
+	byte Times;		// 运行次数
 
 	Dhcp(ISocket* socket);
 	~Dhcp();

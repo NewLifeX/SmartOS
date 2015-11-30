@@ -37,7 +37,7 @@ void OnDhcpStop5500(void* sender, void* param)
 	net->ShowInfo();
 	net->SaveConfig();
 
-	Sys.AddTask(StartGateway, net, 0, -1, "启动网关");
+	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, net, 0, -1, "启动网关");
 }
 
 ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
@@ -262,7 +262,7 @@ void StartGateway(void* param)
 	// 此时启动网关服务
 	if(gw)
 	{
-		IPEndPoint& ep = gw->Client->Hello.EndPoint;
+		auto& ep = gw->Client->Hello.EndPoint;
 		if(socket) ep.Address = socket->Host->IP;
 
 		if(!gw->Running)

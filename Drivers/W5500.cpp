@@ -1369,8 +1369,9 @@ void UdpClient::RaiseReceive()
 	// 拆包
 	while(ms.Remain())
 	{
-		ByteArray bs2(6);
-		ms.Read(bs2);
+		//ByteArray bs2(6);
+		//ms.Read(bs2);
+		auto bs2	= ms.ReadArray(6);
 
 		ushort len = ms.ReadUInt16();
 		len = __REV16(len);

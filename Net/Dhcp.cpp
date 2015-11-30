@@ -17,13 +17,14 @@ Dhcp::Dhcp(ISocket* socket)
 
 	Running	= false;
 	Result	= false;
+	Times	= 0;
 	ExpiredTime	= 10000;
 
 	OnStop	= NULL;
 	taskID	= 0;
 
 	//ITransport* port = (ITransport*)socket;
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(Socket);
 	port->Register(OnReceive, this);
 }
 
@@ -35,15 +36,15 @@ Dhcp::~Dhcp()
 
 void Dhcp::SendDhcp(byte* buf, uint len)
 {
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
-	byte* p = dhcp->Next();
+	auto dhcp	= (DHCP_HEADER*)buf;
+	auto p		= dhcp->Next();
 	if(p[len - 1] != DHCP_OPT_End)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
-		DHCP_OPT* opt = (DHCP_OPT*)(p + len);
+		auto opt	= (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId(Host->Mac);
 		if(!Host->IP.IsAny())
-			opt = opt->Next()->SetData(DHCP_OPT_RequestedIP, Host->IP.Value);
+			opt	= opt->Next()->SetData(DHCP_OPT_RequestedIP, Host->IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
 		String name;
@@ -72,14 +73,14 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 void Dhcp::Discover()
 {
 	byte buf[sizeof(DHCP_HEADER) + 200];
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
+	auto dhcp	= (DHCP_HEADER*)buf;
 
 	debug_printf("DHCP::Discover...\r\n");
 	dhcpid	= Sys.Ms();
 	dhcp->Init(dhcpid, false);
 
-	byte* p = dhcp->Next();
-	DHCP_OPT* opt = (DHCP_OPT*)p;
+	auto p		= dhcp->Next();
+	auto opt	= (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Discover);
 
 	SendDhcp(buf, (byte*)opt->Next() - p);
@@ -88,13 +89,13 @@ void Dhcp::Discover()
 void Dhcp::Request()
 {
 	byte buf[sizeof(DHCP_HEADER) + 200];
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)buf;
+	auto dhcp	= (DHCP_HEADER*)buf;
 
 	debug_printf("DHCP::Request...\r\n");
 	dhcp->Init(dhcpid, false);
 
-	byte* p = dhcp->Next();
-	DHCP_OPT* opt = (DHCP_OPT*)p;
+	auto p		= dhcp->Next();
+	auto opt	= (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
 
 	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Host->DHCPServer.Value);
@@ -105,26 +106,28 @@ void Dhcp::Request()
 
 void Dhcp::Start()
 {
-	ulong now = Sys.Ms();
-	_expiredTime = now + ExpiredTime;
+	ulong now	= Sys.Ms();
+	_expired	= now + ExpiredTime;
 	if(!dhcpid) dhcpid = now;
 
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	Host->IP	= IPAddress::Any();
-	
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
+
+	auto port = dynamic_cast<ITransport*>(Socket);
 	if(port) port->Open();
 
 	// 创建任务，每秒发送一次Discover
 	if(!taskID)
-		taskID = Sys.AddTask(SendDiscover, this, 0, 1000, "DHCP获取");
+		taskID = Sys.AddTask(Loop, this, 0, 1000, "DHCP获取");
 	else
 	{
 		Sys.SetTaskPeriod(taskID, 1000);
 		Sys.SetTask(taskID, true);
 	}
+
+	Times++;
 
 	Running = true;
 }
@@ -133,7 +136,7 @@ void Dhcp::Stop()
 {
 	if(!Running) return;
 
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(Socket);
 	if(port) port->Close();
 
 	Running	= false;
@@ -144,13 +147,19 @@ void Dhcp::Stop()
 	if(OnStop) OnStop(this, NULL);
 }
 
-void Dhcp::SendDiscover(void* param)
+void Dhcp::Loop(void* param)
 {
-	Dhcp* _dhcp = (Dhcp*)param;
-	if(!_dhcp->Running) return;
+	auto _dhcp = (Dhcp*)param;
+	if(!_dhcp->Running)
+	{
+		// 曾经成功后再次启动，则重新开始
+		if(_dhcp->Times == 0) return;
+
+		_dhcp->Start();
+	}
 
 	// 检查总等待时间
-	if(_dhcp->_expiredTime < Sys.Ms())
+	if(_dhcp->_expired < Sys.Ms())
 	{
 		_dhcp->Stop();
 		return;
@@ -201,13 +210,6 @@ void Dhcp::PareOption(Stream& ms)
 
 uint Dhcp::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 {
-	/*IPEndPoint* ep = (IPEndPoint*)param2;
-	if(ep)
-	{
-		debug_printf("收到数据，来自 ");
-		ep->Show(true);
-	}*/
-
 	((Dhcp*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;
@@ -215,21 +217,21 @@ uint Dhcp::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 
 void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 {
-	DHCP_HEADER* dhcp = (DHCP_HEADER*)bs.GetBuffer();
+	auto dhcp	= (DHCP_HEADER*)bs.GetBuffer();
 	if(!dhcp->Valid()) return;
 
-	byte* data	= dhcp->Next();
+	auto data	= dhcp->Next();
 	uint len	= bs.Length() - sizeof(DHCP_HEADER);
 
 	// 获取DHCP消息类型
-	DHCP_OPT* opt = GetOption(data, len, DHCP_OPT_MessageType);
+	auto opt = GetOption(data, len, DHCP_OPT_MessageType);
 	if(!opt) return;
 
 	// 所有响应都需要检查事务ID
 	if(__REV(dhcp->TransID) != dhcpid) return;
 
 #if NET_DEBUG
-	const IPAddress& remote	= ep.Address;
+	auto& remote	= ep.Address;
 #endif
 
 	if(opt->Data == DHCP_TYPE_Offer)
