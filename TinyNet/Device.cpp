@@ -27,28 +27,16 @@ void Device::Write(Stream& ms) const
 	ms.Write(Kind);
 	ms.WriteArray(HardID);
 	ms.Write(LastTime);
+
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
-	
-	ms.Write(PingTime);
-	ms.Write(OfflineTime);
-	ms.Write(SleepTime);
-	ms.WriteArray(Name);
-}
 
-void Device::Write2(Stream& ms) const
-{
-	ms.Write(Address);
-	ms.Write(Kind);
-	ms.WriteArray(HardID);
-	ms.Write(LastTime);
-	//ms.Write(DataSize);
-	//ms.Write(ConfigSize);
-	
-	ms.Write(SleepTime);
-	ms.Write(OfflineTime);
 	ms.Write(PingTime);
+	ms.Write(OfflineTime);
+	ms.Write(SleepTime);
+
 	ms.WriteArray(Name);
+	ms.Write(Version);
 }
 
 void Device::Read(Stream& ms)
@@ -57,28 +45,67 @@ void Device::Read(Stream& ms)
 	Kind	= ms.ReadUInt16();
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
+
 	DataSize	= ms.ReadByte();
-	ConfigSize	= ms.ReadByte();	
+	ConfigSize	= ms.ReadByte();
 
 	PingTime	= ms.ReadUInt16();
 	OfflineTime	= ms.ReadUInt16();
 	SleepTime	= ms.ReadUInt16();
+
 	Name		= ms.ReadString();
+	Version		= ms.ReadUInt16();
 }
 
-void Device::Read2(Stream& ms)
+void Device::WriteMessage(Stream& ms) const
 {
+	byte* buf	= ms.Current();
+	// 先写入0占位，后面回来写入大小
+	ms.Write((byte)0);
+	uint p		= ms.Position();
+
+	ms.Write(Address);
+	ms.Write(Kind);
+	ms.WriteArray(HardID);
+	ms.Write(LastTime);
+
+	ms.Write(Version);
+	ms.Write(DataSize);
+	ms.Write(ConfigSize);
+
+	ms.Write(SleepTime);
+	ms.Write(OfflineTime);
+	ms.Write(PingTime);
+
+	ms.WriteArray(Name);
+
+	// 计算并设置大小
+	byte size	= ms.Position() - p;
+	buf[0]		= size;
+}
+
+void Device::ReadMessage(Stream& ms)
+{
+	byte size	= ms.ReadByte();
+	uint p		= ms.Position() + size;
+
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
-	//DataSize	= ms.ReadByte();
-	//ConfigSize	= ms.ReadByte();	
+
+	Version		= ms.ReadUInt16();
+	DataSize	= ms.ReadByte();
+	ConfigSize	= ms.ReadByte();
 
 	SleepTime	= ms.ReadUInt16();
 	OfflineTime	= ms.ReadUInt16();
 	PingTime	= ms.ReadUInt16();
+
 	Name		= ms.ReadString();
+
+	// 最后位置
+	ms.SetPosition(p);
 }
 
 void Device::Save(Stream& ms) const
@@ -135,11 +162,11 @@ String& Device::ToStr(String& str) const
 	str = str + "Addr=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	str = str + " ID=" + HardID;
-	
+
 	DateTime dt;
 	dt.Parse(LastTime);
 	str = str + " LastTime=" + dt.ToString();
-/*	
+/*
 	str = str + "Address=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	str = str + " Name=" + Name;

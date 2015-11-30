@@ -301,16 +301,15 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	//MemoryStream ms(1536);
 	ms.Write((byte)act);
 	ms.Write((byte)count);
-	//ms.WriteEncodeInt(count);
 
 	if(count > 0)
 	{
 		if(dv)
-			dv->Write2(ms);
+			dv->WriteMessage(ms);
 		else
 		{
 			for(int i=0; i<count; i++)
-				Server->Devices[i]->Write2(ms);
+				Server->Devices[i]->WriteMessage(ms);
 		}
 	}
 
@@ -511,7 +510,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 				auto ms	= msg.ToStream();
 				ms.Seek(2);
 
-				dv->Read2(ms);
+				dv->ReadMessage(ms);
 				Server->SaveDevices();
 			}
 

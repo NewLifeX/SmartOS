@@ -61,7 +61,7 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 	assert_ptr(buf);
 	assert_ptr(param);
 
-	Controller* control = (Controller*)param;
+	auto control = (Controller*)param;
 
 #if MSG_DEBUG
 	msg_printf("Controller::Receive[%d] ", len);
