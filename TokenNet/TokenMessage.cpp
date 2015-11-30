@@ -76,7 +76,7 @@ void TokenMessage::Write(Stream& ms) const
 		ms.Write((byte)0);
 	else
 	{
-		ms.Write(Length);
+		ms.WriteEncodeInt(Length);
 		if(Length > 0) ms.Write(Data, 0, Length);
 	}
 }
