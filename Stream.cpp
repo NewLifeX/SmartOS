@@ -117,19 +117,14 @@ uint Stream::Read(void* buf, uint offset, int count)
 uint Stream::ReadEncodeInt()
 {
 	uint value = 0;
-	byte temp = 0;
+	// 同时计算最大4字节，避免无限读取错误数据
 	for(int i = 0, k = 0; i < 4; i++, k += 7)
 	{
-		temp = ReadByte();
-		if(temp < 0x7F)
-		{
-			value |= (temp << k);
-			return value;
-		}
-		temp &= 0x7F;
-		value |= (temp << k);
+		byte temp = ReadByte();
+		value |= (temp & 0x7F) << k;
+		if((temp & 0x80) == 0) break;
 	}
-	return 0xFFFFFFFF;
+	return value;
 }
 
 // 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
@@ -158,22 +153,22 @@ bool Stream::Write(const void* buf, uint offset, uint count)
 // 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
-	if(!CanWrite) return false;
-	
-	for( int i = 0 ; i < 4 ; i++ )
+	if(!CanWrite) return 0;
+
+	uint count	= 1;
+	for(int i = 0; i < 4 && value >= 0x80; i++)
 	{
-		byte temp;
-		temp = (byte)value;
-		if(temp < 0x7F)
-		{
-			Write(&temp, 0, 1);
-			return i + 1;
-		}
-		temp |= 0x80;
+		byte temp	= (byte)(value | 0x80);
 		Write(&temp, 0, 1);
-		value >>= 7;
+
+		count++;
+		value	>>= 7;
 	}
-	return 0;
+	{
+		byte temp = (byte)value;
+		Write(&temp, 0, 1);
+	}
+	return count;
 }
 
 // 写入字符串，先写入压缩编码整数表示的长度
