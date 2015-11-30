@@ -295,9 +295,10 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	int count = Server->Devices.Length();
 	if(dv) count	= 1;
 
-	MemoryStream ms;
+	MemoryStream ms(1536);
 	ms.Write((byte)act);
 	ms.Write((byte)count);
+	//ms.WriteEncodeInt(count);
 
 	if(count > 0)
 	{
