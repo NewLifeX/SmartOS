@@ -2,6 +2,7 @@
 #include "Config.h"
 
 #include "Security\MD5.h"
+#include "Security\Crc.h"
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
@@ -460,8 +461,20 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 			debug_printf("节点离线 ID=0x%02X\r\n", id);
 			break;
 		case DeviceAtions::Delete:
+		{
 			debug_printf("节点删除 ID=0x%02X\r\n", id);
+			
+			auto dv = Server->Devices[id];
+			TinyMessage rs;
+			rs.Dest = dv->Address;
+			ushort crc = Crc::Hash16(dv->HardID);
+			Server->Disjoin(rs, crc);
+			Server->Disjoin(rs, crc);
+			Server->Disjoin(rs, crc);
+			
+			Server->DeleteDevice(id);
 			break;
+		}
 		default:
 			debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
 			break;
@@ -795,9 +808,16 @@ void Gateway::UpdateOnlneOfflne(void* param)
 		ushort OfflineTime = (dv->OfflineTime)? dv->OfflineTime : 60;
 
 		if(dv->LastTime + OfflineTime > now)
-			gt->SendDevices(DeviceAtions::Offline, dv);
+		{
+			if(dv->Logined == true)
+				gt->SendDevices(DeviceAtions::Offline, dv);
+			dv->Logined = false;
+		}
 		else
-			gt->SendDevices(DeviceAtions::Online, dv);
-
+		{
+			if(dv->Logined == false)
+				gt->SendDevices(DeviceAtions::Online, dv);
+			dv->Logined = true;
+		}
 	}
 }
