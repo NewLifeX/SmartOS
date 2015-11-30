@@ -423,8 +423,6 @@ void W5500::OnClose()
 // 复位
 void W5500::Reset()
 {
-	//debug_printf("软件复位 \r\n");
-
 	T_Mode mr;
 	mr.Init();
 	mr.RST = 1;
@@ -1018,11 +1016,23 @@ bool HardSocket::OnOpen()
 	// 打开Socket
 	WriteConfig(OPEN);
 
-	Sys.Sleep(5);	//延时5ms
+	//Sys.Sleep(5);	//延时5ms
 
 	//如果Socket打开失败
-	byte sr = ReadStatus();
-	if(Protocol == 0x01 && sr != SOCK_INIT || Protocol == 0x02 && sr != SOCK_UDP)
+	bool rs	= false;
+	byte sr	= 0;
+	TimeWheel tw(0, 50);
+	while(!tw.Expired())
+	{
+		sr = ReadStatus();
+		if(Protocol == 0x01 && sr == SOCK_INIT
+		|| Protocol == 0x02 && sr == SOCK_UDP)
+		{
+			rs	= true;
+			break;
+		}
+	}
+	if(!rs)
 	{
 		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n", Index, sr);
 		OnClose();
