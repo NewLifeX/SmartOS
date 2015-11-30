@@ -230,6 +230,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	// 生成随机密码。当前时间的MD5
 	dv->Pass = MD5::Hash(Array(&now, 8));
 	dv->Pass.SetLength(8);	// 小心不要超长
+	dv->Name = "新设备";
 
 	// 响应
 	TinyMessage rs;
