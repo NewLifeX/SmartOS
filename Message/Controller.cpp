@@ -163,8 +163,7 @@ bool Controller::Send(Message& msg)
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
 
-	byte buf[128];
-	MemoryStream ms(buf, ArrayLength(buf));
+	MemoryStream ms;
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 

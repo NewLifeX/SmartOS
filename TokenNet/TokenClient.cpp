@@ -389,7 +389,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;
-	if(cost > 1000)Time.SetTime(start / 1000);
+	if(cost > 1000) Time.SetTime(start / 1000);
 
 	if(Delay)
 		Delay = (Delay + cost) / 2;
