@@ -105,7 +105,7 @@ void Device::ReadMessage(Stream& ms)
 	Name		= ms.ReadString();
 
 	// 最后位置
-	ms.SetPosition(p + size - 1);
+	ms.SetPosition(p + size);
 }
 
 void Device::Save(Stream& ms) const
