@@ -110,8 +110,8 @@ void TokenMessage::Show() const
 	{
 		if(Error)
 			debug_printf(" Error");
-		else if(Reply)
-			debug_printf(" Reply");
+		//else if(Reply)
+		//	debug_printf(" Reply");
 		debug_printf(" _Code=0x%02X", Code);
 	}
 
@@ -326,7 +326,10 @@ bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
 
-	ShowMessage("Send", msg);
+	if(msg.Reply)
+		ShowMessage("Reply", msg);
+	else
+		ShowMessage("Send", msg);
 
 	// 加解密。握手不加密，登录响应不加密
 	Encrypt(msg, Key);
@@ -401,8 +404,8 @@ void TokenController::ShowMessage(string action, Message& msg)
 
 	if(msg.State)
 	{
-		IPEndPoint* svr	= (IPEndPoint*)Server;
-		IPEndPoint* rmt	= (IPEndPoint*)msg.State;
+		auto svr	= (IPEndPoint*)Server;
+		auto rmt	= (IPEndPoint*)msg.State;
 		if(!svr || *svr != *rmt)
 		{
 			rmt->Show();
