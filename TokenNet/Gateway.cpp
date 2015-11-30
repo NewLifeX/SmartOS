@@ -295,7 +295,7 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	int count = Server->Devices.Length();
 	if(dv) count	= 1;
 
-	byte buf[1024];
+	byte buf[1500];		// 1024 字节只能承载 23条数据，udp最大能承载1514字节
 	MemoryStream ms(buf, ArrayLength(buf));
 	//MemoryStream ms(1536);
 	ms.Write((byte)act);
