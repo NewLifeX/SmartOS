@@ -311,7 +311,8 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 		}
 	}
 
-	msg.Length = ms.Position();
+	msg.Length 	= ms.Position();
+	msg.Data 	= ms.GetBuffer(); 
 
     debug_printf("发送设备列表 共%d个\r\n", count);
 
