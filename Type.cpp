@@ -153,7 +153,7 @@ bool Array::SetLength(int length, bool bak)
 // 设置数组元素为指定值，自动扩容
 bool Array::SetItem(const void* data, int index, int count)
 {
-	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_canWrite, "禁止SetItem修改数组数据");
 	assert_param2(data, "SetItem数据不能为空指针");
 
 	// count<=0 表示设置全部元素
@@ -213,7 +213,7 @@ bool Array::Set(const void* data, int len)
 // 复制数组。深度克隆，拷贝数据，自动扩容
 int Array::Copy(const void* data, int len, int index)
 {
-	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_canWrite, "禁止CopyData修改数组数据");
 	assert_param2(data, "Copy数据不能为空指针");
 
 	if(!len) len = MemLen(data);
@@ -234,7 +234,7 @@ int Array::Copy(const void* data, int len, int index)
 // 复制数组。深度克隆，拷贝数据
 int Array::Copy(const Array& arr, int index)
 {
-	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_canWrite, "禁止CopyArray修改数组数据");
 
 	if(&arr == this) return 0;
 	if(arr.Length() == 0) return 0;
@@ -260,7 +260,7 @@ int Array::CopyTo(void* data, int len, int index) const
 // 清空已存储数据。
 void Array::Clear()
 {
-	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_canWrite, "禁止Clear修改数组数据");
 	assert_param2(_Arr, "Clear数据不能为空指针");
 
 	memset(_Arr, 0, _Size * _Length);
@@ -269,7 +269,7 @@ void Array::Clear()
 // 设置指定位置的值，不足时自动扩容
 void Array::SetItemAt(int i, const void* item)
 {
-	assert_param2(_canWrite, "禁止修改数组数据");
+	assert_param2(_canWrite, "禁止SetItemAt修改数组数据");
 
 	// 检查长度，不足时扩容
 	CheckCapacity(i + 1, _Length);
