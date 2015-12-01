@@ -736,8 +736,11 @@ void DeviceShow(void* param)
 	{
 		auto dv	= svr->Devices[i];
 		dv->Show();
-		debug_printf("\r\n");
-
+		if(i&0x01)
+			debug_printf("\r\n");
+		else
+			debug_printf("\t");
+			
 		Sys.Sleep(0);
 	}
 	debug_printf("\r\n\r\n");

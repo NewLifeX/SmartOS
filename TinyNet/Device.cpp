@@ -161,7 +161,7 @@ String& Device::ToStr(String& str) const
 {
 	str = str + "Addr=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
-	str = str + " ID=" + HardID;
+//	str = str + " ID=" + HardID;
 
 	DateTime dt;
 	dt.Parse(LastTime);
