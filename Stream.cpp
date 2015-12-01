@@ -386,8 +386,9 @@ bool MemoryStream::CheckRemain(uint count)
 
 		if(_Buffer != _Arr) delete[] _Buffer;
 
-		_Buffer = bufNew;
-		_Capacity = size;
+		_Buffer		= bufNew;
+		_Capacity	= size;
+		_needFree	= true;
 	}
 
 	return true;
