@@ -18,19 +18,20 @@ public:
 	ushort		Kind;		// 类型
 	ByteArray	HardID;		// 硬件编码
 	uint		LastTime;	// 活跃时间。秒
+	uint		RegTime;	// 注册时间。秒
+	uint		LoginTime;	// 登录时间。秒
 	uint		Logins;		// 登录次数
+	
 	ushort		Version;	// 版本
 	byte		DataSize;	// 数据大小
 	byte		ConfigSize;	// 配置大小
-	String		Name;		// 名称
-	ByteArray	Pass;		// 通信密码
 
 	ushort		PingTime;	// 心跳时间。秒
 	ushort		OfflineTime;// 离线阀值时间。秒
 	ushort		SleepTime;	// 睡眠时间。秒
 
-	uint		RegTime;	// 注册时间。秒
-	uint		LoginTime;	// 登录时间。秒
+	String		Name;		// 名称
+	ByteArray	Pass;		// 通信密码
 
 	ByteArray	Store;		// 数据存储区
 	TinyConfig*	Cfg	= NULL;

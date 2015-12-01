@@ -7,27 +7,35 @@ Device::Device() : HardID(0), Name(0), Pass(0)
 {
 	Address		= 0;
 	Logined		= false;
+
 	Kind		= 0;
 	LastTime	= 0;
+	RegTime		= 0;
+	LoginTime	= 0;
 	Logins		= 0;
-	DataSize	= 0x10;
-	ConfigSize	= 0x10;
+
+	Version		= 0;
+	DataSize	= 0;
+	ConfigSize	= 0;
 
 	PingTime	= 0;
 	OfflineTime	= 0;
 	SleepTime	= 0;
-
-	RegTime		= 0;
-	LoginTime	= 0;
 }
 
 void Device::Write(Stream& ms) const
 {
+	TS("Device::Write");
+
 	ms.Write(Address);
 	ms.Write(Kind);
 	ms.WriteArray(HardID);
 	ms.Write(LastTime);
+	ms.Write(RegTime);
+	ms.Write(LoginTime);
+	ms.Write(Logins);
 
+	ms.Write(Version);
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
 
@@ -36,16 +44,23 @@ void Device::Write(Stream& ms) const
 	ms.Write(SleepTime);
 
 	ms.WriteArray(Name);
-	ms.Write(Version);
+	ms.WriteArray(Pass);
+	ms.WriteArray(Store);
 }
 
 void Device::Read(Stream& ms)
 {
+	TS("Device::Write");
+
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
+	RegTime	= ms.ReadUInt32();
+	LoginTime= ms.ReadUInt32();
+	Logins	= ms.ReadUInt32();
 
+	Version		= ms.ReadUInt16();
 	DataSize	= ms.ReadByte();
 	ConfigSize	= ms.ReadByte();
 
@@ -54,7 +69,8 @@ void Device::Read(Stream& ms)
 	SleepTime	= ms.ReadUInt16();
 
 	Name		= ms.ReadString();
-	Version		= ms.ReadUInt16();
+	Pass		= ms.ReadArray();
+	Store		= ms.ReadArray();
 }
 
 void Device::WriteMessage(Stream& ms) const
