@@ -225,7 +225,7 @@ uint Stream::ReadArray(Array& bs)
 		// 在设计时，如果取得的长度超级大，可能是设计错误
 		if(len > 0x40)
 		{
-			debug_printf("准备读取的数据长度是 %d，而缓冲区数组容量是 %d\r\n", len, bs.Capacity());
+			debug_printf(" 读 %d > %d ", len, bs.Capacity());
 			//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
 			//bs.Set(0, 0, len);
 			/*// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据

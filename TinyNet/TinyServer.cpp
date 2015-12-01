@@ -62,6 +62,8 @@ bool OnServerReceived(void* sender, Message& msg, void* param)
 
 void TinyServer::Start()
 {
+	TS("TinyServer::Start");
+
 	assert_param2(Cfg, "未指定微网服务器的配置");
 
 	//LoadConfig();
@@ -76,12 +78,14 @@ void TinyServer::Start()
 // 收到本地无线网消息
 bool TinyServer::OnReceive(TinyMessage& msg)
 {
+	TS("TinyServer::OnReceive");
+
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	auto dv = Current;
 	if(!dv) dv = FindDevice(id);
 	// 不响应不在设备列表设备的 非Join指令
-	if((!dv) && (msg.Code > 2))return false;
+	if(!dv && msg.Code > 2) return false;
 
 	switch(msg.Code)
 	{
@@ -95,18 +99,12 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 		case 3:
 			// 设置当前设备
 			Current = dv;
-			dv->Logined = true;
-			dv->LastTime = Sys.Seconds();
 			OnPing(msg);
 			break;
 		case 5:
 			// 系统指令不会被转发，这里修改为用户指令
-			dv->Logined = true;
-			dv->LastTime = Sys.Seconds();
 			msg.Code = 0x15;
 		case 0x15:
-			dv->Logined = true;
-			dv->LastTime = Sys.Seconds();
 			OnReadReply(msg, *dv);
 			break;
 		case 6:
@@ -116,7 +114,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	}
 
 	// 更新设备信息
-	if(dv) dv->LastTime = Sys.Ms();
+	if(dv) dv->LastTime = Sys.Seconds();
 
 	// 设置当前设备
 	Current = dv;
@@ -132,6 +130,8 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 // 分发外网过来的消息。返回值表示是否有响应
 bool TinyServer::Dispatch(TinyMessage& msg)
 {
+	TS("TinyServer::Dispatch");
+
 	// 非休眠设备直接发送
 	//if(!dv->CanSleep())
 	//{
@@ -180,6 +180,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 {
 	if(msg.Reply) return false;
 
+	TS("TinyServer::OnJoin");
+
 	if(!Study)
 	{
 		debug_printf("非学习模式禁止加入\r\n");
@@ -196,7 +198,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.ReadMessage(msg);
 	// 根据硬件编码找设备
 	auto dv = FindDevice(dm.HardID);
-	bool IsNewDv = false;
+	//bool IsNewDv = false;
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
@@ -222,11 +224,11 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->Pass = MD5::Hash(Array(&now, 8));
 		dv->Pass.SetLength(8);	// 小心不要超长
 		dv->Name = "新设备";
-	
+
 		if(dv->Valid())
 		{
 			Devices.Push(dv);
-			SaveDevices();	// 写好相关数据 校验通过才能存flash  
+			SaveDevices();	// 写好相关数据 校验通过才能存flash
 		}
 		else
 		{
@@ -239,7 +241,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	Current		= dv;
 	if(dv->Logins++ == 0) dv->LoginTime = now;
 	dv->LastTime = now;
-	
+
 	debug_printf("\r\nTinyServer::设备第 %d 次组网 TranID=0x%04X \r\n", dv->Logins, dm.TranID);
 	dv->Show(true);
 
@@ -260,7 +262,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.HardID.SetLength(6);	// 小心不要超长
 	dm.HardID	= Sys.ID;
 	dm.WriteMessage(rs);
-	
+
 	Reply(rs);
 
 	return true;
@@ -269,6 +271,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 // 网关重置节点通信密码
 bool TinyServer::ResetPassword(byte id)
 {
+	TS("TinyServer::ResetPassword");
+
 	ulong nowMs = Sys.Ms();
 	auto  nowSec = Sys.Seconds();
 
@@ -319,11 +323,15 @@ bool TinyServer::ResetPassword(byte id)
 // 读取
 bool TinyServer::OnDisjoin(const TinyMessage& msg)
 {
+	TS("TinyServer::OnDisjoin");
+
 	return true;
 }
 
 bool TinyServer::Disjoin(TinyMessage& msg, uint crc)
 {
+	TS("TinyServer::Disjoin");
+
 	msg.Code = 0x02;
 	auto ms = msg.ToStream();
 	ms.Write(crc);
@@ -337,10 +345,12 @@ bool TinyServer::Disjoin(TinyMessage& msg, uint crc)
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {
+	TS("TinyServer::OnPing");
+
 	auto dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL)return false;
-	
+
 	dv->LastTime = Sys.Seconds();
 	dv->Logined  = true;
 
@@ -384,7 +394,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		}
 	}
 	// 告诉客户端有多少待处理指令
-	
+
 	// 0x02给客户端同步时间，4字节的秒
 	auto ms2	= rs.ToStream();
 	pm.WriteTime(ms2, Sys.Seconds());
@@ -404,6 +414,8 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
 	if(msg.Error) return false;
+
+	TS("TinyServer::OnRead");
 
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
@@ -451,7 +463,9 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	if(!msg.Reply || msg.Error) return false;
 	if(msg.Length < 2) return false;
 
-	 debug_printf("响应读取写入数据 \r\n") ;
+	TS("TinyServer::OnReadReply");
+
+	debug_printf("响应读取写入数据 \r\n") ;
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
@@ -480,6 +494,8 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
+
+	TS("TinyServer::OnWrite");
 
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
@@ -555,7 +571,9 @@ Device* TinyServer::FindDevice(const Array& hardid)
 
 bool TinyServer::DeleteDevice(byte id)
 {
-	Device* dv = FindDevice(id);
+	TS("TinyServer::DeleteDevice");
+
+	auto dv = FindDevice(id);
 	if(dv && dv->Address == id)
 	{
 		//Devices.Remove(dv);
@@ -563,6 +581,7 @@ bool TinyServer::DeleteDevice(byte id)
 		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;
 		SaveDevices();
+		
 		return true;
 	}
 
@@ -571,6 +590,8 @@ bool TinyServer::DeleteDevice(byte id)
 
 int TinyServer::LoadDevices()
 {
+	TS("TinyServer::LoadDevices");
+
 	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
@@ -583,13 +604,13 @@ int TinyServer::LoadDevices()
 	Stream ms(data, 4 << 10);
 	// 设备个数
 	int count = ms.ReadByte();
-	debug_printf("FLASH 内存有%d个节点\r\n",count);
+	debug_printf("\t共有%d个节点\r\n", count);
 	int i = 0;
 	for(; i<count; i++)
 	{
 		debug_printf("\t加载设备:");
 		byte id = ms.Peek();
-		Device* dv = FindDevice(id);
+		auto dv = FindDevice(id);
 		if(!dv) dv = new Device();
 		dv->Read(ms);
 		dv->Show();
@@ -601,13 +622,13 @@ int TinyServer::LoadDevices()
 				Devices.Push(dv);
 			else
 				delete dv;
-			debug_printf("/t Push");
+			debug_printf("\t Push");
 		}
 		debug_printf("\r\n");
 	}
 
 	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", addr, i);
-	
+
 	byte len = Devices.Length();
 	debug_printf("Devices内已有节点 %d 个\r\n", len);
 
@@ -616,6 +637,8 @@ int TinyServer::LoadDevices()
 
 void TinyServer::SaveDevices()
 {
+	TS("TinyServer::SaveDevices");
+
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
@@ -623,7 +646,7 @@ void TinyServer::SaveDevices()
 
 	byte buf[0x800];
 
-	Stream ms(buf, ArrayLength(buf));
+	MemoryStream ms(buf, ArrayLength(buf));
 	// 设备个数
 	int count = Devices.Length();
 	ms.Write((byte)count);
@@ -638,6 +661,8 @@ void TinyServer::SaveDevices()
 
 void TinyServer::ClearDevices()
 {
+	TS("TinyServer::ClearDevices");
+
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
@@ -646,7 +671,7 @@ void TinyServer::ClearDevices()
 	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", addr);
 
 	cfg.Invalid("Devs");
-	
+
 	int count = Devices.Length();
 	for(int j = 0; j < 3; j++)		// 3遍
 	{
@@ -658,8 +683,8 @@ void TinyServer::ClearDevices()
 			ushort crc = Crc::Hash16(dv->HardID);
 			Disjoin(rs, crc);
 		}
-	}	
-			
+	}
+
 	for(int i=0; i<Devices.Length(); i++)
 	{
 		delete Devices[i];
@@ -670,6 +695,8 @@ void TinyServer::ClearDevices()
 
 bool TinyServer::LoadConfig()
 {
+	TS("TinyServer::LoadConfig");
+
 	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
@@ -694,6 +721,8 @@ bool TinyServer::LoadConfig()
 
 void TinyServer::SaveConfig()
 {
+	TS("TinyServer::SaveConfig");
+
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
@@ -711,6 +740,8 @@ void TinyServer::SaveConfig()
 
 void TinyServer::ClearConfig()
 {
+	TS("TinyServer::ClearConfig");
+
 	debug_printf("TinyServer::ClearDevices 设备区清零！\r\n");
 	// 最后4k的位置作为存储位置
 	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
@@ -729,6 +760,8 @@ void TinyServer::ClearConfig()
 // 输出所有设备
 void DeviceShow(void* param)
 {
+	TS("TinyServer::DeviceShow");
+
 	auto svr	= (TinyServer*)param;
 
 	byte len = svr->Devices.Length();
@@ -741,7 +774,7 @@ void DeviceShow(void* param)
 			debug_printf("\r\n");
 		else
 			debug_printf("\t");
-			
+
 		Sys.Sleep(0);
 	}
 	debug_printf("\r\n\r\n");
