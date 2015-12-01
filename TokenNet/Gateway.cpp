@@ -63,9 +63,10 @@ void Gateway::Start()
 		auto dv = new Device();
 		dv->Address		= Server->Cfg->Address;
 		dv->Kind		= Sys.Code;
-		dv->HardID.Copy(Sys.ID, 16);
 		dv->LastTime	= Sys.Seconds();
-		dv->Name		= Sys.Name;
+
+		dv->GetHardID().Copy(Sys.ID, 16);
+		dv->GetName().Copy(Sys.Name, 0);
 
 		Server->Devices.Push(dv);
 		Server->SaveDevices();
@@ -463,7 +464,7 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 			auto dv = Server->Devices[id];
 			TinyMessage rs;
 			rs.Dest = dv->Address;
-			ushort crc = Crc::Hash16(dv->HardID);
+			ushort crc = Crc::Hash16(dv->GetHardID());
 			Server->Disjoin(rs, crc);
 			Server->Disjoin(rs, crc);
 			Server->Disjoin(rs, crc);

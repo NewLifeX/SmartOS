@@ -67,8 +67,11 @@ void TinyServer::Start()
 	assert_param2(Cfg, "未指定微网服务器的配置");
 
 	//LoadConfig();
-	LoadDevices();
-#if DEBUG
+	auto count = LoadDevices();
+	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
+	if(Devices.Length() != count) SaveDevices();
+
+	#if DEBUG
 	Sys.AddTask(DeviceShow, this, 10000, 30000, "节点列表");
 #endif
 
@@ -217,13 +220,14 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		// 节点注册
 		dv->RegTime	= now;
 		dv->Kind	= dm.Kind;
-		dv->HardID	= dm.HardID;
+		dv->GetHardID()	= dm.HardID;
 		dv->Version	= dm.Version;
 		dv->LoginTime = now;
 		// 生成随机密码。当前时间的MD5
-		dv->Pass = MD5::Hash(Array(&now, 8));
-		dv->Pass.SetLength(8);	// 小心不要超长
-		dv->Name = "新设备";
+		auto bs	= MD5::Hash(Array(&now, 8));
+		if(bs.Length() > 8) bs.SetLength(8);
+		dv->GetPass() = bs;
+		//dv->Name = "新设备";
 
 		if(dv->Valid())
 		{
@@ -257,7 +261,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Channel	= Cfg->Channel;
 	dm.Speed	= Cfg->Speed / 10;
 	dm.Address	= dv->Address;
-	dm.Password	= dv->Pass;
+	dm.Password.Copy(dv->GetPass());
 
 	dm.HardID.Set(Sys.ID, 6);
 	dm.WriteMessage(rs);
@@ -281,16 +285,10 @@ bool TinyServer::ResetPassword(byte id)
 	auto dv = FindDevice(id);
 	if(!dv) return false;
 
-	// 更新设备信息
-	//Current		= dv;
-
-	//if(dv->Logins++ == 0) dv->LoginTime = nowSec;
-	//dv->LastTime = nowSec;
-
-
 	// 生成随机密码。当前时间的MD5
-	dv->Pass = MD5::Hash(Array(&nowMs, 8));
-	dv->Pass.SetLength(8);	// 小心不要超长
+	auto bs	= MD5::Hash(Array(&nowMs, 8));
+	if(bs.Length() > 8) bs.SetLength(8);
+	dv->GetPass() = bs;
 
 	// 响应
 	TinyMessage rs;
@@ -306,7 +304,7 @@ bool TinyServer::ResetPassword(byte id)
 	dm.Speed	= Cfg->Speed / 10;
 
 	dm.Address	= dv->Address;
-	dm.Password	= dv->Pass;
+	dm.Password.Copy(dv->Pass);
 
 	dm.HardID.Set(Sys.ID, 6);
 
@@ -315,7 +313,6 @@ bool TinyServer::ResetPassword(byte id)
 	Reply(rs);
 
 	return true;
-
 }
 
 // 读取
@@ -368,12 +365,13 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		{
 			case 0x01:
 			{
-				pm.ReadData(ms, dv->Store);
+				auto bs = dv->GetStore();
+				pm.ReadData(ms, bs);
 				break;
 			}
 			case 0x02:
 			{
-				Array bs(dv->Cfg, sizeof(dv->Cfg[0]));
+				auto bs = dv->GetConfig();
 				pm.ReadData(ms, bs);
 				break;
 			}
@@ -424,15 +422,16 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	ms.SetPosition(0);
 
 	// 计算还有多少数据可读
-	int remain = dv.Store.Length() - offset;
+	auto bs	= dv.GetStore();
+	int remain = bs.Length() - offset;
 
-	  while(remain<0)
-	  {
-		  debug_printf("读取数据出错Store.Length=%d \r\n",dv.Store.Length()) ;
-		  offset--;
+	while(remain<0)
+	{
+		debug_printf("读取数据出错Store.Length=%d \r\n", bs.Length()) ;
+		offset--;
 
-		  remain = dv.Store.Length() - offset;
-	  }
+		remain = bs.Length() - offset;
+	}
 
 	if(remain < 0)
 	{
@@ -447,7 +446,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 		ms.WriteEncodeInt(offset);
 		// 限制可以读取的大小，不允许越界
 		if(len > remain) len = remain;
-		if(len > 0) ms.Write(dv.Store.GetBuffer(), offset, len);
+		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
 	}
 	msg.Length	= ms.Position();
 	msg.Reply	= true;
@@ -468,7 +467,8 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	int remain = dv.Store.Capacity() - offset;
+	auto bs	= dv.GetStore();
+	int remain = bs.Capacity() - offset;
 
 	if(remain < 0) return false;
 
@@ -477,7 +477,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 	// 保存一份到缓冲区
 	if(len > 0)
 	{
-		dv.Store.Copy(ms.Current(), len, offset);
+		bs.Copy(ms.Current(), len, offset);
 	}
 
 	return true;
@@ -505,7 +505,8 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	}
 	// 计算还有多少数据可写
 	uint len = ms.Remain();
-	int remain = dv.Store.Capacity() - offset;
+	auto bs	= dv.GetStore();
+	int remain = bs.Capacity() - offset;
 	if(remain < 0)
 	{
 		msg.Error = true;
@@ -525,7 +526,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 		// 保存一份到缓冲区
 		if(len > 0)
 		{
-			dv.Store.Copy(ms.Current(), len, offset);
+			bs.Copy(ms.Current(), len, offset);
 
 			// 指针归零，准备写入响应数据
 			ms.SetPosition(0);
@@ -561,7 +562,7 @@ Device* TinyServer::FindDevice(const Array& hardid)
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-		if(hardid == Devices[i]->HardID) return Devices[i];
+		if(hardid == Devices[i]->GetHardID()) return Devices[i];
 	}
 
 	return NULL;
@@ -607,20 +608,33 @@ int TinyServer::LoadDevices()
 	for(; i<count; i++)
 	{
 		debug_printf("\t加载设备:");
+		
+		bool fs	= false;
+		/*ms.Seek(1);
 		byte id = ms.Peek();
+		ms.Seek(-1);*/
+		// 前面一个字节是长度，第二个字节才是ID
+		byte id = ms.GetBuffer()[1];
 		auto dv = FindDevice(id);
-		if(!dv) dv = new Device();
+		if(!dv)
+		{
+			dv	= new Device();
+			fs	= true;
+		}
 		dv->Read(ms);
 		dv->Show();
 
-		int idx = Devices.FindIndex(NULL);
-		if(idx == -1)
+		if(fs)
 		{
-			if(dv->Valid())
-				Devices.Push(dv);
-			else
-				delete dv;
-			debug_printf("\t Push");
+			int idx = Devices.FindIndex(NULL);
+			if(idx == -1)
+			{
+				if(dv->Valid())
+					Devices.Push(dv);
+				else
+					delete dv;
+				debug_printf("\t Push");
+			}
 		}
 		debug_printf("\r\n");
 	}
@@ -678,7 +692,7 @@ void TinyServer::ClearDevices()
 			auto dv = Devices[i];
 			TinyMessage rs;
 			rs.Dest = dv->Address;
-			ushort crc = Crc::Hash16(dv->HardID);
+			ushort crc = Crc::Hash16(dv->GetHardID());
 			Disjoin(rs, crc);
 		}
 	}

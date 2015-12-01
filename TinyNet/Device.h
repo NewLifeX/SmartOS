@@ -12,28 +12,29 @@
 class Device : public Object
 {
 public:
-	byte		Address;	// 节点地址
-	bool		Logined;	// 是否在线
+	bool	Logined;	// 是否在线
+	byte	Address;	// 节点地址
 
-	ushort		Kind;		// 类型
-	ByteArray	HardID;		// 硬件编码
-	uint		LastTime;	// 活跃时间。秒
-	uint		RegTime;	// 注册时间。秒
-	uint		LoginTime;	// 登录时间。秒
-	uint		Logins;		// 登录次数
-	
-	ushort		Version;	// 版本
-	byte		DataSize;	// 数据大小
-	byte		ConfigSize;	// 配置大小
+	ushort	Kind;		// 类型
+	byte	HardID[16];	// 硬件编码
+	uint	LastTime;	// 活跃时间。秒
+	uint	RegTime;	// 注册时间。秒
+	uint	LoginTime;	// 登录时间。秒
+	uint	Logins;		// 登录次数
 
-	ushort		PingTime;	// 心跳时间。秒
-	ushort		OfflineTime;// 离线阀值时间。秒
-	ushort		SleepTime;	// 睡眠时间。秒
+	ushort	Version;	// 版本
+	byte	DataSize;	// 数据大小
+	byte	ConfigSize;	// 配置大小
 
-	String		Name;		// 名称
-	ByteArray	Pass;		// 通信密码
+	ushort	SleepTime;	// 睡眠时间。秒
+	ushort	OfflineTime;// 离线阀值时间。秒
+	ushort	PingTime;	// 心跳时间。秒
 
-	ByteArray	Store;		// 数据存储区
+	char	Name[16];	// 名称
+	byte	Pass[8];	// 通信密码
+
+	byte	Store[32];	// 数据存储区
+
 	TinyConfig*	Cfg	= NULL;
 
 	Device();
@@ -50,6 +51,12 @@ public:
 
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
+
+	Array GetHardID() const;
+	Array GetName() const;
+	Array GetPass() const;
+	Array GetStore() const;
+	Array GetConfig() const;
 
 #if DEBUG
 	virtual String& ToStr(String& str) const;

@@ -3,7 +3,7 @@
 
 /******************************** Device ********************************/
 
-Device::Device() : HardID(0), Name(0), Pass(0)
+Device::Device()
 {
 	Address		= 0;
 	Logined		= false;
@@ -27,9 +27,9 @@ void Device::Write(Stream& ms) const
 {
 	TS("Device::Write");
 
-	ms.Write(Address);
+	/*ms.Write(Address);
 	ms.Write(Kind);
-	ms.WriteArray(HardID);
+	ms.WriteArray(CArray(HardID));
 	ms.Write(LastTime);
 	ms.Write(RegTime);
 	ms.Write(LoginTime);
@@ -39,20 +39,23 @@ void Device::Write(Stream& ms) const
 	ms.Write(DataSize);
 	ms.Write(ConfigSize);
 
-	ms.Write(PingTime);
-	ms.Write(OfflineTime);
 	ms.Write(SleepTime);
+	ms.Write(OfflineTime);
+	ms.Write(PingTime);
 
-	ms.WriteArray(Name);
-	ms.WriteArray(Pass);
-	ms.WriteArray(Store);
+	ms.WriteArray(CArray(Name));
+	ms.WriteArray(CArray(Pass));
+	ms.WriteArray(CArray(Store));*/
+
+	Array bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	ms.WriteArray(bs);
 }
 
 void Device::Read(Stream& ms)
 {
-	TS("Device::Write");
+	TS("Device::Read");
 
-	Address	= ms.ReadByte();
+	/*Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
@@ -64,13 +67,22 @@ void Device::Read(Stream& ms)
 	DataSize	= ms.ReadByte();
 	ConfigSize	= ms.ReadByte();
 
-	PingTime	= ms.ReadUInt16();
-	OfflineTime	= ms.ReadUInt16();
 	SleepTime	= ms.ReadUInt16();
+	OfflineTime	= ms.ReadUInt16();
+	PingTime	= ms.ReadUInt16();
 
 	Name		= ms.ReadString();
 	Pass		= ms.ReadArray();
-	Store		= ms.ReadArray();
+	Store		= ms.ReadArray();*/
+
+	// 为了避免不同版本的配置兼容，指定长度避免覆盖过头
+	Array bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	//bs	= ms.ReadArray();
+	// 为了减少一个临时对象，直接传入外部包装给内部拷贝
+	uint len 	= ms.ReadEncodeInt();
+	uint p		= ms.Position();
+	ms.Read(bs);
+	ms.SetPosition(p + len);
 }
 
 void Device::WriteMessage(Stream& ms) const
@@ -82,7 +94,7 @@ void Device::WriteMessage(Stream& ms) const
 
 	ms.Write(Address);
 	ms.Write(Kind);
-	ms.WriteArray(HardID);
+	ms.WriteArray(CArray(HardID));
 	ms.Write(LastTime);
 
 	ms.Write(Version);
@@ -93,7 +105,7 @@ void Device::WriteMessage(Stream& ms) const
 	ms.Write(OfflineTime);
 	ms.Write(PingTime);
 
-	ms.WriteArray(Name);
+	ms.WriteArray(CArray(Name));
 
 	// 计算并设置大小
 	byte size	= ms.Position() - p;
@@ -107,7 +119,7 @@ void Device::ReadMessage(Stream& ms)
 
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
-	HardID	= ms.ReadArray();
+	ms.ReadArray().CopyTo(HardID, ArrayLength(HardID));
 	LastTime= ms.ReadUInt32();
 
 	Version		= ms.ReadUInt16();
@@ -118,12 +130,12 @@ void Device::ReadMessage(Stream& ms)
 	OfflineTime	= ms.ReadUInt16();
 	PingTime	= ms.ReadUInt16();
 
-	Name		= ms.ReadString();
+	ms.ReadString().CopyTo(Name, ArrayLength(Name));
 
 	// 最后位置
 	ms.SetPosition(p + size);
 }
-
+/*
 void Device::Save(Stream& ms) const
 {
 	ms.Write(Address);
@@ -163,12 +175,13 @@ void Device::Load(Stream& ms)
 	RegTime		= ms.ReadUInt32();
 	LoginTime	= ms.ReadUInt32();
 }
-
+*/
 bool Device::Valid() const
 {
 	if(Address 	== 0x00)	return false;
 	if(Kind		== 0x0000)	return false;
-	if(HardID.Length() == 0)return false;
+	//if(HardID.Length() == 0)return false;
+
 	return true;
 }
 
@@ -177,7 +190,9 @@ String& Device::ToStr(String& str) const
 {
 	str = str + "Addr=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
-//	str = str + " ID=" + HardID;
+	//str = str + " ID=" + HardID;
+	str = str + " ID=";
+	str.Append(HardID[0]).Append(HardID[1]);
 
 	DateTime dt;
 	dt.Parse(LastTime);
@@ -208,3 +223,9 @@ bool operator!=(const Device& d1, const Device& d2)
 {
 	return d1.Address != d2.Address;
 }
+
+Array Device::GetHardID()	const	{ return Array(HardID, ArrayLength(HardID)); }
+Array Device::GetName()		const	{ return Array(Name, ArrayLength(Name)); }
+Array Device::GetPass()		const	{ return Array(Pass, ArrayLength(Pass)); }
+Array Device::GetStore()	const	{ return Array(Store, ArrayLength(Store)); }
+Array Device::GetConfig()	const	{ return Array(Cfg, sizeof(Cfg[0])); }

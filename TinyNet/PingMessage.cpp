@@ -84,14 +84,14 @@ void PingMessage::WriteConfig(Stream& ms, const Array& bs)
 bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc)
 {
 	crc  = ms.ReadUInt16();
-	ushort crc1 = Crc::Hash16(dv->HardID);
+	ushort crc1 = Crc::Hash16(dv->GetHardID());
 	// 下一行仅调试使用
 	//debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
 	if(crc != crc1)
 	{
 		debug_printf("设备硬件Crc: %04X, 本地Crc：%04X \r\n", crc, crc1);
 		debug_printf("设备硬件ID: ");
-		dv->HardID.Show(true);
+		ByteArray(dv->HardID, ArrayLength(dv->HardID)).Show(true);
 
 		return false;
 	}
