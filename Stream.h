@@ -106,6 +106,7 @@ class MemoryStream : public Stream
 private:
 	byte _Arr[0x40];	// 内部缓冲区。较小内存需要时，直接使用栈分配，提高性能。
 	bool _needFree;		// 是否自动释放
+	//bool _resize;		// 是否可以自动扩容
 
 	virtual bool CheckRemain(uint count);
 

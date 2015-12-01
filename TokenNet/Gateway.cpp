@@ -293,6 +293,8 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 // 设备列表 0x21
 bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 {
+	TS("Gateway::SendDevices");
+
 	TokenMessage msg;
 	msg.Code = 0x21;
 
@@ -317,8 +319,8 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	}
 
 	msg.Length 	= ms.Position();
-	msg.Data 	= ms.GetBuffer(); 
-	
+	msg.Data 	= ms.GetBuffer();
+
 #if DEBUG
 	switch(act)
 	{
@@ -800,9 +802,9 @@ Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 void Gateway::UpdateOnlneOfflne(void* param)
 {
 	auto gt		= 	(Gateway*)param;
-	auto svr	=	gt->Server; 
+	auto svr	=	gt->Server;
 	byte len	= 	svr->Devices.Length();
-	
+
 	auto now = Sys.Seconds();
 	for(int i = 0; i < len; i++)
 	{

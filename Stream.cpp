@@ -368,12 +368,12 @@ bool MemoryStream::CheckRemain(uint count)
 	// 容量不够，需要扩容
 	if(count > remain)
 	{
-		if(!_needFree && _Buffer != _Arr)
+		/*if(!_needFree && _Buffer != _Arr)
 		{
 			debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，而外部缓冲区无法扩容！\r\n", this, remain, count);
 			//assert_param(false);
 			return false;
-		}
+		}*/
 
 		// 原始容量成倍扩容
 		uint total = _Position + count;
@@ -392,4 +392,3 @@ bool MemoryStream::CheckRemain(uint count)
 
 	return true;
 }
-
