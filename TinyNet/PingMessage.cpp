@@ -20,7 +20,7 @@ void PingMessage::Write(Stream& ms)
 }
 
 // 0x01 主数据
-void PingMessage::ReadData(Stream& ms, Array& bs)
+void PingMessage::ReadData(Stream& ms, Array& bs) const
 {
 	TS("PingMessage::ReadData");
 
@@ -40,10 +40,11 @@ void PingMessage::ReadData(Stream& ms, Array& bs)
 }
 
 // 写入数据。同时写入头部大小，否则网关不知道数据区大小和配置区大小
-void PingMessage::WriteData(Stream& ms, byte code, const Array& bs)
+void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
 {
 	TS("PingMessage::WriteData");
 
+	//debug_printf("WriteData p=%d MaxSize=%d \r\n", ms.Position(), MaxSize);
 	int remain	= MaxSize - ms.Position() - 3;
 	if(remain <= 0) return;
 
@@ -82,7 +83,7 @@ void PingMessage::WriteConfig(Stream& ms, const Array& bs)
 
 
 // 0x03 硬件校验
-bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc)
+bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc) const
 {
 	crc  = ms.ReadUInt16();
 	ushort crc1 = Crc::Hash16(dv->GetHardID());
@@ -100,7 +101,7 @@ bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc)
 	return true;
 }
 
-void PingMessage::WriteHardCrc(Stream& ms, ushort crc)
+void PingMessage::WriteHardCrc(Stream& ms, ushort crc) const
 {
 	TS("PingMessage::WriteHardCrc");
 
@@ -112,7 +113,7 @@ void PingMessage::WriteHardCrc(Stream& ms, ushort crc)
 
 
 // 0x04 时间
-bool PingMessage::ReadTime(Stream& ms, uint& seconds)
+bool PingMessage::ReadTime(Stream& ms, uint& seconds) const
 {
 	if(ms.Remain() < 4) return false;
 
@@ -121,7 +122,7 @@ bool PingMessage::ReadTime(Stream& ms, uint& seconds)
 	return true;
 }
 
-void PingMessage::WriteTime(Stream& ms, uint seconds)
+void PingMessage::WriteTime(Stream& ms, uint seconds) const
 {
 	TS("PingMessage::WriteTime");
 

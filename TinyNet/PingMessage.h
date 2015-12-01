@@ -19,20 +19,20 @@ public:
 	virtual void Write(Stream& ms);
 
 	// 0x01 主数据
-	void ReadData(Stream& ms, Array& bs);
-	void WriteData(Stream& ms, byte code, const Array& bs);
+	void ReadData(Stream& ms, Array& bs) const;
+	void WriteData(Stream& ms, byte code, const Array& bs) const;
 
 	// 0x02 配置数据
 	/*void ReadConfig(Stream& ms, Array& bs);
 	void WriteConfig(Stream& ms, const Array& bs);*/
 
 	// 0x03 硬件校验
-	bool ReadHardCrc(Stream& ms, const Device* dv, ushort& crc);
-	void WriteHardCrc(Stream& ms, ushort crc);
+	bool ReadHardCrc(Stream& ms, const Device* dv, ushort& crc) const;
+	void WriteHardCrc(Stream& ms, ushort crc) const;
 
 	// 0x04 时间
-	bool ReadTime(Stream& ms, uint& seconds);
-	void WriteTime(Stream& ms, uint seconds);
+	bool ReadTime(Stream& ms, uint& seconds) const;
+	void WriteTime(Stream& ms, uint seconds) const;
 };
 
 #endif

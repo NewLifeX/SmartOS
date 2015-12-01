@@ -128,7 +128,8 @@ void TinyMessage::ComputeCrc()
 	TS("TinyMessage::ComputeCrc");
 	
 	byte buf[sizeof(_Data) + HeaderSize + sizeof(Checksum)];
-	Stream ms(buf, ArrayLength(buf));
+	//byte buf[256];
+	MemoryStream ms(buf, ArrayLength(buf));
 
 	Write(ms);
 
