@@ -39,22 +39,23 @@ void PingMessage::ReadData(Stream& ms, Array& bs)
 	}
 }
 
+// 写入数据。同时写入头部大小，否则网关不知道数据区大小和配置区大小
 void PingMessage::WriteData(Stream& ms, byte code, const Array& bs)
 {
 	TS("PingMessage::WriteData");
 
-	byte len = bs.Length() - 1;
-	//if(ms.Position() + 3 + len > MaxSize) return;
-	byte remain	= MaxSize - ms.Position() - 3;
+	int remain	= MaxSize - ms.Position() - 3;
+	if(remain <= 0) return;
+
+	byte len	= bs.Length();
 	if(len > remain) len = remain;
 
 	ms.Write(code);	// 子功能码
 	ms.Write((byte)0x01);	// 起始地址
 
 	ms.Write(len);	// 长度
-	ms.Write(Array((byte*)bs.GetBuffer() + 1, len));
+	ms.Write(Array(bs.GetBuffer(), len));
 }
-
 
 /*// 0x02 配置数据
 void PingMessage::ReadConfig(Stream& ms, Array& bs)

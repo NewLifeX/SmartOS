@@ -317,6 +317,7 @@ void TinyClient::Report(Message& msg)
 	auto ms = msg.ToStream();
 	PingMessage pm;
 	pm.MaxSize	= ms.Remain();
+	if(pm.MaxSize > Control->Port->MaxSize) pm.MaxSize = Control->Port->MaxSize;
 
 	pm.WriteData(ms, 0x01, Store.Data);
 	pm.WriteHardCrc(ms, HardCrc);
