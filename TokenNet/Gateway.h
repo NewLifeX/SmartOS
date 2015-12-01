@@ -18,7 +18,6 @@ public:
 	TinyServer*		Server;		// 内网服务端
 	TokenClient*	Client;	// 外网客户端
 	IDataPort*		Led;		// 指示灯
-	uint 			_taskStudy;
 
 	Gateway();
 	~Gateway();
@@ -35,7 +34,6 @@ public:
 	bool OnRemote(const TokenMessage& msg);
 
 	/******** 远程网业务逻辑 ********/
-	bool AutoReport;	// 自动上报
 	bool IsOldOrder; 	//是否旧指令
 
 	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
@@ -58,7 +56,12 @@ public:
 
 	static Gateway*	Current;
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
-	static void UpdateOnlneOfflne(void* param);
+	
+public:
+	uint	_task	= 0;	// 定时任务，10秒
+	int		_Study	= 0;	// 自动退出学习时间，秒
+
+	static void Loop(void* param);
 };
 
 #endif
