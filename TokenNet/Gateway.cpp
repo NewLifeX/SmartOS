@@ -301,6 +301,8 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 {
 	TS("Gateway::SendDevices");
 
+	if(Client->Status < 2) return false;
+
 	TokenMessage msg;
 	msg.Code = 0x21;
 
@@ -432,6 +434,8 @@ bool Gateway::OnMode(const Message& msg)
 void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 {
 	TS("Gateway::DeviceRequest");
+
+	if(Client->Status < 2) return;
 
 	byte id	= dv->Address;
 	switch(act)
