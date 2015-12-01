@@ -8,8 +8,6 @@
 
 TinyClient* TinyClient::Current	= NULL;
 
-static bool OnClientReceived(void* sender, Message& msg, void* param);
-
 static void TinyClientTask(void* param);
 static void TinyClientReset();
 
@@ -43,7 +41,7 @@ void TinyClient::Open()
 {
 	if(Opened) return;
 
-	Control->Received	= OnClientReceived;
+	Control->Received	= [](void* s, Message& msg, void* p){ return ((TinyClient*)p)->OnReceive((TinyMessage&)msg); };
 	Control->Param		= this;
 
 	TranID	= (int)Sys.Ms();
@@ -109,24 +107,14 @@ bool TinyClient::Reply(TinyMessage& msg)
 	return Control->Reply(msg);
 }
 
-bool OnClientReceived(void* sender, Message& msg, void* param)
-{
-	auto client = (TinyClient*)param;
-	assert_ptr(client);
-
-	client->OnReceive((TinyMessage&)msg);
-
-	return true;
-}
-
 bool TinyClient::OnReceive(TinyMessage& msg)
 {
 	// 不处理来自网关以外的消息
 	//if(Server == 0 || Server != msg.Dest) return true;
 	//debug_printf("源地址: 0x%08X 网关地址:0x%08X \r\n",Server, msg.Src);
 
-	if(Type != 0x01C8)
-	   if(msg.Code != 0x01&& Server != msg.Src) return true;//不是无线中继，不是组网消息。不是被组网网关消息，不受其它消息设备控制.
+	// 不是组网消息。不是被组网网关消息，不受其它消息设备控制.
+	if(msg.Code != 0x01 && Server != msg.Src) return true;
 
 	if(msg.Src == Server) LastActive = Sys.Ms();
 
