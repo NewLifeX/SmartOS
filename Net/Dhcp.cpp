@@ -48,8 +48,9 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 
 		// 构造产品名称，把ID第一个字节附到最后
 		String name;
-		name += "WSWL_SmartOS_";	// 产生拷贝效果
+		name += "SmartOS_";	// 产生拷贝效果
 		name.Append(Sys.ID[0]);
+		name.Append(Sys.ID[1]);
 
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
 		String vendor = "www.NewLifeX.com";
