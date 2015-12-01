@@ -10,7 +10,8 @@ void ShunCom::Init(ITransport* port, Pin rst)
 	assert_ptr(port);
 
 	Set(port);
-	MaxSize	= 82;
+	//MaxSize	= 82;
+	MaxSize	= 64;
 
 	if(rst != P0) Reset.Init(rst, true);
 }
