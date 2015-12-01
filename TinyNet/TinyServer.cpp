@@ -259,8 +259,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Address	= dv->Address;
 	dm.Password	= dv->Pass;
 
-	dm.HardID.SetLength(6);	// 小心不要超长
-	dm.HardID	= Sys.ID;
+	dm.HardID.Set(Sys.ID, 6);
 	dm.WriteMessage(rs);
 
 	Reply(rs);
@@ -309,8 +308,7 @@ bool TinyServer::ResetPassword(byte id)
 	dm.Address	= dv->Address;
 	dm.Password	= dv->Pass;
 
-	dm.HardID.SetLength(6);	// 小心不要超长
-	dm.HardID	= Sys.ID;
+	dm.HardID.Set(Sys.ID, 6);
 
 	dm.WriteMessage(rs);
 
@@ -581,7 +579,7 @@ bool TinyServer::DeleteDevice(byte id)
 		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;
 		SaveDevices();
-		
+
 		return true;
 	}
 

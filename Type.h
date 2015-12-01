@@ -108,7 +108,7 @@ public:
 	// 重载等号运算符，使用另一个固定数组来初始化
     Array& operator=(const Array& arr);
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-    Array& operator=(const void* data);
+    //Array& operator=(const void* data);
 
 	virtual ~Array();
 
@@ -286,7 +286,7 @@ public:
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-    ByteArray& operator=(const void* data);
+    //ByteArray& operator=(const void* data);
 
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String& ToHex(String& str, char sep = '-', int newLine = 0x10) const;

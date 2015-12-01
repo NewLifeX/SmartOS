@@ -489,7 +489,7 @@ void TinyClient::DisJoin()
 	// 发送的广播消息，设备类型和系统ID
 	JoinMessage dm;
 	dm.Kind		= Type;
-	dm.HardID	= Sys.ID;
+	dm.HardID.Set(Sys.ID, 16);
 	dm.TranID	= TranID;
 	dm.WriteMessage(msg);
 	dm.Show(true);

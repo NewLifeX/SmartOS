@@ -126,12 +126,12 @@ Array& Array::operator=(const Array& arr)
 }
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-Array& Array::operator=(const void* data)
+/*Array& Array::operator=(const void* data)
 {
 	if(Length() > 0) Copy(data, Length());
 
 	return *this;
-}
+}*/
 
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 bool Array::SetLength(int length, bool bak)
@@ -367,12 +367,12 @@ ByteArray::ByteArray(const String& str) : TArray(0)
 }
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-ByteArray& ByteArray::operator=(const void* data)
+/*ByteArray& ByteArray::operator=(const void* data)
 {
 	if(Length() > 0) Copy(data, Length());
 
 	return *this;
-}
+}*/
 
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine) const
