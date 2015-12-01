@@ -809,14 +809,14 @@ void Gateway::UpdateOnlneOfflne(void* param)
 		auto dv = svr->Devices[i];
 		ushort OfflineTime = (dv->OfflineTime)? dv->OfflineTime : 60;
 
-		if(dv->LastTime + OfflineTime > now)
-		{
+		if(dv->LastTime + OfflineTime < now)
+		{	// 下线
 			if(dv->Logined == true)
 				gt->SendDevices(DeviceAtions::Offline, dv);
 			dv->Logined = false;
 		}
 		else
-		{
+		{	// 上线
 			if(dv->Logined == false)
 				gt->SendDevices(DeviceAtions::Online, dv);
 			dv->Logined = true;

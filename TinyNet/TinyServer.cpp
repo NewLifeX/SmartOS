@@ -582,6 +582,7 @@ int TinyServer::LoadDevices()
 	Stream ms(data, 4 << 10);
 	// 设备个数
 	int count = ms.ReadByte();
+	debug_printf("FLASH 内存有%d个节点\r\n",count);
 	int i = 0;
 	for(; i<count; i++)
 	{
