@@ -645,10 +645,26 @@ void TinyServer::ClearDevices()
 	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", addr);
 
 	cfg.Invalid("Devs");
-
+	
+	int count = Devices.Length();
+	for(int j = 0; j < 3; j++)		// 3遍
+	{
+		for(int i = 1; i < count; i++)	// 从1开始派ID  自己下线完全不需要
+		{
+			auto dv = Devices[i];
+			TinyMessage rs;
+			rs.Dest = dv->Address;
+			ushort crc = Crc::Hash16(dv->HardID);
+			Disjoin(rs, crc);
+		}
+	}	
+			
 	for(int i=0; i<Devices.Length(); i++)
+	{
 		delete Devices[i];
-	Devices.SetLength(0);
+	}
+	Devices.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
+	SaveDevices();
 }
 
 bool TinyServer::LoadConfig()
