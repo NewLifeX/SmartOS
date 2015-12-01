@@ -196,6 +196,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.ReadMessage(msg);
 	// 根据硬件编码找设备
 	auto dv = FindDevice(dm.HardID);
+	bool IsNewDv = false;
 	if(!dv)
 	{
 		// 以网关地址为基准，进行递增分配
@@ -213,31 +214,34 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->Logins	= 0;
 		// 节点注册
 		dv->RegTime	= now;
+		dv->Kind	= dm.Kind;
+		dv->HardID	= dm.HardID;
+		dv->Version	= dm.Version;
+		dv->LoginTime = now;
+		// 生成随机密码。当前时间的MD5
+		dv->Pass = MD5::Hash(Array(&now, 8));
+		dv->Pass.SetLength(8);	// 小心不要超长
+		dv->Name = "新设备";
+	
+		if(dv->Valid())
+		{
+			Devices.Push(dv);
+			SaveDevices();	// 写好相关数据 校验通过才能存flash  
+		}
+		else
+		{
+			delete dv;
+			return false;
+		}
 	}
 
 	// 更新设备信息
 	Current		= dv;
-
-	dv->Kind	= dm.Kind;
-	dv->HardID	= dm.HardID;
-	dv->Version	= dm.Version;
-
 	if(dv->Logins++ == 0) dv->LoginTime = now;
 	dv->LastTime = now;
-
+	
 	debug_printf("\r\nTinyServer::设备第 %d 次组网 TranID=0x%04X \r\n", dv->Logins, dm.TranID);
 	dv->Show(true);
-
-	// 生成随机密码。当前时间的MD5
-	dv->Pass = MD5::Hash(Array(&now, 8));
-	dv->Pass.SetLength(8);	// 小心不要超长
-	dv->Name = "新设备";
-	
-	if(dv->Valid())
-	{
-		Devices.Push(dv);
-		SaveDevices();	// 写好相关数据 校验通过才能存flash  
-	}
 
 	// 响应
 	TinyMessage rs;
@@ -247,19 +251,16 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	// 发现响应
 	dm.Reply	= true;
-
 	dm.Server	= Cfg->Address;
 	dm.Channel	= Cfg->Channel;
 	dm.Speed	= Cfg->Speed / 10;
-
 	dm.Address	= dv->Address;
 	dm.Password	= dv->Pass;
 
 	dm.HardID.SetLength(6);	// 小心不要超长
 	dm.HardID	= Sys.ID;
-
 	dm.WriteMessage(rs);
-
+	
 	Reply(rs);
 
 	return true;
