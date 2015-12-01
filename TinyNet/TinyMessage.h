@@ -102,7 +102,7 @@ class MessageNode
 public:
 	byte	Using;		// 是否在使用
 	byte	Sequence;	// 序列号
-	byte	Data[32];
+	byte	Data[64];
 	uint	Length;
 	uint	Period;		// 延迟间隔ms。每次逐步递增
 	ulong	StartTime;	// 开始时间ms
