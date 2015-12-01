@@ -69,7 +69,7 @@ int Array::Capacity() const { return _Capacity; }
 // 缓冲区。按字节指针返回
 byte* Array::GetBuffer() const { return (byte*)_Arr; }
 
-int memlen(const void* data)
+int MemLen(const void* data)
 {
 	if(!data) return 0;
 
@@ -84,7 +84,7 @@ Array::Array(void* data, int len)
 {
 	_Size	= 1;
 
-	if(!len) len = memlen(data);
+	if(!len) len = MemLen(data);
 
 	_Arr		= data;
 	_Length		= len;
@@ -97,7 +97,7 @@ Array::Array(const void* data, int len)
 {
 	_Size	= 1;
 
-	if(!len) len = memlen(data);
+	if(!len) len = MemLen(data);
 
 	_Arr		= (void*)data;
 	_Length		= len;
@@ -196,7 +196,7 @@ bool Array::Set(void* data, int len)
 // 设置数组。直接使用指针，不拷贝数据
 bool Array::Set(const void* data, int len)
 {
-	if(!len) len = memlen(data);
+	if(!len) len = MemLen(data);
 
 	// 销毁旧的
 	if(_needFree && _Arr && _Arr != data) delete _Arr;
@@ -216,7 +216,7 @@ int Array::Copy(const void* data, int len, int index)
 	assert_param2(_canWrite, "禁止修改数组数据");
 	assert_param2(data, "Copy数据不能为空指针");
 
-	if(!len) len = memlen(data);
+	if(!len) len = MemLen(data);
 
 	// 检查长度是否足够
 	int len2 = index + len;
@@ -229,6 +229,17 @@ int Array::Copy(const void* data, int len, int index)
 	if(len2 > _Length) _Length = len2;
 
 	return len;
+}
+
+// 复制数组。深度克隆，拷贝数据
+int Array::Copy(const Array& arr, int index)
+{
+	assert_param2(_canWrite, "禁止修改数组数据");
+
+	if(&arr == this) return 0;
+	if(arr.Length() == 0) return 0;
+
+	return Copy(arr._Arr, arr.Length(), index);
 }
 
 // 把当前数组复制到目标缓冲区。未指定长度len时复制全部
@@ -253,17 +264,6 @@ void Array::Clear()
 	assert_param2(_Arr, "Clear数据不能为空指针");
 
 	memset(_Arr, 0, _Size * _Length);
-}
-
-// 复制数组。深度克隆，拷贝数据
-int Array::Copy(const Array& arr, int index)
-{
-	assert_param2(_canWrite, "禁止修改数组数据");
-
-	if(&arr == this) return 0;
-	if(arr.Length() == 0) return 0;
-
-	return Copy(arr._Arr, arr.Length(), index);
 }
 
 // 设置指定位置的值，不足时自动扩容

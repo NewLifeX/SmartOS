@@ -122,12 +122,12 @@ public:
 	bool Set(const void* data, int len = 0);
 	// 复制数组。深度克隆，拷贝数据，自动扩容
 	int Copy(const void* data, int len = 0, int index = 0);
+	// 复制数组。深度克隆，拷贝数据
+	int Copy(const Array& arr, int index = 0);
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
 	int CopyTo(void* data, int len = 0, int index = 0) const;
 	// 清空已存储数据。
 	virtual void Clear();
-	// 复制数组。深度克隆，拷贝数据
-	int Copy(const Array& arr, int index = 0);
 	// 设置指定位置的值，不足时自动扩容
 	virtual void SetItemAt(int i, const void* item);
 
