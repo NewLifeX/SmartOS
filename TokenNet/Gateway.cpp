@@ -101,12 +101,13 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	auto dv = Server->Current;
 	if(dv)
 	{
-		// 短时间内重复活动的 上报注册和上线
-		auto now	= Sys.Seconds();
-		if(dv->RegTime		> now - 3)	DeviceRequest(DeviceAtions::Register, dv);
-		if(dv->LoginTime	> now - 3)	DeviceRequest(DeviceAtions::Online, dv);
-		dv->LastTime	= now;
-		dv->Logined		= true;
+		switch(msg.Code)
+		{
+			case 0x01:
+				DeviceRequest(DeviceAtions::Register, dv);
+				DeviceRequest(DeviceAtions::Online, dv);
+				break;
+		}
 	}
 
 	// 应用级消息转发

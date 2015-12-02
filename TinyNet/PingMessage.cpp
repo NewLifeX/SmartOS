@@ -129,5 +129,5 @@ void PingMessage::WriteTime(Stream& ms, uint seconds) const
 	if(ms.Position() + 5 > MaxSize) return;
 
 	ms.Write((byte)0x04);	// 子功能码
-	ms.Write(seconds);		//硬件CRC
+	ms.Write(seconds);
 }

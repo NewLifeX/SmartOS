@@ -200,33 +200,27 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.ReadMessage(msg);
 	// 根据硬件编码找设备
 	auto dv = FindDevice(dm.HardID);
-	//bool IsNewDv = false;
 	if(!dv)
 	{
-		// 以网关地址为基准，进行递增分配
-		//byte addr = Cfg->Address;
-		{
-			//id = addr;
-			// 从1开始派ID
-			id	= 1;
-			while(FindDevice(++id) != NULL && id < 0xFF);
-			debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
-			if(id == 0xFF) return false;
-		}
+		// 从1开始派ID
+		id	= 1;
+		while(FindDevice(++id) != NULL && id < 0xFF);
+		debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
+		if(id == 0xFF) return false;
+
 		dv = new Device();
 		dv->Address	= id;
 		dv->Logins	= 0;
 		// 节点注册
 		dv->RegTime	= now;
 		dv->Kind	= dm.Kind;
-		dv->GetHardID()	= dm.HardID;
+		dv->SetHardID(dm.HardID);
 		dv->Version	= dm.Version;
 		dv->LoginTime = now;
 		// 生成随机密码。当前时间的MD5
 		auto bs	= MD5::Hash(Array(&now, 8));
 		if(bs.Length() > 8) bs.SetLength(8);
-		dv->GetPass() = bs;
-		//dv->Name = "新设备";
+		dv->SetPass(bs);
 
 		if(dv->Valid())
 		{
@@ -242,8 +236,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	// 更新设备信息
 	Current		= dv;
-	if(dv->Logins++ == 0) dv->LoginTime = now;
-	dv->LastTime = now;
+	dv->LoginTime	= now;
+	dv->Logins++;
 
 	debug_printf("\r\nTinyServer::设备第 %d 次组网 TranID=0x%04X \r\n", dv->Logins, dm.TranID);
 	dv->Show(true);
@@ -345,9 +339,6 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL)return false;
 
-	dv->LastTime = Sys.Seconds();
-	dv->Logined  = true;
-
 	// 准备一条响应指令
 	TinyMessage rs;
 	rs.Code = msg.Code;
@@ -356,7 +347,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 
 	auto ms	= msg.ToStream();
 	PingMessage pm;
-	pm.MaxSize	= Control->Port->MaxSize;
+	pm.MaxSize	= Control->Port->MaxSize - TinyMessage::MinSize;
 	// 子操作码
 	while(ms.Remain())
 	{
@@ -393,6 +384,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	// 0x02给客户端同步时间，4字节的秒
 	auto ms2	= rs.ToStream();
 	pm.WriteTime(ms2, Sys.Seconds());
+	rs.Length	= ms2.Position();
 
 	Reply(rs);
 

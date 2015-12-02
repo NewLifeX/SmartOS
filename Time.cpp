@@ -151,6 +151,12 @@ void TTime::SetTime(ulong seconds)
 	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
 	BaseSeconds = seconds - Seconds;
 
+#if DEBUG
+	DateTime dt(seconds);
+	debug_printf("TTime::SetTime 设置时间 ");
+	dt.Show(true);
+#endif
+
 	// 保存到RTC
 	if(OnSave) OnSave();
 }

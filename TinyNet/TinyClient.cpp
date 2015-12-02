@@ -567,40 +567,39 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	TS("TinyClient::OnPing");
 
 	// 忽略响应消息
-	if(msg.Reply)
+	if(!msg.Reply)
 	{
-		if(msg.Src == Server)
-		{
-			LastActive = Sys.Ms();
-			
-			// 处理消息
-			auto ms	= msg.ToStream();
-			PingMessage pm;
-			pm.MaxSize	= Control->Port->MaxSize;
-			// 子操作码
-			while(ms.Remain())
-			{
-				switch(ms.ReadByte())
-				{
-					case 0x04:
-					{
-						uint seconds = 0;
-						if(pm.ReadTime(ms, seconds))
-						{
-							Time.SetTime(seconds);
-						}
-						break;
-					}
-					default:
-						break;
-				}
-			}
-		}
+		debug_printf("TinyClient::OnPing Length=%d\r\n", msg.Length);
 
 		return true;
 	}
 
-	debug_printf("TinyClient::OnPing Length=%d\r\n", msg.Length);
+	if(msg.Src != Server) return true;
+
+	LastActive = Sys.Ms();
+
+	// 处理消息
+	auto ms	= msg.ToStream();
+	PingMessage pm;
+	pm.MaxSize	= Control->Port->MaxSize - TinyMessage::MinSize;
+	// 子操作码
+	while(ms.Remain())
+	{
+		switch(ms.ReadByte())
+		{
+			case 0x04:
+			{
+				uint seconds = 0;
+				if(pm.ReadTime(ms, seconds))
+				{
+					Time.SetTime(seconds);
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
 
 	return true;
 }
