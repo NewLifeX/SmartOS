@@ -823,6 +823,9 @@ void Gateway::Loop(void* param)
 		auto dv = gw->Server->Devices[i];
 		ushort time = dv->OfflineTime ? dv->OfflineTime : 60;
 
+		// 特殊处理网关自身
+		if(dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
+
 		if(dv->LastTime + time < now)
 		{	// 下线
 			if(dv->Logined)
