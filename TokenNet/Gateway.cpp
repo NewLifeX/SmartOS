@@ -210,10 +210,10 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	}
 
 	// 应用级消息转发
-	if(msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - 8)
+	if(msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)
 	{
 		//debug_printf("Gateway::Remote ");
-		msg.Show();
+		//msg.Show();
 
 		TinyMessage tmsg;
 		if(!TokenToTiny(msg, tmsg)) return true;
