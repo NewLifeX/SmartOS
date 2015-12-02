@@ -28,7 +28,6 @@ TinyServer::TinyServer(TinyController* control)
 	Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
-	DataStoreLent		= 64;
 
 	Received	= NULL;
 	Param		= NULL;
@@ -462,7 +461,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 
 	TS("TinyServer::OnReadReply");
 
-	debug_printf("响应读取写入数据 \r\n") ;
+	//debug_printf("响应读取写入数据 \r\n") ;
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
@@ -499,14 +498,10 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	if(offset>DataStoreLent)
-	{
-		return true;
-	}
 	// 计算还有多少数据可写
-	uint len = ms.Remain();
-	auto bs	= dv.GetStore();
-	int remain = bs.Capacity() - offset;
+	uint len	= ms.Remain();
+	auto bs		= dv.GetStore();
+	int remain	= bs.Capacity() - offset;
 	if(remain < 0)
 	{
 		msg.Error = true;
@@ -534,7 +529,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 			// 实际写入的长度
 			ms.WriteEncodeInt(len);
 
-			debug_printf("读写指令转换");
+			//debug_printf("读写指令转换");
 		}
 	}
 	msg.Length	= ms.Position();
@@ -608,7 +603,7 @@ int TinyServer::LoadDevices()
 	for(; i<count; i++)
 	{
 		debug_printf("\t加载设备:");
-		
+
 		bool fs	= false;
 		/*ms.Seek(1);
 		byte id = ms.Peek();

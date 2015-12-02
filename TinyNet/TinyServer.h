@@ -10,12 +10,9 @@
 
 /******************************** TinyServer ********************************/
 
-// 微网客户端
+// 微网服务端
 class TinyServer
 {
-private:
-	byte DataStoreLent;
-
 public:
 	TinyController* Control;
 	TinyConfig*	Cfg;
