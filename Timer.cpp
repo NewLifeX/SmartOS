@@ -337,7 +337,7 @@ void PWM::Config()
 	oc.TIM_OCMode		= TIM_OCMode_PWM1;
 	oc.TIM_OutputState	= TIM_OutputState_Enable;
 	oc.TIM_OCPolarity	= Polarity ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
-	//oc.TIM_OCIdleState	= TIM_OCIdleState_Set;
+	oc.TIM_OCIdleState	= Polarity ? TIM_OCIdleState_Reset : TIM_OCIdleState_Set;
 
 	for(int i=0; i<4; i++)
 	{
