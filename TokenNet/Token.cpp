@@ -271,7 +271,7 @@ void StartGateway(void* param)
 
 			debug_printf("\r\n");
 			// 启动时首先进入学习模式
-			gw->SetMode(true);
+			gw->SetMode(30);
 		}
 	}
 }

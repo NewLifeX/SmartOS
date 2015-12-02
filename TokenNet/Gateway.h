@@ -39,8 +39,7 @@ public:
 	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
 
 	// 学习模式 0x20
-	bool Study;
-	void SetMode(bool student);
+	void SetMode(uint sStudy);
 	void Clear();
 	bool OnMode(const Message& msg);
 

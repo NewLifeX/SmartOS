@@ -47,7 +47,6 @@ void Gateway::Start()
 
 	Server->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnLocal((TinyMessage&)msg); };
 	Server->Param		= this;
-	Server->Study		= Study;
 
 	Client->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnRemote((TokenMessage&)msg); };
 	Client->Param		= this;
@@ -354,26 +353,38 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 }
 
 // 学习模式 0x20
-void Gateway::SetMode(bool study)
+void Gateway::SetMode(uint sStudy)
 {
 	TS("Gateway::SetMode");
 
-	Study  		  = study;
-	Server->Study = Study;
+	Server->Study = sStudy > 0;
+
+	// 兼容旧版本
+	switch(sStudy)
+	{
+		case 1:
+			sStudy	= 30;
+			break;
+		case 2:
+			sStudy	= 90;
+			break;
+	}
+
+	// 定时退出学习模式
+	_Study	= sStudy;
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(study ? 90000 : 100);
+	if(Led) Led->Write(sStudy ? sStudy * 1000 : 100);
+
+	if(sStudy)
+		debug_printf("进入 学习模式 %d 秒\r\n", sStudy);
+	else
+		debug_printf("退出 学习模式\r\n");
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
 	msg.Length	= 1;
-	msg.Data[0]	= study ? 2 : 0;
-	//msg.Data[1]	= study ? 1 : 0;
-
-	debug_printf("%s 学习模式\r\n", study ? "进入" : "退出");
-
-	// 定时退出学习模式
-	_Study	= study ? 30 : 0;
+	msg.Data[0]	= sStudy;
 
 	Client->Reply(msg);
 }
@@ -398,36 +409,12 @@ bool Gateway::OnMode(const Message& msg)
 
     if(msg.Length < 1)
     {
-    	SetMode(true);
+    	SetMode(30);
         return true;
     }
+
     // 自动学习模式
-    if(msg.Data[0] == 2)
-    {
-        SetMode(true);
-        return true;
-    }
-
-	// 手动学习模式
-	if(msg.Data[0] == 1)
-	{
-		Study  	  = true;
-		Server->Study = Study;
-
-		// 设定小灯快闪时间，单位毫秒
-		if(Led) Led->Write(900000);
-
-		TokenMessage msg;
-		msg.Code	= 0x20;
-		msg.Length	= 1;
-		msg.Data[0]	= 1;
-		// msg.Data[1] = 1;
-		debug_printf("%s 学习模式\r\n", Study ? "进入" : "退出");
-		Client->Reply(msg);
-	}
-
-	// 退出学习模式
-	if(msg.Data[0] == 0) SetMode(false);
+	SetMode(msg.Data[0]);
 
 	return true;
 }
@@ -812,7 +799,7 @@ void Gateway::Loop(void* param)
 		{
 			gw->_Study	= 0;
 
-			gw->SetMode(false);
+			gw->SetMode(0);
 		}
 	}
 
