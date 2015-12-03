@@ -377,6 +377,8 @@ bool NRF24L01::Check(void)
 // 配置
 bool NRF24L01::Config()
 {
+	if(Speed != 250 && Speed != 1000 && Speed != 2000) Speed = 250;
+
 #if RF_DEBUG
 	debug_printf("NRF24L01::Config\r\n");
 
@@ -597,7 +599,7 @@ void NRF24L01::ChangePower(int level)
 	if(level == 1)
 	{
 		// 芯片内部关闭电源
-		SetPowerMode(false);		
+		SetPowerMode(false);
 	}
 	else if(level > 1)
 	{
