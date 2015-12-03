@@ -1,7 +1,7 @@
 #ifndef __STM32_H
 #define __STM32_H
 
-#if !defined(STM32F0) && !defined(STM32F1) && !defined(STM32F4)
+#if !defined(STM32F0) && !defined(STM32F1) && !defined(STM32F4) && !defined(GD32F150)
 	#if defined (STM32F0XX) || defined (STM32F0XX_LD) || defined (STM32F030X6) || defined (STM32F0XX_MD) || defined (STM32F030X8)
 		#ifndef STM32F0
 			#define STM32F0
@@ -33,6 +33,11 @@
 			#define GD32
 		#endif
 	#endif
+	
+	#ifdef GD32F150X8
+		#define GD32F150
+		#define GD32
+	#endif
 #endif
 
 // 默认使用固件库
@@ -50,8 +55,10 @@
 	#include "stm32f3xx.h"
 #elif defined(STM32F0)
 	#include "stm32f0xx.h"
+#elif defined(GD32F150)
+	#include "stm32f0xx.h"
 #else
-	#error "请在Keil项目配置C/C++页定义芯片平台，如STM32F0/STM32F1/STM32F2/STM32F3/STM32F4"
+	#error "请在Keil项目配置C/C++页定义芯片平台，如STM32F0/STM32F1/STM32F2/STM32F3/STM32F4/GD32F150"
 #endif
 
 extern "C"
