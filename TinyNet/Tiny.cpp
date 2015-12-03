@@ -14,7 +14,7 @@ uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 	debug_printf("OnSerial len=%d \t", bs.Length());
 	bs.Show(true);
 
-	TinyClient* client = TinyClient::Current;
+	auto client = TinyClient::Current;
 	if(client) client->Store.Write(1, bs);
 
 	return 0;
@@ -35,7 +35,7 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 #if DEBUG
 	// 打开串口输入便于调试数据操作，但是会影响性能
-	SerialPort* sp = SerialPort::GetMessagePort();
+	auto sp = SerialPort::GetMessagePort();
 	if(baudRate != 1024000)
 	{
 		sp->Close();
@@ -51,10 +51,10 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
-	Spi* spi = new Spi(spi_, 10000000, true);
-	NRF24L01* nrf = new NRF24L01();
+	auto spi = new Spi(spi_, 10000000, true);
+	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
-	nrf->Power.Invert = powerInvert;
+	//nrf->Power.Invert = powerInvert;
 	//nrf->SetPower();
 
 	nrf->AutoAnswer		= false;
@@ -111,7 +111,7 @@ void* InitConfig(void* data, uint size)
 	Config::Current	= &Config::CreateFlash();
 
 	// 启动信息
-	HotConfig* hot	= &HotConfig::Current();
+	auto hot	= &HotConfig::Current();
 	hot->Times++;
 
 	data = hot->Next();
@@ -121,7 +121,7 @@ void* InitConfig(void* data, uint size)
 		((byte*)data)[0] = size;
 	}
 
-	TinyConfig* tc = TinyConfig::Init();
+	auto tc = TinyConfig::Init();
 
 	// 尝试加载配置区设置
 	tc->Load();
@@ -131,11 +131,11 @@ void* InitConfig(void* data, uint size)
 
 void ClearConfig()
 {
-	TinyConfig* tc = TinyConfig::Current;
+	auto tc = TinyConfig::Current;
 	if(tc) tc->Clear();
 
 	// 退网
-	TinyClient* client = TinyClient::Current;
+	auto client = TinyClient::Current;
 	if(client) client->DisJoin();
 
 	Sys.Reset();
@@ -180,6 +180,6 @@ void InitButtonPress(Button_GrayLevel* btns, byte count)
 
 void SetPower(ITransport* port)
 {
-	Power* pwr	= dynamic_cast<Power*>(port);
+	auto pwr	= dynamic_cast<Power*>(port);
 	if(pwr) pwr->SetPower();
 }
