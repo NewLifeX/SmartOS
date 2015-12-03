@@ -188,7 +188,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	auto spi = new Spi(spi_, 10000000, true);
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
-	nrf->Power.Invert = powerInvert;
+	//nrf->Power.Invert = powerInvert;
 
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
@@ -196,7 +196,6 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf->Speed			= TinyConfig::Current->Speed;
 
 	nrf->Led	= led;
-	//if(!nrf.Check()) debug_printf("请检查NRF24L01线路\r\n");
 
 	return nrf;
 }

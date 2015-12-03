@@ -55,7 +55,6 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 	//nrf->Power.Invert = powerInvert;
-	//nrf->SetPower();
 
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
@@ -63,8 +62,6 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	nrf->Speed			= TinyConfig::Current->Speed;
 
 	nrf->Led	= led;
-
-	//if(!nrf.Check()) debug_printf("请检查NRF24L01线路\r\n");
 
 	return nrf;
 }

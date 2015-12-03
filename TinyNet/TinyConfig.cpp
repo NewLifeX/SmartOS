@@ -13,6 +13,9 @@ void TinyConfig::LoadDefault()
 	Kind	= Sys.Code;
 	//Server	= 0x01;
 
+	Channel	= 120;
+	Speed	= 250;
+
 	PingTime	= 10;
 	OfflineTime	= 60;
 	StartSet	= 64;
@@ -62,14 +65,14 @@ void TinyConfig::Clear()
 	Config::Current->Set("TCFG", bs);
 }
 
-void TinyConfig::Write(Stream& ms)const
+void TinyConfig::Write(Stream& ms) const
 {
-	ms.Write((byte *)this, 0, sizeof(this[0]));
+	ms.Write(&Length, 0, Length);
 }
 
 void TinyConfig::Read(Stream& ms)
 {
-	memcpy((byte *)this, ms.GetBuffer(), sizeof(this[0]));
+	ms.Read(&Length, 0, Length);
 }
 
 TinyConfig* TinyConfig::Init()
@@ -78,8 +81,6 @@ TinyConfig* TinyConfig::Init()
 	static TinyConfig tc;
 	TinyConfig::Current = &tc;
 	tc.LoadDefault();
-	tc.Channel	= 120;
-	tc.Speed	= 250;
 
 	return &tc;
 }
