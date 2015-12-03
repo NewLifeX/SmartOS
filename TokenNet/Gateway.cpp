@@ -389,6 +389,12 @@ void Gateway::SetMode(uint sStudy)
 	Client->Reply(msg);
 }
 
+// 获取学习模式 返回sStudy
+uint Gateway::GetMode()
+{
+	return _Study;
+}
+
 // 清空
 void Gateway::Clear()
 {

@@ -40,6 +40,7 @@ public:
 
 	// 学习模式 0x20
 	void SetMode(uint sStudy);
+	uint GetMode();
 	void Clear();
 	bool OnMode(const Message& msg);
 
