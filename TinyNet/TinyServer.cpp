@@ -92,7 +92,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	switch(msg.Code)
 	{
 		case 1:
-			OnJoin(msg);
+			if(!OnJoin(msg)) return false;
 			dv = Current;
 			break;
 		case 2:
