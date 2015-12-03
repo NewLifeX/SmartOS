@@ -1018,7 +1018,7 @@ void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;
 
-	NRF24L01* nrf = (NRF24L01*)param;
+	auto nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
 	// 马上调度任务
@@ -1135,7 +1135,7 @@ void NRF24L01::ReceiveTask(void* param)
 {
 	assert_ptr(param);
 
-	NRF24L01* nrf = (NRF24L01*)param;
+	auto nrf = (NRF24L01*)param;
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	if(nrf->Opened && nrf->_Lock == 0)
 	{
