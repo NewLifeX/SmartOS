@@ -60,7 +60,7 @@ void ShunCom::ShowConfig()
 	if(!Open()) return;
 
 	Config	= true;
-	Sys.Sleep(3000);
+	Sys.Sleep(2000);
 
 	//读取Zibeer模块配置指令
 	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };

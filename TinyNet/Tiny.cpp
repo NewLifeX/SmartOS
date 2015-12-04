@@ -77,6 +77,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
+	zb->ShowConfig();
 
 	zb->Led	= led;
 
