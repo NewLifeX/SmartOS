@@ -143,8 +143,6 @@ TaskScheduler::TaskScheduler(string name)
 	_Tasks.SetLength(0);
 	Name 	= name;
 
-	_gid 	= 1;
-
 	Running = false;
 	Current	= NULL;
 	Count	= 0;
@@ -158,25 +156,32 @@ TaskScheduler::TaskScheduler(string name)
 	Current = NULL;
 	//_Tasks.DeleteAll().Clear();
 	if(_Tasks) delete _Tasks;
-}
-
-void TaskScheduler::Set(IArray<Task>* tasks)
-{
-	assert_param2(_Tasks == NULL, "已设置任务数组，禁止覆盖！");
-
-	_Tasks = tasks;
 }*/
+
+void TaskScheduler::Set(Task* tasks, uint count)
+{
+	for(int i=0; i<count; i++)
+	{
+		tasks[i].ID	= 0;
+		_Tasks.Push(&tasks[i]);
+	}
+}
 
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, string name)
 {
 	// 查找是否有可用空闲任务
 	Task* task	= NULL;
-	int idx = _Tasks.FindIndex(NULL);
-	if(idx >= 0)
-		task	= _Tasks[idx];
-	else
-		_Tasks.Push(task = new Task());
+	for(int i=0; !task && i<_Tasks.Length(); i++)
+	{
+		if(!_Tasks[i])
+			task	= _Tasks[i] = new Task();
+		else if(_Tasks[i]->ID == 0)
+			task	= _Tasks[i];
+	}
+	if(!task) _Tasks.Push(task = new Task());
+
+	static uint _gid = 1;
 
 	task->Host	= this;
 	task->ID	= _gid++;

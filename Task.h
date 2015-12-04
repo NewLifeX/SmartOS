@@ -57,7 +57,6 @@ class TaskScheduler
 {
 private:
 	TArray<Task*, 0x20>	_Tasks;
-	uint _gid;	// 总编号
 
 	friend class Task;
 
@@ -74,7 +73,7 @@ public:
 	TaskScheduler(string name = NULL);
 	//~TaskScheduler();
 
-	//void Set(IArray<Task>* tasks);
+	void Set(Task* tasks, uint count);
 
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 	uint Add(Action func, void* param, int dueTime = 0, int period = 0, string name = NULL);

@@ -122,7 +122,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
-	debug_printf("\r\nCreateServer \r\n");
+	//debug_printf("\r\nCreateServer \r\n");
 
 	static TinyController ctrl;
 	ctrl.Port = port;
@@ -161,6 +161,12 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 #if DEBUG
     Sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
+#endif
+
+#if DEBUG
+	// 设置一定量初始任务，减少堆分配
+	static Task ts[0x10];
+	Task::Scheduler()->Set(ts, ArrayLength(ts));
 #endif
 
 #if DEBUG
