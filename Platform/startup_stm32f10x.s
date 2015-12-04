@@ -29,13 +29,15 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     Reset_Handler ; Reset Handler
 
 				IMPORT FaultHandler
-				IMPORT UserHandler
                 DCD     FaultHandler ; NMI Handler
                 DCD     FaultHandler ; Hard Fault Handler
                 DCD     FaultHandler ; MPU Fault Handler
                 DCD     FaultHandler ; Bus Fault Handler
                 DCD     FaultHandler ; Usage Fault Handler
 
+				IF :DEF:TINY
+				ELSE
+				IMPORT UserHandler
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
                 DCD     0           ; Reserved
@@ -107,6 +109,7 @@ __Vectors       DCD     __initial_sp  ; Top of Stack
                 DCD     UserHandler ; DMA2 Channel2
                 DCD     UserHandler ; DMA2 Channel3
                 DCD     UserHandler ; DMA2 Channel4 & Channel5
+				ENDIF
 __Vectors_End
 
 __Vectors_Size  EQU  __Vectors_End - __Vectors
