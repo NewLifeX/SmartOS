@@ -162,7 +162,7 @@ bool SerialPort::OnOpen()
 	Rx.SetCapacity(0x80);
 	Rx.Clear();
 
-#if !(defined(STM32F0) || defined(GD32F150))
+#if defined(STM32F0) || defined(GD32F150)
 	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
 	//USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
 #else
