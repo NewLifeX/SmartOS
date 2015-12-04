@@ -35,13 +35,16 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 #if DEBUG
 	// 打开串口输入便于调试数据操作，但是会影响性能
-	auto sp = SerialPort::GetMessagePort();
-	if(baudRate != 1024000)
+	if(baudRate > 0)
 	{
-		sp->Close();
-		sp->SetBaudRate(baudRate);
+		auto sp = SerialPort::GetMessagePort();
+		if(baudRate != 1024000)
+		{
+			sp->Close();
+			sp->SetBaudRate(baudRate);
+		}
+		sp->Register(OnSerial);
 	}
-	sp->Register(OnSerial);
 
 	//WatchDog::Start(20000);
 #else
