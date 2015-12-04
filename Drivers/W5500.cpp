@@ -628,7 +628,7 @@ void W5500::OnIRQ(InputPort* port, bool down, void* param)
 {
 	if(!down) return;	// 低电平中断
 
-	W5500* net = (W5500*)param;
+	auto net = (W5500*)param;
 	//net->OnIRQ();
 	//debug_printf("OnIRQ \r\n");
 	Sys.SetTask(net->TaskID, true, 0);
@@ -648,10 +648,12 @@ void W5500::OnIRQ()
 		if(ir.CONFLICT)
 		{
 			// IP 冲突
+			debug_printf("IP地址冲突 \r\n");
 		}
 		if(ir.MP)
 		{
 			// 收到网络唤醒包
+			debug_printf("收到网络唤醒包 \r\n");
 		}
 		if(ir.UNREACH)
 		{
