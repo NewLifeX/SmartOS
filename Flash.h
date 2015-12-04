@@ -8,7 +8,7 @@
 // Flash类
 class Flash : public BlockStorage
 {
-protected:
+public:
 	virtual bool WriteBlock(uint address, const byte* buf, uint len, bool inc);
     // 擦除块 （段地址）
     virtual bool EraseBlock(uint address);
