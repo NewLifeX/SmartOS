@@ -45,6 +45,5 @@ namespace NewLife.Reflection
             build.BuildLib("..\\SmartOS_F1x0");*/
         }
     }
-
 }
 	//include=MDK.cs

@@ -38,8 +38,11 @@ namespace NewLife.Reflection
 			build.Debug = false;
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
+
+			build.Tiny = true;
+            build.CompileAll();
+            build.BuildLib("..\\SmartOS_F1");
         }
     }
-
 }
 	//include=MDK.cs
