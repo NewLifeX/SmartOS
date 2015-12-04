@@ -44,25 +44,24 @@ ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, 
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi = new Spi(spi_, 36000000);
-
-	auto pwr = new OutputPort(power, true);
-	*pwr = true;
+	static Spi spi(spi_, 36000000);
+	static OutputPort pwr(power, true);
+	pwr = true;
 
 	//TokenConfig* tk = TokenConfig::Current;
 
-	auto net = new W5500();
-	net->LoadConfig();
-	net->Init(spi, irq, rst);
-	net->Led = led;
+	static W5500 net;
+	net.LoadConfig();
+	net.Init(&spi, irq, rst);
+	net.Led = led;
 
 	// 打开DHCP
-	auto udp	= new UdpClient(net);
-	auto dhcp	= new Dhcp(udp);
-	dhcp->OnStop	= OnDhcpStop5500;
-	dhcp->Start();
+	static UdpClient udp(&net);
+	static Dhcp	dhcp(&udp);
+	dhcp.OnStop	= OnDhcpStop5500;
+	dhcp.Start();
 
-	return net;
+	return &net;
 }
 
 ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
@@ -89,7 +88,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 {
 	debug_printf("\r\nCreateClient \r\n");
 
-	auto token	= new TokenController();
+	static TokenController token;
 
 	auto tk = TokenConfig::Current;
 	ISocket* socket	= NULL;
@@ -97,10 +96,10 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 		socket = CreateW5500UDP(host, tk);
 	else
 		socket = CreateW5500TCP(host, tk);
-	token->Port = dynamic_cast<ITransport*>(socket);
+	token.Port = dynamic_cast<ITransport*>(socket);
 
-	auto client	= new TokenClient();
-	client->Control	= token;
+	static TokenClient client;
+	client.Control	= &token;
 	//client->Local	= token;
 
 	// 如果是TCP，需要再建立一个本地UDP
@@ -113,31 +112,31 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 		socket	= CreateW5500UDP(host, &tc);
 		socket->Local.Port	= tk->Port;
-		token	= new TokenController();
-		token->Port = dynamic_cast<ITransport*>(socket);
-		client->Local	= token;
+		auto token2		= new TokenController();
+		token2->Port	= dynamic_cast<ITransport*>(socket);
+		client.Local	= token2;
 	}
 
-	return client;
+	return &client;
 }
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
 	debug_printf("\r\nCreateServer \r\n");
 
-	auto ctrl	= new TinyController();
-	ctrl->Port = port;
+	static TinyController ctrl;
+	ctrl.Port = port;
 
 	// 只有2401需要打开重发机制
 	//if(strcmp(port->ToString(), "R24")) ctrl->Timeout = -1;
 
 	auto tc = TinyConfig::Current;
-	tc->Address = ctrl->Address;
+	tc->Address = ctrl.Address;
 
-	auto server	= new TinyServer(ctrl);
-	server->Cfg	= tc;
+	static TinyServer server(&ctrl);
+	server.Cfg	= tc;
 
-	return server;
+	return &server;
 }
 
 uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
@@ -185,19 +184,19 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
-	auto spi = new Spi(spi_, 10000000, true);
-	auto nrf = new NRF24L01();
-	nrf->Init(spi, ce, irq, power);
+	static Spi spi(spi_, 10000000, true);
+	static NRF24L01 nrf;
+	nrf.Init(&spi, ce, irq, power);
 	//nrf->Power.Invert = powerInvert;
 
-	nrf->AutoAnswer		= false;
-	nrf->PayloadWidth	= 32;
-	nrf->Channel		= TinyConfig::Current->Channel;
-	nrf->Speed			= TinyConfig::Current->Speed;
+	nrf.AutoAnswer	= false;
+	nrf.PayloadWidth= 32;
+	nrf.Channel		= TinyConfig::Current->Channel;
+	nrf.Speed		= TinyConfig::Current->Speed;
 
-	nrf->Led	= led;
+	nrf.Led	= led;
 
-	return nrf;
+	return &nrf;
 }
 
 uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
@@ -210,16 +209,16 @@ uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
 
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	auto sp = new SerialPort(index, baudRate);
-	auto zb = new ShunCom();
-	zb->Power.Set(power);
-	zb->Sleep.Init(slp, true);
-	zb->Config.Init(cfg, true);
-	zb->Init(sp, rst);
+	static SerialPort sp(index, baudRate);
+	static ShunCom zb;
+	zb.Power.Set(power);
+	zb.Sleep.Init(slp, true);
+	zb.Config.Init(cfg, true);
+	zb.Init(&sp, rst);
 
-	zb->Led	= led;
+	zb.Led	= led;
 
-	return zb;
+	return &zb;
 }
 
 void StartGateway(void* param)
@@ -232,7 +231,7 @@ void StartGateway(void* param)
 
 	if(tk && tk->Server[0])
 	{
-		W5500* net	= (W5500*)param;
+		auto net	= (W5500*)param;
 		// 根据DNS获取云端IP地址
 		UdpClient udp(net);
 		DNS dns(&udp);
