@@ -62,6 +62,7 @@ void ShunCom::ShowConfig()
 	Config	= true;
 	Sys.Sleep(3000);
 
+	//读取Zibeer模块配置指令
 	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
 	Write(CArray(buf));
 
@@ -69,6 +70,7 @@ void ShunCom::ShowConfig()
 
 	ByteArray rs;
 	Read(rs);
+	debug_printf("Zibeer配置信息\n");
 	rs.Show(true);
 }
 
