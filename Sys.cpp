@@ -26,7 +26,7 @@ static int _Index;	// MCU在型号表中的索引
 #endif
 	const uint MemSizes[] = { 16, 32, 64, 128, 256, 384, 512, 768, 1024, 2048, 3072 };
 	const uint RamSizes[] = {  6, 10, 20,  20,  48,  48,  64,  96,   96,   96,   96 };
-#elif defined(STM32F0)
+#elif defined(STM32F0) || defined(GD32F150)
 #if DEBUG
 	const char MemNames[] = "468B";
 #endif
@@ -104,7 +104,7 @@ TSys::TSys()
 {
 #ifdef STM32F0
     Clock = 48000000;
-#elif defined(STM32F1)
+#elif defined(STM32F1) || defined(GD32F150)
     Clock = 72000000;
 #elif defined(STM32F4)
     Clock = 168000000;
@@ -116,7 +116,7 @@ TSys::TSys()
 #ifndef TINY
     bool IsGD = Get_JTAG_ID() == 0x7A3;
 
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	void* p = (void*)0x1FFFF7AC;	// 手册里搜索UID，优先英文手册
 #elif defined(STM32F1)
 	void* p = (void*)0x1FFFF7E8;
@@ -135,7 +135,7 @@ TSys::TSys()
     if(IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 
 	_Index = 0;
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	if(IsGD)
 		FlashSize = *(__IO ushort *)(0x1FFFF7E0);  // 容量
 	else

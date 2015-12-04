@@ -6,7 +6,7 @@ static const int PORT_IRQns[] = {
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
     EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
-#elif defined(STM32F0)
+#elif defined(STM32F0) || defined(GD32F150)
 static const int PORT_IRQns[] = {
     EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
     EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
@@ -114,7 +114,7 @@ void OpenClock(Pin pin, bool flag)
 	}
 
 	FunctionalState fs = flag ? ENABLE : DISABLE;
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
     RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, fs);
 #elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, fs);
@@ -200,7 +200,7 @@ void Port::OnOpen(GPIO_InitTypeDef& gpio)
 #endif
 }
 
-#if defined(STM32F0) || defined(STM32F4)
+#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
 void Port::AFConfig(byte GPIO_AF) const
 {
 	assert_param2(Opened, "必须打开端口以后才能配置AF");
@@ -652,7 +652,7 @@ void EXTI_IRQHandler(ushort num, void* param)
 			num++; pending >>= 1;
 		} while (pending);
 	}
-#elif defined(STM32F0)
+#elif defined(STM32F0) || defined(GD32F150)
 	switch(num)
 	{
 		case EXTI0_1_IRQn:
@@ -832,7 +832,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
 	st->OldValue	= Read(); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
-#if defined(STM32F0) || defined(STM32F4)
+#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
     SYSCFG_EXTILineConfig(gi, idx);
 #elif defined(STM32F1)

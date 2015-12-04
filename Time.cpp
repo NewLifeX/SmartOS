@@ -18,7 +18,7 @@ TTime::TTime()
 {
 	Seconds	= 0;
 	Ticks	= 0;
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	Index	= 13;
 #else
 	Div		= 0;
@@ -54,14 +54,14 @@ void TTime::Init()
 	//Interrupt.Disable(SysTick_IRQn);
 
 	TIM_TypeDef* tim = g_Timers[Index];
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
 #else
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
 #endif
 
     // 获取当前频率
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	uint prd	= 1000;
 	uint psc	= Sys.Clock / 1000;
 #else
@@ -106,7 +106,7 @@ void TTime::Init()
 
 #pragma arm section code = "SectionForSys"
 
-#if defined(STM32F0) || defined(STM32F4)
+#if  defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
 void TTime::OnHandler(ushort num, void* param)
@@ -140,7 +140,7 @@ uint TTime::CurrentTicks()
 ulong TTime::Current()
 {
 	uint cnt = g_Timers[Index]->CNT;
-#ifndef STM32F0
+#if ! (defined(STM32F0) || defined(GD32F150))
 	if(Div) cnt >>= Div;
 #endif
 	return Milliseconds + cnt;

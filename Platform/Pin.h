@@ -145,6 +145,8 @@ enum Pin
 	#include "Pin_STM32F3.h"
 #elif defined(STM32F0)
 	#include "Pin_STM32F0.h"
+#elif defined(GD32F150)
+	#include "Pin_GD32F150.h"
 //#else
 //	#include "Pin_STM32F1.h"
 #endif

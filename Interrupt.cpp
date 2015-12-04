@@ -243,7 +243,7 @@ extern "C"
 		//SP+24: PC
 		//SP+28: PSR
 		//R0-R12 are not overwritten yet
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 		//add      sp,sp,#16             // remove R0-R3
 		push     {r4-r7}              // store R0-R11
 #else

@@ -181,7 +181,7 @@ void Timer::ClockCmd(bool state)
 		case 13: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM13, st); break;
 		case 14: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, st); break;
 #endif
-#if defined(STM32F0)
+#if defined(STM32F0) || defined(GD32F150)
 		case 14: RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, st); break;
 		case 15: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, st); break;
 		case 16: RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, st); break;
@@ -203,7 +203,7 @@ void Timer::ClockCmd(bool state)
 void Timer::SetFrequency(uint frequency)
 {
     // 获取当前频率
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	uint clk	= Sys.Clock;
 #else
 	uint clk = RCC_GetPCLK();
@@ -371,7 +371,7 @@ void PWM::Open()
 {
 	Timer::Open();
 
-#if defined(STM32F0)
+#if defined(STM32F0) || defined(GD32F150)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs(_Timer, ENABLE);
 #endif
@@ -387,7 +387,7 @@ void PWM::Open()
 
 void PWM::Close()
 {
-#if defined(STM32F1)
+#if defined(STM32F1) || defined(GD32F150)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs(_Timer, DISABLE);
 #elif defined(STM32F1)

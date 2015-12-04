@@ -29,7 +29,7 @@ public:
 	void Close();
 	void Clear();
 
-#if defined(STM32F0) || defined(STM32F4)
+#if defined(STM32F0)|| defined(GD32F150) || defined(STM32F4)
 	void AFConfig(byte GPIO_AF) const;
 #endif
 

@@ -10,10 +10,13 @@ typedef void (*InterruptCallback)(ushort num, void* param);
     #define VectorySize 84
 #elif defined(STM32F0)
     #define VectorySize 48
+#elif defined(GD32F150)
+    #define VectorySize 64
 #elif defined(STM32F4)
     #define VectorySize (86 + 16 + 1)
 #endif
 
+//VectorySize 64 未考证
 // 中断管理类
 class TInterrupt
 {

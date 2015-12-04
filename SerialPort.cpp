@@ -117,7 +117,7 @@ bool SerialPort::OnOpen()
 #endif
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	switch(_index)
 	{
 		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;
@@ -132,7 +132,7 @@ bool SerialPort::OnOpen()
     }
 #endif
 
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	_tx.AFConfig(GPIO_AF_1);
 	_rx.AFConfig(GPIO_AF_1);
 #elif defined(STM32F4)
@@ -156,13 +156,13 @@ bool SerialPort::OnOpen()
 	//USART_ITConfig(_port, USART_IT_TXE, DISABLE);
 
 	// 清空缓冲区
-#ifndef STM32F0
+#if !(defined(STM32F0) || defined(GD32F150))
 	Tx.Clear();
 #endif
 	Rx.SetCapacity(0x80);
 	Rx.Clear();
 
-#ifdef STM32F0
+#if !(defined(STM32F0) || defined(GD32F150))
 	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
 	//USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
 #else
@@ -229,7 +229,7 @@ uint SerialPort::SendData(byte data, uint times)
 bool SerialPort::OnWrite(const Array& bs)
 {
 	if(!bs.Length()) return true;
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 	if(RS485) *RS485 = true;
 	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
 	for(int i=0; i<bs.Length(); i++)
@@ -254,7 +254,7 @@ bool SerialPort::OnWrite(const Array& bs)
 // 刷出某个端口中的数据
 bool SerialPort::Flush(uint times)
 {
-#ifndef STM32F0
+#if !(defined(STM32F0) || defined(GD32F150))
 	// 打开串口发送
 	if(RS485) *RS485 = true;
 
@@ -272,7 +272,7 @@ bool SerialPort::Flush(uint times)
 
 void SerialPort::OnTxHandler()
 {
-#ifndef STM32F0
+#if !(defined(STM32F0) || defined(GD32F150))
 	if(!Tx.Empty())
 		USART_SendData(_port, (ushort)Tx.Pop());
 	else
@@ -382,7 +382,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
 		}
-#ifdef STM32F0
+#if defined(STM32F0) || defined(GD32F150)
 		// 打开中断
 		byte irq = uart_irqs[_index];
 		Interrupt.SetPriority(irq, 0);
@@ -402,7 +402,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 {
 	SerialPort* sp = (SerialPort*)param;
 
-#ifndef STM32F0
+#if !(defined(STM32F0) || defined(GD32F150))
 	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
 #endif
 	// 接收中断
@@ -490,7 +490,7 @@ SerialPort* SerialPort::GetMessagePort()
         USART_TypeDef* port = g_Uart_Ports[_index];
 		_printf_sp = new SerialPort(port);
 #if DEBUG
-#ifdef STM32F0
+#if  defined(STM32F0) || defined(GD32F150)
 		//_printf_sp->Tx.SetCapacity(256);
 #else
 		//_printf_sp->Tx.SetCapacity(1024);

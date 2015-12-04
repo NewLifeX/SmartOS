@@ -23,7 +23,7 @@ private:
 
     USART_TypeDef* _port;
 	AlternatePort _tx;
-#if defined(STM32F0) || defined(STM32F4)
+#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
 	AlternatePort _rx;
 #else
 	InputPort _rx;
@@ -40,7 +40,7 @@ public:
 	int 		Error;	// 错误计数
 
 	// 收发缓冲区
-#ifndef STM32F0
+#if	!(defined(STM32F0) || defined(GD32F150))
 	Queue Tx;
 #endif
 	Queue Rx;
