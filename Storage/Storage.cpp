@@ -1,4 +1,4 @@
-﻿#include "Config.h"
+﻿#include "Storage.h"
 
 //#define STORAGE_DEBUG DEBUG
 #define STORAGE_DEBUG 0
@@ -8,7 +8,6 @@
 	#define st_printf(format, ...)
 #endif
 
-/* 读取段数据 （起始段，字节数量，目标缓冲区） */
 bool BlockStorage::Read(uint address, Array& bs)
 {
 	uint len = bs.Length();
@@ -87,8 +86,8 @@ bool BlockStorage::Write(uint address, const Array& bs)
 #else
 	byte bb[0x800];
 #endif
-	Stream ms(bb, ArrayLength(bb));
-	ms.SetCapacity(Block);
+	Array ms(bb, ArrayLength(bb));
+	ms.SetLength(Block);
 
 	// 写入第一个半块
 	if(offset)
@@ -97,12 +96,13 @@ bool BlockStorage::Write(uint address, const Array& bs)
 		uint blk	= addr - offset;
 		uint size	= Block - offset;
 		// 前段原始数据，中段来源数据，末段原始数据
-		ms.Write((byte*)blk, 0, offset);
+		ms.Copy((byte*)blk, offset, 0);
 		if(size > remain) size = remain;
-		ms.Write(pData, 0, size);
+		ms.Copy(pData, size, offset);
 
-		int last = Block - (offset + size);
-		if(last > 0) ms.Write((byte*)blk, offset + size, last);
+		int	offset2	= offset + size;
+		int last	= Block - offset2;
+		if(last > 0) ms.Copy((byte*)(blk + offset2), last, offset2);
 
 		// 整块擦除，然后整体写入
 		//if(!IsErased(blk + offset, size)) Erase(blk, Block);
@@ -129,9 +129,9 @@ bool BlockStorage::Write(uint address, const Array& bs)
 	if(remain > 0)
 	{
 		// 前段来源数据，末段原始数据
-		ms.SetPosition(0);
-		ms.Write(pData, 0, remain);
-		ms.Write((byte*)addr, remain, Block - remain);
+		//ms.SetPosition(0);
+		ms.Copy(pData, remain, 0);
+		ms.Copy((byte*)(addr + remain), Block - remain, remain);
 
 		//if(!IsErased(addr, remain)) Erase(addr, Block);
 		Erase(addr, remain);
