@@ -377,6 +377,7 @@ bool NRF24L01::Check(void)
 // 配置
 bool NRF24L01::Config()
 {
+	if(Channel > 126) Channel = 126;
 	if(Speed != 250 && Speed != 1000 && Speed != 2000) Speed = 250;
 
 #if RF_DEBUG
