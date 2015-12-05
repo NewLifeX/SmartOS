@@ -27,11 +27,11 @@ extern "C"
 		RCC->CR |= (uint32_t)0x00000001;
 
 		/* Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits */
-		#ifndef STM32F10X_CL
+#ifndef STM32F10X_CL
 		RCC->CFGR &= (uint32_t)0xF8FF0000;
-		#else
+#else
 		RCC->CFGR &= (uint32_t)0xF0FF0000;
-		#endif /* STM32F10X_CL */   
+#endif /* STM32F10X_CL */   
 
 		/* Reset HSEON, CSSON and PLLON bits */
 		RCC->CR &= (uint32_t)0xFEF6FFFF;
@@ -42,7 +42,7 @@ extern "C"
 		/* Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits */
 		RCC->CFGR &= (uint32_t)0xFF80FFFF;
 
-		#ifdef STM32F10X_CL
+#ifdef STM32F10X_CL
 		/* Reset PLL2ON and PLL3ON bits */
 		RCC->CR &= (uint32_t)0xEBFFFFFF;
 
@@ -51,22 +51,22 @@ extern "C"
 
 		/* Reset CFGR2 register */
 		RCC->CFGR2 = 0x00000000;
-		#elif defined (STM32F10X_LD_VL) || defined (STM32F10X_MD_VL) || (defined STM32F10X_HD_VL)
+#elif defined (STM32F10X_LD_VL) || defined (STM32F10X_MD_VL) || (defined STM32F10X_HD_VL)
 		/* Disable all interrupts and clear pending bits  */
 		RCC->CIR = 0x009F0000;
 
 		/* Reset CFGR2 register */
 		RCC->CFGR2 = 0x00000000;      
-		#else
+#else
 		/* Disable all interrupts and clear pending bits  */
 		RCC->CIR = 0x009F0000;
-		#endif /* STM32F10X_CL */
+#endif /* STM32F10X_CL */
 
-		#if defined (STM32F10X_HD) || (defined STM32F10X_XL) || (defined STM32F10X_HD_VL)
-		#ifdef DATA_IN_ExtSRAM
+#if defined (STM32F10X_HD) || (defined STM32F10X_XL) || (defined STM32F10X_HD_VL)
+	#ifdef DATA_IN_ExtSRAM
 		SystemInit_ExtMemCtl(); 
-		#endif /* DATA_IN_ExtSRAM */
-		#endif 
+	#endif /* DATA_IN_ExtSRAM */
+#endif 
 
 		/* SYSCLK, HCLK, PCLK2 and PCLK1 configuration ---------------------------*/    
 		/* Enable HSE */    
