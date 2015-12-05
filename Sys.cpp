@@ -43,7 +43,7 @@ static int _Index;	// MCU在型号表中的索引
 
 #endif
 
-#ifndef TINY
+#if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -231,7 +231,7 @@ uint TSys::StackTop()
 	return SRAM_BASE + (RAMSize << 10) - 0x40;
 }
 
-#ifdef DEBUG
+#if !defined(TINY) && defined(STM32F0) && defined(DEBUG)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -397,7 +397,7 @@ void TSys::RemoveTask(uint& taskid)
 	taskid = 0;
 }
 
-#ifdef DEBUG
+#if !defined(TINY) && defined(STM32F0) && defined(DEBUG)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -520,9 +520,7 @@ void TSys::Delay(uint us)
 }
 #endif
 
-#ifndef TINY
-	#pragma arm section code
-#endif
+#pragma arm section code
 
 /****************系统跟踪****************/
 

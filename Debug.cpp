@@ -10,7 +10,9 @@
 
 #if DEBUG
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 extern uint __heap_base;
 extern uint __heap_limit;

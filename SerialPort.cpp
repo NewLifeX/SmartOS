@@ -268,7 +268,9 @@ bool SerialPort::Flush(uint times)
 #endif
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 void SerialPort::OnTxHandler()
 {
@@ -316,7 +318,9 @@ uint SerialPort::OnRead(Array& bs)
 	return count;
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 void SerialPort::OnRxHandler()
 {
@@ -395,7 +399,9 @@ void SerialPort::Register(TransportHandler handler, void* param)
 	}
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 // 真正的串口中断函数
 void SerialPort::OnHandler(ushort num, void* param)

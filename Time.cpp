@@ -104,7 +104,9 @@ void TTime::Init()
 	TIM_Cmd(tim, ENABLE);
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 #if  defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
@@ -171,7 +173,9 @@ DateTime TTime::Now()
 	return dt;
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 void TTime::Sleep(uint ms, bool* running)
 {

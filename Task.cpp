@@ -24,7 +24,7 @@ Task::~Task()
 	if(ID) Host->Remove(ID);
 }
 
-#ifndef TINY
+#if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -118,7 +118,7 @@ void Task::ShowStatus()
 	debug_printf("\r\n");
 }
 
-#ifndef TINY
+#if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -256,7 +256,7 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
-#ifndef TINY
+#if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -346,7 +346,7 @@ void TaskScheduler::ShowStatus(void* param)
 	}
 }
 
-#ifndef TINY
+#if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 

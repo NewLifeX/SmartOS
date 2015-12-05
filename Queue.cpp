@@ -18,7 +18,9 @@ void Queue::Clear()
 	_size	= 0;
 }
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 void Queue::Push(byte dat)
 {

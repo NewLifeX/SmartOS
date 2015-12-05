@@ -22,7 +22,9 @@
 	#define STACK_SAVE_Size (8 << 2)	// 0x20 = 32
 #endif
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 Thread::Thread(Action callback, void* state, uint stackSize)
 {

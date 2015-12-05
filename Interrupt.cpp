@@ -163,7 +163,9 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 }
 #endif
 
-#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#pragma arm section code = "SectionForSys"
+#endif
 
 __asm uint GetIPSR()
 {
