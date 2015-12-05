@@ -341,7 +341,7 @@ public:
 	String& Append(const char* str, int len = 0);
 	String& Append(int value, int radix = 10, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
 	String& Append(byte bt);		// 十六进制
-	String& Append(ByteArray& bs);	// 十六进制
+	String& Append(const ByteArray& bs);	// 十六进制
 
 	// 调试输出字符串
 	virtual void Show(bool newLine = false) const;

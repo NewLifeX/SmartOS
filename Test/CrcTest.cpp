@@ -39,15 +39,16 @@ void Init()
 }
 
 // 硬件实现的Crc
-uint HardCrc(const void* buf, int len, uint crc)
+uint HardCrc(const Array& bs, uint crc)
 {
 	if (!inited) Init();
 
     CRC_ResetDR();
     // STM32的初值是0xFFFFFFFF，而软Crc初值是0
-	CRC->DR = __REV(crc ^ 0xFFFFFFFF);
+	CRC->DR		= __REV(crc ^ 0xFFFFFFFF);
     //CRC->DR = 0xFFFFFFFF;
-    uint* ptr = (uint*)buf;
+    uint* ptr	= (uint*)bs.GetBuffer();
+	uint len	= bs.Length();
     len >>= 2;
     while(len-- > 0)
     {
@@ -74,48 +75,52 @@ void TestCrc()
     debug_printf("TestCrc Start......\r\n");
     debug_printf("\r\n");
 
-    uint size = ArrayLength(DataBuffer);
+    uint size	= ArrayLength(DataBuffer);
 
 	// Sys.Crc是软校验，HardCrc是硬件实现，要求硬件实现的结果跟软件实现一致
-	uint data = 0x12345678;
-	uint crc = Crc::Hash((byte*)&data, 4, 0);
-	uint crc2 = Crc::Hash(&data, 4);
-	ByteArray((byte*)&data, 4)).Show();
+	uint data	= 0x12345678;
+	ByteArray bs(&data, 4);
+	uint crc	= Crc::Hash(bs, 0);
+	uint crc2	= Crc::Hash(bs, 4);
+	bs.Show();
 	debug_printf("\r\n\tSoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 无初值时，两者一样
 
-	uint temp = crc;
+	uint temp	= crc;
 	// 试试二次计算Crc
-	crc = Crc::Hash((byte*)&crc, 4, 0);
-	crc2 = Crc::Hash(&crc2, 4);
-	ByteArray((byte*)&temp, 4)).Show();
+	crc		= Crc::Hash(Array(&crc, 4), 0);
+	crc2	= Crc::Hash(Array(&crc2, 4));
+	ByteArray(&temp, 4).Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果相同，但都不是0
 
 	// 连续测试。构建8字节，前面是data，后面是前面的crc
 	ulong data2 = temp;
-	data2 <<= 32;
-	data2 += data;
-	crc = Crc::Hash((byte*)&data2, 8, 0);
-	crc2 = Crc::Hash(&data2, 8);
-	ByteArray((byte*)&data2, 8)).Show();
+	data2	<<= 32;
+	data2	+= data;
+	ByteArray bs2(&data2, 8);
+	crc		= Crc::Hash(bs2, 0);
+	crc2	= Crc::Hash(bs2);
+	bs2.Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果相同，但都不是0
 
 	// 实际应用中，先计算数据的校验，然后接着附加校验码部分，跟直接连续计算效果应该一致
 	// 实际上就是数字为初值，对它自身进行校验码计算
-	crc = Crc::Hash((byte*)&temp, 4, data);
-	crc2 = HardCrc(&temp, 4, data);
-	ByteArray((byte*)&temp, 4)).Show();
+	ByteArray bs3(&temp, 4);
+	crc		= Crc::Hash(bs3, data);
+	crc2	= HardCrc(bs3, data);
+	bs3.Show();
 	debug_printf(" <= 0x%08x\r\n\t", data);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果不同，HardCrc结果跟8字节测试相同
 
-	crc = Crc::Hash((byte*)&temp, 4, temp);
-	crc2 = HardCrc(&temp, 4, temp);
-	ByteArray((byte*)&temp, 4)).Show();
+	ByteArray bs4(&temp, 4);
+	crc		= Crc::Hash(bs4, temp);
+	crc2	= HardCrc(bs4, temp);
+	bs4.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 结果不同，SoftCrc结果跟8字节测试相同
@@ -123,9 +128,10 @@ void TestCrc()
 	// 对大数据块进行校验
     debug_printf("\r\n");
 
-	crc = Crc::Hash((byte*)DataBuffer, size*4, 0);
-	crc2 = Crc::Hash(DataBuffer, size*4);
-	ByteArray((byte*)DataBuffer, 0x20)).Show();
+	ByteArray bs5(DataBuffer, size*4);
+	crc		= Crc::Hash(bs5, 0);
+	crc2	= Crc::Hash(bs5);
+	bs5.Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 无初值时，两者一样
@@ -133,29 +139,31 @@ void TestCrc()
 	temp = crc;
 
 	// 实际应用中，先计算数据的校验，然后接着附加校验码部分
-	crc = Crc::Hash((byte*)&temp, 4, temp);
-	crc2 = HardCrc((byte*)&temp, 4, temp);
-	ByteArray((byte*)&temp, 4)).Show();
+	ByteArray bs6(&temp, 4);
+	crc		= Crc::Hash(bs6, temp);
+	crc2	= HardCrc(bs6, temp);
+	bs6.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 	// 有初值时，两者不一样
 
 	// 增量计算CRC
-	crc = Crc::Hash((byte*)DataBuffer, size*4, 0);
-	temp = crc;
-	crc = Crc::Hash((byte*)&crc, 4, crc);
-	crc2 = HardCrc(DataBuffer, size*4, 0);
-	crc2 = HardCrc((byte*)&crc2, 4, crc2);
-	ByteArray((byte*)DataBuffer, 0x20).Show();
+	ByteArray bs7(DataBuffer, size*4);
+	crc		= Crc::Hash(bs7, 0);
+	temp	= crc;
+	crc		= Crc::Hash(Array(&crc, 4), crc);
+	crc2	= HardCrc(bs7, 0);
+	crc2	= HardCrc(Array(&crc2, 4), crc2);
+	bs7.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
 
 	// 测试Crc16，数据和crc部分一起计算crc16，结果为0
     debug_printf("\r\n");
     byte data16[] = { 0x01, 0x08, 0x00, 0x00};
-    ushort crc16 = Crc::Hash16(data16, 4);
+    ushort crc16 = Crc::Hash16(Array(data16, 4));
     debug_printf("Crc::Hash16(#%08x) = 0x%04x\r\n", __REV(*(uint*)data16), crc16);
-    ushort crc17 = Crc::Hash16((byte*)&crc16, 2, crc16);
+    ushort crc17 = Crc::Hash16(Array(&crc16, 2), crc16);
     debug_printf("Crc::Hash16(#%08x, 0x%04x) = 0x%04x\r\n", __REV(*(uint*)data16), crc16, crc17);
 
     debug_printf("\r\n");

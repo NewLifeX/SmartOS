@@ -39,12 +39,12 @@ void TestTimer(OutputPort& leds)
     timer = new Timer(TIM2);
     timer->SetFrequency(50);
     timer->Register(TimerTask, &leds);
-    timer->Start();
+    timer->Open();
 
     Timer* timer2 = Timer::Create();
     timer2->SetFrequency(10);
     timer2->Register(TimerTask2, NULL);
-    timer2->Start();
+    timer2->Open();
 
     debug_printf("\r\n TestTimer Finish!\r\n");
 }

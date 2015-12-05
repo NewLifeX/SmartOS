@@ -606,7 +606,7 @@ String& String::Append(byte bt)
 	return *this;
 }
 
-String& String::Append(ByteArray& bs)
+String& String::Append(const ByteArray& bs)
 {
 	bs.ToHex(*this);
 
