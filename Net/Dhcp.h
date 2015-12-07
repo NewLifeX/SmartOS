@@ -21,6 +21,7 @@ private:
 public:
 	ISocket*	Socket;
 	ISocketHost*	Host;	// 主机
+	IPAddress	IP;			// 获取的IP地址
 
 	uint ExpiredTime;	// 过期时间，默认10000毫秒
 	bool Running;	// 正在运行

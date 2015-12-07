@@ -15,6 +15,8 @@ Dhcp::Dhcp(ISocket* socket)
 	socket->Remote.Port		= 67;
 	socket->Remote.Address	= IPAddress::Broadcast();
 
+	IP		= IPAddress::Any();
+
 	Running	= false;
 	Result	= false;
 	Times	= 0;
@@ -43,8 +45,8 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		auto opt	= (DHCP_OPT*)(p + len);
 		opt = opt->SetClientId(Host->Mac);
-		if(!Host->IP.IsAny())
-			opt	= opt->Next()->SetData(DHCP_OPT_RequestedIP, Host->IP.Value);
+		if(!IP.IsAny())
+			opt	= opt->Next()->SetData(DHCP_OPT_RequestedIP, IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
 		String name;
@@ -65,9 +67,20 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	for(int i=0; i<6; i++)
 		dhcp->ClientMac[i] = Host->Mac[i];
 
+	/*auto bak	= Host->IP;
+	auto any	= IPAddress::Any();
+	bool isAny	= IP == any;
+	if(isAny)
+	{
+		debug_printf("更换Host->IP \r\n");
+		Host->IP	= any;
+	}*/
+
 	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
 	Array bs(dhcp, sizeof(DHCP_HEADER) + len);
 	Socket->Send(bs);
+
+	//if(isAny) Host->IP	= bak;
 }
 
 // 找服务器
@@ -114,7 +127,12 @@ void Dhcp::Start()
 	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
-	Host->IP	= IPAddress::Any();
+	if(IP.IsAny())
+	{
+		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
+		//Host->Close();
+		Host->IP	= IPAddress::Any();
+	}
 
 	auto port = dynamic_cast<ITransport*>(Socket);
 	if(port) port->Open();
@@ -237,7 +255,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
-		Host->IP = dhcp->YourIP;
+		Host->IP = IP = dhcp->YourIP;
 		Stream optData(dhcp->Next(), len);
 		PareOption(optData);
 
@@ -246,7 +264,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 		// 如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
 		debug_printf("DHCP::Offer IP:");
-		Host->IP.Show();
+		IP.Show();
 		debug_printf(" From ");
 		remote.Show();
 		debug_printf("\r\n");
@@ -256,7 +274,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
-		Host->IP = dhcp->YourIP;
+		Host->IP = IP = dhcp->YourIP;
 #if NET_DEBUG
 		debug_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();
@@ -292,7 +310,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 		// 导致Nak的原因
 		opt = GetOption(data, len, DHCP_OPT_Message);
 		debug_printf("DHCP::Nak   IP:");
-		Host->IP.Show();
+		IP.Show();
 		debug_printf(" From ");
 		remote.Show();
 		if(opt)
