@@ -309,6 +309,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 	// 后移一个字节来弥补
 	ms.Seek(-1);*/
 
+	//Encrypt(ms,Key)
 	TinyMessage msg;
 	return Controller::Dispatch(ms, &msg, param);
 }
@@ -463,6 +464,7 @@ uint TinyController::Post(byte dest, byte code, const Array& arr)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TinyController::Send(Message& msg)
 {
+	
 	TinyMessage& tmsg = (TinyMessage&)msg;
 
 	// 附上自己的地址
@@ -486,20 +488,9 @@ bool TinyController::Send(Message& msg)
 }
 
 //加密。组网不加密，退网不加密
-static bool Encrypt(TinyMessage& msg, const Array& pass)
+static bool Encrypt(Message& msg, const Array& pass)
 {
 	// 加解密。组网不加密，退网不加密
-	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
-	{
-		Array bs(msg.Data, msg.Length);
-		RC4::Encrypt(bs, pass);
-		return true;
-	}
-	return false;
-}
-//解密 组网不解密，退网不解密
-static bool Decrypt(Message& msg, const Array& pass)
-{
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
 	{
 		Array bs(msg.Data, msg.Length);
