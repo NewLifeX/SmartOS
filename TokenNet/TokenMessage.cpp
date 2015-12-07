@@ -240,7 +240,7 @@ bool TokenController::Valid(const Message& msg)
 	return true;
 }
 
-bool Encrypt(Message& msg, const Array& pass)
+static bool Encrypt(Message& msg, const Array& pass)
 {
 	// 加解密。握手不加密，握手响应不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x08))

@@ -486,7 +486,7 @@ bool TinyController::Send(Message& msg)
 }
 
 //加解密。组网不加密，退网不加密
-bool Encrypt(Message& msg, const Array& pass)
+static bool Encrypt(Message& msg, const Array& pass)
 {
 	// 加解密。组网不加密，退网不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
