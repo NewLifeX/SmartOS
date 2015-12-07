@@ -1,6 +1,7 @@
 ﻿#include "Security\Crc.h"
 
 #include "TinyMessage.h"
+#include "Security\RC4.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -469,6 +470,8 @@ bool TinyController::Send(Message& msg)
 
 	// 附上序列号。响应消息保持序列号不变
 	if(!tmsg.Reply) tmsg.Sequence = ++_Sequence;
+	
+	//Encrypt(msg, Key);
 
 #if MSG_DEBUG
 	// 计算校验
@@ -480,6 +483,19 @@ bool TinyController::Send(Message& msg)
 	//return Controller::Send(msg, port);
 
 	return Post(tmsg, -1) ? 1 : 0;
+}
+
+//加解密。组网不加密，退网不加密
+bool Encrypt(Message& msg, const Array& pass)
+{
+	// 加解密。组网不加密，退网不加密
+	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
+	{
+		Array bs(msg.Data, msg.Length);
+		RC4::Encrypt(bs, pass);
+		return true;
+	}
+	return false;
 }
 
 void SendTask(void* param)
