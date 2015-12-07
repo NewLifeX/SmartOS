@@ -485,10 +485,21 @@ bool TinyController::Send(Message& msg)
 	return Post(tmsg, -1) ? 1 : 0;
 }
 
-//加解密。组网不加密，退网不加密
-static bool Encrypt(Message& msg, const Array& pass)
+//加密。组网不加密，退网不加密
+static bool Encrypt(TinyMessage& msg, const Array& pass)
 {
 	// 加解密。组网不加密，退网不加密
+	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
+	{
+		Array bs(msg.Data, msg.Length);
+		RC4::Encrypt(bs, pass);
+		return true;
+	}
+	return false;
+}
+//解密 组网不解密，退网不解密
+static bool Decrypt(Message& msg, const Array& pass)
+{
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
 	{
 		Array bs(msg.Data, msg.Length);
