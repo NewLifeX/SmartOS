@@ -61,9 +61,6 @@ public:
 	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
 	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
-	//bool CheckConfig();
-	void ClearFIFO(bool rx);
-	void ClearStatus(bool tx, bool rx);
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);

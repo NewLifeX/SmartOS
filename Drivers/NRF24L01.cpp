@@ -333,10 +333,10 @@ byte NRF24L01::ReadReg(byte reg)
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
 #if RF_DEBUG
-	if(!_CE.Read())
+	/*if(!_CE.Read())
 	{
 		debug_printf("NRF24L01::WriteReg 0x%02X=0x%02X 只允许Shutdown、Standby、Idle-TX模式下操作\r\n", reg, dat);
-	}
+	}*/
 #endif
 	SpiScope sc(_spi);
 
@@ -477,7 +477,7 @@ bool NRF24L01::Config()
 	set.POWER = RadioPower;
 	switch(Speed)
 	{
-		case 250: {set.DR = 0; set.DR_LOW = 1; break;}
+		case 250:  {set.DR = 0; set.DR_LOW = 1; break;}
 		case 1000: {set.DR = 0; set.DR_LOW = 0; break;}
 		case 2000: {set.DR = 1; set.DR_LOW = 0; break;}
 	}
@@ -501,10 +501,14 @@ bool NRF24L01::Config()
 	WriteReg(CONFIG, mode);
 
 	// 在ACK模式下发送失败和接收失败要清空发送缓冲区和接收缓冲区，否则不能进行下次发射或接收
-	ClearFIFO(true);
-	ClearFIFO(false);
+	WriteReg(FLUSH_RX, NOP);
+	WriteReg(FLUSH_TX, NOP);
+
 	// 清除中断标志
-	ClearStatus(true, true);
+	// 发送标识位 TX_DS/MAX_RT
+	WriteReg(STATUS, 0x30);
+	// 接收标识位 RX_DR
+	WriteReg(STATUS, 0x40);
 
 	if(!SetPowerMode(true)) return false;
 
@@ -512,44 +516,6 @@ bool NRF24L01::Config()
 	if(ReadReg(CD) > 0) debug_printf("空间发现载波，可能存在干扰或者拥挤！\r\n");
 
 	return true;
-}
-
-/*bool NRF24L01::CheckConfig()
-{
-	for(int i=0; i<0x20; i++)
-	{
-		byte dat = ReadReg(i);
-		debug_printf("Reg 0x%02x = 0x%02x\r\n", i, dat);
-	}
-
-	return true;
-}*/
-
-void NRF24L01::ClearFIFO(bool rx)
-{
-#if RF_DEBUG
-	bool mode	= GetMode();
-	if(rx)
-	{
-		if(!mode) debug_printf("NRF24L01::ClearFIFO 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
-	}
-	else
-	{
-		if(mode) debug_printf("NRF24L01::ClearFIFO 清空TX缓冲区只能发送模式下用。\r\n");
-	}
-#endif
-	if(rx)
-		WriteReg(FLUSH_RX, NOP);
-	else
-		WriteReg(FLUSH_TX, NOP);
-}
-
-void NRF24L01::ClearStatus(bool tx, bool rx)
-{
-	// 发送标识位 TX_DS/MAX_RT
-	if(tx) WriteReg(STATUS, 0x30);
-	// 接收标识位 RX_DR
-	if(rx) WriteReg(STATUS, 0x40);
 }
 
 // 获取当前电源状态
@@ -638,12 +604,14 @@ bool NRF24L01::SetMode(bool isReceive)
 	if(isReceive) // 接收模式
 	{
 		config.PRIM_RX = 1;
-		ClearStatus(false, true);
+		// 接收标识位 RX_DR
+		WriteReg(STATUS, 0x40);
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
-		ClearStatus(true, false);
+		// 发送标识位 TX_DS/MAX_RT
+		WriteReg(STATUS, 0x30);
 	}
 	WriteReg(CONFIG, config.ToByte());
 
@@ -655,13 +623,13 @@ bool NRF24L01::SetMode(bool isReceive)
 		if(fifo.RX_FULL)
 		{
 			debug_printf("RX缓冲区满，需要清空！\r\n");
-			ClearFIFO(true);
+			WriteReg(FLUSH_RX, NOP);
 		}
 	}
 	else
 	{
 		// 发送前清空缓冲区和标识位
-		ClearFIFO(false);
+		WriteReg(FLUSH_TX, NOP);
 	}
 	_CE = false;
 
@@ -756,10 +724,6 @@ void ShowStatusTask(void* param)
 	debug_printf("定时 ");
 	nrf->ShowStatus();
 	//nrf->CheckConfig();
-
-	// 可以定时做一些事情，方便调试
-	//nrf->ClearStatus(false, true);
-	//nrf->ClearFIFO(true);
 }
 
 void AutoOpenTask(void* param)
@@ -890,8 +854,9 @@ uint NRF24L01::OnRead(Array& bs)
 	}
 
 	// 清除中断标志
-	ClearStatus(false, true);
-	ClearFIFO(true);
+	// 接收标识位 RX_DR
+	WriteReg(STATUS, 0x40);
+	WriteReg(FLUSH_RX, NOP);
 
 	if(rs && Led) Led->Write(500);
 
@@ -925,7 +890,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	if(!SetMode(false)) return false;
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
-	_CE = true;
+	//_CE = true;
 
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
@@ -935,7 +900,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	WriteBuf(cmd, (const byte*)bs.GetBuffer(), len);
 
 	// 进入TX，维持一段时间
-	_CE = false;
+	//_CE = false;
 
 	bool rs = false;
 	uint ms = RetryPeriod * Retry;
@@ -959,7 +924,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 
 		if(st.TX_DS || st.MAX_RT)
 		{
-			_CE = true;
+			//_CE = true;
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
 
@@ -983,8 +948,8 @@ bool NRF24L01::OnWrite(const Array& bs)
 	}while(!tw.Expired());
 
 	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
-	_CE = true;
-	ClearFIFO(false);
+	//_CE = true;
+	WriteReg(FLUSH_TX, NOP);
 
 	SetMode(true);	// 发送完成以后进入接收模式
 
@@ -1032,8 +997,8 @@ void NRF24L01::OnIRQ()
 		// 达到最大重试次数以后，需要清空TX缓冲区
 		if(st.MAX_RT)
 		{
-			PortScope ps(&_CE);
-			ClearFIFO(false);
+			//PortScope ps(&_CE);
+			WriteReg(FLUSH_TX, NOP);
 		}
 		//SetMode(true);
 	}
@@ -1041,17 +1006,16 @@ void NRF24L01::OnIRQ()
 	// TX_FIFO 缓冲区满
 	if(fifo.TX_FULL)
 	{
-		PortScope ps(&_CE);
-		ClearFIFO(false);
-		ClearStatus(true, false);
-		//SetMode(false);
+		//PortScope ps(&_CE);
+		WriteReg(FLUSH_TX, NOP);
+		// 发送标识位 TX_DS/MAX_RT
+		WriteReg(STATUS, 0x30);
 	}
 
 	if(st.RX_DR)
 	{
 		ByteArray bs;
 		uint len = Read(bs);
-		//ClearStatus(false, true);
 		if(len)
 		{
 			uint addr = st.RX_P_NO;
@@ -1073,10 +1037,9 @@ void NRF24L01::OnIRQ()
 		{
 			debug_printf("RX缓冲区满IRQ，需要清空！\r\n");
 
-			PortScope ps(&_CE);
-			ClearFIFO(true);
-			ClearStatus(false, true);
-			//SetMode(true);
+			WriteReg(FLUSH_RX, NOP);
+			// 接收标识位 RX_DR
+			WriteReg(STATUS, 0x40);
 		}
 	}
 }
