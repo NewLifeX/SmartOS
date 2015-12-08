@@ -5,6 +5,16 @@
 
 #define RF_DEBUG DEBUG
 
+/*
+模式		PRIM_RX	CE		FIFO状态
+接收模式	1		1
+发射模式	0		1		数据在TX_FIFO寄存器
+发射模式	0		1->0	停留在发射模式，直至数据发送完
+待机模式II	0		1		TX_FIFO为空
+待机模式I	-		0		无正在传输的数据
+掉电模式	-		-
+*/
+
 #define RF2401_REG
 #ifdef  RF2401_REG
 /********************************************************************************/
@@ -197,7 +207,6 @@ NRF24L01::NRF24L01()
 {
 	MaxSize	= 32;
 
-	Power	= NULL;
 	_spi	= NULL;
 
 	// 初始化地址
@@ -235,8 +244,9 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		// 拉高CE，可以由待机模式切换到RX/TX模式
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
-		_CE.Init(ce, false);
-		//_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
+		//_CE.Init(ce, false);
+		// 自动检测倒置。默认CE为高，需要倒置
+		_CE.Set(ce);
 	}
     if(irq != P0)
     {
@@ -249,10 +259,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		_IRQ.Set(irq);
         _IRQ.Register(OnIRQ, this);
     }
-	if(power != P0)
-	{
-		Power.Set(power);
-	}
+	if(power != P0) _Power.Set(power);
 
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
@@ -297,7 +304,6 @@ byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
   	return status;
 }
 
-// 向NRF的寄存器中写入一串数据
 byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
 {
 #if RF_DEBUG
@@ -327,10 +333,10 @@ byte NRF24L01::ReadReg(byte reg)
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
 #if RF_DEBUG
-	/*if(_CE && _CE->Read())
+	if(!_CE.Read())
 	{
 		debug_printf("NRF24L01::WriteReg 只允许Shutdown、Standby、Idle-TX模式下操作\r\n");
-	}*/
+	}
 #endif
 	SpiScope sc(_spi);
 
@@ -345,13 +351,12 @@ bool NRF24L01::Check(void)
 {
 	if(!Open()) return false;
 
-	//byte buf[5]={0xC2,0xC2,0xC2,0xC2,0xC2};
 	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
 	byte buf1[5];
 	byte buf2[5];
 
 	// 必须拉低CE后修改配置，然后再拉高
-	PortScope ps(&_CE, false);
+	PortScope ps(&_CE);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
@@ -377,7 +382,7 @@ bool NRF24L01::Check(void)
 // 配置
 bool NRF24L01::Config()
 {
-	if(Channel > 126) Channel = 126;
+	if(Channel > 125) Channel = 125;
 	if(Speed != 250 && Speed != 1000 && Speed != 2000) Speed = 250;
 
 #if RF_DEBUG
@@ -438,21 +443,21 @@ bool NRF24L01::Config()
 		debug_printf("    重试周期: %dus + 86us\r\n", RetryPeriod);
 	}
 	debug_printf("    发送超时: %dms\r\n", Timeout);
-	debug_printf("    出错重启: %d次  发送失败等出错超过%d次将会重启模块\r\n", MaxError, MaxError);
+	debug_printf("    出错重启: %d次\r\n", MaxError);
 #endif
 
-	//ShowStatus();
+	// 必须拉低CE后修改配置，然后再拉高
+	PortScope ps(&_CE);
+
 	SetPowerMode(false);
-	_CE = false;
 
 	SetAddress(true);
 
 	if(AutoAnswer)
 	{
-		//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+		// 设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 		int period = RetryPeriod / 250 - 1;
 		if(period < 0) period = 0;
-		//WriteReg(SETUP_RETR, (period << 4) | Retry);
 
 		RF_SETUP_RETR retr;
 		retr.ARC = Retry;
@@ -464,7 +469,8 @@ bool NRF24L01::Config()
 		WriteReg(SETUP_RETR, 0);
 	}
 
-	WriteReg(RF_CH, Channel);					// 设置RF通信频率
+	// 设置RF通信频率
+	WriteReg(RF_CH, Channel);
 
 	ST_RF_SETUP set;
 	set.Init();
@@ -502,13 +508,8 @@ bool NRF24L01::Config()
 
 	if(!SetPowerMode(true)) return false;
 
-	_CE = true;
-
-	//Sys.Sleep(1000);
 	// 上电后并不能马上使用，需要一段时间才能载波。标称100ms，实测1000ms
-	//debug_printf("    载波检测: %s\r\n", ReadReg(CD) > 0 ? "通过" : "失败");
 	if(ReadReg(CD) > 0) debug_printf("空间发现载波，可能存在干扰或者拥挤！\r\n");
-	//ShowStatus();
 
 	return true;
 }
@@ -527,13 +528,14 @@ bool NRF24L01::Config()
 void NRF24L01::ClearFIFO(bool rx)
 {
 #if RF_DEBUG
+	bool mode	= GetMode();
 	if(rx)
 	{
-		if(!GetMode()) debug_printf("NRF24L01::ClearFIFO 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
+		if(!mode) debug_printf("NRF24L01::ClearFIFO 清空RX缓冲区只能接收模式下用。如果在发送应答期间执行，数据应答将不能完成。\r\n");
 	}
 	else
 	{
-		if(GetMode()) debug_printf("NRF24L01::ClearFIFO 清空TX缓冲区只能发送模式下用。\r\n");
+		if(mode) debug_printf("NRF24L01::ClearFIFO 清空TX缓冲区只能发送模式下用。\r\n");
 	}
 #endif
 	if(rx)
@@ -569,15 +571,11 @@ bool NRF24L01::SetPowerMode(bool on)
 
 	if(!(on ^ config.PWR_UP)) return true;
 
-	debug_printf("NRF24L01::SetPowerMode %s电源\r\n", on ? "打开" : "关闭");
+	debug_printf("NRF24L01::SetPower %s电源\r\n", on ? "打开" : "关闭");
 
 	config.PWR_UP = on ? 1 : 0;
+	WriteReg(CONFIG, config.ToByte());
 
-	{
-		// 故意缩进，为了让ps提前析构，拉高CE
-		//PortScope ps(_CE, false);
-		WriteReg(CONFIG, config.ToByte());
-	}
 	if(on)
 	{
 		// 如果是上电，需要等待1.5~2ms
@@ -587,7 +585,7 @@ bool NRF24L01::SetPowerMode(bool on)
 		config.Init(ReadReg(CONFIG));
 		if(!config.PWR_UP)
 		{
-			debug_printf("NRF24L01::SetPowerMode 无法打开电源！\r\n");
+			debug_printf("NRF24L01::SetPower 无法打开电源！\r\n");
 			return false;
 		}
 	}
@@ -605,7 +603,7 @@ void NRF24L01::ChangePower(int level)
 	else if(level > 1)
 	{
 		// 整个模块断电
-		Power	= false;
+		_Power	= false;
 	}
 }
 
@@ -634,7 +632,7 @@ bool NRF24L01::SetMode(bool isReceive)
 	if(!config.PWR_UP) config.PWR_UP = 1;
 
 	// 必须拉低CE后修改配置，然后再拉高
-	_CE = false;
+	_CE = true;
 
 	// 不能随便清空FIFO寄存器，否则收到的数据都被清掉了
 	if(isReceive) // 接收模式
@@ -665,7 +663,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		// 发送前清空缓冲区和标识位
 		ClearFIFO(false);
 	}
-	_CE = true;
+	_CE = false;
 
 	// 进入发射模式等一会
 	if(!isReceive) Sys.Delay(200);
@@ -724,9 +722,6 @@ void NRF24L01::SetAddress(bool full)
 
 	// 开启隐藏寄存器
 	WriteReg(ACTIVATE, 0x73);
-#if RF_DEBUG
-	//debug_printf("R24::ACTIVATE\t= 0x%02X\r\n", ReadReg(ACTIVATE));
-#endif
 
 	RF_FEATURE ft;
 	ft.Init(ReadReg(FEATURE));
@@ -743,9 +738,6 @@ void NRF24L01::SetAddress(bool full)
 	{
 		// 动态负载
 		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
-#if RF_DEBUG
-		//debug_printf("R24::DYNPD\t= 0x%02X\r\n", ReadReg(DYNPD));
-#endif
 
 		ft.DPL = 1;			// 使能动态负载长度
 	}
@@ -755,9 +747,6 @@ void NRF24L01::SetAddress(bool full)
 	//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
 
 	WriteReg(FEATURE, ft.ToByte());
-#if RF_DEBUG
-	//debug_printf("R24::FEATURE\t= 0x%02X => 0x%02X\r\n", ft.ToByte(), ReadReg(FEATURE));
-#endif
 }
 
 void ShowStatusTask(void* param)
@@ -788,16 +777,17 @@ bool NRF24L01::OnOpen()
 	debug_printf("R24::Open\r\n");
 
 	debug_printf("\tPower: ");
-	if(Power.Open() && !Power.Read())
+	auto& pwr	= _Power;
+	if(pwr.Open() && !pwr.Read())
 	{
-		Power = true;
+		pwr = true;
 		debug_printf("NRF24L01::打开 物理电源开关\r\n");
 	}
 	debug_printf("\t   CE: ");
 	_CE.Open();
 	debug_printf("\t  IRQ: ");
 	_IRQ.Open();
-	debug_printf("Power=%d CE=%d Irq=%d \r\n", Power.Read(), _CE.Read(), _IRQ.Read());
+	debug_printf("Power=%d CE=%d Irq=%d \r\n", pwr.Read(), _CE.Read(), _IRQ.Read());
 
 	// 检查并打开Spi
 	_spi->Open();
@@ -843,20 +833,19 @@ void NRF24L01::OnClose()
 	_spi->Close();
 	_CE.Close();
 	_IRQ.Close();
-	if(Power.Read())
+
+	auto& pwr	= _Power;
+	if(pwr.Read())
 	{
-		Power = false;
+		pwr = false;
 		debug_printf("NRF24L01::关闭 物理电源开关\r\n");
 	}
-	Power.Close();
+	pwr.Close();
 }
 
 // 从NRF的接收缓冲区中读出数据
 uint NRF24L01::OnRead(Array& bs)
 {
-	// 亮灯。离开时自动熄灯
-	//PortScope ps(LedRx);
-
 	Lock lock(_Lock);
 	//if(!lock.Wait(10000)) return false;
 	// 如果拿不到锁，马上退出，不等待。因为一般读取是由定时器中断来驱动，等待没有意义。
@@ -899,14 +888,10 @@ uint NRF24L01::OnRead(Array& bs)
 		}
 	}
 
-	// 进入Standby
-	//_CE = false;
-
 	// 清除中断标志
 	ClearStatus(false, true);
 	ClearFIFO(true);
 
-	//_CE = true;
 	if(rs && Led) Led->Write(500);
 
 	bs.SetLength(rs);
@@ -939,7 +924,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	if(!SetMode(false)) return false;
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
-	_CE = false;
+	_CE = true;
 
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
@@ -949,13 +934,9 @@ bool NRF24L01::OnWrite(const Array& bs)
 	WriteBuf(cmd, (const byte*)bs.GetBuffer(), len);
 
 	// 进入TX，维持一段时间
-	_CE = true;
+	_CE = false;
 
 	bool rs = false;
-	// 这里需要延迟一点时间，发送没有那么快完成。整个循环大概耗时20us
-	//TimeWheel tw(0, Timeout);
-	//TimeWheel tw(0, RetryPeriod * Retry);
-
 	uint ms = RetryPeriod * Retry;
 	if(ms > 4 && AutoAnswer) ms = 4;
 	// https://devzone.nordicsemi.com/question/17074/nrf24l01-data-loss/
@@ -977,7 +958,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 
 		if(st.TX_DS || st.MAX_RT)
 		{
-			_CE = false;
+			_CE = true;
 			// 清除TX_DS或MAX_RT中断标志
 			WriteReg(STATUS, Status);
 
@@ -1001,7 +982,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	}while(!tw.Expired());
 
 	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
-	_CE = false;
+	_CE = true;
 	ClearFIFO(false);
 
 	SetMode(true);	// 发送完成以后进入接收模式
@@ -1055,7 +1036,7 @@ void NRF24L01::OnIRQ()
 	// TX_FIFO 缓冲区满
 	if(fifo.TX_FULL)
 	{
-		PortScope ps(&_CE, false);
+		PortScope ps(&_CE);
 		ClearFIFO(false);
 		ClearStatus(true, false);
 		//SetMode(false);
@@ -1085,7 +1066,7 @@ void NRF24L01::OnIRQ()
 		// RX_FIFO 缓冲区满
 		if(fifo.RX_FULL)
 		{
-			PortScope ps(&_CE, false);
+			PortScope ps(&_CE);
 			ClearFIFO(true);
 			ClearStatus(false, true);
 			//SetMode(true);
