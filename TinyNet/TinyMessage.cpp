@@ -13,6 +13,7 @@
 
 void SendTask(void* param);
 void StatTask(void* param);
+static bool Encrypt(Message& msg,Array& pass);
 
 typedef struct{
 	byte Retry:2;	// 标识位。也可以用来做二级命令
@@ -382,8 +383,10 @@ bool TinyController::Valid(const Message& msg)
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
-	// 
-	//Encrypt(tmsg,Key)
+	
+	// ByteArray  key;
+	// CallblackKey(tmsg.Src,key,Param);
+	// Encrypt(tmsg,key);
 
 #if MSG_DEBUG
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
@@ -498,7 +501,7 @@ bool TinyController::Send(Message& msg)
 }
 
 //加密。组网不加密，退网不加密
-static bool Encrypt(Message& msg, const Array& pass)
+static bool Encrypt(Message& msg,  Array& pass)
 {
 	// 加解密。组网不加密，退网不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))

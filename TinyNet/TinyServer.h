@@ -37,7 +37,6 @@ public:
 	Device* FindDevice(byte id);
 	Device* FindDevice(const Array& hardid);
 	bool	DeleteDevice(byte id);
-	void	GetDeviceKey(byte scr,Array& key);
 
 	int LoadDevices();
 	void SaveDevices();

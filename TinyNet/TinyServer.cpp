@@ -12,6 +12,7 @@
 /******************************** TinyServer ********************************/
 
 static bool OnServerReceived(void* sender, Message& msg, void* param);
+static void GetDeviceKey(byte scr, Array& key,void* param);
 
 #if DEBUG
 // 输出所有设备
@@ -24,7 +25,8 @@ TinyServer::TinyServer(TinyController* control)
 	Cfg			= NULL;
 	DeviceType	= Sys.Code;
 
-	Control->Received	= OnServerReceived;
+	Control->Received		= OnServerReceived;
+	Control->CallblackKey	= GetDeviceKey;
 	Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
@@ -543,22 +545,23 @@ Device* TinyServer::FindDevice(byte id)
 	return NULL;
 }
 
-void TinyServer::GetDeviceKey(byte scr,Array& key)
+void GetDeviceKey(byte scr,Array& key,void* param)
 {
-  auto dv = FindDevice(scr);
+  auto server = (TinyServer*)param;
+  auto dv = server->FindDevice(scr);
   if(!dv) return;
   
   key.Set(dv->Pass,8);   	     
 }
+
 Device* TinyServer::FindDevice(const Array& hardid)
 {
 	if(hardid.Length() == 0) return NULL;
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-		if(hardid == Devices[i]->GetHardID()) return Devices[i];
+	  if(hardid == Devices[i]->GetHardID()) return Devices[i];
 	}
-
 	return NULL;
 }
 

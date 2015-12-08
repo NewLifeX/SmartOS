@@ -141,8 +141,8 @@ public:
 	uint	Interval;	// 消息队列发送间隔ms
 	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
 	
-	TArray<Device*>* Devices; //设备列表，控制器若无此设备不上抛消息
-
+   void  (*CallblackKey)(byte ,Array& key,void* param);
+	
 	TinyController();
 	virtual ~TinyController();
 
