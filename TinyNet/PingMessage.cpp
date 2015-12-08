@@ -52,7 +52,7 @@ void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
 	if(len > remain) len = remain;
 
 	ms.Write(code);	// 子功能码
-	ms.Write((byte)0x01);	// 起始地址
+	ms.Write((byte)0x00);	// 起始地址
 
 	ms.Write(len);	// 长度
 	ms.Write(Array(bs.GetBuffer(), len));
