@@ -2,7 +2,6 @@
 
 #include "TinyMessage.h"
 #include "Security\RC4.h"
-#include "Device.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -284,6 +283,11 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	msg.Show();
 }
 
+bool TinyController::OnReceive(Message& msg)
+{
+  //debug_printf("TinyController::OnReceive\n");
+  return Controller::OnReceive(msg);
+}
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	/*byte* buf	= ms.Current();
@@ -320,6 +324,7 @@ bool TinyController::Valid(const Message& msg)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;
 
+	//debug_printf("TinyController::Valid\n");
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 	// 没有源地址是很不负责任的
