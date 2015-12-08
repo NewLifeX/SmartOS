@@ -731,9 +731,9 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	if(Floating)
 		debug_printf(" 浮空");
 	else if(Pull == UP)
-		debug_printf(" 上拉");
+		debug_printf(" 上升沿");
 	else if(Pull == DOWN)
-		debug_printf(" 下拉");
+		debug_printf(" 下降沿");
 	if(Mode & Rising)	debug_printf(" 按下");
 	if(Mode & Falling)	debug_printf(" 弹起");
 
@@ -797,7 +797,7 @@ void InputPort::OnClose()
 }
 
 // 注册回调  及中断使能
-void InputPort::Register(IOReadHandler handler, void* param)
+bool InputPort::Register(IOReadHandler handler, void* param)
 {
 	assert_param2(_Pin != P0, "输入注册必须先设置引脚");
 
@@ -809,7 +809,7 @@ void InputPort::Register(IOReadHandler handler, void* param)
     {
         for(int i=0; i<16; i++)
         {
-            IntState* st = &States[i];
+            auto st = &States[i];
             st->Port	= NULL;
         }
         hasInitState = true;
@@ -817,16 +817,18 @@ void InputPort::Register(IOReadHandler handler, void* param)
 
 	byte gi = _Pin >> 4;
 	int idx = Bits2Index(Mask);
-	IntState* st = &States[idx];
+	auto st = &States[idx];
 
-	InputPort* port	= st->Port;
+	auto port	= st->Port;
     // 检查是否已经注册到别的引脚上
     if(port != this && port != NULL)
     {
 #if DEBUG
         debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
 #endif
-        return;
+
+		// 将来可能修改设计，即使注册失败，也可以开启一个短时间的定时任务，来替代中断输入
+        return false;
     }
     st->Port		= this;
 	st->OldValue	= Read(); // 预先保存当前状态值，后面跳变时触发中断
@@ -848,6 +850,8 @@ void InputPort::Register(IOReadHandler handler, void* param)
     Interrupt.Activate(PORT_IRQns[idx], EXTI_IRQHandler, this);
 
 	if(!_taskInput && !HardEvent) _taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+
+	return true;
 }
 
 #endif

@@ -45,10 +45,10 @@ ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, 
 	debug_printf("\r\nW5500::Create \r\n");
 
 	static Spi spi(spi_, 36000000);
+
+	debug_printf("\tPower: ");
 	static OutputPort pwr(power, true);
 	pwr = true;
-
-	//TokenConfig* tk = TokenConfig::Current;
 
 	static W5500 net;
 	net.LoadConfig();

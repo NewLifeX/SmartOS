@@ -258,7 +258,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		Irq.Set(irq);
-		Irq.Register(OnIRQ, this);
+		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
 	}
 
 	_spi = spi;
@@ -271,12 +271,14 @@ bool W5500::Open()
 	debug_printf("\r\nW5500::Open\r\n");
 	ShowInfo();
 
+	debug_printf("\tRst: ");
 	if(!Rst.Open()) return false;
 	//debug_printf("硬件复位 \r\n");
 	Rst = true;		// 低电平有效
 	Sys.Delay(600);	// 最少500us
 	Rst = false;
 
+	debug_printf("\tIrq: ");
 	Irq.Open();
 	debug_printf("Reset=%d Irq=%d \r\n", Rst.Read(), Irq.Read());
 
@@ -312,9 +314,9 @@ bool W5500::Open()
 	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
 	if(!TaskID)
 	{
-		int time = Irq.Empty() ? 100 : 500;
+		int time = Irq.Empty() || !Irq.HardEvent ? 10 : 500;
 		TaskID = Sys.AddTask(IRQTask, this, time, time, "W5500中断");
-		Task* task = Task::Get(TaskID);
+		auto task = Task::Get(TaskID);
 		task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 	}
 

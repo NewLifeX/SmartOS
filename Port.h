@@ -145,7 +145,7 @@ public:
     virtual bool Read() const;
 
 	// 注册事件
-    void Register(IOReadHandler handler, void* param = NULL);
+    bool Register(IOReadHandler handler, void* param = NULL);
 
 	void OnPress(bool down);
 
