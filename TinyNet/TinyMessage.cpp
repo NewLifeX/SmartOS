@@ -325,7 +325,6 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 bool TinyController::Valid(const Message& msg)
 {
 	TinyMessage& tmsg = (TinyMessage&)msg;
-
 	//debug_printf("TinyController::Valid\n");
 	// 代码为0是非法的
 	if(!msg.Code) return false;
@@ -383,8 +382,8 @@ bool TinyController::Valid(const Message& msg)
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
-	
-	//Encrypt(ms,Key)
+	// 
+	//Encrypt(tmsg,Key)
 
 #if MSG_DEBUG
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
@@ -482,7 +481,8 @@ bool TinyController::Send(Message& msg)
 
 	// 附上序列号。响应消息保持序列号不变
 	if(!tmsg.Reply) tmsg.Sequence = ++_Sequence;
-	
+	//auto pass=CallBack(tmsg.Scr);
+	//if(pass)
 	//Encrypt(msg, Key);
 
 #if MSG_DEBUG
