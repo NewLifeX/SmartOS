@@ -124,7 +124,7 @@ void Dhcp::Start()
 	_expired	= now + ExpiredTime;
 	if(!dhcpid) dhcpid = now;
 
-	debug_printf("Dhcp::Start ExpiredTime=%ds DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
+	debug_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	if(IP.IsAny())
