@@ -2,6 +2,7 @@
 
 #include "TinyMessage.h"
 #include "Security\RC4.h"
+#include "Device.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
