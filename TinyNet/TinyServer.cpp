@@ -543,6 +543,13 @@ Device* TinyServer::FindDevice(byte id)
 	return NULL;
 }
 
+void TinyServer::GetDeviceKey(byte scr,Array& key)
+{
+  auto dv = FindDevice(scr);
+  if(!dv) return;
+  
+  key.Set(dv->Pass,8);   	     
+}
 Device* TinyServer::FindDevice(const Array& hardid)
 {
 	if(hardid.Length() == 0) return NULL;
