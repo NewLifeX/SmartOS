@@ -235,7 +235,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		// 拉高CE，可以由待机模式切换到RX/TX模式
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
-		_CE.Set(ce);
+		_CE.Init(ce, false);
 		//_CE = false;	// 开始让CE=0，系统上电并打开电源寄存器后，位于待机模式
 	}
     if(irq != P0)
@@ -762,7 +762,7 @@ void NRF24L01::SetAddress(bool full)
 
 void ShowStatusTask(void* param)
 {
-	NRF24L01* nrf = (NRF24L01*)param;
+	auto nrf = (NRF24L01*)param;
 
 	debug_printf("定时 ");
 	nrf->ShowStatus();
@@ -777,7 +777,7 @@ void AutoOpenTask(void* param)
 {
 	assert_ptr(param);
 
-	NRF24L01* nrf = (NRF24L01*)param;
+	auto nrf = (NRF24L01*)param;
 	nrf->Open();
 }
 
@@ -787,13 +787,18 @@ bool NRF24L01::OnOpen()
 
 	debug_printf("R24::Open\r\n");
 
+	debug_printf("\tPower: ");
 	if(Power.Open() && !Power.Read())
 	{
 		Power = true;
 		debug_printf("NRF24L01::打开 物理电源开关\r\n");
 	}
+	debug_printf("\t   CE: ");
 	_CE.Open();
+	debug_printf("\t  IRQ: ");
 	_IRQ.Open();
+	debug_printf("Power=%d CE=%d Irq=%d \r\n", Power.Read(), _CE.Read(), _IRQ.Read());
+
 	// 检查并打开Spi
 	_spi->Open();
 
