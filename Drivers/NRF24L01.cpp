@@ -335,7 +335,7 @@ byte NRF24L01::WriteReg(byte reg, byte dat)
 #if RF_DEBUG
 	if(!_CE.Read())
 	{
-		debug_printf("NRF24L01::WriteReg 只允许Shutdown、Standby、Idle-TX模式下操作\r\n");
+		debug_printf("NRF24L01::WriteReg 0x%02X=0x%02X 只允许Shutdown、Standby、Idle-TX模式下操作\r\n", reg, dat);
 	}
 #endif
 	SpiScope sc(_spi);
@@ -455,7 +455,7 @@ bool NRF24L01::Config()
 
 	if(AutoAnswer)
 	{
-		// 设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
+		//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 		int period = RetryPeriod / 250 - 1;
 		if(period < 0) period = 0;
 
@@ -654,7 +654,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		fifo.Init(FifoStatus);
 		if(fifo.RX_FULL)
 		{
-			//debug_printf("RX缓冲区满，需要清空！\r\n");
+			debug_printf("RX缓冲区满，需要清空！\r\n");
 			ClearFIFO(true);
 		}
 	}
@@ -788,6 +788,7 @@ bool NRF24L01::OnOpen()
 	debug_printf("\t  IRQ: ");
 	_IRQ.Open();
 	debug_printf("Power=%d CE=%d Irq=%d \r\n", pwr.Read(), _CE.Read(), _IRQ.Read());
+	_CE	= false;
 
 	// 检查并打开Spi
 	_spi->Open();
@@ -1029,7 +1030,11 @@ void NRF24L01::OnIRQ()
 	if(st.TX_DS || st.MAX_RT)
 	{
 		// 达到最大重试次数以后，需要清空TX缓冲区
-		if(st.MAX_RT) ClearFIFO(false);
+		if(st.MAX_RT)
+		{
+			PortScope ps(&_CE);
+			ClearFIFO(false);
+		}
 		//SetMode(true);
 	}
 
@@ -1066,6 +1071,8 @@ void NRF24L01::OnIRQ()
 		// RX_FIFO 缓冲区满
 		if(fifo.RX_FULL)
 		{
+			debug_printf("RX缓冲区满IRQ，需要清空！\r\n");
+
 			PortScope ps(&_CE);
 			ClearFIFO(true);
 			ClearStatus(false, true);
