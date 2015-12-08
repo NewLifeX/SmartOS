@@ -135,7 +135,7 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 
 		return true;
 	}
-
+    if(!msg.Valid()) return true;
 	return OnReceive(msg);
 }
 
