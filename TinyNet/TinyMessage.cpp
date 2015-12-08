@@ -527,7 +527,7 @@ void TinyController::Loop()
 	int count = 0;
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
-		MessageNode& node = _Queue[i];
+		auto& node = _Queue[i];
 		if(!node.Using) continue;
 
 		// 检查时间。至少发送一次
@@ -550,7 +550,7 @@ void TinyController::Loop()
 		count++;
 		node.Times++;
 
-		TFlags* f = (TFlags*)&node.Data[3];
+		auto f = (TFlags*)&node.Data[3];
 		f->Retry++;
 
 		// 发送消息

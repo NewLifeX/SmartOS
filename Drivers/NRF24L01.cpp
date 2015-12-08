@@ -383,6 +383,8 @@ bool NRF24L01::Check(void)
 // 配置
 bool NRF24L01::Config()
 {
+	TS("R24::Config");
+
 	if(Channel > 125) Channel = 125;
 	if(Speed != 250 && Speed != 1000 && Speed != 2000) Speed = 250;
 
@@ -532,6 +534,8 @@ bool NRF24L01::GetPower()
 // 获取/设置当前电源状态
 bool NRF24L01::SetPowerMode(bool on)
 {
+	TS("R24::SetPower");
+
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
 	config.Init(mode);
@@ -588,6 +592,8 @@ bool NRF24L01::GetMode()
 // 因为CE拉高需要延迟的原因，整个函数大概耗时185us，如果不延迟，大概55us
 bool NRF24L01::SetMode(bool isReceive)
 {
+	TS("R24::SetMode");
+
 	byte mode = ReadReg(CONFIG);
 	RF_CONFIG config;
 	config.Init(mode);
@@ -659,6 +665,8 @@ bool NRF24L01::SetMode(bool isReceive)
 // 设置地址。参数指定是否设置0通道地址以外的完整地址
 void NRF24L01::SetAddress(bool full)
 {
+	TS("R24::SetAddress");
+
 	uint addrLen = ArrayLength(Address);
 
 	WriteBuf(TX_ADDR, Address, addrLen);
@@ -737,6 +745,8 @@ void AutoOpenTask(void* param)
 
 bool NRF24L01::OnOpen()
 {
+	TS("R24::OnOpen");
+
 	debug_printf("\r\n");
 
 	debug_printf("R24::Open\r\n");
@@ -795,6 +805,8 @@ bool NRF24L01::OnOpen()
 
 void NRF24L01::OnClose()
 {
+	TS("R24::OnClose");
+
 	if(_tidRecv) Sys.SetTask(_tidRecv, false);
 
 	SetPowerMode(false);
@@ -822,6 +834,8 @@ uint NRF24L01::OnRead(Array& bs)
 
 	// 进入接收模式
 	if(!SetMode(true)) return false;
+
+	TS("NRF24L01::OnRead");
 
 	uint rs = 0;
 	// 读取status寄存器的值
@@ -865,6 +879,12 @@ uint NRF24L01::OnRead(Array& bs)
 	if(rs && Led) Led->Write(500);
 
 	bs.SetLength(rs);
+	// 微网指令特殊处理长度
+	if(rs >= 8)
+	{
+		rs = bs[5] + 8;
+		if(rs < bs.Length()) bs.SetLength(rs);
+	}
 
 	return rs;
 }
@@ -872,6 +892,8 @@ uint NRF24L01::OnRead(Array& bs)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::OnWrite(const Array& bs)
 {
+	TS("R24::OnWrite");
+
 	// 设定小灯快闪时间，单位毫秒
 	if(Led) Led->Write(500);
 
@@ -974,6 +996,8 @@ void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
 
 void NRF24L01::OnIRQ()
 {
+	TS("R24::OnIRQ");
+
 	// 读状态寄存器
 	Status		= ReadReg(STATUS);
 	FifoStatus	= ReadReg(FIFO_STATUS);
