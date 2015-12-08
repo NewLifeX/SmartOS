@@ -257,7 +257,8 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		_IRQ.Mode		= InputPort::Rising;
 		_IRQ.HardEvent	= true;
 		_IRQ.Set(irq);
-        _IRQ.Register(OnIRQ, this);
+        //_IRQ.Register(OnIRQ, this);
+		if(!_IRQ.Register(OnIRQ, this)) _IRQ.HardEvent	= false;
     }
 	if(power != P0) _Power.Set(power);
 
@@ -779,7 +780,10 @@ bool NRF24L01::OnOpen()
 		Sys.SetTask(_tidOpen, false);
 	}
 	if(!_tidRecv)
-		_tidRecv = Sys.AddTask(ReceiveTask, this, 200, 200, "R24接收");
+	{
+		int time = _IRQ.Empty() || !_IRQ.HardEvent ? 10 : 500;
+		_tidRecv = Sys.AddTask(ReceiveTask, this, time, time, "R24接收");
+	}
 	else
 		Sys.SetTask(_tidRecv, true);
 
@@ -873,18 +877,6 @@ bool NRF24L01::OnWrite(const Array& bs)
 
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
-
-	/*// 检查空间载波，避开
-	int retry = 2000;
-	while(ReadReg(CD))
-	{
-		if(retry-- <= 0)
-		{
-			debug_printf("空间载波拥挤，发送失败！\r\n");
-			return false;
-		}
-		Sys.Delay(50);	// 暂停50微秒
-	}*/
 
 	// 进入发送模式
 	if(!SetMode(false)) return false;
@@ -983,30 +975,17 @@ void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
 void NRF24L01::OnIRQ()
 {
 	// 读状态寄存器
-	Status = ReadReg(STATUS);
-	FifoStatus = ReadReg(FIFO_STATUS);
+	Status		= ReadReg(STATUS);
+	FifoStatus	= ReadReg(FIFO_STATUS);
 
 	RF_STATUS st;
 	st.Init(Status);
 	RF_FIFO_STATUS fifo;
 	fifo.Init(FifoStatus);
 
-	// 发送完成或最大重试次数以后进入接收模式
-	if(st.TX_DS || st.MAX_RT)
-	{
-		// 达到最大重试次数以后，需要清空TX缓冲区
-		if(st.MAX_RT)
-		{
-			//PortScope ps(&_CE);
-			WriteReg(FLUSH_TX, NOP);
-		}
-		//SetMode(true);
-	}
-
 	// TX_FIFO 缓冲区满
-	if(fifo.TX_FULL)
+	if(fifo.TX_FULL || st.MAX_RT)
 	{
-		//PortScope ps(&_CE);
 		WriteReg(FLUSH_TX, NOP);
 		// 发送标识位 TX_DS/MAX_RT
 		WriteReg(STATUS, 0x30);
@@ -1028,19 +1007,15 @@ void NRF24L01::OnIRQ()
 				Write(bs);
 			}
 		}
-		return;
 	}
-	else
+	// RX_FIFO 缓冲区满
+	else if(fifo.RX_FULL)
 	{
-		// RX_FIFO 缓冲区满
-		if(fifo.RX_FULL)
-		{
-			debug_printf("RX缓冲区满IRQ，需要清空！\r\n");
+		debug_printf("RX缓冲区满IRQ，需要清空！\r\n");
 
-			WriteReg(FLUSH_RX, NOP);
-			// 接收标识位 RX_DR
-			WriteReg(STATUS, 0x40);
-		}
+		WriteReg(FLUSH_RX, NOP);
+		// 接收标识位 RX_DR
+		WriteReg(STATUS, 0x40);
 	}
 }
 
