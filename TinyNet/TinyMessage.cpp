@@ -283,9 +283,11 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	msg.Show();
 }
 
+//接受函数
 bool TinyController::OnReceive(Message& msg)
 {
   //debug_printf("TinyController::OnReceive\n");
+  //msg.Show();
   return Controller::OnReceive(msg);
 }
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
@@ -381,6 +383,8 @@ bool TinyController::Valid(const Message& msg)
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
+	
+	//Encrypt(ms,Key)
 
 #if MSG_DEBUG
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
