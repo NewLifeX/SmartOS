@@ -527,7 +527,7 @@ bool TinyController::Send(Message& msg)
 static bool Encrypt(Message& msg,  Array& pass)
 {
 	// 加解密。组网不加密，退网不加密
-	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
+	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02||msg.Code==0x03))
 	{
 		Array bs(msg.Data, msg.Length);
 		RC4::Encrypt(bs, pass);
