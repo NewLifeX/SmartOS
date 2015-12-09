@@ -20,7 +20,7 @@ TinyClient::TinyClient(TinyController* control)
 
 	Control 				= control;
 	Control->CallblackKey	= GetDeviceKey;
-	
+
 
 	Opened		= false;
 	Joining		= false;
@@ -409,7 +409,7 @@ void GetDeviceKey(byte id, Array& key, void* param)
 
 	auto client = (TinyClient*)param;
 
-	key = client->Password;    	     
+	key = client->Password;
 }
 
 // 发送发现消息，告诉大家我在这
@@ -526,9 +526,13 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 	TS("TinyClient::OnDisJoin");
 
 	Stream ms(msg.Data, msg.Length);
-	ushort crc=ms.ReadUInt16();
+	ushort crc	= ms.ReadUInt16();
 
-	if(crc!=HardCrc) return false;
+	if(crc != HardCrc)
+	{
+		debug_printf("退网密码 0x%04X 不等于本地密码 0x%04X \r\n", crc, HardCrc);
+		return false;
+	}
 
 	Cfg->LoadDefault();
 	Cfg->Save();
