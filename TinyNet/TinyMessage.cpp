@@ -317,7 +317,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 	// 后移一个字节来弥补
 	ms.Seek(-1);*/
 
-	//Encrypt(ms,Key)
+	Encrypt(ms,0x12)
 	TinyMessage msg;
 	return Controller::Dispatch(ms, &msg, param);
 }
@@ -390,10 +390,10 @@ bool TinyController::Valid(const Message& msg)
        ByteArray  key;
        CallblackKey(tmsg.Src,key,Param);
       // debug_printf("接收未解密:");
-       tmsg.Show();
+      // tmsg.Show();
       // debug_printf("解密密匙：");
       // key.Show();
-       Encrypt(tmsg,key);
+      // Encrypt(tmsg,key);
       // debug_printf("解密后数据：");
       // tmsg.Show();
 	}
@@ -500,7 +500,7 @@ bool TinyController::Send(Message& msg)
 	if(!tmsg.Reply) tmsg.Sequence = ++_Sequence;
 	//auto pass=CallBack(tmsg.Scr);
 	//if(pass)
-	//Encrypt(msg, Key);
+	Encrypt(msg, 0x12);
 
 #if MSG_DEBUG
 	// 计算校验
