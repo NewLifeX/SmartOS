@@ -29,7 +29,7 @@ public:
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误
 	byte _Reply:1;	// 是否响应
-	byte Sequence;	// 序列号
+	byte Seq;		// 序列号
 	byte _Length;	// 数据长度
 	byte _Data[64];	// 数据部分
 	ushort Checksum;// 16位检验和
@@ -102,7 +102,7 @@ class MessageNode
 {
 public:
 	byte	Using;		// 是否在使用
-	byte	Sequence;	// 序列号
+	byte	Seq;		// 序列号
 	byte	Data[64];
 	uint	Length;
 	uint	Period;		// 延迟间隔ms。每次逐步递增

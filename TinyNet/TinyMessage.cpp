@@ -169,7 +169,7 @@ void TinyMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Sequence, Retry);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Seq, Retry);
 	ushort len	= Length;
 	if(len > 0)
 	{
@@ -346,20 +346,20 @@ bool TinyController::Valid(const Message& msg)
 
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
-	if(tmsg.Sequence != 0)
+	if(tmsg.Seq != 0)
 #endif
 	{
 		// Ack的包有可能重复，不做处理。正式响应包跟前面的Ack有相同的源地址和序列号
 		if(!tmsg.Ack)
 		{
 			// 处理重复消息。加上来源地址，以免重复
-			ushort seq = (tmsg.Src << 8) | tmsg.Sequence;
+			ushort seq = (tmsg.Src << 8) | tmsg.Seq;
 			if(_Ring.Check(seq))
 			{
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!tmsg.NoAck) AckResponse(tmsg);
 
-				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
+				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Seq, tmsg.Retry);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -387,7 +387,7 @@ bool TinyController::Valid(const Message& msg)
 		ByteArray  key;
 		CallblackKey(tmsg.Src, key, Param);
 		// debug_printf("接收未解密:");
-		tmsg.Show();
+		//tmsg.Show();
 		// debug_printf("解密密匙：");
 		// key.Show();
 		// Encrypt(tmsg,key);
@@ -415,7 +415,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
 		auto& node = _Queue[i];
-		if(node.Using && node.Sequence == msg.Sequence)
+		if(node.Using && node.Seq == msg.Seq)
 		{
 			int cost = Sys.Ms() - node.LastSend;
 			if(cost < 0) cost = -cost;
@@ -439,12 +439,12 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			else
 				msg_printf("响应确认 ");
 
-			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Sequence, cost, msg.Retry);
+			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Seq, cost, msg.Retry);
 			return;
 		}
 	}
 
-	if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Sequence, msg.Retry);
+	if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
 }
 
 // 向对方发出Ack包
@@ -460,6 +460,7 @@ void TinyController::AckResponse(const TinyMessage& msg)
 	msg2.Code	= msg.Code;
 	msg2.Src	= Address;
 	msg2.Dest	= msg.Src;
+	msg2.Seq	= msg.Seq;
 	msg2.Reply	= 1;
 	msg2.Ack	= 1;
 	msg2.Length	= 0;
@@ -468,7 +469,7 @@ void TinyController::AckResponse(const TinyMessage& msg)
 #endif
 
 	bool rs = Controller::Send(msg2);
-	msg_printf("发送确认 Dest=0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Sequence, msg.Retry);
+	//msg_printf("发送确认 Dest=0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
 	/*if(rs)
 		msg_printf(" 成功!\r\n");
 	else
@@ -494,7 +495,7 @@ bool TinyController::Send(Message& msg)
 	tmsg.Src = Address;
 
 	// 附上序列号。响应消息保持序列号不变
-	if(!tmsg.Reply) tmsg.Sequence = ++_Sequence;
+	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
 
 #if MSG_DEBUG
 	// 计算校验
@@ -558,7 +559,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.Expired < now2)
 			{
-				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Period=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Period, node.Times);
+				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Period=%d Times=%d\r\n", node.Data[0], node.Seq, node.Period, node.Times);
 				node.Using = 0;
 
 				continue;
@@ -623,7 +624,7 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 		if(!_Queue[i].Using)
 		{
 			node = &_Queue[i];
-			node->Sequence = 0;
+			node->Seq = 0;
 			node->Using = 1;
 			break;
 		}
@@ -653,7 +654,7 @@ bool TinyController::Broadcast(TinyMessage& msg)
 	msg.Dest = 0;
 
 	// 附上序列号。响应消息保持序列号不变
-	if(!msg.Reply) msg.Sequence = ++_Sequence;
+	if(!msg.Reply) msg.Seq = ++_Sequence;
 
 #if MSG_DEBUG
 	// 计算校验
@@ -713,7 +714,7 @@ void TinyController::ShowStat()
 
 void MessageNode::SetMessage(TinyMessage& msg)
 {
-	Sequence	= msg.Sequence;
+	Seq			= msg.Seq;
 	Period		= 0;
 	Times		= 0;
 	LastSend	= 0;
