@@ -43,7 +43,7 @@ bool TinyMessage::Read(Stream& ms)
 
 	TS("TinyMessage::Read");
 
-	byte* p = ms.Current();
+	auto p = ms.Current();
 	ms.Read(&Dest, 0, HeaderSize);
 
 	// 占位符拷贝到实际数据
@@ -78,7 +78,7 @@ bool TinyMessage::Read(Stream& ms)
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs = p[3];
 	//p[3] &= 0xF0;
-	TFlags* f = (TFlags*)&p[3];
+	auto f = (TFlags*)&p[3];
 	f->TTL		= 0;
 	f->Retry	= 0;
 	// 连续的，可以直接计算Crc16
@@ -191,7 +191,6 @@ TinyController::TinyController() : Controller()
 	Timeout		= 200;
 
 	MinSize = TinyMessage::MinSize;
-	//MaxSize = 32;
 
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
@@ -227,7 +226,6 @@ void TinyController::Open()
 
 	if(!_taskID)
 	{
-		//debug_printf("TinyNet::微网消息队列 ");
 		_taskID = Sys.AddTask(SendTask, this, 0, 1, "微网队列");
 		// 默认禁用，有数据要发送才开启
 		Sys.SetTask(_taskID, false);
@@ -245,7 +243,7 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
-	int blank = 9;
+	int blank = 6;
 	msg_printf("%s", port->ToString());
 	if(send && !msg.Reply)
 	{
@@ -284,13 +282,14 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	msg.Show();
 }
 
-//接受函数
+// 接收函数
 bool TinyController::OnReceive(Message& msg)
 {
   //debug_printf("TinyController::OnReceive\n");
   //msg.Show();
   return Controller::OnReceive(msg);
 }
+
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	/*byte* buf	= ms.Current();
@@ -323,7 +322,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 bool TinyController::Valid(const Message& msg)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	auto& tmsg = (TinyMessage&)msg;
 	//debug_printf("TinyController::Valid\n");
 	// 代码为0是非法的
 	if(!msg.Code) return false;
@@ -360,7 +359,7 @@ bool TinyController::Valid(const Message& msg)
 				// 快速响应确认消息，避免对方无休止的重发
 				if(!tmsg.NoAck) AckResponse(tmsg);
 
-				msg_printf("重复消息 Reply=%d Ack=%d Src=0x%02x Seq=%d Retry=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
+				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Sequence, tmsg.Retry);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -385,19 +384,19 @@ bool TinyController::Valid(const Message& msg)
 	
 	if(tmsg.Dest==Address)
 	{
-       ByteArray  key;
-       CallblackKey(tmsg.Src,key,Param);
-      // debug_printf("接收未解密:");
-       tmsg.Show();
-      // debug_printf("解密密匙：");
-      // key.Show();
-      // Encrypt(tmsg,key);
-      // debug_printf("解密后数据：");
-      // tmsg.Show();
+		ByteArray  key;
+		CallblackKey(tmsg.Src, key, Param);
+		// debug_printf("接收未解密:");
+		tmsg.Show();
+		// debug_printf("解密密匙：");
+		// key.Show();
+		// Encrypt(tmsg,key);
+		// debug_printf("解密后数据：");
+		// tmsg.Show();
 	}
 	else
 	{
-		 debug_printf("中转消息不解密");
+		debug_printf("中转消息不解密");
 	}
 
 #if MSG_DEBUG
@@ -415,15 +414,15 @@ void TinyController::AckRequest(const TinyMessage& msg)
 {
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
-		MessageNode& node = _Queue[i];
+		auto& node = _Queue[i];
 		if(node.Using && node.Sequence == msg.Sequence)
 		{
 			int cost = Sys.Ms() - node.LastSend;
 			if(cost < 0) cost = -cost;
 
-			Total.Cost += cost;
+			Total.Cost	+= cost;
 			Total.Ack++;
-			Total.Bytes += node.Length;
+			Total.Bytes	+= node.Length;
 
 			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
 			/*uint it = (Interval + cost) >> 1;
@@ -436,16 +435,16 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			node.Using = 0;
 
 			if(msg.Ack)
-				msg_printf("收到Ack确认包 ");
+				msg_printf("收到确认 ");
 			else
-				msg_printf("收到Reply确认 ");
+				msg_printf("响应确认 ");
 
-			msg_printf("Src=%d Seq=%d Cost=%dus Retry=%d\r\n", msg.Src, msg.Sequence, cost, msg.Retry);
+			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Sequence, cost, msg.Retry);
 			return;
 		}
 	}
 
-	if(msg.Ack) msg_printf("无效Ack确认包 Src=%d Seq=%d 可能你来迟了，消息已经从发送队列被删除\r\n", msg.Src, msg.Sequence);
+	if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Sequence, msg.Retry);
 }
 
 // 向对方发出Ack包
@@ -469,11 +468,11 @@ void TinyController::AckResponse(const TinyMessage& msg)
 #endif
 
 	bool rs = Controller::Send(msg2);
-	msg_printf("发送Ack确认包 Dest=0x%02x Seq=%d Retry=%d ", msg.Src, msg.Sequence, msg.Retry);
-	if(rs)
+	msg_printf("发送确认 Dest=0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Sequence, msg.Retry);
+	/*if(rs)
 		msg_printf(" 成功!\r\n");
 	else
-		msg_printf(" 失败!\r\n");
+		msg_printf(" 失败!\r\n");*/
 }
 
 uint TinyController::Post(byte dest, byte code, const Array& arr)
@@ -559,7 +558,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.Expired < now2)
 			{
-				debug_printf("消息过期 Dest=0x%02X Seq=%d Period=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Period, node.Times);
+				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Period=%d Times=%d\r\n", node.Data[0], node.Sequence, node.Period, node.Times);
 				node.Using = 0;
 
 				continue;
