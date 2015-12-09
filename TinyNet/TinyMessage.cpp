@@ -32,7 +32,8 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 	// 如果地址不是8字节对齐，长整型操作会导致异常
 	memset(&Dest, 0, MinSize);
 
-	Crc = 0;
+	Checksum	= 0;
+	Crc			= 0;
 }
 
 // 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
