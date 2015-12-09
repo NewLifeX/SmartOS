@@ -200,6 +200,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	JoinMessage dm;
 	dm.ReadMessage(msg);
+	if(dm.Kind == 0x1004) return false;
+
 	// 根据硬件编码找设备
 	auto dv = FindDevice(dm.HardID);
 	if(!dv)
