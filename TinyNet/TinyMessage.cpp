@@ -295,7 +295,7 @@ bool TinyController::OnReceive(Message& msg)
 {
   //debug_printf("TinyController::OnReceive\n");
   //msg.Show();
-  return Controller::OnReceive(msg);
+  //return Controller::OnReceive(msg);
 }
 
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
