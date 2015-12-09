@@ -81,7 +81,7 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream ms(buf, len);
+	Stream ms((const void*)buf, len);
 	while(ms.Remain() >= control->MinSize)
 	{
 #if MSG_DEBUG
