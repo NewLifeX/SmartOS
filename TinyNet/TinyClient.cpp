@@ -576,7 +576,7 @@ void TinyClient::Ping()
 bool TinyClient::OnPing(const TinyMessage& msg)
 {
 	// 仅处理来自网关的消息
-	if(Server == 0 || Server != msg.Dest) return true;
+	if(Server == 0 || Server != msg.Src) return true;
 
 	TS("TinyClient::OnPing");
 
