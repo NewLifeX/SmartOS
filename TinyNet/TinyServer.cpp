@@ -40,12 +40,12 @@ TinyServer::TinyServer(TinyController* control)
 	Devices.SetLength(0);
 }
 
-bool TinyServer::Send(Message& msg)
+bool TinyServer::Send(Message& msg) const
 {
 	return Control->Send(msg);
 }
 
-bool TinyServer::Reply(Message& msg)
+bool TinyServer::Reply(Message& msg) const
 {
 	return Control->Reply(msg);
 }
@@ -268,7 +268,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 }
 
 // 网关重置节点通信密码
-bool TinyServer::ResetPassword(byte id)
+bool TinyServer::ResetPassword(byte id) const
 {
 	TS("TinyServer::ResetPassword");
 
@@ -320,7 +320,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 	return true;
 }
 
-bool TinyServer::Disjoin(TinyMessage& msg, uint crc)
+bool TinyServer::Disjoin(TinyMessage& msg, uint crc) const
 {
 	TS("TinyServer::Disjoin");
 
@@ -541,7 +541,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	return true;
 }
 
-Device* TinyServer::FindDevice(byte id)
+Device* TinyServer::FindDevice(byte id) const
 {
 	if(id == 0) return NULL;
 
@@ -569,7 +569,7 @@ void GetDeviceKey(byte scr,Array& key,void* param)
 	key.Set(dv->Pass, 8);
 }
 
-Device* TinyServer::FindDevice(const Array& hardid)
+Device* TinyServer::FindDevice(const Array& hardid) const
 {
 	if(hardid.Length() == 0) return NULL;
 
@@ -659,7 +659,7 @@ int TinyServer::LoadDevices()
 	return i;
 }
 
-void TinyServer::SaveDevices()
+void TinyServer::SaveDevices() const
 {
 	TS("TinyServer::SaveDevices");
 
@@ -743,7 +743,7 @@ bool TinyServer::LoadConfig()
 	return true;
 }
 
-void TinyServer::SaveConfig()
+void TinyServer::SaveConfig() const
 {
 	TS("TinyServer::SaveConfig");
 

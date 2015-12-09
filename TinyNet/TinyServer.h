@@ -22,8 +22,8 @@ public:
 	TinyServer(TinyController* control);
 
 	// 发送消息
-	bool Send(Message& msg);
-	bool Reply(Message& msg);
+	bool Send(Message& msg) const;
+	bool Reply(Message& msg) const;
 	// 收到本地无线网消息
 	bool OnReceive(TinyMessage& msg);
 	// 分发外网过来的消息。返回值表示是否有响应
@@ -34,16 +34,16 @@ public:
 	void*			Param;
 
 	TArray<Device*> Devices;
-	Device* FindDevice(byte id);
-	Device* FindDevice(const Array& hardid);
+	Device* FindDevice(byte id) const;
+	Device* FindDevice(const Array& hardid) const;
 	bool	DeleteDevice(byte id);
 
 	int LoadDevices();
-	void SaveDevices();
+	void SaveDevices() const;
 	void ClearDevices();
 
 	bool LoadConfig();
-	void SaveConfig();
+	void SaveConfig() const;
 	void ClearConfig();
 
 	// 当前设备
@@ -58,9 +58,9 @@ public:
 	// 组网
 	bool OnJoin(const TinyMessage& msg);
 
-	bool ResetPassword(byte id);
+	bool ResetPassword(byte id) const;
 	
-    bool Disjoin(TinyMessage& msg,uint crc);
+    bool Disjoin(TinyMessage& msg,uint crc) const;
 	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳
