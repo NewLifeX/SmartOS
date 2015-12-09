@@ -408,7 +408,8 @@ void GetDeviceKey(byte id, Array& key, void* param)
 	//debug_printf("微网客户端获取密钥");
 
 	auto client = (TinyClient*)param;
-
+	if(Sys.Version< 0x00AA)return;
+	
 	key = client->Password;
 }
 
