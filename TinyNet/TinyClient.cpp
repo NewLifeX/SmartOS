@@ -10,6 +10,7 @@ TinyClient* TinyClient::Current	= NULL;
 
 static void TinyClientTask(void* param);
 static void TinyClientReset();
+static void GetDeviceKey(byte scr, Array& key,void* param);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -17,7 +18,9 @@ TinyClient::TinyClient(TinyController* control)
 {
 	assert_ptr(control);
 
-	Control 	= control;
+	Control 				= control;
+	Control->CallblackKey	= GetDeviceKey;
+	
 
 	Opened		= false;
 	Joining		= false;
@@ -398,6 +401,14 @@ void TinyClientReset()
 	Sys.Reset();
 }
 
+void GetDeviceKey(byte scr,Array& key,void* param)
+{
+  TS("TinyClient::GetDeviceKey");
+  debug_printf("微网客户端获取密钥");
+  auto client = (TinyClient*)param;
+  
+   key = client->Password;    	     
+}
 // 发送发现消息，告诉大家我在这
 // 格式：2设备类型 + N系统ID
 void TinyClient::Join()
