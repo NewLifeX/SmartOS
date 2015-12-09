@@ -284,7 +284,8 @@ bool TinyServer::ResetPassword(byte id)
 	// 生成随机密码。当前时间的MD5
 	auto bs	= MD5::Hash(Array(&nowMs, 8));
 	if(bs.Length() > 8) bs.SetLength(8);
-	dv->GetPass() = bs;
+	//dv->GetPass() = bs;
+	dv->SetPass(bs);
 
 	// 响应
 	TinyMessage rs;
@@ -340,7 +341,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 
 	auto dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
-	if(dv == NULL)return false;
+	if(dv == NULL) return false;
 
 	// 准备一条响应指令
 	/*TinyMessage rs;
@@ -355,7 +356,8 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	// 子操作码
 	while(ms.Remain())
 	{
-		switch(ms.ReadByte())
+		byte code	= ms.ReadByte();
+		switch(code)
 		{
 			case 0x01:
 			{
@@ -380,7 +382,11 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				break;
 			}
 			default:
-				break;
+			{
+				debug_printf("TinyServer::OnPing 无法识别的心跳子操作码 0x%02X \r\n", code);
+				return false;
+				//break;
+			}
 		}
 	}
 	// 告诉客户端有多少待处理指令
@@ -549,14 +555,18 @@ Device* TinyServer::FindDevice(byte id)
 
 void GetDeviceKey(byte scr,Array& key,void* param)
 {
-  TS("TinyServer::GetDeviceKey");
-  
-  auto server = (TinyServer*)param;
-  
-  auto dv = server->FindDevice(scr);
-  if(!dv) return;
- // debug_printf("%d 设备获取密匙\n",scr);
-  key.Set(dv->Pass,8);   	     
+	TS("TinyServer::GetDeviceKey");
+
+	auto server = (TinyServer*)param;
+
+	auto dv = server->FindDevice(scr);
+	if(!dv) return;
+
+	// 检查版本
+	if(dv->Version < 0x00AA) return;
+
+	// debug_printf("%d 设备获取密匙\n",scr);
+	key.Set(dv->Pass, 8);
 }
 
 Device* TinyServer::FindDevice(const Array& hardid)

@@ -390,15 +390,15 @@ bool TinyController::Valid(const Message& msg)
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
 
-	if(tmsg.Dest==Address)
+	if(tmsg.Dest == Address)
 	{
-		ByteArray  key;
+		ByteArray  key(0);
 		CallblackKey(tmsg.Src, key, Param);
 	   // debug_printf("接收未解密:");
 		//tmsg.Show();
 	   // debug_printf("解密密匙：");
 	   // key.Show();
-		Encrypt(tmsg,key);
+		if(key.Length() > 0) Encrypt(tmsg, key);
 		//debug_printf("解密后数据：");
 	    //tmsg.Show();
 	}
