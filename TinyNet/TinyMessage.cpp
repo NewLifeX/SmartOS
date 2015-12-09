@@ -290,14 +290,6 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	msg.Show();
 }
 
-// 接收函数
-bool TinyController::OnReceive(Message& msg)
-{
-  //debug_printf("TinyController::OnReceive\n");
-  //msg.Show();
-  //return Controller::OnReceive(msg);
-}
-
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	/*byte* buf	= ms.Current();
