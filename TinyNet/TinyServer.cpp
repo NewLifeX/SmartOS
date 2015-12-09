@@ -245,10 +245,11 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Show(true);
 
 	// 响应
-	TinyMessage rs;
+	/*TinyMessage rs;
 	rs.Code = msg.Code;
 	rs.Dest = msg.Src;
-	rs.Sequence	= msg.Sequence;
+	rs.Seq	= msg.Seq;*/
+	auto rs	= msg.CreateReply();
 
 	// 发现响应
 	dm.Reply	= true;
@@ -289,7 +290,7 @@ bool TinyServer::ResetPassword(byte id)
 	TinyMessage rs;
 	rs.Code = 0x01;
 	rs.Dest = id;
-	rs.Sequence	= id;
+	//rs.Seq	= id;
 
 	// 发现响应
 	dm.Reply	= true;
@@ -342,10 +343,11 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	if(dv == NULL)return false;
 
 	// 准备一条响应指令
-	TinyMessage rs;
+	/*TinyMessage rs;
 	rs.Code = msg.Code;
 	rs.Dest = msg.Src;
-	rs.Sequence	= msg.Sequence;
+	rs.Seq	= msg.Seq;*/
+	auto rs	= msg.CreateReply();
 
 	auto ms	= msg.ToStream();
 	PingMessage pm;

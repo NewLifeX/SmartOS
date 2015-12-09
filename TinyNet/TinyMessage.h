@@ -59,6 +59,8 @@ public:
 	// 计算当前消息的Crc
 	virtual void ComputeCrc();
 
+	TinyMessage CreateReply() const;
+
 	// 显示消息内容
 	virtual void Show() const;
 };
@@ -140,9 +142,9 @@ public:
 	byte	Mode;		// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	uint	Interval;	// 消息队列发送间隔ms
 	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
-	
+
    void  (*CallblackKey)(byte ,Array& key,void* param);
-	
+
 	TinyController();
 	virtual ~TinyController();
 

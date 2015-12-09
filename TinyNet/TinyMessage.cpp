@@ -182,6 +182,18 @@ void TinyMessage::Show() const
 #endif
 }
 
+TinyMessage TinyMessage::CreateReply() const
+{
+	TinyMessage msg;
+	msg.Dest	= Src;
+	msg.Src		= Dest;
+	msg.Code	= Code;
+	msg.Reply	= true;
+	msg.Seq		= Seq;
+	
+	return msg;
+}
+
 // 构造控制器
 TinyController::TinyController() : Controller()
 {
