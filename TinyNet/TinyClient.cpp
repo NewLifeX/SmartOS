@@ -10,7 +10,7 @@ TinyClient* TinyClient::Current	= NULL;
 
 static void TinyClientTask(void* param);
 static void TinyClientReset();
-static void GetDeviceKey(byte scr, Array& key,void* param);
+static void GetDeviceKey(byte id, Array& key, void* param);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -194,6 +194,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 
 	//Report(rs);//接受写入一次，刷新服务端
 }
+
 bool TinyClient::ReadCfg(uint offset,	Stream ms)
 {
 	if(offset < Cfg->StartSet) return false;
@@ -401,14 +402,16 @@ void TinyClientReset()
 	Sys.Reset();
 }
 
-void GetDeviceKey(byte scr,Array& key,void* param)
+void GetDeviceKey(byte id, Array& key, void* param)
 {
-  TS("TinyClient::GetDeviceKey");
-  debug_printf("微网客户端获取密钥");
-  auto client = (TinyClient*)param;
-  
-   key = client->Password;    	     
+	TS("TinyClient::GetDeviceKey");
+	//debug_printf("微网客户端获取密钥");
+
+	auto client = (TinyClient*)param;
+
+	key = client->Password;    	     
 }
+
 // 发送发现消息，告诉大家我在这
 // 格式：2设备类型 + N系统ID
 void TinyClient::Join()
