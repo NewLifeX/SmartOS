@@ -331,6 +331,7 @@ bool TinyController::Valid(const Message& msg)
 	if(!msg.Code) return false;
 	// 没有源地址是很不负责任的
 	if(!tmsg.Src) return false;
+	//if(tmsg!=Address) return false;
 	// 非广播包时，源地址和目的地址相同也是非法的
 	if(tmsg.Dest == tmsg.Src) return false;
 	// 源地址是自己不要接收
@@ -384,9 +385,22 @@ bool TinyController::Valid(const Message& msg)
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
 	
-	// ByteArray  key;
-	// CallblackKey(tmsg.Src,key,Param);
-	// Encrypt(tmsg,key);
+	if(tmsg.Dest==Address)
+	{
+       ByteArray  key;
+       CallblackKey(tmsg.Src,key,Param);
+      // debug_printf("接收未解密:");
+       tmsg.Show();
+      // debug_printf("解密密匙：");
+      // key.Show();
+       Encrypt(tmsg,key);
+      // debug_printf("解密后数据：");
+      // tmsg.Show();
+	}
+	else
+	{
+		 debug_printf("中转消息不解密");
+	}
 
 #if MSG_DEBUG
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
@@ -491,7 +505,17 @@ bool TinyController::Send(Message& msg)
 #if MSG_DEBUG
 	// 计算校验
 	msg.ComputeCrc();
-
+	
+	 ByteArray  key;
+	 CallblackKey(tmsg.Dest,key,Param);
+	// debug_printf("发送加密前数据：");
+	// tmsg.Show();
+	// debug_printf("发送解密密匙：");
+	// key.Show();
+	// Encrypt(tmsg,key);
+	// debug_printf("发送解密后数据:");
+	// tmsg.Show();
+    
 	ShowMessage(tmsg, true, Port);
 #endif
 

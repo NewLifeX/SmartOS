@@ -547,10 +547,13 @@ Device* TinyServer::FindDevice(byte id)
 
 void GetDeviceKey(byte scr,Array& key,void* param)
 {
+  TS("TinyServer::GetDeviceKey");
+  
   auto server = (TinyServer*)param;
+  
   auto dv = server->FindDevice(scr);
   if(!dv) return;
-  
+ // debug_printf("%d 设备获取密匙\n",scr);
   key.Set(dv->Pass,8);   	     
 }
 
