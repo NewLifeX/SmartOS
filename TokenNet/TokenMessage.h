@@ -38,7 +38,6 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	virtual void ComputeCrc() { }
 	// 设置错误信息字符串
 	void SetError(byte errorCode, string error, int errLength);
 

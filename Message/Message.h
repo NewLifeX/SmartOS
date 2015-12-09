@@ -31,8 +31,6 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const = 0;
-	// 计算当前消息的Crc
-	virtual void ComputeCrc() = 0;
 	// 克隆对象
 	virtual bool Clone(const Message& msg);
 

@@ -16,8 +16,6 @@
 // 负载 0038-1000-0003-030303-A936，从0x38广播，功能4，长度3，负载03-03-03
 class TinyMessage : public Message
 {
-private:
-
 public:
 	// 标准头部，符合内存布局。注意凑够4字节，否则会有很头疼的对齐问题
 	byte Dest;		// 目的地址
@@ -56,8 +54,6 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	// 计算当前消息的Crc
-	virtual void ComputeCrc();
 
 	TinyMessage CreateReply() const;
 
@@ -77,7 +73,7 @@ public:
 
 	RingQueue();
 	void Push(ushort item);
-	int Find(ushort item);
+	int Find(ushort item) const;
 
 	bool Check(ushort item);
 };
@@ -114,7 +110,7 @@ public:
 	uint	Times;		// 发送次数
 	ulong	LastSend;	// 最后一次发送时间ms
 
-	void SetMessage(TinyMessage& msg);
+	void SetMessage(const TinyMessage& msg);
 };
 
 // 消息控制器。负责发送消息、接收消息、分发消息
@@ -143,7 +139,7 @@ public:
 	uint	Interval;	// 消息队列发送间隔ms
 	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
 
-   void  (*CallblackKey)(byte ,Array& key,void* param);
+	void (*CallblackKey)(byte id, Array& key, void* param);
 
 	TinyController();
 	virtual ~TinyController();
@@ -171,7 +167,7 @@ public:
 	TinyStat	Last;	// 最后一次统计
 
 	// 显示统计信息
-	void ShowStat();
+	void ShowStat() const;
 };
 
 #endif

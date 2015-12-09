@@ -56,7 +56,7 @@ bool TinyMessage::Read(Stream& ms)
 	if(!Code) return false;
 	// 没有源地址是很不负责任的
 	if(!Src) return false;
-	// 非广播包时，源地址和目的地址相同也是非法的
+	// 源地址和目的地址相同也是非法的
 	if(Dest == Src) return false;
 
 	// 校验剩余长度
@@ -67,7 +67,6 @@ bool TinyMessage::Read(Stream& ms)
 	if(Data == _Data && len > ArrayLength(_Data))
 	{
 		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", len, ArrayLength(_Data));
-		//assert_param(false);
 		return false;
 	}
 	if(len > 0) ms.Read(Data, 0, len);
@@ -77,7 +76,6 @@ bool TinyMessage::Read(Stream& ms)
 
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs = p[3];
-	//p[3] &= 0xF0;
 	auto f = (TFlags*)&p[3];
 	f->TTL		= 0;
 	f->Retry	= 0;
@@ -85,6 +83,7 @@ bool TinyMessage::Read(Stream& ms)
 	Crc = Crc::Hash16(Array(p, HeaderSize + Length));
 	// 还原数据
 	p[3] = fs;
+
 	return true;
 }
 
@@ -125,20 +124,6 @@ void TinyMessage::Write(Stream& ms) const
 	ms.Write(Checksum);
 }
 
-void TinyMessage::ComputeCrc()
-{
-	TS("TinyMessage::ComputeCrc");
-	
-	byte buf[sizeof(_Data) + HeaderSize + sizeof(Checksum)];
-	//byte buf[256];
-	MemoryStream ms(buf, ArrayLength(buf));
-
-	Write(ms);
-
-	// 扣除不计算校验码的部分
-	Checksum = Crc = Crc::Hash16(Array(ms.GetBuffer(), HeaderSize + Length));
-}
-
 // 验证消息校验码是否有效
 bool TinyMessage::Valid() const
 {
@@ -156,8 +141,7 @@ bool TinyMessage::Valid() const
 // 消息所占据的指令数据大小。包括头部、负载数据和附加数据
 uint TinyMessage::Size() const
 {
-	uint len = MinSize + Length;
-	return len;
+	return MinSize + Length;
 }
 
 uint TinyMessage::MaxDataSize() const
@@ -169,12 +153,23 @@ void TinyMessage::Show() const
 {
 #if MSG_DEBUG
 	assert_ptr(this);
-	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, *((byte*)&_Code+1), Seq, Retry);
+
+	byte flag	= *((byte*)&_Code+1);
+	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, flag, Seq, Retry);
+
+	if(flag)
+	{
+		if(Reply)	msg_printf(" Reply");
+		if(Error)	msg_printf(" Error");
+		if(Ack)		msg_printf(" Ack");
+		if(NoAck)	msg_printf(" NoAck");
+	}
+
 	ushort len	= Length;
 	if(len > 0)
 	{
 		assert_ptr(Data);
-		msg_printf(" Data[%d]=", len);
+		msg_printf(" Data[%02d]=", len);
 		ByteArray(Data, len).Show();
 	}
 	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
@@ -190,7 +185,7 @@ TinyMessage TinyMessage::CreateReply() const
 	msg.Code	= Code;
 	msg.Reply	= true;
 	msg.Seq		= Seq;
-	
+
 	return msg;
 }
 
@@ -326,7 +321,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 	}
 
 	// 后移一个字节来弥补
-	ms.Seek(-1);*/	
+	ms.Seek(-1);*/
 	TinyMessage msg;
 	return Controller::Dispatch(ms, &msg, param);
 }
@@ -393,7 +388,7 @@ bool TinyController::Valid(const Message& msg)
 
 	// 快速响应确认消息，避免对方无休止的重发
 	if(!tmsg.NoAck) AckResponse(tmsg);
-	
+
 	if(tmsg.Dest==Address)
 	{
 		ByteArray  key;
@@ -500,8 +495,7 @@ uint TinyController::Post(byte dest, byte code, const Array& arr)
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TinyController::Send(Message& msg)
 {
-	
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	auto& tmsg = (TinyMessage&)msg;
 
 	// 附上自己的地址
 	tmsg.Src = Address;
@@ -510,11 +504,8 @@ bool TinyController::Send(Message& msg)
 	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
 
 #if MSG_DEBUG
-	// 计算校验
-	msg.ComputeCrc();
-	
-	 ByteArray  key;
-	 CallblackKey(tmsg.Dest,key,Param);
+	ByteArray  key;
+	CallblackKey(tmsg.Dest, key, Param);
 	// debug_printf("发送加密前数据：");
 	// tmsg.Show();
 	// debug_printf("发送解密密匙：");
@@ -522,13 +513,13 @@ bool TinyController::Send(Message& msg)
 	// Encrypt(tmsg,key);
 	// debug_printf("发送解密后数据:");
 	// tmsg.Show();
-    
+
 	ShowMessage(tmsg, true, Port);
 #endif
 
 	//return Controller::Send(msg, port);
 
-	return Post(tmsg, -1) ? 1 : 0;
+	return Post(tmsg, -1);
 }
 
 //加密。组网不加密，退网不加密
@@ -645,9 +636,9 @@ bool TinyController::Post(TinyMessage& msg, int expire)
 	if(!node) return false;
 
 	node->SetMessage(msg);
-	node->StartTime = Sys.Ms();
-	node->Next = 0;
-	node->Expired = Sys.Ms() + expire;
+	node->StartTime	= Sys.Ms();
+	node->Next		= 0;
+	node->Expired	= Sys.Ms() + expire;
 
 	Total.Msg++;
 
@@ -661,17 +652,14 @@ bool TinyController::Broadcast(TinyMessage& msg)
 {
 	TS("TinyController::Broadcast");
 
-	msg.NoAck = true;
-	msg.Src = Address;
-	msg.Dest = 0;
+	msg.NoAck	= true;
+	msg.Src		= Address;
+	msg.Dest	= 0;
 
 	// 附上序列号。响应消息保持序列号不变
 	if(!msg.Reply) msg.Seq = ++_Sequence;
 
 #if MSG_DEBUG
-	// 计算校验
-	msg.ComputeCrc();
-
 	ShowMessage(msg, true, Port);
 #endif
 
@@ -680,7 +668,7 @@ bool TinyController::Broadcast(TinyMessage& msg)
 
 bool TinyController::Reply(Message& msg)
 {
-	TinyMessage& tmsg = (TinyMessage&)msg;
+	auto& tmsg = (TinyMessage&)msg;
 
 	// 回复信息，源地址变成目的地址
 	if(tmsg.Dest == Address && tmsg.Src != Address) tmsg.Dest = tmsg.Src;
@@ -692,12 +680,13 @@ bool TinyController::Reply(Message& msg)
 void StatTask(void* param)
 {
 	assert_ptr(param);
-	TinyController* control = (TinyController*)param;
+
+	auto control = (TinyController*)param;
 	control->ShowStat();
 }
 
 // 显示统计信息
-void TinyController::ShowStat()
+void TinyController::ShowStat() const
 {
 #if MSG_DEBUG
 	static uint lastSend = 0;
@@ -724,7 +713,7 @@ void TinyController::ShowStat()
 #endif
 }
 
-void MessageNode::SetMessage(TinyMessage& msg)
+void MessageNode::SetMessage(const TinyMessage& msg)
 {
 	Seq			= msg.Seq;
 	Period		= 0;
@@ -739,9 +728,9 @@ void MessageNode::SetMessage(TinyMessage& msg)
 
 RingQueue::RingQueue()
 {
-	Index = 0;
+	Index	= 0;
 	ArrayZero(Arr);
-	Expired = 0;
+	Expired	= 0;
 }
 
 void RingQueue::Push(ushort item)
@@ -753,7 +742,7 @@ void RingQueue::Push(ushort item)
 	Expired = Sys.Ms() + 10000;
 }
 
-int RingQueue::Find(ushort item)
+int RingQueue::Find(ushort item) const
 {
 	for(int i=0; i < ArrayLength(Arr); i++)
 	{
@@ -773,9 +762,9 @@ bool RingQueue::Check(ushort item)
 	{
 		//debug_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始
-		Index = 0;
+		Index	= 0;
 		ArrayZero(Arr);
-		Expired = 0;
+		Expired	= 0;
 
 		return false;
 	}
