@@ -60,7 +60,8 @@ void ShunCom::ShowConfig()
 	
 	if(!Open()) return;
 
-	Config	= true;	
+	Config	= true;
+	debug_printf("Config=%d\n",Config.Read());
 	Sys.Sleep(2000);
 	Config	= false;
 	
@@ -112,6 +113,7 @@ void ShunCom:: EnterSetMode()
 	Config	= true;
 	Sys.Sleep(2000);
 	Config	= false;
+	
 	//读取Zibeer模块配置指令
 	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
 	Write(CArray(buf));
@@ -119,7 +121,7 @@ void ShunCom:: EnterSetMode()
 	ByteArray rs;
 	Read(rs);
     debug_printf("Zibeer配置信息\n");
-	rs.Show(true);	
+	rs.Show(true);		
 }
 //退出配置模式
 void ShunCom:: OutSetMode()
@@ -127,6 +129,7 @@ void ShunCom:: OutSetMode()
   if(!Open()) return;
   byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
   Write(CArray(buf));	
+  Config	= false;
 }
 //读取配置信息
 void  ShunCom::ConfigMessage(ByteArray& array)

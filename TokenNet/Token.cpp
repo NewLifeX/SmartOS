@@ -225,6 +225,9 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
 	zb.Init(&sp, rst);
+	zb.SetDeviceMode(0x00);
+	zb.SetSendMode(0x01);
+	zb.ShowConfig();
 
 	zb.Led	= led;
 
