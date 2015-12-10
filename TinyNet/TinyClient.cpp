@@ -595,7 +595,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 
 	if(msg.Src != Server) return true;
 
-	LastActive = Sys.Ms();
+	//LastActive = Sys.Ms();
 
 	// 处理消息
 	auto ms	= msg.ToStream();
@@ -612,6 +612,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 				if(pm.ReadTime(ms, seconds))
 				{
 					Time.SetTime(seconds);
+					LastActive = Sys.Ms();
 				}
 				break;
 			}
