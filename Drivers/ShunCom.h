@@ -44,7 +44,7 @@ public:
 	//退出配置模式
 	virtual void OutSetMode();
 	//读取配置信息
-	virtual void OutSetMode(Array& buf);
+	virtual void ConfigMessage(ByteArray& buf);
 	
     virtual bool OnWrite(const Array& bs);
 	// 引发数据到达事件

@@ -612,7 +612,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 				if(pm.ReadTime(ms, seconds))
 				{
 					Time.SetTime(seconds);
-					LastActive = Sys.Ms();
+					//LastActive = Sys.Ms();
 				}
 				break;
 			}

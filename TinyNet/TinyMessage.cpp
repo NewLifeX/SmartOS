@@ -385,14 +385,8 @@ bool TinyController::Valid(const Message& msg)
 	if(tmsg.Dest == Address)
 	{
 		ByteArray  key(0);
-		CallblackKey(tmsg.Src, key, Param);
-	   // debug_printf("接收未解密:");
-		//tmsg.Show();
-	   // debug_printf("解密密匙：");
-	   // key.Show();
+		CallblackKey(tmsg.Src, key, Param);	   
 		if(key.Length() > 0) Encrypt(tmsg, key);
-		//debug_printf("解密后数据：");
-	    //tmsg.Show();
 	}
 	else
 	{
@@ -496,16 +490,9 @@ bool TinyController::Send(Message& msg)
 	// 附上序列号。响应消息保持序列号不变
 	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
 
-//#if MSG_DEBUG
 	ByteArray  key;
-	CallblackKey(tmsg.Dest, key, Param);
-	//debug_printf("发送加密前数据：");
-	//tmsg.Show();
-	//debug_printf("发送解密密匙：");
-	//key.Show();
+	CallblackKey(tmsg.Dest, key, Param);	
 	Encrypt(tmsg,key);
-	//debug_printf("发送解密后数据:");
-	//tmsg.Show();
 
 	ShowMessage(tmsg, true, Port);
 //#endif
