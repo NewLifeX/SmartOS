@@ -33,7 +33,7 @@ public:
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
-	//设置设备诶类型：00代表中端、01代表路由，02代表终端
+	//设置设备诶类型：00代表中心、01代表路由，02代表终端
 	virtual void SetDeviceMode(byte kind);
 	//设置无线频点，注意大小端，Zibeer是小端存储
 	virtual void SetChannel(int kind);
