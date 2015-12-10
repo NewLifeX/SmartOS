@@ -85,6 +85,10 @@ void ShunCom:: SetDeviceMode(byte kind)
 //设置无线频点，注意大小端，Zibeer是小端存储
 void ShunCom::SetChannel(int kind)
 {
+	EnterSetMode();
+	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x08,0x00,0x00,0xA8 };
+	Write(CArray(buf));
+    OutSetMode();
 	
 }
 //设置发送模式00为广播、01为主从模式、02为点对点模式
