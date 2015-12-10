@@ -33,7 +33,19 @@ public:
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
-
+	//设置设备诶类型：00代表中端、01代表路由，02代表终端
+	virtual void SetDeviceMode(byte kind);
+	//设置无线频点，注意大小端，Zibeer是小端存储
+	virtual void SetChannel(int kind);
+	//设置发送模式00为广播、01为主从模式、02为点对点模式
+	virtual void SetSendMode(byte mode);	
+	//进入配置模式
+	virtual void EnterSetMode();
+	//退出配置模式
+	virtual void OutSetMode();
+	//读取配置信息
+	virtual void OutSetMode(Array& buf);
+	
     virtual bool OnWrite(const Array& bs);
 	// 引发数据到达事件
 	virtual uint OnReceive(Array& bs, void* param);

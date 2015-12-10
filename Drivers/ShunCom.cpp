@@ -57,6 +57,7 @@ void ShunCom::OnClose()
 
 void ShunCom::ShowConfig()
 {
+	
 	if(!Open()) return;
 
 	//Config	= true;
@@ -70,10 +71,42 @@ void ShunCom::ShowConfig()
 
 	ByteArray rs;
 	Read(rs);
-	debug_printf("Zibeer配置信息\n");
+    debug_printf("Zibeer配置信息\n");
 	rs.Show(true);
 }
 
+void ShunCom:: SetDeviceMode(byte kind)
+{
+	EnterSetMode();
+	byte buf[] = { 0xFE, 0x05, 0x21, 0x09, 0x87,0x00,0x00,kind,0xAB };
+	Write(CArray(buf));
+    OutSetMode();
+}
+//设置无线频点，注意大小端，Zibeer是小端存储
+void ShunCom::SetChannel(int kind)
+{
+	
+}
+//设置发送模式00为广播、01为主从模式、02为点对点模式
+void  ShunCom::SetSendMode(byte mode)
+{
+	
+}	
+//进入配置模式
+void ShunCom:: EnterSetMode()
+{
+	
+}
+//退出配置模式
+void ShunCom:: OutSetMode()
+{
+	
+}
+//读取配置信息
+void  ShunCom::OutSetMode(Array& buf)
+{
+	
+}
 // 模块进入低功耗模式时需要处理的事情
 void ShunCom::ChangePower(int level)
 {
