@@ -2,6 +2,15 @@
 #include "Flash.h"
 #include "Security\Crc.h"
 
+//#define CFG_DEBUG DEBUG
+#define CFG_DEBUG 0
+#if CFG_DEBUG
+	//#define CTS TS
+#else
+	#undef TS
+	#define TS(name)
+#endif
+
 Config* Config::Current	= NULL;
 
 // 配置块。名称、长度、头部校验，数据部分不做校验，方便外部修改
@@ -51,7 +60,8 @@ const void* ConfigBlock::Data() const
 // 构造一个新的配置块
 bool ConfigBlock::Init(const char* name, const Array& bs)
 {
-    assert_param2(name, "配置块名称不能为空");
+    if(name == NULL) return false;
+    //assert_param2(name, "配置块名称不能为空");
 
 	TS("ConfigBlock::Init");
 
@@ -119,7 +129,8 @@ const void* Config::Find(const char* name, int size)
 
     const uint c_Version = 0x534F5453; // STOS
 
-	assert_param2(name, "配置段名称不能为空");
+    if(name == NULL) return NULL;
+	//assert_param2(name, "配置段名称不能为空");
 
 	uint addr = Address;
 	// 检查签名，如果不存在则写入
@@ -131,9 +142,10 @@ const void* Config::Find(const char* name, int size)
 	}
 
 	addr += sizeof(c_Version);
-    const ConfigBlock* cfg = (const ConfigBlock*)addr;
+    auto cfg = (const ConfigBlock*)addr;
 	uint slen = strlen(name);
-	assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
+    if(slen > sizeof(cfg->Name)) return NULL;
+	//assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
 
 	// 遍历链表，找到同名块
     while(cfg->Valid())
@@ -170,11 +182,11 @@ const void* Config::Set(const char* name, const Array& bs)
 {
 	TS("Config::Set");
 
-    //if(name == NULL) return NULL;
-    assert_param2(name, "配置块名称不能为空");
-	assert_param2(Device, "未指定配置段的存储设备");
+    if(name == NULL) return NULL;
+    //assert_param2(name, "配置块名称不能为空");
+	//assert_param2(Device, "未指定配置段的存储设备");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, bs.Length());
+	auto cfg = (const ConfigBlock*)Find(name, bs.Length());
     if(cfg)
 	{
 		// 重新搞一个配置头，使用新的数据去重新初始化
@@ -193,10 +205,10 @@ bool Config::Get(const char* name, Array& bs)
 {
 	TS("Config::Get");
 
-    //if(name == NULL) return false;
-    assert_param2(name, "配置块名称不能为空");
+    if(name == NULL) return false;
+    //assert_param2(name, "配置块名称不能为空");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
+	auto cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
 	{
 		bs.Copy(cfg->Data(), cfg->Size);
@@ -213,8 +225,8 @@ bool Config::GetOrSet(const char* name, Array& bs)
 {
 	TS("Config::GetOrSet");
 
-    //if(name == NULL) return false;
-    assert_param2(name, "配置块名称不能为空");
+    if(name == NULL) return false;
+    //assert_param2(name, "配置块名称不能为空");
 
 	// 输入数据已存在，直接返回
 	if(Get(name, bs)) return true;
@@ -229,10 +241,10 @@ const void* Config::Get(const char* name)
 {
 	TS("Config::GetByName");
 
-    //if(name == NULL) return NULL;
-    assert_param2(name, "配置块名称不能为空");
+    if(name == NULL) return NULL;
+    //assert_param2(name, "配置块名称不能为空");
 
-	const ConfigBlock* cfg = (const ConfigBlock*)Find(name, 0);
+	auto cfg = (const ConfigBlock*)Find(name, 0);
     if(cfg && cfg->Size) return cfg->Data();
 
     return NULL;
@@ -244,8 +256,6 @@ Config& Config::CreateFlash()
 	// 最后一块作为配置区
 	static Flash flash;
 	static Config cfg(&flash, flash.Start + flash.Size - flash.Block);
-	//cfg.Device		= &flash;
-	//cfg.Address		= flash.Start + flash.Size - flash.Block;
 
 	return cfg;
 }
@@ -256,8 +266,6 @@ Config& Config::CreateRAM()
 	// 最后一块作为配置区
 	static CharStorage cs;
 	static Config cfg(&cs, Sys.StackTop());
-	//cfg.Device		= &cs;
-	//cfg.Address		= Sys.StackTop();
 
 	return cfg;
 }
@@ -272,7 +280,7 @@ HotConfig& HotConfig::Current()
 	static Config& cfg = Config::CreateRAM();
 
 	// 查找配置数据，如果不存在，则清空
-	const void* dat = cfg.Get("Hot");
+	auto dat = cfg.Get("Hot");
 	if(!dat) dat = cfg.Set("Hot", ByteArray((byte)0, sizeof(HotConfig)));
 
 	return *(HotConfig*)dat;
