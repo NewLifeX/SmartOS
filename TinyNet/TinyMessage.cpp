@@ -13,10 +13,10 @@
 
 void SendTask(void* param);
 void StatTask(void* param);
-static bool Encrypt(Message& msg,Array& pass);
 
+/*================================ 微网消息 ================================*/
 typedef struct{
-	byte Retry:2;	// 标识位。也可以用来做二级命令
+	byte Retry:2;	// 重发次数。
 	byte TTL:2;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
@@ -54,11 +54,11 @@ bool TinyMessage::Read(Stream& ms)
 	Error	= _Error;
 
 	// 代码为0是非法的
-	if(!Code) return false;
+	if(!Code)		return false;
 	// 没有源地址是很不负责任的
-	if(!Src) return false;
+	if(!Src)		return false;
 	// 源地址和目的地址相同也是非法的
-	if(Dest == Src) return false;
+	if(Dest == Src)	return false;
 
 	// 校验剩余长度
 	ushort len	= Length;
@@ -132,7 +132,7 @@ bool TinyMessage::Valid() const
 
 	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
-	debug_printf("校验错误指令 ");
+	debug_printf("指令校验错误 ");
 	Show();
 #endif
 
@@ -155,7 +155,7 @@ void TinyMessage::Show() const
 #if MSG_DEBUG
 	assert_ptr(this);
 
-	byte flag	= *((byte*)&_Code+1);
+	byte flag	= *((byte*)&_Code + 1);
 	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, flag, Seq, Retry);
 
 	if(flag)
@@ -190,10 +190,10 @@ TinyMessage TinyMessage::CreateReply() const
 	return msg;
 }
 
+/*================================ 微网控制器 ================================*/
 // 构造控制器
 TinyController::TinyController() : Controller()
 {
-	_Sequence	= 0;
 	_taskID		= 0;
 	Interval	= 2;
 	Timeout		= 200;
@@ -288,6 +288,19 @@ void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
 	}
 
 	msg.Show();
+}
+
+//加密。组网不加密，退网不加密
+static bool Encrypt(Message& msg,  Array& pass)
+{
+	// 加解密。组网不加密，退网不加密
+	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02||msg.Code==0x03))
+	{
+		Array bs(msg.Data, msg.Length);
+		RC4::Encrypt(bs, pass);
+		return true;
+	}
+	return false;
 }
 
 bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
@@ -385,7 +398,7 @@ bool TinyController::Valid(const Message& msg)
 	if(tmsg.Dest == Address)
 	{
 		ByteArray  key(0);
-		CallblackKey(tmsg.Src, key, Param);	   
+		CallblackKey(tmsg.Src, key, Param);
 		if(key.Length() > 0) Encrypt(tmsg, key);
 	}
 	else
@@ -470,15 +483,7 @@ void TinyController::AckResponse(const TinyMessage& msg)
 		msg_printf(" 失败!\r\n");*/
 }
 
-uint TinyController::Post(byte dest, byte code, const Array& arr)
-{
-	TinyMessage msg(code);
-	msg.Dest = dest;
-	msg.SetData(arr);
-
-	return Send(msg);
-}
-
+static byte _Sequence	= 0;
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TinyController::Send(Message& msg)
 {
@@ -491,140 +496,25 @@ bool TinyController::Send(Message& msg)
 	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
 
 	ByteArray  key;
-	CallblackKey(tmsg.Dest, key, Param);	
-	Encrypt(tmsg,key);
+	CallblackKey(tmsg.Dest, key, Param);
+	if(key.Length() > 0) Encrypt(tmsg, key);
 
+#if MSG_DEBUG
 	ShowMessage(tmsg, true, Port);
-//#endif
-
-	//return Controller::Send(msg, port);
+#endif
 
 	return Post(tmsg, -1);
 }
 
-//加密。组网不加密，退网不加密
-static bool Encrypt(Message& msg,  Array& pass)
+bool TinyController::Reply(Message& msg)
 {
-	// 加解密。组网不加密，退网不加密
-	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02||msg.Code==0x03))
-	{
-		Array bs(msg.Data, msg.Length);
-		RC4::Encrypt(bs, pass);
-		return true;
-	}
-	return false;
-}
+	auto& tmsg = (TinyMessage&)msg;
 
-void SendTask(void* param)
-{
-	assert_ptr(param);
-	TinyController* control = (TinyController*)param;
-	control->Loop();
-}
+	// 回复信息，源地址变成目的地址
+	if(tmsg.Dest == Address && tmsg.Src != Address) tmsg.Dest = tmsg.Src;
+	msg.Reply = 1;
 
-void TinyController::Loop()
-{
-	TS("TinyController::Loop");
-
-	int count = 0;
-	for(int i=0; i<ArrayLength(_Queue); i++)
-	{
-		auto& node = _Queue[i];
-		if(!node.Using) continue;
-
-		// 检查时间。至少发送一次
-		if(node.Next > 0)
-		{
-			ulong now2 = Sys.Ms();
-			// 下一次发送时间还没到，跳过
-			if(node.Next > now2) continue;
-
-			// 已过期则删除
-			if(node.Expired < now2)
-			{
-				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Period=%d Times=%d\r\n", node.Data[0], node.Seq, node.Period, node.Times);
-				node.Using = 0;
-
-				continue;
-			}
-		}
-
-		count++;
-		node.Times++;
-
-		auto f = (TFlags*)&node.Data[3];
-		f->Retry++;
-
-		// 发送消息
-		Array bs(node.Data, node.Length);
-		Port->Write(bs);
-
-		// 增加发送次数统计
-		Total.Send++;
-
-		// 分组统计
-		if(Total.Send >= 100)
-		{
-			memcpy(&Last, &Total, sizeof(Total));
-			memset(&Total, 0, sizeof(Total));
-		}
-
-		ulong now = Sys.Ms();
-		node.LastSend = now;
-
-		// 随机延迟。随机数1~5。每次延迟递增
-		byte rnd = (uint)now % 3;
-		node.Period = (rnd + 1) * Interval;
-		//node.Period = Interval;
-		node.Next = now + node.Period;
-		//debug_printf("下一次 %dus\r\n", node.Period);
-	}
-
-	if(count == 0) Sys.SetTask(_taskID, false);
-}
-
-// 发送消息，usTimeout微秒超时时间内，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
-bool TinyController::Post(TinyMessage& msg, int expire)
-{
-	TS("TinyController::Post");
-
-	// 如果没有传输口处于打开状态，则发送失败
-	if(!Port->Open()) return false;
-
-	if(expire < 0) expire = Timeout;
-	// 需要响应
-	if(expire <= 0) msg.NoAck = true;
-	// 如果确定不需要响应，则改用Post
-	if(msg.NoAck || msg.Ack) return Controller::Send(msg);
-
-	// 针对Zigbee等不需要Ack确认的通道
-	if(Timeout < 0) return Controller::Send(msg);
-
-	// 准备消息队列
-	MessageNode* node = NULL;
-	for(int i=0; i<ArrayLength(_Queue); i++)
-	{
-		if(!_Queue[i].Using)
-		{
-			node = &_Queue[i];
-			node->Seq = 0;
-			node->Using = 1;
-			break;
-		}
-	}
-	// 队列已满
-	if(!node) return false;
-
-	node->SetMessage(msg);
-	node->StartTime	= Sys.Ms();
-	node->Next		= 0;
-	node->Expired	= Sys.Ms() + expire;
-
-	Total.Msg++;
-
-	Sys.SetTask(_taskID, true, 0);
-
-	return true;
+	return Send(msg);
 }
 
 // 广播消息，不等待响应和确认
@@ -643,18 +533,121 @@ bool TinyController::Broadcast(TinyMessage& msg)
 	ShowMessage(msg, true, Port);
 #endif
 
-	return Post(msg, 0);
+	if(!Port->Open()) return false;
+
+	return Controller::SendInternal(msg);
 }
 
-bool TinyController::Reply(Message& msg)
+// 放入发送队列，超时之前，如果对方没有响应，会重复发送，-1表示采用系统默认超时时间Timeout
+bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 {
-	auto& tmsg = (TinyMessage&)msg;
+	TS("TinyController::Post");
 
-	// 回复信息，源地址变成目的地址
-	if(tmsg.Dest == Address && tmsg.Src != Address) tmsg.Dest = tmsg.Src;
-	msg.Reply = 1;
+	// 如果没有传输口处于打开状态，则发送失败
+	if(!Port->Open()) return false;
 
-	return Send(msg);
+	if(msTimeout < 0) msTimeout = Timeout;
+	// 如果确定不需要响应，则改用Post
+	if(msTimeout <= 0 || msg.NoAck || msg.Ack) return Controller::SendInternal(msg);
+
+	// 针对Zigbee等不需要Ack确认的通道
+	if(Timeout < 0) return Controller::SendInternal(msg);
+
+	// 准备消息队列
+	MessageNode* node = NULL;
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		if(!_Queue[i].Using)
+		{
+			node = &_Queue[i];
+			node->Using	= 1;
+			node->Seq	= 0;
+			break;
+		}
+	}
+	// 队列已满
+	if(!node)
+	{
+		debug_printf("TinyController::Post 发送队列已满！ \r\n");
+		return false;
+	}
+
+	node->Set(msg, msTimeout);
+
+	Total.Msg++;
+
+	Sys.SetTask(_taskID, true, 0);
+
+	return true;
+}
+
+void SendTask(void* param)
+{
+	assert_ptr(param);
+
+	auto control = (TinyController*)param;
+	control->Loop();
+}
+
+void TinyController::Loop()
+{
+	TS("TinyController::Loop");
+
+	int count = 0;
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		auto& node = _Queue[i];
+		if(!node.Using) continue;
+
+		// 检查时间。至少发送一次
+		if(node.Next > 0)
+		{
+			ulong now = Sys.Ms();
+			// 下一次发送时间还没到，跳过
+			if(node.Next > now) continue;
+
+			// 已过期则删除
+			if(node.Expired < now)
+			{
+				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
+				node.Using = 0;
+
+				continue;
+			}
+		}
+
+		count++;
+		node.Times++;
+
+		// 递增重试次数
+		auto f = (TFlags*)&node.Data[3];
+		f->Retry++;
+
+		// 发送消息
+		Port->Write(Array(node.Data, node.Length));
+
+		// 增加发送次数统计
+		Total.Send++;
+
+		// 分组统计
+		if(Total.Send >= 100)
+		{
+			memcpy(&Last, &Total, sizeof(Total));
+			memset(&Total, 0, sizeof(Total));
+		}
+
+		// 计算下一次重发时间
+		{
+			ulong now	= Sys.Ms();
+			node.LastSend	= now;
+
+			// 随机延迟。随机数1~5。每次延迟递增
+			byte rnd	= (uint)now % 3;
+			node.Next	= now + (rnd + 1) * Interval;
+		}
+	}
+
+	if(count == 0) Sys.SetTask(_taskID, false);
 }
 
 void StatTask(void* param)
@@ -693,19 +686,24 @@ void TinyController::ShowStat() const
 #endif
 }
 
-void MessageNode::SetMessage(const TinyMessage& msg)
+/*================================ 信息节点 ================================*/
+void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 {
 	Seq			= msg.Seq;
-	Period		= 0;
 	Times		= 0;
 	LastSend	= 0;
+
+	StartTime	= Sys.Ms();
+	Expired		= StartTime + msTimeout;
+	Next		= 0;
 
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(Data, ArrayLength(Data));
 	msg.Write(ms);
-	Length = ms.Position();
+	Length		= ms.Position();
 }
 
+/*================================ 环形队列 ================================*/
 RingQueue::RingQueue()
 {
 	Index	= 0;

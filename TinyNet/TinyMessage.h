@@ -10,10 +10,6 @@
 
 // 消息
 // 头部按照内存布局，但是数据和校验部分不是
-// 请求 0038-0403-0000-BC4C，从0x38发往0（广播），功能4，标识3（保留字段用于业务），序号0长度0，校验0x4CBC（小字节序）
-// 响应 3856-048x-0000-xxxx
-// 错误 3856-044x-0000
-// 负载 0038-1000-0003-030303-A936，从0x38广播，功能4，长度3，负载03-03-03
 class TinyMessage : public Message
 {
 public:
@@ -21,7 +17,7 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte _Code;		// 功能代码
-	byte Retry:2;	// 标识位。也可以用来做二级命令
+	byte Retry:2;	// 重发次数。
 	byte TTL:2;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
@@ -55,27 +51,26 @@ public:
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
 
+	// 创建当前消息对应的响应消息。设置源地址目的地址、功能代码、序列号、标识位
 	TinyMessage CreateReply() const;
 
 	// 显示消息内容
 	virtual void Show() const;
 };
 
-class RingQueue;
-
 // 环形队列。记录收到消息的序列号，防止短时间内重复处理消息
 class RingQueue
 {
 public:
-	int	Index;
-	ushort Arr[32];
-	ulong Expired;	// 过期时间，微秒
+	int		Index;
+	ushort	Arr[32];
+	ulong	Expired;	// 过期时间，微秒
 
 	RingQueue();
-	void Push(ushort item);
-	int Find(ushort item) const;
+	void	Push(ushort item);
+	int		Find(ushort item) const;
 
-	bool Check(ushort item);
+	bool	Check(ushort item);
 };
 
 // 统计信息
@@ -102,24 +97,22 @@ public:
 	byte	Using;		// 是否在使用
 	byte	Seq;		// 序列号
 	byte	Data[64];
-	uint	Length;
-	uint	Period;		// 延迟间隔ms。每次逐步递增
+	ushort	Length;
+	ushort	Times;		// 发送次数
 	ulong	StartTime;	// 开始时间ms
 	ulong	Next;		// 下一次重发时间ms
 	ulong	Expired;	// 过期时间ms
-	uint	Times;		// 发送次数
 	ulong	LastSend;	// 最后一次发送时间ms
 
-	void SetMessage(const TinyMessage& msg);
+	void Set(const TinyMessage& msg, int msTimeout);
 };
 
 // 消息控制器。负责发送消息、接收消息、分发消息
 class TinyController : public Controller
 {
 private:
-	MessageNode	_Queue[4];	// 消息队列。最多允许16个消息同时等待响应
+	MessageNode	_Queue[4];	// 消息队列。最多允许4个消息同时等待响应
 
-	uint		_Sequence;	// 控制器的消息序号
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
 
@@ -145,17 +138,15 @@ public:
 
 	virtual void Open();
 
-	// 发送消息，传输口参数为空时向所有传输口发送消息
+	// 发送消息
 	virtual bool Send(Message& msg);
-
-	// 发送消息，传输口参数为空时向所有传输口发送消息
-	uint Post(byte dest, byte code, const Array& arr);
-	// 把消息放入发送队列，usTimeout微秒超时时间内，如果对方没有响应，会重复发送
-	bool Post(TinyMessage& msg, int usTimeout = -1);
 	// 回复对方的请求消息
 	virtual bool Reply(Message& msg);
 	// 广播消息，不等待响应和确认
 	bool Broadcast(TinyMessage& msg);
+
+	// 放入发送队列，超时之前，如果对方没有响应，会重复发送
+	bool Post(const TinyMessage& msg, int msTimeout = -1);
 
 	// 循环处理待发送的消息队列
 	void Loop();

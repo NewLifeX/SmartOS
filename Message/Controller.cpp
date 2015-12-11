@@ -1,7 +1,7 @@
 ﻿#include "Controller.h"
 
-//#define MSG_DEBUG DEBUG
-#define MSG_DEBUG 0
+#define MSG_DEBUG DEBUG
+//#define MSG_DEBUG 0
 #if MSG_DEBUG
 	#define msg_printf debug_printf
 #else
@@ -158,7 +158,19 @@ bool Controller::OnReceive(Message& msg)
 
 bool Controller::Send(Message& msg)
 {
-	TS("Controller::Send");
+	return SendInternal(msg);
+}
+
+bool Controller::Reply(Message& msg)
+{
+	msg.Reply = 1;
+
+	return SendInternal(msg);
+}
+
+bool Controller::SendInternal(const Message& msg)
+{
+	TS("Controller::SendInternal");
 
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
@@ -169,11 +181,4 @@ bool Controller::Send(Message& msg)
 
 	Array bs(ms.GetBuffer(), ms.Position());
 	return Port->Write(bs, msg.State);
-}
-
-bool Controller::Reply(Message& msg)
-{
-	msg.Reply = 1;
-
-	return Send(msg);
 }

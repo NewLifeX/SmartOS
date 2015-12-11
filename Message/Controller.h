@@ -43,6 +43,9 @@ public:
 	// 收到消息时触发
 	MessageHandler	Received;
 	void*			Param;
+	
+protected:
+	bool SendInternal(const Message& msg);
 };
 
 #endif
