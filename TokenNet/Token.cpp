@@ -193,7 +193,7 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 
 void Fix2401(void* param)
 {
-	auto bs	= *(Array*)param;
+	auto& bs	= *(Array*)param;
 	// 微网指令特殊处理长度
 	uint rs	= bs.Length();
 	if(rs >= 8)
