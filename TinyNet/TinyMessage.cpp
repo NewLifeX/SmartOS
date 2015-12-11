@@ -211,7 +211,7 @@ TinyController::TinyController() : Controller()
 
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	Mode		= 0;
-	Interval	= 10;
+	Interval	= 20;
 	Timeout		= 200;
 
 	_taskID		= 0;
@@ -387,6 +387,9 @@ bool TinyController::Valid(const Message& _msg)
 			ushort seq = (msg.Src << 8) | msg.Seq;
 			if(_Ring.Check(seq))
 			{
+				// 对方可能多次发同一个请求过来，都要做响应
+				if(!msg.Reply && AckResponse(msg)) return true;
+
 				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
 				return false;
 			}
@@ -411,7 +414,9 @@ bool TinyController::Valid(const Message& _msg)
 		if(msg.Reply)
 			AckRequest(msg);
 		else
-			AckResponse(msg);
+		{
+			if(AckResponse(msg)) return true;
+		}
 	}
 
 	if(msg.Dest == Address)
@@ -469,11 +474,11 @@ void TinyController::AckRequest(const TinyMessage& msg)
 }
 
 // 处理对方发出的请求，如果已响应则重发响应
-void TinyController::AckResponse(const TinyMessage& msg)
+bool TinyController::AckResponse(const TinyMessage& msg)
 {
-	if(msg.Reply) return;
+	if(msg.Reply) return false;
 	// 广播消息不要给确认
-	if(msg.Dest == 0) return;
+	if(msg.Dest == 0) return false;
 
 	TS("TinyController::AckResponse");
 
@@ -489,9 +494,11 @@ void TinyController::AckResponse(const TinyMessage& msg)
 
 			msg_printf("重发响应 ");
 			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
-			return;
+			return true;
 		}
 	}
+
+	return false;
 }
 
 static byte _Sequence	= 0;

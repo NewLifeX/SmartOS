@@ -119,7 +119,7 @@ private:
 	uint		_taskID;	// 发送队列任务
 
 	void AckRequest(const TinyMessage& msg);	// 处理收到的Ack包
-	void AckResponse(const TinyMessage& msg);	// 向对方发出Ack包
+	bool AckResponse(const TinyMessage& msg);	// 向对方发出Ack包
 
 protected:
 	virtual bool Dispatch(Stream& ms, Message* pmsg, void* param);
