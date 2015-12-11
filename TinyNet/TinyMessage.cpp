@@ -209,7 +209,7 @@ TinyController::TinyController() : Controller()
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	Mode		= 0;
 	Interval	= 10;
-	Timeout		= 50;
+	Timeout		= 200;
 
 	_taskID		= 0;
 	ArrayZero(_Queue);
@@ -672,7 +672,7 @@ void TinyController::Loop()
 			// 下一次发送时间还没到，跳过
 			if(node.Next > now) continue;
 
-			msg_printf("重发消息 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times + 1);
+			//msg_printf("重发消息 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times + 1);
 		}
 
 		node.Times++;
