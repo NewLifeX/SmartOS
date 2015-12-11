@@ -68,16 +68,6 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 	// 输出整条信息
 	ByteArray(buf, len).Show(true);
 #endif
-	if(len > control->Port->MaxSize)
-	{
-#if MSG_DEBUG
-		msg_printf("Controller::Dispatch[%d] ", len);
-		// 输出整条信息
-		ByteArray(buf, len).Show(true);
-#endif
-		msg_printf("数据长度 %d 超过控制器可接受最大长度 %d \r\n", len, control->Port->MaxSize);
-		//assert_param2(len <= control->Port->MaxSize, "数据长度超过控制器可接受最大长度");
-	}
 
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
@@ -93,13 +83,6 @@ uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2
 		if(!control->Dispatch(ms, NULL, param2))
 		{
 #if MSG_DEBUG
-			// 兼容性处理，如果0x00 0x01 0x02开头，则重新来一次
-			/*if(buf[0] == 0x00 || buf[0] == 0x01 || buf[0] == 0x02 || buf[0] == 0x03)
-			{
-				ms.SetPosition(p + 1);
-				continue;
-			}*/
-
 			msg_printf("Controller::Error[%d] ", len);
 			// 输出整条信息
 			ByteArray(buf, len).Show(true);

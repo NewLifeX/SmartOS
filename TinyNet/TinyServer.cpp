@@ -568,7 +568,7 @@ void GetDeviceKey(byte scr,Array& key,void* param)
 	if(dv->Version < 0x00AA) return;
 
 	// debug_printf("%d 设备获取密匙\n",scr);
-	key.Set(dv->Pass, 8);
+	key.Copy(dv->Pass, 8);
 }
 
 Device* TinyServer::FindDevice(const Array& hardid) const
