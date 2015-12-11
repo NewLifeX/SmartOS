@@ -18,8 +18,8 @@ TinyClient::TinyClient(TinyController* control)
 {
 	assert_ptr(control);
 
-	Control 				= control;
-	Control->CallblackKey	= GetDeviceKey;
+	Control 		= control;
+	Control->GetKey	= GetDeviceKey;
 
 
 	Opened		= false;

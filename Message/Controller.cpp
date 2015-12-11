@@ -1,7 +1,7 @@
 ﻿#include "Controller.h"
 
-#define MSG_DEBUG DEBUG
-//#define MSG_DEBUG 0
+//#define MSG_DEBUG DEBUG
+#define MSG_DEBUG 0
 #if MSG_DEBUG
 	#define msg_printf debug_printf
 #else

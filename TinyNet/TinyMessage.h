@@ -126,12 +126,9 @@ protected:
 
 public:
 	byte	Address;	// 本地地址
-	bool	NoAck;		// 是否不使用Ack，若为true，即使收到消息要求Ack也不发送Ack。默认false
 	byte	Mode;		// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
-	uint	Interval;	// 消息队列发送间隔ms
-	int		Timeout;	// 消息队列发送消息的默认超时时间ms。如果不需要超时重发，那么直接设置为-1
-
-	void (*CallblackKey)(byte id, Array& key, void* param);
+	ushort	Interval;	// 队列发送间隔，默认10ms
+	short	Timeout;	// 队列发送超时，默认50ms。如果不需要超时重发，那么直接设置为-1
 
 	TinyController();
 	virtual ~TinyController();
@@ -150,6 +147,9 @@ public:
 
 	// 循环处理待发送的消息队列
 	void Loop();
+
+	// 获取密钥的回调
+	void (*GetKey)(byte id, Array& key, void* param);
 
 public:
 	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX

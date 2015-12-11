@@ -11,9 +11,6 @@
 	#define msg_printf(format, ...)
 #endif
 
-void SendTask(void* param);
-void StatTask(void* param);
-
 /*================================ 微网消息 ================================*/
 typedef struct{
 	byte Retry:2;	// 重发次数。
@@ -130,9 +127,9 @@ bool TinyMessage::Valid() const
 {
 	if(Checksum == Crc) return true;
 
-	debug_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
+	msg_printf("Message::Valid Crc Error %04X != Checksum: %04X \r\n", Crc, Checksum);
 #if MSG_DEBUG
-	debug_printf("指令校验错误 ");
+	msg_printf("指令校验错误 ");
 	Show();
 #endif
 
@@ -191,14 +188,13 @@ TinyMessage TinyMessage::CreateReply() const
 }
 
 /*================================ 微网控制器 ================================*/
+void SendTask(void* param);
+void StatTask(void* param);
+
 // 构造控制器
 TinyController::TinyController() : Controller()
 {
-	_taskID		= 0;
-	Interval	= 2;
-	Timeout		= 200;
-
-	MinSize = TinyMessage::MinSize;
+	MinSize	= TinyMessage::MinSize;
 
 	// 初始化一个随机地址
 	Address = Sys.ID[0];
@@ -212,8 +208,10 @@ TinyController::TinyController() : Controller()
 
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	Mode		= 0;
-	NoAck		= false;
+	Interval	= 10;
+	Timeout		= 50;
 
+	_taskID		= 0;
 	ArrayZero(_Queue);
 }
 
@@ -336,7 +334,7 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 bool TinyController::Valid(const Message& msg)
 {
 	auto& tmsg = (TinyMessage&)msg;
-	//debug_printf("TinyController::Valid\n");
+
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 	// 没有源地址是很不负责任的
@@ -398,7 +396,7 @@ bool TinyController::Valid(const Message& msg)
 	if(tmsg.Dest == Address)
 	{
 		ByteArray  key(0);
-		CallblackKey(tmsg.Src, key, Param);
+		GetKey(tmsg.Src, key, Param);
 		if(key.Length() > 0) Encrypt(tmsg, key);
 	}
 	else
@@ -457,7 +455,6 @@ void TinyController::AckRequest(const TinyMessage& msg)
 // 向对方发出Ack包
 void TinyController::AckResponse(const TinyMessage& msg)
 {
-	if(NoAck) return;
 	// 广播消息不要给确认
 	if(msg.Dest == 0) return;
 
@@ -496,7 +493,7 @@ bool TinyController::Send(Message& msg)
 	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
 
 	ByteArray  key;
-	CallblackKey(tmsg.Dest, key, Param);
+	GetKey(tmsg.Dest, key, Param);
 	if(key.Length() > 0) Encrypt(tmsg, key);
 
 #if MSG_DEBUG
@@ -609,7 +606,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.Expired < now)
 			{
-				debug_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
+				msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using = 0;
 
 				continue;
@@ -642,8 +639,9 @@ void TinyController::Loop()
 			node.LastSend	= now;
 
 			// 随机延迟。随机数1~5。每次延迟递增
-			byte rnd	= (uint)now % 3;
-			node.Next	= now + (rnd + 1) * Interval;
+			//byte rnd	= (uint)now % 3;
+			//node.Next	= now + (rnd + 1) * Interval;
+			node.Next	= now + Interval;
 		}
 	}
 
@@ -738,7 +736,7 @@ bool RingQueue::Check(ushort item)
 	// 首先检查是否过期。如果已过期，说明很长时间都没有收到消息
 	if(Expired < Sys.Ms())
 	{
-		//debug_printf("环形队列过期，清空 \r\n");
+		//msg_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始
 		Index	= 0;
 		ArrayZero(Arr);

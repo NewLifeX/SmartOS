@@ -25,8 +25,8 @@ TinyServer::TinyServer(TinyController* control)
 	Cfg			= NULL;
 	DeviceType	= Sys.Code;
 
-	Control->Received		= OnServerReceived;
-	Control->CallblackKey	= GetDeviceKey;
+	Control->Received	= OnServerReceived;
+	Control->GetKey		= GetDeviceKey;
 	Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
