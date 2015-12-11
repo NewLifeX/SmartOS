@@ -154,9 +154,9 @@ void TTime::SetTime(ulong seconds)
 	BaseSeconds = seconds - Seconds;
 
 #if DEBUG
-	DateTime dt(seconds);
+	/*DateTime dt(seconds);
 	debug_printf("TTime::SetTime 设置时间 ");
-	dt.Show(true);
+	dt.Show(true);*/
 #endif
 
 	// 保存到RTC
