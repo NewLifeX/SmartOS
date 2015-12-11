@@ -651,6 +651,10 @@ void TinyController::Loop()
 		auto& node = _Queue[i];
 		if(!node.Using) continue;
 
+		auto f = (TFlags*)&node.Data[3];
+		// 可用请求消息数，需要继续轮询
+		if(!f->_Reply) count++;
+
 		// 检查时间。至少发送一次
 		if(node.Times > 0)
 		{
@@ -671,14 +675,12 @@ void TinyController::Loop()
 			msg_printf("重发消息 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times + 1);
 		}
 
-		count++;
 		node.Times++;
 
 		// 发送消息
 		Port->Write(Array(node.Data, node.Length));
 
 		// 递增重试次数
-		auto f = (TFlags*)&node.Data[3];
 		f->Retry++;
 
 		// 请求消息列入统计
@@ -707,6 +709,7 @@ void TinyController::Loop()
 		}
 	}
 
+	// 没有可用请求时，停止轮询
 	if(count == 0) Sys.SetTask(_taskID, false);
 }
 
