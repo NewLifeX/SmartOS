@@ -13,8 +13,8 @@
 
 /*================================ 微网消息 ================================*/
 typedef struct{
-	byte Retry:2;	// 重发次数。
-	byte TTL:2;		// 路由TTL。最多3次转发
+	byte Retry:3;	// 重发次数。
+	byte TTL:1;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误
@@ -183,6 +183,9 @@ TinyMessage TinyMessage::CreateReply() const
 	msg.Code	= Code;
 	msg.Reply	= true;
 	msg.Seq		= Seq;
+#if MSG_DEBUG
+	msg.Retry	= Retry;
+#endif
 
 	return msg;
 }
@@ -384,10 +387,7 @@ bool TinyController::Valid(const Message& _msg)
 			ushort seq = (msg.Src << 8) | msg.Seq;
 			if(_Ring.Check(seq))
 			{
-				// 快速响应确认消息，避免对方无休止的重发
-				//if(!msg.NoAck) AckResponse(msg);
-
-				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Seq, msg.Retry);
+				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -414,18 +414,11 @@ bool TinyController::Valid(const Message& _msg)
 			AckResponse(msg);
 	}
 
-	// 快速响应确认消息，避免对方无休止的重发
-	//if(!msg.NoAck) AckResponse(msg);
-
 	if(msg.Dest == Address)
 	{
 		ByteArray  key(0);
 		GetKey(msg.Src, key, Param);
 		if(key.Length() > 0) Encrypt(msg, key);
-	}
-	else
-	{
-		//debug_printf("中转消息不解密");
 	}
 
 #if MSG_DEBUG
@@ -452,7 +445,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			if(cost < 0) cost = -cost;
 
 			Total.Cost	+= cost;
-			Total.Ack++;
+			Total.Success++;
 			Total.Bytes	+= node.Length;
 
 			// 该传输口收到响应，从就绪队列中删除
@@ -468,11 +461,9 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		}
 	}
 
-	//if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
 	if(msg.Ack)
 	{
 		msg_printf("无效确认 ");
-		//msg.Show();
 		ShowMessage(msg, false, Port);
 	}
 }
@@ -501,16 +492,6 @@ void TinyController::AckResponse(const TinyMessage& msg)
 			return;
 		}
 	}
-
-	/*auto rs = msg.CreateReply();
-	rs.Src	= Address;
-	rs.Ack	= 1;
-	rs.Length	= 0;
-#if MSG_DEBUG
-	rs.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
-#endif
-
-	Controller::Send(rs);*/
 }
 
 static byte _Sequence	= 0;
@@ -734,7 +715,7 @@ void TinyController::ShowStat() const
 	lastReceive	= Total.Receive;
 
 	uint rate	= 100;
-	uint tack	= Last.Ack + Total.Ack;
+	uint tack	= Last.Success + Total.Success;
 	uint tmsg	= Last.Msg + Total.Msg;
 	tsend		+= Last.Send;
 	if(tsend > 0)
@@ -759,12 +740,13 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Times		= 0;
 	LastSend	= 0;
 
-	StartTime	= Sys.Ms();
-	EndTime		= StartTime + msTimeout;
+	ulong now	= Sys.Ms();
+	//StartTime	= now;
+	EndTime		= now + msTimeout;
 
 	Next		= 0;
 	// 响应消息只发一次，然后长时间等待
-	if(msg.Reply) Next	= StartTime + 60000;
+	if(msg.Reply) Next	= now + 60000;
 
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(Data, ArrayLength(Data));

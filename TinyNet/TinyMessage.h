@@ -17,8 +17,8 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte _Code;		// 功能代码
-	byte Retry:2;	// 重发次数。
-	byte TTL:2;		// 路由TTL。最多3次转发
+	byte Retry:3;	// 重发次数。
+	byte TTL:1;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误
@@ -79,7 +79,7 @@ class TinyStat
 public:
 	uint	Msg;	// 总消息数
 	uint	Send;	// 总次数。每条消息可能发送多次
-	uint	Ack;	// 总成功。有多少消息收到确认，每条消息仅计算一次确认
+	uint	Success;// 总成功。有多少消息收到确认，每条消息仅计算一次确认
 	uint	Bytes;	// 总字节数。成功发送消息的字节数
 	uint	Cost;	// 总开销ms。成功发送消息到收到确认所花费的时间
 	uint	Receive;// 收到消息数
@@ -101,7 +101,7 @@ public:
 	byte	Data[64];
 	ushort	Length;
 	ushort	Times;		// 发送次数
-	ulong	StartTime;	// 开始时间ms
+	//ulong	StartTime;	// 开始时间ms
 	ulong	EndTime;	// 过期时间ms
 	ulong	Next;		// 下一次重发时间ms
 	ulong	LastSend;	// 最后一次发送时间ms
@@ -113,7 +113,7 @@ public:
 class TinyController : public Controller
 {
 private:
-	MessageNode	_Queue[4];	// 消息队列。最多允许4个消息同时等待响应
+	MessageNode	_Queue[8];	// 消息队列。最多允许8个消息同时等待响应
 
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
