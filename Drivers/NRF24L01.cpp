@@ -232,6 +232,7 @@ NRF24L01::NRF24L01()
 
 	_Lock	= 0;
 
+	FixData	= NULL;
 	Led		= NULL;
 }
 
@@ -880,11 +881,7 @@ uint NRF24L01::OnRead(Array& bs)
 
 	bs.SetLength(rs);
 	// 微网指令特殊处理长度
-	if(rs >= 8)
-	{
-		rs = bs[5] + 8;
-		if(rs < bs.Length()) bs.SetLength(rs);
-	}
+	if(FixData)	FixData(&bs);
 
 	return rs;
 }

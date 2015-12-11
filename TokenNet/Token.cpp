@@ -192,6 +192,18 @@ void Token::Setup(ushort code, const char* name, COM_Def message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
+void Fix2401(void* param)
+{
+	auto bs	= *(Array*)param;
+	// 微网指令特殊处理长度
+	uint rs	= bs.Length();
+	if(rs >= 8)
+	{
+		rs = bs[5] + 8;
+		if(rs < bs.Length()) bs.SetLength(rs);
+	}
+}
+
 ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	static Spi spi(spi_, 10000000, true);
@@ -204,7 +216,8 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf.Channel		= TinyConfig::Current->Channel;
 	nrf.Speed		= TinyConfig::Current->Speed;
 
-	nrf.Led	= led;
+	nrf.FixData	= Fix2401;
+	nrf.Led		= led;
 
 	return &nrf;
 }

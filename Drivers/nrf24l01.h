@@ -65,7 +65,8 @@ public:
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-	IDataPort* Led;	// 数据灯
+	Action		FixData;// 修正数据的委托
+	IDataPort*	Led;	// 数据灯
 
 	byte Status;
 	byte FifoStatus;
