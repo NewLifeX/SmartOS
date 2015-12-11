@@ -227,6 +227,23 @@ void TinyController::Open()
 	assert_param2(Port, "还没有传输口呢");
 
 	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, Port->ToString());
+	debug_printf("\t间隔: %dms\r\n", Interval);
+	debug_printf("\t超时: %dms\r\n", Timeout);
+	debug_printf("\t模式: %d ", Mode);
+	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
+	switch(Mode)
+	{
+		case 0:
+			debug_printf("仅本地址");
+			break;
+		case 1:
+			debug_printf("本地址和广播");
+			break;
+		case 2:
+			debug_printf("接收所有");
+			break;
+	}
+	debug_printf("\r\n");
 
 	Controller::Open();
 
@@ -237,15 +254,15 @@ void TinyController::Open()
 		Sys.SetTask(_taskID, false);
 	}
 
-	memset(&Total, 0, sizeof(Total));
-	memset(&Last, 0, sizeof(Last));
+	memset(&Total, 0, sizeof(TinyStat));
+	memset(&Last, 0, sizeof(TinyStat));
 
 #if MSG_DEBUG
 	Sys.AddTask(StatTask, this, 1000, 15000, "微网统计");
 #endif
 }
 
-void ShowMessage(TinyMessage& msg, bool send, ITransport* port)
+void ShowMessage(const TinyMessage& msg, bool send, ITransport* port)
 {
 	if(msg.Ack) return;
 
@@ -331,46 +348,46 @@ bool TinyController::Dispatch(Stream& ms, Message* pmsg, void* param)
 }
 
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
-bool TinyController::Valid(const Message& msg)
+bool TinyController::Valid(const Message& _msg)
 {
-	auto& tmsg = (TinyMessage&)msg;
+	auto& msg = (TinyMessage&)_msg;
 
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 	// 没有源地址是很不负责任的
-	if(!tmsg.Src) return false;
-	//if(tmsg!=Address) return false;
+	if(!msg.Src) return false;
+	//if(msg!=Address) return false;
 	// 非广播包时，源地址和目的地址相同也是非法的
-	if(tmsg.Dest == tmsg.Src) return false;
+	if(msg.Dest == msg.Src) return false;
 	// 源地址是自己不要接收
-	if(tmsg.Src == Address) return false;
+	if(msg.Src == Address) return false;
 	// 只处理本机消息或广播消息
-	//if(tmsg.Dest != Address && tmsg.Dest != 0) return false;
+	//if(msg.Dest != Address && msg.Dest != 0) return false;
 	// 不是自己的消息，并且没有设置接收全部
-	if(Mode < 2 && tmsg.Dest != Address)
+	if(Mode < 2 && msg.Dest != Address)
 	{
 		// 如果不是广播或者不允许广播
-		if(Mode != 1 || tmsg.Dest != 0) return false;
+		if(Mode != 1 || msg.Dest != 0) return false;
 	}
 
 	TS("TinyController::Valid");
 
 #if MSG_DEBUG
 	// 调试版不过滤序列号为0的重复消息
-	if(tmsg.Seq != 0)
+	if(msg.Seq != 0)
 #endif
 	{
 		// Ack的包有可能重复，不做处理。正式响应包跟前面的Ack有相同的源地址和序列号
-		if(!tmsg.Ack)
+		if(!msg.Ack)
 		{
 			// 处理重复消息。加上来源地址，以免重复
-			ushort seq = (tmsg.Src << 8) | tmsg.Seq;
+			ushort seq = (msg.Src << 8) | msg.Seq;
 			if(_Ring.Check(seq))
 			{
 				// 快速响应确认消息，避免对方无休止的重发
-				if(!tmsg.NoAck) AckResponse(tmsg);
+				//if(!msg.NoAck) AckResponse(msg);
 
-				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", tmsg.Reply, tmsg.Ack, tmsg.Src, tmsg.Seq, tmsg.Retry);
+				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Reply, msg.Ack, msg.Src, msg.Seq, msg.Retry);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -378,26 +395,33 @@ bool TinyController::Valid(const Message& msg)
 	}
 
 	// 广播的响应消息也不要
-	if(tmsg.Dest == 0 && tmsg.Reply) return false;
+	if(msg.Dest == 0 && msg.Reply) return false;
 
-	// 如果是确认消息或响应消息，及时更新请求队列
-	if(tmsg.Ack)
+	// 仅处理本节点的确认消息
+	if(msg.Dest == Address)
 	{
-		AckRequest(tmsg);
-		// 如果只是确认消息，不做处理
-		return false;
+		// 如果是确认消息或响应消息，及时更新请求队列
+		if(msg.Ack)
+		{
+			AckRequest(msg);
+			// 如果只是确认消息，不做处理
+			return false;
+		}
+		// 响应消息消除请求，请求消息要求重发响应
+		if(msg.Reply)
+			AckRequest(msg);
+		else
+			AckResponse(msg);
 	}
-	// 响应消息顺道帮忙消除Ack
-	if(tmsg.Reply) AckRequest(tmsg);
 
 	// 快速响应确认消息，避免对方无休止的重发
-	if(!tmsg.NoAck) AckResponse(tmsg);
+	//if(!msg.NoAck) AckResponse(msg);
 
-	if(tmsg.Dest == Address)
+	if(msg.Dest == Address)
 	{
 		ByteArray  key(0);
-		GetKey(tmsg.Src, key, Param);
-		if(key.Length() > 0) Encrypt(tmsg, key);
+		GetKey(msg.Src, key, Param);
+		if(key.Length() > 0) Encrypt(msg, key);
 	}
 	else
 	{
@@ -406,7 +430,7 @@ bool TinyController::Valid(const Message& msg)
 
 #if MSG_DEBUG
 	// 尽量在Ack以后再输出日志，加快Ack处理速度
-	ShowMessage(tmsg, false, Port);
+	ShowMessage(msg, false, Port);
 #endif
 
 	Total.Receive++;
@@ -414,9 +438,11 @@ bool TinyController::Valid(const Message& msg)
 	return true;
 }
 
-// 处理收到的Ack包
+// 处理收到的响应包或Ack包，消除请求
 void TinyController::AckRequest(const TinyMessage& msg)
 {
+	if(!msg.Ack && !msg.Reply) return;
+
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
 		auto& node = _Queue[i];
@@ -429,13 +455,6 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			Total.Ack++;
 			Total.Bytes	+= node.Length;
 
-			// 发送开支作为新的随机延迟时间，这样子延迟重发就可以根据实际情况动态调整
-			/*uint it = (Interval + cost) >> 1;
-			// 确保小于等于超时时间的四分之一，让其有机会重发
-			uint tt = Timeout >> 2;
-			if(it > tt) it = tt;
-			Interval = it;*/
-
 			// 该传输口收到响应，从就绪队列中删除
 			node.Using = 0;
 
@@ -444,71 +463,85 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			else
 				msg_printf("响应确认 ");
 
-			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Seq, cost, msg.Retry);
+			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Seq, msg.Retry, cost);
 			return;
 		}
 	}
 
-	if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
+	//if(msg.Ack) msg_printf("无效确认 Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
+	if(msg.Ack)
+	{
+		msg_printf("无效确认 ");
+		//msg.Show();
+		ShowMessage(msg, false, Port);
+	}
 }
 
-// 向对方发出Ack包
+// 处理对方发出的请求，如果已响应则重发响应
 void TinyController::AckResponse(const TinyMessage& msg)
 {
+	if(msg.Reply) return;
 	// 广播消息不要给确认
 	if(msg.Dest == 0) return;
 
 	TS("TinyController::AckResponse");
 
-	TinyMessage msg2;
-	msg2.Code	= msg.Code;
-	msg2.Src	= Address;
-	msg2.Dest	= msg.Src;
-	msg2.Seq	= msg.Seq;
-	msg2.Reply	= 1;
-	msg2.Ack	= 1;
-	msg2.Length	= 0;
+	for(int i=0; i<ArrayLength(_Queue); i++)
+	{
+		auto& node = _Queue[i];
+		if(node.Using && node.Seq == msg.Seq)
+		{
+			// 马上重发这条响应
+			node.Next	= 0;
+
+			Sys.SetTask(_taskID, true, 0);
+
+			msg_printf("重发响应 ");
+			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
+			return;
+		}
+	}
+
+	/*auto rs = msg.CreateReply();
+	rs.Src	= Address;
+	rs.Ack	= 1;
+	rs.Length	= 0;
 #if MSG_DEBUG
-	msg2.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
+	rs.Retry = msg.Retry; // 说明这是匹配对方的哪一次重发
 #endif
 
-	bool rs = Controller::Send(msg2);
-	//msg_printf("发送确认 Dest=0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
-	/*if(rs)
-		msg_printf(" 成功!\r\n");
-	else
-		msg_printf(" 失败!\r\n");*/
+	Controller::Send(rs);*/
 }
 
 static byte _Sequence	= 0;
 // 发送消息，传输口参数为空时向所有传输口发送消息
-bool TinyController::Send(Message& msg)
+bool TinyController::Send(Message& _msg)
 {
-	auto& tmsg = (TinyMessage&)msg;
+	auto& msg = (TinyMessage&)_msg;
 
 	// 附上自己的地址
-	tmsg.Src = Address;
+	msg.Src = Address;
 
 	// 附上序列号。响应消息保持序列号不变
-	if(!tmsg.Reply) tmsg.Seq = ++_Sequence;
+	if(!msg.Reply) msg.Seq = ++_Sequence;
 
 	ByteArray  key;
-	GetKey(tmsg.Dest, key, Param);
-	if(key.Length() > 0) Encrypt(tmsg, key);
+	GetKey(msg.Dest, key, Param);
+	if(key.Length() > 0) Encrypt(msg, key);
 
 #if MSG_DEBUG
-	ShowMessage(tmsg, true, Port);
+	ShowMessage(msg, true, Port);
 #endif
 
-	return Post(tmsg, -1);
+	return Post(msg, -1);
 }
 
-bool TinyController::Reply(Message& msg)
+bool TinyController::Reply(Message& _msg)
 {
-	auto& tmsg = (TinyMessage&)msg;
+	auto& msg = (TinyMessage&)_msg;
 
 	// 回复信息，源地址变成目的地址
-	if(tmsg.Dest == Address && tmsg.Src != Address) tmsg.Dest = tmsg.Src;
+	if(msg.Dest == Address && msg.Src != Address) msg.Dest = msg.Src;
 	msg.Reply = 1;
 
 	return Send(msg);
@@ -532,6 +565,8 @@ bool TinyController::Broadcast(TinyMessage& msg)
 
 	if(!Port->Open()) return false;
 
+	Total.Broadcast++;
+
 	return Controller::SendInternal(msg);
 }
 
@@ -545,10 +580,18 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 
 	if(msTimeout < 0) msTimeout = Timeout;
 	// 如果确定不需要响应，则改用Post
-	if(msTimeout <= 0 || msg.NoAck || msg.Ack) return Controller::SendInternal(msg);
+	if(msTimeout <= 0 || msg.NoAck || msg.Ack)
+	{
+		Total.Broadcast++;
+		return Controller::SendInternal(msg);
+	}
 
 	// 针对Zigbee等不需要Ack确认的通道
-	if(Timeout < 0) return Controller::SendInternal(msg);
+	if(Timeout < 0)
+	{
+		Total.Broadcast++;
+		return Controller::SendInternal(msg);
+	}
 
 	// 准备消息队列
 	MessageNode* node = NULL;
@@ -571,7 +614,10 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 
 	node->Set(msg, msTimeout);
 
-	Total.Msg++;
+	if(msg.Reply)
+		Total.Reply++;
+	else
+		Total.Msg++;
 
 	Sys.SetTask(_taskID, true, 0);
 
@@ -590,6 +636,15 @@ void TinyController::Loop()
 {
 	TS("TinyController::Loop");
 
+	/*
+	队列机制：
+	1，定时发送请求消息，直到被响应消去或者超时
+	2，发送一次响应消息，直到超时，中途有该序列的请求则直接重发响应
+	3，不管请求还是响应，同样方式处理超时，响应的下一次时间特别长
+	4，如果某个请求序列对应的响应存在，则直接将其下一次时间置为0，让其马上重发
+	5，发送响应消息，不好统计速度和成功率
+	*/
+
 	int count = 0;
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -597,40 +652,47 @@ void TinyController::Loop()
 		if(!node.Using) continue;
 
 		// 检查时间。至少发送一次
-		if(node.Next > 0)
+		if(node.Times > 0)
 		{
 			ulong now = Sys.Ms();
-			// 下一次发送时间还没到，跳过
-			if(node.Next > now) continue;
 
 			// 已过期则删除
-			if(node.Expired < now)
+			if(node.EndTime < now)
 			{
 				msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using = 0;
 
 				continue;
 			}
+
+			// 下一次发送时间还没到，跳过
+			if(node.Next > now) continue;
+
+			msg_printf("重发消息 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times + 1);
 		}
 
 		count++;
 		node.Times++;
 
+		// 发送消息
+		Port->Write(Array(node.Data, node.Length));
+
 		// 递增重试次数
 		auto f = (TFlags*)&node.Data[3];
 		f->Retry++;
 
-		// 发送消息
-		Port->Write(Array(node.Data, node.Length));
-
-		// 增加发送次数统计
-		Total.Send++;
-
-		// 分组统计
-		if(Total.Send >= 100)
+		// 请求消息列入统计
+		if(!f->_Reply)
 		{
-			memcpy(&Last, &Total, sizeof(Total));
-			memset(&Total, 0, sizeof(Total));
+			// 增加发送次数统计
+			Total.Send++;
+
+			// 分组统计
+			if(Total.Send >= 100)
+			{
+				memcpy(&Last, &Total, sizeof(TinyStat));
+				memset(&Total, 0, sizeof(TinyStat));
+			}
 		}
 
 		// 计算下一次重发时间
@@ -663,24 +725,27 @@ void TinyController::ShowStat() const
 	static uint lastSend = 0;
 	static uint lastReceive = 0;
 
-	int tsend = Total.Send;
+	int tsend	= Total.Send;
 	if(tsend == lastSend && Total.Receive == lastReceive) return;
-	lastSend = tsend;
-	lastReceive = Total.Receive;
+	lastSend	= tsend;
+	lastReceive	= Total.Receive;
 
-	uint rate = 100;
-	if(Last.Send + tsend > 0)
-		rate = (Last.Ack + Total.Ack) * 100 / (Last.Send + tsend);
-	uint cost = 0;
-	if(Last.Ack + Total.Ack > 0)
-		cost = (Last.Cost + Total.Cost) / (Last.Ack + Total.Ack);
-	uint speed = 0;
+	uint rate	= 100;
+	uint tack	= Last.Ack + Total.Ack;
+	uint tmsg	= Last.Msg + Total.Msg;
+	tsend		+= Last.Send;
+	if(tsend > 0)
+		rate	= tack * 100 / tmsg;
+	uint cost	= 0;
+	if(tack > 0)
+		cost	= (Last.Cost + Total.Cost) / tack;
+	uint speed	= 0;
 	if(Last.Cost + Total.Cost > 0)
-		speed = (Last.Bytes + Total.Bytes) * 1000000 / (Last.Cost + Total.Cost);
-	uint retry = 0;
+		speed	= (Last.Bytes + Total.Bytes) * 1000 / (Last.Cost + Total.Cost);
+	uint retry	= 0;
 	if(Last.Msg + Total.Msg > 0)
-		retry = (Last.Send + tsend) * 100 / (Last.Msg + Total.Msg);
-	msg_printf("Tiny::State 成功=%d%% 平均=%dus 速度=%d Byte/s 重发=%d.%02d 收发=%d/%d \r\n", rate, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Msg + Total.Msg);
+		retry	= tsend * 100 / tmsg;
+	msg_printf("Tiny::State 成功=%d%% %d/%d 平均=%dms 速度=%d Byte/s 重发=%d.%02d 接收=%d 响应=%d 广播=%d \r\n", rate, tack, tmsg, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Reply + Total.Reply, Last.Broadcast + Total.Broadcast);
 #endif
 }
 
@@ -692,8 +757,11 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	LastSend	= 0;
 
 	StartTime	= Sys.Ms();
-	Expired		= StartTime + msTimeout;
+	EndTime		= StartTime + msTimeout;
+
 	Next		= 0;
+	// 响应消息只发一次，然后长时间等待
+	if(msg.Reply) Next	= StartTime + 60000;
 
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(Data, ArrayLength(Data));

@@ -128,8 +128,7 @@ TinyServer* Token::CreateServer(ITransport* port)
 	ctrl.Port = port;
 
 	// 只有2401需要打开重发机制
-	//if(strcmp(port->ToString(), "R24")) 
-	ctrl.Timeout = -1;
+	if(strcmp(port->ToString(), "R24") != 0) ctrl.Timeout = -1;
 
 	auto tc = TinyConfig::Current;
 	tc->Address = ctrl.Address;

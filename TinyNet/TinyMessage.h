@@ -82,7 +82,9 @@ public:
 	uint	Ack;	// 总成功。有多少消息收到确认，每条消息仅计算一次确认
 	uint	Bytes;	// 总字节数。成功发送消息的字节数
 	uint	Cost;	// 总开销ms。成功发送消息到收到确认所花费的时间
-	int		Receive;// 收到消息数
+	uint	Receive;// 收到消息数
+	uint	Reply;	// 发出的响应
+	uint	Broadcast;	// 广播
 
 	TinyStat()
 	{
@@ -100,8 +102,8 @@ public:
 	ushort	Length;
 	ushort	Times;		// 发送次数
 	ulong	StartTime;	// 开始时间ms
+	ulong	EndTime;	// 过期时间ms
 	ulong	Next;		// 下一次重发时间ms
-	ulong	Expired;	// 过期时间ms
 	ulong	LastSend;	// 最后一次发送时间ms
 
 	void Set(const TinyMessage& msg, int msTimeout);
