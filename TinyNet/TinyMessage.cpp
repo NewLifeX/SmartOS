@@ -223,6 +223,9 @@ TinyController::TinyController() : Controller()
 TinyController::~TinyController()
 {
 	Sys.RemoveTask(_taskID);
+	
+	delete[] _Queue;
+	_Queue	= NULL;
 }
 
 void TinyController::Open()
