@@ -215,7 +215,9 @@ TinyController::TinyController() : Controller()
 	Timeout		= 200;
 
 	_taskID		= 0;
-	ArrayZero(_Queue);
+	//ArrayZero(_Queue);
+	_Queue		= NULL;
+	QueueLength	= 8;
 }
 
 TinyController::~TinyController()
@@ -250,6 +252,9 @@ void TinyController::Open()
 
 	Controller::Open();
 
+	// 初始化发送队列
+	_Queue	= new MessageNode[QueueLength];
+	
 	if(!_taskID)
 	{
 		_taskID = Sys.AddTask(SendTask, this, 0, 1, "微网队列");
@@ -441,7 +446,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 {
 	if(!msg.Ack && !msg.Reply) return;
 
-	for(int i=0; i<ArrayLength(_Queue); i++)
+	for(int i=0; i<QueueLength; i++)
 	{
 		auto& node = _Queue[i];
 		if(node.Using && node.Seq == msg.Seq)
@@ -482,7 +487,7 @@ bool TinyController::AckResponse(const TinyMessage& msg)
 
 	TS("TinyController::AckResponse");
 
-	for(int i=0; i<ArrayLength(_Queue); i++)
+	for(int i=0; i<QueueLength; i++)
 	{
 		auto& node = _Queue[i];
 		if(node.Using && node.Seq == msg.Seq)
@@ -583,7 +588,7 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 
 	// 准备消息队列
 	MessageNode* node = NULL;
-	for(int i=0; i<ArrayLength(_Queue); i++)
+	for(int i=0; i<QueueLength; i++)
 	{
 		if(!_Queue[i].Using)
 		{
@@ -634,7 +639,7 @@ void TinyController::Loop()
 	*/
 
 	int count = 0;
-	for(int i=0; i<ArrayLength(_Queue); i++)
+	for(int i=0; i<QueueLength; i++)
 	{
 		auto& node = _Queue[i];
 		if(!node.Using) continue;

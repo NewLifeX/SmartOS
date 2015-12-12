@@ -113,7 +113,7 @@ public:
 class TinyController : public Controller
 {
 private:
-	MessageNode	_Queue[8];	// 消息队列。最多允许8个消息同时等待响应
+	MessageNode*	_Queue;	// 消息队列。允许多少个消息同时等待响应
 
 	RingQueue	_Ring;		// 环形队列
 	uint		_taskID;	// 发送队列任务
@@ -131,6 +131,7 @@ public:
 	byte	Mode;		// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	ushort	Interval;	// 队列发送间隔，默认10ms
 	short	Timeout;	// 队列发送超时，默认50ms。如果不需要超时重发，那么直接设置为-1
+	byte	QueueLength;// 队列长度，默认8
 
 	TinyController();
 	virtual ~TinyController();
