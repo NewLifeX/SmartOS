@@ -1,4 +1,5 @@
 ﻿#include "ShunCom.h"
+#include "CheckSum.h"
 
 ShunCom::ShunCom()
 {
@@ -67,7 +68,8 @@ void ShunCom::ShowConfig()
 	
 
 	//读取Zibeer模块配置指令
-	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
+	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34};
+	
 	Write(CArray(buf));
 
 	Sys.Sleep(300);
@@ -80,67 +82,82 @@ void ShunCom::ShowConfig()
 
 void ShunCom:: SetDeviceMode(byte kind)
 {
-	if(!Open()) return;
-	EnterSetMode();
-	byte buf[] = { 0xFE, 0x05, 0x21, 0x09, 0x87,0x00,0x00,kind,0xAB };
+	if(!EnterSetMode()) return;
+	debug_printf("设置设备模式\n");
+	byte buf[] = {0xFE,0x05, 0x21,0x09,0x87,0x00,0x00,0x01,0x01,0xAA };
 	Write(CArray(buf));
     OutSetMode();
 }
+
 //设置无线频点，注意大小端，Zibeer是小端存储
 void ShunCom::SetChannel(int kind)
 {
-	if(!Open()) return;
-	EnterSetMode();
-	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x08,0x00,0x00,0xA8 };
+	if(!EnterSetMode()) return;
+	
+	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x08,0x00,0x00,0xA8};
+	Write(CArray(buf));
+    OutSetMode();	
+}
+
+void ShunCom::SetPanID(int kind)
+{
+	if(!EnterSetMode()) return;
+	debug_printf("配置信息SetPanID\r\n");
+	byte buf[] = { 0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,0x55,0x55,0xAF};
 	Write(CArray(buf));
     OutSetMode();	
 }
 //设置发送模式00为广播、01为主从模式、02为点对点模式
-void  ShunCom::SetSendMode(byte mode)
+void  ShunCom::SetSendMode(byte mode)	
 {
-	if(!Open()) return;
-	EnterSetMode();
-	byte buf[] = {0xFE,0x05,0x21,0x09,0x03,0x04,0x00,0x01 ,mode,0x2B };
+	if(!EnterSetMode()) return;
+	debug_printf("设置发送模式\n");	
+	byte buf[] = {0xFE,0x05, 0x21,0x09,0x03,0x04,0x00,0x01,mode,0x2A};
 	Write(CArray(buf));
-    OutSetMode();	
-	
+    OutSetMode();		
 }	
 //进入配置模式
-void ShunCom:: EnterSetMode()
+bool ShunCom:: EnterSetMode()
 {
-	if(!Open()) return;
+	if(!Open()) return false;
+	Sys.Sleep(2000);
 
-	Config	= true;
+	Config	= true;	
 	Sys.Sleep(2000);
 	Config	= false;
+	ByteArray rs1;
 	
+	while(true)
+	{
+		ByteArray rs1;
+		Read(rs1);
+		if(rs1.Length() == 0) break;
+	}
+     
 	//读取Zibeer模块配置指令
 	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
 	Write(CArray(buf));
 	Sys.Sleep(300);
 	ByteArray rs;
-	Read(rs);
+	Read(rs); 
     debug_printf("Zibeer配置信息\n");
 	rs.Show(true);		
 }
 //退出配置模式
 void ShunCom:: OutSetMode()
-{
+{  
   if(!Open()) return;
+  
+  debug_printf("重启Zibee模块\n");
   byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
   Write(CArray(buf));	
-  Config	= false;
+ // Config	= false;
 }
 //读取配置信息
 void  ShunCom::ConfigMessage(ByteArray& array)
 {
-	if(!Open()) return;
-
-	Config	= true;
-	Sys.Sleep(2000);
-
 	//读取Zibeer模块配置指令
-	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
+	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34 };
 	Write(CArray(buf));
 
 	Sys.Sleep(300);
@@ -174,9 +191,31 @@ bool ShunCom::OnWrite(const Array& bs)
 
 // 引发数据到达事件
 uint ShunCom::OnReceive(Array& bs, void* param)
-{
+{	
 	//Led = !Led;
 	if(Led) Led->Write(1000);
 
 	return ITransport::OnReceive(bs, param);
 }
+
+ ShunComMessage::ShunComMessage(uint code,uint codekind)
+{
+	Frame		= 0xfe;
+	Code		= code;
+	CodeKind	= codekind;
+
+}
+void ShunComMessage::Write(Stream& ms) const
+{
+	assert_ptr(this);
+	
+	ms.Write(Frame);
+	ms.Write(Length);
+	ms.Write(Code);
+	ms.Write(CodeKind);
+	ms.Write(DataLength);
+	ms.Write(CArray(Data));
+	ms.Write(Checksum);
+	
+}
+

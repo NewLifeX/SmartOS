@@ -39,10 +39,13 @@ public:
 	virtual void SetChannel(int kind);
 	//设置发送模式00为广播、01为主从模式、02为点对点模式
 	virtual void SetSendMode(byte mode);	
+	//进入配置PanID,同一网络PanID必须相同
+    virtual void SetPanID(int ID);
 	//进入配置模式
-	virtual void EnterSetMode();
+	virtual bool EnterSetMode();
 	//退出配置模式
 	virtual void OutSetMode();
+	
 	//读取配置信息
 	virtual void ConfigMessage(ByteArray& buf);
 	
@@ -51,10 +54,30 @@ public:
 	virtual uint OnReceive(Array& bs, void* param);
 
 	virtual string ToString() { return "ShunCom"; }
+	virtual bool OnOpen();
 
 protected:
-	virtual bool OnOpen();
+	
     virtual void OnClose();
 };
-
+class ShunComMessage
+{
+public:
+	byte 		Frame;		//帧头
+	byte		Length;		//数据长度
+	uint		Code;		//操作码
+	uint		CodeKind;  	//操类型
+	uint		DataLength;	//负载数据长度
+	byte   		Data[64];	// 负载数据部分
+	byte		Checksum;	//异或校验、从数据长度到负载数据尾
+public:
+	ShunComMessage(uint code,uint codeKind);
+	virtual bool Read(Stream& ms);
+	// 写入指定数据流
+	virtual void Write(Stream& ms) const;
+	// 验证消息校验码是否有效
+	virtual bool Valid();
+	// 显示消息内容
+	virtual void Show() const;
+};
 #endif
