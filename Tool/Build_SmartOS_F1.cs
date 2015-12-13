@@ -23,7 +23,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
             build.AddFiles("..\\Platform", "Boot_F1.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f10x.s");
-            build.AddFiles("..\\Security");
+            build.AddFiles("..\\Security", "*.cpp");
             build.AddFiles("..\\Storage");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
