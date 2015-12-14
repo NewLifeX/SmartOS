@@ -41,14 +41,10 @@ public:
 
 	byte PayloadWidth;	// 负载数据宽度，默认32字节。0表示使用动态负载
 	bool AutoAnswer;	// 自动应答，默认启用
-	byte Retry;			// 重试次数，最大15次
-	ushort RetryPeriod;	// 重试间隔，250us的倍数，最小250us
 	ushort Speed;		// 射频数据率，单位kbps，默认250kbps，可选1000kbps/2000kbps，速度越低传输越远
 	byte RadioPower;	// 发射功率。共8档，最高0x07代表7dBm最大功率
 
-	uint Timeout;		// 超时时间ms
-	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
-	ushort Error;		// 错误次数，超过最大错误次数则自动重置
+	ushort	Error;		// 错误次数，超过最大错误次数则自动重置
 	byte	AddrLength;	// 地址长度。默认0，主站建议设为5
 
 	NRF24L01();
@@ -61,7 +57,7 @@ public:
 	bool SetPowerMode(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式
     bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
-	void SetAddress(bool full);	// 设置地址。参数指定是否设置0通道地址以外的完整地址
+	void SetAddress();	// 设置地址
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);

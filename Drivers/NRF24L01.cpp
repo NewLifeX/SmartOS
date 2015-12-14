@@ -216,15 +216,11 @@ NRF24L01::NRF24L01()
 	Channel		= 0;	// 默认通道0
 	AddrBits	= 0x01;	// 默认使能地址0
 
-	Timeout		= 50;
 	PayloadWidth= 32;
 	AutoAnswer	= true;
-	Retry		= 15;
-	RetryPeriod	= 500;	// 500us
 	Speed		= 250;
 	RadioPower	= 0xFF;
 
-	MaxError	= 10;
 	Error		= 0;
 
 	_tidOpen	= 0;
@@ -419,8 +415,9 @@ bool NRF24L01::Config()
 		}
 	}
 	static const short powers[] = {-12, -6, -4, 0, 1, 3, 4, 7};
-	if(RadioPower >= ArrayLength(powers)) RadioPower = ArrayLength(powers) - 1;
-	debug_printf("    射频通道: %d  %dMHz %ddBm\r\n", Channel, 2400 + Channel, powers[RadioPower]);
+	auto rp	= RadioPower;
+	if(rp >= ArrayLength(powers)) rp = ArrayLength(powers) - 1;
+	debug_printf("    射频通道: %d  %dMHz %ddBm\r\n", Channel, 2400 + Channel, powers[rp]);
 	// 检查WiFi通道
 	static const byte wifis[] = {2, 32, 70, 5, 35, 68, 8, 39, 65, 11, 41, 62};
 	for(int i=0; i<ArrayLength(wifis); i++)
@@ -439,15 +436,7 @@ bool NRF24L01::Config()
 	debug_printf("    负载大小: %d字节\r\n", PayloadWidth);
 	debug_printf("    自动应答: %s\r\n", AutoAnswer ? "true" : "false");
 	if(AutoAnswer)
-	{
-		debug_printf("    应答重试: %d次\r\n", Retry);
-		int period = RetryPeriod / 250 - 1;
-		if(period < 0) period = 0;
-		RetryPeriod = (period + 1) * 250;
-		debug_printf("    重试周期: %dus + 86us\r\n", RetryPeriod);
-	}
-	debug_printf("    发送超时: %dms\r\n", Timeout);
-	debug_printf("    出错重启: %d次\r\n", MaxError);
+		debug_printf("    重试周期: %dus + 86us\r\n", 500);
 #endif
 
 	// 必须拉低CE后修改配置，然后再拉高
@@ -455,17 +444,14 @@ bool NRF24L01::Config()
 
 	SetPowerMode(false);
 
-	SetAddress(true);
+	SetAddress();
 
 	if(AutoAnswer)
 	{
-		//设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
-		int period = RetryPeriod / 250 - 1;
-		if(period < 0) period = 0;
-
+		// 设置自动重发间隔时间:500us + 86us;最大自动重发次数:10次
 		RF_SETUP_RETR retr;
-		retr.ARC = Retry;
-		retr.ARD = period;
+		retr.ARC = 15;
+		retr.ARD = 500 / 250 - 1;
 		WriteReg(SETUP_RETR, retr.ToByte());
 	}
 	else
@@ -663,8 +649,8 @@ bool NRF24L01::SetMode(bool isReceive)
 	return true;
 }
 
-// 设置地址。参数指定是否设置0通道地址以外的完整地址
-void NRF24L01::SetAddress(bool full)
+// 设置地址
+void NRF24L01::SetAddress()
 {
 	TS("R24::SetAddress");
 
@@ -673,8 +659,6 @@ void NRF24L01::SetAddress(bool full)
 	WriteBuf(TX_ADDR, Address, addrLen);
 	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
 	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
-
-	if(!full) return;
 
 	byte bits = AddrBits >> 1;
 	if(bits & 0x01)
@@ -914,7 +898,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	//_CE = false;
 
 	bool rs = false;
-	uint ms = RetryPeriod * Retry;
+	uint ms = 250 * 15 / 1000;
 	if(ms > 4 && AutoAnswer) ms = 4;
 	// https://devzone.nordicsemi.com/question/17074/nrf24l01-data-loss/
 	// It is important never to keep the nRF24L01+ in TX mode for more than 4ms at a time.
@@ -995,9 +979,9 @@ bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
 void NRF24L01::AddError()
 {
 	Error++;
-	if(MaxError > 0 && Error >= MaxError)
+	if(Error >= 10)
 	{
-		debug_printf("RF24::Error 出错%d次，超过最大次数%d，准备重启模块\r\n", Error, MaxError);
+		debug_printf("RF24::Error 出错%d次，超过最大次数%d，准备重启模块\r\n", Error, 10);
 
 		Close();
 		Open();
