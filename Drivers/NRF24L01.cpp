@@ -222,6 +222,7 @@ NRF24L01::NRF24L01()
 	RadioPower	= 0xFF;
 
 	Error		= 0;
+	AddrLength	= 0;
 
 	_tidOpen	= 0;
 	_tidRecv	= 0;
