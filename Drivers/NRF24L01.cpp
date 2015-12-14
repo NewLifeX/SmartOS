@@ -877,7 +877,7 @@ uint NRF24L01::OnRead(Array& bs)
 	WriteReg(STATUS, 0x40);
 	WriteReg(FLUSH_RX, NOP);
 
-	if(rs && Led) Led->Write(500);
+	if(rs && Led) Led->Write(1000);
 
 	bs.SetLength(rs);
 	// 微网指令特殊处理长度
@@ -892,7 +892,7 @@ bool NRF24L01::OnWrite(const Array& bs)
 	TS("R24::OnWrite");
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(500);
+	//if(Led) Led->Write(500);
 
 	Lock lock(_Lock);
 	if(!lock.Wait(10000)) return false;
@@ -965,6 +965,31 @@ bool NRF24L01::OnWrite(const Array& bs)
 	SetMode(true);	// 发送完成以后进入接收模式
 
 	return rs;
+}
+
+// 引发数据到达事件
+uint NRF24L01::OnReceive(Array& bs, void* param)
+{
+	//if(Led) Led->Write(1000);
+
+	if(!AddrLength) return ITransport::OnReceive(bs, param);
+
+	// 取出地址
+	byte* addr	= bs.GetBuffer();
+	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
+	return ITransport::OnReceive(bs2, addr);
+}
+
+bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
+{
+	if(!AddrLength || !opt) return OnWrite(bs);
+
+	// 加入地址
+	ByteArray bs2;
+	bs2.Copy(opt, AddrLength);
+	bs2.Copy(bs, AddrLength);
+
+	return OnWrite(bs2);
 }
 
 void NRF24L01::AddError()

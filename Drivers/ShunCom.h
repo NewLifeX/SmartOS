@@ -20,12 +20,10 @@ public:
 	OutputPort	Config;	// 配置
 
 	byte	AddrLength;	// 地址长度。默认0，主站建议设为2
+
 	ShunCom();
 
 	void Init(ITransport* port, Pin rst = P0);
-
-	// 引发数据到达事件
-	virtual uint OnReceive(Array& bs, void* param);
 
 	virtual string ToString() { return "ShunCom"; }
 
@@ -51,6 +49,9 @@ private:
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
+
+	// 引发数据到达事件
+	virtual uint OnReceive(Array& bs, void* param);
 
 	virtual bool OnWriteEx(const Array& bs, void* opt);
 };

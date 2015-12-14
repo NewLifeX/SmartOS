@@ -49,6 +49,7 @@ public:
 	uint Timeout;		// 超时时间ms
 	ushort MaxError;	// 最大错误次数，超过该次数则自动重置，0表示不重置，默认10
 	ushort Error;		// 错误次数，超过最大错误次数则自动重置
+	byte	AddrLength;	// 地址长度。默认0，主站建议设为5
 
 	NRF24L01();
     virtual ~NRF24L01();
@@ -80,6 +81,10 @@ protected:
 
     virtual bool OnWrite(const Array& bs);
 	virtual uint OnRead(Array& bs);
+
+	// 引发数据到达事件
+	virtual uint OnReceive(Array& bs, void* param);
+	virtual bool OnWriteEx(const Array& bs, void* opt);
 };
 
 #endif
