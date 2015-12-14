@@ -25,6 +25,7 @@ public:
 	static ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = NULL);
 	
 	static TokenClient* CreateClient(ISocketHost* host);
+	static TokenClient* CreateClient2860(ISocketHost* host);
 	static TinyServer* CreateServer(ITransport* port);
 
 	void SetPower(ITransport* port);

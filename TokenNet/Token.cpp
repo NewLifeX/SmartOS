@@ -6,12 +6,7 @@
 
 #include "Drivers\NRF24L01.h"
 #include "Drivers\W5500.h"
-#include "Drivers\Enc28j60.h"
 #include "Drivers\ShunCom.h"
-
-#include "TinyIP\Icmp.h"
-#include "TinyIP\Tcp.h"
-#include "TinyIP\Udp.h"
 
 #include "Net\Dhcp.h"
 #include "Net\DNS.h"
@@ -23,9 +18,9 @@
 
 #include "App\FlushPort.h"
 
-void StartGateway(void* param);
+static void StartGateway(void* param);
 
-void OnDhcpStop5500(void* sender, void* param)
+static void OnDhcpStop5500(void* sender, void* param)
 {
 	auto dhcp = (Dhcp*)sender;
 	if(!dhcp->Result)
@@ -43,63 +38,6 @@ void OnDhcpStop5500(void* sender, void* param)
 	net->SaveConfig();
 
 	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, net, 0, -1, "启动网关");
-}
-
-void OnDhcpStop(void* sender, void* param)
-{
-	Dhcp* dhcp = (Dhcp*)sender;
-	if(!dhcp->Result)
-	{
-		// 失败后重新开始DHCP，等待网络连接
-		dhcp->Start();
-
-		return;
-	}
-
-	UdpSocket* udp = (UdpSocket*)dhcp->Socket;
-	TinyIP* tip = udp->Tip;
-
-	// 通过DHCP获取IP期间，关闭Arp响应
-	if(tip->Arp) tip->Arp->Enable = true;
-
-    // 测试Ping网关
-	IcmpSocket icmp(tip);
-	for(int i=0; i<4; i++)
-	{
-		icmp.Ping(tip->Gateway);
-	}
-
-	// 此时启动网关服务
-	 Sys.AddTask(StartGateway, udp, 0, -1, "启动网关");
-	
-}
-
-ISocketHost* Token::Create2860(SPI_TypeDef* spi_, Pin irq, Pin rst)
-{
-	debug_printf("\r\n2860::Create \r\n");
-
-	debug_printf("初始化以太网\r\n");
-
-	static Spi spi(spi_, 9000000);
-	static Enc28j60 _enc;
-	_enc.Init(&spi, irq, rst);
-
-	static TinyIP _tip;
-
-	_enc.Mac = _tip.Mac;
-	if(!_tip.Open()) return NULL;
-	//Sys.Sleep(40);
-	if(!_enc.Linked()) debug_printf("未连接网线！\r\n");
-
-	//!!! 非常悲催，dhcp完成的时候，会释放自己，所以这里必须动态申请内存，否则会导致堆管理混乱
-	static UdpSocket udp(&_tip);
-			
-	//static UdpClient udp(&_enc);
-	static Dhcp	dhcp(&udp);
-	dhcp.OnStop	= OnDhcpStop;
-	dhcp.Start();
-
-	//return &_enc;	
 }
 
 ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
@@ -289,14 +227,6 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	return &nrf;
 }
 
-uint OnZig(ITransport* port, Array& bs, void* param, void* param2)
-{
-	debug_printf("配置信息\r\n");
-	bs.Show(true);
-
-	return 0;
-}
-
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
 	static SerialPort sp(index, baudRate);
@@ -335,9 +265,7 @@ void StartGateway(void* param)
 
 		for(int i=0; i<10; i++)
 		{
-			//IPAddress ip =IPAddress(192, 168, 0, 6);
 			auto ip = dns.Query(tk->Server, 2000);
-			//dns.Query(tk->Server, 2000);
 			ip.Show(true);
 
 			if(ip != IPAddress::Any())
