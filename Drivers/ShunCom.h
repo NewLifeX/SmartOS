@@ -29,34 +29,34 @@ public:
 
 	void Init(ITransport* port, Pin rst = P0);
 
-	void ShowConfig();
-
-	// 电源等级变更（如进入低功耗模式）时调用
-	virtual void ChangePower(int level);
-	//设置设备诶类型：00代表中心、01代表路由，02代表终端
-	void SetDeviceMode(byte kind);
-	//设置无线频点，注意大小端，Zibeer是小端存储
-	void SetChannel(int kind);
-	//设置发送模式00为广播、01为主从模式、02为点对点模式
-	void SetSendMode(byte mode);	
-	//进入配置PanID,同一网络PanID必须相同
-    void SetPanID(int ID);
-	//进入配置模式
-	bool EnterSetMode();
-	//退出配置模式
-	void OutSetMode();
-	
-	//读取配置信息
-	virtual void ConfigMessage(ByteArray& buf);
-	
 	// 引发数据到达事件
 	virtual uint OnReceive(Array& bs, void* param);
 
 	virtual string ToString() { return "ShunCom"; }
-	virtual bool OnOpen();
+
+	// 进入配置模式
+	bool EnterConfig();
+	// 退出配置模式
+	void ExitConfig();
+	// 读取配置信息
+	void ShowConfig();
+
+	// 设置设备的类型：00代表中心、01代表路由，02代表终端
+	void SetDevice(byte kind);
+	// 设置无线频点，注意大小端，ShunCom是小端存储
+	void SetChannel(byte chn);
+	// 设置发送模式00为广播、01为主从模式、02为点对点模式
+	void SetSend(byte mode);
+	// 进入配置PanID,同一网络PanID必须相同
+    void SetPanID(ushort id);
 
 protected:
-	
+	virtual bool OnOpen();
     virtual void OnClose();
+
+	// 电源等级变更（如进入低功耗模式）时调用
+	virtual void ChangePower(int level);
+
+private:
 };
 #endif

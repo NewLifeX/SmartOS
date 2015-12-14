@@ -4,22 +4,31 @@
 class ShunComMessage
 {
 public:
-	byte 		Frame;		//帧头
-	byte		Length;		//数据长度
-	uint		Code;		//操作码
-	uint		CodeKind;  	//操类型
-	uint		DataLength;	//负载数据长度
+	byte 		Frame;		// 帧头
+	byte		Length;		// 数据长度
+	ushort		Code;		// 操作码
+	ushort		Kind;  		// 操类型
+	ushort		Size;		// 负载数据长度
 	byte   		Data[64];	// 负载数据部分
-	byte		Checksum;	//异或校验、从数据长度到负载数据尾
+	byte		Checksum;	// 校验和、从数据长度到负载数据尾
+
+	const int HEADERSIZE = 1 + 1 + 2 + 2 + 2;
+
 public:
-	//ShunComMessage(uint code,uint codeKind);
+	ShunComMessage(ushort code = 0);
+
 	bool Read(Stream& ms);
-	// 写入指定数据流
 	void Write(Stream& ms) const;
+	ByteArray ToArray() const;
+	void Set(ushort kind, const Array& bs);
+	void Set(ushort kind, byte dat);
+	void Set(ushort kind, ushort dat);
+	void Set(ushort kind, uint dat);
+
 	// 验证消息校验码是否有效
-	bool Valid();
+	//bool Valid();
 	// 显示消息内容
-	void Show() const;
+	//void Show() const;
 };
 
 ShunCom::ShunCom()
@@ -77,129 +86,6 @@ void ShunCom::OnClose()
 	PackPort::OnClose();
 }
 
-void ShunCom::ShowConfig()
-{
-	if(!Open()) return;
-
-	Config	= true;
-	debug_printf("Config=%d\n",Config.Read());
-	Sys.Sleep(2000);
-	Config	= false;
-
-	//读取ShunCom模块配置指令
-	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34};
-	Write(CArray(buf));
-
-	Sys.Sleep(300);
-
-	ByteArray rs;
-	Read(rs);
-    debug_printf("ShunCom配置信息\n");
-	rs.Show(true);
-}
-
-void ShunCom::SetDeviceMode(byte kind)
-{
-	if(!EnterSetMode()) return;
-
-	debug_printf("设置设备模式\n");
-
-	byte buf[] = {0xFE,0x05, 0x21,0x09,0x87,0x00,0x00,0x01,0x01,0xAA };
-	Write(CArray(buf));
-    OutSetMode();
-}
-
-// 设置无线频点，注意大小端，ShunCom是小端存储
-void ShunCom::SetChannel(int kind)
-{
-	if(!EnterSetMode()) return;
-
-	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x00,0x80,0x00,0x3A};
-	Write(CArray(buf));
-    OutSetMode();
-}
-
-void ShunCom::SetPanID(int kind)
-{
-	if(!EnterSetMode()) return;
-
-	debug_printf("配置信息SetPanID\r\n");
-
-	byte buf[] = { 0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,0x55,0x55,0xAF};
-	Write(CArray(buf));
-    OutSetMode();
-}
-
-//设置发送模式00为广播、01为主从模式、02为点对点模式
-void  ShunCom::SetSendMode(byte mode)
-{
-	if(!EnterSetMode()) return;
-
-	debug_printf("设置发送模式\n");
-
-	byte buf[] = {0xFE,0x05, 0x21,0x09,0x03,0x04,0x00,0x01,mode,0x2A};
-	Write(CArray(buf));
-    OutSetMode();
-}
-
-//进入配置模式
-bool ShunCom:: EnterSetMode()
-{
-	if(!Open()) return false;
-
-	Sys.Sleep(2000);
-
-	Config	= true;
-	Sys.Sleep(2000);
-	Config	= false;
-	ByteArray rs1;
-
-	while(true)
-	{
-		ByteArray rs1;
-		Read(rs1);
-		if(rs1.Length() == 0) break;
-	}
-
-	//读取ShunCom模块配置指令
-	byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
-	Write(CArray(buf));
-
-	Sys.Sleep(300);
-
-	ByteArray rs;
-	Read(rs);
-    debug_printf("ShunCom配置信息\n");
-	rs.Show(true);
-
-	return true;
-}
-
-//退出配置模式
-void ShunCom::OutSetMode()
-{
-	if(!Open()) return;
-
-	debug_printf("重启模块\n");
-	byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
-	Write(CArray(buf));
-	// Config	= false;
-}
-
-//读取配置信息
-void  ShunCom::ConfigMessage(ByteArray& array)
-{
-	//读取ShunCom模块配置指令
-	byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34 };
-	Write(CArray(buf));
-
-	Sys.Sleep(300);
-
-	Read(array);
-    debug_printf("ShunCom配置信息\n");
-	array.Show(true);
-}
-
 // 模块进入低功耗模式时需要处理的事情
 void ShunCom::ChangePower(int level)
 {
@@ -223,15 +109,235 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
+// 进入配置模式
+bool ShunCom::EnterConfig()
+{
+	if(!Open()) return false;
+
+	Sys.Sleep(2000);
+
+	Config	= true;
+	Sys.Sleep(2000);
+	Config	= false;
+	ByteArray rs1;
+
+	// 清空串口缓冲区
+	while(true)
+	{
+		ByteArray rs1;
+		Read(rs1);
+		if(rs1.Length() == 0) break;
+	}
+
+	//读取ShunCom模块配置指令
+	//byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
+	//Write(CArray(buf));
+
+	Sys.Sleep(300);
+
+	ByteArray rs;
+	Read(rs);
+    debug_printf("ShunCom配置信息\n");
+	rs.Show(true);
+
+	return true;
+}
+
+// 退出配置模式
+void ShunCom::ExitConfig()
+{
+	if(!Open()) return;
+
+	debug_printf("重启模块\n");
+	//byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
+	//Write(CArray(buf));
+	// Config	= false;
+
+	ShunComMessage msg(0x0041);
+	msg.Length	= 1;
+	msg.Data[0]	= 0x00;
+	Write(msg.ToArray());
+}
+
+// 读取配置信息
+void ShunCom::ShowConfig()
+{
+	//读取ShunCom模块配置指令
+	//byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34 };
+	//Write(CArray(buf));
+	ShunComMessage msg(0x1521);
+	Write(msg.ToArray());
+
+	Sys.Sleep(300);
+
+	ByteArray bs;
+	Read(bs);
+    debug_printf("ShunCom配置信息\n");
+	bs.Show(true);
+}
+
+// 设置设备的类型：00代表中心、01代表路由，02代表终端
+void ShunCom::SetDevice(byte kind)
+{
+	if(!EnterConfig()) return;
+
+	debug_printf("设置设备模式\n");
+
+	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x87,0x00,0x00,0x01,0x01,0xAA };
+	//Write(CArray(buf));
+
+	ShunComMessage msg(0x0921);
+	msg.Set(0x0087, kind);
+	Write(msg.ToArray());
+
+    ExitConfig();
+}
+
+// 设置无线频点，注意大小端，ShunCom是小端存储
+void ShunCom::SetChannel(byte chn)
+{
+	if(!EnterConfig()) return;
+
+	//byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x00,0x80,0x00,0x3A};
+	//Write(CArray(buf));
+
+	ShunComMessage msg(0x0921);
+	//byte buf[] = { 0x00,0x00,0x80,0x00 };
+	//msg.Set(0x0084, CArray(buf));
+	//msg.Set(0x0084, 0x00800000);
+	//todo 这里需要查资料核对左移公式
+	msg.Set(0x0084, (uint)(0x01 << chn));
+	Write(msg.ToArray());
+
+	ExitConfig();
+}
+
+// 进入配置PanID,同一网络PanID必须相同
+void ShunCom::SetPanID(ushort id)
+{
+	if(!EnterConfig()) return;
+
+	//debug_printf("配置信息SetPanID\r\n");
+
+	//byte buf[] = { 0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,0x55,0x55,0xAF};
+	//Write(CArray(buf));
+
+	ShunComMessage msg(0x0921);
+	msg.Set(0x0083, id);
+	Write(msg.ToArray());
+
+    ExitConfig();
+}
+
+// 设置发送模式00为广播、01为主从模式、02为点对点模式
+void ShunCom::SetSend(byte mode)
+{
+	if(!EnterConfig()) return;
+
+	//debug_printf("设置发送模式\n");
+
+	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x03,0x04,0x00,0x01,mode,0x2A};
+	//Write(CArray(buf));
+
+	ShunComMessage msg(0x0921);
+	msg.Set(0x0403, mode);
+	Write(msg.ToArray());
+
+    ExitConfig();
+}
+
+ShunComMessage::ShunComMessage(ushort code)
+{
+	Frame	= 0xFE;
+	Code	= code;
+	Length	= 0;
+}
+
+bool ShunComMessage::Read(Stream& ms)
+{
+	byte magic	= ms.ReadByte();
+	if(magic != 0xFE) return false;
+
+	Frame	= magic;
+	Length	= ms.ReadByte();
+	Code	= ms.ReadUInt16();
+	if(Length > 4)
+	{
+		Kind	= ms.ReadUInt16();
+		Size	= __REV16(ms.ReadUInt16());
+		assert_param2(2 + 2 + Size == Length, "ShunComMessage::Read");
+		ms.Read(Data, 0, Size);
+	}
+	else if(Length > 0)
+	{
+		ms.Read(Data, 0, Length);
+	}
+	// 不做校验检查，不是很重要
+	Checksum	= ms.ReadByte();
+
+	return true;
+}
+
 void ShunComMessage::Write(Stream& ms) const
 {
-	assert_ptr(this);
-
+	byte* p	= ms.Current();
 	ms.Write(Frame);
 	ms.Write(Length);
 	ms.Write(Code);
-	ms.Write(CodeKind);
-	ms.Write(DataLength);
-	ms.Write(CArray(Data));
-	ms.Write(Checksum);
+	if(Length > 4)
+	{
+		ms.Write(Kind);
+		ms.Write(__REV16(Size));
+		ms.Write(Data, 0, Size);
+	}
+	else if(Length > 0)
+	{
+		ms.Write(Data, 0, Length);
+	}
+	//ms.Write(Checksum);
+	// 计算校验
+	byte sum	= 0;
+	while(p++ < ms.Current()) sum += *p;
+	ms.Write(sum);
+}
+
+ByteArray ShunComMessage::ToArray() const
+{
+	ByteArray bs;
+	Stream ms(bs);
+	Write(ms);
+
+	return bs;
+}
+
+void ShunComMessage::Set(ushort kind, const Array& bs)
+{
+	Kind	= kind;
+	bs.CopyTo(Data);
+
+	Length	= 2 + 2 + bs.Length();
+}
+
+void ShunComMessage::Set(ushort kind, byte dat)
+{
+	Kind	= kind;
+	Data[0]	= dat;
+	Size	= 1;
+	Length	= 2 + 2 + Size;
+}
+
+void ShunComMessage::Set(ushort kind, ushort dat)
+{
+	Kind	= kind;
+	Size	= 2;
+	Length	= 2 + 2 + Size;
+	memcpy(Data, &dat, Size);
+}
+
+void ShunComMessage::Set(ushort kind, uint dat)
+{
+	Kind	= kind;
+	Size	= 4;
+	Length	= 2 + 2 + Size;
+	memcpy(Data, &dat, Size);
 }
