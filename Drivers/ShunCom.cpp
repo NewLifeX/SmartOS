@@ -94,7 +94,7 @@ void ShunCom::SetChannel(int kind)
 {
 	if(!EnterSetMode()) return;
 	
-	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x08,0x00,0x00,0xA8};
+	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x00,0x80,0x00,0x3A};
 	Write(CArray(buf));
     OutSetMode();	
 }
@@ -198,13 +198,6 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
- ShunComMessage::ShunComMessage(uint code,uint codekind)
-{
-	Frame		= 0xfe;
-	Code		= code;
-	CodeKind	= codekind;
-
-}
 void ShunComMessage::Write(Stream& ms) const
 {
 	assert_ptr(this);
@@ -215,7 +208,6 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(CodeKind);
 	ms.Write(DataLength);
 	ms.Write(CArray(Data));
-	ms.Write(Checksum);
-	
+	ms.Write(Checksum);	
 }
 

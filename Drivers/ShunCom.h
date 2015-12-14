@@ -71,7 +71,7 @@ public:
 	byte   		Data[64];	// 负载数据部分
 	byte		Checksum;	//异或校验、从数据长度到负载数据尾
 public:
-	ShunComMessage(uint code,uint codeKind);
+	//ShunComMessage(uint code,uint codeKind);
 	virtual bool Read(Stream& ms);
 	// 写入指定数据流
 	virtual void Write(Stream& ms) const;
