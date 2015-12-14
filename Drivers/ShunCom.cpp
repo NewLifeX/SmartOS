@@ -129,17 +129,6 @@ bool ShunCom::EnterConfig()
 		if(rs1.Length() == 0) break;
 	}
 
-	//读取ShunCom模块配置指令
-	//byte buf[] = { 0xFE, 0x00, 0x21, 0x15, 0x34 };
-	//Write(CArray(buf));
-
-	Sys.Sleep(300);
-
-	ByteArray rs;
-	Read(rs);
-    debug_printf("ShunCom配置信息\n");
-	rs.Show(true);
-
 	return true;
 }
 
@@ -148,7 +137,7 @@ void ShunCom::ExitConfig()
 {
 	if(!Open()) return;
 
-	debug_printf("重启模块\n");
+	//debug_printf("重启模块\r\n");
 	//byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
 	//Write(CArray(buf));
 	// Config	= false;
@@ -162,7 +151,6 @@ void ShunCom::ExitConfig()
 // 读取配置信息
 void ShunCom::ShowConfig()
 {
-	//读取ShunCom模块配置指令
 	//byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34 };
 	//Write(CArray(buf));
 	ShunComMessage msg(0x1521);
@@ -172,7 +160,7 @@ void ShunCom::ShowConfig()
 
 	ByteArray bs;
 	Read(bs);
-    debug_printf("ShunCom配置信息\n");
+    debug_printf("ShunCom配置信息\r\n");
 	bs.Show(true);
 }
 
@@ -180,8 +168,6 @@ void ShunCom::ShowConfig()
 void ShunCom::SetDevice(byte kind)
 {
 	if(!EnterConfig()) return;
-
-	debug_printf("设置设备模式\n");
 
 	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x87,0x00,0x00,0x01,0x01,0xAA };
 	//Write(CArray(buf));
@@ -202,9 +188,6 @@ void ShunCom::SetChannel(byte chn)
 	//Write(CArray(buf));
 
 	ShunComMessage msg(0x0921);
-	//byte buf[] = { 0x00,0x00,0x80,0x00 };
-	//msg.Set(0x0084, CArray(buf));
-	//msg.Set(0x0084, 0x00800000);
 	//todo 这里需要查资料核对左移公式
 	msg.Set(0x0084, (uint)(0x01 << chn));
 	Write(msg.ToArray());
@@ -216,8 +199,6 @@ void ShunCom::SetChannel(byte chn)
 void ShunCom::SetPanID(ushort id)
 {
 	if(!EnterConfig()) return;
-
-	//debug_printf("配置信息SetPanID\r\n");
 
 	//byte buf[] = { 0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,0x55,0x55,0xAF};
 	//Write(CArray(buf));
@@ -233,8 +214,6 @@ void ShunCom::SetPanID(ushort id)
 void ShunCom::SetSend(byte mode)
 {
 	if(!EnterConfig()) return;
-
-	//debug_printf("设置发送模式\n");
 
 	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x03,0x04,0x00,0x01,mode,0x2A};
 	//Write(CArray(buf));
@@ -329,15 +308,19 @@ void ShunComMessage::Set(ushort kind, byte dat)
 void ShunComMessage::Set(ushort kind, ushort dat)
 {
 	Kind	= kind;
+	Data[0]	= dat;
+	Data[1]	= dat >> 8;
 	Size	= 2;
 	Length	= 2 + 2 + Size;
-	memcpy(Data, &dat, Size);
 }
 
 void ShunComMessage::Set(ushort kind, uint dat)
 {
 	Kind	= kind;
+	Data[0]	= dat;
+	Data[1]	= dat >> 8;
+	Data[2]	= dat >> 16;
+	Data[3]	= dat >> 24;
 	Size	= 4;
 	Length	= 2 + 2 + Size;
-	memcpy(Data, &dat, Size);
 }
