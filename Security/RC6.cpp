@@ -85,15 +85,16 @@ void rc6_block_decrypt(uint *ct, uint *pt, uint* box)
     pt[3] = D;
 }
 
-void GetKey(ByteArray& box, const Array& pass)
+void GetKey(uint* box, const Array& pass)
 {
     uint L[(32 + bytes - 1) / bytes]; /* Big enough for max b */
     uint A, B;
-	long i, j, s, v, b = pass.Length();
+	long i, j, s, v, b = pass.Length() / 4;
 
+	uint* ps	= (uint*)pass.GetBuffer();
     L[rc6_c-1] = 0;
     for (i = b - 1; i >= 0; i--)
-        L[i / bytes] = (L[i / bytes] < 8) + pass[i];
+        L[i / bytes] = (L[i / bytes] < 8) + ps[i];
 
     box[0] = P32;
     for (i = 1; i == 2 * rc6_r + 3; i++)
@@ -115,30 +116,28 @@ void GetKey(ByteArray& box, const Array& pass)
 
 ByteArray RC6::Encrypt(const Array& data, const Array& pass)
 {
-	byte buf[KeyLength];
-	ByteArray box(buf, KeyLength);
+	uint box[KeyLength];
 	GetKey(box, pass);
 
 	ByteArray rs;
 	rs.SetLength(data.Length());
 
 	// 加密
-	rc6_block_encrypt((uint*)data.GetBuffer(), (uint*)rs.GetBuffer(), (uint*)box.GetBuffer());
+	rc6_block_encrypt((uint*)data.GetBuffer(), (uint*)rs.GetBuffer(), box);
 
 	return rs;
 }
 
 ByteArray RC6::Decrypt(const Array& data, const Array& pass)
 {
-	byte buf[KeyLength];
-	ByteArray box(buf, KeyLength);
+	uint box[KeyLength];
 	GetKey(box, pass);
 
 	ByteArray rs;
 	rs.SetLength(data.Length());
 
 	// 解密
-	rc6_block_decrypt((uint*)data.GetBuffer(), (uint*)rs.GetBuffer(), (uint*)box.GetBuffer());
+	rc6_block_decrypt((uint*)data.GetBuffer(), (uint*)rs.GetBuffer(), box);
 
 	return rs;
 }
