@@ -42,7 +42,8 @@ void ShunCom::Init(ITransport* port, Pin rst)
 
 	Set(port);
 	//MaxSize	= 82;
-	MaxSize	= 64;
+	MaxSize		= 64;
+	AddrLength	= 0;
 
 	if(rst != P0) Reset.Init(rst, true);
 }
@@ -106,7 +107,24 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 {
 	if(Led) Led->Write(1000);
 
-	return ITransport::OnReceive(bs, param);
+	if(!AddrLength) return ITransport::OnReceive(bs, param);
+
+	// 取出地址
+	byte* addr	= bs.GetBuffer();
+	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
+	return ITransport::OnReceive(bs2, addr);
+}
+
+bool ShunCom::OnWriteEx(const Array& bs, void* opt)
+{
+	if(!AddrLength || !opt) return OnWrite(bs);
+
+	// 加入地址
+	ByteArray bs2;
+	bs2.Copy(opt, AddrLength);
+	bs2.Copy(bs, AddrLength);
+
+	return OnWrite(bs2);
 }
 
 // 进入配置模式

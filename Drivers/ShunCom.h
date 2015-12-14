@@ -8,11 +8,9 @@
 #include "Message\DataStore.h"
 
 // 上海顺舟Zigbee协议
-// 主站发送所有从站收到，从站发送只有主站收到
+// 主从模式时，主站可指定从站地址或广播，从站发送只有主站收到
 class ShunCom : public PackPort, public Power
 {
-private:
-
 public:
 	OutputPort	Reset;	// 复位
 	IDataPort*	Led;	// 指示灯
@@ -21,10 +19,7 @@ public:
 	OutputPort	Sleep;	// 睡眠
 	OutputPort	Config;	// 配置
 
-	//InputPort	Run;	// 组网成功后闪烁
-	//InputPort	Net;	// 组网中闪烁
-	//InputPort	Alarm;	// 警告错误
-
+	byte	AddrLength;	// 地址长度。默认0，主站建议设为2
 	ShunCom();
 
 	void Init(ITransport* port, Pin rst = P0);
@@ -50,13 +45,13 @@ public:
 	// 进入配置PanID,同一网络PanID必须相同
     void SetPanID(ushort id);
 
-protected:
+private:
 	virtual bool OnOpen();
     virtual void OnClose();
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-private:
+	virtual bool OnWriteEx(const Array& bs, void* opt);
 };
 #endif
