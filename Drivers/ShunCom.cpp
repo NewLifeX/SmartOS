@@ -155,11 +155,6 @@ void ShunCom::ExitConfig()
 {
 	if(!Open()) return;
 
-	//debug_printf("重启模块\r\n");
-	//byte buf[] = {0xFE,0x01,0x41,0x00,0x00,0x40};
-	//Write(CArray(buf));
-	// Config	= false;
-
 	ShunComMessage msg(0x0041);
 	msg.Length	= 1;
 	msg.Data[0]	= 0x00;
@@ -168,9 +163,7 @@ void ShunCom::ExitConfig()
 
 // 读取配置信息
 void ShunCom::ShowConfig()
-{
-	//byte buf[] = {0xFE, 0x00, 0x21, 0x15, 0x34 };
-	//Write(CArray(buf));
+{	
 	ShunComMessage msg(0x1521);
 	Write(msg.ToArray());
 
@@ -185,62 +178,35 @@ void ShunCom::ShowConfig()
 // 设置设备的类型：00代表中心、01代表路由，02代表终端
 void ShunCom::SetDevice(byte kind)
 {
-	if(!EnterConfig()) return;
-
-	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x87,0x00,0x00,0x01,0x01,0xAA };
-	//Write(CArray(buf));
-
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0087, kind);
-	Write(msg.ToArray());
-
-    ExitConfig();
+	Write(msg.ToArray());	 
+	msg.ToArray().Show();
 }
 
 // 设置无线频点，注意大小端，ShunCom是小端存储
 void ShunCom::SetChannel(byte chn)
-{
-	if(!EnterConfig()) return;
-
-	//byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x00,0x80,0x00,0x3A};
-	//Write(CArray(buf));
-
+{	
 	ShunComMessage msg(0x0921);
 	//todo 这里需要查资料核对左移公式
 	msg.Set(0x0084, (uint)(0x01 << chn));
-	Write(msg.ToArray());
-
-	ExitConfig();
+	Write(msg.ToArray());msg.ToArray().Show();
 }
 
 // 进入配置PanID,同一网络PanID必须相同
 void ShunCom::SetPanID(ushort id)
-{
-	if(!EnterConfig()) return;
-
-	//byte buf[] = { 0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,0x55,0x55,0xAF};
-	//Write(CArray(buf));
-
+{	
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0083, id);
-	Write(msg.ToArray());
-
-    ExitConfig();
+	Write(msg.ToArray());msg.ToArray().Show();
 }
 
 // 设置发送模式00为广播、01为主从模式、02为点对点模式
 void ShunCom::SetSend(byte mode)
-{
-	if(!EnterConfig()) return;
-
-	//byte buf[] = {0xFE,0x05, 0x21,0x09,0x03,0x04,0x00,0x01,mode,0x2A};
-	//Write(CArray(buf));
-
+{	
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0403, mode);
-	Write(msg.ToArray());
-
-    ExitConfig();
+	Write(msg.ToArray());msg.ToArray().Show();
 }
 
 ShunComMessage::ShunComMessage(ushort code)
@@ -299,11 +265,23 @@ void ShunComMessage::Write(Stream& ms) const
 }
 
 ByteArray ShunComMessage::ToArray() const
-{
+{	
+	//MemoryStream ms;
+	// 带有负载数据，需要合并成为一段连续的内存
 	ByteArray bs;
-	Stream ms(bs);
+	Stream ms(bs.GetBuffer(),64);
+	//ms.SetLength(bs.Length());
 	Write(ms);
-
+	//debug_printf("ssss%d",ms.Position());
+    //ByteArray bs;	
+	//ms.ReadArray(bs);
+	
+	
+	
+   // ByteArray bs(ms.GetBuffer(), ms.Position());	
+	
+	bs.Show(true);
+	//debug_printf("\r\n");
 	return bs;
 }
 

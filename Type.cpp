@@ -143,7 +143,6 @@ bool Array::SetLength(int length, bool bak)
 	else
 	{
 		if(!CheckCapacity(length, bak ? _Length : 0)) return false;
-
 		// 扩大长度
 		if(length > _Length) _Length = length;
 	}

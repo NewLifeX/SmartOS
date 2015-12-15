@@ -53,6 +53,8 @@ ISocketHost* Token::Create2860(SPI_TypeDef* spi_, Pin irq, Pin rst)
 	_enc.Init(&spi, irq, rst);
 
 	static TinyIP _tip;
+	
+	_tip.Init(&_enc);
 
 	_enc.Mac = _tip.Mac;
 	if(!_tip.Open()) return NULL;

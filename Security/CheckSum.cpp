@@ -8,6 +8,6 @@ byte CheckSum::Sum(const Array& data,byte check)
 	{
 		s^=data[k];
 	}
-	check =s;
+	check = s;
 	return s;
 }
