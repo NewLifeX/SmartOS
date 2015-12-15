@@ -1,13 +1,13 @@
 ﻿#include "CheckSum.h"
 
-byte CheckSum::Sum(const Array& data)
+byte CheckSum::Sum(const Array& data,byte& check)
 {
-	byte sum;
+	byte s;
 	
 	for (int k = 0; k < data.Length(); k++)
 	{
-		sum^=data[k];
+		s^=data[k];
 	}
-	
-	return sum;
+	check =s;
+	return s;
 }
