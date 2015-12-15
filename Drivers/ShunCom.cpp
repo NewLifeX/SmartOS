@@ -141,7 +141,9 @@ bool ShunCom:: EnterSetMode()
 	ByteArray rs;
 	Read(rs); 
     debug_printf("Zibeer配置信息\n");
-	rs.Show(true);		
+	rs.Show(true);
+		
+	return true;
 }
 //退出配置模式
 void ShunCom:: OutSetMode()
