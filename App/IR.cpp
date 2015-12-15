@@ -1,7 +1,9 @@
 ﻿#include "IR.h"
 #include "Time.h"
-#include "stm32f0xx_tim.h"
 
+#ifdef STM32F0
+#include "stm32f0xx_tim.h"
+#endif
 /*
 Timer2  CH2       通道
 DMA1    Channel3  通道
@@ -45,7 +47,8 @@ IRStat Stat;
 int IR::Receive(Array& bs, int sTimeout)
 {
 	TS("IR::Receive");
-	
+
+#ifdef STM32F0
 	uint bufLen	= bs.Length();
 	
 	if(_Tim == NULL)
@@ -158,6 +161,8 @@ int IR::Receive(Array& bs, int sTimeout)
 		bs.SetLength(0);
 		return -1;
 	}
+#endif
+
 }
 
 void IR::OnReceive(void* sender, void* param)
