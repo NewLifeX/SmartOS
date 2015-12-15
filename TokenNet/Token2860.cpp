@@ -58,7 +58,8 @@ ISocketHost* Token::Create2860(SPI_TypeDef* spi_, Pin irq, Pin rst)
 
 	_enc.Mac = _tip.Mac;
 	if(!_tip.Open()) return NULL;
-	//Sys.Sleep(40);
+	
+	Sys.Sleep(500);
 	if(!_enc.Linked()) debug_printf("未连接网线！\r\n");
 
 	//!!! 非常悲催，dhcp完成的时候，会释放自己，所以这里必须动态申请内存，否则会导致堆管理混乱
