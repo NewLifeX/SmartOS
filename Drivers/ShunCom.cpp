@@ -1,5 +1,5 @@
 ﻿#include "ShunCom.h"
-#include "CheckSum.h"
+#include "Security\CheckSum.h"
 
 class ShunComMessage
 {
