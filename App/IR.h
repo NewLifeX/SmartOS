@@ -1,4 +1,7 @@
 ﻿
+#ifndef __IR_H__
+#define __IR_H__
+
 #include "Timer.h"
 #include "Port.h"
 
@@ -6,8 +9,6 @@
 	因为引脚跟定时器不是一一对应 还有 remap的关系   引脚不好处理需自行初始化引脚
 保证能输出PWM
 */
-
-// 发送时钟使用100us 作为最小颗粒
 
 /*
 空调的发送数据是打包发送   一个数据包里面包含很多参数  一般长度比较长
@@ -21,22 +22,13 @@
 class IR
 {
 private:
-	PWM*	_Pwm	= NULL;
-	Timer*	_Tim	= NULL;
-	Array*	_Arr	= NULL;
-	short	_Index;
-	short	_Ticks;
-	bool	_Last;
-	bool	_Mode;
-	short	_Timeout;	// 接收超时个数
-
+	Timer*	_Tim			= NULL;
+	AlternatePort * _Port	= NULL;
 public:
-	OutputPort	Tx;	// 发数据
-	InputPort	Rx;	// 接收
 	bool	Opened	= false;
 
-	IR(PWM* pwm, Pin tx, Pin rx);
-
+	IR();
+	
 	bool Open();
 	bool Close();
 
@@ -44,9 +36,9 @@ public:
 	int Receive(Array& bs, int sTimeout = 10);
 
 private:
-	/*typedef void (IR::*IRFunc)();
-	IRFunc	_func	= NULL;*/
 
 	void OnSend();
-	void OnReceive();
+	static void OnReceive(void* sender, void* param);
 };
+
+#endif

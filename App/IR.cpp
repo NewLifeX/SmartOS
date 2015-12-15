@@ -1,173 +1,176 @@
 ﻿#include "IR.h"
 #include "Time.h"
+#include "stm32f0xx_tim.h"
 
-IR::IR(PWM* pwm, Pin tx, Pin rx)
+/*
+Timer2  CH2       通道
+DMA1    Channel3  通道
+
+*/
+
+IR::IR()
 {
-	/*_Pwm	= pwm;
-	_Tim	= NULL;
-	_Arr	= NULL;
-	_Index	= 0;
-	_Ticks	= 0;
 
-	Opened	= false;*/
-
-	if(tx != P0) Tx.Set(tx);
-	if(rx != P0) Rx.Set(rx);
 }
 
 bool IR::Open()
 {
-	if(Opened) return true;
-
-	TS("IR::Open");
-
-	Tx.Open();
-	Rx.Open();
-
-	// 申请一个定时器
-	if(_Tim == NULL) _Tim = Timer::Create();
-	// 配置定时器的参数
-	//if(_Tim == NULL) return false;
-	assert_param2(_Tim, "无法申请得到定时器");
-
-	Tx	= true;
-
-	_Tim->SetFrequency(2000);  // 500us
-	_Tim->Register(
-		[](void* s, void* e){
-			auto ir = (IR*)e;
-			if(ir->_Mode)
-				ir->OnSend();
-			else
-				ir->OnReceive();
-		}
-		, this);
-
-	Opened	= true;
-
 	return true;
 }
 
 bool IR::Close()
 {
-	if(!Opened) return true;
-
-	TS("IR::Close");
-
-	Tx.Close();
-	Rx.Close();
-
-	if(_Tim != NULL) _Tim->Close();
-
-	Opened	= false;
-
 	return true;
 }
 
 bool IR::Send(const Array& bs)
 {
-	if(bs.Length() < 2) return false;
-	if(!Open()) return false;
-
-	TS("IR::Send");
-
-	_Arr	= (Array*)&bs;
-	_Index	= 0;
-	_Ticks	= bs[0];
-	_Mode	= true;	// 发送模式
-
-	Tx	= false;
-	_Pwm->Open();
-	_Tim->Open();
-
-	// 等待发送完成
-	TimeWheel tw(1);
-	while(_Tim->Opened && !tw.Expired());
-
-	Tx	= false;
-	_Tim->Close();
-	_Pwm->Close();
-
-	_Arr	= NULL;
-
 	return true;
 }
 
 void IR::OnSend()
 {
-	// 当前小周期数是否发完
-	if(_Ticks-- > 0) return;
 
-	// 倒转
-	Tx	= !Tx;
-
-	if(++_Index >= _Arr->Length())
-	{
-		Tx	= false;
-		_Pwm->Close();
-		_Tim->Close();
-	}
-	else
-		// 使用下一个元素
-		_Ticks = (*_Arr)[_Index];
 }
+
+typedef enum
+{
+	WaitRev,
+	Rev,
+	RevOver,
+}IRStat;
+
+IRStat Stat;
 
 int IR::Receive(Array& bs, int sTimeout)
 {
-	if(!Open()) return false;
-
 	TS("IR::Receive");
+	// 捕获设置
+	
+	if(_Tim == NULL)
+	{
+		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
+		// _Tim->SetFrequency(50);			// 5Hz   20ms
+		// 使用一个字节  需要自行配置分频系数
+		_Tim->Prescaler	= 4392;		// 分频 需要结果是 Period < 256 时能计数 20ms
+		_Tim->Period	= 255;
+		_Tim->Config();
+	}
+	
+	if(_Port == NULL)
+	{
+		_Port = new	AlternatePort();
+		_Port->Set(PA1);
+		_Port->Open();
+		_Port->AFConfig(GPIO_AF_2);
+	}
+	
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	
+	TIM_ICInitTypeDef  TIM_ICInitStructure;  
+	TIM_ICInitStructure.TIM_Channel		= TIM_Channel_1;
+	TIM_ICInitStructure.TIM_ICPolarity	= TIM_ICPolarity_BothEdge;
+	TIM_ICInitStructure.TIM_ICSelection	= TIM_ICSelection_IndirectTI;
+	TIM_ICInitStructure.TIM_ICPrescaler	= TIM_ICPSC_DIV1;
+	TIM_ICInitStructure.TIM_ICFilter = 0x0;
+	TIM_PWMIConfig(TIM2, &TIM_ICInitStructure);
+	
+	/* Select the TIM2 Input Trigger: TI2FP2 */
+	TIM_SelectInputTrigger(TIM2, TIM_TS_ITR0);
+	/* Select the slave Mode: Reset Mode */
+	TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
+	//TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Enable);
+	
+	/* 使能自动装载 */
+	TIM_ARRPreloadConfig(TIM2, ENABLE);
+	/* TIM enable counter */
+	//TIM_Cmd(TIM2, ENABLE);
+	
+	/* DMA1 clock enable */
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1 , ENABLE);
+	
+	TIM_DMACmd(TIM2, TIM_DMA_CC1, ENABLE);
+	
+	//bs.SetLength(512);
+	byte buf[512];
+	
+	// GD32  DMA Channel3 有 TIM2_CH2
+	// STM32 DMA 没有 TIM2_CH2 触发源
 
-	bs.SetLength(0);
-	_Arr	= &bs;
-	_Index	= -1;
-	_Mode	= false;	// 接收模式
-	_Last	= Rx.Read();
-
-	// 超时个数，每微秒两个周期
-	_Timeout	= sTimeout * 1000 * 2;
-
-	_Tim->Open();
-
-	// 等待发送完成
-	TimeWheel tw(sTimeout);
-	while(_Tim->Opened && !tw.Expired());
-
-	return bs.Length();
+	/* DMA1 Channel1 Config */
+	DMA_InitTypeDef     DMA_InitStructure;
+	DMA_DeInit(DMA1_Channel5);
+	DMA_InitStructure.DMA_PeripheralBaseAddr	= (uint32_t)&(TIM2->CNT);
+	//DMA_InitStructure.DMA_MemoryBaseAddr 		= (uint32_t)bs.GetBuffer();
+	DMA_InitStructure.DMA_MemoryBaseAddr 		= (uint32_t)buf;
+	DMA_InitStructure.DMA_DIR 					= DMA_DIR_PeripheralSRC;
+	DMA_InitStructure.DMA_BufferSize 			= 512;
+	DMA_InitStructure.DMA_PeripheralInc 		= DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc 			= DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize 		= DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_Mode 					= DMA_Mode_Normal;
+	DMA_InitStructure.DMA_Priority 				= DMA_Priority_High;
+	DMA_InitStructure.DMA_M2M 					= DMA_M2M_Disable;
+	DMA_Init(DMA1_Channel5, &DMA_InitStructure);
+  
+  
+	/* DMA1 Channel1 enable */
+	DMA_Cmd(DMA1_Channel5, ENABLE);
+	///* TIM enable counter */
+	TIM_Cmd(TIM2, ENABLE);
+	
+	Stat = WaitRev;
+	// 等待起始条件
+	TimeWheel tw(10);
+	while(!tw.Expired());
+	// && DMA_GetCurrDataCounter(DMA1_Channel5) == bs.Length()
+	if(tw.Expired()) 
+	{	
+		Stat = RevOver;
+		
+		/* DMA1 Channel1 enable */
+		DMA_Cmd(DMA1_Channel5, DISABLE);
+		/* TIM enable counter */
+		TIM_Cmd(TIM2, DISABLE);
+		
+		
+		int leng = DMA_GetCurrDataCounter(DMA1_Channel5);
+		debug_printf("\r\n DMA::Counter %d \r\n", leng);
+		
+		//bs.SetLength(0);
+		
+		return -1;
+	}
+	Stat = Rev;
+	// 启动终止条件触发
+	_Tim->Register(OnReceive,this);
+	
+	
+	tw.Reset(0,200);	// 300ms
+	while(!tw.Expired() && Stat != RevOver);
+	
+	_Tim->Register(NULL,NULL);
+	
+	/* DMA1 Channel1 enable */
+	DMA_Cmd(DMA1_Channel5, DISABLE);
+	/* TIM enable counter */
+	TIM_Cmd(TIM2, DISABLE);
+	
+	if(Stat != RevOver)
+	{
+		Stat = RevOver;
+		//bs.SetLength(0);
+		return -1;
+	}
+	
+	int len = DMA_GetCurrDataCounter(DMA1_Channel5);
+	//bs.SetLength(len);
+	
+	return len;
 }
 
-void IR::OnReceive()
+void IR::OnReceive(void* sender, void* param)
 {
-	if(_Timeout-- == 0)
-	{
-		_Tim->Close();
-		return;
-	}
-
-	// 获取引脚状态
-	bool val = Rx.Read();
-
-	// 等待接收开始状态
-	if(_Index == -1)
-	{
-		if(val == _Last) return;
-
-		_Index	= 0;
-		_Ticks	= 0;
-		_Last	= val;
-	}
-
-	// 接收
-	_Ticks++;
-	if(val != _Last)
-	{
-		// 产生跳变，记录当前小周期数
-		_Arr->SetItemAt(_Index++, &_Ticks);
-
-		_Ticks	= 0;
-		_Last	= val;
-	}
-
-	// 大于255个跳变沿 表示出错
-	if(_Ticks == 0xFF) _Tim->Close();
+	Stat = RevOver;
 }
