@@ -1,6 +1,6 @@
 ﻿#include "CheckSum.h"
 
-byte CheckSum::Sum(const Array& data,byte& check)
+byte CheckSum::Sum(const Array& data,byte check)
 {
 	byte s;
 	
