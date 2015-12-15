@@ -90,16 +90,18 @@ void ShunCom:: SetDeviceMode(byte kind)
 }
 
 //设置无线频点，注意大小端，Zibeer是小端存储
-void ShunCom::SetChannel(int kind)
+void ShunCom::SetChannel(Array& Channel)
 {
-	if(!EnterSetMode()) return;
-	debug_printf("设置设备通道\n");
+	ShunComMessage msg;
+	msg.Code 	 = 0x2189;
+	msg.CodeKind = 0x8400;
+
 	byte buf[] = { 0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,0x00,0x00,0x40,0x00,0xE0};
 	Write(CArray(buf));
     OutSetMode();	
 }
 
-void ShunCom::SetPanID(int kind)
+void ShunCom::SetPanID(Array& ID)
 {
 	if(!EnterSetMode()) return;
 	debug_printf("配置信息SetPanID\r\n");
@@ -200,6 +202,10 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
+ShunComMessage::ShunComMessage()
+{
+	Frame 		= 0XFE;
+}
 ShunComMessage::ShunComMessage(short code,short codekind)
 {
 	Frame 		= 0XFE;

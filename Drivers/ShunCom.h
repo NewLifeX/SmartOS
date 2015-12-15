@@ -36,11 +36,11 @@ public:
 	//设置设备诶类型：00代表中心、01代表路由，02代表终端
 	virtual void SetDeviceMode(byte kind);
 	//设置无线频点，注意大小端，Zibeer是小端存储
-	virtual void SetChannel(int kind);
+	virtual void SetChannel(Array& Channel);
 	//设置发送模式00为广播、01为主从模式、02为点对点模式
 	virtual void SetSendMode(byte mode);	
 	//进入配置PanID,同一网络PanID必须相同
-    virtual void SetPanID(int ID);
+    virtual void SetPanID(Array& ID);
 	//进入配置模式
 	virtual bool EnterSetMode();
 	//退出配置模式
@@ -71,8 +71,11 @@ public:
 	short		DataLength;	      //负载数据长度
 	byte   		Data[64];	      // 负载数据部分
 	byte		Checksum;	      //异或校验、从数据长度到负载数据尾
+	Array		*Buf;
 	
-public:                           
+public:    
+                       
+	ShunComMessage();
 	ShunComMessage(short code,short codeKind);
 	
 	~ShunComMessage();
