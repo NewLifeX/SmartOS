@@ -1,9 +1,9 @@
 ﻿#include "IR.h"
 #include "Time.h"
 
-//#ifdef STM32F0
+#ifdef STM32F0
 #include "stm32f0xx_tim.h"
-//#endif
+#endif
 /*
 Timer2  CH2       通道
 DMA1    Channel3  通道
