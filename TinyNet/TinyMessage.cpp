@@ -724,7 +724,10 @@ void TinyController::Loop()
 			// 随机延迟。随机数1~5。每次延迟递增
 			//byte rnd	= (uint)now % 3;
 			//node.Next	= now + (rnd + 1) * Interval;
-			node.Next	= now + Interval;
+			if(!reply)
+				node.Next	= now + Interval;
+			else
+				node.Next	= now + 60000;
 		}
 	}
 

@@ -613,20 +613,27 @@ void NRF24L01::SetAddress()
 {
 	TS("R24::SetAddress");
 
+	/*
+	Mac地址分配原则：
+	1，所有节点0通道为本地私有地址，1通道为广播地址0xFF
+	2，主节点2通道为组网广播地址0x00
+	3，发送通道为远程地址，节点组网前，远程地址为0x00
+	*/
+
 	// 设置地址宽度
 	WriteReg(SETUP_AW,	5 - 2);
 
-	// 发送地址为远程地址，0通道为本地地址，1通道为广播地址
+	// 发送地址为远程地址，0通道为本地地址，1通道为广播地址0xFF
 	WriteBuf(TX_ADDR, Array(Remote, 5));
 	WriteBuf(RX_ADDR_P0, Array(Local, 5));
-	WriteBuf(RX_ADDR_P1, ByteArray((byte)0, 5));
+	WriteBuf(RX_ADDR_P1, ByteArray((byte)0xFF, 5));
 
-	// 主节点再监听一个全0xFF的地址
+	// 主节点再监听一个全0的地址
 	byte bits	= 0x03;
 	if(Master)
 	{
 		bits	= 0x07;
-		WriteBuf(RX_ADDR_P2, ByteArray((byte)0xFF, 5));
+		WriteBuf(RX_ADDR_P2, ByteArray((byte)0, 5));
 	}
 
 	// 使能接收端的自动应答和接收通道
