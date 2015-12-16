@@ -430,6 +430,7 @@ void TinyClient::Join()
 	dm.Kind		= Type;
 	dm.HardID.Copy(Sys.ID, 16);
 	dm.TranID	= TranID;
+	dm.Name		=Cfg->Name;
 	dm.WriteMessage(msg);
 	dm.Show(true);
 

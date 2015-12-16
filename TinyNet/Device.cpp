@@ -105,7 +105,7 @@ void Device::WriteMessage(Stream& ms) const
 	ms.Write(OfflineTime);
 	ms.Write(PingTime);
 
-	ms.WriteArray(CArray(Name));
+	ms.Write(Name);
 
 	// 计算并设置大小
 	byte size	= ms.Position() - p;
@@ -129,8 +129,8 @@ void Device::ReadMessage(Stream& ms)
 	SleepTime	= ms.ReadUInt16();
 	OfflineTime	= ms.ReadUInt16();
 	PingTime	= ms.ReadUInt16();
-
-	ms.ReadString().CopyTo(Name, ArrayLength(Name));
+	Name		= ms.ReadString();
+	//ms.ReadString().CopyTo(Name, ArrayLength(Name));
 
 	// 最后位置
 	ms.SetPosition(p + size);
@@ -225,19 +225,21 @@ bool operator!=(const Device& d1, const Device& d2)
 }
 
 Array Device::GetHardID()	{ return Array(HardID, ArrayLength(HardID)); }
-Array Device::GetName()		{ return Array(Name, ArrayLength(Name)); }
+//Array Device::GetName()		{ return Array(Name, ArrayLength(Name)); }
+Array Device::GetName()		{ return Name; }
 Array Device::GetPass()		{ return Array(Pass, ArrayLength(Pass)); }
 Array Device::GetStore()	{ return Array(Store, ArrayLength(Store)); }
 Array Device::GetConfig()	{ return Array(Cfg, sizeof(Cfg[0])); }
 
 const Array Device::GetHardID()	const	{ return Array(HardID, ArrayLength(HardID)); }
-const Array Device::GetName()	const	{ return Array(Name, ArrayLength(Name)); }
+//const Array Device::GetName()	const	{ return Array(Name, ArrayLength(Name)); }
+const Array Device::GetName()	const	{ return Name; }
 const Array Device::GetPass()	const	{ return Array(Pass, ArrayLength(Pass)); }
 const Array Device::GetStore()	const	{ return Array(Store, ArrayLength(Store)); }
 const Array Device::GetConfig()	const	{ return Array(Cfg, sizeof(Cfg[0])); }
 
 void Device::SetHardID(const Array& arr) { arr.CopyTo(HardID, ArrayLength(HardID)); }
-void Device::SetName(const Array& arr) { arr.CopyTo(Name, ArrayLength(Name)); }
+//void Device::SetName(const Array& arr) { arr.CopyTo(Name, ArrayLength(Name)); } //不允许网关设置设备名称
 void Device::SetPass(const Array& arr) { arr.CopyTo(Pass, ArrayLength(Pass)); }
 void Device::SetStore(const Array& arr) { arr.CopyTo(Store, ArrayLength(Store)); }
 void Device::SetConfig(const Array& arr) { arr.CopyTo(Cfg, sizeof(Cfg[0])); }

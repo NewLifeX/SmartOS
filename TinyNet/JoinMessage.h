@@ -16,7 +16,7 @@ public:
 	ushort		Kind;		// 类型
 	uint		TranID;		// 会话
 	ByteArray	HardID;		// 硬件编码。一般12~16字节
-	char		Name[16];	// 名称
+	String		Name;	// 名称
 
 	// 响应数据
 	byte		Server;		// 网关地址

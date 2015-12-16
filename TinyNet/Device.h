@@ -33,7 +33,7 @@ public:
 	byte		WirKind;	// 无线类型 
 	ushort		PanID;		//无线网段
 	byte		Channel;	// 通道
-	char		Name[16];	// 名称
+	String		Name;	// 名称
 	byte		Pass[8];	// 通信密码
 
 	byte	Store[32];	// 数据存储区

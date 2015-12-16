@@ -24,8 +24,8 @@ bool JoinMessage::Read(Stream& ms)
 		Kind	= ms.ReadUInt16();
 		TranID	= ms.ReadUInt32();
 		HardID	= ms.ReadArray();
-		
-		ms.ReadString().CopyTo(Name, ArrayLength(Name));
+		Name	= ms.ReadString();
+		//ms.ReadString().CopyTo(Name, ArrayLength(Name));
 	
 		
 	}
@@ -53,7 +53,7 @@ void JoinMessage::Write(Stream& ms)
 		ms.Write(Kind);
 		ms.Write(TranID);
 		ms.WriteArray(HardID);
-		ms.WriteArray(CArray(Name));
+		ms.Write(Name);
 	}
 	else
 	{

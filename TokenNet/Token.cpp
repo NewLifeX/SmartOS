@@ -236,14 +236,13 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.Init(&sp, rst);
 	if(zb.EnterConfig())
 	{
-	 // zb.SetSend(1);
-	 // zb.SetPanID(1);
+	  zb.ShowConfig();
+	  zb.SetSend(1);
+	  zb.SetPanID(1);
 	  zb.SetDevice(0x00);
-	  zb.SetChannel(1);
+	  zb.SetChannel(0x1A);
 	  zb.ExitConfig();
-	}
-	//zb.ShowConfig();
-
+	}	
 	zb.Led	= led;
 
 	return &zb;
