@@ -279,8 +279,8 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(Code);
 	if(Length > 4)
 	{
-		ms.Write(Kind);
-		ms.Write(__REV16(Size));
+		ms.Write(Kind);			     	
+		ms.Write((ushort)__REV16(Size));
 		ms.Write(Data, 0, Size);
 	}
 	else if(Length > 0)
@@ -294,6 +294,8 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(sum);
 	
 }
+
+
 
 ByteArray ShunComMessage::ToArray() const
 {	
