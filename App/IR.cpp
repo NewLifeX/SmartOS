@@ -71,13 +71,7 @@ bool IR::Send(const Array& bs)
 	
 	Stat = Sending;
 	debug_printf("Start %04X\r\n",SendP[0]);
-	
-	/*  调试看波形起始  
-	_Pwm->Open();
-	Sys.Sleep(20);
-	_Pwm->Close();
-	Sys.Sleep(20);	//*/
-	
+		
 	// 开始  中断内处理数据
 	// _Pwm->Open();
 	test = true;
