@@ -1,7 +1,6 @@
 ﻿#ifndef _DHT11_H_
 #define _DHT11_H_
 
-#include "I2C.h"
 #include "Power.h"
 
 // 温湿度传感器

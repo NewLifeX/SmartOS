@@ -43,20 +43,24 @@ bool DHT11::Read(ushort& temp, ushort& humi)
 	while(DA.ReadInput());
 
 	/*开始接收数据*/
-	humi	= ReadByte() << 8;
-	humi	|= ReadByte();
-
-	temp	= ReadByte() << 8;
-	temp	|= ReadByte();
-
-	byte sum= ReadByte();
+	byte buf[5];
+	for(int i=0; i<ArrayLength(buf); i++)
+		buf[i]	= ReadByte();
 
 	/*读取结束，引脚改为输出模式*/
 	/*主机拉高*/
 	DA	= true;
 
 	/*检查读取的数据是否正确*/
-	return sum == (humi >> 8) + (humi && 0xFF) + (temp >> 8) + (temp && 0xFF);
+	if(buf[0] + buf[1] + buf[2] + buf[3] != buf[4]) return false;
+
+	humi	=	buf[0] << 8;
+	humi	|=	buf[1];
+
+	temp	= 	buf[2] << 8;
+	temp	|=	buf[3];
+
+	return true;
 }
 
 byte DHT11::ReadByte()
@@ -78,10 +82,6 @@ byte DHT11::ReadByte()
 			while(DA.ReadInput());
 
 			temp	|= (byte)(0x01 << (7-i));  // 把第7-i位置1
-		}
-		else	 //60us后为低电平表示数据“0”
-		{
-			temp	&= (byte)~(0x01 << (7-i)); // 把第7-i位置0
 		}
 	}
 	return temp;
