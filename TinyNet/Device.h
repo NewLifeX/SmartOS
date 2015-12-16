@@ -35,6 +35,7 @@ public:
 	byte		Channel;	// 通道
 	String		Name;	// 名称
 	byte		Pass[8];	// 通信密码
+	byte		MAC[6];
 
 	byte	Store[32];	// 数据存储区
 

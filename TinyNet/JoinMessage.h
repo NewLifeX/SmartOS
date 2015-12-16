@@ -16,13 +16,9 @@ public:
 	ushort		Kind;		// 类型
 	uint		TranID;		// 会话
 	ByteArray	HardID;		// 硬件编码。一般12~16字节
-	String		Name;	// 名称
 
 	// 响应数据
 	byte		Server;		// 网关地址
-	byte		WirKind;	//无线类型 
-	ushort		PanID;		//无线网段
-	byte		SendMode; 	//发送模式	
 	byte		Channel;	// 通道
 	byte		Speed;		// 传输速度
 	byte		Address;	// 分配得到的设备地址
