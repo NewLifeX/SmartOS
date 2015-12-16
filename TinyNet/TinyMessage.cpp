@@ -171,6 +171,7 @@ void TinyMessage::Show() const
 		ByteArray(Data, len).Show();
 	}
 	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
+
 	msg_printf("\r\n");
 #endif
 }
@@ -312,6 +313,20 @@ void ShowMessage(const TinyMessage& msg, bool send, ITransport* port)
 	{
 		String str(' ', blank);
 		str.Show();
+	}
+
+	// 显示目标地址
+	auto st	= msg.State;
+	if(st)
+	{
+		msg_printf("Mac=");
+		if(strcmp(port->ToString(), "R24") == 0)
+			ByteArray(st, 5).Show();
+		else if(strcmp(port->ToString(), "ShunCom") == 0)
+			ByteArray(st, 2).Show();
+		else
+			ByteArray(st, 6).Show();
+		msg_printf(" ");
 	}
 
 	msg.Show();
@@ -475,11 +490,13 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		}
 	}
 
+#if MSG_DEBUG
 	if(msg.Ack)
 	{
 		msg_printf("无效确认 ");
 		ShowMessage(msg, false, Port);
 	}
+#endif
 }
 
 // 处理对方发出的请求，如果已响应则重发响应

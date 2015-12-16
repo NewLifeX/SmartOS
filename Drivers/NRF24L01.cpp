@@ -969,8 +969,12 @@ void NRF24L01::OnIRQ()
 		uint len = Read(bs);
 		if(len)
 		{
-			uint addr = st.RX_P_NO;
-			len = OnReceive(bs, (void*)addr);
+			// 读取相应通道的地址
+			ByteArray addr(5);
+			byte num = st.RX_P_NO;
+			ReadBuf(RX_ADDR_P0 + num, addr);
+
+			len = OnReceive(bs, addr.GetBuffer());
 
 			// 如果有返回，说明有数据要回复出去
 			if(len)

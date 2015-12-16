@@ -229,6 +229,13 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		if(bs.Length() > 8) bs.SetLength(8);
 		dv->SetPass(bs);
 
+		// 保存无线物理地址
+		debug_printf("msg.State=0x%08X \r\n", msg.State);
+		if(msg.State)
+			memcpy(dv->Mac, msg.State, 6);
+		else
+			memcpy(dv->Mac, dv->HardID, 6);
+
 		if(dv->Valid())
 		{
 			Devices.Push(dv);
@@ -686,7 +693,7 @@ int TinyServer::LoadDevices()
 					Devices.Push(dv);
 				else
 					delete dv;
-				debug_printf("\t Push");
+				//debug_printf("\t Push");
 			}
 		}
 		debug_printf("\r\n");

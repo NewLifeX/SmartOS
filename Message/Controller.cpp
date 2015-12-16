@@ -103,8 +103,8 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 
 	byte* buf = ms.Current();
 
-	Message& msg	= *pmsg;
-	msg.State		= param;
+	auto& msg	= *pmsg;
+	msg.State	= param;
 	if(!msg.Read(ms)) return false;
 
 	// 校验

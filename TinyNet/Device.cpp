@@ -193,6 +193,8 @@ String& Device::ToStr(String& str) const
 	//str = str + " ID=" + HardID;
 	str = str + " ID=";
 	str.Append(HardID[0]).Append(HardID[1]);
+	str = str + " Mac=";
+	str.Append(ByteArray(Mac, 6));
 
 	DateTime dt;
 	dt.Parse(LastTime);
