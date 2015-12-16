@@ -44,7 +44,7 @@ TinyServer::TinyServer(TinyController* control)
 bool TinyServer::Send(Message& msg) const
 {
 	// 附加目标物理地址
-	if(!msg.State)
+	//if(!msg.State)
 	{
 		auto dv	= FindDevice(((TinyMessage&)msg).Dest);
 		if(dv) msg.State	= dv->Mac;
@@ -231,7 +231,12 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		// 保存无线物理地址
 		auto st = (byte*)msg.State;
-		if(!st || (st[0] && st[1] && st[2] && st[3] && st[4] == 0))
+		if(st)
+		{
+			byte sum = st[0] && st[1] && st[2] && st[3] && st[4];
+			if(sum == 0 || sum == 0xFF) st = NULL;
+		}
+		if(!st)
 			memcpy(dv->Mac, dv->HardID, 6);
 		else
 			memcpy(dv->Mac, st, 6);
