@@ -210,19 +210,17 @@ NRF24L01::NRF24L01()
 	_spi	= NULL;
 
 	// 初始化地址
-	memset(Address, 0, ArrayLength(Address));
-	memcpy(Address1, (byte*)Sys.ID, ArrayLength(Address1));
-	for(int i=0; i<ArrayLength(Addr2_5); i++) Addr2_5[i] = Address1[0] + i + 1;
+	memset(Remote, 0, ArrayLength(Remote));
+	memcpy(Local, (byte*)Sys.ID, ArrayLength(Local));
 	Channel		= 0;	// 默认通道0
-	AddrBits	= 0x01;	// 默认使能地址0
 
 	PayloadWidth= 32;
 	AutoAnswer	= true;
 	Speed		= 250;
 	RadioPower	= 0xFF;
+	Master		= false;
 
 	Error		= 0;
-	AddrLength	= 0;
 
 	_tidOpen	= 0;
 	_tidRecv	= 0;
@@ -368,25 +366,10 @@ bool NRF24L01::Config()
 	if(st.Beken) debug_printf("上海Beken芯片\r\n");
 
 	debug_printf("    本地地址: ");
-	ByteArray(Address, 5).Show(true);
+	ByteArray(Local, 5).Show(true);
+	debug_printf("    远程地址: ");
+	ByteArray(Remote, 5).Show(true);
 
-	// 根据AddrBits决定相应通道是否打开
-	byte bits = AddrBits >> 1;
-	if(bits & 0x01)
-	{
-		debug_printf("    Addres1: ");
-		ByteArray(Address1, 5).Show(true);
-	}
-	for(int i=0; i<4; i++)
-	{
-		bits >>= 1;
-		if(bits & 0x01)
-		{
-			debug_printf("    Addres%d: ", i + 2);
-			ByteArray(Addr2_5 + i, 1).Show(true);
-			ByteArray(Address1 + 1, 4).Show(true);
-		}
-	}
 	static const short powers[] = {-12, -6, -4, 0, 1, 3, 4, 7};
 	auto rp	= RadioPower;
 	if(rp >= ArrayLength(powers)) rp = ArrayLength(powers) - 1;
@@ -573,12 +556,18 @@ bool NRF24L01::SetMode(bool isReceive)
 		config.PRIM_RX = 1;
 		// 接收标识位 RX_DR
 		WriteReg(STATUS, 0x40);
+
+		// 接收模式，0通道使用本地地址
+		WriteBuf(RX_ADDR_P0, Array(Local, 5));
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
 		// 发送标识位 TX_DS/MAX_RT
 		WriteReg(STATUS, 0x30);
+
+		// 发送模式，0通道使用远程地址
+		WriteBuf(RX_ADDR_P0, Array(Remote, 5));
 	}
 	WriteReg(CONFIG, config.ToByte());
 
@@ -627,33 +616,25 @@ void NRF24L01::SetAddress()
 {
 	TS("R24::SetAddress");
 
-	uint addrLen = ArrayLength(Address);
-	Array bs(Address, ArrayLength(Address));
+	// 设置地址宽度
+	WriteReg(SETUP_AW,	5 - 2);
 
-	WriteBuf(TX_ADDR,		bs);
-	WriteBuf(RX_ADDR_P0,	bs);		// 写接收端0地址
-	WriteReg(SETUP_AW,		addrLen - 2);			// 设置地址宽度
+	// 发送地址为远程地址，0通道为本地地址，1通道为广播地址
+	WriteBuf(TX_ADDR, Array(Remote, 5));
+	WriteBuf(RX_ADDR_P0, Array(Local, 5));
+	WriteBuf(RX_ADDR_P1, ByteArray((byte)0, 5));
 
-	ByteArray addr(Address1, addrLen, true);
-	byte bits = AddrBits >> 1;
-	if(bits & 0x01)
+	// 主节点再监听一个全0xFF的地址
+	byte bits	= 0x03;
+	if(Master)
 	{
-		WriteBuf(RX_ADDR_P1, addr);	// 写接收端1地址
-	}
-	// 写其它4个接收端的地址
-	for(int i = 0; i < 4; i++)
-	{
-		bits >>= 1;
-		if(bits & 0x01)
-		{
-			addr[0] = Addr2_5[i];
-			WriteBuf(RX_ADDR_P2 + i, addr);
-		}
+		bits	= 0x07;
+		WriteBuf(RX_ADDR_P1, ByteArray((byte)0xFF, 5));
 	}
 
-	// 使能6个接收端的自动应答和接收
-	WriteReg(EN_AA, AutoAnswer ? AddrBits : 0);	// 使能通道0的自动应答
-	WriteReg(EN_RXADDR, AddrBits);				// 使能通道0的接收地址
+	// 使能接收端的自动应答和接收通道
+	WriteReg(EN_AA, AutoAnswer ? 0x01 : 0);
+	WriteReg(EN_RXADDR, bits);
 
 	// 开启隐藏寄存器
 	WriteReg(ACTIVATE, 0x73);
@@ -661,13 +642,11 @@ void NRF24L01::SetAddress()
 	RF_FEATURE ft;
 	ft.Init(ReadReg(FEATURE));
 
-	// 设置6个接收端的数据宽度
+	// 设置接收端的数据宽度
 	if(PayloadWidth > 0)
 	{
-		for(int i = 0; i < addrLen; i++)
-		{
-			WriteReg(RX_PW_P0 + i, PayloadWidth);	// 选择通道0的有效数据宽度
-		}
+		WriteReg(RX_PW_P0, PayloadWidth);
+		WriteReg(RX_PW_P1, PayloadWidth);
 	}
 	else
 	{
@@ -918,24 +897,22 @@ bool NRF24L01::OnWrite(const Array& bs)
 // 引发数据到达事件
 uint NRF24L01::OnReceive(Array& bs, void* param)
 {
-	//if(Led) Led->Write(1000);
-
-	if(!AddrLength) return ITransport::OnReceive(bs, param);
+	if(!Master) return ITransport::OnReceive(bs, param);
 
 	// 取出地址
 	byte* addr	= bs.GetBuffer();
-	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
+	Array bs2(addr + 5, bs.Length() - 5);
 	return ITransport::OnReceive(bs2, addr);
 }
 
 bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
 {
-	if(!AddrLength || !opt) return OnWrite(bs);
+	if(!Master || !opt) return OnWrite(bs);
 
 	// 加入地址
 	ByteArray bs2;
-	bs2.Copy(opt, AddrLength);
-	bs2.Copy(bs, AddrLength);
+	bs2.Copy(opt, 5);
+	bs2.Copy(bs, 5);
 
 	return OnWrite(bs2);
 }

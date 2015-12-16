@@ -12,18 +12,16 @@ class NRF24L01 : public ITransport, public Power
 {
 public:
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加
-	byte Address[5];	// 通道0地址
-	byte Address1[5];	// 通道1地址
-	byte Addr2_5[4];	// 通道2_5地址低字节，高4字节跟通道1一致
-	byte AddrBits;		// 使能通道标识位。默认0x01使能地址0
+	byte Local[5];		// 本地地址
+	byte Remote[5];		// 远程地址
 
 	byte PayloadWidth;	// 负载数据宽度，默认32字节。0表示使用动态负载
 	bool AutoAnswer;	// 自动应答，默认启用
 	ushort Speed;		// 射频数据率，单位kbps，默认250kbps，可选1000kbps/2000kbps，速度越低传输越远
 	byte RadioPower;	// 发射功率。共8档，最高0x07代表7dBm最大功率
+	bool Master;		// 是否主节点。
 
 	ushort	Error;		// 错误次数，超过最大错误次数则自动重置
-	byte	AddrLength;	// 地址长度。默认0，主站建议设为5
 
 	NRF24L01();
     virtual ~NRF24L01();
