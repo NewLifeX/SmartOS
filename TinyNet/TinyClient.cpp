@@ -474,12 +474,13 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	{
 	   //todo 设置zigbee 通道
 	}
-	Cfg->Channel	= dm.Channel;	
+	Cfg->Channel	= dm.Channel;
 	Cfg->Speed		= dm.Speed * 10;
 
 	// 服务端组网密码，退网使用
-	Cfg->Mac[0]		= dm.HardID.Length();
-	dm.HardID.Save(Cfg->Mac, ArrayLength(Cfg->Mac));
+	//Cfg->Mac[0]		= dm.HardID.Length();
+	//dm.HardID.Save(Cfg->Mac, ArrayLength(Cfg->Mac));
+	dm.HardID.CopyTo(Cfg->Mac);
 
 #if DEBUG
 	//debug_printf("组网成功！\r\n");
@@ -567,6 +568,11 @@ void TinyClient::Ping()
 		// 掉线以后，重发组网信息，基本功能继续执行
 		Joining	= true;
 
+		auto tc	= TinyConfig::Current;
+		memset(tc->Mac, 0, 5);
+		tc->Save();
+
+		Sys.Reset();
 		//Server		= 0;
 		//Password.SetLength(0);
 

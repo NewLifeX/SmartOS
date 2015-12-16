@@ -69,15 +69,19 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto spi = new Spi(spi_, 10000000, true);
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
-	//nrf->Power.Invert = powerInvert;
 
+	auto tc	= TinyConfig::Current;
 	nrf->AutoAnswer		= false;
 	nrf->PayloadWidth	= 32;
-	nrf->Channel		= TinyConfig::Current->Channel;
-	nrf->Speed			= TinyConfig::Current->Speed;
+	//nrf->Channel		= tc->Channel;
+	nrf->Channel		= 120;
+	nrf->Speed			= tc->Speed;
 
-	nrf->FixData= Fix2401;
-	nrf->Led	= led;
+	nrf->FixData	= Fix2401;
+	nrf->Led		= led;
+
+	byte num = tc->Mac[0] && tc->Mac[1] && tc->Mac[2] && tc->Mac[3] && tc->Mac[4];
+	if(num != 0 && num != 0xFF) memcpy(nrf->Remote, tc->Mac, 5);
 
 	return nrf;
 }
