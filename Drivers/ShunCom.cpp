@@ -20,6 +20,7 @@ public:
 	bool Read(Stream& ms);
 	void Write(Stream& ms) const;
 	ByteArray ToArray() const;
+	ByteArray ToArray(Stream& ms); 
 	void Set(ushort kind, const Array& bs);
 	void Set(ushort kind, byte dat);
 	void Set(ushort kind, ushort dat);
@@ -180,8 +181,12 @@ void ShunCom::SetDevice(byte kind)
 {
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0087, kind);
-	Write(msg.ToArray());	 
-	msg.ToArray().Show();
+	MemoryStream ms;
+	auto buf=msg.ToArray(ms);
+	debug_printf("ShunCom配置设备类型\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
 }
 
 // 设置无线频点，注意大小端，ShunCom是小端存储
@@ -260,8 +265,9 @@ void ShunComMessage::Write(Stream& ms) const
 	//ms.Write(Checksum);
 	// 计算校验
 	byte sum	= 0;
-	while(p++ < ms.Current()) sum^= *p;
+	while(p++ < ms.Current()-1)sum^= *p;
 	ms.Write(sum);
+	
 }
 
 ByteArray ShunComMessage::ToArray() const
@@ -271,20 +277,17 @@ ByteArray ShunComMessage::ToArray() const
 	ByteArray bs;
 	Stream ms(bs.GetBuffer(),64);
 	//ms.SetLength(bs.Length());
-	Write(ms);
-	//debug_printf("ssss%d",ms.Position());
-    //ByteArray bs;	
-	//ms.ReadArray(bs);
-	
-	
-	
-   // ByteArray bs(ms.GetBuffer(), ms.Position());	
-	
+	Write(ms);	
 	bs.Show(true);
-	//debug_printf("\r\n");
 	return bs;
 }
 
+ByteArray ShunComMessage::ToArray(Stream& ms) 
+{		
+	Write(ms);
+    ByteArray bs(ms.GetBuffer(), ms.Position());	
+	return bs;
+}
 void ShunComMessage::Set(ushort kind, const Array& bs)
 {
 	Kind	= kind;
