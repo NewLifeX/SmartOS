@@ -216,7 +216,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf.Init(&spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Current;
-	nrf.AutoAnswer	= false;
+	nrf.AutoAnswer	= true;
 	nrf.PayloadWidth= 32;
 	//nrf.Channel		= tc->Channel;
 	nrf.Channel		= 120;

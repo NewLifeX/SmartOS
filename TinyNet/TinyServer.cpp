@@ -285,7 +285,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.HardID.Set(Sys.ID, 6);
 	dm.WriteMessage(rs);
 
-	Send(rs);
+	//Send(rs);
+	rs.State	= dv->Mac;
+	Control->Send(rs);
 
 	return true;
 }
