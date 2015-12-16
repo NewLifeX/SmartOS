@@ -22,12 +22,11 @@
 class IR
 {
 private:
+	PWM*	_Pwm			= NULL;
 	Timer*	_Tim			= NULL;
 	AlternatePort * _Port	= NULL;
 public:
-	bool	Opened	= false;
-
-	IR();
+	IR(PWM * pwm);
 	
 	bool Open();
 	bool Close();
@@ -36,9 +35,7 @@ public:
 	int Receive(Array& bs, int sTimeout = 10);
 
 private:
-
-	void OnSend();
-	static void OnReceive(void* sender, void* param);
+	static void OnSend(void* sender, void* param);
 };
 
 #endif

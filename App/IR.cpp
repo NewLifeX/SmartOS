@@ -1,18 +1,18 @@
 ﻿#include "IR.h"
 #include "Time.h"
 
-#ifdef STM32F0
+//#ifdef STM32F0
 #include "stm32f0xx_tim.h"
-#endif
+//#endif
 /*
 Timer2  CH2       通道
 DMA1    Channel3  通道
 
 */
 
-IR::IR()
+IR::IR(PWM * pwm)
 {
-
+	_Pwm = pwm;
 }
 
 bool IR::Open()
@@ -30,7 +30,7 @@ bool IR::Send(const Array& bs)
 	return true;
 }
 
-void IR::OnSend()
+void IR::OnSend(void* sender, void* param)
 {
 
 }
@@ -41,15 +41,14 @@ typedef enum
 	Rev,
 	RevOver,
 }IRStat;
-
 IRStat Stat;
 
 int IR::Receive(Array& bs, int sTimeout)
 {
 	TS("IR::Receive");
-
 #ifdef STM32F0
 	uint bufLen	= bs.Length();
+	uint DmaLen	= bufLen/2;
 	
 	if(_Tim == NULL)
 	{
@@ -57,8 +56,8 @@ int IR::Receive(Array& bs, int sTimeout)
 		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
 		// _Tim->SetFrequency(50);		// 5Hz   20ms
 		// 使用一个字节  需要自行配置分频系数
-		_Tim->Prescaler	= 800;		// 分频 需要结果是 Period < 256 时能计数 20ms
-		_Tim->Period	= 255;
+		_Tim->Prescaler	= 600;		// 分频 需要结果是 Period < 256 时能计数 20ms
+		_Tim->Period	= 65536;
 		_Tim->Config();
 	}
 	
@@ -69,7 +68,6 @@ int IR::Receive(Array& bs, int sTimeout)
 		_Port->Open();
 		_Port->AFConfig(GPIO_AF_2);
 	}
-	
 	/* 使能自动装载 */
 	TIM_ARRPreloadConfig(TIM2, ENABLE);
 	// 捕获设置
@@ -85,14 +83,16 @@ int IR::Receive(Array& bs, int sTimeout)
 	/* Select the TIM2 Input Trigger: TI2FP2 */
 	TIM_SelectInputTrigger(TIM2, TIM_TS_TI2FP2);
 	/* 捕获的同时清空定时器计数 */
-	TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
-	//TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Enable);
+	// TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
+	// TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Enable);
+	// DMA 读取CNT寄存器，一字节设置  无法解决数据冗余
+	// TIM_DMAConfig(TIM2, TIM_DMABase_CNT, TIM_DMABurstLength_1Transfer);
+	// 连接DMA 触发机制
+	TIM_DMACmd(TIM2, TIM_DMA_CC1, ENABLE);
 	
 	//TIM_Cmd(TIM2, ENABLE);
 	
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1 , ENABLE);
-	// 连接DMA 触发机制
-	TIM_DMACmd(TIM2, TIM_DMA_CC1, ENABLE);
 	
 	// 使用通道5
 	/* DMA1 Channel1 Config */
@@ -102,11 +102,11 @@ int IR::Receive(Array& bs, int sTimeout)
 	DMA_InitStructure.DMA_MemoryBaseAddr 		= (uint32_t)bs.GetBuffer();
 	//DMA_InitStructure.DMA_MemoryBaseAddr 		= (uint32_t)buf;
 	DMA_InitStructure.DMA_DIR 					= DMA_DIR_PeripheralSRC;
-	DMA_InitStructure.DMA_BufferSize 			= bufLen;
+	DMA_InitStructure.DMA_BufferSize 			= DmaLen;
 	DMA_InitStructure.DMA_PeripheralInc 		= DMA_PeripheralInc_Disable;
 	DMA_InitStructure.DMA_MemoryInc 			= DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_Byte;
-	DMA_InitStructure.DMA_MemoryDataSize 		= DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_HalfWord;
+	DMA_InitStructure.DMA_MemoryDataSize 		= DMA_MemoryDataSize_HalfWord;
 	DMA_InitStructure.DMA_Mode 					= DMA_Mode_Normal;
 	DMA_InitStructure.DMA_Priority 				= DMA_Priority_High;
 	DMA_InitStructure.DMA_M2M 					= DMA_M2M_Disable;
@@ -119,7 +119,7 @@ int IR::Receive(Array& bs, int sTimeout)
 	Stat = WaitRev;
 	// 等待起始条件
 	TimeWheel tw(sTimeout);
-	while(!tw.Expired() && DMA_GetCurrDataCounter(DMA1_Channel5) == bufLen);
+	while(!tw.Expired() && DMA_GetCurrDataCounter(DMA1_Channel5) == DmaLen);
 
 	if(tw.Expired()) 	// 超时没有收到学习
 	{	
@@ -128,8 +128,8 @@ int IR::Receive(Array& bs, int sTimeout)
 		DMA_Cmd(DMA1_Channel5, DISABLE);
 		TIM_Cmd(TIM2, DISABLE);
 		
-		int leng = DMA_GetCurrDataCounter(DMA1_Channel5);
-		debug_printf("\r\n DMA::Counter %d \r\n", leng);
+		int length = DMA_GetCurrDataCounter(DMA1_Channel5);
+		debug_printf("\r\n DMA::Counter %d \r\n", length);
 		
 		bs.SetLength(0);
 		return -1;
@@ -146,25 +146,34 @@ int IR::Receive(Array& bs, int sTimeout)
 	DMA_Cmd(DMA1_Channel5, DISABLE);
 	TIM_Cmd(TIM2, DISABLE);
 	
-	int len = bufLen - DMA_GetCurrDataCounter(DMA1_Channel5);
+	uint len = DmaLen - DMA_GetCurrDataCounter(DMA1_Channel5);
+	debug_printf("DMA REV %d byte\r\n",len);
+	
 	if(len > 30)
 	{
-		debug_printf("收到数据 %d byte\r\n",len);
 		Stat = RevOver;
+		
+		ushort * p = (ushort *)bs.GetBuffer();
+		for(int i = 0; i < len-1; i++)
+		{
+			if(p[i+1] > p[i])
+				p[i] = p[i+1] - p[i];
+			else
+			{
+				int a = p[i+1] + 0x10000;
+				p[i] = a - p[i];
+			}
+		}
+
+		len <<= 1;
 		bs.SetLength(len);
 		return len;
 	}
 	else
 	{
-		debug_printf("未收到数据 %d byte\r\n",len);
 		Stat = RevOver;
 		bs.SetLength(0);
 		return -1;
 	}
 #endif
-
-}
-
-void IR::OnReceive(void* sender, void* param)
-{
 }
