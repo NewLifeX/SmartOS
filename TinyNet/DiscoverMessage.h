@@ -12,6 +12,7 @@ public:
 	ushort		Type;		// 类型
 	ByteArray	HardID;		// 硬件ID。一般16字节
 	ushort		Version;	//软件版本
+	byte		WirKind;	//无线类型 
 	ushort		PanID;		//无线网段
 	byte		SendMode; 	//发送模式	
 	byte		Channel;	//通道号 

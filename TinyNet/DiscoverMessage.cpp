@@ -59,9 +59,9 @@ String& DiscoverMessage::ToStr(String& str) const
 		str.Append(" Type=").Append(Type, 16, 4);
 		str = str + " HardID=" + HardID;
 		str.Append(" Ver=").Append(Version, 16, 4);
-		str = str + " PanID=" +.Append(PanID,16, 4);
+		str.Append("PanID=").Append(PanID,16, 4);
 		str = str + " SendMode=" + SendMode;
-		str = str + " Channel=" + SendMode;
+		str = str + " Channel=" + Channel;
 	}
 	else
 	{
