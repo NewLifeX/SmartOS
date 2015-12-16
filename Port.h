@@ -129,7 +129,7 @@ public:
 
     ushort	ShakeTime	= 0;	// 抖动时间。毫秒
 	ushort	PressTime	= 0;	// 长按时间。毫秒
-    byte	Invert	= 2;	// 是否倒置输入输出。默认2表示自动检测
+    byte	Invert		= 2;	// 是否倒置输入输出。默认2表示自动检测
     bool	Floating	= true;	// 是否浮空输入
     PuPd	Pull		= UP;		// 上拉下拉电阻
 	Trigger	Mode		= Both;		// 触发模式，上升沿下降沿

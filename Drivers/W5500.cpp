@@ -247,7 +247,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 
 	debug_printf("\r\n");
 
-	if(rst != P0) Rst.Set(rst);
+	if(rst != P0) Rst.Init(rst, true);
 	if(irq != P0)
 	{
 		// 中断引脚初始化
@@ -257,7 +257,8 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		Irq.Pull		= InputPort::UP;
 		Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
-		Irq.Set(irq);
+		//Irq.Set(irq);
+		Irq.Init(irq, true);
 		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
 	}
 

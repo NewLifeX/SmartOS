@@ -44,9 +44,9 @@ Spi::~Spi()
 
 void Spi::Init()
 {
-	_index = 0xFF;
-    Retry = 200;
-	Opened = false;
+	_index	= 0xFF;
+    Retry	= 200;
+	Opened	= false;
 }
 
 void Spi::Init(SPI_TypeDef* spi, uint speedHz, bool useNss)
@@ -138,7 +138,8 @@ void Spi::Open()
     {
 		debug_printf("    NSS : ");
 		_nss.OpenDrain = false;
-		_nss.Set(ps[0]).Open();
+		//_nss.Set(ps[0]).Open();
+		_nss.Init(ps[0], true).Open();
     }
 
     // 使能SPI时钟

@@ -242,9 +242,9 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		// 拉高CE，可以由待机模式切换到RX/TX模式
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
-		//_CE.Init(ce, false);
+		_CE.Init(ce, true);
 		// 自动检测倒置。默认CE为高，需要倒置
-		_CE.Set(ce);
+		//_CE.Set(ce);
 	}
     if(irq != P0)
     {
@@ -254,7 +254,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		_IRQ.Pull		= InputPort::UP;
 		_IRQ.Mode		= InputPort::Rising;
 		_IRQ.HardEvent	= true;
-		_IRQ.Set(irq);
+		_IRQ.Init(irq, true);
         //_IRQ.Register(OnIRQ, this);
 		if(!_IRQ.Register(OnIRQ, this)) _IRQ.HardEvent	= false;
     }
