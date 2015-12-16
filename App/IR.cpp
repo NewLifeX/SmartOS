@@ -43,14 +43,15 @@ bool test;
 
 bool IR::Send(const Array& bs)
 {
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	if(_Tim == NULL)
 	{
-		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+		// RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
 	}
 	// _Tim->SetFrequency(50);		// 5Hz   20ms
 	// 使用一个字节  需要自行配置分频系数
-	_Tim->Prescaler	= 600;		// 分频 需要结果是 Period < 256 时能计数 20ms
+	_Tim->Prescaler	= 400;		// 分频 需要结果是 Period < 256 时能计数 20ms
 	
 	SendP = (ushort *)bs.GetBuffer();
 	SendBufLen	= bs.Length()/2;
@@ -76,16 +77,15 @@ bool IR::Send(const Array& bs)
 	_Pwm->Close();
 	Sys.Sleep(20);	//*/
 	
-	test = true;
-	
 	// 开始  中断内处理数据
 	// _Pwm->Open();
+	test = true;
 	_Tim->Open();
 	// 等待结束
 	TimeWheel tw(2);
 	while(!tw.Expired() && Stat != SendOver);
 	// 结束 不论是超时还是发送结束都关闭pwm和定时器
-	_Pwm->Close();
+	//_Pwm->Close();
 	_Tim->Close();
 	// 清空使用的数据
 	SendIndex = 0;
@@ -98,31 +98,34 @@ void IR::OnSend(void* sender, void* param)
 {
 	TS("IR::OnSend");
 	auto ir = (IR*)param;
-	if(test)
+	if(test)	// 避开打开定时器立马中断问题
 	{
 		ir->_Pwm->Open();
 		test = false;
 		return;
 	}
 	// PWM归位
-	ir->_Pwm->SetCounter(0x00000000);
+	TIM_SetCounter(ir->_Pwm->_Timer, 0x00000000);
 	// PWM变化
 	if(SendIndex % 2)
-		ir->_Pwm->Open();
+		TIM_Cmd(ir->_Pwm->_Timer, DISABLE);
+		//ir->_Pwm->Close();
 	else
-		ir->_Pwm->Close();
+		TIM_Cmd(ir->_Pwm->_Timer, ENABLE);
+		//ir->_Pwm->Open();
 	// 下一个周期
 	SendIndex++;
-	ir->_Tim->Period = SendP[SendIndex];
-	
-	//debug_printf("Index %d Data %04X\r\n",SendIndex,SendP[SendIndex]);
-	// 配置
-	ir->_Tim->Config();
+	// 不能使用这个  会复位定时器计数 严重拖延时间
+	//ir->_Tim->Period = SendP[SendIndex];
+	//ir->_Tim->Config();
+	TIM_SetAutoreload(ir->_Tim->_Timer, SendP[SendIndex]);
 
 	if(SendIndex >= SendBufLen)
 	{
 		// 发送完毕
-		ir->_Pwm->Close();
+		TIM_SetCounter(ir->_Pwm->_Timer, 0x00000000);
+		TIM_Cmd(ir->_Pwm->_Timer, DISABLE);
+		//ir->_Pwm->Close();
 		ir->_Tim->Close();
 		Stat = SendOver;
 		debug_printf("SendOver SendIndex %d\r\n",SendIndex);
@@ -137,13 +140,15 @@ int IR::Receive(Array& bs, int sTimeout)
 	uint bufLen	= bs.Length();
 	uint DmaLen	= bufLen/2;
 	
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, DISABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	
 	if(_Tim == NULL)
 	{
-		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
 		// _Tim->SetFrequency(50);		// 5Hz   20ms
 		// 使用一个字节  需要自行配置分频系数
-		_Tim->Prescaler	= 600;		// 分频 需要结果是 Period < 256 时能计数 20ms
+		_Tim->Prescaler	= 400;		// 分频 需要结果是 Period < 256 时能计数 20ms
 		_Tim->Period	= 65536;
 		_Tim->Config();
 	}
@@ -226,7 +231,7 @@ int IR::Receive(Array& bs, int sTimeout)
 
 	debug_printf("\r\n开始接收数据\r\n");
 	// 300ms 接收时间
-	tw.Reset(1);
+	tw.Reset(0,400);
 	while(!tw.Expired() && Stat != RevOver);
 	
 	// 关闭Time DMA	
@@ -234,6 +239,7 @@ int IR::Receive(Array& bs, int sTimeout)
 	TIM_Cmd(TIM2, DISABLE);
 	
 	uint len = DmaLen - DMA_GetCurrDataCounter(DMA1_Channel5);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, DISABLE);
 	debug_printf("DMA REV %d byte\r\n",len);
 	
 	if(len > 30)
