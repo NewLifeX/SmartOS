@@ -131,6 +131,8 @@ public:
 	// 设置指定位置的值，不足时自动扩容
 	virtual void SetItemAt(int i, const void* item);
 
+	virtual void Show(bool newLine) const;
+
     // 重载索引运算符[]，返回指定元素的第一个字节
     byte& operator[](int i) const;
 

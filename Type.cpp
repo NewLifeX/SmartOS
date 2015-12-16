@@ -316,6 +316,12 @@ bool Array::CheckCapacity(int len, int bak)
 	return true;
 }
 
+void Array::Show(bool newLine) const
+{
+	ByteArray bs(GetBuffer(), Length());
+	bs.Show(newLine);
+}
+
 void* Array::Alloc(int len) { return new byte[_Size * len];}
 
 bool operator==(const Array& bs1, const Array& bs2)
