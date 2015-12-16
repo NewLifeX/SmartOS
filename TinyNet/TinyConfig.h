@@ -28,7 +28,7 @@ struct TinyConfig
 	byte		SoftVer;	// 软件版本
 
 	byte		Password[16]; // 通信密码
-	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
+	byte		Mac[6];		// 无线物理地址
 
 	byte  StartSet;
 

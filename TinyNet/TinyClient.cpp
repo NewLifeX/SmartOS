@@ -478,8 +478,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Cfg->Speed		= dm.Speed * 10;
 
 	// 服务端组网密码，退网使用
-	Cfg->ServerKey[0] = dm.HardID.Length();
-	dm.HardID.Save(Cfg->ServerKey, ArrayLength(Cfg->ServerKey));
+	Cfg->Mac[0]		= dm.HardID.Length();
+	dm.HardID.Save(Cfg->Mac, ArrayLength(Cfg->Mac));
 
 #if DEBUG
 	//debug_printf("组网成功！\r\n");

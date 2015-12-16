@@ -230,11 +230,11 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->SetPass(bs);
 
 		// 保存无线物理地址
-		debug_printf("msg.State=0x%08X \r\n", msg.State);
-		if(msg.State)
-			memcpy(dv->Mac, msg.State, 6);
-		else
+		auto st = (byte*)msg.State;
+		if(!st || (st[0] && st[1] && st[2] && st[3] && st[4] == 0))
 			memcpy(dv->Mac, dv->HardID, 6);
+		else
+			memcpy(dv->Mac, st, 6);
 
 		if(dv->Valid())
 		{
