@@ -10,29 +10,7 @@
 // NRF24L01类
 class NRF24L01 : public ITransport, public Power
 {
-private:
-    byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
-    byte ReadBuf(byte reg, byte *pBuf, byte bytes);
-    byte ReadReg(byte reg);
-    byte WriteReg(byte reg, byte dat);
-
-	void AddError();
-
-	// 接收任务。
-	static void ReceiveTask(void* param);
-	uint _tidOpen;
-	uint _tidRecv;
-	static void OnIRQ(InputPort* port, bool down, void* param);
-	void OnIRQ();
-
-	int _Lock;			// 收发数据锁，确保同时只有一个对象使用
-
 public:
-    Spi*		_spi;
-    OutputPort	_CE;
-    InputPort	_IRQ;
-	OutputPort	_Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
-
     byte Channel;		// 通讯频道。物理频率号，在2400MHZ基础上加
 	byte Address[5];	// 通道0地址
 	byte Address1[5];	// 通道1地址
@@ -81,6 +59,26 @@ protected:
 	// 引发数据到达事件
 	virtual uint OnReceive(Array& bs, void* param);
 	virtual bool OnWriteEx(const Array& bs, void* opt);
+
+private:
+    Spi*		_spi;
+    OutputPort	_CE;
+    InputPort	Irq;
+	OutputPort	_Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
+
+    byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
+    byte ReadBuf(byte reg, byte *pBuf, byte bytes);
+    byte ReadReg(byte reg);
+    byte WriteReg(byte reg, byte dat);
+
+	void AddError();
+
+	// 接收任务。
+	static void ReceiveTask(void* param);
+	uint _tidOpen;
+	uint _tidRecv;
+	static void OnIRQ(InputPort* port, bool down, void* param);
+	void OnIRQ();
 };
 
 #endif

@@ -227,8 +227,6 @@ NRF24L01::NRF24L01()
 	_tidOpen	= 0;
 	_tidRecv	= 0;
 
-	_Lock	= 0;
-
 	FixData	= NULL;
 	Led		= NULL;
 }
@@ -249,14 +247,14 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
     if(irq != P0)
     {
         // 中断引脚初始化
-		//_IRQ->ShakeTime = 2;
-		_IRQ.Floating	= false;
-		_IRQ.Pull		= InputPort::UP;
-		_IRQ.Mode		= InputPort::Rising;
-		_IRQ.HardEvent	= true;
-		_IRQ.Init(irq, true);
-        //_IRQ.Register(OnIRQ, this);
-		if(!_IRQ.Register(OnIRQ, this)) _IRQ.HardEvent	= false;
+		//Irq->ShakeTime = 2;
+		Irq.Floating	= false;
+		Irq.Pull		= InputPort::UP;
+		Irq.Mode		= InputPort::Rising;
+		Irq.HardEvent	= true;
+		Irq.Init(irq, true);
+        //Irq.Register(OnIRQ, this);
+		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
     }
 	if(power != P0) _Power.Set(power);
 
@@ -747,8 +745,8 @@ bool NRF24L01::OnOpen()
 	debug_printf("\t   CE: ");
 	_CE.Open();
 	debug_printf("\t  IRQ: ");
-	_IRQ.Open();
-	debug_printf("Power=%d CE=%d Irq=%d \r\n", pwr.Read(), _CE.Read(), _IRQ.Read());
+	Irq.Open();
+	debug_printf("Power=%d CE=%d Irq=%d \r\n", pwr.Read(), _CE.Read(), Irq.Read());
 	_CE	= false;
 
 	// 检查并打开Spi
@@ -777,7 +775,7 @@ bool NRF24L01::OnOpen()
 	}
 	if(!_tidRecv)
 	{
-		int time = _IRQ.Empty() || !_IRQ.HardEvent ? 10 : 500;
+		int time = Irq.Empty() || !Irq.HardEvent ? 10 : 500;
 		_tidRecv = Sys.AddTask(ReceiveTask, this, time, time, "R24接收");
 	}
 	else
@@ -799,7 +797,7 @@ void NRF24L01::OnClose()
 
 	_spi->Close();
 	_CE.Close();
-	_IRQ.Close();
+	Irq.Close();
 
 	auto& pwr	= _Power;
 	if(pwr.Read())
@@ -813,11 +811,6 @@ void NRF24L01::OnClose()
 // 从NRF的接收缓冲区中读出数据
 uint NRF24L01::OnRead(Array& bs)
 {
-	Lock lock(_Lock);
-	//if(!lock.Wait(10000)) return false;
-	// 如果拿不到锁，马上退出，不等待。因为一般读取是由定时器中断来驱动，等待没有意义。
-	if(!lock.Success) return false;
-
 	// 进入接收模式
 	if(!SetMode(true)) return false;
 
@@ -875,12 +868,6 @@ uint NRF24L01::OnRead(Array& bs)
 bool NRF24L01::OnWrite(const Array& bs)
 {
 	TS("R24::OnWrite");
-
-	// 设定小灯快闪时间，单位毫秒
-	//if(Led) Led->Write(500);
-
-	Lock lock(_Lock);
-	if(!lock.Wait(10000)) return false;
 
 	// 进入发送模式
 	if(!SetMode(false)) return false;
@@ -1102,8 +1089,5 @@ void NRF24L01::ReceiveTask(void* param)
 
 	auto nrf = (NRF24L01*)param;
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	if(nrf->Opened && nrf->_Lock == 0)
-	{
-		nrf->OnIRQ();
-	}
+	if(nrf->Opened) nrf->OnIRQ();
 }

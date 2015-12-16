@@ -206,7 +206,6 @@ W5500::~W5500()
 // 初始化
 void W5500::Init()
 {
-	_Lock	= 0;
 	_spi	= NULL;
 	Led		= NULL;
 
@@ -569,29 +568,21 @@ void W5500::SetAddress(ushort addr, byte rw, byte socket, byte block)
 
 bool W5500::WriteFrame(ushort addr, const Array& bs, byte socket, byte block)
 {
-	while(_Lock != 0) Sys.Sleep(0);
-	_Lock = 1;
-
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 1, socket, block);
 	_spi->Write(bs);
 
-	_Lock = 0;
 	return true;
 }
 
 bool W5500::ReadFrame(ushort addr, Array& bs, byte socket, byte block)
 {
-	while(_Lock != 0) Sys.Sleep(0);
-	_Lock = 1;
-
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 0, socket, block);
 	_spi->Read(bs);
 
-	_Lock = 0;
 	return true;
 }
 

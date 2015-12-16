@@ -214,7 +214,6 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	static Spi spi(spi_, 10000000, true);
 	static NRF24L01 nrf;
 	nrf.Init(&spi, ce, irq, power);
-	//nrf->Power.Invert = powerInvert;
 
 	nrf.AutoAnswer	= false;
 	nrf.PayloadWidth= 32;

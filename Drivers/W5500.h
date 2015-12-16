@@ -15,32 +15,6 @@ class HardSocket;
 // W5500以太网驱动
 class W5500 : public ISocketHost
 {
-private:
-	friend class HardSocket;
-	friend class TcpClient;
-	friend class UdpClient;
-
-	// 收发数据锁，确保同时只有一个对象使用
-	volatile byte _Lock;
-
-	Spi*		_spi;
-    InputPort	Irq;
-	OutputPort	Rst;
-
-	// 8个硬件socket
-	HardSocket* _sockets[8];
-
-	// spi 模式（默认变长）
-	ushort		PhaseOM;
-
-	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
-	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
-	byte ReadByte(ushort addr, byte socket = 0 ,byte block = 0);
-	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
-
-	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
-	void OnClose();
-
 public:
 	ushort		RetryTime;
 	ushort		LowLevelTime;
@@ -84,17 +58,38 @@ public:
 	// 输出物理链路层状态
 	void PhyStateShow();
 
-private:
-	// 中断脚回调
-	static void OnIRQ(InputPort* port, bool down, void* param);
-	static void IRQTask(void* param);
-	void OnIRQ();
-
-public:
 	string ToString() { return "W5500"; }
 
 	byte GetSocket();
 	void Register(byte Index, HardSocket* handler);
+
+private:
+	friend class HardSocket;
+	friend class TcpClient;
+	friend class UdpClient;
+
+	Spi*		_spi;
+    InputPort	Irq;
+	OutputPort	Rst;
+
+	// 8个硬件socket
+	HardSocket* _sockets[8];
+
+	// spi 模式（默认变长）
+	ushort		PhaseOM;
+
+	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
+	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
+	byte ReadByte(ushort addr, byte socket = 0 ,byte block = 0);
+	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
+
+	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
+	void OnClose();
+
+	// 中断脚回调
+	static void OnIRQ(InputPort* port, bool down, void* param);
+	static void IRQTask(void* param);
+	void OnIRQ();
 };
 
 // 硬件Socket控制器
