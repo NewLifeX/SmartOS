@@ -407,7 +407,7 @@ void GetDeviceKey(byte id, Array& key, void* param)
 	//debug_printf("微网客户端获取密钥");
 
 	auto client = (TinyClient*)param;
-	if(Sys.Version < 0xAA) return;
+	if(Sys.Version < 0xFFFF) return;
 
 	//key = client->Password;
 	key.Copy(client->Password, 8);
@@ -501,6 +501,9 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	// 保存配置
 	Cfg->Save();
+
+	// 组网以后重启一次
+	Sys.Reset();
 
 	return true;
 }
