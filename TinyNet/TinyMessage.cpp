@@ -795,7 +795,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	if(msg.State)
 	{
 		Mac[0]	= 5;
-		memcpy(Mac, msg.State, 5);
+		memcpy(&Mac[1], msg.State, 5);
 	}
 }
 
