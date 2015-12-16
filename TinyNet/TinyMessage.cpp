@@ -73,10 +73,10 @@ bool TinyMessage::Read(Stream& ms)
 	Checksum = ms.ReadUInt16();
 
 	// 计算Crc之前，需要清零TTL和Retry
-	byte fs = p[3];
-	auto f = (TFlags*)&p[3];
-	f->TTL		= 0;
-	f->Retry	= 0;
+	byte fs		= p[3];
+	auto flag	= (TFlags*)&p[3];
+	flag->TTL	= 0;
+	flag->Retry	= 0;
 	// 连续的，可以直接计算Crc16
 	Crc = Crc::Hash16(Array(p, HeaderSize + Length));
 	// 还原数据
@@ -108,10 +108,10 @@ void TinyMessage::Write(Stream& ms) const
 	if(len > 0) ms.Write(Data, 0, len);
 
 	// 计算Crc之前，需要清零TTL和Retry
-	byte fs 	= buf[3];
-	auto f = (TFlags*)&buf[3];
-	f->TTL		= 0;
-	f->Retry	= 0;
+	byte fs		= buf[3];
+	auto flag	= (TFlags*)&buf[3];
+	flag->TTL	= 0;
+	flag->Retry	= 0;
 
 	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + len));
 
@@ -223,7 +223,7 @@ TinyController::TinyController() : Controller()
 TinyController::~TinyController()
 {
 	Sys.RemoveTask(_taskID);
-	
+
 	delete[] _Queue;
 	_Queue	= NULL;
 }
@@ -257,7 +257,7 @@ void TinyController::Open()
 
 	// 初始化发送队列
 	_Queue	= new MessageNode[QueueLength];
-	
+
 	if(!_taskID)
 	{
 		_taskID = Sys.AddTask(SendTask, this, 0, 1, "微网队列");
@@ -647,9 +647,10 @@ void TinyController::Loop()
 		auto& node = _Queue[i];
 		if(!node.Using) continue;
 
-		auto f = (TFlags*)&node.Data[3];
+		auto flag = (TFlags*)&node.Data[3];
+		bool reply	= flag->_Reply;
 		// 可用请求消息数，需要继续轮询
-		if(!f->_Reply) count++;
+		if(!reply) count++;
 
 		// 检查时间。至少发送一次
 		if(node.Times > 0)
@@ -659,7 +660,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.EndTime < now)
 			{
-				msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
+				if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using = 0;
 
 				continue;
@@ -677,10 +678,10 @@ void TinyController::Loop()
 		Port->Write(Array(node.Data, node.Length));
 
 		// 递增重试次数
-		f->Retry++;
+		flag->Retry++;
 
 		// 请求消息列入统计
-		if(!f->_Reply)
+		if(!reply)
 		{
 			// 增加发送次数统计
 			Total.Send++;
