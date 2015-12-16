@@ -47,7 +47,8 @@ bool TinyServer::Send(Message& msg) const
 	//if(!msg.State)
 	{
 		auto dv	= FindDevice(((TinyMessage&)msg).Dest);
-		if(dv) msg.State	= dv->Mac;
+		if(!dv)	dv	= Current;
+		if(dv)	msg.State	= dv->Mac;
 	}
 
 	return Control->Send(msg);
