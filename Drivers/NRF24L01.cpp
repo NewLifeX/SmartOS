@@ -626,18 +626,17 @@ void NRF24L01::SetAddress()
 	// 发送地址为远程地址，0通道为本地地址，1通道为广播地址0xFF
 	WriteBuf(TX_ADDR, Array(Remote, 5));
 	WriteBuf(RX_ADDR_P0, Array(Local, 5));
-	
-	ByteArray addr((byte)0, 5);
-	addr[0]	= 0x00;
-	WriteBuf(RX_ADDR_P1, addr);
 
 	// 主节点再监听一个全0的地址
 	byte bits	= 0x03;
 	if(Master)
 	{
 		bits	= 0x07;
-		addr[0]	= 0xFF;
-		WriteBuf(RX_ADDR_P2, addr);
+		WriteBuf(RX_ADDR_P1, ByteArray((byte)0x00, 5));
+	}
+	else
+	{
+		WriteBuf(RX_ADDR_P1, ByteArray((byte)0xFF, 5));
 	}
 
 	// 使能接收端的自动应答和接收通道
