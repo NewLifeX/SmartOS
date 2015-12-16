@@ -140,6 +140,13 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 {
 	TS("TinyServer::Dispatch");
 
+	// 先找到设备
+	auto dv = FindDevice(msg.Dest);
+	if(!dv) return false;
+
+	// 设置当前设备
+	Current = dv;
+
 	// 非休眠设备直接发送
 	//if(!dv->CanSleep())
 	//{
@@ -150,10 +157,6 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	//{
 
 	//}
-
-	// 先找到设备
-	auto dv = FindDevice(msg.Dest);
-	if(!dv) return false;
 
 	bool rs = false;
 
@@ -179,6 +182,8 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		msg.Dest	= src;
 		msg.Src		= dv->Address;
 	}
+
+	Current = NULL;
 
 	return rs;
 }

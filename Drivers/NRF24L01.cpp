@@ -556,16 +556,22 @@ bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 		config.PRIM_RX = 1;
 		// 接收标识位 RX_DR
 		WriteReg(STATUS, 0x40);
+
+		// 接收模式，0通道使用本地地址
+		//WriteBuf(TX_ADDR, ByteArray((byte)0, 5));
+		WriteBuf(RX_ADDR_P0, addr);
 	}
 	else // 发送模式
 	{
 		config.PRIM_RX = 0;
 		// 发送标识位 TX_DS/MAX_RT
 		WriteReg(STATUS, 0x30);
+
+		// 发送模式，0通道使用远程地址
+		WriteBuf(TX_ADDR, addr);
+		WriteBuf(RX_ADDR_P0, addr);
 	}
-	// 接收模式，0通道使用本地地址
-	// 发送模式，0通道使用远程地址
-	WriteBuf(RX_ADDR_P0, addr);
+	//debug_printf("SetMode addr="); addr.Show(true);
 	WriteReg(CONFIG, config.ToByte());
 
 	if(isReceive)
