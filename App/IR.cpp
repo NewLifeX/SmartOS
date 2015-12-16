@@ -25,28 +25,115 @@ bool IR::Close()
 	return true;
 }
 
-bool IR::Send(const Array& bs)
-{
-	return true;
-}
-
-void IR::OnSend(void* sender, void* param)
-{
-
-}
-
 typedef enum
 {
 	WaitRev,
 	Rev,
 	RevOver,
+	
+	Sending,
+	SendOver,
 }IRStat;
 IRStat Stat;
+
+ushort * SendP = NULL;
+ushort SendIndex;
+ushort SendBufLen = 0;
+bool test;
+
+bool IR::Send(const Array& bs)
+{
+	if(_Tim == NULL)
+	{
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
+	}
+	// _Tim->SetFrequency(50);		// 5Hz   20ms
+	// 使用一个字节  需要自行配置分频系数
+	_Tim->Prescaler	= 600;		// 分频 需要结果是 Period < 256 时能计数 20ms
+	
+	SendP = (ushort *)bs.GetBuffer();
+	SendBufLen	= bs.Length()/2;
+	
+	SendIndex = 0;
+	_Tim->Period	= SendP[0];
+	// 取消接收时候的配置
+	_Tim->Opened = true;
+	_Tim->Close();
+	
+	// 注册中断
+	_Tim->Register(OnSend,this);
+	// 重新配置
+	_Tim->SetCounter(0x00000000);
+	_Tim->Config();
+	
+	Stat = Sending;
+	debug_printf("Start %04X\r\n",SendP[0]);
+	
+	/*  调试看波形起始  
+	_Pwm->Open();
+	Sys.Sleep(20);
+	_Pwm->Close();
+	Sys.Sleep(20);	//*/
+	
+	test = true;
+	
+	// 开始  中断内处理数据
+	// _Pwm->Open();
+	_Tim->Open();
+	// 等待结束
+	TimeWheel tw(2);
+	while(!tw.Expired() && Stat != SendOver);
+	// 结束 不论是超时还是发送结束都关闭pwm和定时器
+	_Pwm->Close();
+	_Tim->Close();
+	// 清空使用的数据
+	SendIndex = 0;
+	SendP = NULL;
+	
+	return true;
+}
+
+void IR::OnSend(void* sender, void* param)
+{
+	TS("IR::OnSend");
+	auto ir = (IR*)param;
+	if(test)
+	{
+		ir->_Pwm->Open();
+		test = false;
+		return;
+	}
+	// PWM归位
+	ir->_Pwm->SetCounter(0x00000000);
+	// PWM变化
+	if(SendIndex % 2)
+		ir->_Pwm->Open();
+	else
+		ir->_Pwm->Close();
+	// 下一个周期
+	SendIndex++;
+	ir->_Tim->Period = SendP[SendIndex];
+	
+	//debug_printf("Index %d Data %04X\r\n",SendIndex,SendP[SendIndex]);
+	// 配置
+	ir->_Tim->Config();
+
+	if(SendIndex >= SendBufLen)
+	{
+		// 发送完毕
+		ir->_Pwm->Close();
+		ir->_Tim->Close();
+		Stat = SendOver;
+		debug_printf("SendOver SendIndex %d\r\n",SendIndex);
+		return;
+	}
+}
 
 int IR::Receive(Array& bs, int sTimeout)
 {
 	TS("IR::Receive");
-#ifdef STM32F0
+//#ifdef STM32F0
 	uint bufLen	= bs.Length();
 	uint DmaLen	= bufLen/2;
 	
@@ -175,5 +262,5 @@ int IR::Receive(Array& bs, int sTimeout)
 		bs.SetLength(0);
 		return -1;
 	}
-#endif
+//#endif
 }
