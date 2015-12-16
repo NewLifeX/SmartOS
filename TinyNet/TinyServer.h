@@ -23,7 +23,7 @@ public:
 
 	// 发送消息
 	bool Send(Message& msg) const;
-	bool Reply(Message& msg) const;
+	//bool Reply(Message& msg) const;
 	// 收到本地无线网消息
 	bool OnReceive(TinyMessage& msg);
 	// 分发外网过来的消息。返回值表示是否有响应

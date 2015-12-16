@@ -18,15 +18,11 @@ struct TinyConfig
 	byte		OfflineTime;// 离线阀值时间。秒
 	byte		SleepTime;	// 睡眠时间。秒
 	byte		PingTime;	// 心跳时间。秒
-	char		Name[16];	//设备名称
 
 	ushort		Kind;		// 类型
 	byte		Address;	// 分配得到的设备地址
 	byte		Server;		// 网关ID
-	byte		WirKind;	// 无线类型 
-	ushort		PanID;		//无线网段
 	byte		Channel;	// 通道
-	byte		SendMode;	//发送模式
 	ushort		Speed;		// 传输速度
 	byte		HardVer;	// 硬件版本
 	byte		SoftVer;	// 软件版本
@@ -34,10 +30,6 @@ struct TinyConfig
 	byte		Password[16]; // 通信密码
 	byte		ServerKey[16];	// 服务端组网密码，退网时使用。一般6字节
 
-
-	//初始化，各字段为0
-	//TinyConfig();
-	//const TinyConfig& Default();
 	byte  StartSet;
 
 	void LoadDefault();

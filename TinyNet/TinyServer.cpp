@@ -43,12 +43,14 @@ TinyServer::TinyServer(TinyController* control)
 
 bool TinyServer::Send(Message& msg) const
 {
-	return Control->Send(msg);
-}
+	// 附加目标物理地址
+	if(!msg.State)
+	{
+		auto dv	= FindDevice(((TinyMessage&)msg).Dest);
+		if(dv) msg.State	= dv->Mac;
+	}
 
-bool TinyServer::Reply(Message& msg) const
-{
-	return Control->Reply(msg);
+	return Control->Send(msg);
 }
 
 bool OnServerReceived(void* sender, Message& msg, void* param)
@@ -265,7 +267,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.HardID.Set(Sys.ID, 6);
 	dm.WriteMessage(rs);
 
-	Reply(rs);
+	Send(rs);
 
 	return true;
 }
@@ -310,7 +312,7 @@ bool TinyServer::ResetPassword(byte id) const
 
 	dm.WriteMessage(rs);
 
-	Reply(rs);
+	Send(rs);
 
 	return true;
 }
@@ -399,7 +401,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	pm.WriteTime(ms2, Sys.Seconds());
 	rs.Length	= ms2.Position();
 
-	Reply(rs);
+	Send(rs);
 
 	return true;
 }
@@ -546,16 +548,16 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 //设置zigbee的通道，2401无效
 void TinyServer::SetChannel(byte channel)
 {
-	if(!Control) return;	
-	auto zb = (ShunCom*)Control;		
+	if(!Control) return;
+	auto zb = (ShunCom*)Control;
 	if(!zb) return;
-	
+
 	if(zb->EnterConfig())
 	{
 	  zb->ShowConfig();
 	  zb->SetChannel(channel);
 	  zb->ExitConfig();
-	}	
+	}
 }
 void TinyServer::WriteCfg(TinyMessage& msg)
 {
@@ -563,21 +565,21 @@ void TinyServer::WriteCfg(TinyMessage& msg)
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-	
+
 	auto tc = TinyConfig::Current;
-	
+
 	if(offset < tc->StartSet)	return ;
-	
+
 	ByteArray cfg(tc, tc->Length);
 	uint adrr	= tc->StartSet;
 	uint len 	= ms.Remain();
-	
+
     if((adrr+len) > tc->Length) return;
 	Array bs(ms.Current(), len);
 	bs.CopyTo(&cfg[adrr],len);
-	
-	tc->Save();	
-	
+
+	tc->Save();
+
 	Sys.Reset();
 }
 

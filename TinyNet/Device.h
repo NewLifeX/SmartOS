@@ -30,11 +30,11 @@ public:
 	ushort	OfflineTime;// 离线阀值时间。秒
 	ushort	PingTime;	// 心跳时间。秒
 
+	byte	Mac[6];		// 无线物理地址
 	char	Name[16];	// 名称
 	byte	Pass[8];	// 通信密码
 
 	byte	Store[32];	// 数据存储区
-	byte	MAC[6];	
 
 	TinyConfig*	Cfg	= NULL;
 

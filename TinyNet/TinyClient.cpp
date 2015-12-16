@@ -21,7 +21,6 @@ TinyClient::TinyClient(TinyController* control)
 	Control 		= control;
 	Control->GetKey	= GetDeviceKey;
 
-
 	Opened		= false;
 	Joining		= false;
 	Server		= 0;

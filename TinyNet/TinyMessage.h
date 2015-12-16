@@ -101,6 +101,7 @@ public:
 	byte	Data[64];
 	ushort	Length;
 	ushort	Times;		// 发送次数
+	byte	Mac[6];		// 物理地址
 	//ulong	StartTime;	// 开始时间ms
 	ulong	EndTime;	// 过期时间ms
 	ulong	Next;		// 下一次重发时间ms

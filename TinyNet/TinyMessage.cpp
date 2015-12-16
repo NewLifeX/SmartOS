@@ -183,6 +183,7 @@ TinyMessage TinyMessage::CreateReply() const
 	msg.Code	= Code;
 	msg.Reply	= true;
 	msg.Seq		= Seq;
+	msg.State	= State;
 #if MSG_DEBUG
 	msg.Retry	= Retry;
 #endif
@@ -675,7 +676,11 @@ void TinyController::Loop()
 		node.Times++;
 
 		// 发送消息
-		Port->Write(Array(node.Data, node.Length));
+		Array bs(node.Data, node.Length);
+		if(node.Mac[0])
+			Port->Write(bs, &node.Mac[1]);
+		else
+			Port->Write(bs);
 
 		// 递增重试次数
 		flag->Retry++;
@@ -768,6 +773,13 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Stream ms(Data, ArrayLength(Data));
 	msg.Write(ms);
 	Length		= ms.Position();
+
+	Mac[0]		= 0;
+	if(msg.State)
+	{
+		Mac[0]	= 5;
+		memcpy(Mac, msg.State, 5);
+	}
 }
 
 /*================================ 环形队列 ================================*/

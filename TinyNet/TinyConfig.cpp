@@ -8,7 +8,7 @@ void TinyConfig::LoadDefault()
 	// 实际内存大小，减去头部大小
 	uint len = sizeof(this[0]) - ((int)&Length - (int)this);
 	memset(&Length, 0, len);
-	Length = len;
+	Length	= len;
 
 	Kind	= Sys.Code;
 	//Server	= 0x01;
