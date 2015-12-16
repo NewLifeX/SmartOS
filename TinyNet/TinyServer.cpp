@@ -6,6 +6,7 @@
 #include "PingMessage.h"
 
 #include "Config.h"
+#include "Drivers\ShunCom.h"
 
 #include "Security\MD5.h"
 
@@ -542,6 +543,43 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 
 	return true;
 }
+//设置zigbee的通道，2401无效
+void TinyServer::SetChannel(byte channel)
+{
+	if(!Control) return;	
+	auto zb = (ShunCom*)Control;		
+	if(!zb) return;
+	
+	if(zb->EnterConfig())
+	{
+	  zb->ShowConfig();
+	  zb->SetChannel(channel);
+	  zb->ExitConfig();
+	}	
+}
+void TinyServer::WriteCfg(TinyMessage& msg)
+{
+	if(msg.Reply||msg.Length < 2) return;
+	// 起始地址为7位压缩编码整数
+	Stream ms	= msg.ToStream();
+	uint offset = ms.ReadEncodeInt();
+	
+	auto tc = TinyConfig::Current;
+	
+	if(offset < tc->StartSet)	return ;
+	
+	ByteArray cfg(tc, tc->Length);
+	uint adrr	= tc->StartSet;
+	uint len 	= ms.Remain();
+	
+    if((adrr+len) > tc->Length) return;
+	Array bs(ms.Current(), len);
+	bs.CopyTo(&cfg[adrr],len);
+	
+	tc->Save();	
+	
+	Sys.Reset();
+}
 
 Device* TinyServer::FindDevice(byte id) const
 {
@@ -551,7 +589,6 @@ Device* TinyServer::FindDevice(byte id) const
 	{
 		if(id == Devices[i]->Address) return Devices[i];
 	}
-
 	return NULL;
 }
 

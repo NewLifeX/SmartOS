@@ -471,7 +471,11 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	// 记住服务端地址
 	Server = dm.Server;
 	Cfg->Server		= dm.Server;
-	Cfg->Channel	= dm.Channel;
+	if(Cfg->Channel != dm.Channel)
+	{
+	   //todo 设置zigbee 通道
+	}
+	Cfg->Channel	= dm.Channel;	
 	Cfg->Speed		= dm.Speed * 10;
 
 	// 服务端组网密码，退网使用

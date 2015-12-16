@@ -30,12 +30,8 @@ public:
 	ushort	OfflineTime;// 离线阀值时间。秒
 	ushort	PingTime;	// 心跳时间。秒
 
-	byte		WirKind;	// 无线类型 
-	ushort		PanID;		//无线网段
-	byte		Channel;	// 通道
-	String		Name;	// 名称
-	byte		Pass[8];	// 通信密码
-	byte		MAC[6];
+	char	Name[16];	// 名称
+	byte	Pass[8];	// 通信密码
 
 	byte	Store[32];	// 数据存储区
 

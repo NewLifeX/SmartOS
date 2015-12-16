@@ -42,10 +42,12 @@ public:
 	void SaveDevices() const;
 	void ClearDevices();
 
+	void SetChannel(byte channel);
+	
+	void WriteCfg(TinyMessage& msg);
 	bool LoadConfig();
 	void SaveConfig() const;
-	void ClearConfig();
-
+	void ClearConfig();	
 	// 当前设备
 	Device* Current;
 	bool Study;		//学习模式
