@@ -187,12 +187,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	TS("TinyServer::OnJoin");
 
-	if(!Study)
-	{
-		debug_printf("非学习模式禁止加入\r\n");
-		return false;
-	}
-
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	if(!id) return false;
@@ -207,6 +201,12 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	auto dv = FindDevice(dm.HardID);
 	if(!dv)
 	{
+		if(!Study)
+		{
+			debug_printf("非学习模式禁止加入\r\n");
+			return false;
+		}
+
 		// 从1开始派ID
 		id	= 1;
 		while(FindDevice(++id) != NULL && id < 0xFF);
