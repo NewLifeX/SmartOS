@@ -175,7 +175,6 @@ void ShunCom::ShowConfig()
 	
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom配置设备类型\r\n");
 	buf.Show();
 	Write(buf);	
 
