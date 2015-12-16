@@ -1,6 +1,7 @@
 ﻿#ifndef _DHT11_H_
 #define _DHT11_H_
 
+#include "Port.h"
 #include "Power.h"
 
 // 温湿度传感器

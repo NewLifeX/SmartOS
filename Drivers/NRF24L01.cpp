@@ -241,8 +241,6 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		// 拉低CE，由收发模式切换回来待机模式
 		_CE.OpenDrain = false;
 		_CE.Init(ce, true);
-		// 自动检测倒置。默认CE为高，需要倒置
-		//_CE.Set(ce);
 	}
     if(irq != P0)
     {
@@ -253,30 +251,16 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		Irq.Init(irq, true);
-        //Irq.Register(OnIRQ, this);
 		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
     }
 	if(power != P0) _Power.Set(power);
 
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
-
-	/*// 需要先打开SPI，否则后面可能不能及时得到读数
-	_spi->Open();
-#if !DEBUG
-	TimeWheel tw(0, 100);
-	while(!GetPower() && !tw.Expired()) Sys.Sleep(1);
-#endif
-
-	// 初始化前必须先关闭电源。因为系统可能是重启，而模块并没有重启，还保留着上一次的参数
-	//!!! 重大突破！当前版本程序，烧写后无法触发IRQ中断，但是重新上电以后可以中断，而Reset也不能触发。并且发现，只要模块带电，寄存器参数不会改变。
-	SetPowerMode(false);*/
 }
 
 NRF24L01::~NRF24L01()
 {
-    debug_printf("NRF24L01::~NRF24L01\r\n");
-
 	Sys.RemoveTask(_tidOpen);
 	Sys.RemoveTask(_tidRecv);
 
@@ -289,29 +273,24 @@ NRF24L01::~NRF24L01()
 	_spi = NULL;
 }
 
-// 向NRF的寄存器中写入一串数据
-byte NRF24L01::WriteBuf(byte reg, const byte* buf, byte bytes)
+byte NRF24L01::WriteBuf(byte reg, const Array& bs)
 {
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(WRITE_REG_NRF | reg);
-	for(byte i=0; i<bytes; i++)
-		_spi->Write(*buf++);
+	for(int i=0; i<bs.Length(); i++)
+		_spi->Write(bs[i]);
 
   	return status;
 }
 
-byte NRF24L01::ReadBuf(byte reg, byte* buf, byte bytes)
+byte NRF24L01::ReadBuf(byte reg, Array& bs)
 {
-#if RF_DEBUG
-	/*if(!GetMode())
-		debug_printf("NRF24L01::ReadBuf 只能接收模式下用。\r\n");*/
-#endif
 	SpiScope sc(_spi);
 
-	byte status = _spi->Write(reg);
-	for(byte i=0; i<bytes; i++)
-		buf[i] = _spi->Write(NOP); //从NRF24L01读取数据
+	byte status = _spi->Write(READ_REG_NRF | reg);
+	for(int i=0; i<bs.Length(); i++)
+		bs[i] = _spi->Write(NOP);
 
  	return status;
 }
@@ -322,19 +301,13 @@ byte NRF24L01::ReadReg(byte reg)
 	SpiScope sc(_spi);
 
   	 /*发送寄存器号*/
-	_spi->Write(reg);
+	_spi->Write(READ_REG_NRF | reg);
 	return _spi->Write(NOP);
 }
 
 // 向NRF特定的寄存器写入数据 NRF的命令+寄存器地址
 byte NRF24L01::WriteReg(byte reg, byte dat)
 {
-#if RF_DEBUG
-	/*if(!_CE.Read())
-	{
-		debug_printf("NRF24L01::WriteReg 0x%02X=0x%02X 只允许Shutdown、Standby、Idle-TX模式下操作\r\n", reg, dat);
-	}*/
-#endif
 	SpiScope sc(_spi);
 
 	byte status = _spi->Write(WRITE_REG_NRF | reg);
@@ -348,29 +321,30 @@ bool NRF24L01::Check(void)
 {
 	if(!Open()) return false;
 
-	byte buf[5]={0xA5,0xA5,0xA5,0xA5,0xA5};
-	byte buf1[5];
-	byte buf2[5];
+	byte buf[5]	= {0xA5,0xA5,0xA5,0xA5,0xA5};
+	Array src(buf, 5);
+	ByteArray bak(5);
+	ByteArray dst(5);
 
 	// 必须拉低CE后修改配置，然后再拉高
 	PortScope ps(&_CE);
 
 	//!!! 必须确保还原回原来的地址，否则会干扰系统的正常工作
 	// 读出旧有的地址
-	ReadBuf(TX_ADDR, buf1, 5);
+	ReadBuf(TX_ADDR, bak);
 
 	// 写入新的地址
-	WriteBuf(TX_ADDR, buf, 5);
+	WriteBuf(TX_ADDR, src);
 	// 读出写入的地址
-	ReadBuf(TX_ADDR, buf2, 5);
+	ReadBuf(TX_ADDR, dst);
 
 	// 写入旧有的地址
-	WriteBuf(TX_ADDR, buf1, 5);
+	WriteBuf(TX_ADDR, bak);
 
 	// 比较
-	for(byte i=0; i<5; i++)
+	for(int i=0; i<5; i++)
 	{
-		if(buf2[i] != buf[i]) return false; // 连接不正常
+		if(dst[i] != src[i]) return false; // 连接不正常
 	}
 
 	return true; // 成功连接
@@ -654,26 +628,26 @@ void NRF24L01::SetAddress()
 	TS("R24::SetAddress");
 
 	uint addrLen = ArrayLength(Address);
+	Array bs(Address, ArrayLength(Address));
 
-	WriteBuf(TX_ADDR, Address, addrLen);
-	WriteBuf(RX_ADDR_P0, Address, addrLen);		// 写接收端0地址
-	WriteReg(SETUP_AW, addrLen - 2);			// 设置地址宽度
+	WriteBuf(TX_ADDR,		bs);
+	WriteBuf(RX_ADDR_P0,	bs);		// 写接收端0地址
+	WriteReg(SETUP_AW,		addrLen - 2);			// 设置地址宽度
 
+	ByteArray addr(Address1, addrLen, true);
 	byte bits = AddrBits >> 1;
 	if(bits & 0x01)
 	{
-		WriteBuf(RX_ADDR_P1, Address1, addrLen);	// 写接收端1地址
+		WriteBuf(RX_ADDR_P1, addr);	// 写接收端1地址
 	}
 	// 写其它4个接收端的地址
-	byte addr[ArrayLength(Address1)];
-	memcpy(addr, Address1, addrLen);
 	for(int i = 0; i < 4; i++)
 	{
 		bits >>= 1;
 		if(bits & 0x01)
 		{
 			addr[0] = Addr2_5[i];
-			WriteBuf(RX_ADDR_P2 + i, addr, addrLen);
+			WriteBuf(RX_ADDR_P2 + i, addr);
 		}
 	}
 
@@ -846,7 +820,8 @@ uint NRF24L01::OnRead(Array& bs)
 				debug_printf("NRF24L01::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
 				rs = len;
 			}
-			ReadBuf(RD_RX_PLOAD, (byte*)bs.GetBuffer(), rs); // 读取数据
+			bs.SetLength(rs);
+			ReadBuf(RD_RX_PLOAD, bs); // 读取数据
 		}
 	}
 
@@ -857,7 +832,6 @@ uint NRF24L01::OnRead(Array& bs)
 
 	if(rs && Led) Led->Write(1000);
 
-	bs.SetLength(rs);
 	// 微网指令特殊处理长度
 	if(FixData)	FixData(&bs);
 
@@ -878,9 +852,11 @@ bool NRF24L01::OnWrite(const Array& bs)
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
 	uint len = bs.Length();
+	if(PayloadWidth && len > PayloadWidth) debug_printf("%d > %d \r\n", len, PayloadWidth);
 	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
 	if(PayloadWidth > 0) len = PayloadWidth;
-	WriteBuf(cmd, (const byte*)bs.GetBuffer(), len);
+	Array bs2(bs.GetBuffer(), len);
+	WriteBuf(cmd, bs2);
 
 	// 进入TX，维持一段时间
 	//_CE = false;

@@ -66,8 +66,8 @@ private:
     InputPort	Irq;
 	OutputPort	_Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
 
-    byte WriteBuf(byte reg, const byte *pBuf, byte bytes);
-    byte ReadBuf(byte reg, byte *pBuf, byte bytes);
+    byte WriteBuf(byte reg, const Array& bs);
+    byte ReadBuf(byte reg, Array& bs);
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 
