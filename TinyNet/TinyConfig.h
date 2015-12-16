@@ -25,7 +25,7 @@ struct TinyConfig
 	byte		Server;		// 网关ID
 	ushort		PanID;		//无线网段
 	byte		Channel;	// 通道
-	byte		SendMode	//发送模式
+	byte		SendMode;	//发送模式
 	ushort		Speed;		// 传输速度
 	byte		HardVer;	// 硬件版本
 	byte		SoftVer;	// 软件版本
