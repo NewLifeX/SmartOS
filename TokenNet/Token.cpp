@@ -223,6 +223,8 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf.FixData	= Fix2401;
 	nrf.Led		= led;
 
+	nrf.Master	= true;
+
 	return &nrf;
 }
 
@@ -233,9 +235,9 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.Power.Set(power);
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
-	zb.Init(&sp, rst);		
+	zb.Init(&sp, rst);
 	zb.Led	= led;
-	
+
 	return &zb;
 }
 

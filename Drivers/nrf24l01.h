@@ -32,7 +32,7 @@ public:
 	bool GetPower();	// 获取当前电源状态
 	bool SetPowerMode(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式
-    bool SetMode(bool isReceive);	// 切换收发模式，不包含参数设定
+    bool SetMode(bool isReceive, const Array& addr);	// 切换收发模式，不包含参数设定
 	void SetAddress();	// 设置地址
 
 	// 电源等级变更（如进入低功耗模式）时调用
@@ -47,7 +47,7 @@ public:
 
 	virtual string ToString() { return "R24"; }
 
-protected:
+private:
 	virtual bool OnOpen();
     virtual void OnClose();
 
@@ -55,10 +55,11 @@ protected:
 	virtual uint OnRead(Array& bs);
 
 	// 引发数据到达事件
-	virtual uint OnReceive(Array& bs, void* param);
+	//virtual uint OnReceive(Array& bs, void* param);
 	virtual bool OnWriteEx(const Array& bs, void* opt);
+	
+	bool SendTo(const Array& bs, const Array& addr);
 
-private:
     Spi*		_spi;
     OutputPort	_CE;
     InputPort	Irq;

@@ -533,7 +533,7 @@ bool NRF24L01::GetMode()
 
 // 设置收发模式。
 // 因为CE拉高需要延迟的原因，整个函数大概耗时185us，如果不延迟，大概55us
-bool NRF24L01::SetMode(bool isReceive)
+bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 {
 	TS("R24::SetMode");
 
@@ -558,7 +558,7 @@ bool NRF24L01::SetMode(bool isReceive)
 		WriteReg(STATUS, 0x40);
 
 		// 接收模式，0通道使用本地地址
-		WriteBuf(RX_ADDR_P0, Array(Local, 5));
+		WriteBuf(RX_ADDR_P0, addr);
 	}
 	else // 发送模式
 	{
@@ -629,7 +629,7 @@ void NRF24L01::SetAddress()
 	if(Master)
 	{
 		bits	= 0x07;
-		WriteBuf(RX_ADDR_P1, ByteArray((byte)0xFF, 5));
+		WriteBuf(RX_ADDR_P2, ByteArray((byte)0xFF, 5));
 	}
 
 	// 使能接收端的自动应答和接收通道
@@ -765,7 +765,7 @@ void NRF24L01::OnClose()
 uint NRF24L01::OnRead(Array& bs)
 {
 	// 进入接收模式
-	if(!SetMode(true)) return false;
+	if(!SetMode(true, Array(Local, 5))) return false;
 
 	TS("NRF24L01::OnRead");
 
@@ -818,12 +818,12 @@ uint NRF24L01::OnRead(Array& bs)
 }
 
 // 向NRF的发送缓冲区中写入数据
-bool NRF24L01::OnWrite(const Array& bs)
+bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 {
-	TS("R24::OnWrite");
+	TS("R24::SendTo");
 
 	// 进入发送模式
-	if(!SetMode(false)) return false;
+	if(!SetMode(false, addr)) return false;
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
 	//_CE = true;
@@ -889,20 +889,25 @@ bool NRF24L01::OnWrite(const Array& bs)
 	//_CE = true;
 	WriteReg(FLUSH_TX, NOP);
 
-	SetMode(true);	// 发送完成以后进入接收模式
+	SetMode(true, Array(Local, 5));	// 发送完成以后进入接收模式
 
 	return rs;
 }
 
-// 引发数据到达事件
+/*// 引发数据到达事件
 uint NRF24L01::OnReceive(Array& bs, void* param)
 {
 	if(!Master) return ITransport::OnReceive(bs, param);
 
 	// 取出地址
-	byte* addr	= bs.GetBuffer();
-	Array bs2(addr + 5, bs.Length() - 5);
-	return ITransport::OnReceive(bs2, addr);
+	//byte* addr	= bs.GetBuffer();
+	//Array bs2(addr + 5, bs.Length() - 5);
+	return ITransport::OnReceive(bs, param);
+}*/
+
+bool NRF24L01::OnWrite(const Array& bs)
+{
+	return SendTo(bs, Array(Remote, 5));
 }
 
 bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
@@ -910,11 +915,7 @@ bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
 	if(!Master || !opt) return OnWrite(bs);
 
 	// 加入地址
-	ByteArray bs2;
-	bs2.Copy(opt, 5);
-	bs2.Copy(bs, 5);
-
-	return OnWrite(bs2);
+	return SendTo(bs, Array(opt, 5));
 }
 
 void NRF24L01::AddError()
