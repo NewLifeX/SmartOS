@@ -159,7 +159,14 @@ void ShunCom::ExitConfig()
 	ShunComMessage msg(0x0041);
 	msg.Length	= 1;
 	msg.Data[0]	= 0x00;
-	Write(msg.ToArray());
+	MemoryStream ms;
+	
+	auto buf = msg.ToArray(ms);
+	debug_printf("ShunCom退出配置\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
+	
 }
 
 // 读取配置信息
@@ -182,7 +189,7 @@ void ShunCom::SetDevice(byte kind)
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0087, kind);
 	MemoryStream ms;
-	auto buf=msg.ToArray(ms);
+	auto buf = msg.ToArray(ms);
 	debug_printf("ShunCom配置设备类型\r\n");
 	buf.Show();
 	Write(buf);	
@@ -195,7 +202,13 @@ void ShunCom::SetChannel(byte chn)
 	ShunComMessage msg(0x0921);
 	//todo 这里需要查资料核对左移公式
 	msg.Set(0x0084, (uint)(0x01 << chn));
-	Write(msg.ToArray());msg.ToArray().Show();
+	
+	MemoryStream ms;
+	auto buf=msg.ToArray(ms);
+	debug_printf("ShunCom配置无线频点\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
 }
 
 // 进入配置PanID,同一网络PanID必须相同
@@ -203,7 +216,13 @@ void ShunCom::SetPanID(ushort id)
 {	
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0083, id);
-	Write(msg.ToArray());msg.ToArray().Show();
+	
+	MemoryStream ms;
+	auto buf = msg.ToArray(ms);
+	debug_printf("ShunCom配置PanID\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
 }
 
 // 设置发送模式00为广播、01为主从模式、02为点对点模式
@@ -211,7 +230,13 @@ void ShunCom::SetSend(byte mode)
 {	
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0403, mode);
-	Write(msg.ToArray());msg.ToArray().Show();
+	
+	MemoryStream ms;
+	auto buf = msg.ToArray(ms);
+	debug_printf("ShunCom配置设备主从模式\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
 }
 
 ShunComMessage::ShunComMessage(ushort code)
