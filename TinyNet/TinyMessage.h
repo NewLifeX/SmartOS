@@ -17,8 +17,8 @@ public:
 	byte Dest;		// 目的地址
 	byte Src;		// 源地址
 	byte _Code;		// 功能代码
-	byte Retry:3;	// 重发次数。
-	byte TTL:1;		// 路由TTL。最多3次转发
+	byte Retry:4;	// 重发次数。
+	//byte TTL:1;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误

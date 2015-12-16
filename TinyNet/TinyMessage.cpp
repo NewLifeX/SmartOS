@@ -13,8 +13,8 @@
 
 /*================================ 微网消息 ================================*/
 typedef struct{
-	byte Retry:3;	// 重发次数。
-	byte TTL:1;		// 路由TTL。最多3次转发
+	byte Retry:4;	// 重发次数。
+	//byte TTL:1;		// 路由TTL。最多3次转发
 	byte NoAck:1;	// 是否不需要确认包
 	byte Ack:1;		// 确认包
 	byte _Error:1;	// 是否错误
@@ -75,7 +75,7 @@ bool TinyMessage::Read(Stream& ms)
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs		= p[3];
 	auto flag	= (TFlags*)&p[3];
-	flag->TTL	= 0;
+	//flag->TTL	= 0;
 	flag->Retry	= 0;
 	// 连续的，可以直接计算Crc16
 	Crc = Crc::Hash16(Array(p, HeaderSize + Length));
@@ -110,7 +110,7 @@ void TinyMessage::Write(Stream& ms) const
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs		= buf[3];
 	auto flag	= (TFlags*)&buf[3];
-	flag->TTL	= 0;
+	//flag->TTL	= 0;
 	flag->Retry	= 0;
 
 	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + len));
