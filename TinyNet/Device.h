@@ -34,6 +34,7 @@ public:
 	byte	Pass[8];	// 通信密码
 
 	byte	Store[32];	// 数据存储区
+	byte	MAC[6];	
 
 	TinyConfig*	Cfg	= NULL;
 
