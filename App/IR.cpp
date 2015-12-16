@@ -43,6 +43,7 @@ bool test;
 
 bool IR::Send(const Array& bs)
 {
+#ifdef STM32F0
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	if(_Tim == NULL)
 	{
@@ -90,13 +91,14 @@ bool IR::Send(const Array& bs)
 	// 清空使用的数据
 	SendIndex = 0;
 	SendP = NULL;
-	
+#endif
 	return true;
 }
 
 void IR::OnSend(void* sender, void* param)
 {
 	TS("IR::OnSend");
+#ifdef STM32F0
 	auto ir = (IR*)param;
 	if(test)	// 避开打开定时器立马中断问题
 	{
@@ -131,12 +133,13 @@ void IR::OnSend(void* sender, void* param)
 		debug_printf("SendOver SendIndex %d\r\n",SendIndex);
 		return;
 	}
+#endif
 }
 
 int IR::Receive(Array& bs, int sTimeout)
 {
 	TS("IR::Receive");
-//#ifdef STM32F0
+#ifdef STM32F0
 	uint bufLen	= bs.Length();
 	uint DmaLen	= bufLen/2;
 	
@@ -268,5 +271,7 @@ int IR::Receive(Array& bs, int sTimeout)
 		bs.SetLength(0);
 		return -1;
 	}
-//#endif
+#else
+	return -1;
+#endif
 }
