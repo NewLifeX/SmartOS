@@ -18,6 +18,7 @@ bool DiscoverMessage::Read(Stream& ms)
 		Type		= ms.ReadUInt16();
 		HardID		= ms.ReadArray();
 		Version		= ms.ReadUInt16();
+		WirKind		= ms.ReadByte();
 		PanID		= ms.ReadUInt16();
 		SendMode	= ms.ReadByte();
 		Channel		= ms.ReadByte();
@@ -39,6 +40,7 @@ void DiscoverMessage::Write(Stream& ms)
 		ms.Write(Type);
 		ms.WriteArray(HardID);
 		ms.Write(Version);
+		ms.Write(WirKind);
 		ms.Write(PanID);
 		ms.Write(SendMode);		
 		ms.Write(Channel);

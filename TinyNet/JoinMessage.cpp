@@ -8,6 +8,8 @@ JoinMessage::JoinMessage() : HardID(0x10), Password(0x08)
 	TranID	= 0;
 
 	Server	= 0;
+	PanID	= 0;
+	SendMode= 0;
 	Channel	= 0;
 	Speed	= 0;
 	Address	= 0;
@@ -22,10 +24,15 @@ bool JoinMessage::Read(Stream& ms)
 		Kind	= ms.ReadUInt16();
 		TranID	= ms.ReadUInt32();
 		HardID	= ms.ReadArray();
+		
+		ms.ReadString().CopyTo(Name, ArrayLength(Name));
+	
+		
 	}
 	else
 	{
 		Server	= ms.ReadByte();
+		WirKind	= ms.ReadByte();
 		Channel	= ms.ReadByte();
 		Speed	= ms.ReadByte();
 		Address	= ms.ReadByte();
@@ -46,10 +53,14 @@ void JoinMessage::Write(Stream& ms)
 		ms.Write(Kind);
 		ms.Write(TranID);
 		ms.WriteArray(HardID);
+		ms.WriteArray(CArray(Name));
 	}
 	else
 	{
 		ms.Write(Server);
+		ms.Write(WirKind);
+		ms.Write(PanID);
+		ms.Write(SendMode);
 		ms.Write(Channel);
 		ms.Write(Speed);
 		ms.Write(Address);
@@ -74,6 +85,9 @@ String& JoinMessage::ToStr(String& str) const
 	{
 		str += "#";
 		str = str + " Server=" + Server;
+		str = str + " WirKind=" + WirKind;
+		str.Append("PanID=").Append(PanID, 16, 4);
+		str = str + " SendMode=" + SendMode;
 		str = str + " Channel=" + Channel;
 		str = str + " Speed=" + Speed;
 		str = str + " Address=" + Address;
