@@ -215,10 +215,12 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	static NRF24L01 nrf;
 	nrf.Init(&spi, ce, irq, power);
 
+	auto tc	= TinyConfig::Current;
 	nrf.AutoAnswer	= false;
 	nrf.PayloadWidth= 32;
-	nrf.Channel		= TinyConfig::Current->Channel;
-	nrf.Speed		= TinyConfig::Current->Speed;
+	//nrf.Channel		= tc->Channel;
+	nrf.Channel		= 120;
+	nrf.Speed		= tc->Speed;
 
 	nrf.FixData	= Fix2401;
 	nrf.Led		= led;
