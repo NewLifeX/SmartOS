@@ -12,7 +12,7 @@ String& Object::ToStr(String& str) const
 	const char* name = typeid(*this).name();
 	while(*name >= '0' && *name <= '9') name++;
 
-	str.Set(name);
+	str.Set(name, 0);
 
 	return str;
 }
@@ -247,7 +247,7 @@ int Array::CopyTo(void* data, int len, int index) const
 	assert_param2(data, "CopyTo数据不能为空指针");
 
 	// 数据长度可能不足
-	if(_Length - index < len || len == 0) len = _Length - index;
+	if(_Length - index < len || len <= 0) len = _Length - index;
 	if(len <= 0) return 0;
 
 	// 拷贝数据

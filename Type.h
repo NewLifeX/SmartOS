@@ -106,11 +106,11 @@ public:
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 	bool SetLength(int length, bool bak = false);
 	// 设置数组元素为指定值，自动扩容
-	bool SetItem(const void* data, int index = 0, int count = 0);
+	bool SetItem(const void* data, int index, int count);
 	// 设置数组。直接使用指针，不拷贝数据
-	bool Set(void* data, int len = 0);
+	bool Set(void* data, int len);
 	// 设置数组。直接使用指针，不拷贝数据
-	bool Set(const void* data, int len = 0);
+	bool Set(const void* data, int len);
 	// 复制数组。深度克隆，拷贝数据，自动扩容
 	int Copy(const void* data, int len = 0, int index = 0);
 	// 复制数组。深度克隆，拷贝数据
@@ -131,7 +131,7 @@ public:
 	friend bool operator!=(const Array& bs1, const Array& bs2);
 protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
-	bool CheckCapacity(int len, int bak = 0);
+	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
 };
 
@@ -194,7 +194,7 @@ public:
 	using Array::Set;
 
 	// 设置数组元素为指定值，自动扩容
-	bool Set(const T& item, int index = 0, int count = 0)
+	bool Set(const T& item, int index, int count)
 	{
 		return SetItem(&item, index, count);
 	}
@@ -268,7 +268,7 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const ByteArray& arr) : TArray(arr.Length()) { Copy(arr); }
+	ByteArray(const ByteArray& arr) : TArray(arr.Length()) { Copy(arr, 0); }
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
@@ -315,7 +315,7 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	String(void* str, int len = 0) : TArray(0) { Set(str, len); }
 	String(const void* str, int len = 0) : TArray(0) { Set(str, len); }
-	String(const String& str) : TArray(str.Length()) { Copy(str); }
+	String(const String& str) : TArray(str.Length()) { Copy(str, 0); }
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;

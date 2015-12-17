@@ -238,8 +238,8 @@ const Array Device::GetPass()	const	{ return Array(Pass, ArrayLength(Pass)); }
 const Array Device::GetStore()	const	{ return Array(Store, ArrayLength(Store)); }
 const Array Device::GetConfig()	const	{ return Array(Cfg, sizeof(Cfg[0])); }
 
-void Device::SetHardID(const Array& arr) { arr.CopyTo(HardID, ArrayLength(HardID)); }
-void Device::SetName(const Array& arr) { arr.CopyTo(Name, ArrayLength(Name)); }
-void Device::SetPass(const Array& arr) { arr.CopyTo(Pass, ArrayLength(Pass)); }
-void Device::SetStore(const Array& arr) { arr.CopyTo(Store, ArrayLength(Store)); }
-void Device::SetConfig(const Array& arr) { arr.CopyTo(Cfg, sizeof(Cfg[0])); }
+void Device::SetHardID(const Array& arr)	{ arr.CopyTo(HardID, ArrayLength(HardID)); }
+void Device::SetName(const Array& arr)		{ arr.CopyTo(Name, ArrayLength(Name)); }
+void Device::SetPass(const Array& arr)		{ arr.CopyTo(Pass, ArrayLength(Pass)); }
+void Device::SetStore(const Array& arr)		{ arr.CopyTo(Store, ArrayLength(Store)); }
+void Device::SetConfig(const Array& arr)	{ arr.CopyTo(Cfg, sizeof(Cfg[0])); }

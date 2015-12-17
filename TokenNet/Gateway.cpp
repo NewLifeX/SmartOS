@@ -64,8 +64,8 @@ void Gateway::Start()
 		dv->Kind		= Sys.Code;
 		dv->LastTime	= Sys.Seconds();
 
-		dv->GetHardID().Copy(Sys.ID, 16);
-		dv->GetName().Copy(Sys.Name, 0);
+		dv->SetHardID(Array(Sys.ID, 16));
+		dv->SetName(Array(Sys.Name, 0));
 
 		Server->Devices.Push(dv);
 		Server->SaveDevices();
