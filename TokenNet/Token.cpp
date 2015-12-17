@@ -241,15 +241,11 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.AddrLength = 2;
 	zb.Led = led;	
 	if(zb.EnterConfig())
-	{	
-		auto tc = TinyConfig::Current;
-		
+	{			
 		zb.ShowConfig();
-		zb.SetDevice(0x00);
-		zb.SetChannel(tc->Channel);		
+		zb.SetDevice(0x00);	
 		zb.SetSend(0x01);
 		zb.PrintSrc(true);
-		zb.EraConfig();
 		zb.ExitConfig();
 	}	
 	return &zb;
