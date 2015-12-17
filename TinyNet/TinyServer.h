@@ -44,7 +44,7 @@ public:
 
 	void SetChannel(byte channel);
 	
-	void WriteCfg(TinyMessage& msg);
+	void WriteCfg(TinyMessage& msg)const;
 	bool LoadConfig();
 	void SaveConfig() const;
 	void ClearConfig();	

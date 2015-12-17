@@ -43,6 +43,13 @@ TinyServer::TinyServer(TinyController* control)
 
 bool TinyServer::Send(Message& msg) const
 {
+     auto mg =  (TinyMessage&) msg;
+	 
+	 //如果目标地址为往关地址
+	 if(mg.Dest == Cfg->Address)
+	 {
+		 WriteCfg(mg);
+	 }
 	// 附加目标物理地址
 	//if(!msg.State)
 	{
@@ -579,9 +586,9 @@ void TinyServer::SetChannel(byte channel)
 	  zb->ExitConfig();
 	}
 }
-void TinyServer::WriteCfg(TinyMessage& msg)
+void TinyServer::WriteCfg(TinyMessage& msg)const
 {
-	if(msg.Reply||msg.Length < 2) return;
+    if(msg.Code != 0x16||msg.Reply||msg.Length < 2) return;
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
