@@ -38,7 +38,7 @@ bool JoinMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void JoinMessage::Write(Stream& ms)
+void JoinMessage::Write(Stream& ms) const
 {
 	if(!Reply)
 	{

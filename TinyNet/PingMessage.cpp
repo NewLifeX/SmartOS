@@ -15,7 +15,7 @@ bool PingMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void PingMessage::Write(Stream& ms)
+void PingMessage::Write(Stream& ms) const
 {
 }
 

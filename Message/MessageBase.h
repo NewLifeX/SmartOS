@@ -17,10 +17,10 @@ public:
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms) = 0;
 	// 把消息写入数据流中
-	virtual void Write(Stream& ms) = 0;
+	virtual void Write(Stream& ms) const = 0;
 
 	virtual bool ReadMessage(const Message& msg);
-	virtual void WriteMessage(Message& msg);
+	virtual void WriteMessage(Message& msg) const;
 };
 
 #endif

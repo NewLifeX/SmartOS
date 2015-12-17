@@ -16,7 +16,7 @@ public:
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中
-	virtual void Write(Stream& ms);
+	virtual void Write(Stream& ms) const;
 
 	// 0x01 主数据
 	void ReadData(Stream& ms, Array& bs) const;

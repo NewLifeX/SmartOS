@@ -21,7 +21,7 @@ bool DeviceMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void DeviceMessage::Write(Stream& ms)
+void DeviceMessage::Write(Stream& ms) const
 {
 	ms.WriteArray(HardID);
 
@@ -29,8 +29,9 @@ void DeviceMessage::Write(Stream& ms)
 	ms.WriteArray(MD5::Hash(Key));
 
 	ulong now = Sys.Ms();
-	Salt.Set((byte*)&now, 8);
-	ms.WriteArray(Salt);
+	//Salt.Set((byte*)&now, 8);
+	//ms.WriteArray(Salt);
+	ms.WriteArray(Array(&now, 8));
 
 	ms.Write(Local.Address.ToArray());
 	ms.Write((ushort)Local.Port);

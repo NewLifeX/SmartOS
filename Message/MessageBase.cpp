@@ -16,7 +16,7 @@ bool MessageBase::ReadMessage(const Message& msg)
 	return Read(ms);
 }
 
-void MessageBase::WriteMessage(Message& msg)
+void MessageBase::WriteMessage(Message& msg) const
 {
 	TS("MessageBase::WriteMessage");
 

@@ -58,7 +58,7 @@ bool HelloMessage::Read(Stream& ms)
 }
 
 // 把消息写入数据流中
-void HelloMessage::Write(Stream& ms)
+void HelloMessage::Write(Stream& ms) const
 {
 	ms.Write(Version);
 
