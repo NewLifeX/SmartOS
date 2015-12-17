@@ -158,14 +158,29 @@ void ShunCom::ExitConfig()
 	ShunComMessage msg(0x0041);
 	msg.Length	= 1;
 	msg.Data[0]	= 0x00;
-	MemoryStream ms;
 	
+	MemoryStream ms;	
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom退出配置\r\n");
+	debug_printf("ShunComs重启生效\r\n");
 	buf.Show();
 	Write(buf);	
     debug_printf("\r\n"); 	
 	
+}
+
+void ShunCom::EraConfig()
+{
+	if(!Open()) return;
+	
+	ShunComMessage msg(0x0921);
+	msg.Set(0x0003,(byte)02);
+	
+	MemoryStream ms;	
+	auto buf = msg.ToArray(ms);
+	debug_printf("ShunCom擦除组网信息\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
 }
 
 // 读取配置信息

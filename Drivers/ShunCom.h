@@ -33,6 +33,7 @@ public:
 	void ExitConfig();
 	// 读取配置信息
 	void ShowConfig();
+	void EraConfig();	
 	// 设置设备的类型：00代表中心、01代表路由，02代表终端
 	void SetDevice(byte kind);
 	// 设置无线频点，注意大小端，ShunCom是小端存储
