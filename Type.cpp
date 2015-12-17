@@ -338,6 +338,23 @@ bool operator!=(const Array& bs1, const Array& bs2)
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
 }
 
+/*void* Array::Set(void* data, byte dat, int count)
+{
+	return memset(data, dat, count);
+}
+
+void* Array::Copy(void* dst, const void* src, int count)
+{
+	if(!dst || !src || dst == src || !count) return dst;
+
+	// 如果区域重叠，要用memmove
+	if(dst < src && dst + count > src
+	|| dst > src && src + count > dst)
+		return memmove(dst, src, count);
+	else
+		return memcpy(dst, src, count);
+}*/
+
 /******************************** ByteArray ********************************/
 
 ByteArray::ByteArray(const void* data, int length, bool copy) : TArray(0)

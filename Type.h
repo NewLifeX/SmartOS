@@ -129,6 +129,9 @@ public:
 
 	friend bool operator==(const Array& bs1, const Array& bs2);
 	friend bool operator!=(const Array& bs1, const Array& bs2);
+
+	/*static void* Set(void* data, byte dat, int count);
+	static void* Copy(void* dst, const void* src, int count);*/
 protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);
