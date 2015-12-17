@@ -122,7 +122,35 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 		zb->SetDevice(Kind);
 		zb->SetChannel(tc->Channel);		
 		zb->SetSend(0x01);
-		zb->PrintSrc(true);
+		ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg,byte Kind, IDataPort* led)
+{
+	auto sp = new SerialPort(index, baudRate);
+	auto zb = new ShunCom();
+
+	sp->Rx.SetCapacity(512);
+
+	zb->Power.Set(power);
+	zb->Sleep.Init(slp, true);
+	zb->Config.Init(cfg, true);
+	zb->Init(sp, rst);
+	if(zb.EnterConfig())
+	{	
+		auto tc = TinyConfig::Current;		
+		zb.ShowConfig();
+		zb.SetDevice(Kind);
+		zb.SetChannel(tc->Channel);		
+		zb.SetSend(0x01);
+		zb.PrintSrc(false);
+		zb.EraConfig();
+		zb.ExitConfig();
+	}
+	//zb->ShowConfig();
+
+	zb->Led	= led;
+
+	return zb;
+}
+
 		zb->EraConfig();
 		zb->ExitConfig();
 	}
