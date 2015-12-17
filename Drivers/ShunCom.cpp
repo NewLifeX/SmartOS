@@ -107,23 +107,31 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 {
 	if(Led) Led->Write(1000);
 
-	if(!AddrLength) return ITransport::OnReceive(bs, param);
+	if(!AddrLength) 
+     return ITransport::OnReceive(bs, param);
 
 	// 取出地址
 	byte* addr	= bs.GetBuffer();
 	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
+	debug_printf("zigbee接收\r\n");
+	bs2.Show(true);
+	
 	return ITransport::OnReceive(bs2, addr);
 }
 
 bool ShunCom::OnWriteEx(const Array& bs, void* opt)
 {
 	if(!AddrLength || !opt) return OnWrite(bs);
-
+	debug_printf("zigbee发送\r\n");
+	bs.Show(true);
 	// 加入地址
 	ByteArray bs2;
 	bs2.Copy(opt, AddrLength);
-	bs2.Copy(bs, AddrLength);
-
+	debug_printf("zigbee发送地址\r\n");
+	bs2.Show();
+	
+	bs2.Copy(bs, AddrLength);	
+	bs2.Show();
 	return OnWrite(bs2);
 }
 
@@ -166,6 +174,25 @@ void ShunCom::ExitConfig()
 	Write(buf);	
     debug_printf("\r\n"); 	
 	
+}
+void ShunCom::PrintSrc(bool flag)
+{
+	ShunComMessage msg(0x0921);
+	if(flag)
+	{
+		msg.Set(0x040E,(byte)2);
+	}
+	else
+	{
+		msg.Set(0x040E,(byte)1);
+	}		
+	MemoryStream ms;
+	auto buf = msg.ToArray(ms);
+	debug_printf("ShunCom设置源地址\r\n");
+	buf.Show();
+	Write(buf);	
+    debug_printf("\r\n"); 	
+
 }
 
 void ShunCom::EraConfig()
