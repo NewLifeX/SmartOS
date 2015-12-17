@@ -74,15 +74,6 @@ public:
 // 数组清零，固定长度
 #define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
 
-template<typename T>
-class IArray
-{
-public:
-	virtual int Length() const = 0;
-	virtual void SetAt(int i, const T& item) = 0;
-	virtual T& operator[](int i) const = 0;
-};
-
 // 数组。包括指针和最大长度，支持实际长度
 class Array : public Object
 {
@@ -159,15 +150,9 @@ protected:
 按照指针来源可分为两大用法：
 1，内部分配。随时可以扩容，对象拷贝时共用空间
 2，外部指针。此时认为只是封装，不允许扩容
-
-数组拷贝：
-内=>内 共用数据区
-内=>外 共用数据区
-外=>内 仅复制指针
-外=>外 仅复制指针
 */
 template<typename T, int ArraySize = 0x40>
-class TArray : public Array, public IArray<T>
+class TArray : public Array
 {
 protected:
 	T		Arr[ArraySize];	// 内部缓冲区
