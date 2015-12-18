@@ -246,8 +246,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		auto st = (byte*)msg.State;
 		if(st)
 		{
-			byte sum = st[0] && st[1] && st[2] && st[3] && st[4];
-			//if(sum == 0 || sum == 0xFF) st = NULL;
+			//byte sum = st[0] && st[1] && st[2] && st[3] && st[4];
+			int sum = (int)st[0] + st[1] + st[2] + st[3] + st[4];
+			if(sum == 0 || sum == 0xFF * 5) st = NULL;
 		}
 		if(!st)
 			memcpy(dv->Mac, dv->HardID, 6);
