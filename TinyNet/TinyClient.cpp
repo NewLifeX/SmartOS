@@ -405,7 +405,7 @@ void GetDeviceKey(byte id, Array& key, void* param)
 {
 	TS("TinyClient::GetDeviceKey");
 	//debug_printf("微网客户端获取密钥");
-
+	return;
 	auto client = (TinyClient*)param;
 	if(Sys.Version < 0xFFFF) return;
 
@@ -574,6 +574,8 @@ void TinyClient::Ping()
 		auto tc	= TinyConfig::Current;
 		memset(tc->Mac, 0, 5);
 		tc->Save();
+		Server = 0;
+		
 
 		Sys.Reset();
 		//Server		= 0;
