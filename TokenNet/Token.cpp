@@ -243,9 +243,12 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	if(zb.EnterConfig())
 	{			
 		zb.ShowConfig();
-		zb.SetDevice(0x00);	
+		zb.SetDevice(0x00);
+		//zb.SetPanID(0x6766);
+		zb.SetChannel(0x0F);
 		zb.SetSend(0x01);
 		zb.PrintSrc(true);
+		//zb.EraConfig();
 		zb.ExitConfig();
 	}	
 	return &zb;
