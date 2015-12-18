@@ -569,7 +569,7 @@ bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 		WriteBuf(TX_ADDR, addr);
 		WriteBuf(RX_ADDR_P0, addr);
 	}
-	debug_printf("SetMode addr="); addr.Show(true);
+	//debug_printf("SetMode addr="); addr.Show(true);
 	WriteReg(CONFIG, config.ToByte());
 
 	if(isReceive)
@@ -825,10 +825,10 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	if(!SetMode(false, addr)) return false;
 
 #if RF_DEBUG
-	debug_printf("R24::SendTo ");
+	/*debug_printf("R24::SendTo ");
 	addr.Show(false);
 	debug_printf(" [%d]=", bs.Length());
-	bs.Show(true);
+	bs.Show(true);*/
 #endif
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
