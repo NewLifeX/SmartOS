@@ -578,7 +578,7 @@ void TinyClient::Ping()
 		
 
 		Sys.Reset();
-		//Server		= 0;
+		Server		= 0;
 		//Password.SetLength(0);
 
 		//return;
