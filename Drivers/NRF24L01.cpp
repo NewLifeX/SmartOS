@@ -591,10 +591,10 @@ bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 	_CE = false;
 
 	// 进入发射模式等一会
-	//if(!isReceive) Sys.Delay(200);
+	if(!isReceive) Sys.Delay(200);
 
 	// 如果电源还是关闭，则表示2401已经断开，准备重新初始化
-	/*mode = ReadReg(CONFIG);
+	mode = ReadReg(CONFIG);
 	config.Init(mode);
 	if(mode == 0xFF || !config.PWR_UP)
 	{
@@ -607,7 +607,7 @@ bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 		else
 			_tidOpen = Sys.AddTask(AutoOpenTask, this, 5000, 5000, "R24热插拔");
 		return false;
-	}*/
+	}
 
 	return true;
 }
