@@ -353,8 +353,9 @@ bool NRF24L01::Config()
 {
 	TS("R24::Config");
 
-	if(Channel > 125) Channel = 125;
+	if(Channel > 125) Channel	= 125;
 	if(Speed != 250 && Speed != 1000 && Speed != 2000) Speed = 250;
+	if(DynPayload)	AutoAnswer	= true;
 
 #if RF_DEBUG
 	debug_printf("NRF24L01::Config\r\n");
