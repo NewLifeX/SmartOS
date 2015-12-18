@@ -44,7 +44,7 @@ TinyServer::TinyServer(TinyController* control)
 bool TinyServer::Send(Message& msg) const
 {
      auto mg =  (TinyMessage&) msg;
-	 
+
 	 //如果目标地址为往关地址
 	 if(mg.Dest == Cfg->Address)
 	 {
@@ -382,14 +382,9 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == NULL) return false;
 
-	// 准备一条响应指令
-	/*TinyMessage rs;
-	rs.Code = msg.Code;
-	rs.Dest = msg.Src;
-	rs.Seq	= msg.Seq;*/
 	auto rs	= msg.CreateReply();
-
 	auto ms	= msg.ToStream();
+
 	PingMessage pm;
 	pm.MaxSize	= Control->Port->MaxSize - TinyMessage::MinSize;
 	// 子操作码
@@ -462,8 +457,8 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	ms.SetPosition(0);
 
 	// 计算还有多少数据可读
-	auto bs	= dv.GetStore();
-	int remain = bs.Length() - offset;
+	auto bs		= dv.GetStore();
+	int remain	= bs.Length() - offset;
 
 	while(remain<0)
 	{
@@ -575,7 +570,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	}
 	msg.Length	= ms.Position();
 	msg.Reply	= true;
-	msg.Show();
+	//msg.Show();
 
 	return true;
 }
@@ -583,6 +578,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 void TinyServer::SetChannel(byte channel)
 {
 	if(!Control) return;
+
 	auto zb = (ShunCom*)Control;
 	if(!zb) return;
 
@@ -593,9 +589,11 @@ void TinyServer::SetChannel(byte channel)
 	  zb->ExitConfig();
 	}
 }
+
 void TinyServer::WriteCfg(TinyMessage& msg)const
 {
     if(msg.Code != 0x16||msg.Reply||msg.Length < 2) return;
+
 	// 起始地址为7位压缩编码整数
 	Stream ms	= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
@@ -630,10 +628,9 @@ Device* TinyServer::FindDevice(byte id) const
 
 void GetDeviceKey(byte scr,Array& key,void* param)
 {
-	TS("TinyServer::GetDeviceKey");
+	/*TS("TinyServer::GetDeviceKey");
 
 	auto server = (TinyServer*)param;
-	return;
 
 	auto dv = server->FindDevice(scr);
 	if(!dv) return;
@@ -642,7 +639,7 @@ void GetDeviceKey(byte scr,Array& key,void* param)
 	if(dv->Version < 0x00AA) return;
 
 	// debug_printf("%d 设备获取密匙\n",scr);
-	key.Copy(dv->Pass, 8);
+	key.Copy(dv->Pass, 8);*/
 }
 
 Device* TinyServer::FindDevice(const Array& hardid) const

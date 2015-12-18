@@ -9,8 +9,11 @@
 TinyClient* TinyClient::Current	= NULL;
 
 static void TinyClientTask(void* param);
-static void TinyClientReset();
+//static void TinyClientReset();
 static void GetDeviceKey(byte id, Array& key, void* param);
+
+static bool ReadData(Stream& ms, const Array& bs, uint offset, uint len);
+static bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -111,10 +114,6 @@ bool TinyClient::Reply(TinyMessage& msg)
 
 bool TinyClient::OnReceive(TinyMessage& msg)
 {
-	// 不处理来自网关以外的消息
-	//if(Server == 0 || Server != msg.Dest) return true;
-	//debug_printf("源地址: 0x%08X 网关地址:0x%08X \r\n",Server, msg.Src);
-
 	// 不是组网消息。不是被组网网关消息，不受其它消息设备控制.
 	if(msg.Code != 0x01 && Server != msg.Src) return true;
 
@@ -159,71 +158,26 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
+	auto ms		= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
-
-	if(ReadCfg(offset,ms)) return;
-
 	uint len	= ms.ReadEncodeInt();
 
 	// 准备响应数据
-	TinyMessage rs;
-	rs.Code		= msg.Code;
-	Stream ms2	= rs.ToStream();
+	auto rs		= msg.CreateReply();
+	auto ms2	= rs.ToStream();
 
-	ByteArray& bs = Store.Data;
+	bool rt	= true;
+	if(offset < 64)
+		rt	= ReadData(ms2, Store.Data, offset, len);
+	else if(offset < 128)
+		rt	= ReadData(ms2, Array(Cfg, Cfg->Length), offset  - 64, len);
 
-	int remain = bs.Length() - offset;
-	if(remain < 0)
-	{
-		rs.Error = true;
-		ms2.Write((byte)2);
-		ms2.WriteEncodeInt(offset);
-		ms2.WriteEncodeInt(len);
-	}
-	else
-	{
-		ms2.WriteEncodeInt(offset);
-		if(len > remain) len = remain;
-		if(len > 0) ms2.Write(bs.GetBuffer(), offset, len);
-	}
+	rs.Error	= !rt;
 	rs.Length	= ms2.Position();
 
 	Reply(rs);
-
-	//Report(rs);//接受写入一次，刷新服务端
 }
 
-bool TinyClient::ReadCfg(uint offset,	Stream ms)
-{
-	if(offset < Cfg->StartSet) return false;
-
-	//响应一条数据
-	TinyMessage rs;
-	rs.Code		= 0x15;
-	Stream ms2	= rs.ToStream();
-
-	ByteArray cfg(Cfg, Cfg->Length);
-	uint adrr=offset-Cfg->StartSet;
-	uint len = ms.Remain();
-
-    if((adrr+len)>Cfg->Length)
-	{
-		rs.Error = true;
-		ms2.Write((byte)2);
-		ms2.WriteEncodeInt(offset);
-		ms2.WriteEncodeInt(len);
-	}
-	else
-	{
-		ms2.WriteEncodeInt(offset);
-		if(len > 0) ms2.Write(cfg.GetBuffer(), offset, len);
-	}
-	rs.Length	= ms2.Position();
-
-	Reply(rs);
-	return true;
-}
 /*
 请求：1起始 + N数据
 响应：1起始 + 1大小
@@ -235,80 +189,26 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	if(msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
+	auto ms		= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	if(WriteCfg(offset,ms)) return;
 	// 准备响应数据
-	TinyMessage rs;
-	rs.Code		= msg.Code;
-	Stream ms2	= rs.ToStream();
+	auto rs		= msg.CreateReply();
+	auto ms2	= rs.ToStream();
 
-	// 剩余可写字节数
-	uint len = ms.Remain();
-	int remain = Store.Data.Length() - offset;
-	if(remain < 0)
+	bool rt	= true;
+	if(offset < 64)
+		rt	= WriteData(ms2, Store.Data, offset, ms);
+	else if(offset < 128)
 	{
-		rs.Error = true;
-		ms2.Write((byte)2);
-		ms2.WriteEncodeInt(offset);
-		ms2.WriteEncodeInt(len);
-
+		Array cs(Cfg, Cfg->Length);
+		rt	= WriteData(ms2, cs, offset  - 64, ms);
 	}
-	else
-	{
-		ms2.WriteEncodeInt(offset);
 
-		if(len > remain) len = remain;
-		Array bs(ms.Current(), len);
-		int count = Store.Write(offset, bs);
-		ms2.WriteEncodeInt(count);
-	}
+	rs.Error	= !rt;
 	rs.Length	= ms2.Position();
 
 	Reply(rs);
-}
-
-bool TinyClient::WriteCfg(uint offset,	Stream ms)
-{
-	if(offset < Cfg->StartSet) return false;
-
-	//响应一条数据
-	TinyMessage rs;
-	rs.Code		= 0x16;
-	Stream ms2	= rs.ToStream();
-
-	ByteArray cfg(Cfg, Cfg->Length);
-	uint adrr=offset-Cfg->StartSet;
-	uint len = ms.Remain();
-    if((adrr+len)>Cfg->Length)
-   	{
-   		rs.Error = true;
-   		ms2.Write((byte)2);
-   		ms2.WriteEncodeInt(offset);
-   		ms2.WriteEncodeInt(len);
-		Reply(rs);
-		return  true;//操作成功的意思
-   	}
-
-	Array bs(ms.Current(), len);
-	bs.CopyTo(&cfg[adrr],len);
-
-	Cfg->Save();
-
-	ms2.WriteEncodeInt(offset);
-	ms2.WriteEncodeInt(len);
-	rs.Length	= ms2.Position();
-
-	Reply(rs);
-
-	TinyClientReset();
-	//Sys.Reset();
-
-	//修改配置区，重启系统
-	//debug_printf("修改后的设备ID 0x%08X ,偏移量 %d\r\n", Cfg->Address,offset);
-	//cfg.Show();
-	return true;
 }
 
 void TinyClient::Report(Message& msg)
@@ -393,24 +293,24 @@ void TinyClientTask(void* param)
 	if(client->Server != 0) client->Ping();
 }
 
-void TinyClientReset()
+/*void TinyClientReset()
 {
 	//上报一条信息，让网关得一修改
 	//Join();
 
 	Sys.Reset();
-}
+}*/
 
 void GetDeviceKey(byte id, Array& key, void* param)
 {
-	TS("TinyClient::GetDeviceKey");
+	/*TS("TinyClient::GetDeviceKey");
 	//debug_printf("微网客户端获取密钥");
-	return;
+
 	auto client = (TinyClient*)param;
 	if(Sys.Version < 0xFFFF) return;
 
 	//key = client->Password;
-	key.Copy(client->Password, 8);
+	key.Copy(client->Password, 8);*/
 }
 
 // 发送发现消息，告诉大家我在这
@@ -550,6 +450,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 
     Sys.Sleep(3000);
     Sys.Reset();
+
 	return true;
 }
 
@@ -575,7 +476,7 @@ void TinyClient::Ping()
 		memset(tc->Mac, 0, 5);
 		tc->Clear();
 		Server = 0;
-		
+
 
 		Sys.Reset();
 		Server	= 0;
@@ -638,4 +539,56 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	}
 
 	return true;
+}
+
+// 读取数据
+bool ReadData(Stream& ms, const Array& bs, uint offset, uint len)
+{
+	TS("DataMessage::ReadData");
+
+	int remain	= bs.Length() - offset;
+	if(remain < 0)
+	{
+		ms.Write((byte)2);
+		ms.WriteEncodeInt(offset);
+		ms.WriteEncodeInt(len);
+		
+		return false;
+	}
+	else
+	{
+		ms.WriteEncodeInt(offset);
+		if(len > remain) len = remain;
+		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
+		
+		return true;
+	}
+}
+
+// 写入数据
+bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds)
+{
+	TS("DataMessage::WriteData");
+
+	// 剩余可写字节数
+	uint len	= ds.Remain();
+	int remain	= bs.Length() - offset;
+	if(remain < 0)
+	{
+		ms.Write((byte)2);
+		ms.WriteEncodeInt(offset);
+		ms.WriteEncodeInt(len);
+		
+		return false;
+	}
+	else
+	{
+		ms.WriteEncodeInt(offset);
+
+		if(len > remain) len = remain;
+		bs.Copy(ds.Current(), len);
+		ms.WriteEncodeInt(len);
+		
+		return true;
+	}
 }

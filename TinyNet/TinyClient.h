@@ -53,16 +53,15 @@ public:
 	void ReportPing0x02(Stream& ms);
 	void ReportPing0x03(Stream& ms);
 
-	uint		NextReport;	// 下次上报偏移，0不动
+	uint NextReport;	// 下次上报偏移，0不动
 	void ReportAsync(uint offset);
 
 private:
-	uint		_TaskID;
+	uint _TaskID;
 
 private:
 	void OnWrite(const TinyMessage& msg);
 	void OnRead(const TinyMessage& msg);
-
 
 // 常用系统级消息
 public:
@@ -72,8 +71,6 @@ public:
 	bool OnJoin(const TinyMessage& msg);
 	void DisJoin();
 	bool OnDisjoin(const TinyMessage& msg);
-	bool WriteCfg(uint offset,	Stream ms);
-	bool ReadCfg(uint offset,	Stream ms);
 
 	// 心跳
 	void Ping();
