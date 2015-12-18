@@ -568,7 +568,7 @@ bool NRF24L01::SetMode(bool isReceive, const Array& addr)
 		WriteBuf(TX_ADDR, addr);
 		WriteBuf(RX_ADDR_P0, addr);
 	}
-	//debug_printf("SetMode addr="); addr.Show(true);
+	debug_printf("SetMode addr="); addr.Show(true);
 	WriteReg(CONFIG, config.ToByte());
 
 	if(isReceive)
