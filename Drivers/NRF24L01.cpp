@@ -256,6 +256,8 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 
     // 必须先赋值，后面WriteReg需要用到
     _spi = spi;
+
+	Rx.SetCapacity(256);
 }
 
 NRF24L01::~NRF24L01()
@@ -778,6 +780,8 @@ uint NRF24L01::OnRead(Array& bs)
 		RF_STATUS st;
 		st.Init(Status);
 		//if(!st.RX_DR || st.RX_P_NO == 0x07) return 0;
+		// 这里不能判断，否则会引起误判
+		//if(st.RX_P_NO == 7) return 0;
 		// 单个2401模块独立工作时，也会收到乱七八糟的数据，通过判断RX_P_NO可以过滤掉一部分
 		if(st.RX_DR)
 		{
@@ -801,12 +805,16 @@ uint NRF24L01::OnRead(Array& bs)
 	// 清除中断标志
 	// 接收标识位 RX_DR
 	WriteReg(STATUS, 0x40);
-	WriteReg(FLUSH_RX, NOP);
+	//WriteReg(FLUSH_RX, NOP);
 
 	if(rs && Led) Led->Write(1000);
 
 	// 微网指令特殊处理长度
-	if(FixData)	FixData(&bs);
+	if(FixData)
+	{
+		FixData(&bs);
+		rs = bs.Length();
+	}
 
 #if RF_DEBUG
 	/*debug_printf("R24::Read [%d]=", bs.Length());
@@ -945,8 +953,7 @@ void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
 	auto nrf = (NRF24L01*)param;
 	if(!nrf) return;
 
-	// 马上调度任务
-	Sys.SetTask(nrf->_tidRecv, true, 0);
+	nrf->OnIRQ();
 }
 
 void NRF24L01::OnIRQ()
@@ -974,23 +981,25 @@ void NRF24L01::OnIRQ()
 
 	if(st.RX_DR)
 	{
-		ByteArray bs;
-		uint len = Read(bs);
-		if(len)
+		//debug_printf("st.RX_P_NO=%d \r\n", st.RX_P_NO);
+		while(st.RX_P_NO < 7)
 		{
+			ByteArray bs;
+			uint len = Read(bs);
+			//debug_printf("Queue Rx %d %d \r\n", len, Rx.Length());
+			if(!len) break;
+
 			// 读取相应通道的地址
 			ByteArray addr(5);
-			byte num = st.RX_P_NO;
-			ReadBuf(RX_ADDR_P0 + num, addr);
+			ReadBuf(RX_ADDR_P0 + st.RX_P_NO, addr);
 
-			len = OnReceive(bs, addr.GetBuffer());
+			// 长度、地址、数据
+			Rx.Push(len);
+			Rx.Write(addr);
+			Rx.Write(bs);
 
-			// 如果有返回，说明有数据要回复出去
-			if(len)
-			{
-				bs.SetLength(len, true);
-				Write(bs);
-			}
+			// 循环读取数据
+			st.Init(ReadReg(STATUS));
 		}
 	}
 	// RX_FIFO 缓冲区满
@@ -1002,6 +1011,44 @@ void NRF24L01::OnIRQ()
 		// 接收标识位 RX_DR
 		WriteReg(STATUS, 0x40);
 	}
+
+	// 马上调度任务
+	Sys.SetTask(_tidRecv, true, 0);
+}
+
+void NRF24L01::Process()
+{
+	TS("R24::Process");
+
+	while(!Rx.Empty())
+	{
+		uint len = Rx.Pop();
+		ByteArray addr(5);
+		Rx.Read(addr);
+		ByteArray bs(len);
+		Rx.Read(bs);
+
+		/*debug_printf("R24::Process [%d] ", len);
+		addr.Show(false);
+		debug_printf(" ");
+		bs.Show(true);*/
+		len = OnReceive(bs, addr.GetBuffer());
+
+		// 如果有返回，说明有数据要回复出去
+		if(len)
+		{
+			bs.SetLength(len, true);
+			Write(bs);
+		}
+	}
+}
+
+void NRF24L01::ReceiveTask(void* param)
+{
+	assert_ptr(param);
+
+	auto nrf = (NRF24L01*)param;
+	if(nrf->Opened) nrf->Process();
 }
 
 void NRF24L01::ShowStatus()
@@ -1048,13 +1095,4 @@ void NRF24L01::ShowStatus()
 	if(fifo.TX_FULL)  debug_printf(" TX FIFO 寄存器满");
 	if(fifo.TX_REUSE) debug_printf(" 当CE位高电平状态时不断发送上一数据包");
 	debug_printf("\r\n");
-}
-
-void NRF24L01::ReceiveTask(void* param)
-{
-	assert_ptr(param);
-
-	auto nrf = (NRF24L01*)param;
-	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
-	if(nrf->Opened) nrf->OnIRQ();
 }

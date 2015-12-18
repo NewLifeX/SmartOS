@@ -5,6 +5,7 @@
 #include "Spi.h"
 #include "Net\ITransport.h"
 #include "Power.h"
+#include "Queue.h"
 #include "Message\DataStore.h"
 
 // NRF24L01类
@@ -22,6 +23,8 @@ public:
 	bool Master;		// 是否主节点。
 
 	ushort	Error;		// 错误次数，超过最大错误次数则自动重置
+
+	Queue	Rx;			// 接收缓冲区。
 
 	NRF24L01();
     virtual ~NRF24L01();
@@ -57,7 +60,7 @@ private:
 	// 引发数据到达事件
 	//virtual uint OnReceive(Array& bs, void* param);
 	virtual bool OnWriteEx(const Array& bs, void* opt);
-	
+
 	bool SendTo(const Array& bs, const Array& addr);
 
     Spi*		_spi;
@@ -78,6 +81,7 @@ private:
 	uint _tidRecv;
 	static void OnIRQ(InputPort* port, bool down, void* param);
 	void OnIRQ();
+	void Process();
 };
 
 #endif
