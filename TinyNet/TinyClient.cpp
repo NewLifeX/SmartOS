@@ -166,9 +166,13 @@ void TinyClient::OnRead(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(offset < 64)
-		rt	= DataMessage::ReadData(ms2, Store.Data, offset, len);
+		rt	= DataMessage::ReadData(ms2, Store, offset, len);
 	else if(offset < 128)
-		rt	= DataMessage::ReadData(ms2, Array(Cfg, Cfg->Length), offset  - 64, len);
+	{
+		DataStore ds;
+		ds.Data.Set(Cfg, Cfg->Length);
+		rt	= DataMessage::ReadData(ms2, ds, offset  - 64, len);
+	}
 
 	rs.Error	= !rt;
 	rs.Length	= ms2.Position();
@@ -196,11 +200,12 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(offset < 64)
-		rt	= DataMessage::WriteData(ms2, Store.Data, offset, ms);
+		rt	= DataMessage::WriteData(ms2, Store, offset, ms);
 	else if(offset < 128)
 	{
-		Array cs(Cfg, Cfg->Length);
-		rt	= DataMessage::WriteData(ms2, cs, offset  - 64, ms);
+		DataStore ds;
+		ds.Data.Set(Cfg, Cfg->Length);
+		rt	= DataMessage::WriteData(ms2, ds, offset  - 64, ms);
 	}
 
 	rs.Error	= !rt;

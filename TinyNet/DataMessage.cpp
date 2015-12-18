@@ -1,11 +1,11 @@
 ﻿#include "DataMessage.h"
 
 // 读取数据
-bool ReadData(Stream& ms, const Array& bs, uint offset, uint len)
+bool DataMessage::ReadData(Stream& ms, const DataStore& ds, uint offset, uint len)
 {
 	TS("DataMessage::ReadData");
 
-	int remain	= bs.Length() - offset;
+	int remain	= ds.Data.Length() - offset;
 	if(remain < 0)
 	{
 		ms.Write((byte)2);
@@ -18,20 +18,20 @@ bool ReadData(Stream& ms, const Array& bs, uint offset, uint len)
 	{
 		ms.WriteEncodeInt(offset);
 		if(len > remain) len = remain;
-		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
+		if(len > 0) ms.Write(ds.Data.GetBuffer(), offset, len);
 		
 		return true;
 	}
 }
 
 // 写入数据
-bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds)
+bool DataMessage::WriteData(Stream& ms, DataStore& ds, uint offset, Stream& ms2)
 {
 	TS("DataMessage::WriteData");
 
 	// 剩余可写字节数
-	uint len	= ds.Remain();
-	int remain	= bs.Length() - offset;
+	uint len	= ms2.Remain();
+	int remain	= ds.Data.Length() - offset;
 	if(remain < 0)
 	{
 		ms.Write((byte)2);
@@ -45,7 +45,7 @@ bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds)
 		ms.WriteEncodeInt(offset);
 
 		if(len > remain) len = remain;
-		bs.Copy(ds.Current(), len);
+		ds.Write(offset, Array(ms2.Current(), len));
 		ms.WriteEncodeInt(len);
 		
 		return true;
