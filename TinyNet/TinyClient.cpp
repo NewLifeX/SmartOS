@@ -573,12 +573,12 @@ void TinyClient::Ping()
 
 		auto tc	= TinyConfig::Current;
 		memset(tc->Mac, 0, 5);
-		tc->Save();
+		tc->Clear();
 		Server = 0;
 		
 
 		Sys.Reset();
-		Server		= 0;
+		Server	= 0;
 		//Password.SetLength(0);
 
 		//return;
