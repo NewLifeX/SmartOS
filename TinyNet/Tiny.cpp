@@ -8,6 +8,7 @@
 #include "Drivers\ShunCom.h"
 #include "Net\Zigbee.h"
 #include "TinyNet\TinyClient.h"
+static ShunCom* Zigbee;
 
 uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 {
@@ -102,9 +103,12 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 		zb->ShowConfig();
 		zb->SetDevice(0x02);
 		zb->SetSend(0x01);
+		//zb->SetPanID(0x6766);
+		//zb->EraConfig();
 		zb->ExitConfig();
 	}	
 	zb->Led	= led;
+	Zigbee	= zb;
 
 	return zb;
 }
@@ -153,7 +157,7 @@ void* InitConfig(void* data, uint size)
 }
 
 void ClearConfig()
-{
+{		
 	auto tc = TinyConfig::Current;
 	if(tc) tc->Clear();
 
