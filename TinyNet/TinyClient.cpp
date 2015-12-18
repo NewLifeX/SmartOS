@@ -5,15 +5,13 @@
 
 #include "JoinMessage.h"
 #include "PingMessage.h"
+#include "DataMessage.h"
 
 TinyClient* TinyClient::Current	= NULL;
 
 static void TinyClientTask(void* param);
 //static void TinyClientReset();
 static void GetDeviceKey(byte id, Array& key, void* param);
-
-static bool ReadData(Stream& ms, const Array& bs, uint offset, uint len);
-static bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -168,9 +166,9 @@ void TinyClient::OnRead(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(offset < 64)
-		rt	= ReadData(ms2, Store.Data, offset, len);
+		rt	= DataMessage::ReadData(ms2, Store.Data, offset, len);
 	else if(offset < 128)
-		rt	= ReadData(ms2, Array(Cfg, Cfg->Length), offset  - 64, len);
+		rt	= DataMessage::ReadData(ms2, Array(Cfg, Cfg->Length), offset  - 64, len);
 
 	rs.Error	= !rt;
 	rs.Length	= ms2.Position();
@@ -198,11 +196,11 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(offset < 64)
-		rt	= WriteData(ms2, Store.Data, offset, ms);
+		rt	= DataMessage::WriteData(ms2, Store.Data, offset, ms);
 	else if(offset < 128)
 	{
 		Array cs(Cfg, Cfg->Length);
-		rt	= WriteData(ms2, cs, offset  - 64, ms);
+		rt	= DataMessage::WriteData(ms2, cs, offset  - 64, ms);
 	}
 
 	rs.Error	= !rt;
@@ -539,56 +537,4 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	}
 
 	return true;
-}
-
-// 读取数据
-bool ReadData(Stream& ms, const Array& bs, uint offset, uint len)
-{
-	TS("DataMessage::ReadData");
-
-	int remain	= bs.Length() - offset;
-	if(remain < 0)
-	{
-		ms.Write((byte)2);
-		ms.WriteEncodeInt(offset);
-		ms.WriteEncodeInt(len);
-		
-		return false;
-	}
-	else
-	{
-		ms.WriteEncodeInt(offset);
-		if(len > remain) len = remain;
-		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
-		
-		return true;
-	}
-}
-
-// 写入数据
-bool WriteData(Stream& ms, Array& bs, uint offset, Stream& ds)
-{
-	TS("DataMessage::WriteData");
-
-	// 剩余可写字节数
-	uint len	= ds.Remain();
-	int remain	= bs.Length() - offset;
-	if(remain < 0)
-	{
-		ms.Write((byte)2);
-		ms.WriteEncodeInt(offset);
-		ms.WriteEncodeInt(len);
-		
-		return false;
-	}
-	else
-	{
-		ms.WriteEncodeInt(offset);
-
-		if(len > remain) len = remain;
-		bs.Copy(ds.Current(), len);
-		ms.WriteEncodeInt(len);
-		
-		return true;
-	}
 }

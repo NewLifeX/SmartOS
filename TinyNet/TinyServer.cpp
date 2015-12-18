@@ -4,6 +4,7 @@
 
 #include "JoinMessage.h"
 #include "PingMessage.h"
+#include "DataMessage.h"
 
 #include "Config.h"
 #include "Drivers\ShunCom.h"
@@ -489,7 +490,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	return true;
 }
 
-// 读取响应，服务端趁机缓存一份。定时上报也是采用该指令。
+// 读取响应，服务端趁机缓存一份。
 bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 {
 	if(!msg.Reply || msg.Error) return false;
@@ -497,14 +498,11 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 
 	TS("TinyServer::OnReadReply");
 
-	//debug_printf("响应读取写入数据 \r\n") ;
-	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
+	auto ms		= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
 
-	auto bs	= dv.GetStore();
-	int remain = bs.Capacity() - offset;
-
+	auto bs		= dv.GetStore();
+	int remain	= bs.Capacity() - offset;
 	if(remain < 0) return false;
 
 	uint len = ms.Remain();
@@ -574,6 +572,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 
 	return true;
 }
+
 //设置zigbee的通道，2401无效
 void TinyServer::SetChannel(byte channel)
 {
