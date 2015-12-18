@@ -71,8 +71,8 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	nrf->Init(spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Current;
-	nrf->AutoAnswer		= false;
-	nrf->PayloadWidth	= 32;
+	nrf->AutoAnswer		= true;
+	nrf->DynPayload		= true;
 	//nrf->Channel		= tc->Channel;
 	nrf->Channel		= 120;
 	nrf->Speed			= tc->Speed;

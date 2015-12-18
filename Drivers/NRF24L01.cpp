@@ -214,7 +214,7 @@ NRF24L01::NRF24L01()
 	memcpy(Local, (byte*)Sys.ID, ArrayLength(Local));
 	Channel		= 0;	// 默认通道0
 
-	PayloadWidth= 32;
+	DynPayload	= true;
 	AutoAnswer	= true;
 	Speed		= 250;
 	RadioPower	= 0xFF;
@@ -384,12 +384,8 @@ bool NRF24L01::Config()
 			break;
 		}
 	}
-	debug_printf("    传输速率: ");
-	if(Speed >= 1000)
-		debug_printf("%dMbps\r\n", Speed/1000);
-	else
-		debug_printf("%dkbps\r\n", Speed);
-	debug_printf("    负载大小: %d字节\r\n", PayloadWidth);
+	debug_printf("    传输速率: %dkbps\r\n", Speed);
+	debug_printf("    负载大小: %d字节\r\n", DynPayload ? 0 : 32);
 	debug_printf("    自动应答: %s\r\n", AutoAnswer ? "true" : "false");
 	if(AutoAnswer)
 		debug_printf("    重试周期: %dus + 86us\r\n", 500);
@@ -634,46 +630,31 @@ void NRF24L01::SetAddress()
 	WriteBuf(RX_ADDR_P0, Array(Local, 5));
 
 	// 主节点再监听一个全0的地址
-	byte bits	= 0x03;
-	if(Master)
-	{
-		bits	= 0x07;
-		WriteBuf(RX_ADDR_P1, ByteArray((byte)0x00, 5));
-	}
-	else
-	{
-		WriteBuf(RX_ADDR_P1, ByteArray((byte)0xFF, 5));
-	}
+	ByteArray bs((byte)0xFF, 5);
+	if(Master) bs.Set(0x00, 0, 5);
+	WriteBuf(RX_ADDR_P1, bs);
+
+	// 设置接收端的数据宽度
+	WriteReg(RX_PW_P0, 32);
+	WriteReg(RX_PW_P1, 32);
 
 	// 使能接收端的自动应答和接收通道
-	WriteReg(EN_AA, AutoAnswer ? 0x01 : 0);
-	WriteReg(EN_RXADDR, bits);
+	WriteReg(EN_AA, AutoAnswer ? 0x03 : 0);
+	WriteReg(EN_RXADDR, 0x03);
 
 	// 开启隐藏寄存器
 	WriteReg(ACTIVATE, 0x73);
 
 	RF_FEATURE ft;
 	ft.Init(ReadReg(FEATURE));
-
-	// 设置接收端的数据宽度
-	if(PayloadWidth > 0)
-	{
-		WriteReg(RX_PW_P0, PayloadWidth);
-		WriteReg(RX_PW_P1, PayloadWidth);
-	}
-	else
-	{
-		// 动态负载
-		WriteReg(DYNPD, 0x3F);	// 打开6个通道的动态负载
-
-		ft.DPL = 1;			// 使能动态负载长度
-	}
-
-	if(!AutoAnswer)
-		ft.DYN_ACK = 1;	// 使能命令TX_PAYLOAD_NOACK
+	ft.DPL = DynPayload;		// 使能动态负载长度
+	ft.DYN_ACK = !AutoAnswer;	// 使能命令TX_PAYLOAD_NOACK
 	//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
 
 	WriteReg(FEATURE, ft.ToByte());
+
+	// 动态负载
+	if(DynPayload) WriteReg(DYNPD, 0x03);	// 打开6个通道的动态负载
 }
 
 void ShowStatusTask(void* param)
@@ -801,10 +782,8 @@ uint NRF24L01::OnRead(Array& bs)
 			// 清除中断标志
 			//WriteReg(STATUS, Status);
 
-			if(PayloadWidth > 0)
-				rs = PayloadWidth;
-			else
-				rs = ReadReg(RX_PL_WID);
+			rs	= 32;
+			if(DynPayload) rs = ReadReg(RX_PL_WID);
 
 			uint len = bs.Capacity();
 			if(rs > len)
@@ -844,9 +823,10 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
 	// 检查要发送数据的长度
 	uint len = bs.Length();
-	if(PayloadWidth && len > PayloadWidth) debug_printf("%d > %d \r\n", len, PayloadWidth);
-	assert_param(PayloadWidth == 0 || len <= PayloadWidth);
-	if(PayloadWidth > 0) len = PayloadWidth;
+	byte pw	= 32;
+	if(pw && len > pw) debug_printf("%d > %d \r\n", len, pw);
+	assert_param(pw == 0 || len <= pw);
+	if(pw > 0) len = pw;
 	Array bs2(bs.GetBuffer(), len);
 	WriteBuf(cmd, bs2);
 

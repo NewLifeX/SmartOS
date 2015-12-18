@@ -15,7 +15,7 @@ public:
 	byte Local[5];		// 本地地址
 	byte Remote[5];		// 远程地址
 
-	byte PayloadWidth;	// 负载数据宽度，默认32字节。0表示使用动态负载
+	bool DynPayload;	// 动态负载
 	bool AutoAnswer;	// 自动应答，默认启用
 	ushort Speed;		// 射频数据率，单位kbps，默认250kbps，可选1000kbps/2000kbps，速度越低传输越远
 	byte RadioPower;	// 发射功率。共8档，最高0x07代表7dBm最大功率
