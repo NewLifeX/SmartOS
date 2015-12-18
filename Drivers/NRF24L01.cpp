@@ -4,6 +4,7 @@
 #include "NRF24L01.h"
 
 #define RF_DEBUG DEBUG
+//#define RF_DEBUG 0
 
 /*
 模式		PRIM_RX	CE		FIFO状态
@@ -789,7 +790,7 @@ uint NRF24L01::OnRead(Array& bs)
 			uint len = bs.Capacity();
 			if(rs > len)
 			{
-				debug_printf("NRF24L01::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
+				debug_printf("R24::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
 				rs = len;
 			}
 			bs.SetLength(rs);
@@ -807,6 +808,11 @@ uint NRF24L01::OnRead(Array& bs)
 	// 微网指令特殊处理长度
 	if(FixData)	FixData(&bs);
 
+#if RF_DEBUG
+	debug_printf("R24::Read [%d]=", bs.Length());
+	bs.Show(true);
+#endif
+
 	return rs;
 }
 
@@ -817,6 +823,13 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 
 	// 进入发送模式
 	if(!SetMode(false, addr)) return false;
+
+#if RF_DEBUG
+	debug_printf("R24::SendTo ");
+	addr.Show(false);
+	debug_printf(" [%d]=", bs.Length());
+	bs.Show(true);
+#endif
 
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
 	//_CE = true;
@@ -952,6 +965,8 @@ void NRF24L01::OnIRQ()
 	// TX_FIFO 缓冲区满
 	if(fifo.TX_FULL || st.MAX_RT)
 	{
+		debug_printf("TX缓冲区满IRQ，需要清空！\r\n");
+
 		WriteReg(FLUSH_TX, NOP);
 		// 发送标识位 TX_DS/MAX_RT
 		WriteReg(STATUS, 0x30);

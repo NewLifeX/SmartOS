@@ -293,7 +293,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.WriteMessage(rs);
 
 	//Send(rs);
-	rs.State	= dv->Mac;
+	//rs.State	= dv->Mac;
 	Control->Send(rs);
 
 	return true;
