@@ -293,8 +293,14 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.WriteMessage(rs);
 
 	//Send(rs);
-	//rs.State	= dv->Mac;
-	Control->Send(rs);
+	rs.State	= dv->Mac;
+	//Control->Send(rs);
+	// 组网消息属于广播消息，很可能丢包，重发3次
+	for(int i=0; i<3; i++)
+	{
+		Control->Send(rs);
+		Sys.Sleep(10);
+	}
 
 	return true;
 }
