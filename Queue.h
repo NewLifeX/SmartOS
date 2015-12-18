@@ -1,7 +1,6 @@
 ﻿#ifndef _Queue_H_
 #define _Queue_H_
 
-#include <stddef.h>
 #include "Sys.h"
 
 // 内存缓冲区
@@ -9,7 +8,7 @@
 class Queue
 {
 private:
-	ByteArray _s;		// 数据流
+	ByteArray _s;	// 数据流
 	uint _head;		// 头部位置
     uint _tail;		// 尾部位置
 	uint _size;		// 长度

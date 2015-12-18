@@ -104,11 +104,6 @@ uint Queue::Read(Array& bs)
 {
 	if(_size == 0) return 0;
 
-	//debug_printf("_head=%d _tail=%d _size=%d \r\n", _head, _tail, _size);
-	//Sys.Sleep(0);
-
-	//SmartIRQ irq;
-
 	/*
 	1，读取当前数据到末尾
 	2，如果还剩有数据，则从头开始读取
@@ -117,7 +112,7 @@ uint Queue::Read(Array& bs)
 	*/
 
 	byte*	buf	= (byte*)bs.GetBuffer();
-	uint	len	= bs.Capacity();
+	uint	len	= bs.Length();
 
 	if(len > _size) len = _size;
 
