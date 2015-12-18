@@ -633,6 +633,7 @@ void GetDeviceKey(byte scr,Array& key,void* param)
 	TS("TinyServer::GetDeviceKey");
 
 	auto server = (TinyServer*)param;
+	return;
 
 	auto dv = server->FindDevice(scr);
 	if(!dv) return;
