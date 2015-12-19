@@ -23,8 +23,6 @@ public:
 private:
 	Stream	_Src;
 	Stream&	_Dest;
-	//byte	_Code;
-	//bool	_Reply;
 
 	bool Write(int remain);
 };

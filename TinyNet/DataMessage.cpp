@@ -2,12 +2,6 @@
 
 DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()), _Dest(dest)
 {
-	//_Src	= msg.ToStream();
-	//_Dest	= dest;
-
-	//_Code	= code;
-	//_Reply	= reply;
-
 	Offset	= _Src.ReadEncodeInt();
 	Length	= 0;
 
@@ -21,19 +15,6 @@ DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()
 bool DataMessage::ReadData(const DataStore& ds)
 {
 	return ReadData(ds.Data);
-}
-
-// 写入数据
-bool DataMessage::WriteData(DataStore& ds)
-{
-	TS("DataMessage::WriteData");
-
-	Length	= _Src.Remain();
-	if(!Write(ds.Data.Length() - Offset)) return false;
-
-	ds.Write(Offset, Array(_Src.Current(), Length));
-
-	return true;
 }
 
 // 读取数据
@@ -59,6 +40,19 @@ bool DataMessage::ReadData(const Array& bs)
 
 		return true;
 	}
+}
+
+// 写入数据
+bool DataMessage::WriteData(DataStore& ds)
+{
+	TS("DataMessage::WriteData");
+
+	Length	= _Src.Remain();
+	if(!Write(ds.Data.Length() - Offset)) return false;
+
+	ds.Write(Offset, Array(_Src.Current(), Length));
+
+	return true;
 }
 
 // 写入数据

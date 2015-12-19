@@ -480,41 +480,22 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
 	if(msg.Error) return false;
 
 	TS("TinyServer::OnRead");
+	
+	auto ms	= rs.ToStream();
 
-	// 起始地址为7位压缩编码整数
-	auto ms_	= msg.ToStream();
-	uint offset = ms_.ReadEncodeInt();
-	uint len	= ms_.ReadEncodeInt();
+	DataMessage dm(msg, ms);
 
-	auto ms		= rs.ToStream();
-
-	// 计算还有多少数据可读
-	auto bs		= dv.GetStore();
-	int remain	= bs.Length() - offset;
-
-	while(remain<0)
+	bool rt	= true;
+	if(dm.Offset < 64)
+		rt	= dm.ReadData(Array(dv.Store, ArrayLength(dv.Store)));
+	else if(dm.Offset < 128)
 	{
-		debug_printf("读取数据出错Store.Length=%d \r\n", bs.Length()) ;
-		offset--;
-
-		remain = bs.Length() - offset;
+		dm.Offset	-= 64;
+		Array bs(dv.Cfg, dv.Cfg->Length);
+		rt	= dm.ReadData(bs);
 	}
 
-	if(remain < 0)
-	{
-		// 可读数据不够时出错
-		rs.Error = true;
-		ms.Write((byte)2);
-		ms.WriteEncodeInt(offset);
-		ms.WriteEncodeInt(len);
-	}
-	else
-	{
-		ms.WriteEncodeInt(offset);
-		// 限制可以读取的大小，不允许越界
-		if(len > remain) len = remain;
-		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
-	}
+	rs.Error	= !rt;
 	rs.Length	= ms.Position();
 
 	return true;
@@ -558,44 +539,24 @@ bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 
 	TS("TinyServer::OnWrite");
 
-	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
+	auto ms	= rs.ToStream();
 
-	// 计算还有多少数据可写
-	uint len	= ms.Remain();
-	auto bs		= dv.GetStore();
-	int remain	= bs.Capacity() - offset;
-	if(remain < 0)
+	DataMessage dm(msg, ms);
+
+	bool rt	= true;
+	if(dm.Offset < 64)
 	{
-		rs.Error = true;
-
-		// 指针归零，准备写入响应数据
-		ms.SetPosition(0);
-
-		ms.Write((byte)2);
-		ms.WriteEncodeInt(offset);
-		ms.WriteEncodeInt(len);
-
-		debug_printf("读写指令错误");
+		Array bs(dv.Store, ArrayLength(dv.Store));
+		rt	= dm.WriteData(bs);
 	}
-	else
+	else if(dm.Offset < 128)
 	{
-		if(len > remain) len = remain;
-		// 保存一份到缓冲区
-		if(len > 0)
-		{
-			bs.Copy(ms.Current(), len, offset);
-
-			// 指针归零，准备写入响应数据
-			ms.SetPosition(0);
-			ms.WriteEncodeInt(offset);
-			// 实际写入的长度
-			ms.WriteEncodeInt(len);
-
-			//debug_printf("读写指令转换");
-		}
+		dm.Offset	-= 64;
+		Array bs(dv.Cfg, dv.Cfg->Length);
+		rt	= dm.WriteData(bs);
 	}
+
+	rs.Error	= !rt;
 	rs.Length	= ms.Position();
 
 	return true;

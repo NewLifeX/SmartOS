@@ -155,7 +155,6 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
-	// 准备响应数据
 	auto rs	= msg.CreateReply();
 	auto ms	= rs.ToStream();
 
@@ -187,7 +186,6 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
-	// 准备响应数据
 	auto rs	= msg.CreateReply();
 	auto ms	= rs.ToStream();
 
