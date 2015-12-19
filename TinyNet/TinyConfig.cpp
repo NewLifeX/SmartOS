@@ -13,7 +13,7 @@ void TinyConfig::LoadDefault()
 	Kind	= Sys.Code;
 	//Server	= 0x01;
 
-	Channel	= 0x0F;
+	Channel	= 120;
 	Speed	= 250;
 
 	PingTime	= 10;
