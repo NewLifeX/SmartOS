@@ -155,27 +155,24 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
-	// 起始地址为7位压缩编码整数
-	auto ms		= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
-	uint len	= ms.ReadEncodeInt();
-
 	// 准备响应数据
-	auto rs		= msg.CreateReply();
-	auto ms2	= rs.ToStream();
+	auto rs	= msg.CreateReply();
+	auto ms	= rs.ToStream();
+
+	DataMessage dm(msg, ms);
 
 	bool rt	= true;
-	if(offset < 64)
-		rt	= DataMessage::ReadData(ms2, Store, offset, len);
-	else if(offset < 128)
+	if(dm.Offset < 64)
+		rt	= dm.ReadData(Store);
+	else if(dm.Offset < 128)
 	{
-		DataStore ds;
-		ds.Data.Set(Cfg, Cfg->Length);
-		rt	= DataMessage::ReadData(ms2, ds, offset  - 64, len);
+		dm.Offset	-= 64;
+		Array bs(Cfg, Cfg->Length);
+		rt	= dm.ReadData(bs);
 	}
 
 	rs.Error	= !rt;
-	rs.Length	= ms2.Position();
+	rs.Length	= ms.Position();
 
 	Reply(rs);
 }
@@ -190,26 +187,27 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
 
-	// 起始地址为7位压缩编码整数
-	auto ms		= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
-
 	// 准备响应数据
-	auto rs		= msg.CreateReply();
-	auto ms2	= rs.ToStream();
+	auto rs	= msg.CreateReply();
+	auto ms	= rs.ToStream();
+
+	DataMessage dm(msg, ms);
 
 	bool rt	= true;
-	if(offset < 64)
-		rt	= DataMessage::WriteData(ms2, Store, offset, ms);
-	else if(offset < 128)
+	if(dm.Offset < 64)
+		rt	= dm.WriteData(Store);
+	else if(dm.Offset < 128)
 	{
-		DataStore ds;
-		ds.Data.Set(Cfg, Cfg->Length);
-		rt	= DataMessage::WriteData(ms2, ds, offset  - 64, ms);
+		dm.Offset	-= 64;
+		//DataStore ds;
+		//ds.Data.Set(Cfg, Cfg->Length);
+		//rt	= dm.WriteData(ds);
+		Array bs(Cfg, Cfg->Length);
+		rt	= dm.WriteData(bs);
 	}
 
 	rs.Error	= !rt;
-	rs.Length	= ms2.Position();
+	rs.Length	= ms.Position();
 
 	Reply(rs);
 }
