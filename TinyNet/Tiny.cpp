@@ -102,7 +102,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	
 	if(zb->EnterConfig())
 	{			
-		zb->ShowConfig();
+		//zb->ShowConfig();
 		zb->SetDevice(0x02);
 		zb->SetSend(0x01);
 		
