@@ -291,6 +291,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		 else
 		      TinyToToken(tmsg, msg2);
 
+		  msg2.Show();
 		return Client->Reply(msg2);
 	}
 
@@ -567,17 +568,20 @@ void Gateway::OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2)
 
 	// bool rs = Server->Dispatch(tmsg);
 	//  debug_printf("2微网10指令转换\r\n");
+	auto rs = tmsg.CreateReply();
 	auto dv = Server->FindDevice(tmsg.Dest);
-	bool rs = Server->OnRead(tmsg, *dv);
+	bool rt = Server->OnRead(tmsg, rs, *dv);
 
-	if(rs)
+	if(rt)
 	{
-		tmsg.Dest	= tmsg.Src;
+		tmsg.Dest	= rs.Dest;
 		tmsg.Src	= dv->Address;
-		tmsg.Show();
+		tmsg.Reply	= true;
+		tmsg.Error	= rs.Error;
+		tmsg.SetData(Array(rs.Data, rs.Length));
 	}
 
-	if(rs)
+	if(rt)
 	{
 		msg2.Code	= 0x10;
 		msg2.Data[0]	= tmsg.Src;

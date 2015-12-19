@@ -146,6 +146,8 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 // 分发外网过来的消息。返回值表示是否有响应
 bool TinyServer::Dispatch(TinyMessage& msg)
 {
+	if(msg.Reply || msg.Error) return false;
+
 	TS("TinyServer::Dispatch");
 
 	// 先找到设备
@@ -155,14 +157,13 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	// 设置当前设备
 	Current	= dv;
 
-	bool rs	= false;	// 是否响应远程
+	bool rt	= false;	// 是否响应远程
 	bool fw	= true;		// 是否转发给本地
 
 	// 响应消息不转发
-	if(msg.Reply) fw	= false;
+	//if(msg.Reply) fw	= false;
 
-	// 先记好来源地址，避免待会被修改
-	byte src	= msg.Src;
+	auto rs	= msg.CreateReply();
 
 	auto now	= Sys.Seconds();
 	// 缓存内存操作指令
@@ -170,7 +171,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	{
 		case 5:
 		case 0x15:
-			rs = OnRead(msg, *dv);
+			rt = OnRead(msg, rs, *dv);
 
 			// 避免频繁读取。间隔秒数
 			if(dv->LastRead + 5 < now)
@@ -181,7 +182,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 			break;
 		case 6:
 		case 0x16:
-			rs = OnWrite(msg, *dv);
+			rt = OnWrite(msg, rs, *dv);
 
 			// 避免频繁写入。间隔秒数
 			auto now	= Sys.Seconds();
@@ -193,7 +194,8 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 			break;
 	}
 
-	if(fw && !msg.Error)
+	debug_printf("fw=%d \r\n", fw);
+	if(fw && !rs.Error)
 	{
 		// 非休眠设备直接发送
 		//if(!dv->CanSleep())
@@ -208,16 +210,18 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	}
 
 	// 如果有返回，需要设置目标地址，让网关以为该信息来自设备
-	if(rs)
+	if(rt)
 	{
-		msg.Dest	= src;
+		msg.Dest	= rs.Dest;
 		msg.Src		= dv->Address;
 		msg.Reply	= true;
+		msg.Error	= rs.Error;
+		msg.SetData(Array(rs.Data, rs.Length));
 	}
 
 	Current = NULL;
 
-	return rs;
+	return rt;
 }
 
 // 组网
@@ -469,7 +473,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 响应：1起始 + N数据
 错误：错误码2 + 1起始 + 1大小
 */
-bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
+bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
@@ -478,12 +482,11 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	TS("TinyServer::OnRead");
 
 	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
-	uint len	= ms.ReadEncodeInt();
+	auto ms_	= msg.ToStream();
+	uint offset = ms_.ReadEncodeInt();
+	uint len	= ms_.ReadEncodeInt();
 
-	// 指针归零，准备写入响应数据
-	ms.SetPosition(0);
+	auto ms		= rs.ToStream();
 
 	// 计算还有多少数据可读
 	auto bs		= dv.GetStore();
@@ -500,7 +503,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 	if(remain < 0)
 	{
 		// 可读数据不够时出错
-		msg.Error = true;
+		rs.Error = true;
 		ms.Write((byte)2);
 		ms.WriteEncodeInt(offset);
 		ms.WriteEncodeInt(len);
@@ -512,7 +515,7 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 		if(len > remain) len = remain;
 		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
 	}
-	msg.Length	= ms.Position();
+	rs.Length	= ms.Position();
 
 	return true;
 }
@@ -548,7 +551,7 @@ bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
 响应：1起始 + 1大小
 错误：错误码2 + 1起始 + 1大小
 */
-bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
+bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
@@ -565,7 +568,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 	int remain	= bs.Capacity() - offset;
 	if(remain < 0)
 	{
-		msg.Error = true;
+		rs.Error = true;
 
 		// 指针归零，准备写入响应数据
 		ms.SetPosition(0);
@@ -593,7 +596,7 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 			//debug_printf("读写指令转换");
 		}
 	}
-	msg.Length	= ms.Position();
+	rs.Length	= ms.Position();
 
 	return true;
 }

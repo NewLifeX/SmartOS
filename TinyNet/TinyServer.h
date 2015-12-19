@@ -69,11 +69,11 @@ public:
 	bool OnPing(const TinyMessage& msg);
 
 	// 读取
-	bool OnRead(TinyMessage& msg, Device& dv);
+	bool OnRead(const Message& msg, Message& rs, Device& dv);
 	bool OnReadReply(const TinyMessage& msg, Device& dv);
 
 	// 写入
-	bool OnWrite(TinyMessage& msg, Device& dv);
+	bool OnWrite(const Message& msg, Message& rs, Device& dv);
 };
 
 #endif
