@@ -218,7 +218,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		if(!TokenToTiny(msg, tmsg)) return true;
 
 		bool rs = Server->Dispatch(tmsg);
-		if(rs) return false;
+		if(!rs) return false;
 
 		TokenMessage msg2;
 
