@@ -143,8 +143,9 @@ bool ShunCom::EnterConfig()
 	Sys.Sleep(2000);
 
 	Config	= true;
-	Sys.Sleep(2000);
+	Sys.Sleep(1000);
 	Config	= false;
+	
 	ByteArray rs1;
 
 	// 清空串口缓冲区
@@ -155,6 +156,7 @@ bool ShunCom::EnterConfig()
 		if(rs1.Length() == 0) break;
 	}
 
+	Sys.Sleep(1000);
 	return true;
 }
 
@@ -213,6 +215,8 @@ void ShunCom::EraConfig()
 // 读取配置信息
 void ShunCom::ShowConfig()
 {	
+	if(!Open()) return;
+
 	ShunComMessage msg(0x1521);
 	
 	MemoryStream ms;
