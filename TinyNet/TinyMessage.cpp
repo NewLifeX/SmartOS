@@ -696,6 +696,7 @@ void TinyController::Loop()
 
 		// 发送消息
 		Array bs(node.Data, node.Length);
+		if(node.Length > 32) debug_printf("node.Length=%d \r\n", node.Length);
 		if(node.Mac[0])
 			Port->Write(bs, &node.Mac[1]);
 		else
