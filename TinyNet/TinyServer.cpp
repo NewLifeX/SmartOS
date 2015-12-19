@@ -153,35 +153,58 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	if(!dv) return false;
 
 	// 设置当前设备
-	Current = dv;
+	Current	= dv;
 
-	// 非休眠设备直接发送
-	//if(!dv->CanSleep())
-	//{
-		Send(msg);
-	//}
-	// 休眠设备进入发送队列
-	//else
-	//{
+	bool rs	= false;	// 是否响应远程
+	bool fw	= true;		// 是否转发给本地
 
-	//}
-
-	bool rs = false;
+	// 响应消息不转发
+	if(msg.Reply) fw	= false;
 
 	// 先记好来源地址，避免待会被修改
 	byte src	= msg.Src;
 
+	auto now	= Sys.Seconds();
 	// 缓存内存操作指令
 	switch(msg.Code)
 	{
 		case 5:
 		case 0x15:
 			rs = OnRead(msg, *dv);
+
+			// 避免频繁读取。间隔秒数
+			if(dv->LastRead + 5 < now)
+				dv->LastRead	= now;
+			else
+				fw	= false;
+
 			break;
 		case 6:
 		case 0x16:
 			rs = OnWrite(msg, *dv);
+
+			// 避免频繁写入。间隔秒数
+			auto now	= Sys.Seconds();
+			if(dv->LastWrite + 1 < now)
+				dv->LastWrite	= now;
+			else
+				fw	= false;
+
 			break;
+	}
+
+	if(fw && !msg.Error)
+	{
+		// 非休眠设备直接发送
+		//if(!dv->CanSleep())
+		//{
+			Send(msg);
+		//}
+		// 休眠设备进入发送队列
+		//else
+		//{
+
+		//}
 	}
 
 	// 如果有返回，需要设置目标地址，让网关以为该信息来自设备
@@ -189,6 +212,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	{
 		msg.Dest	= src;
 		msg.Src		= dv->Address;
+		msg.Reply	= true;
 	}
 
 	Current = NULL;
@@ -398,6 +422,10 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			{
 				auto bs = dv->GetStore();
 				pm.ReadData(ms, bs);
+
+				// 更新读取时间
+				dv->LastRead	= Sys.Seconds();
+
 				break;
 			}
 			case 0x02:
@@ -485,7 +513,6 @@ bool TinyServer::OnRead(TinyMessage& msg, Device& dv)
 		if(len > 0) ms.Write(bs.GetBuffer(), offset, len);
 	}
 	msg.Length	= ms.Position();
-	msg.Reply	= true;
 
 	return true;
 }
@@ -567,8 +594,6 @@ bool TinyServer::OnWrite(TinyMessage& msg, Device& dv)
 		}
 	}
 	msg.Length	= ms.Position();
-	msg.Reply	= true;
-	//msg.Show();
 
 	return true;
 }

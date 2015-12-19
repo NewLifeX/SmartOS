@@ -36,7 +36,11 @@ public:
 
 	byte	Store[32];	// 数据存储区
 
-	TinyConfig*	Cfg	= NULL;
+	// 以下字段不存Flash
+	TinyConfig*	Cfg;
+
+	uint	LastRead;	// 最后读取数据的时间。秒
+	uint	LastWrite;	// 最后写入数据的时间。秒
 
 	Device();
 

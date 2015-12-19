@@ -273,7 +273,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 				/// <summary>电动窗帘</summary>
 				case 0x0431:
 				/// <summary>门窗磁</summary>
-				case  0x0531:
+				case 0x0531:
 				/// <summary>红外感应器</summary>
 				case 0x0541:
 				/// <summary>摄像头</summary>

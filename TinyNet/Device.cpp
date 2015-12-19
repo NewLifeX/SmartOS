@@ -21,6 +21,11 @@ Device::Device()
 	PingTime	= 0;
 	OfflineTime	= 0;
 	SleepTime	= 0;
+
+	Cfg			= NULL;
+
+	LastRead	= 0;
+	LastWrite	= 0;
 }
 
 void Device::Write(Stream& ms) const
