@@ -342,6 +342,9 @@ public:
     String& Concat(const Object& obj);
     String& Concat(const char* str, int len = 0);
 
+	int IndexOf(const String& str) const;
+	String Sub(int start, int len) const;
+
     String& operator+=(const Object& obj);
     String& operator+=(const char* str);
     friend String& operator+(String& str, const Object& obj);
@@ -349,6 +352,11 @@ public:
     friend String& operator+(String& str, char ch);
     friend String& operator+(String& str, byte bt);
     friend String& operator+(String& str, int value);
+
+    friend bool operator==(const String& str, const String& str2);
+    friend bool operator!=(const String& str, const String& str2);
+    //friend bool operator==(const String& str, const char* str2);
+    //friend bool operator!=(const String& str, const char* str2);
 };
 
 //String operator+(const char* str1, const char* str2);

@@ -684,6 +684,25 @@ String& String::Concat(const char* str, int len)
 	return *this;
 }
 
+int String::IndexOf(const String& str) const
+{
+	if(str.Length() > Length()) return -1;
+	if(str[0] != this[0]) return -1;
+
+	auto p = strstr(GetBuffer(), str.GetBuffer());
+	if(!p) return -1;
+	
+	return p - GetBuffer();
+}
+
+String String::Sub(int start, int len) const
+{
+	String str;
+	str.Copy(this, len, start);
+
+	return str;
+}
+
 String& String::operator+=(const Object& obj)
 {
 	return this->Concat(obj);
@@ -731,3 +750,13 @@ String operator+(const Object& obj, const char* str)
 String& operator+(String& str, char ch) { return str.Append(ch); }
 String& operator+(String& str, byte bt) { return str.Append(bt); }
 String& operator+(String& str, int value) { return str.Append(value); }
+
+bool operator==(const String& str, const String& str2)
+{
+	return str.Length() == str2.Length() && str.IndexOf(str2) == 0;
+}
+
+bool operator!=(const String& str, const String& str2)
+{
+	return str.Length() != str2.Length() || str.IndexOf(str2) != 0;
+}
