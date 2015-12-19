@@ -66,7 +66,7 @@ bool ShunCom::OnOpen()
 	Config	= false;
 	Reset	= false;
 
-	debug_printf("Power=%d Sleep=%d Config=%d Reset=%d MinSize=%d\r\n", Power.Read(), Sleep.Read(), Config.Read(), Reset.Read(), MinSize);
+	//debug_printf("Power=%d Sleep=%d Config=%d Reset=%d MinSize=%d\r\n", Power.Read(), Sleep.Read(), Config.Read(), Reset.Read(), MinSize);
 
 	Port->MinSize	= MinSize;
 
@@ -113,8 +113,8 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 	// 取出地址
 	byte* addr	= bs.GetBuffer();
 	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
-	debug_printf("zigbee接收\r\n");
-	bs2.Show(true);
+	//debug_printf("zigbee接收\r\n");
+	//bs2.Show(true);
 	
 	return ITransport::OnReceive(bs2, addr);
 }
@@ -122,13 +122,13 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 bool ShunCom::OnWriteEx(const Array& bs, void* opt)
 {
 	if(!AddrLength || !opt) return OnWrite(bs);
-	debug_printf("zigbee发送\r\n");
-	bs.Show(true);
+	//debug_printf("zigbee发送\r\n");
+	//bs.Show(true);
 	// 加入地址
 	ByteArray bs2;
 	bs2.Copy(opt, AddrLength);
-	debug_printf("zigbee发送地址\r\n");
-	bs2.Show();
+	//debug_printf("zigbee发送地址\r\n");
+	//bs2.Show();
 	
 	bs2.Copy(bs, AddrLength);	
 	bs2.Show();
@@ -171,10 +171,10 @@ void ShunCom::ExitConfig()
 	
 	MemoryStream ms;	
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunComs重启生效\r\n");
-	buf.Show();
+	//debug_printf("ShunComs重启生效\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 	
 }
 void ShunCom::PrintSrc(bool flag)
@@ -190,10 +190,10 @@ void ShunCom::PrintSrc(bool flag)
 	}		
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom设置源地址\r\n");
-	buf.Show();
+	//debug_printf("ShunCom设置源地址\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 
 }
 
@@ -206,10 +206,10 @@ void ShunCom::EraConfig()
 	
 	MemoryStream ms;	
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom擦除组网信息\r\n");
+	//debug_printf("ShunCom擦除组网信息\r\n");
 	buf.Show();
-	Write(buf);	
-    debug_printf("\r\n"); 	
+	//Write(buf);	
+    //debug_printf("\r\n"); 	
 }
 
 // 读取配置信息
@@ -239,10 +239,10 @@ void ShunCom::SetDevice(byte kind)
 	msg.Set(0x0087, kind);
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom配置设备类型\r\n");
-	buf.Show();
+	//debug_printf("ShunCom配置设备类型\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 }
 
 // 设置无线频点，注意大小端，ShunCom是小端存储
@@ -254,10 +254,10 @@ void ShunCom::SetChannel(byte chn)
 	
 	MemoryStream ms;
 	auto buf=msg.ToArray(ms);
-	debug_printf("ShunCom配置无线频点\r\n");
-	buf.Show();
+	//debug_printf("ShunCom配置无线频点\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 }
 
 // 进入配置PanID,同一网络PanID必须相同
@@ -268,10 +268,10 @@ void ShunCom::SetPanID(ushort id)
 	
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom配置PanID\r\n");
-	buf.Show();
+	//debug_printf("ShunCom配置PanID\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 }
 
 // 设置发送模式00为广播、01为主从模式、02为点对点模式
@@ -282,10 +282,10 @@ void ShunCom::SetSend(byte mode)
 	
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
-	debug_printf("ShunCom配置设备主从模式\r\n");
-	buf.Show();
+	//debug_printf("ShunCom配置设备主从模式\r\n");
+	//buf.Show();
 	Write(buf);	
-    debug_printf("\r\n"); 	
+   // debug_printf("\r\n"); 	
 }
 
 ShunComMessage::ShunComMessage(ushort code)
