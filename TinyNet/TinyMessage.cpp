@@ -796,6 +796,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Stream ms(Data, ArrayLength(Data));
 	msg.Write(ms);
 	Length		= ms.Position();
+	if(Length > 32) debug_printf("Length=%d \r\n", Length);
 
 	Mac[0]		= 0;
 	if(msg.State)
