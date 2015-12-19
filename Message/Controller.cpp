@@ -148,7 +148,7 @@ bool Controller::Reply(Message& msg)
 {
 	msg.Reply = 1;
 
-	return SendInternal(msg);
+	return Send(msg);
 }
 
 bool Controller::SendInternal(const Message& msg)
