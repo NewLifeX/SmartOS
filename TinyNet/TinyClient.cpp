@@ -415,7 +415,7 @@ void TinyClient::DisJoin()
 {
 	TS("TinyClient::DisJoin");
 
-	debug_printf("TinyClient::DisJoin 退网 \r\n");
+	//debug_printf("TinyClient::DisJoin 退网 \r\n");
 
 	TinyMessage msg;
 	msg.Code = 2;
@@ -449,7 +449,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 
 	Cfg->LoadDefault();
 	Cfg->Save();
-    debug_printf("设备退网3秒后重启\r\n");
+   // debug_printf("设备退网3秒后重启\r\n");
 
     Sys.Sleep(3000);
     Sys.Reset();
@@ -506,12 +506,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	TS("TinyClient::OnPing");
 
 	// 忽略响应消息
-	if(!msg.Reply)
-	{
-		debug_printf("TinyClient::OnPing Length=%d\r\n", msg.Length);
-
-		return true;
-	}
+	if(!msg.Reply)return true;
 
 	if(msg.Src != Server) return true;
 
