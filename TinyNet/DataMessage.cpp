@@ -6,7 +6,7 @@ DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()
 	Length	= 0;
 
 	// 读取请求、写入响应、错误响应 等包含偏移和长度
-	byte code	= msg.Code && 0x0F;
+	byte code	= msg.Code & 0x0F;
 	if(code == 0x05 && !msg.Reply || code == 0x06 && msg.Reply || msg.Error)
 		Length	= _Src.ReadEncodeInt();
 }

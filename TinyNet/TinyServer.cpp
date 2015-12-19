@@ -194,7 +194,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 			break;
 	}
 
-	debug_printf("fw=%d \r\n", fw);
+	//debug_printf("fw=%d \r\n", fw);
 	if(fw && !rs.Error)
 	{
 		// 非休眠设备直接发送
@@ -484,6 +484,7 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
 	auto ms	= rs.ToStream();
 
 	DataMessage dm(msg, ms);
+	//debug_printf("TinyServer::OnRead Addr=%d Offset=%d len=%d \r\n", dv.Address, dm.Offset, dm.Length);
 
 	bool rt	= true;
 	if(dm.Offset < 64)
@@ -497,6 +498,7 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
 
 	rs.Error	= !rt;
 	rs.Length	= ms.Position();
+	//rs.Show();
 
 	return true;
 }
