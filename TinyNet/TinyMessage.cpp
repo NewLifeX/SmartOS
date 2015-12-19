@@ -217,7 +217,6 @@ TinyController::TinyController() : Controller()
 	Timeout		= 200;
 
 	_taskID		= 0;
-	//ArrayZero(_Queue);
 	_Queue		= NULL;
 	QueueLength	= 8;
 }
@@ -608,25 +607,28 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 	}
 
 	// 准备消息队列
-	MessageNode* node = NULL;
+	auto now	= Sys.Ms();
+	int idx		= -1;
 	for(int i=0; i<QueueLength; i++)
 	{
-		if(!_Queue[i].Using)
+		auto& node = _Queue[i];
+		// 未使用，或者即使使用也要抢走已过期的节点
+		if(!node.Using || node.EndTime < now)
 		{
-			node = &_Queue[i];
-			node->Using	= 1;
-			node->Seq	= 0;
+			node.Using	= 1;
+			node.Seq	= 0;
+			idx	= i;
 			break;
 		}
 	}
 	// 队列已满
-	if(!node)
+	if(idx < 0)
 	{
 		debug_printf("TinyController::Post 发送队列已满！ \r\n");
 		return false;
 	}
 
-	node->Set(msg, msTimeout);
+	_Queue[idx].Set(msg, msTimeout);
 
 	if(msg.Reply)
 		Total.Reply++;
