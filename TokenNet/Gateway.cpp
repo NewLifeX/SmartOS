@@ -291,7 +291,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		 else
 		    TinyToToken(tmsg, msg2);
 
-		msg2.Show();
+		//msg2.Show();
 		return Client->Reply(msg2);
 	}
 

@@ -165,12 +165,13 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 
 	auto rs	= msg.CreateReply();
 
-	auto now	= Sys.Seconds();
 	// 缓存内存操作指令
 	switch(msg.Code)
 	{
 		case 5:
 		case 0x15:
+		{
+			auto now	= Sys.Seconds();
 			rt = OnRead(msg, rs, *dv);
 
 			// 避免频繁读取。间隔秒数
@@ -180,18 +181,21 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 				fw	= false;
 
 			break;
+		}
 		case 6:
 		case 0x16:
+		{
+			auto now	= Sys.Ms();
 			rt = OnWrite(msg, rs, *dv);
 
-			// 避免频繁写入。间隔秒数
-			auto now	= Sys.Seconds();
-			if(dv->LastWrite + 1 < now)
+			// 避免频繁写入。间隔毫秒数
+			if(dv->LastWrite + 500 < now)
 				dv->LastWrite	= now;
 			else
 				fw	= false;
 
 			break;
+		}
 	}
 
 	//debug_printf("fw=%d \r\n", fw);
@@ -428,7 +432,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				pm.ReadData(ms, bs);
 
 				// 更新读取时间
-				dv->LastRead	= Sys.Seconds();
+				//dv->LastRead	= Sys.Seconds();
 
 				break;
 			}
