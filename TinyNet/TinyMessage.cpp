@@ -258,6 +258,7 @@ void TinyController::Open()
 
 	// 初始化发送队列
 	_Queue	= new MessageNode[QueueLength];
+	memset(_Queue, 0, QueueLength);
 
 	if(!_taskID)
 	{
@@ -615,8 +616,8 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 		// 未使用，或者即使使用也要抢走已过期的节点
 		if(!node.Using || node.EndTime < now)
 		{
-			node.Using	= 1;
 			node.Seq	= 0;
+			node.Using	= 1;
 			idx	= i;
 			break;
 		}
@@ -696,7 +697,10 @@ void TinyController::Loop()
 
 		// 发送消息
 		Array bs(node.Data, node.Length);
-		if(node.Length > 32) debug_printf("node.Length=%d \r\n", node.Length);
+		/*if(node.Length > 32)
+		{
+			debug_printf("node.Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
+		}*/
 		if(node.Mac[0])
 			Port->Write(bs, &node.Mac[1]);
 		else
@@ -780,7 +784,6 @@ void TinyController::ShowStat() const
 /*================================ 信息节点 ================================*/
 void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 {
-	Seq			= msg.Seq;
 	Times		= 0;
 	LastSend	= 0;
 
@@ -796,7 +799,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Stream ms(Data, ArrayLength(Data));
 	msg.Write(ms);
 	Length		= ms.Position();
-	if(Length > 32) debug_printf("Length=%d \r\n", Length);
+	//if(Length > 32) debug_printf("Length=%d \r\n", Length);
 
 	Mac[0]		= 0;
 	if(msg.State)
@@ -804,6 +807,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 		Mac[0]	= 5;
 		memcpy(&Mac[1], msg.State, 5);
 	}
+	Seq			= msg.Seq;
 }
 
 /*================================ 环形队列 ================================*/

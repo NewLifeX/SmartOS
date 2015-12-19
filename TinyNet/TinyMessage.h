@@ -98,9 +98,9 @@ class MessageNode
 public:
 	byte	Using;		// 是否在使用
 	byte	Seq;		// 序列号
-	byte	Data[64];
 	byte	Length;
 	byte	Times;		// 发送次数
+	byte	Data[64];
 	byte	Mac[6];		// 物理地址
 	//ulong	StartTime;	// 开始时间ms
 	ulong	EndTime;	// 过期时间ms
