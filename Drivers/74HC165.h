@@ -18,8 +18,9 @@ public:
 	// pl采集，cp时钟，Q7输出，ce使能
 	IC74HC165(Pin pl, Pin sck, Pin in, Pin ce = P0);
 	// 级联读取  buf,数据放置位置，count，级联ic数
-	byte Read(byte *buf = NULL, byte count);
-	
+	bool Read(byte *buf = NULL, byte count);
+	// 读一个IC 的数据
+	byte Read();
 };
 
 #endif

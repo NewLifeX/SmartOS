@@ -18,7 +18,7 @@ IC74HC165::IC74HC165(Pin pl, Pin sck, Pin in, Pin ce)
 	}
 }
 
-byte IC74HC165::Read(byte *buf, byte count)
+bool IC74HC165::Read(byte *buf, byte count)
 {
 	if(!buf)return;
 	_PL = false;	// 不采集
@@ -44,7 +44,12 @@ byte IC74HC165::Read(byte *buf, byte count)
 		buf++;
 	}
 	if(_CE) _CE = false;
+	return true;
 }
 
-
-
+byte IC74HC165::Read()
+{
+	byte temp;
+	Read(&temp, 1);
+	return temp;
+}
