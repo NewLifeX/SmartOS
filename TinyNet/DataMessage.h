@@ -2,8 +2,8 @@
 #define __DataMessage_H__
 
 #include "Stream.h"
-#include "DataStore.h"
-#include "Message.h"
+#include "Message\DataStore.h"
+#include "Message\Message.h"
 
 // 数据消息
 class DataMessage
