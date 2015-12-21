@@ -13,16 +13,17 @@ IC74HC165::IC74HC165(Pin pl, Pin sck, Pin in, Pin ce)
 	if(ce != P0)
 	{
 		_CE = new OutputPort(ce);
-		_CE.Invert = true;
-		_CE.Open();
+		_CE->Invert = true;
+		_CE->Open();
 	}
 }
 
 bool IC74HC165::Read(byte *buf, byte count)
 {
-	if(!buf)return;
+	if(!buf)return false;
+	
 	_PL = false;	// 不采集
-	if(_CE) _CE	= true;	// 使能芯片
+	if(_CE) *_CE	= true;	// 使能芯片
 	_PL = true;		// 采集
 	_PL = false;	// 采集
 	
@@ -43,7 +44,8 @@ bool IC74HC165::Read(byte *buf, byte count)
 		*buf = temp;
 		buf++;
 	}
-	if(_CE) _CE = false;
+	if(_CE) *_CE = false;
+	
 	return true;
 }
 
