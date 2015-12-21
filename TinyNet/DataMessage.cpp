@@ -1,6 +1,6 @@
 ﻿#include "DataMessage.h"
 
-DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()), _Dest(dest)
+DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()), _Dest(&dest)
 {
 	Offset	= _Src.ReadEncodeInt();
 	Length	= 0;
@@ -20,9 +20,11 @@ bool DataMessage::ReadData(const DataStore& ds)
 // 读取数据
 bool DataMessage::ReadData(const Array& bs)
 {
+	if(!_Dest) return false;
+	
 	TS("DataMessage::ReadData");
 
-	auto& ms	= _Dest;
+	auto& ms	= *_Dest;
 	int remain	= bs.Length() - Offset;
 	if(remain < 0)
 	{
@@ -48,31 +50,31 @@ bool DataMessage::WriteData(DataStore& ds, bool withData)
 	TS("DataMessage::WriteData");
 
 	Length	= _Src.Remain();
-	if(!Write(ds.Data.Length() - Offset)) return false;
+	if(_Dest && !Write(ds.Data.Length() - Offset)) return false;
 
 	Array dat(_Src.Current(), Length);
 	ds.Write(Offset, dat);
 
 	// 如果携带数据，则把这一段数据附加到后面
-	if(withData) _Dest.Write(ds.Data.GetBuffer(), Offset, Length);
+	if(_Dest && withData) _Dest->Write(ds.Data.GetBuffer(), Offset, Length);
 
 	return true;
 }
 
 // 写入数据
-bool DataMessage::WriteData(Array& bs, bool withData)
+bool DataMessage::WriteData(Array bs, bool withData)
 {
 	TS("DataMessage::WriteData");
 
 	// 剩余可写字节数
 	Length	= _Src.Remain();
-	if(!Write(bs.Length() - Offset)) return false;
+	if(_Dest && !Write(bs.Length() - Offset)) return false;
 
 	Array dat(_Src.Current(), Length);
 	bs.Copy(dat, Offset);
 
 	// 如果携带数据，则把这一段数据附加到后面
-	if(withData) _Dest.Write(bs.GetBuffer(), Offset, Length);
+	if(_Dest && withData) _Dest->Write(bs.GetBuffer(), Offset, Length);
 
 	return true;
 }
@@ -80,7 +82,7 @@ bool DataMessage::WriteData(Array& bs, bool withData)
 // 写入数据
 bool DataMessage::Write(int remain)
 {
-	auto& ms	= _Dest;
+	auto& ms	= *_Dest;
 	// 剩余可写字节数
 	if(remain < 0)
 	{

@@ -124,19 +124,19 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			// 修改最后读取时间
 			if(msg.Reply) dv->LastRead	= Sys.Seconds();
 
-			OnReadReply(msg, *dv);
+			if(msg.Reply) OnReadReply(msg, *dv);
 			break;
 		case 6:
 			// 系统指令不会被转发，这里修改为用户指令
 			msg.Code = 0x16;
 		case 0x16:
-			if(!msg.Reply)
+			if(msg.Reply)
+				OnWriteReply(msg, *dv);
+			else
 			{
 				auto rs	= msg.CreateReply();
 				if(OnWrite(msg, rs, *dv)) Send(rs);
 			}
-			else
-				OnWriteReply(msg, *dv);
 			break;
 	}
 
@@ -171,9 +171,6 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	bool rt	= false;	// 是否响应远程
 	bool fw	= true;		// 是否转发给本地
 
-	// 响应消息不转发
-	//if(msg.Reply) fw	= false;
-
 	auto rs	= msg.CreateReply();
 
 	// 缓存内存操作指令
@@ -198,22 +195,10 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		}
 		case 6:
 		case 0x16:
-		{
-			/*auto now	= Sys.Ms();
-			rt = OnWrite(msg, rs, *dv);
-
-			// 避免频繁写入。间隔毫秒数
-			if(dv->LastWrite + 500 < now)
-				dv->LastWrite	= now;
-			else
-				fw	= false;*/
 			rt = false;
-
 			break;
-		}
 	}
 
-	//debug_printf("fw=%d \r\n", fw);
 	if(fw && !rs.Error)
 	{
 		// 非休眠设备直接发送
@@ -539,15 +524,11 @@ bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
-	{
-		auto bs	= dv.GetStore();
-		rt		= dm.WriteData(bs, false);
-	}
+		rt	= dm.WriteData(dv.GetStore(), false);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		auto bs	= dv.GetConfig();
-		rt		= dm.WriteData(bs, false);
+		rt	= dm.WriteData(dv.GetConfig(), false);
 	}
 
 	rs.Error	= !rt;
@@ -575,28 +556,17 @@ bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
 
 	TS("TinyServer::OnWriteReply");
 
-	auto rs	= ((TinyMessage&)msg).CreateReply();
-	auto ms	= rs.ToStream();
+	DataMessage dm(msg);
 
-	DataMessage dm(msg, ms);
-
-	bool rt	= true;
 	if(dm.Offset < 64)
-	{
-		auto bs	= dv.GetStore();
-		rt		= dm.WriteData(bs, false);
-	}
+		dm.WriteData(dv.GetStore(), false);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		auto bs	= dv.GetConfig();
-		rt		= dm.WriteData(bs, false);
+		dm.WriteData(dv.GetConfig(), false);
 	}
 
-	rs.Error	= !rt;
-	rs.Length	= ms.Position();
-
-	return Send(rs);
+	return true;
 }
 
 //设置zigbee的通道，2401无效

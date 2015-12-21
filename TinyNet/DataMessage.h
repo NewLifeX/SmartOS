@@ -12,17 +12,18 @@ public:
 	uint	Offset;
 	uint	Length;
 
+	DataMessage(const Message& msg);
 	DataMessage(const Message& msg, Stream& dest);
 
 	bool ReadData(const DataStore& ds);
 	bool WriteData(DataStore& ds, bool withData);
 
 	bool ReadData(const Array& bs);
-	bool WriteData(Array& bs, bool withData);
+	bool WriteData(Array bs, bool withData);
 
 private:
 	Stream	_Src;
-	Stream&	_Dest;
+	Stream*	_Dest;
 
 	bool Write(int remain);
 };
