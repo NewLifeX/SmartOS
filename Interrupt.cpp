@@ -341,17 +341,30 @@ bool Lock::Wait(int us)
 
 #if DEBUG
 
-static TArray<string, 0x40> _TS(0);
+static TArray<string, 0x40>* _TS = NULL;
 
-TraceStack::TraceStack(string name) { _TS.Push(name); }
-TraceStack::~TraceStack() { _TS.Pop(); }
+TraceStack::TraceStack(string name)
+{
+	static TArray<string, 0x40> __ts(0);
+	_TS	= &__ts;
+
+	_TS->Push(name);
+}
+
+TraceStack::~TraceStack()
+{
+	_TS->Pop();
+}
 
 void TraceStack::Show()
 {
 	debug_printf("TraceStack::Show:\r\n");
-	for(int i=_TS.Length() - 1; i>=0; i--)
+	if(_TS)
 	{
-		debug_printf("\t<=%s \r\n", _TS[i]);
+		for(int i=_TS->Length() - 1; i>=0; i--)
+		{
+			debug_printf("\t<=%s \r\n", (*_TS)[i]);
+		}
 	}
 }
 
