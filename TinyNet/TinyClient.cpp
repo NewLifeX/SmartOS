@@ -234,14 +234,14 @@ void TinyClient::Report(Message& msg)
 bool TinyClient::Report(uint offset, byte dat)
 {
 	TinyMessage msg;
-	msg.Code	= 0x05;
+	msg.Code	= 0x06;
 
 	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(dat);
 	msg.Length	= ms.Position();
 
-	return Reply(msg);
+	return Send(msg);
 }
 
 bool TinyClient::Report(uint offset, const Array& bs)
