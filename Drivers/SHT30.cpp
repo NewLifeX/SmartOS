@@ -45,7 +45,7 @@ typedef enum{
   CMD_NO_SLEEP        = 0x303E,
 }etCommands;
 
-// Measurement Repeatability
+// Measurement Repeat
 typedef enum{
   REPEATAB_HIGH,
   REPEATAB_MEDIUM,
@@ -105,9 +105,9 @@ SHT30::SHT30()
 	Address	= 0x44;	// ADDR=VSS
 	//Address	= 0x45;	// ADDR=VDD
 
-	Mode	= 0;
-	Frequency	= 0;
-	Repeatability	= 0;
+	Mode	= 2;
+	Freq	= 5;
+	Repeat	= 2;
 }
 
 SHT30::~SHT30()
@@ -131,10 +131,10 @@ void SHT30::Init()
 		debug_printf(" Polling非阻塞模式");
 		break;
 	case 2:
-		debug_printf(" 内部定期采集模式 每秒%d次", Frequency);
+		debug_printf(" 内部定期采集模式 每秒%d次", Freq);
 		break;
 	}
-	switch (Repeatability)
+	switch (Repeat)
 	{
 	case REPEATAB_LOW:
 		debug_printf(" 低重复性");
@@ -151,14 +151,11 @@ void SHT30::Init()
 
 	IIC->SubWidth	= 2;
 	IIC->Address	= Address << 1;
+	IIC->Retry		= 2;
 
 	Pwr	= true;
 
-	//Write(CMD_SOFT_RESET);		// 软重启
-
 	bool rs	= CheckStatus();
-
-	//Write(CMD_CLEAR_STATUS);	// 清除所有状态
 
 	/*
 	SHT30三种采集数据方式：
@@ -289,59 +286,18 @@ void SHT30::SetMode()
 {
 	if(Mode != 2) return;
 
-	debug_printf("SHT30::SetMode Repeatability=%d Frequency=%d \r\n", Repeatability, Frequency);
+	debug_printf("SHT30::SetMode Repeat=%d Freq=%d \r\n", Repeat, Freq);
 	//Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
-	bool rs	= false;
-	switch (Repeatability)
-	{
-	case REPEATAB_LOW:
-		switch (Frequency)
-		{
-		case FREQUENCY_HZ5:
-			rs	= Write(CMD_MEAS_PERI_05_L); break;
-		case FREQUENCY_1HZ:
-			rs	= Write(CMD_MEAS_PERI_1_L); break;
-		case FREQUENCY_2HZ:
-			rs	= Write(CMD_MEAS_PERI_2_L); break;
-		case FREQUENCY_4HZ:
-			rs	= Write(CMD_MEAS_PERI_4_L); break;
-		case FREQUENCY_10HZ:
-			rs	= Write(CMD_MEAS_PERI_10_L); break;
-		}
-		break;
-
-	case REPEATAB_MEDIUM:
-		switch (Frequency)
-		{
-		case FREQUENCY_HZ5:
-			rs	= Write(CMD_MEAS_PERI_05_M); break;
-		case FREQUENCY_1HZ:
-			rs	= Write(CMD_MEAS_PERI_1_M); break;
-		case FREQUENCY_2HZ:
-			rs	= Write(CMD_MEAS_PERI_2_M); break;
-		case FREQUENCY_4HZ:
-			rs	= Write(CMD_MEAS_PERI_4_M); break;
-		case FREQUENCY_10HZ:
-			rs	= Write(CMD_MEAS_PERI_10_M); break;
-		}
-		break;
-
-	case REPEATAB_HIGH:
-		switch (Frequency)
-		{
-		case FREQUENCY_HZ5:
-			rs	= Write(CMD_MEAS_PERI_05_H); break;
-		case FREQUENCY_1HZ:
-			rs	= Write(CMD_MEAS_PERI_1_H); break;
-		case FREQUENCY_2HZ:
-			rs	= Write(CMD_MEAS_PERI_2_H); break;
-		case FREQUENCY_4HZ:
-			rs	= Write(CMD_MEAS_PERI_4_H); break;
-		case FREQUENCY_10HZ:
-			rs	= Write(CMD_MEAS_PERI_10_H); break;
-		}
-		break;
-	}
+	static ushort cmds[]	= {
+		CMD_MEAS_PERI_05_H, CMD_MEAS_PERI_1_H, CMD_MEAS_PERI_2_H, CMD_MEAS_PERI_4_H, CMD_MEAS_PERI_10_H,
+		CMD_MEAS_PERI_05_M, CMD_MEAS_PERI_1_M, CMD_MEAS_PERI_2_M, CMD_MEAS_PERI_4_M, CMD_MEAS_PERI_10_M,
+		CMD_MEAS_PERI_05_L, CMD_MEAS_PERI_1_L, CMD_MEAS_PERI_2_L, CMD_MEAS_PERI_4_L, CMD_MEAS_PERI_10_L,
+	};
+	static byte maps[]	= { 0, 1, 2, 0, 3, 0, 0, 0, 0, 0, 4 };
+	// 5/1/2/4/10 转为 0/1/2/3/4
+	byte map	= maps[Freq];
+	ushort cmd	= cmds[map + Repeat * 5];
+	bool rs		= Write(cmd);
 
 	// 软重启
 	if(!rs) rs	= Write(CMD_SOFT_RESET);
@@ -357,24 +313,12 @@ ushort SHT30::GetMode() const
 	{
 		case 0:
 		{
-			if(Repeatability < ArrayLength(cs)) return cs[Repeatability];
-			/*switch (Repeatability)
-			{
-				case REPEATAB_LOW:    return CMD_MEAS_CLOCKSTR_L;
-				case REPEATAB_MEDIUM: return CMD_MEAS_CLOCKSTR_M;
-				case REPEATAB_HIGH:   return CMD_MEAS_CLOCKSTR_H;
-			}*/
+			if(Repeat < ArrayLength(cs)) return cs[Repeat];
 			break;
 		}
 		case 1:
 		{
-			if(Repeatability < ArrayLength(ps)) return ps[Repeatability];
-			/*switch (Repeatability)
-			{
-				case REPEATAB_LOW:    return CMD_MEAS_POLLING_L;
-				case REPEATAB_MEDIUM: return CMD_MEAS_POLLING_M;
-				case REPEATAB_HIGH:   return CMD_MEAS_POLLING_H;
-			}*/
+			if(Repeat < ArrayLength(ps)) return ps[Repeat];
 			break;
 		}
 		case 2:

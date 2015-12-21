@@ -11,8 +11,8 @@ public:
     I2C* IIC;		// I2C通信口
 	byte Address;	// 设备地址
 	byte Mode;		// 模式。0=CLKSTRETCH/1=POLLING/2=Periodic
-	byte Frequency;	// 频率，多少秒测量一次。05/1/2/4/10，05表示0.5s
-	byte Repeatability;	// 重复性。0=高/1=中/2=低，多次测量相差不多，说明重复性高
+	byte Freq;		// 频率，多少秒测量一次。05/1/2/4/10，05表示0.5s
+	byte Repeat;	// 重复性。0=高/1=中/2=低，多次测量相差不多，说明重复性高
 
 	OutputPort	Pwr;	// 电源
 
@@ -22,8 +22,6 @@ public:
 	void Init();
 	uint ReadSerialNumber() const;
 	ushort ReadStatus() const;
-	//ushort ReadTemperature();
-	//ushort ReadHumidity();
 	bool Read(ushort& temp, ushort& humi);
 
 	// 电源等级变更（如进入低功耗模式）时调用
