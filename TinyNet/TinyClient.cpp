@@ -158,7 +158,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	auto rs	= msg.CreateReply();
 	auto ms	= rs.ToStream();
 
-	DataMessage dm(msg, ms);
+	DataMessage dm(msg, &ms);
 
 	bool rt	= true;
 	if(dm.Offset < 64)
@@ -189,7 +189,7 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	auto rs	= msg.CreateReply();
 	auto ms	= rs.ToStream();
 
-	DataMessage dm(msg, ms);
+	DataMessage dm(msg, &ms);
 
 	bool rt	= true;
 	if(dm.Offset < 64)

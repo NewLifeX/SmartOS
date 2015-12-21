@@ -12,8 +12,7 @@ public:
 	uint	Offset;
 	uint	Length;
 
-	DataMessage(const Message& msg);
-	DataMessage(const Message& msg, Stream& dest);
+	DataMessage(const Message& msg, Stream* dest);
 
 	bool ReadData(const DataStore& ds);
 	bool WriteData(DataStore& ds, bool withData);

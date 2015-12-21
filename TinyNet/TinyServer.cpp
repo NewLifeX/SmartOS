@@ -118,17 +118,15 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			OnPing(msg);
 			break;
 		case 5:
-			// 系统指令不会被转发，这里修改为用户指令
-			msg.Code = 0x15;
 		case 0x15:
-			// 修改最后读取时间
-			if(msg.Reply) dv->LastRead	= Sys.Seconds();
-
-			if(msg.Reply) OnReadReply(msg, *dv);
+			if(msg.Reply)
+			{
+				// 修改最后读取时间
+				dv->LastRead	= Sys.Seconds();
+				OnReadReply(msg, *dv);
+			}
 			break;
 		case 6:
-			// 系统指令不会被转发，这里修改为用户指令
-			msg.Code = 0x16;
 		case 0x16:
 			if(msg.Reply)
 				OnWriteReply(msg, *dv);
@@ -145,6 +143,9 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 
 	// 设置当前设备
 	Current = dv;
+
+	// 系统指令不会被转发，这里修改为用户指令
+	if(msg.Code == 0x05 || msg.Code == 0x06) msg.Code |= 0x10;
 
 	// 消息转发
 	if(Received) return Received(this, msg, Param);
@@ -487,8 +488,7 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, const Device& dv)
 
 	auto ms	= rs.ToStream();
 
-	DataMessage dm(msg, ms);
-	//debug_printf("TinyServer::OnRead Addr=%d Offset=%d len=%d \r\n", dv.Address, dm.Offset, dm.Length);
+	DataMessage dm(msg, &ms);
 
 	bool rt	= true;
 	if(dm.Offset < 64)
@@ -520,7 +520,7 @@ bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 
 	auto ms	= rs.ToStream();
 
-	DataMessage dm(msg, ms);
+	DataMessage dm(msg, &ms);
 
 	bool rt	= true;
 	if(dm.Offset < 64)
@@ -556,7 +556,7 @@ bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
 
 	TS("TinyServer::OnWriteReply");
 
-	DataMessage dm(msg);
+	DataMessage dm(msg, NULL);
 
 	if(dm.Offset < 64)
 		dm.WriteData(dv.GetStore(), false);

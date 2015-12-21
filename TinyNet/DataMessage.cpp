@@ -1,7 +1,9 @@
 ﻿#include "DataMessage.h"
 
-DataMessage::DataMessage(const Message& msg, Stream& dest) : _Src(msg.ToStream()), _Dest(&dest)
+DataMessage::DataMessage(const Message& msg, Stream* dest) : _Src(msg.ToStream())
 {
+	_Dest	= dest;
+
 	Offset	= _Src.ReadEncodeInt();
 	Length	= 0;
 
@@ -21,7 +23,7 @@ bool DataMessage::ReadData(const DataStore& ds)
 bool DataMessage::ReadData(const Array& bs)
 {
 	if(!_Dest) return false;
-	
+
 	TS("DataMessage::ReadData");
 
 	auto& ms	= *_Dest;
