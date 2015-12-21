@@ -468,8 +468,13 @@ SoftI2C::~SoftI2C()
 
 void SoftI2C::SetPin(Pin scl , Pin sda )
 {
-	SCL.Set(scl);
-	SDA.Set(sda);
+	//SCL.Set(scl);
+	//SDA.Set(sda);
+	// 不用自动检测倒置。
+	// 一般I2C初始都是高电平，也就是需要倒置
+	// 但是为了更形象地表达高低电平，不要倒置
+	SCL.Init(scl, false);
+	SDA.Init(sda, false);
 }
 
 void SoftI2C::GetPin(Pin* scl , Pin* sda )
