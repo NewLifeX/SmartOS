@@ -187,17 +187,16 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 	2，Polling非阻塞模式，发送命令后采集，需要反复多次启动并发送读取头，得到ACK以后才能读取数据
 	3，内部定期采集模式，启动时发送Periodic命令，读取时发送FetchData命令后直接读取数据
 	*/
-	TimeCost tc;
+	//TimeCost tc;
 	//uint data = Read4(CMD_MEAS_CLOCKSTR_H);
 	//uint data = Read4(CMD_MEAS_POLLING_H);
 	//uint data = Read4(CMD_FETCH_DATA);
 	uint data = Read4(GetMode());
-	tc.Show();
+	//tc.Show();
 	if(!data)
 	{
 		bool rs	= CheckStatus();
-		//if(rs)
-			SetMode();
+		if(rs) SetMode();
 
 		return false;
 	}
@@ -216,7 +215,7 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 
 bool SHT30::Write(ushort cmd)
 {
-	debug_printf("cmd=0x%04X \r\n", cmd);
+	//debug_printf("cmd=0x%04X \r\n", cmd);
 
 	// 只有子操作码，没有数据
 	bool rs = IIC->Write(cmd, ByteArray(0));
