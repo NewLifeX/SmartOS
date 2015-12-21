@@ -169,7 +169,7 @@ private:
 
 /******************************** AnalogInPort ********************************/
 
-// 模拟输入输出口
+// 模拟输入口
 class AnalogInPort : public Port
 {
 public:

@@ -860,6 +860,10 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
 void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
 {
+#if DEBUG
+	debug_printf("\r\n");
+#endif
+
 	Port::OnOpen(gpio);
 
 #ifdef STM32F1
