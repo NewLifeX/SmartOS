@@ -678,7 +678,7 @@ int TinyServer::LoadDevices()
 	Config cfg(&flash, addr);
 
 	byte* data = (byte*)cfg.Get("Devs");
-	if(!data) return 0;
+	if(!data) return -1;
 
 	Stream ms(data, 4 << 10);
 	// 设备个数
