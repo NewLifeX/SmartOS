@@ -121,6 +121,9 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			// 系统指令不会被转发，这里修改为用户指令
 			msg.Code = 0x15;
 		case 0x15:
+			// 修改最后读取时间
+			if(msg.Reply) dv.LastRead	= now;
+
 			OnReadReply(msg, *dv);
 			break;
 		case 6:
@@ -185,7 +188,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 			// 避免频繁读取。间隔秒数
 			if(dv->LastRead + 5 < now)
 			{
-				dv->LastRead	= now;
+				//dv->LastRead	= now;
 				rt	= false;
 			}
 			else
@@ -444,7 +447,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 				pm.ReadData(ms, bs);
 
 				// 更新读取时间
-				//dv->LastRead	= Sys.Seconds();
+				dv->LastRead	= Sys.Seconds();
 
 				break;
 			}
@@ -496,7 +499,7 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, const Device& dv)
 	if(msg.Error) return false;
 
 	TS("TinyServer::OnRead");
-	
+
 	auto ms	= rs.ToStream();
 
 	DataMessage dm(msg, ms);
