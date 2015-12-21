@@ -15,6 +15,7 @@ bool IC74HC165::Open()
 	_In.Open();
 	_CE.Open();
 	Opened = true;
+	return true;
 }
 
 bool IC74HC165::Close()
@@ -24,6 +25,7 @@ bool IC74HC165::Close()
 	_In.Close();
 	_CE.Close();	
 	Opened = false;
+	return true;
 }
 
 bool IC74HC165::Read(byte *buf, byte count)
