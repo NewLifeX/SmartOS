@@ -1,4 +1,5 @@
-#include "SHT30.h"
+﻿#include "SHT30.h"
+#include "Time.h"
 
 #define LITTLE_ENDIAN
 
@@ -46,9 +47,9 @@ typedef enum{
 
 // Measurement Repeatability
 typedef enum{
-  REPEATAB_HIGH,   // high repeatability
-  REPEATAB_MEDIUM, // medium repeatability
-  REPEATAB_LOW,    // low repeatability
+  REPEATAB_HIGH,
+  REPEATAB_MEDIUM,
+  REPEATAB_LOW,
 }etRepeatability;
 
 // Measurement Mode
@@ -103,34 +104,61 @@ SHT30::SHT30()
 	IIC		= NULL;
 	Address	= 0x44;	// ADDR=VSS
 	//Address	= 0x45;	// ADDR=VDD
+
+	Mode	= 0;
+	Frequency	= 0;
+	Repeatability	= 0;
 }
 
 SHT30::~SHT30()
 {
+	Pwr	= false;
+
 	delete IIC;
 	IIC = NULL;
 }
 
 void SHT30::Init()
 {
-	debug_printf("\r\nSHT30::Init Address=0x%02X \r\n", Address);
+#if DEBUG
+	debug_printf("\r\nSHT30::Init Address=0x%02X ", Address);
+	switch (Mode)
+	{
+	case 0:
+		debug_printf(" Stretch阻塞模式");
+		break;
+	case 1:
+		debug_printf(" Polling非阻塞模式");
+		break;
+	case 2:
+		debug_printf(" 内部定期采集模式 每秒%d次", Frequency);
+		break;
+	}
+	switch (Repeatability)
+	{
+	case REPEATAB_LOW:
+		debug_printf(" 低重复性");
+		break;
+	case REPEATAB_MEDIUM:
+		debug_printf(" 中重复性");
+		break;
+	case REPEATAB_HIGH:
+		debug_printf(" 高重复性");
+		break;
+	}
+	debug_printf("\r\n");
+#endif
 
 	IIC->SubWidth	= 2;
 	IIC->Address	= Address << 1;
 
-	Write(CMD_SOFT_RESET);		// 软重启
-	//Sys.Sleep(15);
+	Pwr	= true;
 
-#if DEBUG
-	uint sn		= ReadSerialNumber();
-	ushort st	= ReadStatus();
+	//Write(CMD_SOFT_RESET);		// 软重启
 
-	//regStatus pst;
-	//pst.u16 = st;
-	debug_printf("SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
-#endif
+	bool rs	= CheckStatus();
 
-	Write(CMD_CLEAR_STATUS);	// 清除所有状态
+	//Write(CMD_CLEAR_STATUS);	// 清除所有状态
 
 	/*
 	SHT30三种采集数据方式：
@@ -140,15 +168,16 @@ void SHT30::Init()
 	*/
 	//Read4(CMD_MEAS_CLOCKSTR_H);
 	//Read4(CMD_MEAS_POLLING_H);
-	Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
+	//Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
+	if(rs) SetMode();
 }
 
-uint SHT30::ReadSerialNumber()
+uint SHT30::ReadSerialNumber() const
 {
 	return Read4(CMD_READ_SERIALNBR);
 }
 
-ushort SHT30::ReadStatus()
+ushort SHT30::ReadStatus() const
 {
 	return Read2(CMD_READ_STATUS);
 }
@@ -161,10 +190,20 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 	2，Polling非阻塞模式，发送命令后采集，需要反复多次启动并发送读取头，得到ACK以后才能读取数据
 	3，内部定期采集模式，启动时发送Periodic命令，读取时发送FetchData命令后直接读取数据
 	*/
+	TimeCost tc;
 	//uint data = Read4(CMD_MEAS_CLOCKSTR_H);
 	//uint data = Read4(CMD_MEAS_POLLING_H);
-	uint data = Read4(CMD_FETCH_DATA);
-	if(!data) return false;
+	//uint data = Read4(CMD_FETCH_DATA);
+	uint data = Read4(GetMode());
+	tc.Show();
+	if(!data)
+	{
+		bool rs	= CheckStatus();
+		//if(rs)
+			SetMode();
+
+		return false;
+	}
 
 	temp = data >> 16;
 	// 公式:T= -46.85 + 175.72 * ST/2^16
@@ -180,14 +219,16 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 
 bool SHT30::Write(ushort cmd)
 {
-	//debug_printf("SHT30::Write 0x%02X\r\n", cmd);
+	debug_printf("cmd=0x%04X \r\n", cmd);
+
 	// 只有子操作码，没有数据
 	bool rs = IIC->Write(cmd, ByteArray(0));
-	if(!rs) debug_printf("SHT30::Write 0x%02X 失败\r\n", cmd);
+	if(!rs) debug_printf("SHT30::Write 0x%04X 失败\r\n", cmd);
+
 	return rs;
 }
 
-ushort SHT30::Read2(ushort cmd)
+ushort SHT30::Read2(ushort cmd) const
 {
 	ByteArray rs(3);
 	if(IIC->Read(cmd, rs) == 0)
@@ -200,8 +241,10 @@ ushort SHT30::Read2(ushort cmd)
 }
 
 // 同时读取温湿度并校验Crc
-uint SHT30::Read4(ushort cmd)
+uint SHT30::Read4(ushort cmd) const
 {
+	if(!cmd) return 0;
+
 	ByteArray rs(6);
 	if(IIC->Read(cmd, rs) == 0)
 	{
@@ -214,9 +257,133 @@ uint SHT30::Read4(ushort cmd)
 	ushort temp = __REV16(*(ushort*)p);
 	ushort humi = __REV16(*(ushort*)(p + 3));
 
-	//Sys.Sleep(10);
-
 	return (temp << 16) | humi;
+}
+
+bool SHT30::CheckStatus()
+{
+	ushort st	= ReadStatus();
+	regStatus rs;
+	rs.u16	= st;
+#if DEBUG
+	if(st != 0)
+	{
+		uint sn		= ReadSerialNumber();
+		debug_printf("SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
+		//debug_printf("Status=0x%04X ", st);
+		if(rs.bit.ResetDetected)	debug_printf(" ResetDetected");
+		if(rs.bit.HeaterStatus)		debug_printf(" HeaterStatus");
+		if(rs.bit.AlertPending)		debug_printf(" AlertPending");
+		debug_printf("\r\n");
+	}
+#endif
+
+	if(!rs.bit.ResetDetected) return false;
+
+	Write(CMD_CLEAR_STATUS);
+
+	return true;
+}
+
+void SHT30::SetMode()
+{
+	if(Mode != 2) return;
+
+	debug_printf("SHT30::SetMode Repeatability=%d Frequency=%d \r\n", Repeatability, Frequency);
+	//Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
+	bool rs	= false;
+	switch (Repeatability)
+	{
+	case REPEATAB_LOW:
+		switch (Frequency)
+		{
+		case FREQUENCY_HZ5:
+			rs	= Write(CMD_MEAS_PERI_05_L); break;
+		case FREQUENCY_1HZ:
+			rs	= Write(CMD_MEAS_PERI_1_L); break;
+		case FREQUENCY_2HZ:
+			rs	= Write(CMD_MEAS_PERI_2_L); break;
+		case FREQUENCY_4HZ:
+			rs	= Write(CMD_MEAS_PERI_4_L); break;
+		case FREQUENCY_10HZ:
+			rs	= Write(CMD_MEAS_PERI_10_L); break;
+		}
+		break;
+
+	case REPEATAB_MEDIUM:
+		switch (Frequency)
+		{
+		case FREQUENCY_HZ5:
+			rs	= Write(CMD_MEAS_PERI_05_M); break;
+		case FREQUENCY_1HZ:
+			rs	= Write(CMD_MEAS_PERI_1_M); break;
+		case FREQUENCY_2HZ:
+			rs	= Write(CMD_MEAS_PERI_2_M); break;
+		case FREQUENCY_4HZ:
+			rs	= Write(CMD_MEAS_PERI_4_M); break;
+		case FREQUENCY_10HZ:
+			rs	= Write(CMD_MEAS_PERI_10_M); break;
+		}
+		break;
+
+	case REPEATAB_HIGH:
+		switch (Frequency)
+		{
+		case FREQUENCY_HZ5:
+			rs	= Write(CMD_MEAS_PERI_05_H); break;
+		case FREQUENCY_1HZ:
+			rs	= Write(CMD_MEAS_PERI_1_H); break;
+		case FREQUENCY_2HZ:
+			rs	= Write(CMD_MEAS_PERI_2_H); break;
+		case FREQUENCY_4HZ:
+			rs	= Write(CMD_MEAS_PERI_4_H); break;
+		case FREQUENCY_10HZ:
+			rs	= Write(CMD_MEAS_PERI_10_H); break;
+		}
+		break;
+	}
+
+	// 软重启
+	if(!rs) rs	= Write(CMD_SOFT_RESET);
+	// 硬重启
+	if(!rs) Pwr.Down(100);
+}
+
+ushort SHT30::GetMode() const
+{
+	static ushort cs[] = {CMD_MEAS_CLOCKSTR_L, CMD_MEAS_CLOCKSTR_M, CMD_MEAS_CLOCKSTR_H};
+	static ushort ps[] = {CMD_MEAS_POLLING_L, CMD_MEAS_POLLING_M, CMD_MEAS_POLLING_H};
+	switch(Mode)
+	{
+		case 0:
+		{
+			if(Repeatability < ArrayLength(cs)) return cs[Repeatability];
+			/*switch (Repeatability)
+			{
+				case REPEATAB_LOW:    return CMD_MEAS_CLOCKSTR_L;
+				case REPEATAB_MEDIUM: return CMD_MEAS_CLOCKSTR_M;
+				case REPEATAB_HIGH:   return CMD_MEAS_CLOCKSTR_H;
+			}*/
+			break;
+		}
+		case 1:
+		{
+			if(Repeatability < ArrayLength(ps)) return ps[Repeatability];
+			/*switch (Repeatability)
+			{
+				case REPEATAB_LOW:    return CMD_MEAS_POLLING_L;
+				case REPEATAB_MEDIUM: return CMD_MEAS_POLLING_M;
+				case REPEATAB_HIGH:   return CMD_MEAS_POLLING_H;
+			}*/
+			break;
+		}
+		case 2:
+		{
+			return CMD_FETCH_DATA;
+		}
+	}
+
+	return 0;
 }
 
 void SHT30::ChangePower(int level)
