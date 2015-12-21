@@ -439,7 +439,7 @@ bool TinyController::Valid(const Message& _msg)
 			AckRequest(msg);
 		else
 		{
-			if(AckResponse(msg)) return true;
+			if(AckResponse(msg)) return false;
 		}
 	}
 
