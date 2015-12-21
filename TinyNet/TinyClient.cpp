@@ -178,7 +178,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 
 /*
 请求：1起始 + N数据
-响应：1起始 + 1大小
+响应：1起始 + 1大小 + N数据
 错误：错误码2 + 1起始 + 1大小
 */
 void TinyClient::OnWrite(const TinyMessage& msg)
