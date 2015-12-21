@@ -412,7 +412,7 @@ bool TinyController::Valid(const Message& _msg)
 			if(_Ring.Check(seq))
 			{
 				// 对方可能多次发同一个请求过来，都要做响应
-				if(!msg.Reply && AckResponse(msg)) return true;
+				if(!msg.Reply && AckResponse(msg)) return false;
 
 				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
 				return false;
@@ -439,7 +439,11 @@ bool TinyController::Valid(const Message& _msg)
 			AckRequest(msg);
 		else
 		{
-			if(AckResponse(msg)) return false;
+			if(AckResponse(msg))
+			{
+				debug_printf("匹配请求 ");
+				return false;
+			}
 		}
 	}
 
@@ -810,7 +814,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	}
 	Seq			= msg.Seq;
 
-	debug_printf("Set 0x%08x \r\n", this);
+	//debug_printf("Set 0x%08x \r\n", this);
 }
 
 /*================================ 环形队列 ================================*/
