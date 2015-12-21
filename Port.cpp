@@ -400,6 +400,15 @@ void OutputPort::Up(uint ms) const
     Write(false);
 }
 
+void OutputPort::Down(uint ms) const
+{
+	if(Empty()) return;
+
+    Write(false);
+	Sys.Sleep(ms);
+    Write(true);
+}
+
 void OutputPort::Blink(uint times, uint ms) const
 {
 	if(Empty()) return;

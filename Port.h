@@ -73,6 +73,7 @@ public:
     void Write(bool value) const;
 	// 拉高一段时间后拉低
 	void Up(uint ms) const;
+	void Down(uint ms) const;
 	// 闪烁多次
 	void Blink(uint times, uint ms) const;
 
