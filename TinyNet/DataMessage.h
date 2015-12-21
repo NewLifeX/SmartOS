@@ -15,10 +15,10 @@ public:
 	DataMessage(const Message& msg, Stream& dest);
 
 	bool ReadData(const DataStore& ds);
-	bool WriteData(DataStore& ds);
+	bool WriteData(DataStore& ds, bool withData);
 
 	bool ReadData(const Array& bs);
-	bool WriteData(Array& bs);
+	bool WriteData(Array& bs, bool withData);
 
 private:
 	Stream	_Src;

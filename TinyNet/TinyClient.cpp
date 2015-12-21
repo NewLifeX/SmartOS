@@ -193,15 +193,12 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
-		rt	= dm.WriteData(Store);
+		rt	= dm.WriteData(Store, true);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		//DataStore ds;
-		//ds.Data.Set(Cfg, Cfg->Length);
-		//rt	= dm.WriteData(ds);
 		Array bs(Cfg, Cfg->Length);
-		rt	= dm.WriteData(bs);
+		rt	= dm.WriteData(bs, true);
 	}
 
 	rs.Error	= !rt;
@@ -250,14 +247,14 @@ bool TinyClient::Report(uint offset, byte dat)
 bool TinyClient::Report(uint offset, const Array& bs)
 {
 	TinyMessage msg;
-	msg.Code	= 0x05;
+	msg.Code	= 0x06;
 
 	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(bs);
 	msg.Length	= ms.Position();
 
-	return Reply(msg);
+	return Send(msg);
 }
 
 void TinyClient::ReportAsync(uint offset)

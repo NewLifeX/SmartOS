@@ -124,8 +124,16 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			OnReadReply(msg, *dv);
 			break;
 		case 6:
+			// 系统指令不会被转发，这里修改为用户指令
+			msg.Code = 0x16;
 		case 0x16:
-			//OnWriteReply(msg, *dv);
+			if(!msg.Reply)
+			{
+				auto rs	= msg.CreateReply();
+				if(OnWrite(msg, rs, *dv)) Send(rs);
+			}
+			else
+				OnWriteReply(msg, *dv);
 			break;
 	}
 
@@ -176,7 +184,10 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 
 			// 避免频繁读取。间隔秒数
 			if(dv->LastRead + 5 < now)
+			{
 				dv->LastRead	= now;
+				rt	= false;
+			}
 			else
 				fw	= false;
 
@@ -185,14 +196,15 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		case 6:
 		case 0x16:
 		{
-			auto now	= Sys.Ms();
+			/*auto now	= Sys.Ms();
 			rt = OnWrite(msg, rs, *dv);
 
 			// 避免频繁写入。间隔毫秒数
 			if(dv->LastWrite + 500 < now)
 				dv->LastWrite	= now;
 			else
-				fw	= false;
+				fw	= false;*/
+			rt = false;
 
 			break;
 		}
@@ -477,7 +489,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 响应：1起始 + N数据
 错误：错误码2 + 1起始 + 1大小
 */
-bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
+bool TinyServer::OnRead(const Message& msg, Message& rs, const Device& dv)
 {
 	if(msg.Reply) return false;
 	if(msg.Length < 2) return false;
@@ -492,43 +504,16 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, Device& dv)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
-		rt	= dm.ReadData(Array(dv.Store, ArrayLength(dv.Store)));
+		rt	= dm.ReadData(dv.GetStore());
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		Array bs(dv.Cfg, dv.Cfg->Length);
-		rt	= dm.ReadData(bs);
+		rt	= dm.ReadData(dv.GetConfig());
 	}
 
 	rs.Error	= !rt;
 	rs.Length	= ms.Position();
 	//rs.Show();
-
-	return true;
-}
-
-// 读取响应，服务端趁机缓存一份。
-bool TinyServer::OnReadReply(const TinyMessage& msg, Device& dv)
-{
-	if(!msg.Reply || msg.Error) return false;
-	if(msg.Length < 2) return false;
-
-	TS("TinyServer::OnReadReply");
-
-	auto ms		= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
-
-	auto bs		= dv.GetStore();
-	int remain	= bs.Capacity() - offset;
-	if(remain < 0) return false;
-
-	uint len = ms.Remain();
-	if(len > remain) len = remain;
-	// 保存一份到缓冲区
-	if(len > 0)
-	{
-		bs.Copy(ms.Current(), len, offset);
-	}
 
 	return true;
 }
@@ -552,20 +537,63 @@ bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 	bool rt	= true;
 	if(dm.Offset < 64)
 	{
-		Array bs(dv.Store, ArrayLength(dv.Store));
-		rt	= dm.WriteData(bs);
+		auto bs	= dv.GetStore();
+		rt		= dm.WriteData(bs, false);
 	}
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		Array bs(dv.Cfg, dv.Cfg->Length);
-		rt	= dm.WriteData(bs);
+		auto bs	= dv.GetConfig();
+		rt		= dm.WriteData(bs, false);
 	}
 
 	rs.Error	= !rt;
 	rs.Length	= ms.Position();
 
 	return true;
+}
+
+// 读取响应，服务端趁机缓存一份。
+bool TinyServer::OnReadReply(const Message& msg, Device& dv)
+{
+	if(!msg.Reply || msg.Error) return false;
+	if(msg.Length < 2) return false;
+
+	TS("TinyServer::OnReadReply");
+
+	return OnWriteReply(msg, dv);
+}
+
+// 节点的写入响应，偏移和长度之后可能携带有数据
+bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
+{
+	if(!msg.Reply || msg.Error) return false;
+	if(msg.Length <= 2) return false;
+
+	TS("TinyServer::OnWriteReply");
+
+	auto rs	= ((TinyMessage&)msg).CreateReply();
+	auto ms	= rs.ToStream();
+
+	DataMessage dm(msg, ms);
+
+	bool rt	= true;
+	if(dm.Offset < 64)
+	{
+		auto bs	= dv.GetStore();
+		rt		= dm.WriteData(bs, false);
+	}
+	else if(dm.Offset < 128)
+	{
+		dm.Offset	-= 64;
+		auto bs	= dv.GetConfig();
+		rt		= dm.WriteData(bs, false);
+	}
+
+	rs.Error	= !rt;
+	rs.Length	= ms.Position();
+
+	return Send(rs);
 }
 
 //设置zigbee的通道，2401无效
