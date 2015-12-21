@@ -666,7 +666,7 @@ void TinyController::Loop()
 	for(int i=0; i<QueueLength; i++)
 	{
 		auto& node = _Queue[i];
-		if(!node.Using) continue;
+		if(!node.Using || node.Seq == 0) continue;
 
 		auto flag = (TFlags*)&node.Data[3];
 		bool reply	= flag->_Reply;
@@ -682,7 +682,8 @@ void TinyController::Loop()
 			if(node.EndTime < now)
 			{
 				if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
-				node.Using = 0;
+				node.Using	= 0;
+				node.Seq	= 0;
 
 				continue;
 			}
@@ -697,10 +698,10 @@ void TinyController::Loop()
 
 		// 发送消息
 		Array bs(node.Data, node.Length);
-		/*if(node.Length > 32)
+		if(node.Length > 32)
 		{
-			debug_printf("node.Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
-		}*/
+			debug_printf("node=0x%08x Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", &node, node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
+		}
 		if(node.Mac[0])
 			Port->Write(bs, &node.Mac[1]);
 		else
@@ -799,7 +800,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Stream ms(Data, ArrayLength(Data));
 	msg.Write(ms);
 	Length		= ms.Position();
-	//if(Length > 32) debug_printf("Length=%d \r\n", Length);
+	if(Length > 32) debug_printf("Length=%d \r\n", Length);
 
 	Mac[0]		= 0;
 	if(msg.State)
@@ -808,6 +809,8 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 		memcpy(&Mac[1], msg.State, 5);
 	}
 	Seq			= msg.Seq;
+
+	debug_printf("Set 0x%08x \r\n", this);
 }
 
 /*================================ 环形队列 ================================*/
