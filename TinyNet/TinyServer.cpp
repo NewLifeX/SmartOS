@@ -122,7 +122,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			msg.Code = 0x15;
 		case 0x15:
 			// 修改最后读取时间
-			if(msg.Reply) dv.LastRead	= now;
+			if(msg.Reply) dv->LastRead	= Sys.Seconds();
 
 			OnReadReply(msg, *dv);
 			break;

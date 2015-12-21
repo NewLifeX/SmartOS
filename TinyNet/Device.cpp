@@ -25,7 +25,7 @@ Device::Device()
 	Cfg			= NULL;
 
 	LastRead	= 0;
-	LastWrite	= 0;
+	//LastWrite	= 0;
 }
 
 void Device::Write(Stream& ms) const
