@@ -664,6 +664,7 @@ void TinyController::Loop()
 	3，不管请求还是响应，同样方式处理超时，响应的下一次时间特别长
 	4，如果某个请求序列对应的响应存在，则直接将其下一次时间置为0，让其马上重发
 	5，发送响应消息，不好统计速度和成功率
+	6，发送次数不允许超过5次
 	*/
 
 	int count = 0;
@@ -683,7 +684,7 @@ void TinyController::Loop()
 			ulong now = Sys.Ms();
 
 			// 已过期则删除
-			if(node.EndTime < now)
+			if(node.EndTime < now||node.Times > 5)
 			{
 				if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using	= 0;
