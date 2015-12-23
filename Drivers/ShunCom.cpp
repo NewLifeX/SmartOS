@@ -295,9 +295,11 @@ void ShunCom::SetSend(byte mode)
 void ShunCom::ShunComReset()
 {
 	EnterConfig();
+	ShowConfig();
+	
 	SetDevice(01);
 	SetChannel(0x0F);
-	SetPanID(6666);
+	SetPanID(0x6666);
 	PrintSrc(false);
 	EraConfig();
 	ExitConfig();	
