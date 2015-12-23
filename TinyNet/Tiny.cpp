@@ -97,21 +97,26 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
+	//zb->Open();
 	
-	auto tc = TinyConfig::Current;
-	
-	if(tc->Channel != 0x0F)
-	if(zb->EnterConfig())
-	{			
-		//zb->ShowConfig();
-		zb->SetDevice(0x02);
-		zb->SetSend(0x01);
-		//zb->SetPanID(0x4444);
-		zb->EraConfig();
-		//tc->Channel = 0x0F;
-		tc->Save();	
-		zb->ExitConfig();
-	}	
+	//Sys.Sleep(300);
+	//
+	//auto tc = TinyConfig::Current;
+	//
+	//if(tc->Channel != 0x0F)
+	//{
+	//  if(zb->EnterConfig())
+	//  {			
+	//	//zb->ShowConfig();
+	//	zb->SetDevice(0x02);
+	//	zb->SetSend(0x00);
+	//	//zb->SetPanID(0x4444);
+	//	//zb->EraConfig();
+	//	//tc->Channel = 0x0F;
+	//	tc->Save();	
+	//	zb->ExitConfig();
+	//  }
+	//}	
 	zb->Led	= led;
 
 	return zb;
