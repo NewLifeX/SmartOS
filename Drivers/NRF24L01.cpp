@@ -834,7 +834,9 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	// 进入Standby，写完数据再进入TX发送。这里开始直到CE拉高之后，共耗时176us。不拉高CE大概45us
 	//_CE = true;
 
-	byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
+	//byte cmd = AutoAnswer ? WR_TX_PLOAD : TX_NOACK;
+	// 是否NOACK由目标地址是否为广播地址决定
+	byte cmd = WR_TX_PLOAD;
 	// 检查要发送数据的长度
 	uint len = bs.Length();
 	byte pw	= 32;
