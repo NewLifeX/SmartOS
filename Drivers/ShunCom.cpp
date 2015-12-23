@@ -33,7 +33,8 @@ public:
 
 ShunCom::ShunCom()
 {
-	Led		= NULL;
+	Led			= NULL;
+	ExternalCfg	= NULL;
 }
 
 void ShunCom::Init(ITransport* port, Pin rst)
@@ -50,6 +51,8 @@ void ShunCom::Init(ITransport* port, Pin rst)
 
 bool ShunCom::OnOpen()
 {
+	if(ExternalCfg)ExternalCfg(this);
+	
 	debug_printf("\r\nShunCom::Open \r\n");
 
     debug_printf("    Sleep : ");

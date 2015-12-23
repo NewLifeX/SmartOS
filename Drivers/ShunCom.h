@@ -47,6 +47,9 @@ public:
 	//还原zigbee默认配置
 	void ShunComReset();
 
+public:
+	// Open 执行的外部配置函数
+	Action	ExternalCfg;
 private:
 	virtual bool OnOpen();
     virtual void OnClose();
