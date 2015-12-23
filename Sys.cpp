@@ -1,6 +1,7 @@
 ﻿#include "Sys.h"
 
 #include "Time.h"
+#include "WatchDog.h"
 
 TSys Sys;
 TTime Time;
@@ -433,7 +434,12 @@ void TSys::Reset() { NVIC_SystemReset(); }
 
 void TSys::Start()
 {
+#if !DEBUG
+	WatchDog::Start();
+#endif
+
 	Started = true;
+	
 #if DEBUG
 	//AddTask(ShowTime, NULL, 2000000, 2000000);
 #endif

@@ -46,9 +46,6 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 		sp->Register(OnSerial);
 	}
 
-	//WatchDog::Start(20000);
-#else
-	WatchDog::Start();
 #endif
 }
 
