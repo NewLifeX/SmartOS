@@ -650,7 +650,7 @@ void NRF24L01::SetAddress()
 	RF_FEATURE ft;
 	ft.Init(ReadReg(FEATURE));
 	ft.DPL = DynPayload;		// 使能动态负载长度
-	ft.DYN_ACK = !AutoAnswer;	// 使能命令TX_PAYLOAD_NOACK
+	ft.DYN_ACK = AutoAnswer;	// 使能命令TX_PAYLOAD_NOACK
 	//ft.ACK_PAYD = 1;	// 使能ACK负载（带负载数据的ACK包）
 
 	WriteReg(FEATURE, ft.ToByte());
