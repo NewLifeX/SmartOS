@@ -107,6 +107,9 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 {
 	if(Led) Led->Write(1000);
 
+	debug_printf("zigbee接收\r\n");
+	bs.Show(true);
+	
 	if(!AddrLength) 
      return ITransport::OnReceive(bs, param);
 
@@ -121,13 +124,14 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 
 bool ShunCom::OnWriteEx(const Array& bs, void* opt)
 {
-	if(!AddrLength || !opt) return OnWrite(bs);
-	//debug_printf("zigbee发送\r\n");
-	//bs.Show(true);
+	debug_printf("zigbee发送\r\n");
+	bs.Show(true);
+	
+	if(!AddrLength || !opt) return OnWrite(bs);	
 	// 加入地址
 	ByteArray bs2;
 	bs2.Copy(opt, AddrLength);
-	//debug_printf("zigbee发送地址\r\n");
+	//debug_printf("zigbee发送\r\n");
 	//bs2.Show();
 	
 	bs2.Copy(bs, AddrLength);	
@@ -287,7 +291,17 @@ void ShunCom::SetSend(byte mode)
 	Write(buf);	
    // debug_printf("\r\n"); 	
 }
-
+//还原zigBee默认配置
+void ShunCom::ShunComReset()
+{
+	EnterConfig();
+	SetDevice(01);
+	SetChannel(0x0F);
+	SetPanID(6666);
+	PrintSrc(false);
+	EraConfig();
+	ExitConfig();	
+}
 ShunComMessage::ShunComMessage(ushort code)
 {
 	Frame	= 0xFE;

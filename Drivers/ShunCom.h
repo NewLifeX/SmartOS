@@ -44,6 +44,8 @@ public:
 	void SetSend(byte mode);
 	// 进入配置PanID,同一网络PanID必须相同
     void SetPanID(ushort id);
+	//还原zigbee默认配置
+	void ShunComReset();
 
 private:
 	virtual bool OnOpen();
