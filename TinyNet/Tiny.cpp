@@ -9,6 +9,9 @@
 #include "Net\Zigbee.h"
 #include "TinyNet\TinyClient.h"
 
+#define SLAVE 0
+//#define MSG_DEBUG 0
+
 uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 {
 	debug_printf("OnSerial len=%d \t", bs.Length());
@@ -115,7 +118,9 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
+#if SLAVE
 	zb->ExternalCfg = ShunComExternalCfg;
+#endif
 	//zb->Open();
 
 	//Sys.Sleep(300);
