@@ -1,4 +1,40 @@
 ﻿#include "ShunCom.h"
+/*
+// 重启
+byte const Reset[] 		= 	{0xFE,0x01,0x41,0x00,0x00,0x40};
+// 擦除组网配置信息
+byte const EraseNetCfg[]= 	{0xFE,0x05,0x21,0x09,0x03,0x00,0x00,0x01,0x02,0x2D};
+// 倒数第二字节  00：中心  01：路由  02：终端
+byte const ModeMsg[] = 		{0xFE,0x05,0x21,0x09,0x87,0x00,0x00,0x01,0x00,0xAB};
+// 倒数 2-6 四个字节表示频道号
+// 频道从11-26   为 0x0000 0001 << channel 然后倒序
+byte const ChannelMsg[] = 	{0xFE,0x08,0x21,0x09,0x84,0x00,0x00,0x04,
+0x00,0x08,0x00,0x00,	// 频道
+0xA8};
+// Panid
+byte const PanidMsg[]	=	{0xFE,0x06,0x21,0x09,0x83,0x00,0x00,0x02,
+0x34,0x12,	// Panid
+0x89};
+// 短地址
+byte const ShortidMsg[]	=	{0xFE,0x06,0x21,0x09,0x11,0x04,0x00,0x02,
+0x34,0x12,	// ID
+0x1F};
+// 扩展Panid
+byte const PanidExMsg[]	=	{0xFE,0x0C,0x21,0x09,0x47,0x00,0x00,0x08,
+0xEF,0xCD,0xAB,0x89,0x67,0x45,0x23,0x01,	// ID
+0x6B};
+// 工作模式
+byte const WorkModeMsg[]=	{0xFE,0x05,0x21,0x09,0x16,0x04,0x00,0x01,
+0xFF,	// Mode
+0xC1};
+
+//*********以下透传模式有效*********
+// 修改发送模式
+byte const WorkModeMsg2[]=	{0xFE,0x05,0x21,0x09,0x03,0x04,0x00,0x01,
+0x00,	// Mode
+0x2B};
+
+*/
 
 class ShunComMessage
 {
@@ -19,7 +55,7 @@ public:
 	bool Read(Stream& ms);
 	void Write(Stream& ms) const;
 	ByteArray ToArray() const;
-	ByteArray ToArray(Stream& ms); 
+	ByteArray ToArray(Stream& ms);
 	void Set(ushort kind, const Array& bs);
 	void Set(ushort kind, byte dat);
 	void Set(ushort kind, ushort dat);
@@ -52,7 +88,7 @@ void ShunCom::Init(ITransport* port, Pin rst)
 bool ShunCom::OnOpen()
 {
 	if(ExternalCfg)ExternalCfg(this);
-	
+
 	debug_printf("\r\nShunCom::Open \r\n");
 
     debug_printf("    Sleep : ");
@@ -112,8 +148,8 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 
 	debug_printf("zigbee接收\r\n");
 	bs.Show(true);
-	
-	if(!AddrLength) 
+
+	if(!AddrLength)
      return ITransport::OnReceive(bs, param);
 
 	// 取出地址
@@ -121,7 +157,7 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
 	//debug_printf("zigbee接收\r\n");
 	//bs2.Show(true);
-	
+
 	return ITransport::OnReceive(bs2, addr);
 }
 
@@ -129,15 +165,15 @@ bool ShunCom::OnWriteEx(const Array& bs, void* opt)
 {
 	debug_printf("zigbee发送\r\n");
 	bs.Show(true);
-	
-	if(!AddrLength || !opt) return OnWrite(bs);	
+
+	if(!AddrLength || !opt) return OnWrite(bs);
 	// 加入地址
 	ByteArray bs2;
 	bs2.Copy(opt, AddrLength);
 	//debug_printf("zigbee发送\r\n");
 	//bs2.Show();
-	
-	bs2.Copy(bs, AddrLength);	
+
+	bs2.Copy(bs, AddrLength);
 	bs2.Show();
 	return OnWrite(bs2);
 }
@@ -152,7 +188,7 @@ bool ShunCom::EnterConfig()
 	Config	= true;
 	Sys.Sleep(1000);
 	Config	= false;
-	
+
 	ByteArray rs1;
 
 	// 清空串口缓冲区
@@ -175,14 +211,14 @@ void ShunCom::ExitConfig()
 	ShunComMessage msg(0x0041);
 	msg.Length	= 1;
 	msg.Data[0]	= 0x00;
-	
-	MemoryStream ms;	
+
+	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunComs重启生效\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
-	
+	Write(buf);
+   // debug_printf("\r\n");
+
 }
 void ShunCom::PrintSrc(bool flag)
 {
@@ -194,42 +230,42 @@ void ShunCom::PrintSrc(bool flag)
 	else
 	{
 		msg.Set(0x040E,(byte)1);
-	}		
+	}
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom设置源地址\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
+	Write(buf);
+   // debug_printf("\r\n");
 
 }
 
 void ShunCom::EraConfig()
 {
 	if(!Open()) return;
-	
+
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0003,(byte)02);
-	
-	MemoryStream ms;	
+
+	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom擦除组网信息\r\n");
 	buf.Show();
-	//Write(buf);	
-    //debug_printf("\r\n"); 	
+	//Write(buf);
+    //debug_printf("\r\n");
 }
 
 // 读取配置信息
 void ShunCom::ShowConfig()
-{	
+{
 	if(!Open()) return;
 
 	ShunComMessage msg(0x1521);
-	
+
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	buf.Show();
-	Write(buf);	
+	Write(buf);
 
 	Sys.Sleep(300);
 
@@ -248,64 +284,64 @@ void ShunCom::SetDevice(byte kind)
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom配置设备类型\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
+	Write(buf);
+   // debug_printf("\r\n");
 }
 
 // 设置无线频点，注意大小端，ShunCom是小端存储
 void ShunCom::SetChannel(byte chn)
-{	
+{
 	ShunComMessage msg(0x0921);
 	//todo 这里需要查资料核对左移公式
 	msg.Set(0x0084, (uint)(0x01 << chn));
-	
+
 	MemoryStream ms;
 	auto buf=msg.ToArray(ms);
 	//debug_printf("ShunCom配置无线频点\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
+	Write(buf);
+   // debug_printf("\r\n");
 }
 
 // 进入配置PanID,同一网络PanID必须相同
 void ShunCom::SetPanID(ushort id)
-{	
+{
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0083, id);
-	
+
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom配置PanID\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
+	Write(buf);
+   // debug_printf("\r\n");
 }
 
 // 设置发送模式00为广播、01为主从模式、02为点对点模式
 void ShunCom::SetSend(byte mode)
-{	
+{
 	ShunComMessage msg(0x0921);
 	msg.Set(0x0403, mode);
-	
+
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom配置设备主从模式\r\n");
 	//buf.Show();
-	Write(buf);	
-   // debug_printf("\r\n"); 	
+	Write(buf);
+   // debug_printf("\r\n");
 }
 //还原zigBee默认配置
 void ShunCom::ShunComReset()
 {
 	EnterConfig();
 	ShowConfig();
-	
+
 	SetDevice(01);
 	SetChannel(0x0F);
 	SetPanID(0x6666);
 	PrintSrc(false);
 	EraConfig();
-	ExitConfig();	
+	ExitConfig();
 }
 ShunComMessage::ShunComMessage(ushort code)
 {
@@ -347,7 +383,7 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(Code);
 	if(Length > 4)
 	{
-		ms.Write(Kind);			     	
+		ms.Write(Kind);
 		ms.Write((ushort)__REV16(Size));
 		ms.Write(Data, 0, Size);
 	}
@@ -360,27 +396,27 @@ void ShunComMessage::Write(Stream& ms) const
 	byte sum	= 0;
 	while(p++ < ms.Current()-1)sum^= *p;
 	ms.Write(sum);
-	
+
 }
 
 
 
 ByteArray ShunComMessage::ToArray() const
-{	
+{
 	//MemoryStream ms;
 	// 带有负载数据，需要合并成为一段连续的内存
 	ByteArray bs;
 	Stream ms(bs.GetBuffer(),64);
 	//ms.SetLength(bs.Length());
-	Write(ms);	
+	Write(ms);
 	bs.Show(true);
 	return bs;
 }
 
-ByteArray ShunComMessage::ToArray(Stream& ms) 
-{		
+ByteArray ShunComMessage::ToArray(Stream& ms)
+{
 	Write(ms);
-    ByteArray bs(ms.GetBuffer(), ms.Position());	
+    ByteArray bs(ms.GetBuffer(), ms.Position());
 	return bs;
 }
 void ShunComMessage::Set(ushort kind, const Array& bs)
