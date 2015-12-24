@@ -9,7 +9,7 @@
 #include "Net\Zigbee.h"
 #include "TinyNet\TinyClient.h"
 
-#define SLAVE 0
+#define ShunCom_SLAVE 0
 //#define MSG_DEBUG 0
 
 uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
@@ -118,7 +118,7 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	zb->Sleep.Init(slp, true);
 	zb->Config.Init(cfg, true);
 	zb->Init(sp, rst);
-#if SLAVE
+#if ShunCom_SLAVE
 	zb->ExternalCfg = ShunComExternalCfg;
 #endif
 	//zb->Open();

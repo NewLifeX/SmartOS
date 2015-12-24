@@ -18,6 +18,8 @@
 
 #include "App\FlushPort.h"
 
+#define ShunCom_Master 0
+
 static void StartGateway(void* param);
 
 static void OnDhcpStop5500(void* sender, void* param)
@@ -237,10 +239,11 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.Power.Set(power);
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
-	zb.Init(&sp, rst);
-	//zb.AddrLength = 2;
+	zb.Init(&sp, rst);	
 	zb.Led = led;
 	
+#if ShunComMaster
+	zb.AddrLength = 2;
 	auto tc = TinyConfig::Current;
 	tc->Load();
 	
@@ -250,8 +253,8 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	  {			
 	  	zb.ShowConfig();
 	  	zb.SetDevice(0x00);		
-	  	zb.SetPanID(0x4444);
-	  	zb.EraConfig();
+	  	//zb.SetPanID(0x4444);
+	  	//zb.EraConfig();
 	  	tc->Channel = 0x0F;			
 	  	tc->Save();
 	  	zb.SetSend(0x01);
@@ -259,6 +262,7 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	  	zb.ExitConfig();
 	  }	
 	}
+#endif
 	return &zb;
 }
 
