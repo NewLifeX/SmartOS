@@ -687,11 +687,11 @@ String& String::Concat(const char* str, int len)
 int String::IndexOf(const String& str) const
 {
 	if(str.Length() > Length()) return -1;
-	if(str[0] != this[0]) return -1;
+	if(str[0] != (*this)[0]) return -1;
 
 	auto p = strstr(GetBuffer(), str.GetBuffer());
 	if(!p) return -1;
-	
+
 	return p - GetBuffer();
 }
 
@@ -702,6 +702,47 @@ String String::Sub(int start, int len) const
 	str.Copy(GetBuffer() + start, len);
 
 	return str;
+}
+
+String String::TrimStart() const
+{
+	String str;
+
+	auto ptr	= GetBuffer();
+	// 找到第一个不是空白字符的位置
+	int i = 0;
+	for(;i < Length(); i++)
+	{
+		auto ch	= ptr[i];
+		if(ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n') break;
+	}
+	str.Copy(ptr + i, Length() - i);
+
+	return str;
+}
+
+String String::TrimEnd() const
+{
+	String str;
+
+	auto ptr	= GetBuffer();
+	// 找到最后一个不是空白字符的位置
+	int i = Length() - 1;
+	for(;i >= 0; i--)
+	{
+		auto ch	= ptr[i];
+		if(ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n') break;
+	}
+	str.Copy(ptr, i + 1);
+
+	return str;
+}
+
+String String::Trim() const
+{
+	//String str	= TrimStart();
+
+	return TrimStart().TrimEnd();;
 }
 
 String& String::operator+=(const Object& obj)

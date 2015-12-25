@@ -344,6 +344,9 @@ public:
 
 	int IndexOf(const String& str) const;
 	String Sub(int start, int len) const;
+	String TrimStart() const;
+	String TrimEnd() const;
+	String Trim() const;
 
     String& operator+=(const Object& obj);
     String& operator+=(const char* str);
