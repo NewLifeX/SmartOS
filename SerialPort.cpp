@@ -343,21 +343,19 @@ void SerialPort::OnRxHandler()
 
 void SerialPort::ReceiveTask(void* param)
 {
-	SerialPort* sp = (SerialPort*)param;
+	auto sp = (SerialPort*)param;
 	assert_param2(sp, "串口参数不能为空 ReceiveTask");
 
 	//!!! 只要注释这一行，四位触摸开关就不会有串口溢出错误
 	if(sp->Rx.Length() == 0) return;
 
 	// 从栈分配，节省内存
-	//ByteArray bs(0x40);
-	byte buf[0x80];
+	byte buf[0x100];
 	Array bs(buf, ArrayLength(buf));
 	uint len = sp->Read(bs);
 	if(len)
 	{
 		len = sp->OnReceive(bs, NULL);
-		//assert_param(len <= ArrayLength(buf));
 		// 如果有数据，则反馈回去
 		if(len) sp->Write(bs);
 	}
