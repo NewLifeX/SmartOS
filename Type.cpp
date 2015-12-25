@@ -687,12 +687,29 @@ String& String::Concat(const char* str, int len)
 int String::IndexOf(const String& str) const
 {
 	if(str.Length() > Length()) return -1;
-	if(str[0] != (*this)[0]) return -1;
 
-	auto p = strstr(GetBuffer(), str.GetBuffer());
+	auto ptr	= GetBuffer();
+	auto ptr2	= str.GetBuffer();
+	if(ptr[0] != ptr2[0]) return -1;
+
+	auto p	= strstr(ptr, ptr2);
 	if(!p) return -1;
 
-	return p - GetBuffer();
+	return p - ptr;
+}
+
+int String::IndexOf(const char* str) const
+{
+	uint len	= MemLen(str);
+	if(len > Length()) return -1;
+
+	auto ptr	= GetBuffer();
+	if(str[0] != ptr[0]) return -1;
+
+	auto p	= strstr(ptr, str);
+	if(!p) return -1;
+
+	return p - ptr;
 }
 
 String String::Sub(int start, int len) const
@@ -801,4 +818,14 @@ bool operator==(const String& str, const String& str2)
 bool operator!=(const String& str, const String& str2)
 {
 	return str.Length() != str2.Length() || str.IndexOf(str2) != 0;
+}
+
+bool operator==(const String& str, const char* str2)
+{
+	return str.Length() == MemLen(str2) && str.IndexOf(str2) == 0;
+}
+
+bool operator!=(const String& str, const char* str2)
+{
+	return str.Length() != MemLen(str2) || str.IndexOf(str2) != 0;
 }
