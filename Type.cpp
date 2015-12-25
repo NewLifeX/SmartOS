@@ -698,7 +698,8 @@ int String::IndexOf(const String& str) const
 String String::Sub(int start, int len) const
 {
 	String str;
-	str.Copy(this, len, start);
+	//str.Copy(this, len, start);
+	str.Copy(GetBuffer() + start, len);
 
 	return str;
 }
