@@ -32,6 +32,7 @@ public:
 
 	byte	Mac[6];		// 无线物理地址
 	char	Name[16];	// 名称
+	//String	Name;		//变长名称
 	byte	Pass[8];	// 通信密码
 
 	byte	Store[32];	// 数据存储区
