@@ -13,10 +13,12 @@
 
 Config* Config::Current	= NULL;
 
+/*================================ 配置块 ================================*/
+
 // 配置块。名称、长度、头部校验，数据部分不做校验，方便外部修改
 struct ConfigBlock
 {
-	ushort	HeaderCRC;
+	ushort	Hash;
 	ushort	Size;
 	char	Name[4];
 
@@ -38,7 +40,7 @@ ushort ConfigBlock::GetHash() const
 
 bool ConfigBlock::Valid() const
 {
-    return GetHash() == HeaderCRC;
+    return GetHash() == Hash;
 }
 
 const ConfigBlock* ConfigBlock::Next() const
@@ -80,7 +82,7 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 		memcpy(Name, name, slen);
 	}
 
-    HeaderCRC = GetHash();
+    Hash = GetHash();
 
     return true;
 }
@@ -102,8 +104,8 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
     bool rs = true;
 
 	// 先写入头部，然后写入数据
-	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, HeaderCRC);
-	if(!storage->Write(addr, Array(&HeaderCRC, len))) return false;
+	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
+	if(!storage->Write(addr, Array(&Hash, len))) return false;
 	if(bs.Length() > 0)
 	{
 		uint len2 = bs.Length();
@@ -114,7 +116,7 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
     return rs;
 }
 
-//--//
+/*================================ 配置 ================================*/
 
 Config::Config(Storage* st, uint addr)
 {
@@ -220,6 +222,19 @@ bool Config::Get(const char* name, Array& bs)
     return false;
 }
 
+const void* Config::Get(const char* name)
+{
+	TS("Config::GetByName");
+
+    if(name == NULL) return NULL;
+    //assert_param2(name, "配置块名称不能为空");
+
+	auto cfg = (const ConfigBlock*)Find(name, 0);
+    if(cfg && cfg->Size) return cfg->Data();
+
+    return NULL;
+}
+
 // 获取配置数据，如果不存在则覆盖
 bool Config::GetOrSet(const char* name, Array& bs)
 {
@@ -235,19 +250,6 @@ bool Config::GetOrSet(const char* name, Array& bs)
 	Set(name, bs);
 
     return false;
-}
-
-const void* Config::Get(const char* name)
-{
-	TS("Config::GetByName");
-
-    if(name == NULL) return NULL;
-    //assert_param2(name, "配置块名称不能为空");
-
-	auto cfg = (const ConfigBlock*)Find(name, 0);
-    if(cfg && cfg->Size) return cfg->Data();
-
-    return NULL;
 }
 
 // Flash最后一块作为配置区
