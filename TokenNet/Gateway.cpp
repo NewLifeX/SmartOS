@@ -828,7 +828,7 @@ void Gateway::Loop(void* param)
 		{	// 下线
 			if(dv->Logined)
 			{
-				gw->SendDevices(DeviceAtions::Offline, dv);
+				gw->DeviceRequest(DeviceAtions::Offline, dv);
 				dv->Logined = false;
 			}
 		}
@@ -836,7 +836,7 @@ void Gateway::Loop(void* param)
 		{	// 上线
 			if(!dv->Logined)
 			{
-				gw->SendDevices(DeviceAtions::Online, dv);
+				gw->DeviceRequest(DeviceAtions::Online, dv);
 				dv->Logined = true;
 			}
 		}
