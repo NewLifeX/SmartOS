@@ -22,6 +22,11 @@ Device::Device()
 	OfflineTime	= 0;
 	SleepTime	= 0;
 
+	ZeroArray(Mac);
+	ZeroArray(Name);
+	ZeroArray(Pass);
+	ZeroArray(Store);
+
 	Cfg			= NULL;
 
 	LastRead	= 0;
@@ -196,14 +201,14 @@ String& Device::ToStr(String& str) const
 	str = str + "Addr=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	//str = str + " ID=" + HardID;
-	str = str + " ID=";
+	str = str + " Hard=";
 	str.Append(HardID[0]).Append(HardID[1]);
 	str = str + " Mac=";
 	str.Append(ByteArray(Mac, 6));
 
 	DateTime dt;
 	dt.Parse(LastTime);
-	str = str + " LastTime=" + dt.ToString();
+	str = str + " Last=" + dt.ToString();
 
 	// 主数据区
 	byte len	= Store[0];
@@ -211,6 +216,13 @@ String& Device::ToStr(String& str) const
 	{
 		str = str + " ";
 		ByteArray(Store, len).ToStr(str);
+	}
+
+	len	= strlen(Name);
+	if(len)
+	{
+		str = str + "\t";
+		String(Name, len).ToStr(str);
 	}
 /*
 	str = str + "Address=0x" + Address;
