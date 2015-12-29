@@ -58,30 +58,6 @@ void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
 	ms.Write(Array(bs.GetBuffer(), len));
 }
 
-/*// 0x02 配置数据
-void PingMessage::ReadConfig(Stream& ms, Array& bs)
-{
-	byte offset = ms.ReadByte();
-	byte len	= ms.ReadByte();
-	ms.SetPosition(ms.Position() + len);
-}
-
-void PingMessage::WriteConfig(Stream& ms, const Array& bs)
-{
-	TS("PingMessage::WriteConfig");
-
-	byte len = bs.Length() - 1;
-	if(len > 0x10) len = 0x10;
-	if(ms.Position() + 3 + len > MaxSize) return;
-
-	ms.Write((byte)0x02);	// 子功能码
-	ms.Write((byte)0x01);	// 起始地址
-
-	ms.Write(len);	// 长度
-	ms.Write(Array((byte*)bs.GetBuffer() + 1, len));
-}*/
-
-
 // 0x03 硬件校验
 bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc) const
 {

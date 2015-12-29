@@ -214,18 +214,12 @@ void TinyClient::Report(Message& msg)
 	if(!Server) return;
 
 	auto ms = msg.ToStream();
-	//MemoryStream ms;
-	//byte buf[256];
-	//MemoryStream ms(buf, ArrayLength(buf));
 	PingMessage pm;
 	pm.MaxSize	= ms.Capacity();
 	uint len = Control->Port->MaxSize - TinyMessage::MinSize;
 	if(pm.MaxSize > len) pm.MaxSize = len;
-	//pm.MaxSize = Control->Port->MaxSize - TinyMessage::MinSize;
-	//debug_printf("Report rm=%d MaxSize=%d %d \r\n", ms.Remain(), pm.MaxSize, Control->Port->MaxSize);
 
-	pm.WriteData(ms, 0x01, Store.Data[1]);
-	//pm.WriteData(ms, 0x01, Store.Data);
+	pm.WriteData(ms, 0x01, Store.Data);
 	
 	pm.WriteHardCrc(ms, HardCrc);
 	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
