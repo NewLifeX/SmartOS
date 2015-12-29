@@ -209,7 +209,7 @@ String& Device::ToStr(String& str) const
 	byte len	= Store[0];
 	if(len > 1 && len <= 32)
 	{
-		str = str + "\t";
+		str = str + " ";
 		ByteArray(Store, len).ToStr(str);
 	}
 /*
