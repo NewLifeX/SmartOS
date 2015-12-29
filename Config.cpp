@@ -70,8 +70,6 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 	uint slen = strlen(name);
     if(slen > sizeof(Name)) return false;
 
-	//Size	= bs.Length();
-
 	if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
 	memset(Name, 0, ArrayLength(Name));
 
