@@ -224,7 +224,9 @@ void TinyClient::Report(Message& msg)
 	//pm.MaxSize = Control->Port->MaxSize - TinyMessage::MinSize;
 	//debug_printf("Report rm=%d MaxSize=%d %d \r\n", ms.Remain(), pm.MaxSize, Control->Port->MaxSize);
 
-	pm.WriteData(ms, 0x01, Store.Data);
+	pm.WriteData(ms, 0x01, Store.Data[1]);
+	//pm.WriteData(ms, 0x01, Store.Data);
+	
 	pm.WriteHardCrc(ms, HardCrc);
 	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
 
