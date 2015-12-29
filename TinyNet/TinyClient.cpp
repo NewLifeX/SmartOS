@@ -285,14 +285,6 @@ void TinyClientTask(void* param)
 	if(client->Server != 0) client->Ping();
 }
 
-/*void TinyClientReset()
-{
-	//上报一条信息，让网关得一修改
-	//Join();
-
-	Sys.Reset();
-}*/
-
 void GetDeviceKey(byte id, Array& key, void* param)
 {
 	/*TS("TinyClient::GetDeviceKey");
@@ -305,8 +297,7 @@ void GetDeviceKey(byte id, Array& key, void* param)
 	key.Copy(client->Password, 8);*/
 }
 
-// 发送发现消息，告诉大家我在这
-// 格式：2设备类型 + N系统ID
+// 组网消息，告诉大家我在这
 void TinyClient::Join()
 {
 	TS("TinyClient::Join");

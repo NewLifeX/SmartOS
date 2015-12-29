@@ -26,8 +26,6 @@ void PingMessage::ReadData(Stream& ms, Array& bs) const
 
 	byte offset	= ms.ReadByte();
 	byte len	= ms.ReadByte();
-	//debug_printf("设备 0x%02X 同步数据（%d, %d）到网关缓存 \r\n", dv->Address, offset, len);
-	//debug_printf(" 同步数据（%d, %d）到网关缓存 \r\n", offset, len);
 
 	int remain	= bs.Capacity() - offset;
 	int len2	= len;
@@ -44,7 +42,6 @@ void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
 {
 	TS("PingMessage::WriteData");
 
-	//debug_printf("WriteData p=%d MaxSize=%d \r\n", ms.Position(), MaxSize);
 	int remain	= MaxSize - ms.Position() - 3;
 	if(remain <= 0) return;
 
@@ -63,8 +60,6 @@ bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc) const
 {
 	crc  = ms.ReadUInt16();
 	ushort crc1 = Crc::Hash16(dv->GetHardID());
-	// 下一行仅调试使用
-	//debug_printf("设备硬件Crc: %08X, 本地Crc：%08X \r\n", crc, crc1);
 	if(crc != crc1)
 	{
 		debug_printf("设备硬件Crc: %04X, 本地Crc：%04X \r\n", crc, crc1);

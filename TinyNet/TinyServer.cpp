@@ -457,13 +457,12 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			{
 				debug_printf("TinyServer::OnPing 无法识别的心跳子操作码 0x%02X \r\n", code);
 				return false;
-				//break;
 			}
 		}
 	}
 	// 告诉客户端有多少待处理指令
 
-	// 0x02给客户端同步时间，4字节的秒
+	// 给客户端同步时间，4字节的秒
 	auto ms2	= rs.ToStream();
 	pm.WriteTime(ms2, Sys.Seconds());
 	rs.Length	= ms2.Position();
