@@ -207,7 +207,11 @@ String& Device::ToStr(String& str) const
 
 	// 主数据区
 	byte len	= Store[0];
-	if(len > 1 && len <= 32) ByteArray(Store, len).ToStr(str);
+	if(len > 1 && len <= 32)
+	{
+		str = str + "\t";
+		ByteArray(Store, len).ToStr(str);
+	}
 /*
 	str = str + "Address=0x" + Address;
 	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
