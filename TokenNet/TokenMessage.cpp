@@ -439,6 +439,11 @@ bool TokenController::StartSendStat(byte code)
 	}
 
 	Stat->SendRequest++;
+	byte code2 = code & 0x3F;
+	if (code2 == 0x15 || code2 == 0x05)
+		Stat->Read++;
+	else if (code2 == 0x16 || code2 == 0x06)
+		Stat->Write++;
 
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -455,11 +460,11 @@ bool TokenController::StartSendStat(byte code)
 
 bool TokenController::EndSendStat(byte code, bool success)
 {
-	code &= 0x3F;
+	byte code2 = code & 0x3F;
 
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
-		if(_Queue[i].Code == code)
+		if(_Queue[i].Code == code2)
 		{
 			bool rs = false;
 			if(success)
@@ -480,6 +485,14 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 			return rs;
 		}
+	}
+
+	if ((code & 0x80) != 0)
+	{
+		if (code2 == 0x15 || code2 == 0x05)
+			Stat->ReadReply++;
+		else if (code2 == 0x16 || code2 == 0x06)
+			Stat->WriteReply++;
 	}
 
 	return false;
