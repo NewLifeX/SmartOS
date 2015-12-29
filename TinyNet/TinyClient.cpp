@@ -220,7 +220,7 @@ void TinyClient::Report(Message& msg)
 	if(pm.MaxSize > len) pm.MaxSize = len;
 
 	pm.WriteData(ms, 0x01, Store.Data);
-	
+
 	pm.WriteHardCrc(ms, HardCrc);
 	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
 
@@ -396,15 +396,11 @@ void TinyClient::DisJoin()
 	TS("TinyClient::DisJoin");
 
 	TinyMessage msg;
-	msg.Code = 2;
+	msg.Code	= 2;
 
-	// 发送的广播消息，设备类型和系统ID
-	JoinMessage dm;
-	dm.Kind		= Type;
-	dm.HardID.Set(Sys.ID, 16);
-	dm.TranID	= TranID;
-	dm.WriteMessage(msg);
-	dm.Show(true);
+	auto ms		= msg.ToStream();
+	ms.Write(HardCrc);
+	msg.Length	= ms.Position();
 
 	Send(msg);
 }
@@ -416,7 +412,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 
 	TS("TinyClient::OnDisJoin");
 
-	Stream ms(msg.Data, msg.Length);
+	auto ms		= msg.ToStream();
 	ushort crc	= ms.ReadUInt16();
 
 	if(crc != HardCrc)

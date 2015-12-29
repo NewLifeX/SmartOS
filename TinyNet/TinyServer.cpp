@@ -341,10 +341,27 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 {
 	TS("TinyServer::OnDisjoin");
 
+	// 如果是退网请求，这里也需要删除设备
+	if(!msg.Reply)
+	{
+		auto dv	= FindDevice(msg.Src);
+		if(dv)
+		{
+			// 拿出来硬件ID的校验，检查是否合法
+			auto ms 	= msg.ToStream();
+			ushort crc1	= ms.ReadUInt16();
+			ushort crc2	= Crc::Hash16(dv->GetHardID());
+			if(crc1 == crc2)
+				DeleteDevice(dv->Address);
+			else
+				debug_printf("0x%02X 非法退网，请求的硬件校验 0x%04X 不等于本地硬件校验 0x%04X", dv->Address, crc1, crc2);
+		}
+	}
+	
 	return true;
 }
 
-bool TinyServer::Disjoin(TinyMessage& msg, uint crc) const
+bool TinyServer::Disjoin(TinyMessage& msg, ushort crc) const
 {
 	TS("TinyServer::Disjoin");
 
@@ -605,7 +622,8 @@ bool TinyServer::DeleteDevice(byte id)
 	auto dv = FindDevice(id);
 	if(dv && dv->Address == id)
 	{
-		//Devices.Remove(dv);
+		debug_printf("TinyServer::DeleteDevice 删除设备 0x%02X \r\n", id);
+
 		int idx = Devices.FindIndex(dv);
 		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;

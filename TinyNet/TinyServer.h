@@ -60,7 +60,7 @@ public:
 	// 组网
 	bool OnJoin(const TinyMessage& msg);
 	
-    bool Disjoin(TinyMessage& msg,uint crc) const;
+    bool Disjoin(TinyMessage& msg, ushort crc) const;
 	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳
