@@ -341,6 +341,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 {
 	TS("TinyServer::OnDisjoin");
 
+	debug_printf("TinyServer::OnDisjoin\r\n");
 	// 如果是退网请求，这里也需要删除设备
 	if(!msg.Reply)
 	{
@@ -829,6 +830,7 @@ void DeviceShow(void* param)
 	for(int i = 0; i < len; i++)
 	{
 		auto dv	= svr->Devices[i];
+		if(dv == NULL) continue;
 		dv->Show();
 		debug_printf("\r\n");
 
