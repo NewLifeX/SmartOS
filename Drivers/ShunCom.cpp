@@ -146,8 +146,8 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 {
 	if(Led) Led->Write(1000);
 
-	debug_printf("zigbee接收\r\n");
-	bs.Show(true);
+	//debug_printf("zigbee接收\r\n");
+	//bs.Show(true);
 
 	if(!AddrLength)
      return ITransport::OnReceive(bs, param);
@@ -163,8 +163,8 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 
 bool ShunCom::OnWriteEx(const Array& bs, void* opt)
 {
-	debug_printf("zigbee发送\r\n");
-	bs.Show(true);
+	//debug_printf("zigbee发送\r\n");
+	//bs.Show(true);
 
 	if(!AddrLength || !opt) return OnWrite(bs);
 	// 加入地址
