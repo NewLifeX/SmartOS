@@ -30,16 +30,7 @@ Task::~Task()
 
 bool Task::Execute(ulong now)
 {
-	TS("Task::Execute");
-
-	Action func = Callback;
-	if(!func)
-	{
-		debug_printf("任务 %d %s Enable=%d 委托不能为空 0x%08x \r\n", ID, Name, Enable, this);
-		ShowStatus();
-		assert_param2(func, "任务委托不能为空");
-		//if(!func) return false;
-	}
+	//TS("Task::Execute");
 
 	if(Deepth >= MaxDeepth) return false;
 	Deepth++;
@@ -56,7 +47,7 @@ bool Task::Execute(ulong now)
 
 	Task* cur = Host->Current;
 	Host->Current = this;
-	func(Param);
+	Callback(Param);
 	Host->Current = cur;
 
 	// 累加任务执行次数和时间
@@ -151,13 +142,7 @@ TaskScheduler::TaskScheduler(string name)
 	MaxCost	= 0;
 }
 
-/*TaskScheduler::~TaskScheduler()
-{
-	Current = NULL;
-	//_Tasks.DeleteAll().Clear();
-	if(_Tasks) delete _Tasks;
-}*/
-
+// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
 void TaskScheduler::Set(Task* tasks, uint count)
 {
 	for(int i=0; i<count; i++)
@@ -218,14 +203,8 @@ void TaskScheduler::Remove(uint taskid)
 		if(task->ID == taskid)
 		{
 			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
-			// 首先清零ID，避免delete的时候再次删除
+			// 清零ID，实现重用
 			task->ID = 0;
-
-			//_Tasks.Remove(task);
-			//int idx = _Tasks.FindIndex(task);
-			//if(idx >= 0)
-
-			//delete task;
 
 			break;
 		}
@@ -237,7 +216,6 @@ void TaskScheduler::Start()
 	if(Running) return;
 
 #if DEBUG
-	//Add(ShowTime, NULL, 2000000, 2000000);
 	Add(ShowStatus, this, 10000, 30000, "任务状态");
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
@@ -263,7 +241,7 @@ void TaskScheduler::Stop()
 // 执行一次循环。指定最大可用时间
 void TaskScheduler::Execute(uint msMax)
 {
-	TS("TaskScheduler::Execute");
+	TS("Task::Execute");
 
 	ulong now = Sys.Ms();
 	ulong end = now + msMax;
@@ -323,7 +301,7 @@ void TaskScheduler::Execute(uint msMax)
 // 显示状态
 void TaskScheduler::ShowStatus(void* param)
 {
-	TaskScheduler* host = (TaskScheduler*)param;
+	auto host = (TaskScheduler*)param;
 
 	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
 	Time.Now().Show();
@@ -337,7 +315,7 @@ void TaskScheduler::ShowStatus(void* param)
 
 	for(int i=0; i<host->_Tasks.Length(); i++)
 	{
-		Task* task = host->_Tasks[i];
+		auto task = host->_Tasks[i];
 		if(task->ID)
 		{
 			task->ShowStatus();

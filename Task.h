@@ -73,6 +73,7 @@ public:
 	TaskScheduler(string name = NULL);
 	//~TaskScheduler();
 
+	// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
 	void Set(Task* tasks, uint count);
 
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
