@@ -308,7 +308,8 @@ void TinyClient::Join()
 	// 发送的广播消息，设备类型和系统ID
 	JoinMessage dm;
 
-	dm.Version	= Sys.Version;
+	// 组网版本不是系统版本，而是为了做新旧版本组网消息兼容的版本号
+	//dm.Version	= Sys.Version;
 	dm.Kind		= Type;
 	dm.HardID.Copy(Sys.ID, 16);
 	dm.TranID	= TranID;
@@ -342,7 +343,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Joining		= false;
 
 	Cfg->SoftVer	= dm.Version;
-	// 小于2的版本加不加密
+	// 小于2的版本不加密
 	if(dm.Version < 2) Encryption	= false;
 
 	Cfg->Address	= dm.Address;

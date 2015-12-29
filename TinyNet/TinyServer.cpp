@@ -244,6 +244,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 	JoinMessage dm;
 	dm.ReadMessage(msg);
+	// 规避旧设备的错误数据
 	if(dm.Kind == 0x1004) return false;
 
 	// 根据硬件编码找设备
@@ -310,10 +311,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Show(true);
 
 	// 响应
-	/*TinyMessage rs;
-	rs.Code = msg.Code;
-	rs.Dest = msg.Src;
-	rs.Seq	= msg.Seq;*/
 	auto rs	= msg.CreateReply();
 
 	// 发现响应
@@ -327,7 +324,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.HardID.Set(Sys.ID, 6);
 	dm.WriteMessage(rs);
 
-	//Send(rs);
 	rs.State	= dv->Mac;
 	//Control->Send(rs);
 	// 组网消息属于广播消息，很可能丢包，重发3次
