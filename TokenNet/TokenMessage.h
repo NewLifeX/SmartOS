@@ -113,18 +113,27 @@ private:
 class TokenStat : public Object
 {
 public:
-	int		Send;
-	int		Success;
-	int		SendReply;
-	int		Time;
-	int		Receive;
-	int		ReceiveReply;
+	// 发送统计
+	int	SendRequest;
+	int	RecvReply;
+	int	Time;
 
-	TokenStat();
-
-	int Percent() const;	// 成功率百分比，已乘以10000
+	int Percent() const;	// 成功率百分比，已乘以100
 	int Speed() const;		// 平均速度，指令发出到收到响应的时间
 
+	// 接收统计
+	int	RecvRequest;
+	int	SendReply;
+	int	RecvReplyAsync;
+	int PercentReply() const;
+
+	// 数据操作统计
+	int Read;
+	int ReadReply;
+	int Write;
+	int WriteReply;
+
+	TokenStat();
 	~TokenStat();
 
 	void Clear();

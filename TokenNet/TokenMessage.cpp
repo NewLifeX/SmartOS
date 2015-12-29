@@ -304,11 +304,11 @@ bool TokenController::OnReceive(Message& msg)
 		bool rs = EndSendStat(code, true);
 
 		// 如果匹配了发送队列，那么这里不再作为收到响应
-		if(!rs) Stat->ReceiveReply++;
+		if(!rs) Stat->RecvReplyAsync++;
 	}
 	else
 	{
-		Stat->Receive++;
+		Stat->RecvRequest++;
 	}
 
 	//ShowMessage("Recv$", msg);
@@ -438,7 +438,7 @@ bool TokenController::StartSendStat(byte code)
 		return true;
 	}
 
-	Stat->Send++;
+	Stat->SendRequest++;
 
 	for(int i=0; i<ArrayLength(_Queue); i++)
 	{
@@ -469,7 +469,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 				if(cost < 0) cost = -cost;
 				if(cost < 1000)
 				{
-					Stat->Success++;
+					Stat->RecvReply++;
 					Stat->Time += cost;
 
 					rs = true;
@@ -515,49 +515,68 @@ void TokenController::StatTask(void* param)
 
 TokenStat::TokenStat()
 {
-	Send		= 0;
-	Success		= 0;
+	/*SendRequest	= 0;
+	RecvReply	= 0;
 	SendReply	= 0;
 	Time		= 0;
-	Receive		= 0;
-	ReceiveReply= 0;
+	RecvRequest	= 0;
+	RecvReplyAsync	= 0;
+
+	Read		= 0;
 
 	_Last		= NULL;
-	_Total		= NULL;
+	_Total		= NULL;*/
+
+	int start	= offsetof(TokenStat, SendRequest);
+	memset((byte*)this + start, 0, sizeof(TokenStat) - start);
 }
 
 TokenStat::~TokenStat()
 {
-	if (_Last == NULL) delete _Last;
-	if (_Total == NULL) delete _Total;
+	if (_Last	== NULL)	delete _Last;
+	if (_Total	== NULL)	delete _Total;
 }
 
 int TokenStat::Percent() const
 {
-	int send = Send;
-	int sucs = Success;
+	int send = SendRequest;
+	int sucs = RecvReply;
 	if(_Last)
 	{
-		send += _Last->Send;
-		sucs += _Last->Success;
+		send += _Last->SendRequest;
+		sucs += _Last->RecvReply;
 	}
 	if(send == 0) return 0;
 
-	return sucs * 10000 / send;
+	return sucs * 100 / send;
 }
 
 int TokenStat::Speed() const
 {
 	int time = Time;
-	int sucs = Success;
+	int sucs = RecvReply;
 	if(_Last)
 	{
 		time += _Last->Time;
-		sucs += _Last->Success;
+		sucs += _Last->RecvReply;
 	}
 	if(sucs == 0) return 0;
 
 	return time / sucs;
+}
+
+int TokenStat::PercentReply() const
+{
+	int req = RecvRequest;
+	int rep = SendReply;
+	if(_Last)
+	{
+		req += _Last->RecvRequest;
+		rep += _Last->SendReply;
+	}
+	if(req == 0) return 0;
+
+	return rep * 100 / req;
 }
 
 void TokenStat::Clear()
@@ -565,38 +584,48 @@ void TokenStat::Clear()
 	if (_Last == NULL) _Last = new TokenStat();
 	if (_Total == NULL) _Total = new TokenStat();
 
-	_Last->Send = Send;
-	_Last->Success = Success;
-	_Last->SendReply = SendReply;
+	_Last->SendRequest	= SendRequest;
+	_Last->RecvReply	= RecvReply;
+	_Last->SendReply	= SendReply;
 	_Last->Time = Time;
-	_Last->Receive = Receive;
-	_Last->ReceiveReply = ReceiveReply;
+	_Last->RecvRequest	= RecvRequest;
+	_Last->RecvReplyAsync	= RecvReplyAsync;
+	_Last->Read			= Read;
+	_Last->ReadReply	= ReadReply;
+	_Last->Write		= Write;
+	_Last->WriteReply	= WriteReply;
 
-	_Total->Send += Send;
-	_Total->Success += Success;
-	_Total->SendReply += SendReply;
+	_Total->SendRequest	+= SendRequest;
+	_Total->RecvReply	+= RecvReply;
+	_Total->SendReply	+= SendReply;
 	_Total->Time += Time;
-	_Total->Receive += Receive;
-	_Total->ReceiveReply += ReceiveReply;
+	_Total->RecvRequest	+= RecvRequest;
+	_Total->RecvReplyAsync	+= RecvReplyAsync;
+	_Total->Read		+= Read;
+	_Total->ReadReply	+= ReadReply;
+	_Total->Write		+= Write;
+	_Total->WriteReply	+= WriteReply;
 
-	Send = 0;
-	Success = 0;
-	SendReply = 0;
-	Time = 0;
-	Receive = 0;
-	ReceiveReply = 0;
+	SendRequest	= 0;
+	RecvReply	= 0;
+	Time		= 0;
+
+	SendReply	= 0;
+	RecvRequest	= 0;
+	RecvReplyAsync	= 0;
+
+	Read		= 0;
+	ReadReply	= 0;
+	Write		= 0;
+	WriteReply	= 0;
 }
 
 String& TokenStat::ToStr(String& str) const
 {
-	int p = Percent();
-	int q = p % 100;
-	p /= 100;
-	if(q == 0)
-		str = str + "发：" + p + "%";
-	else
-		str = str + "发：" + p + "." + p + "%";
-	str = str + " " + Success + "/" + Send + "/" + SendReply + " " + Speed() + "us 收：" + Receive + "/" + ReceiveReply;
+	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
+	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest + " 异步" + RecvReplyAsync;
+	if (Read > 0) str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
+	if (Write > 0) str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
 	if(_Total)
 	{
 		str += "总";
