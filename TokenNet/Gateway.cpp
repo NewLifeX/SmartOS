@@ -16,7 +16,6 @@ Gateway::Gateway()
 	Led		= NULL;
 
 	Running		= false;
-	IsOldOrder	= false;
 }
 
 Gateway::~Gateway()
@@ -45,7 +44,6 @@ void Gateway::Start()
 
 	Client->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnRemote((TokenMessage&)msg); };
 	Client->Param		= this;
-    Client->IsOldOrder  = IsOldOrder;
 
 	debug_printf("\r\nGateway::Start \r\n");
 

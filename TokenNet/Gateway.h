@@ -34,10 +34,6 @@ public:
 	bool OnRemote(const TokenMessage& msg);
 
 	/******** 远程网业务逻辑 ********/
-	bool IsOldOrder; 	//是否旧指令
-
-	void OldTinyToToken10(const TinyMessage& msg, TokenMessage& msg2);
-
 	// 学习模式 0x20
 	void SetMode(uint sStudy);
 	uint GetMode();
