@@ -336,51 +336,6 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	return true;
 }
 
-// 网关重置节点通信密码
-bool TinyServer::ResetPassword(byte id) const
-{
-	TS("TinyServer::ResetPassword");
-
-	ulong nowMs = Sys.Ms();
-	auto  nowSec = Sys.Seconds();
-
-	JoinMessage dm;
-
-	// 根据硬件编码找设备
-	auto dv = FindDevice(id);
-	if(!dv) return false;
-
-	// 生成随机密码。当前时间的MD5
-	auto bs	= MD5::Hash(Array(&nowMs, 8));
-	if(bs.Length() > 8) bs.SetLength(8);
-	//dv->GetPass() = bs;
-	dv->SetPass(bs);
-
-	// 响应
-	TinyMessage rs;
-	rs.Code = 0x01;
-	rs.Dest = id;
-	//rs.Seq	= id;
-
-	// 发现响应
-	dm.Reply	= true;
-
-	dm.Server	= Cfg->Address;
-	dm.Channel	= Cfg->Channel;
-	dm.Speed	= Cfg->Speed / 10;
-
-	dm.Address	= dv->Address;
-	dm.Password.Copy(dv->Pass);
-
-	dm.HardID.Set(Sys.ID, 6);
-
-	dm.WriteMessage(rs);
-
-	Send(rs);
-
-	return true;
-}
-
 // 读取
 bool TinyServer::OnDisjoin(const TinyMessage& msg)
 {

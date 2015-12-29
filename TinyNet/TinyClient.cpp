@@ -367,7 +367,6 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	dm.HardID.CopyTo(Cfg->Mac);
 
 #if DEBUG
-	//debug_printf("组网成功！\r\n");
 	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：", dm.Server, dm.Address, dm.Channel, Cfg->Speed);
 	Password.Show();
 	debug_printf(", 版本: 0x%02X\r\n", dm.Version);
@@ -395,8 +394,6 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 void TinyClient::DisJoin()
 {
 	TS("TinyClient::DisJoin");
-
-	//debug_printf("TinyClient::DisJoin 退网 \r\n");
 
 	TinyMessage msg;
 	msg.Code = 2;
@@ -430,7 +427,6 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 
 	Cfg->LoadDefault();
 	Cfg->Save();
-   // debug_printf("设备退网3秒后重启\r\n");
 
     Sys.Sleep(3000);
     Sys.Reset();

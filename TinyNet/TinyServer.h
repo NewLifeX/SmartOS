@@ -59,8 +59,6 @@ public:
 
 	// 组网
 	bool OnJoin(const TinyMessage& msg);
-
-	bool ResetPassword(byte id) const;
 	
     bool Disjoin(TinyMessage& msg,uint crc) const;
 	bool OnDisjoin(const TinyMessage& msg);
