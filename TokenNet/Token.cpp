@@ -127,13 +127,13 @@ TinyServer* Token::CreateServer(ITransport* port)
 	static TinyController ctrl;
 	ctrl.Port = port;
 	ctrl.QueueLength = 64;
-
+	
 	// 调整顺舟Zigbee的重发参数
-	if(strcmp(port->ToString(), "Shuncom") == 0)
+	if(strcmp(port->ToString(), "ShunCom") == 0)
 	{
 		//ctrl.Timeout	= -1;
-		ctrl.Interval	= 300;
-		ctrl.Timeout	= 1500;
+		ctrl.Interval	= 800;
+		ctrl.Timeout	= 1700;
 	}	
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
