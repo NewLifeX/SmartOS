@@ -467,7 +467,7 @@ extern "C"
 		if(isInFPutc) return ch;
 		isInFPutc = true;
         // 检查并打开串口
-        if((port->CR1 & USART_CR1_UE) != USART_CR1_UE && _printf_sp == NULL)
+        if((port->CR1 & USART_CR1_UE) != USART_CR1_UE)
         {
             _printf_sp = SerialPort::GetMessagePort();
         }
@@ -485,6 +485,13 @@ extern "C"
 
 SerialPort* SerialPort::GetMessagePort()
 {
+	// 支持中途改变调试口
+	if(_printf_sp && Sys.MessagePort != _printf_sp->_index)
+	{
+		delete _printf_sp;
+		_printf_sp	= NULL;
+	}
+
 	if(!_printf_sp)
 	{
         int _index = Sys.MessagePort;
