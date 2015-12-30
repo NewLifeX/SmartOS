@@ -456,6 +456,7 @@ extern "C"
     /* 重载fputc可以让用户程序使用printf函数 */
     int fputc(int ch, FILE *f)
     {
+#if DEBUG
         if(Sys.Clock == 0) return ch;
 
         int _index = Sys.MessagePort;
@@ -479,6 +480,7 @@ extern "C"
 		}
 
 		isInFPutc = false;
+#endif
         return ch;
     }
 }
