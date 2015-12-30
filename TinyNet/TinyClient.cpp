@@ -49,7 +49,7 @@ void TinyClient::Open()
 
 	TranID	= (int)Sys.Ms();
 
-	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "客户端服务");
+	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 20000, "客户端服务");
 
 	if(Cfg->Address > 0 && Cfg->Server > 0)
 	{
