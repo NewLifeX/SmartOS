@@ -131,9 +131,9 @@ TinyServer* Token::CreateServer(ITransport* port)
 	// 调整顺舟Zigbee的重发参数
 	if(strcmp(port->ToString(), "Shuncom") == 0)
 	{
-		ctrl.Timeout	= -1;
-		//ctrl.Interval	= 200;
-		//ctrl.Timeout	= 1000;
+		//ctrl.Timeout	= -1;
+		ctrl.Interval	= 300;
+		ctrl.Timeout	= 1500;
 	}	
 	auto tc = TinyConfig::Current;
 	tc->Address = ctrl.Address;
