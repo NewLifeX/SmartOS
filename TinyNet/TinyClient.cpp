@@ -193,7 +193,9 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
+	{
 		rt	= dm.WriteData(Store, true);
+	}
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
@@ -205,6 +207,9 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	rs.Length	= ms.Position();
 
 	Reply(rs);
+
+	// 写入指令以后，为了避免写入响应丢失，缩短心跳间隔
+	Sys.SetTask(_TaskID, true, 200);
 }
 
 void TinyClient::Report(Message& msg)
