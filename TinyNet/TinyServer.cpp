@@ -376,6 +376,26 @@ bool TinyServer::Disjoin(TinyMessage& msg, ushort crc) const
 	return true;
 }
 
+bool TinyServer::Disjoin(byte id) 
+{
+	TS("TinyServer::Disjoin");
+	
+	auto dv  = FindDevice(id);	
+	auto crc = Crc::Hash16(dv->GetHardID());
+	
+	TinyMessage msg;
+	
+	msg.Code = 0x02;
+	auto ms = msg.ToStream();
+	ms.Write(crc);
+	msg.Length = ms.Position();
+
+	Send(msg);
+	
+	DeleteDevice(id);
+
+	return true;
+}
 // 心跳保持与对方的活动状态
 bool TinyServer::OnPing(const TinyMessage& msg)
 {

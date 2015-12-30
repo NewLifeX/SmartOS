@@ -61,6 +61,7 @@ public:
 	bool OnJoin(const TinyMessage& msg);
 	
     bool Disjoin(TinyMessage& msg, ushort crc) const;
+	bool Disjoin(byte id); 
 	bool OnDisjoin(const TinyMessage& msg);
 
 	// 心跳
