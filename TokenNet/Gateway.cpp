@@ -322,7 +322,9 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 			rs.Dest = dv->Address;
 			ushort crc = Crc::Hash16(dv->GetHardID());
 			Server->Disjoin(rs, crc);
+			Sys.Sleep(300);
 			Server->Disjoin(rs, crc);
+			Sys.Sleep(300);
 			Server->Disjoin(rs, crc);
 
 			Server->DeleteDevice(id);
