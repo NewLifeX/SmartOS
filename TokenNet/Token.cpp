@@ -137,8 +137,8 @@ TinyServer* Token::CreateServer(ITransport* port)
 	}	
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
-		ctrl.Interval	= 50;
-		ctrl.Timeout	= 500;
+		ctrl.Interval	= 40;
+		ctrl.Timeout	= 800;
 	}	
 	auto tc = TinyConfig::Current;
 	tc->Address = ctrl.Address;

@@ -414,7 +414,7 @@ bool TinyController::Valid(const Message& _msg)
 				// 对方可能多次发同一个请求过来，都要做响应
 				if(!msg.Reply && AckResponse(msg)) return false;
 
-				msg_printf("重复消息 Src=0x%02x Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
+				msg_printf("重复消息 Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -489,7 +489,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			else
 				msg_printf("响应确认 ");
 
-			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Seq, msg.Retry, cost);
+			msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, cost);
 			return;
 		}
 	}
@@ -523,7 +523,7 @@ bool TinyController::AckResponse(const TinyMessage& msg)
 			Sys.SetTask(_taskID, true, 0);
 
 			msg_printf("重发响应 ");
-			msg_printf("Src =0x%02x Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Seq, msg.Retry);
+			msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry);
 			return true;
 		}
 	}
@@ -684,7 +684,7 @@ void TinyController::Loop()
 			ulong now = Sys.Ms();
 
 			// 已过期则删除
-			if(node.EndTime < now||node.Times > 5)
+			if(node.EndTime < now || node.Times > 50)
 			{
 				if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using	= 0;
@@ -722,7 +722,7 @@ void TinyController::Loop()
 			Total.Send++;
 
 			// 分组统计
-			if(Total.Send >= 100)
+			if(Total.Send >= 1000)
 			{
 				//memcpy(&Last, &Total, sizeof(TinyStat));
 				//memset(&Total, 0, sizeof(TinyStat));
