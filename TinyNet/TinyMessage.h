@@ -86,10 +86,12 @@ public:
 	uint	Reply;	// 发出的响应
 	uint	Broadcast;	// 广播
 
-	TinyStat()
-	{
-		memset(this, 0, sizeof(this[0]));
-	}
+	TinyStat();
+	
+	// 重载等号运算符
+    TinyStat& operator=(const TinyStat& ts);
+	
+	void Clear();
 };
 
 // 消息队列。需要等待响应的消息，进入消息队列处理。
@@ -102,10 +104,10 @@ public:
 	byte	Times;		// 发送次数
 	byte	Data[64];
 	byte	Mac[6];		// 物理地址
-	//ulong	StartTime;	// 开始时间ms
+	ulong	StartTime;	// 开始时间ms
 	ulong	EndTime;	// 过期时间ms
 	ulong	Next;		// 下一次重发时间ms
-	ulong	LastSend;	// 最后一次发送时间ms
+	//ulong	LastSend;	// 最后一次发送时间ms
 
 	void Set(const TinyMessage& msg, int msTimeout);
 };

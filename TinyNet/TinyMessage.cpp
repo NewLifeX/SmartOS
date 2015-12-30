@@ -267,8 +267,8 @@ void TinyController::Open()
 		Sys.SetTask(_taskID, false);
 	}
 
-	memset(&Total, 0, sizeof(TinyStat));
-	memset(&Last, 0, sizeof(TinyStat));
+	//memset(&Total, 0, sizeof(TinyStat));
+	//memset(&Last, 0, sizeof(TinyStat));
 
 #if MSG_DEBUG
 	Sys.AddTask(StatTask, this, 1000, 15000, "微网统计");
@@ -474,7 +474,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		auto& node = _Queue[i];
 		if(node.Using && node.Seq == msg.Seq)
 		{
-			int cost = Sys.Ms() - node.LastSend;
+			int cost = Sys.Ms() - node.StartTime;
 			if(cost < 0) cost = -cost;
 
 			Total.Cost	+= cost;
@@ -724,15 +724,17 @@ void TinyController::Loop()
 			// 分组统计
 			if(Total.Send >= 100)
 			{
-				memcpy(&Last, &Total, sizeof(TinyStat));
-				memset(&Total, 0, sizeof(TinyStat));
+				//memcpy(&Last, &Total, sizeof(TinyStat));
+				//memset(&Total, 0, sizeof(TinyStat));
+				Last	= Total;
+				Total.Clear();
 			}
 		}
 
 		// 计算下一次重发时间
 		{
 			ulong now	= Sys.Ms();
-			node.LastSend	= now;
+			//node.LastSend	= now;
 
 			// 随机延迟。随机数1~5。每次延迟递增
 			//byte rnd	= (uint)now % 3;
@@ -791,10 +793,10 @@ void TinyController::ShowStat() const
 void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 {
 	Times		= 0;
-	LastSend	= 0;
+	//LastSend	= 0;
 
 	ulong now	= Sys.Ms();
-	//StartTime	= now;
+	StartTime	= now;
 	EndTime		= now + msTimeout;
 
 	Next		= 0;
@@ -864,4 +866,21 @@ bool RingQueue::Check(ushort item)
 
 	// 再检查是否存在
 	return Find(item) >= 0;
+}
+
+TinyStat::TinyStat()
+{
+	Clear();
+}
+
+TinyStat& TinyStat::operator=(const TinyStat& ts)
+{
+	memcpy(this, &ts, sizeof(this[0]));
+
+	return *this;
+}
+
+void TinyStat::Clear()
+{
+	memset(this, 0, sizeof(this[0]));
 }
