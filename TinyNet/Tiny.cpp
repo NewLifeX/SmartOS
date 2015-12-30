@@ -73,8 +73,8 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto tc	= TinyConfig::Current;
 	nrf->AutoAnswer		= false;
 	nrf->DynPayload		= false;
-	//nrf->Channel		= tc->Channel;
-	nrf->Channel		= 120;
+	nrf->Channel		= tc->Channel;
+	//nrf->Channel		= 120;
 	nrf->Speed			= tc->Speed;
 	
 	nrf->FixData	= Fix2401;
@@ -134,8 +134,13 @@ TinyClient* CreateTinyClient(ITransport* port)
 	static TinyController ctrl;
 	ctrl.Port	= port;
 
-	// 只有2401需要打开重发机制
-	if(strcmp(port->ToString(), "R24") != 0) ctrl.Timeout = -1;
+	// 调整顺舟Zigbee的重发参数
+	if(strcmp(port->ToString(), "Shuncom") == 0)
+	{
+		//ctrl.Timeout	= -1;
+		ctrl.Interval	= 200;
+		ctrl.Timeout	= 1000;
+	}
 
 	static TinyClient tc(&ctrl);
 	tc.Cfg = TinyConfig::Current;

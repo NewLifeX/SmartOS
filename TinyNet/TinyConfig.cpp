@@ -16,7 +16,7 @@ void TinyConfig::LoadDefault()
 	Channel	= 120;
 	Speed	= 250;
 
-	PingTime	= 10;
+	PingTime	= 20;
 	OfflineTime	= 60;
 	StartSet	= 64;
 }

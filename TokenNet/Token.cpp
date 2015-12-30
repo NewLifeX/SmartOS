@@ -124,14 +124,12 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
-	//debug_printf("\r\nCreateServer \r\n");
-
 	static TinyController ctrl;
 	ctrl.Port = port;
 	ctrl.QueueLength = 64;
 
-	// 只有2401需要打开重发机制
-	if(strcmp(port->ToString(), "R24") != 0)
+	// 调整顺舟Zigbee的重发参数
+	if(strcmp(port->ToString(), "Shuncom") == 0)
 	{
 		ctrl.Timeout	= -1;
 		//ctrl.Interval	= 200;
@@ -219,8 +217,8 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	auto tc	= TinyConfig::Current;
 	nrf.AutoAnswer	= false;
 	nrf.DynPayload	= false;
-	//nrf.Channel		= tc->Channel;
-	nrf.Channel		= 120;
+	nrf.Channel		= tc->Channel;
+	//nrf.Channel		= 120;
 	nrf.Speed		= tc->Speed;
 
 	nrf.FixData	= Fix2401;
