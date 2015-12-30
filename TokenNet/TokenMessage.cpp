@@ -84,7 +84,7 @@ uint TokenMessage::MaxDataSize() const
 }
 
 // 设置错误信息字符串
-void TokenMessage::SetError(byte errorCode, string error, int errLength)
+void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 {
 	Error = errorCode != 0;
 	Length = 1 + errLength;
@@ -391,7 +391,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	return rs;
 }
 
-void TokenController::ShowMessage(string action, Message& msg)
+void TokenController::ShowMessage(const char* action, Message& msg)
 {
 #if MSG_DEBUG
 	for(int i=0; i<ArrayLength(NoLogCodes); i++)

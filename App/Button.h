@@ -18,7 +18,7 @@ private:
 	EventHandler _Handler;
 	void* _Param;
 public:
-	string	Name;		// 按钮名称
+	const char*	Name;	// 按钮名称
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
 
 	InputPort	Key;	// 输入按键

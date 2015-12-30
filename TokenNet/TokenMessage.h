@@ -39,7 +39,7 @@ public:
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
 	// 设置错误信息字符串
-	void SetError(byte errorCode, string error, int errLength);
+	void SetError(byte errorCode, const char* error, int errLength);
 
 	// 显示消息内容
 	virtual void Show() const;
@@ -81,7 +81,7 @@ public:
 private:
 	Message*	_Response;	// 等待响应的指令
 
-	void ShowMessage(string action, Message& msg);
+	void ShowMessage(const char* action, Message& msg);
 
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送

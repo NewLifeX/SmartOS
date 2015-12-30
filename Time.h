@@ -113,7 +113,7 @@ public:
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 	*/
-	const char* GetString(byte kind = 'F', string str = NULL);
+	const char* GetString(byte kind = 'F', char* str = NULL);
 };
 
 /*

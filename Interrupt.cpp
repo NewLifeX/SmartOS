@@ -341,11 +341,11 @@ bool Lock::Wait(int us)
 
 #if DEBUG
 
-static TArray<string, 0x40>* _TS = NULL;
+static TArray<const char*, 0x40>* _TS = NULL;
 
-TraceStack::TraceStack(string name)
+TraceStack::TraceStack(const char* name)
 {
-	static TArray<string, 0x40> __ts(0);
+	static TArray<const char*, 0x40> __ts(0);
 	_TS	= &__ts;
 
 	_TS->Push(name);

@@ -228,12 +228,12 @@ bool Blu40::CheckSet()
 	return true;
 }
 
-bool Blu40::SetName(string name)
+bool Blu40::SetName(const char* name)
 {
 	*_rts = false;
 	Sys.Delay(170);
 	_port->Write(Array(AT_REN, sizeof(AT_REN)));
-	_port->Write(Array((byte*)name, sizeof(name)));
+	_port->Write(Array(name, 0));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;

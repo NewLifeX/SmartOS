@@ -17,7 +17,7 @@ public:
 	Zigbee(ITransport* port, Pin rst = P0);
 	void Init(ITransport* port, Pin rst = P0);
 
-	virtual string ToString() { return "Zigbee"; }
+	virtual const char* ToString() { return "Zigbee"; }
 
 protected:
 	virtual bool OnOpen();

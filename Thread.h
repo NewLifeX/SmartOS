@@ -14,7 +14,7 @@ private:
 
 public:
 	uint ID;		// 编号
-	string Name;	// 名称
+	const char* Name;	// 名称
 
 	uint* Stack;	// 栈底
 	uint* StackTop;	// 栈顶

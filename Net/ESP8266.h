@@ -15,7 +15,7 @@ private:
 public:
     ESP8266(ITransport* port, Pin rst = P0);
 
-	virtual string ToString() { return "ESP8266"; }
+	virtual const char* ToString() { return "ESP8266"; }
 
 protected:
 	virtual bool OnOpen();

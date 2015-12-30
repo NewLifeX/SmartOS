@@ -34,11 +34,11 @@ public:
 	// 设置发送信号强度 DB数
 	bool SetTPL(int TPLDB);
 	// 设置蓝牙名称
-	bool SetName(string name);
+	bool SetName(const char* name);
 	// 设置产品识别码 硬件类型code
 	bool SetPID(ushort pid);
 
-	virtual string ToString() { return "BLE4"; }
+	virtual const char* ToString() { return "BLE4"; }
 
 protected:
 	virtual bool OnOpen();

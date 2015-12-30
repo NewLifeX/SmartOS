@@ -1,7 +1,7 @@
 ﻿#include "WeakStore.h"
 
 // 初始化
-WeakStore::WeakStore(string magic, byte* ptr, uint len) : Data(0x40)
+WeakStore::WeakStore(const char* magic, byte* ptr, uint len) : Data(0x40)
 {
 	Magic		= magic;
 	MagicLength	= 0;
@@ -11,7 +11,7 @@ WeakStore::WeakStore(string magic, byte* ptr, uint len) : Data(0x40)
 
 	if(magic)
 	{
-		string p = magic;
+		auto p = magic;
 		while(*p++) MagicLength++;
 		if(!Check())
 		{
@@ -26,9 +26,9 @@ bool WeakStore::Check()
 {
 	assert_param2(Magic, "未指定幻数");
 
-	string mg = (string)Data.GetBuffer();
+	auto mg = (const char*)Data.GetBuffer();
 	//return strcmp(mg, Magic) == 0;
-	string p = Magic;
+	auto p = Magic;
 	for(int i=0; i<MagicLength; i++)
 	{
 		if(*mg++ != *p++) return false;

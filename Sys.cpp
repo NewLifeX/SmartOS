@@ -387,7 +387,7 @@ void TSys::ShowInfo()
 #include "Task.h"
 
 // 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, int dueTime, int period, string name)
+uint TSys::AddTask(Action func, void* param, int dueTime, int period, const char* name)
 {
 	return Task::Scheduler()->Add(func, param, dueTime, period, name);
 }

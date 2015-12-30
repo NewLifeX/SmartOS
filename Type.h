@@ -10,7 +10,7 @@ typedef unsigned char   byte;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
 typedef unsigned long long  ulong;
-typedef char*           string;
+//typedef char*           char*;
 //typedef unsigned char   bool;
 //#define true            1
 //#define false           0

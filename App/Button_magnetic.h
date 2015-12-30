@@ -23,7 +23,7 @@ private:
 	EventHandler _Handler;
 	void* _Param;
 public:
-	string Name;
+	const char* Name;
 
 	InputPort*  Key;	// 输入按键
 	OutputPort* Led;	// 指示灯

@@ -374,7 +374,7 @@ String& DateTime::ToStr(String& str) const
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 */
-const char* DateTime::GetString(byte kind, string str)
+const char* DateTime::GetString(byte kind, char* str)
 {
 	assert_param(str);
 	//if(!str) str = _Str;

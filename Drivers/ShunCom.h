@@ -25,7 +25,7 @@ public:
 
 	void Init(ITransport* port, Pin rst = P0);
 
-	virtual string ToString() { return "ShunCom"; }
+	virtual const char* ToString() { return "ShunCom"; }
 
 	// 进入配置模式
 	bool EnterConfig();

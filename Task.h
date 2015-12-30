@@ -15,7 +15,7 @@ public:
 	TaskScheduler* Host;
 
 	uint	ID;			// 编号
-	string	Name;		// 名称
+	const char*	Name;	// 名称
 
 	Action	Callback;	// 回调
 	void*	Param;		// 参数
@@ -61,7 +61,7 @@ private:
 	friend class Task;
 
 public:
-	string	Name;		// 系统名称
+	const char*	Name;	// 系统名称
 	int		Count;		// 任务个数
 	Task*	Current;	// 正在执行的任务
 	bool	Running;	// 是否正在运行
@@ -70,14 +70,14 @@ public:
 	int		Cost;		// 平均执行时间us
 	int		MaxCost;	// 最大执行时间us
 
-	TaskScheduler(string name = NULL);
+	TaskScheduler(const char* name = NULL);
 	//~TaskScheduler();
 
 	// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
 	void Set(Task* tasks, uint count);
 
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
-	uint Add(Action func, void* param, int dueTime = 0, int period = 0, string name = NULL);
+	uint Add(Action func, void* param, int dueTime = 0, int period = 0, const char* name = NULL);
 	void Remove(uint taskid);
 
 	void Start();

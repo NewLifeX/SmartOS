@@ -208,7 +208,7 @@ void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventH
 	}
 
 #if DEBUG
-	const string names[] = {"一号", "二号", "三号", "四号"};
+	const char* names[] = {"一号", "二号", "三号", "四号"};
 #endif
 
 	for(int i=0; i < count; i++)

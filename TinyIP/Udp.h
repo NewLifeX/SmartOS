@@ -29,7 +29,7 @@ public:
 	// 接收数据
 	virtual uint Receive(Array& bs);
 
-	virtual string ToString();
+	virtual const char* ToString();
 
 protected:
 	void SendPacket(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum = true);

@@ -7,11 +7,8 @@
 
 class Sensor
 {
-
 public:
-	
-	
-	string Name;  //名字
+	const char* Name;  //名字
 	int Index;   //索引号
 
 	

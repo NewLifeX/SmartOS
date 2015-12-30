@@ -172,14 +172,14 @@ uint Stream::WriteEncodeInt(uint value)
 }
 
 // 写入字符串，先写入压缩编码整数表示的长度
-uint Stream::Write(const string str)
+uint Stream::Write(const char* str)
 {
 	if(!CanWrite) return false;
 
 	int len = 0;
 	if(str)
 	{
-		string p = str;
+		auto p = str;
 		while(*p++) len++;
 	}
 

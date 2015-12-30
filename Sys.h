@@ -75,9 +75,9 @@ public:
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟
 
-	char*	Name;		// 系统名称
-	char*	Company;	// 系统厂商
-	char*	BuildTime;	// 编译时间
+	const char*	Name;		// 系统名称
+	const char*	Company;	// 系统厂商
+	const char*	BuildTime;	// 编译时间
 	ushort	Code;		// 产品代码
 	ushort	Version;	// 系统版本
     byte	ID[12];		// 芯片ID。
@@ -113,7 +113,7 @@ public:
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, string name = NULL);
+	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = NULL);
 	void RemoveTask(uint& taskid);
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	bool SetTask(uint taskid, bool enable, int msNextTime = -1);
