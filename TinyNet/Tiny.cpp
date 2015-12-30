@@ -185,6 +185,7 @@ void ClearConfig()
 	// 退网
 	auto client = TinyClient::Current;
 	if(client) client->DisJoin();
+	Sys.Sleep(300);
 
 	Sys.Reset();
 }
