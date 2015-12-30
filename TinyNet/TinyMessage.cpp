@@ -785,7 +785,7 @@ void TinyController::ShowStat() const
 	uint retry	= 0;
 	if(Last.Msg + Total.Msg > 0)
 		retry	= tsend * 100 / tmsg;
-	msg_printf("Tiny::State 成功=%d%% %d/%d 平均=%dms 速度=%d Byte/s 重发=%d.%02d 接收=%d 响应=%d 广播=%d \r\n", rate, tack, tmsg, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Reply + Total.Reply, Last.Broadcast + Total.Broadcast);
+	msg_printf("Tiny::State 成功=%d%% %d/%d 平均=%dms 速度=%d Byte/s 次数=%d.%02d 接收=%d 响应=%d 广播=%d \r\n", rate, tack, tmsg, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Reply + Total.Reply, Last.Broadcast + Total.Broadcast);
 #endif
 }
 
