@@ -281,4 +281,18 @@ void ShowFault(uint exception)
 	}
 }
 
+#else
+
+	#  include <rw/_defs.h>
+
+// 发行版不允许抛出异常以及显示异常信息，这将极大减小使用C++标准库所带来的固件膨胀
+_RWSTD_NAMESPACE_BEGIN (__rw)
+
+void _RWSTD_EXPORT __rw_throw (int, ...)
+{
+
+}
+
+_RWSTD_NAMESPACE_END   // __rw
+
 #endif
