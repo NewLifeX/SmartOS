@@ -55,7 +55,7 @@ protected:
 public:
 	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
 	bool	Polarity	= true;	// 极性。默认true高电平
-	//bool	IdleState	= true;	// 空闲状态。
+	bool	IdleState	= true;	// 空闲状态。
 
 	PWM(byte index);		// index 定时器编号
 
