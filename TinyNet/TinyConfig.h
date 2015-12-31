@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Stream.h"
-#include "Storage\Storage.h"
+#include "Config.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 #pragma pack(push)	// 保存对齐状态
@@ -11,27 +11,27 @@
 #pragma pack(1)
 
 // 配置信息
-struct TinyConfig
+class TinyConfig
 {
-	byte		Length;		// 数据长度
+public:
+	byte	Length;		// 数据长度
 
-	byte		OfflineTime;// 离线阀值时间。秒
-	byte		SleepTime;	// 睡眠时间。秒
-	byte		PingTime;	// 心跳时间。秒
+	byte	OfflineTime;// 离线阀值时间。秒
+	byte	SleepTime;	// 睡眠时间。秒
+	byte	PingTime;	// 心跳时间。秒
 
-	ushort		Kind;		// 类型
-	byte		Address;	// 分配得到的设备地址
-	byte		Server;		// 网关ID
-	byte		Channel;	// 通道
-	ushort		Speed;		// 传输速度
-	byte		HardVer;	// 硬件版本
-	byte		SoftVer;	// 软件版本
+	ushort	Kind;		// 类型
+	byte	Address;	// 分配得到的设备地址
+	byte	Server;		// 网关ID
+	byte	Channel;	// 通道
+	ushort	Speed;		// 传输速度
+	byte	HardVer;	// 硬件版本
+	byte	SoftVer;	// 软件版本
 
-	byte		Password[16]; // 通信密码
-	byte		Mac[6];		// 无线物理地址
+	byte	Password[16]; // 通信密码
+	byte	Mac[6];		// 无线物理地址
 
-	byte  StartSet;
-
+	TinyConfig();
 	void LoadDefault();
 
 	void Load();
@@ -43,7 +43,10 @@ struct TinyConfig
 	void Read(Stream& ms);
 
 	static TinyConfig* Current;
-	static TinyConfig*	Init();
+	static TinyConfig* Init();
+	
+private:
+	Config*	Cfg;
 };
 
 #pragma pack(pop)	// 恢复对齐状态

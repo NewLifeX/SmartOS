@@ -50,6 +50,9 @@ void Setup(ushort code, const char* name, COM_Def message, int baudRate)
 	}
 
 #endif
+
+	// Flash最后一块作为配置区
+	Config::Current	= &Config::CreateFlash();
 }
 
 void Fix2401(void* param)
@@ -160,9 +163,6 @@ TinyClient* CreateTinyClient(ITransport* port)
 
 void* InitConfig(void* data, uint size)
 {
-	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
-
 	// 启动信息
 	auto hot	= &HotConfig::Current();
 	hot->Times++;

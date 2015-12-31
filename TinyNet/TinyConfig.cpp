@@ -3,6 +3,11 @@
 
 TinyConfig* TinyConfig::Current	= NULL;
 
+TinyConfig::TinyConfig()
+{
+	Cfg	= Config::Current;
+}
+
 void TinyConfig::LoadDefault()
 {
 	// 实际内存大小，减去头部大小
@@ -18,19 +23,17 @@ void TinyConfig::LoadDefault()
 
 	PingTime	= 20;
 	OfflineTime	= 60;
-	StartSet	= 64;
 }
 
 void TinyConfig::Load()
 {
-	// Flash最后一块作为配置区
-	if(!Config::Current) Config::Current = &Config::CreateFlash();
+	if(!Cfg) return;
 
 	// 尝试加载配置区设置
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
 	Array bs(&Length, len);
-	if(!Config::Current->GetOrSet("TCFG", bs))
+	if(!Cfg->GetOrSet("TCFG", bs))
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
 		debug_printf("TinyConfig::Load 从配置区加载配置\r\n");
@@ -40,29 +43,33 @@ void TinyConfig::Load()
 		debug_printf("TinyConfig::Load 设备类型变更\r\n");
 
 		Kind	= Sys.Code;
-		Config::Current->Set("TCFG", bs);
+		Cfg->Set("TCFG", bs);
 	}
 }
 
 void TinyConfig::Save()
 {
+	if(!Cfg) return;
+
 	uint len = Length;
 	if(!len) len = sizeof(this[0]);
 
 	debug_printf("TinyConfig::Save \r\n");
 
 	Array bs(&Length, len);
-	Config::Current->Set("TCFG", bs);
+	Cfg->Set("TCFG", bs);
 }
 
 void TinyConfig::Clear()
 {
+	if(!Cfg) return;
+
 	LoadDefault();
 
 	debug_printf("TinyConfig::Clear \r\n");
 
 	Array bs(&Length, Length);
-	Config::Current->Set("TCFG", bs);
+	Cfg->Set("TCFG", bs);
 }
 
 void TinyConfig::Write(Stream& ms) const
