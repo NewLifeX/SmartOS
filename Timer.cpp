@@ -322,13 +322,13 @@ PWM::PWM(byte index) : Timer(g_Timers[index])
 	Channel		= 0;
 	PulseIndex	= 0xFF;
 	Repeated	= false;
+	Configed	= 0x00;
 }
 
-void PWM::Config()
+void PWM::pwmConfig()
 {
 	TS("PWM::Config");
 
-//	const Pin _Pin[]=TIM_PINS;
 	Timer::Config();	// 主要是配置时钟基础部分 TIM_TimeBaseInit
 
 	TIM_OCInitTypeDef oc;
@@ -343,13 +343,9 @@ void PWM::Config()
 	{
 		if(Pulse[i] != 0xFFFF)
 		{
-//			Pin tempPin = _Pin[tr->_index*4+i];		// 找到对应的引脚
-//			_pin[i] = new AlternatePort(tempPin);		// 初始化引脚
-//			_pin[i]->Set(tempPin);
-//			GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_2);    在此处卡壳！！！！
-
 			oc.TIM_Pulse = Pulse[i];
 			OCInits[i](_Timer, &oc);
+			Configed |= 0x1 << i;
 		}
 	}
 
@@ -365,6 +361,27 @@ void PWM::Config()
 
 	// 如果需要连续调整宽度，那么需要中断
 	if(Pulses) SetHandler(true);
+}
+
+void PWM::FlushOut()
+{
+	TIM_OCInitTypeDef oc;
+
+	TIM_OCStructInit(&oc);
+	oc.TIM_OCMode		= TIM_OCMode_PWM1;
+	oc.TIM_OutputState	= TIM_OutputState_Enable;
+	oc.TIM_OCPolarity	= Polarity ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
+	oc.TIM_OCIdleState	= IdleState ? TIM_OCIdleState_Reset : TIM_OCIdleState_Set;
+
+	for(int i=0; i<4; i++)
+	{
+		if(Pulse[i] != 0xFFFF)
+		{
+			oc.TIM_Pulse = Pulse[i];
+			OCInits[i](_Timer, &oc);
+			Configed |= 0x1 << i;
+		}
+	}
 }
 
 void PWM::Open()

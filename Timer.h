@@ -52,6 +52,12 @@ class PWM : public Timer
 {
 protected:
 
+#ifdef STM32F0
+private:
+	// 是否已配置 从低到高 4位 分别对应4个通道
+	byte Configed;
+#endif
+
 public:
 	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
 	bool	Polarity	= true;	// 极性。默认true高电平
@@ -61,7 +67,10 @@ public:
 
 	virtual void Open();
 	virtual void Close();
-	virtual void Config();
+	virtual void pwmConfig();
+	// 刷新输出
+	void FlushOut();
+
 	void SetPulse(int idx, ushort pulse);
 
 // 连续调整占空比
