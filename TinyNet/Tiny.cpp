@@ -138,8 +138,8 @@ TinyClient* CreateTinyClient(ITransport* port)
 	if(strcmp(port->ToString(), "ShunCom") == 0)
 	{
 		//ctrl.Timeout	= -1;
-		ctrl.Interval	= 500;
-		ctrl.Timeout	= 1500;
+		ctrl.Interval	= 800;
+		ctrl.Timeout	= 2400;
 	}
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
