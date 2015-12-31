@@ -8,10 +8,25 @@ TinyConfig::TinyConfig()
 	Cfg	= Config::Current;
 }
 
+uint TinyConfig::Size() const
+{
+	return (uint)&Cfg - (uint)&Length;
+}
+
+Array TinyConfig::ToArray()
+{
+	return Array(&Length, Size());
+}
+
+const Array TinyConfig::ToArray() const
+{
+	return Array(&Length, Size());
+}
+
 void TinyConfig::LoadDefault()
 {
 	// 实际内存大小，减去头部大小
-	uint len = sizeof(this[0]) - ((int)&Length - (int)this);
+	uint len = Size();
 	memset(&Length, 0, len);
 	Length	= len;
 
@@ -30,9 +45,7 @@ void TinyConfig::Load()
 	if(!Cfg) return;
 
 	// 尝试加载配置区设置
-	uint len = Length;
-	if(!len) len = sizeof(this[0]);
-	Array bs(&Length, len);
+	auto bs	= ToArray();
 	if(!Cfg->GetOrSet("TCFG", bs))
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
@@ -47,17 +60,13 @@ void TinyConfig::Load()
 	}
 }
 
-void TinyConfig::Save()
+void TinyConfig::Save() const
 {
 	if(!Cfg) return;
 
-	uint len = Length;
-	if(!len) len = sizeof(this[0]);
-
 	debug_printf("TinyConfig::Save \r\n");
 
-	Array bs(&Length, len);
-	Cfg->Set("TCFG", bs);
+	Cfg->Set("TCFG", ToArray());
 }
 
 void TinyConfig::Clear()
@@ -68,18 +77,18 @@ void TinyConfig::Clear()
 
 	debug_printf("TinyConfig::Clear \r\n");
 
-	Array bs(&Length, Length);
-	Cfg->Set("TCFG", bs);
+	Cfg->Set("TCFG", ToArray());
 }
 
 void TinyConfig::Write(Stream& ms) const
 {
-	ms.Write(&Length, 0, Length);
+	ms.Write(ToArray());
 }
 
 void TinyConfig::Read(Stream& ms)
 {
-	ms.Read(&Length, 0, Length);
+	auto bs	= ToArray();
+	ms.Read(bs);
 }
 
 TinyConfig* TinyConfig::Init()

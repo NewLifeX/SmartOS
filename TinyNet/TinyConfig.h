@@ -35,7 +35,7 @@ public:
 	void LoadDefault();
 
 	void Load();
-	void Save();
+	void Save() const;
 	void Clear();
 
 	// 序列化到消息数据流
@@ -47,6 +47,10 @@ public:
 	
 private:
 	Config*	Cfg;
+	
+	uint Size() const;
+	Array ToArray();
+	const Array ToArray() const;
 };
 
 #pragma pack(pop)	// 恢复对齐状态
