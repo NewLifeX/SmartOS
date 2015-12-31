@@ -135,11 +135,11 @@ TinyClient* CreateTinyClient(ITransport* port)
 	ctrl.Port	= port;
 
 	// 调整顺舟Zigbee的重发参数
-	if(strcmp(port->ToString(), "Shuncom") == 0)
+	if(strcmp(port->ToString(), "ShunCom") == 0)
 	{
 		//ctrl.Timeout	= -1;
 		ctrl.Interval	= 200;
-		ctrl.Timeout	= 1000;
+		ctrl.Timeout	= 1500;
 	}
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
