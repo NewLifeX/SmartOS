@@ -72,20 +72,29 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto spi = new Spi(spi_, 10000000, true);
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
-	
+
 	auto tc	= TinyConfig::Current;
+	if(tc->New)
+	{
+		tc->Channel	= 120;
+		tc->Speed	= 250;
+
+		tc->Interval= 40;
+		tc->Timeout	= 1000;
+	}
+
 	nrf->AutoAnswer		= false;
 	nrf->DynPayload		= false;
 	nrf->Channel		= tc->Channel;
 	//nrf->Channel		= 120;
 	nrf->Speed			= tc->Speed;
-	
+
 	nrf->FixData	= Fix2401;
 	nrf->Led		= led;
-	
+
 	byte num = tc->Mac[0] && tc->Mac[1] && tc->Mac[2] && tc->Mac[3] && tc->Mac[4];
 	if(num != 0 && num != 0xFF) memcpy(nrf->Remote, tc->Mac, 5);
-	
+
 	return nrf;
 }
 
@@ -112,6 +121,16 @@ void ShunComExternalCfg(void * param)
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
+	auto tc	= TinyConfig::Current;
+	if(tc->New)
+	{
+		tc->Channel	= 0x0F;
+		tc->Speed	= 250;
+
+		tc->Interval= 800;
+		tc->Timeout	= 2400;
+	}
+
 	auto sp = new SerialPort(index, baudRate);
 	auto zb = new ShunCom();
 
@@ -137,28 +156,19 @@ TinyClient* CreateTinyClient(ITransport* port)
 	static TinyController ctrl;
 	ctrl.Port	= port;
 
-	// 调整顺舟Zigbee的重发参数
-	if(strcmp(port->ToString(), "ShunCom") == 0)
-	{
-		//ctrl.Timeout	= -1;
-		ctrl.Interval	= 800;
-		ctrl.Timeout	= 2400;
-	}
-	else if(strcmp(port->ToString(), "R24") == 0)
-	{
-		ctrl.Interval	= 40;
-		ctrl.Timeout	= 1000;
-	}	
+	// 新配置需要保存一下
+	auto tc = TinyConfig::Current;
+	if(tc && tc->New) tc->Save();
 
-	static TinyClient tc(&ctrl);
-	tc.Cfg = TinyConfig::Current;
+	static TinyClient client(&ctrl);
+	client.Cfg = TinyConfig::Current;
 
-	TinyClient::Current	= &tc;
+	TinyClient::Current	= &client;
 
 	//ctrl.Mode	= 3;
 	//ctrl.Open();
 
-	return &tc;
+	return &client;
 }
 
 void* InitConfig(void* data, uint size)

@@ -25,11 +25,17 @@ public:
 	byte	Server;		// 网关ID
 	byte	Channel;	// 通道
 	ushort	Speed;		// 传输速度
+
+	ushort	Interval;	// 重发间隔。毫秒
+	ushort	Timeout;	// 超时时间。毫秒
+
 	byte	HardVer;	// 硬件版本
 	byte	SoftVer;	// 软件版本
 
 	byte	Password[16]; // 通信密码
 	byte	Mac[6];		// 无线物理地址
+
+	bool	New;		// 是否新创建的配置
 
 	TinyConfig();
 	void LoadDefault();
@@ -44,10 +50,10 @@ public:
 
 	static TinyConfig* Current;
 	static TinyConfig* Init();
-	
+
 private:
 	Config*	Cfg;
-	
+
 	uint Size() const;
 	Array ToArray();
 	const Array ToArray() const;

@@ -215,6 +215,19 @@ TinyController::TinyController() : Controller()
 	Mode		= 0;
 	Interval	= 20;
 	Timeout		= 200;
+	auto cfg	= TinyConfig::Current;
+	if(cfg)
+	{
+		// 调整重发参数
+		if(cfg->New && cfg->Interval == 0)
+		{
+			cfg->Interval	= Interval;
+			cfg->Timeout	= Timeout;
+		}
+		Interval	= cfg->Interval;
+		Timeout		= cfg->Timeout;
+		cfg->Address= Address;
+	}
 
 	_taskID		= 0;
 	_Queue		= NULL;

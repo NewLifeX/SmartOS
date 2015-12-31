@@ -127,21 +127,10 @@ TinyServer* Token::CreateServer(ITransport* port)
 	static TinyController ctrl;
 	ctrl.Port = port;
 	ctrl.QueueLength = 64;
-	
-	// 调整顺舟Zigbee的重发参数
-	if(strcmp(port->ToString(), "ShunCom") == 0)
-	{
-		//ctrl.Timeout	= -1;
-		ctrl.Interval	= 800;
-		ctrl.Timeout	= 2400;
-	}	
-	else if(strcmp(port->ToString(), "R24") == 0)
-	{
-		ctrl.Interval	= 40;
-		ctrl.Timeout	= 800;
-	}	
+
+	// 新配置需要保存一下
 	auto tc = TinyConfig::Current;
-	tc->Address = ctrl.Address;
+	if(tc && tc->New) tc->Save();
 
 	static TinyServer server(&ctrl);
 	server.Cfg	= tc;
@@ -220,6 +209,15 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf.Init(&spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Current;
+	if(tc->New)
+	{
+		tc->Channel	= 120;
+		tc->Speed	= 250;
+
+		tc->Interval= 40;
+		tc->Timeout	= 1000;
+	}
+
 	nrf.AutoAnswer	= false;
 	nrf.DynPayload	= false;
 	nrf.Channel		= tc->Channel;
@@ -236,33 +234,43 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
+	auto tc	= TinyConfig::Current;
+	if(tc->New)
+	{
+		tc->Channel	= 0x0F;
+		tc->Speed	= 250;
+
+		tc->Interval= 800;
+		tc->Timeout	= 2400;
+	}
+
 	static SerialPort sp(index, baudRate);
 	static ShunCom zb;
 	zb.Power.Set(power);
 	zb.Sleep.Init(slp, true);
 	zb.Config.Init(cfg, true);
-	zb.Init(&sp, rst);	
+	zb.Init(&sp, rst);
 	zb.Led = led;
-	
+
 #if ShunComMaster
 	zb.AddrLength = 2;
 	auto tc = TinyConfig::Current;
 	tc->Load();
-	
+
 	if(tc->Channel != 0x0F)
 	{
 	  if(zb.EnterConfig())
-	  {			
+	  {
 	  	zb.ShowConfig();
-	  	zb.SetDevice(0x00);		
+	  	zb.SetDevice(0x00);
 	  	//zb.SetPanID(0x4444);
 	  	//zb.EraConfig();
-	  	tc->Channel = 0x0F;			
+	  	tc->Channel = 0x0F;
 	  	tc->Save();
 	  	zb.SetSend(0x01);
-	  	zb.PrintSrc(true);		
+	  	zb.PrintSrc(true);
 	  	zb.ExitConfig();
-	  }	
+	  }
 	}
 #endif
 	return &zb;

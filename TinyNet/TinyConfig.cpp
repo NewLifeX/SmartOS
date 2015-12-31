@@ -10,7 +10,7 @@ TinyConfig::TinyConfig()
 
 uint TinyConfig::Size() const
 {
-	return (uint)&Cfg - (uint)&Length;
+	return (uint)&New - (uint)&Length;
 }
 
 Array TinyConfig::ToArray()
@@ -33,11 +33,11 @@ void TinyConfig::LoadDefault()
 	Kind	= Sys.Code;
 	//Server	= 0x01;
 
-	Channel	= 120;
-	Speed	= 250;
+	//Channel	= 120;
+	//Speed	= 250;
 
-	PingTime	= 20;
-	OfflineTime	= 60;
+	//PingTime	= 20;
+	//OfflineTime	= 60;
 }
 
 void TinyConfig::Load()
@@ -46,7 +46,8 @@ void TinyConfig::Load()
 
 	// 尝试加载配置区设置
 	auto bs	= ToArray();
-	if(!Cfg->GetOrSet("TCFG", bs))
+	New		= !Cfg->GetOrSet("TCFG", bs);
+	if(!New)
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
 		debug_printf("TinyConfig::Load 从配置区加载配置\r\n");
