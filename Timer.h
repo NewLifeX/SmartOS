@@ -52,11 +52,9 @@ class PWM : public Timer
 {
 protected:
 
-#ifdef STM32F0
 private:
 	// 是否已配置 从低到高 4位 分别对应4个通道
 	byte Configed;
-#endif
 
 public:
 	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
