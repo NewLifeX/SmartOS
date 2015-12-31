@@ -146,8 +146,8 @@ TinyClient* CreateTinyClient(ITransport* port)
 	}
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
-		ctrl.Interval	= 50;
-		ctrl.Timeout	= 500;
+		ctrl.Interval	= 40;
+		ctrl.Timeout	= 1000;
 	}	
 
 	static TinyClient tc(&ctrl);
