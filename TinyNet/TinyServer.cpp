@@ -358,7 +358,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 				debug_printf("0x%02X 非法退网，请求的硬件校验 0x%04X 不等于本地硬件校验 0x%04X", dv->Address, crc1, crc2);
 		}
 	}
-	
+
 	return true;
 }
 
@@ -376,22 +376,22 @@ bool TinyServer::Disjoin(TinyMessage& msg, ushort crc) const
 	return true;
 }
 
-bool TinyServer::Disjoin(byte id) 
+bool TinyServer::Disjoin(byte id)
 {
 	TS("TinyServer::Disjoin");
-	
-	auto dv  = FindDevice(id);	
+
+	auto dv  = FindDevice(id);
 	auto crc = Crc::Hash16(dv->GetHardID());
-	
+
 	TinyMessage msg;
-	
+
 	msg.Code = 0x02;
 	auto ms = msg.ToStream();
 	ms.Write(crc);
 	msg.Length = ms.Position();
 
 	Send(msg);
-	
+
 	DeleteDevice(id);
 
 	return true;
@@ -578,20 +578,22 @@ void TinyServer::WriteCfg(TinyMessage& msg)const
     if(msg.Code != 0x16||msg.Reply||msg.Length < 2) return;
 
 	// 起始地址为7位压缩编码整数
-	Stream ms	= msg.ToStream();
+	auto ms		= msg.ToStream();
 	uint offset = ms.ReadEncodeInt();
+	if(offset < 64)	return;
+	offset	-= 64;
 
 	auto tc = TinyConfig::Current;
 
-	if(offset < tc->StartSet)	return ;
+	//uint adrr	= 64;
+	int len 	= ms.Remain();
+    if(offset + len > tc->Length) len	= tc->Length - offset;
+	if(len <= 0) return;
 
-	ByteArray cfg(tc, tc->Length);
-	uint adrr	= tc->StartSet;
-	uint len 	= ms.Remain();
-
-    if((adrr+len) > tc->Length) return;
-	Array bs(ms.Current(), len);
-	bs.CopyTo(&cfg[adrr],len);
+	//Array bs(ms.Current(), len);
+	//bs.CopyTo(&cfg + offset - 64, len);
+	ByteArray cfg((byte*)&tc + offset, tc->Length - offset);
+	ms.Read(cfg);
 
 	tc->Save();
 
