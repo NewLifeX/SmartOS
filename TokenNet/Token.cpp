@@ -133,7 +133,7 @@ TinyServer* Token::CreateServer(ITransport* port)
 	{
 		//ctrl.Timeout	= -1;
 		ctrl.Interval	= 800;
-		ctrl.Timeout	= 1700;
+		ctrl.Timeout	= 2400;
 	}	
 	else if(strcmp(port->ToString(), "R24") == 0)
 	{
