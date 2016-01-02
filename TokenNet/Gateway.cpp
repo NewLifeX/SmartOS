@@ -65,7 +65,7 @@ void Gateway::Start()
 	}
 
 	Client->Open();
-	_task	= Sys.AddTask(Loop, this, 10000, 10000, "网关任务");
+	_task	= Sys.AddTask(Loop, this, 10000, 60000, "网关任务");
 
 	Running = true;
 }
@@ -496,7 +496,7 @@ void Gateway::Loop(void* param)
 	for(int i = 0; i < len; i++)
 	{
 		auto dv = gw->Server->Devices[i];
-		ushort time = dv->OfflineTime ? dv->OfflineTime : 60;
+		ushort time = dv->OfflineTime ? dv->OfflineTime : 90;
 
 		// 特殊处理网关自身
 		if(dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
