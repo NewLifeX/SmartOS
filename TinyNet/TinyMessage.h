@@ -139,6 +139,7 @@ public:
 	TinyController();
 	virtual ~TinyController();
 
+	void ApplyConfig();
 	virtual void Open();
 
 	// 发送消息

@@ -154,6 +154,7 @@ TinyClient* CreateTinyClient(ITransport* port)
 {
 	static TinyController ctrl;
 	ctrl.Port	= port;
+	ctrl.ApplyConfig();
 
 	// 新配置需要保存一下
 	auto tc = TinyConfig::Current;

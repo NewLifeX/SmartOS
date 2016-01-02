@@ -4,6 +4,9 @@
 #include "Security\MD5.h"
 #include "Security\Crc.h"
 
+// 循环间隔
+#define LOOP_Interval	1
+
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
 Gateway* Gateway::Current	= NULL;
@@ -65,7 +68,7 @@ void Gateway::Start()
 	}
 
 	Client->Open();
-	_task	= Sys.AddTask(Loop, this, 10000, 60000, "网关任务");
+	_task	= Sys.AddTask(Loop, this, 10000, LOOP_Interval, "网关任务");
 
 	Running = true;
 }
@@ -481,7 +484,7 @@ void Gateway::Loop(void* param)
 	// 检测自动退出学习模式
 	if(gw->_Study)
 	{
-		gw->_Study	-= 10;
+		gw->_Study	-= LOOP_Interval;
 		if(gw->_Study <= 0)
 		{
 			gw->_Study	= 0;

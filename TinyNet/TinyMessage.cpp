@@ -202,10 +202,10 @@ TinyController::TinyController() : Controller()
 	MinSize	= TinyMessage::MinSize;
 
 	// 初始化一个随机地址
-	//Address = Sys.ID[0];
+	Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
 	// 节点地址范围2~254，网关专用0x01，节点让步
-	while(Address < 100 || Address > 254)
+	while(Address < 2 || Address > 254)
 	{
 		Sys.Delay(30);
 		Address = Sys.Ms();
@@ -222,14 +222,11 @@ TinyController::TinyController() : Controller()
 		if(cfg->Interval == 0)
 		{
 			cfg->Interval	= Interval;
-			cfg->Timeout	= Timeout;			
+			cfg->Timeout	= Timeout;
 		}
-		Interval	= cfg->Interval;
-		Timeout		= cfg->Timeout;
-		
+
 		if(cfg->Address	== 0)
 			cfg->Address	= Address;
-		Address	= cfg->Address;
 	}
 
 	_taskID		= 0;
@@ -243,6 +240,18 @@ TinyController::~TinyController()
 
 	delete[] _Queue;
 	_Queue	= NULL;
+}
+
+void TinyController::ApplyConfig()
+{
+	auto cfg	= TinyConfig::Current;
+	if(cfg)
+	{
+		// 调整参数
+		Interval	= cfg->Interval;
+		Timeout		= cfg->Timeout;
+		Address		= cfg->Address;
+	}
 }
 
 void TinyController::Open()
