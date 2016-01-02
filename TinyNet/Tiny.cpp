@@ -126,11 +126,10 @@ ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin s
 	{
 		tc->Channel	= 0x0F;
 		tc->Speed	= 250;
-
 		tc->Interval= 800;
 		tc->Timeout	= 2400;
+		tc->Save();
 	}
-
 	auto sp = new SerialPort(index, baudRate);
 	auto zb = new ShunCom();
 
