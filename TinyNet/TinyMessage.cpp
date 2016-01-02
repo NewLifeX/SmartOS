@@ -205,7 +205,7 @@ TinyController::TinyController() : Controller()
 	//Address = Sys.ID[0];
 	// 如果地址为0，则使用时间来随机一个
 	// 节点地址范围2~254，网关专用0x01，节点让步
-	while(Address < 2 || Address > 254)
+	while(Address < 100 || Address > 254)
 	{
 		Sys.Delay(30);
 		Address = Sys.Ms();
