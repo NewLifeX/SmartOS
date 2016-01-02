@@ -325,7 +325,7 @@ PWM::PWM(byte index) : Timer(g_Timers[index])
 	Configed	= 0x00;
 }
 
-void PWM::pwmConfig()
+void PWM::Config()
 {
 	TS("PWM::Config");
 

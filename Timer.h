@@ -65,7 +65,7 @@ public:
 
 	virtual void Open();
 	virtual void Close();
-	virtual void pwmConfig();
+	virtual void Config();
 	// 刷新输出
 	void FlushOut();
 
