@@ -219,14 +219,14 @@ TinyController::TinyController() : Controller()
 	if(cfg)
 	{
 		// 调整重发参数
-		if(cfg->New && cfg->Interval == 0)
+		if(cfg->Interval == 0)
 		{
 			cfg->Interval	= Interval;
 			cfg->Timeout	= Timeout;
 		}
 		Interval	= cfg->Interval;
 		Timeout		= cfg->Timeout;
-		cfg->Address= Address;
+		Address		= cfg->Address;
 	}
 
 	_taskID		= 0;
