@@ -847,16 +847,20 @@ void DeviceShow(void* param)
 
 	auto svr	= (TinyServer*)param;
 
-	byte len = svr->Devices.Length();
-	debug_printf("\r\n已有节点 %d 个\r\n", len);
+	byte len   = svr->Devices.Length();
+	byte count = 0;
+	
 	for(int i = 0; i < len; i++)
 	{
 		auto dv	= svr->Devices[i];
 		if(dv == NULL) continue;
+		
+		count++;
 		dv->Show();
 		debug_printf("\r\n");
 
-		Sys.Sleep(0);
+		//Sys.Sleep(0);
 	}
+	debug_printf("\r\n已有节点 %d 个\r\n", count);
 	debug_printf("\r\n\r\n");
 }
