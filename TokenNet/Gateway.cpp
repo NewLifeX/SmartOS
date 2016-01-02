@@ -99,6 +99,9 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				DeviceRequest(DeviceAtions::Register, dv);
 				DeviceRequest(DeviceAtions::Online, dv);
 				break;
+			case 0x02:
+				DeviceRequest(DeviceAtions::Delete, dv);
+				break;				
 		}
 	}
 
