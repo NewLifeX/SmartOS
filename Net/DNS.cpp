@@ -5,7 +5,13 @@
 #include "DNS.h"
 #include "Ethernet.h"
 
-#define NET_DEBUG DEBUG
+//#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
+#if NET_DEBUG
+	#define net_printf debug_printf
+#else
+	#define net_printf(format, ...)
+#endif
 
 #define  MAX_DOMAIN_NAME   16       // for example "www.google.com"
 
@@ -78,9 +84,9 @@ DNS::DNS(ISocket* socket)
 	port->Register(OnReceive, this);
 }
 
-DNS::~DNS()
+/*DNS::~DNS()
 {
-}
+}*/
 
 // 转换域名为可读格式
 int parse_name(Stream& ms, char* buf, short len)
@@ -333,8 +339,8 @@ short dns_makequery(short op, const String& name, Array& bs)
 IPAddress DNS::Query(const String& domain, int msTimeout)
 {
 #if NET_DEBUG
-	IPAddress& server = Socket->Host->DNSServer;
-	debug_printf("DNS::Query %s DNS Server : ", domain.GetBuffer());
+	auto& server = Socket->Host->DNSServer;
+	net_printf("DNS::Query %s DNS Server : ", domain.GetBuffer());
 	server.Show(true);
 #endif
 
@@ -382,7 +388,7 @@ void DNS::Process(Array& bs, const IPEndPoint& server)
 	else
 	{
 #if NET_DEBUG
-		debug_printf("DNS::Process \r\n");
+		net_printf("DNS::Process \r\n");
 		server.Show(true);
 #endif
 	}

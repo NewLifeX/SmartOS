@@ -10,7 +10,7 @@ public:
 	ISocket*	Socket;
 
 	DNS(ISocket* socket);
-	~DNS();
+	//~DNS();
 
 	IPAddress Query(const String& domain, int msTimeout = 2000);	// 解析
 

@@ -2,8 +2,13 @@
 #include "Time.h"
 #include "Task.h"
 
-#define NET_DEBUG DEBUG
-//#define NET_DEBUG 0
+//#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
+#if NET_DEBUG
+	#define net_printf debug_printf
+#else
+	#define net_printf(format, ...)
+#endif
 
 /*
 硬件设置部分
@@ -268,19 +273,19 @@ bool W5500::Open()
 {
 	if(Opened) return true;
 
-	debug_printf("\r\nW5500::Open\r\n");
+	net_printf("\r\nW5500::Open\r\n");
 	ShowInfo();
 
-	debug_printf("\tRst: ");
+	net_printf("\tRst: ");
 	if(!Rst.Open()) return false;
-	//debug_printf("硬件复位 \r\n");
+	//net_printf("硬件复位 \r\n");
 	Rst = true;		// 低电平有效
 	Sys.Delay(600);	// 最少500us
 	Rst = false;
 
-	debug_printf("\tIrq: ");
+	net_printf("\tIrq: ");
 	Irq.Open();
-	debug_printf("Reset=%d Irq=%d \r\n", Rst.Read(), Irq.Read());
+	net_printf("Reset=%d Irq=%d \r\n", Rst.Read(), Irq.Read());
 
 	// 先开SPI再复位，否则可能有问题
 	_spi->Open();
@@ -299,7 +304,7 @@ bool W5500::Open()
 
 		return false;
 	}
-	debug_printf("硬件版本: %02X\r\n", ver);
+	net_printf("硬件版本: %02X\r\n", ver);
 
 	Config();
 
@@ -380,19 +385,19 @@ void W5500::Config()
 void W5500::ShowInfo()
 {
 #if NET_DEBUG
-	debug_printf("    MAC:\t");
+	net_printf("    MAC:\t");
 	Mac.Show();
-	debug_printf("\r\n    IP:\t");
+	net_printf("\r\n    IP:\t");
 	IP.Show();
-	debug_printf("\r\n    Mask:\t");
+	net_printf("\r\n    Mask:\t");
 	Mask.Show();
-	debug_printf("\r\n    Gate:\t");
+	net_printf("\r\n    Gate:\t");
 	Gateway.Show();
-	debug_printf("\r\n    DHCP:\t");
+	net_printf("\r\n    DHCP:\t");
 	DHCPServer.Show();
-	debug_printf("\r\n    DNS:\t");
+	net_printf("\r\n    DNS:\t");
 	DNSServer.Show();
-	debug_printf("\r\n");
+	net_printf("\r\n");
 #endif
 }
 
@@ -400,7 +405,7 @@ bool W5500::Close()
 {
 	if(!Opened) return true;
 
-	debug_printf("W5500::Close \r\n");
+	net_printf("W5500::Close \r\n");
 	OnClose();
 
 	Opened = false;
@@ -444,32 +449,32 @@ void W5500::StateShow()
 	ByteArray bs(&gen, sizeof(gen));
 	ReadFrame(0, bs);
 
-	debug_printf("\r\nW5500::State\r\n");
+	net_printf("\r\nW5500::State\r\n");
 
-	debug_printf("MR (模式): 		0x%02X   ", gen.MR);
+	net_printf("MR (模式): 		0x%02X   ", gen.MR);
 		T_Mode mr;
 		mr.Init(gen.MR);
-		debug_printf("WOL: %d   ",mr.WOL);
-		debug_printf("PB: %d   ",mr.PB);
-		debug_printf("PPPoE: %d   ",mr.PPPoE);
-		debug_printf("FARP: %d   ",mr.FARP);
-		debug_printf("\r\n");
-	debug_printf("GAR (网关地址): 	");	Gateway.Show(true);
-	debug_printf("SUBR (子网掩码): 	");	Mask.Show(true);
-	debug_printf("SHAR (源MAC地址):	");	Mac.Show(true);
-	debug_printf("SIPR (源IP地址): 	");	IP.Show(true);
-	debug_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
-	debug_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
+		net_printf("WOL: %d   ",mr.WOL);
+		net_printf("PB: %d   ",mr.PB);
+		net_printf("PPPoE: %d   ",mr.PPPoE);
+		net_printf("FARP: %d   ",mr.FARP);
+		net_printf("\r\n");
+	net_printf("GAR (网关地址): 	");	Gateway.Show(true);
+	net_printf("SUBR (子网掩码): 	");	Mask.Show(true);
+	net_printf("SHAR (源MAC地址):	");	Mac.Show(true);
+	net_printf("SIPR (源IP地址): 	");	IP.Show(true);
+	net_printf("INTLEVEL(中断低电平时间): %d\r\n", LowLevelTime);	// 回头计算一下
+	net_printf("IMR (中断屏蔽): 	0x%02X   ", gen.IMR);
 		T_Interrupt imr;
 		imr.Init(gen.IMR);
-		debug_printf("CONFLICT: %d   ",imr.CONFLICT);
-		debug_printf("UNREACH: %d   ",imr.UNREACH);
-		debug_printf("PPPoE: %d   ",imr.PPPoE);
-		debug_printf("MP: %d   ",imr.MP);
-		debug_printf("\r\n");
-	debug_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n", gen.SIMR);
-	debug_printf("RTR (重试时间): 	%d\r\n", RetryTime);		// 回头计算一下
-	debug_printf("RCR (重试计数): 	%d 次\r\n", RetryCount);
+		net_printf("CONFLICT: %d   ",imr.CONFLICT);
+		net_printf("UNREACH: %d   ",imr.UNREACH);
+		net_printf("PPPoE: %d   ",imr.PPPoE);
+		net_printf("MP: %d   ",imr.MP);
+		net_printf("\r\n");
+	net_printf("SIMR (Socket中断屏蔽): 0x%02X\r\n", gen.SIMR);
+	net_printf("RTR (重试时间): 	%d\r\n", RetryTime);		// 回头计算一下
+	net_printf("RCR (重试计数): 	%d 次\r\n", RetryCount);
 }
 
 // 输出物理链路层状态
@@ -479,36 +484,36 @@ void W5500::PhyStateShow()
 	phy.Init(ReadByte(offsetof(TGeneral, PHYCFGR)));
 	if(phy.OPMD)
 	{
-		debug_printf("PHY 模式由 OPMDC 配置\r\n");
+		net_printf("PHY 模式由 OPMDC 配置\r\n");
 		switch(phy.OPMDC)
 		{
-			case 0 : debug_printf("	10BI半双工，关闭自动协商\r\n");break;
-			case 1 : debug_printf("	10BI全双工，关闭自动协商\r\n");break;
-			case 2 : debug_printf("	100BI半双工，关闭自动协商\r\n");break;
-			case 3 : debug_printf("	100BI全双工，关闭自动协商\r\n");break;
-			case 4 : debug_printf("	100BI半双工，启用自动协商\r\n");break;
-			case 7 : debug_printf("	所有功能，启用自动协商\r\n");break;
+			case 0 : net_printf("	10BI半双工，关闭自动协商\r\n");break;
+			case 1 : net_printf("	10BI全双工，关闭自动协商\r\n");break;
+			case 2 : net_printf("	100BI半双工，关闭自动协商\r\n");break;
+			case 3 : net_printf("	100BI全双工，关闭自动协商\r\n");break;
+			case 4 : net_printf("	100BI半双工，启用自动协商\r\n");break;
+			case 7 : net_printf("	所有功能，启用自动协商\r\n");break;
 		}
 	}
 	else
 	{
-		debug_printf("PHY 模式由引脚配置\r\n");
+		net_printf("PHY 模式由引脚配置\r\n");
 	}
 
 	if(phy.LNK)
 	{
-		debug_printf("已连接 ");
-		if(phy.SPD)	{ debug_printf("100Mpbs ");}
-		else		{ debug_printf("10Mpbs ");}
+		net_printf("已连接 ");
+		if(phy.SPD)	{ net_printf("100Mpbs ");}
+		else		{ net_printf("10Mpbs ");}
 
-		if(phy.DPX)	{ debug_printf("全双工");}
-		else		{ debug_printf("半双工");}
+		if(phy.DPX)	{ net_printf("全双工");}
+		else		{ net_printf("半双工");}
 
-		debug_printf("网络\r\n");
+		net_printf("网络\r\n");
 	}
 	else
 	{
-		debug_printf("连接已断开\r\n");
+		net_printf("连接已断开\r\n");
 	}
 }
 
@@ -613,7 +618,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 {
 	if(Index >= 8) return;
 
-	debug_printf("W5500::Register %d 0x%08X\r\n", Index, handler);
+	net_printf("W5500::Register %d 0x%08X\r\n", Index, handler);
 	_sockets[Index] = handler;
 }
 
@@ -624,7 +629,7 @@ void W5500::OnIRQ(InputPort* port, bool down, void* param)
 
 	auto net = (W5500*)param;
 	//net->OnIRQ();
-	//debug_printf("OnIRQ \r\n");
+	//net_printf("OnIRQ \r\n");
 	Sys.SetTask(net->TaskID, true, 0);
 }
 
@@ -634,7 +639,7 @@ void W5500::OnIRQ()
 	byte dat = ReadByte(offsetof(TGeneral, IR));
 	if(dat != 0x00)
 	{
-		debug_printf("W5500::OnIRQ 0x%02X \r\n", dat);
+		net_printf("W5500::OnIRQ 0x%02X \r\n", dat);
 
 		// 分析IR
 		T_Interrupt ir;
@@ -642,12 +647,12 @@ void W5500::OnIRQ()
 		if(ir.CONFLICT)
 		{
 			// IP 冲突
-			debug_printf("IP地址冲突 \r\n");
+			net_printf("IP地址冲突 \r\n");
 		}
 		if(ir.MP)
 		{
 			// 收到网络唤醒包
-			debug_printf("收到网络唤醒包 \r\n");
+			net_printf("收到网络唤醒包 \r\n");
 		}
 		if(ir.UNREACH)
 		{
@@ -657,7 +662,7 @@ void W5500::OnIRQ()
 			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
 			IPEndPoint ep(bs);
 			ep.Port = __REV16(ep.Port);
-			debug_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
+			net_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
 			// 处理..
 #endif
 		}
@@ -681,7 +686,7 @@ void W5500::OnIRQ()
 		{
 			if(dat2 & 0x01)
 			{
-				//debug_printf("W5500::Socket[%d] 中断\r\n", i);
+				//net_printf("W5500::Socket[%d] 中断\r\n", i);
 				if(_sockets[i]) _sockets[i]->Process();
 			}
 			dat2 >>= 1;
@@ -871,29 +876,29 @@ void HardSocket::StateShow()
 	_Host->ReadFrame(0, bs, Index, 0x01);
 	//bs.CopyTo((byte*)&soc);
 
-	debug_printf("\r\nW5500::Socket %d::State\r\n",Index);
+	net_printf("\r\nW5500::Socket %d::State\r\n",Index);
 
-	debug_printf("MR (模式): 		0x%02X\r\n", soc.MR);
+	net_printf("MR (模式): 		0x%02X\r\n", soc.MR);
 		S_Mode mr;
 		mr.Init(soc.MR);
-		debug_printf("	Protocol:");
+		net_printf("	Protocol:");
 		switch(mr.Protocol)
 		{
-			case 0x00:debug_printf("		Closed\r\n");break;
-			case 0x01:debug_printf("		TCP\r\n");break;
-			case 0x02:debug_printf("		UDP\r\n");break;
+			case 0x00:net_printf("		Closed\r\n");break;
+			case 0x01:net_printf("		TCP\r\n");break;
+			case 0x02:net_printf("		UDP\r\n");break;
 			case 0x03:
 				{
-					if(Index == 0x00)debug_printf("		MACRAW");
-					else	debug_printf("		ERROR！！！\r\n");
+					if(Index == 0x00)net_printf("		MACRAW");
+					else	net_printf("		ERROR！！！\r\n");
 					break;
 				}
 			default:break;
 		}
-		debug_printf("	UCASTB_MIP6B:	%d\r\n",mr.UCASTB_MIP6B);
-		debug_printf("	ND_MC_MMB:		%d\r\n",mr.ND_MC_MMB);
-		debug_printf("	BCASTB:		%d\r\n",mr.BCASTB);
-		debug_printf("	MULTI_MFEN:		%d\r\n",mr.MULTI_MFEN);
+		net_printf("	UCASTB_MIP6B:	%d\r\n",mr.UCASTB_MIP6B);
+		net_printf("	ND_MC_MMB:		%d\r\n",mr.ND_MC_MMB);
+		net_printf("	BCASTB:		%d\r\n",mr.BCASTB);
+		net_printf("	MULTI_MFEN:		%d\r\n",mr.MULTI_MFEN);
 		//switch(mr.Protocol)		// 不输出这么详细
 		//{
 		//	case 0x00:break;
@@ -901,57 +906,57 @@ void HardSocket::StateShow()
 		//	case 0x02:
 		//		if(mr.MULTI_MFEN)
 		//		{
-		//			debug_printf("UDP	");
+		//			net_printf("UDP	");
 		//			if(mr.MULTI_MFEN)
 		//			{
-		//				debug_printf("开启多播	");
+		//				net_printf("开启多播	");
 		//				if(mr.UCASTB_MIP6B)
-		//					debug_printf("开启单播阻塞	");
+		//					net_printf("开启单播阻塞	");
 		//				if(mr.ND_MC_MMB)
-		//					debug_printf("IGMP 版本1	");
+		//					net_printf("IGMP 版本1	");
 		//				else
-		//					debug_printf("IGMP 版本0	");
+		//					net_printf("IGMP 版本0	");
 		//			}
-		//			debug_printf("\r\n");
+		//			net_printf("\r\n");
 		//		}
 		//		break;
 		//	case 0x03:break;
 		//}
 
 	enum S_Status stat= *(enum S_Status*) &soc.SR;
-	debug_printf("SR (状态):	");
+	net_printf("SR (状态):	");
 	switch(stat)
 	{
 		// 公共
-		case SOCK_CLOSED:		debug_printf("SOCK_CLOSED\r\n");break;
-		case SOCK_CLOSING:		debug_printf("SOCK_CLOSING\r\n");break;
-		case SOCK_SYNRECV:		debug_printf("SOCK_SYNRECV\r\n");break;
+		case SOCK_CLOSED:		net_printf("SOCK_CLOSED\r\n");break;
+		case SOCK_CLOSING:		net_printf("SOCK_CLOSING\r\n");break;
+		case SOCK_SYNRECV:		net_printf("SOCK_SYNRECV\r\n");break;
 		// TCP
-		case SOCK_INIT:			debug_printf("SOCK_INIT\r\n");break;
-		case SOCK_TIME_WAIT:	debug_printf("SOCK_TIME_WAIT\r\n");break;
-		case SOCK_LISTEN:		debug_printf("SOCK_LISTEN\r\n");break;
-		case SOCK_CLOSE_WAIT:	debug_printf("SOCK_CLOSE_WAIT\r\n");break;
-		case SOCK_FIN_WAIT:		debug_printf("SOCK_FIN_WAIT\r\n");break;
-		case SOCK_SYNSENT:		debug_printf("SOCK_SYNSENT\r\n");break;
-		case SOCK_LAST_ACK:		debug_printf("SOCK_LAST_ACK\r\n");break;
-		case SOCK_ESTABLISHE:	debug_printf("SOCK_ESTABLISHE\r\n");break;
+		case SOCK_INIT:			net_printf("SOCK_INIT\r\n");break;
+		case SOCK_TIME_WAIT:	net_printf("SOCK_TIME_WAIT\r\n");break;
+		case SOCK_LISTEN:		net_printf("SOCK_LISTEN\r\n");break;
+		case SOCK_CLOSE_WAIT:	net_printf("SOCK_CLOSE_WAIT\r\n");break;
+		case SOCK_FIN_WAIT:		net_printf("SOCK_FIN_WAIT\r\n");break;
+		case SOCK_SYNSENT:		net_printf("SOCK_SYNSENT\r\n");break;
+		case SOCK_LAST_ACK:		net_printf("SOCK_LAST_ACK\r\n");break;
+		case SOCK_ESTABLISHE:	net_printf("SOCK_ESTABLISHE\r\n");break;
 		// UDP
-		case SOCK_UDP:			debug_printf("SOCK_UDP\r\n");break;
+		case SOCK_UDP:			net_printf("SOCK_UDP\r\n");break;
 
-		case SOCK_MACRAW:		debug_printf("SOCK_MACRAW\r\n");break;
+		case SOCK_MACRAW:		net_printf("SOCK_MACRAW\r\n");break;
 		default:break;
 	}
 
 	S_Interrupt irqStat;
 	irqStat.Init(soc.IR);
-	debug_printf("IR (中断状态):	0x%02X\r\n",soc.IR);
-		debug_printf("	CON:		%d\r\n",irqStat.CON);
-		debug_printf("	DISCON:	%d\r\n",irqStat.DISCON);
-		debug_printf("	RECV:		%d\r\n",irqStat.RECV);
-		debug_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
-		debug_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
+	net_printf("IR (中断状态):	0x%02X\r\n",soc.IR);
+		net_printf("	CON:		%d\r\n",irqStat.CON);
+		net_printf("	DISCON:	%d\r\n",irqStat.DISCON);
+		net_printf("	RECV:		%d\r\n",irqStat.RECV);
+		net_printf("	TIMEOUT:	%d\r\n",irqStat.TIMEOUT);
+		net_printf("	SEND_OK:	%d\r\n",irqStat.SEND_OK);
 
-	debug_printf("DPORT = 0x%02X%02X\r\n", soc.DPORT[1], soc.DPORT[0]);
+	net_printf("DPORT = 0x%02X%02X\r\n", soc.DPORT[1], soc.DPORT[0]);
 
 }
 
@@ -959,7 +964,7 @@ bool HardSocket::OnOpen()
 {
 	if(Index >= 8)
 	{
-		debug_printf("Socket 0x%02X 编号不正确，打开失败\r\n", Index);
+		net_printf("Socket 0x%02X 编号不正确，打开失败\r\n", Index);
 		return false;
 	}
 	// 确保宿主打开
@@ -1266,28 +1271,28 @@ void TcpClient::OnProcess(byte reg)
 	if(ir.CON)
 	{
 		Linked = true;
-		debug_printf("W5500::OnProcess 连接成功\r\n");
+		net_printf("W5500::OnProcess 连接成功\r\n");
 	}
 	if(ir.DISCON)
 	{
 		Opened = false;
 		Linked = false;
-		debug_printf("W5500::OnProcess 断开\r\n");
+		net_printf("W5500::OnProcess 断开\r\n");
 	}
 	/*if(ir.SEND_OK)
 	{
-		debug_printf("W5500::OnProcess 发送完成\r\n");
+		net_printf("W5500::OnProcess 发送完成\r\n");
 	}*/
 	// 超时直接判定掉线
 	if(ir.TIMEOUT)
 	{
 		Linked = false;
-		debug_printf("W5500::OnProcess 超时\r\n");
+		net_printf("W5500::OnProcess 超时\r\n");
 	}
 	if(Opened && !Linked)
 	{
 	/*
-		//debug_printf("激活异步维护线程\r\n");
+		//net_printf("激活异步维护线程\r\n");
 		if(_tidRodyguard)
 			Sys.SetTask(_tidRodyguard, true, 0);
 	*/
@@ -1340,9 +1345,9 @@ void UdpClient::OnProcess(byte reg)
 	S_Interrupt ir;
 	ir.Init(reg);
 	// UDP 模式下只处理 SendOK  Recv 两种情况
-	/*debug_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
-		debug_printf("	RECV:		%d\r\n",ir.RECV);
-		debug_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);*/
+	/*net_printf("IR(中断状态):		0x%02X\r\n",ir.ToByte());
+		net_printf("	RECV:		%d\r\n",ir.RECV);
+		net_printf("	SEND_OK:	%d\r\n",ir.SEND_OK);*/
 
 	if(ir.RECV)
 	{
@@ -1371,7 +1376,7 @@ void UdpClient::RaiseReceive()
 		// 数据长度不对可能是数据错位引起的，直接丢弃数据包
 		if(len > 1500)
 		{
-			debug_printf("W5500 UDP数据接收有误, ep=%s Length=%d \r\n", ep.ToString().GetBuffer(), len);
+			net_printf("W5500 UDP数据接收有误, ep=%s Length=%d \r\n", ep.ToString().GetBuffer(), len);
 			return;
 		}
 		// 回调中断

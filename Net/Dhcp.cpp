@@ -4,7 +4,13 @@
 #include "Dhcp.h"
 #include "Ethernet.h"
 
-#define NET_DEBUG DEBUG
+//#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
+#if NET_DEBUG
+	#define net_printf debug_printf
+#else
+	#define net_printf(format, ...)
+#endif
 
 Dhcp::Dhcp(ISocket* socket)
 {
@@ -72,7 +78,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	bool isAny	= IP == any;
 	if(isAny)
 	{
-		debug_printf("更换Host->IP \r\n");
+		net_printf("更换Host->IP \r\n");
 		Host->IP	= any;
 	}*/
 
@@ -89,7 +95,7 @@ void Dhcp::Discover()
 	byte buf[sizeof(DHCP_HEADER) + 200];
 	auto dhcp	= (DHCP_HEADER*)buf;
 
-	debug_printf("DHCP::Discover...\r\n");
+	net_printf("DHCP::Discover...\r\n");
 	dhcpid	= Sys.Ms();
 	dhcp->Init(dhcpid, false);
 
@@ -105,7 +111,7 @@ void Dhcp::Request()
 	byte buf[sizeof(DHCP_HEADER) + 200];
 	auto dhcp	= (DHCP_HEADER*)buf;
 
-	debug_printf("DHCP::Request...\r\n");
+	net_printf("DHCP::Request...\r\n");
 	dhcp->Init(dhcpid, false);
 
 	auto p		= dhcp->Next();
@@ -124,7 +130,7 @@ void Dhcp::Start()
 	_expired	= now + ExpiredTime;
 	if(!dhcpid) dhcpid = now;
 
-	debug_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
+	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	if(IP.IsAny())
@@ -161,7 +167,7 @@ void Dhcp::Stop()
 	Running	= false;
 	Sys.SetTask(taskID, false);
 
-	debug_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
+	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
 	if(OnStop) OnStop(this, NULL);
 }
@@ -220,7 +226,7 @@ void Dhcp::PareOption(Stream& ms)
 			case DHCP_OPT_Router:		Host->Gateway	= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_DHCPServer:	Host->DHCPServer= ms.ReadUInt32(); len -= 4; break;
 			//default:
-			//	debug_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
+			//	net_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}
 		// DNS可能有多个IP，就不止4长度了
 		if(len > 0) ms.Seek(len);
@@ -263,11 +269,11 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 		// 这里其实还应该发送ARP包确认IP是否被占用，
 		// 如果被占用，还需要拒绝服务器提供的IP，比较复杂，可能性很低，暂时不考虑
 #if NET_DEBUG
-		debug_printf("DHCP::Offer IP:");
+		net_printf("DHCP::Offer IP:");
 		IP.Show();
-		debug_printf(" From ");
+		net_printf(" From ");
 		remote.Show();
-		debug_printf("\r\n");
+		net_printf("\r\n");
 #endif
 
 		Request();
@@ -276,11 +282,11 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 	{
 		Host->IP = IP = dhcp->YourIP;
 #if NET_DEBUG
-		debug_printf("DHCP::Ack   IP:");
+		net_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();
-		debug_printf(" From ");
+		net_printf(" From ");
 		remote.Show();
-		debug_printf("\r\n");
+		net_printf("\r\n");
 #endif
 
 		Result = true;
@@ -294,7 +300,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 			// 续约时间，大字节序，时间单位秒
 			uint time = __REV(*(uint*)&opt->Data);
 
-			debug_printf("DHCP IPLeaseTime:%ds\r\n", time);
+			net_printf("DHCP IPLeaseTime:%ds\r\n", time);
 
 			// DHCP租约过了一半以后重新获取IP地址
 			if(time > 0)
@@ -309,18 +315,18 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 	{
 		// 导致Nak的原因
 		opt = GetOption(data, len, DHCP_OPT_Message);
-		debug_printf("DHCP::Nak   IP:");
+		net_printf("DHCP::Nak   IP:");
 		IP.Show();
-		debug_printf(" From ");
+		net_printf(" From ");
 		remote.Show();
 		if(opt)
 		{
-			debug_printf(" ");
+			net_printf(" ");
 			String(&opt->Data, opt->Length).Show(true);
 		}
-		debug_printf("\r\n");
+		net_printf("\r\n");
 	}
 	else
-		debug_printf("DHCP::Unkown Type=%d\r\n", opt->Data);
+		net_printf("DHCP::Unkown Type=%d\r\n", opt->Data);
 #endif
 }
