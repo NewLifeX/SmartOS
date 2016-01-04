@@ -124,9 +124,12 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
+	debug_printf("CreateServer \r\n");
+
 	static TinyController ctrl;
 	ctrl.Port = port;
 	ctrl.QueueLength = 64;
+	ctrl.ApplyConfig();
 
 	// 新配置需要保存一下
 	auto tc = TinyConfig::Current;
@@ -208,7 +211,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	static NRF24L01 nrf;
 	nrf.Init(&spi, ce, irq, power);
 
-	auto tc	= TinyConfig::Current;
+	auto tc	= TinyConfig::Init();
 	if(tc->New)
 	{
 		tc->Channel	= 120;
@@ -234,7 +237,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	auto tc	= TinyConfig::Current;
+	auto tc	= TinyConfig::Init();
 	if(tc->New)
 	{
 		tc->Channel	= 0x0F;
@@ -254,23 +257,21 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 
 #if ShunComMaster
 	zb.AddrLength = 2;
-	auto tc = TinyConfig::Current;
-	tc->Load();
 
 	if(tc->Channel != 0x0F)
 	{
-	  if(zb.EnterConfig())
-	  {
-	  	zb.ShowConfig();
-	  	zb.SetDevice(0x00);
-	  	//zb.SetPanID(0x4444);
-	  	//zb.EraConfig();
-	  	tc->Channel = 0x0F;
-	  	tc->Save();
-	  	zb.SetSend(0x01);
-	  	zb.PrintSrc(true);
-	  	zb.ExitConfig();
-	  }
+		if(zb.EnterConfig())
+		{
+			zb.ShowConfig();
+			zb.SetDevice(0x00);
+			//zb.SetPanID(0x4444);
+			//zb.EraConfig();
+			tc->Channel = 0x0F;
+			tc->Save();
+			zb.SetSend(0x01);
+			zb.PrintSrc(true);
+			zb.ExitConfig();
+		}
 	}
 #endif
 	return &zb;

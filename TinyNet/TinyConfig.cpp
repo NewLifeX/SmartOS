@@ -47,7 +47,7 @@ void TinyConfig::Load()
 	// 尝试加载配置区设置
 	auto bs	= ToArray();
 	New		= !Cfg->GetOrSet("TCFG", bs);
-	if(!New)
+	if(New)
 		debug_printf("TinyConfig::Load 首次运行，创建配置区！\r\n");
 	else
 		debug_printf("TinyConfig::Load 从配置区加载配置\r\n");
@@ -96,8 +96,11 @@ TinyConfig* TinyConfig::Init()
 {
 	// 默认出厂设置
 	static TinyConfig tc;
-	TinyConfig::Current = &tc;
-	tc.LoadDefault();
+	if(!Current)
+	{
+		Current = &tc;
+		tc.LoadDefault();
+	}
 
 	return &tc;
 }

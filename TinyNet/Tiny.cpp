@@ -73,7 +73,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 
-	auto tc	= TinyConfig::Current;
+	auto tc	= TinyConfig::Init();
 	if(tc->New)
 	{
 		tc->Channel	= 120;
@@ -121,7 +121,7 @@ void ShunComExternalCfg(void * param)
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	auto tc	= TinyConfig::Current;
+	auto tc	= TinyConfig::Init();
 	if(tc->New)
 	{
 		tc->Channel	= 0x0F;
@@ -164,9 +164,6 @@ TinyClient* CreateTinyClient(ITransport* port)
 	client.Cfg = TinyConfig::Current;
 
 	TinyClient::Current	= &client;
-
-	//ctrl.Mode	= 3;
-	//ctrl.Open();
 
 	return &client;
 }

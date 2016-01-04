@@ -215,18 +215,24 @@ TinyController::TinyController() : Controller()
 	Mode		= 0;
 	Interval	= 20;
 	Timeout		= 200;
-	auto cfg	= TinyConfig::Current;
+	auto cfg	= TinyConfig::Init();
 	if(cfg)
 	{
+		bool flag	= false;
 		// 调整重发参数
 		if(cfg->Interval == 0)
 		{
 			cfg->Interval	= Interval;
 			cfg->Timeout	= Timeout;
+			flag	= true;
 		}
 
 		if(cfg->Address	== 0)
+		{
 			cfg->Address	= Address;
+			flag	= true;
+		}
+		if(flag) cfg->Save();
 	}
 
 	_taskID		= 0;
@@ -244,7 +250,7 @@ TinyController::~TinyController()
 
 void TinyController::ApplyConfig()
 {
-	auto cfg	= TinyConfig::Current;
+	auto cfg	= TinyConfig::Init();
 	if(cfg)
 	{
 		// 调整参数
