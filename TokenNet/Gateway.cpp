@@ -480,36 +480,25 @@ void Gateway::Loop(void* param)
 	TS("Gateway::Loop");
 
 	auto gw		= 	(Gateway*)param;
-
-	// 检测自动退出学习模式
-	//if(gw->_Study)
-	//{
-	//	gw->_Study	-= LOOP_Interval;
-	//	if(gw->_Study <= 0)
-	//	{
-	//		gw->_Study	= 0;
-    //
-	//		gw->SetMode(0);
-	//	}
-	//}
-
-	// 检查设备上线下线
+	
 	auto now	= Sys.Seconds();
 	byte len	= gw->Server->Devices.Length();
 	for(int i = 0; i < len; i++)
 	{
 		auto dv = gw->Server->Devices[i];
-		ushort time = dv->OfflineTime ? dv->OfflineTime : 90;
+		
+		if(!dv) continue;
+		
+		ushort time = dv->OfflineTime ? dv->OfflineTime :60;
 
 		// 特殊处理网关自身
 		if(dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
 
 		if(dv->LastTime + time < now)
-		{	// 下线
+		{	// 下线			
 			if(dv->Logined)
-			{
+			{	
 				//debug_printf("设备最后活跃时间：%d,系统当前时间:%d,离线阈值:%d\r\n",dv->LastTime,now,time);
-				
 				gw->DeviceRequest(DeviceAtions::Offline, dv);
 				dv->Logined = false;
 			}
@@ -517,8 +506,7 @@ void Gateway::Loop(void* param)
 		else
 		{	// 上线
 			if(!dv->Logined)
-			{
-				//debug_printf("设备最后活跃时间：%d,系统当前时间:%d,离线阈值:%d\r\n",dv->LastTime,now,time);
+			{				
 				gw->DeviceRequest(DeviceAtions::Online, dv);
 				dv->Logined = true;
 			}
