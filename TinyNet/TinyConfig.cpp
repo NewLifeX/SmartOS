@@ -37,7 +37,7 @@ void TinyConfig::LoadDefault()
 	//Speed	= 250;
 
 	//PingTime	= 20;
-	//OfflineTime	= 60;
+	OfflineTime	= 60;
 }
 
 void TinyConfig::Load()
