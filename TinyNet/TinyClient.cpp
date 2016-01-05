@@ -200,10 +200,16 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	{
 		dm.Offset	-= 64;
 		Array bs(Cfg, Cfg->Length);
+		//debug_printf("\r\nCfg->Length %d\r\n",Cfg->Length);
 		rt	= dm.WriteData(bs, true);
 		
 		Cfg->Save();
 		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
+		rs.Error	= !rt;
+		rs.Length	= ms.Position();
+
+		Reply(rs);
+		
 		Sys.Sleep(200);		
 		Sys.Reset();
 	}
@@ -445,14 +451,17 @@ void TinyClient::Ping()
 {
 	TS("TinyClient::Ping");
 
-	ushort off = Cfg->OfflineTime;
+	ushort off = (Cfg->OfflineTime)*5;
+	debug_printf(" TinyClient::Ping  Cfg->OfflineTime:%d\r\n", Cfg->OfflineTime);
+    ushort now = Sys.Seconds();
+	
 	if(off < 10) off = 30;
+	
 	if(LastActive > 0 && LastActive + off * 1000 < Sys.Ms())
 	{
 		if(Server == 0) return;
 
-		debug_printf("%d 秒无法联系网关，无线网可能已经掉线，重新组网，其它任务正常处理\r\n", off);
-
+		 debug_printf(" %d 秒无法联系网关，最后活跃时间:%d,系统当前时间:%d\r\n",off,LastActive,now);
 		Sys.SetTaskPeriod(_TaskID, 5000);
 
 		// 掉线以后，重发组网信息，基本功能继续执行
