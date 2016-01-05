@@ -74,7 +74,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	nrf->Init(spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Init();
-	if(tc->Interval == 0)
+	if(tc->Interval < 40)
 	{
 		tc->Channel	= 120;
 		tc->Speed	= 250;
