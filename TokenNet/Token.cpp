@@ -212,7 +212,7 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 	nrf.Init(&spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Init();
-	if(tc->New)
+	if(tc->Interval==0)
 	{
 		tc->Channel	= 120;
 		tc->Speed	= 250;
@@ -238,13 +238,13 @@ ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, boo
 ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
 	auto tc	= TinyConfig::Init();
-	if(tc->New)
+	if(tc->Interval==0)
 	{
 		tc->Channel	= 0x0F;
 		tc->Speed	= 250;
 
-		tc->Interval= 800;
-		tc->Timeout	= 2400;
+		tc->Interval= 400;
+		tc->Timeout	= 2000;
 	}
 
 	static SerialPort sp(index, baudRate);
