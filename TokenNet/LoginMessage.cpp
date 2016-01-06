@@ -10,31 +10,46 @@ LoginMessage::LoginMessage() : HardID(16), Key(6)
 // 从数据流中读取消息
 bool LoginMessage::Read(Stream& ms)
 {
-	ms.ReadArray(HardID);
-	ms.ReadArray(Key);
-	ms.ReadArray(Salt);
-
-	Local.Address = ms.ReadBytes(4);
-	Local.Port = ms.ReadUInt16();
-
-	return false;
+	if(!Reply)
+	{	
+		HardID = ms.ReadArray();
+		Key    = ms.ReadArray();
+		Salt   = ms.ReadArray();
+	
+		Local.Address = ms.ReadBytes(4);
+		Local.Port = ms.ReadUInt16();		
+	}
+	else
+		if(!Error)
+		{
+			Token = ms.ReadUInt32();
+			Key   = ms.ReadArray();
+		}
+		
+    return false;		
 }
 
 // 把消息写入数据流中
 void LoginMessage::Write(Stream& ms) const
 {
-	ms.WriteArray(HardID);
-
-	// 密码取MD5后传输
-	ms.WriteArray(MD5::Hash(Key));
-
-	ulong now = Sys.Ms();
-	//Salt.Set((byte*)&now, 8);
-	//ms.WriteArray(Salt);
-	ms.WriteArray(Array(&now, 8));
-
-	ms.Write(Local.Address.ToArray());
-	ms.Write((ushort)Local.Port);
+	if(!Reply)
+	{
+		ms.WriteArray(HardID);
+		// 密码取MD5后传输
+		ms.WriteArray(MD5::Hash(Key));
+		ulong now = Sys.Ms();
+		//Salt.Set((byte*)&now, 8);
+		//ms.WriteArray(Salt);
+		ms.WriteArray(Array(&now, 8));
+		ms.Write(Local.Address.ToArray());
+		ms.Write((ushort)Local.Port);
+	}
+	else
+		if(!Error)
+		{
+			ms.Write(Token);
+			ms.WriteArray(Key);
+		}		
 }
 
 #if DEBUG

@@ -58,6 +58,7 @@ public:
 
 	// 登录
 	void Login();
+	void Login(TokenMessage& msg);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 	//设置网络配置
 	bool SetTokenConfig(TokenMessage& msg);

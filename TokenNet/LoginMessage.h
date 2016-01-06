@@ -11,6 +11,9 @@ public:
 	ByteArray	HardID;	// 硬件ID
 	ByteArray	Key;	// 登录密码
 	ByteArray	Salt;	// 加盐
+	uint		Token;	//令牌
+	byte		Error:1;//是否错误
+	
 	IPEndPoint	Local;	// 内网地址
 
 	bool		Reply;	// 是否响应

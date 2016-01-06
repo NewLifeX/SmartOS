@@ -307,10 +307,28 @@ void TokenClient::Login()
 	Send(msg);
 }
 
+void TokenClient::Login(TokenMessage& msg)
+{
+	if(msg.Error) return;
+	
+	LoginMessage login;
+	login.Key		= Key;
+	login.Token		= Token;
+
+	TokenMessage rmsg(2);
+	login.WriteMessage(rmsg);
+
+	Reply(msg);			
+}
+
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
-	if(!msg.Reply) return false;
-
+	if(!msg.Reply)
+	{
+		Login(msg);
+		return false;
+	}
+	
 	Stream ms(msg.Data, msg.Length);
 
 	if(msg.Error)
