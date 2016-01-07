@@ -17,6 +17,7 @@ private:
 public:
 	uint	Token;		// 令牌
 	ByteArray	ID;		// 设备标识
+	ByteArray	Name;	//登陆名称
 	ByteArray	Key;	// 登录密码
 
 	int		Status;		// 状态。0准备、1握手完成、2登录后
@@ -55,9 +56,11 @@ public:
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
 	bool OnHello(TokenMessage& msg, Controller* ctrl);
-
+	//注册
+	void Register();
+	void OnRegister(TokenMessage& msg, Controller* ctrl);
 	// 登录
-	void Login();
+	void Login();	
 	void Login(TokenMessage& msg);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 	//设置网络配置

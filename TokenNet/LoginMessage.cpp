@@ -3,7 +3,7 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-LoginMessage::LoginMessage() : HardID(16), Key(6)
+LoginMessage::LoginMessage() : Name(16), Key(6)
 {
 }
 
@@ -12,7 +12,7 @@ bool LoginMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{	
-		HardID = ms.ReadArray();
+		Name = ms.ReadArray();
 		Key    = ms.ReadArray();
 		Salt   = ms.ReadArray();
 	
@@ -34,7 +34,7 @@ void LoginMessage::Write(Stream& ms) const
 {
 	if(!Reply)
 	{
-		ms.WriteArray(HardID);
+		ms.WriteArray(Name);
 		// 密码取MD5后传输
 		ms.WriteArray(MD5::Hash(Key));
 		ulong now = Sys.Ms();
@@ -58,7 +58,7 @@ String& LoginMessage::ToStr(String& str) const
 {
 	str += "登录";
 	if(Reply) str += "#";
-	str = str + " HardID=" + HardID + " Key=" + Key + " Salt=" + Salt + " " + Local;
+	str = str + " Name=" + Name + " Key=" + Key + " Salt=" + Salt + " " + Local;
 
 	return str;
 }

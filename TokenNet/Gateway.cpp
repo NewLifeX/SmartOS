@@ -125,7 +125,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 {
 	TS("Gateway::OnRemote");
 
-	// 本地处理
 	switch(msg.Code)
 	{
 		case 0x02:

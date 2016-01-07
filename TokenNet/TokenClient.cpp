@@ -291,13 +291,24 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 
 	return true;
 }
-
+//注册
+void TokenClient::Register()
+{
+	TokenMessage msg(4);
+	
+	//auto ms= 
+	
+}
+void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
+{
+		
+}
 // 登录
 void TokenClient::Login()
 {
 	LoginMessage login;
-	login.HardID	= ID;
-	login.Key		= Key;
+	login.Name	= Name;
+	login.Key	= Key;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
