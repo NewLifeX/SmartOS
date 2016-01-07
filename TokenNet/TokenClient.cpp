@@ -53,8 +53,7 @@ void TokenClient::Open()
 	
 	if(!TokenConfig->New)
 	{
-		Name = TokenConfig->Name;
-		
+	 //Name = TokenConfig->Name;		
 	}
 
 	// 设置握手广播的本地地址和端口
