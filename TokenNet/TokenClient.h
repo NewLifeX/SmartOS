@@ -15,12 +15,12 @@ private:
 	uint	_task;
 
 public:
-	uint	Token;		// 令牌
+	uint		Token;	// 令牌
 	ByteArray	ID;		// 设备标识
 	ByteArray	Name;	//登陆名称
 	ByteArray	Key;	// 登录密码
 
-	int		Status;		// 状态。0准备、1握手完成、2登录后
+	int			Status;	// 状态。0准备、1握手完成、2登录后
 
 	ulong	LoginTime;	// 登录时间ms
 	ulong	LastActive;	// 最后活跃时间ms
@@ -80,7 +80,7 @@ public:
 	uint	Token;		// 令牌
 	ByteArray	ID;		// 设备标识
 	ByteArray	Key;	// 密钥
-	String	Name;		// 名称
+	String		Name;	// 名称
 	ushort	Version;	// 版本
 	IPEndPoint	Addr;	// 地址
 
