@@ -15,6 +15,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
+	Protocol	= 2;
 }
 
 HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(0)

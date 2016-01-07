@@ -94,9 +94,9 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 	auto tk = TokenConfig::Current;
 	ISocket* socket	= NULL;
-	if(tk->Protocol == 0)
+	if(tk->Protocol == 2)
 		socket = CreateW5500UDP(host, tk);
-	else
+	else if(tk->Protocol == 1)
 		socket = CreateW5500TCP(host, tk);
 	token.Port = dynamic_cast<ITransport*>(socket);
 

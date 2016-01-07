@@ -13,6 +13,8 @@ void TokenConfig::LoadDefault()
 
 	SoftVer		= Sys.Version;
 	PingTime	= 10;
+
+	Protocol	= 2;
 }
 
 bool TokenConfig::Load()
@@ -53,7 +55,7 @@ void TokenConfig::Show()
 #if DEBUG
 	debug_printf("TokenConfig::令牌配置：\r\n");
 
-	debug_printf("\t协议: %s \r\n", Protocol == 0 ? "UDP" : "TCP");
+	debug_printf("\t协议: %s \r\n", Protocol == 2 ? "UDP" : "TCP");
 	debug_printf("\t端口: %d \r\n", Port);
 
 	debug_printf("\t远程: ");

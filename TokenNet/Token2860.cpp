@@ -101,9 +101,9 @@ TokenClient* Token::CreateClient2860(ISocketHost* host)
 
 	auto tk = TokenConfig::Current;
 	ISocket* socket	= NULL;
-	if(tk->Protocol == 0)
+	if(tk->Protocol == 2)
 		socket = CreateUDP(host, tk);
-	else
+	else if(tk->Protocol == 1)
 		socket = CreateTcp(host, tk);
 	token.Port = dynamic_cast<ITransport*>(socket);
 

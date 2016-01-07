@@ -21,7 +21,7 @@ public:
 
 	byte		ErrCode;	// 错误码
 
-	byte	Protocol;		// 协议，UDP=0/TCP=1
+	byte	Protocol;		// 协议，TCP=1/UDP=2
 	ushort	Port;			// 本地端口
 
 	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖

@@ -267,31 +267,29 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 
 	if(ms.ReadByte()!=2) return false;
 
-	  TokenConfig->Protocol =  ms.ReadByte();
-	  TokenConfig->Port	 = 	ms.ReadUInt16();
-	  TokenConfig->ServerIP = 	ms.ReadUInt32();
+	auto cfg	= TokenConfig;
+	cfg->Protocol	= ms.ReadByte();
+	cfg->Port		= ms.ReadUInt16();
+	cfg->ServerIP	= ms.ReadUInt32();
 
-	  TokenConfig->ServerPort = ms.ReadUInt16();
+	cfg->ServerPort = ms.ReadUInt16();
 
+	uint len = ms.ReadByte();
 
-	uint len =ms.ReadByte();
-
-	if(len > ArrayLength(TokenConfig-> Server)) len = ArrayLength(TokenConfig-> Server);
+	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
 
 	for(int i=0;i!=len;i++)
 	{
-		TokenConfig-> Server[i]=ms.ReadByte();
+		cfg-> Server[i]=ms.ReadByte();
     }
-	strcpy(TokenConfig->Vendor, "s1.peacemoon.cn");
+	strcpy(cfg->Vendor, "s1.peacemoon.cn");
 
-	TokenConfig->Save();
-    TokenConfig->Show();
+	cfg->Save();
+    cfg->Show();
 
 	Sys.Reset();
 
 	return true;
-
-
 }
 
 // 登录
