@@ -3,7 +3,7 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-RegisterMessage::RegisterMessage() : HardID(16), Key(6)
+RegisterMessage::RegisterMessage() : Name(16), Pass(16)
 {
 }
 // 从数据流中读取消息
@@ -11,16 +11,16 @@ bool RegisterMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{	
-		HardID = ms.ReadArray();
-		Key    = ms.ReadArray();			
+		Name = ms.ReadArray();
+		Pass = ms.ReadArray();			
 	}
-	else
-		if(!Error)
-		{	
-			HardID = ms.ReadArray();	
-			Key   = ms.ReadArray();
-		}
-		
+	//else
+	//	if(!Error)
+	//	{	
+	//		Name = ms.ReadArray();	
+	//		Pass   = ms.ReadArray();
+	//	}
+	//	
     return false;		
 }
 
@@ -29,15 +29,10 @@ void RegisterMessage::Write(Stream& ms) const
 {
 	if(!Reply)
 	{
-		ms.WriteArray(HardID);
+		ms.WriteArray(Name);
 		// 密码取MD5后传输
-		ms.WriteArray(MD5::Hash(Key));		
-	}
-	else
-		if(!Error)
-		{		
-			//ms.WriteArray(Key);
-		}		
+		ms.WriteArray(MD5::Hash(Pass));		
+	}		
 }
 
 #if DEBUG
@@ -46,7 +41,7 @@ String& RegisterMessage::ToStr(String& str) const
 {
 	str += "注册";
 	if(Reply) str += "#";
-	str = str + " HardID=" + HardID + " Key=" + Key;
+	str = str + " Name=" + Name + " Pass=" + Pass;
 
 	return str;
 }

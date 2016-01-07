@@ -48,7 +48,6 @@ void TokenClient::Open()
 		Local->Param	= this;
 		Local->Open();
 	}
-
 	TokenConfig			= TokenConfig::Current;
 	
 	if(!TokenConfig->New)
