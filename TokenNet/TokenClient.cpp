@@ -6,6 +6,7 @@
 #include "TokenMessage.h"
 #include "HelloMessage.h"
 #include "LoginMessage.h"
+#include "RegisterMessage.h"
 
 static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
@@ -304,6 +305,11 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 //注册
 void TokenClient::Register()
 {
+	RegisterMessage re;
+	
+	re.Name = ID;
+	re.Pass	= Key;
+	
 	TokenMessage msg(4);
 	
 	//auto ms= 

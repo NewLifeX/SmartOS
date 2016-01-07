@@ -1,5 +1,5 @@
-﻿#ifndef __LoginMessage_H__
-#define __LoginMessage_H__
+﻿#ifndef __RegisterMessage_H__
+#define __RegisterMessage_H__
 
 #include "Message\MessageBase.h"
 #include "Net\Net.h"
