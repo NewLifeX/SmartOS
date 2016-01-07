@@ -237,7 +237,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			    else
 					Status =1;					
 			}
-
+			
 			if(ext.Version == 0x00) Token = 0;
 
 			// 同步本地时间
