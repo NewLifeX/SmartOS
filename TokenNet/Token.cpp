@@ -255,7 +255,7 @@ ITransport* Token::CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power
 	zb.Init(&sp, rst);
 	zb.Led = led;
 
-#if ShunComMaster
+#if ShunCom_Master
 	zb.AddrLength = 2;
 
 	if(tc->Channel != 0x0F)
