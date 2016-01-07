@@ -4,10 +4,15 @@
 
 TokenConfig* TokenConfig::Current	= NULL;
 
+uint TokenConfig::Size() const
+{
+	return (uint)&New - (uint)&Length;
+}
+
 void TokenConfig::LoadDefault()
 {
 	// 实际内存大小，减去头部大小
-	uint len = sizeof(this[0]) - ((int)&Length - (int)this);
+	uint len = Size();
 	memset(&Length, 0, len);
 	Length		= len;
 
@@ -23,7 +28,7 @@ bool TokenConfig::Load()
 	if(!Config::Current) Config::Current = &Config::CreateFlash();
 
 	// 尝试加载配置区设置
-	uint len = Length;
+	uint len = Size();
 	if(!len) len = sizeof(this[0]);
 	Array bs(&Length, len);
 	/*if(!Config::Current->GetOrSet("TKCF", bs))
@@ -33,15 +38,20 @@ bool TokenConfig::Load()
 	if(Config::Current->Get("TKCF", bs))
 	{
 		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");
+		New = false;
+		
 		return true;
 	}
+	else 
+		New = true;
+			
 
 	return false;
 }
 
 void TokenConfig::Save()
 {
-	uint len = Length;
+	uint len = Size();
 	if(!len) len = sizeof(this[0]);
 
 	debug_printf("TokenConfig::Save \r\n");
@@ -69,7 +79,7 @@ void TokenConfig::Show()
 
 void TokenConfig::Write(Stream& ms) const
 {
-	uint len = Length;
+	uint len = Size();
 	if(!len) len = sizeof(this[0]);
 
 	ms.Write(&Length, 0, len);
@@ -77,7 +87,7 @@ void TokenConfig::Write(Stream& ms) const
 
 void TokenConfig::Read(Stream& ms)
 {
-	uint len = Length;
+	uint len =  Size();
 	if(!len) len = sizeof(this[0]);
 
 	ms.Read(&Length, 0, len);

@@ -27,11 +27,14 @@ struct TokenConfig
 	char	Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
 	char	Vendor[32];		// 厂商服务器域名。原始厂商服务器地址
 	
+	bool	New;
+	
 	void LoadDefault();
 
 	bool Load();
 	void Save();
 	void Show();
+	uint Size() const;
 
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
