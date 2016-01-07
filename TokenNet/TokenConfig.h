@@ -14,8 +14,9 @@
 struct TokenConfig
 {
 	byte		Length;			// 数据长度
-	ByteArray	Name;			// 登录名
-	ByteArray	Key;			// 登录密码
+	Byte		Name[16];		// 登录名
+	Byte		Key[16];		// 登录密码
+	Byte		Key[16];		// 登录密码
 	ushort		HardVer;		// 硬件版本
 	ushort		SoftVer;		// 软件版本
 
