@@ -55,9 +55,7 @@ void TokenClient::Open()
 	{
 		Name.Copy(TokenConfig->Name,16,0);
 		Key.Copy(TokenConfig->Key,16,0);
-	}
-	else
-		Status = 3;
+	}	
 		
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;
@@ -234,7 +232,10 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
-				Status	= 1;
+				if(TokenConfig->New)					
+					Status = 3;
+			    else
+					Status =1;					
 			}
 
 			if(ext.Version == 0x00) Token = 0;
@@ -305,11 +306,12 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 //注册
 void TokenClient::Register()
 {
+	debug_printf("TokenClient::Register\r\n");
 	RegisterMessage re;	
 	re.Name = ID;
 	re.Pass	= Key;
 	
-	TokenMessage msg(4);
+	TokenMessage msg(7);
 	re.WriteMessage(msg);
 	Send(msg);	
 	
@@ -347,7 +349,7 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 	{
 		cfg-> Server[i]=ms.ReadByte();
     }
-	strcpy(cfg->Vendor, "s1.peacemoon.cn");
+	strcpy(cfg->Vendor, "sz01.peacemoon.cn");
 
 	cfg->Save();
     cfg->Show();
