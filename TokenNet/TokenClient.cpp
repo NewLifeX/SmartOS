@@ -53,9 +53,10 @@ void TokenClient::Open()
 	
 	if(!TokenConfig->New)
 	{
-	 //Name = TokenConfig->Name;		
+		Name.Copy(TokenConfig->Name,16,0);
+		Key.Copy(TokenConfig->Key,16,0);
 	}
-
+	
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
