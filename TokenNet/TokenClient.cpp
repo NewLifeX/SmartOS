@@ -12,7 +12,7 @@ static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
 
-TokenClient::TokenClient() : ID(16), Key(8)
+TokenClient::TokenClient() : ID(16), Key(16)
 {
 	Token		= 0;
 	// 直接拷贝芯片ID和类型作为唯一ID
@@ -305,19 +305,54 @@ bool TokenClient::SetTokenConfig(TokenMessage& msg)
 //注册
 void TokenClient::Register()
 {
-	RegisterMessage re;
-	
+	RegisterMessage re;	
 	re.Name = ID;
 	re.Pass	= Key;
 	
 	TokenMessage msg(4);
-	
-	//auto ms= 
+	re.WriteMessage(msg);
+	Send(msg);	
 	
 }
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
-		
+	Stream ms(msg.Data, msg.Length);
+	
+	auto cfg	= TokenConfig;
+	
+	uint namelen = ms.ReadByte();
+	
+	for(int i=0;i!=namelen;i++)
+	{
+		cfg-> Name[i]=ms.ReadByte();
+    }
+	uint passlen = ms.ReadByte();
+	
+	for(int i=0;i!=passlen;i++)
+	{
+		cfg->Key[i]=ms.ReadByte();
+    }
+	
+	cfg->Protocol	= ms.ReadByte();
+	cfg->Port		= ms.ReadUInt16();
+	cfg->ServerIP	= ms.ReadUInt32();
+
+	cfg->ServerPort = ms.ReadUInt16();
+
+	uint len = ms.ReadByte();
+
+	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
+
+	for(int i=0;i!=len;i++)
+	{
+		cfg-> Server[i]=ms.ReadByte();
+    }
+	strcpy(cfg->Vendor, "s1.peacemoon.cn");
+
+	cfg->Save();
+    cfg->Show();
+
+	Sys.Reset();		
 }
 // 登录
 void TokenClient::Login()
