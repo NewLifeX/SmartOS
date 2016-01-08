@@ -131,7 +131,7 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 
 // 定时任务
 void LoopTask(void* param)
-{
+{	
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
@@ -235,10 +235,11 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
+				
 				if(TokenConfig->New)					
 					Status = 3;
 			    else
-					Status = 1;					
+					Status = 1;	
 			}
 			
 			if(ext.Version == 0x00) Token = 0;

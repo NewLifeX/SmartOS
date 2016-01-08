@@ -71,9 +71,12 @@ void TokenConfig::Show()
 	debug_printf("\t远程: ");
 	IPEndPoint ep2(IPAddress(ServerIP), ServerPort);
 	ep2.Show(true);
-
 	debug_printf("\t服务: %s \r\n", Server);
 	debug_printf("\t厂商: %s \r\n", Vendor);
+	debug_printf("\t登陆: %s \r\n", Name);
+	debug_printf("\t密码: %s \r\n", Key);
+	
+	
 #endif
 }
 
