@@ -15,6 +15,7 @@ void TokenConfig::LoadDefault()
 	uint len = Size();
 	memset(&Length, 0, len);
 	Length		= len;
+	ServerIP	= 0;
 
 	SoftVer		= Sys.Version;
 	PingTime	= 10;
@@ -38,8 +39,10 @@ bool TokenConfig::Load()
 	if(Config::Current->Get("TKCF", bs))
 	{
 		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");
-		New = false;
-		
+		if(ServerIP == 0)
+			New = true;
+		else
+			New = false;
 		return true;
 	}
 	else 
