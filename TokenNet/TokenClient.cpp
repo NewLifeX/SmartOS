@@ -239,7 +239,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 				if(TokenConfig->New)					
 					Status = 3;
 			    else
-					Status = 3;	
+					Status = 1;	
 			}
 			
 			if(ext.Version == 0x00) Token = 0;
