@@ -31,7 +31,8 @@ void RegisterMessage::Write(Stream& ms) const
 	{
 		ms.WriteArray(Name);
 		// 密码取MD5后传输
-		ms.WriteArray(MD5::Hash(Pass));		
+		ms.WriteArray(MD5::Hash(Pass));	
+		ms.WriteArray(MD5::Hash(Name));
 	}		
 }
 

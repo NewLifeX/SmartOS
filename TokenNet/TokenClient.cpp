@@ -106,6 +106,9 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 		case 0x03:
 			OnPing(msg, ctrl);
 			break;
+		case 0x07:
+			OnRegister(msg, ctrl);
+			break;
 	}
 
 	// 消息转发
@@ -235,15 +238,15 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 				if(TokenConfig->New)					
 					Status = 3;
 			    else
-					Status =1;					
+					Status = 1;					
 			}
 			
 			if(ext.Version == 0x00) Token = 0;
 
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
-
-			Login();
+			if(Status == 1)
+				Login();
 		}
 	}
 	else if(!msg.Reply)
@@ -318,27 +321,23 @@ void TokenClient::Register()
 }
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
-	Stream ms(msg.Data, msg.Length);
-	
+	Stream ms(msg.Data, msg.Length);	
 	auto cfg	= TokenConfig;
 	
-	uint namelen = ms.ReadByte();
-	
+	uint namelen = ms.ReadByte();	
 	for(int i=0;i!=namelen;i++)
 	{
 		cfg-> Name[i]=ms.ReadByte();
     }
-	uint passlen = ms.ReadByte();
 	
+	uint passlen = ms.ReadByte();	
 	for(int i=0;i!=passlen;i++)
 	{
 		cfg->Key[i]=ms.ReadByte();
     }
 	
 	cfg->Protocol	= ms.ReadByte();
-	cfg->Port		= ms.ReadUInt16();
 	cfg->ServerIP	= ms.ReadUInt32();
-
 	cfg->ServerPort = ms.ReadUInt16();
 
 	uint len = ms.ReadByte();
@@ -350,7 +349,6 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 		cfg-> Server[i]=ms.ReadByte();
     }
 	strcpy(cfg->Vendor, "sz01.peacemoon.cn");
-
 	cfg->Save();
     cfg->Show();
 
