@@ -137,7 +137,7 @@ void LoopTask(void* param)
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
 	//	client->SayHello(true, 3355);
-
+		
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -239,7 +239,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 				if(TokenConfig->New)					
 					Status = 3;
 			    else
-					Status = 1;	
+					Status = 3;	
 			}
 			
 			if(ext.Version == 0x00) Token = 0;
