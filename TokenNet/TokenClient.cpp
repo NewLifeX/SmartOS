@@ -204,12 +204,11 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 			Stream ms = msg.ToStream();
 			byte err  = ms.ReadByte();
-			if(err==0xff)
-			{
-				Status	= 0;
-			    Token	= 0;
-				debug_printf("握手失败，错误码=0x%02X ",err);
-			}
+
+			Status	= 0;
+			Token	= 0;
+			debug_printf("握手失败，错误码=0x%02X ",err);
+
 			//debug_printf("握手失败，错误码=0x%02X ",err);
 			//ms.ReadString().Show(true);
 			char cs[0x100];
