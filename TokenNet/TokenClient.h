@@ -64,7 +64,7 @@ public:
 	void Login(TokenMessage& msg);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 	//设置网络配置
-	bool SetTokenConfig(TokenMessage& msg);
+	bool HelloRedirect(TokenMessage& msg);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();

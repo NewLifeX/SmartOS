@@ -37,7 +37,7 @@ void LoginMessage::Write(Stream& ms) const
 	{
 		ms.WriteArray(Name);
 		// 密码取MD5后传输
-		ms.WriteArray(MD5::Hash(Key));
+		ms.WriteArray(Key);
 		ulong now = Sys.Ms();
 		//Salt.Set((byte*)&now, 8);
 		//ms.WriteArray(Salt);

@@ -199,18 +199,16 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	{
 		if(msg.Error)
 		{
-			if(SetTokenConfig(msg))
+			if(HelloRedirect(msg))
 				return false;
-
+			
 			Stream ms = msg.ToStream();
 			byte err  = ms.ReadByte();
-
+			
 			Status	= 0;
 			Token	= 0;
 			debug_printf("握手失败，错误码=0x%02X ",err);
-
-			//debug_printf("握手失败，错误码=0x%02X ",err);
-			//ms.ReadString().Show(true);
+			
 			char cs[0x100];
 			String str(cs, ArrayLength(cs));
 			ms.ReadArray(str);
@@ -275,28 +273,25 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::SetTokenConfig(TokenMessage& msg)
+bool TokenClient::HelloRedirect(TokenMessage& msg)
 {
     // 解析数据
 	Stream ms(msg.Data, msg.Length);
 
-	if(ms.ReadByte()!=2) return false;
+	if(ms.ReadByte() < 0xFE) return false;
 
 	auto cfg	= TokenConfig;
 	cfg->Protocol	= ms.ReadByte();
-	cfg->Port		= ms.ReadUInt16();
-	cfg->ServerIP	= ms.ReadUInt32();
-
-	cfg->ServerPort = ms.ReadUInt16();
-
+	
 	uint len = ms.ReadByte();
 
 	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
-
 	for(int i=0;i!=len;i++)
 	{
 		cfg-> Server[i]=ms.ReadByte();
     }
+	
+	cfg->ServerPort = ms.ReadUInt16();
 	strcpy(cfg->Vendor, "s1.peacemoon.cn");
 
 	cfg->Save();
@@ -336,19 +331,6 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 		cfg->Key[i]=ms.ReadByte();
     }
 	
-	cfg->Protocol	= ms.ReadByte();
-	cfg->ServerIP	= ms.ReadUInt32();
-	cfg->ServerPort = ms.ReadUInt16();
-
-	uint len = ms.ReadByte();
-
-	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
-
-	for(int i=0;i!=len;i++)
-	{
-		cfg-> Server[i]=ms.ReadByte();
-    }
-	strcpy(cfg->Vendor, "sz01.peacemoon.cn");
 	cfg->Save();
     cfg->Show();
 
