@@ -70,9 +70,13 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
     _stopBits	= stopBits;
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
-	//_byteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
-	_byteTime	= 1000000 / (baudRate >> 3 >> 1);
-	_byteTime	<<= 1;
+	//ByteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
+	//ByteTime	= 1000000 / (baudRate >> 3 >> 1);
+	//ByteTime	<<= 1;
+	if(baudRate > 9600)
+		ByteTime	= 1;
+	else
+		ByteTime	= 1000 / (baudRate / 10) + 1;	// 小数部分忽略，直接加一
 
 	// 根据端口实际情况决定打开状态
 	if(_port->CR1 & USART_CR1_UE) Opened = true;
@@ -301,8 +305,8 @@ uint SerialPort::OnRead(Array& bs)
 	{
 		count = len;
 		// 按照115200波特率计算，传输7200字节每秒，每个毫秒7个字节，大概150微秒差不多可以接收一个新字节
-		//Sys.Delay(_byteTime);
-		Sys.Sleep(2);
+		Sys.Sleep(ByteTime);
+		//Sys.Sleep(2);
 		len = Rx.Length();
 	}
 	// 如果数据大小不足，等下次吧
@@ -334,7 +338,7 @@ void SerialPort::OnRxHandler()
 	//!!! 暂时注释任务唤醒，避免丢数据问题
 	if(_taskidRx && Rx.Length() >= MinSize)
 	{
-		//Sys.SetTask(_taskidRx, true, (_byteTime >> 10) + 1);
+		//Sys.SetTask(_taskidRx, true, (ByteTime >> 10) + 1);
 		_task->Set(true, 10);
 	}
 }

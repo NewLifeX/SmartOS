@@ -19,7 +19,6 @@ private:
 	byte _dataBits;
 	byte _stopBits;
 	int _baudRate;
-	int _byteTime;	// 传送一字节耗时 （略微加大一些）
 
     USART_TypeDef* _port;
 	AlternatePort _tx;
@@ -38,6 +37,7 @@ public:
 #endif
 	OutputPort* RS485;	// RS485使能引脚
 	int 		Error;	// 错误计数
+	int			ByteTime;	// 字节间隔，最小1ms
 
 	// 收发缓冲区
 #if	!(defined(STM32F0) || defined(GD32F150))
