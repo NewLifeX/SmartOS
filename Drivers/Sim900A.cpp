@@ -8,6 +8,7 @@ Sim900A::Sim900A()
 
 	Com		= COM_NONE;
 	Speed	= 9600;
+	Inited	= false;
 	APN		= NULL;
 	Led		= NULL;
 }
@@ -34,6 +35,8 @@ bool Sim900A::OnOpen()
 		// 设置gprs发送大小
 		sp->Tx.SetCapacity(512);
 	}
+
+	Inited	= false;
 
 	return Port->Open();
 }
@@ -141,7 +144,7 @@ void Sim900A::Init(uint sTimeout)
 	SendCmd("AT+CIPSTART=\"UDP\",\"pm25.peacemoon.cn\",\"3388\"\r");
 
 	// 读取CONNECT OK
-	Opened = SendCmd(NULL, sTimeout);
+	Inited = SendCmd(NULL, sTimeout);
 	//SendCmd("AT+CIPSHUT\r");
 }
 
@@ -150,8 +153,12 @@ void Sim900A::Init(uint sTimeout)
 //使用最笨的任务方式进行进行处理
 bool Sim900A::Send(const Array& bs)
 {
-	if(!Opened) Init();
-	if(!Opened) return false;
+	if(!Inited) Init();
+	if(!Inited)
+	{
+		Close();
+		return false;
+	}
 
 	// 进入发送模式
 	if(!SendCmd("AT+CIPSEND\r", 5))

@@ -11,6 +11,7 @@ public:
     ITransport*	Port;
 	int			Speed;
 	COM_Def		Com;
+	bool		Inited;
 
 	const char*	APN;
 
