@@ -317,7 +317,7 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	String(void* str, int len = 0) : TArray(0) { Set(str, len); }
 	String(const void* str, int len = 0) : TArray(0) { Set(str, len); }
-	String(const String& str) : TArray(str.Length()) { Copy(str, 0); }
+	String(const Array& bs) : TArray(bs.Length()) { Copy(bs, 0); }
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;

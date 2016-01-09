@@ -356,6 +356,9 @@ void SerialPort::ReceiveTask(void* param)
 	// 从栈分配，节省内存
 	byte buf[0x100];
 	Array bs(buf, ArrayLength(buf));
+	int mx	= sp->MaxSize;
+	if(mx > 0 && mx > bs.Length()) bs.SetLength(mx);
+
 	uint len = sp->Read(bs);
 	if(len)
 	{
