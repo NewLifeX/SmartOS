@@ -8,7 +8,6 @@ Sim900A::Sim900A()
 
 	Com		= COM_NONE;
 	Speed	= 9600;
-	IsSGP	= true;
 	APN		= NULL;
 	Led		= NULL;
 }
@@ -106,11 +105,11 @@ bool Sim900A::SendCmd(const char* str, uint sTimeout)
 }
 
 // 00:CMNET 10:CMHK 01:CHKT 11:HKCSL
-void Sim900A::SendAPN()
+void Sim900A::SendAPN(bool issgp)
 {
 	String str;
 	str.Clear();
-	if(IsSGP)
+	if(issgp)
 		str = "AT+CIPCSGP=1";
 	else
 		str = "AT+CGDCONT=1,\"IP\"";
@@ -125,12 +124,12 @@ void Sim900A::Init(uint sTimeout)
 	// ATE1 开启回显
 	SendCmd("ATE0\r");
 	SendCmd("AT+CGCLASS=\"B\"\r");
-	SendAPN();
+	SendAPN(false);
 	SendCmd("AT+CGATT=1\r");
 	// 先断开已有连接
 	SendCmd("AT+CIPSHUT\r", 5);
 	//设置APN
-	SendAPN();
+	SendAPN(true);
 	SendCmd("AT+CLPORT=\"UDP\",\"3399\"\r");
 	// IP设置方式
 	//SendCmd("AT+CIPSTART=\"UDP\",\"183.63.213.113\",\"3388\"\r");

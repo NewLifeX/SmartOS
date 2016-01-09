@@ -12,7 +12,6 @@ public:
 	int			Speed;
 	COM_Def		Com;
 
-	bool		IsSGP;
 	const char*	APN;
 
 	IDataPort*	Led;	// 指示灯
@@ -33,7 +32,7 @@ private:
 
 	String Send(const char* str, uint sTimeout = 3);
 	bool SendCmd(const char* str, uint sTimeout = 3);
-	void SendAPN();
+	void SendAPN(bool issgp);
 };
 
 #endif
