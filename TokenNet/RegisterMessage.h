@@ -8,8 +8,8 @@
 class RegisterMessage : public MessageBase
 {
 public:
-	ByteArray	Name;	// 硬件ID
-	ByteArray	Pass;	// 登录密码	
+	String	Name;	// 硬件ID
+	String	Pass;	// 登录密码	
 		
 	// 初始化消息，各字段为0
 	RegisterMessage();
