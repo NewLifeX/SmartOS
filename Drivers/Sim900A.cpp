@@ -9,7 +9,7 @@ Sim900A::Sim900A()
 	Com		= COM_NONE;
 	Speed	= 9600;
 	Inited	= false;
-	APN		= NULL;
+	APN		= "CMNET";
 	Led		= NULL;
 }
 
