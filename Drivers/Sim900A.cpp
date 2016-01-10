@@ -23,11 +23,11 @@ bool Sim900A::OnOpen()
 {
 	if(Port)
 	{
-		debug_printf("\r\n Sim900A::Open %s \r\n", Port->ToString());
+		debug_printf("Sim900A::Open %s \r\n", Port->ToString());
 	}
 	else
 	{
-		debug_printf("\r\n Sim900A::Open COM%d %d \r\n", (byte)Com + 1, Speed);
+		debug_printf("Sim900A::Open COM%d %d \r\n", (byte)Com + 1, Speed);
 
 		auto sp	= new SerialPort(Com, Speed);
 		Port	= sp;

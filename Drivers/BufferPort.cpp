@@ -3,7 +3,7 @@
 
 BufferPort::BufferPort() : Buffer((void*)NULL, 0)
 {
-	Name	= NULL;
+	Name	= "BufferPort";
 	Port	= NULL;
 
 	Com		= COM_NONE;
@@ -27,18 +27,18 @@ bool BufferPort::Open()
 	bool isNew	= false;
 	if(Port)
 	{
-		debug_printf("\r\n %s::Open %s \r\n", Name, Port->ToString());
+		debug_printf("%s::Open %s \r\n", Name, Port->ToString());
 	}
 	else
 	{
-		debug_printf("\r\n %s::Open COM%d %d \r\n", Name, (byte)Com + 1, Speed);
+		debug_printf("%s::Open COM%d %d \r\n", Name, (byte)Com + 1, Speed);
 
 		isNew	= true;
 	}
 
 	if(Buffer.Length() == 0)
 	{
-		debug_printf("未指定缓冲区大小，默认分配256字节！\r\n");
+		debug_printf("未指定缓冲区大小，默认分配 256 字节！\r\n");
 
 		Buffer.SetLength(256);
 		Buffer.SetLength(0);
@@ -64,7 +64,11 @@ void BufferPort::Close()
 {
 	if(!Opened) return;
 
-	if(Port) Port->Close();
+	if(Port)
+	{
+		Port->Close();
+		Port->Register(NULL, NULL);
+	}
 
 	Opened	= false;
 }
