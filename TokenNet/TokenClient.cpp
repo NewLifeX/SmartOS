@@ -49,13 +49,8 @@ void TokenClient::Open()
 		Local->Param	= this;
 		Local->Open();
 	}
-	TokenConfig			= TokenConfig::Current;
 	
-	if(!TokenConfig->New)
-	{
-		Name.Copy(TokenConfig->Name,16,0);
-		Key.Copy(TokenConfig->Key,16,0);
-	}	
+	TokenConfig	= TokenConfig::Current;
 		
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;
@@ -292,6 +287,7 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
     }
 	
 	cfg->ServerPort = ms.ReadUInt16();
+	debug_printf("cfg->ServerPort:%d\r\n",cfg->ServerPort);
 	strcpy(cfg->Vendor, "s1.peacemoon.cn");
 
 	cfg->Save();
@@ -306,8 +302,8 @@ void TokenClient::Register()
 {
 	debug_printf("TokenClient::Register\r\n");
 	RegisterMessage re;	
-	re.Name = ID;
-	re.Pass	= Key;
+	re.Name = ID.ToHexd();
+	re.Pass	= Key.ToHexd();
 	
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
@@ -319,13 +315,17 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 	Stream ms(msg.Data, msg.Length);	
 	auto cfg	= TokenConfig;
 	
-	uint namelen = ms.ReadByte();	
+	uint namelen = ms.ReadByte();
+	if(namelen > 16) return;
+	
 	for(int i=0;i!=namelen;i++)
 	{
 		cfg-> Name[i]=ms.ReadByte();
     }
 	
-	uint passlen = ms.ReadByte();	
+	uint passlen = ms.ReadByte();
+	if(passlen > 16) return;
+	
 	for(int i=0;i!=passlen;i++)
 	{
 		cfg->Key[i]=ms.ReadByte();
@@ -340,8 +340,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 void TokenClient::Login()
 {
 	LoginMessage login;
-	login.Name	= Name;
-	login.Key	= Key;
+	login.Name	= TokenConfig->Name;
+	login.Key	= TokenConfig->Key;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
@@ -354,8 +354,8 @@ void TokenClient::Login(TokenMessage& msg)
 	if(msg.Error) return;
 	
 	LoginMessage login;
-	login.Key		= Key;
-	login.Token		= Token;
+	login.Key		= TokenConfig->Name;;
+	login.Token		= TokenConfig->Key;
 
 	TokenMessage rmsg(2);
 	login.WriteMessage(rmsg);

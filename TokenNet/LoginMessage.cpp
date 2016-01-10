@@ -13,8 +13,8 @@ bool LoginMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{	
-		Name = ms.ReadArray();
-		Key    = ms.ReadArray();
+		Name = ms.ReadString();
+		Key    = ms.ReadString();
 		Salt   = ms.ReadArray();
 	
 		Local.Address = ms.ReadBytes(4);
@@ -24,7 +24,7 @@ bool LoginMessage::Read(Stream& ms)
 		if(!Error)
 		{
 			Token = ms.ReadUInt32();
-			Key   = ms.ReadArray();
+			Key   = ms.ReadString();
 		}
 		
     return false;		

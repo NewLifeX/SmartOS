@@ -11,8 +11,8 @@ bool RegisterMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{	
-		Name = ms.ReadArray();
-		Pass = ms.ReadArray();			
+		Name = ms.ReadString();
+		Pass = ms.ReadString();			
 	}
 	//else
 	//	if(!Error)
