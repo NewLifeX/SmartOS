@@ -38,9 +38,11 @@ bool BufferPort::Open()
 
 	if(Buffer.Length() == 0)
 	{
-		debug_printf("未指定缓冲区大小！\r\n");
+		debug_printf("未指定缓冲区大小，默认分配256字节！\r\n");
 
-		return false;
+		Buffer.SetLength(256);
+		Buffer.SetLength(0);
+		//return false;
 	}
 
 	if(isNew && Com != COM_NONE)

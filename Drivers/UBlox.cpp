@@ -1,13 +1,31 @@
 ﻿#include "UBlox.h"
 #include "SerialPort.h"
 
+UBlox::UBlox()
+{
+	Name	= "UBlox";
+}
+
+bool UBlox::OnOpen(bool isNew)
+{
+	if(isNew)
+	{
+		auto sp	= (SerialPort*)Port;
+		sp->Rx.SetCapacity(1024);
+		sp->MaxSize		= 1024;
+		sp->ByteTime	= 20;	// 拆包间隔
+	}
+
+	return true;
+}
+
 bool UBlox::SetBaudRate(int baudRate)
 {
 	if(!Open()) return false;
 
 	// 构造波特率指令。默认115200
 	byte cmd[] = {
-		0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 
+		0xB5, 0x62, 0x06, 0x00, 0x14, 0x00,
 		0x01, // PortID
 		0x00, // reserved0
 		0x00, 0x00, // txReady

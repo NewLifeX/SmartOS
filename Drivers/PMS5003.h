@@ -10,9 +10,10 @@
 class PMS5003 : public BufferPort
 {
 public:
+	PMS5003();
 
 protected:
-	virtual void OnReceive(const Array& bs, void* param);
+	//virtual void OnReceive(const Array& bs, void* param);
 };
 
 #endif
