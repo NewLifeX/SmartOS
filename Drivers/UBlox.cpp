@@ -44,13 +44,41 @@ bool UBlox::SetBaudRate(int baudRate)
 	byte CK_A = 0, CK_B = 0;
 	for(int i=2; i<len-2-2; i++)
 	{
-		CK_A = CK_A + cmd[i];
-		CK_B = CK_B + CK_A;
+		CK_A += cmd[i];
+		CK_B += CK_A;
 	}
-	cmd[len - 2]	= CK_A;
-	cmd[len - 1]	= CK_B;
+	//cmd[len - 2]	= CK_A;
+	//cmd[len - 1]	= CK_B;
+
 	// 发送命令
-	Port->Write(Array(cmd, len));
+	Array bs(cmd, len);
+	bs.Show(true);
+	Port->Write(bs);
+
+	// Navigation/Measurement Rate Settings
+	byte cmd2[]	= {
+		0xB5, 0x62, 0x06, 0x08, 0x06, 0x00,
+		0xE8, 0x03, // measRate,1000ms. Measurement Rate, GPS measurements are taken every measRate milliseconds
+		0x01, 0x00, // navRate. Navigation Rate, in number of measurement cycles. This parameter cannot be changed, and must be set to 1.
+		0x01, 0x00, // timeRef. Alignment to reference time: 0 = UTC time, 1 = GPS time
+		0x01, 0x39 };
+	//Port->Write(Array(cmd2, ArrayLength(cmd2)));
+	Array bs2(cmd2, ArrayLength(cmd2));
+	bs2.Show(true);
+	Port->Write(bs2);
+
+	// Clear, Save and Load configurations
+	byte cmd3[]	= {
+		0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00,
+		0x00, 0x00, 0x00, 0x00, // clearMask. ioPort | msgConf | infMsg | navConf | rxmConf + rinvConf | antConf | logConf | ftsConf
+		0xFF, 0xFF, 0x00, 0x00, // saveMask
+		0x00, 0x00, 0x00, 0x00, // loadMask
+		0x17, // deviceMask. devBBR | devFlash | devEEPROM | 0 | devSpiFlash
+		0x31, 0xBF };
+	//Port->Write(Array(cmd3, ArrayLength(cmd3)));
+	Array bs3(cmd3, ArrayLength(cmd3));
+	bs3.Show(true);
+	Port->Write(bs3);
 
 	// 修改波特率，重新打开
 	Close();

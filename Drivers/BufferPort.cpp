@@ -41,9 +41,9 @@ bool BufferPort::Open()
 		debug_printf("未指定缓冲区大小，默认分配 256 字节！\r\n");
 
 		Buffer.SetLength(256);
-		Buffer.SetLength(0);
 		//return false;
 	}
+	Buffer.SetLength(0);
 
 	if(isNew && Com != COM_NONE)
 	{
@@ -67,7 +67,7 @@ void BufferPort::Close()
 	if(Port)
 	{
 		Port->Close();
-		Port->Register(NULL, NULL);
+		//Port->Register(NULL, NULL);
 	}
 
 	Opened	= false;

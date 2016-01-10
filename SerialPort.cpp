@@ -94,6 +94,8 @@ bool SerialPort::OnOpen()
     Pin rx, tx;
     GetPins(&tx, &rx);
 
+    debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits);
+
 #ifdef RTM_Serial_Debug
 	ErrorPort.Set(ErrorPin);
 	ErrorPort.Open();
@@ -101,7 +103,7 @@ bool SerialPort::OnOpen()
 
 	//串口引脚初始化
     _tx.Set(tx).Open();
-    _rx.Set(rx).Open();
+    _rx.Init(rx, false).Open();
 
 	// 不要关调试口，否则杯具
     if(_index != Sys.MessagePort) USART_DeInit(_port);
