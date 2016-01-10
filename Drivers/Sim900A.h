@@ -23,7 +23,7 @@ public:
 	bool Send(const Array& bs);
 
 private:
-	void Init(uint sTimeout = 3);
+	void Init(uint msTimeout = 1000);
 
 	virtual bool OnOpen();
     virtual void OnClose();
@@ -31,8 +31,8 @@ private:
     virtual bool OnWrite(const Array& bs);
 	virtual uint OnRead(Array& bs);
 
-	String Send(const char* str, uint sTimeout = 3);
-	bool SendCmd(const char* str, uint sTimeout = 3);
+	String Send(const char* str, uint msTimeout = 1000);
+	bool SendCmd(const char* str, uint msTimeout = 1000, int times = 1);
 	void SendAPN(bool issgp);
 };
 

@@ -52,7 +52,7 @@ void Sim900A::OnClose()
 bool Sim900A::OnWrite(const Array& bs) { return Send(bs); }
 uint Sim900A::OnRead(Array& bs) { return 0; }
 
-String Sim900A::Send(const char* str, uint sTimeout)
+String Sim900A::Send(const char* str, uint msTimeout)
 {
 	if(str)
 	{
@@ -67,23 +67,23 @@ String Sim900A::Send(const char* str, uint sTimeout)
 	String bs;
 	bs.SetLength(bs.Capacity());
 
-	TimeWheel tw(sTimeout);
-	tw.Sleep	= 1;
-	while(!tw.Expired())
+	TimeWheel tw(0, msTimeout);
+	tw.Sleep	= 50;
+	do
 	{
 		if(Port->Read(bs) >= 2) break;
-	}
+	}while(!tw.Expired());
 
 	if(bs.Length() > 4) return bs.Trim();
 
 	return bs;
 }
 
-bool Sim900A::SendCmd(const char* str, uint sTimeout)
+bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 {
-	for(int i=0; i<sTimeout; i++)
+	for(int i=0; i<times; i++)
 	{
-		auto rt	= Send(str, sTimeout);
+		auto rt	= Send(str, msTimeout);
 #if DEBUG
 		rt.Show(true);
 #endif
@@ -98,7 +98,7 @@ bool Sim900A::SendCmd(const char* str, uint sTimeout)
 		{
 			ByteArray end(0x1A, 1);
 			Port->Write(end);
-			Send("AT+CIPSHUT\r", sTimeout);
+			Send("AT+CIPSHUT\r", msTimeout);
 		}
 
 		Sys.Sleep(1000);
@@ -118,10 +118,10 @@ void Sim900A::SendAPN(bool issgp)
 		str = "AT+CGDCONT=1,\"IP\"";
 	str = str + ",\"" + APN + "\"\r";
 
-	SendCmd(str.GetBuffer());
+	SendCmd(str.GetBuffer(), 2000, 2);
 }
 
-void Sim900A::Init(uint sTimeout)
+void Sim900A::Init(uint msTimeout)
 {
 	// ATE0 关闭回显
 	// ATE1 开启回显
@@ -130,7 +130,7 @@ void Sim900A::Init(uint sTimeout)
 	SendAPN(false);
 	SendCmd("AT+CGATT=1\r");
 	// 先断开已有连接
-	SendCmd("AT+CIPSHUT\r", 5);
+	SendCmd("AT+CIPSHUT\r", 2000);
 	//设置APN
 	SendAPN(true);
 	SendCmd("AT+CLPORT=\"UDP\",\"3399\"\r");
@@ -141,10 +141,10 @@ void Sim900A::Init(uint sTimeout)
 	SendCmd("AT+CIPRXGET=1\r");
 	SendCmd("AT+CIPQRCLOSE=1\r");
 	SendCmd("AT+CIPMODE=0\r");
-	SendCmd("AT+CIPSTART=\"UDP\",\"pm25.peacemoon.cn\",\"3388\"\r");
+	SendCmd("AT+CIPSTART=\"UDP\",\"pm25.peacemoon.cn\",\"3388\"\r", 3000, 3);
 
 	// 读取CONNECT OK
-	Inited = SendCmd(NULL, sTimeout);
+	Inited = SendCmd(NULL, msTimeout);
 	//SendCmd("AT+CIPSHUT\r");
 }
 
@@ -161,7 +161,7 @@ bool Sim900A::Send(const Array& bs)
 	}
 
 	// 进入发送模式
-	if(!SendCmd("AT+CIPSEND\r", 5))
+	if(!SendCmd("AT+CIPSEND\r", 1000))
 	{
 		Close();
 		return false;
