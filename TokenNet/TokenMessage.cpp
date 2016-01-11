@@ -215,6 +215,8 @@ bool TokenController::Valid(const Message& msg)
 
 	// 握手和登录指令可直接通过
 	if(msg.Code <= 0x02) return true;
+	
+	if(Token != 0) return true;
 
 	// 合法来源验证，暂时验证云平台，其它连接将来验证
 	if(Server)
@@ -326,7 +328,7 @@ bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
 	//未登陆，登陆注册，握手可通过	
-	if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
+	//if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
 	
 	if(msg.Reply)
 		ShowMessage("Reply", msg);
