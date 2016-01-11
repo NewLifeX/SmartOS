@@ -78,7 +78,7 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 {
-	if(Status < 2) return false;
+	//if(Status < 2) return false;
 
 	if(!ctrl) ctrl	= Control;
 	assert_param2(ctrl, "TokenClient::Reply");
@@ -96,7 +96,10 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 			OnHello(msg, ctrl);
 			break;
 		case 0x02:
-			OnLogin(msg, ctrl);
+			if(msg.Reply)
+				OnLogin(msg, ctrl);
+			else	
+				Login(msg, ctrl);
 			break;
 		case 0x03:
 			OnPing(msg, ctrl);
@@ -132,7 +135,7 @@ void LoopTask(void* param)
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
 	//	client->SayHello(true, 3355);
-		
+
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -352,28 +355,27 @@ void TokenClient::Login()
 	Send(msg);
 }
 
-void TokenClient::Login(TokenMessage& msg)
+void TokenClient::Login(TokenMessage& msg,Controller* ctrl)
 {
 	if(msg.Error) return;
 	
 	LoginMessage login;
 	login.Key		= TokenConfig->Name;
-	login.Token		= Token;
+	login.Token		= 1;
+	login.Reply		= true;	
+	login.WriteMessage(msg);
+		
+	Reply(msg);	
 
-	TokenMessage rmsg(2);
-	login.WriteMessage(rmsg);
-
-	Reply(msg);			
+	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);	
+	ctrl2->Key		= login.Key;
+	ctrl2->Token 	= login.Token;	
+		 
 }
 
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
-	if(!msg.Reply)
-	{
-		Login(msg);
-		return false;
-	}
-	
+	if(!msg.Reply) return;	
 	Stream ms(msg.Data, msg.Length);
 
 	if(msg.Error)

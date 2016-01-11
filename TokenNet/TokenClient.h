@@ -61,7 +61,7 @@ public:
 	void OnRegister(TokenMessage& msg, Controller* ctrl);
 	// 登录
 	void Login();	
-	void Login(TokenMessage& msg);
+	void Login(TokenMessage& msg,Controller* ctrl);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 	//设置网络配置
 	bool HelloRedirect(TokenMessage& msg);

@@ -22,7 +22,7 @@ bool LoginMessage::Read(Stream& ms)
 	}
 	else
 		if(!Error)
-		{
+		{		
 			Token = ms.ReadUInt32();
 			Key   = ms.ReadString();
 		}
@@ -48,6 +48,7 @@ void LoginMessage::Write(Stream& ms) const
 	else
 		if(!Error)
 		{
+			debug_printf("Token %d", Token);
 			ms.Write(Token);
 			ms.WriteArray(Key);
 		}		
