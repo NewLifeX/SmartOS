@@ -88,7 +88,7 @@ bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 		rt.Show(true);
 #endif
 
-		if(rt.Sub(0, 5) != "ERROR")  return true;
+		if(!rt.StartsWith("ERROR"))  return true;
 
 		// 设定小灯快闪时间，单位毫秒
 		if(Led) Led->Write(500);

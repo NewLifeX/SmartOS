@@ -83,7 +83,7 @@ uint BufferPort::OnReceive(ITransport* transport, Array& bs, void* param, void* 
 
 void BufferPort::OnReceive(const Array& bs, void* param)
 {
-	if(Buffer.Length() > 0)
+	if(Buffer.Capacity() > 0)
 	{
 		Buffer.SetLength(0);
 		Buffer.Copy(bs);

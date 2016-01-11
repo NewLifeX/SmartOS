@@ -4,6 +4,7 @@
 UBlox::UBlox()
 {
 	Name	= "UBlox";
+	Header	= NULL;
 }
 
 bool UBlox::OnOpen(bool isNew)
@@ -129,21 +130,18 @@ void UBlox::OnReceive(const Array& bs, void* param)
 
 	if(Buffer.Capacity() == 0) return;
 
-	// 避免被截成两段
-	if(bs[0] != '$')
-	{
-		if(Buffer.Length() == 0)
-		{
-			/*debug_printf("GPS数据断片[%d]=", bs.Length());
-			String str(bs);
-			str.Show(true);*/
-		}
-
-		//GPSDATA	+= bs;
-	}
-	else
+	// 必须美元开头，可以指定头部识别符
+	if(bs[0] == '$' && (Header == NULL || str.StartsWith(Header)))
 	{
 		Buffer.SetLength(0);
 		Buffer.Copy(bs);
+	}
+	else
+	{
+		// 不合适的数据，可以直接附加在后面
+		if(Buffer.Length() != 0)
+		{
+			Buffer.Copy(bs, Buffer.Length());
+		}
 	}
 }
