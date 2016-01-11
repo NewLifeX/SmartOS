@@ -453,9 +453,9 @@ void TimeSleep(uint us)
 	// 在这段时间里面，去处理一下别的任务
 	if(Sys.Started && us != 0 && us >= 50)
 	{
-		TaskScheduler* sc = Task::Scheduler();
+		auto sc	= Task::Scheduler();
 		// 记录当前正在执行任务
-		Task* task = sc->Current;
+		auto task = sc->Current;
 
 		TimeCost tc;
 		// 实际可用时间。100us一般不够调度新任务，留给硬件等待

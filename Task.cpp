@@ -31,6 +31,7 @@ Task::~Task()
 bool Task::Execute(ulong now)
 {
 	//TS("Task::Execute");
+	TS(Name);
 
 	if(Deepth >= MaxDeepth) return false;
 	Deepth++;
@@ -45,7 +46,13 @@ bool Task::Execute(ulong now)
 	TimeCost tc;
 	SleepTime = 0;
 
-	Task* cur = Host->Current;
+	auto cur = Host->Current;
+	// 事件型任务和一次性任务，禁止重入
+	if(cur == this)
+	{
+		if(Event || Period < 0) return false;
+	}
+
 	Host->Current = this;
 	Callback(Param);
 	Host->Current = cur;
@@ -251,7 +258,7 @@ void TaskScheduler::Execute(uint msMax)
 
 	for(int i=0; i<_Tasks.Length(); i++)
 	{
-		Task* task = _Tasks[i];
+		auto task	= _Tasks[i];
 		if(task->ID == 0 || !task->Enable) continue;
 
 		if((task->NextTime <= now || task->NextTime < 0)
