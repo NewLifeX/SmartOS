@@ -13,7 +13,6 @@ class Device : public Object
 {
 public:
 	bool	Logined;	// 是否在线
-	byte	IsVir;		// 网关虚拟设备标志
 	byte	Address;	// 节点地址
 
 	ushort	Kind;		// 类型
