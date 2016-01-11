@@ -8,9 +8,10 @@ UBlox::UBlox()
 
 bool UBlox::OnOpen(bool isNew)
 {
+	auto sp	= (SerialPort*)Port;
+	sp->SetBaudRate(Speed);
 	if(isNew)
 	{
-		auto sp	= (SerialPort*)Port;
 		sp->Rx.SetCapacity(1024);
 		sp->MaxSize		= 1024;
 		sp->ByteTime	= 20;	// 拆包间隔
@@ -21,7 +22,7 @@ bool UBlox::OnOpen(bool isNew)
 
 bool UBlox::SetBaudRate(int baudRate)
 {
-	if(!Open()) return false;
+	TS("UBlox::SetBaudRate");
 
 	// 构造波特率指令。默认115200
 	byte cmd[] = {
@@ -47,7 +48,7 @@ bool UBlox::SetBaudRate(int baudRate)
 		CK_A += cmd[i];
 		CK_B += CK_A;
 	}
-	//cmd[len - 2]	= CK_A;
+	//cmd[len - 2]	= CK_A ;
 	//cmd[len - 1]	= CK_B;
 
 	// 发送命令
@@ -55,30 +56,74 @@ bool UBlox::SetBaudRate(int baudRate)
 	bs.Show(true);
 	Port->Write(bs);
 
+	Sys.Sleep(1000);
+
+	// 读取
+	byte cmd2[]	= { 0xB5, 0x62, 0x06, 0x00, 0x01, 0x00, 0x01, 0x08, 0x22 };
+	Port->Write(Array(cmd2, ArrayLength(cmd2)));
+
+	Sys.Sleep(1000);
+
+	ByteArray rs;
+	rs.SetLength(64);
+	Port->Read(rs);
+	//rs.Show(true);
+	debug_printf("rs=%d \r\n", rs.Length());
+	if(rs.Length()) rs.Show(true);
+
+	return true;
+}
+
+void UBlox::SetRate()
+{
 	// Navigation/Measurement Rate Settings
-	byte cmd2[]	= {
+	byte cmd[]	= {
 		0xB5, 0x62, 0x06, 0x08, 0x06, 0x00,
 		0xE8, 0x03, // measRate,1000ms. Measurement Rate, GPS measurements are taken every measRate milliseconds
 		0x01, 0x00, // navRate. Navigation Rate, in number of measurement cycles. This parameter cannot be changed, and must be set to 1.
 		0x01, 0x00, // timeRef. Alignment to reference time: 0 = UTC time, 1 = GPS time
 		0x01, 0x39 };
-	//Port->Write(Array(cmd2, ArrayLength(cmd2)));
-	Array bs2(cmd2, ArrayLength(cmd2));
-	bs2.Show(true);
-	Port->Write(bs2);
+	//Port->Write(Array(cmd, ArrayLength(cmd)));
+	Array bs(cmd, ArrayLength(cmd));
+	bs.Show(true);
+	Port->Write(bs);
+}
 
+void UBlox::EnterConfig()
+{
+	Open();
+
+	Port->Register(NULL, NULL);
+}
+
+void UBlox::SaveConfig()
+{
 	// Clear, Save and Load configurations
-	byte cmd3[]	= {
+	byte cmd[]	= {
 		0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00,
 		0x00, 0x00, 0x00, 0x00, // clearMask. ioPort | msgConf | infMsg | navConf | rxmConf + rinvConf | antConf | logConf | ftsConf
 		0xFF, 0xFF, 0x00, 0x00, // saveMask
 		0x00, 0x00, 0x00, 0x00, // loadMask
 		0x17, // deviceMask. devBBR | devFlash | devEEPROM | 0 | devSpiFlash
 		0x31, 0xBF };
-	//Port->Write(Array(cmd3, ArrayLength(cmd3)));
-	Array bs3(cmd3, ArrayLength(cmd3));
-	bs3.Show(true);
-	Port->Write(bs3);
+	//Port->Write(Array(cmd, ArrayLength(cmd)));
+	Array bs(cmd, ArrayLength(cmd));
+	bs.Show(true);
+	Port->Write(bs);
+}
+
+/*bool UBlox::SetBaudRate(int baudRate)
+{
+	if(!Open()) return false;
+
+	SendBaudRate(Port, baudRate);
+	Sys.Sleep(1000);
+
+	SendRate(Port);
+	Sys.Sleep(1000);
+
+	SaveConfig(Port);
+	Sys.Sleep(1000);
 
 	// 修改波特率，重新打开
 	Close();
@@ -87,7 +132,7 @@ bool UBlox::SetBaudRate(int baudRate)
 	sp->SetBaudRate(baudRate);
 
 	return Open();
-}
+}*/
 
 void UBlox::OnReceive(const Array& bs, void* param)
 {

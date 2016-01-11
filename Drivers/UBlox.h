@@ -13,6 +13,10 @@ public:
 	UBlox();
 
 	bool SetBaudRate(int baudRate);
+	void SetRate();
+	
+	void EnterConfig();
+	void SaveConfig();
 
 protected:
 	virtual bool OnOpen(bool isNew);

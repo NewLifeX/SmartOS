@@ -36,7 +36,7 @@ bool BufferPort::Open()
 		isNew	= true;
 	}
 
-	if(Buffer.Length() == 0)
+	if(Buffer.Capacity() == 0)
 	{
 		debug_printf("未指定缓冲区大小，默认分配 256 字节！\r\n");
 
