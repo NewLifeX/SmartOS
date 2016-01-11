@@ -135,7 +135,6 @@ void LoopTask(void* param)
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
 	//	client->SayHello(true, 3355);
-
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -360,8 +359,10 @@ void TokenClient::Login(TokenMessage& msg,Controller* ctrl)
 	if(msg.Error) return;
 	
 	LoginMessage login;
-	login.Key		= TokenConfig->Name;
-	login.Token		= 1;
+	//这里需要随机密匙 
+	login.Key		= Key.Copy(Sys.ID, 16);
+	//随机令牌？
+	login.Token		= 123456;
 	login.Reply		= true;	
 	login.WriteMessage(msg);
 		
