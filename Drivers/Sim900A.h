@@ -12,6 +12,8 @@ public:
 	int			Speed;
 	COM_Def		Com;
 	bool		Inited;
+	
+	const char*	Domain;
 
 	const char*	APN;
 
@@ -34,6 +36,7 @@ private:
 	String Send(const char* str, uint msTimeout = 1000);
 	bool SendCmd(const char* str, uint msTimeout = 1000, int times = 1);
 	void SendAPN(bool issgp);
+	void SendDomain();
 };
 
 #endif

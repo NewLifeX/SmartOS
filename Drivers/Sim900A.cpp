@@ -11,6 +11,7 @@ Sim900A::Sim900A()
 	Inited	= false;
 	APN		= "CMNET";
 	Led		= NULL;
+	Domain	= "pm25.peacemoon.cn";
 }
 
 Sim900A::~Sim900A()
@@ -121,6 +122,16 @@ void Sim900A::SendAPN(bool issgp)
 	SendCmd(str.GetBuffer(), 2000, 2);
 }
 
+void Sim900A::SendDomain()
+{
+	String str;
+	str.Clear();
+	str = "AT+CIPSTART=\"UDP\"";
+	str = str + ",\"" + Domain + "\",\"3388\"\r";
+
+	SendCmd(str.GetBuffer(), 3000, 3);
+}
+
 void Sim900A::Init(uint msTimeout)
 {
 	// ATE0 关闭回显
@@ -141,7 +152,8 @@ void Sim900A::Init(uint msTimeout)
 	SendCmd("AT+CIPRXGET=1\r");
 	SendCmd("AT+CIPQRCLOSE=1\r");
 	SendCmd("AT+CIPMODE=0\r");
-	SendCmd("AT+CIPSTART=\"UDP\",\"pm25.peacemoon.cn\",\"3388\"\r", 3000, 3);
+	//SendCmd("AT+CIPSTART=\"UDP\",\"pm25.peacemoon.cn\",\"3388\"\r", 3000, 3);
+	SendDomain();
 
 	// 读取CONNECT OK
 	Inited = SendCmd(NULL, msTimeout);
@@ -163,7 +175,7 @@ bool Sim900A::Send(const Array& bs)
 	// 进入发送模式
 	if(!SendCmd("AT+CIPSEND\r", 1000))
 	{
-		Close();
+		//Close();
 		return false;
 	}
 
