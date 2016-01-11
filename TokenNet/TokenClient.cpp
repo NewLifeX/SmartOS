@@ -190,7 +190,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 {
 	// 如果收到响应，并且来自来源服务器
-	if(msg.Reply && ctrl == Control)
+	if(msg.Reply)
 	{
 		if(msg.Error)
 		{
@@ -251,8 +251,11 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
 		//ext2.Name.Copy(Sys.ID, 16);
-		// 使用系统ID作为Key
+		// 使用系统ID作为Key		
 		ext2.Key.Copy(Sys.ID, 16);
+		auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
+		if(ctrl3) ctrl3->Key = ext2.Key;
+		
 		ext2.Ciphers[0]	= 0xFF;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
@@ -302,8 +305,8 @@ void TokenClient::Register()
 {
 	debug_printf("TokenClient::Register\r\n");
 	RegisterMessage re;	
-	re.Name = ID.ToHexd();
-	re.Pass	= Key.ToHexd();
+	re.Name = ID;
+	re.Pass	= Key;
 	
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
@@ -354,8 +357,8 @@ void TokenClient::Login(TokenMessage& msg)
 	if(msg.Error) return;
 	
 	LoginMessage login;
-	login.Key		= TokenConfig->Name;;
-	login.Token		= TokenConfig->Key;
+	login.Key		= TokenConfig->Name;
+	login.Token		= Token;
 
 	TokenMessage rmsg(2);
 	login.WriteMessage(rmsg);
