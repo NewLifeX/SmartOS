@@ -353,6 +353,8 @@ TraceStack::TraceStack(const char* name)
 
 TraceStack::~TraceStack()
 {
+	// 清空最后一个项目，避免误判
+	(*_TS)[_TS->Length() - 1]	= NULL;
 	_TS->Pop();
 }
 
