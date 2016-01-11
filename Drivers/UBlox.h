@@ -12,7 +12,7 @@ class UBlox : public BufferPort
 public:
 	UBlox();
 
-	bool SetBaudRate(int baudRate);
+	void SetBaudRate(int baudRate);
 	void SetRate();
 	
 	void EnterConfig();

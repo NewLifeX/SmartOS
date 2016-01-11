@@ -20,10 +20,12 @@ bool UBlox::OnOpen(bool isNew)
 	return true;
 }
 
-bool UBlox::SetBaudRate(int baudRate)
+void UBlox::SetBaudRate(int baudRate)
 {
 	TS("UBlox::SetBaudRate");
 
+	assert_param2(baudRate == 115200, "目前仅支持115200波特率的设定");
+	
 	// 构造波特率指令。默认115200
 	byte cmd[] = {
 		0xB5, 0x62, 0x06, 0x00, 0x14, 0x00,
@@ -55,23 +57,6 @@ bool UBlox::SetBaudRate(int baudRate)
 	Array bs(cmd, len);
 	bs.Show(true);
 	Port->Write(bs);
-
-	Sys.Sleep(1000);
-
-	// 读取
-	byte cmd2[]	= { 0xB5, 0x62, 0x06, 0x00, 0x01, 0x00, 0x01, 0x08, 0x22 };
-	Port->Write(Array(cmd2, ArrayLength(cmd2)));
-
-	Sys.Sleep(1000);
-
-	ByteArray rs;
-	rs.SetLength(64);
-	Port->Read(rs);
-	//rs.Show(true);
-	debug_printf("rs=%d \r\n", rs.Length());
-	if(rs.Length()) rs.Show(true);
-
-	return true;
 }
 
 void UBlox::SetRate()
