@@ -300,10 +300,15 @@ uint SerialPort::OnRead(Array& bs)
 	uint count = 0;
 	uint len = Rx.Length();
 	// 如果没有数据，立刻返回，不要等待浪费时间
-	if(!len) return 0;
+	if(!len)
+	{
+		bs.SetLength(0);
+
+		return 0;
+	}
 
 	// 如果有数据变化，等一会
-	while(len != count)
+	while(len != count && len < bs.Length())
 	{
 		count = len;
 		// 按照115200波特率计算，传输7200字节每秒，每个毫秒7个字节，大概150微秒差不多可以接收一个新字节
@@ -312,7 +317,12 @@ uint SerialPort::OnRead(Array& bs)
 		len = Rx.Length();
 	}
 	// 如果数据大小不足，等下次吧
-	if(len < MinSize) return 0;
+	if(len < MinSize)
+	{
+		bs.SetLength(0);
+
+		return 0;
+	}
 
 	// 从接收队列读取
 	count = Rx.Read(bs);

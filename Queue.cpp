@@ -111,8 +111,9 @@ uint Queue::Read(Array& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	byte*	buf	= (byte*)bs.GetBuffer();
 	uint	len	= bs.Length();
+	if(!len) return 0;
+	byte*	buf	= (byte*)bs.GetBuffer();
 
 	if(len > _size) len = _size;
 
