@@ -347,6 +347,10 @@ public:
 	String TrimStart() const;
 	String TrimEnd() const;
 	String Trim() const;
+	bool StartsWith(const String& str) const;
+	bool StartsWith(const char* str) const;
+	bool EndsWith(const String& str) const;
+	bool EndsWith(const char* str) const;
 
     String& operator+=(const Object& obj);
     String& operator+=(const char* str);

@@ -762,6 +762,11 @@ String String::Trim() const
 	return TrimStart().TrimEnd();;
 }
 
+bool String::StartsWith(const String& str) const { return Sub(0, str.Length()) == str; }
+bool String::StartsWith(const char* str) const { return Sub(0, strlen(str)) == str; }
+bool String::EndsWith(const String& str) const { return Sub(Length() - str.Length(), str.Length()) == str; }
+bool String::EndsWith(const char* str) const { return Sub(Length() - strlen(str), strlen(str)) == str; }
+
 String& String::operator+=(const Object& obj)
 {
 	return this->Concat(obj);
