@@ -47,11 +47,12 @@ bool Task::Execute(ulong now)
 	SleepTime = 0;
 
 	auto cur = Host->Current;
-	// 事件型任务和一次性任务，禁止重入
+	// 其实默认最大深度为1，已经禁止所有任务重入，需要重入的任务得专门设置
+	/*// 事件型任务和一次性任务，禁止重入
 	if(cur == this)
 	{
 		if(Event || Period < 0) return false;
-	}
+	}*/
 
 	Host->Current = this;
 	Callback(Param);
