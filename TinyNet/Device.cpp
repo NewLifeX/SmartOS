@@ -7,6 +7,7 @@ Device::Device()
 {
 	Address		= 0;
 	Logined		= false;
+	IsVir		= 0;
 
 	Kind		= 0;
 	LastTime	= 0;

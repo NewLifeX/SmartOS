@@ -732,13 +732,17 @@ void TinyServer::SaveDevices() const
 	MemoryStream ms(buf, ArrayLength(buf));
 	// 设备个数
 	int count = Devices.Length();
+	int IsVirDv = 0;	// 虚拟设备统计
 	ms.Write((byte)count);
 	for(int i = 0; i<count; i++)
 	{
 		Device* dv = Devices[i];
-		dv->Write(ms);
+		if(dv->IsVir)
+			IsVirDv ++;
+		else
+			dv->Write(ms);
 	}
-	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
+	debug_printf("TinyServer::SaveDevices 保存 %d 个实设备到 0x%08X！\r\n", count - IsVirDv, addr);
 	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));
 }
 
