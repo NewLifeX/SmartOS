@@ -16,7 +16,7 @@
 /* derived constants */
 #define bytes   (rc6_w / 8)             /* bytes per word */
 #define rc6_c   ((b + bytes - 1) / bytes)   /* key in words, rounded up */
-#define R24     (2 * rc6_r + 4)
+#define R24c     (2 * rc6_r + 4)
 #define lgw     5                           /* log2(w) -- wussed out */
 
 /* Rotations */
@@ -101,7 +101,7 @@ void GetKey(uint* box, const Array& pass)
         box[i] = box[i - 1] + Q32;
 
     A = B = i = j = 0;
-    v = R24;
+    v = R24c;
     if (rc6_c > v) v = rc6_c;
     v *= 3;
 
@@ -109,7 +109,7 @@ void GetKey(uint* box, const Array& pass)
     {
         A = box[i] = ROTL(box[i] + A + B, 3);
         B = L[j] = ROTL(L[j] + A + B, A + B);
-        i = (i + 1) % R24;
+        i = (i + 1) % R24c;
         j = (j + 1) % rc6_c;
     }
 }
