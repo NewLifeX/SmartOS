@@ -11,7 +11,9 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 
 	ushort code = __REV16(Sys.Code);
 	ByteArray bs(&code, 2);
+	bs.Show(true);
 	Type		= bs.ToHex('\0');
+	debug_printf("HelloMessage::Load 从配置区加载配置%s\r\n",Type);
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
