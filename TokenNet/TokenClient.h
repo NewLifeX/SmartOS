@@ -17,8 +17,8 @@ private:
 public:
 	uint		Token;	// 令牌
 	ByteArray	ID;		// 设备标识
-	ByteArray	Name;	//登陆名称
-	ByteArray	Key;	//登录密码
+	ByteArray	Name;	// 登录名称
+	ByteArray	Key;	// 登录密码
 
 	int			Status;	// 状态。0准备、1握手完成、2登录后
 

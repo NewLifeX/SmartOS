@@ -327,7 +327,7 @@ bool TokenController::OnReceive(Message& msg)
 bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
-	//未登陆，登陆注册，握手可通过	
+	// 未登录，登录注册，握手可通过	
 	//if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
 	
 	if(msg.Reply)

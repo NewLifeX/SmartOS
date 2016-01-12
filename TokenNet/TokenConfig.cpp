@@ -76,7 +76,7 @@ void TokenConfig::Show()
 	ep2.Show(true);
 	debug_printf("\t服务: %s \r\n", Server);
 	debug_printf("\t厂商: %s \r\n", Vendor);
-	debug_printf("\t登陆: %s \r\n", Name);
+	debug_printf("\t登录: %s \r\n", Name);
 	debug_printf("\t密码: %s \r\n", Key);
 	
 	
