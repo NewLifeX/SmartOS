@@ -435,7 +435,7 @@ void TSys::Reset() { NVIC_SystemReset(); }
 void TSys::Start()
 {
 #if !DEBUG
-	//WatchDog::Start();
+	WatchDog::Start();
 #endif
 
 	Started = true;
