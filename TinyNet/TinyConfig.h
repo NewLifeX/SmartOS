@@ -11,7 +11,7 @@
 #pragma pack(1)
 
 // 配置信息
-class TinyConfig
+class TinyConfig : public ConfigBase
 {
 public:
 	byte	Length;		// 数据长度
@@ -35,28 +35,14 @@ public:
 	byte	Password[16]; // 通信密码
 	byte	Mac[6];		// 无线物理地址
 
-	bool	New;		// 是否新创建的配置
-
 	TinyConfig();
-	void LoadDefault();
-
-	void Load();
-	void Save() const;
-	void Clear();
-
-	// 序列化到消息数据流
-	void Write(Stream& ms) const;
-	void Read(Stream& ms);
+	virtual void Init();
 
 	static TinyConfig* Current;
-	static TinyConfig* Init();
-
+	static TinyConfig* Create();
+	
 private:
-	Config*	Cfg;
-
-	uint Size() const;
-	Array ToArray();
-	const Array ToArray() const;
+	byte	TagEnd;		// 数据区结束标识符
 };
 
 #pragma pack(pop)	// 恢复对齐状态

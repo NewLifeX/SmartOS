@@ -38,10 +38,45 @@ public:
 	static Config& CreateRAM();
 };
 
+/******************************** ConfigBase ********************************/
+
+// 应用配置基类
+class ConfigBase
+{
+public:
+	bool	New;
+	
+	ConfigBase();
+	virtual void Init();
+
+	virtual void Load();
+	virtual void Save() const;
+	virtual void Clear();
+	virtual void Show() const;
+
+	// 序列化到消息数据流
+	void Write(Stream& ms) const;
+	void Read(Stream& ms);
+
+protected:
+	Config*		Cfg;
+	const char* _Name;
+
+	void* _Start;
+	void* _End;
+
+	uint Size() const;
+
+	Array ToArray();
+	const Array ToArray() const;
+};
+
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 #pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
 #pragma pack(1)
+
+/******************************** HotConfig ********************************/
 
 // 系统配置信息
 class HotConfig
@@ -53,6 +88,8 @@ public:
 
 	static HotConfig& Current();
 };
+
+/******************************** SysConfig ********************************/
 
 // 系统配置信息
 class SysConfig

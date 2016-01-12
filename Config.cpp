@@ -270,6 +270,92 @@ Config& Config::CreateRAM()
 	return cfg;
 }
 
+/******************************** ConfigBase ********************************/
+
+ConfigBase::ConfigBase()
+{
+	// Flash最后一块作为配置区
+	if(!Config::Current) Config::Current = &Config::CreateFlash();
+
+	Cfg	= Config::Current;
+	
+	New	= true;
+
+	_Name	= NULL;
+}
+
+uint ConfigBase::Size() const
+{
+	assert_param2(_End && _Start, "_Start & _End == NULL");
+
+	return (uint)_End - (uint)_Start;
+}
+
+Array ConfigBase::ToArray()
+{
+	return Array(_Start, Size());
+}
+
+const Array ConfigBase::ToArray() const
+{
+	return Array(_Start, Size());
+}
+
+void ConfigBase::Init()
+{
+	memset(_Start, 0, Size());
+}
+
+void ConfigBase::Load()
+{
+	if(!Cfg) return;
+
+	// 尝试加载配置区设置
+	auto bs	= ToArray();
+	New		= !Cfg->GetOrSet(_Name, bs);
+	if(New)
+		debug_printf("%s::Load 首次运行，创建配置区！\r\n", _Name);
+	else
+		debug_printf("%s::Load 从配置区加载配置\r\n", _Name);
+}
+
+void ConfigBase::Save() const
+{
+	if(!Cfg) return;
+
+	debug_printf("%s::Save \r\n", _Name);
+
+	Cfg->Set(_Name, ToArray());
+}
+
+void ConfigBase::Clear()
+{
+	if(!Cfg) return;
+
+	Init();
+
+	debug_printf("%s::Clear \r\n", _Name);
+
+	Cfg->Set(_Name, ToArray());
+}
+
+void ConfigBase::Show() const
+{
+}
+
+void ConfigBase::Write(Stream& ms) const
+{
+	ms.Write(ToArray());
+}
+
+void ConfigBase::Read(Stream& ms)
+{
+	auto bs	= ToArray();
+	ms.Read(bs);
+}
+
+/******************************** HotConfig ********************************/
+
 void* HotConfig::Next() const
 {
 	return (void*)&this[1];

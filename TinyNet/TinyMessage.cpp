@@ -215,7 +215,7 @@ TinyController::TinyController() : Controller()
 	Mode		= 0;
 	Interval	= 20;
 	Timeout		= 200;
-	auto cfg	= TinyConfig::Init();
+	auto cfg	= TinyConfig::Create();
 	if(cfg)
 	{
 		bool flag	= false;
@@ -250,7 +250,7 @@ TinyController::~TinyController()
 
 void TinyController::ApplyConfig()
 {
-	auto cfg	= TinyConfig::Init();
+	auto cfg	= TinyConfig::Create();
 	if(cfg)
 	{
 		// 调整参数

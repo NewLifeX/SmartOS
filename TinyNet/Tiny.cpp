@@ -73,7 +73,7 @@ ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool power
 	auto nrf = new NRF24L01();
 	nrf->Init(spi, ce, irq, power);
 
-	auto tc	= TinyConfig::Init();
+	auto tc	= TinyConfig::Create();
 	if(tc->Interval < 40)
 	{
 		tc->Channel	= 120;
@@ -121,7 +121,7 @@ void ShunComExternalCfg(void * param)
 
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
-	auto tc	= TinyConfig::Init();
+	auto tc	= TinyConfig::Create();
 	debug_printf("tc->Interval %d\r\n",tc->Interval );
 	if(tc->Interval == 0)
 	{
@@ -181,7 +181,7 @@ void* InitConfig(void* data, uint size)
 		((byte*)data)[0] = size;
 	}
 
-	auto tc = TinyConfig::Init();
+	auto tc = TinyConfig::Create();
 
 	// 尝试加载配置区设置
 	tc->Load();

@@ -4,17 +4,20 @@
 
 TokenConfig* TokenConfig::Current	= NULL;
 
-uint TokenConfig::Size() const
+TokenConfig::TokenConfig() : ConfigBase()
 {
-	return (uint)&New - (uint)&Length;
+	_Name	= "TKCF";
+	_Start	= &Length;
+	_End	= &TagEnd;
+	
+	Init();
 }
 
-void TokenConfig::LoadDefault()
+void TokenConfig::Init()
 {
-	// 实际内存大小，减去头部大小
-	uint len = Size();
-	memset(&Length, 0, len);
-	Length		= len;
+	ConfigBase::Init();
+
+	Length		= Size();
 	ServerIP	= 0;
 
 	SoftVer		= Sys.Version;
@@ -23,47 +26,7 @@ void TokenConfig::LoadDefault()
 	Protocol	= 2;
 }
 
-bool TokenConfig::Load()
-{
-	// Flash最后一块作为配置区
-	if(!Config::Current) Config::Current = &Config::CreateFlash();
-
-	// 尝试加载配置区设置
-	uint len = Size();
-	if(!len) len = sizeof(this[0]);
-	Array bs(&Length, len);
-	/*if(!Config::Current->GetOrSet("TKCF", bs))
-		debug_printf("TokenConfig::Load 首次运行，创建配置区！\r\n");
-	else
-		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");*/
-	if(Config::Current->Get("TKCF", bs))
-	{
-		debug_printf("TokenConfig::Load 从配置区加载配置\r\n");
-		if(ServerIP == 0)
-			New = true;
-		else
-			New = false;
-		return true;
-	}
-	else 
-		New = true;
-			
-
-	return false;
-}
-
-void TokenConfig::Save()
-{
-	uint len = Size();
-	if(!len) len = sizeof(this[0]);
-
-	debug_printf("TokenConfig::Save \r\n");
-
-	Array bs(&Length, len);
-	Config::Current->Set("TKCF", bs);
-}
-
-void TokenConfig::Show()
+void TokenConfig::Show() const
 {
 #if DEBUG
 	debug_printf("TokenConfig::令牌配置：\r\n");
@@ -78,58 +41,42 @@ void TokenConfig::Show()
 	debug_printf("\t厂商: %s \r\n", Vendor);
 	debug_printf("\t登录: %s \r\n", Name);
 	debug_printf("\t密码: %s \r\n", Key);
-	
-	
 #endif
 }
 
-void TokenConfig::Write(Stream& ms) const
+TokenConfig* TokenConfig::Create(const char* vendor, byte protocol, ushort sport, ushort port)
 {
-	uint len = Size();
-	if(!len) len = sizeof(this[0]);
-
-	ms.Write(&Length, 0, len);
-}
-
-void TokenConfig::Read(Stream& ms)
-{
-	uint len =  Size();
-	if(!len) len = sizeof(this[0]);
-
-	ms.Read(&Length, 0, len);
-}
-
-TokenConfig* TokenConfig::Init(const char* vendor, byte protocol, ushort sport, ushort port)
-{
-	debug_printf("\r\n");
-
 	static TokenConfig tc;
-	TokenConfig::Current = &tc;
-	tc.LoadDefault();
-
-	//strcpy(tc.Vendor, vendor);
-	bool rs = tc.Load();
-
-	if(tc.Vendor[0] == 0)
+	if(!Current)
 	{
-		strncpy(tc.Vendor, vendor, ArrayLength(tc.Vendor));
+		TokenConfig::Current = &tc;
+		tc.Init();
 
-		rs	= false;
+		//strcpy(tc.Vendor, vendor);
+		tc.Load();
+		bool rs = tc.New;
+
+		if(tc.Vendor[0] == 0)
+		{
+			strncpy(tc.Vendor, vendor, ArrayLength(tc.Vendor));
+
+			rs	= false;
+		}
+
+		if(tc.Server[0] == 0)
+		{
+			strncpy(tc.Server, tc.Vendor, ArrayLength(tc.Server));
+
+			//tc.ServerIP		= svr.Value;
+			tc.ServerPort	= sport;
+			tc.Port			= port;
+
+			rs	= false;
+		}
+		if(!rs) tc.Save();
+
+		tc.Show();
 	}
-
-	if(tc.Server[0] == 0)
-	{
-		strncpy(tc.Server, tc.Vendor, ArrayLength(tc.Server));
-
-		//tc.ServerIP		= svr.Value;
-		tc.ServerPort	= sport;
-		tc.Port			= port;
-
-		rs	= false;
-	}
-	if(!rs) tc.Save();
-
-	tc.Show();
 
 	return &tc;
 }

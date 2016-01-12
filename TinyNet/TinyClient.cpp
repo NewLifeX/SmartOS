@@ -437,8 +437,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 		return false;
 	}
 
-	Cfg->LoadDefault();
-	Cfg->Save();
+	Cfg->Clear();
 
     Sys.Sleep(3000);
     Sys.Reset();
@@ -461,7 +460,7 @@ void TinyClient::Ping()
 	{
 		if(Server == 0) return;
 
-		 debug_printf(" %d 秒无法联系网关，最后活跃时间:%d,系统当前时间:%d\r\n",off,LastActive,now);
+		debug_printf(" %d 秒无法联系网关，最后活跃时间: %d ,系统当前时间:%d \r\n", off, (int)LastActive, (int)now);
 		Sys.SetTaskPeriod(_TaskID, 5000);
 
 		// 掉线以后，重发组网信息，基本功能继续执行
