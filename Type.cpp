@@ -423,7 +423,12 @@ String ByteArray::ToHex(char sep, int newLine) const
 {
 	String str;
 
-	return ToHex(str, sep, newLine);
+	//return ToHex(str, sep, newLine);
+
+	// 优化为使用RVO
+	ToHex(str, sep, newLine);
+
+	return str;
 }
 
 // 保存到普通字节数组，首字节为长度
