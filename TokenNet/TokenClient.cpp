@@ -24,13 +24,10 @@ TokenClient::TokenClient() : ID(16), Key(16)
 	LastActive	= 0;
 	Delay		= 0;
 
-	IsOldOrder	= false;	//是否旧指令
-
 	Control		= NULL;
 
 	Received	= NULL;
 	Param		= NULL;
-	TokenConfig	= NULL;
 
 	Local		= NULL;
 }
@@ -49,9 +46,7 @@ void TokenClient::Open()
 		Local->Param	= this;
 		Local->Open();
 	}
-	
-	TokenConfig	= TokenConfig::Current;
-		
+
 	// 设置握手广播的本地地址和端口
 	//ITransport* port = Control->Port;
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
@@ -98,7 +93,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 		case 0x02:
 			if(msg.Reply)
 				OnLogin(msg, ctrl);
-			else	
+			else
 				Login(msg, ctrl);
 			break;
 		case 0x03:
@@ -129,7 +124,7 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 
 // 定时任务
 void LoopTask(void* param)
-{	
+{
 	assert_ptr(param);
 	TokenClient* client = (TokenClient*)param;
 	//client->SayHello(false);
@@ -196,16 +191,15 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	{
 		if(msg.Error)
 		{
-			if(HelloRedirect(msg))
-				return false;
-			
+			if(HelloRedirect(msg)) return false;
+
 			Stream ms = msg.ToStream();
 			byte err  = ms.ReadByte();
-			
+
 			Status	= 0;
 			Token	= 0;
 			debug_printf("握手失败，错误码=0x%02X ",err);
-			
+
 			char cs[0x100];
 			String str(cs, ArrayLength(cs));
 			ms.ReadArray(str);
@@ -214,6 +208,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		else
 		{
 			debug_printf("握手完成，开始登录……\r\n");
+
 			// 解析数据
 	        HelloMessage ext;
 	        ext.Reply = msg.Reply;
@@ -229,19 +224,20 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
-				
-				if(TokenConfig->New)					
+
+				auto cfg	= TokenConfig::Current;
+				if(cfg->New)
 					Status = 3;
 			    else
-					Status = 1;	
+					Status = 1;
 			}
-			
+
 			if(ext.Version == 0x00) Token = 0;
 
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
-			if(Status == 1)
-				Login();
+
+			if(Status == 1) Login();
 		}
 	}
 	else if(!msg.Reply)
@@ -253,11 +249,11 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
 		//ext2.Name.Copy(Sys.ID, 16);
-		// 使用系统ID作为Key		
+		// 使用系统ID作为Key
 		ext2.Key.Copy(Sys.ID, 16);
 		auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 		if(ctrl3) ctrl3->Key = ext2.Key;
-		
+
 		ext2.Ciphers[0]	= 0xFF;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
@@ -280,9 +276,9 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
 
 	if(ms.ReadByte() < 0xFE) return false;
 
-	auto cfg	= TokenConfig;
+	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= ms.ReadByte();
-	
+
 	uint len = ms.ReadByte();
 
 	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
@@ -290,7 +286,7 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
 	{
 		cfg-> Server[i]=ms.ReadByte();
     }
-	
+
 	cfg->ServerPort = ms.ReadUInt16();
 	debug_printf("cfg->ServerPort:%d\r\n",cfg->ServerPort);
 	strcpy(cfg->Vendor, "s1.peacemoon.cn");
@@ -306,47 +302,51 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
 void TokenClient::Register()
 {
 	debug_printf("TokenClient::Register\r\n");
-	RegisterMessage re;	
+	RegisterMessage re;
 	re.Name = ID;
 	re.Pass	= Key;
-	
+
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
-	Send(msg);	
-	
+	Send(msg);
+
 }
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
-	Stream ms(msg.Data, msg.Length);	
-	auto cfg	= TokenConfig;
-	
+	Stream ms(msg.Data, msg.Length);
+
+	auto cfg	= TokenConfig::Current;
+
 	uint namelen = ms.ReadByte();
 	if(namelen > 16) return;
-	
+
 	for(int i=0;i!=namelen;i++)
 	{
 		cfg-> Name[i]=ms.ReadByte();
     }
-	
+
 	uint passlen = ms.ReadByte();
 	if(passlen > 16) return;
-	
+
 	for(int i=0;i!=passlen;i++)
 	{
 		cfg->Key[i]=ms.ReadByte();
     }
-	
+
 	cfg->Save();
     cfg->Show();
 
-	Sys.Reset();		
+	Sys.Reset();
 }
+
 // 登录
 void TokenClient::Login()
 {
 	LoginMessage login;
-	login.Name	= TokenConfig->Name;
-	login.Key	= TokenConfig->Key;
+
+	auto cfg	= TokenConfig::Current;
+	login.Name	= cfg->Name;
+	login.Key	= cfg->Key;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
@@ -357,26 +357,27 @@ void TokenClient::Login()
 void TokenClient::Login(TokenMessage& msg,Controller* ctrl)
 {
 	if(msg.Error) return;
-	
+
 	LoginMessage login;
-	//这里需要随机密匙 
+	//这里需要随机密匙
 	login.Key		= Key.Copy(Sys.ID, 16);
 	//随机令牌？
 	login.Token		= 123456;
-	login.Reply		= true;	
+	login.Reply		= true;
 	login.WriteMessage(msg);
-		
-	Reply(msg);	
 
-	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);	
+	Reply(msg);
+
+	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
 	ctrl2->Key		= login.Key;
-	ctrl2->Token 	= login.Token;	
-		 
+	ctrl2->Token 	= login.Token;
+
 }
 
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
-	if(!msg.Reply) return;	
+	if(!msg.Reply) return false;
+
 	Stream ms(msg.Data, msg.Length);
 
 	if(msg.Error)
@@ -397,10 +398,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-		if(IsOldOrder)
-		{
-			byte stat=ms.ReadByte();//旧指令，读走状态码
-		}
 		// 得到令牌
 		Token = ms.ReadUInt32();
 		debug_printf("令牌：0x%08X ", Token);
