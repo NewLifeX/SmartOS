@@ -661,7 +661,7 @@ void W5500::OnIRQ()
 			ByteArray bs(6);
 			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
 			IPEndPoint ep(bs);
-			ep.Port = __REV16(ep.Port);
+			ep.Port = _REV16(ep.Port);
 			net_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
 			// 处理..
 #endif
@@ -995,11 +995,11 @@ bool HardSocket::OnOpen()
 		SocRegWrite2(MSSR, 1460);
 
 	// 设置自己的端口号
-	SocRegWrite2(PORT, __REV16(Local.Port));
+	SocRegWrite2(PORT, _REV16(Local.Port));
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
 	// 设置端口目的(远程)端口号
-	SocRegWrite2(DPORT, __REV16(Remote.Port));
+	SocRegWrite2(DPORT, _REV16(Remote.Port));
 
 	// 设置Socket为UDP模式
 	S_Mode mode;
@@ -1068,14 +1068,14 @@ void HardSocket::Change(const IPEndPoint& remote)
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, remote.Address.ToArray());
 	// 设置端口目的(远程)端口号
-	SocRegWrite2(DPORT, __REV16(remote.Port));
+	SocRegWrite2(DPORT, _REV16(remote.Port));
 }
 
 // 接收数据
 uint HardSocket::Receive(Array& bs)
 {
 	// 读取收到数据容量
-	ushort size = __REV16(SocRegRead2(RX_RSR));
+	ushort size = _REV16(SocRegRead2(RX_RSR));
 	if(size == 0)
 	{
 		// 没有收到数据时，需要给缓冲区置零，否则系统逻辑会混乱
@@ -1084,7 +1084,7 @@ uint HardSocket::Receive(Array& bs)
 	}
 
 	// 读取收到数据的首地址
-	ushort offset = __REV16(SocRegRead2(RX_RD));
+	ushort offset = _REV16(SocRegRead2(RX_RD));
 
 	// 长度受 bs 限制时 最大读取bs.Lenth
 	if(size > bs.Length()) size = bs.Length();
@@ -1095,7 +1095,7 @@ uint HardSocket::Receive(Array& bs)
 	_Host->ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
-	SocRegWrite2(RX_RD, __REV16(offset + size));
+	SocRegWrite2(RX_RD, _REV16(offset + size));
 	// 生效 RX_RD
 	WriteConfig(RECV);
 
@@ -1117,15 +1117,15 @@ bool HardSocket::Send(const Array& bs)
 	// 不在UDP  不在TCP连接OK 状态下返回
 	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
 	// 读取缓冲区空闲大小 硬件内部自动计算好空闲大小
-	ushort remain = __REV16(SocRegRead2(TX_FSR));
+	ushort remain = _REV16(SocRegRead2(TX_FSR));
 	if( remain < bs.Length())return false;
 
 	// 读取发送缓冲区写指针
-	ushort addr = __REV16(SocRegRead2(TX_WR));
+	ushort addr = _REV16(SocRegRead2(TX_WR));
 	_Host->WriteFrame(addr, bs, Index, 0x02);
 	// 更新发送缓存写指针位置
 	addr += bs.Length();
-	SocRegWrite2(TX_WR,__REV16(addr));
+	SocRegWrite2(TX_WR,_REV16(addr));
 
 	// 启动发送 异步中断处理发送异常等
 	WriteConfig(SEND);
@@ -1142,11 +1142,11 @@ uint HardSocket::OnRead(Array& bs) { return Receive(bs); }
 void HardSocket::ClearRX()
 {
 	// 读取收到数据容量
-	ushort size = __REV16(SocRegRead2(RX_RSR));
+	ushort size = _REV16(SocRegRead2(RX_RSR));
 	// 读取收到数据的首地址
-	ushort offset = __REV16(SocRegRead2(RX_RD));
+	ushort offset = _REV16(SocRegRead2(RX_RD));
 	// 读指针直接 = 接收指针，即让数据区无效
-	SocRegWrite2(RX_RD, __REV16(offset + size));
+	SocRegWrite2(RX_RD, _REV16(offset + size));
 	// 生效 RX_RD
 	WriteConfig(RECV);
 }
@@ -1369,10 +1369,10 @@ void UdpClient::RaiseReceive()
 	while(ms.Remain())
 	{
 		IPEndPoint ep	= ms.ReadArray(6);
-		ep.Port = __REV16(ep.Port);
+		ep.Port = _REV16(ep.Port);
 
 		ushort len = ms.ReadUInt16();
-		len = __REV16(len);
+		len = _REV16(len);
 		// 数据长度不对可能是数据错位引起的，直接丢弃数据包
 		if(len > 1500)
 		{

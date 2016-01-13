@@ -190,7 +190,7 @@ void TinyIP::Process(Stream& ms)
 void TinyIP::FixPayloadLength(IP_HEADER& ip, Stream& ms)
 {
 	// 前面的len不准确，必须以这个为准
-	uint size = __REV16(ip.TotalLength) - (ip.Length << 2);
+	uint size = _REV16(ip.TotalLength) - (ip.Length << 2);
 	ms.Length = ms.Position() + size;
 	//len = size;
 	//buf += (ip->Length << 2);
@@ -300,7 +300,7 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	ip->Version = 4;
 	//ip->TypeOfService = 0;
 	ip->Length = sizeof(IP_HEADER) / 4;	// 暂时不考虑附加数据
-	ip->TotalLength = __REV16(sizeof(IP_HEADER) + len);
+	ip->TotalLength = _REV16(sizeof(IP_HEADER) + len);
 	//ip->Flags = 0x40;
 	//ip->FragmentOffset = 0;
 	//ip->TTL = 64;
@@ -308,11 +308,11 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 
 	// 报文唯一标识。用于识别重组等
 	static ushort g_Identifier = 1;
-	ip->Identifier = __REV16(g_Identifier++);
+	ip->Identifier = _REV16(g_Identifier++);
 
 	// 网络序是大端
 	ip->Checksum = 0;
-	ip->Checksum = __REV16(CheckSum(NULL, (byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum = _REV16(CheckSum(NULL, (byte*)ip, sizeof(IP_HEADER), 0));
 
 	assert_ptr(Arp);
 	ArpSocket* arp = (ArpSocket*)Arp;
@@ -359,10 +359,10 @@ ushort TinyIP::CheckSum(IPAddress* remote, const byte* buf, uint len, byte type)
         // UDP/TCP的校验和需要计算UDP首部加数据荷载部分，但也需要加上UDP伪首部。
 		// 这个伪首部指，源地址、目的地址、UDP数据长度、协议类型（0x11），协议类型就一个字节，但需要补一个字节的0x0，构成12个字节。
 		// 源地址。其实可以按照4字节累加，反正后面会把高位移位到低位累加，但是得考虑溢出的问题。
-		sum += __REV16(IP.Value & 0xFFFF);
-		sum += __REV16(IP.Value >> 16);
-		sum += __REV16(remote->Value & 0xFFFF);
-		sum += __REV16(remote->Value >> 16);
+		sum += _REV16(IP.Value & 0xFFFF);
+		sum += _REV16(IP.Value >> 16);
+		sum += _REV16(remote->Value & 0xFFFF);
+		sum += _REV16(remote->Value >> 16);
 
 		// 数据长度
 		sum += len;

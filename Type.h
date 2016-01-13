@@ -37,6 +37,9 @@ using namespace ::std;
 //extern uint32_t __REV(uint32_t value);
 //extern uint32_t __REV16(uint16_t value);
 
+uint _REV(uint value);
+ushort _REV16(ushort value);
+
 class String;
 class Type;
 

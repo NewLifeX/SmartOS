@@ -361,7 +361,7 @@ bool ShunComMessage::Read(Stream& ms)
 	if(Length > 4)
 	{
 		Kind	= ms.ReadUInt16();
-		Size	= __REV16(ms.ReadUInt16());
+		Size	= _REV16(ms.ReadUInt16());
 		assert_param2(2 + 2 + Size == Length, "ShunComMessage::Read");
 		ms.Read(Data, 0, Size);
 	}
@@ -384,7 +384,7 @@ void ShunComMessage::Write(Stream& ms) const
 	if(Length > 4)
 	{
 		ms.Write(Kind);
-		ms.Write((ushort)__REV16(Size));
+		ms.Write((ushort)_REV16(Size));
 		ms.Write(Data, 0, Size);
 	}
 	else if(Length > 0)

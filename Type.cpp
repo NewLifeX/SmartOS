@@ -840,3 +840,11 @@ bool operator!=(const String& str, const char* str2)
 {
 	return str.Length() != MemLen(str2) || str.IndexOf(str2) != 0;
 }
+
+/******************************** REV ********************************/
+
+extern uint32_t __REV(uint32_t value);
+extern uint32_t __REV16(uint16_t value);
+
+uint	_REV(uint value)		{ return __REV(value); }
+ushort	_REV16(ushort value)	{ return __REV16(value); }

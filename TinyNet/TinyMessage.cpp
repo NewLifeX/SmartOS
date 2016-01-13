@@ -170,7 +170,7 @@ void TinyMessage::Show() const
 		msg_printf(" Data[%02d]=", len);
 		ByteArray(Data, len).Show();
 	}
-	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, __REV16(Crc));
+	if(Checksum != Crc) msg_printf(" Crc Error 0x%04x [%04X]", Crc, _REV16(Crc));
 
 	msg_printf("\r\n");
 #endif

@@ -250,8 +250,8 @@ uint SHT30::Read4(ushort cmd) const
 
 	// 分解数据，暂时不进行CRC校验
 	byte* p = rs.GetBuffer();
-	ushort temp = __REV16(*(ushort*)p);
-	ushort humi = __REV16(*(ushort*)(p + 3));
+	ushort temp = _REV16(*(ushort*)p);
+	ushort humi = _REV16(*(ushort*)(p + 3));
 
 	return (temp << 16) | humi;
 }

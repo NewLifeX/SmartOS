@@ -86,7 +86,7 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 		remote.Show();
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
-		debug_printf("ID=0x%04X Seq=0x%04X ", __REV16(icmp->Identifier), __REV16(icmp->Sequence));
+		debug_printf("ID=0x%04X Seq=0x%04X ", _REV16(icmp->Identifier), _REV16(icmp->Sequence));
 		String(icmp->Next(), len).Show(true);
 #endif
 	}
@@ -130,13 +130,13 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	}
 
 	ushort now = Sys.Ms();
-	ushort id = __REV16(Sys.ID[0]);
-	ushort seq = __REV16(now);
+	ushort id = _REV16(Sys.ID[0]);
+	ushort seq = _REV16(now);
 	icmp->Identifier = id;
 	icmp->Sequence = seq;
 
 	icmp->Checksum = 0;
-	icmp->Checksum = __REV16(Tip->CheckSum(&ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
+	icmp->Checksum = _REV16(Tip->CheckSum(&ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength, 0));
 
 #if NET_DEBUG
 	debug_printf("ICMP::Ping ");

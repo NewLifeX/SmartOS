@@ -41,8 +41,8 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();
 	if(!udp) return false;
 
-	ushort port = __REV16(udp->DestPort);
-	ushort remotePort = __REV16(udp->SrcPort);
+	ushort port = _REV16(udp->DestPort);
+	ushort remotePort = _REV16(udp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(port != Local.Port) return false;
@@ -55,7 +55,7 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 #if NET_DEBUG
 	byte* data	= udp->Next();
 	uint len	= ms.Remain();
-	uint plen	= __REV16(udp->Length);
+	uint plen	= _REV16(udp->Length);
 	assert_param2(len + sizeof(UDP_HEADER) == plen, "UDP数据包标称长度与实际不符");
 #endif
 
@@ -69,7 +69,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	byte* data = ms.Current();
 	//uint len = ms.Remain();
 	// 计算标称的数据长度
-	uint len = __REV16(udp.Length) - sizeof(UDP_HEADER);
+	uint len = _REV16(udp.Length) - sizeof(UDP_HEADER);
 	assert_param2(len <= ms.Remain(), "UDP数据包不完整");
 
 	// 触发ITransport接口事件
@@ -97,7 +97,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 		CurRemote.Show();
 		debug_printf(" => ");
 		CurLocal.Show();
-		debug_printf(" Payload=%d udp_len=%d \r\n", len, __REV16(udp.Length));
+		debug_printf(" Payload=%d udp_len=%d \r\n", len, _REV16(udp.Length));
 
 		ByteArray(data, len).Show(true);
 #endif
@@ -107,16 +107,16 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 void UdpSocket::SendPacket(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port, bool checksum)
 {
 	uint tlen		= sizeof(UDP_HEADER) + len;
-	udp.SrcPort		= __REV16(Local.Port);
-	udp.DestPort	= __REV16(port);
-	udp.Length		= __REV16(tlen);
+	udp.SrcPort		= _REV16(Local.Port);
+	udp.DestPort	= _REV16(port);
+	udp.Length		= _REV16(tlen);
 
 	// 网络序是大端
 	udp.Checksum	= 0;
-	if(checksum) udp.Checksum = __REV16(Tip->CheckSum(&ip, (byte*)&udp, tlen, 1));
+	if(checksum) udp.Checksum = _REV16(Tip->CheckSum(&ip, (byte*)&udp, tlen, 1));
 
 #if NET_DEBUG
-	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, __REV16(udp.SrcPort));
+	debug_printf("SendUdp: len=%d(0x%x) %d => ", tlen, tlen, _REV16(udp.SrcPort));
 	ip.Show();
 	debug_printf(":%d ", port);
 	if(tlen > 0) ByteArray(udp.Next(), tlen > 64 ? 64 : tlen).Show();

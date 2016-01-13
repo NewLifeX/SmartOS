@@ -64,8 +64,8 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	Header = tcp;
 	uint len = ms.Remain();
 
-	ushort port = __REV16(tcp->DestPort);
-	ushort remotePort = __REV16(tcp->SrcPort);
+	ushort port = _REV16(tcp->DestPort);
+	ushort remotePort = _REV16(tcp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(port != Local.Port) return false;
@@ -90,8 +90,8 @@ void TcpSocket::OnProcess(TCP_HEADER& tcp, Stream& ms)
 	// TCP好像没有标识数据长度的字段，但是IP里面有，这样子的话，ms里面的长度是准确的
 	uint len = ms.Remain();
 
-	uint seq = __REV(tcp.Seq);
-	uint ack = __REV(tcp.Ack);
+	uint seq = _REV(tcp.Seq);
+	uint ack = _REV(tcp.Ack);
 
 #if NET_DEBUG
 	debug_printf("Tcp::Process Flags=0x%02x Seq=0x%04x Ack=0x%04x From ", tcp.Flags, seq, ack);
@@ -274,10 +274,10 @@ void TcpSocket::OnDisconnect(TCP_HEADER& tcp, uint len)
 
 bool TcpSocket::SendPacket(TCP_HEADER& tcp, uint len, byte flags)
 {
-	tcp.SrcPort = __REV16(Local.Port);
-	tcp.DestPort = __REV16(Remote.Port);
+	tcp.SrcPort = _REV16(Local.Port);
+	tcp.DestPort = _REV16(Remote.Port);
     tcp.Flags = flags;
-	tcp.WindowSize = __REV16(1024);
+	tcp.WindowSize = _REV16(1024);
 	if(tcp.Length < sizeof(TCP_HEADER) / 4) tcp.Length = sizeof(TCP_HEADER) / 4;
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
@@ -285,11 +285,11 @@ bool TcpSocket::SendPacket(TCP_HEADER& tcp, uint len, byte flags)
 
 	// 网络序是大端
 	tcp.Checksum = 0;
-	tcp.Checksum = __REV16(Tip->CheckSum(&Remote.Address, (byte*)&tcp, tcp.Size() + len, 2));
+	tcp.Checksum = _REV16(Tip->CheckSum(&Remote.Address, (byte*)&tcp, tcp.Size() + len, 2));
 
 #if NET_DEBUG
 	uint hlen = tcp.Length << 2;
-	debug_printf("SendTcp: Flags=0x%02x Seq=0x%04x Ack=0x%04x Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, __REV(tcp.Seq), __REV(tcp.Ack), hlen, hlen, len, len, __REV16(tcp.SrcPort), __REV16(tcp.DestPort));
+	debug_printf("SendTcp: Flags=0x%02x Seq=0x%04x Ack=0x%04x Length=%d(0x%x) Payload=%d(0x%x) %d => %d \r\n", flags, _REV(tcp.Seq), _REV(tcp.Ack), hlen, hlen, len, len, _REV16(tcp.SrcPort), _REV16(tcp.DestPort));
 #endif
 
 	// 注意tcp->Size()包括头部的扩展数据
@@ -310,15 +310,15 @@ void TcpSocket::SetSeqAck(TCP_HEADER& tcp, uint ackNum, bool opSeq)
 	*/
 	//TCP_HEADER* tcp = Header;
 	uint ack = tcp.Ack;
-	tcp.Ack = __REV(__REV(tcp.Seq) + ackNum);
+	tcp.Ack = _REV(_REV(tcp.Seq) + ackNum);
     if (!opSeq)
     {
-		tcp.Seq = __REV(Seq);
+		tcp.Seq = _REV(Seq);
     }
 	else
 	{
 		tcp.Seq = ack;
-		//tcp.Seq = __REV(Seq);
+		//tcp.Seq = _REV(Seq);
 	}
 }
 
@@ -330,9 +330,9 @@ void TcpSocket::SetMss(TCP_HEADER& tcp)
     {
 		uint* p = (uint*)tcp.Next();
         // 使用可选域设置 MSS 到 1460:0x5b4
-		p[0] = __REV(0x020405b4);
-		p[1] = __REV(0x01030302);
-		p[2] = __REV(0x01010402);
+		p[0] = _REV(0x020405b4);
+		p[1] = _REV(0x01030302);
+		p[2] = _REV(0x01010402);
 
 		tcp.Length += 3;
     }
@@ -396,8 +396,8 @@ bool TcpSocket::Send(const Array& bs)
 	ms.Write(bs);
 
 	//SetSeqAck(tcp, len, true);
-	tcp->Seq = __REV(Seq);
-	tcp->Ack = __REV(Ack);
+	tcp->Seq = _REV(Seq);
+	tcp->Ack = _REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	if(!SendPacket(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
@@ -457,7 +457,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	tcp->Init(true);
 	//tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
 	//SetSeqAck(tcp, 0, false);
-	tcp->Seq = __REV(Seq);
+	tcp->Seq = _REV(Seq);
 	tcp->Ack = 0;
 	SetMss(*tcp);
 

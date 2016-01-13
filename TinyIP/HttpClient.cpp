@@ -68,8 +68,8 @@ bool TcpSocket::Process(Stream* ms)
 	Header = tcp;
 	uint len = ms->Remain();
 
-	ushort port = __REV16(tcp->DestPort);
-	ushort remotePort = __REV16(tcp->SrcPort);
+	ushort port = _REV16(tcp->DestPort);
+	ushort remotePort = _REV16(tcp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(Port != 0 && port != Port) return false;
@@ -103,8 +103,8 @@ void TcpSocket::OnProcess(TCP_HEADER* tcp, Stream& ms)
 #endif
 
 	// 下次主动发数据时，用该序列号，因为对方Ack确认期望下次得到这个序列号
-	Seq = __REV(tcp->Ack);
-	Ack = __REV(tcp->Seq) + len + 1;
+	Seq = _REV(tcp->Ack);
+	Ack = _REV(tcp->Seq) + len + 1;
 
 	// 第一次同步应答
 	if (tcp->Flags & TCP_FLAGS_SYN) // SYN连接请求标志位，为1表示发起连接的请求数据包
@@ -250,10 +250,10 @@ void TcpSocket::OnDisconnect(TCP_HEADER* tcp, uint len)
 
 void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 {
-	tcp->SrcPort = __REV16(Port > 0 ? Port : LocalPort);
-	tcp->DestPort = __REV16(RemotePort);
+	tcp->SrcPort = _REV16(Port > 0 ? Port : LocalPort);
+	tcp->DestPort = _REV16(RemotePort);
     tcp->Flags = flags;
-	tcp->WindowSize = __REV16(1024);
+	tcp->WindowSize = _REV16(1024);
 	if(tcp->Length < sizeof(TCP_HEADER) / 4) tcp->Length = sizeof(TCP_HEADER) / 4;
 
 	// 必须在校验码之前设置，因为计算校验码需要地址
@@ -261,9 +261,9 @@ void TcpSocket::Send(TCP_HEADER* tcp, uint len, byte flags)
 
 	// 网络序是大端
 	tcp->Checksum = 0;
-	tcp->Checksum = __REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
+	tcp->Checksum = _REV16(Tip->CheckSum((byte*)tcp, tcp->Size() + len, 2));
 
-	debug_printf("SendTcp: Flags=0x%02x, len=%d(0x%x) %d => %d \r\n", flags, tcp->Length, tcp->Length, __REV16(tcp->SrcPort), __REV16(tcp->DestPort));
+	debug_printf("SendTcp: Flags=0x%02x, len=%d(0x%x) %d => %d \r\n", flags, tcp->Length, tcp->Length, _REV16(tcp->SrcPort), _REV16(tcp->DestPort));
 
 	// 注意tcp->Size()包括头部的扩展数据
 	Tip->SendIP(IP_TCP, (byte*)tcp, tcp->Size() + len);
@@ -283,15 +283,15 @@ void TcpSocket::SetSeqAck(TCP_HEADER* tcp, uint ackNum, bool opSeq)
 	*/
 	//TCP_HEADER* tcp = Header;
 	uint ack = tcp->Ack;
-	tcp->Ack = __REV(__REV(tcp->Seq) + ackNum);
+	tcp->Ack = _REV(_REV(tcp->Seq) + ackNum);
     if (!opSeq)
     {
-		tcp->Seq = __REV(Seq);
+		tcp->Seq = _REV(Seq);
     }
 	else
 	{
 		tcp->Seq = ack;
-		//tcp->Seq = __REV(Seq);
+		//tcp->Seq = _REV(Seq);
 	}
 }
 
@@ -303,9 +303,9 @@ void TcpSocket::SetMss(TCP_HEADER* tcp)
     {
 		uint* p = (uint*)tcp->Next();
         // 使用可选域设置 MSS 到 1460:0x5b4
-		p[0] = __REV(0x020405b4);
-		p[1] = __REV(0x01030302);
-		p[2] = __REV(0x01010402);
+		p[0] = _REV(0x020405b4);
+		p[1] = _REV(0x01030302);
+		p[2] = _REV(0x01010402);
 
 		tcp->Length += 3;
     }
@@ -356,8 +356,8 @@ void TcpSocket::Send(const byte* buf, uint len)
 	LocalPort = BindPort;
 
 	//SetSeqAck(tcp, len, true);
-	tcp->Seq = __REV(Seq);
-	tcp->Ack = __REV(Ack);
+	tcp->Seq = _REV(Seq);
+	tcp->Ack = _REV(Ack);
 	// 发送数据的时候，需要同时带PUSH和ACK
 	Send(tcp, len, TCP_FLAGS_PUSH | TCP_FLAGS_ACK);
 
@@ -421,7 +421,7 @@ bool Callback(TinyIP* tip, void* param, Stream& ms)
 	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
 
 	// 检查端口
-	ushort port = __REV16(tcp->DestPort);
+	ushort port = _REV16(tcp->DestPort);
 	if(port != socket->Port) return false;
 
 	socket->Header = tcp;

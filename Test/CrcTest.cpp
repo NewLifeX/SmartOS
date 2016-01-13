@@ -45,14 +45,14 @@ uint HardCrc(const Array& bs, uint crc)
 
     CRC_ResetDR();
     // STM32的初值是0xFFFFFFFF，而软Crc初值是0
-	CRC->DR		= __REV(crc ^ 0xFFFFFFFF);
+	CRC->DR		= _REV(crc ^ 0xFFFFFFFF);
     //CRC->DR = 0xFFFFFFFF;
     uint* ptr	= (uint*)bs.GetBuffer();
 	uint len	= bs.Length();
     len >>= 2;
     while(len-- > 0)
     {
-        CRC->DR =__REV(*ptr++);    // 字节顺序倒过来,注意不是位序,不是用__RBIT指令
+        CRC->DR =_REV(*ptr++);    // 字节顺序倒过来,注意不是位序,不是用__RBIT指令
     }
     return CRC->DR;
 	/*byte* ptr = (byte*)buf;
@@ -162,9 +162,9 @@ void TestCrc()
     debug_printf("\r\n");
     byte data16[] = { 0x01, 0x08, 0x00, 0x00};
     ushort crc16 = Crc::Hash16(Array(data16, 4));
-    debug_printf("Crc::Hash16(#%08x) = 0x%04x\r\n", __REV(*(uint*)data16), crc16);
+    debug_printf("Crc::Hash16(#%08x) = 0x%04x\r\n", _REV(*(uint*)data16), crc16);
     ushort crc17 = Crc::Hash16(Array(&crc16, 2), crc16);
-    debug_printf("Crc::Hash16(#%08x, 0x%04x) = 0x%04x\r\n", __REV(*(uint*)data16), crc16, crc17);
+    debug_printf("Crc::Hash16(#%08x, 0x%04x) = 0x%04x\r\n", _REV(*(uint*)data16), crc16, crc17);
 
     debug_printf("\r\n");
     debug_printf("TestCrc Finish!\r\n");

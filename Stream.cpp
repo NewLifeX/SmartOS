@@ -1,8 +1,5 @@
 ﻿#include "Stream.h"
 
-extern uint32_t __REV(uint32_t value);
-extern uint32_t __REV16(uint16_t value);
-
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(void* buf, uint len)
 {
@@ -292,7 +289,7 @@ ushort	Stream::ReadUInt16()
 {
 	ushort v;
 	if(!Read((byte*)&v, 0, 2)) return 0;
-	if(!Little) v = __REV16(v);
+	if(!Little) v = _REV16(v);
 	return v;
 }
 
@@ -300,7 +297,7 @@ uint	Stream::ReadUInt32()
 {
 	uint v;
 	if(!Read((byte*)&v, 0, 4)) return 0;
-	if(!Little) v = __REV(v);
+	if(!Little) v = _REV(v);
 	return v;
 }
 
@@ -308,7 +305,7 @@ ulong	Stream::ReadUInt64()
 {
 	ulong v;
 	if(!Read((byte*)&v, 0, 8)) return 0;
-	if(!Little) v = __REV(v >> 32) | ((ulong)__REV(v & 0xFFFFFFFF) << 32);
+	if(!Little) v = _REV(v >> 32) | ((ulong)_REV(v & 0xFFFFFFFF) << 32);
 	return v;
 }
 
@@ -319,21 +316,21 @@ bool Stream::Write(byte value)
 
 bool Stream::Write(ushort value)
 {
-	if(!Little) value = __REV16(value);
+	if(!Little) value = _REV16(value);
 
 	return Write((byte*)&value, 0, 2);
 }
 
 bool Stream::Write(uint value)
 {
-	if(!Little) value = __REV(value);
+	if(!Little) value = _REV(value);
 
 	return Write((byte*)&value, 0, 4);
 }
 
 bool Stream::Write(ulong value)
 {
-	if(!Little) value = __REV(value >> 32) | ((ulong)__REV(value & 0xFFFFFFFF) << 32);
+	if(!Little) value = _REV(value >> 32) | ((ulong)_REV(value & 0xFFFFFFFF) << 32);
 
 	return Write((byte*)&value, 0, 8);
 }

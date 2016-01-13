@@ -180,8 +180,8 @@ typedef struct _TCP_HEADER
 		Length = sizeof(this[0]);
 		reserved_1 = 0;
 		reserved_2 = 0;
-		//WindowSize = __REV16(8192);
-		WindowSize = __REV16(1024);
+		//WindowSize = _REV16(8192);
+		WindowSize = _REV16(1024);
 		urgt_p = 0;
 
 		if(recursion) Prev()->Init(IP_TCP, recursion);
@@ -295,7 +295,7 @@ typedef struct _DHCP_HEADER
 		HardType = 1;
 		HardLength = 6;
 		Hops = 0;
-		TransID = __REV(dhcpid);
+		TransID = _REV(dhcpid);
 		//Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
 		SetMagic();
 

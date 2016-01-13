@@ -253,7 +253,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 	if(!opt) return;
 
 	// 所有响应都需要检查事务ID
-	if(__REV(dhcp->TransID) != dhcpid) return;
+	if(_REV(dhcp->TransID) != dhcpid) return;
 
 #if NET_DEBUG
 	auto& remote	= ep.Address;
@@ -298,7 +298,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 		if(opt)
 		{
 			// 续约时间，大字节序，时间单位秒
-			uint time = __REV(*(uint*)&opt->Data);
+			uint time = _REV(*(uint*)&opt->Data);
 
 			net_printf("DHCP IPLeaseTime:%ds\r\n", time);
 
