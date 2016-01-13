@@ -14,18 +14,18 @@
 class SerialPort : public ITransport, public Power
 {
 private:
-	byte _index;
-	byte _parity;
-	byte _dataBits;
-	byte _stopBits;
-	int _baudRate;
+	byte	_index;
+	byte	_parity;
+	byte	_dataBits;
+	byte	_stopBits;
+	int		_baudRate;
 
-    USART_TypeDef* _port;
-	AlternatePort _tx;
+    void*	_port;
+	AlternatePort	_tx;
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-	AlternatePort _rx;
+	AlternatePort	_rx;
 #else
-	InputPort _rx;
+	InputPort	_rx;
 #endif
 
 	void Init();
@@ -41,9 +41,9 @@ public:
 
 	// 收发缓冲区
 #if	!(defined(STM32F0) || defined(GD32F150))
-	Queue Tx;
+	Queue	Tx;
 #endif
-	Queue Rx;
+	Queue	Rx;
 
 	SerialPort();
     SerialPort(COM_Def index,

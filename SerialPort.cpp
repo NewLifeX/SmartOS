@@ -1,9 +1,7 @@
-﻿#include "Sys.h"
-#include <stdio.h>
-#include "Time.h"
+﻿#include "Platform\stm32.h"
 
-#include "Port.h"
 #include "SerialPort.h"
+#include "Time.h"
 
 #define COM_DEBUG 0
 
@@ -79,7 +77,7 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 		ByteTime	= 1000 / (baudRate / 10) + 1;	// 小数部分忽略，直接加一
 
 	// 根据端口实际情况决定打开状态
-	if(_port->CR1 & USART_CR1_UE) Opened = true;
+	if(((USART_TypeDef*)_port)->CR1 & USART_CR1_UE) Opened = true;
 
 	// 设置名称
 	//Name = "COMx";
@@ -105,8 +103,10 @@ bool SerialPort::OnOpen()
     _tx.Set(tx).Open();
     _rx.Init(rx, false).Open();
 
+	auto st	= (USART_TypeDef*)_port;
+	
 	// 不要关调试口，否则杯具
-    if(_index != Sys.MessagePort) USART_DeInit(_port);
+    if(_index != Sys.MessagePort) USART_DeInit(st);
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
 	// 检查重映射
@@ -153,13 +153,13 @@ bool SerialPort::OnOpen()
 	p.USART_WordLength	= _dataBits;
 	p.USART_StopBits	= _stopBits;
 	p.USART_Parity		= _parity;
-	USART_Init(_port, &p);
+	USART_Init(st, &p);
 
 	// 串口接收中断配置，同时会打开过载错误中断
-	USART_ITConfig(_port, USART_IT_RXNE, ENABLE);
-	//USART_ITConfig(_port, USART_IT_PE, ENABLE);
-	//USART_ITConfig(_port, USART_IT_ERR, ENABLE);
-	//USART_ITConfig(_port, USART_IT_TXE, DISABLE);
+	USART_ITConfig(st, USART_IT_RXNE, ENABLE);
+	//USART_ITConfig(st, USART_IT_PE, ENABLE);
+	//USART_ITConfig(st, USART_IT_ERR, ENABLE);
+	//USART_ITConfig(st, USART_IT_TXE, DISABLE);
 
 	// 清空缓冲区
 #if !(defined(STM32F0) || defined(GD32F150))
@@ -170,7 +170,7 @@ bool SerialPort::OnOpen()
 
 #if defined(STM32F0) || defined(GD32F150)
 	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
-	//USART_OverrunDetectionConfig(_port, USART_OVRDetection_Disable);
+	//USART_OverrunDetectionConfig(st, USART_OVRDetection_Disable);
 #else
 	// 打开中断，收发都要使用
 	//const byte irqs[] = UART_IRQs;
@@ -179,7 +179,7 @@ bool SerialPort::OnOpen()
 	Interrupt.Activate(irq, OnHandler, this);
 #endif
 
-	USART_Cmd(_port, ENABLE);//使能串口
+	USART_Cmd(st, ENABLE);//使能串口
 
 	if(RS485) *RS485 = false;
 
@@ -191,8 +191,9 @@ void SerialPort::OnClose()
 {
     debug_printf("~Serial%d Close\r\n", _index + 1);
 
-	USART_Cmd(_port, DISABLE);
-    USART_DeInit(_port);
+	auto st	= (USART_TypeDef*)_port;
+	USART_Cmd(st, DISABLE);
+    USART_DeInit(st);
 
     _tx.Close();
 	_rx.Close();
@@ -223,9 +224,10 @@ uint SerialPort::SendData(byte data, uint times)
 	1．读一次USART_SR寄存器；
 	2．写一次USART_DR寄存器。
 	*/
-	USART_SendData(_port, (ushort)data);
+	auto st	= (USART_TypeDef*)_port;
+	USART_SendData(st, (ushort)data);
 	// 等待发送完毕
-    while(USART_GetFlagStatus(_port, USART_FLAG_TXE) == RESET && --times > 0);
+    while(USART_GetFlagStatus(st, USART_FLAG_TXE) == RESET && --times > 0);
     if(!times) Error++;
 
 	return times;
@@ -251,7 +253,7 @@ bool SerialPort::OnWrite(const Array& bs)
 
 	// 打开串口发送
 	if(RS485) *RS485 = true;
-	USART_ITConfig(_port, USART_IT_TXE, ENABLE);
+	USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, ENABLE);
 #endif
 
 	return true;
@@ -282,10 +284,10 @@ void SerialPort::OnTxHandler()
 {
 #if !(defined(STM32F0) || defined(GD32F150))
 	if(!Tx.Empty())
-		USART_SendData(_port, (ushort)Tx.Pop());
+		USART_SendData((USART_TypeDef*)_port, (ushort)Tx.Pop());
 	else
 	{
-		USART_ITConfig(_port, USART_IT_TXE, DISABLE);
+		USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, DISABLE);
 
 		if(RS485) *RS485 = false;
 	}
@@ -343,7 +345,7 @@ void SerialPort::OnRxHandler()
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
 	// 缓冲区里面别用%，那会产生非常耗时的除法运算
-	byte dat = (byte)USART_ReceiveData(_port);
+	byte dat = (byte)USART_ReceiveData((USART_TypeDef*)_port);
 	Rx.Push(dat);
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
@@ -423,19 +425,20 @@ void SerialPort::Register(TransportHandler handler, void* param)
 // 真正的串口中断函数
 void SerialPort::OnHandler(ushort num, void* param)
 {
-	SerialPort* sp = (SerialPort*)param;
+	auto sp	= (SerialPort*)param;
+	auto st	= (USART_TypeDef*)sp->_port;
 
 #if !(defined(STM32F0) || defined(GD32F150))
-	if(USART_GetITStatus(sp->_port, USART_IT_TXE) != RESET) sp->OnTxHandler();
+	if(USART_GetITStatus(st, USART_IT_TXE) != RESET) sp->OnTxHandler();
 #endif
 	// 接收中断
-	if(USART_GetITStatus(sp->_port, USART_IT_RXNE) != RESET) sp->OnRxHandler();
+	if(USART_GetITStatus(st, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
-	if(USART_GetFlagStatus(sp->_port, USART_FLAG_ORE) != RESET)
+	if(USART_GetFlagStatus(st, USART_FLAG_ORE) != RESET)
 	{
-		USART_ClearFlag(sp->_port, USART_FLAG_ORE);
+		USART_ClearFlag(st, USART_FLAG_ORE);
 		// 读取并扔到错误数据
-		USART_ReceiveData(sp->_port);
+		USART_ReceiveData(st);
 		//sp->OnRxHandler();
 		sp->Error++;
 #ifdef RTM_Serial_Debug
@@ -443,9 +446,9 @@ void SerialPort::OnHandler(ushort num, void* param)
 #endif
 		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
 	}
-	/*if(USART_GetFlagStatus(sp->_port, USART_FLAG_NE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_NE);
-	if(USART_GetFlagStatus(sp->_port, USART_FLAG_FE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_FE);
-	if(USART_GetFlagStatus(sp->_port, USART_FLAG_PE) != RESET) USART_ClearFlag(sp->_port, USART_FLAG_PE);*/
+	/*if(USART_GetFlagStatus(st, USART_FLAG_NE) != RESET) USART_ClearFlag(st, USART_FLAG_NE);
+	if(USART_GetFlagStatus(st, USART_FLAG_FE) != RESET) USART_ClearFlag(st, USART_FLAG_FE);
+	if(USART_GetFlagStatus(st, USART_FLAG_PE) != RESET) USART_ClearFlag(st, USART_FLAG_PE);*/
 }
 
 #pragma arm section code
