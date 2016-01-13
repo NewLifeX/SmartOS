@@ -226,7 +226,9 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 				ext.Key.Show(true);
 
 				auto cfg	= TokenConfig::Current;
-				if(cfg->New)
+				String name	= cfg->Name;
+				String  key	= cfg->Key;
+				if(cfg->New||name.Length()< 4)
 					Status = 3;
 			    else
 					Status = 1;
