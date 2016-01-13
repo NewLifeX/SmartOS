@@ -1,37 +1,18 @@
-﻿#include "Platform\stm32.h"
-
-#include "SerialPort.h"
+﻿#include "SerialPort.h"
 #include "Time.h"
+
+#include "Platform\stm32.h"
 
 #define COM_DEBUG 0
 
 const byte uart_irqs[] = UART_IRQs;
 
-//#define RTM_Serial_Debug 1
-#ifdef RTM_Serial_Debug
-Pin ErrorPin = PB14;
-OutputPort ErrorPort;
-#endif
-
 SerialPort::SerialPort() { Init(); }
 
-SerialPort::SerialPort(USART_TypeDef* com, int baudRate, byte parity, byte dataBits, byte stopBits)
+SerialPort::SerialPort(byte index, int baudRate)
 {
-	assert_param(com);
-
-	const USART_TypeDef* const g_Uart_Ports[] = UARTS;
-	byte _index = 0xFF;
-	for(int i=0; i<ArrayLength(g_Uart_Ports); i++)
-	{
-		if(g_Uart_Ports[i] == com)
-		{
-			_index = i;
-			break;
-		}
-	}
-
 	Init();
-	Init(_index, baudRate, parity, dataBits, stopBits);
+	Set(index, baudRate);
 }
 
 // 析构时自动关闭
@@ -53,9 +34,13 @@ void SerialPort::Init()
 	MinSize	= 1;
 
 	_taskidRx	= 0;
+
+    _parity		= USART_Parity_No;
+    _dataBits	= USART_WordLength_8b;
+    _stopBits	= USART_StopBits_1;
 }
 
-void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte stopBits)
+void SerialPort::Set(byte index, int baudRate)
 {
 	USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	_index = index;
@@ -63,9 +48,6 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 
     _port		= g_Uart_Ports[_index];
     _baudRate	= baudRate;
-    _parity		= parity;
-    _dataBits	= dataBits;
-    _stopBits	= stopBits;
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
 	//ByteTime = 15000000 / baudRate;  // (1000000 /(baudRate/10)) * 1.5
@@ -86,6 +68,13 @@ void SerialPort::Init(byte index, int baudRate, byte parity, byte dataBits, byte
 	Name[4] = 0;
 }
 
+void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
+{
+    _parity		= parity;
+    _dataBits	= dataBits;
+    _stopBits	= stopBits;
+}
+
 // 打开串口
 bool SerialPort::OnOpen()
 {
@@ -94,17 +83,12 @@ bool SerialPort::OnOpen()
 
     debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits);
 
-#ifdef RTM_Serial_Debug
-	ErrorPort.Set(ErrorPin);
-	ErrorPort.Open();
-#endif
-
 	//串口引脚初始化
     _tx.Set(tx).Open();
     _rx.Init(rx, false).Open();
 
 	auto st	= (USART_TypeDef*)_port;
-	
+
 	// 不要关调试口，否则杯具
     if(_index != Sys.MessagePort) USART_DeInit(st);
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
@@ -384,7 +368,7 @@ void SerialPort::ReceiveTask(void* param)
 
 void SerialPort::SetBaudRate(int baudRate)
 {
-	Init( _index,  baudRate,  _parity,  _dataBits,  _stopBits);
+	Set(_index,  baudRate);
 }
 
 void SerialPort::ChangePower(int level)
@@ -439,12 +423,8 @@ void SerialPort::OnHandler(ushort num, void* param)
 		USART_ClearFlag(st, USART_FLAG_ORE);
 		// 读取并扔到错误数据
 		USART_ReceiveData(st);
-		//sp->OnRxHandler();
 		sp->Error++;
-#ifdef RTM_Serial_Debug
-		ErrorPort = !ErrorPort;
-#endif
-		debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
+		//debug_printf("Serial%d 溢出 \r\n", sp->_index + 1);
 	}
 	/*if(USART_GetFlagStatus(st, USART_FLAG_NE) != RESET) USART_ClearFlag(st, USART_FLAG_NE);
 	if(USART_GetFlagStatus(st, USART_FLAG_FE) != RESET) USART_ClearFlag(st, USART_FLAG_FE);
@@ -481,11 +461,11 @@ extern "C"
 #if DEBUG
         if(Sys.Clock == 0) return ch;
 
-        int _index = Sys.MessagePort;
-        if(_index == COM_NONE) return ch;
+        int idx	= Sys.MessagePort;
+        if(idx == COM_NONE) return ch;
 
 		USART_TypeDef* g_Uart_Ports[] = UARTS;
-        USART_TypeDef* port = g_Uart_Ports[_index];
+        auto port = g_Uart_Ports[idx];
 
 		if(isInFPutc) return ch;
 		isInFPutc = true;
@@ -509,32 +489,21 @@ extern "C"
 
 SerialPort* SerialPort::GetMessagePort()
 {
+	auto sp	= _printf_sp;
 	// 支持中途改变调试口
-	if(_printf_sp && Sys.MessagePort != _printf_sp->_index)
+	if(sp && Sys.MessagePort != sp->_index)
 	{
-		delete _printf_sp;
+		delete sp;
 		_printf_sp	= NULL;
 	}
 
-	if(!_printf_sp)
+	if(!sp)
 	{
-        int _index = Sys.MessagePort;
-        if(_index == COM_NONE) return NULL;
+        int idx	= Sys.MessagePort;
+        if(idx == COM_NONE) return NULL;
 
-		USART_TypeDef* g_Uart_Ports[] = UARTS;
-        USART_TypeDef* port = g_Uart_Ports[_index];
-		_printf_sp = new SerialPort(port);
-#if DEBUG
-#if  defined(STM32F0) || defined(GD32F150)
-		//_printf_sp->Tx.SetCapacity(256);
-#else
-		//_printf_sp->Tx.SetCapacity(1024);
-#endif
-#endif
-		_printf_sp->Open();
-
-		//char str[] = "                                \r\n";
-		//_printf_sp->Write((byte*)str, ArrayLength(str));
+		sp = _printf_sp = new SerialPort(idx);
+		sp->Open();
 	}
-	return _printf_sp;
+	return sp;
 }

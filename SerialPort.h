@@ -46,29 +46,13 @@ public:
 	Queue	Rx;
 
 	SerialPort();
-    SerialPort(COM_Def index,
-        int baudRate = SERIAL_BAUDRATE,
-        byte parity = USART_Parity_No,       //无奇偶校验
-        byte dataBits = USART_WordLength_8b, //8位数据长度
-        byte stopBits = USART_StopBits_1)    //1位停止位
-	{
-		Init();
-		Init(index, baudRate, parity, dataBits, stopBits);
-	}
+    SerialPort(byte index, int baudRate = SERIAL_BAUDRATE);
 
-    SerialPort(USART_TypeDef* com,
-        int baudRate = SERIAL_BAUDRATE,
-        byte parity = USART_Parity_No,       //无奇偶校验
-        byte dataBits = USART_WordLength_8b, //8位数据长度
-        byte stopBits = USART_StopBits_1);    //1位停止位
 	// 析构时自动关闭
     virtual ~SerialPort();
 
-    void Init(byte index,
-        int baudRate = SERIAL_BAUDRATE,
-        byte parity = USART_Parity_No,       //无奇偶校验
-        byte dataBits = USART_WordLength_8b, //8位数据长度
-        byte stopBits = USART_StopBits_1);    //1位停止位
+    void Set(byte index, int baudRate = SERIAL_BAUDRATE);
+    void Set(byte parity, byte dataBits, byte stopBits);
 
 	uint SendData(byte data, uint times = 3000);
 
