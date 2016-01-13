@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include "Sys.h"
+#include "Platform\stm32.h"
 
 /******************************** Object ********************************/
 

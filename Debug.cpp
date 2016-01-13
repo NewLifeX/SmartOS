@@ -110,7 +110,7 @@ void operator delete[](void* p)
 
 #ifdef  USE_FULL_ASSERT
 
-void assert_failed(uint8_t* file, uint32_t line)
+void assert_failed(uint8_t* file, unsigned int line)
 {
     debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
@@ -119,7 +119,7 @@ void assert_failed(uint8_t* file, uint32_t line)
     while (1) { }
 }
 
-void assert_failed(const char* msg, uint8_t* file, uint32_t line)
+void assert_failed2(const char* msg, const char* file, unsigned int line)
 {
     debug_printf("%s Line %d, %s\r\n", msg, line, file);
 

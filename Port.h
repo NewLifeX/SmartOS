@@ -17,10 +17,12 @@
 class Port : public Object
 {
 public:
-    GPIO_TypeDef*	Group	= NULL;		// 引脚组
-    ushort	Mask	= 0;		// 组内引脚位。每个引脚一个位
-    Pin		_Pin	= P0;		// 引脚
-	bool	Opened	= false;		// 是否已经打开
+    void*	Group;		// 引脚组
+    ushort	Mask;		// 组内引脚位。每个引脚一个位
+    Pin		_Pin;		// 引脚
+	bool	Opened;		// 是否已经打开
+
+	Port();
 
     Port& Set(Pin pin);	// 设置引脚
 	bool Empty() const;
@@ -50,7 +52,7 @@ protected:
 #endif
 
     // 配置过程，由Open调用，最后GPIO_Init
-    virtual void OnOpen(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(void* param);
 	virtual void OnClose();
 };
 
@@ -88,7 +90,7 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(void* param);
 };
 
 /******************************** AlternatePort ********************************/
@@ -102,7 +104,7 @@ public:
     AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
-    virtual void OnOpen(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(void* param);
 };
 
 /******************************** InputPort ********************************/
@@ -153,7 +155,7 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(void* param);
 	virtual void OnClose();
 
 private:
@@ -178,7 +180,7 @@ public:
     AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:
-    virtual void OnOpen(GPIO_InitTypeDef& gpio);
+    virtual void OnOpen(void* param);
 };
 
 /******************************** PortScope ********************************/

@@ -1,4 +1,5 @@
-﻿#include "Port.h"
+﻿#include "Platform\stm32.h"
+#include "Port.h"
 
 #if defined(STM32F1) || defined(STM32F4)
 static const int PORT_IRQns[] = {
@@ -23,13 +24,13 @@ _force_inline byte GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group
 // 端口基本功能
 #define REGION_Port 1
 #ifdef REGION_Port
-/* Port::Port()
+Port::Port()
 {
 	_Pin	= P0;
 	Group	= NULL;
 	Mask	= 0;
 	Opened	= false;
-} */
+}
 
 #ifndef TINY
 Port::~Port()
@@ -145,8 +146,8 @@ bool Port::Open()
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
 
-    OnOpen(gpio);
-    GPIO_Init(Group, &gpio);
+    OnOpen(&gpio);
+    GPIO_Init((GPIO_TypeDef*)Group, &gpio);
 
 	Opened = true;
 
@@ -177,9 +178,10 @@ void Port::OnClose()
 	OpenClock(_Pin, false);
 }
 
-void Port::OnOpen(GPIO_InitTypeDef& gpio)
+void Port::OnOpen(void* param)
 {
-    gpio.GPIO_Pin = Mask;
+	auto gpio	= (GPIO_InitTypeDef*)param;
+    gpio->GPIO_Pin = Mask;
 
 #ifdef STM32F1
 	// PA15/PB3/PB4 需要关闭JTAG
@@ -205,7 +207,7 @@ void Port::AFConfig(byte GPIO_AF) const
 {
 	assert_param2(Opened, "必须打开端口以后才能配置AF");
 
-	GPIO_PinAFConfig(Group, _PIN(_Pin), GPIO_AF);
+	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _PIN(_Pin), GPIO_AF);
 }
 #endif
 
@@ -213,7 +215,7 @@ bool Port::Read() const
 {
 	if(_Pin == P0) return false;
 
-	return GPIO_ReadInputData(Group) & Mask;
+	return GPIO_ReadInputData((GPIO_TypeDef*)Group) & Mask;
 }
 #endif
 
@@ -300,7 +302,7 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 	return *this;
 }
 
-void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
+void OutputPort::OnOpen(void* param)
 {
 	TS("OutputPort::OnOpen");
 
@@ -343,25 +345,26 @@ void OutputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
+	auto gpio	= (GPIO_InitTypeDef*)param;
 	Port::OnOpen(gpio);
 
 	switch(Speed)
 	{
-		case 2:		gpio.GPIO_Speed = GPIO_Speed_2MHz;	break;
+		case 2:		gpio->GPIO_Speed = GPIO_Speed_2MHz;	break;
 #ifndef STM32F4
-		case 10:	gpio.GPIO_Speed = GPIO_Speed_10MHz;	break;
+		case 10:	gpio->GPIO_Speed = GPIO_Speed_10MHz;	break;
 #else
-		case 25:	gpio.GPIO_Speed = GPIO_Speed_25MHz;	break;
-		case 100:	gpio.GPIO_Speed = GPIO_Speed_100MHz;break;
+		case 25:	gpio->GPIO_Speed = GPIO_Speed_25MHz;	break;
+		case 100:	gpio->GPIO_Speed = GPIO_Speed_100MHz;break;
 #endif
-		case 50:	gpio.GPIO_Speed = GPIO_Speed_50MHz;	break;
+		case 50:	gpio->GPIO_Speed = GPIO_Speed_50MHz;	break;
 	}
 
 #ifdef STM32F1
-	gpio.GPIO_Mode	= OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
+	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
 #else
-	gpio.GPIO_Mode	= GPIO_Mode_OUT;
-	gpio.GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+	gpio->GPIO_Mode	= GPIO_Mode_OUT;
+	gpio->GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
 
@@ -370,7 +373,7 @@ bool OutputPort::Read() const
 	if(Empty()) return false;
 
 	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadOutputData(Group) & Mask;
+	bool rs = GPIO_ReadOutputData((GPIO_TypeDef*)Group) & Mask;
 	return rs ^ Invert;
 }
 
@@ -386,9 +389,9 @@ void OutputPort::Write(bool value) const
 	if(Empty()) return;
 
     if(value ^ Invert)
-        GPIO_SetBits(Group, Mask);
+        GPIO_SetBits((GPIO_TypeDef*)Group, Mask);
     else
-        GPIO_ResetBits(Group, Mask);
+        GPIO_ResetBits((GPIO_TypeDef*)Group, Mask);
 }
 
 void OutputPort::Up(uint ms) const
@@ -441,15 +444,16 @@ AlternatePort::AlternatePort(Pin pin) : OutputPort(pin, false, false) { }
 AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
 	: OutputPort(pin, invert, openDrain, speed) { }
 
-void AlternatePort::OnOpen(GPIO_InitTypeDef& gpio)
+void AlternatePort::OnOpen(void* param)
 {
+	auto gpio	= (GPIO_InitTypeDef*)param;
 	OutputPort::OnOpen(gpio);
 
 #ifdef STM32F1
-	gpio.GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
+	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
 #else
-	gpio.GPIO_Mode	= GPIO_Mode_AF;
-	gpio.GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
+	gpio->GPIO_Mode	= GPIO_Mode_AF;
+	gpio->GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
 
@@ -729,7 +733,7 @@ InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 	return mode;
 }
 
-void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
+void InputPort::OnOpen(void* param)
 {
 	TS("InputPort::OnOpen");
 
@@ -773,18 +777,19 @@ void InputPort::OnOpen(GPIO_InitTypeDef& gpio)
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
+	auto gpio	= (GPIO_InitTypeDef*)param;
 	Port::OnOpen(gpio);
 
 #ifdef STM32F1
 	if(Floating)
-		gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+		gpio->GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	else if(Pull == UP)
-		gpio.GPIO_Mode = GPIO_Mode_IPU;
+		gpio->GPIO_Mode = GPIO_Mode_IPU;
 	else if(Pull == DOWN)
-		gpio.GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
+		gpio->GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
 #else
-	gpio.GPIO_Mode = GPIO_Mode_IN;
-	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+	gpio->GPIO_Mode = GPIO_Mode_IN;
+	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
 
@@ -867,18 +872,19 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
 /******************************** AnalogInPort ********************************/
 
-void AnalogInPort::OnOpen(GPIO_InitTypeDef& gpio)
+void AnalogInPort::OnOpen(void* param)
 {
 #if DEBUG
 	debug_printf("\r\n");
 #endif
 
+	auto gpio	= (GPIO_InitTypeDef*)param;
 	Port::OnOpen(gpio);
 
 #ifdef STM32F1
-	gpio.GPIO_Mode	= GPIO_Mode_AIN; //
+	gpio->GPIO_Mode	= GPIO_Mode_AIN; //
 #else
-	gpio.GPIO_Mode	= GPIO_Mode_AN;
-	//gpio.GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
+	gpio->GPIO_Mode	= GPIO_Mode_AN;
+	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }

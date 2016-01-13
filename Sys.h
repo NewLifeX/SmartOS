@@ -1,10 +1,10 @@
 ﻿#ifndef _Sys_H_
 #define _Sys_H_
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Platform\stm32.h"
 
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
@@ -25,23 +25,24 @@ extern "C"
 #ifdef USE_FULL_ASSERT
 
 // 验证确保对象不为空，并且在有效的内存范围内
-#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
+extern void assert_failed(uint8_t* file, uint32_t line);
+
+#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed((uint8_t*)__FILE__, __LINE__))
 bool assert_ptr_(const void* p);
 
-void assert_failed(const char* msg, uint8_t* file, uint32_t line);
-#define assert_param2(expr, msg) ((expr) ? (void)0 : assert_failed(msg, (uint8_t *)__FILE__, __LINE__))
+void assert_failed2(const char* msg, const char* file, unsigned int line);
+#define assert_param2(expr, msg) ((expr) ? (void)0 : assert_failed2(msg, (const char*)__FILE__, __LINE__))
 
 #else
 
 #define assert_ptr(expr) ((void)0)
-#define assert_param2(expr,msg) ((void)0)
+#define assert_param2(expr, msg) ((void)0)
 
 #endif
 
 #include "Type.h"
 
 /* 引脚定义 */
-//typedef ushort Pin;
 #include "Platform\Pin.h"
 
 /* 串口定义 */
@@ -52,11 +53,9 @@ typedef enum
 	COM3 = 2,
 	COM4 = 3,
 	COM5 = 4,
-#ifdef STM32F4
 	COM6 = 5,
 	COM7 = 6,
 	COM8 = 7,
-#endif
 	COM_NONE = 0xFF
 } COM_Def;
 
