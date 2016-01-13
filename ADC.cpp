@@ -1,5 +1,7 @@
 ﻿#include "ADC.h"
 
+#include "Platform\stm32.h"
+
 Pin ADC_Pins[] = ADC1_PINS;
 
 ADConverter::ADConverter(byte line, uint channel)
@@ -52,6 +54,7 @@ void ADConverter::Open()
 {
 	debug_printf("ADC::Open %d 共%d个通道\r\n", Line, Count);
 
+	auto at	= (ADC_TypeDef*)_ADC;
 	/* Enable DMA clock */
 #ifdef STM32F4
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
@@ -60,9 +63,9 @@ void ADConverter::Open()
 #else
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
-	ADC_DeInit(_ADC);
+	ADC_DeInit(at);
 #endif
-	/* Enable _ADC and GPIOC clock */
+	/* Enable ADC and GPIOC clock */
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOC, ENABLE);
 	const int g_ADC_rccs[]= ADC_RCCS;
 	RCC_APB2PeriphClockCmd(g_ADC_rccs[Line - 1], ENABLE);
@@ -86,7 +89,7 @@ void ADConverter::Open()
 
 	DMA_InitTypeDef dma;
 	DMA_StructInit(&dma);
-	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
+	dma.DMA_PeripheralBaseAddr = (uint)&at->DR;	 	//ADC地址
 	//dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
 	//dma.DMA_DIR = DMA_DIR_PeripheralSRC;
 	dma.DMA_BufferSize = Count;
@@ -106,7 +109,7 @@ void ADConverter::Open()
 
 	DMA_InitTypeDef dma;
 	DMA_StructInit(&dma);
-	dma.DMA_PeripheralBaseAddr = (uint)&_ADC->DR;	 	//ADC地址
+	dma.DMA_PeripheralBaseAddr = (uint)&at->DR;	 	//ADC地址
 	dma.DMA_MemoryBaseAddr = (uint)&Data;				//内存地址
 	dma.DMA_DIR = DMA_DIR_PeripheralSRC;
 	dma.DMA_BufferSize = Count;
@@ -123,7 +126,7 @@ void ADConverter::Open()
 	DMA_Cmd(DMA1_Channel1, ENABLE);
 #endif
 
-	/* _ADC configuration */
+	/* ADC configuration */
 	ADC_InitTypeDef adc;
 	ADC_StructInit(&adc);
 
@@ -134,7 +137,7 @@ void ADConverter::Open()
 	adc.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;	//不使用外部触发转换
 	adc.ADC_DataAlign = ADC_DataAlign_Right; 		//采集数据右对齐
 	adc.ADC_NbrOfChannel = Count;	 	//要转换的通道数目1
-	ADC_Init(_ADC, &adc);
+	ADC_Init(at, &adc);
 
 #if defined(GD32)
 	RCC_ADCCLKConfig(RCC_ADCCLK_APB2_DIV6);
@@ -144,7 +147,7 @@ void ADConverter::Open()
 #endif
 
 	/*配置ADC1的通道10 11为55.	5个采样周期，序列为1 */
-	//ADC_RegularChannelConfig(_ADC, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
+	//ADC_RegularChannelConfig(at, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
 	dat = 1;
 	uint n = 1;
 	for(byte i=0; i<ArrayLength(Data); i++, dat <<= 1)
@@ -153,52 +156,52 @@ void ADConverter::Open()
 		{
 			// 第三个参数rank必须连续
 			if(i < ADC_Channel_TempSensor)
-				ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_55Cycles5);
+				ADC_RegularChannelConfig(at, i, n++, ADC_SampleTime_55Cycles5);
 			else
-				ADC_RegularChannelConfig(_ADC, i, n++, ADC_SampleTime_239Cycles5);
+				ADC_RegularChannelConfig(at, i, n++, ADC_SampleTime_239Cycles5);
 		}
 	}
 	if(Channel & 0x30000) ADC_TempSensorVrefintCmd(ENABLE);
 
-	/* Enable _ADC DMA */
-	ADC_DMACmd(_ADC, ENABLE);
+	/* Enable ADC DMA */
+	ADC_DMACmd(at, ENABLE);
 
-	/* Enable _ADC */
-	ADC_Cmd(_ADC, ENABLE);
+	/* Enable ADC */
+	ADC_Cmd(at, ENABLE);
 
 	/*复位校准寄存器 */
-	ADC_ResetCalibration(_ADC);
+	ADC_ResetCalibration(at);
 	/*等待校准寄存器复位完成 */
-	while(ADC_GetResetCalibrationStatus(_ADC));
+	while(ADC_GetResetCalibrationStatus(at));
 
 	/* ADC校准 */
-	ADC_StartCalibration(_ADC);
+	ADC_StartCalibration(at);
 	/* 等待校准完成*/
-	while(ADC_GetCalibrationStatus(_ADC));
+	while(ADC_GetCalibrationStatus(at));
 
 	/* 由于没有采用外部触发，所以使用软件触发ADC转换 */
-	ADC_SoftwareStartConvCmd(_ADC, ENABLE);
+	ADC_SoftwareStartConvCmd(at, ENABLE);
 #elif defined(STM32F0)
 	/* ADC DMA request in circular mode */
-	ADC_DMARequestModeConfig(_ADC, ADC_DMAMode_Circular);
+	ADC_DMARequestModeConfig(at, ADC_DMAMode_Circular);
 
 	/* Enable ADC_DMA */
-	ADC_DMACmd(_ADC, ENABLE);
+	ADC_DMACmd(at, ENABLE);
 
-	/* Configure the _ADC in continous mode withe a resolutuion equal to 12 bits  */
+	/* Configure the ADC in continous mode withe a resolutuion equal to 12 bits  */
 	adc.ADC_Resolution = ADC_Resolution_12b;
 	adc.ADC_ContinuousConvMode = ENABLE;
 	adc.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
 	adc.ADC_DataAlign = ADC_DataAlign_Right;
 	adc.ADC_ScanDirection = ADC_ScanDirection_Backward;
-	ADC_Init(_ADC, &adc);
+	ADC_Init(at, &adc);
 
 	dat = 1;
 	for(int i=0; i<ArrayLength(Data); i++, dat <<= 1)
 	{
 		if(Channel & dat)
 		{
-			ADC_ChannelConfig(_ADC, dat , ADC_SampleTime_55_5Cycles);
+			ADC_ChannelConfig(at, dat , ADC_SampleTime_55_5Cycles);
 			if(dat == ADC_Channel_TempSensor)
 				ADC_TempSensorCmd(ENABLE);
 			else if(dat == ADC_Channel_Vrefint)
@@ -209,19 +212,19 @@ void ADConverter::Open()
 	}
 
 	/* ADC Calibration */
-	ADC_GetCalibrationFactor(_ADC);
+	ADC_GetCalibrationFactor(at);
 
-	/* Enable _ADC */
-	ADC_Cmd(_ADC, ENABLE);
+	/* Enable ADC */
+	ADC_Cmd(at, ENABLE);
 
 	// GD32F130需要20us左右的延时
 	Sys.Delay(2000);
 
 	/* Wait the ADCEN falg */
-	while(!ADC_GetFlagStatus(_ADC, ADC_FLAG_ADEN));
+	while(!ADC_GetFlagStatus(at, ADC_FLAG_ADEN));
 
-	/* _ADC regular Software Start Conv */
-	ADC_StartOfConversion(_ADC);
+	/* ADC regular Software Start Conv */
+	ADC_StartOfConversion(at);
 #endif
 }
 

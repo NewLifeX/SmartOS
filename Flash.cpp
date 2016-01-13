@@ -1,5 +1,6 @@
 ﻿#include "Flash.h"
-#include <stdlib.h>
+
+#include "Platform\stm32.h"
 
 #define FLASH_DEBUG DEBUG
 

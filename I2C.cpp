@@ -1,5 +1,7 @@
 ﻿#include "I2C.h"
 
+#include "Platform\stm32.h"
+
 //static I2C_TypeDef* const g_I2Cs[] = I2CS;
 //static const Pin g_I2C_Pins_Map[][2] =  I2C_PINS_FULLREMAP;
 
@@ -178,7 +180,7 @@ uint I2C::Read4(int addr)
 	return (bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3];
 }
 
-HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
+/*HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
 {
 	assert_param(iic);
 
@@ -194,7 +196,7 @@ HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
 	}
 
 	Init(_index, speedHz);
-}
+}*/
 
 HardI2C::HardI2C(byte index, uint speedHz) : I2C()
 {
@@ -259,10 +261,11 @@ void HardI2C::OnOpen()
 	SCL.Open();
 	SDA.Open();
 
+	auto iic	= (I2C_TypeDef*)_IIC;
 	I2C_InitTypeDef i2c;
 	I2C_StructInit(&i2c);
 
-	I2C_DeInit(_IIC);	// 复位
+	I2C_DeInit(iic);	// 复位
 
 //	I2C_Timing
 //	I2C_AnalogFilter
@@ -292,17 +295,18 @@ void HardI2C::OnOpen()
 	else
 		i2c.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
 
-	I2C_Cmd(_IIC, ENABLE);
-	I2C_Init(_IIC, &i2c);
+	I2C_Cmd(iic, ENABLE);
+	I2C_Init(iic, &i2c);
 }
 
 void HardI2C::OnClose()
 {
+	auto iic	= (I2C_TypeDef*)_IIC;
 	// sEE_I2C Peripheral Disable
-	I2C_Cmd(_IIC, DISABLE);
+	I2C_Cmd(iic, DISABLE);
 
 	// sEE_I2C DeInit
-	I2C_DeInit(_IIC);
+	I2C_DeInit(iic);
 
 	// sEE_I2C Periph clock disable
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1 << _index, DISABLE);
@@ -313,9 +317,10 @@ void HardI2C::OnClose()
 
 void HardI2C::Start()
 {
+	auto iic	= (I2C_TypeDef*)_IIC;
 	// 允许1字节1应答模式
-	I2C_AcknowledgeConfig(_IIC, ENABLE);
-    I2C_GenerateSTART(_IIC, ENABLE);
+	I2C_AcknowledgeConfig(iic, ENABLE);
+    I2C_GenerateSTART(iic, ENABLE);
 
 	_Event = I2C_EVENT_MASTER_MODE_SELECT;
 	WaitAck();
@@ -323,21 +328,22 @@ void HardI2C::Start()
 
 void HardI2C::Stop()
 {
+	auto iic	= (I2C_TypeDef*)_IIC;
 	// 最后一位后要关闭应答
-	I2C_AcknowledgeConfig(_IIC, DISABLE);
+	I2C_AcknowledgeConfig(iic, DISABLE);
 	// 产生结束信号
-	I2C_GenerateSTOP(_IIC, ENABLE);
+	I2C_GenerateSTOP(iic, ENABLE);
 }
 
 void HardI2C::Ack(bool ack)
 {
-	I2C_AcknowledgeConfig(_IIC, ack ? ENABLE : DISABLE);
+	I2C_AcknowledgeConfig((I2C_TypeDef*)_IIC, ack ? ENABLE : DISABLE);
 }
 
 bool HardI2C::WaitAck(int retry)
 {
 	if(!retry) retry = Retry;
-	while(!I2C_CheckEvent(_IIC, _Event))
+	while(!I2C_CheckEvent((I2C_TypeDef*)_IIC, _Event))
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
@@ -346,10 +352,11 @@ bool HardI2C::WaitAck(int retry)
 
 bool HardI2C::SendAddress(int addr, bool tx)
 {
+	auto iic	= (I2C_TypeDef*)_IIC;
 	if(tx)
 	{
 		// 向设备发送设备地址
-		I2C_Send7bitAddress(_IIC, Address, I2C_Direction_Transmitter);
+		I2C_Send7bitAddress(iic, Address, I2C_Direction_Transmitter);
 
 		_Event = I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED;
 		if(!WaitAck()) return false;
@@ -369,7 +376,7 @@ bool HardI2C::SendAddress(int addr, bool tx)
 		}
 
 		// 发送读地址
-		I2C_Send7bitAddress(_IIC, Address, I2C_Direction_Receiver);
+		I2C_Send7bitAddress(iic, Address, I2C_Direction_Receiver);
 
 		_Event = I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED;
 		if(!WaitAck()) return false;
@@ -382,14 +389,14 @@ void HardI2C::WriteByte(byte dat)
 {
 	_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
 
-	I2C_SendData(_IIC, dat);
+	I2C_SendData((I2C_TypeDef*)_IIC, dat);
 }
 
 byte HardI2C::ReadByte()
 {
 	_Event = I2C_EVENT_MASTER_BYTE_RECEIVED;
 
-	return I2C_ReceiveData(_IIC);
+	return I2C_ReceiveData((I2C_TypeDef*)_IIC);
 }
 
 /*// 新会话向指定地址写入多个字节
@@ -409,7 +416,7 @@ bool HardI2C::Write(int addr, byte* buf, uint len)
 
 	//发送数据
 	while(len--){
-	  	I2C_SendData(_IIC, *buf++);
+	  	I2C_SendData((I2C_TypeDef*)_IIC, *buf++);
 
 		if(!WaitAck()) return false;
 	}
@@ -431,23 +438,24 @@ uint HardI2C::Read(int addr, byte* buf, uint len)
 	// 发送设备地址
 	SendAddress(addr, false);
 
+	auto iic	= (I2C_TypeDef*)_IIC;
 	//读取数据
 	_Event = I2C_EVENT_MASTER_BYTE_RECEIVED;
     while (len)
     {
 		if(len==1)
 		{
-     		I2C_AcknowledgeConfig(_IIC, DISABLE);
-    		I2C_GenerateSTOP(_IIC, ENABLE);
+     		I2C_AcknowledgeConfig(iic, DISABLE);
+    		I2C_GenerateSTOP(iic, ENABLE);
 		}
 		if(!WaitAck()) return false;
 
-	    *buf++ = I2C_ReceiveData(_IIC);
+	    *buf++ = I2C_ReceiveData(iic);
 
 	    len--;
     }
 
-	I2C_AcknowledgeConfig(_IIC, ENABLE);
+	I2C_AcknowledgeConfig(iic, ENABLE);
 
 	return 0;
 }*/

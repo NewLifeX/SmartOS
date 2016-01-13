@@ -1,7 +1,6 @@
 ﻿#ifndef _I2C_H_
 #define _I2C_H_
 
-#include "Sys.h"
 #include "Port.h"
 
 //SCL		开漏复用输出
@@ -61,13 +60,13 @@ private:
 	I2C* _iic;
 
 public:
-	_force_inline I2CScope(I2C* iic)
+	I2CScope(I2C* iic)
 	{
 		_iic = iic;
 		_iic->Start();
 	}
 
-	_force_inline ~I2CScope()
+	~I2CScope()
 	{
 		_iic->Stop();
 	}
@@ -81,7 +80,7 @@ private:
 
 public:
 	// 使用端口和最大速度初始化，因为需要分频，实际速度小于等于该速度
-    HardI2C(I2C_TypeDef* iic = I2C1, uint speedHz = 100000);
+    //HardI2C(I2C_TypeDef* iic = I2C1, uint speedHz = 100000);
 	HardI2C(byte index, uint speedHz = 100000);
     virtual ~HardI2C();
 
@@ -100,9 +99,9 @@ public:
 	//virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
 
 private:
-    byte			_index;
-	I2C_TypeDef*	_IIC;
-	uint			_Event;
+    byte	_index;
+	void*	_IIC;
+	uint	_Event;
 
 	AlternatePort SCL;
 	AlternatePort SDA;

@@ -1,9 +1,7 @@
 ﻿#ifndef __ADC_H__
 #define __ADC_H__
 
-#include "Sys.h"
 #include "Port.h"
-//#include "DMA.h"
 
 /*
 Analog-to-digital converter
@@ -22,7 +20,7 @@ STM32F103内部ADC
 class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不用继承的好
 {
 private:
-	ADC_TypeDef*	_ADC;	// 当前中断线的引用
+	void*	_ADC;	// 当前中断线的引用
 	AnalogInPort	_ports[16]; 
 public :
 	byte	Line;		// 中断线 1/2/3
