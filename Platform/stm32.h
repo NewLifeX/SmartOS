@@ -18,10 +18,6 @@
 		#ifndef STM32F4
 			#define STM32F4
 		#endif
-	#else
-		#ifdef STM32F4
-			#define STM32F4XX
-		#endif
 	#endif
 
 	// GD32F1x0最接近STM32F0
@@ -38,6 +34,10 @@
 		#define GD32F150
 		#define GD32
 	#endif
+#endif
+
+#ifdef STM32F4
+	#define STM32F4XX
 #endif
 
 // 默认使用固件库

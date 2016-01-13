@@ -97,9 +97,9 @@ bool IR::Send(const Array& bs)
 void IR::OnSend(void* sender, void* param)
 {
 	//TS("IR::OnSend");
+#ifdef STM32F0
 	auto ir = (IR*)param;
 	auto ti	= (TIM_TypeDef*)(ir->_Pwm->_Timer);
-#ifdef STM32F0
 	if(ErrorIRQ)	// 避开打开定时器立马中断问题
 	{
 		ErrorIRQ = false;

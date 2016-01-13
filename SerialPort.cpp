@@ -127,8 +127,8 @@ bool SerialPort::OnOpen()
 	_rx.AFConfig(Port::AF_1);
 #elif defined(STM32F4)
 	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
-	_tx.AFConfig(afs[_index]);
-	_rx.AFConfig(afs[_index]);
+	_tx.AFConfig((Port::GPIO_AF)afs[_index]);
+	_rx.AFConfig((Port::GPIO_AF)afs[_index]);
 #endif
 
 	USART_InitTypeDef  p;

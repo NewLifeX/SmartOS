@@ -154,9 +154,9 @@ void Spi::Open()
 	_mosi.AFConfig(Port::AF_0);
 #elif defined(STM32F4)
 	const byte afs[] = { GPIO_AF_SPI1, GPIO_AF_SPI2, GPIO_AF_SPI3, GPIO_AF_SPI4, GPIO_AF_SPI5, GPIO_AF_SPI6 };
-	_clk.AFConfig(afs[_index]);
-	_miso.AFConfig(afs[_index]);
-	_mosi.AFConfig(afs[_index]);
+	_clk.AFConfig((Port::GPIO_AF)afs[_index]);
+	_miso.AFConfig((Port::GPIO_AF)afs[_index]);
+	_mosi.AFConfig((Port::GPIO_AF)afs[_index]);
 #endif
 
 	Stop();

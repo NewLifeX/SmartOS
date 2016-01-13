@@ -255,8 +255,8 @@ void HardI2C::OnOpen()
 	SDA.AFConfig(Port::AF_0);
 #elif defined(STM32F4)
 	byte afs[] = { GPIO_AF_I2C1, GPIO_AF_I2C2, GPIO_AF_I2C3 };
-	SCL.AFConfig(afs[_index]);
-	SDA.AFConfig(afs[_index]);
+	SCL.AFConfig((Port::GPIO_AF)afs[_index]);
+	SDA.AFConfig((Port::GPIO_AF)afs[_index]);
 #endif
 	SCL.Open();
 	SDA.Open();
