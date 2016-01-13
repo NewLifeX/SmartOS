@@ -5,7 +5,7 @@
 #include "Security\Crc.h"
 
 // 循环间隔
-#define LOOP_Interval	10
+#define LOOP_Interval	10000
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
@@ -68,7 +68,7 @@ void Gateway::Start()
 	}
 
 	Client->Open();
-	_task	= Sys.AddTask(Loop, this, 10000, LOOP_Interval, "网关任务");
+	_task	= Sys.AddTask(Loop, this, 10000, LOOP_Interval, "设备任务");
 
 	Running = true;
 }
