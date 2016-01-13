@@ -135,20 +135,9 @@ enum Pin
     PH15 = 0x7F
 };
 
-#if defined(STM32F4)
-	#include "Pin_STM32F4.h"
-#elif defined(STM32F2XX)
-	#include "Pin_STM32F2.h"
-#elif defined(STM32F1)
-	#include "Pin_STM32F1.h"
-#elif defined(STM32F3XX)
-	#include "Pin_STM32F3.h"
-#elif defined(STM32F0)
-	#include "Pin_STM32F0.h"
-#elif defined(GD32F150)
-	#include "Pin_GD32F150.h"
-//#else
-//	#include "Pin_STM32F1.h"
-#endif
+// 获取组和针脚
+#define _PORT(PIN) (1 << ((PIN) & (uint16_t)0x0F))
+#define _PIN(PIN) (PIN & 0x000F)
+#define _PIN_NAME(pin) ('A' + (pin >> 4)), (pin & 0x0F)
 
 #endif
