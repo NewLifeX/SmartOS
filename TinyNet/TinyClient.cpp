@@ -466,14 +466,14 @@ void TinyClient::Ping()
 		// 掉线以后，重发组网信息，基本功能继续执行
 		Joining	= true;
 
-		auto tc	= TinyConfig::Current;
-		memset(tc->Mac, 0, 5);
-		tc->Clear();
-		Server = 0;
+		//auto tc	= TinyConfig::Current;
+		//memset(tc->Mac, 0, 5);
+		//tc->Clear();
+		//Server = 0;
 
 
-		Sys.Reset();
-		Server	= 0;
+		//Sys.Reset();
+		//Server	= 0;
 		//Password.SetLength(0);
 
 		//return;
