@@ -45,20 +45,6 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 /* 引脚定义 */
 #include "Platform\Pin.h"
 
-/* 串口定义 */
-typedef enum
-{
-	COM1 = 0,
-	COM2 = 1,
-	COM3 = 2,
-	COM4 = 3,
-	COM5 = 4,
-	COM6 = 5,
-	COM7 = 6,
-	COM8 = 7,
-	COM_NONE = 0xFF
-} COM_Def;
-
 // 委托
 #include "Delegate.h"
 
@@ -69,7 +55,7 @@ typedef enum
 class TSys : Object
 {
 public:
-    COM_Def	MessagePort;// 消息口，默认0表示USART1
+    COM		MessagePort;// 消息口，默认0表示USART1
 
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟

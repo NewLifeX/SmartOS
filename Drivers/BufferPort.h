@@ -11,7 +11,7 @@ public:
     const char*	Name;
 	ITransport*	Port;
 	int			Speed;
-	COM_Def		Com;
+	COM			Com;
 	bool		Opened;
 
 	IDataPort*	Led;	// 指示灯

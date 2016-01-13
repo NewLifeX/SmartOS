@@ -13,7 +13,7 @@ static Timer* Timers[16] = {
 	NULL, NULL, NULL, NULL,
 };
 
-Timer::Timer(byte index)
+Timer::Timer(TIMER index)
 {
 	assert_param(index <= ArrayLength(g_Timers));
 
@@ -69,7 +69,7 @@ Timer* Timer::Create(byte index)
 	if(Timers[index])
 		return Timers[index];
 	else
-		return new Timer(index);
+		return new Timer((TIMER)index);
 }
 
 void Timer::Config()
@@ -307,7 +307,7 @@ const static TIM_OCInit OCInits[4]={TIM_OC1Init, TIM_OC2Init, TIM_OC3Init, TIM_O
 //{
 //};
 
-PWM::PWM(byte index) : Timer(index)
+PWM::PWM(TIMER index) : Timer(index)
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
 

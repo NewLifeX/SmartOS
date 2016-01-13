@@ -16,13 +16,13 @@
 class Token
 {
 public:
-	static void Setup(ushort code, const char* name, COM_Def message = COM1, int baudRate = 0);
+	static void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
 
-	static ISocketHost* CreateW5500(byte spi, Pin irq, Pin rst = P0, Pin power = P0, IDataPort* led = NULL);
-	static ISocketHost* Create2860(byte spi, Pin irq, Pin rst);
+	static ISocketHost* CreateW5500(SPI spi, Pin irq, Pin rst = P0, Pin power = P0, IDataPort* led = NULL);
+	static ISocketHost* Create2860(SPI spi, Pin irq, Pin rst);
 
-	static ITransport* Create2401(byte spi, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = NULL);
-	static ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = NULL);
+	static ITransport* Create2401(SPI spi, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = NULL);
+	static ITransport* CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = NULL);
 	
 	static TokenClient* CreateClient(ISocketHost* host);
 	static TokenClient* CreateClient2860(ISocketHost* host);

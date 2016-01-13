@@ -9,7 +9,7 @@ const byte uart_irqs[] = UART_IRQs;
 
 SerialPort::SerialPort() { Init(); }
 
-SerialPort::SerialPort(byte index, int baudRate)
+SerialPort::SerialPort(COM index, int baudRate)
 {
 	Init();
 	Set(index, baudRate);
@@ -40,7 +40,7 @@ void SerialPort::Init()
     _stopBits	= USART_StopBits_1;
 }
 
-void SerialPort::Set(byte index, int baudRate)
+void SerialPort::Set(COM index, int baudRate)
 {
 	USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	_index = index;
@@ -368,7 +368,7 @@ void SerialPort::ReceiveTask(void* param)
 
 void SerialPort::SetBaudRate(int baudRate)
 {
-	Set(_index,  baudRate);
+	Set((COM)_index,  baudRate);
 }
 
 void SerialPort::ChangePower(int level)
@@ -499,7 +499,7 @@ SerialPort* SerialPort::GetMessagePort()
 
 	if(!sp)
 	{
-        int idx	= Sys.MessagePort;
+        auto idx	= Sys.MessagePort;
         if(idx == COM_NONE) return NULL;
 
 		sp = _printf_sp = new SerialPort(idx);

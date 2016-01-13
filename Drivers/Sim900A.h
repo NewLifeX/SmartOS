@@ -10,7 +10,7 @@ class Sim900A : public ITransport
 public:
     ITransport*	Port;
 	int			Speed;
-	COM_Def		Com;
+	COM			Com;
 	bool		Inited;
 	
 	const char*	Domain;

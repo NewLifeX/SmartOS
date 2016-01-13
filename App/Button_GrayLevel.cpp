@@ -161,7 +161,7 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 	return false;
 }
 
-void Button_GrayLevel::Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress
+void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, EventHandler onpress
 	, const ButtonPin* pins, byte* level, const byte* state)
 {
 	debug_printf("\r\n初始化开关按钮 \r\n");

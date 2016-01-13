@@ -15,7 +15,7 @@ public:
 	void*	_Timer;
 	bool	Opened;	// 可能在中断里关闭自己
 
-	Timer(byte index);
+	Timer(TIMER index);
 	virtual ~Timer();
 
 	ushort	Prescaler;	// 预分频。实际值，此时无需减一。
@@ -60,7 +60,7 @@ public:
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
 
-	PWM(byte index);		// index 定时器编号
+	PWM(TIMER index);		// index 定时器编号
 
 	virtual void Open();
 	virtual void Close();

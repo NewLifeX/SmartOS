@@ -66,7 +66,7 @@ public:
 	static byte OnGrayLevel;			// 开灯时 led 灰度
 	static byte OffGrayLevel;			// 关灯时 led 灰度
 
-	static void Init(byte tim, byte count, Button_GrayLevel* btns, EventHandler onpress, const ButtonPin* pins, byte* level, const byte* state);
+	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, EventHandler onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 

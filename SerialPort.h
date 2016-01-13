@@ -46,12 +46,12 @@ public:
 	Queue	Rx;
 
 	SerialPort();
-    SerialPort(byte index, int baudRate = SERIAL_BAUDRATE);
+    SerialPort(COM index, int baudRate = SERIAL_BAUDRATE);
 
 	// 析构时自动关闭
     virtual ~SerialPort();
 
-    void Set(byte index, int baudRate = SERIAL_BAUDRATE);
+    void Set(COM index, int baudRate = SERIAL_BAUDRATE);
     void Set(byte parity, byte dataBits, byte stopBits);
 
 	uint SendData(byte data, uint times = 3000);

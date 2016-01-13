@@ -23,7 +23,7 @@ uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 	return 0;
 }
 
-void Setup(ushort code, const char* name, COM_Def message, int baudRate)
+void Setup(ushort code, const char* name, COM message, int baudRate)
 {
 	Sys.Code = code;
 	Sys.Name = (char*)name;
@@ -67,7 +67,7 @@ void Fix2401(void* param)
 	}
 }
 
-ITransport* Create2401(byte spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+ITransport* Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	auto spi = new Spi(spi_, 10000000, true);
 	auto nrf = new NRF24L01();
@@ -119,7 +119,7 @@ void ShunComExternalCfg(void * param)
 	}
 }
 
-ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
+ITransport* CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
 	auto tc	= TinyConfig::Create();
 	debug_printf("tc->Interval %d\r\n",tc->Interval );

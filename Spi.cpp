@@ -28,11 +28,11 @@ Spi::Spi()
 	Init();
 }
 
-Spi::Spi(byte spiIndex, uint speedHz, bool useNss)
+Spi::Spi(SPI spi, uint speedHz, bool useNss)
 {
 	Init();
 
-	Init(spiIndex, speedHz, useNss);
+	Init(spi, speedHz, useNss);
 }
 
 Spi::~Spi()
@@ -49,13 +49,13 @@ void Spi::Init()
 	Opened	= false;
 }
 
-void Spi::Init(byte spiIndex, uint speedHz, bool useNss)
+void Spi::Init(SPI spi, uint speedHz, bool useNss)
 {
 	SPI_TypeDef* g_Spis[] = SPIS;
-	_index = spiIndex;
+	_index = spi;
 	assert_param(_index < ArrayLength(g_Spis));
 
-    SPI = g_Spis[_index];
+    _SPI = g_Spis[_index];
 
 	Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
 	Pin* ps = g_Spi_Pins_Map[_index];		//选定spi引脚
@@ -160,8 +160,8 @@ void Spi::Open()
 #endif
 
 	Stop();
-	SPI_I2S_DeInit((SPI_TypeDef*)SPI);
-	//SPI_DeInit((SPI_TypeDef*)SPI);	// SPI_I2S_DeInit的宏定义别名
+	SPI_I2S_DeInit((SPI_TypeDef*)_SPI);
+	//SPI_DeInit((SPI_TypeDef*)_SPI);	// SPI_I2S_DeInit的宏定义别名
 
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
@@ -175,8 +175,8 @@ void Spi::Open()
 	sp.SPI_FirstBit = SPI_FirstBit_MSB; // 高位在前。指定数据传输从MSB位还是LSB位开始:数据传输从MSB位开始
 	sp.SPI_CRCPolynomial = 7;           // CRC值计算的多项式
 
-    SPI_Init((SPI_TypeDef*)SPI, &sp);
-    SPI_Cmd((SPI_TypeDef*)SPI, ENABLE);
+    SPI_Init((SPI_TypeDef*)_SPI, &sp);
+    SPI_Cmd((SPI_TypeDef*)_SPI, ENABLE);
 
 	Stop();
 
@@ -189,8 +189,8 @@ void Spi::Close()
 
     Stop();
 
-	SPI_Cmd((SPI_TypeDef*)SPI, DISABLE);
-	SPI_I2S_DeInit((SPI_TypeDef*)SPI);
+	SPI_Cmd((SPI_TypeDef*)_SPI, DISABLE);
+	SPI_I2S_DeInit((SPI_TypeDef*)_SPI);
 
 	debug_printf("    CLK : ");
 	_clk.Close();
@@ -208,7 +208,7 @@ byte Spi::Write(byte data)
 {
 	if(!Opened) Open();
 
-	auto si	= (SPI_TypeDef*)SPI;
+	auto si	= (SPI_TypeDef*)_SPI;
 	int retry = Retry;
     while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_TXE) == RESET)
     {
@@ -237,7 +237,7 @@ ushort Spi::Write16(ushort data)
 {
 	if(!Opened) Open();
 
-	auto si	= (SPI_TypeDef*)SPI;
+	auto si	= (SPI_TypeDef*)_SPI;
     // 双字节操作，超时次数加倍
 	int retry = Retry << 1;
 	while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_TXE) == RESET)
