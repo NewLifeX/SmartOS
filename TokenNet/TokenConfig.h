@@ -16,8 +16,8 @@ class TokenConfig : public ConfigBase
 public:
 	byte	Length;			// 数据长度
 	
-	char	Name[16];		// 登录名
-	char	Key[16];		// 登录密码
+	char	Name[18];		// 登录名
+	char	Key[18];		// 登录密码
 	ushort	HardVer;		// 硬件版本
 	ushort	SoftVer;		// 软件版本
 

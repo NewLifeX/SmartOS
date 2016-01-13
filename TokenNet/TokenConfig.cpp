@@ -6,10 +6,9 @@ TokenConfig* TokenConfig::Current	= NULL;
 
 TokenConfig::TokenConfig() : ConfigBase()
 {
-	_Name	= "TKCF";
-	_Start	= &Length;
-	_End	= &TagEnd;
-	
+	_Name	 = "TKCF";
+	_Start	 = &Length;
+	_End	 = &TagEnd; 
 	Init();
 }
 
@@ -22,6 +21,8 @@ void TokenConfig::Init()
 
 	SoftVer		= Sys.Version;
 	PingTime	= 10;
+	Name[16] = '\0';
+	Key[16]	 = '\0';	
 
 	Protocol	= 2;
 }
