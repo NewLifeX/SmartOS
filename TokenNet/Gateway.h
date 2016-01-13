@@ -45,6 +45,7 @@ public:
 	bool DeviceProcess(const Message& msg);
 	// 发送设备信息
 	bool SendDevices(DeviceAtions act, const Device* dv);
+	void SendDevicesIDs();
 
 	/******** 本地网业务逻辑 ********/
 	// 设备发现

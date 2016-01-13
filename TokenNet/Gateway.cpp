@@ -5,7 +5,7 @@
 #include "Security\Crc.h"
 
 // 循环间隔
-#define LOOP_Interval	1
+#define LOOP_Interval	10
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
@@ -218,7 +218,28 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	else
 		return Client->Send(msg);
 }
-
+void Gateway::SendDevicesIDs()
+{
+	TokenMessage msg;
+	msg.Code = 0x21;	
+	auto act=DeviceAtions::ListIDs;
+	
+	MemoryStream ms;
+	ms.Write((byte)act);
+	byte len = Server->Devices.Length();
+	//先确认真正的设备有多少个
+	for(int i = 0; i < len; i++)
+	{
+		auto dv =Server->Devices[i];		
+		if(!dv) continue;		
+		ms.Write(dv->Address);	
+	}
+	
+	msg.Length 	= ms.Position();
+	msg.Data 	= ms.GetBuffer();
+	
+	Client->Send(msg);	
+}
 // 学习模式 0x20
 void Gateway::SetMode(uint sStudy)
 {

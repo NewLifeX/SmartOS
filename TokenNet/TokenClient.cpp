@@ -207,8 +207,6 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		}
 		else
 		{
-			debug_printf("握手完成，开始登录……\r\n");
-
 			// 解析数据
 	        HelloMessage ext;
 	        ext.Reply = msg.Reply;
@@ -229,7 +227,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 				String name	= cfg->Name;
 				String  key	= cfg->Key;
 				if(cfg->New||name.Length()< 4)
-					Status = 3;
+					Status = 1;
 			    else
 					Status = 1;
 			}
@@ -315,6 +313,7 @@ void TokenClient::Register()
 }
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
+	if(msg.Error) return;
 	Stream ms(msg.Data, msg.Length);
 
 	auto cfg	= TokenConfig::Current;
@@ -349,7 +348,12 @@ void TokenClient::Login()
 	auto cfg	= TokenConfig::Current;
 	login.Name	= cfg->Name;
 	login.Key	= cfg->Key;
-
+	//临时代码，兼容旧云端
+	if(login.Name.Length() < 8)
+	{
+		login.Name	= Sys.ID;
+		login.Key	= Sys.ID;
+	}
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
 
