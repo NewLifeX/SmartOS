@@ -44,7 +44,7 @@ static void OnDhcpStop(void* sender, void* param)
 	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, tip, 0, -1, "启动网关");
 }
 
-ISocketHost* Token::Create2860(SPI_TypeDef* spi_, Pin irq, Pin rst)
+ISocketHost* Token::Create2860(byte spi_, Pin irq, Pin rst)
 {
 	debug_printf("\r\nENC2860::Create \r\n");
 

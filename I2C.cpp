@@ -208,7 +208,7 @@ void HardI2C::Init(byte index, uint speedHz)
 	_index = index;
 
 	I2C_TypeDef* g_I2Cs[] = I2CS;
-	assert_param(_index < ArrayLength(g_I2Cs));
+	assert_param2(_index < ArrayLength(g_I2Cs), "I2C::Init");
 	_IIC = g_I2Cs[_index];
 
 	SCL.OpenDrain = true;

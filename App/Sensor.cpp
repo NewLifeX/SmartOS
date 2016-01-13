@@ -19,7 +19,6 @@ Sensor::Sensor(Pin key, Pin led, Pin buzzer)
 {
 	Init();
 
-	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
 
@@ -31,7 +30,6 @@ Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin buzzer, bool buzzerInvert)
 {
 	Init();
 
-	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
 

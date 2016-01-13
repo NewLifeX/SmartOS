@@ -67,7 +67,7 @@ void Fix2401(void* param)
 	}
 }
 
-ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+ITransport* Create2401(byte spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	auto spi = new Spi(spi_, 10000000, true);
 	auto nrf = new NRF24L01();

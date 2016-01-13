@@ -25,9 +25,6 @@ void Button::Set(Pin key, Pin led, Pin relay)
 
 void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 {
-	assert_param(key != P0);
-
-	//Key.HardEvent = true;
 	Key.Set(key);
 	Key.Register(OnPress, this);
 	Key.Open();
@@ -131,10 +128,7 @@ void Button::SetValue(bool value)
 
 bool Button::SetACZeroPin(Pin aczero)
 {
-	// 检查参数
-	assert_param(aczero != P0);
-
-	InputPort& port = ACZero;
+	auto& port = ACZero;
 
 	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
 	if(!port.Empty()) port.Close();

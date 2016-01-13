@@ -840,8 +840,6 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	// 检查要发送数据的长度
 	uint len = bs.Length();
 	byte pw	= 32;
-	if(pw && len > pw) debug_printf("%d > %d \r\n", len, pw);
-	assert_param(pw == 0 || len <= pw);
 	if(pw > 0) len = pw;
 	Array bs2(bs.GetBuffer(), len);
 	WriteBuf(cmd, bs2);

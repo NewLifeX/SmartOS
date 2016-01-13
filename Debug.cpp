@@ -51,7 +51,6 @@ void* operator new(uint size)
 		if((uint)p + size + 0x40 >= end)
 			mem_printf(" + %d near HeapEnd=0x%08x", size, end);
 	}
-	assert_param(p);
     return p;
 }
 
@@ -81,7 +80,6 @@ void* operator new[](uint size)
 		uint end = __get_MSP();
 		if((uint)p + size + 0x40 >= end) mem_printf(" + %d near HeapEnd=0x%08x", size, end);
 	}
-	assert_param(p);
     return p;
 }
 

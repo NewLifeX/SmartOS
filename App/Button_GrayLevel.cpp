@@ -36,8 +36,6 @@ Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 
 void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 {
-	assert_param(key != P0);
-
 	Key.Set(key);
 
 	// 中断过滤模式
@@ -152,9 +150,6 @@ void Button_GrayLevel::SetValue(bool value)
 
 bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 {
-	// 检查参数
-	assert_param(aczero != P0);
-
 	// 该方法需要检查并释放旧的，避免内存泄漏
 	if(!ACZero) ACZero = new InputPort(aczero);
 

@@ -2,8 +2,6 @@
 
 ESP8266::ESP8266(ITransport* port, Pin rst)
 {
-    assert_param(port);
-
 	Set(port);
     
 	if(rst != P0) _rst.Set(rst);

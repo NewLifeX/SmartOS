@@ -60,8 +60,6 @@ IPAddress& IPAddress::operator=(const Array& arr)
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& IPAddress::operator[](int i)
 {
-	assert_param(i >= 0 && i < 4);
-
 	return ((byte*)&Value)[i];
 }
 
@@ -234,8 +232,6 @@ MacAddress& MacAddress::operator=(const Array& arr)
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& MacAddress::operator[](int i)
 {
-	assert_param(i >= 0 && i < 6);
-
 	return ((byte*)&Value)[i];
 }
 

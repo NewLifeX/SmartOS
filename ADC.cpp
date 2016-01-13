@@ -6,13 +6,13 @@ Pin ADC_Pins[] = ADC1_PINS;
 
 ADConverter::ADConverter(byte line, uint channel)
 {
-	assert_param(line >= 1 && line <= 3);
+	assert_param2(line >= 1 && line <= 3, "ADC Line");
 
 	Line	= line;
 	Channel	= channel;
 
-	uint dat = 1;
-	Count = 0;
+	uint dat	= 1;
+	Count	= 0;
 	for(int i=0; i<ArrayLength(Data); i++, dat <<= 1)
 	{
 		if(Channel & dat) Count++;

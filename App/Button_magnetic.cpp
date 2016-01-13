@@ -17,7 +17,6 @@ Button_magnetic::Button_magnetic(Pin key, Pin led, Pin relay_pin1, Pin relay_pin
 {
 	Init();
 
-	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
 
@@ -31,7 +30,6 @@ Button_magnetic::Button_magnetic(Pin key, Pin led, bool ledInvert, Pin relay_pin
 {
 	Init();
 
-	assert_param(key != P0);
 	Key = new InputPort(key);
 	Key->Register(OnPress, this);
 

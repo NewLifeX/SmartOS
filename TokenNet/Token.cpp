@@ -42,7 +42,7 @@ static void OnDhcpStop5500(void* sender, void* param)
 	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, net, 0, -1, "启动网关");
 }
 
-ISocketHost* Token::CreateW5500(SPI_TypeDef* spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
+ISocketHost* Token::CreateW5500(byte spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -205,7 +205,7 @@ void Fix2401(void* param)
 	}
 }
 
-ITransport* Token::Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+ITransport* Token::Create2401(byte spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	static Spi spi(spi_, 10000000, true);
 	static NRF24L01 nrf;

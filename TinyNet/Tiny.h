@@ -14,7 +14,7 @@ void Setup(ushort code, const char* name, COM_Def message = COM1, int baudRate =
 void* InitConfig(void* data, uint size);
 void ClearConfig();
 
-ITransport* Create2401(SPI_TypeDef* spi_, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = NULL);
+ITransport* Create2401(byte spi, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = NULL);
 ITransport* CreateShunCom(COM_Def index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = NULL);
 
 TinyClient* CreateTinyClient(ITransport* port);

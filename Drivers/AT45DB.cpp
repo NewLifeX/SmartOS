@@ -70,7 +70,7 @@ bool AT45DB::WaitForEnd()
         and put the value of the status register in FLASH_Status variable */
         status = _spi->Write(Dummy_Byte);
     }
-    while ((status & 0x80) == RESET && --retry); /* Busy in progress */
+    while ((status & 0x80) == 0 && --retry); /* Busy in progress */
 
     // 重试次数没有用完，才返回成功
     return retry > 0;
