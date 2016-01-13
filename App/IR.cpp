@@ -1,9 +1,8 @@
 ﻿#include "IR.h"
 #include "Time.h"
 
-#ifdef STM32F0
-#include "stm32f0xx_tim.h"
-#endif
+#include "Platform\stm32.h"
+
 /*
 Timer2  CH2       通道
 DMA1    Channel3  通道
@@ -98,38 +97,41 @@ bool IR::Send(const Array& bs)
 void IR::OnSend(void* sender, void* param)
 {
 	//TS("IR::OnSend");
-#ifdef STM32F0
 	auto ir = (IR*)param;
+	auto ti	= (TIM_TypeDef*)(ir->_Pwm->_Timer);
+#ifdef STM32F0
 	if(ErrorIRQ)	// 避开打开定时器立马中断问题
 	{
 		ErrorIRQ = false;
 		ir->_Pwm->Open();
-		TIM_Cmd(ir->_Pwm->_Timer, ENABLE);
+		TIM_Cmd(ti, ENABLE);
 		//debug_printf("pwm open\r\n");
 		return;
 	}
 	// PWM归位
-	TIM_SetCounter(ir->_Pwm->_Timer, 0x00000000);
+	TIM_SetCounter(ti, 0x00000000);
 	// PWM变化
 	//if(SendIndex % 2)	
 	if(SendIndex & 1)	//不行  暂不知问题所在
 	{
-		TIM_Cmd(ir->_Pwm->_Timer, ENABLE);
+		TIM_Cmd(ti, ENABLE);
 	}
 	else
 	{
-		TIM_Cmd(ir->_Pwm->_Timer, DISABLE);
+		TIM_Cmd(ti, DISABLE);
 	}
 	// 下一个周期
 	SendIndex += 1;
-	TIM_SetAutoreload(ir->_Tim->_Timer, SendP[SendIndex]);
+
+	auto ti2	= (TIM_TypeDef*)(ir->_Tim->_Timer);
+	TIM_SetAutoreload(ti2, SendP[SendIndex]);
 
 	if(SendIndex >= SendBufLen)
 	{
 		// 发送完毕
-		TIM_SetCounter(ir->_Pwm->_Timer, 0x00000000);
-		TIM_Cmd(ir->_Pwm->_Timer, DISABLE);
-		TIM_Cmd(ir->_Tim->_Timer, DISABLE);
+		TIM_SetCounter(ti, 0x00000000);
+		TIM_Cmd(ti, DISABLE);
+		TIM_Cmd(ti2, DISABLE);
 		//ir->_Pwm->Close();
 		//ir->_Tim->Close();
 		Stat = SendOver;
@@ -151,7 +153,7 @@ int IR::Receive(Array& bs, int sTimeout)
 		_Port = new	AlternatePort();	// 在括号内直接写引脚会初始化失败
 		_Port->Set(PA1);
 		_Port->Open();
-		_Port->AFConfig(GPIO_AF_2);
+		_Port->AFConfig(Port::AF_2);
 	}
 	if(_Tim == NULL) _Tim = Timer::Create(0x01);		// 直接占用TIMER2
 	

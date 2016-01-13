@@ -123,8 +123,8 @@ bool SerialPort::OnOpen()
 #endif
 
 #if defined(STM32F0) || defined(GD32F150)
-	_tx.AFConfig(GPIO_AF_1);
-	_rx.AFConfig(GPIO_AF_1);
+	_tx.AFConfig(Port::AF_1);
+	_rx.AFConfig(Port::AF_1);
 #elif defined(STM32F4)
 	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
 	_tx.AFConfig(afs[_index]);

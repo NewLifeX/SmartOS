@@ -202,14 +202,14 @@ void Port::OnOpen(void* param)
 #endif
 }
 
-#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-void Port::AFConfig(byte GPIO_AF) const
+void Port::AFConfig(GPIO_AF GPIO_AF) const
 {
+#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
 	assert_param2(Opened, "必须打开端口以后才能配置AF");
 
 	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _PIN(_Pin), GPIO_AF);
-}
 #endif
+}
 
 bool Port::Read() const
 {

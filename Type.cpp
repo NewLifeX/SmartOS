@@ -843,8 +843,13 @@ bool operator!=(const String& str, const char* str2)
 
 /******************************** REV ********************************/
 
-extern uint32_t __REV(uint32_t value);
-extern uint32_t __REV16(uint16_t value);
+
+//extern uint32_t __REV(uint32_t value);
+//#ifdef STM32F0
+//extern uint32_t __REV16(uint32_t value);
+//#else
+//extern uint32_t __REV16(uint16_t value);
+//#endif
 
 uint	_REV(uint value)		{ return __REV(value); }
 ushort	_REV16(ushort value)	{ return __REV16(value); }

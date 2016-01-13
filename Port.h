@@ -17,6 +17,18 @@
 class Port : public Object
 {
 public:
+	enum GPIO_AF
+	{
+		AF_0 = 0,
+		AF_1 = 1,
+		AF_2 = 2,
+		AF_3 = 3,
+		AF_4 = 4,
+		AF_5 = 5,
+		AF_6 = 6,
+		AF_7 = 7
+	};
+
     void*	Group;		// 引脚组
     ushort	Mask;		// 组内引脚位。每个引脚一个位
     Pin		_Pin;		// 引脚
@@ -31,9 +43,7 @@ public:
 	void Close();
 	void Clear();
 
-#if defined(STM32F0)|| defined(GD32F150) || defined(STM32F4)
-	void AFConfig(byte GPIO_AF) const;
-#endif
+	void AFConfig(GPIO_AF GPIO_AF) const;
 
     virtual bool Read() const;
 

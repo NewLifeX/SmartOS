@@ -33,8 +33,10 @@ bool Sim900A::OnOpen()
 		auto sp	= new SerialPort(Com, Speed);
 		Port	= sp;
 
+#if	!(defined(STM32F0) || defined(GD32F150))
 		// 设置gprs发送大小
 		sp->Tx.SetCapacity(512);
+#endif
 	}
 
 	Inited	= false;

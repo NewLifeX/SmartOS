@@ -1,6 +1,8 @@
 ﻿#include "Button_GrayLevel.h"
 #include "Time.h"
 
+#include "Platform\stm32.h"
+
 #define BTN_DEBUG DEBUG
 //#define BTN_DEBUG 0
 #if BTN_DEBUG
@@ -181,9 +183,7 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, Event
 	{
 		Leds[i].Set(pins[i].Led);
 		Leds[i].Open();
-#if defined(STM32F0) || defined(STM32F4)
-		Leds[i].AFConfig(GPIO_AF_1);
-#endif
+		Leds[i].AFConfig(Port::AF_1);
 	}
 
 	// 设置默认灰度

@@ -251,8 +251,8 @@ void HardI2C::OnOpen()
 
 #ifdef STM32F0
 	// 都在GPIO_AF_0分组内
-	SCL.AFConfig(GPIO_AF_0);
-	SDA.AFConfig(GPIO_AF_0);
+	SCL.AFConfig(Port::AF_0);
+	SDA.AFConfig(Port::AF_0);
 #elif defined(STM32F4)
 	byte afs[] = { GPIO_AF_I2C1, GPIO_AF_I2C2, GPIO_AF_I2C3 };
 	SCL.AFConfig(afs[_index]);

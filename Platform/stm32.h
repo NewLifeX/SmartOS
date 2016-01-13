@@ -47,6 +47,7 @@
 
 #if defined(STM32F4)
 	#include "stm32f4xx.h"
+	#include "Pin_STM32F4.h"
 #elif defined(STM32F2)
 	#include "stm32f2xx.h"
 #elif defined(STM32F1)
@@ -56,6 +57,7 @@
 	#include "stm32f3xx.h"
 #elif defined(STM32F0)
 	#include "stm32f0xx.h"
+	#include "Pin_STM32F0.h"
 #elif defined(GD32F150)
 	#include "stm32f0xx.h"
 #else
