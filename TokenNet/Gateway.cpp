@@ -501,6 +501,7 @@ void Gateway::Loop(void* param)
 
 	auto gw		= 	(Gateway*)param;
 	
+	gw->SendDevicesIDs();
 	auto now	= Sys.Seconds();
 	byte len	= gw->Server->Devices.Length();
 	for(int i = 0; i < len; i++)

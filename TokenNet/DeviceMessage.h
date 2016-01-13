@@ -23,6 +23,8 @@ enum class DeviceAtions
 
 	// <summary>删除。请求响应ID列表</summary>
 	Delete,
+	// <summary>ID列表</summary>
+	ListIDs,
 };
 
 // 设备消息
