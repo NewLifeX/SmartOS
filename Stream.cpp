@@ -1,5 +1,8 @@
 ﻿#include "Stream.h"
 
+extern uint32_t __REV(uint32_t value);
+extern uint32_t __REV16(uint16_t value);
+
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(void* buf, uint len)
 {
@@ -45,7 +48,7 @@ bool Stream::CheckRemain(uint count)
 	if(count > remain)
 	{
 		debug_printf("数据流 0x%08X 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
-		assert_param(false);
+		assert_param2(false, "无法扩容");
 		return false;
 	}
 
