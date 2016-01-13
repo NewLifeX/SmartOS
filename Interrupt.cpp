@@ -1,6 +1,8 @@
 ﻿#include "Interrupt.h"
 #include "SerialPort.h"
 
+#include "Platform\stm32.h"
+
 TInterrupt Interrupt;
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)

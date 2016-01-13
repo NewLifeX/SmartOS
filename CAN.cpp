@@ -2,6 +2,8 @@
 #include "Port.h"
 #include "CAN.h"
 
+#include "Platform\stm32.h"
+
 #ifdef STM32F1
 static const Pin g_CAN_Pins_Map[] =  CAN_PINS;
 static const Pin g_CAN_Pins_Map2[] =  CAN_PINS_REMAP2;

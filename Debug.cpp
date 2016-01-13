@@ -1,4 +1,7 @@
 ﻿#include "Sys.h"
+
+#include "Platform\stm32.h"
+
 // 仅用于调试使用的一些函数实现，RTM不需要
 
 //#define MEM_DEBUG DEBUG

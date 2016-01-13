@@ -2,6 +2,8 @@
 
 #include "WatchDog.h"
 
+#include "Platform\stm32.h"
+
 // 低功耗处理器
 static TArray<Power*, 0x40> _powers(0);
 

@@ -1,5 +1,7 @@
 ﻿#include "DMA.h"
 
+#include "Platform\stm32.h"
+
 bool DMA::Start()
 {
 	DMA_InitTypeDef  DMA_InitStructure;
