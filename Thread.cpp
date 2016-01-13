@@ -1,6 +1,8 @@
 ﻿#include "Thread.h"
 #include "Task.h"
 
+#include "Platform\stm32.h"
+
 //#define TH_DEBUG DEBUG
 #define TH_DEBUG 0
 

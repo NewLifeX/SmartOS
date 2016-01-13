@@ -7,7 +7,7 @@
 #include <string.h>
 
 // 强迫内联
-//#define _force_inline __attribute__( ( always_inline ) ) __INLINE
+#define _force_inline __attribute__( ( always_inline ) ) __INLINE
 
 extern "C"
 {

@@ -1,5 +1,7 @@
 ﻿#include "Timer.h"
 
+#include "Platform\stm32.h"
+
 static TIM_TypeDef* const g_Timers[] = TIMS;
 const byte Timer::TimerCount = ArrayLength(g_Timers);
 
@@ -11,26 +13,14 @@ static Timer* Timers[16] = {
 	NULL, NULL, NULL, NULL,
 };
 
-Timer::Timer(TIM_TypeDef* timer)
+Timer::Timer(byte index)
 {
-	assert_param(timer);
+	assert_param(index <= ArrayLength(g_Timers));
 
-	byte idx	= 0xFF;
-	byte tcount	= ArrayLength(g_Timers);
-	for(int i=0; i<tcount; i++)
-	{
-		if(g_Timers[i] == timer)
-		{
-			idx = i;
-			break;
-		}
-	}
-	assert_param(idx <= tcount);
+	Timers[index]	= this;
 
-	Timers[idx]	= this;
-
-	_index		= idx;
-	_Timer		= g_Timers[idx];
+	_index		= index;
+	_Timer		= g_Timers[index];
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次
 	/*Prescaler = Sys.Clock / 1000000;
@@ -79,12 +69,14 @@ Timer* Timer::Create(byte index)
 	if(Timers[index])
 		return Timers[index];
 	else
-		return new Timer(g_Timers[index]);
+		return new Timer(index);
 }
 
 void Timer::Config()
 {
 	TS("Timer::Config");
+
+	auto ti	= (TIM_TypeDef*)_Timer;
 
 	// 配置时钟
 	TIM_TimeBaseInitTypeDef tr;
@@ -93,16 +85,16 @@ void Timer::Config()
 	tr.TIM_Prescaler	= Prescaler - 1;
 	//tr.TIM_ClockDivision = 0x0;
 	tr.TIM_CounterMode	= TIM_CounterMode_Up;
-	TIM_TimeBaseInit(_Timer, &tr);
+	TIM_TimeBaseInit(ti, &tr);
 
-	//TIM_PrescalerConfig(_Timer, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
+	//TIM_PrescalerConfig(ti, tr.TIM_Period,TIM_PSCReloadMode_Immediate);		// 分频数立即加载
 	// 打开中断
-	//TIM_ITConfig(_Timer, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
-	TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
-	//TIM_UpdateRequestConfig(_Timer, TIM_UpdateSource_Regular);
+	//TIM_ITConfig(ti, TIM_IT_Update | TIM_IT_Trigger, ENABLE);
+	TIM_ITConfig(ti, TIM_IT_Update, ENABLE);
+	//TIM_UpdateRequestConfig(ti, TIM_UpdateSource_Regular);
 	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
-	TIM_ClearFlag(_Timer, TIM_FLAG_Update);
-	//TIM_ClearITPendingBit(_Timer, TIM_IT_Update);
+	TIM_ClearFlag(ti, TIM_FLAG_Update);
+	//TIM_ClearITPendingBit(ti, TIM_IT_Update);
 }
 
 void Timer::Open()
@@ -129,12 +121,12 @@ void Timer::Open()
 	ClockCmd(true);
 
 	// 关闭。不再需要，跟上面ClockCmd的效果一样
-	//TIM_DeInit(_Timer);
+	//TIM_DeInit((TIM_TypeDef*)_Timer);
 
 	Config();
 
 	// 打开计数
-	TIM_Cmd(_Timer, ENABLE);
+	TIM_Cmd((TIM_TypeDef*)_Timer, ENABLE);
 
 	Opened = true;
 }
@@ -147,10 +139,11 @@ void Timer::Close()
 
 	debug_printf("Timer%d::Close\r\n", _index + 1);
 
+	auto ti	= (TIM_TypeDef*)_Timer;
 	// 关闭计数器时钟
-	TIM_Cmd(_Timer, DISABLE);
-	TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
-	TIM_ClearITPendingBit(_Timer, TIM_IT_Update);	// 仅清除中断标志位 关闭不可靠
+	TIM_Cmd(ti, DISABLE);
+	TIM_ITConfig(ti, TIM_IT_Update, DISABLE);
+	TIM_ClearITPendingBit(ti, TIM_IT_Update);	// 仅清除中断标志位 关闭不可靠
 	ClockCmd(false);	// 关闭定时器时钟
 
 	Opened = false;
@@ -237,18 +230,18 @@ void Timer::SetFrequency(uint frequency)
 		tr.TIM_Prescaler	= Prescaler - 1;
 		//tr.TIM_ClockDivision = 0x0;
 		tr.TIM_CounterMode = TIM_CounterMode_Up;
-		TIM_TimeBaseInit(_Timer, &tr);
+		TIM_TimeBaseInit((TIM_TypeDef*)_Timer, &tr);
 	}
 }
 
 uint Timer::GetCounter()
 {
-	return TIM_GetCounter(_Timer);
+	return TIM_GetCounter((TIM_TypeDef*)_Timer);
 }
 
 void Timer::SetCounter(uint cnt)
 {
-	TIM_SetCounter(_Timer, cnt);
+	TIM_SetCounter((TIM_TypeDef*)_Timer, cnt);
 }
 
 void Timer::SetHandler(bool set)
@@ -257,13 +250,13 @@ void Timer::SetHandler(bool set)
 	if(set)
 	{
 		// 打开中断
-		//TIM_ITConfig(_Timer, TIM_IT_Update, ENABLE);
+		//TIM_ITConfig((TIM_TypeDef*)_Timer, TIM_IT_Update, ENABLE);
 		Interrupt.SetPriority(irqs[_index], 1);
 		Interrupt.Activate(irqs[_index], OnHandler, this);
 	}
 	else
 	{
-		TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
+		TIM_ITConfig((TIM_TypeDef*)_Timer, TIM_IT_Update, DISABLE);
 		Interrupt.Deactivate(irqs[_index]);
 	}
 }
@@ -278,13 +271,14 @@ void Timer::Register(EventHandler handler, void* param)
 
 void Timer::OnHandler(ushort num, void* param)
 {
-	Timer* timer = (Timer*)param;
+	auto timer = (Timer*)param;
 	if(timer)
 	{
+		auto ti	= (TIM_TypeDef*)timer->_Timer;
 		// 检查指定的 TIM 中断发生
-		if(TIM_GetITStatus(timer->_Timer, TIM_IT_Update) == RESET) return;
+		if(TIM_GetITStatus(ti, TIM_IT_Update) == RESET) return;
 		// 必须清除TIMx的中断待处理位，否则会频繁中断
-		TIM_ClearITPendingBit(timer->_Timer, TIM_IT_Update);
+		TIM_ClearITPendingBit(ti, TIM_IT_Update);
 
 		timer->OnInterrupt();
 	}
@@ -313,7 +307,7 @@ const static TIM_OCInit OCInits[4]={TIM_OC1Init, TIM_OC2Init, TIM_OC3Init, TIM_O
 //{
 //};
 
-PWM::PWM(byte index) : Timer(g_Timers[index])
+PWM::PWM(byte index) : Timer(index)
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
 
@@ -339,12 +333,13 @@ void PWM::Config()
 	oc.TIM_OCPolarity	= Polarity ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
 	oc.TIM_OCIdleState	= IdleState ? TIM_OCIdleState_Reset : TIM_OCIdleState_Set;
 
+	auto ti	= (TIM_TypeDef*)_Timer;
 	for(int i=0; i<4; i++)
 	{
 		if(Pulse[i] != 0xFFFF)
 		{
 			oc.TIM_Pulse = Pulse[i];
-			OCInits[i](_Timer, &oc);
+			OCInits[i](ti, &oc);
 			Configed |= 0x1 << i;
 		}
 	}
@@ -352,12 +347,12 @@ void PWM::Config()
 	if(!Pulses)
 	{
 		// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
-		TIM_ITConfig(_Timer, TIM_IT_Update, DISABLE);
-		TIM_ClearFlag(_Timer, TIM_FLAG_Update);
+		TIM_ITConfig(ti, TIM_IT_Update, DISABLE);
+		TIM_ClearFlag(ti, TIM_FLAG_Update);
 	}
 
-	TIM_SetCounter(_Timer, 0x00000000);		// 清零定时器CNT计数寄存器
-	TIM_ARRPreloadConfig(_Timer, ENABLE);	// 使能预装载寄存器ARR
+	TIM_SetCounter(ti, 0x00000000);		// 清零定时器CNT计数寄存器
+	TIM_ARRPreloadConfig(ti, ENABLE);	// 使能预装载寄存器ARR
 
 	// 如果需要连续调整宽度，那么需要中断
 	if(Pulses) SetHandler(true);
@@ -378,7 +373,7 @@ void PWM::FlushOut()
 		if(Pulse[i] != 0xFFFF)
 		{
 			oc.TIM_Pulse = Pulse[i];
-			OCInits[i](_Timer, &oc);
+			OCInits[i]((TIM_TypeDef*)_Timer, &oc);
 			Configed |= 0x1 << i;
 		}
 	}
@@ -390,12 +385,12 @@ void PWM::Open()
 
 #if defined(STM32F0) || defined(GD32F150)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
-		TIM_CtrlPWMOutputs(_Timer, ENABLE);
+		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, ENABLE);
 #endif
 
 #if defined(STM32F1)
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
-		TIM_CtrlPWMOutputs(_Timer, ENABLE);
+		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, ENABLE);
 #endif
 
 #if	defined(STM32F4)
@@ -406,10 +401,10 @@ void PWM::Close()
 {
 #if defined(STM32F1) || defined(GD32F150)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
-		TIM_CtrlPWMOutputs(_Timer, DISABLE);
+		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, DISABLE);
 #elif defined(STM32F1)
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
-		TIM_CtrlPWMOutputs(_Timer, DISABLE);
+		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, DISABLE);
 #else	//defined(STM32F4)
 #endif
 
@@ -432,11 +427,12 @@ void PWM::OnInterrupt()
 {
 	if(!Pulses || !PulseCount || PulseIndex > PulseCount) return;
 
+	auto ti	= (TIM_TypeDef*)_Timer;
 	// 动态计算4个寄存器中的某一个，并设置宽度
 #ifdef STM32F1
-	volatile ushort* reg = &(_Timer->CCR1);
+	volatile ushort* reg = &(ti->CCR1);
 #else
-	volatile uint* reg = &(_Timer->CCR1);
+	volatile uint* reg = &(ti->CCR1);
 #endif
 	reg += Channel;
 

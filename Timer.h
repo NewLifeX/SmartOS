@@ -1,7 +1,6 @@
 ﻿#ifndef __Timer_H__
 #define __Timer_H__
 
-#include "Sys.h"
 #include "Port.h"
 
 // 定时器
@@ -13,10 +12,10 @@ protected:
 	void ClockCmd(bool state);
 	void SetHandler(bool set);
 public:
-	TIM_TypeDef* _Timer;
+	void*	_Timer;
 	bool	Opened;	// 可能在中断里关闭自己
 
-	Timer(TIM_TypeDef* timer);
+	Timer(byte index);
 	virtual ~Timer();
 
 	ushort	Prescaler;	// 预分频。实际值，此时无需减一。

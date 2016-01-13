@@ -1,6 +1,8 @@
 ﻿#include "RTC.h"
 #include "Time.h"
 
+#include "Platform\stm32.h"
+
 /************************************************ HardRTC ************************************************/
 
 bool RTC_WaitForLastTask2(uint retry = 300)

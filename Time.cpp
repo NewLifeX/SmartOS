@@ -1,5 +1,7 @@
 ﻿#include "Time.h"
 
+#include "Platform\stm32.h"
+
 #define TIME_DEBUG 0
 
 // 截止2000-01-01的所有秒数
