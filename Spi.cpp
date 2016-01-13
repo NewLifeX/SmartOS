@@ -1,6 +1,6 @@
-﻿#include "Sys.h"
-#include "Port.h"
-#include "Spi.h"
+﻿#include "Spi.h"
+
+#include "Platform\stm32.h"
 
 int GetPre(int index, uint* speedHz)
 {
@@ -28,11 +28,11 @@ Spi::Spi()
 	Init();
 }
 
-Spi::Spi(SPI_TypeDef* spi, uint speedHz, bool useNss)
+Spi::Spi(byte spiIndex, uint speedHz, bool useNss)
 {
 	Init();
 
-	Init(spi, speedHz, useNss);
+	Init(spiIndex, speedHz, useNss);
 }
 
 Spi::~Spi()
@@ -49,20 +49,10 @@ void Spi::Init()
 	Opened	= false;
 }
 
-void Spi::Init(SPI_TypeDef* spi, uint speedHz, bool useNss)
+void Spi::Init(byte spiIndex, uint speedHz, bool useNss)
 {
-	assert_param(spi);
-
 	SPI_TypeDef* g_Spis[] = SPIS;
-	_index = 0xFF;
-	for(int i=0; i<ArrayLength(g_Spis); i++)
-	{
-		if(g_Spis[i] == spi)
-		{
-			_index = i;
-			break;
-		}
-	}
+	_index = spiIndex;
 	assert_param(_index < ArrayLength(g_Spis));
 
     SPI = g_Spis[_index];
@@ -170,8 +160,8 @@ void Spi::Open()
 #endif
 
 	Stop();
-	SPI_I2S_DeInit(SPI);
-	//SPI_DeInit(SPI);	// SPI_I2S_DeInit的宏定义别名
+	SPI_I2S_DeInit((SPI_TypeDef*)SPI);
+	//SPI_DeInit((SPI_TypeDef*)SPI);	// SPI_I2S_DeInit的宏定义别名
 
 	SPI_InitTypeDef sp;
     SPI_StructInit(&sp);
@@ -185,8 +175,8 @@ void Spi::Open()
 	sp.SPI_FirstBit = SPI_FirstBit_MSB; // 高位在前。指定数据传输从MSB位还是LSB位开始:数据传输从MSB位开始
 	sp.SPI_CRCPolynomial = 7;           // CRC值计算的多项式
 
-    SPI_Init(SPI, &sp);
-    SPI_Cmd(SPI, ENABLE);
+    SPI_Init((SPI_TypeDef*)SPI, &sp);
+    SPI_Cmd((SPI_TypeDef*)SPI, ENABLE);
 
 	Stop();
 
@@ -199,8 +189,8 @@ void Spi::Close()
 
     Stop();
 
-	SPI_Cmd(SPI, DISABLE);
-	SPI_I2S_DeInit(SPI);
+	SPI_Cmd((SPI_TypeDef*)SPI, DISABLE);
+	SPI_I2S_DeInit((SPI_TypeDef*)SPI);
 
 	debug_printf("    CLK : ");
 	_clk.Close();
@@ -218,27 +208,28 @@ byte Spi::Write(byte data)
 {
 	if(!Opened) Open();
 
+	auto si	= (SPI_TypeDef*)SPI;
 	int retry = Retry;
-    while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
+    while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_TXE) == RESET)
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
 
 #ifndef STM32F0
-	SPI_I2S_SendData(SPI, data);
+	SPI_I2S_SendData(si, data);
 #else
-	SPI_SendData8(SPI, data);
+	SPI_SendData8(si, data);
 #endif
 
 	retry = Retry;
-	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
+	while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_RXNE) == RESET) //是否发送成功
     {
         if(--retry <= 0) return ++Error; // 超时处理
     }
 #ifndef STM32F0
-	return SPI_I2S_ReceiveData(SPI);
+	return SPI_I2S_ReceiveData(si);
 #else
-	return SPI_ReceiveData8(SPI); //返回通过SPIx最近接收的数据
+	return SPI_ReceiveData8(si); //返回通过SPIx最近接收的数据
 #endif
 }
 
@@ -246,29 +237,30 @@ ushort Spi::Write16(ushort data)
 {
 	if(!Opened) Open();
 
+	auto si	= (SPI_TypeDef*)SPI;
     // 双字节操作，超时次数加倍
 	int retry = Retry << 1;
-	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_TXE) == RESET)
+	while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_TXE) == RESET)
 	{
         if(--retry <= 0) return ++Error; // 超时处理
 	}
 
 #ifndef STM32F0
-	SPI_I2S_SendData(SPI, data);
+	SPI_I2S_SendData(si, data);
 #else
-	SPI_I2S_SendData16(SPI, data);
+	SPI_I2S_SendData16(si, data);
 #endif
 
     retry = Retry << 1;
-	while (SPI_I2S_GetFlagStatus(SPI, SPI_I2S_FLAG_RXNE) == RESET)
+	while (SPI_I2S_GetFlagStatus(si, SPI_I2S_FLAG_RXNE) == RESET)
 	{
         if(--retry <= 0) return ++Error; // 超时处理
 	}
 
 #ifndef STM32F0
-	return SPI_I2S_ReceiveData(SPI);
+	return SPI_I2S_ReceiveData(si);
 #else
-	return SPI_I2S_ReceiveData16(SPI);
+	return SPI_I2S_ReceiveData16(si);
 #endif
 }
 
