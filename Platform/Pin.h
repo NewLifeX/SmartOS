@@ -176,7 +176,11 @@ enum TIMER
 	Timer11 = 10,
 	Timer12 = 11,
 	Timer13 = 12,
-	Timer14 = 13
+	Timer14 = 13,
+	Timer15 = 14,
+	Timer16 = 15,
+	Timer17 = 16,
+	Timer18 = 17,
 };
 
 #endif
