@@ -67,4 +67,110 @@ private:
     void (T::*_Func)(TArg, TArg2);
 };
 
+//***************************************************************************
+// 函数模版接口
+template <typename TParameter>
+class ifunction
+{
+public:
+	// 函数参数的类型
+	typedef TParameter parameter_type;
+
+	// 将被重载的函数操作
+	virtual void operator ()(TParameter) = 0;
+};
+
+// 无参函数模版接口
+template <>
+class ifunction<void>
+{
+public:
+	typedef void parameter_type;
+
+	virtual void operator ()() = 0;
+};
+
+// 对象函数模版
+template <typename TObject, typename TParameter>
+class function : public ifunction<TParameter>
+{
+public:
+	typedef TObject    object_type;    // 对象类型
+	typedef TParameter parameter_type; // 函数参数的类型
+
+	function(TObject& object, void(TObject::* p_function)(TParameter))
+		: p_object(&object),
+		p_function(p_function)
+	{
+	}
+
+	virtual void operator ()(TParameter data)
+	{
+		// 调用对象的成员函数
+		(p_object->*p_function)(data);
+	}
+
+private:
+	TObject* p_object;                        // 对象指针
+	void (TObject::* p_function)(TParameter); // 成员函数指针
+};
+
+// 对象无参函数模版
+template <typename TObject>
+class function<TObject, void> : public ifunction<void>
+{
+public:
+	function(TObject& object, void(TObject::* p_function)(void))
+		: p_object(&object),
+		p_function(p_function)
+	{
+	}
+
+	virtual void operator ()()
+	{
+		(p_object->*p_function)();
+	}
+
+private:
+	TObject* p_object;
+	void (TObject::* p_function)();
+};
+
+// 全局函数模版
+template <typename TParameter>
+class function<void, TParameter> : public ifunction<TParameter>
+{
+public:
+	function(void(*p_function)(TParameter))
+		: p_function(p_function)
+	{
+	}
+
+	virtual void operator ()(TParameter data)
+	{
+		(*p_function)(data);
+	}
+
+private:
+	void (*p_function)(TParameter);
+};
+
+template <>
+class function<void, void> : public ifunction<void>
+{
+public:
+	function(void(*p_function)(void))
+		: p_function(p_function)
+	{
+	}
+
+	virtual void operator ()()
+	{
+		(*p_function)();
+	}
+
+private:
+	void (*p_function)();
+};
+
 #endif //_Delegate_H_
