@@ -94,7 +94,7 @@ bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 		if(!rt.StartsWith("ERROR"))  return true;
 
 		// 设定小灯快闪时间，单位毫秒
-		if(Led) Led->Write(500);
+		if(Led) Led->Write(50);
 
 		// 如果进入了数据发送模式，则需要退出
 		if(rt.Sub(2, 2) == "\r\n" || rt.Sub(1, 2) == "\r\n")
@@ -195,15 +195,15 @@ bool Sim900A::Send(const Array& bs)
 	// 发送结束
 	ByteArray end(0x1A, 1);
 	Port->Write(end);
-
-	//指示灯闪烁
-	//Led.Start();
-	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(500);
-
+	
 	// 把SEND OK读取回来
-	SendCmd(NULL);
-	//SendCmd("AT+CIPSHUT\r");
+	if(SendCmd(NULL))
+	{
+		//指示灯闪烁
+		//Led.Start();
+		// 设定小灯快闪时间，单位毫秒
+		if(Led) Led->Write(500);
+	}	
 
 	return true;
 }
