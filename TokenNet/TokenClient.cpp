@@ -248,7 +248,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
-		//ext2.Name.Copy(Sys.ID, 16);
+		ext2.Name.Copy(Sys.ID, 16);
 		// 使用系统ID作为Key
 		ext2.Key.Copy(Sys.ID, 16);
 		auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
@@ -274,7 +274,7 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
     // 解析数据
 	Stream ms(msg.Data, msg.Length);
 
-	if(ms.ReadByte() < 0xFE) return false;
+	if(ms.ReadByte() != 0xFE) return false;
 
 	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= ms.ReadByte();
@@ -351,7 +351,7 @@ void TokenClient::Login()
 	//临时代码，兼容旧云端
 	if(login.Name.Length() < 8)
 	{
-		login.Name	= Sys.ID;
+		login.Name.Copy(Sys.ID, 16);
 		login.Key	= Sys.ID;
 	}
 	TokenMessage msg(2);
