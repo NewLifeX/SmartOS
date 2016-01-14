@@ -47,7 +47,7 @@ bool Sim900A::OnOpen()
 void Sim900A::OnClose()
 {
 	// 先断开已有连接
-	SendCmd("AT+CIPSHUT\r", 5);
+	SendCmd("AT+CIPSHUT\r");
 
 	Port->Close();
 }
@@ -71,7 +71,7 @@ String Sim900A::Send(const char* str, uint msTimeout)
 	bs.SetLength(bs.Capacity());
 
 	TimeWheel tw(0, msTimeout);
-	tw.Sleep	= 50;
+	tw.Sleep	= 100;
 	do
 	{
 		if(Port->Read(bs) >= 2) break;
@@ -104,7 +104,7 @@ bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 			Send("AT+CIPSHUT\r", msTimeout);
 		}
 
-		Sys.Sleep(1000);
+		Sys.Sleep(350);
 	}
 
 	return false;
@@ -121,7 +121,7 @@ void Sim900A::SendAPN(bool issgp)
 		str = "AT+CGDCONT=1,\"IP\"";
 	str = str + ",\"" + APN + "\"\r";
 
-	SendCmd(str.GetBuffer(), 2000, 2);
+	SendCmd(str.GetBuffer());
 }
 
 void Sim900A::SendDomain()
@@ -131,7 +131,7 @@ void Sim900A::SendDomain()
 	str = "AT+CIPSTART=\"UDP\"";
 	str = str + ",\"" + Domain + "\",\"3388\"\r";
 
-	SendCmd(str.GetBuffer(), 3000, 3);
+	SendCmd(str.GetBuffer());
 }
 
 void Sim900A::Init(uint msTimeout)
@@ -139,11 +139,12 @@ void Sim900A::Init(uint msTimeout)
 	// ATE0 关闭回显
 	// ATE1 开启回显
 	SendCmd("ATE0\r");
+	Send("AT+CIPSHUT\r");
 	SendCmd("AT+CGCLASS=\"B\"\r");
 	SendAPN(false);
 	SendCmd("AT+CGATT=1\r");
 	// 先断开已有连接
-	SendCmd("AT+CIPSHUT\r", 2000);
+	//SendCmd("AT+CIPSHUT\r");
 	//设置APN
 	SendAPN(true);
 	SendCmd("AT+CLPORT=\"UDP\",\"3399\"\r");
@@ -158,7 +159,7 @@ void Sim900A::Init(uint msTimeout)
 	SendDomain();
 
 	// 读取CONNECT OK
-	Inited = SendCmd(NULL, msTimeout);
+	Inited = SendCmd(NULL, 5000);
 	//SendCmd("AT+CIPSHUT\r");
 }
 
@@ -167,22 +168,30 @@ void Sim900A::Init(uint msTimeout)
 //使用最笨的任务方式进行进行处理
 bool Sim900A::Send(const Array& bs)
 {
-	if(!Inited) Init();
 	if(!Inited)
 	{
 		Close();
+		//关闭串口以后500ms后重新配置
+		Sys.Sleep(500);
+		Init();
 		return false;
 	}
 
 	// 进入发送模式
-	if(!SendCmd("AT+CIPSEND\r", 1000))
-	{
-		//Close();
+	auto b = SendCmd("AT+CIPSEND\r");
+	
+	//debug_printf("Sim900A::Send Data  Result:%d\r\n", b);
+	
+	if(!b)
+	{		
+		Init();
 		return false;
 	}
 
+	Sys.Sleep(250);
 	Port->Write(bs);
 
+	Sys.Sleep(250);
 	// 发送结束
 	ByteArray end(0x1A, 1);
 	Port->Write(end);

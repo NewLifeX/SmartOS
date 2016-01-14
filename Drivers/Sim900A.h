@@ -11,7 +11,8 @@ public:
     ITransport*	Port;
 	int			Speed;
 	COM			Com;
-	bool		Inited;
+	bool		Inited;	
+	bool		SendOK;
 	
 	const char*	Domain;
 
