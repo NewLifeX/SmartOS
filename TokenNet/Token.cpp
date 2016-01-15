@@ -212,7 +212,7 @@ ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerIn
 	nrf.Init(&spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Create();
-	if(tc->Interval == 0)
+	if(tc->New)
 	{
 		tc->Channel	= 120;
 		tc->Speed	= 250;
@@ -238,7 +238,7 @@ ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerIn
 ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
 	auto tc	= TinyConfig::Create();
-	if(tc->Interval == 0)
+	if(tc->New)
 	{
 		tc->Channel	= 0x0F;
 		tc->Speed	= 250;

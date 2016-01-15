@@ -220,7 +220,7 @@ TinyController::TinyController() : Controller()
 	{
 		bool flag	= false;
 		// 调整重发参数
-		if(cfg->Interval == 0)
+		if(cfg->Interval == 0 || cfg->Interval > 1000 || cfg->Timeout > 10000)
 		{
 			cfg->Interval	= Interval;
 			cfg->Timeout	= Timeout;
