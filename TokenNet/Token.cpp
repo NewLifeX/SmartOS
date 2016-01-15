@@ -214,8 +214,8 @@ ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerIn
 	auto tc	= TinyConfig::Create();
 	if(tc->Channel == 0)
 	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
+		//tc->Channel	= 120;
+		//tc->Speed	= 250;
 	}
 	if(tc->Interval == 0)
 	{
