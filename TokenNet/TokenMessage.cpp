@@ -164,11 +164,8 @@ void TokenController::Open()
 
 	debug_printf("TokenNet::Inited 使用传输接口 %s\r\n", Port->ToString());
 
-	ISocket* sock = dynamic_cast<ISocket*>(Port);
-	if(sock)
-	{
-		Server	= &sock->Remote;
-	}
+	auto sock	= dynamic_cast<ISocket*>(Port);
+	if(sock) Server	= &sock->Remote;
 
 	if(!Stat)
 	{
@@ -215,22 +212,19 @@ bool TokenController::Valid(const Message& msg)
 
 	// 握手和登录指令可直接通过
 	if(msg.Code <= 0x02) return true;
-	
+
 	if(Token != 0) return true;
 
 	// 合法来源验证，暂时验证云平台，其它连接将来验证
-	if(Server)
-	{
-		auto svr	= (IPEndPoint*)Server;
-		auto rmt	= (IPEndPoint*)msg.State;
+	auto svr	= (IPEndPoint*)Server;
+	auto rmt	= (IPEndPoint*)msg.State;
 
-		if(!rmt || *svr != *rmt)
-		{
-			debug_printf("Token::Valid 非法来源 ");
-			if(rmt) rmt->Show();
-			debug_printf("\r\n");
-			return false;
-		}
+	if(!rmt || svr && *svr != *rmt)
+	{
+		debug_printf("Token::Valid 非法来源 ");
+		if(rmt) rmt->Show();
+		debug_printf("\r\n");
+		return false;
 	}
 
 #if MSG_DEBUG
@@ -327,9 +321,9 @@ bool TokenController::OnReceive(Message& msg)
 bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
-	// 未登录，登录注册，握手可通过	
+	// 未登录，登录注册，握手可通过
 	//if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
-	
+
 	if(msg.Reply)
 		ShowMessage("Reply", msg);
 	else
