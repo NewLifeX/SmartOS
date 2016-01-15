@@ -74,11 +74,13 @@ ITransport* Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, I
 	nrf->Init(spi, ce, irq, power);
 
 	auto tc	= TinyConfig::Create();
-	if(tc->New)
+	if(tc->Channel == 0)
 	{
 		tc->Channel	= 120;
 		tc->Speed	= 250;
-
+	}
+	if(tc->Interval == 0)
+	{
 		tc->Interval= 40;
 		tc->Timeout	= 1000;
 	}
@@ -123,10 +125,13 @@ ITransport* CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, 
 {
 	auto tc	= TinyConfig::Create();
 	debug_printf("tc->Interval %d\r\n",tc->Interval );
-	if(tc->New)
+	if(tc->Channel == 0)
 	{
 		tc->Channel	= 0x0F;
 		tc->Speed	= 250;
+	}
+	if(tc->Interval == 0)
+	{
 		tc->Interval= 800;
 		tc->Timeout	= 2400;
 	}
