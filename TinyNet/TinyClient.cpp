@@ -61,7 +61,7 @@ void TinyClient::Open()
 
 	HardCrc	= Crc::Hash16(Array(Sys.ID, 16));
 	if(Sys.Version > 1) Encryption = true;
-	
+
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
 
@@ -202,15 +202,15 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 		Array bs(Cfg, Cfg->Length);
 		//debug_printf("\r\nCfg->Length %d\r\n",Cfg->Length);
 		rt	= dm.WriteData(bs, true);
-		
+
 		Cfg->Save();
 		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
 		rs.Error	= !rt;
 		rs.Length	= ms.Position();
 
 		Reply(rs);
-		
-		Sys.Sleep(200);		
+
+		Sys.Sleep(200);
 		Sys.Reset();
 	}
 
@@ -450,12 +450,12 @@ void TinyClient::Ping()
 {
 	TS("TinyClient::Ping");
 
-	ushort off = (Cfg->OfflineTime)*5;
-	debug_printf(" TinyClient::Ping  Cfg->OfflineTime:%d\r\n", Cfg->OfflineTime);
+	/*ushort off = (Cfg->OfflineTime)*5;
+	//debug_printf(" TinyClient::Ping  Cfg->OfflineTime:%d\r\n", Cfg->OfflineTime);
     ushort now = Sys.Seconds();
-	
+
 	if(off < 10) off = 30;
-	
+
 	if(LastActive > 0 && LastActive + off * 1000 < Sys.Ms())
 	{
 		if(Server == 0) return;
@@ -477,7 +477,7 @@ void TinyClient::Ping()
 		//Password.SetLength(0);
 
 		//return;
-	}
+	}*/
 
 	TinyMessage msg;
 	msg.Code = 3;
