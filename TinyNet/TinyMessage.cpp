@@ -445,7 +445,7 @@ bool TinyController::Valid(const Message& _msg)
 				// 对方可能多次发同一个请求过来，都要做响应
 				if(!msg.Reply && AckResponse(msg)) return false;
 
-				msg_printf("重复消息 Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
+				//msg_printf("重复消息 Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Reply=%d Ack=%d\r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, msg.Reply, msg.Ack);
 				return false;
 			}
 			_Ring.Push(seq);
@@ -553,8 +553,8 @@ bool TinyController::AckResponse(const TinyMessage& msg)
 
 			Sys.SetTask(_taskID, true, 0);
 
-			msg_printf("重发响应 ");
-			msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry);
+			//msg_printf("重发响应 ");
+			//msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry);
 			return true;
 		}
 	}
