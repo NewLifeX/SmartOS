@@ -570,7 +570,6 @@ bool TinyController::Send(Message& _msg)
 
 	// 附上自己的地址
 	msg.Src = Address;
-
 	// 附上序列号。响应消息保持序列号不变
 	if(!msg.Reply) msg.Seq = ++_Sequence;
 
