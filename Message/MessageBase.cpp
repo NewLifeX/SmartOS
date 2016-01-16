@@ -4,13 +4,21 @@
 MessageBase::MessageBase()
 {
 	Reply	= false;
+	Error	= false;
+}
+
+MessageBase::MessageBase(const MessageBase& msg)
+{
+	Reply	= msg.Reply;
+	Error	= msg.Error;
 }
 
 bool MessageBase::ReadMessage(const Message& msg)
 {
 	TS("MessageBase::ReadMessage");
 
-	Reply = msg.Reply;
+	Reply	= msg.Reply;
+	Error	= msg.Error;
 
 	Stream ms(msg.Data, msg.Length);
 	return Read(ms);

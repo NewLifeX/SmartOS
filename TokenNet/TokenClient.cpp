@@ -149,8 +149,9 @@ void LoopTask(void* param)
 }
 
 // 发送发现消息，告诉大家我在这
-// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + N支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + 1加密算法 + N密钥
+// 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
+// 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
+// 错误：0xFE + 1协议 + S服务器 + 2端口
 void TokenClient::SayHello(bool broadcast, int port)
 {
 	TokenMessage msg(0x01);
@@ -186,12 +187,19 @@ void TokenClient::SayHello(bool broadcast, int port)
 // 握手响应
 bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 {
+	// 解析数据
+	HelloMessage ext;
+	ext.Reply = msg.Reply;
+
+	ext.ReadMessage(msg);
+	ext.Show(true);
+
 	// 如果收到响应，并且来自来源服务器
 	if(msg.Reply)
 	{
 		if(msg.Error)
 		{
-			if(HelloRedirect(msg)) return false;
+			if(OnRedirect(ext)) return false;
 
 			Stream ms = msg.ToStream();
 			byte err  = ms.ReadByte();
@@ -207,13 +215,6 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		}
 		else
 		{
-			// 解析数据
-	        HelloMessage ext;
-	        ext.Reply = msg.Reply;
-
-	        ext.ReadMessage(msg);
-	        ext.Show(true);
-
 			// 通讯密码
 			if(ext.Key.Length() > 0)
 			{
@@ -269,27 +270,24 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::HelloRedirect(TokenMessage& msg)
+bool TokenClient::OnRedirect(const HelloMessage& msg) const
 {
-    // 解析数据
-	Stream ms(msg.Data, msg.Length);
-
-	if(ms.ReadByte() != 0xFE) return false;
+	if(msg.ErrCode != 0xFE && msg.ErrCode != 0xFD) return false;
 
 	auto cfg	= TokenConfig::Current;
-	cfg->Protocol	= ms.ReadByte();
+	cfg->Protocol	= msg.Protocol;
 
-	uint len = ms.ReadByte();
-
-	if(len > ArrayLength(cfg-> Server)) len = ArrayLength(cfg-> Server);
-	for(int i=0;i!=len;i++)
+	uint len = ArrayLength(cfg->Server);
+	if(msg.Server.Length() > len)
 	{
-		cfg-> Server[i]=ms.ReadByte();
-    }
+		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len, msg.Server.GetBuffer());
+		return false;
+	}
+	msg.Server.CopyTo(cfg->Server, 0, 0);
+	cfg->Port = msg.Port;
 
-	cfg->ServerPort = ms.ReadUInt16();
-	debug_printf("cfg->ServerPort:%d\r\n",cfg->ServerPort);
-	strcpy(cfg->Vendor, "s1.peacemoon.cn");
+	// 0xFD永久改变厂商地址
+	if(msg.ErrCode != 0xFD) msg.Server.CopyTo(cfg->Vendor, 0, 0);
 
 	cfg->Save();
     cfg->Show();
@@ -298,6 +296,7 @@ bool TokenClient::HelloRedirect(TokenMessage& msg)
 
 	return true;
 }
+
 //注册
 void TokenClient::Register()
 {

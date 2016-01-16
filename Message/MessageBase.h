@@ -9,10 +9,12 @@
 class MessageBase : public Object
 {
 public:
-	bool		Reply;	// 是否响应
+	bool	Reply;	// 是否响应
+	bool	Error;	// 是否错误
 
 	// 初始化消息，各字段为0
 	MessageBase();
+	MessageBase(const MessageBase& msg);
 
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms) = 0;

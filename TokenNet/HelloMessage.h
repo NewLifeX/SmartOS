@@ -5,8 +5,9 @@
 #include "Net\Net.h"
 
 // 握手消息
-// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + 1加密算法 + N密钥
+// 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
+// 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
+// 错误：0xFE + 1协议 + S服务器 + 2端口
 class HelloMessage : public MessageBase
 {
 public:
@@ -21,16 +22,17 @@ public:
 
 	byte		ErrCode;	// 错误码
 
-	byte	Protocol;		// 协议，TCP=1/UDP=2
-	ushort	Port;			// 本地端口
+	byte		Protocol;	// 协议，TCP=1/UDP=2
+	ushort		Port;		// 本地端口
+	String		Server;		// 服务器地址。可能是域名或IP
 
-	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
-	ushort	ServerPort;		// 服务器端口
-	char	Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
+	//uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
+	//ushort	ServerPort;		// 服务器端口
+	//char	Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
 
 	// 初始化消息，各字段为0
 	HelloMessage();
-	HelloMessage(HelloMessage& msg);
+	HelloMessage(const HelloMessage& msg);
 
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms);

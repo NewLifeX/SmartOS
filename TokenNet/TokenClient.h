@@ -53,15 +53,15 @@ public:
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
 	bool OnHello(TokenMessage& msg, Controller* ctrl);
-	//注册
+	// 跳转
+	bool OnRedirect(const HelloMessage& msg) const;
+	// 注册
 	void Register();
 	void OnRegister(TokenMessage& msg, Controller* ctrl);
 	// 登录
 	void Login();	
 	void Login(TokenMessage& msg,Controller* ctrl);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
-	//设置网络配置
-	bool HelloRedirect(TokenMessage& msg);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();

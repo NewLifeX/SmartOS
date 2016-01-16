@@ -1,8 +1,9 @@
 ﻿#include "Time.h"
 #include "HelloMessage.h"
 
-// 请求：2版本 + S类型 + S名称 + 8本地时间 + 本地IP端口 + S支持加密算法列表
-// 响应：2版本 + S类型 + S名称 + 8对方时间 + 对方IP端口 + S加密算法 + N密钥
+// 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
+// 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
+// 错误：0xFE + 1协议 + S服务器 + 2端口
 
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Ciphers(1), Key(0)
@@ -15,10 +16,12 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
+
 	Protocol	= 2;
+	Port		= 0;
 }
 
-HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(0)
+HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Ciphers(1), Key(0)
 {
 	Version		= msg.Version;
 	Type		= msg.Type;
@@ -27,20 +30,36 @@ HelloMessage::HelloMessage(HelloMessage& msg) : Ciphers(1), Key(0)
 	EndPoint	= msg.EndPoint;
 	Ciphers		= msg.Ciphers;
 	Key			= msg.Key;
-	Reply		= msg.Reply;
+
+	Protocol	= msg.Protocol;
+	Port		= msg.Port;
+	Server		= msg.Server;
 }
 
 // 从数据流中读取消息
 bool HelloMessage::Read(Stream& ms)
-{	
+{
+	if(Reply && Error)
+	{
+		byte err	= ms.ReadByte();
+		if(err == 0xFE || err == 0xFD)
+		{
+			Protocol	= ms.ReadByte();
+			Server		= ms.ReadArray();
+			Port		= ms.ReadUInt16();
+		}
+		else
+		{
+			debug_printf("无法识别错误码 0x%02X \r\n", err);
+
+			return false;
+		}
+	}
+
 	Version		= ms.ReadUInt16();
 	Type		= ms.ReadString();
 	Name		= ms.ReadString();
-
 	LocalTime	= ms.ReadUInt64();
-
-	//EndPoint.Address	= ms.ReadBytes(4);
-	//EndPoint.Port		= ms.ReadUInt16();
 	EndPoint	= ms.ReadArray(6);
 
 	if(!Reply)
@@ -62,17 +81,9 @@ bool HelloMessage::Read(Stream& ms)
 void HelloMessage::Write(Stream& ms) const
 {
 	ms.Write(Version);
-
 	ms.WriteArray(Type);
-	if(Name.Length() != 0)
-		ms.WriteArray(Name);
-	else
-		ms.WriteArray(String(Sys.Company));
-
+	ms.WriteArray(Name);
 	ms.Write(LocalTime);
-
-	//ms.Write(EndPoint.Address.ToArray());
-	//ms.Write((ushort)EndPoint.Port);
 	ms.Write(EndPoint.ToArray());
 
 	if(!Reply)
@@ -92,6 +103,20 @@ String& HelloMessage::ToStr(String& str) const
 {
 	str += "握手";
 	if(Reply) str += "#";
+
+	if(Reply && Error)
+	{
+		if(Protocol == 1)
+			str = str + " TCP ";
+		else if(Protocol == 2)
+			str = str + " UDP ";
+
+		str += Server;
+		str = str + " " + Port;
+
+		return str;
+	}
+
 	str.Append(" Ver=").Append(Version, 16, 4);
 	str = str + " " + Type + " " + Name + " ";
 
