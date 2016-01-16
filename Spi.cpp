@@ -117,11 +117,11 @@ void Spi::Open()
 
 	Pin* ps = Pins;
     // 端口配置，销毁Spi对象时才释放
-    debug_printf("    CLK : ");
+    debug_printf("\t CLK : ");
     _clk.Set(ps[1]).Open();
-    debug_printf("    MISO: ");
+    debug_printf("\t MISO: ");
     _miso.Set(ps[2]).Open();
-    debug_printf("    MOSI: ");
+    debug_printf("\t MOSI: ");
     _mosi.Set(ps[3]).Open();
 
     if(ps[0] != P0)
@@ -192,13 +192,13 @@ void Spi::Close()
 	SPI_Cmd((SPI_TypeDef*)_SPI, DISABLE);
 	SPI_I2S_DeInit((SPI_TypeDef*)_SPI);
 
-	debug_printf("    CLK : ");
+	debug_printf("\t CLK : ");
 	_clk.Close();
-	debug_printf("    MISO: ");
+	debug_printf("\t MISO: ");
 	_miso.Close();
-	debug_printf("    MOSI: ");
+	debug_printf("\t MOSI: ");
 	_mosi.Close();
-	debug_printf("    NSS : ");
+	debug_printf("\t NSS : ");
 	_nss.Close();
 
 	Opened = false;

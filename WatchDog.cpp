@@ -111,7 +111,7 @@ bool WatchDog::Config(uint ms)
 {
 	if(ms == 0)
 	{
-		debug_printf("WatchDog msTimeout %dms must larger than 0ms\r\n", ms);
+		debug_printf("WatchDog msTimeout %d 必须大于 0\r\n", ms);
 		return false;
 	}
 	OpenWatchDog();
@@ -140,7 +140,7 @@ bool WatchDog::Config(uint ms)
 	}
 	if(i > IWDG_Prescaler_256)
 	{
-		debug_printf("WatchDog msTimeout must smaller than %dms\r\n", 0x0FFF * 256 / 40);
+		debug_printf("WatchDog msTimeout 必须小于 %d\r\n", 0x0FFF * 256 / 40);
 		return false;
 	}
 

@@ -94,7 +94,7 @@ byte* Stream::Current() const { return &_Buffer[_Position]; }
 // 从当前位置读取数据
 uint Stream::Read(void* buf, uint offset, int count)
 {
-	assert_param2(buf, "从数据流读取数据需要有效的缓冲区");
+	assert_param2(buf, "Stream::Read buf Error");
 
 	if(count == 0) return 0;
 
@@ -136,7 +136,7 @@ uint Stream::Read(Array& bs)
 // 把数据写入当前位置
 bool Stream::Write(const void* buf, uint offset, uint count)
 {
-	assert_param2(buf, "向数据流写入数据需要有效的缓冲区");
+	assert_param2(buf, "Stream::Read buf Error");
 
 	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;

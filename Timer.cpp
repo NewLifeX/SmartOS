@@ -57,7 +57,7 @@ Timer* Timer::Create(byte index)
 
 		if(i >= tcount)
 		{
-			debug_printf("Timer::Create 失败！没有空闲定时器可用！\r\n");
+			debug_printf("Timer::Create 失败！没有空闲定时器！\r\n");
 			return NULL;
 		}
 
@@ -112,10 +112,10 @@ void Timer::Open()
 	if(clk < Sys.Clock) clk <<= 1;
 
 	uint fre = clk / Prescaler / Period;
-	debug_printf("Timer%d::Open clk=%d Prescaler=%d Period=%d Frequency=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
+	debug_printf("Timer%d::Open clk=%d Prescaler=%d Period=%d Fre=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
 #endif
 
-	assert_param2(fre > 0, "频率超出允许的范围");
+	assert_param2(fre > 0, "频率超出范围");
 
 	// 打开时钟
 	ClockCmd(true);
@@ -216,7 +216,7 @@ void Timer::SetFrequency(uint frequency)
 		Div++;
 	}
 
-	assert_param2(frequency > 0 && frequency <= clk, "频率超出允许的范围");
+	assert_param2(frequency > 0 && frequency <= clk, "频率超出范围");
 
 	Prescaler	= psc;
 	Period		= prd;

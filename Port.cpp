@@ -191,7 +191,7 @@ void Port::OnOpen(void* param)
 		case PB3:
 		case PB4:
 		{
-			debug_printf("关闭 JTAG 为 P%c%d", _PIN_NAME(_Pin));
+			debug_printf("Close JTAG Pin P%c%d", _PIN_NAME(_Pin));
 
 			// PA15是jtag接口中的一员 想要使用 必须开启remap
 			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -205,7 +205,7 @@ void Port::OnOpen(void* param)
 void Port::AFConfig(GPIO_AF GPIO_AF) const
 {
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-	assert_param2(Opened, "必须打开端口以后才能配置AF");
+	assert_param2(Opened, "打开后才能配置AF");
 
 	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _PIN(_Pin), GPIO_AF);
 #endif
@@ -233,7 +233,7 @@ bool Port::Reserve(Pin pin, bool flag)
     if (flag) {
         if (Reserved[port] & bit) {
 			// 增加针脚已经被保护的提示，很多地方调用ReservePin而不写日志，得到False后直接抛异常
-			debug_printf("打开 P%c%d 失败！该引脚已被打开", _PIN_NAME(pin));
+			debug_printf("P%c%d 已被打开", _PIN_NAME(pin));
 			return false; // already reserved
 		}
         Reserved[port] |= bit;
@@ -255,7 +255,7 @@ bool Port::Reserve(Pin pin, bool flag)
 
 		config >>= shift;	// 移位到最右边
 		config &= 0xF;
-		debug_printf("关闭 P%c%d Config=0x%02x", _PIN_NAME(pin), config);
+		debug_printf("关闭 P%c%d Cfg=0x%02x", _PIN_NAME(pin), config);
 #else
 		debug_printf("关闭 P%c%d", _PIN_NAME(pin));
 #endif

@@ -153,12 +153,12 @@ bool Array::SetLength(int length, bool bak)
 // 设置数组元素为指定值，自动扩容
 bool Array::SetItem(const void* data, int index, int count)
 {
-	assert_param2(_canWrite, "禁止SetItem修改数组数据");
-	assert_param2(data, "SetItem数据不能为空指针");
+	assert_param2(_canWrite, "禁止SetItem修改");
+	assert_param2(data, "Array::SetItem data Error");
 
 	// count<=0 表示设置全部元素
 	if(count <= 0) count = _Length - index;
-	assert_param2(count > 0, "Array::SetItem的个数必须大于0");
+	assert_param2(count > 0, "Array::SetItem count Error");
 
 	// 检查长度是否足够
 	int len2 = index + count;
@@ -213,8 +213,8 @@ bool Array::Set(const void* data, int len)
 // 复制数组。深度克隆，拷贝数据，自动扩容
 int Array::Copy(const void* data, int len, int index)
 {
-	assert_param2(_canWrite, "禁止CopyData修改数组数据");
-	assert_param2(data, "Copy数据不能为空指针");
+	assert_param2(_canWrite, "禁止CopyData修改");
+	assert_param2(data, "Array::Copy data Error");
 
 	if(!len) len = MemLen(data);
 
@@ -234,7 +234,7 @@ int Array::Copy(const void* data, int len, int index)
 // 复制数组。深度克隆，拷贝数据
 int Array::Copy(const Array& arr, int index)
 {
-	assert_param2(_canWrite, "禁止CopyArray修改数组数据");
+	assert_param2(_canWrite, "禁止CopyArray修改数据");
 
 	if(&arr == this) return 0;
 	if(arr.Length() == 0) return 0;
@@ -245,7 +245,7 @@ int Array::Copy(const Array& arr, int index)
 // 把当前数组复制到目标缓冲区。未指定长度len时复制全部
 int Array::CopyTo(void* data, int len, int index) const
 {
-	assert_param2(data, "CopyTo数据不能为空指针");
+	assert_param2(data, "Array::CopyTo data Error");
 
 	// 数据长度可能不足
 	if(_Length - index < len || len <= 0) len = _Length - index;
@@ -260,7 +260,7 @@ int Array::CopyTo(void* data, int len, int index) const
 // 清空已存储数据。
 void Array::Clear()
 {
-	assert_param2(_canWrite, "禁止Clear修改数组数据");
+	assert_param2(_canWrite, "禁止Clear修改");
 	assert_param2(_Arr, "Clear数据不能为空指针");
 
 	memset(_Arr, 0, _Size * _Length);
@@ -269,7 +269,7 @@ void Array::Clear()
 // 设置指定位置的值，不足时自动扩容
 void Array::SetItemAt(int i, const void* item)
 {
-	assert_param2(_canWrite, "禁止SetItemAt修改数组数据");
+	assert_param2(_canWrite, "禁止SetItemAt修改");
 
 	// 检查长度，不足时扩容
 	CheckCapacity(i + 1, _Length);
@@ -283,7 +283,7 @@ void Array::SetItemAt(int i, const void* item)
 // 重载索引运算符[]，返回指定元素的第一个字节
 byte& Array::operator[](int i) const
 {
-	assert_param2(_Arr && i >= 0 && i < _Length, "数组下标越界");
+	assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
 
 	byte* buf = (byte*)_Arr;
 	if(_Size > 1) i *= _Size;
