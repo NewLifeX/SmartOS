@@ -121,29 +121,31 @@ SHT30::~SHT30()
 void SHT30::Init()
 {
 #if DEBUG
-	debug_printf("\r\nSHT30::Init Address=0x%02X ", Address);
+	debug_printf("\r\nSHT30::Init Addr=0x%02X ", Address);
 	switch (Mode)
 	{
 	case 0:
-		debug_printf(" Stretch阻塞模式");
+		debug_printf(" 阻塞模式");	// Stretch
 		break;
 	case 1:
-		debug_printf(" Polling非阻塞模式");
+		debug_printf(" 非阻塞模式");	// Polling
 		break;
 	case 2:
-		debug_printf(" 内部定期采集模式 每秒%d次", Freq);
+		debug_printf(" 内部定期采集 每秒%d次", Freq);
 		break;
 	}
+	
+	debug_printf(" 重复性 ");
 	switch (Repeat)
 	{
 	case REPEATAB_LOW:
-		debug_printf(" 低重复性");
+		debug_printf("低");
 		break;
 	case REPEATAB_MEDIUM:
-		debug_printf(" 中重复性");
+		debug_printf("中");
 		break;
 	case REPEATAB_HIGH:
-		debug_printf(" 高重复性");
+		debug_printf("高");
 		break;
 	}
 	debug_printf("\r\n");
@@ -265,12 +267,12 @@ bool SHT30::CheckStatus()
 	if(st != 0)
 	{
 		uint sn		= ReadSerialNumber();
-		debug_printf("SerialNumber=0x%08X Status=0x%04X \r\n", sn, st);
-		//debug_printf("Status=0x%04X ", st);
-		if(rs.bit.ResetDetected)	debug_printf(" ResetDetected");
-		if(rs.bit.HeaterStatus)		debug_printf(" HeaterStatus");
-		if(rs.bit.AlertPending)		debug_printf(" AlertPending");
-		debug_printf("\r\n");
+		debug_printf("SNum=0x%08X Status=0x%04X \r\n", sn, st);
+		debug_printf("Status=0x%04X \r\n", st);
+		//if(rs.bit.ResetDetected)		debug_printf(" RstDet");	// ResetDetected
+		//if(rs.bit.HeaterStatus)		debug_printf(" HatSta");	// HeaterStatus
+		//if(rs.bit.AlertPending)		debug_printf(" AltPed");	// AlertPending
+		//debug_printf("\r\n");
 	}
 #endif
 

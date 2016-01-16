@@ -30,7 +30,7 @@ BH1750::~BH1750()
 
 void BH1750::Init()
 {
-	debug_printf("\r\nBH1750::Init Address=0x%02X \r\n", Address);
+	debug_printf("\r\nBH1750::Init Addr=0x%02X \r\n", Address);
 
 	IIC->Address = Address << 1;
 

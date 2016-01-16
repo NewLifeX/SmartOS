@@ -58,11 +58,12 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 3，读取模式，如果有子地址，先发送写地址，再发送子地址，然后重新开始并发送读地址
 
 	// 发送写入地址
+	debug_printf("I2C::SendAddr\t");
 	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
     WriteByte(d);
 	if(!WaitAck())
 	{
-		debug_printf("I2C::SendAddress 可能设备未连接，或地址 0x%02X 不对 \r\n", d);
+		debug_printf("可能设备未连接，或地址 0x%02X 不对\r\n", d);
 		return false;
 	}
 
@@ -71,7 +72,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 发送子地址
 	if(!SendSubAddr(addr))
 	{
-		debug_printf("I2C::SendAddress 发送子地址 0x%02X 失败 \r\n", addr);
+		debug_printf("发送子地址 0x%02X 失败\r\n", addr);
 		return false;
 	}
 
@@ -89,7 +90,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	}
 	if(!rs)
 	{
-		debug_printf("I2C::SendAddress 发送读取地址 0x%02X 失败 \r\n", d);
+		debug_printf("发送读取地址 0x%02X 失败\r\n", d);
 		return false;
 	}
 
@@ -495,7 +496,7 @@ void SoftI2C::OnOpen()
 {
 	assert_param2(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
-	debug_printf("I2C::Open Address=0x%02X \r\n", Address);
+	debug_printf("I2C::Open Addr=0x%02X \r\n", Address);
 
 	// 开漏输出
 	SCL.OpenDrain = true;
