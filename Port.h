@@ -159,8 +159,6 @@ public:
 
 	// 注册事件
     bool Register(IOReadHandler handler, void* param = NULL);
-	// 独享中断号
-	bool IsOnlyExOfInt();
 	void OnPress(bool down);
 
     operator bool() const { return Read(); }

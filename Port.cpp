@@ -469,7 +469,6 @@ void AlternatePort::OnOpen(void* param)
 typedef struct TIntState
 {
     InputPort*	Port;
-    bool	OldValue;
 } IntState;
 
 // 16条中断线
@@ -617,24 +616,16 @@ void GPIO_ISR(int num)  // 0 <= num <= 15
 {
 	if(!hasInitState) return;
 
-	IntState* st = States + num;
-	if(!st) return;
-
-	uint bit = 1 << num;
-	bool value;
-	//byte line = EXTI_Line0 << num;
+	auto st = &States[num];
 	// 如果未指定委托，则不处理
-	if(!st->Port) return;
+	if(!st || !st->Port) return;
 
+	uint bit	= 1 << num;
+	bool value;
 	do {
-		EXTI->PR = bit;   // 重置挂起位
-		value = st->Port->Read(); // 获取引脚状态
+		EXTI->PR	= bit;   // 重置挂起位
+		value	= st->Port->Read(); // 获取引脚状态
 	} while (EXTI->PR & bit); // 如果再次挂起则重复
-	//EXTI_ClearITPendingBit(line);
-	// 值必须有变动才触发
-	//if(shakeTime > 0 && value == st->OldValue) return;
-	st->OldValue = value;
-	//st->Port->OnPress(value ^ st->Port->Invert);
 	// Read的时候已经计算倒置，这里不必重复计算
 	st->Port->OnPress(value);
 }
@@ -645,59 +636,15 @@ void EXTI_IRQHandler(ushort num, void* param)
 	// EXTI0 - EXTI4
 	if(num <= EXTI4_IRQn)
 		GPIO_ISR(num - EXTI0_IRQn);
-	else if(num == EXTI9_5_IRQn)
-	{
-		// EXTI5 - EXTI9
-		uint pending = EXTI->PR & EXTI->IMR & 0x03E0; // pending bits 5..9
-		int num = 5; pending >>= 5;
-		do {
-			if (pending & 1) GPIO_ISR(num);
-			num++; pending >>= 1;
-		} while (pending);
-	}
-	else if(num == EXTI15_10_IRQn)
-	{
-		// EXTI10 - EXTI15
-		uint pending = EXTI->PR & EXTI->IMR & 0xFC00; // pending bits 10..15
-		int num = 10; pending >>= 10;
-		do {
-			if (pending & 1) GPIO_ISR(num);
-			num++; pending >>= 1;
-		} while (pending);
-	}
-#elif defined(STM32F0) || defined(GD32F150)
-	switch(num)
-	{
-		case EXTI0_1_IRQn:
-		{
-			uint pending = EXTI->PR & EXTI->IMR & 0x0003; // pending bits 0..1
-			int num = 0; pending >>= 0;
-			do {
-				if (pending & 1) GPIO_ISR(num);
-				num++; pending >>= 1;
-			} while (pending);
-			break;
-		}
-		case EXTI2_3_IRQn:
-		{
-			uint pending = EXTI->PR & EXTI->IMR & 0x000c; // pending bits 3..2
-			int num = 2; pending >>= 2;
-			do {
-				if (pending & 1) GPIO_ISR(num);
-				num++; pending >>= 1;
-			} while (pending);
-		}
-		case EXTI4_15_IRQn:
-		{
-			uint pending = EXTI->PR & EXTI->IMR & 0xFFF0; // pending bits 4..15
-			int num = 4; pending >>= 4;
-			do {
-				if (pending & 1) GPIO_ISR(num);
-				num++; pending >>= 1;
-			} while (pending);
-		}
-	}
+	else
 #endif
+	{
+		uint pending = EXTI->PR & EXTI->IMR;
+		for(int i=0; i < 16 && pending != 0; i++, pending >>= 1)
+		{
+			if (pending & 1) GPIO_ISR(i);
+		}
+	}
 }
 #endif
 
@@ -792,46 +739,44 @@ void InputPort::OnOpen(void* param)
 	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
+
 // 是否独享中断号
-bool InputPort::IsOnlyExOfInt()
+bool IsOnlyExOfInt(const InputPort* pt, int idx)
 {
-	if(!hasInitState)
-	{
-		debug_printf("States Error\r\n");
-		return true;
-	}
-	int idx = Bits2Index(Mask);
+	int s=0, e=0;
 #if defined(STM32F1) || defined(STM32F4)
-	if(idx <= 4)
-	{
-		for(int i = 0; i <= 4; i++)
-			if(States[i].Port != NULL && States[i].Port != this)return false;
-	}
+	if(idx <= 4) return true;
+	
 	if(idx <= 9)
 	{
-		for(int i = 5; i <= 9; i++)
-			if(States[i].Port != NULL && States[i].Port != this)return false;
+		s	= 5;
+		e	= 9;
 	}
-	if(idx <= 15)
+	else if(idx <= 15)
 	{
-		for(int i = 10; i <= 15; i++)
-			if(States[i].Port != NULL && States[i].Port != this)return false;
+		s	= 10;
+		e	= 15;
 	}
 #elif defined(STM32F0) || defined(GD32F150)
-	if(idx < 2)
+	if(idx <= 1)
 	{
-		if(States[0].Port != NULL && States[1].Port != NULL)return false;
+		s	= 0;
+		e	= 1;
 	}
-	if(idx < 4)
+	else if(idx <= 3)
 	{
-		if(States[2].Port != NULL && States[3].Port != NULL)return false;
+		s	= 2;
+		e	= 3;
 	}
-	if(idx <= 15)
+	else if(idx <= 15)
 	{
-		for(int i = 5; i <= 15; i++)
-			if(States[i].Port != NULL && States[i].Port != this)return false;
+		s	= 4;
+		e	= 15;
 	}
 #endif
+	for(int i = s; i <= e; i++)
+		if(States[i].Port != NULL && States[i].Port != pt) return false;
+
 	return true;
 }
 
@@ -841,13 +786,13 @@ void InputPort::OnClose()
 
 	int idx = Bits2Index(Mask);
 
-    IntState* st = &States[idx];
+    auto st = &States[idx];
 	if(st->Port == this)
 	{
 		st->Port = NULL;
 
 		SetEXIT(idx, false, GetTrigger(Mode, Invert));
-		if(!IsOnlyExOfInt())return;
+		if(!IsOnlyExOfInt(this, idx))return;
 		Interrupt.Deactivate(PORT_IRQns[idx]);
 	}
 }
@@ -865,8 +810,7 @@ bool InputPort::Register(IOReadHandler handler, void* param)
     {
         for(int i=0; i<16; i++)
         {
-            auto st = &States[i];
-            st->Port	= NULL;
+            States[i].Port	= NULL;
         }
         hasInitState = true;
     }
@@ -887,7 +831,6 @@ bool InputPort::Register(IOReadHandler handler, void* param)
         return false;
     }
     st->Port		= this;
-	st->OldValue	= Read(); // 预先保存当前状态值，后面跳变时触发中断
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
