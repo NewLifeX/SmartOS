@@ -49,7 +49,7 @@ void TinyClient::Open()
 
 	TranID	= (int)Sys.Ms();
 
-	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 20000, "客户端服务");
+	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "微网客户端");
 
 	if(Cfg->Address > 0 && Cfg->Server > 0)
 	{
@@ -200,18 +200,9 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	{
 		dm.Offset	-= 64;
 		Array bs(Cfg, Cfg->Length);
-		//debug_printf("\r\nCfg->Length %d\r\n",Cfg->Length);
 		rt	= dm.WriteData(bs, true);
 
 		Cfg->Save();
-		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
-		rs.Error	= !rt;
-		rs.Length	= ms.Position();
-
-		Reply(rs);
-
-		Sys.Sleep(200);
-		Sys.Reset();
 	}
 
 	rs.Error	= !rt;
@@ -219,28 +210,15 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 
 	Reply(rs);
 
+	if(dm.Offset >= 64 && dm.Offset < 128)
+	{
+		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
+		Sys.Sleep(200);
+		Sys.Reset();
+	}
+
 	// 写入指令以后，为了避免写入响应丢失，缩短心跳间隔
-	Sys.SetTask(_TaskID, true, 200);
-}
-
-void TinyClient::Report(Message& msg)
-{
-	TS("TinyMessage::Report");
-	// 没有服务端时不要上报
-	if(!Server) return;
-
-	auto ms = msg.ToStream();
-	PingMessage pm;
-	pm.MaxSize	= ms.Capacity();
-	uint len = Control->Port->MaxSize - TinyMessage::MinSize;
-	if(pm.MaxSize > len) pm.MaxSize = len;
-
-	pm.WriteData(ms, 0x01, Store.Data);
-
-	pm.WriteHardCrc(ms, HardCrc);
-	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
-
-	msg.Length = ms.Position();
+	Sys.SetTask(_TaskID, true, 500);
 }
 
 bool TinyClient::Report(uint offset, byte dat)
@@ -289,10 +267,11 @@ void TinyClientTask(void* param)
 	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
 	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
+
 	if(offset)
 	{
 		// 检查索引，否则数组越界
-		ByteArray& bs = client->Store.Data;
+		auto& bs = client->Store.Data;
 		if(bs.Length() > offset) client->Report(offset, bs[offset]);
 		client->NextReport = 0;
 		return;
@@ -329,7 +308,6 @@ void TinyClient::Join()
 	dm.Kind		= Type;
 	dm.HardID.Copy(Sys.ID, 16);
 	dm.TranID	= TranID;
-	//dm.Name		= Cfg->Name;
 	dm.WriteMessage(msg);
 	dm.Show(true);
 
@@ -479,14 +457,25 @@ void TinyClient::Ping()
 		//return;
 	}*/
 
+	// 没有服务端时不要上报
+	if(!Server) return;
+
 	TinyMessage msg;
 	msg.Code = 3;
 
-	Report(msg);
+	auto ms = msg.ToStream();
+	PingMessage pm;
+	pm.MaxSize	= ms.Capacity();
+	uint len = Control->Port->MaxSize - TinyMessage::MinSize;
+	if(pm.MaxSize > len) pm.MaxSize = len;
+
+	pm.WriteData(ms, 0x01, Store.Data);
+	pm.WriteHardCrc(ms, HardCrc);
+	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
+
+	msg.Length = ms.Position();
 
 	Send(msg);
-
-	if(LastActive == 0) LastActive = Sys.Ms();
 }
 
 bool TinyClient::OnPing(const TinyMessage& msg)
@@ -500,8 +489,6 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 	if(!msg.Reply)return true;
 
 	if(msg.Src != Server) return true;
-
-	//LastActive = Sys.Ms();
 
 	// 处理消息
 	auto ms	= msg.ToStream();
@@ -518,7 +505,6 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 				if(pm.ReadTime(ms, seconds))
 				{
 					Time.SetTime(seconds);
-					//LastActive = Sys.Ms();
 				}
 				break;
 			}
