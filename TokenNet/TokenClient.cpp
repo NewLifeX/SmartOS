@@ -284,7 +284,7 @@ bool TokenClient::OnRedirect(const HelloMessage& msg) const
 		return false;
 	}
 	msg.Server.CopyTo(cfg->Server, 0, 0);
-	cfg->Port = msg.Port;
+	cfg->ServerPort = msg.Port;
 
 	// 0xFD永久改变厂商地址
 	if(msg.ErrCode != 0xFD) msg.Server.CopyTo(cfg->Vendor, 0, 0);
