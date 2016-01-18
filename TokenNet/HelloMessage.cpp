@@ -3,7 +3,7 @@
 
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
-// 错误：0xFE + 1协议 + S服务器 + 2端口
+// 错误：0xFE/0xFD + 1协议 + S服务器 + 2端口
 
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Ciphers(1), Key(0)
@@ -41,20 +41,26 @@ bool HelloMessage::Read(Stream& ms)
 {
 	if(Reply && Error)
 	{
-		byte err	= ms.ReadByte();
-		if(err == 0xFE || err == 0xFD)
+		ErrCode	= ms.ReadByte();
+		if(ErrCode == 0xFE || ErrCode == 0xFD)
 		{
 			Protocol	= ms.ReadByte();
-			Server		= ms.ReadArray();
+			Server		= ms.ReadString();
 			Port		= ms.ReadUInt16();
 			return false;
 		}
+		else if(ErrCode < 0x80)
+		{
+			ErrMsg		= ms.ReadString();
+		}
 		else
 		{
-			debug_printf("无法识别错误码 0x%02X \r\n", err);
+			debug_printf("无法识别错误码 0x%02X \r\n", ErrCode);
 
 			return false;
 		}
+
+		return true;
 	}
 
 	Version		= ms.ReadUInt16();

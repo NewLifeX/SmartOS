@@ -51,7 +51,7 @@ void TokenClient::Open()
 	//ITransport* port = Control->Port;
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
 	//ISocket* sock = (ISocket*)(port + 1);
-	ISocket* sock = dynamic_cast<ISocket*>(Control->Port);
+	auto sock = dynamic_cast<ISocket*>(Control->Port);
 	if(sock) Hello.EndPoint = sock->Local;
 
 	// 令牌客户端定时任务
@@ -126,7 +126,8 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 void LoopTask(void* param)
 {
 	assert_ptr(param);
-	TokenClient* client = (TokenClient*)param;
+
+	auto client = (TokenClient*)param;
 	//client->SayHello(false);
 	//if(client->Udp->BindPort != 3355)
 	//	client->SayHello(true, 3355);
@@ -137,8 +138,16 @@ void LoopTask(void* param)
 			client->SayHello(false);
 			break;
 		case 1:
-			client->Login();
+		{
+			auto cfg	= TokenConfig::Current;
+
+			if(cfg->Name.Length() == 0)
+				client->Register();
+			else
+				client->Login();
+
 			break;
+		}
 		case 2:
 			client->Ping();
 			break;
@@ -201,17 +210,11 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		{
 			if(OnRedirect(ext)) return false;
 
-			Stream ms = msg.ToStream();
-			byte err  = ms.ReadByte();
-
 			Status	= 0;
 			Token	= 0;
-			debug_printf("握手失败，错误码=0x%02X ",err);
+			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
-			char cs[0x100];
-			String str(cs, ArrayLength(cs));
-			ms.ReadArray(str);
-			str.Show(true);
+			extErrMsg.Show(true);
 		}
 		else
 		{
@@ -223,18 +226,10 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
-
-				auto cfg	= TokenConfig::Current;
-				String name	= cfg->Name;
-				String  key	= cfg->Key;
-				if(cfg->New||name.Length()< 4)
-					Status = 1;
-			    else
-					Status = 1;
 				
 				if(Status == 1) Login();
 			}
-			if(ext.Version == 0x00) Token = 0;
+			Status = 1;
 
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
@@ -249,16 +244,16 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
-		ext2.Name.Copy(Sys.ID, 16);
+		ext2.Name	= TokenConfig::Current->Name;
 		// 使用系统ID作为Key
 		ext2.Key.Copy(Sys.ID, 16);
-		auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
-		if(ctrl3) ctrl3->Key = ext2.Key;
+		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
+		//if(ctrl3) ctrl3->Key = ext2.Key;
 
 		ext2.Ciphers[0]	= 0xFF;
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
-		ext2.LocalTime = Sys.Ms() * 1000;
+		ext2.LocalTime = Time.Now().TotalMicroseconds();
 		ext2.WriteMessage(rs);
 
 		// 源地址发回去
