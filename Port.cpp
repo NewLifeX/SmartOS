@@ -792,6 +792,48 @@ void InputPort::OnOpen(void* param)
 	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
 #endif
 }
+// 是否独享中断号
+bool InputPort::IsOnlyExOfInt()
+{
+	if(!hasInitState)
+	{
+		debug_printf("States Error\r\n");
+		return true;
+	}
+	int idx = Bits2Index(Mask);
+#if defined(STM32F1) || defined(STM32F4)
+	if(idx <= 4)
+	{
+		for(int i = 0; i <= 4; i++)
+			if(States[i].Port != NULL && States[i].Port != this)return false;
+	}
+	if(idx <= 9)
+	{
+		for(int i = 5; i <= 9; i++)
+			if(States[i].Port != NULL && States[i].Port != this)return false;
+	}
+	if(idx <= 15)
+	{
+		for(int i = 10; i <= 15; i++)
+			if(States[i].Port != NULL && States[i].Port != this)return false;
+	}
+#elif defined(STM32F0) || defined(GD32F150)
+	if(idx < 2)
+	{
+		if(States[0].Port != NULL && States[1].Port != NULL)return false;
+	}
+	if(idx < 4)
+	{
+		if(States[2].Port != NULL && States[3].Port != NULL)return false;
+	}
+	if(idx <= 15)
+	{
+		for(int i = 5; i <= 15; i++)
+			if(States[i].Port != NULL && States[i].Port != this)return false;
+	}
+#endif
+	return true;
+}
 
 void InputPort::OnClose()
 {
@@ -805,7 +847,7 @@ void InputPort::OnClose()
 		st->Port = NULL;
 
 		SetEXIT(idx, false, GetTrigger(Mode, Invert));
-
+		if(!IsOnlyExOfInt())return;
 		Interrupt.Deactivate(PORT_IRQns[idx]);
 	}
 }
