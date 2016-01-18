@@ -2,8 +2,8 @@
 #include "Flash.h"
 #include "Security\Crc.h"
 
-//#define CFG_DEBUG DEBUG
-#define CFG_DEBUG 0
+#define CFG_DEBUG DEBUG
+//#define CFG_DEBUG 0
 #if CFG_DEBUG
 	//#define CTS TS
 #else
@@ -11,7 +11,7 @@
 	#define TS(name)
 #endif
 
-Config* Config::Current	= NULL;
+const Config* Config::Current = NULL;
 
 /*================================ 配置块 ================================*/
 
@@ -29,7 +29,7 @@ struct ConfigBlock
     const void*			Data() const;
 
     bool Init(const char* name, const Array& bs);
-    bool Write(Storage* storage, uint addr, const Array& bs);
+    bool Write(const Storage& storage, uint addr, const Array& bs);
 };
 
 ushort ConfigBlock::GetHash() const
@@ -43,6 +43,7 @@ bool ConfigBlock::Valid() const
     return GetHash() == Hash;
 }
 
+// 获取下一块。当前块必须有效，否则返回空，下一块不在乎有效无效
 const ConfigBlock* ConfigBlock::Next() const
 {
     if(!Valid()) return NULL;
@@ -71,6 +72,7 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
     if(slen > sizeof(Name)) return false;
 
 	if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
+	// 无论如何，把整个名称区域清空
 	memset(Name, 0, ArrayLength(Name));
 
 	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
@@ -86,16 +88,14 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 }
 
 // 更新块
-bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
+bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
 {
-	assert_ptr(storage);
-
 	TS("ConfigBlock::Write");
 
 	// 如果大小超标，并且下一块有效，那么这是非法操作
 	if(bs.Length() > Size && Next()->Valid())
 	{
-		debug_printf("ConfigBlock::Write 配置块 %s 大小 %d 小于要写入的数据库大小 %d，并且下一块是有效配置块，不能覆盖！ \r\n", Name, Size, bs.Length());
+		debug_printf("ConfigBlock::Write 配置块 %s 大小 %d 小于要写入的数据大小 %d，并且下一块是有效配置块，不能覆盖！ \r\n", Name, Size, bs.Length());
 		return false;
 	}
 
@@ -103,12 +103,12 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
-	if(!storage->Write(addr, Array(&Hash, len))) return false;
+	if(!storage.Write(addr, Array(&Hash, len))) return false;
 	if(bs.Length() > 0)
 	{
 		uint len2 = bs.Length();
 		if(len2 > Size) len2 = Size;
-		if(!storage->Write(addr + len, Array(bs.GetBuffer(), len2))) return false;
+		if(!storage.Write(addr + len, Array(bs.GetBuffer(), len2))) return false;
 	}
 
     return rs;
@@ -116,14 +116,15 @@ bool ConfigBlock::Write(Storage* storage, uint addr, const Array& bs)
 
 /*================================ 配置 ================================*/
 
-Config::Config(Storage* st, uint addr)
+Config::Config(const Storage& st, uint addr, uint size)
+	: Device(st)
 {
-	Device	= st;
 	Address	= addr;
+	Size	= size;
 }
 
-// 循环查找配置块
-const void* Config::Find(const char* name, int size)
+// 循环查找配置块。如果找不到而又指明了大小，则找一个满足该大小的空闲数据块，或者在最后划分一个
+const void* Config::Find(const char* name, int size) const
 {
 	TS("Config::Find");
 
@@ -138,11 +139,12 @@ const void* Config::Find(const char* name, int size)
 	{
 		if(!size) return NULL;
 
-		Device->Write(addr, Array(&c_Version, sizeof(c_Version)));
+		Device.Write(addr, Array(&c_Version, sizeof(c_Version)));
 	}
 
 	addr += sizeof(c_Version);
     auto cfg = (const ConfigBlock*)addr;
+
 	uint slen = strlen(name);
     if(slen > sizeof(cfg->Name)) return NULL;
 	//assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
@@ -155,30 +157,34 @@ const void* Config::Find(const char* name, int size)
         cfg = cfg->Next();
     }
 
-	// 如果需要添加，返回最后一个非法块的地址
-    //return fAppend ? cfg : NULL;
-
 	if(!size) return NULL;
 
-	// 找一块合适的区域
+	// 找一块合适大小的空闲区域
+	cfg = (const ConfigBlock*)addr;
     while(cfg->Valid())
     {
-        if(cfg->Name[0] && cfg->Size == size) return cfg;
+        if(cfg->Name[0] == 0 && cfg->Size == size) return cfg;
 
         cfg = cfg->Next();
     }
+
+	// 实在没办法，最后划分一个新的区块。这里判断一下空间是否足够
+	if(Size && (uint)(byte*)cfg + sizeof(ConfigBlock) + size <= Address + Size)
+	{
+		return NULL;
+	}
 
 	return cfg;
 }
 
 // 废弃
-bool Config::Invalid(const char* name)
+bool Config::Invalid(const char* name) const
 {
     return Set(name, ByteArray(0));
 }
 
 // 根据名称更新块
-const void* Config::Set(const char* name, const Array& bs)
+const void* Config::Set(const char* name, const Array& bs) const
 {
 	TS("Config::Set");
 
@@ -201,7 +207,7 @@ const void* Config::Set(const char* name, const Array& bs)
 }
 
 // 获取配置数据
-bool Config::Get(const char* name, Array& bs)
+bool Config::Get(const char* name, Array& bs) const
 {
 	TS("Config::Get");
 
@@ -220,7 +226,7 @@ bool Config::Get(const char* name, Array& bs)
     return false;
 }
 
-const void* Config::Get(const char* name)
+const void* Config::Get(const char* name) const
 {
 	TS("Config::GetByName");
 
@@ -234,7 +240,7 @@ const void* Config::Get(const char* name)
 }
 
 // 获取配置数据，如果不存在则覆盖
-bool Config::GetOrSet(const char* name, Array& bs)
+bool Config::GetOrSet(const char* name, Array& bs) const
 {
 	TS("Config::GetOrSet");
 
@@ -251,21 +257,21 @@ bool Config::GetOrSet(const char* name, Array& bs)
 }
 
 // Flash最后一块作为配置区
-Config& Config::CreateFlash()
+const Config& Config::CreateFlash()
 {
 	// 最后一块作为配置区
 	static Flash flash;
-	static Config cfg(&flash, flash.Start + flash.Size - flash.Block);
+	static Config cfg(flash, flash.Start + flash.Size - flash.Block, flash.Block);
 
 	return cfg;
 }
 
 // RAM最后一小段作为热启动配置区
-Config& Config::CreateRAM()
+const Config& Config::CreateRAM()
 {
 	// 最后一块作为配置区
 	static CharStorage cs;
-	static Config cfg(&cs, Sys.StackTop());
+	static Config cfg(cs, Sys.StackTop(), 64);
 
 	return cfg;
 }
@@ -273,12 +279,10 @@ Config& Config::CreateRAM()
 /******************************** ConfigBase ********************************/
 
 ConfigBase::ConfigBase()
+	: Cfg(*Config::Current)
 {
-	// Flash最后一块作为配置区
-	if(!Config::Current) Config::Current = &Config::CreateFlash();
+	assert_ptr(&Cfg);
 
-	Cfg	= Config::Current;
-	
 	New	= true;
 
 	_Name	= NULL;
@@ -308,11 +312,9 @@ void ConfigBase::Init()
 
 void ConfigBase::Load()
 {
-	if(!Cfg) return;
-
 	// 尝试加载配置区设置
 	auto bs	= ToArray();
-	New		= !Cfg->GetOrSet(_Name, bs);
+	New		= !Cfg.GetOrSet(_Name, bs);
 	if(New)
 		debug_printf("%s::Load 首次运行，创建配置区！\r\n", _Name);
 	else
@@ -321,22 +323,18 @@ void ConfigBase::Load()
 
 void ConfigBase::Save() const
 {
-	if(!Cfg) return;
-
 	debug_printf("%s::Save \r\n", _Name);
 
-	Cfg->Set(_Name, ToArray());
+	Cfg.Set(_Name, ToArray());
 }
 
 void ConfigBase::Clear()
 {
-	if(!Cfg) return;
-
 	Init();
 
 	debug_printf("%s::Clear \r\n", _Name);
 
-	Cfg->Set(_Name, ToArray());
+	Cfg.Set(_Name, ToArray());
 }
 
 void ConfigBase::Show() const
@@ -363,7 +361,7 @@ void* HotConfig::Next() const
 
 HotConfig& HotConfig::Current()
 {
-	static Config& cfg = Config::CreateRAM();
+	static const Config& cfg = Config::CreateRAM();
 
 	// 查找配置数据，如果不存在，则清空
 	auto dat = cfg.Get("Hot");

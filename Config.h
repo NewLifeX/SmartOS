@@ -12,30 +12,31 @@ class Config
 private:
 
 public:
-	Storage*	Device;
-	uint		Address;
+	const Storage&	Device;	// 配置存储的设备
+	uint		Address;	// 在存储区中的起始地址
+	uint		Size;		// 在存储区中的可用空间大小
 
-	Config(Storage* st, uint addr);
+	Config(const Storage& st, uint addr, uint size);
 
 	// 查找。size不为0时表示要查找该大小的合适配置块
-    const void* Find(const char* name, int size = 0);
+    const void* Find(const char* name, int size = 0) const;
     // 废弃。仅清空名称，并不删除数据区
-	bool Invalid(const char* name);
+	bool Invalid(const char* name) const;
     // 设置配置数据
-    const void* Set(const char* name, const Array& bs);
+    const void* Set(const char* name, const Array& bs) const;
 	// 获取配置数据
-    bool Get(const char* name, Array& bs);
+    bool Get(const char* name, Array& bs) const;
 	// 获取配置数据，如果不存在则覆盖
-    bool GetOrSet(const char* name, Array& bs);
+    bool GetOrSet(const char* name, Array& bs) const;
 	// 获取配置数据
-    const void* Get(const char* name);
+    const void* Get(const char* name) const;
 
 	// 当前
-	static Config* Current;
+	static const Config* Current;
 	// Flash最后一块作为配置区
-	static Config& CreateFlash();
+	static const Config& CreateFlash();
 	// RAM最后一小段作为热启动配置区
-	static Config& CreateRAM();
+	static const Config& CreateRAM();
 };
 
 /******************************** ConfigBase ********************************/
@@ -59,7 +60,7 @@ public:
 	void Read(Stream& ms);
 
 protected:
-	Config*		Cfg;
+	const Config&	Cfg;
 	const char* _Name;
 
 	void* _Start;

@@ -44,10 +44,6 @@ public:
 
 	void SetChannel(byte channel);
 	
-	void WriteCfg(TinyMessage& msg)const;
-	bool LoadConfig();
-	void SaveConfig() const;
-	void ClearConfig();	
 	// 当前设备
 	Device* Current;
 	bool Study;		//学习模式

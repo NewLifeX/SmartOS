@@ -44,13 +44,6 @@ TinyServer::TinyServer(TinyController* control)
 
 bool TinyServer::Send(Message& msg) const
 {
-     auto mg =  (TinyMessage&) msg;
-
-	 //如果目标地址为往关地址
-	 if(mg.Dest == Cfg->Address)
-	 {
-		 WriteCfg(mg);
-	 }
 	// 附加目标物理地址
 	//if(!msg.State)
 	{
@@ -557,7 +550,7 @@ bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
 	return true;
 }
 
-//设置zigbee的通道，2401无效
+// 设置zigbee的通道，2401无效
 void TinyServer::SetChannel(byte channel)
 {
 	if(!Control) return;
@@ -571,33 +564,6 @@ void TinyServer::SetChannel(byte channel)
 	  zb->SetChannel(channel);
 	  zb->ExitConfig();
 	}
-}
-
-void TinyServer::WriteCfg(TinyMessage& msg)const
-{
-    if(msg.Code != 0x16||msg.Reply||msg.Length < 2) return;
-
-	// 起始地址为7位压缩编码整数
-	auto ms		= msg.ToStream();
-	uint offset = ms.ReadEncodeInt();
-	if(offset < 64)	return;
-	offset	-= 64;
-
-	auto tc = TinyConfig::Current;
-
-	//uint adrr	= 64;
-	int len 	= ms.Remain();
-    if(offset + len > tc->Length) len	= tc->Length - offset;
-	if(len <= 0) return;
-
-	//Array bs(ms.Current(), len);
-	//bs.CopyTo(&cfg + offset - 64, len);
-	ByteArray cfg((byte*)&tc + offset, tc->Length - offset);
-	ms.Read(cfg);
-
-	tc->Save();
-
-	Sys.Reset();
 }
 
 Device* TinyServer::FindDevice(byte id) const
@@ -658,15 +624,23 @@ bool TinyServer::DeleteDevice(byte id)
 	return false;
 }
 
+// 获取设备列表存储对象
+const Config GetStore(Flash& flash)
+{
+	// 最后4k的位置作为存储位置
+	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	Config cfg(flash, addr, 4 << 10);
+
+	return cfg;
+}
+
 int TinyServer::LoadDevices()
 {
 	TS("TinyServer::LoadDevices");
 
 	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
-	Config cfg(&flash, addr);
+	auto cfg	= GetStore(flash);
 
 	byte* data = (byte*)cfg.Get("Devs");
 	if(!data) return -1;
@@ -710,7 +684,7 @@ int TinyServer::LoadDevices()
 		debug_printf("\r\n");
 	}
 
-	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", addr, i);
+	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", cfg.Address, i);
 
 	byte len = Devices.Length();
 	debug_printf("Devices内已有节点 %d 个\r\n", len);
@@ -722,10 +696,8 @@ void TinyServer::SaveDevices() const
 {
 	TS("TinyServer::SaveDevices");
 
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
-	Config cfg(&flash, addr);
+	auto cfg	= GetStore(flash);
 
 	byte buf[0x800];
 
@@ -738,7 +710,7 @@ void TinyServer::SaveDevices() const
 		Device* dv = Devices[i];
 		dv->Write(ms);
 	}
-	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, addr);
+	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, cfg.Address);
 	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));
 }
 
@@ -746,12 +718,10 @@ void TinyServer::ClearDevices()
 {
 	TS("TinyServer::ClearDevices");
 
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
 	Flash flash;
-	Config cfg(&flash, addr);
+	auto cfg	= GetStore(flash);
 
-	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", addr);
+	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", cfg.Address);
 
 	cfg.Invalid("Devs");
 
@@ -774,70 +744,6 @@ void TinyServer::ClearDevices()
 	}
 	Devices.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
 	SaveDevices();
-}
-
-bool TinyServer::LoadConfig()
-{
-	TS("TinyServer::LoadConfig");
-
-	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
-	Flash flash;
-	Config cfg(&flash, addr);
-
-	byte* data = (byte*)cfg.Get("TCfg");
-	if(!data)
-	{
-		SaveConfig();	// 没有就保存默认配置
-		return true;
-	}
-
-	Stream ms(data, sizeof(TinyConfig));
-	// 读取配置信息
-	Cfg->Read(ms);
-
-	debug_printf("TinyServer::LoadConfig 从 0x%08X 加载成功 ！\r\n", addr);
-
-	return true;
-}
-
-void TinyServer::SaveConfig() const
-{
-	TS("TinyServer::SaveConfig");
-
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
-	Flash flash;
-	Config cfg(&flash, addr);
-
-	byte buf[sizeof(TinyConfig)];
-
-	Stream ms(buf, ArrayLength(buf));
-	Cfg->Write(ms);
-
-	debug_printf("TinyServer::SaveConfig 保存到 0x%08X！\r\n", addr);
-
-	cfg.Set("TCfg", Array(ms.GetBuffer(), ms.Position()));
-}
-
-void TinyServer::ClearConfig()
-{
-	TS("TinyServer::ClearConfig");
-
-	debug_printf("TinyServer::ClearDevices 设备区清零！\r\n");
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
-	Flash flash;
-	Config cfg(&flash, addr);
-
-	debug_printf("TinyServer::ClearConfig 重置配置信息 0x%08X \r\n", addr);
-
-	cfg.Invalid("TCfg");
-
-	for(int i=0; i<Devices.Length(); i++)
-		delete Devices[i];
-	Devices.SetLength(0);
 }
 
 // 输出所有设备
