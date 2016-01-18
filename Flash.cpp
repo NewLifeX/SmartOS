@@ -23,7 +23,7 @@ Flash::Flash()
 }
 
 /* 写入段数据 （起始段，段数量，目标缓冲区，读改写） */
-bool Flash::WriteBlock(uint address, const byte* buf, uint len, bool inc)
+bool Flash::WriteBlock(uint address, const byte* buf, uint len, bool inc) const
 {
     if(address < Start || address + len > Start + Size) return false;
 
@@ -71,7 +71,7 @@ bool Flash::WriteBlock(uint address, const byte* buf, uint len, bool inc)
 }
 
 /* 擦除块 （段地址） */
-bool Flash::EraseBlock(uint address)
+bool Flash::EraseBlock(uint address) const
 {
     if(address < Start || address + Block > Start + Size) return false;
 

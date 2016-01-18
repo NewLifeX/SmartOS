@@ -8,7 +8,7 @@
 	#define st_printf(format, ...)
 #endif
 
-bool BlockStorage::Read(uint address, Array& bs)
+bool BlockStorage::Read(uint address, Array& bs) const
 {
 	uint len = bs.Length();
     if (!len) return true;
@@ -24,7 +24,7 @@ bool BlockStorage::Read(uint address, Array& bs)
     return true;
 }
 
-bool BlockStorage::Write(uint address, const Array& bs)
+bool BlockStorage::Write(uint address, const Array& bs) const
 {
     assert_param2((address & 0x01) == 0x00, "Write起始地址必须是2字节对齐");
 
@@ -141,7 +141,7 @@ bool BlockStorage::Write(uint address, const Array& bs)
     return true;
 }
 
-bool BlockStorage::Memset(uint address, byte data, uint len)
+bool BlockStorage::Memset(uint address, byte data, uint len) const
 {
     assert_param2((address & 0x01) == 0x00, "Memset起始地址必须是2字节对齐");
 
@@ -156,7 +156,7 @@ bool BlockStorage::Memset(uint address, byte data, uint len)
 }
 
 // 擦除块。起始地址，字节数量默认0表示擦除全部
-bool BlockStorage::Erase(uint address, uint len)
+bool BlockStorage::Erase(uint address, uint len) const
 {
     assert_param2((address & 0x01) == 0x00, "Erase起始地址必须是2字节对齐");
 
@@ -191,7 +191,7 @@ bool BlockStorage::Erase(uint address, uint len)
 }
 
 /* 指定块是否被擦除 */
-bool BlockStorage::IsErased(uint address, uint len)
+bool BlockStorage::IsErased(uint address, uint len) const
 {
     assert_param2((address & 0x01) == 0x00, "IsErased起始地址必须是2字节对齐");
 
@@ -212,14 +212,14 @@ bool BlockStorage::IsErased(uint address, uint len)
     return true;
 }
 
-bool CharStorage::Read(uint address, Array& bs)
+bool CharStorage::Read(uint address, Array& bs) const
 {
 	bs.Copy((byte*)address);
 
 	return true;
 }
 
-bool CharStorage::Write(uint address, const Array& bs)
+bool CharStorage::Write(uint address, const Array& bs) const
 {
 	bs.CopyTo((byte*)address);
 

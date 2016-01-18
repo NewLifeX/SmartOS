@@ -9,9 +9,9 @@
 class Flash : public BlockStorage
 {
 public:
-	virtual bool WriteBlock(uint address, const byte* buf, uint len, bool inc);
+	virtual bool WriteBlock(uint address, const byte* buf, uint len, bool inc) const;
     // 擦除块 （段地址）
-    virtual bool EraseBlock(uint address);
+    virtual bool EraseBlock(uint address) const;
 
 public:
 	Flash();
