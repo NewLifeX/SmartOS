@@ -309,7 +309,7 @@ void TinyClient::Join()
 	dm.HardID.Copy(Sys.ID, 16);
 	dm.TranID	= TranID;
 	dm.WriteMessage(msg);
-	dm.Show(true);
+	//dm.Show(true);
 
 	Control->Broadcast(msg);
 }
