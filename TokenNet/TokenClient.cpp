@@ -141,7 +141,7 @@ void LoopTask(void* param)
 		{
 			auto cfg	= TokenConfig::Current;
 
-			if(cfg->Name.Length() == 0)
+			if(cfg->Name[0] == 0)
 				client->Register();
 			else
 				client->Login();
@@ -214,7 +214,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			Token	= 0;
 			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
-			extErrMsg.Show(true);
+			ext.ErrMsg.Show(true);
 		}
 		else
 		{
@@ -312,21 +312,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	auto cfg	= TokenConfig::Current;
 
-	uint namelen = ms.ReadByte();
-	if(namelen > 16) return;
-
-	for(int i=0;i!=namelen;i++)
-	{
-		cfg-> Name[i]=ms.ReadByte();
-    }
-
-	uint passlen = ms.ReadByte();
-	if(passlen > 16) return;
-
-	for(int i=0;i!=passlen;i++)
-	{
-		cfg->Key[i]=ms.ReadByte();
-    }
+	ms.ReadString().CopyTo(cfg->Name);
+	ms.ReadString().CopyTo(cfg->Key);
 
 	cfg->Save();
     cfg->Show();
@@ -342,7 +329,7 @@ void TokenClient::Login()
 	auto cfg	= TokenConfig::Current;
 	login.Name	= cfg->Name;
 	login.Key	= cfg->Key;
-	//临时代码，兼容旧云端
+	// 临时代码，兼容旧云端
 	if(login.Name.Length() < 4)
 	{
 		Register();
