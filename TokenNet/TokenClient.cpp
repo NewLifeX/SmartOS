@@ -231,14 +231,14 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 					Status = 1;
 			    else
 					Status = 1;
+				
+				if(Status == 1) Login();
 			}
-
 			if(ext.Version == 0x00) Token = 0;
 
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
-
-			if(Status == 1) Login();
+			
 		}
 	}
 	else if(!msg.Reply)
@@ -272,7 +272,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::OnRedirect(const HelloMessage& msg) const
 {
-	if(msg.ErrCode != 0xFE && msg.ErrCode != 0xFD) return false;
+	if(msg.ErrCode < 0xFE && msg.ErrCode >0xFD) return false;
 
 	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= msg.Protocol;
@@ -348,10 +348,11 @@ void TokenClient::Login()
 	login.Name	= cfg->Name;
 	login.Key	= cfg->Key;
 	//临时代码，兼容旧云端
-	if(login.Name.Length() < 8)
+	if(login.Name.Length() < 4)
 	{
-		login.Name.Copy(Sys.ID, 16);
-		login.Key	= Sys.ID;
+		Register();
+		//login.Name.Copy(Sys.ID, 16);
+		//login.Key.Copy(Sys.ID, 16);
 	}
 	TokenMessage msg(2);
 	login.WriteMessage(msg);

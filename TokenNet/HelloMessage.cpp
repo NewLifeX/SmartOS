@@ -47,6 +47,7 @@ bool HelloMessage::Read(Stream& ms)
 			Protocol	= ms.ReadByte();
 			Server		= ms.ReadArray();
 			Port		= ms.ReadUInt16();
+			return false;
 		}
 		else
 		{
