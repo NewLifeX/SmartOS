@@ -6,7 +6,7 @@ TokenConfig* TokenConfig::Current	= NULL;
 
 TokenConfig::TokenConfig() : ConfigBase()
 {
-	_Name	 = "TKCF";
+	_Name	 = "TokenCfg";
 	_Start	 = &Length;
 	_End	 = &TagEnd; 
 	Init();

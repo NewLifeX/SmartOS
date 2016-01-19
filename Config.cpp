@@ -20,7 +20,7 @@ struct ConfigBlock
 {
 	ushort	Hash;
 	ushort	Size;
-	char	Name[4];
+	char	Name[8];
 
 	ushort GetHash() const;
     bool Valid() const;
@@ -150,7 +150,7 @@ const void* Config::Find(const char* name) const
 	//assert_param2(name, "配置段名称不能为空");
 
 	uint addr = Address;
-	if(CheckSignature(Device, addr, false)) return NULL;
+	if(!CheckSignature(Device, addr, false)) return NULL;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
@@ -176,13 +176,12 @@ const void* Config::New(int size) const
 	TS("Config::New");
 
 	uint addr = Address;
-	if(CheckSignature(Device, addr, true)) return NULL;
+	if(!CheckSignature(Device, addr, true)) return NULL;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
 
 	// 找一块合适大小的空闲区域
-	cfg = (const ConfigBlock*)addr;
     while(cfg->Valid())
     {
         if(cfg->Name[0] == 0 && cfg->Size == size) return cfg;
@@ -191,8 +190,10 @@ const void* Config::New(int size) const
     }
 
 	// 实在没办法，最后划分一个新的区块。这里判断一下空间是否足够
-	if(Size && (uint)(byte*)cfg + sizeof(ConfigBlock) + size <= Address + Size)
+	if(Size && (uint)cfg + sizeof(ConfigBlock) + size > Address + Size)
 	{
+		debug_printf("Config::New 0x%08X + %d + %d 配置区（0x%08X, %d）空间不足\r\n", cfg, sizeof(ConfigBlock), size, Address, Size);
+
 		return NULL;
 	}
 
@@ -347,28 +348,34 @@ void ConfigBase::Load()
 	// 尝试加载配置区设置
 	auto bs	= ToArray();
 	//New		= !Cfg.GetOrSet(_Name, bs);
-	New	= !Cfg.Get(_Name);
+	New	= !Cfg.Get(_Name, bs);
 	if(New)
 		debug_printf("%s::Load 首次运行，创建配置区！\r\n", _Name);
 	else
-		debug_printf("%s::Load 从配置区加载配置\r\n", _Name);
+		debug_printf("%s::Load 从配置区加载配置 %d 字节\r\n", _Name, bs.Length());
 }
 
 void ConfigBase::Save() const
 {
-	debug_printf("%s::Save \r\n", _Name);
+	auto bs	= ToArray();
+	debug_printf("%s::Save %d 字节 ", _Name, bs.Length());
 
-	Cfg.Set(_Name, ToArray());
+	auto pt	= Cfg.Set(_Name, bs);
+	if(pt)
+		debug_printf("成功 0x%08X \r\n", pt);
+	else
+		debug_printf("失败\r\n");
 }
 
 void ConfigBase::Clear()
 {
-	//Init();
+	debug_printf("%s::Clear ", _Name);
 
-	debug_printf("%s::Clear \r\n", _Name);
-
-	//Cfg.Set(_Name, ToArray());
-	Cfg.Remove(_Name);
+	bool rs	= Cfg.Remove(_Name);
+	if(rs)
+		debug_printf("成功\r\n");
+	else
+		debug_printf("失败\r\n");
 }
 
 void ConfigBase::Show() const

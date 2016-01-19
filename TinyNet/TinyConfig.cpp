@@ -5,7 +5,7 @@ TinyConfig* TinyConfig::Current	= NULL;
 
 TinyConfig::TinyConfig() : ConfigBase()
 {
-	_Name	= "TCFG";
+	_Name	= "TinyConf";
 	_Start	= &Length;
 	_End	= &TagEnd;
 	
