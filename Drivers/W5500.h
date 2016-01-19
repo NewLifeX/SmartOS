@@ -58,7 +58,7 @@ public:
 	// 输出物理链路层状态
 	void PhyStateShow();
 
-	const char* ToString() { return "W5500"; }
+	const char* ToString() const { return "W5500"; }
 
 	byte GetSocket();
 	void Register(byte Index, HardSocket* handler);

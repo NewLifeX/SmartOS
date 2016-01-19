@@ -65,7 +65,7 @@ public:
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-	virtual const char* ToString() { return Name; }
+	virtual const char* ToString() const { return Name; }
 
 	static SerialPort* GetMessagePort();
 protected:

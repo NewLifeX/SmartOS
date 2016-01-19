@@ -45,7 +45,7 @@ public:
 	byte FifoStatus;
 	void ShowStatus();
 
-	virtual const char* ToString() { return "R24"; }
+	virtual const char* ToString() const { return "R24"; }
 
 private:
 	virtual bool OnOpen();

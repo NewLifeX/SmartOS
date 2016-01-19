@@ -38,7 +38,7 @@ public:
 	// 设置产品识别码 硬件类型code
 	bool SetPID(ushort pid);
 
-	virtual const char* ToString() { return "BLE4"; }
+	virtual const char* ToString() const { return "BLE4"; }
 
 protected:
 	virtual bool OnOpen();

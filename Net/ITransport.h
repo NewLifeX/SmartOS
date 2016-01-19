@@ -43,9 +43,9 @@ public:
 	virtual void Register(TransportHandler handler, void* param = NULL);
 
 #if DEBUG
-	virtual const char* ToString() { return "ITransport"; }
+	virtual const char* ToString() const { return "ITransport"; }
 #else
-	virtual const char* ToString() { return ""; }
+	virtual const char* ToString() const { return ""; }
 #endif
 
 protected:
@@ -75,7 +75,7 @@ public:
 
 	virtual void Set(ITransport* port);
 
-	virtual const char* ToString() { return "PackPort"; }
+	virtual const char* ToString() const { return "PackPort"; }
 
 protected:
 	virtual bool OnOpen();
