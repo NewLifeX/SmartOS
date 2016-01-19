@@ -707,7 +707,7 @@ void TinyServer::SaveDevices() const
 	ms.Write((byte)count);
 	for(int i = 0; i<count; i++)
 	{
-		Device* dv = Devices[i];
+		auto dv = Devices[i];
 		dv->Write(ms);
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, cfg.Address);
@@ -723,7 +723,7 @@ void TinyServer::ClearDevices()
 
 	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", cfg.Address);
 
-	cfg.Invalid("Devs");
+	//cfg.Remove("Devs");
 
 	int count = Devices.Length();
 	for(int j = 0; j < 3; j++)		// 3遍
@@ -755,12 +755,12 @@ void DeviceShow(void* param)
 
 	byte len   = svr->Devices.Length();
 	byte count = 0;
-	
+
 	for(int i = 0; i < len; i++)
 	{
 		auto dv	= svr->Devices[i];
 		if(dv == NULL) continue;
-		
+
 		count++;
 		dv->Show();
 		debug_printf("\r\n");

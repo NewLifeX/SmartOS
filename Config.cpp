@@ -99,7 +99,7 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
 		return false;
 	}
 
-    bool rs = true;
+    Hash = GetHash();
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
@@ -111,7 +111,7 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
 		if(!storage.Write(addr + len, Array(bs.GetBuffer(), len2))) return false;
 	}
 
-    return rs;
+    return true;
 }
 
 /*================================ 配置 ================================*/
@@ -123,26 +123,36 @@ Config::Config(const Storage& st, uint addr, uint size)
 	Size	= size;
 }
 
-// 循环查找配置块。如果找不到而又指明了大小，则找一个满足该大小的空闲数据块，或者在最后划分一个
-const void* Config::Find(const char* name, int size) const
+// 检查签名
+bool CheckSignature(const Storage& st, uint& addr, bool create)
+{
+    const uint c_Version = 0x534F5453; // STOS
+
+	// 检查签名，如果不存在则写入
+	if(*(uint*)addr != c_Version)
+	{
+		if(!create) return false;
+
+		st.Write(addr, Array(&c_Version, sizeof(c_Version)));
+	}
+
+	addr += sizeof(c_Version);
+
+	return true;
+}
+
+// 循环查找配置块
+const void* Config::Find(const char* name) const
 {
 	TS("Config::Find");
-
-    const uint c_Version = 0x534F5453; // STOS
 
     if(name == NULL) return NULL;
 	//assert_param2(name, "配置段名称不能为空");
 
 	uint addr = Address;
-	// 检查签名，如果不存在则写入
-	if(*(uint*)addr != c_Version)
-	{
-		if(!size) return NULL;
+	if(CheckSignature(Device, addr, false)) return NULL;
 
-		Device.Write(addr, Array(&c_Version, sizeof(c_Version)));
-	}
-
-	addr += sizeof(c_Version);
+	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
 
 	uint slen = strlen(name);
@@ -157,7 +167,19 @@ const void* Config::Find(const char* name, int size) const
         cfg = cfg->Next();
     }
 
-	if(!size) return NULL;
+	return NULL;
+}
+
+// 创建一个指定大小的配置块。找一个满足该大小的空闲数据块，或者在最后划分一个
+const void* Config::New(int size) const
+{
+	TS("Config::New");
+
+	uint addr = Address;
+	if(CheckSignature(Device, addr, true)) return NULL;
+
+	// 第一个配置块
+    auto cfg = (const ConfigBlock*)addr;
 
 	// 找一块合适大小的空闲区域
 	cfg = (const ConfigBlock*)addr;
@@ -177,10 +199,22 @@ const void* Config::Find(const char* name, int size) const
 	return cfg;
 }
 
-// 废弃
-bool Config::Invalid(const char* name) const
+// 删除
+bool Config::Remove(const char* name) const
 {
-    return Set(name, ByteArray(0));
+    //return Set(name, ByteArray(0));
+	TS("Config::Remove");
+
+    if(name == NULL) return NULL;
+
+	auto cfg = (ConfigBlock*)Find(name);
+	if(!cfg) return false;
+
+	// 只清空名称，修改哈希，不能改大小，否则无法定位下一个配置块
+	memset(cfg->Name, 0, ArrayLength(cfg->Name));
+	cfg->Write(Device, (uint)cfg, ByteArray(0));
+
+	return true;
 }
 
 // 根据名称更新块
@@ -192,18 +226,16 @@ const void* Config::Set(const char* name, const Array& bs) const
     //assert_param2(name, "配置块名称不能为空");
 	//assert_param2(Device, "未指定配置段的存储设备");
 
-	auto cfg = (const ConfigBlock*)Find(name, bs.Length());
-    if(cfg)
-	{
-		// 重新搞一个配置头，使用新的数据去重新初始化
-		ConfigBlock header;
-		header.Init(name, bs);
-		header.Write(Device, (uint)cfg, bs);
+	auto cfg = (const ConfigBlock*)Find(name);
+	if(!cfg) cfg	= (const ConfigBlock*)New(bs.Length());
+    if(!cfg) return NULL;
 
-		return cfg->Data();
-	}
+	// 重新搞一个配置头，使用新的数据去重新初始化
+	ConfigBlock header;
+	header.Init(name, bs);
+	header.Write(Device, (uint)cfg, bs);
 
-    return NULL;
+	return cfg->Data();
 }
 
 // 获取配置数据
@@ -214,7 +246,7 @@ bool Config::Get(const char* name, Array& bs) const
     if(name == NULL) return false;
     //assert_param2(name, "配置块名称不能为空");
 
-	auto cfg = (const ConfigBlock*)Find(name, 0);
+	auto cfg = (const ConfigBlock*)Find(name);
     if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
 	{
 		bs.Copy(cfg->Data(), cfg->Size);
@@ -233,13 +265,13 @@ const void* Config::Get(const char* name) const
     if(name == NULL) return NULL;
     //assert_param2(name, "配置块名称不能为空");
 
-	auto cfg = (const ConfigBlock*)Find(name, 0);
+	auto cfg = (const ConfigBlock*)Find(name);
     if(cfg && cfg->Size) return cfg->Data();
 
     return NULL;
 }
 
-// 获取配置数据，如果不存在则覆盖
+/*// 获取配置数据，如果不存在则覆盖
 bool Config::GetOrSet(const char* name, Array& bs) const
 {
 	TS("Config::GetOrSet");
@@ -254,7 +286,7 @@ bool Config::GetOrSet(const char* name, Array& bs) const
 	Set(name, bs);
 
     return false;
-}
+}*/
 
 // Flash最后一块作为配置区
 const Config& Config::CreateFlash()
@@ -314,7 +346,8 @@ void ConfigBase::Load()
 {
 	// 尝试加载配置区设置
 	auto bs	= ToArray();
-	New		= !Cfg.GetOrSet(_Name, bs);
+	//New		= !Cfg.GetOrSet(_Name, bs);
+	New	= !Cfg.Get(_Name);
 	if(New)
 		debug_printf("%s::Load 首次运行，创建配置区！\r\n", _Name);
 	else
@@ -330,11 +363,12 @@ void ConfigBase::Save() const
 
 void ConfigBase::Clear()
 {
-	Init();
+	//Init();
 
 	debug_printf("%s::Clear \r\n", _Name);
 
-	Cfg.Set(_Name, ToArray());
+	//Cfg.Set(_Name, ToArray());
+	Cfg.Remove(_Name);
 }
 
 void ConfigBase::Show() const

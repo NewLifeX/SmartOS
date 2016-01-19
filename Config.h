@@ -19,15 +19,17 @@ public:
 	Config(const Storage& st, uint addr, uint size);
 
 	// 查找。size不为0时表示要查找该大小的合适配置块
-    const void* Find(const char* name, int size = 0) const;
-    // 废弃。仅清空名称，并不删除数据区
-	bool Invalid(const char* name) const;
+    const void* Find(const char* name) const;
+	// 创建一个指定大小的配置块
+    const void* New(int size) const;
+    // 删除。仅清空名称，并不删除数据区
+	bool Remove(const char* name) const;
     // 设置配置数据
     const void* Set(const char* name, const Array& bs) const;
 	// 获取配置数据
     bool Get(const char* name, Array& bs) const;
 	// 获取配置数据，如果不存在则覆盖
-    bool GetOrSet(const char* name, Array& bs) const;
+    //bool GetOrSet(const char* name, Array& bs) const;
 	// 获取配置数据
     const void* Get(const char* name) const;
 
@@ -46,7 +48,7 @@ class ConfigBase
 {
 public:
 	bool	New;
-	
+
 	ConfigBase();
 	virtual void Init();
 
