@@ -332,9 +332,9 @@ void TokenClient::Login()
 	// 临时代码，兼容旧云端
 	if(login.Name.Length() < 4)
 	{
-		Register();
-		//login.Name.Copy(Sys.ID, 16);
-		//login.Key.Copy(Sys.ID, 16);
+		//Register();
+		login.Name.Copy(Sys.ID, 16);
+		login.Key.Copy(Sys.ID, 16);
 	}
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
