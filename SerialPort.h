@@ -40,9 +40,7 @@ public:
 	int			ByteTime;	// 字节间隔，最小1ms
 
 	// 收发缓冲区
-#if	!(defined(STM32F0) || defined(GD32F150))
 	Queue	Tx;
-#endif
 	Queue	Rx;
 
 	SerialPort();

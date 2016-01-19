@@ -146,22 +146,22 @@ bool SerialPort::OnOpen()
 	//USART_ITConfig(st, USART_IT_TXE, DISABLE);
 
 	// 清空缓冲区
-#if !(defined(STM32F0) || defined(GD32F150))
+//#if !(defined(STM32F0) || defined(GD32F150))
 	Tx.Clear();
-#endif
+//#endif
 	Rx.SetCapacity(0x80);
 	Rx.Clear();
 
-#if defined(STM32F0) || defined(GD32F150)
+//#if defined(STM32F0) || defined(GD32F150)
 	// GD官方提供，因GD设计比ST严格，导致一些干扰被错误认为是溢出
 	//USART_OverrunDetectionConfig(st, USART_OVRDetection_Disable);
-#else
+//#else
 	// 打开中断，收发都要使用
 	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
-#endif
+//#endif
 
 	USART_Cmd(st, ENABLE);//使能串口
 
@@ -221,7 +221,7 @@ uint SerialPort::SendData(byte data, uint times)
 bool SerialPort::OnWrite(const Array& bs)
 {
 	if(!bs.Length()) return true;
-#if defined(STM32F0) || defined(GD32F150)
+/*#if defined(STM32F0) || defined(GD32F150)
 	if(RS485) *RS485 = true;
 	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
 	for(int i=0; i<bs.Length(); i++)
@@ -229,7 +229,7 @@ bool SerialPort::OnWrite(const Array& bs)
 		SendData(bs[i], 3000);
 	}
 	if(RS485) *RS485 = false;
-#else
+#else*/
 	// 如果队列已满，则强制刷出
 	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
@@ -238,7 +238,7 @@ bool SerialPort::OnWrite(const Array& bs)
 	// 打开串口发送
 	if(RS485) *RS485 = true;
 	USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, ENABLE);
-#endif
+//#endif
 
 	return true;
 }
@@ -246,7 +246,7 @@ bool SerialPort::OnWrite(const Array& bs)
 // 刷出某个端口中的数据
 bool SerialPort::Flush(uint times)
 {
-#if !(defined(STM32F0) || defined(GD32F150))
+//#if !(defined(STM32F0) || defined(GD32F150))
 	// 打开串口发送
 	if(RS485) *RS485 = true;
 
@@ -255,9 +255,9 @@ bool SerialPort::Flush(uint times)
 	if(RS485) *RS485 = false;
 
 	return times > 0;
-#else
+/*#else
 	return true;
-#endif
+#endif*/
 }
 
 #if !defined(TINY) && defined(STM32F0)
@@ -266,7 +266,7 @@ bool SerialPort::Flush(uint times)
 
 void SerialPort::OnTxHandler()
 {
-#if !(defined(STM32F0) || defined(GD32F150))
+//#if !(defined(STM32F0) || defined(GD32F150))
 	if(!Tx.Empty())
 		USART_SendData((USART_TypeDef*)_port, (ushort)Tx.Pop());
 	else
@@ -275,7 +275,7 @@ void SerialPort::OnTxHandler()
 
 		if(RS485) *RS485 = false;
 	}
-#endif
+//#endif
 }
 
 #pragma arm section code
@@ -389,12 +389,12 @@ void SerialPort::Register(TransportHandler handler, void* param)
 			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
 		}
-#if defined(STM32F0) || defined(GD32F150)
+/*#if defined(STM32F0) || defined(GD32F150)
 		// 打开中断
 		byte irq = uart_irqs[_index];
 		Interrupt.SetPriority(irq, 0);
 		Interrupt.Activate(irq, OnHandler, this);
-#endif
+#endif*/
 	}
     else
 	{
@@ -412,9 +412,9 @@ void SerialPort::OnHandler(ushort num, void* param)
 	auto sp	= (SerialPort*)param;
 	auto st	= (USART_TypeDef*)sp->_port;
 
-#if !(defined(STM32F0) || defined(GD32F150))
+//#if !(defined(STM32F0) || defined(GD32F150))
 	if(USART_GetITStatus(st, USART_IT_TXE) != RESET) sp->OnTxHandler();
-#endif
+//#endif
 	// 接收中断
 	if(USART_GetITStatus(st, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
