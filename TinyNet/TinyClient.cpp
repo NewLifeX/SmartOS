@@ -49,8 +49,6 @@ void TinyClient::Open()
 
 	TranID	= (int)Sys.Ms();
 
-	_TaskID = Sys.AddTask(TinyClientTask, this, 0, 5000, "微网客户端");
-
 	if(Cfg->Address > 0 && Cfg->Server > 0)
 	{
 		Control->Address = Cfg->Address;
@@ -64,6 +62,11 @@ void TinyClient::Open()
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
+
+	int t	= 5000;
+	if(Server) t	= Cfg->PingTime * 1000;
+	if(t < 1000) t = 1000;
+	_TaskID = Sys.AddTask(TinyClientTask, this, 0, t, "微网客户端");
 
 	Opened	= true;
 }
