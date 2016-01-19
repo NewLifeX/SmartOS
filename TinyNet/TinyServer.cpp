@@ -708,6 +708,7 @@ void TinyServer::SaveDevices() const
 	for(int i = 0; i<count; i++)
 	{
 		auto dv = Devices[i];
+		if(dv == NULL) continue;
 		dv->Write(ms);
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, cfg.Address);
