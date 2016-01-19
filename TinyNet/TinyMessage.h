@@ -136,6 +136,8 @@ public:
 	short	Timeout;	// 队列发送超时，默认50ms。如果不需要超时重发，那么直接设置为-1
 	byte	QueueLength;// 队列长度，默认8
 
+	byte	NoLogCodes[8];	// 没有日志的指令
+
 	TinyController();
 	virtual ~TinyController();
 
@@ -163,8 +165,11 @@ public:
 	TinyStat	Total;	// 总统计
 	TinyStat	Last;	// 最后一次统计
 
+private:
 	// 显示统计信息
 	void ShowStat() const;
+
+	void ShowMessage(const TinyMessage& msg, bool send, const ITransport* port);
 };
 
 #endif

@@ -238,6 +238,10 @@ TinyController::TinyController() : Controller()
 	_taskID		= 0;
 	_Queue		= NULL;
 	QueueLength	= 8;
+
+	// 默认屏蔽心跳日志
+	ArrayZero(NoLogCodes);
+	NoLogCodes[0] = 0x03;
 }
 
 TinyController::~TinyController()
@@ -302,13 +306,19 @@ void TinyController::Open()
 	//memset(&Last, 0, sizeof(TinyStat));
 
 #if MSG_DEBUG
-	Sys.AddTask(StatTask, this, 1000, 15000, "微网统计");
+	Sys.AddTask([](void* p){ return ((TinyController*)p)->ShowStat(); }, this, 1000, 15000, "微网统计");
 #endif
 }
 
-void ShowMessage(const TinyMessage& msg, bool send, ITransport* port)
+void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITransport* port)
 {
 	if(msg.Ack) return;
+
+	for(int i=0; i<ArrayLength(NoLogCodes); i++)
+	{
+		if(msg.Code == NoLogCodes[i]) return;
+		if(NoLogCodes[i] == 0) break;
+	}
 
 	int blank = 6;
 	msg_printf("%s", port->ToString());
@@ -515,12 +525,12 @@ void TinyController::AckRequest(const TinyMessage& msg)
 			// 该传输口收到响应，从就绪队列中删除
 			node.Using = 0;
 
-			if(msg.Ack)
+			/*if(msg.Ack)
 				msg_printf("收到确认 ");
 			else
 				msg_printf("响应确认 ");
 
-			msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, cost);
+			msg_printf("Src=0x%02x Code=0x%02X Seq=0x%02X Retry=%d Cost=%dms \r\n", msg.Src, msg.Code, msg.Seq, msg.Retry, cost);*/
 			return;
 		}
 	}
@@ -716,7 +726,7 @@ void TinyController::Loop()
 			// 已过期则删除
 			if(node.EndTime < now || node.Times > 50)
 			{
-				if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
+				//if(!reply) msg_printf("消息过期 Dest=0x%02X Seq=0x%02X Times=%d\r\n", node.Data[0], node.Seq, node.Times);
 				node.Using	= 0;
 				node.Seq	= 0;
 
@@ -754,8 +764,6 @@ void TinyController::Loop()
 			// 分组统计
 			if(Total.Send >= 1000)
 			{
-				//memcpy(&Last, &Total, sizeof(TinyStat));
-				//memset(&Total, 0, sizeof(TinyStat));
 				Last	= Total;
 				Total.Clear();
 			}
@@ -780,13 +788,13 @@ void TinyController::Loop()
 	if(count == 0) Sys.SetTask(_taskID, false);
 }
 
-void StatTask(void* param)
+/*void StatTask(void* param)
 {
 	assert_ptr(param);
 
 	auto control = (TinyController*)param;
 	control->ShowStat();
-}
+}*/
 
 // 显示统计信息
 void TinyController::ShowStat() const
@@ -803,19 +811,20 @@ void TinyController::ShowStat() const
 	uint rate	= 100;
 	uint tack	= Last.Success + Total.Success;
 	uint tmsg	= Last.Msg + Total.Msg;
+	uint tcost	= Last.Cost + Total.Cost;
 	tsend		+= Last.Send;
 	if(tsend > 0)
 		rate	= tack * 100 / tmsg;
 	uint cost	= 0;
 	if(tack > 0)
-		cost	= (Last.Cost + Total.Cost) / tack;
+		cost	= tcost / tack;
 	uint speed	= 0;
-	if(Last.Cost + Total.Cost > 0)
-		speed	= (Last.Bytes + Total.Bytes) * 1000 / (Last.Cost + Total.Cost);
+	if(tcost > 0)
+		speed	= (Last.Bytes + Total.Bytes) * 1000 / tcost;
 	uint retry	= 0;
-	if(Last.Msg + Total.Msg > 0)
+	if(tmsg > 0)
 		retry	= tsend * 100 / tmsg;
-	msg_printf("Tiny::State 成功=%d%% %d/%d 平均=%dms 速度=%d Byte/s 次数=%d.%02d 接收=%d 响应=%d 广播=%d \r\n", rate, tack, tmsg, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Reply + Total.Reply, Last.Broadcast + Total.Broadcast);
+	msg_printf("Tiny::State 成功=%d%% %d/%d/%d 平均=%dms 速度=%d Byte/s 次数=%d.%02d 接收=%d 响应=%d 广播=%d \r\n", rate, tack, tmsg, tsend, cost, speed, retry/100, retry%100, Last.Receive + Total.Receive, Last.Reply + Total.Reply, Last.Broadcast + Total.Broadcast);
 #endif
 }
 
