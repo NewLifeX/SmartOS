@@ -267,7 +267,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::OnRedirect(const HelloMessage& msg) const
 {
-	if(msg.ErrCode < 0xFE && msg.ErrCode >0xFD) return false;
+	if(!(msg.ErrCode == 0xFE || msg.ErrCode ==0xFD)) return false;
 
 	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= msg.Protocol;
