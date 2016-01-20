@@ -139,11 +139,11 @@ void LoopTask(void* param)
 			break;
 		case 1:
 		{
-			//auto cfg	= TokenConfig::Current;
+			auto cfg	= TokenConfig::Current;
 
-			//if(cfg->Name[0] == 0)
-			//	client->Register();
-			//else
+			if(cfg->Name[0] == 0)
+				client->Register();
+			else
 				client->Login();
 
 			break;
