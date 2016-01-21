@@ -218,6 +218,7 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	else
 		return Client->Send(msg);
 }
+
 void Gateway::SendDevicesIDs()
 {
 	TokenMessage msg;
