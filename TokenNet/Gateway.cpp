@@ -190,7 +190,11 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 		else
 		{
 			for(int i=0; i<count; i++)
-				Server->Devices[i]->WriteMessage(ms);
+			{	
+				auto dv1 = Server->Devices[i];
+				if(dv1 == NULL ) continue;
+				dv1->WriteMessage(ms);
+			}
 		}
 	}
 
