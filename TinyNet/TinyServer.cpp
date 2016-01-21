@@ -606,7 +606,7 @@ Device* TinyServer::FindDevice(const Array& hardid) const
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-	  if(hardid == Devices[i]->GetHardID()) return Devices[i];
+	  if(Devices[i]!=NULL&&hardid == Devices[i]->GetHardID()) return Devices[i];
 	}
 	return NULL;
 }
