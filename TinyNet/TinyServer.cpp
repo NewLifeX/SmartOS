@@ -621,6 +621,7 @@ bool TinyServer::DeleteDevice(byte id)
 		debug_printf("TinyServer::DeleteDevice 删除设备 0x%02X \r\n", id);
 
 		int idx = Devices.FindIndex(dv);
+		debug_printf("idx~~~~~~~~~~~:%d\r\n",idx);
 		if(idx >= 0) Devices[idx] = NULL;
 		delete dv;
 		SaveDevices();
@@ -709,16 +710,25 @@ void TinyServer::SaveDevices() const
 	byte buf[0x800];
 
 	MemoryStream ms(buf, ArrayLength(buf));
+	byte num = 0;
+	if(Devices.Length()==0)
+		num = 1;
+	
+	for(int i = 0; i<Devices.Length(); i++)
+	{
+		auto dv = Devices[i];
+		if(dv == NULL) continue;		
+		num++;
+	}
 	// 设备个数
-	int count = Devices.Length();
-	ms.Write((byte)count);
-	byte num;
-	for(int i = 0; i<count; i++)
+	int count = num;
+	ms.Write((byte)count);	
+	
+	for(int i = 0; i<Devices.Length(); i++)
 	{
 		auto dv = Devices[i];
 		if(dv == NULL) continue;
 		dv->Write(ms);
-		num++;
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", num, cfg.Address);
 	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));

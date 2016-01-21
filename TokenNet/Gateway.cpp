@@ -174,7 +174,15 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	TokenMessage msg;
 	msg.Code = 0x21;
 
-	int count = Server->Devices.Length();
+	int count = 0;
+	int len	  =  Server->Devices.Length();
+	
+	for(int i = 0;i < len;i++)
+	{
+		if(Server->Devices[i] == NULL) continue;
+		count++;
+	}
+		
 	if(dv) count	= 1;
 
 	byte buf[1500];		// 1024 字节只能承载 23条数据，udp最大能承载1514字节
@@ -183,13 +191,13 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 	ms.Write((byte)act);
 	ms.Write((byte)count);
 
-	if(count > 0)
+	if(len > 0)
 	{
 		if(dv)
 			dv->WriteMessage(ms);
 		else
 		{
-			for(int i=0; i<count; i++)
+			for(int i=0; i<len; i++)
 			{	
 				auto dv1 = Server->Devices[i];
 				if(dv1 == NULL ) continue;
