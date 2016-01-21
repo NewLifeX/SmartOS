@@ -460,6 +460,7 @@ void TinyClient::Ping()
 		//return;
 	}*/
 
+	debug_printf("TinyClient::Ping");
 	// 没有服务端时不要上报
 	if(!Server) return;
 

@@ -712,13 +712,15 @@ void TinyServer::SaveDevices() const
 	// 设备个数
 	int count = Devices.Length();
 	ms.Write((byte)count);
+	byte num;
 	for(int i = 0; i<count; i++)
 	{
 		auto dv = Devices[i];
 		if(dv == NULL) continue;
 		dv->Write(ms);
+		num++;
 	}
-	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", count, cfg.Address);
+	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", num, cfg.Address);
 	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));
 }
 
