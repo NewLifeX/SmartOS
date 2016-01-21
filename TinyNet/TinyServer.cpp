@@ -103,8 +103,8 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			dv = Current;
 			break;
 		case 2:
-			if(OnDisjoin(msg))
-			   if(Received) return Received(this, msg, Param);
+			if(!OnDisjoin(msg))	
+				return false;
 			break;
 		case 3:
 			// 设置当前设备
