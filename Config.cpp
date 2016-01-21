@@ -27,9 +27,11 @@ struct ConfigBlock
 
     const ConfigBlock*	Next() const;
     const void*			Data() const;
+	uint CopyTo(Array& bs) const;
 
     bool Init(const char* name, const Array& bs);
     bool Write(const Storage& storage, uint addr, const Array& bs);
+	bool Remove(const Storage& storage, uint addr);
 };
 
 ushort ConfigBlock::GetHash() const
@@ -58,6 +60,16 @@ const ConfigBlock* ConfigBlock::Next() const
 const void* ConfigBlock::Data() const
 {
     return (const void*)&this[1];
+}
+
+uint ConfigBlock::CopyTo(Array& bs) const
+{
+    if(Size == 0 || Size > bs.Capacity()) return 0;
+
+	bs.Copy(Data(), Size);
+	bs.SetLength(Size);
+
+	return Size;
 }
 
 // 构造一个新的配置块
@@ -114,6 +126,18 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
     return true;
 }
 
+bool ConfigBlock::Remove(const Storage& storage, uint addr)
+{
+	// 把整个名称区域清空
+	memset(Name, 0, ArrayLength(Name));
+
+    Hash = GetHash();
+
+	// 写入头部
+	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
+	return storage.Write(addr, Array(&Hash, len));
+}
+
 /*================================ 配置 ================================*/
 
 Config::Config(const Storage& st, uint addr, uint size)
@@ -142,15 +166,14 @@ bool CheckSignature(const Storage& st, uint& addr, bool create)
 }
 
 // 循环查找配置块
-const void* Config::Find(const char* name) const
+const ConfigBlock* FindBlock(const Storage& st, uint addr, const char* name)
 {
 	TS("Config::Find");
 
     if(name == NULL) return NULL;
 	//assert_param2(name, "配置段名称不能为空");
 
-	uint addr = Address;
-	if(!CheckSignature(Device, addr, false)) return NULL;
+	if(!CheckSignature(st, addr, false)) return NULL;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
@@ -171,12 +194,11 @@ const void* Config::Find(const char* name) const
 }
 
 // 创建一个指定大小的配置块。找一个满足该大小的空闲数据块，或者在最后划分一个
-const void* Config::New(int size) const
+const ConfigBlock* NewBlock(const Storage& st, uint addr, int size)
 {
 	TS("Config::New");
 
-	uint addr = Address;
-	if(!CheckSignature(Device, addr, true)) return NULL;
+	if(!CheckSignature(st, addr, true)) return NULL;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
@@ -188,6 +210,20 @@ const void* Config::New(int size) const
 
         cfg = cfg->Next();
     }
+
+	return cfg;
+}
+
+// 循环查找配置块
+const void* Config::Find(const char* name) const
+{
+	return FindBlock(Device, Address, name);
+}
+
+// 创建一个指定大小的配置块。找一个满足该大小的空闲数据块，或者在最后划分一个
+const void* Config::New(int size) const
+{
+	auto cfg	= NewBlock(Device, Address, size);
 
 	// 实在没办法，最后划分一个新的区块。这里判断一下空间是否足够
 	if(Size && (uint)cfg + sizeof(ConfigBlock) + size > Address + Size)
@@ -208,14 +244,14 @@ bool Config::Remove(const char* name) const
 
     if(name == NULL) return NULL;
 
-	auto cfg = (ConfigBlock*)Find(name);
+	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) return false;
 
 	// 只清空名称，修改哈希，不能改大小，否则无法定位下一个配置块
-	memset(cfg->Name, 0, ArrayLength(cfg->Name));
-	cfg->Write(Device, (uint)cfg, ByteArray(0));
+	// 拷贝一份修改
+	auto header	= *cfg;
 
-	return true;
+	return header.Remove(Device, (uint)cfg);
 }
 
 // 根据名称更新块
@@ -227,8 +263,8 @@ const void* Config::Set(const char* name, const Array& bs) const
     //assert_param2(name, "配置块名称不能为空");
 	//assert_param2(Device, "未指定配置段的存储设备");
 
-	auto cfg = (const ConfigBlock*)Find(name);
-	if(!cfg) cfg	= (const ConfigBlock*)New(bs.Length());
+	auto cfg = FindBlock(Device, Address, name);
+	if(!cfg) cfg	= NewBlock(Device, Address, bs.Length());
     if(!cfg) return NULL;
 
 	// 重新搞一个配置头，使用新的数据去重新初始化
@@ -247,16 +283,10 @@ bool Config::Get(const char* name, Array& bs) const
     if(name == NULL) return false;
     //assert_param2(name, "配置块名称不能为空");
 
-	auto cfg = (const ConfigBlock*)Find(name);
-    if(cfg && cfg->Size > 0 && cfg->Size <= bs.Capacity())
-	{
-		bs.Copy(cfg->Data(), cfg->Size);
-		bs.SetLength(cfg->Size);
+	auto cfg = FindBlock(Device, Address, name);
+    if(!cfg) return false;
 
-		return true;
-    }
-
-    return false;
+	return cfg->CopyTo(bs) > 0;
 }
 
 const void* Config::Get(const char* name) const
@@ -266,7 +296,7 @@ const void* Config::Get(const char* name) const
     if(name == NULL) return NULL;
     //assert_param2(name, "配置块名称不能为空");
 
-	auto cfg = (const ConfigBlock*)Find(name);
+	auto cfg = FindBlock(Device, Address, name);
     if(cfg && cfg->Size) return cfg->Data();
 
     return NULL;
