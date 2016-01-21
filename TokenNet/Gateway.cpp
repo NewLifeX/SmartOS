@@ -341,19 +341,10 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 			break;
 		case DeviceAtions::Delete:
 		{
-			debug_printf("节点删除 ID=0x%02X\r\n", id);
-
-			auto dv = Server->Devices[id];
-			TinyMessage rs;
-			rs.Dest = dv->Address;
-			ushort crc = Crc::Hash16(dv->GetHardID());
-			Server->Disjoin(rs, crc);
-			Sys.Sleep(300);
-			Server->Disjoin(rs, crc);
-			Sys.Sleep(300);
-			Server->Disjoin(rs, crc);
-
-			Server->DeleteDevice(id);
+			debug_printf("节点删除~~ ID=0x%02X\r\n", id);
+			auto dv = Server->FindDevice(id);
+			if(dv == NULL) return;
+			Server->DeleteDevice(id);			
 			break;
 		}
 		default:
@@ -420,14 +411,26 @@ bool Gateway::DeviceProcess(const Message& msg)
 		case DeviceAtions::Offline:
 			break;
 		case DeviceAtions::Delete:
-			debug_printf("节点删除 ID=0x%02X\r\n", id);
+			debug_printf("节~~1点删除 ID=0x%02X\r\n", id);
 		{
+			auto dv = Server->FindDevice(id);
+			if(dv == NULL) 
+			{
+				rs.Error = true;				
+				Client->Reply(rs);
+				return false;
+			}
+			
+			ushort crc = Crc::Hash16(dv->GetHardID());
+			Server->Disjoin(id);
+			Sys.Sleep(300);
+			Server->Disjoin(id);
+			Sys.Sleep(300);
+			Server->Disjoin(id);
 			// 云端要删除本地设备信息
 			bool flag = Server->DeleteDevice(id);
-
 			rs.Error	= !flag;
-
-			Client->Reply(rs);
+			Client->Reply(rs);			
 		}
 			break;
 		default:
