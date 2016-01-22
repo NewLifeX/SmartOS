@@ -226,14 +226,14 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
-				
-				if(Status == 1) Login();
 			}
 			Status = 1;
 
+			// 握手完成后马上注册或登录
+			Sys.SetTask(_task, true, 0);
+
 			// 同步本地时间
 			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
-			
 		}
 	}
 	else if(!msg.Reply)
