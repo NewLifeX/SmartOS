@@ -348,6 +348,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 			ushort crc2	= Crc::Hash16(dv->GetHardID());
 			if(crc1 == crc2)
 			{
+				debug_printf("TinyServer::OnDisjoin:0x%02X \r\n", dv->Address);
 				//DeleteDevice(dv->Address);
 				return true;				
 			}
@@ -751,6 +752,8 @@ void TinyServer::ClearDevices()
 		for(int i = 1; i < count; i++)	// 从1开始派ID  自己下线完全不需要
 		{
 			auto dv = Devices[i];
+			if(!dv)continue;
+			
 			TinyMessage rs;
 			rs.Dest = dv->Address;
 			ushort crc = Crc::Hash16(dv->GetHardID());
