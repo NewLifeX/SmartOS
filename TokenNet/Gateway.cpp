@@ -104,7 +104,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 				break;
 			case 0x02:
 				DeviceRequest(DeviceAtions::Delete, dv);
-				break;				
+				break;
 		}
 	}
 
@@ -176,13 +176,13 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 
 	int count = 0;
 	int len	  =  Server->Devices.Length();
-	
+
 	for(int i = 0;i < len;i++)
 	{
 		if(Server->Devices[i] == NULL) continue;
 		count++;
 	}
-		
+
 	if(dv) count	= 1;
 
 	byte buf[1500];		// 1024 字节只能承载 23条数据，udp最大能承载1514字节
@@ -198,7 +198,7 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 		else
 		{
 			for(int i=0; i<len; i++)
-			{	
+			{
 				auto dv1 = Server->Devices[i];
 				if(dv1 == NULL ) continue;
 				dv1->WriteMessage(ms);
@@ -234,24 +234,24 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 void Gateway::SendDevicesIDs()
 {
 	TokenMessage msg;
-	msg.Code = 0x21;	
+	msg.Code = 0x21;
 	auto act=DeviceAtions::ListIDs;
-	
+
 	MemoryStream ms;
 	ms.Write((byte)act);
 	byte len = Server->Devices.Length();
 	//先确认真正的设备有多少个
 	for(int i = 0; i < len; i++)
 	{
-		auto dv =Server->Devices[i];		
-		if(!dv) continue;		
-		ms.Write(dv->Address);	
+		auto dv =Server->Devices[i];
+		if(!dv) continue;
+		ms.Write(dv->Address);
 	}
-	
+
 	msg.Length 	= ms.Position();
 	msg.Data 	= ms.GetBuffer();
-	
-	Client->Send(msg);	
+
+	Client->Send(msg);
 }
 // 学习模式 0x20
 void Gateway::SetMode(uint sStudy)
@@ -357,7 +357,7 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 			debug_printf("节点删除~~ ID=0x%02X\r\n", id);
 			auto dv = Server->FindDevice(id);
 			if(dv == NULL) return;
-			Server->DeleteDevice(id);			
+			Server->DeleteDevice(id);
 			break;
 		}
 		default:
@@ -427,13 +427,13 @@ bool Gateway::DeviceProcess(const Message& msg)
 			debug_printf("节~~1点删除 ID=0x%02X\r\n", id);
 		{
 			auto dv = Server->FindDevice(id);
-			if(dv == NULL) 
+			if(dv == NULL)
 			{
-				rs.Error = true;				
+				rs.Error = true;
 				Client->Reply(rs);
 				return false;
 			}
-			
+
 			ushort crc = Crc::Hash16(dv->GetHardID());
 			Server->Disjoin(id);
 			Sys.Sleep(300);
@@ -443,7 +443,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 			// 云端要删除本地设备信息
 			bool flag = Server->DeleteDevice(id);
 			rs.Error	= !flag;
-			Client->Reply(rs);			
+			Client->Reply(rs);
 		}
 			break;
 		default:
@@ -459,14 +459,14 @@ bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 	if(msg.Length == 0) return false;
 
 	TS("TokenToTiny");
-	
+
 	tny.Code	= msg.Code;
 	// 处理Reply标记
 	tny.Reply	= msg.Reply;
 	tny.Error	= msg.Error;
 
 	// 第一个字节是节点设备地址
-	tny.Dest	= msg.Data[0];	
+	tny.Dest	= msg.Data[0];
 	if(msg.Length > 1) memcpy(tny.Data, &msg.Data[1], msg.Length - 1);
 	tny.Length	= msg.Length - 1;
 	return true;
@@ -515,26 +515,29 @@ void Gateway::Loop(void* param)
 {
 	TS("Gateway::Loop");
 
-	auto gw		= 	(Gateway*)param;
-	
+	auto gw		= (Gateway*)param;
+	// 未登录不执行任何逻辑
+	if(gw->Client->Token == 0) return;
+
 	gw->SendDevicesIDs();
+
 	auto now	= Sys.Seconds();
 	byte len	= gw->Server->Devices.Length();
 	for(int i = 0; i < len; i++)
 	{
 		auto dv = gw->Server->Devices[i];
-		
+
 		if(!dv) continue;
-		
+
 		ushort time = dv->OfflineTime ? dv->OfflineTime :60;
 
 		// 特殊处理网关自身
 		if(dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
 
 		if(dv->LastTime + time < now)
-		{	// 下线			
+		{	// 下线
 			if(dv->Logined)
-			{	
+			{
 				//debug_printf("设备最后活跃时间：%d,系统当前时间:%d,离线阈值:%d\r\n",dv->LastTime,now,time);
 				gw->DeviceRequest(DeviceAtions::Offline, dv);
 				dv->Logined = false;
@@ -543,7 +546,7 @@ void Gateway::Loop(void* param)
 		else
 		{	// 上线
 			if(!dv->Logined)
-			{				
+			{
 				gw->DeviceRequest(DeviceAtions::Online, dv);
 				dv->Logined = true;
 			}
