@@ -3,31 +3,26 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-LoginMessage::LoginMessage() : Name(16), Key(6)
+LoginMessage::LoginMessage()
 {
-	Reply = false;
 }
 
 // 从数据流中读取消息
 bool LoginMessage::Read(Stream& ms)
 {
 	if(!Reply)
-	{	
-		Name = ms.ReadString();
-		Key    = ms.ReadString();
-		Salt   = ms.ReadArray();
-	
-		Local.Address = ms.ReadBytes(4);
-		Local.Port = ms.ReadUInt16();		
+	{
+		Name	= ms.ReadString();
+		Key		= ms.ReadString();
+		Salt	= ms.ReadArray();
 	}
-	else
-		if(!Error)
-		{		
-			Token = ms.ReadUInt32();
-			Key   = ms.ReadString();
-		}
-		
-    return false;		
+	else if(!Error)
+	{
+		Token	= ms.ReadUInt32();
+		Key		= ms.ReadString();
+	}
+
+    return false;
 }
 
 // 把消息写入数据流中
@@ -36,22 +31,21 @@ void LoginMessage::Write(Stream& ms) const
 	if(!Reply)
 	{
 		ms.WriteArray(Name);
-		// 密码取MD5后传输
-		ms.WriteArray(Key);
-		ulong now = Sys.Ms();
-		//Salt.Set((byte*)&now, 8);
-		//ms.WriteArray(Salt);
-		ms.WriteArray(Array(&now, 8));
-		ms.Write(Local.Address.ToArray());
-		ms.Write((ushort)Local.Port);
-	}
-	else
-		if(!Error)
+		ms.WriteArray(MD5::Hash(Key));
+
+		if(Salt.Length() > 0)
+			ms.WriteArray(Salt);
+		else
 		{
-			debug_printf("Token %d", Token);
-			ms.Write(Token);
-			ms.WriteArray(Key);
-		}		
+			ulong now = Sys.Ms();
+			ms.WriteArray(MD5::Hash(Array(&now, 8)));
+		}
+	}
+	else if(!Error)
+	{
+		ms.Write(Token);
+		ms.WriteArray(Key);
+	}
 }
 
 #if DEBUG
@@ -60,7 +54,7 @@ String& LoginMessage::ToStr(String& str) const
 {
 	str += "登录";
 	if(Reply) str += "#";
-	str = str + " Name=" + Name + " Key=" + Key + " Salt=" + Salt + " " + Local;
+	str = str + " Name=" + Name + " Key=" + Key + " Salt=" + Salt;
 
 	return str;
 }

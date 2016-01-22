@@ -3,37 +3,39 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-RegisterMessage::RegisterMessage() : Name(16), Pass(16)
+RegisterMessage::RegisterMessage() : Name(0), Pass(0), Salt(0)
 {
 }
+
 // 从数据流中读取消息
 bool RegisterMessage::Read(Stream& ms)
 {
-	if(!Reply)
-	{	
-		Name = ms.ReadString();
-		Pass = ms.ReadString();			
+	if(!Error)
+	{
+		Name	= ms.ReadString();
+		Pass	= ms.ReadString();
+		Salt	= ms.ReadArray();
 	}
-	//else
-	//	if(!Error)
-	//	{	
-	//		Name = ms.ReadArray();	
-	//		Pass   = ms.ReadArray();
-	//	}
-	//	
-    return false;		
+
+    return false;
 }
 
 // 把消息写入数据流中
 void RegisterMessage::Write(Stream& ms) const
 {
-	if(!Reply)
+	if(!Error)
 	{
 		ms.WriteArray(Name);
-		// 密码取MD5后传输
-		ms.WriteArray(MD5::Hash(Pass));	
-		ms.WriteArray(MD5::Hash(Name));
-	}		
+		ms.WriteArray(Pass);
+
+		if(Salt.Length() > 0)
+			ms.WriteArray(Salt);
+		else
+		{
+			ulong now = Sys.Ms();
+			ms.WriteArray(MD5::Hash(Array(&now, 8)));
+		}
+	}
 }
 
 #if DEBUG
@@ -42,7 +44,12 @@ String& RegisterMessage::ToStr(String& str) const
 {
 	str += "注册";
 	if(Reply) str += "#";
-	str = str + " Name=" + Name + " Pass=" + Pass;
+	str = str + " Name=";
+	ByteArray(Name).ToHex(str);
+	str = str + " Pass=";
+	ByteArray(Pass).ToHex(str);
+	str = str + " Salt=";
+	ByteArray(Salt).ToHex(str);
 
 	return str;
 }

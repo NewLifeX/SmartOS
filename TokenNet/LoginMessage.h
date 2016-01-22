@@ -11,12 +11,8 @@ public:
 	String		Name;	// 登录名
 	String		Key;	// 登录密码
 	ByteArray	Salt;	// 加盐
-	uint		Token;	//令牌
-	byte		Error:1;//是否错误
-	
-	IPEndPoint	Local;	// 内网地址
 
-	bool		Reply;	// 是否响应
+	uint		Token;	//令牌
 
 	// 初始化消息，各字段为0
 	LoginMessage();

@@ -12,12 +12,9 @@ static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
 
-TokenClient::TokenClient() : ID(16), Key(16)
+TokenClient::TokenClient()
 {
 	Token		= 0;
-	// 直接拷贝芯片ID和类型作为唯一ID
-	ID.Set(Sys.ID, ID.Length());
-	Key.Set(Sys.ID, Key.Length());
 
 	Status		= 0;
 	LoginTime	= 0;
@@ -299,28 +296,30 @@ bool TokenClient::OnRedirect(const HelloMessage& msg) const
 	return true;
 }
 
-//注册
+// 注册
 void TokenClient::Register()
 {
 	debug_printf("TokenClient::Register\r\n");
+
 	RegisterMessage re;
-	re.Name = ID;
-	re.Pass	= Key;
+	re.Name.Copy(Sys.ID, 16);
 
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
-	Send(msg);
 
+	Send(msg);
 }
+
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
-	if(msg.Error) return;
-	Stream ms(msg.Data, msg.Length);
+	if(!msg.Reply || msg.Error) return;
 
 	auto cfg	= TokenConfig::Current;
 
-	ms.ReadString().CopyTo(cfg->Name);
-	ms.ReadString().CopyTo(cfg->Key);
+	RegisterMessage rm;
+	rm.ReadMessage(msg);
+	rm.Name.CopyTo(cfg->Name);
+	rm.Pass.CopyTo(cfg->Key);
 
 	cfg->Save();
     cfg->Show();
@@ -349,14 +348,14 @@ void TokenClient::Login()
 	Send(msg);
 }
 
-void TokenClient::Login(TokenMessage& msg,Controller* ctrl)
+void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 {
 	if(msg.Error) return;
 
 	LoginMessage login;
-	//这里需要随机密匙
-	login.Key		= Key.Copy(Sys.ID, 16);
-	//随机令牌？
+	// 这里需要随机密匙
+	//login.Key		= Key.Copy(Sys.ID, 16);
+	// 随机令牌
 	login.Token		= 123456;
 	login.Reply		= true;
 	login.WriteMessage(msg);
@@ -366,7 +365,6 @@ void TokenClient::Login(TokenMessage& msg,Controller* ctrl)
 	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
 	ctrl2->Key		= login.Key;
 	ctrl2->Token 	= login.Token;
-
 }
 
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
