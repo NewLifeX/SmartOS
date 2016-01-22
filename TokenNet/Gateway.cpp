@@ -234,8 +234,8 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 void Gateway::SendDevicesIDs()
 {
 	TokenMessage msg;
-	msg.Code = 0x21;
-	auto act=DeviceAtions::ListIDs;
+	msg.Code	= 0x21;
+	auto act	= DeviceAtions::ListIDs;
 
 	MemoryStream ms;
 	ms.Write((byte)act);
@@ -253,39 +253,29 @@ void Gateway::SendDevicesIDs()
 
 	Client->Send(msg);
 }
+
 // 学习模式 0x20
-void Gateway::SetMode(uint sStudy)
+void Gateway::SetMode(uint time)
 {
 	TS("Gateway::SetMode");
 
-	Server->Study = sStudy > 0;
-
-	// 兼容旧版本
-	switch(sStudy)
-	{
-		case 1:
-			sStudy	= 30;
-			break;
-		case 2:
-			sStudy	= 90;
-			break;
-	}
+	Server->Study = time > 0;
 
 	// 定时退出学习模式
-	_Study	= sStudy;
+	_Study	= time;
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(sStudy ? sStudy * 1000 : 100);
+	if(Led) Led->Write(time ? time * 1000 : 100);
 
-	if(sStudy)
-		debug_printf("进入 学习模式 %d 秒\r\n", sStudy);
+	if(time)
+		debug_printf("进入 学习模式 %d 秒\r\n", time);
 	else
 		debug_printf("退出 学习模式\r\n");
 
 	TokenMessage msg;
 	msg.Code	= 0x20;
 	msg.Length	= 1;
-	msg.Data[0]	= sStudy;
+	msg.Data[0]	= time;
 
 	Client->Reply(msg);
 }
@@ -314,14 +304,10 @@ bool Gateway::OnMode(const Message& msg)
 
 	TS("Gateway::OnMode");
 
-    if(msg.Length < 1)
-    {
-    	SetMode(30);
-        return true;
-    }
+	int time	= 30;
+    if(msg.Length > 0) time = msg.Data[0];
 
-    // 自动学习模式
-	SetMode(msg.Data[0]);
+	SetMode(time);
 
 	return true;
 }
@@ -516,6 +502,19 @@ void Gateway::Loop(void* param)
 	TS("Gateway::Loop");
 
 	auto gw		= (Gateway*)param;
+
+	// 检测自动退出学习模式
+	if(gw->_Study)
+	{
+		gw->_Study	-= LOOP_Interval / 1000;
+		if(gw->_Study <= 0)
+		{
+			gw->_Study	= 0;
+
+			gw->SetMode(0);
+		}
+	}
+
 	// 未登录不执行任何逻辑
 	if(gw->Client->Token == 0) return;
 

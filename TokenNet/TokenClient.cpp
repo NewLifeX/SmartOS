@@ -65,6 +65,12 @@ void TokenClient::Close()
 
 bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 {
+	// 未登录之前，只能 握手、登录、注册
+	if(Token == 0)
+	{
+		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
+	}
+
 	if(!ctrl) ctrl	= Control;
 	assert_param2(ctrl, "TokenClient::Send");
 
@@ -73,7 +79,11 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 {
-	//if(Status < 2) return false;
+	// 未登录之前，只能 握手、登录、注册
+	if(Token == 0)
+	{
+		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
+	}
 
 	if(!ctrl) ctrl	= Control;
 	assert_param2(ctrl, "TokenClient::Reply");
@@ -150,9 +160,6 @@ void LoopTask(void* param)
 		}
 		case 2:
 			client->Ping();
-			break;
-		case 3:
-			client->Register();
 			break;
 	}
 }
@@ -374,7 +381,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		Token = 0;
 
 		byte result = ms.ReadByte();
-		//if(result == 0xFF) Status = 0;
 		// 任何错误，重新握手
 		Status = 0;
 
