@@ -85,7 +85,7 @@ Array::Array(void* data, int len)
 {
 	_Size	= 1;
 
-	if(!len) len = MemLen(data);
+	if(len < 0) len = MemLen(data);
 
 	_Arr		= data;
 	_Length		= len;
@@ -98,7 +98,7 @@ Array::Array(const void* data, int len)
 {
 	_Size	= 1;
 
-	if(!len) len = MemLen(data);
+	if(len < 0) len = MemLen(data);
 
 	_Arr		= (void*)data;
 	_Length		= len;
@@ -196,7 +196,7 @@ bool Array::Set(void* data, int len)
 // 设置数组。直接使用指针，不拷贝数据
 bool Array::Set(const void* data, int len)
 {
-	if(!len) len = MemLen(data);
+	if(len < 0) len = MemLen(data);
 
 	// 销毁旧的
 	if(_needFree && _Arr && _Arr != data) delete _Arr;
@@ -216,7 +216,7 @@ int Array::Copy(const void* data, int len, int index)
 	assert_param2(_canWrite, "禁止CopyData修改");
 	assert_param2(data, "Array::Copy data Error");
 
-	if(!len) len = MemLen(data);
+	if(len < 0) len = MemLen(data);
 
 	// 检查长度是否足够
 	int len2 = index + len;
@@ -563,7 +563,7 @@ String& String::Append(char ch)
 
 String& String::Append(const char* str, int len)
 {
-	Copy(str, 0, Length());
+	Copy(str, len, Length());
 
 	return *this;
 }
@@ -685,7 +685,7 @@ String& String::Concat(const Object& obj)
 
 String& String::Concat(const char* str, int len)
 {
-	Copy(str, 0, Length());
+	Copy(str, len, Length());
 
 	return *this;
 }

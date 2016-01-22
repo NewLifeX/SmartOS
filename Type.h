@@ -117,11 +117,11 @@ public:
 	// 设置数组。直接使用指针，不拷贝数据
 	bool Set(const void* data, int len);
 	// 复制数组。深度克隆，拷贝数据，自动扩容
-	int Copy(const void* data, int len = 0, int index = 0);
+	int Copy(const void* data, int len = -1, int index = 0);
 	// 复制数组。深度克隆，拷贝数据
 	int Copy(const Array& arr, int index = 0);
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	int CopyTo(void* data, int len = 0, int index = 0) const;
+	int CopyTo(void* data, int len = -1, int index = 0) const;
 	// 清空已存储数据。
 	virtual void Clear();
 	// 设置指定位置的值，不足时自动扩容
@@ -321,8 +321,8 @@ public:
 	String(int length = 0) : TArray(length) { }
 	String(char item, int count) : TArray(count) { Set(item, 0, count); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	String(void* str, int len = 0) : TArray(0) { Set(str, len); }
-	String(const void* str, int len = 0) : TArray(0) { Set(str, len); }
+	String(void* str, int len = -1) : TArray(0) { Set(str, len); }
+	String(const void* str, int len = -1) : TArray(0) { Set(str, len); }
 	String(const Array& bs) : TArray(bs.Length()) { Copy(bs, 0); }
 
 	// 输出对象的字符串表示方式
@@ -333,7 +333,7 @@ public:
 	virtual void Clear();
 
 	String& Append(char ch);
-	String& Append(const char* str, int len = 0);
+	String& Append(const char* str, int len = -1);
 	String& Append(int value, int radix = 10, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
 	String& Append(byte bt);		// 十六进制
 	String& Append(const ByteArray& bs);	// 十六进制
@@ -345,7 +345,7 @@ public:
 	String& Format(const char* format, ...);
 
     String& Concat(const Object& obj);
-    String& Concat(const char* str, int len = 0);
+    String& Concat(const char* str, int len = -1);
 
 	int IndexOf(const String& str) const;
 	int IndexOf(const char* str) const;
