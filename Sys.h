@@ -76,40 +76,40 @@ public:
 
 	void InitClock();	// 初始化系统时钟
     void Init();     	// 初始化系统
-	void ShowInfo();
-	uint HeapBase();	// 堆起始地址，前面是静态分配内存
-	uint StackTop();	// 栈顶，后面是初始化不清零区域
+	void ShowInfo() const;
+	uint HeapBase() const;	// 堆起始地址，前面是静态分配内存
+	uint StackTop() const;	// 栈顶，后面是初始化不清零区域
 
-	ulong	Ms();		// 系统启动后的毫秒数
-	uint	Seconds();	// 系统绝对当前时间，秒
+	ulong	Ms() const;		// 系统启动后的毫秒数
+	uint	Seconds() const;	// 系统绝对当前时间，秒
 
-    void Sleep(uint ms); // 毫秒级延迟
-    void Delay(uint us); // 微秒级延迟
+    void Sleep(uint ms) const; // 毫秒级延迟
+    void Delay(uint us) const; // 微秒级延迟
 	typedef void (*FuncU32)(uint param);
 	FuncU32 OnSleep;
 
-	bool CheckMemory();
+	bool CheckMemory() const;
 
-    void Reset();   // 重启系统
+    void Reset() const;   // 重启系统
 
 	// 系统跟踪
-	void InitTrace(void* port);
-	void Trace(int times = 1);
+	void InitTrace(void* port) const;
+	void Trace(int times = 1) const;
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = NULL);
-	void RemoveTask(uint& taskid);
+	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = NULL) const;
+	void RemoveTask(uint& taskid) const;
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
-	bool SetTask(uint taskid, bool enable, int msNextTime = -1);
+	bool SetTask(uint taskid, bool enable, int msNextTime = -1) const;
 	// 改变任务周期
-	bool SetTaskPeriod(uint taskid, int period);
+	bool SetTaskPeriod(uint taskid, int period) const;
 
 	bool Started;
 	void Start();	// 开始系统大循环
 };
 
-extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
+extern const TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
 
 //#include "Time.h"
 #include "Interrupt.h"

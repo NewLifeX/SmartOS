@@ -237,7 +237,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			Sys.SetTask(_task, true, 0);
 
 			// 同步本地时间
-			if(ext.LocalTime > 0) Time.SetTime(ext.LocalTime / 1000000UL);
+			if(ext.LocalTime > 0) ((TTime&)Time).SetTime(ext.LocalTime / 1000000UL);
 		}
 	}
 	else if(!msg.Reply)
@@ -446,7 +446,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	ulong start = ms.ReadArray().ToUInt64();
 	int cost = (int)(now - start);
 	if(cost < 0) cost = -cost;
-	if(cost > 1000) Time.SetTime(start / 1000);
+	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
 
 	if(Delay)
 		Delay = (Delay + cost) / 2;

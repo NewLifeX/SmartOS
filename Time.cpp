@@ -115,33 +115,34 @@ void TTime::Init()
 #endif
 void TTime::OnHandler(ushort num, void* param)
 {
-	TIM_TypeDef* timer = (TIM_TypeDef*)param;
+	auto timer = (TIM_TypeDef*)param;
 	if(!timer) return;
 
 	// 检查指定的 TIM 中断发生
 	if(TIM_GetITStatus(timer, TIM_IT_Update) == RESET) return;
 
 	// 累加计数
-	Time.Seconds += 1;
-	Time.Milliseconds += 1000;
+	auto& time	= (TTime&)Time;
+	time.Seconds += 1;
+	time.Milliseconds += 1000;
 	// 必须清除TIMx的中断待处理位，否则会频繁中断
 	TIM_ClearITPendingBit(timer, TIM_IT_Update);
 	//debug_printf("TTime::OnHandler Seconds=%d Milliseconds=%d\r\n", Time.Seconds, (uint)Time.Milliseconds);
 
 	// 定期保存Ticks到后备RTC寄存器
-	if(Time.OnSave) Time.OnSave();
+	if(time.OnSave) time.OnSave();
 
 	//if(Sys.OnTick) Sys.OnTick();
 }
 
 // 当前滴答时钟
-uint TTime::CurrentTicks()
+uint TTime::CurrentTicks() const
 {
 	return SysTick->LOAD - SysTick->VAL;
 }
 
 // 当前毫秒数
-ulong TTime::Current()
+ulong TTime::Current() const
 {
 	uint cnt = g_Timers[Index]->CNT;
 #if ! (defined(STM32F0) || defined(GD32F150))
@@ -168,7 +169,7 @@ void TTime::SetTime(ulong seconds)
 #pragma arm section code
 
 // 当前时间
-DateTime TTime::Now()
+DateTime TTime::Now() const
 {
 	DateTime dt(Seconds + BaseSeconds);
 	//dt.Millisecond = Milliseconds;
@@ -179,7 +180,7 @@ DateTime TTime::Now()
 	#pragma arm section code = "SectionForSys"
 #endif
 
-void TTime::Sleep(uint ms, bool* running)
+void TTime::Sleep(uint ms, bool* running) const
 {
     // 睡眠时间太短
     if(!ms) return;
@@ -210,7 +211,7 @@ void TTime::Sleep(uint ms, bool* running)
 	}
 }
 
-void TTime::Delay(uint us)
+void TTime::Delay(uint us) const
 {
     // 睡眠时间太短
     if(!us) return;

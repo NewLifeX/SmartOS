@@ -24,7 +24,7 @@ public:
     InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
     void* Params[VectorySize];       // 每一个中断向量对应的参数
 
-    void Init();    // 初始化中断向量表
+    void Init() const;    // 初始化中断向量表
     //~TInterrupt();
 
     // 注册中断函数（中断号，函数，参数）
@@ -32,32 +32,32 @@ public:
     // 解除中断注册
     bool Deactivate(short irq);
     // 开中断
-    bool Enable(short irq);
+    bool Enable(short irq) const;
     // 关中断
-    bool Disable(short irq);
+    bool Disable(short irq) const;
 
     // 是否开中断
-    bool EnableState(short irq);
+    bool EnableState(short irq) const;
     // 是否挂起
-    bool PendingState(short irq);
+    bool PendingState(short irq) const;
 
     // 设置优先级
-    void SetPriority(short irq, uint priority = 1);
+    void SetPriority(short irq, uint priority = 1) const;
     // 获取优先级
-    void GetPriority(short irq);
+    void GetPriority(short irq) const;
 
 #ifdef STM32F1
     // 编码优先级
-    uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority);
+    uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority) const;
     // 解码优先级
-    void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority);
+    void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority) const;
 #endif
 
-    void GlobalEnable();	// 打开全局中断
-    void GlobalDisable();	// 关闭全局中断
-	bool GlobalState();		// 全局中断开关状态
+    void GlobalEnable() const;	// 打开全局中断
+    void GlobalDisable() const;	// 关闭全局中断
+	bool GlobalState() const;	// 全局中断开关状态
 
-	bool IsHandler();		// 是否在中断里面
+	bool IsHandler() const;		// 是否在中断里面
 };
 
 // 全局中断类对象

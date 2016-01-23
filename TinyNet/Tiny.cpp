@@ -25,14 +25,15 @@ uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
 
 void Setup(ushort code, const char* name, COM message, int baudRate)
 {
-	Sys.Code = code;
-	Sys.Name = (char*)name;
+	auto& sys	= (TSys&)Sys;
+	sys.Code = code;
+	sys.Name = (char*)name;
 
     // 初始化系统
     //Sys.Clock = 48000000;
-    Sys.Init();
+    sys.Init();
 #if DEBUG
-    Sys.MessagePort = message; // 指定printf输出的串口
+    sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
 #endif
 

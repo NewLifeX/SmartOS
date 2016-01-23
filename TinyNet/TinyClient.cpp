@@ -508,7 +508,7 @@ bool TinyClient::OnPing(const TinyMessage& msg)
 				uint seconds = 0;
 				if(pm.ReadTime(ms, seconds))
 				{
-					Time.SetTime(seconds);
+					((TTime&)Time).SetTime(seconds);
 				}
 				break;
 			}

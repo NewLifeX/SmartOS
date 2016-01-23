@@ -426,7 +426,7 @@ void Thread::Schedule()
 	__disable_irq();
 
 	//Sys.OnTick = OnTick;
-	Sys.OnSleep = OnSleep;
+	((TSys&)Sys).OnSleep = OnSleep;
 
 	// 先切换好了才换栈，因为里面有很多层调用，不确定新栈空间是否足够
 	Switch();

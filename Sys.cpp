@@ -5,8 +5,8 @@
 
 #include "Platform\stm32.h"
 
-TSys Sys;
-TTime Time;
+const TSys Sys;
+const TTime Time;
 
 extern uint __heap_base;
 extern uint __heap_limit;
@@ -219,17 +219,17 @@ void TSys::Init(void)
 	InitClock();
 
 	// 必须在系统主频率确定以后再初始化时钟
-    Time.Init();
+    ((TTime&)Time).Init();
 }
 
 // 堆起始地址，前面是静态分配内存
-uint TSys::HeapBase()
+uint TSys::HeapBase() const
 {
 	return (uint)&__heap_base;
 }
 
 // 栈顶，后面是初始化不清零区域
-uint TSys::StackTop()
+uint TSys::StackTop() const
 {
 	return SRAM_BASE + (RAMSize << 10) - 0x40;
 }
@@ -238,7 +238,7 @@ uint TSys::StackTop()
 	#pragma arm section code = "SectionForSys"
 #endif
 
-bool TSys::CheckMemory()
+bool TSys::CheckMemory() const
 {
 #if DEBUG
 	uint msp = __get_MSP();
@@ -268,7 +268,7 @@ typedef struct
 }ST_CPUID;
 #endif
 
-void TSys::ShowInfo()
+void TSys::ShowInfo() const
 {
 #if DEBUG
 	byte* ver = (byte*)&Version;
@@ -389,12 +389,12 @@ void TSys::ShowInfo()
 #include "Task.h"
 
 // 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-uint TSys::AddTask(Action func, void* param, int dueTime, int period, const char* name)
+uint TSys::AddTask(Action func, void* param, int dueTime, int period, const char* name) const
 {
 	return Task::Scheduler()->Add(func, param, dueTime, period, name);
 }
 
-void TSys::RemoveTask(uint& taskid)
+void TSys::RemoveTask(uint& taskid) const
 {
 	if(taskid) Task::Scheduler()->Remove(taskid);
 	taskid = 0;
@@ -404,11 +404,11 @@ void TSys::RemoveTask(uint& taskid)
 	#pragma arm section code = "SectionForSys"
 #endif
 
-bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
+bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
 {
 	if(!taskid) return false;
 
-	Task* task = Task::Get(taskid);
+	auto task = Task::Get(taskid);
 	if(!task) return false;
 
 	task->Set(enable, msNextTime);
@@ -417,7 +417,7 @@ bool TSys::SetTask(uint taskid, bool enable, int msNextTime)
 }
 
 // 改变任务周期
-bool TSys::SetTaskPeriod(uint taskid, int period)
+bool TSys::SetTaskPeriod(uint taskid, int period) const
 {
 	if(!taskid) return false;
 
@@ -432,7 +432,7 @@ bool TSys::SetTaskPeriod(uint taskid, int period)
 	return true;
 }
 
-void TSys::Reset() { NVIC_SystemReset(); }
+void TSys::Reset() const { NVIC_SystemReset(); }
 
 void TSys::Start()
 {
@@ -490,11 +490,11 @@ void TimeSleep(uint us)
 }
 
 // 系统启动后的毫秒数
-ulong TSys::Ms() { return Time.Current(); }
+ulong TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
-uint TSys::Seconds() { return Time.Seconds + Time.BaseSeconds; }
+uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 
-void TSys::Sleep(uint ms)
+void TSys::Sleep(uint ms) const
 {
 	// 优先使用线程级睡眠
 	if(OnSleep)
@@ -509,7 +509,7 @@ void TSys::Sleep(uint ms)
 	}
 }
 
-void TSys::Delay(uint us)
+void TSys::Delay(uint us) const
 {
 	// 如果延迟微秒数太大，则使用线程级睡眠
 	if(OnSleep && us >= 2000)
@@ -536,14 +536,14 @@ void TSys::Delay(uint us)
 	#include "Port.h"
 	static OutputPort* _trace = NULL;
 //#endif
-void TSys::InitTrace(void* port)
+void TSys::InitTrace(void* port) const
 {
 //#if DEBUG
 	_trace	= (OutputPort*)port;
 //#endif
 }
 
-void TSys::Trace(int times)
+void TSys::Trace(int times) const
 {
 //#if DEBUG
 	if(_trace)

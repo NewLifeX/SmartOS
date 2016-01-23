@@ -7,7 +7,7 @@ TInterrupt Interrupt;
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
 
-void TInterrupt::Init()
+void TInterrupt::Init() const
 {
     // 禁用所有中断
     NVIC->ICER[0] = 0xFFFFFFFF;
@@ -91,7 +91,7 @@ bool TInterrupt::Deactivate(short irq)
     return true;
 }
 
-bool TInterrupt::Enable(short irq)
+bool TInterrupt::Enable(short irq) const
 {
 	assert_param(IS_IRQ(irq));
 
@@ -103,7 +103,7 @@ bool TInterrupt::Enable(short irq)
     return (ier >> (irq & 0x1F)) & 1; // old enable bit
 }
 
-bool TInterrupt::Disable(short irq)
+bool TInterrupt::Disable(short irq) const
 {
 	assert_param(IS_IRQ(irq));
 
@@ -115,7 +115,7 @@ bool TInterrupt::Disable(short irq)
     return (ier >> (irq & 0x1F)) & 1; // old enable bit
 }
 
-bool TInterrupt::EnableState(short irq)
+bool TInterrupt::EnableState(short irq) const
 {
 	assert_param(IS_IRQ(irq));
 
@@ -125,7 +125,7 @@ bool TInterrupt::EnableState(short irq)
     return (NVIC->ISER[(uint)irq >> 5] >> ((uint)irq & 0x1F)) & 1;
 }
 
-bool TInterrupt::PendingState(short irq)
+bool TInterrupt::PendingState(short irq) const
 {
 	assert_param(IS_IRQ(irq));
 
@@ -135,31 +135,31 @@ bool TInterrupt::PendingState(short irq)
     return (NVIC->ISPR[(uint)irq >> 5] >> ((uint)irq & 0x1F)) & 1;
 }
 
-void TInterrupt::SetPriority(short irq, uint priority)
+void TInterrupt::SetPriority(short irq, uint priority) const
 {
 	assert_param(IS_IRQ(irq));
 
     NVIC_SetPriority((IRQn_Type)irq, priority);
 }
 
-void TInterrupt::GetPriority(short irq)
+void TInterrupt::GetPriority(short irq) const
 {
 	assert_param(IS_IRQ(irq));
 
     NVIC_GetPriority((IRQn_Type)irq);
 }
 
-void TInterrupt::GlobalEnable() { __enable_irq(); }
-void TInterrupt::GlobalDisable() { __disable_irq(); }
-bool TInterrupt::GlobalState() { return __get_PRIMASK(); }
+void TInterrupt::GlobalEnable() const	{ __enable_irq(); }
+void TInterrupt::GlobalDisable() const	{ __disable_irq(); }
+bool TInterrupt::GlobalState() const	{ return __get_PRIMASK(); }
 
 #ifdef STM32F1
-uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority)
+uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority) const
 {
     return NVIC_EncodePriority(priorityGroup, preemptPriority, subPriority);
 }
 
-void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority)
+void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority) const
 {
     NVIC_DecodePriority(priority, priorityGroup, pPreemptPriority, pSubPriority);
 }
@@ -176,7 +176,7 @@ __asm uint GetIPSR()
 }
 
 // 是否在中断里面
-bool TInterrupt::IsHandler() { return GetIPSR() & 0x01; }
+bool TInterrupt::IsHandler() const { return GetIPSR() & 0x01; }
 
 #ifdef TINY
 __asm void FaultHandler() { }

@@ -200,17 +200,18 @@ void HardRTC::LoadTicks()
 {
 	if(!Opened) return;
 
+	auto& time	= (TTime&)Time;
 #ifdef STM32F1
 	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
 	ulong ms	= RTC_GetCounter();
 	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
 	uint sec	= ReadBackup(1);
-	Time.Seconds		= sec;
-	Time.Milliseconds	= ms;
+	time.Seconds		= sec;
+	time.Milliseconds	= ms;
 #else
 	DateTime dt	= RTC_GetCounter();
-	Time.Seconds		= dt.TotalSeconds();
-	Time.Milliseconds	= dt.Millisecond;
+	time.Seconds		= dt.TotalSeconds();
+	time.Milliseconds	= dt.Millisecond;
 #endif
 }
 
@@ -223,7 +224,7 @@ void HardRTC::SaveTicks()
 	if(g_NextSave == 0)
 	{
 		debug_printf("LoadTime: ");
-		Time.Now.Show(true);
+		Time.Now().Show(true);
 
 		g_Counter = 0;
 	}
@@ -408,10 +409,11 @@ int FuncSleep(int ms) { return HardRTC::Instance()->Sleep(ms); }
 
 void HardRTC::Start(bool lowpower, bool external)
 {
-	Time.OnLoad		= FuncLoadTicks;
-	Time.OnSave		= FuncSaveTicks;
-	Time.OnSleep	= FuncSleep;
+	auto& time	= (TTime&)Time;
+	time.OnLoad		= FuncLoadTicks;
+	time.OnSave		= FuncSaveTicks;
+	time.OnSleep	= FuncSleep;
 
-	HardRTC* rtc = Instance();
+	auto rtc = Instance();
 	if(!rtc->Opened) rtc->Init();
 }

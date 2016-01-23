@@ -34,19 +34,19 @@ public:
 	void UseRTC();			// 使用RTC，必须在Init前调用
 	void Init();
 
-    uint CurrentTicks();	// 当前滴答时钟
-	ulong Current(); 		// 当前毫秒数
+    uint CurrentTicks() const;	// 当前滴答时钟
+	ulong Current() const; 		// 当前毫秒数
 	void SetTime(ulong seconds);	// 设置时间
 
-	void Sleep(uint ms, bool* running = NULL);
+	void Sleep(uint ms, bool* running = NULL) const;
 	// 微秒级延迟
-    void Delay(uint us);
+    void Delay(uint us) const;
 
 	// 当前时间。
-	DateTime Now();
+	DateTime Now() const;
 };
 
-extern TTime Time;
+extern const TTime Time;
 
 // 时间轮。用于超时处理
 class TimeWheel
