@@ -109,7 +109,7 @@ public:
 	void Start();	// 开始系统大循环
 };
 
-extern const TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
+extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
 
 //#include "Time.h"
 #include "Interrupt.h"

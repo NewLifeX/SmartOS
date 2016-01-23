@@ -5,7 +5,7 @@
 
 #include "Platform\stm32.h"
 
-const TSys Sys;
+TSys Sys;
 const TTime Time;
 
 extern uint __heap_base;
