@@ -276,15 +276,22 @@ bool TokenClient::OnRedirect(const HelloMessage& msg) const
 	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= msg.Protocol;
 
-	uint len = ArrayLength(cfg->Server);
-	if(msg.Server.Length() > len)
+	uint len1 = ArrayLength(cfg->Server);
+	if(msg.Server.Length() > len1)
 	{
-		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len, msg.Server.GetBuffer());
+		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len1, msg.Server.GetBuffer());
 		return false;
 	}
 	msg.Server.CopyTo(cfg->Server, 0, 0);
 	cfg->ServerPort = msg.Port;
-
+	
+	uint len2 = ArrayLength(cfg->VisitToken);
+	if(msg.VisitToken.Length() > len2)
+	{
+		debug_printf("访问令牌超长 Max=%d VisitToken=%s \r\n", len2, msg.VisitToken.GetBuffer());
+		return false;
+	}
+	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
 	// 0xFD永久改变厂商地址
 	if(msg.ErrCode != 0xFD) msg.Server.CopyTo(cfg->Vendor, 0, 0);
 

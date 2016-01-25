@@ -26,6 +26,7 @@ public:
 	byte		Protocol;	// 协议，TCP=1/UDP=2
 	String		Server;		// 服务器地址。可能是域名或IP
 	ushort		Port;		// 本地端口
+	String		VisitToken;	//访问令牌 
 
 	// 初始化消息，各字段为0
 	HelloMessage();

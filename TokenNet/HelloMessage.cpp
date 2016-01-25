@@ -47,6 +47,7 @@ bool HelloMessage::Read(Stream& ms)
 			Protocol	= ms.ReadByte();
 			Server		= ms.ReadString();
 			Port		= ms.ReadUInt16();
+			VisitToken	= ms.ReadString();
 			return false;
 		}
 		else if(ErrCode < 0x80)
