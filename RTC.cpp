@@ -273,7 +273,7 @@ int HardRTC::Sleep(int ms)
 #if TIME_DEBUG
 	debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
 #endif
-	SaveTicks();
+	//SaveTicks();
 
 	// 打开RTC报警中断
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
@@ -314,7 +314,9 @@ int HardRTC::Sleep(int ms)
 
 	Sys.Trace(1);
 	// 进入低功耗模式
-	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	//PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	// 直接进入低功耗，不去控制电源，唤醒以后不需要配置系统时钟
+	__WFI();
 
 	//debug_printf("离开低功耗模式\r\n");
 
@@ -390,8 +392,8 @@ void AlarmHandler(ushort num, void* param)
 		RTC_ClearITPendingBit(RTC_IT_ALR);
 		RTC_WaitForLastTask2();
 	}
-	SYSCLKConfig_STOP();
-	rtc->LoadTicks();
+	//SYSCLKConfig_STOP();
+	//rtc->LoadTicks();
 
 	debug_printf("离开低功耗模式\r\n");
 }

@@ -21,8 +21,8 @@ void TokenConfig::Init()
 
 	SoftVer		= Sys.Version;
 	PingTime	= 10;
-	Name[16] = '\0';
-	Key[16]	 = '\0';	
+	Name[15] = '\0';
+	Key[15]	 = '\0';	
 
 	Protocol	= 2;
 }
