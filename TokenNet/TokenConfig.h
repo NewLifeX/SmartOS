@@ -16,13 +16,13 @@ class TokenConfig : public ConfigBase
 public:
 	byte	Length;			// 数据长度
 	
-	char	Name[16];		// 登录名
-	char	Key[16];		// 登录密码
+	char	Name[17];		// 登录名
+	char	Key[64];		// 登录密码
 	ushort	HardVer;		// 硬件版本
 	ushort	SoftVer;		// 软件版本
 
 	byte	PingTime;		// 心跳时间。秒
-	byte	Protocol;		// 协议，TCP=1/UDP=2
+	byte	Protocol;		// 协议，TCP=6/UDP=17
 	ushort	Port;			// 本地端口
 	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
 	ushort	ServerPort;		// 服务器端口

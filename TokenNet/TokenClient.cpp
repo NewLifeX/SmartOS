@@ -322,12 +322,14 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 	if(!msg.Reply || msg.Error) return;
 
 	auto cfg	= TokenConfig::Current;
-
+	
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
-	rm.Name.CopyTo(cfg->Name);
+	rm.Name.CopyTo(cfg->Name,16,0);
 	rm.Pass.CopyTo(cfg->Key);
+	
 
+	cfg->Show();
 	cfg->Save();
     cfg->Show();
 
