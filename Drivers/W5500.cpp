@@ -885,8 +885,8 @@ void HardSocket::StateShow()
 		switch(mr.Protocol)
 		{
 			case 0x00:net_printf("		Closed\r\n");break;
-			case 0x01:net_printf("		TCP\r\n");break;
-			case 0x02:net_printf("		UDP\r\n");break;
+			case TYPE_TCP:net_printf("		TCP\r\n");break;
+			case TYPE_UDP:net_printf("		UDP\r\n");break;
 			case 0x03:
 				{
 					if(Index == 0x00)net_printf("		MACRAW");
@@ -981,7 +981,7 @@ bool HardSocket::OnOpen()
 	Local.Address = _Host->IP;
 
 #if DEBUG
-	debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
+	debug_printf("%s::Open ", Protocol == TYPE_TCP ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);
@@ -989,9 +989,9 @@ bool HardSocket::OnOpen()
 
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
-	if(Protocol == 0x02)
+	if(Protocol == TYPE_UDP)
 		SocRegWrite2(MSSR, 1472);
-	else if(Protocol == 0x01)
+	else if(Protocol == TYPE_TCP)
 		SocRegWrite2(MSSR, 1460);
 
 	// 设置自己的端口号
@@ -1026,8 +1026,8 @@ bool HardSocket::OnOpen()
 	while(!tw.Expired())
 	{
 		sr = ReadStatus();
-		if(Protocol == 0x01 && sr == SOCK_INIT
-		|| Protocol == 0x02 && sr == SOCK_UDP)
+		if(Protocol == TYPE_TCP && sr == SOCK_INIT
+		|| Protocol == TYPE_UDP && sr == SOCK_UDP)
 		{
 			rs	= true;
 			break;
@@ -1035,7 +1035,7 @@ bool HardSocket::OnOpen()
 	}
 	if(!rs)
 	{
-		debug_printf("Socket %d 打开失败 SR : 0x%02X \r\n", Index, sr);
+		debug_printf("protocol %d, Socket %d 打开失败 SR : 0x%02X \r\n", Protocol,Index, sr);
 		OnClose();
 
 		return false;
@@ -1049,7 +1049,7 @@ void HardSocket::OnClose()
 	WriteConfig(CLOSE);
 	WriteInterrupt(0xFF);
 
-	debug_printf("%s::Close ", Protocol == 0x01 ? "Tcp" : "Udp");
+	debug_printf("%s::Close ", Protocol == TYPE_TCP ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);

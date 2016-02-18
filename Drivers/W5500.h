@@ -9,6 +9,9 @@
 #include "Net\Net.h"
 #include "Message\DataStore.h"
 
+#define	TYPE_TCP	6		
+#define	TYPE_UDP	17		
+
 // 硬件Socket基类
 class HardSocket;
 
@@ -145,7 +148,7 @@ public:
 class TcpClient : public HardSocket
 {
 public:
-	TcpClient(W5500* host): HardSocket(host, 0x01){ Init(); };
+	TcpClient(W5500* host): HardSocket(host, TYPE_TCP){ Init(); };
 	void Init();
 	virtual ~TcpClient();
 	virtual bool OnOpen();
@@ -170,7 +173,7 @@ private:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500* host) : HardSocket(host, 0x02) { }
+	UdpClient(W5500* host) : HardSocket(host, TYPE_UDP) { }
 
 	virtual bool SendTo(const Array& bs, const IPEndPoint& remote);
 
