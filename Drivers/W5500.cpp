@@ -885,8 +885,8 @@ void HardSocket::StateShow()
 		switch(mr.Protocol)
 		{
 			case 0x00:net_printf("		Closed\r\n");break;
-			case TYPE_TCP:net_printf("		TCP\r\n");break;
-			case TYPE_UDP:net_printf("		UDP\r\n");break;
+			case 0x01:net_printf("		TCP\r\n");break;
+			case 0x02:net_printf("		UDP\r\n");break;
 			case 0x03:
 				{
 					if(Index == 0x00)net_printf("		MACRAW");
@@ -1004,7 +1004,10 @@ bool HardSocket::OnOpen()
 	// 设置Socket为UDP模式
 	S_Mode mode;
 	mode.Init();
-	mode.Protocol	= Protocol;
+	if(Protocol == TYPE_TCP)
+		mode.Protocol	= 0x01;
+	if(Protocol == TYPE_UDP)
+		mode.Protocol	= 0x02;		
 	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
 	SocRegWrite(MR, mode.ToByte());
 
