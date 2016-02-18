@@ -436,7 +436,7 @@ void W5500::Reset()
 
 	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
 	// 必须要等一会，否则初始化会失败
-	//Sys.Delay(600);		// 最少500us
+	Sys.Delay(600);		// 最少500us
 	TimeWheel tw(0, 10, 0);
 	while(!ReadByte(0x0039) && !tw.Expired());
 }
