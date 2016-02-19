@@ -306,6 +306,43 @@ bool W5500::Open()
 	}
 	net_printf("硬件版本: %02X\r\n", ver);
 
+	debug_printf("等待PHY连接\r\n");
+	
+	T_PHYCFGR phy;
+	tw.Reset(5);
+	int temp = 0;
+	while(!tw.Expired() && !phy.LNK)
+	{
+		phy.Init(ReadByte(offsetof(TGeneral, PHYCFGR)));
+		Sys.Sleep(50);
+		if(++temp == 10)
+		{
+			temp = 0;
+			debug_printf(".");
+		}
+	}
+	debug_printf("\r\n");
+
+	if(phy.LNK)
+	{
+		debug_printf("PHY已连接 ");
+		if(phy.SPD)	{ net_printf("100Mpbs ");}
+		else		{ net_printf("10Mpbs ");}
+
+		if(phy.DPX)	{ net_printf("全双工");}
+		else		{ net_printf("半双工");}
+		net_printf("网络");
+		
+		debug_printf("\r\n");
+	}
+	else
+	{
+		net_printf("PHY连接异常\r\n");
+		OnClose();
+		debug_printf("W5500::Open 打开失败！请检查网线!\r\n");
+		return false;
+	}
+	
 	Config();
 
 	//设置发送缓冲区和接收缓冲区的大小，参考W5500数据手册
