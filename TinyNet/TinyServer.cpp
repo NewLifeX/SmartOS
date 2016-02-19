@@ -763,7 +763,7 @@ void TinyServer::ClearDevices()
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-		delete Devices[i];
+		if(Devices[i])delete Devices[i];			
 	}
 	Devices.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
 	SaveDevices();
