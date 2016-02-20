@@ -85,11 +85,7 @@ namespace NewLife.Reflection
         #region 编译选项
         private Boolean _Debug = true;
         /// <summary>是否编译调试版。默认true</summary>
-        public Boolean Debug { get { return _Debug; } set { _Debug = value;} }
-		
-        private Boolean _Assert = true;
-        /// <summary>是否使用断言。默认跟_Debug相同</summary>
-        public Boolean Assert { get { return _Assert; } set { _Assert = value; } }
+        public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
         private Boolean _Tiny;
         /// <summary>是否精简版。默认false</summary>
@@ -196,8 +192,7 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG");
-            if (Assert) sb.Append(" -DUSE_FULL_ASSERT");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
             if (Tiny) sb.Append(" -DTINY");
             foreach (var item in Includes)
             {
@@ -654,10 +649,9 @@ namespace NewLife.Reflection
             {
                 FullName = file;
                 Name = Path.GetFileNameWithoutExtension(file);
-                Debug = Name.EndsWithIgnoreCase(new String[]{"NA","D"});
-                //Debug = Name.EndsWithIgnoreCase("D");
+                Debug = Name.EndsWithIgnoreCase("D");
                 Tiny = Name.EndsWithIgnoreCase("T");
-                Name = Name.TrimEnd("D", "T", "NA");
+                Name = Name.TrimEnd("D", "T");
             }
         }
 
@@ -679,10 +673,7 @@ namespace NewLife.Reflection
             if (Tiny)
                 name = name.EnsureEnd("T");
             else if (Debug)
-			{
                 name = name.EnsureEnd("D");
-				if(Assert == false)name = name.EnsureEnd("NA");
-			}
 
             return name;
         }
@@ -697,8 +688,6 @@ namespace NewLife.Reflection
                 objName += "T";
             else if (Debug)
                 objName += "D";
-			if(Assert == false)
-				objName += "NA";
             objName = Output.CombinePath(objName);
             objName.GetFullPath().EnsureDirectory(false);
             if (!file.IsNullOrEmpty())
