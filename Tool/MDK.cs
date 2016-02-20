@@ -679,9 +679,10 @@ namespace NewLife.Reflection
             if (Tiny)
                 name = name.EnsureEnd("T");
             else if (Debug)
+			{
                 name = name.EnsureEnd("D");
-			if(Assert == false)
-				name = name.EnsureEnd("NA");
+				if(Assert == false)name = name.EnsureEnd("NA");
+			}
 
             return name;
         }
