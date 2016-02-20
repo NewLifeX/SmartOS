@@ -654,10 +654,10 @@ namespace NewLife.Reflection
             {
                 FullName = file;
                 Name = Path.GetFileNameWithoutExtension(file);
-                Debug = Name.EndsWithIgnoreCase(new String[]{"A","D"});
+                Debug = Name.EndsWithIgnoreCase(new String[]{"NA","D"});
                 //Debug = Name.EndsWithIgnoreCase("D");
                 Tiny = Name.EndsWithIgnoreCase("T");
-                Name = Name.TrimEnd("D", "T", "A");
+                Name = Name.TrimEnd("D", "T", "NA");
             }
         }
 
@@ -680,8 +680,8 @@ namespace NewLife.Reflection
                 name = name.EnsureEnd("T");
             else if (Debug)
                 name = name.EnsureEnd("D");
-			if(Assert)
-				name = name.EnsureEnd("A");
+			if(Assert == false)
+				name = name.EnsureEnd("NA");
 
             return name;
         }
@@ -696,8 +696,8 @@ namespace NewLife.Reflection
                 objName += "T";
             else if (Debug)
                 objName += "D";
-			if(Assert)
-				objName += "A";
+			if(Assert == false)
+				objName += "NA";
             objName = Output.CombinePath(objName);
             objName.GetFullPath().EnsureDirectory(false);
             if (!file.IsNullOrEmpty())
