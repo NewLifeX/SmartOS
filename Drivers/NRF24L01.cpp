@@ -724,8 +724,9 @@ bool NRF24L01::OnOpen()
 	}
 	if(!_tidRecv)
 	{
-		int time = Irq.Empty() || !Irq.HardEvent ? 10 : 500;
-		_tidRecv = Sys.AddTask(ReceiveTask, this, time, time, "R24接收");
+		//int time = Irq.Empty() || !Irq.HardEvent ? 10 : 500;
+		int time = 20;
+		_tidRecv = Sys.AddTask(ReceiveTask, this, -1, time, "R24接收");
 	}
 	else
 		Sys.SetTask(_tidRecv, true);
@@ -1002,6 +1003,8 @@ void NRF24L01::OnIRQ()
 		// 接收标识位 RX_DR
 		WriteReg(STATUS, 0x40);
 	}
+	
+	Sys.SetTask(_tidRecv, true, 30);
 }
 
 void NRF24L01::ShowStatus()
