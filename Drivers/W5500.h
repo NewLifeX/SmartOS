@@ -9,9 +9,6 @@
 #include "Net\Net.h"
 #include "Message\DataStore.h"
 
-#define	TYPE_TCP	6		
-#define	TYPE_UDP	17		
-
 // 硬件Socket基类
 class HardSocket;
 
@@ -66,6 +63,8 @@ public:
 	byte GetSocket();
 	void Register(byte Index, HardSocket* handler);
 
+	ISocket* CreateSocket(ProtocolType type);
+
 private:
 	friend class HardSocket;
 	friend class TcpClient;
@@ -111,9 +110,8 @@ protected:
 public:
 	bool Enable;	// 启用
 	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
-	byte Protocol;	// 协议
 
-	HardSocket(W5500* host, byte protocol);
+	HardSocket(W5500* host, ProtocolType protocol);
 	virtual ~HardSocket();
 
 	// 网卡状态输出
@@ -148,7 +146,7 @@ public:
 class TcpClient : public HardSocket
 {
 public:
-	TcpClient(W5500* host): HardSocket(host, TYPE_TCP){ Init(); };
+	TcpClient(W5500* host): HardSocket(host, ProtocolType::Tcp){ Init(); };
 	void Init();
 	virtual ~TcpClient();
 	virtual bool OnOpen();
@@ -173,7 +171,7 @@ private:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500* host) : HardSocket(host, TYPE_UDP) { }
+	UdpClient(W5500* host) : HardSocket(host, ProtocolType::Udp) { }
 
 	virtual bool SendTo(const Array& bs, const IPEndPoint& remote);
 

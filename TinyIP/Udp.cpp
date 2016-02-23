@@ -7,6 +7,7 @@ UdpSocket::UdpSocket(TinyIP* tip) : TinySocket(tip, IP_UDP)
 {
 	MaxSize	= 1500;
 	Host	= tip;
+	Protocol	= ProtocolType::Udp;
 
 	// 累加端口
 	static ushort g_udp_port = 1024;

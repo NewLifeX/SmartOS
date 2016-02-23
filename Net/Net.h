@@ -3,6 +3,16 @@
 
 #include "Sys.h"
 
+// IP协议类型
+enum ProtocolType
+{
+	Ip		= 0,
+	Icmp	= 1,
+	Igmp	= 2,
+	Tcp		= 6,
+	Udp		= 17,
+};
+
 // IP地址
 class IPAddress : public Object
 {
@@ -108,6 +118,8 @@ public:
 	static const MacAddress& Full();
 };
 
+class ISocket;
+
 // Socket主机
 class ISocketHost
 {
@@ -123,6 +135,8 @@ public:
 	// 保存和加载动态获取的网络配置到存储设备
 	bool LoadConfig();
 	bool SaveConfig();
+
+	ISocket* CreateSocket(ProtocolType type);
 };
 
 // Socket接口
@@ -130,6 +144,7 @@ class ISocket
 {
 public:
 	ISocketHost*	Host;	// 主机
+	ProtocolType	Protocol;	// 协议类型
 
 	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
 	IPEndPoint	Remote;	// 远程地址

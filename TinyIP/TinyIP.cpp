@@ -3,6 +3,9 @@
 
 #include "Task.h"
 
+#include "Tcp.h"
+#include "Udp.h"
+
 #define NET_DEBUG DEBUG
 
 TinyIP::TinyIP() : Buffer(0) { Init(); }
@@ -342,6 +345,21 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	debug_printf("\r\n");*/
 
 	return SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
+}
+
+ISocket* TinyIP::CreateSocket(ProtocolType type)
+{
+	switch(type)
+	{
+		case ProtocolType::Tcp:
+			return new TcpSocket(this);
+
+		case ProtocolType::Udp:
+			return new UdpSocket(this);
+
+		default:
+			return NULL;
+	}
 }
 
 #define TinyIP_HELP
