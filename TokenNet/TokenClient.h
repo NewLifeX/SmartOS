@@ -63,6 +63,7 @@ public:
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
+	bool ChangeIPEndPoint(String& domain);
 };
 
 // 令牌会话

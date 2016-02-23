@@ -1,6 +1,8 @@
 ﻿#include "Time.h"
 
 #include "Net\Net.h"
+#include "Net\DNS.h"
+
 #include "TokenClient.h"
 
 #include "TokenMessage.h"
@@ -451,9 +453,9 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	Stream ms = msg.ToStream();
 
-	ulong now = Sys.Ms();
+	ulong now   = Sys.Ms();
 	ulong start = ms.ReadArray().ToUInt64();
-	int cost = (int)(now - start);
+	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
 
@@ -465,4 +467,30 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 
 	return true;
+}
+bool TokenClient::ChangeIPEndPoint(String& domain)
+{
+    auto socket1 = dynamic_cast<ISocket*>(Control->Port);	
+	if(socket1 == NULL) return false;
+	
+	auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
+	if(socket2) return false;
+		
+	DNS dns(socket2);
+
+	for(int i=0; i<10; i++)
+	{
+		auto ip = dns.Query(domain, 2000);
+		ip.Show(true);
+
+		if(ip != IPAddress::Any())
+		{		
+			if(socket1) socket1->Remote.Address = ip;
+
+			return true;
+		}
+	}
+	
+	delete socket2;
+	return false;
 }
