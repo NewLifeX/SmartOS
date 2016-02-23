@@ -316,3 +316,8 @@ bool ISocketHost::SaveConfig()
 	Array bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
 }
+
+ISocket* ISocketHost::CreateSocket(ProtocolType type)
+{
+	return NULL;
+}
