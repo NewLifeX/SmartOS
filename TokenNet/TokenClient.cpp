@@ -484,9 +484,11 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 	if(socket1 == NULL) return false;
 	
 	//auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
-	//if(socket2) return false;
+	auto socket2 = dynamic_cast<ISocket*>(Local->Port);	
+	auto remote = socket2->Remote;	
+	if(socket2==NULL) return false;
 		
-	DNS dns(socket1);
+	DNS dns(socket2);
 
 	for(int i=0; i<10; i++)
 	{
@@ -495,15 +497,14 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 		ip.Show(true);
 
 		if(ip != IPAddress::Any())
-		{		
-			if(socket1)
-			{
-				socket1->Remote.Address = ip;
-				socket1->Remote.Port 	= port;				
-			}
-
+		{				
+			socket1->Remote.Address = ip;
+			socket1->Remote.Port 	= port;
+			socket2->Remote			= remote;
 			return true;
 		}
 	}
+	
+	socket2->Remote	= remote;
 	return false;
 }
