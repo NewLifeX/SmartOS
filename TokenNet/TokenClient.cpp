@@ -9,6 +9,7 @@
 #include "HelloMessage.h"
 #include "LoginMessage.h"
 #include "RegisterMessage.h"
+#include "Drivers\W5500.h"
 
 static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
@@ -309,7 +310,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		return true;
 	}
 	auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
-	if(!flg) Sys.Reset(); 		 	
+	//if(!flg) Sys.Reset(); 		 	
 	return true;
 }
 
@@ -481,11 +482,12 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 	debug_printf("ChangeIPEndPoint\r\n");
 	domain.Show(true);
     auto socket1 = dynamic_cast<ISocket*>(Control->Port);	
-	if(socket1 == NULL) return false;
-	
+	if(socket1 == NULL) return false;	
+
 	//auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
 	auto socket2 = dynamic_cast<ISocket*>(Local->Port);	
-	auto remote = socket2->Remote;	
+	//auto socket2 =  new UdpClient(socket1->Host);
+	
 	if(socket2==NULL) return false;
 		
 	DNS dns(socket2);
@@ -500,11 +502,18 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 		{				
 			socket1->Remote.Address = ip;
 			socket1->Remote.Port 	= port;
-			socket2->Remote			= remote;
+			//Control->Close();
+			//Control->Open();
+			//socket2->Remote			= remote;
+			
+			auto hardsoc = dynamic_cast<HardSocket*>(Control->Port);
+			if(hardsoc)hardsoc ->Change(IPEndPoint(ip,port));
+
 			return true;
 		}
 	}
 	
-	socket2->Remote	= remote;
+	//socket2->Remote	= remote;
 	return false;
 }
+
