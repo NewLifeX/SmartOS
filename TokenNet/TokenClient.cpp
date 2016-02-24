@@ -271,12 +271,14 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::OnRedirect(const HelloMessage& msg) const
+bool TokenClient::OnRedirect(HelloMessage& msg) 
 {
 	if(!(msg.ErrCode == 0xFE || msg.ErrCode ==0xFD)) return false;
 
 	auto cfg	= TokenConfig::Current;
 	cfg->Protocol	= msg.Protocol;
+	
+	cfg->Show();
 
 	uint len1 = ArrayLength(cfg->Server);
 	if(msg.Server.Length() > len1)
@@ -294,14 +296,20 @@ bool TokenClient::OnRedirect(const HelloMessage& msg) const
 		return false;
 	}
 	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
+	cfg->Show();
 	// 0xFD永久改变厂商地址
-	if(msg.ErrCode != 0xFD) msg.Server.CopyTo(cfg->Vendor, 0, 0);
-
-	cfg->Save();
-    cfg->Show();
-
-	Sys.Reset();
-
+	if(msg.ErrCode == 0xFD)
+	{
+		
+		msg.Server.CopyTo(cfg->Vendor, 0, 0);
+		cfg->Save();
+		ChangeIPEndPoint(msg.Server,msg.Port);
+		Status = 0;		
+		//Sys.Reset();
+		return true;
+	}
+	auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
+	if(!flg) Sys.Reset(); 		 	
 	return true;
 }
 
@@ -468,29 +476,34 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	return true;
 }
-bool TokenClient::ChangeIPEndPoint(String& domain)
+bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 {
+	debug_printf("ChangeIPEndPoint\r\n");
+	domain.Show(true);
     auto socket1 = dynamic_cast<ISocket*>(Control->Port);	
 	if(socket1 == NULL) return false;
 	
-	auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
-	if(socket2) return false;
+	//auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
+	//if(socket2) return false;
 		
-	DNS dns(socket2);
+	DNS dns(socket1);
 
 	for(int i=0; i<10; i++)
 	{
 		auto ip = dns.Query(domain, 2000);
+		debug_printf("Show port: %d\r\n",port);
 		ip.Show(true);
 
 		if(ip != IPAddress::Any())
 		{		
-			if(socket1) socket1->Remote.Address = ip;
+			if(socket1)
+			{
+				socket1->Remote.Address = ip;
+				socket1->Remote.Port 	= port;				
+			}
 
 			return true;
 		}
 	}
-	
-	delete socket2;
 	return false;
 }

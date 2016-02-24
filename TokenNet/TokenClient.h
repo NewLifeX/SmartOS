@@ -51,7 +51,7 @@ public:
 	void SayHello(bool broadcast = false, int port = 0);
 	bool OnHello(TokenMessage& msg, Controller* ctrl);
 	// 跳转
-	bool OnRedirect(const HelloMessage& msg) const;
+	bool OnRedirect(HelloMessage& msg);
 	// 注册
 	void Register();
 	void OnRegister(TokenMessage& msg, Controller* ctrl);
@@ -63,7 +63,7 @@ public:
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
-	bool ChangeIPEndPoint(String& domain);
+	bool ChangeIPEndPoint(String domain,ushort port);
 };
 
 // 令牌会话
