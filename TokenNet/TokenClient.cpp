@@ -306,10 +306,12 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		cfg->Save();
 		ChangeIPEndPoint(msg.Server,msg.Port);
 		Status = 0;		
-		//Sys.Reset();
+		Sys.Reset();
 		return true;
 	}
-	auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
+	//auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
+	cfg->Save();
+	Sys.Reset(); 
 	//if(!flg) Sys.Reset(); 		 	
 	return true;
 }
