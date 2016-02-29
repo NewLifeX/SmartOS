@@ -48,8 +48,9 @@ public:
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const Array& bs);
 
-	uint NextReport;	// 下次上报偏移，0不动
-	void ReportAsync(uint offset);
+	uint NextReport;		// 下次上报偏移，0不动
+	uint NextReportLength;	// 下次上报数据长度
+	void ReportAsync(uint offset,uint length = 1);
 
 private:
 	uint _TaskID;

@@ -250,13 +250,13 @@ bool TinyClient::Report(uint offset, const Array& bs)
 	return Send(msg);
 }
 
-void TinyClient::ReportAsync(uint offset)
+void TinyClient::ReportAsync(uint offset,uint length)
 {
 	if(this == NULL) return;
-	if(offset >= Store.Data.Length()) return;
+	if(offset + length >= Store.Data.Length()) return;
 
 	NextReport = offset;
-
+	NextReportLength = length;
 	// 延迟200ms上报，期间有其它上报任务到来将会覆盖
 	Sys.SetTask(_TaskID, true, 200);
 }
@@ -269,13 +269,23 @@ void TinyClientTask(void* param)
 
 	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
+	uint len	= client->NextReportLength;
 	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 
 	if(offset)
 	{
 		// 检查索引，否则数组越界
 		auto& bs = client->Store.Data;
-		if(bs.Length() > offset) client->Report(offset, bs[offset]);
+		if(bs.Length() > offset + len)
+		{
+			if(len == 1)
+				client->Report(offset, bs[offset]);
+			else
+			{
+				auto bs2 = ByteArray(&bs[offset],len);
+				client->Report(offset, bs2);
+			}
+		}
 		client->NextReport = 0;
 		return;
 	}
