@@ -298,21 +298,22 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	}
 	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
 	cfg->Show();
+	//msg.Server.CopyTo(cfg->Vendor, 0, 0);
 	// 0xFD永久改变厂商地址
 	if(msg.ErrCode == 0xFD)
 	{
-		msg.Server.CopyTo(cfg->Vendor, 0, 0);
 		cfg->Save();
-		ChangeIPEndPoint(msg.Server, msg.Port);
-		Status = 0;
-		Sys.Reset();
+		//Sys.Reset();
 
-		return true;
+		//return true;
 	}
+	ChangeIPEndPoint(msg.Server, msg.Port);
+	Status = 0;
 	//auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
-	cfg->Save();
-	Sys.Reset();
+	//cfg->Save();
+	//Sys.Reset();
 	//if(!flg) Sys.Reset();
+	
 	return true;
 }
 
@@ -479,43 +480,41 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	return true;
 }
-bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
+
+bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 {
-	debug_printf("ChangeIPEndPoint\r\n");
+	debug_printf("ChangeIPEndPoint ");
+
 	domain.Show(true);
-    auto socket1 = dynamic_cast<ISocket*>(Control->Port);
-	if(socket1 == NULL) return false;
 
-	//auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
-	auto socket2 = dynamic_cast<ISocket*>(Local->Port);
-	//auto socket2 =  new UdpClient(socket1->Host);
+    auto socket = dynamic_cast<ISocket*>(Control->Port);
+	if(socket == NULL) return false;
 
-	if(socket2==NULL) return false;
+	auto socket2 = socket->Host->CreateSocket(ProtocolType::Udp);
+	if(socket2 == NULL) return false;
 
 	DNS dns(socket2);
 
+	bool rs	= false;
 	for(int i=0; i<10; i++)
 	{
 		auto ip = dns.Query(domain, 2000);
-		debug_printf("Show port: %d\r\n",port);
+		debug_printf("Show port: %d, ", port);
 		ip.Show(true);
 
 		if(ip != IPAddress::Any())
 		{
-			socket1->Remote.Address = ip;
-			socket1->Remote.Port 	= port;
-			//Control->Close();
-			//Control->Open();
-			//socket2->Remote			= remote;
+			Control->Port->Close();
+			socket->Remote.Address	= ip;
+			socket->Remote.Port		= port;
+			Control->Port->Open();
 
-			auto hardsoc = dynamic_cast<HardSocket*>(Control->Port);
-			if(hardsoc)hardsoc ->Change(IPEndPoint(ip,port));
-
-			return true;
+			rs	= true;
+			break;
 		}
 	}
 
-	//socket2->Remote	= remote;
-	return false;
-}
+	delete socket2;
 
+	return rs;
+}

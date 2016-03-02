@@ -59,14 +59,22 @@ TokenConfig* TokenConfig::Create(const char* vendor, byte protocol, ushort sport
 
 		if(tc.Vendor[0] == 0)
 		{
-			strncpy(tc.Vendor, vendor, ArrayLength(tc.Vendor));
+			// len 表示字符串真实长度，不包括结束零
+			auto len	= strlen(vendor);
+			if(len > ArrayLength(tc.Vendor)) len	= ArrayLength(tc.Vendor) - 1;
+			strncpy(tc.Vendor, vendor, len);
+			tc.Vendor[len]	= '\0';
 
 			rs	= false;
 		}
 
 		if(tc.Server[0] == 0)
 		{
+			// len 表示字符串真实长度，不包括结束零
+			auto len	= strlen(tc.Vendor);
+			if(len > ArrayLength(tc.Server)) len	= ArrayLength(tc.Server) - 1;
 			strncpy(tc.Server, tc.Vendor, ArrayLength(tc.Server));
+			tc.Server[len]	= '\0';
 
 			//tc.ServerIP		= svr.Value;
 			tc.ServerPort	= sport;
