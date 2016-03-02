@@ -38,7 +38,7 @@ public:
 
 	bool Open();
 	bool Close();
-	void Config();
+	virtual void Config();
 	void ShowInfo();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
@@ -63,7 +63,7 @@ public:
 	byte GetSocket();
 	void Register(byte Index, HardSocket* handler);
 
-	ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(ProtocolType type);
 
 private:
 	friend class HardSocket;

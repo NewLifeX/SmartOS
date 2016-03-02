@@ -25,7 +25,7 @@ static void StartGateway(void* param);
 static void OnDhcpStop5500(void* sender, void* param)
 {
 	auto dhcp = (Dhcp*)sender;
-	if(!dhcp->Result)
+	/*if(!dhcp->Result)
 	{
 		// 失败后重新开始DHCP，等待网络连接
 		dhcp->Start();
@@ -37,9 +37,9 @@ static void OnDhcpStop5500(void* sender, void* param)
 	auto net = (W5500*)dhcp->Host;
 	net->Config();
 	net->ShowInfo();
-	net->SaveConfig();
+	net->SaveConfig();*/
 
-	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, net, 0, -1, "启动网关");
+	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, dhcp->Host, 0, -1, "启动网关");
 }
 
 ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)

@@ -317,7 +317,7 @@ bool ISocketHost::SaveConfig()
 	return Config::Current->Set("NET", bs);
 }
 
-ISocket* ISocketHost::CreateSocket(ProtocolType type)
+/*ISocket* ISocketHost::CreateSocket(ProtocolType type)
 {
 	return NULL;
-}
+}*/

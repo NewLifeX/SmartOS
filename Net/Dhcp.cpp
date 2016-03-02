@@ -26,6 +26,7 @@ Dhcp::Dhcp(ISocket* socket)
 	Running	= false;
 	Result	= false;
 	Times	= 0;
+	MaxTimes	= 10;
 	ExpiredTime	= 10000;
 
 	OnStop	= NULL;
@@ -169,6 +170,25 @@ void Dhcp::Stop()
 
 	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
+	// 如果未达到重试次数则重新开始
+	if(Times < MaxTimes)
+	{
+		if(!Result)
+			Start();
+		else
+		{
+			// 获取IP成功，重新设置参数
+			Host->Config();
+			//Host->ShowInfo();
+			Host->SaveConfig();
+		}
+	}
+	else
+	{
+		// 重启一次，可能DHCP失败跟硬件有关
+		Sys.Reset();
+	}
+	
 	if(OnStop) OnStop(this, NULL);
 }
 

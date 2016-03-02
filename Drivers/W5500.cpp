@@ -274,7 +274,7 @@ bool W5500::Open()
 	if(Opened) return true;
 
 	net_printf("\r\nW5500::Open\r\n");
-	ShowInfo();
+	//ShowInfo();
 
 	net_printf("\tRst: ");
 	if(!Rst.Open()) return false;
@@ -380,6 +380,8 @@ void W5500::IRQTask(void* param)
 
 void W5500::Config()
 {
+	ShowInfo();
+
 	// 读所有寄存器
 	TGeneral gen;
 	ByteArray bs(&gen, sizeof(gen));

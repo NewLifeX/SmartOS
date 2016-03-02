@@ -69,6 +69,7 @@ public:
 	void Init(ITransport* port);
 
 	bool Open();
+	virtual void Config();
 	void ShowInfo();
 	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 
@@ -76,7 +77,7 @@ public:
 	bool SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len);
 	bool IsBroadcast(const IPAddress& ip);	// 是否广播地址
 
-	ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(ProtocolType type);
 };
 
 /*

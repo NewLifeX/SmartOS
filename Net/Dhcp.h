@@ -27,6 +27,7 @@ public:
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
 	byte Times;		// 运行次数
+	byte MaxTimes;	// 最大重试次数，默认10次，超过该次数仍然失败则重启系统
 
 	Dhcp(ISocket* socket);
 	~Dhcp();

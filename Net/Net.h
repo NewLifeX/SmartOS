@@ -132,11 +132,14 @@ public:
 	IPAddress	DNSServer;
 	IPAddress	Gateway;
 
+	// 应用配置
+	virtual void Config() = 0;
+
 	// 保存和加载动态获取的网络配置到存储设备
 	bool LoadConfig();
 	bool SaveConfig();
 
-	ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(ProtocolType type) = 0;
 };
 
 // Socket接口

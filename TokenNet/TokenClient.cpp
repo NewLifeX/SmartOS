@@ -301,12 +301,12 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	// 0xFD永久改变厂商地址
 	if(msg.ErrCode == 0xFD)
 	{
-
 		msg.Server.CopyTo(cfg->Vendor, 0, 0);
 		cfg->Save();
-		ChangeIPEndPoint(msg.Server,msg.Port);
+		ChangeIPEndPoint(msg.Server, msg.Port);
 		Status = 0;
 		Sys.Reset();
+
 		return true;
 	}
 	//auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
