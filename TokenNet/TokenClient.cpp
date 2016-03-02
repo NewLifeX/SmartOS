@@ -339,15 +339,15 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
-	rm.Name.CopyTo(cfg->Name,16,0);
+	rm.Name.CopyTo(cfg->Name, 16, 0);
 	rm.Pass.CopyTo(cfg->Key);
-
 
 	cfg->Show();
 	cfg->Save();
-    cfg->Show();
+    //cfg->Show();
 
-	Sys.Reset();
+	//Sys.Reset();
+	Status	= 0;
 }
 
 // 登录
