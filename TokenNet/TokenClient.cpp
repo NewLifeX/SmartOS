@@ -9,7 +9,8 @@
 #include "HelloMessage.h"
 #include "LoginMessage.h"
 #include "RegisterMessage.h"
-#include "Drivers\W5500.h"
+
+#include "Security\MD5.h"
 
 static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
@@ -151,7 +152,7 @@ void LoopTask(void* param)
 		{
 			auto cfg	= TokenConfig::Current;
 
-			if(cfg->Name[0] == 0)
+			if(cfg->User[0] == 0)
 				client->Register();
 			else
 				client->Login();
@@ -251,7 +252,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
-		ext2.Name	= TokenConfig::Current->Name;
+		ext2.Name	= TokenConfig::Current->User;
 		// 使用系统ID作为Key
 		ext2.Key.Copy(Sys.ID, 16);
 		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
@@ -323,7 +324,7 @@ void TokenClient::Register()
 	debug_printf("TokenClient::Register\r\n");
 
 	RegisterMessage re;
-	re.Name.Copy(Sys.ID, 16);
+	re.User.Copy(Sys.ID, 16);
 
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
@@ -339,8 +340,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
-	rm.Name.CopyTo(cfg->Name, 16, 0);
-	rm.Pass.CopyTo(cfg->Key);
+	rm.User.CopyTo(cfg->User, 16, 0);
+	rm.Pass.CopyTo(cfg->Pass);
 
 	cfg->Show();
 	cfg->Save();
@@ -356,17 +357,19 @@ void TokenClient::Login()
 	LoginMessage login;
 
 	auto cfg	= TokenConfig::Current;
-	login.Name	= cfg->Name;
-	login.Key	= cfg->Key;
+	login.User	= cfg->User;
+	//login.Key	= cfg->Key;
+	login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex();
 	// 临时代码，兼容旧云端
-	if(login.Name.Length() < 4)
+	if(login.User.Length() < 4)
 	{
 		//Register();
-		login.Name.Copy(Sys.ID, 16);
-		login.Key.Copy(Sys.ID, 16);
+		login.User.Copy(Sys.ID, 16);
+		login.Pass.Copy(Sys.ID, 16);
 	}
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
+	login.Show();
 
 	Send(msg);
 }
@@ -386,7 +389,7 @@ void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 	Reply(msg);
 
 	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
-	ctrl2->Key		= login.Key;
+	ctrl2->Key		= login.User;
 	ctrl2->Token 	= login.Token;
 }
 

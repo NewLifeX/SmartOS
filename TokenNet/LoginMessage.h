@@ -8,8 +8,8 @@
 class LoginMessage : public MessageBase
 {
 public:
-	String		Name;	// 登录名
-	String		Key;	// 登录密码
+	String		User;	// 登录名
+	String		Pass;	// 登录密码
 	ByteArray	Salt;	// 加盐
 
 	uint		Token;	//令牌

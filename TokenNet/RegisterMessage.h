@@ -8,7 +8,7 @@
 class RegisterMessage : public MessageBase
 {
 public:
-	String		Name;	// 硬件ID
+	String		User;	// 硬件ID
 	String		Pass;	// 登录密码
 	ByteArray	Salt;	// 加盐
 

@@ -16,9 +16,9 @@ class TokenConfig : public ConfigBase
 {
 public:
 	byte	Length;			// 数据长度
-	
-	char	Name[17];		// 登录名
-	char	Key[64];		// 登录密码
+
+	char	User[17];		// 登录名
+	char	Pass[32];		// 登录密码
 	ushort	HardVer;		// 硬件版本
 	ushort	SoftVer;		// 软件版本
 
@@ -29,14 +29,14 @@ public:
 	ushort	ServerPort;		// 服务器端口
 	char	VisitToken[16];	//访问服务器令牌
 	char	Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
-	char	Vendor[32];		// 厂商服务器域名。原始厂商服务器地址		
+	char	Vendor[32];		// 厂商服务器域名。原始厂商服务器地址
 	TokenConfig();
 	virtual void Init();
 	virtual void Show() const;
 
 	static TokenConfig* Current;
 	static TokenConfig*	Create(const char* vendor, byte protocol, ushort sport, ushort port);
-	
+
 private:
 	byte	TagEnd;		// 数据区结束标识符
 };

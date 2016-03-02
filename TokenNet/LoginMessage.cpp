@@ -12,14 +12,14 @@ bool LoginMessage::Read(Stream& ms)
 {
 	if(!Reply)
 	{
-		Name	= ms.ReadString();
-		Key		= ms.ReadString();
+		User	= ms.ReadString();
+		Pass	= ms.ReadString();
 		Salt	= ms.ReadArray();
 	}
 	else if(!Error)
 	{
 		Token	= ms.ReadUInt32();
-		Key		= ms.ReadString();
+		Pass	= ms.ReadString();
 	}
 
     return false;
@@ -30,8 +30,8 @@ void LoginMessage::Write(Stream& ms) const
 {
 	if(!Reply)
 	{
-		ms.WriteArray(Name);
-		ms.WriteArray(MD5::Hash(Key));
+		ms.WriteArray(User);
+		ms.WriteArray(Pass);
 
 		if(Salt.Length() > 0)
 			ms.WriteArray(Salt);
@@ -44,7 +44,7 @@ void LoginMessage::Write(Stream& ms) const
 	else if(!Error)
 	{
 		ms.Write(Token);
-		ms.WriteArray(Key);
+		ms.WriteArray(Pass);
 	}
 }
 
@@ -54,7 +54,7 @@ String& LoginMessage::ToStr(String& str) const
 {
 	str += "登录";
 	if(Reply) str += "#";
-	str = str + " Name=" + Name + " Key=" + Key + " Salt=" + Salt;
+	str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
 
 	return str;
 }

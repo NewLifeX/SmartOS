@@ -3,7 +3,7 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-RegisterMessage::RegisterMessage() : Name(0), Pass(0), Salt(0)
+RegisterMessage::RegisterMessage() : User(0), Pass(0), Salt(0)
 {
 }
 
@@ -12,7 +12,7 @@ bool RegisterMessage::Read(Stream& ms)
 {
 	if(!Error)
 	{
-		Name	= ms.ReadString();
+		User	= ms.ReadString();
 		Pass	= ms.ReadString();
 		Salt	= ms.ReadArray();
 	}
@@ -25,7 +25,7 @@ void RegisterMessage::Write(Stream& ms) const
 {
 	if(!Error)
 	{
-		ms.WriteArray(Name);
+		ms.WriteArray(User);
 		ms.WriteArray(Pass);
 
 		if(Salt.Length() > 0)
@@ -44,8 +44,8 @@ String& RegisterMessage::ToStr(String& str) const
 {
 	str += "注册";
 	if(Reply) str += "#";
-	str = str + " Name=";
-	ByteArray(Name).ToHex(str);
+	str = str + " User=";
+	ByteArray(User).ToHex(str);
 	str = str + " Pass=";
 	ByteArray(Pass).ToHex(str);
 	str = str + " Salt=";

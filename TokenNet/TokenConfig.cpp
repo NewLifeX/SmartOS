@@ -21,7 +21,7 @@ void TokenConfig::Init()
 
 	SoftVer		= Sys.Version;
 	PingTime	= 10;
-	//Name[16] 	= '\0';
+	//User[16] 	= '\0';
 	//Key[15]	= '\0';
 
 	Protocol	= ProtocolType::Udp;
@@ -40,8 +40,8 @@ void TokenConfig::Show() const
 	ep2.Show(true);
 	debug_printf("\t服务: %s \r\n", Server);
 	debug_printf("\t厂商: %s \r\n", Vendor);
-	debug_printf("\t登录: %s \r\n", Name);
-	debug_printf("\t密码: %s \r\n", Key);
+	debug_printf("\t登录: %s \r\n", User);
+	debug_printf("\t密码: %s \r\n", Pass);
 #endif
 }
 
