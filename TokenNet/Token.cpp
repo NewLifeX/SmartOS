@@ -66,53 +66,28 @@ ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort
 	return &net;
 }
 
-ISocket* CreateW5500UDP(ISocketHost* host, TokenConfig* tk)
-{
-	auto udp	= new UdpClient((W5500*)host);
-	//udp->Local.Port	= tk->Port;
-	udp->Remote.Port	= tk->ServerPort;
-	udp->Remote.Address	= IPAddress(tk->ServerIP);
-
-	return udp;
-}
-
-ISocket* CreateW5500TCP(ISocketHost* host, TokenConfig* tk)
-{
-	auto tcp	= new TcpClient((W5500*)host);
-	//tcp->Local.Port	= tk->Port;
-	tcp->Remote.Port	= tk->ServerPort;
-	tcp->Remote.Address	= IPAddress(tk->ServerIP);
-
-	return tcp;
-}
-
 TokenClient* Token::CreateClient(ISocketHost* host)
 {
 	debug_printf("\r\nCreateClient \r\n");
 
-	static TokenController token;
-
 	auto tk = TokenConfig::Current;
-	ISocket* socket	= NULL;
-	if(tk->Protocol == 17)
-		socket = CreateW5500UDP(host, tk);
-	else if(tk->Protocol == 6)
-		socket = CreateW5500TCP(host, tk);
-	token.Port = dynamic_cast<ITransport*>(socket);
+	auto socket	= host->CreateSocket(tk->Protocol);
+	socket->Remote.Port		= tk->ServerPort;
+	socket->Remote.Address	= IPAddress(tk->ServerIP);
+
+	static TokenController ctrl;
+	ctrl.Port = dynamic_cast<ITransport*>(socket);
 
 	static TokenClient client;
-	client.Control	= &token;
-	//client->Local	= token;
+	client.Control	= &ctrl;
+	//client->Local	= ctrl;
 
 	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == 1)
+	//if(tk->Protocol == ProtocolType::Tcp)
 	{
-		TokenConfig tc;
-		//tc.Port			= tk->Port;
-		tc.ServerIP		= IPAddress::Broadcast().Value;
-		tc.ServerPort	= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-
-		socket	= CreateW5500UDP(host, &tc);
+		socket	= host->CreateSocket(ProtocolType::Udp);
+		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
+		socket->Remote.Address	= IPAddress::Broadcast();
 		socket->Local.Port	= tk->Port;
 		auto token2		= new TokenController();
 		token2->Port	= dynamic_cast<ITransport*>(socket);
@@ -249,7 +224,7 @@ ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pi
 	if(tc->Interval == 0)
 	{
 		tc->Interval= 800;
-		tc->Timeout	= 2400;
+		tc->Timeout	= 1600;
 	}
 
 	static SerialPort sp(index, baudRate);

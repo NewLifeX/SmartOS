@@ -272,13 +272,13 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::OnRedirect(HelloMessage& msg) 
+bool TokenClient::OnRedirect(HelloMessage& msg)
 {
-	if(!(msg.ErrCode == 0xFE || msg.ErrCode ==0xFD)) return false;
+	if(!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
 	auto cfg	= TokenConfig::Current;
-	cfg->Protocol	= msg.Protocol;
-	
+	cfg->Protocol	= (ProtocolType)msg.Protocol;
+
 	cfg->Show();
 
 	uint len1 = ArrayLength(cfg->Server);
@@ -289,7 +289,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	}
 	msg.Server.CopyTo(cfg->Server, 0, 0);
 	cfg->ServerPort = msg.Port;
-	
+
 	uint len2 = ArrayLength(cfg->VisitToken);
 	if(msg.VisitToken.Length() > len2)
 	{
@@ -301,18 +301,18 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	// 0xFD永久改变厂商地址
 	if(msg.ErrCode == 0xFD)
 	{
-		
+
 		msg.Server.CopyTo(cfg->Vendor, 0, 0);
 		cfg->Save();
 		ChangeIPEndPoint(msg.Server,msg.Port);
-		Status = 0;		
+		Status = 0;
 		Sys.Reset();
 		return true;
 	}
 	//auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
 	cfg->Save();
-	Sys.Reset(); 
-	//if(!flg) Sys.Reset(); 		 	
+	Sys.Reset();
+	//if(!flg) Sys.Reset();
 	return true;
 }
 
@@ -335,12 +335,12 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 	if(!msg.Reply || msg.Error) return;
 
 	auto cfg	= TokenConfig::Current;
-	
+
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
 	rm.Name.CopyTo(cfg->Name,16,0);
 	rm.Pass.CopyTo(cfg->Key);
-	
+
 
 	cfg->Show();
 	cfg->Save();
@@ -483,15 +483,15 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 {
 	debug_printf("ChangeIPEndPoint\r\n");
 	domain.Show(true);
-    auto socket1 = dynamic_cast<ISocket*>(Control->Port);	
-	if(socket1 == NULL) return false;	
+    auto socket1 = dynamic_cast<ISocket*>(Control->Port);
+	if(socket1 == NULL) return false;
 
 	//auto socket2 = socket1->Host->CreateSocket(socket1->Protocol);
-	auto socket2 = dynamic_cast<ISocket*>(Local->Port);	
+	auto socket2 = dynamic_cast<ISocket*>(Local->Port);
 	//auto socket2 =  new UdpClient(socket1->Host);
-	
+
 	if(socket2==NULL) return false;
-		
+
 	DNS dns(socket2);
 
 	for(int i=0; i<10; i++)
@@ -501,20 +501,20 @@ bool TokenClient::ChangeIPEndPoint(String domain,ushort port)
 		ip.Show(true);
 
 		if(ip != IPAddress::Any())
-		{				
+		{
 			socket1->Remote.Address = ip;
 			socket1->Remote.Port 	= port;
 			//Control->Close();
 			//Control->Open();
 			//socket2->Remote			= remote;
-			
+
 			auto hardsoc = dynamic_cast<HardSocket*>(Control->Port);
 			if(hardsoc)hardsoc ->Change(IPEndPoint(ip,port));
 
 			return true;
 		}
 	}
-	
+
 	//socket2->Remote	= remote;
 	return false;
 }

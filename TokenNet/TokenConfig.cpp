@@ -24,7 +24,7 @@ void TokenConfig::Init()
 	//Name[16] 	= '\0';
 	//Key[15]	= '\0';
 
-	Protocol	= 17;
+	Protocol	= ProtocolType::Udp;
 }
 
 void TokenConfig::Show() const
@@ -32,7 +32,7 @@ void TokenConfig::Show() const
 #if DEBUG
 	debug_printf("TokenConfig::令牌配置：\r\n");
 
-	debug_printf("\t协议: %s ,%d\r\n", Protocol == 17 ? "UDP" : Protocol == 6 ? "TCP" : "", Protocol);
+	debug_printf("\t协议: %s ,%d\r\n", Protocol == ProtocolType::Udp ? "UDP" : Protocol == ProtocolType::Tcp ? "TCP" : "", Protocol);
 	debug_printf("\t端口: %d \r\n", Port);
 
 	debug_printf("\t远程: ");

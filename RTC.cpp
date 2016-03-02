@@ -381,7 +381,7 @@ void AlarmHandler(ushort num, void* param)
     SmartIRQ irq;
 
 	Sys.Trace(4);
-	HardRTC* rtc = (HardRTC*)param;
+	//HardRTC* rtc = (HardRTC*)param;
 
 	if(RTC_GetITStatus(RTC_IT_ALR) != RESET)
 	{
