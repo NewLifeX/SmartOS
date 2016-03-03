@@ -39,7 +39,7 @@ static void OnDhcpStop5500(void* sender, void* param)
 	net->ShowInfo();
 	net->SaveConfig();*/
 
-	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, dhcp->Host, 0, -1, "启动网关");
+	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, dhcp->Socket.Host, 0, -1, "启动网关");
 }
 
 ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
@@ -58,8 +58,8 @@ ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort
 	net.Led = led;
 
 	// 打开DHCP
-	static UdpClient udp(&net);
-	static Dhcp	dhcp(&udp);
+	static UdpClient udp(net);
+	static Dhcp	dhcp(udp);
 	dhcp.OnStop	= OnDhcpStop5500;
 	dhcp.Start();
 
@@ -267,9 +267,15 @@ void StartGateway(void* param)
 
 	if(tk && tk->Server[0])
 	{
-		auto net	= (W5500*)param;
 		// 根据DNS获取云端IP地址
-		UdpClient udp(net);
+		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server, 10, 2000);
+		if(ip != IPAddress::Any())
+		{
+			if(socket) socket->Remote.Address = ip;
+			tk->ServerIP = ip.Value;
+			tk->Save();
+		}
+		/*UdpClient udp(net);
 		DNS dns(&udp);
 		udp.Open();
 
@@ -286,9 +292,7 @@ void StartGateway(void* param)
 
 				break;
 			}
-		}
-
-		tk->Save();
+		}*/
 	}
 
 	// 此时启动网关服务

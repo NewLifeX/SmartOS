@@ -27,16 +27,16 @@ static void StartGateway(void* param);
 static void OnDhcpStop(void* sender, void* param)
 {
 	auto dhcp = (Dhcp*)sender;
-	if(!dhcp->Result)
+	/*if(!dhcp->Result)
 	{
 		// 失败后重新开始DHCP，等待网络连接
 		dhcp->Start();
 
 		return;
-	}
+	}*/
 
-	auto udp = (UdpSocket*)dhcp->Socket;
-	auto tip = udp->Tip;
+	auto udp = (UdpSocket&)dhcp->Socket;
+	auto tip = udp.Tip;
 
 	// 通过DHCP获取IP期间，关闭Arp响应
 	if(tip->Arp) tip->Arp->Enable = true;
@@ -64,7 +64,7 @@ ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
 
 	//!!! 非常悲催，dhcp完成的时候，会释放自己，所以这里必须动态申请内存，否则会导致堆管理混乱
 	static UdpSocket udp(&_tip);
-	static Dhcp	dhcp(&udp);
+	static Dhcp	dhcp(udp);
 	dhcp.OnStop	= OnDhcpStop;
 	// 通过DHCP获取IP期间，关闭Arp响应
 	_tip.Arp->Enable = false;
@@ -140,7 +140,14 @@ void StartGateway(void* param)
 	if(tk && tk->Server[0])
 	{
 		// 根据DNS获取云端IP地址
-		UdpSocket udp((TinyIP*)param);
+		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server, 10, 2000);
+		if(ip != IPAddress::Any())
+		{
+			if(socket) socket->Remote.Address = ip;
+			tk->ServerIP = ip.Value;
+			tk->Save();
+		}
+		/*UdpSocket udp((TinyIP*)param);
 		DNS dns(&udp);
 		udp.Open();
 
@@ -159,7 +166,7 @@ void StartGateway(void* param)
 			}
 		}
 
-		tk->Save();
+		tk->Save();*/
 	}
 
 	// 此时启动网关服务

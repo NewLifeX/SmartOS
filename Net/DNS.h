@@ -8,12 +8,15 @@
 class DNS
 {
 public:
-	ISocket*	Socket;
+	ISocket&	Socket;
 
-	DNS(ISocket* socket);
+	DNS(ISocket& socket);
 	//~DNS();
 
 	IPAddress Query(const String& domain, int msTimeout = 2000);	// 解析
+
+	// 快捷查询。借助主机直接查询多次
+	static IPAddress Query(ISocketHost& host, const String& domain, int times = 10, int msTimeout = 2000);
 
 private:
 	static uint OnReceive(ITransport* port, Array& bs, void* param, void* param2);

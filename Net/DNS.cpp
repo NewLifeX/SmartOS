@@ -73,14 +73,14 @@ typedef struct dhdr
 	ushort arcount;	/* Additional record count */
 } TDNS;
 
-DNS::DNS(ISocket* socket)
+DNS::DNS(ISocket& socket) : Socket(socket)
 {
-	Socket	= socket;
+	//Socket	= socket;
 
-	socket->Remote.Port		= 53;
-	socket->Remote.Address	= socket->Host->DNSServer;
+	socket.Remote.Port		= 53;
+	socket.Remote.Address	= socket.Host->DNSServer;
 
-	ITransport* port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(&Socket);
 	port->Register(OnReceive, this);
 }
 
@@ -339,7 +339,7 @@ short dns_makequery(short op, const String& name, Array& bs)
 IPAddress DNS::Query(const String& domain, int msTimeout)
 {
 #if NET_DEBUG
-	auto& server = Socket->Host->DNSServer;
+	auto& server = Socket.Host->DNSServer;
 	net_printf("DNS::Query %s DNS Server : ", domain.GetBuffer());
 	server.Show(true);
 #endif
@@ -352,7 +352,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	_Buffer = &rs;
 
 	dns_makequery(0, domain, bs);
-	Socket->Send(bs);
+	Socket.Send(bs);
 
 	IPAddress ip;
 	TimeWheel tw(0, msTimeout);
@@ -381,7 +381,7 @@ uint DNS::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
 void DNS::Process(Array& bs, const IPEndPoint& server)
 {
 	// 只要来自服务器的
-	if(server.Address != Socket->Host->DNSServer) return;
+	if(server.Address != Socket.Host->DNSServer) return;
 
 	if(_Buffer)
 		_Buffer->Copy(bs);
@@ -392,4 +392,26 @@ void DNS::Process(Array& bs, const IPEndPoint& server)
 		server.Show(true);
 #endif
 	}
+}
+
+// 快捷查询。借助主机直接查询多次
+IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msTimeout)
+{
+	auto udp	= host.CreateSocket(ProtocolType::Udp);
+	DNS dns(*udp);
+	//udp.Open();
+
+	auto& any	= IPAddress::Any();
+	for(int i=0; i<times; i++)
+	{
+		auto ip = dns.Query(domain, msTimeout);
+		if(ip != any)
+		{
+			delete udp;
+			return ip;
+		}
+	}
+
+	delete udp;
+	return any;
 }

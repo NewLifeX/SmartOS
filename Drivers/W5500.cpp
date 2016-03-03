@@ -657,10 +657,10 @@ ISocket* W5500::CreateSocket(ProtocolType type)
 	switch(type)
 	{
 		case ProtocolType::Tcp:
-			return new TcpClient(this);
+			return new TcpClient(*this);
 
 		case ProtocolType::Udp:
-			return new UdpClient(this);
+			return new UdpClient(*this);
 
 		default:
 			return NULL;
@@ -885,34 +885,34 @@ enum S_Status
 								// 超时或者成功收到断开请求都将 SOCK_CLOSED
 };
 
-#define SocRegWrite(P, D) 	_Host->WriteByte(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegRead(P) 		_Host->ReadByte(offsetof(TSocket, P), Index, 0x01)
-#define SocRegWrite2(P, D) 	_Host->WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegRead2(P) 		_Host->ReadByte2(offsetof(TSocket, P), Index, 0x01)
-#define SocRegWrites(P, D) 	_Host->WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
-#define SocRegReads(P, bs) 	_Host->ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
+#define SocRegWrite(P, D) 	_Host.WriteByte(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead(P) 		_Host.ReadByte(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrite2(P, D) 	_Host.WriteByte2(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegRead2(P) 		_Host.ReadByte2(offsetof(TSocket, P), Index, 0x01)
+#define SocRegWrites(P, D) 	_Host.WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
+#define SocRegReads(P, bs) 	_Host.ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
 
-HardSocket::HardSocket(W5500* host, ProtocolType protocol)
+HardSocket::HardSocket(W5500& host, ProtocolType protocol) : _Host(host)
 {
 	MaxSize	= 1500;
 
-	_Host	= host;
-	Host	= host;
+	//_Host	= host;
+	Host	= &host;
 	Protocol = protocol;
-	if(host)
+	//if(host)
 	{
-		Index = host->GetSocket();
-		if(Index < 8) host->Register(Index, this);
+		Index = host.GetSocket();
+		if(Index < 8) host.Register(Index, this);
 	}
-	else
+	/*else
 	{
 		Index = 0xFF;
-	}
+	}*/
 }
 
 HardSocket::~HardSocket()
 {
-	_Host->Register(Index, NULL);
+	_Host.Register(Index, NULL);
 }
 
 byte HardSocket::ReadConfig() { return SocRegRead(CR); }
@@ -927,7 +927,7 @@ void HardSocket::StateShow()
 	ByteArray bs(&soc, sizeof(soc));
 
 	// 一次性全部读出
-	_Host->ReadFrame(0, bs, Index, 0x01);
+	_Host.ReadFrame(0, bs, Index, 0x01);
 	//bs.CopyTo((byte*)&soc);
 
 	net_printf("\r\nW5500::Socket %d::State\r\n",Index);
@@ -1022,7 +1022,7 @@ bool HardSocket::OnOpen()
 		return false;
 	}
 	// 确保宿主打开
-	if(!_Host->Open()) return false;
+	if(!_Host.Open()) return false;
 
 	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)
@@ -1032,7 +1032,7 @@ bool HardSocket::OnOpen()
 		if(g_port < 1024) g_port = 1024;
 		Local.Port = g_port++;
 	}
-	Local.Address = _Host->IP;
+	Local.Address = _Host.IP;
 
 #if DEBUG
 	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
@@ -1149,7 +1149,7 @@ uint HardSocket::Receive(Array& bs)
 	// 设置 实际要读的长度
 	bs.SetLength(size);
 
-	_Host->ReadFrame(offset, bs, Index, 0x03);
+	_Host.ReadFrame(offset, bs, Index, 0x03);
 
 	// 更新实际物理地址,
 	SocRegWrite2(RX_RD, _REV16(offset + size));
@@ -1179,7 +1179,7 @@ bool HardSocket::Send(const Array& bs)
 
 	// 读取发送缓冲区写指针
 	ushort addr = _REV16(SocRegRead2(TX_WR));
-	_Host->WriteFrame(addr, bs, Index, 0x02);
+	_Host.WriteFrame(addr, bs, Index, 0x02);
 	// 更新发送缓存写指针位置
 	addr += bs.Length();
 	SocRegWrite2(TX_WR,_REV16(addr));
@@ -1188,7 +1188,7 @@ bool HardSocket::Send(const Array& bs)
 	WriteConfig(SEND);
 
 	// 控制轮询任务，加快处理
-	Sys.SetTask(_Host->TaskID, true, 20);
+	Sys.SetTask(_Host.TaskID, true, 20);
 
 	return true;
 }

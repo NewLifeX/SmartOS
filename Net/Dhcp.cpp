@@ -12,14 +12,14 @@
 	#define net_printf(format, ...)
 #endif
 
-Dhcp::Dhcp(ISocket* socket)
+Dhcp::Dhcp(ISocket& socket) : Socket(socket)
 {
-	Socket	= socket;
-	Host	= socket->Host;
+	//Socket	= socket;
+	//Host	= socket->Host;
 
-	socket->Local.Port		= 68;
-	socket->Remote.Port		= 67;
-	socket->Remote.Address	= IPAddress::Broadcast();
+	socket.Local.Port		= 68;
+	socket.Remote.Port		= 67;
+	socket.Remote.Address	= IPAddress::Broadcast();
 
 	IP		= IPAddress::Any();
 
@@ -33,14 +33,14 @@ Dhcp::Dhcp(ISocket* socket)
 	taskID	= 0;
 
 	//ITransport* port = (ITransport*)socket;
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(&Socket);
 	port->Register(OnReceive, this);
 }
 
 Dhcp::~Dhcp()
 {
 	Sys.RemoveTask(taskID);
-	delete Socket;
+	//delete Socket;
 }
 
 void Dhcp::SendDhcp(byte* buf, uint len)
@@ -51,7 +51,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	{
 		// 此时指向的是负载数据后的第一个字节，所以第一个opt不许Next
 		auto opt	= (DHCP_OPT*)(p + len);
-		opt = opt->SetClientId(Host->Mac);
+		opt = opt->SetClientId(Socket.Host->Mac);
 		if(!IP.IsAny())
 			opt	= opt->Next()->SetData(DHCP_OPT_RequestedIP, IP.Value);
 
@@ -72,7 +72,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	}
 
 	for(int i=0; i<6; i++)
-		dhcp->ClientMac[i] = Host->Mac[i];
+		dhcp->ClientMac[i] = Socket.Host->Mac[i];
 
 	/*auto bak	= Host->IP;
 	auto any	= IPAddress::Any();
@@ -85,7 +85,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 
 	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
 	Array bs(dhcp, sizeof(DHCP_HEADER) + len);
-	Socket->Send(bs);
+	Socket.Send(bs);
 
 	//if(isAny) Host->IP	= bak;
 }
@@ -119,7 +119,7 @@ void Dhcp::Request()
 	auto opt	= (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
 
-	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Host->DHCPServer.Value);
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Socket.Host->DHCPServer.Value);
 
 	// 发往DHCP服务器
 	SendDhcp(buf, (byte*)opt->Next() - p);
@@ -138,10 +138,10 @@ void Dhcp::Start()
 	{
 		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
 		//Host->Close();
-		Host->IP	= IPAddress::Any();
+		Socket.Host->IP	= IPAddress::Any();
 	}
 
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(&Socket);
 	if(port) port->Open();
 
 	// 创建任务，每秒发送一次Discover
@@ -162,7 +162,7 @@ void Dhcp::Stop()
 {
 	if(!Running) return;
 
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(&Socket);
 	if(port) port->Close();
 
 	Running	= false;
@@ -178,9 +178,9 @@ void Dhcp::Stop()
 		else
 		{
 			// 获取IP成功，重新设置参数
-			Host->Config();
+			Socket.Host->Config();
 			//Host->ShowInfo();
-			Host->SaveConfig();
+			Socket.Host->SaveConfig();
 		}
 	}
 	else
@@ -241,10 +241,10 @@ void Dhcp::PareOption(Stream& ms)
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask:			Host->Mask		= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_DNSServer:	Host->DNSServer	= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_Router:		Host->Gateway	= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_DHCPServer:	Host->DHCPServer= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_Mask:			Socket.Host->Mask		= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DNSServer:	Socket.Host->DNSServer	= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_Router:		Socket.Host->Gateway	= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DHCPServer:	Socket.Host->DHCPServer= ms.ReadUInt32(); len -= 4; break;
 			//default:
 			//	net_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}
@@ -281,7 +281,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 
 	if(opt->Data == DHCP_TYPE_Offer)
 	{
-		Host->IP = IP = dhcp->YourIP;
+		Socket.Host->IP = IP = dhcp->YourIP;
 		Stream optData(dhcp->Next(), len);
 		PareOption(optData);
 
@@ -300,7 +300,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 	}
 	else if(opt->Data == DHCP_TYPE_Ack)
 	{
-		Host->IP = IP = dhcp->YourIP;
+		Socket.Host->IP = IP = dhcp->YourIP;
 #if NET_DEBUG
 		net_printf("DHCP::Ack   IP:");
 		IPAddress(dhcp->YourIP).Show();

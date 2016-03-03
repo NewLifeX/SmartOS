@@ -493,31 +493,14 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
     auto socket = dynamic_cast<ISocket*>(Control->Port);
 	if(socket == NULL) return false;
 
-	auto socket2 = socket->Host->CreateSocket(ProtocolType::Udp);
-	if(socket2 == NULL) return false;
+	// 根据DNS获取云端IP地址
+	auto ip	= DNS::Query(*(socket->Host), domain, 10, 2000);
+	if(ip == IPAddress::Any()) return false;
 
-	DNS dns(socket2);
+	Control->Port->Close();
+	socket->Remote.Address	= ip;
+	socket->Remote.Port		= port;
+	Control->Port->Open();
 
-	bool rs	= false;
-	for(int i=0; i<10; i++)
-	{
-		auto ip = dns.Query(domain, 2000);
-		debug_printf("Show port: %d, ", port);
-		ip.Show(true);
-
-		if(ip != IPAddress::Any())
-		{
-			Control->Port->Close();
-			socket->Remote.Address	= ip;
-			socket->Remote.Port		= port;
-			Control->Port->Open();
-
-			rs	= true;
-			break;
-		}
-	}
-
-	delete socket2;
-
-	return rs;
+	return true;
 }

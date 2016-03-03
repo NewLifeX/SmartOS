@@ -19,8 +19,8 @@ private:
 
 	static void Loop(void* param);
 public:
-	ISocket*	Socket;
-	ISocketHost*	Host;	// 主机
+	ISocket&	Socket;
+	//ISocketHost*	Host;	// 主机
 	IPAddress	IP;			// 获取的IP地址
 
 	uint ExpiredTime;	// 过期时间，默认10000毫秒
@@ -29,7 +29,7 @@ public:
 	byte Times;		// 运行次数
 	byte MaxTimes;	// 最大重试次数，默认10次，超过该次数仍然失败则重启系统
 
-	Dhcp(ISocket* socket);
+	Dhcp(ISocket& socket);
 	~Dhcp();
 
 	void Start();	// 开始

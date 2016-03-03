@@ -98,7 +98,7 @@ private:
 class HardSocket : public ITransport, public ISocket
 {
 private:
-	W5500*	_Host;	// W5500公共部分控制器
+	W5500&	_Host;	// W5500公共部分控制器
 
 protected:
 	byte ReadConfig();
@@ -111,7 +111,7 @@ public:
 	bool Enable;	// 启用
 	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
 
-	HardSocket(W5500* host, ProtocolType protocol);
+	HardSocket(W5500& host, ProtocolType protocol);
 	virtual ~HardSocket();
 
 	// 网卡状态输出
@@ -146,7 +146,7 @@ public:
 class TcpClient : public HardSocket
 {
 public:
-	TcpClient(W5500* host): HardSocket(host, ProtocolType::Tcp){ Init(); };
+	TcpClient(W5500& host): HardSocket(host, ProtocolType::Tcp){ Init(); };
 	void Init();
 	virtual ~TcpClient();
 	virtual bool OnOpen();
@@ -171,7 +171,7 @@ private:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500* host) : HardSocket(host, ProtocolType::Udp) { }
+	UdpClient(W5500& host) : HardSocket(host, ProtocolType::Udp) { }
 
 	virtual bool SendTo(const Array& bs, const IPEndPoint& remote);
 
