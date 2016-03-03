@@ -24,9 +24,37 @@ extern uint __Vectors;
 extern uint __Vectors_End;
 extern uint __Vectors_Size;
 
+#if MEM_DEBUG
+void* malloc_(uint size)
+{
+	size	+= 4;
+	void* p	= malloc(size);
+	byte* bs = (byte*)p;
+	bs[0]	= 'S';
+	bs[1]	= 'M';
+	*(ushort*)&bs[2]	= size;
+
+	return &bs[4];
+}
+
+void free_(void* p)
+{
+	byte* bs = (byte*)p;
+	bs	-= 4;
+	assert_param2(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
+
+	free(bs);
+}
+
+#else
+	#define  malloc_ malloc
+	#define free_ free
+#endif
+
 void* operator new(uint size)
 {
     mem_printf(" new size: %d ", size);
+
 	// 内存大小向4字节对齐
 	if(size & 0x03)
 	{
@@ -36,7 +64,7 @@ void* operator new(uint size)
 	void* p = NULL;
 	{
 		SmartIRQ irq;
-		p = malloc(size);
+		p = malloc_(size);
 	}
 	if(!p)
 		mem_printf("malloc failed! size=%d ", size);
@@ -66,7 +94,7 @@ void* operator new[](uint size)
 	void* p = NULL;
 	{
 		SmartIRQ irq;
-		p = malloc(size);
+		p = malloc_(size);
 	}
 	if(!p)
 		mem_printf("malloc failed! size=%d ", size);
@@ -91,7 +119,7 @@ void operator delete(void* p)
     if(p)
 	{
 		SmartIRQ irq;
-		free(p);
+		free_(p);
 	}
 }
 
@@ -103,7 +131,7 @@ void operator delete[](void* p)
     if(p)
 	{
 		SmartIRQ irq;
-		free(p);
+		free_(p);
 	}
 }
 

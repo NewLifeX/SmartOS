@@ -132,6 +132,9 @@ public:
 	IPAddress	DNSServer;
 	IPAddress	Gateway;
 
+	// 加上虚析构函数，因为应用层可能要释放该接口
+	virtual ~ISocketHost() { }
+
 	// 应用配置
 	virtual void Config() = 0;
 
@@ -151,6 +154,9 @@ public:
 
 	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
 	IPEndPoint	Remote;	// 远程地址
+
+	// 加上虚析构函数，因为应用层可能要释放该接口
+	virtual ~ISocket() { }
 
 	// 发送数据
 	virtual bool Send(const Array& bs) = 0;

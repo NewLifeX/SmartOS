@@ -30,7 +30,7 @@ public:
 	// 构造
 	W5500();
     W5500(Spi* spi, Pin irq = P0, Pin rst = P0);	// 必须具备复位引脚 否则寄存器不能读
-    ~W5500();
+    virtual ~W5500();
 
 	// 初始化
 	void Init();
