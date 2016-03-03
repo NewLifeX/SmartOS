@@ -7,6 +7,9 @@
 #include "Drivers\NRF24L01.h"
 #include "Drivers\W5500.h"
 #include "Drivers\ShunCom.h"
+#include "Drivers\Enc28j60.h"
+
+#include "TinyIP\TinyIP.h"
 
 #include "Net\Dhcp.h"
 #include "Net\DNS.h"
@@ -22,22 +25,9 @@
 
 static void StartGateway(void* param);
 
-static void OnDhcpStop5500(void* sender, void* param)
+static void OnDhcpStop(void* sender, void* param)
 {
 	auto dhcp = (Dhcp*)sender;
-	/*if(!dhcp->Result)
-	{
-		// 失败后重新开始DHCP，等待网络连接
-		dhcp->Start();
-
-		return;
-	}
-
-	// 获取IP成功，重新设置参数
-	auto net = (W5500*)dhcp->Host;
-	net->Config();
-	net->ShowInfo();
-	net->SaveConfig();*/
 
 	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, &dhcp->Host, 0, -1, "启动网关");
 }
@@ -46,29 +36,52 @@ ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	static Spi spi(spi_, 36000000);
+	auto spi	= new Spi(spi_, 36000000);
 
 	debug_printf("\tPower: ");
-	static OutputPort pwr(power, true);
-	pwr = true;
+	auto pwr	= new OutputPort(power, true);
+	*pwr = true;
 
-	static W5500 net;
-	net.LoadConfig();
-	net.Init(&spi, irq, rst);
-	net.Led = led;
+	auto net	= new W5500();
+	net->LoadConfig();
+	net->Init(spi, irq, rst);
+	net->Led	= led;
 
-	// 打开DHCP
-	//static UdpClient udp(net);
-	static Dhcp	dhcp(net);
-	dhcp.OnStop	= OnDhcpStop5500;
-	dhcp.Start();
+	return net;
+}
 
-	return &net;
+ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
+{
+	debug_printf("\r\nENC2860::Create \r\n");
+
+	auto spi	= new Spi(spi_, 9000000);
+	auto _enc	= new Enc28j60();
+	_enc->Init(spi, irq, rst);
+
+	auto _tip	= new TinyIP();
+	_tip->Init(_enc);
+
+	_enc->Mac = _tip->Mac;
+	if(!_tip->Open()) return NULL;
+
+	Sys.Sleep(500);
+	if(!_enc->Linked()) debug_printf("未连接网线！\r\n");
+
+	// 通过DHCP获取IP期间，关闭Arp响应
+	//_tip.Arp->Enable = false;
+
+	return _tip;
 }
 
 TokenClient* Token::CreateClient(ISocketHost* host)
 {
 	debug_printf("\r\nCreateClient \r\n");
+
+	// 打开DHCP
+	//static UdpClient udp(net);
+	static Dhcp	dhcp(*host);
+	dhcp.OnStop	= OnDhcpStop;
+	dhcp.Start();
 
 	auto tk = TokenConfig::Current;
 	auto socket	= host->CreateSocket(tk->Protocol);

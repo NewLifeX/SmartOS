@@ -60,9 +60,6 @@ public:
 
 	const char* ToString() const { return "W5500"; }
 
-	byte GetSocket();
-	void Register(byte Index, HardSocket* handler);
-
 	virtual ISocket* CreateSocket(ProtocolType type);
 
 private:
@@ -79,6 +76,9 @@ private:
 
 	// spi 模式（默认变长）
 	ushort		PhaseOM;
+
+	byte GetSocket();
+	void Register(byte Index, HardSocket* handler);
 
 	bool WriteByte(ushort addr, byte dat, byte socket = 0 ,byte block = 0);
 	bool WriteByte2(ushort addr, ushort dat, byte socket = 0 ,byte block = 0);
