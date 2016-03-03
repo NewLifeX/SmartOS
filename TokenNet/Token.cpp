@@ -285,12 +285,13 @@ void StartGateway(void* param)
 	if(tk && tk->Server[0])
 	{
 		// 根据DNS获取云端IP地址
-		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server, 10, 2000);
+		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server);
 		if(ip == IPAddress::Any())
 		{
 			debug_printf("DNS::Query %s 失败！\r\n", tk->Server);
 			return;
 		}
+		debug_printf("服务器地址 %s %s:%d \r\n", tk->Server, ip.ToString().GetBuffer(), tk->ServerPort);
 
 		if(socket) socket->Remote.Address = ip;
 		tk->ServerIP = ip.Value;

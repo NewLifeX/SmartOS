@@ -314,7 +314,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	//cfg->Save();
 	//Sys.Reset();
 	//if(!flg) Sys.Reset();
-	
+
 	return true;
 }
 
@@ -494,8 +494,10 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	if(socket == NULL) return false;
 
 	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*(socket->Host), domain, 10, 2000);
+	auto ip	= DNS::Query(*(socket->Host), domain);
 	if(ip == IPAddress::Any()) return false;
+
+	debug_printf("服务器地址 %s %s:%d \r\n", domain.GetBuffer(), ip.ToString().GetBuffer(), port);
 
 	Control->Port->Close();
 	socket->Remote.Address	= ip;
