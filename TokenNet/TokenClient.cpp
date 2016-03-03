@@ -300,8 +300,8 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
 	cfg->Show();
 	//msg.Server.CopyTo(cfg->Vendor, 0, 0);
-	// 0xFD永久改变厂商地址
-	if(msg.ErrCode == 0xFD)
+	// 0xFE永久改变厂商地址
+	if(msg.ErrCode == 0xFE)
 	{
 		cfg->Save();
 		//Sys.Reset();
