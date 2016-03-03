@@ -2,8 +2,8 @@
 #include "Time.h"
 #include "Task.h"
 
-//#define NET_DEBUG DEBUG
-#define NET_DEBUG 0
+#define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
 #if NET_DEBUG
 	#define net_printf debug_printf
 #else
@@ -255,7 +255,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 	if(irq != P0)
 	{
 		// 中断引脚初始化
-		debug_printf("\r\nW5500::Init IRQ = P%c%d RST = P%c%d\r\n", _PIN_NAME(irq), _PIN_NAME(rst));
+		debug_printf("W5500::Init IRQ = P%c%d RST = P%c%d\r\n", _PIN_NAME(irq), _PIN_NAME(rst));
 		//Irq.ShakeTime	= 0;
 		Irq.Floating	= false;
 		Irq.Pull		= InputPort::UP;
@@ -1131,6 +1131,8 @@ void HardSocket::Change(const IPEndPoint& remote)
 // 接收数据
 uint HardSocket::Receive(Array& bs)
 {
+	if(!Open()) return false;
+
 	// 读取收到数据容量
 	ushort size = _REV16(SocRegRead2(RX_RSR));
 	if(size == 0)
@@ -1166,6 +1168,7 @@ uint HardSocket::Receive(Array& bs)
 // 发送数据
 bool HardSocket::Send(const Array& bs)
 {
+	if(!Open()) return false;
 	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
 	bs.Show(true);*/
 

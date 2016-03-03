@@ -8,10 +8,10 @@
 class DNS
 {
 public:
-	ISocket&	Socket;
+	ISocketHost&	Host;	// 主机
 
-	DNS(ISocket& socket);
-	//~DNS();
+	DNS(ISocketHost& host);
+	~DNS();
 
 	IPAddress Query(const String& domain, int msTimeout = 2000);	// 解析
 
@@ -22,6 +22,7 @@ private:
 	static uint OnReceive(ITransport* port, Array& bs, void* param, void* param2);
 	void Process(Array& bs, const IPEndPoint& server);
 
+	ISocket*	Socket;
 	Array*	_Buffer;
 };
 

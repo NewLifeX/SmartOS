@@ -35,13 +35,13 @@ static void OnDhcpStop(void* sender, void* param)
 		return;
 	}*/
 
-	auto udp = (UdpSocket&)dhcp->Socket;
-	auto tip = udp.Tip;
+	auto tip = (TinyIP&)dhcp->Host;
+	//auto tip = udp.Tip;
 
 	// 通过DHCP获取IP期间，关闭Arp响应
-	if(tip->Arp) tip->Arp->Enable = true;
+	if(tip.Arp) tip.Arp->Enable = true;
 
-	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, tip, 0, -1, "启动网关");
+	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, &tip, 0, -1, "启动网关");
 }
 
 ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
@@ -63,8 +63,8 @@ ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
 	if(!_enc.Linked()) debug_printf("未连接网线！\r\n");
 
 	//!!! 非常悲催，dhcp完成的时候，会释放自己，所以这里必须动态申请内存，否则会导致堆管理混乱
-	static UdpSocket udp(&_tip);
-	static Dhcp	dhcp(udp);
+	//static UdpSocket udp(&_tip);
+	static Dhcp	dhcp(_tip);
 	dhcp.OnStop	= OnDhcpStop;
 	// 通过DHCP获取IP期间，关闭Arp响应
 	_tip.Arp->Enable = false;

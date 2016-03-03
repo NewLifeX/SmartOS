@@ -39,7 +39,7 @@ static void OnDhcpStop5500(void* sender, void* param)
 	net->ShowInfo();
 	net->SaveConfig();*/
 
-	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, dhcp->Socket.Host, 0, -1, "启动网关");
+	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, &dhcp->Host, 0, -1, "启动网关");
 }
 
 ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
@@ -58,8 +58,8 @@ ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort
 	net.Led = led;
 
 	// 打开DHCP
-	static UdpClient udp(net);
-	static Dhcp	dhcp(udp);
+	//static UdpClient udp(net);
+	static Dhcp	dhcp(net);
 	dhcp.OnStop	= OnDhcpStop5500;
 	dhcp.Start();
 
@@ -99,7 +99,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 TinyServer* Token::CreateServer(ITransport* port)
 {
-	debug_printf("CreateServer \r\n");
+	debug_printf("\r\n CreateServer \r\n");
 
 	static TinyController ctrl;
 	ctrl.Port = port;
@@ -183,6 +183,8 @@ void Fix2401(void* param)
 
 ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
+	debug_printf("\r\n Create2401 \r\n");
+
 	static Spi spi(spi_, 10000000, true);
 	static NRF24L01 nrf;
 	nrf.Init(&spi, ce, irq, power);
@@ -215,6 +217,8 @@ ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerIn
 
 ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led)
 {
+	debug_printf("\r\n CreateShunCom \r\n");
+
 	auto tc	= TinyConfig::Create();
 	if(tc->Channel == 0)
 	{
@@ -269,30 +273,15 @@ void StartGateway(void* param)
 	{
 		// 根据DNS获取云端IP地址
 		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server, 10, 2000);
-		if(ip != IPAddress::Any())
+		if(ip == IPAddress::Any())
 		{
-			if(socket) socket->Remote.Address = ip;
-			tk->ServerIP = ip.Value;
-			tk->Save();
+			debug_printf("DNS::Query %s 失败！\r\n", tk->Server);
+			return;
 		}
-		/*UdpClient udp(net);
-		DNS dns(&udp);
-		udp.Open();
 
-		for(int i=0; i<10; i++)
-		{
-			auto ip = dns.Query(tk->Server, 2000);
-			ip.Show(true);
-
-			if(ip != IPAddress::Any())
-			{
-				tk->ServerIP = ip.Value;
-
-				if(socket) socket->Remote.Address = ip;
-
-				break;
-			}
-		}*/
+		if(socket) socket->Remote.Address = ip;
+		tk->ServerIP = ip.Value;
+		tk->Save();
 	}
 
 	// 此时启动网关服务
