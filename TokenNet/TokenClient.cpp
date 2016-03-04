@@ -367,7 +367,8 @@ void TokenClient::Login()
 	auto cfg	= TokenConfig::Current;
 	login.User	= cfg->User;
 	//login.Key	= cfg->Key;
-	login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex(0, 0);
+	//login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex(0, 0);
+	login.Pass	= MD5::Hash(String(cfg->Pass, ArrayLength(cfg->Pass)));
 	/*// 临时代码，兼容旧云端
 	if(login.User.Length() < 4)
 	{

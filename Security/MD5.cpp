@@ -238,3 +238,16 @@ ByteArray MD5::Hash(const Array& data)
 
 	return hash;
 }
+
+String MD5::Hash(const String& str)
+{
+	md5_context context;
+	md5_starts(&context);
+	md5_update(&context, (byte*)str.GetBuffer(), str.Length());
+
+	ByteArray hash;
+	hash.SetLength(16);
+	md5_finish(&context, hash.GetBuffer());
+
+	return hash.ToHex(0, 0);
+}
