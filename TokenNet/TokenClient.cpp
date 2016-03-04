@@ -41,18 +41,19 @@ void TokenClient::Open()
 	Control->Param		= this;
 	Control->Open();
 
+	auto ctrl	= Control;
 	if(Local && Local != Control)
 	{
+		// 向服务端握手时，汇报内网本地端口，用户端将会通过该端口连接
+		ctrl	= Local;
+
 		Local->Received	= OnTokenClientReceived;
 		Local->Param	= this;
 		Local->Open();
 	}
 
 	// 设置握手广播的本地地址和端口
-	//ITransport* port = Control->Port;
-	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
-	//ISocket* sock = (ISocket*)(port + 1);
-	auto sock = dynamic_cast<ISocket*>(Control->Port);
+	auto sock	= dynamic_cast<ISocket*>(ctrl->Port);
 	if(sock) 
 	{
 		Hello.EndPoint			= sock->Local;
