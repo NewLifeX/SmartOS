@@ -53,7 +53,12 @@ void TokenClient::Open()
 	// C++的多接口跟C#不一样，不能简单转换了事，还需要注意两个接口的先后顺序，让它偏移
 	//ISocket* sock = (ISocket*)(port + 1);
 	auto sock = dynamic_cast<ISocket*>(Control->Port);
-	if(sock) Hello.EndPoint = sock->Local;
+	if(sock) 
+	{
+		Hello.EndPoint			= sock->Local;
+		auto cfg		 		= TokenConfig::Current;
+		Hello.EndPoint.Port 	= cfg->Port;
+	}
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
