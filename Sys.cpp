@@ -421,11 +421,17 @@ bool TSys::SetTaskPeriod(uint taskid, int period) const
 {
 	if(!taskid) return false;
 
-	Task* task = Task::Get(taskid);
+	auto task = Task::Get(taskid);
 	if(!task) return false;
 
 	if(period)
+	{
 		task->Period = period;
+		
+		// 改变任务周期的同时，重新计算下一次调度时间NextTime，让它立马生效
+		// 否则有可能系统按照上一次计算好的NextTime再调度一次任务
+		task->NextTime	= Ms() + period;
+	}
 	else
 		task->Enable = false;
 

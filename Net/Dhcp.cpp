@@ -4,8 +4,8 @@
 #include "Dhcp.h"
 #include "Ethernet.h"
 
-//#define NET_DEBUG DEBUG
-#define NET_DEBUG 0
+#define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
 #if NET_DEBUG
 	#define net_printf debug_printf
 #else
@@ -157,6 +157,7 @@ void Dhcp::Start()
 
 	Times++;
 
+	Result	= false;
 	Running = true;
 }
 
