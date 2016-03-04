@@ -54,12 +54,7 @@ void TokenClient::Open()
 
 	// 设置握手广播的本地地址和端口
 	auto sock	= dynamic_cast<ISocket*>(ctrl->Port);
-	if(sock) 
-	{
-		Hello.EndPoint			= sock->Local;
-		auto cfg		 		= TokenConfig::Current;
-		Hello.EndPoint.Port 	= cfg->Port;
-	}
+	if(sock) Hello.EndPoint	= sock->Local;
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
