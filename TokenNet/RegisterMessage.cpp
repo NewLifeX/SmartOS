@@ -44,10 +44,8 @@ String& RegisterMessage::ToStr(String& str) const
 {
 	str += "注册";
 	if(Reply) str += "#";
-	str = str + " User=";
-	ByteArray(User).ToHex(str);
-	str = str + " Pass=";
-	ByteArray(Pass).ToHex(str);
+	str = str + " User=" + User;
+	str = str + " Pass=" + Pass;
 	str = str + " Salt=";
 	ByteArray(Salt).ToHex(str);
 

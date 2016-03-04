@@ -331,7 +331,8 @@ void TokenClient::Register()
 	debug_printf("TokenClient::Register\r\n");
 
 	RegisterMessage re;
-	re.User.Copy(Sys.ID, 16);
+	re.User	= ByteArray(Sys.ID, 16).ToHex(0, 0);
+	re.Show(true);
 
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
@@ -366,17 +367,17 @@ void TokenClient::Login()
 	auto cfg	= TokenConfig::Current;
 	login.User	= cfg->User;
 	//login.Key	= cfg->Key;
-	login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex();
-	// 临时代码，兼容旧云端
+	login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex(0, 0);
+	/*// 临时代码，兼容旧云端
 	if(login.User.Length() < 4)
 	{
 		//Register();
 		login.User.Copy(Sys.ID, 16);
 		login.Pass.Copy(Sys.ID, 16);
-	}
+	}*/
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
-	login.Show();
+	login.Show(true);
 
 	Send(msg);
 }
