@@ -277,27 +277,33 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 {
 	if(!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
-	auto cfg	= TokenConfig::Current;
+	auto cfg		= TokenConfig::Current;
 	cfg->Protocol	= (ProtocolType)msg.Protocol;
 
 	cfg->Show();
 
-	uint len1 = ArrayLength(cfg->Server);
-	if(msg.Server.Length() > len1)
+	uint len1 		= ArrayLength(cfg->Server);
+	uint mslen1	= msg.Server.Length();	
+	if(mslen1 > len1)
 	{
 		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len1, msg.Server.GetBuffer());
 		return false;
 	}
 	msg.Server.CopyTo(cfg->Server, 0, 0);
+	cfg->Server[mslen1]= '\0';
+	
 	cfg->ServerPort = msg.Port;
-
-	uint len2 = ArrayLength(cfg->VisitToken);
-	if(msg.VisitToken.Length() > len2)
+	
+	uint len2 	= ArrayLength(cfg->VisitToken);
+	uint mslen2 = msg.VisitToken.Length();
+	if(mslen2> len2)
 	{
 		debug_printf("访问令牌超长 Max=%d VisitToken=%s \r\n", len2, msg.VisitToken.GetBuffer());
 		return false;
-	}
+	}		
 	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
+	cfg->VisitToken[mslen2] = '\0';
+		
 	cfg->Show();
 	//msg.Server.CopyTo(cfg->Vendor, 0, 0);
 	// 0xFE永久改变厂商地址
