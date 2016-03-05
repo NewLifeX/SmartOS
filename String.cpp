@@ -790,6 +790,33 @@ bool String::EndsWith(const char* str) const
 	return strncmp(&buffer[len - slen], str, slen) == 0;
 }
 
+int String::Split(const String& str, StringItem callback)
+{
+	if(str.Length() == 0) return 0;
+
+	int n	= 0;
+	int p	= 0;
+	int e	= 0;
+	while(p < len)
+	{
+		// 找到下一个位置。如果找不到，直接移到末尾
+		e	= IndexOf(str, p);
+		if(e < 0) e = len;
+
+		n++;
+
+		auto item	= Substring(p, e - p);
+		callback(item);
+
+		// 如果在末尾，说明没有找到
+		if(e == len) break;
+
+		p	= e + str.Length();
+	}
+
+	return n;
+}
+
 String String::Substring(int start, int length) const
 {
 	String str;

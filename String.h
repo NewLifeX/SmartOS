@@ -134,6 +134,9 @@ public:
 	bool StartsWith(const char* str, int startIndex = 0) const;
 	bool EndsWith(const String& str) const;
 	bool EndsWith(const char* str) const;
+	
+	typedef void (*StringItem)(const String& item);
+	int Split(const String& str, StringItem callback);
 
 	String Substring(int start, int len) const;
 	String& TrimStart();
