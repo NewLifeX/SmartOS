@@ -457,6 +457,40 @@ bool String::operator>=(const String& rhs) const
 	return CompareTo(rhs) >= 0;
 }
 
+void String::SetAt(int loc, char c) 
+{
+	if (loc < len) buffer[loc] = c;
+}
+
+char& String::operator[](int index)
+{
+	static char dummy_writable_char;
+	if (index >= len || !buffer) {
+		dummy_writable_char = 0;
+		return dummy_writable_char;
+	}
+	return buffer[index];
+}
+
+char String::operator[]( int index ) const
+{
+	if (index >= len || !buffer) return 0;
+	return buffer[index];
+}
+
+void String::GetBytes(byte* buf, int bufsize, int index) const
+{
+	if (!bufsize || !buf) return;
+	if (index >= len) {
+		buf[0] = 0;
+		return;
+	}
+	int n = bufsize - 1;
+	if (n > len - index) n = len - index;
+	strncpy((char*)buf, buffer + index, n);
+	buf[n] = 0;
+}
+
 // 输出对象的字符串表示方式
 String& String::ToStr(String& str) const
 {

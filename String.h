@@ -10,20 +10,7 @@ class StringHelper;
 // 字符串
 class String : public Object
 {
-private:
-	/*// http://www.artima.com/cppsource/safebool.html
-	typedef void (String::*StringIfHelperType)() const;
-	void StringIfHelper() const {}*/
-
 public:
-	// 字符串默认0长度，容量0x40
-	//String(int length = 0) : TArray(length) { }
-	//String(char item, int count) : TArray(count) { Set(item, 0, count); }
-	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	//String(void* str, int len = -1) : TArray(0) { Set(str, len); }
-	//String(const void* str, int len = -1) : TArray(0) { Set(str, len); }
-	//String(const Array& bs) : TArray(bs.Length()) { Copy(bs, 0); }
-
 	String(const char* cstr = "");
 	String(const String& str);
 	String(String&& rval);
@@ -99,7 +86,7 @@ public:
 	friend StringHelper& operator + (const StringHelper& lhs, double num);
 
     //operator bool() const { return len > 0; }
-	operator char*() const { return buffer; }
+	//operator char*() const { return buffer; }
 	int CompareTo(const String& s) const;
 	bool Equals(const String& s) const;
 	bool Equals(const char* cstr) const;
@@ -113,19 +100,14 @@ public:
 	bool operator <= (const String& rhs) const;
 	bool operator >= (const String& rhs) const;
 
-	// character acccess
-	char charAt(unsigned int index) const;
-	void setCharAt(unsigned int index, char c);
-	char operator [] (unsigned int index) const;
-	char& operator [] (unsigned int index);
-	void getBytes(unsigned char *buf, unsigned int bufsize, unsigned int index=0) const;
-	void toCharArray(char *buf, unsigned int bufsize, unsigned int index=0) const
-		{getBytes((unsigned char *)buf, bufsize, index);}
-	const char* c_str() const { return buffer; }
+	void SetAt(int index, char c);
+	char operator [] (int index) const;
+	char& operator [] (int index);
+	void GetBytes(byte* buf, int bufsize, int index=0) const;
+	void ToArray(char* buf, int bufsize, int index=0) const { GetBytes((byte*)buf, bufsize, index); }
 
-	// parsing/conversion
-	long toInt(void) const;
-	float toFloat(void) const;
+	int ToInt() const;
+	float ToFloat() const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
@@ -134,20 +116,11 @@ public:
 	// 清空已存储数据。
 	virtual void Clear();
 
-	/*String& Append(char ch);
-	String& Append(const char* str, int len = -1);
-	String& Append(int value, int radix = 10, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
-	String& Append(byte bt);		// 十六进制
-	String& Append(const ByteArray& bs);	// 十六进制*/
-
 	// 调试输出字符串
 	virtual void Show(bool newLine = false) const;
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
 	String& Format(const char* format, ...);
-
-    //String& Concat(const Object& obj);
-    //String& Concat(const char* str, int len = -1);
 
 	int IndexOf(const char ch, int startIndex = 0) const;
 	int IndexOf(const String& str, int startIndex = 0) const;
@@ -170,19 +143,6 @@ public:
 	String& Remove(int index, int count);
 	String& ToLower();
 	String& ToUpper();
-
-    /*String& operator+=(const Object& obj);
-    //String& operator+=(const char* str);
-    friend String& operator+(String& str, const Object& obj);
-    friend String& operator+(String& str, const char* str2);
-    friend String& operator+(String& str, char ch);
-    friend String& operator+(String& str, byte bt);
-    friend String& operator+(String& str, int value);
-
-    friend bool operator==(const String& str, const String& str2);
-    friend bool operator!=(const String& str, const String& str2);
-    friend bool operator==(const String& str, const char* str2);
-    friend bool operator!=(const String& str, const char* str2);*/
 
 protected:
 	char*	buffer;		// 字符数组
