@@ -59,8 +59,8 @@ String Sim900A::Send(const char* str, uint msTimeout)
 {
 	if(str)
 	{
-		String dat(str, 0);
-		Port->Write(dat);
+		String dat(str);
+		//Port->Write(dat);
 
 #if DEBUG
 		dat.Trim().Show(true);
@@ -68,16 +68,16 @@ String Sim900A::Send(const char* str, uint msTimeout)
 	}
 
 	String bs;
-	bs.SetLength(bs.Capacity());
+	/*bs.SetLength(bs.Capacity());
 
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
 	do
 	{
 		if(Port->Read(bs) >= 2) break;
-	}while(!tw.Expired());
+	}while(!tw.Expired());*/
 
-	if(bs.Length() > 4) return bs.Trim();
+	if(bs.Length() > 4) bs.Trim();
 
 	return bs;
 }
@@ -97,7 +97,7 @@ bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 		if(Led) Led->Write(50);
 
 		// 如果进入了数据发送模式，则需要退出
-		if(rt.Sub(2, 2) == "\r\n" || rt.Sub(1, 2) == "\r\n")
+		if(rt.Substring(2, 2) == "\r\n" || rt.Substring(1, 2) == "\r\n")
 		{
 			ByteArray end(0x1A, 1);
 			Port->Write(end);
@@ -114,7 +114,7 @@ bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
 void Sim900A::SendAPN(bool issgp)
 {
 	String str;
-	str.Clear();
+	//str.Clear();
 	if(issgp)
 		str = "AT+CIPCSGP=1";
 	else

@@ -282,16 +282,16 @@ void StartGateway(void* param)
 
 	auto tk = TokenConfig::Current;
 
-	if(tk && tk->Server[0])
+	if(tk && tk->Server.Length() > 0)
 	{
 		// 根据DNS获取云端IP地址
 		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server);
 		if(ip == IPAddress::Any())
 		{
-			debug_printf("DNS::Query %s 失败！\r\n", tk->Server);
+			debug_printf("DNS::Query %s 失败！\r\n", tk->Server.GetBuffer());
 			return;
 		}
-		debug_printf("服务器地址 %s %s:%d \r\n", tk->Server, ip.ToString().GetBuffer(), tk->ServerPort);
+		debug_printf("服务器地址 %s %s:%d \r\n", tk->Server.GetBuffer(), ip.ToString().GetBuffer(), tk->ServerPort);
 
 		if(socket) socket->Remote.Address = ip;
 		tk->ServerIP = ip.Value;

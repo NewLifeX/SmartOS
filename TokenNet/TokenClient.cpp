@@ -153,7 +153,7 @@ void LoopTask(void* param)
 		{
 			auto cfg	= TokenConfig::Current;
 
-			if(cfg->User[0] == 0)
+			if(cfg->User.Length() == 0)
 				client->Register();
 			else
 				client->Login();
@@ -283,28 +283,28 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	cfg->Show();
 
-	uint len1 		= ArrayLength(cfg->Server);
-	uint mslen1	= msg.Server.Length();	
+	/*uint len1 		= ArrayLength(cfg->Server);
+	uint mslen1	= msg.Server.Length();
 	if(mslen1 > len1)
 	{
 		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len1, msg.Server.GetBuffer());
 		return false;
-	}
-	msg.Server.CopyTo(cfg->Server, 0, 0);
-	cfg->Server[mslen1]= '\0';
-	
+	}*/
+	msg.Server	= cfg->Server;
+	//cfg->Server[mslen1]= '\0';
+
 	cfg->ServerPort = msg.Port;
-	
-	uint len2 	= ArrayLength(cfg->VisitToken);
+
+	/*uint len2 	= ArrayLength(cfg->VisitToken);
 	uint mslen2 = msg.VisitToken.Length();
 	if(mslen2> len2)
 	{
 		debug_printf("访问令牌超长 Max=%d VisitToken=%s \r\n", len2, msg.VisitToken.GetBuffer());
 		return false;
-	}		
-	msg.VisitToken.CopyTo(cfg->VisitToken,0,0);
-	cfg->VisitToken[mslen2] = '\0';
-		
+	}*/
+	msg.VisitToken	= cfg->VisitToken;
+	//cfg->VisitToken[mslen2] = '\0';
+
 	cfg->Show();
 	//msg.Server.CopyTo(cfg->Vendor, 0, 0);
 	// 0xFE永久改变厂商地址
@@ -348,8 +348,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
-	rm.User.CopyTo(cfg->User, 16, 0);
-	rm.Pass.CopyTo(cfg->Pass);
+	rm.User	= cfg->User;
+	rm.Pass	= cfg->Pass;
 
 	cfg->Show();
 	cfg->Save();
@@ -368,7 +368,8 @@ void TokenClient::Login()
 	login.User	= cfg->User;
 	//login.Key	= cfg->Key;
 	//login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex(0, 0);
-	login.Pass	= MD5::Hash(String(cfg->Pass, ArrayLength(cfg->Pass)));
+	//login.Pass	= MD5::Hash(String(cfg->Pass, ArrayLength(cfg->Pass)));
+	login.Pass	= MD5::Hash(cfg->Pass);
 	/*// 临时代码，兼容旧云端
 	if(login.User.Length() < 4)
 	{

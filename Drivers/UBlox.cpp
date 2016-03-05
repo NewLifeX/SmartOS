@@ -125,7 +125,7 @@ void UBlox::OnReceive(const Array& bs, void* param)
 	TS("UBlox::OnReceive");
 
 	//debug_printf("GPS[%d]=", bs.Length());
-	String str(bs);
+	String str((char*)bs.GetBuffer(), bs.Length());
 	//str.Show(true);
 
 	if(Buffer.Capacity() == 0) return;

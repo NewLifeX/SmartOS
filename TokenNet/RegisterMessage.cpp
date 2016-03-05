@@ -25,8 +25,8 @@ void RegisterMessage::Write(Stream& ms) const
 {
 	if(!Error)
 	{
-		ms.WriteArray(User);
-		ms.WriteArray(Pass);
+		ms.WriteString(User);
+		ms.WriteString(Pass);
 
 		if(Salt.Length() > 0)
 			ms.WriteArray(Salt);

@@ -65,20 +65,22 @@ String& JoinMessage::ToStr(String& str) const
 	str += "组网";
 	if(!Reply)
 	{
-		str = str + " Version=" + Version;
-		str.Append(" Kind=").Append(Kind, 16, 4);
-		str.Append(" TranID=").Append(TranID, 16, 8);
+		str += " Version=" + Version;
+		//str += " Kind=";
+		str.Format(" Kind=%04X", Kind);
+		//str += " TranID=";
+		str.Format(" TranID=%08X", TranID);
 		str = str + " HardID=" + HardID;
 	}
 	else
 	{
 		str += "#";
-		str = str + " Server=" + Server;
-		str = str + " Channel=" + Channel;
-		str = str + " Speed=" + Speed;
-		str = str + " Address=" + Address;
+		str += " Server=" + Server;
+		str += " Channel=" + Channel;
+		str += " Speed=" + Speed;
+		str += " Address=" + Address;
 		str = str + " Password=" + Password;
-		str.Append(" TranID=").Append(TranID, 16, 8);
+		str.Format(" TranID=%08X", TranID);
 		str = str + " HardID=" + HardID;
 	}
 

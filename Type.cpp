@@ -13,7 +13,8 @@ String& Object::ToStr(String& str) const
 	const char* name = typeid(*this).name();
 	while(*name >= '0' && *name <= '9') name++;
 
-	str.Set(name, 0);
+	//str.Set(name, 0);
+	str	+= name;
 
 	return str;
 }
@@ -33,7 +34,7 @@ void Object::Show(bool newLine) const
 	// 为了减少堆分配，采用较大的栈缓冲区
 	char cs[0x200];
 	String str(cs, ArrayLength(cs));
-	str.SetLength(0);
+	//str.SetLength(0);
 	ToStr(str);
 	str.Show(newLine);
 }
@@ -405,14 +406,15 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 	// 拼接在字符串后面
 	for(int i=0; i < Length(); i++, buf++)
 	{
-		str.Append(*buf);
+		//str.Append(*buf);
+		str	+= *buf;
 
 		if(i < Length() - 1)
 		{
 			if(newLine > 0 && (i + 1) % newLine == 0)
 				str += "\r\n";
 			else if(sep != '\0')
-				str.Append(sep);
+				str += sep;
 		}
 	}
 
@@ -527,318 +529,6 @@ void ByteArray::Write(int value, int index)
 void ByteArray::Write(ulong value, int index)
 {
 	Copy((byte*)&value, sizeof(ulong), index);
-}
-
-/******************************** String ********************************/
-
-// 输出对象的字符串表示方式
-String& String::ToStr(String& str) const
-{
-	// 把当前字符串复制到目标字符串后面
-	str.Copy(*this, str.Length());
-
-	return (String&)*this;
-}
-
-// 输出对象的字符串表示方式
-String String::ToString() const
-{
-	return *this;
-}
-
-// 清空已存储数据。长度放大到最大容量
-void String::Clear()
-{
-	TArray::Clear();
-
-	_Length = 0;
-}
-
-String& String::Append(char ch)
-{
-	Copy(&ch, 1, Length());
-
-	return *this;
-}
-
-String& String::Append(const char* str, int len)
-{
-	Copy(str, len, Length());
-
-	return *this;
-}
-
-char* _itoa(int value, char* str, int radix, int width = 0)
-{
-	if (radix > 36 || radix <= 1) return 0;
-
-	// 先处理符号
-	uint v;
-	bool sign = (radix == 10 && value < 0);
-	if (sign)
-		v = -value;
-	else
-		v = (uint)value;
-
-	// 从低位数字开始，转为字符以后写入临时字符数组
-	char tmp[33];
-	char* tp = tmp;
-	while (v || tp == tmp)
-	{
-		int i = v % radix;
-		v = v / radix;
-		if (i < 10)
-			*tp++ = i + '0';
-		else
-			*tp++ = i + 'A' - 10;
-	}
-
-	char* sp = str;
-	// 修正宽度
-	if(width > 0)
-	{
-		width -= tp - tmp;
-		if (sign) width--;
-		while(width-- > 0) *sp++ = '0';
-	}
-
-	// 写入符号
-	if (sign) *sp++ = '-';
-
-	// 倒序写入目标字符串
-	while (tp > tmp)
-		*sp++ = *--tp;
-	*sp = 0;
-
-	return str;
-}
-
-// 写入整数，第二参数指定宽带，不足时补零
-String& String::Append(int value, int radix, int width)
-{
-	char ch[16];
-	_itoa(value, ch, radix, width);
-
-	return Append(ch);
-}
-
-String& String::Append(byte bt)
-{
-	int k = Length();
-
-	byte b = bt >> 4;
-	SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
-	b = bt & 0x0F;
-	SetAt(k++, b > 9 ? ('A' + b - 10) : ('0' + b));
-
-	return *this;
-}
-
-String& String::Append(const ByteArray& bs)
-{
-	bs.ToHex(*this);
-
-	return *this;
-}
-
-// 调试输出字符串
-void String::Show(bool newLine) const
-{
-	int len = Length();
-	if(!len) return;
-
-	// C格式字符串以0结尾
-	char* p = GetBuffer();
-	if(p[len] != 0 && !IN_ROM_SECTION(p)) p[len] = 0;
-
-	debug_printf("%s", p);
-	if(newLine) debug_printf("\r\n");
-}
-
-// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
-String& String::Format(const char* format, ...)
-{
-	va_list ap;
-
-	//const char* fmt = format.GetBuffer();
-	va_start(ap, format);
-
-	// 无法准确估计长度，大概乘以2处理
-	int len = Length();
-	CheckCapacity(len + (strlen(format) << 1), len);
-
-	char* p = GetBuffer();
-	len = vsnprintf(p + len, Capacity() - len, format, ap);
-	_Length += len;
-
-	va_end(ap);
-
-	return *this;
-}
-
-String& String::Concat(const Object& obj)
-{
-	obj.ToStr(*this);
-
-	return *this;
-}
-
-String& String::Concat(const char* str, int len)
-{
-	Copy(str, len, Length());
-
-	return *this;
-}
-
-int String::IndexOf(const String& str) const
-{
-	if(str.Length() > Length()) return -1;
-
-	auto ptr	= GetBuffer();
-	auto ptr2	= str.GetBuffer();
-	if(ptr[0] != ptr2[0]) return -1;
-
-	auto p	= strstr(ptr, ptr2);
-	if(!p) return -1;
-
-	return p - ptr;
-}
-
-int String::IndexOf(const char* str) const
-{
-	uint len	= MemLen(str);
-	if(len > Length()) return -1;
-
-	auto ptr	= GetBuffer();
-	if(str[0] != ptr[0]) return -1;
-
-	auto p	= strstr(ptr, str);
-	if(!p) return -1;
-
-	return p - ptr;
-}
-
-String String::Sub(int start, int len) const
-{
-	String str;
-	//str.Copy(this, len, start);
-	str.Copy(GetBuffer() + start, len);
-
-	return str;
-}
-
-String String::TrimStart() const
-{
-	String str;
-
-	auto ptr	= GetBuffer();
-	// 找到第一个不是空白字符的位置
-	int i = 0;
-	for(;i < Length(); i++)
-	{
-		auto ch	= ptr[i];
-		if(ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n') break;
-	}
-	str.Copy(ptr + i, Length() - i);
-
-	return str;
-}
-
-String String::TrimEnd() const
-{
-	String str;
-
-	auto ptr	= GetBuffer();
-	// 找到最后一个不是空白字符的位置
-	int i = Length() - 1;
-	for(;i >= 0; i--)
-	{
-		auto ch	= ptr[i];
-		if(ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n') break;
-	}
-	str.Copy(ptr, i + 1);
-
-	return str;
-}
-
-String String::Trim() const
-{
-	//String str	= TrimStart();
-
-	return TrimStart().TrimEnd();;
-}
-
-bool String::StartsWith(const String& str) const { return Sub(0, str.Length()) == str; }
-bool String::StartsWith(const char* str) const { return Sub(0, strlen(str)) == str; }
-bool String::EndsWith(const String& str) const { return Sub(Length() - str.Length(), str.Length()) == str; }
-bool String::EndsWith(const char* str) const { return Sub(Length() - strlen(str), strlen(str)) == str; }
-
-String& String::operator+=(const Object& obj)
-{
-	return this->Concat(obj);
-}
-
-String& String::operator+=(const char* str)
-{
-	return this->Concat(str);
-}
-
-String& operator+(String& str1, const Object& obj)
-{
-	return str1.Concat(obj);
-}
-
-String& operator+(String& str1, const char* str2)
-{
-	return str1.Concat(str2);
-}
-
-/*String operator+(const char* str1, const char* str2)
-{
-	String str(str1);
-	return str + str2;
-}*/
-
-String operator+(const char* str, const Object& obj)
-{
-	// 要把字符串拷贝过来
-	String s;
-	s = str;
-	s += obj;
-	return s;
-}
-
-String operator+(const Object& obj, const char* str)
-{
-	// 要把字符串拷贝过来
-	String s;
-	obj.ToStr(s);
-	s += str;
-	return s;
-}
-
-String& operator+(String& str, char ch) { return str.Append(ch); }
-String& operator+(String& str, byte bt) { return str.Append(bt); }
-String& operator+(String& str, int value) { return str.Append(value); }
-
-bool operator==(const String& str, const String& str2)
-{
-	return str.Length() == str2.Length() && str.IndexOf(str2) == 0;
-}
-
-bool operator!=(const String& str, const String& str2)
-{
-	return str.Length() != str2.Length() || str.IndexOf(str2) != 0;
-}
-
-bool operator==(const String& str, const char* str2)
-{
-	return str.Length() == MemLen(str2) && str.IndexOf(str2) == 0;
-}
-
-bool operator!=(const String& str, const char* str2)
-{
-	return str.Length() != MemLen(str2) || str.IndexOf(str2) != 0;
 }
 
 /******************************** REV ********************************/

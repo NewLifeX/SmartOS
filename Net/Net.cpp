@@ -83,8 +83,8 @@ String& IPAddress::ToStr(String& str) const
 
 	for(int i=0; i<4; i++)
 	{
-		if(i > 0) str.Append('.');
-		str.Append((int)ips[i]);
+		if(i > 0) str	+= '.';
+		str += (int)ips[i];
 	}
 
 	return str;
@@ -146,7 +146,8 @@ String& IPEndPoint::ToStr(String& str) const
 	//char ss[7];
 	//int len = sprintf(ss, ":%d", Port);
 	//str.Copy(ss, len, str.Length());
-	str.Append(':').Append(Port);
+	str.Concat(':');
+	str.Concat(Port);
 
 	return str;
 }
@@ -255,8 +256,8 @@ String& MacAddress::ToStr(String& str) const
 
 	for(int i=0; i<6; i++)
 	{
-		if(i > 0) str.Append('-');
-		str.Append(macs[i]);
+		if(i > 0) str += '-';
+		str	+= macs[i];
 	}
 
 	return str;

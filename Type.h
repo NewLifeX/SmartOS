@@ -10,26 +10,9 @@ typedef unsigned char   byte;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
 typedef unsigned long long  ulong;
-//typedef char*           char*;
-//typedef unsigned char   bool;
-//#define true            1
-//#define false           0
+typedef long long       Int64;
 
 #define UInt64_Max 0xFFFFFFFFFFFFFFFFull
-
-/*
-// 尚未决定是否采用下面这种类型
-typedef char            SByte;
-typedef unsigned char   Byte;
-typedef short           Int16;
-typedef unsigned short  UInt16;
-typedef int             Int32;
-typedef unsigned int    UInt32;
-typedef long long       Int64;
-typedef unsigned long long  UInt64;
-typedef char*           String;
-*/
-typedef long long       Int64;
 
 #include <typeinfo>
 using namespace ::std;
@@ -311,71 +294,6 @@ public:
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
 };
 
-// 字符串
-class String : public TArray<char>
-{
-private:
-
-public:
-	// 字符串默认0长度，容量0x40
-	String(int length = 0) : TArray(length) { }
-	String(char item, int count) : TArray(count) { Set(item, 0, count); }
-	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
-	String(void* str, int len = -1) : TArray(0) { Set(str, len); }
-	String(const void* str, int len = -1) : TArray(0) { Set(str, len); }
-	String(const Array& bs) : TArray(bs.Length()) { Copy(bs, 0); }
-
-	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str) const;
-	// 输出对象的字符串表示方式
-	virtual String ToString() const;
-	// 清空已存储数据。长度放大到最大容量
-	virtual void Clear();
-
-	String& Append(char ch);
-	String& Append(const char* str, int len = -1);
-	String& Append(int value, int radix = 10, int width = 0);	// 写入整数，第二参数指定宽带，不足时补零
-	String& Append(byte bt);		// 十六进制
-	String& Append(const ByteArray& bs);	// 十六进制
-
-	// 调试输出字符串
-	virtual void Show(bool newLine = false) const;
-
-	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
-	String& Format(const char* format, ...);
-
-    String& Concat(const Object& obj);
-    String& Concat(const char* str, int len = -1);
-
-	int IndexOf(const String& str) const;
-	int IndexOf(const char* str) const;
-	String Sub(int start, int len) const;
-	String TrimStart() const;
-	String TrimEnd() const;
-	String Trim() const;
-	bool StartsWith(const String& str) const;
-	bool StartsWith(const char* str) const;
-	bool EndsWith(const String& str) const;
-	bool EndsWith(const char* str) const;
-
-    String& operator+=(const Object& obj);
-    String& operator+=(const char* str);
-    friend String& operator+(String& str, const Object& obj);
-    friend String& operator+(String& str, const char* str2);
-    friend String& operator+(String& str, char ch);
-    friend String& operator+(String& str, byte bt);
-    friend String& operator+(String& str, int value);
-
-    friend bool operator==(const String& str, const String& str2);
-    friend bool operator!=(const String& str, const String& str2);
-    friend bool operator==(const String& str, const char* str2);
-    friend bool operator!=(const String& str, const char* str2);
-};
-
-//String operator+(const char* str1, const char* str2);
-String operator+(const char* str, const Object& obj);
-String operator+(const Object& obj, const char* str);
-
 // 从数组创建列表
 #define MakeList(T, arr) List<T>(&arr[0], sizeof(arr)/sizeof(arr[0]))
 
@@ -495,7 +413,7 @@ public:
 	}
 };
 
-// 双向链表
+/*// 双向链表
 template <class T>
 class LinkedList
 {
@@ -678,7 +596,7 @@ public:
 
         return item;
     }
-};
+};*/
 
 /*void* operator new(uint size) throw(std::bad_alloc);
 void* operator new[](uint size) throw(std::bad_alloc);
@@ -689,7 +607,7 @@ void operator delete[](void* p) throw();*/
 //#define new DEBUG_NEW
 //#endif
 
-// 自动释放的智能指针
+/*// 自动释放的智能指针
 class SmartPtr
 {
 private:
@@ -737,9 +655,9 @@ public:
 	}
 
 	void* ToPtr() { return _ptr->Ptr; }
-};
+};*/
 
-// 经典的C++自动指针
+/*// 经典的C++自动指针
 // 超出对象作用域时自动销毁被管理指针
 template<class T>
 class auto_ptr
@@ -757,11 +675,6 @@ public:
 	~auto_ptr()
 	{
 		// 因为C++保证删除一个空指针是安全的，所以我们没有必要判断空
-		/*if(_ptr)
-		{
-			delete _ptr;
-			_ptr = NULL;
-		}*/
 		delete _ptr;
 	}
 
@@ -805,6 +718,6 @@ public:
 			_ptr = p;
 		}
 	}
-};
+};*/
 
 #endif

@@ -87,7 +87,7 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 		debug_printf(" Payload=%d ", len);
 		// 越过2个字节标识和2字节序列号
 		debug_printf("ID=0x%04X Seq=0x%04X ", _REV16(icmp->Identifier), _REV16(icmp->Sequence));
-		String(icmp->Next(), len).Show(true);
+		String((char*)icmp->Next(), len).Show(true);
 #endif
 	}
 

@@ -357,7 +357,7 @@ void TSys::ShowInfo() const
 	ByteArray(ID, ArrayLength(ID)).Show();
 
 	debug_printf("\t");
-	String(ID, 12).Show(true);
+	String((char*)ID, 12).Show(true);
 
 	// 输出堆信息
 	uint start = (uint)&__heap_base;

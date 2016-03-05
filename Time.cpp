@@ -358,12 +358,21 @@ ulong DateTime::TotalMicroseconds()
 String& DateTime::ToStr(String& str) const
 {
 	// F长全部 yyyy-MM-dd HH:mm:ss
-	str.Append(Year, 10, 4).Append('-');
-	str.Append(Month, 10, 2).Append('-');
-	str.Append(Day, 10, 2).Append(' ');
-	str.Append(Hour, 10, 2).Append(':');
-	str.Append(Minute, 10, 2).Append(':');
-	str.Append(Second, 10, 2);
+	/*str.Concat(Year, 10, 4);
+	str	+= '-';
+	str.Concat(Month, 10, 2);
+	str	+= '-';
+	str.Concat(Day, 10, 2);
+	str	+= ' ';
+	str.Concat(Hour, 10, 2);
+	str	+= ':';
+	str.Concat(Minute, 10, 2);
+	str	+= ':';
+	str.Concat(Second, 10, 2);*/
+
+	char cs[20];
+	sprintf(cs, "%04d-%02d-%02d %02d:%02d:%02d", Year, Month, Day, Hour, Minute, Second);
+	str	+= cs;
 
 	return str;
 }

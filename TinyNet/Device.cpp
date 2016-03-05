@@ -100,7 +100,9 @@ void Device::ReadMessage(Stream& ms)
 	OfflineTime	= ms.ReadUInt16();
 	PingTime	= ms.ReadUInt16();
 
-	ms.ReadString().CopyTo(Name, ArrayLength(Name));
+	//ms.ReadString().CopyTo(Name, ArrayLength(Name));
+	String str(Name, ArrayLength(Name));
+	str	= ms.ReadString();
 
 	// 最后位置
 	ms.SetPosition(p + size);
@@ -118,17 +120,17 @@ bool Device::Valid() const
 #if DEBUG
 String& Device::ToStr(String& str) const
 {
-	str = str + "Addr=0x" + Address;
-	str = str + " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
+	str += "Addr=0x" + Address;
+	str += " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
 	//str = str + " ID=" + HardID;
-	str = str + " Hard=";
-	str.Append(HardID[0]).Append(HardID[1]);
-	str = str + " Mac=";
-	str.Append(ByteArray(Mac, 6));
+	str += " Hard=";
+	str.Concat(HardID[0], 16);
+	str.Concat(HardID[1], 16);
+	str = str + " Mac=" + ByteArray(Mac, 6);
 
 	DateTime dt;
 	dt.Parse(LastTime);
-	str = str + " Last=" + dt.ToString();
+	str = str + " Last=" + dt;
 
 	// 主数据区
 	byte len	= Store[0];
@@ -141,8 +143,9 @@ String& Device::ToStr(String& str) const
 	len	= strlen(Name);
 	if(len)
 	{
-		str = str + "\t";
-		String(Name, len).ToStr(str);
+		str += "\t";
+		//String(Name, len).ToStr(str);
+		str	+= Name;
 	}
 	return str;
 }

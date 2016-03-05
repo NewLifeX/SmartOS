@@ -68,6 +68,7 @@ public:
 
 	ByteArray ReadArray();
 	String ReadString();
+	bool WriteString(const String& str);
 
 	byte	ReadByte();
 	ushort	ReadUInt16();

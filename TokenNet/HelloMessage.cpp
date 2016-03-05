@@ -89,8 +89,8 @@ bool HelloMessage::Read(Stream& ms)
 void HelloMessage::Write(Stream& ms) const
 {
 	ms.Write(Version);
-	ms.WriteArray(Type);
-	ms.WriteArray(Name);
+	//ms.WriteArray(Type);
+	//ms.WriteArray(Name);
 	ms.Write(LocalTime);
 	ms.Write(EndPoint.ToArray());
 
@@ -110,37 +110,38 @@ void HelloMessage::Write(Stream& ms) const
 String& HelloMessage::ToStr(String& str) const
 {
 	str += "握手";
-	if(Reply) str += "#";
+	if(Reply) str += '#';
 
 	if(Reply && Error)
 	{
-		if(Protocol == 1)
-			str = str + " TCP ";
-		else if(Protocol == 2)
-			str = str + " UDP ";
+		str	+= ' ';
 
-		str += Server;
-		str = str + " " + Port;
+		if(Protocol == ProtocolType::Tcp)
+			str += "TCP ";
+		else if(Protocol == ProtocolType::Udp)
+			str += "UDP ";
+
+		str += Server + " " + Port;
 
 		return str;
 	}
 
-	str.Append(" Ver=").Append(Version, 16, 4);
-	str = str + " " + Type + " " + Name + " ";
+	str.Format(" Ver=%04X", Version);
+	str += " " + Type + " " + Name + " ";
 
 	DateTime dt;
 	dt.ParseUs(LocalTime);
-	str += dt.ToString();
+	str += dt;
 
 	str = str + " " + EndPoint;
 
 	str = str + " Ciphers[" + Ciphers.Length() + "]=";
 	for(int i=0; i<Ciphers.Length(); i++)
 	{
-		str.Append(Ciphers[i]).Append(' ');
+		str += Ciphers[i] + ' ';
 	}
 
-	if(Reply) str += " Key=" + Key;
+	if(Reply) str = str + " Key=" + Key;
 
 	return str;
 }

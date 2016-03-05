@@ -59,8 +59,8 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		// 构造产品名称，把ID第一个字节附到最后
 		String name;
 		name += "SmartOS_";	// 产生拷贝效果
-		name.Append(Sys.ID[0]);
-		name.Append(Sys.ID[1]);
+		name.Concat(Sys.ID[0], 16);
+		name.Concat(Sys.ID[1], 16);
 
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
 		String vendor = "www.NewLifeX.com";
@@ -344,7 +344,7 @@ void Dhcp::Process(Array& bs, const IPEndPoint& ep)
 		if(opt)
 		{
 			net_printf(" ");
-			String(&opt->Data, opt->Length).Show(true);
+			String((char*)&opt->Data, opt->Length).Show(true);
 		}
 		net_printf("\r\n");
 	}

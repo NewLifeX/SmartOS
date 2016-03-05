@@ -272,9 +272,20 @@ bool Stream::WriteArray(const Array& bs)
 String Stream::ReadString()
 {
 	String str;
-	ReadArray(str);
+
+	//ReadArray(str);
+
+	uint len = ReadEncodeInt();
+	if(!len) return 0;
+
+	str	= (char*)ReadBytes(len);
 
 	return str;
+}
+
+bool Stream::WriteString(const String& str)
+{
+	return false;
 }
 
 byte	Stream::ReadByte()
