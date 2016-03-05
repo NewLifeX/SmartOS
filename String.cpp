@@ -457,7 +457,7 @@ bool String::operator>=(const String& rhs) const
 	return CompareTo(rhs) >= 0;
 }
 
-void String::SetAt(int loc, char c) 
+void String::SetAt(int loc, char c)
 {
 	if (loc < len) buffer[loc] = c;
 }
@@ -489,6 +489,36 @@ void String::GetBytes(byte* buf, int bufsize, int index) const
 	if (n > len - index) n = len - index;
 	strncpy((char*)buf, buffer + index, n);
 	buf[n] = 0;
+}
+
+ByteArray String::GetBytes() const
+{
+	ByteArray bs;
+	bs.SetLength(len);
+
+	GetBytes(bs.GetBuffer(), bs.Length());
+
+	return bs;
+}
+
+ByteArray String::ToHex() const
+{
+	ByteArray bs;
+	bs.SetLength(len / 2);
+
+	char cs[3];
+	cs[2]	= 0;
+	byte* b	= bs.GetBuffer();
+	char* p	= buffer;
+	for(int i=0; i<len; i+=2)
+	{
+		cs[0]	= *p++;
+		cs[1]	= *p++;
+
+		*b++	= (byte)strtol(cs, nullptr, 16);
+	}
+
+	return bs;
 }
 
 // 输出对象的字符串表示方式
@@ -694,12 +724,12 @@ int String::LastIndexOf(const char ch, int startIndex) const
 
 char *strrstr(const char* s, const char* str)
 {
-    char *p; 
+    char *p;
     int len = strlen(s);
     for (p = (char*)s + len - 1; p >= s; p--) {
-        if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0)) 
+        if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0))
             return p;
-    }   
+    }
     return NULL;
 }
 
@@ -798,7 +828,7 @@ String& String::TrimStart()
 	return str;*/
 
 	trim(buffer, len, true, false);
-	
+
 	return *this;
 }
 
@@ -828,7 +858,7 @@ String& String::TrimEnd()
 	buffer[len] = 0;*/
 
 	trim(buffer, len, false, true);
-	
+
 	return *this;
 }
 
@@ -846,7 +876,7 @@ String& String::Trim()
 	buffer[len] = 0;*/
 
 	trim(buffer, len, true, true);
-	
+
 	return *this;
 }
 

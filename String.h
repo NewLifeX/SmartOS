@@ -104,6 +104,8 @@ public:
 	char operator [] (int index) const;
 	char& operator [] (int index);
 	void GetBytes(byte* buf, int bufsize, int index=0) const;
+	ByteArray GetBytes() const;
+	ByteArray ToHex() const;
 	void ToArray(char* buf, int bufsize, int index=0) const { GetBytes((byte*)buf, bufsize, index); }
 
 	int ToInt() const;
