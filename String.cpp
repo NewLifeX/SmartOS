@@ -18,6 +18,10 @@ char* dtostrf(double val, char width, byte prec, char* sout);
 String::String(const char* cstr)
 {
 	init();
+
+	/*
+	其实这里可以不用拷贝，内部直接使用这个指针，等第一次修改的时候再拷贝，不过那样过于复杂了
+	*/
 	if (cstr) copy(cstr, strlen(cstr));
 }
 
@@ -98,12 +102,13 @@ String::String(double value, byte decimalPlaces)
 	dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
+// 外部传入缓冲区供内部使用，注意长度减去零结束符
 String::String(char* str, int length)
 {
 	init();
 
 	_Arr		= str;
-	_Capacity	= length;
+	_Capacity	= length - 1;
 	_Arr[0]		= 0;
 }
 
@@ -135,7 +140,7 @@ bool String::CheckCapacity(uint size)
 	// 外部需要放下size个字符，那么需要size+1个字节空间
 	int sz	= _Capacity;
 	while(sz <= size) sz <<= 1;
-	
+
 	auto p	= new char[sz];
 	if(!p) return false;
 

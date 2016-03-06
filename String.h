@@ -15,6 +15,7 @@ public:
 	String(const String& str);
 	String(String&& rval);
 	String(StringHelper&& rval);
+	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
 	explicit String(char c);
 	explicit String(byte value, byte radix = 10);
