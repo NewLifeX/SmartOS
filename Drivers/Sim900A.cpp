@@ -52,8 +52,8 @@ void Sim900A::OnClose()
 	Port->Close();
 }
 
-bool Sim900A::OnWrite(const Array& bs) { return Send(bs); }
-uint Sim900A::OnRead(Array& bs) { return 0; }
+bool Sim900A::OnWrite(const Buffer& bs) { return Send(bs); }
+uint Sim900A::OnRead(Buffer& bs) { return 0; }
 
 String Sim900A::Send(const char* str, uint msTimeout)
 {
@@ -166,7 +166,7 @@ void Sim900A::Init(uint msTimeout)
 //以"AT"开头，以回车（<CR>）结尾			[AT+...\r]
 //响应:<回车><换行><响应内容><回车><换行>	[\r\n....\r\n]
 //使用最笨的任务方式进行进行处理
-bool Sim900A::Send(const Array& bs)
+bool Sim900A::Send(const Buffer& bs)
 {
 	if(!Inited)
 	{

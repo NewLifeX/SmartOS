@@ -8,7 +8,7 @@
 	#define st_printf(format, ...)
 #endif
 
-bool BlockStorage::Read(uint address, Array& bs) const
+bool BlockStorage::Read(uint address, Buffer& bs) const
 {
 	uint len = bs.Length();
     if (!len) return true;
@@ -24,11 +24,11 @@ bool BlockStorage::Read(uint address, Array& bs) const
     return true;
 }
 
-bool BlockStorage::Write(uint address, const Array& bs) const
+bool BlockStorage::Write(uint address, const Buffer& bs) const
 {
     assert_param2((address & 0x01) == 0x00, "Write起始地址必须是2字节对齐");
 
-	byte* buf	= bs.GetBuffer();
+	auto buf	= bs.GetBuffer();
 	uint len	= bs.Length();
     if (!len) return true;
 
@@ -40,7 +40,7 @@ bool BlockStorage::Write(uint address, const Array& bs) const
     if(len < len2) len2 = len;
     //st_printf("    Data: ");
     //!!! 必须另起一个指针，否则移动原来的指针可能造成重大失误
-    byte* p = buf;
+    auto p = buf;
     for(int i=0; i<len2; i++) st_printf(" %02X", *p++);
     st_printf("\r\n");
 #endif
@@ -76,7 +76,7 @@ bool BlockStorage::Write(uint address, const Array& bs) const
 
     // 从地址找到所在扇区
     int  offset	= address % Block;
-	byte* pData = buf;		// 指向要下一个写入的数据
+	auto pData	= buf;		// 指向要下一个写入的数据
 	int remain	= len;		// 剩下数据数量
 	int addr	= address;	// 下一个要写入数据的位置
 
@@ -86,7 +86,7 @@ bool BlockStorage::Write(uint address, const Array& bs) const
 #else
 	byte bb[0x800];
 #endif
-	Array ms(bb, ArrayLength(bb));
+	Buffer ms(bb, ArrayLength(bb));
 	ms.SetLength(Block);
 
 	// 写入第一个半块
@@ -212,14 +212,14 @@ bool BlockStorage::IsErased(uint address, uint len) const
     return true;
 }
 
-bool CharStorage::Read(uint address, Array& bs) const
+bool CharStorage::Read(uint address, Buffer& bs) const
 {
 	bs.Copy((byte*)address);
 
 	return true;
 }
 
-bool CharStorage::Write(uint address, const Array& bs) const
+bool CharStorage::Write(uint address, const Buffer& bs) const
 {
 	bs.CopyTo((byte*)address);
 

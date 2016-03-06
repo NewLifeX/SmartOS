@@ -1,7 +1,7 @@
 ﻿#include "BufferPort.h"
 #include "SerialPort.h"
 
-BufferPort::BufferPort() : Buffer((void*)NULL, 0)
+BufferPort::BufferPort() : Buf()
 {
 	Name	= "BufferPort";
 	Port	= NULL;
@@ -36,14 +36,14 @@ bool BufferPort::Open()
 		isNew	= true;
 	}
 
-	if(Buffer.Capacity() == 0)
+	if(Buf.Capacity() == 0)
 	{
 		debug_printf("未指定缓冲区大小，默认分配 256 字节！\r\n");
 
-		Buffer.SetLength(256);
+		Buf.SetLength(256);
 		//return false;
 	}
-	Buffer.SetLength(0);
+	Buf.SetLength(0);
 
 	if(isNew && Com != COM_NONE)
 	{
@@ -73,7 +73,7 @@ void BufferPort::Close()
 	Opened	= false;
 }
 
-uint BufferPort::OnReceive(ITransport* transport, Array& bs, void* param, void* param2)
+uint BufferPort::OnReceive(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
 	auto bp	= (BufferPort*)param;
 	if(bp) bp->OnReceive(bs, param2);
@@ -81,11 +81,11 @@ uint BufferPort::OnReceive(ITransport* transport, Array& bs, void* param, void* 
 	return 0;
 }
 
-void BufferPort::OnReceive(const Array& bs, void* param)
+void BufferPort::OnReceive(const Buffer& bs, void* param)
 {
-	if(Buffer.Capacity() > 0)
+	if(Buf.Capacity() > 0)
 	{
-		Buffer.SetLength(0);
-		Buffer.Copy(bs);
+		Buf.SetLength(0);
+		Buf.Copy(bs);
 	}
 }

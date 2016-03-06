@@ -85,7 +85,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	}*/
 
 	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
-	Array bs(dhcp, sizeof(DHCP_HEADER) + len);
+	Buffer bs(dhcp, sizeof(DHCP_HEADER) + len);
 	Socket->Send(bs);
 
 	//if(isAny) Host->IP	= bak;
@@ -255,14 +255,14 @@ void Dhcp::PareOption(Stream& ms)
 	}
 }
 
-uint Dhcp::OnReceive(ITransport* port, Array& bs, void* param, void* param2)
+uint Dhcp::OnReceive(ITransport* port, Buffer& bs, void* param, void* param2)
 {
 	((Dhcp*)param)->Process(bs, *(const IPEndPoint*)param2);
 
 	return 0;
 }
 
-void Dhcp::Process(Array& bs, const IPEndPoint& ep)
+void Dhcp::Process(Buffer& bs, const IPEndPoint& ep)
 {
 	auto dhcp	= (DHCP_HEADER*)bs.GetBuffer();
 	if(!dhcp->Valid()) return;

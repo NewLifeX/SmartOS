@@ -226,11 +226,11 @@ void md5_finish(md5_context *ctx, byte digest[16] )
     PUT_UINT32( ctx->state[3], digest, 12 );
 }
 
-ByteArray MD5::Hash(const Array& data)
+ByteArray MD5::Hash(const Buffer& data)
 {
 	md5_context context;
 	md5_starts(&context);
-	md5_update(&context, data.GetBuffer(), data.Length());
+	md5_update(&context, (byte*)data.GetBuffer(), data.Length());
 
 	ByteArray hash;
 	hash.SetLength(16);

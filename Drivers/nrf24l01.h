@@ -32,7 +32,7 @@ public:
 	bool GetPower();	// 获取当前电源状态
 	bool SetPowerMode(bool on);	// 设置当前电源状态。返回是否成功
 	bool GetMode();		// 获取当前模式是否接收模式
-    bool SetMode(bool isReceive, const Array& addr);	// 切换收发模式，不包含参数设定
+    bool SetMode(bool isReceive, const Buffer& addr);	// 切换收发模式，不包含参数设定
 	void SetAddress();	// 设置地址
 
 	// 电源等级变更（如进入低功耗模式）时调用
@@ -51,22 +51,22 @@ private:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const Array& bs);
-	virtual uint OnRead(Array& bs);
+    virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
 
 	// 引发数据到达事件
-	//virtual uint OnReceive(Array& bs, void* param);
-	virtual bool OnWriteEx(const Array& bs, void* opt);
+	//virtual uint OnReceive(Buffer& bs, void* param);
+	virtual bool OnWriteEx(const Buffer& bs, void* opt);
 	
-	bool SendTo(const Array& bs, const Array& addr);
+	bool SendTo(const Buffer& bs, const Buffer& addr);
 
     Spi*		_spi;
     OutputPort	_CE;
     InputPort	Irq;
 	OutputPort	_Power;	// 设置控制2401电源的引脚  直接进行对2401的通断电操作，以免死机对setPower无效
 
-    byte WriteBuf(byte reg, const Array& bs);
-    byte ReadBuf(byte reg, Array& bs);
+    byte WriteBuf(byte reg, const Buffer& bs);
+    byte ReadBuf(byte reg, Buffer& bs);
     byte ReadReg(byte reg);
     byte WriteReg(byte reg, byte dat);
 

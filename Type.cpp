@@ -63,13 +63,63 @@ const String Type::Name() const
 	return String(name);
 }
 
+/******************************** Buffer ********************************/
+
+// 复制数组。深度克隆，拷贝数据，自动扩容
+int Buffer::Copy(const void* data, int len, int index)
+{
+	assert_param(len >= 0);
+	//assert_param2(_canWrite, "禁止CopyData修改");
+	assert_param2(data, "Buffer::Copy data Error");
+
+	//if(len < 0) len = MemLen(data);
+
+	// 检查长度是否足够
+	int len2 = index + len;
+	//CheckCapacity(len2, index);
+
+	// 拷贝数据
+	memcpy((byte*)_Arr + index, data, len);
+
+	// 扩大长度
+	if(len2 > _Length) _Length = len2;
+
+	return len;
+}
+
+// 复制数组。深度克隆，拷贝数据
+int Buffer::Copy(const Buffer& arr, int index)
+{
+	//assert_param2(_canWrite, "禁止CopyArray修改数据");
+
+	if(&arr == this) return 0;
+	if(arr.Length() == 0) return 0;
+
+	return Copy(arr._Arr, arr.Length(), index);
+}
+
+// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
+int Buffer::CopyTo(void* data, int len, int index) const
+{
+	assert_param2(data, "Buffer::CopyTo data Error");
+
+	// 数据长度可能不足
+	if(_Length - index < len || len <= 0) len = _Length - index;
+	if(len <= 0) return 0;
+
+	// 拷贝数据
+	memcpy(data, (byte*)_Arr + index, len);
+
+	return len;
+}
+
 /******************************** TArray ********************************/
 // 数组长度
-int Array::Length() const { return _Length; }
+//int Array::Length() const { return _Length; }
 // 数组最大容量。初始化时决定，后面不允许改变
-int Array::Capacity() const { return _Capacity; }
+//int Array::Capacity() const { return _Capacity; }
 // 缓冲区。按字节指针返回
-byte* Array::GetBuffer() const { return (byte*)_Arr; }
+//byte* Array::GetBuffer() const { return (byte*)_Arr; }
 
 int MemLen(const void* data)
 {
@@ -211,7 +261,7 @@ bool Array::Set(const void* data, int len)
 	return true;
 }
 
-// 复制数组。深度克隆，拷贝数据，自动扩容
+/*// 复制数组。深度克隆，拷贝数据，自动扩容
 int Array::Copy(const void* data, int len, int index)
 {
 	assert_param2(_canWrite, "禁止CopyData修改");
@@ -256,7 +306,7 @@ int Array::CopyTo(void* data, int len, int index) const
 	memcpy(data, (byte*)_Arr + _Size * index, _Size * len);
 
 	return len;
-}
+}*/
 
 // 清空已存储数据。
 void Array::Clear()

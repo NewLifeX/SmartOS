@@ -272,7 +272,7 @@ NRF24L01::~NRF24L01()
 	_spi = NULL;
 }
 
-byte NRF24L01::WriteBuf(byte reg, const Array& bs)
+byte NRF24L01::WriteBuf(byte reg, const Buffer& bs)
 {
 	SpiScope sc(_spi);
 
@@ -283,7 +283,7 @@ byte NRF24L01::WriteBuf(byte reg, const Array& bs)
   	return status;
 }
 
-byte NRF24L01::ReadBuf(byte reg, Array& bs)
+byte NRF24L01::ReadBuf(byte reg, Buffer& bs)
 {
 	SpiScope sc(_spi);
 
@@ -321,7 +321,7 @@ bool NRF24L01::Check(void)
 	if(!Open()) return false;
 
 	byte buf[5]	= {0xA5,0xA5,0xA5,0xA5,0xA5};
-	Array src(buf, 5);
+	Buffer src(buf, 5);
 	ByteArray bak(5);
 	ByteArray dst(5);
 
@@ -531,7 +531,7 @@ bool NRF24L01::GetMode()
 
 // 设置收发模式。
 // 因为CE拉高需要延迟的原因，整个函数大概耗时185us，如果不延迟，大概55us
-bool NRF24L01::SetMode(bool isReceive, const Array& addr)
+bool NRF24L01::SetMode(bool isReceive, const Buffer& addr)
 {
 	TS("R24::SetMode");
 
@@ -628,8 +628,8 @@ void NRF24L01::SetAddress()
 	WriteReg(SETUP_AW,	5 - 2);
 
 	// 发送地址为远程地址，0通道为本地地址，1通道为广播地址0xFF
-	WriteBuf(TX_ADDR, Array(Remote, 5));
-	WriteBuf(RX_ADDR_P0, Array(Local, 5));
+	WriteBuf(TX_ADDR, Buffer(Remote, 5));
+	WriteBuf(RX_ADDR_P0, Buffer(Local, 5));
 
 	// 主节点再监听一个全0的地址
 	ByteArray bs((byte)0xFF, 5);
@@ -759,10 +759,10 @@ void NRF24L01::OnClose()
 }
 
 // 从NRF的接收缓冲区中读出数据
-uint NRF24L01::OnRead(Array& bs)
+uint NRF24L01::OnRead(Buffer& bs)
 {
 	// 进入接收模式
-	if(!SetMode(true, Array(Local, 5))) return false;
+	if(!SetMode(true, Buffer(Local, 5))) return false;
 
 	TS("NRF24L01::OnRead");
 
@@ -818,7 +818,7 @@ uint NRF24L01::OnRead(Array& bs)
 }
 
 // 向NRF的发送缓冲区中写入数据
-bool NRF24L01::SendTo(const Array& bs, const Array& addr)
+bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 {
 	TS("R24::SendTo");
 
@@ -842,8 +842,9 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	uint len = bs.Length();
 	byte pw	= 32;
 	if(pw > 0) len = pw;
-	Array bs2(bs.GetBuffer(), len);
-	WriteBuf(cmd, bs2);
+	//Buffer bs2(bs.GetBuffer(), len);
+	//WriteBuf(cmd, bs2);
+	WriteBuf(cmd, bs.Sub(len));
 
 	// 进入TX，维持一段时间
 	//_CE = false;
@@ -897,33 +898,33 @@ bool NRF24L01::SendTo(const Array& bs, const Array& addr)
 	//_CE = true;
 	WriteReg(FLUSH_TX, NOP);
 
-	SetMode(true, Array(Local, 5));	// 发送完成以后进入接收模式
+	SetMode(true, Buffer(Local, 5));	// 发送完成以后进入接收模式
 
 	return rs;
 }
 
 /*// 引发数据到达事件
-uint NRF24L01::OnReceive(Array& bs, void* param)
+uint NRF24L01::OnReceive(Buffer& bs, void* param)
 {
 	if(!Master) return ITransport::OnReceive(bs, param);
 
 	// 取出地址
 	//byte* addr	= bs.GetBuffer();
-	//Array bs2(addr + 5, bs.Length() - 5);
+	//Buffer bs2(addr + 5, bs.Length() - 5);
 	return ITransport::OnReceive(bs, param);
 }*/
 
-bool NRF24L01::OnWrite(const Array& bs)
+bool NRF24L01::OnWrite(const Buffer& bs)
 {
-	return SendTo(bs, Array(Remote, 5));
+	return SendTo(bs, Buffer(Remote, 5));
 }
 
-bool NRF24L01::OnWriteEx(const Array& bs, void* opt)
+bool NRF24L01::OnWriteEx(const Buffer& bs, void* opt)
 {
 	if(!Master || !opt) return OnWrite(bs);
 
 	// 加入地址
-	return SendTo(bs, Array(opt, 5));
+	return SendTo(bs, Buffer(opt, 5));
 }
 
 void NRF24L01::AddError()

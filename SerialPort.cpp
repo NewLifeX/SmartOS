@@ -218,7 +218,7 @@ uint SerialPort::SendData(byte data, uint times)
 }
 
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
-bool SerialPort::OnWrite(const Array& bs)
+bool SerialPort::OnWrite(const Buffer& bs)
 {
 	if(!bs.Length()) return true;
 /*#if defined(STM32F0) || defined(GD32F150)
@@ -281,7 +281,7 @@ void SerialPort::OnTxHandler()
 #pragma arm section code
 
 // 从某个端口读取数据
-uint SerialPort::OnRead(Array& bs)
+uint SerialPort::OnRead(Buffer& bs)
 {
 	uint count = 0;
 	uint len = Rx.Length();
@@ -353,7 +353,7 @@ void SerialPort::ReceiveTask(void* param)
 
 	// 从栈分配，节省内存
 	byte buf[0x100];
-	Array bs(buf, ArrayLength(buf));
+	Buffer bs(buf, ArrayLength(buf));
 	int mx	= sp->MaxSize;
 	if(mx > 0 && mx > bs.Length()) bs.SetLength(mx);
 
@@ -478,7 +478,7 @@ extern "C"
 		if(_printf_sp)
 		{
 			byte b = ch;
-			_printf_sp->Write(Array(&b, 1));
+			_printf_sp->Write(Buffer(&b, 1));
 		}
 
 		isInFPutc = false;

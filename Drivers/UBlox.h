@@ -22,7 +22,7 @@ public:
 
 protected:
 	virtual bool OnOpen(bool isNew);
-	virtual void OnReceive(const Array& bs, void* param);
+	virtual void OnReceive(const Buffer& bs, void* param);
 };
 
 #endif

@@ -57,7 +57,7 @@ byte Queue::Pop()
 
 #pragma arm section code
 
-uint Queue::Write(const Array& bs)
+uint Queue::Write(const Buffer& bs)
 {
 	/*
 	1，数据写入队列末尾
@@ -100,7 +100,7 @@ uint Queue::Write(const Array& bs)
 	return rs;
 }
 
-uint Queue::Read(Array& bs)
+uint Queue::Read(Buffer& bs)
 {
 	if(_size == 0) return 0;
 

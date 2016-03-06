@@ -27,17 +27,17 @@ struct ConfigBlock
 
     const ConfigBlock*	Next() const;
     const void*			Data() const;
-	uint CopyTo(Array& bs) const;
+	uint CopyTo(Buffer& bs) const;
 
-    bool Init(const char* name, const Array& bs);
-    bool Write(const Storage& storage, uint addr, const Array& bs);
+    bool Init(const char* name, const Buffer& bs);
+    bool Write(const Storage& storage, uint addr, const Buffer& bs);
 	bool Remove(const Storage& storage, uint addr);
 };
 
 ushort ConfigBlock::GetHash() const
 {
     // 计算头部 CRC。从数据CRC开始，包括大小和名称
-    return Crc::Hash16(Array(&Size, sizeof(*this) - offsetof(ConfigBlock, Size)));
+    return Crc::Hash16(Buffer((byte*)&Size, sizeof(*this) - offsetof(ConfigBlock, Size)));
 }
 
 bool ConfigBlock::Valid() const
@@ -62,7 +62,7 @@ const void* ConfigBlock::Data() const
     return (const void*)&this[1];
 }
 
-uint ConfigBlock::CopyTo(Array& bs) const
+uint ConfigBlock::CopyTo(Buffer& bs) const
 {
     if(Size == 0 || Size > bs.Capacity()) return 0;
 
@@ -73,7 +73,7 @@ uint ConfigBlock::CopyTo(Array& bs) const
 }
 
 // 构造一个新的配置块
-bool ConfigBlock::Init(const char* name, const Array& bs)
+bool ConfigBlock::Init(const char* name, const Buffer& bs)
 {
     if(name == NULL) return false;
     //assert_param2(name, "配置块名称不能为空");
@@ -100,7 +100,7 @@ bool ConfigBlock::Init(const char* name, const Array& bs)
 }
 
 // 更新块
-bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
+bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
 {
 	TS("ConfigBlock::Write");
 
@@ -115,12 +115,12 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Array& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
-	if(!storage.Write(addr, Array(&Hash, len))) return false;
+	if(!storage.Write(addr, Buffer(&Hash, len))) return false;
 	if(bs.Length() > 0)
 	{
 		uint len2 = bs.Length();
 		if(len2 > Size) len2 = Size;
-		if(!storage.Write(addr + len, Array(bs.GetBuffer(), len2))) return false;
+		if(!storage.Write(addr + len, bs.Sub(len2))) return false;
 	}
 
     return true;
@@ -135,7 +135,7 @@ bool ConfigBlock::Remove(const Storage& storage, uint addr)
 
 	// 写入头部
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
-	return storage.Write(addr, Array(&Hash, len));
+	return storage.Write(addr, Buffer(&Hash, len));
 }
 
 /*================================ 配置 ================================*/
@@ -157,7 +157,7 @@ bool CheckSignature(const Storage& st, uint& addr, bool create)
 	{
 		if(!create) return false;
 
-		st.Write(addr, Array(&c_Version, sizeof(c_Version)));
+		st.Write(addr, Buffer((byte*)&c_Version, sizeof(c_Version)));
 	}
 
 	addr += sizeof(c_Version);
@@ -255,7 +255,7 @@ bool Config::Remove(const char* name) const
 }
 
 // 根据名称更新块
-const void* Config::Set(const char* name, const Array& bs) const
+const void* Config::Set(const char* name, const Buffer& bs) const
 {
 	TS("Config::Set");
 
@@ -276,7 +276,7 @@ const void* Config::Set(const char* name, const Array& bs) const
 }
 
 // 获取配置数据
-bool Config::Get(const char* name, Array& bs) const
+bool Config::Get(const char* name, Buffer& bs) const
 {
 	TS("Config::Get");
 
@@ -303,7 +303,7 @@ const void* Config::Get(const char* name) const
 }
 
 /*// 获取配置数据，如果不存在则覆盖
-bool Config::GetOrSet(const char* name, Array& bs) const
+bool Config::GetOrSet(const char* name, Buffer& bs) const
 {
 	TS("Config::GetOrSet");
 
@@ -358,14 +358,14 @@ uint ConfigBase::Size() const
 	return (uint)_End - (uint)_Start;
 }
 
-Array ConfigBase::ToArray()
+Buffer ConfigBase::ToArray()
 {
-	return Array(_Start, Size());
+	return Buffer(_Start, Size());
 }
 
-const Array ConfigBase::ToArray() const
+const Buffer ConfigBase::ToArray() const
 {
-	return Array(_Start, Size());
+	return Buffer(_Start, Size());
 }
 
 void ConfigBase::Init()

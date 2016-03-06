@@ -6,10 +6,10 @@ static const ushort c_CRC16Table[] =
 0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400,
 };
 
-ushort Crc::Hash16(const Array& arr, ushort crc)
+ushort Crc::Hash16(const Buffer& arr, ushort crc)
 {
-    const byte* buf	= arr.GetBuffer();
-	int len			= arr.Length();
+    auto buf	= arr.GetBuffer();
+	int len		= arr.Length();
 
 	assert_param2(buf, "Crc16校验目标地址不能为空");
     if (!buf || !len) return 0;

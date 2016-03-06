@@ -56,7 +56,7 @@ public:
 	void Write(Stream& ms) const;
 	ByteArray ToArray() const;
 	ByteArray ToArray(Stream& ms);
-	void Set(ushort kind, const Array& bs);
+	void Set(ushort kind, const Buffer& bs);
 	void Set(ushort kind, byte dat);
 	void Set(ushort kind, ushort dat);
 	void Set(ushort kind, uint dat);
@@ -142,7 +142,7 @@ void ShunCom::ChangePower(int level)
 }
 
 // 引发数据到达事件
-uint ShunCom::OnReceive(Array& bs, void* param)
+uint ShunCom::OnReceive(Buffer& bs, void* param)
 {
 	if(Led) Led->Write(1000);
 
@@ -154,14 +154,14 @@ uint ShunCom::OnReceive(Array& bs, void* param)
 
 	// 取出地址
 	byte* addr	= bs.GetBuffer();
-	Array bs2(addr + AddrLength, bs.Length() - AddrLength);
+	Buffer bs2(addr + AddrLength, bs.Length() - AddrLength);
 	//debug_printf("zigbee接收\r\n");
 	//bs2.Show(true);
 
 	return ITransport::OnReceive(bs2, addr);
 }
 
-bool ShunCom::OnWriteEx(const Array& bs, void* opt)
+bool ShunCom::OnWriteEx(const Buffer& bs, void* opt)
 {
 	//debug_printf("zigbee发送\r\n");
 	//bs.Show(true);
@@ -419,7 +419,7 @@ ByteArray ShunComMessage::ToArray(Stream& ms)
     ByteArray bs(ms.GetBuffer(), ms.Position());
 	return bs;
 }
-void ShunComMessage::Set(ushort kind, const Array& bs)
+void ShunComMessage::Set(ushort kind, const Buffer& bs)
 {
 	Kind	= kind;
 	bs.CopyTo(Data);

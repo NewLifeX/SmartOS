@@ -704,7 +704,7 @@ byte Enc28j60::GetRevision()
     return ReadReg(EREVID);
 }
 
-bool Enc28j60::OnWrite(const Array& bs)
+bool Enc28j60::OnWrite(const Buffer& bs)
 {
 	uint len = bs.Length();
 	assert_param2(len <= MAX_FRAMELEN, "以太网数据帧超大");
@@ -927,7 +927,7 @@ bool Enc28j60::OnWrite(const Array& bs)
 
 // 从网络接收缓冲区获取一个数据包，该包开头是以太网头
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
-uint Enc28j60::OnRead(Array& bs)
+uint Enc28j60::OnRead(Buffer& bs)
 {
     uint rxstat;
     uint len;

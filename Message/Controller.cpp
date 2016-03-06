@@ -51,7 +51,7 @@ void Controller::Close()
 	Opened = false;
 }
 
-uint Controller::Dispatch(ITransport* port, Array& bs, void* param, void* param2)
+uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
 {
 	TS("Controller::Dispatch");
 
@@ -162,6 +162,6 @@ bool Controller::SendInternal(const Message& msg)
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 
-	Array bs(ms.GetBuffer(), ms.Position());
+	Buffer bs(ms.GetBuffer(), ms.Position());
 	return Port->Write(bs, msg.State);
 }

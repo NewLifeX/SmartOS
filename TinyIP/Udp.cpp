@@ -74,7 +74,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	assert_param2(len <= ms.Remain(), "UDP数据包不完整");
 
 	// 触发ITransport接口事件
-	Array bs(data, len);
+	Buffer bs(data, len);
 	uint len2 = OnReceive(bs, &CurRemote);
 	// 如果有返回，说明有数据要回复出去
 	//if(len2) Write(data, len2);
@@ -130,7 +130,7 @@ void UdpSocket::SendPacket(UDP_HEADER& udp, uint len, IPAddress& ip, ushort port
 }
 
 // 发送UDP数据到目标地址
-bool UdpSocket::Send(const Array& bs)
+bool UdpSocket::Send(const Buffer& bs)
 {
 	//if(ip.IsAny()) ip = Remote.Address;
 	//if(!port) port = Remote.Port;
@@ -152,17 +152,17 @@ bool UdpSocket::Send(const Array& bs)
 	return true;
 }
 
-bool UdpSocket::OnWrite(const Array& bs)
+bool UdpSocket::OnWrite(const Buffer& bs)
 {
 	return Send(bs);
 }
 
-uint UdpSocket::Receive(Array& bs)
+uint UdpSocket::Receive(Buffer& bs)
 {
 	return 0;
 }
 
-uint UdpSocket::OnRead(Array& bs)
+uint UdpSocket::OnRead(Buffer& bs)
 {
 	// 暂时不支持
 	return 0;

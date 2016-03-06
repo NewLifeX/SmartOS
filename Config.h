@@ -25,11 +25,11 @@ public:
     // 删除。仅清空名称，并不删除数据区
 	bool Remove(const char* name) const;
     // 设置配置数据
-    const void* Set(const char* name, const Array& bs) const;
+    const void* Set(const char* name, const Buffer& bs) const;
 	// 获取配置数据
-    bool Get(const char* name, Array& bs) const;
+    bool Get(const char* name, Buffer& bs) const;
 	// 获取配置数据，如果不存在则覆盖
-    //bool GetOrSet(const char* name, Array& bs) const;
+    //bool GetOrSet(const char* name, Buffer& bs) const;
 	// 获取配置数据
     const void* Get(const char* name) const;
 
@@ -70,8 +70,8 @@ protected:
 
 	uint Size() const;
 
-	Array ToArray();
-	const Array ToArray() const;
+	Buffer ToArray();
+	const Buffer ToArray() const;
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置

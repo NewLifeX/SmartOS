@@ -6,7 +6,7 @@
 class ITransport;
 
 // 传输口数据到达委托。传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
-typedef uint (*TransportHandler)(ITransport* port, Array& bs, void* param, void* param2);
+typedef uint (*TransportHandler)(ITransport* port, Buffer& bs, void* param, void* param2);
 
 // 帧数据传输接口
 // 实现者确保数据以包的形式传输，屏蔽数据的粘包和拆包
@@ -34,10 +34,10 @@ public:
 	void Close();
 
 	// 发送数据
-	bool Write(const Array& bs);
-	bool Write(const Array& bs, void* opt);
+	bool Write(const Buffer& bs);
+	bool Write(const Buffer& bs, void* opt);
 	// 接收数据
-	uint Read(Array& bs);
+	uint Read(Buffer& bs);
 
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = NULL);
@@ -51,15 +51,15 @@ public:
 protected:
 	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
-	virtual bool OnWrite(const Array& bs) = 0;
-	virtual bool OnWriteEx(const Array& bs, void* opt);
-	virtual uint OnRead(Array& bs) = 0;
+	virtual bool OnWrite(const Buffer& bs) = 0;
+	virtual bool OnWriteEx(const Buffer& bs, void* opt);
+	virtual uint OnRead(Buffer& bs) = 0;
 
 	// 是否有回调函数
 	bool HasHandler() { return _handler != NULL; }
 
 	// 引发数据到达事件
-	virtual uint OnReceive(Array& bs, void* param);
+	virtual uint OnReceive(Buffer& bs, void* param);
 };
 
 // 数据口包装
@@ -81,10 +81,10 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const Array& bs);
-	virtual uint OnRead(Array& bs);
+    virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
 
-	static uint OnPortReceive(ITransport* sender, Array& bs, void* param, void* param2);
+	static uint OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2);
 };
 
 #endif

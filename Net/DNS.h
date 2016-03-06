@@ -19,11 +19,11 @@ public:
 	static IPAddress Query(ISocketHost& host, const String& domain, int times = 5, int msTimeout = 1000);
 
 private:
-	static uint OnReceive(ITransport* port, Array& bs, void* param, void* param2);
-	void Process(Array& bs, const IPEndPoint& server);
+	static uint OnReceive(ITransport* port, Buffer& bs, void* param, void* param2);
+	void Process(Buffer& bs, const IPEndPoint& server);
 
 	ISocket*	Socket;
-	Array*	_Buffer;
+	Buffer*	_Buffer;
 };
 
 #endif

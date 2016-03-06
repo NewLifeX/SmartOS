@@ -9,7 +9,7 @@
 
 IPAddress::IPAddress(const byte* ips)
 {
-	Array(ips, 4).CopyTo(&Value, 4);
+	Buffer((byte*)ips, 4).CopyTo(&Value, 4);
 }
 
 IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
@@ -17,7 +17,7 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 	Value = (ip4 << 24) + (ip3 << 16) + (ip2 << 8) + ip1;
 }
 
-IPAddress::IPAddress(const Array& arr)
+IPAddress::IPAddress(const Buffer& arr)
 {
 	arr.CopyTo(&Value, 4);
 }
@@ -45,12 +45,12 @@ const IPAddress& IPAddress::Broadcast()
 
 IPAddress& IPAddress::operator=(const byte* v)
 {
-	Array(v, 4).CopyTo(&Value, 4);
+	Buffer((byte*)v, 4).CopyTo(&Value, 4);
 
 	return *this;
 }
 
-IPAddress& IPAddress::operator=(const Array& arr)
+IPAddress& IPAddress::operator=(const Buffer& arr)
 {
 	arr.CopyTo(&Value, 4);
 
@@ -74,7 +74,7 @@ ByteArray IPAddress::ToArray() const
 
 void IPAddress::CopyTo(byte* ips) const
 {
-	if(ips) Array(&Value, 4).CopyTo(ips, 4);
+	if(ips) Buffer((byte*)&Value, 4).CopyTo(ips, 4);
 }
 
 String& IPAddress::ToStr(String& str) const
@@ -106,7 +106,7 @@ IPEndPoint::IPEndPoint(const IPAddress& addr, ushort port)
 	Port	= port;
 }
 
-IPEndPoint::IPEndPoint(const Array& arr)
+IPEndPoint::IPEndPoint(const Buffer& arr)
 {
 	/*byte* p = arr.GetBuffer();
 	Address = p;
@@ -114,7 +114,7 @@ IPEndPoint::IPEndPoint(const Array& arr)
 	*this	= arr;
 }
 
-IPEndPoint& IPEndPoint::operator=(const Array& arr)
+IPEndPoint& IPEndPoint::operator=(const Buffer& arr)
 {
 	Address	= arr;
 	arr.CopyTo(&Port, 2, 4);
@@ -187,7 +187,7 @@ MacAddress::MacAddress(const byte* macs)
 	memcpy(&Value, macs, 6);
 }
 
-MacAddress::MacAddress(const Array& arr)
+MacAddress::MacAddress(const Buffer& arr)
 {
 	ByteArray bs(arr.GetBuffer(), arr.Length());
 	Value = bs.ToUInt64();
@@ -218,12 +218,12 @@ MacAddress& MacAddress::operator=(ulong v)
 
 MacAddress& MacAddress::operator=(const byte* buf)
 {
-	Array(buf, 6).CopyTo(&Value, 6);
+	Buffer((byte*)buf, 6).CopyTo(&Value, 6);
 
 	return *this;
 }
 
-MacAddress& MacAddress::operator=(const Array& arr)
+MacAddress& MacAddress::operator=(const Buffer& arr)
 {
 	arr.CopyTo(&Value, 6);
 
@@ -247,7 +247,7 @@ ByteArray MacAddress::ToArray() const
 
 void MacAddress::CopyTo(byte* macs) const
 {
-	if(macs) Array(&Value, 6).CopyTo(macs, 6);
+	if(macs) Buffer((byte*)&Value, 6).CopyTo(macs, 6);
 }
 
 String& MacAddress::ToStr(String& str) const
@@ -287,7 +287,7 @@ bool ISocketHost::LoadConfig()
 	if(!Config::Current) return false;
 
 	NetConfig nc;
-	Array bs(&nc, sizeof(nc));
+	Buffer bs(&nc, sizeof(nc));
 	if(!Config::Current->Get("NET", bs)) return false;
 
 	IP			= nc.IP;
@@ -314,7 +314,7 @@ bool ISocketHost::SaveConfig()
 	nc.DNSServer	= DNSServer.Value;
 	nc.Gateway		= Gateway.Value;
 
-	Array bs(&nc, sizeof(nc));
+	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
 }
 

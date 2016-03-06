@@ -23,7 +23,7 @@ public:
     Sim900A();
     virtual ~Sim900A();
 
-	bool Send(const Array& bs);
+	bool Send(const Buffer& bs);
 
 private:
 	void Init(uint msTimeout = 1000);
@@ -31,8 +31,8 @@ private:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const Array& bs);
-	virtual uint OnRead(Array& bs);
+    virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
 
 	String Send(const char* str, uint msTimeout = 1000);
 	bool SendCmd(const char* str, uint msTimeout = 1000, int times = 1);

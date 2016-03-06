@@ -14,6 +14,9 @@ typedef long long       Int64;
 
 #define UInt64_Max 0xFFFFFFFFFFFFFFFFull
 
+// 逐步使用char替代byte，在返回类型中使用char*替代void*
+// 因为格式化输出时，可以用%c输出char，用%s输出char*
+
 #include <typeinfo>
 using namespace ::std;
 
@@ -57,17 +60,74 @@ public:
 	const String Name() const;	// 名称
 };
 
+class Buffer : public Object
+{
+public:
+	inline byte* GetBuffer() { return (byte*)_Arr; }
+	inline const byte* GetBuffer() const { return (byte*)_Arr; }
+
+	inline int Length() const { return _Length; }
+	virtual bool SetLength(int len, bool bak = false) { _Length = len; return true; }
+	inline int Capacity() const { return _Capacity; }
+
+	Buffer(void* p = nullptr, int len = 0)
+	{
+		_Arr	= p;
+		_Length	= len;
+		_Capacity	= len;
+	}
+
+    // 重载索引运算符[]，返回指定元素的第一个字节
+    byte& operator[](int i) const
+	{
+		assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+
+		byte* buf = (byte*)_Arr;
+
+		return buf[i];
+	}
+	// 复制数组。深度克隆，拷贝数据，自动扩容
+	int Copy(const void* data, int len = -1, int index = 0);
+	// 复制数组。深度克隆，拷贝数据
+	int Copy(const Buffer& arr, int index = 0);
+	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
+	int CopyTo(void* data, int len = -1, int index = 0) const;
+
+	const Buffer Sub(int len) const
+	{
+		assert_param2(len <= _Length, "len <= _Length");
+
+		return Buffer(_Arr, len);
+	}
+
+protected:
+    void*	_Arr;		// 数据指针
+	int		_Length;	// 长度
+	uint	_Capacity;	// 最大容量
+};
+
+/*class Buffer : public IBuffer
+{
+public:
+	char*	Ptr;
+	int		Length;
+
+	Buffer(char* p = nullptr, int len = 0);
+
+
+}*/
+
 // 数组长度
 #define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
 // 数组清零，固定长度
 #define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
 
 // 数组。包括指针和最大长度，支持实际长度
-class Array : public Object
+class Array : public Buffer
 {
 protected:
-    void*	_Arr;		// 数据指针
-	int		_Length;	// 元素个数。非字节数
+    //void*	_Arr;		// 数据指针
+	//int		_Length;	// 元素个数。非字节数
 	uint	_Capacity;	// 最大个数。非字节数
 	bool	_needFree;	// 是否需要释放
 	bool	_canWrite;	// 是否可写
@@ -75,11 +135,11 @@ protected:
 
 public:
 	// 数组长度
-    int Length() const;
+    //int Length() const;
 	// 数组最大容量。初始化时决定，后面不允许改变
-	int Capacity() const;
+	//int Capacity() const;
 	// 缓冲区。按字节指针返回
-	byte* GetBuffer() const;
+	//byte* GetBuffer() const;
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
@@ -92,7 +152,7 @@ public:
 	virtual ~Array();
 
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
-	bool SetLength(int length, bool bak = false);
+	virtual bool SetLength(int length, bool bak = false);
 	// 设置数组元素为指定值，自动扩容
 	bool SetItem(const void* data, int index, int count);
 	// 设置数组。直接使用指针，不拷贝数据
@@ -100,11 +160,11 @@ public:
 	// 设置数组。直接使用指针，不拷贝数据
 	bool Set(const void* data, int len);
 	// 复制数组。深度克隆，拷贝数据，自动扩容
-	int Copy(const void* data, int len = -1, int index = 0);
+	//int Copy(const void* data, int len = -1, int index = 0);
 	// 复制数组。深度克隆，拷贝数据
-	int Copy(const Array& arr, int index = 0);
+	//int Copy(const Array& arr, int index = 0);
 	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	int CopyTo(void* data, int len = -1, int index = 0) const;
+	//int CopyTo(void* data, int len = -1, int index = 0) const;
 	// 清空已存储数据。
 	virtual void Clear();
 	// 设置指定位置的值，不足时自动扩容

@@ -55,7 +55,7 @@ void UBlox::SetBaudRate(int baudRate)
 	//cmd[len - 1]	= CK_B;
 
 	// 发送命令
-	Array bs(cmd, len);
+	Buffer bs(cmd, len);
 	bs.Show(true);
 	Port->Write(bs);
 }
@@ -69,8 +69,8 @@ void UBlox::SetRate()
 		0x01, 0x00, // navRate. Navigation Rate, in number of measurement cycles. This parameter cannot be changed, and must be set to 1.
 		0x01, 0x00, // timeRef. Alignment to reference time: 0 = UTC time, 1 = GPS time
 		0x01, 0x39 };
-	//Port->Write(Array(cmd, ArrayLength(cmd)));
-	Array bs(cmd, ArrayLength(cmd));
+	//Port->Write(Buffer(cmd, ArrayLength(cmd)));
+	Buffer bs(cmd, ArrayLength(cmd));
 	bs.Show(true);
 	Port->Write(bs);
 }
@@ -92,8 +92,8 @@ void UBlox::SaveConfig()
 		0x00, 0x00, 0x00, 0x00, // loadMask
 		0x17, // deviceMask. devBBR | devFlash | devEEPROM | 0 | devSpiFlash
 		0x31, 0xBF };
-	//Port->Write(Array(cmd, ArrayLength(cmd)));
-	Array bs(cmd, ArrayLength(cmd));
+	//Port->Write(Buffer(cmd, ArrayLength(cmd)));
+	Buffer bs(cmd, ArrayLength(cmd));
 	bs.Show(true);
 	Port->Write(bs);
 }
@@ -120,7 +120,7 @@ void UBlox::SaveConfig()
 	return Open();
 }*/
 
-void UBlox::OnReceive(const Array& bs, void* param)
+void UBlox::OnReceive(const Buffer& bs, void* param)
 {
 	TS("UBlox::OnReceive");
 
@@ -128,20 +128,20 @@ void UBlox::OnReceive(const Array& bs, void* param)
 	String str((char*)bs.GetBuffer(), bs.Length());
 	//str.Show(true);
 
-	if(Buffer.Capacity() == 0) return;
+	if(Buf.Capacity() == 0) return;
 
 	// 必须美元开头，可以指定头部识别符
 	if(bs[0] == '$' && (Header == NULL || str.StartsWith(Header)))
 	{
-		Buffer.SetLength(0);
-		Buffer.Copy(bs);
+		Buf.SetLength(0);
+		Buf.Copy(bs, Buf.Length());
 	}
 	else
 	{
 		// 不合适的数据，可以直接附加在后面
-		if(Buffer.Length() != 0)
+		if(Buf.Length() != 0)
 		{
-			Buffer.Copy(bs, Buffer.Length());
+			Buf.Copy(bs, Buf.Length());
 		}
 	}
 }

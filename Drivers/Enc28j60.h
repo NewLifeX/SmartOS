@@ -62,8 +62,8 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose() { }
 
-    virtual bool OnWrite(const Array& bs);
-	virtual uint OnRead(Array& bs);
+    virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
 };
 
 #endif

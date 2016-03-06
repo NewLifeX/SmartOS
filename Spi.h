@@ -41,8 +41,8 @@ public:
     ushort Write16(ushort data);
 
 	// 批量读写。以字节数组长度为准
-	void Write(const Array& bs);
-	void Read(Array& bs);
+	void Write(const Buffer& bs);
+	void Read(Buffer& bs);
 
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输

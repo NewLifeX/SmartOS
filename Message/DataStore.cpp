@@ -15,7 +15,7 @@ DataStore::DataStore() : Areas(0)
 }
 
 // 写入数据
-int DataStore::Write(uint offset, const Array& bs)
+int DataStore::Write(uint offset, const Buffer& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;
@@ -36,7 +36,7 @@ int DataStore::Write(uint offset, const Array& bs)
 }
 
 // 读取数据
-int DataStore::Read(uint offset, Array& bs)
+int DataStore::Read(uint offset, Buffer& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;

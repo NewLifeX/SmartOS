@@ -16,7 +16,7 @@ public:
 
 	IDataPort*	Led;	// 指示灯
 
-	Array		Buffer;	// 用于接收数据的缓冲区，外部在打开前设置大小
+	Buffer		Buf;	// 用于接收数据的缓冲区，外部在打开前设置大小
 	
     BufferPort();
     ~BufferPort();
@@ -26,10 +26,10 @@ public:
 
 protected:
 	virtual bool OnOpen(bool isNew);
-	virtual void OnReceive(const Array& bs, void* param);
+	virtual void OnReceive(const Buffer& bs, void* param);
 
 private:
-	static uint OnReceive(ITransport* transport, Array& bs, void* param, void* param2);
+	static uint OnReceive(ITransport* transport, Buffer& bs, void* param, void* param2);
 };
 
 #endif

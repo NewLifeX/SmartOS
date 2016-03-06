@@ -129,7 +129,7 @@ TinyServer* Token::CreateServer(ITransport* port)
 	return &server;
 }
 
-uint OnSerial(ITransport* transport, Array& bs, void* param, void* param2)
+uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
 	debug_printf("OnSerial len=%d \t", bs.Length());
 	bs.Show(true);
@@ -184,7 +184,7 @@ void Token::Setup(ushort code, const char* name, COM message, int baudRate)
 
 void Fix2401(void* param)
 {
-	auto& bs	= *(Array*)param;
+	auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度
 	uint rs	= bs.Length();
 	if(rs >= 8)

@@ -610,7 +610,7 @@ void W5500::SetAddress(ushort addr, byte rw, byte socket, byte block)
 	_spi->Write(cfg.ToByte());
 }
 
-bool W5500::WriteFrame(ushort addr, const Array& bs, byte socket, byte block)
+bool W5500::WriteFrame(ushort addr, const Buffer& bs, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
@@ -620,7 +620,7 @@ bool W5500::WriteFrame(ushort addr, const Array& bs, byte socket, byte block)
 	return true;
 }
 
-bool W5500::ReadFrame(ushort addr, Array& bs, byte socket, byte block)
+bool W5500::ReadFrame(ushort addr, Buffer& bs, byte socket, byte block)
 {
 	SpiScope sc(_spi);
 
@@ -1129,7 +1129,7 @@ void HardSocket::Change(const IPEndPoint& remote)
 }
 
 // 接收数据
-uint HardSocket::Receive(Array& bs)
+uint HardSocket::Receive(Buffer& bs)
 {
 	if(!Open()) return false;
 
@@ -1166,7 +1166,7 @@ uint HardSocket::Receive(Array& bs)
 }
 
 // 发送数据
-bool HardSocket::Send(const Array& bs)
+bool HardSocket::Send(const Buffer& bs)
 {
 	if(!Open()) return false;
 	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
@@ -1196,8 +1196,8 @@ bool HardSocket::Send(const Array& bs)
 	return true;
 }
 
-bool HardSocket::OnWrite(const Array& bs) {	return Send(bs); }
-uint HardSocket::OnRead(Array& bs) { return Receive(bs); }
+bool HardSocket::OnWrite(const Buffer& bs) {	return Send(bs); }
+uint HardSocket::OnRead(Buffer& bs) { return Receive(bs); }
 
 void HardSocket::ClearRX()
 {
@@ -1364,7 +1364,7 @@ void TcpClient::OnProcess(byte reg)
 void TcpClient::RaiseReceive()
 {
 	byte buf[1500];
-	Array bs(buf, ArrayLength(buf));
+	Buffer bs(buf, ArrayLength(buf));
 	int size = Receive(bs);
 	if(size > 1500)return;
 
@@ -1374,7 +1374,7 @@ void TcpClient::RaiseReceive()
 
 /****************************** UdpClient ************************************/
 
-bool UdpClient::SendTo(const Array& bs, const IPEndPoint& remote)
+bool UdpClient::SendTo(const Buffer& bs, const IPEndPoint& remote)
 {
 	if(remote == Remote) return Send(bs);
 
@@ -1392,7 +1392,7 @@ bool UdpClient::SendTo(const Array& bs, const IPEndPoint& remote)
 	return rs;
 }
 
-bool UdpClient::OnWriteEx(const Array& bs, void* opt)
+bool UdpClient::OnWriteEx(const Buffer& bs, void* opt)
 {
 	IPEndPoint* ep = (IPEndPoint*)opt;
 	if(!ep) return OnWrite(bs);
@@ -1421,7 +1421,7 @@ void UdpClient::OnProcess(byte reg)
 void UdpClient::RaiseReceive()
 {
 	byte buf[1500];
-	Array bs(buf, ArrayLength(buf));
+	Buffer bs(buf, ArrayLength(buf));
 	ushort size = Receive(bs);
 	Stream ms(bs.GetBuffer(), size);
 
@@ -1440,7 +1440,7 @@ void UdpClient::RaiseReceive()
 			return;
 		}
 		// 回调中断
-		Array bs3(ms.ReadBytes(len), len);
+		Buffer bs3(ms.ReadBytes(len), len);
 		OnReceive(bs3, &ep);
 	};
 }

@@ -25,9 +25,9 @@ public:
 	UdpHandler OnReceived;
 
 	// 发送数据
-	virtual bool Send(const Array& bs);
+	virtual bool Send(const Buffer& bs);
 	// 接收数据
-	virtual uint Receive(Array& bs);
+	virtual uint Receive(Buffer& bs);
 
 	virtual const char* ToString() const;
 
@@ -38,8 +38,8 @@ protected:
 	virtual bool OnOpen();
     virtual void OnClose();
 
-    virtual bool OnWrite(const Array& bs);
-	virtual uint OnRead(Array& bs);
+    virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
 };
 
 #endif

@@ -265,7 +265,7 @@ ushort Spi::Write16(ushort data)
 }
 
 // 批量读写。以字节数组长度为准
-void Spi::Write(const Array& bs)
+void Spi::Write(const Buffer& bs)
 {
 	for(int i=0; i<bs.Length(); i++)
 	{
@@ -273,7 +273,7 @@ void Spi::Write(const Array& bs)
 	}
 }
 
-void Spi::Read(Array& bs)
+void Spi::Read(Buffer& bs)
 {
 	for(int i=0; i<bs.Length(); i++)
 	{

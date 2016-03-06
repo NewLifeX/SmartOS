@@ -58,8 +58,8 @@ private:
 	virtual void ChangePower(int level);
 
 	// 引发数据到达事件
-	virtual uint OnReceive(Array& bs, void* param);
+	virtual uint OnReceive(Buffer& bs, void* param);
 
-	virtual bool OnWriteEx(const Array& bs, void* opt);
+	virtual bool OnWriteEx(const Buffer& bs, void* opt);
 };
 #endif

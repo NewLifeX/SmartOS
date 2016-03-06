@@ -17,9 +17,9 @@ public:
 	DataStore();
 
 	// 写入数据
-	int Write(uint offset, const Array& bs);
+	int Write(uint offset, const Buffer& bs);
 	// 读取数据
-	int Read(uint offset, Array& bs);
+	int Read(uint offset, Buffer& bs);
 
 	typedef bool (*Handler)(uint offset, uint size, int mode);
 	// 注册某一块区域的读写钩子函数

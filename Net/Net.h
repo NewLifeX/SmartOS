@@ -23,12 +23,12 @@ public:
 	IPAddress(uint value = 0)	{ Value = value; }
 	IPAddress(const byte* ips);
 	IPAddress(byte ip1, byte ip2, byte ip3, byte ip4);
-	IPAddress(const Array& arr);
+	IPAddress(const Buffer& arr);
 
     IPAddress& operator=(int v)			{ Value = (uint)v; return *this; }
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
     IPAddress& operator=(const byte* v);
-    IPAddress& operator=(const Array& arr);
+    IPAddress& operator=(const Buffer& arr);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
@@ -60,9 +60,9 @@ public:
 
 	IPEndPoint();
 	IPEndPoint(const IPAddress& addr, ushort port);
-	IPEndPoint(const Array& arr);
+	IPEndPoint(const Buffer& arr);
 
-    IPEndPoint& operator=(const Array& arr);
+    IPEndPoint& operator=(const Buffer& arr);
 
 	// 字节数组
     ByteArray ToArray() const;
@@ -86,14 +86,14 @@ public:
 
 	MacAddress(ulong v = 0);
 	MacAddress(const byte* macs);
-	MacAddress(const Array& arr);
+	MacAddress(const Buffer& arr);
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() const;
 
     MacAddress& operator=(ulong v);
     MacAddress& operator=(const byte* buf);
-    MacAddress& operator=(const Array& arr);
+    MacAddress& operator=(const Buffer& arr);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
@@ -159,10 +159,10 @@ public:
 	virtual ~ISocket() { }
 
 	// 发送数据
-	virtual bool Send(const Array& bs) = 0;
-	virtual bool SendTo(const Array& bs, const IPEndPoint& remote) { return Send(bs); }
+	virtual bool Send(const Buffer& bs) = 0;
+	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote) { return Send(bs); }
 	// 接收数据
-	virtual uint Receive(Array& bs) = 0;
+	virtual uint Receive(Buffer& bs) = 0;
 };
 
 #endif

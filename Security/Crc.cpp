@@ -40,10 +40,10 @@ static const uint c_CRCTable[ 256 ] =
     0xAFB010B1, 0xAB710D06, 0xA6322BDF, 0xA2F33668, 0xBCB4666D, 0xB8757BDA, 0xB5365D03, 0xB1F740B4
 };
 
-uint Crc::Hash(const Array& arr, uint crc)
+uint Crc::Hash(const Buffer& arr, uint crc)
 {
-    const byte* ptr	= arr.GetBuffer();
-	int len			= arr.Length();
+    auto ptr	= arr.GetBuffer();
+	int len		= arr.Length();
     while(len-- > 0)
     {
         crc = c_CRCTable[ ((crc >> 24) ^ (*ptr++)) & 0xFF ] ^ (crc << 8);

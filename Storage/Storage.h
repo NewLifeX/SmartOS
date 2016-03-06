@@ -8,9 +8,9 @@ class Storage
 {
 public:
     // 读取
-    virtual bool Read(uint address, Array& bs) const = 0;
+    virtual bool Read(uint address, Buffer& bs) const = 0;
     // 写入
-    virtual bool Write(uint address, const Array& bs) const = 0;
+    virtual bool Write(uint address, const Buffer& bs) const = 0;
 };
 
 // 块存储接口
@@ -23,9 +23,9 @@ public:
 	bool ReadModifyWrite;	// 是否读改写
 
     // 读取
-    virtual bool Read(uint address, Array& bs) const;
+    virtual bool Read(uint address, Buffer& bs) const;
     // 写入
-    virtual bool Write(uint address, const Array& bs) const;
+    virtual bool Write(uint address, const Buffer& bs) const;
 	// 清空
     virtual bool Memset(uint address, byte data, uint len) const;
     // 擦除
@@ -45,9 +45,9 @@ class CharStorage : public Storage
 {
 public:
     // 读取
-    virtual bool Read(uint address, Array& bs) const;
+    virtual bool Read(uint address, Buffer& bs) const;
     // 写入
-    virtual bool Write(uint address, const Array& bs) const;
+    virtual bool Write(uint address, const Buffer& bs) const;
 };
 
 #endif

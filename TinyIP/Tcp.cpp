@@ -205,7 +205,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 	byte* data = tcp.Next();
 
 	// 触发ITransport接口事件
-	Array bs(data, len);
+	Buffer bs(data, len);
 	uint len2 = OnReceive(bs, NULL);
 	// 如果有返回，说明有数据要回复出去
 	if(len2)
@@ -365,7 +365,7 @@ bool TcpSocket::Disconnect()
 	return SendPacket(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
 
-bool TcpSocket::Send(const Array& bs)
+bool TcpSocket::Send(const Buffer& bs)
 {
 	if(!Enable)
 	{
@@ -425,7 +425,7 @@ bool TcpSocket::Send(const Array& bs)
 	return wait;
 }
 
-uint TcpSocket::Receive(Array& bs)
+uint TcpSocket::Receive(Buffer& bs)
 {
 	return 0;
 }
@@ -499,12 +499,12 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	return false;
 }
 
-bool TcpSocket::OnWrite(const Array& bs)
+bool TcpSocket::OnWrite(const Buffer& bs)
 {
 	return Send(bs);
 }
 
-uint TcpSocket::OnRead(Array& bs)
+uint TcpSocket::OnRead(Buffer& bs)
 {
 	// 暂时不支持
 	return 0;

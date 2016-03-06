@@ -14,12 +14,12 @@ Stream::Stream(const void* buf, uint len)
 }
 
 // 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-Stream::Stream(Array& bs)
+Stream::Stream(Buffer& bs)
 {
 	Init(bs.GetBuffer(), bs.Length());
 }
 
-Stream::Stream(const Array& bs)
+Stream::Stream(const Buffer& bs)
 {
 	Init((void*)bs.GetBuffer(), bs.Length());
 
@@ -128,7 +128,7 @@ uint Stream::ReadEncodeInt()
 }
 
 // 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
-uint Stream::Read(Array& bs)
+uint Stream::Read(Buffer& bs)
 {
 	return Read(bs.GetBuffer(), 0, bs.Length());
 }
@@ -190,7 +190,7 @@ uint Stream::Write(const char* str)
 }
 
 // 把字节数组的数据写入到数据流。不包含长度前缀
-bool Stream::Write(const Array& bs)
+bool Stream::Write(const Buffer& bs)
 {
 	return Write(bs.GetBuffer(), 0, bs.Length());
 }
@@ -215,7 +215,7 @@ int Stream::Peek() const
 }
 
 // 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
-uint Stream::ReadArray(Array& bs)
+uint Stream::ReadArray(Buffer& bs)
 {
 	uint len = ReadEncodeInt();
 	if(!len) return 0;
@@ -263,7 +263,7 @@ ByteArray Stream::ReadArray()
 }
 
 // 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
-bool Stream::WriteArray(const Array& bs)
+bool Stream::WriteArray(const Buffer& bs)
 {
 	WriteEncodeInt(bs.Length());
 	return Write(bs.GetBuffer(), 0, bs.Length());

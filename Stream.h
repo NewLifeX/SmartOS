@@ -24,8 +24,8 @@ public:
 	Stream(void* buf, uint len);
 	Stream(const void* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream(Array& bs);
-	Stream(const Array& bs);
+	Stream(Buffer& bs);
+	Stream(const Buffer& bs);
 
 	// 数据流容量
 	uint Capacity() const;
@@ -49,7 +49,7 @@ public:
 	// 读取7位压缩编码整数
 	uint ReadEncodeInt();
 	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
-	uint Read(Array& bs);
+	uint Read(Buffer& bs);
 
 	// 把数据写入当前位置
 	bool Write(const void* buf, uint offset, uint count);
@@ -58,13 +58,13 @@ public:
 	// 写入字符串，先写入压缩编码整数表示的长度
 	uint Write(const char* str);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
-	bool Write(const Array& bs);
+	bool Write(const Buffer& bs);
 
 	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
-	uint ReadArray(Array& bs);
+	uint ReadArray(Buffer& bs);
 	ByteArray ReadArray(int count);
 	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
-	bool WriteArray(const Array& bs);
+	bool WriteArray(const Buffer& bs);
 
 	ByteArray ReadArray();
 	String ReadString();

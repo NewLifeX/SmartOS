@@ -13,7 +13,7 @@ typedef bool (*MessageHandler)(void* sender, Message& msg, void* param);
 class Controller
 {
 private:
-	static uint Dispatch(ITransport* port, Array& bs, void* param, void* param2);
+	static uint Dispatch(ITransport* port, Buffer& bs, void* param, void* param2);
 
 protected:
 
