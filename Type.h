@@ -75,9 +75,9 @@ public:
 	inline byte* GetBuffer() { return (byte*)_Arr; }
 	inline const byte* GetBuffer() const { return (byte*)_Arr; }
 	inline int Length() const { return _Length; }
-	//inline int Capacity() const { return _Capacity; }
 	bool Empty() const;
 
+	// 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
 	virtual bool SetLength(int len, bool bak = false);
 
     // 重载索引运算符[]，返回指定元素的第一个字节
@@ -90,8 +90,6 @@ public:
 	int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
 	int CopyTo(int srcIndex, void* dest, int len) const;
-	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
-	//int CopyTo(int index, const Buffer& arr, int len) const;
 
 	// 用指定字节设置初始化一个区域
 	void Set(byte item, int index, int len);
@@ -109,7 +107,6 @@ public:
 protected:
     void*	_Arr;		// 数据指针
 	int		_Length;	// 长度
-	//uint	_Capacity;	// 最大容量
 };
 
 // 数组长度
@@ -121,28 +118,17 @@ protected:
 class Array : public Buffer
 {
 protected:
-    //void*	_Arr;		// 数据指针
-	//int		_Length;	// 元素个数。非字节数
 	uint	_Capacity;	// 最大个数。非字节数
 	bool	_needFree;	// 是否需要释放
 	bool	_canWrite;	// 是否可写
 	ushort	_Size;		// 单个元素大小。字节
 
 public:
-	// 数组长度
-    //int Length() const;
 	// 数组最大容量。初始化时决定，后面不允许改变
 	int Capacity() const;
-	// 缓冲区。按字节指针返回
-	//byte* GetBuffer() const;
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
-
-	// 重载等号运算符，使用另一个固定数组来初始化
-    //Array& operator=(const Array& arr);
-	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-    //Array& operator=(const void* data);
 
 	virtual ~Array();
 
@@ -156,12 +142,6 @@ public:
 	bool Set(void* data, int len);
 	// 设置数组。直接使用指针，不拷贝数据
 	bool Set(const void* data, int len);
-	// 复制数组。深度克隆，拷贝数据，自动扩容
-	//int Copy(const void* data, int len = -1, int index = 0);
-	// 复制数组。深度克隆，拷贝数据
-	//int Copy(const Array& arr, int index = 0);
-	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	//int CopyTo(void* data, int len = -1, int index = 0) const;
 	// 清空已存储数据。
 	virtual void Clear();
 	// 设置指定位置的值，不足时自动扩容
@@ -174,9 +154,6 @@ public:
 
 	friend bool operator==(const Array& bs1, const Array& bs2);
 	friend bool operator!=(const Array& bs1, const Array& bs2);
-
-	/*static void* Set(void* data, byte dat, int count);
-	static void* Copy(void* dst, const void* src, int count);*/
 protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);

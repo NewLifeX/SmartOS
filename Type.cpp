@@ -10,10 +10,9 @@
 // 输出对象的字符串表示方式
 String& Object::ToStr(String& str) const
 {
-	const char* name = typeid(*this).name();
+	auto name = typeid(*this).name();
 	while(*name >= '0' && *name <= '9') name++;
 
-	//str.Set(name, 0);
 	str	+= name;
 
 	return str;
@@ -34,14 +33,13 @@ void Object::Show(bool newLine) const
 	// 为了减少堆分配，采用较大的栈缓冲区
 	char cs[0x200];
 	String str(cs, ArrayLength(cs));
-	//str.SetLength(0);
 	ToStr(str);
 	str.Show(newLine);
 }
 
 const Type Object::GetType() const
 {
-	int* p = (int*)this;
+	auto p = (int*)this;
 
 	return Type(&typeid(*this), *(p - 1));
 }
@@ -57,7 +55,7 @@ Type::Type(const type_info* ti, int size)
 
 const String Type::Name() const
 {
-	const char* name = _info->name();
+	auto name = _info->name();
 	while(*name >= '0' && *name <= '9') name++;
 
 	return String(name);
@@ -67,12 +65,10 @@ const String Type::Name() const
 
 Buffer::Buffer(void* p, int len)
 {
-	//assert_param2(p || !p && len == 0, "Buffer空指针时不能指定长度！");
 	assert_param2(p && len > 0, "Buffer构造指针不能为空！");
 
 	_Arr	= p;
 	_Length	= len;
-	//_Capacity	= len;
 }
 
 Buffer::Buffer(const Buffer& buf)
@@ -137,11 +133,13 @@ int Buffer::Capacity() const { return _Capacity; }*/
 //bool Buffer::Empty() const { return _Arr && _Length > 0; }
 bool Buffer::Empty() const { return _Length == 0; }
 
+// 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
 bool Buffer::SetLength(int len, bool bak)
 {
 	if(len > _Length) return false;
 
 	_Length = len;
+
 	return true;
 }
 
@@ -150,9 +148,15 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 {
 	if(!src) return 0;
 	int remain	= _Length - destIndex;
-	if(remain <= 0) return 0;
+	//if(remain <= 0) return 0;
 
-	if(len < 0 || len > remain) len	= remain;
+	if(len < 0 )
+		len	= remain;
+	else if(len > remain)
+	{
+		// 子类可能在这里扩容
+		if(!SetLength(destIndex + len, true)) len	= remain;
+	}
 
 	// 拷贝数据
 	if(len) memcpy((byte*)_Arr + destIndex, src, len);
@@ -163,8 +167,6 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 // 拷贝数据，默认-1长度表示两者最小长度
 int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
-	//assert_param2(_canWrite, "禁止CopyArray修改数据");
-
 	if(&src == this) return _Length;
 
 	int remain	= src._Length - srcIndex;
@@ -236,12 +238,9 @@ bool operator != (const Buffer& bs1, const Buffer& bs2)
 }
 
 /******************************** TArray ********************************/
-// 数组长度
-//int Array::Length() const { return _Length; }
+
 // 数组最大容量。初始化时决定，后面不允许改变
 int Array::Capacity() const { return _Capacity; }
-// 缓冲区。按字节指针返回
-//byte* Array::GetBuffer() const { return (byte*)_Arr; }
 
 int MemLen(const void* data)
 {
@@ -258,10 +257,6 @@ Array::Array(void* data, int len) : Buffer(data, len)
 {
 	_Size	= 1;
 
-	//if(len < 0) len = MemLen(data);
-
-	//_Arr		= data;
-	//_Length		= len;
 	_Capacity	= len;
 	_needFree	= false;
 	_canWrite	= true;
@@ -271,10 +266,6 @@ Array::Array(const void* data, int len) : Buffer((void*)data, len)
 {
 	_Size	= 1;
 
-	//if(len < 0) len = MemLen(data);
-
-	//_Arr		= (void*)data;
-	//_Length		= len;
 	_Capacity	= len;
 	_needFree	= false;
 	_canWrite	= false;
@@ -285,27 +276,6 @@ Array::~Array()
 {
 	if(_needFree && _Arr) delete _Arr;
 }
-
-/*// 重载等号运算符，使用另一个固定数组来初始化
-Array& Array::operator=(const Array& arr)
-{
-	// 不要自己拷贝给自己
-	if(&arr == this) return *this;
-
-	_Length = 0;
-
-	Copy(0, arr, 0, -1);
-
-	return *this;
-}*/
-
-// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-/*Array& Array::operator=(const void* data)
-{
-	if(Length() > 0) Copy(data, Length());
-
-	return *this;
-}*/
 
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 bool Array::SetLength(int length, bool bak)
@@ -383,53 +353,6 @@ bool Array::Set(const void* data, int len)
 	return true;
 }
 
-/*// 复制数组。深度克隆，拷贝数据，自动扩容
-int Array::Copy(const void* data, int len, int index)
-{
-	assert_param2(_canWrite, "禁止CopyData修改");
-	assert_param2(data, "Array::Copy data Error");
-
-	if(len < 0) len = MemLen(data);
-
-	// 检查长度是否足够
-	int len2 = index + len;
-	CheckCapacity(len2, index);
-
-	// 拷贝数据
-	memcpy((byte*)_Arr + _Size * index, data, _Size * len);
-
-	// 扩大长度
-	if(len2 > _Length) _Length = len2;
-
-	return len;
-}
-
-// 复制数组。深度克隆，拷贝数据
-int Array::Copy(const Array& arr, int index)
-{
-	assert_param2(_canWrite, "禁止CopyArray修改数据");
-
-	if(&arr == this) return 0;
-	if(arr.Length() == 0) return 0;
-
-	return Copy(arr._Arr, arr.Length(), index);
-}
-
-// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-int Array::CopyTo(void* data, int len, int index) const
-{
-	assert_param2(data, "Array::CopyTo data Error");
-
-	// 数据长度可能不足
-	if(_Length - index < len || len <= 0) len = _Length - index;
-	if(len <= 0) return 0;
-
-	// 拷贝数据
-	memcpy(data, (byte*)_Arr + _Size * index, _Size * len);
-
-	return len;
-}*/
-
 // 清空已存储数据。
 void Array::Clear()
 {
@@ -449,7 +372,6 @@ void Array::SetItemAt(int i, const void* item)
 
 	if(i >= _Length) _Length = i + 1;
 
-	//_Arr[i] = item;
 	memcpy((byte*)_Arr + _Size * i, item, _Size);
 }
 
@@ -512,23 +434,6 @@ bool operator!=(const Array& bs1, const Array& bs2)
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
 }
 
-/*void* Array::Set(void* data, byte dat, int count)
-{
-	return memset(data, dat, count);
-}
-
-void* Array::Copy(void* dst, const void* src, int count)
-{
-	if(!dst || !src || dst == src || !count) return dst;
-
-	// 如果区域重叠，要用memmove
-	if(dst < src && dst + count > src
-	|| dst > src && src + count > dst)
-		return memmove(dst, src, count);
-	else
-		return memcpy(dst, src, count);
-}*/
-
 /******************************** ByteArray ********************************/
 
 ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, ArrayLength(Arr))
@@ -562,14 +467,6 @@ ByteArray::ByteArray(const String& str) : Array(Arr, ArrayLength(Arr))
 	Set((const byte*)p, str.Length());
 }
 
-// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
-/*ByteArray& ByteArray::operator=(const void* data)
-{
-	if(Length() > 0) Copy(data, Length());
-
-	return *this;
-}*/
-
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine) const
 {
@@ -578,8 +475,8 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 	// 拼接在字符串后面
 	for(int i=0; i < Length(); i++, buf++)
 	{
-		//str.Append(*buf);
-		str	+= *buf;
+		//str	+= *buf;
+		str.Concat(*buf, 16);
 
 		if(i < Length() - 1)
 		{
@@ -597,8 +494,6 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 String ByteArray::ToHex(char sep, int newLine) const
 {
 	String str;
-
-	//return ToHex(str, sep, newLine);
 
 	// 优化为使用RVO
 	ToHex(str, sep, newLine);
@@ -704,14 +599,6 @@ void ByteArray::Write(ulong value, int index)
 }
 
 /******************************** REV ********************************/
-
-
-//extern uint32_t __REV(uint32_t value);
-//#ifdef STM32F0
-//extern uint32_t __REV16(uint32_t value);
-//#else
-//extern uint32_t __REV16(uint16_t value);
-//#endif
 
 uint	_REV(uint value)		{ return __REV(value); }
 ushort	_REV16(ushort value)	{ return __REV16(value); }
