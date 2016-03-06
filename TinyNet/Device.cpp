@@ -3,7 +3,12 @@
 
 /******************************** Device ********************************/
 
-Device::Device()
+Device::Device() :
+	HardID(_HardID, ArrayLength(HardID)),
+	Mac(_Mac, ArrayLength(_Mac)),
+	Name(_Name, ArrayLength(_Name)),
+	Pass(_Pass, ArrayLength(_Pass)),
+	Store(_Store, ArrayLength(_Store))
 {
 	Address		= 0;
 	Logined		= false;
@@ -22,10 +27,15 @@ Device::Device()
 	OfflineTime	= 0;
 	SleepTime	= 0;
 
-	ArrayZero(Mac);
+	/*ArrayZero(Mac);
 	ArrayZero(Name);
 	ArrayZero(Pass);
-	ArrayZero(Store);
+	ArrayZero(Store);*/
+	HardID.Clear();
+	Mac.Clear();
+	Name.Clear();
+	Pass.Clear();
+	Store.Clear();
 
 	Cfg			= NULL;
 
@@ -64,7 +74,7 @@ void Device::WriteMessage(Stream& ms) const
 
 	ms.Write(Address);
 	ms.Write(Kind);
-	ms.WriteArray(CArray(HardID));
+	ms.WriteArray(HardID);
 	ms.Write(LastTime);
 
 	ms.Write(Version);
@@ -75,7 +85,7 @@ void Device::WriteMessage(Stream& ms) const
 	ms.Write(OfflineTime);
 	ms.Write(PingTime);
 
-	ms.WriteArray(CArray(Name));
+	ms.WriteString(Name);
 
 	// 计算并设置大小
 	byte size	= ms.Position() - p;
@@ -89,7 +99,8 @@ void Device::ReadMessage(Stream& ms)
 
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
-	ms.ReadArray().CopyTo(HardID, ArrayLength(HardID));
+	//ms.ReadArray().CopyTo(0, HardID, ArrayLength(HardID));
+	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
 
 	Version		= ms.ReadUInt16();
@@ -101,8 +112,9 @@ void Device::ReadMessage(Stream& ms)
 	PingTime	= ms.ReadUInt16();
 
 	//ms.ReadString().CopyTo(Name, ArrayLength(Name));
-	String str(Name, ArrayLength(Name));
-	str	= ms.ReadString();
+	//String str(Name, ArrayLength(Name));
+	//str	= ms.ReadString();
+	Name	= ms.ReadString();
 
 	// 最后位置
 	ms.SetPosition(p + size);
@@ -126,7 +138,7 @@ String& Device::ToStr(String& str) const
 	str += " Hard=";
 	str.Concat(HardID[0], 16);
 	str.Concat(HardID[1], 16);
-	str = str + " Mac=" + ByteArray(Mac, 6);
+	str = str + " Mac=" + Mac;
 
 	DateTime dt;
 	dt.Parse(LastTime);
@@ -137,11 +149,11 @@ String& Device::ToStr(String& str) const
 	if(len > 1 && len <= 32)
 	{
 		str = str + " ";
-		ByteArray(Store, len).ToStr(str);
+		ByteArray(Store.GetBuffer(), len).ToStr(str);
 	}
 
-	len	= strlen(Name);
-	if(len)
+	//len	= strlen(Name);
+	if(Name.Length() > 0)
 	{
 		str += "\t";
 		//String(Name, len).ToStr(str);
@@ -161,7 +173,7 @@ bool operator!=(const Device& d1, const Device& d2)
 	return d1.Address != d2.Address;
 }
 
-Array Device::GetHardID()	{ return Array(HardID, ArrayLength(HardID)); }
+/*Array Device::GetHardID()	{ return Array(HardID, ArrayLength(HardID)); }
 Array Device::GetName()		{ return Array(Name, ArrayLength(Name)); }
 Array Device::GetPass()		{ return Array(Pass, ArrayLength(Pass)); }
 Array Device::GetStore()	{ return Array(Store, ArrayLength(Store)); }
@@ -177,4 +189,4 @@ void Device::SetHardID(const Array& arr)	{ arr.CopyTo(HardID, ArrayLength(HardID
 void Device::SetName(const Array& arr)		{ arr.CopyTo(Name, ArrayLength(Name)); }
 void Device::SetPass(const Array& arr)		{ arr.CopyTo(Pass, ArrayLength(Pass)); }
 void Device::SetStore(const Array& arr)		{ arr.CopyTo(Store, ArrayLength(Store)); }
-void Device::SetConfig(const Array& arr)	{ arr.CopyTo(Cfg, sizeof(Cfg[0])); }
+void Device::SetConfig(const Array& arr)	{ arr.CopyTo(Cfg, sizeof(Cfg[0])); }*/

@@ -788,7 +788,7 @@ uint NRF24L01::OnRead(Buffer& bs)
 			rs	= 32;
 			if(DynPayload) rs = ReadReg(RX_PL_WID);
 
-			uint len = bs.Capacity();
+			uint len = bs.Length();
 			if(rs > len)
 			{
 				debug_printf("R24::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
@@ -796,6 +796,7 @@ uint NRF24L01::OnRead(Buffer& bs)
 			}
 			bs.SetLength(rs);
 			ReadBuf(RD_RX_PLOAD, bs); // 读取数据
+			//ReadBuf(RD_RX_PLOAD, bs.Sub(rs)); // 读取数据
 		}
 	}
 
@@ -807,7 +808,11 @@ uint NRF24L01::OnRead(Buffer& bs)
 	if(rs && Led) Led->Write(1000);
 
 	// 微网指令特殊处理长度
-	if(FixData)	FixData(&bs);
+	if(FixData)
+	{
+		rs = FixData(bs);
+		bs.SetLength(rs);
+	}
 
 #if RF_DEBUG
 	/*debug_printf("R24::Read [%d]=", bs.Length());

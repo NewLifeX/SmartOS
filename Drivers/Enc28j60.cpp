@@ -981,7 +981,7 @@ uint Enc28j60::OnRead(Buffer& bs)
         // 从缓冲区中将数据包复制到packet中
         ReadBuffer((byte*)bs.GetBuffer(), len);
     }
-	bs.SetLength(len);
+	//bs.SetLength(len);
     // 移动接收缓冲区 读指针
     WriteReg(ERXRDPTL, (NextPacketPtr));
     WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);

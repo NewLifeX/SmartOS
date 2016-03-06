@@ -371,7 +371,7 @@ typedef struct _DHCP_OPT
 	{
 		Option = option;
 		Length = bs.Length();
-		bs.CopyTo(&Data);
+		bs.CopyTo(0, &Data, -1);
 
 		return this;
 	}

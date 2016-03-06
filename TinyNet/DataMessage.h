@@ -17,8 +17,8 @@ public:
 	bool ReadData(const DataStore& ds);
 	bool WriteData(DataStore& ds, bool withData);
 
-	bool ReadData(const Array& bs);
-	bool WriteData(Array bs, bool withData);
+	bool ReadData(const Buffer& bs);
+	bool WriteData(Buffer& bs, bool withData);
 
 private:
 	Stream	_Src;

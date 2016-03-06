@@ -19,7 +19,7 @@ bool BlockStorage::Read(uint address, Buffer& bs) const
     st_printf("BlockStorage::Read(0x%08x, %d, 0x%08x)\r\n", address, len, bs.GetBuffer());
 #endif
 
-	bs.Copy((byte*)address);
+	bs.Copy(0, (byte*)address, -1);
 
     return true;
 }
@@ -96,13 +96,13 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 		uint blk	= addr - offset;
 		uint size	= Block - offset;
 		// 前段原始数据，中段来源数据，末段原始数据
-		ms.Copy((byte*)blk, offset, 0);
+		ms.Copy(0, (byte*)blk, offset);
 		if(size > remain) size = remain;
-		ms.Copy(pData, size, offset);
+		ms.Copy(offset, pData, size);
 
 		int	offset2	= offset + size;
 		int last	= Block - offset2;
-		if(last > 0) ms.Copy((byte*)(blk + offset2), last, offset2);
+		if(last > 0) ms.Copy(offset2, (byte*)(blk + offset2), last);
 
 		// 整块擦除，然后整体写入
 		//if(!IsErased(blk + offset, size)) Erase(blk, Block);
@@ -130,8 +130,8 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 	{
 		// 前段来源数据，末段原始数据
 		//ms.SetPosition(0);
-		ms.Copy(pData, remain, 0);
-		ms.Copy((byte*)(addr + remain), Block - remain, remain);
+		ms.Copy(0, pData, remain);
+		ms.Copy(remain, (byte*)(addr + remain), Block - remain);
 
 		//if(!IsErased(addr, remain)) Erase(addr, Block);
 		Erase(addr, remain);
@@ -214,14 +214,14 @@ bool BlockStorage::IsErased(uint address, uint len) const
 
 bool CharStorage::Read(uint address, Buffer& bs) const
 {
-	bs.Copy((byte*)address);
+	bs.Copy(0, (byte*)address, -1);
 
 	return true;
 }
 
 bool CharStorage::Write(uint address, const Buffer& bs) const
 {
-	bs.CopyTo((byte*)address);
+	bs.CopyTo(0, (byte*)address, -1);
 
 	return true;
 }

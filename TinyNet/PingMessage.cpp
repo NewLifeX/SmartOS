@@ -20,25 +20,25 @@ void PingMessage::Write(Stream& ms) const
 }
 
 // 0x01 主数据
-void PingMessage::ReadData(Stream& ms, Array& bs) const
+void PingMessage::ReadData(Stream& ms, Buffer& bs) const
 {
 	TS("PingMessage::ReadData");
 
 	byte offset	= ms.ReadByte();
 	byte len	= ms.ReadByte();
 
-	int remain	= bs.Capacity() - offset;
+	int remain	= bs.Length() - offset;
 	int len2	= len;
 	if(len2 > remain) len2 = remain;
 	// 保存一份到缓冲区
 	if(len2 > 0)
 	{
-		bs.Copy(ms.ReadBytes(len), len2, offset);
+		bs.Copy(offset, ms.ReadBytes(len), len2);
 	}
 }
 
 // 写入数据。同时写入头部大小，否则网关不知道数据区大小和配置区大小
-void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
+void PingMessage::WriteData(Stream& ms, byte code, const Buffer& bs) const
 {
 	TS("PingMessage::WriteData");
 
@@ -52,19 +52,20 @@ void PingMessage::WriteData(Stream& ms, byte code, const Array& bs) const
 	ms.Write((byte)0x00);	// 起始地址
 
 	ms.Write(len);	// 长度
-	ms.Write(Array(bs.GetBuffer(), len));
+	ms.Write(bs.Sub(len));
 }
 
 // 0x03 硬件校验
-bool PingMessage::ReadHardCrc(Stream& ms, const Device* dv, ushort& crc) const
+bool PingMessage::ReadHardCrc(Stream& ms, const Device& dv, ushort& crc) const
 {
 	crc  = ms.ReadUInt16();
-	ushort crc1 = Crc::Hash16(dv->GetHardID());
+	ushort crc1 = Crc::Hash16(dv.HardID);
 	if(crc != crc1)
 	{
 		debug_printf("设备硬件Crc: %04X, 本地Crc：%04X \r\n", crc, crc1);
 		debug_printf("设备硬件ID: ");
-		ByteArray(dv->HardID, ArrayLength(dv->HardID)).Show(true);
+		//ByteArray(dv->HardID, ArrayLength(dv->HardID)).Show(true);
+		dv.HardID.Show();
 
 		return false;
 	}

@@ -472,7 +472,7 @@ char& String::operator[](int index)
 	return buffer[index];
 }
 
-char String::operator[]( int index ) const
+char String::operator[](int index) const
 {
 	if (index >= len || !buffer) return 0;
 	return buffer[index];

@@ -134,14 +134,14 @@ void UBlox::OnReceive(const Buffer& bs, void* param)
 	if(bs[0] == '$' && (Header == NULL || str.StartsWith(Header)))
 	{
 		Buf.SetLength(0);
-		Buf.Copy(bs, Buf.Length());
+		Buf.Copy(0, bs, 0, Buf.Length());
 	}
 	else
 	{
 		// 不合适的数据，可以直接附加在后面
 		if(Buf.Length() != 0)
 		{
-			Buf.Copy(bs, Buf.Length());
+			Buf.Copy(0, bs, 0, Buf.Length());
 		}
 	}
 }

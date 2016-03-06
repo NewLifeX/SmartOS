@@ -42,7 +42,7 @@ void WeakStore::Init()
 
 	debug_printf("初始化 0x%08X，幻数 %s\r\n", Data.GetBuffer(), Magic);
 	Data.Clear();
-	Data.Copy((byte*)Magic, MagicLength);
+	Data.Copy(0, (byte*)Magic, MagicLength);
 }
 
 // 重载索引运算符[]，定位到数据部分的索引。

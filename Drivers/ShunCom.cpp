@@ -169,11 +169,11 @@ bool ShunCom::OnWriteEx(const Buffer& bs, void* opt)
 	if(!AddrLength || !opt) return OnWrite(bs);
 	// 加入地址
 	ByteArray bs2;
-	bs2.Copy(opt, AddrLength);
+	bs2.Copy(0, opt, AddrLength);
 	//debug_printf("zigbee发送\r\n");
 	//bs2.Show();
 
-	bs2.Copy(bs, AddrLength);
+	bs2.Copy(AddrLength, bs, 0, -1);
 	bs2.Show();
 	return OnWrite(bs2);
 }
@@ -399,8 +399,6 @@ void ShunComMessage::Write(Stream& ms) const
 
 }
 
-
-
 ByteArray ShunComMessage::ToArray() const
 {
 	//MemoryStream ms;
@@ -422,7 +420,7 @@ ByteArray ShunComMessage::ToArray(Stream& ms)
 void ShunComMessage::Set(ushort kind, const Buffer& bs)
 {
 	Kind	= kind;
-	bs.CopyTo(Data);
+	bs.CopyTo(0, Data, -1);
 
 	Length	= 2 + 2 + bs.Length();
 }

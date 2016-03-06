@@ -65,59 +65,181 @@ const String Type::Name() const
 
 /******************************** Buffer ********************************/
 
-// 复制数组。深度克隆，拷贝数据，自动扩容
-int Buffer::Copy(const void* data, int len, int index)
+Buffer::Buffer(void* p, int len)
 {
-	assert_param(len >= 0);
-	//assert_param2(_canWrite, "禁止CopyData修改");
-	assert_param2(data, "Buffer::Copy data Error");
+	//assert_param2(p || !p && len == 0, "Buffer空指针时不能指定长度！");
+	assert_param2(p && len > 0, "Buffer构造指针不能为空！");
 
-	//if(len < 0) len = MemLen(data);
+	_Arr	= p;
+	_Length	= len;
+	//_Capacity	= len;
+}
 
-	// 检查长度是否足够
-	int len2 = index + len;
-	//CheckCapacity(len2, index);
+Buffer::Buffer(const Buffer& buf)
+{
+	_Arr	= buf._Arr;
+	_Length	= buf._Length;
+}
+
+Buffer::Buffer(Buffer&& rval)
+{
+	*this	= rval;
+}
+
+Buffer& Buffer::operator = (const Buffer& rhs)
+{
+	Copy(0, rhs, 0, -1);
+
+	return *this;
+}
+
+Buffer& Buffer::operator = (const void* p)
+{
+	if(p) Copy(0, p, -1);
+
+	return *this;
+}
+
+Buffer& Buffer::operator = (Buffer&& rval)
+{
+	_Arr	= rval._Arr;
+	_Length	= rval._Length;
+
+	rval._Arr		= nullptr;
+	rval._Length	= 0;
+
+	return *this;
+}
+
+// 重载索引运算符[]，返回指定元素的第一个字节
+byte Buffer::operator[](int i) const
+{
+	assert_param2(i >= 0 && i < _Length, "下标越界");
+
+	byte* buf = (byte*)_Arr;
+
+	return buf[i];
+}
+
+byte& Buffer::operator[](int i)
+{
+	assert_param2(i >= 0 && i < _Length, "下标越界");
+
+	byte* buf = (byte*)_Arr;
+
+	return buf[i];
+}
+
+/*byte* Buffer::GetBuffer() { return (byte*)_Arr; }
+const byte* Buffer::GetBuffer() const { return (byte*)_Arr; }
+int Buffer::Length() const { return _Length; }
+int Buffer::Capacity() const { return _Capacity; }*/
+//bool Buffer::Empty() const { return _Arr && _Length > 0; }
+bool Buffer::Empty() const { return _Length == 0; }
+
+bool Buffer::SetLength(int len, bool bak)
+{
+	if(len > _Length) return false;
+
+	_Length = len;
+	return true;
+}
+
+// 拷贝数据，默认-1长度表示当前长度
+int Buffer::Copy(int destIndex, const void* src, int len)
+{
+	if(!src) return 0;
+	int remain	= _Length - destIndex;
+	if(remain <= 0) return 0;
+
+	if(len < 0 || len > remain) len	= remain;
 
 	// 拷贝数据
-	memcpy((byte*)_Arr + index, data, len);
-
-	// 扩大长度
-	if(len2 > _Length) _Length = len2;
+	if(len) memcpy((byte*)_Arr + destIndex, src, len);
 
 	return len;
 }
 
-// 复制数组。深度克隆，拷贝数据
-int Buffer::Copy(const Buffer& arr, int index)
+// 拷贝数据，默认-1长度表示两者最小长度
+int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
 	//assert_param2(_canWrite, "禁止CopyArray修改数据");
 
-	if(&arr == this) return 0;
-	if(arr.Length() == 0) return 0;
+	if(&src == this) return _Length;
 
-	return Copy(arr._Arr, arr.Length(), index);
-}
-
-// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-int Buffer::CopyTo(void* data, int len, int index) const
-{
-	assert_param2(data, "Buffer::CopyTo data Error");
-
-	// 数据长度可能不足
-	if(_Length - index < len || len <= 0) len = _Length - index;
+	int remain	= src._Length - srcIndex;
+	if(len > remain) len	= remain;
 	if(len <= 0) return 0;
 
+	return Copy(destIndex, (byte*)src._Arr + srcIndex, src._Length);
+}
+
+// 把数据复制到目标缓冲区，默认-1长度表示当前长度
+int Buffer::CopyTo(int srcIndex, void* data, int len) const
+{
+	//assert_param2(data, "Buffer::CopyTo data Error");
+	if(!data) return 0;
+	int remain	= _Length - srcIndex;
+	if(remain <= 0) return 0;
+
+	if(len < 0 || len > remain) len	= remain;
+
 	// 拷贝数据
-	memcpy(data, (byte*)_Arr + index, len);
+	if(len) memcpy(data, (byte*)_Arr + srcIndex, len);
 
 	return len;
+}
+
+// 用指定字节设置初始化一个区域
+void Buffer::Set(byte item, int index, int len)
+{
+	int remain	= _Length - index;
+	if(remain <= 0) return;
+
+	if(len < 0 || len > remain) len	= remain;
+
+	if(len) memset((byte*)_Arr + index, item, len);
+}
+
+void Buffer::Clear()
+{
+	Set(0, 0, _Length);
+}
+
+// 截取一个子缓冲区
+Buffer Buffer::Sub(int len)
+{
+	assert_param2(len <= _Length, "len <= _Length");
+
+	return Buffer(_Arr, len);
+}
+
+const Buffer Buffer::Sub(int len) const
+{
+	assert_param2(len <= _Length, "len <= _Length");
+
+	return Buffer(_Arr, len);
+}
+
+bool operator == (const Buffer& bs1, const Buffer& bs2)
+{
+	if(bs1.Length() != bs2.Length()) return false;
+
+	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) == 0;
+}
+
+bool operator != (const Buffer& bs1, const Buffer& bs2)
+{
+	if(bs1.Length() != bs2.Length()) return true;
+
+	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) != 0;
 }
 
 /******************************** TArray ********************************/
 // 数组长度
 //int Array::Length() const { return _Length; }
 // 数组最大容量。初始化时决定，后面不允许改变
-//int Array::Capacity() const { return _Capacity; }
+int Array::Capacity() const { return _Capacity; }
 // 缓冲区。按字节指针返回
 //byte* Array::GetBuffer() const { return (byte*)_Arr; }
 
@@ -132,27 +254,27 @@ int MemLen(const void* data)
 	return len;
 }
 
-Array::Array(void* data, int len)
+Array::Array(void* data, int len) : Buffer(data, len)
 {
 	_Size	= 1;
 
-	if(len < 0) len = MemLen(data);
+	//if(len < 0) len = MemLen(data);
 
-	_Arr		= data;
-	_Length		= len;
+	//_Arr		= data;
+	//_Length		= len;
 	_Capacity	= len;
 	_needFree	= false;
 	_canWrite	= true;
 }
 
-Array::Array(const void* data, int len)
+Array::Array(const void* data, int len) : Buffer((void*)data, len)
 {
 	_Size	= 1;
 
-	if(len < 0) len = MemLen(data);
+	//if(len < 0) len = MemLen(data);
 
-	_Arr		= (void*)data;
-	_Length		= len;
+	//_Arr		= (void*)data;
+	//_Length		= len;
 	_Capacity	= len;
 	_needFree	= false;
 	_canWrite	= false;
@@ -164,7 +286,7 @@ Array::~Array()
 	if(_needFree && _Arr) delete _Arr;
 }
 
-// 重载等号运算符，使用另一个固定数组来初始化
+/*// 重载等号运算符，使用另一个固定数组来初始化
 Array& Array::operator=(const Array& arr)
 {
 	// 不要自己拷贝给自己
@@ -172,10 +294,10 @@ Array& Array::operator=(const Array& arr)
 
 	_Length = 0;
 
-	Copy(arr);
+	Copy(0, arr, 0, -1);
 
 	return *this;
-}
+}*/
 
 // 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
 /*Array& Array::operator=(const void* data)
@@ -409,31 +531,31 @@ void* Array::Copy(void* dst, const void* src, int count)
 
 /******************************** ByteArray ********************************/
 
-ByteArray::ByteArray(const void* data, int length, bool copy) : TArray(0)
+ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, ArrayLength(Arr))
 {
 	if(copy)
-		Copy(data, length);
+		Copy(0, data, length);
 	else
 		Set(data, length);
 }
 
-ByteArray::ByteArray(void* data, int length, bool copy) : TArray(0)
+ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, ArrayLength(Arr))
 {
 	if(copy)
-		Copy(data, length);
+		Copy(0, data, length);
 	else
 		Set(data, length);
 }
 
 // 字符串转为字节数组
-ByteArray::ByteArray(String& str) : TArray(0)
+ByteArray::ByteArray(String& str) : Array(Arr, ArrayLength(Arr))
 {
 	char* p = str.GetBuffer();
 	Set((byte*)p, str.Length());
 }
 
 // 不允许修改，拷贝
-ByteArray::ByteArray(const String& str) : TArray(0)
+ByteArray::ByteArray(const String& str) : Array(Arr, ArrayLength(Arr))
 {
 	const char* p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
@@ -451,7 +573,7 @@ ByteArray::ByteArray(const String& str) : TArray(0)
 // 显示十六进制数据，指定分隔字符
 String& ByteArray::ToHex(String& str, char sep, int newLine) const
 {
-	byte* buf = GetBuffer();
+	auto buf = GetBuffer();
 
 	// 拼接在字符串后面
 	for(int i=0; i < Length(); i++, buf++)
@@ -490,7 +612,7 @@ int ByteArray::Load(const void* data, int maxsize)
 	const byte* p = (const byte*)data;
 	_Length = p[0] <= maxsize ? p[0] : maxsize;
 
-	return Copy(p + 1, _Length);
+	return Copy(0, p + 1, _Length);
 }
 
 // 从普通字节数据组加载，首字节为长度
@@ -502,7 +624,7 @@ int ByteArray::Save(void* data, int maxsize) const
 	int len = _Length <= maxsize ? _Length : maxsize;
 	p[0] = len;
 
-	return CopyTo(p + 1, len);
+	return CopyTo(0, p + 1, len);
 }
 
 String& ByteArray::ToStr(String& str) const
@@ -527,7 +649,7 @@ void ByteArray::Show(bool newLine) const
 
 ushort	ByteArray::ToUInt16() const
 {
-	byte* p = GetBuffer();
+	auto p = GetBuffer();
 	// 字节对齐时才能之前转为目标整数
 	if(((int)p & 0x01) == 0) return *(ushort*)p;
 
@@ -536,7 +658,7 @@ ushort	ByteArray::ToUInt16() const
 
 uint	ByteArray::ToUInt32() const
 {
-	byte* p = GetBuffer();
+	auto p = GetBuffer();
 	// 字节对齐时才能之前转为目标整数
 	if(((int)p & 0x03) == 0) return *(uint*)p;
 
@@ -545,7 +667,7 @@ uint	ByteArray::ToUInt32() const
 
 ulong	ByteArray::ToUInt64() const
 {
-	byte* p = GetBuffer();
+	auto p = GetBuffer();
 	// 字节对齐时才能之前转为目标整数
 	if(((int)p & 0x07) == 0) return *(ulong*)p;
 
@@ -558,27 +680,27 @@ ulong	ByteArray::ToUInt64() const
 
 void ByteArray::Write(ushort value, int index)
 {
-	Copy((byte*)&value, sizeof(ushort), index);
+	Copy(index, (byte*)&value, sizeof(ushort));
 }
 
 void ByteArray::Write(short value, int index)
 {
-	Copy((byte*)&value, sizeof(short), index);
+	Copy(index, (byte*)&value, sizeof(short));
 }
 
 void ByteArray::Write(uint value, int index)
 {
-	Copy((byte*)&value, sizeof(uint), index);
+	Copy(index, (byte*)&value, sizeof(uint));
 }
 
 void ByteArray::Write(int value, int index)
 {
-	Copy((byte*)&value, sizeof(int), index);
+	Copy(index, (byte*)&value, sizeof(int));
 }
 
 void ByteArray::Write(ulong value, int index)
 {
-	Copy((byte*)&value, sizeof(ulong), index);
+	Copy(index, (byte*)&value, sizeof(ulong));
 }
 
 /******************************** REV ********************************/

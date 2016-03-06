@@ -20,7 +20,7 @@ bool DataMessage::ReadData(const DataStore& ds)
 }
 
 // 读取数据
-bool DataMessage::ReadData(const Array& bs)
+bool DataMessage::ReadData(const Buffer& bs)
 {
 	if(!_Dest) return false;
 
@@ -54,7 +54,7 @@ bool DataMessage::WriteData(DataStore& ds, bool withData)
 	Length	= _Src.Remain();
 	if(_Dest && !Write(ds.Data.Length() - Offset)) return false;
 
-	Array dat(_Src.Current(), Length);
+	Buffer dat(_Src.Current(), Length);
 	ds.Write(Offset, dat);
 
 	// 如果携带数据，则把这一段数据附加到后面
@@ -64,7 +64,7 @@ bool DataMessage::WriteData(DataStore& ds, bool withData)
 }
 
 // 写入数据
-bool DataMessage::WriteData(Array bs, bool withData)
+bool DataMessage::WriteData(Buffer& bs, bool withData)
 {
 	TS("DataMessage::WriteData");
 
@@ -72,8 +72,9 @@ bool DataMessage::WriteData(Array bs, bool withData)
 	Length	= _Src.Remain();
 	if(_Dest && !Write(bs.Length() - Offset)) return false;
 
-	Array dat(_Src.Current(), Length);
-	bs.Copy(dat, Offset);
+	//Buffer dat(_Src.Current(), Length);
+	//bs.Copy(Offset, dat, 0, -1);
+	bs.Copy(Offset, _Src.Current(), Length);
 
 	// 如果携带数据，则把这一段数据附加到后面
 	if(_Dest && withData) _Dest->Write(bs.GetBuffer(), Offset, Length);

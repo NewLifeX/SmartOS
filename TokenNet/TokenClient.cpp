@@ -255,7 +255,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 使用系统ID作为Name
 		ext2.Name	= TokenConfig::Current->User;
 		// 使用系统ID作为Key
-		ext2.Key.Copy(Sys.ID, 16);
+		ext2.Key.Copy(0, Sys.ID, 16);
 		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 		//if(ctrl3) ctrl3->Key = ext2.Key;
 

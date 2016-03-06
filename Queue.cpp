@@ -66,36 +66,39 @@ uint Queue::Write(const Buffer& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	byte*	buf	= (byte*)bs.GetBuffer();
+	//byte*	buf	= (byte*)bs.GetBuffer();
 	uint	len	= bs.Length();
 
 	uint rs = 0;
 	while(true)
 	{
 		// 计算这一个循环剩下的位置
-		uint remain = _s.Capacity() - _head;
+		uint remain = _s.Length() - _head;
 		// 如果要写入的数据足够存放
 		if(len <= remain)
 		{
-			_s.Copy(buf, len, _head);
+			//_s.Copy(buf, len, _head);
+			_s.Copy(_head, bs, rs, len);
 			rs		+= len;
 			_head	+= len;
-			if(_head >= _s.Capacity()) _head -= _s.Capacity();
+			if(_head >= _s.Length()) _head -= _s.Length();
 
 			break;
 		}
 
 		// 否则先写一段，指针回到开头
-		_s.Copy(buf, remain, _head);
-		buf		+= remain;
+		//_s.Copy(buf, remain, _head);
+		_s.Copy(_head, bs, rs, remain);
+		//buf		+= remain;
 		len		-= remain;
 		rs		+= remain;
 		_head	= 0;
 	}
 
-	SmartIRQ irq;
-
-	_size += rs;
+	{
+		SmartIRQ irq;
+		_size += rs;
+	}
 
 	return rs;
 }
@@ -113,7 +116,7 @@ uint Queue::Read(Buffer& bs)
 
 	uint	len	= bs.Length();
 	if(!len) return 0;
-	byte*	buf	= (byte*)bs.GetBuffer();
+	//byte*	buf	= (byte*)bs.GetBuffer();
 
 	if(len > _size) len = _size;
 
@@ -125,7 +128,9 @@ uint Queue::Read(Buffer& bs)
 		// 如果要读取的数据都在这里
 		if(len <= remain)
 		{
-			_s.CopyTo(buf, len, _tail);
+			//_s.CopyTo(buf, len, _tail);
+			//_s.CopyTo(_tail, bs, rs, len);
+			bs.Copy(rs, _s, _tail, len);
 			rs		+= len;
 			_tail	+= len;
 			if(_tail >= _s.Capacity()) _tail -= _s.Capacity();
@@ -134,17 +139,21 @@ uint Queue::Read(Buffer& bs)
 		}
 
 		// 否则先读一段，指针回到开头
-		_s.CopyTo(buf, remain, _tail);
-		buf		+= remain;
+		//_s.CopyTo(buf, remain, _tail);
+		//_s.CopyTo(_tail, bs, rs, remain);
+		bs.Copy(rs, _s, _tail, remain);
+		//buf		+= remain;
 		len		-= remain;
 		rs		+= remain;
 		_tail	= 0;
 	}
 
-	bs.SetLength(rs, false);
+	//bs.SetLength(rs, false);
 
-	SmartIRQ irq;
-	_size -= rs;
+	{
+		SmartIRQ irq;
+		_size -= rs;
+	}
 	//if(_size == 0) _tail = _head;
 
 	return rs;

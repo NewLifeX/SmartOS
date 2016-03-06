@@ -9,7 +9,7 @@
 
 IPAddress::IPAddress(const byte* ips)
 {
-	Buffer((byte*)ips, 4).CopyTo(&Value, 4);
+	Buffer((byte*)ips, 4).CopyTo(0, &Value, 4);
 }
 
 IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
@@ -19,7 +19,7 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 
 IPAddress::IPAddress(const Buffer& arr)
 {
-	arr.CopyTo(&Value, 4);
+	arr.CopyTo(0, &Value, 4);
 }
 
 bool IPAddress::IsAny() const { return Value == 0; }
@@ -45,14 +45,14 @@ const IPAddress& IPAddress::Broadcast()
 
 IPAddress& IPAddress::operator=(const byte* v)
 {
-	Buffer((byte*)v, 4).CopyTo(&Value, 4);
+	Buffer((byte*)v, 4).CopyTo(0, &Value, 4);
 
 	return *this;
 }
 
 IPAddress& IPAddress::operator=(const Buffer& arr)
 {
-	arr.CopyTo(&Value, 4);
+	arr.CopyTo(0, &Value, 4);
 
 	return *this;
 }
@@ -74,7 +74,7 @@ ByteArray IPAddress::ToArray() const
 
 void IPAddress::CopyTo(byte* ips) const
 {
-	if(ips) Buffer((byte*)&Value, 4).CopyTo(ips, 4);
+	if(ips) Buffer((byte*)&Value, 4).CopyTo(0, ips, 4);
 }
 
 String& IPAddress::ToStr(String& str) const
@@ -117,7 +117,7 @@ IPEndPoint::IPEndPoint(const Buffer& arr)
 IPEndPoint& IPEndPoint::operator=(const Buffer& arr)
 {
 	Address	= arr;
-	arr.CopyTo(&Port, 2, 4);
+	arr.CopyTo(4, &Port, 2);
 
 	return *this;
 }
@@ -129,14 +129,14 @@ ByteArray IPEndPoint::ToArray() const
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
 	ByteArray bs(&Address.Value, 4, true);
-	bs.Copy(&Port, 2, 4);
+	bs.Copy(4, &Port, 2);
 
 	return bs;
 }
 
 void IPEndPoint::CopyTo(byte* ips) const
 {
-	if(ips) ToArray().CopyTo(ips, 6);
+	if(ips) ToArray().CopyTo(0, ips, 6);
 }
 
 String& IPEndPoint::ToStr(String& str) const
@@ -218,14 +218,14 @@ MacAddress& MacAddress::operator=(ulong v)
 
 MacAddress& MacAddress::operator=(const byte* buf)
 {
-	Buffer((byte*)buf, 6).CopyTo(&Value, 6);
+	Buffer((byte*)buf, 6).CopyTo(0, &Value, 6);
 
 	return *this;
 }
 
 MacAddress& MacAddress::operator=(const Buffer& arr)
 {
-	arr.CopyTo(&Value, 6);
+	arr.CopyTo(0, &Value, 6);
 
 	return *this;
 }
@@ -247,7 +247,7 @@ ByteArray MacAddress::ToArray() const
 
 void MacAddress::CopyTo(byte* macs) const
 {
-	if(macs) Buffer((byte*)&Value, 6).CopyTo(macs, 6);
+	if(macs) Buffer((byte*)&Value, 6).CopyTo(0, macs, 6);
 }
 
 String& MacAddress::ToStr(String& str) const

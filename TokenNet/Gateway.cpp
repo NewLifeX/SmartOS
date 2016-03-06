@@ -60,8 +60,10 @@ void Gateway::Start()
 		dv->Kind		= Sys.Code;
 		dv->LastTime	= Sys.Seconds();
 
-		dv->SetHardID(Array(Sys.ID, 16));
-		dv->SetName(Array(Sys.Name, 0));
+		//dv->SetHardID(Array(Sys.ID, 16));
+		//dv->SetName(Array(Sys.Name, 0));
+		dv->HardID	= Sys.ID;
+		dv->Name	= Sys.Name;
 
 		Server->Devices.Push(dv);
 		Server->SaveDevices();
@@ -420,7 +422,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 				return false;
 			}
 
-			ushort crc = Crc::Hash16(dv->GetHardID());
+			ushort crc = Crc::Hash16(dv->HardID);
 			Server->Disjoin(id);
 			Sys.Sleep(300);
 			Server->Disjoin(id);

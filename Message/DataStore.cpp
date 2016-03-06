@@ -27,7 +27,7 @@ int DataStore::Write(uint offset, const Buffer& bs)
 	if(!OnHook(offset, size, 0)) return -1;
 
 	// 从数据区读取数据
-	uint rs = Data.Copy(bs, offset);
+	uint rs = Data.Copy(offset, bs, 0, -1);
 
 	// 执行钩子函数
 	if(!OnHook(offset, size, 1)) return -1;
@@ -48,7 +48,9 @@ int DataStore::Read(uint offset, Buffer& bs)
 	if(!OnHook(offset, size, 2)) return -1;
 
 	// 从数据区读取数据
-	return bs.Copy(Data.GetBuffer() + offset, size);
+	//return bs.Copy(Data.GetBuffer() + offset, size);
+	//return Data.CopyTo(offset, bs, size);
+	return bs.Copy(0, Data, offset, size);
 }
 
 bool DataStore::OnHook(uint offset, uint size, int mode)

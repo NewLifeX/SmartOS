@@ -182,16 +182,17 @@ void Token::Setup(ushort code, const char* name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-void Fix2401(void* param)
+int Fix2401(const Buffer& bs)
 {
-	auto& bs	= *(Buffer*)param;
+	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度
 	uint rs	= bs.Length();
 	if(rs >= 8)
 	{
 		rs = bs[5] + 8;
-		if(rs < bs.Length()) bs.SetLength(rs);
+		//if(rs < bs.Length()) bs.SetLength(rs);
 	}
+	return rs;
 }
 
 ITransport* Token::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)

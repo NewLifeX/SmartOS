@@ -134,7 +134,7 @@ public:
 	bool StartsWith(const char* str, int startIndex = 0) const;
 	bool EndsWith(const String& str) const;
 	bool EndsWith(const char* str) const;
-	
+
 	typedef void (*StringItem)(const String& item);
 	int Split(const String& str, StringItem callback);
 
@@ -164,6 +164,8 @@ protected:
 	String& copy(const char* cstr, uint length);
 	void move(String& rhs);
 };
+
+#define R(str) String(str)
 
 //String operator+(const char* str1, const char* str2);
 //String operator+(const char* str, const Object& obj);

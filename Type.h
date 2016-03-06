@@ -60,62 +60,57 @@ public:
 	const String Name() const;	// 名称
 };
 
+// 内存缓冲区。包装指针和长度
 class Buffer : public Object
 {
 public:
+	Buffer(void* p = nullptr, int len = 0);
+	Buffer(const Buffer& buf);
+	Buffer(Buffer&& rval);
+
+	Buffer& operator = (const Buffer& rhs);
+	Buffer& operator = (const void* p);
+	Buffer& operator = (Buffer&& rval);
+
 	inline byte* GetBuffer() { return (byte*)_Arr; }
 	inline const byte* GetBuffer() const { return (byte*)_Arr; }
-
 	inline int Length() const { return _Length; }
-	virtual bool SetLength(int len, bool bak = false) { _Length = len; return true; }
-	inline int Capacity() const { return _Capacity; }
+	//inline int Capacity() const { return _Capacity; }
+	bool Empty() const;
 
-	Buffer(void* p = nullptr, int len = 0)
-	{
-		_Arr	= p;
-		_Length	= len;
-		_Capacity	= len;
-	}
+	virtual bool SetLength(int len, bool bak = false);
 
     // 重载索引运算符[]，返回指定元素的第一个字节
-    byte& operator[](int i) const
-	{
-		assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+    byte operator[](int i) const;
+    byte& operator[](int i);
 
-		byte* buf = (byte*)_Arr;
+	// 拷贝数据，默认-1长度表示当前长度
+	int Copy(int destIndex, const void* src, int len);
+	// 拷贝数据，默认-1长度表示两者最小长度
+	int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
+	int CopyTo(int srcIndex, void* dest, int len) const;
+	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
+	//int CopyTo(int index, const Buffer& arr, int len) const;
 
-		return buf[i];
-	}
-	// 复制数组。深度克隆，拷贝数据，自动扩容
-	int Copy(const void* data, int len = -1, int index = 0);
-	// 复制数组。深度克隆，拷贝数据
-	int Copy(const Buffer& arr, int index = 0);
-	// 把当前数组复制到目标缓冲区。未指定长度len时复制全部
-	int CopyTo(void* data, int len = -1, int index = 0) const;
+	// 用指定字节设置初始化一个区域
+	void Set(byte item, int index, int len);
+	void Clear();
 
-	const Buffer Sub(int len) const
-	{
-		assert_param2(len <= _Length, "len <= _Length");
+	// 截取一个子缓冲区
+	Buffer Sub(int len);
+	const Buffer Sub(int len) const;
 
-		return Buffer(_Arr, len);
-	}
+	String ToHex();
+
+	friend bool operator == (const Buffer& bs1, const Buffer& bs2);
+	friend bool operator != (const Buffer& bs1, const Buffer& bs2);
 
 protected:
     void*	_Arr;		// 数据指针
 	int		_Length;	// 长度
-	uint	_Capacity;	// 最大容量
+	//uint	_Capacity;	// 最大容量
 };
-
-/*class Buffer : public IBuffer
-{
-public:
-	char*	Ptr;
-	int		Length;
-
-	Buffer(char* p = nullptr, int len = 0);
-
-
-}*/
 
 // 数组长度
 #define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
@@ -137,7 +132,7 @@ public:
 	// 数组长度
     //int Length() const;
 	// 数组最大容量。初始化时决定，后面不允许改变
-	//int Capacity() const;
+	int Capacity() const;
 	// 缓冲区。按字节指针返回
 	//byte* GetBuffer() const;
 
@@ -145,12 +140,14 @@ public:
 	Array(const void* data, int len);
 
 	// 重载等号运算符，使用另一个固定数组来初始化
-    Array& operator=(const Array& arr);
+    //Array& operator=(const Array& arr);
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
     //Array& operator=(const void* data);
 
 	virtual ~Array();
 
+	using Buffer::Set;
+	
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 	virtual bool SetLength(int length, bool bak = false);
 	// 设置数组元素为指定值，自动扩容
@@ -311,15 +308,16 @@ public:
 };
 
 // 字节数组
-class ByteArray : public TArray<byte>
+class ByteArray : public Array
 {
 public:
-	ByteArray(int length = 0) : TArray(length) { }
-	ByteArray(byte item, int length) : TArray(length) { Set(item, 0, length); }
+	ByteArray(int length = 0) : Array(Arr, length > 0 ? length : ArrayLength(Arr)) { }
+	ByteArray(byte item, int length) : Array(Arr, length) { Set(item, 0, length); }
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const Array& arr) : TArray(arr.Length()) { Copy(arr, 0); }
+	ByteArray(const Buffer& arr) : Array(Arr, arr.Length()) { Copy(0, arr, 0, -1); }
+	ByteArray(const ByteArray& arr) : Array(Arr, arr.Length()) { Copy(0, arr, 0, -1); }
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
@@ -352,6 +350,11 @@ public:
 
     //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
+
+protected:
+	byte	Arr[0x40];	// 内部缓冲区
+
+	virtual void* Alloc(int len) { return new byte[len]; }
 };
 
 // 从数组创建列表

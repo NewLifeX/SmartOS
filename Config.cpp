@@ -64,12 +64,12 @@ const void* ConfigBlock::Data() const
 
 uint ConfigBlock::CopyTo(Buffer& bs) const
 {
-    if(Size == 0 || Size > bs.Capacity()) return 0;
+    if(Size == 0 || Size > bs.Length()) return 0;
 
-	bs.Copy(Data(), Size);
-	bs.SetLength(Size);
+	return bs.Copy(0, Data(), Size);
+	//bs.SetLength(Size);
 
-	return Size;
+	//return Size;
 }
 
 // 构造一个新的配置块
@@ -436,7 +436,12 @@ HotConfig& HotConfig::Current()
 
 	// 查找配置数据，如果不存在，则清空
 	auto dat = cfg.Get("Hot");
-	if(!dat) dat = cfg.Set("Hot", ByteArray((byte)0, sizeof(HotConfig)));
+	if(!dat)
+	{
+		ByteArray bs(sizeof(HotConfig));
+		bs.Set(0, 0, bs.Length());
+		dat = cfg.Set("Hot", bs);
+	}
 
 	return *(HotConfig*)dat;
 }

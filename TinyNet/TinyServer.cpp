@@ -49,7 +49,8 @@ bool TinyServer::Send(Message& msg) const
 	{
 		auto dv	= FindDevice(((TinyMessage&)msg).Dest);
 		if(!dv)	dv	= Current;
-		if(dv)	msg.State	= dv->Mac;
+		//if(dv)	msg.State	= dv->Mac;
+		if(dv)	dv->Mac.CopyTo(0, msg.State, -1);
 	}
 
 	return Control->Send(msg);
@@ -263,13 +264,15 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		// 节点注册
 		dv->RegTime	= now;
 		dv->Kind	= dm.Kind;
-		dv->SetHardID(dm.HardID);
+		//dv->SetHardID(dm.HardID);
+		dv->HardID	= dm.HardID;
 		dv->Version	= dm.Version;
 		dv->LoginTime = now;
 		// 生成随机密码。当前时间的MD5
-		auto bs	= MD5::Hash(Array(&now, 8));
-		if(bs.Length() > 8) bs.SetLength(8);
-		dv->SetPass(bs);
+		//auto bs	= MD5::Hash(Buffer(&now, 8));
+		//if(bs.Length() > 8) bs.SetLength(8);
+		//dv->SetPass(bs);
+		dv->Pass	= MD5::Hash(Buffer(&now, 8));
 
 		// 保存无线物理地址
 		auto st = (byte*)msg.State;
@@ -280,9 +283,11 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			if(sum == 0 || sum == 0xFF * 5) st = NULL;
 		}
 		if(!st)
-			memcpy(dv->Mac, dv->HardID, 6);
+			//memcpy(dv->Mac, dv->HardID, 6);
+			dv->Mac	= dv->HardID;
 		else
-			memcpy(dv->Mac, st, 6);
+			//memcpy(dv->Mac, st, 6);
+			dv->Mac	= st;
 
 		if(dv->Valid())
 		{
@@ -313,12 +318,14 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Channel	= Cfg->Channel;
 	dm.Speed	= Cfg->Speed / 10;
 	dm.Address	= dv->Address;
-	dm.Password.Copy(dv->GetPass());
+	//dm.Password.Copy(dv->GetPass());
+	((Buffer&)dm.Password)	= dv->Pass;
 
-	dm.HardID.Set(Sys.ID, 6);
+	//dm.HardID.Set(Sys.ID, 6);
+	((Buffer&)dm.HardID)	= Sys.ID;
 	dm.WriteMessage(rs);
 
-	rs.State	= dv->Mac;
+	rs.State	= dv->_Mac;
 	//Control->Send(rs);
 	// 组网消息属于广播消息，很可能丢包，重发3次
 	for(int i=0; i<3; i++)
@@ -345,7 +352,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 			// 拿出来硬件ID的校验，检查是否合法
 			auto ms 	= msg.ToStream();
 			ushort crc1	= ms.ReadUInt16();
-			ushort crc2	= Crc::Hash16(dv->GetHardID());
+			ushort crc2	= Crc::Hash16(dv->HardID);
 			if(crc1 == crc2)
 			{
 				debug_printf("TinyServer::OnDisjoin:0x%02X \r\n", dv->Address);
@@ -382,7 +389,7 @@ bool TinyServer::Disjoin(byte id)
 	TS("TinyServer::Disjoin");
 
 	auto dv  = FindDevice(id);
-	auto crc = Crc::Hash16(dv->GetHardID());
+	auto crc = Crc::Hash16(dv->HardID);
 
 	TinyMessage msg;
 
@@ -419,8 +426,8 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 		{
 			case 0x01:
 			{
-				auto bs = dv->GetStore();
-				pm.ReadData(ms, bs);
+				//auto bs = dv->GetStore();
+				pm.ReadData(ms, dv->Store);
 
 				// 更新读取时间
 				dv->LastRead	= Sys.Seconds();
@@ -429,14 +436,14 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 			}
 			case 0x02:
 			{
-				auto bs = dv->GetConfig();
-				pm.ReadData(ms, bs);
+				//auto bs = dv->GetConfig();
+				//pm.ReadData(ms, bs);
 				break;
 			}
 			case 0x03:
 			{
 				ushort crc	= 0;
-				if(!pm.ReadHardCrc(ms, dv, crc))
+				if(!pm.ReadHardCrc(ms, *dv, crc))
 				{
 					Disjoin(rs, crc);
 					return false;
@@ -481,11 +488,11 @@ bool TinyServer::OnRead(const Message& msg, Message& rs, const Device& dv)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
-		rt	= dm.ReadData(dv.GetStore());
+		rt	= dm.ReadData(dv.Store);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		rt	= dm.ReadData(dv.GetConfig());
+		//rt	= dm.ReadData(dv.GetConfig());
 	}
 
 	rs.Error	= !rt;
@@ -513,11 +520,11 @@ bool TinyServer::OnWrite(const Message& msg, Message& rs, Device& dv)
 
 	bool rt	= true;
 	if(dm.Offset < 64)
-		rt	= dm.WriteData(dv.GetStore(), false);
+		rt	= dm.WriteData(dv.Store, false);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		rt	= dm.WriteData(dv.GetConfig(), false);
+		//rt	= dm.WriteData(dv.GetConfig(), false);
 	}
 
 	rs.Error	= !rt;
@@ -548,11 +555,11 @@ bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
 	DataMessage dm(msg, NULL);
 
 	if(dm.Offset < 64)
-		dm.WriteData(dv.GetStore(), false);
+		dm.WriteData(dv.Store, false);
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		dm.WriteData(dv.GetConfig(), false);
+		//dm.WriteData(dv.GetConfig(), false);
 	}
 
 	return true;
@@ -601,13 +608,13 @@ void GetDeviceKey(byte scr,Array& key,void* param)
 	key.Copy(dv->Pass, 8);*/
 }
 
-Device* TinyServer::FindDevice(const Array& hardid) const
+Device* TinyServer::FindDevice(const Buffer& hardid) const
 {
 	if(hardid.Length() == 0) return NULL;
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-	  if(Devices[i]!=NULL&&hardid == Devices[i]->GetHardID()) return Devices[i];
+		if(Devices[i] != NULL && hardid == Devices[i]->HardID) return Devices[i];
 	}
 	return NULL;
 }
@@ -756,7 +763,7 @@ void TinyServer::ClearDevices()
 			
 			TinyMessage rs;
 			rs.Dest = dv->Address;
-			ushort crc = Crc::Hash16(dv->GetHardID());
+			ushort crc = Crc::Hash16(dv->HardID);
 			Disjoin(rs, crc);
 		}
 	}

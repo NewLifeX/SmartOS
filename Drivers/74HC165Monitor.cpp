@@ -90,7 +90,7 @@ void IC74HC165MOR::ReaBit()
 byte IC74HC165MOR::Read(byte *buf, byte count)
 {
 	Open();
-	return _Bs.CopyTo(buf,count);
+	return _Bs.CopyTo(0, buf, count);
 }
 
 byte IC74HC165MOR::Read()

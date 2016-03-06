@@ -15,7 +15,7 @@ Message::Message(byte code)
 void Message::SetData(const Array& bs, uint offset)
 {
 	Length = bs.Length() + offset;
-	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(Data + offset, Length);
+	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(0, Data + offset, Length);
 }
 
 void Message::SetError(byte errorCode, const char* msg)

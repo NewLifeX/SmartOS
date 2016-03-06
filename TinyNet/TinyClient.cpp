@@ -282,7 +282,7 @@ void TinyClientTask(void* param)
 				client->Report(offset, bs[offset]);
 			else
 			{
-				auto bs2 = ByteArray(&bs[offset],len);
+				auto bs2 = ByteArray(&bs[offset], len);
 				client->Report(offset, bs2);
 			}
 		}
@@ -319,7 +319,8 @@ void TinyClient::Join()
 	// 组网版本不是系统版本，而是为了做新旧版本组网消息兼容的版本号
 	//dm.Version	= Sys.Version;
 	dm.Kind		= Type;
-	dm.HardID.Copy(Sys.ID, 16);
+	//dm.HardID.Copy(Sys.ID, 16);
+	((Buffer&)dm.HardID)	= Sys.ID;
 	dm.TranID	= TranID;
 	dm.WriteMessage(msg);
 	//dm.Show(true);
@@ -371,7 +372,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	// 服务端组网密码，退网使用
 	//Cfg->Mac[0]		= dm.HardID.Length();
 	//dm.HardID.Save(Cfg->Mac, ArrayLength(Cfg->Mac));
-	dm.HardID.CopyTo(Cfg->Mac);
+	dm.HardID.CopyTo(0, Cfg->Mac, -1);
 
 #if DEBUG
 	debug_printf("组网成功！网关 0x%02X 分配 0x%02X ，频道：%d，传输速率：%dkbps，密码：", dm.Server, dm.Address, dm.Channel, Cfg->Speed);

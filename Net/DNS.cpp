@@ -349,7 +349,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	Buffer bs(buf, ArrayLength(buf));
 	Buffer rs(buf, ArrayLength(buf));
 	// 同时作为响应缓冲区，别浪费了
-	rs.SetLength(0);
+	//rs.SetLength(0);
 	_Buffer = &rs;
 
 	dns_makequery(0, domain, bs);
@@ -385,7 +385,7 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 	if(server.Address != Host.DNSServer) return;
 
 	if(_Buffer)
-		_Buffer->Copy(bs);
+		_Buffer->Copy(0, bs, 0, -1);
 	else
 	{
 #if NET_DEBUG

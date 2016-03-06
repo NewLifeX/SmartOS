@@ -458,7 +458,7 @@ void aesEncrypt(byte* buffer, byte* chainBlock )
 	CopyBytes( chainBlock, buffer, BLOCKSIZE );
 }
 
-ByteArray AES::Encrypt(const Array& data, const Array& pass)
+ByteArray AES::Encrypt(const Buffer& data, const Buffer& pass)
 {
 	byte buf[KeyLength];
 	ByteArray box(buf, KeyLength);
@@ -478,7 +478,7 @@ ByteArray AES::Encrypt(const Array& data, const Array& pass)
 
 	ByteArray rs;
 	//rs.SetLength(data.Length());
-	rs.Copy(data);
+	rs.Copy(0, data, 0, -1);
 
 	// 加密
 	aesEncrypt(rs.GetBuffer(), box.GetBuffer());
@@ -486,7 +486,7 @@ ByteArray AES::Encrypt(const Array& data, const Array& pass)
 	return rs;
 }
 
-ByteArray AES::Decrypt(const Array& data, const Array& pass)
+ByteArray AES::Decrypt(const Buffer& data, const Buffer& pass)
 {
 	byte buf[KeyLength];
 	ByteArray box(buf, KeyLength);
@@ -509,7 +509,7 @@ ByteArray AES::Decrypt(const Array& data, const Array& pass)
 
 	ByteArray rs;
 	//rs.SetLength(data.Length());
-	rs.Copy(data);
+	rs.Copy(0, data, 0, -1);
 
 	// 解密
 	aesDecrypt(rs.GetBuffer(), box.GetBuffer());

@@ -86,6 +86,6 @@ void BufferPort::OnReceive(const Buffer& bs, void* param)
 	if(Buf.Capacity() > 0)
 	{
 		Buf.SetLength(0);
-		Buf.Copy(bs);
+		Buf.Copy(0, bs, 0, -1);
 	}
 }

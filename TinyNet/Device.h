@@ -16,7 +16,7 @@ public:
 	byte	Address;	// 节点地址
 
 	ushort	Kind;		// 类型
-	byte	HardID[16];	// 硬件编码
+	byte	_HardID[16];	// 硬件编码
 	uint	LastTime;	// 活跃时间。秒
 	uint	RegTime;	// 注册时间。秒
 	uint	LoginTime;	// 登录时间。秒
@@ -30,12 +30,12 @@ public:
 	ushort	OfflineTime;// 离线阀值时间。秒
 	ushort	PingTime;	// 心跳时间。秒
 
-	byte	Mac[6];		// 无线物理地址
-	char	Name[16];	// 名称
+	byte	_Mac[6];		// 无线物理地址
+	char	_Name[16];	// 名称
 	//String	Name;		//变长名称
-	byte	Pass[8];	// 通信密码
+	byte	_Pass[8];	// 通信密码
 
-	byte	Store[32];	// 数据存储区
+	byte	_Store[32];	// 数据存储区
 
 	// 以下字段不存Flash
 	TinyConfig*	Cfg;
@@ -43,6 +43,13 @@ public:
 	uint	LastRead;	// 最后读取数据的时间。秒
 	//uint	LastWrite;	// 最后写入数据的时间。毫秒
 
+	Buffer	HardID;
+	Buffer	Mac;
+	String	Name;
+	Buffer	Pass;
+	Buffer	Store;
+	//Buffer	Config;
+	
 	Device();
 
 	// 序列化到消息数据流
@@ -58,7 +65,7 @@ public:
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
 
-	Array GetHardID();
+	/*Array GetHardID();
 	Array GetName();
 	Array GetPass();
 	Array GetStore();
@@ -74,7 +81,7 @@ public:
 	void SetName(const Array& arr);
 	void SetPass(const Array& arr);
 	void SetStore(const Array& arr);
-	void SetConfig(const Array& arr);
+	void SetConfig(const Array& arr);*/
 
 #if DEBUG
 	virtual String& ToStr(String& str) const;

@@ -220,25 +220,25 @@ uint Stream::ReadArray(Buffer& bs)
 	uint len = ReadEncodeInt();
 	if(!len) return 0;
 
-	if(len > bs.Capacity())
+	if(len > bs.Length())
 	{
 		// 在设计时，如果取得的长度超级大，可能是设计错误
 		if(len > 0x40)
 		{
-			debug_printf(" 读 %d > %d ", len, bs.Capacity());
+			debug_printf(" 读 %d > %d ", len, bs.Length());
 			//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
 			//bs.Set(0, 0, len);
 			/*// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据
 			// 这里在缓冲区不够大时，有多少读取多少
 			len = bs.Capacity();*/
 			// 为了避免错误数据导致内存溢出，限定最大值
-			if(len > 0x400) len = bs.Capacity();
+			//if(len > 0x400) len = bs.Capacity();
 		}
 		// 如果不是设计错误，那么数组直接扩容
 		//bs.SetLength(len);
 	}
 	// 不管长度太大还是太小，都要设置一下长度，避免读取长度小于数组长度，导致得到一片空数据
-	bs.SetLength(len);
+	//bs.SetLength(len);
 
 	Read(bs.GetBuffer(), 0, len);
 

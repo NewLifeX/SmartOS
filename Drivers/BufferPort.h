@@ -16,7 +16,7 @@ public:
 
 	IDataPort*	Led;	// 指示灯
 
-	Buffer		Buf;	// 用于接收数据的缓冲区，外部在打开前设置大小
+	ByteArray	Buf;	// 用于接收数据的缓冲区，外部在打开前设置大小
 	
     BufferPort();
     ~BufferPort();
