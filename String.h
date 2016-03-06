@@ -28,8 +28,8 @@ public:
 
 	// 内存管理
 	bool CheckCapacity(uint size);
-	inline uint Length() const { return len; }
-	inline char* GetBuffer() const { return buffer; }
+	inline uint Length() const { return _Length; }
+	inline char* GetBuffer() const { return _Arr; }
 	void SetBuffer(const void* str, int length);
 
 	// 为被赋值对象建立一个备份。
@@ -85,8 +85,8 @@ public:
 	friend StringHelper& operator + (const StringHelper& lhs, float num);
 	friend StringHelper& operator + (const StringHelper& lhs, double num);
 
-    //operator bool() const { return len > 0; }
-	//operator char*() const { return buffer; }
+    //operator bool() const { return _Length > 0; }
+	//operator char*() const { return _Arr; }
 	int CompareTo(const String& s) const;
 	bool Equals(const String& s) const;
 	bool Equals(const char* cstr) const;
@@ -138,7 +138,7 @@ public:
 	typedef void (*StringItem)(const String& item);
 	int Split(const String& str, StringItem callback);
 
-	String Substring(int start, int len) const;
+	String Substring(int start, int _Length) const;
 	String& TrimStart();
 	String& TrimEnd();
 	String& Trim();
@@ -150,9 +150,11 @@ public:
 	String& ToUpper();
 
 protected:
-	char*	buffer;		// 字符数组
-	int		capacity;	// 容量，不包含0结束符
-	int		len;		// 字符串长度，不包含0结束符
+	char*	_Arr;		// 字符数组
+	int		_Capacity;	// 容量，不包含0结束符
+	int		_Length;		// 字符串长度，不包含0结束符
+	bool	_needFree;	// 是否需要释放
+	//bool	_canWrite;	// 是否可写
 
 	char	Arr[0x40];
 
