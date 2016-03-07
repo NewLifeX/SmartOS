@@ -1,11 +1,11 @@
-﻿#ifndef _XH711_H_
-#define _XH711_H_
+﻿#ifndef _HX711_H_
+#define _HX711_H_
 
 #include "Port.h"
 #include "Power.h"
 
 // 24位 ADC
-class XH711
+class HX711
 {
 private:
 
@@ -13,7 +13,7 @@ private:
 public:
 	bool Opened;
 
-	XH711();
+	HX711();
 	
 	bool Open();
 	bool Close();
