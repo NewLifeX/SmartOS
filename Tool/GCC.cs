@@ -25,7 +25,7 @@ namespace NewLife.Reflection
         String Asm;
         String Link;
         String Ar;
-        String FromELF;
+        String ObjCopy;
         String LibPath;
 
         public Boolean Init(String basePath = null, Boolean addlib = true)
@@ -40,14 +40,15 @@ namespace NewLife.Reflection
                 }
 
                 XTrace.WriteLine("发现 {0} {1} {2}", gcc.Name, gcc.Version, gcc.ToolPath);
-                basePath = gcc.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
+                //basePath = gcc.ToolPath.CombinePath("arm-none-eabi\\bin").GetFullPath();
+                basePath = gcc.ToolPath.CombinePath("bin").GetFullPath();
             }
 
-            Complier = basePath.CombinePath("arm-none-eabi-g++.exe");
-            Asm = basePath.CombinePath("as.exe");
+            Complier = basePath.CombinePath("arm-none-eabi-g++.exe").GetFullPath();
+            Asm = basePath.CombinePath("arm-none-eabi-gcc.exe");
             Link = basePath.CombinePath("armlink.exe");
-            Ar = basePath.CombinePath("ar.exe");
-            FromELF = basePath.CombinePath("readelf.exe");
+            Ar = basePath.CombinePath("arm-none-eabi-ar.exe");
+            ObjCopy = basePath.CombinePath("arm-none-eabi-objcopy.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
             // 特殊处理GD32F1x0
@@ -87,13 +88,11 @@ namespace NewLife.Reflection
         /// <summary>是否编译调试版。默认true</summary>
         public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
 
-        private Boolean _Tiny;
         /// <summary>是否精简版。默认false</summary>
-        public Boolean Tiny { get { return _Tiny; } set { _Tiny = value; } }
+        public Boolean Tiny { get; set; }
 
-        private Boolean _Preprocess = false;
         /// <summary>是否仅预处理文件，不编译。默认false</summary>
-        public Boolean Preprocess { get { return _Preprocess; } set { _Preprocess = value; } }
+        public Boolean Preprocess { get; set; }
 
         private String _CPU = "Cortex-M0";
         /// <summary>处理器。默认M0</summary>
@@ -103,9 +102,8 @@ namespace NewLife.Reflection
         /// <summary>Flash容量</summary>
         public String Flash { get { return _Flash; } set { _Flash = value; } }
 
-        private String _Scatter;
         /// <summary>分散加载文件</summary>
-        public String Scatter { get { return _Scatter; } set { _Scatter = value; } }
+        public String Scatter { get; set; }
 
         private Int32 _Cortex;
         /// <summary>Cortex版本。默认0</summary>
@@ -127,9 +125,8 @@ namespace NewLife.Reflection
             }
         }
 
-        private Boolean _GD32;
         /// <summary>是否GD32芯片</summary>
-        public Boolean GD32 { get { return _GD32; } set { _GD32 = value; } }
+        public Boolean GD32 { get; set; }
 
         private Int32 _RebuildTime = 60;
         /// <summary>重新编译时间，默认60分钟</summary>
@@ -157,7 +154,7 @@ namespace NewLife.Reflection
         #endregion
 
         #region 主要编译方法
-        public Int32 Compile(String file)
+        public Int32 Compile(String file, Boolean showCmd)
         {
             /*
              * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS
@@ -182,11 +179,16 @@ namespace NewLife.Reflection
             }
 
             var sb = new StringBuilder();
-            sb.Append("-c");
-            if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
-            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
-			sb.Append(" --multibyte_chars --locale \"chinese\"");
-            sb.AppendFormat(" -D{0}", Flash);
+			if(file.EndsWithIgnoreCase(".cpp"))
+				sb.Append("-c -std=c++17");
+			else
+				sb.Append("-c");
+            sb.AppendFormat(" -mlittle-endian -mthumb -mcpu={0} -mthumb-interwork -O{1}", CPU, Debug ? 0 : 3);
+			sb.AppendFormat(" -flto -ffunction-sections -fdata-sections");
+			sb.AppendFormat(" -fno-exceptions --specs=nano.specs --specs=rdimon.specs -o");
+			sb.AppendFormat(" -L. -L./ldscripts -T gcc.ld");
+			sb.AppendFormat(" -Wl,--gc-sections");
+            sb.AppendFormat("  -D__NO_SYSTEM_INIT -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
@@ -194,19 +196,21 @@ namespace NewLife.Reflection
             }
             if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
             if (Tiny) sb.Append(" -DTINY");
+			if(showCmd)
+			{
+				Console.Write("命令参数：");
+				Console.ForegroundColor = ConsoleColor.Magenta;
+				Console.WriteLine(sb);
+				Console.ResetColor();
+			}
+			sb.AppendFormat(" -I.");
             foreach (var item in Includes)
             {
                 sb.AppendFormat(" -I{0}", item);
             }
 
-            if (Preprocess)
-            {
-                sb.AppendFormat(" -E");
-                sb.AppendFormat(" -o \"{0}.{1}\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName, Path.GetExtension(file).TrimStart("."));
-            }
-            else
-                sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
-            sb.AppendFormat(" -c \"{0}\"", file);
+			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
+            sb.AppendFormat(" {0} -o \"{0}.o\"", file, objName);
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -268,21 +272,7 @@ namespace NewLife.Reflection
             var obj = GetObjPath(null);
             var list = new List<String>();
 
-            var sb = new StringBuilder();
-            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} -DUSE_STDPERIPH_DRIVER", CPU, Debug ? 0 : 3);
-            sb.AppendFormat(" -D{0}", Flash);
-            if (GD32) sb.Append(" -DGD32");
-            foreach (var item in Defines)
-            {
-                sb.AppendFormat(" -D{0}", item);
-            }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-            if (Tiny) sb.Append(" -DTINY");
-            Console.Write("命令参数：");
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine(sb);
-            Console.ResetColor();
-
+			var cpp = 0;
             foreach (var item in Files)
             {
                 var rs = 0;
@@ -292,7 +282,7 @@ namespace NewLife.Reflection
                 {
                     case ".c":
                     case ".cpp":
-                        rs = Compile(item);
+                        rs = Compile(item, cpp++ == 0);
                         break;
                     case ".s":
                         rs = Assemble(item);
@@ -503,13 +493,13 @@ namespace NewLife.Reflection
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
-            rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
 
             /*var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
             sb.Clear();
             sb.AppendFormat("--i32  -o \"{0}\" \"{1}\"", hex, axf);
-            rs = FromELF.Run(sb.ToString(), 3000, WriteLog);*/
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);*/
 
             if (name.Contains("\\")) name = name.Substring("\\", "_");
             if (rs == 0)
@@ -748,7 +738,7 @@ namespace NewLife.Reflection
                 Words.Add("Error", "错误");
                 Words.Add("Warning", "警告");
                 Words.Add("Warnings", "警告");
-                Words.Add("cannot", "不能");
+                /*Words.Add("cannot", "不能");
                 Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
@@ -780,7 +770,7 @@ namespace NewLife.Reflection
                 Words.Add("architecture", "架构");
                 Words.Add("processor", "处理器");
                 Words.Add("Undefined", "未定义");
-                Words.Add("referred", "引用");
+                Words.Add("referred", "引用");*/
             }
             #endregion
 
@@ -830,7 +820,7 @@ namespace NewLife.Reflection
         public GCC()
         {
 			Name = "GCC";
-			
+
             #region 从注册表获取目录和版本
             if (String.IsNullOrEmpty(ToolPath))
             {
