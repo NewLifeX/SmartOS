@@ -60,28 +60,40 @@ public:
 	const String Name() const;	// 名称
 };
 
-// 内存缓冲区。包装指针和长度
+// 内存数据区。包装指针和长度
+// 参考C#的Byte[]，主要实现对象与指针的相互转化、赋值、拷贝、设置、截取、比较等操作。
+// 内部指针指向的内存和长度，都由外部传入，内部不会自动分配。
+// 所有的进出拷贝都是针对内部指针和最大长度，不会自动扩容，除非子类继承扩展SetLength。
+// 拷贝的原则是尽力而为，有多少可用空间就拷贝多少长度。
 class Buffer : public Object
 {
 public:
+	// 打包一个指针和长度指定的数据区
 	Buffer(void* p = nullptr, int len = 0);
+	// 拷贝构造函数。直接把指针和长度拿过来用
 	Buffer(const Buffer& buf);
+	// 对象mov操作，指针和长度归我，清空对方
 	Buffer(Buffer&& rval);
 
+	// 从另一个对象那里拷贝
 	Buffer& operator = (const Buffer& rhs);
+	// 从指针拷贝，使用我的长度
 	Buffer& operator = (const void* p);
+	// 对象mov操作，指针和长度归我，清空对方
 	Buffer& operator = (Buffer&& rval);
 
+	// 拿出指针供外部使用
 	inline byte* GetBuffer() { return (byte*)_Arr; }
 	inline const byte* GetBuffer() const { return (byte*)_Arr; }
 	inline int Length() const { return _Length; }
 	bool Empty() const;
 
-	// 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
+	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	virtual bool SetLength(int len, bool bak = false);
 
     // 重载索引运算符[]，返回指定元素的第一个字节
     byte operator[](int i) const;
+	// 支持 buf[i] = 0x36 的语法
     byte& operator[](int i);
 
 	// 拷贝数据，默认-1长度表示当前长度
@@ -99,6 +111,7 @@ public:
 	Buffer Sub(int len);
 	const Buffer Sub(int len) const;
 
+	// 转为十六进制字符串
 	String ToHex();
 
 	friend bool operator == (const Buffer& bs1, const Buffer& bs2);
@@ -107,6 +120,9 @@ public:
 protected:
     void*	_Arr;		// 数据指针
 	int		_Length;	// 长度
+	
+private:
+	void move(Buffer& rval);
 };
 
 // 数组长度
@@ -129,8 +145,15 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
+	Array(const Buffer& rhs);
+	Array(const Array& rhs);
+	Array(Array&& rval);
 
 	virtual ~Array();
+
+	Array& operator = (const Buffer& rhs);
+	Array& operator = (const void* p);
+	Array& operator = (Array&& rval);
 
 	using Buffer::Set;
 	
@@ -158,6 +181,7 @@ protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
+	void Init();
 };
 
 // 使用常量数组来定义一个指针数组
@@ -293,10 +317,15 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const Buffer& arr) : Array(Arr, arr.Length()) { Copy(0, arr, 0, -1); }
-	ByteArray(const ByteArray& arr) : Array(Arr, arr.Length()) { Copy(0, arr, 0, -1); }
+	ByteArray(const Buffer& arr);
+	ByteArray(const ByteArray& arr);
+	ByteArray(ByteArray&& rval);
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
+
+	ByteArray& operator = (const Buffer& rhs);
+	ByteArray& operator = (const void* p);
+	ByteArray& operator = (ByteArray&& rval);
 
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
     //ByteArray& operator=(const void* data);

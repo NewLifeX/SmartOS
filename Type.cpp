@@ -79,7 +79,16 @@ Buffer::Buffer(const Buffer& buf)
 
 Buffer::Buffer(Buffer&& rval)
 {
-	*this	= rval;
+	move(rval);
+}
+
+void Buffer::move(Buffer& rval)
+{
+	_Arr	= rval._Arr;
+	_Length	= rval._Length;
+
+	rval._Arr		= nullptr;
+	rval._Length	= 0;
 }
 
 Buffer& Buffer::operator = (const Buffer& rhs)
@@ -98,11 +107,7 @@ Buffer& Buffer::operator = (const void* p)
 
 Buffer& Buffer::operator = (Buffer&& rval)
 {
-	_Arr	= rval._Arr;
-	_Length	= rval._Length;
-
-	rval._Arr		= nullptr;
-	rval._Length	= 0;
+	move(rval);
 
 	return *this;
 }
@@ -126,11 +131,6 @@ byte& Buffer::operator[](int i)
 	return buf[i];
 }
 
-/*byte* Buffer::GetBuffer() { return (byte*)_Arr; }
-const byte* Buffer::GetBuffer() const { return (byte*)_Arr; }
-int Buffer::Length() const { return _Length; }
-int Buffer::Capacity() const { return _Capacity; }*/
-//bool Buffer::Empty() const { return _Arr && _Length > 0; }
 bool Buffer::Empty() const { return _Length == 0; }
 
 // 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
@@ -147,13 +147,16 @@ bool Buffer::SetLength(int len, bool bak)
 int Buffer::Copy(int destIndex, const void* src, int len)
 {
 	if(!src) return 0;
+
 	int remain	= _Length - destIndex;
 	//if(remain <= 0) return 0;
 
+	// 如果没有指明长度，则拷贝起始位置之后的剩余部分
 	if(len < 0 )
 		len	= remain;
 	else if(len > remain)
 	{
+		// 要拷贝进来的数据超过内存大小，给子类尝试扩容，如果扩容失败，则只拷贝没有超长的那一部分
 		// 子类可能在这里扩容
 		if(!SetLength(destIndex + len, true)) len	= remain;
 	}
@@ -167,13 +170,14 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 // 拷贝数据，默认-1长度表示两者最小长度
 int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
-	if(&src == this) return _Length;
+	//if(&src == this) return _Length;
 
+	// 源数据的实际长度可能跟要拷贝的长度不一致
 	int remain	= src._Length - srcIndex;
 	if(len > remain) len	= remain;
 	if(len <= 0) return 0;
 
-	return Copy(destIndex, (byte*)src._Arr + srcIndex, src._Length);
+	return Copy(destIndex, (byte*)src._Arr + srcIndex, len);
 }
 
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
@@ -255,26 +259,65 @@ int MemLen(const void* data)
 
 Array::Array(void* data, int len) : Buffer(data, len)
 {
-	_Size	= 1;
-
-	_Capacity	= len;
-	_needFree	= false;
-	_canWrite	= true;
+	Init();
 }
 
 Array::Array(const void* data, int len) : Buffer((void*)data, len)
 {
+	Init();
+
+	_canWrite	= false;
+}
+
+Array::Array(const Buffer& rhs) : Buffer(rhs)
+{
+	Init();
+}
+
+Array::Array(const Array& rhs) : Buffer(rhs)
+{
+	Init();
+}
+
+Array::Array(Array&& rval)
+{
+	*this	= rval;
+}
+
+void Array::Init()
+{
 	_Size	= 1;
 
-	_Capacity	= len;
+	_Capacity	= _Length;
 	_needFree	= false;
-	_canWrite	= false;
+	_canWrite	= true;
 }
 
 // 析构。释放资源
 Array::~Array()
 {
 	if(_needFree && _Arr) delete _Arr;
+}
+
+Array& Array::operator = (const Buffer& rhs)
+{
+	Buffer::operator=(rhs);
+
+	return *this;
+}
+
+Array& Array::operator = (const void* p)
+{
+	Buffer::operator=(p);
+
+	return *this;
+}
+
+Array& Array::operator = (Array&& rval)
+{
+	Buffer::operator=(rval);
+
+	return *this;
 }
 
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
@@ -452,6 +495,16 @@ ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, ArrayLength
 		Set(data, length);
 }
 
+ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
+{
+	Copy(0, arr, 0, -1);
+}
+
+ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
+{
+	Copy(0, arr, 0, -1);
+}
+
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(Arr, ArrayLength(Arr))
 {
@@ -465,6 +518,27 @@ ByteArray::ByteArray(const String& str) : Array(Arr, ArrayLength(Arr))
 	const char* p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
 	Set((const byte*)p, str.Length());
+}
+
+ByteArray& ByteArray::operator = (const Buffer& rhs)
+{
+	Array::operator=(rhs);
+
+	return *this;
+}
+
+ByteArray& ByteArray::operator = (const void* p)
+{
+	Array::operator=(p);
+
+	return *this;
+}
+
+ByteArray& ByteArray::operator = (ByteArray&& rval)
+{
+	Array::operator=(rval);
+
+	return *this;
 }
 
 // 显示十六进制数据，指定分隔字符

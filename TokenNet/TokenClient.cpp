@@ -255,7 +255,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 使用系统ID作为Name
 		ext2.Name	= TokenConfig::Current->User;
 		// 使用系统ID作为Key
-		ext2.Key.Copy(0, Sys.ID, 16);
+		//ext2.Key.Copy(0, Sys.ID, 16);
+		ext2.Key	= Sys.ID;
 		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 		//if(ctrl3) ctrl3->Key = ext2.Key;
 
@@ -331,7 +332,7 @@ void TokenClient::Register()
 	debug_printf("TokenClient::Register\r\n");
 
 	RegisterMessage re;
-	re.User	= ByteArray(Sys.ID, 16).ToHex(0, 0);
+	re.User	= ByteArray((const void*)Sys.ID, 16).ToHex(0, 0);
 	re.Show(true);
 
 	TokenMessage msg(7);
