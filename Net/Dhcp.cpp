@@ -128,7 +128,7 @@ void Dhcp::Request()
 
 void Dhcp::Start()
 {
-	ulong now	= Sys.Ms();
+	UInt64 now	= Sys.Ms();
 	_expired	= now + ExpiredTime;
 	if(!dhcpid) dhcpid = now;
 
@@ -327,7 +327,7 @@ void Dhcp::Process(Buffer& bs, const IPEndPoint& ep)
 			// DHCP租约过了一半以后重新获取IP地址
 			if(time > 0)
 			{
-				Sys.SetTaskPeriod(taskID, (ulong)time / 2 * 1000);
+				Sys.SetTaskPeriod(taskID, (UInt64)time / 2 * 1000);
 				Sys.SetTask(taskID, true);
 			}
 		}

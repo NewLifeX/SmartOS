@@ -9,7 +9,7 @@ typedef char            sbyte;
 typedef unsigned char   byte;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
-typedef unsigned long long  ulong;
+typedef unsigned long long  UInt64;
 typedef long long       Int64;
 
 #define UInt64_Max 0xFFFFFFFFFFFFFFFFull
@@ -348,12 +348,12 @@ public:
 
 	ushort	ToUInt16() const;
 	uint	ToUInt32() const;
-	ulong	ToUInt64() const;
+	UInt64	ToUInt64() const;
 	void Write(ushort value, int index = 0);
 	void Write(short value, int index = 0);
 	void Write(uint value, int index = 0);
 	void Write(int value, int index = 0);
-	void Write(ulong value, int index = 0);
+	void Write(UInt64 value, int index = 0);
 
     //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);

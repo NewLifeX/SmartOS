@@ -10,7 +10,7 @@
 extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
-extern char* ultoa(ulong value, char* string, int radix);
+extern char* ultoa(UInt64 value, char* string, int radix);
 char* dtostrf(double val, char width, byte prec, char* sout);
 
 /******************************** String ********************************/
@@ -81,7 +81,7 @@ String::String(Int64 value, byte radix)
 	ltoa(value, _Arr, radix);
 }
 
-String::String(ulong value, byte radix)
+String::String(UInt64 value, byte radix)
 {
 	init();
 
@@ -313,9 +313,9 @@ bool String::Concat(Int64 num, byte radix)
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(ulong num, byte radix)
+bool String::Concat(UInt64 num, byte radix)
 {
-	char buf[1 + 3 * sizeof(ulong)];
+	char buf[1 + 3 * sizeof(UInt64)];
 	ultoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
@@ -391,7 +391,7 @@ StringHelper& operator + (const StringHelper& lhs, Int64 num)
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, ulong num)
+StringHelper& operator + (const StringHelper& lhs, UInt64 num)
 {
 	auto& a = const_cast<StringHelper&>(lhs);
 	if (!a.Concat(num)) a.release();
@@ -765,7 +765,7 @@ extern char* ltoa(Int64 value, char* string, int radix )
 	char tmp[33];
 	char *tp = tmp;
 	Int64 i;
-	ulong v;
+	UInt64 v;
 	int sign;
 	char *sp;
 
@@ -777,7 +777,7 @@ extern char* ltoa(Int64 value, char* string, int radix )
 	if (sign)
 		v = -value;
 	else
-		v = (ulong)value;
+		v = (UInt64)value;
 
 	while (v || tp == tmp)
 	{
@@ -804,12 +804,12 @@ extern char* utoa(uint value, char* string, int radix)
 	return ultoa(value, string, radix ) ;
 }
 
-extern char* ultoa(ulong value, char* string, int radix)
+extern char* ultoa(UInt64 value, char* string, int radix)
 {
 	char tmp[33];
 	char *tp = tmp;
 	Int64 i;
-	ulong v = value;
+	UInt64 v = value;
 	char *sp;
 
 	if ( string == NULL ) return 0;

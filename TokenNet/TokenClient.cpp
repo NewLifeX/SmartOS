@@ -464,7 +464,7 @@ void TokenClient::Ping()
 
 	TokenMessage msg(3);
 
-	ulong time	= Sys.Ms();
+	UInt64 time	= Sys.Ms();
 	Stream ms	= msg.ToStream();
 	ms.WriteArray(Array(&time, 8));
 	msg.Length	= ms.Position();
@@ -479,8 +479,8 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	Stream ms = msg.ToStream();
 
-	ulong now   = Sys.Ms();
-	ulong start = ms.ReadArray().ToUInt64();
+	UInt64 now   = Sys.Ms();
+	UInt64 start = ms.ReadArray().ToUInt64();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);

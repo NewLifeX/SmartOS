@@ -3,7 +3,6 @@
 #include <math.h>
 #include <stdarg.h>
 #include "Sys.h"
-#include "Platform\stm32.h"
 
 /******************************** Object ********************************/
 
@@ -597,7 +596,7 @@ int ByteArray::Load(const void* data, int maxsize)
 // 从普通字节数据组加载，首字节为长度
 int ByteArray::Save(void* data, int maxsize) const
 {
-	assert_param(_Length <= 0xFF);
+	assert_param2(_Length <= 0xFF, "_Length <= 0xFF");
 
 	byte* p = (byte*)data;
 	int len = _Length <= maxsize ? _Length : maxsize;
@@ -644,17 +643,17 @@ uint	ByteArray::ToUInt32() const
 	return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
 }
 
-ulong	ByteArray::ToUInt64() const
+UInt64	ByteArray::ToUInt64() const
 {
 	auto p = GetBuffer();
 	// 字节对齐时才能之前转为目标整数
-	if(((int)p & 0x07) == 0) return *(ulong*)p;
+	if(((int)p & 0x07) == 0) return *(UInt64*)p;
 
 	uint n1 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
 	p += 4;
 	uint n2 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
 
-	return n1 | ((ulong)n2 << 0x20);
+	return n1 | ((UInt64)n2 << 0x20);
 }
 
 void ByteArray::Write(ushort value, int index)
@@ -677,12 +676,23 @@ void ByteArray::Write(int value, int index)
 	Copy(index, (byte*)&value, sizeof(int));
 }
 
-void ByteArray::Write(ulong value, int index)
+void ByteArray::Write(UInt64 value, int index)
 {
-	Copy(index, (byte*)&value, sizeof(ulong));
+	Copy(index, (byte*)&value, sizeof(UInt64));
 }
 
 /******************************** REV ********************************/
 
-uint	_REV(uint value)		{ return __REV(value); }
-ushort	_REV16(ushort value)	{ return __REV16(value); }
+//uint	_REV(uint value)		{ return __REV(value); }
+//ushort	_REV16(ushort value)	{ return __REV16(value); }
+__asm uint _REV(uint value)
+{
+  rev16 r0, r0
+  bx lr
+}
+
+__asm ushort _REV16(ushort value)
+{
+  rev16 r0, r0
+  bx lr
+}

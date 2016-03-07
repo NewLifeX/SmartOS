@@ -22,7 +22,7 @@ public:
 	explicit String(int value, byte radix = 10);
 	explicit String(uint value, byte radix = 10);
 	explicit String(Int64 value, byte radix = 10);
-	explicit String(ulong value, byte radix = 10);
+	explicit String(UInt64 value, byte radix = 10);
 	explicit String(float value, byte decimalPlaces = 2);
 	explicit String(double value, byte decimalPlaces = 2);
 	virtual ~String();
@@ -49,7 +49,7 @@ public:
 	bool Concat(int num, byte radix = 10);
 	bool Concat(uint num, byte radix = 10);
 	bool Concat(Int64 num, byte radix = 10);
-	bool Concat(ulong num, byte radix = 10);
+	bool Concat(UInt64 num, byte radix = 10);
 	bool Concat(float num);
 	bool Concat(double num);
 
@@ -63,7 +63,7 @@ public:
 	String& operator += (int num)			{Concat(num); return (*this);}
 	String& operator += (uint num)			{Concat(num); return (*this);}
 	String& operator += (Int64 num)			{Concat(num); return (*this);}
-	String& operator += (ulong num)			{Concat(num); return (*this);}
+	String& operator += (UInt64 num)			{Concat(num); return (*this);}
 	String& operator += (float num)			{Concat(num); return (*this);}
 	String& operator += (double num)		{Concat(num); return (*this);}
 
@@ -82,7 +82,7 @@ public:
 	friend StringHelper& operator + (const StringHelper& lhs, int num);
 	friend StringHelper& operator + (const StringHelper& lhs, uint num);
 	friend StringHelper& operator + (const StringHelper& lhs, Int64 num);
-	friend StringHelper& operator + (const StringHelper& lhs, ulong num);
+	friend StringHelper& operator + (const StringHelper& lhs, UInt64 num);
 	friend StringHelper& operator + (const StringHelper& lhs, float num);
 	friend StringHelper& operator + (const StringHelper& lhs, double num);
 
@@ -184,7 +184,7 @@ public:
 	StringHelper(int num) : String(num) {}
 	StringHelper(uint num) : String(num) {}
 	StringHelper(Int64 num) : String(num) {}
-	StringHelper(ulong num) : String(num) {}
+	StringHelper(UInt64 num) : String(num) {}
 	StringHelper(float num) : String(num) {}
 	StringHelper(double num) : String(num) {}
 };

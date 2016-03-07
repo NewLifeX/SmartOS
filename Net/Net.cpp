@@ -175,7 +175,7 @@ bool operator!=(const IPEndPoint& addr1, const IPEndPoint& addr2)
 //const MacAddress MacAddress::Empty(0x0ull);
 //const MacAddress MacAddress::Full(MAC_MASK);
 
-MacAddress::MacAddress(ulong v)
+MacAddress::MacAddress(UInt64 v)
 {
 	Value = v & MAC_MASK;
 }
@@ -209,7 +209,7 @@ const MacAddress& MacAddress::Full()
 	return _Full;
 }
 
-MacAddress& MacAddress::operator=(ulong v)
+MacAddress& MacAddress::operator=(UInt64 v)
 {
 	Value = v & MAC_MASK;
 

@@ -497,7 +497,7 @@ void TimeSleep(uint us)
 }
 
 // 系统启动后的毫秒数
-ulong TSys::Ms() const { return Time.Current(); }
+UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
 uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 

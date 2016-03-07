@@ -48,7 +48,7 @@ public:
 	void Suspend();
 	void Resume();
 
-	ulong DelayExpire;		// 过期时间，单位微秒。睡眠的线程达到该时间后将恢复唤醒
+	UInt64 DelayExpire;		// 过期时间，单位微秒。睡眠的线程达到该时间后将恢复唤醒
 	void Sleep(uint ms);	// 睡眠指定毫秒数。
 
 	// 静态管理

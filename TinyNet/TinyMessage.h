@@ -64,7 +64,7 @@ class RingQueue
 public:
 	int		Index;
 	ushort	Arr[32];
-	ulong	Expired;	// 过期时间，微秒
+	UInt64	Expired;	// 过期时间，微秒
 
 	RingQueue();
 	void	Push(ushort item);
@@ -104,10 +104,10 @@ public:
 	byte	Times;		// 发送次数
 	byte	Data[64];
 	byte	Mac[6];		// 物理地址
-	ulong	StartTime;	// 开始时间ms
-	ulong	EndTime;	// 过期时间ms
-	ulong	Next;		// 下一次重发时间ms
-	//ulong	LastSend;	// 最后一次发送时间ms
+	UInt64	StartTime;	// 开始时间ms
+	UInt64	EndTime;	// 过期时间ms
+	UInt64	Next;		// 下一次重发时间ms
+	//UInt64	LastSend;	// 最后一次发送时间ms
 
 	void Set(const TinyMessage& msg, int msTimeout);
 };

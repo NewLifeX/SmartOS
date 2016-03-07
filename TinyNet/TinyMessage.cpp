@@ -721,7 +721,7 @@ void TinyController::Loop()
 		// 检查时间。至少发送一次
 		if(node.Times > 0)
 		{
-			ulong now = Sys.Ms();
+			UInt64 now = Sys.Ms();
 
 			// 已过期则删除
 			if(node.EndTime < now || node.Times > 50)
@@ -771,7 +771,7 @@ void TinyController::Loop()
 
 		// 计算下一次重发时间
 		{
-			ulong now	= Sys.Ms();
+			UInt64 now	= Sys.Ms();
 			//node.LastSend	= now;
 
 			// 随机延迟。随机数1~5。每次延迟递增
@@ -834,7 +834,7 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Times		= 0;
 	//LastSend	= 0;
 
-	ulong now	= Sys.Ms();
+	UInt64 now	= Sys.Ms();
 	StartTime	= now;
 	EndTime		= now + msTimeout;
 

@@ -170,9 +170,9 @@ protected:
 private:
 	byte	_Value	= 0;
 	uint	_taskInput	= 0;		// 输入任务
-	ulong	_PressStart	= 0;	// 开始按下时间
-	ulong	_PressStart2	= 0;	// 开始按下时间
-	ulong	_PressLast	= 0;		// 最后一次按下时间
+	UInt64	_PressStart	= 0;	// 开始按下时间
+	UInt64	_PressStart2	= 0;	// 开始按下时间
+	UInt64	_PressLast	= 0;		// 最后一次按下时间
 	static void InputTask(void* param);
 
     IOReadHandler	Handler	= NULL;

@@ -15,7 +15,7 @@ private:
 
 public:
     uint	Seconds;		// 全局秒数。累加
-	ulong	Milliseconds;	// 全局毫秒数。累加
+	UInt64	Milliseconds;	// 全局毫秒数。累加
     uint	BaseSeconds;	// 基准秒数。时间调节，影响Now()
     byte	Ticks;			// 每微秒的时钟滴答数
 	byte	Index;			// 定时器
@@ -35,8 +35,8 @@ public:
 	void Init();
 
     uint CurrentTicks() const;	// 当前滴答时钟
-	ulong Current() const; 		// 当前毫秒数
-	void SetTime(ulong seconds);	// 设置时间
+	UInt64 Current() const; 		// 当前毫秒数
+	void SetTime(UInt64 seconds);	// 设置时间
 
 	void Sleep(uint ms, bool* running = NULL) const;
 	// 微秒级延迟
@@ -68,7 +68,7 @@ public:
 class TimeCost
 {
 public:
-	ulong	Start;		// 开始时间，毫秒
+	UInt64	Start;		// 开始时间，毫秒
 	ushort	StartTicks;	// 开始滴答
 
 	TimeCost();
@@ -92,15 +92,15 @@ public:
 	ushort Microsecond;
 
 	DateTime();
-	DateTime(ulong seconds);
+	DateTime(UInt64 seconds);
 
 	// 重载等号运算符
-    DateTime& operator=(ulong seconds);
+    DateTime& operator=(UInt64 seconds);
 
-	DateTime& Parse(ulong seconds);
-	DateTime& ParseUs(ulong us);
+	DateTime& Parse(UInt64 seconds);
+	DateTime& ParseUs(UInt64 us);
 	uint TotalSeconds();
-	ulong TotalMicroseconds();
+	UInt64 TotalMicroseconds();
 
 	virtual String& ToStr(String& str) const;
 

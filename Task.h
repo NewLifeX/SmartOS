@@ -39,7 +39,7 @@ public:
 	~Task();
 
 	// 执行任务。返回是否正常执行。
-	bool Execute(ulong now);
+	bool Execute(UInt64 now);
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	void Set(bool enable, int msNextTime = -1);
 	// 显示状态

@@ -9,7 +9,7 @@ class Dhcp
 private:
 	uint dhcpid;	// 事务ID
 	uint taskID;	// 任务ID
-	ulong _expired;	// 目标过期时间，毫秒
+	UInt64 _expired;	// 目标过期时间，毫秒
 	ISocket*	Socket;
 
 	void Discover();

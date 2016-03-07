@@ -28,7 +28,7 @@ Task::~Task()
 	#pragma arm section code = "SectionForSys"
 #endif
 
-bool Task::Execute(ulong now)
+bool Task::Execute(UInt64 now)
 {
 	//TS("Task::Execute");
 	TS(Name);
@@ -251,9 +251,9 @@ void TaskScheduler::Execute(uint msMax)
 {
 	TS("Task::Execute");
 
-	ulong now = Sys.Ms();
-	ulong end = now + msMax;
-	ulong min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
+	UInt64 now = Sys.Ms();
+	UInt64 end = now + msMax;
+	UInt64 min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
 
 	TimeCost tc;
 
@@ -278,8 +278,8 @@ void TaskScheduler::Execute(uint msMax)
 			// 如果事件型任务还需要执行，那么就不要做任何等待
 			if(task->NextTime < 0)
 				min = 0;
-			else if((ulong)task->NextTime < min)
-				min = (ulong)task->NextTime;
+			else if((UInt64)task->NextTime < min)
+				min = (UInt64)task->NextTime;
 		}
 	}
 

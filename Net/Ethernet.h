@@ -29,7 +29,7 @@ public:
 	uint v4;
 	ushort v2;
 
-	MacAddr(ulong v = 0)
+	MacAddr(UInt64 v = 0)
 	{
 		v4 = v;
 		v2 = v >> 32;
@@ -38,17 +38,17 @@ public:
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
 
-    MacAddr& operator=(ulong v)
+    MacAddr& operator=(UInt64 v)
 	{
 		v4 = v;
 		v2 = v >> 32;
 
 		return *this;
 	}
-    ulong Value()
+    UInt64 Value()
 	{
-		ulong v = v4;
-		v |= ((ulong)v2) << 32;
+		UInt64 v = v4;
+		v |= ((UInt64)v2) << 32;
 		return v;
 	}
 	

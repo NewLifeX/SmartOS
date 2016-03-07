@@ -203,7 +203,7 @@ void HardRTC::LoadTicks()
 	auto& time	= (TTime&)Time;
 #ifdef STM32F1
 	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
-	ulong ms	= RTC_GetCounter();
+	UInt64 ms	= RTC_GetCounter();
 	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
 	uint sec	= ReadBackup(1);
 	time.Seconds		= sec;

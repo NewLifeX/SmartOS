@@ -312,11 +312,11 @@ uint	Stream::ReadUInt32()
 	return v;
 }
 
-ulong	Stream::ReadUInt64()
+UInt64	Stream::ReadUInt64()
 {
-	ulong v;
+	UInt64 v;
 	if(!Read((byte*)&v, 0, 8)) return 0;
-	if(!Little) v = _REV(v >> 32) | ((ulong)_REV(v & 0xFFFFFFFF) << 32);
+	if(!Little) v = _REV(v >> 32) | ((UInt64)_REV(v & 0xFFFFFFFF) << 32);
 	return v;
 }
 
@@ -339,9 +339,9 @@ bool Stream::Write(uint value)
 	return Write((byte*)&value, 0, 4);
 }
 
-bool Stream::Write(ulong value)
+bool Stream::Write(UInt64 value)
 {
-	if(!Little) value = _REV(value >> 32) | ((ulong)_REV(value & 0xFFFFFFFF) << 32);
+	if(!Little) value = _REV(value >> 32) | ((UInt64)_REV(value & 0xFFFFFFFF) << 32);
 
 	return Write((byte*)&value, 0, 8);
 }

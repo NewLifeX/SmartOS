@@ -82,16 +82,16 @@ class MacAddress : public Object
 {
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
-	ulong	Value;	// 地址
+	UInt64	Value;	// 地址
 
-	MacAddress(ulong v = 0);
+	MacAddress(UInt64 v = 0);
 	MacAddress(const byte* macs);
 	MacAddress(const Buffer& arr);
 
 	// 是否广播地址，全0或全1
 	bool IsBroadcast() const;
 
-    MacAddress& operator=(ulong v);
+    MacAddress& operator=(UInt64 v);
     MacAddress& operator=(const byte* buf);
     MacAddress& operator=(const Buffer& arr);
 

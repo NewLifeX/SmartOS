@@ -14,7 +14,7 @@ public:
 	ushort		Version;	// 版本
 	String		Type;		// 类型
 	String		Name;		// 名称
-	ulong		LocalTime;	// 时间ms
+	UInt64		LocalTime;	// 时间ms
 	IPEndPoint	EndPoint;
 	ByteArray	Ciphers;
 

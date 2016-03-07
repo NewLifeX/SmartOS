@@ -100,7 +100,7 @@ private:
 	{
 	public:
 		byte	Code;
-		ulong	Time;	// 时间ms
+		UInt64	Time;	// 时间ms
 	};
 
 	QueueItem	_Queue[16];

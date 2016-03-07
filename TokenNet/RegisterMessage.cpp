@@ -32,7 +32,7 @@ void RegisterMessage::Write(Stream& ms) const
 			ms.WriteArray(Salt);
 		else
 		{
-			ulong now = Sys.Ms();
+			UInt64 now = Sys.Ms();
 			ms.WriteArray(MD5::Hash(Array(&now, 8)));
 		}
 	}

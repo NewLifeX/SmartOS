@@ -546,7 +546,7 @@ void InputPort::OnPress(bool down)
 	2，记录最近两次按下的时间，如果出现抖动且时间相差不是非常大，则使用上一次按下时间
 	3，也可能出现100抖动
 	*/
-	ulong	now	= Sys.Ms();
+	UInt64	now	= Sys.Ms();
 	// 预处理抖动。如果相邻两次间隔小于抖动时间，那么忽略上一次未处理的值（可能失败）
 	bool shake	= false;
 	if(ShakeTime && ShakeTime > now - _PressLast)

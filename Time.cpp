@@ -142,7 +142,7 @@ uint TTime::CurrentTicks() const
 }
 
 // 当前毫秒数
-ulong TTime::Current() const
+UInt64 TTime::Current() const
 {
 	uint cnt = g_Timers[Index]->CNT;
 #if ! (defined(STM32F0) || defined(GD32F150))
@@ -151,7 +151,7 @@ ulong TTime::Current() const
 	return Milliseconds + cnt;
 }
 
-void TTime::SetTime(ulong seconds)
+void TTime::SetTime(UInt64 seconds)
 {
 	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
 	BaseSeconds = seconds - Seconds;
@@ -226,7 +226,7 @@ void TTime::Delay(uint us) const
     if(!us) return;
 
 	// 无需关闭中断，也能实现延迟
-	ulong ms	= Current();
+	UInt64 ms	= Current();
 	uint ticks	= CurrentTicks() + us * Ticks;
 	if(ticks >= (1000 - 1) * Ticks)
 	{
@@ -261,7 +261,7 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
-DateTime& DateTime::Parse(ulong seconds)
+DateTime& DateTime::Parse(UInt64 seconds)
 {
 	DateTime& st = *this;
 
@@ -305,7 +305,7 @@ DateTime& DateTime::Parse(ulong seconds)
 	return st;
 }
 
-DateTime& DateTime::ParseUs(ulong us)
+DateTime& DateTime::ParseUs(UInt64 us)
 {
 	Parse(us / 1000000ULL);
 	uint n = us % 1000000ULL;
@@ -320,7 +320,7 @@ DateTime::DateTime()
 	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
 }
 
-DateTime::DateTime(ulong seconds)
+DateTime::DateTime(UInt64 seconds)
 {
 	if(seconds == 0)
 		memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
@@ -329,7 +329,7 @@ DateTime::DateTime(ulong seconds)
 }
 
 // 重载等号运算符
-DateTime& DateTime::operator=(ulong seconds)
+DateTime& DateTime::operator=(UInt64 seconds)
 {
 	Parse(seconds);
 
@@ -347,9 +347,9 @@ uint DateTime::TotalSeconds()
 	return s;
 }
 
-ulong DateTime::TotalMicroseconds()
+UInt64 DateTime::TotalMicroseconds()
 {
-	ulong sec = (ulong)TotalSeconds();
+	UInt64 sec = (UInt64)TotalSeconds();
 	uint us = (uint)Millisecond * 1000 + Microsecond;
 
 	return sec * 1000 + us;
@@ -437,7 +437,7 @@ void TimeWheel::Reset(uint seconds, uint ms, uint us)
 // 是否已过期
 bool TimeWheel::Expired()
 {
-	ulong now = Time.Current();
+	UInt64 now = Time.Current();
 	if(now > Expire) return true;
 	if(now == Expire && Time.CurrentTicks() >= Expire2) return true;
 

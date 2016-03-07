@@ -78,7 +78,7 @@ uint TinyIP::Fetch(Stream& ms)
 
 	// 获取第一个结构体，不要移动指针
 	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>(false);
-	ulong v = eth->DestMac.Value();
+	UInt64 v = eth->DestMac.Value();
 	// 广播地址有效，直接返回
 	if(!v || v == 0xFFFFFFFFFFFFFFFFull) return len;
 
