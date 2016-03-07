@@ -46,7 +46,12 @@ void WeakStore::Init()
 }
 
 // 重载索引运算符[]，定位到数据部分的索引。
-byte& WeakStore::operator[](int i) const
+byte WeakStore::operator[](int i) const
+{
+	return Data[MagicLength + i];
+}
+
+byte& WeakStore::operator[](int i)
 {
 	return Data[MagicLength + i];
 }

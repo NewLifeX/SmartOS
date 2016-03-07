@@ -22,7 +22,8 @@ public:
 	void Init();
 
     // 重载索引运算符[]，定位到数据部分的索引。
-    byte& operator[](int i) const;
+    byte operator[](int i) const;
+    byte& operator[](int i);
 };
 
 #endif

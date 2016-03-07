@@ -39,7 +39,7 @@ ByteArray RC4::Encrypt(const Array& data, const Array& pass)
 		box[j] = temp;
 		byte a = data[k];
 		byte b = box[(box[i] + box[j]) % KeyLength];
-		data[k] = (byte)(a ^ b);
+		rs[k] = (byte)(a ^ b);
 	}
 
 	return rs;

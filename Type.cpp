@@ -244,9 +244,9 @@ bool operator != (const Buffer& bs1, const Buffer& bs2)
 /******************************** TArray ********************************/
 
 // 数组最大容量。初始化时决定，后面不允许改变
-int Array::Capacity() const { return _Capacity; }
+//int Array::Capacity() const { return _Capacity; }
 
-int MemLen(const void* data)
+/*int MemLen(const void* data)
 {
 	if(!data) return 0;
 
@@ -255,7 +255,7 @@ int MemLen(const void* data)
 	const byte* p =(const byte*)data;
 	while(*p++) len++;
 	return len;
-}
+}*/
 
 Array::Array(void* data, int len) : Buffer(data, len)
 {
@@ -382,7 +382,7 @@ bool Array::Set(void* data, int len)
 // 设置数组。直接使用指针，不拷贝数据
 bool Array::Set(const void* data, int len)
 {
-	if(len < 0) len = MemLen(data);
+	//if(len < 0) len = MemLen(data);
 
 	// 销毁旧的
 	if(_needFree && _Arr && _Arr != data) delete _Arr;
@@ -419,7 +419,17 @@ void Array::SetItemAt(int i, const void* item)
 }
 
 // 重载索引运算符[]，返回指定元素的第一个字节
-byte& Array::operator[](int i) const
+byte Array::operator[](int i) const
+{
+	assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+
+	byte* buf = (byte*)_Arr;
+	if(_Size > 1) i *= _Size;
+
+	return buf[i];
+}
+
+byte& Array::operator[](int i)
 {
 	assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
 

@@ -120,7 +120,7 @@ public:
 protected:
     void*	_Arr;		// 数据指针
 	int		_Length;	// 长度
-	
+
 private:
 	void move(Buffer& rval);
 };
@@ -133,15 +133,9 @@ private:
 // 数组。包括指针和最大长度，支持实际长度
 class Array : public Buffer
 {
-protected:
-	uint	_Capacity;	// 最大个数。非字节数
-	bool	_needFree;	// 是否需要释放
-	bool	_canWrite;	// 是否可写
-	ushort	_Size;		// 单个元素大小。字节
-
 public:
 	// 数组最大容量。初始化时决定，后面不允许改变
-	int Capacity() const;
+	inline int Capacity() const { return _Capacity; }
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
@@ -156,7 +150,7 @@ public:
 	Array& operator = (Array&& rval);
 
 	using Buffer::Set;
-	
+
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 	virtual bool SetLength(int length, bool bak = false);
 	// 设置数组元素为指定值，自动扩容
@@ -173,11 +167,18 @@ public:
 	virtual void Show(bool newLine) const;
 
     // 重载索引运算符[]，返回指定元素的第一个字节
-    byte& operator[](int i) const;
+    byte operator[](int i) const;
+    byte& operator[](int i);
 
 	friend bool operator==(const Array& bs1, const Array& bs2);
 	friend bool operator!=(const Array& bs1, const Array& bs2);
+
 protected:
+	uint	_Capacity;	// 最大个数。非字节数
+	bool	_needFree;	// 是否需要释放
+	bool	_canWrite;	// 是否可写
+	ushort	_Size;		// 单个元素大小。字节
+
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
