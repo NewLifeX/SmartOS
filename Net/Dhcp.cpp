@@ -63,7 +63,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		name.Concat(Sys.ID[1], 16);
 
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
-		String vendor = "www.NewLifeX.com";
+		String vendor = "www.wslink.cn";
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
 		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, CArray(ps));

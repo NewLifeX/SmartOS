@@ -55,7 +55,7 @@ void TinyIP::Init(ITransport* port)
 	IP[3] = first;
 
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	Mac[0] = 'P'; Mac[1] = 'M'; //Mac[2] = 'W'; Mac[3] = 'L';
+	Mac[0] = 'W'; Mac[1] = 'S'; //Mac[2] = 'W'; Mac[3] = 'L';
 	for(int i=0; i< 4; i++)
 		Mac[2 + i] = Sys.ID[3 - i];
 	// MAC地址首字节奇数表示组地址，这里用偶数

@@ -239,7 +239,7 @@ void W5500::Init()
 
 	MacAddress& mac = Mac;
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	mac[0] = 'P'; mac[1] = 'M'; //mac[2] = 'W'; mac[3] = 'L';
+	mac[0] = 'W'; mac[1] = 'S'; //mac[2] = 'W'; mac[3] = 'L';
 	for(int i=0; i< 4; i++)
 		mac[2 + i] = Sys.ID[3 - i];
 }

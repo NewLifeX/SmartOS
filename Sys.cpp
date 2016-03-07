@@ -281,7 +281,7 @@ void TSys::ShowInfo() const
 	else
 		debug_printf("STM32");
 
-	ST_CPUID* cpu = (ST_CPUID*)&CPUID;
+	auto cpu = (ST_CPUID*)&CPUID;
 	if(DevID > 0)
 	{
 		if(DevID == 0x410)
@@ -356,8 +356,9 @@ void TSys::ShowInfo() const
     debug_printf("ChipID:");
 	ByteArray(ID, ArrayLength(ID)).Show();
 
-	debug_printf("\t");
-	String((char*)ID, 12).Show(true);
+	// 新的字符串这样用会导致第一个字符被清零
+	//debug_printf("\t");
+	//String((char*)ID, 12).Show(true);
 
 	// 输出堆信息
 	uint start = (uint)&__heap_base;
