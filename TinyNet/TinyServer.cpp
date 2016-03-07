@@ -319,10 +319,10 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Speed	= Cfg->Speed / 10;
 	dm.Address	= dv->Address;
 	//dm.Password.Copy(dv->GetPass());
-	((Buffer&)dm.Password)	= dv->Pass;
+	dm.Password	= dv->Pass;
 
 	//dm.HardID.Set(Sys.ID, 6);
-	((Buffer&)dm.HardID)	= Sys.ID;
+	dm.HardID	= Sys.ID;
 	dm.WriteMessage(rs);
 
 	rs.State	= dv->_Mac;

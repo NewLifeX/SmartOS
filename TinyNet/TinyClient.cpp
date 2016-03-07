@@ -320,7 +320,7 @@ void TinyClient::Join()
 	//dm.Version	= Sys.Version;
 	dm.Kind		= Type;
 	//dm.HardID.Copy(Sys.ID, 16);
-	((Buffer&)dm.HardID)	= Sys.ID;
+	dm.HardID	= Sys.ID;
 	dm.TranID	= TranID;
 	dm.WriteMessage(msg);
 	//dm.Show(true);
