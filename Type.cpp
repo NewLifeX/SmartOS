@@ -280,7 +280,21 @@ Array::Array(const Array& rhs) : Buffer(rhs)
 
 Array::Array(Array&& rval)
 {
-	*this	= rval;
+	//*this	= rval;
+	move(rval);
+}
+
+void Array::move(Array& rval)
+{
+	Buffer::move(rval);
+
+	_Capacity	= rval._Capacity;
+	_needFree	= rval._needFree;
+	_canWrite	= rval._canWrite;
+
+	rval._Capacity	= 0;
+	rval._needFree	= 0;
+	rval._canWrite	= 0;
 }
 
 void Array::Init()
@@ -295,7 +309,7 @@ void Array::Init()
 // 析构。释放资源
 Array::~Array()
 {
-	if(_needFree && _Arr) delete _Arr;
+	if(_needFree && _Arr) delete (byte*)_Arr;
 }
 
 Array& Array::operator = (const Buffer& rhs)
@@ -314,7 +328,8 @@ Array& Array::operator = (const void* p)
 
 Array& Array::operator = (Array&& rval)
 {
-	Buffer::operator=(rval);
+	//Buffer::operator=(rval);
+	move(rval);
 
 	return *this;
 }
@@ -384,7 +399,7 @@ bool Array::Set(const void* data, int len)
 	//if(len < 0) len = MemLen(data);
 
 	// 销毁旧的
-	if(_needFree && _Arr && _Arr != data) delete _Arr;
+	if(_needFree && _Arr && _Arr != data) delete (byte*)_Arr;
 
 	_Arr		= (void*)data;
 	_Length		= len;
@@ -455,7 +470,7 @@ bool Array::CheckCapacity(int len, int bak)
 	if(bak > _Length) bak = _Length;
 	if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
 
-	if(_needFree && _Arr && _Arr != p) delete _Arr;
+	if(_needFree && _Arr && _Arr != p) delete (char*)_Arr;
 
 	_Capacity	= k;
 	_Arr		= p;
@@ -514,6 +529,11 @@ ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
 	Copy(0, arr, 0, -1);
 }
 
+ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
+{
+	move(rval);
+}
+
 // 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(Arr, ArrayLength(Arr))
 {
@@ -527,6 +547,17 @@ ByteArray::ByteArray(const String& str) : Array(Arr, ArrayLength(Arr))
 	const char* p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
 	Set((const byte*)p, str.Length());
+}
+
+void ByteArray::move(ByteArray& rval)
+{
+	Array::move(rval);
+
+	// 如果指向自己的缓冲区，那么拷贝一下数据
+	if(rval._Arr == rval.Arr && rval._Length > 0)
+	{
+		Copy(0, rval._Arr, rval._Length);
+	}
 }
 
 ByteArray& ByteArray::operator = (const Buffer& rhs)
@@ -545,7 +576,7 @@ ByteArray& ByteArray::operator = (const void* p)
 
 ByteArray& ByteArray::operator = (ByteArray&& rval)
 {
-	Array::operator=(rval);
+	move(rval);
 
 	return *this;
 }
@@ -685,6 +716,8 @@ void ByteArray::Write(UInt64 value, int index)
 
 //uint	_REV(uint value)		{ return __REV(value); }
 //ushort	_REV16(ushort value)	{ return __REV16(value); }
+
+#if defined ( __CC_ARM   )
 __asm uint _REV(uint value)
 {
   rev16 r0, r0
@@ -696,3 +729,21 @@ __asm ushort _REV16(ushort value)
   rev16 r0, r0
   bx lr
 }
+
+#elif defined   (  __GNUC__  )
+uint32_t __REV(uint32_t value)
+{
+  uint32_t result=0;
+
+  __ASM volatile ("rev %0, %1" : "=r" (result) : "r" (value) );
+  return(result);
+}
+
+uint32_t __REV16(uint16_t value)
+{
+  uint32_t result=0;
+
+  __ASM volatile ("rev16 %0, %1" : "=r" (result) : "r" (value) );
+  return(result);
+}
+#endif

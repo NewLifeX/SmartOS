@@ -121,7 +121,6 @@ protected:
     void*	_Arr;		// 数据指针
 	int		_Length;	// 长度
 
-private:
 	void move(Buffer& rval);
 };
 
@@ -183,6 +182,8 @@ protected:
 	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
 	void Init();
+
+	void move(Array& rval);
 };
 
 // 使用常量数组来定义一个指针数组
@@ -362,6 +363,8 @@ protected:
 	byte	Arr[0x40];	// 内部缓冲区
 
 	virtual void* Alloc(int len) { return new byte[len]; }
+
+	void move(ByteArray& rval);
 };
 
 // 从数组创建列表

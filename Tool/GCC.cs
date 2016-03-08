@@ -156,15 +156,6 @@ namespace NewLife.Reflection
         #region 主要编译方法
         public Int32 Compile(String file, Boolean showCmd)
         {
-            /*
-             * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS
-             * -DSTM32F030 -DUSE_STDPERIPH_DRIVER -DSTM32F0XX -DGD32 -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
-             *
-             * -c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I..\STM32F1Lib\inc -I..\STM32F1Lib\CMSIS -I..\SmartOS
-             * -DSTM32F10X_HD -DDEBUG -DUSE_FULL_ASSERT -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
-
-             */
-
             var objName = GetObjPath(file);
 
             // 如果文件太新，则不参与编译
@@ -178,24 +169,28 @@ namespace NewLife.Reflection
                 }
             }
 
+			// -ggdb -ffunction-sections -fno-exceptions -fno-rtti -O0   -mcpu=cortex-m3 -mthumb
+			// -I. -IstLib/inc -IstCM3 -DDEBUG=1 -DARM_MATH_CM3 -DSTM32F103VE -Dstm32_flash_layout -DSTM32F10X_HD 
+			// -c LEDBlink.cpp -o Debug/LEDBlink.o -MD -MF Debug/LEDBlink.dep
             var sb = new StringBuilder();
+			sb.Append("-ggdb");
 			if(file.EndsWithIgnoreCase(".cpp"))
-				sb.Append("-c -std=c++17");
-			else
-				sb.Append("-c");
+				sb.Append(" -std=c++17");
             sb.AppendFormat(" -mlittle-endian -mthumb -mcpu={0} -mthumb-interwork -O{1}", CPU, Debug ? 0 : 3);
-			sb.AppendFormat(" -flto -ffunction-sections -fdata-sections");
-			sb.AppendFormat(" -fno-exceptions --specs=nano.specs --specs=rdimon.specs -o");
-			sb.AppendFormat(" -L. -L./ldscripts -T gcc.ld");
-			sb.AppendFormat(" -Wl,--gc-sections");
-			sb.AppendFormat(" -fwide-exec-charset=UTF-8");
-            sb.AppendFormat("  -D__NO_SYSTEM_INIT -D{0}", Flash);
+			sb.AppendFormat(" -ffunction-sections -fdata-sections");
+			sb.AppendFormat(" -fno-exceptions -MD");
+			//sb.AppendFormat(" -fno-exceptions --specs=nano.specs --specs=rdimon.specs -o");
+			//sb.AppendFormat(" -L. -L./ldscripts -T gcc.ld");
+			//sb.AppendFormat(" -Wl,--gc-sections");
+			//sb.AppendFormat(" -fwide-exec-charset=UTF-8");
+            //sb.AppendFormat("  -D__NO_SYSTEM_INIT -D{0}", Flash);
+            sb.AppendFormat(" -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT -g -v");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
             if (Tiny) sb.Append(" -DTINY");
 			if(showCmd)
 			{
@@ -212,7 +207,8 @@ namespace NewLife.Reflection
 
 			if(Preprocess) sb.Append(" -E");
 			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
-            sb.AppendFormat(" {0} -o \"{0}.o\"", file, objName);
+            sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
+			sb.AppendFormat(" -MF {0}.dep", objName);
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -284,7 +280,8 @@ namespace NewLife.Reflection
                 {
                     case ".c":
                     case ".cpp":
-                        rs = Compile(item, cpp++ == 0);
+                        rs = Compile(item, cpp == 0);
+						if(rs == 0) cpp++;
                         break;
                     case ".s":
                         rs = Assemble(item);
@@ -359,10 +356,21 @@ namespace NewLife.Reflection
             name = GetOutputName(name);
             XTrace.WriteLine("链接：{0}", name);
 
-            var lib = name.EnsureEnd(".lib");
+            var lib = name.EnsureEnd(".a");
             var sb = new StringBuilder();
-            sb.Append("-static");
+            //sb.Append("-static");
             sb.AppendFormat(" -r \"{0}\"", lib);
+			// 还需要加载LDS文件
+			var lds = "F{0}.lds".F(Cortex == 3 ? 1 : Cortex);
+			var root = @".".GetFullPath();
+			if(!File.Exists(root.CombinePath(lds))) root = @"..\SmartOS\Tool".GetFullPath();
+			if(!File.Exists(root.CombinePath(lds))) root = @"..\..\SmartOS\Tool".GetFullPath();
+            sb.AppendFormat(" \"{0}\"", root.CombinePath(lds));
+
+			Console.Write("命令参数：");
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine(sb);
+			Console.ResetColor();
 
             if (Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
@@ -727,16 +735,24 @@ namespace NewLife.Reflection
         public String FixWord(String msg)
         {
             #region 初始化
-            if (Sections.Count == 0)
+			var ss = Sections;
+            if (ss.Count == 0)
             {
-                Sections.Add("Fatal error", "致命错误");
-                Sections.Add("fatal error", "致命错误");
-                Sections.Add("Could not open file", "无法打开文件");
-                Sections.Add("No such file or directory", "文件或目录不存在");
-                Sections.Add("Undefined symbol", "未定义标记");
-                Sections.Add("referred from", "引用自");
-                Sections.Add("Program Size", "程序大小");
-                Sections.Add("Finished", "程序大小");
+                ss.Add("Fatal error", "致命错误");
+                ss.Add("fatal error", "致命错误");
+                ss.Add("Could not open file", "无法打开文件");
+                ss.Add("No such file or directory", "文件或目录不存在");
+                ss.Add("Undefined symbol", "未定义标记");
+                ss.Add("referred from", "引用自");
+                ss.Add("Program Size", "程序大小");
+                ss.Add("Finished", "程序大小");
+				ss.Add("In constructor", "构造函数");
+				ss.Add("is ambiguous", "含糊不清");
+				ss.Add("call of overloaded", "重载调用");
+				ss.Add("was not declared in this scope", "在该区域未定义");
+				ss.Add("was not declared", "未定义");
+				ss.Add("in this scope", "在该区域");
+				ss.Add("In function", "函数");
             }
 
             if (Words.Count == 0)
@@ -744,6 +760,8 @@ namespace NewLife.Reflection
                 Words.Add("Error", "错误");
                 Words.Add("Warning", "警告");
                 Words.Add("Warnings", "警告");
+                Words.Add("note", "提示");
+				Words.Add("candidate", "候选");
                 /*Words.Add("cannot", "不能");
                 Words.Add("open", "打开");
                 Words.Add("source", "源");
