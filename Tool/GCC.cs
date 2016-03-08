@@ -188,13 +188,14 @@ namespace NewLife.Reflection
 			sb.AppendFormat(" -fno-exceptions --specs=nano.specs --specs=rdimon.specs -o");
 			sb.AppendFormat(" -L. -L./ldscripts -T gcc.ld");
 			sb.AppendFormat(" -Wl,--gc-sections");
+			sb.AppendFormat(" -fwide-exec-charset=UTF-8");
             sb.AppendFormat("  -D__NO_SYSTEM_INIT -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT -v");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT -g -v");
             if (Tiny) sb.Append(" -DTINY");
 			if(showCmd)
 			{
@@ -209,6 +210,7 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -I{0}", item);
             }
 
+			if(Preprocess) sb.Append(" -E");
 			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
             sb.AppendFormat(" {0} -o \"{0}.o\"", file, objName);
 
@@ -359,7 +361,7 @@ namespace NewLife.Reflection
 
             var lib = name.EnsureEnd(".lib");
             var sb = new StringBuilder();
-            sb.Append("--create -c");
+            sb.Append("-static");
             sb.AppendFormat(" -r \"{0}\"", lib);
 
             if (Objs.Count < 6) Console.Write("使用对象文件：");
