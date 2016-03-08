@@ -194,7 +194,7 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT -v");
             if (Tiny) sb.Append(" -DTINY");
 			if(showCmd)
 			{
@@ -835,7 +835,7 @@ namespace NewLife.Reflection
             #endregion
 
             #region 扫描所有根目录，获取MDK安装目录
-            if (String.IsNullOrEmpty(ToolPath))
+            //if (String.IsNullOrEmpty(ToolPath))
             {
                 foreach (var item in DriveInfo.GetDrives())
                 {
@@ -844,7 +844,7 @@ namespace NewLife.Reflection
 					var p = Path.Combine(item.RootDirectory.FullName, @"GCC\arm-none-eabi");
                     if (Directory.Exists(p))
                     {
-                        ToolPath = p;
+                        ToolPath = p.CombinePath(@"..\").GetFullPath();
                         break;
                     }
                 }
