@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdarg.h>
+
 #include "Sys.h"
+#include "Type.h"
+#include "String.h"
 
 /******************************** Object ********************************/
 
