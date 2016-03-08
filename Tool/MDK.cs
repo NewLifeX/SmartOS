@@ -198,6 +198,8 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -I{0}", item);
             }
+			//var self = file.CombinePath("../").GetFullPath();
+			//if(!Includes.Contains(self)) sb.AppendFormat(" -I{0}", self);
 
             if (Preprocess)
             {
