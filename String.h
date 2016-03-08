@@ -86,7 +86,8 @@ public:
 	friend StringHelper& operator + (const StringHelper& lhs, float num);
 	friend StringHelper& operator + (const StringHelper& lhs, double num);
 
-    //operator bool() const { return _Length > 0; }
+    explicit operator bool() const { return _Length > 0; }
+    bool operator !() const { return _Length == 0; }
 	//operator char*() const { return _Arr; }
 	int CompareTo(const String& s) const;
 	bool Equals(const String& s) const;

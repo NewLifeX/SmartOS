@@ -18,16 +18,13 @@ void GetKey(ByteArray& box, const Array& pass)
 	}
 }
 
-ByteArray RC4::Encrypt(const Array& data, const Array& pass)
+void RC4::Encrypt(Array& data, const Array& pass)
 {
 	int i = 0;
 	int j = 0;
 	byte buf[KeyLength];
 	ByteArray box(buf, KeyLength);
 	GetKey(box, pass);
-
-	ByteArray rs;
-	rs.SetLength(data.Length());
 
 	// 加密
 	for (int k = 0; k < data.Length(); k++)
@@ -39,8 +36,17 @@ ByteArray RC4::Encrypt(const Array& data, const Array& pass)
 		box[j] = temp;
 		byte a = data[k];
 		byte b = box[(box[i] + box[j]) % KeyLength];
-		rs[k] = (byte)(a ^ b);
+		data[k] = (byte)(a ^ b);
 	}
+}
+
+ByteArray RC4::Encrypt(const Array& data, const Array& pass)
+{
+	ByteArray rs;
+	rs.SetLength(data.Length());
+	rs	= data;
+
+	Encrypt(rs, pass);
 
 	return rs;
 }
