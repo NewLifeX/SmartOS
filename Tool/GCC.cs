@@ -75,7 +75,7 @@ namespace NewLife.Reflection
                 if (!Directory.Exists(p)) p = ("..\\" + src).GetFullPath();
                 if (!Directory.Exists(p)) continue;
 
-                AddIncludes(p, true);
+                AddIncludes(p, false);
                 if (addlib) AddLibs(p);
             }
 
@@ -522,7 +522,7 @@ namespace NewLife.Reflection
         public Int32 AddFiles(String path, String exts = "*.c;*.cpp", Boolean allSub = true, String excludes = null)
         {
             // 目标目录也加入头文件搜索
-            AddIncludes(path);
+            //AddIncludes(path, allSub);
 
             var count = 0;
 
@@ -571,6 +571,10 @@ namespace NewLife.Reflection
         {
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
+
+			// 有头文件才要，没有头文件不要
+			var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
+			if(!fs.Any()) return;
 
             if (!Includes.Contains(path) && HasHeaderFile(path))
             {
