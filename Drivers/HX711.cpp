@@ -1,11 +1,13 @@
 ﻿#include "HX711.h"
 
+#include "Time.h"
+
 /*
-XH711 有两个通道  A   B  
+XH711 有两个通道  A   B
 A通道增益可以设置 64/128
 B通道固定为32倍增益
 
-HX711   有两个数字口   SCK   DOUT 
+HX711   有两个数字口   SCK   DOUT
 DOUT：芯片从复位或断电状态进入工作状态后  DOUT 会保持高电平
 此时高电平表示   芯片未准备好数据
 
@@ -38,64 +40,69 @@ SCK上升沿驱动DOUT变动   即在SCK 下一次上升沿前读取DOUT便OK
 当配置信息修改后  需要一段时间数据才能稳定
 */
 
-HX711::HX711(Pin sck,Pin dout)
+HX711::HX711(Pin sck, Pin dout) : SCK(sck, true), DOUT(dout)
 {
-	if(!sck)
-	{
-		debug_printf("SCK ERROR");
-		return;
-	}
-	if(!dout)
-	{
-		debug_printf("DOUT ERROR");
-		return;
-	}
-	SCK = new OutputPort(sck);
+	assert_param2(sck != P0, "SCK ERROR");
+	assert_param2(dout != P0, "DOUT ERROR");
+
 	// 关闭 模块
-	SCK->Open();
-	SCK = true;
-	
-	DOUT = new IntputPort(dout);
+	/*SCK.Open();
+	SCK = true;*/
+
+	Mode	= A128;
+	Opened	= false;
 }
 
-HX711::~HX711()
+/*HX711::~HX711()
 {
 	if(SCK)delete SCK;
 	if(DOUT)delete DOUT;
-}
+}*/
 
 bool HX711::Open()
 {
-	if(Opened)return true;
-	if(!(SCK&&DOUT))
+	if(Opened) return true;
+
+	/*if(!(SCK&&DOUT))
 	{
 		debug_printf("Pin ERROR\r\n");
 		return false;
-	}
-	
+	}*/
+
+	// 关闭 模块
+	SCK.Open();
+	SCK = true;
+
 	//SCK->Open();
 	SCK = false;
-	DOUT->Open();
+	DOUT.Open();
 
 	Opened = true;
+
 	return true;
 }
 
 bool HX711::Close()
 {
-	SCK = true;
+	if(!Opened) return true;
+
+	SCK	= true;
 	DOUT.Close();
+
 	Opened = false;
+
 	return true;
 }
 
 uint HX711::Read()
 {
 	if(!Open())return 0;
+
 	uint temp = 0x00000000;
 	// 等待 IC 数据
-	TimeWheel tw(0,30);
+	TimeWheel tw(0, 30);
 	while(!tw.Expired() && DOUT);
+
 	// 读取数据
 	for(int i = 0;i < 24; i++)
 	{
@@ -103,7 +110,7 @@ uint HX711::Read()
 		temp <<= 1;
 		if(DOUT)
 			temp |= 0x01;
-		//else 
+		//else
 		//	temp &= 0xfffffffe;
 		SCK = false;
 	}
@@ -111,7 +118,8 @@ uint HX711::Read()
 	for(int i = 0; i < Mode; i++)
 	{
 		SCK = true;
-		_nop();
+		//_nop();
+		Sys.Delay(10);
 		SCK = false;
 	}
 	return temp;

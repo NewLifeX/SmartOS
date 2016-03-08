@@ -15,18 +15,19 @@ enum HX711Mode
 class HX711
 {
 private:
-	bool Opened	= false;
-	OutputPort * SCK	= NULL;
-	IntputPort * DOUT	= NULL;
-	
+	OutputPort	SCK;
+	InputPort	DOUT;
+	bool Opened;
+
 public:
 	HX711Mode Mode = A128;
 
-	HX711(Pin sck,Pin dout);
-	
+	HX711(Pin sck, Pin dout);
+	//~HX711();
+
 	bool Open();
 	bool Close();
-	
+
 	uint Read();
 };
 
