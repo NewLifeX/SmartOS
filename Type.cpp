@@ -4,8 +4,8 @@
 #include <stdarg.h>
 
 #include "Sys.h"
-#include "Type.h"
-#include "String.h"
+//#include "Type.h"
+//#include "String.h"
 
 /******************************** Object ********************************/
 
@@ -67,7 +67,7 @@ const String Type::Name() const
 
 Buffer::Buffer(void* p, int len)
 {
-	assert_param2(p && len > 0, "Buffer构造指针不能为空！");
+	//assert_param2(p && len > 0, "Buffer构造指针不能为空！");
 
 	_Arr	= p;
 	_Length	= len;
@@ -133,7 +133,7 @@ byte& Buffer::operator[](int i)
 	return buf[i];
 }
 
-bool Buffer::Empty() const { return _Length == 0; }
+//bool Buffer::Empty() const { return _Length == 0; }
 
 // 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
 bool Buffer::SetLength(int len, bool bak)

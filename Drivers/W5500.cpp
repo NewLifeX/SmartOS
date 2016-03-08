@@ -237,7 +237,7 @@ void W5500::Init()
 	Mask = IPAddress(255, 255, 255, 0);
 	DHCPServer = Gateway = DNSServer = defip;
 
-	MacAddress& mac = Mac;
+	auto& mac = Mac;
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
 	mac[0] = 'W'; mac[1] = 'S'; //mac[2] = 'W'; mac[3] = 'L';
 	for(int i=0; i< 4; i++)
@@ -384,7 +384,7 @@ void W5500::Config()
 
 	// 读所有寄存器
 	TGeneral gen;
-	ByteArray bs(&gen, sizeof(gen));
+	Buffer bs(&gen, sizeof(gen));
 	ReadFrame(0, bs);
 
 	// 设置地址、网关、掩码、MAC等

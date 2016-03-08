@@ -72,8 +72,9 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		len = (byte*)opt + 1 - p;
 	}
 
-	for(int i=0; i<6; i++)
-		dhcp->ClientMac[i] = Host.Mac[i];
+	//for(int i=0; i<6; i++)
+	//	dhcp->ClientMac[i] = Host.Mac[i];
+	Host.Mac.CopyTo(dhcp->ClientMac);
 
 	/*auto bak	= Host->IP;
 	auto any	= IPAddress::Any();

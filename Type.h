@@ -86,7 +86,7 @@ public:
 	inline byte* GetBuffer() { return (byte*)_Arr; }
 	inline const byte* GetBuffer() const { return (byte*)_Arr; }
 	inline int Length() const { return _Length; }
-	bool Empty() const;
+	//bool Empty() const;
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	virtual bool SetLength(int len, bool bak = false);
@@ -114,6 +114,8 @@ public:
 	// 转为十六进制字符串
 	String ToHex();
 
+    explicit operator bool() const { return _Length > 0; }
+    bool operator !() const { return _Length == 0; }
 	friend bool operator == (const Buffer& bs1, const Buffer& bs2);
 	friend bool operator != (const Buffer& bs1, const Buffer& bs2);
 
@@ -123,11 +125,6 @@ protected:
 
 	void move(Buffer& rval);
 };
-
-// 数组长度
-#define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
-// 数组清零，固定长度
-#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
 
 // 数组。包括指针和最大长度，支持实际长度
 class Array : public Buffer
@@ -186,9 +183,18 @@ protected:
 	void move(Array& rval);
 };
 
+// 数组长度
+#define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
+// 数组清零，固定长度
+#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
+
 // 使用常量数组来定义一个指针数组
 #define CArray(arr) (Array(arr, ArrayLength(arr)))
 #define SArray(obj) (Array(&obj, sizeof(obj)))
+
+// 使用常量数组来定义一个指针数组
+//#define CBuffer(arr) (Buffer(arr, ArrayLength(arr)))
+//#define SBuffer(obj) (Buffer(&obj, sizeof(obj)))
 
 // 数组
 /*
