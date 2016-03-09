@@ -7,6 +7,7 @@
 
 #include "String.h"
 
+char* utohex(uint value, byte size, char* string, bool upper);
 extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
@@ -51,37 +52,41 @@ String::String(char c)
 	*this = buf;*/
 	_Arr[0] = c;
 	_Arr[1] = 0;
+	_Length	= 1;
 }
 
-String::String(byte value, byte radix)
+String::String(byte value, int radix)
 {
 	init();
 
-	utoa(value, _Arr, radix);
+	if(radix == 16 || radix == -16)
+		Concat(value, radix);
+	else
+		utoa(value, _Arr, radix);
 }
 
-String::String(int value, byte radix)
+String::String(int value, int radix)
 {
 	init();
 
 	itoa(value, _Arr, radix);
 }
 
-String::String(uint value, byte radix)
+String::String(uint value, int radix)
 {
 	init();
 
 	utoa(value, _Arr, radix);
 }
 
-String::String(Int64 value, byte radix)
+String::String(Int64 value, int radix)
 {
 	init();
 
 	ltoa(value, _Arr, radix);
 }
 
-String::String(UInt64 value, byte radix)
+String::String(UInt64 value, int radix)
 {
 	init();
 
@@ -258,72 +263,112 @@ bool String::Concat(const char* cstr)
 
 bool String::Concat(char c)
 {
-	char buf[2];
+	/*char buf[2];
 	buf[0] = c;
 	buf[1] = 0;
-	return Concat(buf, 1);
+	return Concat(buf, 1);*/
+
+	if (!CheckCapacity(_Length + 1)) return false;
+
+	_Arr[_Length++]	= c;
+
+	return true;
 }
 
-bool String::Concat(byte num, byte radix)
+bool String::Concat(byte num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
+		_Length	+= (sizeof(num) << 1);
+
+		return true;
+	}
+
 	char buf[1 + 3 * sizeof(byte)];
-	if(radix == 16)
-	{
-		byte b	= num >> 4;
-		buf[0]	= b > 9 ? ('A' + b - 10) : ('0' + b);
-		b = num & 0x0F;
-		buf[1]	= b > 9 ? ('A' + b - 10) : ('0' + b);
-		buf[2]	= '\0';
-	}
-	else
-		itoa(num, buf, radix);
+	itoa(num, buf, radix);
 
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(int num, byte radix)
+bool String::Concat(short num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
+		_Length	+= (sizeof(num) << 1);
+
+		return true;
+	}
+
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
 
-/*bool String::Concat(uint num, byte radix, byte width)
+bool String::Concat(int num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
+		_Length	+= (sizeof(num) << 1);
+
+		return true;
+	}
+
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
-	int length	= strlen(buf);
-	if(width)
-	{
-		int remain	= width - length;
-		if(remain > 0)
-		{
-			// 前面补0
-			char cs[16];
-			memset(cs, '0', remain);
-			cs[remain]	= 0;
-			Concat(cs, remain);
-		}
-		// 如果超长，按照C#标准，让它撑大
-	}
-	return Concat(buf, length);
-}*/
+	return Concat(buf, strlen(buf));
+}
 
-bool String::Concat(uint num, byte radix)
+bool String::Concat(uint num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
+		_Length	+= (sizeof(num) << 1);
+
+		return true;
+	}
+
 	char buf[1 + 3 * sizeof(uint)];
 	utoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(Int64 num, byte radix)
+bool String::Concat(Int64 num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex((int)(num >> 32), sizeof(num) >> 1, _Arr + _Length, radix < 0);
+		_Length	+= sizeof(num);
+		utohex((int)(num & 0xFFFFFFFF), sizeof(num) >> 1, _Arr + _Length, radix < 0);
+		_Length	+= sizeof(num);
+
+		return true;
+	}
+
 	char buf[2 + 3 * sizeof(Int64)];
 	ltoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(UInt64 num, byte radix)
+bool String::Concat(UInt64 num, int radix)
 {
 	char buf[1 + 3 * sizeof(UInt64)];
 	ultoa(num, buf, radix);
@@ -770,7 +815,7 @@ extern char* itoa(int value, char *string, int radix)
 	return ltoa(value, string, radix) ;
 }
 
-extern char* ltoa(Int64 value, char* string, int radix )
+extern char* ltoa(Int64 value, char* string, int radix)
 {
 	char tmp[33];
 	char *tp = tmp;
@@ -809,6 +854,29 @@ extern char* ltoa(Int64 value, char* string, int radix )
 	return string;
 }
 
+char* utohex(uint value, byte size, char* string, bool upper)
+{
+	if (string == NULL ) return 0;
+
+	// 字节数乘以2是字符个数
+	size	<<= 1;
+	// 指针提前指向最后一个字符，数字从小往大处理，字符需要倒过来赋值
+	auto tp	= string + size;;
+	*tp--	= '\0';
+	char ch	= upper ? 'A' : 'a';
+	for(int i=0; i<size; i++)
+	{
+		byte bt = value & 0x0F;
+		value	>>= 4;
+		if (bt < 10)
+			*tp-- = bt + '0';
+		else
+			*tp-- = bt + ch - 10;
+	}
+
+	return string;
+}
+
 extern char* utoa(uint value, char* string, int radix)
 {
 	return ultoa(value, string, radix ) ;
@@ -816,31 +884,28 @@ extern char* utoa(uint value, char* string, int radix)
 
 extern char* ultoa(UInt64 value, char* string, int radix)
 {
-	char tmp[33];
-	char *tp = tmp;
-	Int64 i;
-	UInt64 v = value;
-	char *sp;
-
-	if ( string == NULL ) return 0;
+	if (string == NULL ) return 0;
 
 	if (radix > 36 || radix <= 1) return 0;
 
+	char tmp[33];
+	auto tp	= tmp;
+	auto v	= value;
+	char ch	= radix < 0 ? 'A' : 'a';
 	while (v || tp == tmp)
 	{
-		i = v % radix;
+		auto i = v % radix;
 		v = v / radix;
 		if (i < 10)
-			*tp++ = i+'0';
+			*tp++ = i + '0';
 		else
-			*tp++ = i + 'a' - 10;
+			*tp++ = i + ch - 10;
 	}
 
-	sp = string;
-
+	auto sp = string;
 	while (tp > tmp)
 		*sp++ = *--tp;
-	*sp = 0;
+	*sp = '\0';
 
 	return string;
 }
@@ -850,5 +915,6 @@ char *dtostrf (double val, char width, byte prec, char* sout)
 	char fmt[20];
 	sprintf(fmt, "%%%d.%df", width, prec);
 	sprintf(sout, fmt, val);
+	
 	return sout;
 }

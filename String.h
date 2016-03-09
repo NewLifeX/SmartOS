@@ -18,11 +18,12 @@ public:
 	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
 	explicit String(char c);
-	explicit String(byte value, byte radix = 10);
-	explicit String(int value, byte radix = 10);
-	explicit String(uint value, byte radix = 10);
-	explicit String(Int64 value, byte radix = 10);
-	explicit String(UInt64 value, byte radix = 10);
+	explicit String(byte value, int radix = 10);
+	explicit String(short value, int radix = 10);
+	explicit String(int value, int radix = 10);
+	explicit String(uint value, int radix = 10);
+	explicit String(Int64 value, int radix = 10);
+	explicit String(UInt64 value, int radix = 10);
 	explicit String(float value, byte decimalPlaces = 2);
 	explicit String(double value, byte decimalPlaces = 2);
 	virtual ~String();
@@ -45,11 +46,12 @@ public:
 	bool Concat(const String& str);
 	bool Concat(const char* cstr);
 	bool Concat(char c);
-	bool Concat(byte c, byte radix = 10);
-	bool Concat(int num, byte radix = 10);
-	bool Concat(uint num, byte radix = 10);
-	bool Concat(Int64 num, byte radix = 10);
-	bool Concat(UInt64 num, byte radix = 10);
+	bool Concat(byte c, int radix = 10);
+	bool Concat(short num, int radix = 10);
+	bool Concat(int num, int radix = 10);
+	bool Concat(uint num, int radix = 10);
+	bool Concat(Int64 num, int radix = 10);
+	bool Concat(UInt64 num, int radix = 10);
 	bool Concat(float num);
 	bool Concat(double num);
 
