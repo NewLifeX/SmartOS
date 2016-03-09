@@ -753,6 +753,7 @@ namespace NewLife.Reflection
 				ss.Add("it is a deleted function", "函数已标记为删除");
 				ss.Add("be referenced", "被引用");
 				ss.Add("the format string ends before this argument", "格式字符串参数不足");
+				ss.Add("has already been declared in the current scope", "已在当前区域中定义");
             }
 
             if (Words.Count == 0)
