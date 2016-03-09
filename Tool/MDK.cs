@@ -737,16 +737,22 @@ namespace NewLife.Reflection
         public String FixWord(String msg)
         {
             #region 初始化
-            if (Sections.Count == 0)
+			var ss = Sections;
+            if (ss.Count == 0)
             {
-                Sections.Add("Fatal error", "致命错误");
-                Sections.Add("fatal error", "致命错误");
-                Sections.Add("Could not open file", "无法打开文件");
-                Sections.Add("No such file or directory", "文件或目录不存在");
-                Sections.Add("Undefined symbol", "未定义标记");
-                Sections.Add("referred from", "引用自");
-                Sections.Add("Program Size", "程序大小");
-                Sections.Add("Finished", "程序大小");
+                ss.Add("Fatal error", "致命错误");
+                ss.Add("fatal error", "致命错误");
+                ss.Add("Could not open file", "无法打开文件");
+                ss.Add("No such file or directory", "文件或目录不存在");
+                ss.Add("Undefined symbol", "未定义标记");
+                ss.Add("referred from", "引用自");
+                ss.Add("Program Size", "程序大小");
+                ss.Add("Finished", "程序大小");
+				ss.Add("declared at", "声明于");
+				ss.Add("required for copy that was eliminated", "已淘汰");
+				ss.Add("it is a deleted function", "函数已标记为删除");
+				ss.Add("be referenced", "被引用");
+				ss.Add("the format string ends before this argument", "格式字符串参数不足");
             }
 
             if (Words.Count == 0)
@@ -755,7 +761,7 @@ namespace NewLife.Reflection
                 Words.Add("Warning", "警告");
                 Words.Add("Warnings", "警告");
                 Words.Add("cannot", "不能");
-                Words.Add("open", "打开");
+                /*Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
                 Words.Add("file", "文件");
@@ -786,7 +792,7 @@ namespace NewLife.Reflection
                 Words.Add("architecture", "架构");
                 Words.Add("processor", "处理器");
                 Words.Add("Undefined", "未定义");
-                Words.Add("referred", "引用");
+                Words.Add("referred", "引用");*/
             }
             #endregion
 

@@ -357,7 +357,7 @@ void TSys::ShowInfo() const
 	ByteArray(ID, ArrayLength(ID)).Show();
 
 	// 新的字符串这样用会导致第一个字符被清零
-	//debug_printf("\t");
+	debug_printf("\t %s", ID);
 	//String((char*)ID, 12).Show(true);
 
 	// 输出堆信息
