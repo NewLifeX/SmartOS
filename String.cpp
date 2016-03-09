@@ -267,7 +267,17 @@ bool String::Concat(char c)
 bool String::Concat(byte num, byte radix)
 {
 	char buf[1 + 3 * sizeof(byte)];
-	itoa(num, buf, radix);
+	if(radix == 16)
+	{
+		byte b	= num >> 4;
+		buf[0]	= b > 9 ? ('A' + b - 10) : ('0' + b);
+		b = num & 0x0F;
+		buf[1]	= b > 9 ? ('A' + b - 10) : ('0' + b);
+		buf[2]	= '\0';
+	}
+	else
+		itoa(num, buf, radix);
+
 	return Concat(buf, strlen(buf));
 }
 
