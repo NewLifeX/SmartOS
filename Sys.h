@@ -115,6 +115,12 @@ extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行
 //#include "Time.h"
 #include "Interrupt.h"
 
+//extern uint32_t __REV(uint32_t value);
+//extern uint32_t __REV16(uint16_t value);
+
+uint _REV(uint value);
+ushort _REV16(ushort value);
+
 #endif //_Sys_H_
 
 /*

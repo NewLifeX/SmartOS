@@ -559,3 +559,39 @@ void TSys::Trace(int times) const
 	}
 //#endif
 }
+
+/******************************** REV ********************************/
+
+uint	_REV(uint value)		{ return __REV(value); }
+ushort	_REV16(ushort value)	{ return __REV16(value); }
+
+/*#if defined ( __CC_ARM   )
+__asm uint _REV(uint value)
+{
+	rev16 r0, r0
+		bx lr
+}
+
+__asm ushort _REV16(ushort value)
+{
+	rev16 r0, r0
+		bx lr
+}
+
+#elif defined   (  __GNUC__  )
+uint32_t __REV(uint32_t value)
+{
+	uint32_t result = 0;
+
+	__ASM volatile ("rev %0, %1" : "=r" (result) : "r" (value));
+	return(result);
+}
+
+uint32_t __REV16(uint16_t value)
+{
+	uint32_t result = 0;
+
+	__ASM volatile ("rev16 %0, %1" : "=r" (result) : "r" (value));
+	return(result);
+}
+#endif*/
