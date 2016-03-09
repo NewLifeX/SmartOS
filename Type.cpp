@@ -73,11 +73,11 @@ Buffer::Buffer(void* p, int len)
 	_Length	= len;
 }
 
-Buffer::Buffer(const Buffer& buf)
+/*Buffer::Buffer(const Buffer& buf)
 {
 	_Arr	= buf._Arr;
 	_Length	= buf._Length;
-}
+}*/
 
 Buffer::Buffer(Buffer&& rval)
 {
@@ -271,7 +271,7 @@ Array::Array(const void* data, int len) : Buffer((void*)data, len)
 	_canWrite	= false;
 }
 
-Array::Array(const Buffer& rhs) : Buffer(rhs)
+/*Array::Array(const Buffer& rhs) : Buffer(rhs)
 {
 	Init();
 }
@@ -279,7 +279,7 @@ Array::Array(const Buffer& rhs) : Buffer(rhs)
 Array::Array(const Array& rhs) : Buffer(rhs)
 {
 	Init();
-}
+}*/
 
 Array::Array(Array&& rval)
 {

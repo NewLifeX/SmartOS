@@ -65,7 +65,7 @@ public:
 	// 打包一个指针和长度指定的数据区
 	Buffer(void* p = nullptr, int len = 0);
 	// 拷贝构造函数。直接把指针和长度拿过来用
-	Buffer(const Buffer& buf);
+	Buffer(const Buffer& buf) = delete;
 	// 对象mov操作，指针和长度归我，清空对方
 	Buffer(Buffer&& rval);
 
@@ -129,8 +129,8 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
-	Array(const Buffer& rhs);
-	Array(const Array& rhs);
+	Array(const Buffer& rhs) = delete;
+	Array(const Array& rhs) = delete;
 	Array(Array&& rval);
 
 	virtual ~Array();
