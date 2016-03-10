@@ -1,20 +1,20 @@
 ﻿#include "String.h"
+#include "Time.h"
 
-static String TestMove(String& ss)
+/*static String TestMove(String& ss)
 {
 	//String ss = "Hello Move";
 	ss += " Test ";
 	//ss += dd;
 
 	return ss;
-}
+}*/
 
 static void TestCtor()
 {
 	TS("TestCtor");
 
 	debug_printf("字符串构造函数测试\r\n");
-	debug_printf("基础构造测试\r\n");
 
 	String str1("456");
 	assert_param2(str1 == "456", "String(const char* cstr)");
@@ -102,6 +102,109 @@ void TestNum16()
 	assert_param2(str6 == "331144997AC45566", "String(UInt64 value, int radix = 16)");
 }
 
+static void TestAssign()
+{
+	TS("TestAssign");
+
+	debug_printf("赋值构造测试\r\n");
+
+	String str = "万家灯火，无声物联！";
+	debug_printf("TestAssign: %s\r\n", str.GetBuffer());
+	str	= "无声物联";
+	assert_param2(str == "无声物联", "String& operator = (const char* cstr)");
+
+	String str2	= "xxx";
+	str2	= str;
+	assert_param2(str == "无声物联", "String& operator = (const char* cstr)");
+	assert_param2(str2.GetBuffer() != str.GetBuffer(), "String& operator = (const String& rhs)");
+}
+
+static void TestConcat()
+{
+	TS("TestConcat");
+
+	debug_printf("字符串连接测试\r\n");
+
+	auto now	= Time.Now();
+	//char cs[32];
+	//debug_printf("now: %d %s\r\n", now.Second, now.GetString('F', cs));
+
+	String str;
+
+	// 连接时间，继承自Object
+	str	+= now;
+	//str.Show(true);
+	// yyyy-MM-dd HH:mm:ss
+	assert_param2(str.Length() == 19, "String& operator += (const Object& rhs)");
+
+	// 连接其它字符串
+	int len	= str.Length();
+	String str2(" 中国时间");
+	str += str2;
+	assert_param2(str.Length() == len + str2.Length(), "String& operator += (const String& rhs)");
+
+	// 连接C格式字符串
+	str	+= " ";
+
+	// 连接整数
+	len	= str.Length();
+	str += 1234;
+	assert_param2(str.Length() == len + 4, "String& operator += (int num)");
+
+	// 连接C格式字符串
+	str	+= " ";
+
+	// 连接浮点数
+	len	= str.Length();
+	str += -1234.8856;	// 特别注意，默认2位小数，所以字符串是-1234.89
+	str.Show(true);
+	assert_param2(str.Length() == len + 8, "String& operator += (double num)");
+}
+
+static void TestConcat16()
+{
+	TS("TestConcat16");
+
+	String str = "十六进制连接测试 ";
+
+	// 连接单个字节的十六进制
+	str.Concat((byte)0x20, 16);
+
+	// 连接整数的十六进制，前面补零
+	str	+= " @ ";
+	str.Concat((ushort)0xE3F, 16);
+
+	// 连接整数的十六进制（大写字母），前面补零
+	str += " # ";
+	str.Concat(0x73F88, -16);
+
+	str.Show(true);
+	// 十六进制连接测试 20 @ 00000e3f # 00073F88
+	assert_param2(str == "十六进制连接测试 20 @ 00000e3f # 00073F88", "bool Concat(int num, int radix = 16)");
+}
+
+static void TestAdd()
+{
+	TS("TestAdd");
+
+	String str = R("字符串连加 ") + 1234 + "@" + Time.Now() + "#" + R("99xx") + '$' + -33.883;
+	str.Show(true);
+	// 字符串连加 1234@0000-00-00 00:00:00#99xx
+	assert_param2(str == "字符串连加 1234@0000-00-00 00:00:00#99xx$-33.88", "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");
+}
+
+static void TestEquals()
+{
+	TS("TestEquals");
+
+	debug_printf("字符串相等测试\r\n");
+
+	String str1 = "TestABC HH";
+	String str2 = "TESTABC HH";
+	assert_param2(str1 >= str2, "bool operator <  (const String& rhs) const");
+	assert_param2(str1.EqualsIgnoreCase(str2), "bool EqualsIgnoreCase(const String& s)");
+}
+
 void TestString()
 {
 	TS("TestString");
@@ -109,6 +212,11 @@ void TestString()
 	TestCtor();
 	TestNum10();
 	TestNum16();
+	TestAssign();
+	TestConcat();
+	TestConcat16();
+	TestAdd();
+	TestEquals();
 
 	//内存管理
 	debug_printf("字符串str1");
@@ -126,28 +234,6 @@ void TestString()
 	//参数长度超标
 	str1.SetBuffer(&str2,2);
 	debug_printf("字符串str1 Concat 10进制.....\r\n");
-	str1.Concat((String&)str2);
-	str1.Show(true);
-	str1.Concat( (char*)'3');
-	str1.Show(true);
-	str1.Concat((char) '4');
-	str1.Show(true);
-	str1.Concat((byte)0x10,10);
-	str1.Show(true);
-	str1.Concat((short)1, 10);
-	str1.Show(true);
-	str1.Concat((int)1, 10);
-	str1.Show(true);
-	str1.Concat((uint)1, 10);
-	str1.Show(true);
-	str1.Concat((Int64)1,10);
-	str1.Show(true);
-	str1.Concat((UInt64)1,10);
-	str1.Show(true);
-	str1.Concat((float)1.0);
-	str1.Show(true);
-	str1.Concat((double)1);
-	str1.Show(true);
 
 	debug_printf("字符串str1 Concat 16进制.....\r\n");
 	str1.Concat((byte)0x1,16);

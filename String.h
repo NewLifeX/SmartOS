@@ -65,7 +65,7 @@ public:
 	String& operator += (int num)			{Concat(num); return (*this);}
 	String& operator += (uint num)			{Concat(num); return (*this);}
 	String& operator += (Int64 num)			{Concat(num); return (*this);}
-	String& operator += (UInt64 num)			{Concat(num); return (*this);}
+	String& operator += (UInt64 num)		{Concat(num); return (*this);}
 	String& operator += (float num)			{Concat(num); return (*this);}
 	String& operator += (double num)		{Concat(num); return (*this);}
 
