@@ -6,9 +6,9 @@
 #include "Config.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
-#pragma pack(push)	// 保存对齐状态
+//#pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
-#pragma pack(1)
+//#pragma pack(1)
 
 // 配置信息
 class TinyConfig : public ConfigBase
@@ -45,6 +45,6 @@ private:
 	byte	TagEnd;		// 数据区结束标识符
 };
 
-#pragma pack(pop)	// 恢复对齐状态
+//#pragma pack(pop)	// 恢复对齐状态
 
 #endif

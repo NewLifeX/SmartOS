@@ -75,9 +75,9 @@ protected:
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
-#pragma pack(push)	// 保存对齐状态
+//#pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
-#pragma pack(1)
+//#pragma pack(1)
 
 /******************************** HotConfig ********************************/
 
@@ -101,7 +101,7 @@ public:
 
 };
 
-#pragma pack(pop)	// 恢复对齐状态
+//#pragma pack(pop)	// 恢复对齐状态
 
 /*
 配置子系统，链式保存管理多配置段。

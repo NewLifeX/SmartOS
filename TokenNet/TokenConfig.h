@@ -7,9 +7,9 @@
 #include "Net\Net.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
-#pragma pack(push)	// 保存对齐状态
+//#pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
-#pragma pack(1)
+//#pragma pack(1)
 
 // 配置信息
 class TokenConfig : public ConfigBase
@@ -30,7 +30,7 @@ public:
 	char	_VisitToken[16];	//访问服务器令牌
 	char	_Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
 	char	_Vendor[32];		// 厂商服务器域名。原始厂商服务器地址
-	
+
 	byte	TagEnd;		// 数据区结束标识符
 
 	TokenConfig();
@@ -42,13 +42,13 @@ public:
 	String	VisitToken;
 	String	Server;
 	String	Vendor;
-	
+
 	static TokenConfig* Current;
 	static TokenConfig*	Create(const char* vendor, byte protocol, ushort sport, ushort port);
 
 private:
 };
 
-#pragma pack(pop)	// 恢复对齐状态
+//#pragma pack(pop)	// 恢复对齐状态
 
 #endif

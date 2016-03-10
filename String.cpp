@@ -146,13 +146,13 @@ bool String::CheckCapacity(uint size)
 	if (_Arr && _Capacity >= size) return true;
 
 	// 外部需要放下size个字符，那么需要size+1个字节空间
-	int sz	= _Capacity;
+	int sz	= 0x40;
 	while(sz <= size) sz <<= 1;
 
 	auto p	= new char[sz];
 	if(!p) return false;
 
-	if(_Length)
+	if(_Arr && _Length)
 		//strcpy(p, _Arr);
 		// 为了安全，按照字节拷贝
 		Buffer(p, sz).Copy(0, _Arr, _Length);
@@ -162,7 +162,7 @@ bool String::CheckCapacity(uint size)
 	if(_needFree && _Arr != Arr) delete _Arr;
 
 	_Arr		= p;
-	_Capacity	= sz;
+	_Capacity	= sz - 1;
 	_needFree	= true;
 
 	return true;
@@ -259,7 +259,7 @@ bool String::Concat(const char* cstr, uint length)
 	if (!cstr) return false;
 	if (length == 0) return true;
 	if (!CheckCapacity(newlen)) return false;
-	
+
 	//strcpy(_Arr + _Length, cstr);
 	Buffer(_Arr, _Capacity).Copy(_Length, cstr, length);
 	_Length = newlen;
