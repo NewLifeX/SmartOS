@@ -1,7 +1,6 @@
 ﻿#include "Sys.h"
 #include "SerialPort.h"
 #include "Drivers\NRF24L01.h"
-#include "TinyNet\Message.h"
 #include "TinyNet\TinyClient.h"
 
 #include "TinyNet\TinyMessage.h"
@@ -60,12 +59,12 @@ void FlashLed(void* param)
 	// 发送广播消息，刷所有人小灯
 	TinyMessage msg(0x10);
 
-	byte leds[] = {0, 1, 2};
+	/*byte leds[] = {0, 1, 2};
 	leds[0] = Sys.Ms() % 4 - 1;
 	leds[1] = Sys.Ms() % 4 - 1;
-	leds[2] = Sys.Ms() % 4 - 1;
+	leds[2] = Sys.Ms() % 4 - 1;*/
 
-	msg.SetData(leds, ArrayLength(leds));
+	//msg.SetData(leds, ArrayLength(leds));
 
 	//msg.NoAck = true;
 	control->Send(msg);
@@ -76,7 +75,7 @@ void TestMessage(OutputPort* leds)
     debug_printf("\r\n");
     debug_printf("TestMessage Start......\r\n");
 
-	NRF24L01* nrf = Create2401();
+	/*auto nrf	= Create2401();
     //nrf->Timeout = 1000;
     //nrf->Channel = 0x28;
 	// 如果打开自动应答，繁忙时收不到数据会增加错误计数，达到一定程度会自动重启模块
@@ -89,15 +88,15 @@ void TestMessage(OutputPort* leds)
         debug_printf("请检查NRF24L01线路\r\n");
 
     // 使用nRF24L01+作为链路层
-    Controller* control = new TinyController(nrf);
+    auto control = new TinyController(nrf);
 
-	TinyClient* client = new TinyClient(control);
+	auto client = new TinyClient(control);
 	client->DeviceType = 0x0101;
 	//client->SetDefault();
 	//control->AddTransport(SerialPort::GetMessagePort());
 
 	// 注册消息。每个消息代码对应一个功能函数
-	control->Register(0x10, OpenLed, leds);
+	control->Register(0x10, OpenLed, leds);*/
 
 	// 添加定时任务
 	//debug_printf("灯光闪烁任务 ");

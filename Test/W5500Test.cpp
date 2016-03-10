@@ -19,7 +19,7 @@ void TestTask2(void* param)
 	byte buf[70] ;
 	for(int i = 0; i < 70; i++)
 		buf[i] = i;
-	udp->Write(buf,sizeof(buf));
+	udp->Write(Buffer(buf,sizeof(buf)));
 }
 
 void SocketShow(void* param)
@@ -28,10 +28,10 @@ void SocketShow(void* param)
 	udp->StateShow();
 }
 
-void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
+void TestW5500(Spi* spi, Pin irq, Pin rst)
 {
-	W5500* net = new W5500();
-	net->Init(spi, irq, reset);
+	auto net	= new W5500();
+	net->Init(spi, irq, rst);
 
 	net->IP = IPAddress(192, 168, 0, 200);
 	net->Gateway = IPAddress(192,168,0,1);
@@ -41,7 +41,7 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 
 	net->StateShow();
 
-	UdpClient *udp = new UdpClient(net);
+	auto udp	= new UdpClient(*net);
 	IPAddress RemoteIP(255, 255, 255, 255);
 
 	udp->Remote.Address = RemoteIP;
@@ -52,9 +52,8 @@ void TestW5500(Spi* spi, Pin irq, OutputPort* reset)
 
 	Sys.AddTask(TestTask2, udp, 9000, 10000, "TestUdpClient");
 	Sys.Sleep(1000);
-	byte buf[]  = "hello";
-	udp->Write(buf,sizeof(buf));
+	String str	= "hello";
+	udp->Write(str.GetBytes());
 
 	//Sys.AddTask(SocketShow, udp, 9000, 10000, "show");
-
 }

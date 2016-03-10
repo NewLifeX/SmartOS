@@ -32,10 +32,10 @@ PWM * IRFREQ()
 
 //网关C 
 //PB1			HIRPWM  (TIME3 CH4)
-PWM * IRFREQ()
+PWM* IRFREQ()
 {
-	AlternatePort* irpin = new AlternatePort(PB1);	
-	PWM * IRFreq = new PWM(0x02);					
+	auto irpin	= new AlternatePort(PB1);	
+	auto IRFreq	= new PWM(Timer3);					
 	//  38KHz 占空比 50%
 //	IRFreq->SetFrequency(38000);	// 严重不准确 103ve上实际输出只有25KHz
 	IRFreq->Prescaler = 0x06;	
@@ -47,10 +47,10 @@ PWM * IRFREQ()
 
 void IRTest()
 {
-	OutputPort * HIRPOWER = new OutputPort(PE11,false,true);
+	auto HIRPOWER	= new OutputPort(PE11,false,true);
 	*HIRPOWER = false;
 	
-	IR * ir = new IR(IRFREQ(),PE10,PE15);
+	/*auto ir	= new IR(IRFREQ(), PE10, PE15);
 	byte Recbuff[512];
 	for(int i =0;i<sizeof(Recbuff);i++)Recbuff[i]=0x00;
 	int length=0;
@@ -61,5 +61,5 @@ void IRTest()
 	{
 		ir->Send(Recbuff,length);
 		Sys.Sleep(1000);
-	}
+	}*/
 }

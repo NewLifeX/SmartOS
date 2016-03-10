@@ -25,7 +25,7 @@ static const uint DataBuffer[] =
     0xdf7caf9b, 0xbfba8fd9, 0x9ff86e17, 0x7e364e55, 0x2e933eb2, 0x0ed11ef0
 };
 
-bool inited = false;
+/*bool inited = false;
 
 void Init()
 {
@@ -55,19 +55,7 @@ uint HardCrc(const Array& bs, uint crc)
         CRC->DR =_REV(*ptr++);    // 字节顺序倒过来,注意不是位序,不是用__RBIT指令
     }
     return CRC->DR;
-	/*byte* ptr = (byte*)buf;
-    while(len-- > 0)
-    {
-        CRC->DR = (uint)*ptr++;
-    }
-    return CRC->DR;*/
-
-	/*CRC_CalcBlockCRC(ptr, len);
-	return CRC_GetCRC();*/
-
-    //UINT32 rs = CRC->DR;
-    //return c_CRCTable[ ((crc >> 24) ^ rs) & 0xFF ] ^ (crc << 8);
-}
+}*/
 
 void TestCrc()
 {
@@ -111,7 +99,7 @@ void TestCrc()
 	// 实际上就是数字为初值，对它自身进行校验码计算
 	ByteArray bs3(&temp, 4);
 	crc		= Crc::Hash(bs3, data);
-	crc2	= HardCrc(bs3, data);
+	//crc2	= HardCrc(bs3, data);
 	bs3.Show();
 	debug_printf(" <= 0x%08x\r\n\t", data);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -119,7 +107,7 @@ void TestCrc()
 
 	ByteArray bs4(&temp, 4);
 	crc		= Crc::Hash(bs4, temp);
-	crc2	= HardCrc(bs4, temp);
+	//crc2	= HardCrc(bs4, temp);
 	bs4.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -141,7 +129,7 @@ void TestCrc()
 	// 实际应用中，先计算数据的校验，然后接着附加校验码部分
 	ByteArray bs6(&temp, 4);
 	crc		= Crc::Hash(bs6, temp);
-	crc2	= HardCrc(bs6, temp);
+	//crc2	= HardCrc(bs6, temp);
 	bs6.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -152,8 +140,8 @@ void TestCrc()
 	crc		= Crc::Hash(bs7, 0);
 	temp	= crc;
 	crc		= Crc::Hash(Array(&crc, 4), crc);
-	crc2	= HardCrc(bs7, 0);
-	crc2	= HardCrc(Array(&crc2, 4), crc2);
+	//crc2	= HardCrc(bs7, 0);
+	//crc2	= HardCrc(Array(&crc2, 4), crc2);
 	bs7.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);

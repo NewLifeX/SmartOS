@@ -36,7 +36,7 @@ void TestTimer(OutputPort& leds)
     debug_printf("\r\n");
     debug_printf("TestTimer Start......\r\n");
 
-    timer = new Timer(TIM2);
+    timer = new Timer(Timer2);
     timer->SetFrequency(50);
     timer->Register(TimerTask, &leds);
     timer->Open();

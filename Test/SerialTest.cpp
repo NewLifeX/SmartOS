@@ -1,6 +1,6 @@
 ﻿#include "SerialPort.h"
 
-uint OnUsartRead(ITransport* transport, Array& bs, void* param, void* param2)
+uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
 	debug_printf("收到：");
 	bs.Show(true);

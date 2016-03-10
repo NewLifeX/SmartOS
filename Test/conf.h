@@ -15,7 +15,7 @@ void TestEthernet();
 void IRTest();
 void TestTimer(OutputPort& leds);
 void TestThread(OutputPort& leds);
-void TestW5500(Spi* spi, Pin irq, OutputPort* reset);
+void TestW5500(Spi* spi, Pin irq, Pin rst);
 
 #include "Drivers\NRF24L01.h"
 void TestNRF24L01();
@@ -23,6 +23,7 @@ NRF24L01* Create2401();
 
 void TestMessage(OutputPort* leds);
 
+void TestBuffer();
 void TestString();
 
 #endif
