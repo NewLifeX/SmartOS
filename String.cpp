@@ -46,10 +46,7 @@ String::String(StringHelper&& rval)
 String::String(char c)
 {
 	init();
-	/*char buf[2];
-	buf[0] = c;
-	buf[1] = 0;
-	*this = buf;*/
+
 	_Arr[0] = c;
 	_Arr[1] = 0;
 	_Length	= 1;
@@ -59,52 +56,58 @@ String::String(byte value, int radix)
 {
 	init();
 
-	if(radix == 16 || radix == -16)
-		Concat(value, radix);
-	else
-		utoa(value, _Arr, radix);
+	Concat(value, radix);
+}
+
+String::String(short value, int radix)
+{
+	init();
+
+	Concat(value, radix);
 }
 
 String::String(int value, int radix)
 {
 	init();
 
-	itoa(value, _Arr, radix);
+	Concat(value, radix);
 }
 
 String::String(uint value, int radix)
 {
 	init();
 
-	utoa(value, _Arr, radix);
+	Concat(value, radix);
 }
 
 String::String(Int64 value, int radix)
 {
 	init();
 
-	ltoa(value, _Arr, radix);
+	Concat(value, radix);
 }
 
 String::String(UInt64 value, int radix)
 {
 	init();
 
-	ultoa(value, _Arr, radix);
+	Concat(value, radix);
 }
 
 String::String(float value, byte decimalPlaces)
 {
 	init();
 
-	dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
+	Concat(value, decimalPlaces);
+	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
 String::String(double value, byte decimalPlaces)
 {
 	init();
 
-	dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
+	Concat(value, decimalPlaces);
+	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
 // 外部传入缓冲区供内部使用，注意长度减去零结束符
@@ -370,22 +373,35 @@ bool String::Concat(Int64 num, int radix)
 
 bool String::Concat(UInt64 num, int radix)
 {
+	// 十六进制固定
+	if(radix == 16 || radix == -16)
+	{
+		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
+
+		utohex((int)(num >> 32), sizeof(num) >> 1, _Arr + _Length, radix < 0);
+		_Length	+= sizeof(num);
+		utohex((int)(num & 0xFFFFFFFF), sizeof(num) >> 1, _Arr + _Length, radix < 0);
+		_Length	+= sizeof(num);
+
+		return true;
+	}
+
 	char buf[1 + 3 * sizeof(UInt64)];
 	ultoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(float num)
+bool String::Concat(float num, byte decimalPlaces)
 {
 	char buf[20];
-	char* string = dtostrf(num, 4, 2, buf);
+	char* string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
 	return Concat(string, strlen(string));
 }
 
-bool String::Concat(double num)
+bool String::Concat(double num, byte decimalPlaces)
 {
 	char buf[20];
-	char* string = dtostrf(num, 4, 2, buf);
+	char* string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
 	return Concat(string, strlen(string));
 }
 

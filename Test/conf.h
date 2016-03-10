@@ -23,4 +23,6 @@ NRF24L01* Create2401();
 
 void TestMessage(OutputPort* leds);
 
+void TestString();
+
 #endif

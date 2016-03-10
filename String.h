@@ -52,8 +52,8 @@ public:
 	bool Concat(uint num, int radix = 10);
 	bool Concat(Int64 num, int radix = 10);
 	bool Concat(UInt64 num, int radix = 10);
-	bool Concat(float num);
-	bool Concat(double num);
+	bool Concat(float num, byte decimalPlaces = 2);
+	bool Concat(double num, byte decimalPlaces = 2);
 
 	/*template<typename T>
 	String& operator += (T rhs)	{Concat(rhs); return (*this);}*/

@@ -1,66 +1,131 @@
-#include "String.h"
-void StringTest()
-{	
-	//¹¹Ôìº¯Êı
-	String str1 = "456";
-	String str2((char)'1');
-	String srr3((String&)str1);  
-	//String str4((String&&)str1);	
-	String str5((char*)'1',1);
-	
-	debug_printf("10½øÖÆ¹¹Ôìº¯Êı:.....\r\n");
-	String Str6((byte)1,10);
-	String Str7((short)1,10);
-	String Str8((int)1,10);
-	String Str9((uint)1,10);
-	String Str10((Int64)1,10);
-	String Str11((UInt64)1,10);
-	String Str12((float)1.0);
-	String Str13((double)1);
-	
-	Str6.Show(true);
-	Str7.Show(true);
-	Str8.Show(true);
-	Str9.Show(true);
-	Str10.Show(true);
-	Str11.Show(true);
-	Str12.Show(true);
-	Str13.Show(true);
-	
-	debug_printf("16½øÖÆ¹¹Ôìº¯Êı:.....\r\n");
-	String Str14((byte)1,16);
-	String Str15((short)1,16);
-	String Str16((int)1,16);
-	String Str17((uint)1,16);
-	String Str18((Int64)1,16);
-	String Str19((UInt64)1,16);
-	String Str20((float)1.0);
-	String Str21((double)1);
-	
-	Str14.Show(true);
-	Str15.Show(true);
-	Str16.Show(true);
-	Str17.Show(true);
-	Str18.Show(true);
-	Str19.Show(true);
-	Str20.Show(true);
-	Str21.Show(true)
-	
-	//ÄÚ´æ¹ÜÀí
-	debug_printf("×Ö·û´®str1");
-	str1.Show(true);	
-	debug_printf("×Ö·û´®str1¼ì²éÄÚ´æ:.....\r\n");
+ï»¿#include "String.h"
+
+static String TestMove(String& ss)
+{
+	//String ss = "Hello Move";
+	ss += " Test ";
+	//ss += dd;
+
+	return ss;
+}
+
+static void TestCtor()
+{
+	TS("TestCtor");
+
+	debug_printf("å­—ç¬¦ä¸²æ„é€ å‡½æ•°æµ‹è¯•\r\n");
+	debug_printf("åŸºç¡€æ„é€ æµ‹è¯•\r\n");
+
+	String str1("456");
+	assert_param2(str1 == "456", "String(const char* cstr)");
+	assert_param2(str1.GetBuffer() != "456", "String(const char* cstr)");
+
+	String str2(str1);
+	assert_param2(str2 == str1, "String(const String& str)");
+	assert_param2(str2.GetBuffer() != str1.GetBuffer(), "String(const String& str)");
+
+	StringHelper str3(str1);
+	assert_param2(str3 == str1, "String(StringHelper&& rval)");
+	assert_param2(str3.GetBuffer() != str1.GetBuffer(), "String(StringHelper&& rval)");
+
+	char cs[] = "Hello Buffer";
+	String str4(cs, sizeof(cs));
+	assert_param2(str4 == cs, "String(char* str, int length)");
+	assert_param2(str4.GetBuffer() == cs, "String(char* str, int length)");
+
+	debug_printf("moveæµ‹è¯•\r\n");
+	auto tt	= TestMove(str1);
+	tt.Show(true);
+	str1.Show(true);
+
+	String str5((char)'1');
+	assert_param2(str5 == "1", "String(char c)");
+}
+
+void TestNum10()
+{
+	TS("TestNum10");
+
+	debug_printf("10è¿›åˆ¶æ„é€ å‡½æ•°:.....\r\n");
+	String str1((byte)123, 10);
+	assert_param2(str1 == "123", "String(byte value, int radix = 10)");
+
+	String str2((short)4567, 10);
+	assert_param2(str2 == "4567", "String(short value, int radix = 10)");
+
+	String str3((int)-88996677, 10);
+	assert_param2(str3 == "-88996677", "String(int value, int radix = 10)");
+
+	String str4((uint)0xFFFFFFFF, 10);
+	assert_param2(str4 == "4294967295", "String(uint value, int radix = 10)");
+
+	String str5((Int64)-7744, 10);
+	assert_param2(str5 == "-7744", "String(Int64 value, int radix = 10)");
+
+	String str6((UInt64)331144, 10);
+	assert_param2(str6 == "331144", "String(UInt64 value, int radix = 10)");
+
+	// é»˜è®¤2ä½å°æ•°ï¼Œæ‰€ä»¥å­—ç¬¦ä¸²è¦è¡¥é›¶
+	String str7((float)123.0);
+	assert_param2(str7 == "123.00", "String(float value, int decimalPlaces = 2)");
+
+	// æµ®ç‚¹æ•°æ ¼å¼åŒ–çš„æ—¶å€™ï¼Œå¦‚æœè¶…è¿‡è¦æ±‚å°æ•°ä½æ•°ï¼Œåˆ™ä¼šå››èˆäº”å…¥
+	String str8((double)456.784);
+	assert_param2(str8 == "456.78", "String(double value, int decimalPlaces = 2)");
+
+	String str9((double)456.789);
+	assert_param2(str9 == "456.79", "String(double value, int decimalPlaces = 2)");
+}
+
+void TestNum16()
+{
+	TS("TestNum16");
+
+	debug_printf("16è¿›åˆ¶æ„é€ å‡½æ•°:.....\r\n");
+	String str1((byte)0xA3, 16);
+	assert_param2(str1 == "a3", "String(byte value, int radix = 16)");
+	assert_param2(String((byte)0xA3, -16) == "A3", "String(byte value, int radix = 16)");
+
+	String str2((short)0x4567, 16);
+	assert_param2(str2 == "4567", "String(short value, int radix = 16)");
+
+	String str3((int)-0x7799, 16);
+	assert_param2(str3 == "ffff8867", "String(int value, int radix = 16)");
+
+	String str4((uint)0xFFFFFFFF, 16);
+	assert_param2(str4 == "ffffffff", "String(uint value, int radix = 16)");
+
+	String str5((Int64)0x331144997AC45566, 16);
+	assert_param2(str5 == "331144997ac45566", "String(Int64 value, int radix = 16)");
+
+	String str6((UInt64)0x331144997AC45566, -16);
+	assert_param2(str6 == "331144997AC45566", "String(UInt64 value, int radix = 16)");
+}
+
+void TestString()
+{
+	TS("TestString");
+
+	TestCtor();
+	TestNum10();
+	TestNum16();
+
+	//å†…å­˜ç®¡ç†
+	debug_printf("å­—ç¬¦ä¸²str1");
+	String str1("456");
+	str1.Show(true);
+	debug_printf("å­—ç¬¦ä¸²str1æ£€æŸ¥å†…å­˜:.....\r\n");
 	auto len	= str1.Length();
     auto check1 = str1.CheckCapacity(1);
-	auto check2 = str1.CheckCapacity(len+1);	
-	str1.GetBuffer();	
-	
-	//String  str2('1');
-	
+	auto check2 = str1.CheckCapacity(len+1);
+	str1.GetBuffer();
+
+	String  str2('1');
+
 	str1.SetBuffer(&str2,1);
-	//²ÎÊı³¤¶È³¬±ê
+	//å‚æ•°é•¿åº¦è¶…æ ‡
 	str1.SetBuffer(&str2,2);
-	debug_printf("×Ö·û´®str1 Concat 10½øÖÆ.....\r\n");
+	debug_printf("å­—ç¬¦ä¸²str1 Concat 10è¿›åˆ¶.....\r\n");
 	str1.Concat((String&)str2);
 	str1.Show(true);
 	str1.Concat( (char*)'3');
@@ -83,8 +148,8 @@ void StringTest()
 	str1.Show(true);
 	str1.Concat((double)1);
 	str1.Show(true);
-	
-	debug_printf("×Ö·û´®str1 Concat 16½øÖÆ.....\r\n");
+
+	debug_printf("å­—ç¬¦ä¸²str1 Concat 16è¿›åˆ¶.....\r\n");
 	str1.Concat((byte)0x1,16);
 	str1.Show(true);
 	str1.Concat((short)1, 16);
@@ -101,9 +166,9 @@ void StringTest()
 	str1.Show(true);
 	str1.Concat((double)1);
 	str1.Show(true);
-	
-	debug_printf("×Ö·û´®str1 +=²Ù×÷.....\r\n");
-	
+
+	debug_printf("å­—ç¬¦ä¸²str1 +=æ“ä½œ.....\r\n");
+
 	str1+=(Object&)str2;
 	str1.Show(true);
 	str1+=(String&)str2;
@@ -122,7 +187,7 @@ void StringTest()
 	str1.Show(true);
 	str1+=(double)1;
 	str1.Show(true);
-	
-   			
+
+
 }
 
