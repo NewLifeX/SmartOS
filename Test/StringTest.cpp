@@ -33,10 +33,10 @@ static void TestCtor()
 	assert_param2(str4 == cs, "String(char* str, int length)");
 	assert_param2(str4.GetBuffer() == cs, "String(char* str, int length)");
 
-	debug_printf("move测试\r\n");
+	/*debug_printf("move测试\r\n");
 	auto tt	= TestMove(str1);
 	tt.Show(true);
-	str1.Show(true);
+	str1.Show(true);*/
 
 	String str5((char)'1');
 	assert_param2(str5 == "1", "String(char c)");

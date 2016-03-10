@@ -280,7 +280,7 @@ bool String::Concat(char c)
 
 bool String::Concat(byte num, int radix)
 {
-	// 十六进制固定
+	// 十六进制固定长度
 	if(radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
@@ -299,7 +299,7 @@ bool String::Concat(byte num, int radix)
 
 bool String::Concat(short num, int radix)
 {
-	// 十六进制固定
+	// 十六进制固定长度
 	if(radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
@@ -317,16 +317,8 @@ bool String::Concat(short num, int radix)
 
 bool String::Concat(int num, int radix)
 {
-	// 十六进制固定
-	if(radix == 16 || radix == -16)
-	{
-		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
-
-		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
-		_Length	+= (sizeof(num) << 1);
-
-		return true;
-	}
+	// 十六进制固定长度
+	if(radix == 16 || radix == -16) return Concat((uint)num, radix);
 
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
@@ -335,7 +327,7 @@ bool String::Concat(int num, int radix)
 
 bool String::Concat(uint num, int radix)
 {
-	// 十六进制固定
+	// 十六进制固定长度
 	if(radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
@@ -353,18 +345,8 @@ bool String::Concat(uint num, int radix)
 
 bool String::Concat(Int64 num, int radix)
 {
-	// 十六进制固定
-	if(radix == 16 || radix == -16)
-	{
-		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
-
-		utohex((int)(num >> 32), sizeof(num) >> 1, _Arr + _Length, radix < 0);
-		_Length	+= sizeof(num);
-		utohex((int)(num & 0xFFFFFFFF), sizeof(num) >> 1, _Arr + _Length, radix < 0);
-		_Length	+= sizeof(num);
-
-		return true;
-	}
+	// 十六进制固定长度
+	if(radix == 16 || radix == -16) return Concat((UInt64)num, radix);
 
 	char buf[2 + 3 * sizeof(Int64)];
 	ltoa(num, buf, radix);
@@ -373,7 +355,7 @@ bool String::Concat(Int64 num, int radix)
 
 bool String::Concat(UInt64 num, int radix)
 {
-	// 十六进制固定
+	// 十六进制固定长度
 	if(radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
