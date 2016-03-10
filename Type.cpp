@@ -65,11 +65,11 @@ const String Type::Name() const
 
 /******************************** Buffer ********************************/
 
-Buffer::Buffer(void* p, int len)
+Buffer::Buffer(void* ptr, int len)
 {
-	//assert_param2(p && len > 0, "Buffer构造指针不能为空！");
+	//assert_param2(ptr && len > 0, "Buffer构造指针不能为空！");
 
-	_Arr	= p;
+	_Arr	= ptr;
 	_Length	= len;
 }
 
@@ -100,9 +100,9 @@ Buffer& Buffer::operator = (const Buffer& rhs)
 	return *this;
 }
 
-Buffer& Buffer::operator = (const void* p)
+Buffer& Buffer::operator = (const void* ptr)
 {
-	if(p) Copy(0, p, -1);
+	if(ptr) Copy(0, ptr, -1);
 
 	return *this;
 }
@@ -133,8 +133,6 @@ byte& Buffer::operator[](int i)
 	return buf[i];
 }
 
-//bool Buffer::Empty() const { return _Length == 0; }
-
 // 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
 bool Buffer::SetLength(int len, bool bak)
 {
@@ -151,7 +149,6 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	if(!src) return 0;
 
 	int remain	= _Length - destIndex;
-	//if(remain <= 0) return 0;
 
 	// 如果没有指明长度，则拷贝起始位置之后的剩余部分
 	if(len < 0 )
@@ -163,6 +160,9 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 		if(!SetLength(destIndex + len, true)) len	= remain;
 	}
 
+	// 放到这里判断，前面有可能自动扩容
+	if(!_Arr) return 0;
+
 	// 拷贝数据
 	if(len) memcpy((byte*)_Arr + destIndex, src, len);
 
@@ -172,8 +172,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 // 拷贝数据，默认-1长度表示两者最小长度
 int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
-	//if(&src == this) return _Length;
-
+	// 允许自身拷贝
 	// 源数据的实际长度可能跟要拷贝的长度不一致
 	int remain	= src._Length - srcIndex;
 	if(len > remain) len	= remain;
@@ -185,8 +184,8 @@ int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
 int Buffer::CopyTo(int srcIndex, void* data, int len) const
 {
-	//assert_param2(data, "Buffer::CopyTo data Error");
-	if(!data) return 0;
+	if(!_Arr || !data) return 0;
+
 	int remain	= _Length - srcIndex;
 	if(remain <= 0) return 0;
 
@@ -199,14 +198,18 @@ int Buffer::CopyTo(int srcIndex, void* data, int len) const
 }
 
 // 用指定字节设置初始化一个区域
-void Buffer::Set(byte item, int index, int len)
+int Buffer::Set(byte item, int index, int len)
 {
+	if(!_Arr || len == 0) return 0;
+
 	int remain	= _Length - index;
-	if(remain <= 0) return;
+	if(remain <= 0) return 0;
 
 	if(len < 0 || len > remain) len	= remain;
 
 	if(len) memset((byte*)_Arr + index, item, len);
+
+	return len;
 }
 
 void Buffer::Clear()
@@ -215,32 +218,85 @@ void Buffer::Clear()
 }
 
 // 截取一个子缓冲区
-Buffer Buffer::Sub(int len)
+Buffer Buffer::Sub(int index, int len)
 {
-	assert_param2(len <= _Length, "len <= _Length");
+	assert_param2(index + len <= _Length, "len <= _Length");
 
-	return Buffer(_Arr, len);
+	return Buffer((byte*)_Arr + index, len);
+
+	/*// 预留子类自动扩容
+	Buffer bs((byte*)_Arr + index, 0);
+	// 如果不支持自动扩容，这里会失败
+	if(!bs.SetLength(len)) bs._Length	= len;
+	return false;*/
 }
 
-const Buffer Buffer::Sub(int len) const
+const Buffer Buffer::Sub(int index, int len) const
 {
-	assert_param2(len <= _Length, "len <= _Length");
+	assert_param2(index + len <= _Length, "len <= _Length");
 
-	return Buffer(_Arr, len);
+	return Buffer((byte*)_Arr + index, len);
+
+	/*// 预留子类自动扩容
+	Buffer bs((byte*)_Arr + index, 0);
+	// 如果不支持自动扩容，这里会失败
+	if(!bs.SetLength(len)) bs._Length	= len;
+	return false;*/
+}
+
+// 转为十六进制字符串
+String Buffer::ToHex() const
+{
+	String str;
+	ToStr(str);
+
+	return str;
+}
+
+String& Buffer::ToStr(String& str) const
+{
+	if(_Length)
+	{
+		//str.SetLength(_Length * 3 - 1);
+		for(int i=0; i<_Length; i++)
+			str.Concat((*this)[i], -16);
+	}
+
+	return str;
 }
 
 bool operator == (const Buffer& bs1, const Buffer& bs2)
 {
+	if(bs1._Arr == bs2._Arr) return true;
+	if(!bs1._Arr || !bs2._Arr) return false;
 	if(bs1.Length() != bs2.Length()) return false;
 
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) == 0;
 }
 
+bool operator == (const Buffer& bs1, const void* ptr)
+{
+	if(bs1._Arr == ptr) return true;
+	if(!bs1._Arr || !ptr) return false;
+
+	return memcmp(bs1._Arr, ptr, bs1.Length()) == 0;
+}
+
 bool operator != (const Buffer& bs1, const Buffer& bs2)
 {
+	if(bs1._Arr == bs2._Arr) return false;
+	if(!bs1._Arr || !bs2._Arr) return true;
 	if(bs1.Length() != bs2.Length()) return true;
 
 	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) != 0;
+}
+
+bool operator != (const Buffer& bs1, const void* ptr)
+{
+	if(bs1._Arr == ptr) return false;
+	if(!bs1._Arr || !ptr) return true;
+
+	return memcmp(bs1._Arr, ptr, bs1.Length()) != 0;
 }
 
 /******************************** TArray ********************************/

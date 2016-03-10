@@ -120,7 +120,7 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
 	{
 		uint len2 = bs.Length();
 		if(len2 > Size) len2 = Size;
-		if(!storage.Write(addr + len, bs.Sub(len2))) return false;
+		if(!storage.Write(addr + len, bs.Sub(0, len2))) return false;
 	}
 
     return true;

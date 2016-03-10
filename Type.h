@@ -63,16 +63,16 @@ class Buffer : public Object
 {
 public:
 	// 打包一个指针和长度指定的数据区
-	Buffer(void* p = nullptr, int len = 0);
+	Buffer(void* ptr = nullptr, int len = 0);
 	// 拷贝构造函数。直接把指针和长度拿过来用
 	Buffer(const Buffer& buf) = delete;
 	// 对象mov操作，指针和长度归我，清空对方
 	Buffer(Buffer&& rval);
 
-	// 从另一个对象那里拷贝
+	// 从另一个对象那里拷贝，拷贝长度为两者最小者，除非当前对象能自动扩容
 	Buffer& operator = (const Buffer& rhs);
 	// 从指针拷贝，使用我的长度
-	Buffer& operator = (const void* p);
+	Buffer& operator = (const void* ptr);
 	// 对象mov操作，指针和长度归我，清空对方
 	Buffer& operator = (Buffer&& rval);
 
@@ -80,7 +80,6 @@ public:
 	inline byte* GetBuffer() { return (byte*)_Arr; }
 	inline const byte* GetBuffer() const { return (byte*)_Arr; }
 	inline int Length() const { return _Length; }
-	//bool Empty() const;
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	virtual bool SetLength(int len, bool bak = false);
@@ -98,20 +97,24 @@ public:
 	int CopyTo(int srcIndex, void* dest, int len) const;
 
 	// 用指定字节设置初始化一个区域
-	void Set(byte item, int index, int len);
+	int Set(byte item, int index, int len);
 	void Clear();
 
 	// 截取一个子缓冲区
-	Buffer Sub(int len);
-	const Buffer Sub(int len) const;
+	Buffer Sub(int index, int len);
+	const Buffer Sub(int index, int len) const;
 
 	// 转为十六进制字符串
-	String ToHex();
+	String ToHex() const;
+
+	virtual String& ToStr(String& str) const;
 
     explicit operator bool() const { return _Length > 0; }
     bool operator !() const { return _Length == 0; }
 	friend bool operator == (const Buffer& bs1, const Buffer& bs2);
+	friend bool operator == (const Buffer& bs1, const void* ptr);
 	friend bool operator != (const Buffer& bs1, const Buffer& bs2);
+	friend bool operator != (const Buffer& bs1, const void* ptr);
 
 protected:
     void*	_Arr;		// 数据指针

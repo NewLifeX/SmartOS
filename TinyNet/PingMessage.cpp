@@ -52,7 +52,7 @@ void PingMessage::WriteData(Stream& ms, byte code, const Buffer& bs) const
 	ms.Write((byte)0x00);	// 起始地址
 
 	ms.Write(len);	// 长度
-	ms.Write(bs.Sub(len));
+	ms.Write(bs.Sub(0, len));
 }
 
 // 0x03 硬件校验
