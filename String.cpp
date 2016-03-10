@@ -153,9 +153,11 @@ bool String::CheckCapacity(uint size)
 	if(!p) return false;
 
 	if(_Length)
-		strcpy(p, _Arr);
-	else
-		p[0]	= 0;
+		//strcpy(p, _Arr);
+		// 为了安全，按照字节拷贝
+		Buffer(p, sz).Copy(0, _Arr, _Length);
+	// 强制最后一个字符为0
+	p[_Length]	= '\0';
 
 	if(_needFree && _Arr != Arr) delete _Arr;
 
@@ -175,7 +177,7 @@ String& String::copy(const char* cstr, uint length)
 		_Length = length;
 		//strcpy(_Arr, cstr);
 		//!!! 特别注意要拷贝的长度
-		if(length) strncpy(_Arr, cstr, length);
+		if(length) Buffer(_Arr, _Capacity).Copy(0, cstr, length);
 		_Arr[length]	= '\0';
 	}
 
@@ -186,9 +188,11 @@ void String::move(String& rhs)
 {
 	if (_Arr) {
 		if (_Capacity >= rhs._Length) {
-			strcpy(_Arr, rhs._Arr);
+			//strcpy(_Arr, rhs._Arr);
+			Buffer(_Arr, _Capacity).Copy(0, rhs._Arr, rhs._Length);
 			_Length = rhs._Length;
-			rhs._Length = 0;
+			_Arr[_Length]	= '\0';
+			rhs._Length	= 0;
 			return;
 		} else {
 			delete _Arr;
@@ -255,8 +259,11 @@ bool String::Concat(const char* cstr, uint length)
 	if (!cstr) return false;
 	if (length == 0) return true;
 	if (!CheckCapacity(newlen)) return false;
-	strcpy(_Arr + _Length, cstr);
+	
+	//strcpy(_Arr + _Length, cstr);
+	Buffer(_Arr, _Capacity).Copy(_Length, cstr, length);
 	_Length = newlen;
+	_Arr[_Length]	= '\0';
 
 	return true;
 }
@@ -554,8 +561,9 @@ void String::GetBytes(byte* buf, int bufsize, int index) const
 	}
 	int n = bufsize;
 	if (n > _Length - index) n = _Length - index;
-	strncpy((char*)buf, _Arr + index, n);
-	//buf[n] = 0;
+	//strncpy((char*)buf, _Arr + index, n);
+	Buffer(buf, bufsize).Copy(0, _Arr + index, n);
+	//buf[n] = '\0';
 }
 
 ByteArray String::GetBytes() const
