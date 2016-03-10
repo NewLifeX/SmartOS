@@ -134,6 +134,8 @@ public:
 	int LastIndexOf(const char ch, int startIndex = 0) const;
 	int LastIndexOf(const String& str, int startIndex = 0) const;
 	int LastIndexOf(const char* str, int startIndex = 0) const;
+	bool Contains(const String& str) const;
+	bool Contains(const char* str) const;
 	bool StartsWith(const String& str, int startIndex = 0) const;
 	bool StartsWith(const char* str, int startIndex = 0) const;
 	bool EndsWith(const String& str) const;
@@ -143,15 +145,15 @@ public:
 	int Split(const String& str, StringItem callback);
 
 	String Substring(int start, int _Length) const;
-	String& TrimStart();
-	String& TrimEnd();
-	String& Trim();
-	String& Replace(char find, char replace);
-	String& Replace(const String& find, const String& replace);
-	String& Remove(int index);
-	String& Remove(int index, int count);
-	String& ToLower();
-	String& ToUpper();
+	String TrimStart() const;
+	String TrimEnd() const;
+	String Trim() const;
+	String Replace(char find, char replace) const;
+	String Replace(const String& find, const String& replace) const;
+	String Remove(int index) const;
+	String Remove(int index, int count) const;
+	String ToLower() const;
+	String ToUpper() const;
 
 protected:
 	char*	_Arr;		// 字符数组

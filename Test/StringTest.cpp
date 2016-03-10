@@ -187,10 +187,10 @@ static void TestAdd()
 {
 	TS("TestAdd");
 
-	String str = R("字符串连加 ") + 1234 + "@" + Time.Now() + "#" + R("99xx") + '$' + -33.883;
+	String str = R("字符串连加 ") + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + Time.Now();
 	str.Show(true);
 	// 字符串连加 1234@0000-00-00 00:00:00#99xx
-	assert_param2(str == "字符串连加 1234@0000-00-00 00:00:00#99xx$-33.88", "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");
+	assert_param2(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");
 }
 
 static void TestEquals()
@@ -213,18 +213,18 @@ static void TestSet()
 
 	String str = "ABCDEFG";
 	assert_param2(str[3] == 'D', "char operator [] (int index)");
-	
+
 	str[5]	= 'W';
 	assert_param2(str[5] == 'W', "char& operator [] (int index)");
 	//debug_printf("%s 的第 %d 个字符是 %c \r\n", str.GetBuffer(), 5, str[5]);
-	
+
 	str	= "我是ABC";
 	int len	= str.Length();
 	auto bs	= str.GetBytes();
 	assert_param2(bs.Length() == str.Length(), "ByteArray GetBytes() const");
 	assert_param2(bs[len - 1] == (byte)'C', "ByteArray GetBytes() const");
 	//assert_param2(bs.GetBuffer() == (byte*)str.GetBuffer(), "ByteArray GetBytes() const");
-	
+
 	// 十六进制字符串转为二进制数组
 	str	= "36-1f-36-35-34-3F-31-31-32-30-32-34";
 	auto bs2	= str.ToHex();
@@ -232,6 +232,25 @@ static void TestSet()
 	assert_param2(bs2.Length() == 12, "ByteArray ToHex()");
 	assert_param2(bs2[1] == 0x1F, "ByteArray ToHex()");
 	assert_param2(bs2[5] == 0x3F, "ByteArray ToHex()");
+
+	// 字符串搜索
+	assert_param2(str.IndexOf("36") == 0, "int IndexOf(const char* str, int startIndex = 0)");
+	assert_param2(str.IndexOf("36", 1) == 6, "int IndexOf(const char* str, int startIndex = 0)");
+	assert_param2(str.LastIndexOf("36", 6) == 6, "int LastIndexOf(const char* str, int startIndex = 0)");
+	assert_param2(str.LastIndexOf("36", 7) == -1, "int LastIndexOf(const char* str, int startIndex = 0)");
+	assert_param2(str.Contains("34-3F-31"), "bool Contains(const char* str) const");
+	assert_param2(str.StartsWith("36-"), "bool StartsWith(const char* str, int startIndex = 0)");
+	assert_param2(str.EndsWith("-32-34"), "bool EndsWith(const char* str)");
+	
+	// 字符串截取
+	str	= " 36-1f-36-35-34\n";
+	len	= str.Length();
+	str	= str.Trim();
+	assert_param2(str.Length() == len - 2, "String& Trim()");
+	
+	str	= str.Substring(3, 5).ToUpper();
+	str.Show(true);
+	assert_param2(str == "1F-36", "String Substring(int start, int _Length)");
 }
 
 void TestString()
@@ -249,62 +268,6 @@ void TestString()
 
 	TestSet();
 
-	//内存管理
-	debug_printf("字符串str1");
-	String str1("456");
-	str1.Show(true);
-	debug_printf("字符串str1检查内存:.....\r\n");
-	auto len	= str1.Length();
-    auto check1 = str1.CheckCapacity(1);
-	auto check2 = str1.CheckCapacity(len+1);
-	str1.GetBuffer();
-
-	String  str2('1');
-
-	str1.SetBuffer(&str2,1);
-	//参数长度超标
-	str1.SetBuffer(&str2,2);
-	debug_printf("字符串str1 Concat 10进制.....\r\n");
-
-	debug_printf("字符串str1 Concat 16进制.....\r\n");
-	str1.Concat((byte)0x1,16);
-	str1.Show(true);
-	str1.Concat((short)1, 16);
-	str1.Show(true);
-	str1.Concat((int)1, 16);
-	str1.Show(true);
-	str1.Concat((uint)1, 16);
-	str1.Show(true);
-	str1.Concat((Int64)1,16);
-	str1.Show(true);
-	str1.Concat((UInt64)1,16);
-	str1.Show(true);
-	str1.Concat((float)1.0);
-	str1.Show(true);
-	str1.Concat((double)1);
-	str1.Show(true);
-
-	debug_printf("字符串str1 +=操作.....\r\n");
-
-	str1+=(Object&)str2;
-	str1.Show(true);
-	str1+=(String&)str2;
-	str1.Show(true);
-	str1+=(char*)'1';
-	str1.Show(true);
-	str1+=(byte)1;
-	str1.Show(true);
-	str1+=(int)1;
-	str1.Show(true);
-	str1+=(uint)1;
-	str1.Show(true);
-	str1+=(Int64)1;
-	str1.Show(true);
-	str1+=(float)1.0;
-	str1.Show(true);
-	str1+=(double)1;
-	str1.Show(true);
-
-
+	debug_printf("字符串单元测试全部通过！");
 }
 

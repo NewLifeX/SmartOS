@@ -173,7 +173,10 @@ String& String::copy(const char* cstr, uint length)
 	else
 	{
 		_Length = length;
-		strcpy(_Arr, cstr);
+		//strcpy(_Arr, cstr);
+		//!!! 特别注意要拷贝的长度
+		if(length) strncpy(_Arr, cstr, length);
+		_Arr[length]	= '\0';
 	}
 
 	return *this;
@@ -719,6 +722,10 @@ int String::LastIndexOf(const char* str, int startIndex) const
 	return p - _Arr;
 }
 
+bool String::Contains(const String& str) const { return IndexOf(str) >= 0; }
+
+bool String::Contains(const char* str) const { return IndexOf(str) >= 0; }
+
 bool String::StartsWith(const String& str, int startIndex) const
 {
 	if (startIndex + str._Length > _Length || !_Arr || !str._Arr) return false;
@@ -798,25 +805,48 @@ void trim(char* buffer, int& len, bool trimBegin, bool trimEnd)
 	buffer[len] = 0;
 }
 
-String& String::TrimStart()
+String String::TrimStart() const
 {
-	trim(_Arr, _Length, true, false);
+	String str(*this);
+	trim(str._Arr, str._Length, true, false);
 
-	return *this;
+	return str;
 }
 
-String& String::TrimEnd()
+String String::TrimEnd() const
 {
-	trim(_Arr, _Length, false, true);
+	String str(*this);
+	trim(str._Arr, str._Length, false, true);
 
-	return *this;
+	return str;
 }
 
-String& String::Trim()
+String String::Trim() const
 {
-	trim(_Arr, _Length, true, true);
+	String str(*this);
+	trim(str._Arr, str._Length, true, true);
 
-	return *this;
+	return str;
+}
+
+String String::ToLower() const
+{
+	String str(*this);
+	auto p	= str.GetBuffer();
+	for(int i=0; i<str._Length; i++)
+		p[i]	= tolower(p[i]);
+
+	return str;
+}
+
+String String::ToUpper() const
+{
+	String str(*this);
+	auto p	= str.GetBuffer();
+	for(int i=0; i<str._Length; i++)
+		p[i]	= toupper(p[i]);
+
+	return str;
 }
 
 extern char* itoa(int value, char *string, int radix)
