@@ -549,10 +549,10 @@ void String::GetBytes(byte* buf, int bufsize, int index) const
 		buf[0] = 0;
 		return;
 	}
-	int n = bufsize - 1;
+	int n = bufsize;
 	if (n > _Length - index) n = _Length - index;
 	strncpy((char*)buf, _Arr + index, n);
-	buf[n] = 0;
+	//buf[n] = 0;
 }
 
 ByteArray String::GetBytes() const
@@ -574,13 +574,24 @@ ByteArray String::ToHex() const
 	cs[2]	= 0;
 	byte* b	= bs.GetBuffer();
 	char* p	= _Arr;
+	int n	= 0;
 	for(int i=0; i<_Length; i+=2)
 	{
 		cs[0]	= *p++;
 		cs[1]	= *p++;
 
 		*b++	= (byte)strtol(cs, nullptr, 16);
+
+		// 过滤横杠和空格
+		if(*p == '-' || isspace(*p))
+		{
+			p++;
+			i++;
+		}
+
+		n++;
 	}
+	bs.SetLength(n);
 
 	return bs;
 }
@@ -913,6 +924,6 @@ char *dtostrf (double val, char width, byte prec, char* sout)
 	char fmt[20];
 	sprintf(fmt, "%%%d.%df", width, prec);
 	sprintf(sout, fmt, val);
-	
+
 	return sout;
 }

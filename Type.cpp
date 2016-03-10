@@ -593,7 +593,7 @@ String& ByteArray::ToHex(String& str, char sep, int newLine) const
 	for(int i=0; i < Length(); i++, buf++)
 	{
 		//str	+= *buf;
-		str.Concat(*buf, 16);
+		str.Concat(*buf, -16);
 
 		if(i < Length() - 1)
 		{

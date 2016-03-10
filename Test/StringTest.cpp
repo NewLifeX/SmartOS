@@ -205,6 +205,35 @@ static void TestEquals()
 	assert_param2(str1.EqualsIgnoreCase(str2), "bool EqualsIgnoreCase(const String& s)");
 }
 
+static void TestSet()
+{
+	TS("TestSet");
+
+	debug_printf("字符串设置测试\r\n");
+
+	String str = "ABCDEFG";
+	assert_param2(str[3] == 'D', "char operator [] (int index)");
+	
+	str[5]	= 'W';
+	assert_param2(str[5] == 'W', "char& operator [] (int index)");
+	//debug_printf("%s 的第 %d 个字符是 %c \r\n", str.GetBuffer(), 5, str[5]);
+	
+	str	= "我是ABC";
+	int len	= str.Length();
+	auto bs	= str.GetBytes();
+	assert_param2(bs.Length() == str.Length(), "ByteArray GetBytes() const");
+	assert_param2(bs[len - 1] == (byte)'C', "ByteArray GetBytes() const");
+	//assert_param2(bs.GetBuffer() == (byte*)str.GetBuffer(), "ByteArray GetBytes() const");
+	
+	// 十六进制字符串转为二进制数组
+	str	= "36-1f-36-35-34-3F-31-31-32-30-32-34";
+	auto bs2	= str.ToHex();
+	bs2.Show(true);
+	assert_param2(bs2.Length() == 12, "ByteArray ToHex()");
+	assert_param2(bs2[1] == 0x1F, "ByteArray ToHex()");
+	assert_param2(bs2[5] == 0x3F, "ByteArray ToHex()");
+}
+
 void TestString()
 {
 	TS("TestString");
@@ -217,6 +246,8 @@ void TestString()
 	TestConcat16();
 	TestAdd();
 	TestEquals();
+
+	TestSet();
 
 	//内存管理
 	debug_printf("字符串str1");
