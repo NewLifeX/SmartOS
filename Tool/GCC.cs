@@ -26,6 +26,7 @@ namespace NewLife.Reflection
         String Link;
         String Ar;
         String ObjCopy;
+		String IncPath;
         String LibPath;
 
         public Boolean Init(String basePath = null, Boolean addlib = true)
@@ -49,7 +50,9 @@ namespace NewLife.Reflection
             Link = basePath.CombinePath("armlink.exe");
             Ar = basePath.CombinePath("arm-none-eabi-ar.exe");
             ObjCopy = basePath.CombinePath("arm-none-eabi-objcopy.exe");
-            LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
+
+            IncPath = basePath.CombinePath(@"..\arm-none-eabi\include").GetFullPath();
+            LibPath = basePath.CombinePath(@"..\arm-none-eabi\lib").GetFullPath();
 
             // 特殊处理GD32F1x0
             if (GD32) Cortex = Cortex;
@@ -78,6 +81,7 @@ namespace NewLife.Reflection
                 AddIncludes(p, false);
                 if (addlib) AddLibs(p);
             }
+			AddIncludes(IncPath, false);
 
             return true;
         }
@@ -170,7 +174,7 @@ namespace NewLife.Reflection
             }
 
 			// -ggdb -ffunction-sections -fno-exceptions -fno-rtti -O0   -mcpu=cortex-m3 -mthumb
-			// -I. -IstLib/inc -IstCM3 -DDEBUG=1 -DARM_MATH_CM3 -DSTM32F103VE -Dstm32_flash_layout -DSTM32F10X_HD 
+			// -I. -IstLib/inc -IstCM3 -DDEBUG=1 -DARM_MATH_CM3 -DSTM32F103VE -Dstm32_flash_layout -DSTM32F10X_HD
 			// -c LEDBlink.cpp -o Debug/LEDBlink.o -MD -MF Debug/LEDBlink.dep
             var sb = new StringBuilder();
 			sb.Append("-ggdb");
@@ -192,23 +196,25 @@ namespace NewLife.Reflection
             }
             if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
             if (Tiny) sb.Append(" -DTINY");
-			if(showCmd)
-			{
-				Console.Write("命令参数：");
-				Console.ForegroundColor = ConsoleColor.Magenta;
-				Console.WriteLine(sb);
-				Console.ResetColor();
-			}
 			sb.AppendFormat(" -I.");
             foreach (var item in Includes)
             {
                 sb.AppendFormat(" -I{0}", item);
             }
+			if(showCmd)
+			{
+				if (Debug) sb.Append(" -v");
+
+				Console.Write("命令参数：");
+				Console.ForegroundColor = ConsoleColor.Magenta;
+				Console.WriteLine(sb);
+				Console.ResetColor();
+			}
 
 			if(Preprocess) sb.Append(" -E");
 			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
             sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
-			sb.AppendFormat(" -MF {0}.dep", objName);
+			sb.AppendFormat(" -MF {0}.dep", objName.GetFullPath());
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -281,7 +287,7 @@ namespace NewLife.Reflection
                     case ".c":
                     case ".cpp":
                         rs = Compile(item, cpp == 0);
-						if(rs == 0) cpp++;
+						if(rs != -2) cpp++;
                         break;
                     case ".s":
                         rs = Assemble(item);
@@ -749,10 +755,20 @@ namespace NewLife.Reflection
 				ss.Add("In constructor", "构造函数");
 				ss.Add("is ambiguous", "含糊不清");
 				ss.Add("call of overloaded", "重载调用");
-				ss.Add("was not declared in this scope", "在该区域未定义");
+				ss.Add("was not declared in this scope", "在该范围未定义");
 				ss.Add("was not declared", "未定义");
-				ss.Add("in this scope", "在该区域");
-				ss.Add("In function", "函数");
+				ss.Add("in this scope", "在该范围");
+				ss.Add("In function", "在函数");
+				ss.Add("In member function", "在成员函数");
+				ss.Add("In instantiation of", "在初始化");
+				ss.Add("At global scope", "在全局范围");
+				ss.Add("if you use", "如果你使用");
+				ss.Add("will accept your code", "将接受你的代码");
+				ss.Add("but allowing the use of an undeclared name is deprecated", "但是允许使用未声明的名称是过时的");
+				ss.Add("there are no arguments to", "没有参数在");
+				ss.Add("that depend on a template parameter", "依赖于模板参数");
+				ss.Add("so a declaration of", "所以声明");
+				ss.Add("must be available", "必须启用");
             }
 
             if (Words.Count == 0)
@@ -762,8 +778,10 @@ namespace NewLife.Reflection
                 Words.Add("Warnings", "警告");
                 Words.Add("note", "提示");
 				Words.Add("candidate", "候选");
-                /*Words.Add("cannot", "不能");
-                Words.Add("open", "打开");
+				Words.Add("expected", "预期");
+				Words.Add("before", "在之前");
+                Words.Add("cannot", "不能");
+                /*Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
                 Words.Add("file", "文件");
