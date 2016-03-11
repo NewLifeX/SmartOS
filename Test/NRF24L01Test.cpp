@@ -37,7 +37,7 @@ void OnReceive(void* param)
     }
 }
 
-uint OnReceive(ITransport* transport, Array& bs, void* param, void* param2)
+uint OnReceive(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
 	bs.Show(true);
 

@@ -31,8 +31,8 @@ public:
 	bool Open();
 	bool Close();
 
-	bool Send(const Array& bs);
-	int Receive(Array& bs, int sTimeout = 10);
+	bool Send(const Buffer& bs);
+	int Receive(Buffer& bs, int sTimeout = 10);
 
 private:
 	static void OnSend(void* sender, void* param);

@@ -63,7 +63,7 @@ const byte ATOK[] = {'A','T',':','O','K','\r','\n','\0'};
 
 
 const int TPLNum[] = {-23,-6,0,4};
-	
+
 Blu40::Blu40()
 {
 	Init();
@@ -89,13 +89,13 @@ void Blu40::Init(SerialPort *port ,Pin rts,/*Pin cts,*/Pin sleep, OutputPort * r
 	if(rts != P0)_rts = new OutputPort(rts); // 低电平有效
 	if(sleep!=P0)_sleep = new OutputPort(sleep);
 	if(_rts==NULL)debug_printf("关键引脚_rts不可忽略");
-	
+
 	if(_sleep)*_sleep=false;
 	*_rts = true;
 	/*if(cts != P0)_cts = new InputPort(cts);
 	_cts.Register();*/
 	if(!rst)_rst = rst;
-	Reset();	
+	Reset();
 }
 
 Blu40::~Blu40()
@@ -115,18 +115,19 @@ void Blu40::Reset()
 	*_rst = true;
 }
 
-int const BPreserve[] = {1200,2400,4800,9600,19200,38400,57600,115200};  // 不是简单*=2能搞定的 
+int const BPreserve[] = {1200,2400,4800,9600,19200,38400,57600,115200};  // 不是简单*=2能搞定的
 bool Blu40::SetBP(int BP)
 {
 	if(BP>115200)
 	{
 		debug_printf("Blu不支持如此高的波特率\r\n");
 	}
-	
+
 	byte bpnumIndex;
 	for(bpnumIndex=0;BP!=BPreserve[bpnumIndex] && bpnumIndex<8;bpnumIndex++);
 	if(BPreserve[bpnumIndex] != BP)return false;
-	
+
+	const Buffer bs((void*)AT_BPS, sizeof(AT_BPS));
 	//byte buf[40];
 	ByteArray ds;
 	//byte BPSOK[] = "AT:BPS SET AFTER 2S \r\n\0"; // 坑人的需要ASIIC
@@ -138,16 +139,15 @@ bool Blu40::SetBP(int BP)
 		// 启用新波特率
 		_port->Close();
 		_port->Open();
-		
+
 		*_rts = false;
 		Sys.Delay(150);
-		
-		const Array bs(AT_BPS, sizeof(AT_BPS));
+
 		_port->Write(bs);
-		_port->Write(Array(&bpnumIndex, 1));	// 晕死，AT指令里面放非字符
+		_port->Write(Buffer(&bpnumIndex, 1));	// 晕死，AT指令里面放非字符
 		//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 		*_rts = true;
-		
+
 		Sys.Delay(500);
 		_port->Read(ds);
 
@@ -174,17 +174,14 @@ bool Blu40::SetBP(int BP)
 			// 启用新波特率
 			_port->Close();
 			_port->Open();
-			
+
 			*_rts = false;
 			Sys.Delay(170);
-			//_port->Write(AT_BPS,sizeof(AT_BPS));
-			//_port->Write(&bpnumIndex,1);	// 晕死，AT指令里面放非字符
-			const Array bs(AT_BPS, sizeof(AT_BPS));
 			_port->Write(bs);
-			_port->Write(Array(&bpnumIndex, 1));
+			_port->Write(Buffer(&bpnumIndex, 1));
 			//_port->Write("\r\n",sizeof("\r\n"));	// 无需回车
 			*_rts = true;
-			
+
 			Sys.Delay(500);
 			_port->Read(ds);
 			//"AT:BPS SET AFTER 2S \r\n\0"
@@ -194,7 +191,7 @@ bool Blu40::SetBP(int BP)
 				if(ds[j] != BPSOK[j])
 				{
 					if(i==7)
-					{	
+					{
 						debug_printf("设置失败，请检查现在使用的波特率是否正确\r\n");
 						_baudRate = 0;
 						return false;
@@ -206,7 +203,7 @@ bool Blu40::SetBP(int BP)
 			}
 		}
 	_baudRate = portBaudRateTemp;
-	}	
+	}
 	debug_printf("设置成功，2S后启用新波特率\r\n");
 	return true;
 }
@@ -232,8 +229,8 @@ bool Blu40::SetName(const char* name)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(Array(AT_REN, sizeof(AT_REN)));
-	_port->Write(Array(name, 0));
+	_port->Write(Buffer((void*)AT_REN, sizeof(AT_REN)));
+	_port->Write(String(name));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -243,8 +240,8 @@ bool Blu40::SetPID(ushort pid)
 {
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(Array(AT_PID, sizeof(AT_PID)));
-	_port->Write(Array((byte*)pid, 2));
+	_port->Write(Buffer((void*)AT_PID, sizeof(AT_PID)));
+	_port->Write(Buffer((byte*)pid, 2));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;
@@ -260,9 +257,9 @@ bool Blu40::SetTPL(int TPLDB)
 	}
 	*_rts = false;
 	Sys.Delay(170);
-	_port->Write(Array(AT_TPL, sizeof(AT_TPL)));
+	_port->Write(Buffer((void*)AT_TPL, sizeof(AT_TPL)));
 	//byte temp = TPLNumIndex+'0';// 又是坑人的 非字符
-	_port->Write(Array(&TPLNumIndex,1));
+	_port->Write(Buffer(&TPLNumIndex, 1));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;

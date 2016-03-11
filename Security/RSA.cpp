@@ -1168,7 +1168,7 @@ static void rsa_mul(uint32_t *des, uint8_t *des_len, uint32_t *sour, uint8_t *so
         }
 }
 
-ByteArray RSA::Encrypt(const Array& data, const Array& pass)
+ByteArray RSA::Encrypt(const Buffer& data, const Buffer& pass)
 {
 	/*byte buf[KeyLength];
 	ByteArray box(buf, KeyLength);
@@ -1195,7 +1195,7 @@ ByteArray RSA::Encrypt(const Array& data, const Array& pass)
 	return rs;
 }
 
-ByteArray RSA::Decrypt(const Array& data, const Array& pass)
+ByteArray RSA::Decrypt(const Buffer& data, const Buffer& pass)
 {
 	/*byte buf[KeyLength];
 	ByteArray box(buf, KeyLength);

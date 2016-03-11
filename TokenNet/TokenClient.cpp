@@ -367,17 +367,7 @@ void TokenClient::Login()
 
 	auto cfg	= TokenConfig::Current;
 	login.User	= cfg->User;
-	//login.Key	= cfg->Key;
-	//login.Pass	= MD5::Hash(Array(cfg->Pass, ArrayLength(cfg->Pass))).ToHex(0, 0);
-	//login.Pass	= MD5::Hash(String(cfg->Pass, ArrayLength(cfg->Pass)));
 	login.Pass	= MD5::Hash(cfg->Pass);
-	/*// 临时代码，兼容旧云端
-	if(login.User.Length() < 4)
-	{
-		//Register();
-		login.User.Copy(Sys.ID, 16);
-		login.Pass.Copy(Sys.ID, 16);
-	}*/
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
 	login.Show(true);
@@ -466,7 +456,7 @@ void TokenClient::Ping()
 
 	UInt64 time	= Sys.Ms();
 	Stream ms	= msg.ToStream();
-	ms.WriteArray(Array(&time, 8));
+	ms.WriteArray(Buffer(&time, 8));
 	msg.Length	= ms.Position();
 
 	Send(msg);

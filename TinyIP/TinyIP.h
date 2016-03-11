@@ -41,7 +41,7 @@ class TinyIP : public ISocketHost
 private:
 	ITransport*	_port;
 	UInt64		_StartTime;
-	ByteArray	Buffer; // 缓冲区
+	ByteArray	_Arr; // 缓冲区
 
 	// 循环调度的任务，捕获数据包，返回长度
 	uint Fetch(Stream& ms);

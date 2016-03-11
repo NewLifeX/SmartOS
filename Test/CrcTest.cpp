@@ -39,7 +39,7 @@ void Init()
 }
 
 // 硬件实现的Crc
-uint HardCrc(const Array& bs, uint crc)
+uint HardCrc(const Buffer& bs, uint crc)
 {
 	if (!inited) Init();
 
@@ -76,8 +76,8 @@ void TestCrc()
 
 	uint temp	= crc;
 	// 试试二次计算Crc
-	crc		= Crc::Hash(Array(&crc, 4), 0);
-	crc2	= Crc::Hash(Array(&crc2, 4));
+	crc		= Crc::Hash(Buffer(&crc, 4), 0);
+	crc2	= Crc::Hash(Buffer(&crc2, 4));
 	ByteArray(&temp, 4).Show();
 	debug_printf("\r\n\t");
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -139,9 +139,9 @@ void TestCrc()
 	ByteArray bs7(DataBuffer, size*4);
 	crc		= Crc::Hash(bs7, 0);
 	temp	= crc;
-	crc		= Crc::Hash(Array(&crc, 4), crc);
+	crc		= Crc::Hash(Buffer(&crc, 4), crc);
 	//crc2	= HardCrc(bs7, 0);
-	//crc2	= HardCrc(Array(&crc2, 4), crc2);
+	//crc2	= HardCrc(Buffer(&crc2, 4), crc2);
 	bs7.Show();
 	debug_printf(" <= 0x%08x\r\n\t", temp);
 	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
@@ -149,9 +149,9 @@ void TestCrc()
 	// 测试Crc16，数据和crc部分一起计算crc16，结果为0
     debug_printf("\r\n");
     byte data16[] = { 0x01, 0x08, 0x00, 0x00};
-    ushort crc16 = Crc::Hash16(Array(data16, 4));
+    ushort crc16 = Crc::Hash16(Buffer(data16, 4));
     debug_printf("Crc::Hash16(#%08x) = 0x%04x\r\n", _REV(*(uint*)data16), crc16);
-    ushort crc17 = Crc::Hash16(Array(&crc16, 2), crc16);
+    ushort crc17 = Crc::Hash16(Buffer(&crc16, 2), crc16);
     debug_printf("Crc::Hash16(#%08x, 0x%04x) = 0x%04x\r\n", _REV(*(uint*)data16), crc16, crc17);
 
     debug_printf("\r\n");

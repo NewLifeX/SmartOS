@@ -78,7 +78,7 @@ bool TinyMessage::Read(Stream& ms)
 	//flag->TTL	= 0;
 	flag->Retry	= 0;
 	// 连续的，可以直接计算Crc16
-	Crc = Crc::Hash16(Array(p, HeaderSize + Length));
+	Crc = Crc::Hash16(Buffer(p, HeaderSize + Length));
 	// 还原数据
 	p[3] = fs;
 
@@ -113,7 +113,7 @@ void TinyMessage::Write(Stream& ms) const
 	//flag->TTL	= 0;
 	flag->Retry	= 0;
 
-	p->Checksum = p->Crc = Crc::Hash16(Array(buf, HeaderSize + len));
+	p->Checksum = p->Crc = Crc::Hash16(Buffer(buf, HeaderSize + len));
 
 	// 还原数据
 	buf[3] = fs;
@@ -371,12 +371,12 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 }
 
 //加密。组网不加密，退网不加密
-static bool Encrypt(Message& msg,  Array& pass)
+static bool Encrypt(Message& msg,  Buffer& pass)
 {
 	// 加解密。组网不加密，退网不加密
 	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x02))
 	{
-		Array bs(msg.Data, msg.Length);
+		Buffer bs(msg.Data, msg.Length);
 		RC4::Encrypt(bs, pass);
 		return true;
 	}
@@ -739,7 +739,7 @@ void TinyController::Loop()
 		node.Times++;
 
 		// 发送消息
-		Array bs(node.Data, node.Length);
+		Buffer bs(node.Data, node.Length);
 		if(node.Length > 32)
 		{
 			debug_printf("node=0x%08x Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", &node, node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);

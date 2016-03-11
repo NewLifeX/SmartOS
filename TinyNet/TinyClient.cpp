@@ -11,7 +11,7 @@ TinyClient* TinyClient::Current	= NULL;
 
 static void TinyClientTask(void* param);
 //static void TinyClientReset();
-static void GetDeviceKey(byte id, Array& key, void* param);
+static void GetDeviceKey(byte id, Buffer& key, void* param);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -57,7 +57,7 @@ void TinyClient::Open()
 		Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
 	}
 
-	HardCrc	= Crc::Hash16(Array(Sys.ID, 16));
+	HardCrc	= Crc::Hash16(Buffer(Sys.ID, 16));
 	if(Sys.Version > 1) Encryption = true;
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
@@ -169,7 +169,7 @@ void TinyClient::OnRead(const TinyMessage& msg)
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		Array bs(Cfg, Cfg->Length);
+		Buffer bs(Cfg, Cfg->Length);
 		rt	= dm.ReadData(bs);
 	}
 
@@ -202,7 +202,7 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	else if(dm.Offset < 128)
 	{
 		dm.Offset	-= 64;
-		Array bs(Cfg, Cfg->Length);
+		Buffer bs(Cfg, Cfg->Length);
 		rt	= dm.WriteData(bs, true);
 
 		Cfg->Save();
@@ -237,7 +237,7 @@ bool TinyClient::Report(uint offset, byte dat)
 	return Send(msg);
 }
 
-bool TinyClient::Report(uint offset, const Array& bs)
+bool TinyClient::Report(uint offset, const Buffer& bs)
 {
 	TinyMessage msg;
 	msg.Code	= 0x06;
@@ -293,7 +293,7 @@ void TinyClientTask(void* param)
 	if(client->Server != 0) client->Ping();
 }
 
-void GetDeviceKey(byte id, Array& key, void* param)
+void GetDeviceKey(byte id, Buffer& key, void* param)
 {
 	/*TS("TinyClient::GetDeviceKey");
 	//debug_printf("微网客户端获取密钥");
@@ -487,7 +487,7 @@ void TinyClient::Ping()
 
 	pm.WriteData(ms, 0x01, Store.Data);
 	pm.WriteHardCrc(ms, HardCrc);
-	pm.WriteData(ms, 0x02, Array(Cfg, sizeof(Cfg[0])));
+	pm.WriteData(ms, 0x02, Buffer(Cfg, sizeof(Cfg[0])));
 
 	msg.Length = ms.Position();
 

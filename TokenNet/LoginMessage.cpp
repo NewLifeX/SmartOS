@@ -38,7 +38,7 @@ void LoginMessage::Write(Stream& ms) const
 		else
 		{
 			UInt64 now = Sys.Ms();
-			ms.WriteArray(MD5::Hash(Array(&now, 8)));
+			ms.WriteArray(MD5::Hash(Buffer(&now, 8)));
 		}
 	}
 	else if(!Error)

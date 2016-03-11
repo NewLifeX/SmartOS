@@ -40,7 +40,7 @@ ushort  SendIndex;
 ushort SendBufLen;
 bool ErrorIRQ;
 
-bool IR::Send(const Array& bs)
+bool IR::Send(const Buffer& bs)
 {
 #ifdef STM32F0
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -140,7 +140,7 @@ void IR::OnSend(void* sender, void* param)
 #endif
 }
 
-int IR::Receive(Array& bs, int sTimeout)
+int IR::Receive(Buffer& bs, int sTimeout)
 {
 	TS("IR::Receive");
 #ifdef STM32F0

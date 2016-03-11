@@ -31,7 +31,7 @@ void DeviceMessage::Write(Stream& ms) const
 	UInt64 now = Sys.Ms();
 	//Salt.Set((byte*)&now, 8);
 	//ms.WriteArray(Salt);
-	ms.WriteArray(Array(&now, 8));
+	ms.WriteArray(Buffer(&now, 8));
 
 	ms.Write(Local.Address.ToArray());
 	ms.Write((ushort)Local.Port);

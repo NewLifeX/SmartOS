@@ -46,7 +46,7 @@ public:
 	DataStore	Store;		// 数据存储区
 
 	bool Report(uint offset, byte dat);
-	bool Report(uint offset, const Array& bs);
+	bool Report(uint offset, const Buffer& bs);
 
 	uint NextReport;		// 下次上报偏移，0不动
 	uint NextReportLength;	// 下次上报数据长度

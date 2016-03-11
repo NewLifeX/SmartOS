@@ -12,10 +12,10 @@ Message::Message(byte code)
 }
 
 // 设置数据。
-void Message::SetData(const Array& bs, uint offset)
+void Message::SetData(const Buffer& bs, uint offset)
 {
 	Length = bs.Length() + offset;
-	if(Length > 0 && bs.GetBuffer() != Data + offset) bs.CopyTo(0, Data + offset, Length);
+	if(Length > 0) bs.CopyTo(0, Data + offset, Length);
 }
 
 void Message::SetError(byte errorCode, const char* msg)

@@ -43,7 +43,7 @@ void Device::Write(Stream& ms) const
 {
 	TS("Device::Write");
 
-	Array bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	Buffer bs((void*)&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
 	ms.WriteArray(bs);
 }
 
@@ -52,7 +52,7 @@ void Device::Read(Stream& ms)
 	TS("Device::Read");
 
 	// 为了避免不同版本的配置兼容，指定长度避免覆盖过头
-	Array bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	Buffer bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
 	//bs	= ms.ReadArray();
 	// 为了减少一个临时对象，直接传入外部包装给内部拷贝
 	uint len 	= ms.ReadEncodeInt();
@@ -168,21 +168,3 @@ bool operator!=(const Device& d1, const Device& d2)
 {
 	return d1.Address != d2.Address;
 }
-
-/*Array Device::GetHardID()	{ return Array(HardID, ArrayLength(HardID)); }
-Array Device::GetName()		{ return Array(Name, ArrayLength(Name)); }
-Array Device::GetPass()		{ return Array(Pass, ArrayLength(Pass)); }
-Array Device::GetStore()	{ return Array(Store, ArrayLength(Store)); }
-Array Device::GetConfig()	{ return Array(Cfg, sizeof(Cfg[0])); }
-
-const Array Device::GetHardID()	const	{ return Array(HardID, ArrayLength(HardID)); }
-const Array Device::GetName()	const	{ return Array(Name, ArrayLength(Name)); }
-const Array Device::GetPass()	const	{ return Array(Pass, ArrayLength(Pass)); }
-const Array Device::GetStore()	const	{ return Array(Store, ArrayLength(Store)); }
-const Array Device::GetConfig()	const	{ return Array(Cfg, sizeof(Cfg[0])); }
-
-void Device::SetHardID(const Array& arr)	{ arr.CopyTo(HardID, ArrayLength(HardID)); }
-void Device::SetName(const Array& arr)		{ arr.CopyTo(Name, ArrayLength(Name)); }
-void Device::SetPass(const Array& arr)		{ arr.CopyTo(Pass, ArrayLength(Pass)); }
-void Device::SetStore(const Array& arr)		{ arr.CopyTo(Store, ArrayLength(Store)); }
-void Device::SetConfig(const Array& arr)	{ arr.CopyTo(Cfg, sizeof(Cfg[0])); }*/

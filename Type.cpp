@@ -194,7 +194,11 @@ int Buffer::CopyTo(int srcIndex, void* data, int len) const
 	if(len < 0 || len > remain) len	= remain;
 
 	// 拷贝数据
-	if(len) memcpy(data, (byte*)_Arr + srcIndex, len);
+	if(len)
+	{
+		if(data != (byte*)_Arr + srcIndex)
+			memcpy(data, (byte*)_Arr + srcIndex, len);
+	}
 
 	return len;
 }

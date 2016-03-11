@@ -85,7 +85,7 @@ void rc6_block_decrypt(uint *ct, uint *pt, uint* box)
     pt[3] = D;
 }
 
-void GetKey(uint* box, const Array& pass)
+void GetKey(uint* box, const Buffer& pass)
 {
     uint L[(32 + bytes - 1) / bytes]; /* Big enough for max b */
     uint A, B;
@@ -114,7 +114,7 @@ void GetKey(uint* box, const Array& pass)
     }
 }
 
-ByteArray RC6::Encrypt(const Array& data, const Array& pass)
+ByteArray RC6::Encrypt(const Buffer& data, const Buffer& pass)
 {
 	uint box[KeyLength];
 	GetKey(box, pass);
@@ -128,7 +128,7 @@ ByteArray RC6::Encrypt(const Array& data, const Array& pass)
 	return rs;
 }
 
-ByteArray RC6::Decrypt(const Array& data, const Array& pass)
+ByteArray RC6::Decrypt(const Buffer& data, const Buffer& pass)
 {
 	uint box[KeyLength];
 	GetKey(box, pass);

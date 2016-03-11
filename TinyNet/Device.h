@@ -65,24 +65,6 @@ public:
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
 
-	/*Array GetHardID();
-	Array GetName();
-	Array GetPass();
-	Array GetStore();
-	Array GetConfig();
-
-	const Array GetHardID() const;
-	const Array GetName() const;
-	const Array GetPass() const;
-	const Array GetStore() const;
-	const Array GetConfig() const;
-
-	void SetHardID(const Array& arr);
-	void SetName(const Array& arr);
-	void SetPass(const Array& arr);
-	void SetStore(const Array& arr);
-	void SetConfig(const Array& arr);*/
-
 #if DEBUG
 	virtual String& ToStr(String& str) const;
 #endif

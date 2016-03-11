@@ -14,7 +14,7 @@
 /******************************** TinyServer ********************************/
 
 static bool OnServerReceived(void* sender, Message& msg, void* param);
-static void GetDeviceKey(byte scr, Array& key,void* param);
+static void GetDeviceKey(byte scr, Buffer& key,void* param);
 
 #if DEBUG
 // 输出所有设备
@@ -216,7 +216,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		msg.Src		= dv->Address;
 		msg.Reply	= true;
 		msg.Error	= rs.Error;
-		msg.SetData(Array(rs.Data, rs.Length));
+		msg.SetData(Buffer(rs.Data, rs.Length));
 	}
 
 	Current = NULL;
@@ -591,7 +591,7 @@ Device* TinyServer::FindDevice(byte id) const
 	return NULL;
 }
 
-void GetDeviceKey(byte scr,Array& key,void* param)
+void GetDeviceKey(byte scr, Buffer& key, void* param)
 {
 	/*TS("TinyServer::GetDeviceKey");
 
@@ -738,7 +738,7 @@ void TinyServer::SaveDevices() const
 		dv->Write(ms);
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", num, cfg.Address);
-	cfg.Set("Devs", Array(ms.GetBuffer(), ms.Position()));
+	cfg.Set("Devs", Buffer(ms.GetBuffer(), ms.Position()));
 }
 
 void TinyServer::ClearDevices()

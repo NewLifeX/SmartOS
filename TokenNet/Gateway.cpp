@@ -60,8 +60,6 @@ void Gateway::Start()
 		dv->Kind		= Sys.Code;
 		dv->LastTime	= Sys.Seconds();
 
-		//dv->SetHardID(Array(Sys.ID, 16));
-		//dv->SetName(Array(Sys.Name, 0));
 		dv->HardID	= Sys.ID;
 		dv->Name	= Sys.Name;
 

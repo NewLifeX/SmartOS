@@ -22,10 +22,6 @@ public:
 	void ReadData(Stream& ms, Buffer& bs) const;
 	void WriteData(Stream& ms, byte code, const Buffer& bs) const;
 
-	// 0x02 配置数据
-	/*void ReadConfig(Stream& ms, Array& bs);
-	void WriteConfig(Stream& ms, const Array& bs);*/
-
 	// 0x03 硬件校验
 	bool ReadHardCrc(Stream& ms, const Device& dv, ushort& crc) const;
 	void WriteHardCrc(Stream& ms, ushort crc) const;

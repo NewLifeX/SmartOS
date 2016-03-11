@@ -8,8 +8,8 @@ class RC6
 {
 public:
 	// 加解密
-	static ByteArray Encrypt(const Array& data, const Array& pass);
-	static ByteArray Decrypt(const Array& data, const Array& pass);
+	static ByteArray Encrypt(const Buffer& data, const Buffer& pass);
+	static ByteArray Decrypt(const Buffer& data, const Buffer& pass);
 };
 
 #endif

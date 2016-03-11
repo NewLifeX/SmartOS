@@ -8,9 +8,9 @@
 
 #define NET_DEBUG DEBUG
 
-TinyIP::TinyIP() : Buffer(0) { Init(); }
+TinyIP::TinyIP() : _Arr(0) { Init(); }
 
-TinyIP::TinyIP(ITransport* port) : Buffer(0)
+TinyIP::TinyIP(ITransport* port) : _Arr(0)
 {
 	Init();
 	Init(port);
@@ -31,7 +31,7 @@ void TinyIP::Init()
 	_StartTime = 0;
 
 	// 以太网缓冲区先初始化为0，然后再调整大小
-	Buffer.SetLength(1500);
+	_Arr.SetLength(1500);
 
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = IP = 0;
@@ -68,7 +68,7 @@ void TinyIP::Init(ITransport* port)
 uint TinyIP::Fetch(Stream& ms)
 {
 	// 获取缓冲区的包
-	Array bs(ms.Current(), ms.Remain());
+	Buffer bs(ms.Current(), ms.Remain());
 	int len = _port->Read(bs);
 	// 如果缓冲器里面没有数据则转入下一次循环
 	if(len < sizeof(ETH_HEADER)) return 0;
@@ -207,7 +207,7 @@ void TinyIP::Work(void* param)
 	if(tip)
 	{
 		// 注意，此时指针位于0，而内容长度为缓冲区长度
-		Stream ms(tip->Buffer);
+		Stream ms(tip->_Arr);
 		uint len = tip->Fetch(ms);
 		if(len)
 		{
@@ -270,10 +270,10 @@ void TinyIP::ShowInfo()
 
 bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)
 {
-	ETH_HEADER* eth = (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
+	auto eth	= (ETH_HEADER*)(buf - sizeof(ETH_HEADER));
 	assert_param2(IS_ETH_TYPE(type), "这个不是以太网类型");
 
-	eth->Type = type;
+	eth->Type	= type;
 	eth->DestMac = remote;
 	eth->SrcMac  = Mac;
 
@@ -294,7 +294,7 @@ bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	debug_printf("\r\n");*/
 	/*ByteArray((byte*)eth->Next(), len).Show(true);*/
 
-	return _port->Write(Array(eth, len));
+	return _port->Write(Buffer(eth, len));
 }
 
 bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len)

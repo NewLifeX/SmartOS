@@ -36,7 +36,7 @@ void TestFlash()
 
     // 集成测试
     //flash.Erase(addr, 0x100);
-    flash.Write(addr, Array(buf, size));
+    flash.Write(addr, Buffer(buf, size));
 
     flash.Read(addr, bs);
 

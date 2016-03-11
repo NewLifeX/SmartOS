@@ -158,7 +158,7 @@ public:
 	void Loop();
 
 	// 获取密钥的回调
-	void (*GetKey)(byte id, Array& key, void* param);
+	void (*GetKey)(byte id, Buffer& key, void* param);
 
 public:
 	// 统计。平均值=(LastCost + TotalCost)/(LastSend + TotalSend)。每一组完成以后，TotalXXX整体复制给LastXXX

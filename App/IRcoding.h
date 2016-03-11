@@ -34,8 +34,8 @@ public:
 	// 设置配置区所在位置
 	void SetCfgAddr(uint addr);
 	
-	bool SaveCoding(byte index, const Array& bs);
-	bool GetCoding(byte index, Array& bs);
+	bool SaveCoding(byte index, const Buffer& bs);
+	bool GetCoding(byte index, Buffer& bs);
 	
 };
 
