@@ -172,11 +172,13 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 // 拷贝数据，默认-1长度表示两者最小长度
 int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
+	if(len < 0 ) len	= _Length - destIndex;
+
 	// 允许自身拷贝
 	// 源数据的实际长度可能跟要拷贝的长度不一致
 	int remain	= src._Length - srcIndex;
 	if(len > remain) len	= remain;
-	if(len <= 0) return 0;
+	//if(len <= 0) return 0;
 
 	return Copy(destIndex, (byte*)src._Arr + srcIndex, len);
 }

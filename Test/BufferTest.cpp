@@ -88,5 +88,5 @@ void TestBuffer()
 	auto type	= bs5.GetType();
 	Buffer bs6(type);
 	
-	debug_printf("内存缓冲区单元测试全部通过！");
+	debug_printf("内存缓冲区单元测试全部通过！\r\n");
 }
