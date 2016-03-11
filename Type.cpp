@@ -244,28 +244,43 @@ const Buffer Buffer::Sub(int index, int len) const
 	return false;*/
 }
 
-// 转为十六进制字符串
-String Buffer::ToHex() const
+
+// 显示十六进制数据，指定分隔字符
+String& Buffer::ToHex(String& str, char sep, int newLine) const
+{
+	auto buf = GetBuffer();
+
+	// 拼接在字符串后面
+	for(int i=0; i < Length(); i++, buf++)
+	{
+		if(i)
+		{
+			if(newLine > 0 && (i + 1) % newLine == 0)
+				str += "\r\n";
+			else if(sep != '\0')
+				str += sep;
+		}
+
+		str.Concat(*buf, -16);
+	}
+
+	return str;
+}
+
+// 显示十六进制数据，指定分隔字符
+String Buffer::ToHex(char sep, int newLine) const
 {
 	String str;
-	ToStr(str);
+
+	// 优化为使用RVO
+	ToHex(str, sep, newLine);
 
 	return str;
 }
 
 String& Buffer::ToStr(String& str) const
 {
-	if(_Length)
-	{
-		//str.SetLength(_Length * 3 - 1);
-		for(int i=0; i<_Length; i++)
-		{
-			if(i) str	+= '-';
-			str.Concat((*this)[i], -16);
-		}
-	}
-
-	return str;
+	return ToHex(str, '-', 0x20);
 }
 
 bool operator == (const Buffer& bs1, const Buffer& bs2)
@@ -541,12 +556,6 @@ bool Array::CheckCapacity(int len, int bak)
 	return true;
 }
 
-void Array::Show(bool newLine) const
-{
-	ByteArray bs(GetBuffer(), Length());
-	bs.Show(newLine);
-}
-
 void* Array::Alloc(int len) { return new byte[_Size * len];}
 
 bool operator==(const Array& bs1, const Array& bs2)
@@ -643,40 +652,6 @@ ByteArray& ByteArray::operator = (ByteArray&& rval)
 	return *this;
 }
 
-// 显示十六进制数据，指定分隔字符
-String& ByteArray::ToHex(String& str, char sep, int newLine) const
-{
-	auto buf = GetBuffer();
-
-	// 拼接在字符串后面
-	for(int i=0; i < Length(); i++, buf++)
-	{
-		//str	+= *buf;
-		str.Concat(*buf, -16);
-
-		if(i < Length() - 1)
-		{
-			if(newLine > 0 && (i + 1) % newLine == 0)
-				str += "\r\n";
-			else if(sep != '\0')
-				str += sep;
-		}
-	}
-
-	return str;
-}
-
-// 显示十六进制数据，指定分隔字符
-String ByteArray::ToHex(char sep, int newLine) const
-{
-	String str;
-
-	// 优化为使用RVO
-	ToHex(str, sep, newLine);
-
-	return str;
-}
-
 // 保存到普通字节数组，首字节为长度
 int ByteArray::Load(const void* data, int maxsize)
 {
@@ -696,26 +671,6 @@ int ByteArray::Save(void* data, int maxsize) const
 	p[0] = len;
 
 	return CopyTo(0, p + 1, len);
-}
-
-String& ByteArray::ToStr(String& str) const
-{
-	return ToHex(str, '-', 0x20);
-}
-
-// 显示对象。默认显示ToString
-void ByteArray::Show(bool newLine) const
-{
-	// 采用栈分配然后复制，避免堆分配
-	char cs[0x200];
-	String str(cs, ArrayLength(cs));
-	// 清空字符串，变成0长度，因为ToHex内部是附加
-	str.Clear();
-
-	// 如果需要的缓冲区超过512，那么让它自己分配好了
-	ToHex(str, '-', 0x20);
-
-	str.Show(newLine);
 }
 
 ushort	ByteArray::ToUInt16() const

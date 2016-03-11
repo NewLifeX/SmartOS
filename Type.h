@@ -104,9 +104,12 @@ public:
 	Buffer Sub(int index, int len);
 	const Buffer Sub(int index, int len) const;
 
-	// 转为十六进制字符串
-	String ToHex() const;
+	// 显示十六进制数据，指定分隔字符和换行长度
+	String& ToHex(String& str, char sep = 0, int newLine = 0) const;
+	// 显示十六进制数据，指定分隔字符和换行长度
+	String ToHex(char sep = 0, int newLine = 0) const;
 
+	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
 
     explicit operator bool() const { return _Length > 0; }
@@ -156,8 +159,6 @@ public:
 	virtual void Clear();
 	// 设置指定位置的值，不足时自动扩容
 	virtual void SetItemAt(int i, const void* item);
-
-	virtual void Show(bool newLine) const;
 
     // 重载索引运算符[]，返回指定元素的第一个字节
     byte operator[](int i) const;
@@ -335,20 +336,10 @@ public:
 	// 重载等号运算符，使用外部指针、内部长度，用户自己注意安全
     //ByteArray& operator=(const void* data);
 
-	// 显示十六进制数据，指定分隔字符和换行长度
-	String& ToHex(String& str, char sep = '-', int newLine = 0x10) const;
-	// 显示十六进制数据，指定分隔字符和换行长度
-	String ToHex(char sep = '-', int newLine = 0x10) const;
-
 	// 保存到普通字节数组，首字节为长度
 	int Load(const void* data, int maxsize = -1);
 	// 从普通字节数据组加载，首字节为长度
 	int Save(void* data, int maxsize = -1) const;
-
-	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str) const;
-	// 显示对象。默认显示ToString
-	virtual void Show(bool newLine = false) const;
 
 	ushort	ToUInt16() const;
 	uint	ToUInt32() const;
