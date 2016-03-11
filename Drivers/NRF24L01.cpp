@@ -789,14 +789,12 @@ uint NRF24L01::OnRead(Buffer& bs)
 			if(DynPayload) rs = ReadReg(RX_PL_WID);
 
 			uint len = bs.Length();
-			if(rs > len)
+			if(rs > len && !bs.SetLength(rs))
 			{
 				debug_printf("R24::Read 实际负载%d，缓冲区大小%d，为了稳定，使用缓冲区大小\r\n", rs, len);
 				rs = len;
 			}
-			bs.SetLength(rs);
 			ReadBuf(RD_RX_PLOAD, bs); // 读取数据
-			//ReadBuf(RD_RX_PLOAD, bs.Sub(rs)); // 读取数据
 		}
 	}
 

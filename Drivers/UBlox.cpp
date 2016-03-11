@@ -133,8 +133,8 @@ void UBlox::OnReceive(const Buffer& bs, void* param)
 	// 必须美元开头，可以指定头部识别符
 	if(bs[0] == '$' && (Header == NULL || str.StartsWith(Header)))
 	{
-		Buf.SetLength(0);
-		Buf.Copy(0, bs, 0, Buf.Length());
+		Buf.SetLength(bs.Length());
+		Buf	= bs;
 	}
 	else
 	{

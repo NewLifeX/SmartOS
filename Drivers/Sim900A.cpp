@@ -60,7 +60,7 @@ String Sim900A::Send(const char* str, uint msTimeout)
 	if(str)
 	{
 		String dat(str);
-		//Port->Write(dat);
+		Port->Write(dat);
 
 #if DEBUG
 		dat.Trim().Show(true);
@@ -68,14 +68,14 @@ String Sim900A::Send(const char* str, uint msTimeout)
 	}
 
 	String bs;
-	/*bs.SetLength(bs.Capacity());
+	bs.SetLength(bs.Capacity());
 
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
 	do
 	{
 		if(Port->Read(bs) >= 2) break;
-	}while(!tw.Expired());*/
+	}while(!tw.Expired());
 
 	if(bs.Length() > 4) bs.Trim();
 

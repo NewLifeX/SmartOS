@@ -54,6 +54,13 @@ public:
 	const String Name() const;	// 名称
 };
 
+/*
+数据区设计原则：
+1，固定数据区封装 Buffer	=> Object
+2，变长数据区封装 Array		=> Buffer
+3，自带初始缓冲区封装 ByteArray/String/TArray<T>	=> Array
+*/
+
 // 内存数据区。包装指针和长度
 // 参考C#的Byte[]，主要实现对象与指针的相互转化、赋值、拷贝、设置、截取、比较等操作。
 // 内部指针指向的内存和长度，都由外部传入，内部不会自动分配。
@@ -82,7 +89,7 @@ public:
 	Buffer(Buffer&& rval);
 
 	// 从另一个对象那里拷贝，拷贝长度为两者最小者，除非当前对象能自动扩容
-	Buffer& operator = (const Buffer& rhs);
+	//Buffer& operator = (const Buffer& rhs);	// 无法解释用法，暂时注释
 	// 从指针拷贝，使用我的长度
 	Buffer& operator = (const void* ptr);
 	// 对象mov操作，指针和长度归我，清空对方
@@ -138,7 +145,7 @@ protected:
 	void move(Buffer& rval);
 };
 
-// 数组。包括指针和最大长度，支持实际长度
+// 变长数组。自动扩容
 class Array : public Buffer
 {
 public:

@@ -404,10 +404,11 @@ ByteArray ShunComMessage::ToArray() const
 	//MemoryStream ms;
 	// 带有负载数据，需要合并成为一段连续的内存
 	ByteArray bs;
-	Stream ms(bs.GetBuffer(),64);
-	//ms.SetLength(bs.Length());
+	Stream ms(bs.GetBuffer(), 64);
+	//ms.SetLength(0);
 	Write(ms);
 	bs.Show(true);
+
 	return bs;
 }
 

@@ -38,6 +38,7 @@ public:
 	bool Write(const Buffer& bs, void* opt);
 	// 接收数据
 	uint Read(Buffer& bs);
+	Buffer Read();
 
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = NULL);

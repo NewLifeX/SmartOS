@@ -93,12 +93,12 @@ void Buffer::move(Buffer& rval)
 	rval._Length	= 0;
 }
 
-Buffer& Buffer::operator = (const Buffer& rhs)
+/*Buffer& Buffer::operator = (const Buffer& rhs)
 {
 	Copy(0, rhs, 0, -1);
 
 	return *this;
-}
+}*/
 
 Buffer& Buffer::operator = (const void* ptr)
 {

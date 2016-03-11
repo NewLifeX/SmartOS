@@ -6,7 +6,7 @@ void TestBuffer()
 
 	// 使用指针和长度构造一个内存区
 	char cs[] = "This is Buffer Test.";
-	Buffer bs(cs, strlen(cs));
+	Buffer bs(cs, sizeof(cs));
 	debug_printf("Buffer bs(cs, strlen(cs)) => %s\r\n", cs);
 	assert_param2(bs.GetBuffer() == (byte*)cs, "Buffer(void* p = nullptr, int len = 0)");
 	assert_param2(bs == cs, "Buffer(void* p = nullptr, int len = 0)");
@@ -78,6 +78,11 @@ void TestBuffer()
 	assert_param2(str2 == "AB-34-FE", "String ToString()");
 
 	Buffer bs5(cs);
+	debug_printf("Buffer(T (&arr)[N]) => %s\r\n", cs);
+	assert_param2(bs5.GetBuffer() == (byte*)cs, "Buffer(T (&arr)[N])");
+	assert_param2(bs5 == cs, "Buffer(void* p = nullptr, int len = 0)");
+
+	Buffer bs7((byte*)cs);
 	
 	auto type	= bs5.GetType();
 	Buffer bs6(type);
