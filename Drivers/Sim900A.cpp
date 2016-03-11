@@ -127,7 +127,7 @@ void Sim900A::SendAPN(bool issgp)
 void Sim900A::SendDomain()
 {
 	String str;
-	str.Clear();
+	//str.Clear();
 	str = "AT+CIPSTART=\"UDP\"";
 	str = str + ",\"" + Domain + "\",\"3388\"\r";
 

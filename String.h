@@ -118,8 +118,8 @@ public:
 	virtual String& ToStr(String& str) const;
 	// 输出对象的字符串表示方式
 	virtual String ToString() const;
-	// 清空已存储数据。
-	virtual void Clear();
+	//// 清空已存储数据。
+	//virtual void Clear();
 
 	// 调试输出字符串
 	virtual void Show(bool newLine = false) const;

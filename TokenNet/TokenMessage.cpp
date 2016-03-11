@@ -500,19 +500,18 @@ void TokenController::ShowStat()
 {
 	char cs[128];
 	String str(cs, ArrayLength(cs));
-	str.Clear();
+	//str.Clear();
 	Stat->ToStr(str);
 	str.Show(true);
 
 	Stat->Clear();
 
 	// 向以太网广播
-	ISocket* sock = dynamic_cast<ISocket*>(Port);
+	auto sock = dynamic_cast<ISocket*>(Port);
 	if(sock)
 	{
-		ByteArray bs(str);
 		IPEndPoint ep(IPAddress::Broadcast(), 514);
-		sock->SendTo(bs, ep);
+		sock->SendTo(str, ep);
 	}
 }
 

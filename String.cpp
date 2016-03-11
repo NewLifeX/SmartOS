@@ -607,11 +607,11 @@ String String::ToString() const
 	return *this;
 }
 
-// 清空已存储数据。
+/*// 清空已存储数据。
 void String::Clear()
 {
 	release();
-}
+}*/
 
 // 调试输出字符串
 void String::Show(bool newLine) const
