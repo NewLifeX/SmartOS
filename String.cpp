@@ -127,6 +127,7 @@ inline void String::init()
 	_Arr		= Arr;
 	_Capacity	= sizeof(Arr) - 1;
 	_Length		= 0;
+	_Arr[0]		= '\0';
 }
 
 void String::release()
@@ -169,25 +170,47 @@ String& String::copy(const char* cstr, uint length)
 
 void String::move(String& rhs)
 {
-	if (_Arr) {
-		if (_Capacity >= rhs._Length) {
-			//strcpy(_Arr, rhs._Arr);
+	/*
+	move逻辑：
+	1，如果右值是内部指针，则必须拷贝数据，因为右值销毁的时候，内部数据跟着释放
+	2，如果右值是外部指针，并且需要释放，则直接拿指针过来使用，由当前对象负责释放
+	3，如果右值是外部指针，而不需要释放，则拷贝数据，因为那指针可能是借用外部的栈内存
+	*/
+
+	if(rhs._Arr != rhs.Arr && rhs._needFree)
+	{
+		_Arr		= rhs._Arr;
+		_Capacity	= rhs._Capacity;
+		_Length		= rhs._Length;
+		_needFree	= rhs._needFree;
+
+		rhs._Arr	= nullptr;
+		rhs._Capacity	= 0;
+		rhs._Length	= 0;
+		rhs._needFree	= false;
+
+		return;
+	}
+
+	SetLength(rhs.Length());
+	copy(rhs._Arr, rhs._Length);
+
+	/*if (_Arr)
+	{
+		// 如果容量不足
+		if (_Capacity >= rhs._Length)
+		{
 			Buffer(_Arr, _Capacity).Copy(0, rhs._Arr, rhs._Length);
 			_Length = rhs._Length;
 			_Arr[_Length]	= '\0';
 			rhs._Length	= 0;
 			return;
-		} else {
-			//delete _Arr;
+		}
+		else
+		{
 			Array::Release();
 		}
-	}
-	_Arr		= rhs._Arr;
-	_Capacity	= rhs._Capacity;
-	_Length		= rhs._Length;
-	rhs._Arr	= NULL;
-	rhs._Capacity	= 0;
-	rhs._Length	= 0;
+	}*/
 }
 
 void String::SetBuffer(const void* str, int length)
@@ -195,6 +218,9 @@ void String::SetBuffer(const void* str, int length)
 	_Arr		= (char*)str;
 	_Capacity	= length;
 	_Length		= 0;
+
+	_needFree	= false;
+	_canWrite	= false;
 }
 
 bool String::SetLength(int length, bool bak)
@@ -204,6 +230,39 @@ bool String::SetLength(int length, bool bak)
 	_Arr[_Length]	= '\0';
 
 	return true;
+}
+
+// 拷贝数据，默认-1长度表示当前长度
+int String::Copy(int destIndex, const void* src, int len)
+{
+	int rs	= Buffer::Copy(destIndex, src, len);
+	if(!rs) return 0;
+
+	_Arr[_Length]	= '\0';
+
+	return rs;
+}
+
+// 拷贝数据，默认-1长度表示两者最小长度
+int String::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
+{
+	int rs	= Buffer::Copy(destIndex, src, srcIndex, len);
+	if(!rs) return 0;
+
+	_Arr[_Length]	= '\0';
+
+	return rs;
+}
+
+// 把数据复制到目标缓冲区，默认-1长度表示当前长度
+int String::CopyTo(int srcIndex, void* dest, int len) const
+{
+	int rs	= Buffer::CopyTo(srcIndex, dest, len);
+	if(!rs) return 0;
+
+	((char*)dest)[len]	= '\0';
+
+	return rs;
 }
 
 String& String::operator = (const String& rhs)

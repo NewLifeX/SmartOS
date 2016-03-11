@@ -35,6 +35,13 @@ public:
 	// 设置数组长度。改变长度后，确保最后以0结尾
 	virtual bool SetLength(int length, bool bak = false);
 
+	// 拷贝数据，默认-1长度表示当前长度
+	virtual int Copy(int destIndex, const void* src, int len);
+	// 拷贝数据，默认-1长度表示两者最小长度
+	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
+	virtual int CopyTo(int srcIndex, void* dest, int len) const;
+
 	// 为被赋值对象建立一个备份。
 	// 如果值为空或无效，或者内存分配失败，字符串将会被标记为无效
 	String& operator = (const String& rhs);

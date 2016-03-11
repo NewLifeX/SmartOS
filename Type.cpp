@@ -397,12 +397,17 @@ Array::~Array()
 
 bool Array::Release()
 {
-	if(_needFree && _Arr)
-	{
-		delete (byte*)_Arr;
+	auto p	= _Arr;
 
-		_Arr		= nullptr;
-		_needFree	= false;
+	_Arr		= nullptr;
+	_Capacity	= 0;
+	_Length		= 0;
+	_needFree	= false;
+	_canWrite	= true;
+
+	if(_needFree && p)
+	{
+		delete (byte*)p;
 
 		return true;
 	}
@@ -568,10 +573,12 @@ bool Array::CheckCapacity(int len, int bak)
 		// 为了安全，按照字节拷贝
 		Buffer(p, sz).Copy(0, _Arr, bak);
 
+	int oldlen	= _Length;
 	if(_needFree && _Arr != p) Release();
 
-	_Capacity	= sz;
 	_Arr		= (char*)p;
+	_Capacity	= sz;
+	_Length		= oldlen;
 	_needFree	= true;
 
 	return true;
