@@ -595,18 +595,24 @@ bool operator!=(const Array& bs1, const Array& bs2)
 
 /******************************** ByteArray ********************************/
 
-ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, length)
+ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, sizeof(Arr))
 {
 	if(copy)
+	{
+		_Length	=	length;
 		Copy(0, data, length);
+	}
 	else
 		Set(data, length);
 }
 
-ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, length)
+ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, sizeof(Arr))
 {
 	if(copy)
+	{
+		_Length	=	length;
 		Copy(0, data, length);
+	}
 	else
 		Set(data, length);
 }
