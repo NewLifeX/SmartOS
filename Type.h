@@ -64,6 +64,12 @@ class Buffer : public Object
 public:
 	// 打包一个指针和长度指定的数据区
 	Buffer(void* ptr = nullptr, int len = 0);
+	template<typename T, int N>
+	Buffer(T[] arr, N)
+	{
+		_Arr	= arr;
+		_Length	= N;
+	}
 	// 拷贝构造函数。直接把指针和长度拿过来用
 	Buffer(const Buffer& buf) = delete;
 	// 对象mov操作，指针和长度归我，清空对方
@@ -98,7 +104,7 @@ public:
 
 	// 用指定字节设置初始化一个区域
 	int Set(byte item, int index, int len);
-	void Clear();
+	void Clear(byte item = 0);
 
 	// 截取一个子缓冲区
 	Buffer Sub(int index, int len);
@@ -184,11 +190,11 @@ protected:
 // 数组长度
 #define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
 // 数组清零，固定长度
-#define ArrayZero(arr) memset(arr, 0, ArrayLength(arr) * sizeof(arr[0]))
+//#define ArrayZero(arr) memset(arr, 0, sizeof(arr))
 
 // 使用常量数组来定义一个指针数组
-#define CArray(arr) (Array(arr, ArrayLength(arr)))
-#define SArray(obj) (Array(&obj, sizeof(obj)))
+//#define CArray(arr) (Array(arr, ArrayLength(arr)))
+//#define SArray(obj) (Array(&obj, sizeof(obj)))
 
 // 使用常量数组来定义一个指针数组
 //#define CBuffer(arr) (Buffer(arr, ArrayLength(arr)))

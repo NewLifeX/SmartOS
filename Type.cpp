@@ -212,9 +212,9 @@ int Buffer::Set(byte item, int index, int len)
 	return len;
 }
 
-void Buffer::Clear()
+void Buffer::Clear(byte item)
 {
-	Set(0, 0, _Length);
+	Set(item, 0, _Length);
 }
 
 // 截取一个子缓冲区

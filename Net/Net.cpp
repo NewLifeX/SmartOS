@@ -182,9 +182,7 @@ MacAddress::MacAddress(UInt64 v)
 
 MacAddress::MacAddress(const byte* macs)
 {
-	/*ByteArray bs(macs, 6);
-	Value = bs.ToUInt64() & MAC_MASK;*/
-	memcpy(&Value, macs, 6);
+	Buffer(&Value, 6)	= macs;
 }
 
 MacAddress::MacAddress(const Buffer& arr)

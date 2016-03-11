@@ -7,7 +7,7 @@ BlinkPort::BlinkPort()
 {
 	_tid	= 0;
 
-	ArrayZero(Ports);
+	Buffer(Ports, sizeof(Ports)).Clear();
 	Count	= 0;
 
 	First	= true;

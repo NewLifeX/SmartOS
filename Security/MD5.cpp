@@ -178,7 +178,8 @@ void md5_update(md5_context *ctx, byte *input, uint length )
 
     if( left && length >= fill )
     {
-        memcpy( (void *) (ctx->buffer + left), (void *) input, fill );
+        //memcpy((void*)(ctx->buffer + left), (void*)input, fill);
+		Buffer((void*)(ctx->buffer + left), fill)	= input;
         md5_process( ctx, ctx->buffer );
         length -= fill;
         input  += fill;
@@ -194,7 +195,8 @@ void md5_update(md5_context *ctx, byte *input, uint length )
 
     if( length )
     {
-        memcpy( (void *) (ctx->buffer + left), (void *) input, length );
+        //memcpy((void*)(ctx->buffer + left), (void*)input, length);
+		Buffer((void*)(ctx->buffer + left), length)	= input;
     }
 }
 

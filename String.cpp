@@ -809,7 +809,7 @@ void trim(char* buffer, int& len, bool trimBegin, bool trimEnd)
 	char *end = buffer + len - 1;
 	if(trimEnd) while (isspace(*end) && end >= begin) end--;
 	len = end + 1 - begin;
-	if (begin > buffer) memcpy(buffer, begin, len);
+	if (begin > buffer) Buffer(buffer, len)	= begin;
 	buffer[len] = 0;
 }
 

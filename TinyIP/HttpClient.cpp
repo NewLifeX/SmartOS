@@ -349,7 +349,7 @@ void TcpSocket::Send(const byte* buf, uint len)
 		uint len2 = Tip->BufferSize - tcp->Offset() - tcp->Size();
 		assert_param(len <= len2);
 
-		memcpy(tcp->Next(), buf, len);
+		Buffer(tcp->Next(), len)	= buf;
 	}
 
 	// 发送的时候采用LocalPort

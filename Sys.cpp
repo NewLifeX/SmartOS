@@ -57,7 +57,7 @@ _force_inline void InitHeapStack(uint top)
 	uint size = (uint)&__initial_sp - (uint)p;
 	uint msp = top - size;
 	// 拷贝一部分栈内容到新栈
-	memcpy((void*)msp, (void*)p, size);
+	Buffer((void*)msp, size)	= (void*)p;
 
 	// 必须先拷贝完成栈，再修改栈指针
 	__set_MSP(msp);
@@ -126,7 +126,7 @@ TSys::TSys()
 #elif defined(STM32F4)
 	void* p = (void*)0x1FFF7A10;
 #endif
-	memcpy(ID, p, ArrayLength(ID));
+	Buffer(ID, ArrayLength(ID))	= p;
 
     CPUID = SCB->CPUID;
     uint mcuid = DBGMCU->IDCODE; // MCU编码。低字设备版本，高字子版本

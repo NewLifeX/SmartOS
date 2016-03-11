@@ -97,7 +97,7 @@ ITransport* Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, I
 	nrf->Led		= led;
 
 	byte num = tc->Mac[0] && tc->Mac[1] && tc->Mac[2] && tc->Mac[3] && tc->Mac[4];
-	if(num != 0 && num != 0xFF) memcpy(nrf->Remote, tc->Mac, 5);
+	if(num != 0 && num != 0xFF) Buffer(nrf->Remote, 5)	= tc->Mac;
 
 	return nrf;
 }
@@ -184,8 +184,9 @@ void* InitConfig(void* data, uint size)
 	data = hot->Next();
 	if(hot->Times == 1)
 	{
-		memset(data, 0x00, size);
-		((byte*)data)[0] = size;
+		Buffer ds(data, size);
+		ds.Clear();
+		ds[0]	= size;
 	}
 
 	auto tc = TinyConfig::Create();

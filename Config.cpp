@@ -84,14 +84,17 @@ bool ConfigBlock::Init(const char* name, const Buffer& bs)
     if(slen > sizeof(Name)) return false;
 
 	if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
+	
+	Buffer ns(Name, ArrayLength(Name));
 	// 无论如何，把整个名称区域清空
-	memset(Name, 0, ArrayLength(Name));
+	ns.Clear();
 
 	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
 	if(bs.Length() > 0)
 	{
 		Size	= bs.Length();
-		memcpy(Name, name, slen);
+		ns.SetLength(slen);
+		ns	= name;
 	}
 
     Hash = GetHash();
@@ -129,7 +132,7 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
 bool ConfigBlock::Remove(const Storage& storage, uint addr)
 {
 	// 把整个名称区域清空
-	memset(Name, 0, ArrayLength(Name));
+	Buffer(Name, ArrayLength(Name)).Clear();
 
     Hash = GetHash();
 
@@ -370,7 +373,7 @@ const Buffer ConfigBase::ToArray() const
 
 void ConfigBase::Init()
 {
-	memset(_Start, 0, Size());
+	Buffer(_Start, Size()).Clear();
 }
 
 void ConfigBase::Load()

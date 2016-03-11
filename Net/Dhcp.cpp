@@ -66,7 +66,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		String vendor = "www.wslink.cn";
 		opt = opt->Next()->SetData(DHCP_OPT_Vendor, vendor);
 		byte ps[] = { 0x01, 0x06, 0x03, 0x2b}; // 需要参数 Mask/DNS/Router/Vendor
-		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, CArray(ps));
+		opt = opt->Next()->SetData(DHCP_OPT_ParameterList, Buffer(ps, sizeof(ps)));
 		opt = opt->Next()->End();
 
 		len = (byte*)opt + 1 - p;

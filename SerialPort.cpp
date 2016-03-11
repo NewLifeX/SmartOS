@@ -62,8 +62,7 @@ void SerialPort::Set(COM index, int baudRate)
 	if(((USART_TypeDef*)_port)->CR1 & USART_CR1_UE) Opened = true;
 
 	// 设置名称
-	//Name = "COMx";
-	memcpy((byte*)Name, (byte*)"COMx", 4);
+	Buffer(Name, 4)	= "COMx";
 	Name[3] = '0' + _index + 1;
 	Name[4] = 0;
 }

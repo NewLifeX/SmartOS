@@ -273,7 +273,7 @@ void ArpSocket::Add(const IPAddress& ip, const MacAddress& mac)
 	if(!_Arps)
 	{
 		_Arps = new ARP_ITEM[Count];
-		memset(_Arps, 0, sizeof(ARP_ITEM) * Count);
+		Buffer(_Arps, sizeof(ARP_ITEM) * Count).Clear();
 	}
 
 	ARP_ITEM* item = NULL;

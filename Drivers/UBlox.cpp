@@ -43,7 +43,7 @@ void UBlox::SetBaudRate(int baudRate)
 		};
 	int len	= ArrayLength(cmd);
 	int p	= 6 + 8;	// 头6字节，偏移8
-	memcpy(cmd + p, &baudRate, 4);	// 小字节序
+	Buffer(cmd, len).Copy(p, &baudRate, 4);
 	// 修改校验。不含头尾各2字节
 	byte CK_A = 0, CK_B = 0;
 	for(int i=2; i<len-2-2; i++)

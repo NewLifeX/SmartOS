@@ -24,8 +24,8 @@ void TestSerial()
     sp1->Open();
     sp1->Register(OnUsartRead);
     
-	char str[] = "http://www.NewLifeX.com \r\n";
-    sp1->Write(CArray(str));
+	String str = "http://www.NewLifeX.com \r\n";
+    //sp1->Write(str);
     //Sys.Sleep(3000);
 
     debug_printf("\r\nTestSerial Finish!\r\n");

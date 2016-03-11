@@ -211,8 +211,8 @@ NRF24L01::NRF24L01()
 	_spi	= NULL;
 
 	// 初始化地址
-	memset(Remote, 0, ArrayLength(Remote));
-	memcpy(Local, (byte*)Sys.ID, ArrayLength(Local));
+	Buffer(Remote, ArrayLength(Remote)).Clear();
+	Buffer(Local, ArrayLength(Local))	= Sys.ID;
 	Channel		= 0;	// 默认通道0
 
 	DynPayload	= true;

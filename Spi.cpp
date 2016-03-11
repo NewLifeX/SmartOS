@@ -58,8 +58,8 @@ void Spi::Init(SPI spi, uint speedHz, bool useNss)
     _SPI = g_Spis[_index];
 
 	Pin g_Spi_Pins_Map[][4] =  SPI_PINS_FULLREMAP;
-	Pin* ps = g_Spi_Pins_Map[_index];		//选定spi引脚
-	memcpy(Pins, ps, sizeof(Pins));
+	auto ps = g_Spi_Pins_Map[_index];		//选定spi引脚
+	Buffer(Pins, sizeof(Pins))	= ps;
 
 	if(!useNss) Pins[0] = P0;
 

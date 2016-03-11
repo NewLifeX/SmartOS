@@ -82,7 +82,6 @@ void TestMessage(OutputPort* leds)
     nrf->AutoAnswer = false;
 	nrf->Speed = 1000;
 	//byte addr[] = {0x34, 0x43, 0x10, 0x10, 0x01};
-	//memcpy(nrf->Address, addr, ArrayLength(addr));
 	nrf->PayloadWidth = 0;	// 使用动态负载
     if(!nrf->Check())
         debug_printf("请检查NRF24L01线路\r\n");

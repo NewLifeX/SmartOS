@@ -18,7 +18,7 @@ ADConverter::ADConverter(byte line, uint channel)
 		if(Channel & dat) Count++;
 	}
 
-	ArrayZero(Data);
+	Buffer(Data, sizeof(Data)).Clear();
 
 	ADC_TypeDef* const g_ADCs[]= ADCS;
 	_ADC = g_ADCs[line - 1];

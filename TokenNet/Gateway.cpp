@@ -455,8 +455,9 @@ bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 
 	// 第一个字节是节点设备地址
 	tny.Dest	= msg.Data[0];
-	if(msg.Length > 1) memcpy(tny.Data, &msg.Data[1], msg.Length - 1);
+	if(msg.Length > 1) Buffer(tny.Data, msg.Length - 1)	= &msg.Data[1];
 	tny.Length	= msg.Length - 1;
+	
 	return true;
 }
 
@@ -471,7 +472,7 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 	// 第一个字节是节点设备地址
 	msg2.Data[0] = ((TinyMessage&)msg).Src;
 
-	if(msg.Length > 0) memcpy(&msg2.Data[1], msg.Data, msg.Length);
+	if(msg.Length > 0) Buffer(&msg2.Data[1], msg.Length)	= msg.Data;
 
 	msg2.Length = 1 + msg.Length;
 }

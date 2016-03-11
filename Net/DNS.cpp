@@ -223,7 +223,7 @@ bool parseDNSMSG(TDNS* hdr, const Buffer& bs, byte* ip_from_dns)
 	Stream ms(bs);
 	ms.Little = false;
 
-	memset(hdr, 0, sizeof(hdr));
+	Buffer(hdr, sizeof(hdr)).Clear();
 
 	hdr->id = ms.ReadUInt16();
 	ushort tmp = ms.ReadUInt16();

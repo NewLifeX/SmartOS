@@ -317,13 +317,13 @@ DateTime& DateTime::ParseUs(UInt64 us)
 
 DateTime::DateTime()
 {
-	memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
+	Buffer(&Year, &Microsecond - &Year + sizeof(Microsecond)).Clear();
 }
 
 DateTime::DateTime(UInt64 seconds)
 {
 	if(seconds == 0)
-		memset(&Year, 0, &Microsecond - &Year + sizeof(Microsecond));
+		Buffer(&Year, &Microsecond - &Year + sizeof(Microsecond)).Clear();
 	else
 		Parse(seconds);
 }

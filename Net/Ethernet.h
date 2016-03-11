@@ -289,13 +289,13 @@ typedef struct _DHCP_HEADER
 	void Init(uint dhcpid, bool recursion = false)
 	{
 		// 为了安全，清空一次
-		memset(this, 0, sizeof(this[0]));
+		Buffer(this, sizeof(this[0])).Clear();
 
-		MsgType = 1;
-		HardType = 1;
-		HardLength = 6;
-		Hops = 0;
-		TransID = _REV(dhcpid);
+		MsgType		= 1;
+		HardType	= 1;
+		HardLength	= 6;
+		Hops	= 0;
+		TransID	= _REV(dhcpid);
 		//Flags = 0x80;	// 从0-15bits，最左一bit为1时表示server将以广播方式传送封包给 client，其余尚未使用
 		SetMagic();
 
@@ -386,9 +386,7 @@ typedef struct _DHCP_OPT
 	{
 		Option = option;
 		Length = 4;
-		memcpy(&Data, &value, Length);
-		// 需要考虑地址对齐问题，只有4字节对齐，才可以直接使用整数赋值
-		//*(uint*)&Data = value;
+		Buffer(&Data, 4)	= &value;
 
 		return this;
 	}
@@ -398,7 +396,7 @@ typedef struct _DHCP_OPT
 		Option = DHCP_OPT_ClientIdentifier;
 		Length = 1 + 6;
 		Data = 1;	// 类型ETHERNET=1
-		memcpy(&Data + 1, &mac.Value, 6);
+		mac.CopyTo(&Data + 1);
 
 		return this;
 	}

@@ -27,10 +27,6 @@ Device::Device() :
 	OfflineTime	= 0;
 	SleepTime	= 0;
 
-	/*ArrayZero(Mac);
-	ArrayZero(Name);
-	ArrayZero(Pass);
-	ArrayZero(Store);*/
 	HardID.Clear();
 	Mac.Clear();
 	Name.Clear();

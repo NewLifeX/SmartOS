@@ -283,10 +283,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			if(sum == 0 || sum == 0xFF * 5) st = NULL;
 		}
 		if(!st)
-			//memcpy(dv->Mac, dv->HardID, 6);
 			dv->Mac	= dv->HardID;
 		else
-			//memcpy(dv->Mac, st, 6);
 			dv->Mac	= st;
 
 		if(dv->Valid())

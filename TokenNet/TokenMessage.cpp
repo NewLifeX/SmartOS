@@ -86,13 +86,13 @@ uint TokenMessage::MaxDataSize() const
 // 设置错误信息字符串
 void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 {
-	Error = errorCode != 0;
-	Length = 1 + errLength;
-	Data[0] = errorCode;
+	Error	= errorCode != 0;
+	Length	= 1 + errLength;
+	Data[0]	= errorCode;
 	if(errLength > 0)
 	{
 		assert_ptr(error);
-		memcpy(Data + 1, error, errLength);
+		Buffer(Data + 1, errLength)	= error;
 	}
 }
 
@@ -140,7 +140,7 @@ TokenController::TokenController() : Controller(), Key(0)
 	Server	= NULL;
 
 	// 默认屏蔽心跳日志和确认日志
-	ArrayZero(NoLogCodes);
+	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 	NoLogCodes[1] = 0x08;
 
@@ -148,7 +148,7 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	Stat	= NULL;
 
-	memset(_Queue, 0, ArrayLength(_Queue) * sizeof(_Queue[0]));
+	Buffer(_Queue, ArrayLength(_Queue) * sizeof(_Queue[0])).Clear();
 }
 
 TokenController::~TokenController()
@@ -539,7 +539,7 @@ TokenStat::TokenStat()
 	_Total		= NULL;*/
 
 	int start	= offsetof(TokenStat, SendRequest);
-	memset((byte*)this + start, 0, sizeof(TokenStat) - start);
+	Buffer((byte*)this + start, sizeof(TokenStat) - start).Clear();
 }
 
 TokenStat::~TokenStat()
