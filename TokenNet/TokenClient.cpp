@@ -224,6 +224,9 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
 			ext.ErrMsg.Show(true);
+
+			// 未握手错误，马上重新握手
+			if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
 		}
 		else
 		{
@@ -299,6 +302,8 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	ChangeIPEndPoint(msg.Server, msg.Port);
 	Status = 0;
 
+	Sys.SetTask(_task, true, 0);
+
 	return true;
 }
 
@@ -325,15 +330,15 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
-	rm.User	= cfg->User;
-	rm.Pass	= cfg->Pass;
+	cfg->User	= rm.User;
+	cfg->Pass	= rm.Pass;
 
 	cfg->Show();
 	cfg->Save();
-    //cfg->Show();
 
-	//Sys.Reset();
 	Status	= 0;
+
+	Sys.SetTask(_task, true, 0);
 }
 
 // 登录
@@ -387,6 +392,9 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 
 		debug_printf("登录失败，错误码 0x%02X！", result);
 		ms.ReadString().Show(true);
+
+		// 未登录错误，马上重新登录
+		if(result == 0x7F) Sys.SetTask(_task, true, 0);
 	}
 	else
 	{
