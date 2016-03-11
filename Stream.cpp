@@ -130,7 +130,10 @@ uint Stream::ReadEncodeInt()
 // 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
 uint Stream::Read(Buffer& bs)
 {
-	return Read(bs.GetBuffer(), 0, bs.Length());
+	uint rs = Read(bs.GetBuffer(), 0, bs.Length());
+	bs.SetLength(rs);
+
+	return 0;
 }
 
 // 把数据写入当前位置
@@ -176,12 +179,7 @@ uint Stream::Write(const char* str)
 {
 	if(!CanWrite) return false;
 
-	int len = 0;
-	if(str)
-	{
-		auto p = str;
-		while(*p++) len++;
-	}
+	int len = strlen(str);
 
 	WriteEncodeInt(len);
 	if(len) Write((byte*)str, 0, len);
@@ -218,36 +216,31 @@ int Stream::Peek() const
 uint Stream::ReadArray(Buffer& bs)
 {
 	uint len = ReadEncodeInt();
-	if(!len) return 0;
+	if(!len)
+	{
+		bs.SetLength(0);
 
-	if(len > bs.Length())
+		return 0;
+	}
+
+	if(len > bs.Length() && !bs.SetLength(len))
 	{
 		// 在设计时，如果取得的长度超级大，可能是设计错误
-		if(len > 0x40)
+		//if(len > 0x40)
 		{
-			debug_printf(" 读 %d > %d ", len, bs.Length());
+			debug_printf("Stream::ReadArray 缓冲区大小不足 读 %d > %d ", len, bs.Length());
 			//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
-			//bs.Set(0, 0, len);
-			/*// 即使缓冲区不够大，也不要随便去重置，否则会清空别人的数据
-			// 这里在缓冲区不够大时，有多少读取多少
-			len = bs.Capacity();*/
-			// 为了避免错误数据导致内存溢出，限定最大值
-			//if(len > 0x400) len = bs.Capacity();
 		}
-		// 如果不是设计错误，那么数组直接扩容
-		//bs.SetLength(len);
+		return 0;
 	}
-	// 不管长度太大还是太小，都要设置一下长度，避免读取长度小于数组长度，导致得到一片空数据
-	//bs.SetLength(len);
 
-	Read(bs.GetBuffer(), 0, len);
-
-	return len;
+	return Read(bs.GetBuffer(), 0, len);
 }
 
 ByteArray Stream::ReadArray(int count)
 {
-	ByteArray bs(count);
+	ByteArray bs;
+	bs.SetLength(count);
 	Read(bs.GetBuffer(), 0, bs.Length());
 
 	return bs;
@@ -273,20 +266,20 @@ String Stream::ReadString()
 {
 	String str;
 
-	//ReadArray(str);
+	ReadArray(str);
 
-	uint len = ReadEncodeInt();
+	/*uint len = ReadEncodeInt();
 	if(!len) return 0;
 
-	str	= (char*)ReadBytes(len);
+	str	= (char*)ReadBytes(len);*/
 
 	return str;
 }
 
-bool Stream::WriteString(const String& str)
+/*bool Stream::WriteString(const String& str)
 {
 	return false;
-}
+}*/
 
 byte	Stream::ReadByte()
 {

@@ -81,7 +81,7 @@ void Device::WriteMessage(Stream& ms) const
 	ms.Write(OfflineTime);
 	ms.Write(PingTime);
 
-	ms.WriteString(Name);
+	ms.WriteArray(Name);
 
 	// 计算并设置大小
 	byte size	= ms.Position() - p;

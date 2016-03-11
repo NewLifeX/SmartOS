@@ -89,8 +89,8 @@ bool HelloMessage::Read(Stream& ms)
 void HelloMessage::Write(Stream& ms) const
 {
 	ms.Write(Version);
-	//ms.WriteArray(Type);
-	//ms.WriteArray(Name);
+	ms.WriteArray(Type);
+	ms.WriteArray(Name);
 	ms.Write(LocalTime);
 	ms.Write(EndPoint.ToArray());
 

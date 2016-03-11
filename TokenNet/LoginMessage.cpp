@@ -30,8 +30,8 @@ void LoginMessage::Write(Stream& ms) const
 {
 	if(!Reply)
 	{
-		ms.WriteString(User);
-		ms.WriteString(Pass);
+		ms.WriteArray(User);
+		ms.WriteArray(Pass);
 
 		if(Salt.Length() > 0)
 			ms.WriteArray(Salt);
@@ -44,7 +44,7 @@ void LoginMessage::Write(Stream& ms) const
 	else if(!Error)
 	{
 		ms.Write(Token);
-		ms.WriteString(Pass);
+		ms.WriteArray(Pass);
 	}
 }
 
