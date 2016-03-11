@@ -153,7 +153,7 @@ void LoopTask(void* param)
 		{
 			auto cfg	= TokenConfig::Current;
 
-			if(cfg->User.Length() == 0)
+			if(!cfg->User)
 				client->Register();
 			else
 				client->Login();
@@ -231,7 +231,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			if(ext.Key.Length() > 0)
 			{
 				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-				if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, -1);
+				if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, ext.Key.Length());
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
