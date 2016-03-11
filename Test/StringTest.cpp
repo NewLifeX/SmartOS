@@ -24,9 +24,9 @@ static void TestCtor()
 	assert_param2(str2 == str1, "String(const String& str)");
 	assert_param2(str2.GetBuffer() != str1.GetBuffer(), "String(const String& str)");
 
-	StringHelper str3(str1);
-	assert_param2(str3 == str1, "String(StringHelper&& rval)");
-	assert_param2(str3.GetBuffer() != str1.GetBuffer(), "String(StringHelper&& rval)");
+	//StringHelper str3(str1);
+	//assert_param2(str3 == str1, "String(StringHelper&& rval)");
+	//assert_param2(str3.GetBuffer() != str1.GetBuffer(), "String(StringHelper&& rval)");
 
 	char cs[] = "Hello Buffer";
 	String str4(cs, sizeof(cs));
@@ -187,7 +187,8 @@ static void TestAdd()
 {
 	TS("TestAdd");
 
-	String str = R("字符串连加 ") + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + Time.Now();
+	String str = R("字符串连加 ");
+	str = str + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + Time.Now();
 	str.Show(true);
 	// 字符串连加 1234@0000-00-00 00:00:00#99xx
 	assert_param2(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");

@@ -37,11 +37,12 @@ String::String(String&& rval) : Array(Arr, ArrayLength(Arr))
 	init();
 	move(rval);
 }
-String::String(StringHelper&& rval) : Array(Arr, ArrayLength(Arr))
+
+/*String::String(StringHelper&& rval) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 	move(rval);
-}
+}*/
 
 String::String(char c) : Array(Arr, ArrayLength(Arr))
 {
@@ -113,11 +114,12 @@ String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 // 外部传入缓冲区供内部使用，注意长度减去零结束符
 String::String(char* str, int length) : Array(str, length)
 {
-	init();
+	//init();
 
 	_Arr		= str;
 	_Capacity	= length - 1;
-	_Arr[0]		= 0;
+	_Length		= 0;
+	_Arr[0]		= '\0';
 }
 
 inline void String::init()
@@ -211,11 +213,11 @@ String& String::operator = (String&& rval)
 	return *this;
 }
 
-String& String::operator = (StringHelper&& rval)
+/*String& String::operator = (StringHelper&& rval)
 {
 	if (this != &rval) move(rval);
 	return *this;
-}
+}*/
 
 String& String::operator = (const char* cstr)
 {
@@ -379,80 +381,80 @@ bool String::Concat(double num, byte decimalPlaces)
 	return Concat(string, strlen(string));
 }
 
-StringHelper& operator + (const StringHelper& lhs, const Object& rhs)
+String& operator + (String& lhs, const Object& rhs)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	auto str = rhs.ToString();
 	if (!a.Concat(str._Arr, str._Length)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, const String& rhs)
+String& operator + (String& lhs, const String& rhs)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(rhs._Arr, rhs._Length)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, const char* cstr)
+String& operator + (String& lhs, const char* cstr)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!cstr || !a.Concat(cstr, strlen(cstr))) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, char c)
+String& operator + (String& lhs, char c)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(c)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, byte num)
+String& operator + (String& lhs, byte num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, int num)
+String& operator + (String& lhs, int num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, uint num)
+String& operator + (String& lhs, uint num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, Int64 num)
+String& operator + (String& lhs, Int64 num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, UInt64 num)
+String& operator + (String& lhs, UInt64 num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, float num)
+String& operator + (String& lhs, float num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }
 
-StringHelper& operator + (const StringHelper& lhs, double num)
+String& operator + (String& lhs, double num)
 {
-	auto& a = const_cast<StringHelper&>(lhs);
+	auto& a = const_cast<String&>(lhs);
 	if (!a.Concat(num)) a.release();
 	return a;
 }

@@ -14,7 +14,7 @@ public:
 	String(const char* cstr = "");
 	String(const String& str);
 	String(String&& rval);
-	String(StringHelper&& rval);
+	//String(StringHelper&& rval);
 	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
 	explicit String(char c);
@@ -38,7 +38,7 @@ public:
 	String& operator = (const String& rhs);
 	String& operator = (const char* cstr);
 	String& operator = (String&& rval);
-	String& operator = (StringHelper&& rval);
+	//String& operator = (StringHelper&& rval);
 
 	// 连接内建类型。如果参数无效则认为连接失败
 	bool Concat(const Object& obj);
@@ -75,17 +75,17 @@ public:
 		if (!a.Concat(rhs)) a.release();
 		return a;
 	}*/
-	friend StringHelper& operator + (const StringHelper& lhs, const Object& rhs);
-	friend StringHelper& operator + (const StringHelper& lhs, const String& rhs);
-	friend StringHelper& operator + (const StringHelper& lhs, const char* cstr);
-	friend StringHelper& operator + (const StringHelper& lhs, char c);
-	friend StringHelper& operator + (const StringHelper& lhs, byte num);
-	friend StringHelper& operator + (const StringHelper& lhs, int num);
-	friend StringHelper& operator + (const StringHelper& lhs, uint num);
-	friend StringHelper& operator + (const StringHelper& lhs, Int64 num);
-	friend StringHelper& operator + (const StringHelper& lhs, UInt64 num);
-	friend StringHelper& operator + (const StringHelper& lhs, float num);
-	friend StringHelper& operator + (const StringHelper& lhs, double num);
+	friend String& operator + (String& lhs, const Object& rhs);
+	friend String& operator + (String& lhs, const String& rhs);
+	friend String& operator + (String& lhs, const char* cstr);
+	friend String& operator + (String& lhs, char c);
+	friend String& operator + (String& lhs, byte num);
+	friend String& operator + (String& lhs, int num);
+	friend String& operator + (String& lhs, uint num);
+	friend String& operator + (String& lhs, Int64 num);
+	friend String& operator + (String& lhs, UInt64 num);
+	friend String& operator + (String& lhs, float num);
+	friend String& operator + (String& lhs, double num);
 
     explicit operator bool() const { return _Length > 0; }
     bool operator !() const { return _Length == 0; }
@@ -180,7 +180,7 @@ protected:
 //String operator+(const char* str, const Object& obj);
 //String operator+(const Object& obj, const char* str);
 
-class StringHelper : public String
+/*class StringHelper : public String
 {
 public:
 	StringHelper(const String& s) : String(s) {}
@@ -193,6 +193,6 @@ public:
 	StringHelper(UInt64 num) : String(num) {}
 	StringHelper(float num) : String(num) {}
 	StringHelper(double num) : String(num) {}
-};
+};*/
 
 #endif

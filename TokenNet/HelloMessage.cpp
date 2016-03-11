@@ -121,13 +121,13 @@ String& HelloMessage::ToStr(String& str) const
 		else if(Protocol == ProtocolType::Udp)
 			str += "UDP ";
 
-		str += Server + " " + Port;
+		str = str + Server + " " + Port;
 
 		return str;
 	}
 
 	str.Format(" Ver=%04X", Version);
-	str += " " + Type + " " + Name + " ";
+	str = str + " " + Type + " " + Name + " ";
 
 	DateTime dt;
 	dt.ParseUs(LocalTime);
