@@ -259,7 +259,10 @@ String& Buffer::ToStr(String& str) const
 	{
 		//str.SetLength(_Length * 3 - 1);
 		for(int i=0; i<_Length; i++)
+		{
+			if(i) str	+= '-';
 			str.Concat((*this)[i], -16);
+		}
 	}
 
 	return str;
