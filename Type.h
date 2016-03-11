@@ -89,7 +89,8 @@ public:
 	Buffer(Buffer&& rval);
 
 	// 从另一个对象那里拷贝，拷贝长度为两者最小者，除非当前对象能自动扩容
-	//Buffer& operator = (const Buffer& rhs);	// 无法解释用法，暂时注释
+	// 无法解释用法，暂时注释
+	Buffer& operator = (const Buffer& rhs) = delete;
 	// 从指针拷贝，使用我的长度
 	Buffer& operator = (const void* ptr);
 	// 对象mov操作，指针和长度归我，清空对方
@@ -160,7 +161,7 @@ public:
 
 	virtual ~Array();
 
-	Array& operator = (const Buffer& rhs);
+	Array& operator = (const Buffer& rhs) = delete;
 	Array& operator = (const void* p);
 	Array& operator = (Array&& rval);
 
@@ -257,12 +258,13 @@ public:
 	}
 
 	// 重载等号运算符，使用另一个固定数组来初始化
-    TArray& operator=(const TArray& arr)
+    /*TArray& operator=(const TArray& arr)
 	{
 		Array::operator=(arr);
 
 		return *this;
-	}
+	}*/
+	TArray& operator=(const TArray& arr) = delete;
 
 	// 让父类的所有Set函数在这里可见
 	using Array::Set;
@@ -348,8 +350,8 @@ public:
 	ByteArray(String& str);			// 直接引用数据缓冲区
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
-	ByteArray& operator = (const Buffer& rhs);
-	ByteArray& operator = (const ByteArray& rhs);
+	ByteArray& operator = (const Buffer& rhs) = delete;
+	ByteArray& operator = (const ByteArray& rhs) = delete;
 	ByteArray& operator = (const void* p);
 	ByteArray& operator = (ByteArray&& rval);
 

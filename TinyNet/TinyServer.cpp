@@ -265,7 +265,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		dv->RegTime	= now;
 		dv->Kind	= dm.Kind;
 		//dv->SetHardID(dm.HardID);
-		dv->HardID	= dm.HardID;
+		//dv->HardID	= dm.HardID;
+		dv->HardID.Copy(0, dm.HardID, 0, -1);
 		dv->Version	= dm.Version;
 		dv->LoginTime = now;
 		// 生成随机密码。当前时间的MD5
@@ -283,9 +284,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			if(sum == 0 || sum == 0xFF * 5) st = NULL;
 		}
 		if(!st)
-			dv->Mac	= dv->HardID;
+			dv->Mac.Copy(0, dv->HardID, 0, -1);
 		else
-			dv->Mac	= st;
+			dv->Mac.Copy(0, st, 0, -1);
 
 		if(dv->Valid())
 		{
@@ -317,7 +318,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Speed	= Cfg->Speed / 10;
 	dm.Address	= dv->Address;
 	//dm.Password.Copy(dv->GetPass());
-	dm.Password	= dv->Pass;
+	dm.Password.Copy(0, dv->Pass, 0, -1);
 
 	//dm.HardID.Set(Sys.ID, 6);
 	dm.HardID	= Sys.ID;

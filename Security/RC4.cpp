@@ -43,8 +43,9 @@ void RC4::Encrypt(Array& data, const Array& pass)
 ByteArray RC4::Encrypt(const Array& data, const Array& pass)
 {
 	ByteArray rs;
-	rs.SetLength(data.Length());
-	rs	= data;
+	//rs.SetLength(data.Length());
+	//rs	= data;
+	rs.Copy(0, data, 0, data.Length());
 
 	Encrypt(rs, pass);
 

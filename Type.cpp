@@ -389,12 +389,12 @@ Array::~Array()
 	if(_needFree && _Arr) delete (byte*)_Arr;
 }
 
-Array& Array::operator = (const Buffer& rhs)
+/*Array& Array::operator = (const Buffer& rhs)
 {
 	Buffer::operator=(rhs);
 
 	return *this;
-}
+}*/
 
 Array& Array::operator = (const void* p)
 {
@@ -631,7 +631,7 @@ void ByteArray::move(ByteArray& rval)
 	}
 }
 
-ByteArray& ByteArray::operator = (const Buffer& rhs)
+/*ByteArray& ByteArray::operator = (const Buffer& rhs)
 {
 	Array::operator=(rhs);
 
@@ -643,7 +643,7 @@ ByteArray& ByteArray::operator = (const ByteArray& rhs)
 	Array::operator=(rhs);
 
 	return *this;
-}
+}*/
 
 ByteArray& ByteArray::operator = (const void* p)
 {

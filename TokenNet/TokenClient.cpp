@@ -231,7 +231,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			if(ext.Key.Length() > 0)
 			{
 				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-				if(ctrl2) ctrl2->Key = ext.Key;
+				if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, -1);
 
 				debug_printf("握手得到通信密码：");
 				ext.Key.Show(true);
@@ -400,7 +400,7 @@ void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 	Reply(msg);
 
 	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
-	ctrl2->Key		= login.User;
+	ctrl2->Key.Copy(0, login.User, 0, -1);
 	ctrl2->Token 	= login.Token;
 }
 
@@ -437,7 +437,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 			if(bs.Length() > 0)
 			{
 				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-				if(ctrl2) ctrl2->Key = bs;
+				if(ctrl2) ctrl2->Key.Copy(0, bs, 0, -1);
 
 				debug_printf("通信密码：");
 				bs.Show();

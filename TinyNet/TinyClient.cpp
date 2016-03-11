@@ -356,7 +356,8 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 
 	Cfg->Address	= dm.Address;
 	Control->Address	= dm.Address;
-	Password	= dm.Password;
+	//Password	= dm.Password;
+	Password.Copy(0, dm.Password, 0, -1);
 	Password.Save(Cfg->Password, ArrayLength(Cfg->Password));
 
 	// 记住服务端地址

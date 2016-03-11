@@ -28,8 +28,8 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Ciphers(
 	Name		= msg.Name;
 	LocalTime	= msg.LocalTime;
 	EndPoint	= msg.EndPoint;
-	Ciphers		= msg.Ciphers;
-	Key			= msg.Key;
+	Ciphers.Copy(0, msg.Ciphers, 0, -1);
+	Key.Copy(0, msg.Key, 0, -1);
 
 	Protocol	= msg.Protocol;
 	Port		= msg.Port;

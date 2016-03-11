@@ -15,7 +15,8 @@ void TestBuffer()
 	buf[4]	= '\0';
 	Buffer bs2(buf, 4);
 	// 拷贝长度为两者最小者，除非当前对象能自动扩容
-	bs2	= bs;
+	//bs2	= bs;
+	bs2.Copy(0, bs, 0, -1);
 	debug_printf("bs2	= bs => %s\r\n", buf);
 	assert_param2(bs2.GetBuffer() != bs.GetBuffer(), "Buffer& operator = (const Buffer& rhs)");
 	assert_param2(bs2 != bs, "Buffer& operator = (const Buffer& rhs)");
