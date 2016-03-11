@@ -142,7 +142,7 @@ bool String::CheckCapacity(uint size)
 	int old	= _Capacity;
 	Array::CheckCapacity(size, _Length);
 	if(old == _Capacity) return true;
-	
+
 	// 强制最后一个字符为0
 	_Arr[_Length]	= '\0';
 
@@ -195,6 +195,15 @@ void String::SetBuffer(const void* str, int length)
 	_Arr		= (char*)str;
 	_Capacity	= length;
 	_Length		= 0;
+}
+
+bool String::SetLength(int length, bool bak)
+{
+	if(!Array::SetLength(length, bak)) return false;
+
+	_Arr[_Length]	= '\0';
+
+	return true;
 }
 
 String& String::operator = (const String& rhs)

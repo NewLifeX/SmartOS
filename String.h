@@ -32,6 +32,8 @@ public:
 	//inline uint Length() const { return _Length; }
 	inline char* GetBuffer() const { return (char*)_Arr; }
 	void SetBuffer(const void* str, int length);
+	// 设置数组长度。改变长度后，确保最后以0结尾
+	virtual bool SetLength(int length, bool bak = false);
 
 	// 为被赋值对象建立一个备份。
 	// 如果值为空或无效，或者内存分配失败，字符串将会被标记为无效
