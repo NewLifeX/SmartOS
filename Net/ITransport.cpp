@@ -85,13 +85,13 @@ uint ITransport::Read(Buffer& bs)
 	return OnRead(bs);
 }
 
-Buffer ITransport::Read()
+/*Buffer ITransport::Read()
 {
 	ByteArray bs;
 	Read(bs);
 
 	return bs;
-}
+}*/
 
 // 注册回调函数
 void ITransport::Register(TransportHandler handler, void* param)

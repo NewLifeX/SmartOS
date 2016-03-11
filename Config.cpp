@@ -390,7 +390,8 @@ void ConfigBase::Load()
 
 void ConfigBase::Save() const
 {
-	auto bs	= ToArray();
+	//auto bs	= ToArray();
+	Buffer bs(_Start, Size());
 	debug_printf("%s::Save %d 字节 ", _Name, bs.Length());
 
 	auto pt	= Cfg.Set(_Name, bs);

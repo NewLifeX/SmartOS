@@ -340,13 +340,13 @@ public:
 class ByteArray : public Array
 {
 public:
-	ByteArray(int length = 0) : Array(Arr, length > 0 ? length : ArrayLength(Arr)) { }
-	ByteArray(byte item, int length) : Array(Arr, length) { Set(item, 0, length); }
+	ByteArray(int length = 0);
+	ByteArray(byte item, int length);
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const Buffer& arr);
-	ByteArray(const ByteArray& arr);
+	ByteArray(const Buffer& arr) = delete;
+	ByteArray(const ByteArray& arr) = delete;
 	ByteArray(ByteArray&& rval);
 	//ByteArray(String& str);			// 直接引用数据缓冲区
 	//ByteArray(const String& str);	// 不允许修改，拷贝

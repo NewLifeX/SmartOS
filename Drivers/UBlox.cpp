@@ -143,7 +143,7 @@ void UBlox::OnReceive(const Buffer& bs, void* param)
 		// 不合适的数据，可以直接附加在后面
 		if(Buf.Length() != 0)
 		{
-			Buf.Copy(0, bs, 0, Buf.Length());
+			Buf.Copy(Buf.Length(), bs, 0, bs.Length());
 		}
 	}
 }

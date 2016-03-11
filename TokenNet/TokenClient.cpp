@@ -284,44 +284,20 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	cfg->Show();
 
-	/*uint len1 		= ArrayLength(cfg->Server);
-	uint mslen1	= msg.Server.Length();
-	if(mslen1 > len1)
-	{
-		debug_printf("服务器地址超长 Max=%d Server=%s \r\n", len1, msg.Server.GetBuffer());
-		return false;
-	}*/
-	msg.Server	= cfg->Server;
-	//cfg->Server[mslen1]= '\0';
-
+	cfg->Server	= msg.Server;
 	cfg->ServerPort = msg.Port;
-
-	/*uint len2 	= ArrayLength(cfg->VisitToken);
-	uint mslen2 = msg.VisitToken.Length();
-	if(mslen2> len2)
-	{
-		debug_printf("访问令牌超长 Max=%d VisitToken=%s \r\n", len2, msg.VisitToken.GetBuffer());
-		return false;
-	}*/
-	msg.VisitToken	= cfg->VisitToken;
-	//cfg->VisitToken[mslen2] = '\0';
+	cfg->VisitToken	= msg.VisitToken;
 
 	cfg->Show();
-	//msg.Server.CopyTo(cfg->Vendor, 0, 0);
+
 	// 0xFE永久改变厂商地址
 	if(msg.ErrCode == 0xFE)
 	{
 		cfg->Save();
-		//Sys.Reset();
-
-		//return true;
 	}
+
 	ChangeIPEndPoint(msg.Server, msg.Port);
 	Status = 0;
-	//auto flg = ChangeIPEndPoint(msg.Server,msg.Port);
-	//cfg->Save();
-	//Sys.Reset();
-	//if(!flg) Sys.Reset();
 
 	return true;
 }
@@ -332,7 +308,7 @@ void TokenClient::Register()
 	debug_printf("TokenClient::Register\r\n");
 
 	RegisterMessage re;
-	re.User	= ByteArray((const void*)Sys.ID, 16).ToHex(0, 0);
+	re.User	= Buffer(Sys.ID, 16).ToHex();
 	re.Show(true);
 
 	TokenMessage msg(7);

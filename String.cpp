@@ -179,38 +179,13 @@ void String::move(String& rhs)
 
 	if(rhs._Arr != rhs.Arr && rhs._needFree)
 	{
-		_Arr		= rhs._Arr;
-		_Capacity	= rhs._Capacity;
-		_Length		= rhs._Length;
-		_needFree	= rhs._needFree;
-
-		rhs._Arr	= nullptr;
-		rhs._Capacity	= 0;
-		rhs._Length	= 0;
-		rhs._needFree	= false;
+		Array::move(rhs);
 
 		return;
 	}
 
 	SetLength(rhs.Length());
 	copy(rhs._Arr, rhs._Length);
-
-	/*if (_Arr)
-	{
-		// 如果容量不足
-		if (_Capacity >= rhs._Length)
-		{
-			Buffer(_Arr, _Capacity).Copy(0, rhs._Arr, rhs._Length);
-			_Length = rhs._Length;
-			_Arr[_Length]	= '\0';
-			rhs._Length	= 0;
-			return;
-		}
-		else
-		{
-			Array::Release();
-		}
-	}*/
 }
 
 void String::SetBuffer(const void* str, int length)

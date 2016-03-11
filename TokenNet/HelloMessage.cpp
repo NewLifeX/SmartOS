@@ -11,8 +11,7 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Version		= Sys.Version;
 
 	ushort code = _REV16(Sys.Code);
-	ByteArray bs(&code, 2);
-	Type		= bs.ToHex('\0');
+	Type		= Buffer(&code, 2).ToHex();
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Ciphers[0]	= 1;
@@ -28,8 +27,8 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Ciphers(
 	Name		= msg.Name;
 	LocalTime	= msg.LocalTime;
 	EndPoint	= msg.EndPoint;
-	Ciphers.Copy(0, msg.Ciphers, 0, -1);
-	Key.Copy(0, msg.Key, 0, -1);
+	Ciphers.Copy(0, msg.Ciphers, 0, msg.Ciphers.Length());
+	Key.Copy(0, msg.Key, 0, msg.Key.Length());
 
 	Protocol	= msg.Protocol;
 	Port		= msg.Port;
@@ -48,6 +47,7 @@ bool HelloMessage::Read(Stream& ms)
 			Server		= ms.ReadString();
 			Port		= ms.ReadUInt16();
 			VisitToken	= ms.ReadString();
+
 			return false;
 		}
 		else if(ErrCode < 0x80)

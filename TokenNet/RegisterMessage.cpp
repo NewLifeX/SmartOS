@@ -3,7 +3,7 @@
 #include "Security\MD5.h"
 
 // 初始化消息，各字段为0
-RegisterMessage::RegisterMessage() : User(0), Pass(0), Salt(0)
+RegisterMessage::RegisterMessage() : User(), Pass(), Salt(0)
 {
 }
 
@@ -47,7 +47,7 @@ String& RegisterMessage::ToStr(String& str) const
 	str = str + " User=" + User;
 	str = str + " Pass=" + Pass;
 	str = str + " Salt=";
-	ByteArray(Salt).ToHex(str);
+	Salt.ToHex(str);
 
 	return str;
 }

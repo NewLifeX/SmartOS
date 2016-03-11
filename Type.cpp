@@ -602,6 +602,17 @@ bool operator!=(const Array& bs1, const Array& bs2)
 
 /******************************** ByteArray ********************************/
 
+ByteArray::ByteArray(int length) : Array(Arr, sizeof(Arr))
+{
+	_Length	= length;
+}
+
+ByteArray::ByteArray(byte item, int length) : Array(Arr, sizeof(Arr))
+{
+	_Length	= length;
+	Set(item, 0, length);
+}
+
 ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, sizeof(Arr))
 {
 	if(copy)
@@ -624,7 +635,7 @@ ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, sizeof(Arr)
 		Set(data, length);
 }
 
-ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
+/*ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
 {
 	Copy(0, arr, 0, -1);
 }
@@ -632,7 +643,7 @@ ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
 ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
 {
 	Copy(0, arr, 0, -1);
-}
+}*/
 
 ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
 {
@@ -656,13 +667,22 @@ ByteArray::ByteArray(const String& str) : Array(Arr, str.Length())
 
 void ByteArray::move(ByteArray& rval)
 {
-	Array::move(rval);
+	/*
+	move逻辑：
+	1，如果右值是内部指针，则必须拷贝数据，因为右值销毁的时候，内部数据跟着释放
+	2，如果右值是外部指针，并且需要释放，则直接拿指针过来使用，由当前对象负责释放
+	3，如果右值是外部指针，而不需要释放，则拷贝数据，因为那指针可能是借用外部的栈内存
+	*/
 
-	// 如果指向自己的缓冲区，那么拷贝一下数据
-	if(rval._Arr == (char*)rval.Arr && rval._Length > 0)
+	if(rval._Arr != (char*)rval.Arr && rval._needFree)
 	{
-		Copy(0, rval._Arr, rval._Length);
+		Array::move(rval);
+
+		return;
 	}
+
+	SetLength(rval.Length());
+	Copy(0, rval._Arr, rval._Length);
 }
 
 /*ByteArray& ByteArray::operator = (const Buffer& rhs)

@@ -376,11 +376,11 @@ typedef struct _DHCP_OPT
 		return this;
 	}
 
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, String& str)
+	/*struct _DHCP_OPT* SetData(DHCP_OPTION option, String& str)
 	{
 		ByteArray bs(str);
 		return SetData(option, bs);
-	}
+	}*/
 
 	struct _DHCP_OPT* SetData(DHCP_OPTION option, uint value)
 	{
