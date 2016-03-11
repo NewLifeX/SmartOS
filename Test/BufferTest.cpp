@@ -18,7 +18,7 @@ void TestBuffer()
 	bs2	= bs;
 	debug_printf("bs2	= bs => %s\r\n", buf);
 	assert_param2(bs2.GetBuffer() != bs.GetBuffer(), "Buffer& operator = (const Buffer& rhs)");
-	assert_param2(bs2 == bs, "Buffer& operator = (const Buffer& rhs)");
+	assert_param2(bs2 != bs, "Buffer& operator = (const Buffer& rhs)");
 	assert_param2(bs2.Length() == 4, "Buffer& operator = (const Buffer& rhs)");
 	assert_param2(bs2 == cs, "Buffer& operator = (const Buffer& rhs)");
 
@@ -68,12 +68,14 @@ void TestBuffer()
 
 	bs.Clear();
 	assert_param2(cs[0] == 0 && cs[bs.Length() - 1] == 0, "void Clear()");
-	
+
 	// 转为十六进制字符串
 	byte bts[]	= { 0xAB, 0x34, 0xfe };
 	Buffer bs4(bts, 3);
-	auto str	= bs4.ToHex();
-	assert_param2(str == "AB-34-FE", "String ToHex()");
-	
+	auto str	= bs4.ToHex('#', 2);
+	assert_param2(str == "AB#34\r\nFE", "String ToHex(char sep = 0, int newLine = 0)");
+	auto str2	= bs4.ToString();
+	assert_param2(str2 == "AB-34-FE", "String ToString()");
+
 	debug_printf("内存缓冲区单元测试全部通过！");
 }
