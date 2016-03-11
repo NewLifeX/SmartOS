@@ -255,7 +255,7 @@ String& Buffer::ToHex(String& str, char sep, int newLine) const
 	{
 		if(i)
 		{
-			if(newLine > 0 && (i + 1) % newLine == 0)
+			if(newLine > 0 && i % newLine == 0)
 				str += "\r\n";
 			else if(sep != '\0')
 				str += sep;
