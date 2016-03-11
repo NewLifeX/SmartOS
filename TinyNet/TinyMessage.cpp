@@ -27,7 +27,7 @@ TinyMessage::TinyMessage(byte code) : Message(code)
 	Data = _Data;
 
 	// 如果地址不是8字节对齐，长整型操作会导致异常
-	memset(&Dest, 0, MinSize);
+	Buffer(&Dest, MinSize).Clear();
 
 	Checksum	= 0;
 	Crc			= 0;
@@ -240,7 +240,7 @@ TinyController::TinyController() : Controller()
 	QueueLength	= 8;
 
 	// 默认屏蔽心跳日志
-	ArrayZero(NoLogCodes);
+	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 }
 
@@ -293,7 +293,7 @@ void TinyController::Open()
 
 	// 初始化发送队列
 	_Queue	= new MessageNode[QueueLength];
-	memset(_Queue, 0, QueueLength);
+	Buffer(_Queue, sizeof(_Queue)).Clear();
 
 	if(!_taskID)
 	{
@@ -301,9 +301,6 @@ void TinyController::Open()
 		// 默认禁用，有数据要发送才开启
 		Sys.SetTask(_taskID, false);
 	}
-
-	//memset(&Total, 0, sizeof(TinyStat));
-	//memset(&Last, 0, sizeof(TinyStat));
 
 #if MSG_DEBUG
 	Sys.AddTask([](void* p){ return ((TinyController*)p)->ShowStat(); }, this, 1000, 15000, "微网统计");
@@ -848,22 +845,21 @@ void MessageNode::Set(const TinyMessage& msg, int msTimeout)
 	Length		= ms.Position();
 	if(Length > 32) debug_printf("Length=%d \r\n", Length);
 
-	Mac[0]		= 0;
+	Buffer mcs(Mac, ArrayLength(Mac));
+	mcs[0]	= 0;
 	if(msg.State)
 	{
-		Mac[0]	= 5;
-		memcpy(&Mac[1], msg.State, 5);
+		mcs[0]	= mcs.Length();
+		mcs.Copy(1, msg.State, -1);
 	}
 	Seq			= msg.Seq;
-
-	//debug_printf("Set 0x%08x \r\n", this);
 }
 
 /*================================ 环形队列 ================================*/
 RingQueue::RingQueue()
 {
 	Index	= 0;
-	ArrayZero(Arr);
+	Buffer(Arr, sizeof(Arr)).Clear();
 	Expired	= 0;
 }
 
@@ -897,7 +893,7 @@ bool RingQueue::Check(ushort item)
 		//msg_printf("环形队列过期，清空 \r\n");
 		// 清空队列，重新开始
 		Index	= 0;
-		ArrayZero(Arr);
+		Buffer(Arr, sizeof(Arr)).Clear();
 		Expired	= 0;
 
 		return false;
@@ -914,12 +910,12 @@ TinyStat::TinyStat()
 
 TinyStat& TinyStat::operator=(const TinyStat& ts)
 {
-	memcpy(this, &ts, sizeof(this[0]));
+	Buffer(this, sizeof(this[0]))	= &ts;
 
 	return *this;
 }
 
 void TinyStat::Clear()
 {
-	memset(this, 0, sizeof(this[0]));
+	Buffer(this, sizeof(this[0])).Clear();
 }
