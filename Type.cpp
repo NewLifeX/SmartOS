@@ -638,6 +638,13 @@ ByteArray& ByteArray::operator = (const Buffer& rhs)
 	return *this;
 }
 
+ByteArray& ByteArray::operator = (const ByteArray& rhs)
+{
+	Array::operator=(rhs);
+
+	return *this;
+}
+
 ByteArray& ByteArray::operator = (const void* p)
 {
 	Array::operator=(p);

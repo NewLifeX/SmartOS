@@ -342,6 +342,7 @@ public:
 	ByteArray(const String& str);	// 不允许修改，拷贝
 
 	ByteArray& operator = (const Buffer& rhs);
+	ByteArray& operator = (const ByteArray& rhs);
 	ByteArray& operator = (const void* p);
 	ByteArray& operator = (ByteArray&& rval);
 
