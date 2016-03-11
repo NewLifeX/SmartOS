@@ -8,7 +8,7 @@
 class StringHelper;
 
 // 字符串
-class String : public Object
+class String : public Array
 {
 public:
 	String(const char* cstr = "");
@@ -31,7 +31,7 @@ public:
 	// 内存管理
 	bool CheckCapacity(uint size);
 	inline uint Length() const { return _Length; }
-	inline char* GetBuffer() const { return _Arr; }
+	inline char* GetBuffer() const { return (char*)_Arr; }
 	void SetBuffer(const void* str, int length);
 
 	// 为被赋值对象建立一个备份。
@@ -156,10 +156,10 @@ public:
 	String ToUpper() const;
 
 protected:
-	char*	_Arr;		// 字符数组
-	int		_Capacity;	// 容量，不包含0结束符
-	int		_Length;		// 字符串长度，不包含0结束符
-	bool	_needFree;	// 是否需要释放
+	//char*	_Arr;		// 字符数组
+	//int		_Capacity;	// 容量，不包含0结束符
+	//int		_Length;		// 字符串长度，不包含0结束符
+	//bool	_needFree;	// 是否需要释放
 	//bool	_canWrite;	// 是否可写
 
 	char	Arr[0x40];

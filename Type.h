@@ -73,7 +73,7 @@ public:
 	template<typename T>
 	Buffer(T obj)
 	{
-		_Arr	= &obj;
+		_Arr	= (char*)&obj;
 		_Length	= sizeof(obj);
 	}
 	// 拷贝构造函数。直接把指针和长度拿过来用
@@ -132,7 +132,7 @@ public:
 	friend bool operator != (const Buffer& bs1, const void* ptr);
 
 protected:
-    void*	_Arr;		// 数据指针
+    char*	_Arr;		// 数据指针
 	int		_Length;	// 长度
 
 	void move(Buffer& rval);
@@ -241,7 +241,7 @@ public:
 		_Length		= length;
 		if(length > ArrayLength(Arr))
 		{
-			_Arr		= new T[length];
+			_Arr		= (char*)new T[length];
 			_Capacity	= length;
 			_needFree	= true;
 		}

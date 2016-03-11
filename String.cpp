@@ -16,7 +16,7 @@ char* dtostrf(double val, char width, byte prec, char* sout);
 
 /******************************** String ********************************/
 
-String::String(const char* cstr)
+String::String(const char* cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -26,24 +26,24 @@ String::String(const char* cstr)
 	if (cstr) copy(cstr, strlen(cstr));
 }
 
-String::String(const String& value)
+String::String(const String& value) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 	*this = value;
 }
 
-String::String(String&& rval)
+String::String(String&& rval) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 	move(rval);
 }
-String::String(StringHelper&& rval)
+String::String(StringHelper&& rval) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 	move(rval);
 }
 
-String::String(char c)
+String::String(char c) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -52,49 +52,49 @@ String::String(char c)
 	_Length	= 1;
 }
 
-String::String(byte value, int radix)
+String::String(byte value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(short value, int radix)
+String::String(short value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(int value, int radix)
+String::String(int value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(uint value, int radix)
+String::String(uint value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(Int64 value, int radix)
+String::String(Int64 value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(UInt64 value, int radix)
+String::String(UInt64 value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, radix);
 }
 
-String::String(float value, byte decimalPlaces)
+String::String(float value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -102,7 +102,7 @@ String::String(float value, byte decimalPlaces)
 	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
-String::String(double value, byte decimalPlaces)
+String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -111,7 +111,7 @@ String::String(double value, byte decimalPlaces)
 }
 
 // 外部传入缓冲区供内部使用，注意长度减去零结束符
-String::String(char* str, int length)
+String::String(char* str, int length) : Array(str, length)
 {
 	init();
 

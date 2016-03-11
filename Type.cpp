@@ -69,7 +69,7 @@ Buffer::Buffer(void* ptr, int len)
 {
 	//assert_param2(ptr && len > 0, "Buffer构造指针不能为空！");
 
-	_Arr	= ptr;
+	_Arr	= (char*)ptr;
 	_Length	= len;
 }
 
@@ -478,7 +478,7 @@ bool Array::Set(const void* data, int len)
 	// 销毁旧的
 	if(_needFree && _Arr && _Arr != data) delete (byte*)_Arr;
 
-	_Arr		= (void*)data;
+	_Arr		= (char*)data;
 	_Length		= len;
 	_Capacity	= len;
 	_needFree	= false;
@@ -550,7 +550,7 @@ bool Array::CheckCapacity(int len, int bak)
 	if(_needFree && _Arr && _Arr != p) delete (char*)_Arr;
 
 	_Capacity	= k;
-	_Arr		= p;
+	_Arr		= (char*)p;
 	_needFree	= true;
 
 	return true;
@@ -625,7 +625,7 @@ void ByteArray::move(ByteArray& rval)
 	Array::move(rval);
 
 	// 如果指向自己的缓冲区，那么拷贝一下数据
-	if(rval._Arr == rval.Arr && rval._Length > 0)
+	if(rval._Arr == (char*)rval.Arr && rval._Length > 0)
 	{
 		Copy(0, rval._Arr, rval._Length);
 	}

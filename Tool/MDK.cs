@@ -754,6 +754,9 @@ namespace NewLife.Reflection
 				ss.Add("be referenced", "被引用");
 				ss.Add("the format string ends before this argument", "格式字符串参数不足");
 				ss.Add("has already been declared in the current scope", "已在当前区域中定义");
+				ss.Add("more than one operator", "多于一个运算符");
+				ss.Add("matches these operands", "匹配该操作");
+				ss.Add("operand types are", "操作类型");
             }
 
             if (Words.Count == 0)
