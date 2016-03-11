@@ -255,7 +255,8 @@ String& MacAddress::ToStr(String& str) const
 	for(int i=0; i<6; i++)
 	{
 		if(i > 0) str += '-';
-		str	+= macs[i];
+		//str	+= macs[i];
+		str.Concat(macs[i], -16);
 	}
 
 	return str;

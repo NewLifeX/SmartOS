@@ -595,7 +595,7 @@ bool operator!=(const Array& bs1, const Array& bs2)
 
 /******************************** ByteArray ********************************/
 
-ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, ArrayLength(Arr))
+ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, length)
 {
 	if(copy)
 		Copy(0, data, length);
@@ -603,7 +603,7 @@ ByteArray::ByteArray(const void* data, int length, bool copy) : Array(Arr, Array
 		Set(data, length);
 }
 
-ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, ArrayLength(Arr))
+ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, length)
 {
 	if(copy)
 		Copy(0, data, length);
@@ -626,20 +626,20 @@ ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
 	move(rval);
 }
 
-// 字符串转为字节数组
-ByteArray::ByteArray(String& str) : Array(Arr, ArrayLength(Arr))
+/*// 字符串转为字节数组
+ByteArray::ByteArray(String& str) : Array(Arr, str.Length())
 {
 	char* p = str.GetBuffer();
 	Set((byte*)p, str.Length());
 }
 
 // 不允许修改，拷贝
-ByteArray::ByteArray(const String& str) : Array(Arr, ArrayLength(Arr))
+ByteArray::ByteArray(const String& str) : Array(Arr, str.Length())
 {
 	const char* p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
 	Set((const byte*)p, str.Length());
-}
+}*/
 
 void ByteArray::move(ByteArray& rval)
 {
