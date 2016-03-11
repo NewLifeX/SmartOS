@@ -196,6 +196,7 @@ protected:
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
+	bool Release();
 	void Init();
 
 	void move(Array& rval);

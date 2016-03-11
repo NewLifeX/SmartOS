@@ -376,8 +376,8 @@ void Array::move(Array& rval)
 	_canWrite	= rval._canWrite;
 
 	rval._Capacity	= 0;
-	rval._needFree	= 0;
-	rval._canWrite	= 0;
+	rval._needFree	= false;
+	rval._canWrite	= false;
 }
 
 void Array::Init()
@@ -392,7 +392,22 @@ void Array::Init()
 // 析构。释放资源
 Array::~Array()
 {
-	if(_needFree && _Arr) delete (byte*)_Arr;
+	Release();
+}
+
+bool Array::Release()
+{
+	if(_needFree && _Arr)
+	{
+		delete (byte*)_Arr;
+
+		_Arr		= nullptr;
+		_needFree	= false;
+
+		return true;
+	}
+
+	return false;
 }
 
 /*Array& Array::operator = (const Buffer& rhs)
@@ -479,10 +494,8 @@ bool Array::Set(void* data, int len)
 // 设置数组。直接使用指针，不拷贝数据
 bool Array::Set(const void* data, int len)
 {
-	//if(len < 0) len = MemLen(data);
-
 	// 销毁旧的
-	if(_needFree && _Arr && _Arr != data) delete (byte*)_Arr;
+	if(_needFree && _Arr != data) Release();
 
 	_Arr		= (char*)data;
 	_Length		= len;
@@ -540,22 +553,24 @@ byte& Array::operator[](int i)
 bool Array::CheckCapacity(int len, int bak)
 {
 	// 是否超出容量
-	if(len <= _Capacity) return true;
+	if(_Arr && len <= _Capacity) return true;
 
 	// 自动计算合适的容量
-	int k = 0x40;
-	while(k < len) k <<= 1;
+	int sz = 0x40;
+	while(sz < len) sz <<= 1;
 
-	void* p = Alloc(k);
+	void* p = Alloc(sz);
 	if(!p) return false;
 
 	// 是否需要备份数据
 	if(bak > _Length) bak = _Length;
-	if(bak > 0 && _Arr) memcpy(p, _Arr, bak);
+	if(bak > 0 && _Arr)
+		// 为了安全，按照字节拷贝
+		Buffer(p, sz).Copy(0, _Arr, bak);
 
-	if(_needFree && _Arr && _Arr != p) delete (char*)_Arr;
+	if(_needFree && _Arr != p) Release();
 
-	_Capacity	= k;
+	_Capacity	= sz;
 	_Arr		= (char*)p;
 	_needFree	= true;
 

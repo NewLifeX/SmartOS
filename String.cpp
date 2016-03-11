@@ -120,50 +120,31 @@ String::String(char* str, int length) : Array(str, length)
 	_Arr[0]		= 0;
 }
 
-String::~String()
-{
-	if(_needFree && _Arr != Arr) delete _Arr;
-}
-
 inline void String::init()
 {
 	_Arr		= Arr;
 	_Capacity	= sizeof(Arr) - 1;
 	_Length		= 0;
-	_needFree	= false;
-	//_canWrite	= true;
 }
 
 void String::release()
 {
-	if(_needFree && _Arr != Arr) delete _Arr;
+	//if(_needFree && _Arr != Arr) delete _Arr;
+	Array::Release();
 
 	init();
 }
 
 bool String::CheckCapacity(uint size)
 {
-	if (_Arr && _Capacity >= size) return true;
-
-	// 外部需要放下size个字符，那么需要size+1个字节空间
-	int sz	= 0x40;
-	while(sz <= size) sz <<= 1;
-
-	auto p	= new char[sz];
-	if(!p) return false;
-
-	if(_Arr && _Length)
-		//strcpy(p, _Arr);
-		// 为了安全，按照字节拷贝
-		Buffer(p, sz).Copy(0, _Arr, _Length);
+	int old	= _Capacity;
+	Array::CheckCapacity(size, _Length);
+	if(old == _Capacity) return true;
+	
 	// 强制最后一个字符为0
-	p[_Length]	= '\0';
+	_Arr[_Length]	= '\0';
 
-	if(_needFree && _Arr != Arr) delete _Arr;
-
-	_Arr		= p;
-	_Capacity	= sz - 1;
-	_needFree	= true;
+	_Capacity--;
 
 	return true;
 }
@@ -195,7 +176,8 @@ void String::move(String& rhs)
 			rhs._Length	= 0;
 			return;
 		} else {
-			delete _Arr;
+			//delete _Arr;
+			Array::Release();
 		}
 	}
 	_Arr		= rhs._Arr;

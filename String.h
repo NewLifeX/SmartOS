@@ -26,11 +26,10 @@ public:
 	explicit String(UInt64 value, int radix = 10);
 	explicit String(float value, byte decimalPlaces = 2);
 	explicit String(double value, byte decimalPlaces = 2);
-	virtual ~String();
+	//virtual ~String();
 
 	// 内存管理
-	bool CheckCapacity(uint size);
-	inline uint Length() const { return _Length; }
+	//inline uint Length() const { return _Length; }
 	inline char* GetBuffer() const { return (char*)_Arr; }
 	void SetBuffer(const void* str, int length);
 
@@ -171,6 +170,8 @@ protected:
 
 	String& copy(const char* cstr, uint length);
 	void move(String& rhs);
+
+	bool CheckCapacity(uint size);
 };
 
 #define R(str) String(str)
