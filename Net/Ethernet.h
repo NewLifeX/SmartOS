@@ -367,7 +367,7 @@ typedef struct _DHCP_OPT
 		return this;
 	}
 
-	struct _DHCP_OPT* SetData(DHCP_OPTION option, const Array& bs)
+	struct _DHCP_OPT* SetData(DHCP_OPTION option, const Buffer& bs)
 	{
 		Option = option;
 		Length = bs.Length();

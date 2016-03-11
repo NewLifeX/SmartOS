@@ -65,10 +65,16 @@ public:
 	// 打包一个指针和长度指定的数据区
 	Buffer(void* ptr = nullptr, int len = 0);
 	template<typename T, int N>
-	Buffer(T[] arr, N)
+	Buffer(T (&arr)[N])
 	{
 		_Arr	= arr;
-		_Length	= N;
+		_Length	= sizeof(arr);
+	}
+	template<typename T>
+	Buffer(T obj)
+	{
+		_Arr	= &obj;
+		_Length	= sizeof(obj);
 	}
 	// 拷贝构造函数。直接把指针和长度拿过来用
 	Buffer(const Buffer& buf) = delete;

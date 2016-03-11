@@ -77,5 +77,10 @@ void TestBuffer()
 	auto str2	= bs4.ToString();
 	assert_param2(str2 == "AB-34-FE", "String ToString()");
 
+	Buffer bs5(cs);
+	
+	auto type	= bs5.GetType();
+	Buffer bs6(type);
+	
 	debug_printf("内存缓冲区单元测试全部通过！");
 }
