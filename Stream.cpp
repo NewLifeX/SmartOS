@@ -361,7 +361,9 @@ MemoryStream::~MemoryStream()
 	assert_ptr(this);
 	if(_needFree)
 	{
-		if(_Buffer != _Arr) delete[] _Buffer;
+		//if(_Buffer != _Arr) 
+		if(_needFree)
+			delete[] _Buffer;
 		_Buffer = NULL;
 	}
 }
@@ -387,8 +389,10 @@ bool MemoryStream::CheckRemain(uint count)
 		// 申请新的空间，并复制数据
 		byte* bufNew = new byte[size];
 		if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
-
-		if(_Buffer != _Arr) delete[] _Buffer;
+		
+		//if(_Buffer != _Arr) 
+		if(_needFree)
+			delete[] _Buffer;
 
 		_Buffer		= bufNew;
 		_Capacity	= size;
