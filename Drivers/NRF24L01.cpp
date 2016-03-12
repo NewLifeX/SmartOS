@@ -845,9 +845,9 @@ bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 	uint len = bs.Length();
 	byte pw	= 32;
 	if(pw > 0) len = pw;
-	//Buffer bs2(bs.GetBuffer(), len);
-	//WriteBuf(cmd, bs2);
-	WriteBuf(cmd, bs.Sub(0, len));
+	ByteArray bs2(bs.GetBuffer(), len);
+	WriteBuf(cmd, bs2);
+	//WriteBuf(cmd, bs.Sub(0, len));
 
 	// 进入TX，维持一段时间
 	//_CE = false;
