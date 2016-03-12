@@ -25,5 +25,6 @@ void TestMessage(OutputPort* leds);
 
 void TestBuffer();
 void TestString();
+void TestArray();
 
 #endif
