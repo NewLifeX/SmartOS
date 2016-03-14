@@ -4,18 +4,18 @@
 Music::Music(Timer* timer,OutputPort* pin)
 {
 	Init();
-	if(timer!= NULL)
+	if(timer!= nullptr)
 		_timer = timer;
-	if(pin!= NULL)
+	if(pin!= nullptr)
 		_phonatePin = pin;
 }
 
 void Music::Init()
 {
-	_tuneSet = NULL;
+	_tuneSet = nullptr;
 	_tuneNum = 0;
-	_timer = NULL;
-	_phonatePin = NULL;
+	_timer = nullptr;
+	_phonatePin = nullptr;
 	Sounding = false;
 	sound_cnt = 0;
 	music_beat = 0;
@@ -30,22 +30,22 @@ void Music::Disposable()
 		delete(_timer);
 	}
 	if(_phonatePin)delete(_phonatePin);
-	_tuneSet = NULL;
+	_tuneSet = nullptr;
 }
 
 
 Music::~Music()
 {
-	_tuneSet = NULL;
-	_tuneNum = NULL;
+	_tuneSet	= nullptr;
+	_tuneNum	= 0;
 	_timer->Close();
-	Sounding = false;
-	_timer = NULL;
+	Sounding	= false;
+	_timer		= nullptr;
 }
 
 void Music::Sound()
 {
-	if(_timer!= NULL && _phonatePin != NULL && _tuneSet != NULL && _tuneNum != 0)
+	if(_timer!= nullptr && _phonatePin != nullptr && _tuneSet != nullptr && _tuneNum != 0)
 	{
 		_timer->SetFrequency(100000);
 		_timer->Register(TimerHander, this);
@@ -66,13 +66,13 @@ void Music::Unsound()
 	Sounding = false;
 }
 
-void Music::SetTuneSet(const Tune* tune,int num)
+void Music::SetTuneSet(const Tune* tune, int num)
 {
 	if(Sounding) Unsound();
 	
-	if(tune != NULL && num != NULL)
+	if(tune != nullptr && num != 0)
 	{
-		_tuneSet = (Tune*)tune;
+		_tuneSet = tune;
 		_tuneNum = num;
 	}
 }
@@ -84,7 +84,7 @@ bool Music::getStat()
 
 void Music::TimerHander(void* sender,void* param)
 {
-	if(param == NULL)return;
+	if(param == nullptr)return;
 	Music * music = (Music * )param;
 	music->phonate();
 }

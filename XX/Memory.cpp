@@ -17,7 +17,7 @@ typedef struct
 // 初始化内存池
 bool _init_mem(void* pool, uint size)
 {
-	if (pool == NULL || size < sizeof(MemBlock)) return false;
+	if (pool == nullptr || size < sizeof(MemBlock)) return false;
 
 	/*
 	现有内存块位于pool，大小size。
@@ -28,7 +28,7 @@ bool _init_mem(void* pool, uint size)
 	*/
 	MemBlock* ptr = (MemBlock*)pool;
 	ptr->next = (MemBlock*)((uint)pool + size - sizeof(MemBlock));
-	ptr->next->next = NULL;
+	ptr->next->next = nullptr;
 	ptr->len = 0;
 
 	return true;
@@ -37,7 +37,7 @@ bool _init_mem(void* pool, uint size)
 // 分配内存
 void* _alloc_mem(void* pool, uint size)
 {
-	if (pool == NULL || size == 0) return NULL;
+	if (pool == nullptr || size == 0) return nullptr;
 
 	// 增加头部大小
 	size += sizeof(MemBlock);
@@ -54,7 +54,7 @@ void* _alloc_mem(void* pool, uint size)
 		if (hole_size >= size) break;
 		p = p->next;
 		// 失败，位于列表尾部
-		if (p->next == NULL) return NULL;
+		if (p->next == nullptr) return nullptr;
 	}
 
 	if (p->len == 0)
@@ -77,22 +77,22 @@ void* _alloc_mem(void* pool, uint size)
 // 释放内存
 bool _free_mem(void* pool, void *mem)
 {
-	if (pool == NULL || mem == NULL) return false;
+	if (pool == nullptr || mem == nullptr) return false;
 
 	// 要释放的目标内存块
 	MemBlock* rs	= (MemBlock*)((uint)mem - sizeof(MemBlock));
 
-	MemBlock* prv	= NULL;
+	MemBlock* prv	= nullptr;
 	MemBlock* p		= (MemBlock*)pool;
 	while (p != rs)
 	{
 		prv	= p;
 		p	= p->next;
 		// 验证内存块不存在
-		if (p == NULL) return false;
+		if (p == nullptr) return false;
 	}
 
-	if (prv == NULL)
+	if (prv == nullptr)
 	// 第一块被释放，仅仅设置长度为0
 		p->len		= 0;
 	else

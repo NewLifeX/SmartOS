@@ -40,7 +40,7 @@ public:
 	} Priorities;
 	Priorities Priority;	// 优先级
 
-	Thread(Action callback, void* state = NULL, uint stackSize = 0x200);
+	Thread(Action callback, void* state = nullptr, uint stackSize = 0x200);
 	virtual ~Thread();
 
 	void Start();

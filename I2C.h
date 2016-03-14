@@ -23,7 +23,7 @@ public:
 	virtual ~I2C();
 
 	virtual void SetPin(Pin scl, Pin sda) = 0;
-	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL) = 0;
+	virtual void GetPin(Pin* scl = nullptr, Pin* sda = nullptr) = 0;
 
 	virtual void Open();		// 打开设备
 	virtual void Close();		// 关闭设备
@@ -85,7 +85,7 @@ public:
     virtual ~HardI2C();
 
 	virtual void SetPin(Pin scl, Pin sda);
-	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL);
+	virtual void GetPin(Pin* scl = nullptr, Pin* sda = nullptr);
 
 	virtual void Start();
 	virtual void Stop();
@@ -123,7 +123,7 @@ public:
     virtual ~SoftI2C();
 
 	virtual void SetPin(Pin scl, Pin sda);
-	virtual void GetPin(Pin* scl = NULL, Pin* sda = NULL);
+	virtual void GetPin(Pin* scl = nullptr, Pin* sda = nullptr);
 
 	virtual void Start();
 	virtual void Stop();

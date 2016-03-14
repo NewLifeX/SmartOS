@@ -335,7 +335,7 @@ Enc28j60::Enc28j60()
 {
 	MaxSize	= 1500;
 
-	_spi	= NULL;
+	_spi	= nullptr;
 
 	LastTime	= Sys.Ms();
 	ResetPeriod	= 6000;
@@ -349,7 +349,7 @@ Enc28j60::Enc28j60()
 Enc28j60::~Enc28j60()
 {
 	delete _spi;
-	_spi = NULL;
+	_spi = nullptr;
 
 	Sys.RemoveTask(_ResetTask);
 }

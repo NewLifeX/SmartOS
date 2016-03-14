@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+/*#include <stdlib.h>
+#include <string.h>*/
 
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
@@ -27,7 +27,7 @@ extern "C"
 // 验证确保对象不为空，并且在有效的内存范围内
 //extern void assert_failed(uint8_t* file, uint32_t line);
 
-#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed2("ptr==NULL", (const char*)__FILE__, __LINE__))
+#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed2("ptr==nullptr", (const char*)__FILE__, __LINE__))
 bool assert_ptr_(const void* p);
 
 void assert_failed2(const char* msg, const char* file, unsigned int line);
@@ -99,7 +99,7 @@ public:
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = NULL) const;
+	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = nullptr) const;
 	void RemoveTask(uint& taskid) const;
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	bool SetTask(uint taskid, bool enable, int msNextTime = -1) const;

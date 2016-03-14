@@ -69,8 +69,8 @@ public:
 
 ShunCom::ShunCom()
 {
-	Led			= NULL;
-	ExternalCfg	= NULL;
+	Led			= nullptr;
+	ExternalCfg	= nullptr;
 }
 
 void ShunCom::Init(ITransport* port, Pin rst)

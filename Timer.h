@@ -30,7 +30,7 @@ public:
 	uint GetCounter();
 	void SetCounter(uint cnt);		// 设置计数器值
 
-	void Register(EventHandler handler, void* param = NULL);
+	void Register(EventHandler handler, void* param = nullptr);
 
 private:
 	static void OnHandler(ushort num, void* param);
@@ -92,7 +92,7 @@ public:
 //	FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG);
 //	volatile int CapValue[4];	// 一个定时器又是四路
 
-	Capture(Timer * timer = NULL);
+	Capture(Timer * timer = nullptr);
 	~Capture();
 	uint GetCapture(int channel);
 
@@ -105,7 +105,7 @@ private :
 	void* _Param[4];
 
 public :
-	void Register(int Index,EventHandler handler, void* param = NULL);
+	void Register(int Index,EventHandler handler, void* param = nullptr);
 };
 //void (*EventHandler)(void* sender, void* param);
 */

@@ -6,12 +6,12 @@ int Button::ACZeroAdjTime = 2300;
 
 Button::Button()
 {
-	Name	= NULL;
+	Name	= nullptr;
 	Index	= 0;
 	_Value	= false;
 
-	_Handler	= NULL;
-	_Param		= NULL;
+	_Handler	= nullptr;
+	_Param		= nullptr;
 }
 
 Button::~Button()
@@ -67,8 +67,8 @@ void Button::Register(EventHandler handler, void* param)
 	}
 	else
 	{
-		_Handler = NULL;
-		_Param = NULL;
+		_Handler = nullptr;
+		_Param = nullptr;
 	}
 }
 

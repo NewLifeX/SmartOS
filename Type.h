@@ -1,8 +1,8 @@
 ﻿#ifndef __Type_H__
 #define __Type_H__
 
-#include <stdio.h>
-#include <stdlib.h>
+/*#include <stdio.h>
+#include <stdlib.h>*/
 
 /* 类型定义 */
 typedef char            sbyte;
@@ -455,8 +455,8 @@ public:
 
     void Initialize()
     {
-        Next = NULL;
-        Prev = NULL;
+        Next = nullptr;
+        Prev = nullptr;
     }
 
     // 从链表中删除。需要修改前后节点的指针指向，但当前节点仍然指向之前的前后节点
@@ -472,8 +472,8 @@ public:
         if(Prev) Prev->Next = Next;
         if(Next) Next->Prev = Prev;
 
-        Next = NULL;
-        Prev = NULL;
+        Next = nullptr;
+        Prev = nullptr;
     }
 
 	// 把当前节点附加到另一个节点之后
@@ -482,7 +482,7 @@ public:
 		node->Next = (T*)this;
 		Prev = node;
 		// 不能清空Next，因为可能是两个链表的合并
-		//Next = NULL;
+		//Next = nullptr;
 	}
 
 	// 最后一个节点
@@ -499,7 +499,7 @@ public:
 	{
 		Next = node;
 		node->Prev = (T*)this;
-		//node->Next = NULL;
+		//node->Next = nullptr;
 	}
 };
 
@@ -518,8 +518,8 @@ public:
 
 		Node()
 		{
-			Prev = NULL;
-			Next = NULL;
+			Prev = nullptr;
+			Next = nullptr;
 		}
 
 		// 从队列中脱离
@@ -545,8 +545,8 @@ private:
 
 	void Init()
 	{
-        _Head = NULL;
-		_Tail = NULL;
+        _Head = nullptr;
+		_Tail = nullptr;
 		_Count = 0;
 	}
 
@@ -650,15 +650,15 @@ public:
 	// 释放第一个有效节点
     T& ExtractFirst()
     {
-		if(!_Count) return NULL;
+		if(!_Count) return nullptr;
 
         Node* node = _Head;
         _Head = _Head->Next;
 		// 可能只有一个节点
 		if(!_Head)
-			_Tail = NULL;
+			_Tail = nullptr;
 		else
-			_Head->Prev = NULL;
+			_Head->Prev = nullptr;
 
 		T& item = node->Item;
 		delete node;
@@ -670,15 +670,15 @@ public:
 	// 释放最后一个有效节点
     T& ExtractLast()
     {
-		if(!_Count) return NULL;
+		if(!_Count) return nullptr;
 
         Node* node = _Tail;
         _Tail = _Tail->Prev;
 		// 可能只有一个节点
 		if(!_Tail)
-			_Head = NULL;
+			_Head = nullptr;
 		else
-			_Tail->Next = NULL;
+			_Tail->Next = nullptr;
 
 		T& item = node->Item;
 		delete node;
@@ -740,7 +740,7 @@ public:
 		if(!_ptr->Count)
 		{
 			delete _ptr;
-			_ptr = NULL;
+			_ptr = nullptr;
 		}
 	}
 

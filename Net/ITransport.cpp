@@ -11,8 +11,8 @@ ITransport::ITransport()
 	MinSize		= 0;
 	MaxSize		= 0;
 
-	_handler	= NULL;
-	_param		= NULL;
+	_handler	= nullptr;
+	_param		= nullptr;
 }
 
 // 析构函数确保关闭
@@ -20,7 +20,7 @@ ITransport::~ITransport()
 {
 	if(Opened) Close();
 
-	Register(NULL);
+	Register(nullptr);
 }
 
 // 打开传输口
@@ -118,17 +118,17 @@ bool ITransport::OnWriteEx(const Buffer& bs, void* opt)
 
 /******************************** PackPort ********************************/
 
-PackPort::PackPort(){ Port = NULL; }
+PackPort::PackPort(){ Port = nullptr; }
 
 PackPort::~PackPort()
 {
-	if(Port) Port->Register(NULL);
+	if(Port) Port->Register(nullptr);
 	delete Port;
 }
 
 void PackPort::Set(ITransport* port)
 {
-	if(Port) Port->Register(NULL);
+	if(Port) Port->Register(nullptr);
 	Port = port;
 	if(Port)
 	{

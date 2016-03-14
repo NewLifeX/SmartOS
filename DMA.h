@@ -21,7 +21,7 @@ public:
 	bool WaitForStop();	// 停止
 	
 	//typedef void (*TimerHandler)(Timer* tim, void* param);
-	//void Register(TimerHandler handler, void* param = NULL);
+	//void Register(TimerHandler handler, void* param = nullptr);
 
 private:
 	//static void OnHandler(ushort num, void* param);

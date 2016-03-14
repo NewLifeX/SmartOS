@@ -31,8 +31,8 @@ public:
 	void Close();
 
 	// 发送消息
-	bool Send(TokenMessage& msg, Controller* ctrl = NULL);
-	bool Reply(TokenMessage& msg, Controller* ctrl = NULL);
+	bool Send(TokenMessage& msg, Controller* ctrl = nullptr);
+	bool Reply(TokenMessage& msg, Controller* ctrl = nullptr);
 	bool OnReceive(TokenMessage& msg, Controller* ctrl);
 
 	// 收到功能消息时触发

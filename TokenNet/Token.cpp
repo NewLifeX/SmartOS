@@ -62,7 +62,7 @@ ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
 	_tip->Init(_enc);
 
 	_enc->Mac = _tip->Mac;
-	if(!_tip->Open()) return NULL;
+	if(!_tip->Open()) return nullptr;
 
 	Sys.Sleep(500);
 	if(!_enc->Linked()) debug_printf("未连接网线！\r\n");
@@ -277,7 +277,7 @@ ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pi
 
 void StartGateway(void* param)
 {
-	ISocket* socket	= NULL;
+	ISocket* socket	= nullptr;
 	auto gw	= Gateway::Current;
 	if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
 

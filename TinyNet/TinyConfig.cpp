@@ -1,7 +1,7 @@
 ﻿#include "TinyConfig.h"
 #include "Config.h"
 
-TinyConfig* TinyConfig::Current	= NULL;
+TinyConfig* TinyConfig::Current	= nullptr;
 
 TinyConfig::TinyConfig() : ConfigBase()
 {

@@ -2,15 +2,15 @@
 
 void Button_magnetic::Init()
 {
-	Key = NULL;
-	Led = NULL;
-	Relay_pack1 = NULL;
-	Relay_pack2 = NULL;
+	Key = nullptr;
+	Led = nullptr;
+	Relay_pack1 = nullptr;
+	Relay_pack2 = nullptr;
 	
-	Name = NULL;
+	Name = nullptr;
 	_Value = false;
-	_Handler = NULL;
-	_Param = NULL;
+	_Handler = nullptr;
+	_Param = nullptr;
 }
 
 Button_magnetic::Button_magnetic(Pin key, Pin led, Pin relay_pin1, Pin relay_pin2)
@@ -46,16 +46,16 @@ Button_magnetic::Button_magnetic(Pin key, Pin led, bool ledInvert, Pin relay_pin
 Button_magnetic::~Button_magnetic()
 {
 	if(Key) delete Key;
-	Key = NULL;
+	Key = nullptr;
 
 	if(Led) delete Led;
-	Led = NULL;
+	Led = nullptr;
 
 	if(Relay_pack1) delete Relay_pack1;
-	Relay_pack1 = NULL;
+	Relay_pack1 = nullptr;
 	
 	if(Relay_pack2) delete Relay_pack2;
-	Relay_pack2 = NULL;
+	Relay_pack2 = nullptr;
 }
 
 
@@ -85,8 +85,8 @@ void Button_magnetic::Register(EventHandler handler, void* param)
 	}
 	else
 	{
-		_Handler = NULL;
-		_Param = NULL;
+		_Handler = nullptr;
+		_Param = nullptr;
 	}
 }
 

@@ -760,6 +760,7 @@ namespace NewLife.Reflection
 				ss.Add("in this scope", "在该范围");
 				ss.Add("In function", "在函数");
 				ss.Add("In member function", "在成员函数");
+				ss.Add("In static member function", "在静态成员函数");
 				ss.Add("In destructor", "在析构函数");
 				ss.Add("In instantiation of", "在初始化");
 				ss.Add("At global scope", "在全局范围");

@@ -7,7 +7,7 @@
 #include "PingMessage.h"
 #include "DataMessage.h"
 
-TinyClient* TinyClient::Current	= NULL;
+TinyClient* TinyClient::Current	= nullptr;
 
 static void TinyClientTask(void* param);
 //static void TinyClientReset();
@@ -29,10 +29,10 @@ TinyClient::TinyClient(TinyController* control)
 
 	LastActive	= 0;
 
-	Received	= NULL;
-	Param		= NULL;
+	Received	= nullptr;
+	Param		= nullptr;
 
-	Cfg			= NULL;
+	Cfg			= nullptr;
 
 	_TaskID		= 0;
 
@@ -77,8 +77,8 @@ void TinyClient::Close()
 
 	Sys.RemoveTask(_TaskID);
 
-	Control->Received	= NULL;
-	Control->Param		= NULL;
+	Control->Received	= nullptr;
+	Control->Param		= nullptr;
 
 	Control->Close();
 
@@ -252,7 +252,7 @@ bool TinyClient::Report(uint offset, const Buffer& bs)
 
 void TinyClient::ReportAsync(uint offset,uint length)
 {
-	if(this == NULL) return;
+	if(this == nullptr) return;
 	if(offset + length >= Store.Data.Length()) return;
 
 	NextReport = offset;

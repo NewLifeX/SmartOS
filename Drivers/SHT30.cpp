@@ -101,7 +101,7 @@ typedef union {
 
 SHT30::SHT30()
 {
-	IIC		= NULL;
+	IIC		= nullptr;
 	Address	= 0x44;	// ADDR=VSS
 	//Address	= 0x45;	// ADDR=VDD
 
@@ -115,7 +115,7 @@ SHT30::~SHT30()
 	Pwr	= false;
 
 	delete IIC;
-	IIC = NULL;
+	IIC = nullptr;
 }
 
 void SHT30::Init()

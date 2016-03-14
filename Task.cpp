@@ -3,10 +3,10 @@
 
 Task::Task()
 {
-	Host		= NULL;
+	Host		= nullptr;
 
 	ID			= 0;
-	Name		= NULL;
+	Name		= nullptr;
 	Times		= 0;
 	CpuTime		= 0;
 	SleepTime	= 0;
@@ -143,7 +143,7 @@ TaskScheduler::TaskScheduler(const char* name)
 	Name 	= name;
 
 	Running = false;
-	Current	= NULL;
+	Current	= nullptr;
 	Count	= 0;
 
 	Cost	= 0;
@@ -164,7 +164,7 @@ void TaskScheduler::Set(Task* tasks, uint count)
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, const char* name)
 {
 	// 查找是否有可用空闲任务
-	Task* task	= NULL;
+	Task* task	= nullptr;
 	for(int i=0; !task && i<_Tasks.Length(); i++)
 	{
 		if(!_Tasks[i])
@@ -344,7 +344,7 @@ Task* TaskScheduler::operator[](int taskid)
 		if(task->ID == taskid) return task;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 #pragma arm section code

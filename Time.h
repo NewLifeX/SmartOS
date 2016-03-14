@@ -38,7 +38,7 @@ public:
 	UInt64 Current() const; 		// 当前毫秒数
 	void SetTime(UInt64 seconds);	// 设置时间
 
-	void Sleep(uint ms, bool* running = NULL) const;
+	void Sleep(uint ms, bool* running = nullptr) const;
 	// 微秒级延迟
     void Delay(uint us) const;
 
@@ -74,7 +74,7 @@ public:
 	TimeCost();
 
 	int Elapsed();	// 逝去的时间，微秒
-	void Show(const char* format = NULL);
+	void Show(const char* format = nullptr);
 };
 
 // 系统时钟
@@ -113,7 +113,7 @@ public:
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 	*/
-	const char* GetString(byte kind = 'F', char* str = NULL);
+	const char* GetString(byte kind = 'F', char* str = nullptr);
 };
 
 /*

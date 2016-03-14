@@ -10,7 +10,7 @@ Slave(ITransport* port)
 Slave::~Slave()
 {
 	delete _port;
-	_port = NULL;
+	_port = nullptr;
 }
 
 void Slave::OnReceive(ITransport* transport, byte* buf, uint len, void* param)

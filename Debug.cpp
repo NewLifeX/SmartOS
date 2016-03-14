@@ -61,7 +61,7 @@ void* operator new(uint size)
 		size += 4 - (size & 0x03);
 		mem_printf("=> %d ", size);
 	}
-	void* p = NULL;
+	void* p = nullptr;
 	{
 		SmartIRQ irq;
 		p = malloc_(size);
@@ -91,7 +91,7 @@ void* operator new[](uint size)
 		size += 4 - (size & 0x03);
 		mem_printf("=> %d ", size);
 	}
-	void* p = NULL;
+	void* p = nullptr;
 	{
 		SmartIRQ irq;
 		p = malloc_(size);

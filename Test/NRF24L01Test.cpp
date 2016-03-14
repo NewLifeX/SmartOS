@@ -66,9 +66,9 @@ void TestNRF24L01()
     {
         //nrf->Config();
         //nrf->SetMode(true);
-        //Sys.AddTask(OnReceive, NULL, 0, 1);
+        //Sys.AddTask(OnReceive, nullptr, 0, 1);
 		//nrf->Register(OnReceive, nrf);
-        Sys.AddTask(OnSend, NULL, 0, 1000);
+        Sys.AddTask(OnSend, nullptr, 0, 1000);
     }
 
     debug_printf("TestNRF24L01 Finish!\r\n");

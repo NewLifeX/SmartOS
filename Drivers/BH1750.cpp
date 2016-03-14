@@ -15,7 +15,7 @@
 
 BH1750::BH1750()
 {
-	IIC		= NULL;
+	IIC		= nullptr;
 	
 	// 7位地址，到了I2C那里，需要左移1位
 	Address	= 0x5C;
@@ -25,7 +25,7 @@ BH1750::BH1750()
 BH1750::~BH1750()
 {
 	delete IIC;
-	IIC = NULL;
+	IIC = nullptr;
 }
 
 void BH1750::Init()

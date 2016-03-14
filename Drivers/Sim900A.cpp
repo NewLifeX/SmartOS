@@ -4,20 +4,20 @@
 
 Sim900A::Sim900A()
 {
-	Port	= NULL;
+	Port	= nullptr;
 
 	Com		= COM_NONE;
 	Speed	= 9600;
 	Inited	= false;
 	APN		= "CMNET";
-	Led		= NULL;
+	Led		= nullptr;
 	Domain	= "pm25.peacemoon.cn";
 }
 
 Sim900A::~Sim900A()
 {
 	delete Port;
-	Port = NULL;
+	Port = nullptr;
 }
 
 bool Sim900A::OnOpen()
@@ -159,7 +159,7 @@ void Sim900A::Init(uint msTimeout)
 	SendDomain();
 
 	// 读取CONNECT OK
-	Inited = SendCmd(NULL, 5000);
+	Inited = SendCmd(nullptr, 5000);
 	//SendCmd("AT+CIPSHUT\r");
 }
 
@@ -197,7 +197,7 @@ bool Sim900A::Send(const Buffer& bs)
 	Port->Write(end);
 	
 	// 把SEND OK读取回来
-	if(SendCmd(NULL))
+	if(SendCmd(nullptr))
 	{
 		//指示灯闪烁
 		//Led.Start();

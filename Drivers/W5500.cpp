@@ -211,8 +211,8 @@ W5500::~W5500()
 // 初始化
 void W5500::Init()
 {
-	_spi	= NULL;
-	Led		= NULL;
+	_spi	= nullptr;
+	Led		= nullptr;
 
 	Buffer(_sockets, sizeof(_sockets)).Clear();
 
@@ -645,7 +645,7 @@ byte W5500::GetSocket()
 {
 	for(byte i = 0;i < 8;i ++)
 	{
-		if(_sockets[i] == NULL) return i;
+		if(_sockets[i] == nullptr) return i;
 	}
 	debug_printf("没有空余的Socket可用了 !\r\n");
 
@@ -663,7 +663,7 @@ ISocket* W5500::CreateSocket(ProtocolType type)
 			return new UdpClient(*this);
 
 		default:
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -912,7 +912,7 @@ HardSocket::HardSocket(W5500& host, ProtocolType protocol) : _Host(host)
 
 HardSocket::~HardSocket()
 {
-	_Host.Register(Index, NULL);
+	_Host.Register(Index, nullptr);
 }
 
 byte HardSocket::ReadConfig() { return SocRegRead(CR); }
@@ -1241,7 +1241,7 @@ void TcpClient::Init()
 
 TcpClient::~TcpClient() //: ~HardSockets()
 {
-	HardSocket::~HardSocket();
+	//HardSocket::~HardSocket();
 	Sys.RemoveTask(_tidRodyguard);
 }
 
@@ -1369,7 +1369,7 @@ void TcpClient::RaiseReceive()
 	if(size > 1500)return;
 
 	// 回调中断
-	OnReceive(bs, NULL);
+	OnReceive(bs, nullptr);
 }
 
 /****************************** UdpClient ************************************/

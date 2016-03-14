@@ -39,7 +39,7 @@ AT45DB::AT45DB(Spi* spi)
 AT45DB::~AT45DB()
 {
     if(_spi) delete _spi;
-    _spi = NULL;
+    _spi = nullptr;
 }
 
 // 设置操作地址

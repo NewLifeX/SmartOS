@@ -137,16 +137,16 @@ TokenController::TokenController() : Controller(), Key(0)
 	MinSize = TokenMessage::MinSize;
 	//MaxSize = 1500;
 
-	Server	= NULL;
+	Server	= nullptr;
 
 	// 默认屏蔽心跳日志和确认日志
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 	NoLogCodes[1] = 0x08;
 
-	_Response = NULL;
+	_Response = nullptr;
 
-	Stat	= NULL;
+	Stat	= nullptr;
 
 	Buffer(_Queue, ArrayLength(_Queue) * sizeof(_Queue[0])).Clear();
 }
@@ -183,7 +183,7 @@ void TokenController::Open()
 void TokenController::Close()
 {
 	delete Stat;
-	Stat = NULL;
+	Stat = nullptr;
 
 	Sys.RemoveTask(_taskID);
 }
@@ -382,7 +382,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	debug_printf("\r\n");
 #endif
 
-	_Response = NULL;
+	_Response = nullptr;
 
 	EndSendStat(code, rs);
 
@@ -534,8 +534,8 @@ TokenStat::TokenStat()
 
 	Read		= 0;
 
-	_Last		= NULL;
-	_Total		= NULL;*/
+	_Last		= nullptr;
+	_Total		= nullptr;*/
 
 	int start	= offsetof(TokenStat, SendRequest);
 	Buffer((byte*)this + start, sizeof(TokenStat) - start).Clear();
@@ -543,8 +543,8 @@ TokenStat::TokenStat()
 
 TokenStat::~TokenStat()
 {
-	if (_Last	== NULL)	delete _Last;
-	if (_Total	== NULL)	delete _Total;
+	if (_Last	== nullptr)	delete _Last;
+	if (_Total	== nullptr)	delete _Total;
 }
 
 int TokenStat::Percent() const
@@ -591,8 +591,8 @@ int TokenStat::PercentReply() const
 
 void TokenStat::Clear()
 {
-	if (_Last == NULL) _Last = new TokenStat();
-	if (_Total == NULL) _Total = new TokenStat();
+	if (_Last == nullptr) _Last = new TokenStat();
+	if (_Total == nullptr) _Total = new TokenStat();
 
 	_Last->SendRequest	= SendRequest;
 	_Last->RecvReply	= RecvReply;

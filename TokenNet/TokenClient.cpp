@@ -25,12 +25,12 @@ TokenClient::TokenClient()
 	LastActive	= 0;
 	Delay		= 0;
 
-	Control		= NULL;
+	Control		= nullptr;
 
-	Received	= NULL;
-	Param		= NULL;
+	Received	= nullptr;
+	Param		= nullptr;
 
-	Local		= NULL;
+	Local		= nullptr;
 }
 
 void TokenClient::Open()
@@ -476,7 +476,7 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	domain.Show(true);
 
     auto socket = dynamic_cast<ISocket*>(Control->Port);
-	if(socket == NULL) return false;
+	if(socket == nullptr) return false;
 
 	// 根据DNS获取云端IP地址
 	auto ip	= DNS::Query(*(socket->Host), domain);

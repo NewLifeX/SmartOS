@@ -11,12 +11,12 @@
 // 构造控制器
 Controller::Controller()
 {
-	Port		= NULL;
+	Port		= nullptr;
 	MinSize 	= 0;
 	Opened		= false;
 
-	Received	= NULL;
-	Param		= NULL;
+	Received	= nullptr;
+	Param		= nullptr;
 }
 
 Controller::~Controller()
@@ -80,7 +80,7 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 		len = ms.Remain();
 #endif
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, NULL, param2))
+		if(!control->Dispatch(ms, nullptr, param2))
 		{
 #if MSG_DEBUG
 			msg_printf("Controller::Error[%d] ", len);

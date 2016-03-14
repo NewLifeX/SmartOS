@@ -18,7 +18,7 @@
 
 AT24CXX::AT24CXX()
 {
-	IIC		= NULL;
+	IIC		= nullptr;
 
 	// 7位地址，到了I2C那里，需要左移1位
 	Address	= 0x50;
@@ -27,7 +27,7 @@ AT24CXX::AT24CXX()
 AT24CXX::~AT24CXX()
 {
 	delete IIC;
-	IIC = NULL;
+	IIC = nullptr;
 }
 
 void AT24CXX::Init()

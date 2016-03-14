@@ -19,13 +19,13 @@ SerialPort::SerialPort(COM index, int baudRate)
 SerialPort::~SerialPort()
 {
 	if(RS485) delete RS485;
-	RS485 = NULL;
+	RS485 = nullptr;
 }
 
 void SerialPort::Init()
 {
 	_index	= 0xFF;
-	RS485	= NULL;
+	RS485	= nullptr;
 	Error	= 0;
 
 #ifdef STM32F1XX
@@ -359,7 +359,7 @@ void SerialPort::ReceiveTask(void* param)
 	uint len = sp->Read(bs);
 	if(len)
 	{
-		len = sp->OnReceive(bs, NULL);
+		len = sp->OnReceive(bs, nullptr);
 		// 如果有数据，则反馈回去
 		if(len) sp->Write(bs);
 	}
@@ -493,13 +493,13 @@ SerialPort* SerialPort::GetMessagePort()
 	if(sp && Sys.MessagePort != sp->_index)
 	{
 		delete sp;
-		_printf_sp	= NULL;
+		_printf_sp	= nullptr;
 	}
 
 	if(!sp)
 	{
         auto idx	= Sys.MessagePort;
-        if(idx == COM_NONE) return NULL;
+        if(idx == COM_NONE) return nullptr;
 
 		sp = _printf_sp = new SerialPort(idx);
 		sp->Open();

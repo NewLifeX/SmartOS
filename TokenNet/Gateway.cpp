@@ -9,14 +9,14 @@
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
-Gateway* Gateway::Current	= NULL;
+Gateway* Gateway::Current	= nullptr;
 
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
 {
-	Server	= NULL;
-	Client	= NULL;
-	Led		= NULL;
+	Server	= nullptr;
+	Client	= nullptr;
+	Led		= nullptr;
 
 	Running		= false;
 }
@@ -26,10 +26,10 @@ Gateway::~Gateway()
 	Stop();
 
 	delete Server;
-	Server = NULL;
+	Server = nullptr;
 
 	delete Client;
-	Client = NULL;
+	Client = nullptr;
 }
 
 // 启动网关。挂载本地和远程的消息事件
@@ -80,10 +80,10 @@ void Gateway::Stop()
 
 	Sys.RemoveTask(_task);
 
-	Server->Received	= NULL;
-	Server->Param		= NULL;
-	Client->Received	= NULL;
-	Client->Param		= NULL;
+	Server->Received	= nullptr;
+	Server->Param		= nullptr;
+	Client->Received	= nullptr;
+	Client->Param		= nullptr;
 
 	Running = false;
 }
@@ -132,7 +132,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			if(msg.Reply && Client->Token != 0)
 			{
 				// 遍历发送所有设备信息
-				SendDevices(DeviceAtions::List, NULL);
+				SendDevices(DeviceAtions::List, nullptr);
 			}
 			break;
 
@@ -179,7 +179,7 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 
 	for(int i = 0;i < len;i++)
 	{
-		if(Server->Devices[i] == NULL) continue;
+		if(Server->Devices[i] == nullptr) continue;
 		count++;
 	}
 
@@ -200,7 +200,7 @@ bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
 			for(int i=0; i<len; i++)
 			{
 				auto dv1 = Server->Devices[i];
-				if(dv1 == NULL ) continue;
+				if(dv1 == nullptr ) continue;
 				dv1->WriteMessage(ms);
 			}
 		}
@@ -342,7 +342,7 @@ void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
 		{
 			debug_printf("节点删除~~ ID=0x%02X\r\n", id);
 			auto dv = Server->FindDevice(id);
-			if(dv == NULL) return;
+			if(dv == nullptr) return;
 			Server->DeleteDevice(id);
 			break;
 		}
@@ -380,7 +380,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 	{
 		case DeviceAtions::List:
 		{
-			SendDevices(act, NULL);
+			SendDevices(act, nullptr);
 			return true;
 		}
 		case DeviceAtions::Update:
@@ -413,7 +413,7 @@ bool Gateway::DeviceProcess(const Message& msg)
 			debug_printf("节~~1点删除 ID=0x%02X\r\n", id);
 		{
 			auto dv = Server->FindDevice(id);
-			if(dv == NULL)
+			if(dv == nullptr)
 			{
 				rs.Error = true;
 				Client->Reply(rs);
@@ -482,8 +482,8 @@ Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 	Gateway* gw	= Current;
 	if(gw)
 	{
-		if(	(client == NULL || gw->Client == client) &&
-			(server == NULL || gw->Server == server)) return gw;
+		if(	(client == nullptr || gw->Client == client) &&
+			(server == nullptr || gw->Server == server)) return gw;
 
 		delete gw;
 	}

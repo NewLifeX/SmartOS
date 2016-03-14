@@ -4,7 +4,7 @@
 FlushPort::FlushPort()
 {
 	_tid	= 0;
-	Port	= NULL;
+	Port	= nullptr;
 	Fast	= 50;
 	Slow	= 1000;
 	Count	= 0;

@@ -106,7 +106,7 @@ DataStore::Area::Area()
 {
 	Offset	= 0;
 	Size	= 0;
-	Hook	= NULL;
+	Hook	= nullptr;
 }
 
 bool DataStore::Area::Contain(uint offset, uint size)

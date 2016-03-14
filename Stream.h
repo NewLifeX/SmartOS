@@ -90,10 +90,10 @@ public:
 	{
 		int p = sizeof(T) + _Position;
 		// 允许移动到最后一个字节之后，也就是Length
-		if(p < 0 || p > Length) return NULL;
+		if(p < 0 || p > Length) return nullptr;
 
 		T* pt = (T*)Current();
-		if(move && !Seek(sizeof(T))) return NULL;
+		if(move && !Seek(sizeof(T))) return nullptr;
 
 		return pt;
 	}

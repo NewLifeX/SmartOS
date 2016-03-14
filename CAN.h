@@ -26,9 +26,9 @@ public:
     virtual ~CAN()
     {
         if(_TxMsg) delete _TxMsg;
-        _TxMsg = NULL;
+        _TxMsg = nullptr;
         if(_RxMsg) delete _RxMsg;
-        _RxMsg = NULL;
+        _RxMsg = nullptr;
     }
 
     void Send(byte* buf, uint len);

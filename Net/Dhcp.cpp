@@ -30,7 +30,7 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	MaxTimes	= 10;
 	ExpiredTime	= 10000;
 
-	OnStop	= NULL;
+	OnStop	= nullptr;
 	taskID	= 0;
 
 	//ITransport* port = (ITransport*)socket;
@@ -192,7 +192,7 @@ void Dhcp::Stop()
 		Sys.Reset();
 	}
 	
-	if(OnStop) OnStop(this, NULL);
+	if(OnStop) OnStop(this, nullptr);
 }
 
 void Dhcp::Loop(void* param)

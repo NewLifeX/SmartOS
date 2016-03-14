@@ -208,7 +208,7 @@ NRF24L01::NRF24L01()
 {
 	MaxSize	= 32;
 
-	_spi	= NULL;
+	_spi	= nullptr;
 
 	// 初始化地址
 	Buffer(Remote, ArrayLength(Remote)).Clear();
@@ -226,8 +226,8 @@ NRF24L01::NRF24L01()
 	_tidOpen	= 0;
 	_tidRecv	= 0;
 
-	FixData	= NULL;
-	Led		= NULL;
+	FixData	= nullptr;
+	Led		= nullptr;
 }
 
 void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
@@ -263,13 +263,13 @@ NRF24L01::~NRF24L01()
 	Sys.RemoveTask(_tidOpen);
 	Sys.RemoveTask(_tidRecv);
 
-	Register(NULL);
+	Register(nullptr);
 
 	// 关闭电源
 	SetPowerMode(false);
 
 	delete _spi;
-	_spi = NULL;
+	_spi = nullptr;
 }
 
 byte NRF24L01::WriteBuf(byte reg, const Buffer& bs)

@@ -519,8 +519,8 @@ bool String::Equals(const String& s2) const
 
 bool String::Equals(const char* cstr) const
 {
-	if (_Length == 0) return cstr == NULL || *cstr == 0;
-	if (cstr == NULL) return _Arr[0] == 0;
+	if (_Length == 0) return cstr == nullptr || *cstr == 0;
+	if (cstr == nullptr) return _Arr[0] == 0;
 
 	return strcmp(_Arr, cstr) == 0;
 }
@@ -732,7 +732,7 @@ char *strrstr(const char* s, const char* str)
         if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0))
             return p;
     }
-    return NULL;
+    return nullptr;
 }
 
 int String::LastIndexOf(const String& str, int startIndex) const
@@ -898,7 +898,7 @@ extern char* ltoa(Int64 value, char* string, int radix)
 	int sign;
 	char *sp;
 
-	if ( string == NULL ) return 0 ;
+	if ( string == nullptr ) return 0 ;
 
 	if (radix > 36 || radix <= 1) return 0 ;
 
@@ -930,7 +930,7 @@ extern char* ltoa(Int64 value, char* string, int radix)
 
 char* utohex(uint value, byte size, char* string, bool upper)
 {
-	if (string == NULL ) return 0;
+	if (string == nullptr ) return 0;
 
 	// 字节数乘以2是字符个数
 	size	<<= 1;
@@ -958,7 +958,7 @@ extern char* utoa(uint value, char* string, int radix)
 
 extern char* ultoa(UInt64 value, char* string, int radix)
 {
-	if (string == NULL ) return 0;
+	if (string == nullptr ) return 0;
 
 	if (radix > 36 || radix <= 1) return 0;
 

@@ -28,7 +28,7 @@ public:
     //~TInterrupt();
 
     // 注册中断函数（中断号，函数，参数）
-    bool Activate(short irq, InterruptCallback isr, void* param = NULL);
+    bool Activate(short irq, InterruptCallback isr, void* param = nullptr);
     // 解除中断注册
     bool Deactivate(short irq);
     // 开中断

@@ -29,7 +29,7 @@ public:
 	// 此位置存在不对齐问题  需要注意
 	
 public:
-	IRcoding(Storage* flash = NULL, uint blockSize = 0);
+	IRcoding(Storage* flash = nullptr, uint blockSize = 0);
 	//~IRcoding();
 	// 设置配置区所在位置
 	void SetCfgAddr(uint addr);

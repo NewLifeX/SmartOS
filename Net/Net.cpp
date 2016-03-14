@@ -319,5 +319,5 @@ bool ISocketHost::SaveConfig()
 
 /*ISocket* ISocketHost::CreateSocket(ProtocolType type)
 {
-	return NULL;
+	return nullptr;
 }*/

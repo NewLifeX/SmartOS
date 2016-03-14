@@ -33,7 +33,7 @@ Device::Device() :
 	Pass.Clear();
 	Store.Clear();
 
-	Cfg			= NULL;
+	Cfg			= nullptr;
 
 	LastRead	= 0;
 	//LastWrite	= 0;

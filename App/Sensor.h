@@ -32,7 +32,7 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 
-	void Register(EventHandler handler, void* param = NULL);
+	void Register(EventHandler handler, void* param = nullptr);
 
 	
 private:

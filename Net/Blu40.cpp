@@ -77,10 +77,10 @@ Blu40::Blu40(SerialPort *port,Pin rts ,/*Pin cts,*/ Pin sleep, OutputPort * rst 
 
 void Blu40::Init()
 {
-	_rts = NULL;
-	//_cts = NULL;
+	_rts = nullptr;
+	//_cts = nullptr;
 	_baudRate = 0;
-	_sleep = NULL;
+	_sleep = nullptr;
 }
 
 void Blu40::Init(SerialPort *port ,Pin rts,/*Pin cts,*/Pin sleep, OutputPort * rst)
@@ -88,7 +88,7 @@ void Blu40::Init(SerialPort *port ,Pin rts,/*Pin cts,*/Pin sleep, OutputPort * r
 	if(port) _port = port;
 	if(rts != P0)_rts = new OutputPort(rts); // 低电平有效
 	if(sleep!=P0)_sleep = new OutputPort(sleep);
-	if(_rts==NULL)debug_printf("关键引脚_rts不可忽略");
+	if(_rts==nullptr)debug_printf("关键引脚_rts不可忽略");
 
 	if(_sleep)*_sleep=false;
 	*_rts = true;
@@ -241,7 +241,7 @@ bool Blu40::SetPID(ushort pid)
 	*_rts = false;
 	Sys.Delay(170);
 	_port->Write(Buffer((void*)AT_PID, sizeof(AT_PID)));
-	_port->Write(Buffer((byte*)pid, 2));
+	_port->Write(Buffer(&pid, 2));
 	bool ret = CheckSet();
 	*_rts = true;
 	return ret;

@@ -236,7 +236,7 @@ TinyController::TinyController() : Controller()
 	}
 
 	_taskID		= 0;
-	_Queue		= NULL;
+	_Queue		= nullptr;
 	QueueLength	= 8;
 
 	// 默认屏蔽心跳日志
@@ -249,7 +249,7 @@ TinyController::~TinyController()
 	Sys.RemoveTask(_taskID);
 
 	delete[] _Queue;
-	_Queue	= NULL;
+	_Queue	= nullptr;
 }
 
 void TinyController::ApplyConfig()

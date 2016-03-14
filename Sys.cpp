@@ -165,7 +165,7 @@ TSys::TSys()
 	InitHeapStack(StackTop());
 #endif
 
-	OnSleep		= NULL;
+	OnSleep		= nullptr;
 
 #ifdef STM32F1
 	// 关闭JTAG仿真接口，只打开SW仿真。
@@ -452,7 +452,7 @@ void TSys::Start()
 	Started = true;
 	
 #if DEBUG
-	//AddTask(ShowTime, NULL, 2000000, 2000000);
+	//AddTask(ShowTime, nullptr, 2000000, 2000000);
 #endif
 	Task::Scheduler()->Start();
 }
@@ -543,7 +543,7 @@ void TSys::Delay(uint us) const
 
 //#if DEBUG
 	#include "Port.h"
-	static OutputPort* _trace = NULL;
+	static OutputPort* _trace = nullptr;
 //#endif
 void TSys::InitTrace(void* port) const
 {

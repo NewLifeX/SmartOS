@@ -31,7 +31,7 @@ public:
 };
 
 // 用于等待Ping响应的会话
-PingSession* _IcmpSession = NULL;
+PingSession* _IcmpSession = nullptr;
 
 IcmpSocket::IcmpSocket(TinyIP* tip) : TinySocket(tip, IP_ICMP)
 {
@@ -48,7 +48,7 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	IPAddress remote = ip.SrcIP;
 
 	// 检查有没有会话等待
-	if(icmp->Type == 0 && _IcmpSession != NULL && _IcmpSession->Check(remote, icmp))
+	if(icmp->Type == 0 && _IcmpSession != nullptr && _IcmpSession->Check(remote, icmp))
 	{
 		_IcmpSession->Success = true;
 		return true;
@@ -161,7 +161,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 		if(ps.Success) break;
 	}while(!tw.Expired());
 
-	_IcmpSession = NULL;
+	_IcmpSession = nullptr;
 
 #if NET_DEBUG
 	uint cost = ct.Elapsed() / 1000;

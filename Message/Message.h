@@ -37,7 +37,7 @@ public:
 	// 设置数据
 	//void SetData(const void* buf, uint len, uint offset = 0);
 	void SetData(const Buffer& bs, uint offset = 0);
-	void SetError(byte errorCode, const char* msg = NULL);
+	void SetError(byte errorCode, const char* msg = nullptr);
 
 	// 负载数据转数据流
 	Stream ToStream();

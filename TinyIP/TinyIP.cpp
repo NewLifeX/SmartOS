@@ -19,15 +19,15 @@ TinyIP::TinyIP(ITransport* port) : _Arr(0)
 TinyIP::~TinyIP()
 {
 	delete _port;
-    _port = NULL;
+    _port = nullptr;
 
 	delete Arp;
-	Arp = NULL;
+	Arp = nullptr;
 }
 
 void TinyIP::Init()
 {
-	_port = NULL;
+	_port = nullptr;
 	_StartTime = 0;
 
 	// 以太网缓冲区先初始化为0，然后再调整大小
@@ -37,7 +37,7 @@ void TinyIP::Init()
 	DHCPServer = Gateway = DNSServer = IP = 0;
 
 	//Sockets.SetCapacity(0x10);
-	Arp = NULL;
+	Arp = nullptr;
 }
 
 void TinyIP::Init(ITransport* port)
@@ -320,7 +320,7 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 
 	// 网络序是大端
 	ip->Checksum = 0;
-	ip->Checksum = _REV16(CheckSum(NULL, (byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum = _REV16(CheckSum(nullptr, (byte*)ip, sizeof(IP_HEADER), 0));
 
 	assert_ptr(Arp);
 	ArpSocket* arp = (ArpSocket*)Arp;
@@ -363,7 +363,7 @@ ISocket* TinyIP::CreateSocket(ProtocolType type)
 			return new UdpSocket(this);
 
 		default:
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -442,14 +442,14 @@ TinySocket::TinySocket(TinyIP* tip, IP_TYPE type)
 	{
 		for(int i=0; i<tip->Sockets.Length(); i++)
 		{
-			if(tip->Sockets[i] == NULL)
+			if(tip->Sockets[i] == nullptr)
 			{
 				tip->Sockets[i] = this;
 				break;
 			}
 		}
 	}*/
-	//int idx = tip->Sockets.FindIndex(NULL);
+	//int idx = tip->Sockets.FindIndex(nullptr);
 	//if(idx >= 0) tip->Sockets[idx] = this;
 }
 
@@ -464,12 +464,12 @@ TinySocket::~TinySocket()
 	{
 		if(Tip->Sockets[i] == this)
 		{
-			Tip->Sockets[i] = NULL;
+			Tip->Sockets[i] = nullptr;
 			break;
 		}
 	}*/
 	//int idx = Tip->Sockets.FindIndex(this);
-	//if(idx >= 0) Tip->Sockets[idx] = NULL;
+	//if(idx >= 0) Tip->Sockets[idx] = nullptr;
 }
 
 TinySocket* SocketList::FindByType(ushort type)
@@ -484,12 +484,12 @@ TinySocket* SocketList::FindByType(ushort type)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void SocketList::Add(const TinySocket* socket)
 {
-	int idx = FindIndex(NULL);
+	int idx = FindIndex(nullptr);
 	// 如果找不到空位，则加在最后
 	if(idx < 0) idx = Length();
 	SetAt(idx, (TinySocket*)socket);
@@ -498,6 +498,6 @@ void SocketList::Add(const TinySocket* socket)
 void SocketList::Remove(const TinySocket* socket)
 {
 	int idx = FindIndex((TinySocket*)socket);
-	if(idx >= 0) (*this)[idx] = NULL;
+	if(idx >= 0) (*this)[idx] = nullptr;
 }
 

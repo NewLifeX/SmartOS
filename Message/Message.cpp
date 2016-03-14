@@ -5,10 +5,10 @@ Message::Message(byte code)
 {
 	Code	= code;
 	Length	= 0;
-	Data	= NULL;
+	Data	= nullptr;
 	Reply	= false;
 	Error	= false;
-	State	= NULL;
+	State	= nullptr;
 }
 
 // 设置数据。

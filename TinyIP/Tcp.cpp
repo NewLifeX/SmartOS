@@ -29,9 +29,9 @@ TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 
 	Status = Closed;
 
-	OnAccepted = NULL;
-	OnReceived = NULL;
-	OnDisconnected = NULL;
+	OnAccepted = nullptr;
+	OnReceived = nullptr;
+	OnDisconnected = nullptr;
 }
 
 const char* TcpSocket::ToString() const
@@ -206,7 +206,7 @@ void TcpSocket::OnDataReceive(TCP_HEADER& tcp, uint len)
 
 	// 触发ITransport接口事件
 	Buffer bs(data, len);
-	uint len2 = OnReceive(bs, NULL);
+	uint len2 = OnReceive(bs, nullptr);
 	// 如果有返回，说明有数据要回复出去
 	if(len2)
 	{
@@ -413,7 +413,7 @@ bool TcpSocket::Send(const Buffer& bs)
 		if(wait) break;
 	}while(!tw.Expired());
 
-	WaitAck = NULL;
+	WaitAck = nullptr;
 
 #if NET_DEBUG
 	if(wait)
@@ -479,7 +479,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		if(wait) break;
 	}while(!tw.Expired());
 
-	WaitAck = NULL;
+	WaitAck = nullptr;
 
 	if(wait)
 	{

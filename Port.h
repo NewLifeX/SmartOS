@@ -158,7 +158,7 @@ public:
     virtual bool Read() const;
 
 	// 注册事件
-    bool Register(IOReadHandler handler, void* param = NULL);
+    bool Register(IOReadHandler handler, void* param = nullptr);
 	void OnPress(bool down);
 
     operator bool() const { return Read(); }
@@ -175,8 +175,8 @@ private:
 	UInt64	_PressLast	= 0;		// 最后一次按下时间
 	static void InputTask(void* param);
 
-    IOReadHandler	Handler	= NULL;
-	void*			Param	= NULL;
+    IOReadHandler	Handler	= nullptr;
+	void*			Param	= nullptr;
 };
 
 /******************************** AnalogInPort ********************************/

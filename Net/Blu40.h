@@ -19,12 +19,12 @@ private:
 
 public:
 	Blu40();
-	Blu40(SerialPort *port,Pin rts = P0 ,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = NULL);
+	Blu40(SerialPort *port,Pin rts = P0 ,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = nullptr);
 	virtual ~Blu40();
 	void Init();
-	void Init(SerialPort *port ,Pin rts = P0,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = NULL);
+	void Init(SerialPort *port ,Pin rts = P0,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = nullptr);
 
-	virtual void Register(TransportHandler handler, void* param = NULL);
+	virtual void Register(TransportHandler handler, void* param = nullptr);
 	virtual void Reset(void);
 
 	// 设置波特路

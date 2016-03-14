@@ -28,10 +28,10 @@ TTime::TTime()
 #endif
 	BaseSeconds = 0;
 
-	OnInit	= NULL;
-	OnLoad	= NULL;
-	OnSave	= NULL;
-	OnSleep	= NULL;
+	OnInit	= nullptr;
+	OnLoad	= nullptr;
+	OnSave	= nullptr;
+	OnSleep	= nullptr;
 }
 
 void TTime::Init()
@@ -199,7 +199,7 @@ void TTime::Sleep(uint ms, bool* running) const
 		}
 	}
     // 睡眠时间太短
-    if(!ms || running != NULL && !*running) return;
+    if(!ms || running != nullptr && !*running) return;
 
 	uint me	= Current() + ms;
 
@@ -207,7 +207,7 @@ void TTime::Sleep(uint ms, bool* running) const
 	{
 		if(Current() >= me) break;
 
-		if(running != NULL && !*running) break;
+		if(running != nullptr && !*running) break;
 	}
 }
 

@@ -30,7 +30,7 @@ ArpSocket::ArpSocket(TinyIP* tip) : TinySocket(tip, IP_NONE)
 #elif defined(STM32F4)
 	Count = 64;
 #endif
-	_Arps = NULL;
+	_Arps = nullptr;
 
 	Enable = true;
 }
@@ -38,7 +38,7 @@ ArpSocket::ArpSocket(TinyIP* tip) : TinySocket(tip, IP_NONE)
 ArpSocket::~ArpSocket()
 {
 	if(_Arps) delete _Arps;
-	_Arps = NULL;
+	_Arps = nullptr;
 }
 
 bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
@@ -205,7 +205,7 @@ bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 		return true;
 	}
 
-	_ArpSession = NULL;
+	_ArpSession = nullptr;
 
 	return false;
 }
@@ -223,7 +223,7 @@ bool ArpSocket::Resolve(const IPAddress& ip, MacAddress& mac)
 	//if((ip & Tip->Mask) != (Tip->IP & Tip->Mask)) ip = Tip->Gateway;
 	if(dest.GetSubNet(Tip->Mask) != Tip->IP.GetSubNet(Tip->Mask)) dest = Tip->Gateway;
 
-	ARP_ITEM* item = NULL;	// 匹配项
+	ARP_ITEM* item = nullptr;	// 匹配项
 	if(_Arps)
 	{
 		uint sNow = Sys.Ms() >> 10;	// 当前时间，秒
@@ -276,8 +276,8 @@ void ArpSocket::Add(const IPAddress& ip, const MacAddress& mac)
 		Buffer(_Arps, sizeof(ARP_ITEM) * Count).Clear();
 	}
 
-	ARP_ITEM* item = NULL;
-	ARP_ITEM* empty = NULL;
+	ARP_ITEM* item = nullptr;
+	ARP_ITEM* empty = nullptr;
 	// 在表中查找项
 	for(int i=0; i<Count; i++)
 	{

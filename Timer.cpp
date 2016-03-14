@@ -7,10 +7,10 @@ const byte Timer::TimerCount = ArrayLength(g_Timers);
 
 // 已经实例化的定时器对象
 static Timer* Timers[16] = {
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL,
+	nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr,
 };
 
 Timer::Timer(TIMER index)
@@ -29,17 +29,17 @@ Timer::Timer(TIMER index)
 
 	Opened	= false;
 
-	_Handler	= NULL;
-	_Param		= NULL;
+	_Handler	= nullptr;
+	_Param		= nullptr;
 }
 
 Timer::~Timer()
 {
 	Close();
 
-	if(_Handler) Register(NULL);
+	if(_Handler) Register(nullptr);
 
-	Timers[_index] = NULL;
+	Timers[_index] = nullptr;
 }
 
 // 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
@@ -58,7 +58,7 @@ Timer* Timer::Create(byte index)
 		if(i >= tcount)
 		{
 			debug_printf("Timer::Create 失败！没有空闲定时器！\r\n");
-			return NULL;
+			return nullptr;
 		}
 
 		index = i;
@@ -265,7 +265,7 @@ void Timer::Register(EventHandler handler, void* param)
 	_Handler	= handler;
 	_Param		= param;
 
-	SetHandler(handler != NULL);
+	SetHandler(handler != nullptr);
 }
 
 void Timer::OnHandler(ushort num, void* param)
@@ -310,7 +310,7 @@ PWM::PWM(TIMER index) : Timer(index)
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
 
-	Pulses		= NULL;
+	Pulses		= nullptr;
 	PulseCount	= 0;
 	Channel		= 0;
 	PulseIndex	= 0xFF;
@@ -472,13 +472,13 @@ TIM_SetIC4Prescaler ,
 
 Capture::Capture(Timer * timer)
 {
-	if(timer == NULL)return ;
+	if(timer == nullptr)return ;
 	tr = timer;
 //	HaveCap = 0x00;
 	for(int i =0;i<4;i++)
 	{
-		_Handler [i]=NULL;	// 其实可以不赋值
-		_Param [i]=NULL;
+		_Handler [i]=nullptr;	// 其实可以不赋值
+		_Param [i]=nullptr;
 	}
 }
 
@@ -508,7 +508,7 @@ void Capture::Register(int channel,EventHandler handler, void* param )
 	if(channel<1||channel>4) return ;
 	_Handler[channel-1] = handler;
 	_Param[channel-1]=param;
-//	if(handler != NULL)
+//	if(handler != nullptr)
 //		tr->Register (OnHandler  ,this);
 	int irq;
 	if(handler)
@@ -521,10 +521,10 @@ void Capture::Register(int channel,EventHandler handler, void* param )
 	}
 	else
 	{
-		_Handler[channel-1] = NULL ;
-		_Param [channel-1]=NULL;
+		_Handler[channel-1] = nullptr ;
+		_Param [channel-1]=nullptr;
 		for(int i =0 ;i<4;i++)
-			if(_Handler [i] != NULL )return ;
+			if(_Handler [i] != nullptr )return ;
 		Interrupt.Deactivate(irq);
 	}
 }
@@ -533,14 +533,14 @@ void Capture::Register(int channel,EventHandler handler, void* param )
 //void Capture :: OnHandler(void* sender, void* param)
 //{
 //	Capture * cap= (Capture*)param;
-//	if(cap->_Handler != NULL)
+//	if(cap->_Handler != nullptr)
 //		cap->_Handler(sender,cap->_Param );
 //}
 
 void Capture :: OnHandler(ushort num, void* param)
 {
 	Capture * cap= (Capture*)param;
-	if(cap != NULL)
+	if(cap != nullptr)
 		cap->OnInterrupt();
 }
 
@@ -559,7 +559,7 @@ void Capture::OnInterrupt()
 Capture::~Capture()
 {
 	for(int i =0;i<4;i++)
-		Register(i,NULL, NULL );
+		Register(i,nullptr, nullptr );
 	delete(tr);
 }
 */

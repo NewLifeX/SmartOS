@@ -200,7 +200,7 @@ byte* Stream::ReadBytes(int count)
 	if(count < 0) count = Remain();
 
 	byte* p = Current();
-	if(!Seek(count)) return NULL;
+	if(!Seek(count)) return nullptr;
 
 	return p;
 }
@@ -364,7 +364,7 @@ MemoryStream::~MemoryStream()
 		//if(_Buffer != _Arr) 
 		if(_needFree)
 			delete[] _Buffer;
-		_Buffer = NULL;
+		_Buffer = nullptr;
 	}
 }
 

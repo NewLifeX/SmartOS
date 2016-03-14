@@ -1,4 +1,6 @@
-﻿#include "RSA.h"
+﻿#include <stdint.h>
+
+#include "RSA.h"
 
 #define KeyLength 1024
 

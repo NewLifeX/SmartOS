@@ -35,7 +35,7 @@ typedef enum
 }IRStat;
 IRStat Stat;
 
-ushort * SendP = NULL;
+ushort * SendP = nullptr;
 ushort  SendIndex;
 ushort SendBufLen;
 bool ErrorIRQ;
@@ -46,7 +46,7 @@ bool IR::Send(const Buffer& bs)
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	TIM_DeInit(TIM2);
 	
-	if(_Tim == NULL)
+	if(_Tim == nullptr)
 	{
 		// RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 		_Tim = Timer::Create(0x01);		// 直接占用TIMER2
@@ -83,11 +83,11 @@ bool IR::Send(const Buffer& bs)
 	while(!tw.Expired() && Stat != SendOver) Sys.Sleep(50);
 	// 结束 不论是超时还是发送结束都关闭pwm和定时器
 	//_Pwm->Close();
-	_Tim->Register(NULL,NULL);
+	_Tim->Register(nullptr,nullptr);
 	_Tim->Close();
 	// 清空使用的数据
 	SendIndex = 0;
-	SendP = NULL;
+	SendP = nullptr;
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, DISABLE);
 #endif
@@ -148,14 +148,14 @@ int IR::Receive(Buffer& bs, int sTimeout)
 	uint DmaLen	= bufLen/2 -1;
 	
 	// 捕获引脚初始化
-	if(_Port == NULL)
+	if(_Port == nullptr)
 	{
 		_Port = new	AlternatePort();	// 在括号内直接写引脚会初始化失败
 		_Port->Set(PA1);
 		_Port->Open();
 		_Port->AFConfig(Port::AF_2);
 	}
-	if(_Tim == NULL) _Tim = Timer::Create(0x01);		// 直接占用TIMER2
+	if(_Tim == nullptr) _Tim = Timer::Create(0x01);		// 直接占用TIMER2
 	
 	// RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, DISABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);

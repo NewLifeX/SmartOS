@@ -60,7 +60,7 @@ public:
 
     void GetPins(Pin* txPin, Pin* rxPin);
 
-    virtual void Register(TransportHandler handler, void* param = NULL);
+    virtual void Register(TransportHandler handler, void* param = nullptr);
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);

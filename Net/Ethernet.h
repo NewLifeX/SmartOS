@@ -177,7 +177,7 @@ typedef struct _TCP_HEADER
 
 	void Init(bool recursion = false)
 	{
-		Length = sizeof(this[0]);
+		Length = (byte)sizeof(this[0]);
 		reserved_1 = 0;
 		reserved_2 = 0;
 		//WindowSize = _REV16(8192);

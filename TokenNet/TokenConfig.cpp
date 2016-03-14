@@ -2,7 +2,7 @@
 #include "Net\Net.h"
 #include "Config.h"
 
-TokenConfig* TokenConfig::Current	= NULL;
+TokenConfig* TokenConfig::Current	= nullptr;
 
 TokenConfig::TokenConfig() : ConfigBase(),
 	User(_User, ArrayLength(_User)),

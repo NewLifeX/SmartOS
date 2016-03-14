@@ -29,9 +29,9 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 
 	Status = Closed;
 	
-	OnAccepted = NULL;
-	OnReceived = NULL;
-	OnDisconnected = NULL;
+	OnAccepted = nullptr;
+	OnReceived = nullptr;
+	OnDisconnected = nullptr;
 }
 
 const char* TcpSocket::ToString()

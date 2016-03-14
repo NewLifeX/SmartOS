@@ -27,7 +27,7 @@ _force_inline byte GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group
 Port::Port()
 {
 	_Pin	= P0;
-	Group	= NULL;
+	Group	= nullptr;
 	Mask	= 0;
 	Opened	= false;
 }
@@ -73,7 +73,7 @@ Port& Port::Set(Pin pin)
 	}
 	else
 	{
-		Group	= NULL;
+		Group	= nullptr;
 		Mask	= 0;
 	}
 
@@ -84,14 +84,14 @@ bool Port::Empty() const
 {
 	if(_Pin != P0) return false;
 
-	if(Group == NULL || Mask == 0) return true;
+	if(Group == nullptr || Mask == 0) return true;
 
 	return false;
 }
 
 void Port::Clear()
 {
-	Group	= NULL;
+	Group	= nullptr;
 	_Pin	= P0;
 	Mask	= 0;
 }
@@ -499,8 +499,8 @@ InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 	HardEvent	= false; */
 	_taskInput	= 0;
 
-	Handler		= NULL;
-	Param		= NULL;
+	Handler		= nullptr;
+	Param		= nullptr;
 	_Value		= 0;
 
 	_PressStart = 0;
@@ -775,7 +775,7 @@ bool IsOnlyExOfInt(const InputPort* pt, int idx)
 	}
 #endif
 	for(int i = s; i <= e; i++)
-		if(States[i].Port != NULL && States[i].Port != pt) return false;
+		if(States[i].Port != nullptr && States[i].Port != pt) return false;
 
 	return true;
 }
@@ -789,7 +789,7 @@ void InputPort::OnClose()
     auto st = &States[idx];
 	if(st->Port == this)
 	{
-		st->Port = NULL;
+		st->Port = nullptr;
 
 		SetEXIT(idx, false, GetTrigger(Mode, Invert));
 		if(!IsOnlyExOfInt(this, idx))return;
@@ -810,7 +810,7 @@ bool InputPort::Register(IOReadHandler handler, void* param)
     {
         for(int i=0; i<16; i++)
         {
-            States[i].Port	= NULL;
+            States[i].Port	= nullptr;
         }
         hasInitState = true;
     }
@@ -821,7 +821,7 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
 	auto port	= st->Port;
     // 检查是否已经注册到别的引脚上
-    if(port != this && port != NULL)
+    if(port != this && port != nullptr)
     {
 #if DEBUG
         debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));

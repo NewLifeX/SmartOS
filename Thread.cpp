@@ -41,7 +41,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	if(g_ID >= 0xFFFF) g_ID = 0;
 	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
 
-	Name = NULL;
+	Name = nullptr;
 
 	// 外部传入的stackSize参数只是用户可用的栈大小，这里还需要加上保存寄存器所需要的stk部分
 	uint stkSize = STACK_Size;
@@ -65,8 +65,8 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 
 	DelayExpire = 0;
 
-	Next = NULL;
-	Prev = NULL;
+	Next = nullptr;
+	Prev = nullptr;
 
     uint* stk = StackTop;          // 加载栈指针
                                    // 中断时自动保存一部分寄存器
@@ -147,8 +147,8 @@ Thread::~Thread()
 
 	Stack = StackTop - (StackSize >> 2);
 	if(Stack) delete[] Stack;
-	Stack = NULL;
-	StackTop = NULL;
+	Stack = nullptr;
+	StackTop = nullptr;
 }
 
 void Thread::Start()
@@ -282,8 +282,8 @@ void Thread::Add(Thread* thread)
 	{
 		Free = thread;
 
-		thread->Prev = NULL;
-		thread->Next = NULL;
+		thread->Prev = nullptr;
+		thread->Next = nullptr;
 	}
 	else
 	{
@@ -304,7 +304,7 @@ void Thread::Remove(Thread* thread)
 	SmartIRQ irq;
 
 	// 如果其为头部，注意修改头部指针
-	if(thread->Prev == NULL)
+	if(thread->Prev == nullptr)
 	{
 		if(thread == Free)
 			Free = thread->Next;
@@ -325,7 +325,7 @@ void Thread::Remove(Thread* thread)
 	// 如果刚好是当前线程，则放弃时间片，重新调度。因为PendSV优先级的原因，不会马上调度
 	if(thread == Current) Switch();
 	// 如果就绪队列为空，重新调度。这里其实不用操心，Switch里面会准备好Busy
-	if(Busy == NULL) BuildReady();
+	if(Busy == nullptr) BuildReady();
 }
 
 // 查找最高优先级
@@ -387,8 +387,8 @@ byte Thread::BuildReady()
 	pri = FindMax(Busy, pri);
 
 	// 根据最高优先级重构线程就绪队列
-	Thread* head = NULL;
-	Thread* tail = NULL;
+	Thread* head = nullptr;
+	Thread* tail = nullptr;
 	byte count = 0;
 	count += BuildList(Free, head, tail, pri);
 	count += BuildList(Busy, head, tail, pri);
@@ -621,12 +621,12 @@ bool Thread::Inited = false;
 uint Thread::g_ID = 0;
 byte Thread::_running = 0;
 byte Thread::_sleeps = 0;
-Thread* Thread::Free = NULL;
-Thread* Thread::Busy = NULL;
-Thread* Thread::Current = NULL;
+Thread* Thread::Free = nullptr;
+Thread* Thread::Busy = nullptr;
+Thread* Thread::Current = nullptr;
 byte Thread::Count = 0;
-Thread* Thread::Idle = NULL;
-Thread* Thread::Main = NULL;
+Thread* Thread::Idle = nullptr;
+Thread* Thread::Main = nullptr;
 
 void Thread::Init()
 {
@@ -637,19 +637,19 @@ void Thread::Init()
 
 	Inited = true;
 
-	Free = NULL;
-	Busy = NULL;
-	Current = NULL;
+	Free = nullptr;
+	Busy = nullptr;
+	Current = nullptr;
 
 	// 创建一个空闲线程，确保队列不为空
-	Thread* idle = new Thread(Idle_Handler, NULL, 0);
+	Thread* idle = new Thread(Idle_Handler, nullptr, 0);
 	idle->Name = "Idle";
 	idle->Priority = Lowest;
 	idle->Start();
 	Idle = idle;
 
 	// 多线程调度与Sys定时调度联动，由多线程调度器的Main线程负责驱动Sys.Start实现传统定时任务。要小心线程栈溢出
-	Thread* main = new Thread(Main_Handler, NULL, 0x400);
+	Thread* main = new Thread(Main_Handler, nullptr, 0x400);
 	main->Name = "Main";
 	main->Priority = BelowNormal;
 	main->Start();
@@ -691,7 +691,7 @@ public:
 	~ThreadItem()
 	{
 		delete _thread;
-		_thread = NULL;
+		_thread = nullptr;
 	}
 
 	static void OnWork(void* param)

@@ -288,7 +288,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 		const char* cp1 = strchr(dname, '.');
 
 		int len = 0;
-		if (cp1 != NULL)
+		if (cp1 != nullptr)
 			len = cp1 - dname;	/* More to come */
 		else
 			len = dlen;			/* Last component */
@@ -302,7 +302,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 		//strncpy((char *)cp, dname, len);
 		//cp += len;
 		ms.Write((const byte*)dname, 0, len);
-		if (cp1 == NULL)
+		if (cp1 == nullptr)
 		{
 			//*cp++ = 0;			/* Last one; write null and finish */
 			// 最后一个，写空，完成
@@ -367,7 +367,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 			break;
 		}
 	}
-	_Buffer = NULL;
+	_Buffer = nullptr;
 
 	return ip;
 }

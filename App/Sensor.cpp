@@ -2,17 +2,17 @@
 
 void Sensor::Init()
 {
-	Key = NULL;
-	Led = NULL;
-	Buzzer = NULL;
-	Pir=NULL;    //门磁
-  Pir=NULL;    //人体感应
+	Key = nullptr;
+	Led = nullptr;
+	Buzzer = nullptr;
+	Pir=nullptr;    //门磁
+  Pir=nullptr;    //人体感应
 	
-	Name = NULL;
+	Name = nullptr;
 	Index = 0;
 	_Value = false;
-	_Handler = NULL;
-	_Param = NULL;
+	_Handler = nullptr;
+	_Param = nullptr;
 }
 
 Sensor::Sensor(Pin key, Pin led, Pin buzzer)
@@ -42,13 +42,13 @@ Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin buzzer, bool buzzerInvert)
 Sensor::~Sensor()
 {
 	if(Key) delete Key;
-	Key = NULL;
+	Key = nullptr;
 
 	if(Led) delete Led;
-	Led = NULL;
+	Led = nullptr;
 
 	if(Mag) delete Mag;
-	Mag = NULL;
+	Mag = nullptr;
 }
 
 void Sensor::OnPress(InputPort* port, bool down, void* param)
@@ -77,8 +77,8 @@ void Sensor::Register(EventHandler handler, void* param)
 	}
 	else
 	{
-		_Handler = NULL;
-		_Param = NULL;
+		_Handler = nullptr;
+		_Param = nullptr;
 	}
 }
 

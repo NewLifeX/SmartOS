@@ -15,10 +15,10 @@ typedef struct		// 单个音节
 class Music
 {
 private:
-	Tune* _tuneSet;		// 调子集合 就是曲子
-	int _tuneNum;			// 有多少个调子
-	Timer* _timer;			// 定时器
-	OutputPort* _phonatePin;	// 输出引脚
+	const Tune*	_tuneSet;		// 调子集合 就是曲子
+	int			_tuneNum;		// 有多少个调子
+	Timer*		_timer;			// 定时器
+	OutputPort*	_phonatePin;	// 输出引脚
 
 	bool Sounding;			// 作为判断的依据  最好只有Get 没有Set
 public:	

@@ -11,7 +11,7 @@
 	#define btn_printf(format, ...)
 #endif
 
-InputPort* Button_GrayLevel::ACZero = NULL;
+InputPort* Button_GrayLevel::ACZero = nullptr;
 byte Button_GrayLevel::OnGrayLevel	= 0xFF;			// 开灯时 led 灰度
 byte Button_GrayLevel::OffGrayLevel	= 0x00;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime=2300;
@@ -19,21 +19,21 @@ int Button_GrayLevel::ACZeroAdjTime=2300;
 Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 {
 #if DEBUG
-	Name	= NULL;
+	Name	= nullptr;
 #endif
 	Index	= 0;
 	_Value	= false;
 
-	_Pwm		= NULL;
+	_Pwm		= nullptr;
 	_Channel	= 0;
 
-	_Handler	= NULL;
-	_Param		= NULL;
+	_Handler	= nullptr;
+	_Param		= nullptr;
 
 	_tid	= 0;
 	Next	= 0xFF;
 
-	OnPress	= NULL;
+	OnPress	= nullptr;
 }
 
 void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
@@ -100,8 +100,8 @@ void Button_GrayLevel::Register(EventHandler handler, void* param)
 	}
 	else
 	{
-		_Handler = NULL;
-		_Param = NULL;
+		_Handler = nullptr;
+		_Param = nullptr;
 	}
 }
 
@@ -251,7 +251,7 @@ void Button_GrayLevel::InitZero(Pin zero, int us)
 
 	debug_printf("所有开关按钮准备就绪！\r\n\r\n");
 
-	Sys.AddTask(ACZeroReset, NULL, 60000, 60000, "定时过零");
+	Sys.AddTask(ACZeroReset, nullptr, 60000, 60000, "定时过零");
 }
 
 bool Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte count)

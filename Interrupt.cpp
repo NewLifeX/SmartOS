@@ -371,7 +371,7 @@ bool Lock::Wait(int us)
 
 #if DEBUG
 
-static TArray<const char*, 0x40>* _TS = NULL;
+static TArray<const char*, 0x40>* _TS = nullptr;
 
 TraceStack::TraceStack(const char* name)
 {
@@ -384,7 +384,7 @@ TraceStack::TraceStack(const char* name)
 TraceStack::~TraceStack()
 {
 	// 清空最后一个项目，避免误判
-	(*_TS)[_TS->Length() - 1]	= NULL;
+	(*_TS)[_TS->Length() - 1]	= nullptr;
 	_TS->Pop();
 }
 

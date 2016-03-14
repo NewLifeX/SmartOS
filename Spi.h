@@ -32,7 +32,7 @@ public:
 	void Init(SPI spi, uint speedHz = 9000000, bool useNss = true);
 
 	void SetPin(Pin clk = P0, Pin miso = P0, Pin mosi = P0, Pin nss = P0);
-	void GetPin(Pin* clk = NULL, Pin* miso = NULL, Pin* mosi = NULL, Pin* nss = NULL);
+	void GetPin(Pin* clk = nullptr, Pin* miso = nullptr, Pin* mosi = nullptr, Pin* nss = nullptr);
 	void Open();
 	void Close();
 

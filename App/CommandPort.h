@@ -18,7 +18,7 @@ public:
 	String		Name;	// 名称
 #endif
 
-	CommandPort(OutputPort* port, byte* data = NULL);
+	CommandPort(OutputPort* port, byte* data = nullptr);
 	~CommandPort();
 
 	void Set(byte cmd);	// 根据命令执行动作

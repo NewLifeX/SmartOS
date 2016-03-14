@@ -41,7 +41,7 @@ public:
 	//Buffer Read();
 
 	// 注册回调函数
-	virtual void Register(TransportHandler handler, void* param = NULL);
+	virtual void Register(TransportHandler handler, void* param = nullptr);
 
 #if DEBUG
 	virtual const char* ToString() const { return "ITransport"; }
@@ -57,7 +57,7 @@ protected:
 	virtual uint OnRead(Buffer& bs) = 0;
 
 	// 是否有回调函数
-	bool HasHandler() { return _handler != NULL; }
+	bool HasHandler() { return _handler != nullptr; }
 
 	// 引发数据到达事件
 	virtual uint OnReceive(Buffer& bs, void* param);

@@ -22,9 +22,9 @@
 class IR
 {
 private:
-	PWM*	_Pwm			= NULL;
-	Timer*	_Tim			= NULL;
-	AlternatePort * _Port	= NULL;
+	PWM*	_Pwm			= nullptr;
+	Timer*	_Tim			= nullptr;
+	AlternatePort * _Port	= nullptr;
 public:
 	IR(PWM * pwm);
 	

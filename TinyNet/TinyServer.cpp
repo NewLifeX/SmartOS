@@ -24,7 +24,7 @@ static void DeviceShow(void* param);
 TinyServer::TinyServer(TinyController* control)
 {
 	Control 	= control;
-	Cfg			= NULL;
+	Cfg			= nullptr;
 	DeviceType	= Sys.Code;
 
 	Control->Received	= OnServerReceived;
@@ -33,10 +33,10 @@ TinyServer::TinyServer(TinyController* control)
 
 	Control->Mode		= 2;	// 服务端接收所有消息
 
-	Received	= NULL;
-	Param		= NULL;
+	Received	= nullptr;
+	Param		= nullptr;
 
-	Current		= NULL;
+	Current		= nullptr;
 	Study		= false;
 
 	Devices.SetLength(0);
@@ -145,7 +145,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	// 消息转发
 	if(Received) return Received(this, msg, Param);
 
-	Current = NULL;
+	Current = nullptr;
 
 	return true;
 }
@@ -219,7 +219,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 		msg.SetData(Buffer(rs.Data, rs.Length));
 	}
 
-	Current = NULL;
+	Current = nullptr;
 
 	return rt;
 }
@@ -254,7 +254,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		// 从1开始派ID
 		id	= 1;
-		while(FindDevice(++id) != NULL && id < 0xFF);
+		while(FindDevice(++id) != nullptr && id < 0xFF);
 		debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 		if(id == 0xFF) return false;
 
@@ -281,7 +281,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		{
 			//byte sum = st[0] && st[1] && st[2] && st[3] && st[4];
 			int sum = (int)st[0] + st[1] + st[2] + st[3] + st[4];
-			if(sum == 0 || sum == 0xFF * 5) st = NULL;
+			if(sum == 0 || sum == 0xFF * 5) st = nullptr;
 		}
 		if(!st)
 			dv->Mac.Copy(0, dv->HardID, 0, -1);
@@ -410,7 +410,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 
 	auto dv = FindDevice(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
-	if(dv == NULL) return false;
+	if(dv == nullptr) return false;
 
 	auto rs	= msg.CreateReply();
 	auto ms	= msg.ToStream();
@@ -551,7 +551,7 @@ bool TinyServer::OnWriteReply(const Message& msg, Device& dv)
 
 	TS("TinyServer::OnWriteReply");
 
-	DataMessage dm(msg, NULL);
+	DataMessage dm(msg, nullptr);
 
 	if(dm.Offset < 64)
 		dm.WriteData(dv.Store, false);
@@ -582,13 +582,13 @@ void TinyServer::SetChannel(byte channel)
 
 Device* TinyServer::FindDevice(byte id) const
 {
-	if(id == 0) return NULL;
+	if(id == 0) return nullptr;
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
 		if(id == Devices[i]->Address) return Devices[i];
 	}
-	return NULL;
+	return nullptr;
 }
 
 void GetDeviceKey(byte scr, Buffer& key, void* param)
@@ -609,13 +609,13 @@ void GetDeviceKey(byte scr, Buffer& key, void* param)
 
 Device* TinyServer::FindDevice(const Buffer& hardid) const
 {
-	if(hardid.Length() == 0) return NULL;
+	if(hardid.Length() == 0) return nullptr;
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-		if(Devices[i] != NULL && hardid == Devices[i]->HardID) return Devices[i];
+		if(Devices[i] != nullptr && hardid == Devices[i]->HardID) return Devices[i];
 	}
-	return NULL;
+	return nullptr;
 }
 
 bool TinyServer::DeleteDevice(byte id)
@@ -629,7 +629,7 @@ bool TinyServer::DeleteDevice(byte id)
 
 		int idx = Devices.FindIndex(dv);
 		debug_printf("idx~~~~~~~~~~~:%d\r\n",idx);
-		if(idx >= 0) Devices[idx] = NULL;
+		if(idx >= 0) Devices[idx] = nullptr;
 		delete dv;
 		SaveDevices();
 
@@ -686,7 +686,7 @@ int TinyServer::LoadDevices()
 
 		if(fs)
 		{
-			int idx = Devices.FindIndex(NULL);
+			int idx = Devices.FindIndex(nullptr);
 			if(idx == -1)
 			{
 				if(dv->Valid())
@@ -724,7 +724,7 @@ void TinyServer::SaveDevices() const
 	for(int i = 0; i<Devices.Length(); i++)
 	{
 		auto dv = Devices[i];
-		if(dv == NULL) continue;		
+		if(dv == nullptr) continue;		
 		num++;
 	}
 	// 设备个数
@@ -734,7 +734,7 @@ void TinyServer::SaveDevices() const
 	for(int i = 0; i<Devices.Length(); i++)
 	{
 		auto dv = Devices[i];
-		if(dv == NULL) continue;
+		if(dv == nullptr) continue;
 		dv->Write(ms);
 	}
 	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", num, cfg.Address);
@@ -788,7 +788,7 @@ void DeviceShow(void* param)
 	for(int i = 0; i < len; i++)
 	{
 		auto dv	= svr->Devices[i];
-		if(dv == NULL) continue;
+		if(dv == nullptr) continue;
 
 		count++;
 		dv->Show();

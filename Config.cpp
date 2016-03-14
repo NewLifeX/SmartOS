@@ -11,7 +11,7 @@
 	#define TS(name)
 #endif
 
-const Config* Config::Current = NULL;
+const Config* Config::Current = nullptr;
 
 /*================================ 配置块 ================================*/
 
@@ -48,7 +48,7 @@ bool ConfigBlock::Valid() const
 // 获取下一块。当前块必须有效，否则返回空，下一块不在乎有效无效
 const ConfigBlock* ConfigBlock::Next() const
 {
-    if(!Valid()) return NULL;
+    if(!Valid()) return nullptr;
 
 	// 确保数据部分2字节对齐，便于Flash操作
 	uint s = (Size + 1) & 0xFFFE;
@@ -75,7 +75,7 @@ uint ConfigBlock::CopyTo(Buffer& bs) const
 // 构造一个新的配置块
 bool ConfigBlock::Init(const char* name, const Buffer& bs)
 {
-    if(name == NULL) return false;
+    if(name == nullptr) return false;
     //assert_param2(name, "配置块名称不能为空");
 
 	TS("ConfigBlock::Init");
@@ -173,16 +173,16 @@ const ConfigBlock* FindBlock(const Storage& st, uint addr, const char* name)
 {
 	TS("Config::Find");
 
-    if(name == NULL) return NULL;
+    if(name == nullptr) return nullptr;
 	//assert_param2(name, "配置段名称不能为空");
 
-	if(!CheckSignature(st, addr, false)) return NULL;
+	if(!CheckSignature(st, addr, false)) return nullptr;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
 
 	uint slen = strlen(name);
-    if(slen > sizeof(cfg->Name)) return NULL;
+    if(slen > sizeof(cfg->Name)) return nullptr;
 	//assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
 
 	// 遍历链表，找到同名块
@@ -193,7 +193,7 @@ const ConfigBlock* FindBlock(const Storage& st, uint addr, const char* name)
         cfg = cfg->Next();
     }
 
-	return NULL;
+	return nullptr;
 }
 
 // 创建一个指定大小的配置块。找一个满足该大小的空闲数据块，或者在最后划分一个
@@ -201,7 +201,7 @@ const ConfigBlock* NewBlock(const Storage& st, uint addr, int size)
 {
 	TS("Config::New");
 
-	if(!CheckSignature(st, addr, true)) return NULL;
+	if(!CheckSignature(st, addr, true)) return nullptr;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
@@ -233,7 +233,7 @@ const void* Config::New(int size) const
 	{
 		debug_printf("Config::New 0x%08X + %d + %d 配置区（0x%08X, %d）空间不足\r\n", cfg, sizeof(ConfigBlock), size, Address, Size);
 
-		return NULL;
+		return nullptr;
 	}
 
 	return cfg;
@@ -245,7 +245,7 @@ bool Config::Remove(const char* name) const
     //return Set(name, ByteArray(0));
 	TS("Config::Remove");
 
-    if(name == NULL) return NULL;
+    if(name == nullptr) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) return false;
@@ -262,13 +262,13 @@ const void* Config::Set(const char* name, const Buffer& bs) const
 {
 	TS("Config::Set");
 
-    if(name == NULL) return NULL;
+    if(name == nullptr) return nullptr;
     //assert_param2(name, "配置块名称不能为空");
 	//assert_param2(Device, "未指定配置段的存储设备");
 
 	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) cfg	= NewBlock(Device, Address, bs.Length());
-    if(!cfg) return NULL;
+    if(!cfg) return nullptr;
 
 	// 重新搞一个配置头，使用新的数据去重新初始化
 	ConfigBlock header;
@@ -283,7 +283,7 @@ bool Config::Get(const char* name, Buffer& bs) const
 {
 	TS("Config::Get");
 
-    if(name == NULL) return false;
+    if(name == nullptr) return false;
     //assert_param2(name, "配置块名称不能为空");
 
 	auto cfg = FindBlock(Device, Address, name);
@@ -296,13 +296,13 @@ const void* Config::Get(const char* name) const
 {
 	TS("Config::GetByName");
 
-    if(name == NULL) return NULL;
+    if(name == nullptr) return nullptr;
     //assert_param2(name, "配置块名称不能为空");
 
 	auto cfg = FindBlock(Device, Address, name);
     if(cfg && cfg->Size) return cfg->Data();
 
-    return NULL;
+    return nullptr;
 }
 
 /*// 获取配置数据，如果不存在则覆盖
@@ -310,7 +310,7 @@ bool Config::GetOrSet(const char* name, Buffer& bs) const
 {
 	TS("Config::GetOrSet");
 
-    if(name == NULL) return false;
+    if(name == nullptr) return false;
     //assert_param2(name, "配置块名称不能为空");
 
 	// 输入数据已存在，直接返回
@@ -351,12 +351,12 @@ ConfigBase::ConfigBase()
 
 	New	= true;
 
-	_Name	= NULL;
+	_Name	= nullptr;
 }
 
 uint ConfigBase::Size() const
 {
-	assert_param2(_End && _Start, "_Start & _End == NULL");
+	assert_param2(_End && _Start, "_Start & _End == nullptr");
 
 	return (uint)_End - (uint)_Start;
 }

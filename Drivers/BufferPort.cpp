@@ -4,20 +4,20 @@
 BufferPort::BufferPort() : Buf()
 {
 	Name	= "BufferPort";
-	Port	= NULL;
+	Port	= nullptr;
 
 	Com		= COM_NONE;
 	Speed	= 9600;
 
 	Opened	= false;
 
-	Led		= NULL;
+	Led		= nullptr;
 }
 
 BufferPort::~BufferPort()
 {
 	delete Port;
-	Port = NULL;
+	Port = nullptr;
 }
 
 bool BufferPort::Open()
@@ -51,7 +51,7 @@ bool BufferPort::Open()
 		Port	= sp;
 	}
 
-	if(!OnOpen(isNew) || Port == NULL) return false;
+	if(!OnOpen(isNew) || Port == nullptr) return false;
 
 	Port->Register(OnReceive, this);
 
@@ -67,7 +67,7 @@ void BufferPort::Close()
 	if(Port)
 	{
 		Port->Close();
-		//Port->Register(NULL, NULL);
+		//Port->Register(nullptr, nullptr);
 	}
 
 	Opened	= false;

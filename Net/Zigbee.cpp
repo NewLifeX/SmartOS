@@ -2,7 +2,7 @@
 
 Zigbee::Zigbee()
 {
-	Set(NULL);
+	Set(nullptr);
 }
 
 Zigbee::Zigbee(ITransport* port, Pin rst)
