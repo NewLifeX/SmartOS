@@ -46,7 +46,8 @@ public:
 	byte FifoStatus;
 	void ShowStatus();
 
-	virtual String ToString() const { return String("R24"); }
+	//virtual String ToString() const { return String("R24"); }
+	virtual String& ToStr(String& str) const { return str + "R24"; }
 
 private:
 	virtual bool OnOpen();

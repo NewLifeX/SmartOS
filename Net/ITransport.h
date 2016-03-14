@@ -64,7 +64,7 @@ protected:
 };
 
 // 数据口包装
-class PackPort : public ITransport
+class PackPort : public Object, public ITransport
 {
 private:
 

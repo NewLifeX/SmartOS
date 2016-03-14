@@ -95,7 +95,7 @@ private:
 };
 
 // 硬件Socket控制器
-class HardSocket : public ITransport, public ISocket
+class HardSocket : public Object, public ITransport, public ISocket
 {
 private:
 	W5500&	_Host;	// W5500公共部分控制器
@@ -161,6 +161,8 @@ public:
 	// 用户注册的中断事件处理 异步调用
 	virtual void RaiseReceive();
 
+	virtual String& ToStr(String& str) const { return str + "Tcp_" + Local.Port; }
+
 private:
 	bool Linked;
 	uint _tidRodyguard;	// 维护 Link 状态的任务
@@ -179,6 +181,8 @@ public:
 	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void RaiseReceive();
+
+	virtual String& ToStr(String& str) const { return str + "Udp_" + Local.Port; }
 
 private:
 	virtual bool OnWriteEx(const Buffer& bs, void* opt);
