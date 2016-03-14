@@ -177,8 +177,11 @@ typedef struct _TCP_HEADER
 
 	void Init(bool recursion = false)
 	{
+#pragma  GCC diagnostic ignored  "-Woverflow"
 		Length = (byte)sizeof(this[0]);
 		//Length	= (byte)0x14;
+#pragma  GCC diagnostic warning  "-Woverflow"
+
 		reserved_1 = 0;
 		reserved_2 = 0;
 		//WindowSize = _REV16(8192);

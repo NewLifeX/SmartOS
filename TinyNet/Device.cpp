@@ -43,7 +43,10 @@ void Device::Write(Stream& ms) const
 {
 	TS("Device::Write");
 
+/*#pragma  GCC diagnostic ignored  "-Winvalid-offsetof"
 	Buffer bs((void*)&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+#pragma  GCC diagnostic warning  "-Winvalid-offsetof"*/
+	Buffer bs((void*)&Address, (byte*)&Cfg - (byte*)&Address);
 	ms.WriteArray(bs);
 }
 
@@ -52,7 +55,8 @@ void Device::Read(Stream& ms)
 	TS("Device::Read");
 
 	// 为了避免不同版本的配置兼容，指定长度避免覆盖过头
-	Buffer bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	//Buffer bs(&Address, offsetof(Device, Cfg) - offsetof(Device, Address));
+	Buffer bs(&Address, (byte*)&Cfg - (byte*)&Address);
 	//bs	= ms.ReadArray();
 	// 为了减少一个临时对象，直接传入外部包装给内部拷贝
 	uint len 	= ms.ReadEncodeInt();

@@ -693,7 +693,7 @@ namespace NewLife.Reflection
 
         private String GetObjPath(String file)
         {
-            var objName = "Obj";
+            var objName = "Gcc";
             if (Tiny)
                 objName += "T";
             else if (Debug)

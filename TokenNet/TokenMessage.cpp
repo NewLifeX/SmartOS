@@ -538,8 +538,9 @@ TokenStat::TokenStat()
 	_Last		= nullptr;
 	_Total		= nullptr;*/
 
-	int start	= offsetof(TokenStat, SendRequest);
-	Buffer((byte*)this + start, sizeof(TokenStat) - start).Clear();
+	/*int start	= offsetof(TokenStat, SendRequest);
+	Buffer((byte*)this + start, sizeof(TokenStat) - start).Clear();*/
+	Buffer(&SendRequest, (byte*)&WriteReply + sizeof(WriteReply) - (byte*)&SendRequest).Clear();
 }
 
 TokenStat::~TokenStat()
