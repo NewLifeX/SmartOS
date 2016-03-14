@@ -98,14 +98,15 @@ uint Stream::Read(void* buf, uint offset, int count)
 
 	if(count == 0) return 0;
 
-	uint remain = Remain();
+	/*uint remain = Remain();
 	if(count < 0)
 		count = remain;
 	else if(count > remain)
 		count = remain;
 
 	// 复制需要的数据
-	memcpy((byte*)buf + offset, Current(), count);
+	memcpy((byte*)buf + offset, Current(), count);*/
+	count	= Buffer(_Buffer, Length).CopyTo(_Position, (byte*)buf + offset, count);
 
 	// 游标移动
 	_Position += count;
@@ -144,7 +145,8 @@ bool Stream::Write(const void* buf, uint offset, uint count)
 	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;
 
-	memcpy(Current(), (byte*)buf + offset, count);
+	//memcpy(Current(), (byte*)buf + offset, count);
+	count	= Buffer(_Buffer, Length).Copy(_Position, (byte*)buf + offset, count);
 
 	_Position += count;
 	// 内容长度不是累加，而是根据位置而扩大
@@ -174,7 +176,7 @@ uint Stream::WriteEncodeInt(uint value)
 	return count;
 }
 
-// 写入字符串，先写入压缩编码整数表示的长度
+/*// 写入字符串，先写入压缩编码整数表示的长度
 uint Stream::Write(const char* str)
 {
 	if(!CanWrite) return false;
@@ -185,7 +187,7 @@ uint Stream::Write(const char* str)
 	if(len) Write((byte*)str, 0, len);
 
 	return len;
-}
+}*/
 
 // 把字节数组的数据写入到数据流。不包含长度前缀
 bool Stream::Write(const Buffer& bs)
@@ -361,7 +363,7 @@ MemoryStream::~MemoryStream()
 	assert_ptr(this);
 	if(_needFree)
 	{
-		//if(_Buffer != _Arr) 
+		//if(_Buffer != _Arr)
 		if(_needFree)
 			delete[] _Buffer;
 		_Buffer = nullptr;
@@ -388,9 +390,10 @@ bool MemoryStream::CheckRemain(uint count)
 
 		// 申请新的空间，并复制数据
 		byte* bufNew = new byte[size];
-		if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
-		
-		//if(_Buffer != _Arr) 
+		//if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
+		if(Length > 0) Buffer(_Buffer, Length).CopyTo(0, bufNew, -1);
+
+		//if(_Buffer != _Arr)
 		if(_needFree)
 			delete[] _Buffer;
 

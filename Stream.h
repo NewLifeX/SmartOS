@@ -56,7 +56,7 @@ public:
 	// 写入7位压缩编码整数
 	uint WriteEncodeInt(uint value);
 	// 写入字符串，先写入压缩编码整数表示的长度
-	uint Write(const char* str);
+	//uint Write(const char* str);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
 	bool Write(const Buffer& bs);
 
