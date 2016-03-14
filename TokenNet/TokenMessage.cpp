@@ -176,7 +176,7 @@ void TokenController::Open()
 		//Stat->Start();
 		//debug_printf("TokenStat::令牌统计 ");
 #if DEBUG
-		_taskID = Sys.AddTask(StatTask, this, 5000, 30000, "令牌统计");
+		_taskID = Sys.AddTask([](void* param){ ((TokenController*)param)->ShowStat(); }, this, 5000, 30000, "令牌统计");
 #endif
 	}
 
@@ -501,6 +501,8 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 void TokenController::ShowStat()
 {
+	TS("TokenController::ShowStat");
+
 	char cs[128];
 	String str(cs, ArrayLength(cs));
 	//str.Clear();
@@ -518,11 +520,11 @@ void TokenController::ShowStat()
 	}
 }
 
-void TokenController::StatTask(void* param)
+/*void TokenController::StatTask(void* param)
 {
-	TokenController* st = (TokenController*)param;
+	auto st = (TokenController*)param;
 	st->ShowStat();
-}
+}*/
 
 /******************************** TokenStat ********************************/
 
@@ -542,7 +544,7 @@ TokenStat::TokenStat()
 
 	/*int start	= offsetof(TokenStat, SendRequest);
 	Buffer((byte*)this + start, sizeof(TokenStat) - start).Clear();*/
-	Buffer(&SendRequest, (byte*)&WriteReply + sizeof(WriteReply) - (byte*)&SendRequest).Clear();
+	Buffer(&SendRequest, (byte*)&_Total + sizeof(_Total) - (byte*)&SendRequest).Clear();
 }
 
 TokenStat::~TokenStat()
@@ -636,6 +638,10 @@ void TokenStat::Clear()
 
 String& TokenStat::ToStr(String& str) const
 {
+	TS("TokenStat::ToStr");
+	assert_ptr(this);
+
+	debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X \r\n", this, _Last, _Total);
 	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
 	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest + " 异步" + RecvReplyAsync;
 	if (Read > 0) str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;

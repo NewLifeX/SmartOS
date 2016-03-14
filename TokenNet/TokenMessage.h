@@ -94,7 +94,7 @@ private:
 	uint		_taskID;
 
 	void ShowStat();
-	static void StatTask(void* param);
+	//static void StatTask(void* param);
 
 	class QueueItem
 	{
