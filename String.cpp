@@ -235,7 +235,7 @@ int String::CopyTo(int srcIndex, void* dest, int len) const
 	int rs	= Buffer::CopyTo(srcIndex, dest, len);
 	if(!rs) return 0;
 
-	((char*)dest)[len]	= '\0';
+	((char*)dest)[rs]	= '\0';
 
 	return rs;
 }
