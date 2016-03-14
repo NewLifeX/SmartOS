@@ -844,10 +844,10 @@ bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 	// 检查要发送数据的长度
 	uint len = bs.Length();
 	byte pw	= 32;
-	if(pw > 0) len = pw;
-	ByteArray bs2(bs.GetBuffer(), len);
-	WriteBuf(cmd, bs2);
-	//WriteBuf(cmd, bs.Sub(0, len));
+	if(len > pw) len = pw;
+	//ByteArray bs2(bs.GetBuffer(), len);
+	//WriteBuf(cmd, bs2);
+	WriteBuf(cmd, bs.Sub(0, len));
 
 	// 进入TX，维持一段时间
 	//_CE = false;
