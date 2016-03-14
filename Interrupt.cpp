@@ -161,7 +161,7 @@ uint TInterrupt::EncodePriority (uint priorityGroup, uint preemptPriority, uint 
 
 void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority) const
 {
-    NVIC_DecodePriority(priority, priorityGroup, pPreemptPriority, pSubPriority);
+    NVIC_DecodePriority(priority, priorityGroup, (uint32_t*)pPreemptPriority, (uint32_t*)pSubPriority);
 }
 #endif
 
@@ -169,17 +169,29 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 	#pragma arm section code = "SectionForSys"
 #endif
 
-__asm uint GetIPSR()
+#if defined ( __CC_ARM   )
+__ASM uint GetIPSR()
 {
     mrs     r0,IPSR               // exception number
     bx      lr
 }
+#elif (defined (__GNUC__))
+uint32_t GetIPSR(void) __attribute__( ( naked ) );
+uint32_t GetIPSR(void)
+{
+  uint32_t result=0;
+
+  __ASM volatile ("MRS r0, IPSR\n\t" 
+                  "BX  lr     \n\t"  : "=r" (result) );
+  return(result);
+}
+#endif
 
 // 是否在中断里面
 bool TInterrupt::IsHandler() const { return GetIPSR() & 0x01; }
 
 #ifdef TINY
-__asm void FaultHandler() { }
+__ASM void FaultHandler() { }
 #else
 void UserHandler()
 {
@@ -233,7 +245,8 @@ extern "C"
 		while(true);
 	}
 
-	__asm void FaultHandler()
+#if defined ( __CC_ARM   )
+	__ASM void FaultHandler()
 	{
 		IMPORT FAULT_SubHandler
 
@@ -263,6 +276,21 @@ extern "C"
 		b        FAULT_SubHandler
 		//never expect to return
 	}
+#elif (defined (__GNUC__))
+	void FaultHandler()
+	{
+		__ASM volatile (
+#if defined(STM32F0) || defined(GD32F150)
+			"push	{r4-r7}		\n\t" 
+#else
+			"add	sp,sp,#16	\n\t"
+			"push	{r0-r11}	\n\t"
+#endif
+			"mov	r0,sp	\n\t"
+			"mrs	r1,IPSR	\n\t"
+			"b	FAULT_SubHandler	\n\t");
+	}
+#endif
 }
 #endif
 

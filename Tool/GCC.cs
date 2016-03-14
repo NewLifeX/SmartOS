@@ -203,7 +203,7 @@ namespace NewLife.Reflection
             }
 			if(showCmd)
 			{
-				if (Debug) sb.Append(" -v");
+				//if (Debug) sb.Append(" -v");
 
 				Console.Write("命令参数：");
 				Console.ForegroundColor = ConsoleColor.Magenta;
@@ -769,6 +769,10 @@ namespace NewLife.Reflection
 				ss.Add("that depend on a template parameter", "依赖于模板参数");
 				ss.Add("so a declaration of", "所以声明");
 				ss.Add("must be available", "必须启用");
+				ss.Add("initializing argument", "初始参数");
+				ss.Add("conflicting declaration", "声明冲突");
+				ss.Add("previous declaration", "前一个声明");
+				ss.Add("invalid conversion from", "无效转换");
             }
 
             if (Words.Count == 0)

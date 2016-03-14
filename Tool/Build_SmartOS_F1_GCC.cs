@@ -20,9 +20,9 @@ namespace NewLife.Reflection
 			build.Cortex = 3;
 			build.Output = "F1";
 			build.AddIncludes("..\\..\\Lib");
-            build.AddFiles("..\\", "Type.cpp");
-            //build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
-            /*build.AddFiles("..\\Platform", "Boot_F1.cpp");
+            //build.AddFiles("..\\", "Type.cpp");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;Thread");
+            build.AddFiles("..\\Platform", "Boot_F1.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f10x.s");
             build.AddFiles("..\\Security", "*.cpp");
             build.AddFiles("..\\Storage");
@@ -32,13 +32,13 @@ namespace NewLife.Reflection
             build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
-            build.AddFiles("..\\TokenNet");*/
+            build.AddFiles("..\\TokenNet");
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
 
-			/*build.Debug = false;
+			build.Debug = false;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_F1");*/
+            build.BuildLib("..\\SmartOS_F1");
 
 			/*build.Tiny = true;
             build.CompileAll();
