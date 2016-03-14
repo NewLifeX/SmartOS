@@ -224,6 +224,7 @@ void Buffer::Clear(byte item)
 }
 
 // 截取一个子缓冲区
+	//### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
 Buffer Buffer::Sub(int index, int len)
 {
 	assert_param2(index + len <= _Length, "len <= _Length");

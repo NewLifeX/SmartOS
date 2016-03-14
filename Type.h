@@ -121,6 +121,7 @@ public:
 	void Clear(byte item = 0);
 
 	// 截取一个子缓冲区
+	//### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
 	Buffer Sub(int index, int len);
 	const Buffer Sub(int index, int len) const;
 
