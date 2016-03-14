@@ -34,11 +34,16 @@ TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 	OnDisconnected = nullptr;
 }
 
-const char* TcpSocket::ToString() const
+/*const char* TcpSocket::ToString() const
 {
 	static char name[10];
 	sprintf(name, "TCP_%d", Local.Port);
 	return name;
+}*/
+
+String& TcpSocket::ToStr(String& str) const
+{
+	return str + "TCP_" + Local.Port;
 }
 
 bool TcpSocket::OnOpen()

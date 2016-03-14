@@ -162,8 +162,10 @@ void TokenController::Open()
 
 	assert_param2(Port, "还没有传输口呢");
 
+	debug_printf("TokenNet::Inited 使用传输接口 ");
 	auto obj	= dynamic_cast<Object*>(Port);
-	debug_printf("TokenNet::Inited 使用传输接口 %s\r\n", obj->ToString());
+	if(obj) obj->Show(true);
+	//Port->Show(true);
 
 	auto sock	= dynamic_cast<ISocket*>(Port);
 	if(sock) Server	= &sock->Remote;

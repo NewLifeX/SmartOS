@@ -27,11 +27,12 @@ bool BufferPort::Open()
 	bool isNew	= false;
 	if(Port)
 	{
+		debug_printf("%s::Open \r\n", Name);
 		auto obj	= dynamic_cast<Object*>(Port);
 		if(obj)
-			debug_printf("%s::Open %s \r\n", Name, obj->ToString());
+			obj->Show(true);
 		else
-			debug_printf("%s::Open \r\n", Name);
+			debug_printf("\r\n");
 	}
 	else
 	{

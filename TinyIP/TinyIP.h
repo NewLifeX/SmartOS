@@ -12,7 +12,7 @@
 class TinyIP;
 
 // 网络数据处理Socket基类
-class TinySocket
+class TinySocket : public Object
 {
 public:
 	TinyIP*	Tip;	// TinyIP控制器
@@ -36,7 +36,7 @@ public:
 };
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
-class TinyIP : public ISocketHost
+class TinyIP : public Object, public ISocketHost
 {
 private:
 	ITransport*	_port;

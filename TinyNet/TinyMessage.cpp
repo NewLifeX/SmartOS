@@ -270,8 +270,10 @@ void TinyController::Open()
 
 	assert_param2(Port, "还没有传输口呢");
 
+	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 ", Address, Address);
 	auto obj	= dynamic_cast<Object*>(Port);
-	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, obj->ToString());
+	if(obj) obj->Show(true);
+	//Port->Show(true);
 	debug_printf("\t间隔: %dms\r\n", Interval);
 	debug_printf("\t超时: %dms\r\n", Timeout);
 	debug_printf("\t模式: %d ", Mode);
