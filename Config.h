@@ -19,19 +19,19 @@ public:
 	Config(const Storage& st, uint addr, uint size);
 
 	// 查找。size不为0时表示要查找该大小的合适配置块
-    const void* Find(const char* name) const;
+    const void* Find(const String& name) const;
 	// 创建一个指定大小的配置块
     const void* New(int size) const;
     // 删除。仅清空名称，并不删除数据区
-	bool Remove(const char* name) const;
+	bool Remove(const String& name) const;
     // 设置配置数据
-    const void* Set(const char* name, const Buffer& bs) const;
+    const void* Set(const String& name, const Buffer& bs) const;
 	// 获取配置数据
-    bool Get(const char* name, Buffer& bs) const;
+    bool Get(const String& name, Buffer& bs) const;
 	// 获取配置数据，如果不存在则覆盖
     //bool GetOrSet(const char* name, Buffer& bs) const;
 	// 获取配置数据
-    const void* Get(const char* name) const;
+    const void* Get(const String& name) const;
 
 	// 当前
 	static const Config* Current;

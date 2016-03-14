@@ -2,6 +2,8 @@
 
 #include "Platform\stm32.h"
 
+#include <stdlib.h>
+
 // 仅用于调试使用的一些函数实现，RTM不需要
 
 #define MEM_DEBUG DEBUG
@@ -313,6 +315,7 @@ void ShowFault(uint exception)
 
 #else
 
+#if defined ( __CC_ARM   )
 	#  include <rw/_defs.h>
 
 // 发行版不允许抛出异常以及显示异常信息，这将极大减小使用C++标准库所带来的固件膨胀
@@ -324,5 +327,6 @@ void _RWSTD_EXPORT __rw_throw (int, ...)
 }
 
 _RWSTD_NAMESPACE_END   // __rw
+#endif
 
 #endif

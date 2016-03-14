@@ -358,9 +358,10 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 	if(st)
 	{
 		msg_printf("Mac=");
-		if(strcmp(port->ToString(), "R24") == 0)
+		auto name	= port->ToString();
+		if(name == "R24")
 			ByteArray(st, 5).Show();
-		else if(strcmp(port->ToString(), "ShunCom") == 0)
+		else if(name == "ShunCom")
 			ByteArray(st, 2).Show();
 		else
 			ByteArray(st, 6).Show();

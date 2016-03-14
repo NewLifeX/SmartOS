@@ -29,7 +29,7 @@ struct ConfigBlock
     const void*			Data() const;
 	uint CopyTo(Buffer& bs) const;
 
-    bool Init(const char* name, const Buffer& bs);
+    bool Init(const String& name, const Buffer& bs);
     bool Write(const Storage& storage, uint addr, const Buffer& bs);
 	bool Remove(const Storage& storage, uint addr);
 };
@@ -73,28 +73,19 @@ uint ConfigBlock::CopyTo(Buffer& bs) const
 }
 
 // 构造一个新的配置块
-bool ConfigBlock::Init(const char* name, const Buffer& bs)
+bool ConfigBlock::Init(const String& name, const Buffer& bs)
 {
-    if(name == nullptr) return false;
-    //assert_param2(name, "配置块名称不能为空");
+    if(!name) return false;
 
 	TS("ConfigBlock::Init");
 
-	uint slen = strlen(name);
-    if(slen > sizeof(Name)) return false;
-
-	if(slen > ArrayLength(Name)) slen = ArrayLength(Name);
-	
-	Buffer ns(Name, ArrayLength(Name));
-	// 无论如何，把整个名称区域清空
-	ns.Clear();
+    if(name.Length() > sizeof(Name)) return false;
 
 	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
 	if(bs.Length() > 0)
 	{
 		Size	= bs.Length();
-		ns.SetLength(slen);
-		ns	= name;
+		name.CopyTo(0, Name, -1);
 	}
 
     Hash = GetHash();
@@ -169,26 +160,23 @@ bool CheckSignature(const Storage& st, uint& addr, bool create)
 }
 
 // 循环查找配置块
-const ConfigBlock* FindBlock(const Storage& st, uint addr, const char* name)
+const ConfigBlock* FindBlock(const Storage& st, uint addr, const String& name)
 {
 	TS("Config::Find");
 
-    if(name == nullptr) return nullptr;
-	//assert_param2(name, "配置段名称不能为空");
+    if(!name) return nullptr;
 
 	if(!CheckSignature(st, addr, false)) return nullptr;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
 
-	uint slen = strlen(name);
-    if(slen > sizeof(cfg->Name)) return nullptr;
-	//assert_param2(slen <= sizeof(cfg->Name), "配置段名称最大4个字符");
+    if(name.Length() > sizeof(cfg->Name)) return nullptr;
 
 	// 遍历链表，找到同名块
     while(cfg->Valid())
     {
-        if(cfg->Name[0] && memcmp(name, cfg->Name, slen) == 0) return cfg;
+        if(cfg->Name[0] && name == cfg->Name) return cfg;
 
         cfg = cfg->Next();
     }
@@ -218,7 +206,7 @@ const ConfigBlock* NewBlock(const Storage& st, uint addr, int size)
 }
 
 // 循环查找配置块
-const void* Config::Find(const char* name) const
+const void* Config::Find(const String& name) const
 {
 	return FindBlock(Device, Address, name);
 }
@@ -240,12 +228,12 @@ const void* Config::New(int size) const
 }
 
 // 删除
-bool Config::Remove(const char* name) const
+bool Config::Remove(const String& name) const
 {
     //return Set(name, ByteArray(0));
 	TS("Config::Remove");
 
-    if(name == nullptr) return nullptr;
+    if(!name) return false;
 
 	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) return false;
@@ -258,13 +246,11 @@ bool Config::Remove(const char* name) const
 }
 
 // 根据名称更新块
-const void* Config::Set(const char* name, const Buffer& bs) const
+const void* Config::Set(const String& name, const Buffer& bs) const
 {
 	TS("Config::Set");
 
-    if(name == nullptr) return nullptr;
-    //assert_param2(name, "配置块名称不能为空");
-	//assert_param2(Device, "未指定配置段的存储设备");
+    if(!name) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) cfg	= NewBlock(Device, Address, bs.Length());
@@ -279,12 +265,11 @@ const void* Config::Set(const char* name, const Buffer& bs) const
 }
 
 // 获取配置数据
-bool Config::Get(const char* name, Buffer& bs) const
+bool Config::Get(const String& name, Buffer& bs) const
 {
 	TS("Config::Get");
 
-    if(name == nullptr) return false;
-    //assert_param2(name, "配置块名称不能为空");
+    if(!name) return false;
 
 	auto cfg = FindBlock(Device, Address, name);
     if(!cfg) return false;
@@ -292,12 +277,11 @@ bool Config::Get(const char* name, Buffer& bs) const
 	return cfg->CopyTo(bs) > 0;
 }
 
-const void* Config::Get(const char* name) const
+const void* Config::Get(const String& name) const
 {
 	TS("Config::GetByName");
 
-    if(name == nullptr) return nullptr;
-    //assert_param2(name, "配置块名称不能为空");
+    if(!name) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
     if(cfg && cfg->Size) return cfg->Data();
@@ -306,7 +290,7 @@ const void* Config::Get(const char* name) const
 }
 
 /*// 获取配置数据，如果不存在则覆盖
-bool Config::GetOrSet(const char* name, Buffer& bs) const
+bool Config::GetOrSet(const String& name, Buffer& bs) const
 {
 	TS("Config::GetOrSet");
 
