@@ -103,7 +103,7 @@ class DataOutputPort : public ByteDataPort, public Object
 public:
 	OutputPort*	Port;
 
-	DataOutputPort(OutputPort* port = false) { Port = port; }
+	DataOutputPort(OutputPort* port = nullptr) { Port = port; }
 
 protected:
 	virtual int OnWrite(byte data) { Port->Write(data); return OnRead(); };
@@ -118,7 +118,7 @@ class DataInputPort : public IDataPort, public Object
 public:
 	InputPort*	Port;
 
-	DataInputPort(InputPort* port = false) { Port = port; }
+	DataInputPort(InputPort* port = nullptr) { Port = port; }
 
 	virtual int Write(byte* data) { return Read(data); };
 	virtual int Read(byte* data) { *data = Port->Read() ? 1 : 0; return Size(); };

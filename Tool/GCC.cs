@@ -760,6 +760,7 @@ namespace NewLife.Reflection
 				ss.Add("in this scope", "在该范围");
 				ss.Add("In function", "在函数");
 				ss.Add("In member function", "在成员函数");
+				ss.Add("In destructor", "在析构函数");
 				ss.Add("In instantiation of", "在初始化");
 				ss.Add("At global scope", "在全局范围");
 				ss.Add("if you use", "如果你使用");
@@ -773,6 +774,13 @@ namespace NewLife.Reflection
 				ss.Add("conflicting declaration", "声明冲突");
 				ss.Add("previous declaration", "前一个声明");
 				ss.Add("invalid conversion from", "无效转换");
+				ss.Add("to pointer type", "到指针类型");
+				ss.Add("large integer", "大整数");
+				ss.Add("implicitly truncated to", "隐式截断到");
+				ss.Add("unsigned type", "无符号类型");
+				ss.Add("no matching function for call to", "没有匹配函数去调用");
+				ss.Add("cast to pointer from integer of different size", "从不同大小的整数转为指针");
+				ss.Add("candidate expects", "候选预期");
             }
 
             if (Words.Count == 0)
@@ -785,6 +793,7 @@ namespace NewLife.Reflection
 				Words.Add("expected", "预期");
 				Words.Add("before", "在之前");
                 Words.Add("cannot", "不能");
+				Words.Add("converting", "转换");
                 /*Words.Add("open", "打开");
                 Words.Add("source", "源");
                 Words.Add("input", "输入");
