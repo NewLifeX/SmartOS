@@ -20,7 +20,6 @@ namespace NewLife.Reflection
 			build.Cortex = 3;
 			build.Output = "F1";
 			build.AddIncludes("..\\..\\Lib");
-            //build.AddFiles("..\\", "Type.cpp");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;Thread");
             build.AddFiles("..\\Platform", "Boot_F1.cpp");
             //build.AddFiles("..\\Platform", "startup_stm32f10x.s");
@@ -29,6 +28,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
             build.AddFiles("..\\Net");
+            build.AddFiles("..\\Test");
             build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
