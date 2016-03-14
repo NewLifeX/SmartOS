@@ -1,5 +1,7 @@
 ﻿#include "Sys.h"
 
+#include <string.h>
+
 void TestBuffer()
 {
 	TS("TestBuffer");
