@@ -280,37 +280,57 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 	ms.Write((ushort)0);
 	ms.Write((ushort)0);
 
-	const char* dname = name.GetBuffer();
-	ushort dlen = strlen(dname);
+	int st	= 0;
+	int idx	= 0;
+	//const char* dname = name.GetBuffer();
+	//ushort dlen = strlen(dname);
 	for (;;)
 	{
 		// 查找下一个小圆点
-		const char* cp1 = strchr(dname, '.');
-
-		int len = 0;
-		if (cp1 != nullptr)
-			len = cp1 - dname;	/* More to come */
-		else
-			len = dlen;			/* Last component */
-
-		//*cp++ = len;				/* Write length of component */
+		idx	= name.IndexOf('.', st);
 		// 写长度
+		int len	= (idx >= 0 ? idx : name.Length()) - st;
 		ms.Write((byte)len);
-		if (len == 0) break;
 
-		/* Copy component up to (but not including) dot */
-		//strncpy((char *)cp, dname, len);
-		//cp += len;
-		ms.Write((const byte*)dname, 0, len);
-		if (cp1 == nullptr)
+		// 写字符串
+		ms.Write(name.GetBuffer() + st, 0, len);
+
+		if(idx < 0)
 		{
-			//*cp++ = 0;			/* Last one; write null and finish */
 			// 最后一个，写空，完成
 			ms.Write((byte)0);
 			break;
 		}
-		dname += len+1;
-		dlen -= len+1;
+
+		st	= idx + 1;
+
+		//// 查找下一个小圆点
+		//const char* cp1 = strchr(dname, '.');
+        //
+		//int len = 0;
+		//if (cp1 != nullptr)
+		//	len = cp1 - dname;	/* More to come */
+		//else
+		//	len = dlen;			/* Last component */
+        //
+		////*cp++ = len;				/* Write length of component */
+		//// 写长度
+		//ms.Write((byte)len);
+		//if (len == 0) break;
+        //
+		///* Copy component up to (but not including) dot */
+		////strncpy((char *)cp, dname, len);
+		////cp += len;
+		//ms.Write((const byte*)dname, 0, len);
+		//if (cp1 == nullptr)
+		//{
+		//	//*cp++ = 0;			/* Last one; write null and finish */
+		//	// 最后一个，写空，完成
+		//	ms.Write((byte)0);
+		//	break;
+		//}
+		//dname += len+1;
+		//dlen -= len+1;
 	}
 
 	ms.Write((ushort)0x0001);				/* type */
