@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdarg.h>
 
-#include "String.h"
+#include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
 extern char* itoa(int value, char* string, int radix);

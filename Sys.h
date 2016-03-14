@@ -41,7 +41,7 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 #endif
 
 #include "Type.h"
-#include "String.h"
+#include "SString.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"
