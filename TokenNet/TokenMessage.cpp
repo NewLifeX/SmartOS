@@ -641,7 +641,7 @@ String& TokenStat::ToStr(String& str) const
 	TS("TokenStat::ToStr");
 	assert_ptr(this);
 
-	debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X \r\n", this, _Last, _Total);
+	//debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X \r\n", this, _Last, _Total);
 	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
 	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest + " 异步" + RecvReplyAsync;
 	if (Read > 0) str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;

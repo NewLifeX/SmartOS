@@ -21,7 +21,7 @@ public:
 
 	// 消息所占据的指令数据大小。包括头部、负载数据、校验和附加数据
 	virtual uint Size() const = 0;
-	// 数据缓冲区大小
+	// 最大数据大小
 	virtual uint MaxDataSize() const = 0;
 
 	// 从数据流中读取消息
