@@ -214,7 +214,7 @@ namespace NewLife.Reflection
 			if(Preprocess) sb.Append(" -E");
 			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
             sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
-			sb.AppendFormat(" -MF {0}.dep", objName.GetFullPath());
+			sb.AppendFormat(" -MF {0}.dep", objName);
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -222,13 +222,8 @@ namespace NewLife.Reflection
             return Complier.Run(sb.ToString(), 100, WriteLog);
         }
 
-        public Int32 Assemble(String file)
+        public Int32 Assemble(String file, Boolean showCmd)
         {
-            /*
-             * --cpu Cortex-M3 -g --apcs=interwork --pd "__MICROLIB SETA 1"
-             * --pd "__UVISION_VERSION SETA 515" --pd "STM32F10X_HD SETA 1" --list ".\Lis\*.lst" --xref -o "*.o" --depend "*.d"
-             */
-
             var lstName = GetListPath(file);
             var objName = GetObjPath(file);
 
@@ -244,19 +239,37 @@ namespace NewLife.Reflection
             }
 
             var sb = new StringBuilder();
-            sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
-            sb.AppendFormat(" --pd \"{0} SETA 1\"", Flash);
-
-            if (GD32) sb.Append(" --pd \"GD32 SETA 1\"");
+			sb.Append("-ggdb");
+			if(file.EndsWithIgnoreCase(".cpp"))
+				sb.Append(" -std=c++17");
+            sb.AppendFormat(" -mlittle-endian -mthumb -mcpu={0} -mthumb-interwork -O{1}", CPU, Debug ? 0 : 3);
+			sb.AppendFormat(" -ffunction-sections -fdata-sections");
+			sb.AppendFormat(" -fno-exceptions -MD");
+            sb.AppendFormat(" -D{0}", Flash);
+            if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
-                sb.AppendFormat(" --pd \"{0} SETA 1\"", item);
+                sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" --pd \"DEBUG SETA 1\"");
-            if (Tiny) sb.Append(" --pd \"TINY SETA 1\"");
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if (Tiny) sb.Append(" -DTINY");
+			sb.AppendFormat(" -I.");
+            foreach (var item in Includes)
+            {
+                sb.AppendFormat(" -I{0}", item);
+            }
+			if(showCmd)
+			{
+				//if (Debug) sb.Append(" -v");
 
-            sb.AppendFormat(" --list \"{0}.lst\" --xref -o \"{1}.o\" --depend \"{1}.d\"", lstName, objName);
-            sb.AppendFormat(" \"{0}\"", file);
+				Console.Write("命令参数：");
+				Console.ForegroundColor = ConsoleColor.Magenta;
+				Console.WriteLine(sb);
+				Console.ResetColor();
+			}
+			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
+            sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
+			sb.AppendFormat(" -MF {0}.dep", objName);
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -277,6 +290,7 @@ namespace NewLife.Reflection
             var list = new List<String>();
 
 			var cpp = 0;
+			var asm = 0;
             foreach (var item in Files)
             {
                 var rs = 0;
@@ -290,7 +304,8 @@ namespace NewLife.Reflection
 						if(rs != -2) cpp++;
                         break;
                     case ".s":
-                        rs = Assemble(item);
+                        rs = Assemble(item, asm == 0);
+						if(rs != -2) asm++;
                         break;
                     default:
                         break;
