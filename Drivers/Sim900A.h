@@ -25,6 +25,8 @@ public:
 
 	bool Send(const Buffer& bs);
 
+	//virtual const String ToString() const { return String("Sim900A"); }
+
 private:
 	void Init(uint msTimeout = 1000);
 

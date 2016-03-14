@@ -256,7 +256,7 @@ typedef union _WORD_VAL
     {
         byte LB;
         byte HB;
-    } byte;
+    } bytes;
     struct
     {
         unsigned char b0:1;

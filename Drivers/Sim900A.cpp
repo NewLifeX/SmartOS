@@ -24,7 +24,8 @@ bool Sim900A::OnOpen()
 {
 	if(Port)
 	{
-		debug_printf("Sim900A::Open %s \r\n", Port->ToString());
+		auto obj	= dynamic_cast<Object*>(Port);
+		debug_printf("Sim900A::Open %s \r\n", obj->ToString());
 	}
 	else
 	{

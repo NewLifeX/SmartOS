@@ -49,7 +49,7 @@ public:
 
     //void Init(byte mac[6]);
     byte GetRevision();
-	
+
 	bool Broadcast;
 	// 设置是否接收广播数据包
 	void SetBroadcast(bool flag);
@@ -58,6 +58,9 @@ public:
 
 	int	Error;	// 错误次数
 	void CheckError();
+
+	//virtual const String ToString() const { return String("Enc28j60"); }
+
 protected:
 	virtual bool OnOpen();
     virtual void OnClose() { }

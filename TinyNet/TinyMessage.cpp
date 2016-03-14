@@ -270,7 +270,8 @@ void TinyController::Open()
 
 	assert_param2(Port, "还没有传输口呢");
 
-	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, Port->ToString());
+	auto obj	= dynamic_cast<Object*>(Port);
+	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 %s\r\n", Address, Address, obj->ToString());
 	debug_printf("\t间隔: %dms\r\n", Interval);
 	debug_printf("\t超时: %dms\r\n", Timeout);
 	debug_printf("\t模式: %d ", Mode);
@@ -317,8 +318,11 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 		if(NoLogCodes[i] == 0) break;
 	}
 
+	auto obj	= dynamic_cast<Object*>(Port);
+	auto name	= obj->ToString();
+
 	int blank = 6;
-	msg_printf("%s", port->ToString());
+	msg_printf("%s", name.GetBuffer());
 	if(send && !msg.Reply)
 	{
 		msg_printf("::Send ");
@@ -358,7 +362,6 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 	if(st)
 	{
 		msg_printf("Mac=");
-		auto name	= port->ToString();
 		if(name == "R24")
 			ByteArray(st, 5).Show();
 		else if(name == "ShunCom")
