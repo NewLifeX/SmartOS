@@ -28,12 +28,13 @@ public:
 	explicit String(double value, byte decimalPlaces = 2);
 	//virtual ~String();
 
+	using Array::SetLength;
+
 	// 内存管理
 	//inline uint Length() const { return _Length; }
 	inline char* GetBuffer() const { return (char*)_Arr; }
-	void SetBuffer(const void* str, int length);
 	// 设置数组长度。改变长度后，确保最后以0结尾
-	virtual bool SetLength(int length, bool bak = false);
+	virtual bool SetLength(int length, bool bak);
 
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);

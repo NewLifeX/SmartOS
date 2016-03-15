@@ -188,15 +188,17 @@ void String::move(String& rhs)
 	copy(rhs._Arr, rhs._Length);
 }
 
-void String::SetBuffer(const void* str, int length)
+/*void String::SetBuffer(const void* str, int length)
 {
+	release();
+	
 	_Arr		= (char*)str;
 	_Capacity	= length;
 	_Length		= 0;
 
 	_needFree	= false;
 	_canWrite	= false;
-}
+}*/
 
 bool String::SetLength(int length, bool bak)
 {

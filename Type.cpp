@@ -68,8 +68,6 @@ const String Type::Name() const
 
 Buffer::Buffer(void* ptr, int len)
 {
-	//assert_param2(ptr && len > 0, "Buffer构造指针不能为空！");
-
 	_Arr	= (char*)ptr;
 	_Length	= len;
 }
@@ -135,7 +133,7 @@ byte& Buffer::operator[](int i)
 }
 
 // 设置数组长度。容量足够则缩小Length，否则失败。子类可以扩展以实现自动扩容
-bool Buffer::SetLength(int len, bool bak)
+bool Buffer::SetLength(int len)
 {
 	if(len > _Length) return false;
 
@@ -143,6 +141,12 @@ bool Buffer::SetLength(int len, bool bak)
 
 	return true;
 }
+
+/*void Buffer::SetBuffer(void* ptr, int len)
+{
+	_Arr		= (char*)ptr;
+	_Length		= len;
+}*/
 
 // 拷贝数据，默认-1长度表示当前长度
 int Buffer::Copy(int destIndex, const void* src, int len)
@@ -158,7 +162,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	{
 		// 要拷贝进来的数据超过内存大小，给子类尝试扩容，如果扩容失败，则只拷贝没有超长的那一部分
 		// 子类可能在这里扩容
-		if(!SetLength(destIndex + len, true)) len	= remain;
+		if(!SetLength(destIndex + len)) len	= remain;
 	}
 
 	// 放到这里判断，前面有可能自动扩容
@@ -397,6 +401,7 @@ Array::~Array()
 	Release();
 }
 
+// 释放已占用内存
 bool Array::Release()
 {
 	auto p	= _Arr;
@@ -440,20 +445,39 @@ Array& Array::operator = (Array&& rval)
 }
 
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
-bool Array::SetLength(int length, bool bak)
+bool Array::SetLength(int len)
 {
-	if(length <= _Capacity)
+	return SetLength(len, false);
+}
+
+bool Array::SetLength(int len, bool bak)
+{
+	if(len <= _Capacity)
 	{
-		_Length = length;
+		_Length = len;
 	}
 	else
 	{
-		if(!CheckCapacity(length, bak ? _Length : 0)) return false;
+		if(!CheckCapacity(len, bak ? _Length : 0)) return false;
 		// 扩大长度
-		if(length > _Length) _Length = length;
+		if(len > _Length) _Length = len;
 	}
 	return true;
 }
+
+/*void Array::SetBuffer(void* ptr, int len)
+{
+	Release();
+	
+	Buffer::SetBuffer(ptr, len);
+}
+
+void Array::SetBuffer(const void* ptr, int len)
+{
+	SetBuffer((void*)ptr, len);
+	
+	_canWrite	= false;
+}*/
 
 // 设置数组元素为指定值，自动扩容
 bool Array::SetItem(const void* data, int index, int count)

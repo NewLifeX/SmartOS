@@ -102,7 +102,8 @@ public:
 	inline int Length() const { return _Length; }
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
-	virtual bool SetLength(int len, bool bak = false);
+	virtual bool SetLength(int len);
+	//virtual void SetBuffer(void* ptr, int len);
 
     // 重载索引运算符[]，返回指定元素的第一个字节
     byte operator[](int i) const;
@@ -167,9 +168,14 @@ public:
 	Array& operator = (Array&& rval);
 
 	using Buffer::Set;
+	using Buffer::SetLength;
 
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
-	virtual bool SetLength(int length, bool bak = false);
+	virtual bool SetLength(int len);
+	virtual bool SetLength(int len, bool bak);
+	//virtual void SetBuffer(void* ptr, int len);
+	//virtual void SetBuffer(const void* ptr, int len);
+
 	// 设置数组元素为指定值，自动扩容
 	bool SetItem(const void* data, int index, int count);
 	// 设置数组。直接使用指针，不拷贝数据
@@ -194,13 +200,14 @@ protected:
 	bool	_canWrite;	// 是否可写
 	ushort	_Size;		// 单个元素大小。字节
 
+	void Init();
+	void move(Array& rval);
+
 	// 检查容量。如果不足则扩大，并备份指定长度的数据
 	bool CheckCapacity(int len, int bak);
 	virtual void* Alloc(int len);
-	bool Release();
-	void Init();
-
-	void move(Array& rval);
+	// 释放已占用内存
+	virtual bool Release();
 };
 
 // 数组长度
