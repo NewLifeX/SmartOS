@@ -270,6 +270,7 @@ void TinyController::Open()
 
 	assert_param2(Port, "还没有传输口呢");
 
+#if MSG_DEBUG
 	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 ", Address, Address);
 	auto obj	= dynamic_cast<Object*>(Port);
 	if(obj) obj->Show(true);
@@ -277,6 +278,8 @@ void TinyController::Open()
 	debug_printf("\t间隔: %dms\r\n", Interval);
 	debug_printf("\t超时: %dms\r\n", Timeout);
 	debug_printf("\t模式: %d ", Mode);
+#endif
+
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
 	switch(Mode)
 	{
@@ -320,11 +323,13 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 		if(NoLogCodes[i] == 0) break;
 	}
 
+#if MSG_DEBUG
 	auto obj	= dynamic_cast<Object*>(Port);
 	auto name	= obj->ToString();
 
-	int blank = 6;
 	msg_printf("%s", name.GetBuffer());
+#endif
+	int blank = 6;
 	if(send && !msg.Reply)
 	{
 		msg_printf("::Send ");
@@ -359,6 +364,7 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 		str.Show();
 	}
 
+#if MSG_DEBUG
 	// 显示目标地址
 	auto st	= msg.State;
 	if(st)
@@ -372,6 +378,7 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 			ByteArray(st, 6).Show();
 		msg_printf(" ");
 	}
+#endif
 
 	msg.Show();
 }

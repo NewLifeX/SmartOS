@@ -149,7 +149,6 @@ uint PackPort::OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* 
 {
 	assert_ptr(param);
 
-	//PackPort* pp = (PackPort*)param;
-	PackPort* pp = dynamic_cast<PackPort*>((PackPort*)param);
+	auto pp	= dynamic_cast<PackPort*>((PackPort*)param);
 	return pp->OnReceive(bs, param2);
 }

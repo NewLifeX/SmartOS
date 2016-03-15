@@ -33,7 +33,6 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	OnStop	= nullptr;
 	taskID	= 0;
 
-	//ITransport* port = (ITransport*)socket;
 	auto port = dynamic_cast<ITransport*>(Socket);
 	port->Register(OnReceive, this);
 }
