@@ -454,7 +454,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
 
-	msg.Show();
 	auto ms = msg.ToStream();
 
 	UInt64 now   = Sys.Ms();
