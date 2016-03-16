@@ -307,7 +307,8 @@ void TinyController::Open()
 
 	// 初始化发送队列
 	_Queue	= new MessageNode[QueueLength];
-	Buffer(_Queue, sizeof(_Queue)).Clear();
+	//Buffer(_Queue, sizeof(*_Queue)).Clear();
+	Buffer(_Queue, sizeof(MessageNode) * QueueLength).Clear();
 
 	if(!_taskID)
 	{
