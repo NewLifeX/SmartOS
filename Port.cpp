@@ -191,7 +191,7 @@ void Port::OnOpen(void* param)
 		case PB3:
 		case PB4:
 		{
-			debug_printf("Close JTAG Pin P%c%d", _PIN_NAME(_Pin));
+			debug_printf("Close JTAG Pin P%c%d \r\n", _PIN_NAME(_Pin));
 
 			// PA15是jtag接口中的一员 想要使用 必须开启remap
 			RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);

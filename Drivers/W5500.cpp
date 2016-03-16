@@ -321,7 +321,7 @@ bool W5500::Open()
 			debug_printf(".");
 		}
 	}
-	debug_printf("\r\n");
+	//debug_printf("\r\n");
 
 	if(phy.LNK)
 	{
@@ -340,6 +340,7 @@ bool W5500::Open()
 		net_printf("PHY连接异常\r\n");
 		OnClose();
 		debug_printf("W5500::Open 打开失败！请检查网线!\r\n");
+
 		return false;
 	}
 
