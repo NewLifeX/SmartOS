@@ -91,28 +91,20 @@ byte* Stream::GetBuffer() const { return _Buffer; }
 // 数据流当前位置指针。注意：扩容后指针会改变！
 byte* Stream::Current() const { return &_Buffer[_Position]; }
 
-// 从当前位置读取数据
+/*// 从当前位置读取数据
 uint Stream::Read(void* buf, uint offset, int count)
 {
 	assert_param2(buf, "Stream::Read buf Error");
 
 	if(count == 0) return 0;
 
-	/*uint remain = Remain();
-	if(count < 0)
-		count = remain;
-	else if(count > remain)
-		count = remain;
-
-	// 复制需要的数据
-	memcpy((byte*)buf + offset, Current(), count);*/
 	count	= Buffer(_Buffer, Length).CopyTo(_Position, (byte*)buf + offset, count);
 
 	// 游标移动
 	_Position += count;
 
 	return count;
-}
+}*/
 
 // 读取7位压缩编码整数
 uint Stream::ReadEncodeInt()
@@ -131,13 +123,21 @@ uint Stream::ReadEncodeInt()
 // 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
 uint Stream::Read(Buffer& bs)
 {
-	uint rs = Read(bs.GetBuffer(), 0, bs.Length());
-	bs.SetLength(rs);
+	if(bs.Length() == 0) return 0;
 
-	return 0;
+	//uint count = Read(bs.GetBuffer(), 0, bs.Length());
+	Buffer ss(_Buffer, Length);
+	int count	= bs.Copy(0, ss, _Position, bs.Length());
+
+	// 游标移动
+	_Position += count;
+
+	bs.SetLength(count);
+
+	return count;
 }
 
-// 把数据写入当前位置
+/*// 把数据写入当前位置
 bool Stream::Write(const void* buf, uint offset, uint count)
 {
 	assert_param2(buf, "Stream::Read buf Error");
@@ -153,27 +153,30 @@ bool Stream::Write(const void* buf, uint offset, uint count)
 	if(_Position > Length) Length = _Position;
 
 	return true;
-}
+}*/
 
 // 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
 	if(!CanWrite) return 0;
 
-	uint count	= 1;
+	byte buf[8];
+	int k	= 0;
+	//uint count	= 1;
 	for(int i = 0; i < 4 && value >= 0x80; i++)
 	{
-		byte temp	= (byte)(value | 0x80);
-		Write(&temp, 0, 1);
+		buf[k++]	= (byte)(value | 0x80);
+		//Write(&temp, 0, 1);
 
-		count++;
+		//count++;
 		value	>>= 7;
 	}
 	{
-		byte temp = (byte)value;
-		Write(&temp, 0, 1);
+		buf[k++] = (byte)value;
+		//Write(&temp, 0, 1);
 	}
-	return count;
+
+	return Write(Buffer(buf, k));
 }
 
 /*// 写入字符串，先写入压缩编码整数表示的长度
@@ -192,7 +195,21 @@ uint Stream::Write(const char* str)
 // 把字节数组的数据写入到数据流。不包含长度前缀
 bool Stream::Write(const Buffer& bs)
 {
-	return Write(bs.GetBuffer(), 0, bs.Length());
+	int count	= bs.Length();
+	if(count == 0) return true;
+	if(!CanWrite) return false;
+	if(!CheckRemain(count)) return false;
+
+	Buffer ss(_Buffer, Length);
+	count	= ss.Copy((uint)_Position, bs, 0, count);
+
+	_Position += count;
+	// 内容长度不是累加，而是根据位置而扩大
+	if(_Position > Length) Length = _Position;
+
+	return true;
+
+	//return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
 // 读取指定长度的数据并返回首字节指针，移动数据流位置
@@ -236,14 +253,15 @@ uint Stream::ReadArray(Buffer& bs)
 		return 0;
 	}
 
-	return Read(bs.GetBuffer(), 0, len);
+	//return Read(bs.GetBuffer(), 0, len);
+	return Read(bs);
 }
 
 ByteArray Stream::ReadArray(int count)
 {
 	ByteArray bs;
 	bs.SetLength(count);
-	Read(bs.GetBuffer(), 0, bs.Length());
+	Read(bs);
 
 	return bs;
 }
@@ -261,7 +279,7 @@ ByteArray Stream::ReadArray()
 bool Stream::WriteArray(const Buffer& bs)
 {
 	WriteEncodeInt(bs.Length());
-	return Write(bs.GetBuffer(), 0, bs.Length());
+	return Write(bs);
 }
 
 String Stream::ReadString()
@@ -294,7 +312,8 @@ byte	Stream::ReadByte()
 ushort	Stream::ReadUInt16()
 {
 	ushort v;
-	if(!Read((byte*)&v, 0, 2)) return 0;
+	Buffer bs(&v, sizeof(v));
+	if(!Read(bs)) return 0;
 	if(!Little) v = _REV16(v);
 	return v;
 }
@@ -302,7 +321,8 @@ ushort	Stream::ReadUInt16()
 uint	Stream::ReadUInt32()
 {
 	uint v;
-	if(!Read((byte*)&v, 0, 4)) return 0;
+	Buffer bs(&v, sizeof(v));
+	if(!Read(bs)) return 0;
 	if(!Little) v = _REV(v);
 	return v;
 }
@@ -310,35 +330,36 @@ uint	Stream::ReadUInt32()
 UInt64	Stream::ReadUInt64()
 {
 	UInt64 v;
-	if(!Read((byte*)&v, 0, 8)) return 0;
+	Buffer bs(&v, sizeof(v));
+	if(!Read(bs)) return 0;
 	if(!Little) v = _REV(v >> 32) | ((UInt64)_REV(v & 0xFFFFFFFF) << 32);
 	return v;
 }
 
 bool Stream::Write(byte value)
 {
-	return Write((byte*)&value, 0, 1);
+	return Write(Buffer(&value, sizeof(value)));
 }
 
 bool Stream::Write(ushort value)
 {
 	if(!Little) value = _REV16(value);
 
-	return Write((byte*)&value, 0, 2);
+	return Write(Buffer(&value, sizeof(value)));
 }
 
 bool Stream::Write(uint value)
 {
 	if(!Little) value = _REV(value);
 
-	return Write((byte*)&value, 0, 4);
+	return Write(Buffer(&value, sizeof(value)));
 }
 
 bool Stream::Write(UInt64 value)
 {
 	if(!Little) value = _REV(value >> 32) | ((UInt64)_REV(value & 0xFFFFFFFF) << 32);
 
-	return Write((byte*)&value, 0, 8);
+	return Write(Buffer(&value, sizeof(value)));
 }
 
 MemoryStream::MemoryStream(uint len) : Stream(_Arr, ArrayLength(_Arr))

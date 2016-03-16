@@ -146,7 +146,7 @@ bool dns_question(Stream& ms)
 }
 
 // 分析应答记录
-bool dns_answer(Stream& ms, byte* ip_from_dns)
+bool dns_answer(Stream& ms, Buffer& ip_from_dns)
 {
 	char name[MAXCNAME];
 
@@ -166,7 +166,9 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 	{
 	case TYPE_A:
 		/* Just read the address directly into the structure */
-		ms.Read(ip_from_dns, 0, 4);
+		//ms.Read(ip_from_dns, 0, 4);
+		ip_from_dns.SetLength(4);
+		ms.Read(ip_from_dns);
 		break;
 	case TYPE_CNAME:
 	case TYPE_MB:
@@ -218,53 +220,54 @@ bool dns_answer(Stream& ms, byte* ip_from_dns)
 }
 
 // 分析响应
-bool parseDNSMSG(TDNS* hdr, const Buffer& bs, byte* ip_from_dns)
+bool parseDNSMSG(const Buffer& bs, Buffer& ip_from_dns)
 {
 	Stream ms(bs);
 	ms.Little = false;
 
-	Buffer(hdr, sizeof(hdr)).Clear();
+	TDNS hdr;
+	Buffer(hdr).Clear();
 
-	hdr->id = ms.ReadUInt16();
+	hdr.id = ms.ReadUInt16();
 	ushort tmp = ms.ReadUInt16();
-	if (tmp & 0x8000) hdr->qr = 1;
+	if (tmp & 0x8000) hdr.qr = 1;
 
-	hdr->opcode = (tmp >> 11) & 0xf;
+	hdr.opcode = (tmp >> 11) & 0xf;
 
-	if (tmp & 0x0400) hdr->aa = 1;
-	if (tmp & 0x0200) hdr->tc = 1;
-	if (tmp & 0x0100) hdr->rd = 1;
-	if (tmp & 0x0080) hdr->ra = 1;
+	if (tmp & 0x0400) hdr.aa = 1;
+	if (tmp & 0x0200) hdr.tc = 1;
+	if (tmp & 0x0100) hdr.rd = 1;
+	if (tmp & 0x0080) hdr.ra = 1;
 
-	hdr->rcode = tmp & 0xf;
-	hdr->qdcount = ms.ReadUInt16();
-	hdr->ancount = ms.ReadUInt16();
-	hdr->nscount = ms.ReadUInt16();
-	hdr->arcount = ms.ReadUInt16();
+	hdr.rcode	= tmp & 0xf;
+	hdr.qdcount = ms.ReadUInt16();
+	hdr.ancount = ms.ReadUInt16();
+	hdr.nscount = ms.ReadUInt16();
+	hdr.arcount = ms.ReadUInt16();
 	//ms.Read((byte*)hdr, 0, sizeof(TDNS));
 
 	// 开始分析变长部分
 
 	/* Question section */
-	for (int i = 0; i < hdr->qdcount; i++)
+	for (int i = 0; i < hdr.qdcount; i++)
 	{
 		// 域名太长
 		if(!dns_question(ms)) return false;
 	}
 
 	/* Answer section */
-	for (int i = 0; i < hdr->ancount; i++)
+	for (int i = 0; i < hdr.ancount; i++)
 	{
 		if(!dns_answer(ms, ip_from_dns)) return -1;
 	}
 
 	/* Name server (authority) section */
-	//for (i = 0; i < hdr->nscount; i++);
+	//for (i = 0; i < hdr.nscount; i++);
 
 	/* Additional section */
-	//for (i = 0; i < hdr->arcount; i++);
+	//for (i = 0; i < hdr.arcount; i++);
 
-	return hdr->rcode == 0;
+	return hdr.rcode == 0;
 }
 
 // DNS查询消息
@@ -293,7 +296,8 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 		ms.Write((byte)len);
 
 		// 写字符串
-		ms.Write(name.GetBuffer() + st, 0, len);
+		//ms.Write(name.GetBuffer() + st, 0, len);
+		ms.Write(name.Sub(st, len));
 
 		if(idx < 0)
 		{
@@ -382,8 +386,9 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	{
 		if(rs.Length() > 0)
 		{
-			TDNS dns;
-			parseDNSMSG(&dns, rs, (byte*)&ip.Value);
+			//Buffer ips(&ip.Value, sizeof(ip.Value));
+			Buffer ips(ip.Value);
+			parseDNSMSG(rs, ips);
 			break;
 		}
 	}

@@ -439,10 +439,15 @@ void TokenClient::Ping()
 	TokenMessage msg(3);
 
 	UInt64 time	= Sys.Ms();
-	Stream ms	= msg.ToStream();
-	ms.WriteArray(Buffer(&time, 8));
+	Buffer bs(&time, 8);
+	bs.Show(true);
+	
+	auto ms	= msg.ToStream();
+	ms.WriteArray(bs);
 	msg.Length	= ms.Position();
 
+	msg.Show();
+	
 	Send(msg);
 }
 
@@ -451,10 +456,13 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
 
-	Stream ms = msg.ToStream();
+	msg.Show();
+	auto ms = msg.ToStream();
 
 	UInt64 now   = Sys.Ms();
-	UInt64 start = ms.ReadArray().ToUInt64();
+	auto bs	= ms.ReadArray();
+	bs.Show(true);
+	UInt64 start = bs.ToUInt64();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
@@ -464,7 +472,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	else
 		Delay = cost;
 
-	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
+	debug_printf("心跳延迟 %dms / %dms %lld - %lld \r\n", cost, Delay, now, start);
 
 	return true;
 }

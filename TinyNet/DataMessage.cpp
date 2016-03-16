@@ -40,7 +40,8 @@ bool DataMessage::ReadData(const Buffer& bs)
 	{
 		ms.WriteEncodeInt(Offset);
 		if(Length > remain) Length = remain;
-		if(Length > 0) ms.Write(bs.GetBuffer(), Offset, Length);
+		//if(Length > 0) ms.Write(bs.GetBuffer(), Offset, Length);
+		if(Length > 0) ms.Write(bs.Sub(Offset, Length));
 
 		return true;
 	}
@@ -58,7 +59,7 @@ bool DataMessage::WriteData(DataStore& ds, bool withData)
 	ds.Write(Offset, dat);
 
 	// 如果携带数据，则把这一段数据附加到后面
-	if(_Dest && withData) _Dest->Write(ds.Data.GetBuffer(), Offset, Length);
+	if(_Dest && withData) _Dest->Write(ds.Data.Sub(Offset, Length));
 
 	return true;
 }
@@ -77,7 +78,7 @@ bool DataMessage::WriteData(Buffer& bs, bool withData)
 	bs.Copy(Offset, _Src.Current(), Length);
 
 	// 如果携带数据，则把这一段数据附加到后面
-	if(_Dest && withData) _Dest->Write(bs.GetBuffer(), Offset, Length);
+	if(_Dest && withData) _Dest->Write(bs.Sub(Offset, Length));
 
 	return true;
 }

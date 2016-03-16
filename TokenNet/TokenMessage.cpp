@@ -43,7 +43,12 @@ bool TokenMessage::Read(Stream& ms)
 		//assert_param(false);
 		return false;
 	}
-	if(len > 0) ms.Read(Data, 0, len);
+	//if(len > 0) ms.Read(Data, 0, len);
+	if(len > 0)
+	{
+		Buffer bs(Data, len);
+		ms.Read(bs);
+	}
 
 	return true;
 }
@@ -62,7 +67,7 @@ void TokenMessage::Write(Stream& ms) const
 	{
 		ushort len	= Length;
 		ms.WriteEncodeInt(len);
-		if(len > 0) ms.Write(Data, 0, len);
+		if(len > 0) ms.Write(Buffer(Data, len));
 	}
 }
 

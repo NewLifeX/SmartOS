@@ -358,17 +358,22 @@ bool ShunComMessage::Read(Stream& ms)
 	Frame	= magic;
 	Length	= ms.ReadByte();
 	Code	= ms.ReadUInt16();
+	
+	Buffer bs(Data);
 	if(Length > 4)
 	{
 		Kind	= ms.ReadUInt16();
 		Size	= _REV16(ms.ReadUInt16());
 		assert_param2(2 + 2 + Size == Length, "ShunComMessage::Read");
-		ms.Read(Data, 0, Size);
+		//ms.Read(Data, 0, Size);
+		bs.SetLength(Size);
 	}
 	else if(Length > 0)
 	{
-		ms.Read(Data, 0, Length);
+		//ms.Read(Data, 0, Length);
+		bs.SetLength(Length);
 	}
+	ms.Read(bs);
 	// 不做校验检查，不是很重要
 	Checksum	= ms.ReadByte();
 
@@ -381,20 +386,25 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(Frame);
 	ms.Write(Length);
 	ms.Write(Code);
+
+	Buffer bs(Data);
 	if(Length > 4)
 	{
 		ms.Write(Kind);
 		ms.Write((ushort)_REV16(Size));
-		ms.Write(Data, 0, Size);
+		//ms.Write(Data, 0, Size);
+		bs.SetLength(Size);
 	}
 	else if(Length > 0)
 	{
-		ms.Write(Data, 0, Length);
+		//ms.Write(Data, 0, Length);
+		bs.SetLength(Length);
 	}
+	ms.Write(bs);
 	//ms.Write(Checksum);
 	// 计算校验
 	byte sum	= 0;
-	while(p++ < ms.Current()-1)sum^= *p;
+	while(p++ < ms.Current()-1) sum^= *p;
 	ms.Write(sum);
 
 }

@@ -42,7 +42,9 @@ bool TinyMessage::Read(Stream& ms)
 	TS("TinyMessage::Read");
 
 	auto p = ms.Current();
-	ms.Read(&Dest, 0, HeaderSize);
+	//ms.Read(&Dest, 0, HeaderSize);
+	Buffer bs(&Dest, HeaderSize);
+	ms.Read(bs);
 
 	// 占位符拷贝到实际数据
 	Code	= _Code;
@@ -67,7 +69,12 @@ bool TinyMessage::Read(Stream& ms)
 		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", len, ArrayLength(_Data));
 		return false;
 	}
-	if(len > 0) ms.Read(Data, 0, len);
+	//if(len > 0) ms.Read(Data, 0, len);
+	if(len > 0)
+	{
+		Buffer ds(Data, len);
+		ms.Read(ds);
+	}
 
 	// 读取真正的校验码
 	Checksum = ms.ReadUInt16();
@@ -104,8 +111,9 @@ void TinyMessage::Write(Stream& ms) const
 
 	auto buf = ms.Current();
 	// 不要写入验证码
-	ms.Write(&Dest, 0, HeaderSize);
-	if(len > 0) ms.Write(Data, 0, len);
+	//ms.Write(&Dest, 0, HeaderSize);
+	ms.Write(Buffer((byte*)&Dest, HeaderSize));
+	if(len > 0) ms.Write(Buffer(Data, len));
 
 	// 计算Crc之前，需要清零TTL和Retry
 	byte fs		= buf[3];
