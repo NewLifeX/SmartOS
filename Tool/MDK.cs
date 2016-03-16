@@ -757,6 +757,18 @@ namespace NewLife.Reflection
 				ss.Add("more than one operator", "多于一个运算符");
 				ss.Add("matches these operands", "匹配该操作");
 				ss.Add("operand types are", "操作类型");
+				ss.Add("no instance of overloaded function", "没有函数");
+				ss.Add("matches the argument list", "匹配参数列表");
+				ss.Add("argument types are", "参数类型是");
+				ss.Add("object type is", "对象类型是");
+				ss.Add("initial value of reference to non-const must be an lvalue", "非常量引用初值必须是左值");
+				ss.Add("too many arguments in function call", "函数调用参数过多");
+				ss.Add("cannot be initialized with a value of type", "不能初始化为类型");
+				ss.Add("a reference of type", "引用类型");
+				ss.Add("connot be assigned to an entity of type", "不能赋值给类型");
+				ss.Add("detected during instantiation of", "在检测实例化");
+				ss.Add("not const-qualified", "非常量约束");
+				ss.Add("no instance of constructor", "没有构造函数");
             }
 
             if (Words.Count == 0)
