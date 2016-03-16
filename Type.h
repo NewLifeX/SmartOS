@@ -74,11 +74,11 @@ public:
 	template<typename T, int N>
 	Buffer(T (&arr)[N])
 	{
-		_Arr	= arr;
+		_Arr	= (char*)arr;
 		_Length	= sizeof(arr);
 	}
 	template<typename T>
-	Buffer(T obj)
+	Buffer(T (&obj))
 	{
 		_Arr	= (char*)&obj;
 		_Length	= sizeof(obj);
@@ -121,7 +121,7 @@ public:
 	int Set(byte item, int index, int len);
 	void Clear(byte item = 0);
 
-	// 截取一个子缓冲区
+	// 截取一个子缓冲区，默认-1长度表示剩余全部
 	//### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
 	Buffer Sub(int index, int len);
 	const Buffer Sub(int index, int len) const;

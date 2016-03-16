@@ -228,10 +228,11 @@ void Buffer::Clear(byte item)
 	Set(item, 0, _Length);
 }
 
-// 截取一个子缓冲区
-	//### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
+// 截取一个子缓冲区，默认-1长度表示剩余全部
+//### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
 Buffer Buffer::Sub(int index, int len)
 {
+	if(len < 0) len	= _Length - index;
 	assert_param2(index + len <= _Length, "len <= _Length");
 
 	return Buffer((byte*)_Arr + index, len);
@@ -245,6 +246,7 @@ Buffer Buffer::Sub(int index, int len)
 
 const Buffer Buffer::Sub(int index, int len) const
 {
+	if(len < 0) len	= _Length - index;
 	assert_param2(index + len <= _Length, "len <= _Length");
 
 	return Buffer((byte*)_Arr + index, len);
