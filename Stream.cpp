@@ -202,7 +202,7 @@ bool Stream::Write(const Buffer& bs)
 	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;
 
-	Buffer ss(_Buffer, Length);
+	Buffer ss(_Buffer, _Capacity);
 	count	= ss.Copy((uint)_Position, bs, 0, count);
 
 	_Position += count;

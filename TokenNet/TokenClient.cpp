@@ -291,6 +291,8 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	cfg->ServerPort = msg.Port;
 	cfg->VisitToken	= msg.VisitToken;
 
+	ChangeIPEndPoint(msg.Server, msg.Port);
+
 	cfg->Show();
 
 	// 0xFE永久改变厂商地址
@@ -299,9 +301,8 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		cfg->Save();
 	}
 
-	ChangeIPEndPoint(msg.Server, msg.Port);
+	// 马上开始重新握手
 	Status = 0;
-
 	Sys.SetTask(_task, true, 0);
 
 	return true;
@@ -440,14 +441,11 @@ void TokenClient::Ping()
 
 	UInt64 time	= Sys.Ms();
 	Buffer bs(&time, 8);
-	bs.Show(true);
-	
+
 	auto ms	= msg.ToStream();
 	ms.WriteArray(bs);
 	msg.Length	= ms.Position();
 
-	msg.Show();
-	
 	Send(msg);
 }
 
@@ -461,7 +459,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	UInt64 now   = Sys.Ms();
 	auto bs	= ms.ReadArray();
-	bs.Show(true);
 	UInt64 start = bs.ToUInt64();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
@@ -472,7 +469,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	else
 		Delay = cost;
 
-	debug_printf("心跳延迟 %dms / %dms %lld - %lld \r\n", cost, Delay, now, start);
+	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 
 	return true;
 }
@@ -496,6 +493,9 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	socket->Remote.Address	= ip;
 	socket->Remote.Port		= port;
 	Control->Port->Open();
+
+	auto cfg		= TokenConfig::Current;
+	cfg->ServerIP	= ip.Value;
 
 	return true;
 }
