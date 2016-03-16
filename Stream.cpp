@@ -113,7 +113,9 @@ uint Stream::ReadEncodeInt()
 	// 同时计算最大4字节，避免无限读取错误数据
 	for(int i = 0, k = 0; i < 4; i++, k += 7)
 	{
-		byte temp = ReadByte();
+		int temp = ReadByte();
+		if(temp < 0) break;
+
 		value |= (temp & 0x7F) << k;
 		if((temp & 0x80) == 0) break;
 	}
@@ -301,8 +303,10 @@ String Stream::ReadString()
 	return false;
 }*/
 
-byte	Stream::ReadByte()
+int	Stream::ReadByte()
 {
+	if(Length == _Position) return -1;
+
 	byte* p = Current();
 	if(!Seek(1)) return 0;
 

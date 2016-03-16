@@ -70,7 +70,7 @@ public:
 	String ReadString();
 	//bool WriteString(const String& str);
 
-	byte	ReadByte();
+	int		ReadByte();
 	ushort	ReadUInt16();
 	uint	ReadUInt32();
 	UInt64	ReadUInt64();
