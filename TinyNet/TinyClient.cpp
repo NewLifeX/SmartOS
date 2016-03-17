@@ -55,7 +55,7 @@ void TinyClient::Open()
 		Server = Cfg->Server;
 
 		//Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
-		Password	= cfg->Pass;
+		Password	= Cfg->Pass;
 	}
 
 	HardCrc	= Crc::Hash16(Buffer(Sys.ID, 16));

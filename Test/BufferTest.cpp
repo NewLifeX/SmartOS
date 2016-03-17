@@ -85,7 +85,7 @@ void TestBuffer()
 	assert_param2(bs5.GetBuffer() == (byte*)cs, "Buffer(T (&arr)[N])");
 	assert_param2(bs5 == cs, "Buffer(void* p = nullptr, int len = 0)");
 
-	Buffer bs7((byte*)cs);
+	Buffer bs7(cs);
 	
 	auto type	= bs5.GetType();
 	Buffer bs6(type);

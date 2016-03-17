@@ -74,8 +74,7 @@ Buffer::Buffer(void* ptr, int len)
 
 /*Buffer::Buffer(const Buffer& buf)
 {
-	_Arr	= buf._Arr;
-	_Length	= buf._Length;
+	Copy(0, rhs, 0, -1);
 }*/
 
 Buffer::Buffer(Buffer&& rval)
@@ -92,12 +91,12 @@ void Buffer::move(Buffer& rval)
 	rval._Length	= 0;
 }
 
-/*Buffer& Buffer::operator = (const Buffer& rhs)
+Buffer& Buffer::operator = (const Buffer& rhs)
 {
 	Copy(0, rhs, 0, -1);
 
 	return *this;
-}*/
+}
 
 Buffer& Buffer::operator = (const void* ptr)
 {
@@ -162,7 +161,13 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	{
 		// 要拷贝进来的数据超过内存大小，给子类尝试扩容，如果扩容失败，则只拷贝没有超长的那一部分
 		// 子类可能在这里扩容
-		if(!SetLength(destIndex + len)) len	= remain;
+		if(!SetLength(destIndex + len))
+		{
+			debug_printf("Buffer::Copy 缓冲区 0x%08X %d 太小，不足以拷贝 0x%08X %d \r\n", _Arr + destIndex, _Length, src, len);
+			assert_param2(false, "Buffer::Copy 缓冲区太小");
+
+			len	= remain;
+		}
 	}
 
 	// 放到这里判断，前面有可能自动扩容
@@ -362,17 +367,21 @@ Array::Array(const void* data, int len) : Buffer((void*)data, len)
 	_canWrite	= false;
 }
 
-/*Array::Array(const Buffer& rhs) : Buffer(rhs)
+Array::Array(const Buffer& rhs) : Buffer(nullptr, 0)
 {
+	Copy(0, rhs, 0, -1);
+
 	Init();
 }
 
-Array::Array(const Array& rhs) : Buffer(rhs)
+Array::Array(const Array& rhs) : Buffer(nullptr, 0)
 {
-	Init();
-}*/
+	Copy(0, rhs, 0, -1);
 
-Array::Array(Array&& rval)
+	Init();
+}
+
+Array::Array(Array&& rval) : Buffer(nullptr, 0)
 {
 	//*this	= rval;
 	move(rval);
@@ -427,12 +436,12 @@ bool Array::Release()
 	return false;
 }
 
-/*Array& Array::operator = (const Buffer& rhs)
+Array& Array::operator = (const Buffer& rhs)
 {
 	Buffer::operator=(rhs);
 
 	return *this;
-}*/
+}
 
 Array& Array::operator = (const void* p)
 {
@@ -666,7 +675,7 @@ ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, sizeof(Arr)
 		Set(data, length);
 }
 
-/*ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
+ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
 {
 	Copy(0, arr, 0, -1);
 }
@@ -674,7 +683,7 @@ ByteArray::ByteArray(void* data, int length, bool copy) : Array(Arr, sizeof(Arr)
 ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
 {
 	Copy(0, arr, 0, -1);
-}*/
+}
 
 ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
 {
@@ -716,7 +725,7 @@ void ByteArray::move(ByteArray& rval)
 	Copy(0, rval._Arr, rval._Length);
 }
 
-/*ByteArray& ByteArray::operator = (const Buffer& rhs)
+ByteArray& ByteArray::operator = (const Buffer& rhs)
 {
 	Array::operator=(rhs);
 
@@ -728,7 +737,7 @@ ByteArray& ByteArray::operator = (const ByteArray& rhs)
 	Array::operator=(rhs);
 
 	return *this;
-}*/
+}
 
 ByteArray& ByteArray::operator = (const void* p)
 {

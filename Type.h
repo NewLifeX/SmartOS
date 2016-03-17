@@ -70,7 +70,7 @@ class Buffer : public Object
 {
 public:
 	// 打包一个指针和长度指定的数据区
-	Buffer(void* ptr = nullptr, int len = 0);
+	Buffer(void* ptr, int len);
 	template<typename T, int N>
 	Buffer(T (&arr)[N])
 	{
@@ -90,7 +90,7 @@ public:
 
 	// 从另一个对象那里拷贝，拷贝长度为两者最小者，除非当前对象能自动扩容
 	// 无法解释用法，暂时注释
-	Buffer& operator = (const Buffer& rhs) = delete;
+	Buffer& operator = (const Buffer& rhs);
 	// 从指针拷贝，使用我的长度
 	Buffer& operator = (const void* ptr);
 	// 对象mov操作，指针和长度归我，清空对方
@@ -113,7 +113,7 @@ public:
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);
 	// 拷贝数据，默认-1长度表示两者最小长度
-	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
 
@@ -157,13 +157,13 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
-	Array(const Buffer& rhs) = delete;
-	Array(const Array& rhs) = delete;
+	Array(const Buffer& rhs);
+	Array(const Array& rhs);
 	Array(Array&& rval);
 
 	virtual ~Array();
 
-	Array& operator = (const Buffer& rhs) = delete;
+	Array& operator = (const Buffer& rhs);
 	Array& operator = (const void* p);
 	Array& operator = (Array&& rval);
 
@@ -353,14 +353,14 @@ public:
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const Buffer& arr) = delete;
-	ByteArray(const ByteArray& arr) = delete;
+	ByteArray(const Buffer& arr);
+	ByteArray(const ByteArray& arr);
 	ByteArray(ByteArray&& rval);
 	//ByteArray(String& str);			// 直接引用数据缓冲区
 	//ByteArray(const String& str);	// 不允许修改，拷贝
 
-	ByteArray& operator = (const Buffer& rhs) = delete;
-	ByteArray& operator = (const ByteArray& rhs) = delete;
+	ByteArray& operator = (const Buffer& rhs);
+	ByteArray& operator = (const ByteArray& rhs);
 	ByteArray& operator = (const void* p);
 	ByteArray& operator = (ByteArray&& rval);
 
