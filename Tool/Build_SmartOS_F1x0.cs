@@ -17,8 +17,8 @@ namespace NewLife.Reflection
         {
             var build = new Builder();
             build.Init();
+            build.GD32 = true;	// 先设置GD32才设置Cortex，使用STM32F0+M3编译
 			build.Cortex = 0;
-            build.GD32 = true;
 			build.Output = "F1x0";
 			build.AddIncludes("..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\Lib\\Inc");

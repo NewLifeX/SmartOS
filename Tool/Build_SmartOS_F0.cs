@@ -17,12 +17,14 @@ namespace NewLife.Reflection
         {
             var build = new Builder();
             build.Init();
+			build.Cortex = 0;
 			build.Output = "F0";
-			build.AddIncludes("..\\..\\Lib");
-            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
+			build.AddIncludes("..\\..\\Lib\\CMSIS");
+			build.AddIncludes("..\\..\\Lib\\Inc");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
             build.AddFiles("..\\Platform", "Boot_F0.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
-            build.AddFiles("..\\Security");
+            build.AddFiles("..\\Security", "*.cpp");
             build.AddFiles("..\\Storage");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");

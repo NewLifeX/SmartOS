@@ -17,10 +17,12 @@ namespace NewLife.Reflection
         {
             var build = new Builder();
             build.Init();
-            build.GD32 = true;
+			build.Cortex = 0;
+            build.GD32 = true;	// 先设置Cortex才设置GD32，使用STM32F0+M0编译
 			build.Output = "F1x0M0";
-			build.AddIncludes("..\\..\\Lib");
-            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
+			build.AddIncludes("..\\..\\Lib\\CMSIS");
+			build.AddIncludes("..\\..\\Lib\\Inc");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
             build.AddFiles("..\\Platform", "Boot_F0.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
             build.AddFiles("..\\Security");
