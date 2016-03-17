@@ -76,6 +76,8 @@ uint ConfigBlock::CopyTo(Buffer& bs) const
 bool ConfigBlock::Init(const String& name, const Buffer& bs)
 {
     if(!name) return false;
+
+	assert_param2(name.Length() < sizeof(Name), "配置区名称太长");
     if(name.Length() >= sizeof(Name)) return false;
 
 	TS("ConfigBlock::Init");
@@ -164,6 +166,8 @@ const ConfigBlock* FindBlock(const Storage& st, uint addr, const String& name)
 	TS("Config::Find");
 
     if(!name) return nullptr;
+
+	assert_param2(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
     if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	if(!CheckSignature(st, addr, false)) return nullptr;
@@ -250,6 +254,7 @@ const void* Config::Set(const String& name, const Buffer& bs) const
 
     if(!name) return nullptr;
 
+	assert_param2(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
     if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
