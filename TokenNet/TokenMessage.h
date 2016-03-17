@@ -10,8 +10,6 @@
 // 令牌消息
 class TokenMessage : public Message
 {
-private:
-
 public:
 	/*byte	_Code:6;	// 功能码
 	byte	_Error:1;	// 是否错误
@@ -38,8 +36,8 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	// 设置错误信息字符串
-	void SetError(byte errorCode, const char* error, int errLength);
+	//// 设置错误信息字符串
+	//void SetError(byte errorCode, const char* error, int errLength);
 
 	// 显示消息内容
 	virtual void Show() const;

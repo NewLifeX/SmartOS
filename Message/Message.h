@@ -9,8 +9,8 @@ class Message
 {
 public:
 	byte	Code;		// 消息代码
-	byte	Reply:1;	// 是否响应指令
-	byte	Error:1;	// 是否错误
+	byte	Reply;	// 是否响应指令
+	byte	Error;	// 是否错误
 	ushort	Length;		// 数据长度
 	byte*	Data;		// 数据。指向子类内部声明的缓冲区
 
@@ -54,5 +54,4 @@ public:
 /*
 消息的共有部分是消息代码和负载数据，可由微网协议或令牌协议承载传输。
 都是二进制格式传输，所以有Read/Write等操作
-都有Crc校验，用于判断消息是否被篡改过
 */

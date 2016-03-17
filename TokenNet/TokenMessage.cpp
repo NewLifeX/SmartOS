@@ -60,15 +60,7 @@ void TokenMessage::Write(Stream& ms) const
 
 	byte tmp = Code | (Reply << 7) | (Error << 6);
 	ms.Write(tmp);
-
-	if(!Data)
-		ms.Write((byte)0);
-	else
-	{
-		ushort len	= Length;
-		ms.WriteEncodeInt(len);
-		if(len > 0) ms.Write(Buffer(Data, len));
-	}
+	ms.WriteArray(Buffer(Data, Length));
 }
 
 // 验证消息校验码是否有效
@@ -88,7 +80,7 @@ uint TokenMessage::MaxDataSize() const
 	return Data == _Data ? ArrayLength(_Data) : Length;
 }
 
-// 设置错误信息字符串
+/*// 设置错误信息字符串
 void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 {
 	Error	= errorCode != 0;
@@ -99,7 +91,7 @@ void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 		assert_ptr(error);
 		Buffer(Data + 1, errLength)	= error;
 	}
-}
+}*/
 
 void TokenMessage::Show() const
 {

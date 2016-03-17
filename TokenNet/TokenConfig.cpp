@@ -5,11 +5,11 @@
 TokenConfig* TokenConfig::Current	= nullptr;
 
 TokenConfig::TokenConfig() : ConfigBase(),
-	User(_User, ArrayLength(_User)),
-	Pass(_Pass, ArrayLength(_Pass)),
-	VisitToken(_VisitToken, ArrayLength(_VisitToken)),
-	Server(_Server, ArrayLength(_Server)),
-	Vendor(_Vendor, ArrayLength(_Vendor))
+	User(_User),
+	Pass(_Pass),
+	VisitToken(_VisitToken),
+	Server(_Server),
+	Vendor(_Vendor)
 {
 	_Name	 = "TokenCf";
 	_Start	 = &Length;

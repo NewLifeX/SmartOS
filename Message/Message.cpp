@@ -20,16 +20,11 @@ void Message::SetData(const Buffer& bs, uint offset)
 
 void Message::SetError(byte errorCode, const char* msg)
 {
-	//byte* p = (byte*)msg;
-	//uint len = 0;
-	//while(*p++) len++;
-
 	Error	= true;
 
 	Stream ms(Data, MaxDataSize());
 	ms.Write(errorCode);
-	//ms.Write((const byte*)msg, 0, len);
-	ms.Write(String(msg));
+	ms.WriteArray(String(msg));
 
 	Length	= ms.Position();
 }
