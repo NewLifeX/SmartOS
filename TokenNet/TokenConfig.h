@@ -35,6 +35,7 @@ public:
 
 	TokenConfig();
 	virtual void Init();
+	virtual void Load();
 	virtual void Show() const;
 
 	String	User;

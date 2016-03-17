@@ -168,6 +168,9 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	// 放到这里判断，前面有可能自动扩容
 	if(!_Arr) return 0;
 
+	// 自我拷贝，跳过
+	if(_Arr == src) return len;
+
 	// 拷贝数据
 	if(len) memcpy((byte*)_Arr + destIndex, src, len);
 
@@ -470,14 +473,14 @@ bool Array::SetLength(int len, bool bak)
 /*void Array::SetBuffer(void* ptr, int len)
 {
 	Release();
-	
+
 	Buffer::SetBuffer(ptr, len);
 }
 
 void Array::SetBuffer(const void* ptr, int len)
 {
 	SetBuffer((void*)ptr, len);
-	
+
 	_canWrite	= false;
 }*/
 

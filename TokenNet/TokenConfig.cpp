@@ -32,6 +32,17 @@ void TokenConfig::Init()
 	Protocol	= ProtocolType::Udp;
 }
 
+void TokenConfig::Load()
+{
+	ConfigBase::Load();
+	
+	User	= _User;
+	Pass	= _Pass;
+	VisitToken	= _VisitToken;
+	Server	= _Server;
+	Vendor	= _Vendor;
+}
+
 void TokenConfig::Show() const
 {
 #if DEBUG

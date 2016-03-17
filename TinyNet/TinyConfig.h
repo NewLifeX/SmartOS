@@ -32,17 +32,23 @@ public:
 	byte	HardVer;	// 硬件版本
 	byte	SoftVer;	// 软件版本
 
-	byte	Password[16]; // 通信密码
+	byte	_PassLen;	// 密码长度
+	byte	_Pass[15];	// 通信密码
 	byte	Mac[6];		// 无线物理地址
+
+	byte	TagEnd;		// 数据区结束标识符
+
+	ByteArray	Pass;
 
 	TinyConfig();
 	virtual void Init();
+	virtual void Load();
+	virtual void Save() const;
 
 	static TinyConfig* Current;
 	static TinyConfig* Create();
 	
 private:
-	byte	TagEnd;		// 数据区结束标识符
 };
 
 //#pragma pack(pop)	// 恢复对齐状态
