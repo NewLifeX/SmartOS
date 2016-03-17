@@ -20,7 +20,7 @@ struct ConfigBlock
 {
 	ushort	Hash;
 	ushort	Size;
-	char	Name[8];
+	char	Name[8];	// 零结尾字符串
 
 	ushort GetHash() const;
     bool Valid() const;
@@ -76,10 +76,9 @@ uint ConfigBlock::CopyTo(Buffer& bs) const
 bool ConfigBlock::Init(const String& name, const Buffer& bs)
 {
     if(!name) return false;
+    if(name.Length() >= sizeof(Name)) return false;
 
 	TS("ConfigBlock::Init");
-
-    if(name.Length() > sizeof(Name)) return false;
 
 	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
 	if(bs.Length() > 0)
@@ -165,13 +164,12 @@ const ConfigBlock* FindBlock(const Storage& st, uint addr, const String& name)
 	TS("Config::Find");
 
     if(!name) return nullptr;
+    if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	if(!CheckSignature(st, addr, false)) return nullptr;
 
 	// 第一个配置块
     auto cfg = (const ConfigBlock*)addr;
-
-    if(name.Length() > sizeof(cfg->Name)) return nullptr;
 
 	// 遍历链表，找到同名块
     while(cfg->Valid())
@@ -251,6 +249,8 @@ const void* Config::Set(const String& name, const Buffer& bs) const
 	TS("Config::Set");
 
     if(!name) return nullptr;
+
+    if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
 	if(!cfg) cfg	= NewBlock(Device, Address, bs.Length());

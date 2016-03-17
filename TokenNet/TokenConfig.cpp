@@ -11,7 +11,7 @@ TokenConfig::TokenConfig() : ConfigBase(),
 	Server(_Server, ArrayLength(_Server)),
 	Vendor(_Vendor, ArrayLength(_Vendor))
 {
-	_Name	 = "TokenCfg";
+	_Name	 = "TokenCf";
 	_Start	 = &Length;
 	_End	 = &TagEnd;
 	Init();
