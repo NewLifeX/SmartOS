@@ -4,7 +4,7 @@
 /******************************** Device ********************************/
 
 Device::Device() :
-	HardID(_HardID, ArrayLength(HardID)),
+	HardID(_HardID, sizeof(_HardID)),
 	Mac(_Mac, ArrayLength(_Mac)),
 	Name(_Name, ArrayLength(_Name)),
 	Pass(_Pass, ArrayLength(_Pass)),
