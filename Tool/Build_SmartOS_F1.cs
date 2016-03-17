@@ -19,7 +19,8 @@ namespace NewLife.Reflection
             build.Init();
 			build.Cortex = 3;
 			build.Output = "F1";
-			build.AddIncludes("..\\..\\Lib");
+			build.AddIncludes("..\\..\\Lib\\CMSIS");
+			build.AddIncludes("..\\..\\Lib\\Inc");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
             build.AddFiles("..\\Platform", "Boot_F1.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f10x.s");
@@ -33,6 +34,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
+			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
 

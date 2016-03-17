@@ -19,11 +19,12 @@ namespace NewLife.Reflection
             build.Init();
 			build.Cortex = 4;
 			build.Output = "F4";
-			build.AddIncludes("..\\..\\Lib");
-            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory;String");
+			build.AddIncludes("..\\..\\Lib\\CMSIS");
+			build.AddIncludes("..\\..\\Lib\\Inc");
+            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
             build.AddFiles("..\\Platform", "Boot_F4.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f4xx.s");
-            build.AddFiles("..\\Security");
+            build.AddFiles("..\\Security", "*.cpp");
             build.AddFiles("..\\Storage");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
@@ -32,6 +33,7 @@ namespace NewLife.Reflection
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
+			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F4");
 
