@@ -727,21 +727,21 @@ void ByteArray::move(ByteArray& rval)
 
 ByteArray& ByteArray::operator = (const Buffer& rhs)
 {
-	Array::operator=(rhs);
+	Buffer::operator=(rhs);
 
 	return *this;
 }
 
 ByteArray& ByteArray::operator = (const ByteArray& rhs)
 {
-	Array::operator=(rhs);
+	Buffer::operator=(rhs);
 
 	return *this;
 }
 
 ByteArray& ByteArray::operator = (const void* p)
 {
-	Array::operator=(p);
+	Buffer::operator=(p);
 
 	return *this;
 }

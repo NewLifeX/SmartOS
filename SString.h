@@ -39,7 +39,7 @@ public:
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);
 	// 拷贝数据，默认-1长度表示两者最小长度
-	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	//virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
 

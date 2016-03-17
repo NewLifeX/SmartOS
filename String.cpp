@@ -220,7 +220,7 @@ int String::Copy(int destIndex, const void* src, int len)
 	return rs;
 }
 
-// 拷贝数据，默认-1长度表示两者最小长度
+/*// 拷贝数据，默认-1长度表示两者最小长度
 int String::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 {
 	int rs	= Buffer::Copy(destIndex, src, srcIndex, len);
@@ -229,7 +229,7 @@ int String::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 	_Arr[_Length]	= '\0';
 
 	return rs;
-}
+}*/
 
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
 int String::CopyTo(int srcIndex, void* dest, int len) const
