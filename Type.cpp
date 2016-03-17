@@ -172,7 +172,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	if(_Arr == src) return len;
 
 	// 拷贝数据
-	if(len) memcpy((byte*)_Arr + destIndex, src, len);
+	if(len) memmove((byte*)_Arr + destIndex, src, len);
 
 	return len;
 }
