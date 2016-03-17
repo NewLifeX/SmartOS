@@ -4,11 +4,11 @@
 /******************************** Device ********************************/
 
 Device::Device() :
-	HardID(_HardID, sizeof(_HardID)),
-	Mac(_Mac, ArrayLength(_Mac)),
-	Name(_Name, ArrayLength(_Name)),
-	Pass(_Pass, ArrayLength(_Pass)),
-	Store(_Store, ArrayLength(_Store))
+	HardID(_HardID),
+	Mac(_Mac),
+	Name(_Name),
+	Pass(_Pass),
+	Store(_Store)
 {
 	Address		= 0;
 	Logined		= false;
@@ -99,7 +99,6 @@ void Device::ReadMessage(Stream& ms)
 
 	Address	= ms.ReadByte();
 	Kind	= ms.ReadUInt16();
-	//ms.ReadArray().CopyTo(0, HardID, ArrayLength(HardID));
 	HardID	= ms.ReadArray();
 	LastTime= ms.ReadUInt32();
 
@@ -111,9 +110,6 @@ void Device::ReadMessage(Stream& ms)
 	OfflineTime	= ms.ReadUInt16();
 	PingTime	= ms.ReadUInt16();
 
-	//ms.ReadString().CopyTo(Name, ArrayLength(Name));
-	//String str(Name, ArrayLength(Name));
-	//str	= ms.ReadString();
 	Name	= ms.ReadString();
 
 	// 最后位置
@@ -134,7 +130,6 @@ String& Device::ToStr(String& str) const
 {
 	str += "Addr=0x" + Address;
 	str += " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
-	//str = str + " ID=" + HardID;
 	str += " Hard=";
 	str.Concat(HardID[0], 16);
 	str.Concat(HardID[1], 16);
