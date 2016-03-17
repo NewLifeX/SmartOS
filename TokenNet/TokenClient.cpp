@@ -325,7 +325,18 @@ void TokenClient::Register()
 
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
-	if(!msg.Reply || msg.Error) return;
+	if(!msg.Reply) return;
+
+	if(msg.Error)
+	{
+		auto ms		= msg.ToStream();
+		byte result = ms.ReadByte();
+
+		debug_printf("注册失败，错误码 0x%02X！", result);
+		ms.ReadString().Show(true);
+
+		return;
+	}
 
 	auto cfg	= TokenConfig::Current;
 
