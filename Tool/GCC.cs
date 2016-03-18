@@ -57,7 +57,7 @@ namespace NewLife.Reflection
             // 特殊处理GD32F1x0
             if (GD32) Cortex = Cortex;
 
-            _Libs.Clear();
+            Libs.Clear();
             Objs.Clear();
 
             // 扫描当前所有目录，作为头文件引用目录
@@ -88,9 +88,8 @@ namespace NewLife.Reflection
         #endregion
 
         #region 编译选项
-        private Boolean _Debug = true;
         /// <summary>是否编译调试版。默认true</summary>
-        public Boolean Debug { get { return _Debug; } set { _Debug = value; } }
+        public Boolean Debug { get; set; }
 
         /// <summary>是否精简版。默认false</summary>
         public Boolean Tiny { get; set; }
@@ -100,11 +99,11 @@ namespace NewLife.Reflection
 
         private String _CPU = "Cortex-M0";
         /// <summary>处理器。默认M0</summary>
-        public String CPU { get { return _CPU; } set { _CPU = value; } }
+        public String CPU { get; set; }
 
         private String _Flash = "STM32F0";
         /// <summary>Flash容量</summary>
-        public String Flash { get { return _Flash; } set { _Flash = value; } }
+        public String Flash { get; set; }
 
         /// <summary>分散加载文件</summary>
         public String Scatter { get; set; }
@@ -132,29 +131,38 @@ namespace NewLife.Reflection
         /// <summary>是否GD32芯片</summary>
         public Boolean GD32 { get; set; }
 
-        private Int32 _RebuildTime = 60;
         /// <summary>重新编译时间，默认60分钟</summary>
-        public Int32 RebuildTime { get { return _RebuildTime; } set { _RebuildTime = value; } }
+        public Int32 RebuildTime { get; set; }
 
-        private ICollection<String> _Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>定义集合</summary>
-        public ICollection<String> Defines { get { return _Defines; } set { _Defines = value; } }
+        public ICollection<String> Defines { get; private set; }
 
-        private ICollection<String> _Includes = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>引用头文件路径集合</summary>
-        public ICollection<String> Includes { get { return _Includes; } set { _Includes = value; } }
+        public ICollection<String> Includes { get; private set; }
 
-        private ICollection<String> _Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>源文件集合</summary>
-        public ICollection<String> Files { get { return _Files; } set { _Files = value; } }
+        public ICollection<String> Files { get; private set; }
 
-        private ICollection<String> _Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>对象文件集合</summary>
-        public ICollection<String> Objs { get { return _Objs; } set { _Objs = value; } }
+        public ICollection<String> Objs { get; private set; }
 
-        private ICollection<String> _Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         /// <summary>库文件集合</summary>
-        public ICollection<String> Libs { get { return _Libs; } }
+        public ICollection<String> Libs { get; private set; }
+        #endregion
+
+        #region 构造函数
+		public Builder()
+		{
+			CPU = "Cortex-M0";
+			Flash = "STM32F0";
+			RebuildTime = 60;
+			
+			Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			Includes = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+		}
         #endregion
 
         #region 主要编译方法
@@ -643,11 +651,11 @@ namespace NewLife.Reflection
             foreach (var item in path.AsDirectory().GetAllFiles(filter, allSub))
             {
                 // 不包含，直接增加
-                if (!_Libs.Contains(item.FullName))
+                if (!Libs.Contains(item.FullName))
                 {
                     var lib = new LibFile(item.FullName);
                     WriteLog("发现静态库：{0, -12} {1}".F(lib.Name, item.FullName));
-                    _Libs.Add(item.FullName);
+                    Libs.Add(item.FullName);
                 }
             }
         }

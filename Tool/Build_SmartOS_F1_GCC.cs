@@ -36,7 +36,7 @@ namespace NewLife.Reflection
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
 
-			build.Debug = false;
+			build.Debug = true;
             build.CompileAll();
             build.BuildLib("..\\SmartOS_F1");
 
