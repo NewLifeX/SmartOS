@@ -306,7 +306,7 @@ bool W5500::Open()
 	}
 	net_printf("硬件版本: %02X\r\n", ver);
 
-	debug_printf("等待PHY连接\r\n");
+	debug_printf("等待PHY连接 ");
 
 	T_PHYCFGR phy;
 	tw.Reset(5);
