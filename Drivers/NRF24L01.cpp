@@ -3,8 +3,8 @@
 #include "Port.h"
 #include "NRF24L01.h"
 
-#define RF_DEBUG DEBUG
-//#define RF_DEBUG 0
+//#define RF_DEBUG DEBUG
+#define RF_DEBUG 0
 
 /*
 模式		PRIM_RX	CE		FIFO状态
