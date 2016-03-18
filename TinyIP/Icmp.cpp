@@ -107,7 +107,7 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 // Ping目的地址，附带a~z重复的负载数据
 bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 {
-	assert_param2(this, "非法调用Icmp");
+	assert(this, "非法调用Icmp");
 	assert_ptr(this);
 
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];

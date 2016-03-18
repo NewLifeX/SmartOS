@@ -45,7 +45,7 @@ bool Stream::CheckRemain(uint count)
 	if(count > remain)
 	{
 		debug_printf("数据流 0x%08X 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
-		assert_param2(false, "无法扩容");
+		assert(false, "无法扩容");
 		return false;
 	}
 
@@ -63,7 +63,7 @@ uint Stream::Position() const { return _Position; }
 bool Stream::SetPosition(int p)
 {
 	// 允许移动到最后一个字节之后，也就是Length
-	//assert_param2(p <= Length, "设置的位置超出长度");
+	//assert(p <= Length, "设置的位置超出长度");
 	if(p < 0 && p > Length)
 	{
 		debug_printf("设置的位置 %d 超出长度 %d\r\n", p, Length);
@@ -94,7 +94,7 @@ byte* Stream::Current() const { return &_Buffer[_Position]; }
 /*// 从当前位置读取数据
 uint Stream::Read(void* buf, uint offset, int count)
 {
-	assert_param2(buf, "Stream::Read buf Error");
+	assert(buf, "Stream::Read buf Error");
 
 	if(count == 0) return 0;
 
@@ -142,7 +142,7 @@ uint Stream::Read(Buffer& bs)
 /*// 把数据写入当前位置
 bool Stream::Write(const void* buf, uint offset, uint count)
 {
-	assert_param2(buf, "Stream::Read buf Error");
+	assert(buf, "Stream::Read buf Error");
 
 	if(!CanWrite) return false;
 	if(!CheckRemain(count)) return false;
@@ -250,7 +250,7 @@ uint Stream::ReadArray(Buffer& bs)
 		//if(len > 0x40)
 		{
 			debug_printf("Stream::ReadArray 缓冲区大小不足 读 %d > %d ", len, bs.Length());
-			//assert_param2(len <= bs.Capacity(), "缓冲区大小不足");
+			//assert(len <= bs.Capacity(), "缓冲区大小不足");
 		}
 		return 0;
 	}

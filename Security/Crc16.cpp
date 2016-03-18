@@ -11,7 +11,7 @@ ushort Crc::Hash16(const Buffer& arr, ushort crc)
     auto buf	= arr.GetBuffer();
 	int len		= arr.Length();
 
-	assert_param2(buf, "Crc16校验目标地址不能为空");
+	assert(buf, "Crc16校验目标地址不能为空");
     if (!buf || !len) return 0;
 
     for (int i = 0; i < len; i++)

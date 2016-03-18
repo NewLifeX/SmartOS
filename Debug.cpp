@@ -43,7 +43,7 @@ void free_(void* p)
 {
 	byte* bs = (byte*)p;
 	bs	-= 4;
-	assert_param2(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
+	assert(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
 
 	free(bs);
 }

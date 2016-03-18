@@ -5,8 +5,8 @@ ushort IRcoding::CodingSize = 255;
 
 IRcoding::IRcoding(Storage* flash, uint blockSize)
 {
-	assert_param2(flash, "必须给出存储介质");
-	assert_param2(blockSize, "必须给出具体块大小");
+	assert(flash, "必须给出存储介质");
+	assert(blockSize, "必须给出具体块大小");
 	_Medium = flash;
 	_BlockSize = blockSize;
 	// 计算需要多少个 Block 存储一个 编码

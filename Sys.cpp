@@ -244,12 +244,12 @@ bool TSys::CheckMemory() const
 	uint msp = __get_MSP();
 
 	//if(__microlib_freelist >= msp) return false;
-	assert_param2(__microlib_freelist + 0x40 < msp, "堆栈相互穿透，内存已用完！可能是堆分配或野指针带来了内存泄漏！");
+	assert(__microlib_freelist + 0x40 < msp, "堆栈相互穿透，内存已用完！可能是堆分配或野指针带来了内存泄漏！");
 
 	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
 	//uint end = SRAM_BASE + (RAMSize << 10);
 	//if(__microlib_freelist + 0x40 >= end) return false;
-	assert_param2(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10), "堆栈相互穿透，内存已用完！一定是堆分配带来了内存泄漏！");
+	assert(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10), "堆栈相互穿透，内存已用完！一定是堆分配带来了内存泄漏！");
 #endif
 
 	return true;

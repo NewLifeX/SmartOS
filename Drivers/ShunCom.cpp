@@ -364,7 +364,7 @@ bool ShunComMessage::Read(Stream& ms)
 	{
 		Kind	= ms.ReadUInt16();
 		Size	= _REV16(ms.ReadUInt16());
-		assert_param2(2 + 2 + Size == Length, "ShunComMessage::Read");
+		assert(2 + 2 + Size == Length, "ShunComMessage::Read");
 		//ms.Read(Data, 0, Size);
 		bs.SetLength(Size);
 	}

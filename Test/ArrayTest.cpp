@@ -14,22 +14,22 @@ void TestArray()
 	Array arr1(bs1,sizeof(bs1));
 	arr1.Show(true);
 	
-	assert_param2(arr1.GetBuffer() == (byte*)bs1&&arr1.Length()== sizeof(bs1),"Array(void* data, int len)");
-	assert_param2(arr1[0] == 1, " byte& operator[](int i)");
+	assert(arr1.GetBuffer() == (byte*)bs1&&arr1.Length()== sizeof(bs1),"Array(void* data, int len)");
+	assert(arr1[0] == 1, " byte& operator[](int i)");
 	
 	//Buffer buf(bs2,sizeof(bs2));		
 	arr1 = bs2;
-	assert_param2(arr1[0] == bs2[0]&&arr1[3] == bs2[3], "Array& operator = (const void* p);");
+	assert(arr1[0] == bs2[0]&&arr1[3] == bs2[3], "Array& operator = (const void* p);");
 			
 	arr1.Clear();
-	assert_param2(arr1[1] == 0, "virtual void Clear()");
+	assert(arr1[1] == 0, "virtual void Clear()");
 	
 	arr1.Set(bs1,sizeof(bs1));
-	assert_param2(arr1== bs1, "bool Set(void* data, int len)");
+	assert(arr1== bs1, "bool Set(void* data, int len)");
 	
 	arr1.SetItem((void*)bs3,0,sizeof(bs3));
 	arr1.Show(true);
-	assert_param2(arr1[0] == 10&& arr1.Length() == sizeof(bs3) , "bool SetItem(const void* data, int index, int count);");
+	assert(arr1[0] == 10&& arr1.Length() == sizeof(bs3) , "bool SetItem(const void* data, int index, int count);");
 			
 	debug_printf("Array测试完毕....../r/n");
 				

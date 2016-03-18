@@ -71,7 +71,7 @@ void TinyServer::Start()
 {
 	TS("TinyServer::Start");
 
-	assert_param2(Cfg, "未指定微网服务器的配置");
+	assert(Cfg, "未指定微网服务器的配置");
 
 	//LoadConfig();
 	auto count = LoadDevices();

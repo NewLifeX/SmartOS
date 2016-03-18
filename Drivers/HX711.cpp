@@ -42,8 +42,8 @@ SCK上升沿驱动DOUT变动   即在SCK 下一次上升沿前读取DOUT便OK
 
 HX711::HX711(Pin sck, Pin dout) : SCK(sck, true), DOUT(dout)
 {
-	assert_param2(sck != P0, "SCK ERROR");
-	assert_param2(dout != P0, "DOUT ERROR");
+	assert(sck != P0, "SCK ERROR");
+	assert(dout != P0, "DOUT ERROR");
 
 	// 关闭 模块
 	/*SCK.Open();

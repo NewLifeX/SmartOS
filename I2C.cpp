@@ -209,7 +209,7 @@ void HardI2C::Init(byte index, uint speedHz)
 	_index = index;
 
 	I2C_TypeDef* g_I2Cs[] = I2CS;
-	assert_param2(_index < ArrayLength(g_I2Cs), "I2C::Init");
+	assert(_index < ArrayLength(g_I2Cs), "I2C::Init");
 	_IIC = g_I2Cs[_index];
 
 	SCL.OpenDrain = true;
@@ -494,7 +494,7 @@ void SoftI2C::GetPin(Pin* scl , Pin* sda )
 
 void SoftI2C::OnOpen()
 {
-	assert_param2(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
+	assert(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
 	debug_printf("I2C::Open Addr=0x%02X \r\n", Address);
 

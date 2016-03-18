@@ -67,9 +67,6 @@ uint ConfigBlock::CopyTo(Buffer& bs) const
     if(Size == 0 || Size > bs.Length()) return 0;
 
 	return bs.Copy(0, Data(), Size);
-	//bs.SetLength(Size);
-
-	//return Size;
 }
 
 // 构造一个新的配置块
@@ -77,10 +74,10 @@ bool ConfigBlock::Init(const String& name, const Buffer& bs)
 {
     if(!name) return false;
 
-	assert_param2(name.Length() < sizeof(Name), "配置区名称太长");
+	assert(name.Length() < sizeof(Name), "配置区名称太长");
     if(name.Length() >= sizeof(Name)) return false;
 
-	TS("ConfigBlock::Init");
+	//TS("ConfigBlock::Init");
 
 	// 配置块的大小，只有第一次能够修改，以后即使废弃也不能修改，仅仅清空名称
 	if(bs.Length() > 0)
@@ -102,7 +99,7 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
 	// 如果大小超标，并且下一块有效，那么这是非法操作
 	if(bs.Length() > Size && Next()->Valid())
 	{
-		debug_printf("ConfigBlock::Write 配置块 %s 大小 %d 小于要写入的数据大小 %d，并且下一块是有效配置块，不能覆盖！ \r\n", Name, Size, bs.Length());
+		debug_printf("ConfigBlock::Write 配置块 %s 大小 %d < %d \r\n", Name, Size, bs.Length());
 		return false;
 	}
 
@@ -167,7 +164,7 @@ const ConfigBlock* FindBlock(const Storage& st, uint addr, const String& name)
 
     if(!name) return nullptr;
 
-	assert_param2(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
+	assert(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
     if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	if(!CheckSignature(st, addr, false)) return nullptr;
@@ -254,7 +251,7 @@ const void* Config::Set(const String& name, const Buffer& bs) const
 
     if(!name) return nullptr;
 
-	assert_param2(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
+	assert(name.Length() < sizeof(ConfigBlock::Name), "配置区名称太长");
     if(name.Length() >= sizeof(ConfigBlock::Name)) return nullptr;
 
 	auto cfg = FindBlock(Device, Address, name);
@@ -300,7 +297,7 @@ bool Config::GetOrSet(const String& name, Buffer& bs) const
 	TS("Config::GetOrSet");
 
     if(name == nullptr) return false;
-    //assert_param2(name, "配置块名称不能为空");
+    //assert(name, "配置块名称不能为空");
 
 	// 输入数据已存在，直接返回
 	if(Get(name, bs)) return true;
@@ -345,7 +342,7 @@ ConfigBase::ConfigBase()
 
 uint ConfigBase::Size() const
 {
-	assert_param2(_End && _Start, "_Start & _End == nullptr");
+	assert(_End && _Start, "_Start & _End == nullptr");
 
 	return (uint)_End - (uint)_Start;
 }

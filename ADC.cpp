@@ -6,7 +6,7 @@ Pin ADC_Pins[] = ADC1_PINS;
 
 ADConverter::ADConverter(byte line, uint channel)
 {
-	assert_param2(line >= 1 && line <= 3, "ADC Line");
+	assert(line >= 1 && line <= 3, "ADC Line");
 
 	Line	= line;
 	Channel	= channel;

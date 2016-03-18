@@ -39,8 +39,8 @@ void Gateway::Start()
 
 	TS("Gateway::Start");
 
-	assert_param2(Server, "微网服务端未设置");
-	assert_param2(Client, "令牌客户端未设置");
+	assert(Server, "微网服务端未设置");
+	assert(Client, "令牌客户端未设置");
 
 	Server->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnLocal((TinyMessage&)msg); };
 	Server->Param		= this;

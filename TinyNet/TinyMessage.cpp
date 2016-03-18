@@ -94,9 +94,9 @@ bool TinyMessage::Read(Stream& ms)
 
 void TinyMessage::Write(Stream& ms) const
 {
-	assert_param2(Code, "微网指令码不能为空");
-	assert_param2(Src, "微网源地址不能为空");
-	//assert_param2(Src != Dest, "微网目的地址不能等于源地址");
+	assert(Code, "微网指令码不能为空");
+	assert(Src, "微网源地址不能为空");
+	//assert(Src != Dest, "微网目的地址不能等于源地址");
 	if(Src == Dest) return;
 
 	TS("TinyMessage::Write");
@@ -276,7 +276,7 @@ void TinyController::Open()
 {
 	if(Opened) return;
 
-	assert_param2(Port, "还没有传输口呢");
+	assert(Port, "还没有传输口呢");
 
 #if MSG_DEBUG
 	debug_printf("TinyNet::Inited Address=%d (0x%02X) 使用传输接口 ", Address, Address);

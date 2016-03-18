@@ -24,7 +24,7 @@ WeakStore::WeakStore(const char* magic, byte* ptr, uint len) : Data(0x40)
 // 检查并确保初始化，返回原来是否已初始化
 bool WeakStore::Check()
 {
-	assert_param2(Magic, "未指定幻数");
+	assert(Magic, "未指定幻数");
 
 	auto mg = (const char*)Data.GetBuffer();
 	//return strcmp(mg, Magic) == 0;
@@ -38,7 +38,7 @@ bool WeakStore::Check()
 
 void WeakStore::Init()
 {
-	assert_param2(Magic, "未指定幻数");
+	assert(Magic, "未指定幻数");
 
 	debug_printf("初始化 0x%08X，幻数 %s\r\n", Data.GetBuffer(), Magic);
 	Data.Clear();

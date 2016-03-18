@@ -62,7 +62,7 @@ bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 	byte* data	= udp->Next();
 	uint len	= ms.Remain();
 	uint plen	= _REV16(udp->Length);
-	assert_param2(len + sizeof(UDP_HEADER) == plen, "UDP数据包标称长度与实际不符");
+	assert(len + sizeof(UDP_HEADER) == plen, "UDP数据包标称长度与实际不符");
 #endif
 
 	OnProcess(ip, *udp, ms);
@@ -76,7 +76,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	//uint len = ms.Remain();
 	// 计算标称的数据长度
 	uint len = _REV16(udp.Length) - sizeof(UDP_HEADER);
-	assert_param2(len <= ms.Remain(), "UDP数据包不完整");
+	assert(len <= ms.Remain(), "UDP数据包不完整");
 
 	// 触发ITransport接口事件
 	Buffer bs(data, len);

@@ -31,12 +31,12 @@ extern "C"
 bool assert_ptr_(const void* p);
 
 void assert_failed2(const char* msg, const char* file, unsigned int line);
-#define assert_param2(expr, msg) ((expr) ? (void)0 : assert_failed2(msg, (const char*)__FILE__, __LINE__))
+#define assert(expr, msg) ((expr) ? (void)0 : assert_failed2(msg, (const char*)__FILE__, __LINE__))
 
 #else
 
 #define assert_ptr(expr) ((void)0)
-#define assert_param2(expr, msg) ((void)0)
+#define assert(expr, msg) ((void)0)
 
 #endif
 

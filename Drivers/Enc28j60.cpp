@@ -707,7 +707,7 @@ byte Enc28j60::GetRevision()
 bool Enc28j60::OnWrite(const Buffer& bs)
 {
 	uint len = bs.Length();
-	assert_param2(len <= MAX_FRAMELEN, "以太网数据帧超大");
+	assert(len <= MAX_FRAMELEN, "以太网数据帧超大");
 
 	if(!Linked())
 	{

@@ -89,8 +89,8 @@ void TinyClient::Close()
 /******************************** 收发中心 ********************************/
 bool TinyClient::Send(TinyMessage& msg)
 {
-	assert_param2(this, "令牌客户端未初始化");
-	assert_param2(Control, "令牌控制器未初始化");
+	assert(this, "令牌客户端未初始化");
+	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
 	if(!Server) return false;
@@ -103,8 +103,8 @@ bool TinyClient::Send(TinyMessage& msg)
 
 bool TinyClient::Reply(TinyMessage& msg)
 {
-	assert_param2(this, "令牌客户端未初始化");
-	assert_param2(Control, "令牌控制器未初始化");
+	assert(this, "令牌客户端未初始化");
+	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
 	if(!Server) return false;
@@ -271,7 +271,7 @@ void TinyClientTask(void* param)
 	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
 	uint len	= client->NextReportLength;
-	assert_param2(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
+	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 
 	if(offset)
 	{

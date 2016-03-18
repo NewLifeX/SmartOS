@@ -115,7 +115,7 @@ Buffer& Buffer::operator = (Buffer&& rval)
 // 重载索引运算符[]，返回指定元素的第一个字节
 byte Buffer::operator[](int i) const
 {
-	assert_param2(i >= 0 && i < _Length, "下标越界");
+	assert(i >= 0 && i < _Length, "下标越界");
 
 	byte* buf = (byte*)_Arr;
 
@@ -124,7 +124,7 @@ byte Buffer::operator[](int i) const
 
 byte& Buffer::operator[](int i)
 {
-	assert_param2(i >= 0 && i < _Length, "下标越界");
+	assert(i >= 0 && i < _Length, "下标越界");
 
 	byte* buf = (byte*)_Arr;
 
@@ -164,7 +164,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 		if(!SetLength(destIndex + len))
 		{
 			debug_printf("Buffer::Copy 缓冲区 0x%08X %d 太小，不足以拷贝 0x%08X %d \r\n", _Arr + destIndex, _Length, src, len);
-			assert_param2(false, "Buffer::Copy 缓冲区太小");
+			assert(false, "Buffer::Copy 缓冲区太小");
 
 			len	= remain;
 		}
@@ -241,7 +241,7 @@ void Buffer::Clear(byte item)
 Buffer Buffer::Sub(int index, int len)
 {
 	if(len < 0) len	= _Length - index;
-	assert_param2(index + len <= _Length, "len <= _Length");
+	assert(index + len <= _Length, "len <= _Length");
 
 	return Buffer((byte*)_Arr + index, len);
 
@@ -255,7 +255,7 @@ Buffer Buffer::Sub(int index, int len)
 const Buffer Buffer::Sub(int index, int len) const
 {
 	if(len < 0) len	= _Length - index;
-	assert_param2(index + len <= _Length, "len <= _Length");
+	assert(index + len <= _Length, "len <= _Length");
 
 	return Buffer((byte*)_Arr + index, len);
 
@@ -496,12 +496,12 @@ void Array::SetBuffer(const void* ptr, int len)
 // 设置数组元素为指定值，自动扩容
 bool Array::SetItem(const void* data, int index, int count)
 {
-	assert_param2(_canWrite, "禁止SetItem修改");
-	assert_param2(data, "Array::SetItem data Error");
+	assert(_canWrite, "禁止SetItem修改");
+	assert(data, "Array::SetItem data Error");
 
 	// count<=0 表示设置全部元素
 	if(count <= 0) count = _Length - index;
-	assert_param2(count > 0, "Array::SetItem count Error");
+	assert(count > 0, "Array::SetItem count Error");
 
 	// 检查长度是否足够
 	int len2 = index + count;
@@ -554,8 +554,8 @@ bool Array::Set(const void* data, int len)
 // 清空已存储数据。
 void Array::Clear()
 {
-	assert_param2(_canWrite, "禁止Clear修改");
-	assert_param2(_Arr, "Clear数据不能为空指针");
+	assert(_canWrite, "禁止Clear修改");
+	assert(_Arr, "Clear数据不能为空指针");
 
 	memset(_Arr, 0, _Size * _Length);
 }
@@ -563,7 +563,7 @@ void Array::Clear()
 // 设置指定位置的值，不足时自动扩容
 void Array::SetItemAt(int i, const void* item)
 {
-	assert_param2(_canWrite, "禁止SetItemAt修改");
+	assert(_canWrite, "禁止SetItemAt修改");
 
 	// 检查长度，不足时扩容
 	CheckCapacity(i + 1, _Length);
@@ -576,7 +576,7 @@ void Array::SetItemAt(int i, const void* item)
 // 重载索引运算符[]，返回指定元素的第一个字节
 byte Array::operator[](int i) const
 {
-	assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+	assert(_Arr && i >= 0 && i < _Length, "下标越界");
 
 	byte* buf = (byte*)_Arr;
 	if(_Size > 1) i *= _Size;
@@ -586,7 +586,7 @@ byte Array::operator[](int i) const
 
 byte& Array::operator[](int i)
 {
-	assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+	assert(_Arr && i >= 0 && i < _Length, "下标越界");
 
 	byte* buf = (byte*)_Arr;
 	if(_Size > 1) i *= _Size;
@@ -765,7 +765,7 @@ int ByteArray::Load(const void* data, int maxsize)
 // 从普通字节数据组加载，首字节为长度
 int ByteArray::Save(void* data, int maxsize) const
 {
-	assert_param2(_Length <= 0xFF, "_Length <= 0xFF");
+	assert(_Length <= 0xFF, "_Length <= 0xFF");
 
 	byte* p = (byte*)data;
 	int len = _Length <= maxsize ? _Length : maxsize;

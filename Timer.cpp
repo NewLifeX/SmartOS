@@ -113,7 +113,7 @@ void Timer::Open()
 
 	uint fre = clk / Prescaler / Period;
 	debug_printf("Timer%d::Open clk=%d Prescaler=%d Period=%d Fre=%d\r\n", _index + 1, clk, Prescaler, Period, fre);
-	assert_param2(fre > 0, "频率超出范围");
+	assert(fre > 0, "频率超出范围");
 #endif
 
 	// 打开时钟
@@ -215,7 +215,7 @@ void Timer::SetFrequency(uint frequency)
 		Div++;
 	}
 
-	assert_param2(frequency > 0 && frequency <= clk, "频率超出范围");
+	assert(frequency > 0 && frequency <= clk, "频率超出范围");
 
 	Prescaler	= psc;
 	Period		= prd;

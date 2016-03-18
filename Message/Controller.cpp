@@ -32,7 +32,7 @@ void Controller::Open()
 {
 	if(Opened) return;
 
-	assert_param2(Port, "还没有传输口呢");
+	assert(Port, "还没有传输口呢");
 
 	Port->MinSize	= MinSize;
 	// 注册收到数据事件
@@ -90,7 +90,7 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 			break;
 		}
 
-		assert_param2(control, "控制器指针已被改变3");
+		assert(control, "控制器指针已被改变3");
 		assert_ptr(control);
 	}
 

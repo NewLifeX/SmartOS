@@ -35,7 +35,7 @@ TokenClient::TokenClient()
 
 void TokenClient::Open()
 {
-	assert_param2(Control, "令牌客户端还没设置控制器呢");
+	assert(Control, "令牌客户端还没设置控制器呢");
 
 	Control->Received	= OnTokenClientReceived;
 	Control->Param		= this;
@@ -74,7 +74,7 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 	}
 
 	if(!ctrl) ctrl	= Control;
-	assert_param2(ctrl, "TokenClient::Send");
+	assert(ctrl, "TokenClient::Send");
 
 	return ctrl->Send(msg);
 }
@@ -88,7 +88,7 @@ bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 	}
 
 	if(!ctrl) ctrl	= Control;
-	assert_param2(ctrl, "TokenClient::Reply");
+	assert(ctrl, "TokenClient::Reply");
 
 	return ctrl->Reply(msg);
 }

@@ -205,7 +205,7 @@ void Port::OnOpen(void* param)
 void Port::AFConfig(GPIO_AF GPIO_AF) const
 {
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-	assert_param2(Opened, "打开后才能配置AF");
+	assert(Opened, "打开后才能配置AF");
 
 	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _PIN(_Pin), GPIO_AF);
 #endif
@@ -800,7 +800,7 @@ void InputPort::OnClose()
 // 注册回调  及中断使能
 bool InputPort::Register(IOReadHandler handler, void* param)
 {
-	assert_param2(_Pin != P0, "输入注册必须先设置引脚");
+	assert(_Pin != P0, "输入注册必须先设置引脚");
 
     Handler	= handler;
 	Param	= param;

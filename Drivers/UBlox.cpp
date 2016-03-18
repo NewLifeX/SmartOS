@@ -25,7 +25,7 @@ void UBlox::SetBaudRate(int baudRate)
 {
 	TS("UBlox::SetBaudRate");
 
-	assert_param2(baudRate == 115200, "目前仅支持115200波特率的设定");
+	assert(baudRate == 115200, "目前仅支持115200波特率的设定");
 
 	// 构造波特率指令。默认115200
 	byte cmd[] = {

@@ -252,7 +252,7 @@ public:
 	// 初始化指定长度的数组。默认使用内部缓冲区
 	TArray(int length = ArraySize) : Array(Arr, ArrayLength(Arr))
 	{
-		assert_param2(length <= 0x400, "禁止分配超过1k的数组");
+		assert(length <= 0x400, "禁止分配超过1k的数组");
 		if(length < 0) length = ArrayLength(Arr);
 
 		_Length		= length;
@@ -301,7 +301,7 @@ public:
 	// 末尾加入一个空数据，并返回引用，允许外部修改
 	virtual T& Push()
 	{
-		assert_param2(_canWrite, "禁止修改");
+		assert(_canWrite, "禁止修改");
 
 		int i = _Length;
 		// 检查长度，不足时扩容
@@ -316,7 +316,7 @@ public:
 	// 弹出最后一个数组元素，长度减一
 	virtual T& Pop()
 	{
-		assert_param2(_canWrite, "禁止修改");
+		assert(_canWrite, "禁止修改");
 
 		T* buf = (T*)_Arr;
 		return buf[--_Length];
@@ -337,7 +337,7 @@ public:
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     virtual T& operator[](int i) const
 	{
-		assert_param2(_Arr && i >= 0 && i < _Length, "下标越界");
+		assert(_Arr && i >= 0 && i < _Length, "下标越界");
 
 		T* buf = (T*)_Arr;
 		return buf[i];
