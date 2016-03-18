@@ -371,21 +371,25 @@ bool Lock::Wait(int us)
 
 #if DEBUG
 
-static TArray<const char*, 0x40>* _TS = nullptr;
+// 使用字符串指针的指针，因为引用的都是字符串常量，不需要拷贝和分配空间
+static const char** _TS	= nullptr;
+static int _TS_Len	= 0;
 
 TraceStack::TraceStack(const char* name)
 {
-	static TArray<const char*, 0x40> __ts(0);
-	_TS	= &__ts;
+	// 字符串指针的数组
+	static const char* __ts[8];
+	_TS	= __ts;
 
-	_TS->Push(name);
+	//_TS->Push(name);
+	if(_TS_Len < 8) _TS[_TS_Len++]	= name;
 }
 
 TraceStack::~TraceStack()
 {
 	// 清空最后一个项目，避免误判
-	(*_TS)[_TS->Length() - 1]	= nullptr;
-	_TS->Pop();
+	if(_TS_Len > 0) _TS[_TS_Len--]	= "";
+	//_TS->Pop();
 }
 
 void TraceStack::Show()
@@ -393,9 +397,9 @@ void TraceStack::Show()
 	debug_printf("TraceStack::Show:\r\n");
 	if(_TS)
 	{
-		for(int i=_TS->Length() - 1; i>=0; i--)
+		for(int i=_TS_Len - 1; i>=0; i--)
 		{
-			debug_printf("\t<=%s \r\n", (*_TS)[i]);
+			debug_printf("\t<=%s \r\n", _TS[i]);
 		}
 	}
 }
