@@ -603,7 +603,7 @@ bool Array::CheckCapacity(int len, int bak)
 	// 自动计算合适的容量
 	int sz = 0x40;
 	while(sz < len) sz <<= 1;
-
+	
 	void* p = Alloc(sz);
 	if(!p) return false;
 
@@ -619,12 +619,20 @@ bool Array::CheckCapacity(int len, int bak)
 	_Arr		= (char*)p;
 	_Capacity	= sz;
 	_Length		= oldlen;
-	_needFree	= true;
+
+	// _needFree 由Alloc决定
+	// 有可能当前用的内存不是内部内存，然后要分配的内存小于内部内存，则直接使用内部，不需要释放
+	//_needFree	= true;
 
 	return true;
 }
 
-void* Array::Alloc(int len) { return new byte[_Size * len];}
+void* Array::Alloc(int len)
+{
+	_needFree	= true;
+	
+	return new byte[_Size * len];
+}
 
 bool operator==(const Array& bs1, const Array& bs2)
 {
@@ -723,6 +731,20 @@ void ByteArray::move(ByteArray& rval)
 
 	SetLength(rval.Length());
 	Copy(0, rval._Arr, rval._Length);
+}
+
+void* ByteArray::Alloc(int len)
+{
+	if(len <= sizeof(Arr))
+	{
+		_needFree	= false;
+		return Arr;
+	}
+	else
+	{
+		_needFree	= true;
+		return new byte[len];
+	}
 }
 
 ByteArray& ByteArray::operator = (const Buffer& rhs)

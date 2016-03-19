@@ -166,6 +166,20 @@ bool String::CheckCapacity(uint size)
 	return true;
 }
 
+void* String::Alloc(int len)
+{
+	if(len <= sizeof(Arr))
+	{
+		_needFree	= false;
+		return Arr;
+	}
+	else
+	{
+		_needFree	= true;
+		return new byte[len];
+	}
+}
+
 String& String::copy(const char* cstr, uint length)
 {
 	if (!CheckCapacity(length))

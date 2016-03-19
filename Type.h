@@ -242,7 +242,19 @@ class TArray : public Array
 protected:
 	T		Arr[ArraySize];	// 内部缓冲区
 
-	virtual void* Alloc(int len) { return new T[len]; }
+	virtual void* Alloc(int len)
+	{
+		if(len <= ArraySize)
+		{
+			_needFree	= false;
+			return Arr;
+		}
+		else
+		{
+			_needFree	= true;
+			return new T[len];
+		}
+	}
 
 public:
 	// 数组长度
@@ -388,7 +400,7 @@ public:
 protected:
 	byte	Arr[0x40];	// 内部缓冲区
 
-	virtual void* Alloc(int len) { return new byte[len]; }
+	virtual void* Alloc(int len);
 
 	void move(ByteArray& rval);
 };

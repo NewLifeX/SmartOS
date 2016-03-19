@@ -186,6 +186,7 @@ protected:
 	void move(String& rhs);
 
 	bool CheckCapacity(uint size);
+	virtual void* Alloc(int len);
 };
 
 #define R(str) String(str)
