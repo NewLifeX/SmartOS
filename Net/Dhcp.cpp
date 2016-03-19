@@ -4,8 +4,8 @@
 #include "Dhcp.h"
 #include "Ethernet.h"
 
-//#define NET_DEBUG DEBUG
-#define NET_DEBUG 0
+#define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
 #if NET_DEBUG
 	#define net_printf debug_printf
 #else
@@ -134,13 +134,13 @@ void Dhcp::Start()
 
 	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
-	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
+	/*// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	if(IP.IsAny())
 	{
 		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
 		//Host->Close();
 		Host.IP	= IPAddress::Any();
-	}
+	}*/
 
 	// 发送网络请求时会自动开始
 	//auto port = dynamic_cast<ITransport*>(Socket);
