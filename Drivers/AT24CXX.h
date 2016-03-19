@@ -4,8 +4,8 @@
 #include "I2C.h"
 #include "..\Storage\Storage.h"
 
-// 光强传感器
-class AT24CXX : public Storage
+// EEPROM
+class AT24CXX : public CharStorage
 {
 public:
     I2C* IIC;		// I2C通信口

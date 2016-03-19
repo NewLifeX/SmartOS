@@ -261,7 +261,7 @@ const void* Config::Set(const String& name, const Buffer& bs) const
 	// 重新搞一个配置头，使用新的数据去重新初始化
 	ConfigBlock header;
 	header.Init(name, bs);
-	header.Write(Device, (uint)cfg, bs);
+	if(!header.Write(Device, (uint)cfg, bs)) return nullptr;
 
 	return cfg->Data();
 }
