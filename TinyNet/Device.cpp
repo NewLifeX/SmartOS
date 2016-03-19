@@ -4,11 +4,11 @@
 /******************************** Device ********************************/
 
 Device::Device() :
-	HardID(_HardID),
-	Mac(_Mac),
-	Name(_Name),
-	Pass(_Pass),
-	Store(_Store)
+	HardID(_HardID, sizeof(_HardID)),
+	Mac(_Mac, sizeof(_Mac)),
+	Name(_Name, sizeof(_Name)),
+	Pass(_Pass, sizeof(_Pass)),
+	Store(_Store, sizeof(_Store))
 {
 	Address		= 0;
 	Logined		= false;
