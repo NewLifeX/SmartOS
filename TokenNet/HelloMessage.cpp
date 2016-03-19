@@ -114,16 +114,20 @@ String& HelloMessage::ToStr(String& str) const
 
 	if(Reply && Error)
 	{
-		str	+= ' ';
+		if(ErrCode == 0xFE || ErrCode == 0xFD)
+		{
+			//str	+= ' ';
+			str	+= (ErrCode == 0xFD) ? " 临时跳转 " : " 永久跳转 ";
 
-		if(Protocol == ProtocolType::Tcp)
-			str += "TCP ";
-		else if(Protocol == ProtocolType::Udp)
-			str += "UDP ";
+			if(Protocol == ProtocolType::Tcp)
+				str += "Tcp://";
+			else if(Protocol == ProtocolType::Udp)
+				str += "Udp://";
 
-		str = str + Server + " " + Port;
+			str = str + Server + ":" + Port;
 
-		return str;
+			return str;
+		}
 	}
 
 	str.Format(" Ver=%04X", Version);
