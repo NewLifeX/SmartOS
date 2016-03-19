@@ -71,7 +71,8 @@ class Buffer : public Object
 public:
 	// 打包一个指针和长度指定的数据区
 	Buffer(void* ptr, int len);
-	template<typename T, int N>
+	// 不能用简写的模板，否则String可能命中自己的构造函数
+	/*template<typename T, int N>
 	Buffer(T (&arr)[N])
 	{
 		_Arr	= (char*)arr;
@@ -82,7 +83,7 @@ public:
 	{
 		_Arr	= (char*)&obj;
 		_Length	= sizeof(obj);
-	}
+	}*/
 	// 拷贝构造函数。直接把指针和长度拿过来用
 	Buffer(const Buffer& buf) = delete;
 	// 对象mov操作，指针和长度归我，清空对方

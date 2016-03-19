@@ -226,7 +226,7 @@ bool parseDNSMSG(const Buffer& bs, Buffer& ip_from_dns)
 	ms.Little = false;
 
 	TDNS hdr;
-	Buffer(hdr).Clear();
+	Buffer(&hdr, sizeof(hdr)).Clear();
 
 	hdr.id = ms.ReadUInt16();
 	ushort tmp = ms.ReadUInt16();
@@ -370,7 +370,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 #endif
 
 	auto ip	= IPAddress::Parse(domain);
-	if(ip.IsAny()) return ip;
+	if(!ip.IsAny()) return ip;
 
 	byte buf[1024];
 	Buffer bs(buf, ArrayLength(buf));
@@ -388,8 +388,8 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	{
 		if(rs.Length() > 0)
 		{
-			//Buffer ips(&ip.Value, sizeof(ip.Value));
-			Buffer ips(ip.Value);
+			Buffer ips(&ip.Value, sizeof(ip.Value));
+			//Buffer ips(ip.Value);
 			parseDNSMSG(rs, ips);
 			break;
 		}

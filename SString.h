@@ -18,6 +18,8 @@ public:
 	//String(StringHelper&& rval);
 	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
+	// 包装静态字符串，直接使用，修改时扩容
+	String(const char* str, int length);
 	explicit String(char c);
 	explicit String(byte value, int radix = 10);
 	explicit String(short value, int radix = 10);
@@ -33,7 +35,7 @@ public:
 
 	// 内存管理
 	//inline uint Length() const { return _Length; }
-	inline char* GetBuffer() const { return (char*)_Arr; }
+	inline const char* GetBuffer() const { return (const char*)_Arr; }
 	// 设置数组长度。改变长度后，确保最后以0结尾
 	virtual bool SetLength(int length, bool bak);
 
@@ -202,7 +204,7 @@ private:
 	const String& _Str;
 	const String& _Sep;
 	int		_Position;
-	//int		_Length;
+	int		_Length;
 };
 
 #endif

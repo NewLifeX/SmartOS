@@ -23,7 +23,13 @@ String::String(const char* cstr) : Array(Arr, ArrayLength(Arr))
 	/*
 	其实这里可以不用拷贝，内部直接使用这个指针，等第一次修改的时候再拷贝，不过那样过于复杂了
 	*/
-	if (cstr) copy(cstr, strlen(cstr));
+	//if (cstr) copy(cstr, strlen(cstr));
+
+	_Arr	= (char*)cstr;
+	_Length	= strlen(cstr);
+	// 此时不能保证外部一定是0结尾
+	_Capacity	= _Length + 1;
+	_canWrite	= false;
 }
 
 String::String(const String& value) : Array(Arr, ArrayLength(Arr))
@@ -120,6 +126,14 @@ String::String(char* str, int length) : Array(str, length)
 	_Capacity	= length - 1;
 	_Length		= 0;
 	_Arr[0]		= '\0';
+}
+
+// 包装静态字符串，直接使用，修改时扩容
+String::String(const char* str, int length) : Array((char*)str, length)
+{
+	// 此时不能保证外部一定是0结尾
+	_Capacity	= length + 1;
+	_canWrite	= false;
 }
 
 inline void String::init()
@@ -881,7 +895,7 @@ String String::Trim() const
 String String::ToLower() const
 {
 	String str(*this);
-	auto p	= str.GetBuffer();
+	auto p	= str._Arr;
 	for(int i=0; i<str._Length; i++)
 		p[i]	= tolower(p[i]);
 
@@ -891,7 +905,7 @@ String String::ToLower() const
 String String::ToUpper() const
 {
 	String str(*this);
-	auto p	= str.GetBuffer();
+	auto p	= str._Arr;
 	for(int i=0; i<str._Length; i++)
 		p[i]	= toupper(p[i]);
 
@@ -1011,13 +1025,12 @@ StringSplit::StringSplit(const String& str, const String& sep) :
 	_Str(str),
 	_Sep(sep)
 {
-	//_Position	= -1;
-	//_Length		= 0;
+	_Position	= 0;
+	_Length		= 0;
 
+	// 先算好第一段
 	int p	= _Str.IndexOf(_Sep);
-	if(p >= 0) p += _Sep.Length();
-
-	_Position	= p;
+	if(p >= 0) _Length	= p;
 }
 
 /*int String::Split(const String& str, StringItem callback)
@@ -1049,18 +1062,27 @@ StringSplit::StringSplit(const String& str, const String& sep) :
 
 const String StringSplit::Next()
 {
-	if(_Position < 0) return String(nullptr, 0);
+	auto ptr	= _Str.GetBuffer();
+	int len		= 0;
+	
+	if(_Position < 0 || _Length == 0)
+		ptr	= nullptr;
+	else
+	{
+		// 拿出当前段，然后提前计算下一段
+		ptr	+= _Position;
+		len	= _Length;
+		
+		// 找到下一个位置
+		// 剩余全部长度，如果找不到下一个，那么这个就是最后长度
+		int end	= _Str.Length();
+		_Position += _Length + _Sep.Length();
+		int p	= _Str.IndexOf(_Sep, _Position);
+		if(p > 0) end	= p;
 
-	int len	= _Str.Length() - _Position;
-
-	// 找到下一个位置
-	int p	= _Str.IndexOf(_Sep, _Position);
-	if(p > 0) len	= p - _Position;
+		_Length		= end - _Position;
+	}
 
 	// 包装一层指针
-	String item(_Str.GetBuffer() + _Position, len);
-
-	_Position	= p;
-
-	return item;
+	return String((const char*)ptr, len);
 }

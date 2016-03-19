@@ -40,8 +40,11 @@ IPAddress IPAddress::Parse(const String& ipstr)
 	// 最大长度判断 255.255.255.255
 	if(ipstr.Length() > 3 + 1 + 3 + 1 + 3 + 1 + 3) return ip;
 
-	auto ss	= ipstr.Split(".");
-	for(int i=0; i<4 && ss; i++)
+	// 这里不能在Split参数直接使用字符指针，隐式构造的字符串对象在这个函数之后将会被销毁
+	String sep(".");
+	auto ss	= ipstr.Split(sep);
+	int i	= 0;
+	for(i=0; i<4 && ss; i++)
 	{
 		auto item	= ss.Next();
 		if(item.Length() == 0 || item.Length() > 3) return ip;
@@ -51,6 +54,7 @@ IPAddress IPAddress::Parse(const String& ipstr)
 
 		ip[i]	= (byte)v;
 	}
+	if(i == 4) debug_printf("IPAddress::Parse %s => %08X \r\n", ipstr.GetBuffer(), ip.Value);
 
 	return ip;
 }
