@@ -31,6 +31,30 @@ uint IPAddress::GetSubNet(const IPAddress& mask) const
 	return Value & mask.Value;
 }
 
+// 把字符串IP地址解析为IPAddress
+IPAddress IPAddress::Parse(const String& ipstr)
+{
+	auto ip	= IPAddress::Any();
+	if(!ipstr) return ip;
+
+	// 最大长度判断 255.255.255.255
+	if(ipstr.Length() > 3 + 1 + 3 + 1 + 3 + 1 + 3) return ip;
+
+	auto ss	= ipstr.Split(".");
+	for(int i=0; i<4 && ss; i++)
+	{
+		auto item	= ss.Next();
+		if(item.Length() == 0 || item.Length() > 3) return ip;
+
+		int v	= item.ToInt();
+		if(v < 0 || v > 255) return ip;
+
+		ip[i]	= (byte)v;
+	}
+
+	return ip;
+}
+
 const IPAddress& IPAddress::Any()
 {
 	static const IPAddress _Any(0, 0, 0, 0);

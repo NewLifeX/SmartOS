@@ -17,8 +17,6 @@ public:
 
 	// 快捷查询。借助主机直接查询多次
 	static IPAddress Query(ISocketHost& host, const String& domain, int times = 5, int msTimeout = 1000);
-	// 把字符串IP地址解析为IPAddress
-	static IPAddress Parse(const String& ipstr);
 
 private:
 	static uint OnReceive(ITransport* port, Buffer& bs, void* param, void* param2);

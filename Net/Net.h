@@ -39,7 +39,8 @@ public:
 
 	bool IsAny() const;
 	bool IsBroadcast() const;
-	uint GetSubNet(const IPAddress& mask) const;	// 获取子网
+	// 获取子网
+	uint GetSubNet(const IPAddress& mask) const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
@@ -49,6 +50,9 @@ public:
 
 	static const IPAddress& Any();
 	static const IPAddress& Broadcast();
+
+	// 把字符串IP地址解析为IPAddress
+	static IPAddress Parse(const String& ipstr);
 };
 
 // IP结点
