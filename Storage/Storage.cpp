@@ -65,7 +65,7 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 	}
 	if(!len)
 	{
-		st_printf("数据相同，无需写入！");
+		st_printf("数据相同，无需写入！\r\n");
 		return true;
 	}
 
