@@ -191,7 +191,7 @@ void String::move(String& rhs)
 /*void String::SetBuffer(const void* str, int length)
 {
 	release();
-	
+
 	_Arr		= (char*)str;
 	_Capacity	= length;
 	_Length		= 0;
@@ -636,6 +636,13 @@ ByteArray String::ToHex() const
 	return bs;
 }
 
+int String::ToInt() const
+{
+	if(_Length == 0) return 0;
+
+	return atoi(_Arr);
+}
+
 // 输出对象的字符串表示方式
 String& String::ToStr(String& str) const
 {
@@ -794,7 +801,7 @@ bool String::EndsWith(const char* str) const
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
 }
 
-int String::Split(const String& str, StringItem callback)
+/*int String::Split(const String& str, StringItem callback)
 {
 	if(str.Length() == 0) return 0;
 
@@ -819,6 +826,11 @@ int String::Split(const String& str, StringItem callback)
 	}
 
 	return n;
+}*/
+
+StringSplit String::Split(const String& sep) const
+{
+	return StringSplit(*this, sep);
 }
 
 String String::Substring(int start, int length) const
@@ -993,4 +1005,62 @@ char *dtostrf (double val, char width, byte prec, char* sout)
 	sprintf(sout, fmt, val);
 
 	return sout;
+}
+
+StringSplit::StringSplit(const String& str, const String& sep) :
+	_Str(str),
+	_Sep(sep)
+{
+	//_Position	= -1;
+	//_Length		= 0;
+
+	int p	= _Str.IndexOf(_Sep);
+	if(p >= 0) p += _Sep.Length();
+
+	_Position	= p;
+}
+
+/*int String::Split(const String& str, StringItem callback)
+{
+	if(str.Length() == 0) return 0;
+
+	int n	= 0;
+	int p	= 0;
+	int e	= 0;
+	while(p < _Length)
+	{
+		// 找到下一个位置。如果找不到，直接移到末尾
+		e	= IndexOf(str, p);
+		if(e < 0) e = _Length;
+
+		n++;
+
+		auto item	= Substring(p, e - p);
+		callback(item);
+
+		// 如果在末尾，说明没有找到
+		if(e == _Length) break;
+
+		p	= e + str.Length();
+	}
+
+	return n;
+}*/
+
+const String StringSplit::Next()
+{
+	if(_Position < 0) return String(nullptr, 0);
+
+	int len	= _Str.Length() - _Position;
+
+	// 找到下一个位置
+	int p	= _Str.IndexOf(_Sep, _Position);
+	if(p > 0) len	= p - _Position;
+
+	// 包装一层指针
+	String item(_Str.GetBuffer() + _Position, len);
+
+	_Position	= p;
+
+	return item;
 }

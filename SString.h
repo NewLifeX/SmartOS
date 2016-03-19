@@ -5,7 +5,8 @@
 #include "Type.h"
 
 // 字符串助手，主要用于字符串连接
-class StringHelper;
+//class StringHelper;
+class StringSplit;
 
 // 字符串
 class String : public Array
@@ -150,8 +151,9 @@ public:
 	bool EndsWith(const String& str) const;
 	bool EndsWith(const char* str) const;
 
-	typedef void (*StringItem)(const String& item);
-	int Split(const String& str, StringItem callback);
+	//typedef void (*StringItem)(const String& item);
+	//int Split(const String& str, StringItem callback);
+	StringSplit Split(const String& sep) const;
 
 	String Substring(int start, int _Length) const;
 	String TrimStart() const;
@@ -186,23 +188,21 @@ protected:
 
 #define R(str) String(str)
 
-//String operator+(const char* str1, const char* str2);
-//String operator+(const char* str, const Object& obj);
-//String operator+(const Object& obj, const char* str);
-
-/*class StringHelper : public String
+class StringSplit
 {
 public:
-	StringHelper(const String& s) : String(s) {}
-	StringHelper(const char* p) : String(p) {}
-	StringHelper(char c) : String(c) {}
-	StringHelper(byte num) : String(num) {}
-	StringHelper(int num) : String(num) {}
-	StringHelper(uint num) : String(num) {}
-	StringHelper(Int64 num) : String(num) {}
-	StringHelper(UInt64 num) : String(num) {}
-	StringHelper(float num) : String(num) {}
-	StringHelper(double num) : String(num) {}
-};*/
+	StringSplit(const String& str, const String& sep);
+	
+	const String Next();
+
+    explicit operator bool() const { return _Position >= 0; }
+    bool operator !() const { return _Position < 0; }
+
+private:
+	const String& _Str;
+	const String& _Sep;
+	int		_Position;
+	//int		_Length;
+};
 
 #endif
