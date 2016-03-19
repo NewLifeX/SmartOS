@@ -369,6 +369,11 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	server.Show(true);
 #endif
 
+	auto ip	= Parse(domain);
+	if(ip.IsAny()) return ip;
+
+	// 尝试细节数字IP
+
 	byte buf[1024];
 	Buffer bs(buf, ArrayLength(buf));
 	Buffer rs(buf, ArrayLength(buf));
@@ -379,7 +384,6 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	dns_makequery(0, domain, bs);
 	Socket->Send(bs);
 
-	IPAddress ip;
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep = 100;
 	while(!tw.Expired())
@@ -433,4 +437,28 @@ IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msT
 	}
 
 	return any;
+}
+
+// 把字符串IP地址解析为IPAddress
+IPAddress DNS::Parse(const String& ipstr)
+{
+	auto ip	= IPAddress::Any();
+	if(!ipstr) return ip;
+
+	// 最大长度判断 255.255.255.255
+	if(ipstr.Length() > 3 + 1 + 3 + 1 + 3 + 1 + 3) return ip;
+
+	auto ss	= ipstr.Split(".");
+	for(int i=0; i<4 && ss; i++)
+	{
+		auto item	= ss.Next();
+		if(item.Length() == 0 || item.Length() > 3) return ip;
+
+		int v	= item.ToInt();
+		if(v < 0 || v > 255) return ip;
+
+		ip[i]	= (byte)v;
+	}
+
+	return ip;
 }
