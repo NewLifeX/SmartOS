@@ -214,7 +214,7 @@ void W5500::Init()
 	_spi	= nullptr;
 	Led		= nullptr;
 
-	Buffer(_sockets).Clear();
+	Buffer(_sockets, sizeof(_sockets)).Clear();
 
 	PhaseOM = 0x00;
 

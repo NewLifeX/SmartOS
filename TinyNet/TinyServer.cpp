@@ -286,7 +286,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		if(!st)
 			dv->Mac.Copy(0, dv->HardID, 0, -1);
 		else
-			dv->Mac.Copy(0, st, 0, -1);
+			dv->Mac.Copy(0, st, -1);
 
 		if(dv->Valid())
 		{

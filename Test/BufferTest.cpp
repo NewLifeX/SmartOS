@@ -80,15 +80,15 @@ void TestBuffer()
 	auto str2	= bs4.ToString();
 	assert(str2 == "AB-34-FE", "String ToString()");
 
-	Buffer bs5(cs);
+	Buffer bs5(cs, sizeof(cs));
 	debug_printf("Buffer(T (&arr)[N]) => %s\r\n", cs);
 	assert(bs5.GetBuffer() == (byte*)cs, "Buffer(T (&arr)[N])");
 	assert(bs5 == cs, "Buffer(void* p = nullptr, int len = 0)");
 
-	Buffer bs7(cs);
+	/*Buffer bs7(cs);
 	
 	auto type	= bs5.GetType();
-	Buffer bs6(type);
+	Buffer bs6(type);*/
 	
 	debug_printf("内存缓冲区单元测试全部通过！\r\n");
 }

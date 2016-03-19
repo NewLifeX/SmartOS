@@ -359,7 +359,7 @@ bool ShunComMessage::Read(Stream& ms)
 	Length	= ms.ReadByte();
 	Code	= ms.ReadUInt16();
 	
-	Buffer bs(Data);
+	Buffer bs(Data, sizeof(Data));
 	if(Length > 4)
 	{
 		Kind	= ms.ReadUInt16();
@@ -387,7 +387,7 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(Length);
 	ms.Write(Code);
 
-	Buffer bs(Data);
+	Buffer bs((void*)Data, sizeof(Data));
 	if(Length > 4)
 	{
 		ms.Write(Kind);
