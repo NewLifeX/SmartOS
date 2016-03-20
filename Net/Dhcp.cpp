@@ -326,10 +326,10 @@ void Dhcp::Process(Buffer& bs, const IPEndPoint& ep)
 
 			net_printf("DHCP IPLeaseTime:%ds\r\n", time);
 
-			// DHCP租约过了一半以后重新获取IP地址
+			// DHCP租约过期前提前一分钟重新获取IP地址
 			if(time > 0)
 			{
-				Sys.SetTaskPeriod(taskID, (UInt64)time / 2 * 1000);
+				Sys.SetTaskPeriod(taskID, (UInt64)(time - 60) * 1000);
 				Sys.SetTask(taskID, true);
 			}
 		}
