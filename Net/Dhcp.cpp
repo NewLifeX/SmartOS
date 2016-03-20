@@ -187,10 +187,12 @@ void Dhcp::Stop()
 	}
 	else
 	{
+		net_printf("尝试次数 %d 超过最大允许次数 %d ，准备重启系统\r\n", Times, MaxTimes);
+
 		// 重启一次，可能DHCP失败跟硬件有关
 		Sys.Reset();
 	}
-	
+
 	if(OnStop) OnStop(this, nullptr);
 }
 
