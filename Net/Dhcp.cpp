@@ -134,13 +134,14 @@ void Dhcp::Start()
 
 	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
-	/*// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
+	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
+	// 严格路由要求默认请求的IP必须在本网段，否则不予处理
 	if(IP.IsAny())
 	{
 		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
 		//Host->Close();
 		Host.IP	= IPAddress::Any();
-	}*/
+	}
 
 	// 发送网络请求时会自动开始
 	//auto port = dynamic_cast<ITransport*>(Socket);
@@ -155,7 +156,7 @@ void Dhcp::Start()
 		Sys.SetTask(taskID, true);
 	}
 
-	Times++;
+	//Times++;
 
 	Result	= false;
 	Running = true;
@@ -173,24 +174,29 @@ void Dhcp::Stop()
 
 	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
 
-	// 如果未达到重试次数则重新开始
-	if(Times < MaxTimes)
+	if(Result)
 	{
-		if(!Result)
-			Start();
-		else
-		{
-			// 获取IP成功，重新设置参数
-			Host.Config();
-			Host.SaveConfig();
-		}
+		// 成功后次数清零
+		Times	= 0;
+
+		// 获取IP成功，重新设置参数
+		Host.Config();
+		Host.SaveConfig();
 	}
 	else
 	{
-		net_printf("尝试次数 %d 超过最大允许次数 %d ，准备重启系统\r\n", Times, MaxTimes);
+		// 如果未达到重试次数则重新开始
+		if(++Times < MaxTimes)
+		{
+			Start();
+		}
+		else
+		{
+			net_printf("尝试次数 %d 超过最大允许次数 %d ，准备重启系统\r\n", Times, MaxTimes);
 
-		// 重启一次，可能DHCP失败跟硬件有关
-		Sys.Reset();
+			// 重启一次，可能DHCP失败跟硬件有关
+			Sys.Reset();
+		}
 	}
 
 	if(OnStop) OnStop(this, nullptr);
@@ -202,9 +208,10 @@ void Dhcp::Loop(void* param)
 	if(!_dhcp->Running)
 	{
 		// 曾经成功后再次启动，则重新开始
-		if(_dhcp->Times == 0) return;
+		//if(_dhcp->Times == 0) return;
 
-		_dhcp->Start();
+		// 上一次是成功的，这次定时任务可能就是重新获取IP
+		if(_dhcp->Result) _dhcp->Start();
 	}
 
 	// 检查总等待时间
