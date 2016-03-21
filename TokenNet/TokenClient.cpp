@@ -35,6 +35,7 @@ TokenClient::TokenClient()
 
 void TokenClient::Open()
 {
+	TS("TokenClient::Open");
 	assert(Control, "令牌客户端还没设置控制器呢");
 
 	Control->Received	= OnTokenClientReceived;
@@ -95,6 +96,8 @@ bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 {
+	TS("TokenClient::OnReceive");
+
 	LastActive = Sys.Ms();
 
 	switch(msg.Code)
@@ -137,6 +140,7 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 // 定时任务
 void LoopTask(void* param)
 {
+	TS("TokenClient::LoopTask");
 	assert_ptr(param);
 
 	auto client = (TokenClient*)param;
@@ -172,6 +176,8 @@ void LoopTask(void* param)
 // 错误：0xFE + 1协议 + S服务器 + 2端口
 void TokenClient::SayHello(bool broadcast, int port)
 {
+	TS("TokenClient::SayHello");
+
 	TokenMessage msg(0x01);
 
 	HelloMessage ext(Hello);
@@ -219,6 +225,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		{
 			if(OnRedirect(ext)) return false;
 
+			TS("TokenClient::OnHello_Error");
+
 			Status	= 0;
 			Token	= 0;
 			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
@@ -230,6 +238,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		}
 		else
 		{
+			TS("TokenClient::OnHello_Reply");
+
 			// 通讯密码
 			if(ext.Key.Length() > 0)
 			{
@@ -250,6 +260,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	}
 	else if(!msg.Reply)
 	{
+		TS("TokenClient::OnHello_Request");
+
 		TokenMessage rs;
 		rs.Code		= msg.Code;
 
@@ -258,8 +270,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 使用系统ID作为Name
 		ext2.Name	= TokenConfig::Current->User;
 		// 使用系统ID作为Key
-		//ext2.Key.Copy(0, Sys.ID, 16);
-		ext2.Key	= Sys.ID;
+		ext2.Key.Copy(0, Sys.ID, 16);
+		//ext2.Key	= Sys.ID;
 		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 		//if(ctrl3) ctrl3->Key = ext2.Key;
 
@@ -280,6 +292,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::OnRedirect(HelloMessage& msg)
 {
+	TS("TokenClient::OnRedirect");
+
 	if(!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
 	auto cfg		= TokenConfig::Current;
@@ -311,6 +325,8 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 // 注册
 void TokenClient::Register()
 {
+	TS("TokenClient::Register");
+
 	debug_printf("TokenClient::Register\r\n");
 
 	RegisterMessage re;
@@ -326,6 +342,8 @@ void TokenClient::Register()
 void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 {
 	if(!msg.Reply) return;
+
+	TS("TokenClient::OnRegister");
 
 	if(msg.Error)
 	{
@@ -356,6 +374,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 // 登录
 void TokenClient::Login()
 {
+	TS("TokenClient::Login");
+
 	LoginMessage login;
 
 	auto cfg	= TokenConfig::Current;
@@ -371,6 +391,8 @@ void TokenClient::Login()
 void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 {
 	if(msg.Error) return;
+
+	TS("TokenClient::Login2");
 
 	LoginMessage login;
 	// 这里需要随机密匙
@@ -390,6 +412,8 @@ void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
 	if(!msg.Reply) return false;
+
+	TS("TokenClient::OnLogin");
 
 	Stream ms(msg.Data, msg.Length);
 
@@ -438,6 +462,8 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 // Ping指令用于保持与对方的活动状态
 void TokenClient::Ping()
 {
+	TS("TokenClient::Ping");
+
 	if(LastActive > 0 && LastActive + 30000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
@@ -462,6 +488,8 @@ void TokenClient::Ping()
 
 bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 {
+	TS("TokenClient::OnPing");
+
 	// 忽略
 	if(!msg.Reply) return Reply(msg);
 
@@ -486,6 +514,8 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 {
+	TS("TokenClient::ChangeIPEndPoint");
+
 	debug_printf("ChangeIPEndPoint ");
 
 	domain.Show(true);

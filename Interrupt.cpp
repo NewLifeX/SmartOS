@@ -378,11 +378,11 @@ static int _TS_Len	= 0;
 TraceStack::TraceStack(const char* name)
 {
 	// 字符串指针的数组
-	static const char* __ts[8];
+	static const char* __ts[16];
 	_TS	= __ts;
 
 	//_TS->Push(name);
-	if(_TS_Len < 8) _TS[_TS_Len++]	= name;
+	if(_TS_Len < 16) _TS[_TS_Len++]	= name;
 }
 
 TraceStack::~TraceStack()
