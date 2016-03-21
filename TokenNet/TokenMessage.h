@@ -116,14 +116,14 @@ public:
 	int	RecvReply;
 	int	Time;
 
-	int Percent() const;	// 成功率百分比，已乘以100
+	String Percent() const;	// 成功率百分比，已乘以100
 	int Speed() const;		// 平均速度，指令发出到收到响应的时间
 
 	// 接收统计
 	int	RecvRequest;
 	int	SendReply;
 	int	RecvReplyAsync;
-	int PercentReply() const;
+	String PercentReply() const;
 
 	// 数据操作统计
 	int Read;

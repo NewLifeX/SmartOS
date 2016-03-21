@@ -552,7 +552,32 @@ TokenStat::~TokenStat()
 	if (_Total	== nullptr)	delete _Total;
 }
 
-int TokenStat::Percent() const
+String CaclPercent(int d1, int d2)
+{
+	String str;
+	if(d2 == 0) return str + "0";
+
+	// 分开处理整数部分和小数部分
+	d1	*= 100;
+	int d	= d1 / d2;
+	//d1	%= d2;
+	// %会产生乘减指令MLS，再算一次除法
+	d1	-= d * d2;
+	d1	*= 100;
+	int f	= d1 / d2;
+
+	str	+= d;
+	if(f > 0)
+	{
+		str	+= ".";
+		if(f < 10) str	+= "0";
+		str	+= f;
+	}
+
+	return str;
+}
+
+String TokenStat::Percent() const
 {
 	int send = SendRequest;
 	int sucs = RecvReply;
@@ -561,9 +586,8 @@ int TokenStat::Percent() const
 		send += _Last->SendRequest;
 		sucs += _Last->RecvReply;
 	}
-	if(send == 0) return 0;
 
-	return sucs * 100 / send;
+	return CaclPercent(sucs, send);
 }
 
 int TokenStat::Speed() const
@@ -580,7 +604,7 @@ int TokenStat::Speed() const
 	return time / sucs;
 }
 
-int TokenStat::PercentReply() const
+String TokenStat::PercentReply() const
 {
 	int req = RecvRequest;
 	int rep = SendReply;
@@ -589,9 +613,8 @@ int TokenStat::PercentReply() const
 		req += _Last->RecvRequest;
 		rep += _Last->SendReply;
 	}
-	if(req == 0) return 0;
 
-	return rep * 100 / req;
+	return CaclPercent(rep, req);
 }
 
 void TokenStat::Clear()
@@ -640,14 +663,16 @@ String& TokenStat::ToStr(String& str) const
 	TS("TokenStat::ToStr");
 	assert_ptr(this);
 
-	//debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X \r\n", this, _Last, _Total);
+	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
+	Percent().Show(true);*/
 	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
-	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest + " 异步" + RecvReplyAsync;
+	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
+	if(RecvReplyAsync > 0) str = str + " 异步 " + RecvReplyAsync;
 	if (Read > 0) str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
 	if (Write > 0) str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
 	if(_Total)
 	{
-		str += "总";
+		str += " 总";
 		_Total->ToStr(str);
 	}
 
