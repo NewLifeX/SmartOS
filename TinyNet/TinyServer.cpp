@@ -104,7 +104,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 			dv = Current;
 			break;
 		case 2:
-			if(!OnDisjoin(msg))	
+			if(!OnDisjoin(msg))
 				return false;
 			break;
 		case 3:
@@ -273,7 +273,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 		//auto bs	= MD5::Hash(Buffer(&now, 8));
 		//if(bs.Length() > 8) bs.SetLength(8);
 		//dv->SetPass(bs);
-		dv->Pass	= MD5::Hash(Buffer(&now, 8));
+		dv->Pass	= MD5::Hash(Buffer(&now, 8)).Sub(0, 8);
 
 		// 保存无线物理地址
 		auto st = (byte*)msg.State;
@@ -284,9 +284,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			if(sum == 0 || sum == 0xFF * 5) st = nullptr;
 		}
 		if(!st)
-			dv->Mac.Copy(0, dv->HardID, 0, -1);
+			dv->Mac	= dv->HardID.Sub(0, dv->Mac.Length());
 		else
-			dv->Mac.Copy(0, st, -1);
+			dv->Mac	= st;
 
 		if(dv->Valid())
 		{
@@ -318,7 +318,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Speed	= Cfg->Speed / 10;
 	dm.Address	= dv->Address;
 	//dm.Password.Copy(dv->GetPass());
-	dm.Password.Copy(0, dv->Pass, 0, -1);
+	dm.Password	= dv->Pass;
 
 	//dm.HardID.Set(Sys.ID, 6);
 	dm.HardID	= Sys.ID;
@@ -356,10 +356,10 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 			{
 				debug_printf("TinyServer::OnDisjoin:0x%02X \r\n", dv->Address);
 				//DeleteDevice(dv->Address);
-				return true;				
+				return true;
 			}
 			else
-			{				
+			{
 				debug_printf("0x%02X 非法退网，请求的硬件校验 0x%04X 不等于本地硬件校验 0x%04X", dv->Address, crc1, crc2);
 				return false;
 			}
@@ -720,17 +720,17 @@ void TinyServer::SaveDevices() const
 	byte num = 0;
 	if(Devices.Length()==0)
 		num = 1;
-	
+
 	for(int i = 0; i<Devices.Length(); i++)
 	{
 		auto dv = Devices[i];
-		if(dv == nullptr) continue;		
+		if(dv == nullptr) continue;
 		num++;
 	}
 	// 设备个数
 	int count = num;
-	ms.Write((byte)count);	
-	
+	ms.Write((byte)count);
+
 	for(int i = 0; i<Devices.Length(); i++)
 	{
 		auto dv = Devices[i];
@@ -759,7 +759,7 @@ void TinyServer::ClearDevices()
 		{
 			auto dv = Devices[i];
 			if(!dv)continue;
-			
+
 			TinyMessage rs;
 			rs.Dest = dv->Address;
 			ushort crc = Crc::Hash16(dv->HardID);
@@ -769,7 +769,7 @@ void TinyServer::ClearDevices()
 
 	for(int i=0; i<Devices.Length(); i++)
 	{
-		if(Devices[i])delete Devices[i];			
+		if(Devices[i])delete Devices[i];
 	}
 	Devices.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
 	SaveDevices();
