@@ -156,14 +156,25 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 
 	// 如果没有指明长度，则拷贝起始位置之后的剩余部分
 	if(len < 0 )
+	{
+		// 不指定长度，又没有剩余量，无法拷贝
+		if(remain <= 0)
+		{
+			debug_printf("Buffer::Copy (0x%08X, %d) <= (%d, 0x%08X, %d) \r\n", _Arr, _Length, destIndex, src, len);
+			assert(false, "Buffer::Copy 未指明要拷贝的长度");
+
+			return 0;
+		}
+
 		len	= remain;
+	}
 	else if(len > remain)
 	{
 		// 要拷贝进来的数据超过内存大小，给子类尝试扩容，如果扩容失败，则只拷贝没有超长的那一部分
 		// 子类可能在这里扩容
 		if(!SetLength(destIndex + len))
 		{
-			debug_printf("Buffer::Copy 缓冲区 0x%08X %d 太小，不足以拷贝 0x%08X %d \r\n", _Arr + destIndex, _Length, src, len);
+			debug_printf("Buffer::Copy (0x%08X, %d) <= (%d, 0x%08X, %d) \r\n", _Arr, _Length, destIndex, src, len);
 			assert(false, "Buffer::Copy 缓冲区太小");
 
 			len	= remain;
@@ -604,7 +615,7 @@ bool Array::CheckCapacity(int len, int bak)
 	// 自动计算合适的容量
 	int sz = 0x40;
 	while(sz < len) sz <<= 1;
-	
+
 	void* p = Alloc(sz);
 	if(!p) return false;
 
@@ -631,7 +642,7 @@ bool Array::CheckCapacity(int len, int bak)
 void* Array::Alloc(int len)
 {
 	_needFree	= true;
-	
+
 	return new byte[_Size * len];
 }
 
