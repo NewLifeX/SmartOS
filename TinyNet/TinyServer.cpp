@@ -321,7 +321,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dm.Password	= dv->Pass;
 
 	//dm.HardID.Set(Sys.ID, 6);
-	dm.HardID	= Sys.ID;
+	dm.HardID.Copy(0, Sys.ID, 6);
 	dm.WriteMessage(rs);
 
 	rs.State	= dv->_Mac;
