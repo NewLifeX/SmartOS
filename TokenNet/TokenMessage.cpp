@@ -391,7 +391,7 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 	return rs;
 }
 
-void TokenController::ShowMessage(const char* action, Message& msg)
+void TokenController::ShowMessage(const char* action, const Message& msg)
 {
 #if MSG_DEBUG
 	for(int i=0; i<ArrayLength(NoLogCodes); i++)

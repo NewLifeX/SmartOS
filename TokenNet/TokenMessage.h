@@ -79,7 +79,7 @@ public:
 private:
 	Message*	_Response;	// 等待响应的指令
 
-	void ShowMessage(const char* action, Message& msg);
+	void ShowMessage(const char* action, const Message& msg);
 
 public:
 	// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
