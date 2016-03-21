@@ -65,7 +65,7 @@ String& JoinMessage::ToStr(String& str) const
 	str += "组网";
 	if(!Reply)
 	{
-		str += " Version=" + Version;
+		str = str + " Version=" + Version;
 		//str += " Kind=";
 		str.Format(" Kind=%04X", Kind);
 		//str += " TranID=";
