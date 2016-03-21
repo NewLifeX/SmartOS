@@ -23,6 +23,8 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 // 从数据流中读取消息
 bool TokenMessage::Read(Stream& ms)
 {
+	TS("TokenMessage::Read");
+
 	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
 
@@ -56,6 +58,8 @@ bool TokenMessage::Read(Stream& ms)
 // 把消息写入到数据流中
 void TokenMessage::Write(Stream& ms) const
 {
+	TS("TokenMessage::Write");
+
 	assert_ptr(this);
 
 	byte tmp = Code | (Reply << 7) | (Error << 6);
@@ -96,6 +100,8 @@ void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 void TokenMessage::Show() const
 {
 #if MSG_DEBUG
+	TS("TokenMessage::Show");
+
 	assert_ptr(this);
 
 	byte code = Code;
@@ -209,6 +215,8 @@ bool TokenController::Dispatch(Stream& ms, Message* pmsg, void* param)
 // 收到消息校验后调用该函数。返回值决定消息是否有效，无效消息不交给处理器处理
 bool TokenController::Valid(const Message& msg)
 {
+	TS("TokenController::Valid");
+
 	// 代码为0是非法的
 	if(!msg.Code) return false;
 
@@ -253,6 +261,8 @@ static bool Encrypt(Message& msg, const Buffer& pass)
 // 接收处理函数
 bool TokenController::OnReceive(Message& msg)
 {
+	TS("TokenController::OnReceive");
+
 	byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
 	if(msg.Error) code |= 0x40;
@@ -343,6 +353,8 @@ bool TokenController::Send(Message& msg)
 // 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
 bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
 {
+	TS("TokenController::SendAndReceive");
+
 #if MSG_DEBUG
 	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
 
@@ -394,6 +406,8 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 void TokenController::ShowMessage(const char* action, const Message& msg)
 {
 #if MSG_DEBUG
+	TS("TokenController::ShowMessage");
+
 	for(int i=0; i<ArrayLength(NoLogCodes); i++)
 	{
 		if(msg.Code == NoLogCodes[i]) return;
@@ -431,6 +445,8 @@ void TokenController::ShowMessage(const char* action, const Message& msg)
 
 bool TokenController::StartSendStat(byte code)
 {
+	TS("TokenController::StartSendStat");
+
 	// 仅统计请求信息，不统计响应信息
 	if ((code & 0x80) != 0)
 	{
@@ -460,6 +476,8 @@ bool TokenController::StartSendStat(byte code)
 
 bool TokenController::EndSendStat(byte code, bool success)
 {
+	TS("TokenController::EndSendStat");
+
 	byte code2 = code & 0x3F;
 
 	for(int i=0; i<ArrayLength(_Queue); i++)

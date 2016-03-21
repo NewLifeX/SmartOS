@@ -118,7 +118,8 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 
 		return true;
 	}
-    if(!msg.Valid()) return true;
+    //if(!msg.Valid()) return true;
+
 	return OnReceive(msg);
 }
 
@@ -130,6 +131,8 @@ bool Controller::Valid(const Message& msg)
 // 接收处理
 bool Controller::OnReceive(Message& msg)
 {
+	TS("Controller::OnReceive");
+
 	// 外部公共消息事件
 	if(Received)
 	{

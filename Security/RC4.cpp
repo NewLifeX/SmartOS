@@ -20,6 +20,8 @@ void GetKey(ByteArray& box, const Buffer& pass)
 
 void RC4::Encrypt(Buffer& data, const Buffer& pass)
 {
+	TS("RC4::Encrypt");
+
 	int i = 0;
 	int j = 0;
 	byte buf[KeyLength];
