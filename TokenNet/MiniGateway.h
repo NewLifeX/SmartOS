@@ -7,18 +7,18 @@
 #include "Message\DataStore.h"
 #include "TokenClient.h"
 
-#include "TinyNet\TinyServer.h"
-
+#include "TinyNet\Device.h"
 #include "DeviceMessage.h"
+#include "TinyNet\TinyClient.h"
+#include "TinyNet\DataMessage.h"
 
 // 网关服务器
 class MiniGateway
 {
 private:
-	Device dev;
+	Device _Dev;
 public:
-	TinyServer*		Server;		// 内网服务端
-	TokenClient*	Client;	// 外网客户端
+	TokenClient*	TkClient;	// 外网客户端
 	IDataPort*		Led;		// 指示灯
 
 	MiniGateway();
@@ -32,7 +32,7 @@ public:
 	MessageHandler Received;
 
 	// 数据接收中心
-	bool OnLocal(const TinyMessage& msg);
+	//bool OnLocal(const TinyMessage& msg);
 	bool OnRemote(const TokenMessage& msg);
 
 	/******** 远程网业务逻辑 ********/
@@ -51,16 +51,30 @@ public:
 
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
-	bool OnDiscover(const TinyMessage& msg);
+	//bool OnDiscover(const TinyMessage& msg);
 
 	static MiniGateway*	Current;
-	static MiniGateway* CreateMiniGateway(TokenClient* client, TinyServer* server);
+	static MiniGateway* CreateMiniGateway(TokenClient* tkclient);
 	
 public:
 	uint	_task	= 0;	// 定时任务，10秒
 	int		_Study	= 0;	// 自动退出学习时间，秒
 
 	static void Loop(void* param);
+	
+public:
+	/*		用户接口		*/
+	DataStore	Store;		// 数据存储区
+	
+	bool  Report();
+	bool  Report(uint offset, byte dat);
+	bool  Report(uint offset, const Buffer& bs);
+	
+private:	
+	bool Dispatch(TinyMessage& msg);
+	void StoreRead(const TinyMessage& msg);
+	void StoreWrite(const TinyMessage& msg);
+	bool Reply(TinyMessage& msg);
 };
 
 #endif
