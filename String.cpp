@@ -312,9 +312,10 @@ bool String::Concat(const String& s)
 
 bool String::Concat(const char* cstr, uint length)
 {
-	uint newlen = _Length + length;
 	if (!cstr) return false;
 	if (length == 0) return true;
+
+	uint newlen = _Length + length;
 	if (!CheckCapacity(newlen)) return false;
 
 	//strcpy(_Arr + _Length, cstr);
@@ -333,11 +334,6 @@ bool String::Concat(const char* cstr)
 
 bool String::Concat(char c)
 {
-	/*char buf[2];
-	buf[0] = c;
-	buf[1] = 0;
-	return Concat(buf, 1);*/
-
 	if (!CheckCapacity(_Length + 1)) return false;
 
 	_Arr[_Length++]	= c;
@@ -1078,7 +1074,7 @@ const String StringSplit::Next()
 {
 	auto ptr	= _Str.GetBuffer();
 	int len		= 0;
-	
+
 	if(_Position < 0 || _Length == 0)
 		ptr	= nullptr;
 	else
@@ -1086,7 +1082,7 @@ const String StringSplit::Next()
 		// 拿出当前段，然后提前计算下一段
 		ptr	+= _Position;
 		len	= _Length;
-		
+
 		// 找到下一个位置
 		// 剩余全部长度，如果找不到下一个，那么这个就是最后长度
 		int end	= _Str.Length();

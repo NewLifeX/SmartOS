@@ -599,6 +599,8 @@ bool Array::CheckCapacity(int len, int bak)
 {
 	// 是否超出容量
 	if(_Arr && len <= _Capacity) return true;
+	// 如果不是可写，在扩容检查时，也要进行扩容，避免内部不可写数据被修改
+	if(_canWrite) return true;
 
 	// 自动计算合适的容量
 	int sz = 0x40;
