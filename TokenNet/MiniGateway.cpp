@@ -325,7 +325,7 @@ bool MiniGateway::DeviceProcess(const Message& msg)
 
 	return true;
 }
-
+/*
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 {
 	if(msg.Length == 0) return false;
@@ -360,7 +360,7 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 	if(msg.Length > 0) Buffer(&msg2.Data[1], msg.Length)	= msg.Data;
 
 	msg2.Length = 1 + msg.Length;
-}
+}*/
 
 MiniGateway* MiniGateway::CreateMiniGateway(TokenClient* TkClient)
 {
