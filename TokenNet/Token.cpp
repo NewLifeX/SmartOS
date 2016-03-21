@@ -29,7 +29,11 @@ static void OnDhcpStop(void* sender, void* param)
 {
 	auto dhcp = (Dhcp*)sender;
 
-	if(dhcp->Times <= 1) Sys.AddTask(StartGateway, &dhcp->Host, 0, -1, "启动网关");
+	if(dhcp->Result)
+	{
+		auto gw	= Gateway::Current;
+		if(!gw || !gw->Running) Sys.AddTask(StartGateway, &dhcp->Host, 0, -1, "启动网关");
+	}
 }
 
 ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
