@@ -128,11 +128,13 @@ bool Device::Valid() const
 #if DEBUG
 String& Device::ToStr(String& str) const
 {
-	str += "Addr=0x" + Address;
-	str += " Kind=" + (byte)(Kind >> 8) + (byte)(Kind & 0xFF);
+	str += "Addr=0x";
+	str.Concat(Address, -16);
+	str += " Kind=";
+	str.Concat(Kind, -16);
 	str += " Hard=";
-	str.Concat(HardID[0], 16);
-	str.Concat(HardID[1], 16);
+	str.Concat(HardID[0], -16);
+	str.Concat(HardID[1], -16);
 	str = str + " Mac=" + Mac;
 
 	DateTime dt;

@@ -73,6 +73,13 @@ String::String(short value, int radix) : Array(Arr, ArrayLength(Arr))
 	Concat(value, radix);
 }
 
+String::String(ushort value, int radix) : Array(Arr, ArrayLength(Arr))
+{
+	init();
+
+	Concat(value, radix);
+}
+
 String::String(int value, int radix) : Array(Arr, ArrayLength(Arr))
 {
 	init();
@@ -363,6 +370,16 @@ bool String::Concat(byte num, int radix)
 bool String::Concat(short num, int radix)
 {
 	// 十六进制固定长度
+	if(radix == 16 || radix == -16) return Concat((ushort)num, radix);
+
+	char buf[2 + 3 * sizeof(int)];
+	itoa(num, buf, radix);
+	return Concat(buf, strlen(buf));
+}
+
+bool String::Concat(ushort num, int radix)
+{
+	// 十六进制固定长度
 	if(radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
@@ -374,7 +391,7 @@ bool String::Concat(short num, int radix)
 	}
 
 	char buf[2 + 3 * sizeof(int)];
-	itoa(num, buf, radix);
+	utoa(num, buf, radix);
 	return Concat(buf, strlen(buf));
 }
 
