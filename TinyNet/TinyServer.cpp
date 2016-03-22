@@ -284,7 +284,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 			if(sum == 0 || sum == 0xFF * 5) st = nullptr;
 		}
 		if(!st)
-			dv->Mac	= dv->HardID.Sub(0, dv->Mac.Length());
+			dv->Mac.Copy(0,dv->HardID,0, dv->Mac.Length());
 		else
 			dv->Mac	= st;
 
