@@ -333,9 +333,10 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 	}
 
 #if MSG_DEBUG
+	String name ="R24";
 	auto obj	= dynamic_cast<Object*>(Port);
-	if(!obj)  return ;
-	auto name	= obj->ToString();
+	if(obj) 
+	  name	= obj->ToString();
 
 	msg_printf("%s", name.GetBuffer());
 #endif
