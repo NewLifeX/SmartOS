@@ -491,7 +491,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	TS("TokenClient::OnPing");
 
 	// 忽略
-	if(!msg.Reply) return Reply(msg);
+	if(!msg.Reply) return Reply(msg, ctrl);
 
 	auto ms = msg.ToStream();
 
