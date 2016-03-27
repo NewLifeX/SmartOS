@@ -147,6 +147,7 @@ public:
 	void InitConfig();
 	bool LoadConfig();
 	bool SaveConfig();
+	void ShowConfig();
 
 	virtual ISocket* CreateSocket(ProtocolType type) = 0;
 };

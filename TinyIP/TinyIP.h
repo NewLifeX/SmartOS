@@ -70,7 +70,6 @@ public:
 
 	bool Open();
 	virtual void Config();
-	void ShowInfo();
 	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 
 	bool SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len);

@@ -39,7 +39,6 @@ public:
 	bool Open();
 	bool Close();
 	virtual void Config();
-	void ShowInfo();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
 	bool WriteFrame(ushort addr, const Buffer& bs, byte socket = 0 ,byte block = 0);

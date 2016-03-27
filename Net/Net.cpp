@@ -1,6 +1,14 @@
 #include "Net.h"
 #include "Config.h"
 
+#define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
+#if NET_DEBUG
+	#define net_printf debug_printf
+#else
+	#define net_printf(format, ...)
+#endif
+
 /******************************** IPAddress ********************************/
 /* IP地址 */
 
@@ -370,4 +378,28 @@ bool ISocketHost::SaveConfig()
 
 	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
+}
+
+void ISocketHost::ShowConfig()
+{
+#if NET_DEBUG
+	net_printf("    MAC:\t");
+	Mac.Show();
+	net_printf("\r\n    IP:\t");
+	IP.Show();
+	net_printf("\r\n    Mask:\t");
+	Mask.Show();
+	net_printf("\r\n    Gate:\t");
+	Gateway.Show();
+	net_printf("\r\n    DHCP:\t");
+	DHCPServer.Show();
+	net_printf("\r\n    DNS:\t");
+	DNSServer.Show();
+	if(!DNSServer2.IsAny())
+	{
+		net_printf("\r\n    DNS2:\t");
+		DNSServer2.Show();
+	}
+	net_printf("\r\n");
+#endif
 }

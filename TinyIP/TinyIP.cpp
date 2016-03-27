@@ -214,7 +214,7 @@ bool TinyIP::Open()
 	if(!Arp) Arp = new ArpSocket(this);
 	Arp->Enable = true;
 
-	ShowInfo();
+	ShowConfig();
 
 	// 添加到系统任务，马上开始，尽可能多被调度
 	//debug_printf("TinyIP::以太网轮询 ");
@@ -232,24 +232,7 @@ bool TinyIP::Open()
 
 void TinyIP::Config()
 {
-	ShowInfo();
-}
-
-void TinyIP::ShowInfo()
-{
-#if NET_DEBUG
-	debug_printf("    IP:\t");
-	IP.Show();
-	debug_printf("\r\n    Mask:\t");
-	Mask.Show();
-	debug_printf("\r\n    Gate:\t");
-	Gateway.Show();
-	debug_printf("\r\n    DHCP:\t");
-	DHCPServer.Show();
-	debug_printf("\r\n    DNS:\t");
-	DNSServer.Show();
-	debug_printf("\r\n");
-#endif
+	ShowConfig();
 }
 
 bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)

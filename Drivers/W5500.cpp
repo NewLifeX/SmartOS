@@ -366,7 +366,7 @@ void W5500::IRQTask(void* param)
 
 void W5500::Config()
 {
-	ShowInfo();
+	ShowConfig();
 
 	// 读所有寄存器
 	TGeneral gen;
@@ -405,30 +405,6 @@ void W5500::Config()
 
 	// 一次性全部写入
 	WriteFrame(0, bs);
-}
-
-void W5500::ShowInfo()
-{
-#if NET_DEBUG
-	net_printf("    MAC:\t");
-	Mac.Show();
-	net_printf("\r\n    IP:\t");
-	IP.Show();
-	net_printf("\r\n    Mask:\t");
-	Mask.Show();
-	net_printf("\r\n    Gate:\t");
-	Gateway.Show();
-	net_printf("\r\n    DHCP:\t");
-	DHCPServer.Show();
-	net_printf("\r\n    DNS:\t");
-	DNSServer.Show();
-	if(!DNSServer2.IsAny())
-	{
-		net_printf("\r\n    DNS2:\t");
-		DNSServer2.Show();
-	}
-	net_printf("\r\n");
-#endif
 }
 
 bool W5500::Close()
