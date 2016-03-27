@@ -309,6 +309,26 @@ struct NetConfig
 	uint	Gateway;
 };
 
+void ISocketHost::InitConfig()
+{
+	IPAddress defip(192, 168, 1, 1);
+
+	// 随机IP，取ID最后一个字节
+	IP = defip;
+	byte first = Sys.ID[0];
+	if(first <= 1 || first >= 254) first = 2;
+	IP[3] = first;
+
+	Mask = IPAddress(255, 255, 255, 0);
+	DHCPServer = Gateway = DNSServer = defip;
+
+	auto& mac = Mac;
+	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
+	mac[0] = 'W'; mac[1] = 'S'; //mac[2] = 'W'; mac[3] = 'L';
+	for(int i=0; i< 4; i++)
+		mac[2 + i] = Sys.ID[3 - i];
+}
+
 bool ISocketHost::LoadConfig()
 {
 	if(!Config::Current) return false;

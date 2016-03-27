@@ -45,23 +45,7 @@ void TinyIP::Init(ITransport* port)
 	_port = port;
 	_StartTime = Sys.Ms();
 
-	const byte defip_[] = {192, 168, 1, 1};
-	IPAddress defip(defip_);
-
-	// 随机IP，取ID最后一个字节
-	IP = defip;
-	byte first = Sys.ID[0];
-	if(first <= 1 || first >= 254) first = 2;
-	IP[3] = first;
-
-	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	Mac[0] = 'W'; Mac[1] = 'S'; //Mac[2] = 'W'; Mac[3] = 'L';
-	for(int i=0; i< 4; i++)
-		Mac[2 + i] = Sys.ID[3 - i];
-	// MAC地址首字节奇数表示组地址，这里用偶数
-
-	Mask = 0x00FFFFFF;
-	DHCPServer = Gateway = DNSServer = defip;
+	InitConfig();
 }
 
 // 循环调度的任务
