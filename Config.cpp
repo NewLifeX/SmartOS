@@ -118,12 +118,27 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
     return true;
 }
 
+// 删除块。名称清空，如果下一块有效，则保留大小和数据区，避免找不到下一块区域
 bool ConfigBlock::Remove(const Storage& storage, uint addr)
 {
 	// 把整个名称区域清空
-	Buffer(Name, ArrayLength(Name)).Clear();
+	Buffer(Name, sizeof(Name)).Clear();
 
-    Hash = GetHash();
+	// 如果下一块有效，则保留大小和数据区，避免找不到下一块区域
+	// 如果下一块有效，且名称为空，则需要把两块连在一起
+	// 否则，把长度也清零，让它跟后面的区域连在一起
+	auto p	= Next();
+	if(p && p->Valid())
+	{
+		// 如果下一个也是空的，连在一起
+		if(!Name[0]) Size	+= sizeof(ConfigBlock) + p->Size;
+	}
+	else
+	{
+		Size	= 0;
+	}
+
+	Hash = GetHash();
 
 	// 写入头部
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
