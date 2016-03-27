@@ -248,9 +248,20 @@ void Dhcp::PareOption(Stream& ms)
 		switch(opt)
 		{
 			case DHCP_OPT_Mask:			Host.Mask		= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_DNSServer:	Host.DNSServer	= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_Router:		Host.Gateway	= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_DHCPServer:	Host.DHCPServer= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DNSServer:
+			{
+				// 有可能有多个DNS，只要第一个
+				IPAddress dns	= ms.ReadUInt32();
+				// 成功获取DHCP信息后，采用本地DNS为主DNS，阿里公共DNS为备用DNS
+				IPAddress aliyun(233, 5, 5, 5);
+				//if(Host.DNSServer != dns) Host.DNSServer2	= Host.DNSServer;
+				Host.DNSServer2	= aliyun;
+				Host.DNSServer	= dns;
+				len -= 4;
+				break;
+			}
 			//default:
 			//	net_printf("Unkown DHCP Option=%d Length=%d\r\n", opt, len);
 		}
