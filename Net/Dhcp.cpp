@@ -27,8 +27,8 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	Running	= false;
 	Result	= false;
 	Times	= 0;
-	MaxTimes	= 10;
-	ExpiredTime	= 10000;
+	MaxTimes	= 2;
+	ExpiredTime	= 500 * 5;
 
 	OnStop	= nullptr;
 	taskID	= 0;
@@ -71,24 +71,10 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 		len = (byte*)opt + 1 - p;
 	}
 
-	//for(int i=0; i<6; i++)
-	//	dhcp->ClientMac[i] = Host.Mac[i];
 	Host.Mac.CopyTo(dhcp->ClientMac);
 
-	/*auto bak	= Host->IP;
-	auto any	= IPAddress::Any();
-	bool isAny	= IP == any;
-	if(isAny)
-	{
-		net_printf("更换Host->IP \r\n");
-		Host->IP	= any;
-	}*/
-
-	//Send(*dhcp.Prev(), sizeof(DHCP_HEADER) + len, Remote.Address, Remote.Port, false);
 	Buffer bs(dhcp, sizeof(DHCP_HEADER) + len);
 	Socket->Send(bs);
-
-	//if(isAny) Host->IP	= bak;
 }
 
 // 找服务器
@@ -147,16 +133,14 @@ void Dhcp::Start()
 	//auto port = dynamic_cast<ITransport*>(Socket);
 	//if(port) port->Open();
 
-	// 创建任务，每秒发送一次Discover
+	// 创建任务，每500ms发送一次Discover
 	if(!taskID)
-		taskID = Sys.AddTask(Loop, this, 0, 1000, "DHCP获取");
+		taskID = Sys.AddTask(Loop, this, 0, 500, "DHCP获取");
 	else
 	{
-		Sys.SetTaskPeriod(taskID, 1000);
+		Sys.SetTaskPeriod(taskID, 500);
 		Sys.SetTask(taskID, true);
 	}
-
-	//Times++;
 
 	Result	= false;
 	Running = true;
@@ -192,10 +176,12 @@ void Dhcp::Stop()
 		}
 		else
 		{
-			net_printf("尝试次数 %d 超过最大允许次数 %d ，准备重启系统\r\n", Times, MaxTimes);
+			net_printf("尝试次数 %d 超过最大允许次数 %d ，准备恢复上一次设置\r\n", Times, MaxTimes);
 
 			// 重启一次，可能DHCP失败跟硬件有关
-			Sys.Reset();
+			//Sys.Reset();
+			Host.LoadConfig();
+			Host.Config();
 		}
 	}
 
@@ -314,7 +300,7 @@ void Dhcp::Process(Buffer& bs, const IPEndPoint& ep)
 		Host.IP = IP = dhcp->YourIP;
 #if NET_DEBUG
 		net_printf("DHCP::Ack   IP:");
-		IPAddress(dhcp->YourIP).Show();
+		IP.Show();
 		net_printf(" From ");
 		remote.Show();
 		net_printf("\r\n");
