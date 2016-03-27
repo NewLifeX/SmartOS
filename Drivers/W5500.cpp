@@ -683,7 +683,7 @@ void W5500::OnIRQ()
 			ReadFrame(offsetof(TGeneral, UIPR), bs);	// UIPR + UPORTR
 			IPEndPoint ep(bs);
 			ep.Port = _REV16(ep.Port);
-			net_printf("IP 不可达：%s \r\n", ep.ToString().GetBuffer());
+			net_printf("IP端口 目标不可达：%s \r\n", ep.ToString().GetBuffer());
 			// 处理..
 #endif
 		}
