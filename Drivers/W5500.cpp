@@ -422,6 +422,11 @@ void W5500::ShowInfo()
 	DHCPServer.Show();
 	net_printf("\r\n    DNS:\t");
 	DNSServer.Show();
+	if(!DNSServer2.IsAny())
+	{
+		net_printf("\r\n    DNS2:\t");
+		DNSServer2.Show();
+	}
 	net_printf("\r\n");
 #endif
 }

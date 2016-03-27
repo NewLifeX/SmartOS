@@ -306,6 +306,7 @@ struct NetConfig
 
 	uint	DHCPServer;
 	uint	DNSServer;
+	uint	DNSServer2;
 	uint	Gateway;
 };
 
@@ -320,7 +321,11 @@ void ISocketHost::InitConfig()
 	IP[3] = first;
 
 	Mask = IPAddress(255, 255, 255, 0);
-	DHCPServer = Gateway = DNSServer = defip;
+	DHCPServer = Gateway = defip;
+
+	// 修改为双DNS方案，避免单点故障。默认使用阿里和百度公共DNS。
+	DNSServer	= IPAddress(223, 5, 5, 5);
+	DNSServer2	= IPAddress(180, 76, 76, 76);
 
 	auto& mac = Mac;
 	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
@@ -343,6 +348,7 @@ bool ISocketHost::LoadConfig()
 
 	DHCPServer	= nc.DHCPServer;
 	DNSServer	= nc.DNSServer;
+	DNSServer2	= nc.DNSServer2;
 	Gateway		= nc.Gateway;
 
 	return true;
@@ -359,13 +365,9 @@ bool ISocketHost::SaveConfig()
 
 	nc.DHCPServer	= DHCPServer.Value;
 	nc.DNSServer	= DNSServer.Value;
+	nc.DNSServer2	= DNSServer2.Value;
 	nc.Gateway		= Gateway.Value;
 
 	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
 }
-
-/*ISocket* ISocketHost::CreateSocket(ProtocolType type)
-{
-	return nullptr;
-}*/

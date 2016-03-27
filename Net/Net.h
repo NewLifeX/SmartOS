@@ -134,6 +134,7 @@ public:
 
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
+	IPAddress	DNSServer2;
 	IPAddress	Gateway;
 
 	// 加上虚析构函数，因为应用层可能要释放该接口
