@@ -426,17 +426,20 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msTimeout)
 {
 	DNS dns(host, host.DNSServer);
-	DNS dns2(host, host.DNSServer2);
 
 	auto& any	= IPAddress::Any();
 	for(int i=0; i<times; i++)
 	{
 		auto ip = dns.Query(domain, msTimeout);
 		if(ip != any) return ip;
+	}
 
-		if(!host.DNSServer2.IsAny())
+	if(!host.DNSServer2.IsAny())
+	{
+		DNS dns2(host, host.DNSServer2);
+		for(int i=0; i<times; i++)
 		{
-			ip = dns2.Query(domain, msTimeout);
+			auto ip = dns2.Query(domain, msTimeout);
 			if(ip != any) return ip;
 		}
 	}
