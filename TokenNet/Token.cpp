@@ -27,12 +27,13 @@ static void StartGateway(void* param);
 
 static void OnDhcpStop(void* sender, void* param)
 {
-	auto dhcp = (Dhcp*)sender;
+	auto dhcp = *(Dhcp*)sender;
 
-	if(dhcp->Result)
+	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
+	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
 	{
 		auto gw	= Gateway::Current;
-		if(!gw || !gw->Running) Sys.AddTask(StartGateway, &dhcp->Host, 0, -1, "启动网关");
+		if(!gw || !gw->Running) Sys.AddTask(StartGateway, &dhcp.Host, 0, -1, "启动网关");
 	}
 }
 
