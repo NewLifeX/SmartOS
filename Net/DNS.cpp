@@ -345,12 +345,12 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 	return ms.Position();
 }
 
-DNS::DNS(ISocketHost& host) : Host(host)
+DNS::DNS(ISocketHost& host, const IPAddress& dns) : Host(host)
 {
 	Socket	= host.CreateSocket(ProtocolType::Udp);
 
 	Socket->Remote.Port		= 53;
-	Socket->Remote.Address	= host.DNSServer;
+	Socket->Remote.Address	= !dns.IsAny() ? dns : host.DNSServer;
 
 	auto port = dynamic_cast<ITransport*>(Socket);
 	port->Register(OnReceive, this);
@@ -425,13 +425,20 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 // 快捷查询。借助主机直接查询多次
 IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msTimeout)
 {
-	DNS dns(host);
+	DNS dns(host, host.DNSServer);
+	DNS dns2(host, host.DNSServer2);
 
 	auto& any	= IPAddress::Any();
 	for(int i=0; i<times; i++)
 	{
 		auto ip = dns.Query(domain, msTimeout);
 		if(ip != any) return ip;
+
+		if(!host.DNSServer2.IsAny())
+		{
+			ip = dns2.Query(domain, msTimeout);
+			if(ip != any) return ip;
+		}
 	}
 
 	return any;

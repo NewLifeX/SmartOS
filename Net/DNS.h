@@ -10,7 +10,7 @@ class DNS
 public:
 	ISocketHost&	Host;	// 主机
 
-	DNS(ISocketHost& host);
+	DNS(ISocketHost& host, const IPAddress& dns);
 	~DNS();
 
 	IPAddress Query(const String& domain, int msTimeout = 1000);	// 解析
