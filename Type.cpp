@@ -450,6 +450,7 @@ bool Array::Release()
 Array& Array::operator = (const Buffer& rhs)
 {
 	// 可能需要先扩容，否则Buffer拷贝时，长度可能不准确
+	// 长度也要相等，可能会因此而扩容
 	SetLength(rhs.Length());
 
 	Buffer::operator=(rhs);
@@ -506,6 +507,29 @@ void Array::SetBuffer(const void* ptr, int len)
 
 	_canWrite	= false;
 }*/
+
+// 拷贝数据，默认-1长度表示使用右边最大长度，左边不足时自动扩容
+int Array::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
+{
+	// 可能需要先扩容，否则Buffer拷贝时，长度可能不准确
+	int remain	= src.Length() - srcIndex;
+	if(len < 0)
+	{
+		// -1时选择右边最大长度
+		len	= remain;
+		if(len <= 0) return 0;
+	}
+	else
+	{
+		// 右边可能不足len
+		if(len < remain) len	= remain;
+	}
+
+	// 左边不足时自动扩容
+	if(Length() < len) SetLength(len);
+
+	return Buffer::Copy(destIndex, src, srcIndex, len);
+}
 
 // 设置数组元素为指定值，自动扩容
 bool Array::SetItem(const void* data, int index, int count)

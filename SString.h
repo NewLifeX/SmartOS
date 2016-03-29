@@ -33,6 +33,7 @@ public:
 	//virtual ~String();
 
 	using Array::SetLength;
+	using Array::Copy;
 
 	// 内存管理
 	//inline uint Length() const { return _Length; }

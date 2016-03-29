@@ -114,7 +114,7 @@ public:
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);
 	// 拷贝数据，默认-1长度表示两者最小长度
-	int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
 
@@ -170,12 +170,15 @@ public:
 
 	using Buffer::Set;
 	using Buffer::SetLength;
+	using Buffer::Copy;
 
 	// 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 	virtual bool SetLength(int len);
 	virtual bool SetLength(int len, bool bak);
 	//virtual void SetBuffer(void* ptr, int len);
 	//virtual void SetBuffer(const void* ptr, int len);
+	// 拷贝数据，默认-1长度表示使用右边最大长度，左边不足时自动扩容
+	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 
 	// 设置数组元素为指定值，自动扩容
 	bool SetItem(const void* data, int index, int count);
