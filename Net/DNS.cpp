@@ -137,9 +137,10 @@ bool dns_question(Stream& ms)
 	int len = parse_name(ms, name, MAXCNAME);
 	if (len == -1) return false;
 
-	//cp += len;
-	//cp += 2;		/* type */
-	//cp += 2;		/* class */
+#if NET_DEBUG
+	/*net_printf("dns_question: %s type=%d class=%d \r\n", name, ms.ReadUInt16(), ms.ReadUInt16());
+	ms.Seek(-4);*/
+#endif
 	ms.Seek(2 + 2);
 
 	return true;
@@ -161,6 +162,10 @@ bool dns_answer(Stream& ms, Buffer& ip_from_dns)
 	//ms.Seek(2 + 2 + 4 + 2);
 	// 上面已经读取了type
 	ms.Seek(2 + 4 + 2);
+
+#if NET_DEBUG
+	net_printf("dns_answer: %s type=%d \r\n", name, type);
+#endif
 
 	switch (type)
 	{
@@ -245,6 +250,10 @@ bool parseDNSMSG(const Buffer& bs, Buffer& ip_from_dns)
 	hdr.nscount = ms.ReadUInt16();
 	hdr.arcount = ms.ReadUInt16();
 	//ms.Read((byte*)hdr, 0, sizeof(TDNS));
+
+#if NET_DEBUG
+	net_printf("parseDNSMSG: rcode=%d qdcount=%d ancount=%d nscount=%d arcount=%d \r\n", hdr.rcode, hdr.qdcount, hdr.ancount, hdr.nscount, hdr.arcount);
+#endif
 
 	// 开始分析变长部分
 
@@ -374,9 +383,9 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 
 	byte buf[1024];
 	Buffer bs(buf, ArrayLength(buf));
-	Buffer rs(buf, ArrayLength(buf));
+	Array rs(buf, ArrayLength(buf));
 	// 同时作为响应缓冲区，别浪费了
-	//rs.SetLength(0);
+	rs.SetLength(0);
 	_Buffer = &rs;
 
 	dns_makequery(0, domain, bs);
@@ -409,10 +418,12 @@ uint DNS::OnReceive(ITransport* port, Buffer& bs, void* param, void* param2)
 void DNS::Process(Buffer& bs, const IPEndPoint& server)
 {
 	// 只要来自服务器的
-	if(server.Address != Host.DNSServer) return;
+	if(server.Address != Socket->Remote.Address) return;
 
+	net_printf("DNS::Process %d \r\n", bs.Length());
+	bs.Show(true);
 	if(_Buffer)
-		_Buffer->Copy(0, bs, 0, -1);
+		*_Buffer	= bs;
 	else
 	{
 #if NET_DEBUG
@@ -420,6 +431,8 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 		server.Show(true);
 #endif
 	}
+	net_printf("DNS::Process %d \r\n", _Buffer->Length());
+	_Buffer->Show(true);
 }
 
 // 快捷查询。借助主机直接查询多次

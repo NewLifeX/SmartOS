@@ -23,7 +23,7 @@ private:
 	void Process(Buffer& bs, const IPEndPoint& server);
 
 	ISocket*	Socket;
-	Buffer*	_Buffer;
+	Array*		_Buffer;
 };
 
 #endif
