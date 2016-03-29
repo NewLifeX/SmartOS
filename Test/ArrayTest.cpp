@@ -32,10 +32,10 @@ void TestArray()
 	assert(arr1[0] == 10&& arr1.Length() == sizeof(buf3) , "bool SetItem(const void* data, int index, int count);");
 
 	// Array = Buffer
-	Array arr2(buf1, sizeof(buf1));
-	Buffer bs2(buf2, sizeof(buf2));
+	Array arr2(buf2, sizeof(buf2));
+	Buffer bs2(buf3, sizeof(buf3));
 	arr2	= bs2;
-	assert(arr1.Length() == bs2.Length() && arr1 == buf2, "Array = Buffer");
+	assert(arr2.Length() == sizeof(buf2)&&arr2[0]==bs2[0],"Array = Buffer");
 
 	debug_printf("Array测试完毕....../r/n");
 
