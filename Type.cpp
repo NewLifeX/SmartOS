@@ -449,6 +449,9 @@ bool Array::Release()
 
 Array& Array::operator = (const Buffer& rhs)
 {
+	// 可能需要先扩容，否则Buffer拷贝时，长度可能不准确
+	SetLength(rhs.Length());
+
 	Buffer::operator=(rhs);
 
 	return *this;

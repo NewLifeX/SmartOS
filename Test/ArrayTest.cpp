@@ -24,19 +24,19 @@ void TestArray()
 	arr1.Clear();
 	assert(arr1[1] == 0, "virtual void Clear()");
 
-	arr1.Set(buf1,sizeof(buf1));
+	arr1.Set(buf1, sizeof(buf1));
 	assert(arr1== buf1, "bool Set(void* data, int len)");
 
-	arr1.SetItem((void*)buf3, 0, sizeof(buf3));
+	arr1.SetItem(buf3, 0, sizeof(buf3));
 	arr1.Show(true);
-	assert(arr1[0] == 10&& arr1.Length() == sizeof(buf3) , "bool SetItem(const void* data, int index, int count);");
+	assert(arr1[arr1.Length() - 1] == 10 && arr1.Length() == sizeof(buf3) , "bool SetItem(const void* data, int index, int count);");
 
 	// Array = Buffer
 	Array arr2(buf2, sizeof(buf2));
 	Buffer bs2(buf3, sizeof(buf3));
 	arr2	= bs2;
-	assert(arr2.Length() == sizeof(buf2)&&arr2[0]==bs2[0],"Array = Buffer");
+	assert(arr2.Length() == sizeof(buf3) && arr2 == buf3, "Array = Buffer");
 
-	debug_printf("Array测试完毕....../r/n");
+	debug_printf("Array测试完毕......\r\n");
 
 }
