@@ -255,7 +255,7 @@ void Dhcp::PareOption(Stream& ms)
 				// 有可能有多个DNS，只要第一个
 				IPAddress dns	= ms.ReadUInt32();
 				// 成功获取DHCP信息后，采用本地DNS为主DNS，阿里公共DNS为备用DNS
-				IPAddress aliyun(233, 5, 5, 5);
+				IPAddress aliyun(223, 5, 5, 5);
 				//if(Host.DNSServer != dns) Host.DNSServer2	= Host.DNSServer;
 				Host.DNSServer2	= aliyun;
 				Host.DNSServer	= dns;
