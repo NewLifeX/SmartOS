@@ -56,10 +56,10 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 			opt	= opt->Next()->SetData(DHCP_OPT_RequestedIP, IP.Value);
 
 		// 构造产品名称，把ID第一个字节附到最后
-		String name;
-		name += "SmartOS_";	// 产生拷贝效果
-		name.Concat(Sys.ID[0], 16);
-		name.Concat(Sys.ID[1], 16);
+		String name	= "SmartOS_";
+		//name.Concat(Sys.ID[0], 16);
+		//name.Concat(Sys.ID[1], 16);
+		name	+= Buffer(Sys.ID, 2).ToHex();
 
 		opt = opt->Next()->SetData(DHCP_OPT_HostName, name);
 		String vendor = "www.wslink.cn";
@@ -84,7 +84,7 @@ void Dhcp::Discover()
 	auto dhcp	= (DHCP_HEADER*)buf;
 
 	net_printf("DHCP::Discover...\r\n");
-	dhcpid	= Sys.Ms();
+	//dhcpid	= Sys.Ms();
 	dhcp->Init(dhcpid, false);
 
 	auto p		= dhcp->Next();
@@ -116,7 +116,7 @@ void Dhcp::Start()
 {
 	UInt64 now	= Sys.Ms();
 	_expired	= now + ExpiredTime;
-	if(!dhcpid) dhcpid = now;
+	dhcpid		= now;
 
 	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
@@ -156,7 +156,7 @@ void Dhcp::Stop()
 	Running	= false;
 	Sys.SetTask(taskID, false);
 
-	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x\r\n", Result, dhcpid);
+	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x Times=%d MaxTimes=%d\r\n", Result, dhcpid, Times, MaxTimes);
 
 	if(Result)
 	{
