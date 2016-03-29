@@ -5,8 +5,8 @@
 #include "DNS.h"
 #include "Ethernet.h"
 
-//#define NET_DEBUG DEBUG
-#define NET_DEBUG 0
+#define NET_DEBUG DEBUG
+//#define NET_DEBUG 0
 #if NET_DEBUG
 	#define net_printf debug_printf
 #else
@@ -364,9 +364,9 @@ DNS::~DNS()
 IPAddress DNS::Query(const String& domain, int msTimeout)
 {
 #if NET_DEBUG
-	auto& server = Socket.Host->DNSServer;
-	net_printf("DNS::Query %s DNS Server : ", domain.GetBuffer());
-	server.Show(true);
+	//auto& server = Socket->Host->DNSServer;
+	net_printf("DNS::Query %s Timeout: %dms DNS Server : ", domain.GetBuffer(), msTimeout);
+	Socket->Remote.Address.Show(true);
 #endif
 
 	auto ip	= IPAddress::Parse(domain);
@@ -383,7 +383,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	Socket->Send(bs);
 
 	TimeWheel tw(0, msTimeout);
-	tw.Sleep = 100;
+	tw.Sleep = 10;
 	while(!tw.Expired())
 	{
 		if(rs.Length() > 0)
@@ -425,22 +425,19 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 // 快捷查询。借助主机直接查询多次
 IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msTimeout)
 {
-	DNS dns(host, host.DNSServer);
-
 	auto& any	= IPAddress::Any();
-	for(int i=0; i<times; i++)
+	for(int k=0; k<2; k++)
 	{
-		auto ip = dns.Query(domain, msTimeout);
-		if(ip != any) return ip;
-	}
-
-	if(!host.DNSServer2.IsAny())
-	{
-		DNS dns2(host, host.DNSServer2);
-		for(int i=0; i<times; i++)
+		auto& svr	= k==0 ? host.DNSServer : host.DNSServer2;
+		if(!svr.IsAny())
 		{
-			auto ip = dns2.Query(domain, msTimeout);
-			if(ip != any) return ip;
+			DNS dns(host, svr);
+
+			for(int i=0; i<times; i++)
+			{
+				auto ip = dns.Query(domain, msTimeout);
+				if(ip != any) return ip;
+			}
 		}
 	}
 
