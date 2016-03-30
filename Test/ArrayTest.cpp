@@ -45,7 +45,8 @@ static void TestAssign2()
 
 	// 左边空间足够，直接使用
 	Array arr2(bts, sizeof(bts));
-	arr2	= buf;
+	Buffer bs2(buf, sizeof(buf));
+	arr2	= bs2;
 	assert(arr2.GetBuffer() == bts, err);
 	assert(arr2.GetBuffer() != buf, err);
 	assert(arr2.Length() == sizeof(buf) && arr2 == buf, err);

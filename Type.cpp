@@ -251,6 +251,8 @@ void Buffer::Clear(byte item)
 //### 这里逻辑可以考虑修改为，当len大于内部长度时，直接用内部长度而不报错，方便应用层免去比较长度的啰嗦
 Buffer Buffer::Sub(int index, int len)
 {
+	assert(index >= 0, "index >= 0");
+	assert(index < _Length, "index < _Length");
 	if(len < 0) len	= _Length - index;
 	assert(index + len <= _Length, "len <= _Length");
 
@@ -265,6 +267,8 @@ Buffer Buffer::Sub(int index, int len)
 
 const Buffer Buffer::Sub(int index, int len) const
 {
+	assert(index >= 0, "index >= 0");
+	assert(index < _Length, "index < _Length");
 	if(len < 0) len	= _Length - index;
 	assert(index + len <= _Length, "len <= _Length");
 
@@ -522,7 +526,7 @@ int Array::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 	else
 	{
 		// 右边可能不足len
-		if(len < remain) len	= remain;
+		if(len > remain) len	= remain;
 	}
 
 	// 左边不足时自动扩容
