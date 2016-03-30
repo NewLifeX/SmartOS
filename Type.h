@@ -170,7 +170,7 @@ public:
 
 	virtual ~Array();
 
-	Array& operator = (const Buffer& rhs);
+	//Array& operator = (const Buffer& rhs);
 	Array& operator = (const void* p);
 	Array& operator = (Array&& rval);
 
@@ -381,8 +381,8 @@ public:
 	//ByteArray(String& str);			// 直接引用数据缓冲区
 	//ByteArray(const String& str);	// 不允许修改，拷贝
 
-	ByteArray& operator = (const Buffer& rhs);
-	ByteArray& operator = (const ByteArray& rhs);
+	//ByteArray& operator = (const Buffer& rhs);
+	//ByteArray& operator = (const ByteArray& rhs);
 	ByteArray& operator = (const void* p);
 	ByteArray& operator = (ByteArray&& rval);
 

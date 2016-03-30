@@ -453,7 +453,7 @@ bool Array::Release()
 	return false;
 }
 
-Array& Array::operator = (const Buffer& rhs)
+/*Array& Array::operator = (const Buffer& rhs)
 {
 	// 可能需要先扩容，否则Buffer拷贝时，长度可能不准确
 	// 长度也要相等，可能会因此而扩容
@@ -462,7 +462,7 @@ Array& Array::operator = (const Buffer& rhs)
 	Buffer::operator=(rhs);
 
 	return *this;
-}
+}*/
 
 Array& Array::operator = (const void* p)
 {
@@ -792,7 +792,7 @@ void* ByteArray::Alloc(int len)
 	}
 }
 
-ByteArray& ByteArray::operator = (const Buffer& rhs)
+/*ByteArray& ByteArray::operator = (const Buffer& rhs)
 {
 	Buffer::operator=(rhs);
 
@@ -804,7 +804,7 @@ ByteArray& ByteArray::operator = (const ByteArray& rhs)
 	Buffer::operator=(rhs);
 
 	return *this;
-}
+}*/
 
 ByteArray& ByteArray::operator = (const void* p)
 {
