@@ -5,8 +5,8 @@
 #include "DNS.h"
 #include "Ethernet.h"
 
-#define NET_DEBUG DEBUG
-//#define NET_DEBUG 0
+//#define NET_DEBUG DEBUG
+#define NET_DEBUG 0
 #if NET_DEBUG
 	#define net_printf debug_printf
 #else
@@ -252,7 +252,7 @@ bool parseDNSMSG(const Buffer& bs, Buffer& ip_from_dns)
 	//ms.Read((byte*)hdr, 0, sizeof(TDNS));
 
 #if NET_DEBUG
-	net_printf("parseDNSMSG: rcode=%d qdcount=%d ancount=%d nscount=%d arcount=%d \r\n", hdr.rcode, hdr.qdcount, hdr.ancount, hdr.nscount, hdr.arcount);
+	//net_printf("parseDNSMSG: rcode=%d qdcount=%d ancount=%d nscount=%d arcount=%d \r\n", hdr.rcode, hdr.qdcount, hdr.ancount, hdr.nscount, hdr.arcount);
 #endif
 
 	// 开始分析变长部分
@@ -373,7 +373,6 @@ DNS::~DNS()
 IPAddress DNS::Query(const String& domain, int msTimeout)
 {
 #if NET_DEBUG
-	//auto& server = Socket->Host->DNSServer;
 	net_printf("DNS::Query %s Timeout: %dms DNS Server : ", domain.GetBuffer(), msTimeout);
 	Socket->Remote.Address.Show(true);
 #endif
@@ -420,14 +419,10 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 	// 只要来自服务器的
 	if(server.Address != Socket->Remote.Address) return;
 
-	net_printf("DNS::Process [%d] = 0x%08X [%d] = 0x%08X \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
-	bs.Show(true);
+	//net_printf("DNS::Process [%d] = 0x%08X [%d] = 0x%08X \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
+	//bs.Show(true);
 	if(_Buffer)
-	{
 		*_Buffer	= bs;
-		//_Buffer->SetLength(bs.Length());
-		//_Buffer->Copy(bs);
-	}
 	else
 	{
 #if NET_DEBUG
@@ -435,8 +430,8 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 		server.Show(true);
 #endif
 	}
-	net_printf("DNS::Process [%d] = 0x%08X \r\n", _Buffer->Length(), _Buffer->GetBuffer());
-	_Buffer->Show(true);
+	//net_printf("DNS::Process [%d] = 0x%08X \r\n", _Buffer->Length(), _Buffer->GetBuffer());
+	//_Buffer->Show(true);
 }
 
 // 快捷查询。借助主机直接查询多次
