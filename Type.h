@@ -59,6 +59,12 @@ public:
 1，固定数据区封装 Buffer	=> Object
 2，变长数据区封装 Array		=> Buffer
 3，自带初始缓冲区封装 ByteArray/String/TArray<T>	=> Array
+
+赋值运算符原则：
+1，赋值运算拷贝长度和数据，核心语义为拷贝一份数据区
+2，左值长度大于等于右值时，左值长度变小
+3，左值长度小于右值时，左值尝试SetLength扩容
+4，如果扩容失败，调试版断言失败，发行版左值长度保持不变
 */
 
 // 内存数据区。包装指针和长度
@@ -89,8 +95,7 @@ public:
 	// 对象mov操作，指针和长度归我，清空对方
 	Buffer(Buffer&& rval);
 
-	// 从另一个对象那里拷贝，拷贝长度为两者最小者，除非当前对象能自动扩容
-	// 无法解释用法，暂时注释
+	// 从另一个对象拷贝数据和长度，长度不足且扩容失败时报错
 	Buffer& operator = (const Buffer& rhs);
 	// 从指针拷贝，使用我的长度
 	Buffer& operator = (const void* ptr);
@@ -113,10 +118,11 @@ public:
 
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);
-	// 拷贝数据，默认-1长度表示两者最小长度
-	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
+	// 拷贝数据，默认-1长度表示两者最小长度
+	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	//virtual int Copy(const Buffer& src, int destIndex = 0);
 
 	// 用指定字节设置初始化一个区域
 	int Set(byte item, int index, int len);

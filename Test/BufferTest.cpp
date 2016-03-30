@@ -2,6 +2,71 @@
 
 #include <string.h>
 
+#if DEBUG
+static void TestAssign()
+{
+	byte buf[]	= { 1, 2, 3, 4 };
+	byte bts[]	= { 5, 6, 7, 8, 9, 10 };
+	Buffer bs(buf, sizeof(buf));
+
+	auto err	= "Buffer& operator = (const void* ptr)";
+
+	// 从指针拷贝，使用我的长度
+	bs	= bts;
+	assert(bs.GetBuffer() == buf, err);
+	assert(bs.GetBuffer() != bts, err);
+	assert(bs.Length() == sizeof(buf), err);
+	assert(buf[0] == bts[0] && buf[3] == bts[3], err);
+}
+
+static void TestAssign2()
+{
+	byte buf[]	= { 1, 2, 3, 4 };
+	byte bts[]	= { 5, 6, 7 };
+	Buffer bs(buf, sizeof(buf));
+	Buffer bs2(bts, sizeof(bts));
+
+	auto err	= "Buffer& operator = (const Buffer& rhs)";
+
+	// 从另一个对象拷贝数据和长度，长度不足且扩容失败时报错
+	// Buffer无法自动扩容，Arrar可以
+	//bs2	= bs;
+	bs	= bs2;
+	assert(bs.GetBuffer() == buf, err);
+	assert(bs.GetBuffer() != bts, err);
+	assert(bs.Length() == sizeof(bts), err);
+	assert(bs.Length() != sizeof(buf), err);
+	assert(buf[0] == bts[0] && buf[2] == bts[2], err);
+	assert(buf[3] == 4, err);
+}
+
+static void TestCopy(const Buffer& bs)
+{
+	byte buf[5];
+	buf[4]	= '\0';
+	Buffer bs2(buf, 4);
+
+	auto cs	= bs.GetBuffer();
+
+	auto err	= "Buffer& operator = (const Buffer& rhs)";
+	// 拷贝长度为两者最小者，除非当前对象能自动扩容
+	//bs2	= bs;
+	bs2.Copy(0, bs, 0, -1);
+	debug_printf("bs2	= bs => %s\r\n", buf);
+	assert(bs2.GetBuffer() != bs.GetBuffer(), err);
+	assert(bs2 != bs, err);
+	assert(bs2.Length() == 4, err);
+	assert(bs2 == cs, err);
+
+	err	= "Buffer& operator = (const void* p)";
+	// 从指针拷贝，使用我的长度
+	bs2	= cs + 8;
+	debug_printf("bs2	= cs + 8 => %s\r\n", buf);
+	assert(bs2.GetBuffer() != (byte*)(cs + 8), err);
+	assert(bs2.Length() == 4, err);
+	assert(bs2 == cs + 8, err);
+}
+
 void TestBuffer()
 {
 	TS("TestBuffer");
@@ -13,24 +78,9 @@ void TestBuffer()
 	assert(bs.GetBuffer() == (byte*)cs, "Buffer(void* p = nullptr, int len = 0)");
 	assert(bs == cs, "Buffer(void* p = nullptr, int len = 0)");
 
-	byte buf[5];
-	buf[4]	= '\0';
-	Buffer bs2(buf, 4);
-	// 拷贝长度为两者最小者，除非当前对象能自动扩容
-	//bs2	= bs;
-	bs2.Copy(0, bs, 0, -1);
-	debug_printf("bs2	= bs => %s\r\n", buf);
-	assert(bs2.GetBuffer() != bs.GetBuffer(), "Buffer& operator = (const Buffer& rhs)");
-	assert(bs2 != bs, "Buffer& operator = (const Buffer& rhs)");
-	assert(bs2.Length() == 4, "Buffer& operator = (const Buffer& rhs)");
-	assert(bs2 == cs, "Buffer& operator = (const Buffer& rhs)");
-
-	// 从指针拷贝，使用我的长度
-	bs2	= cs + 8;
-	debug_printf("bs2	= cs + 8 => %s\r\n", buf);
-	assert(bs2.GetBuffer() != (byte*)(cs + 8), "Buffer& operator = (const void* p)");
-	assert(bs2.Length() == 4, "Buffer& operator = (const void* p)");
-	assert(bs2 == cs + 8, "Buffer& operator = (const void* p)");
+	TestAssign();
+	TestAssign2();
+	TestCopy(bs);
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	bs.SetLength(11);
@@ -86,9 +136,10 @@ void TestBuffer()
 	assert(bs5 == cs, "Buffer(void* p = nullptr, int len = 0)");
 
 	/*Buffer bs7(cs);
-	
+
 	auto type	= bs5.GetType();
 	Buffer bs6(type);*/
-	
+
 	debug_printf("内存缓冲区单元测试全部通过！\r\n");
 }
+#endif

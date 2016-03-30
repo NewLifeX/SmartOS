@@ -93,6 +93,8 @@ void Buffer::move(Buffer& rval)
 
 Buffer& Buffer::operator = (const Buffer& rhs)
 {
+	if(!SetLength(rhs.Length())) assert(false, "赋值操作无法扩容");
+
 	Copy(0, rhs, 0, -1);
 
 	return *this;
