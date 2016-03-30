@@ -805,6 +805,9 @@ namespace NewLife.Reflection
 				ss.Add("no matching function for call to", "没有匹配函数去调用");
 				ss.Add("cast to pointer from integer of different size", "从不同大小的整数转为指针");
 				ss.Add("candidate expects", "候选预期");
+				ss.Add("use of deleted function", "函数被删除");
+				ss.Add("is implicitly declared as deleted because", "被隐式声明为删除，因为");
+				ss.Add("declares a move constructor or move assignment operator", "声明了一个move构造或move赋值运算符");
             }
 
             if (Words.Count == 0)

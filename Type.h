@@ -122,7 +122,7 @@ public:
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
 	// 拷贝数据，默认-1长度表示两者最小长度
 	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
-	//virtual int Copy(const Buffer& src, int destIndex = 0);
+	int Copy(const Buffer& src, int destIndex = 0);
 
 	// 用指定字节设置初始化一个区域
 	int Set(byte item, int index, int len);
@@ -164,13 +164,13 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
-	Array(const Buffer& rhs);
-	Array(const Array& rhs);
+	explicit Array(const Buffer& rhs);
+	Array(const Array& rhs) = delete;
 	Array(Array&& rval);
 
 	virtual ~Array();
 
-	//Array& operator = (const Buffer& rhs);
+	Array& operator = (const Buffer& rhs);
 	Array& operator = (const void* p);
 	Array& operator = (Array&& rval);
 
@@ -370,19 +370,19 @@ public:
 class ByteArray : public Array
 {
 public:
-	ByteArray(int length = 0);
+	explicit ByteArray(int length = 0);
 	ByteArray(byte item, int length);
 	// 因为使用外部指针，这里初始化时没必要分配内存造成浪费
 	ByteArray(const void* data, int length, bool copy = false);
 	ByteArray(void* data, int length, bool copy = false);
-	ByteArray(const Buffer& arr);
-	ByteArray(const ByteArray& arr);
+	explicit ByteArray(const Buffer& arr);
+	ByteArray(const ByteArray& arr) = delete;
 	ByteArray(ByteArray&& rval);
 	//ByteArray(String& str);			// 直接引用数据缓冲区
 	//ByteArray(const String& str);	// 不允许修改，拷贝
 
-	//ByteArray& operator = (const Buffer& rhs);
-	//ByteArray& operator = (const ByteArray& rhs);
+	ByteArray& operator = (const Buffer& rhs);
+	ByteArray& operator = (const ByteArray& rhs);
 	ByteArray& operator = (const void* p);
 	ByteArray& operator = (ByteArray&& rval);
 

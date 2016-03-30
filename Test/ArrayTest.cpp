@@ -42,6 +42,7 @@ static void TestAssign2()
 	assert(arr.GetBuffer() != buf, err);
 	assert(arr.GetBuffer() != bts, err);
 	assert(arr.Length() == sizeof(bts) && arr == bts, err);
+	assert(bts[0] != buf[0] && bts[3] != buf[3], err);
 
 	// 左边空间足够，直接使用
 	Array arr2(bts, sizeof(bts));

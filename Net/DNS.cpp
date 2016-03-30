@@ -392,7 +392,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	Socket->Send(bs);
 
 	TimeWheel tw(0, msTimeout);
-	tw.Sleep = 10;
+	tw.Sleep = 100;
 	while(!tw.Expired())
 	{
 		if(rs.Length() > 0)
@@ -420,10 +420,14 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 	// 只要来自服务器的
 	if(server.Address != Socket->Remote.Address) return;
 
-	net_printf("DNS::Process %d \r\n", bs.Length());
+	net_printf("DNS::Process [%d] = 0x%08X [%d] = 0x%08X \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
 	bs.Show(true);
 	if(_Buffer)
+	{
 		*_Buffer	= bs;
+		//_Buffer->SetLength(bs.Length());
+		//_Buffer->Copy(bs);
+	}
 	else
 	{
 #if NET_DEBUG
@@ -431,7 +435,7 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 		server.Show(true);
 #endif
 	}
-	net_printf("DNS::Process %d \r\n", _Buffer->Length());
+	net_printf("DNS::Process [%d] = 0x%08X \r\n", _Buffer->Length(), _Buffer->GetBuffer());
 	_Buffer->Show(true);
 }
 

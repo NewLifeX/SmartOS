@@ -95,7 +95,8 @@ Buffer& Buffer::operator = (const Buffer& rhs)
 {
 	if(!SetLength(rhs.Length())) assert(false, "赋值操作无法扩容");
 
-	Copy(0, rhs, 0, -1);
+	//Copy(0, rhs, 0, -1);
+	Copy(rhs, 0);
 
 	return *this;
 }
@@ -207,6 +208,11 @@ int Buffer::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 	//if(len <= 0) return 0;
 
 	return Copy(destIndex, (byte*)src._Arr + srcIndex, len);
+}
+
+int Buffer::Copy(const Buffer& src, int destIndex)
+{
+	return Copy(destIndex, (byte*)src._Arr, src.Length());
 }
 
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
@@ -391,12 +397,12 @@ Array::Array(const Buffer& rhs) : Buffer(nullptr, 0)
 	Init();
 }
 
-Array::Array(const Array& rhs) : Buffer(nullptr, 0)
+/*Array::Array(const Array& rhs) : Buffer(nullptr, 0)
 {
 	Copy(0, rhs, 0, -1);
 
 	Init();
-}
+}*/
 
 Array::Array(Array&& rval) : Buffer(nullptr, 0)
 {
@@ -453,16 +459,16 @@ bool Array::Release()
 	return false;
 }
 
-/*Array& Array::operator = (const Buffer& rhs)
+Array& Array::operator = (const Buffer& rhs)
 {
 	// 可能需要先扩容，否则Buffer拷贝时，长度可能不准确
 	// 长度也要相等，可能会因此而扩容
-	SetLength(rhs.Length());
+	//SetLength(rhs.Length());
 
 	Buffer::operator=(rhs);
 
 	return *this;
-}*/
+}
 
 Array& Array::operator = (const void* p)
 {
@@ -733,10 +739,10 @@ ByteArray::ByteArray(const Buffer& arr) : Array(Arr, arr.Length())
 	Copy(0, arr, 0, -1);
 }
 
-ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
+/*ByteArray::ByteArray(const ByteArray& arr) : Array(Arr, arr.Length())
 {
 	Copy(0, arr, 0, -1);
-}
+}*/
 
 ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
 {
@@ -792,7 +798,7 @@ void* ByteArray::Alloc(int len)
 	}
 }
 
-/*ByteArray& ByteArray::operator = (const Buffer& rhs)
+ByteArray& ByteArray::operator = (const Buffer& rhs)
 {
 	Buffer::operator=(rhs);
 
@@ -804,7 +810,7 @@ ByteArray& ByteArray::operator = (const ByteArray& rhs)
 	Buffer::operator=(rhs);
 
 	return *this;
-}*/
+}
 
 ByteArray& ByteArray::operator = (const void* p)
 {
