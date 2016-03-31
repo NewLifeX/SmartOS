@@ -264,6 +264,34 @@ static void TestSet()
 	assert(str == "1F-36", "String Substring(int start, int _Length)");
 }
 
+static void TestMemory()
+{
+	TS("TestMemory");
+
+	debug_printf("字符串内存泄漏测试\r\n");
+
+	int p	= 0;
+	{
+		auto arr = new int[4];
+		p	= (int)arr;
+
+		delete[] arr;
+	}
+
+	{
+		String str = "ABCDEFG";
+		for(int i=0; i<4; i++) str += str;
+	}
+
+	{
+		auto arr = new int[4];
+
+		delete[] arr;
+
+		assert((int)arr == p, "字符串连加，内存泄漏！");
+	}
+}
+
 void TestString()
 {
 	TS("TestString");
@@ -278,6 +306,8 @@ void TestString()
 	TestEquals();
 
 	TestSet();
+
+	TestMemory();
 
 	debug_printf("字符串单元测试全部通过！");
 }

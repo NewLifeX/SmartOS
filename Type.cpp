@@ -442,6 +442,7 @@ Array::~Array()
 bool Array::Release()
 {
 	auto p	= _Arr;
+	bool fr	= _needFree;
 
 	_Arr		= nullptr;
 	_Capacity	= 0;
@@ -449,7 +450,7 @@ bool Array::Release()
 	_needFree	= false;
 	_canWrite	= true;
 
-	if(_needFree && p)
+	if(fr && p)
 	{
 		delete (byte*)p;
 
@@ -655,6 +656,8 @@ bool Array::CheckCapacity(int len, int bak)
 	int sz = 0x40;
 	while(sz < len) sz <<= 1;
 
+	bool _free	= _needFree;
+
 	void* p = Alloc(sz);
 	if(!p) return false;
 
@@ -665,7 +668,7 @@ bool Array::CheckCapacity(int len, int bak)
 		Buffer(p, sz).Copy(0, _Arr, bak);
 
 	int oldlen	= _Length;
-	if(_needFree && _Arr != p) Release();
+	if(_free && _Arr != p) Release();
 
 	_Arr		= (char*)p;
 	_Capacity	= sz;
