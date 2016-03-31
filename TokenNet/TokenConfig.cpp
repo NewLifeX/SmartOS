@@ -61,13 +61,14 @@ void TokenConfig::Show() const
 #endif
 }
 
-TokenConfig* TokenConfig::Create(const char* vendor, byte protocol, ushort sport, ushort port)
+TokenConfig* TokenConfig::Create(const char* vendor, ProtocolType protocol, ushort sport, ushort port)
 {
 	static TokenConfig tc;
 	if(!Current)
 	{
 		TokenConfig::Current = &tc;
 		tc.Init();
+		tc.Protocol	= protocol;
 		tc.Load();
 
 		bool rs = tc.New;
