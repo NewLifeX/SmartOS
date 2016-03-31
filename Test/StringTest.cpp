@@ -27,11 +27,12 @@ static void TestCtor()
 
 	String str1("456");
 	assert(str1 == "456", err);
-	assert(str1.GetBuffer() != "456", err);
+	assert(str1.GetBuffer() == "456", err);
 
+	err	= "String(const String& str)";
 	String str2(str1);
-	assert(str2 == str1, "String(const String& str)");
-	assert(str2.GetBuffer() != str1.GetBuffer(), "String(const String& str)");
+	assert(str2 == str1, err);
+	assert(str2.GetBuffer() != str1.GetBuffer(), err);
 
 	//StringHelper str3(str1);
 	//assert(str3 == str1, "String(StringHelper&& rval)");
@@ -188,8 +189,8 @@ static void TestConcat16()
 	str.Concat(0x73F88, -16);
 
 	str.Show(true);
-	// 十六进制连接测试 20 @ 00000e3f # 00073F88
-	assert(str == "十六进制连接测试 20 @ 00000e3f # 00073F88", "bool Concat(int num, int radix = 16)");
+	// 十六进制连接测试 20 @ 0e3f # 00073F88
+	assert(str == "十六进制连接测试 20 @ 0e3f # 00073F88", "bool Concat(int num, int radix = 16)");
 }
 
 static void TestAdd()
