@@ -187,6 +187,7 @@ protected:
 
 	String& copy(const char* cstr, uint length);
 	void move(String& rhs);
+	bool CopyOrWrite();
 
 	bool CheckCapacity(uint size);
 	virtual void* Alloc(int len);

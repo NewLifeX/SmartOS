@@ -226,6 +226,15 @@ void String::move(String& rhs)
 	copy(rhs._Arr, rhs._Length);
 }
 
+// 修改时拷贝
+bool String::CopyOrWrite()
+{
+	// 如果不可写
+	if(!_canWrite) return CheckCapacity(_Length);
+
+	return false;
+}
+
 /*void String::SetBuffer(const void* str, int length)
 {
 	release();
@@ -616,6 +625,10 @@ char& String::operator[](int index)
 		dummy_writable_char = 0;
 		return dummy_writable_char;
 	}
+
+	// 修改时拷贝
+	CopyOrWrite();
+
 	return _Arr[index];
 }
 
