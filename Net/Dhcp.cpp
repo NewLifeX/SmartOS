@@ -191,6 +191,10 @@ void Dhcp::Stop()
 			net_printf("\r\n");
 
 			Host.Config();
+
+			// 3分钟后继续启动DHCP
+			Sys.SetTaskPeriod(taskID, 3 * 60 * 1000);
+			Sys.SetTask(taskID, true);
 		}
 	}
 
