@@ -336,8 +336,10 @@ void ISocketHost::InitConfig()
 	DNSServer2	= IPAddress(180, 76, 76, 76);
 
 	auto& mac = Mac;
-	// 随机Mac，前三个字节取自YWS的ASCII，最后3个字节取自后三个ID
-	mac[0] = 'W'; mac[1] = 'S'; //mac[2] = 'W'; mac[3] = 'L';
+	// 随机Mac，前2个字节取自ASCII，最后4个字节取自后三个ID
+	//mac[0] = 'W'; mac[1] = 'S';
+	// 第一个字节最低位为1表示组播地址，所以第一个字节必须是偶数
+	mac[0] = 'N'; mac[1] = 'X';
 	for(int i=0; i< 4; i++)
 		mac[2 + i] = Sys.ID[3 - i];
 }
