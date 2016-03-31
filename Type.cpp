@@ -260,7 +260,7 @@ void Buffer::Clear(byte item)
 Buffer Buffer::Sub(int index, int len)
 {
 	assert(index >= 0, "index >= 0");
-	assert(index < _Length, "index < _Length");
+	assert(index <= _Length, "index < _Length");
 	if(len < 0) len	= _Length - index;
 	assert(index + len <= _Length, "len <= _Length");
 
@@ -276,7 +276,7 @@ Buffer Buffer::Sub(int index, int len)
 const Buffer Buffer::Sub(int index, int len) const
 {
 	assert(index >= 0, "index >= 0");
-	assert(index < _Length, "index < _Length");
+	assert(index <= _Length, "index < _Length");
 	if(len < 0) len	= _Length - index;
 	assert(index + len <= _Length, "len <= _Length");
 

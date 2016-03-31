@@ -823,6 +823,8 @@ uint NRF24L01::OnRead(Buffer& bs)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 {
+	if(bs.Length()) return false;
+
 	TS("R24::SendTo");
 
 	// 进入发送模式
@@ -843,10 +845,7 @@ bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 	byte cmd = WR_TX_PLOAD;
 	// 检查要发送数据的长度
 	uint len = bs.Length();
-	byte pw	= 32;
-	if(len > pw) len = pw;
-	//ByteArray bs2(bs.GetBuffer(), len);
-	//WriteBuf(cmd, bs2);
+	if(len > 32) len = 32;
 	WriteBuf(cmd, bs.Sub(0, len));
 
 	// 进入TX，维持一段时间
@@ -1007,7 +1006,7 @@ void NRF24L01::OnIRQ()
 		// 接收标识位 RX_DR
 		WriteReg(STATUS, 0x40);
 	}
-	
+
 	Sys.SetTask(_tidRecv, true, 30);
 }
 

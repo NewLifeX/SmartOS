@@ -335,7 +335,7 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 #if MSG_DEBUG
 	String name ="R24";
 	auto obj	= dynamic_cast<Object*>(Port);
-	if(obj) 
+	if(obj)
 	  name	= obj->ToString();
 
 	msg_printf("%s", name.GetBuffer());
@@ -764,7 +764,7 @@ void TinyController::Loop()
 
 		// 发送消息
 		Buffer bs(node.Data, node.Length);
-		if(node.Length > 32)
+		if(node.Length <= 0 || node.Length > 32)
 		{
 			debug_printf("node=0x%08x Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", &node, node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
 		}
