@@ -25,11 +25,14 @@ String::String(const char* cstr) : Array(Arr, ArrayLength(Arr))
 	*/
 	//if (cstr) copy(cstr, strlen(cstr));
 
-	_Arr	= (char*)cstr;
 	_Length	= strlen(cstr);
-	// 此时不能保证外部一定是0结尾
-	_Capacity	= _Length + 1;
-	_canWrite	= false;
+	if(_Length)
+	{
+		_Arr	= (char*)cstr;
+		// 此时保证外部一定是0结尾
+		_Capacity	= _Length + 1;
+		_canWrite	= false;
+	}
 }
 
 String::String(const String& value) : Array(Arr, ArrayLength(Arr))

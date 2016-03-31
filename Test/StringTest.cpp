@@ -1,6 +1,8 @@
 ﻿#include "String.h"
 #include "Time.h"
 
+#if DEBUG
+
 /*static String TestMove(String& ss)
 {
 	//String ss = "Hello Move";
@@ -16,9 +18,16 @@ static void TestCtor()
 
 	debug_printf("字符串构造函数测试\r\n");
 
+	auto err	= "String(const char* cstr)";
+
+	// 默认空字符串，使用内部数据区
+	String str;
+	assert(str.Length() == 0, err);
+	assert(str.Capacity() == 0x40 - 1, err);
+
 	String str1("456");
-	assert(str1 == "456", "String(const char* cstr)");
-	assert(str1.GetBuffer() != "456", "String(const char* cstr)");
+	assert(str1 == "456", err);
+	assert(str1.GetBuffer() != "456", err);
 
 	String str2(str1);
 	assert(str2 == str1, "String(const String& str)");
@@ -242,13 +251,13 @@ static void TestSet()
 	assert(str.Contains("34-3F-31"), "bool Contains(const char* str) const");
 	assert(str.StartsWith("36-"), "bool StartsWith(const char* str, int startIndex = 0)");
 	assert(str.EndsWith("-32-34"), "bool EndsWith(const char* str)");
-	
+
 	// 字符串截取
 	str	= " 36-1f-36-35-34\n";
 	len	= str.Length();
 	str	= str.Trim();
 	assert(str.Length() == len - 2, "String& Trim()");
-	
+
 	str	= str.Substring(3, 5).ToUpper();
 	str.Show(true);
 	assert(str == "1F-36", "String Substring(int start, int _Length)");
@@ -272,3 +281,4 @@ void TestString()
 	debug_printf("字符串单元测试全部通过！");
 }
 
+#endif
