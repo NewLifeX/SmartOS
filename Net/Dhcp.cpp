@@ -27,8 +27,8 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	Running	= false;
 	Result	= false;
 	Times	= 0;
-	MaxTimes	= 2;
-	ExpiredTime	= 500 * 5;
+	MaxTimes	= 6;
+	ExpiredTime	= 500 * 10;
 
 	OnStop	= nullptr;
 	taskID	= 0;

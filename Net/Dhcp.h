@@ -23,11 +23,11 @@ public:
 	ISocketHost&	Host;	// 主机
 	IPAddress	IP;			// 获取的IP地址
 
-	uint ExpiredTime;	// 过期时间，默认2500毫秒
+	uint ExpiredTime;	// 过期时间，默认5000毫秒
 	bool Running;	// 正在运行
 	bool Result;	// 是否获取IP成功
 	byte Times;		// 运行次数
-	byte MaxTimes;	// 最大重试次数，默认2次，超过该次数仍然失败则恢复上一次设置
+	byte MaxTimes;	// 最大重试次数，默认6次，超过该次数仍然失败则恢复上一次设置
 
 	Dhcp(ISocketHost& host);
 	~Dhcp();
