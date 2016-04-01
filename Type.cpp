@@ -706,12 +706,14 @@ bool operator!=(const Array& bs1, const Array& bs2)
 
 ByteArray::ByteArray(int length) : Array(Arr, sizeof(Arr))
 {
-	_Length	= length;
+	//_Length	= length;
+	SetLength(length);
 }
 
 ByteArray::ByteArray(byte item, int length) : Array(Arr, sizeof(Arr))
 {
-	_Length	= length;
+	//_Length	= length;
+	SetLength(length);
 	Set(item, 0, length);
 }
 

@@ -86,7 +86,7 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 #else
 	byte bb[0x800];
 #endif
-	Buffer ms(bb, ArrayLength(bb));
+	Buffer ms(bb, sizeof(bb));
 	ms.SetLength(Block);
 
 	// 写入第一个半块
