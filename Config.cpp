@@ -259,6 +259,45 @@ bool Config::Remove(const String& name) const
 	return header.Remove(Device, (uint)cfg);
 }
 
+bool Config::RemoveAll() const
+{
+	TS("Config::RemoveAll");
+
+	/*int count	= 0;
+
+	uint addr	= Address;
+	if(!CheckSignature(Device, addr, false)) return count;
+
+	// 第一个配置块
+    auto cfg = (const ConfigBlock*)addr;
+
+	// 遍历链表，找到同名块
+    while(cfg->Valid())
+    {
+		count++;
+#if CFG_DEBUG
+		debug_printf("Config::RemoveAll %d %s \r\n", count, cfg->Name);
+#endif
+
+		auto next	= cfg->Next();
+
+		// 重新搞一个配置头
+		ConfigBlock header;
+		cfg->CopyTo(Buffer(&header, sizeof(header)));
+		header.Size	= 0;
+		Device.Write(&cfg, Buffer(&Hash, len));
+
+        cfg = next;
+    }*/
+
+#if CFG_DEBUG
+	debug_printf("Config::RemoveAll (0x%08X, %d) \r\n", Address, Size);
+#endif
+
+	ByteArray bs((byte)0xFF, Size);
+	return Device.Write(Address, bs);
+}
+
 // 根据名称更新块
 const void* Config::Set(const String& name, const Buffer& bs) const
 {

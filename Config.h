@@ -24,6 +24,8 @@ public:
     const void* New(int size) const;
     // 删除。仅清空名称，并不删除数据区
 	bool Remove(const String& name) const;
+	// 删除所有配置。
+	bool RemoveAll() const;
     // 设置配置数据
     const void* Set(const String& name, const Buffer& bs) const;
 	// 获取配置数据
