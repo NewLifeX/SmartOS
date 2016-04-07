@@ -10,7 +10,7 @@
 // 输入类型为脉冲的IO驱动
 class PulsePort
 {
-    typedef void (*PulsePortHandler)(PulsePort* port, bool down, void* param);
+    typedef void (*PulsePortHandler)(PulsePort* port, bool hasPulse, void* param);
 private:
 	bool		Opened 	= false;
 	bool		value	= false;	// 对外的状态

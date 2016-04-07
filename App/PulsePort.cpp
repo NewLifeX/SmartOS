@@ -47,11 +47,14 @@ void PulsePort::Open()
 						port->Handler(port,port->value,port->Param);
 						},
 				this, ShakeTime, ShakeTime, "PulsePort触发任务");
+				
+	Opened = true;
 }
 
 void PulsePort::Close()
 {
 	_Port->Close();
+	Opened = false;
 	delete _Port;
 }
 

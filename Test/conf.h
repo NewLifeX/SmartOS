@@ -13,6 +13,8 @@ void TestADC();
 void TestEnc28j60();
 void TestEthernet();
 void IRTest();
+void TestPulsePort();
+
 void TestTimer(OutputPort& leds);
 void TestThread(OutputPort& leds);
 void TestW5500(Spi* spi, Pin irq, Pin rst);
