@@ -17,6 +17,7 @@ Gateway::Gateway()
 	Server	= nullptr;
 	Client	= nullptr;
 	Led		= nullptr;
+	pDevMgmt = nullptr;
 
 	Running		= false;
 }
@@ -52,19 +53,29 @@ void Gateway::Start()
 
 	Server->Start();
 
-	// 添加网关这一条设备信息
-	if(Server->Devices.Length() == 0)
+	// 如果全局都没有设备列表，那就直接创建一个
+	if (DevicesManagement::Current)
+		pDevMgmt = DevicesManagement::Current;
+	else
+		pDevMgmt = new DevicesManagement();
+
+	// 设备列表服务于Token  保存token的“联系方式”
+	pDevMgmt->Port = Client;	
+	if (pDevMgmt->Length() == 0)
 	{
+		// 如果全局设备列表为空，则添加一条Addr=1的设备
 		auto dv = new Device();
-		dv->Address		= Server->Cfg->Address;
-		dv->Kind		= Sys.Code;
-		dv->LastTime	= Sys.Seconds();
+		dv->Address = 1;
+		dv->Kind = Sys.Code;
+		dv->LastTime = Sys.Seconds();
 
-		dv->HardID	= Sys.ID;
-		dv->Name	= Sys.Name;
+		dv->HardID = Sys.ID;
+		dv->Name = Sys.Name;
 
-		Server->Devices.Push(dv);
-		Server->SaveDevices();
+		pDevMgmt->PushDev(dv);
+		// 放进持续在线表
+		pDevMgmt->OnlineAlways.Push(dv);
+		pDevMgmt->SaveDev();
 	}
 
 	Client->Open();
@@ -99,11 +110,11 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		switch(msg.Code)
 		{
 			case 0x01:
-				DeviceRequest(DeviceAtions::Register, dv);
-				DeviceRequest(DeviceAtions::Online, dv);
+				pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
+				pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
 				break;
 			case 0x02:
-				DeviceRequest(DeviceAtions::Delete, dv);
+				pDevMgmt->DeviceRequest(DeviceAtions::Delete, dv);
 				break;
 		}
 	}
@@ -132,14 +143,14 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			if(msg.Reply && Client->Token != 0)
 			{
 				// 遍历发送所有设备信息
-				SendDevices(DeviceAtions::List, nullptr);
+				pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
 			}
 			break;
 
 		case 0x20:
 			return OnMode(msg);
 		case 0x21:
-			return DeviceProcess(msg);
+			return pDevMgmt->DeviceProcess(msg);
 	}
 
 	// 应用级消息转发
@@ -162,96 +173,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	}
 
 	return true;
-}
-
-// 设备列表 0x21
-bool Gateway::SendDevices(DeviceAtions act, const Device* dv)
-{
-	TS("Gateway::SendDevices");
-
-	if(Client->Status < 2) return false;
-
-	TokenMessage msg;
-	msg.Code = 0x21;
-
-	int count = 0;
-	int len	  =  Server->Devices.Length();
-
-	for(int i = 0;i < len;i++)
-	{
-		if(Server->Devices[i] == nullptr) continue;
-		count++;
-	}
-
-	if(dv) count	= 1;
-
-	byte buf[1500];		// 1024 字节只能承载 23条数据，udp最大能承载1514字节
-	MemoryStream ms(buf, ArrayLength(buf));
-	//MemoryStream ms(1536);
-	ms.Write((byte)act);
-	ms.Write((byte)count);
-
-	if(len > 0)
-	{
-		if(dv)
-			dv->WriteMessage(ms);
-		else
-		{
-			for(int i=0; i<len; i++)
-			{
-				auto dv1 = Server->Devices[i];
-				if(dv1 == nullptr ) continue;
-				dv1->WriteMessage(ms);
-			}
-		}
-	}
-
-	msg.Length 	= ms.Position();
-	msg.Data 	= ms.GetBuffer();
-
-#if DEBUG
-	switch(act)
-	{
-		case DeviceAtions::List:
-			debug_printf("发送设备列表 共%d个\r\n", count);
-			break;
-		case DeviceAtions::Online:
-			debug_printf("节点上线 ID=0x%02X \t", dv->Address);
-			break;
-		case DeviceAtions::Offline:
-			debug_printf("节点下线 ID=0x%02X \t", dv->Address);
-			break;
-		default: break;
-	}
-#endif
-
-	if(act == DeviceAtions::List)
-		return Client->Reply(msg);
-	else
-		return Client->Send(msg);
-}
-
-void Gateway::SendDevicesIDs()
-{
-	TokenMessage msg;
-	msg.Code	= 0x21;
-	auto act	= DeviceAtions::ListIDs;
-
-	MemoryStream ms;
-	ms.Write((byte)act);
-	byte len = Server->Devices.Length();
-	//先确认真正的设备有多少个
-	for(int i = 0; i < len; i++)
-	{
-		auto dv =Server->Devices[i];
-		if(!dv) continue;
-		ms.Write(dv->Address);
-	}
-
-	msg.Length 	= ms.Position();
-	msg.Data 	= ms.GetBuffer();
-
-	Client->Send(msg);
 }
 
 // 学习模式 0x20
@@ -308,134 +229,6 @@ bool Gateway::OnMode(const Message& msg)
     if(msg.Length > 0) time = msg.Data[0];
 
 	SetMode(time);
-
-	return true;
-}
-
-// 节点消息处理 0x21
-void Gateway::DeviceRequest(DeviceAtions act, const Device* dv)
-{
-	TS("Gateway::DeviceRequest");
-
-	if(Client->Status < 2) return;
-
-	byte id	= dv->Address;
-	switch(act)
-	{
-		case DeviceAtions::List:
-			SendDevices(act, dv);
-			return;
-		case DeviceAtions::Update:
-			SendDevices(act, dv);
-			return;
-		case DeviceAtions::Register:
-			debug_printf("节点注册入网 ID=0x%02X\r\n", id);
-			SendDevices(act, dv);
-			return;
-		case DeviceAtions::Online:
-			debug_printf("节点上线 ID=0x%02X\r\n", id);
-			break;
-		case DeviceAtions::Offline:
-			debug_printf("节点离线 ID=0x%02X\r\n", id);
-			break;
-		case DeviceAtions::Delete:
-		{
-			debug_printf("节点删除~~ ID=0x%02X\r\n", id);
-			auto dv = Server->FindDevice(id);
-			if(dv == nullptr) return;
-			Server->DeleteDevice(id);
-			break;
-		}
-		default:
-			debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
-			break;
-	}
-
-	TokenMessage rs;
-	rs.Code	= 0x21;
-	rs.Length	= 2;
-	rs.Data[0]	= (byte)act;
-	rs.Data[1]	= id;
-
-	Client->Send(rs);
-}
-
-bool Gateway::DeviceProcess(const Message& msg)
-{
-	// 仅处理来自云端的请求
-	if(msg.Reply) return false;
-
-	TS("Gateway::DeviceProcess");
-
-	auto act	= (DeviceAtions)msg.Data[0];
-	byte id		= msg.Data[1];
-
-	TokenMessage rs;
-	rs.Code	= 0x21;
-	rs.Length	= 2;
-	rs.Data[0]	= (byte)act;
-	rs.Data[1]	= id;
-
-	switch(act)
-	{
-		case DeviceAtions::List:
-		{
-			SendDevices(act, nullptr);
-			return true;
-		}
-		case DeviceAtions::Update:
-		{
-			// 云端要更新网关设备信息
-			auto dv = Server->FindDevice(id);
-			if(!dv)
-			{
-				rs.Error	= true;
-			}
-			else
-			{
-				auto ms	= msg.ToStream();
-				ms.Seek(2);
-
-				dv->ReadMessage(ms);
-				Server->SaveDevices();
-			}
-
-			Client->Reply(rs);
-		}
-			break;
-		case DeviceAtions::Register:
-			break;
-		case DeviceAtions::Online:
-			break;
-		case DeviceAtions::Offline:
-			break;
-		case DeviceAtions::Delete:
-			debug_printf("节~~1点删除 ID=0x%02X\r\n", id);
-		{
-			auto dv = Server->FindDevice(id);
-			if(dv == nullptr)
-			{
-				rs.Error = true;
-				Client->Reply(rs);
-				return false;
-			}
-
-			ushort crc = Crc::Hash16(dv->HardID);
-			Server->Disjoin(id);
-			Sys.Sleep(300);
-			Server->Disjoin(id);
-			Sys.Sleep(300);
-			Server->Disjoin(id);
-			// 云端要删除本地设备信息
-			bool flag = Server->DeleteDevice(id);
-			rs.Error	= !flag;
-			Client->Reply(rs);
-		}
-			break;
-		default:
-			debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
-			break;
-	}
 
 	return true;
 }
@@ -515,41 +308,5 @@ void Gateway::Loop(void* param)
 			gw->SetMode(0);
 		}
 	}
-
-	// 未登录不执行任何逻辑
-	if(gw->Client->Token == 0) return;
-
-	gw->SendDevicesIDs();
-
-	auto now	= Sys.Seconds();
-	byte len	= gw->Server->Devices.Length();
-	for(int i = 0; i < len; i++)
-	{
-		auto dv = gw->Server->Devices[i];
-
-		if(!dv) continue;
-
-		ushort time = dv->OfflineTime ? dv->OfflineTime :60;
-
-		// 特殊处理网关自身
-		if(dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
-
-		if(dv->LastTime + time < now)
-		{	// 下线
-			if(dv->Logined)
-			{
-				//debug_printf("设备最后活跃时间：%d,系统当前时间:%d,离线阈值:%d\r\n",dv->LastTime,now,time);
-				gw->DeviceRequest(DeviceAtions::Offline, dv);
-				dv->Logined = false;
-			}
-		}
-		else
-		{	// 上线
-			if(!dv->Logined)
-			{
-				gw->DeviceRequest(DeviceAtions::Online, dv);
-				dv->Logined = true;
-			}
-		}
-	}
+	gw->pDevMgmt->MaintainState();
 }

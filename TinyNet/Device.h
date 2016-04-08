@@ -75,29 +75,5 @@ public:
 bool operator==(const Device& d1, const Device& d2);
 bool operator!=(const Device& d1, const Device& d2);
 
-class DevicesManagement
-{
-public:
-	//DevicesManagement();
-	//~DevicesManagement();
-	
-	bool SetFlashCfg(uint addr,uint size);
-	int Length() { return Arr.Length(); }
-
-	Device* Find(byte id)const;
-	Device* Find(const Buffer& hardid) const;
-	int		Push(Device* dv) { return Arr.Push(dv); }
-	bool	Delete(byte id);
-
-	int Load();
-	void Save();
-	void Clear();
-
-	TArray<Device*> Arr;
-private:
-	const Config GetStore(Flash &flash);
-	uint _Addr = 0;		// 固化到flash的地址
-	uint _FlashSize = 0;
-};
 
 #endif

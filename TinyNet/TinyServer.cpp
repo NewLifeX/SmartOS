@@ -16,10 +16,6 @@
 static bool OnServerReceived(void* sender, Message& msg, void* param);
 static void GetDeviceKey(byte scr, Buffer& key,void* param);
 
-#if DEBUG
-// 输出所有设备
-static void DeviceShow(void* param);
-#endif
 
 TinyServer::TinyServer(TinyController* control)
 {
@@ -38,8 +34,6 @@ TinyServer::TinyServer(TinyController* control)
 
 	Current		= nullptr;
 	Study		= false;
-
-	Devices.SetLength(0);
 }
 
 bool TinyServer::Send(Message& msg) const
@@ -47,7 +41,7 @@ bool TinyServer::Send(Message& msg) const
 	// 附加目标物理地址
 	//if(!msg.State)
 	{
-		auto dv	= FindDevice(((TinyMessage&)msg).Dest);
+		auto dv	= DevMgmt.FindDev(((TinyMessage&)msg).Dest);
 		if(!dv)	dv	= Current;
 		//if(dv)	msg.State	= dv->Mac;
 		if(dv)	dv->Mac.CopyTo(0, msg.State, -1);
@@ -72,14 +66,38 @@ void TinyServer::Start()
 	TS("TinyServer::Start");
 
 	assert(Cfg, "未指定微网服务器的配置");
+	
+	// 最后倒数8KB - 倒数位置4KB  的 4KB 空间
+	//const uint DevAddr = 0x8000000 + (Sys.FlashSize << 10) - (8 << 10);
+	//const uint DevSize = 4 << 10;
+	//DevMgmt.SetFlashCfg(DevAddr,DevSize);
 
-	//LoadConfig();
-	auto count = LoadDevices();
+	auto count = DevMgmt.LoadDev();
 	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
-	if(Devices.Length() != count) SaveDevices();
+	if (DevMgmt.Length() != count)DevMgmt.SaveDev();
+
+	// 添加网关这一条设备信息
+	if (!DevMgmt.FindDev(Cfg->Address))
+	{
+		// 如果全局设备列表内没有Server自己，则添加
+		auto dv = new Device();
+		dv->Address = Cfg->Address;
+		dv->Kind = Sys.Code;
+		dv->LastTime = Sys.Seconds();
+
+		dv->HardID = Sys.ID;
+		dv->Name = Sys.Name;
+
+		DevMgmt.PushDev(dv);
+		// 放进持续在线表
+		DevMgmt.OnlineAlways.Push(dv);
+		DevMgmt.SaveDev();
+	}
+	// 注册Token控制设备列表时回调函数
+	DevMgmt.Register([](DeviceAtions act, const Device* dv, void *param) {((TinyServer*)(param))->DevPrsCallback(act, dv); }, this);
 
 	#if DEBUG
-	Sys.AddTask(DeviceShow, this, 10000, 30000, "节点列表");
+	Sys.AddTask([](void *param) {((DevicesManagement*)(param))->ShowDev(); }, &DevMgmt, 10000, 30000, "节点列表");
 #endif
 
 	Control->Open();
@@ -93,7 +111,7 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	auto dv = Current;
-	if(!dv) dv = FindDevice(id);
+	if (!dv) dv = DevMgmt.FindDev(id);
 	// 不响应不在设备列表设备的 非Join指令
 	if(!dv && msg.Code > 2) return false;
 
@@ -158,7 +176,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	TS("TinyServer::Dispatch");
 
 	// 先找到设备
-	auto dv = FindDevice(msg.Dest);
+	auto dv = DevMgmt.FindDev(msg.Dest);
 	if(!dv) return false;
 
 	// 设置当前设备
@@ -243,7 +261,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	if(dm.Kind == 0x1004) return false;
 
 	// 根据硬件编码找设备
-	auto dv = FindDevice(dm.HardID);
+	auto dv = DevMgmt.FindDev(dm.HardID);
 	if(!dv)
 	{
 		if(!Study)
@@ -254,7 +272,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		// 从1开始派ID
 		id	= 1;
-		while(FindDevice(++id) != nullptr && id < 0xFF);
+		while(DevMgmt.FindDev(++id) != nullptr && id < 0xFF);
 		debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 		if(id == 0xFF) return false;
 
@@ -290,8 +308,8 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		if(dv->Valid())
 		{
-			Devices.Push(dv);
-			SaveDevices();	// 写好相关数据 校验通过才能存flash
+			DevMgmt.PushDev(dv);
+			DevMgmt.SaveDev();	// 写好相关数据 校验通过才能存flash
 		}
 		else
 		{
@@ -349,7 +367,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 	// 如果是退网请求，这里也需要删除设备
 	if(!msg.Reply)
 	{
-		auto dv	= FindDevice(msg.Src);
+		auto dv	= DevMgmt.FindDev(msg.Src);
 		if(dv)
 		{
 			// 拿出来硬件ID的校验，检查是否合法
@@ -391,7 +409,7 @@ bool TinyServer::Disjoin(byte id)
 {
 	TS("TinyServer::Disjoin");
 
-	auto dv  = FindDevice(id);
+	auto dv  = DevMgmt.FindDev(id);
 	auto crc = Crc::Hash16(dv->HardID);
 
 	TinyMessage msg;
@@ -403,7 +421,7 @@ bool TinyServer::Disjoin(byte id)
 
 	Send(msg);
 
-	DeleteDevice(id);
+	DevMgmt.DeleteDev(id);
 
 	return true;
 }
@@ -412,7 +430,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	TS("TinyServer::OnPing");
 
-	auto dv = FindDevice(msg.Src);
+	auto dv = DevMgmt.FindDev(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == nullptr) return false;
 
@@ -584,24 +602,14 @@ void TinyServer::SetChannel(byte channel)
 	}
 }
 
-Device* TinyServer::FindDevice(byte id) const
-{
-	if(id == 0) return nullptr;
-
-	for(int i=0; i<Devices.Length(); i++)
-	{
-		if(id == Devices[i]->Address) return Devices[i];
-	}
-	return nullptr;
-}
-
 void GetDeviceKey(byte scr, Buffer& key, void* param)
 {
 	/*TS("TinyServer::GetDeviceKey");
 
 	auto server = (TinyServer*)param;
+	auto devMgmt = &(server->DevMgmt);
 
-	auto dv = server->FindDevice(scr);
+	auto dv = devMgmt->FindDev(scr);
 	if(!dv) return;
 
 	// 检查版本
@@ -611,195 +619,63 @@ void GetDeviceKey(byte scr, Buffer& key, void* param)
 	key.Copy(dv->Pass, 8);*/
 }
 
-Device* TinyServer::FindDevice(const Buffer& hardid) const
-{
-	if(hardid.Length() == 0) return nullptr;
-
-	for(int i=0; i<Devices.Length(); i++)
-	{
-		if(Devices[i] != nullptr && hardid == Devices[i]->HardID) return Devices[i];
-	}
-	return nullptr;
-}
-
-bool TinyServer::DeleteDevice(byte id)
-{
-	TS("TinyServer::DeleteDevice");
-
-	auto dv = FindDevice(id);
-	if(dv && dv->Address == id)
-	{
-		debug_printf("TinyServer::DeleteDevice 删除设备 0x%02X \r\n", id);
-
-		int idx = Devices.FindIndex(dv);
-		debug_printf("idx~~~~~~~~~~~:%d\r\n",idx);
-		if(idx >= 0) Devices[idx] = nullptr;
-		delete dv;
-		SaveDevices();
-
-		return true;
-	}
-
-	return false;
-}
-
-// 获取设备列表存储对象
-const Config GetStore(Flash& flash)
-{
-	// 最后4k的位置作为存储位置
-	uint addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
-	Config cfg(flash, addr, 4 << 10);
-
-	return cfg;
-}
-
-int TinyServer::LoadDevices()
-{
-	TS("TinyServer::LoadDevices");
-
-	debug_printf("TinyServer::LoadDevices 加载设备！\r\n");
-	Flash flash;
-	auto cfg	= GetStore(flash);
-
-	byte* data = (byte*)cfg.Get("Devs");
-	if(!data) return -1;
-
-	Stream ms(data, 4 << 10);
-	// 设备个数
-	int count = ms.ReadByte();
-	debug_printf("\t共有%d个节点\r\n", count);
-	int i = 0;
-	for(; i<count; i++)
-	{
-		debug_printf("\t加载设备:");
-
-		bool fs	= false;
-		/*ms.Seek(1);
-		byte id = ms.Peek();
-		ms.Seek(-1);*/
-		// 前面一个字节是长度，第二个字节才是ID
-		byte id = ms.GetBuffer()[1];
-		auto dv = FindDevice(id);
-		if(!dv)
-		{
-			dv	= new Device();
-			fs	= true;
-		}
-		dv->Read(ms);
-		dv->Show();
-
-		if(fs)
-		{
-			int idx = Devices.FindIndex(nullptr);
-			if(idx == -1)
-			{
-				if(dv->Valid())
-					Devices.Push(dv);
-				else
-					delete dv;
-				//debug_printf("\t Push");
-			}
-		}
-		debug_printf("\r\n");
-	}
-
-	debug_printf("TinyServer::LoadDevices 从 0x%08X 加载 %d 个设备！\r\n", cfg.Address, i);
-
-	byte len = Devices.Length();
-	debug_printf("Devices内已有节点 %d 个\r\n", len);
-
-	return i;
-}
-
-void TinyServer::SaveDevices() const
-{
-	TS("TinyServer::SaveDevices");
-
-	Flash flash;
-	auto cfg	= GetStore(flash);
-
-	byte buf[0x800];
-
-	MemoryStream ms(buf, ArrayLength(buf));
-	byte num = 0;
-	if(Devices.Length()==0)
-		num = 1;
-
-	for(int i = 0; i<Devices.Length(); i++)
-	{
-		auto dv = Devices[i];
-		if(dv == nullptr) continue;
-		num++;
-	}
-	// 设备个数
-	int count = num;
-	ms.Write((byte)count);
-
-	for(int i = 0; i<Devices.Length(); i++)
-	{
-		auto dv = Devices[i];
-		if(dv == nullptr) continue;
-		dv->Write(ms);
-	}
-	debug_printf("TinyServer::SaveDevices 保存 %d 个设备到 0x%08X！\r\n", num, cfg.Address);
-	cfg.Set("Devs", Buffer(ms.GetBuffer(), ms.Position()));
-}
-
 void TinyServer::ClearDevices()
 {
 	TS("TinyServer::ClearDevices");
+	debug_printf("准备清空设备，发送 Disjoin");
 
-	Flash flash;
-	auto cfg	= GetStore(flash);
-
-	debug_printf("TinyServer::ClearDevices 清空设备列表 0x%08X \r\n", cfg.Address);
-
-	//cfg.Remove("Devs");
-
-	int count = Devices.Length();
+	int count = DevMgmt.Length();
 	for(int j = 0; j < 3; j++)		// 3遍
 	{
 		for(int i = 1; i < count; i++)	// 从1开始派ID  自己下线完全不需要
 		{
-			auto dv = Devices[i];
+			auto dv = DevMgmt.DevArr[i];
 			if(!dv)continue;
 
 			TinyMessage rs;
 			rs.Dest = dv->Address;
 			ushort crc = Crc::Hash16(dv->HardID);
 			Disjoin(rs, crc);
+			debug_printf(".");
 		}
 	}
-
-	for(int i=0; i<Devices.Length(); i++)
-	{
-		if(Devices[i])delete Devices[i];
-	}
-	Devices.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
-	SaveDevices();
+	debug_printf("\r\n发送 Disjoin 完毕\r\n");
+	DevMgmt.ClearDev();
 }
 
-// 输出所有设备
-void DeviceShow(void* param)
+void TinyServer::DevPrsCallback(DeviceAtions act, const Device * dv)
 {
-	TS("TinyServer::DeviceShow");
-
-	auto svr	= (TinyServer*)param;
-
-	byte len   = svr->Devices.Length();
-	byte count = 0;
-
-	for(int i = 0; i < len; i++)
+	TS("TinyServer::DevPrsCallback");
+	if (!dv)return;
+	switch (act)
 	{
-		auto dv	= svr->Devices[i];
-		if(dv == nullptr) continue;
+		case DeviceAtions::Delete:
+			{
+				auto crc = Crc::Hash16(dv->HardID);
 
-		count++;
-		dv->Show();
-		debug_printf("\r\n");
+				TinyMessage msg;
 
-		//Sys.Sleep(0);
+				msg.Code = 0x02;
+				auto ms = msg.ToStream();
+				ms.Write(crc);
+				msg.Length = ms.Position();
+				Send(msg);
+			}
+			break;/*
+		case DeviceAtions::List:
+			break;
+		case DeviceAtions::Update:
+			break;
+		case DeviceAtions::Register:
+			break;
+		case DeviceAtions::Online:
+			break;
+		case DeviceAtions::Offline:
+			break;
+		case DeviceAtions::ListIDs:
+			break;*/
+		default:
+			break;
 	}
-	debug_printf("\r\n已有节点 %d 个\r\n", count);
-	debug_printf("\r\n\r\n");
+
 }

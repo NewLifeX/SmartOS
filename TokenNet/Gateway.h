@@ -16,8 +16,9 @@ class Gateway
 {
 public:
 	TinyServer*		Server;		// 内网服务端
-	TokenClient*	Client;	// 外网客户端
+	TokenClient*	Client;		// 外网客户端
 	IDataPort*		Led;		// 指示灯
+	DevicesManagement * pDevMgmt;	// 设备集合管理的指针
 
 	Gateway();
 	~Gateway();
@@ -40,16 +41,9 @@ public:
 	void Clear();
 	bool OnMode(const Message& msg);
 
-	// 节点消息处理 0x21
-	void DeviceRequest(DeviceAtions act, const Device* dv);
-	bool DeviceProcess(const Message& msg);
-	// 发送设备信息
-	bool SendDevices(DeviceAtions act, const Device* dv);
-	void SendDevicesIDs();
-
 	/******** 本地网业务逻辑 ********/
 	// 设备发现
-	bool OnDiscover(const TinyMessage& msg);
+	// bool OnDiscover(const TinyMessage& msg);
 
 	static Gateway*	Current;
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);

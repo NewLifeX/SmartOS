@@ -7,6 +7,7 @@
 #include "TinyConfig.h"
 
 #include "TinyNet\Device.h"
+#include "TinyNet\DevicesManagement.h"
 
 /******************************** TinyServer ********************************/
 
@@ -33,14 +34,12 @@ public:
 	MessageHandler	Received;
 	void*			Param;
 
-	TArray<Device*> Devices;
-	Device* FindDevice(byte id) const;
-	Device* FindDevice(const Buffer& hardid) const;
-	bool	DeleteDevice(byte id);
-
-	int LoadDevices();
-	void SaveDevices() const;
+	//TinyServer 有足够的理由持有设备列表
+	DevicesManagement DevMgmt;
+	// 删除列表时候需要发送Disjoin消息  所以保留次函数
 	void ClearDevices();
+	// 云端处理设备时候回调
+	void DevPrsCallback(DeviceAtions act, const Device* dv = nullptr);
 
 	void SetChannel(byte channel);
 	
