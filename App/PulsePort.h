@@ -13,7 +13,6 @@ class PulsePort
     typedef void (*PulsePortHandler)(PulsePort* port, bool hasPulse, void* param);
 private:
 	bool		Opened 	= false;
-	bool		value	= false;	// 对外的状态
 	uint		ShkPulse= 0;		// ShakeTime/Intervals/2 即 去抖脉冲个数 提前计算降低中断代价
 	uint		ShkCnt 	= 0;		// ShakeTime 期间脉冲计数
 	
@@ -41,7 +40,10 @@ public:
 	void Register(PulsePortHandler handler = NULL, void* param = NULL);
 	
 	InputPort *	_Port 	= nullptr;
+
+	bool		value	= false;	// 对外的状态
 	UInt64 		LastTriTime;		// 最后一次触发时间
+
 	bool 	ShkStat;				// 去抖标志
 };
 
