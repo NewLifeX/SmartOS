@@ -7,15 +7,29 @@ PulsePort::PulsePort(Pin pin)
 {
 	if(pin == P0)return;
 	_Port = new InputPort(pin);
+	needFree = true;
 }
 
 bool PulsePort::Set(InputPort * port, uint intervals, uint shktime)
 {
 	if(port == nullptr)return false;
+	if (intervals == 0)return false;
 	_Port = port;
+	needFree = false;
 	Intervals = intervals;
 	ShakeTime = shktime;
 	return true;
+}
+
+bool PulsePort::Set(Pin pin, uint intervals, uint shktime)
+{
+	if (pin == P0)return false;
+	if (intervals == 0)return false;
+	_Port = new InputPort(pin);
+	needFree = true;
+	Intervals = intervals;
+	ShakeTime = shktime;
+	return false;
 }
 
 void PulsePort::Open()
@@ -27,9 +41,11 @@ void PulsePort::Open()
 	
 	if(Opened)return;
 	_Port->HardEvent = true;
-	_Port->Register(
-			[](InputPort* port, bool down, void* param){((PulsePort*)param)->OnHandler(port,down);},
-			this);
+	if (!_Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnHandler(port, down); },this))
+	{
+		// 注册失败就返回 不要再往下了  没意义
+		return;
+	}
 	_Port->Open();
 	
 	_task = Sys.AddTask(
@@ -41,10 +57,10 @@ void PulsePort::Open()
 						// 从有到无一定是超时的结果
 						// 不是去抖的结果 肯定是从有到无
 						if(port->ShkStat== false)
-							port->value = false;
+							port->Value = false;
 						
 						Sys.SetTask(port->_task,false);
-						port->Handler(port,port->value,port->Param);
+						port->Handler(port,port->Value,port->Param);
 						},
 				this, ShakeTime, ShakeTime, "PulsePort触发任务");
 				
@@ -55,7 +71,8 @@ void PulsePort::Close()
 {
 	_Port->Close();
 	Opened = false;
-	delete _Port;
+	if (needFree)
+		delete _Port;
 }
 
 void PulsePort::Register(PulsePortHandler handler, void* param)
@@ -72,7 +89,7 @@ void PulsePort::OnHandler(InputPort* port,bool down)
 	if(down)return;
 	UInt64 now = Sys.Ms();
 	
-	if(value)
+	if(Value)
 	{
 		LastTriTime = now;
 		// 有连续脉冲情况下  一定是不用去抖的
@@ -100,7 +117,7 @@ void PulsePort::OnHandler(InputPort* port,bool down)
 					return;
 				}
 				LastTriTime = ShkTmeStar;
-				value = true;			// 有脉冲
+				Value = true;			// 有脉冲
 				// 触发
 				if(_task)Sys.SetTask(_task, true, -1);
 				return;
