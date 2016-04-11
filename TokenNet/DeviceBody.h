@@ -10,7 +10,26 @@
 #include "TinyNet\DevicesManagement.h"
 
 // tokendistributive
+// TokenDistributor
+class DeviceBody;
 
+class BodyManagement
+{
+public:
+	// BodyManagement();
+	// ~BodyManagement();
+
+	TArray<DeviceBody*> Bodys;
+	DeviceBody* FindBody(byte id) const;
+	
+	// 下发 由 GateWay 调用
+	void Send(TokenMessage& msg);
+	// 上报 由 Body 调用
+	void Report(TokenMessage &msg);
+
+private:
+
+};
 
 // 令牌网
 class DeviceBody
@@ -19,6 +38,8 @@ private:
 	bool Opened = false;
 	// 第二数据区起始地址
 	uint St2BaseAddr;
+
+	BodyManagement* Mgmt;
 public:
 	Device DevInfo;
 	DataStore Store;
@@ -26,7 +47,7 @@ public:
 	// 第二数据区 
 	DataStore * Store2;
 
-	DeviceBody();
+	DeviceBody(BodyManagement* mgmt);
 	// 设置第二数据区
 	bool SetSecDaStor(uint addr,byte* buf,int len);
 	bool SetSecDaStor(DataStore * store);
