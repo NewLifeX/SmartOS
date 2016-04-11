@@ -16,9 +16,12 @@ public:
 	byte	_Reply:1;	// 是否响应指令
 	byte	_Length;	// 数据长度*/
 
+	byte	OneWay;		// 单向传输。无应答
+	byte	Seq;		// 消息序号
+	
 	byte	_Data[256];	// 数据
 
-	static const uint HeaderSize = 1 + 1;	// 消息头部大小
+	static const uint HeaderSize = 1 + 1 + 1;	// 消息头部大小
 	static const uint MinSize = HeaderSize + 0;	// 最小消息大小
 
 	// 使用指定功能码初始化令牌消息

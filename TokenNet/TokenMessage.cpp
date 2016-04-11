@@ -18,6 +18,9 @@ TokenMessage::TokenMessage(byte code) : Message(code)
 	_Reply	= 0;
 	_Error	= 0;
 	_Length	= 0;*/
+	
+	OneWay	= false;
+	Seq		= 0;
 }
 
 // 从数据流中读取消息
@@ -31,8 +34,11 @@ bool TokenMessage::Read(Stream& ms)
 	byte temp = ms.ReadByte();
 	Code	= temp & 0x3f;
 	Reply	= temp >> 7;
-	Error	= (temp >> 6) & 0x01;
-	//Length	= ms.ReadByte();
+	if(!Reply)
+		OneWay	= (temp >> 6) & 0x01;
+	else
+		Error	= (temp >> 6) & 0x01;
+	Seq		= ms.ReadByte();
 	ushort len	= ms.ReadEncodeInt();
 	Length	= len;
 
@@ -45,7 +51,6 @@ bool TokenMessage::Read(Stream& ms)
 		//assert_param(false);
 		return false;
 	}
-	//if(len > 0) ms.Read(Data, 0, len);
 	if(len > 0)
 	{
 		Buffer bs(Data, len);
@@ -62,8 +67,10 @@ void TokenMessage::Write(Stream& ms) const
 
 	assert_ptr(this);
 
-	byte tmp = Code | (Reply << 7) | (Error << 6);
+	byte tmp = Code | (Reply << 7);
+	if(!Reply && OneWay || Reply && Error) tmp |= (1 << 6);
 	ms.Write(tmp);
+	ms.Write(Seq);
 	ms.WriteArray(Buffer(Data, Length));
 }
 
@@ -106,17 +113,25 @@ void TokenMessage::Show() const
 
 	byte code = Code;
 	if(Reply) code |= 0x80;
-	if(Error) code |= 0x40;
+	if(!Reply && OneWay || Reply && Error) code |= (1 << 6);
 
-	debug_printf("Code=0x%02X", code);
-	if(Reply || Error)
+	debug_printf("%02X", code);
+	if(Reply)
 	{
 		if(Error)
-			debug_printf(" Error");
-		//else if(Reply)
-		//	debug_printf(" Reply");
-		debug_printf(" _Code=0x%02X", Code);
+			debug_printf("$");
+		else
+			debug_printf("#");
+		//debug_printf(" _Code=0x%02X", Code);
 	}
+	else
+	{
+		if(OneWay)
+			debug_printf("~");
+		else
+			debug_printf(" ");
+	}
+	debug_printf(" Seq=%02X", Seq);
 
 	ushort len	= Length;
 	if(len > 0)
@@ -145,7 +160,7 @@ TokenController::TokenController() : Controller(), Key(0)
 	// 默认屏蔽心跳日志和确认日志
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
-	NoLogCodes[1] = 0x08;
+	//NoLogCodes[1] = 0x08;
 
 	_Response = nullptr;
 
@@ -263,11 +278,12 @@ bool TokenController::OnReceive(Message& msg)
 {
 	TS("TokenController::OnReceive");
 
-	byte code = msg.Code;
+	/*byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
-	if(msg.Error) code |= 0x40;
+	//if(msg.Error) code |= 0x40;
+	if(!msg.Reply && msg.OneWay || msg.Reply && msg.Error) code |= (1 << 6);*/
 
-	// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
+	/*// 起点和终点节点，收到响应时需要发出确认指令，而收到请求时不需要
 	// 系统指令也不需要确认
 	if(msg.Code >= 0x10 && msg.Code != 0x08)
 	{
@@ -281,7 +297,7 @@ bool TokenController::OnReceive(Message& msg)
 
 			Reply(ack);
 		}
-	}
+	}*/
 
 	// 如果有等待响应，则交给它
 	if(msg.Reply && _Response && (msg.Code == _Response->Code || msg.Code == 0x08 && msg.Data[0] == _Response->Code))
@@ -297,7 +313,7 @@ bool TokenController::OnReceive(Message& msg)
 		return true;
 	}
 
-	// 确认指令已完成使命直接跳出
+	/*// 确认指令已完成使命直接跳出
 	if(msg.Code == 0x08)
 	{
 		if(msg.Length >= 1) EndSendStat(msg.Data[0], true);
@@ -305,11 +321,11 @@ bool TokenController::OnReceive(Message& msg)
 		ShowMessage("Recv", msg);
 
 		return true;
-	}
+	}*/
 
 	if(msg.Reply)
 	{
-		bool rs = EndSendStat(code, true);
+		bool rs = EndSendStat(msg.Code, true);
 
 		// 如果匹配了发送队列，那么这里不再作为收到响应
 		if(!rs) Stat->RecvReplyAsync++;
@@ -365,7 +381,9 @@ bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout
 
 	byte code = msg.Code;
 	if(msg.Reply) code |= 0x80;
-	if(msg.Error) code |= 0x40;
+	//if(msg.Error) code |= 0x40;
+	if(!msg.Reply && msg.OneWay || msg.Reply && msg.Error) code |= (1 << 6);
+
 	// 加入统计
 	if(!msg.Reply) StartSendStat(msg.Code);
 
