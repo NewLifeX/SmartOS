@@ -17,7 +17,7 @@ DeviceBody::DeviceBody(BodyManagement* mgmt)
 
 bool DeviceBody::SetSecDaStor(uint addr, byte * buf, int len)
 {
-	if (addr < Store.Data.Length || addr > 0x8000000)
+	if (addr < Store.Data.Length() || addr > 0x8000000)
 	{
 		debug_printf("DeviceBody::SetSecDaStor 地址设置不合法\r\n");
 		return false;
@@ -31,7 +31,7 @@ bool DeviceBody::SetSecDaStor(uint addr, byte * buf, int len)
 
 bool DeviceBody::SetSecDaStor(DataStore * store)
 {
-	if (store->VirAddrBase + store->Data.Length() > 0x8000000 || store->VirAddrBase < Store.Data.Length)
+	if (store->VirAddrBase + store->Data.Length() > 0x8000000 || store->VirAddrBase < Store.Data.Length())
 	{
 		debug_printf(" DeviceBody::SetSecDaStor 虚拟地址不正确\r\n");
 	}
@@ -57,11 +57,9 @@ void DeviceBody::Open()
 		return;
 	}
 
-	if (OnOpen)
-	{
-		// 调用子类 Open 函数
-		if (!OnOpen())return;
-	}
+	// 调用子类 Open 函数
+	if (!OnOpen())return;
+
 
 	if (DevInfo.Kind == 0)
 	{
@@ -88,11 +86,10 @@ void DeviceBody::Close()
 	if (!Opened)return;
 	debug_printf("DeviceBody::Close()  ");
 
-	if (OnClose)
-	{
-		// 调用子类 Open 函数
-		if (!OnClose())return;
-	}
+
+	// 调用子类 Open 函数
+	if (!OnClose())return;
+
 	// // 把自己装入设备列表里面  并且一直在线
 	// auto pMgmt = DevicesManagement::Current;
 	// pMgmt->DeleteDev(DevInfo.Kind);
@@ -182,7 +179,7 @@ DeviceBody * BodyManagement::FindBody(byte id) const
 
 byte GetAddr(TokenMessage & msg)
 {
-	Stream ms = msg.ToStream;
+	Stream ms = msg.ToStream();
 	if (ms.Length > 1)
 		return ms.ReadByte();
 	return 0;
