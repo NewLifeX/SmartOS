@@ -1,8 +1,11 @@
 ﻿#include "DataMessage.h"
 
-DataMessage::DataMessage(const Message& msg, Stream* dest) : _Src(msg.ToStream())
+DataMessage::DataMessage(const Message& msg, Stream* dest, bool isTokenMsg) : _Src(msg.ToStream())
 {
 	_Dest	= dest;
+
+	// TokenMassge 数据区第一个字节是目的地址
+	if(isTokenMsg)_Dest->Write(_Src.ReadByte());
 
 	Offset	= _Src.ReadEncodeInt();
 	Length	= 0;
