@@ -12,13 +12,14 @@ class DataStore
 public:
 	ByteArray	Data;	// 数据
 	bool		Strict;	// 是否严格限制存储区，读写不许越界。默认true
+	uint		VirAddrBase = 0;	// 虚拟地址起始位置， 可以吧Store定义到任意位置
 
 	// 初始化
 	DataStore();
 
-	// 写入数据
+	// 写入数据 offset 为虚拟地址
 	int Write(uint offset, const Buffer& bs);
-	// 读取数据
+	// 读取数据 offset 为虚拟地址
 	int Read(uint offset, Buffer& bs);
 
 	typedef bool (*Handler)(uint offset, uint size, int mode);

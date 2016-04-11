@@ -20,17 +20,19 @@ int DataStore::Write(uint offset, const Buffer& bs)
 	uint size = bs.Length();
 	if(size == 0) return 0;
 
+	uint realOffset = offset - VirAddrBase;
+
 	// 检查是否越界
-	if(Strict && offset + size > Data.Length()) return -1;
+	if(Strict && realOffset + size > Data.Length()) return -1;
 
 	// 执行钩子函数
-	if(!OnHook(offset, size, 0)) return -1;
+	if(!OnHook(realOffset, size, 0)) return -1;
 
 	// 从数据区读取数据
-	uint rs = Data.Copy(offset, bs, 0, size);
+	uint rs = Data.Copy(realOffset, bs, 0, size);
 
 	// 执行钩子函数
-	if(!OnHook(offset, size, 1)) return -1;
+	if(!OnHook(realOffset, size, 1)) return -1;
 
 	return rs;
 }
@@ -40,17 +42,17 @@ int DataStore::Read(uint offset, Buffer& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;
-
+	auto realOffset = offset - VirAddrBase;
 	// 检查是否越界
-	if(Strict && offset + size > Data.Length()) return -1;
+	if(Strict && realOffset + size > Data.Length()) return -1;
 
 	// 执行钩子函数
-	if(!OnHook(offset, size, 2)) return -1;
+	if(!OnHook(realOffset, size, 2)) return -1;
 
 	// 从数据区读取数据
 	//return bs.Copy(Data.GetBuffer() + offset, size);
 	//return Data.CopyTo(offset, bs, size);
-	return bs.Copy(0, Data, offset, size);
+	return bs.Copy(0, Data, realOffset, size);
 }
 
 bool DataStore::OnHook(uint offset, uint size, int mode)
