@@ -104,6 +104,18 @@ void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
 	}
 }*/
 
+// 创建当前消息对应的响应消息。设置序列号、标识位
+TokenMessage TokenMessage::CreateReply() const
+{
+	TokenMessage msg;
+	msg.Code	= Code;
+	msg.Reply	= true;
+	msg.Seq		= Seq;
+	msg.State	= State;
+
+	return msg;
+}
+
 void TokenMessage::Show() const
 {
 #if MSG_DEBUG
@@ -345,12 +357,18 @@ bool TokenController::OnReceive(Message& msg)
 	return Controller::OnReceive(msg);
 }
 
+static byte _Sequence	= 0;
 // 发送消息，传输口参数为空时向所有传输口发送消息
 bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
 	// 未登录，登录注册，握手可通过
 	//if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
+
+	//static byte _Sequence	= 0;
+	auto& tmsg	= (TokenMessage&)msg;
+	// 附上序列号。响应消息保持序列号不变
+	if(!msg.Reply && tmsg.Seq == 0) tmsg.Seq = ++_Sequence;
 
 	if(msg.Reply)
 		ShowMessage("Reply", msg);

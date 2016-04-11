@@ -42,6 +42,9 @@ public:
 	//// 设置错误信息字符串
 	//void SetError(byte errorCode, const char* error, int errLength);
 
+	// 创建当前消息对应的响应消息。设置序列号、标识位
+	TokenMessage CreateReply() const;
+
 	// 显示消息内容
 	virtual void Show() const;
 };
