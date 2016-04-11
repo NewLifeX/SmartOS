@@ -37,7 +37,9 @@ public:
 	//String	Name;		//变长名称
 	byte	_Pass[8];	// 通信密码
 
-	byte	_Store[32];	// 数据存储区
+	// 在Tiny网络下  作为设备的数据区的网关备份 加快访问速度
+	// 在Token网络下  直接作为虚拟设备的数据区
+	byte	_Store[32];	// 数据存储区 （主数据区）
 
 	// 以下字段不存Flash
 	TinyConfig*	Cfg;
@@ -59,10 +61,6 @@ public:
 	void Read(Stream& ms);
 	void WriteMessage(Stream& ms) const;
 	void ReadMessage(Stream& ms);
-
-	// 保存到存储设备数据流
-	void Save(Stream& ms) const;
-	void Load(Stream& ms);
 
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
