@@ -170,8 +170,45 @@ void DeviceBody::OnRead(const TokenMessage & msg)
 	// Reply(rs);
 }
 
+DeviceBody * BodyManagement::FindBody(byte id) const
+{
+	if (id == 0)return nullptr;
+	for (int i = 0; i < Bodys.Length(); i++)
+	{
+		if (Bodys[i]->DevInfo.Address == id)return Bodys[i];
+	}
+	return nullptr;
+}
 
+byte GetAddr(TokenMessage & msg)
+{
+	Stream ms = msg.ToStream;
+	if (ms.Length > 1)
+		return ms.ReadByte();
+	return 0;
+}
 
+void BodyManagement::Send(TokenMessage & msg)
+{
+	byte id = GetAddr(msg);
+	if (id == 0)return;
+	auto body = FindBody(id);
+	switch (msg.Code)
+	{
+	case 5:
+	case 15:
+		body->OnRead(msg);
+		break;
+	case 6:
+	case 16:
+		body->OnWrite(msg);
+		break;
 
+	default:
+		break;
+	}
+}
 
-
+void BodyManagement::Report(TokenMessage & msg)
+{
+}
