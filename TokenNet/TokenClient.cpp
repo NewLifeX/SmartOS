@@ -262,8 +262,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	{
 		TS("TokenClient::OnHello_Request");
 
-		TokenMessage rs;
-		rs.Code		= msg.Code;
+		auto rs		= msg.CreateReply();
 
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
@@ -280,9 +279,6 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 使用当前时间
 		ext2.LocalTime = Time.Now().TotalMicroseconds();
 		ext2.WriteMessage(rs);
-
-		// 源地址发回去
-		rs.State	= msg.State;
 
 		Reply(rs);
 	}
@@ -381,6 +377,7 @@ void TokenClient::Login()
 	auto cfg	= TokenConfig::Current;
 	login.User	= cfg->User;
 	login.Pass	= MD5::Hash(cfg->Pass);
+
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
 	login.Show(true);
@@ -394,15 +391,17 @@ void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 
 	TS("TokenClient::Login2");
 
+	auto rs	= msg.CreateReply();
+	
 	LoginMessage login;
 	// 这里需要随机密匙
 	//login.Key		= Key.Copy(Sys.ID, 16);
 	// 随机令牌
 	login.Token		= 123456;
 	login.Reply		= true;
-	login.WriteMessage(msg);
+	login.WriteMessage(rs);
 
-	Reply(msg);
+	Reply(rs);
 
 	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
 	ctrl2->Key.Copy(0, login.User, 0, -1);
