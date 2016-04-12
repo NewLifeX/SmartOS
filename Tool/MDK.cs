@@ -423,9 +423,16 @@ namespace NewLife.Reflection
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
             if (!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
-                sb.AppendFormat(" --scatter \"{0}\"", Scatter);
+			{
+				sb.AppendFormat(" --scatter \"{0}\"", Scatter);
+				Console.WriteLine("使用分散加载文件");
+			}
             else
+			{
                 sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
+				Console.WriteLine("未使用分散加载文件");
+				Console.WriteLine("--ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
+			}
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
