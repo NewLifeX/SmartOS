@@ -16,7 +16,7 @@ void BootConfig::Init()
 {
 	ConfigBase::Init();
 
-	Stat.HasApp = 1;				// 没有APP位置固件
+	Stat.HasApp = 0;				// 没有APP位置固件
 	Stat.NeedUpDate = 0;			// 不需要升级
 
 	App.WorkeAddr = 0x8010000;		// 64KB位置
