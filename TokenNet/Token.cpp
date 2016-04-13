@@ -21,9 +21,8 @@
 
 #include "App\FlushPort.h"
 
-#if defined(APP)
 #include "BootConfig.h"
-#endif
+
 
 #define ShunCom_Master 0
 
@@ -190,7 +189,7 @@ void Token::Setup(ushort code, const char* name, COM message, int baudRate)
 #if defined(APP)
 	// 把引脚放进 Boot区 的 PinConfig 内
 	Flash flash;
-	uint bootCfgAddr = 0x8010000 - 1 << 10;	// 63K位置
+	const uint bootCfgAddr = 0x800fc00;	// 63K位置
 	Config Cfg(flash,bootCfgAddr,sizeof(PinConfig));
 	Config::Current = &Cfg;
 	static PinConfig pinCfg;

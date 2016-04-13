@@ -50,14 +50,14 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 #include "Delegate.h"
 
 #if defined(BOOT) || defined(APP)
-struct BootCofig
+struct HandlerRemap
 {
 	Func pUserHandler;
 	void* Reserved1;
 	void* Reserved2;
 	void* Reserved3;
 };
-extern struct BootCofig StrBoot;
+extern struct HandlerRemap StrBoot;
 #endif
 
 // 判定指针是否在ROM区

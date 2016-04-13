@@ -12,7 +12,8 @@ typedef struct
 {
 	uint HasApp : 1;		// 有可运行APP
 	uint NeedUpDate : 1;	// 需要跟新
-	uint Reserved : 30;		// 保留
+	uint SearchPinCfg : 1;	// 搜索 PinCfg 固件
+	uint Reserved : 29;		// 保留
 }BootStat;
 
 typedef struct
@@ -37,6 +38,7 @@ public:
 	virtual void Init();
 	// virtual void Load();
 	// virtual void Save()const;
+	virtual void Show() const;
 
 	static BootConfig* Current;
 	static BootConfig* Create();
@@ -71,6 +73,8 @@ typedef struct
 
 typedef struct
 {
+	COM MsgPort;
+	int MsgPortBaudRate;
 	W5500Pin W5500;
 	NRFPin Nrf;
 	Pin	UserKey1;		// 默认重启
@@ -85,13 +89,14 @@ class PinConfig : public ConfigBase
 {
 public:
 	PINS AllPin;
-	uint IsEff;
+	uint IsEff;			// 有效的
 	byte	TagEnd;		// 数据区结束标识符
 
 	PinConfig();
 	virtual void Init();
 	// virtual void Load();
 	// virtual void Save()const;
+	virtual void Show() const;
 
 	static PinConfig* Current;
 	static PinConfig* Create();
