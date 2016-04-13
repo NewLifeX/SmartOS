@@ -21,6 +21,10 @@
 
 #include "App\FlushPort.h"
 
+#if defined(APP)
+#include "BootConfig.h"
+#endif
+
 #define ShunCom_Master 0
 
 static void StartGateway(void* param);
@@ -183,6 +187,16 @@ void Token::Setup(ushort code, const char* name, COM message, int baudRate)
 	WatchDog::Start();
 #endif
 
+#if defined(APP)
+	// 把引脚放进 Boot区 的 PinConfig 内
+	Flash flash;
+	uint bootCfgAddr = 0x8010000 - 1 << 10;	// 63K位置
+	Config Cfg(flash,bootCfgAddr,sizeof(PinConfig));
+	Config::Current = &Cfg;
+	static PinConfig pinCfg;
+	pinCfg.Load();
+	PinConfig::Current = &pinCfg;
+#endif
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
 }
