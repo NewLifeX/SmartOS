@@ -97,6 +97,11 @@ extern "C"
 {
 	void FaultHandler(void);
 	void UserHandler(void);
+
+#if defined(BOOT) || defined(APP)
+	void RealHandler(void);
+#endif
+
 	void ShowFault(uint exception);
 }
 

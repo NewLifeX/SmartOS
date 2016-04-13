@@ -49,6 +49,17 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 // 委托
 #include "Delegate.h"
 
+#if defined(BOOT) || defined(APP)
+struct BootCofig
+{
+	Func pUserHandler;
+	void* Reserved1;
+	void* Reserved2;
+	void* Reserved3;
+};
+extern struct BootCofig StrBoot;
+#endif
+
 // 判定指针是否在ROM区
 #define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 

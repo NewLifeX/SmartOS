@@ -14,13 +14,21 @@ void TInterrupt::Init() const
 #if defined(STM32F1) || defined(STM32F4)
     NVIC->ICER[1] = 0xFFFFFFFF;
     NVIC->ICER[2] = 0xFFFFFFFF;
-#endif
+#endif // defined(STM32F1) || defined(STM32F4)
 
     // 清除所有中断位
     NVIC->ICPR[0] = 0xFFFFFFFF;
 #if defined(STM32F1) || defined(STM32F4)
     NVIC->ICPR[1] = 0xFFFFFFFF;
     NVIC->ICPR[2] = 0xFFFFFFFF;
+#endif	// defined(STM32F1) || defined(STM32F4)
+
+#if defined(BOOT) || defined(APP)
+	StrBoot.pUserHandler = RealHandler;;
+#endif
+
+#if defined(APP)
+	GlobalEnable();
 #endif
 
 #ifdef STM32F4
@@ -32,7 +40,7 @@ void TInterrupt::Init() const
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk
                 | SCB_SHCSR_BUSFAULTENA_Msk
                 | SCB_SHCSR_MEMFAULTENA_Msk;
-#endif
+#endif	// STM32F4
 #ifdef STM32F1
     /*SCB->AIRCR = (0x5FA << SCB_AIRCR_VECTKEY_Pos) // 解锁
                | (7 << SCB_AIRCR_PRIGROUP_Pos);   // 没有优先组位*/
@@ -42,7 +50,7 @@ void TInterrupt::Init() const
     SCB->SHCSR |= SCB_SHCSR_USGFAULTENA
                 | SCB_SHCSR_BUSFAULTENA
                 | SCB_SHCSR_MEMFAULTENA;
-#endif
+#endif	// STM32F1
 
 	// 初始化EXTI中断线为默认值
 	EXTI_DeInit();
@@ -193,7 +201,18 @@ bool TInterrupt::IsHandler() const { return GetIPSR() & 0x01; }
 #ifdef TINY
 __ASM void FaultHandler() { }
 #else
+
+#if defined(BOOT) || defined(APP)
+
 void UserHandler()
+{
+	StrBoot.pUserHandler();
+}
+
+void RealHandler()
+#else
+void UserHandler()
+#endif
 {
     uint num = GetIPSR();
 	assert_param(num < VectorySize);

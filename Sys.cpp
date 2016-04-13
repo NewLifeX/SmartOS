@@ -8,6 +8,13 @@
 TSys Sys;
 const TTime Time;
 
+#if defined(BOOT) || defined(APP)
+
+//#pragma location  = 0x20000000
+struct BootCofig StrBoot __attribute__((at(0x2000fff0)));
+
+#endif
+
 extern uint __heap_base;
 extern uint __heap_limit;
 extern uint __initial_sp;
