@@ -21,8 +21,8 @@ void BootConfig::Init()
 	Stat.NeedUpDate = 0;			// 不需要升级
 	Stat.SearchPinCfg = 1;			// 默认搜索引脚配置固件 PinCfg
 
-	App.WorkeAddr = 0x8010000;		// 64KB位置
-	App.Depositary = 0x8010000;		// 64KB位置
+	App.WorkAddr = 0x8010000;		// 64KB位置
+	App.Directory = 0x8010000;		// 64KB位置
 	App.Length = 0x30000;			// 192KB
 	App.Checksum = 0xffffffff;		// 特殊判断不校验
 	AllPin.IsEff = 0;				// 不是有效的
@@ -42,8 +42,8 @@ BootConfig * BootConfig::Create()
 void BootConfig::Show() const
 {
 	debug_printf("BootConfig   HasApp %d  NeedUpData %d  SearchPinCfg %d\r\n", Stat.HasApp, Stat.NeedUpDate, Stat.SearchPinCfg);
-	debug_printf("WorkeAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", App.WorkeAddr, App.Length, App.Depositary, App.Checksum);
-	debug_printf("UpdateAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", Update.WorkeAddr, Update.Length, Update.Depositary, Update.Checksum);
+	debug_printf("WorkAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", App.WorkAddr, App.Length, App.Directory, App.Checksum);
+	debug_printf("UpdateAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", Update.WorkAddr, Update.Length, Update.Directory, Update.Checksum);
 
 	debug_printf("PinConfig\r\n");
 	if (AllPin.IsEff)

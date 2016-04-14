@@ -18,8 +18,8 @@ typedef struct
 
 typedef struct
 {
-	uint WorkeAddr;		// 运行地址
-	uint Depositary;	// 存放地址
+	uint WorkAddr;		// 运行地址
+	uint Directory;		// 存放地址
 	uint Length;		// 固件大小
 	uint Checksum;		// 校验码
 }FirmwareInfo;
