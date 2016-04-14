@@ -2,10 +2,11 @@
 #include "BootConfig.h"
 
 BootConfig* BootConfig::Current = nullptr;
+const char bootName[] = {'B','o','o','t',   'C','f','g','\0'};
 
 BootConfig::BootConfig() :ConfigBase()
 {
-	_Name = "Boot";
+	_Name = bootName;
 	_Start = &Stat;
 	_End = &TagEnd;
 
