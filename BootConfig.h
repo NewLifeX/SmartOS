@@ -24,32 +24,7 @@ typedef struct
 	uint Checksum;		// 校验码
 }FirmwareInfo;
 
-#pragma pack(pop)
 
-class BootConfig : public ConfigBase
-{
-public:
-	BootStat Stat;
-	FirmwareInfo App;
-	FirmwareInfo Update;
-	byte	TagEnd;		// 数据区结束标识符
-
-	BootConfig();
-	virtual void Init();
-	// virtual void Load();
-	// virtual void Save()const;
-	virtual void Show() const;
-
-	static BootConfig* Current;
-	static BootConfig* Create();
-};
-
-
-/****************** PinConfig ********************/
-
-
-#pragma pack(push)
-#pragma pack(1)
 
 typedef struct
 {
@@ -81,25 +56,29 @@ typedef struct
 	Pin	UserKey2;		// 默认设置
 	Pin UserLed1;		// 默认蓝色
 	Pin UserLed2;		// 默认红色
+	uint IsEff;			// 是有效的配置
 }PINS;
 
 #pragma pack(pop)
 
-class PinConfig : public ConfigBase
+class BootConfig : public ConfigBase
 {
 public:
+	BootStat Stat;
+	FirmwareInfo App;
+	FirmwareInfo Update;
+
 	PINS AllPin;
-	uint IsEff;			// 有效的
 	byte	TagEnd;		// 数据区结束标识符
 
-	PinConfig();
+	BootConfig();
 	virtual void Init();
 	// virtual void Load();
 	// virtual void Save()const;
 	virtual void Show() const;
 
-	static PinConfig* Current;
-	static PinConfig* Create();
+	static BootConfig* Current;
+	static BootConfig* Create();
 };
 
 #endif

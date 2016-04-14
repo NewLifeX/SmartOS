@@ -190,11 +190,11 @@ void Token::Setup(ushort code, const char* name, COM message, int baudRate)
 	// 把引脚放进 Boot区 的 PinConfig 内
 	Flash flash;
 	const uint bootCfgAddr = 0x800fc00;	// 63K位置
-	Config Cfg(flash,bootCfgAddr,sizeof(PinConfig));
+	Config Cfg(flash,bootCfgAddr,1 << 10);
 	Config::Current = &Cfg;
-	static PinConfig pinCfg;
-	pinCfg.Load();
-	PinConfig::Current = &pinCfg;
+	static BootConfig bootCfg;
+	bootCfg.Load();
+	BootConfig::Current = &bootCfg;
 #endif
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
