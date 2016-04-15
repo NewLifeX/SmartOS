@@ -127,3 +127,33 @@ bool Flash::EraseBlock(uint address) const
 
     return ret;
 }
+
+/*
+// 设置读保护
+if(FLASH_GetReadOutProtectionStatus() != SET)
+{
+	FLASH_Unlock();
+	FLASH_ReadOutProtection(ENABLE);
+}
+// 取消读保护  执行后Flash就清空了  注意：要上电复位才可以使用IC
+if(FLASH_GetReadOutProtectionStatus() != RESET)
+{
+	FLASH_Unlock();
+	FLASH_ReadOutProtection(DISABLE);
+}*/
+
+bool Flash::ReadOutProtection(bool set)
+{
+	bool isProt = FLASH_GetReadOutProtectionStatus()== SET ? true:false;
+	if (isProt == set)return isProt;
+	if (set)
+	{
+		// FLASH_Unlock();   // 多处资料都写了这一行并注释了
+		FLASH_ReadOutProtection(ENABLE);
+	}else
+	{
+		// 取消读保护会清空 Flash 内容，注意：要上电复位才可以使用IC
+		FLASH_Unlock();
+		FLASH_ReadOutProtection(DISABLE);
+	}return set;
+}
