@@ -25,6 +25,9 @@ void BootConfig::Init()
 	App.Directory = 0x8010000;		// 64KB位置
 	App.Length = 0x30000;			// 192KB
 	App.Checksum = 0xffffffff;		// 特殊判断不校验
+
+	AllPin.MsgPort = COM1;			// 默认COM
+	AllPin.MsgPortBaudRate = 1024000; // 默认波特率
 	AllPin.IsEff = 0;				// 不是有效的
 }
 
