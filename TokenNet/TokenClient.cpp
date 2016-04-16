@@ -280,7 +280,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		ext2.LocalTime = Time.Now().TotalMicroseconds();
 		ext2.WriteMessage(rs);
 
-		Reply(rs);
+		Reply(rs, ctrl);
 	}
 
 	return true;
