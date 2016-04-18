@@ -206,6 +206,7 @@ void DevicesManagement::ClearDev()
 	for (int i = 0; i < DevArr.Length(); i++)
 	{
 		if (DevArr[i])delete DevArr[i];
+		DevArr[i] = nullptr;
 	}
 	DevArr.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
 	SaveDev();
