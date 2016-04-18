@@ -57,7 +57,21 @@ Device * DevicesManagement::FindDev(const Buffer & hardid) const
 	if (hardid.Length())return nullptr;
 	for (int i = 0; i < DevArr.Length(); i++)
 	{
-		if (DevArr[i] != nullptr&&hardid == DevArr[i]->HardID)return DevArr[i];
+		// Buffer 不支持 == 判断两个对象是否相等  （只判断是否是同一个Arr内存地址）
+		// if (DevArr[i] != nullptr&&hardid == DevArr[i]->HardID)return DevArr[i];
+		bool isEqual = true;
+		if (DevArr[i] != nullptr)
+		{
+			for (int i = 0; i < hardid.Length(); i++)
+			{
+				if (hardid[i] != DevArr[i]->HardID[i])
+				{
+					isEqual = false;
+					break;
+				}
+			}
+		}
+		if (isEqual)return DevArr[i];
 	}
 	return nullptr;
 }
