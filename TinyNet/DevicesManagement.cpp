@@ -170,15 +170,13 @@ void DevicesManagement::SaveDev()
 
 	MemoryStream ms(buf, ArrayLength(buf));
 	byte num = 0;
-	if (DevArr.Length() == 0)
-		num = 1;
-
 	for (int i = 0; i < DevArr.Length(); i++)
 	{
 		auto dv = DevArr[i];
 		if (dv == nullptr) continue;
 		num++;
 	}
+
 	// 设备个数
 	//int count = num;
 	debug_printf("\tCount %d\r\n", num);
