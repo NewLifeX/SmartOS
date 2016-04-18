@@ -39,8 +39,8 @@ bool DevicesManagement::SetFlashCfg(uint addr, uint size)
 		debug_printf("设置的大小不合适\r\n");
 		return false;
 	}
-	_Addr 		= addr;
-	_FlashSize 	= size;
+	_Addr = addr;
+	_FlashSize = size;
 	return true;
 }
 
@@ -54,7 +54,7 @@ Device * DevicesManagement::FindDev(byte id) const
 
 Device * DevicesManagement::FindDev(const Buffer & hardid) const
 {
-	if (hardid.Length())return nullptr;
+	if (hardid.Length() == 0)return nullptr;
 	for (int i = 0; i < DevArr.Length(); i++)
 	{
 		// Buffer 不支持 == 判断两个对象是否相等  （只判断是否是同一个Arr内存地址）
@@ -165,7 +165,7 @@ int DevicesManagement::LoadDev()
 		debug_printf("\r\n");
 	}
 
-	debug_printf("Load %d Dev from 0x%08X\r\n",i, cfg.Address);
+	debug_printf("Load %d Dev from 0x%08X\r\n", i, cfg.Address);
 
 	byte len = DevArr.Length();
 	debug_printf("Devices has %d Dev\r\n", len);
@@ -302,7 +302,7 @@ bool DevicesManagement::DeviceProcess(const Message& msg)
 			SaveDev();
 		}
 
-		if(Port)Port->Reply(rs);
+		if (Port)Port->Reply(rs);
 	}
 	break;
 	case DeviceAtions::Register:
@@ -370,7 +370,7 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 			dv->WriteMessage(ms);
 		else
 		{
-			for (int i = 0; i<len; i++)
+			for (int i = 0; i < len; i++)
 			{
 				auto dv1 = DevArr[i];
 				if (dv1 == nullptr) continue;
