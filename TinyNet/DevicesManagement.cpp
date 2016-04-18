@@ -62,9 +62,10 @@ Device * DevicesManagement::FindDev(const Buffer & hardid) const
 		bool isEqual = true;
 		if (DevArr[i] != nullptr)
 		{
-			for (int i = 0; i < hardid.Length(); i++)
+			auto dv = DevArr[i];
+			for (int j = 0; j < hardid.Length(); j++)
 			{
-				if (hardid[i] != DevArr[i]->HardID[i])
+				if (hardid[j] != dv->HardID[j])
 				{
 					isEqual = false;
 					break;
