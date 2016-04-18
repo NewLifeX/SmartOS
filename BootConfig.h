@@ -73,10 +73,9 @@ public:
 
 	BootConfig();
 	virtual void Init();
-	// virtual void Load();
-	// virtual void Save()const;
+#if defined DEBUG
 	virtual void Show() const;
-
+#endif
 	static BootConfig* Current;
 	static BootConfig* Create();
 };

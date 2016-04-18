@@ -72,5 +72,15 @@ public:
 	bool Report(uint offset, byte dat);
 	bool Report(uint offset, const Buffer& bs);
 };
+/*
+class BootBody:public DeviceBody
+{
+public:
+	//BootBody();
+	//~BootBody();
 
+private:
+
+};
+*/
 #endif

@@ -20,10 +20,15 @@ void BootConfig::Init()
 	Stat.HasApp = 0;				// 没有APP位置固件
 	Stat.NeedUpDate = 0;			// 不需要升级
 	Stat.SearchPinCfg = 1;			// 默认搜索引脚配置固件 PinCfg
-
+#if defined DEBUG
+	App.WorkAddr = 0x8020000;		// 128KB位置
+	App.Directory = 0x8020000;		// 128KB位置
+	App.Length = 0x20000;			// 128KB
+#else
 	App.WorkAddr = 0x8010000;		// 64KB位置
 	App.Directory = 0x8010000;		// 64KB位置
 	App.Length = 0x30000;			// 192KB
+#endif
 	App.Checksum = 0xffffffff;		// 特殊判断不校验
 
 	AllPin.MsgPort = COM1;			// 默认COM
@@ -42,6 +47,7 @@ BootConfig * BootConfig::Create()
 	return &bc;
 }
 
+#if defined DEBUG
 void BootConfig::Show() const
 {
 	debug_printf("BootConfig   HasApp %d  NeedUpData %d  SearchPinCfg %d\r\n", Stat.HasApp, Stat.NeedUpDate, Stat.SearchPinCfg);
@@ -59,4 +65,4 @@ void BootConfig::Show() const
 		debug_printf("Pins is Not Eff !! \r\n");
 	}
 }
-
+#endif
