@@ -140,20 +140,66 @@ if(FLASH_GetReadOutProtectionStatus() != RESET)
 {
 	FLASH_Unlock();
 	FLASH_ReadOutProtection(DISABLE);
+
+
+
+
+	*     @arg OB_RDP_Level_0: No protection
+	*     @arg OB_RDP_Level_1: Read protection of the memory
+	*     @arg OB_RDP_Level_2: Chip protection
+	* @retval FLASH Status: The returned value can be:
+	*         FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+
+FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP)
+
+
+
+
+
+
+
 }*/
+
 
 bool Flash::ReadOutProtection(bool set)
 {
-	bool isProt = FLASH_GetReadOutProtectionStatus()== SET ? true:false;
+#if defined(STM32F1)
+	bool isProt = FLASH_GetReadOutProtectionStatus() == SET ? true : false;
 	if (isProt == set)return isProt;
 	if (set)
 	{
 		// FLASH_Unlock();   // 多处资料都写了这一行并注释了
 		FLASH_ReadOutProtection(ENABLE);
-	}else
+	}
+	else
 	{
 		// 取消读保护会清空 Flash 内容，注意：要上电复位才可以使用IC
 		FLASH_Unlock();
 		FLASH_ReadOutProtection(DISABLE);
 	}return set;
+#endif
+#if defined(STM32F0)
+	bool isProt = FLASH_OB_GetRDP() == SET ? true : false;
+
+	if (isProt == set)return isProt;
+	if (set)
+	{
+		FLASH_OB_Unlock();
+		FLASH_OB_RDPConfig(OB_RDP_Level_1);
+		// FLASH_OB_RDPConfig(OB_RDP_Level_2);
+
+		/*	Warning: When enabling read protection level 2
+			it's no more possible to go back to level 1 or 0
+		* OB_RDP_Level_0: No protection
+		* OB_RDP_Level_1 : Read protection of the memory
+		* OB_RDP_Level_2 : Chip protection	*/
+		FLASH_OB_Lock();
+	}else
+	{
+		// 取消读保护会清空 Flash 内容，注意：要上电复位才可以使用IC
+		FLASH_Unlock();
+		FLASH_OB_RDPConfig(OB_RDP_Level_0);
+		FLASH_OB_Lock();
+	}return set;
+#endif
 }
