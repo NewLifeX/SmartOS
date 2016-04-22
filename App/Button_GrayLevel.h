@@ -15,6 +15,14 @@ struct ButtonPin
 	byte PwmIndex;
 };
 
+enum ButtonStat :byte
+{
+	normal = 0,			// 正常
+	set = 1,			// 设置
+	externSet = 2,		// 外部设置
+	execution = 3,		// 执行设置
+};
+
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
@@ -22,16 +30,19 @@ struct ButtonPin
 class Button_GrayLevel : public ByteDataPort
 {
 public:
-	int		Index;		// 索引号，方便在众多按钮中标识按钮
+	int		Index;			// 索引号，方便在众多按钮中标识按钮
 #if DEBUG
 	const char*	Name;		// 按钮名称
 #endif
 
-	InputPort	Key;	// 输入按键
-	OutputPort	Relay;	// 继电器
+	InputPort	Key;				// 输入按键
+	OutputPort	Relay;				// 继电器
+	enum ButtonStat Stat = normal;	// 状态
 
-	// 长按事件。
-	InputPort::IOReadHandler	OnPress;
+	// 外部设置模式调用
+	typedef bool(*IOHandler)(Button_GrayLevel* bt, bool down, void * param);
+	IOHandler	ExterSet = nullptr;
+	void * ExterSetParam = nullptr;
 
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
@@ -44,6 +55,9 @@ public:
 	void SetValue(bool value);
 	void RenewGrayLevel();
 	void Register(EventHandler handler, void* param = nullptr);
+
+	virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
+	//virtual int Read(byte* cmd);	
 
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
@@ -70,7 +84,12 @@ public:
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 
-// 过零检测
+	void GrayLevelDown();
+	void GrayLevelUp();
+	void DelayClose2(int ms);		// 自定义延时关闭
+	int delaytime = 0;
+	int _task2 = 0;
+	// 过零检测
 private:
 	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us
 
@@ -78,7 +97,7 @@ public:
 	static InputPort*  ACZero;			// 交流过零检测引脚
 
 	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
-	static void SetACZeroAdjTime(int us){ ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
+	static void SetACZeroAdjTime(int us) { ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
 };
 
 #endif
