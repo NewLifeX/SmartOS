@@ -16,7 +16,7 @@ public:
 	String		Name;		// 名称
 	UInt64		LocalTime;	// 时间ms
 	IPEndPoint	EndPoint;
-	ByteArray	Ciphers;
+	String		Cipher;
 
 	ByteArray	Key;		// 密钥
 

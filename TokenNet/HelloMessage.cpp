@@ -1,12 +1,14 @@
 ﻿#include "Time.h"
 #include "HelloMessage.h"
 
+#include "Message\BinaryPair.h"
+
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
 // 错误：0xFE/0xFD + 1协议 + S服务器 + 2端口
 
 // 初始化消息，各字段为0
-HelloMessage::HelloMessage() : Ciphers(1), Key(0)
+HelloMessage::HelloMessage() : Cipher(1), Key(0)
 {
 	Version		= Sys.Version;
 
@@ -14,20 +16,20 @@ HelloMessage::HelloMessage() : Ciphers(1), Key(0)
 	Type		= Buffer(&code, 2).ToHex();
 	Name		= Sys.Company;
 	LocalTime	= Time.Now().TotalMicroseconds();
-	Ciphers[0]	= 1;
+	Cipher[0]	= 1;
 
 	Protocol	= 2;
 	Port		= 0;
 }
 
-HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Ciphers(1), Key(0)
+HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1), Key(0)
 {
 	Version		= msg.Version;
 	Type		= msg.Type;
 	Name		= msg.Name;
 	LocalTime	= msg.LocalTime;
 	EndPoint	= msg.EndPoint;
-	Ciphers.Copy(0, msg.Ciphers, 0, msg.Ciphers.Length());
+	Cipher.Copy(0, msg.Cipher, 0, msg.Cipher.Length());
 	Key.Copy(0, msg.Key, 0, msg.Key.Length());
 
 	Protocol	= msg.Protocol;
@@ -38,9 +40,12 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Ciphers(
 // 从数据流中读取消息
 bool HelloMessage::Read(Stream& ms)
 {
+	BinaryPair bp(ms);
+
 	if(Reply && Error)
 	{
 		ErrCode	= ms.ReadByte();
+		//ErrCode	= bp.GetValue("ErrorCode");
 		if(ErrCode == 0xFE || ErrCode == 0xFD)
 		{
 			Protocol	= ms.ReadByte();
@@ -64,23 +69,52 @@ bool HelloMessage::Read(Stream& ms)
 		return true;
 	}
 
-	Version		= ms.ReadUInt16();
+	/*Version		= ms.ReadUInt16();
 	Type		= ms.ReadString();
 	Name		= ms.ReadString();
 	LocalTime	= ms.ReadUInt64();
-	EndPoint	= ms.ReadArray(6);
+	EndPoint	= ms.ReadArray(6);*/
+	
+	/*auto bs	= bp.Get("Ver");
+	if(bs.Length()) Version	= bs.ToUInt16();
+	
+	bs	= bp.Get("Type");
+	if(bs.Length()) Type	= bs.ToString();
+	
+	bs	= bp.Get("Name");
+	if(bs.Length()) Name	= bs.ToString();
+	
+	bs	= bp.Get("Time");
+	if(bs.Length()) LocalTime	= bs.ToUInt64();
+	
+	bs	= bp.Get("EndPoint");
+	if(bs.Length()) EndPoint	= bs.ToString();
+	
+	bs	= bp.Get("Cipher");
+	if(bs.Length()) Cipher	= bs.ToString();
+	
+	bs	= bp.Get("Key");
+	if(bs.Length()) Key		= bs;*/
+	
+	bp.Get("Ver", Version);
+	bp.Get("Type", Type);
+	bp.Get("Name", Name);
+	bp.Get("Time", LocalTime);
+	bp.Get("EndPoint", EndPoint);
+	bp.Get("Cipher", Cipher);
+	bp.Get("Key", Key);
 
-	if(!Reply)
+	/*if(!Reply)
 	{
-		Ciphers	= ms.ReadArray();
+		Cipher	= ms.ReadArray();
 	}
 	else
 	{
-		Ciphers[0]	= ms.ReadByte();
+		Cipher[0]	= ms.ReadByte();
 		// 读取数组前，先设置为0，避免实际长度小于数组长度
 		Key.SetLength(0);
 		Key		= ms.ReadArray();
-	}
+	}*/
 
 	return false;
 }
@@ -88,7 +122,7 @@ bool HelloMessage::Read(Stream& ms)
 // 把消息写入数据流中
 void HelloMessage::Write(Stream& ms) const
 {
-	ms.Write(Version);
+	/*ms.Write(Version);
 	ms.WriteArray(Type);
 	ms.WriteArray(Name);
 	ms.Write(LocalTime);
@@ -96,13 +130,23 @@ void HelloMessage::Write(Stream& ms) const
 
 	if(!Reply)
 	{
-		ms.WriteArray(Ciphers);
+		ms.WriteArray(Cipher);
 	}
 	else
 	{
-		ms.Write(Ciphers[0]);
+		ms.Write(Cipher[0]);
 		ms.WriteArray(Key);
-	}
+	}*/
+
+	BinaryPair bp(ms);
+
+	bp.Set("Ver", Version);
+	bp.Set("Type", Type);
+	bp.Set("Name", Name);
+	bp.Set("Time", LocalTime);
+	bp.Set("EndPoint", EndPoint);
+	bp.Set("Cipher", Cipher);
+	bp.Set("Key", Key);
 }
 
 #if DEBUG
@@ -139,10 +183,10 @@ String& HelloMessage::ToStr(String& str) const
 
 	str = str + " " + EndPoint;
 
-	str = str + " Ciphers[" + Ciphers.Length() + "]=";
-	for(int i=0; i<Ciphers.Length(); i++)
+	str = str + " Cipher[" + Cipher.Length() + "]=";
+	for(int i=0; i<Cipher.Length(); i++)
 	{
-		str += Ciphers[i] + ' ';
+		str += Cipher[i] + ' ';
 	}
 
 	if(Reply) str = str + " Key=" + Key;

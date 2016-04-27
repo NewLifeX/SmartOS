@@ -274,7 +274,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 		//if(ctrl3) ctrl3->Key = ext2.Key;
 
-		ext2.Ciphers[0]	= 0xFF;
+		ext2.Cipher	= "";
 		//ext2.LocalTime = ext.LocalTime;
 		// 使用当前时间
 		ext2.LocalTime = Time.Now().TotalMicroseconds();
