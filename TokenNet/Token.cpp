@@ -14,6 +14,8 @@
 #include "Net\Dhcp.h"
 #include "Net\DNS.h"
 
+#include "TokenNet\TokenController.h"
+
 #include "TokenNet\Gateway.h"
 #include "TokenNet\Token.h"
 

@@ -6,6 +6,8 @@
 #include "TokenMessage.h"
 #include "HelloMessage.h"
 
+#include "TokenNet\TokenController.h"
+
 class TokenSession;
 
 // 微网客户端

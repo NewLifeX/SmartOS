@@ -4,10 +4,13 @@
 Message::Message(byte code)
 {
 	Code	= code;
-	Length	= 0;
-	Data	= nullptr;
 	Reply	= false;
 	Error	= false;
+	OneWay	= false;
+
+	Length	= 0;
+	Data	= nullptr;
+
 	State	= nullptr;
 }
 

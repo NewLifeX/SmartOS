@@ -9,8 +9,9 @@ class Message
 {
 public:
 	byte	Code;		// 消息代码
-	byte	Reply;	// 是否响应指令
-	byte	Error;	// 是否错误
+	byte	Reply;		// 是否响应
+	byte	Error;		// 是否错误
+	byte	OneWay;		// 是否单向
 	ushort	Length;		// 数据长度
 	byte*	Data;		// 数据。指向子类内部声明的缓冲区
 
@@ -35,7 +36,6 @@ public:
 	virtual bool Clone(const Message& msg);
 
 	// 设置数据
-	//void SetData(const void* buf, uint len, uint offset = 0);
 	void SetData(const Buffer& bs, uint offset = 0);
 	void SetError(byte errorCode, const char* msg = nullptr);
 
