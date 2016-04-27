@@ -778,46 +778,49 @@ namespace NewLife.Reflection
 				ss.Add("detected during instantiation of", "在检测实例化");
 				ss.Add("not const-qualified", "非常量约束");
 				ss.Add("no instance of constructor", "没有构造函数");
+				ss.Add("is undefined", "未定义");
             }
 
-            if (Words.Count == 0)
+			ss = Words;
+            if (ss.Count == 0)
             {
-                Words.Add("Error", "错误");
-                Words.Add("Warning", "警告");
-                Words.Add("Warnings", "警告");
-                Words.Add("cannot", "不能");
-                /*Words.Add("open", "打开");
-                Words.Add("source", "源");
-                Words.Add("input", "输入");
-                Words.Add("file", "文件");
-                Words.Add("No", "没有");
-                Words.Add("Not", "没有");
-                Words.Add("such", "该");
-                Words.Add("or", "或");
-                Words.Add("And", "与");
-                Words.Add("Directory", "目录");
-                Words.Add("Enough", "足够");
-                Words.Add("Information", "信息");
-                Words.Add("to", "去");
-                Words.Add("from", "自");
-                Words.Add("list", "列出");
-                Words.Add("image", "镜像");
-                Words.Add("Symbol", "标识");
-                Words.Add("Symbols", "标识");
-                Words.Add("the", "");
-                Words.Add("map", "映射");
-                Words.Add("Finished", "完成");
-                Words.Add("line", "行");
-                Words.Add("messages", "消息");
-                Words.Add("this", "这个");
-                Words.Add("feature", "功能");
-                Words.Add("supported", "被支持");
-                Words.Add("on", "在");
-                Words.Add("target", "目标");
-                Words.Add("architecture", "架构");
-                Words.Add("processor", "处理器");
-                Words.Add("Undefined", "未定义");
-                Words.Add("referred", "引用");*/
+                ss.Add("Error", "错误");
+                ss.Add("Warning", "警告");
+                ss.Add("Warnings", "警告");
+                ss.Add("cannot", "不能");
+				ss.Add("identifier", "标识符");
+                /*ss.Add("open", "打开");
+                ss.Add("source", "源");
+                ss.Add("input", "输入");
+                ss.Add("file", "文件");
+                ss.Add("No", "没有");
+                ss.Add("Not", "没有");
+                ss.Add("such", "该");
+                ss.Add("or", "或");
+                ss.Add("And", "与");
+                ss.Add("Directory", "目录");
+                ss.Add("Enough", "足够");
+                ss.Add("Information", "信息");
+                ss.Add("to", "去");
+                ss.Add("from", "自");
+                ss.Add("list", "列出");
+                ss.Add("image", "镜像");
+                ss.Add("Symbol", "标识");
+                ss.Add("Symbols", "标识");
+                ss.Add("the", "");
+                ss.Add("map", "映射");
+                ss.Add("Finished", "完成");
+                ss.Add("line", "行");
+                ss.Add("messages", "消息");
+                ss.Add("this", "这个");
+                ss.Add("feature", "功能");
+                ss.Add("supported", "被支持");
+                ss.Add("on", "在");
+                ss.Add("target", "目标");
+                ss.Add("architecture", "架构");
+                ss.Add("processor", "处理器");
+                ss.Add("Undefined", "未定义");
+                ss.Add("referred", "引用");*/
             }
             #endregion
 

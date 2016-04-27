@@ -323,6 +323,62 @@ String Buffer::ToHex(char sep, int newLine) const
 	return str;
 }
 
+ushort	Buffer::ToUInt16() const
+{
+	auto p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x01) == 0) return *(ushort*)p;
+
+	return p[0] | (p[1] << 8);
+}
+
+uint	Buffer::ToUInt32() const
+{
+	auto p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x03) == 0) return *(uint*)p;
+
+	return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+}
+
+UInt64	Buffer::ToUInt64() const
+{
+	auto p = GetBuffer();
+	// 字节对齐时才能之前转为目标整数
+	if(((int)p & 0x07) == 0) return *(UInt64*)p;
+
+	uint n1 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+	p += 4;
+	uint n2 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+
+	return n1 | ((UInt64)n2 << 0x20);
+}
+
+void Buffer::Write(ushort value, int index)
+{
+	Copy(index, (byte*)&value, sizeof(ushort));
+}
+
+void Buffer::Write(short value, int index)
+{
+	Copy(index, (byte*)&value, sizeof(short));
+}
+
+void Buffer::Write(uint value, int index)
+{
+	Copy(index, (byte*)&value, sizeof(uint));
+}
+
+void Buffer::Write(int value, int index)
+{
+	Copy(index, (byte*)&value, sizeof(int));
+}
+
+void Buffer::Write(UInt64 value, int index)
+{
+	Copy(index, (byte*)&value, sizeof(UInt64));
+}
+
 String& Buffer::ToStr(String& str) const
 {
 	return ToHex(str, '-', 0x20);
@@ -850,60 +906,4 @@ int ByteArray::Save(void* data, int maxsize) const
 	p[0] = len;
 
 	return CopyTo(0, p + 1, len);
-}
-
-ushort	ByteArray::ToUInt16() const
-{
-	auto p = GetBuffer();
-	// 字节对齐时才能之前转为目标整数
-	if(((int)p & 0x01) == 0) return *(ushort*)p;
-
-	return p[0] | (p[1] << 8);
-}
-
-uint	ByteArray::ToUInt32() const
-{
-	auto p = GetBuffer();
-	// 字节对齐时才能之前转为目标整数
-	if(((int)p & 0x03) == 0) return *(uint*)p;
-
-	return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
-}
-
-UInt64	ByteArray::ToUInt64() const
-{
-	auto p = GetBuffer();
-	// 字节对齐时才能之前转为目标整数
-	if(((int)p & 0x07) == 0) return *(UInt64*)p;
-
-	uint n1 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
-	p += 4;
-	uint n2 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
-
-	return n1 | ((UInt64)n2 << 0x20);
-}
-
-void ByteArray::Write(ushort value, int index)
-{
-	Copy(index, (byte*)&value, sizeof(ushort));
-}
-
-void ByteArray::Write(short value, int index)
-{
-	Copy(index, (byte*)&value, sizeof(short));
-}
-
-void ByteArray::Write(uint value, int index)
-{
-	Copy(index, (byte*)&value, sizeof(uint));
-}
-
-void ByteArray::Write(int value, int index)
-{
-	Copy(index, (byte*)&value, sizeof(int));
-}
-
-void ByteArray::Write(UInt64 value, int index)
-{
-	Copy(index, (byte*)&value, sizeof(UInt64));
 }

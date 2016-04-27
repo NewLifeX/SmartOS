@@ -138,6 +138,15 @@ public:
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String ToHex(char sep = 0, int newLine = 0) const;
 
+	ushort	ToUInt16() const;
+	uint	ToUInt32() const;
+	UInt64	ToUInt64() const;
+	void Write(ushort value, int index = 0);
+	void Write(short value, int index = 0);
+	void Write(uint value, int index = 0);
+	void Write(int value, int index = 0);
+	void Write(UInt64 value, int index = 0);
+
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
 
@@ -393,15 +402,6 @@ public:
 	int Load(const void* data, int maxsize = -1);
 	// 从普通字节数据组加载，首字节为长度
 	int Save(void* data, int maxsize = -1) const;
-
-	ushort	ToUInt16() const;
-	uint	ToUInt32() const;
-	UInt64	ToUInt64() const;
-	void Write(ushort value, int index = 0);
-	void Write(short value, int index = 0);
-	void Write(uint value, int index = 0);
-	void Write(int value, int index = 0);
-	void Write(UInt64 value, int index = 0);
 
     //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
