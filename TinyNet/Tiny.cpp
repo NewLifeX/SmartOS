@@ -239,13 +239,13 @@ void CheckUserPress2(InputPort* port, bool down, void* param)
 	CheckUserPress(port, down, param);
 }
 
-void InitButtonPress(Button_GrayLevel* btns, byte count)
+/*void InitButtonPress(Button_GrayLevel* btns, byte count)
 {
 	for(int i=0; i<count; i++)
 	{
 		btns[i].OnPress	= CheckUserPress2;
 	}
-}
+}*/
 
 void SetPower(ITransport* port)
 {

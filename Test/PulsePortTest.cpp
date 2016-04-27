@@ -9,7 +9,9 @@ void TestPulsePort()
 }
 
 void PulseHandler(PulsePort* port, bool hasPulse, void* param)
-{	// down true　无遮挡　　　down false 有遮挡
+{	
+#if defined(DEBUG)
+	// down true　无遮挡　　　down false 有遮挡
 	static UInt64 HideStr;
 	static UInt64 UnHideStr;
 	// debug_printf("Press P%c%d down=%d", _PIN_NAME(port->_Port->_Pin),down);
@@ -27,6 +29,7 @@ void PulseHandler(PulsePort* port, bool hasPulse, void* param)
 		//int time = HideStr-UnHideStr;
 		debug_printf("有脉冲时间 %d \r\n", (int)(HideStr-UnHideStr));
 	}
+#endif
 }
 
 // 初始化引脚
