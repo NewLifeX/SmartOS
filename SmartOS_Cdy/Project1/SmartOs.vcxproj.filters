@@ -1,0 +1,700 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="TokenNet">
+      <UniqueIdentifier>{fadaee4a-ef7a-4147-b14e-65e9c43872ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Message">
+      <UniqueIdentifier>{985e8524-b611-43c7-85d5-213d5ff55261}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Security">
+      <UniqueIdentifier>{ef6f7abc-73d1-4a79-8ac5-1083af92fc65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Net">
+      <UniqueIdentifier>{966ab677-3e0d-4929-b432-7ef2d5a63533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TinyIP">
+      <UniqueIdentifier>{ccde715e-344c-40bd-adb8-173de07234e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Drivers">
+      <UniqueIdentifier>{9d07abf9-c09c-436f-9f3c-bbcc1032032f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modbus">
+      <UniqueIdentifier>{db1ffa13-503d-4024-a0ec-90e69a00616b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{04953b95-eac2-4a18-86bf-a7da9b5ef801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage">
+      <UniqueIdentifier>{2f2294f2-215c-4144-aa34-5438b18955bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TinyNet">
+      <UniqueIdentifier>{fa397002-57ee-4f07-b737-952545d6fa8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="XX">
+      <UniqueIdentifier>{2d5b5375-12ab-4ac8-9617-cf02bd9a4e79}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Port.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Power.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SerialPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Spi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\SString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Stream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sys.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Task.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Thread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Time.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Timer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Type.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\WatchDog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\DeviceBody.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\DeviceMessage.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\Gateway.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\HelloMessage.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\LoginMessage.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\RegisterMessage.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\Token.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\TokenClient.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\TokenConfig.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\TokenController.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\TokenDevice.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TokenNet\TokenMessage.h">
+      <Filter>TokenNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\BlinkPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\Button.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\Button_GrayLevel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\Button_magnetic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\CommandPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\FlushPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\IR.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\IRcoding.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\PulsePort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\Sensor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\App\Sound.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\BinaryPair.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\Controller.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\DataStore.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\Message.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\MessageBase.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Message\WeakStore.h">
+      <Filter>Message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\AES.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\Crc.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\MD5.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\RC4.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\RC6.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Security\RSA.h">
+      <Filter>Security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\Blu40.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\Dhcp.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\DNS.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\ESP8266.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\Ethernet.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\ITransport.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\Net.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Net\Zigbee.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyIP\TinyIP.h">
+      <Filter>TinyIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyIP\Arp.h">
+      <Filter>TinyIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyIP\HttpClient.h">
+      <Filter>TinyIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyIP\Icmp.h">
+      <Filter>TinyIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyIP\Udp.h">
+      <Filter>TinyIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\74HC165.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\74HC165Monitor.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\AT24CXX.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\AT45DB.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\BH1750.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\BufferPort.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\DHT11.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\Enc28j60.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\HX711.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\nrf24l01.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\PMS5003.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\SHT30.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\ShunCom.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\Sim900A.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\UBlox.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Drivers\W5500.h">
+      <Filter>Drivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modbus\Master.h">
+      <Filter>Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modbus\Modbus.h">
+      <Filter>Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modbus\Slave.h">
+      <Filter>Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\Pin.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\Pin_GD32F150.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\Pin_STM32F0.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\Pin_STM32F1.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\Pin_STM32F4.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Platform\stm32.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Storage\Storage.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\DataMessage.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\Device.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\DevicesManagement.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\JoinMessage.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\PingMessage.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\Tiny.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\TinyClient.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\TinyConfig.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\TinyMessage.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TinyNet\TinyServer.h">
+      <Filter>TinyNet</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\XX\Memory.h">
+      <Filter>XX</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ADC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\BootConfig.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\CAN.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Config.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Debug.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\DMA.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Flash.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\I2C.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Interrupt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Port.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Power.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Queue.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\SerialPort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Spi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Stream.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\String.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sys.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Task.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Thread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Time.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Timer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Type.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\WatchDog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\DeviceBody.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\DeviceMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\Gateway.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\HelloMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\LoginMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\RegisterMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\Token.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\TokenClient.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\TokenConfig.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\TokenController.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\TokenDevice.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TokenNet\TokenMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\BlinkPort.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\Button.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\Button_GrayLevel.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\Button_magnetic.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\CommandPort.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\FlushPort.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\IR.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\IRcoding.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\PulsePort.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\Sensor.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\App\Sound.cpp">
+      <Filter>头文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\BinaryPair.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\Controller.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\DataStore.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\Message.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\MessageBase.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Message\WeakStore.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\AES.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\Crc.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\Crc16.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\MD5.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\RC4.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\RC6.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Security\RSA.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\Blu40.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\Dhcp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\DNS.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\ESP8266.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\ITransport.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\Net.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Net\Zigbee.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\Tcp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\Arp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\HttpClient.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\Icmp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\TinyIP.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyIP\Udp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\74HC165.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\74HC165Monitor.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\AT24CXX.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\AT45DB.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\BH1750.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\BufferPort.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\DHT11.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\Enc28j60.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\HX711.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\NRF24L01.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\PMS5003.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\SHT30.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\ShunCom.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\Sim900A.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\UBlox.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Drivers\W5500.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modbus\Master.cpp">
+      <Filter>Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modbus\Modbus.cpp">
+      <Filter>Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modbus\Slave.cpp">
+      <Filter>Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Platform\Boot_F0.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Platform\Boot_F1.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Platform\Boot_F4.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Platform\Boot_F150.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Storage\Storage.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\DataMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\Device.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\DevicesManagement.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\JoinMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\PingMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\Tiny.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\TinyClient.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\TinyConfig.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\TinyMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TinyNet\TinyServer.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\XX\Memory.cpp">
+      <Filter>XX</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\Net\zigbee速率.txt">
+      <Filter>Net</Filter>
+    </Text>
+    <Text Include="..\..\TinyNet\微网设计方案.txt">
+      <Filter>TinyNet</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Platform\startup_GD32f150.s">
+      <Filter>Platform</Filter>
+    </None>
+    <None Include="..\..\Platform\startup_stm32f0xx.s">
+      <Filter>Platform</Filter>
+    </None>
+    <None Include="..\..\Platform\startup_stm32f4xx.s">
+      <Filter>Platform</Filter>
+    </None>
+    <None Include="..\..\Platform\startup_stm32f10x.s">
+      <Filter>Platform</Filter>
+    </None>
+  </ItemGroup>
+</Project>
