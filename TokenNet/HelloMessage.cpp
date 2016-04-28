@@ -44,20 +44,19 @@ bool HelloMessage::Read(Stream& ms)
 
 	if(Reply && Error)
 	{
-		ErrCode	= ms.ReadByte();
-		//ErrCode	= bp.GetValue("ErrorCode");
+		bp.Get("ErrorCode", ErrCode);
 		if(ErrCode == 0xFE || ErrCode == 0xFD)
 		{
-			Protocol	= ms.ReadByte();
-			Server		= ms.ReadString();
-			Port		= ms.ReadUInt16();
-			VisitToken	= ms.ReadString();
+			bp.Get("Protocol", Protocol);
+			bp.Get("Server", Server);
+			bp.Get("Port", Port);
+			bp.Get("VisitToken", VisitToken);
 
 			return false;
 		}
 		else if(ErrCode < 0x80)
 		{
-			ErrMsg		= ms.ReadString();
+			bp.Get("ErrorMessage", ErrMsg);
 		}
 		else
 		{
@@ -68,33 +67,6 @@ bool HelloMessage::Read(Stream& ms)
 
 		return true;
 	}
-
-	/*Version		= ms.ReadUInt16();
-	Type		= ms.ReadString();
-	Name		= ms.ReadString();
-	LocalTime	= ms.ReadUInt64();
-	EndPoint	= ms.ReadArray(6);*/
-	
-	/*auto bs	= bp.Get("Ver");
-	if(bs.Length()) Version	= bs.ToUInt16();
-	
-	bs	= bp.Get("Type");
-	if(bs.Length()) Type	= bs.ToString();
-	
-	bs	= bp.Get("Name");
-	if(bs.Length()) Name	= bs.ToString();
-	
-	bs	= bp.Get("Time");
-	if(bs.Length()) LocalTime	= bs.ToUInt64();
-	
-	bs	= bp.Get("EndPoint");
-	if(bs.Length()) EndPoint	= bs.ToString();
-	
-	bs	= bp.Get("Cipher");
-	if(bs.Length()) Cipher	= bs.ToString();
-	
-	bs	= bp.Get("Key");
-	if(bs.Length()) Key		= bs;*/
 	
 	bp.Get("Ver", Version);
 	bp.Get("Type", Type);
@@ -104,40 +76,12 @@ bool HelloMessage::Read(Stream& ms)
 	bp.Get("Cipher", Cipher);
 	bp.Get("Key", Key);
 
-	/*if(!Reply)
-	{
-		Cipher	= ms.ReadArray();
-	}
-	else
-	{
-		Cipher[0]	= ms.ReadByte();
-		// 读取数组前，先设置为0，避免实际长度小于数组长度
-		Key.SetLength(0);
-		Key		= ms.ReadArray();
-	}*/
-
 	return false;
 }
 
 // 把消息写入数据流中
 void HelloMessage::Write(Stream& ms) const
 {
-	/*ms.Write(Version);
-	ms.WriteArray(Type);
-	ms.WriteArray(Name);
-	ms.Write(LocalTime);
-	ms.Write(EndPoint.ToArray());
-
-	if(!Reply)
-	{
-		ms.WriteArray(Cipher);
-	}
-	else
-	{
-		ms.Write(Cipher[0]);
-		ms.WriteArray(Key);
-	}*/
-
 	BinaryPair bp(ms);
 
 	bp.Set("Ver", Version);
@@ -183,11 +127,7 @@ String& HelloMessage::ToStr(String& str) const
 
 	str = str + " " + EndPoint;
 
-	str = str + " Cipher[" + Cipher.Length() + "]=";
-	for(int i=0; i<Cipher.Length(); i++)
-	{
-		str += Cipher[i] + ' ';
-	}
+	str = str + " Cipher=" + Cipher;
 
 	if(Reply) str = str + " Key=" + Key;
 

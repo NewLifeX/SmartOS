@@ -12,7 +12,7 @@ class BinaryPair : public Object
 {
 public:
 
-	BinaryPair(Buffer& bs);
+	//BinaryPair(Buffer& bs);
 	BinaryPair(Stream& ms);
 	BinaryPair(const BinaryPair& pair) = delete;
 
@@ -30,13 +30,13 @@ public:
 	bool Set(const String& name, ushort value);
 	bool Set(const String& name, uint value);
 	bool Set(const String& name, UInt64 value);
-	//bool Set(const String& name, const Buffer& value);
 	bool Set(const String& name, const IPEndPoint& value);
 
 private:
-	byte*	Data;		// 数据指针
-	uint	Length;		// 数据长度
-	uint	Position;	// 写入时的位置
+	//byte*	Data;		// 数据指针
+	//uint	Length;		// 数据长度
+	uint	_p;	// 写入时的位置
+	Stream*	_s;
 };
 
 #endif

@@ -1,35 +1,47 @@
 ﻿#include "BinaryPair.h"
 
 // 初始化消息，各字段为0
-BinaryPair::BinaryPair(Buffer& bs)
+/*BinaryPair::BinaryPair(Buffer& bs)
 {
 	Data	= bs.GetBuffer();
 	Length	= bs.Length();
 	Position	= 0;
-}
+}*/
 
 BinaryPair::BinaryPair(Stream& ms)
 {
-	Data	= ms.GetBuffer();
-	Length	= ms.Length;
-	Position	= 0;
+	_s	= &ms;
+	_p	= ms.Position();
 }
 
 Buffer BinaryPair::Get(const String& name) const
 {
-	if(!Data || !Length) return Buffer(nullptr, 0);
+	//if(!Data || !Length) return Buffer(nullptr, 0);
 	// 暂时不方便支持空名称的名值对，而服务端是支持的
 	//if(!name) return Buffer(nullptr, 0);
 
-	Stream ms(Data, Length);
-	while(ms.Remain())
-	{
-		int len	= ms.ReadEncodeInt();
-		auto nm	= ms.ReadBytes(len);
-		int ln2	= ms.ReadEncodeInt();
-		auto dt	= ms.ReadBytes(ln2);
+	// 从当前位置开始向后找，如果找不到，再从头开始找到当前位置。
+	// 这样子安排，如果是顺序读取，将会提升性能
 
-		if(name == nm) return Buffer(dt, ln2);
+	//Stream ms(Data, Length);
+	auto& ms	= *_s;
+	uint p	= ms.Position();
+	for(int i=0; i<2; i++)
+	{
+		while(ms.Remain() && (i ==0 || ms.Position() < p))
+		{
+			int len	= ms.ReadEncodeInt();
+			auto nm	= ms.ReadBytes(len);
+			int ln2	= ms.ReadEncodeInt();
+			auto dt	= ms.ReadBytes(ln2);
+
+			if(name == nm) return Buffer(dt, ln2);
+		}
+
+		// 从头开始再来一次
+		if(p == _p) break;
+
+		ms.SetPosition(_p);
 	}
 
 	return Buffer(nullptr, 0);
@@ -37,9 +49,10 @@ Buffer BinaryPair::Get(const String& name) const
 
 bool BinaryPair::Set(const String& name, const Buffer& bs)
 {
-	if(Position >= Length) return false;
+	//if(Position >= Length) return false;
 
-	Stream ms(Data + Position, Length - Position);
+	//Stream ms(Data + Position, Length - Position);
+	auto& ms	= *_s;
 	ms.WriteArray(name);
 	ms.WriteArray(bs);
 
@@ -101,8 +114,6 @@ bool BinaryPair::Get(const String& name, IPEndPoint& value) const
 	auto bs	= Get(name);
 	if(bs.Length() < 6) return false;
 
-	//value.Address	= bs;
-	//value.Port		= bs.Sub(4, 2).ToUInt16();
 	value	= bs;
 
 	return true;
