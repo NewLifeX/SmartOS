@@ -331,7 +331,6 @@ void TokenClient::Register()
 
 	TokenMessage msg(7);
 	re.WriteMessage(msg);
-
 	Send(msg);
 }
 

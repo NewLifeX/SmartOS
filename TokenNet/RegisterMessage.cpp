@@ -23,18 +23,17 @@ bool RegisterMessage::Read(Stream& ms)
 // 把消息写入数据流中
 void RegisterMessage::Write(Stream& ms) const
 {
-	if(!Error)
-	{
-		ms.WriteArray(User);
-		ms.WriteArray(Pass);
+	BinaryPair bp(ms);
 
-		if(Salt.Length() > 0)
-			ms.WriteArray(Salt);
-		else
-		{
-			UInt64 now = Sys.Ms();
-			ms.WriteArray(MD5::Hash(Buffer(&now, 8)));
-		}
+	bp.Set("User", User);
+	bp.Set("Pass", Pass);
+	
+	if(Salt.Length() > 0)
+		bp.Set("Salt", Salt);
+	else
+	{
+		UInt64 now = Sys.Ms();
+		bp.Set("Salt", MD5::Hash(Buffer(&now, 8)));
 	}
 }
 

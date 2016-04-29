@@ -2,6 +2,7 @@
 #define __RegisterMessage_H__
 
 #include "Message\MessageBase.h"
+#include "Message\BinaryPair.h"
 #include "Net\Net.h"
 
 // 登录消息

@@ -12,6 +12,7 @@ class TokenMessage : public Message
 public:
 	//byte	OneWay;		// 单向传输。无应答
 	byte	Seq;		// 消息序号
+	ushort	Crc;		//Crc16 
 
 	byte	_Data[256];	// 数据
 

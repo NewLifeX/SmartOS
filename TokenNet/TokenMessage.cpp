@@ -3,6 +3,7 @@
 
 #include "Net\Net.h"
 #include "Security\RC4.h"
+#include "Security\Crc.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -61,12 +62,15 @@ void TokenMessage::Write(Stream& ms) const
 	TS("TokenMessage::Write");
 
 	assert_ptr(this);
-
+	
+	Crc::Hash16(Buffer(Data,Length),Crc);
+	
 	byte tmp = Code | (Reply << 7);
 	if(!Reply && OneWay || Reply && Error) tmp |= (1 << 6);
 	ms.Write(tmp);
 	ms.Write(Seq);
 	ms.WriteArray(Buffer(Data, Length));
+	ms.Write(Crc);
 }
 
 // 验证消息校验码是否有效
@@ -143,7 +147,8 @@ void TokenMessage::Show() const
 	if(len > 0)
 	{
 		assert_ptr(Data);
-		debug_printf(" Data[%d]=", len);
+		debug_printf(" Data[%d]=",Crc);
+		debug_printf(" Crc= %d", len);
 		// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
 		if(len > 32) debug_printf("\r\n");
 		ByteArray(Data, len).Show();
