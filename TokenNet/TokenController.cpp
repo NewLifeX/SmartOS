@@ -179,6 +179,8 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 	ms.Seek(2);
 
 	auto bs	= ms.ReadArray();
+	
+	//todo 还需要两个字节空余，后面的SetLength不一定生效
 
 	RC4::Encrypt(bs, pass);
 
@@ -186,9 +188,7 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 	auto crc	= Crc::Hash16(bs);
 	ms.Write(crc);
 
-	data.SetLength(ms.Position());
-
-	return true;
+	return data.SetLength(ms.Position());
 }
 
 static bool Decrypt(Buffer& data, const Buffer& pass)
