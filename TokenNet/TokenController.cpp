@@ -3,6 +3,7 @@
 
 #include "Net\Net.h"
 #include "Security\RC4.h"
+#include "Security\Crc.h"
 
 #define MSG_DEBUG DEBUG
 //#define MSG_DEBUG 0
@@ -165,6 +166,60 @@ static bool Encrypt(Message& msg, const Buffer& pass)
 	return false;
 }
 
+static bool Encrypt(Buffer& data, const Buffer& pass)
+{
+	if(data.Length() <= 3) return false;
+	if(pass.Length() == 0) return false;
+
+	// 握手不加密
+	byte code	= data[0] & 0x0F;
+	if(code == 0x01) return true;
+
+	Stream ms(data);
+	ms.Seek(2);
+
+	auto bs	= ms.ReadArray();
+
+	RC4::Encrypt(bs, pass);
+
+	// 计算明文校验码，写在最后面
+	auto crc	= Crc::Hash16(bs);
+	ms.Write(crc);
+
+	data.SetLength(ms.Position());
+
+	return true;
+}
+
+static bool Decrypt(Buffer& data, const Buffer& pass)
+{
+	if(data.Length() <= 3) return false;
+	if(pass.Length() == 0) return false;
+
+	// 握手不加密
+	byte code	= data[0] & 0x0F;
+	if(code == 0x01) return true;
+
+	Stream ms(data);
+	ms.Seek(2);
+
+	auto bs	= ms.ReadArray();
+
+	RC4::Encrypt(bs, pass);
+
+	// 新的加密指令最后有2字节的明文校验码
+	if(ms.Position() + 2 > ms.Length)
+	{
+		debug_printf("不支持旧版本指令解密！");
+		return false;
+	}
+
+	auto crc	= Crc::Hash16(bs);
+	if(ms.ReadUInt16() != crc) return false;
+
+	return true;
+}
+
 // 接收处理函数
 bool TokenController::OnReceive(Message& msg)
 {
@@ -264,7 +319,7 @@ bool TokenController::StartSendStat(byte code)
 	TS("TokenController::StartSendStat");
 
 	auto st	= Stat;
-	
+
 	// 仅统计请求信息，不统计响应信息
 	if ((code & 0x80) != 0)
 	{

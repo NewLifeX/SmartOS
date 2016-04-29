@@ -34,9 +34,7 @@ public:
 	virtual void Open();
 	virtual void Close();
 
-	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual bool Send(Message& msg);
-	// 发送消息，传输口参数为空时向所有传输口发送消息
 	virtual bool Send(byte code, const Buffer& arr);
 
 	// 响应消息
