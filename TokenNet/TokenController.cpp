@@ -64,8 +64,6 @@ TokenController::TokenController() : Controller(), Key(0)
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 
-	_Response = nullptr;
-
 	Buffer(_Queue, ArrayLength(_Queue) * sizeof(_Queue[0])).Clear();
 }
 
@@ -172,20 +170,6 @@ bool TokenController::OnReceive(Message& msg)
 {
 	TS("TokenController::OnReceive");
 
-	// 如果有等待响应，则交给它
-	if(msg.Reply && _Response && (msg.Code == _Response->Code || msg.Code == 0x08 && msg.Data[0] == _Response->Code))
-	{
-		_Response->SetData(Buffer(msg.Data, msg.Length));
-		_Response->Reply = true;
-
-		// 加解密。握手不加密，登录响应不加密
-		Encrypt(msg, Key);
-
-		ShowMessage("RecvSync", msg);
-
-		return true;
-	}
-
 	if(msg.Reply)
 	{
 		bool rs = EndSendStat(msg.Code, true);
@@ -233,61 +217,6 @@ bool TokenController::Send(Message& msg)
 	if(!msg.Reply) StartSendStat(msg.Code);
 
 	return Controller::Send(msg);
-}
-
-// 发送消息并接受响应，msTimeout毫秒超时时间内，如果对方没有响应，会重复发送
-bool TokenController::SendAndReceive(TokenMessage& msg, int retry, int msTimeout)
-{
-	TS("TokenController::SendAndReceive");
-
-#if MSG_DEBUG
-	if(_Response) debug_printf("设计错误！正在等待Code=0x%02X的消息，完成之前不能再次调用\r\n", _Response->Code);
-
-	TimeCost ct;
-#endif
-
-	if(msg.Reply) return Send(msg) != 0;
-
-	byte code = msg.Code;
-	if(msg.Reply) code |= 0x80;
-	//if(msg.Error) code |= 0x40;
-	if(!msg.Reply && msg.OneWay || msg.Reply && msg.Error) code |= (1 << 6);
-
-	// 加入统计
-	if(!msg.Reply) StartSendStat(msg.Code);
-
-	_Response = &msg;
-
-	bool rs = false;
-	while(retry-- >= 0)
-	{
-		if(!Send(msg)) break;
-
-		// 等待响应
-		TimeWheel tw(0, msTimeout);
-		tw.Sleep = 1;
-		do
-		{
-			if(_Response->Reply)
-			{
-				rs = true;
-				break;
-			}
-		}while(!tw.Expired());
-		if(rs) break;
-	}
-
-#if MSG_DEBUG
-	debug_printf("Token::SendAndReceive Len=%d Time=%dus ", msg.Size(), ct.Elapsed());
-	if(rs) _Response->Show();
-	debug_printf("\r\n");
-#endif
-
-	_Response = nullptr;
-
-	EndSendStat(code, rs);
-
-	return rs;
 }
 
 void TokenController::ShowMessage(const char* action, const Message& msg)
