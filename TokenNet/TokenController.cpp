@@ -154,18 +154,6 @@ bool TokenController::Valid(const Message& msg)
 	return true;
 }
 
-static bool Encrypt(Message& msg, const Buffer& pass)
-{
-	// 加解密。握手不加密，握手响应不加密
-	if(msg.Length > 0 && pass.Length() > 0 && !(msg.Code == 0x01 || msg.Code == 0x08))
-	{
-		Buffer bs(msg.Data, msg.Length);
-		RC4::Encrypt(bs, pass);
-		return true;
-	}
-	return false;
-}
-
 static bool Encrypt(Buffer& data, const Buffer& pass)
 {
 	if(data.Length() <= 3) return false;
@@ -208,7 +196,7 @@ static bool Decrypt(Buffer& data, const Buffer& pass)
 	RC4::Encrypt(bs, pass);
 
 	// 新的加密指令最后有2字节的明文校验码
-	if(ms.Position() + 2 > ms.Length)
+	if(ms.Position() + 2 <= ms.Length)
 	{
 		debug_printf("不支持旧版本指令解密！");
 		return false;
