@@ -156,8 +156,8 @@ bool TokenController::Valid(const Message& msg)
 
 static bool Encrypt(Buffer& data, const Buffer& pass)
 {
-	if(data.Length() <= 3) return false;
-	if(pass.Length() == 0) return false;
+	if (data.Length() <= 3) return false;
+	if (pass.Length() == 0) return true;
 
 	// 握手不加密
 	byte code	= data[0] & 0x0F;
@@ -166,7 +166,10 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 	Stream ms(data);
 	ms.Seek(2);
 
-	auto bs	= ms.ReadArray();
+	auto len = ms.ReadEncodeInt();
+	//auto bs	= ms.ReadArray(len);
+	ByteArray bs(ms.GetBuffer()+ms.Position(), len);
+	ms.Seek(len);
 
 	//todo 还需要两个字节空余，后面的SetLength不一定生效
 
@@ -182,16 +185,17 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 static bool Decrypt(Buffer& data, const Buffer& pass)
 {
 	if(data.Length() <= 3) return false;
-	if(pass.Length() == 0) return false;
+	if(pass.Length() == 0) return true;
 
 	// 握手不加密
 	byte code	= data[0] & 0x0F;
 	if(code == 0x01) return true;
 
 	Stream ms(data);
-	ms.Seek(2);
+	//ms.Seek(2);	// 传进来的就是Data部分
 
-	auto bs	= ms.ReadArray();
+	auto len = data.Length();
+	auto bs = ms.ReadArray(len - 2);	// 去掉crc的位置
 
 	RC4::Encrypt(bs, pass);
 
@@ -266,7 +270,10 @@ bool TokenController::Send(Message& msg)
 
 bool TokenController::SendInternal(const Buffer& bs, const void* state)
 {
-	ByteArray arr(bs.Length() + 2);
+	auto len = bs.Length() + 2;
+	ByteArray arr(len);
+	arr = bs;
+	arr.SetLength(len);
 
 	if(!Encrypt(arr, Key)) return false;
 
