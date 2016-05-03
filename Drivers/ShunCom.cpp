@@ -161,7 +161,7 @@ uint ShunCom::OnReceive(Buffer& bs, void* param)
 	return ITransport::OnReceive(bs2, addr);
 }
 
-bool ShunCom::OnWriteEx(const Buffer& bs, void* opt)
+bool ShunCom::OnWriteEx(const Buffer& bs, const void* opt)
 {
 	//debug_printf("zigbee发送\r\n");
 	//bs.Show(true);

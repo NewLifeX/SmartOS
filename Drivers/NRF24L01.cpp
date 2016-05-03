@@ -921,12 +921,12 @@ bool NRF24L01::OnWrite(const Buffer& bs)
 	return SendTo(bs, Buffer(Remote, 5));
 }
 
-bool NRF24L01::OnWriteEx(const Buffer& bs, void* opt)
+bool NRF24L01::OnWriteEx(const Buffer& bs, const void* opt)
 {
 	if(!Master || !opt) return OnWrite(bs);
 
 	// 加入地址
-	return SendTo(bs, Buffer(opt, 5));
+	return SendTo(bs, Buffer((void*)opt, 5));
 }
 
 void NRF24L01::AddError()

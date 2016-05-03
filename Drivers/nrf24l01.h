@@ -58,7 +58,7 @@ private:
 
 	// 引发数据到达事件
 	//virtual uint OnReceive(Buffer& bs, void* param);
-	virtual bool OnWriteEx(const Buffer& bs, void* opt);
+	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 	
 	bool SendTo(const Buffer& bs, const Buffer& addr);
 

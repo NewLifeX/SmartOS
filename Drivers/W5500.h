@@ -184,7 +184,7 @@ public:
 	virtual String& ToStr(String& str) const { return str + "Udp_" + Local.Port; }
 
 private:
-	virtual bool OnWriteEx(const Buffer& bs, void* opt);
+	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 };
 
 #endif

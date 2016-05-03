@@ -1359,9 +1359,9 @@ bool UdpClient::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	return rs;
 }
 
-bool UdpClient::OnWriteEx(const Buffer& bs, void* opt)
+bool UdpClient::OnWriteEx(const Buffer& bs, const void* opt)
 {
-	IPEndPoint* ep = (IPEndPoint*)opt;
+	auto ep = (IPEndPoint*)opt;
 	if(!ep) return OnWrite(bs);
 
 	return SendTo(bs, *ep);

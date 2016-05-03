@@ -64,7 +64,7 @@ bool ITransport::Write(const Buffer& bs)
 }
 
 // 发送数据
-bool ITransport::Write(const Buffer& bs, void* opt)
+bool ITransport::Write(const Buffer& bs, const void* opt)
 {
 	// 特别是接口要检查this指针
 	assert_ptr(this);
@@ -111,7 +111,7 @@ uint ITransport::OnReceive(Buffer& bs, void* param)
 	return 0;
 }
 
-bool ITransport::OnWriteEx(const Buffer& bs, void* opt)
+bool ITransport::OnWriteEx(const Buffer& bs, const void* opt)
 {
 	return OnWrite(bs);
 }

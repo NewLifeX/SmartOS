@@ -35,7 +35,7 @@ public:
 
 	// 发送数据
 	bool Write(const Buffer& bs);
-	bool Write(const Buffer& bs, void* opt);
+	bool Write(const Buffer& bs, const void* opt);
 	// 接收数据
 	uint Read(Buffer& bs);
 	//Buffer Read();
@@ -53,7 +53,7 @@ protected:
 	virtual bool OnOpen() { return true; }
 	virtual void OnClose() { }
 	virtual bool OnWrite(const Buffer& bs) = 0;
-	virtual bool OnWriteEx(const Buffer& bs, void* opt);
+	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 	virtual uint OnRead(Buffer& bs) = 0;
 
 	// 是否有回调函数
