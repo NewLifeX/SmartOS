@@ -173,10 +173,10 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 
 	//todo 还需要两个字节空余，后面的SetLength不一定生效
 
-	RC4::Encrypt(bs, pass);
-
 	// 计算明文校验码，写在最后面
 	auto crc	= Crc::Hash16(bs);
+	RC4::Encrypt(bs, pass);
+
 	ms.Write(crc);
 
 	return data.SetLength(ms.Position());
