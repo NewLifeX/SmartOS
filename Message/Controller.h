@@ -45,6 +45,7 @@ public:
 	
 protected:
 	bool SendInternal(const Message& msg);
+	virtual bool SendInternal(const Buffer& bs, const void* state);
 };
 
 #endif

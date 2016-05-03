@@ -167,7 +167,7 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 	ms.Seek(2);
 
 	auto bs	= ms.ReadArray();
-	
+
 	//todo 还需要两个字节空余，后面的SetLength不一定生效
 
 	RC4::Encrypt(bs, pass);
@@ -196,7 +196,7 @@ static bool Decrypt(Buffer& data, const Buffer& pass)
 	RC4::Encrypt(bs, pass);
 
 	// 新的加密指令最后有2字节的明文校验码
-	if(ms.Position() + 2 <= ms.Length)
+	if(ms.Position() + 2 > ms.Length)
 	{
 		debug_printf("不支持旧版本指令解密！");
 		return false;
@@ -228,7 +228,9 @@ bool TokenController::OnReceive(Message& msg)
 	//ShowMessage("Recv$", msg);
 
 	// 加解密。握手不加密，登录响应不加密
-	Encrypt(msg, Key);
+	//Encrypt(msg, Key);
+	Buffer bs(msg.Data, msg.Length + 2);
+	if(!Decrypt(bs, Key)) return false;
 
 	ShowMessage("Recv", msg);
 
@@ -254,12 +256,21 @@ bool TokenController::Send(Message& msg)
 		ShowMessage("Send", msg);
 
 	// 加解密。握手不加密，登录响应不加密
-	Encrypt(msg, Key);
+	//Encrypt(msg, Key);
 
 	// 加入统计
 	if(!msg.Reply) StartSendStat(msg.Code);
 
 	return Controller::Send(msg);
+}
+
+bool TokenController::SendInternal(const Buffer& bs, const void* state)
+{
+	ByteArray arr(bs.Length() + 2);
+
+	if(!Encrypt(arr, Key)) return false;
+
+	return Controller::SendInternal(arr, state);
 }
 
 void TokenController::ShowMessage(const char* action, const Message& msg)

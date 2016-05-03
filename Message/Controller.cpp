@@ -166,5 +166,11 @@ bool Controller::SendInternal(const Message& msg)
 	msg.Write(ms);
 
 	Buffer bs(ms.GetBuffer(), ms.Position());
-	return Port->Write(bs, msg.State);
+	//return Port->Write(bs, msg.State);
+	return SendInternal(bs, msg.State);
+}
+
+bool Controller::SendInternal(const Buffer& bs, const void* state)
+{
+	return Port->Write(bs, state);
 }
