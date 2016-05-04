@@ -1,6 +1,6 @@
 ﻿#include "LoginMessage.h"
-
 #include "Security\MD5.h"
+#include "Message\BinaryPair.h"
 
 // 初始化消息，各字段为0
 LoginMessage::LoginMessage()
@@ -10,41 +10,43 @@ LoginMessage::LoginMessage()
 // 从数据流中读取消息
 bool LoginMessage::Read(Stream& ms)
 {
-	if(!Reply)
+	BinaryPair bp(ms);
+	if (!Reply)
 	{
-		User	= ms.ReadString();
-		Pass	= ms.ReadString();
-		Salt	= ms.ReadArray();
+		bp.Get("UserName", User);
+		bp.Get("Password", Pass);
+		bp.Get("Salt", Salt);
 	}
-	else if(!Error)
+	else if (!Error)
 	{
-		Token	= ms.ReadUInt32();
-		Pass	= ms.ReadString();
+		bp.Get("Token", Token);
+		bp.Get("Password", Pass);
 	}
-
     return false;
 }
 
 // 把消息写入数据流中
 void LoginMessage::Write(Stream& ms) const
 {
+	BinaryPair bp(ms);
+
 	if(!Reply)
 	{
-		ms.WriteArray(User);
-		ms.WriteArray(Pass);
+		bp.Set("UserName", User);
+		bp.Set("Password", Pass);
 
 		if(Salt.Length() > 0)
-			ms.WriteArray(Salt);
+			bp.Set("Salt", Salt);
 		else
 		{
 			UInt64 now = Sys.Ms();
-			ms.WriteArray(MD5::Hash(Buffer(&now, 8)));
+			bp.Set("Salt", MD5::Hash(Buffer(&now, 8)));
 		}
 	}
 	else if(!Error)
 	{
-		ms.Write(Token);
-		ms.WriteArray(Pass);
+		bp.Set("Token", Token);
+		bp.Set("Password", Pass);
 	}
 }
 
