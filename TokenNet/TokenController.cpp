@@ -154,6 +154,7 @@ bool TokenController::Valid(const Message& msg)
 	return true;
 }
 
+// msg所有成员序列化为data
 static bool Encrypt(Buffer& data, const Buffer& pass)
 {
 	if (data.Length() <= 3) return false;
@@ -178,36 +179,25 @@ static bool Encrypt(Buffer& data, const Buffer& pass)
 	RC4::Encrypt(bs, pass);
 
 	ms.Write(crc);
-
 	return data.SetLength(ms.Position());
 }
-
+// Decrypt(Buffer(msg.Data,len),Key)  只处理data部分
 static bool Decrypt(Buffer& data, const Buffer& pass)
 {
 	if(data.Length() <= 3) return false;
 	if(pass.Length() == 0) return true;
 
-	// 握手不加密
-	byte code	= data[0] & 0x0F;
-	if(code == 0x01) return true;
-
+	auto msgDataLen = data.Length() - 2;
 	Stream ms(data);
-	//ms.Seek(2);	// 传进来的就是Data部分
+	ms.Seek(msgDataLen);
+	auto crc = ms.ReadUInt16();		// 读取数据包中crc
 
-	auto len = data.Length();
-	auto bs = ms.ReadArray(len - 2);	// 去掉crc的位置
+	data.SetLength(msgDataLen);
+	ByteArray bs(data.GetBuffer(),data.Length());
+	RC4::Encrypt(bs, pass);			// 解密
 
-	RC4::Encrypt(bs, pass);
-
-	// 新的加密指令最后有2字节的明文校验码
-	if(ms.Position() + 2 > ms.Length)
-	{
-		debug_printf("不支持旧版本指令解密！");
-		return false;
-	}
-
-	auto crc	= Crc::Hash16(bs);
-	if(ms.ReadUInt16() != crc) return false;
+	auto crc2	= Crc::Hash16(bs);	// 明文的CRC值
+	if(crc != crc2) return false;
 
 	return true;
 }

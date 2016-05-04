@@ -40,8 +40,8 @@ bool TokenMessage::Read(Stream& ms)
 
 	if(ms.Remain() < len) return false;
 
-	// 避免错误指令超长，导致溢出
-	if(Data == _Data && len > ArrayLength(_Data))
+	// 避免错误指令超长，导致溢出 data后面有crc
+	if(Data == _Data && (len + 2) > ArrayLength(_Data))
 	{
 		debug_printf("错误指令，长度 %d 大于消息数据缓冲区长度 %d \r\n", len, ArrayLength(_Data));
 		//assert_param(false);
@@ -49,7 +49,7 @@ bool TokenMessage::Read(Stream& ms)
 	}
 	if(len > 0)
 	{
-		Buffer bs(Data, len);
+		Buffer bs(Data, len+2);	// DATA + CRC 位置
 		ms.Read(bs);
 	}
 
