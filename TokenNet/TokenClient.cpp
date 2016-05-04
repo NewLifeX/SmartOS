@@ -232,7 +232,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
 			ext.ErrMsg.Show(true);
-
+			
 			// 未握手错误，马上重新握手
 			if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
 		}
@@ -435,22 +435,37 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-		// 得到令牌
-		Token = ms.ReadUInt32();
-		debug_printf("令牌：0x%08X ", Token);
-		// 这里可能有通信密码
-		if(ms.Remain() > 0)
-		{
-			auto bs = ms.ReadArray();
-			if(bs.Length() > 0)
-			{
-				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-				if(ctrl2) ctrl2->Key.Copy(0, bs, 0, -1);
 
-				debug_printf("通信密码：");
-				bs.Show();
-			}
+		LoginMessage logMsg;
+		logMsg.ReadMessage(msg);
+		Token = logMsg.Token;
+		logMsg.Show(true);
+		debug_printf("令牌：0x%08X ", Token);
+		if (logMsg.Key.Length())
+		{
+			auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
+			if (ctrl2) ctrl2->Key = logMsg.Key;
+
+			debug_printf("通信密码：");
+			logMsg.Key.Show();
 		}
+
+		//// 得到令牌
+		//Token = ms.ReadUInt32();
+		//debug_printf("令牌：0x%08X ", Token);
+		//// 这里可能有通信密码
+		//if(ms.Remain() > 0)
+		//{
+		//	auto bs = ms.ReadArray();
+		//	if(bs.Length() > 0)
+		//	{
+		//		auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
+		//		if(ctrl2) ctrl2->Key.Copy(0, bs, 0, -1);
+
+		//		debug_printf("通信密码：");
+		//		bs.Show();
+		//	}
+		//}
 		debug_printf("\r\n");
 	}
 
@@ -467,19 +482,18 @@ void TokenClient::Ping()
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
+		auto ctrl2 = dynamic_cast<TokenController*>(Control);
+		if (ctrl2) ctrl2->Key.SetLength(0);
+
 		Status = 0;
 
 		return;
 	}
 
+	TokenPingMessage pinMsg;
+
 	TokenMessage msg(3);
-
-	UInt64 time	= Sys.Ms();
-	Buffer bs(&time, 8);
-
-	auto ms	= msg.ToStream();
-	ms.WriteArray(bs);
-	msg.Length	= ms.Position();
+	pinMsg.WriteMessage(msg);
 
 	Send(msg);
 }
@@ -488,14 +502,23 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 {
 	TS("TokenClient::OnPing");
 
-	// 忽略
-	if(!msg.Reply) return Reply(msg, ctrl);
+	if (!msg.Reply) return false;
 
-	auto ms = msg.ToStream();
+	TokenPingMessage pinMsg;
+	pinMsg.ReadMessage(msg);
+	UInt64 start = pinMsg.thisTime;
 
-	UInt64 now   = Sys.Ms();
-	auto bs	= ms.ReadArray();
-	UInt64 start = bs.ToUInt64();
+	//// 忽略
+	//if(!msg.Reply) return Reply(msg, ctrl);
+
+	//auto ms = msg.ToStream();
+
+	//BinaryPair bp(ms);
+	//ByteArray bs;
+	//bp.Get("Time", bs);
+	//UInt64 start = bs.ToUInt64();
+
+	UInt64 now = Sys.Ms();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);

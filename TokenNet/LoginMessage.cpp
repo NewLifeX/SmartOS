@@ -3,7 +3,7 @@
 #include "Message\BinaryPair.h"
 
 // 初始化消息，各字段为0
-LoginMessage::LoginMessage()
+LoginMessage::LoginMessage() : Key(0)
 {
 }
 
@@ -21,6 +21,7 @@ bool LoginMessage::Read(Stream& ms)
 	{
 		bp.Get("Token", Token);
 		bp.Get("Password", Pass);
+		bp.Get("Key",Key);
 	}
     return false;
 }

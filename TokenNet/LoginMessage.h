@@ -12,7 +12,8 @@ public:
 	String		Pass;	// 登录密码
 	ByteArray	Salt;	// 加盐
 
-	uint		Token;	//令牌
+	uint		Token;	// 令牌
+	ByteArray	Key;	// 登录时会发通讯密码
 
 	// 初始化消息，各字段为0
 	LoginMessage();

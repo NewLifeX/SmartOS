@@ -99,7 +99,7 @@ void Gateway::Stop()
 	Running = false;
 }
 
-// 数据接收中心
+// 数据接收中心 TinyServer 上级
 bool Gateway::OnLocal(const TinyMessage& msg)
 {
 	TS("Gateway::OnLocal");
@@ -132,6 +132,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	return true;
 }
 
+// 数据接收中心 TokenClient 上级
 bool Gateway::OnRemote(const TokenMessage& msg)
 {
 	TS("Gateway::OnRemote");
@@ -139,16 +140,18 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	switch(msg.Code)
 	{
 		case 0x02:
-			// 登录以后自动发送设备列表和设备信息
-			if(msg.Reply && Client->Token != 0)
-			{
-				// 遍历发送所有设备信息
-				pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
-			}
+			//// 登录以后自动发送设备列表和设备信息
+			//if(msg.Reply && Client->Token != 0)
+			//{
+			//	// 遍历发送所有设备信息
+			//	pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
+			//}
 			break;
 
 		case 0x20:
-			return OnMode(msg);
+			//return OnMode(msg);
+			break;
+
 		case 0x21:
 			return pDevMgmt->DeviceProcess(msg);
 	}

@@ -134,3 +134,43 @@ String& HelloMessage::ToStr(String& str) const
 	return str;
 }
 #endif
+
+
+TokenPingMessage::TokenPingMessage()
+{
+	thisTime = Time.Now().TotalMicroseconds();
+}
+TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg)
+{
+	thisTime = msg.thisTime;
+}
+
+// 从数据流中读取消息
+bool TokenPingMessage::Read(Stream& ms)
+{
+	BinaryPair bp(ms);
+	bp.Get("Time", thisTime);
+
+	return true;
+}
+// 把消息写入数据流中
+void TokenPingMessage::Write(Stream& ms) const
+{
+	BinaryPair bp(ms);
+	bp.Set("Time", thisTime);
+}
+
+#if DEBUG
+// 显示消息内容
+String& TokenPingMessage::ToStr(String& str) const
+{
+	str += "Ping";
+	if (Reply) str += '#';
+
+	DateTime dt;
+	dt.ParseUs(thisTime);
+	str += dt;
+
+	return str;
+}
+#endif
