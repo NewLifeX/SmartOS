@@ -435,7 +435,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-
 		LoginMessage logMsg;
 		logMsg.ReadMessage(msg);
 		Token = logMsg.Token;
@@ -450,22 +449,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 			logMsg.Key.Show();
 		}
 
-		//// 得到令牌
-		//Token = ms.ReadUInt32();
-		//debug_printf("令牌：0x%08X ", Token);
-		//// 这里可能有通信密码
-		//if(ms.Remain() > 0)
-		//{
-		//	auto bs = ms.ReadArray();
-		//	if(bs.Length() > 0)
-		//	{
-		//		auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-		//		if(ctrl2) ctrl2->Key.Copy(0, bs, 0, -1);
-
-		//		debug_printf("通信密码：");
-		//		bs.Show();
-		//	}
-		//}
 		debug_printf("\r\n");
 	}
 
@@ -508,16 +491,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	pinMsg.ReadMessage(msg);
 	UInt64 start = pinMsg.thisTime;
 
-	//// 忽略
-	//if(!msg.Reply) return Reply(msg, ctrl);
-
-	//auto ms = msg.ToStream();
-
-	//BinaryPair bp(ms);
-	//ByteArray bs;
-	//bp.Get("Time", bs);
-	//UInt64 start = bs.ToUInt64();
-
 	UInt64 now = Sys.Ms();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
@@ -529,7 +502,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 		Delay = cost;
 
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
-
 	return true;
 }
 
