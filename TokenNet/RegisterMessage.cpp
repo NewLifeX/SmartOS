@@ -10,11 +10,13 @@ RegisterMessage::RegisterMessage() : User(), Pass(), Salt(0)
 // 从数据流中读取消息
 bool RegisterMessage::Read(Stream& ms)
 {
-	if(!Error)
+	if (!Error)
 	{
-		User	= ms.ReadString();
-		Pass	= ms.ReadString();
-		Salt	= ms.ReadArray();
+		BinaryPair bp(ms);
+
+		bp.Get("Name",User);
+		bp.Get("Pass", Pass);
+		bp.Get("Salt", Salt);
 	}
 
     return false;
@@ -25,7 +27,7 @@ void RegisterMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 
-	bp.Set("User", User);
+	bp.Set("Name", User);
 	bp.Set("Pass", Pass);
 	
 	if(Salt.Length() > 0)

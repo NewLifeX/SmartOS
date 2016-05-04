@@ -71,7 +71,7 @@ bool HelloMessage::Read(Stream& ms)
 	bp.Get("Ver", Version);
 	bp.Get("Type", Type);
 	bp.Get("Name", Name);
-	bp.Get("Time", LocalTime);
+	//bp.Get("Time", LocalTime);
 	bp.Get("EndPoint", EndPoint);
 	bp.Get("Cipher", Cipher);
 	bp.Get("Key", Key);
@@ -87,7 +87,7 @@ void HelloMessage::Write(Stream& ms) const
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);
-	bp.Set("Time", LocalTime);
+	//bp.Set("Time", LocalTime);
 	bp.Set("EndPoint", EndPoint);
 	bp.Set("Cipher", Cipher);
 	bp.Set("Key", Key);
