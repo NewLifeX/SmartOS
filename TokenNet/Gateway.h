@@ -10,6 +10,7 @@
 #include "TinyNet\TinyServer.h"
 
 #include "DeviceMessage.h"
+#include "TokenNet/TokenDataMessage.h"
 
 // 网关服务器
 class Gateway

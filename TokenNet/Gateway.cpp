@@ -9,17 +9,17 @@
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& msg2);
 void TinyToToken(const TinyMessage& msg, TokenMessage& msg2);
-Gateway* Gateway::Current	= nullptr;
+Gateway* Gateway::Current = nullptr;
 
 // 本地网和远程网一起实例化网关服务
 Gateway::Gateway()
 {
-	Server	= nullptr;
-	Client	= nullptr;
-	Led		= nullptr;
+	Server = nullptr;
+	Client = nullptr;
+	Led = nullptr;
 	pDevMgmt = nullptr;
 
-	Running		= false;
+	Running = false;
 }
 
 Gateway::~Gateway()
@@ -36,18 +36,18 @@ Gateway::~Gateway()
 // 启动网关。挂载本地和远程的消息事件
 void Gateway::Start()
 {
-	if(Running) return;
+	if (Running) return;
 
 	TS("Gateway::Start");
 
 	assert(Server, "微网服务端未设置");
 	assert(Client, "令牌客户端未设置");
 
-	Server->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnLocal((TinyMessage&)msg); };
-	Server->Param		= this;
+	Server->Received = [](void* s, Message& msg, void* p) { return ((Gateway*)p)->OnLocal((TinyMessage&)msg); };
+	Server->Param = this;
 
-	Client->Received	= [](void* s, Message& msg, void* p){ return ((Gateway*)p)->OnRemote((TokenMessage&)msg); };
-	Client->Param		= this;
+	Client->Received = [](void* s, Message& msg, void* p) { return ((Gateway*)p)->OnRemote((TokenMessage&)msg); };
+	Client->Param = this;
 
 	debug_printf("\r\nGateway::Start \r\n");
 
@@ -60,7 +60,7 @@ void Gateway::Start()
 		pDevMgmt = new DevicesManagement();
 
 	// 设备列表服务于Token  保存token的“联系方式”
-	pDevMgmt->Port = Client;	
+	pDevMgmt->Port = Client;
 	if (pDevMgmt->Length() == 0)
 	{
 		// 如果全局设备列表为空，则添加一条Addr=1的设备
@@ -79,7 +79,7 @@ void Gateway::Start()
 	}
 
 	Client->Open();
-	_task	= Sys.AddTask(Loop, this, 10000, LOOP_Interval, "设备任务");
+	_task = Sys.AddTask(Loop, this, 10000, LOOP_Interval, "设备任务");
 
 	Running = true;
 }
@@ -87,14 +87,14 @@ void Gateway::Start()
 // 停止网关。取消本地和远程的消息挂载
 void Gateway::Stop()
 {
-	if(!Running) return;
+	if (!Running) return;
 
 	Sys.RemoveTask(_task);
 
-	Server->Received	= nullptr;
-	Server->Param		= nullptr;
-	Client->Received	= nullptr;
-	Client->Param		= nullptr;
+	Server->Received = nullptr;
+	Server->Param = nullptr;
+	Client->Received = nullptr;
+	Client->Param = nullptr;
 
 	Running = false;
 }
@@ -105,22 +105,22 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 	TS("Gateway::OnLocal");
 
 	auto dv = Server->Current;
-	if(dv)
+	if (dv)
 	{
-		switch(msg.Code)
+		switch (msg.Code)
 		{
-			case 0x01:
-				pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
-				pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
-				break;
-			case 0x02:
-				pDevMgmt->DeviceRequest(DeviceAtions::Delete, dv);
-				break;
+		case 0x01:
+			pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
+			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
+			break;
+		case 0x02:
+			pDevMgmt->DeviceRequest(DeviceAtions::Delete, dv);
+			break;
 		}
 	}
 
 	// 应用级消息转发
-	if(msg.Code >= 0x10 && msg.Dest == Server->Cfg->Address)
+	if (msg.Code >= 0x10 && msg.Dest == Server->Cfg->Address)
 	{
 		TokenMessage tmsg;
 
@@ -137,36 +137,36 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 {
 	TS("Gateway::OnRemote");
 
-	switch(msg.Code)
+	switch (msg.Code)
 	{
-		case 0x02:
-			//// 登录以后自动发送设备列表和设备信息
-			//if(msg.Reply && Client->Token != 0)
-			//{
-			//	// 遍历发送所有设备信息
-			//	pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
-			//}
-			break;
+	case 0x02:
+		// 登录以后自动发送设备列表和设备信息
+		if (msg.Reply && Client->Token != 0)
+		{
+			// 遍历发送所有设备信息
+			pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
+		}
+		break;
 
-		case 0x20:
-			//return OnMode(msg);
-			break;
+	case 0x20:
+		//return OnMode(msg);
+		break;
 
-		case 0x21:
-			return pDevMgmt->DeviceProcess(msg);
+	case 0x21:
+		return pDevMgmt->DeviceProcess(msg);
 	}
 
 	// 应用级消息转发
-	if(msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)
+	if (msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)
 	{
 		//debug_printf("Gateway::Remote ");
 		//msg.Show();
 
 		TinyMessage tmsg;
-		if(!TokenToTiny(msg, tmsg)) return true;
+		if (!TokenToTiny(msg, tmsg)) return true;
 
 		bool rs = Server->Dispatch(tmsg);
-		if(!rs) return false;
+		if (!rs) return false;
 
 		TokenMessage msg2;
 		TinyToToken(tmsg, msg2);
@@ -186,20 +186,20 @@ void Gateway::SetMode(uint time)
 	Server->Study = time > 0;
 
 	// 定时退出学习模式
-	_Study	= time;
+	_Study = time;
 
 	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(time ? time * 1000 : 100);
+	if (Led) Led->Write(time ? time * 1000 : 100);
 
-	if(time)
+	if (time)
 		debug_printf("进入 学习模式 %d 秒\r\n", time);
 	else
 		debug_printf("退出 学习模式\r\n");
 
 	TokenMessage msg;
-	msg.Code	= 0x20;
-	msg.Length	= 1;
-	msg.Data[0]	= time;
+	msg.Code = 0x20;
+	msg.Length = 1;
+	msg.Data[0] = time;
 
 	Client->Reply(msg);
 }
@@ -216,9 +216,9 @@ void Gateway::Clear()
 	TS("Gateway::Clear()");
 
 	TokenMessage msg;
-	msg.Code	= 0x35;
-	msg.Length	= 1;
-	msg.Data[0]	= 0;
+	msg.Code = 0x35;
+	msg.Length = 1;
+	msg.Data[0] = 0;
 	Client->Reply(msg);
 }
 
@@ -228,8 +228,8 @@ bool Gateway::OnMode(const Message& msg)
 
 	TS("Gateway::OnMode");
 
-	int time	= 30;
-    if(msg.Length > 0) time = msg.Data[0];
+	int time = 30;
+	if (msg.Length > 0) time = msg.Data[0];
 
 	SetMode(time);
 
@@ -238,20 +238,30 @@ bool Gateway::OnMode(const Message& msg)
 
 bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 {
-	if(msg.Length == 0) return false;
+	if (msg.Length == 0) return false;
 
 	TS("TokenToTiny");
 
-	tny.Code	= msg.Code;
+	tny.Code = msg.Code;
 	// 处理Reply标记
-	tny.Reply	= msg.Reply;
-	tny.Error	= msg.Error;
-
+	tny.Reply = msg.Reply;
+	tny.Error = msg.Error;
 	// 第一个字节是节点设备地址
-	tny.Dest	= msg.Data[0];
-	if(msg.Length > 1) Buffer(tny.Data, msg.Length - 1)	= &msg.Data[1];
-	tny.Length	= msg.Length - 1;
-	
+	// tny.Dest	= msg.Data[0];
+	//if(msg.Length > 1) Buffer(tny.Data, msg.Length - 1)	= &msg.Data[1];
+	//tny.Length	= msg.Length - 1;
+
+	TokenDataMessage dm;
+	dm.ReadMessage(msg);
+	tny.Dest = dm.ID;
+
+	auto ms = tny.ToStream();
+	ms.WriteEncodeInt(dm.Start);
+	// 不管什么指令 有就写  没就不写
+	if (dm.Size)ms.WriteEncodeInt(dm.Size);
+	if (dm.Data.Length() != 0)ms.Write(dm.Data);
+
+	tny.Length = ms.Position();
 	return true;
 }
 
@@ -263,32 +273,45 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 	msg2.Code = msg.Code;
 	msg2.Reply = msg.Reply;
 	msg2.Error = msg.Error;
-	// 第一个字节是节点设备地址
-	msg2.Data[0] = ((TinyMessage&)msg).Src;
 
-	if(msg.Length > 0) Buffer(&msg2.Data[1], msg.Length)	= msg.Data;
+	auto ms = msg.ToStream();
 
-	msg2.Length = 1 + msg.Length;
+	TokenDataMessage dm;
+	//dm.ReadMessage(msg2);	// 很显然 什么都读不到
+	dm.ID = ms.ReadByte();
+	dm.Start = ms.ReadEncodeInt();
+
+	// 存在三种情况  云读设备的回复   云写设备的回复  设备上报
+	// 云读设备的回复  设备上报  没有长度
+	// 云写设备的回复 不确定
+	auto isRead = (msg.Code == 0x05 || msg.Code == 0x15);
+	if ((!isRead) && msg.Reply)
+	{
+		dm.Size = ms.ReadEncodeInt();
+	}
+
+	dm.Data = ByteArray(ms.GetBuffer() + ms.Position(), ms.Remain());
+	dm.WriteMessage(msg2);
 }
 
 Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 {
 	debug_printf("\r\nGateway::CreateGateway \r\n");
 
-	Gateway* gw	= Current;
-	if(gw)
+	Gateway* gw = Current;
+	if (gw)
 	{
-		if(	(client == nullptr || gw->Client == client) &&
+		if ((client == nullptr || gw->Client == client) &&
 			(server == nullptr || gw->Server == server)) return gw;
 
 		delete gw;
 	}
 
 	gw = new Gateway();
-	gw->Client	= client;
-	gw->Server	= server;
+	gw->Client = client;
+	gw->Server = server;
 
-	Current		= gw;
+	Current = gw;
 
 	return gw;
 }
@@ -298,15 +321,15 @@ void Gateway::Loop(void* param)
 {
 	TS("Gateway::Loop");
 
-	auto gw		= (Gateway*)param;
+	auto gw = (Gateway*)param;
 
 	// 检测自动退出学习模式
-	if(gw->_Study)
+	if (gw->_Study)
 	{
-		gw->_Study	-= LOOP_Interval / 1000;
-		if(gw->_Study <= 0)
+		gw->_Study -= LOOP_Interval / 1000;
+		if (gw->_Study <= 0)
 		{
-			gw->_Study	= 0;
+			gw->_Study = 0;
 
 			gw->SetMode(0);
 		}
