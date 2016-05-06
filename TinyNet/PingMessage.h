@@ -2,7 +2,7 @@
 #define __PingMessage_H__
 
 #include "Message\MessageBase.h"
-#include "Device.h"
+#include "TokenNet\Device.h"
 
 // 心跳消息
 class PingMessage : public MessageBase

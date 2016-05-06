@@ -4,7 +4,7 @@
 #include "Sys.h"
 #include "Net\ITransport.h"
 #include "Stream.h"
-#include "Device.h"
+#include "TokenNet\Device.h"
 
 #include "Message\Controller.h"
 

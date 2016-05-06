@@ -267,24 +267,26 @@ bool DevicesManagement::DeviceProcess(const Message& msg)
 
 	TS("DevicesManagement::DeviceProcess");
 
-	auto act = (DeviceAtions)msg.Data[0];
-	byte id = msg.Data[1];
+	auto ms = msg.ToStream();
+
+	DeviceMessage dm;
+	if (!dm.GetBaseInfo(ms))return false;
+	auto dv = FindDev(dm.Id);
 
 	TokenMessage rs;
 	rs.Code = 0x21;
-	rs.Length = 2;
-	rs.Data[0] = (byte)act;
-	rs.Data[1] = id;
 
-	auto dv = FindDev(id);
-	// 外部处理
-	if (_DevProcess)_DevProcess(act, dv, _ClbkParam);
+	if (dv)
+	{
+		// 外部处理
+		if (_DevProcess)_DevProcess(dm.Action, dv, _ClbkParam);
 
-	switch (act)
+	}
+	switch (dm.Action)
 	{
 	case DeviceAtions::List:
 	{
-		SendDevices(act, nullptr);
+		SendDevices(dm.Action, nullptr);
 		return true;
 	}
 	case DeviceAtions::Update:
@@ -296,13 +298,16 @@ bool DevicesManagement::DeviceProcess(const Message& msg)
 		}
 		else
 		{
-			auto ms = msg.ToStream();
-			ms.Seek(2);
-
-			dv->ReadMessage(ms);
+			// 获取信息
+			dm.GetMsgInfo(ms, dv);
 			SaveDev();
+			// 拿到写后的信息
+			DeviceMessage dmrs;
+			dmrs.pDev = dv;
+			dmrs.Action = dm.Action;
+			dmrs.WriteMessage(rs);
 		}
-
+		// 发送
 		if (Port)Port->Reply(rs);
 	}
 	break;

@@ -3,7 +3,8 @@
 
 #include "Sys.h"
 #include "Stream.h"
-#include "Device.h"
+#include "TokenNet\Device.h"
+#include "TokenNet\DeviceMessage.h"
 
 #include "Flash.h"
 #include "TinyConfig.h"

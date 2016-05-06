@@ -3,8 +3,9 @@
 
 #include "Message\MessageBase.h"
 #include "Net\Net.h"
+#include "TokenNet\Device.h"
 
-enum class DeviceAtions
+enum class DeviceAtions : byte
 {
 	// <summary>信息列表。请求ID列表，响应设备信息列表</summary>
 	List,
@@ -31,16 +32,16 @@ enum class DeviceAtions
 class DeviceMessage : public MessageBase
 {
 public:
-	ByteArray	HardID;	// 硬件ID
-	ByteArray	Key;	// 登录密码
-	ByteArray	Salt;	// 加盐
-	IPEndPoint	Local;	// 内网地址
-
-	bool		Reply;	// 是否响应
+	DeviceAtions Action;
+	byte	Id = 0;
+	Device * pDev = nullptr;
 
 	// 初始化消息，各字段为0
 	DeviceMessage();
-
+	DeviceMessage(Device *dv);
+	// 拿ID 不修改ms
+	bool GetBaseInfo(Stream& ms);
+	bool GetMsgInfo(Stream&ms, Device* dv);
 	// 从数据流中读取消息
 	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中

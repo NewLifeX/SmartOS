@@ -5,8 +5,7 @@
 #include "Stream.h"
 
 #include "Flash.h"
-
-#include "TinyConfig.h"
+#include "TinyNet\TinyConfig.h"
 
 /******************************** Device ********************************/
 
