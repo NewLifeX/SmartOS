@@ -223,8 +223,15 @@ bool TokenController::OnReceive(Message& msg)
 
 	// 加解密。握手不加密，登录响应不加密
 	//Encrypt(msg, Key);
-	Buffer bs(msg.Data, msg.Length + 2);
-	if (!Decrypt(bs, Key)) return false;
+	if (msg.Code != 0x01)
+	{
+		Buffer bs(msg.Data, msg.Length + 2);
+		if (!Decrypt(bs, Key))
+		{
+			debug_printf("TokenController::OnReceive 解密失败\r\n");
+			return false;
+		}
+	}
 
 	ShowMessage("Recv", msg);
 

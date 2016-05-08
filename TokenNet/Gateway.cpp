@@ -3,6 +3,7 @@
 
 #include "Security\MD5.h"
 #include "Security\Crc.h"
+#include "..\Message\BinaryPair.h"
 
 // 循环间隔
 #define LOOP_Interval	10000
@@ -137,7 +138,37 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 {
 	TS("Gateway::OnRemote");
 
-	switch (msg.Code)
+	if (msg.Code == 0x20)
+	{
+		OnMode(msg);
+	}
+
+	if (msg.Code == 0x08 || msg.Code == 0x02)
+	{
+		auto ms = msg.ToStream();
+		BinaryPair bp(ms);
+		if (bp.Get("Device/List") || (msg.Code == 0x02 && msg.Reply&&Client->Token != 0))
+		{
+			// 登录以后自动发送设备列表和设备信息
+			// 遍历发送所有设备信息
+			pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
+			return true;
+		}
+
+		String act;
+		bp.Get("Action", act);
+		if (act.StartsWith("Device/")) 
+		{ 
+			// 由他内部回复数据
+			pDevMgmt->DeviceProcess(act, msg); 
+			return true;
+		}
+		//if (act.StartsWith("USART/"))xxx();
+		//if (act.StartsWith("IO/"))xxx2();
+	}
+
+
+	/*switch (msg.Code)
 	{
 	case 0x02:
 		// 登录以后自动发送设备列表和设备信息
@@ -154,7 +185,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 
 	case 0x21:
 		return pDevMgmt->DeviceProcess(msg);
-	}
+	}*/
 
 	// 应用级消息转发
 	if (msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)

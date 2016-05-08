@@ -23,7 +23,7 @@ public:
 	byte		ErrCode;	// 错误码
 	String		ErrMsg;		// 错误信息
 
-	byte		Protocol;	// 协议，TCP=1/UDP=2
+	byte		Protocol;	// 协议,17为UDP  6为TCP
 	String		Server;		// 服务器地址。可能是域名或IP
 	ushort		Port;		// 本地端口
 	String		VisitToken;	//访问令牌 

@@ -45,7 +45,9 @@ public:
 	// 发送时刻再绑定？！ 如果绑定失败报错？
 	TokenClient * Port = nullptr;
 
-	bool DeviceProcess(const Message& msg);
+	bool DeviceProcess(String &act, const Message& msg);
+	bool GetDevInfo(byte id, MemoryStream &ms);
+	bool GetDevInfo(Device *dv, MemoryStream &ms);
 	bool SendDevices(DeviceAtions act, const Device* dv = nullptr);
 	void SendDevicesIDs();
 	// 设备状态变更上报

@@ -25,6 +25,7 @@ bool TokenDataMessage::Read(Stream& ms)
 	bp.Get("Start", Start);
 	bp.Get("Size", Size);
 	bp.Get("MemoryData", Data);
+	return true;
 }
 
 // 把消息写入数据流中

@@ -18,7 +18,7 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	LocalTime	= Time.Now().TotalMicroseconds();
 	Cipher[0]	= 1;
 
-	Protocol	= 2;
+	Protocol	= 17;
 	Port		= 0;
 }
 
@@ -47,9 +47,30 @@ bool HelloMessage::Read(Stream& ms)
 		bp.Get("ErrorCode", ErrCode);
 		if(ErrCode == 0xFE || ErrCode == 0xFD)
 		{
-			bp.Get("Protocol", Protocol);
-			bp.Get("Server", Server);
-			bp.Get("Port", Port);
+			ByteArray uri;
+			if (bp.Get("Redirect", uri))
+			{
+				MemoryStream urims(uri.GetBuffer(), uri.Length());
+				BinaryPair uribp(urims);
+
+				uint prcl = 0x00;						// 服务店 ProtocolType  17 为UDP
+				uribp.Get("ProtocolType", prcl);
+				prcl >>= 24;							// 大小端问题
+				Protocol = prcl;
+				uribp.Get("Host", Server);
+				uint uintPort;							// 服务端 Port 为 int 类型
+				uribp.Get("Port", uintPort);
+				Port = uintPort >> 16;
+				Port = _REV16(Port);					// 大小端问题
+
+				/*uint prcl = 0x00;						// 服务店 ProtocolType  17 为UDP
+				bp.Get("ProtocolType", prcl);
+				Protocol = prcl == 0x11 ? 0x02 : 0x01;	// Protocol;	// 协议，TCP=1/UDP=2
+				bp.Get("Host", Server);
+				uint uintPort;							// 服务端 Port 为 int 类型
+				bp.Get("Port", uintPort);
+				Port = (*(int*)&uintPort);*/
+			}
 			bp.Get("VisitToken", VisitToken);
 
 			return false;

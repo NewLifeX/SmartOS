@@ -6,7 +6,7 @@
 #include "TinyMessage.h"
 #include "TinyConfig.h"
 
-#include "TinyNet\Device.h"
+#include "TokenNet\Device.h"
 #include "TinyNet\DevicesManagement.h"
 
 /******************************** TinyServer ********************************/

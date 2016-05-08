@@ -6,7 +6,7 @@
 
 //#include "TokenNet\TokenClient.h"
 
-#include "TinyNet\Device.h"
+#include "TokenNet\Device.h"
 #include "TinyNet\DevicesManagement.h"
 
 // tokendistributive
