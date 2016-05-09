@@ -4,9 +4,13 @@
 
 #define TIME_DEBUG 0
 
-// 截止2000-01-01的所有秒数
-#define BASE_YEAR_US				63082281600UL
-
+#define UTC		true								// utc 从1970/1/1 开始计时
+#define UTC_CALIBRATE				946684800UL		// 2000/1/1 - 1970/1/1 秒值
+#ifdef UTC
+#define BASE_YEAR_US				62135596800UL		// (63082281600UL-UTC_CALIBRATE)	// 从0 到 2000-01-01的所有秒数
+#else
+#define BASE_YEAR_US				63082281600UL	// 从0 到 2000-01-01的所有秒数
+#endif
 /************************************************ TTime ************************************************/
 
 #define TIME_Completion_IdleValue 0xFFFFFFFFFFFFFFFFull
@@ -154,6 +158,7 @@ UInt64 TTime::Current() const
 void TTime::SetTime(UInt64 seconds)
 {
 	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
+
 	BaseSeconds = seconds - Seconds;
 
 #if DEBUG
@@ -247,9 +252,16 @@ void TTime::Delay(uint us) const
 /************************************************ DateTime ************************************************/
 
 /// 我们的时间起点是 1/1/2000 00:00:00.000.000 在公历里面1/1/2000是星期六
+#ifdef UTC
+#define BASE_YEAR                   1970
+#define BASE_YEAR_LEAPYEAR_ADJUST   484
+#define BASE_YEAR_DAYOFWEEK_SHIFT   4		// 星期偏移
+#else
 #define BASE_YEAR                   2000
 #define BASE_YEAR_LEAPYEAR_ADJUST   484
 #define BASE_YEAR_DAYOFWEEK_SHIFT   6		// 星期偏移
+#endif
+
 //#define BASE_YEAR_US				63082281600UL
 
 const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
@@ -325,7 +337,9 @@ DateTime::DateTime(UInt64 seconds)
 	if(seconds == 0)
 		Buffer(&Year, &Microsecond - &Year + sizeof(Microsecond)).Clear();
 	else
+	{
 		Parse(seconds);
+	}
 }
 
 // 重载等号运算符

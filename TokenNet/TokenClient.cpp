@@ -254,8 +254,9 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			// 握手完成后马上注册或登录
 			Sys.SetTask(_task, true, 0);
 
+			DateTime dt(ext.LocalTime / 1000UL);
 			// 同步本地时间
-			if(ext.LocalTime > 0) ((TTime&)Time).SetTime(ext.LocalTime / 1000000UL);
+			if(ext.LocalTime > 0) ((TTime&)Time).SetTime(dt.TotalSeconds());
 		}
 	}
 	else if(!msg.Reply)
@@ -497,7 +498,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	UInt64 now = Sys.Ms();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
-	if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
+	// if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
 
 	if(Delay)
 		Delay = (Delay + cost) / 2;
