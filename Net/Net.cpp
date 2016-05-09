@@ -88,7 +88,10 @@ IPAddress& IPAddress::operator=(const byte* v)
 
 IPAddress& IPAddress::operator=(const Buffer& arr)
 {
-	arr.CopyTo(0, &Value, 4);
+	//arr.CopyTo(0, &Value, 4);
+	// 第一个字节就是IP长度
+	auto len	= arr[0];
+	if(len >= 4) arr.CopyTo(1, &Value, len);
 
 	return *this;
 }
@@ -153,7 +156,9 @@ IPEndPoint::IPEndPoint(const Buffer& arr)
 IPEndPoint& IPEndPoint::operator=(const Buffer& arr)
 {
 	Address	= arr;
-	arr.CopyTo(4, &Port, 2);
+	//arr.CopyTo(4, &Port, 2);
+	// 第一个字节就是IP长度
+	arr.CopyTo(1 + arr[0], &Port, 2);
 
 	return *this;
 }
