@@ -27,10 +27,7 @@ IPAddress::IPAddress(byte ip1, byte ip2, byte ip3, byte ip4)
 
 IPAddress::IPAddress(const Buffer& arr)
 {
-	//arr.CopyTo(0, &Value, 4);
-	// 第一个字节就是IP长度
-	auto len	= arr[0];
-	if(len >= 4) arr.CopyTo(1, &Value, len);
+	arr.CopyTo(0, &Value, 4);
 }
 
 bool IPAddress::IsAny() const { return Value == 0; }
@@ -91,10 +88,7 @@ IPAddress& IPAddress::operator=(const byte* v)
 
 IPAddress& IPAddress::operator=(const Buffer& arr)
 {
-	//arr.CopyTo(0, &Value, 4);
-	// 第一个字节就是IP长度
-	auto len	= arr[0];
-	if(len >= 4) arr.CopyTo(1, &Value, len);
+	arr.CopyTo(0, &Value, 4);
 
 	return *this;
 }
@@ -111,12 +105,7 @@ ByteArray IPAddress::ToArray() const
 	//return ByteArray((byte*)&Value, 4);
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
-	//return ByteArray(&Value, 4, true);
-	ByteArray bs;
-	bs[0]	= 4;
-	bs.Copy(0, &Value, 4);
-
-	return bs;
+	return ByteArray(&Value, 4, true);
 }
 
 void IPAddress::CopyTo(byte* ips) const
@@ -164,9 +153,7 @@ IPEndPoint::IPEndPoint(const Buffer& arr)
 IPEndPoint& IPEndPoint::operator=(const Buffer& arr)
 {
 	Address	= arr;
-	//arr.CopyTo(4, &Port, 2);
-	// 第一个字节就是IP长度
-	arr.CopyTo(1 + arr[0], &Port, 2);
+	arr.CopyTo(4, &Port, 2);
 
 	return *this;
 }
@@ -177,22 +164,24 @@ ByteArray IPEndPoint::ToArray() const
 	//return ByteArray((byte*)&Value, 4);
 
 	// 要复制数据，而不是直接使用指针，那样会导致外部修改内部数据
-	//ByteArray bs(&Address.Value, 4, true);
-	auto bs	= Address.ToArray();
-	bs.Copy(1 + bs[0], &Port, 2);
+	ByteArray bs(&Address.Value, 4, true);
+	bs.Copy(4, &Port, 2);
 
 	return bs;
 }
 
 void IPEndPoint::CopyTo(byte* ips) const
 {
-	if(ips) ToArray().CopyTo(1, ips, 6);
+	if(ips) ToArray().CopyTo(0, ips, 6);
 }
 
 String& IPEndPoint::ToStr(String& str) const
 {
 	Address.ToStr(str);
 
+	//char ss[7];
+	//int len = sprintf(ss, ":%d", Port);
+	//str.Copy(ss, len, str.Length());
 	str.Concat(':');
 	str.Concat(Port);
 
