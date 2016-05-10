@@ -113,8 +113,9 @@ bool BinaryPair::Get(const String& name, IPEndPoint& value) const
 {
 	auto bs	= Get(name);
 	if(bs.Length() < 6) return false;
-
-	value	= bs;
+	if (bs[0] == 6)return false;	// 单片机这边不支持ipv6
+	Buffer bs2(bs.GetBuffer() + 1, 6);
+	value	= bs2;
 
 	return true;
 }
@@ -142,6 +143,11 @@ bool BinaryPair::Set(const String& name, UInt64 value)
 
 bool BinaryPair::Set(const String& name, const IPEndPoint& value)
 {
-	return Set(name, value.ToArray());
+	MemoryStream ms(7);
+	ms.Write(4);
+	ms.Write(value.ToArray());
+	ByteArray bs(ms.GetBuffer(), ms.Position());
+	return Set(name, bs);
+	//return Set(name, value.ToArray());
 }
 

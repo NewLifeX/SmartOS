@@ -70,6 +70,7 @@ TokenConfig* TokenConfig::Create(const char* vendor, ProtocolType protocol, usho
 		tc.Init();
 		tc.Protocol	= protocol;
 		tc.Load();
+		if(tc.Protocol == 0x00)tc.Protocol = ProtocolType::Udp;	// 默认 UDP 不允许 unknown
 
 		bool rs = tc.New;
 		if(!tc.Vendor)

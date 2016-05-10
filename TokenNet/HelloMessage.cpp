@@ -53,23 +53,12 @@ bool HelloMessage::Read(Stream& ms)
 				MemoryStream urims(uri.GetBuffer(), uri.Length());
 				BinaryPair uribp(urims);
 
-				uint prcl = 0x00;						// 服务店 ProtocolType  17 为UDP
-				uribp.Get("ProtocolType", prcl);
-				prcl >>= 24;							// 大小端问题
-				Protocol = prcl;
+				uribp.Get("Type", Protocol);			// 服务店 ProtocolType  17 为UDP
+				if (Protocol == 0x00)Protocol = 0x11;	// 避免 unknown 出现
 				uribp.Get("Host", Server);
 				uint uintPort;							// 服务端 Port 为 int 类型
 				uribp.Get("Port", uintPort);
-				Port = uintPort >> 16;
-				Port = _REV16(Port);					// 大小端问题
-
-				/*uint prcl = 0x00;						// 服务店 ProtocolType  17 为UDP
-				bp.Get("ProtocolType", prcl);
-				Protocol = prcl == 0x11 ? 0x02 : 0x01;	// Protocol;	// 协议，TCP=1/UDP=2
-				bp.Get("Host", Server);
-				uint uintPort;							// 服务端 Port 为 int 类型
-				bp.Get("Port", uintPort);
-				Port = (*(int*)&uintPort);*/
+				Port = uintPort ;
 			}
 			bp.Get("VisitToken", VisitToken);
 
