@@ -144,7 +144,7 @@ bool BinaryPair::Set(const String& name, UInt64 value)
 bool BinaryPair::Set(const String& name, const IPEndPoint& value)
 {
 	MemoryStream ms(7);
-	ms.Write(4);
+	ms.Write((byte)4);
 	ms.Write(value.ToArray());
 	ByteArray bs(ms.GetBuffer(), ms.Position());
 	return Set(name, bs);
