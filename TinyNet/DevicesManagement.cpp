@@ -23,6 +23,14 @@ DevicesManagement::~DevicesManagement()
 	Current = nullptr;
 }
 
+int	DevicesManagement::PushDev(Device* dv)
+{
+	//DeviceRequest(DeviceAtions::Register, dv);
+	int temp = DevArr.Push(dv);
+	SaveDev();
+	return temp; // DevArr.Push(dv);
+}
+
 bool DevicesManagement::SetFlashCfg(uint addr, uint size)
 {
 	const uint minAddr = 0x8000000 + (Sys.FlashSize << 10) - (64 << 10);
@@ -170,6 +178,8 @@ int DevicesManagement::LoadDev()
 
 	byte len = DevArr.Length();
 	debug_printf("Devices has %d Dev\r\n", len);
+	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
+	if (len != i)SaveDev();
 
 	return i;
 }
@@ -313,7 +323,6 @@ bool DevicesManagement::DeviceProcess(String &act, const Message& msg)
 		//Port->Reply(tmsg);
 	}
 	break;
-
 	case DeviceAtions::Delete:
 	{
 		// 拿到操作对象
@@ -323,7 +332,15 @@ bool DevicesManagement::DeviceProcess(String &act, const Message& msg)
 		// 拿到操作对象s
 		ByteArray idss;
 		bp.Get("IDs", idss);
-		for (int i = 0; i < idss.Length(); i++)DeleteDev(idss[i]);
+
+		for (int i = 0; i < idss.Length(); i++)
+		{
+			auto dv = FindDev(idss[i]);
+			// 外部处理一下
+			if (_DevProcess)_DevProcess(devact, dv, _ClbkParam);
+			DeleteDev(idss[i]);
+		}
+
 		// 准备回复数据
 		if (addr == 0x00 && idss.Length() == 0)
 		{
@@ -411,82 +428,14 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	return true;
 }
 
-// 设备列表 0x21
-bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
-{
-	TS("DevicesManagement::SendDevices");
-
-	if (Port)return false;
-	if (Port->Status < 2) return false;
-
-	TokenMessage msg;
-	msg.Code = 0x21;
-
-	int count = 0;
-	int len = Length();
-
-	for (int i = 0; i < len; i++)
-	{
-		if (DevArr[i] == nullptr) continue;
-		count++;
-	}
-
-	if (dv) count = 1;
-
-	byte buf[1500];		// 1024 字节只能承载 23条数据，udp最大能承载1514字节
-	MemoryStream ms(buf, ArrayLength(buf));
-	//MemoryStream ms(1536);
-	ms.Write((byte)act);
-	ms.Write((byte)count);
-
-	if (len > 0)
-	{
-		if (dv)
-			dv->WriteMessage(ms);
-		else
-		{
-			for (int i = 0; i < len; i++)
-			{
-				auto dv1 = DevArr[i];
-				if (dv1 == nullptr) continue;
-				dv1->WriteMessage(ms);
-			}
-		}
-	}
-
-	msg.Length = ms.Position();
-	msg.Data = ms.GetBuffer();
-
-#if DEBUG
-	switch (act)
-	{
-	case DeviceAtions::List:
-		debug_printf("发送设备列表 共%d个\r\n", count);
-		break;
-	case DeviceAtions::Online:
-		debug_printf("节点上线 ID=0x%02X \t", dv->Address);
-		break;
-	case DeviceAtions::Offline:
-		debug_printf("节点下线 ID=0x%02X \t", dv->Address);
-		break;
-	default: break;
-	}
-#endif
-	if (act == DeviceAtions::List)
-		return Port->Reply(msg);
-	else
-		return Port->Send(msg);
-}
-
 void DevicesManagement::SendDevicesIDs()
 {
-	TokenMessage msg(0x08);
-
 	// 获取IDList
 	MemoryStream idms;
 	WriteIDs(idms);
 	ByteArray idbs(idms.GetBuffer(), idms.Position());
 
+	TokenMessage msg(0x08);
 	MemoryStream ms;
 	BinaryPair bp(ms);
 	bp.Set("Action", String("Device/ListIDs"));
@@ -495,8 +444,63 @@ void DevicesManagement::SendDevicesIDs()
 	msg.SetData(Buffer(ms.GetBuffer(), ms.Position()));
 	if (Port)Port->Send(msg);
 }
+// 设备状态上报  一次一个设备   未完待续
+bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
+{
+	TS("DevicesManagement::SendDevices");
+	// 不许为空
+	if (dv == nullptr)return false;
+	// 不存在主动发送这两条
+	if (act == DeviceAtions::List || act == DeviceAtions::ListIDs)return false;
+	// 保证可以顺利执行
+	if (Port)return false;
+	if (Port->Status < 2) return false;
+	// 只有 Register 需要发送完整设备信息
+	String actstr;
+	switch (act)
+	{
+	case DeviceAtions::Register:
+		actstr = "Device/Register";
+		break;
+		// case DeviceAtions::Update:
+		// 	actstr = "Device/Update";
+		// 	break;
+		// case DeviceAtions::Online:
+		// 	actstr = "Device/Online";
+		// 	break;
+		// case DeviceAtions::Offline:
+		// 	actstr = "Device/Offline";
+		// 	break;
+		// case DeviceAtions::Delete:
+		// 	actstr = "Device/Delete";
+		// 	break;
+		// case DeviceAtions::ListIDs:
+		// 	break;
+		// case DeviceAtions::List:
+		// 	break;
+	default:
+		debug_printf("无法处理的指令\r\n");
+		break;
+	}
+	if (actstr.Length() == 0)return false;
 
-// 节点消息处理 0x21
+	MemoryStream datams;
+	BinaryPair bp(datams);
+	bp.Set("Action", actstr);
+	GetDevInfo((Device*)dv, datams);
+
+	TokenMessage tmsg(0x08);
+	tmsg.SetData(Buffer(datams.GetBuffer(), datams.Position()));
+	Port->Send(tmsg);
+}
+
+void DevicesManagement::DeviceRequest(DeviceAtions act, byte id)
+{
+	if (id == 0x00)return;
+	auto dv = FindDev(id);
+	DeviceRequest(act, dv);
+}
+// 节点消息处理
 void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 {
 	TS("DevicesManagement::DeviceRequest");
@@ -508,14 +512,8 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	switch (act)
 	{
 	case DeviceAtions::List:
-		SendDevices(act, dv);
 		return;
 	case DeviceAtions::Update:
-		SendDevices(act, dv);
-		return;
-	case DeviceAtions::Register:
-		debug_printf("节点注册入网 ID=0x%02X\r\n", id);
-		SendDevices(act, dv);
 		return;
 	case DeviceAtions::Online:
 		debug_printf("节点上线 ID=0x%02X\r\n", id);
@@ -523,26 +521,20 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	case DeviceAtions::Offline:
 		debug_printf("节点离线 ID=0x%02X\r\n", id);
 		break;
+	case DeviceAtions::Register:
+		PushDev((Device*)dv);
+		debug_printf("节点注册入网 ID=0x%02X\r\n", id);
+		SendDevices(act, dv);
+		return;
 	case DeviceAtions::Delete:
-	{
 		debug_printf("节点删除~~ ID=0x%02X\r\n", id);
-		auto dv = FindDev(id);
-		if (dv == nullptr) return;
 		DeleteDev(id);
+		//SendDevices(act, dv);
 		break;
-	}
 	default:
 		debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
 		break;
 	}
-
-	TokenMessage rs;
-	rs.Code = 0x21;
-	rs.Length = 2;
-	rs.Data[0] = (byte)act;
-	rs.Data[1] = id;
-
-	Port->Send(rs);
 }
 
 void DevicesManagement::MaintainState()
@@ -591,3 +583,5 @@ void DevicesManagement::MaintainState()
 		}
 	}
 }
+
+

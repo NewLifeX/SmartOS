@@ -73,10 +73,10 @@ void Gateway::Start()
 		dv->HardID = Sys.ID;
 		dv->Name = Sys.Name;
 
-		pDevMgmt->PushDev(dv);
+		//pDevMgmt->PushDev(dv);
 		// 放进持续在线表
 		pDevMgmt->OnlineAlways.Push(dv);
-		pDevMgmt->SaveDev();
+		pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
 	}
 
 	Client->Open();
@@ -111,7 +111,7 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 		switch (msg.Code)
 		{
 		case 0x01:
-			pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
+			//pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
 			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
 			break;
 		case 0x02:
@@ -145,47 +145,27 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 
 	if (msg.Code == 0x08 || msg.Code == 0x02)
 	{
-		auto ms = msg.ToStream();
-		BinaryPair bp(ms);
-		if (bp.Get("Device/List") || (msg.Code == 0x02 && msg.Reply&&Client->Token != 0))
+		if (msg.Code == 0x02 && msg.Reply && Client->Token != 0)
 		{
 			// 登录以后自动发送设备列表和设备信息
 			// 遍历发送所有设备信息
-			pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
+			pDevMgmt->SendDevicesIDs();
 			return true;
 		}
 
+		auto ms = msg.ToStream();
+		BinaryPair bp(ms);
 		String act;
 		bp.Get("Action", act);
-		if (act.StartsWith("Device/")) 
-		{ 
+		if (act.StartsWith("Device/"))
+		{
 			// 由他内部回复数据
-			pDevMgmt->DeviceProcess(act, msg); 
+			pDevMgmt->DeviceProcess(act, msg);
 			return true;
 		}
 		//if (act.StartsWith("USART/"))xxx();
 		//if (act.StartsWith("IO/"))xxx2();
 	}
-
-
-	/*switch (msg.Code)
-	{
-	case 0x02:
-		// 登录以后自动发送设备列表和设备信息
-		if (msg.Reply && Client->Token != 0)
-		{
-			// 遍历发送所有设备信息
-			pDevMgmt->SendDevices(DeviceAtions::List, nullptr);
-		}
-		break;
-
-	case 0x20:
-		//return OnMode(msg);
-		break;
-
-	case 0x21:
-		return pDevMgmt->DeviceProcess(msg);
-	}*/
 
 	// 应用级消息转发
 	if (msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)

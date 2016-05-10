@@ -73,8 +73,6 @@ void TinyServer::Start()
 	//DevMgmt.SetFlashCfg(DevAddr,DevSize);
 
 	auto count = DevMgmt.LoadDev();
-	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
-	if (DevMgmt.Length() != count)DevMgmt.SaveDev();
 
 	// 添加网关这一条设备信息
 	if (!DevMgmt.FindDev(Cfg->Address))
@@ -88,10 +86,11 @@ void TinyServer::Start()
 		dv->HardID = Sys.ID;
 		dv->Name = Sys.Name;
 
-		DevMgmt.PushDev(dv);
 		// 放进持续在线表
 		DevMgmt.OnlineAlways.Push(dv);
-		DevMgmt.SaveDev();
+		//DevMgmt.PushDev(dv);
+		//DevMgmt.SaveDev();
+		DevMgmt.DeviceRequest(DeviceAtions::Register, dv);
 	}
 	// 注册Token控制设备列表时回调函数
 	DevMgmt.Register([](DeviceAtions act, const Device* dv, void *param) {((TinyServer*)(param))->DevPrsCallback(act, dv); }, this);
@@ -308,8 +307,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		if(dv->Valid())
 		{
-			DevMgmt.PushDev(dv);
-			DevMgmt.SaveDev();	// 写好相关数据 校验通过才能存flash
+			DevMgmt.DeviceRequest(DeviceAtions::Register, dv);
+			//DevMgmt.PushDev(dv);
+			//DevMgmt.SaveDev();	// 写好相关数据 校验通过才能存flash
 		}
 		else
 		{
@@ -420,8 +420,7 @@ bool TinyServer::Disjoin(byte id)
 	msg.Length = ms.Position();
 
 	Send(msg);
-
-	DevMgmt.DeleteDev(id);
+	DevMgmt.DeviceRequest(DeviceAtions::Delete,id);
 
 	return true;
 }
