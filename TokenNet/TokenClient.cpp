@@ -328,6 +328,10 @@ void TokenClient::Register()
 
 	RegisterMessage re;
 	re.User	= Buffer(Sys.ID, 16).ToHex();
+
+	ushort code = _REV16(Sys.Code);
+	String Kind = Buffer(&code, 2).ToHex();
+	re.Pass = Kind;
 	re.Show(true);
 
 	TokenMessage msg(7);
