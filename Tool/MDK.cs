@@ -884,7 +884,7 @@ namespace NewLife.Reflection
                     var ss = s.SplitAsInt(".");
                     Version = new Version(ss[0], ss[1]);
 
-                    //if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从注册表得到路径{0} {1}！", ToolPath, Version);
+                    if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从注册表得到路径{0} {1}！", ToolPath, Version);
                 }
             }
             #endregion
@@ -905,6 +905,8 @@ namespace NewLife.Reflection
                             ToolPath = p;
                             Version = ver;
 
+                    if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从本地磁盘得到路径{0} {1}！", ToolPath, Version);
+
                             break;
                         }
                     }
@@ -912,6 +914,8 @@ namespace NewLife.Reflection
             }
             if (Version < new Version(5, 17))
             {
+				XTrace.WriteLine("版本 {0} 太旧，准备更新", Version);
+				
                 var url = "http://www.newlifex.com/showtopic-1456.aspx";
                 var client = new WebClientX(true, true);
                 client.Log = XTrace.Log;
