@@ -117,6 +117,9 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 		case 0x07:
 			OnRegister(msg, ctrl);
 			break;
+		case 0x08:
+			OnInvoke(msg, ctrl);
+			break;
 	}
 
 	// 消息转发
@@ -399,7 +402,7 @@ void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
 	TS("TokenClient::Login2");
 
 	auto rs	= msg.CreateReply();
-	
+
 	LoginMessage login;
 	// 这里需要随机密匙
 	//login.Key		= Key.Copy(Sys.ID, 16);
@@ -539,4 +542,23 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	cfg->ServerIP	= ip.Value;
 
 	return true;
+}
+
+void TokenClient::Invoke(const String& action, Buffer& bs)
+{
+	TokenMessage msg;
+	auto ms	= msg.ToStream();
+
+	BinaryPair bp(ms);
+
+	bp.Set("Action", action);
+
+	ms.Write(bs);
+
+	Control->Send(msg);
+}
+
+void TokenClient::OnInvoke(TokenMessage& msg, Controller* ctrl)
+{
+
 }

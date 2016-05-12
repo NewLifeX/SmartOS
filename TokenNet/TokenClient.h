@@ -58,7 +58,7 @@ public:
 	void Register();
 	void OnRegister(TokenMessage& msg, Controller* ctrl);
 	// 登录
-	void Login();	
+	void Login();
 	void Login(TokenMessage& msg,Controller* ctrl);
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 
@@ -66,6 +66,15 @@ public:
 	void Ping();
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
 	bool ChangeIPEndPoint(const String& domain, ushort port);
+
+	void Read();
+	void OnRead(TokenMessage& msg, Controller* ctrl);
+	void Write();
+	void OnWrite(TokenMessage& msg, Controller* ctrl);
+	
+	// 远程调用
+	void Invoke(const String& action, Buffer& bs);
+	void OnInvoke(TokenMessage& msg, Controller* ctrl);
 };
 
 // 令牌会话
