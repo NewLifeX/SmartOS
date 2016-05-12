@@ -110,7 +110,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 			if(msg.Reply)
 				OnLogin(msg, ctrl);
 			else
-				Login(msg, ctrl);
+				OnLocalLogin(msg, ctrl);
 			break;
 		case 0x03:
 			OnPing(msg, ctrl);
