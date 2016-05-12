@@ -17,9 +17,9 @@ private:
 	uint	_task;
 
 public:
-	uint		Token;	// 令牌
+	uint	Token;	// 令牌
 
-	int			Status;	// 状态。0准备、1握手完成、2登录后
+	int		Status;	// 状态。0准备、1握手完成、2登录后
 
 	UInt64	LoginTime;	// 登录时间ms
 	UInt64	LastActive;	// 最后活跃时间ms
@@ -42,12 +42,10 @@ public:
 	void*			Param;
 
 // 本地网络支持
-public:
 	Controller* Local;			// 本地网络控制器
 	TArray<TokenSession*> Sessions;	// 会话集合
 
 // 常用系统级消息
-public:
 	// 握手广播
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
@@ -57,13 +55,12 @@ public:
 
 	// 登录
 	void Login();
-	void Login(TokenMessage& msg,Controller* ctrl);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 
-	void Read();
-	void Write();
+	void Read(int start, int size);
+	void Write(int start, const Buffer& bs);
 
 	// 远程调用
 	void Invoke(const String& action, const Buffer& bs);
@@ -76,6 +73,7 @@ private:
 	void OnRegister(TokenMessage& msg, Controller* ctrl);
 
 	bool OnLogin(TokenMessage& msg, Controller* ctrl);
+	bool OnLocalLogin(TokenMessage& msg,Controller* ctrl);
 
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
 	bool ChangeIPEndPoint(const String& domain, ushort port);

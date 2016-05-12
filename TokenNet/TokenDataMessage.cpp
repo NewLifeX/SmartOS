@@ -4,17 +4,17 @@
 
 TokenDataMessage::TokenDataMessage() :Data(0)
 {
-	ID = 0;
-	Start = 0;
-	Size = 0;
+	ID		= 0;
+	Start	= 0;
+	Size	= 0;
 }
 
 TokenDataMessage::TokenDataMessage(const TokenDataMessage& msg)
 {
-	ID = msg.ID;
-	Start = msg.Start;
-	Size = msg.Size;
-	Data = msg.Data;
+	ID		= msg.ID;
+	Start	= msg.Start;
+	Size	= msg.Size;
+	Data	= msg.Data;
 }
 
 // 从数据流中读取消息
@@ -24,7 +24,8 @@ bool TokenDataMessage::Read(Stream& ms)
 	bp.Get("ID", ID);
 	bp.Get("Start", Start);
 	bp.Get("Size", Size);
-	bp.Get("MemoryData", Data);
+	bp.Get("Data", Data);
+
 	return true;
 }
 
@@ -32,10 +33,10 @@ bool TokenDataMessage::Read(Stream& ms)
 void TokenDataMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
-	bp.Set("ID", ID);
+	if(ID) bp.Set("ID", ID);
 	bp.Set("Start", Start);
-	bp.Set("Size", Size);
-	bp.Set("MemoryData", Data);
+	if(Size) bp.Set("Size", Size);
+	if(Data.Length()) bp.Set("Data", Data);
 }
 
 #if DEBUG

@@ -9,6 +9,7 @@
 #include "HelloMessage.h"
 #include "LoginMessage.h"
 #include "RegisterMessage.h"
+#include "TokenDataMessage.h"
 
 #include "Security\MD5.h"
 
@@ -235,7 +236,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
 			ext.ErrMsg.Show(true);
-			
+
 			// 未握手错误，马上重新握手
 			if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
 		}
@@ -395,29 +396,6 @@ void TokenClient::Login()
 	Send(msg);
 }
 
-void TokenClient::Login(TokenMessage& msg, Controller* ctrl)
-{
-	if(msg.Error) return;
-
-	TS("TokenClient::Login2");
-
-	auto rs	= msg.CreateReply();
-
-	LoginMessage login;
-	// 这里需要随机密匙
-	//login.Key		= Key.Copy(Sys.ID, 16);
-	// 随机令牌
-	login.Token		= 123456;
-	login.Reply		= true;
-	login.WriteMessage(rs);
-
-	Reply(rs);
-
-	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
-	ctrl2->Key.Copy(0, login.User, 0, -1);
-	ctrl2->Token 	= login.Token;
-}
-
 bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 {
 	if(!msg.Reply) return false;
@@ -462,6 +440,31 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 
 		debug_printf("\r\n");
 	}
+
+	return true;
+}
+
+bool TokenClient::OnLocalLogin(TokenMessage& msg, Controller* ctrl)
+{
+	if(msg.Reply) return false;
+
+	TS("TokenClient::OnLocalLogin");
+
+	auto rs	= msg.CreateReply();
+
+	LoginMessage login;
+	// 这里需要随机密匙
+	//login.Key		= Key.Copy(Sys.ID, 16);
+	// 随机令牌
+	login.Token		= Sys.Ms();
+	login.Reply		= true;
+	login.WriteMessage(rs);
+
+	Reply(rs);
+
+	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
+	ctrl2->Key.Copy(0, login.User, 0, -1);
+	ctrl2->Token 	= login.Token;
 
 	return true;
 }
@@ -542,6 +545,32 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	cfg->ServerIP	= ip.Value;
 
 	return true;
+}
+
+void TokenClient::Read(int start, int size)
+{
+	TokenDataMessage dm;
+	dm.Start	= start;
+	dm.Size		= size;
+
+	TokenMessage msg;
+	msg.Code	= 0x05;
+	dm.WriteMessage(msg);
+
+	Control->Send(msg);
+}
+
+void TokenClient::Write(int start, const Buffer& bs)
+{
+	TokenDataMessage dm;
+	dm.Start	= start;
+	dm.Data		= bs;
+
+	TokenMessage msg;
+	msg.Code	= 0x06;
+	dm.WriteMessage(msg);
+
+	Control->Send(msg);
 }
 
 void TokenClient::Invoke(const String& action, const Buffer& bs)
