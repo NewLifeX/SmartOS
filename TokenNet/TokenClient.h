@@ -51,29 +51,38 @@ public:
 	// 握手广播
 	HelloMessage	Hello;
 	void SayHello(bool broadcast = false, int port = 0);
-	bool OnHello(TokenMessage& msg, Controller* ctrl);
-	// 跳转
-	bool OnRedirect(HelloMessage& msg);
+
 	// 注册
 	void Register();
-	void OnRegister(TokenMessage& msg, Controller* ctrl);
+
 	// 登录
 	void Login();
 	void Login(TokenMessage& msg,Controller* ctrl);
-	bool OnLogin(TokenMessage& msg, Controller* ctrl);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
+
+	void Read();
+	void Write();
+
+	// 远程调用
+	void Invoke(const String& action, const Buffer& bs);
+
+private:
+	bool OnHello(TokenMessage& msg, Controller* ctrl);
+	// 跳转
+	bool OnRedirect(HelloMessage& msg);
+
+	void OnRegister(TokenMessage& msg, Controller* ctrl);
+
+	bool OnLogin(TokenMessage& msg, Controller* ctrl);
+
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
 	bool ChangeIPEndPoint(const String& domain, ushort port);
 
-	void Read();
 	void OnRead(TokenMessage& msg, Controller* ctrl);
-	void Write();
 	void OnWrite(TokenMessage& msg, Controller* ctrl);
-	
-	// 远程调用
-	void Invoke(const String& action, Buffer& bs);
+
 	void OnInvoke(TokenMessage& msg, Controller* ctrl);
 };
 

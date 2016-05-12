@@ -544,7 +544,7 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	return true;
 }
 
-void TokenClient::Invoke(const String& action, Buffer& bs)
+void TokenClient::Invoke(const String& action, const Buffer& bs)
 {
 	TokenMessage msg;
 	auto ms	= msg.ToStream();
