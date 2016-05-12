@@ -453,7 +453,7 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	// 不存在主动发送这两条
 	if (act == DeviceAtions::List || act == DeviceAtions::ListIDs)return false;
 	// 保证可以顺利执行
-	if (Port)return false;
+	if (Port == nullptr)return false;
 	if (Port->Status < 2) return false;
 	// 只有 Register 需要发送完整设备信息
 	String actstr;
