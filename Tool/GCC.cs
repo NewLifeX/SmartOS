@@ -1114,7 +1114,7 @@ namespace NewLife.Reflection
             //var company = "NewLife_Team";
             var name = String.Format("{0}_{1}", Environment.MachineName, Environment.UserName);
             if (name.GetBytes().Length > company.Length)
-                name = name.CutBinary(company.Length);
+                name = name.Cut(company.Length);
 
             var rs = false;
             // 查找时间字符串，写入真实时间
