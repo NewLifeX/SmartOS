@@ -63,17 +63,17 @@ public:
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
 
+	uint Size() const;
+
+	Buffer ToArray();
+	const Buffer ToArray() const;
+
 protected:
 	const Config&	Cfg;
 	const char* _Name;
 
 	void* _Start;
 	void* _End;
-
-	uint Size() const;
-
-	Buffer ToArray();
-	const Buffer ToArray() const;
 };
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置

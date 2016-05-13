@@ -779,6 +779,8 @@ namespace NewLife.Reflection
 				ss.Add("not const-qualified", "非常量约束");
 				ss.Add("no instance of constructor", "没有构造函数");
 				ss.Add("is undefined", "未定义");
+				ss.Add("declaration is incompatible with", "声明不兼容");
+				ss.Add("is inaccessible", "不可访问");
             }
 
 			ss = Words;

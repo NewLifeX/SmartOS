@@ -6,6 +6,7 @@
 
 #include "Message\Message.h"
 #include "Message\MessageBase.h"
+#include "Message\DataStore.h"
 
 // 令牌消息
 class TokenDataMessage : public MessageBase
@@ -23,6 +24,12 @@ public:
 	virtual bool Read(Stream& ms);
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms) const;
+
+	bool ReadData(const DataStore& ds);
+	bool WriteData(DataStore& ds, bool withData);
+
+	bool ReadData(const Buffer& bs);
+	bool WriteData(Buffer& bs, bool withData);
 
 	// 显示消息内容
 #if DEBUG

@@ -8,6 +8,8 @@
 
 #include "TokenNet\TokenController.h"
 
+#include "Message\DataStore.h"
+
 class TokenSession;
 
 // 微网客户端
@@ -26,6 +28,8 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 
 	Controller* Control;
+	TokenConfig*	Cfg;
+	DataStore	Store;	// 数据存储区
 
 	TokenClient();
 
@@ -78,10 +82,10 @@ private:
 	bool OnPing(TokenMessage& msg, Controller* ctrl);
 	bool ChangeIPEndPoint(const String& domain, ushort port);
 
-	void OnRead(TokenMessage& msg, Controller* ctrl);
-	void OnWrite(TokenMessage& msg, Controller* ctrl);
+	void OnRead(const TokenMessage& msg, Controller* ctrl);
+	void OnWrite(const TokenMessage& msg, Controller* ctrl);
 
-	void OnInvoke(TokenMessage& msg, Controller* ctrl);
+	void OnInvoke(const TokenMessage& msg, Controller* ctrl);
 };
 
 // 令牌会话

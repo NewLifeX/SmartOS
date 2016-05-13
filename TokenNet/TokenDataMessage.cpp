@@ -39,6 +39,49 @@ void TokenDataMessage::Write(Stream& ms) const
 	if(Data.Length()) bp.Set("Data", Data);
 }
 
+// 读取数据
+bool TokenDataMessage::ReadData(const DataStore& ds)
+{
+	return ReadData(ds.Data);
+}
+
+// 读取数据
+bool TokenDataMessage::ReadData(const Buffer& bs)
+{
+	if(!Size) return false;
+
+	TS("TokenDataMessage::ReadData");
+
+	int remain	= bs.Length() - Start;
+	if(remain < 0) return false;
+
+	int len	= Size;
+	if(len > remain) len = remain;
+	if(len > 0) Data	= bs.Sub(Start, len);
+
+	return true;
+}
+
+// 写入数据
+bool TokenDataMessage::WriteData(DataStore& ds, bool withData)
+{
+	TS("TokenDataMessage::WriteData");
+
+	ds.Write(Start, Data);
+
+	return true;
+}
+
+// 写入数据
+bool TokenDataMessage::WriteData(Buffer& bs, bool withData)
+{
+	TS("TokenDataMessage::WriteData");
+
+	bs.Copy(Data, Start);
+
+	return true;
+}
+
 #if DEBUG
 // 显示消息内容
 String& TokenDataMessage::ToStr(String& str) const

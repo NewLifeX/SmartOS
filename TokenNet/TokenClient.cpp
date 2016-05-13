@@ -27,6 +27,7 @@ TokenClient::TokenClient()
 	Delay		= 0;
 
 	Control		= nullptr;
+	Cfg			= nullptr;
 
 	Received	= nullptr;
 	Param		= nullptr;
@@ -159,9 +160,7 @@ void LoopTask(void* param)
 			break;
 		case 1:
 		{
-			auto cfg	= TokenConfig::Current;
-
-			if(!cfg->User)
+			if(!client->Cfg->User)
 				client->Register();
 			else
 				client->Login();
@@ -272,7 +271,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		HelloMessage ext2(Hello);
 		ext2.Reply	= true;
 		// 使用系统ID作为Name
-		ext2.Name	= TokenConfig::Current->User;
+		ext2.Name	= Cfg->User;
 		// 使用系统ID作为Key
 		ext2.Key.Copy(0, Sys.ID, 16);
 		//ext2.Key	= Sys.ID;
@@ -297,7 +296,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	if(!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
-	auto cfg		= TokenConfig::Current;
+	auto cfg		= Cfg;
 	cfg->Protocol	= (ProtocolType)msg.Protocol;
 
 	cfg->Show();
@@ -360,7 +359,7 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 		return;
 	}
 
-	auto cfg	= TokenConfig::Current;
+	auto cfg	= Cfg;
 
 	RegisterMessage rm;
 	rm.ReadMessage(msg);
@@ -385,7 +384,7 @@ void TokenClient::Login()
 
 	LoginMessage login;
 
-	auto cfg	= TokenConfig::Current;
+	auto cfg	= Cfg;
 	login.User	= cfg->User;
 	login.Pass	= MD5::Hash(cfg->Pass);
 
@@ -541,11 +540,12 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	socket->Remote.Port		= port;
 	Control->Port->Open();
 
-	auto cfg		= TokenConfig::Current;
-	cfg->ServerIP	= ip.Value;
+	Cfg->ServerIP	= ip.Value;
 
 	return true;
 }
+
+/******************************** 数据区 ********************************/
 
 void TokenClient::Read(int start, int size)
 {
@@ -573,6 +573,87 @@ void TokenClient::Write(int start, const Buffer& bs)
 	Control->Send(msg);
 }
 
+/*
+请求：起始 + 大小
+响应：起始 + 数据
+*/
+void TokenClient::OnRead(const TokenMessage& msg, Controller* ctrl)
+{
+	if(msg.Reply) return;
+	if(msg.Length < 2) return;
+
+	auto rs	= msg.CreateReply();
+	auto ms	= rs.ToStream();
+
+	TokenDataMessage dm;
+	dm.ReadMessage(msg);
+
+	bool rt	= true;
+	if(dm.Start < 64)
+		rt	= dm.ReadData(Store);
+	else if(dm.Start < 128)
+	{
+		dm.Start	-= 64;
+		rt	= dm.ReadData(Cfg->ToArray());
+		dm.Start	+= 64;
+	}
+
+	if(!rt)
+		rs.Error	= true;
+	else
+		dm.WriteMessage(rs);
+
+	Reply(rs, ctrl);
+}
+
+/*
+请求：1起始 + N数据
+响应：1起始 + 1大小 + N数据
+错误：错误码2 + 1起始 + 1大小
+*/
+void TokenClient::OnWrite(const TokenMessage& msg, Controller* ctrl)
+{
+	if(msg.Reply) return;
+	if(msg.Length < 2) return;
+
+	auto rs	= msg.CreateReply();
+	auto ms	= rs.ToStream();
+
+	TokenDataMessage dm;
+	dm.ReadMessage(msg);
+
+	bool rt	= true;
+	if(dm.Start < 64)
+	{
+		rt	= dm.WriteData(Store, true);
+	}
+	else if(dm.Start < 128)
+	{
+		dm.Start	-= 64;
+		auto bs	= Cfg->ToArray();
+		rt	= dm.WriteData(bs, true);
+		dm.Start	+= 64;
+
+		Cfg->Save();
+	}
+
+	if(!rt)
+		rs.Error	= true;
+	else
+		dm.WriteMessage(rs);
+
+	Reply(rs, ctrl);
+
+	if(dm.Start >= 64 && dm.Start < 128)
+	{
+		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
+		Sys.Sleep(200);
+		Sys.Reset();
+	}
+}
+
+/******************************** 远程调用 ********************************/
+
 void TokenClient::Invoke(const String& action, const Buffer& bs)
 {
 	TokenMessage msg;
@@ -587,7 +668,7 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 	Control->Send(msg);
 }
 
-void TokenClient::OnInvoke(TokenMessage& msg, Controller* ctrl)
+void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
 {
 
 }
