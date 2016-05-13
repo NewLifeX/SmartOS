@@ -104,6 +104,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 	static TokenClient client;
 	client.Control	= &ctrl;
 	//client->Local	= ctrl;
+	client.Cfg		= tk;
 
 	// 如果是TCP，需要再建立一个本地UDP
 	//if(tk->Protocol == ProtocolType::Tcp)
