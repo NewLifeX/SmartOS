@@ -54,7 +54,7 @@ bool HelloMessage::Read(Stream& ms)
 				BinaryPair uribp(urims);
 
 				uribp.Get("Type", Protocol);			// 服务店 ProtocolType  17 为UDP
-				if (Protocol == 0x00)Protocol = 0x11;	// 避免 unknown 出现
+				if (Protocol == 0x00) Protocol = 0x11;	// 避免 unknown 出现
 				uribp.Get("Host", Server);
 				uint uintPort;							// 服务端 Port 为 int 类型
 				uribp.Get("Port", uintPort);
@@ -82,6 +82,7 @@ bool HelloMessage::Read(Stream& ms)
 	bp.Get("Type", Type);
 	bp.Get("Name", Name);
 	bp.Get("Time", LocalTime);
+	bp.Get("Protocol", Protocol);
 	bp.Get("EndPoint", EndPoint);
 	bp.Get("Cipher", Cipher);
 	bp.Get("Key", Key);
@@ -98,6 +99,7 @@ void HelloMessage::Write(Stream& ms) const
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);
 	bp.Set("Time", LocalTime);
+	bp.Set("Protocol", Protocol);
 	bp.Set("EndPoint", EndPoint);
 	bp.Set("Cipher", Cipher);
 	bp.Set("Key", Key);
