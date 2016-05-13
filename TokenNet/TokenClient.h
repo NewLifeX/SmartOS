@@ -71,6 +71,8 @@ public:
 
 private:
 	bool OnHello(TokenMessage& msg, Controller* ctrl);
+	bool OnLocalHello(TokenMessage& msg, Controller* ctrl);
+
 	// 跳转
 	bool OnRedirect(HelloMessage& msg);
 

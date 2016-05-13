@@ -105,7 +105,10 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 	switch(msg.Code)
 	{
 		case 0x01:
-			OnHello(msg, ctrl);
+			if(msg.Reply)
+				OnHello(msg, ctrl);
+			else
+				OnLocalHello(msg, ctrl);
 			break;
 		case 0x02:
 			if(msg.Reply)
@@ -214,6 +217,8 @@ void TokenClient::SayHello(bool broadcast, int port)
 // 握手响应
 bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 {
+	if(!msg.Reply) return false;
+	
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
@@ -222,70 +227,79 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	ext.Show(true);
 
 	// 如果收到响应，并且来自来源服务器
-	if(msg.Reply)
+	if(msg.Error)
 	{
-		if(msg.Error)
-		{
-			if(OnRedirect(ext)) return false;
+		if(OnRedirect(ext)) return false;
 
-			TS("TokenClient::OnHello_Error");
+		TS("TokenClient::OnHello_Error");
 
-			Status	= 0;
-			Token	= 0;
-			debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
+		Status	= 0;
+		Token	= 0;
+		debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
-			ext.ErrMsg.Show(true);
+		ext.ErrMsg.Show(true);
 
-			// 未握手错误，马上重新握手
-			if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
-		}
-		else
-		{
-			TS("TokenClient::OnHello_Reply");
-
-			// 通讯密码
-			if(ext.Key.Length() > 0)
-			{
-				auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-				if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, ext.Key.Length());
-
-				debug_printf("握手得到通信密码：");
-				ext.Key.Show(true);
-			}
-			Status = 1;
-
-			// 握手完成后马上注册或登录
-			Sys.SetTask(_task, true, 0);
-
-			DateTime dt(ext.LocalTime / 1000UL);
-			// 同步本地时间
-			if(ext.LocalTime > 0) ((TTime&)Time).SetTime(dt.TotalSeconds());
-		}
+		// 未握手错误，马上重新握手
+		if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
 	}
-	else if(!msg.Reply)
+	else
 	{
-		TS("TokenClient::OnHello_Request");
+		TS("TokenClient::OnHello_Reply");
 
-		auto rs		= msg.CreateReply();
+		// 通讯密码
+		if(ext.Key.Length() > 0)
+		{
+			auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
+			if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, ext.Key.Length());
 
-		HelloMessage ext2(Hello);
-		ext2.Reply	= true;
-		// 使用系统ID作为Name
-		ext2.Name	= Cfg->User;
-		// 使用系统ID作为Key
-		ext2.Key.Copy(0, Sys.ID, 16);
-		//ext2.Key	= Sys.ID;
-		//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
-		//if(ctrl3) ctrl3->Key = ext2.Key;
+			debug_printf("握手得到通信密码：");
+			ext.Key.Show(true);
+		}
+		Status = 1;
 
-		ext2.Cipher	= "";
-		//ext2.LocalTime = ext.LocalTime;
-		// 使用当前时间
-		ext2.LocalTime = Time.Now().TotalMicroseconds();
-		ext2.WriteMessage(rs);
+		// 握手完成后马上注册或登录
+		Sys.SetTask(_task, true, 0);
 
-		Reply(rs, ctrl);
+		DateTime dt(ext.LocalTime / 1000UL);
+		// 同步本地时间
+		if(ext.LocalTime > 0) ((TTime&)Time).SetTime(dt.TotalSeconds());
 	}
+
+	return true;
+}
+
+bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
+{
+	if(msg.Reply) return false;
+	
+	// 解析数据
+	HelloMessage ext;
+	ext.Reply = msg.Reply;
+
+	ext.ReadMessage(msg);
+	ext.Show(true);
+
+	TS("TokenClient::OnLocalHello");
+
+	auto rs		= msg.CreateReply();
+
+	HelloMessage ext2(Hello);
+	ext2.Reply	= true;
+	// 使用系统ID作为Name
+	ext2.Name	= Cfg->User;
+	// 使用系统ID作为Key
+	ext2.Key.Copy(0, Sys.ID, 16);
+	//ext2.Key	= Sys.ID;
+	//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
+	//if(ctrl3) ctrl3->Key = ext2.Key;
+
+	ext2.Cipher	= "";
+	//ext2.LocalTime = ext.LocalTime;
+	// 使用当前时间
+	ext2.LocalTime = Time.Now().TotalMicroseconds();
+	ext2.WriteMessage(rs);
+
+	Reply(rs, ctrl);
 
 	return true;
 }
