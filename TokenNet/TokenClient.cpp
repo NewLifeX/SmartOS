@@ -199,29 +199,13 @@ void TokenClient::SayHello(bool broadcast, int port)
 	HelloMessage ext(Hello);
 	ext.Reply		= false;
 	ext.LocalTime	= Time.Now().TotalMicroseconds();
-	auto socket		= dynamic_cast<ISocket*>(Control->Port);
-	ext.EndPoint	= socket->Local;
+
+	// 设置握手广播的本地地址和端口
+	//auto socket		= dynamic_cast<ISocket*>(Control->Port);
+	//ext.EndPoint.Address	= socket->Host->IP;
+
 	ext.WriteMessage(msg);
 	ext.Show(true);
-
-	// 广播消息直接用UDP发出
-	/*if(broadcast)
-	{
-		if(!Udp) return;
-
-		// 临时修改远程地址为广播地址
-		IPEndPoint ep = Udp->Remote;
-		Udp->Remote.Address	= IPAddress::Broadcast;
-		Udp->Remote.Port	= port;
-
-		debug_printf("握手广播 ");
-		Control->Send(msg);
-
-		// 还原回来原来的地址端口
-		Udp->Remote = ep;
-
-		return;
-	}*/
 
 	Send(msg);
 }
