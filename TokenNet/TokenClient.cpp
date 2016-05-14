@@ -114,7 +114,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 			if(msg.Reply)
 				OnLogin(msg, ctrl);
 			else
-				OnLocalLogin(msg, ctrl);
+				OnLocalLogin(msg, ctrl);			
 			break;
 		case 0x03:
 			OnPing(msg, ctrl);
@@ -126,6 +126,8 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 			OnInvoke(msg, ctrl);
 			break;
 	}
+	// todo  握手登录心跳消息不需要转发
+	if(msg.Code < 0x03) return true;
 
 	// 消息转发
 	if(Received) Received(ctrl, msg, Param);
@@ -462,22 +464,23 @@ bool TokenClient::OnLocalLogin(TokenMessage& msg, Controller* ctrl)
 	if(msg.Reply) return false;
 
 	TS("TokenClient::OnLocalLogin");
+	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
 
 	auto rs	= msg.CreateReply();
 
 	LoginMessage login;
 	// 这里需要随机密匙
-	//login.Key		= Key.Copy(Sys.ID, 16);
+	login.Key		= ctrl2->Key;
 	// 随机令牌
 	login.Token		= Sys.Ms();
 	login.Reply		= true;
 	login.WriteMessage(rs);
 
-	Reply(rs);
+	Reply(rs, ctrl);
 
-	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
-	ctrl2->Key.Copy(0, login.User, 0, -1);
-	ctrl2->Token 	= login.Token;
+	
+	//ctrl2->Key.Copy(0, login.User, 0, -1);
+	 ctrl2->Token 	= login.Token;
 
 	return true;
 }
