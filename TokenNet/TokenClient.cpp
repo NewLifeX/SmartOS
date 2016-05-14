@@ -57,7 +57,12 @@ void TokenClient::Open()
 
 	// 设置握手广播的本地地址和端口
 	auto sock	= dynamic_cast<ISocket*>(ctrl->Port);
-	if(sock) Hello.EndPoint	= sock->Local;
+	if(sock)
+	{
+		auto& ep = Hello.EndPoint;
+		ep.Address	= sock->Host->IP;
+		ep.Port		= sock->Local.Port;
+	}
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
@@ -66,6 +71,9 @@ void TokenClient::Open()
 void TokenClient::Close()
 {
 	Sys.RemoveTask(_task);
+
+	Control->Close();
+	if(Local && Local != Control) Local->Close();
 }
 
 bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
@@ -114,7 +122,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 			if(msg.Reply)
 				OnLogin(msg, ctrl);
 			else
-				OnLocalLogin(msg, ctrl);			
+				OnLocalLogin(msg, ctrl);
 			break;
 		case 0x03:
 			OnPing(msg, ctrl);
@@ -222,7 +230,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 {
 	if(!msg.Reply) return false;
-	
+
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
@@ -275,9 +283,9 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 {
 	if(msg.Reply) return false;
-	
+
 	auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
-	
+
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
@@ -482,7 +490,7 @@ bool TokenClient::OnLocalLogin(TokenMessage& msg, Controller* ctrl)
 
 	Reply(rs, ctrl);
 
-	
+
 	//ctrl2->Key.Copy(0, login.User, 0, -1);
 	 ctrl2->Token 	= login.Token;
 

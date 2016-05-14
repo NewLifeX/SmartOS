@@ -88,19 +88,22 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 	debug_printf("\r\nCreateClient \r\n");
 
 	// 打开DHCP
-	//static UdpClient udp(net);
 	static Dhcp	dhcp(*host);
 	dhcp.OnStop	= OnDhcpStop;
 	dhcp.Start();
 
 	auto tk = TokenConfig::Current;
+	
+	// 创建连接服务器的Socket
 	auto socket	= host->CreateSocket(tk->Protocol);
 	socket->Remote.Port		= tk->ServerPort;
 	socket->Remote.Address	= IPAddress(tk->ServerIP);
 
+	// 创建连接服务器的控制器
 	static TokenController ctrl;
 	ctrl.Port = dynamic_cast<ITransport*>(socket);
 
+	// 创建客户端
 	static TokenClient client;
 	client.Control	= &ctrl;
 	//client->Local	= ctrl;
@@ -109,10 +112,13 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 	// 如果是TCP，需要再建立一个本地UDP
 	//if(tk->Protocol == ProtocolType::Tcp)
 	{
+		// 建立一个监听内网的UDP Socket
 		socket	= host->CreateSocket(ProtocolType::Udp);
 		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
 		socket->Remote.Address	= IPAddress::Broadcast();
 		socket->Local.Port	= tk->Port;
+		
+		// 建立内网控制器
 		auto token2		= new TokenController();
 		token2->Port	= dynamic_cast<ITransport*>(socket);
 		client.Local	= token2;
@@ -323,8 +329,8 @@ void StartGateway(void* param)
 	// 此时启动网关服务
 	if(gw)
 	{
-		auto& ep = gw->Client->Hello.EndPoint;
-		if(socket) ep.Address = socket->Host->IP;
+		//auto& ep = gw->Client->Hello.EndPoint;
+		//if(socket) ep.Address = socket->Host->IP;
 
 		if(!gw->Running)
 		{
