@@ -274,6 +274,8 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 {
 	if(msg.Reply) return false;
 	
+	auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
+	
 	// 解析数据
 	HelloMessage ext;
 	ext.Reply = msg.Reply;
@@ -290,12 +292,12 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	// 使用系统ID作为Name
 	ext2.Name	= Cfg->User;
 	// 使用系统ID作为Key
-	ext2.Key.Copy(0, Sys.ID, 16);
+	ext2.Key	= ctrl2->Key;
 	//ext2.Key	= Sys.ID;
 	//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
 	//if(ctrl3) ctrl3->Key = ext2.Key;
 
-	ext2.Cipher	= "";
+	ext2.Cipher	= "RC4";
 	//ext2.LocalTime = ext.LocalTime;
 	// 使用当前时间
 	ext2.LocalTime = Time.Now().TotalMicroseconds();
