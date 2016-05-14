@@ -781,6 +781,7 @@ namespace NewLife.Reflection
 				ss.Add("is undefined", "未定义");
 				ss.Add("declaration is incompatible with", "声明不兼容");
 				ss.Add("is inaccessible", "不可访问");
+				ss.Add("expression must have class type", "表达式必须是类");
             }
 
 			ss = Words;
