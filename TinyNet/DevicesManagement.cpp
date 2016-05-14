@@ -480,7 +480,8 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 		// 	break;
 	default:
 		debug_printf("无法处理的指令\r\n");
-		break;
+		return false;
+		
 	}
 	if (actstr.Length() == 0)return false;
 
@@ -492,6 +493,7 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	TokenMessage tmsg(0x08);
 	tmsg.SetData(Buffer(datams.GetBuffer(), datams.Position()));
 	Port->Send(tmsg);
+	return true;
 }
 
 void DevicesManagement::DeviceRequest(DeviceAtions act, byte id)
