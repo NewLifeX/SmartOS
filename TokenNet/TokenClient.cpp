@@ -191,6 +191,8 @@ void TokenClient::SayHello(bool broadcast, int port)
 	HelloMessage ext(Hello);
 	ext.Reply		= false;
 	ext.LocalTime	= Time.Now().TotalMicroseconds();
+	auto socket		= dynamic_cast<ISocket*>(Control->Port);
+	ext.EndPoint	= socket->Local;
 	ext.WriteMessage(msg);
 	ext.Show(true);
 
