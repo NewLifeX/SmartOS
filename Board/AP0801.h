@@ -3,32 +3,33 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-#include "Message\DataStore.h"
 
 #include "TokenNet\TokenClient.h"
-#include "TinyNet\TinyServer.h"
 
-#include "TokenNet\Gateway.h"
-
-#include "App\FlushPort.h"
-
-// 令牌网
+// 阿波罗0801/0802
 class AP0801
 {
 public:
-	static void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
+	OutputPort		Leds[2];
+	InputPort		Buttons[2];
 
-	static ISocketHost* CreateW5500(SPI spi, Pin irq, Pin rst = P0, Pin power = P0, IDataPort* led = nullptr);
-	static ISocketHost* Create2860(SPI spi, Pin irq, Pin rst);
+	OutputPort*		EthernetLed;	// 以太网指示灯
+	OutputPort*		WirelessLed;	// 无线指示灯
 
-	static ITransport* Create2401(SPI spi, Pin ce, Pin irq, Pin power = P0, bool powerInvert = false, IDataPort* led = nullptr);
-	static ITransport* CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pin slp, Pin cfg, IDataPort* led = nullptr);
+	ISocketHost*	Host;			// 网络主机
 	
-	static TokenClient* CreateClient(ISocketHost* host);
-	static TokenClient* CreateClient2860(ISocketHost* host);
-	static TinyServer* CreateServer(ITransport* port);
+	AP0801();
 
-	void SetPower(ITransport* port);
+	void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
+
+	ISocketHost* Create5500();
+	ITransport* Create2401();
+	ITransport* Create8266();
+
+	TokenClient* CreateClient();
+
+	void InitDHCP(Action onNetReady = nullptr);
+	bool QueryDNS(TokenConfig& tk);
 };
 
 #endif
