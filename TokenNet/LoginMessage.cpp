@@ -47,7 +47,7 @@ void LoginMessage::Write(Stream& ms) const
 	else if(!Error)
 	{
 		bp.Set("Token", Token);
-		bp.Set("Password", Pass);
+		bp.Set("Key", Key);
 	}
 }
 
