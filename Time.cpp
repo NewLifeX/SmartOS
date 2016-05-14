@@ -383,10 +383,11 @@ String& DateTime::ToStr(String& str) const
 	str.Concat(Minute, 10, 2);
 	str	+= ':';
 	str.Concat(Second, 10, 2);*/
+	str = str + Year + '-' + Month + '-' + Day + ' ' + Hour + ':' + Minute + ':' + Second;
 
-	char cs[20];
+	/*char cs[20];
 	sprintf(cs, "%04d-%02d-%02d %02d:%02d:%02d", Year, Month, Day, Hour, Minute, Second);
-	str	+= cs;
+	str	+= cs;*/
 
 	return str;
 }
