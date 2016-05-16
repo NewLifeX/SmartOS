@@ -92,8 +92,9 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 
 bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 {
+	auto tctrl = dynamic_cast<TokenController*>(ctrl);
 	// 未登录之前，只能 握手、登录、注册
-	if(Token == 0)
+	if(tctrl->Token == 0)
 	{
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
@@ -451,6 +452,8 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		LoginMessage logMsg;
 		logMsg.ReadMessage(msg);
 		Token = logMsg.Token;
+		auto tctrl = dynamic_cast<TokenController*>(ctrl);
+		tctrl->Token = Token;
 		logMsg.Show(true);
 		debug_printf("令牌：0x%08X ", Token);
 		if (logMsg.Key.Length())
