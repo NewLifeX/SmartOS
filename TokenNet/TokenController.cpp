@@ -137,7 +137,7 @@ bool TokenController::Valid(const Message& msg)
 	auto svr = (IPEndPoint*)Server;
 	auto rmt = (IPEndPoint*)msg.State;
 
-	if (!rmt || svr && *svr != *rmt)
+	if (!rmt)
 	{
 		debug_printf("Token::Valid 非法来源 ");
 		if (rmt) rmt->Show();
