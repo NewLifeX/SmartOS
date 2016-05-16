@@ -138,7 +138,20 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 	if(msg.Code < 0x03) return true;
 
 	// 消息转发
-	if(Received) Received(ctrl, msg, Param);
+	if (Received)
+	{
+		Received(ctrl, msg, Param);
+	}
+	else
+	{
+		switch (msg.Code)
+		{
+		case 0x05: OnRead(msg, ctrl); break;
+		case 0x06: OnWrite(msg, ctrl); break;
+		default:
+			break;
+		}
+	}
 
 	return true;
 }
@@ -600,6 +613,7 @@ void TokenClient::OnRead(const TokenMessage& msg, Controller* ctrl)
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
+	dm.Show(true);
 
 	bool rt	= true;
 	if(dm.Start < 64)
@@ -634,6 +648,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, Controller* ctrl)
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
+	dm.Show(true);
 
 	bool rt	= true;
 	if(dm.Start < 64)
