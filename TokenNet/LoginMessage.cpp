@@ -1,5 +1,4 @@
 ﻿#include "LoginMessage.h"
-#include "Security\MD5.h"
 #include "Message\BinaryPair.h"
 
 // 初始化消息，各字段为0
@@ -38,11 +37,11 @@ void LoginMessage::Write(Stream& ms) const
 
 		if(Salt.Length() > 0)
 			bp.Set("Salt", Salt);
-		else
+		/*else
 		{
 			UInt64 now = Sys.Ms();
-			bp.Set("Salt", MD5::Hash(Buffer(&now, 8)));
-		}
+			bp.Set("Salt", Buffer(&now, 8));
+		}*/
 	}
 	else if(!Error)
 	{

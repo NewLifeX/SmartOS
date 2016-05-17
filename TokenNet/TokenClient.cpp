@@ -3,6 +3,8 @@
 #include "Net\Net.h"
 #include "Net\DNS.h"
 
+#include "Message\BinaryPair.h"
+
 #include "TokenClient.h"
 
 #include "TokenMessage.h"
@@ -11,7 +13,7 @@
 #include "RegisterMessage.h"
 #include "TokenDataMessage.h"
 
-#include "Security\MD5.h"
+#include "Security\RC4.h"
 
 static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
@@ -355,16 +357,19 @@ void TokenClient::Register()
 
 	debug_printf("TokenClient::Register\r\n");
 
-	RegisterMessage re;
-	re.User	= Buffer(Sys.ID, 16).ToHex();
+	RegisterMessage reg;
+	reg.User	= Buffer(Sys.ID, 16).ToHex();
 
-	ushort code = _REV16(Sys.Code);
-	String Kind = Buffer(&code, 2).ToHex();
-	re.Pass = Kind;
-	re.Show(true);
+	// 原始密码作为注册密码
+	reg.Pass	= Cfg->Pass;
+
+	auto now	= Sys.Ms();
+	reg.Salt	= Buffer(&now, 8);
+
+	reg.Show(true);
 
 	TokenMessage msg(7);
-	re.WriteMessage(msg);
+	reg.WriteMessage(msg);
 	Send(msg);
 }
 
@@ -387,10 +392,10 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	auto cfg	= Cfg;
 
-	RegisterMessage rm;
-	rm.ReadMessage(msg);
-	cfg->User	= rm.User;
-	cfg->Pass	= rm.Pass;
+	RegisterMessage reg;
+	reg.ReadMessage(msg);
+	cfg->User	= reg.User;
+	cfg->Pass	= reg.Pass;
 
 	cfg->Show();
 	cfg->Save();
@@ -412,7 +417,14 @@ void TokenClient::Login()
 
 	auto cfg	= Cfg;
 	login.User	= cfg->User;
-	login.Pass	= MD5::Hash(cfg->Pass);
+	//login.Pass	= MD5::Hash(cfg->Pass);
+
+	// 原始密码对盐值进行加密，得到登录密码
+	auto now	= Sys.Ms();
+	auto arr	= Buffer(&now, 8);
+	login.Salt	= arr;
+	RC4::Encrypt(arr, cfg->Pass);
+	login.Pass	= arr.ToHex();
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
