@@ -1,14 +1,6 @@
 ﻿#ifndef _W5500_H_
 #define _W5500_H_
 
-#include "Sys.h"
-#include "Stream.h"
-#include "Spi.h"
-#include "Power.h"
-#include "Net\ITransport.h"
-#include "Net\Net.h"
-#include "Message\DataStore.h"
-
 // 硬件Socket基类
 class HardSocket;
 

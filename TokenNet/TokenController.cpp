@@ -134,7 +134,7 @@ bool TokenController::Valid(const Message& msg)
 	if (Token != 0) return true;
 
 	// 合法来源验证，暂时验证云平台，其它连接将来验证
-	auto svr = (IPEndPoint*)Server;
+	//auto svr = (IPEndPoint*)Server;
 	auto rmt = (IPEndPoint*)msg.State;
 
 	if (!rmt)

@@ -1,4 +1,29 @@
-﻿#include "Queue.h"
+﻿#include "Type.h"
+#include "Buffer.h"
+#include "Array.h"
+#include "ByteArray.h"
+
+#include "Queue.h"
+
+extern void EnterCritical();
+extern void ExitCritical();
+
+
+// 智能IRQ，初始化时备份，销毁时还原
+// SmartIRQ相当霸道，它直接关闭所有中断，再也没有别的任务可以跟当前任务争夺MCU
+class SmartIRQ
+{
+public:
+	SmartIRQ()
+	{
+		EnterCritical();
+	}
+
+	~SmartIRQ()
+	{
+		ExitCritical();
+	}
+};
 
 Queue::Queue(uint len) : _s(len)
 {

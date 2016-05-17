@@ -1,5 +1,7 @@
-﻿#include "Stream.h"
+﻿#include "Sys.h"
 #include "ITransport.h"
+
+#include "Net.h"
 
 #include "Dhcp.h"
 #include "Ethernet.h"

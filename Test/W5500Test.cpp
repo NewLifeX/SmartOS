@@ -1,4 +1,10 @@
-﻿#include "Drivers\W5500.h"
+﻿#include "Sys.h"
+#include "Spi.h"
+#include "Power.h"
+#include "Net\ITransport.h"
+#include "Net\Net.h"
+#include "Message\DataStore.h"
+#include "Drivers\W5500.h"
 
 void TestTask(void* param)
 {

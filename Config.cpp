@@ -1,4 +1,6 @@
-﻿#include "Config.h"
+﻿#include "stddef.h"
+
+#include "Config.h"
 #include "Flash.h"
 #include "Security\Crc.h"
 

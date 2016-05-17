@@ -1,8 +1,6 @@
 ﻿#ifndef _TinyIP_DHCP_H_
 #define _TinyIP_DHCP_H_
 
-#include "Net.h"
-
 // DHCP协议
 class Dhcp
 {

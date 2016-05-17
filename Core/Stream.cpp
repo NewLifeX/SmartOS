@@ -1,4 +1,17 @@
-﻿#include "Stream.h"
+﻿#include <stddef.h>
+
+#include "_Core.h"
+
+#include "Type.h"
+#include "Buffer.h"
+#include "Array.h"
+#include "ByteArray.h"
+#include "SString.h"
+
+#include "Stream.h"
+
+extern ushort _Rev16(ushort);
+extern uint _Rev32(uint);
 
 // 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 Stream::Stream(void* buf, uint len)
@@ -318,7 +331,7 @@ ushort	Stream::ReadUInt16()
 	ushort v;
 	Buffer bs(&v, sizeof(v));
 	if(!Read(bs)) return 0;
-	if(!Little) v = _REV16(v);
+	if(!Little) v = _Rev16(v);
 	return v;
 }
 
@@ -327,7 +340,7 @@ uint	Stream::ReadUInt32()
 	uint v;
 	Buffer bs(&v, sizeof(v));
 	if(!Read(bs)) return 0;
-	if(!Little) v = _REV(v);
+	if(!Little) v = _Rev32(v);
 	return v;
 }
 
@@ -336,7 +349,7 @@ UInt64	Stream::ReadUInt64()
 	UInt64 v;
 	Buffer bs(&v, sizeof(v));
 	if(!Read(bs)) return 0;
-	if(!Little) v = _REV(v >> 32) | ((UInt64)_REV(v & 0xFFFFFFFF) << 32);
+	if(!Little) v = _Rev32(v >> 32) | ((UInt64)_Rev32(v & 0xFFFFFFFF) << 32);
 	return v;
 }
 
@@ -347,21 +360,21 @@ bool Stream::Write(byte value)
 
 bool Stream::Write(ushort value)
 {
-	if(!Little) value = _REV16(value);
+	if(!Little) value = _Rev16(value);
 
 	return Write(Buffer(&value, sizeof(value)));
 }
 
 bool Stream::Write(uint value)
 {
-	if(!Little) value = _REV(value);
+	if(!Little) value = _Rev32(value);
 
 	return Write(Buffer(&value, sizeof(value)));
 }
 
 bool Stream::Write(UInt64 value)
 {
-	if(!Little) value = _REV(value >> 32) | ((UInt64)_REV(value & 0xFFFFFFFF) << 32);
+	if(!Little) value = _Rev32(value >> 32) | ((UInt64)_Rev32(value & 0xFFFFFFFF) << 32);
 
 	return Write(Buffer(&value, sizeof(value)));
 }

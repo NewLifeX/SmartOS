@@ -1,4 +1,13 @@
-﻿#include "W5500.h"
+﻿#include "stddef.h"
+
+#include "Sys.h"
+#include "Spi.h"
+#include "Power.h"
+#include "Net\ITransport.h"
+#include "Net\Net.h"
+#include "Message\DataStore.h"
+
+#include "W5500.h"
 #include "Time.h"
 #include "Task.h"
 

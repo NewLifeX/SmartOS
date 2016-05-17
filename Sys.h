@@ -40,8 +40,12 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 
 #endif
 
-#include "Type.h"
-#include "SString.h"
+#include "Core\Type.h"
+#include "Core\Buffer.h"
+#include "Core\Array.h"
+#include "Core\ByteArray.h"
+#include "Core\SString.h"
+#include "Core\Stream.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"

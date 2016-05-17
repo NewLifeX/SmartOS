@@ -1,9 +1,6 @@
 ﻿#ifndef __String_H__
 #define __String_H__
 
-#include "Sys.h"
-#include "Type.h"
-
 // 字符串助手，主要用于字符串连接
 //class StringHelper;
 class StringSplit;

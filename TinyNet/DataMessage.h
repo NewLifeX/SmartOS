@@ -1,7 +1,7 @@
 ﻿#ifndef __DataMessage_H__
 #define __DataMessage_H__
 
-#include "Stream.h"
+#include "Sys.h"
 #include "Message\DataStore.h"
 #include "Message\Message.h"
 

@@ -21,6 +21,8 @@ namespace NewLife.Reflection
 			build.Output = "F1";
 			build.AddIncludes("..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\Lib\\Inc");
+			build.AddIncludes("..\\Core");
+            build.AddFiles("..\\Core");
             build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
             build.AddFiles("..\\Platform", "Boot_F1.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f10x.s");

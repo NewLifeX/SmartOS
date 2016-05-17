@@ -5,6 +5,13 @@
 #include <math.h>
 #include <stdarg.h>
 
+#include "_Core.h"
+
+#include "Type.h"
+#include "Buffer.h"
+#include "Array.h"
+#include "ByteArray.h"
+
 #include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
