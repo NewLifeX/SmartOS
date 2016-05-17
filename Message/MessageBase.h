@@ -2,7 +2,6 @@
 #define __MessageBase_H__
 
 #include "Sys.h"
-#include "Stream.h"
 #include "Message.h"
 
 // 应用消息基类

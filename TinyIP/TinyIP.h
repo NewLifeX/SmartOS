@@ -4,7 +4,6 @@
 // 模块开发使用说明见后
 
 #include "Sys.h"
-#include "Stream.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
 #include "Net\Ethernet.h"

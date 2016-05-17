@@ -1,6 +1,4 @@
 ﻿#include "TokenConfig.h"
-#include "Net\Net.h"
-#include "Config.h"
 
 TokenConfig* TokenConfig::Current	= nullptr;
 

@@ -2,7 +2,6 @@
 #define __WeakStore_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 // 弱存储。
 // 采用全局变量或者堆分配的变量在系统启动时会被清空。

@@ -2,7 +2,6 @@
 #define __BinaryPair_H__
 
 #include "Sys.h"
-#include "Stream.h"
 #include "Message.h"
 
 #include "Net\Net.h"

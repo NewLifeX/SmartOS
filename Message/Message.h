@@ -2,7 +2,6 @@
 #define __Message_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 // 消息基类
 class Message

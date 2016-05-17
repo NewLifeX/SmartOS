@@ -2,7 +2,6 @@
 #define __DevMgmt_H__
 
 #include "Sys.h"
-#include "Stream.h"
 #include "TokenNet\Device.h"
 #include "TokenNet\DeviceMessage.h"
 

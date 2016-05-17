@@ -2,7 +2,6 @@
 #define __TokenConfig_H__
 
 #include "Sys.h"
-#include "Stream.h"
 #include "Config.h"
 #include "Net\Net.h"
 

@@ -2,7 +2,6 @@
 #define __DataStore_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 class IDataPort;
 

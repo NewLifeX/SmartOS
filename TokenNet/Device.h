@@ -2,7 +2,6 @@
 #define __Device_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 #include "Flash.h"
 #include "TinyNet\TinyConfig.h"

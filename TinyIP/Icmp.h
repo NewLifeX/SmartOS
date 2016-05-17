@@ -2,7 +2,6 @@
 #define _TinyIP_ICMP_H_
 
 #include "Sys.h"
-#include "Stream.h"
 #include "TinyIP.h"
 
 // ICMP协议

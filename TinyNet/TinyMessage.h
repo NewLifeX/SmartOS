@@ -3,7 +3,6 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-#include "Stream.h"
 #include "TokenNet\Device.h"
 
 #include "Message\Controller.h"

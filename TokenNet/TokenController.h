@@ -2,7 +2,6 @@
 #define __TokenController_H__
 
 #include "Sys.h"
-#include "Stream.h"
 #include "Net\ITransport.h"
 
 #include "Message\Controller.h"

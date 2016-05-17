@@ -2,7 +2,6 @@
 #define __Slave_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 class ModbusErrors
 {

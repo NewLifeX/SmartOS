@@ -2,7 +2,6 @@
 #define __TokenMessage_H__
 
 #include "Sys.h"
-#include "Stream.h"
 
 #include "Message\Message.h"
 
