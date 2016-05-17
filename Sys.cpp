@@ -571,6 +571,11 @@ void TSys::Trace(int times) const
 //#endif
 }
 
+/******************************** 临界区 ********************************/
+
+void EnterCritical()	{ __disable_irq(); }
+void ExitCritical()		{ __enable_irq(); }
+
 /******************************** REV ********************************/
 
 uint	_REV(uint value)		{ return __REV(value); }

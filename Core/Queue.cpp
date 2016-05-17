@@ -9,7 +9,7 @@ extern void EnterCritical();
 extern void ExitCritical();
 
 
-// 智能IRQ，初始化时备份，销毁时还原
+/*// 智能IRQ，初始化时备份，销毁时还原
 // SmartIRQ相当霸道，它直接关闭所有中断，再也没有别的任务可以跟当前任务争夺MCU
 class SmartIRQ
 {
@@ -23,7 +23,7 @@ public:
 	{
 		ExitCritical();
 	}
-};
+};*/
 
 Queue::Queue(uint len) : _s(len)
 {
@@ -54,16 +54,20 @@ void Queue::Push(byte dat)
 	// 除法运算是一个超级大祸害，它浪费了大量时间，导致串口中断接收丢数据
 	if(_head >= _s.Capacity()) _head -= _s.Capacity();
 
-	SmartIRQ irq;
+	//SmartIRQ irq;
+	EnterCritical();
 	_size++;
+	ExitCritical();
 }
 
 byte Queue::Pop()
 {
 	if(_size == 0) return 0;
 	{
-		SmartIRQ irq;
+		//SmartIRQ irq;
+		EnterCritical();
 		_size--;
+		ExitCritical();
 	}
 
 	/*
@@ -121,8 +125,10 @@ uint Queue::Write(const Buffer& bs)
 	}
 
 	{
-		SmartIRQ irq;
+		//SmartIRQ irq;
+		EnterCritical();
 		_size += rs;
+		ExitCritical();
 	}
 
 	return rs;
@@ -176,8 +182,10 @@ uint Queue::Read(Buffer& bs)
 	//bs.SetLength(rs, false);
 
 	{
-		SmartIRQ irq;
+		//SmartIRQ irq;
+		EnterCritical();
 		_size -= rs;
+		ExitCritical();
 	}
 	//if(_size == 0) _tail = _head;
 

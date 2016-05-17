@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stddef.h>
 /*#include <stdlib.h>
 #include <string.h>*/
 
@@ -129,6 +130,9 @@ extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行
 
 //#include "Time.h"
 #include "Interrupt.h"
+
+void EnterCritical();
+void ExitCritical();
 
 //extern uint32_t __REV(uint32_t value);
 //extern uint32_t __REV16(uint16_t value);
