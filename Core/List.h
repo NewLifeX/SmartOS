@@ -5,7 +5,7 @@
 class List
 {
 public:
-    List(int count = 0);
+    explicit List(int count = 0);
     //List(void* items, uint count);
 
 	int Count() const;

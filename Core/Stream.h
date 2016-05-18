@@ -21,8 +21,8 @@ public:
 	Stream(void* buf, uint len);
 	Stream(const void* buf, uint len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream(Buffer& bs);
-	Stream(const Buffer& bs);
+	explicit Stream(Buffer& bs);
+	explicit Stream(const Buffer& bs);
 
 	// 数据流容量
 	uint Capacity() const;
@@ -65,7 +65,6 @@ public:
 
 	ByteArray ReadArray();
 	String ReadString();
-	//bool WriteString(const String& str);
 
 	int		ReadByte();
 	ushort	ReadUInt16();
@@ -76,7 +75,7 @@ public:
 	bool Write(ushort value);
 	bool Write(uint value);
 	bool Write(UInt64 value);
-	bool Write(sbyte value)	{ return Write((byte)value); }
+	//bool Write(sbyte value)	{ return Write((byte)value); }
 	bool Write(short value)	{ return Write((ushort)value); }
 	bool Write(int value)	{ return Write((uint)value); }
 	bool Write(Int64 value)	{ return Write((UInt64)value); }

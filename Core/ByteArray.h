@@ -15,8 +15,6 @@ public:
 	explicit ByteArray(const Buffer& arr);
 	ByteArray(const ByteArray& arr) = delete;
 	ByteArray(ByteArray&& rval);
-	//ByteArray(String& str);			// 直接引用数据缓冲区
-	//ByteArray(const String& str);	// 不允许修改，拷贝
 
 	ByteArray& operator = (const Buffer& rhs);
 	ByteArray& operator = (const ByteArray& rhs);

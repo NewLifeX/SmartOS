@@ -15,7 +15,7 @@ private:
 
 public:
 	// 分配指定大小的缓冲区
-	Queue(uint len = 0);
+	explicit Queue(uint len = 0);
 
 	bool Empty() const { return _size == 0; }	// 队列空
 	uint Capacity() const { return _s.Capacity(); }	// 队列容量
