@@ -20,7 +20,7 @@ protected:
 	virtual bool Valid(const Message& msg);
 	// 接收处理函数
 	virtual bool OnReceive(Message& msg);
-	virtual bool SendInternal(const Buffer& bs, const void* state);
+	//virtual bool SendInternal(const Buffer& bs, const void* state);
 
 public:
 	uint		Token;	// 令牌

@@ -155,32 +155,25 @@ bool TokenController::Valid(const Message& msg)
 }
 
 // msg所有成员序列化为data
-static bool Encrypt(Buffer& data, const Buffer& pass)
+static bool Encrypt(Stream& ms, const Buffer& pass)
 {
-	if (data.Length() <= 3) return false;
+	if (ms.Length <= 3) return false;
 	if (pass.Length() == 0) return true;
 
-	// 握手不加密
-	byte code = data[0] & 0x0F;
-	if (code == 0x01) return true;
-
-	Stream ms(data);
 	ms.Seek(2);
 
 	auto len = ms.ReadEncodeInt();
-	//auto bs	= ms.ReadArray(len);
-	ByteArray bs(ms.GetBuffer() + ms.Position(), len);
-	ms.Seek(len);
-
-	//todo 还需要两个字节空余，后面的SetLength不一定生效
+	Buffer bs(ms.ReadBytes(len), len);
 
 	// 计算明文校验码，写在最后面
 	auto crc = Crc::Hash16(bs);
 	RC4::Encrypt(bs, pass);
 
 	ms.Write(crc);
-	return data.SetLength(ms.Position());
+
+	return true;
 }
+
 // Decrypt(Buffer(msg.Data,len),Key)  只处理data部分
 static bool Decrypt(Buffer& data, const Buffer& pass)
 {
@@ -222,7 +215,6 @@ bool TokenController::OnReceive(Message& msg)
 	//ShowMessage("Recv$", msg);
 
 	// 加解密。握手不加密，登录响应不加密
-	//Encrypt(msg, Key);
 	if (msg.Code != 0x01)
 	{
 		Buffer bs(msg.Data, msg.Length + 2);
@@ -256,13 +248,8 @@ bool TokenController::Send(Message& msg)
 	else
 		ShowMessage("Send", msg);
 
-	// 加解密。握手不加密，登录响应不加密
-	//Encrypt(msg, Key);
-
 	// 加入统计
 	if (!msg.Reply) StartSendStat(msg.Code);
-
-	//return Controller::Send(msg);
 
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
@@ -272,20 +259,16 @@ bool TokenController::Send(Message& msg)
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 
+	// 握手不加密
+	if(msg.Code > 0x01 && Key.Length() > 0)
+	{
+		ms.SetPosition(0);
+		if (!Encrypt(ms, Key)) return false;
+	}
+
 	Buffer bs(buf, ms.Position());
-	return SendInternal(bs, msg.State);
-}
 
-bool TokenController::SendInternal(const Buffer& bs, const void* state)
-{
-	auto len = bs.Length() + 2;
-	ByteArray arr(len);
-	arr = bs;
-	arr.SetLength(len);
-
-	if (!Encrypt(arr, Key)) return false;
-
-	return Controller::SendInternal(arr, state);
+	return Controller::SendInternal(bs, msg.State);
 }
 
 void TokenController::ShowMessage(const char* action, const Message& msg)
