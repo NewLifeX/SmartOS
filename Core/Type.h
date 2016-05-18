@@ -1,9 +1,6 @@
 ﻿#ifndef __Type_H__
 #define __Type_H__
 
-/*#include <stdio.h>
-#include <stdlib.h>*/
-
 /* 类型定义 */
 typedef char            sbyte;
 typedef unsigned char   byte;

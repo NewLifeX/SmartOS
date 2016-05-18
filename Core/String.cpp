@@ -24,11 +24,6 @@ String::String(const char* cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
-	/*
-	其实这里可以不用拷贝，内部直接使用这个指针，等第一次修改的时候再拷贝，不过那样过于复杂了
-	*/
-	//if (cstr) copy(cstr, strlen(cstr));
-
 	_Length	= strlen(cstr);
 	if(_Length)
 	{
@@ -50,12 +45,6 @@ String::String(String&& rval) : Array(Arr, ArrayLength(Arr))
 	init();
 	move(rval);
 }
-
-/*String::String(StringHelper&& rval) : Array(Arr, ArrayLength(Arr))
-{
-	init();
-	move(rval);
-}*/
 
 String::String(char c) : Array(Arr, ArrayLength(Arr))
 {
@@ -308,12 +297,6 @@ String& String::operator = (String&& rval)
 	if (this != &rval) move(rval);
 	return *this;
 }
-
-/*String& String::operator = (StringHelper&& rval)
-{
-	if (this != &rval) move(rval);
-	return *this;
-}*/
 
 String& String::operator = (const char* cstr)
 {
@@ -862,33 +845,6 @@ bool String::EndsWith(const char* str) const
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
 }
 
-/*int String::Split(const String& str, StringItem callback)
-{
-	if(str.Length() == 0) return 0;
-
-	int n	= 0;
-	int p	= 0;
-	int e	= 0;
-	while(p < _Length)
-	{
-		// 找到下一个位置。如果找不到，直接移到末尾
-		e	= IndexOf(str, p);
-		if(e < 0) e = _Length;
-
-		n++;
-
-		auto item	= Substring(p, e - p);
-		callback(item);
-
-		// 如果在末尾，说明没有找到
-		if(e == _Length) break;
-
-		p	= e + str.Length();
-	}
-
-	return n;
-}*/
-
 StringSplit String::Split(const String& sep) const
 {
 	return StringSplit(*this, sep);
@@ -958,6 +914,8 @@ String String::ToUpper() const
 
 	return str;
 }
+
+/******************************** 辅助 ********************************/
 
 extern char* itoa(int value, char *string, int radix)
 {
@@ -1068,6 +1026,8 @@ char *dtostrf (double val, char width, byte prec, char* sout)
 	return sout;
 }
 
+/******************************** StringSplit ********************************/
+
 StringSplit::StringSplit(const String& str, const String& sep) :
 	_Str(str),
 	_Sep(sep)
@@ -1079,33 +1039,6 @@ StringSplit::StringSplit(const String& str, const String& sep) :
 	int p	= _Str.IndexOf(_Sep);
 	if(p >= 0) _Length	= p;
 }
-
-/*int String::Split(const String& str, StringItem callback)
-{
-	if(str.Length() == 0) return 0;
-
-	int n	= 0;
-	int p	= 0;
-	int e	= 0;
-	while(p < _Length)
-	{
-		// 找到下一个位置。如果找不到，直接移到末尾
-		e	= IndexOf(str, p);
-		if(e < 0) e = _Length;
-
-		n++;
-
-		auto item	= Substring(p, e - p);
-		callback(item);
-
-		// 如果在末尾，说明没有找到
-		if(e == _Length) break;
-
-		p	= e + str.Length();
-	}
-
-	return n;
-}*/
 
 const String StringSplit::Next()
 {

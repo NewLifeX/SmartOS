@@ -12,20 +12,6 @@
 
 /******************************** Array ********************************/
 
-// 数组最大容量。初始化时决定，后面不允许改变
-//int Array::Capacity() const { return _Capacity; }
-
-/*int MemLen(const void* data)
-{
-	if(!data) return 0;
-
-	// 自动计算长度，\0结尾，单字节大小时才允许
-	int len = 0;
-	const byte* p =(const byte*)data;
-	while(*p++) len++;
-	return len;
-}*/
-
 Array::Array(void* data, int len) : Buffer(data, len)
 {
 	Init();
@@ -45,16 +31,8 @@ Array::Array(const Buffer& rhs) : Buffer(nullptr, 0)
 	Init();
 }
 
-/*Array::Array(const Array& rhs) : Buffer(nullptr, 0)
-{
-	Copy(0, rhs, 0, -1);
-
-	Init();
-}*/
-
 Array::Array(Array&& rval) : Buffer(nullptr, 0)
 {
-	//*this	= rval;
 	move(rval);
 }
 
@@ -128,7 +106,6 @@ Array& Array::operator = (const void* p)
 
 Array& Array::operator = (Array&& rval)
 {
-	//Buffer::operator=(rval);
 	move(rval);
 
 	return *this;

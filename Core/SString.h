@@ -2,9 +2,9 @@
 #define __String_H__
 
 #include "Array.h"
+#include "ByteArray.h"
 
 // 字符串助手，主要用于字符串连接
-//class StringHelper;
 class StringSplit;
 
 // 字符串
@@ -14,7 +14,6 @@ public:
 	String(const char* cstr = "");
 	String(const String& str);
 	String(String&& rval);
-	//String(StringHelper&& rval);
 	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
 	// 包装静态字符串，直接使用，修改时扩容
@@ -52,7 +51,6 @@ public:
 	String& operator = (const String& rhs);
 	String& operator = (const char* cstr);
 	String& operator = (String&& rval);
-	//String& operator = (StringHelper&& rval);
 
 	// 连接内建类型。如果参数无效则认为连接失败
 	bool Concat(const Object& obj);
@@ -83,13 +81,6 @@ public:
 	String& operator += (float num)			{Concat(num); return (*this);}
 	String& operator += (double num)		{Concat(num); return (*this);}
 
-	/*template<typename T>
-	friend StringHelper& operator + (const StringHelper& lhs, T rhs)
-	{
-		auto& a = const_cast<StringHelper&>(lhs);
-		if (!a.Concat(rhs)) a.release();
-		return a;
-	}*/
 	friend String& operator + (String& lhs, const Object& rhs);
 	friend String& operator + (String& lhs, const String& rhs);
 	friend String& operator + (String& lhs, const char* cstr);
@@ -155,8 +146,6 @@ public:
 	bool EndsWith(const String& str) const;
 	bool EndsWith(const char* str) const;
 
-	//typedef void (*StringItem)(const String& item);
-	//int Split(const String& str, StringItem callback);
 	StringSplit Split(const String& sep) const;
 
 	String Substring(int start, int _Length) const;

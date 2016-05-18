@@ -12,9 +12,9 @@ public:
 
 	Array(void* data, int len);
 	Array(const void* data, int len);
-	explicit Array(const Buffer& rhs);
 	Array(const Array& rhs) = delete;
 	Array(Array&& rval);
+	explicit Array(const Buffer& rhs);
 
 	virtual ~Array();
 
@@ -136,13 +136,6 @@ public:
 		_Size	= sizeof(T);
 	}
 
-	// 重载等号运算符，使用另一个固定数组来初始化
-    /*TArray& operator=(const TArray& arr)
-	{
-		Array::operator=(arr);
-
-		return *this;
-	}*/
 	TArray& operator=(const TArray& arr) = delete;
 
 	// 让父类的所有Set函数在这里可见

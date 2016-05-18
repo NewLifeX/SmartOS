@@ -26,20 +26,7 @@ class Buffer : public Object
 public:
 	// 打包一个指针和长度指定的数据区
 	Buffer(void* ptr, int len);
-	// 不能用简写的模板，否则String可能命中自己的构造函数
-	/*template<typename T, int N>
-	Buffer(T (&arr)[N])
-	{
-		_Arr	= (char*)arr;
-		_Length	= sizeof(arr);
-	}
-	template<typename T>
-	Buffer(T (&obj))
-	{
-		_Arr	= (char*)&obj;
-		_Length	= sizeof(obj);
-	}*/
-	// 拷贝构造函数。直接把指针和长度拿过来用
+	// 禁用拷贝构造函数
 	Buffer(const Buffer& buf) = delete;
 	// 对象mov操作，指针和长度归我，清空对方
 	Buffer(Buffer&& rval);
@@ -52,9 +39,9 @@ public:
 	Buffer& operator = (Buffer&& rval);
 
 	// 拿出指针供外部使用
-	inline byte* GetBuffer() { return (byte*)_Arr; }
-	inline const byte* GetBuffer() const { return (byte*)_Arr; }
-	inline int Length() const { return _Length; }
+	inline byte* GetBuffer()				{ return (byte*)_Arr; }
+	inline const byte* GetBuffer() const	{ return (byte*)_Arr; }
+	inline int Length() const				{ return _Length; }
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	virtual bool SetLength(int len);
@@ -71,6 +58,7 @@ public:
 	virtual int CopyTo(int srcIndex, void* dest, int len) const;
 	// 拷贝数据，默认-1长度表示两者最小长度
 	virtual int Copy(int destIndex, const Buffer& src, int srcIndex, int len);
+	// 从另一个对象拷贝数据和长度，长度不足且扩容失败时报错
 	int Copy(const Buffer& src, int destIndex = 0);
 
 	// 用指定字节设置初始化一个区域

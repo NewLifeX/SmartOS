@@ -2,10 +2,7 @@
 
 #include "_Core.h"
 
-#include "Type.h"
 #include "Buffer.h"
-#include "Array.h"
-#include "ByteArray.h"
 #include "SString.h"
 
 /******************************** Buffer ********************************/
@@ -39,7 +36,6 @@ Buffer& Buffer::operator = (const Buffer& rhs)
 {
 	if(!SetLength(rhs.Length())) assert(false, "赋值操作无法扩容");
 
-	//Copy(0, rhs, 0, -1);
 	Copy(rhs, 0);
 
 	return *this;
