@@ -64,7 +64,7 @@ void TcpSocket::OnClose()
 
 bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	auto tcp	= ms.Retrieve<TCP_HEADER>();
 	if(!tcp) return false;
 
 	Header = tcp;
@@ -350,7 +350,7 @@ void TcpSocket::SendAck(uint len)
 	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + len);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	auto tcp	= ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	SendPacket(*tcp, len, TCP_FLAGS_ACK | TCP_FLAGS_PUSH);
 }
@@ -365,7 +365,7 @@ bool TcpSocket::Disconnect()
 	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	auto tcp	= ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	return SendPacket(*tcp, 0, TCP_FLAGS_ACK | TCP_FLAGS_PUSH | TCP_FLAGS_FIN);
 }
@@ -395,7 +395,7 @@ bool TcpSocket::Send(const Buffer& bs)
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	auto tcp	= ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 
 	// 复制数据，确保数据不会溢出
@@ -459,7 +459,7 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 	Stream ms(buf, sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + 3);
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	TCP_HEADER* tcp = ms.Retrieve<TCP_HEADER>();
+	auto tcp	= ms.Retrieve<TCP_HEADER>();
 	tcp->Init(true);
 	//tcp->Seq = 0;	// 仅仅是为了Ack=0，tcp->Seq还是会被Socket的顺序Seq替代
 	//SetSeqAck(tcp, 0, false);

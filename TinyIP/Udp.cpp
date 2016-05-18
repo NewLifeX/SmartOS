@@ -44,7 +44,7 @@ void UdpSocket::OnClose()
 
 bool UdpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();
+	auto udp	= ms.Retrieve<UDP_HEADER>();
 	if(!udp) return false;
 
 	ushort port = _REV16(udp->DestPort);
@@ -146,7 +146,7 @@ bool UdpSocket::Send(const Buffer& bs)
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	UDP_HEADER* udp = ms.Retrieve<UDP_HEADER>();
+	auto udp	= ms.Retrieve<UDP_HEADER>();
 	udp->Init(true);
 
 	// 复制数据，确保数据不会溢出

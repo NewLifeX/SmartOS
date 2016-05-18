@@ -47,7 +47,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	//uint size = ms->Position + sizeof(ARP_HEADER);
 	//if(ms->Length < size) ms->Length = size;
 
-	ARP_HEADER* arp = ms.Retrieve<ARP_HEADER>();
+	auto arp	= ms.Retrieve<ARP_HEADER>();
 	if(!arp) return false;
 
 	/*
@@ -131,28 +131,6 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 
 	return true;
 }
-
-/*bool RequestCallback(TinyIP* tip, void* param, Stream& ms)
-{
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
-	ARP_HEADER* arp = ms.Retrieve<ARP_HEADER>();
-
-	// 处理ARP
-	if(eth->Type == ETH_ARP)
-	{
-		// 是否目标发给本机的Arp响应包。
-		if(arp->DestIP == tip->IP.Value
-		// 不要那么严格，只要有源MAC地址，即使不是发给本机，也可以使用
-		&& arp->Option == 0x0200)
-		{
-			//return &arp->SrcMac;
-			*(MacAddress*)param = arp->SrcMac.Value();
-			return true;
-		}
-	}
-
-	return false;
-}*/
 
 // 请求Arp并返回其Mac。timeout超时3秒，如果没有超时时间，表示异步请求，不用等待结果
 bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)

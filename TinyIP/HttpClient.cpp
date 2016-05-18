@@ -409,16 +409,16 @@ bool TcpSocket::Connect(IPAddress ip, ushort port)
 
 bool Callback(TinyIP* tip, void* param, Stream& ms)
 {
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
+	auto eth	= ms.Retrieve<ETH_HEADER>();
 	if(eth->Type != ETH_IP) return false;
 
-	IP_HEADER* _ip = ms.Retrieve<IP_HEADER>();
+	auto _ip	= ms.Retrieve<IP_HEADER>();
 	if(_ip->Protocol != IP_TCP) return false;
 
-	TcpSocket* socket = (TcpSocket*)param;
+	auto socket	= (TcpSocket*)param;
 	
 	// 这里不移动数据流，方便后面调用Process
-	TCP_HEADER* tcp = (TCP_HEADER*)_ip->Next();
+	auto tcp	= (TCP_HEADER*)_ip->Next();
 
 	// 检查端口
 	ushort port = _REV16(tcp->DestPort);

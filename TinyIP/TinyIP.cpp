@@ -61,7 +61,7 @@ uint TinyIP::Fetch(Stream& ms)
 	//ms.Seek(-len);
 
 	// 获取第一个结构体，不要移动指针
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>(false);
+	auto eth	= ms.Retrieve<ETH_HEADER>(false);
 	UInt64 v = eth->DestMac.Value();
 	// 广播地址有效，直接返回
 	if(!v || v == 0xFFFFFFFFFFFFFFFFull) return len;
@@ -75,7 +75,7 @@ uint TinyIP::Fetch(Stream& ms)
 
 void TinyIP::Process(Stream& ms)
 {
-	ETH_HEADER* eth = ms.Retrieve<ETH_HEADER>();
+	auto eth	= ms.Retrieve<ETH_HEADER>();
 	if(!eth) return;
 
 	// 只处理发给本机MAC的数据包。此时不能进行目标Mac地址过滤，因为可能是广播包
@@ -110,7 +110,7 @@ void TinyIP::Process(Stream& ms)
 	}
 #endif
 
-	IP_HEADER* ip = ms.Retrieve<IP_HEADER>();
+	auto ip	= ms.Retrieve<IP_HEADER>();
 	if(!ip) return;
 
 	// 记录远程信息

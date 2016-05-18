@@ -42,10 +42,10 @@ IcmpSocket::IcmpSocket(TinyIP* tip) : TinySocket(tip, IP_ICMP)
 
 bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	ICMP_HEADER* icmp = ms.Retrieve<ICMP_HEADER>();
+	auto icmp	= ms.Retrieve<ICMP_HEADER>();
 	if(!icmp) return false;
 
-	IPAddress remote = ip.SrcIP;
+	IPAddress remote	= ip.SrcIP;
 
 	// 检查有没有会话等待
 	if(icmp->Type == 0 && _IcmpSession != nullptr && _IcmpSession->Check(remote, icmp))
@@ -115,7 +115,7 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	ICMP_HEADER* icmp = ms.Retrieve<ICMP_HEADER>();
+	auto icmp	= ms.Retrieve<ICMP_HEADER>();
 	icmp->Init(true);
 
 	icmp->Type = 8;
