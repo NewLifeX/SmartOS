@@ -146,9 +146,9 @@ uint DateTime::TotalSeconds()
 
 UInt64 DateTime::TotalMs()
 {
-	uint sec = TotalSeconds();
+	UInt64 sec = (UInt64)TotalSeconds();
 
-	return sec * 1000UL + Ms;
+	return sec * 1000UL + (UInt64)Ms;
 }
 
 /*UInt64 DateTime::TotalUs()
