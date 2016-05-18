@@ -1,9 +1,4 @@
-﻿#include "Type.h"
-#include "Buffer.h"
-#include "Array.h"
-#include "ByteArray.h"
-
-#include "Queue.h"
+﻿#include "Queue.h"
 
 extern void EnterCritical();
 extern void ExitCritical();

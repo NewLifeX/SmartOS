@@ -1,6 +1,8 @@
 ﻿#ifndef _ByteArray_H_
 #define _ByteArray_H_
 
+#include "Array.h"
+
 // 字节数组
 class ByteArray : public Array
 {

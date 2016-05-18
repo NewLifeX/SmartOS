@@ -1,6 +1,8 @@
 ﻿#ifndef _Buffer_H_
 #define _Buffer_H_
 
+#include "Type.h"
+
 /*
 数据区设计原则：
 1，固定数据区封装 Buffer	=> Object
