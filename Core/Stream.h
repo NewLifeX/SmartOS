@@ -41,19 +41,13 @@ public:
 	// 数据流当前位置指针。注意：扩容后指针会改变！
     byte* Current() const;
 
-	// 从当前位置读取数据，填充到目标数组
-	//uint Read(void* buf, uint offset, int count);
 	// 读取7位压缩编码整数
 	uint ReadEncodeInt();
 	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
 	uint Read(Buffer& bs);
 
-	// 把数据写入当前位置
-	//bool Write(const void* buf, uint offset, uint count);
 	// 写入7位压缩编码整数
 	uint WriteEncodeInt(uint value);
-	// 写入字符串，先写入压缩编码整数表示的长度
-	//uint Write(const char* str);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
 	bool Write(const Buffer& bs);
 

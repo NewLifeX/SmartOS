@@ -101,21 +101,6 @@ byte* Stream::GetBuffer() const { return _Buffer; }
 // 数据流当前位置指针。注意：扩容后指针会改变！
 byte* Stream::Current() const { return &_Buffer[_Position]; }
 
-/*// 从当前位置读取数据
-uint Stream::Read(void* buf, uint offset, int count)
-{
-	assert(buf, "Stream::Read buf Error");
-
-	if(count == 0) return 0;
-
-	count	= Buffer(_Buffer, Length).CopyTo(_Position, (byte*)buf + offset, count);
-
-	// 游标移动
-	_Position += count;
-
-	return count;
-}*/
-
 // 读取7位压缩编码整数
 uint Stream::ReadEncodeInt()
 {
@@ -137,7 +122,6 @@ uint Stream::Read(Buffer& bs)
 {
 	if(bs.Length() == 0) return 0;
 
-	//uint count = Read(bs.GetBuffer(), 0, bs.Length());
 	Buffer ss(_Buffer, Length);
 	int count	= bs.Copy(0, ss, _Position, bs.Length());
 
@@ -149,24 +133,6 @@ uint Stream::Read(Buffer& bs)
 	return count;
 }
 
-/*// 把数据写入当前位置
-bool Stream::Write(const void* buf, uint offset, uint count)
-{
-	assert(buf, "Stream::Read buf Error");
-
-	if(!CanWrite) return false;
-	if(!CheckRemain(count)) return false;
-
-	//memcpy(Current(), (byte*)buf + offset, count);
-	count	= Buffer(_Buffer, Length).Copy(_Position, (byte*)buf + offset, count);
-
-	_Position += count;
-	// 内容长度不是累加，而是根据位置而扩大
-	if(_Position > Length) Length = _Position;
-
-	return true;
-}*/
-
 // 写入7位压缩编码整数
 uint Stream::WriteEncodeInt(uint value)
 {
@@ -174,35 +140,18 @@ uint Stream::WriteEncodeInt(uint value)
 
 	byte buf[8];
 	int k	= 0;
-	//uint count	= 1;
 	for(int i = 0; i < 4 && value >= 0x80; i++)
 	{
 		buf[k++]	= (byte)(value | 0x80);
-		//Write(&temp, 0, 1);
 
-		//count++;
 		value	>>= 7;
 	}
 	{
 		buf[k++] = (byte)value;
-		//Write(&temp, 0, 1);
 	}
 
 	return Write(Buffer(buf, k));
 }
-
-/*// 写入字符串，先写入压缩编码整数表示的长度
-uint Stream::Write(const char* str)
-{
-	if(!CanWrite) return false;
-
-	int len = strlen(str);
-
-	WriteEncodeInt(len);
-	if(len) Write((byte*)str, 0, len);
-
-	return len;
-}*/
 
 // 把字节数组的数据写入到数据流。不包含长度前缀
 bool Stream::Write(const Buffer& bs)
@@ -220,8 +169,6 @@ bool Stream::Write(const Buffer& bs)
 	if(_Position > Length) Length = _Position;
 
 	return true;
-
-	//return Write(bs.GetBuffer(), 0, bs.Length());
 }
 
 // 读取指定长度的数据并返回首字节指针，移动数据流位置
@@ -265,7 +212,6 @@ uint Stream::ReadArray(Buffer& bs)
 		return 0;
 	}
 
-	//return Read(bs.GetBuffer(), 0, len);
 	return Read(bs);
 }
 
@@ -300,18 +246,8 @@ String Stream::ReadString()
 
 	ReadArray(str);
 
-	/*uint len = ReadEncodeInt();
-	if(!len) return 0;
-
-	str	= (char*)ReadBytes(len);*/
-
 	return str;
 }
-
-/*bool Stream::WriteString(const String& str)
-{
-	return false;
-}*/
 
 int	Stream::ReadByte()
 {
@@ -376,6 +312,8 @@ bool Stream::Write(UInt64 value)
 	return Write(Buffer(&value, sizeof(value)));
 }
 
+/******************************** MemoryStream ********************************/
+
 MemoryStream::MemoryStream(uint len) : Stream(_Arr, ArrayLength(_Arr))
 {
 	_needFree	= false;
@@ -398,9 +336,7 @@ MemoryStream::~MemoryStream()
 	assert_ptr(this);
 	if(_needFree)
 	{
-		//if(_Buffer != _Arr)
-		if(_needFree)
-			delete[] _Buffer;
+		if(_Buffer != _Arr) delete[] _Buffer;
 		_Buffer = nullptr;
 	}
 }
@@ -411,13 +347,6 @@ bool MemoryStream::CheckRemain(uint count)
 	// 容量不够，需要扩容
 	if(count > remain)
 	{
-		/*if(!_needFree && _Buffer != _Arr)
-		{
-			debug_printf("数据流 0x%08X 剩余容量 %d 不足 %d ，而外部缓冲区无法扩容！\r\n", this, remain, count);
-			//assert_param(false);
-			return false;
-		}*/
-
 		// 原始容量成倍扩容
 		uint total = _Position + count;
 		uint size = _Capacity;
@@ -425,12 +354,9 @@ bool MemoryStream::CheckRemain(uint count)
 
 		// 申请新的空间，并复制数据
 		byte* bufNew = new byte[size];
-		//if(_Position > 0) memcpy(bufNew, _Buffer, _Position);
 		if(Length > 0) Buffer(_Buffer, Length).CopyTo(0, bufNew, -1);
 
-		//if(_Buffer != _Arr)
-		if(_needFree)
-			delete[] _Buffer;
+		if(_Buffer != _Arr) delete[] _Buffer;
 
 		_Buffer		= bufNew;
 		_Capacity	= size;
