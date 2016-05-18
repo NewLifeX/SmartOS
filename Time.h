@@ -77,45 +77,6 @@ public:
 	void Show(const char* format = nullptr);
 };
 
-// 系统时钟
-class DateTime : public Object
-{
-public:
-	ushort Year;
-	byte Month;
-	byte DayOfWeek;
-	byte Day;
-	byte Hour;
-	byte Minute;
-	byte Second;
-	ushort Millisecond;
-	ushort Microsecond;
-
-	DateTime();
-	DateTime(UInt64 seconds);
-
-	// 重载等号运算符
-    DateTime& operator=(UInt64 seconds);
-
-	DateTime& Parse(UInt64 seconds);
-	DateTime& ParseUs(UInt64 us);
-	uint TotalSeconds();
-	UInt64 TotalMicroseconds();
-
-	virtual String& ToStr(String& str) const;
-
-	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
-	/*
-	d短日期 M/d/yy
-	D长日期 yyyy-MM-dd
-	t短时间 mm:ss
-	T长时间 HH:mm:ss
-	f短全部 M/d/yy HH:mm
-	F长全部 yyyy-MM-dd HH:mm:ss
-	*/
-	const char* GetString(byte kind = 'F', char* str = nullptr);
-};
-
 /*
 开发历史：
 

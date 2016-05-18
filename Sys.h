@@ -47,6 +47,7 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 #include "Core\ByteArray.h"
 #include "Core\SString.h"
 #include "Core\Stream.h"
+#include "Core\DateTime.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"
