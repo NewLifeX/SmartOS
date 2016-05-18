@@ -28,5 +28,6 @@ void TestMessage(OutputPort* leds);
 void TestBuffer();
 void TestString();
 void TestArray();
+void TestDateTime();
 
 #endif

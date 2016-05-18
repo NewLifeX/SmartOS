@@ -214,7 +214,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 
 	HelloMessage ext(Hello);
 	ext.Reply		= false;
-	ext.LocalTime	= Time.Now().TotalMicroseconds();
+	ext.LocalTime	= Time.Now().TotalMs();
 
 	// 设置握手广播的本地地址和端口
 	//auto socket		= dynamic_cast<ISocket*>(Control->Port);
@@ -310,7 +310,7 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	ext2.Cipher	= "RC4";
 	//ext2.LocalTime = ext.LocalTime;
 	// 使用当前时间
-	ext2.LocalTime = Time.Now().TotalMicroseconds();
+	ext2.LocalTime = Time.Now().TotalMs();
 	ext2.WriteMessage(rs);
 
 	Reply(rs, ctrl);

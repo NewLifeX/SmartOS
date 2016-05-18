@@ -29,13 +29,15 @@ AP0801::AP0801()
 	WirelessLed	= nullptr;
 }
 
-uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
+#if DEBUG
+static uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
 	debug_printf("OnSerial len=%d \t", bs.Length());
 	bs.Show(true);
 
 	return 0;
 }
+#endif
 
 void AP0801::Setup(ushort code, const char* name, COM message, int baudRate)
 {

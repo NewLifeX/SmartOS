@@ -15,7 +15,7 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	ushort code = _REV16(Sys.Code);
 	Type		= Buffer(&code, 2).ToHex();
 	Name		= Sys.Company;
-	LocalTime	= Time.Now().TotalMicroseconds();
+	LocalTime	= Time.Now().TotalMs();
 	Cipher[0]	= 1;
 
 	Protocol	= 17;
@@ -134,7 +134,7 @@ String& HelloMessage::ToStr(String& str) const
 	str = str + " " + Type + " " + Name + " ";
 
 	DateTime dt;
-	dt.ParseUs(LocalTime*1000);
+	dt.ParseMs(LocalTime);
 	str += dt;
 
 	str = str + " " + EndPoint;
@@ -150,7 +150,7 @@ String& HelloMessage::ToStr(String& str) const
 
 TokenPingMessage::TokenPingMessage()
 {
-	TimeX = Time.Now().TotalMicroseconds();
+	TimeX = Time.Now().TotalMs();
 }
 TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg)
 {
@@ -180,7 +180,7 @@ String& TokenPingMessage::ToStr(String& str) const
 	if (Reply) str += '#';
 
 	DateTime dt;
-	dt.ParseUs(TimeX);
+	dt.ParseMs(TimeX);
 	str += dt;
 
 	return str;

@@ -101,6 +101,20 @@ DateTime::DateTime()
 	Ms		= 0;
 }
 
+DateTime::DateTime(ushort year, byte month, byte day)
+{
+	Year	= year;
+	Month	= month;
+	Day		= day;
+	Hour	= 0;
+	Minute	= 0;
+	Second	= 0;
+	Ms		= 0;
+
+	uint days	= YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
+	DayOfWeek	= (days + BASE_YEAR_DAYOFWEEK_SHIFT) % 7;
+}
+
 DateTime::DateTime(uint seconds)
 {
 	//if(seconds == 0)
@@ -130,9 +144,9 @@ uint DateTime::TotalSeconds()
 
 UInt64 DateTime::TotalMs()
 {
-	UInt64 sec = (UInt64)TotalSeconds();
+	uint sec = TotalSeconds();
 
-	return sec * 1000 + Ms;
+	return sec * 1000UL + Ms;
 }
 
 /*UInt64 DateTime::TotalUs()

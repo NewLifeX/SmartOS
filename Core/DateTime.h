@@ -16,6 +16,7 @@ public:
 	//ushort Us;
 
 	DateTime();
+	DateTime(ushort year, byte month, byte day);
 	DateTime(uint seconds);
 
 	// 重载等号运算符
