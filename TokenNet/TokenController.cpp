@@ -262,7 +262,18 @@ bool TokenController::Send(Message& msg)
 	// 加入统计
 	if (!msg.Reply) StartSendStat(msg.Code);
 
-	return Controller::Send(msg);
+	//return Controller::Send(msg);
+
+	// 如果没有传输口处于打开状态，则发送失败
+	if(!Port->Open()) return false;
+
+	byte buf[1472];
+	Stream ms(buf, ArrayLength(buf));
+	// 带有负载数据，需要合并成为一段连续的内存
+	msg.Write(ms);
+
+	Buffer bs(buf, ms.Position());
+	return SendInternal(bs, msg.State);
 }
 
 bool TokenController::SendInternal(const Buffer& bs, const void* state)

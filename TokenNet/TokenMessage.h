@@ -10,7 +10,7 @@ public:
 	//byte	OneWay;		// 单向传输。无应答
 	byte	Seq;		// 消息序号
 	
-	byte	_Data[256];	// 数据
+	byte	_Data[512];	// 数据
 
 	static const uint HeaderSize = 1 + 1 + 1;	// 消息头部大小
 	static const uint MinSize = HeaderSize + 0;	// 最小消息大小
