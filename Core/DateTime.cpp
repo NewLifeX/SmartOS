@@ -18,7 +18,7 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 
 #define IS_LEAP_YEAR(y)             (((y % 4 == 0) && (y % 100 != 0)) || (y % 400 == 0))
 // 基于基本年的闰年数，不包含当年
-#define NUMBER_OF_LEAP_YEARS(y)     ((((y - 1) / 4) - ((y - 1) / 100) + ((y - 1) / 400)) - BASE_YEAR_LEAPYEAR_ADJUST) 
+#define NUMBER_OF_LEAP_YEARS(y)     ((((y - 1) / 4) - ((y - 1) / 100) + ((y - 1) / 400)) - BASE_YEAR_LEAPYEAR_ADJUST)
 #define NUMBER_OF_YEARS(y)          (y - BASE_YEAR)
 
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
@@ -40,7 +40,7 @@ DateTime& DateTime::Parse(uint seconds)
     time /= 24;
 
 	uint day	= time;
-	
+
 	// 基本年的一天不一定是星期天，需要偏移BASE_YEAR_DAYOFWEEK_SHIFT
     st.DayOfWeek = (day + BASE_YEAR_DAYOFWEEK_SHIFT) % 7;
     st.Year = (ushort)(day / 365 + BASE_YEAR);
@@ -66,6 +66,8 @@ DateTime& DateTime::Parse(uint seconds)
 
 	// 今年总天数减去月份天数，得到该月第几天
     st.Day = (ushort)(day - mtd + 1);
+
+	Ms	= 0;
 
 	return st;
 }
