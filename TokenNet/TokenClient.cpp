@@ -12,6 +12,7 @@
 #include "LoginMessage.h"
 #include "RegisterMessage.h"
 #include "TokenDataMessage.h"
+#include "ErrorMessage.h"
 
 #include "Security\RC4.h"
 
@@ -381,11 +382,14 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	if(msg.Error)
 	{
-		auto ms		= msg.ToStream();
-		byte result = ms.ReadByte();
+		//auto ms		= msg.ToStream();
+		//byte result = ms.ReadByte();
+		ErrorMessage em;
+		em.Read(msg);
 
-		debug_printf("注册失败，错误码 0x%02X！", result);
-		ms.ReadString().Show(true);
+		debug_printf("注册失败，错误码 0x%02X！", em.ErrorCode);
+		//ms.ReadString().Show(true);
+		em.ErrorContent.Show(true);
 
 		return;
 	}
