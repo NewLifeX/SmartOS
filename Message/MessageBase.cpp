@@ -20,7 +20,9 @@ bool MessageBase::ReadMessage(const Message& msg)
 	Reply	= msg.Reply;
 	Error	= msg.Error;
 
-	Stream ms(msg.Data, msg.Length);
+	//Stream ms(msg.Data, msg.Length);
+	auto ms	= msg.ToStream();
+
 	return Read(ms);
 }
 
@@ -30,10 +32,11 @@ void MessageBase::WriteMessage(Message& msg) const
 
 	// 如果是令牌消息，这里就要自己小心了
 	//Stream ms(msg.Data, 256);
-	MemoryStream ms;
+	//MemoryStream ms;
+	auto ms	= msg.ToStream();
 
 	Write(ms);
 
-	//msg.Length = ms.Position();
-	msg.SetData(Buffer(ms.GetBuffer(), ms.Position()));
+	msg.Length = ms.Position();
+	//msg.SetData(Buffer(ms.GetBuffer(), ms.Position()));
 }

@@ -46,7 +46,8 @@ bool Message::Clone(const Message& msg)
 Stream Message::ToStream()
 {
 	Stream ms(Data, MaxDataSize());
-	ms.Length = Length;
+	ms.Length	= Length;
+	ms.CanResize	= false;
 
 	return ms;
 }
@@ -54,7 +55,8 @@ Stream Message::ToStream()
 Stream Message::ToStream() const
 {
 	Stream ms((const byte*)Data, MaxDataSize());
-	ms.Length = Length;
+	ms.Length	= Length;
+	ms.CanResize	= false;
 
 	return ms;
 }

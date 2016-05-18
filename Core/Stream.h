@@ -16,6 +16,7 @@ public:
 	uint Length;	// 数据长度
 	bool Little;	// 默认小字节序。仅影响数据读写操作
 	bool CanWrite;	// 是否可写
+	bool CanResize;	// 是否可以自动扩容
 
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream(void* buf, uint len);

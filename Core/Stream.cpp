@@ -44,6 +44,7 @@ void Stream::Init(void* buf, uint len)
 	_Capacity	= len;
 	_Position	= 0;
 	CanWrite	= true;
+	CanResize	= true;
 	Length		= len;
 	Little		= true;
 }
@@ -54,8 +55,11 @@ bool Stream::CheckRemain(uint count)
 	// 容量不够，需要扩容
 	if(count > remain)
 	{
-		debug_printf("数据流 0x%08X 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
-		assert(false, "无法扩容");
+		if(CanResize)
+			debug_printf("数据流 0x%08X 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
+		else
+			assert(false, "无法扩容");
+
 		return false;
 	}
 
@@ -347,6 +351,8 @@ bool MemoryStream::CheckRemain(uint count)
 	// 容量不够，需要扩容
 	if(count > remain)
 	{
+		if(!CanResize) return Stream::CheckRemain(count);
+
 		// 原始容量成倍扩容
 		uint total = _Position + count;
 		uint size = _Capacity;
