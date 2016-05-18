@@ -86,19 +86,6 @@ uint TokenMessage::MaxDataSize() const
 	return Data == _Data ? ArrayLength(_Data) : Length;
 }
 
-/*// 设置错误信息字符串
-void TokenMessage::SetError(byte errorCode, const char* error, int errLength)
-{
-	Error	= errorCode != 0;
-	Length	= 1 + errLength;
-	Data[0]	= errorCode;
-	if(errLength > 0)
-	{
-		assert_ptr(error);
-		Buffer(Data + 1, errLength)	= error;
-	}
-}*/
-
 // 创建当前消息对应的响应消息。设置序列号、标识位
 TokenMessage TokenMessage::CreateReply() const
 {

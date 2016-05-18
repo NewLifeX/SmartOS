@@ -1,8 +1,6 @@
 ﻿#ifndef __TokenMessage_H__
 #define __TokenMessage_H__
 
-#include "Sys.h"
-
 #include "Message\Message.h"
 
 // 令牌消息
@@ -32,8 +30,6 @@ public:
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;
-	//// 设置错误信息字符串
-	//void SetError(byte errorCode, const char* error, int errLength);
 
 	// 创建当前消息对应的响应消息。设置序列号、标识位
 	TokenMessage CreateReply() const;

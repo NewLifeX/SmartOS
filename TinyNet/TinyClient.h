@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 
-#include "TinyMessage.h"
+#include "TinyController.h"
 #include "TinyConfig.h"
 
 #include "Message\DataStore.h"
