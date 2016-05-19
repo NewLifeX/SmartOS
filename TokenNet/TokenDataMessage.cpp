@@ -42,7 +42,11 @@ void TokenDataMessage::Write(Stream& ms) const
 // 读取数据
 bool TokenDataMessage::ReadData(const DataStore& ds)
 {
-	return ReadData(ds.Data);
+	ByteArray bs(Size);
+	auto ds2 = (DataStore*)&ds;
+	ds2->Read(Start, bs);
+
+	return ReadData(bs);
 }
 
 // 读取数据
@@ -52,13 +56,15 @@ bool TokenDataMessage::ReadData(const Buffer& bs)
 
 	TS("TokenDataMessage::ReadData");
 
-	int remain	= bs.Length() - Start;
-	if(remain < 0) return false;
+	//int remain	= bs.Length() - Start;
+	//if(remain < 0) return false;
 
-	int len	= Size;
-	if(len > remain) len = remain;
-	if(len > 0) Data	= bs.Sub(Start, len);
+	//int len	= Size;
+	//if(len > remain) len = remain;
+	//if (len > 0) Data = bs;// .Sub(Start, len);
 
+	if (bs.Length() == 0)return false;
+	Data = bs;
 	return true;
 }
 

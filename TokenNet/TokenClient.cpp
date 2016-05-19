@@ -644,10 +644,16 @@ void TokenClient::OnRead(const TokenMessage& msg, Controller* ctrl)
 		dm.Start	+= 64;
 	}
 
-	if(!rt)
-		rs.Error	= true;
+	if (!rt)
+	{
+		debug_printf("rt == false\r\n");
+		rs.Error = true;
+	}
 	else
+	{
+		dm.Show(true);
 		dm.WriteMessage(rs);
+	}
 
 	Reply(rs, ctrl);
 }
