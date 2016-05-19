@@ -113,8 +113,8 @@ DataStore::Area::Area()
 
 bool DataStore::Area::Contain(uint offset, uint size)
 {
-	return (Offset <= offset && offset <= Offset + Size ||
-			Offset >= offset && Offset <= offset + size);
+	return (Offset <= offset && offset < Offset + Size ||
+			Offset >= offset && Offset < offset + size);
 }
 
 /****************************** 数据操作接口 ************************************/
