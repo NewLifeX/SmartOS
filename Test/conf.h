@@ -29,5 +29,6 @@ void TestBuffer();
 void TestString();
 void TestArray();
 void TestDateTime();
+void TestList();
 
 #endif
