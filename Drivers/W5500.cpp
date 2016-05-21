@@ -1107,7 +1107,7 @@ void HardSocket::Change(const IPEndPoint& remote)
 // 接收数据
 uint HardSocket::Receive(Buffer& bs)
 {
-	if(!Open()) return false;
+	if(!Open()) return 0;
 
 	// 读取收到数据容量
 	ushort size = _REV16(SocRegRead2(RX_RSR));

@@ -18,8 +18,8 @@ public:
 
     Esp8266(ITransport* port, Pin rst = P0);
 
-	bool Open();
-	bool Close();
+	//bool Open();
+	//bool Close();
 	virtual void Config();
 
 	//virtual const String ToString() const { return String("Esp8266"); }

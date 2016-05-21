@@ -1,3 +1,4 @@
+#include "Message\DataStore.h"
 #include "Esp8266.h"
 
 #define NET_DEBUG DEBUG
@@ -9,7 +10,7 @@
 #endif
 
 /******************************** 内部Tcp/Udp ********************************/
-class EspSocket : public ISocket
+class EspSocket : public Object, public ITransport, public ISocket
 {
 private:
 	Esp8266&	_Host;
@@ -89,6 +90,12 @@ void Esp8266::OnClose()
 	PackPort::OnClose();
 }
 
+// 配置网络参数
+void Esp8266::Config()
+{
+	
+}
+
 ISocket* Esp8266::CreateSocket(ProtocolType type)
 {
 	switch(type)
@@ -112,6 +119,99 @@ EspSocket::EspSocket(Esp8266& host, ProtocolType protocol)
 	Host		= &host;
 	Protocol	= protocol;
 }
+
+EspSocket::~EspSocket()
+{
+	Close();
+}
+
+// 应用配置，修改远程地址和端口
+void EspSocket::Change(const IPEndPoint& remote)
+{
+#if DEBUG
+	/*debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
+	Local.Show(false);
+	debug_printf(" => ");
+	remote.Show(true);*/
+#endif
+
+	// 设置端口目的(远程)IP地址
+	/*SocRegWrites(DIPR, remote.Address.ToArray());
+	// 设置端口目的(远程)端口号
+	SocRegWrite2(DPORT, _REV16(remote.Port));*/
+}
+
+// 接收数据
+uint EspSocket::Receive(Buffer& bs)
+{
+	if(!Open()) return 0;
+
+	/*// 读取收到数据容量
+	ushort size = _REV16(SocRegRead2(RX_RSR));
+	if(size == 0)
+	{
+		// 没有收到数据时，需要给缓冲区置零，否则系统逻辑会混乱
+		bs.SetLength(0);
+		return 0;
+	}
+
+	// 读取收到数据的首地址
+	ushort offset = _REV16(SocRegRead2(RX_RD));
+
+	// 长度受 bs 限制时 最大读取bs.Lenth
+	if(size > bs.Length()) size = bs.Length();
+
+	// 设置 实际要读的长度
+	bs.SetLength(size);
+
+	_Host.ReadFrame(offset, bs, Index, 0x03);
+
+	// 更新实际物理地址,
+	SocRegWrite2(RX_RD, _REV16(offset + size));
+	// 生效 RX_RD
+	WriteConfig(RECV);
+
+	// 等待操作完成
+	// while(ReadConfig());
+
+	//返回接收到数据的长度
+	return size;*/
+	return 0;
+}
+
+// 发送数据
+bool EspSocket::Send(const Buffer& bs)
+{
+	if(!Open()) return false;
+	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
+	bs.Show(true);*/
+
+	/*// 读取状态
+	byte st = ReadStatus();
+	// 不在UDP  不在TCP连接OK 状态下返回
+	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
+	// 读取缓冲区空闲大小 硬件内部自动计算好空闲大小
+	ushort remain = _REV16(SocRegRead2(TX_FSR));
+	if( remain < bs.Length())return false;
+
+	// 读取发送缓冲区写指针
+	ushort addr = _REV16(SocRegRead2(TX_WR));
+	_Host.WriteFrame(addr, bs, Index, 0x02);
+	// 更新发送缓存写指针位置
+	addr += bs.Length();
+	SocRegWrite2(TX_WR,_REV16(addr));
+
+	// 启动发送 异步中断处理发送异常等
+	WriteConfig(SEND);
+
+	// 控制轮询任务，加快处理
+	Sys.SetTask(_Host.TaskID, true, 20);*/
+
+	return true;
+}
+
+bool EspSocket::OnWrite(const Buffer& bs) {	return Send(bs); }
+uint EspSocket::OnRead(Buffer& bs) { return Receive(bs); }
 
 /******************************** Tcp ********************************/
 
