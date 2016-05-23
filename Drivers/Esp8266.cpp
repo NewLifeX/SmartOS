@@ -183,6 +183,8 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 
 String Esp8266::Send(const String& str, uint msTimeout)
 {
+	TS("Esp8266::Send");
+
 	String rs;
 	//rs.SetLength(rs.Capacity());
 
@@ -222,6 +224,8 @@ String Esp8266::Send(const String& str, uint msTimeout)
 // 引发数据到达事件
 uint Esp8266::OnReceive(Buffer& bs, void* param)
 {
+	TS("Esp8266::OnReceive");
+
 	// 拦截给同步方法
 	if(_Response)
 	{
@@ -237,6 +241,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 
 bool Esp8266::SendCmd(const String& str, uint msTimeout, int times)
 {
+	TS("Esp8266::SendCmd");
+
 	for(int i=0; i<times; i++)
 	{
 		auto rt	= Send(str, msTimeout);
@@ -294,7 +300,7 @@ bool Esp8266::SetMode(Modes mode)
 	if (!SendCmd(cmd)) return false;
 
 	Mode = mode;
-	
+
 	return true;
 }
 
@@ -311,7 +317,7 @@ OK
 Esp8266::Modes Esp8266::GetMode()
 {
 	TS("Esp8266::GetMode");
-	
+
 	auto mode	= Send("AT+CWMODE?\r\n");
 	if (!mode) return Modes::Unknown;
 
