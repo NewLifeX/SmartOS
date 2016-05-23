@@ -131,6 +131,7 @@ public:
 	IPAddress	IP;		// 本地IP地址
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
+	byte		Wireless;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
 
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
