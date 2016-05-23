@@ -700,9 +700,9 @@ bool Esp8266::AutoConn(bool enable)
 {
 	String cmd = "AT+ CWAUTOCONN=";
 	if (enable)
-		cmd += '1';
+		cmd += "1\r\n";
 	else
-		cmd += '0';
+		cmd += "0\r\n";
 
 	return SendCmd(cmd + "\r\n");
 }
