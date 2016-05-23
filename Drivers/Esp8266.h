@@ -38,23 +38,19 @@ public:
 	Modes GetMode();
 	bool SetMode(Modes mode);
 
-	// timeOutMs 为等待返回数据时间  为0表示不需要管返回
-	//void  Send(Buffer & dat);
-	//bool SendCmd(String &str,uint timeOutMs = 1000);
-
-	//int RevData(MemoryStream &ms, uint timeMs=5);
+	bool WaitForConnected(uint msTimeout = 1000);
 
 	bool JoinAP(const String& ssid, const String& pwd);
 	bool UnJoinAP();
 	bool AutoConn(bool enable);
-
 
 protected:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
 	String Send(const String& str, uint msTimeout = 1000, int waitLength = 4);
-	bool SendCmd(const String& str, uint msTimeout = 1000, int times = 1);
+	bool SendCmd(const String& str, uint msTimeout = 1000, int waitLength = 4, int times = 1);
+	bool WaitForCmd(const String& str, uint msTimeout);
 
 	// 引发数据到达事件
 	virtual uint OnReceive(Buffer& bs, void* param);

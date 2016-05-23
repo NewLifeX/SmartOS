@@ -35,6 +35,8 @@ bool ITransport::Open()
 	Opened	= OnOpen();
 	Opening	= false;
 
+	if(!Opened) OnClose();
+
 	return Opened;
 }
 

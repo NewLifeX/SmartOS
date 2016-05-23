@@ -118,7 +118,7 @@ bool Esp8266::OnOpen()
 
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
 	if(!_power.Empty()) _power.Down(10);
-	
+
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
 	{
@@ -130,32 +130,43 @@ bool Esp8266::OnOpen()
 		//Sys.Sleep(100);
 	}
 
-	
+
 	// 等待模块启动进入就绪状态
 	if(!WaitForReady(3000))
 	{
 		net_printf("Esp8266::Open 打开失败！");
 
-		OnClose();
-
 		return false;
 	}
 
-	if (GetMode() != Modes::Station)	// Station模式
-		SetMode(Modes::Station);
-
 	// 开回显
-	SendCmd("ATE1");
+	SendCmd("ATE1\r\n");
 
-	//String ssid = "FAST_2.4G";
-	//String pwd = "yws52718*";
-	if (JoinAP("yws007", "yws52718"))
-		debug_printf("\r\nJoin ok\r\n");
-	else
-		debug_printf("\r\nJoin not ok\r\n");
-	Sys.Sleep(1000);
-	UnJoinAP();
-	Sys.Sleep(1000);
+	// Station模式
+	if (GetMode() != Modes::Station)
+	{
+		if(!SetMode(Modes::Station))
+		{
+			net_printf("设置Station模式失败！");
+
+			return false;
+		}
+	}
+
+	// 等待WiFi自动连接
+	if(!WaitForConnected(3000))
+	{
+		//String ssid = "FAST_2.4G";
+		//String pwd = "yws52718*";
+		if (!JoinAP("yws007", "yws52718"))
+		{
+			net_printf("连接WiFi失败！\r\n");
+
+			return false;
+		}
+	}
+	
+	// 发命令拿到IP地址
 
 	return true;
 }
@@ -255,15 +266,15 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
-bool Esp8266::SendCmd(const String& str, uint msTimeout, int times)
+bool Esp8266::SendCmd(const String& str, uint msTimeout, int waitLength, int times)
 {
 	TS("Esp8266::SendCmd");
 
 	for(int i=0; i<times; i++)
 	{
-		auto rt	= Send(str, msTimeout);
-#if DEBUG
-		rt.Show(true);
+		auto rt	= Send(str, msTimeout, waitLength);
+#if NET_DEBUG
+		//rt.Show(true);
 #endif
 
 		if(!rt.StartsWith("ERROR"))  return true;
@@ -285,18 +296,23 @@ bool Esp8266::SendCmd(const String& str, uint msTimeout, int times)
 	return false;
 }
 
-bool Esp8266::WaitForReady(uint msTimeout)
+bool Esp8266::WaitForCmd(const String& str, uint msTimeout)
 {
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
 	do
 	{
-		auto rs	= Send("", 1000, 64);
-		if(rs && rs.IndexOf("ready") >= 0) return true;
+		auto rs	= Send("", 1000, str.Length());
+		if(rs && rs.IndexOf(str) >= 0) return true;
 	}
 	while(!tw.Expired());
 
 	return false;
+}
+
+bool Esp8266::WaitForReady(uint msTimeout)
+{
+	return WaitForCmd("ready", msTimeout);
 }
 
 /*
@@ -327,7 +343,7 @@ bool Esp8266::SetMode(Modes mode)
 		default:
 			return false;
 	}
-	if (!SendCmd(cmd)) return false;
+	if (!SendCmd(cmd + "\r\n", 3000, 12)) return false;
 
 	Mode = mode;
 
@@ -351,16 +367,22 @@ Esp8266::Modes Esp8266::GetMode()
 	auto mode	= Send("AT+CWMODE?\r\n");
 	if (!mode) return Modes::Unknown;
 
-	String mo1 = "+CWMODE:1";
-	String mo2 = "+CWMODE:2";
-	String mo3 = "+CWMODE:3";
-
 	Mode = Modes::Unknown;
-	if (mode.IndexOf(mo1) != -1) Mode = Modes::Station;
-	if (mode.IndexOf(mo2) != -1) Mode = Modes::Ap;
-	if (mode.IndexOf(mo3) != -1) Mode = Modes::Both;
-
-	//debug_printf("Mode = %d\r\n", Mode);
+	if (mode.IndexOf("+CWMODE:1") >= 0)
+	{
+		Mode = Modes::Station;
+		net_printf("Modes::Station\r\n");
+	}
+	else if (mode.IndexOf("+CWMODE:2") >= 0)
+	{
+		Mode = Modes::Ap;
+		net_printf("Modes::AP\r\n");
+	}
+	else if (mode.IndexOf("+CWMODE:3") >= 0)
+	{
+		Mode = Modes::Both;
+		net_printf("Modes::Station+AP\r\n");
+	}
 
 	return Mode;
 }
@@ -484,28 +506,13 @@ FAIL
 */
 bool Esp8266::JoinAP(const String& ssid, const String& pwd)
 {
-	String str = "AT+CWJAP=";
-	str.Show(true);
-	str = str + "\"" + ssid + "\",\"" + pwd + "\"";
+	String cmd = "AT+CWJAP=";
+	cmd = cmd + "\"" + ssid + "\",\"" + pwd + "\"\r\n";
 
-	String cmd = str + "\r\n";
+	auto rs	= Send(cmd, 5000);
 
-	// 因为时间跨度很长  所以自己来捞数据
-	auto rs	= Send(cmd);
-	/*MemoryStream rsms;
-	auto rslen = RevData(rsms, 10000);	// 这里注定捞不干净  哪怕延时20s都不行  原因不明
-	debug_printf("\r\nRevData len:%d\r\n", rslen);
-	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());*/
-	//rsstr.Show(true);
 	int index = 0;
 	int indexnow = 0;
-
-	/*if (indexnow + 20 > rslen)			// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
-	{
-		rslen = RevData(rsms, 1000);
-		debug_printf("\r\nRevData len:%d\r\n", rslen);
-		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
-	}*/
 
 	index = rs.IndexOf("AT+CWJAP");
 	if (index != -1)
@@ -665,6 +672,11 @@ bool Esp8266::UnJoinAP()
 	else
 		debug_printf(" Cmd Fail\r\n");
 	return isOK;
+}
+
+bool Esp8266::WaitForConnected(uint msTimeout)
+{
+	return WaitForCmd("WIFI CONNECTED", msTimeout);
 }
 
 /*
