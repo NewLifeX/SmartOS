@@ -173,7 +173,23 @@ String& DateTime::ToStr(String& str) const
 	str.Concat(Minute, 10, 2);
 	str	+= ':';
 	str.Concat(Second, 10, 2);*/
-	str = str + Year + '-' + Month + '-' + Day + ' ' + Hour + ':' + Minute + ':' + Second;
+	//str = str + Year + '-' + Month + '-' + Day + ' ' + Hour + ':' + Minute + ':' + Second;
+	str = str + Year + '-';
+
+	if(Month < 10) str += '0';
+	str	= str + Month + '-';
+
+	if(Day < 10) str += '0';
+	str	= str + Day + ' ';
+
+	if(Hour < 10) str += '0';
+	str	= str + Hour + ':';
+
+	if(Minute < 10) str += '0';
+	str	= str + Minute + ':';
+
+	if(Second < 10) str += '0';
+	str	= str + Second;
 
 	/*char cs[20];
 	sprintf(cs, "%04d-%02d-%02d %02d:%02d:%02d", Year, Month, Day, Hour, Minute, Second);
