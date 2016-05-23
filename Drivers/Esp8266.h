@@ -35,11 +35,11 @@ public:
 	enum class Modes
 	{
 		Unknown = 0,
-		Station = 1,
-		Ap = 2,
-		Both = 3,
+		Station	= 1,
+		Ap		= 2,
+		Both	= 3,
 	};
-	
+
 	Modes GetMode();
 	bool SetMode(Modes mode);
 
@@ -64,7 +64,7 @@ private:
     OutputPort	_power;
     OutputPort	_rst;
 	String*		_Response;	// 响应内容
-	
+
 	Modes Mode = Modes::Unknown;
 	// 数据回显  Write 数据被发回
 	bool BackShow = false;

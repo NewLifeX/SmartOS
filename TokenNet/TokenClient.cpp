@@ -36,6 +36,7 @@ TokenClient::TokenClient()
 	Param		= nullptr;
 
 	Local		= nullptr;
+	LocalAP		= nullptr;
 }
 
 void TokenClient::Open()
