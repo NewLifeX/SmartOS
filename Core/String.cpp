@@ -158,7 +158,7 @@ void String::release()
 bool String::CheckCapacity(uint size)
 {
 	int old	= _Capacity;
-	Array::CheckCapacity(size, _Length);
+	CheckCapacity(size + 1, _Length);
 	if(old == _Capacity) return true;
 
 	// 强制最后一个字符为0
@@ -185,6 +185,8 @@ void* String::Alloc(int len)
 
 String& String::copy(const char* cstr, uint length)
 {
+	if(!cstr || !length) return *this;
+
 	if (!CheckCapacity(length))
 		release();
 	else
@@ -240,9 +242,20 @@ bool String::CopyOrWrite()
 	_canWrite	= false;
 }*/
 
-bool String::SetLength(int length, bool bak)
+bool String::SetLength(int len, bool bak)
 {
-	if(!Array::SetLength(length, bak)) return false;
+	//if(!Array::SetLength(length, bak)) return false;
+	// 字符串的最大长度为容量减一，因为需要保留一个零结束字符
+	if(len < _Capacity)
+	{
+		_Length = len;
+	}
+	else
+	{
+		if(!CheckCapacity(len + 1, bak ? _Length : 0)) return false;
+		// 扩大长度
+		if(len > _Length) _Length = len;
+	}
 
 	_Arr[_Length]	= '\0';
 

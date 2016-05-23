@@ -177,6 +177,7 @@ protected:
 	void move(String& rhs);
 	bool CopyOrWrite();
 
+	using Array::CheckCapacity;
 	bool CheckCapacity(uint size);
 	virtual void* Alloc(int len);
 };
