@@ -19,12 +19,17 @@ public:
 	Action		NetReady;	// 网络准备就绪
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
-	//Esp8266(COM com, AiEspMode mode = Unknown);
 
 	virtual void Config();
 
 	//virtual const String ToString() const { return String("Esp8266"); }
 	virtual ISocket* CreateSocket(ProtocolType type);
+
+	// 基础AT指令
+	bool Test();
+	bool Reset();
+	String GetVersion();
+	bool Sleep(uint ms);
 
 	enum class Modes
 	{
@@ -33,12 +38,9 @@ public:
 		Ap = 2,
 		Both = 3,
 	};
-
-	bool WaitForReady(uint msTimeout = 1000);
+	
 	Modes GetMode();
 	bool SetMode(Modes mode);
-
-	bool WaitForConnected(uint msTimeout = 1000);
 
 	bool JoinAP(const String& ssid, const String& pwd);
 	bool UnJoinAP();
@@ -48,9 +50,11 @@ protected:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
-	String Send(const String& str, uint msTimeout = 1000, int waitLength = 4);
-	bool SendCmd(const String& str, uint msTimeout = 1000, int waitLength = 4, int times = 1);
-	bool WaitForCmd(const String& str, uint msTimeout);
+	// 发送指令
+	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
+	bool SendCmd(const String& cmd);
+	bool SendCmd(const String& cmd, const String& expect, uint msTimeout = 1000, int times = 1);
+	bool WaitForCmd(const String& expect, uint msTimeout);
 
 	// 引发数据到达事件
 	virtual uint OnReceive(Buffer& bs, void* param);

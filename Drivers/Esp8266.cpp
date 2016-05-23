@@ -136,7 +136,7 @@ bool Esp8266::OnOpen()
 
 
 	// 等待模块启动进入就绪状态
-	if(!WaitForReady(3000))
+	if(!WaitForCmd("ready", 3000))
 	{
 		if (!SendCmd("AT\r\n"))
 		{
@@ -161,7 +161,7 @@ bool Esp8266::OnOpen()
 	}
 
 	// 等待WiFi自动连接
-	if(!WaitForConnected(3000))
+	if(!WaitForCmd("WIFI CONNECTED", 3000))
 	{
 		//String ssid = "FAST_2.4G";
 		//String pwd = "yws52718*";
@@ -172,7 +172,7 @@ bool Esp8266::OnOpen()
 			return false;
 		}
 	}
-	
+
 	// 发命令拿到IP地址
 
 	return true;
@@ -207,38 +207,37 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 	}
 }
 
-/*Esp8266::Esp8266(COM com, Modes mode)
-{
-	Port.Set(com,115200);
-	Port.ByteTime = 1;
-	Port.MinSize = 1;
-	Mode = mode;
-}*/
-
-String Esp8266::Send(const String& str, uint msTimeout, int waitLength)
+String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 {
 	TS("Esp8266::Send");
 
 	String rs;
-	//rs.SetLength(rs.Capacity());
 
 	// 在接收事件中拦截
 	_Response	= &rs;
 
-	if(str)
+	if(cmd)
 	{
-		Port->Write(str);
+		Port->Write(cmd);
 
 #if NET_DEBUG
 		net_printf("=> ");
-		str.Trim().Show(true);
+		cmd.Trim().Show(true);
 #endif
+	}
+
+	// 默认等OK
+	auto exp	= &expect;
+	if(!*exp)
+	{
+		static String _OK("OK");
+		exp	= &_OK;
 	}
 
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
-	while(rs.Length() < waitLength && !tw.Expired());
+	while(rs.IndexOf(*exp) < 0 && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
 
@@ -263,8 +262,6 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	// 拦截给同步方法
 	if(_Response)
 	{
-		//*_Response	= bs;
-		//_Response->Copy(0, bs, -1);
 		_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
 
 		return 0;
@@ -274,29 +271,23 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
-bool Esp8266::SendCmd(const String& str, uint msTimeout, int waitLength, int times)
+bool Esp8266::SendCmd(const String& cmd)
+{
+	return SendCmd(cmd, "OK");
+}
+
+bool Esp8266::SendCmd(const String& cmd, const String& expect, uint msTimeout, int times)
 {
 	TS("Esp8266::SendCmd");
-
+	
 	for(int i=0; i<times; i++)
 	{
-		auto rt	= Send(str, msTimeout, waitLength);
-#if NET_DEBUG
-		//rt.Show(true);
-#endif
+		auto rt	= Send(cmd, expect, msTimeout);
 
-		if(!rt.StartsWith("ERROR"))  return true;
+		if(rt.IndexOf(expect) >= 0)  return true;
 
 		// 设定小灯快闪时间，单位毫秒
 		if(Led) Led->Write(50);
-
-		/*// 如果进入了数据发送模式，则需要退出
-		if(rt.Substring(2, 2) == "\r\n" || rt.Substring(1, 2) == "\r\n")
-		{
-			ByteArray end(0x1A, 1);
-			Port->Write(end);
-			Send("AT+CIPSHUT\r", msTimeout);
-		}*/
 
 		Sys.Sleep(350);
 	}
@@ -304,24 +295,46 @@ bool Esp8266::SendCmd(const String& str, uint msTimeout, int waitLength, int tim
 	return false;
 }
 
-bool Esp8266::WaitForCmd(const String& str, uint msTimeout)
+bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 {
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
 	do
 	{
-		auto rs	= Send("", 1000, str.Length());
-		if(rs && rs.IndexOf(str) >= 0) return true;
+		auto rs	= Send("", expect);
+		if(rs && rs.IndexOf(expect) >= 0) return true;
 	}
 	while(!tw.Expired());
 
 	return false;
 }
 
-bool Esp8266::WaitForReady(uint msTimeout)
+/******************************** 基础AT指令 ********************************/
+
+// 基础AT指令
+bool Esp8266::Test()
 {
-	return WaitForCmd("ready", msTimeout);
+	return SendCmd("AT\r\n", "OK");
 }
+
+bool Esp8266::Reset()
+{
+	return SendCmd("AT+RST\r\n", "OK");
+}
+
+String Esp8266::GetVersion()
+{
+	return Send("AT+GMR\r\n", "OK");
+}
+
+bool Esp8266::Sleep(uint ms)
+{
+	String cmd	= "AT+GSLP=";
+	cmd	+= ms;
+	return SendCmd(cmd + "\r\n", "OK");
+}
+
+/******************************** Esp8266 ********************************/
 
 /*
 发送：
@@ -351,7 +364,7 @@ bool Esp8266::SetMode(Modes mode)
 		default:
 			return false;
 	}
-	if (!SendCmd(cmd + "\r\n", 3000, 12)) return false;
+	if (!SendCmd(cmd + "\r\n")) return false;
 
 	Mode = mode;
 
@@ -372,7 +385,7 @@ Esp8266::Modes Esp8266::GetMode()
 {
 	TS("Esp8266::GetMode");
 
-	auto mode	= Send("AT+CWMODE?\r\n");
+	auto mode	= Send("AT+CWMODE?\r\n", "OK");
 	if (!mode) return Modes::Unknown;
 
 	Mode = Modes::Unknown;
@@ -517,7 +530,7 @@ bool Esp8266::JoinAP(const String& ssid, const String& pwd)
 	String cmd = "AT+CWJAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pwd + "\"\r\n";
 
-	auto rs	= Send(cmd, 5000);
+	auto rs	= Send(cmd, "OK", 5000);
 
 	int index = 0;
 	int indexnow = 0;
@@ -613,16 +626,7 @@ bool Esp8266::UnJoinAP()
 
 	String cmd(str);
 	cmd += "\r\n";
-	auto rs	= Send(cmd);
-	/*MemoryStream rsms;
-	auto rslen = RevData(rsms, 2000);
-	debug_printf("\r\n ");
-	str.Show(false);
-
-	debug_printf(" SendCmd rev len:%d\r\n", rslen);
-	if (rslen == 0)return false;
-	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());
-	//rsstr.Show(true);*/
+	auto rs	= Send(cmd, "AT+CWQAP");
 
 	bool isOK = true;
 	int index = 0;
@@ -682,11 +686,6 @@ bool Esp8266::UnJoinAP()
 	return isOK;
 }
 
-bool Esp8266::WaitForConnected(uint msTimeout)
-{
-	return WaitForCmd("WIFI CONNECTED", msTimeout);
-}
-
 /*
 开机自动连接WIFI
 */
@@ -698,7 +697,7 @@ bool Esp8266::AutoConn(bool enable)
 	else
 		cmd += '0';
 
-	return SendCmd(cmd);
+	return SendCmd(cmd + "\r\n");
 }
 
 
