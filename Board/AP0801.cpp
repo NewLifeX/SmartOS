@@ -103,15 +103,14 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
-	// 上电
+	/*// 上电
 	auto pwr	= new OutputPort(PE2);
-	//*pwr	= true;
-	pwr->Down(1000);
+	pwr->Down(1000);*/
 
 	auto srp	= new SerialPort(COM4, 115200);
 	srp->ByteTime	= 10;
 
-	auto net	= new Esp8266(srp, PD3);
+	auto net	= new Esp8266(srp, PE2, PD3);
 	net->LoadConfig();
 
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);

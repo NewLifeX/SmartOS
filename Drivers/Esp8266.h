@@ -18,7 +18,7 @@ public:
 	IDataPort*	Led;	// 指示灯
 	Action		NetReady;	// 网络准备就绪
 
-    Esp8266(ITransport* port, Pin rst = P0);
+    Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
 	//Esp8266(COM com, AiEspMode mode = Unknown);
 
 	virtual void Config();
@@ -34,6 +34,7 @@ public:
 		Both = 3,
 	};
 
+	bool WaitForReady(uint msTimeout = 1000);
 	Modes GetMode();
 	bool SetMode(Modes mode);
 
@@ -52,13 +53,14 @@ protected:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
-	String Send(const String& str, uint msTimeout = 1000);
+	String Send(const String& str, uint msTimeout = 1000, int waitLength = 4);
 	bool SendCmd(const String& str, uint msTimeout = 1000, int times = 1);
 
 	// 引发数据到达事件
 	virtual uint OnReceive(Buffer& bs, void* param);
 
 private:
+    OutputPort	_power;
     OutputPort	_rst;
 	String*		_Response;	// 响应内容
 	

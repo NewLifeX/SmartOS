@@ -100,10 +100,11 @@ String gotIp = "WIFI GOT IP";
 
 /******************************** Esp8266 ********************************/
 
-Esp8266::Esp8266(ITransport* port, Pin rst)
+Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 {
 	Set(port);
 
+	if(power != P0) _power.Set(power);
 	if(rst != P0) _rst.Set(rst);
 
 	Led			= nullptr;
@@ -115,19 +116,23 @@ bool Esp8266::OnOpen()
 {
 	if(!PackPort::OnOpen()) return false;
 
+	// 先关一会电，然后再上电，让它来一个完整的冷启动
+	if(!_power.Empty()) _power.Down(10);
+	
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
 	{
 		_rst.Open();
 
 		_rst = true;
-		Sys.Sleep(100);
+		Sys.Sleep(10);
 		_rst = false;
 		//Sys.Sleep(100);
 	}
 
-	auto rs	= Send("");
-	if(!rs)
+	
+	// 等待模块启动进入就绪状态
+	if(!WaitForReady(3000))
 	{
 		net_printf("Esp8266::Open 打开失败！");
 
@@ -157,6 +162,7 @@ bool Esp8266::OnOpen()
 
 void Esp8266::OnClose()
 {
+	_power.Close();
 	_rst.Close();
 
 	PackPort::OnClose();
@@ -191,7 +197,7 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 	Mode = mode;
 }*/
 
-String Esp8266::Send(const String& str, uint msTimeout)
+String Esp8266::Send(const String& str, uint msTimeout, int waitLength)
 {
 	TS("Esp8266::Send");
 
@@ -214,7 +220,7 @@ String Esp8266::Send(const String& str, uint msTimeout)
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
-	while(!rs && !tw.Expired());
+	while(rs.Length() < waitLength && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
 
@@ -241,7 +247,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	{
 		//*_Response	= bs;
 		//_Response->Copy(0, bs, -1);
-		_Response->Copy(0, bs.GetBuffer(), bs.Length());
+		_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
 
 		return 0;
 	}
@@ -275,6 +281,20 @@ bool Esp8266::SendCmd(const String& str, uint msTimeout, int times)
 
 		Sys.Sleep(350);
 	}
+
+	return false;
+}
+
+bool Esp8266::WaitForReady(uint msTimeout)
+{
+	TimeWheel tw(0, msTimeout);
+	tw.Sleep	= 100;
+	do
+	{
+		auto rs	= Send("", 1000, 64);
+		if(rs && rs.IndexOf("ready") >= 0) return true;
+	}
+	while(!tw.Expired());
 
 	return false;
 }
