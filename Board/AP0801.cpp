@@ -108,6 +108,7 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	*pwr	= true;
 
 	auto srp	= new SerialPort(COM4, 115200);
+	srp->ByteTime	= 10;
 
 	auto net	= new Esp8266(srp, PD3);
 	net->LoadConfig();

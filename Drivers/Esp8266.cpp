@@ -184,18 +184,18 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 String Esp8266::Send(const String& str, uint msTimeout)
 {
 	String rs;
-	rs.SetLength(rs.Capacity());
+	//rs.SetLength(rs.Capacity());
 
 	// 在接收事件中拦截
 	_Response	= &rs;
 
 	if(str)
 	{
-		String dat(str);
-		Port->Write(dat);
+		Port->Write(str);
 
-#if DEBUG
-		dat.Trim().Show(true);
+#if NET_DEBUG
+		net_printf("=> ");
+		str.Trim().Show(true);
 #endif
 	}
 
@@ -207,6 +207,14 @@ String Esp8266::Send(const String& str, uint msTimeout)
 	if(rs.Length() > 4) rs.Trim();
 
 	_Response	= nullptr;
+
+#if NET_DEBUG
+	if(rs)
+	{
+		net_printf("<= ");
+		rs.Trim().Show(true);
+	}
+#endif
 
 	return rs;
 }
