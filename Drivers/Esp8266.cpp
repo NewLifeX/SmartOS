@@ -129,6 +129,10 @@ bool Esp8266::OnOpen()
 		_rst = false;
 		//Sys.Sleep(100);
 	}
+	else
+	{
+		SendCmd("AT+RST\r\n");	// 软件重启命令
+	}
 
 
 	// 等待模块启动进入就绪状态
@@ -137,7 +141,7 @@ bool Esp8266::OnOpen()
 		if (!SendCmd("AT\r\n"))
 		{
 			net_printf("Esp8266::Open 打开失败！");
-
+			SendCmd("AT+RST\r\n");	// 软件重启命令
 			return false;
 		}
 	}
@@ -265,6 +269,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 
 		return 0;
 	}
+	bs.Show(true);
 
 	return ITransport::OnReceive(bs, param);
 }
