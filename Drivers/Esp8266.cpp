@@ -14,10 +14,12 @@
 /******************************** 内部Tcp/Udp ********************************/
 class EspSocket : public Object, public ITransport, public ISocket
 {
-private:
+protected:
 	Esp8266&	_Host;
 
 public:
+	String		RemoteDomain;	// 远程域名
+
 	EspSocket(Esp8266& host, ProtocolType protocol);
 	virtual ~EspSocket();
 
@@ -26,7 +28,7 @@ public:
 	virtual void OnClose();
 
 	// 应用配置，修改远程地址和端口
-	void Change(const IPEndPoint& remote);
+	virtual bool Change(const String& remote, ushort port);
 
 	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
@@ -708,7 +710,7 @@ bool Esp8266::AutoConn(bool enable)
 /******************************** Socket ********************************/
 
 EspSocket::EspSocket(Esp8266& host, ProtocolType protocol)
-	: _Host(host)
+	: _Host(host), RemoteDomain("")
 {
 	Host		= &host;
 	Protocol	= protocol;
@@ -748,8 +750,11 @@ bool EspSocket::OnOpen()
 	else if(Protocol == ProtocolType::Tcp)
 		cmd	+= "\"TCP\"";
 
+	auto rm	= RemoteDomain;
+	if(!rm) rm	= Remote.Address.ToString();
+
 	// 设置端口目的(远程)IP地址和端口号
-	cmd	= cmd + ",\"" + Remote.Address.ToString() + "\"," + Remote.Port;
+	cmd	= cmd + ",\"" + rm + "\"," + Remote.Port;
 	// 设置自己的端口号
 	cmd	= cmd + "," + Local.Port;
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
@@ -773,19 +778,19 @@ void EspSocket::OnClose()
 }
 
 // 应用配置，修改远程地址和端口
-void EspSocket::Change(const IPEndPoint& remote)
+bool EspSocket::Change(const String& remote, ushort port)
 {
-#if DEBUG
-	/*debug_printf("%s::Open ", Protocol == 0x01 ? "Tcp" : "Udp");
-	Local.Show(false);
-	debug_printf(" => ");
-	remote.Show(true);*/
-#endif
+	//if(!Close()) return false;
 
-	// 设置端口目的(远程)IP地址
-	/*SocRegWrites(DIPR, remote.Address.ToArray());
-	// 设置端口目的(远程)端口号
-	SocRegWrite2(DPORT, _REV16(remote.Port));*/
+	RemoteDomain	= remote;
+	Remote.Port		= port;
+
+	// 可能这个字符串是IP地址，尝试解析
+	auto ip	= IPAddress::Parse(remote);
+	if(ip != IPAddress::Any()) Remote.Address	= ip;
+
+	//if(!Open()) return false;
+	return true;
 }
 
 // 接收数据
@@ -863,11 +868,20 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 {
 	if(remote == Remote) return Send(bs);
 
-	Change(remote);
-	bool rs = Send(bs);
-	Change(Remote);
+	if(!Open()) return false;
 
-	return rs;
+	String cmd	= "AT+CIPSEND=0,";
+	cmd	+= bs.Length();
+
+	// 加上远程IP和端口
+	cmd	= cmd + "," + remote.Address;
+	cmd	= cmd + "," + remote.Port;
+
+	if(!_Host.SendCmd(cmd, ">")) return false;
+
+	_Host.Send(bs.AsString(), "");
+
+	return true;
 }
 
 bool EspUdp::OnWriteEx(const Buffer& bs, const void* opt)

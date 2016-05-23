@@ -166,6 +166,9 @@ public:
 	// 加上虚析构函数，因为应用层可能要释放该接口
 	virtual ~ISocket() { }
 
+	// 应用配置，修改远程地址和端口
+	virtual bool Change(const String& remote, ushort port) { return false; };
+
 	// 发送数据
 	virtual bool Send(const Buffer& bs) = 0;
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote) { return Send(bs); }

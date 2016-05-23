@@ -222,6 +222,7 @@ void W5500::Init()
 {
 	_spi	= nullptr;
 	Led		= nullptr;
+	OnResolve	= nullptr;
 
 	Buffer(_sockets, sizeof(_sockets)).Clear();
 
@@ -1102,6 +1103,23 @@ void HardSocket::Change(const IPEndPoint& remote)
 	SocRegWrites(DIPR, remote.Address.ToArray());
 	// 设置端口目的(远程)端口号
 	SocRegWrite2(DPORT, _REV16(remote.Port));
+}
+
+// 应用配置，修改远程地址和端口
+bool HardSocket::Change(const String& remote, ushort port)
+{
+	// 可能这个字符串是IP地址，尝试解析
+	auto ip	= IPAddress::Parse(remote);
+	if(ip == IPAddress::Any())
+	{
+		if(_Host.OnResolve) ip	= _Host.OnResolve(&_Host, remote);
+		if(ip == IPAddress::Any()) return false;
+	}
+
+	Remote.Address	= ip;
+	Remote.Port		= port;
+
+	return true;
 }
 
 // 接收数据

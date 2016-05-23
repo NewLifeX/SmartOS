@@ -576,17 +576,18 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	if(socket == nullptr) return false;
 
 	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*(socket->Host), domain);
+	/*auto ip	= DNS::Query(*(socket->Host), domain);
 	if(ip == IPAddress::Any()) return false;
 
-	debug_printf("服务器地址 %s %s:%d \r\n", domain.GetBuffer(), ip.ToString().GetBuffer(), port);
+	debug_printf("服务器地址 %s %s:%d \r\n", domain.GetBuffer(), ip.ToString().GetBuffer(), port);*/
 
 	Control->Port->Close();
-	socket->Remote.Address	= ip;
-	socket->Remote.Port		= port;
+	/*socket->Remote.Address	= ip;
+	socket->Remote.Port		= port;*/
+	socket->Change(domain, port);
 	Control->Port->Open();
 
-	Cfg->ServerIP	= ip.Value;
+	Cfg->ServerIP	= socket->Remote.Address.Value;
 
 	return true;
 }

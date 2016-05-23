@@ -19,6 +19,9 @@ public:
 
 	IDataPort*	Led;	// 指示灯
 
+	typedef IPAddress (*ResolveHandler)(ISocketHost* host, const String& domain);
+	ResolveHandler	OnResolve;	// 解析域名为IP地址。Tcp/Udp改变远程地址时使用
+
 	// 构造
 	W5500();
     W5500(Spi* spi, Pin irq = P0, Pin rst = P0);	// 必须具备复位引脚 否则寄存器不能读
@@ -114,6 +117,9 @@ public:
 
 	// 应用配置，修改远程地址和端口
 	void Change(const IPEndPoint& remote);
+
+	// 应用配置，修改远程地址和端口
+	virtual bool Change(const String& remote, ushort port);
 
 	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
