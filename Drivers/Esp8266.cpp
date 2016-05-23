@@ -134,9 +134,12 @@ bool Esp8266::OnOpen()
 	// 等待模块启动进入就绪状态
 	if(!WaitForReady(3000))
 	{
-		net_printf("Esp8266::Open 打开失败！");
+		if (!SendCmd("AT\r\n"))
+		{
+			net_printf("Esp8266::Open 打开失败！");
 
-		return false;
+			return false;
+		}
 	}
 
 	// 开回显
