@@ -379,7 +379,7 @@ bool Esp8266::JoinAP(String& ssid, String& pwd)
 
 	index = rsstr.IndexOf("AT+CWJAP");
 	if (index != -1)
-		indexnow = index;
+		indexnow = index+cmd.Length();
 	else
 	{
 		debug_printf("not find cmd\r\n");
