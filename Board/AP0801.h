@@ -24,7 +24,7 @@ public:
 
 	ISocketHost* Create5500();
 	ITransport* Create2401();
-	ISocketHost* Create8266();
+	ISocketHost* Create8266(Action onNetReady = nullptr);
 
 	TokenClient* CreateClient();
 

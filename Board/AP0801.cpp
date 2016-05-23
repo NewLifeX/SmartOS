@@ -20,7 +20,7 @@ static FlushPort* CreateFlushPort(OutputPort* led)
 	auto fp	= new FlushPort();
 	fp->Port	= led;
 	fp->Start();
-	
+
 	return fp;
 }
 
@@ -99,20 +99,23 @@ ISocketHost* AP0801::Create5500()
 	return net;
 }
 
-ISocketHost* AP0801::Create8266()
+ISocketHost* AP0801::Create8266(Action onNetReady)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
 	// 上电
 	auto pwr	= new OutputPort(PE2);
 	*pwr	= true;
-	
+
 	auto srp	= new SerialPort(COM4, 115200);
 
 	auto net	= new Esp8266(srp, PD3);
 	net->LoadConfig();
 
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
+	net->NetReady	= onNetReady;
+
+	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, net, 0, -1, "Esp8266");
 
 	Host	= net;
 

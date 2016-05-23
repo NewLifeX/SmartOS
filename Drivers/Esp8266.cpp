@@ -60,7 +60,7 @@ private:
 };
 
 /******************************** 测试 ********************************/
-#include "SerialPort.h"
+/*#include "SerialPort.h"
 void EspTest(void * param)
 {
 	SerialPort sp(COM4);
@@ -71,7 +71,7 @@ void EspTest(void * param)
 
 	Sys.Sleep(50);				//
 
-	if (esp.GetMode() != Station)	// Station模式
+	if (esp.GetMode() != Esp8266::Modes::Station)	// Station模式
 		esp.SetMode(Station);
 
 	String ate = "ATE1";			// 开回显
@@ -88,7 +88,7 @@ void EspTest(void * param)
 	Sys.Sleep(1000);
 	esp.UnJoinAP();
 	Sys.Sleep(1000);
-}
+}*/
 
 String busy = "busy p...";
 String discon = "WIFI DISCONNECT";
@@ -105,6 +105,10 @@ Esp8266::Esp8266(ITransport* port, Pin rst)
 	Set(port);
 
 	//if(rst != P0) _rst.Set(rst);
+
+	Led			= nullptr;
+	NetReady	= nullptr;
+	_Response	= nullptr;
 }
 
 bool Esp8266::OnOpen()
@@ -121,6 +125,22 @@ bool Esp8266::OnOpen()
 		Sys.Delay(100);
 		_rst = true;
 	}*/
+
+	if (GetMode() != Modes::Station)	// Station模式
+		SetMode(Modes::Station);
+
+	// 开回显
+	SendCmd("ATE1");
+
+	//String ssid = "FAST_2.4G";
+	//String pwd = "yws52718*";
+	if (JoinAP("yws007", "yws52718"))
+		debug_printf("\r\nJoin ok\r\n");
+	else
+		debug_printf("\r\nJoin not ok\r\n");
+	Sys.Sleep(1000);
+	UnJoinAP();
+	Sys.Sleep(1000);
 
 	return true;
 }
@@ -153,13 +173,87 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 	}
 }
 
-/*Esp8266::Esp8266(COM com, AiEspMode mode)
+/*Esp8266::Esp8266(COM com, Modes mode)
 {
 	Port.Set(com,115200);
 	Port.ByteTime = 1;
 	Port.MinSize = 1;
 	Mode = mode;
 }*/
+
+String Esp8266::Send(const String& str, uint msTimeout)
+{
+	String rs;
+	rs.SetLength(rs.Capacity());
+
+	// 在接收事件中拦截
+	_Response	= &rs;
+
+	if(str)
+	{
+		String dat(str);
+		Port->Write(dat);
+
+#if DEBUG
+		dat.Trim().Show(true);
+#endif
+	}
+
+	// 等待收到数据
+	TimeWheel tw(0, msTimeout);
+	tw.Sleep	= 100;
+	while(!rs && !tw.Expired());
+
+	if(rs.Length() > 4) rs.Trim();
+
+	_Response	= nullptr;
+
+	return rs;
+}
+
+// 引发数据到达事件
+uint Esp8266::OnReceive(Buffer& bs, void* param)
+{
+	// 拦截给同步方法
+	if(_Response)
+	{
+		//*_Response	= bs;
+		//_Response->Copy(0, bs, -1);
+		_Response->Copy(0, bs.GetBuffer(), bs.Length());
+
+		return 0;
+	}
+
+	return ITransport::OnReceive(bs, param);
+}
+
+bool Esp8266::SendCmd(const String& str, uint msTimeout, int times)
+{
+	for(int i=0; i<times; i++)
+	{
+		auto rt	= Send(str, msTimeout);
+#if DEBUG
+		rt.Show(true);
+#endif
+
+		if(!rt.StartsWith("ERROR"))  return true;
+
+		// 设定小灯快闪时间，单位毫秒
+		if(Led) Led->Write(50);
+
+		/*// 如果进入了数据发送模式，则需要退出
+		if(rt.Substring(2, 2) == "\r\n" || rt.Substring(1, 2) == "\r\n")
+		{
+			ByteArray end(0x1A, 1);
+			Port->Write(end);
+			Send("AT+CIPSHUT\r", msTimeout);
+		}*/
+
+		Sys.Sleep(350);
+	}
+
+	return false;
+}
 
 /*
 发送：
@@ -171,35 +265,29 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 OK
 "
 */
-bool Esp8266::SetMode(AiEspMode mode)
+bool Esp8266::SetMode(Modes mode)
 {
-	String str = "AT+CWMODE=";
-	String cmd;
+	String cmd = "AT+CWMODE=";
 	switch (mode)
 	{
-	case Unknown:
-		return false;
-		//break;
-	case Station:
-		cmd = str + '1';
-		break;
-	case Ap:
-		cmd = str + '2';
-		break;
-	case Both:
-		cmd = str + '3';
-		break;
-	default:
-		return false;
+		case Modes::Station:
+			cmd += '1';
+			break;
+		case Modes::Ap:
+			cmd += '2';
+			break;
+		case Modes::Both:
+			cmd += '3';
+			break;
+		case Modes::Unknown:
+		default:
+			return false;
+	}
+	if (!SendCmd(cmd)) return false;
 
-	}
-	if (SendCmd(cmd))
-	{
-		Mode = mode;
-		return true;
-	}
-	else
-		return false;
+	Mode = mode;
+	
+	return true;
 }
 
 /*
@@ -212,30 +300,28 @@ bool Esp8266::SetMode(AiEspMode mode)
 OK
 "
 */
-AiEspMode Esp8266::GetMode()
+Esp8266::Modes Esp8266::GetMode()
 {
-	debug_printf("GetMode\r\n");
-	String str = "AT+CWMODE?\r\n";
-	Send(str);
-	MemoryStream rsms;
-	if (RevData(rsms, 1000) == 0)return Unknown;
+	TS("Esp8266::GetMode");
+	
+	auto mode	= Send("AT+CWMODE?\r\n");
+	if (!mode) return Modes::Unknown;
 
 	String mo1 = "+CWMODE:1";
 	String mo2 = "+CWMODE:2";
 	String mo3 = "+CWMODE:3";
 
-	String rsstr((const char*)rsms.GetBuffer(), rsms.Position());
-	Mode = Unknown;
-	if (rsstr.IndexOf(mo1) != -1)Mode = Station;
-	if (rsstr.IndexOf(mo2) != -1)Mode = Ap;
-	if (rsstr.IndexOf(mo3) != -1)Mode = Both;
+	Mode = Modes::Unknown;
+	if (mode.IndexOf(mo1) != -1) Mode = Modes::Station;
+	if (mode.IndexOf(mo2) != -1) Mode = Modes::Ap;
+	if (mode.IndexOf(mo3) != -1) Mode = Modes::Both;
 
-	debug_printf("Mode = %d\r\n", Mode);
+	//debug_printf("Mode = %d\r\n", Mode);
 
 	return Mode;
 }
 
-// 发送数据  并按照参数条件 适当返回收到的数据
+/*// 发送数据  并按照参数条件 适当返回收到的数据
 void  Esp8266::Send(Buffer & dat)
 {
 	if (dat.Length() != 0)
@@ -327,7 +413,7 @@ bool Esp8266::SendCmd(String &str, uint timeOutMs)
 	else
 		debug_printf(" Cmd Fail\r\n");
 	return isOK;
-}
+}*/
 
 /*
 发送：
@@ -352,7 +438,7 @@ OK
 FAIL
 "
 */
-bool Esp8266::JoinAP(String& ssid, String& pwd)
+bool Esp8266::JoinAP(const String& ssid, const String& pwd)
 {
 	String str = "AT+CWJAP=";
 	str.Show(true);
@@ -361,23 +447,23 @@ bool Esp8266::JoinAP(String& ssid, String& pwd)
 	String cmd = str + "\r\n";
 
 	// 因为时间跨度很长  所以自己来捞数据
-	Send(cmd);
-	MemoryStream rsms;
+	auto rs	= Send(cmd);
+	/*MemoryStream rsms;
 	auto rslen = RevData(rsms, 10000);	// 这里注定捞不干净  哪怕延时20s都不行  原因不明
 	debug_printf("\r\nRevData len:%d\r\n", rslen);
-	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());
+	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());*/
 	//rsstr.Show(true);
 	int index = 0;
 	int indexnow = 0;
 
-	if (indexnow + 20 > rslen)			// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
+	/*if (indexnow + 20 > rslen)			// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
 	{
 		rslen = RevData(rsms, 1000);
 		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
-	}
+	}*/
 
-	index = rsstr.IndexOf("AT+CWJAP");
+	index = rs.IndexOf("AT+CWJAP");
 	if (index != -1)
 		indexnow = index+cmd.Length();
 	else
@@ -386,27 +472,27 @@ bool Esp8266::JoinAP(String& ssid, String& pwd)
 		return false;
 	}
 
-	// 补捞  重组字符串   因为不动rsms.Position()  所以数据保留不变
+	/*// 补捞  重组字符串   因为不动rsms.Position()  所以数据保留不变
 	if (cmd.Length()+discon.Length() > rslen)
 	{
 		rslen = RevData(rsms, 1000);
 		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
-	}
+	}*/
 	// 干掉 WIFI DISCONNECT
-	index = rsstr.IndexOf(discon, indexnow);
+	index = rs.IndexOf(discon, indexnow);
 	if (index != -1)indexnow = index + discon.Length();
 
-	// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
+	/*// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
 	auto comNum = index <= 0 ? cmd.Length() + conn.Length() : indexnow + conn.Length();
 	if (comNum > rslen)
 	{
 		rslen = RevData(rsms, 1000);
 		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
-	}
+	}*/
 
-	index = rsstr.IndexOf(conn, indexnow);
+	index = rs.IndexOf(conn, indexnow);
 	if (index == -1)
 	{
 		debug_printf("\r\nindex:%d,  find conn not ok\r\n",index);
@@ -418,15 +504,15 @@ bool Esp8266::JoinAP(String& ssid, String& pwd)
 		indexnow = index + conn.Length();
 	}
 
-	// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
+	/*// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
 	if (indexnow + 20 > rslen)
 	{
 		rslen = RevData(rsms, 1000);
 		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
-	}
+	}*/
 
-	index = rsstr.IndexOf(gotIp, indexnow);
+	index = rs.IndexOf(gotIp, indexnow);
 	if (index == -1 || index - 5 > indexnow)
 	{
 		debug_printf("not find gotIp\r\n");
@@ -438,7 +524,7 @@ bool Esp8266::JoinAP(String& ssid, String& pwd)
 		indexnow = index + gotIp.Length();
 	}
 
-	index = rsstr.IndexOf(okstr, indexnow);
+	index = rs.IndexOf(okstr, indexnow);
 	if (index == -1 || index - 5 > indexnow)
 	{
 		// 没有发现  或者 不在范围内就认为是错的
@@ -468,8 +554,8 @@ bool Esp8266::UnJoinAP()
 
 	String cmd(str);
 	cmd += "\r\n";
-	Send(cmd);
-	MemoryStream rsms;
+	auto rs	= Send(cmd);
+	/*MemoryStream rsms;
 	auto rslen = RevData(rsms, 2000);
 	debug_printf("\r\n ");
 	str.Show(false);
@@ -477,13 +563,13 @@ bool Esp8266::UnJoinAP()
 	debug_printf(" SendCmd rev len:%d\r\n", rslen);
 	if (rslen == 0)return false;
 	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());
-	//rsstr.Show(true);
+	//rsstr.Show(true);*/
 
 	bool isOK = true;
 	int index = 0;
 	int indexnow = 0;
 
-	index = rsstr.IndexOf(str);
+	index = rs.IndexOf(str);
 	if (index == -1)
 	{
 		// 没有找到命令本身就表示不通过
@@ -494,7 +580,7 @@ bool Esp8266::UnJoinAP()
 	{
 		indexnow = index + str.Length();
 		// 去掉busy
-		index = rsstr.IndexOf(busy, indexnow);
+		index = rs.IndexOf(busy, indexnow);
 		if (index != -1 && index - 5 < indexnow)
 		{
 			// 发现有 busy 并在允许范围就跳转    没有就不动作
@@ -502,20 +588,20 @@ bool Esp8266::UnJoinAP()
 			indexnow = index + busy.Length();
 		}
 		// 断开连接
-		index = rsstr.IndexOf(discon, indexnow);
+		index = rs.IndexOf(discon, indexnow);
 		if (index != -1 && index - 5 < indexnow)
 		{
 			// 断开连接
 			indexnow = index + discon.Length();
 		}
 		// 去掉busy
-		index = rsstr.IndexOf(busy, indexnow);
+		index = rs.IndexOf(busy, indexnow);
 		if (index != -1 && index - 5 < indexnow)
 		{
 			indexnow = index + busy.Length();
 		}
 
-		index = rsstr.IndexOf(okstr, indexnow);
+		index = rs.IndexOf(okstr, indexnow);
 		if (index == -1 || index - 5 > indexnow)
 		{
 			// 没有发现  或者 不在范围内就认为是错的
