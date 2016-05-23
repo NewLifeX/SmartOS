@@ -4,7 +4,7 @@
 void EspTest(void * param)
 {
 	AiESP esp(COM4);
-	esp.Port.SetBaudRate(115200);
+	//esp.Port.SetBaudRate(115200);
 	esp.Port.Open();
 
 	Sys.Sleep(50);				//
@@ -15,13 +15,15 @@ void EspTest(void * param)
 	String ate = "ATE1";			// 开回显
 	esp.SendCmd(ate);
 
-	//String ssid = "yws007";
-	//String pwd = "yws52718";
+	String ssid = "yws007";
+	String pwd = "yws52718";
 
-	String ssid = "FAST_2.4G";
-	String pwd = "yws52718*";
+	//String ssid = "FAST_2.4G";
+	//String pwd = "yws52718*";
 	bool isjoin = esp.JoinAP(ssid, pwd);
-	if (isjoin)debug_printf("Join ok\r\n");
+	if (isjoin)debug_printf("\r\nJoin ok\r\n");
+	else debug_printf("\r\nJoin not ok\r\n");
+	Sys.Sleep(1000);
 	esp.UnJoinAP();
 	Sys.Sleep(1000);
 }
@@ -40,7 +42,9 @@ AiESP::AiESP()
 
 AiESP::AiESP(COM com, AiEspMode mode)
 {
-	Port.Set(com);
+	Port.Set(com,115200);
+	Port.ByteTime = 1;
+	Port.MinSize = 1;
 	Mode = mode;
 }
 /*
@@ -238,18 +242,17 @@ bool AiESP::JoinAP(String & ssid, String &pwd)
 	// 因为时间跨度很长  所以自己来捞数据
 	Send(cmd);
 	MemoryStream rsms;
-	auto rslen = RevData(rsms, 5000);	// 这里注定捞不干净  哪怕延时20s都不行  原因不明
-	debug_printf("RevData len:%d\r\n", rslen);
+	auto rslen = RevData(rsms, 10000);	// 这里注定捞不干净  哪怕延时20s都不行  原因不明
+	debug_printf("\r\nRevData len:%d\r\n", rslen);
 	String rsstr((const char *)rsms.GetBuffer(), rsms.Position());
-	rsstr.Show(true);
+	//rsstr.Show(true);
 	int index = 0;
 	int indexnow = 0;
 
 	if (indexnow + 20 > rslen)			// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
 	{
-		//String x = "\r\n";
-		//Send(x);
 		rslen = RevData(rsms, 1000);
+		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
 	}
 
@@ -262,32 +265,30 @@ bool AiESP::JoinAP(String & ssid, String &pwd)
 		return false;
 	}
 
-	// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
-	if (indexnow + 20 > rslen)
+	// 补捞  重组字符串   因为不动rsms.Position()  所以数据保留不变
+	if (cmd.Length()+discon.Length() > rslen)
 	{
-		//String x = "\r\n";
-		//Send(x);
 		rslen = RevData(rsms, 1000);
+		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
 	}
 	// 干掉 WIFI DISCONNECT
 	index = rsstr.IndexOf(discon, indexnow);
-	if (index != -1 /*&& index - 5 < indexnow*/)indexnow = index + discon.Length();
+	if (index != -1)indexnow = index + discon.Length();
 
 	// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
-	if (indexnow + 20 > rslen)
+	auto comNum = index <= 0 ? cmd.Length() + conn.Length() : indexnow + conn.Length();
+	if (comNum > rslen)
 	{
-		//String x = "\r\n";
-		//Send(x);
 		rslen = RevData(rsms, 1000);
+		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
 	}
 
 	index = rsstr.IndexOf(conn, indexnow);
-
-	if (index == -1 || index - 5 > indexnow)
+	if (index == -1)
 	{
-		debug_printf("not find conn\r\n");
+		debug_printf("\r\nindex:%d,  find conn not ok\r\n",index);
 		return false;
 	}
 	else
@@ -299,9 +300,8 @@ bool AiESP::JoinAP(String & ssid, String &pwd)
 	// 补捞  重组字符串   因为不动  rsms.Position() 所以数据保留不变
 	if (indexnow + 20 > rslen)
 	{
-		//String x = "\r\n";
-		//Send(x);
 		rslen = RevData(rsms, 1000);
+		debug_printf("\r\nRevData len:%d\r\n", rslen);
 		rsstr = String((const char *)rsms.GetBuffer(), rsms.Position());
 	}
 
