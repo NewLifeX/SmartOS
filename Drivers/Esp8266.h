@@ -5,6 +5,7 @@
 #include "Port.h"
 #include "Net\ITransport.h"
 #include "Net\Net.h"
+#include "Message\DataStore.h"
 
 
 extern void EspTest(void * param);
