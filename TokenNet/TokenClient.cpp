@@ -340,10 +340,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	cfg->Show();
 
 	// 0xFE永久改变厂商地址
-	if(msg.ErrCode == 0xFE)
-	{
-		cfg->Save();
-	}
+	if(msg.ErrCode == 0xFE) cfg->Save();
 
 	// 马上开始重新握手
 	Status = 0;
@@ -582,9 +579,10 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	debug_printf("服务器地址 %s %s:%d \r\n", domain.GetBuffer(), ip.ToString().GetBuffer(), port);*/
 
 	Control->Port->Close();
-	/*socket->Remote.Address	= ip;
-	socket->Remote.Port		= port;*/
-	socket->Change(domain, port);
+	//socket->Remote.Address	= ip;
+	socket->Remote.Port		= port;
+	socket->Server		= domain;
+	//socket->Change(domain, port);
 	Control->Port->Open();
 
 	Cfg->ServerIP	= socket->Remote.Address.Value;

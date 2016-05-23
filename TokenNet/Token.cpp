@@ -306,11 +306,11 @@ ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pi
 
 void StartGateway(void* param)
 {
-	ISocket* socket	= nullptr;
+	//ISocket* socket	= nullptr;
 	auto gw	= Gateway::Current;
-	if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
+	//if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
 
-	auto tk = TokenConfig::Current;
+	/*auto tk = TokenConfig::Current;
 
 	if(tk && tk->Server.Length() > 0)
 	{
@@ -326,7 +326,7 @@ void StartGateway(void* param)
 		if(socket) socket->Remote.Address = ip;
 		tk->ServerIP = ip.Value;
 		tk->Save();
-	}
+	}*/
 
 	// 此时启动网关服务
 	if(gw)

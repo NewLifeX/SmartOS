@@ -1001,6 +1001,19 @@ bool HardSocket::OnOpen()
 	// 确保宿主打开
 	if(!_Host.Open()) return false;
 
+	// 可能这个字符串是IP地址，尝试解析
+	auto ip	= Remote.Address;
+	if(Server)
+	{
+		ip	= IPAddress::Parse(Server);
+		if(ip == IPAddress::Any())
+		{
+			if(_Host.OnResolve) ip	= _Host.OnResolve(&_Host, Server);
+			if(ip == IPAddress::Any()) return false;
+		}
+		Remote.Address	= ip;
+	}
+
 	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)
 	{
@@ -1015,6 +1028,8 @@ bool HardSocket::OnOpen()
 	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
+	Server.Show(false);
+	debug_printf(" ");
 	Remote.Show(true);
 #endif
 
@@ -1027,6 +1042,7 @@ bool HardSocket::OnOpen()
 
 	// 设置自己的端口号
 	SocRegWrite2(PORT, _REV16(Local.Port));
+
 	// 设置端口目的(远程)IP地址
 	SocRegWrites(DIPR, Remote.Address.ToArray());
 	// 设置端口目的(远程)端口号
@@ -1105,7 +1121,7 @@ void HardSocket::Change(const IPEndPoint& remote)
 	SocRegWrite2(DPORT, _REV16(remote.Port));
 }
 
-// 应用配置，修改远程地址和端口
+/*// 应用配置，修改远程地址和端口
 bool HardSocket::Change(const String& remote, ushort port)
 {
 	// 可能这个字符串是IP地址，尝试解析
@@ -1120,7 +1136,7 @@ bool HardSocket::Change(const String& remote, ushort port)
 	Remote.Port		= port;
 
 	return true;
-}
+}*/
 
 // 接收数据
 uint HardSocket::Receive(Buffer& bs)

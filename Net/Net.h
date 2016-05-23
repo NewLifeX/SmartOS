@@ -162,12 +162,13 @@ public:
 
 	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
 	IPEndPoint	Remote;	// 远程地址
+	String		Server;	// 远程地址，字符串格式，可能是IP字符串
 
 	// 加上虚析构函数，因为应用层可能要释放该接口
 	virtual ~ISocket() { }
 
-	// 应用配置，修改远程地址和端口
-	virtual bool Change(const String& remote, ushort port) { return false; };
+	//// 应用配置，修改远程地址和端口
+	//virtual bool Change(const String& remote, ushort port) { return false; };
 
 	// 发送数据
 	virtual bool Send(const Buffer& bs) = 0;

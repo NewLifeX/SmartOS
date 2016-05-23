@@ -18,8 +18,6 @@ protected:
 	Esp8266&	_Host;
 
 public:
-	String		RemoteDomain;	// 远程域名
-
 	EspSocket(Esp8266& host, ProtocolType protocol);
 	virtual ~EspSocket();
 
@@ -27,8 +25,8 @@ public:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
-	// 应用配置，修改远程地址和端口
-	virtual bool Change(const String& remote, ushort port);
+	//// 应用配置，修改远程地址和端口
+	//virtual bool Change(const String& remote, ushort port);
 
 	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
@@ -710,7 +708,7 @@ bool Esp8266::AutoConn(bool enable)
 /******************************** Socket ********************************/
 
 EspSocket::EspSocket(Esp8266& host, ProtocolType protocol)
-	: _Host(host), RemoteDomain("")
+	: _Host(host)
 {
 	Host		= &host;
 	Protocol	= protocol;
@@ -740,6 +738,8 @@ bool EspSocket::OnOpen()
 	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
+	Server.Show(false);
+	debug_printf(" ");
 	Remote.Show(true);
 #endif
 
@@ -750,7 +750,7 @@ bool EspSocket::OnOpen()
 	else if(Protocol == ProtocolType::Tcp)
 		cmd	+= "\"TCP\"";
 
-	auto rm	= RemoteDomain;
+	auto rm	= Server;
 	if(!rm) rm	= Remote.Address.ToString();
 
 	// 设置端口目的(远程)IP地址和端口号
@@ -777,7 +777,7 @@ void EspSocket::OnClose()
 	_Host.SendCmd("AT+CIPCLOSE\r\n", "OK");
 }
 
-// 应用配置，修改远程地址和端口
+/*// 应用配置，修改远程地址和端口
 bool EspSocket::Change(const String& remote, ushort port)
 {
 	//if(!Close()) return false;
@@ -791,7 +791,7 @@ bool EspSocket::Change(const String& remote, ushort port)
 
 	//if(!Open()) return false;
 	return true;
-}
+}*/
 
 // 接收数据
 uint EspSocket::Receive(Buffer& bs)
