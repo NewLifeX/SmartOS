@@ -116,7 +116,7 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
 	net->NetReady	= onNetReady;
 
-	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, net, 0, -1, "Esp8266");
+	net->OpenAsync();
 
 	Host	= net;
 

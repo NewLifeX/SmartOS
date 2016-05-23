@@ -112,6 +112,13 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	_Response	= nullptr;
 }
 
+void Esp8266::OpenAsync()
+{
+	if(Opened) return;
+
+	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, this, 0, -1, "Esp8266");
+}
+
 bool Esp8266::OnOpen()
 {
 	if(!PackPort::OnOpen()) return false;
@@ -279,7 +286,7 @@ bool Esp8266::SendCmd(const String& cmd)
 bool Esp8266::SendCmd(const String& cmd, const String& expect, uint msTimeout, int times)
 {
 	TS("Esp8266::SendCmd");
-	
+
 	for(int i=0; i<times; i++)
 	{
 		auto rt	= Send(cmd, expect, msTimeout);

@@ -20,6 +20,7 @@ public:
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
 
+	void OpenAsync();
 	virtual void Config();
 
 	//virtual const String ToString() const { return String("Esp8266"); }
