@@ -105,7 +105,8 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 
 	// 上电
 	auto pwr	= new OutputPort(PE2);
-	*pwr	= true;
+	//*pwr	= true;
+	pwr->Down(1000);
 
 	auto srp	= new SerialPort(COM4, 115200);
 	srp->ByteTime	= 10;

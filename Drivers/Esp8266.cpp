@@ -104,7 +104,7 @@ Esp8266::Esp8266(ITransport* port, Pin rst)
 {
 	Set(port);
 
-	//if(rst != P0) _rst.Set(rst);
+	if(rst != P0) _rst.Set(rst);
 
 	Led			= nullptr;
 	NetReady	= nullptr;
@@ -115,16 +115,26 @@ bool Esp8266::OnOpen()
 {
 	if(!PackPort::OnOpen()) return false;
 
-	/*if(!_rst.Empty())
+	// 每两次启动会有一次打开失败，交替
+	if(!_rst.Empty())
 	{
 		_rst.Open();
 
 		_rst = true;
-		Sys.Delay(100);
+		Sys.Sleep(100);
 		_rst = false;
-		Sys.Delay(100);
-		_rst = true;
-	}*/
+		//Sys.Sleep(100);
+	}
+
+	auto rs	= Send("");
+	if(!rs)
+	{
+		net_printf("Esp8266::Open 打开失败！");
+
+		OnClose();
+
+		return false;
+	}
 
 	if (GetMode() != Modes::Station)	// Station模式
 		SetMode(Modes::Station);
@@ -147,7 +157,7 @@ bool Esp8266::OnOpen()
 
 void Esp8266::OnClose()
 {
-	//_rst.Close();
+	_rst.Close();
 
 	PackPort::OnClose();
 }
