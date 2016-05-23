@@ -21,6 +21,10 @@ public:
 	EspSocket(Esp8266& host, ProtocolType protocol);
 	virtual ~EspSocket();
 
+	// 打开Socket
+	virtual bool OnOpen();
+	virtual void OnClose();
+
 	// 应用配置，修改远程地址和端口
 	void Change(const IPEndPoint& remote);
 
@@ -233,18 +237,10 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 #endif
 	}
 
-	// 默认等OK
-	auto exp	= &expect;
-	if(!*exp)
-	{
-		static String _OK("OK");
-		exp	= &_OK;
-	}
-
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
-	while(rs.IndexOf(*exp) < 0 && !tw.Expired());
+	while(rs.IndexOf(expect) < 0 && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
 
@@ -269,7 +265,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	// 拦截给同步方法
 	if(_Response)
 	{
-		_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
+		//_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
+		*_Response	+= bs.AsString();
 
 		return 0;
 	}
@@ -722,6 +719,59 @@ EspSocket::~EspSocket()
 	Close();
 }
 
+bool EspSocket::OnOpen()
+{
+	// 确保宿主打开
+	if(!_Host.Open()) return false;
+
+	// 如果没有指定本地端口，则使用累加端口
+	if(!Local.Port)
+	{
+		// 累加端口
+		static ushort g_port = 1024;
+		if(g_port < 1024) g_port = 1024;
+		Local.Port = g_port++;
+	}
+	Local.Address = _Host.IP;
+
+#if DEBUG
+	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
+	Local.Show(false);
+	debug_printf(" => ");
+	Remote.Show(true);
+#endif
+
+	String cmd	= "AT+CIPSTART=";
+
+	if(Protocol == ProtocolType::Udp)
+		cmd	+= "\"UDP\"";
+	else if(Protocol == ProtocolType::Tcp)
+		cmd	+= "\"TCP\"";
+
+	// 设置端口目的(远程)IP地址和端口号
+	cmd	= cmd + ",\"" + Remote.Address.ToString() + "\"," + Remote.Port;
+	// 设置自己的端口号
+	cmd	= cmd + "," + Local.Port;
+	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
+	cmd	= cmd + ",0";
+
+	//如果Socket打开失败
+	if(!_Host.SendCmd(cmd, "OK"))
+	{
+		debug_printf("protocol %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		OnClose();
+
+		return false;
+	}
+
+	return true;
+}
+
+void EspSocket::OnClose()
+{
+	_Host.SendCmd("AT+CIPCLOSE\r\n", "OK");
+}
+
 // 应用配置，修改远程地址和端口
 void EspSocket::Change(const IPEndPoint& remote)
 {
@@ -780,29 +830,12 @@ uint EspSocket::Receive(Buffer& bs)
 bool EspSocket::Send(const Buffer& bs)
 {
 	if(!Open()) return false;
-	/*debug_printf("%s::Send [%d]=", Protocol == 0x01 ? "Tcp" : "Udp", bs.Length());
-	bs.Show(true);*/
 
-	/*// 读取状态
-	byte st = ReadStatus();
-	// 不在UDP  不在TCP连接OK 状态下返回
-	if(!(st == SOCK_UDP || st == SOCK_ESTABLISHE))return false;
-	// 读取缓冲区空闲大小 硬件内部自动计算好空闲大小
-	ushort remain = _REV16(SocRegRead2(TX_FSR));
-	if( remain < bs.Length())return false;
+	String cmd	= "AT+CIPSEND=0,";
+	cmd	+= bs.Length();
+	if(!_Host.SendCmd(cmd, ">")) return false;
 
-	// 读取发送缓冲区写指针
-	ushort addr = _REV16(SocRegRead2(TX_WR));
-	_Host.WriteFrame(addr, bs, Index, 0x02);
-	// 更新发送缓存写指针位置
-	addr += bs.Length();
-	SocRegWrite2(TX_WR,_REV16(addr));
-
-	// 启动发送 异步中断处理发送异常等
-	WriteConfig(SEND);
-
-	// 控制轮询任务，加快处理
-	Sys.SetTask(_Host.TaskID, true, 20);*/
+	_Host.Send(bs.AsString(), "");
 
 	return true;
 }

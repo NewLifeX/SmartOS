@@ -86,6 +86,8 @@ public:
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;
+	// 包装为字符串对象
+	String AsString() const;
 
     explicit operator bool() const { return _Length > 0; }
     bool operator !() const { return _Length == 0; }

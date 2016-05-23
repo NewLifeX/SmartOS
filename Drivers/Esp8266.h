@@ -47,15 +47,15 @@ public:
 	bool UnJoinAP();
 	bool AutoConn(bool enable);
 
-protected:
-	virtual bool OnOpen();
-	virtual void OnClose();
-
 	// 发送指令
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
 	bool SendCmd(const String& cmd);
 	bool SendCmd(const String& cmd, const String& expect, uint msTimeout = 1000, int times = 1);
 	bool WaitForCmd(const String& expect, uint msTimeout);
+
+protected:
+	virtual bool OnOpen();
+	virtual void OnClose();
 
 	// 引发数据到达事件
 	virtual uint OnReceive(Buffer& bs, void* param);
