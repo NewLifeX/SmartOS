@@ -324,6 +324,13 @@ String& Buffer::ToStr(String& str) const
 	return ToHex(str, '-', 0x20);
 }
 
+// 包装为字符串对象
+String Buffer::AsString() const
+{
+	String str((const char*)_Arr, _Length);
+	return str;
+}
+
 bool operator == (const Buffer& bs1, const Buffer& bs2)
 {
 	if(bs1._Arr == bs2._Arr) return true;
