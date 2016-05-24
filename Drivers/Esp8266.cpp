@@ -160,8 +160,8 @@ bool Esp8266::OnOpen()
 	// 开回显
 	SendCmd("ATE1\r\n");
 
-	UnJoinAP();
-	//AutoConn(false);
+	//UnJoinAP();
+	AutoConn(false);
 
 	// Station模式
 	if (GetMode() != Modes::Station)
@@ -698,7 +698,7 @@ bool Esp8266::UnJoinAP()
 */
 bool Esp8266::AutoConn(bool enable)
 {
-	String cmd = "AT+ CWAUTOCONN=";
+	String cmd = "AT+CWAUTOCONN=";
 	if (enable)
 		cmd += "1\r\n";
 	else
