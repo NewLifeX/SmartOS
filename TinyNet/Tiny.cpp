@@ -239,13 +239,19 @@ void CheckUserPress2(InputPort* port, bool down, void* param)
 	CheckUserPress(port, down, param);
 }
 
-/*void InitButtonPress(Button_GrayLevel* btns, byte count)
+void CheckUserPress3(void* sender,  void* param)
+{
+	auto but = (Button_GrayLevel *)sender;
+	CheckUserPress(&but->Key, but->Key.Read(), param);
+}
+
+void InitButtonPress(Button_GrayLevel* btns, byte count)
 {
 	for(int i=0; i<count; i++)
 	{
-		btns[i].OnPress	= CheckUserPress2;
+		btns[i].Register(CheckUserPress3, nullptr);// = CheckUserPress2;
 	}
-}*/
+}
 
 void SetPower(ITransport* port)
 {
