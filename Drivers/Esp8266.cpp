@@ -160,6 +160,9 @@ bool Esp8266::OnOpen()
 	// 开回显
 	SendCmd("ATE1\r\n");
 
+	UnJoinAP();
+	//AutoConn(false);
+
 	// Station模式
 	if (GetMode() != Modes::Station)
 	{
@@ -534,7 +537,7 @@ bool Esp8266::JoinAP(const String& ssid, const String& pwd)
 	String cmd = "AT+CWJAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pwd + "\"\r\n";
 
-	auto rs	= Send(cmd, "OK", 5000);
+	auto rs	= Send(cmd, "OK", 15000);
 
 	int index = 0;
 	int indexnow = 0;
