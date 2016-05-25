@@ -186,7 +186,8 @@ bool Esp8266::OnOpen()
 	}
 	Wireless	= (byte)mode;
 
-	SetAutoConn(AutoConn);
+	Config();
+
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
@@ -202,7 +203,13 @@ bool Esp8266::OnOpen()
 		}
 	}
 
-	Config();
+	// 拿到IP，网络就绪
+	if(mode == Modes::Station || mode == Modes::Both)
+	{
+		IP	= GetIP(true);
+
+		ShowConfig();
+	}
 
 	if(NetReady) NetReady(this);
 
@@ -220,8 +227,6 @@ void Esp8266::OnClose()
 // 配置网络参数
 void Esp8266::Config()
 {
-	auto mode	= (Modes)Wireless;
-
 	// 设置多连接
 	SetMux(true);
 
@@ -233,13 +238,7 @@ void Esp8266::Config()
 	mac[5]++;
 	SetMAC(false, mac);
 
-	// 拿到IP，网络就绪
-	if(mode == Modes::Station || mode == Modes::Both)
-	{
-		IP	= GetIP(true);
-
-		ShowConfig();
-	}
+	SetAutoConn(AutoConn);
 }
 
 ISocket* Esp8266::CreateSocket(ProtocolType type)
@@ -727,6 +726,7 @@ MacAddress Esp8266::GetMAC(bool sta)
 	return MacAddress::Parse(rs.Substring(p + 1, -1));
 }
 
+// 设置MAC会导致WiFi连接断开
 bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 {
 	String cmd	= sta ? "AT+CIPSTAMAC" : "AT+CIPAPMAC";
