@@ -106,7 +106,10 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 
 	Led			= nullptr;
 	NetReady	= nullptr;
+
 	_Response	= nullptr;
+	_Expect		= nullptr;
+	_Expect2	= nullptr;
 
 	Buffer(_sockets, 5 * 4).Clear();
 
@@ -277,25 +280,34 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 
 	// 在接收事件中拦截
 	_Response	= &rs;
+	_Expect		= &expect;
 
 	if(cmd)
 	{
+		// 设定小灯快闪时间，单位毫秒
+		if(Led) Led->Write(50);
+
 		Port->Write(cmd);
 
 #if NET_DEBUG
-		net_printf("=> ");
-		cmd.Trim().Show(true);
+		// 只有AT指令显示日志
+		if(cmd.StartsWith("AT"))
+		{
+			net_printf("=> ");
+			cmd.Trim().Show(true);
+		}
 #endif
 	}
 
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
-	while(rs.IndexOf(expect) < 0 && !tw.Expired());
+	while(_Expect && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
 
 	_Response	= nullptr;
+	_Expect		= nullptr;
 
 #if NET_DEBUG
 	if(rs)
@@ -313,33 +325,78 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 {
 	TS("Esp8266::SendCmd");
 
-	static const String& expect("OK");
+	static const String& ok("OK");
+	static const String& err("ERROR");
 
-	String cmd2	= cmd;
-	if(!cmd2.EndsWith("\r\n")) cmd2	+= "\r\n";
+	String cmd2;
 
-	auto rt	= Send(cmd2, expect, msTimeout);
+	// 只有AT指令需要检查结尾，其它指令不检查，避免产生拷贝
+	auto p	= &cmd;
+	if(cmd.StartsWith("AT") && !cmd.EndsWith("\r\n"))
+	{
+		cmd2	= cmd;
+		cmd2	+= "\r\n";
+		p	= &cmd2;
+	}
 
-	if(rt.IndexOf(expect) >= 0)  return true;
+	// 二级拦截
+	_Expect2	= &err;
 
-	// 设定小灯快闪时间，单位毫秒
-	if(Led) Led->Write(50);
+	auto rt	= Send(*p, ok, msTimeout);
 
-	return false;
+	_Expect2	= nullptr;
+
+	return rt.Contains(ok);
 }
 
 bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 {
+	String rs;
+
+	// 在接收事件中拦截
+	_Response	= &rs;
+	_Expect		= &expect;
+
+	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
 	tw.Sleep	= 100;
-	do
+	while(!tw.Expired() && _Expect)
 	{
-		auto rs	= Send("", expect);
-		if(rs && rs.IndexOf(expect) >= 0) return true;
+		// 只等我要的数据，不累加
+		rs.SetLength(0);
 	}
-	while(!tw.Expired());
+
+	if(rs.Length() > 4) rs.Trim();
+
+	_Response	= nullptr;
+	_Expect		= nullptr;
 
 	return false;
+}
+
+// 引发数据到达事件
+uint Esp8266::OnReceive(Buffer& bs, void* param)
+{
+	if(bs.Length() == 0) return 0;
+
+	TS("Esp8266::OnReceive");
+
+	// 分析+IPD数据，返回起始位，如果不为0，说明之前有别的数据
+	int p	= ParseReceive(bs);
+	if(p == 0) return 0;
+	
+	// 截取头部，给后面使用
+	if(p > 0) bs	= bs.Sub(0, p);
+
+	// 拦截给同步方法
+	if(_Response && ParseExpect(bs)) return 0;
+
+#if NET_DEBUG
+	net_printf("Esp8266无法识别的数据：");
+	bs.AsString().Show(true);
+#endif
+
+	return ITransport::OnReceive(bs, param);
 }
 
 /*
@@ -352,67 +409,82 @@ port>]:<data>
 (+CIPMUX=1)
 +IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
 */
-// 引发数据到达事件
-uint Esp8266::OnReceive(Buffer& bs, void* param)
+int Esp8266::ParseReceive(const Buffer& bs) const
 {
-	TS("Esp8266::OnReceive");
-
 	auto str	= bs.AsString();
 
 	// +IPD开头的是收到网络数据
 	int p	= str.IndexOf("+IPD,");
-	if(p >= 0)
+	if(p < 0) return -1;
+	
+	int s	= str.IndexOf(",") + 1;
+	int e	= str.IndexOf(",", s);
+
+	int idx	= str.Substring(s, e - s).ToInt();
+
+	s	= e + 1;
+	e	= str.IndexOf(",", s);
+	int len	= str.Substring(s, e - s).ToInt();
+
+	IPEndPoint ep;
+
+	s	= e + 1;
+	e	= str.IndexOf(",", s);
+	ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
+
+	s	= e + 1;
+	e	= str.IndexOf(":", s);
+	ep.Port		= str.Substring(s, e - s).ToInt();
+
+	// 后面是数据
+	s	= e + 1;
+
+	// 分发给各个Socket
+	auto es	= (EspSocket**)_sockets;
+	auto sk	= es[idx];
+	if(sk) sk->OnProcess(bs.Sub(s, -1), ep);
+
+	// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
+	// 发送UDP数据包时，响应数据会随着SEND OK一起收到
+	return p;
+}
+
+bool Esp8266::ParseExpect(const Buffer& bs)
+{
+	if(!_Response) return false;
+
+	auto str	= bs.AsString();
+	if(_Expect)
 	{
-		int s	= str.IndexOf(",") + 1;
-		int e	= str.IndexOf(",", s);
+		// 适配第一关键字。没有关键字的数据别乱吃
+		if(str.Contains(*_Expect))
+		{
+			_Expect		= nullptr;
+			*_Response	+= str;
 
-		int idx	= str.Substring(s, e - s).ToInt();
-
-		s	= e + 1;
-		e	= str.IndexOf(",", s);
-		int len	= str.Substring(s, e - s).ToInt();
-
-		IPEndPoint ep;
-
-		s	= e + 1;
-		e	= str.IndexOf(",", s);
-		ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
-
-		s	= e + 1;
-		e	= str.IndexOf(":", s);
-		ep.Port		= str.Substring(s, e - s).ToInt();
-
-		// 后面是数据
-		s	= e + 1;
-
-		// 分发给各个Socket
-		auto es	= (EspSocket**)_sockets;
-		auto sk	= es[idx];
-		if(sk) sk->OnProcess(bs.Sub(s, -1), ep);
-
-		// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
-		// 发送UDP数据包时，响应数据会随着SEND OK一起收到
-		if(p == 0) return 0;
-
-		// 截取头部，给后面使用
-		bs	= bs.Sub(0, p);
+			return true;
+		}
 	}
-
-	// 拦截给同步方法
-	if(_Response)
+	else if(_Expect2)
 	{
-		//_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
-		*_Response	+= bs.AsString();
+		// 适配第二关键字。没有关键字的数据别乱吃
+		if(str.Contains(*_Expect2))
+		{
+			_Expect2	= nullptr;
+			*_Response	+= str;
 
-		return 0;
+			return true;
+		}
 	}
+	else
+	{
+		// 没有关键字时直接累加
+		*_Response	+= str;
 
-#if NET_DEBUG
-	net_printf("Esp8266无法识别的数据：");
-	bs.AsString().Show(true);
-#endif
-
-	return ITransport::OnReceive(bs, param);
+		return true;
+	}
+	
+	return false;
 }
 
 /******************************** 基础AT指令 ********************************/
@@ -834,7 +906,7 @@ bool EspSocket::OnOpen()
 	cmd	= cmd + ",0";
 
 	//如果Socket打开失败
-	if(!_Host.SendCmd(cmd, 3000))
+	if(!_Host.SendCmd(cmd, 5000))
 	{
 		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 		OnClose();
@@ -854,7 +926,7 @@ void EspSocket::OnClose()
 	String cmd	= "AT+CIPCLOSE=";
 	cmd += _Index;
 
-	_Host.SendCmd(cmd, 3000);
+	_Host.SendCmd(cmd, 5000);
 }
 
 // 接收数据
@@ -874,11 +946,13 @@ bool EspSocket::Send(const Buffer& bs)
 	cmd = cmd + _Index + ',' + bs.Length() + "\r\n";
 
 	auto rt	= _Host.Send(cmd, ">");
-	if(rt.IndexOf(">") < 0) return false;
+	if(!rt.Contains(">")) return false;
 
-	_Host.Port->Write(bs);
+	return _Host.SendCmd(bs.AsString());
 
-	return _Host.WaitForCmd("OK", 1000);
+	//_Host.Port->Write(bs);
+
+	//return _Host.WaitForCmd("OK", 1000);
 }
 
 bool EspSocket::OnWrite(const Buffer& bs) {	return Send(bs); }

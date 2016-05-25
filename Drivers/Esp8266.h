@@ -104,9 +104,14 @@ private:
     OutputPort	_power;
     OutputPort	_rst;
 	String*		_Response;	// 响应内容
+	const String*	_Expect;	// 等待内容
+	const String*	_Expect2;	// 等待内容2
 
 	// 多个硬件socket
 	int* _sockets[5];
+	
+	int ParseReceive(const Buffer& bs) const;
+	bool ParseExpect(const Buffer& bs);
 };
 
 #endif
