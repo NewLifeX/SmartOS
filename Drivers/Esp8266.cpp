@@ -380,11 +380,11 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		auto es	= (EspSocket**)_sockets;
 		auto sk	= es[idx];
 		if(sk) sk->OnProcess(bs.Sub(s, -1), ep);
-		
+
 		// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
 		// 发送UDP数据包时，响应数据会随着SEND OK一起收到
 		if(p == 0) return 0;
-		
+
 		// 截取头部，给后面使用
 		bs	= bs.Sub(0, p);
 	}
@@ -829,6 +829,10 @@ bool EspSocket::OnOpen()
 		return false;
 	}
 
+	// 请一次缓冲区
+	cmd	= "AT+CIPBUFRESET=";
+	_Host.SendCmd(cmd + _Index);
+
 	return true;
 }
 
@@ -859,9 +863,9 @@ bool EspSocket::Send(const Buffer& bs)
 	auto rt	= _Host.Send(cmd, ">");
 	if(rt.IndexOf(">") < 0) return false;
 
-	_Host.Send(bs.AsString(), "");
+	_Host.Port->Write(bs);
 
-	return true;
+	return _Host.WaitForCmd("OK", 1000);
 }
 
 bool EspSocket::OnWrite(const Buffer& bs) {	return Send(bs); }
