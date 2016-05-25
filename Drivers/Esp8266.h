@@ -40,7 +40,7 @@ public:
 	//virtual const String ToString() const { return String("Esp8266"); }
 	virtual ISocket* CreateSocket(ProtocolType type);
 
-	// 基础AT指令
+/******************************** 基础AT指令 ********************************/
 	bool Test();
 	bool Reset();
 	String GetVersion();
@@ -49,7 +49,7 @@ public:
 	// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
 	bool Restore();
 
-	// WiFi功能指令
+/******************************** WiFi功能指令 ********************************/
 	// 获取模式
 	Modes GetMode();
 	// 设置模式。需要重启
@@ -73,8 +73,12 @@ public:
 	MacAddress GetMAC(bool sta);
 	bool SetMAC(bool sta, const MacAddress& mac);
 	
-	IPAddress GetIP();
+	IPAddress GetIP(bool sta);
 
+/******************************** TCP/IP ********************************/
+	String GetStatus();
+
+/******************************** 发送指令 ********************************/
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
 	// 发送命令，自动检测并加上\r\n，等待响应OK

@@ -590,13 +590,39 @@ bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 	return SendCmd(cmd);
 }
 
-IPAddress Esp8266::GetIP()
+IPAddress Esp8266::GetIP(bool sta)
 {
-	auto rs	= Send("AT+CIPSTA?\r\n", "OK");
+	auto rs	= Send(sta ? "AT+CIPSTA?\r\n" : "AT+CIPAP?\r\n", "OK");
 	int p	= rs.IndexOf(':');
 	if(p < 0) return IPAddress::Any();
 
 	return IPAddress::Parse(rs.Substring(p + 1, -1));
+}
+
+/******************************** TCP/IP ********************************/
+
+/*
+STATUS:<stat>
++CIPSTATUS:<link ID>,<type>,<remote IP>,<remote port> ,<local port>,<tetype>
+
+参数说明：
+<stat>
+     2：获得 IP
+     3：已连接
+     4：断开连接
+     5：未连接到 WiFi
+<link ID> ⺴˷	络连接 ID (0~4)，⽤ݒ于多连接的情况
+<type> 字符串参数， “TCP” 或者 “UDP”
+<remote IP> 字符串，远端 IP 地址
+<remote port> 远端端⼝Ծ值
+<local port> ESP8266 本地端⼝Ծ值
+<tetype>
+     0: ESP8266 作为 client
+     1: ESP8266 作为 server
+*/
+String Esp8266::GetStatus()
+{
+	return Send("AT+CIPSTATUS?\r\n", "OK");
 }
 
 /******************************** Socket ********************************/
