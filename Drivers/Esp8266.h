@@ -63,6 +63,8 @@ public:
 	String LoadAPs();
 	String GetAP();
 	bool SetAP(const String& ssid, const String& pass, byte channel, byte ecn, byte maxConnect, bool hidden);
+	// 查询连接到AP的Stations信息。无法查询DHCP接入
+	String LoadStations();
 	
 	bool SetAutoConn(bool enable);
 

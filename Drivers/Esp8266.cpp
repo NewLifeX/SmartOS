@@ -520,6 +520,13 @@ bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte e
 	return SendCmd(cmd, 15000);
 }
 
+// <ip addr>,<mac>
+// 查询连接到AP的Stations信息。无法查询DHCP接入
+String Esp8266::LoadStations()
+{
+	return Send("AT+CWLIF", "OK");
+}
+
 /*
 开机自动连接WIFI
 */
