@@ -416,7 +416,7 @@ int Esp8266::ParseReceive(const Buffer& bs) const
 	int p	= str.IndexOf("+IPD,");
 	if(p < 0) return -1;
 
-	int s	= str.IndexOf(",") + 1;
+	int s	= str.IndexOf(",", p) + 1;
 	int e	= str.IndexOf(",", s);
 
 	int idx	= str.Substring(s, e - s).ToInt();
@@ -895,7 +895,7 @@ bool EspSocket::OnOpen()
 		return false;
 	}
 
-	// 请一次缓冲区
+	// 清空一次缓冲区
 	cmd	= "AT+CIPBUFRESET=";
 	_Host.SendCmd(cmd + _Index);
 
@@ -971,7 +971,7 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	cmd = cmd + _Index + ',' + bs.Length();
 
 	// 加上远程IP和端口
-	cmd	= cmd + ',' + remote.Address;
+	cmd	= cmd + ",\"" + remote.Address + "\"";
 	cmd	= cmd + ',' + remote.Port;
 	cmd	+= "\r\n";
 
