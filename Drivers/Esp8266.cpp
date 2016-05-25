@@ -101,7 +101,7 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	if(power != P0) _power.Set(power);
 	if(rst != P0) _rst.Set(rst);
 
-	Mode		= Modes::Both;
+	//Mode		= Modes::Both;
 	AutoConn	= false;
 
 	Led			= nullptr;
@@ -109,6 +109,8 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	_Response	= nullptr;
 
 	Buffer(_sockets, 5 * 4).Clear();
+
+	Wireless	= (byte)Modes::Both;
 }
 
 void Esp8266::OpenAsync()
@@ -182,9 +184,10 @@ void Esp8266::Config()
 	//UnJoinAP();
 
 	// Station模式
-	if (GetMode() != Mode)
+	auto mode	= (Modes)Wireless;
+	if (GetMode() != mode)
 	{
-		if(!SetMode(Mode))
+		if(!SetMode(mode))
 		{
 			net_printf("设置Station模式失败！");
 
@@ -328,29 +331,29 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	TS("Esp8266::OnReceive");
 
 	auto str	= bs.AsString();
-	
+
 	// +IPD开头的是收到网络数据
 	if(str.StartsWith("+IPD,"))
 	{
 		int s	= str.IndexOf(",") + 1;
 		int e	= str.IndexOf(",", s);
-		
+
 		int idx	= str.Substring(s, e - s).ToInt();
-		
+
 		s	= e + 1;
 		e	= str.IndexOf(",", s);
 		int len	= str.Substring(s, e - s).ToInt();
-		
+
 		IPEndPoint ep;
-		
+
 		s	= e + 1;
 		e	= str.IndexOf(",", s);
 		ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
-		
+
 		s	= e + 1;
 		e	= str.IndexOf(":", s);
 		ep.Port		= str.Substring(s, e - s).ToInt();
-		
+
 		// 后面是数据
 		s	= e + 1;
 
@@ -359,7 +362,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		auto sk	= es[idx];
 		if(!sk) sk->OnProcess(bs.Sub(s, -1), ep);
 	}
-		
+
 	// 拦截给同步方法
 	if(_Response)
 	{
@@ -448,7 +451,7 @@ bool Esp8266::SetMode(Modes mode)
 	}
 	if (!SendCmd(cmd)) return false;
 
-	Mode = mode;
+	Wireless = (byte)mode;
 
 	return true;
 }
@@ -467,26 +470,36 @@ Esp8266::Modes Esp8266::GetMode()
 {
 	TS("Esp8266::GetMode");
 
-	auto mode	= Send("AT+CWMODE?\r\n", "OK");
-	if (!mode) return Modes::Unknown;
+	auto mod	= Modes::Unknown;
 
+	auto rs	= Send("AT+CWMODE?\r\n", "OK");
+	if (!rs) return mod;
+
+	/*Modes mod;
 	if (mode.IndexOf("+CWMODE:1") >= 0)
 	{
-		Mode = Modes::Station;
+		mod = Modes::Station;
 		net_printf("Modes::Station\r\n");
 	}
 	else if (mode.IndexOf("+CWMODE:2") >= 0)
 	{
-		Mode = Modes::Ap;
+		mod = Modes::Ap;
 		net_printf("Modes::AP\r\n");
 	}
 	else if (mode.IndexOf("+CWMODE:3") >= 0)
 	{
-		Mode = Modes::Both;
+		mod = Modes::Both;
 		net_printf("Modes::Station+AP\r\n");
-	}
+	}*/
 
-	return Mode;
+	int p	= rs.IndexOf(':');
+	if(p < 0) return mod;
+
+	mod	=(Modes)rs.Substring(p+1, 1).ToInt();
+
+	Wireless	= (byte)mod;
+
+	return mod;
 }
 
 // +CWJAP:<ssid>,<bssid>,<channel>,<rssi>

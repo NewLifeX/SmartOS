@@ -23,7 +23,7 @@ public:
 		Both	= 3,
 	};
 
-	Modes	Mode;		// 工作模式。默认Both
+	//Modes	Mode;		// 工作模式。默认Both
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
 	//bool	Connected;	// 是否已连接
 	String	SSID;
