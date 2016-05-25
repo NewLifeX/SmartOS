@@ -351,7 +351,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	auto str	= bs.AsString();
 
 	// +IPD开头的是收到网络数据
-	if(str.StartsWith("+IPD,"))
+	int p	= str.IndexOf("+IPD,");
+	if(p >= 0)
 	{
 		int s	= str.IndexOf(",") + 1;
 		int e	= str.IndexOf(",", s);
@@ -378,14 +379,21 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		// 分发给各个Socket
 		auto es	= (EspSocket**)_sockets;
 		auto sk	= es[idx];
-		if(!sk) sk->OnProcess(bs.Sub(s, -1), ep);
+		if(sk) sk->OnProcess(bs.Sub(s, -1), ep);
+		
+		// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
+		// 发送UDP数据包时，响应数据会随着SEND OK一起收到
+		if(p == 0) return 0;
+		
+		// 截取头部，给后面使用
+		bs	= bs.Sub(0, p);
 	}
 
 	// 拦截给同步方法
 	if(_Response)
 	{
 		//_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
-		*_Response	+= str;
+		*_Response	+= bs.AsString();
 
 		return 0;
 	}
