@@ -47,10 +47,10 @@ public:
 	bool UnJoinAP();
 	bool AutoConn(bool enable);
 
-	// 发送指令
+	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
-	bool SendCmd(const String& cmd);
-	bool SendCmd(const String& cmd, const String& expect, uint msTimeout = 1000, int times = 1);
+	// 发送命令，自动检测并加上\r\n，等待响应OK
+	bool SendCmd(const String& cmd, uint msTimeout = 1000);
 	bool WaitForCmd(const String& expect, uint msTimeout);
 
 protected:

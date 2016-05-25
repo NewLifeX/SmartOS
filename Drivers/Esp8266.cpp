@@ -71,37 +71,6 @@ private:
 	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 };
 
-/******************************** 测试 ********************************/
-/*#include "SerialPort.h"
-void EspTest(void * param)
-{
-	SerialPort sp(COM4);
-
-	Esp8266 esp(&sp);
-	//esp.Port.SetBaudRate(115200);
-	esp.Open();
-
-	Sys.Sleep(50);				//
-
-	if (esp.GetMode() != Esp8266::Modes::Station)	// Station模式
-		esp.SetMode(Station);
-
-	String ate = "ATE1";			// 开回显
-	esp.SendCmd(ate);
-
-	String ssid = "yws007";
-	String pwd = "yws52718";
-
-	//String ssid = "FAST_2.4G";
-	//String pwd = "yws52718*";
-	bool isjoin = esp.JoinAP(ssid, pwd);
-	if (isjoin)debug_printf("\r\nJoin ok\r\n");
-	else debug_printf("\r\nJoin not ok\r\n");
-	Sys.Sleep(1000);
-	esp.UnJoinAP();
-	Sys.Sleep(1000);
-}*/
-
 String busy = "busy p...";
 String discon = "WIFI DISCONNECT";
 String conn = "WIFI CONNECTED";
@@ -150,23 +119,23 @@ bool Esp8266::OnOpen()
 	}
 	else
 	{
-		SendCmd("AT+RST\r\n");	// 软件重启命令
+		Reset();	// 软件重启命令
 	}
 
 
 	// 等待模块启动进入就绪状态
 	if(!WaitForCmd("ready", 3000))
 	{
-		if (!SendCmd("AT\r\n"))
+		if (!Test())
 		{
 			net_printf("Esp8266::Open 打开失败！");
-			SendCmd("AT+RST\r\n");	// 软件重启命令
+
 			return false;
 		}
 	}
 
 	// 开回显
-	SendCmd("ATE1\r\n");
+	SendCmd("ATE1");
 
 	//UnJoinAP();
 	AutoConn(false);
@@ -229,6 +198,7 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 	}
 }
 
+// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 {
 	TS("Esp8266::Send");
@@ -286,26 +256,22 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	return ITransport::OnReceive(bs, param);
 }
 
-bool Esp8266::SendCmd(const String& cmd)
-{
-	return SendCmd(cmd, "OK");
-}
-
-bool Esp8266::SendCmd(const String& cmd, const String& expect, uint msTimeout, int times)
+// 发送命令，自动检测并加上\r\n，等待响应OK
+bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 {
 	TS("Esp8266::SendCmd");
 
-	for(int i=0; i<times; i++)
-	{
-		auto rt	= Send(cmd, expect, msTimeout);
+	static const String& expect("OK");
 
-		if(rt.IndexOf(expect) >= 0)  return true;
+	String cmd2	= cmd;
+	if(!cmd2.EndsWith("\r\n")) cmd2	+= "\r\n";
 
-		// 设定小灯快闪时间，单位毫秒
-		if(Led) Led->Write(50);
+	auto rt	= Send(cmd2, expect, msTimeout);
 
-		Sys.Sleep(350);
-	}
+	if(rt.IndexOf(expect) >= 0)  return true;
+
+	// 设定小灯快闪时间，单位毫秒
+	if(Led) Led->Write(50);
 
 	return false;
 }
@@ -329,24 +295,24 @@ bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 // 基础AT指令
 bool Esp8266::Test()
 {
-	return SendCmd("AT\r\n", "OK");
+	return SendCmd("AT");
 }
 
 bool Esp8266::Reset()
 {
-	return SendCmd("AT+RST\r\n", "OK");
+	return SendCmd("AT+RST");
 }
 
 String Esp8266::GetVersion()
 {
-	return Send("AT+GMR\r\n", "OK");
+	return Send("AT+GMR", "OK");
 }
 
 bool Esp8266::Sleep(uint ms)
 {
 	String cmd	= "AT+GSLP=";
 	cmd	+= ms;
-	return SendCmd(cmd + "\r\n", "OK");
+	return SendCmd(cmd);
 }
 
 /******************************** Esp8266 ********************************/
@@ -379,7 +345,7 @@ bool Esp8266::SetMode(Modes mode)
 		default:
 			return false;
 	}
-	if (!SendCmd(cmd + "\r\n")) return false;
+	if (!SendCmd(cmd)) return false;
 
 	Mode = mode;
 
@@ -708,11 +674,11 @@ bool Esp8266::AutoConn(bool enable)
 {
 	String cmd = "AT+CWAUTOCONN=";
 	if (enable)
-		cmd += "1\r\n";
+		cmd += "1";
 	else
-		cmd += "0\r\n";
+		cmd += "0";
 
-	return SendCmd(cmd + "\r\n");
+	return SendCmd(cmd);
 }
 
 
@@ -772,7 +738,7 @@ bool EspSocket::OnOpen()
 	cmd	= cmd + ",0";
 
 	//如果Socket打开失败
-	if(!_Host.SendCmd(cmd, "OK"))
+	if(!_Host.SendCmd(cmd))
 	{
 		debug_printf("protocol %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 		OnClose();
@@ -785,7 +751,7 @@ bool EspSocket::OnOpen()
 
 void EspSocket::OnClose()
 {
-	_Host.SendCmd("AT+CIPCLOSE\r\n", "OK");
+	_Host.SendCmd("AT+CIPCLOSE");
 }
 
 /*// 应用配置，修改远程地址和端口
@@ -849,7 +815,10 @@ bool EspSocket::Send(const Buffer& bs)
 
 	String cmd	= "AT+CIPSEND=0,";
 	cmd	+= bs.Length();
-	if(!_Host.SendCmd(cmd, ">")) return false;
+	cmd	+= "\r\n";
+
+	auto rt	= _Host.Send(cmd, ">");
+	if(rt.IndexOf(">") < 0) return false;
 
 	_Host.Send(bs.AsString(), "");
 
@@ -887,8 +856,10 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	// 加上远程IP和端口
 	cmd	= cmd + "," + remote.Address;
 	cmd	= cmd + "," + remote.Port;
+	cmd	+= "\r\n";
 
-	if(!_Host.SendCmd(cmd, ">")) return false;
+	auto rt	= _Host.Send(cmd, ">");
+	if(rt.IndexOf(">") < 0) return false;
 
 	_Host.Send(bs.AsString(), "");
 
