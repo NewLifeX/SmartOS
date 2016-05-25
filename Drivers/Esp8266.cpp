@@ -2,6 +2,7 @@
 #include "Message\DataStore.h"
 
 #include "Esp8266.h"
+#include "Config.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -71,13 +72,26 @@ private:
 	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 };
 
-String busy = "busy p...";
-String discon = "WIFI DISCONNECT";
-String conn = "WIFI CONNECTED";
-String okstr = "OK";
-String gotIp = "WIFI GOT IP";
+class EspConfig : public ConfigBase
+{
+public:
+	byte	Length;			// 数据长度
 
+	char	_SSID[32];		// 登录名
+	char	_Pass[32];		// 登录密码
 
+	byte	TagEnd;		// 数据区结束标识符
+
+	String	SSID;
+	String	Pass;
+
+	EspConfig();
+	virtual void Init();
+	virtual void Load();
+	virtual void Show() const;
+	
+	static EspConfig* Create();
+};
 
 /******************************** Esp8266 ********************************/
 
@@ -88,6 +102,7 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	if(power != P0) _power.Set(power);
 	if(rst != P0) _rst.Set(rst);
 
+	Mode		= Modes::Both;
 	AutoConn	= false;
 
 	Led			= nullptr;
@@ -139,33 +154,7 @@ bool Esp8266::OnOpen()
 	// 开回显
 	SendCmd("ATE1");
 
-	//UnJoinAP();
-	SetAutoConn(AutoConn);
-
-	// Station模式
-	if (GetMode() != Modes::Station)
-	{
-		if(!SetMode(Modes::Station))
-		{
-			net_printf("设置Station模式失败！");
-
-			return false;
-		}
-	}
-
-	// 等待WiFi自动连接
-	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
-	{
-		//String ssid = "FAST_2.4G";
-		//String pwd = "yws52718*";
-		if (!JoinAP("yws007", "yws52718"))
-		{
-			net_printf("连接WiFi失败！\r\n");
-
-			return false;
-		}
-	}
-
+	Config();
 	// 发命令拿到IP地址
 
 	return true;
@@ -182,7 +171,35 @@ void Esp8266::OnClose()
 // 配置网络参数
 void Esp8266::Config()
 {
+	auto cfg	= EspConfig::Create();
 
+	//UnJoinAP();
+
+	// Station模式
+	if (GetMode() != Mode)
+	{
+		if(!SetMode(Mode))
+		{
+			net_printf("设置Station模式失败！");
+
+			return;
+		}
+	}
+
+	SetAutoConn(AutoConn);
+	// 等待WiFi自动连接
+	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
+	{
+		//String ssid = "FAST_2.4G";
+		//String pwd = "yws52718*";
+		//if (!JoinAP("yws007", "yws52718"))
+		if (!cfg->SSID && !cfg->Pass && !JoinAP(cfg->SSID, cfg->Pass))
+		{
+			net_printf("连接WiFi失败！\r\n");
+
+			return;
+		}
+	}
 }
 
 ISocket* Esp8266::CreateSocket(ProtocolType type)
@@ -681,4 +698,55 @@ void EspUdp::RaiseReceive()
 		Buffer bs3(ms.ReadBytes(len), len);
 		OnReceive(bs3, &ep);
 	};*/
+}
+
+/******************************** EspConfig ********************************/
+
+EspConfig::EspConfig() : ConfigBase(),
+	SSID(_SSID, sizeof(_SSID)),
+	Pass(_Pass, sizeof(_Pass))
+{
+	_Name	 = "EspCfg";
+	_Start	 = &Length;
+	_End	 = &TagEnd;
+	Init();
+}
+
+void EspConfig::Init()
+{
+	ConfigBase::Init();
+
+	Length		= Size();
+}
+
+void EspConfig::Load()
+{
+	ConfigBase::Load();
+	
+	SSID	= _SSID;
+	Pass	= _Pass;
+}
+
+void EspConfig::Show() const
+{
+#if DEBUG
+	debug_printf("EspConfig::无线配置：\r\n");
+
+	debug_printf("\tSSID: %s \r\n", SSID.GetBuffer());
+	debug_printf("\t密码: %s \r\n", Pass.GetBuffer());
+#endif
+}
+
+EspConfig* EspConfig::Create()
+{
+	static EspConfig cfg;
+	if(cfg.New)
+	{
+		cfg.Init();
+		cfg.Load();
+		
+		cfg.New	= false;
+	}
+	
+	return &cfg;
 }

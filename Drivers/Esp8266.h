@@ -15,10 +15,20 @@ extern void EspTest(void * param);
 class Esp8266 : public PackPort, public ISocketHost
 {
 public:
-	bool		AutoConn;	// 是否自动连接WiFi
+	enum class Modes
+	{
+		Unknown = 0,
+		Station	= 1,
+		Ap		= 2,
+		Both	= 3,
+	};
+
+	Modes	Mode;		// 工作模式。默认Both
+	bool	AutoConn;	// 是否自动连接WiFi，默认false
+	//bool	Connected;	// 是否已连接
 	
 	IDataPort*	Led;	// 指示灯
-	Action		NetReady;	// 网络准备就绪
+	Action	NetReady;	// 网络准备就绪
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
 
@@ -33,14 +43,6 @@ public:
 	bool Reset();
 	String GetVersion();
 	bool Sleep(uint ms);
-
-	enum class Modes
-	{
-		Unknown = 0,
-		Station	= 1,
-		Ap		= 2,
-		Both	= 3,
-	};
 
 	// 获取模式
 	Modes GetMode();
@@ -68,10 +70,6 @@ private:
     OutputPort	_power;
     OutputPort	_rst;
 	String*		_Response;	// 响应内容
-
-	Modes Mode = Modes::Unknown;
-	// 数据回显  Write 数据被发回
-	bool BackShow = false;
 };
 
 #endif
