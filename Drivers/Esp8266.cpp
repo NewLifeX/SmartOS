@@ -159,7 +159,7 @@ bool Esp8266::OnOpen()
 	net_printf("版本:");
 	ver.Show(true);
 #endif
-	
+
 	Config();
 
 	return true;
@@ -431,33 +431,40 @@ Esp8266::Modes Esp8266::GetMode()
 	return Mode;
 }
 
+// +CWJAP:<ssid>,<bssid>,<channel>,<rssi>
+// <bssid>目标AP的MAC地址
+String Esp8266::GetJoinAP()
+{
+	return Send("AT+CWJAP?\r\n", "OK");
+}
+
 /*
 发送：
-"AT+CWJAP="yws007","yws52718"
+"AT+CWJAP="yws007','yws52718"
 "
 返回：	( 一般3秒钟能搞定   密码后面位置会停顿，  WIFI GOT IP 前面也会停顿 )
-"AT+CWJAP="yws007","yws52718"WIFI CONNECTED
+"AT+CWJAP="yws007','yws52718"WIFI CONNECTED
 WIFI GOT IP
 
 OK
 "
 也可能  (已连接其他WIFI)  70bytes
-"AT+CWJAP="yws007","yws52718" WIFI DISCONNECT
+"AT+CWJAP="yws007','yws52718" WIFI DISCONNECT
 WIFI CONNECTED
 WIFI GOT IP
 
 OK
 "
 密码错误返回
-"AT+CWJAP="yws007","7" +CWJAP:1
+"AT+CWJAP="yws007','7" +CWJAP:1
 
 FAIL
 "
 */
-bool Esp8266::JoinAP(const String& ssid, const String& pwd)
+bool Esp8266::JoinAP(const String& ssid, const String& pass)
 {
 	String cmd = "AT+CWJAP=";
-	cmd = cmd + "\"" + ssid + "\",\"" + pwd + "\"";
+	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"";
 
 	return SendCmd(cmd, 15000);
 }
@@ -472,6 +479,45 @@ OK
 bool Esp8266::UnJoinAP()
 {
 	return SendCmd("AT+CWQAP", 2000);
+}
+
+// +CWLAP:<enc>,<ssid>,<rssi>,<mac>,<ch>,<freq offset>,<freq calibration>
+// freq offset, AP频偏，单位kHz，转为成ppm需要除以2.4
+// freq calibration，频偏校准值
+String Esp8266::LoadAPs()
+{
+	return Send("AT+CWLAP", "OK");
+}
+
+// +CWSAP:<ssid>,<pwd>,<chl>,<ecn>,<max conn>,<ssid hidden>
+String Esp8266::GetAP()
+{
+	return Send("AT+CWSAP", "OK");
+}
+
+/*
+注意: 指令只有在 softAP 模式开启后有效
+参数说明：
+<ssid> 字符串参数，接入点名称
+<pwd> 字符串参数，密码强度范围：8 ~ 64 字节 ASCII
+<chl> 通道号
+<ecn> 加密方式，不支持 WEP
+   0 OPEN
+   2 WPA_PSK
+   3 WPA2_PSK
+   4 WPA_WPA2_PSK
+<max conn> 允许连接 ESP8266 soft-AP 的最多 station 数目
+   取值范围 [1, 4]
+<ssid hidden> 默认为 0，开启广播 ESP8266 soft-AP SSID
+  0 广播 SSID
+  1 不广播 SSID
+*/
+bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte ecn, byte maxConnect, bool hidden)
+{
+	String cmd = "AT+CWSAP=";
+	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn + ',' + maxConnect + ',' + (hidden ? '1' : '0');
+
+	return SendCmd(cmd, 15000);
 }
 
 /*
@@ -540,7 +586,7 @@ bool EspSocket::OnOpen()
 	// 设置端口目的(远程)IP地址和端口号
 	cmd	= cmd + ",\"" + rm + "\"," + Remote.Port;
 	// 设置自己的端口号
-	cmd	= cmd + "," + Local.Port;
+	cmd	= cmd + ',' + Local.Port;
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
 	cmd	= cmd + ",0";
 
@@ -661,8 +707,8 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	cmd	+= bs.Length();
 
 	// 加上远程IP和端口
-	cmd	= cmd + "," + remote.Address;
-	cmd	= cmd + "," + remote.Port;
+	cmd	= cmd + ',' + remote.Address;
+	cmd	= cmd + ',' + remote.Port;
 	cmd	+= "\r\n";
 
 	auto rt	= _Host.Send(cmd, ">");

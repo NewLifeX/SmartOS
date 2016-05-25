@@ -49,13 +49,21 @@ public:
 	// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
 	bool Restore();
 
+	// WiFi功能指令
 	// 获取模式
 	Modes GetMode();
 	// 设置模式。需要重启
 	bool SetMode(Modes mode);
 
-	bool JoinAP(const String& ssid, const String& pwd);
+	// 连接AP相关
+	String GetJoinAP();
+	bool JoinAP(const String& ssid, const String& pass);
 	bool UnJoinAP();
+	
+	String LoadAPs();
+	String GetAP();
+	bool SetAP(const String& ssid, const String& pass, byte channel, byte ecn, byte maxConnect, bool hidden);
+	
 	bool SetAutoConn(bool enable);
 
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
