@@ -199,6 +199,7 @@ bool Esp8266::OnOpen()
 		}
 	}
 
+	Config();
 
 	if(NetReady) NetReady(this);
 
@@ -674,7 +675,7 @@ MacAddress Esp8266::GetMAC(bool sta)
 
 bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 {
-	String cmd	= sta ? "AT+CIPSTAMAC=" : "AT+CIPAPMAC=";
+	String cmd	= sta ? "AT+CIPSTAMAC" : "AT+CIPAPMAC";
 	cmd = cmd + "=\"" + mac + '\"';
 
 	return SendCmd(cmd);
