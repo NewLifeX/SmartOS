@@ -89,7 +89,7 @@ public:
 	virtual void Init();
 	virtual void Load();
 	virtual void Show() const;
-	
+
 	static EspConfig* Create();
 };
 
@@ -193,7 +193,8 @@ void Esp8266::Config()
 		//String ssid = "FAST_2.4G";
 		//String pwd = "yws52718*";
 		//if (!JoinAP("yws007", "yws52718"))
-		if (!cfg->SSID && !cfg->Pass && !JoinAP(cfg->SSID, cfg->Pass))
+		//if (!cfg->SSID && !cfg->Pass && !JoinAP(cfg->SSID, cfg->Pass))
+		if (SSID && Pass && !JoinAP(SSID, Pass))
 		{
 			net_printf("连接WiFi失败！\r\n");
 
@@ -722,7 +723,7 @@ void EspConfig::Init()
 void EspConfig::Load()
 {
 	ConfigBase::Load();
-	
+
 	SSID	= _SSID;
 	Pass	= _Pass;
 }
@@ -744,9 +745,9 @@ EspConfig* EspConfig::Create()
 	{
 		cfg.Init();
 		cfg.Load();
-		
+
 		cfg.New	= false;
 	}
-	
+
 	return &cfg;
 }

@@ -113,6 +113,9 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	auto net	= new Esp8266(srp, PE2, PD3);
 	net->LoadConfig();
 
+	net->SSID	= "yws007";
+	net->Pass	= "yws52718";
+
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
 	net->NetReady	= onNetReady;
 
@@ -166,7 +169,7 @@ void AP0801::InitDNS()
 	// 只有W5500需要DNS支持
 	auto net	= dynamic_cast<W5500*>(Host);
 	if(!net) return;
-	
+
 	net->OnResolve	= QueryDNS;
 }
 
