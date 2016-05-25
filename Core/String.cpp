@@ -908,6 +908,19 @@ String String::Trim() const
 	return str;
 }
 
+String String::Replace(char find, char replace) const
+{
+	String str(*this);
+
+	auto p	= (char*)str.GetBuffer();
+	for(int i=0; i<Length(); i++)
+	{
+		if(*p++ == find) *p	= replace;
+	}
+
+	return str;
+}
+
 String String::ToLower() const
 {
 	String str(*this);

@@ -65,9 +65,6 @@ public:
 
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote);
 
-	// 用户注册的中断事件处理 异步调用
-	virtual void RaiseReceive();
-
 	virtual String& ToStr(String& str) const { return str + "Udp_" + Local.Port; }
 
 private:
