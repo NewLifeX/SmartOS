@@ -11,6 +11,14 @@
 	#define net_printf(format, ...)
 #endif
 
+/*
+		注意事项
+1、设置模式AT+CWMODE需要重启后生效AT+RST
+2、AP模式下查询本机IP无效，可能会造成死机
+3、开启server需要多连接作为基础AT+CIPMUX=1
+4、单连接模式，多连接模式  收发数据有参数个数区别
+*/
+
 /******************************** 内部Tcp/Udp ********************************/
 class EspSocket : public Object, public ITransport, public ISocket
 {
