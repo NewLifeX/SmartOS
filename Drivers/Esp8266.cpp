@@ -45,6 +45,9 @@ public:
 	virtual bool Send(const Buffer& bs);
 	// 接收数据
 	virtual uint Receive(Buffer& bs);
+
+	// 收到数据
+	virtual void OnProcess(const Buffer& bs, const IPEndPoint& remote);
 };
 
 class EspTcp : public EspSocket
@@ -62,8 +65,6 @@ public:
 
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote);
 
-	// 中断分发  维护状态
-	virtual void OnProcess(byte reg);
 	// 用户注册的中断事件处理 异步调用
 	virtual void RaiseReceive();
 
@@ -314,16 +315,59 @@ bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 	return false;
 }
 
+/*
++IPD – 接收网络数据
+1) 单连接时:
+(+CIPMUX=0)
++IPD,<len>[,<remote IP>,<remote
+port>]:<data>
+2) 多连接时：
+(+CIPMUX=1)
++IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
+*/
 // 引发数据到达事件
 uint Esp8266::OnReceive(Buffer& bs, void* param)
 {
 	TS("Esp8266::OnReceive");
 
+	auto str	= bs.AsString();
+	
+	// +IPD开头的是收到网络数据
+	if(str.StartsWith("+IPD,"))
+	{
+		int s	= str.IndexOf(",") + 1;
+		int e	= str.IndexOf(",", s);
+		
+		int idx	= str.Substring(s, e - s).ToInt();
+		
+		s	= e + 1;
+		e	= str.IndexOf(",", s);
+		int len	= str.Substring(s, e - s).ToInt();
+		
+		IPEndPoint ep;
+		
+		s	= e + 1;
+		e	= str.IndexOf(",", s);
+		ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
+		
+		s	= e + 1;
+		e	= str.IndexOf(":", s);
+		ep.Port		= str.Substring(s, e - s).ToInt();
+		
+		// 后面是数据
+		s	= e + 1;
+
+		// 分发给各个Socket
+		auto es	= (EspSocket**)_sockets;
+		auto sk	= es[idx];
+		if(!sk) sk->OnProcess(bs.Sub(s, -1), ep);
+	}
+		
 	// 拦截给同步方法
 	if(_Response)
 	{
 		//_Response->Copy(_Response->Length(), bs.GetBuffer(), bs.Length());
-		*_Response	+= bs.AsString();
+		*_Response	+= str;
 
 		return 0;
 	}
@@ -669,15 +713,14 @@ bool Esp8266::Ping(const IPAddress& ip)
 }
 
 /*
-+IPD – 接收⺴˷	络数据
++IPD – 接收网络数据
 1) 单连接时:
 (+CIPMUX=0)
 +IPD,<len>[,<remote IP>,<remote
 port>]:<data>
 2) 多连接时：
 (+CIPMUX=1)
-+IPD,<link ID>,<len>[,<remote
-IP>,<remote port>]:<data>
++IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
 说明:
 此指令在普通指令模式下有效，ESP8266 接收到⺴˷	络数据时向串⼝Ծ发
 送 +IPD 和数据
@@ -771,57 +814,11 @@ void EspSocket::OnClose()
 	_Host.SendCmd(cmd);
 }
 
-/*// 应用配置，修改远程地址和端口
-bool EspSocket::Change(const String& remote, ushort port)
-{
-	//if(!Close()) return false;
-
-	RemoteDomain	= remote;
-	Remote.Port		= port;
-
-	// 可能这个字符串是IP地址，尝试解析
-	auto ip	= IPAddress::Parse(remote);
-	if(ip != IPAddress::Any()) Remote.Address	= ip;
-
-	//if(!Open()) return false;
-	return true;
-}*/
-
 // 接收数据
 uint EspSocket::Receive(Buffer& bs)
 {
 	if(!Open()) return 0;
 
-	/*// 读取收到数据容量
-	ushort size = _REV16(SocRegRead2(RX_RSR));
-	if(size == 0)
-	{
-		// 没有收到数据时，需要给缓冲区置零，否则系统逻辑会混乱
-		bs.SetLength(0);
-		return 0;
-	}
-
-	// 读取收到数据的首地址
-	ushort offset = _REV16(SocRegRead2(RX_RD));
-
-	// 长度受 bs 限制时 最大读取bs.Lenth
-	if(size > bs.Length()) size = bs.Length();
-
-	// 设置 实际要读的长度
-	bs.SetLength(size);
-
-	_Host.ReadFrame(offset, bs, Index, 0x03);
-
-	// 更新实际物理地址,
-	SocRegWrite2(RX_RD, _REV16(offset + size));
-	// 生效 RX_RD
-	WriteConfig(RECV);
-
-	// 等待操作完成
-	// while(ReadConfig());
-
-	//返回接收到数据的长度
-	return size;*/
 	return 0;
 }
 
@@ -843,6 +840,12 @@ bool EspSocket::Send(const Buffer& bs)
 
 bool EspSocket::OnWrite(const Buffer& bs) {	return Send(bs); }
 uint EspSocket::OnRead(Buffer& bs) { return Receive(bs); }
+
+// 收到数据
+void EspSocket::OnProcess(const Buffer& bs, const IPEndPoint& remote)
+{
+	OnReceive((Buffer&)bs, (void*)&remote);
+}
 
 /******************************** Tcp ********************************/
 
@@ -888,48 +891,6 @@ bool EspUdp::OnWriteEx(const Buffer& bs, const void* opt)
 	if(!ep) return OnWrite(bs);
 
 	return SendTo(bs, *ep);
-}
-
-void EspUdp::OnProcess(byte reg)
-{
-	/*S_Interrupt ir;
-	ir.Init(reg);
-	// UDP 模式下只处理 SendOK  Recv 两种情况
-
-	if(ir.RECV)
-	{
-		RaiseReceive();
-	}*/
-	//	SEND OK   不需要处理 但要清空中断位
-}
-
-// UDP 异步只有一种情况  收到数据  可能有多个数据包
-// UDP接收到的数据结构： RemoteIP(4 byte) + RemotePort(2 byte) + Length(2 byte) + Data(Length byte)
-void EspUdp::RaiseReceive()
-{
-	/*byte buf[1500];
-	Buffer bs(buf, ArrayLength(buf));
-	ushort size = Receive(bs);
-	Stream ms(bs.GetBuffer(), size);
-
-	// 拆包
-	while(ms.Remain())
-	{
-		IPEndPoint ep	= ms.ReadArray(6);
-		ep.Port = _REV16(ep.Port);
-
-		ushort len = ms.ReadUInt16();
-		len = _REV16(len);
-		// 数据长度不对可能是数据错位引起的，直接丢弃数据包
-		if(len > 1500)
-		{
-			net_printf("W5500 UDP数据接收有误, ep=%s Length=%d \r\n", ep.ToString().GetBuffer(), len);
-			return;
-		}
-		// 回调中断
-		Buffer bs3(ms.ReadBytes(len), len);
-		OnReceive(bs3, &ep);
-	};*/
 }
 
 /******************************** EspConfig ********************************/
