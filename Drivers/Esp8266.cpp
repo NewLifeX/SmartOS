@@ -224,11 +224,14 @@ void Esp8266::Config()
 	// 设置IPD
 	SetIPD(true);
 
+	auto mac	= Mac;
+	SetMAC(true, mac);
+	mac[5]++;
+	SetMAC(false, mac);
+
 	// 拿到IP，网络就绪
 	if(mode == Modes::Station || mode == Modes::Both)
 	{
-		SetMAC(true, Mac);
-
 		IP	= GetIP(true);
 
 		ShowConfig();
