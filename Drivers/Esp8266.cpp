@@ -406,7 +406,11 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 
 		return 0;
 	}
-	bs.Show(true);
+
+#if NET_DEBUG
+	net_printf("Esp8266无法识别的数据：");
+	bs.AsString().Show(true);
+#endif
 
 	return ITransport::OnReceive(bs, param);
 }
@@ -830,9 +834,9 @@ bool EspSocket::OnOpen()
 	cmd	= cmd + ",0";
 
 	//如果Socket打开失败
-	if(!_Host.SendCmd(cmd))
+	if(!_Host.SendCmd(cmd, 3000))
 	{
-		debug_printf("protocol %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 		OnClose();
 
 		return false;
@@ -850,7 +854,7 @@ void EspSocket::OnClose()
 	String cmd	= "AT+CIPCLOSE=";
 	cmd += _Index;
 
-	_Host.SendCmd(cmd);
+	_Host.SendCmd(cmd, 3000);
 }
 
 // 接收数据

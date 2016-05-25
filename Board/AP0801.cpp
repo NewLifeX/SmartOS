@@ -109,7 +109,8 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 
 	auto srp	= new SerialPort(COM4, 115200);
 	srp->ByteTime	= 10;
-	srp->Tx.SetCapacity(0x100);
+	srp->Tx.SetCapacity(0x400);
+	srp->Rx.SetCapacity(0x400);
 
 	auto net	= new Esp8266(srp, PE2, PD3);
 	net->InitConfig();
