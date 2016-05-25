@@ -405,7 +405,7 @@ AT 版本信息
 */
 String Esp8266::GetVersion()
 {
-	return Send("AT+GMR", "OK");
+	return Send("AT+GMR\r\n", "OK");
 }
 
 bool Esp8266::Sleep(uint ms)
