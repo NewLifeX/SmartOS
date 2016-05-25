@@ -139,7 +139,6 @@ bool Esp8266::OnOpen()
 		Reset();	// 软件重启命令
 	}
 
-
 	// 等待模块启动进入就绪状态
 	if(!WaitForCmd("ready", 3000))
 	{
@@ -152,10 +151,16 @@ bool Esp8266::OnOpen()
 	}
 
 	// 开回显
-	SendCmd("ATE1");
+	Echo(true);
 
+#if NET_DEBUG
+	// 获取版本
+	auto ver	= GetVersion();
+	net_printf("版本:");
+	ver.Show(true);
+#endif
+	
 	Config();
-	// 发命令拿到IP地址
 
 	return true;
 }
@@ -323,6 +328,11 @@ bool Esp8266::Reset()
 	return SendCmd("AT+RST");
 }
 
+/*
+AT 版本信息
+基于的SDK版本信息
+编译生成时间
+*/
 String Esp8266::GetVersion()
 {
 	return Send("AT+GMR", "OK");
@@ -333,6 +343,19 @@ bool Esp8266::Sleep(uint ms)
 	String cmd	= "AT+GSLP=";
 	cmd	+= ms;
 	return SendCmd(cmd);
+}
+
+bool Esp8266::Echo(bool open)
+{
+	String cmd	= "ATE";
+	cmd	= cmd + (open ? '1' : '0');
+	return SendCmd(cmd);
+}
+
+// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
+bool Esp8266::Restore()
+{
+	return SendCmd("AT+RESTORE");
 }
 
 /******************************** Esp8266 ********************************/

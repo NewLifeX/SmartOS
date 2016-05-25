@@ -45,6 +45,9 @@ public:
 	bool Reset();
 	String GetVersion();
 	bool Sleep(uint ms);
+	bool Echo(bool open);
+	// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
+	bool Restore();
 
 	// 获取模式
 	Modes GetMode();
