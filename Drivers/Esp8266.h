@@ -15,6 +15,8 @@ extern void EspTest(void * param);
 class Esp8266 : public PackPort, public ISocketHost
 {
 public:
+	bool		AutoConn;	// 是否自动连接WiFi
+	
 	IDataPort*	Led;	// 指示灯
 	Action		NetReady;	// 网络准备就绪
 
@@ -40,12 +42,14 @@ public:
 		Both	= 3,
 	};
 
+	// 获取模式
 	Modes GetMode();
+	// 设置模式。需要重启
 	bool SetMode(Modes mode);
 
 	bool JoinAP(const String& ssid, const String& pwd);
 	bool UnJoinAP();
-	bool AutoConn(bool enable);
+	bool SetAutoConn(bool enable);
 
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
