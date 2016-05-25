@@ -163,22 +163,6 @@ bool Esp8266::OnOpen()
 	ver.Show(true);
 #endif
 
-	Config();
-
-	return true;
-}
-
-void Esp8266::OnClose()
-{
-	_power.Close();
-	_rst.Close();
-
-	PackPort::OnClose();
-}
-
-// 配置网络参数
-void Esp8266::Config()
-{
 	auto cfg	= EspConfig::Create();
 
 	//UnJoinAP();
@@ -191,7 +175,7 @@ void Esp8266::Config()
 		{
 			net_printf("设置Station模式失败！");
 
-			return;
+			return false;
 		}
 	}
 
@@ -207,9 +191,34 @@ void Esp8266::Config()
 		{
 			net_printf("连接WiFi失败！\r\n");
 
-			return;
+			return false;
 		}
 	}
+
+	// 拿到IP，网络就绪
+	if(mode == Modes::Station || mode == Modes::Both)
+	{
+		IP	= GetIP(true);
+
+		ShowConfig();
+	}
+
+	if(NetReady) NetReady(this);
+
+	return true;
+}
+
+void Esp8266::OnClose()
+{
+	_power.Close();
+	_rst.Close();
+
+	PackPort::OnClose();
+}
+
+// 配置网络参数
+void Esp8266::Config()
+{
 }
 
 ISocket* Esp8266::CreateSocket(ProtocolType type)
