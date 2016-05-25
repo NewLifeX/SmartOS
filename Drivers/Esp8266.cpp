@@ -576,7 +576,10 @@ bool Esp8266::SetDHCP(Modes mode, bool enable)
 MacAddress Esp8266::GetMAC(bool sta)
 {
 	auto rs	= Send(sta ? "AT+CIPSTAMAC?\r\n" : "AT+CIPAPMAC?\r\n", "OK");
-	return MacAddress::Parse(rs);
+	int p	= rs.IndexOf(':');
+	if(p < 0) return MacAddress::Empty();
+
+	return MacAddress::Parse(rs.Substring(p + 1, -1));
 }
 
 bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
@@ -587,6 +590,14 @@ bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 	return SendCmd(cmd);
 }
 
+IPAddress Esp8266::GetIP()
+{
+	auto rs	= Send("AT+CIPSTA?\r\n", "OK");
+	int p	= rs.IndexOf(':');
+	if(p < 0) return IPAddress::Any();
+
+	return IPAddress::Parse(rs.Substring(p + 1, -1));
+}
 
 /******************************** Socket ********************************/
 

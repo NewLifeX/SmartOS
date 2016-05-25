@@ -72,6 +72,8 @@ public:
 	
 	MacAddress GetMAC(bool sta);
 	bool SetMAC(bool sta, const MacAddress& mac);
+	
+	IPAddress GetIP();
 
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
