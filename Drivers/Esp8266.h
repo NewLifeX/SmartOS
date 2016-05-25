@@ -79,6 +79,12 @@ public:
 	String GetStatus();
 	bool GetMux();
 	bool SetMux(bool enable);
+	
+	bool Update();
+	
+	bool Ping(const IPAddress& ip);
+	
+	bool SetIPD(bool enable);
 
 /******************************** 发送指令 ********************************/
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
