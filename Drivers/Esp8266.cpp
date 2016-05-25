@@ -181,6 +181,7 @@ bool Esp8266::OnOpen()
 			return false;
 		}
 	}
+	Wireless	= (byte)mode;
 
 	SetAutoConn(AutoConn);
 	// 等待WiFi自动连接
@@ -198,19 +199,6 @@ bool Esp8266::OnOpen()
 		}
 	}
 
-	// 设置多连接
-	SetMux(true);
-
-	// 设置IPD
-	SetIPD(true);
-
-	// 拿到IP，网络就绪
-	if(mode == Modes::Station || mode == Modes::Both)
-	{
-		IP	= GetIP(true);
-
-		ShowConfig();
-	}
 
 	if(NetReady) NetReady(this);
 
@@ -228,6 +216,23 @@ void Esp8266::OnClose()
 // 配置网络参数
 void Esp8266::Config()
 {
+	auto mode	= (Modes)Wireless;
+
+	// 设置多连接
+	SetMux(true);
+
+	// 设置IPD
+	SetIPD(true);
+
+	// 拿到IP，网络就绪
+	if(mode == Modes::Station || mode == Modes::Both)
+	{
+		SetMAC(true, Mac);
+
+		IP	= GetIP(true);
+
+		ShowConfig();
+	}
 }
 
 ISocket* Esp8266::CreateSocket(ProtocolType type)
