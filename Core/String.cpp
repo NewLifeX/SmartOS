@@ -913,9 +913,9 @@ String String::Replace(char find, char replace) const
 	String str(*this);
 
 	auto p	= (char*)str.GetBuffer();
-	for(int i=0; i<Length(); i++)
+	for(int i=0; i<Length(); i++, p++)
 	{
-		if(*p++ == find) *p	= replace;
+		if(*p == find) *p	= replace;
 	}
 
 	return str;
