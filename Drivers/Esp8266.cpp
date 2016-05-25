@@ -339,7 +339,7 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 		p	= &cmd2;
 	}
 
-	// 二级拦截
+	// 二级拦截。遇到错误也马上结束
 	_Expect2	= &err;
 
 	auto rt	= Send(*p, ok, msTimeout);
@@ -384,7 +384,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	// 分析+IPD数据，返回起始位，如果不为0，说明之前有别的数据
 	int p	= ParseReceive(bs);
 	if(p == 0) return 0;
-	
+
 	// 截取头部，给后面使用
 	if(p > 0) bs	= bs.Sub(0, p);
 
@@ -416,7 +416,7 @@ int Esp8266::ParseReceive(const Buffer& bs) const
 	// +IPD开头的是收到网络数据
 	int p	= str.IndexOf("+IPD,");
 	if(p < 0) return -1;
-	
+
 	int s	= str.IndexOf(",") + 1;
 	int e	= str.IndexOf(",", s);
 
@@ -453,38 +453,16 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 {
 	if(!_Response) return false;
 
+	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
 	auto str	= bs.AsString();
-	if(_Expect)
-	{
-		// 适配第一关键字。没有关键字的数据别乱吃
-		if(str.Contains(*_Expect))
-		{
-			_Expect		= nullptr;
-			*_Response	+= str;
+	// 适配第一关键字
+	if(_Expect && str.Contains(*_Expect)) _Expect	= _Expect2	= nullptr;
+	// 适配第二关键字
+	if(_Expect2 && str.Contains(*_Expect2)) _Expect	= _Expect2	= nullptr;
 
-			return true;
-		}
-	}
-	else if(_Expect2)
-	{
-		// 适配第二关键字。没有关键字的数据别乱吃
-		if(str.Contains(*_Expect2))
-		{
-			_Expect2	= nullptr;
-			*_Response	+= str;
+	*_Response	+= str;
 
-			return true;
-		}
-	}
-	else
-	{
-		// 没有关键字时直接累加
-		*_Response	+= str;
-
-		return true;
-	}
-	
-	return false;
+	return true;
 }
 
 /******************************** 基础AT指令 ********************************/
@@ -752,7 +730,7 @@ MacAddress Esp8266::GetMAC(bool sta)
 bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 {
 	String cmd	= sta ? "AT+CIPSTAMAC" : "AT+CIPAPMAC";
-	cmd = cmd + "=\"" + mac + '\"';
+	cmd = cmd + "=\"" + mac.ToString().Replace('-', ':') + '\"';
 
 	return SendCmd(cmd);
 }
