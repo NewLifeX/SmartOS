@@ -108,7 +108,7 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	pwr->Down(1000);*/
 
 	auto srp	= new SerialPort(COM4, 115200);
-	srp->ByteTime	= 10;
+	//srp->ByteTime	= 10;
 	srp->Tx.SetCapacity(0x400);
 	srp->Rx.SetCapacity(0x400);
 

@@ -888,7 +888,7 @@ bool EspSocket::OnOpen()
 	cmd	= cmd + ",0";
 
 	//如果Socket打开失败
-	if(!_Host.SendCmd(cmd, 5000))
+	if(!_Host.SendCmd(cmd))
 	{
 		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 
@@ -907,7 +907,7 @@ void EspSocket::OnClose()
 	String cmd	= "AT+CIPCLOSE=";
 	cmd += _Index;
 
-	_Host.SendCmd(cmd, 5000);
+	_Host.SendCmd(cmd);
 }
 
 // 接收数据
