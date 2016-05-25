@@ -59,6 +59,7 @@ public:
 	String GetJoinAP();
 	bool JoinAP(const String& ssid, const String& pass);
 	bool UnJoinAP();
+	bool SetAutoConn(bool enable);
 	
 	String LoadAPs();
 	String GetAP();
@@ -66,7 +67,9 @@ public:
 	// 查询连接到AP的Stations信息。无法查询DHCP接入
 	String LoadStations();
 	
-	bool SetAutoConn(bool enable);
+	bool GetDHCP(bool* sta, bool* ap);
+	bool SetStationDHCP(bool enable);
+	bool SetAPDHCP(bool enable);
 
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);

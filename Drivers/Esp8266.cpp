@@ -481,6 +481,20 @@ bool Esp8266::UnJoinAP()
 	return SendCmd("AT+CWQAP", 2000);
 }
 
+/*
+开机自动连接WIFI
+*/
+bool Esp8266::SetAutoConn(bool enable)
+{
+	String cmd = "AT+CWAUTOCONN=";
+	if (enable)
+		cmd += '1';
+	else
+		cmd += '0';
+
+	return SendCmd(cmd);
+}
+
 // +CWLAP:<enc>,<ssid>,<rssi>,<mac>,<ch>,<freq offset>,<freq calibration>
 // freq offset, AP频偏，单位kHz，转为成ppm需要除以2.4
 // freq calibration，频偏校准值
@@ -526,19 +540,27 @@ String Esp8266::LoadStations()
 {
 	return Send("AT+CWLIF", "OK");
 }
-
-/*
-开机自动连接WIFI
-*/
-bool Esp8266::SetAutoConn(bool enable)
+	
+bool Esp8266::GetDHCP(bool* sta, bool* ap)
 {
-	String cmd = "AT+CWAUTOCONN=";
-	if (enable)
-		cmd += '1';
-	else
-		cmd += '0';
+	auto rs	= Send("AT+CWDHCP?", "OK");
+	if(!rs) return false;
+	
+	byte n	= rs.ToInt();
+	*sta	= n & 0x01;
+	*ap		= n & 0x02;
+	
+	return true;
+}
 
-	return SendCmd(cmd);
+bool Esp8266::SetStationDHCP(bool enable)
+{
+	return SendCmd("AT+CWDHCP=1," + enable);
+}
+
+bool Esp8266::SetAPDHCP(bool enable)
+{
+	return SendCmd("AT+CWDHCP=0," + enable);
 }
 
 
