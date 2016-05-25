@@ -738,10 +738,14 @@ bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 IPAddress Esp8266::GetIP(bool sta)
 {
 	auto rs	= Send(sta ? "AT+CIPSTA?\r\n" : "AT+CIPAP?\r\n", "OK");
-	int p	= rs.IndexOf(':');
+	int p	= rs.IndexOf("ip:\"");
 	if(p < 0) return IPAddress::Any();
 
-	return IPAddress::Parse(rs.Substring(p + 1, -1));
+	p	+= 4;
+	int e	= rs.IndexOf("\"", p);
+	if(e < 0) return IPAddress::Any();
+
+	return IPAddress::Parse(rs.Substring(p, e - p));
 }
 
 /******************************** TCP/IP ********************************/
@@ -887,7 +891,6 @@ bool EspSocket::OnOpen()
 	if(!_Host.SendCmd(cmd, 5000))
 	{
 		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
-		OnClose();
 
 		return false;
 	}
