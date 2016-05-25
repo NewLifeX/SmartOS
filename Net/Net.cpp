@@ -62,7 +62,7 @@ IPAddress IPAddress::Parse(const String& ipstr)
 
 		ip[i]	= (byte)v;
 	}
-	if(i == 4) debug_printf("IPAddress::Parse %s => %08X \r\n", ipstr.GetBuffer(), ip.Value);
+	if(i == 4) net_printf("IPAddress::Parse %s => %08X \r\n", ipstr.GetBuffer(), ip.Value);
 
 	return ip;
 }
@@ -303,6 +303,29 @@ String& MacAddress::ToStr(String& str) const
 	byte* macs = (byte*)&Value;
 	debug_printf("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
 }*/
+
+// 把字符串Mac地址解析为MacAddress
+MacAddress MacAddress::Parse(const String& macstr)
+{
+	auto mac	= MacAddress::Empty();
+	if(!macstr) return mac;
+
+	// 最大长度判断 00-00-00-00-00-00
+	if(macstr.Length() > 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2) return mac;
+
+	auto str	= macstr.Replace(':', '-');
+	auto bs		= str.ToHex();
+	if(bs.Length() < 6) return mac;
+	
+	mac	= bs;
+	
+#if NET_DEBUG
+	net_printf("MacAddress::Parse %s => ", macstr.GetBuffer());
+	mac.Show(true);
+#endif
+
+	return mac;
+}
 
 /******************************** ISocketHost ********************************/
 

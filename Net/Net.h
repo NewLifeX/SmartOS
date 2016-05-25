@@ -120,6 +120,9 @@ public:
 
 	static const MacAddress& Empty();
 	static const MacAddress& Full();
+
+	// 把字符串Mac地址解析为MacAddress
+	static MacAddress Parse(const String& macstr);
 };
 
 class ISocket;
