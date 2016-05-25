@@ -198,6 +198,12 @@ bool Esp8266::OnOpen()
 		}
 	}
 
+	// 设置多连接
+	SetMux(true);
+
+	// 设置IPD
+	SetIPD(true);
+
 	// 拿到IP，网络就绪
 	if(mode == Modes::Station || mode == Modes::Both)
 	{
@@ -557,12 +563,8 @@ bool Esp8266::UnJoinAP()
 bool Esp8266::SetAutoConn(bool enable)
 {
 	String cmd = "AT+CWAUTOCONN=";
-	if (enable)
-		cmd += '1';
-	else
-		cmd += '0';
 
-	return SendCmd(cmd);
+	return SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 // +CWLAP:<enc>,<ssid>,<rssi>,<mac>,<ch>,<freq offset>,<freq calibration>
@@ -640,7 +642,9 @@ bool Esp8266::SetDHCP(Modes mode, bool enable)
 		default:
 			return false;
 	}
-	return SendCmd("AT+CWDHCP=" + m + ',' + enable);
+
+	String cmd = "AT+CWDHCP=";
+	return SendCmd(cmd + m + ',' + enable);
 }
 
 MacAddress Esp8266::GetMAC(bool sta)
@@ -706,7 +710,11 @@ bool Esp8266::GetMux()
 
 bool Esp8266::SetMux(bool enable)
 {
-	return SendCmd("AT+CIPMUX=" + enable);
+	// 多连接要求非透传模式
+	if(!enable || !SendCmd("AT+CIPMODE=0")) return false;
+
+	String cmd = "AT+CIPMUX=";
+	return SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 bool Esp8266::Update()
@@ -741,7 +749,8 @@ port>]:<data>
 */
 bool Esp8266::SetIPD(bool enable)
 {
-	return SendCmd("AT+CIPDINFO=" + enable);
+	String cmd = "AT+CIPDINFO=";
+	return SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 /******************************** Socket ********************************/
