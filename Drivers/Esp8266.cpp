@@ -625,6 +625,20 @@ String Esp8266::GetStatus()
 	return Send("AT+CIPSTATUS?\r\n", "OK");
 }
 
+bool Esp8266::GetMux()
+{
+	auto rs	= Send("AT+CIPMUX?\r\n", "OK");
+	int p	= rs.IndexOf(':');
+	if(p < 0) return false;
+	
+	return rs.Substring(p + 1, 1) != "0";
+}
+
+bool Esp8266::SetMux(bool enable)
+{
+	return SendCmd("AT+CIPMUX=" + enable);
+}
+
 /******************************** Socket ********************************/
 
 EspSocket::EspSocket(Esp8266& host, ProtocolType protocol)
