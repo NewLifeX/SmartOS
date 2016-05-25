@@ -112,6 +112,7 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	srp->Tx.SetCapacity(0x100);
 
 	auto net	= new Esp8266(srp, PE2, PD3);
+	net->InitConfig();
 	net->LoadConfig();
 
 	net->SSID	= "yws007";
@@ -205,6 +206,7 @@ TokenClient* AP0801::CreateClient()
 	auto socket	= Host->CreateSocket(tk->Protocol);
 	socket->Remote.Port		= tk->ServerPort;
 	socket->Remote.Address	= IPAddress(tk->ServerIP);
+	socket->Server	= tk->Server;
 
 	// 创建连接服务器的控制器
 	auto ctrl	= new TokenController();
