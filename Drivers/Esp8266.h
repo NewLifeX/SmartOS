@@ -104,6 +104,9 @@ private:
     OutputPort	_power;
     OutputPort	_rst;
 	String*		_Response;	// 响应内容
+
+	// 多个硬件socket
+	int* _sockets[5];
 };
 
 #endif

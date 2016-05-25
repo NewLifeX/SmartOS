@@ -25,9 +25,10 @@ class EspSocket : public Object, public ITransport, public ISocket
 {
 protected:
 	Esp8266&	_Host;
+	byte		_Index;
 
 public:
-	EspSocket(Esp8266& host, ProtocolType protocol);
+	EspSocket(Esp8266& host, ProtocolType protocol, byte idx);
 	virtual ~EspSocket();
 
 	// 打开Socket
@@ -49,7 +50,7 @@ public:
 class EspTcp : public EspSocket
 {
 public:
-	EspTcp(Esp8266& host);
+	EspTcp(Esp8266& host, byte idx);
 
 	virtual String& ToStr(String& str) const { return str + "Tcp_" + Local.Port; }
 };
@@ -57,7 +58,7 @@ public:
 class EspUdp : public EspSocket
 {
 public:
-	EspUdp(Esp8266& host);
+	EspUdp(Esp8266& host, byte idx);
 
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote);
 
@@ -108,6 +109,8 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	Led			= nullptr;
 	NetReady	= nullptr;
 	_Response	= nullptr;
+
+	Buffer(_sockets, 5 * 4).Clear();
 }
 
 void Esp8266::OpenAsync()
@@ -210,13 +213,27 @@ void Esp8266::Config()
 
 ISocket* Esp8266::CreateSocket(ProtocolType type)
 {
+	auto es	= (EspSocket**)_sockets;
+
+	int i = 0;
+	for(i = 0; i < 5; i++)
+	{
+		if(es[i] == nullptr) break;
+	}
+	if(i >= 5 )
+	{
+		net_printf("没有空余的Socket可用了 !\r\n");
+
+		return nullptr;
+	}
+
 	switch(type)
 	{
 		case ProtocolType::Tcp:
-			return new EspTcp(*this);
+			return es[i]	= new EspTcp(*this, i);
 
 		case ProtocolType::Udp:
-			return new EspUdp(*this);
+			return es[i]	= new EspUdp(*this, i);
 
 		default:
 			return nullptr;
@@ -651,6 +668,25 @@ bool Esp8266::Ping(const IPAddress& ip)
 	return SendCmd(cmd + ip);
 }
 
+/*
++IPD – 接收⺴˷	络数据
+1) 单连接时:
+(+CIPMUX=0)
++IPD,<len>[,<remote IP>,<remote
+port>]:<data>
+2) 多连接时：
+(+CIPMUX=1)
++IPD,<link ID>,<len>[,<remote
+IP>,<remote port>]:<data>
+说明:
+此指令在普通指令模式下有效，ESP8266 接收到⺴˷	络数据时向串⼝Ծ发
+送 +IPD 和数据
+[<remote IP>] ⺴˷	络通信对端 IP，由指令“AT+CIPDINFO=1”使能显⽰ޓ
+[<remote port>] ⺴˷	络通信对端端⼝Ծ，由指令“AT+CIPDINFO=1”使能
+<link ID> 收到⺴˷	络连接的 ID 号
+<len> 数据⻓ॗ度
+<data> 收到的数据
+*/
 bool Esp8266::SetIPD(bool enable)
 {
 	return SendCmd("AT+CIPDINFO=" + enable);
@@ -658,9 +694,11 @@ bool Esp8266::SetIPD(bool enable)
 
 /******************************** Socket ********************************/
 
-EspSocket::EspSocket(Esp8266& host, ProtocolType protocol)
+EspSocket::EspSocket(Esp8266& host, ProtocolType protocol, byte idx)
 	: _Host(host)
 {
+	_Index		= idx;
+
 	Host		= &host;
 	Protocol	= protocol;
 }
@@ -696,6 +734,8 @@ bool EspSocket::OnOpen()
 
 	String cmd	= "AT+CIPSTART=";
 
+	cmd	= cmd + _Index + ",";
+
 	if(Protocol == ProtocolType::Udp)
 		cmd	+= "\"UDP\"";
 	else if(Protocol == ProtocolType::Tcp)
@@ -707,7 +747,7 @@ bool EspSocket::OnOpen()
 	// 设置端口目的(远程)IP地址和端口号
 	cmd	= cmd + ",\"" + rm + "\"," + Remote.Port;
 	// 设置自己的端口号
-	cmd	= cmd + ',' + Local.Port;
+	if(Local.Port) cmd	= cmd + ',' + Local.Port;
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
 	cmd	= cmd + ",0";
 
@@ -725,7 +765,10 @@ bool EspSocket::OnOpen()
 
 void EspSocket::OnClose()
 {
-	_Host.SendCmd("AT+CIPCLOSE");
+	String cmd	= "AT+CIPCLOSE=";
+	cmd += _Index;
+
+	_Host.SendCmd(cmd);
 }
 
 /*// 应用配置，修改远程地址和端口
@@ -787,9 +830,8 @@ bool EspSocket::Send(const Buffer& bs)
 {
 	if(!Open()) return false;
 
-	String cmd	= "AT+CIPSEND=0,";
-	cmd	+= bs.Length();
-	cmd	+= "\r\n";
+	String cmd	= "AT+CIPSEND=";
+	cmd = cmd + _Index + ',' + bs.Length() + "\r\n";
 
 	auto rt	= _Host.Send(cmd, ">");
 	if(rt.IndexOf(">") < 0) return false;
@@ -804,16 +846,16 @@ uint EspSocket::OnRead(Buffer& bs) { return Receive(bs); }
 
 /******************************** Tcp ********************************/
 
-EspTcp::EspTcp(Esp8266& host)
-	: EspSocket(host, ProtocolType::Tcp)
+EspTcp::EspTcp(Esp8266& host, byte idx)
+	: EspSocket(host, ProtocolType::Tcp, idx)
 {
 
 }
 
 /******************************** Udp ********************************/
 
-EspUdp::EspUdp(Esp8266& host)
-	: EspSocket(host, ProtocolType::Udp)
+EspUdp::EspUdp(Esp8266& host, byte idx)
+	: EspSocket(host, ProtocolType::Udp, idx)
 {
 
 }
@@ -824,8 +866,8 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 
 	if(!Open()) return false;
 
-	String cmd	= "AT+CIPSEND=0,";
-	cmd	+= bs.Length();
+	String cmd	= "AT+CIPSEND=";
+	cmd = cmd + _Index + ',' + bs.Length();
 
 	// 加上远程IP和端口
 	cmd	= cmd + ',' + remote.Address;
