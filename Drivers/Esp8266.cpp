@@ -389,7 +389,6 @@ Esp8266::Modes Esp8266::GetMode()
 	auto mode	= Send("AT+CWMODE?\r\n", "OK");
 	if (!mode) return Modes::Unknown;
 
-	Mode = Modes::Unknown;
 	if (mode.IndexOf("+CWMODE:1") >= 0)
 	{
 		Mode = Modes::Station;
