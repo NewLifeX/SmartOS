@@ -500,13 +500,13 @@ bool Esp8266::SetAutoConn(bool enable)
 // freq calibration，频偏校准值
 String Esp8266::LoadAPs()
 {
-	return Send("AT+CWLAP", "OK");
+	return Send("AT+CWLAP\r\n", "OK");
 }
 
 // +CWSAP:<ssid>,<pwd>,<chl>,<ecn>,<max conn>,<ssid hidden>
 String Esp8266::GetAP()
 {
-	return Send("AT+CWSAP", "OK");
+	return Send("AT+CWSAP\r\n", "OK");
 }
 
 /*
@@ -538,29 +538,53 @@ bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte e
 // 查询连接到AP的Stations信息。无法查询DHCP接入
 String Esp8266::LoadStations()
 {
-	return Send("AT+CWLIF", "OK");
+	return Send("AT+CWLIF\r\n", "OK");
 }
-	
+
 bool Esp8266::GetDHCP(bool* sta, bool* ap)
 {
-	auto rs	= Send("AT+CWDHCP?", "OK");
+	auto rs	= Send("AT+CWDHCP?\r\n", "OK");
 	if(!rs) return false;
-	
+
 	byte n	= rs.ToInt();
 	*sta	= n & 0x01;
 	*ap		= n & 0x02;
-	
+
 	return true;
 }
 
-bool Esp8266::SetStationDHCP(bool enable)
+bool Esp8266::SetDHCP(Modes mode, bool enable)
 {
-	return SendCmd("AT+CWDHCP=1," + enable);
+	byte m	= 0;
+	switch(mode)
+	{
+		case Modes::Station:
+			m	= 1;
+			break;
+		case Modes::Ap:
+			m	= 0;
+			break;
+		case Modes::Both:
+			m	= 2;
+			break;
+		default:
+			return false;
+	}
+	return SendCmd("AT+CWDHCP=" + m + ',' + enable);
 }
 
-bool Esp8266::SetAPDHCP(bool enable)
+MacAddress Esp8266::GetMAC(bool sta)
 {
-	return SendCmd("AT+CWDHCP=0," + enable);
+	auto rs	= Send(sta ? "AT+CIPSTAMAC?\r\n" : "AT+CIPAPMAC?\r\n", "OK");
+	return MacAddress::Parse(rs);
+}
+
+bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
+{
+	String cmd	= sta ? "AT+CIPSTAMAC=" : "AT+CIPAPMAC=";
+	cmd = cmd + "=\"" + mac + '\"';
+
+	return SendCmd(cmd);
 }
 
 
