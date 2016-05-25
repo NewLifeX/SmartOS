@@ -169,6 +169,9 @@ bool Esp8266::OnOpen()
 
 	// Station模式
 	auto mode	= (Modes)Wireless;
+	// 默认Both
+	if(mode == Modes::Unknown) mode	= Modes::Both;
+
 	if (GetMode() != mode)
 	{
 		if(!SetMode(mode))
@@ -443,21 +446,8 @@ OK
 bool Esp8266::SetMode(Modes mode)
 {
 	String cmd = "AT+CWMODE=";
-	switch (mode)
-	{
-		case Modes::Station:
-			cmd += '1';
-			break;
-		case Modes::Ap:
-			cmd += '2';
-			break;
-		case Modes::Both:
-			cmd += '3';
-			break;
-		case Modes::Unknown:
-		default:
-			return false;
-	}
+	cmd	+= (byte)mode;
+
 	if (!SendCmd(cmd)) return false;
 
 	Wireless = (byte)mode;
