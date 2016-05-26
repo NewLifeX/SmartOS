@@ -887,7 +887,7 @@ bool EspSocket::OnOpen()
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
 	cmd	= cmd + ",0";
 
-	//如果Socket打开失败
+	// 如果Socket打开失败
 	if(!_Host.SendCmd(cmd))
 	{
 		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
@@ -929,8 +929,12 @@ bool EspSocket::Send(const Buffer& bs)
 	auto rt	= _Host.Send(cmd, ">");
 	if(!rt.Contains(">")) return false;
 
-	return _Host.SendCmd(bs.AsString());
+	if(_Host.SendCmd(bs.AsString())) return true;
 
+	// 发送失败，关闭链接，下一次重新打开
+	Close();
+
+	return false;
 	//_Host.Port->Write(bs);
 
 	//return _Host.WaitForCmd("OK", 1000);
