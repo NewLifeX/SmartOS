@@ -48,23 +48,36 @@ IPAddress IPAddress::Parse(const String& ipstr)
 	// 最大长度判断 255.255.255.255
 	if(ipstr.Length() > 3 + 1 + 3 + 1 + 3 + 1 + 3) return ip;
 
-	// 这里不能在Split参数直接使用字符指针，隐式构造的字符串对象在这个函数之后将会被销毁
-	String sep(".");
-	auto ss	= ipstr.Split(sep);
-	int i	= 0;
-	for(i=0; i<4 && ss; i++)
+	if(ipstr.Contains("."))
 	{
-		auto item	= ss.Next();
-		if(item.Length() == 0 || item.Length() > 3) return ip;
+		// 特殊处理 0.0.0.0 和 255.255.255.255
+		if(ipstr == "0.0.0.0") return ip;
+		if(ipstr == "255.255.255.255") return IPAddress::Broadcast();
 
-		int v	= item.ToInt();
-		if(v < 0 || v > 255) return ip;
+		// 这里不能在Split参数直接使用字符指针，隐式构造的字符串对象在这个函数之后将会被销毁
+		String sep(".");
+		auto ss	= ipstr.Split(sep);
+		for(int i=0; i<4 && ss; i++)
+		{
+			auto item	= ss.Next();
+			if(item.Length() == 0 || item.Length() > 3) break;
 
-		ip[i]	= (byte)v;
+			// 标准地址第一个不能是0，唯一的Any例外已经在前面处理
+			int v	= item.ToInt();
+			if(v < 0 || v > 255 || i == 0 && v == 0) break;
+
+			ip[i]	= (byte)v;
+
+			// 只有完全4个都正确，才直接返回
+			if(i == 4-1) return ip;
+		}
 	}
-	if(i == 4) net_printf("IPAddress::Parse %s => %08X \r\n", ipstr.GetBuffer(), ip.Value);
+#if NET_DEBUG
+	// 只显示失败
+	net_printf("IPAddress::Parse %s => %08X \r\n", ipstr.GetBuffer(), ip.Value);
+#endif
 
-	return ip;
+	return IPAddress::Any();
 }
 
 const IPAddress& IPAddress::Any()
@@ -298,12 +311,6 @@ String& MacAddress::ToStr(String& str) const
 	return str;
 }
 
-/*void MacAddress::Show()
-{
-	byte* macs = (byte*)&Value;
-	debug_printf("%02X-%02X-%02X-%02X-%02X-%02X", macs[0], macs[1], macs[2], macs[3], macs[4], macs[5]);
-}*/
-
 // 把字符串Mac地址解析为MacAddress
 MacAddress MacAddress::Parse(const String& macstr)
 {
@@ -314,12 +321,22 @@ MacAddress MacAddress::Parse(const String& macstr)
 	if(macstr.Length() > 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1 + 2) return mac;
 
 	auto str	= macstr.Replace(':', '-');
-	auto bs		= str.ToHex();
-	if(bs.Length() < 6) return mac;
-	
-	mac	= bs;
-	
+	if(str.Contains("-"))
+	{
+		// 特殊处理 00-00-00-00-00-00 和 FF-FF-FF-FF-FF-FF
+		if(macstr == "00-00-00-00-00-00") return mac;
+		if(macstr == "FF-FF-FF-FF-FF-FF") return MacAddress::Full();
+
+		auto bs		= str.ToHex();
+		if(bs.Length() == 6)
+		{
+			mac	= bs;
+			return mac;
+		}
+	}
+
 #if NET_DEBUG
+	// 只显示失败
 	net_printf("MacAddress::Parse %s => ", macstr.GetBuffer());
 	mac.Show(true);
 #endif
