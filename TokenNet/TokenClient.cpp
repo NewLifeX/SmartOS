@@ -349,6 +349,31 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	return true;
 }
 
+bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
+{
+	TS("TokenClient::ChangeIPEndPoint");
+
+	debug_printf("ChangeIPEndPoint ");
+
+	domain.Show(true);
+
+    auto socket = dynamic_cast<ISocket*>(Control->Port);
+	if(socket == nullptr) return false;
+
+	Control->Port->Close();
+	//socket->Remote.Address	= ip;
+	socket->Remote.Port	= port;
+	socket->Server		= domain;
+	//socket->Change(domain, port);
+	
+	// 等下次发数据的时候自动打开
+	//Control->Port->Open();
+
+	Cfg->ServerIP	= socket->Remote.Address.Value;
+
+	return true;
+}
+
 // 注册
 void TokenClient::Register()
 {
@@ -558,35 +583,6 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 		Delay = cost;
 
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
-	return true;
-}
-
-bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
-{
-	TS("TokenClient::ChangeIPEndPoint");
-
-	debug_printf("ChangeIPEndPoint ");
-
-	domain.Show(true);
-
-    auto socket = dynamic_cast<ISocket*>(Control->Port);
-	if(socket == nullptr) return false;
-
-	// 根据DNS获取云端IP地址
-	/*auto ip	= DNS::Query(*(socket->Host), domain);
-	if(ip == IPAddress::Any()) return false;
-
-	debug_printf("服务器地址 %s %s:%d \r\n", domain.GetBuffer(), ip.ToString().GetBuffer(), port);*/
-
-	Control->Port->Close();
-	//socket->Remote.Address	= ip;
-	socket->Remote.Port		= port;
-	socket->Server		= domain;
-	//socket->Change(domain, port);
-	Control->Port->Open();
-
-	Cfg->ServerIP	= socket->Remote.Address.Value;
-
 	return true;
 }
 
