@@ -95,6 +95,9 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 {
 	if(!src) return 0;
 
+	// 自己有缓冲区才能拷贝
+	if(!_Arr || !_Length) return 0;
+
 	int remain	= _Length - destIndex;
 
 	// 如果没有指明长度，则拷贝起始位置之后的剩余部分
