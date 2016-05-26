@@ -545,9 +545,9 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	TokenPingMessage pinMsg;
 	pinMsg.ReadMessage(msg);
-	UInt64 start = pinMsg.TimeX;
+	UInt64 start = pinMsg.LocalTime;
 
-	UInt64 now = Sys.Ms();
+	UInt64 now = Time.Now().TotalMs();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	// if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);

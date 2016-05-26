@@ -150,18 +150,18 @@ String& HelloMessage::ToStr(String& str) const
 
 TokenPingMessage::TokenPingMessage()
 {
-	TimeX = Time.Now().TotalMs();
+	LocalTime = Time.Now().TotalMs();
 }
 TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg)
 {
-	TimeX = msg.TimeX;
+	LocalTime = msg.LocalTime;
 }
 
 // 从数据流中读取消息
 bool TokenPingMessage::Read(Stream& ms)
 {
 	BinaryPair bp(ms);
-	bp.Get("Time", TimeX);
+	bp.Get("Time", LocalTime);
 
 	return true;
 }
@@ -169,7 +169,7 @@ bool TokenPingMessage::Read(Stream& ms)
 void TokenPingMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
-	bp.Set("Time", TimeX);
+	bp.Set("Time", LocalTime);
 }
 
 #if DEBUG
@@ -180,7 +180,7 @@ String& TokenPingMessage::ToStr(String& str) const
 	if (Reply) str += '#';
 
 	DateTime dt;
-	dt.ParseMs(TimeX);
+	dt.ParseMs(LocalTime);
 	str += dt;
 
 	return str;

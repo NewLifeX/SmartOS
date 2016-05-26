@@ -46,7 +46,7 @@ public:
 class TokenPingMessage : public MessageBase
 {
 public:
-	UInt64		TimeX;	// 时间ms
+	UInt64		LocalTime;	// 时间ms
 
 	TokenPingMessage();
 	TokenPingMessage(const TokenPingMessage& msg);
