@@ -392,7 +392,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	if(_Response && ParseExpect(bs)) return 0;
 
 #if NET_DEBUG
-	net_printf("Esp8266无法识别的数据：");
+	net_printf("Esp8266无法识别[%d]：", bs.Length());
 	bs.AsString().Show(true);
 #endif
 
