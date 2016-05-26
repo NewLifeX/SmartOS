@@ -17,8 +17,8 @@
 
 static FlushPort* CreateFlushPort(OutputPort* led)
 {
-	auto fp	= new FlushPort();
-	fp->Port	= led;
+	auto fp = new FlushPort();
+	fp->Port = led;
 	fp->Start();
 
 	return fp;
@@ -26,8 +26,8 @@ static FlushPort* CreateFlushPort(OutputPort* led)
 
 AP0104::AP0104()
 {
-	EthernetLed	= nullptr;
-	WirelessLed	= nullptr;
+	EthernetLed = nullptr;
+	WirelessLed = nullptr;
 }
 
 #if DEBUG
@@ -42,16 +42,16 @@ static uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param
 
 void AP0104::Setup(ushort code, const char* name, COM message, int baudRate)
 {
-	auto& sys	= (TSys&)Sys;
+	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
-    // 初始化系统
-    //Sys.Clock = 48000000;
-    sys.Init();
+	// 初始化系统
+	//Sys.Clock = 48000000;
+	sys.Init();
 #if DEBUG
-    sys.MessagePort = message; // 指定printf输出的串口
-    Sys.ShowInfo();
+	sys.MessagePort = message; // 指定printf输出的串口
+	Sys.ShowInfo();
 #endif
 
 #if DEBUG
@@ -62,10 +62,10 @@ void AP0104::Setup(ushort code, const char* name, COM message, int baudRate)
 
 #if DEBUG
 	// 打开串口输入便于调试数据操作，但是会影响性能
-	if(baudRate > 0)
+	if (baudRate > 0)
 	{
 		auto sp = SerialPort::GetMessagePort();
-		if(baudRate != 1024000)
+		if (baudRate != 1024000)
 		{
 			sp->Close();
 			sp->SetBaudRate(baudRate);
@@ -79,22 +79,22 @@ void AP0104::Setup(ushort code, const char* name, COM message, int baudRate)
 #endif
 
 	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
+	Config::Current = &Config::CreateFlash();
 }
 
 ISocketHost* AP0104::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi	= new Spi(Spi1, 36000000);
+	auto spi = new Spi(Spi1, 36000000);
 
-	auto net	= new W5500();
+	auto net = new W5500();
 	net->LoadConfig();
 	net->Init(spi, PE7, PB2);
 
-	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
+	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
 
-	Host	= net;
+	Host = net;
 
 	return net;
 }
@@ -107,19 +107,23 @@ ISocketHost* AP0104::Create8266(Action onNetReady)
 	auto pwr	= new OutputPort(PE2);
 	pwr->Down(1000);*/
 
-	auto srp	= new SerialPort(COM4, 115200);
-	srp->ByteTime	= 10;
+	auto srp = new SerialPort(COM4, 115200);
+	srp->ByteTime = 10;
 
-	auto net	= new Esp8266(srp, P0, P0);
+	auto net = new Esp8266(srp, P0, P0);
+	net->InitConfig();
 	net->LoadConfig();
 
-	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-	net->NetReady	= onNetReady;
+	net->SSID = "yws007";
+	net->Pass = "yws52718";
+
+	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
+	net->NetReady = onNetReady;
 
 	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, net, 0, -1, "Esp8266");
 
-	Host	= net;
-
+	Host = net;
+	//net->LoadAPs();
 	return net;
 }
 
@@ -129,7 +133,7 @@ static Action _DHCP_Ready = nullptr;
 
 static void On_DHCP_Ready(void* param)
 {
-	if(_DHCP_Ready) _DHCP_Ready(param);
+	if (_DHCP_Ready) _DHCP_Ready(param);
 }
 
 static void OnDhcpStop(void* sender, void* param)
@@ -137,20 +141,20 @@ static void OnDhcpStop(void* sender, void* param)
 	auto& dhcp = *(Dhcp*)sender;
 
 	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
-	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
+	if (dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
 	{
 		// 防止调用栈太深，另外开任务
-		if(_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
+		if (_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
 	}
 }
 
 void AP0104::InitDHCP(Action onNetReady)
 {
-	_DHCP_Ready	= onNetReady;
+	_DHCP_Ready = onNetReady;
 
 	// 打开DHCP
-	auto dhcp	= new Dhcp(*Host);
-	dhcp->OnStop	= OnDhcpStop;
+	auto dhcp = new Dhcp(*Host);
+	dhcp->OnStop = OnDhcpStop;
 	dhcp->Start();
 }
 
@@ -158,11 +162,11 @@ void AP0104::InitDHCP(Action onNetReady)
 
 bool AP0104::QueryDNS(TokenConfig& tk)
 {
-	if(tk.Server.Length() == 0) return false;
+	if (tk.Server.Length() == 0) return false;
 
 	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*Host, tk.Server);
-	if(ip == IPAddress::Any())
+	auto ip = DNS::Query(*Host, tk.Server);
+	if (ip == IPAddress::Any())
 	{
 		debug_printf("DNS::Query %s 失败！\r\n", tk.Server.GetBuffer());
 		return false;
@@ -184,33 +188,33 @@ TokenClient* AP0104::CreateClient()
 	auto tk = TokenConfig::Current;
 
 	// 创建连接服务器的Socket
-	auto socket	= Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port		= tk->ServerPort;
-	socket->Remote.Address	= IPAddress(tk->ServerIP);
+	auto socket = Host->CreateSocket(tk->Protocol);
+	socket->Remote.Port = tk->ServerPort;
+	socket->Remote.Address = IPAddress(tk->ServerIP);
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
+	auto ctrl = new TokenController();
 	ctrl->Port = dynamic_cast<ITransport*>(socket);
 
 	// 创建客户端
-	auto client	= new TokenClient();
-	client->Control	= ctrl;
+	auto client = new TokenClient();
+	client->Control = ctrl;
 	//client->Local	= ctrl;
-	client->Cfg		= tk;
+	client->Cfg = tk;
 
 	// 如果是TCP，需要再建立一个本地UDP
 	//if(tk->Protocol == ProtocolType::Tcp)
 	{
 		// 建立一个监听内网的UDP Socket
-		socket	= Host->CreateSocket(ProtocolType::Udp);
-		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address	= IPAddress::Broadcast();
-		socket->Local.Port	= tk->Port;
+		socket = Host->CreateSocket(ProtocolType::Udp);
+		socket->Remote.Port = 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
+		socket->Remote.Address = IPAddress::Broadcast();
+		socket->Local.Port = tk->Port;
 
 		// 建立内网控制器
-		auto token2		= new TokenController();
-		token2->Port	= dynamic_cast<ITransport*>(socket);
-		client->Local	= token2;
+		auto token2 = new TokenController();
+		token2->Port = dynamic_cast<ITransport*>(socket);
+		client->Local = token2;
 	}
 
 	return client;
@@ -277,7 +281,7 @@ PD9			CE			|	PB2			NET_NRST	|
 PE4			POWER		|	P0			POWER		|
 
 ESP8266
-COM4 
+COM4
 Power	null
 rst		null
 
