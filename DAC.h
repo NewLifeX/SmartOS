@@ -2,7 +2,10 @@
 #define __DAC_H__
 
 #include "Port.h"
+
+#if defined(STM32F1)
 #include "stm32f10x_dac.h"
+#endif
 
 /*
 STM32F1：
