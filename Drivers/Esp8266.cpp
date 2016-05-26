@@ -26,6 +26,7 @@ class EspSocket : public Object, public ITransport, public ISocket
 protected:
 	Esp8266&	_Host;
 	byte		_Index;
+	int			_Error;
 
 public:
 	EspSocket(Esp8266& host, ProtocolType protocol, byte idx);
@@ -834,6 +835,7 @@ EspSocket::EspSocket(Esp8266& host, ProtocolType protocol, byte idx)
 	: _Host(host)
 {
 	_Index		= idx;
+	_Error		= 0;
 
 	Host		= &host;
 	Protocol	= protocol;
@@ -899,6 +901,8 @@ bool EspSocket::OnOpen()
 	cmd	= "AT+CIPBUFRESET=";
 	_Host.SendCmd(cmd + _Index);
 
+	_Error	= 0;
+
 	return true;
 }
 
@@ -927,12 +931,15 @@ bool EspSocket::Send(const Buffer& bs)
 	cmd = cmd + _Index + ',' + bs.Length() + "\r\n";
 
 	auto rt	= _Host.Send(cmd, ">");
-	if(!rt.Contains(">")) return false;
-
-	if(_Host.SendCmd(bs.AsString())) return true;
+	if(rt.Contains(">") && _Host.SendCmd(bs.AsString())) return true;
 
 	// 发送失败，关闭链接，下一次重新打开
-	Close();
+	if(++_Error >= 10)
+	{
+		_Error	= 0;
+
+		Close();
+	}
 
 	return false;
 	//_Host.Port->Write(bs);

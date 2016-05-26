@@ -103,6 +103,7 @@ protected:
 private:
     OutputPort	_power;
     OutputPort	_rst;
+	
 	String*		_Response;	// 响应内容
 	const String*	_Expect;	// 等待内容
 	const String*	_Expect2;	// 等待内容2
