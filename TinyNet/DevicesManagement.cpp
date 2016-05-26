@@ -507,8 +507,10 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 {
 	TS("DevicesManagement::DeviceRequest");
 
-	if (Port)return;
-	if (Port->Status < 2) return;
+	bool PortOk = true;
+	if (Port == nullptr)PortOk = false;
+	if (Port->Status < 2) PortOk = false;
+	if(Port == false)debug_printf("Port Not Realy\r\n");
 
 	byte id = dv->Address;
 	switch (act)
@@ -526,12 +528,12 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	case DeviceAtions::Register:
 		PushDev((Device*)dv);
 		debug_printf("节点注册入网 ID=0x%02X\r\n", id);
-		SendDevices(act, dv);
+		if(PortOk)SendDevices(act, dv);
 		return;
 	case DeviceAtions::Delete:
 		debug_printf("节点删除~~ ID=0x%02X\r\n", id);
 		DeleteDev(id);
-		//SendDevices(act, dv);
+		//if(PortOk)SendDevices(act, dv);
 		break;
 	default:
 		debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
