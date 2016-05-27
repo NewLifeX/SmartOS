@@ -196,11 +196,19 @@ bool Esp8266::OnOpen()
 		//String pwd = "yws52718*";
 		//if (!JoinAP("yws007", "yws52718"))
 		//if (!cfg->SSID && !cfg->Pass && !JoinAP(cfg->SSID, cfg->Pass))
-		if (SSID && Pass && !JoinAP(SSID, Pass))
+		
+		if (SSID.Length() == 0 || mode == Modes::Both)
 		{
-			net_printf("连接WiFi失败！\r\n");
-
-			return false;
+			net_printf("启动AP模式!\r\n");
+			SetAP("WsLink-001","",11,0,1,1);
+		}
+		if (SSID.Length() > 0)
+		{
+			if (!JoinAP(SSID, Pass))	// Pass 可以为空
+			{
+				net_printf("连接WiFi失败！\r\n");
+				return false;
+			}
 		}
 	}
 

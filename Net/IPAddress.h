@@ -1,8 +1,8 @@
 ﻿#ifndef _IPAddress_H_
 #define _IPAddress_H_
 
-#include "ByteArray.h"
-#include "SString.h"
+#include "Core\ByteArray.h"
+#include "Core\SString.h"
 
 // IP协议类型
 enum ProtocolType

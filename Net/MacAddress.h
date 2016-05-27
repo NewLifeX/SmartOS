@@ -1,7 +1,7 @@
 ﻿#ifndef _MacAddress_H_
 #define _MacAddress_H_
 
-#include "Buffer.h"
+#include "Core\Buffer.h"
 
 // Mac地址
 class MacAddress : public Object
