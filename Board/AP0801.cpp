@@ -160,41 +160,6 @@ void AP0801::InitDHCP(Action onNetReady)
 	dhcp->Start();
 }
 
-/******************************** DNS ********************************/
-
-static IPAddress QueryDNS(ISocketHost* host, const String& domain)
-{
-	return DNS::Query(*host, domain);
-}
-
-void AP0801::InitDNS()
-{
-	// 只有W5500需要DNS支持
-	auto net	= dynamic_cast<W5500*>(Host);
-	if(!net) return;
-
-	net->OnResolve	= QueryDNS;
-}
-
-/*bool AP0801::QueryDNS(TokenConfig& tk)
-{
-	if(tk.Server.Length() == 0) return false;
-
-	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*Host, tk.Server);
-	if(ip == IPAddress::Any())
-	{
-		debug_printf("DNS::Query %s 失败！\r\n", tk.Server.GetBuffer());
-		return false;
-	}
-	debug_printf("服务器地址 %s %s:%d \r\n", tk.Server.GetBuffer(), ip.ToString().GetBuffer(), tk.ServerPort);
-
-	tk.ServerIP = ip.Value;
-	tk.Save();
-
-	return true;
-}*/
-
 /******************************** Token ********************************/
 
 TokenClient* AP0801::CreateClient()

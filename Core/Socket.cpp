@@ -25,6 +25,13 @@ struct NetConfig
 	uint	Gateway;
 };
 
+ISocketHost::ISocketHost()
+{
+	Wireless	= 0;
+
+	NetReady	= nullptr;
+}
+
 void ISocketHost::InitConfig()
 {
 	IPAddress defip(192, 168, 1, 1);
@@ -134,4 +141,10 @@ void ISocketHost::ShowConfig()
 	}
 	net_printf("\r\n");
 #endif
+}
+
+// DNS解析。默认仅支持字符串IP地址解析
+IPAddress ISocketHost::QueryDNS(const String& domain)
+{
+	return IPAddress::Parse(domain);
 }

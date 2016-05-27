@@ -270,6 +270,10 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 			return nullptr;
 	}
 }
+// 启用DNS
+bool Esp8266::EnableDNS() { return true; }
+// 启用DHCP
+bool Esp8266::EnableDHCP() { return SetDHCP(Modes::Both, true); }
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)

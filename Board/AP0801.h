@@ -29,8 +29,6 @@ public:
 	TokenClient* CreateClient();
 
 	void InitDHCP(Action onNetReady = nullptr);
-	void InitDNS();
-	//bool QueryDNS(TokenConfig& tk);
 };
 
 #endif

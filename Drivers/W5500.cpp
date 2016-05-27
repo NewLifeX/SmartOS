@@ -7,6 +7,9 @@
 #include "Socket.h"
 #include "Message\DataStore.h"
 
+#include "Net\Dhcp.h"
+#include "Net\DNS.h"
+
 #include "W5500.h"
 #include "Time.h"
 #include "Task.h"
@@ -222,7 +225,8 @@ void W5500::Init()
 {
 	_spi	= nullptr;
 	Led		= nullptr;
-	OnResolve	= nullptr;
+	_Dns	= nullptr;
+	_Dhcp	= nullptr;
 
 	Buffer(_sockets, sizeof(_sockets)).Clear();
 
@@ -232,7 +236,6 @@ void W5500::Init()
 	RetryCount	= 8;
 	LowLevelTime= 0;
 	PingACK		= true;
-	EnableDHCP	= true;
 	Opened		= false;
 	TaskID		= 0;
 
@@ -737,6 +740,58 @@ void W5500::OnIRQ()
 	// 中断位清零 说明书说的不够清晰 有待完善
 }
 
+// DNS解析。默认仅支持字符串IP地址解析
+IPAddress W5500::QueryDNS(const String& domain)
+{
+	auto ip	= IPAddress::Parse(domain);
+	if(ip != IPAddress::Any()) return ip;
+	
+	if(_Dns) return _Dns(this, domain);
+	
+	return ip;
+}
+
+static IPAddress FullQueryDNS(ISocketHost* host, const String& domain)
+{
+	return DNS::Query(*host, domain);
+}
+
+// 是否使用完整DNS
+bool W5500::EnableDNS()
+{
+	_Dns	= FullQueryDNS;
+	
+	return true;
+}
+
+static void OnDhcpStop(void* sender, void* param)
+{
+	auto& dhcp = *(Dhcp*)sender;
+
+	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
+	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
+	{
+		auto callback	= (Action)param;
+		// 防止调用栈太深，另外开任务
+		if(callback) Sys.AddTask(callback, &dhcp.Host, 0, -1, "网络就绪");
+	}
+}
+
+// 启用DHCP
+bool W5500::EnableDHCP()
+{
+	if(_Dhcp) return true;
+	
+	// 打开DHCP
+	auto dhcp	= new Dhcp(*this);
+	dhcp->OnStop	= OnDhcpStop;
+	dhcp->Start();
+	
+	_Dhcp	= dhcp;
+	
+	return true;
+}
+
 /****************************** 硬件Socket控制器 ************************************/
 
 typedef struct : ByteStruct
@@ -1001,18 +1056,13 @@ bool HardSocket::OnOpen()
 	// 确保宿主打开
 	if(!_Host.Open()) return false;
 
-	// 可能这个字符串是IP地址，尝试解析
-	auto ip	= Remote.Address;
+	// 如果有域名地址，尝试解析，失败后采用数字地址
 	if(Server)
 	{
-		ip	= IPAddress::Parse(Server);
-		if(ip == IPAddress::Any())
-		{
-			if(_Host.OnResolve) ip	= _Host.OnResolve(&_Host, Server);
-			if(ip == IPAddress::Any()) return false;
-		}
-		Remote.Address	= ip;
+		auto ip	= _Host.QueryDNS(Server);
+		if(ip != IPAddress::Any()) Remote.Address	= ip;
 	}
+	if(Remote.Address == IPAddress::Any()) return false;
 
 	// 如果没有指定本地端口，则使用累加端口
 	if(!Local.Port)

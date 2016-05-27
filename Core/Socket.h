@@ -21,6 +21,10 @@ public:
 	IPAddress	DNSServer2;
 	IPAddress	Gateway;
 
+	typedef void (*NetReadyHandler)(ISocketHost* host);
+	NetReadyHandler		NetReady;	// 网络准备就绪
+
+	ISocketHost();
 	// 加上虚析构函数，因为应用层可能要释放该接口
 	virtual ~ISocketHost() { }
 
@@ -34,6 +38,13 @@ public:
 	void ShowConfig();
 
 	virtual ISocket* CreateSocket(ProtocolType type) = 0;
+	
+	// DNS解析。默认仅支持字符串IP地址解析
+	virtual IPAddress QueryDNS(const String& domain);
+	// 启用DNS
+	virtual bool EnableDNS() { return false; }
+	// 启用DHCP
+	virtual bool EnableDHCP() { return false; }
 };
 
 // Socket接口

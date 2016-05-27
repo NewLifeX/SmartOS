@@ -12,15 +12,11 @@ public:
 	ushort		LowLevelTime;
 	byte		RetryCount;
 	bool		PingACK;
-	bool		EnableDHCP;
 
 	bool		Opened;	// 是否已经打开
 	uint		TaskID;
 
 	IDataPort*	Led;	// 指示灯
-
-	typedef IPAddress (*ResolveHandler)(ISocketHost* host, const String& domain);
-	ResolveHandler	OnResolve;	// 解析域名为IP地址。Tcp/Udp改变远程地址时使用
 
 	// 构造
 	W5500();
@@ -56,6 +52,13 @@ public:
 
 	virtual ISocket* CreateSocket(ProtocolType type);
 
+	// DNS解析。默认仅支持字符串IP地址解析
+	virtual IPAddress QueryDNS(const String& domain);
+	// 启用DNS
+	virtual bool EnableDNS();
+	// 启用DHCP
+	virtual bool EnableDHCP();
+
 private:
 	friend class HardSocket;
 	friend class TcpClient;
@@ -70,6 +73,10 @@ private:
 
 	// spi 模式（默认变长）
 	ushort		PhaseOM;
+
+	typedef IPAddress (*DnsHandler)(ISocketHost* host, const String& domain);
+	DnsHandler	_Dns;	// 解析域名为IP地址
+	void*	_Dhcp;
 
 	byte GetSocket();
 	void Register(byte Index, HardSocket* handler);

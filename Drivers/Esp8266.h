@@ -39,6 +39,10 @@ public:
 
 	//virtual const String ToString() const { return String("Esp8266"); }
 	virtual ISocket* CreateSocket(ProtocolType type);
+	// 启用DNS
+	virtual bool EnableDNS();
+	// 启用DHCP
+	virtual bool EnableDHCP();
 
 /******************************** 基础AT指令 ********************************/
 	bool Test();
