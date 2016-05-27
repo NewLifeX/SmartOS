@@ -1,7 +1,6 @@
 ﻿#include "Time.h"
 
-#include "Socket.h"
-#include "Net\DNS.h"
+#include "Net\Socket.h"
 
 #include "TokenClient.h"
 
@@ -11,5 +10,3 @@
 #include "RegisterMessage.h"
 
 #include "Security\MD5.h"
-
-

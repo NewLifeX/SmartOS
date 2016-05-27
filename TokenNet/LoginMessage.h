@@ -2,7 +2,6 @@
 #define __LoginMessage_H__
 
 #include "Message\MessageBase.h"
-#include "Socket.h"
 
 // 登录消息
 class LoginMessage : public MessageBase

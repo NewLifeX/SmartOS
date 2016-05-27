@@ -5,7 +5,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-#include "Socket.h"
+#include "Net\Socket.h"
 #include "Net\Ethernet.h"
 
 class TinyIP;

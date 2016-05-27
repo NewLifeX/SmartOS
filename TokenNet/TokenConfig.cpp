@@ -1,4 +1,6 @@
-﻿#include "TokenConfig.h"
+﻿#include "Net\IPEndPoint.h"
+
+#include "TokenConfig.h"
 
 TokenConfig* TokenConfig::Current	= nullptr;
 

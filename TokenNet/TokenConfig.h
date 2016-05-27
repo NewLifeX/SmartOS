@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "Config.h"
-#include "Socket.h"
+#include "Net\IPAddress.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 //#pragma pack(push)	// 保存对齐状态

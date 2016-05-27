@@ -1,6 +1,8 @@
 ﻿#ifndef _W5500_H_
 #define _W5500_H_
 
+#include "Net\Socket.h"
+
 // 硬件Socket基类
 class HardSocket;
 

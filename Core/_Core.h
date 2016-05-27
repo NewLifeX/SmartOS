@@ -16,7 +16,7 @@ extern "C"
 #endif
 }
 
-#ifdef USE_FULL_ASSERT
+#if defined(DEBUG) && defined(USE_FULL_ASSERT)
 
 #define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed2("ptr==nullptr", (const char*)__FILE__, __LINE__))
 bool assert_ptr_(const void* p);

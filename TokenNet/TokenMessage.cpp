@@ -1,7 +1,7 @@
 ﻿#include "Time.h"
 #include "TokenMessage.h"
 
-#include "Socket.h"
+#include "Net\Socket.h"
 #include "Security\RC4.h"
 #include "Security\Crc.h"
 

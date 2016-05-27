@@ -2,7 +2,6 @@
 #define __DeviceMessage_H__
 
 #include "Message\MessageBase.h"
-#include "Socket.h"
 #include "TokenNet\Device.h"
 
 enum class DeviceAtions : byte

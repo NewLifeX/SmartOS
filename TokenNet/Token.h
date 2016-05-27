@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 #include "Message\DataStore.h"
 
 #include "TokenNet\TokenClient.h"
