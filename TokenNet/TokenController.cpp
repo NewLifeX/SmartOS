@@ -1,7 +1,7 @@
 ﻿#include "Time.h"
 #include "TokenController.h"
 
-#include "Net\Net.h"
+#include "Socket.h"
 #include "Security\RC4.h"
 #include "Security\Crc.h"
 

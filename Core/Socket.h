@@ -1,5 +1,5 @@
-﻿#ifndef _Net_H_
-#define _Net_H_
+﻿#ifndef _Socket_H_
+#define _Socket_H_
 
 #include "IPAddress.h"
 #include "IPEndPoint.h"

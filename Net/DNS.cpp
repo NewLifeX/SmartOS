@@ -2,6 +2,8 @@
 #include "Time.h"
 #include "ITransport.h"
 
+#include "Socket.h"
+
 #include "DNS.h"
 #include "Ethernet.h"
 

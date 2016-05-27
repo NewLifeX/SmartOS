@@ -1,6 +1,6 @@
 ﻿#include "RegisterMessage.h"
 #include "Message\BinaryPair.h"
-#include "Net\Net.h"
+#include "Socket.h"
 
 // 初始化消息，各字段为0
 RegisterMessage::RegisterMessage() : User(), Pass(), Salt(0)

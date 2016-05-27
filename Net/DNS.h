@@ -1,7 +1,6 @@
 ﻿#ifndef _SmartOS_DNS_H_
 #define _SmartOS_DNS_H_
 
-#include "Net.h"
 #include "Net\ITransport.h"
 
 // DNS协议

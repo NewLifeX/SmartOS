@@ -1,6 +1,6 @@
 ﻿#include "Time.h"
 
-#include "Net\Net.h"
+#include "Socket.h"
 #include "Net\DNS.h"
 
 #include "Message\BinaryPair.h"

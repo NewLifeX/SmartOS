@@ -4,7 +4,7 @@
 #include "Spi.h"
 #include "Power.h"
 #include "Net\ITransport.h"
-#include "Net\Net.h"
+#include "Socket.h"
 #include "Message\DataStore.h"
 
 #include "W5500.h"

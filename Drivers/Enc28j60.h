@@ -5,7 +5,7 @@
 #include "Spi.h"
 #include "Power.h"
 #include "Net\ITransport.h"
-#include "Net\Net.h"
+#include "Socket.h"
 
 // Enc28j60类
 class Enc28j60 : public ITransport

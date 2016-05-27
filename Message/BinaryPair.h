@@ -4,7 +4,7 @@
 #include "Sys.h"
 #include "Message.h"
 
-#include "Net\Net.h"
+#include "Socket.h"
 
 // 二进制名值对
 class BinaryPair : public Object
