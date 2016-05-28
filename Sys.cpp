@@ -181,11 +181,11 @@ TSys::TSys()
 #endif
 
 	Code	= 0x0000;
-	Version	= 0x0300;
+	Ver		= 0x0300;
 #ifndef TINY
 	Name	= "SmartOS";
 	Company	= "NewLife_Embedded_Team";
-	BuildTime = "yyyy-MM-dd HH:mm:ss";
+	//BuildTime = "yyyy-MM-dd HH:mm:ss";
 
     Interrupt.Init();
 #endif
@@ -278,9 +278,10 @@ typedef struct
 void TSys::ShowInfo() const
 {
 #if DEBUG
-	byte* ver = (byte*)&Version;
-	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
-	debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
+	//byte* ver = (byte*)&Version;
+	debug_printf("%s::%s Code:%04X ", Company.GetBuffer(), Name.GetBuffer(), Code);
+	//debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
+	debug_printf("Ver:%s Build:%s\r\n", Ver.ToString().GetBuffer(), Ver.Compile().ToString().GetBuffer());
 	debug_printf("SmartOS::");
     bool IsGD = Get_JTAG_ID() == 0x7A3;
 	if(IsGD)

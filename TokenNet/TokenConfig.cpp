@@ -24,7 +24,7 @@ void TokenConfig::Init()
 	Length		= Size();
 	ServerIP	= 0;
 
-	SoftVer		= Sys.Version;
+	SoftVer		= Sys.Ver.Major;
 	PingTime	= 10;
 	//User[16] 	= '\0';
 	//Key[15]	= '\0';

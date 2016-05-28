@@ -27,7 +27,7 @@ public:
     friend bool operator<	(const Version& left, const Version& right);
     friend bool operator>=	(const Version& left, const Version& right);
     friend bool operator<=	(const Version& left, const Version& right);
-	
+
 	// 根据版本号反推编译时间
 	DateTime Compile() const;
 

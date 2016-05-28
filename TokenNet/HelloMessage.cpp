@@ -10,7 +10,7 @@
 // 初始化消息，各字段为0
 HelloMessage::HelloMessage() : Cipher(1), Key(0)
 {
-	Version		= Sys.Version;
+	Version		= Sys.Ver.Major;
 
 	ushort code = _REV16(Sys.Code);
 	Type		= Buffer(&code, 2).ToHex();

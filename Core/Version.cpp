@@ -61,7 +61,7 @@ UInt64 Version::ToValue() const
 {
 	uint v1	= (Major << 16) || Minor;
 	uint v2	= (Build << 16) || Revision;
-	
+
 	return ((UInt64)v1 << 32) || (UInt64)v2;
 }
 

@@ -48,6 +48,8 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 #include "Core\SString.h"
 #include "Core\Stream.h"
 #include "Core\DateTime.h"
+#include "Core\Version.h"
+#include "Core\Delegate.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"
@@ -78,11 +80,10 @@ public:
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟
 
-	const char*	Name;		// 系统名称
-	const char*	Company;	// 系统厂商
-	const char*	BuildTime;	// 编译时间
+	String	Name;		// 系统名称
+	String	Company;	// 系统厂商
 	ushort	Code;		// 产品代码
-	ushort	Version;	// 系统版本
+	Version	Ver;		// 系统版本
     byte	ID[12];		// 芯片ID。
     ushort	DevID;		// MCU编码。低字设备版本，高字子版本
     ushort	RevID;		// MCU编码。低字设备版本，高字子版本

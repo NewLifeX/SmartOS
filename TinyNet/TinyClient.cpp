@@ -59,7 +59,7 @@ void TinyClient::Open()
 	}
 
 	HardCrc	= Crc::Hash16(Buffer(Sys.ID, 16));
-	if(Sys.Version > 1) Encryption = true;
+	if(Sys.Ver.Major > 1) Encryption = true;
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
