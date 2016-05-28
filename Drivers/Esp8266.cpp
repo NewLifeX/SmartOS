@@ -691,7 +691,7 @@ String Esp8266::GetAP()
 bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte ecn, byte maxConnect, bool hidden)
 {
 	String cmd = "AT+CWSAP=";
-	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn + ',' + maxConnect + ',' + (hidden ? '1' : '0');
+	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn /*+ ',' + maxConnect + ',' + (hidden ? '1' : '0')*/;
 
 	return SendCmd(cmd, 15000);
 }
@@ -1029,12 +1029,12 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	cmd	= cmd + ',' + remote.Port;
 	cmd	+= "\r\n";
 
-	auto rt	= _Host.Send(cmd, ">",3000);
-	if (rt.IndexOf(">") < 0)
+	auto rt	= _Host.Send(cmd, ">",1500);
+	/*if (rt.IndexOf(">") < 0)
 	{
 		debug_printf("\r\n发送失败\r\n");
 		return false;
-	}
+	}*/
 
 	_Host.Send(bs.AsString(), "");
 
