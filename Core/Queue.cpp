@@ -187,5 +187,13 @@ uint Queue::Read(Buffer& bs)
 	return rs;
 }
 
+#if defined(__CC_ARM)
 __weak void EnterCritical() { }
 __weak void ExitCritical() { }
+#elif defined(__GNUC__)
+void EnterCritical() __attribute__((weak));
+void EnterCritical() { }
+
+void ExitCritical() __attribute__((weak));
+void ExitCritical() { }
+#endif
