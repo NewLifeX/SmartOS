@@ -70,7 +70,7 @@ extern struct HandlerRemap StrBoot;
 #define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 
 // 系统类
-class TSys : Object
+class TSys
 {
 public:
     COM		MessagePort;// 消息口，默认0表示USART1
