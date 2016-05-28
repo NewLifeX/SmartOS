@@ -1,4 +1,6 @@
-﻿#include "Task.h"
+﻿#include "DateTime.h"
+
+#include "Task.h"
 #include "Time.h"
 
 Task::Task()
@@ -312,7 +314,7 @@ void TaskScheduler::ShowStatus(void* param)
 	auto host = (TaskScheduler*)param;
 
 	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
-	Time.Now().Show();
+	DateTime::Now().Show();
 	debug_printf(" 启动 ");
 	DateTime dt(Sys.Ms() / 1000);
 	dt.Show(true);

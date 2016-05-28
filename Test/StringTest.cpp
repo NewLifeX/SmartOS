@@ -135,7 +135,7 @@ static void TestConcat()
 
 	debug_printf("字符串连接测试\r\n");
 
-	auto now	= Time.Now();
+	auto now	= DateTime::Now();
 	//char cs[32];
 	//debug_printf("now: %d %s\r\n", now.Second, now.GetString('F', cs));
 
@@ -198,7 +198,7 @@ static void TestAdd()
 	TS("TestAdd");
 
 	String str = R("字符串连加 ");
-	str = str + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + Time.Now();
+	str = str + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + DateTime::Now();
 	str.Show(true);
 	// 字符串连加 1234@0000-00-00 00:00:00#99xx
 	assert(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");

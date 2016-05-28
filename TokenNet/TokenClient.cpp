@@ -215,7 +215,7 @@ void TokenClient::SayHello(bool broadcast, int port)
 
 	HelloMessage ext(Hello);
 	ext.Reply		= false;
-	ext.LocalTime	= Time.Now().TotalMs();
+	ext.LocalTime	= DateTime::Now().TotalMs();
 
 	// 设置握手广播的本地地址和端口
 	//auto socket		= dynamic_cast<ISocket*>(Control->Port);
@@ -273,9 +273,8 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 握手完成后马上注册或登录
 		Sys.SetTask(_task, true, 0);
 
-		DateTime dt(ext.LocalTime / 1000UL);
 		// 同步本地时间
-		if(ext.LocalTime > 0) ((TTime&)Time).SetTime(dt.TotalSeconds());
+		if(ext.LocalTime > 0) ((TTime&)Time).SetTime(ext.LocalTime / 1000);
 	}
 
 	return true;
@@ -311,7 +310,7 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	ext2.Cipher	= "RC4";
 	//ext2.LocalTime = ext.LocalTime;
 	// 使用当前时间
-	ext2.LocalTime = Time.Now().TotalMs();
+	ext2.LocalTime = DateTime::Now().TotalMs();
 	ext2.WriteMessage(rs);
 
 	Reply(rs, ctrl);
@@ -571,7 +570,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 	pinMsg.ReadMessage(msg);
 	UInt64 start = pinMsg.LocalTime;
 
-	UInt64 now = Time.Now().TotalMs();
+	UInt64 now = DateTime::Now().TotalMs();
 	int cost 	= (int)(now - start);
 	if(cost < 0) cost = -cost;
 	// if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);

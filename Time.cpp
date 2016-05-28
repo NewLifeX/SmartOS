@@ -173,14 +173,6 @@ void TTime::SetTime(UInt64 seconds)
 
 #pragma arm section code
 
-// 当前时间
-DateTime TTime::Now() const
-{
-	DateTime dt(Seconds + BaseSeconds);
-	//dt.Millisecond = Milliseconds;
-	return dt;
-}
-
 #if !defined(TINY) && defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif

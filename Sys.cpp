@@ -198,7 +198,7 @@ TSys::TSys()
 void ShowTime(void* param)
 {
 	debug_printf("\r");
-	Time.Now().Show();
+	DateTime::Now().Show();
 	debug_printf(" ");
 }
 
@@ -387,7 +387,7 @@ void TSys::ShowInfo() const
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
 
 	debug_printf("Time : ");
-	Time.Now().Show(true);
+	DateTime::Now().Show(true);
 	debug_printf("Support: http://www.NewLifeX.com\r\n");
 
     debug_printf("\r\n");
@@ -439,7 +439,7 @@ bool TSys::SetTaskPeriod(uint taskid, int period) const
 	if(period)
 	{
 		task->Period = period;
-		
+
 		// 改变任务周期的同时，重新计算下一次调度时间NextTime，让它立马生效
 		// 否则有可能系统按照上一次计算好的NextTime再调度一次任务
 		task->NextTime	= Ms() + period;
@@ -459,7 +459,7 @@ void TSys::Start()
 #endif
 
 	Started = true;
-	
+
 #if DEBUG
 	//AddTask(ShowTime, nullptr, 2000000, 2000000);
 #endif
@@ -511,6 +511,15 @@ void TimeSleep(uint us)
 UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
 uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
+
+// 当前时间
+DateTime DateTime::Now()
+{
+	DateTime dt(Sys.Seconds());
+	dt.Ms = Sys.Ms();
+
+	return dt;
+}
 
 void TSys::Sleep(uint ms) const
 {

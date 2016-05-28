@@ -41,9 +41,6 @@ public:
 	void Sleep(uint ms, bool* running = nullptr) const;
 	// 微秒级延迟
     void Delay(uint us) const;
-
-	// 当前时间。
-	DateTime Now() const;
 };
 
 extern const TTime Time;

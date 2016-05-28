@@ -15,7 +15,7 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	ushort code = _REV16(Sys.Code);
 	Type		= Buffer(&code, 2).ToHex();
 	Name		= Sys.Company;
-	LocalTime	= Time.Now().TotalMs();
+	LocalTime	= DateTime::Now().TotalMs();
 	Cipher[0]	= 1;
 
 	Protocol	= 17;
@@ -150,8 +150,9 @@ String& HelloMessage::ToStr(String& str) const
 
 TokenPingMessage::TokenPingMessage()
 {
-	LocalTime = Time.Now().TotalMs();
+	LocalTime = DateTime::Now().TotalMs();
 }
+
 TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg)
 {
 	LocalTime = msg.LocalTime;
@@ -165,6 +166,7 @@ bool TokenPingMessage::Read(Stream& ms)
 
 	return true;
 }
+
 // 把消息写入数据流中
 void TokenPingMessage::Write(Stream& ms) const
 {

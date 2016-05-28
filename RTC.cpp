@@ -224,7 +224,7 @@ void HardRTC::SaveTicks()
 	if(g_NextSave == 0)
 	{
 		debug_printf("LoadTime: ");
-		Time.Now().Show(true);
+		DateTime::Now().Show(true);
 
 		g_Counter = 0;
 	}
@@ -244,7 +244,7 @@ void HardRTC::SaveTicks()
 	// 设置计数器
 	RTC_SetCounter(ms);
 #else
-	RTC_SetCounter(Time.Now());
+	RTC_SetCounter(DateTime::Now());
 #endif
 
 	// 必须打开时钟和后备域，否则写不进去时间
