@@ -371,3 +371,13 @@ bool MemoryStream::CheckRemain(uint count)
 
 	return true;
 }
+
+__weak ushort _REV16(ushort value)
+{
+	return (ushort)((value << 8) | (value >> 8));
+}
+
+__weak uint _REV(uint value)
+{
+	return (_REV16(value & 0xFFFF) << 16) | (_REV16(value >> 16) >> 16);
+}

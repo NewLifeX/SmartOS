@@ -186,3 +186,6 @@ uint Queue::Read(Buffer& bs)
 
 	return rs;
 }
+
+__weak void EnterCritical() { }
+__weak void ExitCritical() { }
