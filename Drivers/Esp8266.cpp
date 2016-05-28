@@ -3,6 +3,7 @@
 
 #include "Esp8266.h"
 #include "Config.h"
+#include "SerialPort.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -135,6 +136,7 @@ bool Esp8266::OnOpen()
 	if(!_rst.Empty())
 	{
 		_rst.Open();
+		Reset();	// 软件重启命令
 
 		_rst = true;
 		Sys.Sleep(10);
@@ -281,7 +283,7 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 // 启用DNS
 bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
-bool Esp8266::EnableDHCP() { return SetDHCP(Modes::Both, true); }
+bool Esp8266::EnableDHCP() { Wireless = (byte)Modes::Both; return true;/*  return SetDHCP(Modes::Both, true); */}
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
@@ -487,7 +489,7 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 // 基础AT指令
 bool Esp8266::Test()
 {
-	return SendCmd("AT");
+	return SendCmd("AT",2000);
 }
 
 bool Esp8266::Reset()
@@ -904,14 +906,28 @@ bool EspSocket::OnOpen()
 	// 设置自己的端口号
 	if(Local.Port) cmd	= cmd + ',' + Local.Port;
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
-	cmd	= cmd + ",0";
+
+	if(Remote.Address == IPAddress::Broadcast())
+		cmd = cmd + ",2";
+	else
+		cmd	= cmd + ",0";
 
 	// 如果Socket打开失败
 	if(!_Host.SendCmd(cmd))
 	{
-		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		String close = "AT+CIPCLOSE=";
+		close += _Index;
+		close += "\r\n";
+		auto sp = (SerialPort*)_Host.Port;
+		sp->Rx.Clear();
+		sp->Write(cmd);
+		Sys.Sleep(100);
 
-		return false;
+		if (!_Host.SendCmd(cmd))
+		{
+			debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+			return false;
+		}
 	}
 
 	// 清空一次缓冲区
@@ -925,10 +941,20 @@ bool EspSocket::OnOpen()
 
 void EspSocket::OnClose()
 {
+	auto sp = (SerialPort*)_Host.Port;
+	sp->Rx.Clear();
+
 	String cmd	= "AT+CIPCLOSE=";
 	cmd += _Index;
+	cmd += "\r\n";
 
-	_Host.SendCmd(cmd);
+	sp->Write(cmd);
+	//_Host.SendCmd(cmd,4000);
+
+	byte buff[128];
+	Buffer bf(buff, sizeof(buff));
+	Sys.Sleep(300);
+	sp->Rx.Clear();
 }
 
 // 接收数据
@@ -1003,8 +1029,12 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	cmd	= cmd + ',' + remote.Port;
 	cmd	+= "\r\n";
 
-	auto rt	= _Host.Send(cmd, ">");
-	if(rt.IndexOf(">") < 0) return false;
+	auto rt	= _Host.Send(cmd, ">",3000);
+	if (rt.IndexOf(">") < 0)
+	{
+		debug_printf("\r\n发送失败\r\n");
+		return false;
+	}
 
 	_Host.Send(bs.AsString(), "");
 
