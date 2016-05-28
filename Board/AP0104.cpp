@@ -1,4 +1,4 @@
-﻿#include "AP0104.h"
+#include "AP0104.h"
 
 #include "SerialPort.h"
 #include "WatchDog.h"
@@ -108,7 +108,9 @@ ISocketHost* AP0104::Create8266(Action onNetReady)
 	pwr->Down(1000);*/
 
 	auto srp = new SerialPort(COM4, 115200);
-	srp->ByteTime = 10;
+	//srp->ByteTime	= 10;
+	srp->Tx.SetCapacity(0x400);
+	srp->Rx.SetCapacity(0x400);
 
 	auto net = new Esp8266(srp, P0, P0);
 	net->InitConfig();
@@ -120,7 +122,7 @@ ISocketHost* AP0104::Create8266(Action onNetReady)
 	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
 	net->NetReady = onNetReady;
 
-	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, net, 0, -1, "Esp8266");
+	net->OpenAsync();
 
 	Host = net;
 	//net->LoadAPs();
@@ -199,7 +201,7 @@ TokenClient* AP0104::CreateClient()
 	// 创建客户端
 	auto client = new TokenClient();
 	client->Control = ctrl;
-	//client->Local	= ctrl;
+	//client->Local	= ctrl;`
 	client->Cfg = tk;
 
 	// 如果是TCP，需要再建立一个本地UDP
