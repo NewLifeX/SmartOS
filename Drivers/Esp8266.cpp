@@ -1,4 +1,5 @@
 ﻿#include "Time.h"
+#include "Sys.h"
 #include "Message\DataStore.h"
 
 #include "Esp8266.h"
@@ -202,7 +203,13 @@ bool Esp8266::OnOpen()
 		if (SSID.Length() == 0 || mode == Modes::Both)
 		{
 			net_printf("启动AP模式!\r\n");
-			SetAP("WsLink-001","",11,0,1,1);
+			String wifiName = "WsLink-";
+			ByteArray nameSuffix;
+			Buffer bf(&Sys.ID[9],3);
+			nameSuffix = bf;
+			wifiName += nameSuffix.ToHex();
+
+			SetAP(wifiName,"",11,0,1,1);
 		}
 		if (SSID.Length() > 0)
 		{
