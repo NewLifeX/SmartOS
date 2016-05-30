@@ -54,9 +54,6 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 /* 引脚定义 */
 #include "Platform\Pin.h"
 
-// 委托
-#include "Delegate.h"
-
 #if defined(BOOT) || defined(APP)
 struct HandlerRemap
 {
