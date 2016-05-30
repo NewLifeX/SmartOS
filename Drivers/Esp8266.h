@@ -96,6 +96,8 @@ public:
 	// 发送命令，自动检测并加上\r\n，等待响应OK
 	bool SendCmd(const String& cmd, uint msTimeout = 1000);
 	bool WaitForCmd(const String& expect, uint msTimeout);
+	// 清空收据据缓冲，必要时手动调用
+	void ClearRXD();
 
 protected:
 	virtual bool OnOpen();

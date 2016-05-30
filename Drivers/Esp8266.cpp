@@ -388,6 +388,12 @@ bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 	return false;
 }
 
+void Esp8266::ClearRXD()
+{
+	auto sp = (SerialPort*)Port;
+	sp->Rx.Clear();
+}
+
 // 引发数据到达事件
 uint Esp8266::OnReceive(Buffer& bs, void* param)
 {
@@ -880,6 +886,8 @@ bool EspSocket::OnOpen()
 	}
 	Local.Address = _Host.IP;
 
+	_Host.SetMux(true);
+
 #if DEBUG
 	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
@@ -919,21 +927,21 @@ bool EspSocket::OnOpen()
 		close += _Index;
 		close += "\r\n";
 		auto sp = (SerialPort*)_Host.Port;
-		sp->Rx.Clear();
 		sp->Write(cmd);
-		Sys.Sleep(100);
+		Sys.Sleep(1000);
+		_Host.ClearRXD();
 
 		if (!_Host.SendCmd(cmd))
 		{
 			debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
-			return false;
+			//return false;
 		}
 	}
 
 	// 清空一次缓冲区
 	cmd	= "AT+CIPBUFRESET=";
 	_Host.SendCmd(cmd + _Index);
-
+	_Host.ClearRXD();
 	_Error	= 0;
 
 	return true;
@@ -1017,6 +1025,19 @@ EspUdp::EspUdp(Esp8266& host, byte idx)
 
 bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 {
+	static bool spinlocks = false;
+	// 加自旋锁  解决重入问题
+	/*
+	这里加超时毫无作用，
+	任务1 在此锁上   任务2重入
+	任务2不执行完，永远别执行任务1，
+	也就是别想任务一 spinlocks = false;
+	*/
+	//TimeWheel tw(4);		
+	//while (!tw.Expired() && spinlocks == true);
+	if (spinlocks == true)return false;
+
+	spinlocks = true;
 	if(remote == Remote) return Send(bs);
 
 	if(!Open()) return false;
@@ -1037,7 +1058,9 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	}*/
 
 	_Host.Send(bs.AsString(), "");
+	_Host.ClearRXD();
 
+	spinlocks = false;
 	return true;
 }
 
