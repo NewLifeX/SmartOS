@@ -1,4 +1,4 @@
-﻿#ifndef _Buffer_H_
+#ifndef _Buffer_H_
 #define _Buffer_H_
 
 #include "Type.h"
