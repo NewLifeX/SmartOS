@@ -204,9 +204,7 @@ bool Esp8266::OnOpen()
 		{
 			net_printf("启动AP模式!\r\n");
 			String wifiName = "WsLink-";
-			ByteArray nameSuffix;
-			Buffer bf(&Sys.ID[9],3);
-			nameSuffix = bf;
+			Buffer nameSuffix(Sys.ID,3);
 			wifiName += nameSuffix.ToHex();
 
 			SetAP(wifiName,"",11,0,1,1);
