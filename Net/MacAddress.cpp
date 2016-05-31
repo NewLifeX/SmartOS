@@ -1,7 +1,7 @@
-#include "_Core.h"
+#include "Core\_Core.h"
 
-#include "ByteArray.h"
-#include "SString.h"
+#include "Core\ByteArray.h"
+#include "Core\SString.h"
 
 #include "MacAddress.h"
 
