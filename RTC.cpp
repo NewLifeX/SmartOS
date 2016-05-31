@@ -121,7 +121,8 @@ void RTC_SetCounter(DateTime dt)
 	RTC_DateStructInit(&date);
 	date.RTC_Date		= dt.Day;
 	date.RTC_Month		= dt.Month;
-	date.RTC_WeekDay	= dt.DayOfWeek > 0 ? dt.DayOfWeek : RTC_Weekday_Sunday;
+	byte weekdata = dt.DayOfWeek();
+	date.RTC_WeekDay	= weekdata > 0 ? weekdata : RTC_Weekday_Sunday;
 	date.RTC_Year		= dt.Year;
 	RTC_SetDate(RTC_Format_BCD, &date);
 }
@@ -211,7 +212,8 @@ void HardRTC::LoadTicks()
 #else
 	DateTime dt	= RTC_GetCounter();
 	time.Seconds		= dt.TotalSeconds();
-	time.Milliseconds	= dt.Millisecond;
+	//time.Milliseconds	= dt.Millisecond;
+	time.Milliseconds	= dt.Ms;
 #endif
 }
 
