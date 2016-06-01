@@ -192,22 +192,18 @@ bool Esp8266::OnOpen()
 
 	Config();
 
+	SetDHCP(mode, true);
+
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		//String ssid = "FAST_2.4G";
-		//String pwd = "yws52718*";
-		//if (!JoinAP("yws007", "yws52718"))
-		//if (!cfg->SSID && !cfg->Pass && !JoinAP(cfg->SSID, cfg->Pass))
-		
 		if (SSID.Length() == 0 || mode == Modes::Both)
 		{
 			net_printf("启动AP模式!\r\n");
 			String wifiName = "WsLink-";
-			Buffer nameSuffix(Sys.ID,3);
-			wifiName += nameSuffix.ToHex();
+			wifiName += Buffer(Sys.ID, 3).ToHex();
 
-			SetAP(wifiName,"",11,0,1,1);
+			SetAP(wifiName, "", 11, 0, 1, 1);
 		}
 		if (SSID.Length() > 0)
 		{
@@ -1038,7 +1034,7 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	任务2不执行完，永远别执行任务1，
 	也就是别想任务一 spinlocks = false;
 	*/
-	//TimeWheel tw(4);		
+	//TimeWheel tw(4);
 	//while (!tw.Expired() && spinlocks == true);
 	if (spinlocks == true)return false;
 
