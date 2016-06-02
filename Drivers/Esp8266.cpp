@@ -101,8 +101,8 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 {
 	Set(port);
 
-	if(power != P0) _power.Set(power);
-	if(rst != P0) _rst.Set(rst);
+	if(power != P0) _power.Init(power,0);
+	if(rst != P0) _rst.Init(rst,1);
 
 	//Mode		= Modes::Both;
 	AutoConn	= false;
@@ -131,7 +131,12 @@ bool Esp8266::OnOpen()
 	if(!PackPort::OnOpen()) return false;
 
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if(!_power.Empty()) _power.Down(10);
+	if (!_power.Empty())
+	{
+		_power = false;
+		Sys.Sleep(20);
+		_power = true;
+	}
 
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
@@ -140,7 +145,7 @@ bool Esp8266::OnOpen()
 		Reset();	// 软件重启命令
 
 		_rst = true;
-		Sys.Sleep(10);
+		Sys.Sleep(20);
 		_rst = false;
 		//Sys.Sleep(100);
 	}
