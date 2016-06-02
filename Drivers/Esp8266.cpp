@@ -291,6 +291,10 @@ bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
 bool Esp8266::EnableDHCP() { Wireless = (byte)Modes::Both; return true;/*  return SetDHCP(Modes::Both, true); */}
 
+#if NET_DEBUG
+static bool EnableLog	= true;
+#endif
+
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 {
@@ -311,7 +315,7 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if(cmd.StartsWith("AT"))
+		if(EnableLog && cmd.StartsWith("AT"))
 		{
 			net_printf("=> ");
 			cmd.Trim().Show(true);
@@ -330,7 +334,7 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 	_Expect		= nullptr;
 
 #if NET_DEBUG
-	if(rs)
+	if(rs && EnableLog)
 	{
 		net_printf("<= ");
 		rs.Trim().Show(true);
@@ -998,8 +1002,21 @@ bool EspSocket::Send(const Buffer& bs)
 	String cmd	= "AT+CIPSEND=";
 	cmd = cmd + _Index + ',' + bs.Length() + "\r\n";
 
+#if NET_DEBUG
+	EnableLog	= false;
+#endif
+
 	auto rt	= _Host.Send(cmd, ">");
-	if(rt.Contains(">") && _Host.SendCmd(bs.AsString())) return true;
+	if(rt.Contains(">") && _Host.SendCmd(bs.AsString()))
+	{
+#if NET_DEBUG
+		EnableLog	= true;
+#endif
+		return true;
+	}
+#if NET_DEBUG
+	EnableLog	= true;
+#endif
 
 	// 发送失败，关闭链接，下一次重新打开
 	if(++_Error >= 10)
