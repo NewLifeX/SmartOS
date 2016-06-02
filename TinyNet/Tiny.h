@@ -9,7 +9,7 @@
 
 #include "App\Button_GrayLevel.h"
 
-void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
+void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 void* InitConfig(void* data, uint size);
 void ClearConfig();

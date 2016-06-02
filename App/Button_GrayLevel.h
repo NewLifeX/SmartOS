@@ -32,7 +32,7 @@ class Button_GrayLevel : public ByteDataPort
 public:
 	int		Index;			// 索引号，方便在众多按钮中标识按钮
 #if DEBUG
-	const char*	Name;		// 按钮名称
+	cstring	Name;		// 按钮名称
 #endif
 
 	InputPort	Key;				// 输入按键

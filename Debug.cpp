@@ -150,7 +150,7 @@ void assert_failed(uint8_t* file, unsigned int line)
     while (1) { }
 }
 
-void assert_failed2(const char* msg, const char* file, unsigned int line)
+void assert_failed2(cstring msg, cstring file, unsigned int line)
 {
     debug_printf("%s Line %d, %s\r\n", msg, line, file);
 

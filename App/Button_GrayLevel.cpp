@@ -269,7 +269,7 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, Event
 	}
 
 #if DEBUG
-	const char* names[] = { "一号", "二号", "三号", "四号" };
+	cstring names[] = { "一号", "二号", "三号", "四号" };
 #endif
 
 	for (int i = 0; i < count; i++)

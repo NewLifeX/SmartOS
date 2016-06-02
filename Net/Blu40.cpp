@@ -225,7 +225,7 @@ bool Blu40::CheckSet()
 	return true;
 }
 
-bool Blu40::SetName(const char* name)
+bool Blu40::SetName(cstring name)
 {
 	*_rts = false;
 	Sys.Delay(170);

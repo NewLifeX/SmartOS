@@ -394,10 +394,10 @@ bool Lock::Wait(int us)
 static const char** _TS	= nullptr;
 static int _TS_Len	= 0;
 
-TraceStack::TraceStack(const char* name)
+TraceStack::TraceStack(cstring name)
 {
 	// 字符串指针的数组
-	static const char* __ts[16];
+	static cstring __ts[16];
 	_TS	= __ts;
 
 	//_TS->Push(name);

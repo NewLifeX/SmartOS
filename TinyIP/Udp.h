@@ -29,7 +29,7 @@ public:
 	// 接收数据
 	virtual uint Receive(Buffer& bs);
 
-	//virtual const char* ToString() const;
+	//virtual cstring ToString() const;
 	virtual String& ToStr(String& str) const;
 
 protected:

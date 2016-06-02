@@ -138,7 +138,7 @@ Task* Task::Get(int taskid)
 
 #pragma arm section code
 
-TaskScheduler::TaskScheduler(const char* name)
+TaskScheduler::TaskScheduler(cstring name)
 {
 	_Tasks.Clear();
 	_Tasks.SetLength(0);
@@ -163,7 +163,7 @@ void TaskScheduler::Set(Task* tasks, uint count)
 }
 
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
-uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, const char* name)
+uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstring name)
 {
 	// 查找是否有可用空闲任务
 	Task* task	= nullptr;

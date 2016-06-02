@@ -10,7 +10,7 @@
 class UBlox : public BufferPort
 {
 public:
-	const char* Header;	// 识别为数据包开头的字符串
+	cstring Header;	// 识别为数据包开头的字符串
 	
 	UBlox();
 

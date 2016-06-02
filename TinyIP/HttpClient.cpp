@@ -34,7 +34,7 @@ TcpSocket::TcpSocket(TinyIP* tip) : Socket(tip)
 	OnDisconnected = nullptr;
 }
 
-const char* TcpSocket::ToString()
+cstring TcpSocket::ToString()
 {
 	static char name[10];
 	sprintf(name, "TCP_%d", Port);

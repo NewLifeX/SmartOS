@@ -39,7 +39,7 @@ public:
 
 	// 响应消息
 private:
-	void ShowMessage(const char* action, const Message& msg);
+	void ShowMessage(cstring action, const Message& msg);
 
 	// 统计
 private:

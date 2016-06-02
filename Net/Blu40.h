@@ -34,7 +34,7 @@ public:
 	// 设置发送信号强度 DB数
 	bool SetTPL(int TPLDB);
 	// 设置蓝牙名称
-	bool SetName(const char* name);
+	bool SetName(cstring name);
 	// 设置产品识别码 硬件类型code
 	bool SetPID(ushort pid);
 

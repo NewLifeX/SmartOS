@@ -1,7 +1,7 @@
 ﻿#include "WeakStore.h"
 
 // 初始化
-WeakStore::WeakStore(const char* magic, byte* ptr, uint len) : Data(0x40)
+WeakStore::WeakStore(cstring magic, byte* ptr, uint len) : Data(0x40)
 {
 	Magic		= magic;
 	MagicLength	= 0;

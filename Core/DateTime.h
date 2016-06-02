@@ -66,7 +66,7 @@ public:
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 	*/
-	const char* GetString(byte kind = 'F', char* str = nullptr);
+	cstring GetString(byte kind = 'F', char* str = nullptr);
 
 	// 当前时间
 	static DateTime Now();

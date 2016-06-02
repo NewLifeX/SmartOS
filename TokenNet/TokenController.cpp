@@ -271,7 +271,7 @@ bool TokenController::Send(Message& msg)
 	return Controller::SendInternal(bs, msg.State);
 }
 
-void TokenController::ShowMessage(const char* action, const Message& msg)
+void TokenController::ShowMessage(cstring action, const Message& msg)
 {
 #if MSG_DEBUG
 	TS("TokenController::ShowMessage");

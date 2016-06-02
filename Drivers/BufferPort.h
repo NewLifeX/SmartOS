@@ -8,7 +8,7 @@
 class BufferPort
 {
 public:
-    const char*	Name;
+    cstring	Name;
 	ITransport*	Port;
 	int			Speed;
 	COM			Com;

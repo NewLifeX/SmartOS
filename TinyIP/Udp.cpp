@@ -16,7 +16,7 @@ UdpSocket::UdpSocket(TinyIP* tip) : TinySocket(tip, IP_UDP)
 	Local.Address = tip->IP;
 }
 
-/*const char* UdpSocket::ToString() const
+/*cstring UdpSocket::ToString() const
 {
 	static char name[10];
 	sprintf(name, "UDP_%d", Local.Port);

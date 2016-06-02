@@ -14,9 +14,9 @@ public:
 	bool		Inited;	
 	bool		SendOK;
 	
-	const char*	Domain;
+	cstring	Domain;
 
-	const char*	APN;
+	cstring	APN;
 
 	IDataPort*	Led;	// 指示灯
 
@@ -36,8 +36,8 @@ private:
     virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
 
-	String Send(const char* str, uint msTimeout = 1000);
-	bool SendCmd(const char* str, uint msTimeout = 1000, int times = 1);
+	String Send(cstring str, uint msTimeout = 1000);
+	bool SendCmd(cstring str, uint msTimeout = 1000, int times = 1);
 	void SendAPN(bool issgp);
 	void SendDomain();
 };

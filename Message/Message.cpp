@@ -21,7 +21,7 @@ void Message::SetData(const Buffer& bs, uint offset)
 	if(Length > 0) bs.CopyTo(0, Data + offset, Length);
 }
 
-void Message::SetError(byte errorCode, const char* msg)
+void Message::SetError(byte errorCode, cstring msg)
 {
 	Error	= true;
 

@@ -61,7 +61,7 @@ void TokenConfig::Show() const
 #endif
 }
 
-TokenConfig* TokenConfig::Create(const char* vendor, ProtocolType protocol, ushort sport, ushort port)
+TokenConfig* TokenConfig::Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port)
 {
 	static TokenConfig tc;
 	if(!Current)

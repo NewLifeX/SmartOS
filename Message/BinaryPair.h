@@ -15,22 +15,22 @@ public:
 	BinaryPair(Stream& ms);
 	BinaryPair(const BinaryPair& pair) = delete;
 
-	Buffer Get(const char* name) const;
-	bool Set(const char* name, const Buffer& bs);
+	Buffer Get(cstring name) const;
+	bool Set(cstring name, const Buffer& bs);
 	bool Set(const String& name, const Buffer& bs);
 
-	bool Get(const char* name, byte& value) const;
-	bool Get(const char* name, ushort& value) const;
-	bool Get(const char* name, uint& value) const;
-	bool Get(const char* name, UInt64& value) const;
-	bool Get(const char* name, Buffer& value) const;
-	bool Get(const char* name, IPEndPoint& value) const;
+	bool Get(cstring name, byte& value) const;
+	bool Get(cstring name, ushort& value) const;
+	bool Get(cstring name, uint& value) const;
+	bool Get(cstring name, UInt64& value) const;
+	bool Get(cstring name, Buffer& value) const;
+	bool Get(cstring name, IPEndPoint& value) const;
 
-	bool Set(const char* name, byte value);
-	bool Set(const char* name, ushort value);
-	bool Set(const char* name, uint value);
-	bool Set(const char* name, UInt64 value);
-	bool Set(const char* name, const IPEndPoint& value);
+	bool Set(cstring name, byte value);
+	bool Set(cstring name, ushort value);
+	bool Set(cstring name, uint value);
+	bool Set(cstring name, UInt64 value);
+	bool Set(cstring name, const IPEndPoint& value);
 
 private:
 	//byte*	Data;		// 数据指针

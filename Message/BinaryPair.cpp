@@ -16,7 +16,7 @@ BinaryPair::BinaryPair(Stream& ms)
 	_p	= ms.Position();
 }
 
-Buffer BinaryPair::Get(const char* name) const
+Buffer BinaryPair::Get(cstring name) const
 {
 	// 暂时不方便支持空名称的名值对，而服务端是支持的
 	if(!name) return Buffer(nullptr, 0);
@@ -49,7 +49,7 @@ Buffer BinaryPair::Get(const char* name) const
 	return Buffer(nullptr, 0);
 }
 
-bool BinaryPair::Set(const char* name, const Buffer& bs)
+bool BinaryPair::Set(cstring name, const Buffer& bs)
 {
 	auto& ms	= *_s;
 	ms.WriteArray(Buffer((void*)name, strlen(name)));
@@ -67,7 +67,7 @@ bool BinaryPair::Set(const String& name, const Buffer& bs)
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, byte& value) const
+bool BinaryPair::Get(cstring name, byte& value) const
 {
 	auto bs	= Get(name);
 	if(!bs.Length()) return false;
@@ -77,7 +77,7 @@ bool BinaryPair::Get(const char* name, byte& value) const
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, ushort& value) const
+bool BinaryPair::Get(cstring name, ushort& value) const
 {
 	auto bs	= Get(name);
 	if(!bs.Length()) return false;
@@ -87,7 +87,7 @@ bool BinaryPair::Get(const char* name, ushort& value) const
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, uint& value) const
+bool BinaryPair::Get(cstring name, uint& value) const
 {
 	auto bs	= Get(name);
 	if(!bs.Length()) return false;
@@ -97,7 +97,7 @@ bool BinaryPair::Get(const char* name, uint& value) const
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, UInt64& value) const
+bool BinaryPair::Get(cstring name, UInt64& value) const
 {
 	auto bs	= Get(name);
 	if(!bs.Length()) return false;
@@ -107,7 +107,7 @@ bool BinaryPair::Get(const char* name, UInt64& value) const
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, Buffer& value) const
+bool BinaryPair::Get(cstring name, Buffer& value) const
 {
 	auto bs	= Get(name);
 	if(!bs.Length()) return false;
@@ -117,7 +117,7 @@ bool BinaryPair::Get(const char* name, Buffer& value) const
 	return true;
 }
 
-bool BinaryPair::Get(const char* name, IPEndPoint& value) const
+bool BinaryPair::Get(cstring name, IPEndPoint& value) const
 {
 	auto bs	= Get(name);
 	if(bs.Length() < 6) return false;
@@ -131,27 +131,27 @@ bool BinaryPair::Get(const char* name, IPEndPoint& value) const
 }
 
 
-bool BinaryPair::Set(const char* name, byte value)
+bool BinaryPair::Set(cstring name, byte value)
 {
 	return Set(name, Buffer(&value, 1));
 }
 
-bool BinaryPair::Set(const char* name, ushort value)
+bool BinaryPair::Set(cstring name, ushort value)
 {
 	return Set(name, Buffer(&value, 2));
 }
 
-bool BinaryPair::Set(const char* name, uint value)
+bool BinaryPair::Set(cstring name, uint value)
 {
 	return Set(name, Buffer(&value, 4));
 }
 
-bool BinaryPair::Set(const char* name, UInt64 value)
+bool BinaryPair::Set(cstring name, UInt64 value)
 {
 	return Set(name, Buffer(&value, 8));
 }
 
-bool BinaryPair::Set(const char* name, const IPEndPoint& value)
+bool BinaryPair::Set(cstring name, const IPEndPoint& value)
 {
 	MemoryStream ms(7);
 

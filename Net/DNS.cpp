@@ -296,7 +296,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 
 	int st	= 0;
 	int idx	= 0;
-	//const char* dname = name.GetBuffer();
+	//cstring dname = name.GetBuffer();
 	//ushort dlen = strlen(dname);
 	for (;;)
 	{
@@ -320,7 +320,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 		st	= idx + 1;
 
 		//// 查找下一个小圆点
-		//const char* cp1 = strchr(dname, '.');
+		//cstring cp1 = strchr(dname, '.');
         //
 		//int len = 0;
 		//if (cp1 != nullptr)

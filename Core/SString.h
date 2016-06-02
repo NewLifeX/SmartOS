@@ -11,13 +11,13 @@ class StringSplit;
 class String : public Array
 {
 public:
-	String(const char* cstr = "");
+	String(cstring cstr = "");
 	String(const String& str);
 	String(String&& rval);
 	// 外部传入缓冲区供内部使用，注意长度减去零结束符
 	String(char* str, int length);
 	// 包装静态字符串，直接使用，修改时扩容
-	String(const char* str, int length);
+	String(cstring str, int length);
 	explicit String(char c);
 	explicit String(byte value, int radix = 10);
 	explicit String(short value, int radix = 10);
@@ -35,7 +35,7 @@ public:
 
 	// 内存管理
 	//inline uint Length() const { return _Length; }
-	inline const char* GetBuffer() const { return (const char*)_Arr; }
+	inline cstring GetBuffer() const { return (const char*)_Arr; }
 	// 设置数组长度。改变长度后，确保最后以0结尾
 	virtual bool SetLength(int length, bool bak);
 
@@ -49,13 +49,13 @@ public:
 	// 为被赋值对象建立一个备份。
 	// 如果值为空或无效，或者内存分配失败，字符串将会被标记为无效
 	String& operator = (const String& rhs);
-	String& operator = (const char* cstr);
+	String& operator = (cstring cstr);
 	String& operator = (String&& rval);
 
 	// 连接内建类型。如果参数无效则认为连接失败
 	bool Concat(const Object& obj);
 	bool Concat(const String& str);
-	bool Concat(const char* cstr);
+	bool Concat(cstring cstr);
 	bool Concat(char c);
 	bool Concat(byte c, int radix = 10);
 	bool Concat(short num, int radix = 10);
@@ -71,7 +71,7 @@ public:
 	String& operator += (T rhs)	{Concat(rhs); return (*this);}*/
 	String& operator += (const Object& rhs)	{Concat(rhs); return (*this);}
 	String& operator += (const String& rhs)	{Concat(rhs); return (*this);}
-	String& operator += (const char* cstr)	{Concat(cstr); return (*this);}
+	String& operator += (cstring cstr)	{Concat(cstr); return (*this);}
 	String& operator += (char c)			{Concat(c); return (*this);}
 	String& operator += (byte num)			{Concat(num); return (*this);}
 	String& operator += (int num)			{Concat(num); return (*this);}
@@ -83,7 +83,7 @@ public:
 
 	friend String& operator + (String& lhs, const Object& rhs);
 	friend String& operator + (String& lhs, const String& rhs);
-	friend String& operator + (String& lhs, const char* cstr);
+	friend String& operator + (String& lhs, cstring cstr);
 	friend String& operator + (String& lhs, char c);
 	friend String& operator + (String& lhs, byte num);
 	friend String& operator + (String& lhs, int num);
@@ -98,12 +98,12 @@ public:
 	//operator char*() const { return _Arr; }
 	int CompareTo(const String& s) const;
 	bool Equals(const String& s) const;
-	bool Equals(const char* cstr) const;
+	bool Equals(cstring cstr) const;
 	bool EqualsIgnoreCase(const String& s) const;
 	bool operator == (const String& rhs) const {return Equals(rhs);}
-	bool operator == (const char* cstr) const {return Equals(cstr);}
+	bool operator == (cstring cstr) const {return Equals(cstr);}
 	bool operator != (const String& rhs) const {return !Equals(rhs);}
-	bool operator != (const char* cstr) const {return !Equals(cstr);}
+	bool operator != (cstring cstr) const {return !Equals(cstr);}
 	bool operator <  (const String& rhs) const;
 	bool operator >  (const String& rhs) const;
 	bool operator <= (const String& rhs) const;
@@ -131,20 +131,20 @@ public:
 	virtual void Show(bool newLine = false) const;
 
 	// 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
-	String& Format(const char* format, ...);
+	String& Format(cstring format, ...);
 
 	int IndexOf(const char ch, int startIndex = 0) const;
 	int IndexOf(const String& str, int startIndex = 0) const;
-	int IndexOf(const char* str, int startIndex = 0) const;
+	int IndexOf(cstring str, int startIndex = 0) const;
 	int LastIndexOf(const char ch, int startIndex = 0) const;
 	int LastIndexOf(const String& str, int startIndex = 0) const;
-	int LastIndexOf(const char* str, int startIndex = 0) const;
+	int LastIndexOf(cstring str, int startIndex = 0) const;
 	bool Contains(const String& str) const;
-	bool Contains(const char* str) const;
+	bool Contains(cstring str) const;
 	bool StartsWith(const String& str, int startIndex = 0) const;
-	bool StartsWith(const char* str, int startIndex = 0) const;
+	bool StartsWith(cstring str, int startIndex = 0) const;
 	bool EndsWith(const String& str) const;
-	bool EndsWith(const char* str) const;
+	bool EndsWith(cstring str) const;
 
 	StringSplit Split(const String& sep) const;
 
@@ -171,9 +171,9 @@ protected:
 protected:
 	void init();
 	void release();
-	bool Concat(const char* cstr, uint length);
+	bool Concat(cstring cstr, uint length);
 
-	String& copy(const char* cstr, uint length);
+	String& copy(cstring cstr, uint length);
 	void move(String& rhs);
 	bool CopyOrWrite();
 

@@ -57,14 +57,14 @@ ByteArray::ByteArray(ByteArray&& rval) : Array((const void*)nullptr, 0)
 /*// 字符串转为字节数组
 ByteArray::ByteArray(String& str) : Array(Arr, str.Length())
 {
-	char* p = str.GetBuffer();
+	auto p = str.GetBuffer();
 	Set((byte*)p, str.Length());
 }
 
 // 不允许修改，拷贝
 ByteArray::ByteArray(const String& str) : Array(Arr, str.Length())
 {
-	const char* p = str.GetBuffer();
+	cstring p = str.GetBuffer();
 	//Copy((const byte*)p, str.Length());
 	Set((const byte*)p, str.Length());
 }*/

@@ -44,7 +44,7 @@ public:
 	String	Vendor;
 
 	static TokenConfig* Current;
-	static TokenConfig*	Create(const char* vendor, ProtocolType protocol, ushort sport, ushort port);
+	static TokenConfig*	Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port);
 
 private:
 };

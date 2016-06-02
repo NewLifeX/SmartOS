@@ -60,7 +60,7 @@ void Sim900A::OnClose()
 bool Sim900A::OnWrite(const Buffer& bs) { return Send(bs); }
 uint Sim900A::OnRead(Buffer& bs) { return 0; }
 
-String Sim900A::Send(const char* str, uint msTimeout)
+String Sim900A::Send(cstring str, uint msTimeout)
 {
 	if(str)
 	{
@@ -87,7 +87,7 @@ String Sim900A::Send(const char* str, uint msTimeout)
 	return bs;
 }
 
-bool Sim900A::SendCmd(const char* str, uint msTimeout, int times)
+bool Sim900A::SendCmd(cstring str, uint msTimeout, int times)
 {
 	for(int i=0; i<times; i++)
 	{

@@ -288,7 +288,7 @@ int TimeCost::Elapsed()
 	return ms * 1000 + ts;
 }
 
-void TimeCost::Show(const char* format)
+void TimeCost::Show(cstring format)
 {
 	if(!format) format = "执行 %dus\r\n";
 	debug_printf(format, Elapsed());

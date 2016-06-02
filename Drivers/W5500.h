@@ -50,7 +50,7 @@ public:
 	// 输出物理链路层状态
 	void PhyStateShow();
 
-	const char* ToString() const { return "W5500"; }
+	cstring ToString() const { return "W5500"; }
 
 	virtual ISocket* CreateSocket(ProtocolType type);
 

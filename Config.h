@@ -30,7 +30,7 @@ public:
 	// 获取配置数据
     bool Get(const String& name, Buffer& bs) const;
 	// 获取配置数据，如果不存在则覆盖
-    //bool GetOrSet(const char* name, Buffer& bs) const;
+    //bool GetOrSet(cstring name, Buffer& bs) const;
 	// 获取配置数据
     const void* Get(const String& name) const;
 
@@ -69,7 +69,7 @@ public:
 
 protected:
 	const Config&	Cfg;
-	const char* _Name;
+	cstring _Name;
 
 	void* _Start;
 	void* _End;

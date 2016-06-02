@@ -111,7 +111,7 @@ extern "C"
 class TraceStack
 {
 public:
-	TraceStack(const char* name);
+	TraceStack(cstring name);
 	~TraceStack();
 
 	static void Show();

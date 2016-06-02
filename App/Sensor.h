@@ -8,7 +8,7 @@
 class Sensor
 {
 public:
-	const char* Name;  //名字
+	cstring Name;  //名字
 	int Index;   //索引号
 
 	

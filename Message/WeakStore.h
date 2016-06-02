@@ -9,12 +9,12 @@
 class WeakStore
 {
 public:
-	const char*	Magic;	// 幻数。用于唯一标识
+	cstring	Magic;	// 幻数。用于唯一标识
 	uint		MagicLength;
 	ByteArray	Data;	// 数据
 
 	// 初始化
-	WeakStore(const char* magic = nullptr, byte* ptr = nullptr, uint len = 0);
+	WeakStore(cstring magic = nullptr, byte* ptr = nullptr, uint len = 0);
 
 	// 检查并确保初始化，返回原来是否已初始化
 	bool Check();

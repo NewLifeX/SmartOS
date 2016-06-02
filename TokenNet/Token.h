@@ -17,7 +17,7 @@
 class Token
 {
 public:
-	static void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
+	static void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 	static ISocketHost* CreateW5500(SPI spi, Pin irq, Pin rst = P0, Pin power = P0, IDataPort* led = nullptr);
 	static ISocketHost* Create2860(SPI spi, Pin irq, Pin rst);

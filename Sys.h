@@ -7,6 +7,19 @@
 /*#include <stdlib.h>
 #include <string.h>*/
 
+#include "Core\Type.h"
+#include "Core\Buffer.h"
+#include "Core\Array.h"
+#include "Core\ByteArray.h"
+#include "Core\SString.h"
+#include "Core\Stream.h"
+#include "Core\DateTime.h"
+#include "Core\Version.h"
+#include "Core\Delegate.h"
+
+/* 引脚定义 */
+#include "Platform\Pin.h"
+
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
 
@@ -31,7 +44,7 @@ extern "C"
 #define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed2("ptr==nullptr", (const char*)__FILE__, __LINE__))
 bool assert_ptr_(const void* p);
 
-void assert_failed2(const char* msg, const char* file, unsigned int line);
+void assert_failed2(cstring msg, cstring file, unsigned int line);
 #define assert(expr, msg) ((expr) ? (void)0 : assert_failed2(msg, (const char*)__FILE__, __LINE__))
 
 #else
@@ -40,19 +53,6 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 #define assert(expr, msg) ((void)0)
 
 #endif
-
-#include "Core\Type.h"
-#include "Core\Buffer.h"
-#include "Core\Array.h"
-#include "Core\ByteArray.h"
-#include "Core\SString.h"
-#include "Core\Stream.h"
-#include "Core\DateTime.h"
-#include "Core\Version.h"
-#include "Core\Delegate.h"
-
-/* 引脚定义 */
-#include "Platform\Pin.h"
 
 #if defined(BOOT) || defined(APP)
 struct HandlerRemap
@@ -114,7 +114,7 @@ public:
 
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
-	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, const char* name = nullptr) const;
+	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, cstring name = nullptr) const;
 	void RemoveTask(uint& taskid) const;
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	bool SetTask(uint taskid, bool enable, int msNextTime = -1) const;

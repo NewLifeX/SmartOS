@@ -49,7 +49,7 @@ public:
 	TcpHandler OnReceived;
 	TcpHandler OnDisconnected;
 
-	//virtual const char* ToString() const;
+	//virtual cstring ToString() const;
 	virtual String& ToStr(String& str) const;
 
 protected:

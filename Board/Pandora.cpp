@@ -37,7 +37,7 @@ uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
 	return 0;
 }
 
-void PA0903::Setup(ushort code, const char* name, COM message, int baudRate)
+void PA0903::Setup(ushort code, cstring name, COM message, int baudRate)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;

@@ -122,7 +122,7 @@ void TinyIP::Process(Stream& ms)
 	debug_printf("=>");
 	local.Show();
 
-	const char* name = "Unkown";
+	cstring name = "Unkown";
 	switch(ip->Protocol)
 	{
 		case IP_ICMP: { name = "ICMP"; break; }
@@ -247,7 +247,7 @@ bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* b
 	len += sizeof(ETH_HEADER);
 	//if(len < 60) len = 60;	// 以太网最小包60字节
 
-	/*char* name = "Unkown";
+	/*auto name = "Unkown";
 	switch(type)
 	{
 		case ETH_ARP: { name = "ARP"; break; }
@@ -302,7 +302,7 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 		return false;
 	}
 
-	/*char* name = "Unkown";
+	/*auto name = "Unkown";
 	switch(type)
 	{
 		case IP_ICMP: { name = "ICMP"; break; }

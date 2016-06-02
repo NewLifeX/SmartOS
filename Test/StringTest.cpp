@@ -18,7 +18,7 @@ static void TestCtor()
 
 	debug_printf("字符串构造函数测试\r\n");
 
-	auto err	= "String(const char* cstr)";
+	auto err	= "String(cstring cstr)";
 
 	// 默认空字符串，使用内部数据区
 	String str;
@@ -121,11 +121,11 @@ static void TestAssign()
 	String str = "万家灯火，无声物联！";
 	debug_printf("TestAssign: %s\r\n", str.GetBuffer());
 	str	= "无声物联";
-	assert(str == "无声物联", "String& operator = (const char* cstr)");
+	assert(str == "无声物联", "String& operator = (cstring cstr)");
 
 	String str2	= "xxx";
 	str2	= str;
-	assert(str == "无声物联", "String& operator = (const char* cstr)");
+	assert(str == "无声物联", "String& operator = (cstring cstr)");
 	assert(str2.GetBuffer() != str.GetBuffer(), "String& operator = (const String& rhs)");
 }
 
@@ -201,7 +201,7 @@ static void TestAdd()
 	str = str + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + DateTime::Now();
 	str.Show(true);
 	// 字符串连加 1234@0000-00-00 00:00:00#99xx
-	assert(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, const char* cstr)");
+	assert(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, cstring cstr)");
 }
 
 static void TestEquals()
@@ -245,13 +245,13 @@ static void TestSet()
 	assert(bs2[5] == 0x3F, "ByteArray ToHex()");
 
 	// 字符串搜索
-	assert(str.IndexOf("36") == 0, "int IndexOf(const char* str, int startIndex = 0)");
-	assert(str.IndexOf("36", 1) == 6, "int IndexOf(const char* str, int startIndex = 0)");
-	assert(str.LastIndexOf("36", 6) == 6, "int LastIndexOf(const char* str, int startIndex = 0)");
-	assert(str.LastIndexOf("36", 7) == -1, "int LastIndexOf(const char* str, int startIndex = 0)");
-	assert(str.Contains("34-3F-31"), "bool Contains(const char* str) const");
-	assert(str.StartsWith("36-"), "bool StartsWith(const char* str, int startIndex = 0)");
-	assert(str.EndsWith("-32-34"), "bool EndsWith(const char* str)");
+	assert(str.IndexOf("36") == 0, "int IndexOf(cstring str, int startIndex = 0)");
+	assert(str.IndexOf("36", 1) == 6, "int IndexOf(cstring str, int startIndex = 0)");
+	assert(str.LastIndexOf("36", 6) == 6, "int LastIndexOf(cstring str, int startIndex = 0)");
+	assert(str.LastIndexOf("36", 7) == -1, "int LastIndexOf(cstring str, int startIndex = 0)");
+	assert(str.Contains("34-3F-31"), "bool Contains(cstring str) const");
+	assert(str.StartsWith("36-"), "bool StartsWith(cstring str, int startIndex = 0)");
+	assert(str.EndsWith("-32-34"), "bool EndsWith(cstring str)");
 
 	// 字符串截取
 	str	= " 36-1f-36-35-34\n";

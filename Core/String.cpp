@@ -20,7 +20,7 @@ char* dtostrf(double val, char width, byte prec, char* sout);
 
 /******************************** String ********************************/
 
-String::String(const char* cstr) : Array(Arr, ArrayLength(Arr))
+String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -132,7 +132,7 @@ String::String(char* str, int length) : Array(str, length)
 }
 
 // 包装静态字符串，直接使用，修改时扩容
-String::String(const char* str, int length) : Array((char*)str, length)
+String::String(cstring str, int length) : Array((char*)str, length)
 {
 	// 此时不能保证外部一定是0结尾
 	_Capacity	= length + 1;
@@ -183,7 +183,7 @@ void* String::Alloc(int len)
 	}
 }
 
-String& String::copy(const char* cstr, uint length)
+String& String::copy(cstring cstr, uint length)
 {
 	if(!cstr || !length) return *this;
 
@@ -311,7 +311,7 @@ String& String::operator = (String&& rval)
 	return *this;
 }
 
-String& String::operator = (const char* cstr)
+String& String::operator = (cstring cstr)
 {
 	if (cstr) copy(cstr, strlen(cstr));
 	else release();
@@ -329,7 +329,7 @@ bool String::Concat(const String& s)
 	return Concat(s._Arr, s._Length);
 }
 
-bool String::Concat(const char* cstr, uint length)
+bool String::Concat(cstring cstr, uint length)
 {
 	if (!cstr) return false;
 	if (length == 0) return true;
@@ -345,7 +345,7 @@ bool String::Concat(const char* cstr, uint length)
 	return true;
 }
 
-bool String::Concat(const char* cstr)
+bool String::Concat(cstring cstr)
 {
 	if (!cstr) return 0;
 	return Concat(cstr, strlen(cstr));
@@ -468,14 +468,14 @@ bool String::Concat(UInt64 num, int radix)
 bool String::Concat(float num, byte decimalPlaces)
 {
 	char buf[20];
-	char* string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
+	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
 	return Concat(string, strlen(string));
 }
 
 bool String::Concat(double num, byte decimalPlaces)
 {
 	char buf[20];
-	char* string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
+	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
 	return Concat(string, strlen(string));
 }
 
@@ -494,7 +494,7 @@ String& operator + (String& lhs, const String& rhs)
 	return a;
 }
 
-String& operator + (String& lhs, const char* cstr)
+String& operator + (String& lhs, cstring cstr)
 {
 	auto& a = const_cast<String&>(lhs);
 	if (!cstr || !a.Concat(cstr, strlen(cstr))) a.release();
@@ -572,7 +572,7 @@ bool String::Equals(const String& s2) const
 	return _Length == s2._Length && CompareTo(s2) == 0;
 }
 
-bool String::Equals(const char* cstr) const
+bool String::Equals(cstring cstr) const
 {
 	if (_Length == 0) return cstr == nullptr || *cstr == 0;
 	if (cstr == nullptr) return _Arr[0] == 0;
@@ -585,8 +585,8 @@ bool String::EqualsIgnoreCase(const String &s2 ) const
 	if (this == &s2) return true;
 	if (_Length != s2._Length) return false;
 	if (_Length == 0) return true;
-	const char *p1 = _Arr;
-	const char *p2 = s2._Arr;
+	auto p1	= _Arr;
+	auto p2	= s2._Arr;
 	while (*p1) {
 		if (tolower(*p1++) != tolower(*p2++)) return false;
 	}
@@ -670,7 +670,7 @@ ByteArray String::ToHex() const
 	char cs[3];
 	cs[2]	= 0;
 	byte* b	= bs.GetBuffer();
-	char* p	= _Arr;
+	auto p	= _Arr;
 	int n	= 0;
 	for(int i=0; i<_Length; i+=2)
 	{
@@ -730,7 +730,7 @@ void String::Show(bool newLine) const
 }
 
 // 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
-String& String::Format(const char* format, ...)
+String& String::Format(cstring format, ...)
 {
 	va_list ap;
 
@@ -769,7 +769,7 @@ int String::IndexOf(const String& str, int startIndex) const
 	return p - _Arr;
 }
 
-int String::IndexOf(const char* str, int startIndex) const
+int String::IndexOf(cstring str, int startIndex) const
 {
 	if(!str) return -1;
 	if(startIndex + strlen(str) > _Length) return -1;
@@ -790,7 +790,7 @@ int String::LastIndexOf(const char ch, int startIndex) const
 	return p - _Arr;
 }
 
-char *strrstr(const char* s, const char* str)
+char *strrstr(cstring s, cstring str)
 {
     char *p;
     int _Length = strlen(s);
@@ -812,7 +812,7 @@ int String::LastIndexOf(const String& str, int startIndex) const
 	return p - _Arr;
 }
 
-int String::LastIndexOf(const char* str, int startIndex) const
+int String::LastIndexOf(cstring str, int startIndex) const
 {
 	if(!str) return -1;
 	if(startIndex + strlen(str) > _Length) return -1;
@@ -825,7 +825,7 @@ int String::LastIndexOf(const char* str, int startIndex) const
 
 bool String::Contains(const String& str) const { return IndexOf(str) >= 0; }
 
-bool String::Contains(const char* str) const { return IndexOf(str) >= 0; }
+bool String::Contains(cstring str) const { return IndexOf(str) >= 0; }
 
 bool String::StartsWith(const String& str, int startIndex) const
 {
@@ -833,7 +833,7 @@ bool String::StartsWith(const String& str, int startIndex) const
 	return strncmp(&_Arr[startIndex], str._Arr, str._Length) == 0;
 }
 
-bool String::StartsWith(const char* str, int startIndex) const
+bool String::StartsWith(cstring str, int startIndex) const
 {
 	if(!str) return false;
 	int slen	= strlen(str);
@@ -849,7 +849,7 @@ bool String::EndsWith(const String& str) const
 	return strncmp(&_Arr[_Length - str._Length], str._Arr, str._Length) == 0;
 }
 
-bool String::EndsWith(const char* str) const
+bool String::EndsWith(cstring str) const
 {
 	if(!str) return false;
 	int slen	= strlen(str);

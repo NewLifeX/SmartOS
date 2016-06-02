@@ -20,7 +20,7 @@ public:
 	
 	AP0104();
 
-	void Setup(ushort code, const char* name, COM message = COM1, int baudRate = 0);
+	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 	ISocketHost* Create5500();
 	ITransport* Create2401();

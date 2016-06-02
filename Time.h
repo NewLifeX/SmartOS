@@ -71,7 +71,7 @@ public:
 	TimeCost();
 
 	int Elapsed();	// 逝去的时间，微秒
-	void Show(const char* format = nullptr);
+	void Show(cstring format = nullptr);
 };
 
 /*

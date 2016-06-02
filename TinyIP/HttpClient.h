@@ -23,7 +23,7 @@ public:
 	TcpHandler OnReceived;
 	TcpHandler OnDisconnected;
 
-	virtual const char* ToString();
+	virtual cstring ToString();
 
 protected:
 	void SendAck(uint len);
