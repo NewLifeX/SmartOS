@@ -442,6 +442,8 @@ port>]:<data>
 */
 int Esp8266::ParseReceive(const Buffer& bs) const
 {
+	TS("Esp8266::ParseReceive");
+
 	auto str	= bs.AsString();
 
 	// +IPD开头的是收到网络数据
@@ -450,21 +452,28 @@ int Esp8266::ParseReceive(const Buffer& bs) const
 
 	int s	= str.IndexOf(",", p) + 1;
 	int e	= str.IndexOf(",", s);
+	if(s == 0 || e < 0) return -1;
 
 	int idx	= str.Substring(s, e - s).ToInt();
 
 	s	= e + 1;
 	e	= str.IndexOf(",", s);
+	if(e < 0) return -1;
+
 	int len	= str.Substring(s, e - s).ToInt();
 
 	IPEndPoint ep;
 
 	s	= e + 1;
 	e	= str.IndexOf(",", s);
+	if(e < 0) return -1;
+
 	ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
 
 	s	= e + 1;
 	e	= str.IndexOf(":", s);
+	if(e < 0) return -1;
+
 	ep.Port		= str.Substring(s, e - s).ToInt();
 
 	// 后面是数据
@@ -483,6 +492,8 @@ int Esp8266::ParseReceive(const Buffer& bs) const
 bool Esp8266::ParseExpect(const Buffer& bs)
 {
 	if(!_Response) return false;
+
+	TS("Esp8266::ParseExpect");
 
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
 	auto str	= bs.AsString();

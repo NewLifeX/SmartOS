@@ -750,6 +750,7 @@ String& String::Format(cstring format, ...)
 
 int String::IndexOf(const char ch, int startIndex) const
 {
+	if(startIndex < 0) return -1;
 	if(startIndex >= _Length) return -1;
 
 	auto p	= strchr(_Arr + startIndex, ch);
@@ -761,6 +762,7 @@ int String::IndexOf(const char ch, int startIndex) const
 int String::IndexOf(const String& str, int startIndex) const
 {
 	if(str._Length == 0) return -1;
+	if(startIndex < 0) return -1;
 	if(startIndex + str._Length > _Length) return -1;
 
 	auto p	= strstr(_Arr + startIndex, str._Arr);
@@ -772,6 +774,7 @@ int String::IndexOf(const String& str, int startIndex) const
 int String::IndexOf(cstring str, int startIndex) const
 {
 	if(!str) return -1;
+	if(startIndex < 0) return -1;
 	if(startIndex + strlen(str) > _Length) return -1;
 
 	auto p	= strstr(_Arr + startIndex, str);
