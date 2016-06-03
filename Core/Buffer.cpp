@@ -330,7 +330,7 @@ String& Buffer::ToStr(String& str) const
 // 包装为字符串对象
 String Buffer::AsString() const
 {
-	String str((const char*)_Arr, _Length);
+	String str((cstring)_Arr, _Length);
 	return str;
 }
 

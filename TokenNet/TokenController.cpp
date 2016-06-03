@@ -212,8 +212,6 @@ bool TokenController::OnReceive(Message& msg)
 		Stat->RecvRequest++;
 	}
 
-	//ShowMessage("Recv$", msg);
-
 	// 加解密。握手不加密，登录响应不加密
 	if (msg.Code != 0x01)
 	{

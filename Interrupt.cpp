@@ -391,7 +391,7 @@ bool Lock::Wait(int us)
 #if DEBUG
 
 // 使用字符串指针的指针，因为引用的都是字符串常量，不需要拷贝和分配空间
-static const char** _TS	= nullptr;
+static cstring* _TS	= nullptr;
 static int _TS_Len	= 0;
 
 TraceStack::TraceStack(cstring name)

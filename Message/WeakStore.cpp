@@ -26,7 +26,7 @@ bool WeakStore::Check()
 {
 	assert(Magic, "未指定幻数");
 
-	auto mg = (const char*)Data.GetBuffer();
+	auto mg = (cstring)Data.GetBuffer();
 	//return strcmp(mg, Magic) == 0;
 	auto p = Magic;
 	for(int i=0; i<MagicLength; i++)

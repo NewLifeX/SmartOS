@@ -1093,5 +1093,5 @@ const String StringSplit::Next()
 	}
 
 	// 包装一层指针
-	return String((const char*)ptr, len);
+	return String((cstring)ptr, len);
 }

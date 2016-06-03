@@ -18,26 +18,34 @@ BinaryPair::BinaryPair(Stream& ms)
 
 Buffer BinaryPair::Get(cstring name) const
 {
+	Buffer err(nullptr, 0);
+
 	// 暂时不方便支持空名称的名值对，而服务端是支持的
-	if(!name) return Buffer(nullptr, 0);
+	if(!name) return err;
 
 	// 从当前位置开始向后找，如果找不到，再从头开始找到当前位置。
 	// 这样子安排，如果是顺序读取，将会提升性能
 
 	int slen	= strlen(name);
-	
+
 	auto& ms	= *_s;
 	uint p	= ms.Position();
 	for(int i=0; i<2; i++)
 	{
 		while(ms.Remain() && (i ==0 || ms.Position() < p))
 		{
+			// 每个名值对最小长度是2，名称和值的长度都为0
+			if(ms.Remain() < 2) return err;
 			int len	= ms.ReadEncodeInt();
+			if(len <0 || len > ms.Remain()) return err;
 			auto nm	= ms.ReadBytes(len);
+
+			if(ms.Remain() < 1) return err;
 			int ln2	= ms.ReadEncodeInt();
+			if(ln2 <0 || ln2 > ms.Remain()) return err;
 			auto dt	= ms.ReadBytes(ln2);
 
-			if(len == slen && strncmp(name, (const char*)nm, len) == 0) return Buffer(dt, ln2);
+			if(len == slen && strncmp(name, (cstring)nm, len) == 0) return Buffer(dt, ln2);
 		}
 
 		// 从头开始再来一次
@@ -46,7 +54,7 @@ Buffer BinaryPair::Get(cstring name) const
 		ms.SetPosition(_p);
 	}
 
-	return Buffer(nullptr, 0);
+	return err;
 }
 
 bool BinaryPair::Set(cstring name, const Buffer& bs)
@@ -121,9 +129,9 @@ bool BinaryPair::Get(cstring name, IPEndPoint& value) const
 {
 	auto bs	= Get(name);
 	if(bs.Length() < 6) return false;
-	
+
 	if (bs[0] != 4) return false;	// 单片机这边不支持ipv6
-	
+
 	Buffer bs2(bs.GetBuffer() + 1, 6);
 	value	= bs2;
 

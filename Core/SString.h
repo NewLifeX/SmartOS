@@ -35,7 +35,7 @@ public:
 
 	// 内存管理
 	//inline uint Length() const { return _Length; }
-	inline cstring GetBuffer() const { return (const char*)_Arr; }
+	inline cstring GetBuffer() const { return (cstring)_Arr; }
 	// 设置数组长度。改变长度后，确保最后以0结尾
 	virtual bool SetLength(int length, bool bak);
 
