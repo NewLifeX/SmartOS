@@ -20,7 +20,7 @@ public:
 	~DevicesManagement();
 
 	bool SetFlashCfg(uint addr, uint size);
-	int Length() { return DevArr.Length(); }
+	int Length() { return DevArr.Count(); }
 
 	Device* FindDev(byte id)const;
 	Device* FindDev(const Buffer& hardid) const;
@@ -35,9 +35,9 @@ private:	// 外部操作使用 DeviceRequest
 	int	PushDev(Device* dv);
 public:
 	// 设备列表
-	TArray<Device*> DevArr;
+	List	DevArr;
 	// 持久在线列表
-	TArray<Device*> OnlineAlways;
+	List	OnlineAlways;
 	static DevicesManagement * Current;
 	// 发送时刻再绑定？！ 如果绑定失败报错？
 	TokenClient * Port = nullptr;

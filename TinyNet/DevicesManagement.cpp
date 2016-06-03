@@ -5,8 +5,8 @@ DevicesManagement* DevicesManagement::Current = nullptr;
 
 DevicesManagement::DevicesManagement()
 {
-	DevArr.SetLength(0);
-	OnlineAlways.SetLength(0);
+	//DevArr.SetLength(0);
+	//OnlineAlways.SetLength(0);
 	Current = this;
 }
 
@@ -18,17 +18,17 @@ DevicesManagement::~DevicesManagement()
 	// 	if (!dv)continue;
 	// 	delete dv;
 	// }
-	DevArr.SetLength(0);
-	OnlineAlways.SetLength(0);
+	//DevArr.SetLength(0);
+	//OnlineAlways.SetLength(0);
 	Current = nullptr;
 }
 
 int	DevicesManagement::PushDev(Device* dv)
 {
 	//DeviceRequest(DeviceAtions::Register, dv);
-	int temp = DevArr.Push(dv);
+	DevArr.Add(dv);
 	SaveDev();
-	return temp; // DevArr.Push(dv);
+	return DevArr.Count() - 1;
 }
 
 bool DevicesManagement::SetFlashCfg(uint addr, uint size)
@@ -55,22 +55,23 @@ bool DevicesManagement::SetFlashCfg(uint addr, uint size)
 Device * DevicesManagement::FindDev(byte id) const
 {
 	if (id == 0)return nullptr;
-	for (int i = 0; i < DevArr.Length(); i++)
-		if (id == DevArr[i]->Address)return DevArr[i];
+	for (int i = 0; i < DevArr.Count(); i++)
+	{
+		auto dv	= (Device*)DevArr[i];
+		if (id == dv->Address) return dv;
+	}
 	return nullptr;
 }
 
 Device * DevicesManagement::FindDev(const Buffer & hardid) const
 {
 	if (hardid.Length() == 0)return nullptr;
-	for (int i = 0; i < DevArr.Length(); i++)
+	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		// Buffer 不支持 == 判断两个对象是否相等  （只判断是否是同一个Arr内存地址）
-		// if (DevArr[i] != nullptr&&hardid == DevArr[i]->HardID)return DevArr[i];
+		auto dv	= (Device*)DevArr[i];
 		bool isEqual = true;
-		if (DevArr[i] != nullptr)
+		if (dv != nullptr)
 		{
-			auto dv = DevArr[i];
 			for (int j = 0; j < hardid.Length(); j++)
 			{
 				if (hardid[j] != dv->HardID[j])
@@ -80,7 +81,7 @@ Device * DevicesManagement::FindDev(const Buffer & hardid) const
 				}
 			}
 		}
-		if (isEqual)return DevArr[i];
+		if (isEqual) return dv;
 	}
 	return nullptr;
 }
@@ -165,7 +166,7 @@ int DevicesManagement::LoadDev()
 			if (idx == -1)
 			{
 				if (dv->Valid())
-					DevArr.Push(dv);
+					DevArr.Add(dv);
 				else
 					delete dv;
 				//debug_printf("\t Push");
@@ -176,10 +177,10 @@ int DevicesManagement::LoadDev()
 
 	debug_printf("Load %d Dev from 0x%08X\r\n", i, cfg.Address);
 
-	byte len = DevArr.Length();
+	byte len = DevArr.Count();
 	debug_printf("Devices has %d Dev\r\n", len);
 	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
-	if (len != i)SaveDev();
+	if (len != i) SaveDev();
 
 	return i;
 }
@@ -195,11 +196,9 @@ void DevicesManagement::SaveDev()
 
 	MemoryStream ms(buf, ArrayLength(buf));
 	byte num = 0;
-	for (int i = 0; i < DevArr.Length(); i++)
+	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		auto dv = DevArr[i];
-		if (dv == nullptr) continue;
-		num++;
+		if (DevArr[i]) num++;
 	}
 
 	// 设备个数
@@ -207,11 +206,10 @@ void DevicesManagement::SaveDev()
 	debug_printf("\tCount %d\r\n", num);
 	ms.Write((byte)num);
 
-	for (int i = 0; i < DevArr.Length(); i++)
+	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		auto dv = DevArr[i];
-		if (dv == nullptr) continue;
-		dv->Write(ms);
+		auto dv = (Device*)DevArr[i];
+		if (dv) dv->Write(ms);
 	}
 	debug_printf("DevicesManagement::SaveDevices Save %d Dev To 0x%08X！\r\n", num, cfg.Address);
 	cfg.Set("Devs", Buffer(ms.GetBuffer(), ms.Position()));
@@ -226,12 +224,13 @@ void DevicesManagement::ClearDev()
 
 	debug_printf("DevicesManagement::ClearDevices Clear List 0x%08X \r\n", cfg.Address);
 
-	for (int i = 0; i < DevArr.Length(); i++)
+	DevArr.DeleteAll().Clear();
+	/*for (int i = 0; i < DevArr.Count(); i++)
 	{
-		if (DevArr[i])delete DevArr[i];
+		if (DevArr[i]) delete DevArr[i];
 		DevArr[i] = nullptr;
-	}
-	DevArr.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
+	}*/
+	//DevArr.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
 	SaveDev();
 }
 
@@ -245,7 +244,7 @@ void DevicesManagement::ShowDev()
 
 	for (int i = 0; i < len; i++)
 	{
-		auto dv = DevArr[i];
+		auto dv = (Device*)DevArr[i];
 		if (dv == nullptr) continue;
 
 		count++;
@@ -261,11 +260,14 @@ void DevicesManagement::ShowDev()
 int DevicesManagement::WriteIDs(Stream &ms)
 {
 	int len = 0;
-	for (int i = 0; i < DevArr.Length(); i++)
+	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		if (DevArr[i] == nullptr)continue;
-		ms.Write(DevArr[i]->Address);
-		len++;
+		auto dv = (Device*)DevArr[i];
+		if (dv)
+		{
+			ms.Write(dv->Address);
+			len++;
+		}
 	}
 	return len;
 }
@@ -550,17 +552,16 @@ void DevicesManagement::MaintainState()
 	auto now = Sys.Seconds();
 
 	// 处理持久在线设备
-	for (int i = 0; i < OnlineAlways.Length(); i++)
+	for (int i = 0; i < OnlineAlways.Count(); i++)
 	{
-		auto dv = OnlineAlways[i];
-		if (!dv)continue;
-		dv->LastTime = now;
+		auto dv = (Device*)OnlineAlways[i];
+		if (dv) dv->LastTime = now;
 	}
 
 	byte len = Length();
 	for (int i = 0; i < len; i++)
 	{
-		auto dv = DevArr[i];
+		auto dv = (Device*)DevArr[i];
 		if (!dv) continue;
 
 		ushort time = dv->OfflineTime ? dv->OfflineTime : 60;

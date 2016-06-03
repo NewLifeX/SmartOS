@@ -5,7 +5,7 @@
 #include "Platform\stm32.h"
 
 // 低功耗处理器
-static TArray<Power*, 0x40> _powers(0);
+static List	_powers;
 
 void Power::SetPower()
 {
@@ -36,9 +36,9 @@ void Power::Standby(uint msTime)
 {
 	debug_printf("Power::Standby Time=%d \r\n", msTime);
 
-	for(int i=0; i<_powers.Length(); i++)
+	for(int i=0; i<_powers.Count(); i++)
 	{
-		Power* pwr = _powers[i];
+		auto pwr = (Power*)_powers[i];
 		if(pwr)
 		{
 			debug_printf("Power::LowPower 0x%08X\r\n", pwr);
@@ -56,5 +56,5 @@ void Power::AddPower(Power* power)
 {
 	debug_printf("Power::AddPower 0x%08X\r\n", power);
 	
-	_powers.Push(power);
+	_powers.Add(power);
 }

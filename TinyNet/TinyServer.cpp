@@ -87,7 +87,7 @@ void TinyServer::Start()
 		dv->Name = Sys.Name;
 
 		// 放进持续在线表
-		DevMgmt.OnlineAlways.Push(dv);
+		DevMgmt.OnlineAlways.Add(dv);
 		//DevMgmt.PushDev(dv);
 		//DevMgmt.SaveDev();
 		DevMgmt.DeviceRequest(DeviceAtions::Register, dv);
@@ -628,8 +628,8 @@ void TinyServer::ClearDevices()
 	{
 		for(int i = 1; i < count; i++)	// 从1开始派ID  自己下线完全不需要
 		{
-			auto dv = DevMgmt.DevArr[i];
-			if(!dv)continue;
+			auto dv = (Device*)DevMgmt.DevArr[i];
+			if(!dv) continue;
 
 			TinyMessage rs;
 			rs.Dest = dv->Address;

@@ -8,8 +8,26 @@
 	#define ds_printf(format, ...)
 #endif
 
+class Area
+{
+public:
+	uint	Offset;
+	uint	Size;
+
+	DataStore::Handler	Hook;
+	IDataPort*	Port;
+
+	Area();
+	bool Contain(uint offset, uint size);
+
+	friend bool operator==(const Area& a1, const Area& a2)
+	{
+		return a1.Offset == a2.Offset && a1.Size == a2.Size;
+	}
+};
+
 // 初始化
-DataStore::DataStore() : Areas(0)
+DataStore::DataStore()
 {
 	Strict	= true;
 }
@@ -57,9 +75,9 @@ int DataStore::Read(uint offset, Buffer& bs)
 
 bool DataStore::OnHook(uint offset, uint size, int mode)
 {
-	for(int i=0; i<Areas.Length(); i++)
+	for(int i=0; i<Areas.Count(); i++)
 	{
-		Area& ar = Areas[i];
+		auto ar = *(Area*)Areas[i];
 		if(ar.Size == 0) break;
 
 		// 数据操作口只认可完整的当前区域
@@ -88,30 +106,32 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 // 注册某一块区域的读写钩子函数
 void DataStore::Register(uint offset, uint size, Handler hook)
 {
-	Area& ar = Areas.Push();
-
-	ar.Offset	= offset;
-	ar.Size	= size;
-	ar.Hook	= hook;
+	auto ar	= new Area();
+	ar->Offset	= offset;
+	ar->Size	= size;
+	ar->Hook	= hook;
+	
+	Areas.Add(ar);
 }
 
 void DataStore::Register(uint offset, IDataPort& port)
 {
-	Area& ar = Areas.Push();
-
-	ar.Offset	= offset;
-	ar.Size	= port.Size();
-	ar.Port	= &port;
+	auto ar	= new Area();
+	ar->Offset	= offset;
+	ar->Size	= port.Size();
+	ar->Port	= &port;
+	
+	Areas.Add(ar);
 }
 
-DataStore::Area::Area()
+Area::Area()
 {
 	Offset	= 0;
 	Size	= 0;
 	Hook	= nullptr;
 }
 
-bool DataStore::Area::Contain(uint offset, uint size)
+bool Area::Contain(uint offset, uint size)
 {
 	return (Offset <= offset && offset < Offset + Size ||
 			Offset >= offset && Offset < offset + size);

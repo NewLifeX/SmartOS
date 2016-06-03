@@ -75,7 +75,7 @@ void Gateway::Start()
 
 		//pDevMgmt->PushDev(dv);
 		// 放进持续在线表
-		pDevMgmt->OnlineAlways.Push(dv);
+		pDevMgmt->OnlineAlways.Add(dv);
 		pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
 	}
 

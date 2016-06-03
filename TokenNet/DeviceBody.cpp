@@ -169,10 +169,11 @@ void DeviceBody::OnRead(const TokenMessage & msg)
 
 DeviceBody * BodyManagement::FindBody(byte id) const
 {
-	if (id == 0)return nullptr;
-	for (int i = 0; i < Bodys.Length(); i++)
+	if (id == 0) return nullptr;
+	for (int i = 0; i < Bodys.Count(); i++)
 	{
-		if (Bodys[i]->DevInfo.Address == id)return Bodys[i];
+		auto dv	= (DeviceBody*)Bodys[i];
+		if (dv->DevInfo.Address == id) return dv;
 	}
 	return nullptr;
 }

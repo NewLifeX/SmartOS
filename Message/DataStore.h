@@ -27,25 +27,7 @@ public:
 	void Register(uint offset, IDataPort& port);
 
 private:
-	class Area
-	{
-	public:
-		uint	Offset;
-		uint	Size;
-
-		Handler	Hook;
-		IDataPort*	Port;
-
-		Area();
-		bool Contain(uint offset, uint size);
-
-		friend bool operator==(const Area& a1, const Area& a2)
-		{
-			return a1.Offset == a2.Offset && a1.Size == a2.Size;
-		}
-	};
-
-	TArray<Area, 0x08> Areas;
+	List	Areas;
 
 	bool OnHook(uint offset, uint size, int mode);
 };

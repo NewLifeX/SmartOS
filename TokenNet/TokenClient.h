@@ -50,7 +50,7 @@ public:
 // 本地网络支持
 	Controller* Local;	// 本地网络控制器
 	Controller* LocalAP;// 无线AP控制器
-	TArray<TokenSession*> Sessions;	// 会话集合
+	List	Sessions;	// 会话集合
 
 // 常用系统级消息
 	// 握手广播
