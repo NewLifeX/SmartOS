@@ -220,6 +220,7 @@ bool Esp8266::OnOpen()
 	{
 		IP	= GetIP(true);
 
+		SaveConfig();
 		ShowConfig();
 	}
 
