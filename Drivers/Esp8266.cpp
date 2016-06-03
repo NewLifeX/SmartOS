@@ -51,6 +51,9 @@ public:
 
 	// 收到数据
 	virtual void OnProcess(const Buffer& bs, const IPEndPoint& remote);
+	
+protected:
+	bool SendData(const String& cmd, const Buffer& bs);
 };
 
 class EspTcp : public EspSocket
@@ -1010,12 +1013,17 @@ bool EspSocket::Send(const Buffer& bs)
 	String cmd	= "AT+CIPSEND=";
 	cmd = cmd + _Index + ',' + bs.Length() + "\r\n";
 
+	return SendData(cmd, bs);
+}
+
+bool EspSocket::SendData(const String& cmd, const Buffer& bs)
+{
 #if NET_DEBUG
 	EnableLog	= false;
 #endif
 
-	auto rt	= _Host.Send(cmd, ">");
-	if(rt.Contains(">") && _Host.SendCmd(bs.AsString()))
+	auto rt	= _Host.Send(cmd, ">", 1600);
+	if(rt.Contains(">") && _Host.SendCmd(bs.AsString(), 1600))
 	{
 #if NET_DEBUG
 		EnableLog	= true;
@@ -1035,9 +1043,6 @@ bool EspSocket::Send(const Buffer& bs)
 	}
 
 	return false;
-	//_Host.Port->Write(bs);
-
-	//return _Host.WaitForCmd("OK", 1000);
 }
 
 bool EspSocket::OnWrite(const Buffer& bs) {	return Send(bs); }
@@ -1067,19 +1072,6 @@ EspUdp::EspUdp(Esp8266& host, byte idx)
 
 bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 {
-	static bool spinlocks = false;
-	// 加自旋锁  解决重入问题
-	/*
-	这里加超时毫无作用，
-	任务1 在此锁上   任务2重入
-	任务2不执行完，永远别执行任务1，
-	也就是别想任务一 spinlocks = false;
-	*/
-	//TimeWheel tw(4);
-	//while (!tw.Expired() && spinlocks == true);
-	if (spinlocks == true)return false;
-
-	spinlocks = true;
 	if(remote == Remote) return Send(bs);
 
 	if(!Open()) return false;
@@ -1092,18 +1084,7 @@ bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 	cmd	= cmd + ',' + remote.Port;
 	cmd	+= "\r\n";
 
-	auto rt	= _Host.Send(cmd, ">",1500);
-	/*if (rt.IndexOf(">") < 0)
-	{
-		debug_printf("\r\n发送失败\r\n");
-		return false;
-	}*/
-
-	_Host.Send(bs.AsString(), "");
-	_Host.ClearRXD();
-
-	spinlocks = false;
-	return true;
+	return SendData(cmd, bs);
 }
 
 bool EspUdp::OnWriteEx(const Buffer& bs, const void* opt)

@@ -7,9 +7,6 @@
 #include "Net\Socket.h"
 #include "Message\DataStore.h"
 
-
-extern void EspTest(void * param);
-
 // 最好打开 Soket 前 不注册中断，以免AT指令乱入到中断里面去  然后信息不对称
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
 class Esp8266 : public PackPort, public ISocketHost
@@ -23,9 +20,7 @@ public:
 		Both	= 3,
 	};
 
-	//Modes	Mode;		// 工作模式。默认Both
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
-	//bool	Connected;	// 是否已连接
 	String	SSID;
 	String	Pass;
 	
