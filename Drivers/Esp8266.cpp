@@ -4,7 +4,6 @@
 
 #include "Esp8266.h"
 #include "Config.h"
-#include "SerialPort.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -395,12 +394,6 @@ bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
 	_Expect		= nullptr;
 
 	return false;
-}
-
-void Esp8266::ClearRXD()
-{
-	auto sp = (SerialPort*)Port;
-	sp->Rx.Clear();
 }
 
 // 引发数据到达事件
@@ -958,22 +951,22 @@ bool EspSocket::OnOpen()
 		String close = "AT+CIPCLOSE=";
 		close += _Index;
 		close += "\r\n";
-		auto sp = (SerialPort*)_Host.Port;
+		/*auto sp = (SerialPort*)_Host.Port;
 		sp->Write(cmd);
 		Sys.Sleep(1000);
-		_Host.ClearRXD();
+		_Host.ClearRXD();*/
 
-		if (!_Host.SendCmd(cmd))
+		//if (!_Host.SendCmd(cmd))
 		{
 			debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
-			//return false;
+			return false;
 		}
 	}
 
 	// 清空一次缓冲区
 	cmd	= "AT+CIPBUFRESET=";
 	_Host.SendCmd(cmd + _Index);
-	_Host.ClearRXD();
+	//_Host.ClearRXD();
 	_Error	= 0;
 
 	return true;
@@ -981,20 +974,11 @@ bool EspSocket::OnOpen()
 
 void EspSocket::OnClose()
 {
-	auto sp = (SerialPort*)_Host.Port;
-	sp->Rx.Clear();
-
 	String cmd	= "AT+CIPCLOSE=";
 	cmd += _Index;
 	cmd += "\r\n";
 
-	sp->Write(cmd);
-	//_Host.SendCmd(cmd,4000);
-
-	byte buff[128];
-	Buffer bf(buff, sizeof(buff));
-	Sys.Sleep(300);
-	sp->Rx.Clear();
+	_Host.SendCmd(cmd, 4000);
 }
 
 // 接收数据
