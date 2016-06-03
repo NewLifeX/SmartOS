@@ -101,8 +101,8 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 {
 	Set(port);
 
-	if(power != P0) _power.Init(power,0);
-	if(rst != P0) _rst.Init(rst,1);
+	if(power != P0) _power.Init(power, false);
+	if(rst != P0) _rst.Init(rst, true);
 
 	//Mode		= Modes::Both;
 	AutoConn	= false;
