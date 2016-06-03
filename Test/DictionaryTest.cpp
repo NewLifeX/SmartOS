@@ -26,7 +26,7 @@ void Dictionary::Test()
 	dic["buf2"]	= buf3;
 	dic["buf3"]	= buf2;
 	assert(dic.Count() == 3, "Count()");
-	assert(dic["buf2"] == buf2 && dic["buf3"] == buf3, "void*& operator[](const void* key)");
+	assert(dic["buf2"] == buf3 && dic["buf3"] == buf2, "void*& operator[](const void* key)");
 
 	// 查找
 	bool rs	= dic.ContainKey("buf2");
@@ -42,7 +42,7 @@ void Dictionary::Test()
 	// 尝试获取值
 	void* p	= nullptr;
 	rs	= dic.TryGetValue("buf3", p);
-	assert(dic.Count() == 3, "Count()");
+	assert(dic.Count() == 2, "Count()");
 	assert(rs, "bool TryGetValue(const void* key, void*& value) const");
 	// 前面曾经赋值，所以buf3里面保存的是buf2
 	assert(p == buf2, "bool TryGetValue(const void* key, void*& value) const");
