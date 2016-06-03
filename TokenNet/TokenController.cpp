@@ -87,7 +87,16 @@ void TokenController::Open()
 #endif
 
 	auto sock = dynamic_cast<ISocket*>(Port);
-	if (sock) Server = &sock->Remote;
+	if (sock)
+	{
+		Server = &sock->Remote;
+		// 如果远程IP地址不存在，则调用DNS解析域名取得
+		if(sock->Remote.Address == IPAddress::Any() && sock->Server)
+		{
+			auto ip	= sock->Host->QueryDNS(sock->Server);
+			if(ip != IPAddress::Any()) sock->Remote.Address	= ip;
+		}
+	}
 
 	if (!Stat)
 	{
