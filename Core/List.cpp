@@ -6,7 +6,7 @@ List::List(int size)
 {
 	_Arr	= Arr;
 	_Count	= 0;
-	_Capacity	= ArrayLength(Arr) >> 2;
+	_Capacity	= ArrayLength(Arr);
 }
 
 //List::List(T* items, uint count) { Set(items, count); }
@@ -29,8 +29,6 @@ void List::Add(void* item)
 // 添加多个元素
 void List::Add(void** items, uint count)
 {
-	//assert(items, "items");
-	//assert(count, "count");
 	if(!items || !count) return;
 
 	CheckCapacity(_Count + count);
@@ -89,12 +87,6 @@ void List::Clear()
 	_Count = 0;
 }
 
-/*// 返回内部指针
-const void** List::ToArray() const
-{
-	return _Arr;
-}*/
-
 // 重载索引运算符[]，返回指定元素的第一个
 void* List::operator[](int i) const
 {
@@ -129,9 +121,9 @@ bool List::CheckCapacity(int count)
 	// 需要备份数据
 	if(_Count > 0 && _Arr)
 		// 为了安全，按照字节拷贝
-		Buffer(p, sz).Copy(0, _Arr, _Count << 2);
+		Buffer(p, sz << 2).Copy(0, _Arr, _Count << 2);
 
-	if(_Arr && _Arr != p) delete _Arr;
+	if(_Arr && _Arr != Arr) delete _Arr;
 
 	_Arr		= (void**)p;
 	_Capacity	= sz;

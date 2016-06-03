@@ -31,9 +31,6 @@ public:
 	// 释放所有指针指向的内存
 	List& DeleteAll();
 
-	// 返回内部指针
-    //const void** ToArray() const;
-
     // 重载索引运算符[]，返回指定元素的第一个
     void* operator[](int i) const;
     void*& operator[](int i);
