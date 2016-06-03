@@ -55,13 +55,15 @@ void List::RemoveAt(uint index)
 }
 
 // 删除指定元素
-void List::Remove(const void* item)
+int List::Remove(const void* item)
 {
 	int index = FindIndex(item);
 	if(index >= 0) RemoveAt(index);
+	
+	return index;
 }
 
-int List::FindIndex(const void* item)
+int List::FindIndex(const void* item) const
 {
 	for(int i=0; i<_Count; i++)
 	{

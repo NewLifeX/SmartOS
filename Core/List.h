@@ -21,12 +21,12 @@ public:
 	void RemoveAt(uint index);
 
 	// 删除指定元素
-	void Remove(const void* item);
+	int Remove(const void* item);
 
 	void Clear();
 	
 	// 查找指定项。不存在时返回-1
-	int FindIndex(const void* item);
+	int FindIndex(const void* item) const;
 
 	// 释放所有指针指向的内存
 	List& DeleteAll();
