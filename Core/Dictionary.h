@@ -30,6 +30,10 @@ public:
     void* operator[](const void* key) const;
     void*& operator[](const void* key);
 
+#if DEBUG
+	static void Test();
+#endif
+
 private:
 	List	_Keys;
 	List	_Values;

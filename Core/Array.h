@@ -52,6 +52,10 @@ public:
 	friend bool operator==(const Array& bs1, const Array& bs2);
 	friend bool operator!=(const Array& bs1, const Array& bs2);
 
+#if DEBUG
+	static void Test();
+#endif
+
 protected:
 	uint	_Capacity;	// 最大个数。非字节数
 	bool	_needFree;	// 是否需要释放

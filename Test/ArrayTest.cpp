@@ -84,7 +84,7 @@ static void TestCopy()
 	assert(arr.Length() == sizeof(bts) && arr == bts, err);
 }
 
-void TestArray()
+void Array::Test()
 {
 	TS("TestArray");
 

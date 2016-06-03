@@ -25,10 +25,4 @@ NRF24L01* Create2401();
 
 void TestMessage(OutputPort* leds);
 
-void TestBuffer();
-void TestString();
-void TestArray();
-void TestDateTime();
-void TestList();
-
 #endif

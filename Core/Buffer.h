@@ -96,6 +96,10 @@ public:
 	friend bool operator != (const Buffer& bs1, const Buffer& bs2);
 	friend bool operator != (const Buffer& bs1, const void* ptr);
 
+#if DEBUG
+	static void Test();
+#endif
+
 protected:
     char*	_Arr;		// 数据指针
 	int		_Length;	// 长度

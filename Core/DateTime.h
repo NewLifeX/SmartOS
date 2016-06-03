@@ -71,6 +71,10 @@ public:
 	// 当前时间
 	static DateTime Now();
 
+#if DEBUG
+	static void Test();
+#endif
+
 private:
 	void Init();
 	Buffer ToArray();

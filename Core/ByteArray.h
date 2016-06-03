@@ -32,6 +32,10 @@ public:
     //friend bool operator==(const ByteArray& bs1, const ByteArray& bs2);
     //friend bool operator!=(const ByteArray& bs1, const ByteArray& bs2);
 
+#if DEBUG
+	static void Test();
+#endif
+
 protected:
 	byte	Arr[0x40];	// 内部缓冲区
 

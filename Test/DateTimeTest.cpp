@@ -21,7 +21,7 @@ static void TestCtor()
 	assert(dt3.Hour == 0 && dt3.Minute == 0 && dt3.Second == 33 && dt3.Ms == 00, "DateTime(uint seconds)");
 }
 
-static void ParseMs()
+static void TestParseMs()
 {
 	TS("TestCtor");
 	
@@ -41,13 +41,13 @@ static void TestTotal()
 	assert(dt.TotalMs() == 1463443233UL * 1000, "TotalMs");
 }
 
-void TestDateTime()
+void DateTime::Test()
 {
     debug_printf("\r\n");
     debug_printf("TestDateTime Start......\r\n");
 
 	TestCtor();
-	ParseMs();
+	TestParseMs();
 	TestTotal();
 
     debug_printf("\r\n TestDateTime Finish!\r\n");

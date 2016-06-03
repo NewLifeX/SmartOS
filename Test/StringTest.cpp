@@ -292,7 +292,7 @@ static void TestMemory()
 	}
 }
 
-void TestString()
+void String::Test()
 {
 	TS("TestString");
 

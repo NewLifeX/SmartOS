@@ -3,7 +3,7 @@
 #include "Dictionary.h"
 
 #if DEBUG
-void TestDictionary()
+void Dictionary::Test()
 {
 	TS("TestDictionary");
 

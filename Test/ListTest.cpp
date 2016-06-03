@@ -2,7 +2,7 @@
 #include "List.h"
 
 #if DEBUG
-void TestList()
+void List::Test()
 {
 	TS("TestList");
 

@@ -38,6 +38,10 @@ public:
     void* operator[](int i) const;
     void*& operator[](int i);
 
+#if DEBUG
+	static void Test();
+#endif
+	
 private:
 	void**	_Arr;
 	uint	_Count;

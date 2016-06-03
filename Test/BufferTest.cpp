@@ -67,7 +67,7 @@ static void TestCopy(const Buffer& bs)
 	assert(bs2 == cs + 8, err);
 }
 
-void TestBuffer()
+void Buffer::Test()
 {
 	TS("TestBuffer");
 

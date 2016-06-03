@@ -159,6 +159,10 @@ public:
 	String ToLower() const;
 	String ToUpper() const;
 
+#if DEBUG
+	static void Test();
+#endif
+
 protected:
 	//char*	_Arr;		// 字符数组
 	//int		_Capacity;	// 容量，不包含0结束符
