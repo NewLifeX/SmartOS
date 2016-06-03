@@ -466,11 +466,11 @@ String CaclPercent(int d1, int d2)
 String TokenStat::Percent() const
 {
 	int send = SendRequest;
-	int sucs = RecvReply;
+	int sucs = RecvReply + RecvReplyAsync;
 	if (_Last)
 	{
 		send += _Last->SendRequest;
-		sucs += _Last->RecvReply;
+		sucs += _Last->RecvReply + _Last->RecvReplyAsync;
 	}
 
 	return CaclPercent(sucs, send);
@@ -557,8 +557,8 @@ String& TokenStat::ToStr(String& str) const
 
 	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
 	Percent().Show(true);*/
-	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
-	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
+	if(SendRequest > 0)	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms ";
+	if(RecvRequest > 0)	str = str + "收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
 	if (RecvReplyAsync > 0) str = str + " 异步 " + RecvReplyAsync;
 	if (Read > 0)	str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
 	if (Write > 0)	str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
