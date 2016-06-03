@@ -363,7 +363,7 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	socket->Remote.Port	= port;
 	socket->Server		= domain;
 	//socket->Change(domain, port);
-	
+
 	// 等下次发数据的时候自动打开
 	//Control->Port->Open();
 
@@ -572,7 +572,7 @@ bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
 
 	UInt64 now = DateTime::Now().TotalMs();
 	int cost 	= (int)(now - start);
-	if(cost < 0) cost = -cost;
+	//if(cost < 0) cost = -cost;
 	// if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
 
 	if(Delay)
@@ -720,7 +720,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
 	auto rs	= msg.CreateReply();
 
 	BinaryPair bp(msg.ToStream());
-	
+
 	String action;
 	if(!bp.Get("Action", action) || !action)
 	{
@@ -736,7 +736,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
 		else
 		{
 			auto ivh	= (InvokeHandler)handler;
-			
+
 			BinaryPair result(rs.ToStream());
 			if(!ivh(bp, result))
 			{
@@ -748,6 +748,6 @@ void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
 			}
 		}
 	}
-	
+
 	ctrl->Reply(rs);
 }
