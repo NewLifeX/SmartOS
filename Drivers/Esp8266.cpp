@@ -326,7 +326,7 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 	tw.Sleep	= 200;
 	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
 	// 提前等待一会，再开始轮询
-	Sys.Sleep(20);
+	Sys.Sleep(40);
 	while(_Expect && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
@@ -728,7 +728,7 @@ bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte e
 	String cmd = "AT+CWSAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn /*+ ',' + maxConnect + ',' + (hidden ? '1' : '0')*/;
 
-	return SendCmd(cmd, 15000);
+	return SendCmd(cmd, 3200);
 }
 
 // <ip addr>,<mac>
