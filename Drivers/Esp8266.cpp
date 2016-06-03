@@ -175,9 +175,11 @@ bool Esp8266::OnOpen()
 	ver.Show(true);
 #endif
 
-	auto cfg	= EspConfig::Create();
-
-	//UnJoinAP();
+	//auto cfg	= EspConfig::Create();
+	
+	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
+	auto cfg	= Config::Current->Find("NET");
+	if(!cfg) Restore();
 
 	// Station模式
 	auto mode	= (Modes)Wireless;
