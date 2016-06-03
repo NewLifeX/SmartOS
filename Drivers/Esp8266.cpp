@@ -154,15 +154,25 @@ bool Esp8266::OnOpen()
 		Reset();	// 软件重启命令
 	}
 
-	// 等待模块启动进入就绪状态
-	if(!WaitForCmd("ready", 3000))
-	{
-		if (!Test())
-		{
-			net_printf("Esp8266::Open 打开失败！");
+	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
+	auto cfg	= Config::Current->Find("NET");
+	//if(!cfg) Restore();
 
-			return false;
+	for(int i=0; i<2; i++)
+	{
+		// 等待模块启动进入就绪状态
+		if(!WaitForCmd("ready", 3000))
+		{
+			if (!Test())
+			{
+				net_printf("Esp8266::Open 打开失败！");
+
+				return false;
+			}
 		}
+		if(cfg || i==1) break;
+
+		Restore();
 	}
 
 	// 开回显
@@ -176,10 +186,6 @@ bool Esp8266::OnOpen()
 #endif
 
 	//auto cfg	= EspConfig::Create();
-	
-	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
-	auto cfg	= Config::Current->Find("NET");
-	if(!cfg) Restore();
 
 	// Station模式
 	auto mode	= (Modes)Wireless;
