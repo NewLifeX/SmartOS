@@ -68,11 +68,6 @@ protected:
 	virtual bool Release();
 };
 
-// 数组长度
-#define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
-// 数组清零，固定长度
-//#define ArrayZero(arr) memset(arr, 0, sizeof(arr))
-
 // 使用常量数组来定义一个指针数组
 //#define CArray(arr) (Array(arr, ArrayLength(arr)))
 //#define SArray(obj) (Array(&obj, sizeof(obj)))

@@ -1,4 +1,5 @@
 #include "Sys.h"
+#include "List.h"
 
 #if DEBUG
 static void TestAssign()
@@ -92,28 +93,49 @@ void TestList()
 
 	//不同长度的原始数据
 	byte buf1[] = {1,2,3,4,5};
-	//byte buf2[] = {6,7,8,9};
+	byte buf2[] = {6,7,8,9};
 	byte buf3[] = {10,11,12,13,14,15,16,17,18,19,20};
 
-	Array arr1(buf1, sizeof(buf1));
-	arr1.Show(true);
+	List list;
+	list.Add(buf1);
+	list.Add(buf2);
+	list.Add(buf3);
 
-	assert(arr1.GetBuffer() == (byte*)buf1 && arr1.Length()== sizeof(buf1),"Array(void* data, int len)");
-	assert(arr1[0] == 1, " byte& operator[](int i)");
+	assert(list.Count() == 3, "Count()");
+	assert(list[0] == buf1 && list[1] == buf2 && list[2] == buf3, "void Add(void* item)");
 
-	arr1.Clear();
-	assert(arr1[1] == 0, "virtual void Clear()");
+	// 添加
+	list.Add(buf2);
+	list.Add(buf3);
+	assert(list.Count() == 5, "Count()");
+	assert(list[3] == buf2 && list[4] == buf3, "void Add(void* item)");
 
-	arr1.Set(buf1, sizeof(buf1));
-	assert(arr1== buf1, "bool Set(void* data, int len)");
+	// 查找
+	int idx	= list.FindIndex(buf2);
+	assert(idx == 1, "int FindIndex(const void* item)");
 
-	arr1.SetItem(buf3, 0, sizeof(buf3));
-	arr1.Show(true);
-	assert(arr1[arr1.Length() - 1] == 10 && arr1.Length() == sizeof(buf3) , "bool SetItem(const void* data, int index, int count);");
+	// 删除倒数第二个。后面前移
+	list.RemoveAt(list.Count());	// 无效
+	list.RemoveAt(list.Count() - 2);
+	assert(list.Count() == 4, "Count()");
+	assert(list[3] == buf3, "void RemoveAt(uint index)");
 
-	TestAssign();
-	TestAssign2();
-	TestCopy();
+	// 删除具体项。后面前移
+	list.Remove(buf2);
+	assert(list.Count() == 3, "Count()");
+	assert(list[1] == buf3 && list[2] == buf3, "void Remove(const void* item)");
+
+	// 删除具体项。找不到的情况
+	list.Remove(buf2);
+	assert(list.Count() == 3, "Count()");
+
+	// 查找。找不到的情况
+	idx	= list.FindIndex(buf2);
+	assert(idx == -1, "int FindIndex(const void* item)");
+
+	//TestAssign();
+	//TestAssign2();
+	//TestCopy();
 
 	debug_printf("TestList测试完毕......\r\n");
 
