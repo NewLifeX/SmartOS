@@ -24,6 +24,53 @@ const int CummulativeDaysForMonth[13] = {0, 31, 59, 90, 120, 151, 181, 212, 243,
 #define YEARS_TO_DAYS(y)            ((NUMBER_OF_YEARS(y) * 365) + NUMBER_OF_LEAP_YEARS(y))
 #define MONTH_TO_DAYS(y, m)         (CummulativeDaysForMonth[m - 1] + ((IS_LEAP_YEAR(y) && (m > 2)) ? 1 : 0))
 
+DateTime::DateTime()
+{
+	Init();
+}
+
+DateTime::DateTime(ushort year, byte month, byte day)
+{
+	Year	= year;
+	Month	= month;
+	Day		= day;
+	Hour	= 0;
+	Minute	= 0;
+	Second	= 0;
+	Ms		= 0;
+}
+
+DateTime::DateTime(uint seconds)
+{
+	Parse(seconds);
+}
+
+DateTime::DateTime(const DateTime& value)
+{
+	*this	= value;
+}
+
+DateTime::DateTime(DateTime&& value)
+{
+	// 拷贝对方数据，把对方初始化为默认值
+	auto bs	= ToArray();
+	bs	= value.ToArray();
+	// 对方反正不用了，就不要浪费时间做初始化啦，反正没有需要释放的资源
+	//value.Init();
+}
+
+void DateTime::Init()
+{
+	//Buffer(&Year, &Ms - &Year + sizeof(Ms)).Clear();
+	Year	= BASE_YEAR;
+	Month	= 1;
+	Day		= 1;
+	Hour	= 0;
+	Minute	= 0;
+	Second	= 0;
+	Ms		= 0;
+}
+
 DateTime& DateTime::Parse(uint seconds)
 {
 	auto& st	= *this;
@@ -39,7 +86,7 @@ DateTime& DateTime::Parse(uint seconds)
     st.Hour = time % 24;
     time /= 24;
 
-	if(time) ParseDays(time);
+	ParseDays(time);
 
 	Ms	= 0;
 
@@ -84,56 +131,6 @@ DateTime& DateTime::ParseDays(uint days)
     Day = (ushort)(days - mtd + 1);
 
 	return *this;
-}
-
-DateTime::DateTime()
-{
-	Init();
-}
-
-DateTime::DateTime(ushort year, byte month, byte day)
-{
-	Year	= year;
-	Month	= month;
-	Day		= day;
-	Hour	= 0;
-	Minute	= 0;
-	Second	= 0;
-	Ms		= 0;
-}
-
-DateTime::DateTime(uint seconds)
-{
-	//if(seconds == 0)
-	//	Buffer(&Year, &Ms - &Year + sizeof(Ms)).Clear();
-	//else
-	Parse(seconds);
-}
-
-DateTime::DateTime(const DateTime& value)
-{
-	*this	= value;
-}
-
-DateTime::DateTime(DateTime&& value)
-{
-	// 拷贝对方数据，把对方初始化为默认值
-	auto bs	= ToArray();
-	bs	= value.ToArray();
-	// 对方反正不用了，就不要浪费时间做初始化啦，反正没有需要释放的资源
-	//value.Init();
-}
-
-void DateTime::Init()
-{
-	//Buffer(&Year, &Ms - &Year + sizeof(Ms)).Clear();
-	Year	= BASE_YEAR;
-	Month	= 1;
-	Day		= 1;
-	Hour	= 0;
-	Minute	= 0;
-	Second	= 0;
-	Ms		= 0;
 }
 
 Buffer DateTime::ToArray()
