@@ -30,6 +30,7 @@ public:
 	Controller* Control;
 	TokenConfig*	Cfg;
 	DataStore	Store;	// 数据存储区
+	Dictionary	Routes;	// 路由集合
 
 	TokenClient();
 
@@ -69,6 +70,10 @@ public:
 
 	// 远程调用
 	void Invoke(const String& action, const Buffer& bs);
+	
+	// 注册远程调用处理器
+	typedef bool (*InvokeHandler)(const BinaryPair& args, BinaryPair& result);
+	void Register(const String& action, InvokeHandler handler);
 
 private:
 	bool OnHello(TokenMessage& msg, Controller* ctrl);

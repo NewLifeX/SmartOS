@@ -717,5 +717,37 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 
 void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
 {
+	auto rs	= msg.CreateReply();
 
+	BinaryPair bp(msg.ToStream());
+	
+	String action;
+	if(!bp.Get("Action", action) || !action)
+	{
+		rs.SetError(0x01, "请求错误");
+	}
+	else
+	{
+		void* handler	= nullptr;
+		if(!Routes.TryGetValue(action.GetBuffer(), handler) || !handler)
+		{
+			rs.SetError(0x02, "操作注册有误");
+		}
+		else
+		{
+			auto ivh	= (InvokeHandler)handler;
+			
+			BinaryPair result(rs.ToStream());
+			if(!ivh(bp, result))
+			{
+				rs.SetError(0x03, "执行出错");
+			}
+			else
+			{
+				// 执行成功
+			}
+		}
+	}
+	
+	ctrl->Reply(rs);
 }
