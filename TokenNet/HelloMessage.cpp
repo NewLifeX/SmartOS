@@ -50,7 +50,7 @@ bool HelloMessage::Read(Stream& ms)
 			ByteArray uri;
 			if (bp.Get("Redirect", uri))
 			{
-				MemoryStream urims(uri.GetBuffer(), uri.Length());
+				Stream urims(uri);
 				BinaryPair uribp(urims);
 
 				uribp.Get("Type", Protocol);			// 服务店 ProtocolType  17 为UDP
