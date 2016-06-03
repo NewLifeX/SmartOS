@@ -46,7 +46,7 @@ public:
 
 /******************************** 基础AT指令 ********************************/
 	bool Test();
-	bool Reset();
+	bool Reset(bool soft);
 	String GetVersion();
 	bool Sleep(uint ms);
 	bool Echo(bool open);

@@ -131,28 +131,13 @@ bool Esp8266::OnOpen()
 	if(!PackPort::OnOpen()) return false;
 
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if (!_power.Empty())
-	{
-		_power = false;
-		Sys.Sleep(20);
-		_power = true;
-	}
+	if (!_power.Empty()) _power.Down(20);
 
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
-	{
-		_rst.Open();
-		Reset();	// 软件重启命令
-
-		_rst = true;
-		Sys.Sleep(20);
-		_rst = false;
-		//Sys.Sleep(100);
-	}
+		Reset(false);	// 硬重启
 	else
-	{
-		Reset();	// 软件重启命令
-	}
+		Reset(true);	// 软件重启命令
 
 	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
 	auto cfg	= Config::Current->Find("NET");
@@ -333,7 +318,10 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
-	tw.Sleep	= 100;
+	// 默认检查间隔200ms，如果超时时间大于1000ms，则以四分之一为检查间隔
+	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
+	tw.Sleep	= 200;
+	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
 	while(_Expect && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
@@ -524,12 +512,25 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 // 基础AT指令
 bool Esp8266::Test()
 {
-	return SendCmd("AT",2000);
+	for(int i=0; i<10; i++)
+	{
+		if(SendCmd("AT", 500)) return true;
+
+		Reset(false);
+	}
+
+	return false;
 }
 
-bool Esp8266::Reset()
+bool Esp8266::Reset(bool soft)
 {
-	return SendCmd("AT+RST");
+	if(soft)
+		return SendCmd("AT+RST");
+	else
+	{
+		_rst.Up(100);
+		return true;
+	}
 }
 
 /*
@@ -927,7 +928,6 @@ bool EspSocket::OnOpen()
 #endif
 
 	String cmd	= "AT+CIPSTART=";
-
 	cmd	= cmd + _Index + ",";
 
 	if(Protocol == ProtocolType::Udp)
