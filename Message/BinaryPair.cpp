@@ -14,6 +14,14 @@ BinaryPair::BinaryPair(Stream& ms)
 {
 	_s	= &ms;
 	_p	= ms.Position();
+	_canWrite	= true;
+}
+
+BinaryPair::BinaryPair(const Stream& ms)
+{
+	_s	= (Stream*)&ms;
+	_p	= ms.Position();
+	_canWrite	= false;
 }
 
 Buffer BinaryPair::Get(cstring name) const
@@ -59,15 +67,13 @@ Buffer BinaryPair::Get(cstring name) const
 
 bool BinaryPair::Set(cstring name, const Buffer& bs)
 {
-	auto& ms	= *_s;
-	ms.WriteArray(Buffer((void*)name, strlen(name)));
-	ms.WriteArray(bs);
-
-	return true;
+	return Set(String(name), bs);
 }
 
 bool BinaryPair::Set(const String& name, const Buffer& bs)
 {
+	if(!_canWrite) return false;
+
 	auto& ms	= *_s;
 	ms.WriteArray(name);
 	ms.WriteArray(bs);
@@ -170,4 +176,3 @@ bool BinaryPair::Set(cstring name, const IPEndPoint& value)
 
 	//return Set(name, value.ToArray());
 }
-

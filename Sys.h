@@ -15,6 +15,8 @@
 #include "Core\Stream.h"
 #include "Core\DateTime.h"
 #include "Core\Version.h"
+#include "Core\List.h"
+#include "Core\Dictionary.h"
 #include "Core\Delegate.h"
 
 /* 引脚定义 */

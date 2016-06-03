@@ -10,9 +10,9 @@
 class BinaryPair : public Object
 {
 public:
-
 	//BinaryPair(Buffer& bs);
 	BinaryPair(Stream& ms);
+	BinaryPair(const Stream& ms);
 	BinaryPair(const BinaryPair& pair) = delete;
 
 	Buffer Get(cstring name) const;
@@ -37,6 +37,7 @@ private:
 	//uint	Length;		// 数据长度
 	uint	_p;	// 写入时的位置
 	Stream*	_s;
+	bool	_canWrite;
 };
 
 #endif
