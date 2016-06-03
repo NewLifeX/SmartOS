@@ -841,7 +841,7 @@ bool Esp8266::GetMux()
 bool Esp8266::SetMux(bool enable)
 {
 	// 多连接要求非透传模式
-	if(!enable || !SendCmd("AT+CIPMODE=0")) return false;
+	//if(!enable || !SendCmd("AT+CIPMODE=0")) return false;
 
 	String cmd = "AT+CIPMUX=";
 	return SendCmd(cmd + (enable ? '1' : '0'));
