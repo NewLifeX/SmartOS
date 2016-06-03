@@ -15,7 +15,7 @@ public:
 	TaskScheduler* Host;
 
 	uint	ID;			// 编号
-	cstring	Name;	// 名称
+	cstring	Name;		// 名称
 
 	Action	Callback;	// 回调
 	void*	Param;		// 参数
@@ -43,7 +43,7 @@ public:
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	void Set(bool enable, int msNextTime = -1);
 	// 显示状态
-	void ShowStatus();	
+	void ShowStatus();
 
 	friend bool operator==(const Task& t1, const Task& t2) { return &t1 == &t2; }
 
@@ -56,7 +56,7 @@ public:
 class TaskScheduler
 {
 private:
-	TArray<Task*, 0x20>	_Tasks;
+	List	_Tasks;
 
 	friend class Task;
 

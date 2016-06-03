@@ -65,7 +65,7 @@ bool Task::Execute(UInt64 now)
 	int ct = tc.Elapsed();
 	if(ct < 0)
 		debug_printf("cost = %d \r\n", ct);
-	if(ct < 0) ct = -ct;
+	//if(ct < 0) ct = -ct;
 	//if(ct > 0)
 	{
 		ct -= SleepTime;
@@ -140,8 +140,8 @@ Task* Task::Get(int taskid)
 
 TaskScheduler::TaskScheduler(cstring name)
 {
-	_Tasks.Clear();
-	_Tasks.SetLength(0);
+	//_Tasks.Clear();
+	//_Tasks.SetLength(0);
 	Name 	= name;
 
 	Running = false;
@@ -158,7 +158,7 @@ void TaskScheduler::Set(Task* tasks, uint count)
 	for(int i=0; i<count; i++)
 	{
 		tasks[i].ID	= 0;
-		_Tasks.Push(&tasks[i]);
+		_Tasks.Add(&tasks[i]);
 	}
 }
 
@@ -167,14 +167,12 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstri
 {
 	// 查找是否有可用空闲任务
 	Task* task	= nullptr;
-	for(int i=0; !task && i<_Tasks.Length(); i++)
+	for(int i=0; !task && i<_Tasks.Count(); i++)
 	{
-		if(!_Tasks[i])
-			task	= _Tasks[i] = new Task();
-		else if(_Tasks[i]->ID == 0)
-			task	= _Tasks[i];
+		auto ti	= (Task*)_Tasks[i];
+		if(ti->ID == 0) task	= ti;
 	}
-	if(!task) _Tasks.Push(task = new Task());
+	if(!task) _Tasks.Add(task = new Task());
 
 	static uint _gid = 1;
 
@@ -207,9 +205,9 @@ void TaskScheduler::Remove(uint taskid)
 {
 	if(!taskid) return;
 
-	for(int i=0; i<_Tasks.Length(); i++)
+	for(int i=0; i<_Tasks.Count(); i++)
 	{
-		Task* task = _Tasks[i];
+		auto task = (Task*)_Tasks[i];
 		if(task->ID == taskid)
 		{
 			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
@@ -259,9 +257,9 @@ void TaskScheduler::Execute(uint msMax)
 
 	TimeCost tc;
 
-	for(int i=0; i<_Tasks.Length(); i++)
+	for(int i=0; i<_Tasks.Count(); i++)
 	{
-		auto task	= _Tasks[i];
+		auto task	= (Task*)_Tasks[i];
 		if(task->ID == 0 || !task->Enable) continue;
 
 		if((task->NextTime <= now || task->NextTime < 0)
@@ -323,9 +321,9 @@ void TaskScheduler::ShowStatus(void* param)
 	int ms = host->Cost / 1000;
 	if(ms > 10) ms = 10;
 
-	for(int i=0; i<host->_Tasks.Length(); i++)
+	for(int i=0; i<host->_Tasks.Count(); i++)
 	{
-		auto task = host->_Tasks[i];
+		auto task = (Task*)host->_Tasks[i];
 		if(task->ID)
 		{
 			task->ShowStatus();
@@ -340,9 +338,9 @@ void TaskScheduler::ShowStatus(void* param)
 
 Task* TaskScheduler::operator[](int taskid)
 {
-	for(int i=0; i<_Tasks.Length(); i++)
+	for(int i=0; i<_Tasks.Count(); i++)
 	{
-		Task* task = _Tasks[i];
+		auto task = (Task*)_Tasks[i];
 		if(task->ID == taskid) return task;
 	}
 
