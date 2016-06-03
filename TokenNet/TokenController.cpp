@@ -86,19 +86,8 @@ void TokenController::Open()
 	//Port->Show(true);
 #endif
 
-	Controller::Open();
-
 	auto sock = dynamic_cast<ISocket*>(Port);
-	if (sock)
-	{
-		Server = &sock->Remote;
-		// 如果远程IP地址不存在，则调用DNS解析域名取得
-		if(sock->Remote.Address == IPAddress::Any() && sock->Server)
-		{
-			auto ip	= sock->Host->QueryDNS(sock->Server);
-			if(ip != IPAddress::Any()) sock->Remote.Address	= ip;
-		}
-	}
+	if (sock) Server = &sock->Remote;
 
 	if (!Stat)
 	{
@@ -107,6 +96,8 @@ void TokenController::Open()
 		Sys.AddTask(StatTask, Stat, 5000, 30000, "令牌统计");
 #endif
 	}
+
+	Controller::Open();
 }
 
 void TokenController::Close()
@@ -230,6 +221,14 @@ bool TokenController::OnReceive(Message& msg)
 			debug_printf("TokenController::OnReceive 解密失败\r\n");
 			return false;
 		}
+	}
+	
+	// 如果远程地址为空，则使用首次地址作为远程地址
+	auto svr = (IPEndPoint*)Server;
+	auto rmt = (IPEndPoint*)msg.State;
+	if(svr && rmt)
+	{
+		if(svr->Address == IPAddress::Any()) svr->Address	= rmt->Address;
 	}
 
 	ShowMessage("Recv", msg);
