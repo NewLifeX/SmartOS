@@ -28,7 +28,7 @@ bool TokenMessage::Read(Stream& ms)
 	if(ms.Remain() < MinSize) return false;
 
 	byte temp = ms.ReadByte();
-	Code	= temp & 0x3f;
+	Code	= temp & 0x0F;
 	Reply	= temp >> 7;
 	if(!Reply)
 		OneWay	= (temp >> 6) & 0x01;

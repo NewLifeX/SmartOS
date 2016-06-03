@@ -31,6 +31,8 @@ public:
 	int ReadReply;
 	int Write;
 	int WriteReply;
+	int Invoke;
+	int InvokeReply;
 
 	TokenStat();
 	~TokenStat();
@@ -241,8 +243,6 @@ static byte _Sequence = 0;
 bool TokenController::Send(Message& msg)
 {
 	TS("TokenController::Send");
-	// 未登录，登录注册，握手可通过
-	//if(Token == 0&&!( msg.Code <= 0x2||msg.Code == 0x07)) return false;
 
 	//static byte _Sequence	= 0;
 	auto& tmsg = (TokenMessage&)msg;
@@ -260,8 +260,10 @@ bool TokenController::Send(Message& msg)
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
 
-	byte buf[1472];
-	Stream ms(buf, ArrayLength(buf));
+	//byte buf[1472];
+	//Stream ms(buf, ArrayLength(buf));
+	byte buf[128];
+	MemoStream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 
@@ -319,7 +321,7 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 
 bool TokenController::StartSendStat(byte code)
 {
-	TS("TokenController::StartSendStat");
+	//TS("TokenController::StartSendStat");
 
 	auto st = Stat;
 
@@ -331,18 +333,24 @@ bool TokenController::StartSendStat(byte code)
 	}
 
 	st->SendRequest++;
-	byte code2 = code & 0x3F;
-	if (code2 == 0x15 || code2 == 0x05)
+	byte tc = code & 0x0F;
+	if (tc == 0x05)
 		st->Read++;
-	else if (code2 == 0x16 || code2 == 0x06)
+	else if (tc == 0x06)
 		st->Write++;
+	else if (tc == 0x08)
+		st->Invoke++;
 
+	// 超时指令也干掉
+	UInt64 end	= Sys.Ms() - 5000;
 	for (int i = 0; i < ArrayLength(_Queue); i++)
 	{
-		if (_Queue[i].Code == 0)
+		auto& qi	= _Queue[i];
+		if (qi.Code == 0 || qi.Time <= end)
 		{
-			_Queue[i].Code = code;
-			_Queue[i].Time = Sys.Ms();
+			qi.Code = code;
+			qi.Time = Sys.Ms();
+			
 			return true;
 		}
 	}
@@ -352,20 +360,21 @@ bool TokenController::StartSendStat(byte code)
 
 bool TokenController::EndSendStat(byte code, bool success)
 {
-	TS("TokenController::EndSendStat");
+	//TS("TokenController::EndSendStat");
 
 	auto st = Stat;
 
-	byte code2 = code & 0x3F;
+	byte tc = code & 0x0F;
 
 	for (int i = 0; i < ArrayLength(_Queue); i++)
 	{
-		if (_Queue[i].Code == code2)
+		auto& qi	= _Queue[i];
+		if (qi.Code == tc)
 		{
 			bool rs = false;
 			if (success)
 			{
-				int cost = (int)(Sys.Ms() - _Queue[i].Time);
+				int cost = (int)(Sys.Ms() - qi.Time);
 				// 莫名其妙，有时候竟然是负数
 				if (cost < 0) cost = -cost;
 				if (cost < 1000)
@@ -377,7 +386,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 				}
 			}
 
-			_Queue[i].Code = 0;
+			qi.Code = 0;
 
 			return rs;
 		}
@@ -385,10 +394,12 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 	if ((code & 0x80) != 0)
 	{
-		if (code2 == 0x15 || code2 == 0x05)
+		if (tc == 0x05)
 			st->ReadReply++;
-		else if (code2 == 0x16 || code2 == 0x06)
+		else if (tc == 0x06)
 			st->WriteReply++;
+		else if (tc == 0x08)
+			st->InvokeReply++;
 	}
 
 	return false;
@@ -487,6 +498,8 @@ void TokenStat::Clear()
 	_Last->ReadReply = ReadReply;
 	_Last->Write = Write;
 	_Last->WriteReply = WriteReply;
+	_Last->Invoke = Invoke;
+	_Last->InvokeReply = InvokeReply;
 
 	_Total->SendRequest += SendRequest;
 	_Total->RecvReply += RecvReply;
@@ -498,19 +511,23 @@ void TokenStat::Clear()
 	_Total->ReadReply += ReadReply;
 	_Total->Write += Write;
 	_Total->WriteReply += WriteReply;
+	_Total->Invoke += Invoke;
+	_Total->InvokeReply += InvokeReply;
 
-	SendRequest = 0;
-	RecvReply = 0;
-	Time = 0;
+	SendRequest	= 0;
+	RecvReply	= 0;
+	Time		= 0;
 
-	SendReply = 0;
-	RecvRequest = 0;
-	RecvReplyAsync = 0;
+	SendReply	= 0;
+	RecvRequest	= 0;
+	RecvReplyAsync	= 0;
 
-	Read = 0;
-	ReadReply = 0;
-	Write = 0;
-	WriteReply = 0;
+	Read	= 0;
+	ReadReply	= 0;
+	Write	= 0;
+	WriteReply	= 0;
+	Invoke	= 0;
+	InvokeReply	= 0;
 }
 
 String& TokenStat::ToStr(String& str) const
@@ -523,8 +540,9 @@ String& TokenStat::ToStr(String& str) const
 	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms";
 	str = str + " 收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
 	if (RecvReplyAsync > 0) str = str + " 异步 " + RecvReplyAsync;
-	if (Read > 0) str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
-	if (Write > 0) str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
+	if (Read > 0)	str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
+	if (Write > 0)	str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
+	if (Write > 0)	str = str + " 调：" + (InvokeReply * 100 / Invoke) + " " + InvokeReply + "/" + Invoke;
 	if (_Total)
 	{
 		str += " 总";

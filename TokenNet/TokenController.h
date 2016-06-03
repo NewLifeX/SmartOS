@@ -50,7 +50,7 @@ private:
 		UInt64	Time;	// 时间ms
 	};
 
-	QueueItem	_Queue[16];
+	QueueItem	_Queue[4];
 
 	bool StartSendStat(byte code);
 	bool EndSendStat(byte code, bool success);
