@@ -86,6 +86,8 @@ void TokenController::Open()
 	//Port->Show(true);
 #endif
 
+	Controller::Open();
+
 	auto sock = dynamic_cast<ISocket*>(Port);
 	if (sock)
 	{
@@ -105,8 +107,6 @@ void TokenController::Open()
 		Sys.AddTask(StatTask, Stat, 5000, 30000, "令牌统计");
 #endif
 	}
-
-	Controller::Open();
 }
 
 void TokenController::Close()
