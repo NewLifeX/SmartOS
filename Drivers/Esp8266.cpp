@@ -967,9 +967,8 @@ bool EspSocket::OnOpen()
 	}
 
 	// 清空一次缓冲区
-	cmd	= "AT+CIPBUFRESET=";
-	_Host.SendCmd(cmd + _Index);
-	//_Host.ClearRXD();
+	/*cmd	= "AT+CIPBUFRESET=";
+	_Host.SendCmd(cmd + _Index);*/
 	_Error	= 0;
 
 	return true;
