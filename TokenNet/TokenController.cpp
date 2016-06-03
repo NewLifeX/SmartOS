@@ -67,7 +67,8 @@ TokenController::TokenController() : Controller(), Key(0)
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 
-	Buffer(_Queue, ArrayLength(_Queue) * sizeof(_Queue[0])).Clear();
+	Buffer(_StatQueue, sizeof(_StatQueue)).Clear();
+	Buffer(_RecvQueue, sizeof(_RecvQueue)).Clear();
 }
 
 TokenController::~TokenController()
@@ -211,6 +212,25 @@ bool TokenController::OnReceive(Message& msg)
 	}
 	else
 	{
+		// 过滤重复请求。1秒内不接收重复指令
+		UInt64 start	= Sys.Ms() - 1000;
+		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
+		{
+			auto& qi	= _RecvQueue[i];
+			if (qi.Code == msg.Code && qi.Time > start) return true;
+		}
+		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
+		{
+			auto& qi	= _RecvQueue[i];
+			if (qi.Code == 0 || qi.Time <= start)
+			{
+				qi.Code = msg.Code;
+				qi.Time = Sys.Ms();
+
+				break;
+			}
+		}
+
 		Stat->RecvRequest++;
 	}
 
@@ -263,7 +283,7 @@ bool TokenController::Send(Message& msg)
 	//byte buf[1472];
 	//Stream ms(buf, ArrayLength(buf));
 	byte buf[128];
-	MemoStream ms(buf, ArrayLength(buf));
+	MemoryStream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
 
@@ -343,14 +363,14 @@ bool TokenController::StartSendStat(byte code)
 
 	// 超时指令也干掉
 	UInt64 end	= Sys.Ms() - 5000;
-	for (int i = 0; i < ArrayLength(_Queue); i++)
+	for (int i = 0; i < ArrayLength(_StatQueue); i++)
 	{
-		auto& qi	= _Queue[i];
+		auto& qi	= _StatQueue[i];
 		if (qi.Code == 0 || qi.Time <= end)
 		{
 			qi.Code = code;
 			qi.Time = Sys.Ms();
-			
+
 			return true;
 		}
 	}
@@ -366,9 +386,9 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 	byte tc = code & 0x0F;
 
-	for (int i = 0; i < ArrayLength(_Queue); i++)
+	for (int i = 0; i < ArrayLength(_StatQueue); i++)
 	{
-		auto& qi	= _Queue[i];
+		auto& qi	= _StatQueue[i];
 		if (qi.Code == tc)
 		{
 			bool rs = false;
