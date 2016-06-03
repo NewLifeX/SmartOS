@@ -324,6 +324,8 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
 	tw.Sleep	= 200;
 	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
+	// 提前等待一会，再开始轮询
+	Sys.Sleep(20);
 	while(_Expect && !tw.Expired());
 
 	if(rs.Length() > 4) rs.Trim();
