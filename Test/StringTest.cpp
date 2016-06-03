@@ -143,7 +143,7 @@ static void TestConcat()
 
 	// 连接时间，继承自Object
 	str	+= now;
-	//str.Show(true);
+	str.Show(true);
 	// yyyy-MM-dd HH:mm:ss
 	assert(str.Length() == 19, "String& operator += (const Object& rhs)");
 

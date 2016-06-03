@@ -338,6 +338,9 @@ String& DateTime::ToStr(String& str) const
 	str	+= ':';
 	str.Concat(Second, 10, 2);*/
 	//str = str + Year + '-' + Month + '-' + Day + ' ' + Hour + ':' + Minute + ':' + Second;
+	if(Year < 10) str += '0';
+	if(Year < 100) str += '0';
+	if(Year < 1000) str += '0';
 	str = str + Year + '-';
 
 	if(Month < 10) str += '0';

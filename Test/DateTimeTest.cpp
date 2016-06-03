@@ -24,7 +24,7 @@ static void TestCtor()
 static void TestParseMs()
 {
 	TS("TestCtor");
-	
+
     DateTime dt3;
 	dt3	= 1463443233;
 	assert(dt3.Year == 2016 && dt3.Month == 5 && dt3.Day == 17, "DateTime(uint seconds)");
@@ -35,10 +35,10 @@ static void TestParseMs()
 static void TestTotal()
 {
 	TS("TestTotal");
-	
+
     DateTime dt	= 1463443233;
 	assert(dt.TotalSeconds() == 1463443233, "TotalSeconds");
-	assert(dt.TotalMs() == 1463443233UL * 1000, "TotalMs");
+	assert(dt.TotalMs() == 1463443233000ULL, "TotalMs");
 }
 
 void DateTime::Test()
