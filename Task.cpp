@@ -76,7 +76,7 @@ bool Task::Execute(UInt64 now)
 	}
 
 #if DEBUG
-	if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
+	if(ct > 1000000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
 #endif
 
 	// 如果只是一次性任务，在这里清理
