@@ -11,6 +11,11 @@ List::List(int size)
 
 //List::List(T* items, uint count) { Set(items, count); }
 
+List::~List()
+{
+	if(_Arr && _Arr != Arr) delete _Arr;
+}
+
 int List::Count() const { return _Count; }
 
 // 添加单个元素
@@ -105,4 +110,29 @@ void*& List::operator[](int i)
 	}
 
 	return _Arr[i];
+}
+
+bool List::CheckCapacity(int count)
+{
+	// 是否超出容量
+	if(_Arr && count <= _Capacity) return true;
+
+	// 自动计算合适的容量
+	int sz = 0x40 >> 2;
+	while(sz < count) sz <<= 1;
+
+	void* p = new byte[sz << 2];
+	if(!p) return false;
+
+	// 需要备份数据
+	if(_Count > 0 && _Arr)
+		// 为了安全，按照字节拷贝
+		Buffer(p, sz).Copy(0, _Arr, _Count << 2);
+
+	if(_Arr && _Arr != p) delete _Arr;
+
+	_Arr		= (void**)p;
+	_Capacity	= sz;
+
+	return true;
 }

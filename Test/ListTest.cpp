@@ -133,6 +133,14 @@ void TestList()
 	idx	= list.FindIndex(buf2);
 	assert(idx == -1, "int FindIndex(const void* item)");
 
+	debug_printf("下面添加多项内容，将会引发List重新分配并拷贝内存\r\n需要注意new/delete\r\n");
+	for(int i=0; i<16; i++)
+	{
+		list.Add(buf1);
+	}
+	assert(list.Count() == 3 + 16, "Count()");
+	assert(list[0] == buf1 && list[1] == buf3 && list[2] == buf3, "bool CheckCapacity(int count)");
+
 	//TestAssign();
 	//TestAssign2();
 	//TestCopy();
