@@ -222,14 +222,14 @@ bool TokenController::OnReceive(Message& msg)
 			return false;
 		}
 	}
-	
+
 	// 如果远程地址为空，则使用首次地址作为远程地址
-	auto svr = (IPEndPoint*)Server;
+	/*auto svr = (IPEndPoint*)Server;
 	auto rmt = (IPEndPoint*)msg.State;
 	if(svr && rmt)
 	{
 		if(svr->Address == IPAddress::Any()) svr->Address	= rmt->Address;
-	}
+	}*/
 
 	ShowMessage("Recv", msg);
 
@@ -294,7 +294,7 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 	{
 		auto svr = (IPEndPoint*)Server;
 		auto rmt = (IPEndPoint*)msg.State;
-		if (!svr || *svr != *rmt)
+		if (!svr || svr->Address == IPAddress::Broadcast())
 		{
 			rmt->Show();
 			debug_printf(" ");

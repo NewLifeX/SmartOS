@@ -944,26 +944,15 @@ bool EspSocket::OnOpen()
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
 
 	if(Remote.Address == IPAddress::Broadcast())
-		cmd = cmd + ",2";
+		cmd += ",2";
 	else
-		cmd	= cmd + ",0";
+		cmd	+= ",0";
 
 	// 如果Socket打开失败
-	if(!_Host.SendCmd(cmd))
+	if(!_Host.SendCmd(cmd, 1600))
 	{
-		String close = "AT+CIPCLOSE=";
-		close += _Index;
-		close += "\r\n";
-		/*auto sp = (SerialPort*)_Host.Port;
-		sp->Write(cmd);
-		Sys.Sleep(1000);
-		_Host.ClearRXD();*/
-
-		//if (!_Host.SendCmd(cmd))
-		{
-			debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
-			return false;
-		}
+		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		return false;
 	}
 
 	// 清空一次缓冲区
@@ -980,7 +969,7 @@ void EspSocket::OnClose()
 	cmd += _Index;
 	cmd += "\r\n";
 
-	_Host.SendCmd(cmd, 4000);
+	_Host.SendCmd(cmd, 1600);
 }
 
 // 接收数据
