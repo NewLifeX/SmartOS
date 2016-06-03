@@ -9,6 +9,7 @@
 #include "TokenNet\TokenController.h"
 
 #include "Message\DataStore.h"
+#include"Message\BinaryPair.h"
 
 class TokenSession;
 
