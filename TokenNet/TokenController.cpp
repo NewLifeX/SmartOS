@@ -46,10 +46,10 @@ private:
 	TokenStat*	_Total;
 };
 
+#if DEBUG
 // 全局的令牌统计指针
 static TokenStat* Stat = nullptr;
 
-#if DEBUG
 static void StatTask(void* param);
 #endif
 
@@ -92,13 +92,13 @@ void TokenController::Open()
 	auto sock = dynamic_cast<ISocket*>(Port);
 	if (sock) Server = &sock->Remote;
 
+#if DEBUG
 	if (!Stat)
 	{
 		Stat = new TokenStat();
-#if DEBUG
 		Sys.AddTask(StatTask, Stat, 5000, 30000, "令牌统计");
-#endif
 	}
+#endif
 
 	Controller::Open();
 }
@@ -205,10 +205,12 @@ bool TokenController::OnReceive(Message& msg)
 
 	if (msg.Reply)
 	{
+#if DEBUG
 		bool rs = EndSendStat(msg.Code, true);
 
 		// 如果匹配了发送队列，那么这里不再作为收到响应
 		if (!rs) Stat->RecvReplyAsync++;
+#endif
 	}
 	else
 	{
@@ -231,7 +233,9 @@ bool TokenController::OnReceive(Message& msg)
 			}
 		}
 
+#if DEBUG
 		Stat->RecvRequest++;
+#endif
 	}
 
 	// 加解密。握手不加密，登录响应不加密
@@ -274,8 +278,10 @@ bool TokenController::Send(Message& msg)
 	else
 		ShowMessage("Send", msg);
 
+#if DEBUG
 	// 加入统计
 	if (!msg.Reply) StartSendStat(msg.Code);
+#endif
 
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
@@ -339,6 +345,7 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 #endif
 }
 
+#if DEBUG
 bool TokenController::StartSendStat(byte code)
 {
 	//TS("TokenController::StartSendStat");
@@ -424,6 +431,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 	return false;
 }
+#endif
 
 /******************************** TokenStat ********************************/
 
