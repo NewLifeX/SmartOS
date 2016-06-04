@@ -260,7 +260,7 @@ void TaskScheduler::Execute(uint msMax)
 	for(int i=0; i<_Tasks.Count(); i++)
 	{
 		auto task	= (Task*)_Tasks[i];
-		if(task->ID == 0 || !task->Enable) continue;
+		if(!task || task->ID == 0 || !task->Enable) continue;
 
 		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
