@@ -209,7 +209,7 @@ void TokenClient::SayHello(bool broadcast)
 {
 	TS("TokenClient::SayHello");
 
-	auto ctrl	= !broadcast ? Control : Local;
+	auto ctrl	= !broadcast ? Local:Control;
 	if(!ctrl) return;
 
 	TokenMessage msg(0x01);
