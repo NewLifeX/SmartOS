@@ -260,9 +260,8 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 
 		Status	= 0;
 		Token	= 0;
-		debug_printf("握手失败，错误码=0x%02X ", ext.ErrCode);
 
-		ext.ErrMsg.Show(true);
+		//ext.Show(true);
 
 		// 未握手错误，马上重新握手
 		if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);

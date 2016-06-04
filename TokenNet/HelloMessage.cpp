@@ -77,7 +77,7 @@ bool HelloMessage::Read(Stream& ms)
 
 		return true;
 	}
-	
+
 	bp.Get("Ver", Version);
 	bp.Get("Type", Type);
 	bp.Get("Name", Name);
@@ -125,9 +125,13 @@ String& HelloMessage::ToStr(String& str) const
 				str += "Udp://";
 
 			str = str + Server + ":" + Port;
-
-			return str;
 		}
+		else
+		{
+			str	= str + " 错误码=" + ErrCode + " " + ErrMsg;
+		}
+
+		return str;
 	}
 
 	str.Format(" Ver=%04X", Version);
