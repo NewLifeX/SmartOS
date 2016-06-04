@@ -224,6 +224,8 @@ void TokenClient::SayHello(bool broadcast)
 	// 特殊处理广播，指定广播地址，避免因为内网发现改变了本地端口
 	if(broadcast)
 	{
+		msg.OneWay	= true;
+
 		auto sock	= dynamic_cast<ISocket*>(((TokenController*)ctrl)->Port);
 		msg.State	= &sock->Remote;
 	}

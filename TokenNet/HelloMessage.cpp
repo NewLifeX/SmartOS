@@ -139,9 +139,9 @@ String& HelloMessage::ToStr(String& str) const
 
 	str = str + " " + EndPoint;
 
-	str = str + " Cipher=" + Cipher;
+	if(Cipher)	str = str + " Cipher=" + Cipher;
 
-	if(Reply) str = str + " Key=" + Key;
+	if(Reply)	str = str + " Key=" + Key;
 
 	return str;
 }

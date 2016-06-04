@@ -357,11 +357,14 @@ bool TokenController::StartSendStat(byte code)
 	auto st = Stat;
 
 	// 仅统计请求信息，不统计响应信息
-	if ((code & 0x80) != 0)
+	if (code & 0x80)
 	{
 		st->SendReply++;
 		return true;
 	}
+
+	// 单向请求一般用于广播也不列入统计
+	if(code & 0x40) return true;
 
 	st->SendRequest++;
 	byte tc = code & 0x0F;
@@ -423,7 +426,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 		}
 	}
 
-	if ((code & 0x80) != 0)
+	if (code & 0x80)
 	{
 		if (tc == 0x05)
 			st->ReadReply++;
