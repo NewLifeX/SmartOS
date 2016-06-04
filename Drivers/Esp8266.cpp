@@ -497,12 +497,12 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
 	auto str	= bs.AsString();
+	*_Response	+= str;
+
 	// 适配第一关键字
 	if(_Expect && str.Contains(_Expect))	_Expect	= _Expect2	= nullptr;
 	// 适配第二关键字
 	if(_Expect2 && str.Contains(_Expect2))	_Expect	= _Expect2	= nullptr;
-
-	*_Response	+= str;
 
 	return true;
 }
