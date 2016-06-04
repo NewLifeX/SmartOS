@@ -9,7 +9,6 @@ class Timer
 protected:
 	byte	_index;		// 第几个定时器，从0开始
 
-	void ClockCmd(bool state);
 	void SetHandler(bool set);
 public:
 	void*	_Timer;
@@ -31,6 +30,8 @@ public:
 	void SetCounter(uint cnt);		// 设置计数器值
 
 	void Register(EventHandler handler, void* param = nullptr);
+
+	static void ClockCmd(int idx, bool state);
 
 private:
 	static void OnHandler(ushort num, void* param);

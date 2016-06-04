@@ -1,4 +1,5 @@
 ﻿#include "Time.h"
+#include "Timer.h"
 
 #include "Platform\stm32.h"
 
@@ -28,7 +29,10 @@ TTime::TTime()
 	Index	= 13;
 #else
 	Div		= 0;
-	Index	= 5;
+	if(Sys.FlashSize > 0x80)
+		Index	= 5;
+	else
+		Index	= 3;
 #endif
 	BaseSeconds = 0;
 
@@ -60,11 +64,12 @@ void TTime::Init()
 	//Interrupt.Disable(SysTick_IRQn);
 
 	TIM_TypeDef* tim = g_Timers[Index];
-#if defined(STM32F0) || defined(GD32F150)
+/*#if defined(STM32F0) || defined(GD32F150)
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
 #else
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
-#endif
+#endif*/
+	Timer::ClockCmd(Index, true);
 
     // 获取当前频率
 #if defined(STM32F0) || defined(GD32F150)
