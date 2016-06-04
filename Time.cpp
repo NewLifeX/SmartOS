@@ -32,7 +32,7 @@ TTime::TTime()
 	if(Sys.FlashSize > 0x80)
 		Index	= 5;
 	else
-		Index	= 3;
+		Index	= 2;
 #endif
 	BaseSeconds = 0;
 
