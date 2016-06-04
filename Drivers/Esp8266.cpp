@@ -950,9 +950,9 @@ bool EspSocket::OnOpen()
 	if(Local.Port) cmd	= cmd + ',' + Local.Port;
 	// UDP传输属性。0，收到数据不改变远端目标；1，收到数据改变一次远端目标；2，收到数据改变远端目标
 
-	if(Remote.Address == IPAddress::Broadcast())
+	/*if(Remote.Address == IPAddress::Broadcast())
 		cmd += ",2";
-	else
+	else*/
 		cmd	+= ",0";
 
 	// 打开Socket。有OK/ERROR/ALREADY CONNECTED三种
