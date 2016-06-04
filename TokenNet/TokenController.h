@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 
 #include "Message\Controller.h"
 
@@ -23,6 +24,8 @@ protected:
 	//virtual bool SendInternal(const Buffer& bs, const void* state);
 
 public:
+	ISocket*	Socket;
+	
 	uint	Token;	// 令牌
 	ByteArray	Key;	// 通信密码
 

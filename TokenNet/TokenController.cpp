@@ -61,7 +61,8 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	MinSize = TokenMessage::MinSize;
 
-	Server = nullptr;
+	Socket	= nullptr;
+	Server	= nullptr;
 
 	ShowRemote	= false;
 
@@ -82,6 +83,7 @@ void TokenController::Open()
 {
 	if (Opened) return;
 
+	if(!Port) Port	= dynamic_cast<ITransport*>(Socket);
 	assert(Port, "还没有传输口呢");
 
 	debug_printf("TokenNet::Inited 使用传输接口 ");
@@ -91,8 +93,7 @@ void TokenController::Open()
 	//Port->Show(true);
 #endif
 
-	auto sock = dynamic_cast<ISocket*>(Port);
-	if (sock) Server = &sock->Remote;
+	Server = &Socket->Remote;
 
 #if DEBUG
 	if (!Stat)
@@ -282,7 +283,7 @@ bool TokenController::Send(Message& msg)
 
 #if DEBUG
 	// 加入统计
-	if (!msg.Reply) StartSendStat(msg.Code);
+	if (!msg.Reply && !msg.OneWay) StartSendStat(msg.Code);
 #endif
 
 	// 如果没有传输口处于打开状态，则发送失败
@@ -356,7 +357,7 @@ bool TokenController::StartSendStat(byte code)
 
 	auto st = Stat;
 
-	// 仅统计请求信息，不统计响应信息
+	/*// 仅统计请求信息，不统计响应信息
 	if (code & 0x80)
 	{
 		st->SendReply++;
@@ -364,7 +365,7 @@ bool TokenController::StartSendStat(byte code)
 	}
 
 	// 单向请求一般用于广播也不列入统计
-	if(code & 0x40) return true;
+	if(code & 0x40) return true;*/
 
 	st->SendRequest++;
 	byte tc = code & 0x0F;

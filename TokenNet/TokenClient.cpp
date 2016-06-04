@@ -35,7 +35,6 @@ TokenClient::TokenClient()
 	Param		= nullptr;
 
 	Local		= nullptr;
-	LocalAP		= nullptr;
 }
 
 void TokenClient::Open()
@@ -79,7 +78,7 @@ void TokenClient::Close()
 	if(Local && Local != Control) Local->Close();
 }
 
-bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 {
 	// 未登录之前，只能 握手、登录、注册
 	if(Token == 0)
@@ -93,11 +92,10 @@ bool TokenClient::Send(TokenMessage& msg, Controller* ctrl)
 	return ctrl->Send(msg);
 }
 
-bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 {
-	auto tctrl = dynamic_cast<TokenController*>(ctrl);
 	// 未登录之前，只能 握手、登录、注册
-	if(tctrl->Token == 0)
+	if(ctrl->Token == 0)
 	{
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
@@ -108,7 +106,7 @@ bool TokenClient::Reply(TokenMessage& msg, Controller* ctrl)
 	return ctrl->Reply(msg);
 }
 
-bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
 {
 	TS("TokenClient::OnReceive");
 
@@ -162,7 +160,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, Controller* ctrl)
 
 bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 {
-	auto ctrl = (Controller*)sender;
+	auto ctrl = (TokenController*)sender;
 	assert_ptr(ctrl);
 	auto client = (TokenClient*)param;
 	assert_ptr(client);
@@ -226,15 +224,14 @@ void TokenClient::SayHello(bool broadcast)
 	{
 		msg.OneWay	= true;
 
-		auto sock	= dynamic_cast<ISocket*>(((TokenController*)ctrl)->Port);
-		msg.State	= &sock->Remote;
+		msg.State	= &ctrl->Socket->Remote;
 	}
 
 	Send(msg, ctrl);
 }
 
 // 握手响应
-bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 {
 	if(!msg.Reply) return false;
 
@@ -268,8 +265,7 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 		// 通讯密码
 		if(ext.Key.Length() > 0)
 		{
-			auto ctrl2	= dynamic_cast<TokenController*>(ctrl);
-			if(ctrl2) ctrl2->Key.Copy(0, ext.Key, 0, ext.Key.Length());
+			if(ctrl) ctrl->Key.Copy(0, ext.Key, 0, ext.Key.Length());
 
 			debug_printf("握手得到通信密码：");
 			ext.Key.Show(true);
@@ -286,11 +282,9 @@ bool TokenClient::OnHello(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
 {
 	if(msg.Reply) return false;
-
-	auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
 
 	// 解析数据
 	HelloMessage ext;
@@ -308,7 +302,7 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	// 使用系统ID作为Name
 	ext2.Name	= Cfg->User();
 	// 使用系统ID作为Key
-	ext2.Key	= ctrl2->Key;
+	ext2.Key	= ctrl->Key;
 	//ext2.Key	= Sys.ID;
 
 	ext2.Cipher	= "RC4";
@@ -399,7 +393,7 @@ void TokenClient::Register()
 	Send(msg);
 }
 
-void TokenClient::OnRegister(TokenMessage& msg, Controller* ctrl)
+void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 {
 	if(!msg.Reply) return;
 
@@ -459,7 +453,7 @@ void TokenClient::Login()
 	Send(msg);
 }
 
-bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 {
 	if(!msg.Reply) return false;
 
@@ -490,13 +484,13 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		LoginMessage logMsg;
 		logMsg.ReadMessage(msg);
 		Token = logMsg.Token;
-		auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
-		ctrl2->Token = Token;
+
+		if(ctrl) ctrl->Token = Token;
 		logMsg.Show(true);
 		debug_printf("令牌：0x%08X ", Token);
 		if (logMsg.Key.Length())
 		{
-			if (ctrl2) ctrl2->Key = logMsg.Key;
+			if(ctrl) ctrl->Key = logMsg.Key;
 
 			debug_printf("通信密码：");
 			logMsg.Key.Show();
@@ -508,18 +502,17 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 	return true;
 }
 
-bool TokenClient::OnLocalLogin(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnLocalLogin(TokenMessage& msg, TokenController* ctrl)
 {
 	if(msg.Reply) return false;
 
 	TS("TokenClient::OnLocalLogin");
-	auto ctrl2		= dynamic_cast<TokenController*>(ctrl);
 
 	auto rs	= msg.CreateReply();
 
 	LoginMessage login;
 	// 这里需要随机密匙
-	login.Key		= ctrl2->Key;
+	login.Key		= ctrl->Key;
 	// 随机令牌
 	login.Token		= Sys.Ms();
 	login.Reply		= true;
@@ -529,7 +522,7 @@ bool TokenClient::OnLocalLogin(TokenMessage& msg, Controller* ctrl)
 
 
 	//ctrl2->Key.Copy(0, login.User, 0, -1);
-	 ctrl2->Token 	= login.Token;
+	ctrl->Token 	= login.Token;
 
 	return true;
 }
@@ -544,8 +537,7 @@ void TokenClient::Ping()
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
-		auto ctrl2 = dynamic_cast<TokenController*>(Control);
-		if (ctrl2) ctrl2->Key.SetLength(0);
+		Control->Key.SetLength(0);
 
 		Status = 0;
 
@@ -560,7 +552,7 @@ void TokenClient::Ping()
 	Send(msg);
 }
 
-bool TokenClient::OnPing(TokenMessage& msg, Controller* ctrl)
+bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 {
 	TS("TokenClient::OnPing");
 
@@ -616,7 +608,7 @@ void TokenClient::Write(int start, const Buffer& bs)
 请求：起始 + 大小
 响应：起始 + 数据
 */
-void TokenClient::OnRead(const TokenMessage& msg, Controller* ctrl)
+void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 {
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
@@ -657,7 +649,7 @@ void TokenClient::OnRead(const TokenMessage& msg, Controller* ctrl)
 响应：1起始 + 1大小 + N数据
 错误：错误码2 + 1起始 + 1大小
 */
-void TokenClient::OnWrite(const TokenMessage& msg, Controller* ctrl)
+void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 {
 	if(msg.Reply) return;
 	if(msg.Length < 2) return;
@@ -715,7 +707,7 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 	Control->Send(msg);
 }
 
-void TokenClient::OnInvoke(const TokenMessage& msg, Controller* ctrl)
+void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 {
 	auto rs	= msg.CreateReply();
 

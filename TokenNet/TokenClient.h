@@ -28,7 +28,7 @@ public:
 	UInt64	LastActive;	// 最后活跃时间ms
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 
-	Controller* Control;
+	TokenController* Control;
 	TokenConfig*	Cfg;
 	DataStore	Store;	// 数据存储区
 	Dictionary	Routes;	// 路由集合
@@ -39,17 +39,17 @@ public:
 	void Close();
 
 	// 发送消息
-	bool Send(TokenMessage& msg, Controller* ctrl = nullptr);
-	bool Reply(TokenMessage& msg, Controller* ctrl = nullptr);
-	bool OnReceive(TokenMessage& msg, Controller* ctrl);
+	bool Send(TokenMessage& msg, TokenController* ctrl = nullptr);
+	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
+	bool OnReceive(TokenMessage& msg, TokenController* ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
 	void*			Param;
 
 // 本地网络支持
-	Controller* Local;	// 本地网络控制器
-	Controller* LocalAP;// 无线AP控制器
+	TokenController* Local;	// 本地网络控制器
+	int		LocalPort;	// 本地广播端口
 	List	Sessions;	// 会话集合
 
 // 常用系统级消息
@@ -77,24 +77,24 @@ public:
 	void Register(const String& action, InvokeHandler handler);
 
 private:
-	bool OnHello(TokenMessage& msg, Controller* ctrl);
-	bool OnLocalHello(TokenMessage& msg, Controller* ctrl);
+	bool OnHello(TokenMessage& msg, TokenController* ctrl);
+	bool OnLocalHello(TokenMessage& msg, TokenController* ctrl);
 
 	// 跳转
 	bool OnRedirect(HelloMessage& msg);
 
-	void OnRegister(TokenMessage& msg, Controller* ctrl);
+	void OnRegister(TokenMessage& msg, TokenController* ctrl);
 
-	bool OnLogin(TokenMessage& msg, Controller* ctrl);
-	bool OnLocalLogin(TokenMessage& msg,Controller* ctrl);
+	bool OnLogin(TokenMessage& msg, TokenController* ctrl);
+	bool OnLocalLogin(TokenMessage& msg,TokenController* ctrl);
 
-	bool OnPing(TokenMessage& msg, Controller* ctrl);
+	bool OnPing(TokenMessage& msg, TokenController* ctrl);
 	bool ChangeIPEndPoint(const String& domain, ushort port);
 
-	void OnRead(const TokenMessage& msg, Controller* ctrl);
-	void OnWrite(const TokenMessage& msg, Controller* ctrl);
+	void OnRead(const TokenMessage& msg, TokenController* ctrl);
+	void OnWrite(const TokenMessage& msg, TokenController* ctrl);
 
-	void OnInvoke(const TokenMessage& msg, Controller* ctrl);
+	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
 };
 
 // 令牌会话
