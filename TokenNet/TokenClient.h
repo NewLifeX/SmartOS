@@ -54,7 +54,6 @@ public:
 
 // 常用系统级消息
 	// 握手广播
-	HelloMessage	Hello;
 	void SayHello(bool broadcast);
 
 	// 注册

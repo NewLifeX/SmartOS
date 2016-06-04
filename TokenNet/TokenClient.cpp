@@ -46,18 +46,18 @@ void TokenClient::Open()
 	Control->Param		= this;
 	Control->Open();
 
-	auto ctrl	= Control;
+	//auto ctrl	= Control;
 	if(Local && Local != Control)
 	{
 		// 向服务端握手时，汇报内网本地端口，用户端将会通过该端口连接
-		ctrl	= Local;
+		//ctrl	= Local;
 
 		Local->Received	= OnTokenClientReceived;
 		Local->Param	= this;
 		Local->Open();
 	}
 
-	// 设置握手广播的本地地址和端口
+	/*// 设置握手广播的本地地址和端口
 	auto sock	= ctrl->Socket;
 	if(sock)
 	{
@@ -66,7 +66,7 @@ void TokenClient::Open()
 		ep.Port		= sock->Local.Port;
 	}
 	Hello.Cipher	= "RC4";
-	Hello.Name		= Cfg->User();
+	Hello.Name		= Cfg->User();*/
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
@@ -214,9 +214,16 @@ void TokenClient::SayHello(bool broadcast)
 
 	TokenMessage msg(0x01);
 
-	HelloMessage ext(Hello);
+	HelloMessage ext;
 	ext.Reply		= false;
 	ext.LocalTime	= DateTime::Now().TotalMs();
+
+	auto sock	= Local->Socket;
+	ext.EndPoint.Address	= sock->Host->IP;
+	ext.EndPoint.Port		= sock->Local.Port;
+
+	ext.Cipher	= "RC4";
+	ext.Name		= Cfg->User();
 
 	ext.WriteMessage(msg);
 	ext.Show(true);
@@ -299,9 +306,16 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
 
 	auto rs		= msg.CreateReply();
 
-	HelloMessage ext2(Hello);
+	HelloMessage ext2;
 	ext2.Reply	= true;
 	ext2.Key	= ctrl->Key;
+
+	auto sock	= Local->Socket;
+	ext2.EndPoint.Address	= sock->Host->IP;
+	ext2.EndPoint.Port		= sock->Local.Port;
+
+	ext2.Cipher	= "RC4";
+	ext2.Name		= Cfg->User();
 
 	// 使用当前时间
 	ext2.LocalTime = DateTime::Now().TotalMs();
@@ -419,7 +433,7 @@ void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 	cfg->Show();
 	cfg->Save();
 
-	Hello.Name	= reg.User;
+	//Hello.Name	= reg.User;
 	
 	Status	= 0;
 
