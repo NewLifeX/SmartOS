@@ -7,7 +7,7 @@
 数据区设计原则：
 1，固定数据区封装 Buffer	=> Object
 2，变长数据区封装 Array		=> Buffer
-3，自带初始缓冲区封装 ByteArray/String/TArray<T>	=> Array
+3，自带初始缓冲区封装 ByteArray/String	=> Array
 
 赋值运算符原则：
 1，赋值运算拷贝长度和数据，核心语义为拷贝一份数据区

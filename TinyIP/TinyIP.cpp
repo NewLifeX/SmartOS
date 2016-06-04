@@ -8,6 +8,7 @@
 
 #define NET_DEBUG DEBUG
 
+/******************************** TinyIP ********************************/
 TinyIP::TinyIP() : _Arr(0) { Init(); }
 
 TinyIP::TinyIP(ITransport* port) : _Arr(0)
@@ -36,7 +37,6 @@ void TinyIP::Init()
 	Mask = 0x00FFFFFF;
 	DHCPServer = Gateway = DNSServer = IP = 0;
 
-	//Sockets.SetCapacity(0x10);
 	Arp = nullptr;
 }
 
@@ -148,10 +148,9 @@ void TinyIP::Process(Stream& ms)
 	// 各处理器有可能改变数据流游标，这里备份一下
 	uint p = ms.Position();
 	// 考虑到可能有通用端口处理器，也可能有专用端口处理器（一般在后面），这里偷懒使用倒序处理
-	uint count = Sockets.Length();
-	for(int i=count-1; i>=0; i--)
+	for(int i=Sockets.Count()-1; i>=0; i--)
 	{
-		TinySocket* socket = Sockets[i];
+		auto socket = (TinySocket*)Sockets[i];
 		if(socket && socket->Enable)
 		{
 			// 必须类型匹配
@@ -395,6 +394,7 @@ bool TinyIP::IsBroadcast(const IPAddress& ip)
 }
 #endif
 
+/******************************** TinySocket ********************************/
 TinySocket::TinySocket(TinyIP* tip, IP_TYPE type)
 {
 	assert(tip, "空的Tip");
@@ -405,19 +405,6 @@ TinySocket::TinySocket(TinyIP* tip, IP_TYPE type)
 
 	// 除了ARP以外，加入到列表
 	if(type != IP_NONE) tip->Sockets.Add(this);
-	/*if(type != IP_NONE)
-	{
-		for(int i=0; i<tip->Sockets.Length(); i++)
-		{
-			if(tip->Sockets[i] == nullptr)
-			{
-				tip->Sockets[i] = this;
-				break;
-			}
-		}
-	}*/
-	//int idx = tip->Sockets.FindIndex(nullptr);
-	//if(idx >= 0) tip->Sockets[idx] = this;
 }
 
 TinySocket::~TinySocket()
@@ -427,44 +414,4 @@ TinySocket::~TinySocket()
 	Enable = false;
 	// 从TinyIP中删除当前Socket
 	Tip->Sockets.Remove(this);
-	/*for(int i=0; i<Tip->Sockets.Length(); i++)
-	{
-		if(Tip->Sockets[i] == this)
-		{
-			Tip->Sockets[i] = nullptr;
-			break;
-		}
-	}*/
-	//int idx = Tip->Sockets.FindIndex(this);
-	//if(idx >= 0) Tip->Sockets[idx] = nullptr;
 }
-
-TinySocket* SocketList::FindByType(ushort type)
-{
-	for(int i=Length()-1; i>=0; i--)
-	{
-		TinySocket* socket = (*this)[i];
-		if(socket)
-		{
-			// 必须类型匹配
-			if(socket->Type == type) return socket;
-		}
-	}
-
-	return nullptr;
-}
-
-void SocketList::Add(const TinySocket* socket)
-{
-	int idx = FindIndex(nullptr);
-	// 如果找不到空位，则加在最后
-	if(idx < 0) idx = Length();
-	SetAt(idx, (TinySocket*)socket);
-}
-
-void SocketList::Remove(const TinySocket* socket)
-{
-	int idx = FindIndex((TinySocket*)socket);
-	if(idx >= 0) (*this)[idx] = nullptr;
-}
-

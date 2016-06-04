@@ -92,7 +92,7 @@ protected:
 1，内部分配。随时可以扩容，对象拷贝时共用空间
 2，外部指针。此时认为只是封装，不允许扩容
 */
-template<typename T, int ArraySize = 0x40>
+/*template<typename T, int ArraySize = 0x40>
 class TArray : public Array
 {
 protected:
@@ -204,6 +204,6 @@ public:
 		T* buf = (T*)_Arr;
 		return buf[i];
 	}
-};
+};*/
 
 #endif

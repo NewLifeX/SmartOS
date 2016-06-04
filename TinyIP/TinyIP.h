@@ -25,18 +25,6 @@ public:
 	virtual bool Process(IP_HEADER& ip, Stream& ms) = 0;
 };
 
-// Socket列表
-class SocketList : public TArray<TinySocket*>
-{
-public:
-	TinySocket* FindByType(ushort type);
-	void Add(const TinySocket* socket);
-	void Remove(const TinySocket* socket);
-	
-private:
-	List	_Sockets;
-};
-
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
 class TinyIP : public Object, public ISocketHost
 {
@@ -63,7 +51,7 @@ public:
 	// Arp套接字
 	TinySocket*		Arp;
 	// 套接字列表。套接字根据类型来识别
-	SocketList	Sockets;
+	List	Sockets;
 
 	TinyIP();
     TinyIP(ITransport* port);
