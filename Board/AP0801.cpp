@@ -196,6 +196,7 @@ TokenClient* AP0801::CreateClient()
 		// 建立内网控制器
 		auto token2		= new TokenController();
 		token2->Port	= dynamic_cast<ITransport*>(socket);
+		token2->ShowRemote	= true;
 		client->Local	= token2;
 	}
 

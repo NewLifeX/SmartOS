@@ -23,10 +23,11 @@ protected:
 	//virtual bool SendInternal(const Buffer& bs, const void* state);
 
 public:
-	uint		Token;	// 令牌
+	uint	Token;	// 令牌
 	ByteArray	Key;	// 通信密码
 
-	byte		NoLogCodes[8];	// 没有日志的指令
+	byte	NoLogCodes[8];	// 没有日志的指令
+	bool	ShowRemote;	// 消息日志中是否显示远程地址
 
 	TokenController();
 	virtual ~TokenController();

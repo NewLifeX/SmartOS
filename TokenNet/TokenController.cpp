@@ -63,6 +63,8 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	Server = nullptr;
 
+	ShowRemote	= false;
+
 	// 默认屏蔽心跳日志和确认日志
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
@@ -318,13 +320,15 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 
 	debug_printf("Token::%s ", action);
 
-	if (msg.State)
+	if (ShowRemote || msg.State)
 	{
-		auto svr = (IPEndPoint*)Server;
-		auto rmt = (IPEndPoint*)msg.State;
-		if (!svr || svr->Address == IPAddress::Broadcast())
+		//auto svr = (IPEndPoint*)Server;
+		auto svr = (IPEndPoint*)msg.State;
+		if(!svr) svr = (IPEndPoint*)Server;
+		//if (!svr || svr->Address == IPAddress::Broadcast())
+		if(svr)
 		{
-			rmt->Show();
+			svr->Show();
 			debug_printf(" ");
 		}
 	}
