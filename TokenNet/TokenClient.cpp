@@ -301,13 +301,8 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
 
 	HelloMessage ext2(Hello);
 	ext2.Reply	= true;
-	ext2.Name	= Cfg->User();
-	// 使用系统ID作为Key
 	ext2.Key	= ctrl->Key;
-	//ext2.Key	= Sys.ID;
 
-	ext2.Cipher	= "RC4";
-	//ext2.LocalTime = ext.LocalTime;
 	// 使用当前时间
 	ext2.LocalTime = DateTime::Now().TotalMs();
 	ext2.WriteMessage(rs);
