@@ -133,7 +133,12 @@ bool Esp8266::OnOpen()
 	if(!PackPort::OnOpen()) return false;
 
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if (!_power.Empty()) _power.Down(20);
+	if (!_power.Empty())
+	{
+		_power.Open();					// 使用前必须Open；
+		_power.Down(20);
+	}
+	if (!_rst.Empty())_rst.Open();		// 使用前必须Open；
 
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
