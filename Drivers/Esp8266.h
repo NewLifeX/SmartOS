@@ -110,7 +110,7 @@ private:
 	// 多个硬件socket
 	int* _sockets[5];
 	
-	int ParseReceive(const Buffer& bs) const;
+	int ParseReceive(const Buffer& bs);
 	bool ParseExpect(const Buffer& bs);
 };
 

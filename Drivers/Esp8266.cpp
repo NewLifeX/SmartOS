@@ -438,7 +438,7 @@ port>]:<data>
 (+CIPMUX=1)
 +IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
 */
-int Esp8266::ParseReceive(const Buffer& bs) const
+int Esp8266::ParseReceive(const Buffer& bs)
 {
 	TS("Esp8266::ParseReceive");
 
@@ -480,7 +480,15 @@ int Esp8266::ParseReceive(const Buffer& bs) const
 	// 分发给各个Socket
 	auto es	= (EspSocket**)_sockets;
 	auto sk	= es[idx];
-	if(sk) sk->OnProcess(bs.Sub(s, -1), ep);
+	if(sk) sk->OnProcess(bs.Sub(s, len), ep);
+	
+	// 可能在+IPD数据包后面紧跟有指令响应数据
+	int remain	= bs.Length() - (s + len);
+	if(remain)
+	{
+		net_printf("IPD数据包后面跟随 %d 数据\r\n", remain);
+		ParseExpect(bs.Sub(s + len, -1));
+	}
 
 	// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
 	// 发送UDP数据包时，响应数据会随着SEND OK一起收到
