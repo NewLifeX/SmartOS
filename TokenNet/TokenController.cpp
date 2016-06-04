@@ -239,7 +239,7 @@ bool TokenController::OnReceive(Message& msg)
 	}
 
 	// 加解密。握手不加密，登录响应不加密
-	if (msg.Code != 0x01)
+	if (msg.Code > 0x01)
 	{
 		Buffer bs(msg.Data, msg.Length + 2);
 		if (!Decrypt(bs, Key))

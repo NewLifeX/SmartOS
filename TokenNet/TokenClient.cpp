@@ -395,7 +395,7 @@ void TokenClient::Register()
 	Send(msg);
 }
 
-void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
+void TokenClient::OnRegister(TokenMessage& msg, Controller* ctrl)
 {
 	if(!msg.Reply) return;
 
@@ -427,8 +427,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	Status	= 0;
 
-	auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
-	if (ctrl2) ctrl2->Key.SetLength(0);
+	//auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
+	//if (ctrl2) ctrl2->Key.SetLength(0);
 
 	Sys.SetTask(_task, true, 0);
 }
