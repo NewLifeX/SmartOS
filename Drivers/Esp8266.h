@@ -87,10 +87,10 @@ public:
 
 /******************************** 发送指令 ********************************/
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
-	String Send(const String& cmd, const String& expect, uint msTimeout = 1000);
+	String Send(const String& cmd, cstring expect, uint msTimeout = 1000);
 	// 发送命令，自动检测并加上\r\n，等待响应OK
 	bool SendCmd(const String& cmd, uint msTimeout = 1000);
-	bool WaitForCmd(const String& expect, uint msTimeout);
+	bool WaitForCmd(cstring expect, uint msTimeout);
 
 protected:
 	virtual bool OnOpen();
@@ -104,8 +104,8 @@ private:
     OutputPort	_rst;
 	
 	String*		_Response;	// 响应内容
-	const String*	_Expect;	// 等待内容
-	const String*	_Expect2;	// 等待内容2
+	cstring		_Expect;	// 等待内容
+	cstring		_Expect2;	// 等待内容2
 
 	// 多个硬件socket
 	int* _sockets[5];

@@ -76,7 +76,7 @@ private:
 	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 };
 
-class EspConfig : public ConfigBase
+/*class EspConfig : public ConfigBase
 {
 public:
 	byte	Length;			// 数据长度
@@ -95,7 +95,7 @@ public:
 	virtual void Show() const;
 
 	static EspConfig* Create();
-};
+};*/
 
 /******************************** Esp8266 ********************************/
 
@@ -292,7 +292,7 @@ static bool EnableLog	= true;
 #endif
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
-String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
+String Esp8266::Send(const String& cmd, cstring expect, uint msTimeout)
 {
 	TS("Esp8266::Send");
 
@@ -300,7 +300,7 @@ String Esp8266::Send(const String& cmd, const String& expect, uint msTimeout)
 
 	// 在接收事件中拦截
 	_Response	= &rs;
-	_Expect		= &expect;
+	_Expect		= expect;
 
 	if(cmd)
 	{
@@ -350,8 +350,8 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 {
 	TS("Esp8266::SendCmd");
 
-	static const String& ok("OK");
-	static const String& err("ERROR");
+	static const cstring ok		= "OK";
+	static const cstring err	= "ERROR";
 
 	String cmd2;
 
@@ -365,7 +365,7 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 	}
 
 	// 二级拦截。遇到错误也马上结束
-	_Expect2	= &err;
+	_Expect2	= err;
 
 	auto rt	= Send(*p, ok, msTimeout);
 
@@ -374,13 +374,13 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 	return rt.Contains(ok);
 }
 
-bool Esp8266::WaitForCmd(const String& expect, uint msTimeout)
+bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
 {
 	String rs;
 
 	// 在接收事件中拦截
 	_Response	= &rs;
-	_Expect		= &expect;
+	_Expect		= expect;
 
 	// 等待收到数据
 	TimeWheel tw(0, msTimeout);
@@ -497,9 +497,9 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
 	auto str	= bs.AsString();
 	// 适配第一关键字
-	if(_Expect && str.Contains(*_Expect)) _Expect	= _Expect2	= nullptr;
+	if(_Expect && str.Contains(_Expect))	_Expect	= _Expect2	= nullptr;
 	// 适配第二关键字
-	if(_Expect2 && str.Contains(*_Expect2)) _Expect	= _Expect2	= nullptr;
+	if(_Expect2 && str.Contains(_Expect2))	_Expect	= _Expect2	= nullptr;
 
 	*_Response	+= str;
 
@@ -1072,7 +1072,7 @@ bool EspUdp::OnWriteEx(const Buffer& bs, const void* opt)
 
 /******************************** EspConfig ********************************/
 
-EspConfig::EspConfig() : ConfigBase(),
+/*EspConfig::EspConfig() : ConfigBase(),
 	SSID(_SSID, sizeof(_SSID)),
 	Pass(_Pass, sizeof(_Pass))
 {
@@ -1119,4 +1119,4 @@ EspConfig* EspConfig::Create()
 	}
 
 	return &cfg;
-}
+}*/
