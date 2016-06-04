@@ -293,7 +293,7 @@ static bool EnableLog	= true;
 #endif
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
-String Esp8266::Send(const String& cmd, cstring expect, uint msTimeout)
+String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeout)
 {
 	TS("Esp8266::Send");
 
@@ -302,6 +302,7 @@ String Esp8266::Send(const String& cmd, cstring expect, uint msTimeout)
 	// 在接收事件中拦截
 	_Response	= &rs;
 	_Expect		= expect;
+	_Expect2	= expect2;
 
 	if(cmd)
 	{
@@ -334,6 +335,7 @@ String Esp8266::Send(const String& cmd, cstring expect, uint msTimeout)
 
 	_Response	= nullptr;
 	_Expect		= nullptr;
+	_Expect2	= nullptr;
 
 #if NET_DEBUG
 	if(rs && EnableLog)
@@ -366,11 +368,7 @@ bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
 	}
 
 	// 二级拦截。遇到错误也马上结束
-	_Expect2	= err;
-
-	auto rt	= Send(*p, ok, msTimeout);
-
-	_Expect2	= nullptr;
+	auto rt	= Send(*p, ok, err, msTimeout);
 
 	return rt.Contains(ok);
 }
@@ -949,8 +947,9 @@ bool EspSocket::OnOpen()
 	else
 		cmd	+= ",0";
 
-	// 如果Socket打开失败
-	if(!_Host.SendCmd(cmd, 1600))
+	// 打开Socket。有OK/ERROR/ALREADY CONNECTED三种
+	auto rt		= _Host.Send(cmd + "\r\n", "OK", "ERROR", 1600);
+	if(!rt.Contains("OK") && ! rt.Contains("ALREADY CONNECTED"))
 	{
 		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 		return false;
@@ -998,7 +997,7 @@ bool EspSocket::SendData(const String& cmd, const Buffer& bs)
 	EnableLog	= false;
 #endif
 
-	auto rt	= _Host.Send(cmd, ">", 1600);
+	auto rt	= _Host.Send(cmd, ">", "OK", 1600);
 	if(rt.Contains(">") && _Host.SendCmd(bs.AsString(), 1600))
 	{
 #if NET_DEBUG
