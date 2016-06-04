@@ -209,7 +209,7 @@ void TokenClient::SayHello(bool broadcast)
 {
 	TS("TokenClient::SayHello");
 
-	auto ctrl	= !broadcast ? Local:Control;
+	auto ctrl	= broadcast ? Local : Control;
 	if(!ctrl) return;
 
 	TokenMessage msg(0x01);
@@ -220,6 +220,13 @@ void TokenClient::SayHello(bool broadcast)
 
 	ext.WriteMessage(msg);
 	ext.Show(true);
+
+	// 特殊处理广播，指定广播地址，避免因为内网发现改变了本地端口
+	if(broadcast)
+	{
+		auto sock	= dynamic_cast<ISocket*>(((TokenController*)ctrl)->Port);
+		msg.State	= &sock->Remote;
+	}
 
 	Send(msg, ctrl);
 }
