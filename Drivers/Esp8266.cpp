@@ -50,7 +50,7 @@ public:
 
 	// 收到数据
 	virtual void OnProcess(const Buffer& bs, const IPEndPoint& remote);
-	
+
 protected:
 	bool SendData(const String& cmd, const Buffer& bs);
 };

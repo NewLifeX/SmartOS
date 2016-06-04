@@ -54,7 +54,9 @@ TokenConfig* TokenConfig::Create(cstring vendor, ProtocolType protocol, ushort s
 		tc.Init();
 		tc.Protocol	= protocol;
 		tc.Load();
-		if(tc.Protocol == 0x00)tc.Protocol = ProtocolType::Udp;	// 默认 UDP 不允许 unknown
+
+		// 默认 UDP 不允许 unknown
+		if(tc.Protocol == 0x00) tc.Protocol = ProtocolType::Udp;
 
 		bool rs = tc.New;
 		auto vnd	= tc.Vendor();

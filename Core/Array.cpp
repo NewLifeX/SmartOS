@@ -43,6 +43,7 @@ void Array::move(Array& rval)
 	_Capacity	= rval._Capacity;
 	_needFree	= rval._needFree;
 	_canWrite	= rval._canWrite;
+	Expand		= rval.Expand;
 
 	rval._Capacity	= 0;
 	rval._needFree	= false;
@@ -51,6 +52,7 @@ void Array::move(Array& rval)
 
 void Array::Init()
 {
+	Expand	= true;
 	_Size	= 1;
 
 	_Capacity	= _Length;
@@ -276,6 +278,8 @@ bool Array::CheckCapacity(int len, int bak)
 	// 是否超出容量
 	// 如果不是可写，在扩容检查时，也要进行扩容，避免内部不可写数据被修改
 	if(_Arr && len <= _Capacity && _canWrite) return true;
+	// 是否可以扩容
+	if(!Expand) return false;
 
 	// 自动计算合适的容量
 	int sz = 0x40;

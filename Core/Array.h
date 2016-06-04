@@ -7,6 +7,8 @@
 class Array : public Buffer
 {
 public:
+	bool	Expand;	// 是否可扩容
+	
 	// 数组最大容量。初始化时决定，后面不允许改变
 	inline int Capacity() const { return _Capacity; }
 

@@ -120,15 +120,23 @@ String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
-// 外部传入缓冲区供内部使用，注意长度减去零结束符
+// 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
 String::String(char* str, int length) : Array(str, length)
 {
-	//init();
-
-	_Arr		= str;
+	_Arr	= str;
 	_Capacity	= length - 1;
-	_Length		= 0;
-	_Arr[0]		= '\0';
+
+	// 计算外部字符串长度
+	int len	= strlen(str);
+	if(len >= length) len	= length - 1;
+	_Length	= len;
+	_Arr[_Length]	= '\0';
+}
+
+// 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
+String::String(char* str, int length, bool expand) : String(str, length)
+{
+	Expand	= expand;
 }
 
 // 包装静态字符串，直接使用，修改时扩容

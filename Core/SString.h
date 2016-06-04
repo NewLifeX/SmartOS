@@ -14,8 +14,9 @@ public:
 	String(cstring cstr = "");
 	String(const String& str);
 	String(String&& rval);
-	// 外部传入缓冲区供内部使用，注意长度减去零结束符
+	// 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
 	String(char* str, int length);
+	String(char* str, int length, bool expand);
 	// 包装静态字符串，直接使用，修改时扩容
 	String(cstring str, int length);
 	explicit String(char c);

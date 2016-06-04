@@ -589,6 +589,7 @@ void StatTask(void* param)
 
 	char cs[128];
 	String str(cs, ArrayLength(cs));
+	str.SetLength(0);
 	st->ToStr(str);
 	str.Show(true);
 

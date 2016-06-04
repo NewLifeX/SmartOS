@@ -36,11 +36,11 @@ public:
 	virtual void Init();
 	virtual void Show() const;
 
-	String	User()		{ return String(_User);		}
-	String	Pass()		{ return String(_Pass);		}
-	String	Token()		{ return String(_Token);	}
-	String	Server()	{ return String(_Server);	}
-	String	Vendor()	{ return String(_Vendor);	}
+	String	User()		{ return String(_User, sizeof(_User), false); }
+	String	Pass()		{ return String(_Pass, sizeof(_Pass), false); }
+	String	Token()		{ return String(_Token, sizeof(_Token), false); }
+	String	Server()	{ return String(_Server, sizeof(_Server), false); }
+	String	Vendor()	{ return String(_Vendor, sizeof(_Vendor), false); }
 
 	static TokenConfig* Current;
 	static TokenConfig*	Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port);
