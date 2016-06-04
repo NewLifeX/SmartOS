@@ -58,13 +58,15 @@ void TokenClient::Open()
 	}
 
 	// 设置握手广播的本地地址和端口
-	auto sock	= dynamic_cast<ISocket*>(ctrl->Port);
+	auto sock	= ctrl->Socket;
 	if(sock)
 	{
 		auto& ep = Hello.EndPoint;
 		ep.Address	= sock->Host->IP;
 		ep.Port		= sock->Local.Port;
 	}
+	Hello.Cipher	= "RC4";
+	Hello.Name		= Cfg->User();
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
@@ -299,7 +301,6 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
 
 	HelloMessage ext2(Hello);
 	ext2.Reply	= true;
-	// 使用系统ID作为Name
 	ext2.Name	= Cfg->User();
 	// 使用系统ID作为Key
 	ext2.Key	= ctrl->Key;
@@ -353,7 +354,7 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 
 	domain.Show(true);
 
-    auto socket = dynamic_cast<ISocket*>(Control->Port);
+    auto socket = Control->Socket;
 	if(socket == nullptr) return false;
 
 	Control->Port->Close();
@@ -423,6 +424,8 @@ void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 	cfg->Show();
 	cfg->Save();
 
+	Hello.Name	= reg.User;
+	
 	Status	= 0;
 
 	Sys.SetTask(_task, true, 0);
