@@ -172,7 +172,7 @@ TokenClient* AP0801::CreateClient()
 	auto socket	= Host->CreateSocket(tk->Protocol);
 	socket->Remote.Port		= tk->ServerPort;
 	socket->Remote.Address	= IPAddress(tk->ServerIP);
-	socket->Server	= tk->Server;
+	socket->Server	= tk->Server();
 
 	// 创建连接服务器的控制器
 	auto ctrl	= new TokenController();

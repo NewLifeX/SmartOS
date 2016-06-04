@@ -131,16 +131,17 @@ void PA0903::InitDHCP(Action onNetReady)
 
 bool PA0903::QueryDNS(TokenConfig& tk)
 {
-	if(tk.Server.Length() == 0) return false;
+	auto svr	= tk.Server();
+	if(svr.Length() == 0) return false;
 
 	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*Host, tk.Server);
+	auto ip	= DNS::Query(*Host, svr);
 	if(ip == IPAddress::Any())
 	{
-		debug_printf("DNS::Query %s 失败！\r\n", tk.Server.GetBuffer());
+		debug_printf("DNS::Query %s 失败！\r\n", svr.GetBuffer());
 		return false;
 	}
-	debug_printf("服务器地址 %s %s:%d \r\n", tk.Server.GetBuffer(), ip.ToString().GetBuffer(), tk.ServerPort);
+	debug_printf("服务器地址 %s %s:%d \r\n", svr.GetBuffer(), ip.ToString().GetBuffer(), tk.ServerPort);
 
 	tk.ServerIP = ip.Value;
 	tk.Save();

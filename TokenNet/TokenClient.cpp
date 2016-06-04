@@ -190,7 +190,7 @@ void LoopTask(void* param)
 			break;
 		case 1:
 		{
-			if(!client->Cfg->User)
+			if(!client->Cfg->User())
 				client->Register();
 			else
 				client->Login();
@@ -300,7 +300,7 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	HelloMessage ext2(Hello);
 	ext2.Reply	= true;
 	// 使用系统ID作为Name
-	ext2.Name	= Cfg->User;
+	ext2.Name	= Cfg->User();
 	// 使用系统ID作为Key
 	ext2.Key	= ctrl2->Key;
 	//ext2.Key	= Sys.ID;
@@ -329,9 +329,9 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	cfg->Show();
 
-	cfg->Server	= msg.Server;
+	cfg->Server()	= msg.Server;
 	cfg->ServerPort = msg.Port;
-	cfg->VisitToken	= msg.VisitToken;
+	cfg->Token()	= msg.VisitToken;
 
 	ChangeIPEndPoint(msg.Server, msg.Port);
 
@@ -383,7 +383,7 @@ void TokenClient::Register()
 	reg.User	= Buffer(Sys.ID, 16).ToHex();
 
 	// 原始密码作为注册密码
-	reg.Pass	= Cfg->Pass;
+	reg.Pass	= Cfg->Pass();
 
 	auto now	= Sys.Ms();
 	reg.Salt	= Buffer(&now, 8);
@@ -419,8 +419,8 @@ void TokenClient::OnRegister(TokenMessage& msg ,Controller* ctrl)
 
 	RegisterMessage reg;
 	reg.ReadMessage(msg);
-	cfg->User	= reg.User;
-	cfg->Pass	= reg.Pass;
+	cfg->User()	= reg.User;
+	cfg->Pass()	= reg.Pass;
 
 	cfg->Show();
 	cfg->Save();
@@ -441,14 +441,14 @@ void TokenClient::Login()
 	LoginMessage login;
 
 	auto cfg	= Cfg;
-	login.User	= cfg->User;
+	login.User	= cfg->User();
 	//login.Pass	= MD5::Hash(cfg->Pass);
 
 	// 原始密码对盐值进行加密，得到登录密码
 	auto now	= Sys.Ms();
 	auto arr	= Buffer(&now, 8);
 	login.Salt	= arr;
-	RC4::Encrypt(arr, cfg->Pass);
+	RC4::Encrypt(arr, cfg->Pass());
 	login.Pass	= arr.ToHex();
 
 	TokenMessage msg(2);

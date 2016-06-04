@@ -4,12 +4,7 @@
 
 TokenConfig* TokenConfig::Current	= nullptr;
 
-TokenConfig::TokenConfig() : ConfigBase(),
-	User(_User, sizeof(_User)),
-	Pass(_Pass, sizeof(_Pass)),
-	VisitToken(_VisitToken, sizeof(_VisitToken)),
-	Server(_Server, sizeof(_Server)),
-	Vendor(_Vendor, sizeof(_Vendor))
+TokenConfig::TokenConfig() : ConfigBase()
 {
 	_Name	 = "TokenCf";
 	_Start	 = &Length;
@@ -32,17 +27,6 @@ void TokenConfig::Init()
 	Protocol	= ProtocolType::Udp;
 }
 
-void TokenConfig::Load()
-{
-	ConfigBase::Load();
-	
-	User	= _User;
-	Pass	= _Pass;
-	VisitToken	= _VisitToken;
-	Server	= _Server;
-	Vendor	= _Vendor;
-}
-
 void TokenConfig::Show() const
 {
 #if DEBUG
@@ -54,10 +38,10 @@ void TokenConfig::Show() const
 	debug_printf("\t远程: ");
 	IPEndPoint ep2(IPAddress(ServerIP), ServerPort);
 	ep2.Show(true);
-	debug_printf("\t服务: %s \r\n", Server.GetBuffer());
-	debug_printf("\t厂商: %s \r\n", Vendor.GetBuffer());
-	debug_printf("\t登录: %s \r\n", User.GetBuffer());
-	debug_printf("\t密码: %s \r\n", Pass.GetBuffer());
+	debug_printf("\t服务: %s \r\n", _Server);
+	debug_printf("\t厂商: %s \r\n", _Vendor);
+	debug_printf("\t登录: %s \r\n", _User);
+	debug_printf("\t密码: %s \r\n", _Pass);
 #endif
 }
 
@@ -73,16 +57,18 @@ TokenConfig* TokenConfig::Create(cstring vendor, ProtocolType protocol, ushort s
 		if(tc.Protocol == 0x00)tc.Protocol = ProtocolType::Udp;	// 默认 UDP 不允许 unknown
 
 		bool rs = tc.New;
-		if(!tc.Vendor)
+		auto vnd	= tc.Vendor();
+		if(!vnd)
 		{
-			tc.Vendor	= vendor;
+			vnd	= vendor;
 
 			rs	= false;
 		}
 
-		if(!tc.Server)
+		auto svr	= tc.Server();
+		if(!svr)
 		{
-			tc.Server	= tc.Vendor;
+			svr	= vnd;
 			tc.ServerPort	= sport;
 			tc.Port		= port;
 

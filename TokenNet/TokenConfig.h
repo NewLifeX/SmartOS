@@ -26,7 +26,7 @@ public:
 	ushort	Port;			// 本地端口
 	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
 	ushort	ServerPort;		// 服务器端口
-	char	_VisitToken[16];	//访问服务器令牌
+	char	_Token[16];	//访问服务器令牌
 	char	_Server[32];		// 服务器域名。出厂为空，从厂商服务器覆盖，恢复出厂设置时清空
 	char	_Vendor[32];		// 厂商服务器域名。原始厂商服务器地址
 
@@ -34,14 +34,13 @@ public:
 
 	TokenConfig();
 	virtual void Init();
-	virtual void Load();
 	virtual void Show() const;
 
-	String	User;
-	String	Pass;
-	String	VisitToken;
-	String	Server;
-	String	Vendor;
+	String	User()		{ return String(_User, sizeof(_User)); }
+	String	Pass()		{ return String(_Pass, sizeof(_Pass)); }
+	String	Token()		{ return String(_Token, sizeof(_Token)); }
+	String	Server()	{ return String(_Server, sizeof(_Server)); }
+	String	Vendor()	{ return String(_Vendor, sizeof(_Vendor)); }
 
 	static TokenConfig* Current;
 	static TokenConfig*	Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port);
