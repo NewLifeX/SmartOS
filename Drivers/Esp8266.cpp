@@ -203,7 +203,8 @@ bool Esp8266::OnOpen()
 			String wifiName = "WsLink-";
 			wifiName += Buffer(Sys.ID, 3).ToHex();
 
-			SetAP(wifiName, "", 11, 0, 1, 1);
+			int chn	= (Sys.Ms() % 14) + 1;
+			SetAP(wifiName, "", chn, 0, 1, 1);
 		}
 		if (SSID.Length() > 0)
 		{
