@@ -179,9 +179,7 @@ void LoopTask(void* param)
 	assert_ptr(param);
 
 	auto client = (TokenClient*)param;
-	//client->SayHello(false);
-	//if(client->Udp->BindPort != 3355)
-	//	client->SayHello(true, 3355);
+	client->SayHello(true);
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -207,9 +205,12 @@ void LoopTask(void* param)
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
 // 响应：2版本 + S类型 + S名称 + 8本地时间 + 6对方IP端口 + 1加密算法 + N密钥
 // 错误：0xFE + 1协议 + S服务器 + 2端口
-void TokenClient::SayHello(bool broadcast, int port)
+void TokenClient::SayHello(bool broadcast)
 {
 	TS("TokenClient::SayHello");
+
+	auto ctrl	= broadcast ? Control : Local;
+	if(!ctrl) return;
 
 	TokenMessage msg(0x01);
 
@@ -217,14 +218,10 @@ void TokenClient::SayHello(bool broadcast, int port)
 	ext.Reply		= false;
 	ext.LocalTime	= DateTime::Now().TotalMs();
 
-	// 设置握手广播的本地地址和端口
-	//auto socket		= dynamic_cast<ISocket*>(Control->Port);
-	//ext.EndPoint.Address	= socket->Host->IP;
-
 	ext.WriteMessage(msg);
 	ext.Show(true);
 
-	Send(msg);
+	Send(msg, ctrl);
 }
 
 // 握手响应
