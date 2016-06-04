@@ -1060,6 +1060,7 @@ EspUdp::EspUdp(Esp8266& host, byte idx)
 
 bool EspUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 {
+	//!!! ESP8266有BUG，收到数据后，远程地址还是乱了，所以这里的远程地址跟实际可能不一致
 	if(remote == Remote) return Send(bs);
 
 	if(!Open()) return false;
