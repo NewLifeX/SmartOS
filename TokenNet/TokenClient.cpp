@@ -304,8 +304,6 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, Controller* ctrl)
 	// 使用系统ID作为Key
 	ext2.Key	= ctrl2->Key;
 	//ext2.Key	= Sys.ID;
-	//auto ctrl3	= dynamic_cast<TokenController*>(ctrl);
-	//if(ctrl3) ctrl3->Key = ext2.Key;
 
 	ext2.Cipher	= "RC4";
 	//ext2.LocalTime = ext.LocalTime;
@@ -427,9 +425,6 @@ void TokenClient::OnRegister(TokenMessage& msg, Controller* ctrl)
 
 	Status	= 0;
 
-	//auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
-	//if (ctrl2) ctrl2->Key.SetLength(0);
-
 	Sys.SetTask(_task, true, 0);
 }
 
@@ -489,13 +484,12 @@ bool TokenClient::OnLogin(TokenMessage& msg, Controller* ctrl)
 		LoginMessage logMsg;
 		logMsg.ReadMessage(msg);
 		Token = logMsg.Token;
-		auto tctrl = dynamic_cast<TokenController*>(ctrl);
-		tctrl->Token = Token;
+		auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
+		ctrl2->Token = Token;
 		logMsg.Show(true);
 		debug_printf("令牌：0x%08X ", Token);
 		if (logMsg.Key.Length())
 		{
-			auto ctrl2 = dynamic_cast<TokenController*>(ctrl);
 			if (ctrl2) ctrl2->Key = logMsg.Key;
 
 			debug_printf("通信密码：");
