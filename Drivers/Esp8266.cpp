@@ -486,7 +486,7 @@ int Esp8266::ParseReceive(const Buffer& bs)
 	auto es	= (EspSocket**)_sockets;
 	auto sk	= es[idx];
 	if(sk) sk->OnProcess(bs.Sub(s, len), ep);
-	
+
 	// 可能在+IPD数据包后面紧跟有指令响应数据
 	int remain	= bs.Length() - (s + len);
 	if(remain)
@@ -1010,8 +1010,16 @@ bool EspSocket::SendData(const String& cmd, const Buffer& bs)
 	EnableLog	= false;
 #endif
 
-	auto rt	= _Host.Send(cmd, ">", "OK", 1600);
-	if(rt.Contains(">") && _Host.SendCmd(bs.AsString(), 1600))
+	// 重发3次AT指令，避免busy
+	int i	= 0;
+	for(i=0; i<3; i++)
+	{
+		//auto rt	= _Host.Send(cmd, ">", "OK", 1600);
+		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
+		auto rt	= _Host.Send(cmd, ">", "busy s...", 1600);
+		if(rt.Contains(">")) break;
+	}
+	if(i<3 && _Host.Send(bs.AsString(), "SEND OK", "ERROR", 1600).Contains("SEND OK"))
 	{
 #if NET_DEBUG
 		EnableLog	= true;
