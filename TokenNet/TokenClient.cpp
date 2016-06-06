@@ -18,6 +18,7 @@
 static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
+static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
 {
@@ -70,6 +71,7 @@ void TokenClient::Open()
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
+	Sys.AddTask(BroadcastHelloTask, this, 2000, 30000, "令牌广播");
 }
 
 void TokenClient::Close()
@@ -179,7 +181,7 @@ void LoopTask(void* param)
 	assert_ptr(param);
 
 	auto client = (TokenClient*)param;
-	client->SayHello(true);
+	//client->SayHello(true);
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -199,6 +201,15 @@ void LoopTask(void* param)
 			client->Ping();
 			break;
 	}
+}
+
+void BroadcastHelloTask(void* param)
+{
+	TS("TokenClient::BroadcastHello");
+	assert_ptr(param);
+
+	auto client = (TokenClient*)param;
+	client->SayHello(true);
 }
 
 // 发送发现消息，告诉大家我在这
