@@ -28,6 +28,10 @@ void IOK0203::Setup(ushort code, cstring name, COM message, int baudRate)
     // 初始化系统
     //Sys.Clock = 48000000;
     sys.Init();
+#if DEBUG
+    sys.MessagePort = message; // 指定printf输出的串口
+    Sys.ShowInfo();
+#endif
 
 	// WatchDog::Start();
 	// Flash最后一块作为配置区
