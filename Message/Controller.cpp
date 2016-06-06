@@ -172,5 +172,8 @@ bool Controller::SendInternal(const Message& msg)
 
 bool Controller::SendInternal(const Buffer& bs, const void* state)
 {
-	return Port->Write(bs, state);
+	if (state == nullptr)
+		return Port->Write(bs);
+	else
+		return Port->Write(bs, state);
 }
