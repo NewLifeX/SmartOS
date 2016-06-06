@@ -149,11 +149,9 @@ String& Device::ToStr(String& str) const
 		ByteArray(Store.GetBuffer(), len).ToStr(str);
 	}
 
-	//len	= strlen(Name);
 	if (Name.Length() > 0)
 	{
 		str += "\t";
-		//String(Name, len).ToStr(str);
 		str += Name;
 	}
 	return str;

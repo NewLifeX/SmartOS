@@ -1,6 +1,6 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+//#include <string.h>
 #include <ctype.h>
 #include <math.h>
 #include <stdarg.h>
@@ -19,7 +19,10 @@ extern char* ultoa(UInt64 value, char* string, int radix);
 char* dtostrf(double val, char width, byte prec, char* sout);
 
 // C格式字符串函数
-static int strnstr(cstring s1, cstring s2, int max);
+static int strnlen(cstring str, int max = 0xFFFF);
+static int strncmp(cstring s1, cstring s2, int n);
+static int strnstr(cstring str, cstring find, int max);
+static int strrnstr(cstring str, cstring find, int max);
 
 /******************************** String ********************************/
 
@@ -27,7 +30,7 @@ String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
-	_Length	= strlen(cstr);
+	_Length	= strnlen(cstr);
 	if(_Length)
 	{
 		_Arr	= (char*)cstr;
@@ -130,7 +133,7 @@ String::String(char* str, int length) : Array(str, length)
 	_Capacity	= length - 1;
 
 	// 计算外部字符串长度
-	int len	= strlen(str);
+	int len	= strnlen(str, length);
 	if(len >= length) len	= length - 1;
 	_Length	= len;
 	_Arr[_Length]	= '\0';
@@ -324,7 +327,7 @@ String& String::operator = (String&& rval)
 
 String& String::operator = (cstring cstr)
 {
-	if (cstr) copy(cstr, strlen(cstr));
+	if (cstr) copy(cstr, strnlen(cstr));
 	else release();
 
 	return *this;
@@ -359,7 +362,7 @@ bool String::Concat(cstring cstr, uint length)
 bool String::Concat(cstring cstr)
 {
 	if (!cstr) return 0;
-	return Concat(cstr, strlen(cstr));
+	return Concat(cstr, strnlen(cstr));
 }
 
 bool String::Concat(char c)
@@ -387,7 +390,7 @@ bool String::Concat(byte num, int radix)
 	char buf[1 + 3 * sizeof(byte)];
 	itoa(num, buf, radix);
 
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(short num, int radix)
@@ -397,7 +400,7 @@ bool String::Concat(short num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(ushort num, int radix)
@@ -415,7 +418,7 @@ bool String::Concat(ushort num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	utoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(int num, int radix)
@@ -425,7 +428,7 @@ bool String::Concat(int num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(uint num, int radix)
@@ -443,7 +446,7 @@ bool String::Concat(uint num, int radix)
 
 	char buf[1 + 3 * sizeof(uint)];
 	utoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(Int64 num, int radix)
@@ -453,7 +456,7 @@ bool String::Concat(Int64 num, int radix)
 
 	char buf[2 + 3 * sizeof(Int64)];
 	ltoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(UInt64 num, int radix)
@@ -473,21 +476,21 @@ bool String::Concat(UInt64 num, int radix)
 
 	char buf[1 + 3 * sizeof(UInt64)];
 	ultoa(num, buf, radix);
-	return Concat(buf, strlen(buf));
+	return Concat(buf, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(float num, byte decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strlen(string));
+	return Concat(string, strnlen(buf, sizeof(buf)));
 }
 
 bool String::Concat(double num, byte decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strlen(string));
+	return Concat(string, strnlen(buf, sizeof(buf)));
 }
 
 String& operator + (String& lhs, const Object& rhs)
@@ -508,7 +511,7 @@ String& operator + (String& lhs, const String& rhs)
 String& operator + (String& lhs, cstring cstr)
 {
 	auto& a = const_cast<String&>(lhs);
-	if (!cstr || !a.Concat(cstr, strlen(cstr))) a.release();
+	if (!cstr || !a.Concat(cstr, strnlen(cstr))) a.release();
 	return a;
 }
 
@@ -575,7 +578,7 @@ int String::CompareTo(const String& s) const
 		if (_Arr && _Length > 0) return *(byte*)_Arr;
 		return 0;
 	}
-	return strcmp(_Arr, s._Arr);
+	return strncmp(_Arr, s._Arr, _Length);
 }
 
 bool String::Equals(const String& s2) const
@@ -586,9 +589,13 @@ bool String::Equals(const String& s2) const
 bool String::Equals(cstring cstr) const
 {
 	if (_Length == 0) return cstr == nullptr || *cstr == 0;
-	if (cstr == nullptr) return _Arr[0] == 0;
+	//if (cstr == nullptr) return _Arr[0] == 0;
+	if (cstr == nullptr) return false;
 
-	return strcmp(_Arr, cstr) == 0;
+	int len	= strnlen(cstr, _Length + 1);
+	if(len != _Length) return false;
+
+	return strncmp(_Arr, cstr, len) == 0;
 }
 
 bool String::EqualsIgnoreCase(const String &s2 ) const
@@ -748,7 +755,7 @@ String& String::Format(cstring format, ...)
 	va_start(ap, format);
 
 	// 无法准确估计长度，大概乘以2处理
-	CheckCapacity(_Length + (strlen(format) << 1));
+	CheckCapacity(_Length + (strnlen(format) << 1));
 
 	//char* p = _Arr;
 	int len2 = vsnprintf(_Arr + _Length, _Capacity - _Length, format, ap);
@@ -783,49 +790,40 @@ int String::IndexOf(const String& str, int startIndex) const
 	if(startIndex < 0) return -1;
 	if(startIndex + str._Length > _Length) return -1;
 
-	/*auto p	= strstr(_Arr + startIndex, str._Arr);
-	if(!p) return -1;
-
-	return p - _Arr;*/
+	int p	= strnstr(_Arr + startIndex, str._Arr, str._Length);
+	if(p < 0) return -1;
 	
-	return strnstr(_Arr + startIndex, str._Arr, str._Length);
+	return p + startIndex;
 }
 
 int String::IndexOf(cstring str, int startIndex) const
 {
 	if(!str) return -1;
 	if(startIndex < 0) return -1;
-	
-	int slen	= strlen(str);
+
+	int slen	= strnlen(str, _Length - startIndex + 1);
 	if(startIndex + slen > _Length) return -1;
 
-	/*auto p	= strstr(_Arr + startIndex, str);
-	if(!p) return -1;
-
-	return p - _Arr;*/
+	int p	= strnstr(_Arr + startIndex, str, slen);
+	if(p < 0) return -1;
 	
-	return strnstr(_Arr + startIndex, str, slen);
+	return p + startIndex;
 }
 
 int String::LastIndexOf(const char ch, int startIndex) const
 {
 	if(startIndex >= _Length) return -1;
 
-	auto p	= strrchr(_Arr + startIndex, ch);
+	/*auto p	= strrchr(_Arr + startIndex, ch);
 	if(!p) return -1;
 
-	return p - _Arr;
-}
+	return p - _Arr;*/
 
-char *strrstr(cstring s, cstring str)
-{
-    char *p;
-    int _Length = strlen(s);
-    for (p = (char*)s + _Length - 1; p >= s; p--) {
-        if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0))
-            return p;
-    }
-    return nullptr;
+	for(int i=_Length - 1; i>=startIndex; i--)
+	{
+		if(_Arr[i] == ch) return i;
+	}
+	return -1;
 }
 
 int String::LastIndexOf(const String& str, int startIndex) const
@@ -833,21 +831,33 @@ int String::LastIndexOf(const String& str, int startIndex) const
 	if(str._Length == 0) return -1;
 	if(startIndex + str._Length > _Length) return -1;
 
-	auto p	= strrstr(_Arr + startIndex, str._Arr);
+	/*auto p	= strrstr(_Arr + startIndex, str._Arr);
 	if(!p) return -1;
 
-	return p - _Arr;
+	return p - _Arr;*/
+
+	int p	= strrnstr(_Arr + startIndex, str._Arr, str._Length);
+	if(p < 0) return -1;
+	
+	return p + startIndex;
 }
 
 int String::LastIndexOf(cstring str, int startIndex) const
 {
 	if(!str) return -1;
-	if(startIndex + strlen(str) > _Length) return -1;
 
-	auto p	= strrstr(_Arr + startIndex, str);
+	int len	= strnlen(str, _Length - startIndex + 1);
+	if(startIndex + len > _Length) return -1;
+
+	/*auto p	= strrstr(_Arr + startIndex, str);
 	if(!p) return -1;
 
-	return p - _Arr;
+	return p - _Arr;*/
+
+	int p	= strrnstr(_Arr + startIndex, str, len);
+	if(p < 0) return -1;
+	
+	return p + startIndex;
 }
 
 bool String::Contains(const String& str) const { return IndexOf(str) >= 0; }
@@ -863,8 +873,10 @@ bool String::StartsWith(const String& str, int startIndex) const
 bool String::StartsWith(cstring str, int startIndex) const
 {
 	if(!str) return false;
-	int slen	= strlen(str);
+
+	int slen	= strnlen(str, _Length - startIndex + 1);
 	if (startIndex + slen > _Length || !_Arr) return false;
+
 	return strncmp(&_Arr[startIndex], str, slen) == 0;
 }
 
@@ -879,7 +891,8 @@ bool String::EndsWith(const String& str) const
 bool String::EndsWith(cstring str) const
 {
 	if(!str) return false;
-	int slen	= strlen(str);
+
+	int slen	= strnlen(str, _Length + 1);
 	if(slen > _Length) return false;
 
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
@@ -1122,6 +1135,25 @@ const String StringSplit::Next()
 
 
 /******************************** C格式字符串函数 ********************************/
+/*size_t
+strlen(const char *str)
+{
+	const char *s;
+
+	for (s = str; *s; ++s)
+		;
+	return (s - str);
+}*/
+int strnlen(cstring str, int max)
+{
+	cstring s	= str;
+
+	for (int i=0; i<max && *s; i++, s++);
+
+	return (s - str);
+}
+
+
 /*
  * Find the first occurrence of find in s.
  */
@@ -1144,22 +1176,60 @@ strstr(const char *s, const char *find)
 	return ((char *)s);
 }*/
 
-int strnstr(cstring s1, cstring s2, int max)
+int strnstr(cstring str, cstring find, int max)
 {
-	if(!s1) return -1;
-    if(!s2 || !*s2) return -1;
+	if(!str) return -1;
+	if(!find || !*find) return -1;
 
 	// 遍历源字符串
-	auto p	= s1;
-	while(*p)
+	auto p	= str;
+	for(;*p; p++)
 	{
-		// 遍历目标字符串
+		/*// 遍历目标字符串
 		int n;
-		for(n=0; n<max && p[n]==s2[n]; n++);
+		for(n=0; n<max && p[n]==find[n]; n++);
 		// 如果刚好比较到最后一个字符，则匹配
-		if(n == max) return p - s1;
-
-		p++;
+		if(n == max) return p - str;*/
+		if(strncmp(p, find, max) == 0) return p - str;
 	}
 	return -1;
+}
+
+/*char *strrstr(cstring s, cstring str)
+{
+    char *p;
+    int _Length = strlen(s);
+    for (p = (char*)s + _Length - 1; p >= s; p--) {
+        if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0))
+            return p;
+    }
+    return nullptr;
+}*/
+
+int strrnstr(cstring str, cstring find, int max)
+{
+	int len	= strnlen(find, max);
+	auto p	= str + strnlen(str) - 1;
+	for(;p >= str; p--)
+	{
+		/*// 遍历目标字符串
+		int n;
+		for(n=0; n<max && p[n]==find[n]; n++);
+		// 如果刚好比较到最后一个字符，则匹配
+		if(n == max) return p - str;*/
+		if(strncmp(p, find, max) == 0) return p - str;
+	}
+	return -1;
+}
+
+int strncmp(cstring s1, cstring s2, int n)
+{
+	if (n == 0) return 0;
+	do {
+		if (*s1 != *s2) return *s1 - *s2;
+		if (*s1++ == 0) break;
+		s2++;
+	} while (--n);
+
+	return 0;
 }
