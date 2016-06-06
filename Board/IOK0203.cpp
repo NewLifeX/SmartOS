@@ -104,8 +104,9 @@ TokenClient* IOK0203::CreateClient()
 	socket->Server	= tk->Server();
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
-	ctrl->Port = dynamic_cast<ITransport*>(socket);
+	auto ctrl = new TokenController();
+	//ctrl->Port = dynamic_cast<ITransport*>(socket);
+	ctrl->Socket = socket;
 
 	// 创建客户端
 	auto client	= new TokenClient();
@@ -123,8 +124,9 @@ TokenClient* IOK0203::CreateClient()
 		socket->Local.Port	= tk->Port;
 
 		// 建立内网控制器
-		auto token2		= new TokenController();
-		token2->Port	= dynamic_cast<ITransport*>(socket);
+		auto token2 = new TokenController();
+		//token2->Port	= dynamic_cast<ITransport*>(socket);
+		token2->Socket = socket;
 		client->Local	= token2;
 	}
 
