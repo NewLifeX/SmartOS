@@ -83,6 +83,7 @@ void TokenController::Open()
 {
 	if (Opened) return;
 
+	assert(Socket, "还没有Socket呢");
 	if(!Port) Port	= dynamic_cast<ITransport*>(Socket);
 	assert(Port, "还没有传输口呢");
 
