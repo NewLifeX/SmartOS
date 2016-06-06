@@ -335,16 +335,17 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	if(tw.Sleep > 1000)	tw.Sleep	= 1000;
 	// 提前等待一会，再开始轮询
 	Sys.Sleep(40);
-	while(_Expect && !tw.Expired());
 
-	if(rs.Length() > 4) rs.Trim();
+	while(_Response &&! tw.Expired());
+
+	//if(rs.Length() > 4) rs.Trim();
 
 	_Response	= nullptr;
 	_Expect		= nullptr;
 	_Expect2	= nullptr;
 
 #if NET_DEBUG
-	if(rs && EnableLog)
+	if(EnableLog && rs)
 	{
 		net_printf("<= ");
 		rs.Trim().Show(true);
@@ -512,9 +513,23 @@ bool Esp8266::ParseExpect(const Buffer& bs)
 	*_Response	+= str;
 
 	// 适配第一关键字
-	if(_Expect && str.Contains(_Expect))	_Expect	= _Expect2	= nullptr;
+	if(_Expect && str.Contains(_Expect))
+	{
+		//net_printf("适配第一关键字 %s \r\n", _Expect);
+		_Response	= nullptr;
+	}
 	// 适配第二关键字
-	if(_Expect2 && str.Contains(_Expect2))	_Expect	= _Expect2	= nullptr;
+	if(_Expect2 && str.Contains(_Expect2))
+	{
+		net_printf("适配第二关键字 %s \r\n", _Expect2);
+		_Response	= nullptr;
+	}
+	// 适配busy
+	if(str.Contains("busy p..."))
+	{
+		net_printf("适配 busy p... \r\n");
+		_Response	= nullptr;
+	}
 
 	return true;
 }
@@ -688,6 +703,10 @@ bool Esp8266::JoinAP(const String& ssid, const String& pass)
 
 #if NET_DEBUG
 	net_printf("Esp8266::JoinAP ");
+	if(rs)
+		net_printf("成功 ");
+	else
+		net_printf("失败 ");
 	tc.Show();
 #endif
 
