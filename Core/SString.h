@@ -164,7 +164,7 @@ public:
 	static void Test();
 #endif
 
-protected:
+private:
 	//char*	_Arr;		// 字符数组
 	//int		_Capacity;	// 容量，不包含0结束符
 	//int		_Length;		// 字符串长度，不包含0结束符
@@ -173,7 +173,6 @@ protected:
 
 	char	Arr[0x40];
 
-protected:
 	void init();
 	void release();
 	bool Concat(cstring cstr, uint length);
@@ -185,6 +184,8 @@ protected:
 	using Array::CheckCapacity;
 	bool CheckCapacity(uint size);
 	virtual void* Alloc(int len);
+	
+	int Search(cstring str, int len, int startIndex, bool rev) const;
 };
 
 #define R(str) String(str)

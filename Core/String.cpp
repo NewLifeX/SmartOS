@@ -21,8 +21,6 @@ char* dtostrf(double val, char width, byte prec, char* sout);
 // C格式字符串函数
 static int strnlen(cstring str, int max = 0xFFFF);
 static int strncmp(cstring s1, cstring s2, int n);
-static int strnstr(cstring str, cstring find, int max);
-static int strrnstr(cstring str, cstring find, int max);
 
 /******************************** String ********************************/
 
@@ -771,11 +769,6 @@ int String::IndexOf(const char ch, int startIndex) const
 	if(startIndex < 0) return -1;
 	if(startIndex >= _Length) return -1;
 
-	/*auto p	= strchr(_Arr + startIndex, ch);
-	if(!p) return -1;
-
-	return p - _Arr;*/
-
 	for(int i=startIndex; i<_Length; i++)
 	{
 		if(_Arr[i] == ch) return i;
@@ -786,28 +779,12 @@ int String::IndexOf(const char ch, int startIndex) const
 
 int String::IndexOf(const String& str, int startIndex) const
 {
-	if(str._Length == 0) return -1;
-	if(startIndex < 0) return -1;
-	if(startIndex + str._Length > _Length) return -1;
-
-	int p	= strnstr(_Arr + startIndex, str._Arr, str._Length);
-	if(p < 0) return -1;
-	
-	return p + startIndex;
+	return Search(str._Arr, str._Length, startIndex, false);
 }
 
 int String::IndexOf(cstring str, int startIndex) const
 {
-	if(!str) return -1;
-	if(startIndex < 0) return -1;
-
-	int slen	= strnlen(str, _Length - startIndex + 1);
-	if(startIndex + slen > _Length) return -1;
-
-	int p	= strnstr(_Arr + startIndex, str, slen);
-	if(p < 0) return -1;
-	
-	return p + startIndex;
+	return Search(str, strnlen(str, _Length - startIndex + 1), startIndex, false);
 }
 
 int String::LastIndexOf(const char ch, int startIndex) const
@@ -828,36 +805,42 @@ int String::LastIndexOf(const char ch, int startIndex) const
 
 int String::LastIndexOf(const String& str, int startIndex) const
 {
-	if(str._Length == 0) return -1;
-	if(startIndex + str._Length > _Length) return -1;
-
-	/*auto p	= strrstr(_Arr + startIndex, str._Arr);
-	if(!p) return -1;
-
-	return p - _Arr;*/
-
-	int p	= strrnstr(_Arr + startIndex, str._Arr, str._Length);
-	if(p < 0) return -1;
-	
-	return p + startIndex;
+	return Search(str._Arr, str._Length, startIndex, true);
 }
 
 int String::LastIndexOf(cstring str, int startIndex) const
 {
+	return Search(str, strnlen(str, _Length - startIndex + 1), startIndex, true);
+}
+
+int String::Search(cstring str, int len, int startIndex, bool rev) const
+{
 	if(!str) return -1;
+	if(startIndex < 0) return -1;
 
-	int len	= strnlen(str, _Length - startIndex + 1);
-	if(startIndex + len > _Length) return -1;
+	// 可遍历的长度
+	int count	= _Length - len;
+	if(startIndex > count) return -1;
 
-	/*auto p	= strrstr(_Arr + startIndex, str);
-	if(!p) return -1;
-
-	return p - _Arr;*/
-
-	int p	= strrnstr(_Arr + startIndex, str, len);
-	if(p < 0) return -1;
-	
-	return p + startIndex;
+	// 遍历源字符串
+	auto s	= _Arr + startIndex;
+	auto e	= _Arr + _Length - 1;
+	auto p	= rev ? e : s;
+	for(int i=0; i<=count; i++)
+	{
+		// 最大比较个数以目标字符串为准，源字符串确保长度足够
+		if(strncmp(p, str, len) == 0) return p - _Arr;
+		
+		if(rev)
+		{
+			if(--p < s) break;
+		}
+		else
+		{
+			if(++p > e) break;
+		}
+	}
+	return -1;
 }
 
 bool String::Contains(const String& str) const { return IndexOf(str) >= 0; }
@@ -1151,75 +1134,6 @@ int strnlen(cstring str, int max)
 	for (int i=0; i<max && *s; i++, s++);
 
 	return (s - str);
-}
-
-
-/*
- * Find the first occurrence of find in s.
- */
-/*char *
-strstr(const char *s, const char *find)
-{
-	char c, sc;
-	size_t len;
-
-	if ((c = *find++) != 0) {
-		len = strlen(find);
-		do {
-			do {
-				if ((sc = *s++) == 0)
-					return (NULL);
-			} while (sc != c);
-		} while (strncmp(s, find, len) != 0);
-		s--;
-	}
-	return ((char *)s);
-}*/
-
-int strnstr(cstring str, cstring find, int max)
-{
-	if(!str) return -1;
-	if(!find || !*find) return -1;
-
-	// 遍历源字符串
-	auto p	= str;
-	for(;*p; p++)
-	{
-		/*// 遍历目标字符串
-		int n;
-		for(n=0; n<max && p[n]==find[n]; n++);
-		// 如果刚好比较到最后一个字符，则匹配
-		if(n == max) return p - str;*/
-		if(strncmp(p, find, max) == 0) return p - str;
-	}
-	return -1;
-}
-
-/*char *strrstr(cstring s, cstring str)
-{
-    char *p;
-    int _Length = strlen(s);
-    for (p = (char*)s + _Length - 1; p >= s; p--) {
-        if ((*p == *str) && (memcmp(p, str, strlen(str)) == 0))
-            return p;
-    }
-    return nullptr;
-}*/
-
-int strrnstr(cstring str, cstring find, int max)
-{
-	int len	= strnlen(find, max);
-	auto p	= str + strnlen(str) - 1;
-	for(;p >= str; p--)
-	{
-		/*// 遍历目标字符串
-		int n;
-		for(n=0; n<max && p[n]==find[n]; n++);
-		// 如果刚好比较到最后一个字符，则匹配
-		if(n == max) return p - str;*/
-		if(strncmp(p, find, max) == 0) return p - str;
-	}
-	return -1;
 }
 
 int strncmp(cstring s1, cstring s2, int n)
