@@ -332,6 +332,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
 	tw.Sleep	= 200;
 	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
+	if(tw.Sleep > 1000)	tw.Sleep	= 1000;
 	// 提前等待一会，再开始轮询
 	Sys.Sleep(40);
 	while(_Expect && !tw.Expired());
@@ -676,10 +677,21 @@ FAIL
 */
 bool Esp8266::JoinAP(const String& ssid, const String& pass)
 {
+#if NET_DEBUG
+	TimeCost tc;
+#endif
+
 	String cmd = "AT+CWJAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"";
 
-	return SendCmd(cmd, 15000);
+	bool rs	= SendCmd(cmd, 15000);
+
+#if NET_DEBUG
+	net_printf("Esp8266::JoinAP ");
+	tc.Show();
+#endif
+
+	return rs;
 }
 
 /*
