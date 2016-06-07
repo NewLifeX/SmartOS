@@ -43,6 +43,7 @@ void free_(void* p)
 {
 	byte* bs = (byte*)p;
 	bs	-= 4;
+	if(!(bs[0] == 'S' && bs[1] == 'M')) mem_printf("p=0x%08x bs[0]=%c bs[1]=%c\r\n", p, bs[0], bs[1]);
 	assert(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
 
 	free(bs);
