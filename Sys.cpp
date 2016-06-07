@@ -370,6 +370,8 @@ void TSys::ShowInfo() const
 	str.Copy(0, ID, 12);
 	str.Show(true);
 
+	if(IsGD) debug_printf("ChipType:0x%08X\r\n", *(uint*)0x40022100);
+
 	// 输出堆信息
 	uint start	= (uint)&__heap_base;
 	// F4有64k的CCM内存
