@@ -179,6 +179,9 @@ bool Array::SetItem(const void* data, int index, int count)
 	int len2 = index + count;
 	CheckCapacity(len2, index);
 
+	// 扩大长度
+	if(len2 > _Length) _Length = len2;
+
 	//byte* buf = (byte*)GetBuffer();
 	// 如果元素类型大小为1，那么可以直接调用内存设置函数
 	if(_Size == 1)
@@ -194,9 +197,6 @@ bool Array::SetItem(const void* data, int index, int count)
 			index	+= _Size;
 		}
 	}
-
-	// 扩大长度
-	if(len2 > _Length) _Length = len2;
 
 	return true;
 }
