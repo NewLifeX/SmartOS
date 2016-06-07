@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 
-#include <string.h>
+//#include <string.h>
 
 #if DEBUG
 static void TestAssign()
@@ -97,8 +97,8 @@ void Buffer::Test()
 
 	// 拷贝数据，默认-1长度表示当前长度
 	char abc[]	= "abcd";
-	bs.Copy(5, abc, strlen(abc));
-	debug_printf("Copy(5, \"abcd\", %d) => %s\r\n", strlen(abc), cs);
+	bs.Copy(5, abc, sizeof(abc));
+	debug_printf("Copy(5, \"abcd\", %d) => %s\r\n", sizeof(abc), cs);
 	assert(cs[5] == 'a' && cs[8] == 'd', "int Copy(int destIndex, const void* src, int len)");
 
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度

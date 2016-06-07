@@ -1,6 +1,6 @@
 ﻿#include "BinaryPair.h"
 
-#include <string.h>
+//#include <string.h>
 
 // 初始化消息，各字段为0
 /*BinaryPair::BinaryPair(Buffer& bs)
@@ -34,7 +34,8 @@ Buffer BinaryPair::Get(cstring name) const
 	// 从当前位置开始向后找，如果找不到，再从头开始找到当前位置。
 	// 这样子安排，如果是顺序读取，将会提升性能
 
-	int slen	= strlen(name);
+	//int slen	= strlen(name);
+	String sn	= name;
 
 	auto& ms	= *_s;
 	uint p	= ms.Position();
@@ -53,7 +54,7 @@ Buffer BinaryPair::Get(cstring name) const
 			if(ln2 <0 || ln2 > ms.Remain()) return err;
 			auto dt	= ms.ReadBytes(ln2);
 
-			if(len == slen && strncmp(name, (cstring)nm, len) == 0) return Buffer(dt, ln2);
+			if(sn == String((cstring)nm, len)) return Buffer(dt, ln2);
 		}
 
 		// 从头开始再来一次

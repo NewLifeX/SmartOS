@@ -1,8 +1,4 @@
-﻿//#include <stdio.h>
-//#include <stdlib.h>
-//#include <math.h>
-//#include <stdarg.h>
-#include <string.h>
+﻿//#include <string.h>
 
 #include "_Core.h"
 
@@ -185,16 +181,19 @@ bool Array::SetItem(const void* data, int index, int count)
 	int len2 = index + count;
 	CheckCapacity(len2, index);
 
-	byte* buf = (byte*)GetBuffer();
+	//byte* buf = (byte*)GetBuffer();
 	// 如果元素类型大小为1，那么可以直接调用内存设置函数
 	if(_Size == 1)
-		memset(&buf[index], *(byte*)data, count);
+		//memset(&buf[index], *(byte*)data, count);
+		Set(*(byte*)data, index, count);
 	else
 	{
 		while(count-- > 0)
 		{
-			memcpy(buf, data, _Size);
-			buf += _Size;
+			//memcpy(buf, data, _Size);
+			//buf += _Size;
+			Copy(index, data, _Size);
+			index	+= _Size;
 		}
 	}
 
@@ -235,7 +234,8 @@ void Array::Clear()
 	assert(_canWrite, "禁止Clear修改");
 	assert(_Arr, "Clear数据不能为空指针");
 
-	memset(_Arr, 0, _Size * _Length);
+	//memset(_Arr, 0, _Size * _Length);
+	Set(0, 0, _Size * _Length);
 }
 
 // 设置指定位置的值，不足时自动扩容
@@ -248,7 +248,8 @@ void Array::SetItemAt(int i, const void* item)
 
 	if(i >= _Length) _Length = i + 1;
 
-	memcpy((byte*)_Arr + _Size * i, item, _Size);
+	//memcpy((byte*)_Arr + _Size * i, item, _Size);
+	Copy(_Size * i, item, _Size);
 }
 
 // 重载索引运算符[]，返回指定元素的第一个字节
@@ -321,12 +322,14 @@ bool operator==(const Array& bs1, const Array& bs2)
 {
 	if(bs1.Length() != bs2.Length()) return false;
 
-	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) == 0;
+	return bs1.CompareTo(bs2) == 0;
+	//return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) == 0;
 }
 
 bool operator!=(const Array& bs1, const Array& bs2)
 {
 	if(bs1.Length() != bs2.Length()) return true;
 
-	return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
+	return bs1.CompareTo(bs2) != 0;
+	//return memcmp(bs1._Arr, bs2._Arr, bs1.Length() * bs1._Size) != 0;
 }

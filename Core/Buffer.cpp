@@ -1,9 +1,12 @@
-﻿#include <string.h>
+﻿//#include <string.h>
 
 #include "_Core.h"
 
 #include "Buffer.h"
 #include "SString.h"
+
+static void memset(byte* ptr, byte item, uint len);
+static void memcpy(byte* dst, const byte* src, uint len);
 
 /******************************** Buffer ********************************/
 
@@ -134,7 +137,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	if(_Arr == src) return len;
 
 	// 拷贝数据
-	if(len) memmove((byte*)_Arr + destIndex, src, len);
+	if(len) memcpy((byte*)_Arr + destIndex, (byte*)src, len);
 
 	return len;
 }
@@ -172,7 +175,7 @@ int Buffer::CopyTo(int srcIndex, void* data, int len) const
 	if(len)
 	{
 		if(data != (byte*)_Arr + srcIndex)
-			memcpy(data, (byte*)_Arr + srcIndex, len);
+			memcpy((byte*)data, (byte*)_Arr + srcIndex, len);
 	}
 
 	return len;
@@ -337,13 +340,40 @@ String Buffer::AsString() const
 	return str;
 }
 
+int Buffer::CompareTo(const Buffer& bs) const
+{
+	return CompareTo(bs._Arr, bs._Length);
+}
+
+int Buffer::CompareTo(const void* ptr, int len) const
+{
+	if(len < 0) len	= 0xFFFF;
+
+	// 同一个指针，长度决定大小
+	if(_Arr == ptr) return _Length - len;
+
+	// 以最短长度来比较
+	int count	= _Length;
+	if(count > len)	count	= len;
+
+	// 遍历每一个字符
+	for(cstring p1=_Arr, p2=(cstring)ptr; count>0; count--, p1++, p2++)
+	{
+		int n	= *p1 - *p2;
+		if(n) return n;
+	}
+
+	// 判断剩余长度，以此决定大小
+	return _Length - len;
+}
+
 bool operator == (const Buffer& bs1, const Buffer& bs2)
 {
 	if(bs1._Arr == bs2._Arr) return true;
 	if(!bs1._Arr || !bs2._Arr) return false;
 	if(bs1.Length() != bs2.Length()) return false;
 
-	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) == 0;
+	return bs1.CompareTo(bs2) == 0;
 }
 
 bool operator == (const Buffer& bs1, const void* ptr)
@@ -351,7 +381,7 @@ bool operator == (const Buffer& bs1, const void* ptr)
 	if(bs1._Arr == ptr) return true;
 	if(!bs1._Arr || !ptr) return false;
 
-	return memcmp(bs1._Arr, ptr, bs1.Length()) == 0;
+	return bs1.CompareTo(ptr) == 0;
 }
 
 bool operator != (const Buffer& bs1, const Buffer& bs2)
@@ -360,7 +390,7 @@ bool operator != (const Buffer& bs1, const Buffer& bs2)
 	if(!bs1._Arr || !bs2._Arr) return true;
 	if(bs1.Length() != bs2.Length()) return true;
 
-	return memcmp(bs1._Arr, bs2._Arr, bs1.Length()) != 0;
+	return bs1.CompareTo(bs2) != 0;
 }
 
 bool operator != (const Buffer& bs1, const void* ptr)
@@ -368,5 +398,60 @@ bool operator != (const Buffer& bs1, const void* ptr)
 	if(bs1._Arr == ptr) return false;
 	if(!bs1._Arr || !ptr) return true;
 
-	return memcmp(bs1._Arr, ptr, bs1.Length()) != 0;
+	return bs1.CompareTo(ptr) != 0;
+}
+
+void memset(byte* ptr, byte item, uint len)
+{
+	// 为了加快速度，分头中尾三部分
+	byte* p	= ptr;
+
+	// 为了让中间部分凑够4字节对齐
+	int n	= (uint)p & 0x03;
+	for(int i=0; i<n && len>0; i++, len--)
+		*p++	= item;
+
+	// 中间部分，4字节对齐
+	if(len > 4)
+	{
+		int v	= (item << 24) | (item << 16) | (item << 8) | item;
+		int* pi	= (int*)p;
+		for(; len>0; len-=4)
+			*pi++	= v;
+		p	= (byte*)pi;
+	}
+
+	// 结尾部分
+	while(len--)
+		*p++	= item;
+}
+
+void memcpy(byte* dst, const byte* src, uint len)
+{
+	// 为了加快速度，分头中尾三部分
+
+	// 如果两个不能同时对齐，那么无法使用快速拷贝
+	int nd	= (uint)dst & 0x03;
+	int ns	= (uint)src & 0x03;
+	if(nd == ns)
+	{
+		// 为了让中间部分凑够4字节对齐
+		for(int i=0; i<nd && len>0; i++, len--)
+			*dst++	= *src++;
+
+		// 中间部分，4字节对齐
+		if(len > 4)
+		{
+			int* pd	= (int*)dst;
+			int* ps	= (int*)src;
+			for(; len>0; len-=4)
+				*pd++	= *ps++;
+			dst	= (byte*)pd;
+			src	= (byte*)ps;
+		}
+	}
+
+	// 结尾部分
+	while(len--)
+		*dst++	= *src++;
 }

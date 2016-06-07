@@ -91,6 +91,8 @@ public:
 
     explicit operator bool() const { return _Length > 0; }
     bool operator !() const { return _Length == 0; }
+	int CompareTo(const Buffer& bs) const;
+	int CompareTo(const void* ptr, int len = -1) const;
 	friend bool operator == (const Buffer& bs1, const Buffer& bs2);
 	friend bool operator == (const Buffer& bs1, const void* ptr);
 	friend bool operator != (const Buffer& bs1, const Buffer& bs2);

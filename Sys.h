@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-/*#include <stdlib.h>
-#include <string.h>*/
 
 #include "Core\Type.h"
 #include "Core\Buffer.h"
