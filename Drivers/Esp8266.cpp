@@ -13,6 +13,21 @@
 	#define net_printf(format, ...)
 #endif
 
+// 等待
+class WaitExpect
+{
+public:
+	String*	Result	= nullptr;
+	cstring	Key1	= nullptr;
+	cstring	Key2	= nullptr;
+
+	bool	Capture	= true;	// 是否捕获所有
+	//bool	OK	= false;
+
+	bool Wait(int msTimeout);
+	bool Parse(const Buffer& bs);
+};
+
 /*
 		注意事项
 1、设置模式AT+CWMODE需要重启后生效AT+RST
@@ -112,9 +127,7 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	Led			= nullptr;
 	NetReady	= nullptr;
 
-	_Response	= nullptr;
 	_Expect		= nullptr;
-	_Expect2	= nullptr;
 
 	Buffer(_sockets, 5 * 4).Clear();
 
@@ -302,12 +315,14 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 {
 	TS("Esp8266::Send");
 
-	String rs;
-
 	// 在接收事件中拦截
-	_Response	= &rs;
-	_Expect		= expect;
-	_Expect2	= expect2;
+	String rs;
+	WaitExpect we;
+	we.Result	= &rs;
+	we.Key1		= expect;
+	we.Key2		= expect2;
+
+	_Expect	= &we;
 
 	if(cmd)
 	{
@@ -326,23 +341,10 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 #endif
 	}
 
-	// 等待收到数据
-	TimeWheel tw(0, msTimeout);
-	// 默认检查间隔200ms，如果超时时间大于1000ms，则以四分之一为检查间隔
-	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
-	tw.Sleep	= 200;
-	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
-	if(tw.Sleep > 1000)	tw.Sleep	= 1000;
-	// 提前等待一会，再开始轮询
-	Sys.Sleep(40);
-
-	while(_Response &&! tw.Expired());
+	we.Wait(msTimeout);
+	_Expect		= nullptr;
 
 	//if(rs.Length() > 4) rs.Trim();
-
-	_Response	= nullptr;
-	_Expect		= nullptr;
-	_Expect2	= nullptr;
 
 #if NET_DEBUG
 	if(EnableLog && rs)
@@ -385,24 +387,18 @@ bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
 	String rs;
 
 	// 在接收事件中拦截
-	_Response	= &rs;
-	_Expect		= expect;
+	WaitExpect we;
+	we.Result	= &rs;
+	we.Key1		= expect;
+	we.Capture	= false;
+
+	_Expect	= &we;
 
 	// 等待收到数据
-	TimeWheel tw(0, msTimeout);
-	tw.Sleep	= 100;
-	while(!tw.Expired() && _Expect)
-	{
-		// 只等我要的数据，不累加
-		rs.SetLength(0);
-	}
-
-	if(rs.Length() > 4) rs.Trim();
-
-	_Response	= nullptr;
+	bool rt	= we.Wait(msTimeout);
 	_Expect		= nullptr;
 
-	return false;
+	return rt;
 }
 
 // 引发数据到达事件
@@ -420,7 +416,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	if(p > 0) bs	= bs.Sub(0, p);
 
 	// 拦截给同步方法
-	if(_Response && ParseExpect(bs)) return 0;
+	auto we	= (WaitExpect*)_Expect;
+	if(we && we->Parse(bs)) return 0;
 
 #if NET_DEBUG
 	// 无法识别的数据可能是空格前缀，需要特殊处理
@@ -493,45 +490,15 @@ int Esp8266::ParseReceive(const Buffer& bs)
 	int remain	= bs.Length() - (s + len);
 	if(remain)
 	{
-		net_printf("IPD数据包后面跟随 %d 数据\r\n", remain);
-		ParseExpect(bs.Sub(s + len, -1));
+		//net_printf("IPD数据包后面跟随 %d 数据\r\n", remain);
+		// 拦截给同步方法
+		auto we	= (WaitExpect*)_Expect;
+		if(we && we->Parse(bs.Sub(s + len, -1))) return 0;
 	}
 
 	// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
 	// 发送UDP数据包时，响应数据会随着SEND OK一起收到
 	return p;
-}
-
-bool Esp8266::ParseExpect(const Buffer& bs)
-{
-	if(!_Response) return false;
-
-	TS("Esp8266::ParseExpect");
-
-	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
-	auto str	= bs.AsString();
-	*_Response	+= str;
-
-	// 适配第一关键字
-	if(_Expect && str.Contains(_Expect))
-	{
-		//net_printf("适配第一关键字 %s \r\n", _Expect);
-		_Response	= nullptr;
-	}
-	// 适配第二关键字
-	if(_Expect2 && str.Contains(_Expect2))
-	{
-		net_printf("适配第二关键字 %s \r\n", _Expect2);
-		_Response	= nullptr;
-	}
-	// 适配busy
-	if(str.Contains("busy p..."))
-	{
-		net_printf("适配 busy p... \r\n");
-		_Response	= nullptr;
-	}
-
-	return true;
 }
 
 /******************************** 基础AT指令 ********************************/
@@ -1173,3 +1140,55 @@ EspConfig* EspConfig::Create()
 
 	return &cfg;
 }*/
+
+bool WaitExpect::Wait(int msTimeout)
+{
+	// 等待收到数据
+	TimeWheel tw(0, msTimeout);
+	// 默认检查间隔200ms，如果超时时间大于1000ms，则以四分之一为检查间隔
+	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
+	tw.Sleep	= 200;
+	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
+	if(tw.Sleep > 1000)	tw.Sleep	= 1000;
+	// 提前等待一会，再开始轮询
+	Sys.Sleep(40);
+
+	while(Result)
+	{
+		if(tw.Expired()) return false;
+	}
+
+	return true;
+}
+
+bool WaitExpect::Parse(const Buffer& bs)
+{
+	if(bs.Length() == 0 || !Result) return false;
+
+	TS("WaitExpect::Parse");
+
+	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
+	auto str	= bs.AsString();
+	if(Capture) *Result	+= str;
+
+	// 适配第一关键字
+	if(Key1 && str.Contains(Key1))
+	{
+		//net_printf("适配第一关键字 %s \r\n", Key1);
+		Result	= nullptr;
+	}
+	// 适配第二关键字
+	if(Key2 && str.Contains(Key2))
+	{
+		net_printf("适配第二关键字 %s \r\n", Key2);
+		Result	= nullptr;
+	}
+	// 适配busy
+	if(str.Contains("busy p..."))
+	{
+		net_printf("适配 busy p... \r\n");
+		Result	= nullptr;
+	}
+
+	return true;
+}
