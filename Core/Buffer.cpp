@@ -406,7 +406,7 @@ void memset(byte* ptr, byte item, uint len)
 
 	// 为了让中间部分凑够4字节对齐
 	int n	= (uint)p & 0x03;
-	while(n-- && len--)
+	for(; n>0 && len>0; n--, len--)
 		*p++	= item;
 
 	// 中间部分，4字节对齐
@@ -414,15 +414,13 @@ void memset(byte* ptr, byte item, uint len)
 	{
 		int v	= (item << 24) | (item << 16) | (item << 8) | item;
 		int* pi	= (int*)p;
-		n	= len >> 2;
-		while(n--)
+		for(; len>4; len-=4)
 			*pi++	= v;
 		p	= (byte*)pi;
-		len	&= 0x03;
 	}
 
 	// 结尾部分
-	while(len--)
+	for(; len>0; len--)
 		*p++	= item;
 }
 
@@ -436,7 +434,7 @@ void memcpy(byte* dst, const byte* src, uint len)
 	if(nd == ns)
 	{
 		// 为了让中间部分凑够4字节对齐
-		while(nd-- && len--)
+		for(; nd>0 && len>0; nd--, len--)
 			*dst++	= *src++;
 
 		// 中间部分，4字节对齐
@@ -444,16 +442,14 @@ void memcpy(byte* dst, const byte* src, uint len)
 		{
 			int* pd	= (int*)dst;
 			int* ps	= (int*)src;
-			ns	= len >> 2;
-			while(ns--)
+			for(; len>4; len-=4)
 				*pd++	= *ps++;
 			dst	= (byte*)pd;
 			src	= (byte*)ps;
-			len	&= 0x03;
 		}
 	}
 
 	// 结尾部分
-	while(len--)
+	for(; len>0; len--)
 		*dst++	= *src++;
 }
