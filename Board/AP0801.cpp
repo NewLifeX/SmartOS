@@ -175,12 +175,12 @@ TokenClient* AP0801::CreateClient()
 	socket->Server	= tk->Server();
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
+	auto ctrl		= new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
 	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client	= new TokenClient();
+	auto client		= new TokenClient();
 	client->Control	= ctrl;
 	//client->Local	= ctrl;
 	client->Cfg		= tk;
