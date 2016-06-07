@@ -44,8 +44,8 @@ ISocketHost* IOK0203::Create8266(Action onNetReady)
 
 	auto srp	= new SerialPort(COM2, 115200);
 	//srp->ByteTime	= 10;
-	srp->Tx.SetCapacity(0x80);
-	srp->Rx.SetCapacity(0x80);
+	srp->Tx.SetCapacity(0x100);
+	srp->Rx.SetCapacity(0x100);
 
 	auto net	= new Esp8266(srp, PB2, PA1);
 	net->InitConfig();
