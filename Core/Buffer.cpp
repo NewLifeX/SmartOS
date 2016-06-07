@@ -1,6 +1,4 @@
-﻿//#include <string.h>
-
-#include "_Core.h"
+﻿#include "_Core.h"
 
 #include "Buffer.h"
 #include "SString.h"
@@ -347,7 +345,7 @@ int Buffer::CompareTo(const Buffer& bs) const
 
 int Buffer::CompareTo(const void* ptr, int len) const
 {
-	if(len < 0) len	= 0xFFFF;
+	if(len < 0) len	= _Length;
 
 	// 同一个指针，长度决定大小
 	if(_Arr == ptr) return _Length - len;
@@ -408,7 +406,7 @@ void memset(byte* ptr, byte item, uint len)
 
 	// 为了让中间部分凑够4字节对齐
 	int n	= (uint)p & 0x03;
-	for(int i=0; i<n && len>0; i++, len--)
+	while(n-- && len--)
 		*p++	= item;
 
 	// 中间部分，4字节对齐
@@ -416,9 +414,11 @@ void memset(byte* ptr, byte item, uint len)
 	{
 		int v	= (item << 24) | (item << 16) | (item << 8) | item;
 		int* pi	= (int*)p;
-		for(; len>0; len-=4)
+		n	= len >> 2;
+		while(n--)
 			*pi++	= v;
 		p	= (byte*)pi;
+		len	&= 0x03;
 	}
 
 	// 结尾部分
@@ -436,7 +436,7 @@ void memcpy(byte* dst, const byte* src, uint len)
 	if(nd == ns)
 	{
 		// 为了让中间部分凑够4字节对齐
-		for(int i=0; i<nd && len>0; i++, len--)
+		while(nd-- && len--)
 			*dst++	= *src++;
 
 		// 中间部分，4字节对齐
@@ -444,10 +444,12 @@ void memcpy(byte* dst, const byte* src, uint len)
 		{
 			int* pd	= (int*)dst;
 			int* ps	= (int*)src;
-			for(; len>0; len-=4)
+			ns	= len >> 2;
+			while(ns--)
 				*pd++	= *ps++;
 			dst	= (byte*)pd;
 			src	= (byte*)ps;
+			len	&= 0x03;
 		}
 	}
 

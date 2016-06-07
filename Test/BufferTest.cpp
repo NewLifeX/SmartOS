@@ -1,7 +1,5 @@
 ﻿#include "Sys.h"
 
-//#include <string.h>
-
 #if DEBUG
 static void TestAssign()
 {

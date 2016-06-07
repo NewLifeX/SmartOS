@@ -1,7 +1,5 @@
 ﻿#include "BinaryPair.h"
 
-//#include <string.h>
-
 // 初始化消息，各字段为0
 /*BinaryPair::BinaryPair(Buffer& bs)
 {

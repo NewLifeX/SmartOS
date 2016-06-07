@@ -1,6 +1,4 @@
-﻿//#include <string.h>
-
-#include "_Core.h"
+﻿#include "_Core.h"
 
 #include "Type.h"
 #include "Buffer.h"
