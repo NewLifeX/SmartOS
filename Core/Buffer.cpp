@@ -219,9 +219,12 @@ Buffer Buffer::Sub(int index, int len)
 const Buffer Buffer::Sub(int index, int len) const
 {
 	assert(index >= 0, "index >= 0");
-	assert(index <= _Length, "index < _Length");
 	if(len < 0) len	= _Length - index;
-	assert(index + len <= _Length, "len <= _Length");
+#if DEBUG
+	if(index + len > _Length) debug_printf("Buffer::Sub (%d, %d) > %d \r\n", index, len, _Length);
+#endif
+	//assert(index <= _Length, "index < _Length");
+	assert(index + len <= _Length, "index + len <= _Length");
 
 	return Buffer((byte*)_Arr + index, len);
 
