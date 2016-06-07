@@ -484,7 +484,19 @@ int Esp8266::ParseReceive(const Buffer& bs)
 	// 分发给各个Socket
 	auto es	= (EspSocket**)_sockets;
 	auto sk	= es[idx];
-	if(sk) sk->OnProcess(bs.Sub(s, len), ep);
+	if(sk)
+	{
+		// 校验数据长度
+		int len2	= len;
+		int remain	= bs.Length();
+		if(remain < len2)
+		{
+			len2	= remain;
+			net_printf("剩余数据长度 %d 小于标称长度 %d \r\n", remain, len);
+		}
+
+		sk->OnProcess(bs.Sub(s, len2), ep);
+	}
 
 	// 可能在+IPD数据包后面紧跟有指令响应数据
 	int remain	= bs.Length() - (s + len);
