@@ -456,7 +456,7 @@ void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 	cfg->Save();
 
 	//Hello.Name	= reg.User;
-	
+
 	Status	= 0;
 
 	Sys.SetTask(_task, true, 0);
@@ -531,6 +531,9 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		}
 
 		debug_printf("\r\n");
+
+		// 登录成功后加大心跳间隔
+		Sys.SetTaskPeriod(_task, 30000);
 	}
 
 	return true;
@@ -566,14 +569,16 @@ void TokenClient::Ping()
 {
 	TS("TokenClient::Ping");
 
-	if(LastActive > 0 && LastActive + 30000 < Sys.Ms())
+	if(LastActive > 0 && LastActive + 180000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
-		debug_printf("30秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
+		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
 		Control->Key.SetLength(0);
 
 		Status = 0;
+
+		Sys.SetTaskPeriod(_task, 5000);
 
 		return;
 	}
