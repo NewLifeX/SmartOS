@@ -488,7 +488,7 @@ int Esp8266::ParseReceive(const Buffer& bs)
 	{
 		// 校验数据长度
 		int len2	= len;
-		int remain	= bs.Length();
+		int remain	= bs.Length() - s;
 		if(remain < len2)
 		{
 			len2	= remain;
