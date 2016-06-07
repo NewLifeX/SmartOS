@@ -322,17 +322,11 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 
 	debug_printf("Token::%s ", action);
 
-	if (ShowRemote || msg.State)
+	if (ShowRemote && msg.State)
 	{
-		//auto svr = (IPEndPoint*)Server;
 		auto svr = (IPEndPoint*)msg.State;
-		if(!svr) svr = (IPEndPoint*)Server;
-		//if (!svr || svr->Address == IPAddress::Broadcast())
-		if(svr)
-		{
-			svr->Show();
-			debug_printf(" ");
-		}
+		svr->Show();
+		debug_printf(" ");
 	}
 
 	msg.Show();

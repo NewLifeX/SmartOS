@@ -70,7 +70,7 @@ void TokenClient::Open()
 	Hello.Name		= Cfg->User();*/
 
 	// 令牌客户端定时任务
-	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户端");
+	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
 	Sys.AddTask(BroadcastHelloTask, this, 2000, 30000, "令牌广播");
 }
 
