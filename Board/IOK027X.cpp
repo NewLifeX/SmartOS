@@ -1,4 +1,5 @@
-﻿#include "IOK0203.h"
+﻿
+#include "IOK027X.h"
 
 #include "SerialPort.h"
 #include "WatchDog.h"
@@ -15,11 +16,11 @@
 #include "App\FlushPort.h"
 
 
-IOK0203::IOK0203()
+IOK027X::IOK027X()
 {
 }
 
-void IOK0203::Setup(ushort code, cstring name, COM message, int baudRate)
+void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
@@ -38,7 +39,7 @@ void IOK0203::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-ISocketHost* IOK0203::Create8266(Action onNetReady)
+ISocketHost* IOK027X::Create8266(Action onNetReady)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
@@ -52,8 +53,11 @@ ISocketHost* IOK0203::Create8266(Action onNetReady)
 	net->LoadConfig();
 	//net->_power.Invert = true;
 
-	net->SSID	= "yws007";
-	net->Pass	= "yws52718";
+	//net->SSID	= "yws007";
+	//net->Pass	= "yws52718";
+
+	net->SSID	= "wswl-net";
+	net->Pass	= "wswl52718";
 
 	net->NetReady	= onNetReady;
 	net->OpenAsync();
@@ -83,7 +87,7 @@ static void OnDhcpStop(void* sender, void* param)
 	}
 }
 
-void IOK0203::InitDHCP(Action onNetReady)
+void IOK027X::InitDHCP(Action onNetReady)
 {
 	_DHCP_Ready	= onNetReady;
 
@@ -95,7 +99,7 @@ void IOK0203::InitDHCP(Action onNetReady)
 
 /******************************** Token ********************************/
 
-TokenClient* IOK0203::CreateClient()
+TokenClient* IOK027X::CreateClient()
 {
 	debug_printf("\r\nCreateClient \r\n");
 
@@ -108,12 +112,12 @@ TokenClient* IOK0203::CreateClient()
 	socket->Server	= tk->Server();
 
 	// 创建连接服务器的控制器
-	auto ctrl		= new TokenController();
+	auto ctrl = new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
+	ctrl->Socket = socket;
 
 	// 创建客户端
-	auto client		= new TokenClient();
+	auto client	= new TokenClient();
 	client->Control	= ctrl;
 	//client->Local	= ctrl;
 	client->Cfg		= tk;
@@ -128,10 +132,9 @@ TokenClient* IOK0203::CreateClient()
 		socket->Local.Port	= tk->Port;
 
 		// 建立内网控制器
-		auto token2		= new TokenController();
+		auto token2 = new TokenController();
 		//token2->Port	= dynamic_cast<ITransport*>(socket);
-		token2->Socket	= socket;
-		token2->ShowRemote	= true;
+		token2->Socket = socket;
 		client->Local	= token2;
 	}
 
@@ -153,7 +156,7 @@ TokenClient* IOK0203::CreateClient()
 	return rs;
 }
 
-ITransport* IOK0203::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+ITransport* IOK027X::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	debug_printf("\r\n Create2401 \r\n");
 

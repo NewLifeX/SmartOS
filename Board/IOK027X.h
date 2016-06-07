@@ -1,18 +1,18 @@
-﻿#ifndef _IOK0203_H_
-#define _IOK0203_H_
+﻿#ifndef _IOK027X_H_
+#define _IOK027X_H_
 
 #include "Sys.h"
 #include "Net\ITransport.h"
 
 #include "TokenNet\TokenClient.h"
 
-// 阿波罗0801/0802
-class IOK0203
+// WIFI触摸开关 123位
+class IOK027X
 {
 public:
 	ISocketHost*	Host;			// 网络主机
 	
-	IOK0203();
+	IOK027X();
 
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
