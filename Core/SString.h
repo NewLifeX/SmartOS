@@ -205,10 +205,10 @@ public:
 	const String Next();
 
 	// 是否已经到达末尾
-	bool End() const { return Position == -2; }
+	//bool End() const { return Position == -2; }
 
-    explicit operator bool() const { return Position >= 0; }
-    bool operator !() const { return Position < 0; }
+    explicit operator bool() const { return Position >= -1; }
+    bool operator !() const { return Position < -1; }
 
 private:
 	const String& _Str;

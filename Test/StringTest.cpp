@@ -340,7 +340,7 @@ static void TestSplit(cstring cstr)
 	int p	= -1;
 	auto sp	= str.Split(",");
 	assert(sp.Position == p && sp.Length == 0, err);
-	assert(!sp.End(), err);
+	assert(sp, err);
 
 	auto rs	= sp.Next();
 
@@ -387,13 +387,13 @@ static void TestSplit(cstring cstr)
 
 	// 再来一组
 	rs	= sp.Next();
-	assert(sp.End(), err);
+	assert(!sp, err);
 	assert(sp.Position == -2 && sp.Length == 0, err);
 	assert(!rs, err);
 
 	// 到了默认不再查找
 	rs	= sp.Next();
-	assert(sp.End(), err);
+	assert(!sp, err);
 	assert(sp.Position == -2 && sp.Length == 0, err);
 	assert(!rs, err);
 }
