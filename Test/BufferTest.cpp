@@ -65,6 +65,19 @@ static void TestCopy(const Buffer& bs)
 	assert(bs2 == cs + 8, err);
 }
 
+static void TestCopy2()
+{
+	byte buf[]	= { 1, 2, 3, 4 };
+	Buffer bs(buf, sizeof(buf));
+
+	auto err	= "自我局部拷贝，不重叠";
+	// 拷贝123覆盖自己的234，结果应该是1123，而不是1111
+	bs.Copy(1, buf, 3);
+	assert(buf[1] == 1, err);
+	assert(buf[2] == 2, err);
+	assert(buf[3] == 3, err);
+}
+
 void Buffer::Test()
 {
 	TS("TestBuffer");
@@ -79,6 +92,7 @@ void Buffer::Test()
 	TestAssign();
 	TestAssign2();
 	TestCopy(bs);
+	TestCopy2();
 
 	// 设置数组长度。只能缩小不能扩大，子类可以扩展以实现自动扩容
 	bs.SetLength(11);
