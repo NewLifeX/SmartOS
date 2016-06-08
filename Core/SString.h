@@ -98,13 +98,15 @@ public:
     bool operator !() const { return _Length == 0; }
 	//operator char*() const { return _Arr; }
 	int CompareTo(const String& s) const;
+	int CompareTo(cstring cstr, int len = -1, bool ignoreCase = false) const;
 	bool Equals(const String& s) const;
 	bool Equals(cstring cstr) const;
 	bool EqualsIgnoreCase(const String& s) const;
-	bool operator == (const String& rhs) const {return Equals(rhs);}
-	bool operator == (cstring cstr) const {return Equals(cstr);}
-	bool operator != (const String& rhs) const {return !Equals(rhs);}
-	bool operator != (cstring cstr) const {return !Equals(cstr);}
+	bool EqualsIgnoreCase(cstring cstr) const;
+	bool operator == (const String& rhs) const	{return Equals(rhs);	}
+	bool operator == (cstring cstr) const 		{return Equals(cstr);	}
+	bool operator != (const String& rhs) const	{return !Equals(rhs);	}
+	bool operator != (cstring cstr) const		{return !Equals(cstr);	}
 	bool operator <  (const String& rhs) const;
 	bool operator >  (const String& rhs) const;
 	bool operator <= (const String& rhs) const;
@@ -184,7 +186,7 @@ private:
 	using Array::CheckCapacity;
 	bool CheckCapacity(uint size);
 	virtual void* Alloc(int len);
-	
+
 	int Search(cstring str, int len, int startIndex, bool rev) const;
 };
 
@@ -194,7 +196,7 @@ class StringSplit
 {
 public:
 	StringSplit(const String& str, const String& sep);
-	
+
 	const String Next();
 
     explicit operator bool() const { return _Position >= 0; }

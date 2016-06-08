@@ -292,6 +292,41 @@ static void TestMemory()
 	}
 }
 
+static void TestCompare()
+{
+	TS("TestCompare");
+
+	debug_printf("字符串比较测试\r\n");
+
+	String str	= "abcd";
+	cstring cs	= "abcdef";
+
+	auto err	= "int CompareTo(cstring cstr) const";
+
+	// 因为按照左边长度来比较，所以返回0
+	assert(str.CompareTo(cs) == 0, err);
+
+	err	= "bool operator != (cstring cstr) const";
+	assert(str != cs, err);
+
+	// 倒过来试试
+	String str2	= "abcdef";
+	cstring cs2	= "abcd";
+
+	assert(str2.CompareTo(cs2) > 0, err);
+
+	err	= "bool operator != (cstring cstr) const";
+	assert(str2 != cs2, err);
+
+	// 不区分大小写
+	String str3	= "ABCD";
+
+	err	= "bool EqualsIgnoreCase(cstring cstr) const";
+	assert(!str3.Equals(cs2), err);
+	assert(str3.EqualsIgnoreCase(cs2), err);
+	assert(str3.EqualsIgnoreCase(String(cs2)), err);
+}
+
 void String::Test()
 {
 	TS("TestString");
@@ -308,6 +343,8 @@ void String::Test()
 	TestSet();
 
 	TestMemory();
+
+	TestCompare();
 
 	debug_printf("字符串单元测试全部通过！");
 }

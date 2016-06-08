@@ -1,5 +1,6 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 #include <stdarg.h>
@@ -18,8 +19,8 @@ extern char* ultoa(UInt64 value, char* string, int radix);
 char* dtostrf(double val, char width, byte prec, char* sout);
 
 // C格式字符串函数
-static int strnlen(cstring str, int max = 0xFFFF);
-static int strncmp(cstring s1, cstring s2, int n);
+//static int strnlen(cstring str, int max = 0xFFFF);
+//static int strncmp(cstring s1, cstring s2, int n);
 
 /******************************** String ********************************/
 
@@ -27,7 +28,7 @@ String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
-	_Length	= strnlen(cstr);
+	_Length	= strlen(cstr);
 	if(_Length)
 	{
 		_Arr	= (char*)cstr;
@@ -130,7 +131,7 @@ String::String(char* str, int length) : Array(str, length)
 	_Capacity	= length - 1;
 
 	// 计算外部字符串长度
-	int len	= strnlen(str, length);
+	int len	= strlen(str);
 	if(len >= length) len	= length - 1;
 	_Length	= len;
 	_Arr[_Length]	= '\0';
@@ -324,7 +325,7 @@ String& String::operator = (String&& rval)
 
 String& String::operator = (cstring cstr)
 {
-	if (cstr) copy(cstr, strnlen(cstr));
+	if (cstr) copy(cstr, strlen(cstr));
 	else release();
 
 	return *this;
@@ -359,7 +360,7 @@ bool String::Concat(cstring cstr, uint length)
 bool String::Concat(cstring cstr)
 {
 	if (!cstr) return 0;
-	return Concat(cstr, strnlen(cstr));
+	return Concat(cstr, strlen(cstr));
 }
 
 bool String::Concat(char c)
@@ -387,7 +388,7 @@ bool String::Concat(byte num, int radix)
 	char buf[1 + 3 * sizeof(byte)];
 	itoa(num, buf, radix);
 
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(short num, int radix)
@@ -397,7 +398,7 @@ bool String::Concat(short num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(ushort num, int radix)
@@ -415,7 +416,7 @@ bool String::Concat(ushort num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	utoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(int num, int radix)
@@ -425,7 +426,7 @@ bool String::Concat(int num, int radix)
 
 	char buf[2 + 3 * sizeof(int)];
 	itoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(uint num, int radix)
@@ -443,7 +444,7 @@ bool String::Concat(uint num, int radix)
 
 	char buf[1 + 3 * sizeof(uint)];
 	utoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(Int64 num, int radix)
@@ -453,7 +454,7 @@ bool String::Concat(Int64 num, int radix)
 
 	char buf[2 + 3 * sizeof(Int64)];
 	ltoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(UInt64 num, int radix)
@@ -473,21 +474,21 @@ bool String::Concat(UInt64 num, int radix)
 
 	char buf[1 + 3 * sizeof(UInt64)];
 	ultoa(num, buf, radix);
-	return Concat(buf, strnlen(buf, sizeof(buf)));
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(float num, byte decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strnlen(buf, sizeof(buf)));
+	return Concat(string, strlen(string));
 }
 
 bool String::Concat(double num, byte decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strnlen(buf, sizeof(buf)));
+	return Concat(string, strlen(string));
 }
 
 String& operator + (String& lhs, const Object& rhs)
@@ -508,7 +509,7 @@ String& operator + (String& lhs, const String& rhs)
 String& operator + (String& lhs, cstring cstr)
 {
 	auto& a = const_cast<String&>(lhs);
-	if (!cstr || !a.Concat(cstr, strnlen(cstr))) a.release();
+	if (!cstr || !a.Concat(cstr, strlen(cstr))) a.release();
 	return a;
 }
 
@@ -570,42 +571,58 @@ String& operator + (String& lhs, double num)
 
 int String::CompareTo(const String& s) const
 {
-	if (!_Arr || !s._Arr) {
-		if (s._Arr && s._Length > 0) return 0 - *(byte*)s._Arr;
-		if (_Arr && _Length > 0) return *(byte*)_Arr;
+	/*if (!_Arr)
+	{
+		if (s._Arr && s._Length > 0) return -1;
 		return 0;
 	}
-	return strncmp(_Arr, s._Arr, _Length);
+	if(!s._Arr && _Arr && _Length > 0) return 1;
+
+	return strncmp(_Arr, s._Arr, _Length);*/
+	return CompareTo(s._Arr, s._Length, false);
 }
 
-bool String::Equals(const String& s2) const
+int String::CompareTo(cstring cstr, int len, bool ignoreCase) const
 {
-	return _Length == s2._Length && CompareTo(s2) == 0;
+	if(len < 0) len	= strlen(cstr);
+	if (!_Arr)
+	{
+		if (cstr && len > 0) return -1;
+		return 0;
+	}
+	if(!cstr && _Arr && _Length > 0) return 1;
+	
+	// 逐个比较字符，直到指定长度或者源字符串结束
+	if(ignoreCase)
+		return strncasecmp(_Arr, cstr, _Length);
+	else
+		return strncmp(_Arr, cstr, _Length);
+}
+
+bool String::Equals(const String& str) const
+{
+	return _Length == str._Length && CompareTo(str._Arr, str._Length, false) == 0;
 }
 
 bool String::Equals(cstring cstr) const
 {
-	if (_Length == 0) return cstr == nullptr || *cstr == 0;
-	//if (cstr == nullptr) return _Arr[0] == 0;
-	if (cstr == nullptr) return false;
-
-	int len	= strnlen(cstr, _Length + 1);
+	int len	= strlen(cstr);
 	if(len != _Length) return false;
-
-	return strncmp(_Arr, cstr, len) == 0;
+	
+	return CompareTo(cstr, len, false) == 0;
 }
 
-bool String::EqualsIgnoreCase(const String &s2 ) const
+bool String::EqualsIgnoreCase(const String &str) const
 {
-	if (this == &s2) return true;
-	if (_Length != s2._Length) return false;
-	if (_Length == 0) return true;
-	auto p1	= _Arr;
-	auto p2	= s2._Arr;
-	while (*p1) {
-		if (tolower(*p1++) != tolower(*p2++)) return false;
-	}
-	return true;
+	return _Length == str._Length && CompareTo(str._Arr, str._Length, true) == 0;
+}
+
+bool String::EqualsIgnoreCase(cstring cstr) const
+{
+	int len	= strlen(cstr);
+	if(len != _Length) return false;
+	
+	return CompareTo(cstr, len, true) == 0;
 }
 
 bool String::operator<(const String& rhs) const
@@ -752,7 +769,7 @@ String& String::Format(cstring format, ...)
 	va_start(ap, format);
 
 	// 无法准确估计长度，大概乘以2处理
-	CheckCapacity(_Length + (strnlen(format) << 1));
+	CheckCapacity(_Length + (strlen(format) << 1));
 
 	//char* p = _Arr;
 	int len2 = vsnprintf(_Arr + _Length, _Capacity - _Length, format, ap);
@@ -783,7 +800,7 @@ int String::IndexOf(const String& str, int startIndex) const
 
 int String::IndexOf(cstring str, int startIndex) const
 {
-	return Search(str, strnlen(str, _Length - startIndex + 1), startIndex, false);
+	return Search(str, strlen(str), startIndex, false);
 }
 
 int String::LastIndexOf(const char ch, int startIndex) const
@@ -809,7 +826,7 @@ int String::LastIndexOf(const String& str, int startIndex) const
 
 int String::LastIndexOf(cstring str, int startIndex) const
 {
-	return Search(str, strnlen(str, _Length - startIndex + 1), startIndex, true);
+	return Search(str, strlen(str), startIndex, true);
 }
 
 int String::Search(cstring str, int len, int startIndex, bool rev) const
@@ -855,8 +872,7 @@ bool String::StartsWith(const String& str, int startIndex) const
 bool String::StartsWith(cstring str, int startIndex) const
 {
 	if(!str) return false;
-
-	int slen	= strnlen(str, _Length - startIndex + 1);
+	int slen	= strlen(str);
 	if (startIndex + slen > _Length || !_Arr) return false;
 
 	return strncmp(&_Arr[startIndex], str, slen) == 0;
@@ -873,8 +889,7 @@ bool String::EndsWith(const String& str) const
 bool String::EndsWith(cstring str) const
 {
 	if(!str) return false;
-
-	int slen	= strnlen(str, _Length + 1);
+	int slen	= strlen(str);
 	if(slen > _Length) return false;
 
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
@@ -1126,7 +1141,7 @@ strlen(const char *str)
 		;
 	return (s - str);
 }*/
-int strnlen(cstring str, int max)
+/*int strnlen(cstring str, int max)
 {
 	cstring s	= str;
 
@@ -1145,4 +1160,4 @@ int strncmp(cstring s1, cstring s2, int n)
 	} while (--n);
 
 	return 0;
-}
+}*/
