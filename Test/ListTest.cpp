@@ -1,5 +1,5 @@
 #include "Sys.h"
-#include "List.h"
+#include "Core\List.h"
 
 #if DEBUG
 void List::Test()
