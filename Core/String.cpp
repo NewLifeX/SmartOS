@@ -18,10 +18,6 @@ extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
 char* dtostrf(double val, char width, byte prec, char* sout);
 
-// C格式字符串函数
-//static int strnlen(cstring str, int max = 0xFFFF);
-//static int strncmp(cstring s1, cstring s2, int n);
-
 /******************************** String ********************************/
 
 String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
@@ -113,7 +109,6 @@ String::String(float value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 	init();
 
 	Concat(value, decimalPlaces);
-	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
 String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
@@ -121,7 +116,6 @@ String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
 	init();
 
 	Concat(value, decimalPlaces);
-	//dtostrf(value, (decimalPlaces + 2), decimalPlaces, _Arr);
 }
 
 // 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
@@ -161,7 +155,6 @@ inline void String::init()
 
 void String::release()
 {
-	//if(_needFree && _Arr != Arr) delete _Arr;
 	Array::Release();
 
 	init();
@@ -571,14 +564,6 @@ String& operator + (String& lhs, double num)
 
 int String::CompareTo(const String& s) const
 {
-	/*if (!_Arr)
-	{
-		if (s._Arr && s._Length > 0) return -1;
-		return 0;
-	}
-	if(!s._Arr && _Arr && _Length > 0) return 1;
-
-	return strncmp(_Arr, s._Arr, _Length);*/
 	return CompareTo(s._Arr, s._Length, false);
 }
 
@@ -807,11 +792,6 @@ int String::LastIndexOf(const char ch, int startIndex) const
 {
 	if(startIndex >= _Length) return -1;
 
-	/*auto p	= strrchr(_Arr + startIndex, ch);
-	if(!p) return -1;
-
-	return p - _Arr;*/
-
 	for(int i=_Length - 1; i>=startIndex; i--)
 	{
 		if(_Arr[i] == ch) return i;
@@ -865,21 +845,26 @@ bool String::Contains(cstring str) const { return IndexOf(str) >= 0; }
 
 bool String::StartsWith(const String& str, int startIndex) const
 {
-	if (startIndex + str._Length > _Length || !_Arr || !str._Arr) return false;
+	if(!_Arr || !str._Arr) return false;
+	if(str._Length == 0) return false;
+	if (startIndex + str._Length > _Length) return false;
+	
 	return strncmp(&_Arr[startIndex], str._Arr, str._Length) == 0;
 }
 
 bool String::StartsWith(cstring str, int startIndex) const
 {
-	if(!str) return false;
+	if(!_Arr || !str) return false;
 	int slen	= strlen(str);
-	if (startIndex + slen > _Length || !_Arr) return false;
+	if(slen == 0) return false;
+	if (startIndex + slen > _Length) return false;
 
 	return strncmp(&_Arr[startIndex], str, slen) == 0;
 }
 
 bool String::EndsWith(const String& str) const
 {
+	if(!_Arr || !str._Arr) return false;
 	if(str._Length == 0) return false;
 	if(str._Length > _Length) return false;
 
@@ -888,8 +873,9 @@ bool String::EndsWith(const String& str) const
 
 bool String::EndsWith(cstring str) const
 {
-	if(!str) return false;
+	if(!_Arr || !str) return false;
 	int slen	= strlen(str);
+	if(slen == 0) return false;
 	if(slen > _Length) return false;
 
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
@@ -1129,35 +1115,3 @@ const String StringSplit::Next()
 	// 包装一层指针
 	return String((cstring)ptr, len);
 }
-
-
-/******************************** C格式字符串函数 ********************************/
-/*size_t
-strlen(const char *str)
-{
-	const char *s;
-
-	for (s = str; *s; ++s)
-		;
-	return (s - str);
-}*/
-/*int strnlen(cstring str, int max)
-{
-	cstring s	= str;
-
-	for (int i=0; i<max && *s; i++, s++);
-
-	return (s - str);
-}
-
-int strncmp(cstring s1, cstring s2, int n)
-{
-	if (n == 0) return 0;
-	do {
-		if (*s1 != *s2) return *s1 - *s2;
-		if (*s1++ == 0) break;
-		s2++;
-	} while (--n);
-
-	return 0;
-}*/
