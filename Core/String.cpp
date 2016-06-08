@@ -576,7 +576,7 @@ int String::CompareTo(cstring cstr, int len, bool ignoreCase) const
 		return 0;
 	}
 	if(!cstr && _Arr && _Length > 0) return 1;
-	
+
 	// 逐个比较字符，直到指定长度或者源字符串结束
 	if(ignoreCase)
 		return strncasecmp(_Arr, cstr, _Length);
@@ -593,7 +593,7 @@ bool String::Equals(cstring cstr) const
 {
 	int len	= strlen(cstr);
 	if(len != _Length) return false;
-	
+
 	return CompareTo(cstr, len, false) == 0;
 }
 
@@ -606,7 +606,7 @@ bool String::EqualsIgnoreCase(cstring cstr) const
 {
 	int len	= strlen(cstr);
 	if(len != _Length) return false;
-	
+
 	return CompareTo(cstr, len, true) == 0;
 }
 
@@ -826,7 +826,7 @@ int String::Search(cstring str, int len, int startIndex, bool rev) const
 	{
 		// 最大比较个数以目标字符串为准，源字符串确保长度足够
 		if(strncmp(p, str, len) == 0) return p - _Arr;
-		
+
 		if(rev)
 		{
 			if(--p < s) break;
@@ -848,7 +848,7 @@ bool String::StartsWith(const String& str, int startIndex) const
 	if(!_Arr || !str._Arr) return false;
 	if(str._Length == 0) return false;
 	if (startIndex + str._Length > _Length) return false;
-	
+
 	return strncmp(&_Arr[startIndex], str._Arr, str._Length) == 0;
 }
 
@@ -883,14 +883,21 @@ bool String::EndsWith(cstring str) const
 
 StringSplit String::Split(const String& sep) const
 {
+	return StringSplit(*this, sep.GetBuffer());
+}
+
+StringSplit String::Split(cstring sep) const
+{
 	return StringSplit(*this, sep);
 }
 
-String String::Substring(int start, int length) const
+String String::Substring(int start, int len) const
 {
 	String str;
+
+	if(len < 0) len	= _Length - start;
 	//str.Copy(this, _Length, start);
-	if(_Length && start < _Length) str.copy(_Arr + start, length);
+	if(_Length && start < _Length) str.copy(_Arr + start, len);
 
 	return str;
 }
@@ -1077,41 +1084,61 @@ char *dtostrf (double val, char width, byte prec, char* sout)
 
 /******************************** StringSplit ********************************/
 
-StringSplit::StringSplit(const String& str, const String& sep) :
-	_Str(str),
-	_Sep(sep)
+StringSplit::StringSplit(const String& str, cstring sep) :
+	_Str(str)
 {
-	_Position	= 0;
-	_Length		= 0;
+	Sep			= sep;
+	Position	= -1;
+	Length		= 0;
 
 	// 先算好第一段
-	int p	= _Str.IndexOf(_Sep);
-	if(p >= 0) _Length	= p;
+	//int p	= _Str.IndexOf(_Sep);
+	//if(p >= 0) _Length	= p;
 }
 
 const String StringSplit::Next()
 {
-	auto ptr	= _Str.GetBuffer();
+	cstring ptr	= nullptr;
 	int len		= 0;
 
-	if(_Position < 0 || _Length == 0)
-		ptr	= nullptr;
-	else
+	if(Position >= -1 && Sep)
 	{
-		// 拿出当前段，然后提前计算下一段
-		ptr	+= _Position;
-		len	= _Length;
+		String sp	= Sep;
 
-		// 找到下一个位置
-		// 剩余全部长度，如果找不到下一个，那么这个就是最后长度
-		int end	= _Str.Length();
-		_Position += _Length + _Sep.Length();
-		int p	= _Str.IndexOf(_Sep, _Position);
-		if(p > 0) end	= p;
+		// 从当前段之后开始找一段
+		int s	= Position + Length;
+		// 除首次以外，每次都要跳过分隔符
+		if(s < 0)
+			s	= 0;
+		else
+			s	+= sp.Length();
 
-		_Length		= end - _Position;
+		// 检查是否已经越界
+		if(s >= _Str.Length())
+		{
+			Position	= -2;
+			Length		= 0;
+		}
+		else
+		{
+			// 查找分隔符
+			int p	= _Str.IndexOf(Sep, s);
+
+			int sz	= 0;
+			// 剩余全部长度，如果找不到下一个，那么这个就是最后长度。不用跳过分隔符
+			if(p < 0)
+				sz	= _Str.Length() - s;
+			else
+				sz	= p - s;
+
+			Position	= s;
+			Length		= sz;
+
+			ptr	= _Str.GetBuffer() + Position;
+			len	= Length;
+		}
 	}
 
 	// 包装一层指针
-	return String((cstring)ptr, len);
+	return String(ptr, len);
 }

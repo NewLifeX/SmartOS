@@ -56,11 +56,10 @@ IPAddress IPAddress::Parse(const String& ipstr)
 		if(ipstr == "255.255.255.255") return IPAddress::Broadcast();
 
 		// 这里不能在Split参数直接使用字符指针，隐式构造的字符串对象在这个函数之后将会被销毁
-		String sep(".");
-		auto ss	= ipstr.Split(sep);
-		for(int i=0; i<4 && ss; i++)
+		auto sp	= ipstr.Split(".");
+		for(int i=0; i<4 && sp; i++)
 		{
-			auto item	= ss.Next();
+			auto item	= sp.Next();
 			if(item.Length() == 0 || item.Length() > 3) break;
 
 			// 标准地址第一个不能是0，唯一的Any例外已经在前面处理

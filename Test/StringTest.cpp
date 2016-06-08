@@ -327,6 +327,77 @@ static void TestCompare()
 	assert(str3.EqualsIgnoreCase(String(cs2)), err);
 }
 
+static void TestSplit(cstring cstr)
+{
+	TS("TestSplit");
+
+	debug_printf("字符串分割测试\r\n");
+
+	String str	= cstr;
+
+	auto err	= "StringSplit Split(cstring sep) const";
+
+	int p	= -1;
+	auto sp	= str.Split(",");
+	assert(sp.Position == p && sp.Length == 0, err);
+	assert(!sp.End(), err);
+
+	auto rs	= sp.Next();
+
+	p	= 0;
+
+	// 如果分隔符开头，则跳过它
+	if(cstr[0] == ',')
+	{
+		rs	= sp.Next();
+		p++;
+	}
+
+	assert(sp.Position == p && sp.Length == 4, err);
+	assert(rs == "+IPD", err);
+	p	+= 4 + 1;
+
+	rs	= sp.Next();
+	assert(sp.Position == p && sp.Length == 1, err);
+	assert(rs.ToInt() == 3, err);
+	p	+= 1 + 1;
+
+	rs	= sp.Next();
+	assert(sp.Position == p && sp.Length == 2, err);
+	assert(rs.ToInt() == 96, err);
+	p	+= 2 + 1;
+
+	rs	= sp.Next();
+	assert(sp.Position == p && sp.Length == rs.Length(), err);
+	assert(rs == "10.0.0.21", err);
+	p	+= rs.Length() + 1;
+
+	// 更换分隔符
+	sp.Sep	= ":";
+	rs	= sp.Next();
+	assert(sp.Position == p && sp.Length == 4, err);
+	assert(rs.ToInt() == 3377, err);
+	p	+= 4 + 1;
+
+	// 最后一组
+	rs	= sp.Next();
+	assert(sp.Position == p && sp.Length == rs.Length(), err);
+	assert(rs == "abcdef", err);
+	//assert(sp.Position + sp.Length == str.Length(), err);
+
+	// 再来一组
+	rs	= sp.Next();
+	assert(sp.End(), err);
+	assert(sp.Position == -2 && sp.Length == 0, err);
+	assert(!rs, err);
+
+	// 到了默认不再查找
+	rs	= sp.Next();
+	assert(sp.End(), err);
+	assert(sp.Position == -2 && sp.Length == 0, err);
+	assert(!rs, err);
+}
+
 void String::Test()
 {
 	TS("TestString");
@@ -345,6 +416,13 @@ void String::Test()
 	TestMemory();
 
 	TestCompare();
+
+	// 分隔符
+	cstring cstr	= "+IPD,3,96,10.0.0.21,3377:abcdef";
+	TestSplit(cstr);
+	// 以分隔符开头和结尾的情况
+	cstr	= ",+IPD,3,96,10.0.0.21,3377:abcdef:";
+	TestSplit(cstr);
 
 	debug_printf("字符串单元测试全部通过！");
 }

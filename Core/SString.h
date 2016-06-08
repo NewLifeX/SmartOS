@@ -150,8 +150,9 @@ public:
 	bool EndsWith(cstring str) const;
 
 	StringSplit Split(const String& sep) const;
+	StringSplit Split(cstring sep) const;
 
-	String Substring(int start, int _Length) const;
+	String Substring(int start, int len = -1) const;
 	String TrimStart() const;
 	String TrimEnd() const;
 	String Trim() const;
@@ -195,18 +196,22 @@ private:
 class StringSplit
 {
 public:
-	StringSplit(const String& str, const String& sep);
+	cstring Sep;		// 分隔符。下一个要寻找的边界符
+	int		Position;	// 当前段位置。负数表示到了结尾。
+	int		Length;		// 当前段长度。
+
+	StringSplit(const String& str, cstring sep);
 
 	const String Next();
 
-    explicit operator bool() const { return _Position >= 0; }
-    bool operator !() const { return _Position < 0; }
+	// 是否已经到达末尾
+	bool End() const { return Position == -2; }
+
+    explicit operator bool() const { return Position >= 0; }
+    bool operator !() const { return Position < 0; }
 
 private:
 	const String& _Str;
-	const String& _Sep;
-	int		_Position;
-	int		_Length;
 };
 
 #endif
