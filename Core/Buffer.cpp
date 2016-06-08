@@ -1,10 +1,12 @@
-﻿#include "_Core.h"
+﻿#include <string.h>
+
+#include "_Core.h"
 
 #include "Buffer.h"
 #include "SString.h"
 
-static void memset(byte* ptr, byte item, uint len);
-static void memcpy(byte* dst, const byte* src, uint len);
+//static void memset(byte* ptr, byte item, uint len);
+//static void memcpy(byte* dst, const byte* src, uint len);
 
 /******************************** Buffer ********************************/
 
@@ -135,7 +137,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 	if(_Arr == src) return len;
 
 	// 拷贝数据
-	if(len) memcpy((byte*)_Arr + destIndex, (byte*)src, len);
+	if(len) memmove((byte*)_Arr + destIndex, (byte*)src, len);
 
 	return len;
 }
@@ -173,7 +175,7 @@ int Buffer::CopyTo(int srcIndex, void* data, int len) const
 	if(len)
 	{
 		if(data != (byte*)_Arr + srcIndex)
-			memcpy((byte*)data, (byte*)_Arr + srcIndex, len);
+			memmove((byte*)data, (byte*)_Arr + srcIndex, len);
 	}
 
 	return len;
@@ -399,7 +401,7 @@ bool operator != (const Buffer& bs1, const void* ptr)
 	return bs1.CompareTo(ptr) != 0;
 }
 
-void memset(byte* ptr, byte item, uint len)
+/*void memset(byte* ptr, byte item, uint len)
 {
 	// 为了加快速度，分头中尾三部分
 	byte* p	= ptr;
@@ -452,4 +454,4 @@ void memcpy(byte* dst, const byte* src, uint len)
 	// 结尾部分
 	for(; len>0; len--)
 		*dst++	= *src++;
-}
+}*/
