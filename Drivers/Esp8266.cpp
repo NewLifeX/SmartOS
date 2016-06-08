@@ -25,7 +25,8 @@ public:
 	//bool	OK	= false;
 
 	bool Wait(int msTimeout);
-	bool Parse(const Buffer& bs);
+	int Parse(const Buffer& bs);
+	int FindKey(const String& str);
 };
 
 /*
@@ -186,8 +187,8 @@ bool Esp8266::OnOpen()
 #if NET_DEBUG
 	// 获取版本
 	auto ver	= GetVersion();
-	net_printf("版本:");
-	ver.Show(true);
+	//net_printf("版本:");
+	//ver.Show(true);
 #endif
 
 	//auto cfg	= EspConfig::Create();
@@ -401,6 +402,20 @@ bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
 	return rt;
 }
 
+void ParseFail(const Buffer& bs)
+{
+#if NET_DEBUG
+	// 无法识别的数据可能是空格前缀，需要特殊处理
+	auto str	= bs.AsString();
+	if(str && (bs.Length() != 2 || bs[0] != 0x0D || bs[1] != 0x0A))
+	{
+		net_printf("Esp8266无法识别[%d]：", bs.Length());
+		//if(bs.Length() == 2) net_printf("%02X %02X ", bs[0], bs[1]);
+		str.Show(true);
+	}
+#endif
+}
+
 // 引发数据到达事件
 uint Esp8266::OnReceive(Buffer& bs, void* param)
 {
@@ -408,28 +423,36 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 
 	TS("Esp8266::OnReceive");
 
-	// 分析+IPD数据，返回起始位，如果不为0，说明之前有别的数据
-	int p	= ParseReceive(bs);
-	if(p == 0) return 0;
-
-	// 截取头部，给后面使用
-	if(p > 0) bs	= bs.Sub(0, p);
-
-	// 拦截给同步方法
-	auto we	= (WaitExpect*)_Expect;
-	if(we && we->Parse(bs)) return 0;
-
-#if NET_DEBUG
-	// 无法识别的数据可能是空格前缀，需要特殊处理
-	auto str	= bs.AsString().Substring(0, bs.Length()).Trim();
-	if(str)
+	//!!! 分析+IPD数据和命令返回，特别要注意粘包
+	int s	= 0;
+	int p	= 0;
+	auto str	= bs.AsString();
+	while(p >= 0 && p < bs.Length())
 	{
-		net_printf("Esp8266无法识别[%d]：", bs.Length());
-		bs.AsString().Show(true);
-	}
-#endif
+		s	= p;
+		p	= str.IndexOf("+IPD,", s);
 
-	return ITransport::OnReceive(bs, param);
+		// +IPD之前之后的数据，留给命令分析
+		int size	= p>=0 ? p-s : bs.Length()-s;
+		if(size > 0)
+		{
+			int rs	= ParseReply(bs.Sub(s, size));
+			// 如果没有吃完，剩下部分报未识别
+			if(rs < size) ParseFail(bs.Sub(s + rs, size - rs));
+		}
+
+		// +IPD开头的数据，作为收到数据
+		if(p >= 0 && p + 5 < bs.Length())
+		{
+			int rs	= ParseReceive(bs.Sub(p, -1));
+			if(rs <= 0) ParseFail(bs.Sub(p + rs, -1));
+
+			// 游标移到下一组数据
+			p	+= rs;
+		}
+	}
+
+	return 0;
 }
 
 /*
@@ -442,25 +465,48 @@ port>]:<data>
 (+CIPMUX=1)
 +IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
 */
+
+// 分析+IPD接收数据。返回被用掉的字节数
 int Esp8266::ParseReceive(const Buffer& bs)
 {
 	TS("Esp8266::ParseReceive");
 
 	auto str	= bs.AsString();
 
-	// +IPD开头的是收到网络数据
-	int p	= str.IndexOf("+IPD,");
-	if(p < 0) return -1;
+	StringSplit sp(str, ",");
 
+	// 跳过第一段+IPD
+	auto rs	= sp.Next();
+
+	if(!(rs	= sp.Next())) return 0;
+	int idx	= rs.ToInt();
+
+	if(!(rs	= sp.Next())) return 0;
+	int len	= rs.ToInt();
+
+	IPEndPoint ep;
+	if(!(rs	= sp.Next())) return 0;
+	ep.Address	= IPAddress::Parse(rs);
+
+	// 提前改变下一个分隔符
+	sp.Sep	= ":";
+	if(!(rs	= sp.Next())) return 0;
+	ep.Port	= rs.ToInt();
+
+	/*// +IPD开头的是收到网络数据
+	//int p	= str.IndexOf("+IPD,");
+	//if(p < 0) return 0;
+
+	int p	= 0;
 	int s	= str.IndexOf(",", p) + 1;
 	int e	= str.IndexOf(",", s);
-	if(s == 0 || e < 0) return -1;
+	if(s == 0 || e < 0) return 0;
 
 	int idx	= str.Substring(s, e - s).ToInt();
 
 	s	= e + 1;
 	e	= str.IndexOf(",", s);
-	if(e < 0) return -1;
+	if(e < 0) return 0;
 
 	int len	= str.Substring(s, e - s).ToInt();
 
@@ -468,18 +514,19 @@ int Esp8266::ParseReceive(const Buffer& bs)
 
 	s	= e + 1;
 	e	= str.IndexOf(",", s);
-	if(e < 0) return -1;
+	if(e < 0) return 0;
 
 	ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
 
 	s	= e + 1;
 	e	= str.IndexOf(":", s);
-	if(e < 0) return -1;
+	if(e < 0) return 0;
 
-	ep.Port		= str.Substring(s, e - s).ToInt();
+	ep.Port		= str.Substring(s, e - s).ToInt();*/
 
 	// 后面是数据
-	s	= e + 1;
+	//s	= e + 1;
+	int s	= sp.Position;
 
 	// 分发给各个Socket
 	auto es	= (EspSocket**)_sockets;
@@ -498,19 +545,17 @@ int Esp8266::ParseReceive(const Buffer& bs)
 		sk->OnProcess(bs.Sub(s, len2), ep);
 	}
 
-	// 可能在+IPD数据包后面紧跟有指令响应数据
-	int remain	= bs.Length() - (s + len);
-	if(remain)
-	{
-		//net_printf("IPD数据包后面跟随 %d 数据\r\n", remain);
-		// 拦截给同步方法
-		auto we	= (WaitExpect*)_Expect;
-		if(we && we->Parse(bs.Sub(s + len, -1))) return 0;
-	}
+	return sp.Position + len;
+}
 
-	// 如果+IPD开头，说明这个数据包是纯粹的数据包，否则可能前面有半截其它指令
-	// 发送UDP数据包时，响应数据会随着SEND OK一起收到
-	return p;
+// 分析关键字。返回被用掉的字节数
+int Esp8266::ParseReply(const Buffer& bs)
+{
+	if(!_Expect) return 0;
+
+	// 拦截给同步方法
+	auto we	= (WaitExpect*)_Expect;
+	return we->Parse(bs);
 }
 
 /******************************** 基础AT指令 ********************************/
@@ -1173,34 +1218,55 @@ bool WaitExpect::Wait(int msTimeout)
 	return true;
 }
 
-bool WaitExpect::Parse(const Buffer& bs)
+int WaitExpect::Parse(const Buffer& bs)
 {
-	if(bs.Length() == 0 || !Result) return false;
+	if(bs.Length() == 0 || !Result) return 0;
 
 	TS("WaitExpect::Parse");
 
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
-	auto str	= bs.AsString();
-	if(Capture) *Result	+= str;
+	auto s	= bs.AsString();
+	int p	= FindKey(s);
 
+	// 捕获所有
+	if(Capture)
+	{
+		if(p)
+			*Result	+= bs.Sub(0, p).AsString();
+		else
+			*Result	+= s;
+	}
+	else if(p)
+		*Result	= bs.Sub(0, p).AsString();
+
+	// 匹配关键字，任务完成
+	if(p) Result	= nullptr;
+
+	return p;
+}
+
+int WaitExpect::FindKey(const String& str)
+{
 	// 适配第一关键字
-	if(Key1 && str.Contains(Key1))
+	int p	= Key1 ? str.IndexOf(Key1) : -1;
+	if(p >= 0)
 	{
 		//net_printf("适配第一关键字 %s \r\n", Key1);
-		Result	= nullptr;
+		return p + String(Key1).Length();
 	}
 	// 适配第二关键字
-	if(Key2 && str.Contains(Key2))
+	p	= Key2 ? str.IndexOf(Key2) : -1;
+	if(p >= 0)
 	{
 		net_printf("适配第二关键字 %s \r\n", Key2);
-		Result	= nullptr;
+		return p + String(Key1).Length();
 	}
 	// 适配busy
-	if(str.Contains("busy p..."))
+	p	= str.IndexOf("busy p...");
+	if(p >= 0)
 	{
 		net_printf("适配 busy p... \r\n");
-		Result	= nullptr;
+		return p + String("busy p...").Length();
 	}
-
-	return true;
+	return 0;
 }

@@ -108,7 +108,10 @@ private:
 	// 多个硬件socket
 	int* _sockets[5];
 	
+	// 分析+IPD接收数据。返回被用掉的字节数
 	int ParseReceive(const Buffer& bs);
+	// 分析关键字。返回被用掉的字节数
+	int ParseReply(const Buffer& bs);
 };
 
 #endif
