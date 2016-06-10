@@ -1,8 +1,6 @@
 ﻿#ifndef __DataStore_H__
 #define __DataStore_H__
 
-#include "Sys.h"
-
 class IDataPort;
 
 // 数据存储适配器
@@ -21,15 +19,13 @@ public:
 	// 读取数据 offset 为虚拟地址
 	int Read(uint offset, Buffer& bs);
 
-	typedef bool (*Handler)(uint offset, uint size, int mode);
 	// 注册某一块区域的读写钩子函数
-	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& port);
 
 private:
 	List	Areas;
 
-	bool OnHook(uint offset, uint size, int mode);
+	bool OnHook(uint offset, uint size, bool write);
 };
 
 /****************************** 数据操作接口 ************************************/

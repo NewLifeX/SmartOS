@@ -94,8 +94,15 @@ String& TokenDataMessage::ToStr(String& str) const
 {
 	str += "DateMsg";
 	if (Reply) str += '#';
-	int len = Data.Length();
-	str = str + " ID:" + ID + " Start:" + Start + " Size:" + Size + " DataLen" + len;
+	if(ID) str	= str + " ID:" + ID;
+	str	= str + " Start:" + Start;
+	if(Size) str	= str + " Size:" + Size;
+
+	if(Data)
+	{
+		str	= str + " Data[" + Data.Length() + "]=";
+		str	+= Data;
+	}
 
 	return str;
 }

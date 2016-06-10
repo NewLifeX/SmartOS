@@ -1,4 +1,7 @@
-﻿#include "DataStore.h"
+﻿#include "Core\ByteArray.h"
+#include "Core\List.h"
+
+#include "DataStore.h"
 
 //#define DS_DEBUG DEBUG
 #define DS_DEBUG 0
@@ -14,7 +17,6 @@ public:
 	uint	Offset;
 	uint	Size;
 
-	DataStore::Handler	Hook;
 	IDataPort*	Port;
 
 	Area();
@@ -38,19 +40,17 @@ int DataStore::Write(uint offset, const Buffer& bs)
 	uint size = bs.Length();
 	if(size == 0) return 0;
 
-	uint realOffset = offset - VirAddrBase;
+	uint realOffset	= offset - VirAddrBase;
 
 	// 检查是否越界
 	if(Strict && realOffset + size > Data.Length()) return -1;
 
-	// 执行钩子函数
-	if(!OnHook(realOffset, size, 0)) return -1;
-
 	// 从数据区读取数据
 	uint rs = Data.Copy(realOffset, bs, 0, size);
+	if(rs == 0) return rs;
 
 	// 执行钩子函数
-	if(!OnHook(realOffset, size, 1)) return -1;
+	if(!OnHook(realOffset, rs, true)) return -1;
 
 	return rs;
 }
@@ -60,20 +60,19 @@ int DataStore::Read(uint offset, Buffer& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;
-	auto realOffset = offset - VirAddrBase;
+	
+	uint realOffset = offset - VirAddrBase;
 	// 检查是否越界
 	if(Strict && realOffset + size > Data.Length()) return -1;
 
 	// 执行钩子函数
-	if(!OnHook(realOffset, size, 2)) return -1;
+	if(!OnHook(realOffset, size, false)) return -1;
 
 	// 从数据区读取数据
-	//return bs.Copy(Data.GetBuffer() + offset, size);
-	//return Data.CopyTo(offset, bs, size);
 	return bs.Copy(0, Data, realOffset, size);
 }
 
-bool DataStore::OnHook(uint offset, uint size, int mode)
+bool DataStore::OnHook(uint offset, uint size, bool write)
 {
 	for(int i=0; i<Areas.Count(); i++)
 	{
@@ -81,22 +80,16 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 		if(ar.Size == 0) break;
 
 		// 数据操作口只认可完整的当前区域
-		if(ar.Port && offset <= ar.Offset && offset + size >= ar.Offset + ar.Size)
+		if(ar.Port && ar.Contain(offset, size))
 		{
-			if(mode == 1)
+			if(write)
 			{
 				if(ar.Port->Write(&Data[ar.Offset]) <= 0) return false;
 			}
-			//else if(mode == 0 || mode == 2)
-			// 使用Data数据写入时，本来是为了强制修改，结果因为预读取而被覆盖
-			else if(mode == 2)
+			else
 			{
 				if(ar.Port->Read(&Data[ar.Offset]) <= 0) return false;
 			}
-		}
-		if(ar.Hook && ar.Contain(offset, size))
-		{
-			if(!ar.Hook(offset, size, mode)) return false;
 		}
 	}
 
@@ -104,16 +97,6 @@ bool DataStore::OnHook(uint offset, uint size, int mode)
 }
 
 // 注册某一块区域的读写钩子函数
-void DataStore::Register(uint offset, uint size, Handler hook)
-{
-	auto ar	= new Area();
-	ar->Offset	= offset;
-	ar->Size	= size;
-	ar->Hook	= hook;
-	
-	Areas.Add(ar);
-}
-
 void DataStore::Register(uint offset, IDataPort& port)
 {
 	auto ar	= new Area();
@@ -128,13 +111,12 @@ Area::Area()
 {
 	Offset	= 0;
 	Size	= 0;
-	Hook	= nullptr;
 }
 
 bool Area::Contain(uint offset, uint size)
 {
-	return (Offset <= offset && offset < Offset + Size ||
-			Offset >= offset && Offset < offset + size);
+	// 数据操作口只认可完整的当前区域
+	return Offset >= offset && Offset + Size <= offset + size;
 }
 
 /****************************** 数据操作接口 ************************************/
