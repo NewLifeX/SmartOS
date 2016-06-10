@@ -527,6 +527,7 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 	ep.Port	= rs.ToInt();
 
 	// 后面是数据
+	sp.Next();
 	int s	= sp.Position;
 
 	// 分发给各个Socket
