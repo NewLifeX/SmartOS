@@ -25,8 +25,8 @@ public:
 	//bool	OK	= false;
 
 	bool Wait(int msTimeout);
-	int Parse(const Buffer& bs);
-	int FindKey(const String& str);
+	uint Parse(const Buffer& bs);
+	uint FindKey(const String& str);
 };
 
 /*
@@ -436,19 +436,27 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		int size	= p>=0 ? p-s : bs.Length()-s;
 		if(size > 0)
 		{
-			int rs	= ParseReply(bs.Sub(s, size));
+			uint rs	= ParseReply(bs.Sub(s, size));
 			// 如果没有吃完，剩下部分报未识别
 			if(rs < size) ParseFail(bs.Sub(s + rs, size - rs));
 		}
 
 		// +IPD开头的数据，作为收到数据
-		if(p >= 0 && p + 5 < bs.Length())
+		if(p >= 0)
 		{
-			int rs	= ParseReceive(bs.Sub(p, -1));
-			if(rs <= 0) ParseFail(bs.Sub(p + rs, -1));
+			if(p + 5 >= bs.Length())
+			{
+				ParseFail(bs.Sub(p, -1));
+				break;
+			}
+			else
+			{
+				uint rs	= ParseReceive(bs.Sub(p, -1));
+				if(rs <= 0) ParseFail(bs.Sub(p + rs, -1));
 
-			// 游标移到下一组数据
-			p	+= rs;
+				// 游标移到下一组数据
+				p	+= rs;
+			}
 		}
 	}
 
@@ -467,7 +475,7 @@ port>]:<data>
 */
 
 // 分析+IPD接收数据。返回被用掉的字节数
-int Esp8266::ParseReceive(const Buffer& bs)
+uint Esp8266::ParseReceive(const Buffer& bs)
 {
 	TS("Esp8266::ParseReceive");
 
@@ -549,7 +557,7 @@ int Esp8266::ParseReceive(const Buffer& bs)
 }
 
 // 分析关键字。返回被用掉的字节数
-int Esp8266::ParseReply(const Buffer& bs)
+uint Esp8266::ParseReply(const Buffer& bs)
 {
 	if(!_Expect) return 0;
 
@@ -1218,7 +1226,7 @@ bool WaitExpect::Wait(int msTimeout)
 	return true;
 }
 
-int WaitExpect::Parse(const Buffer& bs)
+uint WaitExpect::Parse(const Buffer& bs)
 {
 	if(bs.Length() == 0 || !Result) return 0;
 
@@ -1231,21 +1239,25 @@ int WaitExpect::Parse(const Buffer& bs)
 	// 捕获所有
 	if(Capture)
 	{
-		if(p)
+		if(p > 0)
 			*Result	+= bs.Sub(0, p).AsString();
 		else
 			*Result	+= s;
 	}
-	else if(p)
+	else if(p > 0)
 		*Result	= bs.Sub(0, p).AsString();
 
 	// 匹配关键字，任务完成
-	if(p) Result	= nullptr;
+	if(p > 0) Result	= nullptr;
+
+	// 如果后面是换行，则跳过
+	if(s[p] == '\r') p++;
+	if(s[p] == '\n') p++;
 
 	return p;
 }
 
-int WaitExpect::FindKey(const String& str)
+uint WaitExpect::FindKey(const String& str)
 {
 	// 适配第一关键字
 	int p	= Key1 ? str.IndexOf(Key1) : -1;
@@ -1259,7 +1271,7 @@ int WaitExpect::FindKey(const String& str)
 	if(p >= 0)
 	{
 		net_printf("适配第二关键字 %s \r\n", Key2);
-		return p + String(Key1).Length();
+		return p + String(Key2).Length();
 	}
 	// 适配busy
 	p	= str.IndexOf("busy p...");
