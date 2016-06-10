@@ -74,13 +74,8 @@ bool Task::Execute(UInt64 now)
 
 	ct -= SleepTime;
 	if(ct > MaxCost) MaxCost = ct;
-	//CpuTime += ct;
-	//Cost = CpuTime / Times;
-	//CostMs = Cost / 1000;
 	// 根据权重计算平均耗时
 	Cost	= (Cost * 5 + ct * 3) >> 3;
-	// 省去一次除法，M0没有除法指令
-	//CostMs	= Cost >> 10;
 	CostMs	= Cost / 1000;
 
 #if DEBUG
@@ -111,12 +106,12 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 {
 	UInt64 now = Sys.Ms();
 	if(NextTime > 0 && NextTime > now) return false;
-	
+
 	// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 	if(Sys.Ms() + CostMs > end) return false;
-	
+
 	if(!isSleep) return true;
-	
+
 	// 只有被调度过的任务，才会在Sleep里面被再次调度
 	return Event || Times > 0;
 }
@@ -332,7 +327,7 @@ void TaskScheduler::ShowStatus(void* param)
 {
 	auto host = (TaskScheduler*)param;
 
-	debug_printf("Task::ShowStatus 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
+	debug_printf("Task::ShowStatus [%d] 平均 %dus 最大 %dus 当前 ", host->Times, host->Cost, host->MaxCost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
 	DateTime dt(Sys.Ms() / 1000);
@@ -345,7 +340,7 @@ void TaskScheduler::ShowStatus(void* param)
 	for(int i=0; i<host->_Tasks.Count(); i++)
 	{
 		auto task = (Task*)host->_Tasks[i];
-		if(task->ID)
+		if(task && task->ID)
 		{
 			task->ShowStatus();
 			Sys.Sleep(ms);

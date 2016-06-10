@@ -21,7 +21,6 @@ public:
 	Int64	NextTime;	// 下一次执行时间ms
 
 	int		Times;		// 执行次数
-	//int		CpuTime;	// 总耗费时间us
 	int		SleepTime;	// 当前睡眠时间us
 	int		Cost;		// 平均执行时间us
 	int		CostMs;		// 平均执行时间ms
@@ -41,8 +40,6 @@ public:
 	void Set(bool enable, int msNextTime = -1);
 	// 显示状态
 	void ShowStatus();
-
-	//friend bool operator==(const Task& t1, const Task& t2) { return &t1 == &t2; }
 
 	// 全局任务调度器
 	static TaskScheduler* Scheduler();
