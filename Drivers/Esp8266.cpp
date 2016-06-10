@@ -316,8 +316,21 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 {
 	TS("Esp8266::Send");
 
-	// 在接收事件中拦截
 	String rs;
+
+	// 判断是否正在发送其它指令
+	if(_Expect)
+	{
+#if NET_DEBUG
+		net_printf("Esp8266::Send 正在发送其它指令，无法发送");
+		cmd.Trim().Show(true);
+		//net_printf("\r\n");
+#endif
+
+		return rs;
+	}
+
+	// 在接收事件中拦截
 	WaitExpect we;
 	we.Result	= &rs;
 	we.Key1		= expect;
@@ -402,14 +415,21 @@ bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
 	return rt;
 }
 
-void ParseFail(const Buffer& bs)
+void ParseFail(cstring name, const Buffer& bs)
 {
 #if NET_DEBUG
+	if(bs.Length() == 0) return;
+
+	int p	= 0;
+	if(bs[p] == ' ') p++;
+	if(bs[p] == '\r') p++;
+	if(bs[p] == '\n') p++;
+
 	// 无法识别的数据可能是空格前缀，需要特殊处理
-	auto str	= bs.AsString();
-	if(str && (bs.Length() != 2 || bs[0] != 0x0D || bs[1] != 0x0A))
+	auto str	= bs.Sub(p, -1).AsString();
+	if(str)
 	{
-		net_printf("Esp8266无法识别[%d]：", bs.Length());
+		net_printf("Esp8266:%s 无法识别[%d]：", name, bs.Length());
 		//if(bs.Length() == 2) net_printf("%02X %02X ", bs[0], bs[1]);
 		str.Show(true);
 	}
@@ -438,7 +458,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		{
 			uint rs	= ParseReply(bs.Sub(s, size));
 			// 如果没有吃完，剩下部分报未识别
-			if(rs < size) ParseFail(bs.Sub(s + rs, size - rs));
+			if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
 		}
 
 		// +IPD开头的数据，作为收到数据
@@ -446,13 +466,17 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		{
 			if(p + 5 >= bs.Length())
 			{
-				ParseFail(bs.Sub(p, -1));
+				ParseFail("+IPD<=5", bs.Sub(p, -1));
 				break;
 			}
 			else
 			{
 				uint rs	= ParseReceive(bs.Sub(p, -1));
-				if(rs <= 0) ParseFail(bs.Sub(p + rs, -1));
+				if(rs <= 0)
+				{
+					ParseFail("ParseReceive", bs.Sub(p + rs, -1));
+					break;
+				}
 
 				// 游标移到下一组数据
 				p	+= rs;
@@ -488,6 +512,7 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 
 	if(!(rs	= sp.Next())) return 0;
 	int idx	= rs.ToInt();
+	if(idx < 0 || idx > 4) return 0;
 
 	if(!(rs	= sp.Next())) return 0;
 	int len	= rs.ToInt();
@@ -501,39 +526,7 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 	if(!(rs	= sp.Next())) return 0;
 	ep.Port	= rs.ToInt();
 
-	/*// +IPD开头的是收到网络数据
-	//int p	= str.IndexOf("+IPD,");
-	//if(p < 0) return 0;
-
-	int p	= 0;
-	int s	= str.IndexOf(",", p) + 1;
-	int e	= str.IndexOf(",", s);
-	if(s == 0 || e < 0) return 0;
-
-	int idx	= str.Substring(s, e - s).ToInt();
-
-	s	= e + 1;
-	e	= str.IndexOf(",", s);
-	if(e < 0) return 0;
-
-	int len	= str.Substring(s, e - s).ToInt();
-
-	IPEndPoint ep;
-
-	s	= e + 1;
-	e	= str.IndexOf(",", s);
-	if(e < 0) return 0;
-
-	ep.Address	= IPAddress::Parse(str.Substring(s, e - s));
-
-	s	= e + 1;
-	e	= str.IndexOf(":", s);
-	if(e < 0) return 0;
-
-	ep.Port		= str.Substring(s, e - s).ToInt();*/
-
 	// 后面是数据
-	//s	= e + 1;
 	int s	= sp.Position;
 
 	// 分发给各个Socket
@@ -1251,6 +1244,7 @@ uint WaitExpect::Parse(const Buffer& bs)
 	if(p > 0) Result	= nullptr;
 
 	// 如果后面是换行，则跳过
+	if(s[p] == ' ') p++;
 	if(s[p] == '\r') p++;
 	if(s[p] == '\n') p++;
 
