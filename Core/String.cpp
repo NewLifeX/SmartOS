@@ -742,7 +742,12 @@ void String::Clear()
 // 调试输出字符串
 void String::Show(bool newLine) const
 {
-	if(_Length) debug_printf("%s", _Arr);
+	//if(_Length) debug_printf("%s", _Arr);
+	for(int i=0; i<_Length; i++)
+	{
+		//fput(_Arr[i]);
+		debug_printf("%c", _Arr[i]);
+	}
 	if(newLine) debug_printf("\r\n");
 }
 
