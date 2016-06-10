@@ -8,9 +8,6 @@ class TaskScheduler;
 // 任务
 class Task
 {
-private:
-	friend class TaskScheduler;
-
 public:
 	TaskScheduler* Host;
 
@@ -45,11 +42,16 @@ public:
 	// 显示状态
 	void ShowStatus();
 
-	friend bool operator==(const Task& t1, const Task& t2) { return &t1 == &t2; }
+	//friend bool operator==(const Task& t1, const Task& t2) { return &t1 == &t2; }
 
 	// 全局任务调度器
 	static TaskScheduler* Scheduler();
 	static Task* Get(int taskid);
+	
+private:
+	friend class TaskScheduler;
+
+	bool CheckTime(UInt64 end, bool isSleep);
 };
 
 // 任务调度器

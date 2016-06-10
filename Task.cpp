@@ -9,12 +9,20 @@ Task::Task()
 
 	ID			= 0;
 	Name		= nullptr;
+
+	Callback	= nullptr;
+	Param		= nullptr;
+
+	Period		= 0;
+	NextTime	= 0;
+
 	Times		= 0;
 	//CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
 	CostMs		= 0;
 	MaxCost		= 0;
+
 	Enable		= true;
 	Event		= false;
 	Deepth		= 0;
@@ -63,7 +71,7 @@ bool Task::Execute(UInt64 now)
 	Times++;
 	int ct = tc.Elapsed();
 	if(ct < 0) debug_printf("cost = %d \r\n", ct);
-	
+
 	ct -= SleepTime;
 	if(ct > MaxCost) MaxCost = ct;
 	//CpuTime += ct;
@@ -97,6 +105,20 @@ void Task::Set(bool enable, int msNextTime)
 
 	// 如果系统调度器处于Sleep，让它立马退出
 	if(enable) Scheduler()->Sleeping = false;
+}
+
+bool Task::CheckTime(UInt64 end, bool isSleep)
+{
+	UInt64 now = Sys.Ms();
+	if(NextTime > 0 && NextTime > now) return false;
+	
+	// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
+	if(Sys.Ms() + CostMs > end) return false;
+	
+	if(!isSleep) return true;
+	
+	// 只有被调度过的任务，才会在Sleep里面被再次调度
+	return Event || Times > 0;
 }
 
 #pragma arm section code
@@ -263,11 +285,7 @@ void TaskScheduler::Execute(uint msMax)
 		auto task	= (Task*)_Tasks[i];
 		if(!task || task->ID == 0 || !task->Enable) continue;
 
-		if((task->NextTime <= now || task->NextTime < 0)
-		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-		&& Sys.Ms() + task->CostMs <= end
-		// 只有被调度过的任务，才会在Sleep里面被再次调度
-		&& (task->Event || task->Times > 0 || msMax == 0xFFFFFFFF))
+		if(task->CheckTime(end, msMax != 0xFFFFFFFF))
 		{
 			if(task->Execute(now)) Times++;
 
