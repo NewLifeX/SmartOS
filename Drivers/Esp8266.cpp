@@ -1,5 +1,6 @@
 ﻿#include "Time.h"
 #include "Sys.h"
+#include "Task.h"
 #include "Message\DataStore.h"
 
 #include "Esp8266.h"
@@ -17,6 +18,7 @@
 class WaitExpect
 {
 public:
+	const String*	Command	= nullptr;
 	String*	Result	= nullptr;
 	cstring	Key1	= nullptr;
 	cstring	Key2	= nullptr;
@@ -318,11 +320,17 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	String rs;
 
+#if NET_DEBUG
+	auto tid	= Task::Scheduler()->Current->ID;
+#endif
 	// 判断是否正在发送其它指令
 	if(_Expect)
 	{
 #if NET_DEBUG
-		net_printf("Esp8266::Send 正在发送其它指令，无法发送");
+		auto w	= (WaitExpect*)_Expect;
+		net_printf("Esp8266::Send 正在发送 ");
+		if(w->Command) w->Command->Trim().Show(false);
+		net_printf(" 指令，无法发送 ");
 		cmd.Trim().Show(true);
 		//net_printf("\r\n");
 #endif
@@ -332,6 +340,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	// 在接收事件中拦截
 	WaitExpect we;
+	we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;
 	we.Key2		= expect2;
@@ -349,7 +358,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 		// 只有AT指令显示日志
 		if(EnableLog && cmd.StartsWith("AT"))
 		{
-			net_printf("=> ");
+			net_printf("%d=> ", tid);
 			cmd.Trim().Show(true);
 		}
 #endif
@@ -363,7 +372,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 #if NET_DEBUG
 	if(EnableLog && rs)
 	{
-		net_printf("<= ");
+		net_printf("%d<= ", tid);
 		rs.Trim().Show(true);
 	}
 #endif
@@ -456,9 +465,20 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		int size	= p>=0 ? p-s : bs.Length()-s;
 		if(size > 0)
 		{
-			uint rs	= ParseReply(bs.Sub(s, size));
-			// 如果没有吃完，剩下部分报未识别
-			if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
+			if(_Expect)
+			{
+				uint rs	= ParseReply(bs.Sub(s, size));
+#if NET_DEBUG
+				// 如果没有吃完，剩下部分报未识别
+				if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
+#endif
+			}
+			else
+			{
+#if NET_DEBUG
+				ParseFail("NoExpect", bs.Sub(s, size));
+#endif
+			}
 		}
 
 		// +IPD开头的数据，作为收到数据
@@ -466,7 +486,9 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		{
 			if(p + 5 >= bs.Length())
 			{
+#if NET_DEBUG
 				ParseFail("+IPD<=5", bs.Sub(p, -1));
+#endif
 				break;
 			}
 			else
@@ -474,7 +496,9 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 				uint rs	= ParseReceive(bs.Sub(p, -1));
 				if(rs <= 0)
 				{
+#if NET_DEBUG
 					ParseFail("ParseReceive", bs.Sub(p + rs, -1));
+#endif
 					break;
 				}
 
@@ -529,6 +553,7 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 	// 后面是数据
 	sp.Next();
 	int s	= sp.Position;
+	if(s <= 0) return 0;
 
 	// 分发给各个Socket
 	auto es	= (EspSocket**)_sockets;
@@ -797,7 +822,7 @@ bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte e
 	String cmd = "AT+CWSAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn /*+ ',' + maxConnect + ',' + (hidden ? '1' : '0')*/;
 
-	return SendCmd(cmd, 3200);
+	return SendCmd(cmd, 1600);
 }
 
 // <ip addr>,<mac>
@@ -1073,7 +1098,7 @@ bool EspSocket::SendData(const String& cmd, const Buffer& bs)
 	{
 		//auto rt	= _Host.Send(cmd, ">", "OK", 1600);
 		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
-		auto rt	= _Host.Send(cmd, ">", "busy s...", 1600);
+		auto rt	= _Host.Send(cmd, ">", "ERROR", 1600);
 		if(rt.Contains(">")) break;
 	}
 	if(i<3 && _Host.Send(bs.AsString(), "SEND OK", "ERROR", 1600).Contains("SEND OK"))
@@ -1202,15 +1227,17 @@ EspConfig* EspConfig::Create()
 
 bool WaitExpect::Wait(int msTimeout)
 {
+	// 提前等待一会，再开始轮询，专门为了加快命中快速响应的指令
+	Sys.Sleep(40);
+	if(!Result) return true;
+
 	// 等待收到数据
-	TimeWheel tw(0, msTimeout);
+	TimeWheel tw(0, msTimeout - 40);
 	// 默认检查间隔200ms，如果超时时间大于1000ms，则以四分之一为检查间隔
 	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
 	tw.Sleep	= 200;
 	if(msTimeout > 1000) tw.Sleep	= msTimeout >> 2;
 	if(tw.Sleep > 1000)	tw.Sleep	= 1000;
-	// 提前等待一会，再开始轮询
-	Sys.Sleep(40);
 
 	while(Result)
 	{
@@ -1269,11 +1296,11 @@ uint WaitExpect::FindKey(const String& str)
 		return p + String(Key2).Length();
 	}
 	// 适配busy
-	p	= str.IndexOf("busy p...");
+	p	= str.IndexOf("busy ");
 	if(p >= 0)
 	{
-		net_printf("适配 busy p... \r\n");
-		return p + String("busy p...").Length();
+		net_printf("适配 busy  \r\n");
+		return p + 4 + 1 + 4;
 	}
 	return 0;
 }
