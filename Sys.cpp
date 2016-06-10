@@ -483,6 +483,15 @@ void TimeSleep(uint us)
 		TimeCost tc;
 		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
 		int total = us;
+		/*int ts	= sc->Times;
+		int tid	= 0;
+		int tms	= 0;
+		if(task)
+		{
+			tid	= task->ID;
+			tms	= task->Times;
+		}
+		debug_printf("Sys::Sleep=> taskid=%d/%d us=%d \r\n", tid, tms, us);*/
 		// 如果休眠时间足够长，允许多次调度其它任务
 		while(true)
 		{
@@ -497,6 +506,7 @@ void TimeSleep(uint us)
 		}
 
 		int ct = tc.Elapsed();
+		//debug_printf("Sys::Sleep<= taskid=%d/%d us=%d total=%d ct=%d Times=%d \r\n", tid, tms, us, total, ct, sc->Times - ts);
 		if(task)
 		{
 			sc->Current = task;

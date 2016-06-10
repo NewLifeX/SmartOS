@@ -267,7 +267,7 @@ void TaskScheduler::Execute(uint msMax)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 		&& Sys.Ms() + task->CostMs <= end
 		// 只有被调度过的任务，才会在Sleep里面被再次调度
-		&& (task->Times > 0 || msMax == 0xFFFFFFFF))
+		&& (task->Event || task->Times > 0 || msMax == 0xFFFFFFFF))
 		{
 			if(task->Execute(now)) Times++;
 
