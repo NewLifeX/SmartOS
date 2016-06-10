@@ -10,7 +10,7 @@ Task::Task()
 	ID			= 0;
 	Name		= nullptr;
 	Times		= 0;
-	CpuTime		= 0;
+	//CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
 	CostMs		= 0;
@@ -32,7 +32,6 @@ Task::~Task()
 
 bool Task::Execute(UInt64 now)
 {
-	//TS("Task::Execute");
 	TS(Name);
 
 	if(Deepth >= MaxDeepth) return false;
@@ -40,15 +39,15 @@ bool Task::Execute(UInt64 now)
 
 	// 如果是事件型任务，这里禁用。任务中可以重新启用
 	if(Event)
-		Enable = false;
+		Enable	= false;
 	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
 	else
-		NextTime = now + Period;
+		NextTime	= now + Period;
 
 	TimeCost tc;
-	SleepTime = 0;
+	SleepTime	= 0;
 
-	auto cur = Host->Current;
+	auto cur	= Host->Current;
 	// 其实默认最大深度为1，已经禁止所有任务重入，需要重入的任务得专门设置
 	/*// 事件型任务和一次性任务，禁止重入
 	if(cur == this)
@@ -63,17 +62,18 @@ bool Task::Execute(UInt64 now)
 	// 累加任务执行次数和时间
 	Times++;
 	int ct = tc.Elapsed();
-	if(ct < 0)
-		debug_printf("cost = %d \r\n", ct);
-	//if(ct < 0) ct = -ct;
-	//if(ct > 0)
-	{
-		ct -= SleepTime;
-		if(ct > MaxCost) MaxCost = ct;
-		CpuTime += ct;
-		Cost = CpuTime / Times;
-		CostMs = Cost / 1000;
-	}
+	if(ct < 0) debug_printf("cost = %d \r\n", ct);
+	
+	ct -= SleepTime;
+	if(ct > MaxCost) MaxCost = ct;
+	//CpuTime += ct;
+	//Cost = CpuTime / Times;
+	//CostMs = Cost / 1000;
+	// 根据权重计算平均耗时
+	Cost	= (Cost * 5 + ct * 3) >> 3;
+	// 省去一次除法，M0没有除法指令
+	//CostMs	= Cost >> 10;
+	CostMs	= Cost / 1000;
 
 #if DEBUG
 	if(ct > 1000000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
@@ -148,6 +148,7 @@ TaskScheduler::TaskScheduler(cstring name)
 	Current	= nullptr;
 	Count	= 0;
 
+	Times	= 0;
 	Cost	= 0;
 	MaxCost	= 0;
 }
@@ -264,9 +265,11 @@ void TaskScheduler::Execute(uint msMax)
 
 		if((task->NextTime <= now || task->NextTime < 0)
 		// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-		&& Sys.Ms() + task->CostMs <= end)
+		&& Sys.Ms() + task->CostMs <= end
+		// 只有被调度过的任务，才会在Sleep里面被再次调度
+		&& (task->Times > 0 || msMax == 0xFFFFFFFF))
 		{
-			task->Execute(now);
+			if(task->Execute(now)) Times++;
 
 			// 为了确保至少被有效调度一次，需要在被调度任务内判断
 			// 如果已经超出最大可用时间，则退出

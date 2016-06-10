@@ -24,7 +24,7 @@ public:
 	Int64	NextTime;	// 下一次执行时间ms
 
 	int		Times;		// 执行次数
-	int		CpuTime;	// 总耗费时间us
+	//int		CpuTime;	// 总耗费时间us
 	int		SleepTime;	// 当前睡眠时间us
 	int		Cost;		// 平均执行时间us
 	int		CostMs;		// 平均执行时间ms
@@ -67,6 +67,7 @@ public:
 	bool	Running;	// 是否正在运行
 	bool	Sleeping;	// 如果当前处于Sleep状态，马上停止并退出
 
+	int		Times;		// 执行次数
 	int		Cost;		// 平均执行时间us
 	int		MaxCost;	// 最大执行时间us
 
