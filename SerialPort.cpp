@@ -387,6 +387,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 		{
 			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
+			// 串口任务深度设为2，允许重入，解决接收任务内部调用发送然后又等待接收匹配的问题
+			_task->MaxDeepth	= 2;
 		}
 /*#if defined(STM32F0) || defined(GD32F150)
 		// 打开中断
