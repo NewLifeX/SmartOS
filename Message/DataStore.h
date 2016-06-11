@@ -19,7 +19,9 @@ public:
 	// 读取数据 offset 为虚拟地址
 	int Read(uint offset, Buffer& bs);
 
+	typedef bool (*Handler)(uint offset, uint size, bool write);
 	// 注册某一块区域的读写钩子函数
+	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& port);
 
 private:

@@ -17,6 +17,7 @@ public:
 	uint	Offset;
 	uint	Size;
 
+	DataStore::Handler	Hook;
 	IDataPort*	Port;
 
 	Area();
@@ -60,7 +61,7 @@ int DataStore::Read(uint offset, Buffer& bs)
 {
 	uint size = bs.Length();
 	if(size == 0) return 0;
-	
+
 	uint realOffset = offset - VirAddrBase;
 	// 检查是否越界
 	if(Strict && realOffset + size > Data.Length()) return -1;
@@ -77,10 +78,12 @@ bool DataStore::OnHook(uint offset, uint size, bool write)
 	for(int i=0; i<Areas.Count(); i++)
 	{
 		auto ar = *(Area*)Areas[i];
-		if(ar.Size == 0) break;
+		if(ar.Size == 0) continue;
+
+		if(!ar.Contain(offset, size)) continue;
 
 		// 数据操作口只认可完整的当前区域
-		if(ar.Port && ar.Contain(offset, size))
+		if(ar.Port)
 		{
 			if(write)
 			{
@@ -91,19 +94,33 @@ bool DataStore::OnHook(uint offset, uint size, bool write)
 				if(ar.Port->Read(&Data[ar.Offset]) <= 0) return false;
 			}
 		}
+		if(ar.Hook)
+		{
+			if(!ar.Hook(ar.Offset, ar.Size, write)) return false;
+		}
 	}
 
 	return true;
 }
 
 // 注册某一块区域的读写钩子函数
+void DataStore::Register(uint offset, uint size, Handler hook)
+{
+	auto ar	= new Area();
+	ar->Offset	= offset;
+	ar->Size	= size;
+	ar->Hook	= hook;
+
+	Areas.Add(ar);
+}
+
 void DataStore::Register(uint offset, IDataPort& port)
 {
 	auto ar	= new Area();
 	ar->Offset	= offset;
 	ar->Size	= port.Size();
 	ar->Port	= &port;
-	
+
 	Areas.Add(ar);
 }
 
@@ -111,6 +128,7 @@ Area::Area()
 {
 	Offset	= 0;
 	Size	= 0;
+	Hook	= nullptr;
 }
 
 bool Area::Contain(uint offset, uint size)
