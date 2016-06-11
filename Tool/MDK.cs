@@ -782,6 +782,7 @@ namespace NewLife.Reflection
 				ss.Add("declaration is incompatible with", "声明不兼容");
 				ss.Add("is inaccessible", "不可访问");
 				ss.Add("expression must have class type", "表达式必须是类");
+				ss.Add("argument is incompatible with corresponding format string conversion", "格式化字符串不兼容参数");
             }
 
 			ss = Words;
