@@ -51,11 +51,12 @@ private:
 	{
 	public:
 		byte	Code;
+		byte	Seq;
 		UInt64	Time;	// 时间ms
 	};
 
-	QueueItem	_StatQueue[4];
-	QueueItem	_RecvQueue[4];
+	QueueItem	_StatQueue[8];
+	QueueItem	_RecvQueue[8];
 
 	bool StatSend(const Message& msg);
 	bool StatReceive(const Message& msg);

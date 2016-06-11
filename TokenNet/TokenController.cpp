@@ -211,12 +211,13 @@ bool TokenController::OnReceive(Message& msg)
 	}
 	else
 	{
+		auto& tmsg	= (TokenMessage&)msg;
 		// 过滤重复请求。1秒内不接收重复指令
-		UInt64 start	= Sys.Ms() - 1000;
+		UInt64 start	= Sys.Ms() - 5000;
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
 			auto& qi	= _RecvQueue[i];
-			if (qi.Code == msg.Code && qi.Time > start) return true;
+			if (qi.Code == msg.Code && qi.Seq == tmsg.Seq && qi.Time > start) return true;
 		}
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
@@ -224,6 +225,7 @@ bool TokenController::OnReceive(Message& msg)
 			if (qi.Code == 0 || qi.Time <= start)
 			{
 				qi.Code = msg.Code;
+				qi.Seq	= tmsg.Seq;
 				qi.Time = Sys.Ms();
 
 				break;
@@ -405,8 +407,9 @@ bool TokenController::StatReceive(const Message& msg)
 			auto& qi	= _StatQueue[i];
 			if (qi.Code == code)
 			{
-				int cost = (int)(Sys.Ms() - qi.Time);
+				int cost = (int)(Sys.Ms() - (UInt64)qi.Time);
 				// 莫名其妙，有时候竟然是负数
+				if (cost < 0) debug_printf("cost=%d qi.Time=%d now=%d \r\n", cost, (int)qi.Time, (int)qi.Time + cost);
 				if (cost < 0) cost = -cost;
 				if (cost < 1000)
 				{
