@@ -430,9 +430,9 @@ void ParseFail(cstring name, const Buffer& bs)
 	if(bs.Length() == 0) return;
 
 	int p	= 0;
-	if(bs[p] == ' ') p++;
-	if(bs[p] == '\r') p++;
-	if(bs[p] == '\n') p++;
+	if(p < bs.Length() && bs[p] == ' ') p++;
+	if(p < bs.Length() && bs[p] == '\r') p++;
+	if(p < bs.Length() && bs[p] == '\n') p++;
 
 	// 无法识别的数据可能是空格前缀，需要特殊处理
 	auto str	= bs.Sub(p, -1).AsString();
