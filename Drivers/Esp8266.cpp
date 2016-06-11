@@ -1272,9 +1272,9 @@ uint WaitExpect::Parse(const Buffer& bs)
 	if(p > 0) Result	= nullptr;
 
 	// 如果后面是换行，则跳过
-	if(s[p] == ' ') p++;
-	if(s[p] == '\r') p++;
-	if(s[p] == '\n') p++;
+	if(p < s.Length() && s[p] == ' ') p++;
+	if(p < s.Length() && s[p] == '\r') p++;
+	if(p < s.Length() && s[p] == '\n') p++;
 
 	return p;
 }
