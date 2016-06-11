@@ -329,8 +329,13 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 #if NET_DEBUG
 		auto w	= (WaitExpect*)_Expect;
 		net_printf("Esp8266::Send 正在发送 ");
-		if(w->Command) w->Command->Trim().Show(false);
-		net_printf(" 指令，无法发送 ");
+		if(w->Command)
+		{
+			w->Command->Trim().Show(false);
+		}
+		else
+			net_printf("数据");
+		net_printf(" ，无法发送 ");
 		cmd.Trim().Show(true);
 		//net_printf("\r\n");
 #endif
@@ -340,7 +345,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	// 在接收事件中拦截
 	WaitExpect we;
-	we.Command	= &cmd;
+	//we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;
 	we.Key2		= expect2;
@@ -358,6 +363,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 		// 只有AT指令显示日志
 		if(EnableLog && cmd.StartsWith("AT"))
 		{
+			we.Command	= &cmd;
 			net_printf("%d=> ", tid);
 			cmd.Trim().Show(true);
 		}
@@ -365,7 +371,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	}
 
 	we.Wait(msTimeout);
-	_Expect		= nullptr;
+	_Expect	= nullptr;
 
 	//if(rs.Length() > 4) rs.Trim();
 
@@ -419,7 +425,7 @@ bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
 
 	// 等待收到数据
 	bool rt	= we.Wait(msTimeout);
-	_Expect		= nullptr;
+	_Expect	= nullptr;
 
 	return rt;
 }
