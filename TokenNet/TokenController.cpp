@@ -70,7 +70,6 @@ TokenController::TokenController() : Controller(), Key(0)
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
 	NoLogCodes[0] = 0x03;
 
-	Buffer(_StatQueue, sizeof(_StatQueue)).Clear();
 	Buffer(_RecvQueue, sizeof(_RecvQueue)).Clear();
 }
 
@@ -209,12 +208,6 @@ bool TokenController::OnReceive(Message& msg)
 
 	if (msg.Reply)
 	{
-#if DEBUG
-		bool rs = EndSendStat(msg.Code, true);
-
-		// 如果匹配了发送队列，那么这里不再作为收到响应
-		if (!rs) Stat->RecvReplyAsync++;
-#endif
 	}
 	else
 	{
@@ -236,11 +229,10 @@ bool TokenController::OnReceive(Message& msg)
 				break;
 			}
 		}
-
-#if DEBUG
-		Stat->RecvRequest++;
-#endif
 	}
+#if DEBUG
+	bool rs = StatReceive(msg);
+#endif
 
 	// 加解密。握手不加密，登录响应不加密
 	if (msg.Code > 0x01)
@@ -252,14 +244,6 @@ bool TokenController::OnReceive(Message& msg)
 			return false;
 		}
 	}
-
-	// 如果远程地址为空，则使用首次地址作为远程地址
-	/*auto svr = (IPEndPoint*)Server;
-	auto rmt = (IPEndPoint*)msg.State;
-	if(svr && rmt)
-	{
-		if(svr->Address == IPAddress::Any()) svr->Address	= rmt->Address;
-	}*/
 
 	ShowMessage("Recv", msg);
 
@@ -282,11 +266,6 @@ bool TokenController::Send(Message& msg)
 	else
 		ShowMessage("Send", msg);
 
-#if DEBUG
-	// 加入统计
-	if (!msg.Reply && !msg.OneWay) StartSendStat(msg.Code);
-#endif
-
 	// 如果没有传输口处于打开状态，则发送失败
 	if(!Port->Open()) return false;
 
@@ -303,6 +282,11 @@ bool TokenController::Send(Message& msg)
 		ms.SetPosition(0);
 		if (!Encrypt(ms, Key)) return false;
 	}
+
+#if DEBUG
+	// 加入统计
+	StatSend(msg);
+#endif
 
 	Buffer bs(buf, ms.Position());
 
@@ -346,23 +330,10 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 }
 
 #if DEBUG
-bool TokenController::StartSendStat(byte code)
+void StatRequest(byte code)
 {
-	//TS("TokenController::StartSendStat");
-
 	auto st = Stat;
 
-	/*// 仅统计请求信息，不统计响应信息
-	if (code & 0x80)
-	{
-		st->SendReply++;
-		return true;
-	}
-
-	// 单向请求一般用于广播也不列入统计
-	if(code & 0x40) return true;*/
-
-	st->SendRequest++;
 	byte tc = code & 0x0F;
 	if (tc == 0x05)
 		st->Read++;
@@ -370,39 +341,69 @@ bool TokenController::StartSendStat(byte code)
 		st->Write++;
 	else if (tc == 0x08)
 		st->Invoke++;
+}
 
-	// 超时指令也干掉
-	UInt64 end	= Sys.Ms() - 5000;
-	for (int i = 0; i < ArrayLength(_StatQueue); i++)
+void StatReply(byte code)
+{
+	auto st = Stat;
+
+	byte tc = code & 0x0F;
+	if (tc == 0x05)
+		st->ReadReply++;
+	else if (tc == 0x06)
+		st->WriteReply++;
+	else if (tc == 0x08)
+		st->InvokeReply++;
+}
+
+bool TokenController::StatSend(const Message& msg)
+{
+	byte code	= msg.Code;
+	auto st = Stat;
+
+	// 统计请求
+	if(!msg.Reply && !msg.OneWay)
 	{
-		auto& qi	= _StatQueue[i];
-		if (qi.Code == 0 || qi.Time <= end)
-		{
-			qi.Code = code;
-			qi.Time = Sys.Ms();
+		st->SendRequest++;
+		StatRequest(code);
 
-			return true;
+		// 超时指令也干掉
+		UInt64 end	= Sys.Ms() - 5000;
+		for (int i = 0; i < ArrayLength(_StatQueue); i++)
+		{
+			auto& qi	= _StatQueue[i];
+			if (qi.Code == 0 || qi.Time <= end)
+			{
+				qi.Code = code;
+				qi.Time = Sys.Ms();
+
+				return true;
+			}
 		}
+	}
+
+	// 统计响应
+	if(msg.Reply)
+	{
+		st->SendReply++;
+		StatReply(msg.Code);
 	}
 
 	return false;
 }
 
-bool TokenController::EndSendStat(byte code, bool success)
+bool TokenController::StatReceive(const Message& msg)
 {
-	//TS("TokenController::EndSendStat");
-
+	byte code	= msg.Code;
 	auto st = Stat;
 
-	byte tc = code & 0x0F;
-
-	for (int i = 0; i < ArrayLength(_StatQueue); i++)
+	if(msg.Reply)
 	{
-		auto& qi	= _StatQueue[i];
-		if (qi.Code == tc)
+		bool rs = false;
+		for (int i = 0; i < ArrayLength(_StatQueue); i++)
 		{
-			bool rs = false;
-			if (success)
+			auto& qi	= _StatQueue[i];
+			if (qi.Code == code)
 			{
 				int cost = (int)(Sys.Ms() - qi.Time);
 				// 莫名其妙，有时候竟然是负数
@@ -414,25 +415,26 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 					rs = true;
 				}
+
+				qi.Code = 0;
+
+				break;
 			}
-
-			qi.Code = 0;
-
-			return rs;
 		}
-	}
+		// 如果匹配了发送队列，那么这里不再作为收到响应
+		if (!rs) st->RecvReplyAsync++;
 
-	if (code & 0x80)
+		StatReply(code);
+
+		return rs;
+	}
+	else
 	{
-		if (tc == 0x05)
-			st->ReadReply++;
-		else if (tc == 0x06)
-			st->WriteReply++;
-		else if (tc == 0x08)
-			st->InvokeReply++;
+		st->RecvRequest++;
+		StatRequest(code);
 	}
 
-	return false;
+	return true;
 }
 #endif
 
@@ -440,6 +442,7 @@ bool TokenController::EndSendStat(byte code, bool success)
 
 TokenStat::TokenStat()
 {
+	//Buffer(_StatQueue, sizeof(_StatQueue)).Clear();
 	Buffer(&SendRequest, (byte*)&_Total + sizeof(_Total) - (byte*)&SendRequest).Clear();
 }
 
@@ -568,12 +571,16 @@ String& TokenStat::ToStr(String& str) const
 
 	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
 	Percent().Show(true);*/
-	if(SendRequest > 0)	str = str + "发：" + Percent() + "% " + RecvReply + "/" + SendRequest + " " + Speed() + "ms ";
+	if(SendRequest > 0)
+	{
+		str = str + "发：" + Percent() + "% " + RecvReply;
+		if (RecvReplyAsync > 0) str = str + "+" + RecvReplyAsync;
+		str	= str + "/" + SendRequest + " " + Speed() + "ms ";
+	}
 	if(RecvRequest > 0)	str = str + "收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
-	if (RecvReplyAsync > 0) str = str + " 异步 " + RecvReplyAsync;
-	if (Read > 0)	str = str + " 读：" + (ReadReply * 100 / Read) + " " + ReadReply + "/" + Read;
-	if (Write > 0)	str = str + " 写：" + (WriteReply * 100 / Write) + " " + WriteReply + "/" + Write;
-	if (Write > 0)	str = str + " 调：" + (InvokeReply * 100 / Invoke) + " " + InvokeReply + "/" + Invoke;
+	if (Read > 0)	str = str + " 读：" + (ReadReply * 100 / Read) + "% " + ReadReply + "/" + Read;
+	if (Write > 0)	str = str + " 写：" + (WriteReply * 100 / Write) + "% " + WriteReply + "/" + Write;
+	if (Invoke > 0)	str = str + " 调：" + (InvokeReply * 100 / Invoke) + " " + InvokeReply + "/" + Invoke;
 	if (_Total)
 	{
 		str += " 总";

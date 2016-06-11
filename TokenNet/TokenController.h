@@ -57,8 +57,8 @@ private:
 	QueueItem	_StatQueue[4];
 	QueueItem	_RecvQueue[4];
 
-	bool StartSendStat(byte code);
-	bool EndSendStat(byte code, bool success);
+	bool StatSend(const Message& msg);
+	bool StatReceive(const Message& msg);
 };
 
 #endif
