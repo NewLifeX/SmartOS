@@ -1260,19 +1260,20 @@ uint WaitExpect::Parse(const Buffer& bs)
 	TS("WaitExpect::Parse");
 
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
-	auto s	= bs.AsString();
+	auto s	= (const String)bs.AsString();
 	int p	= FindKey(s);
+	auto& rs= *Result;
 
 	// 捕获所有
 	if(Capture)
 	{
 		if(p > 0)
-			*Result	+= bs.Sub(0, p).AsString();
+			rs	+= bs.Sub(0, p).AsString();
 		else
-			*Result	+= s;
+			rs	+= s;
 	}
 	else if(p > 0)
-		*Result	= bs.Sub(0, p).AsString();
+		rs	= bs.Sub(0, p).AsString();
 
 	// 匹配关键字，任务完成
 	if(p > 0) Result	= nullptr;
