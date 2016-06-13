@@ -164,6 +164,11 @@ bool BinaryPair::Set(cstring name, UInt64 value)
 	return Set(name, Buffer(&value, 8));
 }
 
+bool BinaryPair::Set(cstring name, const String& str)
+{
+	return Set(name, (const Buffer&)str);
+}
+
 bool BinaryPair::Set(cstring name, const IPEndPoint& value)
 {
 	MemoryStream ms(7);

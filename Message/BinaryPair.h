@@ -30,6 +30,7 @@ public:
 	bool Set(cstring name, ushort value);
 	bool Set(cstring name, uint value);
 	bool Set(cstring name, UInt64 value);
+	bool Set(cstring name, const String& str);
 	bool Set(cstring name, const IPEndPoint& value);
 
 private:
