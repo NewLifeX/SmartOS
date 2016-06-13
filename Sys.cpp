@@ -391,7 +391,7 @@ void TSys::ShowInfo() const
 
 	debug_printf("Time : ");
 	DateTime::Now().Show(true);
-	debug_printf("Support: http://www.NewLifeX.com\r\n");
+	debug_printf("Support: http://www.WsLink.cn\r\n");
 
     debug_printf("\r\n");
 #endif

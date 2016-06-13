@@ -245,18 +245,19 @@ void Timer::SetCounter(uint cnt)
 
 void Timer::SetHandler(bool set)
 {
-	int irqs[] = TIM_IRQns;
+	const byte irqs[] = TIM_IRQns;
+	byte irq	= irqs[_index];
 	if(set)
 	{
 		// 打开中断
 		//TIM_ITConfig((TIM_TypeDef*)_Timer, TIM_IT_Update, ENABLE);
-		Interrupt.SetPriority(irqs[_index], 1);
-		Interrupt.Activate(irqs[_index], OnHandler, this);
+		Interrupt.SetPriority(irq, 1);
+		Interrupt.Activate(irq, OnHandler, this);
 	}
 	else
 	{
 		TIM_ITConfig((TIM_TypeDef*)_Timer, TIM_IT_Update, DISABLE);
-		Interrupt.Deactivate(irqs[_index]);
+		Interrupt.Deactivate(irq);
 	}
 }
 

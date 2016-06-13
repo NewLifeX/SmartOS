@@ -2,13 +2,13 @@
 #include "Port.h"
 
 #if defined(STM32F1) || defined(STM32F4)
-static const int PORT_IRQns[] = {
+static const byte PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
     EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
 #elif defined(STM32F0) || defined(GD32F150)
-static const int PORT_IRQns[] = {
+static const byte PORT_IRQns[] = {
     EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
     EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
     EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn,

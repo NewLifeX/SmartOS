@@ -107,9 +107,10 @@ void TTime::Init()
 	// 清除标志位  必须要有！！ 否则 开启中断立马中断给你看
 	TIM_ClearFlag(tim, TIM_FLAG_Update);
 
-	const int irqs[] = TIM_IRQns;
-	Interrupt.SetPriority(irqs[Index], 0);
-	Interrupt.Activate(irqs[Index], OnHandler, tim);
+	const byte irqs[] = TIM_IRQns;
+	byte irq	= irqs[Index];
+	Interrupt.SetPriority(irq, 0);
+	Interrupt.Activate(irq, OnHandler, tim);
 
 	// 打开计数
 	TIM_Cmd(tim, ENABLE);
