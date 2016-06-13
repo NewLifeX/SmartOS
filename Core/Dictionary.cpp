@@ -29,7 +29,7 @@ void Dictionary::Add(const void* key, void* value)
 }
 
 // 删除指定元素
-void Dictionary::RemoveKey(const void* key)
+void Dictionary::Remove(const void* key)
 {
 	int idx = _Keys.Remove(key);
 	if(idx >= 0) _Values.RemoveAt(idx);

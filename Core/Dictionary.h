@@ -16,7 +16,7 @@ public:
     void Add(const void* key, void* value);
 
 	// 删除指定元素
-	void RemoveKey(const void* key);
+	void Remove(const void* key);
 
 	void Clear();
 	
