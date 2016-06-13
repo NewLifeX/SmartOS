@@ -45,7 +45,7 @@ void Dictionary::Test()
 	assert(!rs, err);
 
 	// 删除倒数第二个。后面前移
-	dic.RemoveKey("buf2");	// 无效
+	dic.Remove("buf2");	// 无效
 	err	= "void RemoveKey(const void* key)";
 	assert(dic.Count() == 2, err);
 	assert(dic["buf2"] == nullptr, err);
