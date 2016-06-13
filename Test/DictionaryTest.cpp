@@ -66,10 +66,10 @@ void Dictionary::Test()
 
 	char cs[5];
 	cs[0]	= 't';
-	cs[0]	= 'e';
-	cs[0]	= 's';
-	cs[0]	= 't';
-	cs[0]	= '\0';
+	cs[1]	= 'e';
+	cs[2]	= 's';
+	cs[3]	= 't';
+	cs[4]	= '\0';
 	rs	= dic2.TryGetValue(cs, p);
 
 	err	= "Dictionary(IComparer comparer = nullptr)";
