@@ -243,6 +243,7 @@ void SetWiFiTask(void* param)
 	bp.Set("ssid", "yws007");
 	bp.Set("pass", "yws52718");
 
+	ms1.SetPosition(0);
 	BinaryPair args(ms1);
 	BinaryPair result(ms2);
 
