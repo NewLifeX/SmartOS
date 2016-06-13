@@ -21,7 +21,13 @@ namespace NewLife.Reflection
 			build.Output = "F4";
 			build.AddIncludes("..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\Lib\\Inc");
-            build.AddFiles("..\\", "*.c;*.cpp", false, "CAN;DMA;Memory");
+			build.AddIncludes("..\\Core");
+			build.AddIncludes("..\\Kernel");
+			build.AddIncludes("..\\Device");
+            build.AddFiles("..\\Core");
+            build.AddFiles("..\\Kernel");
+            build.AddFiles("..\\Device");
+            build.AddFiles("..\\", "*.c;*.cpp", false);
             build.AddFiles("..\\Platform", "Boot_F4.cpp");
             build.AddFiles("..\\Platform", "startup_stm32f4xx.s");
             build.AddFiles("..\\Security", "*.cpp");
