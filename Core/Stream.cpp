@@ -320,6 +320,7 @@ bool Stream::Write(UInt64 value)
 
 MemoryStream::MemoryStream(uint len) : Stream(_Arr, ArrayLength(_Arr))
 {
+	Length	= 0;
 	_needFree	= false;
 	if(len > ArrayLength(_Arr))
 	{
