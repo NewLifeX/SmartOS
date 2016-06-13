@@ -31,22 +31,26 @@ typedef void (*EventHandler)(void* sender, void* param);
 // 传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
 typedef uint (*DataHandler)(void* sender, byte* buf, uint size, void* param);
 
-template<typename T, typename TArg>
 class Delegate
 {
 public:
+    void*	Target;
+    void*	Method;
+	
 	// 构造函数后面的冒号起分割作用，是类给成员变量赋值的方法
 	// 初始化列表，更适用于成员变量的常量const型
-    Delegate(T* target, void(T::*func)(TArg)) : _Target(target), _Func(func) {}
+	template<typename T, typename TArg>
+    Delegate(T* target, void(T::*func)(TArg)) : Target(target), Method(&func) {}
 
+	template<typename T, typename TArg>
     void Invoke(TArg value)
     {
-        (_Target->*_Func)(value);
-    }
+		auto obj	= (T*)Target;
+		typedef void(T::*TAction)(TArg);
+		auto act	= *(TAction*)Method;
 
-private:
-    T* _Target;
-    void (T::*_Func)(TArg);
+		(obj->*act)(value);
+    }
 };
 
 template<typename T, typename TArg, typename TArg2>

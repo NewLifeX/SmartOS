@@ -242,7 +242,8 @@ void TaskScheduler::Start()
 	if(Running) return;
 
 #if DEBUG
-	Add(ShowStatus, this, 10000, 30000, "任务状态");
+	//Add([](void* p){ ((TaskScheduler*)p)->ShowStatus(); }, this, 10000, 30000, "任务状态");
+	Add(&TaskScheduler::ShowStatus, this, 10000, 30000, "任务状态");
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
@@ -323,9 +324,10 @@ void TaskScheduler::Execute(uint msMax)
 #pragma arm section code
 
 // 显示状态
-void TaskScheduler::ShowStatus(void* param)
+void TaskScheduler::ShowStatus()
 {
-	auto host = (TaskScheduler*)param;
+	//auto host = (TaskScheduler*)param;
+	auto host	= this;
 
 	debug_printf("Task::ShowStatus [%d] 平均 %dus 最大 %dus 当前 ", host->Times, host->Cost, host->MaxCost);
 	DateTime::Now().Show();

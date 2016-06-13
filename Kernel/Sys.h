@@ -115,6 +115,11 @@ public:
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
 	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, cstring name = nullptr) const;
+	template<typename T>
+	uint AddTask(void(T::*func)(), T* target, int dueTime = 0, int period = 0, cstring name = nullptr)
+	{
+		return AddTask(*(Action*)&func, target, dueTime, period, name);
+	}
 	void RemoveTask(uint& taskid) const;
 	// 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 	bool SetTask(uint taskid, bool enable, int msNextTime = -1) const;

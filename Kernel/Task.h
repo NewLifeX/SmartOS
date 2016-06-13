@@ -78,6 +78,11 @@ public:
 
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 	uint Add(Action func, void* param, int dueTime = 0, int period = 0, cstring name = nullptr);
+	template<typename T>
+	uint Add(void(T::*func)(), T* target, int dueTime = 0, int period = 0, cstring name = nullptr)
+	{
+		return Add(*(Action*)&func, target, dueTime, period, name);
+	}
 	void Remove(uint taskid);
 
 	void Start();
@@ -85,7 +90,7 @@ public:
 	// 执行一次循环。指定最大可用时间
 	void Execute(uint msMax);
 
-	static void ShowStatus(void* param);	// 显示状态
+	void ShowStatus();	// 显示状态
 
     Task* operator[](int taskid);
 };
