@@ -94,6 +94,9 @@ private:
 	void OnWrite(const TokenMessage& msg, TokenController* ctrl);
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
+	
+public:
+	bool OnInvoke(const String& action, const BinaryPair& args, BinaryPair& result);
 };
 
 // 令牌会话

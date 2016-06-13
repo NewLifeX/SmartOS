@@ -750,42 +750,56 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 {
 	auto rs	= msg.CreateReply();
-	auto ms	= rs.ToStream();
 	// 考虑到结果可能比较大，允许扩容
-	ms.CanResize	= true;
+	//auto ms	= rs.ToStream();
+	//ms.CanResize	= true;
+	MemoryStream ms(rs.Data, rs.Length);
 
-	BinaryPair bp(msg.ToStream());
+	BinaryPair args(msg.ToStream());
 
 	String action;
-	if(!bp.Get("Action", action) || !action)
+	if(!args.Get("Action", action) || !action)
 	{
 		rs.SetError(0x01, "请求错误");
 	}
 	else
 	{
-		void* handler	= nullptr;
-		if(!Routes.TryGetValue(action.GetBuffer(), handler) || !handler)
+		BinaryPair bprs(ms);
+		if(!OnInvoke(action, args, bprs))
 		{
 			rs.SetError(0x02, "操作注册有误");
 		}
 		else
 		{
-			auto ivh	= (InvokeHandler)handler;
+			// 执行成功
 
-			BinaryPair result(ms);
-			if(!ivh(bp, result))
-			{
-				rs.SetError(0x03, "执行出错");
-			}
-			else
-			{
-				// 执行成功
-				// 数据流可能已经扩容
-				rs.Data		= ms.GetBuffer();
-				rs.Length	= ms.Position();
-			}
+			// 数据流可能已经扩容
+			rs.Data		= ms.GetBuffer();
+			rs.Length	= ms.Position();
 		}
 	}
 
 	ctrl->Reply(rs);
+}
+
+bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, BinaryPair& result)
+{
+	void* handler	= nullptr;
+	if(!Routes.TryGetValue(action.GetBuffer(), handler) || !handler) return false;
+
+	auto rs	= ((InvokeHandler)handler)(args, result);
+	if(!rs) return false;
+	
+	//BinaryPair bprs(ms);
+	//bprs.Set("Result", bs);
+	return true;
+}
+
+void TokenClient::Register(const String& action, InvokeHandler handler)
+{
+	auto act	= action.GetBuffer();
+	if(handler)
+		Routes.Add(act, (void*)handler);
+	else
+		Routes.Remove(act);
 }

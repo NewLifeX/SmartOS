@@ -18,6 +18,8 @@ public:
 
 	ISocketHost*	Host;			// 网络主机
 	
+	TokenClient*	Client;
+	
 	AP0801();
 
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
