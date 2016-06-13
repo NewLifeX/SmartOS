@@ -407,8 +407,8 @@ TraceStack::TraceStack(cstring name)
 TraceStack::~TraceStack()
 {
 	// 清空最后一个项目，避免误判
-	if(_TS_Len > 0) _TS[_TS_Len--]	= "";
-	//_TS->Pop();
+	//if(_TS_Len > 0) _TS[--_TS_Len]	= "";
+	_TS_Len--;
 }
 
 void TraceStack::Show()

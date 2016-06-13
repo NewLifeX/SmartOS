@@ -342,10 +342,10 @@ void SerialPort::OnRxHandler()
 
 #pragma arm section code
 
-void SerialPort::ReceiveTask(void* param)
+void SerialPort::ReceiveTask()
 {
-	auto sp = (SerialPort*)param;
-	assert(sp, "串口 ReceiveTask param Error");
+	//auto sp = (SerialPort*)param;
+	auto sp	= this;
 
 	//!!! 只要注释这一行，四位触摸开关就不会有串口溢出错误
 	if(sp->Rx.Length() == 0) return;
@@ -385,7 +385,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 		// 建立一个未启用的任务，用于定时触发接收数据，收到数据时开启
 		if(!_taskidRx)
 		{
-			_taskidRx = Sys.AddTask(ReceiveTask, this, -1, -1, "串口接收");
+			//_taskidRx = Sys.AddTask([](void* p){ ((SerialPort*)p)->ReceiveTask(); }, this, -1, -1, "串口接收");
+			_taskidRx = Sys.AddTask(&SerialPort::ReceiveTask, this, -1, -1, "串口接收");
 			_task = Task::Get(_taskidRx);
 			// 串口任务深度设为2，允许重入，解决接收任务内部调用发送然后又等待接收匹配的问题
 			_task->MaxDeepth	= 2;

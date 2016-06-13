@@ -83,7 +83,7 @@ private:
 
 	Task*	_task;
 	uint	_taskidRx;
-	static void ReceiveTask(void* param);
+	void ReceiveTask();
 };
 
 #endif
