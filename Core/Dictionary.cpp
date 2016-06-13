@@ -14,15 +14,24 @@ const List& Dictionary::Values() const { return _Values; }
 // 添加单个元素
 void Dictionary::Add(const void* key, void* value)
 {
-	_Keys.Add((void*)key);
-	_Values.Add(value);
+	// 判断一下，如果已存在，则覆盖
+	int idx	= _Keys.FindIndex(key);
+	if(idx >= 0)
+	{
+		_Values[idx]	= value;
+	}
+	else
+	{
+		_Keys.Add((void*)key);
+		_Values.Add(value);
+	}
 }
 
 // 删除指定元素
 void Dictionary::RemoveKey(const void* key)
 {
-	int index = _Keys.Remove(key);
-	if(index >= 0) _Values.RemoveAt(index);
+	int idx = _Keys.Remove(key);
+	if(idx >= 0) _Values.RemoveAt(idx);
 }
 
 void Dictionary::Clear()
@@ -32,7 +41,7 @@ void Dictionary::Clear()
 }
 
 // 是否包含指定项
-bool Dictionary::ContainKey(const void* key)
+bool Dictionary::ContainKey(const void* key) const
 {
 	return _Keys.FindIndex(key) >= 0;
 }

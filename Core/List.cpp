@@ -90,10 +90,10 @@ void List::RemoveAt(uint index)
 // 删除指定元素
 int List::Remove(const void* item)
 {
-	int index = FindIndex(item);
-	if(index >= 0) RemoveAt(index);
+	int idx = FindIndex(item);
+	if(idx >= 0) RemoveAt(idx);
 
-	return index;
+	return idx;
 }
 
 int List::FindIndex(const void* item) const

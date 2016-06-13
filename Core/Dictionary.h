@@ -21,7 +21,7 @@ public:
 	void Clear();
 	
 	// 是否包含指定项
-	bool ContainKey(const void* key);
+	bool ContainKey(const void* key) const;
 
 	// 尝试获取值
 	bool TryGetValue(const void* key, void*& value) const;
