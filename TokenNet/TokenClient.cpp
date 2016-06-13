@@ -21,6 +21,7 @@ static void LoopTask(void* param);
 static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
+	: Routes(String::Compare)
 {
 	Token		= 0;
 
