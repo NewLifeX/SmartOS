@@ -5,12 +5,13 @@
 class List
 {
 public:
-    explicit List(int count = 0);
-    //List(void* items, uint count);
+    explicit List();
+    List(const List& list);
+    List(List&& list);
 	~List();
 
 	int Count() const;
-	
+
 	// 添加单个元素
     void Add(void* item);
 
@@ -24,7 +25,7 @@ public:
 	int Remove(const void* item);
 
 	void Clear();
-	
+
 	// 查找指定项。不存在时返回-1
 	int FindIndex(const void* item) const;
 
@@ -38,14 +39,15 @@ public:
 #if DEBUG
 	static void Test();
 #endif
-	
+
 private:
 	void**	_Arr;
 	uint	_Count;
 	uint	_Capacity;
 
 	void*	Arr[0x10];
-	
+
+	void Init();
 	bool CheckCapacity(int count);
 };
 

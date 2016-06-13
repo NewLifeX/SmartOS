@@ -2,18 +2,53 @@
 #include "Buffer.h"
 #include "List.h"
 
-List::List(int size)
+List::List()
 {
-	_Arr	= Arr;
-	_Count	= 0;
-	_Capacity	= ArrayLength(Arr);
+	Init();
 }
 
-//List::List(T* items, uint count) { Set(items, count); }
+List::List(const List& list)
+{
+	Init();
+
+	// 如果list的缓冲区是自己的，则拷贝过来
+	// 如果不是自己的，则直接拿过来用
+	if(list._Arr != list.Arr) CheckCapacity(_Count + 1);
+	
+	_Count	= list._Count;
+
+	Buffer(_Arr, _Count << 2)	= list._Arr;
+}
+
+List::List(List&& list)
+{
+	_Count	= list._Count;
+	_Capacity	= list._Capacity;
+
+	// 如果list的缓冲区是自己的，则拷贝过来
+	// 如果不是自己的，则直接拿过来用
+	if(list._Arr == list.Arr)
+	{
+		_Arr	= Arr;
+		Buffer(_Arr, _Count << 2)	= list._Arr;
+	}
+	else
+	{
+		_Arr	= list._Arr;
+		list.Init();
+	}
+}
 
 List::~List()
 {
 	if(_Arr && _Arr != Arr) delete _Arr;
+}
+
+void List::Init()
+{
+	_Arr	= Arr;
+	_Count	= 0;
+	_Capacity	= ArrayLength(Arr);
 }
 
 int List::Count() const { return _Count; }
@@ -57,7 +92,7 @@ int List::Remove(const void* item)
 {
 	int index = FindIndex(item);
 	if(index >= 0) RemoveAt(index);
-	
+
 	return index;
 }
 
