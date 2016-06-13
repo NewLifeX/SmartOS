@@ -750,6 +750,9 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 {
 	auto rs	= msg.CreateReply();
+	auto ms	= rs.ToStream();
+	// 考虑到结果可能比较大，允许扩容
+	ms.CanResize	= true;
 
 	BinaryPair bp(msg.ToStream());
 
@@ -769,7 +772,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 		{
 			auto ivh	= (InvokeHandler)handler;
 
-			BinaryPair result(rs.ToStream());
+			BinaryPair result(ms);
 			if(!ivh(bp, result))
 			{
 				rs.SetError(0x03, "执行出错");
@@ -777,6 +780,9 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 			else
 			{
 				// 执行成功
+				// 数据流可能已经扩容
+				rs.Data		= ms.GetBuffer();
+				rs.Length	= ms.Position();
 			}
 		}
 	}
