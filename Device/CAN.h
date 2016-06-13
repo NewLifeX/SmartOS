@@ -1,10 +1,8 @@
 ﻿#ifndef __CAN_H__
 #define __CAN_H__
 
-#include "Sys.h"
-
 // CAN类
-class CAN
+class Can
 {
 public:
     typedef enum
@@ -19,26 +17,19 @@ public:
         Mode_ALL = 0x07          // 接收所有类型
     }Mode_TypeDef;
 
-    CAN_TypeDef* Port;  // 端口
     Mode_TypeDef Mode;  // 工作模式
 
-    CAN(CAN_TypeDef* port = CAN1, Mode_TypeDef mode = Mode_Send, int remap = 1);
-    virtual ~CAN()
-    {
-        if(_TxMsg) delete _TxMsg;
-        _TxMsg = nullptr;
-        if(_RxMsg) delete _RxMsg;
-        _RxMsg = nullptr;
-    }
+    Can(CAN index = Can1, Mode_TypeDef mode = Mode_Send, int remap = 1);
+    ~Can();
 
     void Send(byte* buf, uint len);
-    
-private:
-    CAN_InitTypeDef _can;
-    int Remap;
 
-    CanTxMsg* _TxMsg;
-    CanRxMsg* _RxMsg;
+private:
+	byte	_index;
+    int		Remap;
+
+    void*	_Tx;
+    void*	_Rx;
 };
 
 #endif

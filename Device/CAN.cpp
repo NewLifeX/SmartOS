@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 #include "Port.h"
-#include "CAN.h"
+#include "Can.h"
 
 #include "Platform\stm32.h"
 
@@ -10,25 +10,28 @@ static const Pin g_CAN_Pins_Map2[] =  CAN_PINS_REMAP2;
 static const Pin g_CAN_Pins_Map3[] =  CAN_PINS_REMAP3;
 #endif
 
-CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
+Can::Can(CAN index, Mode_TypeDef mode, int remap)
 {
-    Port = port;
-    Mode = mode;
-    Remap = remap;
+    _index	= index;
+    Mode	= mode;
+    Remap	= remap;
+
+	_Tx		= nullptr;
+	_Rx		= nullptr;
 
   	/*外设时钟设置*/
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOB, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
   	/*IO设置*/
 #ifdef STM32F1
-    if(port == CAN1)
+    if(index == Can1)
     {
         if(remap == 1)
             GPIO_PinRemapConfig(GPIO_Remap1_CAN1, ENABLE);
         else if(remap == 2)
             GPIO_PinRemapConfig(GPIO_Remap2_CAN1, ENABLE);
     }
-    else if(port == CAN2)
+    else if(index == Can2)
         GPIO_PinRemapConfig(GPIO_Remap_CAN2, ENABLE);
 
     const Pin* p = g_CAN_Pins_Map;
@@ -36,7 +39,7 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
         p = g_CAN_Pins_Map2;
     else if(remap == 3)
         p = g_CAN_Pins_Map3;
-    
+
     AlternatePort tx(p[0]);
     InputPort rx(p[1], false, InputPort::UP);
 #endif
@@ -48,28 +51,31 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
 #endif
 
     /************************CAN通信参数设置**********************************/
+	CAN_TypeDef* const g_CANs[] = CANS;
     /*CAN寄存器初始化*/
-    CAN_DeInit(Port);
+    CAN_DeInit(g_CANs[_index]);
+
+	CAN_InitTypeDef _can;
     CAN_StructInit(&_can);
     /*CAN单元初始化*/
     _can.CAN_TTCM = DISABLE;			   //MCR-TTCM  时间触发通信模式使能
-    _can.CAN_ABOM = Mode == Mode_Send ? ENABLE : DISABLE;			   //MCR-ABOM  自动离线管理 
+    _can.CAN_ABOM = Mode == Mode_Send ? ENABLE : DISABLE;			   //MCR-ABOM  自动离线管理
     _can.CAN_AWUM = Mode == Mode_Send ? ENABLE : DISABLE;			   //MCR-AWUM  自动唤醒模式
     _can.CAN_NART = DISABLE;			   //MCR-NART  禁止报文自动重传	  DISABLE-自动重传
-    _can.CAN_RFLM = DISABLE;			   //MCR-RFLM  接收FIFO 锁定模式  DISABLE-溢出时新报文会覆盖原有报文  
-    _can.CAN_TXFP = DISABLE;			   //MCR-TXFP  发送FIFO优先级 DISABLE-优先级取决于报文标示符 
+    _can.CAN_RFLM = DISABLE;			   //MCR-RFLM  接收FIFO 锁定模式  DISABLE-溢出时新报文会覆盖原有报文
+    _can.CAN_TXFP = DISABLE;			   //MCR-TXFP  发送FIFO优先级 DISABLE-优先级取决于报文标示符
     _can.CAN_Mode = CAN_Mode_Normal;  //正常发送模式
     _can.CAN_SJW = CAN_SJW_1tq;		   //BTR-SJW 重新同步跳跃宽度 2个时间单元
     _can.CAN_BS1 = CAN_BS1_3tq;		   //BTR-TS1 时间段1 占用了6个时间单元
     _can.CAN_BS2 = CAN_BS2_2tq;		   //BTR-TS1 时间段2 占用了3个时间单元
     _can.CAN_Prescaler  = 6;		   ////BTR-BRP 波特率分频器  定义了时间单元的时间长度 36/(1+6+3)/4 = 0.8Mbps
-    CAN_Init(Port, &_can);
-    
+    CAN_Init(g_CANs[_index], &_can);
+
     if(Mode == Mode_Send)
-        _TxMsg = new CanTxMsg();
+        _Tx = new CanTxMsg();
     else
     {
-        _RxMsg = new CanRxMsg();
+        _Rx = new CanRxMsg();
 
         CAN_FilterInitTypeDef  filter;
 
@@ -140,27 +146,37 @@ CAN::CAN(CAN_TypeDef* port, Mode_TypeDef mode, int remap)
     }
 }
 
-void CAN::Send(byte* buf, uint len)
+Can::~Can()
 {
+	auto tx	= (CanTxMsg*)_Tx;
+	delete tx;
+
+	auto rx	= (CanRxMsg*)_Rx;
+	delete rx;
+}
+
+void Can::Send(byte* buf, uint len)
+{
+	auto tx	= (CanTxMsg*)_Tx;
     switch(Mode)
     {
         case STD_Data:
         case STD_Remote:
         case STD:
-            _TxMsg->StdId = 0;
-            _TxMsg->IDE = CAN_ID_STD;
+            tx->StdId	= 0;
+            tx->IDE		= CAN_ID_STD;
             break;
         case EXT_Data:
         case EXT_Remote:
         case EXT:
-            _TxMsg->StdId = 0;
-            _TxMsg->IDE = CAN_ID_EXT;
+            tx->StdId	= 0;
+            tx->IDE		= CAN_ID_EXT;
             break;
     }
 
-    _TxMsg->RTR=CAN_RTR_DATA;				 //发送的是数据
-    _TxMsg->DLC=2;							 //数据长度为2字节
-    _TxMsg->Data[0] = 0x12;
-    _TxMsg->Data[1] = 0x34;
+    tx->RTR	=CAN_RTR_DATA;				 //发送的是数据
+    tx->DLC	=2;							 //数据长度为2字节
+    tx->Data[0]	= 0x12;
+    tx->Data[1]	= 0x34;
     // 未完成
 }

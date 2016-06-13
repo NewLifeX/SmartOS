@@ -183,4 +183,10 @@ enum TIMER
 	Timer18 = 17,
 };
 
+enum CAN
+{
+	Can1 = 0,
+	Can2 = 1,
+};
+
 #endif
