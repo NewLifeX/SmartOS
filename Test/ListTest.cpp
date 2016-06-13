@@ -58,10 +58,6 @@ void List::Test()
 	assert(list.Count() == 3 + 16, "Count()");
 	assert(list[0] == buf1 && list[1] == buf3 && list[2] == buf3, "bool CheckCapacity(int count)");
 
-	//TestAssign();
-	//TestAssign2();
-	//TestCopy();
-
 	debug_printf("TestList测试完毕......\r\n");
 
 }

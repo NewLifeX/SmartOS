@@ -1,11 +1,15 @@
 ﻿#ifndef _List_H_
 #define _List_H_
 
+typedef int (*IComparer)(const void* v1, const void* v2);
+
 // 变长列表。仅用于存储指针
 class List
 {
 public:
-    explicit List();
+    IComparer	Comparer;	// 比较器
+
+	explicit List();
     List(const List& list);
     List(List&& list);
 	~List();

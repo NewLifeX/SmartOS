@@ -163,6 +163,9 @@ public:
 	String ToLower() const;
 	String ToUpper() const;
 
+	// 静态比较器。比较两个字符串指针
+	static int Compare(const void* v1, const void* v2);
+
 #if DEBUG
 	static void Test();
 #endif

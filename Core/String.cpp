@@ -976,6 +976,17 @@ String String::ToUpper() const
 	return str;
 }
 
+// 静态比较器。比较两个字符串指针
+int String::Compare(const void* v1, const void* v2)
+{
+	if(!v1) return v1	== v2 ? 0 : -1;
+	if(!v2) return 1;
+
+	auto str1	= (cstring)v1;
+	auto str2	= (cstring)v2;
+	return strncmp((char*)v1, str2, strlen(str1));
+}
+
 /******************************** 辅助 ********************************/
 
 extern char* itoa(int value, char *string, int radix)

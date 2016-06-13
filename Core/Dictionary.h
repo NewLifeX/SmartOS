@@ -6,7 +6,7 @@
 class Dictionary
 {
 public:
-    Dictionary();
+    Dictionary(IComparer comparer = nullptr);
 
 	int Count() const;
 	const List& Keys() const;

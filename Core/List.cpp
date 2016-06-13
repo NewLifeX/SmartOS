@@ -14,8 +14,9 @@ List::List(const List& list)
 	// 如果list的缓冲区是自己的，则拷贝过来
 	// 如果不是自己的，则直接拿过来用
 	if(list._Arr != list.Arr) CheckCapacity(_Count + 1);
-	
+
 	_Count	= list._Count;
+	Comparer	= list.Comparer;
 
 	Buffer(_Arr, _Count << 2)	= list._Arr;
 }
@@ -24,6 +25,7 @@ List::List(List&& list)
 {
 	_Count	= list._Count;
 	_Capacity	= list._Capacity;
+	Comparer	= list.Comparer;
 
 	// 如果list的缓冲区是自己的，则拷贝过来
 	// 如果不是自己的，则直接拿过来用
@@ -49,6 +51,8 @@ void List::Init()
 	_Arr	= Arr;
 	_Count	= 0;
 	_Capacity	= ArrayLength(Arr);
+
+	Comparer	= nullptr;
 }
 
 int List::Count() const { return _Count; }
@@ -101,6 +105,7 @@ int List::FindIndex(const void* item) const
 	for(int i=0; i<_Count; i++)
 	{
 		if(_Arr[i] == item) return i;
+		if(Comparer && Comparer(_Arr[i], item) == 0) return i;
 	}
 
 	return -1;

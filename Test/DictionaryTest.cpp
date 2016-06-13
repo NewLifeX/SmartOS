@@ -59,6 +59,24 @@ void Dictionary::Test()
 	// 前面曾经赋值，所以buf3里面保存的是buf2
 	assert(p == buf2, err);
 
+	// 测试比较器
+	cstring str	= "123456";
+	Dictionary dic2(String::Compare);
+	dic2.Add("test", (void*)str);
+
+	char cs[5];
+	cs[0]	= 't';
+	cs[0]	= 'e';
+	cs[0]	= 's';
+	cs[0]	= 't';
+	cs[0]	= '\0';
+	rs	= dic2.TryGetValue(cs, p);
+
+	err	= "Dictionary(IComparer comparer = nullptr)";
+	assert(rs, err);
+	// 前面曾经赋值，所以buf3里面保存的是buf2
+	assert(p == str, err);
+
 	debug_printf("TestDictionary测试完毕......\r\n");
 }
 #endif

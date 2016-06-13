@@ -3,8 +3,9 @@
 #include "List.h"
 #include "Dictionary.h"
 
-Dictionary::Dictionary()
+Dictionary::Dictionary(IComparer comparer)
 {
+	_Keys.Comparer	= comparer;
 }
 
 int Dictionary::Count() const { return _Keys.Count(); }
