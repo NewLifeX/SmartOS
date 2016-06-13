@@ -75,7 +75,7 @@ public:
 	typedef TParameter parameter_type;
 
 	// 将被重载的函数操作
-	virtual void operator ()(TParameter) = 0;
+	virtual void operator ()(TParameter) const = 0;
 };
 
 // 无参函数模版接口
@@ -85,7 +85,7 @@ class ifunction<void>
 public:
 	typedef void parameter_type;
 
-	virtual void operator ()() = 0;
+	virtual void operator ()() const = 0;
 };
 
 // 对象函数模版
@@ -102,7 +102,7 @@ public:
 	{
 	}
 
-	virtual void operator ()(TParameter data)
+	virtual void operator ()(TParameter data) const
 	{
 		// 调用对象的成员函数
 		(p_object->*p_function)(data);
@@ -124,7 +124,7 @@ public:
 	{
 	}
 
-	virtual void operator ()()
+	virtual void operator ()() const
 	{
 		(p_object->*p_function)();
 	}
@@ -144,7 +144,7 @@ public:
 	{
 	}
 
-	virtual void operator ()(TParameter data)
+	virtual void operator ()(TParameter data) const
 	{
 		(*p_function)(data);
 	}
@@ -162,7 +162,7 @@ public:
 	{
 	}
 
-	virtual void operator ()()
+	virtual void operator ()() const
 	{
 		(*p_function)();
 	}
