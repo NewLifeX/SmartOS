@@ -1,10 +1,8 @@
 ﻿#ifndef __SerialPort_H__
 #define __SerialPort_H__
 
-#include "Sys.h"
 #include "Port.h"
-#include "Task.h"
-#include "Core\Queue.h"
+#include "Queue.h"
 #include "Power.h"
 #include "Net\ITransport.h"
 
@@ -81,9 +79,15 @@ private:
 	void OnTxHandler();
 	void OnRxHandler();
 
-	Task*	_task;
+	void*	_task;
 	uint	_taskidRx;
 	void ReceiveTask();
+	
+	void OnInit();
+	bool OnSet();
+	void OnOpen2();
+	void OnClose2();
+	void OnWrite2();
 };
 
 #endif
