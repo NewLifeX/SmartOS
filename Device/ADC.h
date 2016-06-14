@@ -17,20 +17,18 @@ STM32F103内部ADC
 	Port
 */
 
-class ADConverter  //: public	AnalogPort   //有两个通道不在引脚上  不用继承的好
+class ADConverter
 {
 private:
 	void*	_ADC;	// 当前中断线的引用
+	Pin		_Pins[16];
 	AnalogInPort	_ports[16]; 
+	byte	_PinCount;
 public :
 	byte	Line;		// 中断线 1/2/3
 	byte	Count;		// 通道个数
 	uint	Channel;	// 使用哪些通道，每个通道一位
-#ifdef STM32F1
-	ushort	Data[18];	// 存放数据
-#else
 	ushort	Data[19];	// 存放数据
-#endif
 
 	// 如果需要读取温度和电压，通道需要设置0x30000
 	ADConverter(byte line = 1, uint channel = 0);
@@ -41,8 +39,10 @@ public :
 	ushort Read(Pin pin);
 	ushort ReadTempSensor();
 	ushort ReadVrefint();
-#if defined(STM32F0) && !defined(GD32)
 	ushort ReadVbat();
-#endif
+	
+private:
+	void OnInit();
+	void OnOpen();
 };
 #endif
