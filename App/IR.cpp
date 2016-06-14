@@ -1,7 +1,7 @@
 ﻿#include "IR.h"
 #include "Time.h"
 
-#include "Platform\stm32.h"
+//#include "Platform\stm32.h"
 
 /*
 Timer2  CH2       通道

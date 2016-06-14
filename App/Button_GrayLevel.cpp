@@ -1,7 +1,7 @@
 ﻿#include "Button_GrayLevel.h"
 #include "Time.h"
 
-#include "Platform\stm32.h"
+//#include "Platform\stm32.h"
 
 #define BTN_DEBUG DEBUG
 //#define BTN_DEBUG 0
