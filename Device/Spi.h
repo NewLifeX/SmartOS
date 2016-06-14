@@ -46,6 +46,12 @@ public:
 
     void Start();   // 拉低NSS，开始传输
     void Stop();    // 拉高NSS，停止传输
+	
+private:
+	static int GetPre(int index, uint& speedHz);
+	void OnInit();
+	void OnOpen();
+	void OnClose();
 };
 
 // Spi会话类。初始化时打开Spi，超出作用域析构时关闭
