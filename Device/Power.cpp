@@ -2,8 +2,6 @@
 
 #include "WatchDog.h"
 
-#include "Platform\stm32.h"
-
 // 低功耗处理器
 static List	_powers;
 
@@ -20,16 +18,15 @@ void Power::Stop(uint msTime)
 
 	if(!msTime) msTime = 0xFFFF;
 	WatchDog::Start(msTime);
-	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	
+	OnStop();
 }
 
 void Power::DeepSleep(uint msTime)
 {
 	debug_printf("Power::DeepSleep Time=%d \r\n", msTime);
 
-#ifdef STM32F0
-	PWR_EnterSleepMode(PWR_SLEEPEntry_WFI);
-#endif
+	OnDeepSleep();
 }
 
 void Power::Standby(uint msTime)
@@ -48,7 +45,8 @@ void Power::Standby(uint msTime)
 	
 	if(!msTime) msTime = 0xFFFF;
 	WatchDog::Start(msTime);
-	PWR_EnterSTANDBYMode();
+	
+	OnStandby();
 }
 
 // 各模块向系统注册低功耗句柄，供系统进入低功耗前调用

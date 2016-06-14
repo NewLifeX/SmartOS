@@ -19,6 +19,11 @@ public:
 
 	// 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
 	static void AddPower(Power* power);
+
+private:
+	static void OnStop();
+	static void OnDeepSleep();
+	static void OnStandby();
 };
 
 #endif
