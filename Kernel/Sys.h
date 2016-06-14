@@ -77,10 +77,10 @@ public:
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟
 
-	String	Name;		// 系统名称
-	String	Company;	// 系统厂商
+	cstring	Name;		// 系统名称
+	cstring	Company;	// 系统厂商
 	ushort	Code;		// 产品代码
-	Version	Ver;		// 系统版本
+	ushort	Ver;		// 系统版本
     byte	ID[12];		// 芯片ID。
     ushort	DevID;		// MCU编码。低字设备版本，高字子版本
     ushort	RevID;		// MCU编码。低字设备版本，高字子版本

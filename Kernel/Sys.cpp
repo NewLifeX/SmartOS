@@ -33,14 +33,13 @@ TSys::TSys()
 {
 	OnInit();
 
-	OnSleep		= nullptr;
+	OnSleep	= nullptr;
 
 	Code	= 0x0000;
 	Ver		= 0x0300;
 #ifndef TINY
 	Name	= "SmartOS";
 	Company	= "NewLife_Embedded_Team";
-	//BuildTime = "yyyy-MM-dd HH:mm:ss";
 
     Interrupt.Init();
 #endif
@@ -69,9 +68,10 @@ void TSys::ShowInfo() const
 {
 #if DEBUG
 	//byte* ver = (byte*)&Version;
-	debug_printf("%s::%s Code:%04X ", Company.GetBuffer(), Name.GetBuffer(), Code);
+	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	//debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
-	debug_printf("Ver:%s Build:%s\r\n", Ver.ToString().GetBuffer(), Ver.Compile().ToString().GetBuffer());
+	Version v(0, 0, Ver, 0);
+	debug_printf("Ver:%s Build:%s\r\n", v.ToString().GetBuffer(), v.Compile().ToString().GetBuffer());
 
 	OnShowInfo();
 
