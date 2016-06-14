@@ -112,6 +112,11 @@ public:
 	void InitTrace(void* port) const;
 	void Trace(int times = 1) const;
 
+private:
+	void OnInit();
+	void OnShowInfo() const;
+	void OnStart();
+	
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
 	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, cstring name = nullptr) const;
