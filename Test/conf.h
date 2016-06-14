@@ -24,5 +24,6 @@ void TestNRF24L01();
 NRF24L01* Create2401();
 
 void TestMessage(OutputPort* leds);
+void InvokeTest(TokenClient * client);
 
 #endif
