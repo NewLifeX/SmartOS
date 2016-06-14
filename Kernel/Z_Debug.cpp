@@ -136,15 +136,6 @@ void operator delete[](void* p)
 
 #ifdef  USE_FULL_ASSERT
 
-void assert_failed(uint8_t* file, unsigned int line)
-{
-    debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
-
-	TraceStack::Show();
-
-    while (1) { }
-}
-
 void assert_failed2(cstring msg, cstring file, unsigned int line)
 {
     debug_printf("%s Line %d, %s\r\n", msg, line, file);

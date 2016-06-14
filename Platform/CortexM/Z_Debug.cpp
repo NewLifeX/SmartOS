@@ -16,6 +16,15 @@ extern uint __Vectors_Size;
 
 #ifdef  USE_FULL_ASSERT
 
+void assert_failed(uint8_t* file, unsigned int line)
+{
+    debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
+
+	TraceStack::Show();
+
+    while (1) { }
+}
+
 bool assert_ptr_(const void* p)
 {
 	if((uint)p < FLASH_BASE)
