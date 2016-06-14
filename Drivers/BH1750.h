@@ -5,7 +5,7 @@
 #include "Power.h"
 
 // 光强传感器
-class BH1750
+class BH1750 : public Power
 {
 public:
     I2C* IIC;		// I2C通信口

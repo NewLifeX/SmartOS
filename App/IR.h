@@ -2,6 +2,7 @@
 #ifndef __IR_H__
 #define __IR_H__
 
+#include "Buffer.h"
 #include "Timer.h"
 #include "Port.h"
 

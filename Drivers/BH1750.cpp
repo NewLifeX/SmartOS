@@ -1,4 +1,5 @@
-﻿#include "BH1750.h"
+﻿#include "ByteArray.h"
+#include "BH1750.h"
 
 #define	CMD_PWN_OFF	0x00
 #define	CMD_PWN_ON	0x01

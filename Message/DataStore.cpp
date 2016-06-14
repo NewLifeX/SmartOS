@@ -1,6 +1,8 @@
 ﻿#include "Core\ByteArray.h"
 #include "Core\List.h"
 
+#include "Sys.h"
+
 #include "DataStore.h"
 
 //#define DS_DEBUG DEBUG

@@ -1,6 +1,8 @@
 ﻿#ifndef __Timer_H__
 #define __Timer_H__
 
+#include "Type.h"
+#include "Delegate.h"
 #include "Port.h"
 
 // 定时器
