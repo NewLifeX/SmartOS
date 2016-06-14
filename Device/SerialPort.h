@@ -29,12 +29,10 @@ private:
 	void Init();
 
 public:
-	char 		Name[5];// 名称。COMx，后面1字节\0表示结束
-#ifdef STM32F1XX
-    bool		IsRemap;// 是否重映射
-#endif
-	OutputPort* RS485;	// RS485使能引脚
-	int 		Error;	// 错误计数
+	char 		Name[5];	// 名称。COMxx，后面1字节\0表示结束
+    bool		Remap;		// 是否重映射
+	OutputPort* RS485;		// RS485使能引脚
+	int 		Error;		// 错误计数
 	int			ByteTime;	// 字节间隔，最小1ms
 
 	// 收发缓冲区
@@ -82,7 +80,7 @@ private:
 	void*	_task;
 	uint	_taskidRx;
 	void ReceiveTask();
-	
+
 	void OnInit();
 	bool OnSet();
 	void OnOpen2();

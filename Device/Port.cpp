@@ -300,7 +300,7 @@ AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
 void AlternatePort::OnOpen(void* param)
 {
 	OutputPort::OnOpen(param);
-	
+
 	OpenPin(param);
 }
 
@@ -492,7 +492,7 @@ void InputPort::OnOpen(void* param)
 #if DEBUG
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
-	
+
 	OpenPin(param);
 }
 
@@ -529,7 +529,6 @@ bool InputPort::Register(IOReadHandler handler, void* param)
         hasInitState = true;
     }
 
-	byte gi = _Pin >> 4;
 	int idx = Bits2Index(Mask);
 	auto st = &States[idx];
 
@@ -538,6 +537,7 @@ bool InputPort::Register(IOReadHandler handler, void* param)
     if(port != this && port != nullptr)
     {
 #if DEBUG
+		byte gi = _Pin >> 4;
         debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
 #endif
 
@@ -564,6 +564,6 @@ void AnalogInPort::OnOpen(void* param)
 #endif
 
 	Port::OnOpen(param);
-	
+
 	OpenPin(param);
 }

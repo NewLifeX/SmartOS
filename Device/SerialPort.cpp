@@ -27,9 +27,7 @@ void SerialPort::Init()
 	RS485	= nullptr;
 	Error	= 0;
 
-#ifdef STM32F1XX
-	IsRemap	= false;
-#endif
+	Remap	= false;
 	MinSize	= 1;
 
 	_taskidRx	= 0;
