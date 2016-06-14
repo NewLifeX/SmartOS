@@ -30,7 +30,7 @@ namespace NewLife.Reflection
 			build.AddIncludes("..\\..\\Kernel");
 			build.AddIncludes("..\\..\\Device");
             build.AddFiles(".", "*.c;*.cpp;*.s");
-            build.AddFiles("..\\CMSIS", "*.c;*.cpp;*.s");
+            build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
 			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\..\\");
