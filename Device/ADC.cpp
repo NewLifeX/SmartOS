@@ -1,4 +1,5 @@
-﻿#include "ADC.h"
+﻿#include "Sys.h"
+#include "ADC.h"
 
 //Pin _Pins[] = ADC1_PINS;
 

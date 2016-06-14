@@ -1,7 +1,7 @@
 ﻿#ifndef _Port_H_
 #define _Port_H_
 
-#include "Sys.h"
+#include "Type.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"
@@ -56,6 +56,8 @@ public:
 	static bool IsBusy(Pin pin);	// 引脚是否被保护
 #endif
 
+	static void OpenClock(Pin pin, bool flag);
+
 	virtual String& ToStr(String& str) const;
 
 protected:
@@ -67,6 +69,11 @@ protected:
     // 配置过程，由Open调用，最后GPIO_Init
     virtual void OnOpen(void* param);
 	virtual void OnClose();
+	
+private:
+	static void* IndexToGroup(byte index);
+	static void OnOpenClock(Pin pin, bool flag);
+	void OpenPin();
 };
 
 /******************************** OutputPort ********************************/
@@ -104,6 +111,9 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
+	
+private:
+	void OpenPin(void* param);
 };
 
 /******************************** AlternatePort ********************************/
@@ -118,6 +128,9 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
+	
+private:
+	void OpenPin(void* param);
 };
 
 /******************************** InputPort ********************************/
@@ -180,6 +193,11 @@ private:
 
     IOReadHandler	Handler	= nullptr;
 	void*			Param	= nullptr;
+	
+private:
+	void OpenPin(void* param);
+	void ClosePin();
+	void OnRegister();
 };
 
 /******************************** AnalogInPort ********************************/
@@ -193,6 +211,9 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
+	
+private:
+	void OpenPin(void* param);
 };
 
 /******************************** PortScope ********************************/

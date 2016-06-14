@@ -1,4 +1,6 @@
-﻿#include "Spi.h"
+﻿#include "Buffer.h"
+
+#include "Spi.h"
 
 #include "Platform\stm32.h"
 
