@@ -39,6 +39,7 @@ void SerialPort::Init()
 
 void SerialPort::Set(COM index, int baudRate)
 {
+	_index		= index;
     _baudRate	= baudRate;
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
