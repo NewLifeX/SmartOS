@@ -1,5 +1,7 @@
 ﻿#include "Pandora.h"
 
+#include "Task.h"
+
 #include "SerialPort.h"
 #include "WatchDog.h"
 #include "Config.h"
