@@ -4,6 +4,7 @@
 #include "Sys.h"
 #include "Port.h"
 #include "Spi.h"
+#include "TokenNet\TokenClient.h"
 
 void TestSerial();
 void TestAT45DB();
