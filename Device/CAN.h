@@ -26,7 +26,7 @@ public:
     void Send(byte* buf, uint len);
 
 private:
-	byte	_index;
+	CAN		_index;
     int		Remap;
 
     void*	_Tx;

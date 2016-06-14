@@ -17,20 +17,20 @@ void Can::OnOpen()
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
   	/*IO设置*/
 #ifdef STM32F1
-    if(index == Can1)
+    if(_index == Can1)
     {
-        if(remap == 1)
+        if(Remap == 1)
             GPIO_PinRemapConfig(GPIO_Remap1_CAN1, ENABLE);
-        else if(remap == 2)
+        else if(Remap == 2)
             GPIO_PinRemapConfig(GPIO_Remap2_CAN1, ENABLE);
     }
-    else if(index == Can2)
+    else if(_index == Can2)
         GPIO_PinRemapConfig(GPIO_Remap_CAN2, ENABLE);
 
     const Pin* p = g_CAN_Pins_Map;
-    if(remap == 2)
+    if(Remap == 2)
         p = g_CAN_Pins_Map2;
-    else if(remap == 3)
+    else if(Remap == 3)
         p = g_CAN_Pins_Map3;
 
     AlternatePort tx(p[0]);

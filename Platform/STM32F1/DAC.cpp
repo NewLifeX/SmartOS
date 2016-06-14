@@ -1,4 +1,5 @@
-﻿#include "DAC.h"
+﻿#include "Port.h"
+#include "DAC.h"
 
 #include "Platform\stm32.h"
 
@@ -50,9 +51,9 @@ bool DAConverter::OnWrite(ushort value)	// 处理对齐问题
 {
 	//if (Opened)return false;
 	if (Channel == DAC_Channel_1)
-		DAC_SetChannel1Data(Align, dat);
+		DAC_SetChannel1Data(Align, value);
 	else
-		DAC_SetChannel2Data(Align, dat);
+		DAC_SetChannel2Data(Align, value);
 	DAC_SoftwareTriggerCmd(Channel, ENABLE);
 
 	return true;
