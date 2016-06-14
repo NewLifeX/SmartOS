@@ -18,7 +18,7 @@
 #include "Core\Delegate.h"
 
 /* 引脚定义 */
-#include "Platform\Pin.h"
+//#include "Platform\Pin.h"
 
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
@@ -72,7 +72,7 @@ extern struct HandlerRemap StrBoot;
 class TSys
 {
 public:
-    COM		MessagePort;// 消息口，默认0表示USART1
+    byte	MessagePort;// 消息口，默认0表示USART1
 
     uint	Clock;  	// 系统时钟
     uint	CystalClock;// 晶振时钟

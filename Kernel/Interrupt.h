@@ -1,8 +1,6 @@
 ﻿#ifndef __INTERRUPT_H__
 #define __INTERRUPT_H__
 
-#include "Sys.h"
-
 // 中断委托（中断号，参数）
 typedef void (*InterruptCallback)(ushort num, void* param);
 
@@ -27,37 +25,42 @@ public:
     void Init() const;    // 初始化中断向量表
     //~TInterrupt();
 
+	void Process(uint num) const;
+	
     // 注册中断函数（中断号，函数，参数）
     bool Activate(short irq, InterruptCallback isr, void* param = nullptr);
     // 解除中断注册
     bool Deactivate(short irq);
     // 开中断
-    bool Enable(short irq) const;
+    //bool Enable(short irq) const;
     // 关中断
-    bool Disable(short irq) const;
+    //bool Disable(short irq) const;
 
     // 是否开中断
-    bool EnableState(short irq) const;
+    //bool EnableState(short irq) const;
     // 是否挂起
-    bool PendingState(short irq) const;
+    //bool PendingState(short irq) const;
 
     // 设置优先级
     void SetPriority(short irq, uint priority = 1) const;
     // 获取优先级
     void GetPriority(short irq) const;
 
-#ifdef STM32F1
     // 编码优先级
     uint EncodePriority (uint priorityGroup, uint preemptPriority, uint subPriority) const;
     // 解码优先级
     void DecodePriority (uint priority, uint priorityGroup, uint* pPreemptPriority, uint* pSubPriority) const;
-#endif
 
-    void GlobalEnable() const;	// 打开全局中断
-    void GlobalDisable() const;	// 关闭全局中断
-	bool GlobalState() const;	// 全局中断开关状态
+    static void GlobalEnable();	// 打开全局中断
+    static void GlobalDisable();	// 关闭全局中断
+	static bool GlobalState();	// 全局中断开关状态
 
-	bool IsHandler() const;		// 是否在中断里面
+	static bool IsHandler();		// 是否在中断里面
+	
+private:
+	void OnInit() const;
+	bool OnActivate(short irq);
+	bool OnDeactivate(short irq);
 };
 
 // 全局中断类对象
