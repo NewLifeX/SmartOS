@@ -98,8 +98,6 @@ extern "C"
 #endif
 
 #if DEBUG
-		ShowFault(exception);
-
 		TraceStack::Show();
 
 		//auto sp	= SerialPort::GetMessagePort();

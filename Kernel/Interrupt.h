@@ -104,8 +104,6 @@ extern "C"
 #if defined(BOOT) || defined(APP)
 	void RealHandler(void);
 #endif
-
-	void ShowFault(uint exception);
 }
 
 #if DEBUG

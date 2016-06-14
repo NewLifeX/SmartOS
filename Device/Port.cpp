@@ -192,6 +192,30 @@ bool Port::IsBusy(Pin pin)
 #define REGION_Output 1
 #ifdef REGION_Output
 
+OutputPort::OutputPort() : Port() { }
+OutputPort::OutputPort(Pin pin) : OutputPort(pin, 2) { }
+OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port()
+{
+	OpenDrain	= openDrain;
+	Speed		= speed;
+	Invert		= invert;
+
+	if(pin != P0)
+	{
+		Set(pin);
+		Open();
+	}
+}
+
+OutputPort& OutputPort::Init(Pin pin, bool invert)
+{
+	Port::Set(pin);
+
+	Invert	= invert;
+
+	return *this;
+}
+
 void OutputPort::OnOpen(void* param)
 {
 	TS("OutputPort::OnOpen");
