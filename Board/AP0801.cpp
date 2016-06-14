@@ -94,6 +94,8 @@ ISocketHost* AP0801::Create5500()
 	auto net	= new W5500();
 	net->LoadConfig();
 	net->Init(spi, PE1, PD13);
+	net->Wireless = 0;	// 不是无线
+	net->EnableDNS();
 
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
 
