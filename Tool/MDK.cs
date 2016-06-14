@@ -685,6 +685,8 @@ namespace NewLife.Reflection
                 name = ".".GetFullPath().AsDirectory().Name;
             else if (name.StartsWith("_"))
                 name = ".".GetFullPath().AsDirectory().Name + name.TrimStart("_");
+			else if (name.EndsWith("\\"))
+				name += ".".GetFullPath().AsDirectory().Name;
             if (Tiny)
                 name = name.EnsureEnd("T");
             else if (Debug)
