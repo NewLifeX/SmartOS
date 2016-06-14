@@ -22,6 +22,7 @@ public:
     Can(CAN index = Can1, Mode_TypeDef mode = Mode_Send, int remap = 1);
     ~Can();
 
+	void Open();
     void Send(byte* buf, uint len);
 
 private:
@@ -30,6 +31,8 @@ private:
 
     void*	_Tx;
     void*	_Rx;
+	
+	void OnOpen();
 };
 
 #endif
