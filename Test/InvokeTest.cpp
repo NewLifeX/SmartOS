@@ -24,7 +24,7 @@ bool InvokeFun(const BinaryPair& args, BinaryPair& result)
 
 void InvokeTest(TokenClient * client)
 {
-	debug_printf("Reg Invoke \r\n");
+	debug_printf("\r\nReg Invoke \r\n");
 	client->Register("Test", InvokeFun);
 
 	// 写入信息
@@ -47,24 +47,24 @@ void InvokeTest(TokenClient * client)
 	bool rs = result.Get("Hello", rt);
 	if (!rs)
 	{
-		debug_printf("not got Hello");
+		debug_printf("not got Hello\r\n");
 		isOk = false;
 	}
 	if (rt != 0)
 	{
-		debug_printf("test error");
+		debug_printf("test error\r\n");
 		isOk = false;
 	}
 
 	rs = result.Get("Rehello", rt);
 	if (!rs)
 	{
-		debug_printf("not got Rehello");
+		debug_printf("not got Rehello\r\n");
 		isOk = false;
 	}
 	if (rt != 1)
 	{
-		debug_printf("test error");
+		debug_printf("test error\r\n");
 		isOk = false;
 	}
 
