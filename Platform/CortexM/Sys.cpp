@@ -192,13 +192,6 @@ void TSys::OnInit()
 
 #pragma arm section code
 
-void ShowTime(void* param)
-{
-	debug_printf("\r");
-	DateTime::Now().Show();
-	debug_printf(" ");
-}
-
 void TSys::InitClock()
 {
 #ifndef TINY

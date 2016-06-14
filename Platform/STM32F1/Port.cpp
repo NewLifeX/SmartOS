@@ -200,16 +200,7 @@ typedef struct TIntState
 static IntState States[16];
 static bool hasInitState = false;
 
-int Bits2Index(ushort value)
-{
-    for(int i=0; i<16; i++)
-    {
-        if(value & 0x01) return i;
-        value >>= 1;
-    }
-
-	return -1;
-}
+extern int Bits2Index(ushort value);
 
 #define IT 1
 #ifdef IT

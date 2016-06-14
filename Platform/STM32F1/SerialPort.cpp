@@ -29,13 +29,6 @@ bool SerialPort::OnSet()
 	return sp->CR1 & USART_CR1_UE;
 }
 
-void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
-{
-    _parity		= parity;
-    _dataBits	= dataBits;
-    _stopBits	= stopBits;
-}
-
 // 打开串口
 void SerialPort::OnOpen2()
 {
