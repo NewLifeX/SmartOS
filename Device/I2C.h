@@ -108,6 +108,7 @@ private:
 
 	virtual bool SendAddress(int addr, bool tx = true);
 
+	void OnInit();
 	virtual void OnOpen();
 	virtual void OnClose();
 };
