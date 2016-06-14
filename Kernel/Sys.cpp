@@ -3,7 +3,7 @@
 #include "Time.h"
 #include "WatchDog.h"
 
-#include "Platform\stm32.h"
+//#include "Platform\stm32.h"
 
 TSys Sys;
 const TTime Time;

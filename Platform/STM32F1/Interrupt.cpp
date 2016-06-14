@@ -5,11 +5,9 @@
 
 #include "..\stm32.h"
 
-TInterrupt Interrupt;
-
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
 
-#include "..\CMSIS\Interrupt.cpp"
+//#include "..\CMSIS\Interrupt.cpp"
 
 void TInterrupt::OnInit() const
 {

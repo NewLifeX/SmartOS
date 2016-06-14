@@ -3,6 +3,10 @@
 #include "Interrupt.h"
 //#include "SerialPort.h"
 
+#include "..\stm32.h"
+
+#define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
+
 bool TInterrupt::OnActivate(short irq)
 {
 	assert_param(IS_IRQ(irq));

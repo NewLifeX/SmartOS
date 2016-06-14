@@ -22,7 +22,6 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
 			build.Cortex = 3;
-			build.Output = "F1";
 			build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\..\\Lib\\Inc");
 			build.AddIncludes("..\\", false);
@@ -31,6 +30,7 @@ namespace NewLife.Reflection
 			build.AddIncludes("..\\..\\Kernel");
 			build.AddIncludes("..\\..\\Device");
             build.AddFiles(".", "*.c;*.cpp;*.s");
+            build.AddFiles("..\\CMSIS", "*.c;*.cpp;*.s");
 			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\..\\");

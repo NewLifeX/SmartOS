@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Reflection;
-using System.Text;
-using System.Linq;
-using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
@@ -144,21 +142,22 @@ namespace NewLife.Reflection
         #endregion
 
         #region 构造函数
-		public Builder()
-		{
-			CPU = "Cortex-M0";
-			Flash = "STM32F0";
-			RebuildTime = 60;
-			
-			Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
-			Includes = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
-			Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
-			Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
-			Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
-		}
+        public Builder()
+        {
+            CPU = "Cortex-M0";
+            Flash = "STM32F0";
+            RebuildTime = 60;
+
+            Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            Includes = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+            Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+        }
         #endregion
 
         #region 主要编译方法
+        private String _Root;
         public Int32 Compile(String file)
         {
             /*
@@ -183,11 +182,13 @@ namespace NewLife.Reflection
                 }
             }
 
+            obj.DirectoryName.EnsureDirectory(false);
+
             var sb = new StringBuilder();
             sb.Append("-c");
             if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
-			sb.Append(" --multibyte_chars --locale \"chinese\"");
+            sb.Append(" --multibyte_chars --locale \"chinese\"");
             sb.AppendFormat(" -D{0}", Flash);
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
@@ -200,8 +201,8 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -I{0}", item);
             }
-			//var self = file.CombinePath("../").GetFullPath();
-			//if(!Includes.Contains(self)) sb.AppendFormat(" -I{0}", self);
+            //var self = file.CombinePath("../").GetFullPath();
+            //if(!Includes.Contains(self)) sb.AppendFormat(" -I{0}", self);
 
             if (Preprocess)
             {
@@ -239,6 +240,8 @@ namespace NewLife.Reflection
                 }
             }
 
+            obj.DirectoryName.EnsureDirectory(false);
+
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
             sb.AppendFormat(" --pd \"{0} SETA 1\"", Flash);
@@ -267,6 +270,23 @@ namespace NewLife.Reflection
 
             // 特殊处理GD32F130
             //if(GD32) Cortex = Cortex;
+
+            // 计算根路径，输出的对象文件以根路径下子路径的方式存放
+            var di = Files.First().AsFile().Directory;
+            _Root = di.FullName;
+            foreach (var item in Files)
+            {
+                while (!item.StartsWithIgnoreCase(_Root))
+                {
+                    di = di.Parent;
+                    if (di == null) break;
+
+                    _Root = di.FullName;
+                }
+                if (di == null) break;
+            }
+            _Root = _Root.EnsureEnd("\\");
+            Console.WriteLine("根目录：{0}", _Root);
 
             // 提前创建临时目录
             var obj = GetObjPath(null);
@@ -320,7 +340,8 @@ namespace NewLife.Reflection
                 {
                     if (!Preprocess)
                     {
-                        var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+                        //var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+                        var fi = GetObjPath(item) + ".o";
                         list.Add(fi);
                     }
                 }
@@ -423,16 +444,16 @@ namespace NewLife.Reflection
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
             if (!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
-			{
-				sb.AppendFormat(" --scatter \"{0}\"", Scatter);
-				Console.WriteLine("使用分散加载文件");
-			}
+            {
+                sb.AppendFormat(" --scatter \"{0}\"", Scatter);
+                Console.WriteLine("使用分散加载文件");
+            }
             else
-			{
+            {
                 sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
-				Console.WriteLine("未使用分散加载文件");
-				Console.WriteLine("--ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
-			}
+                Console.WriteLine("未使用分散加载文件");
+                Console.WriteLine("--ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
+            }
             //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
@@ -591,9 +612,9 @@ namespace NewLife.Reflection
             path = path.GetFullPath();
             if (!Directory.Exists(path)) return;
 
-			// 有头文件才要，没有头文件不要
-			var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
-			if(!fs.Any()) return;
+            // 有头文件才要，没有头文件不要
+            var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
+            if (!fs.Any()) return;
 
             if (!Includes.Contains(path) && HasHeaderFile(path))
             {
@@ -685,8 +706,8 @@ namespace NewLife.Reflection
                 name = ".".GetFullPath().AsDirectory().Name;
             else if (name.StartsWith("_"))
                 name = ".".GetFullPath().AsDirectory().Name + name.TrimStart("_");
-			else if (name.EndsWith("\\"))
-				name += ".".GetFullPath().AsDirectory().Name;
+            else if (name.EndsWith("\\"))
+                name += ".".GetFullPath().AsDirectory().Name;
             if (Tiny)
                 name = name.EnsureEnd("T");
             else if (Debug)
@@ -708,7 +729,15 @@ namespace NewLife.Reflection
             objName = Output.CombinePath(objName);
             objName.GetFullPath().EnsureDirectory(false);
             if (!file.IsNullOrEmpty())
-                objName += "\\" + Path.GetFileNameWithoutExtension(file);
+            {
+                //objName += "\\" + Path.GetFileNameWithoutExtension(file);
+                var p = file.IndexOf(_Root, StringComparison.OrdinalIgnoreCase);
+                if (p == 0) file = file.Substring(_Root.Length);
+
+                objName = objName.CombinePath(file);
+                p = objName.LastIndexOf('.');
+                if (p > 0) objName = objName.Substring(0, p);
+            }
 
             return objName;
         }
@@ -748,7 +777,7 @@ namespace NewLife.Reflection
         public String FixWord(String msg)
         {
             #region 初始化
-			var ss = Sections;
+            var ss = Sections;
             if (ss.Count == 0)
             {
                 ss.Add("Fatal error", "致命错误");
@@ -759,44 +788,44 @@ namespace NewLife.Reflection
                 ss.Add("referred from", "引用自");
                 ss.Add("Program Size", "程序大小");
                 ss.Add("Finished", "程序大小");
-				ss.Add("declared at", "声明于");
-				ss.Add("required for copy that was eliminated", "已淘汰");
-				ss.Add("it is a deleted function", "函数已标记为删除");
-				ss.Add("be referenced", "被引用");
-				ss.Add("the format string ends before this argument", "格式字符串参数不足");
-				ss.Add("has already been declared in the current scope", "已在当前区域中定义");
-				ss.Add("more than one operator", "多于一个运算符");
-				ss.Add("matches these operands", "匹配该操作");
-				ss.Add("operand types are", "操作类型");
-				ss.Add("no instance of overloaded function", "没有函数");
-				ss.Add("matches the argument list", "匹配参数列表");
-				ss.Add("argument types are", "参数类型是");
-				ss.Add("object type is", "对象类型是");
-				ss.Add("initial value of reference to non-const must be an lvalue", "非常量引用初值必须是左值");
-				ss.Add("too many arguments in function call", "函数调用参数过多");
-				ss.Add("cannot be initialized with a value of type", "不能初始化为类型");
-				ss.Add("a reference of type", "引用类型");
-				ss.Add("connot be assigned to an entity of type", "不能赋值给类型");
-				ss.Add("detected during instantiation of", "在检测实例化");
-				ss.Add("not const-qualified", "非常量约束");
-				ss.Add("no instance of constructor", "没有构造函数");
-				ss.Add("is undefined", "未定义");
-				ss.Add("declaration is incompatible with", "声明不兼容");
-				ss.Add("is inaccessible", "不可访问");
-				ss.Add("expression must have class type", "表达式必须是类");
-				ss.Add("argument is incompatible with corresponding format string conversion", "格式化字符串不兼容参数");
-				ss.Add("no suitable constructor exists to convert from", "没有合适的构造函数去转换");
-				ss.Add("nonstandard form for taking the address of a member function", "获取成员函数地址不标准（&Class::Method）");
+                ss.Add("declared at", "声明于");
+                ss.Add("required for copy that was eliminated", "已淘汰");
+                ss.Add("it is a deleted function", "函数已标记为删除");
+                ss.Add("be referenced", "被引用");
+                ss.Add("the format string ends before this argument", "格式字符串参数不足");
+                ss.Add("has already been declared in the current scope", "已在当前区域中定义");
+                ss.Add("more than one operator", "多于一个运算符");
+                ss.Add("matches these operands", "匹配该操作");
+                ss.Add("operand types are", "操作类型");
+                ss.Add("no instance of overloaded function", "没有函数");
+                ss.Add("matches the argument list", "匹配参数列表");
+                ss.Add("argument types are", "参数类型是");
+                ss.Add("object type is", "对象类型是");
+                ss.Add("initial value of reference to non-const must be an lvalue", "非常量引用初值必须是左值");
+                ss.Add("too many arguments in function call", "函数调用参数过多");
+                ss.Add("cannot be initialized with a value of type", "不能初始化为类型");
+                ss.Add("a reference of type", "引用类型");
+                ss.Add("connot be assigned to an entity of type", "不能赋值给类型");
+                ss.Add("detected during instantiation of", "在检测实例化");
+                ss.Add("not const-qualified", "非常量约束");
+                ss.Add("no instance of constructor", "没有构造函数");
+                ss.Add("is undefined", "未定义");
+                ss.Add("declaration is incompatible with", "声明不兼容");
+                ss.Add("is inaccessible", "不可访问");
+                ss.Add("expression must have class type", "表达式必须是类");
+                ss.Add("argument is incompatible with corresponding format string conversion", "格式化字符串不兼容参数");
+                ss.Add("no suitable constructor exists to convert from", "没有合适的构造函数去转换");
+                ss.Add("nonstandard form for taking the address of a member function", "获取成员函数地址不标准（&Class::Method）");
             }
 
-			ss = Words;
+            ss = Words;
             if (ss.Count == 0)
             {
                 ss.Add("Error", "错误");
                 ss.Add("Warning", "警告");
                 ss.Add("Warnings", "警告");
                 ss.Add("cannot", "不能");
-				ss.Add("identifier", "标识符");
+                ss.Add("identifier", "标识符");
                 /*ss.Add("open", "打开");
                 ss.Add("source", "源");
                 ss.Add("input", "输入");
@@ -913,7 +942,7 @@ namespace NewLife.Reflection
                             ToolPath = p;
                             Version = ver;
 
-                    if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从本地磁盘得到路径{0} {1}！", ToolPath, Version);
+                            if (!String.IsNullOrEmpty(ToolPath)) XTrace.WriteLine("从本地磁盘得到路径{0} {1}！", ToolPath, Version);
 
                             break;
                         }
@@ -922,8 +951,8 @@ namespace NewLife.Reflection
             }
             if (Version < new Version(5, 17))
             {
-				XTrace.WriteLine("版本 {0} 太旧，准备更新", Version);
-				
+                XTrace.WriteLine("版本 {0} 太旧，准备更新", Version);
+
                 var url = "http://www.newlifex.com/showtopic-1456.aspx";
                 var client = new WebClientX(true, true);
                 client.Log = XTrace.Log;
@@ -1051,7 +1080,7 @@ namespace NewLife.Reflection
              */
 
             var file = GetProjectFile();
-			if(file.IsNullOrEmpty()) return;
+            if (file.IsNullOrEmpty()) return;
 
             Console.WriteLine("加载项目：{0}", file);
             file = file.GetFullPath();
