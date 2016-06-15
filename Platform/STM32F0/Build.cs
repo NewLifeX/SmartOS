@@ -22,6 +22,7 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
 			build.Cortex = 0;
+			build.Defines.Add("STM32F0");
 			build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\..\\Lib\\Inc");
 			build.AddIncludes("..\\", false);
