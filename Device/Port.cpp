@@ -472,6 +472,7 @@ void InputPort::OnOpen(void* param)
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
+	Port::OnOpen(param);
 	OpenPin(param);
 }
 
