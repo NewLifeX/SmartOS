@@ -17,7 +17,8 @@ namespace NewLife.Reflection
         {
             var build = new Builder();
             build.Init();
-			build.Cortex = 3;
+			build.Cortex = 0;
+			build.Defines.Add("STM32F0");
 			build.AddIncludes("..\\Core");
 			build.AddIncludes("..\\Kernel");
 			build.AddIncludes("..\\Device");
@@ -38,15 +39,15 @@ namespace NewLife.Reflection
             build.AddFiles("..\\TokenNet");
 			build.Libs.Clear();
             build.CompileAll();
-            build.BuildLib("..\\SmartOS");
+            build.BuildLib("..\\SmartOS_M0");
 
 			build.Debug = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS");
+            build.BuildLib("..\\SmartOS_M0");
 
 			/*build.Tiny = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS");*/
+            build.BuildLib("..\\SmartOS_M0");*/
         }
     }
 }

@@ -17,41 +17,37 @@ namespace NewLife.Reflection
         {
             var build = new Builder();
             build.Init();
-            build.GD32 = true;	// 先设置GD32才设置Cortex，使用STM32F0+M3编译
-			build.Cortex = 0;
-			build.Output = "F1x0";
-			build.AddIncludes("..\\..\\Lib\\CMSIS");
-			build.AddIncludes("..\\..\\Lib\\Inc");
+			build.Cortex = 4;
+			build.Defines.Add("STM32F4");
 			build.AddIncludes("..\\Core");
 			build.AddIncludes("..\\Kernel");
 			build.AddIncludes("..\\Device");
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
-            build.AddFiles("..\\Device", "*.c;*.cpp", false, "CAN,DMA");
+            build.AddFiles("..\\Device");
             build.AddFiles("..\\", "*.c;*.cpp", false);
-            build.AddFiles("..\\Platform", "Boot_F0.cpp");
-            build.AddFiles("..\\Platform", "startup_stm32f0xx.s");
-            build.AddFiles("..\\Security");
+            build.AddFiles("..\\Security", "*.cpp");
+            build.AddFiles("..\\Board");
             build.AddFiles("..\\Storage");
-            build.AddFiles("..\\Core");
             build.AddFiles("..\\App");
             build.AddFiles("..\\Drivers");
             build.AddFiles("..\\Net");
+            build.AddFiles("..\\Test");
             build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
             build.AddFiles("..\\Message");
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
 			build.Libs.Clear();
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_F1x0");
+            build.BuildLib("..\\SmartOS_M4");
 
 			build.Debug = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_F1x0");
+            build.BuildLib("..\\SmartOS_M4");
 
 			/*build.Tiny = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_F1x0");*/
+            build.BuildLib("..\\SmartOS_M4");*/
         }
     }
 }
