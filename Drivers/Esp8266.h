@@ -12,14 +12,6 @@
 class Esp8266 : public PackPort, public ISocketHost
 {
 public:
-	enum class Modes
-	{
-		Unknown = 0,
-		Station	= 1,
-		Ap		= 2,
-		Both	= 3,
-	};
-
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
 	String	SSID;
 	String	Pass;
@@ -50,9 +42,9 @@ public:
 
 /******************************** WiFi功能指令 ********************************/
 	// 获取模式
-	Modes GetMode();
+	SocketMode GetMode();
 	// 设置模式。需要重启
-	bool SetMode(Modes mode);
+	bool SetMode(SocketMode mode);
 
 	// 连接AP相关
 	String GetJoinAP();
@@ -67,7 +59,7 @@ public:
 	String LoadStations();
 	
 	bool GetDHCP(bool* sta, bool* ap);
-	bool SetDHCP(Modes mode, bool enable);
+	bool SetDHCP(SocketMode mode, bool enable);
 	
 	MacAddress GetMAC(bool sta);
 	bool SetMAC(bool sta, const MacAddress& mac);

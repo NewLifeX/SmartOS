@@ -16,7 +16,7 @@ struct NetConfig
 	uint	IP;		// 本地IP地址
     uint	Mask;	// 子网掩码
 	byte	Mac[6];	// 本地Mac地址
-	byte	Wireless;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
+	byte	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
 	byte	Reserved;
 
 	uint	DHCPServer;
@@ -27,7 +27,7 @@ struct NetConfig
 
 ISocketHost::ISocketHost()
 {
-	Wireless	= 0;
+	Mode	= SocketMode::Wire;
 
 	NetReady	= nullptr;
 }
@@ -57,7 +57,7 @@ void ISocketHost::InitConfig()
 	for(int i=0; i< 4; i++)
 		mac[2 + i] = Sys.ID[3 - i];
 
-	Wireless	= 0;
+	Mode	= SocketMode::Wire;
 }
 
 bool ISocketHost::LoadConfig()
@@ -71,7 +71,7 @@ bool ISocketHost::LoadConfig()
 	IP			= nc.IP;
 	Mask		= nc.Mask;
 	Mac			= nc.Mac;
-	Wireless	= nc.Wireless;
+	Mode		= (SocketMode)nc.Mode;
 
 	DHCPServer	= nc.DHCPServer;
 	DNSServer	= nc.DNSServer;
@@ -89,7 +89,7 @@ bool ISocketHost::SaveConfig()
 	nc.IP	= IP.Value;
 	nc.Mask	= Mask.Value;
 	Mac.CopyTo(nc.Mac);
-	nc.Wireless	= Wireless;
+	nc.Mode	= Mode;
 
 	nc.DHCPServer	= DHCPServer.Value;
 	nc.DNSServer	= DNSServer.Value;
@@ -121,24 +121,22 @@ void ISocketHost::ShowConfig()
 		DNSServer2.Show();
 	}
 	net_printf("\r\n    模式:\t");
-	if(!Wireless)
-		net_printf("有线");
-	else
+	switch(Mode)
 	{
-		switch(Wireless)
-		{
-			case 1:
-				net_printf("无线Station");
-				break;
-			case 2:
-				net_printf("无线AP热点");
-				break;
-			case 3:
-				net_printf("无线Station+AP热点");
-				break;
-		}
-		net_printf("\r\n");
+		case SocketMode::Wire:
+			net_printf("有线");
+			break;
+		case SocketMode::Station:
+			net_printf("无线Station");
+			break;
+		case SocketMode::AP:
+			net_printf("无线AP热点");
+			break;
+		case SocketMode::STA_AP:
+			net_printf("无线Station+AP热点");
+			break;
 	}
+	net_printf("\r\n");
 	net_printf("\r\n");
 #endif
 }

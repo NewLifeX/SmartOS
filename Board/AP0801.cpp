@@ -104,7 +104,6 @@ ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	auto net	= new W5500();
 	net->LoadConfig();
 	net->Init(spi_, irq, rst);
-	net->Wireless = 0;	// 不是无线
 	//net->EnableDNS();
 
 	return net;

@@ -124,7 +124,6 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	if(power != P0) _power.Init(power, false);
 	if(rst != P0) _rst.Init(rst, true);
 
-	//Mode		= Modes::Both;
 	AutoConn	= false;
 
 	Led			= nullptr;
@@ -134,7 +133,7 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 
 	Buffer(_sockets, 5 * 4).Clear();
 
-	Wireless	= (byte)Modes::Both;
+	Mode	= SocketMode::STA_AP;
 }
 
 void Esp8266::OpenAsync()
@@ -196,29 +195,27 @@ bool Esp8266::OnOpen()
 	//auto cfg	= EspConfig::Create();
 
 	// Station模式
-	auto mode	= (Modes)Wireless;
 	// 默认Both
-	if(mode == Modes::Unknown) mode	= Modes::Both;
+	if(Mode == SocketMode::Wire) Mode	= SocketMode::STA_AP;
 
-	if (GetMode() != mode)
+	if (GetMode() != Mode)
 	{
-		if(!SetMode(mode))
+		if(!SetMode(Mode))
 		{
 			net_printf("设置Station模式失败！");
 
 			return false;
 		}
 	}
-	Wireless	= (byte)mode;
 
 	Config();
 
-	SetDHCP(mode, true);
+	SetDHCP(Mode, true);
 
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		if (SSID.Length() == 0 || mode == Modes::Both)
+		if (SSID.Length() == 0 || Mode == SocketMode::STA_AP)
 		{
 			net_printf("启动AP模式!\r\n");
 			String wifiName = "WsLink-";
@@ -238,7 +235,7 @@ bool Esp8266::OnOpen()
 	}
 
 	// 拿到IP，网络就绪
-	if(mode == Modes::Station || mode == Modes::Both)
+	if(Mode == SocketMode::Station || Mode == SocketMode::STA_AP)
 	{
 		IP	= GetIP(true);
 
@@ -307,7 +304,7 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 // 启用DNS
 bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
-bool Esp8266::EnableDHCP() { Wireless = (byte)Modes::Both; return true;/*  return SetDHCP(Modes::Both, true); */}
+bool Esp8266::EnableDHCP() { Mode	= SocketMode::STA_AP;	return true;/*  return SetDHCP(SocketMode::Both, true); */}
 
 #if NET_DEBUG
 static bool EnableLog	= true;
@@ -659,14 +656,14 @@ bool Esp8266::Restore()
 OK
 "
 */
-bool Esp8266::SetMode(Modes mode)
+bool Esp8266::SetMode(SocketMode mode)
 {
 	String cmd = "AT+CWMODE=";
 	cmd	+= (byte)mode;
 
 	if (!SendCmd(cmd)) return false;
 
-	Wireless = (byte)mode;
+	Mode	= mode;
 
 	return true;
 }
@@ -681,40 +678,19 @@ bool Esp8266::SetMode(Modes mode)
 OK
 "
 */
-Esp8266::Modes Esp8266::GetMode()
+SocketMode Esp8266::GetMode()
 {
 	TS("Esp8266::GetMode");
 
-	auto mod	= Modes::Unknown;
+	auto mod	= SocketMode::Station;
 
 	auto rs	= Send("AT+CWMODE?\r\n", "OK");
 	if (!rs) return mod;
 
-	/*Modes mod;
-	if (mode.IndexOf("+CWMODE:1") >= 0)
-	{
-		mod = Modes::Station;
-		net_printf("Modes::Station\r\n");
-	}
-	else if (mode.IndexOf("+CWMODE:2") >= 0)
-	{
-		mod = Modes::Ap;
-		net_printf("Modes::AP\r\n");
-	}
-	else if (mode.IndexOf("+CWMODE:3") >= 0)
-	{
-		mod = Modes::Both;
-		net_printf("Modes::Station+AP\r\n");
-	}*/
-
 	int p	= rs.IndexOf(':');
 	if(p < 0) return mod;
 
-	mod	=(Modes)rs.Substring(p+1, 1).ToInt();
-
-	Wireless	= (byte)mod;
-
-	return mod;
+	return	(SocketMode)rs.Substring(p+1, 1).ToInt();
 }
 
 // +CWJAP:<ssid>,<bssid>,<channel>,<rssi>
@@ -850,18 +826,18 @@ bool Esp8266::GetDHCP(bool* sta, bool* ap)
 	return true;
 }
 
-bool Esp8266::SetDHCP(Modes mode, bool enable)
+bool Esp8266::SetDHCP(SocketMode mode, bool enable)
 {
 	byte m	= 0;
 	switch(mode)
 	{
-		case Modes::Station:
+		case SocketMode::Station:
 			m	= 1;
 			break;
-		case Modes::Ap:
+		case SocketMode::AP:
 			m	= 0;
 			break;
-		case Modes::Both:
+		case SocketMode::STA_AP:
 			m	= 2;
 			break;
 		default:
