@@ -45,10 +45,10 @@ namespace NewLife.Reflection
             build.CompileAll();
             build.BuildLib("..\\SmartOS_M3");
 
-			build.Debug = false;
+			/*build.Debug = false;
 			build.Tiny = true;
             build.CompileAll();
-            build.BuildLib("..\\SmartOS_M3");
+            build.BuildLib("..\\SmartOS_M3");*/
         }
     }
 }

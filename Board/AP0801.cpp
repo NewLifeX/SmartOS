@@ -89,19 +89,23 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 
 ISocketHost* AP0801::Create5500()
 {
+	IDataPort* led = nullptr;
+	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
+
+	return Host	= Create5500(Spi2, PE1, PD13, led);
+}
+
+ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
+{
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi	= new Spi(Spi2, 36000000);
+	auto spi_	= new Spi(spi, 36000000);
 
 	auto net	= new W5500();
 	net->LoadConfig();
-	net->Init(spi, PE1, PD13);
+	net->Init(spi_, irq, rst);
 	net->Wireless = 0;	// 不是无线
-	net->EnableDNS();
-
-	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-
-	Host	= net;
+	//net->EnableDNS();
 
 	return net;
 }
