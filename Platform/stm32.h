@@ -52,7 +52,7 @@
 	#include "stm32f2xx.h"
 #elif defined(STM32F1)
 	#include "stm32f10x.h"
-	#include "Pin_STM32F1.h"
+	#include "STM32F1/Pin_STM32F1.h"
 #elif defined(STM32F3)
 	#include "stm32f3xx.h"
 #elif defined(STM32F0)
