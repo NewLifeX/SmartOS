@@ -29,6 +29,9 @@ public:
 	IPAddress	DNSServer2;
 	IPAddress	Gateway;
 
+	String*		SSID;	// 无线SSID
+	String*		Pass;	// 无线密码
+
 	typedef void (*NetReadyHandler)(ISocketHost* host);
 	NetReadyHandler		NetReady;	// 网络准备就绪
 
@@ -46,7 +49,7 @@ public:
 	void ShowConfig();
 
 	virtual ISocket* CreateSocket(ProtocolType type) = 0;
-	
+
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
 	// 启用DNS

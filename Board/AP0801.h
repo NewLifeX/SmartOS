@@ -27,7 +27,7 @@ public:
 	ISocketHost* Create5500();
 	static ISocketHost* Create5500(SPI spi, Pin irq, Pin rst = P0, IDataPort* led = nullptr);
 	ITransport* Create2401();
-	ISocketHost* Create8266(Action onNetReady = nullptr);
+	ISocketHost* Create8266();
 
 	TokenClient* CreateClient();
 

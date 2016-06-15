@@ -13,13 +13,14 @@ class Esp8266 : public PackPort, public ISocketHost
 {
 public:
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
-	String	SSID;
-	String	Pass;
-	
+	//String	SSID;
+	//String	Pass;
+
 	IDataPort*	Led;	// 指示灯
-	Action	NetReady;	// 网络准备就绪
+	//Action	NetReady;	// 网络准备就绪
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
+	virtual ~Esp8266();
 
 	void OpenAsync();
 	virtual void Config();
@@ -51,30 +52,30 @@ public:
 	bool JoinAP(const String& ssid, const String& pass);
 	bool UnJoinAP();
 	bool SetAutoConn(bool enable);
-	
+
 	String LoadAPs();
 	String GetAP();
 	bool SetAP(const String& ssid, const String& pass, byte channel, byte ecn, byte maxConnect, bool hidden);
 	// 查询连接到AP的Stations信息。无法查询DHCP接入
 	String LoadStations();
-	
+
 	bool GetDHCP(bool* sta, bool* ap);
 	bool SetDHCP(SocketMode mode, bool enable);
-	
+
 	MacAddress GetMAC(bool sta);
 	bool SetMAC(bool sta, const MacAddress& mac);
-	
+
 	IPAddress GetIP(bool sta);
 
 /******************************** TCP/IP ********************************/
 	String GetStatus();
 	bool GetMux();
 	bool SetMux(bool enable);
-	
+
 	bool Update();
-	
+
 	bool Ping(const IPAddress& ip);
-	
+
 	bool SetIPD(bool enable);
 
 /******************************** 发送指令 ********************************/
@@ -94,12 +95,12 @@ protected:
 private:
     OutputPort	_power;
     OutputPort	_rst;
-	
+
 	void*		_Expect;	// 等待内容
 
 	// 多个硬件socket
 	int* _sockets[5];
-	
+
 	// 分析+IPD接收数据。返回被用掉的字节数
 	uint ParseReceive(const Buffer& bs);
 	// 分析关键字。返回被用掉的字节数

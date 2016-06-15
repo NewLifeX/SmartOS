@@ -94,27 +94,6 @@ private:
 	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
 };
 
-/*class EspConfig : public ConfigBase
-{
-public:
-	byte	Length;			// 数据长度
-
-	char	_SSID[32];		// 登录名
-	char	_Pass[32];		// 登录密码
-
-	byte	TagEnd;		// 数据区结束标识符
-
-	String	SSID;
-	String	Pass;
-
-	EspConfig();
-	virtual void Init();
-	virtual void Load();
-	virtual void Show() const;
-
-	static EspConfig* Create();
-};*/
-
 /******************************** Esp8266 ********************************/
 
 Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
@@ -134,6 +113,15 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	Buffer(_sockets, 5 * 4).Clear();
 
 	Mode	= SocketMode::STA_AP;
+
+	SSID	= new String();
+	Pass	= new String();
+}
+
+Esp8266::~Esp8266()
+{
+	delete SSID;
+	delete Pass;
 }
 
 void Esp8266::OpenAsync()
@@ -215,7 +203,7 @@ bool Esp8266::OnOpen()
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		if (SSID.Length() == 0 || Mode == SocketMode::STA_AP)
+		if (!SSID || !*SSID || Mode == SocketMode::STA_AP)
 		{
 			net_printf("启动AP模式!\r\n");
 			String wifiName = "WsLink-";
@@ -224,9 +212,9 @@ bool Esp8266::OnOpen()
 			int chn	= (Sys.Ms() % 14) + 1;
 			SetAP(wifiName, "", chn, 0, 1, 1);
 		}
-		if (SSID.Length() > 0)
+		if (SSID && *SSID)
 		{
-			if (!JoinAP(SSID, Pass))	// Pass 可以为空
+			if (!JoinAP(*SSID, *Pass))	// Pass 可以为空
 			{
 				net_printf("连接WiFi失败！\r\n");
 				return false;
@@ -1156,56 +1144,7 @@ bool EspUdp::OnWriteEx(const Buffer& bs, const void* opt)
 	return SendTo(bs, *ep);
 }
 
-/******************************** EspConfig ********************************/
-
-/*EspConfig::EspConfig() : ConfigBase(),
-	SSID(_SSID, sizeof(_SSID)),
-	Pass(_Pass, sizeof(_Pass))
-{
-	_Name	 = "EspCfg";
-	_Start	 = &Length;
-	_End	 = &TagEnd;
-	Init();
-}
-
-void EspConfig::Init()
-{
-	ConfigBase::Init();
-
-	Length		= Size();
-}
-
-void EspConfig::Load()
-{
-	ConfigBase::Load();
-
-	SSID	= _SSID;
-	Pass	= _Pass;
-}
-
-void EspConfig::Show() const
-{
-#if DEBUG
-	debug_printf("EspConfig::无线配置：\r\n");
-
-	debug_printf("\tSSID: %s \r\n", SSID.GetBuffer());
-	debug_printf("\t密码: %s \r\n", Pass.GetBuffer());
-#endif
-}
-
-EspConfig* EspConfig::Create()
-{
-	static EspConfig cfg;
-	if(cfg.New)
-	{
-		cfg.Init();
-		cfg.Load();
-
-		cfg.New	= false;
-	}
-
-	return &cfg;
-}*/
+/******************************** WaitExpect ********************************/
 
 bool WaitExpect::Wait(int msTimeout)
 {

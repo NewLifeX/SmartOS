@@ -23,11 +23,17 @@ struct NetConfig
 	uint	DNSServer;
 	uint	DNSServer2;
 	uint	Gateway;
+
+	char	SSID[32];
+	char	Pass[32];
 };
 
 ISocketHost::ISocketHost()
 {
 	Mode	= SocketMode::Wire;
+
+	SSID	= nullptr;
+	Pass	= nullptr;
 
 	NetReady	= nullptr;
 }
@@ -78,6 +84,9 @@ bool ISocketHost::LoadConfig()
 	DNSServer2	= nc.DNSServer2;
 	Gateway		= nc.Gateway;
 
+	if(SSID) *SSID	= nc.SSID;
+	if(Pass) *Pass	= nc.Pass;
+
 	return true;
 }
 
@@ -95,6 +104,9 @@ bool ISocketHost::SaveConfig()
 	nc.DNSServer	= DNSServer.Value;
 	nc.DNSServer2	= DNSServer2.Value;
 	nc.Gateway		= Gateway.Value;
+
+	if(SSID) SSID->CopyTo(0, nc.SSID, ArrayLength(nc.SSID) - 1);
+	if(Pass) Pass->CopyTo(0, nc.Pass, ArrayLength(nc.Pass) - 1);
 
 	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
@@ -137,6 +149,10 @@ void ISocketHost::ShowConfig()
 			break;
 	}
 	net_printf("\r\n");
+
+	if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(true); }
+	if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(true); }
+
 	net_printf("\r\n");
 #endif
 }

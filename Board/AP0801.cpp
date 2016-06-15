@@ -109,7 +109,7 @@ ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	return net;
 }
 
-ISocketHost* AP0801::Create8266(Action onNetReady)
+ISocketHost* AP0801::Create8266()
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
@@ -126,11 +126,11 @@ ISocketHost* AP0801::Create8266(Action onNetReady)
 	net->InitConfig();
 	net->LoadConfig();
 
-	net->SSID	= "yws007";
-	net->Pass	= "yws52718";
+	//net->SSID	= "yws007";
+	//net->Pass	= "yws52718";
 
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-	net->NetReady	= onNetReady;
+	//net->NetReady	= onNetReady;
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 
