@@ -95,6 +95,7 @@ public:
 	void ShowInfo() const;
 	uint HeapBase() const;	// 堆起始地址，前面是静态分配内存
 	uint StackTop() const;	// 栈顶，后面是初始化不清零区域
+	void SetStackTop(uint addr);
 
 	UInt64	Ms() const;		// 系统启动后的毫秒数
 	uint	Seconds() const;	// 系统绝对当前时间，秒

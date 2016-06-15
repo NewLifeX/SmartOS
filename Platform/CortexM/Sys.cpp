@@ -209,6 +209,11 @@ uint TSys::StackTop() const
 	return SRAM_BASE + (RAMSize << 10) - 0x40;
 }
 
+void TSys::SetStackTop(uint addr)
+{
+	__set_MSP(addr);
+}
+
 #if !defined(TINY) && defined(STM32F0) && defined(DEBUG)
 	#pragma arm section code = "SectionForSys"
 #endif
