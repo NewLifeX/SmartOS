@@ -46,8 +46,8 @@ void SerialPort::OnOpen2()
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
 	// 检查重映射
-#ifdef STM32F1XX
-	if(IsRemap)
+#ifdef STM32F1
+	if(Remap)
 	{
 		switch (_index) {
 		case 0: AFIO->MAPR |= AFIO_MAPR_USART1_REMAP; break;
@@ -55,7 +55,7 @@ void SerialPort::OnOpen2()
 		case 2: AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
 		}
 	}
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE );
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 #endif
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
@@ -126,8 +126,8 @@ void SerialPort::OnClose2()
 	Interrupt.Deactivate(irq);
 
 	// 检查重映射
-#ifdef STM32F1XX
-	if(IsRemap)
+#ifdef STM32F1
+	if(Remap)
 	{
 		switch (_index) {
 		case 0: AFIO->MAPR &= ~AFIO_MAPR_USART1_REMAP; break;
@@ -232,9 +232,9 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 
 	const Pin g_Uart_Pins[] = UART_PINS;
 	const Pin* p = g_Uart_Pins;
-#ifdef STM32F1XX
+#ifdef STM32F1
 	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
-	if(IsRemap) p = g_Uart_Pins_Map;
+	if(Remap) p = g_Uart_Pins_Map;
 #endif
 
 	int n = _index << 2;
