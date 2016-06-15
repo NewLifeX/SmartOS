@@ -49,13 +49,13 @@ void SerialPort::OnOpen2()
 #ifdef STM32F1
 	if(Remap)
 	{
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 		switch (_index) {
 		case 0: AFIO->MAPR |= AFIO_MAPR_USART1_REMAP; break;
 		case 1: AFIO->MAPR |= AFIO_MAPR_USART2_REMAP; break;
 		case 2: AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
 		}
 	}
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 #endif
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
