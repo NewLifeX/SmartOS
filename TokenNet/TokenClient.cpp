@@ -182,7 +182,6 @@ void LoopTask(void* param)
 	assert_ptr(param);
 
 	auto client = (TokenClient*)param;
-	//client->SayHello(true);
 	// 状态。0准备、1握手完成、2登录后
 	switch(client->Status)
 	{
@@ -202,6 +201,7 @@ void LoopTask(void* param)
 			client->Ping();
 			break;
 	}
+	client->SayHello(true);
 }
 
 void BroadcastHelloTask(void* param)
