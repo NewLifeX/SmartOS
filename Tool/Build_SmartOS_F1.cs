@@ -18,9 +18,7 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
 			build.Cortex = 3;
-			build.Output = "F1";
-			build.AddIncludes("..\\..\\Lib\\CMSIS");
-			build.AddIncludes("..\\..\\Lib\\Inc");
+			build.Defines.Add("STM32F1");
 			build.AddIncludes("..\\Core");
 			build.AddIncludes("..\\Kernel");
 			build.AddIncludes("..\\Device");
@@ -28,8 +26,6 @@ namespace NewLife.Reflection
             build.AddFiles("..\\Kernel");
             build.AddFiles("..\\Device");
             build.AddFiles("..\\", "*.c;*.cpp", false);
-            build.AddFiles("..\\Platform", "Boot_F1.cpp");
-            build.AddFiles("..\\Platform", "startup_stm32f10x.s");
             build.AddFiles("..\\Security", "*.cpp");
             build.AddFiles("..\\Board");
             build.AddFiles("..\\Storage");

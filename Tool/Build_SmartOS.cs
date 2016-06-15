@@ -18,7 +18,6 @@ namespace NewLife.Reflection
             var build = new Builder();
             build.Init();
 			build.Cortex = 3;
-			//build.Output = "F1";
 			build.AddIncludes("..\\Core");
 			build.AddIncludes("..\\Kernel");
 			build.AddIncludes("..\\Device");

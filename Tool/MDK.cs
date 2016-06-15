@@ -48,9 +48,6 @@ namespace NewLife.Reflection
             FromELF = basePath.CombinePath("fromelf.exe");
             LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
 
-            // 特殊处理GD32F1x0
-            if (GD32) Cortex = Cortex;
-
             Libs.Clear();
             Objs.Clear();
 
@@ -93,9 +90,6 @@ namespace NewLife.Reflection
         /// <summary>处理器。默认M0</summary>
         public String CPU { get; set; }
 
-        /// <summary>Flash容量</summary>
-        public String Flash { get; set; }
-
         /// <summary>分散加载文件</summary>
         public String Scatter { get; set; }
 
@@ -107,20 +101,10 @@ namespace NewLife.Reflection
             set
             {
                 _Cortex = value;
-                if (GD32 && value == 0)
-                    CPU = "Cortex-M{0}".F(3);
-                else
-                    CPU = "Cortex-M{0}".F(value);
-                if (value == 3)
-                    Flash = "STM32F1";
-                else
-                    Flash = "STM32F{0}".F(value);
+                CPU = "Cortex-M{0}".F(value);
                 if (value == 4) CPU += ".fp";
             }
         }
-
-        /// <summary>是否GD32芯片</summary>
-        public Boolean GD32 { get; set; }
 
         /// <summary>重新编译时间，默认60分钟</summary>
         public Int32 RebuildTime { get; set; }
@@ -145,7 +129,6 @@ namespace NewLife.Reflection
         public Builder()
         {
             CPU = "Cortex-M0";
-            Flash = "STM32F0";
             RebuildTime = 60;
 
             Defines = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
@@ -189,8 +172,8 @@ namespace NewLife.Reflection
             if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
             sb.Append(" --multibyte_chars --locale \"chinese\"");
-            sb.AppendFormat(" -D{0}", Flash);
-            if (GD32) sb.Append(" -DGD32");
+            //sb.AppendFormat(" -D{0}", Flash);
+            //if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
@@ -244,9 +227,9 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.AppendFormat("--cpu {0} -g --apcs=interwork --pd \"__MICROLIB SETA 1\"", CPU);
-            sb.AppendFormat(" --pd \"{0} SETA 1\"", Flash);
+            //sb.AppendFormat(" --pd \"{0} SETA 1\"", Flash);
 
-            if (GD32) sb.Append(" --pd \"GD32 SETA 1\"");
+            //if (GD32) sb.Append(" --pd \"GD32 SETA 1\"");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" --pd \"{0} SETA 1\"", item);
@@ -267,9 +250,6 @@ namespace NewLife.Reflection
         {
             Objs.Clear();
             var count = 0;
-
-            // 特殊处理GD32F130
-            //if(GD32) Cortex = Cortex;
 
             // 计算根路径，输出的对象文件以根路径下子路径的方式存放
             var di = Files.First().AsFile().Directory;
@@ -294,8 +274,8 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1}", CPU, Debug ? 0 : 3);
-            sb.AppendFormat(" -D{0}", Flash);
-            if (GD32) sb.Append(" -DGD32");
+            //sb.AppendFormat(" -D{0}", Flash);
+            //if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
