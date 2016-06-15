@@ -34,11 +34,11 @@ namespace NewLife.Reflection
             build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
 			build.Libs.Clear();
             build.CompileAll();
-            build.BuildLib("..\\..\\");
+            build.BuildLib("..\\..\\SmartOS_F4");
 
 			build.Debug = true;
             build.CompileAll();
-            build.BuildLib("..\\..\\");
+            build.BuildLib("..\\..\\SmartOS_F4");
 
 			/*build.Tiny = true;
             build.CompileAll();
