@@ -69,7 +69,7 @@ protected:
     // 配置过程，由Open调用，最后GPIO_Init
     virtual void OnOpen(void* param);
 	virtual void OnClose();
-	
+
 private:
 	static void* IndexToGroup(byte index);
 	static void OnOpenClock(Pin pin, bool flag);
@@ -111,7 +111,7 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
-	
+
 private:
 	void OpenPin(void* param);
 };
@@ -128,7 +128,7 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
-	
+
 private:
 	void OpenPin(void* param);
 };
@@ -193,11 +193,11 @@ private:
 
     IOReadHandler	Handler	= nullptr;
 	void*			Param	= nullptr;
-	
+
 private:
 	void OpenPin(void* param);
 	void ClosePin();
-	void OnRegister();
+	bool OnRegister();
 };
 
 /******************************** AnalogInPort ********************************/
@@ -211,7 +211,7 @@ public:
 
 protected:
     virtual void OnOpen(void* param);
-	
+
 private:
 	void OpenPin(void* param);
 };

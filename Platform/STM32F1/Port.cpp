@@ -200,7 +200,16 @@ typedef struct TIntState
 static IntState States[16];
 static bool hasInitState = false;
 
-extern int Bits2Index(ushort value);
+int Bits2Index(ushort value)
+{
+    for(int i=0; i<16; i++)
+    {
+        if(value & 0x01) return i;
+        value >>= 1;
+    }
+
+	return -1;
+}
 
 #define IT 1
 #ifdef IT
@@ -281,7 +290,7 @@ bool IsOnlyExOfInt(const InputPort* pt, int idx)
 	int s=0, e=0;
 #if defined(STM32F1) || defined(STM32F4)
 	if(idx <= 4) return true;
-	
+
 	if(idx <= 9)
 	{
 		s	= 5;
@@ -332,16 +341,51 @@ InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 void InputPort::ClosePin()
 {
 	int idx = Bits2Index(Mask);
-	SetEXIT(idx, false, GetTrigger(Mode, Invert));
-	if(!IsOnlyExOfInt(this, idx))return;
-	Interrupt.Deactivate(PORT_IRQns[idx]);
+
+    auto st = &States[idx];
+	if(st->Port == this)
+	{
+		st->Port = nullptr;
+
+		SetEXIT(idx, false, GetTrigger(Mode, Invert));
+		if(!IsOnlyExOfInt(this, idx))return;
+		Interrupt.Deactivate(PORT_IRQns[idx]);
+	}
 }
 
 // 注册回调  及中断使能
-void InputPort::OnRegister()
+bool InputPort::OnRegister()
 {
+
+    // 检查并初始化中断线数组
+    if(!hasInitState)
+    {
+        for(int i=0; i<16; i++)
+        {
+            States[i].Port	= nullptr;
+        }
+        hasInitState = true;
+    }
+
 	byte gi = _Pin >> 4;
 	int idx = Bits2Index(Mask);
+	auto st = &States[idx];
+
+	auto port	= st->Port;
+    // 检查是否已经注册到别的引脚上
+    if(port != this && port != nullptr)
+    {
+#if DEBUG
+        debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
+#endif
+
+		// 将来可能修改设计，即使注册失败，也可以开启一个短时间的定时任务，来替代中断输入
+        return false;
+    }
+    st->Port		= this;
+
+	//byte gi = _Pin >> 4;
+	//int idx = Bits2Index(Mask);
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
@@ -358,6 +402,8 @@ void InputPort::OnRegister()
     Interrupt.SetPriority(PORT_IRQns[idx], 1);
 
     Interrupt.Activate(PORT_IRQns[idx], EXTI_IRQHandler, this);
+
+	return true;
 }
 
 #endif

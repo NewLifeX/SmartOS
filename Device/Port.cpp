@@ -311,27 +311,6 @@ void AlternatePort::OnOpen(void* param)
 // 输入端口
 #define REGION_Input 1
 #ifdef REGION_Input
-/* 中断状态结构体 */
-/* 一共16条中断线，意味着同一条线每一组只能有一个引脚使用中断 */
-typedef struct TIntState
-{
-    InputPort*	Port;
-} IntState;
-
-// 16条中断线
-static IntState States[16];
-static bool hasInitState = false;
-
-int Bits2Index(ushort value)
-{
-    for(int i=0; i<16; i++)
-    {
-        if(value & 0x01) return i;
-        value >>= 1;
-    }
-
-	return -1;
-}
 
 InputPort::InputPort() : InputPort(P0) { }
 InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
@@ -500,15 +479,7 @@ void InputPort::OnClose()
 {
 	Port::OnClose();
 
-	int idx = Bits2Index(Mask);
-
-    auto st = &States[idx];
-	if(st->Port == this)
-	{
-		st->Port = nullptr;
-
-		ClosePin();
-	}
+	ClosePin();
 }
 
 // 注册回调  及中断使能
@@ -519,34 +490,7 @@ bool InputPort::Register(IOReadHandler handler, void* param)
     Handler	= handler;
 	Param	= param;
 
-    // 检查并初始化中断线数组
-    if(!hasInitState)
-    {
-        for(int i=0; i<16; i++)
-        {
-            States[i].Port	= nullptr;
-        }
-        hasInitState = true;
-    }
-
-	int idx = Bits2Index(Mask);
-	auto st = &States[idx];
-
-	auto port	= st->Port;
-    // 检查是否已经注册到别的引脚上
-    if(port != this && port != nullptr)
-    {
-#if DEBUG
-		byte gi = _Pin >> 4;
-        debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
-#endif
-
-		// 将来可能修改设计，即使注册失败，也可以开启一个短时间的定时任务，来替代中断输入
-        return false;
-    }
-    st->Port		= this;
-
-    OnRegister();
+    if(!OnRegister()) return false;
 
 	if(!_taskInput && !HardEvent) _taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
 
