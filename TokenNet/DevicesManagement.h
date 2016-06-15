@@ -2,14 +2,13 @@
 #define __DevMgmt_H__
 
 #include "Sys.h"
-#include "TokenNet\Device.h"
-#include "TokenNet\DeviceMessage.h"
+#include "Device.h"
 
 #include "Flash.h"
-#include "TinyConfig.h"
+#include "TinyNet\TinyConfig.h"
 
-#include "TokenNet\TokenClient.h"
-#include "TokenNet\DeviceMessage.h"
+#include "TokenClient.h"
+#include "DeviceMessage.h"
 #include "Security\Crc.h"
 
 // DevicesManagement 服务于客户端/云端   所以内部 Port 限定为TokenClient
