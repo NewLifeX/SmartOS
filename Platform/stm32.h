@@ -66,7 +66,7 @@
 
 extern "C"
 {
-	void SystemInit(void);
+	void SysInit(void);
 	void SetSysClock(unsigned int clock, unsigned int cystalClock);
 }
 

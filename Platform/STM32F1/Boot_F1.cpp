@@ -6,7 +6,7 @@ extern "C"
 	uint32_t SystemCoreClock = 72000000;
 	__I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
-	void SystemInit(void)
+	void SysInit(void)
 	{
 		HSE_VALUE = 8000000;
 		SystemCoreClock = 72000000;
