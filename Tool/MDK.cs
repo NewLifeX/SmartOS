@@ -471,7 +471,7 @@ namespace NewLife.Reflection
                 // 已包含，并且新版本更合适，替换
                 else
                 {
-                    Console.WriteLine("{0} Debug={1} Tiny={2}", lib.FullName, lib.Debug, lib.Tiny);
+                    //Console.WriteLine("{0} Debug={1} Tiny={2}", lib.FullName, lib.Debug, lib.Tiny);
                     var lib2 = new LibFile(old);
                     if (!(lib2.Debug == Debug && lib2.Tiny == Tiny) &&
                     (lib.Debug == Debug && lib.Tiny == Tiny))
