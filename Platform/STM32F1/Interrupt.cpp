@@ -70,7 +70,8 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 }
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
+#if !defined(TINY)
+#if defined(STM32F0)
 	#pragma arm section code = "SectionForSys"
 #endif
 
@@ -153,3 +154,4 @@ extern "C"
 	}
 #endif
 }
+#endif
