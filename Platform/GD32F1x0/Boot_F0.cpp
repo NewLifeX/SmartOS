@@ -2,13 +2,13 @@
 
 extern "C"
 {
-	uint32_t SystemCoreClock    = 48000000;
-	__I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+	//uint32_t SystemCoreClock    = 48000000;
+	//__I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
 	void SysInit(void)
 	{
 #ifndef TINY
-		SystemCoreClock = 48000000;
+		//SystemCoreClock = 48000000;
 
 		/* Configure the System clock frequency, AHB/APBx prescalers and Flash settings */
 		SetSysClock(SystemCoreClock, 8000000);
