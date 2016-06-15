@@ -309,7 +309,9 @@ namespace NewLife.Reflection
 
                 if (rs == 0 || rs == -1)
                 {
-                    Console.Write("编译：{0}\t", item);
+                    var fi = item;
+                    if (fi.StartsWith(_Root)) fi = fi.Substring(_Root.Length);
+                    Console.Write("编译：{0}\t", fi);
                     var old = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("\t {0:n0}毫秒", sw.ElapsedMilliseconds);
@@ -387,8 +389,12 @@ namespace NewLife.Reflection
             if (Objs.Count < 6) Console.WriteLine();
 
             var rs = Ar.Run(sb.ToString(), 3000, WriteLog);
-            if (name.Contains("\\")) name = name.Substring("\\", "_");
             XTrace.WriteLine("链接完成 {0} {1}", rs, lib);
+
+            if (name.Contains("\\")) name = name.Substring("\\");
+            var p = name.LastIndexOf("\\");
+            if (p >= 0) name = name.Substring(p + 1);
+            name = name.Replace("_", " ");
             if (rs == 0)
                 "链接静态库{0}完成".F(name).SpeakAsync();
             else
