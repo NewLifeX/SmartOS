@@ -1,7 +1,6 @@
 ﻿#ifndef __Esp8266_H__
 #define __Esp8266_H__
 
-#include "Sys.h"
 #include "Port.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
@@ -13,11 +12,8 @@ class Esp8266 : public PackPort, public ISocketHost
 {
 public:
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
-	//String	SSID;
-	//String	Pass;
 
 	IDataPort*	Led;	// 指示灯
-	//Action	NetReady;	// 网络准备就绪
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
 	virtual ~Esp8266();
