@@ -40,7 +40,7 @@ void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-ISocketHost* IOK027X::Create8266(Action onNetReady)
+ISocketHost* IOK027X::Create8266()
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
@@ -57,10 +57,10 @@ ISocketHost* IOK027X::Create8266(Action onNetReady)
 	//net->SSID	= "yws007";
 	//net->Pass	= "yws52718";
 
-	net->SSID	= "wswl-net";
-	net->Pass	= "wswl52718";
+	//net->SSID	= "wswl-net";
+	//net->Pass	= "wswl52718";
+	//net->NetReady	= onNetReady;
 
-	net->NetReady	= onNetReady;
 	net->OpenAsync();
 
 	Host	= net;

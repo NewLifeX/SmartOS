@@ -101,7 +101,7 @@ ISocketHost* AP0104::Create5500()
 	return net;
 }
 
-ISocketHost* AP0104::Create8266(Action onNetReady)
+ISocketHost* AP0104::Create8266()
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
@@ -118,11 +118,11 @@ ISocketHost* AP0104::Create8266(Action onNetReady)
 	net->InitConfig();
 	net->LoadConfig();
 
-	net->SSID = "yws007";
-	net->Pass = "yws52718";
+	//net->SSID = "yws007";
+	//net->Pass = "yws52718";
+	//net->NetReady = onNetReady;
 
 	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
-	net->NetReady = onNetReady;
 
 	net->OpenAsync();
 

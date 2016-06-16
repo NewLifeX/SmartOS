@@ -17,7 +17,7 @@ public:
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 	ITransport* Create2401();
-	ISocketHost* Create8266(Action onNetReady = nullptr);
+	ISocketHost* Create8266();
 
 	TokenClient* CreateClient();
 
