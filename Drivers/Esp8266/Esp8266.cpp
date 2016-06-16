@@ -283,7 +283,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	}
 
 	we.Wait(msTimeout);
-	_Expect	= nullptr;
+	if(_Expect	== &we) _Expect	= nullptr;
 
 	//if(rs.Length() > 4) rs.Trim();
 
@@ -388,7 +388,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 				uint rs	= ParseReply(bs.Sub(s, size));
 #if NET_DEBUG
 				// 如果没有吃完，剩下部分报未识别
-				if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
+				//if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
+				// 不要报未识别了，反正内部会全部吃掉
 #endif
 			}
 			else
