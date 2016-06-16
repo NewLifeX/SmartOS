@@ -31,6 +31,8 @@ void Spi::Init()
 
 void Spi::Init(SPI spi, uint speedHz, bool useNss)
 {
+	_index = spi;
+
 	OnInit();
 
 	if(!useNss) Pins[0] = P0;
