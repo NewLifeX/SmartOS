@@ -132,7 +132,7 @@ void ISocketHost::ShowConfig()
 		net_printf("\r\n    DNS2:\t");
 		DNSServer2.Show();
 	}
-	net_printf("\r\n    模式:\t");
+	net_printf("\r\n    Mode:\t");
 	switch(Mode)
 	{
 		case SocketMode::Wire:
@@ -148,10 +148,10 @@ void ISocketHost::ShowConfig()
 			net_printf("无线Station+AP热点");
 			break;
 	}
-	net_printf("\r\n");
+	//net_printf("\r\n");
 
-	if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(true); }
-	if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(true); }
+	if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(false); }
+	if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(false); }
 
 	net_printf("\r\n");
 #endif
