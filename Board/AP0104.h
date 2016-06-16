@@ -31,6 +31,9 @@ public:
 
 	void InitDHCP(Action onNetReady = nullptr);
 	bool QueryDNS(TokenConfig& tk);
+
+private:
+	static int Fix2401(const Buffer& bs);
 };
 
 #endif

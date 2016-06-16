@@ -13,6 +13,7 @@
 #include "Net\Dhcp.h"
 #include "Net\DNS.h"
 
+#include "TinyNet\TinyConfig.h"
 #include "TokenNet\TokenController.h"
 
 #include "App\FlushPort.h"
@@ -231,9 +232,10 @@ TokenClient* AP0104::CreateClient()
 	return client;
 }
 
+
 /******************************** 2401 ********************************/
 
-/*int Fix2401(const Buffer& bs)
+int AP0104::Fix2401(const Buffer& bs)
 {
 	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度
@@ -246,13 +248,13 @@ TokenClient* AP0104::CreateClient()
 	return rs;
 }
 
-ITransport* AP0104::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+ITransport* AP0104::Create2401()//(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
 	debug_printf("\r\n Create2401 \r\n");
 
-	static Spi spi(spi_, 10000000, true);
+	static Spi spi(Spi2, 10000000, true);
 	static NRF24L01 nrf;
-	nrf.Init(&spi, ce, irq, power);
+	nrf.Init(&spi, PD9, PD8, PE4);
 
 	auto tc	= TinyConfig::Create();
 	if(tc->Channel == 0)
@@ -274,12 +276,12 @@ ITransport* AP0104::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 
 	nrf.FixData	= Fix2401;
 
-	if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
+	if(WirelessLed) nrf.Led	= CreateFlushPort(WirelessLed);
 
 	nrf.Master	= true;
 
 	return &nrf;
-}*/
+}
 
 /*
 NRF24L01+ 	(SPI2)		|	W5500		(SPI1)		|
