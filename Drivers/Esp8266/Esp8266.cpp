@@ -234,7 +234,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	auto tid	= Task::Scheduler()->Current->ID;
 #endif
 	// 判断是否正在发送其它指令
-	if(_Expect)
+	if(_Expect && ((WaitExpect*)_Expect)->Result)
 	{
 #if NET_DEBUG
 		auto w	= (WaitExpect*)_Expect;
@@ -257,7 +257,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	we.Key1		= expect;
 	we.Key2		= expect2;
 
-	_Expect	= &we;
+	if(&rs == ((WaitExpect*)_Expect)->Result) _Expect	= &we;
 
 #if NET_DEBUG
 	bool EnableLog	= true;
