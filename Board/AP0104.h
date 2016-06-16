@@ -23,6 +23,7 @@ public:
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 	ISocketHost* Create5500();
+	static ISocketHost* Create5500(SPI spi, Pin irq, Pin rst = P0, IDataPort* led = nullptr);
 	ITransport* Create2401();
 	ISocketHost* Create8266();
 

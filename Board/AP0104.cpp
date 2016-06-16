@@ -87,16 +87,22 @@ void AP0104::Setup(ushort code, cstring name, COM message, int baudRate)
 ISocketHost* AP0104::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
+	IDataPort* led = nullptr;
+	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
 
-	auto spi = new Spi(Spi1, 36000000);
+	return Host	= Create5500(Spi1, PE7, PB2, led);
+}
 
-	auto net = new W5500();
+ISocketHost* AP0104::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
+{
+	debug_printf("\r\nW5500::Create \r\n");
+
+	auto spi_	= new Spi(spi, 36000000);
+
+	auto net	= new W5500();
 	net->LoadConfig();
-	net->Init(spi, PE7, PB2);
-
-	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
-
-	Host = net;
+	net->Init(spi_, irq, rst);
+	//net->EnableDNS();
 
 	return net;
 }
