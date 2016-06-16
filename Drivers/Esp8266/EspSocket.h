@@ -18,9 +18,6 @@ public:
 	virtual bool OnOpen();
 	virtual void OnClose();
 
-	//// 应用配置，修改远程地址和端口
-	//virtual bool Change(const String& remote, ushort port);
-
 	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
 

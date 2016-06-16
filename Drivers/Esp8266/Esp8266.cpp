@@ -1,7 +1,6 @@
-﻿#include "Time.h"
-#include "Sys.h"
+﻿#include "Sys.h"
 #include "Task.h"
-#include "Message\DataStore.h"
+#include "Time.h"
 
 #include "Esp8266.h"
 #include "EspTcp.h"
@@ -73,7 +72,7 @@ bool Esp8266::OnOpen()
 		_power.Open();					// 使用前必须Open；
 		_power.Down(20);
 	}
-	if (!_rst.Empty())_rst.Open();		// 使用前必须Open；
+	if (!_rst.Empty()) _rst.Open();		// 使用前必须Open；
 
 	// 每两次启动会有一次打开失败，交替
 	if(!_rst.Empty())
@@ -112,9 +111,6 @@ bool Esp8266::OnOpen()
 	//ver.Show(true);
 #endif
 
-	//auto cfg	= EspConfig::Create();
-
-	// Station模式
 	// 默认Both
 	if(Mode == SocketMode::Wire) Mode	= SocketMode::STA_AP;
 
@@ -221,6 +217,7 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 			return nullptr;
 	}
 }
+
 // 启用DNS
 bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
@@ -243,14 +240,11 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 		auto w	= (WaitExpect*)_Expect;
 		net_printf("Esp8266::Send 正在发送 ");
 		if(w->Command)
-		{
 			w->Command->Trim().Show(false);
-		}
 		else
 			net_printf("数据");
-		net_printf(" ，无法发送 ");
+		net_printf(" ，%d 无法发送 ", tid);
 		cmd.Trim().Show(true);
-		//net_printf("\r\n");
 #endif
 
 		return rs;
@@ -278,7 +272,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if(!cmd.StartsWith("AT") || expect && expect[0] == '<') EnableLog = false;
+		if(!cmd.StartsWith("AT") || expect && expect[0] == '>') EnableLog = false;
 		if(EnableLog)
 		{
 			we.Command	= &cmd;
@@ -837,9 +831,6 @@ bool Esp8266::GetMux()
 
 bool Esp8266::SetMux(bool enable)
 {
-	// 多连接要求非透传模式
-	//if(!enable || !SendCmd("AT+CIPMODE=0")) return false;
-
 	String cmd = "AT+CIPMUX=";
 	return SendCmd(cmd + (enable ? '1' : '0'));
 }
@@ -856,24 +847,6 @@ bool Esp8266::Ping(const IPAddress& ip)
 	return SendCmd(cmd + ip);
 }
 
-/*
-+IPD – 接收网络数据
-1) 单连接时:
-(+CIPMUX=0)
-+IPD,<len>[,<remote IP>,<remote
-port>]:<data>
-2) 多连接时：
-(+CIPMUX=1)
-+IPD,<link ID>,<len>[,<remote IP>,<remote port>]:<data>
-说明:
-此指令在普通指令模式下有效，ESP8266 接收到⺴˷	络数据时向串⼝Ծ发
-送 +IPD 和数据
-[<remote IP>] ⺴˷	络通信对端 IP，由指令“AT+CIPDINFO=1”使能显⽰ޓ
-[<remote port>] ⺴˷	络通信对端端⼝Ծ，由指令“AT+CIPDINFO=1”使能
-<link ID> 收到⺴˷	络连接的 ID 号
-<len> 数据⻓ॗ度
-<data> 收到的数据
-*/
 bool Esp8266::SetIPD(bool enable)
 {
 	String cmd = "AT+CIPDINFO=";

@@ -42,12 +42,12 @@ bool EspSocket::OnOpen()
 
 	_Host.SetMux(true);
 
-#if DEBUG
-	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
+#if NET_DEBUG
+	net_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
-	debug_printf(" => ");
+	net_printf(" => ");
 	Server.Show(false);
-	debug_printf(" ");
+	net_printf(" ");
 	Remote.Show(true);
 #endif
 
@@ -77,7 +77,7 @@ bool EspSocket::OnOpen()
 	auto rt		= _Host.Send(cmd + "\r\n", "OK", "ERROR", 1600);
 	if(!rt.Contains("OK") && ! rt.Contains("ALREADY CONNECTED"))
 	{
-		debug_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		net_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
 		return false;
 	}
 
