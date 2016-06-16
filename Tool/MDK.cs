@@ -330,7 +330,7 @@ namespace NewLife.Reflection
             }
 
             Console.WriteLine("等待编译完成：");
-            var left = Console.CursorLeft;
+            //var left = Console.CursorLeft;
             var list2 = new List<String>(list);
             var end = DateTime.Now.AddSeconds(10);
             var fs = 0;
@@ -344,8 +344,10 @@ namespace NewLife.Reflection
                         list2.RemoveAt(i);
                     }
                 }
-                Console.CursorLeft = left;
+                //Console.CursorLeft = left;
+				Console.WriteLine();
                 Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, (Double)fs / Files.Count);
+				
                 if (DateTime.Now > end)
                 {
                     Console.Write(" 等待超时！");
@@ -519,6 +521,7 @@ namespace NewLife.Reflection
 
             var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
+            Console.WriteLine("");
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
             rs = FromELF.Run(sb.ToString(), 3000, WriteLog);
