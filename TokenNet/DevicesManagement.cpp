@@ -3,6 +3,8 @@
 
 DevicesManagement* DevicesManagement::Current = nullptr;
 
+/******************************** 功能代码 ********************************/
+
 DevicesManagement::DevicesManagement()
 {
 	//DevArr.SetLength(0);
@@ -257,6 +259,138 @@ void DevicesManagement::ShowDev()
 	debug_printf("\r\n\r\n");
 }
 
+
+/******************************** TokenMsg数据处理 ********************************/
+/******************************** 收到Invoke ********************************/
+
+void DevicesManagement::SetTokenClient(TokenClient *port)
+{
+	if (port == nullptr)return;
+	Port = port;
+
+	Port->Register("Device/List", InvokeList);
+	Port->Register("Device/Update", InvokeUpdate);
+	Port->Register("Device/Delete", InvokeDelete);
+	Port->Register("Device/ListIDs", InvokeListIDs);
+}
+
+// Invoke 注册项
+bool DevicesManagement::InvokeList(const BinaryPair& args, BinaryPair& result)
+{
+	if (Current == nullptr)return false;
+	return Current->DeviceProcess(DeviceAtions::List, args, result);
+}
+
+bool DevicesManagement::InvokeUpdate(const BinaryPair& args, BinaryPair& result)
+{
+	if (Current == nullptr)return false;
+	return Current->DeviceProcess(DeviceAtions::Update, args, result);
+}
+
+bool DevicesManagement::InvokeDelete(const BinaryPair& args, BinaryPair& result)
+{
+	if (Current == nullptr)return false;
+	return Current->DeviceProcess(DeviceAtions::Delete, args, result);
+}
+
+bool DevicesManagement::InvokeListIDs(const BinaryPair& args, BinaryPair& result)
+{
+	if (Current == nullptr)return false;
+	return Current->DeviceProcess(DeviceAtions::ListIDs, args, result);
+}
+// 缺少更新的处理  未完待续
+bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, BinaryPair& result)
+{
+	TS("DevicesManagement::DeviceProcess");
+	// 仅处理来自云端的请求
+	switch (act)
+	{
+	case DeviceAtions::List:
+	{
+		// 获取需要发送的IDs
+		ByteArray idss;
+		args.Get("IDs", idss);
+		for (int i = 0; i < idss.Length(); i++)	// 判定依据需要修改
+		{
+			// 获取数据ms
+			MemoryStream dvms;
+			// 序列化一个DevInfo到ms
+			if (!GetDevInfo(idss[i], dvms))continue;
+			// 转换为ByteArray
+			ByteArray dvbs(dvms.GetBuffer(), dvms.Position());
+			String countstr;
+			// 这里需要注意  ！！！！！  i 是 int 类型
+			countstr += i;
+			// 写入DevInfo
+			result.Set(countstr, dvbs);
+		}
+		return true;
+	}
+
+	case DeviceAtions::Delete:
+	{
+		// 拿到操作对象
+		byte addr = 0;
+		args.Get("ID", addr);
+		if (addr != 0x00)
+		{
+			if (_DevProcess)_DevProcess(act, FindDev(addr), _ClbkParam);
+			DeleteDev(addr);
+		}
+
+		// 拿到操作对象s
+		ByteArray idss;
+		args.Get("IDs", idss);
+		if (idss.Length() > 0)
+		{
+			for (int i = 0; i < idss.Length(); i++)
+			{
+				// 外部处理一下
+				if (_DevProcess)_DevProcess(act, FindDev(idss[i]), _ClbkParam);
+				DeleteDev(idss[i]);
+			}
+		}
+
+		// 准备回复数据
+		if (addr == 0x00 && idss.Length() == 0)
+		{
+			debug_printf("DeleteDev Error\r\n");
+			return false;
+		}
+	}
+	break;
+
+	case DeviceAtions::ListIDs:
+	{
+		//　获取IDs ByteArray
+		MemoryStream idsms;
+		WriteIDs(idsms);
+		ByteArray idbs(idsms.GetBuffer(), idsms.Position());
+		result.Set("IDs", idbs);
+	}
+	break;
+
+	// 未写
+	case DeviceAtions::Update:
+	{
+	}
+	break;
+	/*case DeviceAtions::Register:
+		break;
+	case DeviceAtions::Online:
+		break;
+	case DeviceAtions::Offline:
+		break;*/
+	default:
+	{
+		debug_printf("不支持的设备操作指令！！\r\n");
+		return false;
+	}
+	}
+	return true;
+}
+
+// 获取设备ID集合
 int DevicesManagement::WriteIDs(Stream &ms)
 {
 	int len = 0;
@@ -270,122 +404,6 @@ int DevicesManagement::WriteIDs(Stream &ms)
 		}
 	}
 	return len;
-}
-
-bool DevicesManagement::DeviceProcess(String &act, const Message& msg)
-{
-	TS("DevicesManagement::DeviceProcess");
-	// 仅处理来自云端的请求
-	if (msg.Reply) return false;
-
-	DeviceAtions devact = DeviceAtions::Register;
-	if (act == "Device/List")devact = DeviceAtions::List;
-	if (act == "Device/Update")devact = DeviceAtions::Update;
-	if (act == "Device/Delete")devact = DeviceAtions::Delete;
-	if (act == "Device/ListIDs")devact = DeviceAtions::ListIDs;
-	// if (act == "Device/Register")devact = DeviceAtions::Register;
-	// if (act == "Device/Online")devact = DeviceAtions::Online;
-	// if (act == "Device/Offline")devact = DeviceAtions::Offline;
-	if (devact == DeviceAtions::Register)debug_printf("不支持的命令\r\n");
-
-	auto ms = msg.ToStream();
-	BinaryPair bp(ms);
-	// 建立Reply
-	auto tmsg = (*(TokenMessage*)&msg).CreateReply();
-
-	switch (devact)
-	{
-	case DeviceAtions::List:
-	{
-		// 获取需要发送的IDs
-		ByteArray idss;
-		bp.Get("IDs", idss);
-		// 准备写入器
-		MemoryStream ms2;
-		BinaryPair bp2(ms2);
-		// 写入命令类型
-		bp2.Set("Action", act);
-		// 设备DevsInfo数据
-		for (int i = 0; i < idss.Length(); i++)	// 判定依据需要修改
-		{
-			// 获取数据ms
-			MemoryStream dvms;
-			// 序列化一个DevInfo到ms
-			if (!GetDevInfo(idss[i], dvms))continue;
-			// 转换为ByteArray
-			ByteArray dvbs(dvms.GetBuffer(), dvms.Position());
-			String countstr;
-			countstr += i;
-			// 写入DevInfo
-			bp2.Set(countstr, dvbs);
-		}
-		// 将所有数据写入Data
-		tmsg.SetData(Buffer(ms2.GetBuffer(), ms2.Position()));
-		// 发送
-		//Port->Reply(tmsg);
-	}
-	break;
-	case DeviceAtions::Delete:
-	{
-		// 拿到操作对象
-		byte addr = 0;
-		bp.Get("ID", addr);
-		DeleteDev(addr);
-		// 拿到操作对象s
-		ByteArray idss;
-		bp.Get("IDs", idss);
-
-		for (int i = 0; i < idss.Length(); i++)
-		{
-			auto dv = FindDev(idss[i]);
-			// 外部处理一下
-			if (_DevProcess)_DevProcess(devact, dv, _ClbkParam);
-			DeleteDev(idss[i]);
-		}
-
-		// 准备回复数据
-		if (addr == 0x00 && idss.Length() == 0)
-		{
-			debug_printf("DeleteDev Error\r\n");
-			tmsg.Error = true;
-		}
-	}
-	break;
-	case DeviceAtions::ListIDs:
-	{
-		MemoryStream ms2;
-		BinaryPair bp2(ms2);
-
-		bp2.Set("Action", act);
-		//　获取IDs ByteArray
-		MemoryStream idsms;
-		WriteIDs(idsms);
-		// for (int i = 0; i < DevArr.Length(); i++)
-		// {
-		// 	if (DevArr[i] == nullptr)continue;
-		// 	idsms.Write(DevArr[i]->Address);
-		// }
-		ByteArray idbs(idsms.GetBuffer(), idsms.Position());
-		// 写入名值对
-		bp2.Set("IDs", idbs);
-
-		tmsg.SetData(Buffer(ms2.GetBuffer(), ms2.Position()));
-	}
-	break;
-	/*case DeviceAtions::Update:
-		break;
-	case DeviceAtions::Register:
-		break;
-	case DeviceAtions::Online:
-		break;
-	case DeviceAtions::Offline:
-		break;*/
-	default:
-		debug_printf("不支持的设备操作指令！！\r\n");
-		tmsg.Error = true;
-		break;
-	}
-	return Port->Reply(tmsg);
 }
 
 // 获取设备信息到流
@@ -430,23 +448,26 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	return true;
 }
 
+
+/******************************** 发送Invoke ********************************/
+
+
 void DevicesManagement::SendDevicesIDs()
 {
 	// 获取IDList
 	MemoryStream idms;
 	WriteIDs(idms);
 	ByteArray idbs(idms.GetBuffer(), idms.Position());
-
-	TokenMessage msg(0x08);
+	// 封装成所需 Data
 	MemoryStream ms;
 	BinaryPair bp(ms);
-	bp.Set("Action", String("Device/ListIDs"));
 	bp.Set("IDs", idbs);
-
-	msg.SetData(Buffer(ms.GetBuffer(), ms.Position()));
-	if (Port)Port->Send(msg);
+	Buffer bs(ms.GetBuffer(), ms.Position());
+	// 发送
+	if (Port)Port->Invoke("Device/ListIDs", bs);
 }
-// 设备状态上报  一次一个设备   未完待续
+
+// 设备状态上报  一次一个设备
 bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 {
 	TS("DevicesManagement::SendDevices");
@@ -464,39 +485,34 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	case DeviceAtions::Register:
 		actstr = "Device/Register";
 		break;
-		// case DeviceAtions::Update:
-		// 	actstr = "Device/Update";
-		// 	break;
-		// case DeviceAtions::Online:
-		// 	actstr = "Device/Online";
-		// 	break;
-		// case DeviceAtions::Offline:
-		// 	actstr = "Device/Offline";
-		// 	break;
-		// case DeviceAtions::Delete:
-		// 	actstr = "Device/Delete";
-		// 	break;
-		// case DeviceAtions::ListIDs:
-		// 	break;
-		// case DeviceAtions::List:
-		// 	break;
+	case DeviceAtions::Update:
+		actstr = "Device/Update";
+		break;
+	case DeviceAtions::Online:
+		actstr = "Device/Online";
+		break;
+	case DeviceAtions::Offline:
+		actstr = "Device/Offline";
+		break;
+	case DeviceAtions::Delete:
+		actstr = "Device/Delete";
+		break;
 	default:
 		debug_printf("无法处理的指令\r\n");
 		return false;
 		
 	}
 	if (actstr.Length() == 0)return false;
-
+	// 拿取数据
 	MemoryStream datams;
 	BinaryPair bp(datams);
-	bp.Set("Action", actstr);
 	GetDevInfo((Device*)dv, datams);
 
-	TokenMessage tmsg(0x08);
-	tmsg.SetData(Buffer(datams.GetBuffer(), datams.Position()));
-	Port->Send(tmsg);
+	if (Port)Port->Invoke(actstr, Buffer(datams.GetBuffer(),datams.Position()));
 	return true;
 }
+
+/******************************** Tiny侧数据处理 ********************************/
 
 void DevicesManagement::DeviceRequest(DeviceAtions act, byte id)
 {
@@ -542,6 +558,8 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 		break;
 	}
 }
+
+/******************************** 其他 ********************************/
 
 void DevicesManagement::MaintainState()
 {

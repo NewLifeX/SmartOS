@@ -61,7 +61,9 @@ void Gateway::Start()
 		pDevMgmt = new DevicesManagement();
 
 	// 设备列表服务于Token  保存token的“联系方式”
-	pDevMgmt->Port = Client;
+	//pDevMgmt->Port = Client;
+	pDevMgmt->SetTokenClient(Client);
+
 	if (pDevMgmt->Length() == 0)
 	{
 		// 如果全局设备列表为空，则添加一条Addr=1的设备
@@ -105,21 +107,6 @@ bool Gateway::OnLocal(const TinyMessage& msg)
 {
 	TS("Gateway::OnLocal");
 
-	auto dv = Server->Current;
-	if (dv)
-	{
-		switch (msg.Code)
-		{
-		case 0x01:
-			//pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
-			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
-			break;
-		case 0x02:
-			pDevMgmt->DeviceRequest(DeviceAtions::Delete, dv);
-			break;
-		}
-	}
-
 	// 应用级消息转发
 	if (msg.Code >= 0x10 && msg.Dest == Server->Cfg->Address)
 	{
@@ -143,7 +130,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 		OnMode(msg);
 	}
 
-	if (msg.Code == 0x08 || msg.Code == 0x02)
+	if (msg.Code == 0x02)
 	{
 		if (msg.Code == 0x02 && msg.Reply && Client->Token != 0)
 		{
@@ -152,19 +139,6 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 			pDevMgmt->SendDevicesIDs();
 			return true;
 		}
-
-		auto ms = msg.ToStream();
-		BinaryPair bp(ms);
-		String act;
-		bp.Get("Action", act);
-		if (act.StartsWith("Device/"))
-		{
-			// 由他内部回复数据
-			pDevMgmt->DeviceProcess(act, msg);
-			return true;
-		}
-		//if (act.StartsWith("USART/"))xxx();
-		//if (act.StartsWith("IO/"))xxx2();
 	}
 
 	// 应用级消息转发

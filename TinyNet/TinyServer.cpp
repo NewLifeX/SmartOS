@@ -117,13 +117,20 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	switch(msg.Code)
 	{
 		case 1:
-			if(!OnJoin(msg)) return false;
+		{
+			if (!OnJoin(msg)) return false;
 			dv = Current;
-			break;
+			DevMgmt.DeviceRequest(DeviceAtions::Online, dv);
+			return true;
+		}
+
 		case 2:
-			if(!OnDisjoin(msg))
-				return false;
-			break;
+		{
+			if (!OnDisjoin(msg))return false;
+			DevMgmt.DeviceRequest(DeviceAtions::Delete, dv);
+			return true;
+		}
+
 		case 3:
 			// 设置当前设备
 			Current = dv;

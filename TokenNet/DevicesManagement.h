@@ -15,6 +15,14 @@
 class DevicesManagement
 {
 public:
+	// 全局只允许一个设备管理器  Invoke 也就使用这个
+	static DevicesManagement * Current;
+	static bool InvokeList		(const BinaryPair& args, BinaryPair& result);
+	static bool InvokeUpdate	(const BinaryPair& args, BinaryPair& result);
+	static bool InvokeDelete	(const BinaryPair& args, BinaryPair& result);
+	static bool InvokeListIDs	(const BinaryPair& args, BinaryPair& result);
+
+public:
 	DevicesManagement();
 	~DevicesManagement();
 
@@ -28,7 +36,8 @@ public:
 	void ClearDev();
 	void ShowDev();
 
-private:	// 外部操作使用 DeviceRequest
+private:	
+	// 外部操作使用 DeviceRequest
 	void SaveDev();
 	bool DeleteDev(byte id);
 	int	PushDev(Device* dv);
@@ -37,12 +46,14 @@ public:
 	List	DevArr;
 	// 持久在线列表
 	List	OnlineAlways;
-	static DevicesManagement * Current;
-	// 发送时刻再绑定？！ 如果绑定失败报错？
+
 	TokenClient * Port = nullptr;
+	// 发送时刻再绑定？！ 如果绑定失败报错？
+	void SetTokenClient(TokenClient *port);
 
 	// 处理TokenMsg的设备指令
-	bool DeviceProcess(String &act, const Message& msg);
+	//bool DeviceProcess(String &act, const Message& msg);
+	bool DeviceProcess(DeviceAtions act,const BinaryPair& args, BinaryPair& result);
 	void SendDevicesIDs();
 	// 设备状态变更上报 由TinyServer这种对象调用
 	void DeviceRequest(DeviceAtions act, const Device* dv = nullptr);
