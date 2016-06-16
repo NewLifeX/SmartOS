@@ -183,13 +183,14 @@ void TimeSleep(uint us)
 			tms	= task->Times;
 		}
 		debug_printf("Sys::Sleep=> taskid=%d/%d us=%d \r\n", tid, tms, us);*/
+		bool cancel	= false;
 		// 如果休眠时间足够长，允许多次调度其它任务
 		while(true)
 		{
 			// 统计这次调度的时间，累加作为当前任务的休眠时间
 			TimeCost tc2;
 
-			sc->Execute(total / 1000);
+			sc->Execute(total / 1000, cancel);
 
 			total -= tc2.Elapsed();
 

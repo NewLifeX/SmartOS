@@ -19,7 +19,7 @@ bool WaitExpect::Wait(int msTimeout)
 	Sys.Sleep(40);
 	if(!Result) return true;
 
-	// 等待收到数据
+	/*// 等待收到数据
 	TimeWheel tw(0, msTimeout - 40);
 	// 默认检查间隔200ms，如果超时时间大于1000ms，则以四分之一为检查间隔
 	// ESP8266串口任务平均时间为150ms左右，为了避免接收指令任务里面发送指令时等不到OK，需要加大检查间隔
@@ -32,7 +32,9 @@ bool WaitExpect::Wait(int msTimeout)
 		if(tw.Expired()) return false;
 	}
 
-	return true;
+	return true;*/
+
+	return Handle.WaitOne(msTimeout);
 }
 
 uint WaitExpect::Parse(const Buffer& bs)
@@ -58,7 +60,13 @@ uint WaitExpect::Parse(const Buffer& bs)
 		rs	= bs.Sub(0, p).AsString();
 
 	// 匹配关键字，任务完成
-	if(p > 0) Result	= nullptr;
+	if(p > 0)
+	{
+		Result	= nullptr;
+
+		// 设置事件，通知等待任务退出循环
+		Handle.Set();
+	}
 
 	// 如果后面是换行，则跳过
 	if(p < s.Length() && s[p] == ' ') p++;

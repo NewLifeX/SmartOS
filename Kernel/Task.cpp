@@ -247,10 +247,11 @@ void TaskScheduler::Start()
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
+	bool cancel	= false;
 	Running = true;
 	while(Running)
 	{
-		Execute(0xFFFFFFFF);
+		Execute(0xFFFFFFFF, cancel);
 	}
 	debug_printf("%s停止调度，共有%d个任务！\r\n", Name, Count);
 }
@@ -266,7 +267,7 @@ void TaskScheduler::Stop()
 #endif
 
 // 执行一次循环。指定最大可用时间
-void TaskScheduler::Execute(uint msMax)
+void TaskScheduler::Execute(uint msMax, bool& cancel)
 {
 	TS("Task::Execute");
 
@@ -278,6 +279,9 @@ void TaskScheduler::Execute(uint msMax)
 
 	for(int i=0; i<_Tasks.Count(); i++)
 	{
+		// 如果外部取消，马上退出调度
+		if(cancel) return;
+
 		auto task	= (Task*)_Tasks[i];
 		if(!task || task->ID == 0 || !task->Enable) continue;
 

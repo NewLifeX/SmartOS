@@ -234,7 +234,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	auto tid	= Task::Scheduler()->Current->ID;
 #endif
 	// 判断是否正在发送其它指令
-	if(_Expect && ((WaitExpect*)_Expect)->Result)
+	if(_Expect)
 	{
 #if NET_DEBUG
 		auto w	= (WaitExpect*)_Expect;
@@ -257,7 +257,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	we.Key1		= expect;
 	we.Key2		= expect2;
 
-	if(&rs == ((WaitExpect*)_Expect)->Result) _Expect	= &we;
+	_Expect	= &we;
 
 #if NET_DEBUG
 	bool EnableLog	= true;
@@ -500,7 +500,12 @@ uint Esp8266::ParseReply(const Buffer& bs)
 
 	// 拦截给同步方法
 	auto we	= (WaitExpect*)_Expect;
-	return we->Parse(bs);
+	bool rs	= we->Parse(bs);
+
+	// 如果内部已经适配，则清空
+	if(!we->Result) _Expect	= nullptr;
+
+	return rs;
 }
 
 /******************************** 基础AT指令 ********************************/
