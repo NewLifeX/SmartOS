@@ -230,15 +230,13 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	String rs;
 
-#if NET_DEBUG
 	auto tid	= Task::Scheduler()->Current->ID;
-#endif
 	// 判断是否正在发送其它指令
 	if(_Expect)
 	{
 #if NET_DEBUG
 		auto w	= (WaitExpect*)_Expect;
-		net_printf("Esp8266::Send 正在发送 ");
+		net_printf("Esp8266::Send %d 正在发送 ", w->TaskID);
 		if(w->Command)
 			w->Command->Trim().Show(false);
 		else
@@ -252,6 +250,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	// 在接收事件中拦截
 	WaitExpect we;
+	we.TaskID	= tid;
 	//we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;

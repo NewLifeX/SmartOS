@@ -9,6 +9,7 @@ class WaitExpect
 public:
 	WaitHandle	Handle;	// 等待句柄
 
+	uint	TaskID	= 0;
 	const String*	Command	= nullptr;
 	String*	Result	= nullptr;
 	cstring	Key1	= nullptr;
