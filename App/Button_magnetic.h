@@ -20,10 +20,12 @@ private:
 	static void OnPress(InputPort* port, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
-	EventHandler _Handler;
-	void* _Param;
+	//EventHandler _Handler;
+	//void* _Param;
 public:
 	cstring Name;
+	
+	Delegate	Press;
 
 	InputPort*  Key;	// 输入按键
 	OutputPort* Led;	// 指示灯
@@ -40,7 +42,7 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 
-	void Register(EventHandler handler, void* param = nullptr);
+	//void Register(EventHandler handler, void* param = nullptr);
 
 private:
 	bool _Value; // 状态

@@ -10,8 +10,8 @@ Button::Button()
 	Index	= 0;
 	_Value	= false;
 
-	_Handler	= nullptr;
-	_Param		= nullptr;
+	//_Handler	= nullptr;
+	//_Param		= nullptr;
 }
 
 Button::~Button()
@@ -54,11 +54,12 @@ void Button::OnPress(Pin pin, bool down)
 	{
 		SetValue(!_Value);
 
-		if(_Handler) _Handler(this, _Param);
+		//if(_Handler) _Handler(this, _Param);
+		Press(this);
 	}
 }
 
-void Button::Register(EventHandler handler, void* param)
+/*void Button::Register(EventHandler handler, void* param)
 {
 	if(handler)
 	{
@@ -70,7 +71,7 @@ void Button::Register(EventHandler handler, void* param)
 		_Handler = nullptr;
 		_Param = nullptr;
 	}
-}
+}*/
 
 bool Button::GetValue() { return _Value; }
 

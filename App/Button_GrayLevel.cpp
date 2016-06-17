@@ -27,8 +27,8 @@ Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 	_Pwm = nullptr;
 	_Channel = 0;
 
-	_Handler = nullptr;
-	_Param = nullptr;
+	//_Handler = nullptr;
+	//_Param = nullptr;
 
 	_tid = 0;
 	Next = 0xFF;
@@ -119,13 +119,15 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 				}
 			}
 			SetValue(!_Value);
-			if (_Handler) _Handler(this, _Param);
+			//if (_Handler) _Handler(this, _Param);
+			Press(this);
 			break;
 		case set:
 			Stat = normal;
 			Next = 0xff;
 			SetValue(!_Value);
-			if (_Handler) _Handler(this, _Param);
+			//if (_Handler) _Handler(this, _Param);
+			Press(this);
 			break;
 		}
 	}
@@ -157,7 +159,7 @@ void Button_GrayLevel::DelayClose2(int ms)
 	delaytime = ms;
 }
 
-void Button_GrayLevel::Register(EventHandler handler, void* param)
+/*void Button_GrayLevel::Register(EventHandler handler, void* param)
 {
 	if (handler)
 	{
@@ -169,7 +171,7 @@ void Button_GrayLevel::Register(EventHandler handler, void* param)
 		_Handler = nullptr;
 		_Param = nullptr;
 	}
-}
+}*/
 
 int Button_GrayLevel::OnWrite(byte data)
 {
@@ -229,7 +231,7 @@ bool Button_GrayLevel::SetACZeroPin(Pin aczero)
 	return false;
 }
 
-void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, EventHandler onpress
+void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, Action onpress
 	, const ButtonPin* pins, byte* level, const byte* state)
 {
 	debug_printf("\r\n初始化开关按钮 \r\n");
@@ -278,7 +280,8 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, Event
 #if DEBUG
 		btns[i].Name = names[i];
 #endif
-		btns[i].Register(onpress);
+		//btns[i].Register(onpress);
+		btns[i].Press	= onpress;
 
 		// 灰度 LED 绑定到 Button
 		btns[i].Set(&LedPWM, pins[i].PwmIndex);

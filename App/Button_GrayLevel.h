@@ -45,6 +45,8 @@ public:
 	void * ExterSetParam = nullptr;
 
 public:
+	Delegate	Press;
+	
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
 
@@ -54,7 +56,7 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 	void RenewGrayLevel();
-	void Register(EventHandler handler, void* param = nullptr);
+	//void Register(EventHandler handler, void* param = nullptr);
 
 	virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
 	//virtual int Read(byte* cmd);	
@@ -70,8 +72,8 @@ private:
 	bool _Value; // 状态
 	ushort Reserved;	// 补足对齐问题
 
-	EventHandler _Handler;
-	void* _Param;
+	//EventHandler _Handler;
+	//void* _Param;
 
 	static void OnKeyPress(InputPort* port, bool down, void* param);
 	void OnKeyPress(InputPort* port, bool down);
@@ -80,7 +82,7 @@ public:
 	static byte OnGrayLevel;			// 开灯时 led 灰度
 	static byte OffGrayLevel;			// 关灯时 led 灰度
 
-	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, EventHandler onpress, const ButtonPin* pins, byte* level, const byte* state);
+	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, Action onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 

@@ -9,8 +9,8 @@ void Button_magnetic::Init()
 	
 	Name = nullptr;
 	_Value = false;
-	_Handler = nullptr;
-	_Param = nullptr;
+	//_Handler = nullptr;
+	//_Param = nullptr;
 }
 
 Button_magnetic::Button_magnetic(Pin key, Pin led, Pin relay_pin1, Pin relay_pin2)
@@ -72,11 +72,12 @@ void Button_magnetic::OnPress(Pin pin, bool down)
 	{
 		SetValue(!_Value);
 
-		if(_Handler) _Handler(this, _Param);
+		//if(_Handler) _Handler(this, _Param);
+		Press();
 	}
 }
 
-void Button_magnetic::Register(EventHandler handler, void* param)
+/*void Button_magnetic::Register(EventHandler handler, void* param)
 {
 	if(handler)
 	{
@@ -88,7 +89,7 @@ void Button_magnetic::Register(EventHandler handler, void* param)
 		_Handler = nullptr;
 		_Param = nullptr;
 	}
-}
+}*/
 
 bool Button_magnetic::GetValue() { return _Value; }
 

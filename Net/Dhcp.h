@@ -33,7 +33,7 @@ public:
 	void Start();	// 开始
 	void Stop();	// 停止
 
-	EventHandler OnStop;
+	Delegate	OnStop;
 
 private:
 	static uint OnReceive(ITransport* port, Buffer& bs, void* param, void* param2);

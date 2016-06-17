@@ -24,15 +24,16 @@ Timer::Timer(TIMER index)
 
 	Opened	= false;
 
-	_Handler	= nullptr;
-	_Param		= nullptr;
+	//_Handler	= nullptr;
+	//_Param		= nullptr;
 }
 
 Timer::~Timer()
 {
 	Close();
 
-	if(_Handler) Register(nullptr);
+	//if(_Handler) Register(nullptr);
+	if(OnTick.Method) SetHandler(false);
 
 	Timers[_index] = nullptr;
 }
@@ -91,17 +92,25 @@ void Timer::Close()
 	Opened = false;
 }
 
-void Timer::Register(EventHandler handler, void* param)
+/*void Timer::Register(EventHandler handler, void* param)
 {
 	_Handler	= handler;
 	_Param		= param;
 
 	SetHandler(handler != nullptr);
+}*/
+
+void Timer::Register(const Delegate& dlg)
+{
+	OnTick	= dlg;
+
+	SetHandler(dlg.Method);
 }
 
 void Timer::OnInterrupt()
 {
-	if(_Handler) _Handler(this, _Param);
+	//if(_Handler) _Handler(this, _Param);
+	OnTick(this);
 }
 
 /*================ PWM ================*/

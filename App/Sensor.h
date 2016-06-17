@@ -21,7 +21,7 @@ public:
 	
 	//I2C*   Ifrared    //红外转发
 	
-	
+	Delegate	Press;
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Sensor() { Init(); }
@@ -32,7 +32,7 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 
-	void Register(EventHandler handler, void* param = nullptr);
+	//void Register(EventHandler handler, void* param = nullptr);
 
 	
 private:
@@ -41,8 +41,8 @@ private:
 	static void OnPress(InputPort* port, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
-	EventHandler _Handler;
-	void* _Param;
+	//EventHandler _Handler;
+	//void* _Param;
 	
 private:
 	bool _Value; // 状态

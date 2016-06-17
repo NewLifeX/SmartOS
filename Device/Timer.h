@@ -16,11 +16,13 @@ public:
 	void*	_Timer;
 	bool	Opened;	// 可能在中断里关闭自己
 
-	Timer(TIMER index);
-	virtual ~Timer();
-
 	ushort	Prescaler;	// 预分频。实际值，此时无需减一。
 	uint	Period;		// 周期。实际值，此时无需减一。
+
+	Delegate	OnTick;
+
+	Timer(TIMER index);
+	virtual ~Timer();
 
 	virtual void Open();	// 开始定时器
 	virtual void Close();	// 停止定时器
@@ -31,14 +33,15 @@ public:
 	uint GetCounter();
 	void SetCounter(uint cnt);		// 设置计数器值
 
-	void Register(EventHandler handler, void* param = nullptr);
+	//void Register(EventHandler handler, void* param = nullptr);
+	void Register(const Delegate& dlg);
 
 	static void ClockCmd(int idx, bool state);
 
 private:
 	static void OnHandler(ushort num, void* param);
-	EventHandler _Handler;
-	void* _Param;
+	//EventHandler _Handler;
+	//void* _Param;
 
 protected:
 	virtual void OnInterrupt();
@@ -47,12 +50,12 @@ public:
 	static const byte	TimerCount;	// 定时器个数
 
 	static Timer* Create(byte index = 0xFF);	// 创建指定索引的定时器，如果已有则直接返回，默认0xFF表示随机分配
-	
+
 private:
 	void OnInit();
 	void OnOpen();
 	void OnClose();
-	
+
 	static const void* GetTimer(byte idx);
 };
 

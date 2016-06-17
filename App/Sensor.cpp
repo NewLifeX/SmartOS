@@ -6,13 +6,13 @@ void Sensor::Init()
 	Led = nullptr;
 	Buzzer = nullptr;
 	Pir=nullptr;    //门磁
-  Pir=nullptr;    //人体感应
+	//Pir=nullptr;    //人体感应
 	
 	Name = nullptr;
 	Index = 0;
 	_Value = false;
-	_Handler = nullptr;
-	_Param = nullptr;
+	//_Handler = nullptr;
+	//_Param = nullptr;
 }
 
 Sensor::Sensor(Pin key, Pin led, Pin buzzer)
@@ -64,11 +64,12 @@ void Sensor::OnPress(Pin pin, bool down)
 	{
 		SetValue(!_Value);
 
-		if(_Handler) _Handler(this, _Param);
+		//if(_Handler) _Handler(this, _Param);
+		Press();
 	}
 }
 
-void Sensor::Register(EventHandler handler, void* param)
+/*void Sensor::Register(EventHandler handler, void* param)
 {
 	if(handler)
 	{
@@ -80,7 +81,7 @@ void Sensor::Register(EventHandler handler, void* param)
 		_Handler = nullptr;
 		_Param = nullptr;
 	}
-}
+}*/
 
 bool Sensor::GetValue() { return _Value; }
 

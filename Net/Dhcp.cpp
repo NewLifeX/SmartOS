@@ -32,7 +32,7 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	MaxTimes	= 6;
 	ExpiredTime	= 500 * 10;
 
-	OnStop	= nullptr;
+	//OnStop	= nullptr;
 	taskID	= 0;
 
 	auto port = dynamic_cast<ITransport*>(Socket);
@@ -200,7 +200,8 @@ void Dhcp::Stop()
 		}
 	}
 
-	if(OnStop) OnStop(this, nullptr);
+	//if(OnStop) OnStop(this, nullptr);
+	OnStop(this);
 }
 
 void Dhcp::Loop(void* param)

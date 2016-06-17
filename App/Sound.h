@@ -37,7 +37,7 @@ private:
 	volatile int sound_cnt;
 	volatile int music_freq;
 	volatile int music_beat;
-	void static TimerHander(void* sender, void* param);
+	void TimerHander(Timer* timer);
 	void phonate();
 };
 

@@ -2,18 +2,17 @@
 #include "Port.h"
 #include "Timer.h"
 
-Timer* timer;
+//Timer* timer;
 
-void TimerTask(void* sender, void* param)
+void TimerTask(OutputPort* leds, Timer* timer)
 {
-    OutputPort* leds = (OutputPort*)param;
     *leds = !*leds;
 }
 
 uint frequency = 0;
 int step = 1;
 
-void TimerTask2(void* sender, void* param)
+void TimerTask2(Timer* timer)
 {
 	frequency += step;
 	
@@ -36,14 +35,16 @@ void TestTimer(OutputPort& leds)
     debug_printf("\r\n");
     debug_printf("TestTimer Start......\r\n");
 
-    timer = new Timer(Timer2);
+    auto timer	= new Timer(Timer2);
     timer->SetFrequency(50);
-    timer->Register(TimerTask, &leds);
+    //timer->Register(TimerTask, &leds);
+	timer->OnTick	= Delegate((void*)&TimerTask, &leds);
     timer->Open();
 
-    Timer* timer2 = Timer::Create();
+    auto timer2	= Timer::Create();
     timer2->SetFrequency(10);
-    timer2->Register(TimerTask2, nullptr);
+    //timer2->Register(TimerTask2, nullptr);
+	timer2->OnTick	= (void*)&TimerTask2;
     timer2->Open();
 
     debug_printf("\r\n TestTimer Finish!\r\n");

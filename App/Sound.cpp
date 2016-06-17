@@ -48,7 +48,8 @@ void Music::Sound()
 	if(_timer!= nullptr && _phonatePin != nullptr && _tuneSet != nullptr && _tuneNum != 0)
 	{
 		_timer->SetFrequency(100000);
-		_timer->Register(TimerHander, this);
+		//_timer->Register(TimerHander, this);
+		_timer->OnTick	= Delegate(&Music::TimerHander, this);
 		_timer->Open();
 		Sounding = true;
 	}
@@ -69,7 +70,7 @@ void Music::Unsound()
 void Music::SetTuneSet(const Tune* tune, int num)
 {
 	if(Sounding) Unsound();
-	
+
 	if(tune != nullptr && num != 0)
 	{
 		_tuneSet = tune;
@@ -82,11 +83,13 @@ bool Music::getStat()
 	return Sounding;
 }
 
-void Music::TimerHander(void* sender,void* param)
+void Music::TimerHander(Timer* timer)
 {
-	if(param == nullptr)return;
+	/*if(param == nullptr)return;
 	Music * music = (Music * )param;
-	music->phonate();
+	music->phonate();*/
+
+	phonate();
 }
 
 void Music::phonate()

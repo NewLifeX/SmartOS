@@ -15,8 +15,8 @@ private:
 	static void OnPress(InputPort* port, bool down, void* param);
 	void OnPress(Pin pin, bool down);
 
-	EventHandler _Handler;
-	void* _Param;
+	//EventHandler _Handler;
+	//void* _Param;
 public:
 	cstring	Name;	// 按钮名称
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
@@ -25,6 +25,8 @@ public:
 	OutputPort	Led;	// 指示灯
 	OutputPort	Relay;	// 继电器
 
+	Delegate	Press;	// 按下事件
+	
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button();
@@ -35,7 +37,7 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 
-	void Register(EventHandler handler, void* param = nullptr);
+	//void Register(EventHandler handler, void* param = nullptr);
 
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
