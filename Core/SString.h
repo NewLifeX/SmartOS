@@ -112,7 +112,7 @@ public:
 	bool operator <= (const String& rhs) const;
 	bool operator >= (const String& rhs) const;
 
-	void SetAt(int index, char c);
+	//void SetAt(int index, char c);
 	char operator [] (int index) const;
 	char& operator [] (int index);
 	void GetBytes(byte* buf, int bufsize, int index=0) const;

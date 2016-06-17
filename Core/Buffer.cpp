@@ -58,6 +58,16 @@ Buffer& Buffer::operator = (Buffer&& rval)
 	return *this;
 }
 
+// 设置指定位置的值，长度不足时自动扩容
+bool Buffer::SetAt(int index, byte value)
+{
+	if(index >= _Length && !SetLength(index + 1)) return false;
+
+	_Arr[index]	= value;
+
+	return true;
+}
+
 // 重载索引运算符[]，返回指定元素的第一个字节
 byte Buffer::operator[](int i) const
 {

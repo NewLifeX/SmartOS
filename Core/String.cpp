@@ -630,10 +630,10 @@ bool String::operator>=(const String& rhs) const
 	return CompareTo(rhs) >= 0;
 }
 
-void String::SetAt(int loc, char c)
+/*void String::SetAt(int loc, char c)
 {
 	if (loc < _Length) _Arr[loc] = c;
-}
+}*/
 
 char& String::operator[](int index)
 {

@@ -47,6 +47,9 @@ public:
 	virtual bool SetLength(int len);
 	//virtual void SetBuffer(void* ptr, int len);
 
+	// 设置指定位置的值，长度不足时自动扩容
+	bool SetAt(int index, byte value);
+
     // 重载索引运算符[]，返回指定元素的第一个字节
     byte operator[](int i) const;
 	// 支持 buf[i] = 0x36 的语法
