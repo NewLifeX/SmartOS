@@ -49,7 +49,7 @@ private:
 	uint	_Count;
 	uint	_Capacity;
 
-	void*	Arr[0x10];
+	void*	Arr[0x04];
 
 	void Init();
 	bool CheckCapacity(int count);
