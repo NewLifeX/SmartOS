@@ -11,27 +11,18 @@ Delegate::Delegate()
 	Target	= nullptr;
 }
 
-Delegate::Delegate(void* func)
-{
-	Method	= func;
-	Target	= nullptr;
-}
+Delegate::Delegate(void* func)	{ Method	= (void*)func; Target	= nullptr; }
+Delegate::Delegate(void* func, void* target){ Method	= (void*)func; Target	= target; }
+Delegate::Delegate(Func func)	{ Method	= (void*)func; Target	= nullptr; }
+Delegate::Delegate(Action func)	{ Method	= (void*)func; Target	= nullptr; }
+Delegate::Delegate(Action2 func){ Method	= (void*)func; Target	= nullptr; }
+Delegate::Delegate(Action3 func){ Method	= (void*)func; Target	= nullptr; }
 
-Delegate::Delegate(void* func, void* target)
-{
-	Method	= func;
-	Target	= target;
-}
-
-Delegate::Delegate(Func func)	{ Method	= (void*)func; }
-Delegate::Delegate(Action func)	{ Method	= (void*)func; }
-Delegate::Delegate(Action2 func){ Method	= (void*)func; }
-Delegate::Delegate(Action3 func){ Method	= (void*)func; }
-
-/*void Delegate::Add(Func func)
-{
-	Method	= (void*)func;
-}*/
+Delegate& Delegate::operator=(void* func)	{ Method	= (void*)func; return *this; }
+Delegate& Delegate::operator=(Func func)	{ Method	= (void*)func; return *this; }
+Delegate& Delegate::operator=(Action func)	{ Method	= (void*)func; return *this; }
+Delegate& Delegate::operator=(Action2 func)	{ Method	= (void*)func; return *this; }
+Delegate& Delegate::operator=(Action3 func)	{ Method	= (void*)func; return *this; }
 
 void Delegate::operator()()
 {

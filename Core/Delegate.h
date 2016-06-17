@@ -20,6 +20,7 @@ public:
 	void*	Target;	// 参数
 
 	Delegate();
+	Delegate(const Delegate& dlg)	= delete;
 	Delegate(void* func);
 	Delegate(void* func, void* target);
     Delegate(Func func);
@@ -34,6 +35,12 @@ public:
 	template<typename T, typename TArg, typename TArg2>
 	Delegate(void(T::*func)(TArg, TArg2), T* target)	{ Method	= (void*)&func; Target	= target; }
 
+	Delegate& operator=(void* func);
+    Delegate& operator=(Func func);
+    Delegate& operator=(Action func);
+    Delegate& operator=(Action2 func);
+    Delegate& operator=(Action3 func);
+	
 	void operator()();
 	void operator()(void* arg);
 	void operator()(void* arg, void* arg2);
