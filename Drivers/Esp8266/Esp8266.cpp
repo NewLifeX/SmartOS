@@ -230,7 +230,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	String rs;
 
-	auto task	= Task::Current();
+	auto& task	= Task::Current();
 	// 判断是否正在发送其它指令
 	if(_Expect)
 	{
