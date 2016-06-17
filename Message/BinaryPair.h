@@ -33,9 +33,11 @@ public:
 	bool Set(cstring name, const String& str);
 	bool Set(cstring name, const IPEndPoint& value);
 
+	// 字典名值对操作
+	Dictionary GetAll() const;
+	bool Set(const Dictionary& dic);
+	
 private:
-	//byte*	Data;		// 数据指针
-	//uint	Length;		// 数据长度
 	uint	_p;	// 写入时的位置
 	Stream*	_s;
 	bool	_canWrite;

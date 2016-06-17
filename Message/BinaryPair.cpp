@@ -180,3 +180,33 @@ bool BinaryPair::Set(cstring name, const IPEndPoint& value)
 
 	//return Set(name, value.ToArray());
 }
+
+// 字典名值对操作
+Dictionary BinaryPair::GetAll() const
+{
+	Dictionary dic(String::Compare);
+
+	auto& ms	= *_s;
+	while(ms.Remain())
+	{
+		// 每个名值对最小长度是2，名称和值的长度都为0
+		if(ms.Remain() < 2) break;
+		int len	= ms.ReadEncodeInt();
+		if(len <0 || len > ms.Remain()) break;
+		auto nm	= ms.ReadBytes(len);
+
+		if(ms.Remain() < 1) break;
+		int ln2	= ms.ReadEncodeInt();
+		if(ln2 <0 || ln2 > ms.Remain()) break;
+		auto dt	= ms.ReadBytes(ln2);
+
+		dic.Add(nm, dt);
+	}
+
+	return dic;
+}
+
+bool BinaryPair::Set(const Dictionary& dic)
+{
+	return false;
+}

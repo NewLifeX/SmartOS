@@ -16,9 +16,6 @@ class TokenSession;
 // 微网客户端
 class TokenClient
 {
-private:
-	uint	_task;
-
 public:
 	uint	Token;	// 令牌
 
@@ -70,9 +67,9 @@ public:
 
 	// 远程调用
 	void Invoke(const String& action, const Buffer& bs);
-	
+
 	// 注册远程调用处理器
-	typedef bool (*InvokeHandler)(const BinaryPair& args, BinaryPair& result);
+	typedef bool (*InvokeHandler)(const Dictionary& args, Buffer& result);
 	void Register(const String& action, InvokeHandler handler);
 
 private:
@@ -94,9 +91,13 @@ private:
 	void OnWrite(const TokenMessage& msg, TokenController* ctrl);
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
-	
+#if DEBUG
 public:
-	bool OnInvoke(const String& action, const BinaryPair& args, BinaryPair& result);
+#endif
+	bool OnInvoke(const String& action, const Dictionary& args, Buffer& result);
+
+private:
+	uint	_task;
 };
 
 // 令牌会话

@@ -217,20 +217,27 @@ TokenClient* AP0801::CreateClient()
 	return Client = client;
 }
 
-bool SetWiFi(const BinaryPair& args, BinaryPair& result)
+bool SetWiFi(const Dictionary& args, Buffer& result)
 {
 	ByteArray rs;
 
-	String ssid;
+	/*String ssid;
 	String pass;
 
 	if(!args.Get("ssid", ssid)) return false;
-	if(!args.Get("pass", pass)) return false;
+	if(!args.Get("pass", pass)) return false;*/
+
+	auto ssid	= args.GetString("ssid");
+	auto pass	= args.GetString("pass");
+
+	if(!ssid || !pass) return false;
 
 	//todo 保存WiFi信息
 	//auto esp	= (ESP8266*)
-	
-	result.Set("Result", (byte)1);
+
+	//result.Set("Result", (byte)1);
+	result.SetLength(1);
+	result[0]	= true;
 
 	return true;
 }
@@ -244,7 +251,6 @@ void SetWiFiTask(void* param)
 
 #if DEBUG
 	MemoryStream ms1;
-	MemoryStream ms2;
 
 	BinaryPair bp(ms1);
 	bp.Set("ssid", "yws007");
@@ -252,15 +258,12 @@ void SetWiFiTask(void* param)
 
 	ms1.SetPosition(0);
 	BinaryPair args(ms1);
-	BinaryPair result(ms2);
 
-	client->OnInvoke("SetWiFi", args, result);
+	ByteArray result;
+	client->OnInvoke("SetWiFi", args.GetAll(), result);
 
-	byte rt	= 0;
-	bool rs	= result.Get("Result", rt);
-
-	assert(rs, "rs");
-	assert(rt == 1, "rt");
+	assert(result, "result");
+	assert(result[0] == 1, "rt");
 
 	debug_printf("Invoke测试通过");
 #endif
