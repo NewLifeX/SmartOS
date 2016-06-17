@@ -32,6 +32,7 @@ public:
 	byte	MaxDeepth;	// 最大深度。默认1层，不允许重入
 
 	Task();
+	Task(const Task& task)	= delete;
 	~Task();
 
 	// 执行任务。返回是否正常执行。
