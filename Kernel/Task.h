@@ -44,6 +44,7 @@ public:
 	// 全局任务调度器
 	static TaskScheduler* Scheduler();
 	static Task* Get(int taskid);
+	static Task& Current();
 	
 private:
 	friend class TaskScheduler;

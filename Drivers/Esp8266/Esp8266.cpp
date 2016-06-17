@@ -230,7 +230,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	String rs;
 
-	auto tid	= Task::Scheduler()->Current->ID;
+	auto task	= Task::Current();
 	// 判断是否正在发送其它指令
 	if(_Expect)
 	{
@@ -241,7 +241,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 			w->Command->Trim().Show(false);
 		else
 			net_printf("数据");
-		net_printf(" ，%d 无法发送 ", tid);
+		net_printf(" ，%d 无法发送 ", task.ID);
 		cmd.Trim().Show(true);
 #endif
 
@@ -250,7 +250,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 	// 在接收事件中拦截
 	WaitExpect we;
-	we.TaskID	= tid;
+	we.TaskID	= task.ID;
 	//we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;
@@ -275,7 +275,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 		if(EnableLog)
 		{
 			we.Command	= &cmd;
-			net_printf("%d=> ", tid);
+			net_printf("%d=> ", task.ID);
 			cmd.Trim().Show(true);
 		}
 #endif
@@ -289,7 +289,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 #if NET_DEBUG
 	if(EnableLog && rs)
 	{
-		net_printf("%d<= ", tid);
+		net_printf("%d<= ", task.ID);
 		rs.Trim().Show(true);
 	}
 #endif

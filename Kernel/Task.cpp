@@ -153,12 +153,15 @@ Task* Task::Get(int taskid)
 	return (*Scheduler())[taskid];
 }
 
+Task& Task::Current()
+{
+	return *(Scheduler()->Current);
+}
+
 #pragma arm section code
 
 TaskScheduler::TaskScheduler(cstring name)
 {
-	//_Tasks.Clear();
-	//_Tasks.SetLength(0);
 	Name 	= name;
 
 	Running = false;
