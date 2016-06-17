@@ -764,17 +764,22 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 	}
 	else
 	{
-		auto args	= bp.GetAll();
-		ByteArray result;
-		if(!OnInvoke(action, args, result))
+		// 传入参数名值对以及结果缓冲区引用，业务失败时返回false并把错误信息放在结果缓冲区
+		MemoryStream result;
+		if(!OnInvoke(action, bp, result))
 		{
-			rs.SetError(0x02, "操作注册有误");
+			if(result.Position() > 0)
+				rs.SetError(0x03, (cstring)result.GetBuffer());
+			else
+				rs.SetError(0x02, "执行出错");
 		}
 		else
 		{
 			// 执行成功
+			result.SetPosition(0);
+
 			BinaryPair bprs(ms);
-			bprs.Set("Result", result);
+			bprs.Set("Result", Buffer(result.GetBuffer(), result.Length));
 
 			// 数据流可能已经扩容
 			rs.Data		= ms.GetBuffer();
@@ -785,19 +790,36 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 	ctrl->Reply(rs);
 }
 
-bool TokenClient::OnInvoke(const String& action, const Dictionary& args, Buffer& result)
+bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream& result)
 {
-	void* handler	= nullptr;
-	if(!Routes.TryGetValue(action.GetBuffer(), handler) || !handler) return false;
+	void* ps	= nullptr;
+	if(!Routes.TryGetValue(action.GetBuffer(), ps) || !ps) return false;
 
-	return ((InvokeHandler)handler)(args, result);
+	auto ps2	= (int*)ps;
+	auto inv	= (InvokeHandler)ps2[0];
+	auto param	= (void*)ps2[1];
+
+	return inv(param, args, result);
 }
 
-void TokenClient::Register(const String& action, InvokeHandler handler)
+void TokenClient::Register(const String& action, InvokeHandler handler, void* param)
 {
 	auto act	= action.GetBuffer();
 	if(handler)
-		Routes.Add(act, (void*)handler);
+	{
+		int* ps	= new int[2];
+		ps[0]	= (int)handler;
+		ps[1]	= (int)param;
+		Routes.Add(act, (void*)ps);
+	}
 	else
-		Routes.Remove(act);
+	{
+		void* ps	= nullptr;
+		if(Routes.TryGetValue(act, ps))
+		{
+			delete (int*)ps;
+
+			Routes.Remove(act);
+		}
+	}
 }

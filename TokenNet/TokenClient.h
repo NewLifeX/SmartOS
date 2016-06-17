@@ -68,9 +68,16 @@ public:
 	// 远程调用
 	void Invoke(const String& action, const Buffer& bs);
 
+	// 远程调用委托。传入参数名值对以及结果缓冲区引用，业务失败时返回false并把错误信息放在结果缓冲区
+	typedef bool (*InvokeHandler)(void* param, const BinaryPair& args, Stream& result);
 	// 注册远程调用处理器
-	typedef bool (*InvokeHandler)(const Dictionary& args, Buffer& result);
-	void Register(const String& action, InvokeHandler handler);
+	void Register(const String& action, InvokeHandler handler, void* param = nullptr);
+	// 模版支持成员函数
+	template<typename T>
+	void Register(const String& action, void(T::*func)(const BinaryPair&, Stream&), T* target)
+	{
+		Register(action, *(InvokeHandler*)&func, target);
+	}
 
 private:
 	bool OnHello(TokenMessage& msg, TokenController* ctrl);
@@ -94,7 +101,7 @@ private:
 #if DEBUG
 public:
 #endif
-	bool OnInvoke(const String& action, const Dictionary& args, Buffer& result);
+	bool OnInvoke(const String& action, const BinaryPair& args, Stream& result);
 
 private:
 	uint	_task;

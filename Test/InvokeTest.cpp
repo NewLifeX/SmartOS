@@ -1,22 +1,20 @@
 ﻿#include "Sys.h"
 #include "TokenNet/TokenClient.h"
 
-bool InvokeFun(const BinaryPair& args, BinaryPair& result)
+bool InvokeFun(void* param, const BinaryPair& args, Buffer& result)
 {
 	byte rt;
 	bool rs;
 
 	rs = args.Get("Hello", rt);
-	if (rt == 1 && rs)
-		result.Set("Hello", (byte)0);
-	else
-		return false;
+	if(!rs || rt != 1) return false;
+
+	result.SetAt(0, 0);
 
 	rs = args.Get("Rehello", rt);
-	if (rt == 0 && rs)
-		result.Set("Rehello", (byte)1);
-	else
-		return false;
+	if(!rs || rt != 0) return false;
+
+	result.SetAt(0, 1);
 
 	return true;
 }
@@ -36,10 +34,11 @@ void InvokeTest(TokenClient * client)
 	// 封装成所需数据格式
 	BinaryPair args(ms1);
 	// 准备返回数据的容器
-	MemoryStream ms2;
+	ByteArray bs;
+	Stream ms2(bs);
 	BinaryPair result(ms2);
 	// 调用
-	client->OnInvoke("Test", args, result);
+	client->OnInvoke("Test", args, bs);
 
 	bool isOk = true;
 

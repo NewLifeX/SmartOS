@@ -217,27 +217,26 @@ TokenClient* AP0801::CreateClient()
 	return Client = client;
 }
 
-bool SetWiFi(const Dictionary& args, Buffer& result)
+bool SetWiFi(void* param, const BinaryPair& args, Stream& result)
 {
 	ByteArray rs;
 
-	/*String ssid;
+	String ssid;
 	String pass;
 
 	if(!args.Get("ssid", ssid)) return false;
-	if(!args.Get("pass", pass)) return false;*/
+	if(!args.Get("pass", pass)) return false;
 
-	auto ssid	= args.GetString("ssid");
+	/*auto ssid	= args.GetString("ssid");
 	auto pass	= args.GetString("pass");
 
-	if(!ssid || !pass) return false;
+	if(!ssid || !pass) return false;*/
 
 	//todo 保存WiFi信息
 	//auto esp	= (ESP8266*)
 
 	//result.Set("Result", (byte)1);
-	result.SetLength(1);
-	result[0]	= true;
+	result.Write((byte)1);
 
 	return true;
 }
@@ -260,8 +259,9 @@ void SetWiFiTask(void* param)
 	BinaryPair args(ms1);
 
 	ByteArray result;
-	client->OnInvoke("SetWiFi", args.GetAll(), result);
+	bool rs	= client->OnInvoke("SetWiFi", args, result);
 
+	assert(rs, "OnInvoke");
 	assert(result, "result");
 	assert(result[0] == 1, "rt");
 
