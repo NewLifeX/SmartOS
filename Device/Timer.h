@@ -10,6 +10,7 @@ class Timer
 {
 protected:
 	byte	_index;		// 第几个定时器，从0开始
+	Delegate	OnTick;	// 带this参数
 
 	void SetHandler(bool set);
 public:
@@ -18,8 +19,6 @@ public:
 
 	ushort	Prescaler;	// 预分频。实际值，此时无需减一。
 	uint	Period;		// 周期。实际值，此时无需减一。
-
-	Delegate	OnTick;
 
 	Timer(TIMER index);
 	virtual ~Timer();

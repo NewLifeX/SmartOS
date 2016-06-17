@@ -49,7 +49,7 @@ void Music::Sound()
 	{
 		_timer->SetFrequency(100000);
 		//_timer->Register(TimerHander, this);
-		_timer->OnTick	= Delegate(&Music::TimerHander, this);
+		_timer->Register(Delegate(&Music::TimerHander, this));
 		_timer->Open();
 		Sounding = true;
 	}
