@@ -1,6 +1,6 @@
 ﻿#include "Type.h"
 #include "Buffer.h"
-#include "String.h"
+#include "SString.h"
 
 #include "List.h"
 #include "Dictionary.h"
