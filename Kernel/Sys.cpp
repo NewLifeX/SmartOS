@@ -31,6 +31,8 @@ extern uint __microlib_freelist_initialised;
 
 TSys::TSys()
 {
+	Config	= nullptr;
+
 	OnInit();
 
 	OnSleep	= nullptr;

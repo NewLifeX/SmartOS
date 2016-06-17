@@ -68,6 +68,8 @@ extern struct HandlerRemap StrBoot;
 // 判定指针是否在ROM区
 #define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 
+class SystemConfig;
+
 // 系统类
 class TSys
 {
@@ -87,6 +89,8 @@ public:
     uint	CPUID;		// CPUID
     ushort	FlashSize;	// 芯片Flash容量。
     ushort	RAMSize;	// 芯片RAM容量
+
+	const SystemConfig*	Config;	// 系统设置
 
     TSys();				// 构造函数
 
@@ -117,7 +121,7 @@ private:
 	void OnInit();
 	void OnShowInfo() const;
 	void OnStart();
-	
+
 public:
 	// 创建任务，返回任务编号。dueTime首次调度时间ms，period调度间隔ms，-1表示仅处理一次
 	uint AddTask(Action func, void* param, int dueTime = 0, int period = 0, cstring name = nullptr) const;
@@ -136,7 +140,26 @@ public:
 	void Start();	// 开始系统大循环
 };
 
-extern TSys Sys;		//创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
+extern TSys Sys;		// 创建一个全局的Sys对象  会在main函数之前执行构造函数（！！！！！）
+
+// 系统设置
+class SystemConfig
+{
+public:
+	// 操作系统
+	char	Name[16];	// 系统名称。如：SmartOS-M3-10x
+	uint	Ver;		// 系统版本。系统内
+
+	// 硬件
+	uint	HardVer;	// 硬件版本
+
+	// 应用软件
+	ushort	Type;		// 产品种类
+	uint	AppVer;		// 产品版本
+	char	Serial[16];	// 授权码
+	char	Product[16];// 产品名称
+	char	Company[16];// 公司
+};
 
 //#include "Time.h"
 #include "Interrupt.h"
