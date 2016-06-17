@@ -30,7 +30,7 @@ public:
     void* operator[](const void* key) const;
     void*& operator[](const void* key);
 
-	String GetString(const void* key) const;
+	const String GetString(const void* key) const;
 	
 #if DEBUG
 	static void Test();

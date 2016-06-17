@@ -1,6 +1,6 @@
 ﻿#include "Type.h"
 #include "Buffer.h"
-#include "String.h"
+#include "SString.h"
 
 #include "List.h"
 #include "Dictionary.h"
@@ -82,7 +82,7 @@ void*& Dictionary::operator[](const void* key)
 	return _Values[idx];
 }
 
-String Dictionary::GetString(const void* key) const
+const String Dictionary::GetString(const void* key) const
 {
 	void* p	= nullptr;
 	TryGetValue(key, p);
