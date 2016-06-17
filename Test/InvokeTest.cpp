@@ -1,29 +1,29 @@
 ﻿#include "Sys.h"
 #include "TokenNet/TokenClient.h"
 
-bool InvokeFun(void* param, const BinaryPair& args, Buffer& result)
+bool InvokeFun(void* param, const BinaryPair& args, Stream& result)
 {
 	byte rt;
 	bool rs;
+	BinaryPair res(result);
 
 	rs = args.Get("Hello", rt);
 	if(!rs || rt != 1) return false;
 
-	result.SetAt(0, 0);
+	res.Set("Hello", (byte)0);
 
 	rs = args.Get("Rehello", rt);
 	if(!rs || rt != 0) return false;
 
-	result.SetAt(0, 1);
+	res.Set("Rehello", (byte)1);
 
 	return true;
 }
 
-
 void InvokeTest(TokenClient * client)
 {
 	debug_printf("\r\nReg Invoke \r\n");
-	client->Register("Test", InvokeFun);
+	client->Register("Test", InvokeFun, nullptr);
 
 	// 写入信息
 	MemoryStream ms1;
@@ -34,16 +34,19 @@ void InvokeTest(TokenClient * client)
 	// 封装成所需数据格式
 	BinaryPair args(ms1);
 	// 准备返回数据的容器
-	ByteArray bs;
-	Stream ms2(bs);
-	BinaryPair result(ms2);
+	MemoryStream result;
+
+#if DEBUG
 	// 调用
-	client->OnInvoke("Test", args, bs);
+	client->OnInvoke("Test", args, result);
+#endif
 
 	bool isOk = true;
 
 	byte rt = 0;
-	bool rs = result.Get("Hello", rt);
+	BinaryPair resxx(result);
+
+	bool rs = resxx.Get("Hello", rt);
 	if (!rs)
 	{
 		debug_printf("not got Hello\r\n");
@@ -55,7 +58,7 @@ void InvokeTest(TokenClient * client)
 		isOk = false;
 	}
 
-	rs = result.Get("Rehello", rt);
+	rs = resxx.Get("Rehello", rt);
 	if (!rs)
 	{
 		debug_printf("not got Rehello\r\n");

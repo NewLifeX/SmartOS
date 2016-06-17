@@ -268,38 +268,42 @@ void DevicesManagement::SetTokenClient(TokenClient *port)
 	if (port == nullptr)return;
 	Port = port;
 
-	Port->Register("Device/List", InvokeList);
-	Port->Register("Device/Update", InvokeUpdate);
-	Port->Register("Device/Delete", InvokeDelete);
-	Port->Register("Device/ListIDs", InvokeListIDs);
+	Port->Register("Device/List",	InvokeList		,this);
+	Port->Register("Device/Update", InvokeUpdate	,this);
+	Port->Register("Device/Delete", InvokeDelete	,this);
+	Port->Register("Device/ListIDs", InvokeListIDs	,this);
 }
 
 // Invoke 注册项
-bool DevicesManagement::InvokeList(const BinaryPair& args, BinaryPair& result)
+bool DevicesManagement::InvokeList(void * param, const BinaryPair& args, Stream& result)
 {
-	if (Current == nullptr)return false;
-	return Current->DeviceProcess(DeviceAtions::List, args, result);
+	if (param == nullptr)return false;
+	auto dMgmt = (DevicesManagement*)param;
+	return dMgmt->DeviceProcess(DeviceAtions::List, args, result);
 }
 
-bool DevicesManagement::InvokeUpdate(const BinaryPair& args, BinaryPair& result)
+bool DevicesManagement::InvokeUpdate(void * param, const BinaryPair& args, Stream& result)
 {
-	if (Current == nullptr)return false;
-	return Current->DeviceProcess(DeviceAtions::Update, args, result);
+	if (param == nullptr)return false;
+	auto dMgmt = (DevicesManagement*)param;
+	return dMgmt->DeviceProcess(DeviceAtions::Update, args, result);
 }
 
-bool DevicesManagement::InvokeDelete(const BinaryPair& args, BinaryPair& result)
+bool DevicesManagement::InvokeDelete(void * param, const BinaryPair& args, Stream& result)
 {
-	if (Current == nullptr)return false;
-	return Current->DeviceProcess(DeviceAtions::Delete, args, result);
+	if (param == nullptr)return false;
+	auto dMgmt = (DevicesManagement*)param;
+	return dMgmt->DeviceProcess(DeviceAtions::Delete, args, result);
 }
 
-bool DevicesManagement::InvokeListIDs(const BinaryPair& args, BinaryPair& result)
+bool DevicesManagement::InvokeListIDs(void * param, const BinaryPair& args, Stream& result)
 {
-	if (Current == nullptr)return false;
-	return Current->DeviceProcess(DeviceAtions::ListIDs, args, result);
+	if (param == nullptr)return false;
+	auto dMgmt = (DevicesManagement*)param;
+	return dMgmt->DeviceProcess(DeviceAtions::ListIDs, args, result);
 }
 // 缺少更新的处理  未完待续
-bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, BinaryPair& result)
+bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, Stream& result)
 {
 	TS("DevicesManagement::DeviceProcess");
 	// 仅处理来自云端的请求
@@ -322,7 +326,8 @@ bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, B
 			// 这里需要注意  ！！！！！  i 是 int 类型
 			countstr += i;
 			// 写入DevInfo
-			result.Set(countstr, dvbs);
+			BinaryPair res(result);
+			res.Set(countstr, dvbs);
 		}
 		return true;
 	}
@@ -366,7 +371,8 @@ bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, B
 		MemoryStream idsms;
 		WriteIDs(idsms);
 		ByteArray idbs(idsms.GetBuffer(), idsms.Position());
-		result.Set("IDs", idbs);
+		BinaryPair res(result);
+		res.Set("IDs", idbs);
 	}
 	break;
 

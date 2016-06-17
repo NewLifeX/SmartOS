@@ -258,12 +258,11 @@ void SetWiFiTask(void* param)
 	ms1.SetPosition(0);
 	BinaryPair args(ms1);
 
-	ByteArray result;
+	//ByteArray result;
+	MemoryStream result;
 	bool rs	= client->OnInvoke("SetWiFi", args, result);
 
 	assert(rs, "OnInvoke");
-	assert(result, "result");
-	assert(result[0] == 1, "rt");
 
 	debug_printf("Invoke测试通过");
 #endif
