@@ -15,7 +15,7 @@
 
 #include "Security\RC4.h"
 
-static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
+//static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
 static void BroadcastHelloTask(void* param);
@@ -44,7 +44,7 @@ void TokenClient::Open()
 	TS("TokenClient::Open");
 	assert(Control, "令牌客户端还没设置控制器呢");
 
-	Control->Received	= OnTokenClientReceived;
+	Control->Received.bind(*this, &TokenClient::OnReceive); 
 	Control->Param		= this;
 	Control->Open();
 
@@ -54,7 +54,7 @@ void TokenClient::Open()
 		// 向服务端握手时，汇报内网本地端口，用户端将会通过该端口连接
 		//ctrl	= Local;
 
-		Local->Received	= OnTokenClientReceived;
+		Local->Received	= Control->Received;
 		Local->Param	= this;
 		Local->Open();
 	}
@@ -111,10 +111,13 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 	return ctrl->Reply(msg);
 }
 
-bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
+void TokenClient::OnReceive(Message& msg_, Controller& ctrl_)
 {
 	TS("TokenClient::OnReceive");
 
+	auto& msg	= (TokenMessage&)msg_;
+	auto ctrl	= (TokenController*)&ctrl_;
+	
 	LastActive = Sys.Ms();
 
 	switch(msg.Code)
@@ -142,7 +145,7 @@ bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
 			break;
 	}
 	// todo  握手登录心跳消息不需要转发
-	if(msg.Code < 0x03) return true;
+	if(msg.Code < 0x03) return;
 
 	// 消息转发
 	if (Received)
@@ -159,11 +162,9 @@ bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
 			break;
 		}
 	}
-
-	return true;
 }
 
-bool OnTokenClientReceived(void* sender, Message& msg, void* param)
+/*bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 {
 	auto ctrl = (TokenController*)sender;
 	assert_ptr(ctrl);
@@ -171,7 +172,7 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 	assert_ptr(client);
 
 	return client->OnReceive((TokenMessage&)msg, ctrl);
-}
+}*/
 
 // 常用系统级消息
 

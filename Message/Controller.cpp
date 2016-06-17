@@ -15,8 +15,8 @@ Controller::Controller()
 	MinSize 	= 0;
 	Opened		= false;
 
-	Received	= nullptr;
-	Param		= nullptr;
+	//Received	= nullptr;
+	//Param		= nullptr;
 }
 
 Controller::~Controller()
@@ -134,10 +134,7 @@ bool Controller::OnReceive(Message& msg)
 	TS("Controller::OnReceive");
 
 	// 外部公共消息事件
-	if(Received)
-	{
-		if(!Received(this, msg, Param)) return true;
-	}
+	Received(msg, *this);
 
 	return true;
 }

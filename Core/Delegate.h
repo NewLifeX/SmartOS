@@ -102,4 +102,29 @@ A* pa=&a;
 要调用一个成员函数，仅仅有成员函数指针是不够的，还需要一个对象指针，所以要用一个类将两者绑到一起。
 */
 
+//***************************************************************************
+
+// 对象函数模版
+template <typename TArg, typename TArg2>
+class function
+{
+public:
+	void*	Method;	// 函数指针
+	void*	Target;	// 参数
+
+	template <typename TObject>
+	void bind(TObject& object, void(TObject::* func)(TArg, TArg2))
+	{
+		Target	= &object;
+		Method	= (void*)&func;
+	}
+
+	virtual void operator ()(TArg arg, TArg2 arg2) const
+	{
+		// 调用对象的成员函数
+		typedef void(*TFunc)(void*, TArg, TArg2);
+		((TFunc)Method)(Target, arg, arg2);
+	}
+};
+
 #endif //_Delegate_H_
