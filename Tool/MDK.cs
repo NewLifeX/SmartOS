@@ -38,10 +38,14 @@ namespace NewLife.Reflection
                 }
 
                 XTrace.WriteLine("发现 {0} {1} {2}", mdk.Name, mdk.Version, mdk.ToolPath);
+                //basePath = mdk.ToolPath.CombinePath("ARMCLANG\\bin").GetFullPath();
+                //if (!Directory.Exists(basePath)) basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
+                // CLang编译器用来检查语法非常棒，但是对代码要求很高，我们有很多代码需要改进，暂时不用
                 basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
             }
 
             Complier = basePath.CombinePath("armcc.exe");
+            if (!File.Exists(Complier)) Complier = basePath.CombinePath("armclang.exe");
             Asm = basePath.CombinePath("armasm.exe");
             Link = basePath.CombinePath("armlink.exe");
             Ar = basePath.CombinePath("armar.exe");
@@ -141,17 +145,65 @@ namespace NewLife.Reflection
 
         #region 主要编译方法
         private String _Root;
-        public Int32 Compile(String file)
+
+        /// <summary>获取编译用的命令行</summary>
+        /// <param name="clang"></param>
+        /// <returns></returns>
+        public String GetCompileCommand(Boolean clang, Boolean cpp)
         {
-            /*
-             * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS
-             * -DSTM32F030 -DUSE_STDPERIPH_DRIVER -DSTM32F0XX -DGD32 -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
-             *
-             * -c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I..\STM32F1Lib\inc -I..\STM32F1Lib\CMSIS -I..\SmartOS
-             * -DSTM32F10X_HD -DDEBUG -DUSE_FULL_ASSERT -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
+            var sb = new StringBuilder();
+            if (!clang)
+            {
+                /*
+                 * -c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I..\Lib\inc -I..\Lib\CMSIS -I..\SmartOS
+                 * -DSTM32F030 -DUSE_STDPERIPH_DRIVER -DSTM32F0XX -DGD32 -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
+                 *
+                 * -c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork --split_sections -I..\STM32F1Lib\inc -I..\STM32F1Lib\CMSIS -I..\SmartOS
+                 * -DSTM32F10X_HD -DDEBUG -DUSE_FULL_ASSERT -o ".\Obj\*.o" --omf_browse ".\Obj\*.crf" --depend ".\Obj\*.d"
+                 */
 
-             */
+                sb.Append("-c");
+                if (cpp) sb.Append(" --cpp11");
+                sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
+                sb.Append(" --multibyte_chars --locale \"chinese\"");
+                if (Tiny) sb.Append(" -DTINY");
+            }
+            else
+            {
+                /*
+                 * -xc --target=arm-arm-none-eabi -mcpu=cortex-m3 -c
+                 * -funsigned-char
+                 * -D__MICROLIB -gdwarf-3 -O0 -ffunction-sections 
+                 * -I ..\Lib\inc -I ..\Lib\CMSIS -I ..\SmartOS -I ..\SmartOS\Core -I ..\SmartOS\Device 
+                 * -I ..\SmartOS\Kernel 
+                 * -D__UVISION_VERSION="520" -DSTM32F10X_HD -DSTM32F1 -DDEBUG -DUSE_FULL_ASSERT -DR24
+                 * -o .\Obj\*.o -MD
+                 */
 
+                sb.Append("-xc++");
+                //if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" -std=gnu++11");
+                if (cpp) sb.Append(" -std=c++14");
+                sb.Append(" --target=arm-arm-none-eabi -funsigned-char -MD");
+                sb.AppendFormat(" -mcpu={0} -D__MICROLIB -gdwarf-3 -O{1} -ffunction-sections", CPU.ToLower(), Debug ? 0 : 3);
+                sb.Append(" -Warmcc-pragma-arm");
+            }
+
+            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if (Tiny) sb.Append(" -DTINY");
+            foreach (var item in Defines)
+            {
+                sb.AppendFormat(" -D{0}", item);
+            }
+            foreach (var item in Includes)
+            {
+                sb.AppendFormat(" -I{0}", item);
+            }
+
+            return sb.ToString();
+        }
+
+        public Int32 Compile(String cmd, String file)
+        {
             var objName = GetObjPath(file);
 
             // 如果文件太新，则不参与编译
@@ -168,25 +220,7 @@ namespace NewLife.Reflection
             obj.DirectoryName.EnsureDirectory(false);
 
             var sb = new StringBuilder();
-            sb.Append("-c");
-            if (file.EndsWithIgnoreCase(".cpp")) sb.Append(" --cpp11");
-            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
-            sb.Append(" --multibyte_chars --locale \"chinese\"");
-            //sb.AppendFormat(" -D{0}", Flash);
-            //if (GD32) sb.Append(" -DGD32");
-            foreach (var item in Defines)
-            {
-                sb.AppendFormat(" -D{0}", item);
-            }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-            if (Tiny) sb.Append(" -DTINY");
-            foreach (var item in Includes)
-            {
-                sb.AppendFormat(" -I{0}", item);
-            }
-            //var self = file.CombinePath("../").GetFullPath();
-            //if(!Includes.Contains(self)) sb.AppendFormat(" -I{0}", self);
-
+            sb.Append(cmd);
             if (Preprocess)
             {
                 sb.AppendFormat(" -E");
@@ -194,6 +228,37 @@ namespace NewLife.Reflection
             }
             else
                 sb.AppendFormat(" -o \"{0}.o\" --omf_browse \"{0}.crf\" --depend \"{0}.d\"", objName);
+            sb.AppendFormat(" -c \"{0}\"", file);
+
+            // 先删除目标文件
+            if (obj.Exists) obj.Delete();
+
+            return Complier.Run(sb.ToString(), 100, WriteLog);
+        }
+
+        public Int32 CompileCLang(String cmd, String file)
+        {
+            var objName = GetObjPath(file);
+
+            // 如果文件太新，则不参与编译
+            var obj = (objName + ".o").AsFile();
+            if (obj.Exists)
+            {
+                if (RebuildTime > 0 && obj.LastWriteTime > file.AsFile().LastWriteTime)
+                {
+                    // 单独验证源码文件的修改时间不够，每小时无论如何都编译一次新的
+                    if (obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return -2;
+                }
+            }
+
+            obj.DirectoryName.EnsureDirectory(false);
+
+            var sb = new StringBuilder();
+            sb.Append(cmd);
+            if (Preprocess)
+                sb.AppendFormat(" -E");
+            else
+                sb.AppendFormat(" -o \"{0}.o\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
 
             // 先删除目标文件
@@ -272,19 +337,13 @@ namespace NewLife.Reflection
             var obj = GetObjPath(null);
             var list = new List<String>();
 
-            var sb = new StringBuilder();
-            sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1}", CPU, Debug ? 0 : 3);
-            //sb.AppendFormat(" -D{0}", Flash);
-            //if (GD32) sb.Append(" -DGD32");
-            foreach (var item in Defines)
-            {
-                sb.AppendFormat(" -D{0}", item);
-            }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-            if (Tiny) sb.Append(" -DTINY");
+            var clang = Complier.Contains("ARMCLANG");
+            var cmd = GetCompileCommand(clang, true);
+            var cmd2 = GetCompileCommand(clang, false);
+
             Console.Write("命令参数：");
             Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine(sb);
+            Console.WriteLine(cmd);
             Console.ResetColor();
 
             foreach (var item in Files)
@@ -295,8 +354,16 @@ namespace NewLife.Reflection
                 switch (Path.GetExtension(item).ToLower())
                 {
                     case ".c":
+                        if (clang)
+                            rs = CompileCLang(cmd2, item);
+                        else
+                            rs = Compile(cmd2, item);
+                        break;
                     case ".cpp":
-                        rs = Compile(item);
+                        if (clang)
+                            rs = CompileCLang(cmd, item);
+                        else
+                            rs = Compile(cmd, item);
                         break;
                     case ".s":
                         rs = Assemble(item);
@@ -345,9 +412,9 @@ namespace NewLife.Reflection
                     }
                 }
                 //Console.CursorLeft = left;
-				Console.WriteLine();
+                Console.WriteLine();
                 Console.Write("\t {0}/{1} = {2:p}", fs, Files.Count, (Double)fs / Files.Count);
-				
+
                 if (DateTime.Now > end)
                 {
                     Console.Write(" 等待超时！");
