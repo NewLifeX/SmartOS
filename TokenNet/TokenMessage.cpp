@@ -107,7 +107,7 @@ void TokenMessage::Show() const
 
 	byte code = Code;
 	if(Reply) code |= 0x80;
-	if(!Reply && OneWay || Reply && Error) code |= (1 << 6);
+	if((!Reply && OneWay) || (Reply && Error)) code |= (1 << 6);
 
 	debug_printf("%02X", code);
 	if(Reply)

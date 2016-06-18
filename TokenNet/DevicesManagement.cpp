@@ -532,9 +532,9 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	TS("DevicesManagement::DeviceRequest");
 
 	bool PortOk = true;
-	if (Port == nullptr)PortOk = false;
+	if (!Port)PortOk = false;
 	if (Port->Status < 2) PortOk = false;
-	if(Port == false)debug_printf("Port Not Realy\r\n");
+	if(!Port)debug_printf("Port Not Realy\r\n");
 
 	byte id = dv->Address;
 	switch (act)

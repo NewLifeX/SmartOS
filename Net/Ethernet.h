@@ -36,7 +36,7 @@ public:
 	}
 	
 	// 是否广播地址，全0或全1
-	bool IsBroadcast() { return !v4 && !v2 || v4 == 0xFFFFFFFF && v2 == 0xFFFF; }
+	bool IsBroadcast() { return (!v4 && !v2) || (v4 == 0xFFFFFFFF && v2 == 0xFFFF); }
 
     MacAddr& operator=(UInt64 v)
 	{

@@ -40,7 +40,7 @@ void WeakStore::Init()
 {
 	assert(Magic, "未指定幻数");
 
-	debug_printf("初始化 0x%08X，幻数 %s\r\n", Data.GetBuffer(), Magic);
+	debug_printf("初始化 0x%08X，幻数 %s\r\n", (uint)Data.GetBuffer(), Magic);
 	Data.Clear();
 	Data.Copy(0, (byte*)Magic, MagicLength);
 }

@@ -75,10 +75,10 @@ String& JoinMessage::ToStr(String& str) const
 	else
 	{
 		str += "#";
-		str += " Server=" + Server;
-		str += " Channel=" + Channel;
-		str += " Speed=" + Speed;
-		str += " Address=" + Address;
+		str = str + " Server=" + Server;
+		str = str + " Channel=" + Channel;
+		str = str + " Speed=" + Speed;
+		str = str + " Address=" + Address;
 		str = str + " Password=" + Password;
 		str.Format(" TranID=%08X", TranID);
 		str = str + " HardID=" + HardID;

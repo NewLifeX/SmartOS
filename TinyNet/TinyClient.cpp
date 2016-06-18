@@ -253,7 +253,7 @@ bool TinyClient::Report(uint offset, const Buffer& bs)
 
 void TinyClient::ReportAsync(uint offset,uint length)
 {
-	if(this == nullptr) return;
+	//if(this == nullptr) return;
 	if(offset + length >= Store.Data.Length()) return;
 
 	NextReport = offset;
