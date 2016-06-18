@@ -38,7 +38,7 @@ public:
 	// 发送消息
 	bool Send(TokenMessage& msg, TokenController* ctrl = nullptr);
 	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
-	void OnReceive(Message& msg, Controller& ctrl);
+	bool OnReceive(TokenMessage& msg, TokenController* ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;

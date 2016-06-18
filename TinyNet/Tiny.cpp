@@ -234,10 +234,9 @@ bool CheckUserPress(InputPort* port, bool down, void* param)
 	return false;
 }
 
-void CheckUserPress3(void* sender)
+void CheckUserPress3(Button_GrayLevel& btn)
 {
-	auto but = (Button_GrayLevel *)sender;
-	CheckUserPress(&but->Key, but->Key.Read(), nullptr);
+	CheckUserPress(&btn.Key, btn.Key.Read(), nullptr);
 }
 
 void InitButtonPress(Button_GrayLevel* btns, byte count)

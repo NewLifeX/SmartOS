@@ -147,10 +147,8 @@ static void On_DHCP_Ready(void* param)
 	if (_DHCP_Ready) _DHCP_Ready(param);
 }
 
-static void OnDhcpStop(void* sender, void* param)
+static void OnDhcpStop(Dhcp& dhcp)
 {
-	auto& dhcp = *(Dhcp*)sender;
-
 	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
 	if (dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
 	{

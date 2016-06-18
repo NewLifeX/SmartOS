@@ -25,7 +25,7 @@ private:
 public:
 	cstring Name;
 	
-	Delegate	Press;
+	Delegate<Button_magnetic&>	Press;
 
 	InputPort*  Key;	// 输入按键
 	OutputPort* Led;	// 指示灯

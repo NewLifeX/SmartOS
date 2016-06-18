@@ -23,6 +23,9 @@ enum ButtonStat :byte
 	execution = 3,		// 执行设置
 };
 
+class Button_GrayLevel;
+using TAction	= Delegate<Button_GrayLevel&>::Action;
+
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
@@ -45,7 +48,7 @@ public:
 	void * ExterSetParam = nullptr;
 
 public:
-	Delegate	Press;
+	Delegate<Button_GrayLevel&>	Press;
 	
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
@@ -82,7 +85,7 @@ public:
 	static byte OnGrayLevel;			// 开灯时 led 灰度
 	static byte OffGrayLevel;			// 关灯时 led 灰度
 
-	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, Action onpress, const ButtonPin* pins, byte* level, const byte* state);
+	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, TAction onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
 	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 

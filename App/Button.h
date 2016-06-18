@@ -25,7 +25,7 @@ public:
 	OutputPort	Led;	// 指示灯
 	OutputPort	Relay;	// 继电器
 
-	Delegate	Press;	// 按下事件
+	Delegate<Button&>	Press;	// 按下事件
 	
 public:
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置

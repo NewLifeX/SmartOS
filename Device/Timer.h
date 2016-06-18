@@ -10,7 +10,7 @@ class Timer
 {
 protected:
 	byte	_index;		// 第几个定时器，从0开始
-	Delegate	OnTick;	// 带this参数
+	Delegate<Timer&>	OnTick;	// 带this参数
 
 	void SetHandler(bool set);
 public:
@@ -33,7 +33,7 @@ public:
 	void SetCounter(uint cnt);		// 设置计数器值
 
 	//void Register(EventHandler handler, void* param = nullptr);
-	void Register(const Delegate& dlg);
+	void Register(const Delegate<Timer&>& dlg);
 
 	static void ClockCmd(int idx, bool state);
 

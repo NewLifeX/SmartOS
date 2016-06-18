@@ -4,15 +4,15 @@
 
 //Timer* timer;
 
-void TimerTask(OutputPort* leds, Timer* timer)
+void TimerTask(OutputPort& led, Timer& timer)
 {
-    *leds = !*leds;
+    led = !led;
 }
 
 uint frequency = 0;
 int step = 1;
 
-void TimerTask2(Timer* timer)
+void TimerTask2(Timer& timer)
 {
 	frequency += step;
 	
@@ -27,24 +27,24 @@ void TimerTask2(Timer* timer)
 		step = -1;
 	}
 
-    timer->SetFrequency(frequency);
+    timer.SetFrequency(frequency);
 }
 
-void TestTimer(OutputPort& leds)
+void TestTimer(OutputPort& led)
 {
     debug_printf("\r\n");
     debug_printf("TestTimer Start......\r\n");
 
     auto timer	= new Timer(Timer2);
     timer->SetFrequency(50);
-    //timer->Register(TimerTask, &leds);
-	timer->Register(Delegate((void*)&TimerTask, &leds));
+    //timer->Register(TimerTask, &led);
+	timer->Register(Delegate<Timer&>(TimerTask, &led));
     timer->Open();
 
     auto timer2	= Timer::Create();
     timer2->SetFrequency(10);
     //timer2->Register(TimerTask2, nullptr);
-	timer2->Register(Delegate((void*)&TimerTask2));
+	timer2->Register(TimerTask2);
     timer2->Open();
 
     debug_printf("\r\n TestTimer Finish!\r\n");

@@ -201,7 +201,7 @@ void Dhcp::Stop()
 	}
 
 	//if(OnStop) OnStop(this, nullptr);
-	OnStop(this);
+	OnStop(*this);
 }
 
 void Dhcp::Loop(void* param)

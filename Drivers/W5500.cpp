@@ -745,9 +745,9 @@ IPAddress W5500::QueryDNS(const String& domain)
 {
 	auto ip	= IPAddress::Parse(domain);
 	if(ip != IPAddress::Any()) return ip;
-	
+
 	if(_Dns) return _Dns(this, domain);
-	
+
 	return ip;
 }
 
@@ -760,20 +760,24 @@ static IPAddress FullQueryDNS(ISocketHost* host, const String& domain)
 bool W5500::EnableDNS()
 {
 	_Dns	= FullQueryDNS;
-	
+
 	return true;
 }
 
-static void OnDhcpStop(void* sender, void* param)
+static void OnDhcpStopTask(void* param)
 {
-	auto& dhcp = *(Dhcp*)sender;
+	auto& net	= *(W5500*)param;
+	if(net.NetReady) net.NetReady(net);
+}
 
+static void OnDhcpStop(W5500& net, Dhcp& dhcp)
+{
 	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
 	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
 	{
-		auto callback	= (Action)param;
+		//auto callback	= (Action)param;
 		// 防止调用栈太深，另外开任务
-		if(callback) Sys.AddTask(callback, &dhcp.Host, 0, -1, "网络就绪");
+		if(net.NetReady) Sys.AddTask(OnDhcpStopTask, &net, 0, -1, "网络就绪");
 	}
 }
 
@@ -781,14 +785,14 @@ static void OnDhcpStop(void* sender, void* param)
 bool W5500::EnableDHCP()
 {
 	if(_Dhcp) return true;
-	
+
 	// 打开DHCP
 	auto dhcp	= new Dhcp(*this);
-	dhcp->OnStop	= OnDhcpStop;
+	dhcp->OnStop	= Delegate<Dhcp&>(OnDhcpStop, this);
 	dhcp->Start();
-	
+
 	_Dhcp	= dhcp;
-	
+
 	return true;
 }
 

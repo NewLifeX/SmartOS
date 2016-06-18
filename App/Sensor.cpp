@@ -65,7 +65,7 @@ void Sensor::OnPress(Pin pin, bool down)
 		SetValue(!_Value);
 
 		//if(_Handler) _Handler(this, _Param);
-		Press();
+		Press(*this);
 	}
 }
 

@@ -32,7 +32,7 @@ public:
 	String*		SSID;	// 无线SSID
 	String*		Pass;	// 无线密码
 
-	typedef void (*NetReadyHandler)(ISocketHost* host);
+	typedef void (*NetReadyHandler)(ISocketHost& host);
 	NetReadyHandler		NetReady;	// 网络准备就绪
 
 	ISocketHost();

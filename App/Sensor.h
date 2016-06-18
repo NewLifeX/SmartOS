@@ -21,7 +21,7 @@ public:
 	
 	//I2C*   Ifrared    //红外转发
 	
-	Delegate	Press;
+	Delegate<Sensor&>	Press;
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Sensor() { Init(); }

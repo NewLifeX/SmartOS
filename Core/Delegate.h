@@ -12,74 +12,171 @@ typedef void (*EventHandler)(void* sender, void* param);
 // 传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
 typedef uint (*DataHandler)(void* sender, byte* buf, uint size, void* param);
 
-// 事件处理器
+// 委托。第一参数目标对象指针，第二泛型参数
+template <typename TArg>
 class Delegate
 {
 public:
+	typedef void(*Action)(TArg);
+
 	void*	Method;	// 函数指针
 	void*	Target;	// 参数
 
-	Delegate();
-	Delegate(const Delegate& dlg)	= delete;
-	Delegate(void* func);
-	Delegate(void* func, void* target);
-    Delegate(Func func);
-    Delegate(Action func);
-    Delegate(Action2 func);
-    Delegate(Action3 func);
-
-	template<typename T>
-	Delegate(void(T::*func)(), T* target)	{ Method	= (void*)&func; Target	= target; }
-	template<typename T, typename TArg>
-	Delegate(void(T::*func)(TArg), T* target)	{ Method	= (void*)&func; Target	= target; }
-	template<typename T, typename TArg, typename TArg2>
-	Delegate(void(T::*func)(TArg, TArg2), T* target)	{ Method	= (void*)&func; Target	= target; }
-
-	Delegate& operator=(void* func);
-    Delegate& operator=(Func func);
-    Delegate& operator=(Action func);
-    Delegate& operator=(Action2 func);
-    Delegate& operator=(Action3 func);
-	
-	void operator()();
-	void operator()(void* arg);
-	void operator()(void* arg, void* arg2);
-	template<typename T>
-	void operator()()
+	Delegate()
 	{
-		if(Method)
-		{
-			auto obj	= (T*)Target;
-			typedef void(T::*TAction)();
-			auto act	= *(TAction*)Method;
-
-			(obj->*act)();
-		}
+		Method	= nullptr;
+		Target	= nullptr;
 	}
-	template<typename T, typename TArg>
+	Delegate(const Delegate& dlg)	= delete;
+    Delegate(Action func)	// 全局函数或类静态函数
+	{
+		Method	= (void*)func;
+		Target	= nullptr;
+	}
+	template<typename T>
+	Delegate(void(*func)(T&, TArg), T* target)
+	{
+		Method	= (void*)func;
+		Target	= target;
+	}
+
+	template<typename T>
+	Delegate(void(T::*func)(TArg), T* target)	{ Method	= (void*)&func; Target	= target; }
+
+    Delegate& operator=(Action func)	// 全局函数或类静态函数
+	{
+		Method	= (void*)func;
+		Target	= nullptr;
+
+		return *this;
+	}
+
 	void operator()(TArg arg)
 	{
 		if(Method)
 		{
-			auto obj	= (T*)Target;
-			typedef void(T::*TAction)(TArg);
-			auto act	= *(TAction*)Method;
+			if(Target)
+			{
+				typedef void(*TAction)(void*, TArg);
+				auto act	= *(TAction*)Method;
 
-			(obj->*act)(arg);
+				(*act)(Target, arg);
+			}
+			else
+			{
+				//typedef void(*TAction)(TArg);
+				auto act	= *(Action*)Method;
+
+				(*act)(arg);
+			}
 		}
 	}
-	template<typename T, typename TArg, typename TArg2>
-	void operator()(TArg arg, TArg arg2)
+};
+
+//***************************************************************************
+// 函数模版接口
+template <typename TParameter>
+class ifunction
+{
+public:
+	// 函数参数的类型
+	typedef TParameter parameter_type;
+
+	// 将被重载的函数操作
+	virtual void operator ()(TParameter) const = 0;
+};
+
+// 无参函数模版接口
+template <>
+class ifunction<void>
+{
+public:
+	typedef void parameter_type;
+
+	virtual void operator ()() const = 0;
+};
+
+// 对象函数模版
+template <typename TObject, typename TParameter>
+class function : public ifunction<TParameter>
+{
+public:
+	typedef TObject    object_type;    // 对象类型
+	typedef TParameter parameter_type; // 函数参数的类型
+
+	function(TObject& object, void(TObject::* p_function)(TParameter))
+		: p_object(&object),
+		p_function(p_function)
 	{
-		if(Method)
-		{
-			auto obj	= (T*)Target;
-			typedef void(T::*TAction)(TArg, TArg2);
-			auto act	= *(TAction*)Method;
-
-			(obj->*act)(arg, arg2);
-		}
 	}
+
+	virtual void operator ()(TParameter data) const
+	{
+		// 调用对象的成员函数
+		(p_object->*p_function)(data);
+	}
+
+private:
+	TObject* p_object;                        // 对象指针
+	void (TObject::* p_function)(TParameter); // 成员函数指针
+};
+
+// 对象无参函数模版
+template <typename TObject>
+class function<TObject, void> : public ifunction<void>
+{
+public:
+	function(TObject& object, void(TObject::* p_function)(void))
+		: p_object(&object),
+		p_function(p_function)
+	{
+	}
+
+	virtual void operator ()() const
+	{
+		(p_object->*p_function)();
+	}
+
+private:
+	TObject* p_object;
+	void (TObject::* p_function)();
+};
+
+// 全局函数模版
+template <typename TParameter>
+class function<void, TParameter> : public ifunction<TParameter>
+{
+public:
+	function(void(*p_function)(TParameter))
+		: p_function(p_function)
+	{
+	}
+
+	virtual void operator ()(TParameter data) const
+	{
+		(*p_function)(data);
+	}
+
+private:
+	void (*p_function)(TParameter);
+};
+
+template <>
+class function<void, void> : public ifunction<void>
+{
+public:
+	function(void(*p_function)(void))
+		: p_function(p_function)
+	{
+	}
+
+	virtual void operator ()() const
+	{
+		(*p_function)();
+	}
+
+private:
+	void (*p_function)();
 };
 
 /*
@@ -101,30 +198,5 @@ A* pa=&a;
 使用类模板：
 要调用一个成员函数，仅仅有成员函数指针是不够的，还需要一个对象指针，所以要用一个类将两者绑到一起。
 */
-
-//***************************************************************************
-
-// 对象函数模版
-template <typename TArg, typename TArg2>
-class function
-{
-public:
-	void*	Method;	// 函数指针
-	void*	Target;	// 参数
-
-	template <typename TObject>
-	void bind(TObject& object, void(TObject::* func)(TArg, TArg2))
-	{
-		Target	= &object;
-		Method	= (void*)&func;
-	}
-
-	virtual void operator ()(TArg arg, TArg2 arg2) const
-	{
-		// 调用对象的成员函数
-		typedef void(*TFunc)(void*, TArg, TArg2);
-		((TFunc)Method)(Target, arg, arg2);
-	}
-};
 
 #endif //_Delegate_H_

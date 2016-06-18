@@ -100,7 +100,7 @@ void Timer::Close()
 	SetHandler(handler != nullptr);
 }*/
 
-void Timer::Register(const Delegate& dlg)
+void Timer::Register(const Delegate<Timer&>& dlg)
 {
 	OnTick	= dlg;
 
@@ -110,7 +110,7 @@ void Timer::Register(const Delegate& dlg)
 void Timer::OnInterrupt()
 {
 	//if(_Handler) _Handler(this, _Param);
-	OnTick(this);
+	OnTick(*this);
 }
 
 /*================ PWM ================*/

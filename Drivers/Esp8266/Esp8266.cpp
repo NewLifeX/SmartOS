@@ -159,7 +159,7 @@ bool Esp8266::OnOpen()
 		ShowConfig();
 	}
 
-	if(NetReady) NetReady(this);
+	if(NetReady) NetReady(*this);
 
 	return true;
 }

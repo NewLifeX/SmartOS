@@ -40,7 +40,7 @@ public:
 	virtual bool Reply(Message& msg);
 
 	// 收到消息时触发
-	function<Message&, Controller&>	Received;
+	MessageHandler	Received;
 	void*			Param;
 	
 protected:
