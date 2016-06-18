@@ -119,7 +119,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 		// 不指定长度，又没有剩余量，无法拷贝
 		if(remain <= 0)
 		{
-			debug_printf("Buffer::Copy (0x%08X, %d) <= (%d, 0x%08X, %d) \r\n", _Arr, _Length, destIndex, src, len);
+			debug_printf("Buffer::Copy (0x%p, %d) <= (%d, 0x%p, %d) \r\n", _Arr, _Length, destIndex, src, len);
 			assert(false, "Buffer::Copy 未指明要拷贝的长度");
 
 			return 0;
@@ -133,7 +133,7 @@ int Buffer::Copy(int destIndex, const void* src, int len)
 		// 子类可能在这里扩容
 		if(!SetLength(destIndex + len))
 		{
-			debug_printf("Buffer::Copy (0x%08X, %d) <= (%d, 0x%08X, %d) \r\n", _Arr, _Length, destIndex, src, len);
+			debug_printf("Buffer::Copy (0x%p, %d) <= (%d, 0x%p, %d) \r\n", _Arr, _Length, destIndex, src, len);
 			assert(false, "Buffer::Copy 缓冲区太小");
 
 			len	= remain;

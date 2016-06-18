@@ -51,10 +51,12 @@ void TTime::SetTime(UInt64 seconds)
 	if(OnSave) OnSave();
 }
 
-#pragma arm section code
-
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 void TTime::Sleep(uint ms, bool* running) const
@@ -76,7 +78,7 @@ void TTime::Sleep(uint ms, bool* running) const
 		}
 	}
     // 睡眠时间太短
-    if(!ms || running != nullptr && !*running) return;
+    if(!ms || (running && !*running)) return;
 
 	uint me	= Current() + ms;
 
@@ -119,7 +121,13 @@ void TTime::Delay(uint us) const
 	}
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 /************************************************ TimeWheel ************************************************/
 

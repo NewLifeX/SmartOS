@@ -278,7 +278,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		// 从1开始派ID
 		id	= 1;
-		while(DevMgmt.FindDev(++id) != nullptr && id < 0xFF);
+		while(DevMgmt.FindDev(++id) != nullptr && id < 0xFF) { }
 		debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 		if(id == 0xFF) return false;
 

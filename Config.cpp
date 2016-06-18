@@ -235,7 +235,7 @@ const void* Config::New(int size) const
 	// 实在没办法，最后划分一个新的区块。这里判断一下空间是否足够
 	if(Size && (uint)cfg + sizeof(ConfigBlock) + size > Address + Size)
 	{
-		debug_printf("Config::New 0x%08X + %d + %d 配置区（0x%08X, %d）空间不足\r\n", cfg, sizeof(ConfigBlock), size, Address, Size);
+		debug_printf("Config::New 0x%p + %d + %d 配置区（0x%p, %d）空间不足\r\n", cfg, sizeof(ConfigBlock), size, (byte*)Address, Size);
 
 		return nullptr;
 	}
@@ -293,7 +293,7 @@ bool Config::RemoveAll() const
     }*/
 
 #if CFG_DEBUG
-	debug_printf("Config::RemoveAll (0x%08X, %d) \r\n", Address, Size);
+	debug_printf("Config::RemoveAll (0x%p, %d) \r\n", (byte*)Address, Size);
 #endif
 
 	ByteArray bs((byte)0xFF, Size);
@@ -438,7 +438,7 @@ void ConfigBase::Save() const
 
 	auto pt	= Cfg.Set(_Name, bs);
 	if(pt)
-		debug_printf("成功 0x%08X \r\n", pt);
+		debug_printf("成功 0x%p \r\n", pt);
 	else
 		debug_printf("失败\r\n");
 }

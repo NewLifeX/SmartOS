@@ -38,7 +38,7 @@ void Power::Standby(uint msTime)
 		auto pwr = (Power*)_powers[i];
 		if(pwr)
 		{
-			debug_printf("Power::LowPower 0x%08X\r\n", pwr);
+			debug_printf("Power::LowPower 0x%p\r\n", pwr);
 			pwr->ChangePower(msTime);
 		}
 	}
@@ -52,7 +52,7 @@ void Power::Standby(uint msTime)
 // 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
 void Power::AddPower(Power* power)
 {
-	debug_printf("Power::AddPower 0x%08X\r\n", power);
+	debug_printf("Power::AddPower 0x%p\r\n", power);
 	
 	_powers.Add(power);
 }

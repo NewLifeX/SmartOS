@@ -652,7 +652,7 @@ void W5500::Register(byte Index, HardSocket* handler)
 {
 	if(Index >= 8) return;
 
-	net_printf("W5500::Register %d 0x%08X\r\n", Index, handler);
+	net_printf("W5500::Register %d 0x%p\r\n", Index, handler);
 	_sockets[Index] = handler;
 }
 
@@ -1126,8 +1126,8 @@ bool HardSocket::OnOpen()
 	while(!tw.Expired())
 	{
 		sr = ReadStatus();
-		if(Protocol == ProtocolType::Tcp && sr == SOCK_INIT
-		|| Protocol == ProtocolType::Udp && sr == SOCK_UDP)
+		if((Protocol == ProtocolType::Tcp && sr == SOCK_INIT)
+		|| (Protocol == ProtocolType::Udp && sr == SOCK_UDP))
 		{
 			rs	= true;
 			break;

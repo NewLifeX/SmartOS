@@ -17,7 +17,11 @@
 #if DEBUG
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 #if MEM_DEBUG
@@ -37,7 +41,7 @@ void free_(void* p)
 {
 	byte* bs = (byte*)p;
 	bs	-= 4;
-	if(!(bs[0] == 'S' && bs[1] == 'M')) mem_printf("p=0x%08x bs[0]=%c bs[1]=%c\r\n", p, bs[0], bs[1]);
+	if(!(bs[0] == 'S' && bs[1] == 'M')) mem_printf("p=0x%p bs[0]=%c bs[1]=%c\r\n", p, bs[0], bs[1]);
 	assert(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
 
 	free(bs);
@@ -67,7 +71,7 @@ void* operator new(uint size)
 		mem_printf("malloc failed! size=%d ", size);
 	else
 	{
-		mem_printf("0x%08x ", p);
+		mem_printf("0x%p ", p);
 		// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
 		//uint end = (uint)&__heap_limit;
 		//uint end = __get_PSP();
@@ -97,7 +101,7 @@ void* operator new[](uint size)
 		mem_printf("malloc failed! size=%d ", size);
 	else
 	{
-		mem_printf("0x%08x ", p);
+		mem_printf("0x%p ", p);
 		// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
 		//uint end = (uint)&__heap_limit;
 		//uint end = __get_PSP();
@@ -108,11 +112,11 @@ void* operator new[](uint size)
     return p;
 }
 
-void operator delete(void* p)
+void operator delete(void* p) noexcept
 {
 	assert_ptr(p);
 
-	mem_printf(" delete 0x%08x ", p);
+	mem_printf(" delete 0x%p ", p);
     if(p)
 	{
 		SmartIRQ irq;
@@ -120,11 +124,11 @@ void operator delete(void* p)
 	}
 }
 
-void operator delete[](void* p)
+void operator delete[](void* p) noexcept
 {
 	assert_ptr(p);
 
-	mem_printf(" delete[] 0x%08x ", p);
+	mem_printf(" delete[] 0x%p ", p);
     if(p)
 	{
 		SmartIRQ irq;
@@ -132,7 +136,13 @@ void operator delete[](void* p)
 	}
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 #ifdef  USE_FULL_ASSERT
 

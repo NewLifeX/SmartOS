@@ -56,7 +56,7 @@ bool Stream::CheckRemain(uint count)
 	if(count > remain)
 	{
 		if(CanResize)
-			debug_printf("数据流 0x%08X 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
+			debug_printf("数据流 0x%p 剩余容量 (%d - %d) = %d 不足 %d ，无法扩容！\r\n", this, _Capacity, _Position, remain, count);
 		else
 			assert(false, "无法扩容");
 

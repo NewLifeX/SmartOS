@@ -35,7 +35,11 @@ Task::~Task()
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 bool Task::Execute(UInt64 now)
@@ -116,7 +120,13 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 	return Event || Times > 0;
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 // 显示状态
 void Task::ShowStatus()
@@ -137,7 +147,11 @@ void Task::ShowStatus()
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 // 全局任务调度器
@@ -158,7 +172,13 @@ Task& Task::Current()
 	return *(Scheduler()->Current);
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 TaskScheduler::TaskScheduler(cstring name)
 {
@@ -216,7 +236,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstri
 	Count++;
 
 #if DEBUG
-	debug_printf("%s::添加%d %s First=%dms Period=%dms 0x%08x\r\n", Name, task->ID, name, dueTime, period, func);
+	debug_printf("%s::添加%d %s First=%dms Period=%dms 0x%p\r\n", Name, task->ID, name, dueTime, period, func);
 #endif
 
 	return task->ID;
@@ -231,7 +251,7 @@ void TaskScheduler::Remove(uint taskid)
 		auto task = (Task*)_Tasks[i];
 		if(task->ID == taskid)
 		{
-			debug_printf("%s::删除%d %s 0x%08x\r\n", Name, task->ID, task->Name, task->Callback);
+			debug_printf("%s::删除%d %s 0x%p\r\n", Name, task->ID, task->Name, task->Callback);
 			// 清零ID，实现重用
 			task->ID = 0;
 
@@ -328,7 +348,13 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	}
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 // 显示状态
 void TaskScheduler::ShowStatus()
@@ -358,7 +384,11 @@ void TaskScheduler::ShowStatus()
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 Task* TaskScheduler::operator[](int taskid)
@@ -372,4 +402,10 @@ Task* TaskScheduler::operator[](int taskid)
 	return nullptr;
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif

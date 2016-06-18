@@ -63,7 +63,7 @@ void TokenMessage::Write(Stream& ms) const
 
 	assert_ptr(this);	
 	byte tmp = Code | (Reply << 7);
-	if(!Reply && OneWay || Reply && Error) tmp |= (1 << 6);
+	if((!Reply && OneWay) || (Reply && Error)) tmp |= (1 << 6);
 	ms.Write(tmp);
 	ms.Write(Seq);
 	ms.WriteArray(Buffer(Data, Length));

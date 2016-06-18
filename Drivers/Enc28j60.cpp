@@ -753,7 +753,7 @@ bool Enc28j60::OnWrite(const Buffer& bs)
     WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 	// 等待发送完成
 	times = 1000;
-	while((ReadReg(ECON1) & ECON1_TXRTS) && --times > 0);
+	while(((ReadReg(ECON1) & ECON1_TXRTS) && --times) > 0) { }
 
 	/*
 	如果数据包发送完成或因错误/ 取消而中止发送，ECON1.TXRTS 位会被清零，一个7 字节的发送状态向量将被写入由ETXND + 1 指向的单元，

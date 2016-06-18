@@ -64,7 +64,7 @@ IPAddress IPAddress::Parse(const String& ipstr)
 
 			// 标准地址第一个不能是0，唯一的Any例外已经在前面处理
 			int v	= item.ToInt();
-			if(v < 0 || v > 255 || i == 0 && v == 0) break;
+			if(v < 0 || v > 255 || (i == 0 && v == 0)) break;
 
 			ip[i]	= (byte)v;
 

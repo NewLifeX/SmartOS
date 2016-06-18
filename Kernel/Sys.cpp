@@ -26,7 +26,11 @@ extern uint __microlib_freelist_initialised;
 #endif
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 TSys::TSys()
@@ -49,7 +53,13 @@ TSys::TSys()
 	Started	= false;
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 void ShowTime(void* param)
 {
@@ -112,8 +122,12 @@ void TSys::RemoveTask(uint& taskid) const
 	taskid = 0;
 }
 
-#if !defined(TINY) && defined(STM32F0) && defined(DEBUG)
-	#pragma arm section code = "SectionForSys"
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
@@ -262,7 +276,13 @@ void TSys::Delay(uint us) const
 }
 #endif
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 /****************系统跟踪****************/
 

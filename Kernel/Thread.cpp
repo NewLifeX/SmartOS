@@ -39,7 +39,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 
 	ID = ++g_ID;
 	if(g_ID >= 0xFFFF) g_ID = 0;
-	debug_printf("Thread::Create %d 0x%08x StackSize=0x%04x", ID, callback, stackSize);
+	debug_printf("Thread::Create %d 0x%p StackSize=0x%04x", ID, callback, stackSize);
 
 	Name = nullptr;
 
@@ -54,7 +54,7 @@ Thread::Thread(Action callback, void* state, uint stackSize)
 	uint* p = new uint[stackSize];
 	Stack = p;
 	StackTop = Stack + stackSize;
-	debug_printf(" Stack=(0x%08x, 0x%08x)", Stack, StackTop);
+	debug_printf(" Stack=(0x%p, 0x%p)", Stack, StackTop);
 	debug_printf("\r\n");
 
 	// 默认状态就绪

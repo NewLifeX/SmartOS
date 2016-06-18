@@ -177,14 +177,7 @@ typedef struct _TCP_HEADER
 
 	void Init(bool recursion = false)
 	{
-#if (defined (__GNUC__))
-#pragma  GCC diagnostic ignored  "-Woverflow"
-#endif
-		Length = (byte)sizeof(this[0]);
-		//Length	= (byte)0x14;
-#if (defined (__GNUC__))
-#pragma  GCC diagnostic warning  "-Woverflow"
-#endif
+		Length	= sizeof(this[0]) >> 2;
 
 		reserved_1 = 0;
 		reserved_2 = 0;

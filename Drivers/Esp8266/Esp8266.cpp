@@ -271,7 +271,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if(!cmd.StartsWith("AT") || expect && expect[0] == '>') EnableLog = false;
+		if(!cmd.StartsWith("AT") || (expect && expect[0] == '>')) EnableLog = false;
 		if(EnableLog)
 		{
 			we.Command	= &cmd;

@@ -39,7 +39,11 @@ void Queue::Clear()
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 void Queue::Push(byte dat)
@@ -79,8 +83,13 @@ byte Queue::Pop()
 	return dat;
 }
 
-#pragma arm section code
-
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 uint Queue::Write(const Buffer& bs)
 {
 	/*

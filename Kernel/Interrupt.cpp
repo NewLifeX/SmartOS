@@ -40,7 +40,11 @@ bool TInterrupt::Deactivate(short irq)
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 void TInterrupt::Process(uint num) const
@@ -80,7 +84,13 @@ SmartIRQ::~SmartIRQ()
 		TInterrupt::GlobalEnable();
 }
 
-#pragma arm section code
+#if !defined(TINY) && defined(STM32F0)
+	#if defined(__CC_ARM)
+		#pragma arm section code
+	#elif defined(__GNUC__)
+		__attribute__((section("")))
+	#endif
+#endif
 
 /*================================ 锁 ================================*/
 
