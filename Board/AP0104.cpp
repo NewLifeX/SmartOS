@@ -201,32 +201,36 @@ TokenClient* AP0104::CreateClient()
 
 	// 创建连接服务器的Socket
 	auto socket = Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port = tk->ServerPort;
-	socket->Remote.Address = IPAddress(tk->ServerIP);
+	socket->Remote.Port 	= tk->ServerPort;
+	socket->Remote.Address 	= IPAddress(tk->ServerIP);
+	socket->Server			= tk->Server();
 
 	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
-	ctrl->Port = dynamic_cast<ITransport*>(socket);
+	auto ctrl 		= new TokenController();
+	//ctrl->Port 	= dynamic_cast<ITransport*>(socket);
+	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client = new TokenClient();
+	auto client 	= new TokenClient();
 	client->Control = ctrl;
-	//client->Local	= ctrl;`
-	client->Cfg = tk;
+	//client->Local	= ctrl;
+	client->Cfg 	= tk;
 
 	// 如果是TCP，需要再建立一个本地UDP
 	//if(tk->Protocol == ProtocolType::Tcp)
 	{
 		// 建立一个监听内网的UDP Socket
 		socket = Host->CreateSocket(ProtocolType::Udp);
-		socket->Remote.Port = 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address = IPAddress::Broadcast();
-		socket->Local.Port = tk->Port;
+		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
+		socket->Remote.Address 	= IPAddress::Broadcast();
+		socket->Local.Port		= tk->Port;
 
 		// 建立内网控制器
-		auto token2 = new TokenController();
-		token2->Port = dynamic_cast<ITransport*>(socket);
-		client->Local = token2;
+		auto token2		= new TokenController();
+		// token2->Port = dynamic_cast<ITransport*>(socket);
+		token2->Socket	= socket;
+		token2->ShowRemote	= true;
+		client->Local	= token2;
 	}
 
 	return client;
