@@ -5,7 +5,7 @@
 
 #include "Environment.h"
 
-TEnvironment Environment;
+const TEnvironment Environment;
 
 /************************************************ TEnvironment ************************************************/
 TEnvironment::TEnvironment()
@@ -23,4 +23,16 @@ UInt64 TEnvironment::Ticks() const
 uint TEnvironment::ClocksPerSecond() const
 {
 	return CLOCKS_PER_SEC;
+}
+
+// 获取系统启动后经过的毫秒数
+UInt64 TEnvironment::TickCount() const
+{
+	return clock() * 1000 / CLOCKS_PER_SEC;
+}
+
+// 获取当前计算机上的处理器数
+int TEnvironment::ProcessorCount() const
+{
+	return 1;
 }

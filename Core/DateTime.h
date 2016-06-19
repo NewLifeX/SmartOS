@@ -38,6 +38,7 @@ public:
 	// 取时间日期的日期部分
 	DateTime Date() const;
 
+	// Add函数返回新的实例
 	DateTime AddYears(int value) const;
 	DateTime AddMonths(int value) const;
 	DateTime AddDays(int value) const;

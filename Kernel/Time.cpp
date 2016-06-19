@@ -1,7 +1,6 @@
 ﻿#include "Time.h"
-//#include "Timer.h"
 
-//#include "Platform\stm32.h"
+#include "Environment.h"
 
 #define TIME_DEBUG 0
 
@@ -128,6 +127,14 @@ void TTime::Delay(uint us) const
 		__attribute__((section("")))
 	#endif
 #endif
+
+
+// 获取系统启动后经过的毫秒数
+UInt64 TEnvironment::Ms() const { return Time.Current(); }
+// 获取系统基准秒数。加上启动后秒数即可得到绝对时间
+uint TEnvironment::BaseSeconds() const{ return Time.BaseSeconds; }
+// 获取系统启动后经过的秒数
+uint TEnvironment::Seconds() const{ return Time.Seconds; }
 
 /************************************************ TimeWheel ************************************************/
 

@@ -233,15 +233,6 @@ UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
 uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 
-// 当前时间
-DateTime DateTime::Now()
-{
-	DateTime dt(Sys.Seconds());
-	dt.Ms = Sys.Ms();
-
-	return dt;
-}
-
 void TSys::Sleep(uint ms) const
 {
 	// 优先使用线程级睡眠

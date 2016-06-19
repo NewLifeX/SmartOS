@@ -3,6 +3,8 @@
 #include "SString.h"
 #include "DateTime.h"
 
+#include "Environment.h"
+
 /************************************************ DateTime ************************************************/
 
 // 我们的时间起点是 1/1/1970 00:00:00.000 在公历里面1/1/1970是星期四
@@ -31,6 +33,10 @@ DateTime::DateTime()
 
 DateTime::DateTime(ushort year, byte month, byte day)
 {
+	if(year < BASE_YEAR) year	= BASE_YEAR;
+	if(month < 1 || month > 12) month	= 1;
+	if(day < 1 || day > 31) day	= 1;
+
 	Year	= year;
 	Month	= month;
 	Day		= day;
@@ -403,4 +409,14 @@ cstring DateTime::GetString(byte kind, char* str)
 	}
 
 	return str;
+}
+
+// 当前时间
+DateTime DateTime::Now()
+{
+	auto& env	= Environment;
+	DateTime dt(env.Seconds() + env.BaseSeconds());
+	//dt.Ms = env.Ms();
+
+	return dt;
 }
