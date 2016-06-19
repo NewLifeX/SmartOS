@@ -91,6 +91,7 @@ public:
 	void Stop();
 	// 执行一次循环。指定最大可用时间
 	void Execute(uint msMax, bool& cancel);
+	uint ExecuteForWait(uint msMax, bool& cancel);
 
 	void ShowStatus();	// 显示状态
 

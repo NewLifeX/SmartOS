@@ -61,13 +61,6 @@ TSys::TSys()
 	#endif
 #endif
 
-void ShowTime(void* param)
-{
-	debug_printf("\r");
-	DateTime::Now().Show();
-	debug_printf(" ");
-}
-
 void TSys::Init(void)
 {
 	InitClock();
@@ -170,62 +163,7 @@ void TSys::Start()
 
 	Started = true;
 
-#if DEBUG
-	//AddTask(ShowTime, nullptr, 2000000, 2000000);
-#endif
 	Task::Scheduler()->Start();
-}
-
-void TimeSleep(uint us)
-{
-	TS("Sys::TimeSleep");
-
-	// 在这段时间里面，去处理一下别的任务
-	if(Sys.Started && us != 0 && us >= 50)
-	{
-		auto sc	= Task::Scheduler();
-		// 记录当前正在执行任务
-		auto task = sc->Current;
-
-		TimeCost tc;
-		// 实际可用时间。100us一般不够调度新任务，留给硬件等待
-		int total = us;
-		/*int ts	= sc->Times;
-		int tid	= 0;
-		int tms	= 0;
-		if(task)
-		{
-			tid	= task->ID;
-			tms	= task->Times;
-		}
-		debug_printf("Sys::Sleep=> taskid=%d/%d us=%d \r\n", tid, tms, us);*/
-		bool cancel	= false;
-		// 如果休眠时间足够长，允许多次调度其它任务
-		while(true)
-		{
-			// 统计这次调度的时间，累加作为当前任务的休眠时间
-			TimeCost tc2;
-
-			sc->Execute(total / 1000, cancel);
-
-			total -= tc2.Elapsed();
-
-			if(total <= 0) break;
-		}
-
-		int ct = tc.Elapsed();
-		//debug_printf("Sys::Sleep<= taskid=%d/%d us=%d total=%d ct=%d Times=%d \r\n", tid, tms, us, total, ct, sc->Times - ts);
-		if(task)
-		{
-			sc->Current = task;
-			task->SleepTime += ct;
-		}
-
-		if(ct >= us) return;
-
-		us -= ct;
-	}
-	if(us) Time.Delay(us);
 }
 
 // 系统启动后的毫秒数
@@ -244,7 +182,17 @@ void TSys::Sleep(uint ms) const
 		if(ms > 1000) debug_printf("Sys::Sleep 设计错误，睡眠%dms太长！", ms);
 #endif
 
-		TimeSleep(ms * 1000);
+		// 在这段时间里面，去处理一下别的任务
+		if(Sys.Started && ms != 0)
+		{
+			bool cancel	= false;
+			int ct	= Task::Scheduler()->ExecuteForWait(ms, cancel);
+
+			if(ct >= ms) return;
+
+			ms	-= ct;
+		}
+		if(ms) Time.Sleep(ms);
 	}
 }
 
@@ -259,10 +207,18 @@ void TSys::Delay(uint us) const
 		if(us > 1000000) debug_printf("Sys::Sleep 设计错误，睡眠%dus太长！", us);
 #endif
 
-		if(us < 50)
-			Time.Delay(us);
-		else
-			TimeSleep(us);
+		// 在这段时间里面，去处理一下别的任务
+		if(Sys.Started && us != 0 && us >= 50)
+		{
+			bool cancel	= false;
+			auto ct	= Task::Scheduler()->ExecuteForWait(us / 1000, cancel);
+			ct	*= 1000;
+
+			if(ct >= us) return;
+
+			us -= ct;
+		}
+		if(us) Time.Delay(us);
 	}
 }
 #endif

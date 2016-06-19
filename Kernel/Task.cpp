@@ -348,6 +348,31 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	}
 }
 
+uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
+{
+	// 记录当前正在执行任务
+	auto task = Current;
+
+	auto start	= Sys.Ms();
+	auto end	= start + msMax;
+	auto ms		= msMax;
+
+	// 如果休眠时间足够长，允许多次调度其它任务
+	while(ms > 0)
+	{
+		Execute(ms, cancel);
+
+		// 统计这次调度的时间
+		ms	= (int)(end - Sys.Ms());
+	}
+	Current	= task;
+	
+	int cost	= (int)(Sys.Ms() - start);
+	if(task) task->SleepTime	+= cost;
+	
+	return cost;
+}
+
 #if !defined(TINY) && defined(STM32F0)
 	#if defined(__CC_ARM)
 		#pragma arm section code
