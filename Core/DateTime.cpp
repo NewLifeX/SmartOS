@@ -3,7 +3,7 @@
 #include "SString.h"
 #include "DateTime.h"
 
-#include "Environment.h"
+#include <time.h>
 
 /************************************************ DateTime ************************************************/
 
@@ -414,9 +414,8 @@ cstring DateTime::GetString(byte kind, char* str)
 // 当前时间
 DateTime DateTime::Now()
 {
-	auto& env	= Environment;
-	DateTime dt(env.Seconds() + env.BaseSeconds());
-	//dt.Ms = env.Ms();
+	DateTime dt(time(NULL));
+	dt.Ms	= clock();
 
 	return dt;
 }
