@@ -150,16 +150,15 @@ extern "C"
 
 /************************************************ TimeWheel ************************************************/
 
-TimeWheel::TimeWheel(uint seconds, uint ms, uint us)
+TimeWheel::TimeWheel(uint ms)
 {
-	Sleep = 0;
-	Reset(seconds, ms, us);
+	Sleep = 10;
+	Reset(ms);
 }
 
-void TimeWheel::Reset(uint seconds, uint ms, uint us)
+void TimeWheel::Reset(uint ms)
 {
-	Expire	= Time.Current() + seconds * 1000 + ms;
-	Expire2	= Time.CurrentTicks() + us * Time.Ticks;
+	Expire	= Time.Current() + + ms;
 }
 
 // 是否已过期
@@ -167,7 +166,6 @@ bool TimeWheel::Expired()
 {
 	UInt64 now = Time.Current();
 	if(now > Expire) return true;
-	if(now == Expire && Time.CurrentTicks() >= Expire2) return true;
 
 	// 睡眠，释放CPU
 	if(Sleep) Sys.Sleep(Sleep);

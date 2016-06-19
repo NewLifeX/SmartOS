@@ -75,7 +75,7 @@ String Sim900A::Send(cstring str, uint msTimeout)
 	String bs;
 	bs.SetLength(bs.Capacity());
 
-	TimeWheel tw(0, msTimeout);
+	TimeWheel tw(msTimeout);
 	tw.Sleep	= 100;
 	do
 	{

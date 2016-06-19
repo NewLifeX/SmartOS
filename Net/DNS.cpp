@@ -392,7 +392,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	dns_makequery(0, domain, bs);
 	Socket->Send(bs);
 
-	TimeWheel tw(0, msTimeout);
+	TimeWheel tw(msTimeout);
 	tw.Sleep = 100;
 	while(!tw.Expired())
 	{

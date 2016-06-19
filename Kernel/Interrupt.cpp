@@ -121,14 +121,14 @@ Lock::~Lock()
 	}
 }
 
-bool Lock::Wait(int us)
+bool Lock::Wait(int ms)
 {
 	// 可能已经进入成功
 	if(Success) return true;
 
 	int& ref = *_ref;
 	// 等待超时时间
-	TimeWheel tw(0, 0, us);
+	TimeWheel tw(ms);
 	tw.Sleep = 1;
 	while(ref > 0)
 	{

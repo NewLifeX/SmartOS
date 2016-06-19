@@ -93,7 +93,7 @@ public:
 	Lock(int& ref);
 	~Lock();
 
-	bool Wait(int us = -1);
+	bool Wait(int ms);
 };
 
 extern "C"

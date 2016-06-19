@@ -293,7 +293,7 @@ bool W5500::Open()
 
 	// 读硬件版本
 	byte ver = 0;
-	TimeWheel tw(1);
+	TimeWheel tw(1000);
 	while(!tw.Expired() && !ver) ver = ReadByte(0x0039);
 	if(!ver)
 	{
@@ -456,7 +456,7 @@ void W5500::Reset()
 	WriteByte(offsetof(TGeneral, MR), mr.ToByte());
 	// 必须要等一会，否则初始化会失败
 	Sys.Delay(600);		// 最少500us
-	TimeWheel tw(0, 10, 0);
+	TimeWheel tw(10);
 	while(!ReadByte(0x0039) && !tw.Expired());
 }
 
@@ -1126,7 +1126,7 @@ bool HardSocket::OnOpen()
 	//如果Socket打开失败
 	bool rs	= false;
 	byte sr	= 0;
-	TimeWheel tw(0, 50);
+	TimeWheel tw(50);
 	while(!tw.Expired())
 	{
 		sr = ReadStatus();
@@ -1331,7 +1331,7 @@ bool TcpClient::OnOpen()
 	while(ReadConfig());
 
 	// 等待3秒
-	TimeWheel tw(3);
+	TimeWheel tw(3000);
 	while(ReadStatus() != SOCK_SYNSENT)
 	{
 		if(ReadStatus() == SOCK_ESTABLISHE) return true;

@@ -223,7 +223,7 @@ int IR::Receive(Buffer& bs, int sTimeout)
 	// 等待起始条件，DMA 开始搬运数据
 	Stat = WaitRev;
 
-	TimeWheel tw(sTimeout);
+	TimeWheel tw(sTimeout * 1000);
 	tw.Sleep	= 50;
 	while(!tw.Expired() && DMA_GetCurrDataCounter(DMA1_Channel5) == DmaLen);
 

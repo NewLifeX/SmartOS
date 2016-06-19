@@ -48,12 +48,11 @@ class TimeWheel
 {
 public:
 	uint	Expire;		// 到期时间，毫秒
-	ushort	Expire2;	// 到期时间，滴答
-	ushort	Sleep;		// 睡眠时间，默认0毫秒
+	ushort	Sleep;		// 睡眠时间，默认10毫秒
 
-	TimeWheel(uint seconds, uint ms = 0, uint us = 0);
+	TimeWheel(uint ms);
 
-	void Reset(uint seconds, uint ms = 0, uint us = 0);
+	void Reset(uint ms);
 
 	// 是否已过期
 	bool Expired();
