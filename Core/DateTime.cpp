@@ -415,7 +415,6 @@ cstring DateTime::GetString(byte kind, char* str)
 DateTime DateTime::Now()
 {
 	DateTime dt(time(NULL));
-	dt.Ms	= clock();
 
 	return dt;
 }
