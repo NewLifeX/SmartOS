@@ -17,7 +17,6 @@ Task::Task()
 	NextTime	= 0;
 
 	Times		= 0;
-	//CpuTime		= 0;
 	SleepTime	= 0;
 	Cost		= 0;
 	CostMs		= 0;
@@ -60,12 +59,6 @@ bool Task::Execute(UInt64 now)
 	SleepTime	= 0;
 
 	auto cur	= Host->Current;
-	// 其实默认最大深度为1，已经禁止所有任务重入，需要重入的任务得专门设置
-	/*// 事件型任务和一次性任务，禁止重入
-	if(cur == this)
-	{
-		if(Event || Period < 0) return false;
-	}*/
 
 	Host->Current = this;
 	Callback(Param);
@@ -120,40 +113,6 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 	return Event || Times > 0;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
-
-// 显示状态
-void Task::ShowStatus()
-{
-	debug_printf("Task::%s \t%d [%d] \t平均 %dus ", Name, ID, Times, Cost);
-	if(Cost < 1000) debug_printf("\t");
-
-	debug_printf("\t最大 %dus ", MaxCost);
-	if(MaxCost < 1000) debug_printf("\t");
-
-	debug_printf("\t周期 ");
-	if(Period >= 1000)
-		debug_printf("%ds", Period / 1000);
-	else
-		debug_printf("%dms", Period);
-	if(!Enable) debug_printf(" 禁用");
-	debug_printf("\r\n");
-}
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
 // 全局任务调度器
 TaskScheduler* Task::Scheduler()
 {
@@ -179,6 +138,24 @@ Task& Task::Current()
 		__attribute__((section("")))
 	#endif
 #endif
+
+// 显示状态
+void Task::ShowStatus()
+{
+	debug_printf("Task::%s \t%d [%d] \t平均 %dus ", Name, ID, Times, Cost);
+	if(Cost < 1000) debug_printf("\t");
+
+	debug_printf("\t最大 %dus ", MaxCost);
+	if(MaxCost < 1000) debug_printf("\t");
+
+	debug_printf("\t周期 ");
+	if(Period >= 1000)
+		debug_printf("%ds", Period / 1000);
+	else
+		debug_printf("%dms", Period);
+	if(!Enable) debug_printf(" 禁用");
+	debug_printf("\r\n");
+}
 
 TaskScheduler::TaskScheduler(cstring name)
 {
@@ -286,7 +263,11 @@ void TaskScheduler::Stop()
 }
 
 #if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
+	#if defined(__CC_ARM)
+		#pragma arm section code = "SectionForSys"
+	#elif defined(__GNUC__)
+		__attribute__((section("SectionForSys")))
+	#endif
 #endif
 
 // 执行一次循环。指定最大可用时间
@@ -366,10 +347,10 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 		ms	= (int)(end - Sys.Ms());
 	}
 	Current	= task;
-	
+
 	int cost	= (int)(Sys.Ms() - start);
 	if(task) task->SleepTime	+= cost;
-	
+
 	return cost;
 }
 
@@ -408,14 +389,6 @@ void TaskScheduler::ShowStatus()
 	}
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
 Task* TaskScheduler::operator[](int taskid)
 {
 	for(int i=0; i<_Tasks.Count(); i++)
@@ -426,11 +399,3 @@ Task* TaskScheduler::operator[](int taskid)
 
 	return nullptr;
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif

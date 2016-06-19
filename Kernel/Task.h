@@ -73,7 +73,6 @@ public:
 	int		MaxCost;	// 最大执行时间us
 
 	TaskScheduler(cstring name = nullptr);
-	//~TaskScheduler();
 
 	// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
 	void Set(Task* tasks, uint count);
