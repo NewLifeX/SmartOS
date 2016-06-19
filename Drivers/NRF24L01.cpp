@@ -857,7 +857,7 @@ bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 	// https://devzone.nordicsemi.com/question/17074/nrf24l01-data-loss/
 	// It is important never to keep the nRF24L01+ in TX mode for more than 4ms at a time.
 	// If the Enhanced ShockBurst™ features are enabled, nRF24L01+ is never in TX mode longer than 4ms
-	TimeWheel tw(0, ms);
+	auto end	= Sys.Ms() + ms;
 	do
 	{
 		Status = ReadReg(STATUS);
@@ -894,7 +894,7 @@ bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 
 			break;
 		}
-	}while(!tw.Expired());
+	}while(Sys.Ms() < end);
 
 	// 这里开始到CE拉高结束，大概耗时186us。不拉高CE大概20us
 	//_CE = true;

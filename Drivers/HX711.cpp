@@ -100,8 +100,8 @@ uint HX711::Read()
 
 	uint temp = 0x00000000;
 	// 等待 IC 数据
-	TimeWheel tw(0, 30);
-	while(!tw.Expired() && DOUT);
+	int times	= 30000;
+	while(DOUT && --times);
 
 	// 读取数据
 	for(int i = 0;i < 24; i++)

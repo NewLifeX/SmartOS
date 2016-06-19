@@ -2,6 +2,8 @@
 #include "Icmp.h"
 #include "Arp.h"
 
+#include "WaitHandle.h"
+
 #define NET_DEBUG DEBUG
 
 class PingSession
@@ -10,14 +12,13 @@ public:
 	IPAddress	Address;
 	ushort		Identifier;
 	ushort		Sequence;
-	bool		Success;
+	WaitHandle	Handle;
 
 	PingSession(IPAddress& ip, ushort id, ushort seq)
 	{
 		Address		= ip;
 		Identifier	= id;
 		Sequence	= seq;
-		Success		= false;
 	}
 
 	bool Check(IPAddress& remote, ICMP_HEADER* icmp)
@@ -50,7 +51,9 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	// 检查有没有会话等待
 	if(icmp->Type == 0 && _IcmpSession != nullptr && _IcmpSession->Check(remote, icmp))
 	{
-		_IcmpSession->Success = true;
+		_IcmpSession->Handle.Set();
+		_IcmpSession	= nullptr;
+
 		return true;
 	}
 
@@ -147,25 +150,15 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 #endif
 	Tip->SendIP(IP_ICMP, ip, (byte*)icmp, sizeof(ICMP_HEADER) + payloadLength);
 
-	// 等待时间
-	//int ps[] = {ip.Value, id, seq};
-	//if(Tip->LoopWait(PingCallback, ps, 1000)) return true;
-
 	PingSession ps(ip, id, seq);
 	_IcmpSession = &ps;
 
 	// 等待响应
-	TimeWheel tw(0, 1000);
-	tw.Sleep = 1;
-	do{
-		if(ps.Success) break;
-	}while(!tw.Expired());
-
-	_IcmpSession = nullptr;
+	bool rs	= ps.Handle.WaitOne(1000);
 
 #if NET_DEBUG
 	uint cost = ct.Elapsed() / 1000;
-	if(ps.Success)
+	if(rs)
 		debug_printf(" 成功 %dms\r\n", cost);
 	else
 		debug_printf(" 失败 %dms\r\n", cost);

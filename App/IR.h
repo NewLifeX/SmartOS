@@ -22,10 +22,6 @@
 
 class IR
 {
-private:
-	PWM*	_Pwm			= nullptr;
-	Timer*	_Tim			= nullptr;
-	AlternatePort * _Port	= nullptr;
 public:
 	IR(PWM * pwm);
 	
@@ -36,6 +32,12 @@ public:
 	int Receive(Buffer& bs, int sTimeout = 10);
 
 private:
+	PWM*	_Pwm			= nullptr;
+	Timer*	_Tim			= nullptr;
+	AlternatePort * _Port	= nullptr;
+	bool	_SendOK;
+	//bool	_RecvOK;
+	
 	static void OnSend(void* sender, void* param);
 };
 

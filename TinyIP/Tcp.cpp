@@ -1,10 +1,10 @@
 ﻿#include "Time.h"
 #include "Tcp.h"
 
+#include "WaitHandle.h"
+
 #define NET_DEBUG 0
 //#define NET_DEBUG DEBUG
-
-bool* WaitAck;
 
 bool Callback(TinyIP* tip, void* param, Stream& ms);
 
@@ -79,9 +79,10 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	//Local.Port		= port;
 	//Local.Address	= ip.DestIP;
 
-	if(WaitAck && (tcp->Flags & TCP_FLAGS_ACK))
+	if(_wait && (tcp->Flags & TCP_FLAGS_ACK))
 	{
-		*WaitAck = true;
+		((WaitHandle*)_wait)->Set();
+		_wait	= nullptr;
 	}
 
 	OnProcess(*tcp, ms);
@@ -408,26 +409,19 @@ bool TcpSocket::Send(const Buffer& bs)
 	//debug_printf("Seq=0x%04x Ack=0x%04x \r\n", Seq, Ack);
 	if(!SendPacket(*tcp, bs.Length(), TCP_FLAGS_PUSH | TCP_FLAGS_ACK)) return false;
 
-	bool wait = false;
-	WaitAck = &wait;
-
 	// 等待响应
-	TimeWheel tw(0, 3000);
-	tw.Sleep = 1;
-	do{
-		if(wait) break;
-	}while(!tw.Expired());
-
-	WaitAck = nullptr;
+	WaitHandle wh;
+	_wait = &wh;
+	bool rs	= wh.WaitOne(3000);
 
 #if NET_DEBUG
-	if(wait)
+	if(rs)
 		debug_printf("发送成功！\r\n");
 	else
 		debug_printf("发送失败！\r\n");
 #endif
 
-	return wait;
+	return rs;
 }
 
 uint TcpSocket::Receive(Buffer& bs)
@@ -474,19 +468,11 @@ bool TcpSocket::Connect(IPAddress& ip, ushort port)
 		return false;
 	}
 
-	bool wait = false;
-	WaitAck = &wait;
-
 	// 等待响应
-	TimeWheel tw(0, 3000);
-	tw.Sleep = 1;
-	do{
-		if(wait) break;
-	}while(!tw.Expired());
+	WaitHandle wh;
+	_wait = &wh;
 
-	WaitAck = nullptr;
-
-	if(wait)
+	if(wh.WaitOne(3000))
 	{
 		if(Status == Established)
 		{

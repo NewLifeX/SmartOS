@@ -1,23 +1,21 @@
 ﻿#include "Time.h"
 #include "Arp.h"
 
+#include "WaitHandle.h"
+
 #define NET_DEBUG 0
 
 class ArpSession
 {
 public:
-	IPAddress IP;
-	MacAddress Mac;
-	bool Success;
+	const IPAddress&	IP;
+	MacAddress	Mac;
+	WaitHandle	Handle;
 
-	ArpSession(const IPAddress& ip)
-	{
-		IP = ip;
-		Success = false;
-	}
+	ArpSession(const IPAddress& ip) : IP(ip) { }
 };
 
-ArpSession* _ArpSession;
+ArpSession* _ArpSession	= nullptr;
 
 ArpSocket::ArpSocket(TinyIP* tip) : TinySocket(tip, IP_NONE)
 {
@@ -80,7 +78,9 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 	if(arp->Option == 0x0200 && _ArpSession && _ArpSession->IP.Value == arp->SrcIP)
 	{
 		_ArpSession->Mac = arp->SrcMac.Value();
-		_ArpSession->Success = true;
+		_ArpSession->Handle.Set();
+		_ArpSession	= nullptr;
+		
 		return true;
 	}
 
@@ -164,28 +164,14 @@ bool ArpSocket::Request(const IPAddress& ip, MacAddress& mac, int timeout)
 	// 如果没有超时时间，表示异步请求，不用等待结果
 	if(timeout <= 0) return false;
 
-	// 等待反馈
-	//if(Tip->LoopWait(RequestCallback, &mac, timeout * 1000)) return true;
-
+	// 等待响应
 	ArpSession ss(ip);
 	_ArpSession = &ss;
 
-	// 等待响应
-	TimeWheel tw(timeout);
-	tw.Sleep = 1;
-	do{
-		if(ss.Success) break;
-	}while(!tw.Expired());
+	if(!ss.Handle.WaitOne(timeout)) return false;
 
-	if(ss.Success)
-	{
-		mac = ss.Mac;
-		return true;
-	}
-
-	_ArpSession = nullptr;
-
-	return false;
+	mac = ss.Mac;
+	return true;
 }
 
 bool ArpSocket::Resolve(const IPAddress& ip, MacAddress& mac)

@@ -70,6 +70,9 @@ protected:
 
     virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
+	
+private:
+	void*	_wait	= nullptr;
 };
 
 #endif

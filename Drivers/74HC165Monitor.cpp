@@ -50,22 +50,25 @@ void IC74HC165MOR::Trigger()
 	for(int i = 0; i < _Bs.Length(); i++)
 	{
 		byte temp = 0x00;
-		TimeWheel tw(0,2);
-		for(int j = 0; j < 8; j++)
+		int j	= 0;
+		for(j = 0; j < 8; j++)
 		{
-			while(!tw.Expired() && _SCK != true );	// 等待 高电平
-			
-			if(tw.Expired()) break;
+			int times	= 2000;
+			while(!_SCK && --times);	// 等待 高电平
+			if(!times) break;
 		
 			if(_In) temp |= 0x01;
 			else	temp &= 0xfe;
 			
-			while(!tw.Expired() && _SCK != false );	// 等待低电平
+			times	= 2000;
+			while(_SCK && --times);	// 等待低电平
+			if(!times) break;
 			
 			temp <<= 1;
 		}
 		_Bs[i] = temp;
-		if(tw.Expired())return;	 // 2ms 不结束 就强制退出
+		//if(tw.Expired())return;	 // 2ms 不结束 就强制退出
+		if(j < 8) break;
 	}
 }
 
