@@ -24,6 +24,7 @@ namespace NewLife.Reflection
         String Link;
         String Ar;
         String FromELF;
+        String IncPath;
         String LibPath;
 
         public Boolean Init(String basePath = null, Boolean addlib = true)
@@ -50,7 +51,8 @@ namespace NewLife.Reflection
             Link = basePath.CombinePath("armlink.exe");
             Ar = basePath.CombinePath("armar.exe");
             FromELF = basePath.CombinePath("fromelf.exe");
-            LibPath = basePath.CombinePath("..\\..\\").GetFullPath();
+            IncPath = basePath.CombinePath("..\\include").GetFullPath();
+            LibPath = basePath.CombinePath("..\\lib").GetFullPath();
 
             Libs.Clear();
             Objs.Clear();
@@ -198,6 +200,7 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -I{0}", item);
             }
+			if(Directory.Exists(IncPath)) sb.AppendFormat(" -I{0}", IncPath);
 
             return sb.ToString();
         }
