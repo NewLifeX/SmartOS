@@ -23,7 +23,11 @@ uint Random::Next() const
 
 uint Random::Next(uint max) const
 {
-	return rand() % max;
+	uint value	= rand();
+
+	if(max == 0x100) return value & 0xFF;
+
+	return value % max;
 }
 
 void Random::Next(Buffer& bs) const
