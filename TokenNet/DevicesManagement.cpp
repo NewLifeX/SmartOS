@@ -271,7 +271,8 @@ void DevicesManagement::SetTokenClient(TokenClient *port)
 	Port->Register("Device/List",	InvokeList		,this);
 	Port->Register("Device/Update", InvokeUpdate	,this);
 	Port->Register("Device/Delete", InvokeDelete	,this);
-	Port->Register("Device/ListIDs", InvokeListIDs	,this);
+	Port->Register("Device/ListIDs", InvokeListIDs, this);
+	Port->Register("Device/FindIDs", InvokeListIDs, this);
 }
 
 // Invoke 注册项

@@ -753,8 +753,8 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 	// 考虑到结果可能比较大，允许扩容
 	//auto ms	= rs.ToStream();
 	//ms.CanResize	= true;
-	MemoryStream ms(rs.Data, rs.Length);
 
+	MemoryStream ms;	// 不能用 rs.Data 数据区  后面Set数据会先写Result  这样就破坏了数据区
 	BinaryPair bp(msg.ToStream());
 
 	String action;
