@@ -633,7 +633,7 @@ namespace NewLife.Reflection
             {
                 if (!item.Extension.EqualIgnoreCase(".c", ".cpp", ".s")) continue;
 
-                Console.Write("添加：{0}\t", item.FullName);
+                //Console.Write("添加：{0}\t", item.FullName);
 
                 var flag = true;
                 var ex = "";
@@ -654,7 +654,7 @@ namespace NewLife.Reflection
 
                     continue;
                 }
-                Console.WriteLine();
+                //Console.WriteLine();
 
                 if (!Files.Contains(item.FullName))
                 {
