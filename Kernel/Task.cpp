@@ -336,7 +336,7 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 
 	auto start	= Sys.Ms();
 	auto end	= start + msMax;
-	auto ms		= msMax;
+	auto ms		= (int)msMax;
 
 	// 如果休眠时间足够长，允许多次调度其它任务
 	while(ms > 0)
