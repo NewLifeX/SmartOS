@@ -228,10 +228,11 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 {
 	TS("Esp8266::Send");
 
-	// 使用较大的字符串缓冲区，避免内部堆分配
+	/*// 使用较大的字符串缓冲区，避免内部堆分配
 	char cs[0x80];
 	cs[0]	= '\0';
-	String rs(cs, sizeof(cs));
+	String rs(cs, sizeof(cs));*/
+	String rs;
 
 	auto& task	= Task::Current();
 	// 判断是否正在发送其它指令
