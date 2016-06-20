@@ -15,7 +15,7 @@
 
 #include "Security\RC4.h"
 
-static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
+//static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
 
 static void LoopTask(void* param);
 static void BroadcastHelloTask(void* param);
@@ -44,8 +44,10 @@ void TokenClient::Open()
 	TS("TokenClient::Open");
 	assert(Control, "令牌客户端还没设置控制器呢");
 
-	Control->Received	= OnTokenClientReceived;
-	Control->Param		= this;
+	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
+	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
+	Control->Received	= dlg;
+	//Control->Param		= this;
 	Control->Open();
 
 	//auto ctrl	= Control;
@@ -54,8 +56,8 @@ void TokenClient::Open()
 		// 向服务端握手时，汇报内网本地端口，用户端将会通过该端口连接
 		//ctrl	= Local;
 
-		Local->Received	= OnTokenClientReceived;
-		Local->Param	= this;
+		Local->Received	= Control->Received;
+		//Local->Param	= this;
 		Local->Open();
 	}
 
@@ -111,7 +113,7 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 	return ctrl->Reply(msg);
 }
 
-bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
+void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 {
 	TS("TokenClient::OnReceive");
 
@@ -121,49 +123,47 @@ bool TokenClient::OnReceive(TokenMessage& msg, TokenController* ctrl)
 	{
 		case 0x01:
 			if(msg.Reply)
-				OnHello(msg, ctrl);
+				OnHello(msg, &ctrl);
 			else
-				OnLocalHello(msg, ctrl);
+				OnLocalHello(msg, &ctrl);
 			break;
 		case 0x02:
 			if(msg.Reply)
-				OnLogin(msg, ctrl);
+				OnLogin(msg, &ctrl);
 			else
-				OnLocalLogin(msg, ctrl);
+				OnLocalLogin(msg, &ctrl);
 			break;
 		case 0x03:
-			OnPing(msg, ctrl);
+			OnPing(msg, &ctrl);
 			break;
 		case 0x07:
-			OnRegister(msg, ctrl);
+			OnRegister(msg, &ctrl);
 			break;
 		case 0x08:
-			OnInvoke(msg, ctrl);
+			OnInvoke(msg, &ctrl);
 			break;
 	}
 	// todo  握手登录心跳消息不需要转发
-	if(msg.Code < 0x03) return true;
+	if(msg.Code < 0x03) return;
 
 	// 消息转发
 	if (Received)
 	{
-		Received(ctrl, msg, Param);
+		Received(&ctrl, msg, Param);
 	}
 	else
 	{
 		switch (msg.Code)
 		{
-		case 0x05: OnRead(msg, ctrl); break;
-		case 0x06: OnWrite(msg, ctrl); break;
+		case 0x05: OnRead(msg, &ctrl); break;
+		case 0x06: OnWrite(msg, &ctrl); break;
 		default:
 			break;
 		}
 	}
-
-	return true;
 }
 
-bool OnTokenClientReceived(void* sender, Message& msg, void* param)
+/*bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 {
 	auto ctrl = (TokenController*)sender;
 	assert_ptr(ctrl);
@@ -171,7 +171,7 @@ bool OnTokenClientReceived(void* sender, Message& msg, void* param)
 	assert_ptr(client);
 
 	return client->OnReceive((TokenMessage&)msg, ctrl);
-}
+}*/
 
 // 常用系统级消息
 

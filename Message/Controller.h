@@ -40,8 +40,8 @@ public:
 	virtual bool Reply(Message& msg);
 
 	// 收到消息时触发
-	MessageHandler	Received;
-	void*			Param;
+	Delegate2<Message&, Controller&>	Received;
+	//void*			Param;
 	
 protected:
 	bool SendInternal(const Message& msg);

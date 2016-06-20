@@ -324,7 +324,7 @@ bool TinyController::Valid(const Message& _msg)
 	if(msg.Dest == Address)
 	{
 		ByteArray  key(0);
-		GetKey(msg.Src, key, Param);
+		GetKey(msg.Src, key);
 		if(key.Length() > 0) Encrypt(msg, key);
 	}
 
@@ -418,7 +418,7 @@ bool TinyController::Send(Message& _msg)
 	if(!msg.Reply) msg.Seq = ++_Sequence;
 
 	ByteArray  key;
-	GetKey(msg.Dest, key, Param);
+	GetKey(msg.Dest, key);
 	if(key.Length() > 0) Encrypt(msg, key);
 
 #if MSG_DEBUG

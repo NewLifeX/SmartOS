@@ -13,8 +13,8 @@
 
 /******************************** TinyServer ********************************/
 
-static bool OnServerReceived(void* sender, Message& msg, void* param);
-static void GetDeviceKey(byte scr, Buffer& key,void* param);
+//static bool OnServerReceived(void* sender, Message& msg, void* param);
+//static void GetDeviceKey(byte scr, Buffer& key,void* param);
 
 
 TinyServer::TinyServer(TinyController* control)
@@ -23,9 +23,9 @@ TinyServer::TinyServer(TinyController* control)
 	Cfg			= nullptr;
 	DeviceType	= Sys.Code;
 
-	Control->Received	= OnServerReceived;
-	Control->GetKey		= GetDeviceKey;
-	Control->Param		= this;
+	Control->Received	= Delegate2<TinyMessage&, TinyController&>(&TinyServer::OnReceive, this);
+	Control->GetKey		= Delegate2<byte, Buffer&>(&TinyServer::GetDeviceKey, this);
+	//Control->Param		= this;
 
 	Control->Mode		= 2;	// 服务端接收所有消息
 
@@ -50,14 +50,14 @@ bool TinyServer::Send(Message& msg) const
 	return Control->Send(msg);
 }
 
-bool OnServerReceived(void* sender, Message& msg, void* param)
+/*bool OnServerReceived(void* sender, Message& msg, void* param)
 {
 	auto server = (TinyServer*)param;
 	assert_ptr(server);
 
 	// 消息转发
 	return server->OnReceive((TinyMessage&)msg);
-}
+}*/
 
 // 常用系统级消息
 
@@ -103,7 +103,7 @@ void TinyServer::Start()
 }
 
 // 收到本地无线网消息
-bool TinyServer::OnReceive(TinyMessage& msg)
+void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 {
 	TS("TinyServer::OnReceive");
 
@@ -112,23 +112,23 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	auto dv = Current;
 	if (!dv) dv = DevMgmt.FindDev(id);
 	// 不响应不在设备列表设备的 非Join指令
-	if(!dv && msg.Code > 2) return false;
+	if(!dv && msg.Code > 2) return;
 
 	switch(msg.Code)
 	{
 		case 1:
 		{
-			if (!OnJoin(msg)) return false;
+			if (!OnJoin(msg)) return;
 			dv = Current;
 			DevMgmt.DeviceRequest(DeviceAtions::Online, dv);
-			return true;
+			return;
 		}
 
 		case 2:
 		{
-			if (!OnDisjoin(msg))return false;
+			if (!OnDisjoin(msg))return;
 			DevMgmt.DeviceRequest(DeviceAtions::Delete, dv);
-			return true;
+			return;
 		}
 
 		case 3:
@@ -167,11 +167,9 @@ bool TinyServer::OnReceive(TinyMessage& msg)
 	if(msg.Code == 0x05 || msg.Code == 0x06) msg.Code |= 0x10;
 
 	// 消息转发
-	if(Received) return Received(this, msg, Param);
+	if(Received) Received(this, msg, Param);
 
 	Current = nullptr;
-
-	return true;
 }
 
 // 分发外网过来的消息。返回值表示是否有响应
@@ -608,21 +606,22 @@ void TinyServer::SetChannel(byte channel)
 	}
 }
 
-void GetDeviceKey(byte scr, Buffer& key, void* param)
+void TinyServer::GetDeviceKey(byte id, Buffer& key)
 {
 	/*TS("TinyServer::GetDeviceKey");
 
 	auto server = (TinyServer*)param;
 	auto devMgmt = &(server->DevMgmt);
 
-	auto dv = devMgmt->FindDev(scr);
+	auto dv = devMgmt->FindDev(id);
 	if(!dv) return;
 
 	// 检查版本
 	if(dv->Version < 0x00AA) return;
 
 	// debug_printf("%d 设备获取密匙\n",scr);
-	key.Copy(dv->Pass, 8);*/
+	//key.Copy(dv->Pass, 8);
+	key	= dv->Pass;*/
 }
 
 void TinyServer::ClearDevices()

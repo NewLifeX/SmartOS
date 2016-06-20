@@ -33,7 +33,7 @@ public:
 	// 发送消息
 	bool Send(TinyMessage& msg);
 	bool Reply(TinyMessage& msg);
-	bool OnReceive(TinyMessage& msg);
+	void OnReceive(TinyMessage& msg, TinyController& ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
@@ -59,6 +59,8 @@ private:
 	void OnWrite(const TinyMessage& msg);
 	void OnRead(const TinyMessage& msg);
 
+	void GetDeviceKey(byte id, Buffer& key);
+	
 // 常用系统级消息
 public:
 	// 组网

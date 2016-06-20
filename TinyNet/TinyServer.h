@@ -26,7 +26,7 @@ public:
 	bool Send(Message& msg) const;
 	//bool Reply(Message& msg) const;
 	// 收到本地无线网消息
-	bool OnReceive(TinyMessage& msg);
+	void OnReceive(TinyMessage& msg, TinyController& ctrl);
 	// 分发外网过来的消息。返回值表示是否有响应
 	bool Dispatch(TinyMessage& msg);
 
@@ -69,6 +69,9 @@ public:
 	// 写入
 	bool OnWrite(const Message& msg, Message& rs, Device& dv);
 	bool OnWriteReply(const Message& msg, Device& dv);
+
+private:
+	void GetDeviceKey(byte id, Buffer& key);
 };
 
 #endif

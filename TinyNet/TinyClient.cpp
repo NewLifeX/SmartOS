@@ -11,7 +11,7 @@ TinyClient* TinyClient::Current	= nullptr;
 
 static void TinyClientTask(void* param);
 //static void TinyClientReset();
-static void GetDeviceKey(byte id, Buffer& key, void* param);
+//static void GetDeviceKey(byte id, Buffer& key, void* param);
 
 /******************************** 初始化和开关 ********************************/
 
@@ -20,7 +20,7 @@ TinyClient::TinyClient(TinyController* control)
 	assert_ptr(control);
 
 	Control 		= control;
-	Control->GetKey	= GetDeviceKey;
+	Control->GetKey	= Delegate2<byte, Buffer&>(&TinyClient::GetDeviceKey, this);
 
 	Opened		= false;
 	Joining		= false;
@@ -44,8 +44,9 @@ void TinyClient::Open()
 {
 	if(Opened) return;
 
-	Control->Received	= [](void* s, Message& msg, void* p){ return ((TinyClient*)p)->OnReceive((TinyMessage&)msg); };
-	Control->Param		= this;
+	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
+	Control->Received	= Delegate2<TinyMessage&, TinyController&>(&TinyClient::OnReceive, this);
+	//Control->Param		= this;
 
 	TranID	= (int)Sys.Ms();
 
@@ -78,8 +79,8 @@ void TinyClient::Close()
 
 	Sys.RemoveTask(_TaskID);
 
-	Control->Received	= nullptr;
-	Control->Param		= nullptr;
+	//Control->Received	= nullptr;
+	//Control->Param		= nullptr;
 
 	Control->Close();
 
@@ -114,10 +115,10 @@ bool TinyClient::Reply(TinyMessage& msg)
 	return Control->Reply(msg);
 }
 
-bool TinyClient::OnReceive(TinyMessage& msg)
+void TinyClient::OnReceive(TinyMessage& msg, TinyController& ctrl)
 {
 	// 不是组网消息。不是被组网网关消息，不受其它消息设备控制.
-	if(msg.Code != 0x01 && Server != msg.Src) return true;
+	if(msg.Code != 0x01 && Server != msg.Src) return;
 
 	if(msg.Src == Server) LastActive = Sys.Ms();
 
@@ -143,9 +144,7 @@ bool TinyClient::OnReceive(TinyMessage& msg)
 	}
 
 	// 消息转发
-	if(Received) return Received(this, msg, Param);
-
-	return true;
+	if(Received) Received(this, msg, Param);
 }
 
 /******************************** 数据区 ********************************/
@@ -294,16 +293,14 @@ void TinyClientTask(void* param)
 	if(client->Server != 0) client->Ping();
 }
 
-void GetDeviceKey(byte id, Buffer& key, void* param)
+void TinyClient::GetDeviceKey(byte id, Buffer& key)
 {
-	/*TS("TinyClient::GetDeviceKey");
-	//debug_printf("微网客户端获取密钥");
+	TS("TinyClient::GetDeviceKey");
 
-	auto client = (TinyClient*)param;
-	if(Sys.Version < 0xFFFF) return;
+	//if(Sys.Version < 0xFFFF) return;
 
-	//key = client->Password;
-	key.Copy(client->Password, 8);*/
+	//key	= Password;
+	//key.Copy(Password, 8);
 }
 
 // 组网消息，告诉大家我在这

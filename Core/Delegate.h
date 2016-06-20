@@ -19,6 +19,8 @@ public:
 	void*	Method;	// 函数指针
 	void*	Target;	// 参数
 
+	IDelegate& operator=(const IDelegate& dlg)	{ Bind(dlg.Method, dlg.Target); return *this; }
+
 protected:
 	void Bind(void* method, void* target = nullptr)
 	{
@@ -82,6 +84,8 @@ public:
     Delegate2& operator=(Action2 func)	{ Bind((void*)func); return *this; }
     Delegate2& operator=(TAction func)	{ Bind((void*)func); return *this; }
 
+	using IDelegate::operator=;
+	
 	// 带目标的全局函数
 	template<typename T>
 	Delegate2(void(*func)(T&, TArg, TArg2), T* target)	{ Bind((void*)func, target); }
