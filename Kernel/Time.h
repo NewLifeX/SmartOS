@@ -48,7 +48,7 @@ class TimeWheel
 {
 public:
 	uint	Expire;		// 到期时间，毫秒
-	ushort	Sleep;		// 睡眠时间，默认10毫秒
+	ushort	Sleep;		// 睡眠时间，默认0毫秒
 
 	TimeWheel(uint ms);
 

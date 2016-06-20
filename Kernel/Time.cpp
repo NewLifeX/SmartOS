@@ -152,7 +152,7 @@ extern "C"
 
 TimeWheel::TimeWheel(uint ms)
 {
-	Sleep = 10;
+	Sleep	= 0;
 	Reset(ms);
 }
 
