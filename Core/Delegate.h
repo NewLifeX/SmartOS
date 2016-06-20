@@ -51,8 +51,9 @@ public:
 	Delegate(void(*func)(T&, TArg), T* target)	{ Bind((void*)func, target); }
 
 	// 类成员函数
+	// func是一个对象，对象值为函数指针，但是不能直接转为void*，所以需要通过指针转为别的类型，再转回来才能赋值
 	template<typename T>
-	Delegate(void(T::*func)(TArg), T* target)	{ Bind((void*)&func, target); }
+	Delegate(void(T::*func)(TArg), T* target)	{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg)
@@ -92,7 +93,7 @@ public:
 
 	// 类成员函数
 	template<typename T>
-	Delegate2(void(T::*func)(TArg, TArg2), T* target)	{ Bind((void*)&func, target); }
+	Delegate2(void(T::*func)(TArg, TArg2), T* target)	{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg, TArg2 arg2)
@@ -130,7 +131,7 @@ public:
 
 	// 类成员函数
 	template<typename T>
-	Delegate3(void(T::*func)(TArg, TArg2, TArg3), T* target)		{ Bind((void*)&func, target); }
+	Delegate3(void(T::*func)(TArg, TArg2, TArg3), T* target)		{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg, TArg2 arg2, TArg3 arg3)
