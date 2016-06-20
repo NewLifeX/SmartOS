@@ -104,8 +104,11 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 	UInt64 now = Sys.Ms();
 	if(NextTime > 0 && NextTime > now) return false;
 
+	// 事件型任务，并且当前可用时间超过10ms，允许调度
+	if(Event && now + 10 < end) return true;
+
 	// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-	if(Sys.Ms() + CostMs > end) return false;
+	if(now + CostMs > end) return false;
 
 	if(!isSleep) return true;
 
