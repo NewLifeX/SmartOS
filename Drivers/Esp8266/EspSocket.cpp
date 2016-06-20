@@ -46,9 +46,13 @@ bool EspSocket::OnOpen()
 	net_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	net_printf(" => ");
-	Server.Show(false);
-	net_printf(" ");
-	Remote.Show(true);
+	if(Server)
+	{
+		Server.Show(false);
+		net_printf(":%d", Remote.Port);
+	}
+	else
+		Remote.Show(true);
 #endif
 
 	String cmd	= "AT+CIPSTART=";

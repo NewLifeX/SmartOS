@@ -44,7 +44,8 @@ uint WaitExpect::Parse(const Buffer& bs)
 	TS("WaitExpect::Parse");
 
 	// 适配任意关键字后，也就是收到了成功或失败，通知业务层已结束
-	auto s	= (const String)bs.AsString();
+	auto s_	= bs.AsString();
+	auto& s	= (const String&)s_;
 	int p	= FindKey(s);
 	auto& rs= *Result;
 
