@@ -60,9 +60,9 @@ public:
 		if(Method)
 		{
 			if(Target)
-				(*(VAction*)Method)(Target, arg);
+				((VAction)Method)(Target, arg);
 			else
-				(*(TAction*)Method)(arg);
+				((TAction)Method)(arg);
 		}
 	}
 };
@@ -100,9 +100,9 @@ public:
 		if(Method)
 		{
 			if(Target)
-				(*(VAction*)Method)(Target, arg, arg2);
+				((VAction)Method)(Target, arg, arg2);
 			else
-				(*(TAction*)Method)(arg, arg2);
+				((TAction)Method)(arg, arg2);
 		}
 	}
 };
@@ -138,9 +138,9 @@ public:
 		if(Method)
 		{
 			if(Target)
-				(*(VAction*)Method)(Target, arg, arg2, arg3);
+				((VAction)Method)(Target, arg, arg2, arg3);
 			else
-				(*(TAction*)Method)(arg, arg2, arg3);
+				((TAction)Method)(arg, arg2, arg3);
 		}
 	}
 };
