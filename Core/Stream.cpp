@@ -355,8 +355,9 @@ bool MemoryStream::CheckRemain(uint count)
 		if(!CanResize) return Stream::CheckRemain(count);
 
 		// 原始容量成倍扩容
-		uint total = _Position + count;
-		uint size = _Capacity;
+		uint total	= _Position + count;
+		uint size	= _Capacity;
+		if(size < 0x10) size	= 0x10;
 		while(size < total) size <<= 1;
 
 		// 申请新的空间，并复制数据
