@@ -12,63 +12,131 @@ typedef void (*EventHandler)(void* sender, void* param);
 // 传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
 typedef uint (*DataHandler)(void* sender, byte* buf, uint size, void* param);
 
-// 委托。第一参数目标对象指针，第二泛型参数
-template <typename TArg>
-class Delegate
+// 委托接口
+class IDelegate
 {
 public:
-	typedef void(*Action)(TArg);
-
 	void*	Method;	// 函数指针
 	void*	Target;	// 参数
 
-	Delegate()
+protected:
+	void Bind(void* method, void* target = nullptr)
 	{
-		Method	= nullptr;
-		Target	= nullptr;
-	}
-	Delegate(const Delegate& dlg)	= delete;
-    Delegate(Action func)	// 全局函数或类静态函数
-	{
-		Method	= (void*)func;
-		Target	= nullptr;
-	}
-	template<typename T>
-	Delegate(void(*func)(T&, TArg), T* target)
-	{
-		Method	= (void*)func;
+		Method	= method;
 		Target	= target;
 	}
+};
 
+// 委托。第一参数目标对象指针，第二泛型参数
+template <typename TArg>
+class Delegate : public IDelegate
+{
+public:
+	typedef void(*TAction)(TArg);
+	typedef void(*VAction)(void*, TArg);
+
+	Delegate()	{ Bind(nullptr); }
+	Delegate(const Delegate& dlg)	= delete;
+
+	// 全局函数或类静态函数
+    Delegate(Action func)	{ Bind((void*)func); }
+    Delegate(TAction func)	{ Bind((void*)func); }
+    Delegate& operator=(Action func)	{ Bind((void*)func); return *this; }
+    Delegate& operator=(TAction func)	{ Bind((void*)func); return *this; }
+
+	// 带目标的全局函数
 	template<typename T>
-	Delegate(void(T::*func)(TArg), T* target)	{ Method	= (void*)&func; Target	= target; }
+	Delegate(void(*func)(T&, TArg), T* target)	{ Bind((void*)func, target); }
 
-    Delegate& operator=(Action func)	// 全局函数或类静态函数
-	{
-		Method	= (void*)func;
-		Target	= nullptr;
+	// 类成员函数
+	template<typename T>
+	Delegate(void(T::*func)(TArg), T* target)	{ Bind((void*)&func, target); }
 
-		return *this;
-	}
-
+	// 执行委托
 	void operator()(TArg arg)
 	{
 		if(Method)
 		{
 			if(Target)
-			{
-				typedef void(*TAction)(void*, TArg);
-				auto act	= *(TAction*)Method;
-
-				(*act)(Target, arg);
-			}
+				(*(VAction*)Method)(Target, arg);
 			else
-			{
-				//typedef void(*TAction)(TArg);
-				auto act	= *(Action*)Method;
+				(*(TAction*)Method)(arg);
+		}
+	}
+};
 
-				(*act)(arg);
-			}
+// 委托。第一参数目标对象指针，第二第三泛型参数
+template <typename TArg, typename TArg2>
+class Delegate2 : public IDelegate
+{
+public:
+	typedef void(*TAction)(TArg, TArg2);
+	typedef void(*VAction)(void*, TArg, TArg2);
+
+	Delegate2()	{ Bind(nullptr); }
+	Delegate2(const Delegate2& dlg)	= delete;
+
+	// 全局函数或类静态函数
+    Delegate2(Action2 func)	{ Bind((void*)func); }
+    Delegate2(TAction func)	{ Bind((void*)func); }
+    Delegate2& operator=(Action2 func)	{ Bind((void*)func); return *this; }
+    Delegate2& operator=(TAction func)	{ Bind((void*)func); return *this; }
+
+	// 带目标的全局函数
+	template<typename T>
+	Delegate2(void(*func)(T&, TArg, TArg2), T* target)	{ Bind((void*)func, target); }
+
+	// 类成员函数
+	template<typename T>
+	Delegate2(void(T::*func)(TArg, TArg2), T* target)	{ Bind((void*)&func, target); }
+
+	// 执行委托
+	void operator()(TArg arg, TArg2 arg2)
+	{
+		if(Method)
+		{
+			if(Target)
+				(*(VAction*)Method)(Target, arg, arg2);
+			else
+				(*(TAction*)Method)(arg, arg2);
+		}
+	}
+};
+
+// 委托。第一参数目标对象指针，第二泛型参数
+template <typename TArg, typename TArg2, typename TArg3>
+class Delegate3 : public IDelegate
+{
+public:
+	typedef void(*TAction)(TArg, TArg2, TArg3);
+	typedef void(*VAction)(void*, TArg, TArg2, TArg3);
+
+	Delegate3()	{ Bind(nullptr); }
+	Delegate3(const Delegate3& dlg)	= delete;
+
+	// 全局函数或类静态函数
+    Delegate3(Action3 func)	{ Bind((void*)func); }
+    Delegate3(TAction func)	{ Bind((void*)func); }
+    Delegate3& operator=(Action3 func)	{ Bind((void*)func); return *this; }
+    Delegate3& operator=(TAction func)	{ Bind((void*)func); return *this; }
+
+	// 带目标的全局函数
+	template<typename T>
+	Delegate3(void(*func)(T&, TArg, TArg2, TArg3), T* target)	{ Bind((void*)func, target); }
+
+	// 类成员函数
+	template<typename T>
+	Delegate3(void(T::*func)(TArg, TArg2, TArg3), T* target)		{ Bind((void*)&func, target); }
+
+	// 执行委托
+	void operator()(TArg arg, TArg2 arg2, TArg3 arg3)
+	{
+		if(Method)
+		{
+			if(Target)
+				(*(VAction*)Method)(Target, arg, arg2, arg3);
+			else
+				(*(TAction*)Method)(arg, arg2, arg3);
 		}
 	}
 };
