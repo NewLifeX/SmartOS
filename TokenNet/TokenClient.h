@@ -18,7 +18,7 @@ class TokenClient
 {
 public:
 	uint	Token;	// 令牌
-
+	bool	Opened;
 	int		Status;	// 状态。0准备、1握手完成、2登录后
 
 	UInt64	LoginTime;	// 登录时间ms

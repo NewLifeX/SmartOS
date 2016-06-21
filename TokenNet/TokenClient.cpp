@@ -15,8 +15,6 @@
 
 #include "Security\RC4.h"
 
-//static bool OnTokenClientReceived(void* sender, Message& msg, void* param);
-
 static void LoopTask(void* param);
 static void BroadcastHelloTask(void* param);
 
@@ -25,6 +23,7 @@ TokenClient::TokenClient()
 {
 	Token		= 0;
 
+	Opened		= false;
 	Status		= 0;
 	LoginTime	= 0;
 	LastActive	= 0;
@@ -41,50 +40,41 @@ TokenClient::TokenClient()
 
 void TokenClient::Open()
 {
+	if(Opened) return;
+
 	TS("TokenClient::Open");
 	assert(Control, "令牌客户端还没设置控制器呢");
 
 	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
 	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
 	Control->Received	= dlg;
-	//Control->Param		= this;
 	Control->Open();
 
-	//auto ctrl	= Control;
 	if(Local && Local != Control)
 	{
-		// 向服务端握手时，汇报内网本地端口，用户端将会通过该端口连接
-		//ctrl	= Local;
-
 		Local->Received	= Control->Received;
-		//Local->Param	= this;
 		Local->Open();
 	}
-
-	/*// 设置握手广播的本地地址和端口
-	auto sock	= ctrl->Socket;
-	if(sock)
-	{
-		auto& ep = Hello.EndPoint;
-		ep.Address	= sock->Host->IP;
-		ep.Port		= sock->Local.Port;
-	}
-	Hello.Cipher	= "RC4";
-	Hello.Name		= Cfg->User();*/
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
 	_taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+
+	Opened	= true;
 }
 
 void TokenClient::Close()
 {
+	if(!Opened) return;
+
 	Sys.RemoveTask(_task);
 	Sys.RemoveTask(_taskBroadcast);
 
 	Control->Close();
 	if(Local && Local != Control) Local->Close();
+
+	Opened	= false;
 }
 
 bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
@@ -164,16 +154,6 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 		}
 	}
 }
-
-/*bool OnTokenClientReceived(void* sender, Message& msg, void* param)
-{
-	auto ctrl = (TokenController*)sender;
-	assert_ptr(ctrl);
-	auto client = (TokenClient*)param;
-	assert_ptr(client);
-
-	return client->OnReceive((TokenMessage&)msg, ctrl);
-}*/
 
 // 常用系统级消息
 
@@ -280,8 +260,6 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 
 		Status	= 0;
 		Token	= 0;
-
-		//ext.Show(true);
 
 		// 未握手错误，马上重新握手
 		if(ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
@@ -392,13 +370,8 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 	if(socket == nullptr) return false;
 
 	Control->Port->Close();
-	//socket->Remote.Address	= ip;
 	socket->Remote.Port	= port;
 	socket->Server		= domain;
-	//socket->Change(domain, port);
-
-	// 等下次发数据的时候自动打开
-	//Control->Port->Open();
 
 	Cfg->ServerIP	= socket->Remote.Address.Value;
 
@@ -436,13 +409,10 @@ void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 
 	if(msg.Error)
 	{
-		//auto ms		= msg.ToStream();
-		//byte result = ms.ReadByte();
 		ErrorMessage em;
 		em.Read(msg);
 
 		debug_printf("注册失败，错误码 0x%02X！", em.ErrorCode);
-		//ms.ReadString().Show(true);
 		em.ErrorContent.Show(true);
 
 		return;
@@ -458,8 +428,6 @@ void TokenClient::OnRegister(TokenMessage& msg, TokenController* ctrl)
 	cfg->Show();
 	cfg->Save();
 
-	//Hello.Name	= reg.User;
-
 	Status	= 0;
 
 	Sys.SetTask(_task, true, 0);
@@ -474,7 +442,6 @@ void TokenClient::Login()
 
 	auto cfg	= Cfg;
 	login.User	= cfg->User();
-	//login.Pass	= MD5::Hash(cfg->Pass);
 
 	// 原始密码对盐值进行加密，得到登录密码
 	auto now	= Sys.Ms();
@@ -560,8 +527,6 @@ bool TokenClient::OnLocalLogin(TokenMessage& msg, TokenController* ctrl)
 
 	Reply(rs, ctrl);
 
-
-	//ctrl2->Key.Copy(0, login.User, 0, -1);
 	ctrl->Token 	= login.Token;
 
 	return true;
@@ -604,10 +569,7 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 	pinMsg.ReadMessage(msg);
 	UInt64 start = pinMsg.LocalTime;
 
-	UInt64 now = DateTime::Now().TotalMs();
-	int cost 	= (int)(now - start);
-	//if(cost < 0) cost = -cost;
-	// if(cost > 1000) ((TTime&)Time).SetTime(start / 1000);
+	int cost 	= (int)(Sys.Ms() - start);
 
 	if(Delay)
 		Delay = (Delay + cost) / 2;
