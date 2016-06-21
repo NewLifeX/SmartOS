@@ -53,5 +53,16 @@ String& TimeSpan::ToStr(String& str) const
 	if(sec < 10) str += '0';
 	str	= str + sec;
 
+	int ms	= Ms % 1000;
+	if(ms > 0)
+	{
+		str	+=	'.';
+		if(ms < 100)
+			str	+=	'0';
+		else if(ms < 10)
+			str	+= "00";
+		str	+= ms;
+	}
+
 	return str;
 }
