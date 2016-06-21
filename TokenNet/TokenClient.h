@@ -105,6 +105,7 @@ public:
 
 private:
 	uint	_task;
+	uint	_taskBroadcast;	// 广播任务
 };
 
 // 令牌会话

@@ -74,12 +74,14 @@ void TokenClient::Open()
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
-	Sys.AddTask(BroadcastHelloTask, this, 2000, 30000, "令牌广播");
+	// 令牌广播使用素数，避免跟别的任务重叠
+	_taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 }
 
 void TokenClient::Close()
 {
 	Sys.RemoveTask(_task);
+	Sys.RemoveTask(_taskBroadcast);
 
 	Control->Close();
 	if(Local && Local != Control) Local->Close();
