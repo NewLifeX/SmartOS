@@ -65,7 +65,7 @@ void TSys::ShowInfo() const
 	//byte* ver = (byte*)&Version;
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	//debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
-	Version v(0, 0, Ver, 0);
+	Version v(0, 0, Ver);
 	debug_printf("Ver:%s Build:%s\r\n", v.ToString().GetBuffer(), v.Compile().ToString().GetBuffer());
 
 	OnShowInfo();
