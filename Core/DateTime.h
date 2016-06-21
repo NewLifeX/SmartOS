@@ -2,6 +2,7 @@
 #define __DateTime_H__
 
 #include "Buffer.h"
+#include "TimeSpan.h"
 
 // 时间日期
 class DateTime : public Object
@@ -46,6 +47,11 @@ public:
 	DateTime AddMinutes(int value) const;
 	DateTime AddSeconds(int value) const;
 	DateTime AddMilliseconds(Int64 value) const;
+	DateTime Add(const TimeSpan& value) const;
+    
+	DateTime operator+(const TimeSpan& value);
+	DateTime operator-(const TimeSpan& value);
+    friend TimeSpan operator-(const DateTime& left, const DateTime& right);
 
 	// 时间比较
 	int CompareTo(const DateTime& value) const;

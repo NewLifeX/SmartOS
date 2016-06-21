@@ -293,6 +293,18 @@ DateTime DateTime::AddMilliseconds(Int64 value) const
 	return dt;
 }
 
+DateTime DateTime::Add(const TimeSpan& value) const { return AddMilliseconds(value.Ms); }
+DateTime DateTime::operator+(const TimeSpan& value) { return AddMilliseconds(value.Ms); }
+DateTime DateTime::operator-(const TimeSpan& value) { return AddMilliseconds(-value.Ms); }
+
+TimeSpan operator-(const DateTime& left, const DateTime& right)
+{
+	TimeSpan ts;
+	ts.Ms	= left.TotalMs() - right.TotalMs();
+
+	return ts;
+}
+
 int DateTime::CompareTo(const DateTime& value) const
 {
 	int n	= (int)Year	- value.Year;
