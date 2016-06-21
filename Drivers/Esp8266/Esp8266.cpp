@@ -73,7 +73,7 @@ void Esp8266::OpenAsync()
 	if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
 
 	// 马上调度一次
-	Sys.SetTask(_task, true, 1);
+	Sys.SetTask(_task, true, 0);
 }
 
 bool Esp8266::OnOpen()
@@ -458,7 +458,21 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 
 void Esp8266::Process()
 {
-	
+	if(_Buffer.Length() <= 1) return;
+
+	byte idx	= _Buffer[0];
+	if(idx >= ArrayLength(_sockets)) return;
+
+	// 分发给各个Socket
+	auto es	= (EspSocket**)_sockets;
+	auto sk	= es[idx];
+	if(sk)
+	{
+		sk->OnProcess(_Buffer.Sub(1, -1), _Remote);
+	}
+
+	// 清零长度，其它数据包才可能进来
+	_Buffer.SetLength(0);
 }
 
 /*
@@ -505,21 +519,29 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 	int s	= sp.Position;
 	if(s <= 0) return 0;
 
-	// 分发给各个Socket
-	auto es	= (EspSocket**)_sockets;
-	auto sk	= es[idx];
-	if(sk)
+	// 校验数据长度
+	int len2	= len;
+	int remain	= bs.Length() - s;
+	if(remain < len2)
 	{
-		// 校验数据长度
-		int len2	= len;
-		int remain	= bs.Length() - s;
-		if(remain < len2)
-		{
-			len2	= remain;
-			net_printf("剩余数据长度 %d 小于标称长度 %d \r\n", remain, len);
-		}
+		len2	= remain;
+		net_printf("剩余数据长度 %d 小于标称长度 %d \r\n", remain, len);
+	}
 
-		sk->OnProcess(bs.Sub(s, len2), ep);
+	//sk->OnProcess(bs.Sub(s, len2), ep);
+	// 如果有数据包正在处理，则丢弃
+	if(_Buffer.Length() > 0)
+	{
+		net_printf("已有数据包 %d 字节正在处理，丢弃当前数据包 %d 字节 \r\n", _Buffer.Length(), len2);
+	}
+	else
+	{
+		_Remote	= ep;
+		// 第一字节放Socket索引，数据包放在后面
+		_Buffer.SetAt(0, idx);
+		_Buffer.Copy(1, bs, s, len2);
+
+		Sys.SetTask(_task, true, 0);
 	}
 
 	return sp.Position + len;
