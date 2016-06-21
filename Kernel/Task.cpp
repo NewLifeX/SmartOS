@@ -105,7 +105,7 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 	if(NextTime > 0 && NextTime > now) return false;
 
 	// 事件型任务，并且当前可用时间超过10ms，允许调度
-	if(Event && now + 10 < end) return true;
+	//if(Event && now + 10 < end) return true;
 
 	// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
 	if(now + CostMs > end) return false;
@@ -320,7 +320,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 
 	// 如果有最小时间，睡一会吧
 	now = Sys.Ms();	// 当前时间
-	if(/*msMax == 0xFFFFFFFF &&*/ min != UInt64_Max && min > now)
+	if(msMax == 0xFFFFFFFF && min != UInt64_Max && min > now)
 	{
 		min -= now;
 		//debug_printf("任务空闲休眠 %d ms \r\n", (uint)(min/1000));
