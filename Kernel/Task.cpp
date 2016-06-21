@@ -318,14 +318,13 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		Cost = ct;
 	if(ct > MaxCost) MaxCost = ct;
 
+	// 有可能这一次轮询是有限时间
+	if(min > end) min	= end;
 	// 如果有最小时间，睡一会吧
 	now = Sys.Ms();	// 当前时间
-	if(msMax == 0xFFFFFFFF && min != UInt64_Max && min > now)
+	if(/*msMax == 0xFFFFFFFF &&*/ min != UInt64_Max && min > now)
 	{
 		min -= now;
-		//debug_printf("任务空闲休眠 %d ms \r\n", (uint)(min/1000));
-		// 睡眠时间不能过长，否则可能无法喂狗
-		//if(min > 1000) min = 1000;
 		Sleeping = true;
 		Time.Sleep(min, &Sleeping);
 		Sleeping = false;
