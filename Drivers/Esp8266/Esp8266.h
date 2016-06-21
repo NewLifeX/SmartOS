@@ -96,7 +96,7 @@ private:
 	ByteArray	_Buffer;	// 待处理数据包
 	IPEndPoint	_Remote;	// 当前数据包远程地址
 
-	static void LoopTask(void* param);
+	//static void LoopTask(void* param);
 	// 处理收到的数据包
 	void Process();
 
