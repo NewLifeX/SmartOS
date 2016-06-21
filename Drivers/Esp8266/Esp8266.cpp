@@ -106,7 +106,8 @@ bool Esp8266::OnOpen()
 
 #if NET_DEBUG
 	// 获取版本
-	auto ver	= GetVersion();
+	GetVersion();
+	//auto ver	= GetVersion();
 	//net_printf("版本:");
 	//ver.Show(true);
 #endif
