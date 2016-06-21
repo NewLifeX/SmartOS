@@ -110,7 +110,7 @@ Array& Array::operator = (Array&& rval)
 // 设置数组长度。容量足够则缩小Length，否则扩容以确保数组容量足够大避免多次分配内存
 bool Array::SetLength(int len)
 {
-	return SetLength(len, false);
+	return SetLength(len, true);
 }
 
 bool Array::SetLength(int len, bool bak)
@@ -159,8 +159,8 @@ int Array::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
 		if(len > remain) len	= remain;
 	}
 
-	// 左边不足时自动扩容
-	if(Length() < len) SetLength(len);
+	// 左边不足时自动扩容，需要备份已有数据
+	if(Length() < destIndex + len) SetLength(destIndex + len, true);
 
 	return Buffer::Copy(destIndex, src, srcIndex, len);
 }
