@@ -92,6 +92,13 @@ private:
     OutputPort	_power;
     OutputPort	_rst;
 
+	uint		_task;		// 调度任务
+	ByteArray	_Buffer;	// 待处理数据包
+
+	static void LoopTask(void* param);
+	// 处理收到的数据包
+	void Process();
+
 	void*		_Expect;	// 等待内容
 
 	// 多个硬件socket

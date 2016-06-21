@@ -34,6 +34,8 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	if(power != P0) _power.Init(power, false);
 	if(rst != P0) _rst.Init(rst, true);
 
+	_task		= 0;
+
 	AutoConn	= false;
 
 	Led			= nullptr;
@@ -55,11 +57,23 @@ Esp8266::~Esp8266()
 	delete Pass;
 }
 
+void Esp8266::LoopTask(void* param)
+{
+	auto& esp	= *(Esp8266*)param;
+	if(!esp.Opened)
+		esp.Open();
+	else
+		esp.Process();
+}
+
 void Esp8266::OpenAsync()
 {
 	if(Opened) return;
 
-	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, this, 0, -1, "Esp8266");
+	if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
+
+	// 马上调度一次
+	Sys.SetTask(_task, true, 1);
 }
 
 bool Esp8266::OnOpen()
@@ -162,11 +176,15 @@ bool Esp8266::OnOpen()
 
 	if(NetReady) NetReady(*this);
 
+	if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
+
 	return true;
 }
 
 void Esp8266::OnClose()
 {
+	if(_task) Sys.RemoveTask(_task);
+
 	_power.Close();
 	_rst.Close();
 
@@ -436,6 +454,11 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	}
 
 	return 0;
+}
+
+void Esp8266::Process()
+{
+	
 }
 
 /*
