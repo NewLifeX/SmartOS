@@ -340,6 +340,7 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 	auto end	= start + msMax;
 	auto ms		= (int)msMax;
 
+	TimeCost tc;
 	// 如果休眠时间足够长，允许多次调度其它任务
 	while(ms > 0 && !cancel)
 	{
@@ -351,7 +352,7 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 	Current	= task;
 
 	int cost	= (int)(Sys.Ms() - start);
-	if(task) task->SleepTime	+= cost;
+	if(task) task->SleepTime	+= tc.Elapsed();
 
 	return cost;
 }
