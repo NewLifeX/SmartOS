@@ -183,7 +183,7 @@ void LoopTask(void* param)
 			client->Ping();
 			break;
 	}
-	client->SayHello(true);
+	//client->SayHello(true);
 }
 
 void BroadcastHelloTask(void* param)
