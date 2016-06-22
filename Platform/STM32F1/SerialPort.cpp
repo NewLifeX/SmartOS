@@ -212,7 +212,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 	// 溢出
 	if(USART_GetFlagStatus(st, USART_FLAG_ORE) != RESET)
 	{
-		USART_ClearFlag(st, USART_FLAG_ORE);
+		//USART_ClearFlag(st, USART_FLAG_ORE);	// ST 库文件 ClearFlag 不许动 USART_FLAG_ORE 寄存器
 		// 读取并扔到错误数据
 		USART_ReceiveData(st);
 		sp->Error++;
