@@ -1,7 +1,7 @@
-﻿#include "Core\DateTime.h"
+﻿#include "DateTime.h"
 
 #include "Task.h"
-#include "Time.h"
+#include "TTime.h"
 
 Task::Task()
 {

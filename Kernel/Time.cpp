@@ -1,8 +1,12 @@
-﻿#include <time.h>
-
-#include "Time.h"
+﻿#include "TTime.h"
 
 #include "Environment.h"
+
+#if defined(__CC_ARM)
+	#include <time.h>
+#else
+	#include <ctime>
+#endif
 
 #define TIME_DEBUG 0
 

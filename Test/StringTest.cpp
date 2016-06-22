@@ -1,5 +1,5 @@
-﻿#include "String.h"
-#include "Time.h"
+﻿#include "SString.h"
+#include "TTime.h"
 
 #if DEBUG
 

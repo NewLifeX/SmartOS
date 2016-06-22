@@ -11,7 +11,7 @@
 #include "Net\DNS.h"
 
 #include "W5500.h"
-#include "Time.h"
+#include "TTime.h"
 #include "Task.h"
 
 #define NET_DEBUG DEBUG

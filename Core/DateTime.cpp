@@ -3,7 +3,11 @@
 #include "SString.h"
 #include "DateTime.h"
 
-#include <time.h>
+#if defined(__CC_ARM)
+	#include <time.h>
+#else
+	#include <ctime>
+#endif
 
 /************************************************ DateTime ************************************************/
 

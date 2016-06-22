@@ -1,7 +1,6 @@
 ﻿#ifndef __BUTTON_GRAY_LEVEL_H__
 #define __BUTTON_GRAY_LEVEL_H__
 
-#include "Sys.h"
 #include "Port.h"
 #include "Timer.h"
 #include "Message\DataStore.h"

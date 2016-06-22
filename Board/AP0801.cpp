@@ -262,7 +262,7 @@ void SetWiFiTask(void* param)
 
 	assert(rs, "OnInvoke");
 
-	debug_printf("Invoke测试通过");
+	debug_printf("Invoke测试通过\r\n");
 #endif
 }
 

@@ -94,7 +94,7 @@ SmartIRQ::~SmartIRQ()
 
 /*================================ 锁 ================================*/
 
-#include "Time.h"
+#include "TTime.h"
 
 // 智能锁。初始化时锁定一个整数，销毁时解锁
 Lock::Lock(int& ref)

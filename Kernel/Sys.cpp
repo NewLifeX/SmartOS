@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 
-#include "Time.h"
+#include "TTime.h"
 
 TSys Sys;
 const TTime Time;
