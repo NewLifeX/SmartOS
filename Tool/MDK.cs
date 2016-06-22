@@ -39,10 +39,16 @@ namespace NewLife.Reflection
                 }
 
                 XTrace.WriteLine("发现 {0} {1} {2}", mdk.Name, mdk.Version, mdk.ToolPath);
-                //basePath = mdk.ToolPath.CombinePath("ARMCLANG\\bin").GetFullPath();
-                //if (!Directory.Exists(basePath)) basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
-                // CLang编译器用来检查语法非常棒，但是对代码要求很高，我们有很多代码需要改进，暂时不用
-                basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
+				if(CLang)
+				{
+					basePath = mdk.ToolPath.CombinePath("ARMCLANG\\bin").GetFullPath();
+					if (!Directory.Exists(basePath)) basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
+				}
+				else
+				{
+					// CLang编译器用来检查语法非常棒，但是对代码要求很高，我们有很多代码需要改进，暂时不用
+					basePath = mdk.ToolPath.CombinePath("ARMCC\\bin").GetFullPath();
+				}
             }
 
             Complier = basePath.CombinePath("armcc.exe");
@@ -115,6 +121,9 @@ namespace NewLife.Reflection
         /// <summary>重新编译时间，默认60分钟</summary>
         public Int32 RebuildTime { get; set; }
 
+        /// <summary>是否使用最新的MDK 6.4</summary>
+        public Boolean CLang { get; set; }
+
         /// <summary>定义集合</summary>
         public ICollection<String> Defines { get; private set; }
 
@@ -175,9 +184,9 @@ namespace NewLife.Reflection
                 /*
                  * -xc --target=arm-arm-none-eabi -mcpu=cortex-m3 -c
                  * -funsigned-char
-                 * -D__MICROLIB -gdwarf-3 -O0 -ffunction-sections 
-                 * -I ..\Lib\inc -I ..\Lib\CMSIS -I ..\SmartOS -I ..\SmartOS\Core -I ..\SmartOS\Device 
-                 * -I ..\SmartOS\Kernel 
+                 * -D__MICROLIB -gdwarf-3 -O0 -ffunction-sections
+                 * -I ..\Lib\inc -I ..\Lib\CMSIS -I ..\SmartOS -I ..\SmartOS\Core -I ..\SmartOS\Device
+                 * -I ..\SmartOS\Kernel
                  * -D__UVISION_VERSION="520" -DSTM32F10X_HD -DSTM32F1 -DDEBUG -DUSE_FULL_ASSERT -DR24
                  * -o .\Obj\*.o -MD
                  */
