@@ -209,7 +209,7 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -I{0}", item);
             }
-			if(Directory.Exists(IncPath)) sb.AppendFormat(" -I{0}", IncPath);
+			//if(Directory.Exists(IncPath)) sb.AppendFormat(" -I{0}", IncPath);
 
             return sb.ToString();
         }
@@ -268,7 +268,10 @@ namespace NewLife.Reflection
             var sb = new StringBuilder();
             sb.Append(cmd);
             if (Preprocess)
+            {
                 sb.AppendFormat(" -E");
+                sb.AppendFormat(" -o \"{0}.{1}\"", objName, Path.GetExtension(file).TrimStart("."));
+            }
             else
                 sb.AppendFormat(" -o \"{0}.o\"", objName);
             sb.AppendFormat(" -c \"{0}\"", file);
