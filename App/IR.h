@@ -3,7 +3,7 @@
 #define __IR_H__
 
 #include "Buffer.h"
-#include "Timer.h"
+#include "Pwm.h"
 #include "Port.h"
 
 /*

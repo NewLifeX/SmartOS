@@ -2,7 +2,7 @@
 #define __BUTTON_GRAY_LEVEL_H__
 
 #include "Port.h"
-#include "Timer.h"
+#include "Pwm.h"
 #include "Message\DataStore.h"
 
 struct ButtonPin
