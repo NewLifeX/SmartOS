@@ -1,5 +1,5 @@
-﻿#include "Task.h"
-#include "Time.h"
+﻿#include "Type.h"
+#include "Interrupt.h"
 
 #include "Heap.h"
 
@@ -18,8 +18,8 @@
 // 内存块。大小和下一块地址
 typedef struct MemoryBlock_
 {
-	uint32_t Used;
-	struct MemoryBlock_* Next;
+	uint	Used;
+	struct MemoryBlock_*	Next;
 } MemoryBlock;
 
 /******************************** Heap ********************************/
@@ -39,18 +39,13 @@ Heap::Heap(uint addr, uint size)
 	mb->Next = (MemoryBlock*)(end - sizeof(MemoryBlock));
 	mb->Next->Used = sizeof(MemoryBlock);
 	mb->Next->Next = nullptr;
+
+	_Used	= sizeof(MemoryBlock) << 1;
+	_Count	= 0;
 }
 
-uint Heap::Used() const
-{
-	uint used	= 0;
-
-	for(auto mcb=(MemoryBlock*)Address; mcb!=nullptr; mcb = mcb->Next)
-	{
-		used	+= mcb->Used;
-	}
-	return used;
-}
+uint Heap::Used()	const { return _Used; }
+uint Heap::Count()	const { return _Count; }
 
 void* Heap::Alloc(uint size)
 {
@@ -75,6 +70,9 @@ void* Heap::Alloc(uint size)
 
 			ret	= (void*)((uint)(tmp+1));
 
+			_Used	+= need;
+			_Count++;
+
 			break;
 		}
 	}
@@ -92,7 +90,11 @@ void Heap::Free(void* ptr)
 	{
 		if(find == mcb)
 		{
+			_Used	-= (uint)find->Next - (uint)prev->Next;
+			_Count--;
+
 			prev->Next = find->Next;
+
 			break;
 		}
 		prev = find;
