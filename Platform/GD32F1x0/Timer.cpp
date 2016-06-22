@@ -209,7 +209,7 @@ void Timer::OnHandler(ushort num, void* param)
 	}
 }
 
-/*================ PWM ================*/
+/*================ Pwm ================*/
 
 // STM32F030 的   先这么写着 后面再对 103 做调整
 typedef void (*TIM_OCInit)(TIM_TypeDef* TIMx, TIM_OCInitTypeDef* TIM_OCInitStruct);
@@ -227,9 +227,9 @@ const static TIM_OCInit OCInits[4]={TIM_OC1Init, TIM_OC2Init, TIM_OC3Init, TIM_O
 //{
 //};
 
-void PWM::Config()
+void Pwm::Config()
 {
-	TS("PWM::Config");
+	TS("Pwm::Config");
 
 	Timer::Config();	// 主要是配置时钟基础部分 TIM_TimeBaseInit
 
@@ -266,7 +266,7 @@ void PWM::Config()
 	if(Pulses) SetHandler(true);
 }
 
-void PWM::FlushOut()
+void Pwm::FlushOut()
 {
 	TIM_OCInitTypeDef oc;
 
@@ -287,7 +287,7 @@ void PWM::FlushOut()
 	}
 }
 
-void PWM::Open()
+void Pwm::Open()
 {
 	Timer::Open();
 
@@ -305,7 +305,7 @@ void PWM::Open()
 #endif
 }
 
-void PWM::Close()
+void Pwm::Close()
 {
 #if defined(STM32F1) || defined(GD32F150)
 	if(_index == 0 ||_index == 7||_index == 14 ||_index == 15|| _index == 16)
@@ -319,7 +319,7 @@ void PWM::Close()
 	Timer::Close();
 }
 
-void PWM::OnInterrupt()
+void Pwm::OnInterrupt()
 {
 	if(!Pulses || !PulseCount || PulseIndex > PulseCount) return;
 

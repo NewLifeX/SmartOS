@@ -4,14 +4,14 @@
 #include "Timer.h"
 
 // 脉冲宽度调制
-class PWM : public Timer
+class Pwm : public Timer
 {
 public:
 	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
 
-	PWM(TIMER index);		// index 定时器编号
+	Pwm(TIMER index);		// index 定时器编号
 
 	virtual void Open();
 	virtual void Close();

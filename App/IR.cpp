@@ -11,7 +11,7 @@ DMA1    Channel3  通道
 
 */
 
-IR::IR(PWM * pwm)
+IR::IR(Pwm * pwm)
 {
 	_Pwm = pwm;
 }

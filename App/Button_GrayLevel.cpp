@@ -53,7 +53,7 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	if (relay != P0) Relay.Init(relay, relayInvert).Open();
 }
 
-void Button_GrayLevel::Set(PWM* drive, byte pulseIndex)
+void Button_GrayLevel::Set(Pwm* drive, byte pulseIndex)
 {
 	if (drive && pulseIndex < 4)
 	{
@@ -241,8 +241,8 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 	debug_printf("\r\n初始化开关按钮 \r\n");
 
 	// 配置PWM来源
-	static PWM LedPWM(tim);
-	// 设置分频 尽量不要改 Prescaler * Period 就是 PWM 周期
+	static Pwm LedPWM(tim);
+	// 设置分频 尽量不要改 Prescaler * Period 就是 Pwm 周期
 	LedPWM.Prescaler = 0x04;		// 随便改  只要肉眼看不到都没问题
 	LedPWM.Period = 0xFF;		// 对应灰度调节范围
 	LedPWM.Polarity = true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态

@@ -2,7 +2,7 @@
 
 #include "Pwm.h"
 
-PWM::PWM(TIMER index) : Timer(index)
+Pwm::Pwm(TIMER index) : Timer(index)
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
 
@@ -14,7 +14,7 @@ PWM::PWM(TIMER index) : Timer(index)
 	Configed	= 0x00;
 }
 
-void PWM::SetPulse(int idx, ushort pulse)
+void Pwm::SetPulse(int idx, ushort pulse)
 {
 	if(Pulse[idx] == pulse) return;
 

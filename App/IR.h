@@ -23,7 +23,7 @@
 class IR
 {
 public:
-	IR(PWM * pwm);
+	IR(Pwm * pwm);
 	
 	bool Open();
 	bool Close();
@@ -32,7 +32,7 @@ public:
 	int Receive(Buffer& bs, int sTimeout = 10);
 
 private:
-	PWM*	_Pwm			= nullptr;
+	Pwm*	_Pwm			= nullptr;
 	Timer*	_Tim			= nullptr;
 	AlternatePort * _Port	= nullptr;
 	bool	_SendOK;

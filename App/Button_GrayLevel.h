@@ -54,7 +54,7 @@ public:
 
 	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
 	// led 驱动器设置
-	void Set(PWM* drive, byte pulseIndex);
+	void Set(Pwm* drive, byte pulseIndex);
 	bool GetValue();
 	void SetValue(bool value);
 	void RenewGrayLevel();
@@ -67,8 +67,8 @@ public:
 	virtual byte OnRead();
 
 private:
-	// 指示灯灰度驱动器 PWM;
-	PWM* 	_Pwm;
+	// 指示灯灰度驱动器 Pwm;
+	Pwm* 	_Pwm;
 	byte	_Channel;
 
 	bool _Value; // 状态

@@ -4,15 +4,15 @@
 
 
 /* 红外
-PWM * IRFREQ()
+Pwm * IRFREQ()
 {
-	// PWM 引脚初始化
+	// Pwm 引脚初始化
 	AlternatePort* irpin = new AlternatePort(PA8);	
 	irpin->Set(PA8);
 #if defined(STM32F0) || defined(STM32F4)
 	GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_2);
 #endif
-	PWM * IRFreq = new PWM(0x00);		// 红外
+	Pwm * IRFreq = new Pwm(0x00);		// 红外
 	//  38KHz 占空比 50%
 //	IRFreq->SetFrequency(38000);	// 严重不准确 103ve上实际输出只有25KHz
 #if defined(STM32F0)
@@ -32,10 +32,10 @@ PWM * IRFREQ()
 
 //网关C 
 //PB1			HIRPWM  (TIME3 CH4)
-PWM* IRFREQ()
+Pwm* IRFREQ()
 {
 	auto irpin	= new AlternatePort(PB1);	
-	auto IRFreq	= new PWM(Timer3);					
+	auto IRFreq	= new Pwm(Timer3);					
 	//  38KHz 占空比 50%
 //	IRFreq->SetFrequency(38000);	// 严重不准确 103ve上实际输出只有25KHz
 	IRFreq->Prescaler = 0x06;	
