@@ -599,8 +599,8 @@ void StatTask(void* param)
 	TS("TokenController::ShowStat");
 
 	auto st = (TokenStat*)param;
-
-	char cs[128];
+	// 这里输出  字节数 在 90-140   为了减少 new 直接使用256
+	char cs[256];
 	String str(cs, ArrayLength(cs));
 	str.SetLength(0);
 	st->ToStr(str);
