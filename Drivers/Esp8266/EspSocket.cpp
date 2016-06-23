@@ -131,6 +131,8 @@ bool EspSocket::SendData(const String& cmd, const Buffer& bs)
 		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
 		auto rt	= _Host.Send(cmd, ">", "ERROR", 1600);
 		if(rt.Contains(">")) break;
+
+		Sys.Sleep(500);
 	}
 	if(i<3 && _Host.Send(bs.AsString(), "SEND OK", "ERROR", 1600).Contains("SEND OK"))
 	{
