@@ -148,16 +148,23 @@ bool Esp8266::OnOpen()
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		if (!SSID || !*SSID || Mode == SocketMode::STA_AP)
+		bool join	= SSID && *SSID;
+		// 未组网时，打开AP，WsLink-xxxxxx
+		// 已组网是，STA_AP打开AP，Ws-123456789ABC
+		if (!join || Mode == SocketMode::STA_AP)
 		{
 			net_printf("启动AP模式!\r\n");
-			String wifiName = "WsLink-";
-			wifiName += Buffer(Sys.ID, 3).ToHex();
+			String name;
+			if(!join)
+				name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
+			else
+				// 这里需要等系统配置完成，修改为设备编码
+				name	= name + "Ws-" + Sys.Name;
 
 			int chn	= (Sys.Ms() % 14) + 1;
-			SetAP(wifiName, "", chn, 0, 1, 1);
+			SetAP(name, "", chn, 0, 1, 1);
 		}
-		if (SSID && *SSID)
+		if (join)
 		{
 			if (!JoinAP(*SSID, *Pass))	// Pass 可以为空
 			{
@@ -929,8 +936,12 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	*SSID	= ssid;
 	*Pass	= pass;
 
-	// 组网后单独STA模式
-	Mode	= SocketMode::STA;
+	// 组网后单独STA模式，调试时使用混合模式
+#if DEBUG
+	Mode	= SocketMode::STA_AP;
+#else
+	Mode	= SocketMode::Station;
+#endif
 
 	SaveConfig();
 

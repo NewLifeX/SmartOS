@@ -159,7 +159,8 @@ void TSys::Start()
 // 延迟异步重启
 void TSys::ResetAsync(int msDelay) const
 {
-	Sys.AddTask(&TSys::Reset, this, msDelay, -1, "延迟重启");
+	auto func	= &TSys::Reset;
+	AddTask(*(Action*)&func, (void*)this, msDelay, -1, "延迟重启");
 }
 
 // 系统启动后的毫秒数
