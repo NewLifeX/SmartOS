@@ -1,12 +1,9 @@
-﻿#include <string.h>
+﻿#include <cstring>
 
 #include "_Core.h"
 
 #include "Buffer.h"
 #include "SString.h"
-
-//static void memset(byte* ptr, byte item, uint len);
-//static void memcpy(byte* dst, const byte* src, uint len);
 
 /******************************** Buffer ********************************/
 
@@ -411,57 +408,11 @@ bool operator != (const Buffer& bs1, const void* ptr)
 	return bs1.CompareTo(ptr) != 0;
 }
 
-/*void memset(byte* ptr, byte item, uint len)
+/******************************** BufferRef ********************************/
+
+// 打包一个指针和长度指定的数据区
+void BufferRef::Set(void* ptr, int len)
 {
-	// 为了加快速度，分头中尾三部分
-	byte* p	= ptr;
-
-	// 为了让中间部分凑够4字节对齐
-	int n	= (uint)p & 0x03;
-	for(; n>0 && len>0; n--, len--)
-		*p++	= item;
-
-	// 中间部分，4字节对齐
-	if(len > 4)
-	{
-		int v	= (item << 24) | (item << 16) | (item << 8) | item;
-		int* pi	= (int*)p;
-		for(; len>4; len-=4)
-			*pi++	= v;
-		p	= (byte*)pi;
-	}
-
-	// 结尾部分
-	for(; len>0; len--)
-		*p++	= item;
+	_Arr	= (char*)ptr;
+	_Length	= len;
 }
-
-void memcpy(byte* dst, const byte* src, uint len)
-{
-	// 为了加快速度，分头中尾三部分
-
-	// 如果两个不能同时对齐，那么无法使用快速拷贝
-	int nd	= (uint)dst & 0x03;
-	int ns	= (uint)src & 0x03;
-	if(nd == ns)
-	{
-		// 为了让中间部分凑够4字节对齐
-		for(; nd>0 && len>0; nd--, len--)
-			*dst++	= *src++;
-
-		// 中间部分，4字节对齐
-		if(len > 4)
-		{
-			int* pd	= (int*)dst;
-			int* ps	= (int*)src;
-			for(; len>4; len-=4)
-				*pd++	= *ps++;
-			dst	= (byte*)pd;
-			src	= (byte*)ps;
-		}
-	}
-
-	// 结尾部分
-	for(; len>0; len--)
-		*dst++	= *src++;
-}*/

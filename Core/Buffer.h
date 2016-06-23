@@ -112,4 +112,14 @@ protected:
 	void move(Buffer& rval);
 };
 
+// 带引用计数的缓冲区
+class BufferRef : public Buffer
+{
+public:
+	int	Ref	= 1;	// 引用计数
+
+	// 打包一个指针和长度指定的数据区
+	void Set(void* ptr, int len);
+};
+
 #endif
