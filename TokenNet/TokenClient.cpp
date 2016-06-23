@@ -759,31 +759,30 @@ bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream&
 	void* ps	= nullptr;
 	if(!Routes.TryGetValue(action.GetBuffer(), ps) || !ps) return false;
 
-	auto ps2	= (int*)ps;
-	auto inv	= (InvokeHandler)ps2[0];
-	auto param	= (void*)ps2[1];
+	auto dlg	= (IDelegate*)ps;
+	auto inv	= (InvokeHandler)dlg->Method;
 
-	return inv(param, args, result);
+	return inv(dlg->Target, args, result);
 }
 
-void TokenClient::Register(const String& action, InvokeHandler handler, void* param)
+void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 {
-	auto act	= action.GetBuffer();
 	if(handler)
 	{
-		int* ps	= new int[2];
-		ps[0]	= (int)handler;
-		ps[1]	= (int)param;
-		Routes.Add(act, (void*)ps);
+		auto dlg	= new IDelegate();
+		dlg->Method	= (void*)handler;
+		dlg->Target	= param;
+
+		Routes.Add(action, dlg);
 	}
 	else
 	{
-		void* ps	= nullptr;
-		if(Routes.TryGetValue(act, ps))
+		void* dlg	= nullptr;
+		if(Routes.TryGetValue(action, dlg))
 		{
-			delete (int*)ps;
+			delete (IDelegate*)dlg;
 
-			Routes.Remove(act);
+			Routes.Remove(action);
 		}
 	}
 }

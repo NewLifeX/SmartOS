@@ -914,3 +914,25 @@ bool Esp8266::SetIPD(bool enable)
 	String cmd = "AT+CIPDINFO=";
 	return SendCmd(cmd + (enable ? '1' : '0'));
 }
+
+/******************************** 发送指令 ********************************/
+// 设置无线组网密码。匹配令牌协议
+bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
+{
+	String ssid;
+	String pass;
+
+	if(!args.Get("ssid", ssid)) return false;
+	if(!args.Get("pass", pass)) return false;
+
+	// 保存密码
+	*SSID	= ssid;
+	*Pass	= pass;
+
+	SaveConfig();
+
+	// 返回结果
+	result.Write((byte)true);
+
+	return true;
+}

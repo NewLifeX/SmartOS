@@ -5,6 +5,7 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 #include "Message\DataStore.h"
+#include "Message\BinaryPair.h"
 
 // 最好打开 Soket 前 不注册中断，以免AT指令乱入到中断里面去  然后信息不对称
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
@@ -80,6 +81,10 @@ public:
 	// 发送命令，自动检测并加上\r\n，等待响应OK
 	bool SendCmd(const String& cmd, uint msTimeout = 1000);
 	bool WaitForCmd(cstring expect, uint msTimeout);
+
+/******************************** 发送指令 ********************************/
+	// 设置无线组网密码。匹配令牌协议
+	bool SetWiFi(const BinaryPair& args, Stream& result);
 
 protected:
 	virtual bool OnOpen();

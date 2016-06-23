@@ -17,9 +17,6 @@
 
 #include "App\FlushPort.h"
 
-bool SetWiFi(const BinaryPair& args, BinaryPair& result);
-void SetWiFiTask(void* param);
-
 static FlushPort* CreateFlushPort(OutputPort* led)
 {
 	auto fp	= new FlushPort();
@@ -109,6 +106,15 @@ ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	return net;
 }
 
+void SetWiFiTask(void* param)
+{
+	auto ap	= (AP0801*)param;
+	auto client	= ap->Client;
+	auto esp	= (Esp8266*)ap->Host;
+
+	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+}
+
 ISocketHost* AP0801::Create8266()
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
@@ -126,11 +132,7 @@ ISocketHost* AP0801::Create8266()
 	net->InitConfig();
 	net->LoadConfig();
 
-	//net->SSID	= "yws007";
-	//net->Pass	= "yws52718";
-
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-	//net->NetReady	= onNetReady;
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 
@@ -213,57 +215,6 @@ TokenClient* AP0801::CreateClient()
 	}
 
 	return Client = client;
-}
-
-bool SetWiFi(void* param, const BinaryPair& args, Stream& result)
-{
-	ByteArray rs;
-
-	String ssid;
-	String pass;
-
-	if(!args.Get("ssid", ssid)) return false;
-	if(!args.Get("pass", pass)) return false;
-
-	/*auto ssid	= args.GetString("ssid");
-	auto pass	= args.GetString("pass");
-
-	if(!ssid || !pass) return false;*/
-
-	//todo 保存WiFi信息
-	//auto esp	= (ESP8266*)
-
-	//result.Set("Result", (byte)1);
-	result.Write((byte)1);
-
-	return true;
-}
-
-void SetWiFiTask(void* param)
-{
-	auto ap	= (AP0801*)param;
-	auto client	= ap->Client;
-
-	client->Register("SetWiFi", SetWiFi);
-
-#if DEBUG
-	MemoryStream ms1;
-
-	BinaryPair bp(ms1);
-	bp.Set("ssid", "yws007");
-	bp.Set("pass", "yws52718");
-
-	ms1.SetPosition(0);
-	BinaryPair args(ms1);
-
-	//ByteArray result;
-	MemoryStream result;
-	bool rs	= client->OnInvoke("SetWiFi", args, result);
-
-	assert(rs, "OnInvoke");
-
-	debug_printf("Invoke测试通过\r\n");
-#endif
 }
 
 /******************************** 2401 ********************************/
