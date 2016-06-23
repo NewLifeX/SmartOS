@@ -3,7 +3,6 @@
 
 #include "Port.h"
 #include "Power.h"
-#include "Time.h"
 
 /* 备注
 调用构造函数后 需要Open()一下

@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "TokenMessage.h"
+﻿#include "TokenMessage.h"
 
 #include "Net\Socket.h"
 #include "Security\RC4.h"

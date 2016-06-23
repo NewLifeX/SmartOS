@@ -1,5 +1,4 @@
 ﻿#include "SHT30.h"
-#include "Time.h"
 
 #define LITTLE_ENDIAN
 

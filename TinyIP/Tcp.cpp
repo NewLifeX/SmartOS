@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Tcp.h"
+﻿#include "Tcp.h"
 
 #include "WaitHandle.h"
 

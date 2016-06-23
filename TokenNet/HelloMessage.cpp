@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "HelloMessage.h"
+﻿#include "HelloMessage.h"
 
 #include "Message\BinaryPair.h"
 

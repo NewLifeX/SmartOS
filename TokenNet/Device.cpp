@@ -1,5 +1,4 @@
-﻿#include "Time.h"
-#include "Device.h"
+﻿#include "Device.h"
 
 /******************************** Device ********************************/
 

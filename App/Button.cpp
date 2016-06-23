@@ -1,5 +1,4 @@
 ﻿#include "Button.h"
-#include "Time.h"
 
 InputPort Button::ACZero;
 int Button::ACZeroAdjTime = 2300;

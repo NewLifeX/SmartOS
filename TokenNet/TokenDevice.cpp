@@ -1,6 +1,4 @@
-﻿#include "Time.h"
-
-#include "Net\Socket.h"
+﻿#include "Net\Socket.h"
 
 #include "TokenClient.h"
 

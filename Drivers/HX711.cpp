@@ -1,7 +1,5 @@
 ﻿#include "HX711.h"
 
-#include "Time.h"
-
 /*
 XH711 有两个通道  A   B
 A通道增益可以设置 64/128
