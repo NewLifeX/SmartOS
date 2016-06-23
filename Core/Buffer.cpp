@@ -1,4 +1,8 @@
-﻿#include <cstring>
+﻿#if defined(__CC_ARM)
+	#include <string.h>
+#else
+	#include <cstring>
+#endif
 
 #include "_Core.h"
 
