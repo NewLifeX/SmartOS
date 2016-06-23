@@ -929,10 +929,16 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	*SSID	= ssid;
 	*Pass	= pass;
 
+	// 组网后单独STA模式
+	Mode	= SocketMode::STA;
+
 	SaveConfig();
 
 	// 返回结果
 	result.Write((byte)true);
+
+	// 延迟重启
+	Sys.ResetAsync(1000);
 
 	return true;
 }

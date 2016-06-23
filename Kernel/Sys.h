@@ -111,7 +111,10 @@ public:
 
 	bool CheckMemory() const;
 
-    void Reset() const;   // 重启系统
+	// 重启系统
+    void Reset() const;
+	// 延迟异步重启
+	void ResetAsync(int msDelay) const;
 
 	// 系统跟踪
 	void InitTrace(void* port) const;
