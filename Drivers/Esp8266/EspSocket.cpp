@@ -78,7 +78,7 @@ bool EspSocket::OnOpen()
 		cmd	+= ",0";
 
 	// 打开Socket。有OK/ERROR/ALREADY CONNECTED三种
-	auto rt		= _Host.Send(cmd + "\r\n", "OK", "ERROR", 1600);
+	auto rt		= _Host.Send(cmd + "\r\n", "OK", "ERROR", 10000);
 	if(!rt.Contains("OK") && !rt.Contains("ALREADY CONNECTED"))
 	{
 		net_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
