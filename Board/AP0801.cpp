@@ -268,6 +268,32 @@ ITransport* AP0801::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 }*/
 
 /*
+网络使用流程：
+
+5500网线检测
+网线连通
+	启动DHCP
+	作为Host
+Host为空 或 AP/STA_AP
+	创建8266，加载配置
+	Host不为空 且 STA_AP
+		工作模式 = AP
+	打开8266
+	STA/STA_AP
+		SSID != null
+			JoinWiFi
+		else
+			工作模式 = AP
+	AP/STA_AP
+		SetAP
+	
+令牌客户端主通道
+令牌客户端内网通道
+	
+
+*/
+
+/*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)
 NSS			|				NSS			|	PD6			NSS
 CLK			|				SCK			|				SCK

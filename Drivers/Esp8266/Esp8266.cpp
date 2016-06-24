@@ -171,7 +171,14 @@ bool Esp8266::OnOpen()
 		}
 		if (join)
 		{
-			if (!JoinAP(*SSID, *Pass))	// Pass 可以为空
+			// 连接WiFi，重试两次
+			int i	= 0;
+			for(; i<2; i++)
+			{
+				// Pass 可以为空
+				if(JoinAP(*SSID, *Pass)) break;
+			}
+			if (i == 2)
 			{
 				net_printf("连接WiFi失败！\r\n");
 				return false;
