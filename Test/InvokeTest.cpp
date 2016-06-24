@@ -38,7 +38,7 @@ void InvokeTest(TokenClient * client)
 
 #if DEBUG
 	// 调用
-	client->OnInvoke("Test", args, result);
+	//client->OnInvoke("Test", args, result);
 #endif
 
 	bool isOk = true;
