@@ -159,7 +159,7 @@ bool Esp8266::OnOpen()
 				name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
 			else
 				// 这里需要等系统配置完成，修改为设备编码
-				name	= name + "Ws-" + Sys.Name;
+				name	= name + "WS-" + Sys.Name;
 
 			int chn	= (Sys.Ms() % 14) + 1;
 			SetAP(name, "", chn, 0, 1, 1);
