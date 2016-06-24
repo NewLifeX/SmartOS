@@ -17,6 +17,8 @@
 	#define net_printf(format, ...)
 #endif
 
+void LoadStationTask(void* param);
+
 /*
 		注意事项
 1、设置模式AT+CWMODE需要重启后生效AT+RST
@@ -162,7 +164,10 @@ bool Esp8266::OnOpen()
 				name	= name + "WS-" + Sys.Name;
 
 			int chn	= (Sys.Ms() % 14) + 1;
-			SetAP(name, "", chn, 0, 1, 1);
+			SetAP(name, "", chn);
+#if NET_DEBUG
+			Sys.AddTask(LoadStationTask, this, 10000, 10000, "LoadSTA");
+#endif
 		}
 		if (join)
 		{
@@ -952,4 +957,11 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	Sys.ResetAsync(1000);
 
 	return true;
+}
+
+void LoadStationTask(void* param)
+{
+	auto& esp	= *(Esp8266*)param;
+	auto rs		= esp.LoadStations();
+	if(rs) rs.Show(true);
 }
