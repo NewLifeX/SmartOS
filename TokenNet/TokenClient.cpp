@@ -28,6 +28,7 @@ TokenClient::TokenClient()
 	LoginTime	= 0;
 	LastActive	= 0;
 	Delay		= 0;
+	MaxNotActive	= 0;
 
 	Control		= nullptr;
 	Cfg			= nullptr;
@@ -60,6 +61,8 @@ void TokenClient::Open()
 	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
 	_taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+
+	LastActive = Sys.Ms();
 
 	Opened	= true;
 }
@@ -183,7 +186,10 @@ void LoopTask(void* param)
 			client->Ping();
 			break;
 	}
-	//client->SayHello(true);
+
+	// 最大不活跃时间ms，超过该时间时重启系统
+	// WiFi触摸开关建议5~10分钟，网关建议5分钟
+	if(LastActive + MaxNotActive < Sys.Ms()) Sys.Reset();
 }
 
 void BroadcastHelloTask(void* param)
