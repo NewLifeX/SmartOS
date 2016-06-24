@@ -145,10 +145,10 @@ bool Esp8266::OnOpen()
 
 	SetDHCP(Mode, true);
 
+	bool join	= SSID && *SSID;
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		bool join	= SSID && *SSID;
 		// 未组网时，打开AP，WsLink-xxxxxx
 		// 已组网是，STA_AP打开AP，Ws-123456789ABC
 		if (!join || Mode == SocketMode::STA_AP)
@@ -175,7 +175,7 @@ bool Esp8266::OnOpen()
 	}
 
 	// 拿到IP，网络就绪
-	if(Mode == SocketMode::Station || Mode == SocketMode::STA_AP)
+	if(join && (Mode == SocketMode::Station || Mode == SocketMode::STA_AP))
 	{
 		IP	= GetIP(true);
 

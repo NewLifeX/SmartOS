@@ -64,6 +64,9 @@ void ISocketHost::InitConfig()
 		mac[2 + i] = Sys.ID[3 - i];
 
 	Mode	= SocketMode::Wire;
+
+	if(SSID)	SSID->Clear();
+	if(Pass)	Pass->Clear();
 }
 
 bool ISocketHost::LoadConfig()
