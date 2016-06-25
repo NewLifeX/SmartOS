@@ -35,7 +35,7 @@ public:
 	void*			Param;
 
 	//TinyServer 有足够的理由持有设备列表
-	DevicesManagement DevMgmt;
+	DevicesManagement *pDevMgmt;
 	// 删除列表时候需要发送Disjoin消息  所以保留次函数
 	void ClearDevices();
 	// 云端处理设备时候回调

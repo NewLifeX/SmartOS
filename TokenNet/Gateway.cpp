@@ -76,8 +76,8 @@ void Gateway::Start()
 		dv->Name = Sys.Name;
 
 		//pDevMgmt->PushDev(dv);
-		// 放进持续在线表
-		pDevMgmt->OnlineAlways.Add(dv);
+		// 标记为永久在线设备
+		dv->Flag.BitFlag.OnlineAlws = 1;
 		pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
 	}
 

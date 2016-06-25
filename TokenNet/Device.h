@@ -8,6 +8,17 @@
 
 /******************************** Device ********************************/
 
+union DevFlag
+{
+	ushort Data;
+	struct
+	{
+		ushort OnlineAlws : 1;	// 持久在线
+		ushort Reserved : 15;	// 保留
+	}BitFlag;
+};
+
+
 // 设备信息
 class Device : public Object
 {
@@ -16,7 +27,7 @@ public:
 	byte	Address;	// 节点地址
 
 	ushort	Kind;		// 类型
-	byte	_HardID[16];	// 硬件编码
+	byte	_HardID[16];// 硬件编码
 	uint	LastTime;	// 活跃时间。秒
 	uint	RegTime;	// 注册时间。秒
 	uint	LoginTime;	// 登录时间。秒
@@ -30,10 +41,11 @@ public:
 	ushort	OfflineTime;// 离线阀值时间。秒
 	ushort	PingTime;	// 心跳时间。秒
 
-	byte	_Mac[6];		// 无线物理地址
+	byte	_Mac[6];	// 无线物理地址
 	char	_Name[16];	// 名称
-	//String	Name;		//变长名称
+	//String	Name;	// 变长名称
 	byte	_Pass[8];	// 通信密码
+	DevFlag  Flag;		// 其他状态
 
 	// 在Tiny网络下  作为设备的数据区的网关备份 加快访问速度
 	// 在Token网络下  直接作为虚拟设备的数据区
@@ -57,9 +69,10 @@ public:
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
 	void Read(Stream& ms);
+	/*
 	void WriteMessage(Stream& ms) const;
 	void ReadMessage(Stream& ms);
-
+	*/
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
 

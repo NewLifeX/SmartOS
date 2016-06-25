@@ -41,7 +41,7 @@ bool TinyServer::Send(Message& msg) const
 	// 附加目标物理地址
 	//if(!msg.State)
 	{
-		auto dv	= DevMgmt.FindDev(((TinyMessage&)msg).Dest);
+		auto dv	= pDevMgmt->FindDev(((TinyMessage&)msg).Dest);
 		if(!dv)	dv	= Current;
 		//if(dv)	msg.State	= dv->Mac;
 		if(dv)	dv->Mac.CopyTo(0, msg.State, -1);
@@ -70,12 +70,17 @@ void TinyServer::Start()
 	// 最后倒数8KB - 倒数位置4KB  的 4KB 空间
 	//const uint DevAddr = 0x8000000 + (Sys.FlashSize << 10) - (8 << 10);
 	//const uint DevSize = 4 << 10;
-	//DevMgmt.SetFlashCfg(DevAddr,DevSize);
+	//pDevMgmt->SetFlashCfg(DevAddr,DevSize);
 
-	auto count = DevMgmt.LoadDev();
+	if (DevicesManagement::Current)
+		pDevMgmt = DevicesManagement::Current;
+	else
+		pDevMgmt = new DevicesManagement();
+
+	auto count = pDevMgmt->LoadDev();
 
 	// 添加网关这一条设备信息
-	if (!DevMgmt.FindDev(Cfg->Address))
+	if (!pDevMgmt->FindDev(Cfg->Address))
 	{
 		// 如果全局设备列表内没有Server自己，则添加
 		auto dv = new Device();
@@ -86,17 +91,17 @@ void TinyServer::Start()
 		dv->HardID = Sys.ID;
 		dv->Name = Sys.Name;
 
-		// 放进持续在线表
-		DevMgmt.OnlineAlways.Add(dv);
-		//DevMgmt.PushDev(dv);
-		//DevMgmt.SaveDev();
-		DevMgmt.DeviceRequest(DeviceAtions::Register, dv);
+		// 标记为永久在线设备
+		dv->Flag.BitFlag.OnlineAlws = 1;
+		//pDevMgmt->PushDev(dv);
+		//pDevMgmt->SaveDev();
+		pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
 	}
 	// 注册Token控制设备列表时回调函数
-	DevMgmt.Register([](DeviceAtions act, const Device* dv, void *param) {((TinyServer*)(param))->DevPrsCallback(act, dv); }, this);
+	pDevMgmt->Register([](DeviceAtions act, const Device* dv, void *param) {((TinyServer*)(param))->DevPrsCallback(act, dv); }, this);
 
 	#if DEBUG
-	Sys.AddTask([](void *param) {((DevicesManagement*)(param))->ShowDev(); }, &DevMgmt, 10000, 30000, "节点列表");
+	Sys.AddTask([](void *param) {((DevicesManagement*)(param))->ShowDev(); }, pDevMgmt, 10000, 30000, "节点列表");
 #endif
 
 	Control->Open();
@@ -110,7 +115,7 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 	// 如果设备列表没有这个设备，那么加进去
 	byte id = msg.Src;
 	auto dv = Current;
-	if (!dv) dv = DevMgmt.FindDev(id);
+	if (!dv) dv = pDevMgmt->FindDev(id);
 	// 不响应不在设备列表设备的 非Join指令
 	if(!dv && msg.Code > 2) return;
 
@@ -120,14 +125,14 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 		{
 			if (!OnJoin(msg)) return;
 			dv = Current;
-			DevMgmt.DeviceRequest(DeviceAtions::Online, dv);
+			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
 			return;
 		}
 
 		case 2:
 		{
 			if (!OnDisjoin(msg))return;
-			DevMgmt.DeviceRequest(DeviceAtions::Delete, dv);
+			pDevMgmt->DeviceRequest(DeviceAtions::Delete, dv);
 			return;
 		}
 
@@ -180,7 +185,7 @@ bool TinyServer::Dispatch(TinyMessage& msg)
 	TS("TinyServer::Dispatch");
 
 	// 先找到设备
-	auto dv = DevMgmt.FindDev(msg.Dest);
+	auto dv = pDevMgmt->FindDev(msg.Dest);
 	if(!dv) return false;
 
 	// 设置当前设备
@@ -265,7 +270,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	if(dm.Kind == 0x1004) return false;
 
 	// 根据硬件编码找设备
-	auto dv = DevMgmt.FindDev(dm.HardID);
+	auto dv = pDevMgmt->FindDev(dm.HardID);
 	if(!dv)
 	{
 		if(!Study)
@@ -276,7 +281,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		// 从1开始派ID
 		id	= 1;
-		while(DevMgmt.FindDev(++id) != nullptr && id < 0xFF) { }
+		while(pDevMgmt->FindDev(++id) != nullptr && id < 0xFF) { }
 		debug_printf("发现节点设备 0x%04X ，为其分配 0x%02X\r\n", dm.Kind, id);
 		if(id == 0xFF) return false;
 
@@ -312,9 +317,9 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 
 		if(dv->Valid())
 		{
-			DevMgmt.DeviceRequest(DeviceAtions::Register, dv);
-			//DevMgmt.PushDev(dv);
-			//DevMgmt.SaveDev();	// 写好相关数据 校验通过才能存flash
+			pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
+			//pDevMgmt->PushDev(dv);
+			//pDevMgmt->SaveDev();	// 写好相关数据 校验通过才能存flash
 		}
 		else
 		{
@@ -372,7 +377,7 @@ bool TinyServer::OnDisjoin(const TinyMessage& msg)
 	// 如果是退网请求，这里也需要删除设备
 	if(!msg.Reply)
 	{
-		auto dv	= DevMgmt.FindDev(msg.Src);
+		auto dv	= pDevMgmt->FindDev(msg.Src);
 		if(dv)
 		{
 			// 拿出来硬件ID的校验，检查是否合法
@@ -414,7 +419,7 @@ bool TinyServer::Disjoin(byte id)
 {
 	TS("TinyServer::Disjoin");
 
-	auto dv  = DevMgmt.FindDev(id);
+	auto dv  = pDevMgmt->FindDev(id);
 	auto crc = Crc::Hash16(dv->HardID);
 
 	TinyMessage msg;
@@ -425,7 +430,7 @@ bool TinyServer::Disjoin(byte id)
 	msg.Length = ms.Position();
 
 	Send(msg);
-	DevMgmt.DeviceRequest(DeviceAtions::Delete,id);
+	pDevMgmt->DeviceRequest(DeviceAtions::Delete,id);
 
 	return true;
 }
@@ -434,7 +439,7 @@ bool TinyServer::OnPing(const TinyMessage& msg)
 {
 	TS("TinyServer::OnPing");
 
-	auto dv = DevMgmt.FindDev(msg.Src);
+	auto dv = pDevMgmt->FindDev(msg.Src);
 	// 网关内没有相关节点信息时不鸟他
 	if(dv == nullptr) return false;
 
@@ -629,12 +634,12 @@ void TinyServer::ClearDevices()
 	TS("TinyServer::ClearDevices");
 	debug_printf("准备清空设备，发送 Disjoin");
 
-	int count = DevMgmt.Length();
+	int count = pDevMgmt->Length();
 	for(int j = 0; j < 3; j++)		// 3遍
 	{
 		for(int i = 1; i < count; i++)	// 从1开始派ID  自己下线完全不需要
 		{
-			auto dv = (Device*)DevMgmt.DevArr[i];
+			auto dv = (Device*)pDevMgmt->DevArr[i];
 			if(!dv) continue;
 
 			TinyMessage rs;
@@ -645,7 +650,7 @@ void TinyServer::ClearDevices()
 		}
 	}
 	debug_printf("\r\n发送 Disjoin 完毕\r\n");
-	DevMgmt.ClearDev();
+	pDevMgmt->ClearDev();
 }
 
 void TinyServer::DevPrsCallback(DeviceAtions act, const Device * dv)

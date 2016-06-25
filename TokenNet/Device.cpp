@@ -9,22 +9,23 @@ Device::Device() :
 	Pass(_Pass, sizeof(_Pass)),
 	Store(_Store, sizeof(_Store))
 {
-	Address = 0;
-	Logined = false;
+	Address		= 0;
+	Logined		= false;
 
-	Kind = 0;
-	LastTime = 0;
-	RegTime = 0;
-	LoginTime = 0;
-	Logins = 0;
+	Kind		= 0;
+	LastTime	= 0;
+	RegTime		= 0;
+	LoginTime	= 0;
+	Logins		= 0;
 
-	Version = 0;
-	DataSize = 0;
-	ConfigSize = 0;
+	Version		= 0;
+	DataSize	= 0;
+	ConfigSize	= 0;
 
-	PingTime = 0;
+	PingTime	= 0;
 	OfflineTime = 0;
-	SleepTime = 0;
+	SleepTime	= 0;
+	Flag.Data	= 0;
 
 	HardID.Clear();
 	Mac.Clear();
@@ -32,9 +33,9 @@ Device::Device() :
 	Pass.Clear();
 	Store.Clear();
 
-	Cfg = nullptr;
+	Cfg			= nullptr;
 
-	LastRead = 0;
+	LastRead	= 0;
 	//LastWrite	= 0;
 }
 
@@ -64,6 +65,7 @@ void Device::Read(Stream& ms)
 	ms.SetPosition(p + len);
 }
 
+/*
 void Device::WriteMessage(Stream& ms) const
 {
 	byte* buf = ms.Current();
@@ -114,6 +116,7 @@ void Device::ReadMessage(Stream& ms)
 	// 最后位置
 	ms.SetPosition(p + size);
 }
+*/
 
 bool Device::Valid() const
 {
@@ -152,6 +155,10 @@ String& Device::ToStr(String& str) const
 	{
 		str += "\t";
 		str += Name;
+	}
+	if (Flag.BitFlag.OnlineAlws)
+	{
+		str += "  持久在线设备";
 	}
 	return str;
 }

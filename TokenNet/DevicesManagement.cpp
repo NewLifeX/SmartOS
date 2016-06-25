@@ -102,8 +102,8 @@ bool DevicesManagement::DeleteDev(byte id)
 		if (idx >= 0)DevArr[idx] = nullptr;
 
 		// 处理持久在线表
-		int idx2 = OnlineAlways.FindIndex(dv);
-		if (idx2 >= 0)OnlineAlways[idx2] = nullptr;
+		// int idx2 = OnlineAlways.FindIndex(dv);
+		// if (idx2 >= 0)OnlineAlways[idx2] = nullptr;
 
 		delete dv;
 		SaveDev();
@@ -570,20 +570,21 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 
 void DevicesManagement::MaintainState()
 {
-	if (Port)return;
+	if (!Port)return;
 	if (Port->Status < 2) return;
 	SendDevicesIDs();
 
-	auto now = Sys.Seconds();
+	//auto now = Sys.Seconds();
+	auto now = DateTime::Now().TotalSeconds();
 
 	// 处理持久在线设备
-	for (int i = 0; i < OnlineAlways.Count(); i++)
+	byte len = Length();
+	for (int i = 0; i < len; i++)
 	{
-		auto dv = (Device*)OnlineAlways[i];
-		if (dv) dv->LastTime = now;
+		auto dv = (Device*)DevArr[i];
+		if (dv && dv->Flag.BitFlag.OnlineAlws == 1)dv->LastTime = now;
 	}
 
-	byte len = Length();
 	for (int i = 0; i < len; i++)
 	{
 		auto dv = (Device*)DevArr[i];
