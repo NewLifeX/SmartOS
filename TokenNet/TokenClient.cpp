@@ -189,7 +189,8 @@ void LoopTask(void* param)
 
 	// 最大不活跃时间ms，超过该时间时重启系统
 	// WiFi触摸开关建议5~10分钟，网关建议5分钟
-	if(client->LastActive + client->MaxNotActive < Sys.Ms()) Sys.Reset();
+	// MaxNotActive 为零便不考虑重启
+	if(client->MaxNotActive != 0 && client->LastActive + client->MaxNotActive < Sys.Ms()) Sys.Reset();
 }
 
 void BroadcastHelloTask(void* param)
