@@ -165,3 +165,13 @@ IPAddress ISocketHost::QueryDNS(const String& domain)
 {
 	return IPAddress::Parse(domain);
 }
+
+bool ISocketHost::IsStation() const
+{
+	return Mode == SocketMode::Station || Mode == SocketMode::STA_AP;
+}
+
+bool ISocketHost::IsAP() const
+{
+	return Mode == SocketMode::AP || Mode == SocketMode::STA_AP;
+}

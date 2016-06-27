@@ -41,7 +41,6 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	AutoConn	= false;
 
 	Led			= nullptr;
-	NetReady	= nullptr;
 
 	_Expect		= nullptr;
 
@@ -198,8 +197,6 @@ bool Esp8266::OnOpen()
 		ShowConfig();
 	}
 
-	if(NetReady) NetReady(*this);
-
 	if(!_task) _task	= Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
 
 	return true;
@@ -263,8 +260,22 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 
 // 启用DNS
 bool Esp8266::EnableDNS() { return true; }
+
 // 启用DHCP
-bool Esp8266::EnableDHCP() { Mode	= SocketMode::STA_AP;	return true;/*  return SetDHCP(SocketMode::Both, true); */}
+bool Esp8266::EnableDHCP()
+{
+	//Mode	= SocketMode::STA_AP;
+	//return true;
+	//return SetDHCP(SocketMode::Both, true);
+
+	if(!Opened) return false;
+
+	if(!SetDHCP(SocketMode::STA_AP, true)) return false;
+
+	NetReady(*this);
+
+	return true;
+}
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeout)

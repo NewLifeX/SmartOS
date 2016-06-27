@@ -23,6 +23,7 @@ public:
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 	SocketMode	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
+	//bool		Ready;
 
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;
@@ -32,8 +33,7 @@ public:
 	String*		SSID;	// 无线SSID
 	String*		Pass;	// 无线密码
 
-	typedef void (*NetReadyHandler)(ISocketHost& host);
-	NetReadyHandler		NetReady;	// 网络准备就绪
+	Delegate<ISocketHost&>	NetReady;	// 网络准备就绪。带this参数
 
 	ISocketHost();
 	// 加上虚析构函数，因为应用层可能要释放该接口
@@ -56,6 +56,9 @@ public:
 	virtual bool EnableDNS() { return false; }
 	// 启用DHCP
 	virtual bool EnableDHCP() { return false; }
+
+	bool IsStation() const;
+	bool IsAP() const;
 };
 
 // Socket接口
