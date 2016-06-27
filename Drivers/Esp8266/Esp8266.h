@@ -13,6 +13,7 @@ class Esp8266 : public PackPort, public ISocketHost
 {
 public:
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
+	SocketMode	WorkMode;	// 工作模式
 
 	IDataPort*	Led;	// 指示灯
 

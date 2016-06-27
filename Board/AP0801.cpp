@@ -132,6 +132,9 @@ ISocketHost* AP0801::Create8266()
 	net->InitConfig();
 	net->LoadConfig();
 
+	// 配置模式作为工作模式
+	net->WorkMode	= net->Mode;
+
 	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
@@ -286,10 +289,10 @@ Host为空 或 AP/STA_AP
 			工作模式 = AP
 	AP/STA_AP
 		SetAP
-	
+
 令牌客户端主通道
 令牌客户端内网通道
-	
+
 
 */
 

@@ -48,6 +48,7 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	Buffer(_sockets, 5 * 4).Clear();
 
 	Mode	= SocketMode::STA_AP;
+	WorkMode= SocketMode::STA_AP;
 
 	SSID	= new String();
 	Pass	= new String();
@@ -130,22 +131,24 @@ bool Esp8266::OnOpen()
 	//ver.Show(true);
 #endif
 
+	auto mode	= WorkMode;
 	// 默认Both
-	if(Mode == SocketMode::Wire) Mode	= SocketMode::STA_AP;
+	if(mode == SocketMode::Wire) mode	= SocketMode::STA_AP;
 
-	if (GetMode() != Mode)
+	if (GetMode() != mode)
 	{
-		if(!SetMode(Mode))
+		if(!SetMode(mode))
 		{
 			net_printf("设置Station模式失败！");
 
 			return false;
 		}
+		mode	= WorkMode;
 	}
 
 	Config();
 
-	SetDHCP(Mode, true);
+	SetDHCP(mode, true);
 
 	bool join	= SSID && *SSID;
 	// 等待WiFi自动连接
@@ -153,7 +156,7 @@ bool Esp8266::OnOpen()
 	{
 		// 未组网时，打开AP，WsLink-xxxxxx
 		// 已组网是，STA_AP打开AP，Ws-123456789ABC
-		if (!join || Mode == SocketMode::STA_AP)
+		if (!join || mode == SocketMode::STA_AP)
 		{
 			net_printf("启动AP模式!\r\n");
 			String name;
@@ -187,7 +190,7 @@ bool Esp8266::OnOpen()
 	}
 
 	// 拿到IP，网络就绪
-	if(join && (Mode == SocketMode::Station || Mode == SocketMode::STA_AP))
+	if(join && (mode == SocketMode::Station || mode == SocketMode::STA_AP))
 	{
 		IP	= GetIP(true);
 
@@ -659,7 +662,7 @@ bool Esp8266::SetMode(SocketMode mode)
 
 	if (!SendCmd(cmd)) return false;
 
-	Mode	= mode;
+	WorkMode	= mode;
 
 	return true;
 }
