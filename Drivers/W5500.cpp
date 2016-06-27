@@ -764,11 +764,11 @@ bool W5500::EnableDNS()
 	return true;
 }
 
-static void OnDhcpStopTask(void* param)
+/*static void OnDhcpStopTask(void* param)
 {
 	auto& net	= *(W5500*)param;
 	if(net.NetReady) net.NetReady(net);
-}
+}*/
 
 static void OnDhcpStop(W5500& net, Dhcp& dhcp)
 {
@@ -777,7 +777,8 @@ static void OnDhcpStop(W5500& net, Dhcp& dhcp)
 	{
 		//auto callback	= (Action)param;
 		// 防止调用栈太深，另外开任务
-		if(net.NetReady) Sys.AddTask(OnDhcpStopTask, &net, 0, -1, "网络就绪");
+		//if(net.NetReady) Sys.AddTask(OnDhcpStopTask, &net, 0, -1, "网络就绪");
+		if(net.NetReady) net.NetReady(net);
 	}
 }
 
