@@ -4,6 +4,7 @@
 #include "IPAddress.h"
 #include "IPEndPoint.h"
 #include "MacAddress.h"
+#include "Delegate.h"
 
 class ISocket;
 
@@ -24,6 +25,7 @@ public:
 	MacAddress	Mac;	// 本地Mac地址
 	SocketMode	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
 	//bool		Ready;
+	bool		Dhcp;	// 是否使用DHCP
 
 	IPAddress	DHCPServer;
 	IPAddress	DNSServer;

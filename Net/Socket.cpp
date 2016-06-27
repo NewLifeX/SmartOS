@@ -35,7 +35,7 @@ ISocketHost::ISocketHost()
 	SSID	= nullptr;
 	Pass	= nullptr;
 
-	NetReady	= nullptr;
+	//NetReady	= nullptr;
 }
 
 void ISocketHost::InitConfig()
