@@ -17,21 +17,25 @@ public:
 	OutputPort*		WirelessLed;	// 无线指示灯
 
 	ISocketHost*	Host;			// 网络主机
-	
+
 	TokenClient*	Client;
-	
+
 	AP0801();
 
+	// 设置系统参数
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
-	ISocketHost* Create5500();
+	// 打开以太网W5500，如果网络未接通，则返回空
+	ISocketHost* Open5500();
 	static ISocketHost* Create5500(SPI spi, Pin irq, Pin rst = P0, IDataPort* led = nullptr);
+
+	// 打开Esp8266，作为主控或者纯AP
+	ISocketHost* Open8266(bool apOnly);
+	static ISocketHost* Create8266(COM idx, Pin power, Pin rst);
+
 	ITransport* Create2401();
-	ISocketHost* Create8266();
 
 	TokenClient* CreateClient();
-
-	void InitDHCP(Action onNetReady = nullptr);
 };
 
 #endif

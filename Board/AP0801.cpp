@@ -30,6 +30,9 @@ AP0801::AP0801()
 {
 	EthernetLed	= nullptr;
 	WirelessLed	= nullptr;
+
+	Host	= nullptr;
+	Client	= nullptr;
 }
 
 #if DEBUG
@@ -49,17 +52,10 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 	sys.Name = (char*)name;
 
     // 初始化系统
-    //Sys.Clock = 48000000;
     sys.Init();
 #if DEBUG
     sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
-#endif
-
-#if DEBUG
-	// 设置一定量初始任务，减少堆分配
-	static Task ts[0x10];
-	Task::Scheduler()->Set(ts, ArrayLength(ts));
 #endif
 
 #if DEBUG
@@ -84,12 +80,24 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-ISocketHost* AP0801::Create5500()
+// 网络就绪
+void OnNetReady(AP0801& ap, ISocketHost& host)
+{
+	if (ap.Client) ap.Client->Open();
+}
+
+ISocketHost* AP0801::Open5500()
 {
 	IDataPort* led = nullptr;
 	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
 
-	return Host	= Create5500(Spi2, PE1, PD13, led);
+	auto host	= (W5500*)Create5500(Spi2, PE1, PD13, led);
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	if(host->Open()) return host;
+
+	delete host;
+
+	return nullptr;
 }
 
 ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
@@ -101,7 +109,6 @@ ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	auto net	= new W5500();
 	net->LoadConfig();
 	net->Init(spi_, irq, rst);
-	//net->EnableDNS();
 
 	return net;
 }
@@ -115,64 +122,38 @@ void SetWiFiTask(void* param)
 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 }
 
-ISocketHost* AP0801::Create8266()
+ISocketHost* AP0801::Open8266(bool apOnly)
+{
+	auto host	= (Esp8266*)Create8266(COM4, PE2, PD3);
+
+	if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
+
+	if(apOnly) host->WorkMode	= SocketMode::AP;
+
+	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+
+	host->OpenAsync();
+
+	return host;
+}
+
+ISocketHost* AP0801::Create8266(COM idx, Pin power, Pin rst)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
-	/*// 上电
-	auto pwr	= new OutputPort(PE2);
-	pwr->Down(1000);*/
-
-	auto srp	= new SerialPort(COM4, 115200);
-	//srp->ByteTime	= 10;
+	auto srp	= new SerialPort(idx, 115200);
 	srp->Tx.SetCapacity(0x100);
 	srp->Rx.SetCapacity(0x100);
 
-	auto net	= new Esp8266(srp, PE2, PD3);
+	auto net	= new Esp8266(srp, power, rst);
 	net->InitConfig();
 	net->LoadConfig();
 
 	// 配置模式作为工作模式
 	net->WorkMode	= net->Mode;
 
-	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-
-	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
-
-	net->OpenAsync();
-
-	Host	= net;
-
 	return net;
-}
-
-/******************************** DHCP ********************************/
-
-static Action _DHCP_Ready = nullptr;
-
-static void On_DHCP_Ready(void* param)
-{
-	if(_DHCP_Ready) _DHCP_Ready(param);
-}
-
-static void OnDhcpStop(Dhcp& dhcp)
-{
-	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
-	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
-	{
-		// 防止调用栈太深，另外开任务
-		if(_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
-	}
-}
-
-void AP0801::InitDHCP(Action onNetReady)
-{
-	_DHCP_Ready	= onNetReady;
-
-	// 打开DHCP
-	auto dhcp	= new Dhcp(*Host);
-	dhcp->OnStop	= OnDhcpStop;
-	dhcp->Start();
 }
 
 /******************************** Token ********************************/
@@ -180,6 +161,7 @@ void AP0801::InitDHCP(Action onNetReady)
 TokenClient* AP0801::CreateClient()
 {
 	debug_printf("\r\nCreateClient \r\n");
+	assert(Host, "Host");
 
 	auto tk = TokenConfig::Current;
 
@@ -217,7 +199,9 @@ TokenClient* AP0801::CreateClient()
 		client->Local	= token2;
 	}
 
-	return Client = client;
+	Client	= client;
+
+	return client;
 }
 
 /******************************** 2401 ********************************/
@@ -279,7 +263,9 @@ ITransport* AP0801::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 	作为Host
 Host为空 或 AP/STA_AP
 	创建8266，加载配置
-	Host不为空 且 STA_AP
+	Host为空
+		作为Host
+	else STA_AP
 		工作模式 = AP
 	打开8266
 	STA/STA_AP
@@ -292,8 +278,6 @@ Host为空 或 AP/STA_AP
 
 令牌客户端主通道
 令牌客户端内网通道
-
-
 */
 
 /*
