@@ -16,8 +16,6 @@
 
 Dhcp::Dhcp(ISocketHost& host) : Host(host)
 {
-	//Socket	= socket;
-	//Host	= socket->Host;
 	Socket	= host.CreateSocket(ProtocolType::Udp);
 
 	Socket->Local.Port		= 68;
@@ -32,7 +30,6 @@ Dhcp::Dhcp(ISocketHost& host) : Host(host)
 	MaxTimes	= 6;
 	ExpiredTime	= 500 * 10;
 
-	//OnStop	= nullptr;
 	taskID	= 0;
 
 	auto port = dynamic_cast<ITransport*>(Socket);
@@ -200,31 +197,29 @@ void Dhcp::Stop()
 		}
 	}
 
-	//if(OnStop) OnStop(this, nullptr);
-	OnStop(*this);
+	//OnStop(*this);
+	// 异步调用OnStop
+	Sys.AddTask([](void* p){ auto d = (Dhcp*)p; d->OnStop(*d); }, this, 0, -1, "OnStop");
 }
 
 void Dhcp::Loop(void* param)
 {
-	auto _dhcp = (Dhcp*)param;
-	if(!_dhcp->Running)
+	auto& dhcp	= *(Dhcp*)param;
+	if(!dhcp.Running)
 	{
-		// 曾经成功后再次启动，则重新开始
-		//if(_dhcp->Times == 0) return;
-
 		// 上一次是成功的，这次定时任务可能就是重新获取IP
-		if(_dhcp->Result) _dhcp->Start();
+		if(dhcp.Result) dhcp.Start();
 	}
 
 	// 检查总等待时间
-	if(_dhcp->_expired < Sys.Ms())
+	if(dhcp._expired < Sys.Ms())
 	{
-		_dhcp->Stop();
+		dhcp.Stop();
 		return;
 	}
 
 	// 向DHCP服务器广播
-	_dhcp->Discover();
+	dhcp.Discover();
 }
 
 // 获取选项，返回数据部分指针
