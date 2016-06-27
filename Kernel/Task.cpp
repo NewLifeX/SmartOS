@@ -5,6 +5,16 @@
 
 Task::Task()
 {
+	Init();
+}
+
+Task::~Task()
+{
+	if(ID) Host->Remove(ID);
+}
+
+void Task::Init()
+{
 	Host		= nullptr;
 
 	ID			= 0;
@@ -26,11 +36,6 @@ Task::Task()
 	Event		= false;
 	Deepth		= 0;
 	MaxDeepth	= 1;
-}
-
-Task::~Task()
-{
-	if(ID) Host->Remove(ID);
 }
 
 #if !defined(TINY) && defined(STM32F0)
@@ -193,7 +198,10 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstri
 		auto ti	= (Task*)_Tasks[i];
 		if(ti->ID == 0) task	= ti;
 	}
-	if(!task) _Tasks.Add(task = new Task());
+	if(task)
+		task->Init();
+	else
+		_Tasks.Add(task = new Task());
 
 	static uint _gid = 1;
 

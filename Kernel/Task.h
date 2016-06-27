@@ -46,11 +46,12 @@ public:
 	static TaskScheduler* Scheduler();
 	static Task* Get(int taskid);
 	static Task& Current();
-	
+
 private:
 	friend class TaskScheduler;
 
 	bool CheckTime(UInt64 end, bool isSleep);
+	void Init();
 };
 
 // 任务调度器
