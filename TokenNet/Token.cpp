@@ -105,9 +105,10 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 
 	// 创建客户端
 	static TokenClient client;
-	client.Control	= &ctrl;
+	//client.Control	= &ctrl;
 	//client->Local	= ctrl;
 	client.Cfg		= tk;
+	client.Controls.Add(&ctrl);
 
 	// 如果是TCP，需要再建立一个本地UDP
 	//if(tk->Protocol == ProtocolType::Tcp)
@@ -119,9 +120,10 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 		socket->Local.Port	= tk->Port;
 		
 		// 建立内网控制器
-		auto token2		= new TokenController();
-		token2->Port	= dynamic_cast<ITransport*>(socket);
-		client.Local	= token2;
+		auto ctrl2		= new TokenController();
+		ctrl2->Port	= dynamic_cast<ITransport*>(socket);
+		//client.Local	= ctrl2;
+		client.Controls.Add(&ctrl2);
 	}
 
 	return &client;

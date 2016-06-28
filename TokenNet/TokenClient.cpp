@@ -34,8 +34,6 @@ TokenClient::TokenClient()
 
 	Received	= nullptr;
 	Param		= nullptr;
-
-	Local		= nullptr;
 }
 
 void TokenClient::Open()
@@ -219,9 +217,15 @@ void TokenClient::SayHello(bool broadcast)
 	ext.Reply		= false;
 	ext.LocalTime	= DateTime::Now().TotalMs();
 
-	auto sock	= Local->Socket;
-	ext.EndPoint.Address	= sock->Host->IP;
-	ext.EndPoint.Port		= sock->Local.Port;
+	auto& cs	= Controls;
+	// 取第二通道为本地通道
+	if(cs.Count() >= 2)
+	{
+		auto& ctrl	= *(TokenController*)cs[1];
+		auto sock	= ctrl.Socket;
+		ext.EndPoint.Address	= sock->Host->IP;
+		ext.EndPoint.Port		= sock->Local.Port;
+	}
 
 	ext.Cipher	= "RC4";
 	ext.Name		= Cfg->User();
@@ -241,7 +245,6 @@ void TokenClient::SayHello(bool broadcast)
 		msg.OneWay	= true;
 
 		//msg.State	= &ctrl->Socket->Remote;
-		auto& cs	= Controls;
 		for(int i=0; i<cs.Count(); i++)
 		{
 			auto& ctrl	= *(TokenController*)cs[i];
@@ -321,9 +324,15 @@ bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
 	ext2.Reply	= true;
 	ext2.Key	= ctrl->Key;
 
-	auto sock	= Local->Socket;
-	ext2.EndPoint.Address	= sock->Host->IP;
-	ext2.EndPoint.Port		= sock->Local.Port;
+	auto& cs	= Controls;
+	// 取第二通道为本地通道
+	if(cs.Count() >= 2)
+	{
+		auto& ctrl	= *(TokenController*)cs[1];
+		auto sock	= ctrl.Socket;
+		ext2.EndPoint.Address	= sock->Host->IP;
+		ext2.EndPoint.Port		= sock->Local.Port;
+	}
 
 	ext2.Cipher	= "RC4";
 	ext2.Name		= Cfg->User();
