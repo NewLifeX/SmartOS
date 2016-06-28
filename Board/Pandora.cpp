@@ -29,6 +29,10 @@ PA0903::PA0903()
 {
 	EthernetLed	= nullptr;
 	WirelessLed	= nullptr;
+
+	Host	= nullptr;
+	HostAP	= nullptr;
+	Client	= nullptr;
 }
 
 uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
@@ -81,113 +85,92 @@ void PA0903::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-ISocketHost* PA0903::Create5500()
+// 网络就绪
+void OnNetReady(PA0903& ap, ISocketHost& host)
+{
+	if (ap.Client) ap.Client->Open();
+}
+
+ISocketHost* PA0903::Open5500()
+{
+	IDataPort* led = nullptr;
+	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
+
+	auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	if(host->Open()) return host;
+
+	delete host;
+
+	return nullptr;
+}
+
+ISocketHost* PA0903::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi	= new Spi(Spi1, 36000000);
+	auto spi_	= new Spi(spi, 36000000);
 
 	auto net	= new W5500();
 	net->LoadConfig();
-	net->Init(spi, PA8, PA0);
-
-	if(EthernetLed) net->Led	= CreateFlushPort(EthernetLed);
-
-	Host	= net;
+	net->Init(spi_, irq, rst);
 
 	return net;
 }
 
-/******************************** DHCP ********************************/
-
-static Action _DHCP_Ready = nullptr;
-
-static void On_DHCP_Ready(void* param)
-{
-	if(_DHCP_Ready) _DHCP_Ready(param);
-}
-
-static void OnDhcpStop(Dhcp& dhcp)
-{
-	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
-	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
-	{
-		// 防止调用栈太深，另外开任务
-		if(_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
-	}
-}
-
-void PA0903::InitDHCP(Action onNetReady)
-{
-	_DHCP_Ready	= onNetReady;
-
-	// 打开DHCP
-	auto dhcp	= new Dhcp(*Host);
-	dhcp->OnStop	= OnDhcpStop;
-	dhcp->Start();
-}
-
-/******************************** DNS ********************************/
-
-bool PA0903::QueryDNS(TokenConfig& tk)
-{
-	auto svr	= tk.Server();
-	if(svr.Length() == 0) return false;
-
-	// 根据DNS获取云端IP地址
-	auto ip	= DNS::Query(*Host, svr);
-	if(ip == IPAddress::Any())
-	{
-		debug_printf("DNS::Query %s 失败！\r\n", svr.GetBuffer());
-		return false;
-	}
-	debug_printf("服务器地址 %s %s:%d \r\n", svr.GetBuffer(), ip.ToString().GetBuffer(), tk.ServerPort);
-
-	tk.ServerIP = ip.Value;
-	tk.Save();
-
-	return true;
-}
-
 /******************************** Token ********************************/
 
-TokenClient* PA0903::CreateClient()
+void PA0903::CreateClient()
 {
-	debug_printf("\r\nCreateClient \r\n");
+	if(Client) return;
 
 	auto tk = TokenConfig::Current;
 
-	// 创建连接服务器的Socket
-	auto socket	= Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port		= tk->ServerPort;
-	socket->Remote.Address	= IPAddress(tk->ServerIP);
-
-	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
-	ctrl->Port = dynamic_cast<ITransport*>(socket);
-
 	// 创建客户端
-	auto client	= new TokenClient();
-	client->Control	= ctrl;
+	auto client		= new TokenClient();
+	//client->Control	= ctrl;
 	//client->Local	= ctrl;
 	client->Cfg		= tk;
 
-	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == NetType::Tcp)
-	{
-		// 建立一个监听内网的UDP Socket
-		socket	= Host->CreateSocket(NetType::Udp);
-		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address	= IPAddress::Broadcast();
-		socket->Local.Port	= tk->Port;
+	Client	= client;
+}
 
-		// 建立内网控制器
-		auto token2		= new TokenController();
-		token2->Port	= dynamic_cast<ITransport*>(socket);
-		client->Local	= token2;
-	}
+void PA0903::OpenClient()
+{
+	debug_printf("\r\n OpenClient \r\n");
+	assert(Host, "Host");
 
-	return client;
+	auto tk = TokenConfig::Current;
+	AddControl(*Host, *tk);
+
+	TokenConfig cfg;
+	cfg.Protocol	= NetType::Udp;
+	cfg.ServerIP	= IPAddress::Broadcast().Value;
+	cfg.ServerPort	= 3355;
+	AddControl(*Host, cfg);
+
+	if(HostAP) AddControl(*HostAP, cfg);
+}
+
+void PA0903::AddControl(ISocketHost& host, TokenConfig& cfg)
+{
+	// 创建连接服务器的Socket
+	auto socket	= host.CreateSocket(cfg.Protocol);
+	socket->Remote.Port		= cfg.ServerPort;
+	socket->Remote.Address	= IPAddress(cfg.ServerIP);
+	socket->Server	= cfg.Server();
+
+	// 创建连接服务器的控制器
+	auto ctrl		= new TokenController();
+	//ctrl->Port = dynamic_cast<ITransport*>(socket);
+	ctrl->Socket	= socket;
+
+	// 创建客户端
+	auto client		= Client;
+	client->Controls.Add(ctrl);
+
+	// 如果不是第一个，则打开远程
+	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
 }
 
 /******************************** 2401 ********************************/
