@@ -160,6 +160,25 @@ void ISocketHost::ShowConfig()
 #endif
 }
 
+ISocket* ISocketHost::CreateClient(const NetUri& uri)
+{
+	auto socket	= CreateSocket(uri.Type);
+	socket->Local.Address	= uri.Address;
+	socket->Local.Port		= uri.Port;
+
+	return socket;
+}
+
+ISocket* ISocketHost::CreateRemote(const NetUri& uri)
+{
+	auto socket	= CreateSocket(uri.Type);
+	socket->Remote.Address	= uri.Address;
+	socket->Remote.Port		= uri.Port;
+	socket->Server			= uri.Host;
+
+	return socket;
+}
+
 // DNS解析。默认仅支持字符串IP地址解析
 IPAddress ISocketHost::QueryDNS(const String& domain)
 {

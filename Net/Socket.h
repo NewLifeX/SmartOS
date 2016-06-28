@@ -4,11 +4,12 @@
 #include "IPAddress.h"
 #include "IPEndPoint.h"
 #include "MacAddress.h"
+#include "NetUri.h"
 #include "Delegate.h"
 
 class ISocket;
 
-enum SocketMode
+enum class SocketMode
 {
 	Wire	= 0,
 	Station	= 1,
@@ -48,7 +49,9 @@ public:
 	bool SaveConfig();
 	void ShowConfig();
 
-	virtual ISocket* CreateSocket(ProtocolType type) = 0;
+	virtual ISocket* CreateSocket(NetType type) = 0;
+	virtual ISocket* CreateClient(const NetUri& uri);
+	virtual ISocket* CreateRemote(const NetUri& uri);
 
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
