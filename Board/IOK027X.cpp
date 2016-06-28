@@ -21,6 +21,7 @@ IOK027X::IOK027X()
 {
 	Host	= nullptr;
 	Client	= nullptr;
+	HostAP	= nullptr;	// 网络主机
 }
 
 void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
@@ -41,13 +42,14 @@ void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
 }
+
 // 网络就绪
 void OnNetReady(IOK027X& ap, ISocketHost& host)
 {
 	if (ap.Client) ap.Client->Open();
 }
 
-void SetWiFiTask(void* param)
+static void SetWiFiTask(void* param)
 {
 	auto ap	= (IOK027X*)param;
 	auto client	= ap->Client;
@@ -75,7 +77,6 @@ ISocketHost* IOK027X::Create8266()
 	debug_printf("\r\nEsp8266::Create \r\n");
 
 	auto srp	= new SerialPort(COM2, 115200);
-	//srp->ByteTime	= 10;
 	srp->Tx.SetCapacity(0x100);
 	srp->Rx.SetCapacity(0x100);
 
@@ -86,57 +87,63 @@ ISocketHost* IOK027X::Create8266()
 	// 配置模式作为工作模式
 	net->WorkMode	= net->Mode;
 
-	Host	= net;
 	return net;
 }
 
 
 /******************************** Token ********************************/
 
-TokenClient* IOK027X::CreateClient()
+void IOK027X::CreateClient()
 {
-	debug_printf("\r\nCreateClient \r\n");
-	assert(Host, "Host");
+	if(Client) return;
 
 	auto tk = TokenConfig::Current;
 
-	// 创建连接服务器的Socket
-	auto socket	= Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port		= tk->ServerPort;
-	socket->Remote.Address	= IPAddress(tk->ServerIP);
-	socket->Server	= tk->Server();
-
-	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
-	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket = socket;
-
 	// 创建客户端
-	auto client	= new TokenClient();
-	client->Control	= ctrl;
+	auto client		= new TokenClient();
+	//client->Control	= ctrl;
 	//client->Local	= ctrl;
 	client->Cfg		= tk;
 
-	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == ProtocolType::Tcp)
-	{
-		// 建立一个监听内网的UDP Socket
-		socket	= Host->CreateSocket(ProtocolType::Udp);
-		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address	= IPAddress::Broadcast();
-		socket->Local.Port	= tk->Port;
-
-		// 建立内网控制器
-		auto token2 = new TokenController();
-		//token2->Port	= dynamic_cast<ITransport*>(socket);
-		token2->Socket = socket;
-		token2->ShowRemote	= true;
-		client->Local	= token2;
-	}
-
 	Client	= client;
-	
-	return client;
+}
+
+void IOK027X::OpenClient()
+{
+	debug_printf("\r\n OpenClient \r\n");
+	assert(Host, "Host");
+
+	auto tk = TokenConfig::Current;
+	AddControl(*Host, *tk);
+
+	TokenConfig cfg;
+	cfg.Protocol	= ProtocolType::Udp;
+	cfg.ServerIP	= IPAddress::Broadcast().Value;
+	cfg.ServerPort	= 3355;
+	AddControl(*Host, cfg);
+
+	if(HostAP) AddControl(*HostAP, cfg);
+}
+
+void IOK027X::AddControl(ISocketHost& host, TokenConfig& cfg)
+{
+	// 创建连接服务器的Socket
+	auto socket	= host.CreateSocket(cfg.Protocol);
+	socket->Remote.Port		= cfg.ServerPort;
+	socket->Remote.Address	= IPAddress(cfg.ServerIP);
+	socket->Server	= cfg.Server();
+
+	// 创建连接服务器的控制器
+	auto ctrl		= new TokenController();
+	//ctrl->Port = dynamic_cast<ITransport*>(socket);
+	ctrl->Socket	= socket;
+
+	// 创建客户端
+	auto client		= Client;
+	client->Controls.Add(ctrl);
+
+	// 如果不是第一个，则打开远程
+	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
 }
 
 /******************************** 2401 ********************************/
