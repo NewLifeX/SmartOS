@@ -199,6 +199,8 @@ bool Esp8266::OnOpen()
 
 	if(!_task) _task	= Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
 
+	NetReady(*this);
+
 	return true;
 }
 
