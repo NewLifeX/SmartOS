@@ -20,8 +20,8 @@
 
 static FlushPort* CreateFlushPort(OutputPort* led)
 {
-	auto fp = new FlushPort();
-	fp->Port = led;
+	auto fp	= new FlushPort();
+	fp->Port	= led;
 	fp->Start();
 
 	return fp;
@@ -29,8 +29,12 @@ static FlushPort* CreateFlushPort(OutputPort* led)
 
 AP0104::AP0104()
 {
-	EthernetLed = nullptr;
-	WirelessLed = nullptr;
+	EthernetLed	= nullptr;
+	WirelessLed	= nullptr;
+
+	Host	= nullptr;
+	HostAP	= nullptr;
+	Client	= nullptr;
 }
 
 #if DEBUG
@@ -85,13 +89,24 @@ void AP0104::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current = &Config::CreateFlash();
 }
 
-ISocketHost* AP0104::Create5500()
+// 网络就绪
+void OnNetReady(AP0104& ap, ISocketHost& host)
 {
-	debug_printf("\r\nW5500::Create \r\n");
+	if (ap.Client) ap.Client->Open();
+}
+
+ISocketHost* AP0104::Open5500()
+{
 	IDataPort* led = nullptr;
 	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
 
-	return Host	= Create5500(Spi1, PE7, PB2, led);
+	auto host	= (W5500*)Create5500(Spi1, PE7, PB2, led);
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	if(host->Open()) return host;
+
+	delete host;
+
+	return nullptr;
 }
 
 ISocketHost* AP0104::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
@@ -103,139 +118,112 @@ ISocketHost* AP0104::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	auto net	= new W5500();
 	net->LoadConfig();
 	net->Init(spi_, irq, rst);
-	//net->EnableDNS();
 
 	return net;
 }
 
-ISocketHost* AP0104::Create8266()
+static void SetWiFiTask(void* param)
+{
+	auto ap	= (AP0104*)param;
+	auto client	= ap->Client;
+	auto esp	= (Esp8266*)ap->Host;
+
+	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+}
+
+ISocketHost* AP0104::Open8266(bool apOnly)
+{
+	auto host	= (Esp8266*)Create8266(COM4, P0, P0);
+
+	if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
+
+	if(apOnly) host->WorkMode	= SocketMode::AP;
+
+	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+
+	host->OpenAsync();
+
+	return host;
+}
+
+
+
+ISocketHost* AP0104::Create8266(COM idx, Pin power, Pin rst)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
-	/*// 上电
-	auto pwr	= new OutputPort(PE2);
-	pwr->Down(1000);*/
+	auto srp	= new SerialPort(idx, 115200);
+	srp->Tx.SetCapacity(0x100);
+	srp->Rx.SetCapacity(0x100);
 
-	auto srp = new SerialPort(COM4, 115200);
-	//srp->ByteTime	= 10;
-	srp->Tx.SetCapacity(0x400);
-	srp->Rx.SetCapacity(0x400);
-
-	auto net = new Esp8266(srp, P0, P0);
+	auto net	= new Esp8266(srp, power, rst);
 	net->InitConfig();
 	net->LoadConfig();
 
-	//net->SSID = "yws007";
-	//net->Pass = "yws52718";
-	//net->NetReady = onNetReady;
+	// 配置模式作为工作模式
+	net->WorkMode	= net->Mode;
 
-	if (EthernetLed) net->Led = CreateFlushPort(EthernetLed);
-
-	net->OpenAsync();
-
-	Host = net;
-	//net->LoadAPs();
 	return net;
-}
-
-/******************************** DHCP ********************************/
-
-static Action _DHCP_Ready = nullptr;
-
-static void On_DHCP_Ready(void* param)
-{
-	if (_DHCP_Ready) _DHCP_Ready(param);
-}
-
-static void OnDhcpStop(Dhcp& dhcp)
-{
-	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
-	if (dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
-	{
-		// 防止调用栈太深，另外开任务
-		if (_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
-	}
-}
-
-void AP0104::InitDHCP(Action onNetReady)
-{
-	_DHCP_Ready = onNetReady;
-
-	// 打开DHCP
-	auto dhcp = new Dhcp(*Host);
-	dhcp->OnStop = OnDhcpStop;
-	dhcp->Start();
-}
-
-/******************************** DNS ********************************/
-
-bool AP0104::QueryDNS(TokenConfig& tk)
-{
-	auto svr	= tk.Server();
-	if (svr.Length() == 0) return false;
-
-	// 根据DNS获取云端IP地址
-	auto ip = DNS::Query(*Host, svr);
-	if (ip == IPAddress::Any())
-	{
-		debug_printf("DNS::Query %s 失败！\r\n", svr.GetBuffer());
-		return false;
-	}
-	debug_printf("服务器地址 %s %s:%d \r\n", svr.GetBuffer(), ip.ToString().GetBuffer(), tk.ServerPort);
-
-	tk.ServerIP = ip.Value;
-	tk.Save();
-
-	return true;
 }
 
 /******************************** Token ********************************/
 
-TokenClient* AP0104::CreateClient()
+void AP0104::CreateClient()
 {
-	debug_printf("\r\nCreateClient \r\n");
+	if(Client) return;
 
 	auto tk = TokenConfig::Current;
 
+	// 创建客户端
+	auto client		= new TokenClient();
+	//client->Control	= ctrl;
+	//client->Local	= ctrl;
+	client->Cfg		= tk;
+
+	Client	= client;
+}
+
+void AP0104::OpenClient()
+{
+	debug_printf("\r\n OpenClient \r\n");
+	assert(Host, "Host");
+
+	auto tk = TokenConfig::Current;
+	AddControl(*Host, *tk);
+
+	TokenConfig cfg;
+	cfg.Protocol	= ProtocolType::Udp;
+	cfg.ServerIP	= IPAddress::Broadcast().Value;
+	cfg.ServerPort	= 3355;
+	AddControl(*Host, cfg);
+
+	if(HostAP) AddControl(*HostAP, cfg);
+}
+
+void AP0104::AddControl(ISocketHost& host, TokenConfig& cfg)
+{
 	// 创建连接服务器的Socket
-	auto socket = Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port 	= tk->ServerPort;
-	socket->Remote.Address 	= IPAddress(tk->ServerIP);
-	socket->Server			= tk->Server();
+	auto socket	= host.CreateSocket(cfg.Protocol);
+	socket->Remote.Port		= cfg.ServerPort;
+	socket->Remote.Address	= IPAddress(cfg.ServerIP);
+	socket->Server	= cfg.Server();
 
 	// 创建连接服务器的控制器
-	auto ctrl 		= new TokenController();
-	//ctrl->Port 	= dynamic_cast<ITransport*>(socket);
+	auto ctrl		= new TokenController();
+	//ctrl->Port = dynamic_cast<ITransport*>(socket);
 	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client 	= new TokenClient();
-	client->Control = ctrl;
-	//client->Local	= ctrl;
-	client->Cfg 	= tk;
+	auto client		= Client;
+	client->Controls.Add(ctrl);
 
-	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == ProtocolType::Tcp)
-	{
-		// 建立一个监听内网的UDP Socket
-		socket = Host->CreateSocket(ProtocolType::Udp);
-		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address 	= IPAddress::Broadcast();
-		socket->Local.Port		= tk->Port;
-
-		// 建立内网控制器
-		auto token2		= new TokenController();
-		// token2->Port = dynamic_cast<ITransport*>(socket);
-		token2->Socket	= socket;
-		token2->ShowRemote	= true;
-		client->Local	= token2;
-	}
-
-	return client;
+	// 如果不是第一个，则打开远程
+	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
 }
 
 
-/******************************** 2401 ********************************/
+/******************************** 2401 *******************************
 
 int AP0104::Fix2401(const Buffer& bs)
 {
@@ -284,7 +272,7 @@ ITransport* AP0104::Create2401()//(SPI spi_, Pin ce, Pin irq, Pin power, bool po
 
 	return &nrf;
 }
-
+*/
 /*
 NRF24L01+ 	(SPI2)		|	W5500		(SPI1)		|
 PB12		NSS			|	PA4			NSS			|
