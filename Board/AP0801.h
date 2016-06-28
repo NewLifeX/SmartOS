@@ -16,9 +16,9 @@ public:
 	OutputPort*		EthernetLed;	// 以太网指示灯
 	OutputPort*		WirelessLed;	// 无线指示灯
 
-	ISocketHost*	Host;			// 网络主机
-
-	TokenClient*	Client;
+	ISocketHost*	Host;	// 网络主机
+	ISocketHost*	HostAP;	// 网络主机
+	TokenClient*	Client;	// 令牌客户端
 
 	AP0801();
 
@@ -35,7 +35,9 @@ public:
 
 	ITransport* Create2401();
 
-	TokenClient* CreateClient();
+	void CreateClient();
+	void OpenClient();
+	void AddControl(ISocketHost& host, TokenConfig& cfg);
 };
 
 #endif

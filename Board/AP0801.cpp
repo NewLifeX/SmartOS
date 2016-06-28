@@ -32,6 +32,7 @@ AP0801::AP0801()
 	WirelessLed	= nullptr;
 
 	Host	= nullptr;
+	HostAP	= nullptr;
 	Client	= nullptr;
 }
 
@@ -113,7 +114,7 @@ ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
 	return net;
 }
 
-void SetWiFiTask(void* param)
+static void SetWiFiTask(void* param)
 {
 	auto ap	= (AP0801*)param;
 	auto client	= ap->Client;
@@ -158,18 +159,45 @@ ISocketHost* AP0801::Create8266(COM idx, Pin power, Pin rst)
 
 /******************************** Token ********************************/
 
-TokenClient* AP0801::CreateClient()
+void AP0801::CreateClient()
 {
-	debug_printf("\r\nCreateClient \r\n");
-	assert(Host, "Host");
+	if(Client) return;
 
 	auto tk = TokenConfig::Current;
 
+	// 创建客户端
+	auto client		= new TokenClient();
+	//client->Control	= ctrl;
+	//client->Local	= ctrl;
+	client->Cfg		= tk;
+
+	Client	= client;
+}
+
+void AP0801::OpenClient()
+{
+	debug_printf("\r\n OpenClient \r\n");
+	assert(Host, "Host");
+
+	auto tk = TokenConfig::Current;
+	AddControl(*Host, *tk);
+
+	TokenConfig cfg;
+	cfg.Protocol	= ProtocolType::Udp;
+	cfg.ServerIP	= IPAddress::Broadcast().Value;
+	cfg.ServerPort	= 3355;
+	AddControl(*Host, cfg);
+
+	if(HostAP) AddControl(*HostAP, cfg);
+}
+
+void AP0801::AddControl(ISocketHost& host, TokenConfig& cfg)
+{
 	// 创建连接服务器的Socket
-	auto socket	= Host->CreateSocket(tk->Protocol);
-	socket->Remote.Port		= tk->ServerPort;
-	socket->Remote.Address	= IPAddress(tk->ServerIP);
-	socket->Server	= tk->Server();
+	auto socket	= host.CreateSocket(cfg.Protocol);
+	socket->Remote.Port		= cfg.ServerPort;
+	socket->Remote.Address	= IPAddress(cfg.ServerIP);
+	socket->Server	= cfg.Server();
 
 	// 创建连接服务器的控制器
 	auto ctrl		= new TokenController();
@@ -177,31 +205,11 @@ TokenClient* AP0801::CreateClient()
 	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client		= new TokenClient();
-	client->Control	= ctrl;
-	//client->Local	= ctrl;
-	client->Cfg		= tk;
+	auto client		= Client;
+	client->Controls.Add(ctrl);
 
-	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == ProtocolType::Tcp)
-	{
-		// 建立一个监听内网的UDP Socket
-		socket	= Host->CreateSocket(ProtocolType::Udp);
-		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
-		socket->Remote.Address	= IPAddress::Broadcast();
-		socket->Local.Port	= tk->Port;
-
-		// 建立内网控制器
-		auto token2		= new TokenController();
-		//token2->Port	= dynamic_cast<ITransport*>(socket);
-		token2->Socket	= socket;
-		token2->ShowRemote	= true;
-		client->Local	= token2;
-	}
-
-	Client	= client;
-
-	return client;
+	// 如果不是第一个，则打开远程
+	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
 }
 
 /******************************** 2401 ********************************/
