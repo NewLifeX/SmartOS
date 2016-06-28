@@ -38,7 +38,7 @@ static uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param
 }
 #endif
 
-void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
+void AP0801::Init(ushort code, cstring name, COM message, int baudRate)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
@@ -73,7 +73,7 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-void* AP0801::SetData(void* data, int size)
+void* AP0801::InitData(void* data, int size)
 {
 	// 启动信息
 	auto hot	= &HotConfig::Current();
@@ -132,7 +132,7 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 
 /******************************** Token ********************************/
 
-void AP0801::CreateClient()
+void AP0801::InitClient()
 {
 	if(Client) return;
 

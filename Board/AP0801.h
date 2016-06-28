@@ -23,10 +23,10 @@ public:
 	AP0801();
 
 	// 设置系统参数
-	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+	void Init(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
 	// 设置数据区
-	void* SetData(void* data, int size);
+	void* InitData(void* data, int size);
 	void Register(int index, IDataPort* dps, int count);
 
 	// 打开以太网W5500
@@ -37,15 +37,15 @@ public:
 
 	ITransport* Create2401();
 
-	void CreateClient();
-	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
+	void InitClient();
 	void InitNet();
 
 private:
 	void*	Data;
 	int		Size;
 
-	void OpenClient(ISocketHost&);
+	void OpenClient(ISocketHost& host);
+	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
 };
 
 #endif
