@@ -5,7 +5,7 @@
 #include "Core\SString.h"
 
 // IP协议类型
-enum ProtocolType
+enum class ProtocolType
 {
 	Ip		= 0,
 	Icmp	= 1,
