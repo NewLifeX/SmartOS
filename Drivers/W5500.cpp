@@ -742,7 +742,7 @@ bool W5500::CheckLink()
 
 ISocket* W5500::CreateSocket(NetType type)
 {
-	if(_sockets.Count() >= 8)
+	if(Sockets.Count() >= 8)
 	{
 		debug_printf("没有空余的Socket可用了 !\r\n");
 		return nullptr;
@@ -760,8 +760,8 @@ ISocket* W5500::CreateSocket(NetType type)
 	
 	if(socket)
 	{
-		socket->Index	= _sockets.Count();
-		_sockets.Add(socket);
+		socket->Index	= Sockets.Count();
+		Sockets.Add(socket);
 	}
 	
 	return socket;
@@ -827,12 +827,12 @@ void W5500::OnIRQ()
 		if(Led) Led->Write(500);
 
 		byte dat2 = dat;
-		for(int i = 0; i < 8 && i < _sockets.Count(); i++)
+		for(int i = 0; i < 8 && i < Sockets.Count(); i++)
 		{
 			if(dat2 & 0x01)
 			{
 				//net_printf("W5500::Socket[%d] 中断\r\n", i);
-				if(_sockets[i]) ((HardSocket*)_sockets[i])->Process();
+				if(Sockets[i]) ((HardSocket*)Sockets[i])->Process();
 			}
 			dat2 >>= 1;
 			if(dat2 == 0x00) break;
@@ -1041,7 +1041,7 @@ HardSocket::HardSocket(W5500& host, NetType protocol) : _Host(host)
 
 HardSocket::~HardSocket()
 {
-	_Host._sockets.Remove(this);
+	_Host.Sockets.Remove(this);
 }
 
 byte HardSocket::ReadConfig() { return SocRegRead(CR); }
