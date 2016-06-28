@@ -40,6 +40,7 @@ public:
 	String	Token()		{ return String(_Token, sizeof(_Token), false); }
 	String	Server()	{ return String(_Server, sizeof(_Server), false); }
 	String	Vendor()	{ return String(_Vendor, sizeof(_Vendor), false); }
+	NetUri	Uri() const;
 
 	static TokenConfig* Current;
 	static TokenConfig*	Create(cstring vendor, NetType protocol, ushort sport, ushort port);

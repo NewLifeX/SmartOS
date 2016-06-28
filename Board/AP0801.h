@@ -37,7 +37,7 @@ public:
 
 	void CreateClient();
 	void OpenClient();
-	void AddControl(ISocketHost& host, TokenConfig& cfg);
+	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
 };
 
 #endif

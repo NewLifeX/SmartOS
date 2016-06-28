@@ -84,7 +84,8 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 // 网络就绪
 void OnNetReady(AP0801& ap, ISocketHost& host)
 {
-	if (ap.Client) ap.Client->Open();
+	//if (ap.Client) ap.Client->Open();
+	ap.OpenClient();
 }
 
 ISocketHost* AP0801::Open5500()
@@ -178,26 +179,28 @@ void AP0801::OpenClient()
 {
 	debug_printf("\r\n OpenClient \r\n");
 	assert(Host, "Host");
+	assert(Client, "Client");
 
 	auto tk = TokenConfig::Current;
-	AddControl(*Host, *tk);
+	AddControl(*Host, tk->Uri());
 
-	TokenConfig cfg;
-	cfg.Protocol	= NetType::Udp;
-	cfg.ServerIP	= IPAddress::Broadcast().Value;
-	cfg.ServerPort	= 3355;
-	AddControl(*Host, cfg);
+	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
+	auto socket	= AddControl(*Host, uri);
+	socket->Local.Port	= tk->Port;
 
-	if(HostAP) AddControl(*HostAP, cfg);
+	if(HostAP)
+	{
+		socket	= AddControl(*HostAP, uri);
+		socket->Local.Port	= tk->Port;
+	}
+
+	Client->Open();
 }
 
-void AP0801::AddControl(ISocketHost& host, TokenConfig& cfg)
+ISocket* AP0801::AddControl(ISocketHost& host, const NetUri& uri)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateSocket(cfg.Protocol);
-	socket->Remote.Port		= cfg.ServerPort;
-	socket->Remote.Address	= IPAddress(cfg.ServerIP);
-	socket->Server	= cfg.Server();
+	auto socket	= host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
 	auto ctrl		= new TokenController();
@@ -210,6 +213,8 @@ void AP0801::AddControl(ISocketHost& host, TokenConfig& cfg)
 
 	// 如果不是第一个，则打开远程
 	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
+
+	return socket;
 }
 
 /******************************** 2401 ********************************/

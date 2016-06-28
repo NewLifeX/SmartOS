@@ -27,6 +27,14 @@ void TokenConfig::Init()
 	Protocol	= NetType::Udp;
 }
 
+NetUri	TokenConfig::Uri() const
+{
+	NetUri uri(Protocol, IPAddress(ServerIP), ServerPort);
+	uri.Host	= _Server;
+
+	return uri;
+}
+
 void TokenConfig::Show() const
 {
 #if DEBUG
