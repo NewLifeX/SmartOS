@@ -19,6 +19,8 @@
 
 IOK027X::IOK027X()
 {
+	Host	= nullptr;
+	Client	= nullptr;
 }
 
 void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
@@ -39,6 +41,34 @@ void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
 }
+// 网络就绪
+void OnNetReady(IOK027X& ap, ISocketHost& host)
+{
+	if (ap.Client) ap.Client->Open();
+}
+
+void SetWiFiTask(void* param)
+{
+	auto ap	= (IOK027X*)param;
+	auto client	= ap->Client;
+	auto esp	= (Esp8266*)ap->Host;
+
+	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+}
+
+ISocketHost* IOK027X::Open8266(bool apOnly)
+{
+	auto host	= (Esp8266*)Create8266();
+
+	if(apOnly) host->WorkMode	= SocketMode::AP;
+
+	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+
+	host->OpenAsync();
+
+	return host;
+}
 
 ISocketHost* IOK027X::Create8266()
 {
@@ -52,55 +82,21 @@ ISocketHost* IOK027X::Create8266()
 	auto net	= new Esp8266(srp, PB2, PA1);
 	net->InitConfig();
 	net->LoadConfig();
-	//net->_power.Invert = true;
 
-	//net->SSID	= "yws007";
-	//net->Pass	= "yws52718";
-
-	//net->SSID	= "wswl-net";
-	//net->Pass	= "wswl52718";
-	//net->NetReady	= onNetReady;
-
-	net->OpenAsync();
+	// 配置模式作为工作模式
+	net->WorkMode	= net->Mode;
 
 	Host	= net;
 	return net;
 }
 
-/******************************** DHCP ********************************/
-
-static Action _DHCP_Ready = nullptr;
-
-static void On_DHCP_Ready(void* param)
-{
-	if(_DHCP_Ready) _DHCP_Ready(param);
-}
-
-static void OnDhcpStop(Dhcp& dhcp)
-{
-	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
-	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
-	{
-		// 防止调用栈太深，另外开任务
-		if(_DHCP_Ready) Sys.AddTask(On_DHCP_Ready, &dhcp.Host, 0, -1, "网络就绪");
-	}
-}
-
-void IOK027X::InitDHCP(Action onNetReady)
-{
-	_DHCP_Ready	= onNetReady;
-
-	// 打开DHCP
-	auto dhcp	= new Dhcp(*Host);
-	dhcp->OnStop	= OnDhcpStop;
-	dhcp->Start();
-}
 
 /******************************** Token ********************************/
 
 TokenClient* IOK027X::CreateClient()
 {
 	debug_printf("\r\nCreateClient \r\n");
+	assert(Host, "Host");
 
 	auto tk = TokenConfig::Current;
 
@@ -134,9 +130,12 @@ TokenClient* IOK027X::CreateClient()
 		auto token2 = new TokenController();
 		//token2->Port	= dynamic_cast<ITransport*>(socket);
 		token2->Socket = socket;
+		token2->ShowRemote	= true;
 		client->Local	= token2;
 	}
 
+	Client	= client;
+	
 	return client;
 }
 

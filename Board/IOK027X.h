@@ -11,14 +11,16 @@ class IOK027X
 {
 public:
 	ISocketHost*	Host;			// 网络主机
+	TokenClient*	Client;			// 
 	
 	IOK027X();
 
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
-	ITransport* Create2401();
 	ISocketHost* Create8266();
 
+	ISocketHost* Open8266(bool apOnly);
+	
 	TokenClient* CreateClient();
 
 	void InitDHCP(Action onNetReady = nullptr);
