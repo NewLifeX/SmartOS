@@ -11,7 +11,7 @@ class AP0801
 {
 public:
 	Pin		Leds[2];
-	InputPort		Buttons[2];
+	Pin		Buttons[2];
 
 	Pin		EthernetLed;	// 以太网指示灯
 	Pin		WirelessLed;	// 无线指示灯
@@ -29,23 +29,23 @@ public:
 	void* SetData(void* data, int size);
 	void Register(int index, IDataPort* dps, int count);
 
-	// 打开以太网W5500，如果网络未接通，则返回空
-	ISocketHost* Open5500();
-	static ISocketHost* Create5500(SPI spi, Pin irq, Pin rst = P0, IDataPort* led = nullptr);
+	// 打开以太网W5500
+	ISocketHost* Create5500();
 
 	// 打开Esp8266，作为主控或者纯AP
-	ISocketHost* Open8266(bool apOnly);
-	static ISocketHost* Create8266(COM idx, Pin power, Pin rst);
+	ISocketHost* Create8266(bool apOnly);
 
 	ITransport* Create2401();
 
 	void CreateClient();
-	void OpenClient();
 	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
+	void InitNet();
 
 private:
 	void*	Data;
 	int		Size;
+
+	void OpenClient(ISocketHost&);
 };
 
 #endif

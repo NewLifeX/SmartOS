@@ -15,17 +15,6 @@
 
 #include "TokenNet\TokenController.h"
 
-#include "App\FlushPort.h"
-
-static FlushPort* CreateFlushPort(OutputPort* led)
-{
-	auto fp	= new FlushPort();
-	fp->Port	= led;
-	fp->Start();
-
-	return fp;
-}
-
 AP0801::AP0801()
 {
 	EthernetLed	= P0;
@@ -104,25 +93,15 @@ void* AP0801::SetData(void* data, int size)
 	return data;
 }
 
-// 网络就绪
-void OnNetReady(AP0801& ap, ISocketHost& host)
-{
-	//if (ap.Client) ap.Client->Open();
-	ap.OpenClient();
-}
-
-ISocketHost* AP0801::Open5500()
+ISocketHost* AP0801::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto host	= new W5500(Spi2, PE1, PD13);
 	host->SetLed(EthernetLed);
-	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
-	if(host->Open()) return host;
-
-	delete host;
-
-	return nullptr;
+	host->NetReady	= Delegate<ISocketHost&>(&AP0801::OpenClient, this);
+	
+	return host;
 }
 
 static void SetWiFiTask(void* param)
@@ -134,38 +113,21 @@ static void SetWiFiTask(void* param)
 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 }
 
-ISocketHost* AP0801::Open8266(bool apOnly)
+ISocketHost* AP0801::Create8266(bool apOnly)
 {
-	auto host	= (Esp8266*)Create8266(COM4, PE2, PD3);
+	auto host	= new Esp8266(COM4, PE2, PD3);
+	host->SetLed(WirelessLed);
 
-	//if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
-
-	if(apOnly) host->WorkMode	= SocketMode::AP;
+	if(apOnly)
+		host->WorkMode	= SocketMode::AP;
+	else
+		host->NetReady	= Delegate<ISocketHost&>(&AP0801::OpenClient, this);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
-	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
 
 	host->OpenAsync();
 
 	return host;
-}
-
-ISocketHost* AP0801::Create8266(COM idx, Pin power, Pin rst)
-{
-	debug_printf("\r\nEsp8266::Create \r\n");
-
-	auto srp	= new SerialPort(idx, 115200);
-	srp->Tx.SetCapacity(0x100);
-	srp->Rx.SetCapacity(0x100);
-
-	auto net	= new Esp8266(srp, power, rst);
-	net->InitConfig();
-	net->LoadConfig();
-
-	// 配置模式作为工作模式
-	net->WorkMode	= net->Mode;
-
-	return net;
 }
 
 /******************************** Token ********************************/
@@ -178,8 +140,6 @@ void AP0801::CreateClient()
 
 	// 创建客户端
 	auto client		= new TokenClient();
-	//client->Control	= ctrl;
-	//client->Local	= ctrl;
 	client->Cfg		= tk;
 
 	if(Data && Size > 0)
@@ -202,7 +162,7 @@ void AP0801::Register(int index, IDataPort* dps, int count)
 	}
 }
 
-void AP0801::OpenClient()
+void AP0801::OpenClient(ISocketHost& host)
 {
 	debug_printf("\r\n OpenClient \r\n");
 	assert(Host, "Host");
@@ -244,6 +204,57 @@ ISocket* AP0801::AddControl(ISocketHost& host, const NetUri& uri)
 	return socket;
 }
 
+void OnInitNet(void* param)
+{
+/*
+网络使用流程：
+
+5500网线检测
+网线连通
+	启动DHCP
+	作为Host
+Host为空 或 AP/STA_AP
+	创建8266，加载配置
+	Host为空
+		作为Host
+	else STA_AP
+		工作模式 = AP
+
+令牌客户端主通道
+令牌客户端内网通道
+*/
+	auto& ap	= *(AP0801*)param;
+	auto host	= (W5500*)ap.Create5500();
+	if(host->Open())
+	{
+		host->EnableDNS();
+		ap.Host	= host;
+	}
+	else
+	{
+		delete host;
+	}
+	if(!ap.Host || host->IsAP())
+	{
+		// 如果Host已存在，则8266仅作为AP
+		auto esp	= ap.Create8266(ap.Host);
+		if(esp)
+		{
+			if(!ap.Host)
+				ap.Host	= esp;
+			else
+				ap.HostAP	= esp;
+		}
+	}
+
+	// 打开DHCP，完成时会打开客户端
+	if(ap.Host) ap.Host->EnableDHCP();
+}
+
+void AP0801::InitNet()
+{
+	Sys.AddTask(OnInitNet, nullptr, 0, -1, "InitNet");
+}
 /******************************** 2401 ********************************/
 
 /*int Fix2401(const Buffer& bs)

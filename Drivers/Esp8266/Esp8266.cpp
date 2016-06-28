@@ -2,12 +2,16 @@
 #include "Task.h"
 #include "TTime.h"
 
+#include "SerialPort.h"
+
 #include "Esp8266.h"
 #include "EspTcp.h"
 #include "EspUdp.h"
 #include "WaitExpect.h"
 
 #include "Config.h"
+
+#include "App\FlushPort.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -53,10 +57,35 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 	Pass	= new String();
 }
 
+Esp8266::Esp8266(COM idx, Pin power, Pin rst)
+{
+	auto srp	= new SerialPort(idx, 115200);
+	srp->Tx.SetCapacity(0x100);
+	srp->Rx.SetCapacity(0x100);
+
+	Esp8266(srp, power, rst);
+	InitConfig();
+	LoadConfig();
+
+	// 配置模式作为工作模式
+	WorkMode	= Mode;
+}
+
 Esp8266::~Esp8266()
 {
 	delete SSID;
 	delete Pass;
+}
+
+void Esp8266::SetLed(Pin led)
+{
+	if(led != P0)
+	{
+		auto fp	= new FlushPort();
+		fp->Port	= new OutputPort(led);
+		fp->Start();
+		Led	= fp;
+	}
 }
 
 /*void Esp8266::LoopTask(void* param)

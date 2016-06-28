@@ -18,10 +18,12 @@ public:
 	IDataPort*	Led;	// 指示灯
 
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
+    Esp8266(COM idx, Pin power = P0, Pin rst = P0);
 	virtual ~Esp8266();
 
 	void OpenAsync();
 	virtual void Config();
+	void SetLed(Pin led);
 
 	//virtual const String ToString() const { return String("Esp8266"); }
 	virtual ISocket* CreateSocket(NetType type);
