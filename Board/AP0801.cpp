@@ -28,8 +28,8 @@ static FlushPort* CreateFlushPort(OutputPort* led)
 
 AP0801::AP0801()
 {
-	EthernetLed	= nullptr;
-	WirelessLed	= nullptr;
+	EthernetLed	= P0;
+	WirelessLed	= P0;
 
 	Host	= nullptr;
 	HostAP	= nullptr;
@@ -113,29 +113,16 @@ void OnNetReady(AP0801& ap, ISocketHost& host)
 
 ISocketHost* AP0801::Open5500()
 {
-	IDataPort* led = nullptr;
-	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
+	debug_printf("\r\nW5500::Create \r\n");
 
-	auto host	= (W5500*)Create5500(Spi2, PE1, PD13, led);
+	auto host	= new W5500(Spi2, PE1, PD13);
+	host->SetLed(EthernetLed);
 	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
 	if(host->Open()) return host;
 
 	delete host;
 
 	return nullptr;
-}
-
-ISocketHost* AP0801::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
-{
-	debug_printf("\r\nW5500::Create \r\n");
-
-	auto spi_	= new Spi(spi, 36000000);
-
-	auto net	= new W5500();
-	net->LoadConfig();
-	net->Init(spi_, irq, rst);
-
-	return net;
 }
 
 static void SetWiFiTask(void* param)
@@ -151,7 +138,7 @@ ISocketHost* AP0801::Open8266(bool apOnly)
 {
 	auto host	= (Esp8266*)Create8266(COM4, PE2, PD3);
 
-	if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
+	//if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
 
 	if(apOnly) host->WorkMode	= SocketMode::AP;
 

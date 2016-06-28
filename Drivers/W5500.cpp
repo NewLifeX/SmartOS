@@ -14,6 +14,8 @@
 #include "TTime.h"
 #include "Task.h"
 
+#include "App\FlushPort.h"
+
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
 #if NET_DEBUG
@@ -211,6 +213,14 @@ W5500::W5500(Spi* spi, Pin irq, Pin rst)
 	Init(spi, irq, rst);
 }
 
+W5500::W5500(SPI spi, Pin irq, Pin rst)
+{
+	auto spi_	= new Spi(spi, 36000000);
+
+	LoadConfig();
+	Init(spi_, irq, rst);
+}
+
 W5500::~W5500()
 {
 	Close();
@@ -265,6 +275,17 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 	}
 
 	_spi = spi;
+}
+
+void W5500::SetLed(Pin led)
+{
+	if(led != P0)
+	{
+		auto fp	= new FlushPort();
+		fp->Port	= new OutputPort(led);
+		fp->Start();
+		Led	= fp;
+	}
 }
 
 bool W5500::Open()

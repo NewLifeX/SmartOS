@@ -22,12 +22,14 @@ public:
 
 	// 构造
 	W5500();
-    W5500(Spi* spi, Pin irq = P0, Pin rst = P0);	// 必须具备复位引脚 否则寄存器不能读
+    W5500(Spi* spi, Pin irq, Pin rst);
+	W5500(SPI spi, Pin irq, Pin rst);
     virtual ~W5500();
 
 	// 初始化
 	void Init();
-    void Init(Spi* spi, Pin irq = P0, Pin rst = P0);	// 必须给出 rst 控制引脚
+    void Init(Spi* spi, Pin irq, Pin rst);
+	void SetLed(Pin led);
 
 	bool Open();
 	bool Close();

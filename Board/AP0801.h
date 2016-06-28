@@ -10,11 +10,11 @@
 class AP0801
 {
 public:
-	OutputPort		Leds[2];
+	Pin		Leds[2];
 	InputPort		Buttons[2];
 
-	OutputPort*		EthernetLed;	// 以太网指示灯
-	OutputPort*		WirelessLed;	// 无线指示灯
+	Pin		EthernetLed;	// 以太网指示灯
+	Pin		WirelessLed;	// 无线指示灯
 
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
@@ -24,7 +24,7 @@ public:
 
 	// 设置系统参数
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
-	
+
 	// 设置数据区
 	void* SetData(void* data, int size);
 	void Register(int index, IDataPort* dps, int count);
@@ -42,7 +42,7 @@ public:
 	void CreateClient();
 	void OpenClient();
 	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
-	
+
 private:
 	void*	Data;
 	int		Size;
