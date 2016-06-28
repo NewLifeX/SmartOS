@@ -1,9 +1,8 @@
 ﻿#ifndef __TokenConfig_H__
 #define __TokenConfig_H__
 
-#include "Sys.h"
 #include "Config.h"
-#include "Net\IPAddress.h"
+#include "Net\NetUri.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
 //#pragma pack(push)	// 保存对齐状态
@@ -22,7 +21,7 @@ public:
 	ushort	SoftVer;		// 软件版本
 
 	byte	PingTime;		// 心跳时间。秒
-	ProtocolType	Protocol;		// 协议，TCP=6/UDP=17
+	NetType	Protocol;		// 协议，TCP=6/UDP=17
 	ushort	Port;			// 本地端口
 	uint	ServerIP;		// 服务器IP地址。服务器域名解析成功后覆盖
 	ushort	ServerPort;		// 服务器端口
@@ -43,7 +42,7 @@ public:
 	String	Vendor()	{ return String(_Vendor, sizeof(_Vendor), false); }
 
 	static TokenConfig* Current;
-	static TokenConfig*	Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port);
+	static TokenConfig*	Create(cstring vendor, NetType protocol, ushort sport, ushort port);
 
 private:
 };

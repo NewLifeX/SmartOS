@@ -16,7 +16,7 @@
 
 Dhcp::Dhcp(ISocketHost& host) : Host(host)
 {
-	Socket	= host.CreateSocket(ProtocolType::Udp);
+	Socket	= host.CreateSocket(NetType::Udp);
 
 	Socket->Local.Port		= 68;
 	Socket->Remote.Port		= 67;

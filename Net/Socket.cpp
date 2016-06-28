@@ -101,7 +101,7 @@ bool ISocketHost::SaveConfig()
 	nc.IP	= IP.Value;
 	nc.Mask	= Mask.Value;
 	Mac.CopyTo(nc.Mac);
-	nc.Mode	= Mode;
+	nc.Mode	= (byte)Mode;
 
 	nc.DHCPServer	= DHCPServer.Value;
 	nc.DNSServer	= DNSServer.Value;

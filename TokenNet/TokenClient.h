@@ -89,7 +89,7 @@ private:
 	bool OnLocalLogin(TokenMessage& msg,TokenController* ctrl);
 
 	bool OnPing(TokenMessage& msg, TokenController* ctrl);
-	bool ChangeIPEndPoint(const String& domain, ushort port);
+	bool ChangeIPEndPoint(const NetUri& uri);
 
 	void OnRead(const TokenMessage& msg, TokenController* ctrl);
 	void OnWrite(const TokenMessage& msg, TokenController* ctrl);

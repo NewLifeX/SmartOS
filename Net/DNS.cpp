@@ -358,7 +358,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 
 DNS::DNS(ISocketHost& host, const IPAddress& dns) : Host(host)
 {
-	Socket	= host.CreateSocket(ProtocolType::Udp);
+	Socket	= host.CreateSocket(NetType::Udp);
 
 	Socket->Remote.Port		= 53;
 	Socket->Remote.Address	= !dns.IsAny() ? dns : host.DNSServer;

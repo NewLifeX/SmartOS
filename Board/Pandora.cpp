@@ -173,10 +173,10 @@ TokenClient* PA0903::CreateClient()
 	client->Cfg		= tk;
 
 	// 如果是TCP，需要再建立一个本地UDP
-	//if(tk->Protocol == ProtocolType::Tcp)
+	//if(tk->Protocol == NetType::Tcp)
 	{
 		// 建立一个监听内网的UDP Socket
-		socket	= Host->CreateSocket(ProtocolType::Udp);
+		socket	= Host->CreateSocket(NetType::Udp);
 		socket->Remote.Port		= 3355;	// 广播端口。其实用哪一个都不重要，因为不会主动广播
 		socket->Remote.Address	= IPAddress::Broadcast();
 		socket->Local.Port	= tk->Port;

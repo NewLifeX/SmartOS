@@ -183,7 +183,7 @@ void AP0801::OpenClient()
 	AddControl(*Host, *tk);
 
 	TokenConfig cfg;
-	cfg.Protocol	= ProtocolType::Udp;
+	cfg.Protocol	= NetType::Udp;
 	cfg.ServerIP	= IPAddress::Broadcast().Value;
 	cfg.ServerPort	= 3355;
 	AddControl(*Host, cfg);

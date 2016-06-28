@@ -52,7 +52,7 @@ public:
 
 	cstring ToString() const { return "W5500"; }
 
-	virtual ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(NetType type);
 
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
@@ -114,7 +114,7 @@ public:
 	bool Enable;	// 启用
 	byte Index;		// 使用的硬Socket编号   也是BSB选项的一部分
 
-	HardSocket(W5500& host, ProtocolType protocol);
+	HardSocket(W5500& host, NetType protocol);
 	virtual ~HardSocket();
 
 	// 网卡状态输出
@@ -152,7 +152,7 @@ public:
 class TcpClient : public HardSocket
 {
 public:
-	TcpClient(W5500& host): HardSocket(host, ProtocolType::Tcp){ Init(); };
+	TcpClient(W5500& host): HardSocket(host, NetType::Tcp){ Init(); };
 	void Init();
 	virtual ~TcpClient();
 	virtual bool OnOpen();
@@ -179,7 +179,7 @@ private:
 class UdpClient : public HardSocket
 {
 public:
-	UdpClient(W5500& host) : HardSocket(host, ProtocolType::Udp) { }
+	UdpClient(W5500& host) : HardSocket(host, NetType::Udp) { }
 
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote);
 

@@ -242,7 +242,7 @@ typedef struct _ICMP_HEADER
 typedef struct _ARP_HEADER
 {
 	ushort	HardType;		// 硬件类型
-	ushort	ProtocolType;	// 协议类型
+	ushort	NetType;	// 协议类型
 	byte	HardLength;		// 硬件地址长度
 	byte	ProtocolLength;	// 协议地址长度
 	ushort	Option;			// 选项
@@ -255,7 +255,7 @@ typedef struct _ARP_HEADER
 	void Init(bool recursion = false)
 	{
 		HardType = 0x0100;
-		ProtocolType = 0x08;
+		NetType = 0x08;
 		HardLength = 6;
 		ProtocolLength = 4;
 

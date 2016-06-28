@@ -24,7 +24,7 @@ void TokenConfig::Init()
 	//User[16] 	= '\0';
 	//Key[15]	= '\0';
 
-	Protocol	= ProtocolType::Udp;
+	Protocol	= NetType::Udp;
 }
 
 void TokenConfig::Show() const
@@ -32,12 +32,12 @@ void TokenConfig::Show() const
 #if DEBUG
 	debug_printf("TokenConfig::令牌配置：\r\n");
 
-	debug_printf("\t协议: %s ,%d\r\n", Protocol == ProtocolType::Udp ? "UDP" : Protocol == ProtocolType::Tcp ? "TCP" : "", Protocol);
+	//debug_printf("\t协议: %s ,%d\r\n", Protocol == NetType::Udp ? "UDP" : Protocol == NetType::Tcp ? "TCP" : "", Protocol);
 	debug_printf("\t端口: %d \r\n", Port);
 
 	debug_printf("\t远程: ");
-	IPEndPoint ep2(IPAddress(ServerIP), ServerPort);
-	ep2.Show(true);
+	NetUri uri(Protocol, IPAddress(ServerIP), ServerPort);
+	uri.Show(true);
 	debug_printf("\t服务: %s \r\n", _Server);
 	debug_printf("\t厂商: %s \r\n", _Vendor);
 	debug_printf("\t登录: %s \r\n", _User);
@@ -45,7 +45,7 @@ void TokenConfig::Show() const
 #endif
 }
 
-TokenConfig* TokenConfig::Create(cstring vendor, ProtocolType protocol, ushort sport, ushort port)
+TokenConfig* TokenConfig::Create(cstring vendor, NetType protocol, ushort sport, ushort port)
 {
 	static TokenConfig tc;
 	if(!Current)
@@ -56,7 +56,7 @@ TokenConfig* TokenConfig::Create(cstring vendor, ProtocolType protocol, ushort s
 		tc.Load();
 
 		// 默认 UDP 不允许 unknown
-		if(tc.Protocol == 0x00) tc.Protocol = ProtocolType::Udp;
+		if(tc.Protocol == NetType::Unknown) tc.Protocol = NetType::Udp;
 
 		bool rs = tc.New;
 		auto vnd	= tc.Vendor();

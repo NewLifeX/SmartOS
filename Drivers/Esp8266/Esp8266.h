@@ -24,7 +24,7 @@ public:
 	virtual void Config();
 
 	//virtual const String ToString() const { return String("Esp8266"); }
-	virtual ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(NetType type);
 	// 启用DNS
 	virtual bool EnableDNS();
 	// 启用DHCP

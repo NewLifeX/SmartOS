@@ -69,7 +69,7 @@ class ISocket
 {
 public:
 	ISocketHost*	Host;	// 主机
-	ProtocolType	Protocol;	// 协议类型
+	NetType	Protocol;	// 协议类型
 
 	IPEndPoint	Local;	// 本地地址。包含本地局域网IP地址，实际监听的端口，从1024开始累加
 	IPEndPoint	Remote;	// 远程地址

@@ -10,7 +10,7 @@
 
 /******************************** Socket ********************************/
 
-EspSocket::EspSocket(Esp8266& host, ProtocolType protocol, byte idx)
+EspSocket::EspSocket(Esp8266& host, NetType protocol, byte idx)
 	: _Host(host)
 {
 	_Index		= idx;
@@ -43,7 +43,7 @@ bool EspSocket::OnOpen()
 	_Host.SetMux(true);
 
 #if NET_DEBUG
-	net_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
+	net_printf("%s::Open ", Protocol == NetType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	net_printf(" => ");
 	if(Server)
@@ -58,9 +58,9 @@ bool EspSocket::OnOpen()
 	String cmd	= "AT+CIPSTART=";
 	cmd	= cmd + _Index + ",";
 
-	if(Protocol == ProtocolType::Udp)
+	if(Protocol == NetType::Udp)
 		cmd	+= "\"UDP\"";
-	else if(Protocol == ProtocolType::Tcp)
+	else if(Protocol == NetType::Tcp)
 		cmd	+= "\"TCP\"";
 
 	auto rm	= Server;
@@ -81,7 +81,7 @@ bool EspSocket::OnOpen()
 	auto rt		= _Host.Send(cmd + "\r\n", "OK", "ERROR", 10000);
 	if(!rt.Contains("OK") && !rt.Contains("ALREADY CONNECTED"))
 	{
-		net_printf("协议 %d, %d 打开失败 \r\n", Protocol, Remote.Port);
+		net_printf("协议 %d, %d 打开失败 \r\n", (byte)Protocol, Remote.Port);
 		return false;
 	}
 

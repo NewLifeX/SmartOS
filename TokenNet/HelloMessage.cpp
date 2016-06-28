@@ -17,8 +17,9 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	LocalTime	= DateTime::Now().TotalMs();
 	Cipher[0]	= 1;
 
-	Protocol	= 17;
-	Port		= 0;
+	//Protocol	= 17;
+	//Port		= 0;
+	Uri.Type	= NetType::Udp;
 }
 
 HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1), Key(0)
@@ -31,9 +32,10 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1
 	Cipher.Copy(0, msg.Cipher, 0, msg.Cipher.Length());
 	Key.Copy(0, msg.Key, 0, msg.Key.Length());
 
-	Protocol	= msg.Protocol;
-	Port		= msg.Port;
-	Server		= msg.Server;
+	//Protocol	= msg.Protocol;
+	//Port		= msg.Port;
+	//Server		= msg.Server;
+	Uri			= msg.Uri;
 }
 
 // 从数据流中读取消息
@@ -52,12 +54,14 @@ bool HelloMessage::Read(Stream& ms)
 				Stream urims(uri);
 				BinaryPair uribp(urims);
 
-				uribp.Get("Type", Protocol);			// 服务店 ProtocolType  17 为UDP
-				if (Protocol == 0x00) Protocol = 0x11;	// 避免 unknown 出现
-				uribp.Get("Host", Server);
+				byte type;
+				uribp.Get("Type", type);			// 服务店 NetType  17 为UDP
+				Uri.Type	= (NetType)type;
+				if (Uri.Type == NetType::Unknown) Uri.Type = NetType::Udp;	// 避免 unknown 出现
+				uribp.Get("Host", Uri.Host);
 				uint uintPort;							// 服务端 Port 为 int 类型
 				uribp.Get("Port", uintPort);
-				Port = uintPort ;
+				Uri.Port = uintPort ;
 			}
 			bp.Get("VisitToken", VisitToken);
 
@@ -118,12 +122,13 @@ String& HelloMessage::ToStr(String& str) const
 			//str	+= ' ';
 			str	+= (ErrCode == 0xFD) ? " 临时跳转 " : " 永久跳转 ";
 
-			if(Protocol == ProtocolType::Tcp)
+			/*if(Protocol == NetType::Tcp)
 				str += "Tcp://";
-			else if(Protocol == ProtocolType::Udp)
+			else if(Protocol == NetType::Udp)
 				str += "Udp://";
 
-			str = str + Server + ":" + Port;
+			str = str + Server + ":" + Port;*/
+			str	+= Uri;
 		}
 		else
 		{

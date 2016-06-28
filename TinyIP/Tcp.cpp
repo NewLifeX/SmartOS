@@ -11,7 +11,7 @@ TcpSocket::TcpSocket(TinyIP* tip) : TinySocket(tip, IP_TCP)
 {
 	MaxSize	= 1500;
 	Host	= tip;
-	Protocol	= ProtocolType::Tcp;
+	Protocol	= NetType::Tcp;
 
 	// 累加端口
 	static ushort g_tcp_port = 1024;

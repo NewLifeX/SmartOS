@@ -66,7 +66,7 @@ public:
 	bool SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len);
 	bool IsBroadcast(const IPAddress& ip);	// 是否广播地址
 
-	virtual ISocket* CreateSocket(ProtocolType type);
+	virtual ISocket* CreateSocket(NetType type);
 };
 
 /*

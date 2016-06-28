@@ -86,7 +86,7 @@ bool ArpSocket::Process(IP_HEADER& ip, Stream& ms)
 #if NET_DEBUG
 	// 数据校验
 	assert_param(arp->HardType == 0x0100);
-	assert_param(arp->ProtocolType == ETH_IP);
+	assert_param(arp->NetType == ETH_IP);
 	assert_param(arp->HardLength == 6);
 	assert_param(arp->ProtocolLength == 4);
 	//assert_param(arp->Option == 0x0100);

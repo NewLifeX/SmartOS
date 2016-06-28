@@ -11,7 +11,7 @@ protected:
 	int			_Error;
 
 public:
-	EspSocket(Esp8266& host, ProtocolType protocol, byte idx);
+	EspSocket(Esp8266& host, NetType protocol, byte idx);
 	virtual ~EspSocket();
 
 	// 打开Socket

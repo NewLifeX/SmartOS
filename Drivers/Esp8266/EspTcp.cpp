@@ -3,7 +3,7 @@
 /******************************** Tcp ********************************/
 
 EspTcp::EspTcp(Esp8266& host, byte idx)
-	: EspSocket(host, ProtocolType::Tcp, idx)
+	: EspSocket(host, NetType::Tcp, idx)
 {
 
 }

@@ -3,7 +3,7 @@
 /******************************** Udp ********************************/
 
 EspUdp::EspUdp(Esp8266& host, byte idx)
-	: EspSocket(host, ProtocolType::Udp, idx)
+	: EspSocket(host, NetType::Udp, idx)
 {
 
 }

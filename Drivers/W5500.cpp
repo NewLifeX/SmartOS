@@ -632,14 +632,14 @@ byte W5500::GetSocket()
 	return 0xFF;
 }
 
-ISocket* W5500::CreateSocket(ProtocolType type)
+ISocket* W5500::CreateSocket(NetType type)
 {
 	switch(type)
 	{
-		case ProtocolType::Tcp:
+		case NetType::Tcp:
 			return new TcpClient(*this);
 
-		case ProtocolType::Udp:
+		case NetType::Udp:
 			return new UdpClient(*this);
 
 		default:
@@ -920,7 +920,7 @@ enum S_Status
 #define SocRegWrites(P, D) 	_Host.WriteFrame(offsetof(TSocket, P), D, Index, 0x01)
 #define SocRegReads(P, bs) 	_Host.ReadFrame(offsetof(TSocket, P), bs, Index, 0x01)
 
-HardSocket::HardSocket(W5500& host, ProtocolType protocol) : _Host(host)
+HardSocket::HardSocket(W5500& host, NetType protocol) : _Host(host)
 {
 	MaxSize	= 1500;
 
@@ -1071,7 +1071,7 @@ bool HardSocket::OnOpen()
 	Local.Address = _Host.IP;
 
 #if DEBUG
-	debug_printf("%s::Open ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
+	debug_printf("%s::Open ", Protocol == NetType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Server.Show(false);
@@ -1081,9 +1081,9 @@ bool HardSocket::OnOpen()
 
 	// 设置分片长度，参考W5500数据手册，该值可以不修改
 	// 默认值：udp 1472 tcp 1460  其他类型不管他 有默认不设置也没啥
-	if(Protocol == ProtocolType::Udp)
+	if(Protocol == NetType::Udp)
 		SocRegWrite2(MSSR, 1472);
-	else if(Protocol == ProtocolType::Tcp)
+	else if(Protocol == NetType::Tcp)
 		SocRegWrite2(MSSR, 1460);
 
 	// 设置自己的端口号
@@ -1097,9 +1097,9 @@ bool HardSocket::OnOpen()
 	// 设置Socket为UDP模式
 	S_Mode mode;
 	mode.Init();
-	if(Protocol == ProtocolType::Tcp)
+	if(Protocol == NetType::Tcp)
 		mode.Protocol	= 0x01;
-	if(Protocol == ProtocolType::Udp)
+	if(Protocol == NetType::Udp)
 		mode.Protocol	= 0x02;
 	//if(Protocol == 0x02) mode.MULTI_MFEN = 1;
 	SocRegWrite(MR, mode.ToByte());
@@ -1122,8 +1122,8 @@ bool HardSocket::OnOpen()
 	while(!tw.Expired())
 	{
 		sr = ReadStatus();
-		if((Protocol == ProtocolType::Tcp && sr == SOCK_INIT)
-		|| (Protocol == ProtocolType::Udp && sr == SOCK_UDP))
+		if((Protocol == NetType::Tcp && sr == SOCK_INIT)
+		|| (Protocol == NetType::Udp && sr == SOCK_UDP))
 		{
 			rs	= true;
 			break;
@@ -1131,7 +1131,7 @@ bool HardSocket::OnOpen()
 	}
 	if(!rs)
 	{
-		debug_printf("protocol %d, Socket %d 打开失败 SR : 0x%02X \r\n", Protocol,Index, sr);
+		debug_printf("protocol %d, Socket %d 打开失败 SR : 0x%02X \r\n", (byte)Protocol,Index, sr);
 		OnClose();
 
 		return false;
@@ -1145,7 +1145,7 @@ void HardSocket::OnClose()
 	WriteConfig(CLOSE);
 	WriteInterrupt(0xFF);
 
-	debug_printf("%s::Close ", Protocol == ProtocolType::Tcp ? "Tcp" : "Udp");
+	debug_printf("%s::Close ", Protocol == NetType::Tcp ? "Tcp" : "Udp");
 	Local.Show(false);
 	debug_printf(" => ");
 	Remote.Show(true);

@@ -2,7 +2,7 @@
 #define __HelloMessage_H__
 
 #include "Message\MessageBase.h"
-#include "Net\Socket.h"
+#include "Net\NetUri.h"
 
 // 握手消息
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
@@ -24,8 +24,9 @@ public:
 	String		ErrMsg;		// 错误信息
 
 	byte		Protocol;	// 协议,17为UDP  6为TCP
-	String		Server;		// 服务器地址。可能是域名或IP
-	ushort		Port;		// 本地端口
+	//String		Server;		// 服务器地址。可能是域名或IP
+	//ushort		Port;		// 本地端口
+	NetUri		Uri;
 	String		VisitToken;	//访问令牌 
 
 	// 初始化消息，各字段为0

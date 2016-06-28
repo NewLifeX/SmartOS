@@ -318,14 +318,14 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	return SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
-ISocket* TinyIP::CreateSocket(ProtocolType type)
+ISocket* TinyIP::CreateSocket(NetType type)
 {
 	switch(type)
 	{
-		case ProtocolType::Tcp:
+		case NetType::Tcp:
 			return new TcpSocket(this);
 
-		case ProtocolType::Udp:
+		case NetType::Udp:
 			return new UdpSocket(this);
 
 		default:

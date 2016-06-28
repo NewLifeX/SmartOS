@@ -231,7 +231,7 @@ void Esp8266::Config()
 	SetAutoConn(AutoConn);
 }
 
-ISocket* Esp8266::CreateSocket(ProtocolType type)
+ISocket* Esp8266::CreateSocket(NetType type)
 {
 	auto es	= (EspSocket**)_sockets;
 
@@ -249,10 +249,10 @@ ISocket* Esp8266::CreateSocket(ProtocolType type)
 
 	switch(type)
 	{
-		case ProtocolType::Tcp:
+		case NetType::Tcp:
 			return es[i]	= new EspTcp(*this, i);
 
-		case ProtocolType::Udp:
+		case NetType::Udp:
 			return es[i]	= new EspUdp(*this, i);
 
 		default:

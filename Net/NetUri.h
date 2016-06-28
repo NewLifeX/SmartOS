@@ -3,8 +3,6 @@
 
 #include "IPAddress.h"
 #include "IPEndPoint.h"
-#include "MacAddress.h"
-#include "Delegate.h"
 
 // 协议类型
 enum class NetType

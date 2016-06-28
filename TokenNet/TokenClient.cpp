@@ -359,15 +359,15 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	if(!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
 	auto cfg		= Cfg;
-	cfg->Protocol	= (ProtocolType)msg.Protocol;
+	cfg->Protocol	= msg.Uri.Type;
 
 	cfg->Show();
 
-	cfg->Server()	= msg.Server;
-	cfg->ServerPort = msg.Port;
+	cfg->Server()	= msg.Uri.Host;
+	cfg->ServerPort = msg.Uri.Port;
 	cfg->Token()	= msg.VisitToken;
 
-	ChangeIPEndPoint(msg.Server, msg.Port);
+	ChangeIPEndPoint(msg.Uri);
 
 	cfg->Show();
 
@@ -381,21 +381,21 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 	return true;
 }
 
-bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
+bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 {
 	TS("TokenClient::ChangeIPEndPoint");
 
 	debug_printf("ChangeIPEndPoint ");
 
-	domain.Show(true);
+	uri.Show(true);
 
 	auto& ctrl	= *(TokenController*)Controls[0];
     auto socket = ctrl.Socket;
 	if(socket == nullptr) return false;
 
 	ctrl.Port->Close();
-	socket->Remote.Port	= port;
-	socket->Server		= domain;
+	socket->Remote.Port	= uri.Port;
+	socket->Server		= uri.Host;
 
 	Cfg->ServerIP	= socket->Remote.Address.Value;
 
