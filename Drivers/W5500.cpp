@@ -293,7 +293,7 @@ bool W5500::Open()
 
 	// 读硬件版本
 	byte ver = 0;
-	TimeWheel tw(1000);
+	TimeWheel tw(5000);
 	while(!tw.Expired() && !ver) ver = ReadByte(0x0039);
 	if(!ver)
 	{
@@ -307,7 +307,7 @@ bool W5500::Open()
 	debug_printf("等待PHY连接 ");
 
 	T_PHYCFGR phy;
-	tw.Reset(5);
+	tw.Reset(5000);
 	int temp = 0;
 	while(!tw.Expired() && !phy.LNK)
 	{
@@ -779,7 +779,8 @@ bool W5500::EnableDHCP()
 	if(_Dhcp) return true;
 
 	// 打开DHCP
-	auto dhcp	= new Dhcp(*this);
+	ISocketHost*  host = (ISocketHost*)this;
+	auto dhcp	= new Dhcp(*host);
 	dhcp->OnStop	= Delegate<Dhcp&>(OnDhcpStop, this);
 	dhcp->Start();
 
