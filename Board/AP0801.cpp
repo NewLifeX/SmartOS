@@ -34,6 +34,9 @@ AP0801::AP0801()
 	Host	= nullptr;
 	HostAP	= nullptr;
 	Client	= nullptr;
+
+	Data	= nullptr;
+	Size	= 0;
 }
 
 #if DEBUG
@@ -79,6 +82,26 @@ void AP0801::Setup(ushort code, cstring name, COM message, int baudRate)
 
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
+}
+
+void* AP0801::SetData(void* data, int size)
+{
+	// 启动信息
+	auto hot	= &HotConfig::Current();
+	hot->Times++;
+
+	data = hot->Next();
+	if (hot->Times == 1)
+	{
+		Buffer ds(data, size);
+		ds.Clear();
+		ds[0] = size;
+	}
+
+	Data	= data;
+	Size	= size;
+
+	return data;
 }
 
 // 网络就绪
@@ -172,7 +195,24 @@ void AP0801::CreateClient()
 	//client->Local	= ctrl;
 	client->Cfg		= tk;
 
+	if(Data && Size > 0)
+	{
+		auto& ds	= Client->Store;
+		ds.Data.Set(Data, Size);
+	}
+
 	Client	= client;
+}
+
+void AP0801::Register(int index, IDataPort* dps, int count)
+{
+	if(!Client) return;
+
+	auto& ds	= Client->Store;
+	for(int i=0; i<count; i++)
+	{
+		ds.Register(index + i, dps[i]);
+	}
 }
 
 void AP0801::OpenClient()

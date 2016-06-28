@@ -24,6 +24,10 @@ public:
 
 	// 设置系统参数
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+	
+	// 设置数据区
+	void* SetData(void* data, int size);
+	void Register(int index, IDataPort* dps, int count);
 
 	// 打开以太网W5500，如果网络未接通，则返回空
 	ISocketHost* Open5500();
@@ -38,6 +42,10 @@ public:
 	void CreateClient();
 	void OpenClient();
 	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
+	
+private:
+	void*	Data;
+	int		Size;
 };
 
 #endif
