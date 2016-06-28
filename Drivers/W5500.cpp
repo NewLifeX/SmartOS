@@ -779,8 +779,7 @@ bool W5500::EnableDHCP()
 	if(_Dhcp) return true;
 
 	// 打开DHCP
-	ISocketHost*  host = (ISocketHost*)this;
-	auto dhcp	= new Dhcp(*host);
+	auto dhcp	= new Dhcp(*this);
 	dhcp->OnStop	= Delegate<Dhcp&>(OnDhcpStop, this);
 	dhcp->Start();
 
