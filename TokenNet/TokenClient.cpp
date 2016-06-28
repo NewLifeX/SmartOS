@@ -30,7 +30,6 @@ TokenClient::TokenClient()
 	Delay		= 0;
 	MaxNotActive	= 0;
 
-	Control		= nullptr;
 	Cfg			= nullptr;
 
 	Received	= nullptr;
@@ -44,17 +43,17 @@ void TokenClient::Open()
 	if(Opened) return;
 
 	TS("TokenClient::Open");
-	assert(Control, "令牌客户端还没设置控制器呢");
+
+	auto& cs	= Controls;
+	assert(cs.Count() > 0, "令牌客户端还没设置控制器呢");
 
 	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
 	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
-	Control->Received	= dlg;
-	Control->Open();
-
-	if(Local && Local != Control)
+	for(int i=0; i<cs.Count(); i++)
 	{
-		Local->Received	= Control->Received;
-		Local->Open();
+		auto& ctrl	= *(TokenController*)cs[i];
+		ctrl.Received	= dlg;
+		ctrl.Open();
 	}
 
 	// 令牌客户端定时任务
@@ -74,8 +73,12 @@ void TokenClient::Close()
 	Sys.RemoveTask(_task);
 	Sys.RemoveTask(_taskBroadcast);
 
-	Control->Close();
-	if(Local && Local != Control) Local->Close();
+	auto& cs	= Controls;
+	for(int i=0; i<cs.Count(); i++)
+	{
+		auto& ctrl	= *(TokenController*)cs[i];
+		ctrl.Close();
+	}
 
 	Opened	= false;
 }
@@ -88,7 +91,7 @@ bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
 
-	if(!ctrl) ctrl	= Control;
+	if(!ctrl) ctrl	= (TokenController*)Controls[0];
 	assert(ctrl, "TokenClient::Send");
 
 	return ctrl->Send(msg);
@@ -102,7 +105,7 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
 
-	if(!ctrl) ctrl	= Control;
+	if(!ctrl) ctrl	= (TokenController*)Controls[0];
 	assert(ctrl, "TokenClient::Reply");
 
 	return ctrl->Reply(msg);
@@ -210,9 +213,6 @@ void TokenClient::SayHello(bool broadcast)
 {
 	TS("TokenClient::SayHello");
 
-	auto ctrl	= broadcast ? Local : Control;
-	if(!ctrl) return;
-
 	TokenMessage msg(0x01);
 
 	HelloMessage ext;
@@ -240,10 +240,17 @@ void TokenClient::SayHello(bool broadcast)
 	{
 		msg.OneWay	= true;
 
-		msg.State	= &ctrl->Socket->Remote;
+		//msg.State	= &ctrl->Socket->Remote;
+		auto& cs	= Controls;
+		for(int i=0; i<cs.Count(); i++)
+		{
+			auto& ctrl	= *(TokenController*)cs[i];
+			msg.State	= &ctrl.Socket->Remote;
+			Send(msg, &ctrl);
+		}
 	}
-
-	Send(msg, ctrl);
+	else
+		Send(msg);
 }
 
 // 握手响应
@@ -373,10 +380,11 @@ bool TokenClient::ChangeIPEndPoint(const String& domain, ushort port)
 
 	domain.Show(true);
 
-    auto socket = Control->Socket;
+	auto& ctrl	= *(TokenController*)Controls[0];
+    auto socket = ctrl.Socket;
 	if(socket == nullptr) return false;
 
-	Control->Port->Close();
+	ctrl.Port->Close();
 	socket->Remote.Port	= port;
 	socket->Server		= domain;
 
@@ -549,7 +557,8 @@ void TokenClient::Ping()
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
-		Control->Key.SetLength(0);
+		auto& ctrl	= *(TokenController*)Controls[0];
+		ctrl.Key.SetLength(0);
 
 		Status = 0;
 
@@ -599,7 +608,7 @@ void TokenClient::Read(int start, int size)
 	msg.Code	= 0x05;
 	dm.WriteMessage(msg);
 
-	Control->Send(msg);
+	Send(msg);
 }
 
 void TokenClient::Write(int start, const Buffer& bs)
@@ -612,7 +621,7 @@ void TokenClient::Write(int start, const Buffer& bs)
 	msg.Code	= 0x06;
 	dm.WriteMessage(msg);
 
-	Control->Send(msg);
+	Send(msg);
 }
 
 /*
@@ -715,7 +724,7 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 
 	ms.Write(bs);
 
-	Control->Send(msg);
+	Send(msg);
 }
 
 void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
