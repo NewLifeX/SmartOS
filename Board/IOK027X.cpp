@@ -82,9 +82,6 @@ ISocketHost* IOK027X::Create8266(bool apOnly)
 {
 	auto host	= new Esp8266(COM2,PB2,PA1);
 
-	if (apOnly)
-		host->WorkMode = SocketMode::AP;
-
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
@@ -137,11 +134,11 @@ void IOK027X::OpenClient(ISocketHost& host)
 	auto socket = AddControl(*HostAP, uri);
 	socket->Local.Port = tk->Port;
 
-	// if (HostAP)
-	// {
-	// 	socket = AddControl(*HostAP, uri);
-	// 	socket->Local.Port = tk->Port;
-	// }
+	 if (HostAP)
+	{
+	 	socket = AddControl(*HostAP, uri);
+	 	socket->Local.Port = tk->Port;
+	 }
 
 	Client->Open();
 }
