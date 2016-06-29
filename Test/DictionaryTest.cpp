@@ -3,7 +3,7 @@
 #include "Dictionary.h"
 
 #if DEBUG
-void Dictionary::Test()
+void IDictionary::Test()
 {
 	TS("TestDictionary");
 
@@ -14,7 +14,7 @@ void Dictionary::Test()
 	byte buf2[] = {6,7,8,9};
 	byte buf3[] = {10,11,12,13,14,15,16,17,18,19,20};
 
-	Dictionary dic;
+	IDictionary dic;
 	dic.Add("buf1", buf1);
 	dic.Add("buf2", buf2);
 	dic.Add("buf3", buf3);
@@ -61,7 +61,7 @@ void Dictionary::Test()
 
 	// 测试比较器
 	cstring str	= "123456";
-	Dictionary dic2(String::Compare);
+	IDictionary dic2(String::Compare);
 	dic2.Add("test", (void*)str);
 
 	char cs[5];
@@ -72,7 +72,7 @@ void Dictionary::Test()
 	cs[4]	= '\0';
 	rs	= dic2.TryGetValue(cs, p);
 
-	err	= "Dictionary(IComparer comparer = nullptr)";
+	err	= "IDictionary(IComparer comparer = nullptr)";
 	assert(rs, err);
 	// 前面曾经赋值，所以buf3里面保存的是buf2
 	assert(p == str, err);

@@ -5,17 +5,17 @@
 #include "List.h"
 #include "Dictionary.h"
 
-Dictionary::Dictionary(IComparer comparer)
+IDictionary::IDictionary(IComparer comparer)
 {
 	_Keys.Comparer	= comparer;
 }
 
-int Dictionary::Count() const { return _Keys.Count(); }
-const List& Dictionary::Keys() const { return _Keys; }
-const List& Dictionary::Values() const { return _Values; }
+int IDictionary::Count() const { return _Keys.Count(); }
+const IList& IDictionary::Keys()	const { return _Keys; }
+const IList& IDictionary::Values()	const { return _Values; }
 
 // 添加单个元素
-void Dictionary::Add(const void* key, void* value)
+void IDictionary::Add(PKey key, void* value)
 {
 	// 判断一下，如果已存在，则覆盖
 	int idx	= _Keys.FindIndex(key);
@@ -31,26 +31,26 @@ void Dictionary::Add(const void* key, void* value)
 }
 
 // 删除指定元素
-void Dictionary::Remove(const void* key)
+void IDictionary::Remove(PKey key)
 {
 	int idx = _Keys.Remove(key);
 	if(idx >= 0) _Values.RemoveAt(idx);
 }
 
-void Dictionary::Clear()
+void IDictionary::Clear()
 {
 	_Keys.Clear();
 	_Values.Clear();
 }
 
 // 是否包含指定项
-bool Dictionary::ContainKey(const void* key) const
+bool IDictionary::ContainKey(PKey key) const
 {
 	return _Keys.FindIndex(key) >= 0;
 }
 
 // 尝试获取值
-bool Dictionary::TryGetValue(const void* key, void*& value) const
+bool IDictionary::TryGetValue(PKey key, void*& value) const
 {
 	int idx	= _Keys.FindIndex(key);
 	if(idx < 0) return false;
@@ -62,7 +62,7 @@ bool Dictionary::TryGetValue(const void* key, void*& value) const
 
 
 // 重载索引运算符[]，返回指定元素的第一个
-void* Dictionary::operator[](const void* key) const
+void* IDictionary::operator[](PKey key) const
 {
 	int idx	= _Keys.FindIndex(key);
 	if(idx < 0) return nullptr;
@@ -70,7 +70,7 @@ void* Dictionary::operator[](const void* key) const
 	return _Values[idx];
 }
 
-void*& Dictionary::operator[](const void* key)
+void*& IDictionary::operator[](PKey key)
 {
 	int idx	= _Keys.FindIndex(key);
 	if(idx < 0)
@@ -82,7 +82,7 @@ void*& Dictionary::operator[](const void* key)
 	return _Values[idx];
 }
 
-const String Dictionary::GetString(const void* key) const
+const String IDictionary::GetString(PKey key) const
 {
 	void* p	= nullptr;
 	TryGetValue(key, p);

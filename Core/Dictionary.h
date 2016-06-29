@@ -3,42 +3,70 @@
 
 // 字典。仅用于存储指针。
 // 内置两个List用于存储键值集合，添加删除时对它们进行同步操作
-class Dictionary
+class IDictionary
 {
+	typedef const void*	PKey;
+	typedef void*		PValue;
 public:
-    Dictionary(IComparer comparer = nullptr);
+    IDictionary(IComparer comparer = nullptr);
 
 	int Count() const;
-	const List& Keys() const;
-	const List& Values() const;
+	const IList& Keys() const;
+	const IList& Values() const;
 
 	// 添加单个元素
-    void Add(const void* key, void* value);
+    void Add(PKey key, PValue value);
 
 	// 删除指定元素
-	void Remove(const void* key);
+	void Remove(PKey key);
 
 	void Clear();
-	
+
 	// 是否包含指定项
-	bool ContainKey(const void* key) const;
+	bool ContainKey(PKey key) const;
 
 	// 尝试获取值
-	bool TryGetValue(const void* key, void*& value) const;
+	bool TryGetValue(PKey key, PValue& value) const;
 
     // 重载索引运算符[]，返回指定元素的第一个
-    void* operator[](const void* key) const;
-    void*& operator[](const void* key);
+    PValue operator[](PKey key) const;
+    PValue& operator[](PKey key);
 
-	const String GetString(const void* key) const;
-	
+	const String GetString(PKey key) const;
+
 #if DEBUG
 	static void Test();
 #endif
 
 private:
-	List	_Keys;
-	List	_Values;
+	IList	_Keys;
+	IList	_Values;
+};
+
+template<typename TKey, typename TValue>
+class Dictionary : public IDictionary
+{
+	typedef const TKey	PKey;
+	typedef TValue		PValue;
+public:
+	const List<TKey>& Keys() const;
+	const List<TValue>& Values() const;
+
+	// 添加单个元素
+    void Add(PKey key, PValue value) { IDictionary::Add(key, value); }
+
+	// 删除指定元素
+	void Remove(PKey key) { IDictionary::Remove(key); }
+
+	// 是否包含指定项
+	bool ContainKey(PKey key) const { return IDictionary::ContainKey(key); }
+
+	// 尝试获取值
+	bool TryGetValue(PKey key, PValue& value) const { return IDictionary::TryGetValue(key, value); }
+
+    // 重载索引运算符[]，返回指定元素的第一个
+    PValue operator[](PKey key) const	{ return IDictionary::operator[](key); }
+    PValue& operator[](PKey key)		{ return IDictionary::operator[](key); }
 };
 
 #endif
