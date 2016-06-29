@@ -887,6 +887,8 @@ namespace NewLife.Reflection
                 ss.Add("argument is incompatible with corresponding format string conversion", "格式化字符串不兼容参数");
                 ss.Add("no suitable constructor exists to convert from", "没有合适的构造函数去转换");
                 ss.Add("nonstandard form for taking the address of a member function", "获取成员函数地址不标准（&Class::Method）");
+				ss.Add("argument of type", "实参类型");
+				ss.Add("is incompatible with parameter of type", "不兼容形参类型");
             }
 
             ss = Words;

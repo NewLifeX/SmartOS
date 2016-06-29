@@ -9,7 +9,7 @@ class List
 public:
     IComparer	Comparer;	// 比较器
 
-	explicit List();
+	List();
     List(const List& list);
     List(List&& list);
 	~List();
@@ -53,6 +53,25 @@ private:
 
 	void Init();
 	bool CheckCapacity(int count);
+};
+
+template<typename T>
+class TList : public List
+{
+	static_assert(sizeof(T) <= 4, "TList only support pointer or int");
+public:
+	// 添加单个元素
+    void Add(T item) { List::Add(item); }
+
+	// 删除指定元素
+	int Remove(const T item) { return List::Remove(item); }
+
+	// 查找指定项。不存在时返回-1
+	int FindIndex(const T item) const { return List::FindIndex(item); }
+
+    // 重载索引运算符[]，返回指定元素的第一个
+    T operator[](int i) const	{ return (T)List::operator[](i); }
+    T& operator[](int i)		{ return (T&)List::operator[](i); }
 };
 
 #endif
