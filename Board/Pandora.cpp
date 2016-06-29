@@ -97,7 +97,7 @@ ISocketHost* PA0903::Open5500()
 	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
 
 	auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
-	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	host->NetReady.Bind(OnNetReady, this);
 	if(host->Open()) return host;
 
 	delete host;

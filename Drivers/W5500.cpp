@@ -899,7 +899,7 @@ bool W5500::EnableDHCP()
 
 	// 打开DHCP
 	auto dhcp	= new Dhcp(*this);
-	dhcp->OnStop	= Delegate<Dhcp&>(OnDhcpStop, this);
+	dhcp->OnStop.Bind(OnDhcpStop, this);
 	dhcp->Start();
 
 	_Dhcp	= dhcp;

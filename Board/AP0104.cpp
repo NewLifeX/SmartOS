@@ -101,7 +101,7 @@ ISocketHost* AP0104::Open5500()
 	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
 
 	auto host	= (W5500*)Create5500(Spi1, PE7, PB2, led);
-	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	host->NetReady.Bind(OnNetReady, this);
 	if(host->Open()) return host;
 
 	delete host;
@@ -140,7 +140,7 @@ ISocketHost* AP0104::Open8266(bool apOnly)
 	if(apOnly) host->WorkMode	= SocketMode::AP;
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
-	host->NetReady	= Delegate<ISocketHost&>(OnNetReady, this);
+	host->NetReady.Bind(OnNetReady, this);
 
 	host->OpenAsync();
 

@@ -37,7 +37,9 @@ public:
 	typedef void(*TAction)(TArg);
 	typedef void(*VAction)(void*, TArg);
 
-	Delegate()	{ Bind(nullptr); }
+	using IDelegate::Bind;
+
+	Delegate()	{ Bind(nullptr, nullptr); }
 	Delegate(const Delegate& dlg)	= delete;
 
 	// 全局函数或类静态函数
@@ -54,6 +56,13 @@ public:
 	// func是一个对象，对象值为函数指针，但是不能直接转为void*，所以需要通过指针转为别的类型，再转回来才能赋值
 	template<typename T>
 	Delegate(void(T::*func)(TArg), T* target)	{ Bind((void*)*(int*)&func, target); }
+
+	void Bind(Action func)	{ Bind((void*)func); }
+	void Bind(TAction func)	{ Bind((void*)func); }
+	template<typename T>
+	void Bind(void(*func)(T&, TArg), T* target)	{ Bind((void*)func, target); }
+	template<typename T>
+	void Bind(void(T::*func)(TArg), T* target)	{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg)
@@ -76,7 +85,9 @@ public:
 	typedef void(*TAction)(TArg, TArg2);
 	typedef void(*VAction)(void*, TArg, TArg2);
 
-	Delegate2()	{ Bind(nullptr); }
+	using IDelegate::Bind;
+
+	Delegate2()	{ Bind(nullptr, nullptr); }
 	Delegate2(const Delegate2& dlg)	= delete;
 
 	// 全局函数或类静态函数
@@ -86,7 +97,7 @@ public:
     Delegate2& operator=(TAction func)	{ Bind((void*)func); return *this; }
 
 	using IDelegate::operator=;
-	
+
 	// 带目标的全局函数
 	template<typename T>
 	Delegate2(void(*func)(T&, TArg, TArg2), T* target)	{ Bind((void*)func, target); }
@@ -94,6 +105,13 @@ public:
 	// 类成员函数
 	template<typename T>
 	Delegate2(void(T::*func)(TArg, TArg2), T* target)	{ Bind((void*)*(int*)&func, target); }
+
+	void Bind(Action2 func)	{ Bind((void*)func); }
+	void Bind(TAction func)	{ Bind((void*)func); }
+	template<typename T>
+	void Bind(void(*func)(T&, TArg, TArg2), T* target)	{ Bind((void*)func, target); }
+	template<typename T>
+	void Bind(void(T::*func)(TArg, TArg2), T* target)	{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg, TArg2 arg2)
@@ -116,7 +134,9 @@ public:
 	typedef void(*TAction)(TArg, TArg2, TArg3);
 	typedef void(*VAction)(void*, TArg, TArg2, TArg3);
 
-	Delegate3()	{ Bind(nullptr); }
+	using IDelegate::Bind;
+
+	Delegate3()	{ Bind(nullptr, nullptr); }
 	Delegate3(const Delegate3& dlg)	= delete;
 
 	// 全局函数或类静态函数
@@ -131,7 +151,14 @@ public:
 
 	// 类成员函数
 	template<typename T>
-	Delegate3(void(T::*func)(TArg, TArg2, TArg3), T* target)		{ Bind((void*)*(int*)&func, target); }
+	Delegate3(void(T::*func)(TArg, TArg2, TArg3), T* target)	{ Bind((void*)*(int*)&func, target); }
+
+	void Bind(Action3 func)	{ Bind((void*)func); }
+	void Bind(TAction func)	{ Bind((void*)func); }
+	template<typename T>
+	void Bind(void(*func)(T&, TArg, TArg2, TArg3), T* target)	{ Bind((void*)func, target); }
+	template<typename T>
+	void Bind(void(T::*func)(TArg, TArg2, TArg3), T* target)	{ Bind((void*)*(int*)&func, target); }
 
 	// 执行委托
 	void operator()(TArg arg, TArg2 arg2, TArg3 arg3)

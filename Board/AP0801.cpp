@@ -114,7 +114,7 @@ ISocketHost* AP0801::Create5500()
 
 	auto host	= new W5500(Spi2, PE1, PD13);
 	host->SetLed(EthernetLed);
-	host->NetReady	= Delegate<ISocketHost&>(&AP0801::OpenClient, this);
+	host->NetReady.Bind(&AP0801::OpenClient, this);
 
 	return host;
 }
@@ -136,7 +136,7 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	if(apOnly)
 		host->WorkMode	= SocketMode::AP;
 	else
-		host->NetReady	= Delegate<ISocketHost&>(&AP0801::OpenClient, this);
+		host->NetReady.Bind(&AP0801::OpenClient, this);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 
