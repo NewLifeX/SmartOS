@@ -108,6 +108,19 @@ void AP0801::InitLeds()
 	}
 }
 
+void AP0801::InitButtons()
+{
+	for(int i=0; i<ButtonPins.Count(); i++)
+	{
+		auto port	= new InputPort(ButtonPins[i]);
+		port->Mode	= InputPort::Both;
+		port->Invert	= true;
+		//port->Register(OnPress, (void*)i);
+		port->Open();
+		Buttons.Add(port);
+	}
+}
+
 ISocketHost* AP0801::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
