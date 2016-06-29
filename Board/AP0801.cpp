@@ -137,7 +137,8 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	auto host	= new Esp8266(COM4, PE2, PD3);
 	//host->SetLed(WirelessLed);
 
-	if(apOnly) host->WorkMode	= SocketMode::AP;
+	// APOnly且不是AP模式时，强制AP模式
+	if(apOnly && !host->IsAP()) host->WorkMode	= SocketMode::AP;
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&AP0801::OpenClient, this);
