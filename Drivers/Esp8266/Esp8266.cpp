@@ -208,7 +208,7 @@ bool Esp8266::OnOpen()
 			int chn	= (Sys.Ms() % 14) + 1;
 			SetAP(name, "", chn);
 #if NET_DEBUG
-			Sys.AddTask(LoadStationTask, this, 10000, 10000, "LoadSTA");
+			//Sys.AddTask(LoadStationTask, this, 10000, 10000, "LoadSTA");
 #endif
 		}
 		if (join)
@@ -329,8 +329,6 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	cs[0]	= '\0';
 	String rs(cs, sizeof(cs));*/
 	String rs;
-
-	if(!Opened) return rs;
 
 	auto& task	= Task::Current();
 	// 判断是否正在发送其它指令
@@ -1027,6 +1025,5 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 void LoadStationTask(void* param)
 {
 	auto& esp	= *(Esp8266*)param;
-	auto rs		= esp.LoadStations();
-	//if(rs) rs.Show(true);
+	if(esp.Opened) esp.LoadStations();
 }

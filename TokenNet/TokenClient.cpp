@@ -401,11 +401,11 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 
 	uri.Show(true);
 
-	auto& ctrl	= *(TokenController*)Controls[0];
-    auto socket = ctrl.Socket;
+	auto ctrl	= Master;
+    auto socket = ctrl->Socket;
 	if(socket == nullptr) return false;
 
-	ctrl.Port->Close();
+	ctrl->Port->Close();
 	socket->Remote.Port	= uri.Port;
 	socket->Server		= uri.Host;
 
@@ -578,8 +578,7 @@ void TokenClient::Ping()
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
-		auto& ctrl	= *(TokenController*)Controls[0];
-		ctrl.Key.SetLength(0);
+		Master->Key.SetLength(0);
 
 		Status = 0;
 
