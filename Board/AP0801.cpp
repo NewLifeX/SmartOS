@@ -182,7 +182,7 @@ void AP0801::Register(int index, IDataPort& dp)
 
 void AP0801::OpenClient(ISocketHost& host)
 {
-	assert(Host, "Host");
+	//assert(Host, "Host");
 	assert(Client, "Client");
 
 	debug_printf("\r\n OpenClient \r\n");
@@ -198,7 +198,7 @@ void AP0801::OpenClient(ISocketHost& host)
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
 	// 避免重复打开
-	if(!Client->Opened)
+	if(!Client->Opened && Host)
 	{
 		AddControl(*Host, tk->Uri(), 0);
 		AddControl(*Host, uri, tk->Port);
@@ -210,6 +210,9 @@ void AP0801::OpenClient(ISocketHost& host)
 	{
 		auto ctrl	= AddControl(*HostAP, uri, tk->Port);
 
+		// 如果没有主机，这里打开令牌客户端，为组网做准备
+		if(!Host) Client->Open();
+		
 		// 假如来迟了，客户端已经打开，那么自己挂载事件
 		if(Client->Opened && Client->Master)
 		{
@@ -281,7 +284,15 @@ void OnInitNet(void* param)
 	if(!bsp.Host)
 	{
 		auto esp	= bsp.Create8266(false);
-		if(esp) bsp.Host	= esp;
+		if(esp)
+		{
+			// 未组网时，主机留空，仅保留AP主机
+			bool join	= esp->SSID && *esp->SSID;
+			if(join && esp->IsStation())
+				bsp.Host	= esp;
+			else
+				bsp.HostAP	= esp;
+		}
 	}
 	// 接了网线，同时需要AP
 	else if(host->IsAP())

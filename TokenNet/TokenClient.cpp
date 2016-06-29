@@ -48,11 +48,16 @@ void TokenClient::Open()
 
 	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
 	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
+	if(Master)
+	{
+		Master->Received	= dlg;
+		Master->Open();
+	}
 	for(int i=0; i<cs.Count(); i++)
 	{
-		auto& ctrl	= *(TokenController*)cs[i];
-		ctrl.Received	= dlg;
-		ctrl.Open();
+		auto ctrl	= cs[i];
+		ctrl->Received	= dlg;
+		ctrl->Open();
 	}
 
 	// 令牌客户端定时任务
@@ -72,11 +77,13 @@ void TokenClient::Close()
 	Sys.RemoveTask(_task);
 	Sys.RemoveTask(_taskBroadcast);
 
+	if(Master) Master->Close();
+
 	auto& cs	= Controls;
 	for(int i=0; i<cs.Count(); i++)
 	{
-		auto& ctrl	= *(TokenController*)cs[i];
-		ctrl.Close();
+		auto ctrl	= cs[i];
+		ctrl->Close();
 	}
 
 	Opened	= false;
@@ -90,7 +97,9 @@ bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
 
-	if(!ctrl) ctrl	= (TokenController*)Controls[0];
+	if(!ctrl) ctrl	= Master;
+	if(!ctrl) return false;
+
 	assert(ctrl, "TokenClient::Send");
 
 	return ctrl->Send(msg);
@@ -104,7 +113,9 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
 
-	if(!ctrl) ctrl	= (TokenController*)Controls[0];
+	if(!ctrl) ctrl	= Master;
+	if(!ctrl) return false;
+
 	assert(ctrl, "TokenClient::Reply");
 
 	return ctrl->Reply(msg);
@@ -220,10 +231,10 @@ void TokenClient::SayHello(bool broadcast)
 
 	auto& cs	= Controls;
 	// 取第二通道为本地通道
-	if(cs.Count() >= 2)
+	if(cs.Count() > 0)
 	{
-		auto& ctrl	= *(TokenController*)cs[1];
-		auto sock	= ctrl.Socket;
+		auto ctrl	= cs[0];
+		auto sock	= ctrl->Socket;
 		ext.EndPoint.Address	= sock->Host->IP;
 		ext.EndPoint.Port		= sock->Local.Port;
 	}
@@ -248,9 +259,9 @@ void TokenClient::SayHello(bool broadcast)
 		//msg.State	= &ctrl->Socket->Remote;
 		for(int i=0; i<cs.Count(); i++)
 		{
-			auto& ctrl	= *(TokenController*)cs[i];
-			msg.State	= &ctrl.Socket->Remote;
-			Send(msg, &ctrl);
+			auto ctrl	= cs[i];
+			msg.State	= &ctrl->Socket->Remote;
+			Send(msg, ctrl);
 		}
 	}
 	else
