@@ -35,6 +35,31 @@ void LoadStationTask(void* param);
 
 Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 {
+	Init(port, power, rst);
+}
+
+Esp8266::Esp8266(COM idx, Pin power, Pin rst)
+{
+	auto srp	= new SerialPort(idx, 115200);
+	srp->Tx.SetCapacity(0x100);
+	srp->Rx.SetCapacity(0x100);
+
+	Init(srp, power, rst);
+	InitConfig();
+	LoadConfig();
+
+	// 配置模式作为工作模式
+	WorkMode	= Mode;
+}
+
+Esp8266::~Esp8266()
+{
+	delete SSID;
+	delete Pass;
+}
+
+void Esp8266::Init(ITransport* port, Pin power, Pin rst)
+{
 	Set(port);
 
 	if(power != P0) _power.Init(power, false);
@@ -55,26 +80,6 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 
 	SSID	= new String();
 	Pass	= new String();
-}
-
-Esp8266::Esp8266(COM idx, Pin power, Pin rst)
-{
-	auto srp	= new SerialPort(idx, 115200);
-	srp->Tx.SetCapacity(0x100);
-	srp->Rx.SetCapacity(0x100);
-
-	Esp8266(srp, power, rst);
-	InitConfig();
-	LoadConfig();
-
-	// 配置模式作为工作模式
-	WorkMode	= Mode;
-}
-
-Esp8266::~Esp8266()
-{
-	delete SSID;
-	delete Pass;
 }
 
 void Esp8266::SetLed(Pin led)

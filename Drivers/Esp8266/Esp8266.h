@@ -20,6 +20,8 @@ public:
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
     Esp8266(COM idx, Pin power = P0, Pin rst = P0);
 	virtual ~Esp8266();
+	
+	void Init(ITransport* port, Pin power = P0, Pin rst = P0);
 
 	void OpenAsync();
 	virtual void Config();
