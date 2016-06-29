@@ -10,11 +10,16 @@
 class AP0801
 {
 public:
-	Pin		Leds[2];
-	Pin		Buttons[2];
+	TList<Pin>	LedPins;
+	TList<Pin>	ButtonPins;
+	TList<OutputPort*>	Leds;
+	TList<InputPort*>	Buttons;
 
 	Pin		EthernetLed;	// 以太网指示灯
 	Pin		WirelessLed;	// 无线指示灯
+
+	TList<OutputPort*>	Outputs;
+	TList<InputPort*>	Inputs;
 
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
@@ -27,7 +32,11 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
-	void Register(int index, IDataPort* dps);
+	void Register(int index, IDataPort& dp);
+
+	void InitLeds();
+	void InitButtons();
+	void InitPort();
 
 	// 打开以太网W5500
 	ISocketHost* Create5500();
@@ -39,6 +48,9 @@ public:
 
 	void InitClient();
 	void InitNet();
+
+	void Restore();
+	void OnLongPress(InputPort* port, bool down);
 
 private:
 	void*	Data;

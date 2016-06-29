@@ -17,6 +17,11 @@
 
 AP0801::AP0801()
 {
+	LedPins[0]		= PD8;
+	LedPins[1]		= PE15;
+	ButtonPins[0]	= PE13;
+	ButtonPins[1]	= PE14;
+
 	EthernetLed	= P0;
 	WirelessLed	= P0;
 
@@ -93,6 +98,16 @@ void* AP0801::InitData(void* data, int size)
 	return data;
 }
 
+void AP0801::InitLeds()
+{
+	for(int i=0; i<LedPins.Count(); i++)
+	{
+		auto port	= new OutputPort(LedPins[i]);
+		port->Open();
+		Leds.Add(port);
+	}
+}
+
 ISocketHost* AP0801::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
@@ -100,7 +115,7 @@ ISocketHost* AP0801::Create5500()
 	auto host	= new W5500(Spi2, PE1, PD13);
 	host->SetLed(EthernetLed);
 	host->NetReady	= Delegate<ISocketHost&>(&AP0801::OpenClient, this);
-	
+
 	return host;
 }
 
@@ -151,11 +166,12 @@ void AP0801::InitClient()
 	}
 }
 
-void AP0801::Register(int index, IDataPort* dps)
+void AP0801::Register(int index, IDataPort& dp)
 {
 	if(!Client) return;
+
 	auto& ds	= Client->Store;
-	ds.Register(index , dps[0]);
+	ds.Register(index , dp);
 }
 
 void AP0801::OpenClient(ISocketHost& host)
@@ -300,6 +316,25 @@ ITransport* AP0801::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 
 	return &nrf;
 }*/
+
+void AP0801::Restore()
+{
+	Config::Current->RemoveAll();
+
+	Sys.Reset();
+}
+
+void AP0801::OnLongPress(InputPort* port, bool down)
+{
+	if (down) return;
+
+	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
+
+	if (port->PressTime >= 5000)
+		Restore();
+	else if (port->PressTime >= 1000)
+		Sys.Reset();
+}
 
 /*
 网络使用流程：
