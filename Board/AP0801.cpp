@@ -33,16 +33,6 @@ AP0801::AP0801()
 	Size	= 0;
 }
 
-#if DEBUG
-static uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
-{
-	debug_printf("OnSerial len=%d \t", bs.Length());
-	bs.Show(true);
-
-	return 0;
-}
-#endif
-
 void AP0801::Init(ushort code, cstring name, COM message, int baudRate)
 {
 	auto& sys	= (TSys&)Sys;
@@ -66,7 +56,7 @@ void AP0801::Init(ushort code, cstring name, COM message, int baudRate)
 			sp->Close();
 			sp->SetBaudRate(baudRate);
 		}
-		sp->Register(OnSerial);
+		//sp->Register(OnSerial);
 	}
 
 	//WatchDog::Start(20000);
@@ -146,10 +136,10 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	auto host	= new Esp8266(COM4, PE2, PD3);
 	host->SetLed(WirelessLed);
 
-	if(apOnly)
-		host->WorkMode	= SocketMode::AP;
-	else
-		host->NetReady.Bind(&AP0801::OpenClient, this);
+	if(apOnly) host->WorkMode	= SocketMode::AP;
+
+	// 绑定委托，避免5500没有连接时导致没有启动客户端
+	host->NetReady.Bind(&AP0801::OpenClient, this);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 
@@ -189,9 +179,13 @@ void AP0801::Register(int index, IDataPort& dp)
 
 void AP0801::OpenClient(ISocketHost& host)
 {
-	debug_printf("\r\n OpenClient \r\n");
 	assert(Host, "Host");
 	assert(Client, "Client");
+
+	// 避免重复打开
+	if(Client->Opened) return;
+
+	debug_printf("\r\n OpenClient \r\n");
 
 	auto tk = TokenConfig::Current;
 	AddControl(*Host, tk->Uri());
