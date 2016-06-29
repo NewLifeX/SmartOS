@@ -80,7 +80,7 @@ static void SetWiFiTask(void* param)
 
 ISocketHost* IOK027X::Create8266(bool apOnly)
 {
-	auto host	= new Esp8266(COM4,PB2,PA1);
+	auto host	= new Esp8266(COM2,PB2,PA1);
 
 	if (apOnly)
 		host->WorkMode = SocketMode::AP;
