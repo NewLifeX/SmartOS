@@ -249,7 +249,7 @@ Host为空 或 AP/STA_AP
 
 void AP0801::InitNet()
 {
-	Sys.AddTask(OnInitNet, nullptr, 0, -1, "InitNet");
+	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
 }
 /******************************** 2401 ********************************/
 
