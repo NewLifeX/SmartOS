@@ -84,8 +84,8 @@ ISocketHost* IOK027X::Create8266(bool apOnly)
 
 	if (apOnly)
 		host->WorkMode = SocketMode::AP;
-	else
-		host->NetReady.Bind(&IOK027X::OpenClient, this);
+
+	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
 	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 
