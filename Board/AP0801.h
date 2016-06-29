@@ -27,7 +27,7 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
-	void Register(int index, IDataPort* dps, int count);
+	void Register(int index, IDataPort* dps);
 
 	// 打开以太网W5500
 	ISocketHost* Create5500();

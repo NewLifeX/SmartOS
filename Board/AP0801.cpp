@@ -151,15 +151,11 @@ void AP0801::InitClient()
 	}
 }
 
-void AP0801::Register(int index, IDataPort* dps, int count)
+void AP0801::Register(int index, IDataPort* dps)
 {
 	if(!Client) return;
-
 	auto& ds	= Client->Store;
-	for(int i=0; i<count; i++)
-	{
-		ds.Register(index + i, dps[i]);
-	}
+	ds.Register(index , dps[0]);
 }
 
 void AP0801::OpenClient(ISocketHost& host)
