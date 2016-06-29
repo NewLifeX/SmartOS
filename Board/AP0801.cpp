@@ -142,13 +142,13 @@ void AP0801::InitClient()
 	auto client		= new TokenClient();
 	client->Cfg		= tk;
 
+	Client	= client;
+
 	if(Data && Size > 0)
 	{
 		auto& ds	= Client->Store;
 		ds.Data.Set(Data, Size);
 	}
-
-	Client	= client;
 }
 
 void AP0801::Register(int index, IDataPort* dps, int count)
