@@ -17,10 +17,10 @@
 
 AP0801::AP0801()
 {
-	LedPins[0]		= PD8;
-	LedPins[1]		= PE15;
-	ButtonPins[0]	= PE13;
-	ButtonPins[1]	= PE14;
+	LedPins.Add(PD8);
+	LedPins.Add(PE15);
+	ButtonPins.Add(PE13);
+	ButtonPins.Add(PE14);
 
 	//EthernetLed	= P0;
 	//WirelessLed	= P0;

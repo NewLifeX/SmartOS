@@ -63,13 +63,13 @@ public:
 	virtual ~List() { };
 
 	// 添加单个元素
-    void Add(T item) { IList::Add(item); }
+    void Add(T item) { IList::Add((void*)item); }
 
 	// 删除指定元素
-	int Remove(const T item) { return IList::Remove(item); }
+	int Remove(const T item) { return IList::Remove((const void*)item); }
 
 	// 查找指定项。不存在时返回-1
-	int FindIndex(const T item) const { return IList::FindIndex(item); }
+	int FindIndex(const T item) const { return IList::FindIndex((const void*)item); }
 
     // 重载索引运算符[]，返回指定元素的第一个
     T operator[](int i) const	{ return (T)IList::operator[](i); }

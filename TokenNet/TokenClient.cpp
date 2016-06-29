@@ -61,9 +61,9 @@ void TokenClient::Open()
 	}
 
 	// 令牌客户端定时任务
-	_task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
+	if(Master) _task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
-	_taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+	if(cs.Count() > 0) _taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
 	LastActive = Sys.Ms();
 
