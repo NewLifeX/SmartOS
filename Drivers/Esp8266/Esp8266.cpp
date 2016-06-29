@@ -1026,5 +1026,5 @@ void LoadStationTask(void* param)
 {
 	auto& esp	= *(Esp8266*)param;
 	auto rs		= esp.LoadStations();
-	if(rs) rs.Show(true);
+	//if(rs) rs.Show(true);
 }
