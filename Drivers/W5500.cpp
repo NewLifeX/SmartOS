@@ -426,6 +426,8 @@ bool W5500::Open()
 	debug_printf("等待PHY连接 ");
 
 	T_PHYCFGR phy;
+	phy.Init(0x00);		// 先清空
+
 	tw.Reset(5000);
 	int temp = 0;
 	while(!tw.Expired() && !phy.LNK)
