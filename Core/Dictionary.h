@@ -46,6 +46,9 @@ private:
 template<typename TKey, typename TValue>
 class Dictionary : public IDictionary
 {
+	static_assert(sizeof(TKey) <= 4, "Dictionary only support pointer or int");
+	static_assert(sizeof(TValue) <= 4, "Dictionary only support pointer or int");
+
 	typedef const TKey	PKey;
 	typedef TValue		PValue;
 public:

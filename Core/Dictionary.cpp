@@ -86,6 +86,6 @@ const String IDictionary::GetString(PKey key) const
 {
 	void* p	= nullptr;
 	TryGetValue(key, p);
-	
+
 	return String((cstring)p);
 }
