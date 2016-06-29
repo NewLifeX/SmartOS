@@ -10,7 +10,6 @@
 class IOK027X
 {
 public:
-	ISocketHost*	Host;			// 网络主机
 	ISocketHost*	HostAP;			// 网络主机
 	TokenClient*	Client;			// 
 	
@@ -18,14 +17,18 @@ public:
 
 	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
 
-	static ISocketHost* Create8266();
+	void InitClient();
+	void InitNet();
 
-	ISocketHost* Open8266(bool apOnly);
-	
-	void CreateClient();
-	
-	void OpenClient();
-	void AddControl(ISocketHost& host, TokenConfig& cfg);
+	ISocketHost* Create8266(bool apOnly);
+	void* InitData(void* data, int size);
+	void Register(int index, IDataPort& dp);
+
+private:
+	void *	Data;
+	int		Size;
+	void OpenClient(ISocketHost& host);
+	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
 };
 
 #endif
