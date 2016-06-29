@@ -10,16 +10,16 @@
 class AP0801
 {
 public:
-	TList<Pin>	LedPins;
-	TList<Pin>	ButtonPins;
-	TList<OutputPort*>	Leds;
-	TList<InputPort*>	Buttons;
+	List<Pin>	LedPins;
+	List<Pin>	ButtonPins;
+	List<OutputPort*>	Leds;
+	List<InputPort*>	Buttons;
 
 	Pin		EthernetLed;	// 以太网指示灯
 	Pin		WirelessLed;	// 无线指示灯
 
-	TList<OutputPort*>	Outputs;
-	TList<InputPort*>	Inputs;
+	List<OutputPort*>	Outputs;
+	List<InputPort*>	Inputs;
 
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机

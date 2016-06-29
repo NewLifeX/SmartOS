@@ -123,7 +123,7 @@ TokenClient* Token::CreateClient(ISocketHost* host)
 		auto ctrl2		= new TokenController();
 		ctrl2->Port	= dynamic_cast<ITransport*>(socket);
 		//client.Local	= ctrl2;
-		client.Controls.Add(&ctrl2);
+		client.Controls.Add(ctrl2);
 	}
 
 	return &client;

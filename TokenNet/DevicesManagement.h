@@ -43,7 +43,7 @@ private:
 	int	PushDev(Device* dv);
 public:
 	// 设备列表
-	List	DevArr;
+	IList	DevArr;
 	// 持久在线列表
 	// List	OnlineAlways;
 

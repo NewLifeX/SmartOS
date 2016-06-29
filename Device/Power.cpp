@@ -3,7 +3,7 @@
 #include "WatchDog.h"
 
 // 低功耗处理器
-static List	_powers;
+static List<Power*>	_powers;
 
 void Power::SetPower()
 {
@@ -35,7 +35,7 @@ void Power::Standby(uint msTime)
 
 	for(int i=0; i<_powers.Count(); i++)
 	{
-		auto pwr = (Power*)_powers[i];
+		auto pwr	= _powers[i];
 		if(pwr)
 		{
 			debug_printf("Power::LowPower 0x%p\r\n", pwr);

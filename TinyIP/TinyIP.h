@@ -51,7 +51,7 @@ public:
 	// Arp套接字
 	TinySocket*		Arp;
 	// 套接字列表。套接字根据类型来识别
-	List	Sockets;
+	List<TinySocket*>	Sockets;
 
 	TinyIP();
     TinyIP(ITransport* port);

@@ -19,7 +19,7 @@ public:
 	// BodyManagement();
 	// ~BodyManagement();
 
-	List	Bodys;
+	List<DeviceBody*>	Bodys;
 	DeviceBody* FindBody(byte id) const;
 	
 	// 下发 由 GateWay 调用

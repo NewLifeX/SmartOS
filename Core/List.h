@@ -4,15 +4,15 @@
 typedef int (*IComparer)(const void* v1, const void* v2);
 
 // 变长列表。仅用于存储指针
-class List
+class IList
 {
 public:
     IComparer	Comparer;	// 比较器
 
-	List();
-    List(const List& list);
-    List(List&& list);
-	~List();
+	IList();
+    IList(const IList& list);
+    IList(IList&& list);
+	virtual ~IList();
 
 	int Count() const;
 
@@ -34,7 +34,7 @@ public:
 	int FindIndex(const void* item) const;
 
 	// 释放所有指针指向的内存
-	List& DeleteAll();
+	IList& DeleteAll();
 
     // 重载索引运算符[]，返回指定元素的第一个
     void* operator[](int i) const;
@@ -56,22 +56,24 @@ private:
 };
 
 template<typename T>
-class TList : public List
+class List : public IList
 {
-	static_assert(sizeof(T) <= 4, "TList only support pointer or int");
+	static_assert(sizeof(T) <= 4, "List only support pointer or int");
 public:
+	virtual ~List() { };
+	
 	// 添加单个元素
-    void Add(T item) { List::Add(item); }
+    void Add(T item) { IList::Add(item); }
 
 	// 删除指定元素
-	int Remove(const T item) { return List::Remove(item); }
+	int Remove(const T item) { return IList::Remove(item); }
 
 	// 查找指定项。不存在时返回-1
-	int FindIndex(const T item) const { return List::FindIndex(item); }
+	int FindIndex(const T item) const { return IList::FindIndex(item); }
 
     // 重载索引运算符[]，返回指定元素的第一个
-    T operator[](int i) const	{ return (T)List::operator[](i); }
-    T& operator[](int i)		{ return (T&)List::operator[](i); }
+    T operator[](int i) const	{ return (T)IList::operator[](i); }
+    T& operator[](int i)		{ return (T&)IList::operator[](i); }
 };
 
 #endif

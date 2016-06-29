@@ -58,7 +58,7 @@ private:
 class TaskScheduler
 {
 private:
-	List	_Tasks;
+	List<Task*>	_Tasks;
 
 	friend class Task;
 

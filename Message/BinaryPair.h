@@ -34,8 +34,8 @@ public:
 	bool Set(cstring name, const IPEndPoint& value);
 
 	// 字典名值对操作
-	Dictionary GetAll() const;
-	bool Set(const Dictionary& dic);
+	IDictionary GetAll() const;
+	bool Set(const IDictionary& dic);
 	
 private:
 	uint	_p;	// 写入时的位置

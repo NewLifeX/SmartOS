@@ -2,12 +2,12 @@
 #include "Buffer.h"
 #include "List.h"
 
-List::List()
+IList::IList()
 {
 	Init();
 }
 
-List::List(const List& list)
+IList::IList(const IList& list)
 {
 	Init();
 
@@ -21,7 +21,7 @@ List::List(const List& list)
 	Buffer(_Arr, _Count << 2)	= list._Arr;
 }
 
-List::List(List&& list)
+IList::IList(IList&& list)
 {
 	_Count	= list._Count;
 	_Capacity	= list._Capacity;
@@ -41,12 +41,12 @@ List::List(List&& list)
 	}
 }
 
-List::~List()
+IList::~IList()
 {
 	if(_Arr && _Arr != Arr) delete _Arr;
 }
 
-void List::Init()
+void IList::Init()
 {
 	_Arr	= Arr;
 	_Count	= 0;
@@ -55,10 +55,10 @@ void List::Init()
 	Comparer	= nullptr;
 }
 
-int List::Count() const { return _Count; }
+int IList::Count() const { return _Count; }
 
 // 添加单个元素
-void List::Add(void* item)
+void IList::Add(void* item)
 {
 	CheckCapacity(_Count + 1);
 
@@ -66,7 +66,7 @@ void List::Add(void* item)
 }
 
 // 添加多个元素
-void List::Add(void** items, uint count)
+void IList::Add(void** items, uint count)
 {
 	if(!items || !count) return;
 
@@ -76,7 +76,7 @@ void List::Add(void** items, uint count)
 }
 
 // 删除指定位置元素
-void List::RemoveAt(uint index)
+void IList::RemoveAt(uint index)
 {
 	int len = _Count;
 	if(len <= 0 || index >= len) return;
@@ -92,7 +92,7 @@ void List::RemoveAt(uint index)
 }
 
 // 删除指定元素
-int List::Remove(const void* item)
+int IList::Remove(const void* item)
 {
 	int idx = FindIndex(item);
 	if(idx >= 0) RemoveAt(idx);
@@ -100,7 +100,7 @@ int List::Remove(const void* item)
 	return idx;
 }
 
-int List::FindIndex(const void* item) const
+int IList::FindIndex(const void* item) const
 {
 	for(int i=0; i<_Count; i++)
 	{
@@ -112,7 +112,7 @@ int List::FindIndex(const void* item) const
 }
 
 // 释放所有指针指向的内存
-List& List::DeleteAll()
+IList& IList::DeleteAll()
 {
 	for(int i=0; i < _Count; i++)
 	{
@@ -122,20 +122,20 @@ List& List::DeleteAll()
 	return *this;
 }
 
-void List::Clear()
+void IList::Clear()
 {
 	_Count = 0;
 }
 
 // 重载索引运算符[]，返回指定元素的第一个
-void* List::operator[](int i) const
+void* IList::operator[](int i) const
 {
 	if(i<0 || i>=_Count) return nullptr;
 
 	return _Arr[i];
 }
 
-void*& List::operator[](int i)
+void*& IList::operator[](int i)
 {
 	if(i<0 || i>=_Count)
 	{
@@ -146,7 +146,7 @@ void*& List::operator[](int i)
 	return _Arr[i];
 }
 
-bool List::CheckCapacity(int count)
+bool IList::CheckCapacity(int count)
 {
 	// 是否超出容量
 	if(_Arr && count <= _Capacity) return true;

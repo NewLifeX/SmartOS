@@ -182,9 +182,9 @@ bool BinaryPair::Set(cstring name, const IPEndPoint& value)
 }
 
 // 字典名值对操作
-Dictionary BinaryPair::GetAll() const
+IDictionary BinaryPair::GetAll() const
 {
-	Dictionary dic(String::Compare);
+	IDictionary dic(String::Compare);
 
 	auto& ms	= *_s;
 	while(ms.Remain())
@@ -206,7 +206,7 @@ Dictionary BinaryPair::GetAll() const
 	return dic;
 }
 
-bool BinaryPair::Set(const Dictionary& dic)
+bool BinaryPair::Set(const IDictionary& dic)
 {
 	return false;
 }

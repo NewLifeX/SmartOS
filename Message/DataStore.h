@@ -25,7 +25,7 @@ public:
 	void Register(uint offset, IDataPort& port);
 
 private:
-	List	Areas;
+	IList	Areas;
 
 	bool OnHook(uint offset, uint size, bool write);
 };

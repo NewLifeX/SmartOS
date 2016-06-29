@@ -2,18 +2,13 @@
 #include "Core\List.h"
 
 #if DEBUG
-void List::Test()
+static void TestEntity(IList& list)
 {
-	TS("TestList");
-
-	debug_printf("TestList......\r\n");
-
 	//不同长度的原始数据
 	byte buf1[] = {1,2,3,4,5};
 	byte buf2[] = {6,7,8,9};
 	byte buf3[] = {10,11,12,13,14,15,16,17,18,19,20};
 
-	TList<byte*> list;
 	list.Add(buf1);
 	list.Add(buf2);
 	list.Add(buf3);
@@ -57,6 +52,19 @@ void List::Test()
 	}
 	assert(list.Count() == 3 + 16, "Count()");
 	assert(list[0] == buf1 && list[1] == buf3 && list[2] == buf3, "bool CheckCapacity(int count)");
+}
+
+void IList::Test()
+{
+	TS("TestList");
+
+	debug_printf("TestList......\r\n");
+
+	IList list;
+	TestEntity(list);
+
+	List<byte*> list2;
+	TestEntity(list2);
 
 	debug_printf("TestList测试完毕......\r\n");
 
