@@ -253,6 +253,7 @@ Host为空 或 AP/STA_AP
 	if(host->Open())
 	{
 		host->EnableDNS();
+		host->EnableDHCP();
 		ap.Host	= host;
 	}
 	else
@@ -273,7 +274,7 @@ Host为空 或 AP/STA_AP
 	}
 
 	// 打开DHCP，完成时会打开客户端
-	if(ap.Host) ap.Host->EnableDHCP();
+	//if(ap.Host) ap.Host->EnableDHCP();
 }
 
 void AP0801::InitNet()
