@@ -234,8 +234,8 @@ bool Esp8266::OnOpen()
 		IP	= GetIP(true);
 
 		SaveConfig();
-		ShowConfig();
 	}
+	ShowConfig();
 
 	if(!_task) _task	= Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
 

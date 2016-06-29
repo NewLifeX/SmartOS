@@ -30,6 +30,7 @@ TokenClient::TokenClient()
 	Delay		= 0;
 	MaxNotActive	= 0;
 
+	Master		= nullptr;
 	Cfg			= nullptr;
 
 	Received	= nullptr;

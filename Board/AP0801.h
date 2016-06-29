@@ -15,8 +15,8 @@ public:
 	List<OutputPort*>	Leds;
 	List<InputPort*>	Buttons;
 
-	Pin		EthernetLed;	// 以太网指示灯
-	Pin		WirelessLed;	// 无线指示灯
+	//IDataPort*	EthernetLed;	// 以太网指示灯
+	//Pin		WirelessLed;	// 无线指示灯
 
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
@@ -57,7 +57,7 @@ private:
 	int		Size;
 
 	void OpenClient(ISocketHost& host);
-	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
+	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

@@ -22,8 +22,8 @@ AP0801::AP0801()
 	ButtonPins[0]	= PE13;
 	ButtonPins[1]	= PE14;
 
-	EthernetLed	= P0;
-	WirelessLed	= P0;
+	//EthernetLed	= P0;
+	//WirelessLed	= P0;
 
 	Host	= nullptr;
 	HostAP	= nullptr;
@@ -116,32 +116,34 @@ ISocketHost* AP0801::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto host	= new W5500(Spi2, PE1, PD13);
-	host->SetLed(EthernetLed);
+	//host->SetLed(EthernetLed);
+	//host->Led	= EthernetLed;
 	host->NetReady.Bind(&AP0801::OpenClient, this);
 
 	return host;
 }
 
-static void SetWiFiTask(void* param)
+/*static void SetWiFiTask(void* param)
 {
-	auto ap	= (AP0801*)param;
-	auto client	= ap->Client;
-	auto esp	= (Esp8266*)ap->Host;
+	auto bsp	= (AP0801*)param;
+	auto client	= bsp->Client;
+	auto esp	= (Esp8266*)bsp->Host;
 
 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-}
+}*/
 
 ISocketHost* AP0801::Create8266(bool apOnly)
 {
 	auto host	= new Esp8266(COM4, PE2, PD3);
-	host->SetLed(WirelessLed);
+	//host->SetLed(WirelessLed);
 
 	if(apOnly) host->WorkMode	= SocketMode::AP;
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&AP0801::OpenClient, this);
 
-	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
 	host->OpenAsync();
 
@@ -182,28 +184,41 @@ void AP0801::OpenClient(ISocketHost& host)
 	assert(Host, "Host");
 	assert(Client, "Client");
 
-	// 避免重复打开
-	if(Client->Opened) return;
-
 	debug_printf("\r\n OpenClient \r\n");
 
+	// 网络就绪后，打开指示灯
+	auto net	= dynamic_cast<W5500*>(&host);
+	if(net) net->SetLed(*Leds[0]);
+
+	auto esp	= dynamic_cast<Esp8266*>(&host);
+	if(esp) esp->SetLed(*Leds[1]);
+
 	auto tk = TokenConfig::Current;
-	AddControl(*Host, tk->Uri());
-
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-	auto socket	= AddControl(*Host, uri);
-	socket->Local.Port	= tk->Port;
 
-	if(HostAP)
+	// 避免重复打开
+	if(!Client->Opened)
 	{
-		socket	= AddControl(*HostAP, uri);
-		socket->Local.Port	= tk->Port;
+		AddControl(*Host, tk->Uri(), 0);
+		AddControl(*Host, uri, tk->Port);
+
+		Client->Open();
 	}
 
-	Client->Open();
+	if(HostAP && esp)
+	{
+		auto ctrl	= AddControl(*HostAP, uri, tk->Port);
+
+		// 假如来迟了，客户端已经打开，那么自己挂载事件
+		if(Client->Opened && Client->Master)
+		{
+			ctrl->Received	= Client->Master->Received;
+			ctrl->Open();
+		}
+	}
 }
 
-ISocket* AP0801::AddControl(ISocketHost& host, const NetUri& uri)
+TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket	= host.CreateRemote(uri);
@@ -215,22 +230,24 @@ ISocket* AP0801::AddControl(ISocketHost& host, const NetUri& uri)
 
 	// 创建客户端
 	auto client		= Client;
-	client->Controls.Add(ctrl);
+	if(localPort == 0)
+		client->Master	= ctrl;
+	else
+	{
+		socket->Local.Port	= localPort;
+		ctrl->ShowRemote	= true;
+		client->Controls.Add(ctrl);
+	}
 
-	// 如果不是第一个，则打开远程
-	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
-
-	return socket;
+	return ctrl;
 }
 
-void OnInitNet(void* param)
-{
 /*
 网络使用流程：
 
 5500网线检测
 网线连通
-	启动DHCP
+	启动DHCP/DNS
 	作为Host
 Host为空 或 AP/STA_AP
 	创建8266，加载配置
@@ -242,39 +259,46 @@ Host为空 或 AP/STA_AP
 令牌客户端主通道
 令牌客户端内网通道
 */
-	auto& ap	= *(AP0801*)param;
-	auto host	= (W5500*)ap.Create5500();
+void OnInitNet(void* param)
+{
+	auto& bsp	= *(AP0801*)param;
+
+	// 检查是否连接网线
+	auto host	= (W5500*)bsp.Create5500();
 	if(host->Open())
 	{
 		host->EnableDNS();
 		host->EnableDHCP();
-		ap.Host	= host;
+		bsp.Host	= host;
 	}
 	else
 	{
 		delete host;
 	}
-	if(!ap.Host || host->IsAP())
+
+	// 没有接网线，需要完整WiFi通道
+	if(!bsp.Host)
+	{
+		auto esp	= bsp.Create8266(false);
+		if(esp) bsp.Host	= esp;
+	}
+	// 接了网线，同时需要AP
+	else if(host->IsAP())
 	{
 		// 如果Host已存在，则8266仅作为AP
-		auto esp	= ap.Create8266(ap.Host);
-		if(esp)
-		{
-			if(!ap.Host)
-				ap.Host	= esp;
-			else
-				ap.HostAP	= esp;
-		}
+		auto esp	= bsp.Create8266(true);
+		if(esp) bsp.HostAP	= esp;
 	}
 
 	// 打开DHCP，完成时会打开客户端
-	//if(ap.Host) ap.Host->EnableDHCP();
+	//if(bsp.Host) bsp.Host->EnableDHCP();
 }
 
 void AP0801::InitNet()
 {
 	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
 }
+
 /******************************** 2401 ********************************/
 
 /*int Fix2401(const Buffer& bs)

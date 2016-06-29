@@ -26,7 +26,8 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
-	List<TokenController*>	Controls;	// 控制器集合
+	TokenController*	Master;	// 主通道
+	List<TokenController*>	Controls;	// 从通道
 	//List	Sessions;	// 会话集合
 	TokenConfig*	Cfg;
 	DataStore	Store;	// 数据存储区
