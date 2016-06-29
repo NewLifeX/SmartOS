@@ -27,6 +27,7 @@ public:
 	void Init();
     void Init(Spi* spi, Pin irq, Pin rst);
 	void SetLed(Pin led);
+	void SetLed(OutputPort& led);
 
 	bool Open();
 	bool Close();

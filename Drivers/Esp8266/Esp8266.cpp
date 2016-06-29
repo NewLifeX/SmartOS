@@ -81,11 +81,17 @@ void Esp8266::SetLed(Pin led)
 {
 	if(led != P0)
 	{
-		auto fp	= new FlushPort();
-		fp->Port	= new OutputPort(led);
-		fp->Start();
-		Led	= fp;
+		auto port	= new OutputPort(led);
+		SetLed(*port);
 	}
+}
+
+void Esp8266::SetLed(OutputPort& led)
+{
+	auto fp	= new FlushPort();
+	fp->Port	= &led;
+	fp->Start();
+	Led	= fp;
 }
 
 /*void Esp8266::LoopTask(void* param)

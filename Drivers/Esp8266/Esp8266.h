@@ -24,6 +24,7 @@ public:
 	void OpenAsync();
 	virtual void Config();
 	void SetLed(Pin led);
+	void SetLed(OutputPort& led);
 
 	//virtual const String ToString() const { return String("Esp8266"); }
 	virtual ISocket* CreateSocket(NetType type);

@@ -379,11 +379,17 @@ void W5500::SetLed(Pin led)
 {
 	if(led != P0)
 	{
-		auto fp	= new FlushPort();
-		fp->Port	= new OutputPort(led);
-		fp->Start();
-		Led	= fp;
+		auto port	= new OutputPort(led);
+		SetLed(*port);
 	}
+}
+
+void W5500::SetLed(OutputPort& led)
+{
+	auto fp	= new FlushPort();
+	fp->Port	= &led;
+	fp->Start();
+	Led	= fp;
 }
 
 bool W5500::Open()
