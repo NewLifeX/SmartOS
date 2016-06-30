@@ -15,9 +15,6 @@ public:
 	List<OutputPort*>	Leds;
 	List<InputPort*>	Buttons;
 
-	//IDataPort*	EthernetLed;	// 以太网指示灯
-	//Pin		WirelessLed;	// 无线指示灯
-
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
@@ -28,7 +25,7 @@ public:
 	AP0801();
 
 	// 设置系统参数
-	void Init(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+	void Init(ushort code, cstring name, COM message = COM1);
 
 	// 设置数据区
 	void* InitData(void* data, int size);

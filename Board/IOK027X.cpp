@@ -2,42 +2,35 @@
 
 #include "Task.h"
 
-#include "SerialPort.h"
 #include "WatchDog.h"
 #include "Config.h"
 
-#include "Drivers\NRF24L01.h"
-#include "Drivers\W5500.h"
 #include "Drivers\Esp8266\Esp8266.h"
 
-#include "Net\Dhcp.h"
-#include "Net\DNS.h"
-
 #include "TokenNet\TokenController.h"
-#include "App\FlushPort.h"
-
 
 IOK027X::IOK027X()
 {
 	Host	= nullptr;	// 网络主机
 	Client	= nullptr;
+
+	Data	= nullptr;
+	Size	= 0;
 }
 
-void IOK027X::Init(ushort code, cstring name, COM message, int baudRate)
+void IOK027X::Init(ushort code, cstring name, COM message)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
     // 初始化系统
-    //Sys.Clock = 48000000;
     sys.Init();
 #if DEBUG
     sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
 #endif
 
-	// WatchDog::Start();
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
 }
@@ -45,7 +38,7 @@ void IOK027X::Init(ushort code, cstring name, COM message, int baudRate)
 void* IOK027X::InitData(void* data, int size)
 {
 	// 启动信息
-	auto hot = &HotConfig::Current();
+	auto hot	= &HotConfig::Current();
 	hot->Times++;
 
 	data = hot->Next();
@@ -56,34 +49,23 @@ void* IOK027X::InitData(void* data, int size)
 		ds[0] = size;
 	}
 
-	Data = data;
-	Size = size;
+	Data	= data;
+	Size	= size;
 
 	return data;
 }
 
-ISocketHost* IOK027X::Create8266(bool apOnly)
+ISocketHost* IOK027X::Create8266()
 {
-	auto host	= new Esp8266(COM2,PB2,PA1);
+	auto host	= new Esp8266(COM2, PB2, PA1);
 
 	// 初次需要指定模式 否则为 Wire
-	if (host->SSID->Length() == 0)
-		host->Mode = SocketMode::AP;
-// 	else
-// 	{
-// 		if (Client->Cfg->Token().Length() == 0)
-// 			host->Mode = SocketMode::STA_AP;
-// 		else
-// 			host->Mode = SocketMode::Station;
-// 	}
-
-	// APOnly且不是AP模式时，强制AP模式  wifi开关不存在APOnly
-	// if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
+	bool join	= host->SSID && *host->SSID;
+	if (!join) host->Mode	= SocketMode::AP;
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
-	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
 	host->OpenAsync();
@@ -125,123 +107,65 @@ void IOK027X::OpenClient(ISocketHost& host)
 	assert(Client, "Client");
 	debug_printf("\r\n OpenClient \r\n");
 
-	// auto esp = dynamic_cast<Esp8266*>(&host);
-
 	auto tk = TokenConfig::Current;
+
+	// STA模式下，主连接服务器
+	if (host.IsStation()) AddControl(host, tk->Uri(), 0);
+
+	// STA或AP模式下，建立本地监听
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
+	AddControl(host, uri, tk->Port);
 
-	auto esp = dynamic_cast<Esp8266*>(&host);
-
-	if (Host&&esp)
-	{
-		if (esp->IsStation())
-		{
-			debug_printf("IsStation Add remote\r\n");
-			AddControl(*Host, tk->Uri(), 0);
-		}
-		if (esp->IsAP())
-		{
-			debug_printf("IsAP Add Local\r\n");
-			AddControl(*Host, uri, tk->Port);
-		}
-
-		if (host.Mode != SocketMode::Wire)
-			Client->Open();
-		else
-		{
-			debug_printf("WIFI开关不存在Wire模式\r\n");
-			Sys.Sleep(10);
-			Sys.Reset();
-		}
-	}
+	Client->Open();
 }
 
 TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket = host.CreateRemote(uri);
+	auto socket	= host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
+	auto ctrl	= new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket = socket;
+	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client = Client;
-	if (localPort == 0)
-		client->Master = ctrl;
+	auto client	= Client;
+	if(localPort == 0)
+		client->Master	= ctrl;
 	else
 	{
-		socket->Local.Port = localPort;
-		ctrl->ShowRemote = true;
+		socket->Local.Port	= localPort;
+		ctrl->ShowRemote	= true;
 		client->Controls.Add(ctrl);
 	}
 
 	return ctrl;
 }
 
-void OnInitNet(void* param)
-{
-	auto& bsp = *(IOK027X*)param;
-
-	// 没有接网线，需要完整WiFi通道
-	auto esp = bsp.Create8266(false);
-	bsp.Host = esp;
-}
-
 void IOK027X::InitNet()
 {
-	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
-}
-/******************************** 2401 ********************************/
-
-/*int Fix2401(const Buffer& bs)
-{
-	//auto& bs	= *(Buffer*)param;
-	// 微网指令特殊处理长度
-	uint rs	= bs.Length();
-	if(rs >= 8)
-	{
-		rs = bs[5] + 8;
-		//if(rs < bs.Length()) bs.SetLength(rs);
-	}
-	return rs;
+	Host	= Create8266();
 }
 
-ITransport* IOK027X::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+void IOK027X::Restore()
 {
-	debug_printf("\r\n Create2401 \r\n");
+	Config::Current->RemoveAll();
 
-	static Spi spi(spi_, 10000000, true);
-	static NRF24L01 nrf;
-	nrf.Init(&spi, ce, irq, power);
+	Sys.Reset();
+}
 
-	auto tc	= TinyConfig::Create();
-	if(tc->Channel == 0)
-	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
-	}
-	if(tc->Interval == 0)
-	{
-		tc->Interval= 40;
-		tc->Timeout	= 1000;
-	}
+void IOK027X::OnLongPress(InputPort* port, bool down)
+{
+	if (down) return;
 
-	nrf.AutoAnswer	= false;
-	nrf.DynPayload	= false;
-	nrf.Channel		= tc->Channel;
-	//nrf.Channel		= 120;
-	nrf.Speed		= tc->Speed;
+	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
-	nrf.FixData	= Fix2401;
-
-	if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
-
-	nrf.Master	= true;
-
-	return &nrf;
-}*/
+	if (port->PressTime >= 5000)
+		Restore();
+	else if (port->PressTime >= 1000)
+		Sys.Reset();
+}
 
 /*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)

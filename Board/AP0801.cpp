@@ -2,16 +2,12 @@
 
 #include "Task.h"
 
-#include "SerialPort.h"
 #include "WatchDog.h"
 #include "Config.h"
 
 #include "Drivers\NRF24L01.h"
 #include "Drivers\W5500.h"
 #include "Drivers\Esp8266\Esp8266.h"
-
-#include "Net\Dhcp.h"
-#include "Net\DNS.h"
 
 #include "TokenNet\TokenController.h"
 
@@ -22,9 +18,6 @@ AP0801::AP0801()
 	ButtonPins.Add(PE13);
 	ButtonPins.Add(PE14);
 
-	//EthernetLed	= P0;
-	//WirelessLed	= P0;
-
 	Host	= nullptr;
 	HostAP	= nullptr;
 	Client	= nullptr;
@@ -33,7 +26,7 @@ AP0801::AP0801()
 	Size	= 0;
 }
 
-void AP0801::Init(ushort code, cstring name, COM message, int baudRate)
+void AP0801::Init(ushort code, cstring name, COM message)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
@@ -44,24 +37,6 @@ void AP0801::Init(ushort code, cstring name, COM message, int baudRate)
 #if DEBUG
     sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
-#endif
-
-#if DEBUG
-	// 打开串口输入便于调试数据操作，但是会影响性能
-	if(baudRate > 0)
-	{
-		auto sp = SerialPort::GetMessagePort();
-		if(baudRate != 1024000)
-		{
-			sp->Close();
-			sp->SetBaudRate(baudRate);
-		}
-		//sp->Register(OnSerial);
-	}
-
-	//WatchDog::Start(20000);
-#else
-	WatchDog::Start();
 #endif
 
 	// Flash最后一块作为配置区
@@ -177,12 +152,11 @@ void AP0801::Register(int index, IDataPort& dp)
 	if(!Client) return;
 
 	auto& ds	= Client->Store;
-	ds.Register(index , dp);
+	ds.Register(index, dp);
 }
 
 void AP0801::OpenClient(ISocketHost& host)
 {
-	//assert(Host, "Host");
 	assert(Client, "Client");
 
 	debug_printf("\r\n OpenClient \r\n");
@@ -228,12 +202,12 @@ TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort
 	auto socket	= host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl		= new TokenController();
+	auto ctrl	= new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
 	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client		= Client;
+	auto client	= Client;
 	if(localPort == 0)
 		client->Master	= ctrl;
 	else

@@ -11,23 +11,27 @@ class IOK027X
 {
 public:
 	ISocketHost*	Host;			// 网络主机
-	TokenClient*	Client;			// 
-	
+	TokenClient*	Client;			//
+
 	IOK027X();
 
-	void Init(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+	void Init(ushort code, cstring name, COM message = COM1);
 
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);
 
-	ISocketHost* Create8266(bool apOnly);
+	ISocketHost* Create8266();
 
 	void InitClient();
 	void InitNet();
 
+	void Restore();
+	void OnLongPress(InputPort* port, bool down);
+
 private:
-	void *	Data;
+	void*	Data;
 	int		Size;
+
 	void OpenClient(ISocketHost& host);
 	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
 };
