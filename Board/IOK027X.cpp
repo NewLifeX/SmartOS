@@ -11,6 +11,8 @@
 
 IOK027X::IOK027X()
 {
+	LedPins.Add(PA0);
+
 	Host	= nullptr;	// 网络主机
 	Client	= nullptr;
 
@@ -53,6 +55,16 @@ void* IOK027X::InitData(void* data, int size)
 	Size	= size;
 
 	return data;
+}
+
+void IOK027X::InitLeds()
+{
+	for(int i=0; i<LedPins.Count(); i++)
+	{
+		auto port	= new OutputPort(LedPins[i]);
+		port->Open();
+		Leds.Add(port);
+	}
 }
 
 ISocketHost* IOK027X::Create8266()
@@ -106,6 +118,9 @@ void IOK027X::OpenClient(ISocketHost& host)
 {
 	assert(Client, "Client");
 	debug_printf("\r\n OpenClient \r\n");
+
+	auto esp	= dynamic_cast<Esp8266*>(&host);
+	if(esp) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 

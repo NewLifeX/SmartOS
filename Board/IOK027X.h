@@ -10,6 +10,9 @@
 class IOK027X
 {
 public:
+	List<Pin>	LedPins;
+	List<OutputPort*>	Leds;
+
 	ISocketHost*	Host;			// 网络主机
 	TokenClient*	Client;			//
 
@@ -19,6 +22,8 @@ public:
 
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);
+
+	void InitLeds();
 
 	ISocketHost* Create8266();
 
