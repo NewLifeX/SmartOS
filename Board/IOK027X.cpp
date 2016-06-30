@@ -77,6 +77,7 @@ ISocketHost* IOK027X::Create8266(bool apOnly)
 
 
 	// APOnly且不是AP模式时，强制AP模式
+	if (host->SSID->Length() == 0)host->Mode = SocketMode::AP;
 	if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -130,10 +131,20 @@ void IOK027X::OpenClient(ISocketHost& host)
 	auto tk = TokenConfig::Current;
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
-	if (HostAP)
+	auto esp = dynamic_cast<Esp8266*>(&host);
+
+	if (HostAP&&esp)
 	{
-		AddControl(*HostAP, tk->Uri(), 0);
-		AddControl(*HostAP, uri, tk->Port);
+		if (esp->IsStation())
+		{
+			debug_printf("IsStation Add remote\r\n");
+			AddControl(*HostAP, tk->Uri(), 0);
+		}
+		if (esp->IsAP())
+		{
+			debug_printf("IsAP Add Local\r\n");
+			AddControl(*HostAP, uri, tk->Port);
+		}
 
 		Client->Open();
 	}
