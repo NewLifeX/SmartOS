@@ -177,8 +177,6 @@ void Dhcp::Stop()
 		{
 			net_printf("尝试次数 %d 超过最大允许次数 %d ，", Times, MaxTimes);
 
-			// 重启一次，可能DHCP失败跟硬件有关
-			//Sys.Reset();
 			// 恢复上一次设置，如果首次，则恢复出厂设置
 			if(Host.LoadConfig())
 				net_printf("恢复上一次设置");
