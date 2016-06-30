@@ -19,7 +19,7 @@
 
 IOK027X::IOK027X()
 {
-	HostAP	= nullptr;	// 网络主机
+	Host	= nullptr;	// 网络主机
 	Client	= nullptr;
 }
 
@@ -66,7 +66,7 @@ void* IOK027X::InitData(void* data, int size)
 // {
 // 	auto ap	= (IOK027X*)param;
 // 	auto client	= ap->Client;
-// 	auto esp	= (Esp8266*)ap->HostAP;
+// 	auto esp	= (Esp8266*)ap->Host;
 // 
 // 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 // }
@@ -133,17 +133,17 @@ void IOK027X::OpenClient(ISocketHost& host)
 
 	auto esp = dynamic_cast<Esp8266*>(&host);
 
-	if (HostAP&&esp)
+	if (Host&&esp)
 	{
 		if (esp->IsStation())
 		{
 			debug_printf("IsStation Add remote\r\n");
-			AddControl(*HostAP, tk->Uri(), 0);
+			AddControl(*Host, tk->Uri(), 0);
 		}
 		if (esp->IsAP())
 		{
 			debug_printf("IsAP Add Local\r\n");
-			AddControl(*HostAP, uri, tk->Port);
+			AddControl(*Host, uri, tk->Port);
 		}
 
 		Client->Open();
@@ -180,7 +180,7 @@ void OnInitNet(void* param)
 
 	// 没有接网线，需要完整WiFi通道
 	auto esp = bsp.Create8266(false);
-	bsp.HostAP = esp;
+	bsp.Host = esp;
 }
 
 void IOK027X::InitNet()

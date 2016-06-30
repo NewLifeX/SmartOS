@@ -10,7 +10,7 @@
 class IOK027X
 {
 public:
-	ISocketHost*	HostAP;			// 网络主机
+	ISocketHost*	Host;			// 网络主机
 	TokenClient*	Client;			// 
 	
 	IOK027X();
