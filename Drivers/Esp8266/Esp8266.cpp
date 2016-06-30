@@ -609,8 +609,12 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 	// 如果有数据包正在处理，则丢弃
 	if(_Buffer.Length() > 0)
 	{
-		net_printf("已有数据包 %d 字节正在处理，丢弃当前数据包 %d 字节 ", _Buffer.Length(), len2);
+#if NET_DEBUG
+		net_printf("已有数据包 %d 字节正在处理，丢弃当前数据包 %d 字节 \r\n处理：", _Buffer.Length(), len2);
+		_Buffer.Show(true);
+		net_printf("当前：");
 		bs.Sub(s, len2).Show(true);
+#endif
 	}
 	else
 	{

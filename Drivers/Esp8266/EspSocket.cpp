@@ -49,7 +49,7 @@ bool EspSocket::OnOpen()
 	if(Server)
 	{
 		Server.Show(false);
-		net_printf(":%d", Remote.Port);
+		net_printf(":%d\r\n", Remote.Port);
 	}
 	else
 		Remote.Show(true);
