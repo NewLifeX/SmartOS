@@ -317,6 +317,7 @@ W5500::W5500(SPI spi, Pin irq, Pin rst)
 {
 	auto spi_	= new Spi(spi, 36000000);
 
+	Init();
 	LoadConfig();
 	Init(spi_, irq, rst);
 }
