@@ -605,7 +605,9 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 	pinMsg.ReadMessage(msg);
 	UInt64 start = pinMsg.LocalTime;
 
-	int cost 	= (int)(Sys.Ms() - start);
+	//int cost 	= (int)(Sys.Ms() - start);
+	// 使用绝对毫秒数，让服务器知道设备本地时间
+	int cost 	= (int)(DateTime::Now().TotalMs() - start);
 
 	if(Delay)
 		Delay = (Delay + cost) / 2;
