@@ -91,8 +91,6 @@ ISocketHost* AP0801::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto host	= new W5500(Spi2, PE1, PD13);
-	//host->SetLed(EthernetLed);
-	//host->Led	= EthernetLed;
 	host->NetReady.Bind(&AP0801::OpenClient, this);
 
 	return host;
