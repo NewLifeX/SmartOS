@@ -134,6 +134,7 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 			//if (_Handler) _Handler(this, _Param);
 			Press(*this);
 			break;
+		default: break;
 		}
 	}
 }

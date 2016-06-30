@@ -764,6 +764,8 @@ ISocket* W5500::CreateSocket(NetType type)
 
 		case NetType::Udp:
 			socket	= new UdpClient(*this);
+		default:
+			break;
 	}
 	
 	if(socket)
