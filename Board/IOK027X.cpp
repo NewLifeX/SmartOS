@@ -62,23 +62,23 @@ void* IOK027X::InitData(void* data, int size)
 	return data;
 }
 
-// static void SetWiFiTask(void* param)
-// {
-// 	auto ap	= (IOK027X*)param;
-// 	auto client	= ap->Client;
-// 	auto esp	= (Esp8266*)ap->Host;
-// 
-// 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-// }
-
 ISocketHost* IOK027X::Create8266(bool apOnly)
 {
 	auto host	= new Esp8266(COM2,PB2,PA1);
 
+	// 初次需要指定模式 否则为 Wire
+	if (host->SSID->Length() == 0)
+		host->Mode = SocketMode::AP;
+// 	else
+// 	{
+// 		if (Client->Cfg->Token().Length() == 0)
+// 			host->Mode = SocketMode::STA_AP;
+// 		else
+// 			host->Mode = SocketMode::Station;
+// 	}
 
-	// APOnly且不是AP模式时，强制AP模式
-	if (host->SSID->Length() == 0)host->Mode = SocketMode::AP;
-	if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
+	// APOnly且不是AP模式时，强制AP模式  wifi开关不存在APOnly
+	// if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
@@ -90,7 +90,6 @@ ISocketHost* IOK027X::Create8266(bool apOnly)
 
 	return host;
 }
-
 
 /******************************** Token ********************************/
 
@@ -146,7 +145,14 @@ void IOK027X::OpenClient(ISocketHost& host)
 			AddControl(*Host, uri, tk->Port);
 		}
 
-		Client->Open();
+		if (host.Mode != SocketMode::Wire)
+			Client->Open();
+		else
+		{
+			debug_printf("WIFI开关不存在Wire模式\r\n");
+			Sys.Sleep(10);
+			Sys.Reset();
+		}
 	}
 }
 
