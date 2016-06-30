@@ -646,6 +646,11 @@ void TokenClient::Write(int start, const Buffer& bs)
 	Send(msg);
 }
 
+void TokenClient::Write(int start, byte dat)
+{
+	Write(start, Buffer(&dat, 1));
+}
+
 /*
 请求：起始 + 大小
 响应：起始 + 数据

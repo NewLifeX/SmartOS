@@ -62,6 +62,7 @@ public:
 
 	void Read(int start, int size);
 	void Write(int start, const Buffer& bs);
+	void Write(int start, byte dat);
 
 	// 远程调用
 	void Invoke(const String& action, const Buffer& bs);
