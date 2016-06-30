@@ -1580,6 +1580,12 @@ void UdpClient::OnProcess(byte reg)
 	{
 		RaiseReceive();
 	}
+#if NET_DEBUG
+	else if(ir.TIMEOUT)
+	{
+		net_printf("SEND_OK TIMEOUT\r\n");
+	}
+#endif
 	//	SEND OK   不需要处理 但要清空中断位
 }
 

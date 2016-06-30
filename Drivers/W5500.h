@@ -71,7 +71,7 @@ private:
 	OutputPort	Rst;
 
 	// 8个硬件socket
-	IList	Sockets;
+	List<ISocket*>	Sockets;
 
 	// spi 模式（默认变长）
 	ushort		PhaseOM;
