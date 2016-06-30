@@ -191,14 +191,14 @@ int TimeCost::Elapsed()
 	short ts	= Time.CurrentTicks() - StartTicks;
 	int ms		= (int)(Time.Current() - Start);
 
-	ts /= Time.Ticks;
-	if(ts <= 0)
+	short us	= ts / Time.Ticks;
+	if(ts < 0 && ms > 0)
 	{
 		ms--;
-		ts += 1000;
+		us	+= 1000;
 	}
 
-	return ms * 1000 + ts;
+	return ms * 1000 + us;
 }
 
 void TimeCost::Show(cstring format)
