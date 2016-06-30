@@ -15,20 +15,21 @@ public:
 	
 	IOK027X();
 
-	void Setup(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+	void Init(ushort code, cstring name, COM message = COM1, int baudRate = 0);
+
+	void* InitData(void* data, int size);
+	void Register(int index, IDataPort& dp);
+
+	ISocketHost* Create8266(bool apOnly);
 
 	void InitClient();
 	void InitNet();
-
-	ISocketHost* Create8266(bool apOnly);
-	void* InitData(void* data, int size);
-	void Register(int index, IDataPort& dp);
 
 private:
 	void *	Data;
 	int		Size;
 	void OpenClient(ISocketHost& host);
-	ISocket* AddControl(ISocketHost& host, const NetUri& uri);
+	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

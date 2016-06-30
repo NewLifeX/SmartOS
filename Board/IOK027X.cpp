@@ -23,7 +23,7 @@ IOK027X::IOK027X()
 	Client	= nullptr;
 }
 
-void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
+void IOK027X::Init(ushort code, cstring name, COM message, int baudRate)
 {
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
@@ -40,12 +40,6 @@ void IOK027X::Setup(ushort code, cstring name, COM message, int baudRate)
 	// WatchDog::Start();
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
-}
-
-// 网络就绪
-void OnNetReady(IOK027X& ap, ISocketHost& host)
-{
-	if (ap.Client) ap.Client->Open();
 }
 
 void* IOK027X::InitData(void* data, int size)
@@ -68,23 +62,28 @@ void* IOK027X::InitData(void* data, int size)
 	return data;
 }
 
-
-static void SetWiFiTask(void* param)
-{
-	auto ap	= (IOK027X*)param;
-	auto client	= ap->Client;
-	auto esp	= (Esp8266*)ap->HostAP;
-
-	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-}
+// static void SetWiFiTask(void* param)
+// {
+// 	auto ap	= (IOK027X*)param;
+// 	auto client	= ap->Client;
+// 	auto esp	= (Esp8266*)ap->HostAP;
+// 
+// 	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+// }
 
 ISocketHost* IOK027X::Create8266(bool apOnly)
 {
 	auto host	= new Esp8266(COM2,PB2,PA1);
 
+
+	// APOnly且不是AP模式时，强制AP模式
+	if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
+
+	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
-	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
 	host->OpenAsync();
 
@@ -123,27 +122,24 @@ void IOK027X::Register(int index, IDataPort& dp)
 
 void IOK027X::OpenClient(ISocketHost& host)
 {
-	debug_printf("\r\n OpenClient \r\n");
-	assert(HostAP, "HostAP");
 	assert(Client, "Client");
+	debug_printf("\r\n OpenClient \r\n");
+
+	// auto esp = dynamic_cast<Esp8266*>(&host);
 
 	auto tk = TokenConfig::Current;
-	AddControl(*HostAP, tk->Uri());
-
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-	auto socket = AddControl(*HostAP, uri);
-	socket->Local.Port = tk->Port;
 
-	 if (HostAP)
+	if (HostAP)
 	{
-	 	socket = AddControl(*HostAP, uri);
-	 	socket->Local.Port = tk->Port;
-	 }
+		AddControl(*HostAP, tk->Uri(), 0);
+		AddControl(*HostAP, uri, tk->Port);
 
-	Client->Open();
+		Client->Open();
+	}
 }
 
-ISocket* IOK027X::AddControl(ISocketHost& host, const NetUri& uri)
+TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);
@@ -155,72 +151,26 @@ ISocket* IOK027X::AddControl(ISocketHost& host, const NetUri& uri)
 
 	// 创建客户端
 	auto client = Client;
-	client->Controls.Add(ctrl);
+	if (localPort == 0)
+		client->Master = ctrl;
+	else
+	{
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
+		client->Controls.Add(ctrl);
+	}
 
-	// 如果不是第一个，则打开远程
-	if (client->Controls.Count() > 1) ctrl->ShowRemote = true;
-
-	return socket;
+	return ctrl;
 }
 
 void OnInitNet(void* param)
 {
-	/*
-	网络使用流程：
+	auto& bsp = *(IOK027X*)param;
 
-	5500网线检测
-	网线连通
-	启动DHCP
-	作为Host
-	Host为空 或 AP/STA_AP
-	创建8266，加载配置
-	Host为空
-	作为Host
-	else STA_AP
-	工作模式 = AP
-
-	令牌客户端主通道
-	令牌客户端内网通道
-	*/
-
-	auto& ap = *(IOK027X*)param;
-
-	// 如果Host已存在，则8266仅作为AP
-	ap.HostAP = ap.Create8266(true);
-
-
-	// 打开DHCP，完成时会打开客户端
-	ap.HostAP->EnableDHCP();
-
-
-	//auto& ap = *(IOK027X*)param;
-	//auto host = (W5500*)ap.Create5500();
-	//if (host->Open())
-	//{
-	//	host->EnableDNS();
-	//	ap.Host = host;
-	//}
-	//else
-	//{
-	//	delete host;
-	//}
-	//if (!ap.Host || host->IsAP())
-	//{
-	//	// 如果Host已存在，则8266仅作为AP
-	//	auto esp = ap.Create8266(ap.Host);
-	//	if (esp)
-	//	{
-	//		if (!ap.Host)
-	//			ap.Host = esp;
-	//		else
-	//			ap.HostAP = esp;
-	//	}
-	//}
-	//
-	//// 打开DHCP，完成时会打开客户端
-	//if (ap.Host) ap.Host->EnableDHCP();
+	// 没有接网线，需要完整WiFi通道
+	auto esp = bsp.Create8266(false);
+	bsp.HostAP = esp;
 }
-
 
 void IOK027X::InitNet()
 {
