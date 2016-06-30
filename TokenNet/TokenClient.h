@@ -31,7 +31,7 @@ public:
 	//List	Sessions;	// 会话集合
 	TokenConfig*	Cfg;
 	DataStore	Store;	// 数据存储区
-	IDictionary	Routes;	// 路由集合
+	Dictionary<cstring, IDelegate*>	Routes;	// 路由集合
 
 	TokenClient();
 

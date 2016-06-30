@@ -52,24 +52,33 @@ class Dictionary : public IDictionary
 	typedef const TKey	PKey;
 	typedef TValue		PValue;
 public:
+    Dictionary(IComparer comparer = nullptr) : IDictionary(comparer) { }
+
 	const List<TKey>& Keys() const;
 	const List<TValue>& Values() const;
 
 	// 添加单个元素
-    void Add(PKey key, PValue value) { IDictionary::Add(key, value); }
+    void Add(PKey key, PValue value) { IDictionary::Add((const void*)key, value); }
 
 	// 删除指定元素
-	void Remove(PKey key) { IDictionary::Remove(key); }
+	void Remove(PKey key) { IDictionary::Remove((const void*)key); }
 
 	// 是否包含指定项
-	bool ContainKey(PKey key) const { return IDictionary::ContainKey(key); }
+	bool ContainKey(PKey key) const { return IDictionary::ContainKey((const void*)key); }
 
 	// 尝试获取值
-	bool TryGetValue(PKey key, PValue& value) const { return IDictionary::TryGetValue(key, value); }
+	bool TryGetValue(PKey key, PValue& value) const
+	{
+		void* val	= nullptr;
+		bool rs	= IDictionary::TryGetValue((const void*)key, val);
+		value	= (PValue)val;
+
+		return rs;
+	}
 
     // 重载索引运算符[]，返回指定元素的第一个
-    PValue operator[](PKey key) const	{ return IDictionary::operator[](key); }
-    PValue& operator[](PKey key)		{ return IDictionary::operator[](key); }
+    PValue operator[](PKey key) const	{ return IDictionary::operator[]((const void*)key); }
+    PValue& operator[](PKey key)		{ return IDictionary::operator[]((const void*)key); }
 };
 
 #endif

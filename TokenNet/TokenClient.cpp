@@ -799,10 +799,9 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 
 bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream& result)
 {
-	void* ps	= nullptr;
-	if(!Routes.TryGetValue(action.GetBuffer(), ps) || !ps) return false;
+	IDelegate* dlg	= nullptr;
+	if(!Routes.TryGetValue(action.GetBuffer(), dlg) || !dlg) return false;
 
-	auto dlg	= (IDelegate*)ps;
 	auto inv	= (InvokeHandler)dlg->Method;
 
 	return inv(dlg->Target, args, result);
@@ -820,10 +819,10 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 	}
 	else
 	{
-		void* dlg	= nullptr;
+		IDelegate* dlg	= nullptr;
 		if(Routes.TryGetValue(action, dlg))
 		{
-			delete (IDelegate*)dlg;
+			delete dlg;
 
 			Routes.Remove(action);
 		}
