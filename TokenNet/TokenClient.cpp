@@ -246,6 +246,7 @@ void TokenClient::SayHello(bool broadcast)
 		auto sock	= ctrl->Socket;
 		ext.EndPoint.Address	= sock->Host->IP;
 		ext.EndPoint.Port		= sock->Local.Port;
+		ext.Protocol			= sock->Protocol ==NetType::Udp ? 17 : 6;
 	}
 
 	ext.Cipher	= "RC4";
