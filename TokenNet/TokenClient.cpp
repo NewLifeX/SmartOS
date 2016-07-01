@@ -106,7 +106,8 @@ bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 
 	assert(ctrl, "TokenClient::Send");
 
-	LastSend	= Sys.Ms();
+	// 最后发送仅统计主控制器
+	if(ctrl == Master) LastSend	= Sys.Ms();
 
 	return ctrl->Send(msg);
 }
@@ -124,7 +125,7 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 
 	assert(ctrl, "TokenClient::Reply");
 
-	LastSend	= Sys.Ms();
+	if(ctrl == Master) LastSend	= Sys.Ms();
 
 	return ctrl->Reply(msg);
 }
