@@ -15,7 +15,6 @@
 
 #include "Security\RC4.h"
 
-static void LoopTask(void* param);
 static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
@@ -26,7 +25,8 @@ TokenClient::TokenClient()
 	Opened		= false;
 	Status		= 0;
 	LoginTime	= 0;
-	LastActive	= 0;
+	LastSend	= 0;
+	LastReceive	= 0;
 	Delay		= 0;
 	MaxNotActive	= 0;
 
@@ -35,6 +35,9 @@ TokenClient::TokenClient()
 
 	Received	= nullptr;
 	Param		= nullptr;
+
+	NextReport	= 0;
+	ReportLength	= 0;
 }
 
 void TokenClient::Open()
@@ -61,11 +64,11 @@ void TokenClient::Open()
 	}
 
 	// 令牌客户端定时任务
-	if(Master) _task = Sys.AddTask(LoopTask, this, 1000, 5000, "令牌客户");
+	if(Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
 	if(cs.Count() > 0) _taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
-	LastActive = Sys.Ms();
+	//LastReceive = Sys.Ms();
 
 	Opened	= true;
 }
@@ -102,6 +105,8 @@ bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 
 	assert(ctrl, "TokenClient::Send");
 
+	LastSend	= Sys.Ms();
+
 	return ctrl->Send(msg);
 }
 
@@ -118,6 +123,8 @@ bool TokenClient::Reply(TokenMessage& msg, TokenController* ctrl)
 
 	assert(ctrl, "TokenClient::Reply");
 
+	LastSend	= Sys.Ms();
+
 	return ctrl->Reply(msg);
 }
 
@@ -125,7 +132,7 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 {
 	TS("TokenClient::OnReceive");
 
-	LastActive = Sys.Ms();
+	LastReceive = Sys.Ms();
 
 	switch(msg.Code)
 	{
@@ -174,36 +181,36 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 // 常用系统级消息
 
 // 定时任务
-void LoopTask(void* param)
+void TokenClient::LoopTask()
 {
 	TS("TokenClient::LoopTask");
-	assert_ptr(param);
 
-	auto client = (TokenClient*)param;
+	CheckReport();
+
 	// 状态。0准备、1握手完成、2登录后
-	switch(client->Status)
+	switch(Status)
 	{
 		case 0:
-			client->SayHello(false);
+			SayHello(false);
 			break;
 		case 1:
 		{
-			if(!client->Cfg->User())
-				client->Register();
+			if(!Cfg->User())
+				Register();
 			else
-				client->Login();
+				Login();
 
 			break;
 		}
 		case 2:
-			client->Ping();
+			Ping();
 			break;
 	}
 
 	// 最大不活跃时间ms，超过该时间时重启系统
 	// WiFi触摸开关建议5~10分钟，网关建议5分钟
 	// MaxNotActive 为零便不考虑重启
-	if(client->MaxNotActive != 0 && client->LastActive + client->MaxNotActive < Sys.Ms()) Sys.Reset();
+	if(MaxNotActive != 0 && LastReceive + MaxNotActive < Sys.Ms()) Sys.Reset();
 }
 
 void BroadcastHelloTask(void* param)
@@ -573,7 +580,7 @@ void TokenClient::Ping()
 {
 	TS("TokenClient::Ping");
 
-	if(LastActive > 0 && LastActive + 180000 < Sys.Ms())
+	if(LastReceive > 0 && LastReceive + 180000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
@@ -649,6 +656,39 @@ void TokenClient::Write(int start, const Buffer& bs)
 void TokenClient::Write(int start, byte dat)
 {
 	Write(start, Buffer(&dat, 1));
+}
+
+void TokenClient::ReportAsync(int start, uint length)
+{
+	if(start + length >= Store.Data.Length()) return;
+
+	NextReport	= start;
+	ReportLength	= length;
+
+	// 延迟上报，期间有其它上报任务到来将会覆盖
+	Sys.SetTask(_task, true, 200);
+}
+
+bool TokenClient::CheckReport()
+{
+	uint offset = NextReport;
+	uint len	= ReportLength;
+	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
+
+	if(!offset) return false;
+
+	// 检查索引，否则数组越界
+	auto& bs = Store.Data;
+	if(bs.Length() > offset + len)
+	{
+		if(len == 1)
+			Write(offset, bs[offset]);
+		else
+			Write(offset, Buffer(&bs[offset], len));
+	}
+	NextReport = 0;
+
+	return true;
 }
 
 /*
