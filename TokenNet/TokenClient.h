@@ -23,7 +23,7 @@ public:
 
 	UInt64	LoginTime;	// 登录时间ms
 	UInt64	LastSend;	// 最后发送时间ms
-	UInt64	LastReceive;// 最后活跃时间ms
+	UInt64	LastActive;	// 最后活跃时间ms
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
@@ -107,7 +107,7 @@ private:
 
 	byte	NextReport;		// 下次上报偏移，0不动
 	byte	ReportLength;	// 下次上报数据长度
-	
+
 	void LoopTask();
 	bool CheckReport();
 };
@@ -127,7 +127,7 @@ public:
 
 	int		Status;		// 状态。0准备、1握手完成、2登录后
 	UInt64	LoginTime;	// 登录时间ms
-	UInt64	LastReceive;	// 最后活跃时间ms
+	UInt64	LastActive;	// 最后活跃时间ms
 };
 
 #endif

@@ -21,9 +21,10 @@ public:
 	ushort		Type;		// 设备类型。两个字节可做二级分类
 	ByteArray	Password;	// 通讯密码
 
+	UInt64		LastSend;	// 最后发送时间ms
 	UInt64		LastActive;	// 最后活跃时间
 	ushort		HardCrc;	// 硬件ID校验
-	bool		Encryption;	// 是否加密 
+	bool		Encryption;	// 是否加密
 
 	TinyClient(TinyController* control);
 
@@ -49,7 +50,7 @@ public:
 	bool Report(uint offset, const Buffer& bs);
 
 	uint NextReport;		// 下次上报偏移，0不动
-	uint NextReportLength;	// 下次上报数据长度
+	uint ReportLength;	// 下次上报数据长度
 	void ReportAsync(uint offset,uint length = 1);
 
 private:
@@ -60,7 +61,7 @@ private:
 	void OnRead(const TinyMessage& msg);
 
 	void GetDeviceKey(byte id, Buffer& key);
-	
+
 // 常用系统级消息
 public:
 	// 组网

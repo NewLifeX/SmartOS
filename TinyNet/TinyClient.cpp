@@ -27,6 +27,7 @@ TinyClient::TinyClient(TinyController* control)
 	Server		= 0;
 	Type		= Sys.Code;
 
+	LastSend	= 0;
 	LastActive	= 0;
 
 	Received	= nullptr;
@@ -256,7 +257,7 @@ void TinyClient::ReportAsync(uint offset,uint length)
 	if(offset + length >= Store.Data.Length()) return;
 
 	NextReport = offset;
-	NextReportLength = length;
+	ReportLength = length;
 	// 延迟200ms上报，期间有其它上报任务到来将会覆盖
 	Sys.SetTask(_TaskID, true, 200);
 }
@@ -269,7 +270,7 @@ void TinyClientTask(void* param)
 
 	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
-	uint len	= client->NextReportLength;
+	uint len	= client->ReportLength;
 	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 
 	if(offset)
@@ -474,6 +475,9 @@ void TinyClient::Ping()
 	debug_printf("TinyClient::Ping");
 	// 没有服务端时不要上报
 	if(!Server) return;
+
+	// 30秒内发过数据，不再发送心跳
+	if(LastSend > 0 && LastSend + 30000 > Sys.Ms()) return;
 
 	TinyMessage msg;
 	msg.Code = 3;

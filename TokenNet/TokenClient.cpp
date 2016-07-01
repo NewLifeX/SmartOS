@@ -26,7 +26,7 @@ TokenClient::TokenClient()
 	Status		= 0;
 	LoginTime	= 0;
 	LastSend	= 0;
-	LastReceive	= 0;
+	LastActive	= 0;
 	Delay		= 0;
 	MaxNotActive	= 0;
 
@@ -68,7 +68,8 @@ void TokenClient::Open()
 	// 令牌广播使用素数，避免跟别的任务重叠
 	if(cs.Count() > 0) _taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
-	//LastReceive = Sys.Ms();
+	// 启动时记为为后一次活跃接收
+	LastActive = Sys.Ms();
 
 	Opened	= true;
 }
@@ -132,7 +133,7 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 {
 	TS("TokenClient::OnReceive");
 
-	LastReceive = Sys.Ms();
+	LastActive = Sys.Ms();
 
 	switch(msg.Code)
 	{
@@ -210,7 +211,7 @@ void TokenClient::LoopTask()
 	// 最大不活跃时间ms，超过该时间时重启系统
 	// WiFi触摸开关建议5~10分钟，网关建议5分钟
 	// MaxNotActive 为零便不考虑重启
-	if(MaxNotActive != 0 && LastReceive + MaxNotActive < Sys.Ms()) Sys.Reset();
+	if(MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms()) Sys.Reset();
 }
 
 void BroadcastHelloTask(void* param)
@@ -580,7 +581,7 @@ void TokenClient::Ping()
 {
 	TS("TokenClient::Ping");
 
-	if(LastReceive > 0 && LastReceive + 180000 < Sys.Ms())
+	if(LastActive > 0 && LastActive + 180000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
@@ -593,6 +594,9 @@ void TokenClient::Ping()
 
 		return;
 	}
+
+	// 30秒内发过数据，不再发送心跳
+	if(LastSend > 0 && LastSend + 30000 > Sys.Ms()) return;
 
 	TokenPingMessage pinMsg;
 
