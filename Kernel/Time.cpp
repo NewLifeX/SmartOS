@@ -30,7 +30,7 @@ TTime::TTime()
 	if(Sys.FlashSize > 0x80)
 		Index	= 5;
 	else
-		Index	= 2;
+		Index	= 1;	// 错开开关的 TIM3 背光
 #endif
 	BaseSeconds = 0;
 
