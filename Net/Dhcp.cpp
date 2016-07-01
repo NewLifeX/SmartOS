@@ -121,7 +121,7 @@ void Dhcp::Start()
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	// 严格路由要求默认请求的IP必须在本网段，否则不予处理
-	if(IP.IsAny())
+	if(!IP.IsAny())
 	{
 		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
 		//Host->Close();

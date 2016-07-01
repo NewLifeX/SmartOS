@@ -241,6 +241,8 @@ void OnInitNet(void* param)
 
 	// 检查是否连接网线
 	auto host	= (W5500*)bsp.Create5500();
+	// 软路由的DHCP要求很严格，必须先把自己IP设为0
+	host->IP	= IPAddress::Any();
 	if(host->Open())
 	{
 		host->EnableDNS();
