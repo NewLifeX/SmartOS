@@ -44,6 +44,8 @@ Dhcp::~Dhcp()
 
 void Dhcp::SendDhcp(byte* buf, uint len)
 {
+	if(!Running) return;
+
 	auto dhcp	= (DHCP_HEADER*)buf;
 	auto p		= dhcp->Next();
 	if(p[len - 1] != DHCP_OPT_End)
@@ -79,6 +81,8 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 // 找服务器
 void Dhcp::Discover()
 {
+	if(!Running) return;
+
 	byte buf[sizeof(DHCP_HEADER) + 200];
 	auto dhcp	= (DHCP_HEADER*)buf;
 
@@ -95,6 +99,8 @@ void Dhcp::Discover()
 
 void Dhcp::Request()
 {
+	if(!Running) return;
+
 	byte buf[sizeof(DHCP_HEADER) + 200];
 	auto dhcp	= (DHCP_HEADER*)buf;
 
