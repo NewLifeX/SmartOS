@@ -65,6 +65,20 @@ void TInterrupt::Process(uint num) const
     isr(num - 16, param);
 }
 
+// 系统挂起
+void TInterrupt::Halt()
+{
+#if DEBUG
+	TraceStack::Show();
+
+	//auto sp	= SerialPort::GetMessagePort();
+	//if(sp) sp->Flush();
+#endif
+	while(true);
+}
+
+/******************************** SmartIRQ ********************************/
+
 // 智能IRQ，初始化时备份，销毁时还原
 SmartIRQ::SmartIRQ(bool enable)
 {
@@ -92,7 +106,7 @@ SmartIRQ::~SmartIRQ()
 	#endif
 #endif
 
-/*================================ 锁 ================================*/
+/******************************** Lock ********************************/
 
 #include "TTime.h"
 

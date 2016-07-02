@@ -614,6 +614,7 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 
 	if (!msg.Reply) return false;
 
+#if DEBUG
 	TokenPingMessage pinMsg;
 	pinMsg.ReadMessage(msg);
 	UInt64 start = pinMsg.LocalTime;
@@ -628,6 +629,8 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 		Delay = cost;
 
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
+#endif
+
 	return true;
 }
 

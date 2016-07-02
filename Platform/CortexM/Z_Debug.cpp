@@ -20,9 +20,7 @@ void assert_failed(uint8_t* file, unsigned int line)
 {
     debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
 
-	TraceStack::Show();
-
-    while (1) { }
+	TInterrupt::Halt();
 }
 
 bool assert_ptr_(const void* p)

@@ -98,13 +98,7 @@ extern "C"
 		}
 #endif
 
-#if DEBUG
-		TraceStack::Show();
-
-		//auto sp	= SerialPort::GetMessagePort();
-		//if(sp) sp->Flush();
-#endif
-		while(true);
+		TInterrupt::Halt();
 	}
 
 #if defined ( __CC_ARM   )
@@ -143,7 +137,7 @@ extern "C"
 	{
 		__asm volatile (
 #if defined(STM32F0) || defined(GD32F150)
-			"push	{r4-r7}		\n\t" 
+			"push	{r4-r7}		\n\t"
 #else
 			"add	sp,sp,#16	\n\t"
 			"push	{r0-r11}	\n\t"

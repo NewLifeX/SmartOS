@@ -26,7 +26,7 @@ public:
     //~TInterrupt();
 
 	void Process(uint num) const;
-	
+
     // 注册中断函数（中断号，函数，参数）
     bool Activate(short irq, InterruptCallback isr, void* param = nullptr);
     // 解除中断注册
@@ -56,7 +56,9 @@ public:
 	static bool GlobalState();	// 全局中断开关状态
 
 	static bool IsHandler();		// 是否在中断里面
-	
+
+	static void Halt();	// 系统挂起
+
 private:
 	void OnInit() const;
 	bool OnActivate(short irq);

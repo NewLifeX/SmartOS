@@ -77,34 +77,16 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 
 extern "C"
 {
-	/*  在GD32F130C8中时常有一个FAULT_SubHandler跳转的错误，
-	经查是因为FAULT_SubHandler和FaultHandler离得太远，导致b跳转无法到达，
-	因此把这两个函数指定到同一个段中，使得它们地址分布上紧挨着
-	*/
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
-#ifdef STM32F0
 		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x\r\n", registers[5], registers[6], registers[7]);
 		for(int i=0; i<=7; i++)
 		{
 			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
 		}
 		debug_printf("R12=0x%08x\r\n", registers[4]);
-#else
-		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x SP=0x%08x\r\n", registers[13], registers[14], registers[15], registers[16]);
-		for(int i=0; i<=12; i++)
-		{
-			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
-		}
-#endif
 
-#if DEBUG
-		TraceStack::Show();
-
-		//auto sp	= SerialPort::GetMessagePort();
-		//if(sp) sp->Flush();
-#endif
-		while(true);
+		TInterrupt::Halt();
 	}
 
 #if defined ( __CC_ARM   )
@@ -143,7 +125,7 @@ extern "C"
 	{
 		__asm volatile (
 #if defined(STM32F0) || defined(GD32F150)
-			"push	{r4-r7}		\n\t" 
+			"push	{r4-r7}		\n\t"
 #else
 			"add	sp,sp,#16	\n\t"
 			"push	{r0-r11}	\n\t"
