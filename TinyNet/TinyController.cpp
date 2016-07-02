@@ -521,8 +521,6 @@ bool TinyController::Post(const TinyMessage& msg, int msTimeout)
 
 void SendTask(void* param)
 {
-	assert_ptr(param);
-
 	auto control = (TinyController*)param;
 	control->Loop();
 }
@@ -630,14 +628,6 @@ void TinyController::Loop()
 	// 没有可用请求时，停止轮询
 	if(count == 0) Sys.SetTask(_taskID, false);
 }
-
-/*void StatTask(void* param)
-{
-	assert_ptr(param);
-
-	auto control = (TinyController*)param;
-	control->ShowStat();
-}*/
 
 // 显示统计信息
 void TinyController::ShowStat() const

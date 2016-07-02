@@ -354,7 +354,7 @@ void W5500::Init()
 // 初始化
 void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
-	assert_ptr(spi);
+	assert(spi, "spi");
 
 	debug_printf("\r\n");
 

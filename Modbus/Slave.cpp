@@ -15,9 +15,7 @@ Slave::~Slave()
 
 void Slave::OnReceive(ITransport* transport, byte* buf, uint len, void* param)
 {
-	assert_ptr(param);
-
-	Slave* slave = (Slave*)param;
+	auto slave	= (Slave*)param;
 
 	Stream ms(buf, len);
 	Modbus entity;

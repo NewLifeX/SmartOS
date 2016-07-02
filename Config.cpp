@@ -389,7 +389,7 @@ const Config& Config::CreateRAM()
 ConfigBase::ConfigBase()
 	: Cfg(*Config::Current)
 {
-	assert_ptr(&Cfg);
+	assert(&Cfg, "Cfg");
 
 	New	= true;
 

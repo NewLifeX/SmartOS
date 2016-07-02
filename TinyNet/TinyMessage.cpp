@@ -158,8 +158,6 @@ uint TinyMessage::MaxDataSize() const
 void TinyMessage::Show() const
 {
 #if MSG_DEBUG
-	assert_ptr(this);
-
 	byte flag	= *((byte*)&_Code + 1);
 	msg_printf("0x%02X => 0x%02X Code=0x%02X Flag=0x%02X Seq=0x%02X Retry=%d", Src, Dest, Code, flag, Seq, Retry);
 
@@ -174,7 +172,6 @@ void TinyMessage::Show() const
 	ushort len	= Length;
 	if(len > 0)
 	{
-		assert_ptr(Data);
 		msg_printf(" Data[%02d]=", len);
 		ByteArray(Data, len).Show();
 	}

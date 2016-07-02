@@ -218,7 +218,6 @@ void TokenClient::LoopTask()
 void BroadcastHelloTask(void* param)
 {
 	TS("TokenClient::BroadcastHello");
-	assert_ptr(param);
 
 	auto client = (TokenClient*)param;
 	client->SayHello(true);

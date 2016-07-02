@@ -285,11 +285,10 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	ip->Identifier = _REV16(g_Identifier++);
 
 	// 网络序是大端
-	ip->Checksum = 0;
-	ip->Checksum = _REV16(CheckSum(nullptr, (byte*)ip, sizeof(IP_HEADER), 0));
+	ip->Checksum	= 0;
+	ip->Checksum	= _REV16(CheckSum(nullptr, (byte*)ip, sizeof(IP_HEADER), 0));
 
-	assert_ptr(Arp);
-	ArpSocket* arp = (ArpSocket*)Arp;
+	auto arp	= (ArpSocket*)Arp;
 	MacAddress mac;
 	if(!arp->Resolve(remote, mac))
 	{

@@ -50,15 +50,6 @@ bool TinyServer::Send(Message& msg) const
 	return Control->Send(msg);
 }
 
-/*bool OnServerReceived(void* sender, Message& msg, void* param)
-{
-	auto server = (TinyServer*)param;
-	assert_ptr(server);
-
-	// 消息转发
-	return server->OnReceive((TinyMessage&)msg);
-}*/
-
 // 常用系统级消息
 
 void TinyServer::Start()

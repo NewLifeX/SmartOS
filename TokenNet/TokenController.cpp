@@ -569,7 +569,6 @@ void TokenStat::Clear()
 String& TokenStat::ToStr(String& str) const
 {
 	TS("TokenStat::ToStr");
-	assert_ptr(this);
 
 	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
 	Percent().Show(true);*/

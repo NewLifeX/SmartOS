@@ -12,8 +12,6 @@ Zigbee::Zigbee(ITransport* port, Pin rst)
 
 void Zigbee::Init(ITransport* port, Pin rst)
 {
-	assert_ptr(port);
-
 	Set(port);
 	MaxSize	= 64;
 

@@ -58,9 +58,6 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 	byte* buf	= bs.GetBuffer();
 	uint len	= bs.Length();
 
-	assert_ptr(buf);
-	assert_ptr(param);
-
 	auto control = (Controller*)param;
 
 #if MSG_DEBUG
@@ -91,7 +88,6 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 		}
 
 		assert(control, "控制器指针已被改变3");
-		assert_ptr(control);
 	}
 
 	return 0;

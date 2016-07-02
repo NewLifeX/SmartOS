@@ -38,7 +38,7 @@ Stream::Stream(const Buffer& bs)
 
 void Stream::Init(void* buf, uint len)
 {
-	assert_ptr(buf);
+	assert(buf, "buf");
 
 	_Buffer		= (byte*)buf;
 	_Capacity	= len;
@@ -338,7 +338,6 @@ MemoryStream::MemoryStream(void* buf, uint len) : Stream(buf, len)
 // 销毁数据流
 MemoryStream::~MemoryStream()
 {
-	assert_ptr(this);
 	if(_needFree)
 	{
 		if(_Buffer != _Arr) delete[] _Buffer;

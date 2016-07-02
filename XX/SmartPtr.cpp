@@ -17,18 +17,13 @@ public:
 // 为某个指针封装
 SmartPtr::SmartPtr(void* ptr)
 {
-	assert_ptr(ptr);
-
 	_ptr = new WrapPtr(ptr);
 }
 
 // 拷贝智能指针。仅拷贝内部包装，然后引用计数加一
 SmartPtr::SmartPtr(const SmartPtr& ptr)
 {
-	assert_ptr(ptr._ptr);
-	
 	auto p	= (WrapPtr*)ptr._ptr;
-	assert_ptr(p->Ptr);
 
 	_ptr = p;
 	p->Count++;

@@ -114,8 +114,6 @@ void* operator new[](uint size)
 
 void operator delete(void* p) noexcept
 {
-	assert_ptr(p);
-
 	mem_printf(" delete 0x%p ", p);
     if(p)
 	{
@@ -126,8 +124,6 @@ void operator delete(void* p) noexcept
 
 void operator delete[](void* p) noexcept
 {
-	assert_ptr(p);
-
 	mem_printf(" delete[] 0x%p ", p);
     if(p)
 	{

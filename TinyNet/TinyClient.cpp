@@ -17,8 +17,6 @@ static void TinyClientTask(void* param);
 
 TinyClient::TinyClient(TinyController* control)
 {
-	assert_ptr(control);
-
 	Control 		= control;
 	Control->GetKey	= Delegate2<byte, Buffer&>(&TinyClient::GetDeviceKey, this);
 
@@ -266,8 +264,6 @@ void TinyClient::ReportAsync(uint offset,uint length)
 
 void TinyClientTask(void* param)
 {
-	assert_ptr(param);
-
 	auto client = (TinyClient*)param;
 	uint offset = client->NextReport;
 	uint len	= client->ReportLength;

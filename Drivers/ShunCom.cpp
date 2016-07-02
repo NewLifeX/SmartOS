@@ -75,7 +75,7 @@ ShunCom::ShunCom()
 
 void ShunCom::Init(ITransport* port, Pin rst)
 {
-	assert_ptr(port);
+	assert(port, "port");
 
 	Set(port);
 	//MaxSize	= 82;

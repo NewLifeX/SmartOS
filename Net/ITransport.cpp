@@ -26,9 +26,6 @@ ITransport::~ITransport()
 // 打开传输口
 bool ITransport::Open()
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	if(Opened || Opening) return true;
 
 	Opening	= true;
@@ -43,9 +40,6 @@ bool ITransport::Open()
 // 关闭传输口
 void ITransport::Close()
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	if(!Opened || Opening) return;
 
 	Opening	= true;
@@ -57,9 +51,6 @@ void ITransport::Close()
 // 发送数据
 bool ITransport::Write(const Buffer& bs)
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	if(!Opened && !Open()) return false;
 
 	return OnWrite(bs);
@@ -68,9 +59,6 @@ bool ITransport::Write(const Buffer& bs)
 // 发送数据
 bool ITransport::Write(const Buffer& bs, const void* opt)
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	if(!Opened && !Open()) return false;
 
 	return OnWriteEx(bs, opt);
@@ -79,9 +67,6 @@ bool ITransport::Write(const Buffer& bs, const void* opt)
 // 接收数据
 uint ITransport::Read(Buffer& bs)
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	if(!Opened && !Open()) return 0;
 
 	return OnRead(bs);
@@ -98,9 +83,6 @@ uint ITransport::Read(Buffer& bs)
 // 注册回调函数
 void ITransport::Register(TransportHandler handler, void* param)
 {
-	// 特别是接口要检查this指针
-	assert_ptr(this);
-
 	_handler	= handler;
 	_param		= param;
 }
@@ -149,8 +131,6 @@ uint PackPort::OnRead(Buffer& bs) { return Port->Read(bs); }
 
 uint PackPort::OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2)
 {
-	assert_ptr(param);
-
 	auto pp	= dynamic_cast<PackPort*>((PackPort*)param);
 	return pp->OnReceive(bs, param2);
 }

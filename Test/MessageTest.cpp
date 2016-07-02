@@ -53,8 +53,7 @@ bool OpenLed(Message& msg, void* param)
 // 发送刷小灯的消息
 void FlashLed(void* param)
 {
-	assert_ptr(param);
-	Controller* control = (Controller*)param;
+	auto control	= (Controller*)param;
 
 	// 发送广播消息，刷所有人小灯
 	TinyMessage msg(0x10);

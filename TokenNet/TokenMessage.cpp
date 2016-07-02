@@ -23,7 +23,6 @@ bool TokenMessage::Read(Stream& ms)
 {
 	TS("TokenMessage::Read");
 
-	assert_ptr(this);
 	if(ms.Remain() < MinSize) return false;
 
 	byte temp = ms.ReadByte();
@@ -60,7 +59,6 @@ void TokenMessage::Write(Stream& ms) const
 {
 	TS("TokenMessage::Write");
 
-	assert_ptr(this);	
 	byte tmp = Code | (Reply << 7);
 	if((!Reply && OneWay) || (Reply && Error)) tmp |= (1 << 6);
 	ms.Write(tmp);
@@ -102,8 +100,6 @@ void TokenMessage::Show() const
 #if MSG_DEBUG
 	TS("TokenMessage::Show");
 
-	assert_ptr(this);
-
 	byte code = Code;
 	if(Reply) code |= 0x80;
 	if((!Reply && OneWay) || (Reply && Error)) code |= (1 << 6);
@@ -128,7 +124,6 @@ void TokenMessage::Show() const
 	ushort len	= Length;
 	if(len > 0)
 	{
-		assert_ptr(Data);
 		debug_printf(" Data[%d]=",len);
 		// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
 		//if(len > 32) debug_printf("\r\n");

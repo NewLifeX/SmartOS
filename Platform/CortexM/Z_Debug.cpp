@@ -23,7 +23,7 @@ void assert_failed(uint8_t* file, unsigned int line)
 	TInterrupt::Halt();
 }
 
-bool assert_ptr_(const void* p)
+/*bool assert_ptr_(const void* p)
 {
 	if((uint)p < FLASH_BASE)
 	{
@@ -54,7 +54,7 @@ bool assert_ptr_(const void* p)
 	//if(p <= (void*)&__heap_base) return false;
 
 	return true;
-}
+}*/
 #endif
 
 #endif

@@ -16,7 +16,6 @@ bool Modbus::Read(Stream& ms)
 	if(ms.Remain() < 4) return false;
 
 	byte* buf = ms.Current();
-	assert_ptr(buf);
 	uint p = ms.Position();
 
 	Address	= ms.ReadByte();
