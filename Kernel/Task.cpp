@@ -57,7 +57,7 @@ bool Task::Execute(UInt64 now)
 	if(Event)
 		Enable	= false;
 	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-	else if(Period > 0)
+	else
 		NextTime	= now + Period;
 
 	TimeCost tc;
@@ -106,6 +106,8 @@ void Task::Set(bool enable, int msNextTime)
 
 bool Task::CheckTime(UInt64 end, bool isSleep)
 {
+	if(Deepth >= MaxDeepth) return false;
+
 	UInt64 now = Sys.Ms();
 	if(NextTime > 0 && NextTime > now) return false;
 
@@ -122,7 +124,7 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 
 	// 还没有经过调度的普通任务，在剩余时间超过500ms时，也给予调度机会
 	// 调试WiFi产品发行版时发现，打开8266需要等待3000ms，然后看门狗没有被调度过，导致没有机会执行
-	if(now + 500000 < end) return true;
+	if(now + 500 < end) return true;
 
 	return false;
 }
