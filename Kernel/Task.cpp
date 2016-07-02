@@ -57,7 +57,7 @@ bool Task::Execute(UInt64 now)
 	if(Event)
 		Enable	= false;
 	// 不能通过累加的方式计算下一次时间，因为可能系统时间被调整
-	else
+	else if(Period > 0)
 		NextTime	= now + Period;
 
 	TimeCost tc;
@@ -81,7 +81,7 @@ bool Task::Execute(UInt64 now)
 	CostMs	= Cost / 1000;
 
 #if DEBUG
-	if(ct > 1000000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
+	if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
 #endif
 
 	// 如果只是一次性任务，在这里清理
@@ -113,12 +113,18 @@ bool Task::CheckTime(UInt64 end, bool isSleep)
 	//if(Event && now + 10 < end) return true;
 
 	// 并且任务的平均耗时要足够调度，才安排执行，避免上层是Sleep时超出预期时间
-	if(now + CostMs > end) return false;
+	if(now + (UInt64)CostMs > end) return false;
 
 	if(!isSleep) return true;
 
 	// 只有被调度过的任务，才会在Sleep里面被再次调度
-	return Event || Times > 0;
+	if(Event || Times > 0) return true;
+
+	// 还没有经过调度的普通任务，在剩余时间超过500ms时，也给予调度机会
+	// 调试WiFi产品发行版时发现，打开8266需要等待3000ms，然后看门狗没有被调度过，导致没有机会执行
+	if(now + 500000 < end) return true;
+
+	return false;
 }
 
 // 全局任务调度器
@@ -214,7 +220,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstri
 
 	if(dueTime < 0)
 	{
-		task->NextTime	= dueTime;
+		task->NextTime	= 0;
 		task->Enable	= false;
 		task->Event		= true;
 	}
@@ -312,10 +318,10 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		if(task->ID && task->Enable)
 		{
 			// 如果事件型任务还需要执行，那么就不要做任何等待
-			if(task->NextTime < 0)
-				min = 0;
-			else if((UInt64)task->NextTime < min)
-				min = (UInt64)task->NextTime;
+			if(task->Event)
+				min	= 0;
+			else if(task->NextTime < min)
+				min	= task->NextTime;
 		}
 	}
 

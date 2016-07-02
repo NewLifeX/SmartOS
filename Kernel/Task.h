@@ -18,7 +18,7 @@ public:
 	void*	Param;		// 参数
 
 	int		Period;		// 周期ms
-	Int64	NextTime;	// 下一次执行时间ms
+	UInt64	NextTime;	// 下一次执行时间ms
 
 	int		Times;		// 执行次数
 	int		SleepTime;	// 当前睡眠时间us
