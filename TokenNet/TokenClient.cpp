@@ -64,7 +64,7 @@ void TokenClient::Open()
 	}
 
 	// 令牌客户端定时任务
-	if(Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
+	if(Master) _task	= Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
 	if(cs.Count() > 0) _taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
@@ -549,7 +549,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		debug_printf("\r\n");
 
 		// 登录成功后加大心跳间隔
-		Sys.SetTaskPeriod(_task, 30000);
+		Sys.SetTaskPeriod(_task, 60000);
 	}
 
 	return true;
@@ -583,7 +583,7 @@ void TokenClient::Ping()
 {
 	TS("TokenClient::Ping");
 
-	if(LastActive > 0 && LastActive + 180000 < Sys.Ms())
+	if(LastActive > 0 && LastActive + 300000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
 		debug_printf("180秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
@@ -598,7 +598,7 @@ void TokenClient::Ping()
 	}
 
 	// 30秒内发过数据，不再发送心跳
-	if(LastSend > 0 && LastSend + 30000 > Sys.Ms()) return;
+	if(LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
 	TokenPingMessage pinMsg;
 
@@ -840,7 +840,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 		}
 	}
 
-	ctrl->Reply(rs);
+	Reply(rs, ctrl);
 }
 
 bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream& result)
