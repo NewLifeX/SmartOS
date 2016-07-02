@@ -84,3 +84,10 @@ void UserHandler()
 	Interrupt.Process(num);
 }
 #endif
+
+void assert_failed(uint8_t* file, unsigned int line)
+{
+    debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
+
+	TInterrupt::Halt();
+}
