@@ -649,9 +649,11 @@ uint Esp8266::ParseReply(const Buffer& bs)
 // 基础AT指令
 bool Esp8266::Test()
 {
+	// 避免在循环内部频繁构造和析构
+	String cmd	= "AT";
 	for(int i=0; i<10; i++)
 	{
-		if(SendCmd("AT", 500)) return true;
+		if(SendCmd(cmd, 500)) return true;
 
 		Reset(false);
 	}
