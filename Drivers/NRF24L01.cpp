@@ -669,8 +669,6 @@ void ShowStatusTask(void* param)
 
 void AutoOpenTask(void* param)
 {
-	assert_ptr(param);
-
 	auto nrf = (NRF24L01*)param;
 	nrf->Open();
 }
@@ -1057,8 +1055,6 @@ void NRF24L01::ShowStatus()
 
 void NRF24L01::ReceiveTask(void* param)
 {
-	assert_ptr(param);
-
 	auto nrf = (NRF24L01*)param;
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	if(nrf->Opened) nrf->OnIRQ();

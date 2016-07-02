@@ -194,8 +194,6 @@ public:
 	// 将集合元素复制到数组中
 	virtual void CopyTo(T* arr)
 	{
-		assert_ptr(arr);
-
 		if(!_Count) return;
 
 		Node* node;

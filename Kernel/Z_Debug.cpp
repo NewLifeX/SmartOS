@@ -140,7 +140,12 @@ void operator delete[](void* p) noexcept
 	#endif
 #endif
 
-#ifdef  USE_FULL_ASSERT
+void assert_failed(uint8_t* file, unsigned int line)
+{
+    debug_printf("Assert Failed! Line %d, %s\r\n", line, file);
+
+	TInterrupt::Halt();
+}
 
 void assert_failed2(cstring msg, cstring file, unsigned int line)
 {
@@ -148,7 +153,6 @@ void assert_failed2(cstring msg, cstring file, unsigned int line)
 
 	TInterrupt::Halt();
 }
-#endif
 
 #else
 

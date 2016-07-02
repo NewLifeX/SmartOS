@@ -17,39 +17,25 @@
 #include "Core\Dictionary.h"
 #include "Core\Delegate.h"
 
-/* 引脚定义 */
-//#include "Platform\Pin.h"
-
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
 
 extern "C"
 {
-#if defined(DEBUG) || defined(MSGDEBUG)
-
-#define debug_printf printf
-
+#if defined(DEBUG)
+	#define debug_printf printf
 #else
-
-#define debug_printf(format, ...)
-
+	#define debug_printf(format, ...)
 #endif
 }
 
-#ifdef USE_FULL_ASSERT
-
-// 验证确保对象不为空，并且在有效的内存范围内
-//extern void assert_failed(uint8_t* file, uint32_t line);
-
-//#define assert_ptr(expr) (assert_ptr_(expr) ? (void)0 : assert_failed2("ptr==nullptr", (const char*)__FILE__, __LINE__))
-//bool assert_ptr_(const void* p);
+#ifdef DEBUG
 
 void assert_failed2(cstring msg, cstring file, unsigned int line);
 #define assert(expr, msg) ((expr) ? (void)0 : assert_failed2(msg, (const char*)__FILE__, __LINE__))
 
 #else
 
-#define assert_ptr(expr) ((void)0)
 #define assert(expr, msg) ((void)0)
 
 #endif
@@ -64,9 +50,6 @@ struct HandlerRemap
 };
 extern struct HandlerRemap StrBoot;
 #endif
-
-// 判定指针是否在ROM区
-#define IN_ROM_SECTION(p)  ( (int)p < 0x20000000 )
 
 class SystemConfig;
 
