@@ -98,6 +98,7 @@ void IOK027X::InitClient()
 	client->Cfg = tk;
 
 	Client = client;
+	Client->MaxNotActive = 300000;
 
 	if (Data && Size > 0)
 	{
