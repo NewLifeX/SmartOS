@@ -582,10 +582,10 @@ void TokenClient::Ping()
 {
 	TS("TokenClient::Ping");
 
-	if(LastActive > 0 && LastActive + 200000 < Sys.Ms())
+	if(LastActive > 0 && LastActive + 300000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
-		debug_printf("200秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
+		debug_printf("300秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
 
 		Master->Key.SetLength(0);
 
