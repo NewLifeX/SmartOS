@@ -136,7 +136,7 @@ Area::Area()
 bool Area::Contain(uint offset, uint size)
 {
 	// 数据操作口只认可完整的当前区域
-	return Offset <= offset && Offset + Size <= offset + size;
+	return Offset <= offset && Offset + Size >= offset + size;
 }
 
 /****************************** 数据操作接口 ************************************/
