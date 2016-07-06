@@ -143,6 +143,13 @@ void AP0801::InitClient()
 		auto& ds	= Client->Store;
 		ds.Data.Set(Data, Size);
 	}
+
+	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
+	Sys.AddTask(
+		[](void* p){
+			if(!((TokenClient*)p)->Opened) Sys.Reset();
+		},
+		client, 8 * 60 * 1000, -1, "CheckClient");
 }
 
 void AP0801::Register(int index, IDataPort& dp)
