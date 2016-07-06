@@ -99,21 +99,19 @@ void Esp8266::SetLed(OutputPort& led)
 	Led	= fp;
 }
 
-/*void Esp8266::LoopTask(void* param)
+void LoopTask(void* param)
 {
 	auto& esp	= *(Esp8266*)param;
-	if(!esp.Opened)
-		esp.Open();
-	else
-		esp.Process();
-}*/
+	// 如果8266没有被打开，并且没有处于正在打开的状态，那么再次打开8266
+	if(!esp.Opened && !esp.Opening) esp.Open();
+}
 
 void Esp8266::OpenAsync()
 {
-	if(Opened) return;
+	if(Opened || Opening) return;
 
 	// 异步打开任务，一般执行时间6~10秒，分离出来避免拉高8266数据处理任务的平均值
-	Sys.AddTask([](void* param) { ((Esp8266*)param)->Open(); }, this, 0, -1, "Open8266");
+	Sys.AddTask(LoopTask, this, 0, 1000, "Open8266");
 	/*if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
 
 	// 马上调度一次
