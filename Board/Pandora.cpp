@@ -2,223 +2,187 @@
 
 #include "Task.h"
 
-#include "SerialPort.h"
 #include "WatchDog.h"
 #include "Config.h"
 
-#include "Drivers\NRF24L01.h"
+#include "Device\Spi.h"
 #include "Drivers\W5500.h"
-
-#include "Net\Dhcp.h"
-#include "Net\DNS.h"
-
 #include "TokenNet\TokenController.h"
-
-#include "App\FlushPort.h"
-
-static FlushPort* CreateFlushPort(OutputPort* led)
-{
-	auto fp	= new FlushPort();
-	fp->Port	= led;
-	fp->Start();
-	
-	return fp;
-}
 
 PA0903::PA0903()
 {
-	EthernetLed	= nullptr;
-	WirelessLed	= nullptr;
+	LedPins.Add(PB1);
+	LedPins.Add(PB14);
 
-	Host	= nullptr;
-	HostAP	= nullptr;
-	Client	= nullptr;
+	Host = nullptr;
+	Client = nullptr;
+
+	Data = nullptr;
+	Size = 0;
 }
 
-uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
+void PA0903::Init(ushort code, cstring name, COM message)
 {
-	debug_printf("OnSerial len=%d \t", bs.Length());
-	bs.Show(true);
-
-	return 0;
-}
-
-void PA0903::Setup(ushort code, cstring name, COM message, int baudRate)
-{
-	auto& sys	= (TSys&)Sys;
+	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
-    // 初始化系统
-    //Sys.Clock = 48000000;
-    sys.Init();
+	// 初始化系统
+	sys.Init();
 #if DEBUG
-    sys.MessagePort = message; // 指定printf输出的串口
-    Sys.ShowInfo();
-#endif
-
-#if DEBUG
-	// 设置一定量初始任务，减少堆分配
-	static Task ts[0x10];
-	Task::Scheduler()->Set(ts, ArrayLength(ts));
-#endif
-
-#if DEBUG
-	// 打开串口输入便于调试数据操作，但是会影响性能
-	if(baudRate > 0)
-	{
-		auto sp = SerialPort::GetMessagePort();
-		if(baudRate != 1024000)
-		{
-			sp->Close();
-			sp->SetBaudRate(baudRate);
-		}
-		sp->Register(OnSerial);
-	}
-
-	//WatchDog::Start(20000);
-#else
-	WatchDog::Start();
+	sys.MessagePort = message; // 指定printf输出的串口
+	Sys.ShowInfo();
 #endif
 
 	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
+	Config::Current = &Config::CreateFlash();
 }
 
-// 网络就绪
-void OnNetReady(PA0903& ap, ISocketHost& host)
+void* PA0903::InitData(void* data, int size)
 {
-	if (ap.Client) ap.Client->Open();
+	// 启动信息
+	auto hot = &HotConfig::Current();
+	hot->Times++;
+
+	data = hot->Next();
+	if (hot->Times == 1)
+	{
+		Buffer ds(data, size);
+		ds.Clear();
+		ds[0] = size;
+	}
+
+	Data = data;
+	Size = size;
+
+	return data;
 }
 
-ISocketHost* PA0903::Open5500()
+void PA0903::InitLeds()
 {
-	IDataPort* led = nullptr;
-	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
-
-	auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
-	host->NetReady.Bind(OnNetReady, this);
-	if(host->Open()) return host;
-
-	delete host;
-
-	return nullptr;
+	for (int i = 0; i < LedPins.Count(); i++)
+	{
+		auto port = new OutputPort(LedPins[i]);
+		port->Open();
+		Leds.Add(port);
+	}
 }
 
-ISocketHost* PA0903::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
+ISocketHost* PA0903::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi_	= new Spi(spi, 36000000);
+	// auto host = new W5500(Spi2, PE1, PD13);
+	auto host = new W5500(Spi1, PA8, PA0);
+	host->NetReady.Bind(&PA0903::OpenClient, this);
 
-	auto net	= new W5500();
-	net->LoadConfig();
-	net->Init(spi_, irq, rst);
-
-	return net;
+	return host;
 }
 
-/******************************** Token ********************************/
-
-void PA0903::CreateClient()
+void PA0903::InitClient()
 {
-	if(Client) return;
+	if (Client) return;
 
 	auto tk = TokenConfig::Current;
 
 	// 创建客户端
-	auto client		= new TokenClient();
-	//client->Control	= ctrl;
-	//client->Local	= ctrl;
-	client->Cfg		= tk;
+	auto client = new TokenClient();
+	client->Cfg = tk;
 
-	Client	= client;
+	Client = client;
+
+	if (Data && Size > 0)
+	{
+		auto& ds = Client->Store;
+		ds.Data.Set(Data, Size);
+	}
+
+	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
+	Sys.AddTask(
+		[](void* p) {
+		if (!((TokenClient*)p)->Opened) Sys.Reset();
+	},
+		client, 8 * 60 * 1000, -1, "CheckClient");
 }
 
-void PA0903::OpenClient()
+void PA0903::Register(int index, IDataPort& dp)
 {
+	if (!Client) return;
+
+	auto& ds = Client->Store;
+	ds.Register(index, dp);
+}
+
+void PA0903::OpenClient(ISocketHost& host)
+{
+	assert(Client, "Client");
+
 	debug_printf("\r\n OpenClient \r\n");
-	assert(Host, "Host");
+
+	// 网络就绪后，打开指示灯
+	auto net = dynamic_cast<W5500*>(&host);
+	if (net) net->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
-	AddControl(*Host, *tk);
+	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
-	TokenConfig cfg;
-	cfg.Protocol	= NetType::Udp;
-	cfg.ServerIP	= IPAddress::Broadcast().Value;
-	cfg.ServerPort	= 3355;
-	AddControl(*Host, cfg);
-
-	if(HostAP) AddControl(*HostAP, cfg);
+	// 避免重复打开  不判断也行  这里只有W5500
+	if (!Client->Opened)
+	{
+		AddControl(*Host, tk->Uri(), 0);
+		AddControl(*Host, uri, tk->Port);
+		Client->Open();
+	}
 }
 
-void PA0903::AddControl(ISocketHost& host, TokenConfig& cfg)
+TokenController* PA0903::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateSocket(cfg.Protocol);
-	socket->Remote.Port		= cfg.ServerPort;
-	socket->Remote.Address	= IPAddress(cfg.ServerIP);
-	socket->Server	= cfg.Server();
+	auto socket = host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl		= new TokenController();
+	auto ctrl = new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
+	ctrl->Socket = socket;
 
 	// 创建客户端
-	auto client		= Client;
-	client->Controls.Add(ctrl);
+	auto client = Client;
+	if (localPort == 0)
+		client->Master = ctrl;
+	else
+	{
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
+		client->Controls.Add(ctrl);
+	}
 
-	// 如果不是第一个，则打开远程
-	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
+	return ctrl;
 }
 
-/******************************** 2401 ********************************/
-
-/*int Fix2401(const Buffer& bs)
+void OnInitNet(void* param)
 {
-	//auto& bs	= *(Buffer*)param;
-	// 微网指令特殊处理长度
-	uint rs	= bs.Length();
-	if(rs >= 8)
-	{
-		rs = bs[5] + 8;
-		//if(rs < bs.Length()) bs.SetLength(rs);
-	}
-	return rs;
+	auto& bsp = *(PA0903*)param;
+
+	// 检查是否连接网线
+	auto host = (W5500*)bsp.Create5500();
+	// 软路由的DHCP要求很严格，必须先把自己IP设为0
+	host->IP = IPAddress::Any();
+
+	host->EnableDNS();
+	host->EnableDHCP();
+	bsp.Host = host;
 }
 
-ITransport* AP0801::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+void PA0903::InitNet()
 {
-	debug_printf("\r\n Create2401 \r\n");
+	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
+}
 
-	static Spi spi(spi_, 10000000, true);
-	static NRF24L01 nrf;
-	nrf.Init(&spi, ce, irq, power);
+void PA0903::Restore()
+{
+	Config::Current->RemoveAll();
 
-	auto tc	= TinyConfig::Create();
-	if(tc->Channel == 0)
-	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
-	}
-	if(tc->Interval == 0)
-	{
-		tc->Interval= 40;
-		tc->Timeout	= 1000;
-	}
+	Sys.Reset();
+}
 
-	nrf.AutoAnswer	= false;
-	nrf.DynPayload	= false;
-	nrf.Channel		= tc->Channel;
-	//nrf.Channel		= 120;
-	nrf.Speed		= tc->Speed;
-
-	nrf.FixData	= Fix2401;
-
-	if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
-
-	nrf.Master	= true;
-
-	return &nrf;
-}*/
+//auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
