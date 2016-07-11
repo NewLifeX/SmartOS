@@ -6,6 +6,7 @@
 #include "Dhcp.h"
 #include "Ethernet.h"
 #include "Core\Random.h"
+#include "Kernel\TTime.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -122,7 +123,7 @@ void Dhcp::Start()
 {
 	UInt64 now	= Sys.Ms();
 	_expired	= now + ExpiredTime;
-	Random ran;
+	Random ran(Time.CurrentTicks());
 	uint randnum = (ran.Next()<<16) & 0xffff0000;
 	dhcpid		= now + randnum;
 
