@@ -5,6 +5,7 @@
 
 #include "Dhcp.h"
 #include "Ethernet.h"
+#include "stdlib.h"
 
 #define NET_DEBUG DEBUG
 //#define NET_DEBUG 0
@@ -121,7 +122,9 @@ void Dhcp::Start()
 {
 	UInt64 now	= Sys.Ms();
 	_expired	= now + ExpiredTime;
-	dhcpid		= now;
+	srand(now);
+	uint randnum = (rand()<<16) & 0xffff0000;
+	dhcpid		= now + randnum;
 
 	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
 
