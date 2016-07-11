@@ -804,6 +804,7 @@ void W5500::OnIRQ()
 		{
 			// IP 冲突
 			net_printf("IP地址冲突 \r\n");
+			if (_Dhcp)((Dhcp*)_Dhcp)->Start();
 		}
 		if(ir.MP)
 		{
