@@ -305,7 +305,8 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 	else
 	{
 		TS("TokenClient::OnHello_Reply");
-
+		//如果已经登陆还接收到握手响应，这不属于正常的握手响应（IP冲突会导致）
+		if(Status==2) return false;
 		// 通讯密码
 		if(ext.Key.Length() > 0)
 		{
