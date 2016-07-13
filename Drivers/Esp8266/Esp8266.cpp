@@ -1009,11 +1009,11 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	*Pass	= pass;
 
 	// 组网后单独STA模式，调试时使用混合模式
-#if DEBUG
-	Mode	= SocketMode::STA_AP;
-#else
+//#if DEBUG
+//	Mode	= SocketMode::STA_AP;
+//#else
 	Mode	= SocketMode::Station;
-#endif
+//#endif
 
 	SaveConfig();
 
