@@ -37,6 +37,8 @@ void AP0801::Init(ushort code, cstring name, COM message)
 #if DEBUG
     sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
+
+	WatchDog::Start(20000, 10000);
 #endif
 
 	// Flash最后一块作为配置区
@@ -196,7 +198,7 @@ void AP0801::OpenClient(ISocketHost& host)
 
 		// 如果没有主机，这里打开令牌客户端，为组网做准备
 		if(!Host) Client->Open();
-		
+
 		// 假如来迟了，客户端已经打开，那么自己挂载事件
 		if(Client->Opened && Client->Master)
 		{

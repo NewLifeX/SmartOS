@@ -31,6 +31,8 @@ void IOK027X::Init(ushort code, cstring name, COM message)
 #if DEBUG
     sys.MessagePort = message; // 指定printf输出的串口
     Sys.ShowInfo();
+
+	WatchDog::Start(20000, 10000);
 #endif
 
 	// Flash最后一块作为配置区
