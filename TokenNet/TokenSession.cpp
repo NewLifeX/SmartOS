@@ -28,6 +28,17 @@ TokenSession::~TokenSession()
 	Client.Sessions.Remove(this);
 }
 
+bool TokenSession::Send(TokenMessage& msg)
+{
+	// 未登录之前，只能 握手、登录、注册
+	if(Token == 0)
+	{
+		if(msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
+	}
+
+	return Control.Send(msg);
+}
+
 void TokenSession::OnReceive(TokenMessage& msg)
 {
 	TS("TokenSession::OnReceive");

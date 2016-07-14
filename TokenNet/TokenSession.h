@@ -33,6 +33,7 @@ public:
 	TokenSession(TokenClient& client, TokenController& ctrl);
 	~TokenSession();
 
+	bool Send(TokenMessage& msg);
 	void OnReceive(TokenMessage& msg);
 
 private:

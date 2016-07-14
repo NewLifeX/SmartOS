@@ -627,6 +627,14 @@ void TokenClient::Write(int start, const Buffer& bs)
 	dm.WriteMessage(msg);
 
 	Send(msg);
+	
+	// 主动上报发给服务器的同时，也发给内网已登录用户
+	auto& cs	= Controls;
+	for(int i=0; i<cs.Count(); i++)
+	{
+		auto ss	= (TokenSession*)cs[i];
+		if(ss) ss->Send(msg);
+	}
 }
 
 void TokenClient::Write(int start, byte dat)
