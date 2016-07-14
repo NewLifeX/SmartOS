@@ -26,7 +26,7 @@ protected:
 public:
 	ISocket*	Socket;
 	
-	uint	Token;	// 令牌
+	uint		Token;	// 令牌
 	ByteArray	Key;	// 通信密码
 
 	byte	NoLogCodes[8];	// 没有日志的指令

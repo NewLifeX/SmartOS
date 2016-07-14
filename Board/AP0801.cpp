@@ -137,6 +137,9 @@ void AP0801::InitClient()
 	// 创建客户端
 	auto client		= new TokenClient();
 	client->Cfg		= tk;
+	
+	// 需要使用本地连接
+	//client->UseLocal();
 
 	Client	= client;
 

@@ -20,6 +20,8 @@ public:
 	void*	Target;	// 参数
 
 	IDelegate& operator=(const IDelegate& dlg)	{ Bind(dlg.Method, dlg.Target); return *this; }
+    explicit operator bool() const { return Method != nullptr; }
+    bool operator !() const { return Method == nullptr; }
 
 protected:
 	void Bind(void* method, void* target = nullptr)

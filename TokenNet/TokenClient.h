@@ -11,8 +11,6 @@
 #include "Message\DataStore.h"
 #include "Message\BinaryPair.h"
 
-class TokenSession;
-
 // 微网客户端
 class TokenClient
 {
@@ -27,22 +25,26 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
-	TokenController*	Master;	// 主通道
+	TokenController*		Master;		// 主通道
 	List<TokenController*>	Controls;	// 从通道
-	//List	Sessions;	// 会话集合
+	IList					Sessions;	// 会话集合
 	TokenConfig*	Cfg;
 	DataStore	Store;	// 数据存储区
 	Dictionary<cstring, IDelegate*>	Routes;	// 路由集合
 
 	TokenClient();
 
-	void Open();		// 打开客户端
+	void Open();
 	void Close();
+
+	// 启用内网功能。必须显式调用，否则内网功能不参与编译链接，以减少大小
+	void UseLocal();
 
 	// 发送消息
 	bool Send(TokenMessage& msg, TokenController* ctrl = nullptr);
 	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
 	void OnReceive(TokenMessage& msg, TokenController& ctrl);
+	void OnReceiveLocal(TokenMessage& msg, TokenController& ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
@@ -82,7 +84,6 @@ public:
 
 private:
 	bool OnHello(TokenMessage& msg, TokenController* ctrl);
-	bool OnLocalHello(TokenMessage& msg, TokenController* ctrl);
 
 	// 跳转
 	bool OnRedirect(HelloMessage& msg);
@@ -90,7 +91,6 @@ private:
 	void OnRegister(TokenMessage& msg, TokenController* ctrl);
 
 	bool OnLogin(TokenMessage& msg, TokenController* ctrl);
-	bool OnLocalLogin(TokenMessage& msg,TokenController* ctrl);
 
 	bool OnPing(TokenMessage& msg, TokenController* ctrl);
 	bool ChangeIPEndPoint(const NetUri& uri);
@@ -105,29 +105,13 @@ private:
 	uint	_task;
 	uint	_taskBroadcast;	// 广播任务
 
+	Delegate2<Message&, Controller&>	_LocalReceive;
+
 	byte	NextReport;		// 下次上报偏移，0不动
 	byte	ReportLength;	// 下次上报数据长度
 
 	void LoopTask();
 	bool CheckReport();
-};
-
-// 令牌会话
-class TokenSession
-{
-public:
-	TokenClient*	Client;
-
-	uint	Token;		// 令牌
-	ByteArray	ID;		// 设备标识
-	ByteArray	Key;	// 密钥
-	String		Name;	// 名称
-	ushort	Version;	// 版本
-	IPEndPoint	Addr;	// 地址
-
-	int		Status;		// 状态。0准备、1握手完成、2登录后
-	UInt64	LoginTime;	// 登录时间ms
-	UInt64	LastActive;	// 最后活跃时间ms
 };
 
 #endif

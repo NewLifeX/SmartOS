@@ -5,6 +5,7 @@
 #include "Message\BinaryPair.h"
 
 #include "TokenClient.h"
+#include "TokenSession.h"
 
 #include "TokenMessage.h"
 #include "HelloMessage.h"
@@ -56,11 +57,19 @@ void TokenClient::Open()
 		Master->Received	= dlg;
 		Master->Open();
 	}
-	for(int i=0; i<cs.Count(); i++)
+	// 启动本地控制器
+	if(_LocalReceive)
 	{
-		auto ctrl	= cs[i];
-		ctrl->Received	= dlg;
-		ctrl->Open();
+		for(int i=0; i<cs.Count(); i++)
+		{
+			auto ctrl	= cs[i];
+			ctrl->Received	= _LocalReceive;
+			ctrl->Open();
+		}
+	}
+	else
+	{
+		if(cs.Count() > 0) debug_printf("设置了本地令牌控制器，但是没有启用本地功能，你可能需要client->UserLocal()\r\n");
 	}
 
 	// 令牌客户端定时任务
@@ -68,7 +77,7 @@ void TokenClient::Open()
 	// 令牌广播使用素数，避免跟别的任务重叠
 	if(cs.Count() > 0) _taskBroadcast	= Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
-	// 启动时记为为后一次活跃接收
+	// 启动时记为最后一次活跃接收
 	LastActive = Sys.Ms();
 
 	Opened	= true;
@@ -91,6 +100,12 @@ void TokenClient::Close()
 	}
 
 	Opened	= false;
+}
+
+// 启用内网功能。必须显式调用，否则内网功能不参与编译链接，以减少大小
+void TokenClient::UseLocal()
+{
+	_LocalReceive	= Delegate2<TokenMessage&, TokenController&>(&TokenClient::OnReceiveLocal, this);
 }
 
 bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
@@ -138,30 +153,14 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 
 	switch(msg.Code)
 	{
-		case 0x01:
-			if(msg.Reply)
-				OnHello(msg, &ctrl);
-			else
-				OnLocalHello(msg, &ctrl);
-			break;
-		case 0x02:
-			if(msg.Reply)
-				OnLogin(msg, &ctrl);
-			else
-				OnLocalLogin(msg, &ctrl);
-			break;
-		case 0x03:
-			OnPing(msg, &ctrl);
-			break;
-		case 0x07:
-			OnRegister(msg, &ctrl);
-			break;
-		case 0x08:
-			OnInvoke(msg, &ctrl);
-			break;
+		case 0x01:	OnHello(msg, &ctrl);	break;
+		case 0x02:	OnLogin(msg, &ctrl);	break;
+		case 0x03:	OnPing(msg, &ctrl);		break;
+		case 0x07:	OnRegister(msg, &ctrl);	break;
+		case 0x08:	OnInvoke(msg, &ctrl);	break;
 	}
-	// todo  握手登录心跳消息不需要转发
-	if(msg.Code < 0x03) return;
+	// 握手登录心跳消息不需要转发
+	if(msg.Code <= 0x03) return;
 
 	// 消息转发
 	if (Received)
@@ -178,6 +177,35 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 			break;
 		}
 	}
+}
+
+void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
+{
+	TS("TokenClient::OnReceiveLocal");
+
+	// 找到会话，如果不存在则创建
+	auto remote	= (IPEndPoint*)msg.State;
+	if(!remote)
+	{
+		debug_printf("无法取得消息来源地址，设计错误！\r\n");
+		return;
+	}
+
+	// 根据远程地址，从会话列表中找到会话。如果会话不存在，则新建会话
+	TokenSession* ss	= nullptr;
+	for(int i=0; i<Sessions.Count(); i++)
+	{
+		ss	= (TokenSession*)Sessions[i];
+		if(ss && ss->Remote == *remote) break;
+		ss	= nullptr;
+	}
+	if(!ss)
+	{
+		ss	= new TokenSession(*this, ctrl);
+		ss->Remote	= *remote;
+	}
+
+	ss->OnReceive(msg);
 }
 
 // 常用系统级消息
@@ -207,6 +235,15 @@ void TokenClient::LoopTask()
 		case 2:
 			Ping();
 			break;
+	}
+
+	// 检查超时会话。倒序，因为可能有删除
+	auto& cs	= Controls;
+	for(int i = cs.Count()-1; i>=0; i--)
+	{
+		auto ss	= (TokenSession*)cs[i];
+		// 5分钟不活跃超时
+		if(ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms()) delete ss;
 	}
 
 	// 最大不活跃时间ms，超过该时间时重启系统
@@ -323,53 +360,6 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 		// 同步本地时间
 		if(ext.LocalTime > 0) ((TTime&)Time).SetTime(ext.LocalTime / 1000);
 	}
-
-	return true;
-}
-
-bool TokenClient::OnLocalHello(TokenMessage& msg, TokenController* ctrl)
-{
-	if(msg.Reply) return false;
-
-	// 解析数据
-	HelloMessage ext;
-	ext.Reply = msg.Reply;
-
-	ext.ReadMessage(msg);
-	ext.Show(true);
-
-	TS("TokenClient::OnLocalHello");
-
-	auto rs		= msg.CreateReply();
-
-	HelloMessage ext2;
-	ext2.Reply	= true;
-	ext2.Key	= ctrl->Key;
-
-	auto& cs	= Controls;
-	// 取第二通道为本地通道
-	if(cs.Count() >= 2)
-	{
-		auto& ctrl	= *(TokenController*)cs[1];
-		auto sock	= ctrl.Socket;
-		ext2.EndPoint.Address	= sock->Host->IP;
-		ext2.EndPoint.Port		= sock->Local.Port;
-	}
-
-	ext2.Cipher	= "RC4";
-	ext2.Name		= Cfg->User();
-	// 未注册时采用系统名称
-	if(!ext2.Name)
-	{
-		ext2.Name	= Sys.Name;
-		ext2.Key	= Buffer(Sys.ID, 16);
-	}
-
-	// 使用当前时间
-	ext2.LocalTime = DateTime::Now().TotalMs();
-	ext2.WriteMessage(rs);
-
-	Reply(rs, ctrl);
 
 	return true;
 }
@@ -551,29 +541,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		// 登录成功后加大心跳间隔
 		Sys.SetTaskPeriod(_task, 60000);
 	}
-
-	return true;
-}
-
-bool TokenClient::OnLocalLogin(TokenMessage& msg, TokenController* ctrl)
-{
-	if(msg.Reply) return false;
-
-	TS("TokenClient::OnLocalLogin");
-
-	auto rs	= msg.CreateReply();
-
-	LoginMessage login;
-	// 这里需要随机密匙
-	login.Key		= ctrl->Key;
-	// 随机令牌
-	login.Token		= Sys.Ms();
-	login.Reply		= true;
-	login.WriteMessage(rs);
-
-	Reply(rs, ctrl);
-
-	ctrl->Token 	= login.Token;
 
 	return true;
 }
