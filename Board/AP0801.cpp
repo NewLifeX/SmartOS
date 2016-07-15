@@ -141,7 +141,8 @@ void AP0801::InitClient()
 	// 需要使用本地连接
 	//client->UseLocal();
 
-	Client	= client;
+	Client = client;
+	Client->MaxNotActive = 480000;
 
 	if(Data && Size > 0)
 	{
