@@ -190,22 +190,41 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		debug_printf("无法取得消息来源地址，设计错误！\r\n");
 		return;
 	}
-
+	// 如果会话Sessions数量为零   创建首个Session专门对付广播
+	if (Sessions.Count() == 0)auto fistss = new TokenSession(*this, ctrl);
 	// 根据远程地址，从会话列表中找到会话。如果会话不存在，则新建会话
 	TokenSession* ss = nullptr;
-	for (int i = 0; i < Sessions.Count(); i++)
+	// 过滤广播端口的数据到独立的一个 Sessions[0] 避免为同一个客户端创建两个Session （一个广播 一个通讯）
+	bool isBroadcast = false;
+	if (remote->Port != 3377)isBroadcast = true;
+	if(!isBroadcast)
 	{
-		ss = (TokenSession*)Sessions[i];
-		if (ss && ss->Remote == *remote) break;
-		ss = nullptr;
+		for (int i = 0; i < Sessions.Count(); i++)
+		{
+			ss = (TokenSession*)Sessions[i];
+			if (ss && ss->Remote == *remote) break;
+			ss = nullptr;
+		}
+		if (!ss)
+		{
+			ss = new TokenSession(*this, ctrl);
+			ss->Remote = *remote;
+		}
 	}
-	if (!ss)
+	else
 	{
-		ss = new TokenSession(*this, ctrl);
+		ss = (TokenSession*)Sessions[0];
 		ss->Remote = *remote;
 	}
 
 	ss->OnReceive(msg);
+	// 用完之后要打扫现场
+	if (isBroadcast)
+	{
+		ss->Key.Clear();
+		ss->Status = 0;
+		ss->LastActive = 0;
+	}
 }
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
@@ -262,8 +281,8 @@ void TokenClient::LoopTask()
 	for (int i = cs.Count() - 1; i >= 0; i--)
 	{
 		auto ss = (TokenSession*)cs[i];
-		// 5分钟不活跃超时
-		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms()) delete ss;
+		// 5分钟不活跃超时	LastActive为0的为特殊Session 不删除
+		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms() && ss->LastActive!=0) delete ss;
 	}
 
 	// 最大不活跃时间ms，超过该时间时重启系统
