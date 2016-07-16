@@ -45,7 +45,7 @@ public:
 	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
 	void OnReceive(TokenMessage& msg, TokenController& ctrl);
 	void OnReceiveLocal(TokenMessage& msg, TokenController& ctrl);
-	void LocalSend(int start, const Buffer& bs, TokenController& ctrl);
+	void LocalSend(int start, const Buffer& bs);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;

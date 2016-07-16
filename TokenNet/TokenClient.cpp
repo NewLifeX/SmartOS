@@ -208,7 +208,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 	ss->OnReceive(msg);
 }
 //内网分发
-void TokenClient::LocalSend(int start, const Buffer& bs, TokenController& ctrl)
+void TokenClient::LocalSend(int start, const Buffer& bs)
 {
 	TokenDataMessage dm;
 	dm.Start = start;
@@ -736,6 +736,8 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 	}
 
 	Reply(rs, ctrl);
+	//读取不会产生状态变换，暂时注释
+	//LocalSend(dm.Size, dm.Data);
 }
 
 /*
@@ -783,6 +785,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		Sys.Sleep(200);
 		Sys.Reset();
 	}
+	LocalSend(dm.Size, dm.Data);
 }
 
 /******************************** 远程调用 ********************************/
