@@ -18,208 +18,297 @@
 
 #include "App\FlushPort.h"
 
-static FlushPort* CreateFlushPort(OutputPort* led)
-{
-	auto fp	= new FlushPort();
-	fp->Port	= led;
-	fp->Start();
-
-	return fp;
-}
+// static FlushPort* CreateFlushPort(OutputPort* led)
+// {
+// 	auto fp	= new FlushPort();
+// 	fp->Port	= led;
+// 	fp->Start();
+// 
+// 	return fp;
+// }
 
 AP0104::AP0104()
 {
-	EthernetLed	= nullptr;
-	WirelessLed	= nullptr;
+	LedPins.Add(PC6);
+	LedPins.Add(PC7);
+	LedPins.Add(PC8);
+	ButtonPins.Add(PE9);
+	ButtonPins.Add(PA1);
 
-	Host	= nullptr;
-	HostAP	= nullptr;
-	Client	= nullptr;
+	Host = nullptr;
+	HostAP = nullptr;
+	Client = nullptr;
+
+	Data = nullptr;
+	Size = 0;
 }
 
-#if DEBUG
-static uint OnSerial(ITransport* transport, Buffer& bs, void* param, void* param2)
-{
-	debug_printf("OnSerial len=%d \t", bs.Length());
-	bs.Show(true);
-
-	return 0;
-}
-#endif
-
-void AP0104::Setup(ushort code, cstring name, COM message, int baudRate)
+void AP0104::Init(ushort code, cstring name, COM message)
 {
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
 	// 初始化系统
-	//Sys.Clock = 48000000;
 	sys.Init();
 #if DEBUG
 	sys.MessagePort = message; // 指定printf输出的串口
 	Sys.ShowInfo();
-#endif
 
-#if DEBUG
-	// 设置一定量初始任务，减少堆分配
-	static Task ts[0x10];
-	Task::Scheduler()->Set(ts, ArrayLength(ts));
-#endif
-
-#if DEBUG
-	// 打开串口输入便于调试数据操作，但是会影响性能
-	if (baudRate > 0)
-	{
-		auto sp = SerialPort::GetMessagePort();
-		if (baudRate != 1024000)
-		{
-			sp->Close();
-			sp->SetBaudRate(baudRate);
-		}
-		sp->Register(OnSerial);
-	}
-
-	//WatchDog::Start(20000);
-#else
-	WatchDog::Start();
+	WatchDog::Start(20000, 10000);
 #endif
 
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
 }
 
-// 网络就绪
-void OnNetReady(AP0104& ap, ISocketHost& host)
+void* AP0104::InitData(void* data, int size)
 {
-	if (ap.Client) ap.Client->Open();
+	// 启动信息
+	auto hot = &HotConfig::Current();
+	hot->Times++;
+
+	data = hot->Next();
+	if (hot->Times == 1)
+	{
+		Buffer ds(data, size);
+		ds.Clear();
+		ds[0] = size;
+	}
+
+	Data = data;
+	Size = size;
+
+	return data;
 }
 
-ISocketHost* AP0104::Open5500()
+void AP0104::InitLeds()
 {
-	IDataPort* led = nullptr;
-	if(EthernetLed) led	= CreateFlushPort(EthernetLed);
-
-	auto host	= (W5500*)Create5500(Spi1, PE7, PB2, led);
-	host->NetReady.Bind(OnNetReady, this);
-	if(host->Open()) return host;
-
-	delete host;
-
-	return nullptr;
+	for (int i = 0; i < LedPins.Count(); i++)
+	{
+		auto port = new OutputPort(LedPins[i]);
+		port->Open();
+		Leds.Add(port);
+	}
 }
 
-ISocketHost* AP0104::Create5500(SPI spi, Pin irq, Pin rst, IDataPort* led)
+void AP0104::InitButtons()
+{
+	for (int i = 0; i < ButtonPins.Count(); i++)
+	{
+		auto port = new InputPort(ButtonPins[i]);
+		port->Mode = InputPort::Both;
+		port->Invert = true;
+		//port->Register(OnPress, (void*)i);
+		port->Open();
+		Buttons.Add(port);
+	}
+}
+
+ISocketHost* AP0104::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto spi_	= new Spi(spi, 36000000);
+	auto host = new W5500(Spi1, PE7, PB2);
+	host->NetReady.Bind(&AP0104::OpenClient, this);
 
-	auto net	= new W5500();
-	net->LoadConfig();
-	net->Init(spi_, irq, rst);
-
-	return net;
+	return host;
 }
 
-static void SetWiFiTask(void* param)
+ISocketHost* AP0104::Create8266(bool apOnly)
 {
-	auto ap	= (AP0104*)param;
-	auto client	= ap->Client;
-	auto esp	= (Esp8266*)ap->Host;
+	auto host = new Esp8266(COM4, P0, P0);
+	//host->SetLed(WirelessLed);
 
-	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-}
+	// APOnly且不是AP模式时，强制AP模式
+	if (apOnly && !host->IsAP()) host->WorkMode = SocketMode::AP;
 
-ISocketHost* AP0104::Open8266(bool apOnly)
-{
-	auto host	= (Esp8266*)Create8266(COM4, P0, P0);
+	// 绑定委托，避免5500没有连接时导致没有启动客户端
+	host->NetReady.Bind(&AP0104::OpenClient, this);
 
-	if(WirelessLed) host->Led	= CreateFlushPort(WirelessLed);
-
-	if(apOnly) host->WorkMode	= SocketMode::AP;
-
-	Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
-	host->NetReady.Bind(OnNetReady, this);
+	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
 	host->OpenAsync();
 
 	return host;
 }
 
-
-
-ISocketHost* AP0104::Create8266(COM idx, Pin power, Pin rst)
-{
-	debug_printf("\r\nEsp8266::Create \r\n");
-
-	auto srp	= new SerialPort(idx, 115200);
-	srp->Tx.SetCapacity(0x100);
-	srp->Rx.SetCapacity(0x100);
-
-	auto net	= new Esp8266(srp, power, rst);
-	net->InitConfig();
-	net->LoadConfig();
-
-	// 配置模式作为工作模式
-	net->WorkMode	= net->Mode;
-
-	return net;
-}
-
 /******************************** Token ********************************/
 
-void AP0104::CreateClient()
+void AP0104::InitClient()
 {
-	if(Client) return;
+	if (Client) return;
 
 	auto tk = TokenConfig::Current;
 
 	// 创建客户端
-	auto client		= new TokenClient();
-	//client->Control	= ctrl;
-	//client->Local	= ctrl;
-	client->Cfg		= tk;
+	auto client = new TokenClient();
+	client->Cfg = tk;
 
-	Client	= client;
+	// 需要使用本地连接
+	//client->UseLocal();
+
+	Client = client;
+	Client->MaxNotActive = 480000;
+
+	if (Data && Size > 0)
+	{
+		auto& ds = Client->Store;
+		ds.Data.Set(Data, Size);
+	}
+
+	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
+	Sys.AddTask(
+		[](void* p) {
+		auto& client = *(TokenClient*)p;
+		if (!client.Opened)
+		{
+			debug_printf("联网超时，准备重启系统！\r\n\r\n");
+			Sys.Reset();
+		}
+	},
+		client, 8 * 60 * 1000, -1, "check connet net");
 }
 
-void AP0104::OpenClient()
+void AP0104::Register(int index, IDataPort& dp)
 {
+	if (!Client) return;
+
+	auto& ds = Client->Store;
+	ds.Register(index, dp);
+}
+
+void AP0104::OpenClient(ISocketHost& host)
+{
+	assert(Client, "Client");
+
 	debug_printf("\r\n OpenClient \r\n");
-	assert(Host, "Host");
+
+	// 网络就绪后，打开指示灯
+	auto net = dynamic_cast<W5500*>(&host);
+	if (net) net->SetLed(*Leds[0]);
+
+	auto esp = dynamic_cast<Esp8266*>(&host);
+	if (esp) esp->SetLed(*Leds[1]);
 
 	auto tk = TokenConfig::Current;
-	AddControl(*Host, *tk);
+	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
-	TokenConfig cfg;
-	cfg.Protocol	= NetType::Udp;
-	cfg.ServerIP	= IPAddress::Broadcast().Value;
-	cfg.ServerPort	= 3355;
-	AddControl(*Host, cfg);
+	// 避免重复打开
+	if (!Client->Opened && Host)
+	{
+		AddControl(*Host, tk->Uri(), 0);
+		AddControl(*Host, uri, tk->Port);
 
-	if(HostAP) AddControl(*HostAP, cfg);
+		Client->Open();
+	}
+
+	if (HostAP && esp)
+	{
+		auto ctrl = AddControl(*HostAP, uri, tk->Port);
+
+		// 如果没有主机，这里打开令牌客户端，为组网做准备
+		if (!Host) Client->Open();
+
+		// 假如来迟了，客户端已经打开，那么自己挂载事件
+		if (Client->Opened && Client->Master)
+		{
+			ctrl->Received = Client->Master->Received;
+			ctrl->Open();
+		}
+	}
 }
 
-void AP0104::AddControl(ISocketHost& host, TokenConfig& cfg)
+TokenController* AP0104::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateSocket(cfg.Protocol);
-	socket->Remote.Port		= cfg.ServerPort;
-	socket->Remote.Address	= IPAddress(cfg.ServerIP);
-	socket->Server	= cfg.Server();
+	auto socket = host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl		= new TokenController();
+	auto ctrl = new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
+	ctrl->Socket = socket;
 
 	// 创建客户端
-	auto client		= Client;
-	client->Controls.Add(ctrl);
+	auto client = Client;
+	if (localPort == 0)
+		client->Master = ctrl;
+	else
+	{
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
+		client->Controls.Add(ctrl);
+	}
 
-	// 如果不是第一个，则打开远程
-	if(client->Controls.Count() > 1) ctrl->ShowRemote	= true;
+	return ctrl;
+}
+
+/*
+网络使用流程：
+
+5500网线检测
+网线连通
+启动DHCP/DNS
+作为Host
+Host为空 或 AP/STA_AP
+创建8266，加载配置
+Host为空
+作为Host
+else STA_AP
+工作模式 = AP
+
+令牌客户端主通道
+令牌客户端内网通道
+*/
+void OnInitNet(void* param)
+{
+	auto& bsp = *(AP0104*)param;
+
+	// 检查是否连接网线
+	auto host = (W5500*)bsp.Create5500();
+	// 软路由的DHCP要求很严格，必须先把自己IP设为0
+	host->IP = IPAddress::Any();
+	if (host->Open())
+	{
+		host->EnableDNS();
+		host->EnableDHCP();
+		bsp.Host = host;
+	}
+	else
+	{
+		delete host;
+	}
+
+	// 没有接网线，需要完整WiFi通道
+	if (!bsp.Host)
+	{
+		auto esp = bsp.Create8266(false);
+		if (esp)
+		{
+			// 未组网时，主机留空，仅保留AP主机
+			bool join = esp->SSID && *esp->SSID;
+			if (join && esp->IsStation())
+				bsp.Host = esp;
+			else
+				bsp.HostAP = esp;
+		}
+	}
+	// 接了网线，同时需要AP
+	else if (host->IsAP())
+	{
+		// 如果Host已存在，则8266仅作为AP
+		auto esp = bsp.Create8266(true);
+		if (esp) bsp.HostAP = esp;
+	}
+
+	// 打开DHCP，完成时会打开客户端
+	//if(bsp.Host) bsp.Host->EnableDHCP();
+}
+
+void AP0104::InitNet()
+{
+	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
 }
 
 
@@ -227,52 +316,54 @@ void AP0104::AddControl(ISocketHost& host, TokenConfig& cfg)
 
 int AP0104::Fix2401(const Buffer& bs)
 {
-	//auto& bs	= *(Buffer*)param;
-	// 微网指令特殊处理长度
-	uint rs	= bs.Length();
-	if(rs >= 8)
-	{
-		rs = bs[5] + 8;
-		//if(rs < bs.Length()) bs.SetLength(rs);
-	}
-	return rs;
+//auto& bs	= *(Buffer*)param;
+// 微网指令特殊处理长度
+uint rs	= bs.Length();
+if(rs >= 8)
+{
+rs = bs[5] + 8;
+//if(rs < bs.Length()) bs.SetLength(rs);
+}
+return rs;
 }
 
 ITransport* AP0104::Create2401()//(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
 {
-	debug_printf("\r\n Create2401 \r\n");
+debug_printf("\r\n Create2401 \r\n");
 
-	static Spi spi(Spi2, 10000000, true);
-	static NRF24L01 nrf;
-	nrf.Init(&spi, PD9, PD8, PE4);
+static Spi spi(Spi2, 10000000, true);
+static NRF24L01 nrf;
+nrf.Init(&spi, PD9, PD8, PE4);
 
-	auto tc	= TinyConfig::Create();
-	if(tc->Channel == 0)
-	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
-	}
-	if(tc->Interval == 0)
-	{
-		tc->Interval= 40;
-		tc->Timeout	= 1000;
-	}
+auto tc	= TinyConfig::Create();
+if(tc->Channel == 0)
+{
+tc->Channel	= 120;
+tc->Speed	= 250;
+}
+if(tc->Interval == 0)
+{
+tc->Interval= 40;
+tc->Timeout	= 1000;
+}
 
-	nrf.AutoAnswer	= false;
-	nrf.DynPayload	= false;
-	nrf.Channel		= tc->Channel;
-	//nrf.Channel		= 120;
-	nrf.Speed		= tc->Speed;
+nrf.AutoAnswer	= false;
+nrf.DynPayload	= false;
+nrf.Channel		= tc->Channel;
+//nrf.Channel		= 120;
+nrf.Speed		= tc->Speed;
 
-	nrf.FixData	= Fix2401;
+nrf.FixData	= Fix2401;
 
-	if(WirelessLed) nrf.Led	= CreateFlushPort(WirelessLed);
+if(WirelessLed) nrf.Led	= CreateFlushPort(WirelessLed);
 
-	nrf.Master	= true;
+nrf.Master	= true;
 
-	return &nrf;
+return &nrf;
 }
 */
+
+
 /*
 NRF24L01+ 	(SPI2)		|	W5500		(SPI1)		|
 PB12		NSS			|	PA4			NSS			|
