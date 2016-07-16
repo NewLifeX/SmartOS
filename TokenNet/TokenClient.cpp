@@ -202,11 +202,16 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		for (int i = 0; i < Sessions.Count(); i++)
 		{
 			ss = (TokenSession*)Sessions[i];
-			if (ss && ss->Remote == *remote) break;
+			if (ss && ss->Remote == *remote)
+			{
+				debug_printf("Session[%d]迎客\r\n",i);
+				break;
+			}
 			ss = nullptr;
 		}
 		if (!ss)
 		{
+			debug_printf("new TokenSession\r\n");
 			ss = new TokenSession(*this, ctrl);
 			ss->Remote = *remote;
 		}
