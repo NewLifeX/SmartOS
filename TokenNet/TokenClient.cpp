@@ -307,7 +307,10 @@ void TokenClient::SayHello(bool broadcast)
 		{
 			auto ctrl	= cs[i];
 			msg.State	= &ctrl->Socket->Remote;
-			Send(msg, ctrl);
+			if (ctrl->Port!=nullptr)
+			{
+				Send(msg, ctrl);
+			}		
 		}
 	}
 	else
