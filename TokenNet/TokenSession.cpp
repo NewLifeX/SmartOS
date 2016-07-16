@@ -21,6 +21,7 @@ TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 	Control(ctrl)
 {
 	client.Sessions.Add(this);
+	Status = 0;
 }
 
 TokenSession::~TokenSession()
@@ -113,6 +114,7 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	//Client.Reply(rs, Control);
 	Control.Reply(rs);
+	Status = 1;
 
 	return true;
 }
@@ -135,6 +137,7 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 
 	Control.Reply(rs);
 
+	Status = 2;
 	Control.Token = Token;
 
 	return true;
@@ -150,5 +153,6 @@ bool TokenSession::OnPing(TokenMessage& msg)
 
 	Control.Reply(rs);
 
+	Status = 3;
 	return true;
 }

@@ -26,7 +26,7 @@ public:
 	ushort	Version;	// 版本
 	IPEndPoint	Remote;	// 地址
 
-	int		Status;		// 状态。0准备、1握手完成、2登录后
+	int		Status;		// 状态。0准备、1握手完成、2登录后、3心跳中
 	UInt64	LoginTime;	// 登录时间ms
 	UInt64	LastActive;	// 最后活跃时间ms
 
