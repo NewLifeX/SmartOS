@@ -45,13 +45,14 @@ public:
 	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
 	void OnReceive(TokenMessage& msg, TokenController& ctrl);
 	void OnReceiveLocal(TokenMessage& msg, TokenController& ctrl);
+	void LocalSend(int start, const Buffer& bs, TokenController& ctrl);
 
 	// 收到功能消息时触发
 	MessageHandler	Received;
 	void*			Param;
 
-// 常用系统级消息
-	// 握手广播
+	// 常用系统级消息
+		// 握手广播
 	void SayHello(bool broadcast);
 
 	// 注册
@@ -72,7 +73,7 @@ public:
 	void Invoke(const String& action, const Buffer& bs);
 
 	// 远程调用委托。传入参数名值对以及结果缓冲区引用，业务失败时返回false并把错误信息放在结果缓冲区
-	typedef bool (*InvokeHandler)(void* param, const BinaryPair& args, Stream& result);
+	typedef bool(*InvokeHandler)(void* param, const BinaryPair& args, Stream& result);
 	// 注册远程调用处理器
 	void Register(cstring action, InvokeHandler handler, void* param = nullptr);
 	// 模版支持成员函数
