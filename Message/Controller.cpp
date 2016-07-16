@@ -3,17 +3,17 @@
 //#define MSG_DEBUG DEBUG
 #define MSG_DEBUG 0
 #if MSG_DEBUG
-	#define msg_printf debug_printf
+#define msg_printf debug_printf
 #else
-	#define msg_printf(format, ...)
+#define msg_printf(format, ...)
 #endif
 
 // 构造控制器
 Controller::Controller()
 {
-	Port		= nullptr;
-	MinSize 	= 0;
-	Opened		= false;
+	Port = nullptr;
+	MinSize = 0;
+	Opened = false;
 
 	//Received	= nullptr;
 	//Param		= nullptr;
@@ -23,18 +23,18 @@ Controller::~Controller()
 {
 	Close();
 
-	if(Port) delete Port;
+	if (Port) delete Port;
 
 	debug_printf("TinyNet::UnInit\r\n");
 }
 
 void Controller::Open()
 {
-	if(Opened) return;
+	if (Opened) return;
 
 	assert(Port, "还没有传输口呢");
 
-	Port->MinSize	= MinSize;
+	Port->MinSize = MinSize;
 	// 注册收到数据事件
 	Port->Register(Dispatch, this);
 	Port->Open();
@@ -44,7 +44,7 @@ void Controller::Open()
 
 void Controller::Close()
 {
-	if(!Opened) return;
+	if (!Opened) return;
 
 	Port->Close();
 
@@ -55,8 +55,8 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 {
 	TS("Controller::Dispatch");
 
-	byte* buf	= bs.GetBuffer();
-	uint len	= bs.Length();
+	byte* buf = bs.GetBuffer();
+	uint len = bs.Length();
 
 	auto control = (Controller*)param;
 
@@ -69,7 +69,7 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 	// 这里使用数据流，可能多个消息粘包在一起
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms((const void*)buf, len);
-	while(ms.Remain() >= control->MinSize)
+	while (ms.Remain() >= control->MinSize)
 	{
 #if MSG_DEBUG
 		uint p = ms.Position();
@@ -77,7 +77,7 @@ uint Controller::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 		len = ms.Remain();
 #endif
 		// 如果不是有效数据包，则直接退出，避免产生死循环。当然，也可以逐字节移动测试，不过那样性能太差
-		if(!control->Dispatch(ms, nullptr, param2))
+		if (!control->Dispatch(ms, nullptr, param2))
 		{
 #if MSG_DEBUG
 			msg_printf("Controller::Error[%d] ", len);
@@ -99,14 +99,14 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 
 	byte* buf = ms.Current();
 
-	auto& msg	= *pmsg;
-	msg.State	= param;
-	if(!msg.Read(ms)) return false;
+	auto& msg = *pmsg;
+	msg.State = param;
+	if (!msg.Read(ms)) return false;
 
 	// 校验
-	if(!msg.Valid()) return true;
+	if (!msg.Valid()) return true;
 
-	if(!Valid(msg))
+	if (!Valid(msg))
 	{
 		/*debug_printf("消息校验未通过\r\n");
 		msg.Show();
@@ -114,7 +114,7 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 
 		return true;
 	}
-    //if(!msg.Valid()) return true;
+	//if(!msg.Valid()) return true;
 
 	return OnReceive(msg);
 }
@@ -154,9 +154,8 @@ bool Controller::Reply(Message& msg)
 bool Controller::SendInternal(const Message& msg)
 {
 	TS("Controller::SendInternal");
-
 	// 如果没有传输口处于打开状态，则发送失败
-	if(!Port->Open()) return false;
+	if (!Port->Open()) return false;
 
 	MemoryStream ms;
 	// 带有负载数据，需要合并成为一段连续的内存
@@ -169,6 +168,8 @@ bool Controller::SendInternal(const Message& msg)
 
 bool Controller::SendInternal(const Buffer& bs, const void* state)
 {
+	assert(Port, "Port为空,不能发送数据");
+
 	if (state == nullptr)
 		return Port->Write(bs);
 	else
