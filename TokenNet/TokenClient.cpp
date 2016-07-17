@@ -242,10 +242,10 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 	msg.Code = 0x06;
 	dm.WriteMessage(msg);
 
-	Send(msg);
+	//Send(msg);
 
 	// 主动上报发给服务器的同时，也发给内网已登录用户
-	auto& cs = Controls;
+	auto& cs = Sessions;
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		auto ss = (TokenSession*)cs[i];
