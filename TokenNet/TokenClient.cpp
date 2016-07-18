@@ -235,8 +235,9 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 	{
 		auto ss = (TokenSession*)cs[i];
 
-		if (ss && ss->Status > 2)
+		if (ss && ss->Status >= 2)
 		{
+			debug_printf("Sessions[%d]  ", i);
 			ss->Send(msg);
 		}
 	}
@@ -669,8 +670,9 @@ void TokenClient::Write(int start, const Buffer& bs)
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		auto ss = (TokenSession*)cs[i];
-		if (ss && ss->Status > 2)
+		if (ss && ss->Status >= 2)
 		{
+			debug_printf("Sessions[%d]  ",i);
 			ss->Send(msg);
 		}
 	}
