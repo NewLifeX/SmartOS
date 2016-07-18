@@ -49,6 +49,20 @@ void TokenSession::OnReceive(TokenMessage& msg)
 
 	LastActive = Sys.Ms();
 
+	if (Token == 0 && msg.Code > 2)
+	{
+		auto rs = msg.CreateReply();
+
+		rs.Code = 0x01;
+		HelloMessage ext;
+		ext.ErrCode = 0xFF;
+		ext.Reply = true;
+		ext.WriteMessage(rs);
+
+		Control.Reply(rs);
+		return;
+	}
+
 	switch (msg.Code)
 	{
 	case 0x01:
