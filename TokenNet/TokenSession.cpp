@@ -92,6 +92,8 @@ bool TokenSession::OnHello(TokenMessage& msg)
 		auto now = Sys.Ms();
 		auto crc = Crc::Hash(Buffer(&now, 8));
 		key = Buffer(&crc, 4);
+		debug_printf("creat key:  ");
+		key.Show(true);
 	}
 	ext2.Key = key;
 

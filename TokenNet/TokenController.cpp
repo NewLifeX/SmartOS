@@ -241,7 +241,9 @@ bool TokenController::OnReceive(Message& msg)
 		Buffer bs(msg.Data, msg.Length + 2);
 		if (!Decrypt(bs, Key))
 		{
-			debug_printf("TokenController::OnReceive 解密失败\r\n");
+			debug_printf("TokenController::OnReceive 解密失败 Key:\r\n");
+			debug_printf("Code 0x%02X Key: ",msg.Code);
+			Key.Show(true);
 			return false;
 		}
 	}

@@ -182,6 +182,7 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 {
 	TS("TokenClient::OnReceiveLocal");
+	debug_printf("LocalRev  ");
 
 	// 找到会话，如果不存在则创建
 	auto remote = (IPEndPoint*)msg.State;
@@ -190,46 +191,29 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		debug_printf("无法取得消息来源地址，设计错误！\r\n");
 		return;
 	}
-	// 如果会话Sessions数量为零   创建首个Session专门对付广播
-	if (Sessions.Count() == 0)auto fistss = new TokenSession(*this, ctrl);
+	remote->Show(false);
+
 	// 根据远程地址，从会话列表中找到会话。如果会话不存在，则新建会话
 	TokenSession* ss = nullptr;
-	// 过滤广播端口的数据到独立的一个 Sessions[0] 避免为同一个客户端创建两个Session （一个广播 一个通讯）
-	bool isBroadcast = false;
-	if (remote->Port != 3377)isBroadcast = true;
-	if(!isBroadcast)
+
+	for (int i = 0; i < Sessions.Count(); i++)
 	{
-		for (int i = 0; i < Sessions.Count(); i++)
+		ss = (TokenSession*)Sessions[i];
+		if (ss && ss->Remote == *remote)
 		{
-			ss = (TokenSession*)Sessions[i];
-			if (ss && ss->Remote == *remote)
-			{
-				debug_printf("Session[%d]迎客\r\n",i);
-				break;
-			}
-			ss = nullptr;
+			debug_printf(" Session[%d]迎客 Code:0x%02X\r\n", i, msg.Code);
+			break;
 		}
-		if (!ss)
-		{
-			debug_printf("new TokenSession\r\n");
-			ss = new TokenSession(*this, ctrl);
-			ss->Remote = *remote;
-		}
+		ss = nullptr;
 	}
-	else
+	if (!ss)
 	{
-		ss = (TokenSession*)Sessions[0];
+		debug_printf("new TokenSession\r\n");
+		ss = new TokenSession(*this, ctrl);
 		ss->Remote = *remote;
 	}
 
 	ss->OnReceive(msg);
-	// 用完之后要打扫现场
-	if (isBroadcast)
-	{
-		ss->Key.Clear();
-		ss->Status = 0;
-		ss->LastActive = 0;
-	}
 }
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
