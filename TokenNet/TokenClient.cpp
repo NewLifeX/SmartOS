@@ -182,7 +182,7 @@ void TokenClient::OnReceive(TokenMessage& msg, TokenController& ctrl)
 void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 {
 	TS("TokenClient::OnReceiveLocal");
-	debug_printf("LocalRev  ");
+	debug_printf("LocalRev ");
 
 	// 找到会话，如果不存在则创建
 	auto remote = (IPEndPoint*)msg.State;
@@ -191,7 +191,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		debug_printf("无法取得消息来源地址，设计错误！\r\n");
 		return;
 	}
-	remote->Show(false);
+	// remote->Show(false);
 
 	// 根据远程地址，从会话列表中找到会话。如果会话不存在，则新建会话
 	TokenSession* ss = nullptr;
@@ -201,14 +201,14 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		ss = (TokenSession*)Sessions[i];
 		if (ss && ss->Remote == *remote)
 		{
-			debug_printf(" Session[%d]迎客 Code:0x%02X\r\n", i, msg.Code);
+			debug_printf("ss[%d] ", i);
 			break;
 		}
 		ss = nullptr;
 	}
 	if (!ss)
 	{
-		debug_printf("new TokenSession\r\n");
+		debug_printf(" new TokenSession\r\n");
 		ss = new TokenSession(*this, ctrl);
 		ss->Remote = *remote;
 	}
@@ -237,7 +237,7 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 
 		if (ss && ss->Status >= 2)
 		{
-			debug_printf("Sessions[%d]  ", i);
+			debug_printf("ss[%d]  ", i);
 			ss->Send(msg);
 		}
 	}
@@ -672,7 +672,7 @@ void TokenClient::Write(int start, const Buffer& bs)
 		auto ss = (TokenSession*)cs[i];
 		if (ss && ss->Status >= 2)
 		{
-			debug_printf("Sessions[%d]  ",i);
+			debug_printf("ss[%d]  ",i);
 			ss->Send(msg);
 		}
 	}
@@ -803,7 +803,6 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		Sys.Sleep(200);
 		Sys.Reset();
 	}
-	// if (ctrl != Master)Write(0, Store.Data);	// 已经包含了内网写
 	LocalSend(0, Store.Data);
 }
 
