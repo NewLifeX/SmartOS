@@ -242,7 +242,9 @@ bool TokenController::OnReceive(Message& msg)
 		if (!Decrypt(bs, Key))
 		{
 			debug_printf("TokenController::OnReceive 解密失败 Key:\r\n");
-			debug_printf("Code 0x%02X Key: ",msg.Code);
+			auto remote = (IPEndPoint*)msg.State;
+			remote->Show(false);
+			debug_printf("  Code 0x%02X Key: ",msg.Code);
 			Key.Show(true);
 			return false;
 		}
