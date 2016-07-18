@@ -218,6 +218,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
 {
+	debug_printf("LocalSend\r\n");
 	TokenDataMessage dm;
 	dm.Start = start;
 	dm.Data = bs;
@@ -233,7 +234,11 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		auto ss = (TokenSession*)cs[i];
-		if (ss) ss->Send(msg);
+
+		if (ss && ss->Status > 2)
+		{
+			ss->Send(msg);
+		}
 	}
 }
 // 常用系统级消息
@@ -664,7 +669,10 @@ void TokenClient::Write(int start, const Buffer& bs)
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		auto ss = (TokenSession*)cs[i];
-		if (ss) ss->Send(msg);
+		if (ss && ss->Status > 2)
+		{
+			ss->Send(msg);
+		}
 	}
 }
 
@@ -793,7 +801,8 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		Sys.Sleep(200);
 		Sys.Reset();
 	}
-	LocalSend(dm.Size, dm.Data);
+	// if (ctrl != Master)Write(0, Store.Data);	// 已经包含了内网写
+	LocalSend(0, Store.Data);
 }
 
 /******************************** 远程调用 ********************************/

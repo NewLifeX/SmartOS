@@ -38,6 +38,8 @@ bool TokenSession::Send(TokenMessage& msg)
 	}
 	assert(&Control, "还没有Control呢");
 
+	msg.State = &Remote;
+
 	return Control.Send(msg);
 }
 
