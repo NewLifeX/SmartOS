@@ -17,7 +17,7 @@ FlushPort::~FlushPort()
 
 static void FlushPortTask(void* param)
 {
-	FlushPort* bp = (FlushPort*)param;
+	auto bp	= (FlushPort*)param;
 	bp->Flush();
 }
 

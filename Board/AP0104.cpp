@@ -187,10 +187,10 @@ void AP0104::OpenClient(ISocketHost& host)
 
 	// 网络就绪后，打开指示灯
 	auto net = dynamic_cast<W5500*>(&host);
-	if (net) net->SetLed(*Leds[0]);
+	if (net && !net->Led) net->SetLed(*Leds[0]);
 
 	auto esp = dynamic_cast<Esp8266*>(&host);
-	if (esp) esp->SetLed(*Leds[1]);
+	if (esp && !esp->Led) esp->SetLed(*Leds[1]);
 
 	auto tk = TokenConfig::Current;
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);

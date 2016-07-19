@@ -132,10 +132,13 @@ void IOK027X::Register(int index, IDataPort& dp)
 void IOK027X::OpenClient(ISocketHost& host)
 {
 	assert(Client, "Client");
+
+	if(Client->Opened) return;
+
 	debug_printf("\r\n OpenClient \r\n");
 
 	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp) esp->SetLed(*Leds[0]);
+	if(esp && !esp->Led) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 

@@ -121,7 +121,7 @@ void PA0903::OpenClient(ISocketHost& host)
 
 	// 网络就绪后，打开指示灯
 	auto net = dynamic_cast<W5500*>(&host);
-	if (net) net->SetLed(*Leds[0]);
+	if (net && !net->Led) net->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
