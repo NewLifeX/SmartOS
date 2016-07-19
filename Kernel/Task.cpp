@@ -390,8 +390,10 @@ void TaskScheduler::ShowStatus()
 	debug_printf("Task::ShowStatus [%d] 平均 %dus 最大 %dus 当前 ", host->Times, host->Cost, host->MaxCost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
-	DateTime dt(Sys.Ms() / 1000);
-	dt.Show(true);
+	//DateTime dt(Sys.Ms() / 1000);
+	//dt.Show(true);
+	TimeSpan ts(Sys.Ms());
+	ts.Show(true);
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
 	int ms = host->Cost / 1000;

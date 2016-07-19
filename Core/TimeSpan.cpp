@@ -41,7 +41,7 @@ bool operator<=	(const TimeSpan& left, const TimeSpan& right) { return left.Comp
 
 String& TimeSpan::ToStr(String& str) const
 {
-	str	= str + Days() + ' ';
+	if(Ms >= 24 * 60 * 60 * 1000) str	= str + Days() + ' ';
 
 	str	= str + Hours() + ':';
 
