@@ -691,7 +691,7 @@ void TokenClient::ReportAsync(int start, uint length)
 	ReportLength = length;
 
 	// 延迟上报，期间有其它上报任务到来将会覆盖
-	Sys.SetTask(_task, true, 200);
+	Sys.SetTask(_task, true, 20);
 }
 
 bool TokenClient::CheckReport()
