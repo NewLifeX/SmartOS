@@ -12,6 +12,7 @@
 IOK027X::IOK027X()
 {
 	LedPins.Add(PA0);
+	LedPins.Add(PA4);
 
 	Host	= nullptr;	// 网络主机
 	Client	= nullptr;
