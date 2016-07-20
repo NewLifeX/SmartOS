@@ -101,6 +101,8 @@ private:
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
 	bool OnInvoke(const String& action, const BinaryPair& args, Stream& result);
+	static bool InvokeRestStart(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeRestBoot(void * param, const BinaryPair& args, Stream& result);
 
 private:
 	uint	_task;

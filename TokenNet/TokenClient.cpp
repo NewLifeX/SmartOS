@@ -39,6 +39,11 @@ TokenClient::TokenClient()
 
 	NextReport = 0;
 	ReportLength = 0;
+
+
+	this->Register("Gateway/RestStart", InvokeRestStart, this);
+	this->Register("Gateway/RestBoot", InvokeRestBoot, this);
+
 }
 
 void TokenClient::Open()
@@ -277,7 +282,7 @@ void TokenClient::LoopTask()
 	{
 		auto ss = (TokenSession*)cs[i];
 		// 5分钟不活跃超时	LastActive为0的为特殊Session 不删除
-		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms() && ss->LastActive!=0) delete ss;
+		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms() && ss->LastActive != 0) delete ss;
 	}
 
 	// 最大不活跃时间ms，超过该时间时重启系统
@@ -672,7 +677,7 @@ void TokenClient::Write(int start, const Buffer& bs)
 		auto ss = (TokenSession*)cs[i];
 		if (ss && ss->Status >= 2)
 		{
-			debug_printf("ss[%d]  ",i);
+			debug_printf("ss[%d]  ", i);
 			ss->Send(msg);
 		}
 	}
@@ -867,6 +872,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 
 bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream& result)
 {
+
 	IDelegate* dlg = nullptr;
 	if (!Routes.TryGetValue(action.GetBuffer(), dlg) || !dlg) return false;
 
@@ -895,4 +901,28 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 			Routes.Remove(action);
 		}
 	}
+}
+
+bool TokenClient::InvokeRestStart(void * param, const BinaryPair& args, Stream& result)
+{
+	BinaryPair res(result);
+	res.Set("RestStar", (byte)01);
+
+	debug_printf("1000ms后重启\r\n");
+	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
+
+	return true;
+}
+bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& result)
+{
+	BinaryPair res(result);
+	res.Set("RestBoot", (byte)01);
+	Config::Current->RemoveAll();
+
+	debug_printf("1000ms后重置\r\n");
+	//Sys.Sleep(500);
+	//Sys.Reset();
+	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
+
+	return true;
 }

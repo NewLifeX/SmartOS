@@ -55,8 +55,6 @@ public:
 
 	static void Loop(void* param);
 	//远程调用操作
-	static bool InvokeRestStart(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeRestBoot(void * param, const BinaryPair& args, Stream& result);
 };
 
 #endif

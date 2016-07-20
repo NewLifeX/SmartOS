@@ -49,10 +49,6 @@ void Gateway::Start()
 
 	Client->Received = [](void* s, Message& msg, void* p) { return ((Gateway*)p)->OnRemote((TokenMessage&)msg); };
 	Client->Param = this;
-
-	Client->Register("Gateway/RestStart", InvokeRestStart, this);
-	Client->Register("Gateway/RestBoot", InvokeRestBoot, this);
-
 	debug_printf("\r\nGateway::Start \r\n");
 
 	Server->Start();
@@ -324,27 +320,3 @@ void Gateway::Loop(void* param)
 	gw->pDevMgmt->MaintainState();
 }
 /******************************** invoke 调用********************************/
-
-bool Gateway::InvokeRestStart(void * param, const BinaryPair& args, Stream& result)
-{
-	BinaryPair res(result);
-	res.Set("RestStar", (byte)01);
-
-	debug_printf("500ms后重启\r\n");
-	Sys.Sleep(500);
-	Sys.Reset();
-
-	return true;
-}
-bool Gateway::InvokeRestBoot(void * param, const BinaryPair& args, Stream& result)
-{
-	BinaryPair res(result);
-	res.Set("RestBoot", (byte)01);
-	Config::Current->RemoveAll();
-
-	debug_printf("500ms后重置\r\n");
-	Sys.Sleep(500);
-	Sys.Reset();
-
-	return true;
-}

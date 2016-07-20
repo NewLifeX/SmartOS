@@ -59,7 +59,7 @@ Device * DevicesManagement::FindDev(byte id) const
 	if (id == 0)return nullptr;
 	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		auto dv	= (Device*)DevArr[i];
+		auto dv = (Device*)DevArr[i];
 		if (id == dv->Address) return dv;
 	}
 	return nullptr;
@@ -70,7 +70,7 @@ Device * DevicesManagement::FindDev(const Buffer & hardid) const
 	if (hardid.Length() == 0)return nullptr;
 	for (int i = 0; i < DevArr.Count(); i++)
 	{
-		auto dv	= (Device*)DevArr[i];
+		auto dv = (Device*)DevArr[i];
 		bool isEqual = true;
 		if (dv != nullptr)
 		{
@@ -268,9 +268,9 @@ void DevicesManagement::SetTokenClient(TokenClient *port)
 	if (port == nullptr)return;
 	Port = port;
 
-	Port->Register("Device/List",	InvokeList		,this);
-	Port->Register("Device/Update", InvokeUpdate	,this);
-	Port->Register("Device/Delete", InvokeDelete	,this);
+	Port->Register("Device/List", InvokeList, this);
+	Port->Register("Device/Update", InvokeUpdate, this);
+	Port->Register("Device/Delete", InvokeDelete, this);
 	Port->Register("Device/ListIDs", InvokeListIDs, this);
 	Port->Register("Device/FindIDs", InvokeListIDs, this);
 }
@@ -304,7 +304,7 @@ bool DevicesManagement::InvokeListIDs(void * param, const BinaryPair& args, Stre
 	return dMgmt->DeviceProcess(DeviceAtions::ListIDs, args, result);
 }
 // 缺少更新的处理  未完待续
-bool DevicesManagement::DeviceProcess(DeviceAtions act,const BinaryPair& args, Stream& result)
+bool DevicesManagement::DeviceProcess(DeviceAtions act, const BinaryPair& args, Stream& result)
 {
 	TS("DevicesManagement::DeviceProcess");
 	// 仅处理来自云端的请求
@@ -507,7 +507,7 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	default:
 		debug_printf("无法处理的指令\r\n");
 		return false;
-		
+
 	}
 	if (actstr.Length() == 0)return false;
 	// 拿取数据
@@ -515,7 +515,7 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	BinaryPair bp(datams);
 	GetDevInfo((Device*)dv, datams);
 
-	if (Port)Port->Invoke(actstr, Buffer(datams.GetBuffer(),datams.Position()));
+	if (Port)Port->Invoke(actstr, Buffer(datams.GetBuffer(), datams.Position()));
 	return true;
 }
 
@@ -535,7 +535,7 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	bool PortOk = true;
 	if (!Port)PortOk = false;
 	if (Port->Status < 2) PortOk = false;
-	if(!Port)debug_printf("Port Not Realy\r\n");
+	if (!Port)debug_printf("Port Not Realy\r\n");
 
 	byte id = dv->Address;
 	switch (act)
@@ -553,7 +553,7 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 	case DeviceAtions::Register:
 		PushDev((Device*)dv);
 		debug_printf("节点注册入网 ID=0x%02X\r\n", id);
-		if(PortOk)SendDevices(act, dv);
+		if (PortOk)SendDevices(act, dv);
 		return;
 	case DeviceAtions::Delete:
 		debug_printf("节点删除~~ ID=0x%02X\r\n", id);
