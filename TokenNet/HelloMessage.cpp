@@ -97,7 +97,7 @@ bool HelloMessage::Read(Stream& ms)
 void HelloMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
-
+	bp.Set("ErrorCode", ErrCode);
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);

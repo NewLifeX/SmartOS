@@ -60,10 +60,10 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	MinSize = TokenMessage::MinSize;
 
-	Socket	= nullptr;
-	Server	= nullptr;
+	Socket = nullptr;
+	Server = nullptr;
 
-	ShowRemote	= false;
+	ShowRemote = false;
 
 	// 默认屏蔽心跳日志和确认日志
 	Buffer(NoLogCodes, sizeof(NoLogCodes)).Clear();
@@ -82,7 +82,7 @@ void TokenController::Open()
 	if (Opened) return;
 
 	assert(Socket, "还没有Socket呢");
-	if(!Port) Port	= dynamic_cast<ITransport*>(Socket);
+	if (!Port) Port = dynamic_cast<ITransport*>(Socket);
 	assert(Port, "还没有传输口呢");
 
 	debug_printf("TokenNet::Inited 使用传输接口 ");
@@ -137,7 +137,7 @@ bool TokenController::Valid(const Message& msg)
 	if (msg.Code <= 0x02) return true;
 
 	if (Token != 0) return true;
-	 
+
 	// 合法来源验证，暂时验证云平台，其它连接将来验证
 	//auto svr = (IPEndPoint*)Server;
 	auto rmt = (IPEndPoint*)msg.State;
@@ -210,21 +210,21 @@ bool TokenController::OnReceive(Message& msg)
 	}
 	else
 	{
-		auto& tmsg	= (TokenMessage&)msg;
+		auto& tmsg = (TokenMessage&)msg;
 		// 过滤重复请求。1秒内不接收重复指令
-		UInt64 start	= Sys.Ms() - 5000;
+		UInt64 start = Sys.Ms() - 5000;
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
-			auto& qi	= _RecvQueue[i];
+			auto& qi = _RecvQueue[i];
 			if (qi.Code == msg.Code && qi.Seq == tmsg.Seq && qi.Time > start) return true;
 		}
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
-			auto& qi	= _RecvQueue[i];
+			auto& qi = _RecvQueue[i];
 			if (qi.Code == 0 || qi.Time <= start)
 			{
 				qi.Code = msg.Code;
-				qi.Seq	= tmsg.Seq;
+				qi.Seq = tmsg.Seq;
 				qi.Time = Sys.Ms();
 
 				break;
@@ -244,9 +244,11 @@ bool TokenController::OnReceive(Message& msg)
 			debug_printf("TokenController::OnReceive 解密失败 Key:\r\n");
 			auto remote = (IPEndPoint*)msg.State;
 			remote->Show(false);
-			debug_printf("  Code 0x%02X Key: ",msg.Code);
+			debug_printf("  Code 0x%02X Key: ", msg.Code);
 			Key.Show(true);
-			return false;
+
+			msg.Length = 0;
+			return Controller::OnReceive(msg);
 		}
 	}
 
@@ -272,7 +274,7 @@ bool TokenController::Send(Message& msg)
 		ShowMessage("Send", msg);
 
 	// 如果没有传输口处于打开状态，则发送失败
-	if(!Port->Open()) return false;
+	if (!Port->Open()) return false;
 
 	//byte buf[1472];
 	//Stream ms(buf, ArrayLength(buf));
@@ -282,7 +284,7 @@ bool TokenController::Send(Message& msg)
 	msg.Write(ms);
 
 	// 握手不加密
-	if(msg.Code > 0x01 && Key.Length() > 0)
+	if (msg.Code > 0x01 && Key.Length() > 0)
 	{
 		ms.SetPosition(0);
 		if (!Encrypt(ms, Key)) return false;
@@ -363,20 +365,20 @@ void StatReply(byte code)
 
 bool TokenController::StatSend(const Message& msg)
 {
-	byte code	= msg.Code;
+	byte code = msg.Code;
 	auto st = Stat;
 
 	// 统计请求
-	if(!msg.Reply && !msg.OneWay)
+	if (!msg.Reply && !msg.OneWay)
 	{
 		st->SendRequest++;
 		StatRequest(code);
 
 		// 超时指令也干掉
-		UInt64 end	= Sys.Ms() - 5000;
+		UInt64 end = Sys.Ms() - 5000;
 		for (int i = 0; i < ArrayLength(_StatQueue); i++)
 		{
-			auto& qi	= _StatQueue[i];
+			auto& qi = _StatQueue[i];
 			if (qi.Code == 0 || qi.Time <= end)
 			{
 				qi.Code = code;
@@ -388,7 +390,7 @@ bool TokenController::StatSend(const Message& msg)
 	}
 
 	// 统计响应
-	if(msg.Reply)
+	if (msg.Reply)
 	{
 		st->SendReply++;
 		StatReply(msg.Code);
@@ -399,15 +401,15 @@ bool TokenController::StatSend(const Message& msg)
 
 bool TokenController::StatReceive(const Message& msg)
 {
-	byte code	= msg.Code;
+	byte code = msg.Code;
 	auto st = Stat;
 
-	if(msg.Reply)
+	if (msg.Reply)
 	{
 		bool rs = false;
 		for (int i = 0; i < ArrayLength(_StatQueue); i++)
 		{
-			auto& qi	= _StatQueue[i];
+			auto& qi = _StatQueue[i];
 			if (qi.Code == code)
 			{
 				int cost = (int)(Sys.Ms() - (UInt64)qi.Time);
@@ -554,20 +556,20 @@ void TokenStat::Clear()
 	_Total->Invoke += Invoke;
 	_Total->InvokeReply += InvokeReply;
 
-	SendRequest	= 0;
-	RecvReply	= 0;
-	Time		= 0;
+	SendRequest = 0;
+	RecvReply = 0;
+	Time = 0;
 
-	SendReply	= 0;
-	RecvRequest	= 0;
-	RecvReplyAsync	= 0;
+	SendReply = 0;
+	RecvRequest = 0;
+	RecvReplyAsync = 0;
 
-	Read	= 0;
-	ReadReply	= 0;
-	Write	= 0;
-	WriteReply	= 0;
-	Invoke	= 0;
-	InvokeReply	= 0;
+	Read = 0;
+	ReadReply = 0;
+	Write = 0;
+	WriteReply = 0;
+	Invoke = 0;
+	InvokeReply = 0;
 }
 
 String& TokenStat::ToStr(String& str) const
@@ -576,13 +578,13 @@ String& TokenStat::ToStr(String& str) const
 
 	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
 	Percent().Show(true);*/
-	if(SendRequest > 0)
+	if (SendRequest > 0)
 	{
 		str = str + "发：" + Percent() + "% " + RecvReply;
 		if (RecvReplyAsync > 0) str = str + "+" + RecvReplyAsync;
-		str	= str + "/" + SendRequest + " " + Speed() + "ms ";
+		str = str + "/" + SendRequest + " " + Speed() + "ms ";
 	}
-	if(RecvRequest > 0)	str = str + "收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
+	if (RecvRequest > 0)	str = str + "收：" + PercentReply() + "% " + SendReply + "/" + RecvRequest;
 	if (Read > 0)	str = str + " 读：" + (ReadReply * 100 / Read) + "% " + ReadReply + "/" + Read;
 	if (Write > 0)	str = str + " 写：" + (WriteReply * 100 / Write) + "% " + WriteReply + "/" + Write;
 	if (Invoke > 0)	str = str + " 调：" + (InvokeReply * 100 / Invoke) + " " + InvokeReply + "/" + Invoke;

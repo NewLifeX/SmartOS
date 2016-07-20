@@ -48,15 +48,15 @@ void TokenSession::OnReceive(TokenMessage& msg)
 	TS("TokenSession::OnReceive");
 
 	LastActive = Sys.Ms();
-
 	if (Token == 0 && msg.Code > 2)
 	{
 		auto rs = msg.CreateReply();
 
 		rs.Code = 0x01;
+		rs.Error = true;
 		HelloMessage ext;
 		ext.ErrCode = 0xFF;
-		ext.Reply = true;
+
 		ext.WriteMessage(rs);
 
 		Control.Reply(rs);
@@ -108,8 +108,8 @@ bool TokenSession::OnHello(TokenMessage& msg)
 		auto now = Sys.Ms();
 		auto crc = Crc::Hash(Buffer(&now, 8));
 		key = Buffer(&crc, 4);
-		debug_printf("creat key:  ");
 		key.Show(true);
+		//通知其它内网，密码被修改了
 	}
 	ext2.Key = key;
 
