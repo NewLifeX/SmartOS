@@ -48,12 +48,15 @@ public:
 
 	static Gateway*	Current;
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
-	
+
 public:
-	uint	_task	= 0;	// 定时任务，10秒
-	int		_Study	= 0;	// 自动退出学习时间，秒
+	uint	_task = 0;	// 定时任务，10秒
+	int		_Study = 0;	// 自动退出学习时间，秒
 
 	static void Loop(void* param);
+	//远程调用操作
+	static bool InvokeRestStart(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeRestBoot(void * param, const BinaryPair& args, Stream& result);
 };
 
 #endif
