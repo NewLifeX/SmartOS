@@ -363,7 +363,7 @@ bool MemoryStream::CheckRemain(uint count)
 		byte* bufNew = new byte[size];
 		if(Length > 0) Buffer(_Buffer, Length).CopyTo(0, bufNew, -1);
 
-		if(_Buffer != _Arr) delete[] _Buffer;
+		if(_Buffer != _Arr && _needFree == true) delete[] _Buffer;
 
 		_Buffer		= bufNew;
 		_Capacity	= size;
