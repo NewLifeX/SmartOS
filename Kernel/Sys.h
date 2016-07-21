@@ -145,6 +145,12 @@ public:
 	char	Serial[16];	// 授权码
 	char	Product[16];// 产品名称
 	char	Company[16];// 公司
+
+	char	DevID[16];	// 设备编码
+	char	Server[32];	// 服务器。重置后先尝试厂商前端，再尝试原服务器
+	char	Token[32];	// 访问服务器的令牌
+
+	ushort	Checksum;	// 校验
 };
 
 //#include "Time.h"
