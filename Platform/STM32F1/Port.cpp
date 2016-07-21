@@ -78,6 +78,14 @@ void Port::OnOpen(void* param)
 #endif
 }
 
+void Port::RemapConfig(uint param, bool sta)
+{
+#ifdef STM32F1
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	GPIO_PinRemapConfig(param, sta ? ENABLE : DISABLE);
+#endif
+}
+
 void Port::AFConfig(GPIO_AF GPIO_AF) const
 {
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)

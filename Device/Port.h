@@ -47,6 +47,7 @@ public:
 	void Clear();
 
 	void AFConfig(GPIO_AF GPIO_AF) const;
+	static void RemapConfig(uint param,bool sta);
 
     virtual bool Read() const;
 
