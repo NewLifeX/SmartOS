@@ -108,34 +108,20 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 	else*/
 	if (!down)		// 要处理长按而不动作  所以必须是弹起响应
 	{
-		switch (Stat)
+		if (_Value == true)
 		{
-		case normal:
-			// 常规模式,长按进入设置模式，并且不动作。否则执行动作
-			if (_Value == true)
+			if (port->PressTime > 1500)
 			{
-				if (port->PressTime > 1500)
-				{
-					if (port->PressTime > 3000)
-						DelayClose2(10 * 60 * 1000);
-					else
-						DelayClose2(2 * 60 * 1000);
-					return;
-				}
+				if (port->PressTime > 3000)
+					DelayClose2(10 * 60 * 1000);
+				else
+					DelayClose2(2 * 60 * 1000);
+				return;
 			}
-			SetValue(!_Value);
-			//if (_Handler) _Handler(this, _Param);
-			Press(*this);
-			break;
-		case set:
-			Stat = normal;
-			Next = 0xff;
-			SetValue(!_Value);
-			//if (_Handler) _Handler(this, _Param);
-			Press(*this);
-			break;
-		default: break;
 		}
+		SetValue(!_Value);
+		//if (_Handler) _Handler(this, _Param);
+		Press(*this);
 	}
 }
 
@@ -164,20 +150,6 @@ void Button_GrayLevel::DelayClose2(int ms)
 	Sys.SetTask(_task2, true, 1000);
 	delaytime = ms;
 }
-
-/*void Button_GrayLevel::Register(EventHandler handler, void* param)
-{
-	if (handler)
-	{
-		_Handler = handler;
-		_Param = param;
-	}
-	else
-	{
-		_Handler = nullptr;
-		_Param = nullptr;
-	}
-}*/
 
 int Button_GrayLevel::OnWrite(byte data)
 {

@@ -14,14 +14,6 @@ struct ButtonPin
 	byte PwmIndex;
 };
 
-enum ButtonStat :byte
-{
-	normal = 0,			// 正常
-	set = 1,			// 设置
-	externSet = 2,		// 外部设置
-	execution = 3,		// 执行设置
-};
-
 class Button_GrayLevel;
 using TAction	= Delegate<Button_GrayLevel&>::TAction;
 
@@ -39,7 +31,6 @@ public:
 
 	InputPort	Key;				// 输入按键
 	OutputPort	Relay;				// 继电器
-	enum ButtonStat Stat = normal;	// 状态
 
 	// 外部设置模式调用
 	typedef bool(*IOHandler)(Button_GrayLevel* bt, bool down, void * param);
@@ -60,7 +51,7 @@ public:
 	void RenewGrayLevel();
 	//void Register(EventHandler handler, void* param = nullptr);
 
-	virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
+	//virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
 	//virtual int Read(byte* cmd);	
 
 	virtual int OnWrite(byte data);
@@ -73,9 +64,6 @@ private:
 
 	bool _Value; // 状态
 	ushort Reserved;	// 补足对齐问题
-
-	//EventHandler _Handler;
-	//void* _Param;
 
 	static void OnKeyPress(InputPort* port, bool down, void* param);
 	void OnKeyPress(InputPort* port, bool down);
