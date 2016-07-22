@@ -558,8 +558,10 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		// 未登录错误，马上重新登录
 		if (result == 0x7F)
 			Register();
-		else
+		else if (result == 0xFF)
+		{
 			Sys.SetTask(_task, true, 0);
+		}
 	}
 	else
 	{
