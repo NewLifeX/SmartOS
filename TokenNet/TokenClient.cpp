@@ -546,7 +546,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	LoginMessage logMsg;
 	logMsg.ReadMessage(msg);
 	logMsg.Show();
-	debug_printf("/r/n");
+	debug_printf("\r\n");
 
 	if (logMsg.Error)
 	{
