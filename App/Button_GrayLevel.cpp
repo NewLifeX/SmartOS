@@ -86,7 +86,7 @@ void Button_GrayLevel::GrayLevelDown()
 {
 	if (_Pwm)
 	{
-		_Pwm->Pulse[_Channel] = (0xFF - OnGrayLevel);
+		_Pwm->Pulse[_Channel] = (0xFF - OffGrayLevel);
 		_Pwm->Config();
 	}
 }
@@ -112,14 +112,27 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 		{
 			if (port->PressTime > 1500)
 			{
-				if (port->PressTime > 3000)
-					DelayClose2(10 * 60 * 1000);
+				debug_printf("DelayClose  ");
+				if (port->PressTime > 4000)
+				{
+					DelayClose2(60 * 1000);
+					debug_printf("60s\r\n");
+				}
 				else
-					DelayClose2(2 * 60 * 1000);
+				{
+					DelayClose2(15 * 1000);
+					debug_printf("15s\r\n");
+				}
 				return;
 			}
 		}
+
 		SetValue(!_Value);
+		if (_task2) 
+		{
+			Sys.RemoveTask(_task2);
+			_task2 = 0;
+		}
 		//if (_Handler) _Handler(this, _Param);
 		Press(*this);
 	}
@@ -137,7 +150,9 @@ void Close2Task(void * param)
 	else
 	{
 		bt->delaytime = 0;
-		Sys.SetTask(bt->_task2, false);
+		debug_printf("延时关闭已完成 删除任务 0x%08X\r\n",bt->_task2);
+		Sys.RemoveTask(bt->_task2);
+		bt->_task2 = 0;
 		bt->SetValue(false);
 	}
 	Sys.Sleep(100);
@@ -146,8 +161,11 @@ void Close2Task(void * param)
 
 void Button_GrayLevel::DelayClose2(int ms)
 {
-	if (_task2)Sys.AddTask(Close2Task, this, -1, 1000, "button close");
-	Sys.SetTask(_task2, true, 1000);
+	if (!_task2)
+	{
+		_task2 = Sys.AddTask(Close2Task, this, 0, 1000, "button close");
+	}
+
 	delaytime = ms;
 }
 

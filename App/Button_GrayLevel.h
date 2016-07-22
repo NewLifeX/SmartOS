@@ -80,7 +80,7 @@ public:
 	void GrayLevelUp();
 	void DelayClose2(int ms);		// 自定义延时关闭
 	int delaytime = 0;
-	int _task2 = 0;
+	uint _task2 = 0;
 	// 过零检测
 private:
 	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us
