@@ -53,6 +53,9 @@ void* IOK027X::InitData(void* data, int size)
 		ds.Clear();
 		ds[0] = size;
 	}
+	// Buffer bs(data, size);
+	// debug_printf("HotConfig Times %d Data: ",hot->Times);
+	// bs.Show(true);
 
 	Data	= data;
 	Size	= size;
@@ -194,8 +197,9 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	if (down) return;
 
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
+	Sys.Sleep(500);
 
-	if (port->PressTime >= 5000)
+	if (port->PressTime >= 15000)
 		Restore();
 	else if (port->PressTime >= 1000)
 		Sys.Reset();

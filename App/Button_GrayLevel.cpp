@@ -123,6 +123,7 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 					DelayClose2(15 * 1000);
 					debug_printf("15s\r\n");
 				}
+				port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
 				return;
 			}
 		}
@@ -154,6 +155,7 @@ void Close2Task(void * param)
 		Sys.RemoveTask(bt->_task2);
 		bt->_task2 = 0;
 		bt->SetValue(false);
+		bt->Press(*bt);			// 维护数据区状态
 	}
 	Sys.Sleep(100);
 	bt->GrayLevelDown();

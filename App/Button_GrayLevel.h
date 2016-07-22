@@ -49,7 +49,6 @@ public:
 	bool GetValue();
 	void SetValue(bool value);
 	void RenewGrayLevel();
-	//void Register(EventHandler handler, void* param = nullptr);
 
 	//virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
 	//virtual int Read(byte* cmd);	
