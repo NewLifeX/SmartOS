@@ -278,7 +278,7 @@ bool TokenController::Send(Message& msg)
 
 	//byte buf[1472];
 	//Stream ms(buf, ArrayLength(buf));
-	byte buf[128];
+	byte buf[256];
 	MemoryStream ms(buf, ArrayLength(buf));
 	// 带有负载数据，需要合并成为一段连续的内存
 	msg.Write(ms);
@@ -295,7 +295,7 @@ bool TokenController::Send(Message& msg)
 	StatSend(msg);
 #endif
 
-	Buffer bs(buf, ms.Position());
+	Buffer bs(ms.GetBuffer(), ms.Position());
 
 	return Controller::SendInternal(bs, msg.State);
 }
