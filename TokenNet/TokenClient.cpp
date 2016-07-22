@@ -219,6 +219,9 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 	}
 
 	ss->OnReceive(msg);
+
+	// 销毁内网广播
+	if(msg.Code == 0x01 && msg.OneWay) delete ss;
 }
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
