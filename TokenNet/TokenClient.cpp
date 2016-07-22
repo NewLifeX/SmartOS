@@ -556,7 +556,10 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		ms.ReadString().Show(true);
 
 		// 未登录错误，马上重新登录
-		if (result == 0x7F) Sys.SetTask(_task, true, 0);
+		if (result == 0x7F)
+			Register();
+		else
+			Sys.SetTask(_task, true, 0);
 	}
 	else
 	{

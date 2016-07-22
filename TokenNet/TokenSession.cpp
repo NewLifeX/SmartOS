@@ -54,6 +54,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 
 		rs.Code = 0x01;
 		rs.Error = true;
+
 		HelloMessage ext;
 		ext.ErrCode = 0xFF;
 
