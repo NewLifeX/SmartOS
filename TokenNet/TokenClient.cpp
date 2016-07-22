@@ -546,6 +546,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	LoginMessage logMsg;
 	logMsg.ReadMessage(msg);
 	logMsg.Show();
+	debug_printf("/r/n");
 
 	if (logMsg.Error)
 	{
@@ -553,7 +554,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 
 		byte result = logMsg.ErrorCode;
-
 
 		// 未登录错误，马上重新登录
 		if (result == 0x7F)
