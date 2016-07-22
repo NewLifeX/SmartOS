@@ -14,6 +14,9 @@ public:
 	uint		Token;	// 令牌
 	ByteArray	Key;	// 登录时会发通讯密码
 
+	byte		ErrorCode;
+	String		ErrorMessage;
+
 	// 初始化消息，各字段为0
 	LoginMessage();
 

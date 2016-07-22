@@ -20,9 +20,14 @@ bool LoginMessage::Read(Stream& ms)
 	{
 		bp.Get("Token", Token);
 		bp.Get("Password", Pass);
-		bp.Get("Key",Key);
+		bp.Get("Key", Key);
 	}
-    return false;
+	else
+	{
+		bp.Get("ErrorCode", ErrorCode);
+		bp.Get("ErrorMessage", ErrorMessage);
+	}
+	return false;
 }
 
 // 把消息写入数据流中
@@ -30,12 +35,12 @@ void LoginMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 
-	if(!Reply)
+	if (!Reply)
 	{
 		bp.Set("UserName", User);
 		bp.Set("Password", Pass);
 
-		if(Salt.Length() > 0)
+		if (Salt.Length() > 0)
 			bp.Set("Salt", Salt);
 		/*else
 		{
@@ -43,7 +48,7 @@ void LoginMessage::Write(Stream& ms) const
 			bp.Set("Salt", Buffer(&now, 8));
 		}*/
 	}
-	else if(!Error)
+	else if (!Error)
 	{
 		bp.Set("Token", Token);
 		bp.Set("Key", Key);
@@ -55,7 +60,14 @@ void LoginMessage::Write(Stream& ms) const
 String& LoginMessage::ToStr(String& str) const
 {
 	str += "登录";
-	if(Reply) str += "#";
+	if (Reply) str += "#";
+
+	if (Error)
+	{
+		str = str + " ErrorCode=" + ErrorCode + " ErrorMessage=" + ErrorMessage;
+
+		return str;
+	}
 	str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
 
 	return str;

@@ -48,7 +48,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 	TS("TokenSession::OnReceive");
 
 	LastActive = Sys.Ms();
-	if (Token == 0 && msg.Code > 2)
+	if (Token == 0 && msg.Code > 1)
 	{
 		auto rs = msg.CreateReply();
 

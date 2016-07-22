@@ -543,17 +543,18 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 	Stream ms(msg.Data, msg.Length);
 
-	if (msg.Error)
+	LoginMessage logMsg;
+	logMsg.ReadMessage(msg);
+
+	if (logMsg.Error)
 	{
 		// 登录失败，清空令牌
 		Token = 0;
 
-		byte result = ms.ReadByte();
+		byte result = logMsg.ErrorCode;
 		// 任何错误，重新握手
 		Status = 0;
 
-		debug_printf("登录失败，错误码 0x%02X！", result);
-		ms.ReadString().Show(true);
 
 		// 未登录错误，马上重新登录
 		if (result == 0x7F)
@@ -568,8 +569,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		Status = 2;
 		debug_printf("登录成功！ ");
 
-		LoginMessage logMsg;
-		logMsg.ReadMessage(msg);
 		Token = logMsg.Token;
 
 		if (ctrl) ctrl->Token = Token;
