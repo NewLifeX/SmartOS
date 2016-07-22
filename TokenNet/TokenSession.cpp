@@ -120,12 +120,12 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	ext2.Cipher = "RC4";
 	ext2.Name = Client.Cfg->User();
-	// 未注册时采用系统名称
-	if (!ext2.Name)
-	{
-		ext2.Name = Sys.Name;
-		ext2.Key = Buffer(Sys.ID, 16);
-	}
+	// 未注册时采用系统名称    内网不考虑此问题
+	// if (!ext2.Name)
+	// {
+	// 	ext2.Name = Sys.Name;
+	// 	ext2.Key = Buffer(Sys.ID, 16);
+	// }
 
 	// 使用当前时间
 	ext2.LocalTime = DateTime::Now().TotalMs();
