@@ -545,6 +545,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 	LoginMessage logMsg;
 	logMsg.ReadMessage(msg);
+	logMsg.Show();
 
 	if (logMsg.Error)
 	{
@@ -567,7 +568,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		Token = 0;
 		Status = 0;
 		if (result == 0xFF)
-		{			
+		{
 			Sys.SetTask(_task, true, 0);
 
 		}
