@@ -549,19 +549,27 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	if (logMsg.Error)
 	{
 		// 登录失败，清空令牌
-		Token = 0;
+
 
 		byte result = logMsg.ErrorCode;
-		// 任何错误，重新握手
-		Status = 0;
 
 
 		// 未登录错误，马上重新登录
 		if (result == 0x7F)
-			Register();
-		else if (result == 0xFF)
 		{
+			// 任何错误，重新握手
+			Status = 1;
+			Token = 0;
+			Register();
+			return false;
+		}
+
+		Token = 0;
+		Status = 0;
+		if (result == 0xFF)
+		{			
 			Sys.SetTask(_task, true, 0);
+
 		}
 	}
 	else
