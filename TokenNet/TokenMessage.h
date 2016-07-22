@@ -3,12 +3,20 @@
 
 #include "Message\Message.h"
 
+enum ErrorCodeType :byte
+{
+	NoError,		// 没错
+	DecryptError,	// 解密失败
+	SeqError,		// Seq无效
+};
+
 // 令牌消息
 class TokenMessage : public Message
 {
 public:
 	//byte	OneWay;		// 单向传输。无应答
 	byte	Seq;		// 消息序号
+	ErrorCodeType	ErrorCode;	// 错误类型   仅本地使用，不与云端交互
 	
 	byte	_Data[512];	// 数据
 

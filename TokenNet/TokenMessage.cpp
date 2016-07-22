@@ -13,7 +13,7 @@
 TokenMessage::TokenMessage(byte code) : Message(code)
 {
 	Data	= _Data;
-
+	ErrorCode = NoError;
 	//OneWay	= false;
 	Seq		= 0;
 }

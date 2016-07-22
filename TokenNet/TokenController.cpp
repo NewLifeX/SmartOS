@@ -216,7 +216,11 @@ bool TokenController::OnReceive(Message& msg)
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
 			auto& qi = _RecvQueue[i];
-			if (qi.Code == msg.Code && qi.Seq == tmsg.Seq && qi.Time > start) return true;
+			if (qi.Code == msg.Code && qi.Seq == tmsg.Seq && qi.Time > start)
+			{
+				tmsg.ErrorCode = SeqError;
+				return true;
+			}
 		}
 		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
@@ -248,7 +252,9 @@ bool TokenController::OnReceive(Message& msg)
 			Key.Show(true);
 
 			msg.Length = 0;
-			return Controller::OnReceive(msg);
+			((TokenMessage&)msg).ErrorCode = DecryptError;
+			// 加解密失败也上抛数据，让TokenClient做一些处理
+			// return Controller::OnReceive(msg);
 		}
 	}
 
