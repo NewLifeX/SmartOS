@@ -13,8 +13,11 @@ public:
 	List<Pin>	LedPins;
 	List<OutputPort*>	Leds;
 
+	bool LedsShow;					// LED 显示状态开关
+
 	ISocketHost*	Host;			// 网络主机
 	TokenClient*	Client;			//
+	uint			LedsTaskId;
 
 	IOK027X();
 
@@ -24,6 +27,9 @@ public:
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
+	void FlushLed();			// 刷新led状态输出
+
+	bool LedStat(bool enable);
 
 	ISocketHost* Create8266();
 

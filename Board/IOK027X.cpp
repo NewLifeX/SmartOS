@@ -6,13 +6,15 @@
 #include "Config.h"
 
 #include "Drivers\Esp8266\Esp8266.h"
-
 #include "TokenNet\TokenController.h"
 
 IOK027X::IOK027X()
 {
 	LedPins.Add(PA0);
 	LedPins.Add(PA4);
+
+	LedsShow = false;
+	LedsTaskId = 0;
 
 	Host	= nullptr;	// 网络主机
 	Client	= nullptr;
@@ -70,6 +72,7 @@ void IOK027X::InitLeds()
 		auto port	= new OutputPort(LedPins[i]);
 		port->Invert = true;
 		port->Open();
+		port->Write(false);
 		Leds.Add(port);
 	}
 }
@@ -143,7 +146,7 @@ void IOK027X::OpenClient(ISocketHost& host)
 	debug_printf("\r\n OpenClient \r\n");
 
 	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led) esp->SetLed(*Leds[0]);
+	if(esp && !esp->Led && LedsShow) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 
@@ -193,6 +196,50 @@ void IOK027X::Restore()
 	Sys.Reset();
 }
 
+void IOK027X::FlushLed()
+{
+	bool stat = false;
+	// 3分钟内 Client还活着则表示  联网OK
+	if (Client && Client->LastActive + 180000 > Sys.Ms()&& LedsShow)stat = true;
+	Leds[1]->Write(stat);
+	if (!LedsShow)Sys.SetTask(LedsTaskId, false);
+	// if (!LedsShow)Sys.SetTask(Task::Scheduler()->Current->ID, false);
+}
+
+bool IOK027X::LedStat(bool enable)
+{
+	auto esp = dynamic_cast<Esp8266*>(Host);
+	if (esp)
+	{
+		if (enable)
+		{
+			esp->RemoveLed();
+			esp->SetLed(*Leds[0]);
+		}
+		else
+		{
+			esp->RemoveLed();
+			// 维护状态为false
+			Leds[0]->Write(false);
+		}
+	}
+	if (enable)
+	{
+		if (!LedsTaskId)
+			LedsTaskId = Sys.AddTask(&IOK027X::FlushLed, this, 500, 500, "CltLedStat");
+		else
+			Sys.SetTask(LedsTaskId, true);
+		LedsShow = true;
+	}
+	else
+	{
+		// 由任务自己结束，顺带维护输出状态为false
+		// if (LedsTaskId)Sys.SetTask(LedsTaskId, false);
+		LedsShow = false;
+	}
+	return LedsShow;
+}
+
 void IOK027X::OnLongPress(InputPort* port, bool down)
 {
 	if (down) return;
@@ -200,11 +247,18 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 	// Sys.Sleep(500);
 
-	if (port->PressTime >= 10000)
+	if (port->PressTime >= 6000 && port->PressTime < 10000)
 	{
 		Sys.Reset();
 		return;
 	}
+
+	if (port->PressTime >= 10000 && port->PressTime < 15000)
+	{
+		LedStat(!LedsShow);
+		return;
+	}
+
 	if (port->PressTime >= 15000)
 	{
 		Restore();
