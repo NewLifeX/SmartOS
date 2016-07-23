@@ -196,6 +196,38 @@ void TaskScheduler::Set(Task* tasks, uint count)
 	}
 }
 
+uint TaskScheduler::FindID(Action func)
+{
+	if (!func) return 0;
+	uint id = 0;
+	for (int i = 0; i < _Tasks.Count(); i++)
+	{
+		auto task = (Task*)_Tasks[i];
+		if (task->Callback == func)
+		{
+			id = task->ID ;
+			break;
+		}
+	}
+	return id;
+}
+
+Task* TaskScheduler::FindTask(Action func)
+{
+	if (!func) return nullptr;
+	Task* ret = nullptr;
+	for (int i = 0; i < _Tasks.Count(); i++)
+	{
+		auto task = (Task*)_Tasks[i];
+		if (task->Callback == func)
+		{
+			ret = task;
+			break;
+		}
+	}
+	return ret;
+}
+
 // 创建任务，返回任务编号。dueTime首次调度时间ms，-1表示事件型任务，period调度间隔ms，-1表示仅处理一次
 uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstring name)
 {
