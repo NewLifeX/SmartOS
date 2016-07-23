@@ -99,6 +99,12 @@ void Esp8266::SetLed(OutputPort& led)
 	Led	= fp;
 }
 
+void Esp8266::RemoveLed()
+{
+	if (Led)delete (FlushPort*)Led;
+	Led = nullptr;
+}
+
 void LoopTask(void* param)
 {
 	auto& esp	= *(Esp8266*)param;
