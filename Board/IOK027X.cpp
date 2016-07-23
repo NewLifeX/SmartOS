@@ -68,6 +68,7 @@ void IOK027X::InitLeds()
 	for(int i=0; i<LedPins.Count(); i++)
 	{
 		auto port	= new OutputPort(LedPins[i]);
+		port->Invert = true;
 		port->Open();
 		Leds.Add(port);
 	}
