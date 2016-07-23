@@ -559,7 +559,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		byte result = logMsg.ErrorCode;
 
 		// 未登录错误，马上重新登录
-		if (result == 0x7F)
+		if (result == 0xF7)
 		{
 			// 任何错误，重新握手
 			Status = 1;
@@ -570,7 +570,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 		Token = 0;
 		Status = 0;
-		if (result == 0xFF)
+		if (result == 0x7F)
 		{
 			Sys.SetTask(_task, true, 0);
 

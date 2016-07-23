@@ -49,7 +49,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 
 	LastActive = Sys.Ms();
 	// if (Token == 0 && msg.Code > 1 && Key.Length() == 0)
-	if(msg.ErrorCode == DecryptError)	// 解密失败 直接让他重新来过
+	if ((Token == 0 && msg.Code > 2) || msg.ErrorCode == DecryptError)	// 解密失败 直接让他重新来过
 	{
 		auto rs = msg.CreateReply();
 
@@ -57,7 +57,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 		rs.Error = true;
 
 		HelloMessage ext;
-		ext.ErrCode = 0xFF;
+		ext.ErrCode = 0x7F;
 
 		ext.WriteMessage(rs);
 
