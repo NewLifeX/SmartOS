@@ -1,10 +1,12 @@
 ﻿#include "Sys.h"
+#include "Task.h"
 #include "Port.h"
 #include "TTime.h"
 
 #include "Timer.h"
 
 #include "Button_GrayLevel.h"
+#include "..\Device\WatchDog.h"
 
 //#include "Platform\stm32.h"
 
@@ -187,6 +189,10 @@ bool Button_GrayLevel::GetValue() { return _Value; }
 
 bool CheckZero(InputPort* port)
 {
+	// 过零检测代码有风险  强制执行喂狗任务确保不出问题
+	Task* feeddgtask = Task::Scheduler()->FindTask(WatchDog::FeedDogTask);
+	feeddgtask->Execute(Sys.Ms());
+
 	int retry = 200;
 	while (*port == false && retry-- > 0) Time.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
 	if (retry <= 0) return false;

@@ -59,7 +59,7 @@ WatchDog::~WatchDog()
 	ConfigMax();
 }
 
-void FeedDogTask(void* param)
+void WatchDog::FeedDogTask(void* param)
 {
     WatchDog* dog = (WatchDog*)param;
     dog->Feed();
@@ -78,6 +78,6 @@ void WatchDog::Start(uint ms, uint msFeed)
 	if(!tid && msFeed > 0 && msFeed <= 26000)
 	{
 		debug_printf("WatchDog::Start ");
-		tid = Sys.AddTask(FeedDogTask, &dog, msFeed, msFeed, "看门狗");
+		tid = Sys.AddTask(WatchDog::FeedDogTask, &dog, msFeed, msFeed, "看门狗");
 	}
 }
