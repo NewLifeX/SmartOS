@@ -197,12 +197,18 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	if (down) return;
 
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
-	Sys.Sleep(500);
+	// Sys.Sleep(500);
 
-	if (port->PressTime >= 15000)
-		Restore();
-	else if (port->PressTime >= 10000)
+	if (port->PressTime >= 10000)
+	{
 		Sys.Reset();
+		return;
+	}
+	if (port->PressTime >= 15000)
+	{
+		Restore();
+		return;
+	}
 }
 
 /*
