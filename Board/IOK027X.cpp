@@ -201,7 +201,7 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 
 	if (port->PressTime >= 15000)
 		Restore();
-	else if (port->PressTime >= 1000)
+	else if (port->PressTime >= 10000)
 		Sys.Reset();
 }
 
