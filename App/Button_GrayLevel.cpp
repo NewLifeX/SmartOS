@@ -117,13 +117,13 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 				debug_printf("DelayClose  ");
 				if (port->PressTime > 4000)
 				{
-					DelayClose2(60 * 1000);
 					debug_printf("60s\r\n");
+					DelayClose2(60 * 1000);
 				}
 				else
 				{
-					DelayClose2(15 * 1000);
 					debug_printf("15s\r\n");
+					DelayClose2(15 * 1000);
 				}
 				port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
 				return;
@@ -167,7 +167,7 @@ void Button_GrayLevel::DelayClose2(int ms)
 {
 	if (!_task2)
 	{
-		_task2 = Sys.AddTask(Close2Task, this, 0, 1000, "button close");
+		_task2 = Sys.AddTask(Close2Task, this, 0, 1000, "延时关闭");
 	}
 
 	delaytime = ms;
