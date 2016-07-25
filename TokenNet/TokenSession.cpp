@@ -16,6 +16,25 @@
 #include "Security\RC4.h"
 #include "Security\Crc.h"
 
+
+#if DEBUG
+SessionStat::SessionStat() { Clear(); }
+SessionStat::~SessionStat(){ }
+
+void SessionStat::Clear()
+{
+	OnHello= 0;
+	OnLogin= 0;
+	OnPing=0;
+}
+
+String& SessionStat::ToStr(String& str) const
+{
+	str = str + "OnHello: " + OnHello + " OnLogin: " + OnLogin + " OnPing: " + OnPing;
+}
+#endif
+
+
 TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 	Client(client),
 	Control(ctrl)

@@ -12,6 +12,24 @@
 #include "Message\DataStore.h"
 #include "Message\BinaryPair.h"
 
+#if DEBUG
+
+class SessionStat
+{
+public:
+	ushort OnHello;
+	ushort OnLogin;
+	ushort OnPing;
+public:
+	SessionStat();
+	~SessionStat();
+	void Clear();
+
+	virtual String& ToStr(String& str) const;
+};
+
+#endif 
+
 // 令牌会话
 class TokenSession
 {
@@ -29,6 +47,10 @@ public:
 	int		Status;		// 状态。0准备、1握手完成、2登录后、3心跳中
 	UInt64	LoginTime;	// 登录时间ms
 	UInt64	LastActive;	// 最后活跃时间ms
+
+#if DEBUG
+	SessionStat Stat;
+#endif
 
 	TokenSession(TokenClient& client, TokenController& ctrl);
 	~TokenSession();
