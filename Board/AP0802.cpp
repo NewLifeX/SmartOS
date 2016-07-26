@@ -10,6 +10,8 @@
 #include "Drivers\Esp8266\Esp8266.h"
 
 #include "TokenNet\TokenController.h"
+#include "..\TinyNet\TinyConfig.h"
+#include "..\App\FlushPort.h"
 
 AP0802::AP0802()
 {
@@ -307,7 +309,8 @@ void AP0802::InitNet()
 
 /******************************** 2401 ********************************/
 
-/*int Fix2401(const Buffer& bs)
+
+int Fix2401(const Buffer& bs)
 {
 	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度
@@ -348,12 +351,19 @@ ITransport* AP0802::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 
 	nrf.FixData	= Fix2401;
 
-	if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
+	//if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
 
 	nrf.Master	= true;
 
 	return &nrf;
-}*/
+}
+
+ITransport* AP0802::Create2401()
+{
+	auto port = new FlushPort();
+	port->Port = Leds[2];
+	return Create2401(Spi3,PD12,PE3,PE6,true,port);
+}
 
 void AP0802::Restore()
 {

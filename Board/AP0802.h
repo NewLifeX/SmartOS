@@ -41,6 +41,7 @@ public:
 	// 打开Esp8266，作为主控或者纯AP
 	ISocketHost* Create8266(bool apOnly);
 
+	ITransport* Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led);
 	ITransport* Create2401();
 
 	void InitClient();
