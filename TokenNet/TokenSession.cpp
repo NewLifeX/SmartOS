@@ -18,19 +18,26 @@
 
 
 #if DEBUG
+uint TokenSession::StatShowTaskID = 0;
+uint TokenSession::HisSsNum = 0;
+
+uint SessionStat::BraHello = 0;
+uint SessionStat::DecError = 0;
+
 SessionStat::SessionStat() { Clear(); }
 SessionStat::~SessionStat(){ }
 
 void SessionStat::Clear()
 {
-	OnHello= 0;
-	OnLogin= 0;
-	OnPing=0;
+	OnHello = 0;
+	OnLogin = 0;
+	OnPing	= 0;
 }
 
 String& SessionStat::ToStr(String& str) const
 {
 	str = str + "OnHello: " + OnHello + " OnLogin: " + OnLogin + " OnPing: " + OnPing;
+	return str;
 }
 #endif
 
@@ -39,6 +46,9 @@ TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 	Client(client),
 	Control(ctrl)
 {
+#if DEBUG
+	HisSsNum++;			// 历史Session个数
+#endif
 	client.Sessions.Add(this);
 	Status = 0;
 }
@@ -81,18 +91,34 @@ void TokenSession::OnReceive(TokenMessage& msg)
 		ext.WriteMessage(rs);
 
 		Control.Reply(rs);
+
+#if DEBUG
+		SessionStat::DecError++;			// 历史Session个数
+#endif
 		return;
 	}
 
 	switch (msg.Code)
 	{
 	case 0x01:
+#if DEBUG
+		if (msg.OneWay)
+			SessionStat::BraHello++;
+		else 
+			Stat.OnHello++;
+#endif
 		OnHello(msg);
 		break;
 	case 0x02:
+#if DEBUG
+		Stat.OnLogin++;
+#endif
 		OnLogin(msg);
 		break;
 	case 0x03:
+#if DEBUG
+		Stat.OnPing++;
+#endif
 		OnPing(msg);
 		break;
 	case 0x05:

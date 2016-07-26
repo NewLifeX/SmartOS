@@ -14,12 +14,14 @@
 
 #if DEBUG
 
-class SessionStat
+class SessionStat : public Object
 {
 public:
-	ushort OnHello;
-	ushort OnLogin;
-	ushort OnPing;
+	ushort OnHello;		// 握手次数
+	ushort OnLogin;		// 登录次数
+	ushort OnPing;		// 心跳次数
+	static uint BraHello;	// 广播握手次数
+	static uint DecError;	// 解密失败次数
 public:
 	SessionStat();
 	~SessionStat();
@@ -49,7 +51,9 @@ public:
 	UInt64	LastActive;	// 最后活跃时间ms
 
 #if DEBUG
-	SessionStat Stat;
+	static uint		HisSsNum;		// 历史Session个数
+	static uint StatShowTaskID;		// 输出统计信息的任务ID
+	SessionStat Stat;				// 统计信息
 #endif
 
 	TokenSession(TokenClient& client, TokenController& ctrl);
