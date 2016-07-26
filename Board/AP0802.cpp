@@ -111,7 +111,7 @@ ISocketHost* AP0802::Create5500()
 
 ISocketHost* AP0802::Create8266(bool apOnly)
 {
-	auto host	= new Esp8266(COM4, PE2, PD3);
+	auto host	= new Esp8266(COM4, PE0, PD3);
 	//host->SetLed(WirelessLed);
 
 	// APOnly且不是AP模式时，强制AP模式
