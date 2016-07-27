@@ -109,7 +109,11 @@ bool ISocketHost::SaveConfig()
 	nc.Gateway		= Gateway.Value;
 
 	if(SSID) SSID->CopyTo(0, nc.SSID, ArrayLength(nc.SSID) - 1);
-	if(Pass) Pass->CopyTo(0, nc.Pass, ArrayLength(nc.Pass) - 1);
+	if (Pass)
+	{
+		Pass->CopyTo(0, nc.Pass, ArrayLength(nc.Pass) - 1);
+		if (Pass->Length() == 0)nc.Pass[0] = 0x00;			// 如果密码为空 写一个字节   弥补String Copy的问题
+	}
 
 	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);

@@ -1010,6 +1010,7 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	if (!args.Get("ssid", ssid)) return false;
 	if (!args.Get("pass", pass))	// 获取失败  直接给0的长度
 	{
+		pass.Clear();
 		pass.SetLength(0);
 		// return false;
 	}
