@@ -117,7 +117,7 @@ void Esp8266::OpenAsync()
 	if(Opened || Opening) return;
 
 	// 异步打开任务，一般执行时间6~10秒，分离出来避免拉高8266数据处理任务的平均值
-	Sys.AddTask(LoopTask, this, 0, 1000, "Open8266");
+	Sys.AddTask(LoopTask, this, 0, 3000, "Open8266");
 	/*if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
 
 	// 马上调度一次
@@ -201,9 +201,9 @@ bool Esp8266::OnOpen()
 		// 已组网是，STA_AP打开AP，Ws-123456789ABC
 		if (!join || mode == SocketMode::STA_AP)
 		{
-			net_printf("启动AP模式!\r\n");
+			net_printf("启动AP!\r\n");
 			String name;
-			if(!join)
+			if(!join || *SSID == "Wslink")
 				name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
 			else
 				// 这里需要等系统配置完成，修改为设备编码
@@ -1007,8 +1007,12 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	String ssid;
 	String pass;
 
-	if(!args.Get("ssid", ssid)) return false;
-	if(!args.Get("pass", pass)) return false;
+	if (!args.Get("ssid", ssid)) return false;
+	if (!args.Get("pass", pass))	// 获取失败  直接给0的长度
+	{
+		pass.SetLength(0);
+		// return false;
+	}
 
 	// 保存密码
 	*SSID	= ssid;

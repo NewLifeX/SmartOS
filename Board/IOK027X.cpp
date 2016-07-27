@@ -83,8 +83,13 @@ ISocketHost* IOK027X::Create8266()
 
 	// 初次需要指定模式 否则为 Wire
 	bool join	= host->SSID && *host->SSID;
-	if (!join) host->Mode	= SocketMode::AP;
+	//if (!join) host->Mode = SocketMode::AP;
 
+	if (!join)
+	{
+		*host->SSID = "Wslink";
+		host->Mode = SocketMode::STA_AP;
+	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
