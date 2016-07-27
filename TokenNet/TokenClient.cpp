@@ -328,7 +328,11 @@ void TokenClient::LoopTask()
 	// 最大不活跃时间ms，超过该时间时重启系统
 	// WiFi触摸开关建议5~10分钟，网关建议5分钟
 	// MaxNotActive 为零便不考虑重启
-	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms()) Sys.Reset();
+	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms())
+	{
+		Master->Close();
+		// Sys.Reset();
+	}
 }
 
 void BroadcastHelloTask(void* param)
