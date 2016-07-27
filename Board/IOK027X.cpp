@@ -124,14 +124,19 @@ void IOK027X::InitClient()
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
 		[](void* p){
-			auto& client	= *(TokenClient*)p;
+			auto & bsp = *(IOK027X*)p;
+			auto & client = *bsp.Client;
 			if(!client.Opened)
 			{
-				debug_printf("联网超时，准备重启系统！\r\n\r\n");
-				Sys.Reset();
+				debug_printf("联网超时，准备重启Esp！\r\n\r\n");
+				// Sys.Reset();
+				auto port = dynamic_cast<Esp8266*>(bsp.Host);
+				port->Close();
+				Sys.Sleep(1000);
+				port->Open();
 			}
 		},
-		client, 8 * 60 * 1000, -1, "联网检查");
+		this, 8 * 60 * 1000, -1, "联网检查");
 }
 
 void IOK027X::Register(int index, IDataPort& dp)
