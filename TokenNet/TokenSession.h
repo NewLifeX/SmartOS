@@ -33,7 +33,7 @@ public:
 #endif 
 
 // 令牌会话
-class TokenSession
+class TokenSession :public Object
 {
 public:
 	TokenClient&		Client;		// 客户端
@@ -61,7 +61,9 @@ public:
 
 	bool Send(TokenMessage& msg);
 	void OnReceive(TokenMessage& msg);
-
+#if DEBUG
+	virtual String& ToStr(String& str) const;
+#endif
 private:
 	bool OnHello(TokenMessage& msg);
 	bool OnLogin(TokenMessage& msg);

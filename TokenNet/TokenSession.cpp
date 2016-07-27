@@ -221,3 +221,13 @@ bool TokenSession::OnPing(TokenMessage& msg)
 	Status = 3;
 	return true;
 }
+#if DEBUG
+String& TokenSession::ToStr(String& str) const
+{
+	int timeSec = (Sys.Ms() - LastActive) / 1000UL;
+	str = str + Remote + " "+ Name +" LastAct "+timeSec +"s ago \t";
+
+	Stat.ToStr(str);
+	return str;
+}
+#endif

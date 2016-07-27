@@ -232,7 +232,8 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 			for (int i = 0; i < sss.Count(); i++)
 			{
 				ss = (TokenSession*)sss[i];
-				ss->Stat.Show(true);
+				//ss->Stat.Show(true);
+				ss->Show(true);
 			}
 			debug_printf("\r\n");
 		},
@@ -243,7 +244,11 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 	ss->OnReceive(msg);
 
 	// 销毁内网广播
-	if(msg.Code == 0x01 && msg.OneWay) delete ss;
+	if (msg.Code == 0x01 && msg.OneWay)
+	{
+		Sessions.Remove(ss);
+		delete ss;
+	}
 }
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
@@ -302,12 +307,22 @@ void TokenClient::LoopTask()
 	}
 
 	// 检查超时会话。倒序，因为可能有删除
-	auto& cs = Controls;
+	// auto& cs = Controls;
+	auto & cs = Sessions;
 	for (int i = cs.Count() - 1; i >= 0; i--)
 	{
 		auto ss = (TokenSession*)cs[i];
 		// 5分钟不活跃超时	LastActive为0的为特殊Session 不删除
-		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms() && ss->LastActive != 0) delete ss;
+		if (ss && ss->LastActive + 5 * 60 * 1000 < Sys.Ms() && ss->LastActive != 0)
+		{
+			cs.Remove(ss);
+			delete ss;
+		}
+		if (ss && ss->LastActive + 60 * 1000 < Sys.Ms() && ss->Status == 1)		// 握手一分钟后还不登录的删掉
+		{
+			cs.Remove(ss);
+			delete ss;
+		}
 	}
 
 	// 最大不活跃时间ms，超过该时间时重启系统
