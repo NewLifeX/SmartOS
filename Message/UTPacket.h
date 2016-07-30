@@ -26,13 +26,16 @@ public:
 	UTPacket(TokenClient * client);
 	~UTPacket();
 
+	// 设置Client对象引用  顺带注册Invoke
 	bool Set(TokenClient* client);
-
+	// 发送   带缓冲区   packet>256Byte则直接发送 不进缓冲区
 	bool Send(Buffer & packet);
+	// 异步发送任务
 	void AsynUpdata();
-	bool Register(byte id,UTPort* port);
+	// 添加UTPort成员
+	bool AndPort(byte id,UTPort* port);
+	// Invoke回调函数
 	bool PressTMsg(const BinaryPair& args, Stream& result);
-	// Client.Register("UTPacket",&UTPacket::PressTMsg,this);
 
 	static UTPacket * Current;
 #if DEBUG

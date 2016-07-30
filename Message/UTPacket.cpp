@@ -7,12 +7,14 @@ UTPacket::UTPacket()
 {
 	Ports.Clear();
 	Client = nullptr;
+	Current = this;
 }
 
 UTPacket::UTPacket(TokenClient * client)
 {
 	Ports.Clear();
-	if(client)Client = client;
+	Set(client);
+	Current = this;
 }
 
 UTPacket::~UTPacket()
@@ -20,6 +22,8 @@ UTPacket::~UTPacket()
 	Ports.Clear();
 	if (AycUptTaskId)Sys.RemoveTask(AycUptTaskId);
 	if (CacheA)delete CacheA;
+
+	Current = nullptr;
 }
 
 bool UTPacket::Set(TokenClient * client)
@@ -43,10 +47,10 @@ void UTPacket::AsynUpdata()
 
 bool UTPacket::Send(Buffer &packet)
 {
-	if (!Client|| !packet.Length())return false;
-	if ( packet.Length() > 256)Client->Invoke("UTPacket", packet);		// 超过256 直接发送 减少拷贝的问题
+	if (!Client || !packet.Length())return false;
+	if (packet.Length() > 256)Client->Invoke("UTPacket", packet);		// 超过256 直接发送 减少拷贝的问题
 	if (!CacheA)CacheA = new MemoryStream();
-	if (!AycUptTaskId)AycUptTaskId = Sys.AddTask(&UTPacket::AsynUpdata,this,3000,3000,"UTPacket");
+	if (!AycUptTaskId)AycUptTaskId = Sys.AddTask(&UTPacket::AsynUpdata, this, 3000, 3000, "UTPacket");
 
 	CacheA->Write(packet);
 	Sys.SetTask(AycUptTaskId, true, 3000);			// 默认3秒后发送
@@ -57,16 +61,11 @@ bool UTPacket::Send(Buffer &packet)
 }
 
 
-bool UTPacket::Register(byte id, UTPort* port)
+bool UTPacket::AndPort(byte id, UTPort* port)
 {
 	Ports.Add((uint)id, port);
 	return true;
 }
-
-
-
-
-
 
 
 bool UTPacket::PressTMsg(const BinaryPair& args, Stream& result)
@@ -78,7 +77,7 @@ bool UTPacket::PressTMsg(const BinaryPair& args, Stream& result)
 	void * tail = head + buff.Length();		// 结尾位置
 	UTPort * port = nullptr;
 
-	while (head<tail)
+	while (head < tail)
 	{
 		if ((uint)head->Next() >(uint)tail)break;	// 要么越界，要么数据包错
 
