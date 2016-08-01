@@ -93,7 +93,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 		Control.Reply(rs);
 
 #if DEBUG
-		SessionStat::DecError++;			// 历史Session个数
+		SessionStat::DecError++;
 #endif
 		return;
 	}

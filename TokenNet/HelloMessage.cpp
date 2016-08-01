@@ -16,7 +16,7 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	Name		= Sys.Company;
 	LocalTime	= DateTime::Now().TotalMs();
 	Cipher[0]	= 1;
-
+	ErrCode		= 0;
 	//Protocol	= 17;
 	//Port		= 0;
 	Uri.Type	= NetType::Udp;
@@ -32,6 +32,7 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1
 	Cipher.Copy(0, msg.Cipher, 0, msg.Cipher.Length());
 	Key.Copy(0, msg.Key, 0, msg.Key.Length());
 
+	ErrCode		= msg.ErrCode;
 	//Protocol	= msg.Protocol;
 	//Port		= msg.Port;
 	//Server		= msg.Server;
@@ -97,7 +98,7 @@ bool HelloMessage::Read(Stream& ms)
 void HelloMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
-	bp.Set("ErrorCode", ErrCode);
+	if(ErrCode != 0) bp.Set("ErrorCode", ErrCode);
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);
