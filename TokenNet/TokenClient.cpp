@@ -55,7 +55,7 @@ void TokenClient::Open()
 	AttachControls();
 
 	// 令牌客户端定时任务
-	if (Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
+	//if (Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
 	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
@@ -98,6 +98,7 @@ void TokenClient::AttachControls()
 	{
 		Master->Received = dlg;
 		Master->Open();
+		if (!_task) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	}
 	// 启动本地控制器
 	if (_LocalReceive)
