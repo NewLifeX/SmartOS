@@ -887,6 +887,7 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 {
 	auto rs = msg.CreateReply();
+	BinaryPair rsbp(rs.ToStream());
 	// 考虑到结果可能比较大，允许扩容
 	//auto ms	= rs.ToStream();
 	//ms.CanResize	= true;
@@ -897,7 +898,8 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 	String action;
 	if (!bp.Get("Action", action) || !action)
 	{
-		rs.SetError(0x01, "请求错误");
+		//rs.SetError(0x01, "请求错误");
+		rsbp.Set("ErrorCode", (byte)0x01);
 	}
 	else
 	{
@@ -906,9 +908,15 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 		if (!OnInvoke(action, bp, result))
 		{
 			if (result.Position() > 0)
-				rs.SetError(0x03, (cstring)result.GetBuffer());
+			{
+				// rs.SetError(0x03, (cstring)result.GetBuffer());
+				rsbp.Set("ErrorCode",(byte)0x03);
+			}
 			else
-				rs.SetError(0x02, "执行出错");
+			{
+				//rs.SetError(0x02, "执行出错");
+				rsbp.Set("ErrorCode", (byte)0x02);
+			}
 		}
 		else
 		{
