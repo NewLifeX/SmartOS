@@ -199,6 +199,7 @@ bool Esp8266::OnOpen()
 	SetDHCP(mode, true);
 
 	bool join	= SSID && *SSID;
+	bool defSSID = *SSID == "Wslink";
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
@@ -208,7 +209,7 @@ bool Esp8266::OnOpen()
 		{
 			net_printf("启动AP!\r\n");
 			String name;
-			if(!join || *SSID == "Wslink")
+			if(!join || defSSID/**SSID == "Wslink"*/)
 				name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
 			else
 				// 这里需要等系统配置完成，修改为设备编码
@@ -232,6 +233,7 @@ bool Esp8266::OnOpen()
 			if (i == 2)
 			{
 				net_printf("连接WiFi失败！\r\n");
+				if (defSSID)return true;
 				return false;
 			}
 		}
