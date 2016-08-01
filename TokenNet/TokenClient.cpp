@@ -59,10 +59,13 @@ void TokenClient::Open()
 	// 令牌广播使用素数，避免跟别的任务重叠
 	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
-	// 启动时记为最后一次活跃接收
-	LastActive = Sys.Ms();
+	auto cfg	= Cfg;
+	VisitToken	= cfg->Token();
 
-	Opened = true;
+	// 启动时记为最后一次活跃接收
+	LastActive	= Sys.Ms();
+
+	Opened	= true;
 }
 
 void TokenClient::Close()
@@ -463,13 +466,15 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	if (!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
+	VisitToken	= msg.VisitToken;
+
 	// 0xFE永久改变厂商地址
 	if (msg.ErrCode == 0xFE)
 	{
 		auto cfg = Cfg;
 		cfg->Show();
 
-		cfg->Protocol = msg.Uri.Type;
+		cfg->Protocol	= msg.Uri.Type;
 		cfg->Server()	= msg.Uri.Host;
 		cfg->ServerPort	= msg.Uri.Port;
 		cfg->Token()	= msg.VisitToken;
@@ -579,6 +584,8 @@ void TokenClient::Login()
 	login.Salt = arr;
 	RC4::Encrypt(arr, cfg->Pass());
 	login.Pass = arr.ToHex();
+
+	login.VisitToken	= VisitToken;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);

@@ -10,6 +10,7 @@ public:
 	String		User;	// 登录名
 	String		Pass;	// 登录密码
 	ByteArray	Salt;	// 加盐
+	String		VisitToken;	// 访问令牌
 
 	uint		Token;	// 令牌
 	ByteArray	Key;	// 登录时会发通讯密码
