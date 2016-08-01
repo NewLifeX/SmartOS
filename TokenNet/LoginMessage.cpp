@@ -19,7 +19,7 @@ bool LoginMessage::Read(Stream& ms)
 	else if (!Error)
 	{
 		bp.Get("Token", Token);
-		bp.Get("Password", Pass);
+		//bp.Get("Password", Pass);
 		bp.Get("Key", Key);
 	}
 	else

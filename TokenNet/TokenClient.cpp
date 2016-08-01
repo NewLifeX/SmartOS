@@ -463,21 +463,22 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	if (!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
-	auto cfg = Cfg;
-	cfg->Protocol = msg.Uri.Type;
+	// 0xFE永久改变厂商地址
+	if (msg.ErrCode == 0xFE)
+	{
+		auto cfg = Cfg;
+		cfg->Show();
 
-	cfg->Show();
+		cfg->Protocol = msg.Uri.Type;
+		cfg->Server()	= msg.Uri.Host;
+		cfg->ServerPort	= msg.Uri.Port;
+		cfg->Token()	= msg.VisitToken;
 
-	cfg->Server() = msg.Uri.Host;
-	cfg->ServerPort = msg.Uri.Port;
-	cfg->Token() = msg.VisitToken;
+		cfg->Save();
+		cfg->Show();
+	}
 
 	ChangeIPEndPoint(msg.Uri);
-
-	cfg->Show();
-
-	// 0xFE永久改变厂商地址
-	if (msg.ErrCode == 0xFE) cfg->Save();
 
 	// 马上开始重新握手
 	Status = 0;
@@ -502,7 +503,7 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 	socket->Remote.Port = uri.Port;
 	socket->Server = uri.Host;
 
-	Cfg->ServerIP = socket->Remote.Address.Value;
+	//Cfg->ServerIP = socket->Remote.Address.Value;
 
 	return true;
 }
