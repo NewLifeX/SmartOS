@@ -112,12 +112,17 @@ void LoopTask(void* param)
 	if(!esp.Opened && !esp.Opening) esp.Open();
 }
 
-void Esp8266::OpenAsync()
+void Esp8266::OpenAsync(int reOpenTimeMs)
 {
+	if (reOpenTimeMs < 1000)
+	{
+		debug_printf("Esp8266::OpenAsync 参数错误，最少1S");
+		reOpenTimeMs = 1000;
+	}
 	if(Opened || Opening) return;
 
 	// 异步打开任务，一般执行时间6~10秒，分离出来避免拉高8266数据处理任务的平均值
-	Sys.AddTask(LoopTask, this, 0, 10000, "Open8266");
+	Sys.AddTask(LoopTask, this, 0, reOpenTimeMs, "Open8266");
 	/*if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
 
 	// 马上调度一次

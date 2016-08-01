@@ -23,7 +23,7 @@ public:
 	
 	void Init(ITransport* port, Pin power = P0, Pin rst = P0);
 
-	void OpenAsync();
+	void OpenAsync(int reOpenTimeMs);
 	virtual void Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);

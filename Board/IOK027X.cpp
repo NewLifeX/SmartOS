@@ -95,7 +95,7 @@ ISocketHost* IOK027X::Create8266()
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
-	host->OpenAsync();
+	host->OpenAsync(30*1000);
 
 	return host;
 }
