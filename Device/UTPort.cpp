@@ -39,7 +39,7 @@ void UTCom::DoFunc(Buffer & packet, MemoryStream & ret)
 	{
 	case Config:
 	{
-		if (State = 0)CreatePort();
+		if (State == 0)CreatePort();
 
 		Stream data(&head->Length + sizeof(head->Length), head->Length);
 		BinaryPair cfg(data);
