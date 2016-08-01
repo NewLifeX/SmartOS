@@ -13,6 +13,7 @@ class Esp8266 : public PackPort, public ISocketHost
 {
 public:
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
+	bool	Joined;		// 是否已连接热点
 	SocketMode	WorkMode;	// 工作模式
 
 	IDataPort*	Led;	// 指示灯
@@ -20,10 +21,11 @@ public:
     Esp8266(ITransport* port, Pin power = P0, Pin rst = P0);
     Esp8266(COM idx, Pin power = P0, Pin rst = P0);
 	virtual ~Esp8266();
-	
+
 	void Init(ITransport* port, Pin power = P0, Pin rst = P0);
 
-	void OpenAsync(int reOpenTimeMs);
+	void OpenAsync();
+	void TryJoinAP();
 	virtual void Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
@@ -105,8 +107,12 @@ private:
     OutputPort	_rst;
 
 	uint		_task;		// 调度任务
+	uint		_task2;		// 连接热点任务
 	ByteArray	_Buffer;	// 待处理数据包
 	IPEndPoint	_Remote;	// 当前数据包远程地址
+
+	bool CheckReady();
+	void OpenAP();
 
 	//static void LoopTask(void* param);
 	// 处理收到的数据包

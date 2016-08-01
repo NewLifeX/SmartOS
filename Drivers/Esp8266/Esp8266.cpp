@@ -68,6 +68,7 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 	_task		= 0;
 
 	AutoConn	= false;
+	Joined		= false;
 
 	Led			= nullptr;
 
@@ -105,67 +106,45 @@ void Esp8266::RemoveLed()
 	Led = nullptr;
 }
 
-void LoopTask(void* param)
+void LoopOpenTask(void* param)
 {
 	auto& esp	= *(Esp8266*)param;
 	// 如果8266没有被打开，并且没有处于正在打开的状态，那么再次打开8266
-	if(!esp.Opened && !esp.Opening) esp.Open();
+	if(!esp.Opened && !esp.Opening)
+		esp.Open();
 }
 
-void Esp8266::OpenAsync(int reOpenTimeMs)
+void LoopJoinTask(void* param)
 {
-	if (reOpenTimeMs < 1000)
+	auto& esp	= *(Esp8266*)param;
+	if(esp.Opened && !esp.Joined)
 	{
-		debug_printf("Esp8266::OpenAsync 参数错误，最少1S");
-		reOpenTimeMs = 1000;
+		// 如果已打开，则尝试连WiFi
+		esp.TryJoinAP();
 	}
+}
+
+void Esp8266::OpenAsync()
+{
 	if(Opened || Opening) return;
 
 	// 异步打开任务，一般执行时间6~10秒，分离出来避免拉高8266数据处理任务的平均值
-	Sys.AddTask(LoopTask, this, 0, reOpenTimeMs, "Open8266");
-	/*if(!_task) _task	= Sys.AddTask(LoopTask, this, -1, -1, "Esp8266");
+	Sys.AddTask(LoopOpenTask, this, 0, -1, "Open8266");
+	//if(!_task) _task	= Sys.AddTask(LoopTask, this, 0, -1, "Open8266");
 
 	// 马上调度一次
-	Sys.SetTask(_task, true, 0);*/
+	//Sys.SetTask(_task, true, 0);
 }
 
 bool Esp8266::OnOpen()
 {
 	if(!PackPort::OnOpen()) return false;
 
-	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if (!_power.Empty())
+	if(!CheckReady())
 	{
-		_power.Open();					// 使用前必须Open；
-		_power.Down(20);
-	}
-	if (!_rst.Empty()) _rst.Open();		// 使用前必须Open；
+		net_printf("Esp8266::Open 打开失败！");
 
-	// 每两次启动会有一次打开失败，交替
-	if(!_rst.Empty())
-		Reset(false);	// 硬重启
-	else
-		Reset(true);	// 软件重启命令
-
-	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
-	auto cfg	= Config::Current->Find("NET");
-	//if(!cfg) Restore();
-
-	for(int i=0; i<2; i++)
-	{
-		// 等待模块启动进入就绪状态
-		if(!WaitForCmd("ready", 3000))
-		{
-			if (!Test())
-			{
-				net_printf("Esp8266::Open 打开失败！");
-
-				return false;
-			}
-		}
-		if(cfg || i==1) break;
-
-		Restore();
+		return false;
 	}
 
 	// 开回显
@@ -202,49 +181,12 @@ bool Esp8266::OnOpen()
 	// 等待WiFi自动连接
 	if(!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		// 未组网时，打开AP，WsLink-xxxxxx
-		// 已组网是，STA_AP打开AP，Ws-123456789ABC
-		if (!join || mode == SocketMode::STA_AP)
-		{
-			net_printf("启动AP!\r\n");
-			String name;
-			if(!join || *SSID == "Wslink")
-				name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
-			else
-				// 这里需要等系统配置完成，修改为设备编码
-				name	= name + "WS-" + Sys.Name;
-
-			int chn	= (Sys.Ms() % 14) + 1;
-			SetAP(name, "", chn);
-#if NET_DEBUG
-			//Sys.AddTask(LoadStationTask, this, 10000, 10000, "LoadSTA");
-#endif
-		}
+		if (!join || mode == SocketMode::STA_AP) OpenAP();
 		if (join)
 		{
-			// 连接WiFi，重试两次
-			int i	= 0;
-			for(; i<2; i++)
-			{
-				// Pass 可以为空
-				if(JoinAP(*SSID, *Pass)) break;
-			}
-			if (i == 2)
-			{
-				net_printf("连接WiFi失败！\r\n");
-				return false;
-			}
+			if(!_task2) _task2	= Sys.AddTask(LoopJoinTask, this, 0, 1000, "JoinAP");
 		}
 	}
-
-	// 拿到IP，网络就绪
-	if(join && (mode == SocketMode::Station || mode == SocketMode::STA_AP))
-	{
-		IP	= GetIP(true);
-
-		SaveConfig();
-	}
-	ShowConfig();
 
 	if(!_task) _task	= Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
 
@@ -253,9 +195,99 @@ bool Esp8266::OnOpen()
 	return true;
 }
 
+bool Esp8266::CheckReady()
+{
+	// 先关一会电，然后再上电，让它来一个完整的冷启动
+	if (!_power.Empty())
+	{
+		_power.Open();					// 使用前必须Open；
+		_power.Down(20);
+	}
+	if (!_rst.Empty()) _rst.Open();		// 使用前必须Open；
+
+	// 每两次启动会有一次打开失败，交替
+	if(!_rst.Empty())
+		Reset(false);	// 硬重启
+	else
+		Reset(true);	// 软件重启命令
+
+	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
+	auto cfg	= Config::Current->Find("NET");
+	//if(!cfg) Restore();
+
+	for(int i=0; i<2; i++)
+	{
+		// 等待模块启动进入就绪状态
+		if(!WaitForCmd("ready", 3000))
+		{
+			if (!Test())
+			{
+				net_printf("Esp8266::Open 打开失败！");
+
+				return false;
+			}
+		}
+		if(cfg || i==1) break;
+
+		Restore();
+	}
+
+	return true;
+}
+
+void Esp8266::OpenAP()
+{
+	// 未组网时，打开AP，WsLink-xxxxxx
+	// 已组网是，STA_AP打开AP，Ws-123456789ABC
+	net_printf("启动AP!\r\n");
+	String name;
+	bool join	= SSID && *SSID;
+	if(!join || *SSID == "WsLink")
+		name	= name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
+	else
+		// 这里需要等系统配置完成，修改为设备编码
+		name	= name + "WS-" + Sys.Name;
+
+	int chn	= (Sys.Ms() % 14) + 1;
+	SetAP(name, "", chn);
+#if NET_DEBUG
+	//Sys.AddTask(LoadStationTask, this, 10000, 10000, "LoadSTA");
+#endif
+}
+
+void Esp8266::TryJoinAP()
+{
+	if(JoinAP(*SSID, *Pass))
+	{
+		// 拿到IP，网络就绪
+		IP	= GetIP(true);
+
+		SaveConfig();
+		ShowConfig();
+
+		Joined	= true;
+
+		// 停止尝试
+		Sys.RemoveTask(_task2);
+
+		NetReady(*this);
+	}
+	else if(Mode != SocketMode::STA_AP)
+	{
+		// 尝试若干次以后还是连接失败，则重启模块
+		auto tsk	= Task::Get(_task2);
+		if(tsk->Times > 0 && tsk->Times % 4 == 0)
+		{
+			Close();
+			OpenAsync();
+		}
+	}
+}
+
 void Esp8266::OnClose()
 {
 	if(_task) Sys.RemoveTask(_task);
+	if(_task2) Sys.RemoveTask(_task2);
 
 	_power.Close();
 	_rst.Close();

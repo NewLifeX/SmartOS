@@ -87,15 +87,15 @@ ISocketHost* IOK027X::Create8266()
 
 	if (!join)
 	{
-		*host->SSID = "Wslink";
-		host->Mode = SocketMode::STA_AP;
+		*host->SSID	= "WsLink";
+		host->Mode	= SocketMode::STA_AP;
 	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
-	host->OpenAsync(30*1000);
+	host->OpenAsync();
 
 	return host;
 }
@@ -151,7 +151,7 @@ void IOK027X::OpenClient(ISocketHost& host)
 {
 	assert(Client, "Client");
 
-	if(Client->Opened) return;
+	//if(Client->Opened) return;
 
 	debug_printf("\r\n OpenClient \r\n");
 
@@ -161,13 +161,19 @@ void IOK027X::OpenClient(ISocketHost& host)
 	auto tk = TokenConfig::Current;
 
 	// STA模式下，主连接服务器
-	if (host.IsStation()) AddControl(host, tk->Uri(), 0);
+	if (host.IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
 
 	// STA或AP模式下，建立本地监听
-	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-	AddControl(host, uri, tk->Port);
+	if(Client->Controls.Count() == 0)
+	{
+		NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
+		AddControl(host, uri, tk->Port);
+	}
 
-	Client->Open();
+	if(!Client->Opened)
+		Client->Open();
+	else
+		Client->AttachControls();
 }
 
 TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)

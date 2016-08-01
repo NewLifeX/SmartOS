@@ -52,35 +52,12 @@ void TokenClient::Open()
 
 	TS("TokenClient::Open");
 
-	auto& cs = Controls;
-	assert(cs.Count() > 0, "令牌客户端还没设置控制器呢");
-
-	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
-	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
-	if (Master)
-	{
-		Master->Received = dlg;
-		Master->Open();
-	}
-	// 启动本地控制器
-	if (_LocalReceive)
-	{
-		for (int i = 0; i < cs.Count(); i++)
-		{
-			auto ctrl = cs[i];
-			ctrl->Received = _LocalReceive;
-			ctrl->Open();
-		}
-	}
-	else
-	{
-		if (cs.Count() > 0) debug_printf("设置了本地令牌控制器，但是没有启用本地功能，你可能需要client->UserLocal()\r\n");
-	}
+	AttachControls();
 
 	// 令牌客户端定时任务
 	if (Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	// 令牌广播使用素数，避免跟别的任务重叠
-	if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
 	// 启动时记为最后一次活跃接收
 	LastActive = Sys.Ms();
@@ -105,6 +82,36 @@ void TokenClient::Close()
 	}
 
 	Opened = false;
+}
+
+void TokenClient::AttachControls()
+{
+	auto& cs = Controls;
+	//assert(cs.Count() > 0, "令牌客户端还没设置控制器呢");
+
+	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
+	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
+	if (Master)
+	{
+		Master->Received = dlg;
+		Master->Open();
+	}
+	// 启动本地控制器
+	if (_LocalReceive)
+	{
+		for (int i = 0; i < cs.Count(); i++)
+		{
+			auto ctrl = cs[i];
+			ctrl->Received = _LocalReceive;
+			ctrl->Open();
+		}
+		// 令牌广播使用素数，避免跟别的任务重叠
+		if (cs.Count() > 0 && _taskBroadcast == 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+	}
+	else
+	{
+		if (cs.Count() > 0) debug_printf("设置了本地令牌控制器，但是没有启用本地功能，你可能需要client->UserLocal()\r\n");
+	}
 }
 
 // 启用内网功能。必须显式调用，否则内网功能不参与编译链接，以减少大小

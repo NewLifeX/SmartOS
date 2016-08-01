@@ -36,6 +36,7 @@ public:
 
 	void Open();
 	void Close();
+	void AttachControls();
 
 	// 启用内网功能。必须显式调用，否则内网功能不参与编译链接，以减少大小
 	void UseLocal();
