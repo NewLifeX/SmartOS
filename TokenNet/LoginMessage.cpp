@@ -15,6 +15,7 @@ bool LoginMessage::Read(Stream& ms)
 		bp.Get("UserName", User);
 		bp.Get("Password", Pass);
 		bp.Get("Salt", Salt);
+		// bp.Get("VisitToken", VisitToken);
 	}
 	else if (!Error)
 	{
@@ -39,6 +40,7 @@ void LoginMessage::Write(Stream& ms) const
 	{
 		bp.Set("UserName", User);
 		bp.Set("Password", Pass);
+		bp.Set("VisitToken", VisitToken);
 
 		if (Salt.Length() > 0)
 			bp.Set("Salt", Salt);
@@ -69,6 +71,7 @@ String& LoginMessage::ToStr(String& str) const
 		return str;
 	}
 	str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
+	if (VisitToken.Length()) str = str + "  VisitToken "+ VisitToken;
 
 	return str;
 }

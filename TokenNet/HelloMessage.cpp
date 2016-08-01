@@ -90,6 +90,7 @@ bool HelloMessage::Read(Stream& ms)
 	bp.Get("EndPoint", EndPoint);
 	bp.Get("Cipher", Cipher);
 	bp.Get("Key", Key);
+	bp.Get("VisitToken", VisitToken);
 
 	return false;
 }
@@ -99,6 +100,7 @@ void HelloMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 	if(ErrCode != 0) bp.Set("ErrorCode", ErrCode);
+	if(VisitToken.Length())bp.Set("VisitToken", VisitToken);
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);
