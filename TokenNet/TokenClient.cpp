@@ -41,8 +41,8 @@ TokenClient::TokenClient()
 	ReportLength = 0;
 
 
-	this->Register("Gateway/RestStart", InvokeRestStart, this);
-	this->Register("Gateway/RestBoot", InvokeRestBoot, this);
+	this->Register("Gateway/Restart", InvokeRestStart, this);
+	this->Register("Gateway/Reset", InvokeRestBoot, this);
 
 }
 
