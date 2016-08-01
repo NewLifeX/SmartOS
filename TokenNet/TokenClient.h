@@ -25,7 +25,7 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
-	String		VisitToken;	// 访问令牌
+	String		Cookie;	// 访问令牌
 
 	TokenController*		Master;		// 主通道
 	List<TokenController*>	Controls;	// 从通道

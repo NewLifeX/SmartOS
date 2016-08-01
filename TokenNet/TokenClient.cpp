@@ -60,7 +60,7 @@ void TokenClient::Open()
 	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
 	auto cfg	= Cfg;
-	VisitToken	= cfg->Token();
+	Cookie = cfg->Token();
 
 	// 启动时记为最后一次活跃接收
 	LastActive	= Sys.Ms();
@@ -467,7 +467,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	if (!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
-	VisitToken	= msg.VisitToken;
+	Cookie = msg.Cookie;
 
 	// 0xFE永久改变厂商地址
 	if (msg.ErrCode == 0xFE)
@@ -478,7 +478,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		cfg->Protocol	= msg.Uri.Type;
 		cfg->Server()	= msg.Uri.Host;
 		cfg->ServerPort	= msg.Uri.Port;
-		cfg->Token()	= msg.VisitToken;
+		cfg->Token()	= msg.Cookie;
 
 		cfg->Save();
 		cfg->Show();
@@ -586,7 +586,7 @@ void TokenClient::Login()
 	RC4::Encrypt(arr, cfg->Pass());
 	login.Pass = arr.ToHex();
 
-	login.VisitToken	= VisitToken;
+	login.Cookie = Cookie;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);

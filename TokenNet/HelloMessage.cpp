@@ -7,7 +7,7 @@
 // 错误：0xFE/0xFD + 1协议 + S服务器 + 2端口
 
 // 初始化消息，各字段为0
-HelloMessage::HelloMessage() : Cipher(1), Key(0)
+HelloMessage::HelloMessage() : Cipher(1), Key(0), Cookie(0)
 {
 	Version		= Sys.Ver;
 
@@ -22,7 +22,7 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0)
 	Uri.Type	= NetType::Udp;
 }
 
-HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1), Key(0)
+HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1), Key(0), Cookie(1)
 {
 	Version		= msg.Version;
 	Type		= msg.Type;
@@ -31,6 +31,7 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1
 	EndPoint	= msg.EndPoint;
 	Cipher.Copy(0, msg.Cipher, 0, msg.Cipher.Length());
 	Key.Copy(0, msg.Key, 0, msg.Key.Length());
+	Cookie.Copy(0, msg.Cookie, 0, msg.Cookie.Length());
 
 	ErrCode		= msg.ErrCode;
 	//Protocol	= msg.Protocol;
@@ -64,7 +65,7 @@ bool HelloMessage::Read(Stream& ms)
 				uribp.Get("Port", uintPort);
 				Uri.Port = uintPort ;
 			}
-			bp.Get("VisitToken", VisitToken);
+			bp.Get("Cookie", Cookie);
 
 			return false;
 		}
@@ -90,7 +91,7 @@ bool HelloMessage::Read(Stream& ms)
 	bp.Get("EndPoint", EndPoint);
 	bp.Get("Cipher", Cipher);
 	bp.Get("Key", Key);
-	bp.Get("VisitToken", VisitToken);
+	bp.Get("Cookie", Cookie);
 
 	return false;
 }
@@ -100,7 +101,7 @@ void HelloMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 	if(ErrCode != 0) bp.Set("ErrorCode", ErrCode);
-	if(VisitToken.Length())bp.Set("VisitToken", VisitToken);
+	if(Cookie.Length())bp.Set("Cookie", Cookie);
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);

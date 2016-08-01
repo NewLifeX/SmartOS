@@ -27,7 +27,7 @@ public:
 	//String		Server;		// 服务器地址。可能是域名或IP
 	//ushort		Port;		// 本地端口
 	NetUri		Uri;
-	String		VisitToken;	//访问令牌 
+	String		Cookie;		//访问令牌 
 
 	// 初始化消息，各字段为0
 	HelloMessage();
