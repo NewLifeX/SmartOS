@@ -10,6 +10,7 @@ public:
 	WaitHandle	Handle;	// 等待句柄
 
 	uint	TaskID	= 0;
+	uint	Timeout	= 0;	// 超时时间
 	const String*	Command	= nullptr;
 	String*	Result	= nullptr;
 	cstring	Key1	= nullptr;
