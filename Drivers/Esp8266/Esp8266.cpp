@@ -184,7 +184,7 @@ bool Esp8266::OnOpen()
 		if (!join || mode == SocketMode::STA_AP) OpenAP();
 		if (join)
 		{
-			if(!_task2) _task2	= Sys.AddTask(LoopJoinTask, this, 0, 1000, "JoinAP");
+			if(!_task2) _task2	= Sys.AddTask(LoopJoinTask, this, 0, 30*1000, "JoinAP");
 		}
 	}
 
