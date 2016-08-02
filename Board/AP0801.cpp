@@ -116,7 +116,7 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	//if (!join) host->Mode = SocketMode::AP;
 	if (!join)
 	{
-		*host->SSID = "Wslink";
+		*host->SSID = "WsLink";
 		host->Mode = SocketMode::STA_AP;
 	}
 
