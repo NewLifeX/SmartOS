@@ -392,6 +392,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	// 在接收事件中拦截
 	WaitExpect we;
 	we.TaskID	= task.ID;
+	// 数据不显示Command，没有打开NET_DEBUG时也不显示
 	//we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;
