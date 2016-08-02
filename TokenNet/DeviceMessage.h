@@ -6,25 +6,20 @@
 
 enum class DeviceAtions : byte
 {
-	// <summary>信息列表。请求ID列表，响应设备信息列表</summary>
-	List,
-
-	// <summary>更新。请求设备信息列表，响应ID列表</summary>
-	Update,
-
-	// <summary>注册。请求设备信息列表，响应ID列表</summary>
-	Register,
-
-	// <summary>上线。请求响应ID列表</summary>
-	Online,
-
-	// <summary>下线。请求响应ID列表</summary>
-	Offline,
-
-	// <summary>删除。请求响应ID列表</summary>
+	// <summary>信息列表。请求ID列表，响应所育设备ID</summary>
+	FindIDs,
+	// <summary>更新。请求设备信息列表，响应对应的列表</summary>
+	FindAll,
+	// <summary>设置设备信息</summary>
+	Set,
+	// <summary>删除。响应成功失败</summary>
 	Delete,
-	// <summary>ID列表</summary>
-	ListIDs,
+	// <summary>上线</summary>
+	Online,
+	// <summary>下线</summary>
+	Offline,
+	// <summary>注册</summary>
+	Register
 };
 
 // 设备消息
