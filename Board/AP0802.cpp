@@ -102,27 +102,13 @@ ISocketHost* AP0802::Create5500()
 	return host;
 }
 
-/*static void SetWiFiTask(void* param)
-{
-	auto bsp	= (AP0802*)param;
-	auto client	= bsp->Client;
-	auto esp	= (Esp8266*)bsp->Host;
-
-	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-}*/
-
 ISocketHost* AP0802::Create8266(bool apOnly)
 {
 	auto host	= new Esp8266(COM4, PE0, PD3);
-	//host->SetLed(WirelessLed);
-
-	// APOnly且不是AP模式时，强制AP模式
-	//if(apOnly && !host->IsAP()) host->WorkMode	= SocketMode::AP;
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
 	//if (!join) host->Mode = SocketMode::AP;
-
 	if (!join)
 	{
 		*host->SSID = "Wslink";
@@ -135,7 +121,7 @@ ISocketHost* AP0802::Create8266(bool apOnly)
 	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 
-	host->OpenAsync(30*1000);
+	host->OpenAsync();
 
 	return host;
 }
@@ -215,7 +201,10 @@ void AP0802::OpenClient(ISocketHost& host)
 		auto ctrl	= AddControl(*HostAP, uri, tk->Port);
 
 		// 如果没有主机，这里打开令牌客户端，为组网做准备
-		if(!Host) Client->Open();
+		if (!Host)
+			Client->Open();
+		else
+			Client->AttachControls();
 
 		// 假如来迟了，客户端已经打开，那么自己挂载事件
 		if(Client->Opened && Client->Master)
