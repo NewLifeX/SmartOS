@@ -375,37 +375,28 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	// 判断是否正在发送其它指令
 	if(_Expect)
 	{
-		auto w	= (WaitExpect*)_Expect;
-		// 大于一定时间的等待，不要堵塞其它任务发送数据
-		auto block	= w->Timeout < 3000;
 #if NET_DEBUG
+		auto w	= (WaitExpect*)_Expect;
 		net_printf("Esp8266::Send %d 正在发送 ", w->TaskID);
 		if(w->Command)
 			w->Command->Trim().Show(false);
 		else
 			net_printf("数据");
-		if(block)
-			net_printf(" ，%d 无法发送 ", task.ID);
-		else
-			net_printf(" ，%d 同时发送 ", task.ID);
+		net_printf(" ，%d 无法发送 ", task.ID);
 		cmd.Trim().Show(true);
 #endif
 
-		if(block) return rs;
+		return rs;
 	}
-	
+
 	// 在接收事件中拦截
 	WaitExpect we;
 	we.TaskID	= task.ID;
-	we.Timeout	= msTimeout;
 	// 数据不显示Command，没有打开NET_DEBUG时也不显示
 	//we.Command	= &cmd;
 	we.Result	= &rs;
 	we.Key1		= expect;
 	we.Key2		= expect2;
-
-	// 保存旧任务
-	auto old	= _Expect;
 
 	_Expect	= &we;
 
@@ -433,8 +424,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	}
 
 	we.Wait(msTimeout);
-	//if(_Expect	== &we) _Expect	= nullptr;
-	_Expect	= old;
+	if(_Expect	== &we) _Expect	= nullptr;
 
 	//if(rs.Length() > 4) rs.Trim();
 
