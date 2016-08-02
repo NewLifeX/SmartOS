@@ -17,10 +17,10 @@ class DevicesManagement
 public:
 	// 全局只允许一个设备管理器  Invoke 也就使用这个
 	static DevicesManagement * Current;
-	static bool InvokeList		(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeUpdate	(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeDelete	(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeListIDs	(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeFindIDs (void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeFindAll(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeSet	 (void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeDelete(void * param, const BinaryPair& args, Stream& result);
 							 
 public:
 	DevicesManagement();
