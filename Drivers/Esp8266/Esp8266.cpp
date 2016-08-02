@@ -393,7 +393,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 
 		if(block) return rs;
 	}
-
+	
 	// 在接收事件中拦截
 	WaitExpect we;
 	we.TaskID	= task.ID;
@@ -403,6 +403,9 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	we.Result	= &rs;
 	we.Key1		= expect;
 	we.Key2		= expect2;
+
+	// 保存旧任务
+	auto old	= _Expect;
 
 	_Expect	= &we;
 
@@ -430,7 +433,8 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 	}
 
 	we.Wait(msTimeout);
-	if(_Expect	== &we) _Expect	= nullptr;
+	//if(_Expect	== &we) _Expect	= nullptr;
+	_Expect	= old;
 
 	//if(rs.Length() > 4) rs.Trim();
 
