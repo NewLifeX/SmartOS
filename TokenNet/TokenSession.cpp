@@ -143,6 +143,14 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	TS("TokenSession::OnHello");
 
+	BinaryPair bp(msg.ToStream());
+	if (bp.Get("Action"))
+	{
+		msg.Code = 0x08;
+		Client.OnReceive(msg, Control);
+		return true;
+	}
+
 	auto rs = msg.CreateReply();
 
 	HelloMessage ext2;
