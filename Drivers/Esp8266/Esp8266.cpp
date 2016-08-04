@@ -66,6 +66,7 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 	if(rst != P0) _rst.Init(rst, true);
 
 	_task		= 0;
+	_task2		= 0;
 
 	AutoConn	= false;
 	Joined		= false;
