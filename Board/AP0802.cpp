@@ -190,7 +190,8 @@ void AP0802::OpenClient(ISocketHost& host)
 	// 避免重复打开
 	if(!Client->Opened && Host)
 	{
-		AddControl(*Host, tk->Uri(), 0);
+		if(!esp && Host == esp && esp->Joined)AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
+		if(!net && Host == net)AddControl(*Host, tk->Uri(), 0);	
 		AddControl(*Host, uri, tk->Port);
 
 		Client->Open();
