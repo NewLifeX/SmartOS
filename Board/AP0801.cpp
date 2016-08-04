@@ -113,7 +113,8 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = SocketMode::AP;
+	// host->Mode = SocketMode::Station;
+	// if (!join) host->Mode = SocketMode::AP;
 	if (!join)
 	{
 		*host->SSID = "WsLink";
@@ -195,7 +196,8 @@ void AP0801::OpenClient(ISocketHost& host)
 	// 避免重复打开
 	if(!Client->Opened && Host)
 	{
-		AddControl(*Host, tk->Uri(), 0);
+		if(!esp && Host == esp && esp->Joined)AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
+		if(!net && Host == net)AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
 		AddControl(*Host, uri, tk->Port);
 
 		Client->Open();
