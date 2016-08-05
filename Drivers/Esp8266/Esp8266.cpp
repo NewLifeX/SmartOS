@@ -268,10 +268,9 @@ void Esp8266::TryJoinAP()
 
 		Joined	= true;
 
+		NetReady(*this);
 		// 停止尝试
 		Sys.RemoveTask(_task2);
-
-		NetReady(*this);
 	}
 	else if(Mode != SocketMode::STA_AP)
 	{
