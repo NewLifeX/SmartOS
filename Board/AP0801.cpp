@@ -24,6 +24,7 @@ AP0801::AP0801()
 
 	Data	= nullptr;
 	Size	= 0;
+	Flag	= 0;
 }
 
 void AP0801::Init(ushort code, cstring name, COM message)
@@ -179,9 +180,14 @@ void AP0801::Register(int index, IDataPort& dp)
 
 void AP0801::OpenClient(ISocketHost& host)
 {
+	/*
+	Flag   四个字节   最高字节标识esp作为Master  第二字节标识esp广播Controller
+	第三字节为 w5500 作为Master   第四字节为 w5500 广播端口
+	*/
+
 	assert(Client, "Client");
 
-	debug_printf("\r\n OpenClient \r\n");
+	debug_printf("\r\n OpenClient Flag :0x%08X\r\n", Flag);
 
 	// 网络就绪后，打开指示灯
 	auto net	= dynamic_cast<W5500*>(&host);
@@ -194,32 +200,89 @@ void AP0801::OpenClient(ISocketHost& host)
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
 	// 避免重复打开
-	if(!Client->Opened && Host)
+	if(Host)
 	{
-		if(!esp && Host == esp && esp->Joined)AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
-		if(!net && Host == net)AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
-		AddControl(*Host, uri, tk->Port);
-
-		Client->Open();
-	}
-
-	if(HostAP && esp)
-	{
-		auto ctrl	= AddControl(*HostAP, uri, tk->Port);
-
-		// 如果没有主机，这里打开令牌客户端，为组网做准备
-		if(!Host) 
-			Client->Open();
-		else 
-			Client->AttachControls();
-
-		// 假如来迟了，客户端已经打开，那么自己挂载事件
-		if(Client->Opened && Client->Master)
+		if (Host == esp)							// 8266 作为Host的时候  使用 Master 和广播端口两个    HostAP 为空
 		{
-			ctrl->Received	= Client->Master->Received;
-			ctrl->Open();
+			debug_printf(":  1  ");
+
+			if (esp->Joined && !(Flag & 0x01000000))
+			{
+				debug_printf(":  2  ");
+				AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
+				Flag |= 0x01000000;
+			}
+			if (!(Flag & 0x00010000))
+			{
+				debug_printf(":  3  ");
+				AddControl(*Host, uri, tk->Port);
+				Flag |= 0x00010000;
+			}
 		}
+
+		if (Host == net)							// w5500 作为Host的时候    使用Master和广播两个端口     HostAP 开启AP时非空 打开其内网端口
+		{
+			debug_printf(":  4  ");
+			if (!(Flag & 0x00000100))
+			{
+				debug_printf(":  5  ");
+				AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
+				Flag |= 0x00000100;
+			}
+			if (!(Flag & 0x00000001))
+			{
+				debug_printf(":  6  ");
+				AddControl(*Host, uri, tk->Port);
+				Flag |= 0x00000001;
+			}
+		}
+
+		if (HostAP && HostAP == esp)				// 只使用esp的时候HostAp为空
+		{
+			debug_printf(":  7  ");
+			if (!(Flag & 0x00010000))
+			{
+				debug_printf(":  8  ");
+				AddControl(*Host, uri, tk->Port);
+				Flag |= 0x00010000;
+			}
+		}
+
+		if (!Client->Opened)
+		{
+			debug_printf(":  9  ");
+			Client->Open();
+		}
+		else
+		{
+			debug_printf(":  a  ");
+			Client->AttachControls();
+		}
+
+		// if (esp && Host == esp && esp->Joined)AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
+		// if (net && Host == net)AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
+		// AddControl(*Host, uri, tk->Port);
+		// Client->Open();
 	}
+
+	// if(HostAP && esp)
+	// {
+	// 	debug_printf("4");
+	// 	auto ctrl	= AddControl(*HostAP, uri, tk->Port);
+	// 
+	// 	// 如果没有主机，这里打开令牌客户端，为组网做准备
+	// 	if(!Host) 
+	// 		Client->Open();
+	// 	else 
+	// 		Client->AttachControls();
+	// 
+	// 	// 假如来迟了，客户端已经打开，那么自己挂载事件
+	// 	if(Client->Opened && Client->Master)
+	// 	{
+	// 		ctrl->Received	= Client->Master->Received;
+	// 		ctrl->Open();
+	// 	}
+	// }
 }
 
 TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
