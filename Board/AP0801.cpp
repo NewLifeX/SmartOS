@@ -120,6 +120,7 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	{
 		*host->SSID = "WsLink";
 		host->Mode = SocketMode::STA_AP;
+		host->WorkMode = SocketMode::STA_AP;
 	}
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
