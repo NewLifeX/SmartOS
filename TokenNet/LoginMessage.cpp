@@ -71,7 +71,17 @@ String& LoginMessage::ToStr(String& str) const
 		return str;
 	}
 	str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
-	if (Cookie.Length()) str = str + "  Cookie "+ Cookie;
+	if (Cookie.Length())
+	{
+		str = str + "  Cookie " + "Len " + Cookie.Length() + "  ";
+		int len = Cookie.Length();
+		
+		if (len > 10)str = str + "\r\n";
+		if (len > 32)len = 32;
+		
+		ByteArray(Cookie.ToHex().GetBuffer(),len).ToStr(str);
+		
+	}
 
 	return str;
 }
