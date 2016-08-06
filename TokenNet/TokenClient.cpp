@@ -987,10 +987,10 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 bool TokenClient::InvokeRestStart(void * param, const BinaryPair& args, Stream& result)
 {
 	BinaryPair res(result);
-	res.Set("RestStar", (byte)01);
+	res.Set("Restart", (byte)01);
 
 	debug_printf("1000ms后重启\r\n");
-	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
+	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "Restart");
 
 	return true;
 }
