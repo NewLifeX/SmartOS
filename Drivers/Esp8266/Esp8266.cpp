@@ -41,8 +41,9 @@ Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
 Esp8266::Esp8266(COM idx, Pin power, Pin rst)
 {
 	auto srp	= new SerialPort(idx, 115200);
-	srp->Tx.SetCapacity(0x100);
-	srp->Rx.SetCapacity(0x100);
+	srp->Tx.SetCapacity(0x200);
+	srp->Rx.SetCapacity(0x200);
+	srp->MaxSize = 512;
 
 	Init(srp, power, rst);
 	InitConfig();
@@ -514,6 +515,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 	if(bs.Length() == 0) return 0;
 
 	TS("Esp8266::OnReceive");
+	debug_printf("Esp::OnRev %d\r\n",bs.Length());
 
 	//!!! 分析+IPD数据和命令返回，特别要注意粘包
 	int s	= 0;

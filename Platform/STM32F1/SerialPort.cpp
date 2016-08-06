@@ -193,7 +193,7 @@ void SerialPort::OnRxHandler()
 	if(_taskidRx && Rx.Length() >= MinSize)
 	{
 		//Sys.SetTask(_taskidRx, true, (ByteTime >> 10) + 1);
-		((Task*)_task)->Set(true, 10);
+		((Task*)_task)->Set(true, 20);
 	}
 }
 
