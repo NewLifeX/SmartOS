@@ -25,19 +25,20 @@ TokenClient::TokenClient()
 
 	Opened = false;
 	Status = 0;
-	LoginTime = 0;
-	LastSend = 0;
+	
+	LoginTime  = 0;
+	LastSend   = 0;
 	LastActive = 0;
-	Delay = 0;
+	Delay      = 0;
 	MaxNotActive = 0;
 
 	Master = nullptr;
-	Cfg = nullptr;
+	Cfg    = nullptr;
 
 	Received = nullptr;
 	Param = nullptr;
 
-	NextReport = 0;
+	NextReport   = 0;
 	ReportLength = 0;
 
 	// 重启
@@ -1035,10 +1036,10 @@ bool TokenClient::InvokeMessage(void * param, const BinaryPair& args, Stream& re
 }
 bool TokenClient::InvokeConfigGet(void * param, const BinaryPair& args, Stream& result)
 {
-
+	result.Write(true);
 }
 
 bool TokenClient::InvokeConfigSet(void * param, const BinaryPair& args, Stream& result)
 {
-
+	result.Write(true);
 }
