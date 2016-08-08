@@ -94,6 +94,9 @@ public:
 /******************************** 发送指令 ********************************/
 	// 设置无线组网密码。匹配令牌协议
 	bool SetWiFi(const BinaryPair& args, Stream& result);
+	// 获取无线名称。
+	bool GetWiFi(const BinaryPair& args, Stream& result);
+
 
 protected:
 	virtual bool OnOpen();
