@@ -27,8 +27,12 @@ AP0802::AP0802()
 	Client	= nullptr;
 
 	Data	= nullptr;
-	Size	= 0;
-	Flag	= 0;
+	Size = 0;
+	// Control 打开情况标识
+	NetMaster	= false;
+	NetBra		= false;
+	EspMaster	= false;
+	EspBra		= false;
 }
 
 void AP0802::Init(ushort code, cstring name, COM message)
@@ -173,6 +177,13 @@ void AP0802::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
+/*
+// Control 打开情况标识
+bool	NetMaster;
+bool	NetBra;
+bool	EspMaster;
+bool	EspBra;
+*/
 void AP0802::OpenClient(ISocketHost& host)
 {
 	/*
@@ -198,38 +209,38 @@ void AP0802::OpenClient(ISocketHost& host)
 	{
 		if (Host == esp)							// 8266 作为Host的时候  使用 Master 和广播端口两个    HostAP 为空
 		{
-			if (esp->Joined && !(Flag & 0x01000000))
+			if (esp->Joined && !EspMaster)
 			{
 				AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
-				Flag |= 0x01000000;
+				EspMaster = true;
 			}
-			if (!(Flag & 0x00010000))
+			if (!EspBra)
 			{
 				AddControl(*Host, uri, tk->Port);
-				Flag |= 0x00010000;
+				EspBra = true;
 			}
 		}
 
 		if (Host == net)							// w5500 作为Host的时候    使用Master和广播两个端口     HostAP 开启AP时非空 打开其内网端口
 		{
-			if (!(Flag & 0x00000100))
+			if (!NetMaster)
 			{
 				AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
-				Flag |= 0x00000100;
+				NetMaster = true;
 			}
-			if (!(Flag & 0x00000001))
+			if (!NetBra)
 			{
 				AddControl(*Host, uri, tk->Port);
-				Flag |= 0x00000001;
+				NetBra = true;
 			}
 		}
 
 		if (HostAP && HostAP == esp)				// 只使用esp的时候HostAp为空
 		{
-			if (!(Flag & 0x00010000))
+			if (!EspBra)
 			{
 				AddControl(*Host, uri, tk->Port);
-				Flag |= 0x00010000;
+				EspBra = true;
 			}
 		}
 

@@ -52,7 +52,13 @@ public:
 private:
 	void*	Data;
 	int		Size;
-	uint	Flag;		// 内部使用  标识Controller创建情况
+	// Control 打开情况标识
+	bool	NetMaster;
+	bool	NetBra;
+	bool	EspMaster;
+	bool	EspBra;
+
+	// uint	Flag;		// 内部使用  标识Controller创建情况
 
 	void OpenClient(ISocketHost& host);
 	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
