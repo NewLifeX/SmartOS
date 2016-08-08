@@ -104,8 +104,16 @@ private:
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
 	bool OnInvoke(const String& action, const BinaryPair& args, Stream& result);
+	// 重启，重置
 	static bool InvokeRestStart(void * param, const BinaryPair& args, Stream& result);
 	static bool InvokeRestBoot(void * param, const BinaryPair& args, Stream& result);
+
+	//配置
+	static bool InvokeConfigSet(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeConfigGet(void * param, const BinaryPair& args, Stream& result);
+
+	//透传消息
+	static bool InvokeMessage(void * param, const BinaryPair& args, Stream& result);
 
 private:
 	uint	_task;

@@ -40,9 +40,16 @@ TokenClient::TokenClient()
 	NextReport = 0;
 	ReportLength = 0;
 
-
+	// 重启
 	this->Register("Gateway/Restart", InvokeRestStart, this);
+	// 重置
 	this->Register("Gateway/Reset", InvokeRestBoot, this);
+	// 透传
+	this->Register("Message/Transparent", InvokeMessage, this);
+	// 设置配置
+	this->Register("Config/Set", InvokeConfigSet, this);
+	// 获取配置
+	this->Register("Config/Get", InvokeConfigGet, this);
 
 }
 
@@ -59,13 +66,13 @@ void TokenClient::Open()
 	// 令牌广播使用素数，避免跟别的任务重叠
 	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 
-	auto cfg	= Cfg;
+	auto cfg = Cfg;
 	Cookie = cfg->Token();
 
 	// 启动时记为最后一次活跃接收
-	LastActive	= Sys.Ms();
+	LastActive = Sys.Ms();
 
-	Opened	= true;
+	Opened = true;
 }
 
 void TokenClient::Close()
@@ -475,10 +482,10 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		auto cfg = Cfg;
 		cfg->Show();
 
-		cfg->Protocol	= msg.Uri.Type;
-		cfg->Server()	= msg.Uri.Host;
-		cfg->ServerPort	= msg.Uri.Port;
-		cfg->Token()	= msg.Cookie;
+		cfg->Protocol = msg.Uri.Type;
+		cfg->Server() = msg.Uri.Host;
+		cfg->ServerPort = msg.Uri.Port;
+		cfg->Token() = msg.Cookie;
 
 		cfg->Save();
 		cfg->Show();
@@ -926,7 +933,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 			if (result.Position() > 0)
 			{
 				// rs.SetError(0x03, (cstring)result.GetBuffer());
-				rsbp.Set("ErrorCode",(byte)0x03);
+				rsbp.Set("ErrorCode", (byte)0x03);
 			}
 			else
 			{
@@ -1006,4 +1013,32 @@ bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& r
 	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
 
 	return true;
+}
+bool TokenClient::InvokeMessage(void * param, const BinaryPair& args, Stream& result)
+{
+	byte id;
+	ByteArray data;
+
+	if (!args.Get("id", id)) return false;
+	if (!args.Get("data", data)) return false;
+
+	// 拿到数据，根据ID分发给各个串口
+
+
+	//测试，原样返回结果
+	//result.Write("id");
+	result.Write(id);
+	//result.Write("data")
+	result.Write(data);
+
+	return true;
+}
+bool TokenClient::InvokeConfigGet(void * param, const BinaryPair& args, Stream& result)
+{
+
+}
+
+bool TokenClient::InvokeConfigSet(void * param, const BinaryPair& args, Stream& result)
+{
+
 }

@@ -128,7 +128,7 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 
 	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("SetWiFi", &Esp8266::GetWiFi, host);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 
 	host->OpenAsync();
 
