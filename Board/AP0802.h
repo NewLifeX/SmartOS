@@ -53,6 +53,7 @@ public:
 private:
 	void*	Data;
 	int		Size;
+	uint	Flag;		// 内部使用  标识Controller创建情况
 
 	void OpenClient(ISocketHost& host);
 	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
