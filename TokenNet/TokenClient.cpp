@@ -36,7 +36,7 @@ TokenClient::TokenClient()
 	Cfg    = nullptr;
 
 	Received = nullptr;
-	Param = nullptr;
+	Param    = nullptr;
 
 	NextReport   = 0;
 	ReportLength = 0;
@@ -46,7 +46,7 @@ TokenClient::TokenClient()
 	// 重置
 	this->Register("Gateway/Reset", InvokeRestBoot, this);
 	// 透传
-	this->Register("Message/Transparent", InvokeMessage, this);
+	this->Register("Message/UTPacket", InvokeMessage, this);
 	// 设置配置
 	this->Register("Config/Set", InvokeConfigSet, this);
 	// 获取配置
@@ -73,7 +73,7 @@ void TokenClient::Open()
 	// 启动时记为最后一次活跃接收
 	LastActive = Sys.Ms();
 
-	Opened = true;
+	Opened 	   = true;
 }
 
 void TokenClient::Close()
@@ -1020,15 +1020,15 @@ bool TokenClient::InvokeMessage(void * param, const BinaryPair& args, Stream& re
 	byte id;
 	ByteArray data;
 
-	if (!args.Get("id", id)) return false;
-	if (!args.Get("data", data)) return false;
+	//if (!args.Get("id", id)) return false;
+	if (!args.Get("Data", data)) return false;
 
 	// 拿到数据，根据ID分发给各个串口
 
 
 	//测试，原样返回结果
 	//result.Write("id");
-	result.Write(id);
+	//result.Write(id);
 	//result.Write("data")
 	result.Write(data);
 
@@ -1037,9 +1037,12 @@ bool TokenClient::InvokeMessage(void * param, const BinaryPair& args, Stream& re
 bool TokenClient::InvokeConfigGet(void * param, const BinaryPair& args, Stream& result)
 {
 	result.Write(true);
+	return true;
 }
 
 bool TokenClient::InvokeConfigSet(void * param, const BinaryPair& args, Stream& result)
 {
 	result.Write(true);
+	return true;
 }
+
