@@ -21,24 +21,24 @@ static void BroadcastHelloTask(void* param);
 TokenClient::TokenClient()
 	: Routes(String::Compare)
 {
-	Token = 0;
+	Token	= 0;
 
-	Opened = false;
-	Status = 0;
-	
-	LoginTime  = 0;
-	LastSend   = 0;
-	LastActive = 0;
-	Delay      = 0;
-	MaxNotActive = 0;
+	Opened	= false;
+	Status	= 0;
 
-	Master = nullptr;
-	Cfg    = nullptr;
+	LoginTime	= 0;
+	LastSend	= 0;
+	LastActive	= 0;
+	Delay		= 0;
+	MaxNotActive= 0;
 
-	Received = nullptr;
-	Param    = nullptr;
+	Master		= nullptr;
+	Cfg			= nullptr;
 
-	NextReport   = 0;
+	Received	= nullptr;
+	Param		= nullptr;
+
+	NextReport = 0;
 	ReportLength = 0;
 
 	// 重启
@@ -46,11 +46,12 @@ TokenClient::TokenClient()
 	// 重置
 	this->Register("Gateway/Reset", InvokeRestBoot, this);
 	// 透传
-	this->Register("Message/UTPacket", InvokeMessage, this);
+	this->Register("Proxy/Read", InvokeRead, this);
+	this->Register("Proxy/Write", InvokeWrite, this);
 	// 设置配置
-	this->Register("Config/Set", InvokeConfigSet, this);
+	this->Register("Proxy/SetConfig", InvokeConfigSet, this);
 	// 获取配置
-	this->Register("Config/Get", InvokeConfigGet, this);
+	this->Register("Proxy/GetConfig", InvokeConfigGet, this);
 
 }
 
@@ -73,7 +74,7 @@ void TokenClient::Open()
 	// 启动时记为最后一次活跃接收
 	LastActive = Sys.Ms();
 
-	Opened 	   = true;
+	Opened = true;
 }
 
 void TokenClient::Close()
@@ -1015,13 +1016,31 @@ bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& r
 
 	return true;
 }
-bool TokenClient::InvokeMessage(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeWrite(void * param, const BinaryPair& args, Stream& result)
 {
-	byte id;
 	ByteArray data;
 
 	//if (!args.Get("id", id)) return false;
-	if (!args.Get("Data", data)) return false;
+	if (!args.Get("data", data)) return false;
+
+	// 拿到数据，根据ID分发给各个串口
+
+
+	//测试，原样返回结果
+	//result.Write("id");
+	//result.Write(id);
+	//result.Write("data")
+	result.Write(data.Length());
+
+	return true;
+}
+
+bool TokenClient::InvokeRead(void * param, const BinaryPair& args, Stream& result)
+{
+	ByteArray data;
+
+	//if (!args.Get("id", id)) return false;
+	if (!args.Get("data", data)) return false;
 
 	// 拿到数据，根据ID分发给各个串口
 

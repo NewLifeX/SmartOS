@@ -113,7 +113,8 @@ private:
 	static bool InvokeConfigGet(void * param, const BinaryPair& args, Stream& result);
 
 	//透传消息
-	static bool InvokeMessage(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeRead(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeWrite(void * param, const BinaryPair& args, Stream& result);
 
 private:
 	uint	_task;
