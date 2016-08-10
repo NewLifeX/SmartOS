@@ -151,6 +151,9 @@ bool TokenSession::OnHello(TokenMessage& msg)
 		return true;
 	}
 
+	// 同步本地时间
+	if (ext.LocalTime > 0 && DateTime::Now().Year < 2016) ((TTime&)Time).SetTime(ext.LocalTime / 1000);
+
 	auto rs = msg.CreateReply();
 
 	HelloMessage ext2;
