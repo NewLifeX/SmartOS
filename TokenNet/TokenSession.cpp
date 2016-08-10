@@ -223,7 +223,7 @@ bool TokenSession::OnPing(TokenMessage& msg)
 	if (msg.Reply) return false;
 
 	auto rs = msg.CreateReply();
-	rs.SetData(msg.Data, msg.Length);
+	rs.SetData(Buffer(msg.Data, msg.Length));
 
 	Control.Reply(rs);
 

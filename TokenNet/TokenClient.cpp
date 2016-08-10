@@ -42,16 +42,16 @@ TokenClient::TokenClient()
 	ReportLength = 0;
 
 	// 重启
-	this->Register("Gateway/Restart", InvokeRestStart, this);
+	Register("Gateway/Restart", InvokeRestStart, this);
 	// 重置
-	this->Register("Gateway/Reset", InvokeRestBoot, this);
+	Register("Gateway/Reset", InvokeRestBoot, this);
 	// 透传
-	this->Register("Proxy/Read", InvokeRead, this);
-	this->Register("Proxy/Write", InvokeWrite, this);
+	Register("Proxy/Read", InvokeRead, this);
+	Register("Proxy/Write", InvokeWrite, this);
 	// 设置配置
-	this->Register("Proxy/SetConfig", InvokeConfigSet, this);
+	Register("Proxy/SetConfig", InvokeConfigSet, this);
 	// 获取配置
-	this->Register("Proxy/GetConfig", InvokeConfigGet, this);
+	Register("Proxy/GetConfig", InvokeConfigGet, this);
 
 }
 
