@@ -36,7 +36,7 @@ Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
 
 	//_Handler = nullptr;
 	//_Param = nullptr;
-
+	EnableDelayClose = true;
 	_tid = 0;
 	Next = 0xFF;
 }
@@ -110,33 +110,39 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 	else*/
 	if (!down)		// 要处理长按而不动作  所以必须是弹起响应
 	{
-		if (_Value == true)
+		if (_Value && EnableDelayClose)
 		{
-			if (port->PressTime > 1500)
+			ushort time = port->PressTime;
+			if (time > 1500)
 			{
 				debug_printf("DelayClose  ");
-				if (port->PressTime > 4000)
+				if (time >= 3800 &&  time < 6500)
 				{
 					debug_printf("60s\r\n");
 					DelayClose2(60 * 1000);
+					port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+					return;
 				}
-				else
+				if(time < 3800)
 				{
 					debug_printf("15s\r\n");
 					DelayClose2(15 * 1000);
+					port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+					return;
 				}
-				port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
-				return;
 			}
 		}
-
-		SetValue(!_Value);
-		if (_task2) 
+		// 不启用长按时，长按操作当正常处理
+		if (port->PressTime <= 1500 || !EnableDelayClose)
 		{
-			Sys.RemoveTask(_task2);
-			_task2 = 0;
+			SetValue(!_Value);
+			if (_task2)
+			{
+				Sys.RemoveTask(_task2);
+				_task2 = 0;
+			}
 		}
-		//if (_Handler) _Handler(this, _Param);
+		// if (_Handler) _Handler(this, _Param);
 		Press(*this);
 	}
 }

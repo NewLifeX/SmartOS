@@ -38,6 +38,7 @@ public:
 	void * ExterSetParam = nullptr;
 
 public:
+	bool EnableDelayClose;			// 标识是否启用延时关闭功能,默认启用
 	Delegate<Button_GrayLevel&>	Press;
 	
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
