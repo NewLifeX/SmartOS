@@ -163,6 +163,7 @@ void Close2Task(void * param)
 		Sys.RemoveTask(bt->_task2);
 		bt->_task2 = 0;
 		bt->SetValue(false);
+		bt->Key.PressTime = 0;
 		bt->Press(*bt);			// 维护数据区状态
 	}
 	Sys.Sleep(100);
@@ -171,7 +172,7 @@ void Close2Task(void * param)
 
 void Button_GrayLevel::DelayClose2(int ms)
 {
-	if (!_task2)
+	if (!_task2 && ms)
 	{
 		_task2 = Sys.AddTask(Close2Task, this, 0, 1000, "延时关闭");
 	}
