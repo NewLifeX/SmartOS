@@ -901,17 +901,18 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 
 void TokenClient::Invoke(const String& action, const Buffer& bs)
 {
-	TokenMessage msg;
-	msg.Code = 0x08;
+	TokenMessage msg(8);
 
-	auto ms = msg.ToStream();
-
+	MemoryStream ms;
 	BinaryPair bp(ms);
-
 	bp.Set("Action", action);
-
 	ms.Write(bs);
+	msg.SetData(Buffer(ms.GetBuffer(), ms.Position()));
 
+	// auto ms = msg.ToStream();
+	// BinaryPair bp(ms);
+	// bp.Set("Action", action);
+	// ms.Write(bs);
 	Send(msg);
 }
 
