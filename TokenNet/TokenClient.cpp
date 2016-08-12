@@ -21,22 +21,22 @@ static void BroadcastHelloTask(void* param);
 TokenClient::TokenClient()
 	: Routes(String::Compare)
 {
-	Token	= 0;
+	Token = 0;
 
-	Opened	= false;
-	Status	= 0;
+	Opened = false;
+	Status = 0;
 
-	LoginTime	= 0;
-	LastSend	= 0;
-	LastActive	= 0;
-	Delay		= 0;
-	MaxNotActive= 0;
+	LoginTime = 0;
+	LastSend = 0;
+	LastActive = 0;
+	Delay = 0;
+	MaxNotActive = 0;
 
-	Master		= nullptr;
-	Cfg			= nullptr;
+	Master = nullptr;
+	Cfg = nullptr;
 
-	Received	= nullptr;
-	Param		= nullptr;
+	Received = nullptr;
+	Param = nullptr;
 
 	NextReport = 0;
 	ReportLength = 0;
@@ -353,6 +353,10 @@ void TokenClient::LoopTask()
 		Master->Close();
 		// Sys.Reset();
 	}
+
+	auto now = Sys.Ms();
+	auto arr = Buffer(&now, 8);
+	Invoke("Proxy/Upload", arr);
 }
 
 void BroadcastHelloTask(void* param)
@@ -898,6 +902,8 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 void TokenClient::Invoke(const String& action, const Buffer& bs)
 {
 	TokenMessage msg;
+	msg.Code = 0x08;
+
 	auto ms = msg.ToStream();
 
 	BinaryPair bp(ms);
@@ -1003,6 +1009,7 @@ bool TokenClient::InvokeRestStart(void * param, const BinaryPair& args, Stream& 
 
 	return true;
 }
+
 bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& result)
 {
 	BinaryPair res(result);
@@ -1016,6 +1023,7 @@ bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& r
 
 	return true;
 }
+
 bool TokenClient::InvokeWrite(void * param, const BinaryPair& args, Stream& result)
 {
 	ByteArray data;
@@ -1053,6 +1061,7 @@ bool TokenClient::InvokeRead(void * param, const BinaryPair& args, Stream& resul
 
 	return true;
 }
+
 bool TokenClient::InvokeConfigGet(void * param, const BinaryPair& args, Stream& result)
 {
 	result.Write(true);
