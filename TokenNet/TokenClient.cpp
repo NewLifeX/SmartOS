@@ -352,11 +352,7 @@ void TokenClient::LoopTask()
 	{
 		Master->Close();
 		// Sys.Reset();
-	}
-
-	auto now = Sys.Ms();
-	auto arr = Buffer(&now, 8);
-	Invoke("Proxy/Upload", arr);
+	}	
 }
 
 void BroadcastHelloTask(void* param)
