@@ -148,7 +148,7 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, char*>& dic)
 			str[end] = '\0';
 		if (end > start)
 		{
-			cstring name = str.GetBuffer() + start;		// 拿到 data
+			cstring data = str.GetBuffer() + start;		// 拿到 data
 			start = end + 1;
 		}
 
