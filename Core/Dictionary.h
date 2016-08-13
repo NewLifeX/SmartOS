@@ -58,7 +58,7 @@ public:
 	const List<TValue>& Values() const;
 
 	// 添加单个元素
-    void Add(PKey key, PValue value) { IDictionary::Add((const void*)key, value); }
+    void Add(PKey key, PValue value) { IDictionary::Add((const void*)key, (void*)value); }
 
 	// 删除指定元素
 	void Remove(PKey key) { IDictionary::Remove((const void*)key); }
