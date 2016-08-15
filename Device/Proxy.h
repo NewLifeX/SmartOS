@@ -4,15 +4,18 @@
 #include "Sys.h"
 #include "SerialPort.h"
 #include "Message/BinaryPair.h"
+#include "ProxyConfig.h"
 
 class Proxy
 {
 public:
-	String Name;			// 端口名
+	cstring Name;			// 端口名
 	MemoryStream* Cache;	// 缓存空间
 	int		CacheSize;		// 缓存大小
 	bool	Stamp;			// 时间戳开关
 	int		TimeStamp;		// 时间戳
+	uint	UploadTaskId;	// 上传任务的ID
+	uint	AutoTaskId;		// 自动任务ID，可以是定时Write数据
 
 	Proxy();
 	bool Open();
@@ -24,7 +27,13 @@ public:
 	virtual bool GetConfig(Dictionary<cstring, int>& config) = 0;
 	virtual int	 Write(Buffer& data) = 0;
 	virtual int  Read(Buffer& data, Buffer& input) = 0;
+	void UploadTask();
 	bool Upload(Buffer& data);
+
+	void AutoTask();
+	virtual bool OnAutoTask() { return true; };
+	bool GetConfig(ProxyConfig& cfg);
+	virtual bool OnGetConfig(Stream& cfg) { return true; };
 };
 
 class ComProxy : public Proxy
@@ -50,6 +59,7 @@ public:
 	virtual int Write(Buffer& data) override;
 
 	virtual int Read(Buffer& data, Buffer& input) override;
+
 
 private:
 

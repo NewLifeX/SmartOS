@@ -11,6 +11,7 @@
 
 #include "TokenNet\TokenController.h"
 
+
 AP0801::AP0801()
 {
 	LedPins.Add(PD8);
@@ -21,6 +22,7 @@ AP0801::AP0801()
 	Host	= nullptr;
 	HostAP	= nullptr;
 	Client	= nullptr;
+	ProxyFac = nullptr;
 
 	Data	= nullptr;
 	Size	= 0;
@@ -241,7 +243,10 @@ void AP0801::OpenClient(ISocketHost& host)
 		}
 
 		if (!Client->Opened)
+		{
 			Client->Open();
+			// ProxyFac->AutoStart();
+		}
 		else
 			Client->AttachControls();
 
@@ -360,6 +365,23 @@ void OnInitNet(void* param)
 void AP0801::InitNet()
 {
 	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
+}
+
+void  AP0801::InitProxy()
+{
+	if (ProxyFac)return;
+	if (!Client)
+	{
+		debug_printf("请先初始化TokenClient！！\r\n");
+		return;
+	}
+	ProxyFac = ProxyFactory::Create();
+
+	ComProxy* proxyCom1 = new ComProxy(COM2);
+	ProxyFac->Register(proxyCom1);
+
+	ProxyFac->Open(Client);
+	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
 }
 
 /******************************** 2401 ********************************/

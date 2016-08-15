@@ -5,6 +5,7 @@
 #include "Net\ITransport.h"
 
 #include "TokenNet\TokenClient.h"
+#include "Message\ProxyFactory.h"
 
 // 阿波罗0801/0802
 class AP0801
@@ -21,6 +22,7 @@ public:
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
+	ProxyFactory*	ProxyFac;	// 透传管理器
 
 	AP0801();
 
@@ -45,6 +47,7 @@ public:
 
 	void InitClient();
 	void InitNet();
+	void InitProxy();
 
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);

@@ -1,5 +1,6 @@
 ﻿
 #include "Proxy.h"
+#include "Message/ProxyFactory.h"
 
 
 Proxy::Proxy()
@@ -8,6 +9,7 @@ Proxy::Proxy()
 	CacheSize	= 0;
 	TimeStamp	= 0;
 	Stamp		= false;
+	UploadTaskId= 0;
 }
 
 bool Proxy::Open()
@@ -25,33 +27,52 @@ bool Proxy::Close()
 	return true;
 }
 
+void Proxy::UploadTask()
+{
+	auto  fac = ProxyFactory::Current;
+	if (Cache->Position() && fac)
+	{
+		Buffer buf(Cache->GetBuffer(), Cache->Position());
+		fac->Upload(*this, buf);
+	}
+	Cache->SetPosition(0);
+}
+
 bool Proxy::Upload(Buffer& data)
 {
-	if (!Cache || !CacheSize)
-	{
-		// 没有Cache则直接发送
-		MemoryStream ms;
-		BinaryPair bp(ms);
-		bp.Set("Port", Name);
+	if (!UploadTaskId)UploadTaskId = Sys.AddTask(&Proxy::UploadTask, this, -1, -1, "Proxy::Upload");
 
-		if (Stamp)bp.Set("Stamp", Sys.Ms());
-		bp.Set("Data", data);
-		Buffer data2(ms.GetBuffer(), ms.Position());
-
-		// auto * fac = ProxyFactory::Current;
-		// fac->Client->Invoke("Proxy\Upload",data2);
-	}
+	// 没有Cache则直接发送
+	BinaryPair bp(*Cache);
+	if (Stamp)bp.Set("Stamp", Sys.Ms());
+	bp.Set("Data", data);
+	// CacheSize 为0时立马发送   ||   Cache 满立马发送
+	if ((UploadTaskId && !CacheSize)
+		||(CacheSize && Cache->Position()>CacheSize))Sys.SetTask(UploadTaskId, true, 0);
+	/*
+	不知道怎么在同一个包里存放多个数据，暂时没写缓存问题的东西
+	*/
 	return true;
 }
 
+void Proxy::AutoTask()
+{
+	OnAutoTask();
+}
+
+bool Proxy::GetConfig(ProxyConfig& cfg)
+{
+	return true;
+}
 
 /************************************************************************/
-
 
 ComProxy::ComProxy(COM com) :port(com)
 {
 	// port.ToStr(Name);
 	Name = port.Name;
+	String name(Name);
+	name.Show(true);
 }
 
 bool ComProxy::OnOpen()
@@ -107,7 +128,7 @@ int ComProxy::Write(Buffer& data)
 	port.Write(data);
 	return true;
 }
-
+// 串口没有WriteRead函数
 int ComProxy::Read(Buffer& data, Buffer& input)
 {
 	port.Write(input);

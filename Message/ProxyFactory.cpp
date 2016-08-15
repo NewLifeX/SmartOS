@@ -11,14 +11,18 @@ error code
 0x04	关闭出错
 */
 
-ProxyFactory::ProxyFactory()
+ProxyFactory::ProxyFactory():Proxys(String::Compare)
 {
+	debug_printf("创建 ProxyFac\r\n");
 	Client = nullptr;
 }
 
 bool ProxyFactory::Open(TokenClient* client)
 {
+	debug_printf("ProxyFac Open");
 	if (!client)return false;
+
+	debug_printf("  Register");
 	Client = client;
 	Client->Register("Proxy/GetConfig", &ProxyFactory::GetConfig,	this);
 	Client->Register("Proxy/SetConfig", &ProxyFactory::SetConfig,	this);
@@ -27,30 +31,45 @@ bool ProxyFactory::Open(TokenClient* client)
 	Client->Register("Proxy/Write",		&ProxyFactory::Write,		this);
 	Client->Register("Proxy/Read",		&ProxyFactory::Read,		this);
 	Client->Register("Proxy/QueryPorts",&ProxyFactory::QueryPorts,	this);
-
+	debug_printf("\r\n");
 	return true;
 }
 
-bool ProxyFactory::Register(cstring& name, Proxy* dev)
+bool ProxyFactory::Register(Proxy* dev)
 {
-	Proxys.Add(name, dev);
+	debug_printf("ProxyFac RegPort");
+	String name = dev->Name;
+	name.Show(true);
+	Proxys.Add(dev->Name, dev);
 	return true;
 }
 
 bool ProxyFactory::PortOpen(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac PortOpen\r\n");
 	auto port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
 	BinaryPair rsbp(ms);
 	if (!port)
 	{
+		debug_printf("没有此Port\r\n");
 		rsbp.Set("ErrorCode", (byte)0x01);
 	}
 	else
 	{
-		if (!port->Open())
+		if (port->Open())
 		{
+			debug_printf("Open ");
+			String name(port->Name);
+			name.Show();
+			debug_printf("  OK\r\n");
+
+			rsbp.Set("OK", (byte)0x01);
+		}
+		else
+		{
+			debug_printf("Open Error\r\n");
 			rsbp.Set("ErrorCode", (byte)0x03);
 		}
 	}
@@ -66,6 +85,7 @@ bool ProxyFactory::PortClose(const BinaryPair& args, Stream& result)
 	BinaryPair rsbp(ms);
 	if (!port)
 	{
+		debug_printf("没有此Port\r\n");
 		rsbp.Set("ErrorCode", (byte)0x01);
 	}
 	else
@@ -81,12 +101,14 @@ bool ProxyFactory::PortClose(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac Write\r\n");
 	auto port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
 	BinaryPair rsbp(ms);
 	if (!port)
 	{
+		debug_printf("没有此Port\r\n");
 		rsbp.Set("ErrorCode", (byte)0x01);
 	}
 	else
@@ -106,6 +128,7 @@ bool ProxyFactory::Read(const BinaryPair& args, Stream& result)
 	BinaryPair rsbp(ms);
 	if (!port)
 	{
+		debug_printf("没有此Port\r\n");
 		rsbp.Set("ErrorCode", (byte)0x01);
 	}
 	else
@@ -128,6 +151,7 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 	if (!port)
 	{
 		BinaryPair bp(ms);
+		debug_printf("没有此Port\r\n");
 		bp.Set("ErrorCode", (byte)0x01);
 	}
 	else
@@ -136,7 +160,7 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 		// port->GetConfig(str);	// 调用端口的函数处理内容
 		// ms.Write(str);
 
-		Dictionary<cstring, int> cfg;
+		Dictionary<cstring, int> cfg(String::Compare);
 		port->GetConfig(cfg);		// 调用端口的函数处理内容
 
 		// 数据先写进缓冲区ms2
@@ -167,11 +191,12 @@ bool ProxyFactory::SetConfig(const BinaryPair& args, Stream& result)
 	if (!port)
 	{
 		BinaryPair bp(ms);
+		debug_printf("没有此Port\r\n");
 		bp.Set("ErrorCode", (byte)0x01);
 	}
 	else
 	{
-		Dictionary<cstring, int> config;		// Dictionary<cstring, cstring> 无法实例化  不知道哪出问题了
+		Dictionary<cstring, int> config(String::Compare);		// Dictionary<cstring, cstring> 无法实例化  不知道哪出问题了
 
 		String str;
 		args.Get("config", str);			// 需要确认字段名称
@@ -203,6 +228,29 @@ bool ProxyFactory::QueryPorts(const BinaryPair& args, Stream& result)
 
 	BinaryPair rsms(result);
 	rsms.Set("Ports", Buffer(ms.GetBuffer(), ms.Position()));
+	return true;
+}
+
+bool ProxyFactory::Upload(Proxy& port, Buffer& data)
+{
+	if (!Client)return false;
+	MemoryStream ms;
+	BinaryPair bp(ms);
+	bp.Set("Port", port.Name);
+	bp.Set("Data", data);
+	Client->Invoke("Proxy/Upload", Buffer(ms.GetBuffer(),ms.Position()));
+	return true;
+}
+
+bool ProxyFactory::UpOpen(Proxy& port)
+{
+	if (!Client)return false;
+	MemoryStream ms;
+	BinaryPair bp(ms);
+	bp.Set("Port", port.Name);
+	bp.Set("Open", (byte)0x01);
+
+	Client->Invoke("Proxy/Open", Buffer(ms.GetBuffer(), ms.Position()));
 	return true;
 }
 
@@ -251,12 +299,24 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 Proxy* ProxyFactory::GetPort(const BinaryPair& args)
 {
 	String Name;
-	args.Get("Port", Name);
-	if (!Name.Length())return nullptr;
+
+	args.Get("port", Name);
+	if (!Name.Length())
+	{
+		args.Get("Port", Name);
+		if (!Name.Length())
+		{
+			debug_printf("GetPort GetName Error\r\n");
+			return nullptr;
+		}
+	}
+
+	debug_printf("GetPort Name = ");
+	Name.Show(true);
 
 	Proxy* port;
 	Proxys.TryGetValue(Name.GetBuffer(), port);
-
+	
 	return port;
 }
 
