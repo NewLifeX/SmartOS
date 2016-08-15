@@ -54,8 +54,8 @@ class Dictionary : public IDictionary
 public:
     Dictionary(IComparer comparer = nullptr) : IDictionary(comparer) { }
 
-	const List<TKey>& Keys() const;
-	const List<TValue>& Values() const;
+	const List<TKey>& Keys() const		{ return (List<TKey>&)	 IDictionary::Keys();	};
+	const List<TValue>& Values() const	{ return (List<TValue>&) IDictionary::Values();	};
 
 	// 添加单个元素
     void Add(PKey key, PValue value) { IDictionary::Add((const void*)key, (void*)value); }
