@@ -11,17 +11,17 @@ class Proxy
 public:
 	cstring Name;			// 端口名
 	MemoryStream* Cache;	// 缓存空间
-	int		CacheSize;		// 缓存大小
-	bool	Stamp;			// 时间戳开关
-	int		TimeStamp;		// 时间戳
 	uint	UploadTaskId;	// 上传任务的ID
 	uint	AutoTaskId;		// 自动任务ID，可以是定时Write数据
+
+	int		CacheSize;		// 缓存大小
+	bool	EnableStamp;	// 时间戳开关
+	int		TimeStamp;		// 时间戳
+	bool	AutoStart;		// 自动启动
 
 	Proxy();
 	bool Open();
 	bool Close();
-	virtual bool OnOpen() = 0;
-	virtual bool OnClose() = 0;
 
 	virtual bool SetConfig(Dictionary<cstring, int>& config, String& str) = 0;
 	virtual bool GetConfig(Dictionary<cstring, int>& config) = 0;
@@ -30,10 +30,16 @@ public:
 	void UploadTask();
 	bool Upload(Buffer& data);
 
-	void AutoTask();
-	virtual bool OnAutoTask() { return true; };
-	bool GetConfig(ProxyConfig& cfg);
+	void AutoTask();				// 自动处理任务
+	bool GetConfig();				// 从配置区内拿数据
+	void SaveConfig();				// 保存配置信息
+
+private:
+	virtual bool OnOpen() = 0;
+	virtual bool OnClose() = 0;
+	virtual bool OnAutoTask() { return true; };	
 	virtual bool OnGetConfig(Stream& cfg) { return true; };
+	virtual bool OnSetConfig(Stream& cfg) { return true; };
 };
 
 class ComProxy : public Proxy
@@ -48,21 +54,20 @@ public:
 	ushort	stopBits;
 	int		baudRate;
 
-	virtual bool OnOpen() override;
-
-	virtual bool OnClose() override;
-
 	virtual bool SetConfig(Dictionary<cstring, int>& config, String& str) override;
-
 	virtual bool GetConfig(Dictionary<cstring, int>& config) override;
 
 	virtual int Write(Buffer& data) override;
-
 	virtual int Read(Buffer& data, Buffer& input) override;
 
-
 private:
+	virtual bool OnOpen() override;
+	virtual bool OnClose() override;
 
+	virtual bool OnGetConfig(Stream& cfg);
+	virtual bool OnSetConfig(Stream& cfg);
+
+	static uint Dispatch(ITransport* port, Buffer& bs, void* param, void* param2);
 };
 
 #endif

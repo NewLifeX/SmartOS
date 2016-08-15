@@ -245,7 +245,7 @@ void AP0801::OpenClient(ISocketHost& host)
 		if (!Client->Opened)
 		{
 			Client->Open();
-			// ProxyFac->AutoStart();
+			ProxyFac->AutoStart();
 		}
 		else
 			Client->AttachControls();

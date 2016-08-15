@@ -182,7 +182,7 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 		for (int i = 0; i < cfg.Count(); i++)
 		{
 			str = str + name[i] + '=' + value[i];
-			if (i < cfg.Count() - 1)str = str + ',';
+			if (i < cfg.Count() - 1)str = str + '&';
 		}
 		str.Show(true);
 		//ms.Write(str);
@@ -252,8 +252,6 @@ bool ProxyFactory::QueryPorts(const BinaryPair& args, Stream& result)
 
 	result.Write(name);
 
-	// BinaryPair rsms(result);
-	// rsms.Set("Ports", Buffer((void*)name.GetBuffer(), name.Length()));
 	return true;
 }
 
@@ -277,6 +275,22 @@ bool ProxyFactory::UpOpen(Proxy& port)
 	bp.Set("Open", (byte)0x01);
 
 	Client->Invoke("Proxy/Open", Buffer(ms.GetBuffer(), ms.Position()));
+	return true;
+}
+
+bool ProxyFactory::AutoStart()
+{
+	if (!Client->Opened)
+	{
+		debug_printf("请在TokenClient Open后再执行\r\n");
+		return false;
+	}
+	auto ports = Proxys.Values();
+	for (int i = 0; i < ports.Count(); i++)
+	{
+		ports[i]->GetConfig();
+		if (ports[i]->AutoStart)ports[i]->Open();
+	}
 	return true;
 }
 

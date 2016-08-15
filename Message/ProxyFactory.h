@@ -39,7 +39,7 @@ public:
 	bool Upload(Proxy& port,Buffer& data);
 	bool UpOpen(Proxy& port);
 
-	// bool AutoStart();		// 自动启动
+	bool AutoStart();		// 自动启动
 
 private:
 	// 从字符串里拿出字典形式的配置信息

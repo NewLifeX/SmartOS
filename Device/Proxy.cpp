@@ -8,8 +8,9 @@ Proxy::Proxy()
 	Cache		= nullptr;
 	CacheSize	= 0;
 	TimeStamp	= 0;
-	Stamp		= false;
+	EnableStamp	= false;
 	UploadTaskId= 0;
+	AutoStart	= false;
 }
 
 bool Proxy::Open()
@@ -44,7 +45,7 @@ bool Proxy::Upload(Buffer& data)
 
 	// 没有Cache则直接发送
 	BinaryPair bp(*Cache);
-	if (Stamp)bp.Set("Stamp", Sys.Ms());
+	if (EnableStamp)bp.Set("Stamp", Sys.Ms());
 	bp.Set("Data", data);
 	// CacheSize 为0时立马发送   ||   Cache 满立马发送
 	if ((UploadTaskId && !CacheSize)
@@ -60,10 +61,35 @@ void Proxy::AutoTask()
 	OnAutoTask();
 }
 
-bool Proxy::GetConfig(ProxyConfig& cfg)
+bool Proxy::GetConfig()
 {
+	ProxyConfig cfg(Name);
+	cfg.Load();
+
+	CacheSize = cfg.CacheSize;
+	EnableStamp = cfg.EnableStamp;
+	AutoStart = cfg.AutoStart;
+
+	Stream st(cfg.PortCfg, sizeof(cfg.PortCfg));
+	OnGetConfig(st);
+
 	return true;
 }
+
+void Proxy::SaveConfig()
+{
+	ProxyConfig cfg(Name);
+
+	cfg.CacheSize	= CacheSize;
+	cfg.EnableStamp	= EnableStamp;
+	cfg.AutoStart	= AutoStart;
+
+	Stream st(cfg.PortCfg, sizeof(cfg.PortCfg));
+	OnSetConfig(st);
+
+	cfg.Save();
+}
+
 
 /************************************************************************/
 
@@ -87,6 +113,7 @@ bool ComProxy::OnOpen()
 	{
 		port.SetBaudRate(baudRate);
 		port.Set(parity, dataBits, stopBits);
+		port.Register(Dispatch, this);
 	}
 	return false;
 }
@@ -144,4 +171,34 @@ int ComProxy::Read(Buffer& data, Buffer& input)
 	port.Write(input);
 	if (port.Read(data) > 0)return true;
 	return false;
+}
+
+uint ComProxy::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
+{
+	// 串口不关心 param2
+	auto& pro = *(ComProxy*)param;
+	pro.Upload(bs);
+	
+	// auto fac = ProxyFactory::Current;	// 直接扔给上级
+	// if (!fac)return 0;
+	// fac->Upload(pro, bs);
+	return 0;
+}
+
+bool ComProxy::OnGetConfig(Stream& cfg)
+{
+	parity = cfg.ReadUInt16();
+	dataBits = cfg.ReadUInt16();
+	stopBits = cfg.ReadUInt16();
+	baudRate = cfg.ReadUInt32();
+	return true;
+}
+
+bool ComProxy::OnSetConfig(Stream& cfg)
+{
+	cfg.Write(parity);
+	cfg.Write(dataBits);
+	cfg.Write(stopBits);
+	cfg.Write(baudRate);
+	return true;
 }
