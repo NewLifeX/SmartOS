@@ -13,9 +13,9 @@ class SerialPort : public ITransport, public Power
 {
 private:
 	byte	_index;
-	byte	_parity;
-	byte	_dataBits;
-	byte	_stopBits;
+	ushort	_parity;
+	ushort	_dataBits;
+	ushort	_stopBits;
 	int		_baudRate;
 
     void*	_port;

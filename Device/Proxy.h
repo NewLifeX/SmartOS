@@ -43,9 +43,9 @@ public:
 
 	SerialPort port;
 
-	byte	parity;
-	byte	dataBits;
-	byte	stopBits;
+	ushort	parity;
+	ushort	dataBits;
+	ushort	stopBits;
 	int		baudRate;
 
 	virtual bool OnOpen() override;

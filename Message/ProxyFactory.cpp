@@ -168,24 +168,36 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 		// port->GetConfig(str);	// 调用端口的函数处理内容
 		// ms.Write(str);
 
-		Dictionary<cstring, int> cfg(String::Compare);
+		Dictionary<cstring, int> cfg;
 		port->GetConfig(cfg);		// 调用端口的函数处理内容
 
 		// 数据先写进缓冲区ms2
 		MemoryStream ms2;
 		auto name = cfg.Keys();
-		auto value = cfg.Keys();
+		auto value = cfg.Values();
+		
+		debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
+		String str;
 
 		for (int i = 0; i < cfg.Count(); i++)
 		{
-			ms2.Write(String(name[i]));
-			ms2.Write('=');
-			ms2.Write(String(value[i]));
-			if (i < cfg.Count() - 1) ms2.Write('&');
+			str = str + name[i] + '=' + value[i];
+			if (i < cfg.Count() - 1)str = str + ',';
 		}
-		// 然后组成名词对写进回复数据内去
-		BinaryPair bp(ms);
-		bp.Set("Config", Buffer(ms2.GetBuffer(), ms2.Position()));
+		str.Show(true);
+		//ms.Write(str);
+		result.Write(str);
+
+		// for (int i = 0; i < cfg.Count(); i++)
+		// {
+		// 	ms2.Write(String(name[i]));
+		// 	ms2.Write('=');
+		// 	ms2.Write(String(value[i]));
+		// 	if (i < cfg.Count() - 1) ms2.Write('&');
+		// }
+		// // 然后组成名词对写进回复数据内去
+		// BinaryPair bp(ms);
+		// bp.Set("Config", Buffer(ms2.GetBuffer(), ms2.Position()));
 	}
 
 	return true;

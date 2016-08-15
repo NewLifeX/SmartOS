@@ -73,12 +73,22 @@ ComProxy::ComProxy(COM com) :port(com)
 	Name = port.Name;
 	String name(Name);
 	name.Show(true);
+
+	baudRate = 115200;
+
+	parity = 0x0000;	// USART_Parity_No;
+	dataBits = 0x0000;	// USART_WordLength_8b;
+	stopBits = 0x0000;	// USART_StopBits_1;
 }
 
 bool ComProxy::OnOpen()
 {
-	return port.Open();
-	// return true;
+	if (port.Open())
+	{
+		port.SetBaudRate(baudRate);
+		port.Set(parity, dataBits, stopBits);
+	}
+	return false;
 }
 
 bool ComProxy::OnClose()
@@ -90,13 +100,13 @@ bool ComProxy::OnClose()
 bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 {
 	int value;
-	if (config.TryGetValue("baudRate", value))
+	if (config.TryGetValue("baudrate", value))
 	{
 		port.SetBaudRate(value);
 	}
 
 	cstring ByteParam[] = { "parity","dataBits","stopBits" };
-	byte*	ParamP[] = {&parity, &dataBits, &stopBits};
+	ushort*	ParamP[] = {&parity, &dataBits, &stopBits};
 	bool haveChang = false;
 	for (int i = 0; i < ArrayLength(ByteParam); i++)
 	{
@@ -114,7 +124,7 @@ bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 
 bool ComProxy::GetConfig(Dictionary<cstring, int>& config)
 {
-	config.Add("baudRate",baudRate);
+	config.Add("baudrate",baudRate);
 
 	config.Add("parity",  parity);
 	config.Add("dataBits", dataBits);
