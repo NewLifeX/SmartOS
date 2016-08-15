@@ -79,6 +79,7 @@ bool ProxyFactory::PortOpen(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::PortClose(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac PortClose\r\n");
 	auto port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -114,6 +115,11 @@ bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
 	else
 	{
 		auto bs = args.Get("Data");
+		if(!bs.Length())bs = args.Get("data");
+
+		debug_printf("Write len: %d  data:",bs.Length());
+		bs.Show(true);
+
 		port->Write(bs);
 	}
 
@@ -122,6 +128,7 @@ bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::Read(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac Read\r\n");
 	auto port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -145,6 +152,7 @@ bool ProxyFactory::Read(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac GetConfig\r\n");
 	Proxy* port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -185,6 +193,7 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::SetConfig(const BinaryPair& args, Stream& result)
 {
+	debug_printf("ProxyFac SetConfig\r\n");
 	Proxy* port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -218,16 +227,21 @@ bool ProxyFactory::SetConfig(const BinaryPair& args, Stream& result)
 
 bool ProxyFactory::QueryPorts(const BinaryPair& args, Stream& result)
 {
-	MemoryStream ms;
+	debug_printf("ProxyFac QueryPorts\r\n");
+
 	auto portnames = Proxys.Keys();
+	String name;
 	for (int i = 0; i < Proxys.Count(); i++)
 	{
-		ms.Write(String(portnames[i]));
-		if (i < Proxys.Count() - 1)ms.Write(',');
+		name = name + portnames[i];
+		if (i < Proxys.Count() - 1)name = name + ',';
 	}
+	name.Show(true);
 
-	BinaryPair rsms(result);
-	rsms.Set("Ports", Buffer(ms.GetBuffer(), ms.Position()));
+	result.Write(name);
+
+	// BinaryPair rsms(result);
+	// rsms.Set("Ports", Buffer((void*)name.GetBuffer(), name.Length()));
 	return true;
 }
 

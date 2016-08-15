@@ -377,8 +377,11 @@ void  AP0801::InitProxy()
 	}
 	ProxyFac = ProxyFactory::Create();
 
-	ComProxy* proxyCom1 = new ComProxy(COM2);
-	ProxyFac->Register(proxyCom1);
+	//ComProxy* proxyCom1 = new ComProxy(COM2);
+	ProxyFac->Register(new ComProxy(COM2));
+	ProxyFac->Register(new ComProxy(COM5));
+
+	
 
 	ProxyFac->Open(Client);
 	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
