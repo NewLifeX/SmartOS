@@ -63,10 +63,14 @@ bool Alarm::GetCfg(byte id, AlarmDataType& data)
 int Alarm::CalcNextTime(AlarmDataType& data)
 {
 	auto dt = DateTime::Now();
-	if (data.Type.ToByte() & 1 << dt.DayOfWeek())
+	byte type = data.Type.ToByte();
+	byte week = dt.DayOfWeek();
+	if (type & 1 << week)
 	{
-
+		
 	}
+
+
 	return Int_Max;
 }
 
@@ -94,7 +98,11 @@ byte Alarm::FindAfter()
 
 void Alarm::AlarmTask()
 {
-	// 执行动作
+	// 获取定时的数据
+	AlarmDataType data;
+	if (AfterAlarmId != 0xff)
+		GetCfg(AfterAlarmId, data);
+	// 执行动作   DoSomething(data);
 
 	// 找到下一个定时器动作的时间
 	AfterAlarmId = FindAfter();
@@ -102,7 +110,7 @@ void Alarm::AlarmTask()
 	{
 		Sys.SetTask(AlarmTaskId, true, NextAlarmMs);
 		return;
-	}	
+	}
 
 	Sys.SetTask(AlarmTaskId, false);
 }
@@ -112,4 +120,3 @@ void Alarm::Start()
 	if (!AlarmTaskId)AlarmTaskId = Sys.AddTask(&Alarm::AlarmTask, this, -1, -1, "AlarmTask");
 	Sys.SetTask(AlarmTaskId,true);
 }
-

@@ -13,7 +13,7 @@ public:
 	byte ToByte() { return *(byte*)this; }
 };
 
-typedef struct:ByteStruct2
+typedef struct : ByteStruct2
 {
 	byte Sunday		: 1;
 	byte Monday		: 1;
@@ -22,7 +22,7 @@ typedef struct:ByteStruct2
 	byte Thursday	: 1;
 	byte Friday		: 1;
 	byte Saturday	: 1;
-	byte Again		: 1;
+	byte Repeat		: 1;
 }AlarmType;
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
@@ -31,7 +31,7 @@ typedef struct:ByteStruct2
 #pragma pack(1)
 typedef struct
 {
-	byte	Enable;
+	byte Enable;
 	AlarmType Type;
 	byte Hour;
 	byte Minutes;
@@ -51,9 +51,9 @@ public:
 	void Start();
 
 private:
-	byte AfterAlarmId;	// 0xff 无效
-
 	uint AlarmTaskId;
+
+	byte AfterAlarmId;	// 0xff 无效
 	int NextAlarmMs;	// 下次闹钟时间
 	void AlarmTask();
 	byte FindAfter();
