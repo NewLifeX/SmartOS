@@ -17,10 +17,10 @@ class DevicesManagement
 public:
 	// 全局只允许一个设备管理器  Invoke 也就使用这个
 	static DevicesManagement * Current;
-	static bool InvokeFindIDs (void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeFindAll(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeSet	 (void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeDelete(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeFindIDs (void * param, const Pair& args, Stream& result);
+	static bool InvokeFindAll(void * param, const Pair& args, Stream& result);
+	static bool InvokeSet	 (void * param, const Pair& args, Stream& result);
+	static bool InvokeDelete(void * param, const Pair& args, Stream& result);
 							 
 public:
 	DevicesManagement();
@@ -53,7 +53,7 @@ public:
 
 	// 处理TokenMsg的设备指令
 	//bool DeviceProcess(String &act, const Message& msg);
-	bool DeviceProcess(DeviceAtions act,const BinaryPair& args, Stream& result);
+	bool DeviceProcess(DeviceAtions act,const Pair& args, Stream& result);
 	void SendDevicesIDs();
 	// 设备状态变更上报 由TinyServer这种对象调用
 	void DeviceRequest(DeviceAtions act, const Device* dv = nullptr);

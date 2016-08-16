@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "SerialPort.h"
-#include "Message/BinaryPair.h"
+#include "Message/Pair.h"
 
 enum  PacketEorrCode : byte
 {
@@ -62,7 +62,7 @@ public:
 	void CreatePort() { Port = new SerialPort(); State = 1; };
 	void DelPort() { if (Port)delete Port; State = 0; };
 
-	bool ComConfig(BinaryPair & data);
+	bool ComConfig(Pair & data);
 };
 
 

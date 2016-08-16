@@ -1,7 +1,8 @@
 ﻿#include "Sys.h"
+#include "Message/BinaryPair.h"
 #include "TokenNet/TokenClient.h"
 
-bool InvokeFun(void* param, const BinaryPair& args, Stream& result)
+bool InvokeFun(void* param, const Pair& args, Stream& result)
 {
 	byte rt;
 	bool rs;

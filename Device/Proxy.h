@@ -3,7 +3,6 @@
 
 #include "Sys.h"
 #include "SerialPort.h"
-#include "Message/BinaryPair.h"
 #include "ProxyConfig.h"
 
 class Proxy

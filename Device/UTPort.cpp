@@ -1,5 +1,5 @@
 ﻿#include "UTPort.h"
-
+#include "Message\BinaryPair.h"
 
 UTPort::UTPort()
 {
@@ -11,7 +11,7 @@ UTPort::UTPort()
 enum UTComOrder : byte
 {
 	Config = 1,		// 数据使用BinaryPair来处理
-	Open = 2,		// 数据长度为0 
+	Open = 2,		// 数据长度为0
 	Write = 3,		// 数据使用Buffer  直接就是要发送的数据
 	Read = 4,		// 收到2字节的长度，返回2字节实际长度+数据   实际读到的长度小于等于命令长度
 	Close = 5,		// 数据产股为0
@@ -77,14 +77,7 @@ void UTCom::DoFunc(Buffer & packet, MemoryStream & ret)
 
 }
 
-bool UTCom::ComConfig(BinaryPair & data)
+bool UTCom::ComConfig(Pair & data)
 {
-
 	return true;
 }
-
-
-
-
-
-

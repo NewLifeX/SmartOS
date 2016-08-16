@@ -1,6 +1,6 @@
-﻿
-#include "Proxy.h"
+﻿#include "Proxy.h"
 #include "Message/ProxyFactory.h"
+#include "Message/BinaryPair.h"
 
 
 Proxy::Proxy()

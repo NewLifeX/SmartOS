@@ -3,7 +3,7 @@
 
 #include "Sys.h"
 #include "TokenNet\TokenMessage.h"
-#include "Message\BinaryPair.h"
+#include "Message\Pair.h"
 #include "Device\UTPort.h"
 #include "TokenNet\TokenClient.h"
 
@@ -35,7 +35,7 @@ public:
 	// 添加UTPort成员
 	bool AndPort(byte id,UTPort* port);
 	// Invoke回调函数
-	bool PressTMsg(const BinaryPair& args, Stream& result);
+	bool PressTMsg(const Pair& args, Stream& result);
 
 	static UTPacket * Current;
 #if DEBUG

@@ -1,5 +1,5 @@
-﻿
-#include "ProxyFactory.h"
+﻿#include "ProxyFactory.h"
+#include "Message\BinaryPair.h"
 
 ProxyFactory * ProxyFactory::Current = nullptr;
 
@@ -44,7 +44,7 @@ bool ProxyFactory::Register(Proxy* dev)
 	return true;
 }
 
-bool ProxyFactory::PortOpen(const BinaryPair& args, Stream& result)
+bool ProxyFactory::PortOpen(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac PortOpen\r\n");
 	auto port = GetPort(args);
@@ -77,7 +77,7 @@ bool ProxyFactory::PortOpen(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::PortClose(const BinaryPair& args, Stream& result)
+bool ProxyFactory::PortClose(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac PortClose\r\n");
 	auto port = GetPort(args);
@@ -100,7 +100,7 @@ bool ProxyFactory::PortClose(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
+bool ProxyFactory::Write(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac Write\r\n");
 	auto port = GetPort(args);
@@ -115,7 +115,7 @@ bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
 	else
 	{
 		auto bs = args.Get("Data");
-		if(!bs.Length())bs = args.Get("data");
+		if(!bs.Length()) bs = args.Get("data");
 
 		debug_printf("Write len: %d  data:",bs.Length());
 		bs.Show(true);
@@ -126,7 +126,7 @@ bool ProxyFactory::Write(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::Read(const BinaryPair& args, Stream& result)
+bool ProxyFactory::Read(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac Read\r\n");
 	auto port = GetPort(args);
@@ -150,7 +150,7 @@ bool ProxyFactory::Read(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
+bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac GetConfig\r\n");
 	Proxy* port = GetPort(args);
@@ -203,7 +203,7 @@ bool ProxyFactory::GetConfig(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::SetConfig(const BinaryPair& args, Stream& result)
+bool ProxyFactory::SetConfig(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac SetConfig\r\n");
 	Proxy* port = GetPort(args);
@@ -237,7 +237,7 @@ bool ProxyFactory::SetConfig(const BinaryPair& args, Stream& result)
 	return true;
 }
 
-bool ProxyFactory::QueryPorts(const BinaryPair& args, Stream& result)
+bool ProxyFactory::QueryPorts(const Pair& args, Stream& result)
 {
 	debug_printf("ProxyFac QueryPorts\r\n");
 
@@ -336,7 +336,7 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 	}
 }
 
-Proxy* ProxyFactory::GetPort(const BinaryPair& args)
+Proxy* ProxyFactory::GetPort(const Pair& args)
 {
 	String Name;
 

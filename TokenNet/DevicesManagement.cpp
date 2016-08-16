@@ -276,35 +276,35 @@ void DevicesManagement::SetTokenClient(TokenClient *port)
 }
 
 // Invoke 注册项
-bool DevicesManagement::InvokeFindIDs(void * param, const BinaryPair& args, Stream& result)
+bool DevicesManagement::InvokeFindIDs(void * param, const Pair& args, Stream& result)
 {
 	if (param == nullptr)return false;
 	auto dMgmt = (DevicesManagement*)param;
 	return dMgmt->DeviceProcess(DeviceAtions::FindIDs, args, result);
 }
 
-bool DevicesManagement::InvokeSet(void * param, const BinaryPair& args, Stream& result)
+bool DevicesManagement::InvokeSet(void * param, const Pair& args, Stream& result)
 {
 	if (param == nullptr)return false;
 	auto dMgmt = (DevicesManagement*)param;
 	return dMgmt->DeviceProcess(DeviceAtions::Set, args, result);
 }
 
-bool DevicesManagement::InvokeDelete(void * param, const BinaryPair& args, Stream& result)
+bool DevicesManagement::InvokeDelete(void * param, const Pair& args, Stream& result)
 {
 	if (param == nullptr)return false;
 	auto dMgmt = (DevicesManagement*)param;
 	return dMgmt->DeviceProcess(DeviceAtions::Delete, args, result);
 }
 
-bool DevicesManagement::InvokeFindAll(void * param, const BinaryPair& args, Stream& result)
+bool DevicesManagement::InvokeFindAll(void * param, const Pair& args, Stream& result)
 {
 	if (param == nullptr)return false;
 	auto dMgmt = (DevicesManagement*)param;
 	return dMgmt->DeviceProcess(DeviceAtions::FindAll, args, result);
 }
 // 缺少更新的处理  未完待续
-bool DevicesManagement::DeviceProcess(DeviceAtions act, const BinaryPair& args, Stream& result)
+bool DevicesManagement::DeviceProcess(DeviceAtions act, const Pair& args, Stream& result)
 {
 	TS("DevicesManagement::DeviceProcess");
 	// 仅处理来自云端的请求

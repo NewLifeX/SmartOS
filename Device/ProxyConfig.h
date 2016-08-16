@@ -2,8 +2,6 @@
 #define __ProxyCfg_H__
 
 #include "Sys.h"
-#include "SerialPort.h"
-#include "Message/BinaryPair.h"
 #include "../Config.h"
 
 class ProxyConfig : public ConfigBase

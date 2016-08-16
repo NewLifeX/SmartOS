@@ -68,7 +68,7 @@ bool UTPacket::AndPort(byte id, UTPort* port)
 }
 
 
-bool UTPacket::PressTMsg(const BinaryPair& args, Stream& result)
+bool UTPacket::PressTMsg(const Pair& args, Stream& result)
 {
 	Buffer buff = args.Get("Data");			// 引用源数据区，后面使用要小心，不能修改任何值。
 	if (buff.Length() < sizeof(PacketHead))return false;

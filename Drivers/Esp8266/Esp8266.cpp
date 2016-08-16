@@ -1042,7 +1042,7 @@ bool Esp8266::SetIPD(bool enable)
 
 /******************************** 发送指令 ********************************/
 // 设置无线组网密码。匹配令牌协议
-bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
+bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 {
 	String ssid;
 	String pass;
@@ -1077,7 +1077,7 @@ bool Esp8266::SetWiFi(const BinaryPair& args, Stream& result)
 	return true;
 }
 // 获取WIFI名称
-bool Esp8266::GetWiFi(const BinaryPair& args, Stream& result)
+bool Esp8266::GetWiFi(const Pair& args, Stream& result)
 {
 	// 返回结果
 	result.Write(*SSID);

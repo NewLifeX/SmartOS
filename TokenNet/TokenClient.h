@@ -9,7 +9,7 @@
 #include "TokenNet\TokenController.h"
 
 #include "Message\DataStore.h"
-#include "Message\BinaryPair.h"
+#include "Message\Pair.h"
 
 // 微网客户端
 class TokenClient
@@ -76,12 +76,12 @@ public:
 	void Invoke(const String& action, const Buffer& bs);
 
 	// 远程调用委托。传入参数名值对以及结果缓冲区引用，业务失败时返回false并把错误信息放在结果缓冲区
-	typedef bool(*InvokeHandler)(void* param, const BinaryPair& args, Stream& result);
+	typedef bool(*InvokeHandler)(void* param, const Pair& args, Stream& result);
 	// 注册远程调用处理器
 	void Register(cstring action, InvokeHandler handler, void* param = nullptr);
 	// 模版支持成员函数
 	template<typename T>
-	void Register(cstring action, bool(T::*func)(const BinaryPair&, Stream&), T* target)
+	void Register(cstring action, bool(T::*func)(const Pair&, Stream&), T* target)
 	{
 		Register(action, *(InvokeHandler*)&func, target);
 	}
@@ -103,18 +103,18 @@ private:
 	void OnWrite(const TokenMessage& msg, TokenController* ctrl);
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
-	bool OnInvoke(const String& action, const BinaryPair& args, Stream& result);
+	bool OnInvoke(const String& action, const Pair& args, Stream& result);
 	// 重启，重置
-	static bool InvokeRestStart(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeRestBoot(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeRestStart(void * param, const Pair& args, Stream& result);
+	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
 
 	//配置
-	static bool InvokeConfigSet(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeConfigGet(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeConfigSet(void * param, const Pair& args, Stream& result);
+	static bool InvokeConfigGet(void * param, const Pair& args, Stream& result);
 
 	//透传消息
-	static bool InvokeRead(void * param, const BinaryPair& args, Stream& result);
-	static bool InvokeWrite(void * param, const BinaryPair& args, Stream& result);
+	static bool InvokeRead(void * param, const Pair& args, Stream& result);
+	static bool InvokeWrite(void * param, const Pair& args, Stream& result);
 
 private:
 	uint	_task;

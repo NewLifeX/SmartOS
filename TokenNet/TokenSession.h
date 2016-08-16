@@ -10,7 +10,6 @@
 #include "TokenNet\TokenClient.h"
 
 #include "Message\DataStore.h"
-#include "Message\BinaryPair.h"
 
 #if DEBUG
 

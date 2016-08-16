@@ -3,7 +3,6 @@
 
 #include "Security\MD5.h"
 #include "Security\Crc.h"
-#include "..\Message\BinaryPair.h"
 
 // 循环间隔
 #define LOOP_Interval	10000

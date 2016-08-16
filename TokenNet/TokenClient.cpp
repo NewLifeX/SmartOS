@@ -963,7 +963,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 	Reply(rs, ctrl);
 }
 
-bool TokenClient::OnInvoke(const String& action, const BinaryPair& args, Stream& result)
+bool TokenClient::OnInvoke(const String& action, const Pair& args, Stream& result)
 {
 
 	IDelegate* dlg = nullptr;
@@ -996,7 +996,7 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 	}
 }
 
-bool TokenClient::InvokeRestStart(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result)
 {
 	BinaryPair res(result);
 	res.Set("Restart", (byte)01);
@@ -1007,7 +1007,7 @@ bool TokenClient::InvokeRestStart(void * param, const BinaryPair& args, Stream& 
 	return true;
 }
 
-bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
 {
 	BinaryPair res(result);
 	res.Set("RestBoot", (byte)01);
@@ -1021,7 +1021,7 @@ bool TokenClient::InvokeRestBoot(void * param, const BinaryPair& args, Stream& r
 	return true;
 }
 
-bool TokenClient::InvokeWrite(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeWrite(void * param, const Pair& args, Stream& result)
 {
 	ByteArray data;
 
@@ -1040,7 +1040,7 @@ bool TokenClient::InvokeWrite(void * param, const BinaryPair& args, Stream& resu
 	return true;
 }
 
-bool TokenClient::InvokeRead(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeRead(void * param, const Pair& args, Stream& result)
 {
 	ByteArray data;
 
@@ -1059,13 +1059,13 @@ bool TokenClient::InvokeRead(void * param, const BinaryPair& args, Stream& resul
 	return true;
 }
 
-bool TokenClient::InvokeConfigGet(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeConfigGet(void * param, const Pair& args, Stream& result)
 {
 	result.Write(true);
 	return true;
 }
 
-bool TokenClient::InvokeConfigSet(void * param, const BinaryPair& args, Stream& result)
+bool TokenClient::InvokeConfigSet(void * param, const Pair& args, Stream& result)
 {
 	result.Write(true);
 	return true;

@@ -5,7 +5,7 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 #include "Message\DataStore.h"
-#include "Message\BinaryPair.h"
+#include "Message\Pair.h"
 
 // 最好打开 Soket 前 不注册中断，以免AT指令乱入到中断里面去  然后信息不对称
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
@@ -93,9 +93,9 @@ public:
 
 /******************************** 发送指令 ********************************/
 	// 设置无线组网密码。匹配令牌协议
-	bool SetWiFi(const BinaryPair& args, Stream& result);
+	bool SetWiFi(const Pair& args, Stream& result);
 	// 获取无线名称。
-	bool GetWiFi(const BinaryPair& args, Stream& result);
+	bool GetWiFi(const Pair& args, Stream& result);
 
 
 protected:
