@@ -23,6 +23,7 @@ AP0801::AP0801()
 	HostAP	= nullptr;
 	Client	= nullptr;
 	ProxyFac = nullptr;
+	AlarmObj = nullptr;
 
 	Data	= nullptr;
 	Size	= 0;
@@ -377,14 +378,19 @@ void  AP0801::InitProxy()
 	}
 	ProxyFac = ProxyFactory::Create();
 
-	//ComProxy* proxyCom1 = new ComProxy(COM2);
 	ProxyFac->Register(new ComProxy(COM2));
-	ProxyFac->Register(new ComProxy(COM5));
-
-	
 
 	ProxyFac->Open(Client);
 	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
+}
+
+void AP0801::InitAlarm()
+{
+	if (!Client)return;
+
+	if(!AlarmObj)AlarmObj = new Alarm();
+	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
 }
 
 /******************************** 2401 ********************************/

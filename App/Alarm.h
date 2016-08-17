@@ -5,6 +5,7 @@
 #include "Timer.h"
 #include "Port.h"
 #include "..\Config.h"
+#include "Message\BinaryPair.h"
 
 class ByteStruct2	// 位域基类
 {
@@ -45,6 +46,11 @@ class Alarm
 public:
 	Alarm();
 	
+	/*  注册给 TokenClient 名称 Policy/AlarmSet  */
+	bool AlarmSet(const Pair& args, Stream& result);
+	/*  注册给 TokenClient 名称 Policy/AlarmGet  */
+	bool AlarmGet(const Pair& args, Stream& result);
+
 	bool SetCfg(byte id, AlarmDataType& data);
 	bool GetCfg(byte id, AlarmDataType& data);
 
@@ -52,12 +58,21 @@ public:
 
 private:
 	uint AlarmTaskId;
+	List<int>NextAlarmIds;		// 下次运行的编号，允许多组定时器定时时间相同
+	int NextAlarmMs;			// 下次闹钟时间
 
-	byte AfterAlarmId;	// 0xff 无效
-	int NextAlarmMs;	// 下次闹钟时间
 	void AlarmTask();
-	byte FindAfter();
+	byte FindNext(int& nextTime);
 	int CalcNextTime(AlarmDataType& data);
 };
+
+// class AlarmActivity
+// {
+// public:
+// 	DataStore* store;
+// 
+// 
+// 
+// };
 
 #endif 

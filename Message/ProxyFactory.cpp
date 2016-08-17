@@ -22,7 +22,7 @@ bool ProxyFactory::Open(TokenClient* client)
 	debug_printf("ProxyFac Open");
 	if (!client)return false;
 
-	debug_printf("  Register");
+	// debug_printf("  Register");
 	Client = client;
 	Client->Register("Proxy/GetConfig", &ProxyFactory::GetConfig,	this);
 	Client->Register("Proxy/SetConfig", &ProxyFactory::SetConfig,	this);
@@ -37,7 +37,7 @@ bool ProxyFactory::Open(TokenClient* client)
 
 bool ProxyFactory::Register(Proxy* dev)
 {
-	debug_printf("ProxyFac RegPort");
+	// debug_printf("ProxyFac RegPort");
 	String name = dev->Name;
 	name.Show(true);
 	Proxys.Add(dev->Name, dev);
@@ -102,7 +102,7 @@ bool ProxyFactory::PortClose(const Pair& args, Stream& result)
 
 bool ProxyFactory::Write(const Pair& args, Stream& result)
 {
-	debug_printf("ProxyFac Write\r\n");
+	// debug_printf("ProxyFac Write\r\n");
 	auto port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -152,7 +152,7 @@ bool ProxyFactory::Read(const Pair& args, Stream& result)
 
 bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 {
-	debug_printf("ProxyFac GetConfig\r\n");
+	// debug_printf("ProxyFac GetConfig\r\n");
 	Proxy* port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -176,7 +176,7 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 		auto name = cfg.Keys();
 		auto value = cfg.Values();
 		
-		debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
+		// debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
 		String str;
 
 		for (int i = 0; i < cfg.Count(); i++)
@@ -205,7 +205,7 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 
 bool ProxyFactory::SetConfig(const Pair& args, Stream& result)
 {
-	debug_printf("ProxyFac SetConfig\r\n");
+	// debug_printf("ProxyFac SetConfig\r\n");
 	Proxy* port = GetPort(args);
 
 	auto ms = (MemoryStream&)result;
@@ -239,8 +239,7 @@ bool ProxyFactory::SetConfig(const Pair& args, Stream& result)
 
 bool ProxyFactory::QueryPorts(const Pair& args, Stream& result)
 {
-	debug_printf("ProxyFac QueryPorts\r\n");
-
+	// debug_printf("ProxyFac QueryPorts\r\n");
 	auto portnames = Proxys.Keys();
 	String name;
 	for (int i = 0; i < Proxys.Count(); i++)

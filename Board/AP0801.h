@@ -6,6 +6,7 @@
 
 #include "TokenNet\TokenClient.h"
 #include "Message\ProxyFactory.h"
+#include "App\Alarm.h"
 
 // 阿波罗0801/0802
 class AP0801
@@ -23,6 +24,7 @@ public:
 	ISocketHost*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
 	ProxyFactory*	ProxyFac;	// 透传管理器
+	Alarm*			AlarmObj;
 
 	AP0801();
 
@@ -48,6 +50,7 @@ public:
 	void InitClient();
 	void InitNet();
 	void InitProxy();
+	void InitAlarm();
 
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);
