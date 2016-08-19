@@ -873,8 +873,8 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		if(rt)
 		{
 			dm.Start	= 0;
-			//dm.Size		= Store.Data.Length;
-			dm.Size		= 0;
+			dm.Size		= Store.Data.Length;
+			//dm.Size		= 0;
 			dm.Data		= Store.Data;
 		}
 	}
