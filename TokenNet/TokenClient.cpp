@@ -859,7 +859,6 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 	if (msg.Length < 2) return;
 
 	auto rs = msg.CreateReply();
-	auto ms = rs.ToStream();
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);

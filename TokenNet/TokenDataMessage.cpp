@@ -26,6 +26,9 @@ bool TokenDataMessage::Read(Stream& ms)
 	bp.Get("Size", Size);
 	bp.Get("Data", Data);
 
+	// 自动设置长度，方便业务层使用
+	if(Size == 0) Size	= Data.Length();
+
 	return true;
 }
 
