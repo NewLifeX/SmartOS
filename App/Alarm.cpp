@@ -38,21 +38,39 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	AlarmDataType data;
 	data.Enable = false;
 
+	Buffer buf = args.Get("Data");
+	Stream ms(buf);
+
 	byte Id = 0xff;
-	args.Get("Number", Id);				// 1/9
+	Id = ms.ReadByte();
 	if (Id > 20)return false;
-	
-	args.Get("Enable",data.Enable);		// 1/9
-	byte type;
-	args.Get("DayOfWeek",type);			// 1/12
+
+	data.Enable = ms.ReadByte();
+
+	byte type = ms.ReadByte();
 	data.Type.Init(type);
-	args.Get("Hour", data.Hour);		// 1/7
-	args.Get("Minute", data.Minutes);	// 1/9
-	args.Get("Second", data.Seconds);	// 1/9
-	Buffer buf(data.Data, sizeof(data.Data));
-	args.Get("Data",buf );				// 11/17
+
+	data.Hour = ms.ReadByte();
+	data.Minutes = ms.ReadByte();
+	data.Seconds = ms.ReadByte();
 
 	if (data.Hour > 23 || data.Minutes > 59 || data.Seconds > 59)return false;
+
+	Buffer buf(data.Data, sizeof(data.Data));
+	buf = ms.ReadBytes();
+
+	// byte Id = 0xff;
+	// args.Get("Number", Id);				// 1/9
+	// if (Id > 20)return false;
+	// args.Get("Enable",data.Enable);		// 1/9
+	// byte type;
+	// args.Get("DayOfWeek",type);			// 1/12
+	// data.Type.Init(type);
+	// args.Get("Hour", data.Hour);		// 1/7
+	// args.Get("Minute", data.Minutes);	// 1/9
+	// args.Get("Second", data.Seconds);	// 1/9
+	// Buffer buf(data.Data, sizeof(data.Data));
+	// args.Get("Data",buf );				// 11/17
 
 	return SetCfg(Id, data);
 }
