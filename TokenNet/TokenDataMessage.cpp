@@ -44,12 +44,13 @@ bool TokenDataMessage::ReadData(DataStore& ds)
 {
 	ByteArray bs(Size);
 
-	if(ds.Read(Start, bs) >= 0) return ReadData(bs);
+	int len	= ds.Read(Start, bs);
+	if(len < 0) return false;
 
-	// 出错返回false
-	bs.SetLength(0);
+	// 设置真实大小
+	bs.SetLength(len);
 
-	return false;
+	return ReadData(bs);
 }
 
 // 读取数据
