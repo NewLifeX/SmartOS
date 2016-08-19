@@ -98,7 +98,7 @@ bool TokenDataMessage::WriteData(Buffer& bs, bool withData)
 // 显示消息内容
 String& TokenDataMessage::ToStr(String& str) const
 {
-	str += "DateMsg";
+	str += "DataMsg";
 	if (Reply) str += '#';
 	if(ID) str	= str + " ID:" + ID;
 	str	= str + " Start:" + Start;
