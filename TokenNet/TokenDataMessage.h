@@ -24,7 +24,7 @@ public:
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms) const;
 
-	bool ReadData(const DataStore& ds);
+	bool ReadData(DataStore& ds);
 	bool WriteData(DataStore& ds, bool withData);
 
 	bool ReadData(const Buffer& bs);

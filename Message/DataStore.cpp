@@ -23,7 +23,8 @@ public:
 	IDataPort*	Port;
 
 	Area();
-	bool Contain(uint offset, uint size);
+	bool In(uint start, uint len);
+	bool Any(uint start, uint len);
 
 	friend bool operator==(const Area& a1, const Area& a2)
 	{
@@ -65,20 +66,21 @@ int DataStore::Read(uint offset, Buffer& bs)
 	if(size == 0) return 0;
 
 	uint realOffset = offset - VirAddrBase;
+	int remain	= Data.Length() - realOffset;
+
 	// 检查是否越界
 	// if(Strict && realOffset + size > Data.Length()) return -1;
 	// 只要起始位置在区间内都读，数据超长就返回能返回的！
-	if(Strict && realOffset > Data.Length()) return -1;		// 起始地址越界直接返回
+	if(Strict && remain <= 0) return -1;		// 起始地址越界直接返回
+
+	// 最大只能读取这么多
+	if(size > remain) size	= remain;
 
 	// 执行钩子函数
 	if(!OnHook(realOffset, size, false)) return -1;
 
 	// 从数据区读取数据
-	// return bs.Copy(0, Data, realOffset, size);
-	// 取真实长度
-	int maxsize = offset + size > Data.Length() ? Data.Length() : size;
-	bs.SetLength(maxsize);
-	return bs.Copy(0, Data, realOffset, maxsize);
+	return bs.Copy(0, Data, realOffset, size);
 }
 
 bool DataStore::OnHook(uint offset, uint size, bool write)
@@ -88,10 +90,8 @@ bool DataStore::OnHook(uint offset, uint size, bool write)
 		auto ar = *(Area*)Areas[i];
 		if(ar.Size == 0) continue;
 
-		if(!ar.Contain(offset, size)) continue;
-
 		// 数据操作口只认可完整的当前区域
-		if(ar.Port)
+		if(ar.Port && ar.In(offset, size))
 		{
 			if(write)
 			{
@@ -102,7 +102,8 @@ bool DataStore::OnHook(uint offset, uint size, bool write)
 				if(ar.Port->Read(&Data[ar.Offset]) <= 0) return false;
 			}
 		}
-		if(ar.Hook)
+		// 钩子函数不需要完整区域，只需要部分匹配即可
+		if(ar.Hook && ar.Any(offset, size))
 		{
 			if(!ar.Hook(ar.Offset, ar.Size, write)) return false;
 		}
@@ -138,13 +139,19 @@ Area::Area()
 	Size	= 0;
 	Hook	= nullptr;
 }
+
 // 参数是读命令里面的偏移和大小
-bool Area::Contain(uint offset, uint size)
+bool Area::In(uint start, uint len)
 {
 	// 数据操作口只认可完整的当前区域
-	//return Offset <= offset && Offset + Size >= offset + size;
+	return Offset >= start && Offset + Size <= start + len;
+}
+
+bool Area::Any(uint start, uint len)
+{
 	// 只要搭边就算数
-	return offset <= Offset + Size  && offset + size >= Offset;
+	//return start <= Offset + Size && start + len >= Offset;
+	return !(Offset > start + len || Offset + Size < start);
 }
 
 /****************************** 数据操作接口 ************************************/
