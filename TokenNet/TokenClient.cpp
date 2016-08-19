@@ -352,7 +352,7 @@ void TokenClient::LoopTask()
 	{
 		Master->Close();
 		// Sys.Reset();
-	}	
+	}
 }
 
 void BroadcastHelloTask(void* param)
@@ -868,6 +868,15 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 	if (dm.Start < 64)
 	{
 		rt = dm.WriteData(Store, true);
+
+		// 读取响应里面，一次性把数据全部读取出来
+		if(rt)
+		{
+			dm.Start	= 0;
+			//dm.Size		= Store.Data.Length;
+			dm.Size		= 0;
+			dm.Data		= Store.Data;
+		}
 	}
 	else if (dm.Start < 128)
 	{
