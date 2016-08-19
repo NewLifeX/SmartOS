@@ -813,7 +813,6 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 	if (msg.Length < 2) return;
 
 	auto rs = msg.CreateReply();
-	auto ms = rs.ToStream();
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
@@ -833,6 +832,10 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 	{
 		debug_printf("rt == false\r\n");
 		rs.Error = true;
+		auto ms = rs.ToStream();
+		BinaryPair bp(ms);
+		bp.Set("ErrorCode", (byte)0x01);
+		rs.Length = ms.Position();
 	}
 	else
 	{
@@ -915,7 +918,8 @@ void TokenClient::Invoke(const String& action, const Buffer& bs)
 void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 {
 	auto rs = msg.CreateReply();
-	BinaryPair rsbp(rs.ToStream());
+	auto ms2 = rs.ToStream();
+	BinaryPair rsbp(ms2);
 	// 考虑到结果可能比较大，允许扩容
 	//auto ms	= rs.ToStream();
 	//ms.CanResize	= true;
@@ -945,6 +949,7 @@ void TokenClient::OnInvoke(const TokenMessage& msg, TokenController* ctrl)
 				//rs.SetError(0x02, "执行出错");
 				rsbp.Set("ErrorCode", (byte)0x02);
 			}
+			rs.Length = ms2.Position();
 		}
 		else
 		{
