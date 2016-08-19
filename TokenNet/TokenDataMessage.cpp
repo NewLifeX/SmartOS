@@ -44,9 +44,11 @@ bool TokenDataMessage::ReadData(const DataStore& ds)
 {
 	ByteArray bs(Size);
 	auto ds2 = (DataStore*)&ds;
-	ds2->Read(Start, bs);
+	if (ds2->Read(Start, bs) != -1)return ReadData(bs);
 
-	return ReadData(bs);
+	// 出错返回false
+	bs.SetLength(0);
+	return false;
 }
 
 // 读取数据

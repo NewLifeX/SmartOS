@@ -66,13 +66,19 @@ int DataStore::Read(uint offset, Buffer& bs)
 
 	uint realOffset = offset - VirAddrBase;
 	// 检查是否越界
-	if(Strict && realOffset + size > Data.Length()) return -1;
+	// if(Strict && realOffset + size > Data.Length()) return -1;
+	// 只要起始位置在区间内都读，数据超长就返回能返回的！
+	if(Strict && realOffset > Data.Length()) return -1;		// 起始地址越界直接返回
 
 	// 执行钩子函数
 	if(!OnHook(realOffset, size, false)) return -1;
 
 	// 从数据区读取数据
-	return bs.Copy(0, Data, realOffset, size);
+	// return bs.Copy(0, Data, realOffset, size);
+	// 取真实长度
+	int maxsize = offset + size > Data.Length() ? Data.Length() : size;
+	bs.SetLength(maxsize);
+	return bs.Copy(0, Data, realOffset, maxsize);
 }
 
 bool DataStore::OnHook(uint offset, uint size, bool write)
@@ -132,11 +138,13 @@ Area::Area()
 	Size	= 0;
 	Hook	= nullptr;
 }
-
+// 参数是读命令里面的偏移和大小
 bool Area::Contain(uint offset, uint size)
 {
 	// 数据操作口只认可完整的当前区域
-	return Offset <= offset && Offset + Size >= offset + size;
+	//return Offset <= offset && Offset + Size >= offset + size;
+	// 只要搭边就算数
+	return offset <= Offset + Size  && offset + size >= Offset;
 }
 
 /****************************** 数据操作接口 ************************************/
