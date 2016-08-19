@@ -514,8 +514,8 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 {
 	if (bs.Length() == 0) return 0;
 
-	TS("Esp8266::OnReceive");
-	debug_printf("Esp::OnRev %d\r\n", bs.Length());
+	//TS("Esp8266::OnReceive");
+	//debug_printf("Esp::OnRev %d\r\n", bs.Length());
 
 	//!!! 分析+IPD数据和命令返回，特别要注意粘包
 	int s = 0;
