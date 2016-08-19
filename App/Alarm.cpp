@@ -56,8 +56,8 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 
 	if (data.Hour > 23 || data.Minutes > 59 || data.Seconds > 59)return false;
 
-	Buffer buf(data.Data, sizeof(data.Data));
-	buf = ms.ReadBytes();
+	Buffer buf2(data.Data, sizeof(data.Data));
+	buf2 = ms.ReadBytes();
 
 	// byte Id = 0xff;
 	// args.Get("Number", Id);				// 1/9
