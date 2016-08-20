@@ -159,7 +159,11 @@ void AP0801::InitClient()
 
 	Client = client;
 	Client->MaxNotActive = 480000;
-	Client->UseLocal();
+
+	// 重启
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	// 重置
+	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
 
 	if(Data && Size > 0)
 	{

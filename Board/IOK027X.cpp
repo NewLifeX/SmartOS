@@ -114,6 +114,10 @@ void IOK027X::InitClient()
 
 	Client = client;
 	Client->MaxNotActive = 480000;
+	// 重启
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	// 重置
+	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
 
 	if (Data && Size > 0)
 	{

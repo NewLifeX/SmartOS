@@ -91,6 +91,11 @@ void PA0903::InitClient()
 
 	Client = client;
 
+	// 重启
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	// 重置
+	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+
 	if (Data && Size > 0)
 	{
 		auto& ds = Client->Store;

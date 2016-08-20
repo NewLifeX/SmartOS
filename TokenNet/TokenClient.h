@@ -86,6 +86,10 @@ public:
 		Register(action, *(InvokeHandler*)&func, target);
 	}
 
+	// 重启，重置
+	static bool InvokeRestStart(void * param, const Pair& args, Stream& result);
+	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
+
 private:
 	bool OnHello(TokenMessage& msg, TokenController* ctrl);
 
@@ -104,17 +108,6 @@ private:
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
 	bool OnInvoke(const String& action, const Pair& args, Stream& result);
-	// 重启，重置
-	static bool InvokeRestStart(void * param, const Pair& args, Stream& result);
-	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
-
-	//配置
-	static bool InvokeConfigSet(void * param, const Pair& args, Stream& result);
-	static bool InvokeConfigGet(void * param, const Pair& args, Stream& result);
-
-	//透传消息
-	static bool InvokeRead(void * param, const Pair& args, Stream& result);
-	static bool InvokeWrite(void * param, const Pair& args, Stream& result);
 
 private:
 	uint	_task;

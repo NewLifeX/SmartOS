@@ -45,14 +45,6 @@ TokenClient::TokenClient()
 	Register("Gateway/Restart", InvokeRestStart, this);
 	// 重置
 	Register("Gateway/Reset", InvokeRestBoot, this);
-	// 透传
-	Register("Proxy/Read", InvokeRead, this);
-	Register("Proxy/Write", InvokeWrite, this);
-	// 设置配置
-	Register("Proxy/SetConfig", InvokeConfigSet, this);
-	// 获取配置
-	Register("Proxy/GetConfig", InvokeConfigGet, this);
-
 }
 
 void TokenClient::Open()
@@ -1033,54 +1025,3 @@ bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
 
 	return true;
 }
-
-bool TokenClient::InvokeWrite(void * param, const Pair& args, Stream& result)
-{
-	ByteArray data;
-
-	//if (!args.Get("id", id)) return false;
-	if (!args.Get("data", data)) return false;
-
-	// 拿到数据，根据ID分发给各个串口
-
-
-	//测试，原样返回结果
-	//result.Write("id");
-	//result.Write(id);
-	//result.Write("data")
-	result.Write(data.Length());
-
-	return true;
-}
-
-bool TokenClient::InvokeRead(void * param, const Pair& args, Stream& result)
-{
-	ByteArray data;
-
-	//if (!args.Get("id", id)) return false;
-	if (!args.Get("data", data)) return false;
-
-	// 拿到数据，根据ID分发给各个串口
-
-
-	//测试，原样返回结果
-	//result.Write("id");
-	//result.Write(id);
-	//result.Write("data")
-	result.Write(data);
-
-	return true;
-}
-
-bool TokenClient::InvokeConfigGet(void * param, const Pair& args, Stream& result)
-{
-	result.Write(true);
-	return true;
-}
-
-bool TokenClient::InvokeConfigSet(void * param, const Pair& args, Stream& result)
-{
-	result.Write(true);
-	return true;
-}
-
