@@ -77,9 +77,16 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 
 bool Alarm::AlarmGet(const Pair& args, Stream& result)
 {
-	// 不知道该如何序列化，暂时不提供
-	BinaryPair bp(result);
-	bp.Set("ErrorCode", (byte)0x01);
+	AlarmConfig cfg;
+	cfg.Load();
+
+	result.Write((byte)ArrayLength(cfg.Data));		// 写入长度
+	for (int i = 0; i < 20; i++)
+	{
+		Buffer bs(&cfg.Data[i].Enable, sizeof(AlarmDataType));
+		result.WriteArray(bs);						// 写入数组
+	}
+
 	return true;
 }
 
@@ -94,7 +101,7 @@ bool Alarm::SetCfg(byte id, AlarmDataType& data)
 
 	cfg.Save();
 	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
-	NextAlarmIds.Clear();	
+	NextAlarmIds.Clear();
 	Start();
 	return true;
 }
@@ -150,7 +157,7 @@ byte Alarm::FindNext(int& nextTime)
 	AlarmConfig cfg;
 	cfg.Load();
 
-	int miniTime = Int_Max;	
+	int miniTime = Int_Max;
 
 	int times[ArrayLength(cfg.Data)];
 	for (int i = 0; i < ArrayLength(cfg.Data); i++)
@@ -201,14 +208,14 @@ void Alarm::AlarmTask()
 		dt.Ms = 0;
 		if (dt == now)
 		{
-		// 执行动作   DoSomething(data);
+			// 执行动作   DoSomething(data);
 			debug_printf("  DoSomething:   ");
-			ByteArray bs((const void*)data.Data,sizeof(data.Data));
+			ByteArray bs((const void*)data.Data, sizeof(data.Data));
 			bs.Show(true);
 		}
 	}
 	NextAlarmIds.Clear();
-	
+
 	// 找到下一个定时器动作的时间
 	FindNext(NextAlarmMs);
 	if (NextAlarmIds.Count() != 0)
@@ -221,5 +228,5 @@ void Alarm::Start()
 {
 	debug_printf("Alarm::Start\r\n");
 	if (!AlarmTaskId)AlarmTaskId = Sys.AddTask(&Alarm::AlarmTask, this, -1, -1, "AlarmTask");
-	Sys.SetTask(AlarmTaskId,true);
+	Sys.SetTask(AlarmTaskId, true);
 }
