@@ -5,6 +5,11 @@
 #include "Net\ITransport.h"
 
 #include "TokenNet\TokenClient.h"
+#include "Device\Port.h"
+
+#define HardwareVerFist		0
+#define HardwareVerAt160712 1
+#define HardwareVerLast		2
 
 // 阿波罗0801/0802
 class AP0802
@@ -21,6 +26,7 @@ public:
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
+	byte HardwareVer;
 
 	AP0802();
 
@@ -32,7 +38,7 @@ public:
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
-	void InitButtons();
+	void InitButtons(InputPort::IOReadHandler press = nullptr);
 	void InitPort();
 
 	// 打开以太网W5500
@@ -47,8 +53,8 @@ public:
 	void InitClient();
 	void InitNet();
 
-	void Restore();
-	void OnLongPress(InputPort* port, bool down);
+	static void Restore();
+	static void OnLongPress(InputPort* port, bool down);
 
 private:
 	void*	Data;

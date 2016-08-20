@@ -15,24 +15,19 @@
 
 AP0802::AP0802()
 {
-	LedPins.Add(PE5);
-	LedPins.Add(PE4);
-	LedPins.Add(PD0);
-	
-	ButtonPins.Add(PE13);
-	ButtonPins.Add(PE14);
-
 	Host	= nullptr;
 	HostAP	= nullptr;
 	Client	= nullptr;
 
 	Data	= nullptr;
-	Size = 0;
+	Size	= 0;
 	// Control 打开情况标识
 	NetMaster	= false;
 	NetBra		= false;
 	EspMaster	= false;
 	EspBra		= false;
+
+	HardwareVer = HardwareVerLast;
 }
 
 void AP0802::Init(ushort code, cstring name, COM message)
@@ -52,6 +47,26 @@ void AP0802::Init(ushort code, cstring name, COM message)
 
 	// Flash最后一块作为配置区
 	Config::Current	= &Config::CreateFlash();
+
+	if (HardwareVer == HardwareVerLast)
+	{
+		LedPins.Add(PE5);
+		LedPins.Add(PE4);
+		LedPins.Add(PD0);
+
+		ButtonPins.Add(PE9);
+		ButtonPins.Add(PE14);
+	}
+
+	if (HardwareVer <= HardwareVerAt160712)
+	{
+		LedPins.Add(PE5);
+		LedPins.Add(PE4);
+		LedPins.Add(PD0);
+
+		ButtonPins.Add(PE13);
+		ButtonPins.Add(PE14);
+	}
 }
 
 void* AP0802::InitData(void* data, int size)
@@ -84,14 +99,23 @@ void AP0802::InitLeds()
 	}
 }
 
-void AP0802::InitButtons()
+void ButtonOnpress(InputPort* port, bool down, void* param)
+{
+	if (port->PressTime > 1000)
+		AP0802::OnLongPress(port, down);
+}
+
+void AP0802::InitButtons(InputPort::IOReadHandler press)
 {
 	for(int i=0; i<ButtonPins.Count(); i++)
 	{
 		auto port	= new InputPort(ButtonPins[i]);
 		port->Mode	= InputPort::Both;
 		port->Invert	= true;
-		//port->Register(OnPress, (void*)i);
+		if(press)
+			port->Register(press, (void*)i);
+		else
+			port->Register(ButtonOnpress, (void*)i);
 		port->Open();
 		Buttons.Add(port);
 	}

@@ -176,7 +176,7 @@ namespace NewLife.Reflection
                 sb.Append("-c");
                 if (cpp) sb.Append(" --cpp11");
                 sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
-                sb.Append(" --multibyte_chars --locale \"chinese\"");
+                // sb.Append(" --multibyte_chars --locale \"chinese\"");
                 if (Tiny) sb.Append(" -DTINY");
             }
             else
