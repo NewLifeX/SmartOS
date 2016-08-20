@@ -32,7 +32,7 @@ TSys::TSys()
 	OnSleep	= nullptr;
 
 	Code	= 0x0000;
-	Ver		= 0x17AE;
+	Ver		= 0x17BC;
 #ifndef TINY
 	Name	= "SmartOS";
 	Company	= "NewLife_Embedded_Team";
