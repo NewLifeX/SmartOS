@@ -199,6 +199,7 @@ bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 	if (config.TryGetValue("baudrate", value))
 	{
 		port.SetBaudRate(value);
+		baudRate = value;
 	}
 
 	cstring const ByteParam[] = { "parity","dataBits","stopBits" };
