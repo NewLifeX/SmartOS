@@ -168,7 +168,7 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 		// port->GetConfig(str);	// 调用端口的函数处理内容
 		// ms.Write(str);
 
-		Dictionary<char *, int> cfg;
+		Dictionary<char*, int> cfg;
 		port->GetConfig(cfg);		// 调用端口的函数处理内容
 
 		if (cfg.Count() < 1)
@@ -178,19 +178,24 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 		}
 
 		// 数据先写进缓冲区ms2
-		MemoryStream ms2;
-		auto& name = cfg.Keys();
-		auto& value = cfg.Values();
-		
+		//MemoryStream ms2;
+		//auto name	= cfg.Keys();
+		//auto value	= cfg.Values();
+
 		// debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
 		String str;
 
 		debug_printf("config:\r\n");
-		for (int i = 0; i < cfg.Count(); i++)
+		/*for (int i = 0; i < cfg.Count(); i++)
 		{
 			debug_printf("%s     %d\r\n",name[i],value[i]);
 			str = str + name[i] + '=' + value[i];
 			if (i < cfg.Count() - 1)str = str + '&';
+		}*/
+		for(int i=0; i<cfg.Count(); i++)
+		{
+			if(i>0) str	+= '&';
+			str	= str + cfg.Keys()[i] + '=' + cfg.Values()[i];
 		}
 		str.Show(true);
 		//ms.Write(str);
@@ -323,7 +328,7 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 			if (str[end + 1] == '&')	// =& 直接忽略
 			{
 				start = end + 1;
-				continue;			
+				continue;
 			}
 			str[end] = '\0';
 			start = end + 1;
@@ -378,7 +383,7 @@ Proxy* ProxyFactory::GetPort(const Pair& args)
 
 	Proxy* port;
 	Proxys.TryGetValue(Name.GetBuffer(), port);
-	
+
 	return port;
 }
 

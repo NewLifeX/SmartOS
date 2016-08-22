@@ -10,9 +10,9 @@ IDictionary::IDictionary(IComparer comparer)
 	_Keys.Comparer	= comparer;
 }
 
-int IDictionary::Count() const { return _Keys.Count(); }
-const IList& IDictionary::Keys()	const { return _Keys; }
-const IList& IDictionary::Values()	const { return _Values; }
+//int IDictionary::Count() const { return _Keys.Count(); }
+//const IList& IDictionary::Keys()	const { return _Keys; }
+//const IList& IDictionary::Values()	const { return _Values; }
 
 // 添加单个元素
 void IDictionary::Add(PKey key, void* value)

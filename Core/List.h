@@ -14,7 +14,7 @@ public:
     IList(IList&& list);
 	virtual ~IList();
 
-	int Count() const;
+	inline int Count()	const { return _Count; }
 
 	// 添加单个元素
     void Add(void* item);

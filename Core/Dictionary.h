@@ -10,9 +10,9 @@ class IDictionary
 public:
     IDictionary(IComparer comparer = nullptr);
 
-	int Count() const;
-	const IList& Keys() const;
-	const IList& Values() const;
+	inline int Count()				const { return _Keys.Count(); }
+	inline const IList& Keys()		const { return _Keys; }
+	inline const IList& Values()	const { return _Values; }
 
 	// 添加单个元素
     void Add(PKey key, PValue value);

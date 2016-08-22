@@ -13,7 +13,7 @@ IList::IList(const IList& list)
 
 	// 如果list的缓冲区是自己的，则拷贝过来
 	// 如果不是自己的，则直接拿过来用
-	if(list._Arr != list.Arr) CheckCapacity(_Count + 1);
+	if(list._Arr != list.Arr) CheckCapacity(list._Count);
 
 	_Count	= list._Count;
 	Comparer	= list.Comparer;
@@ -55,7 +55,7 @@ void IList::Init()
 	Comparer	= nullptr;
 }
 
-int IList::Count() const { return _Count; }
+//int IList::Count() const { return _Count; }
 
 // 添加单个元素
 void IList::Add(void* item)
