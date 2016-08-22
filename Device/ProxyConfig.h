@@ -15,9 +15,10 @@ public:
 	// byte FixedCmd[128];		// 定时任务的命令+数据
 
 	byte TagEnd;
-	
+
 	ProxyConfig(cstring name = nullptr);
 	virtual void Init();
 };
+
 
 #endif

@@ -5,6 +5,7 @@
 #include "Queue.h"
 #include "Power.h"
 #include "Net\ITransport.h"
+// #include "Proxy.h"
 
 #define SERIAL_BAUDRATE 1024000
 
@@ -12,6 +13,7 @@
 class SerialPort : public ITransport, public Power
 {
 private:
+	friend class ComProxy;
 	byte	_index;
 	ushort	_parity;
 	ushort	_dataBits;

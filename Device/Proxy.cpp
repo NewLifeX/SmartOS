@@ -61,7 +61,7 @@ void Proxy::AutoTask()
 	OnAutoTask();
 }
 
-bool Proxy::GetConfig()
+bool Proxy::LoadConfig()
 {
 	ProxyConfig cfg(Name);
 	cfg.Load();
@@ -100,11 +100,30 @@ ComProxy::ComProxy(COM com) :port(com)
 	String name(Name);
 	name.Show(true);
 
-	baudRate = 115200;
+	ProxyConfig cfg(Name);
+	cfg.Load();
+	if (cfg.New)		// 首次运行直接打开拿到默认配置后关闭
+	{
+		port.Open();
+		baudRate = port._baudRate;
 
-	parity = 0x0000;	// USART_Parity_No;
-	dataBits = 0x0000;	// USART_WordLength_8b;
-	stopBits = 0x0000;	// USART_StopBits_1;
+		parity = port._parity;	// USART_Parity_No;
+		dataBits = port._dataBits;	// USART_WordLength_8b;
+		stopBits = port._stopBits;	// USART_StopBits_1;
+		SaveConfig();
+
+		port.Close();
+	}
+	else
+	{
+		LoadConfig();
+	}
+
+	// baudRate = 115200;
+	// 
+	// parity = 0x0000;	// USART_Parity_No;
+	// dataBits = 0x0000;	// USART_WordLength_8b;
+	// stopBits = 0x0000;	// USART_StopBits_1;
 }
 
 bool ComProxy::OnOpen()
@@ -114,6 +133,7 @@ bool ComProxy::OnOpen()
 		port.SetBaudRate(baudRate);
 		port.Set(parity, dataBits, stopBits);
 		port.Register(Dispatch, this);
+		return true;
 	}
 	return false;
 }
@@ -145,12 +165,14 @@ bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 		}
 	}
 	if (haveChang)port.Set(parity,  dataBits,  stopBits);
+	SaveConfig();
 
 	return true;
 }
 
 bool ComProxy::GetConfig(Dictionary<cstring, int>& config)
 {
+	LoadConfig();
 	config.Add("baudrate",baudRate);
 
 	config.Add("parity",  parity);

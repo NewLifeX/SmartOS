@@ -4,7 +4,7 @@
 
 ProxyConfig::ProxyConfig(cstring name)
 {
-	_Name = "TokenCf";
+	_Name = "ProCf";
 	if (name)_Name = name;
 	_Start = &Length;
 	_End = &TagEnd;
@@ -13,8 +13,10 @@ ProxyConfig::ProxyConfig(cstring name)
 
 void ProxyConfig::Init()
 {
-	AutoStart	= false;		// 自动启动
-	CacheSize	= 256;			// 缓存大小
+	AutoStart = false;		// 自动启动
+	CacheSize = 256;			// 缓存大小
 	EnableStamp = false;		// 时间戳开关
 	Buffer(PortCfg, sizeof(PortCfg)).Clear();
 }
+
+

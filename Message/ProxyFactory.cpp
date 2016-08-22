@@ -64,8 +64,7 @@ bool ProxyFactory::PortOpen(const Pair& args, Stream& result)
 			String name(port->Name);
 			name.Show();
 			debug_printf("  OK\r\n");
-
-			rsbp.Set("OK", (byte)0x01);
+			result.Write((byte)1);
 		}
 		else
 		{
@@ -289,7 +288,7 @@ bool ProxyFactory::AutoStart()
 	auto ports = Proxys.Values();
 	for (int i = 0; i < ports.Count(); i++)
 	{
-		ports[i]->GetConfig();
+		ports[i]->LoadConfig();
 		if (ports[i]->AutoStart)ports[i]->Open();
 	}
 	return true;

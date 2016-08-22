@@ -30,7 +30,7 @@ public:
 	bool Upload(Buffer& data);
 
 	void AutoTask();				// 自动处理任务
-	bool GetConfig();				// 从配置区内拿数据
+	bool LoadConfig();				// 从配置区内拿数据
 	void SaveConfig();				// 保存配置信息
 
 private:
