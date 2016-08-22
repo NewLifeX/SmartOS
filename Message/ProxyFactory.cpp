@@ -179,8 +179,8 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 
 		// 数据先写进缓冲区ms2
 		MemoryStream ms2;
-		auto name = cfg.Keys();
-		auto value = cfg.Values();
+		auto& name = cfg.Keys();
+		auto& value = cfg.Values();
 		
 		// debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
 		String str;
