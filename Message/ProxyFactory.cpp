@@ -227,6 +227,7 @@ bool ProxyFactory::SetConfig(const Pair& args, Stream& result)
 			String str2;
 			port->SetConfig(config, str2);	// 调用端口的函数处理内容
 			ms.Write(str2);
+			result.Write((byte)1);
 		}
 		else
 		{
@@ -298,6 +299,8 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 {
 	int start = 0;
 	int end = 0;
+	debug_printf("GetDic data: ");
+	str.Show(true);
 
 	char* name;
 	char* data;
@@ -309,16 +312,27 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 		end = str.IndexOf('=', start);					// 找到 = 表示一个参数名的结束
 		if (end > start && end < str.Length())	// 需要限制很多
 		{
-			cstring name = str.GetBuffer() + start;		// 拿到 name
+			name = (char*)str.GetBuffer() + start;		// 拿到 name
+			if (str[end + 1] == '&')	// =& 直接忽略
+			{
+				start = end + 1;
+				continue;			
+			}
 			str[end] = '\0';
 			start = end + 1;
 		}
 		else
 		{
 			if (!end)									// 没有 = 表示没有参数名了
+			{
+				debug_printf("dic Count = %d\r\n",dic.Count());
 				return false;
+			}
 			else
+			{
+				debug_printf("dic Count = %d\r\n", dic.Count());
 				return true;
+			}
 		}
 
 		end = str.IndexOf('&', start);					// 找到 & 表示一个参数的结束
@@ -328,11 +342,12 @@ bool ProxyFactory::GetDic(String& str, Dictionary<cstring, int>& dic)
 			str[end] = '\0';
 		if (end > start)
 		{
-			cstring data = str.GetBuffer() + start;		// 拿到 data
+			data = (char*)str.GetBuffer() + start;		// 拿到 data
 			start = end + 1;
 		}
-
-		dic.Add(name, String(data).ToInt());		// Dictionary<cstring, cstring> 无法实例化  不知道哪出问题了
+		int value = String(data).ToInt();
+		dic.Add(name, value);// String(data).ToInt());		// Dictionary<cstring, cstring> 无法实例化  不知道哪出问题了
+		debug_printf("%s\t\t%d\r\n", name, value);
 	}
 }
 
