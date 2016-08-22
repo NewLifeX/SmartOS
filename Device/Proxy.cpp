@@ -31,7 +31,6 @@ bool Proxy::Close()
 
 bool Proxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 {
-
 	int value;
 
 	cstring const ByteParam[] = { "cache","buffersize" };
@@ -65,14 +64,6 @@ bool Proxy::GetConfig(Dictionary<char *, int>& config)
 {
 	LoadConfig();
 
-	// cstring const str[] = { "cache" ,"buffersize","auto","timestamp" };
-	// 
-	// config.Add(str[0], CacheSize);
-	// config.Add(str[1], BufferSize);
-	// 
-	// config.Add(str[2], AutoStart);
-	// config.Add(str[3], EnableStamp);
-
 	config.Add("cache", CacheSize);
 	config.Add("buffersize", BufferSize);
 
@@ -80,7 +71,6 @@ bool Proxy::GetConfig(Dictionary<char *, int>& config)
 	config.Add("timestamp", EnableStamp);
 
 	// debug_printf("基础配置条数%d\r\n",config.Count());
-
 	OnGetConfig(config);
 
 	debug_printf("一共%d跳配置",config.Count());
@@ -234,13 +224,6 @@ bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 
 bool ComProxy::OnGetConfig(Dictionary<char *, int>& config)
 {
-	// char * const str[] = {"baudrate","parity" ,"dataBits" ,"stopBits" };
-	// config.Add(str[0],baudRate);
-	// 
-	// config.Add(str[1], parity);
-	// config.Add(str[2], dataBits);
-	// config.Add(str[3], stopBits);
-
 	config.Add("baudrate", baudRate);
 
 	config.Add("parity", parity);
@@ -256,6 +239,7 @@ int ComProxy::Write(Buffer& data)
 	return data.Length();
 	// return true;
 }
+
 // 串口没有WriteRead函数
 int ComProxy::Read(Buffer& data, Buffer& input)
 {
