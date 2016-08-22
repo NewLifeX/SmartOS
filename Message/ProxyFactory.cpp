@@ -120,7 +120,8 @@ bool ProxyFactory::Write(const Pair& args, Stream& result)
 		debug_printf("Write len: %d  data:",bs.Length());
 		bs.Show(true);
 
-		port->Write(bs);
+		int len = port->Write(bs);
+		result.Write(len);
 	}
 
 	return true;

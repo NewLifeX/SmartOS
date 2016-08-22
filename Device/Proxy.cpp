@@ -163,7 +163,8 @@ bool ComProxy::GetConfig(Dictionary<cstring, int>& config)
 int ComProxy::Write(Buffer& data)
 {
 	port.Write(data);
-	return true;
+	return data.Length();
+	// return true;
 }
 // 串口没有WriteRead函数
 int ComProxy::Read(Buffer& data, Buffer& input)
