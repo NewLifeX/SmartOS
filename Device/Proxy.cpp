@@ -2,12 +2,11 @@
 #include "Message/ProxyFactory.h"
 #include "Message/BinaryPair.h"
 
-
 Proxy::Proxy()
 {
 	Cache		= nullptr;
 	CacheSize	= 10;
-	BufferSize = 256;
+	BufferSize	= 256;
 	TimeStamp	= 0;
 	EnableStamp	= false;
 	UploadTaskId= 0;
@@ -16,8 +15,8 @@ Proxy::Proxy()
 
 bool Proxy::Open()
 {
-	CacheSize = 256;
-	if (!Cache)Cache = new MemoryStream(CacheSize);
+	LoadConfig();
+	if (!Cache)Cache = new MemoryStream(BufferSize);
 	OnOpen();
 	return true;
 }
@@ -167,13 +166,10 @@ ComProxy::ComProxy(COM com) :port(com)
 		SaveConfig();
 		port.Close();
 	}
-	else
-	{
-		LoadConfig();
-	}
-
-	// baudRate = 115200;
-	// 
+	// else
+	// {
+	// 	LoadConfig();
+	// }
 	// parity = 0x0000;	// USART_Parity_No;
 	// dataBits = 0x0000;	// USART_WordLength_8b;
 	// stopBits = 0x0000;	// USART_StopBits_1;
@@ -237,7 +233,6 @@ int ComProxy::Write(Buffer& data)
 {
 	port.Write(data);
 	return data.Length();
-	// return true;
 }
 
 // 串口没有WriteRead函数
