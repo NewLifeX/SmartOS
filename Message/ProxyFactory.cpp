@@ -168,8 +168,14 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 		// port->GetConfig(str);	// 调用端口的函数处理内容
 		// ms.Write(str);
 
-		Dictionary<cstring, int> cfg;
+		Dictionary<char *, int> cfg;
 		port->GetConfig(cfg);		// 调用端口的函数处理内容
+
+		if (cfg.Count() < 1)
+		{
+			result.Write((byte)0);
+			return false;
+		}
 
 		// 数据先写进缓冲区ms2
 		MemoryStream ms2;
@@ -179,8 +185,10 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 		// debug_printf("cfg count : %d value count : %d\t\t", name.Count(), value.Count());
 		String str;
 
+		debug_printf("config:\r\n");
 		for (int i = 0; i < cfg.Count(); i++)
 		{
+			debug_printf("%s     %d\r\n",name[i],value[i]);
 			str = str + name[i] + '=' + value[i];
 			if (i < cfg.Count() - 1)str = str + '&';
 		}

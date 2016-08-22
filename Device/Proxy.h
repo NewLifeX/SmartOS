@@ -12,18 +12,19 @@ public:
 	MemoryStream* Cache;	// 缓存空间
 	uint	UploadTaskId;	// 上传任务的ID
 	uint	AutoTaskId;		// 自动任务ID，可以是定时Write数据
-
-	int		CacheSize;		// 缓存大小
-	bool	EnableStamp;	// 时间戳开关
 	int		TimeStamp;		// 时间戳
+
+	int		CacheSize;		// 缓存数据包个数
+	int		BufferSize;		// 缓冲区大小
+	bool	EnableStamp;	// 时间戳开关
 	bool	AutoStart;		// 自动启动
 
 	Proxy();
 	bool Open();
 	bool Close();
 
-	virtual bool SetConfig(Dictionary<cstring, int>& config, String& str) = 0;
-	virtual bool GetConfig(Dictionary<cstring, int>& config) = 0;
+	bool SetConfig(Dictionary<cstring, int>& config, String& str);
+	bool GetConfig(Dictionary<char *, int>& config);
 	virtual int	 Write(Buffer& data) = 0;
 	virtual int  Read(Buffer& data, Buffer& input) = 0;
 	void UploadTask();
@@ -37,6 +38,10 @@ private:
 	virtual bool OnOpen() = 0;
 	virtual bool OnClose() = 0;
 	virtual bool OnAutoTask() { return true; };	
+
+	virtual bool OnSetConfig(Dictionary<cstring, int>& config, String& str) = 0;
+	virtual bool OnGetConfig(Dictionary<char *, int>& config) = 0;
+
 	virtual bool OnGetConfig(Stream& cfg) { return true; };
 	virtual bool OnSetConfig(Stream& cfg) { return true; };
 };
@@ -53,8 +58,8 @@ public:
 	ushort	stopBits;
 	int		baudRate;
 
-	virtual bool SetConfig(Dictionary<cstring, int>& config, String& str) override;
-	virtual bool GetConfig(Dictionary<cstring, int>& config) override;
+	virtual bool OnSetConfig(Dictionary<cstring, int>& config, String& str) override;
+	virtual bool OnGetConfig(Dictionary<char*, int>& config) override;
 
 	virtual int Write(Buffer& data) override;
 	virtual int Read(Buffer& data, Buffer& input) override;

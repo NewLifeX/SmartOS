@@ -6,7 +6,8 @@
 Proxy::Proxy()
 {
 	Cache		= nullptr;
-	CacheSize	= 0;
+	CacheSize	= 10;
+	BufferSize = 256;
 	TimeStamp	= 0;
 	EnableStamp	= false;
 	UploadTaskId= 0;
@@ -25,6 +26,65 @@ bool Proxy::Close()
 {
 	OnClose();
 	delete Cache;
+	return true;
+}
+
+bool Proxy::SetConfig(Dictionary<cstring, int>& config, String& str)
+{
+
+	int value;
+
+	cstring const ByteParam[] = { "cache","buffersize" };
+	int*	ParamP[] = { &CacheSize, &BufferSize };
+	for (int i = 0; i < ArrayLength(ByteParam); i++)
+	{
+		value = 0;
+		if (config.TryGetValue(ByteParam[i], value))
+		{
+			*(ParamP[i]) = value;
+		}
+	}
+
+	cstring const ByteParam2[] = { "auto","timestamp" };
+	bool*	ParamP2[] = { &AutoStart, &EnableStamp };
+	for (int i = 0; i < ArrayLength(ByteParam2); i++)
+	{
+		value = 0;
+		if (config.TryGetValue(ByteParam2[i], value))
+		{
+			*(ParamP2[i]) = value;
+		}
+	}
+
+	OnSetConfig(config, str);
+	SaveConfig();
+	return true;
+}
+
+bool Proxy::GetConfig(Dictionary<char *, int>& config)
+{
+	LoadConfig();
+
+	// cstring const str[] = { "cache" ,"buffersize","auto","timestamp" };
+	// 
+	// config.Add(str[0], CacheSize);
+	// config.Add(str[1], BufferSize);
+	// 
+	// config.Add(str[2], AutoStart);
+	// config.Add(str[3], EnableStamp);
+
+	config.Add("cache", CacheSize);
+	config.Add("buffersize", BufferSize);
+
+	config.Add("auto", AutoStart);
+	config.Add("timestamp", EnableStamp);
+
+	// debug_printf("基础配置条数%d\r\n",config.Count());
+
+	OnGetConfig(config);
+
+	debug_printf("一共%d跳配置",config.Count());
+
 	return true;
 }
 
@@ -67,6 +127,7 @@ bool Proxy::LoadConfig()
 	cfg.Load();
 
 	CacheSize = cfg.CacheSize;
+	BufferSize = cfg.BufferSize;
 	EnableStamp = cfg.EnableStamp;
 	AutoStart = cfg.AutoStart;
 
@@ -83,6 +144,7 @@ void Proxy::SaveConfig()
 	cfg.CacheSize	= CacheSize;
 	cfg.EnableStamp	= EnableStamp;
 	cfg.AutoStart	= AutoStart;
+	cfg.BufferSize  = BufferSize;
 
 	Stream st(cfg.PortCfg, sizeof(cfg.PortCfg));
 	OnSetConfig(st);
@@ -104,14 +166,15 @@ ComProxy::ComProxy(COM com) :port(com)
 	cfg.Load();
 	if (cfg.New)		// 首次运行直接打开拿到默认配置后关闭
 	{
+		debug_printf("初次使用，打开端口获取默认配置:");
 		port.Open();
 		baudRate = port._baudRate;
 
 		parity = port._parity;	// USART_Parity_No;
 		dataBits = port._dataBits;	// USART_WordLength_8b;
 		stopBits = port._stopBits;	// USART_StopBits_1;
-		SaveConfig();
 
+		SaveConfig();
 		port.Close();
 	}
 	else
@@ -144,7 +207,7 @@ bool ComProxy::OnClose()
 	return true;
 }
 
-bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
+bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 {
 	int value;
 	if (config.TryGetValue("baudrate", value))
@@ -152,7 +215,7 @@ bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 		port.SetBaudRate(value);
 	}
 
-	cstring ByteParam[] = { "parity","dataBits","stopBits" };
+	cstring const ByteParam[] = { "parity","dataBits","stopBits" };
 	ushort*	ParamP[] = {&parity, &dataBits, &stopBits};
 	bool haveChang = false;
 	for (int i = 0; i < ArrayLength(ByteParam); i++)
@@ -165,17 +228,22 @@ bool ComProxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 		}
 	}
 	if (haveChang)port.Set(parity,  dataBits,  stopBits);
-	SaveConfig();
-
+	// SaveConfig();
 	return true;
 }
 
-bool ComProxy::GetConfig(Dictionary<cstring, int>& config)
+bool ComProxy::OnGetConfig(Dictionary<char *, int>& config)
 {
-	LoadConfig();
-	config.Add("baudrate",baudRate);
+	// char * const str[] = {"baudrate","parity" ,"dataBits" ,"stopBits" };
+	// config.Add(str[0],baudRate);
+	// 
+	// config.Add(str[1], parity);
+	// config.Add(str[2], dataBits);
+	// config.Add(str[3], stopBits);
 
-	config.Add("parity",  parity);
+	config.Add("baudrate", baudRate);
+
+	config.Add("parity", parity);
 	config.Add("dataBits", dataBits);
 	config.Add("stopBits", stopBits);
 
