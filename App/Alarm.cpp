@@ -294,7 +294,7 @@ void Alarm::Start()
 	Sys.SetTask(AlarmTaskId, true, 0);
 }
 
-void Alarm::Register(byte type, AlarmActuator* act)
+void Alarm::Register(byte type, AlarmActuator act)
 {
 	dic.Add((int)type, act);
 }

@@ -8,14 +8,10 @@
 #include "Message\BinaryPair.h"
 #include "Message\DataStore.h"
 
-class ByteStruct2	// 位域基类
-{
-public:
-	void Init(byte data = 0) { *(byte*)this = data; }
-	byte ToByte() { return *(byte*)this; }
-};
+// 执行定时器的函数类型
+typedef void(*AlarmActuator)(byte type, Buffer& bs);
 
-typedef struct : ByteStruct2
+typedef struct
 {
 	byte Sunday		: 1;
 	byte Monday		: 1;
@@ -24,7 +20,10 @@ typedef struct : ByteStruct2
 	byte Thursday	: 1;
 	byte Friday		: 1;
 	byte Saturday	: 1;
-	byte Repeat		: 1;
+	byte Repeat : 1;
+public:
+	void Init(byte data = 0) { *(byte*)this = data; }
+	byte ToByte() { return *(byte*)this; }
 }AlarmType;
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
@@ -43,13 +42,6 @@ typedef struct
 }AlarmDataType;
 #pragma pack(pop)	// 恢复对齐状态
 
-class AlarmActuator
-{
-public:
-	static DataStore* store;
-	virtual void Actuator(Buffer& bs) = 0;
-};
-
 class Alarm
 {
 public:
@@ -64,10 +56,10 @@ public:
 	bool GetCfg(byte id, AlarmDataType& data);
 
 	void Start();
-	void Register(byte type, AlarmActuator* act);
+	void Register(byte type, AlarmActuator act);
 
 private:
-	Dictionary<int, AlarmActuator*> dic;// AlarmDataType.Data[0] 表示动作类型，由此字典进行匹配动作执行器
+	Dictionary<int, AlarmActuator> dic;// AlarmDataType.Data[1] 表示动作类型，由此字典进行匹配动作执行器
 
 	uint AlarmTaskId;
 	List<int>NextAlarmIds;		// 下次运行的编号，允许多组定时器定时时间相同
