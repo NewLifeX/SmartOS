@@ -89,7 +89,7 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 
 	byte resid = SetCfg(Id, alarm);
 	result.Write((byte)resid);
-	if(resid)return true;
+	if (resid)return true;
 	return false;
 }
 
@@ -123,7 +123,7 @@ byte Alarm::SetCfg(byte id, AlarmDataType& data)
 		{
 			if (!cfg.Data[i].Enable)
 			{
-				id = i+1;
+				id = i + 1;
 				break;
 			}
 		}
@@ -131,7 +131,7 @@ byte Alarm::SetCfg(byte id, AlarmDataType& data)
 	if (!id)return 0;	// 查找失败
 
 	Buffer bf(&data.Number, sizeof(AlarmDataType));
-	Buffer bf2(&cfg.Data[id-1].Number, sizeof(AlarmDataType));
+	Buffer bf2(&cfg.Data[id - 1].Number, sizeof(AlarmDataType));
 	bf2 = bf;
 
 	for (int i = 0; i < 20; i++)
@@ -265,10 +265,10 @@ void Alarm::AlarmTask()
 				bs.Show(true);
 
 				auto type = (int)data.Data[1];
-				AlarmActuator* acttor;
+				AlarmActuator acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
-					acttor->Actuator(bs);
+					acttor(NextAlarmId, bs);
 				}
 			}
 			else

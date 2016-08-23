@@ -32,12 +32,12 @@ public:
 #pragma pack(1)
 typedef struct
 {
-	byte Number;
-	byte Enable;
-	AlarmType Type;
-	byte Hour;
-	byte Minutes;
-	byte Seconds;
+	byte Number;	// 闹钟编号
+	byte Enable;	// 是否有效
+	AlarmType Type;	// week相关
+	byte Hour;		// 时
+	byte Minutes;	// 分
+	byte Seconds;	// 秒
 	byte Data[11];	// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
 }AlarmDataType;
 #pragma pack(pop)	// 恢复对齐状态
@@ -51,22 +51,25 @@ public:
 	bool AlarmSet(const Pair& args, Stream& result);
 	/*  注册给 TokenClient 名称 Policy/AlarmGet  */
 	bool AlarmGet(const Pair& args, Stream& result);
-
+	// Config
 	byte SetCfg(byte id, AlarmDataType& data);
 	bool GetCfg(byte id, AlarmDataType& data);
 
 	void Start();
+	// 注册执行动作的函数
 	void Register(byte type, AlarmActuator act);
 
 private:
 	Dictionary<int, AlarmActuator> dic;// AlarmDataType.Data[1] 表示动作类型，由此字典进行匹配动作执行器
 
-	uint AlarmTaskId;
+	uint AlarmTaskId;			// 闹钟TaskId
 	List<int>NextAlarmIds;		// 下次运行的编号，允许多组定时器定时时间相同
 	int NextAlarmMs;			// 下次闹钟时间
-
+	// Task
 	void AlarmTask();
+	// 找到最近的闹钟时间的id以及时间
 	byte FindNext(int& nextTime);
+	// 计算下次闹钟时间
 	int CalcNextTime(AlarmDataType& data);
 };
 
