@@ -55,6 +55,10 @@ public:
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);
 
+	static AP0801* Current;
+
+
+
 private:
 	void*	Data;
 	int		Size;
