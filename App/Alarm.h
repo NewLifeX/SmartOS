@@ -33,6 +33,7 @@ typedef struct : ByteStruct2
 #pragma pack(1)
 typedef struct
 {
+	byte Number;
 	byte Enable;
 	AlarmType Type;
 	byte Hour;
@@ -59,7 +60,7 @@ public:
 	/*  注册给 TokenClient 名称 Policy/AlarmGet  */
 	bool AlarmGet(const Pair& args, Stream& result);
 
-	bool SetCfg(byte id, AlarmDataType& data);
+	byte SetCfg(byte id, AlarmDataType& data);
 	bool GetCfg(byte id, AlarmDataType& data);
 
 	void Start();

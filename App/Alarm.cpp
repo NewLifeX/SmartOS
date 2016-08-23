@@ -24,6 +24,10 @@ AlarmConfig::AlarmConfig()
 void AlarmConfig::Init()
 {
 	Buffer(Data, sizeof(Data)).Clear();
+	for (int i = 0; i < ArrayLength(Data); i++)
+	{
+		Data[i].Number = i + 1;
+	}
 }
 
 /************************************************/
@@ -36,8 +40,8 @@ Alarm::Alarm()
 bool Alarm::AlarmSet(const Pair& args, Stream& result)
 {
 	debug_printf("AlarmSet\r\n");
-	AlarmDataType data;
-	data.Enable = false;
+	AlarmDataType alarm;
+	alarm.Enable = false;
 
 	Buffer buf = args.Get("alarm");
 
@@ -57,71 +61,89 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 		result.Write((byte)0);
 		return false;
 	}
+	alarm.Number = Id;
 
-	data.Enable = ms.ReadByte();
+	alarm.Enable = ms.ReadByte();
 
 	byte type = ms.ReadByte();
-	data.Type.Init(type);
+	alarm.Type.Init(type);
 
-	data.Hour = ms.ReadByte();
-	data.Minutes = ms.ReadByte();
-	data.Seconds = ms.ReadByte();
+	alarm.Hour = ms.ReadByte();
+	alarm.Minutes = ms.ReadByte();
+	alarm.Seconds = ms.ReadByte();
 
-	if (data.Hour > 23 || data.Minutes > 59 || data.Seconds > 59)return false;
+	if (alarm.Hour > 23 || alarm.Minutes > 59 || alarm.Seconds > 59)return false;
 
 	// Buffer buf2(data.Data, sizeof(data.Data));
 	// auto len = ms.ReadArray(buf2);
 
-	Buffer buf2(data.Data, sizeof(data.Data));
-	Buffer buf3(buf.GetBuffer() + ms.Position() , buf.Length() - ms.Position());
+	Buffer buf2(alarm.Data, sizeof(alarm.Data));
+	Buffer buf3(buf.GetBuffer() + ms.Position(), buf.Length() - ms.Position());
 	buf2 = buf3;
 
-	debug_printf("%d/%d/%d执行bs：",data.Hour,data.Minutes,data.Seconds);
+	buf.Show(true);
+	buf3.Show(true);
 	buf2.Show(true);
+	debug_printf("%d  %d  %d 执行 bs：", alarm.Hour, alarm.Minutes, alarm.Seconds);
 
-	if (SetCfg(Id, data))
-	{
-		result.Write((byte)1);
-		return true;
-	}
-	else
-	{
-		result.Write((byte)0);
-		return false;
-	}
+
+	byte resid = SetCfg(Id, alarm);
+	result.Write((byte)resid);
+	if(resid)return true;
+	return false;
 }
 
 bool Alarm::AlarmGet(const Pair& args, Stream& result)
 {
-	debug_printf("AlarmGet\r\n");
+	debug_printf("AlarmGet");
 	AlarmConfig cfg;
 	cfg.Load();
-
-	result.Write((byte)ArrayLength(cfg.Data));		// 写入长度
-	for (AlarmDataType &x : cfg.Data)
+	debug_printf("data :\r\n");
+	result.Write((byte)20);		// 写入长度
+	for (int i = 0; i < 20; i++)
 	{
-		Buffer bs(&x.Enable, sizeof(AlarmDataType));
+		Buffer bs(&cfg.Data[i].Number, sizeof(AlarmDataType));
+		bs.Show(true);
 		result.WriteArray(bs);
 	}
-	Buffer(result.GetBuffer(), result.Position()).Show(true);
 
+	Buffer(result.GetBuffer(), result.Position()).Show(true);
+	debug_printf("\r\n");
 	return true;
 }
 
-bool Alarm::SetCfg(byte id, AlarmDataType& data)
+byte Alarm::SetCfg(byte id, AlarmDataType& data)
 {
 	AlarmConfig cfg;
 	cfg.Load();
 
-	Buffer bf(&data, sizeof(AlarmDataType));
-	Buffer bf2(&cfg.Data[id].Enable, sizeof(AlarmDataType));
+	if (!id)	// 找到空闲位置
+	{
+		for (int i = 0; i < 20; i++)
+		{
+			if (!cfg.Data[i].Enable)
+			{
+				id = i+1;
+				break;
+			}
+		}
+	}
+	if (!id)return 0;	// 查找失败
+
+	Buffer bf(&data.Number, sizeof(AlarmDataType));
+	Buffer bf2(&cfg.Data[id-1].Number, sizeof(AlarmDataType));
 	bf2 = bf;
+
+	for (int i = 0; i < 20; i++)
+	{
+		cfg.Data[i].Number = i + 1;		// 避免 id 出错
+	}
 
 	cfg.Save();
 	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
 	NextAlarmIds.Clear();
 	Start();
-	return true;
+	return id;
 }
 
 bool Alarm::GetCfg(byte id, AlarmDataType& data)
@@ -129,8 +151,8 @@ bool Alarm::GetCfg(byte id, AlarmDataType& data)
 	AlarmConfig cfg;
 	cfg.Load();
 
-	Buffer bf(&data, sizeof(AlarmDataType));
-	Buffer bf2(&cfg.Data[id].Enable, sizeof(AlarmDataType));
+	Buffer bf(&data.Number, sizeof(AlarmDataType));
+	Buffer bf2(&cfg.Data[id].Number, sizeof(AlarmDataType));
 	bf = bf2;
 	return true;
 }
@@ -196,11 +218,11 @@ byte Alarm::FindNext(int& nextTime)
 			if (times[i] == miniTime)
 			{
 				NextAlarmIds.Add(i);
-				debug_printf("添加下一次闹钟的id %d\r\n",i);
+				debug_printf("添加下一次闹钟的id %d\r\n", i);
 			}
 		}
 		nextTime = miniTime;
-		debug_printf("下一个闹钟时间是%dMs后\r\n",nextTime);
+		debug_printf("下一个闹钟时间是%dMs后\r\n", nextTime);
 	}
 	else
 	{
@@ -269,7 +291,7 @@ void Alarm::Start()
 {
 	debug_printf("Alarm::Start\r\n");
 	if (!AlarmTaskId)AlarmTaskId = Sys.AddTask(&Alarm::AlarmTask, this, -1, -1, "AlarmTask");
-	Sys.SetTask(AlarmTaskId, true);
+	Sys.SetTask(AlarmTaskId, true, 0);
 }
 
 void Alarm::Register(byte type, AlarmActuator* act)
