@@ -11,6 +11,7 @@
 
 #include "TokenNet\TokenController.h"
 
+AP0801* AP0801::Current = nullptr;
 
 AP0801::AP0801()
 {
@@ -31,7 +32,8 @@ AP0801::AP0801()
 	NetMaster  = false;
 	NetBra	   = false;
 	EspMaster  = false;
-	EspBra	   = false;
+	EspBra		= false;
+	Current		= this;
 }
 
 void AP0801::Init(ushort code, cstring name, COM message)
@@ -389,6 +391,28 @@ void  AP0801::InitProxy()
 	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
 }
 
+void AlarmWrite(byte type, Buffer& bs)
+{
+	// if (!type)return;
+	Stream ms(bs);
+
+	auto start = ms.ReadByte();
+	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
+	
+	auto client = AP0801::Current->Client;
+	client->Store.Write(start, bs);
+}
+
+void AlarmReport(byte type, Buffer&bs)
+{
+	Stream ms(bs);
+	auto start = ms.ReadByte();
+	auto size = ms.ReadByte();
+	auto client = AP0801::Current->Client;
+
+	client->ReportAsync(start, size);
+}
+
 void AP0801::InitAlarm()
 {
 	if (!Client)return;
@@ -396,6 +420,9 @@ void AP0801::InitAlarm()
 	if(!AlarmObj)AlarmObj = new Alarm();
 	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
+
+	AlarmObj->Register(5, AlarmWrite);
+	AlarmObj->Register(6, AlarmWrite);
 }
 
 /******************************** 2401 ********************************/

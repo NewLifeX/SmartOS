@@ -255,19 +255,18 @@ void Alarm::AlarmTask()
 		dt.Ms = 0;
 		if (dt == now)
 		{
-			// 执行动作   DoSomething(data);
-			debug_printf("  DoSomething:   ");
 			// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
 			byte len = data.Data[0];
 			if (len <= 10)
 			{
-				ByteArray bs((const void*)data.Data[1], len);
-				bs.Show(true);
-
 				auto type = (int)data.Data[1];
 				AlarmActuator acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
+					ByteArray bs((const void*)data.Data[2], len - 1);
+					// 执行动作   DoSomething(data);
+					debug_printf("  DoSomething type %d ",type);
+					bs.Show(true);
 					acttor(NextAlarmId, bs);
 				}
 			}
