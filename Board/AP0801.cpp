@@ -250,7 +250,8 @@ void AP0801::OpenClient(ISocketHost& host)
 		if (!Client->Opened)
 		{
 			Client->Open();
-			ProxyFac->AutoStart();
+			if(ProxyFac)ProxyFac->AutoStart();
+			if(AlarmObj)AlarmObj->Start();
 		}
 		else
 			Client->AttachControls();
