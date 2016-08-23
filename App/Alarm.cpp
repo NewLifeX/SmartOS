@@ -59,19 +59,6 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	Buffer buf2(data.Data, sizeof(data.Data));
 	buf2 = ms.ReadBytes();
 
-	// byte Id = 0xff;
-	// args.Get("Number", Id);				// 1/9
-	// if (Id > 20)return false;
-	// args.Get("Enable",data.Enable);		// 1/9
-	// byte type;
-	// args.Get("DayOfWeek",type);			// 1/12
-	// data.Type.Init(type);
-	// args.Get("Hour", data.Hour);		// 1/7
-	// args.Get("Minute", data.Minutes);	// 1/9
-	// args.Get("Second", data.Seconds);	// 1/9
-	// Buffer buf(data.Data, sizeof(data.Data));
-	// args.Get("Data",buf );				// 11/17
-
 	return SetCfg(Id, data);
 }
 
@@ -81,10 +68,10 @@ bool Alarm::AlarmGet(const Pair& args, Stream& result)
 	cfg.Load();
 
 	result.Write((byte)ArrayLength(cfg.Data));		// 写入长度
-	for (int i = 0; i < 20; i++)
+	for (AlarmDataType &x : cfg.Data)
 	{
-		Buffer bs(&cfg.Data[i].Enable, sizeof(AlarmDataType));
-		result.WriteArray(bs);						// 写入数组
+		Buffer bs(&x.Enable, sizeof(AlarmDataType));
+		result.WriteArray(bs);
 	}
 
 	return true;
@@ -158,6 +145,7 @@ byte Alarm::FindNext(int& nextTime)
 	cfg.Load();
 
 	int miniTime = Int_Max;
+	int tomorrowTime = ToTomorrow();
 
 	int times[ArrayLength(cfg.Data)];
 	for (int i = 0; i < ArrayLength(cfg.Data); i++)
@@ -182,7 +170,8 @@ byte Alarm::FindNext(int& nextTime)
 	else
 	{
 		// 如果最小值无效   直接明早再来算一次
-		nextTime = ToTomorrow();
+		// nextTime = ToTomorrow();
+		nextTime = tomorrowTime;
 		NextAlarmIds.Clear();
 	}
 

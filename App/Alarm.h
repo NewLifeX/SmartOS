@@ -41,6 +41,12 @@ typedef struct
 }AlarmDataType;
 #pragma pack(pop)	// 恢复对齐状态
 
+class AlarmActuator
+{
+public:
+	virtual void Actuator(Buffer bs) = 0;
+};
+
 class Alarm
 {
 public:
@@ -66,13 +72,5 @@ private:
 	int CalcNextTime(AlarmDataType& data);
 };
 
-// class AlarmActivity
-// {
-// public:
-// 	DataStore* store;
-// 
-// 
-// 
-// };
 
 #endif 
