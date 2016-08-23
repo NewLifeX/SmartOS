@@ -263,7 +263,8 @@ void Alarm::AlarmTask()
 				AlarmActuator acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
-					ByteArray bs((const void*)data.Data[2], len - 1);
+					// ByteArray bs((const void*)data.Data[2], len - 1);
+					Buffer bs(&data.Data[2], len - 2);
 					// 执行动作   DoSomething(data);
 					debug_printf("  DoSomething type %d ",type);
 					bs.Show(true);
