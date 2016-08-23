@@ -1,4 +1,4 @@
-#include "Alarm.h"
+ï»¿#include "Alarm.h"
 
 #define Int_Max  2147483647
 
@@ -44,7 +44,7 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	Stream ms(buf);
 	if (buf.Length() < 7)
 	{
-		debug_printf("Êı¾İÓĞÎó\r\n");
+		debug_printf("æ•°æ®æœ‰è¯¯\r\n");
 		result.Write((byte)0);
 		return false;
 	}
@@ -53,7 +53,7 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	Id = ms.ReadByte();
 	if (Id > 20)
 	{
-		debug_printf("IndexÓĞÎó\r\n");
+		debug_printf("Indexæœ‰è¯¯\r\n");
 		result.Write((byte)0);
 		return false;
 	}
@@ -76,7 +76,7 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	Buffer buf3(buf.GetBuffer() + ms.Position() , buf.Length() - ms.Position());
 	buf2 = buf3;
 
-	debug_printf("%d/%d/%dÖ´ĞĞbs£º",data.Hour,data.Minutes,data.Seconds);
+	debug_printf("%d/%d/%dæ‰§è¡Œbsï¼š",data.Hour,data.Minutes,data.Seconds);
 	buf2.Show(true);
 
 	if (SetCfg(Id, data))
@@ -97,7 +97,7 @@ bool Alarm::AlarmGet(const Pair& args, Stream& result)
 	AlarmConfig cfg;
 	cfg.Load();
 
-	result.Write((byte)ArrayLength(cfg.Data));		// Ğ´Èë³¤¶È
+	result.Write((byte)ArrayLength(cfg.Data));		// å†™å…¥é•¿åº¦
 	for (AlarmDataType &x : cfg.Data)
 	{
 		Buffer bs(&x.Enable, sizeof(AlarmDataType));
@@ -118,7 +118,7 @@ bool Alarm::SetCfg(byte id, AlarmDataType& data)
 	bf2 = bf;
 
 	cfg.Save();
-	// ĞŞ¸Ä¹ıºóÒª¼ì²éÒ»ÏÂTaskµÄÊ±¼ä	// È¡ÏûÏÂ´Î¶¯×÷²¢ÖØĞÂ¼ÆËã
+	// ä¿®æ”¹è¿‡åè¦æ£€æŸ¥ä¸€ä¸‹Taskçš„æ—¶é—´	// å–æ¶ˆä¸‹æ¬¡åŠ¨ä½œå¹¶é‡æ–°è®¡ç®—
 	NextAlarmIds.Clear();
 	Start();
 	return true;
@@ -142,7 +142,7 @@ int Alarm::CalcNextTime(AlarmDataType& data)
 	byte type = data.Type.ToByte();
 	byte week = now.DayOfWeek();
 	int time;
-	if (type & 1 << week)	// ½ñÌì
+	if (type & 1 << week)	// ä»Šå¤©
 	{
 		DateTime dt(now.Year, now.Month, now.Day);
 		dt.Hour = data.Hour;
@@ -152,7 +152,7 @@ int Alarm::CalcNextTime(AlarmDataType& data)
 		{
 			time = (dt - now).Ms;
 			debug_printf("%d\r\n", time);
-			return time;		// ½ñÌìÄÖÖÓ»¹Ã»Ïì
+			return time;		// ä»Šå¤©é—¹é’Ÿè¿˜æ²¡å“
 		}
 	}
 	debug_printf("max\r\n");
@@ -162,9 +162,9 @@ int Alarm::CalcNextTime(AlarmDataType& data)
 int ToTomorrow()
 {
 	auto dt = DateTime::Now();
-	int time = (24 - dt.Hour - 1) * 3600000;		// Ê±-1  ->  ms
-	time += ((60 - dt.Minute - 1) * 60000);			// ·Ö-1  ->  ms
-	time += ((60 - dt.Second) * 1000);				// Ãë	 ->  ms
+	int time = (24 - dt.Hour - 1) * 3600000;		// æ—¶-1  ->  ms
+	time += ((60 - dt.Minute - 1) * 60000);			// åˆ†-1  ->  ms
+	time += ((60 - dt.Second) * 1000);				// ç§’	 ->  ms
 	// debug_printf("ToTomorrow : %d\r\n", time);
 	return time;
 }
@@ -183,10 +183,10 @@ byte Alarm::FindNext(int& nextTime)
 	{
 		times[i] = Int_Max;
 		if (!cfg.Data[i].Enable)continue;
-		int time = CalcNextTime(cfg.Data[i]);	// µ«·²ÓĞĞ§µÄ¶¼¼ÆËã³öÀ´
+		int time = CalcNextTime(cfg.Data[i]);	// ä½†å‡¡æœ‰æ•ˆçš„éƒ½è®¡ç®—å‡ºæ¥
 		times[i] = time;
 
-		if (time < miniTime)miniTime = time;	// ÕÒ³ö×îĞ¡Ê±¼ä
+		if (time < miniTime)miniTime = time;	// æ‰¾å‡ºæœ€å°æ—¶é—´
 	}
 
 	if (miniTime != Int_Max)
@@ -196,17 +196,17 @@ byte Alarm::FindNext(int& nextTime)
 			if (times[i] == miniTime)
 			{
 				NextAlarmIds.Add(i);
-				debug_printf("Ìí¼ÓÏÂÒ»´ÎÄÖÖÓµÄid %d\r\n",i);
+				debug_printf("æ·»åŠ ä¸‹ä¸€æ¬¡é—¹é’Ÿçš„id %d\r\n",i);
 			}
 		}
 		nextTime = miniTime;
-		debug_printf("ÏÂÒ»¸öÄÖÖÓÊ±¼äÊÇ%dMsºó\r\n",nextTime);
+		debug_printf("ä¸‹ä¸€ä¸ªé—¹é’Ÿæ—¶é—´æ˜¯%dMså\r\n",nextTime);
 	}
 	else
 	{
-		// Èç¹û×îĞ¡ÖµÎŞĞ§   Ö±½ÓÃ÷ÔçÔÙÀ´ËãÒ»´Î
+		// å¦‚æœæœ€å°å€¼æ— æ•ˆ   ç›´æ¥æ˜æ—©å†æ¥ç®—ä¸€æ¬¡
 		// nextTime = ToTomorrow();
-		debug_printf("½ñÌìÃ»ÓĞÄÖÖÓÈÎÎñ£¬ÉèÖÃÊ±¼äÎªÃ÷Ìì\r\n");
+		debug_printf("ä»Šå¤©æ²¡æœ‰é—¹é’Ÿä»»åŠ¡ï¼Œè®¾ç½®æ—¶é—´ä¸ºæ˜å¤©\r\n");
 		nextTime = tomorrowTime;
 		NextAlarmIds.Clear();
 	}
@@ -217,7 +217,7 @@ byte Alarm::FindNext(int& nextTime)
 void Alarm::AlarmTask()
 {
 	debug_printf("AlarmTask");
-	// »ñÈ¡¶¨Ê±µÄÊı¾İ
+	// è·å–å®šæ—¶çš„æ•°æ®
 	AlarmDataType data;
 	auto now = DateTime::Now();
 	now.Ms = 0;
@@ -233,9 +233,9 @@ void Alarm::AlarmTask()
 		dt.Ms = 0;
 		if (dt == now)
 		{
-			// Ö´ĞĞ¶¯×÷   DoSomething(data);
+			// æ‰§è¡ŒåŠ¨ä½œ   DoSomething(data);
 			debug_printf("  DoSomething:   ");
-			// µÚÒ»¸ö×Ö½Ú ÓĞĞ§Êı¾İ³¤¶È£¬µÚ¶ş¸ö×Ö½Ú¶¯×÷ÀàĞÍ£¬ºóÃæÊÇÊı¾İ
+			// ç¬¬ä¸€ä¸ªå­—èŠ‚ æœ‰æ•ˆæ•°æ®é•¿åº¦ï¼Œç¬¬äºŒä¸ªå­—èŠ‚åŠ¨ä½œç±»å‹ï¼Œåé¢æ˜¯æ•°æ®
 			byte len = data.Data[0];
 			if (len <= 10)
 			{
@@ -251,13 +251,13 @@ void Alarm::AlarmTask()
 			}
 			else
 			{
-				debug_printf("ÎŞĞ§Êı¾İ\r\n");
+				debug_printf("æ— æ•ˆæ•°æ®\r\n");
 			}
 		}
 	}
 	NextAlarmIds.Clear();
 
-	// ÕÒµ½ÏÂÒ»¸ö¶¨Ê±Æ÷¶¯×÷µÄÊ±¼ä
+	// æ‰¾åˆ°ä¸‹ä¸€ä¸ªå®šæ—¶å™¨åŠ¨ä½œçš„æ—¶é—´
 	FindNext(NextAlarmMs);
 	if (NextAlarmIds.Count() != 0)
 		Sys.SetTask(AlarmTaskId, true, NextAlarmMs);
