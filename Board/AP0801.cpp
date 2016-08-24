@@ -395,7 +395,7 @@ void AlarmWrite(byte type, Buffer& bs)
 {
 	debug_printf("AlarmWrite type %d data ", type);
 	bs.Show(true);
-	// if (!type)return;
+
 	Stream ms(bs);
 
 	auto start = ms.ReadByte();
@@ -407,6 +407,9 @@ void AlarmWrite(byte type, Buffer& bs)
 
 void AlarmReport(byte type, Buffer&bs)
 {
+	debug_printf("AlarmReport type %d data ", type);
+	bs.Show(true);
+
 	Stream ms(bs);
 	auto start = ms.ReadByte();
 	auto size = ms.ReadByte();

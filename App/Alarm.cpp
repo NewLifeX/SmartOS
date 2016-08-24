@@ -81,11 +81,10 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 	Buffer buf3(buf.GetBuffer() + ms.Position(), buf.Length() - ms.Position());
 	buf2 = buf3;
 
-	buf.Show(true);
-	buf3.Show(true);
-	buf2.Show(true);
+	// buf.Show(true);
+	// buf3.Show(true);
 	debug_printf("%d  %d  %d 执行 bs：", alarm.Hour, alarm.Minutes, alarm.Seconds);
-
+	buf2.Show(true);
 
 	byte resid = SetCfg(Id, alarm);
 	result.Write((byte)resid);
@@ -95,10 +94,10 @@ bool Alarm::AlarmSet(const Pair& args, Stream& result)
 
 bool Alarm::AlarmGet(const Pair& args, Stream& result)
 {
-	debug_printf("AlarmGet");
+	// debug_printf("AlarmGet");
 	AlarmConfig cfg;
 	cfg.Load();
-	debug_printf("data :\r\n");
+	// debug_printf("data :\r\n");
 	result.Write((byte)20);		// 写入长度
 	for (int i = 0; i < 20; i++)
 	{
@@ -108,7 +107,7 @@ bool Alarm::AlarmGet(const Pair& args, Stream& result)
 	}
 
 	Buffer(result.GetBuffer(), result.Position()).Show(true);
-	debug_printf("\r\n");
+	// debug_printf("\r\n");
 	return true;
 }
 
@@ -193,7 +192,7 @@ int ToTomorrow()
 
 byte Alarm::FindNext(int& nextTime)
 {
-	debug_printf("FindNext\r\n");
+	// debug_printf("FindNext\r\n");
 	AlarmConfig cfg;
 	cfg.Load();
 
@@ -228,8 +227,8 @@ byte Alarm::FindNext(int& nextTime)
 	{
 		// 如果最小值无效   直接明早再来算一次
 		// nextTime = ToTomorrow();
-		debug_printf("今天没有闹钟任务，设置时间为明天\r\n");
 		nextTime = tomorrowTime;
+		debug_printf("今天没有闹钟任务，下次唤醒时间为明天\r\n");
 		NextAlarmIds.Clear();
 	}
 
@@ -238,7 +237,7 @@ byte Alarm::FindNext(int& nextTime)
 
 void Alarm::AlarmTask()
 {
-	debug_printf("AlarmTask");
+	// debug_printf("AlarmTask");
 	// 获取定时的数据
 	AlarmDataType data;
 	auto now = DateTime::Now();
@@ -263,11 +262,10 @@ void Alarm::AlarmTask()
 				AlarmActuator acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
-					// ByteArray bs((const void*)data.Data[2], len - 1);
 					Buffer bs(&data.Data[2], len - 1);
 					// 执行动作   DoSomething(data);
-					debug_printf("  DoSomething type %d ",type);
-					bs.Show(true);
+					// debug_printf("  DoSomething type %d ",type);
+					// bs.Show(true);
 					acttor(NextAlarmId, bs);
 				}
 			}
