@@ -8,6 +8,26 @@
 #include "Message\BinaryPair.h"
 #include "Message\DataStore.h"
 
+/*
+注册给 TokenClient 名称 Policy/AlarmSet
+注册给 TokenClient 名称 Policy/AlarmGet
+
+Action = Policy/AlarmSet   alarm = AlarmDataType
+Action = Policy/AlarmGet
+
+
+AlarmSet
+1. AlarmDataType.number = 0 的时候 自动选择Enable = false的编号进行存储
+		否则 按照number进行储存和执行。
+2. AlarmDataType.Data 为定时器需要执行命令的数据。
+3. AlarmDataType.Data   =   (1byte)len + (1byte)type + (len-1 byte)data[]
+		type 为执行动作的类型，不同类型有不同的操作函数。 type跟函数 在bsp里进行注册。
+
+AlarmGet
+  直接一次性返回所有（20条）定时动作的数据。（包含编号）。
+
+*/
+
 // 执行定时器的函数类型
 typedef void(*AlarmActuator)(byte type, Buffer& bs);
 
