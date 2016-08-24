@@ -808,7 +808,7 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
-	dm.Show(true);
+	// dm.Show(true);
 
 	bool rt = true;
 	if (dm.Start < 64)
@@ -831,6 +831,7 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 	}
 	else
 	{
+		debug_printf("Read ");
 		dm.Show(true);
 		dm.WriteMessage(rs);
 	}
@@ -854,6 +855,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
+	debug_printf("Write ");
 	dm.Show(true);
 
 	bool rt = true;

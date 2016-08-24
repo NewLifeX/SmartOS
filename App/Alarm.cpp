@@ -158,7 +158,7 @@ bool Alarm::GetCfg(byte id, AlarmDataType& data)
 
 int Alarm::CalcNextTime(AlarmDataType& data)
 {
-	debug_printf("CalcNextTime :");
+	debug_printf("CalcNextTime Id %d  ",data.Number);
 	auto now = DateTime::Now();
 	byte type = data.Type.ToByte();
 	byte week = now.DayOfWeek();
@@ -176,7 +176,7 @@ int Alarm::CalcNextTime(AlarmDataType& data)
 			return time;		// 今天闹钟还没响
 		}
 	}
-	debug_printf("max\r\n");
+	debug_printf("after today\r\n");
 	return Int_Max;
 }
 
