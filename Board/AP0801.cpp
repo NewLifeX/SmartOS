@@ -393,6 +393,8 @@ void  AP0801::InitProxy()
 
 void AlarmWrite(byte type, Buffer& bs)
 {
+	debug_printf("AlarmWrite type %d data ", type);
+	bs.Show(true);
 	// if (!type)return;
 	Stream ms(bs);
 
