@@ -149,7 +149,7 @@ void HardRTC::Init()
 	PWR_BackupAccessCmd(ENABLE);
 
 	// 下一次保存Ticks的数值，避免频繁保存
-	g_NextSave = 0;
+	g_NextSave = 5;
 
 	Opened = true;
 
@@ -202,6 +202,9 @@ void HardRTC::LoadTicks()
 	uint sec	= ReadBackup(1);
 	time.Seconds		= sec;
 	time.Milliseconds	= ms;
+
+	uint basesec = ReadBackup(2);
+	time.BaseSeconds = basesec;
 #else
 	DateTime dt	= RTC_GetCounter();
 	time.Seconds		= dt.TotalSeconds();
@@ -236,6 +239,10 @@ void HardRTC::SaveTicks()
 	debug_printf("SaveTicks %ds %dms\r\n", sec, ms);
 #endif
 	WriteBackup(1, sec);
+
+	uint basesec = Time.BaseSeconds;
+	WriteBackup(2, basesec);
+
 	// 设置计数器
 	RTC_SetCounter(ms);
 #else
