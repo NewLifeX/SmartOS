@@ -42,9 +42,9 @@ TokenClient::TokenClient()
 	ReportLength = 0;
 
 	// 重启
-	Register("Gateway/Restart", InvokeRestStart, this);
+	//Register("Gateway/Restart", InvokeRestStart, this);
 	// 重置
-	Register("Gateway/Reset", InvokeRestBoot, this);
+	//Register("Gateway/Reset", InvokeRestBoot, this);
 }
 
 void TokenClient::Open()
