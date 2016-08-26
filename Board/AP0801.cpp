@@ -434,7 +434,7 @@ void AP0801::InitAlarm()
 	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
 
 	AlarmObj->Register(5, AlarmWrite);
-	AlarmObj->Register(6, AlarmWrite);
+	AlarmObj->Register(6, AlarmReport);
 }
 
 /******************************** 2401 ********************************/
