@@ -260,7 +260,6 @@ void AP0801::OpenClient(ISocketHost& host)
 		{
 			Client->Open();
 			if(ProxyFac)ProxyFac->AutoStart();
-			if(AlarmObj)AlarmObj->Start();
 		}
 		else
 			Client->AttachControls();
@@ -425,6 +424,19 @@ void AlarmReport(byte type, Buffer&bs)
 	client->ReportAsync(start, size);
 }
 
+void AlarmDelayOpen(void *param)
+{
+	auto alarm = (Alarm*)param;
+
+	if (DateTime::Now().Year > 2010)
+	{
+		alarm->Start();
+		Sys.RemoveTask(Task::Current().ID);
+	}
+	else
+		Sys.SetTask(Task::Current().ID, true, 2000);
+}
+
 void AP0801::InitAlarm()
 {
 	if (!Client)return;
@@ -435,6 +447,11 @@ void AP0801::InitAlarm()
 
 	AlarmObj->Register(5, AlarmWrite);
 	AlarmObj->Register(6, AlarmReport);
+
+	if (DateTime::Now().Year > 2010)
+		AlarmObj->Start();
+	else
+		Sys.AddTask(AlarmDelayOpen, AlarmObj, 2000, 2000, "打开Alarm");
 }
 
 /******************************** 2401 ********************************/
