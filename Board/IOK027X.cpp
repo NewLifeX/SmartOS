@@ -7,6 +7,9 @@
 
 #include "Drivers\Esp8266\Esp8266.h"
 #include "TokenNet\TokenController.h"
+#include "Kernel\Task.h"
+
+IOK027X* IOK027X::Current = nullptr;
 
 IOK027X::IOK027X()
 {
@@ -21,6 +24,7 @@ IOK027X::IOK027X()
 
 	Data	= nullptr;
 	Size	= 0;
+	Current = this;
 }
 
 void IOK027X::Init(ushort code, cstring name, COM message)
@@ -28,6 +32,13 @@ void IOK027X::Init(ushort code, cstring name, COM message)
 	auto& sys	= (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
+
+	// RTC 提取时间
+	auto Rtc = HardRTC::Instance();
+	Rtc->LowPower = false;
+	Rtc->External = false;
+	Rtc->Init();
+	Rtc->Start(false, false);
 
     // 初始化系统
     sys.Init();
@@ -174,7 +185,7 @@ void IOK027X::OpenClient(ISocketHost& host)
 		AddControl(host, uri, tk->Port);
 	}
 
-	if(!Client->Opened)
+	if (!Client->Opened)
 		Client->Open();
 	else
 		Client->AttachControls();
@@ -207,6 +218,63 @@ TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushor
 void IOK027X::InitNet()
 {
 	Host	= Create8266();
+}
+
+void AlarmWrite(byte type, Buffer& bs)
+{
+	debug_printf("AlarmWrite type %d data ", type);
+	bs.Show(true);
+
+	Stream ms(bs);
+
+	auto start = ms.ReadByte();
+	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
+
+	auto client = IOK027X::Current->Client;
+	client->Store.Write(start, bs);
+}
+
+// void AlarmReport(byte type, Buffer&bs)
+// {
+// 	debug_printf("AlarmReport type %d data ", type);
+// 	bs.Show(true);
+// 
+// 	Stream ms(bs);
+// 	auto start = ms.ReadByte();
+// 	auto size = ms.ReadByte();
+// 	auto client = IOK027X::Current->Client;
+// 
+// 	client->ReportAsync(start, size);
+// }
+
+void AlarmDelayOpen(void *param)
+{
+	auto alarm = (Alarm*)param;
+
+	if (DateTime::Now().Year > 2010)
+	{
+		alarm->Start();
+		Sys.RemoveTask(Task::Current().ID);
+	}
+	else
+		Sys.SetTask(Task::Current().ID, true, 2000);
+}
+
+void IOK027X::InitAlarm()
+{
+	if (!Client)return;
+
+	if (!AlarmObj)AlarmObj = new Alarm();
+	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
+
+	AlarmObj->Register(5, AlarmWrite);
+	// AlarmObj->Register(6, AlarmReport);
+
+	if (DateTime::Now().Year > 2010)
+		AlarmObj->Start();
+	else
+		Sys.AddTask(AlarmDelayOpen, AlarmObj, 2000, 2000, "打开Alarm");
 }
 
 void IOK027X::Restore()

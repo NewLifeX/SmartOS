@@ -5,6 +5,8 @@
 #include "Net\ITransport.h"
 
 #include "TokenNet\TokenClient.h"
+#include "App\Alarm.h"
+#include "Device\RTC.h"
 
 // WIFI触摸开关 123位
 class IOK027X
@@ -17,6 +19,7 @@ public:
 
 	ISocketHost*	Host;			// 网络主机
 	TokenClient*	Client;			//
+	Alarm*			AlarmObj;
 	uint			LedsTaskId;
 
 	IOK027X();
@@ -35,9 +38,12 @@ public:
 
 	void InitClient();
 	void InitNet();
+	void InitAlarm();
 
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);
+
+	static IOK027X* Current;
 
 private:
 	void*	Data;
