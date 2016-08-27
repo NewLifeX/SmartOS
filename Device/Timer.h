@@ -57,6 +57,8 @@ private:
 	static const void* GetTimer(byte idx);
 };
 
+extern Timer* Timers[];
+
 /*
 class Capture
 {
