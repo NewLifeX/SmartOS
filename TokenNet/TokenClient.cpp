@@ -581,9 +581,10 @@ void TokenClient::Login()
 	login.User = cfg->User();
 
 	// 原始密码对盐值进行加密，得到登录密码
-	auto now = Sys.Ms();
+	// auto now = Sys.Ms();
+	auto now = DateTime::Now().TotalMs();
 	auto arr = Buffer(&now, 8);
-	login.Salt = arr;
+	// login.Salt = arr;
 	RC4::Encrypt(arr, cfg->Pass());
 	login.Pass = arr.ToHex();
 
