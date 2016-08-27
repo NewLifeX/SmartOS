@@ -150,6 +150,8 @@ public:
 	char	Server[32];	// 服务器。重置后先尝试厂商前端，再尝试原服务器
 	char	Token[32];	// 访问服务器的令牌
 
+	uint	Expire;		// 有效期。1970以来的秒数。
+	
 	ushort	Checksum;	// 校验
 };
 
