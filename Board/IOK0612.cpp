@@ -13,8 +13,9 @@ IOK0612* IOK0612::Current = nullptr;
 
 IOK0612::IOK0612()
 {
-	//LedPins.Add(PA0);
 	//LedPins.Add(PA4);
+	ButtonPins.Add(PB6);
+	LedPins.Add(PB7);
 
 	LedsShow = false;
 	LedsTaskId = 0;
@@ -88,10 +89,32 @@ void IOK0612::InitLeds()
 	}
 }
 
+void ButtonOnpress(InputPort* port, bool down, void* param)
+{
+	if (port->PressTime > 1000)
+		IOK0612::OnLongPress(port, down);
+}
+
+void IOK0612::InitButtons(InputPort::IOReadHandler press)
+{
+	for (int i = 0; i < ButtonPins.Count(); i++)
+	{
+		auto port = new InputPort(ButtonPins[i]);
+		port->Mode = InputPort::Both;
+		port->Invert = true;
+		if (press)
+			port->Register(press, (void*)i);
+		else
+			port->Register(ButtonOnpress, (void*)i);
+		port->Open();
+		Buttons.Add(port);
+	}
+}
+
 ISocketHost* IOK0612::Create8266()
 {
 	// auto host	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
-	auto host	= new Esp8266(COM2, PB2, PA1);
+	auto host	= new Esp8266(COM2, PB12, PA1);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join	= host->SSID && *host->SSID;
@@ -343,17 +366,17 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 		return;
 	}
 
-	if (time >= 9000 && time < 14000)
-	{
-		LedStat(!LedsShow);
-		return;
-	}
-
-	if (time >= 14000)
-	{
-		Restore();
-		return;
-	}
+	// if (time >= 9000 && time < 14000)
+	// {
+	// 	LedStat(!LedsShow);
+	// 	return;
+	// }
+	// 
+	// if (time >= 14000)
+	// {
+	// 	Restore();
+	// 	return;
+	// }
 }
 
 /*

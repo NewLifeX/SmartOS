@@ -14,6 +14,8 @@ class IOK0612
 public:
 	List<Pin>	LedPins;
 	List<OutputPort*>	Leds;
+	List<Pin>	ButtonPins;
+	List<InputPort*>	Buttons;
 
 	bool LedsShow;					// LED 显示状态开关
 
@@ -31,6 +33,7 @@ public:
 
 	void InitLeds();
 	void FlushLed();			// 刷新led状态输出
+	void InitButtons(InputPort::IOReadHandler press = nullptr);
 
 	bool LedStat(bool enable);
 
@@ -41,7 +44,7 @@ public:
 	void InitAlarm();
 
 	void Restore();
-	void OnLongPress(InputPort* port, bool down);
+	static void OnLongPress(InputPort* port, bool down);
 
 	static IOK0612* Current;
 
