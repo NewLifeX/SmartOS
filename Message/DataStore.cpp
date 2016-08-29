@@ -151,7 +151,7 @@ bool Area::Any(uint start, uint len)
 {
 	// 只要搭边就算数
 	//return start <= Offset + Size && start + len >= Offset;
-	return !(Offset > start + len || Offset + Size < start);
+	return !(Offset > start + len -1 || Offset + Size < start);
 }
 
 /****************************** 数据操作接口 ************************************/
