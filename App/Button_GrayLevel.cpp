@@ -341,9 +341,9 @@ bool Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte cou
 		OnGrayLevel = level[0];
 		rs = true;
 	}
-	if (OnGrayLevel != level[1])
+	if (OffGrayLevel != level[1])
 	{
-		OnGrayLevel = level[1];
+		OffGrayLevel = level[1];
 		rs = true;
 	}
 	if (rs)
