@@ -123,6 +123,8 @@ ISocketHost* IOK0612::Create8266()
 	if (!join)
 	{
 		*host->SSID	= "WsLink";
+		*host->Pass = "12345678";
+
 		host->Mode	= SocketMode::STA_AP;
 	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -249,13 +251,13 @@ void AlarmWrite(byte type, Buffer& bs)
 	debug_printf("AlarmWrite type %d data ", type);
 	bs.Show(true);
 
-	Stream ms(bs);
+	auto client = IOK0612::Current->Client;
 
+	Stream ms(bs);
 	auto start = ms.ReadByte();
 	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
-	auto client = IOK0612::Current->Client;
-	client->Store.Write(start, bs);
+	client->Store.Write(start, data);
 }
 
 // void AlarmReport(byte type, Buffer&bs)
