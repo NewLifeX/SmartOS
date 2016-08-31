@@ -366,19 +366,12 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 		Sys.Sleep(1000);
 		Sys.Reset();
 		return;
+	}	
+	if (time >= 5000)
+	{
+		Restore();
+		return;
 	}
-
-	// if (time >= 9000 && time < 14000)
-	// {
-	// 	LedStat(!LedsShow);
-	// 	return;
-	// }
-	// 
-	// if (time >= 14000)
-	// {
-	// 	Restore();
-	// 	return;
-	// }
 }
 
 /*
