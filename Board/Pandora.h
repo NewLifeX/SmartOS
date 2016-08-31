@@ -4,15 +4,19 @@
 #include "Sys.h"
 #include "Net\ITransport.h"
 
+#include "Device\RTC.h"
 #include "TokenNet\TokenClient.h"
+#include "Message\ProxyFactory.h"
+#include "App\Alarm.h"
 
 // 潘多拉0903
 class PA0903
 {
 public:
 	List<Pin>	LedPins;
-	//List<Pin>	ButtonPins;
 	List<OutputPort*>	Leds;
+
+	//List<Pin>	ButtonPins;
 	//List<InputPort*>	Buttons;
 
 	List<OutputPort*>	Outputs;
@@ -21,9 +25,10 @@ public:
 	ISocketHost*	Host;	// 网络主机
 	//ISocketHost*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
+	ProxyFactory*	ProxyFac;	// 透传管理器
+	Alarm*			AlarmObj;
 	
 	PA0903();
-
 
 	// 设置系统参数
 	void Init(ushort code, cstring name, COM message = COM2);
@@ -41,14 +46,17 @@ public:
 
 	// 打开Esp8266，作为主控或者纯AP
 	//ISocketHost* Create8266(bool apOnly);
-
 	//ITransport* Create2401();
 
 	void InitClient();
 	void InitNet();
+	void InitProxy();
+	void InitAlarm();
 
 	void Restore();
 	//void OnLongPress(InputPort* port, bool down);
+
+	static PA0903* Current;
 
 private:
 	void*	Data;

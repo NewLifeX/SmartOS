@@ -9,6 +9,8 @@
 #include "Drivers\W5500.h"
 #include "TokenNet\TokenController.h"
 
+PA0903* PA0903::Current = nullptr;
+
 PA0903::PA0903()
 {
 	LedPins.Add(PB1);
@@ -16,9 +18,12 @@ PA0903::PA0903()
 
 	Host = nullptr;
 	Client = nullptr;
+	ProxyFac = nullptr;
+	AlarmObj = nullptr;
 
 	Data = nullptr;
 	Size = 0;
+	Current = this;
 }
 
 void PA0903::Init(ushort code, cstring name, COM message)
@@ -26,6 +31,13 @@ void PA0903::Init(ushort code, cstring name, COM message)
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
+
+	// RTC 提取时间
+	auto Rtc = HardRTC::Instance();
+	Rtc->LowPower = false;
+	Rtc->External = false;
+	Rtc->Init();
+	Rtc->Start(false, false);
 
 	// 初始化系统
 	sys.Init();
@@ -72,7 +84,6 @@ ISocketHost* PA0903::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	// auto host = new W5500(Spi2, PE1, PD13);
 	auto host = new W5500(Spi1, PA8, PA0);
 	host->NetReady.Bind(&PA0903::OpenClient, this);
 
@@ -137,6 +148,7 @@ void PA0903::OpenClient(ISocketHost& host)
 		AddControl(*Host, tk->Uri(), 0);
 		AddControl(*Host, uri, tk->Port);
 		Client->Open();
+		if (ProxyFac)ProxyFac->AutoStart();
 	}
 }
 
@@ -176,6 +188,65 @@ void OnInitNet(void* param)
 	host->EnableDNS();
 	host->EnableDHCP();
 	bsp.Host = host;
+}
+
+void  PA0903::InitProxy()
+{
+	if (ProxyFac)return;
+	if (!Client)
+	{
+		debug_printf("请先初始化TokenClient！！\r\n");
+		return;
+	}
+	ProxyFac = ProxyFactory::Create();
+
+	ProxyFac->Register(new ComProxy(COM1));
+
+	ProxyFac->Open(Client);
+	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
+}
+
+void AlarmWrite(byte type, Buffer& bs)
+{
+	debug_printf("AlarmWrite type %d data ", type);
+	bs.Show(true);
+
+	auto client = PA0903::Current->Client;
+
+	Stream ms(bs);
+	auto start = ms.ReadByte();
+	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
+
+	client->Store.Write(start, data);
+}
+
+void AlarmDelayOpen(void *param)
+{
+	auto alarm = (Alarm*)param;
+
+	if (DateTime::Now().Year > 2010)
+	{
+		alarm->Start();
+		Sys.RemoveTask(Task::Current().ID);
+	}
+	else
+		Sys.SetTask(Task::Current().ID, true, 2000);
+}
+
+void PA0903::InitAlarm()
+{
+	if (!Client)return;
+
+	if (!AlarmObj)AlarmObj = new Alarm();
+	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
+
+	AlarmObj->Register(5, AlarmWrite);
+
+	if (DateTime::Now().Year > 2010)
+		AlarmObj->Start();
+	else
+		Sys.AddTask(AlarmDelayOpen, AlarmObj, 2000, 2000, "打开Alarm");
 }
 
 void PA0903::InitNet()
