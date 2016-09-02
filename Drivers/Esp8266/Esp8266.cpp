@@ -244,7 +244,7 @@ void Esp8266::OpenAP()
 	net_printf("启动AP!\r\n");
 	String name;
 	bool join = SSID && *SSID;
-	if (!join || *SSID == "WsLink")
+	if (!join || *SSID == "WSWL")
 		name = name + "WsLink-" + Buffer(Sys.ID, 3).ToHex();
 	else
 		// 这里需要等系统配置完成，修改为设备编码
