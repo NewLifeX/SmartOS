@@ -1055,9 +1055,11 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 		// return false;
 	}
 
+	bool haveChang = false;
 	// 现有密码与设置密码不一致才写FLASH
 	if (*SSID != ssid  || *Pass != pass)
 	{
+		haveChang = true;
 		// 保存密码
 		*SSID = ssid;
 		*Pass = pass;
@@ -1081,7 +1083,7 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 	// 返回结果
 	result.Write((byte)true);
 	// 延迟重启
-	Sys.ResetAsync(1500);
+	if(haveChang)Sys.ResetAsync(1500);
 
 	return true;
 }
