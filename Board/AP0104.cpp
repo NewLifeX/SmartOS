@@ -124,7 +124,7 @@ ISocketHost* AP0104::Create8266(bool apOnly)
 	//if (!join) host->Mode = SocketMode::AP;
 	if (!join)
 	{
-		*host->SSID = "WsLink";
+		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
 		host->Mode = SocketMode::STA_AP;
@@ -133,8 +133,8 @@ ISocketHost* AP0104::Create8266(bool apOnly)
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&AP0104::OpenClient, this);
 
-	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 
 	host->OpenAsync();
 

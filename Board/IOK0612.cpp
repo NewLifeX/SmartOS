@@ -122,7 +122,7 @@ ISocketHost* IOK0612::Create8266()
 
 	if (!join)
 	{
-		*host->SSID	= "WsLink";
+		*host->SSID	= "WSWL";
 		*host->Pass = "12345678";
 
 		host->Mode	= SocketMode::STA_AP;
@@ -131,6 +131,7 @@ ISocketHost* IOK0612::Create8266()
 	host->NetReady.Bind(&IOK0612::OpenClient, this);
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 
 	host->OpenAsync();
 
