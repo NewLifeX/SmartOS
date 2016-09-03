@@ -96,7 +96,10 @@ public:
 	bool SetWiFi(const Pair& args, Stream& result);
 	// 获取无线名称。
 	bool GetWiFi(const Pair& args, Stream& result);
-
+	// 获取可用APs
+	String* APs;
+	void GetAPsTask();
+	bool GetAPs(const Pair& args, Stream& result);
 
 protected:
 	virtual bool OnOpen();

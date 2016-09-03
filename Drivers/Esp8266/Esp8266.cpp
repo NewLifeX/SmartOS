@@ -1040,7 +1040,13 @@ bool Esp8266::SetIPD(bool enable)
 	return SendCmd(cmd + (enable ? '1' : '0'));
 }
 
-/******************************** 发送指令 ********************************/
+void LoadStationTask(void* param)
+{
+	auto& esp = *(Esp8266*)param;
+	if (esp.Opened) esp.LoadStations();
+}
+
+/******************************** Invoke指令 ********************************/
 // 设置无线组网密码。匹配令牌协议
 bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 {
@@ -1096,8 +1102,34 @@ bool Esp8266::GetWiFi(const Pair& args, Stream& result)
 	return true;
 }
 
-void LoadStationTask(void* param)
+void Esp8266::GetAPsTask()
 {
-	auto& esp = *(Esp8266*)param;
-	if (esp.Opened) esp.LoadStations();
+	if (APs == nullptr)APs = new String();
+	APs->Clear();
+	*APs = LoadAPs();
 }
+
+bool Esp8266::GetAPs(const Pair& args, Stream& result)
+{
+	bool rt = false;
+
+	if (APs && APs->Length())
+	{
+		Buffer buf((void*)APs->GetBuffer(), APs->Length());
+		result.Write(buf);
+		APs->Clear();
+		// delete APs;
+		rt = true;
+	}
+	else
+	{
+		result.Write((byte)false);
+		rt = false;
+	}
+
+	// 只运行一次
+	Sys.AddTask(&Esp8266::GetAPsTask, this, 0, -1, "");
+
+	return rt;
+}
+

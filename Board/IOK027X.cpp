@@ -108,6 +108,7 @@ ISocketHost* IOK027X::Create8266()
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	Client->Register("GetAPs", &Esp8266::GetAPs, host);
 
 	host->OpenAsync();
 
