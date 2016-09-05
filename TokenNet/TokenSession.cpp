@@ -147,7 +147,12 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	if (bp.Get("Action"))
 	{
 		msg.Code = 0x08;
+		auto tokenback = Control.Token;
+		Control.Token = 1;
+
 		Client.OnReceive(msg, Control);
+
+		Control.Token = tokenback;
 		return true;
 	}
 
