@@ -1069,14 +1069,12 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 		// 保存密码
 		*SSID = ssid;
 		*Pass = pass;
-
 	// 组网后单独STA模式，调试时使用混合模式
 	//#if DEBUG
 	//	Mode	= SocketMode::STA_AP;
 	//#else
-
 		Mode = SocketMode::Station;
-		//#endif
+	//#endif
 		SaveConfig();
 	}
 
@@ -1084,12 +1082,12 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 	if (_task2)Sys.SetTask(_task2, false);
 	// Sleep跳出去处理其他的
 	// 让JoinAp相关的东西数据先处理掉  然后再去回复  较少处理数据冲突的情况。
-	Sys.Sleep(500);
+	Sys.Sleep(150);
 
 	// 返回结果
 	result.Write((byte)true);
 	// 延迟重启
-	if(haveChang)Sys.ResetAsync(1500);
+	if(haveChang)Sys.ResetAsync(5000);
 
 	return true;
 }
