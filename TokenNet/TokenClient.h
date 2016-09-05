@@ -89,6 +89,8 @@ public:
 	// 重启，重置
 	static bool InvokeRestStart(void * param, const Pair& args, Stream& result);
 	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
+	//设置远程服务器地址
+	static bool InvokeSetRemote(void * param, const Pair& args, Stream& result);
 
 private:
 	bool OnHello(TokenMessage& msg, TokenController* ctrl);
@@ -101,6 +103,7 @@ private:
 	bool OnLogin(TokenMessage& msg, TokenController* ctrl);
 
 	bool OnPing(TokenMessage& msg, TokenController* ctrl);
+
 	bool ChangeIPEndPoint(const NetUri& uri);
 
 	void OnRead(const TokenMessage& msg, TokenController* ctrl);

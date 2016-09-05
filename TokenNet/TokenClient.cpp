@@ -487,10 +487,6 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	ChangeIPEndPoint(msg.Uri);
 
-	// 马上开始重新握手
-	Status = 0;
-	Sys.SetTask(_task, true, 0);
-
 	return true;
 }
 
@@ -511,6 +507,10 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 	socket->Server = uri.Host;
 
 	//Cfg->ServerIP = socket->Remote.Address.Value;
+	// 马上开始重新握手
+	Status = 0;
+	Sys.SetTask(_task, true, 0);
+
 
 	return true;
 }
@@ -865,12 +865,12 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		rt = dm.WriteData(Store, true);
 
 		// 读取响应里面，一次性把数据全部读取出来
-		if(rt)
+		if (rt)
 		{
-			dm.Start	= 0;
-			dm.Size		= Store.Data.Length();
+			dm.Start = 0;
+			dm.Size = Store.Data.Length();
 			//dm.Size		= 0;
-			dm.Data		= Store.Data;
+			dm.Data = Store.Data;
 		}
 	}
 	else if (dm.Start < 128)
@@ -1031,3 +1031,49 @@ bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
 
 	return true;
 }
+
+bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result)
+{
+	BinaryPair res(result);
+
+	String remote;
+	byte fixd;
+	// 远程地址 
+	if (!args.Get("remote", remote))
+	{
+		res.Set("SetRemote", (byte)0);
+		return false;
+	}
+	// 是否用久跳转
+	if (!args.Get("fixd", fixd))
+	{
+		res.Set("SetRemote", (byte)0);
+		return false;
+	}
+
+	NetUri uri(remote);
+	auto client = (TokenClient*)param;
+	debug_printf("远程地址设置\r\n");
+	uri.Show();
+
+	// 永久改变地址	
+	if (fixd)
+	{	
+		auto cfg = client->Cfg;
+		cfg->Show();
+
+		cfg->Protocol = uri.Type;
+		cfg->Server() = uri.Host;
+		cfg->ServerPort = uri.Port;
+
+		cfg->Save();
+		cfg->Show();
+	}
+
+	res.Set("SetRemote", (byte)1);
+	client->ChangeIPEndPoint(uri);
+
+	return true;
+}
+
+

@@ -147,7 +147,6 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
-
 	host->OpenAsync();
 
 	return host;
@@ -175,6 +174,8 @@ void AP0801::InitClient()
 	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
 	// 重置
 	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	// 设置远程地址
+	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
 
 	if(Data && Size > 0)
 	{

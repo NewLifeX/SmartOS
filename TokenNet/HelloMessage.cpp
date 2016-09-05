@@ -57,7 +57,7 @@ bool HelloMessage::Read(Stream& ms)
 				BinaryPair uribp(urims);
 
 				byte type;
-				uribp.Get("Type", type);			// 服务店 NetType  17 为UDP
+				uribp.Get("Type", type);			// 服务NetType  17 为UDP
 				Uri.Type	= (NetType)type;
 				if (Uri.Type == NetType::Unknown) Uri.Type = NetType::Udp;	// 避免 unknown 出现
 				uribp.Get("Host", Uri.Host);
