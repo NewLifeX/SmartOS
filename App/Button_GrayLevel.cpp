@@ -306,7 +306,7 @@ void ACZeroReset(void *param)
 	InputPort* port = Button_GrayLevel::ACZero;
 	if (port)
 	{
-		//Sys.Reset();
+		//Sys.Reboot();
 		debug_printf("定时检查过零检测\r\n");
 
 		// 需要检测是否有交流电，否则关闭

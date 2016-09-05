@@ -157,8 +157,10 @@ void TSys::Start()
 }
 
 // 延迟异步重启
-void TSys::ResetAsync(int msDelay) const
+void TSys::Reboot(int msDelay) const
 {
+	if (msDelay <= 0)Reset();
+
 	auto func	= &TSys::Reset;
 	AddTask(*(Action*)&func, (void*)this, msDelay, -1, "延迟重启");
 }

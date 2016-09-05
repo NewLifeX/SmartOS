@@ -1087,7 +1087,7 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 	// 返回结果
 	result.Write((byte)true);
 	// 延迟重启
-	if(haveChang)Sys.ResetAsync(5000);
+	if(haveChang)Sys.Reboot(5000);
 
 	return true;
 }

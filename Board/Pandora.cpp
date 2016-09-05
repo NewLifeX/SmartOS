@@ -116,7 +116,7 @@ void PA0903::InitClient()
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
 		[](void* p) {
-		if (!((TokenClient*)p)->Opened) Sys.Reset();
+		if (!((TokenClient*)p)->Opened) Sys.Reboot();
 	},
 		client, 8 * 60 * 1000, -1, "CheckClient");
 }
@@ -258,7 +258,7 @@ void PA0903::Restore()
 {
 	Config::Current->RemoveAll();
 
-	Sys.Reset();
+	Sys.Reboot();
 }
 
 //auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);

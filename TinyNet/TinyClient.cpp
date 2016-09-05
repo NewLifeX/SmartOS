@@ -216,7 +216,7 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	{
 		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
 		Sys.Sleep(200);
-		Sys.Reset();
+		Sys.Reboot();
 	}
 
 	// 写入指令以后，为了避免写入响应丢失，缩短心跳间隔
@@ -391,7 +391,7 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	Cfg->Save();
 
 	// 组网以后重启一次
-	Sys.Reset();
+	Sys.Reboot();
 
 	return true;
 }
@@ -429,7 +429,7 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 	Cfg->Clear();
 
     Sys.Sleep(3000);
-    Sys.Reset();
+    Sys.Reboot();
 
 	return true;
 }
@@ -461,7 +461,7 @@ void TinyClient::Ping()
 		//Server = 0;
 
 
-		//Sys.Reset();
+		//Sys.Reboot();
 		//Server	= 0;
 		//Password.SetLength(0);
 

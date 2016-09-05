@@ -177,7 +177,7 @@ void AP0104::InitClient()
 		if (!client.Opened)
 		{
 			debug_printf("联网超时，准备重启系统！\r\n\r\n");
-			Sys.Reset();
+			Sys.Reboot();
 		}
 	},
 		client, 8 * 60 * 1000, -1, "check connet net");

@@ -189,7 +189,7 @@ void AP0801::InitClient()
 			if(!client.Opened)
 			{
 				debug_printf("联网超时，准备重启系统！\r\n\r\n");
-				Sys.Reset();
+				Sys.Reboot();
 			}
 		},
 		client, 8 * 60 * 1000, -1, "联网检查");
@@ -510,7 +510,7 @@ void AP0801::Restore()
 {
 	Config::Current->RemoveAll();
 
-	Sys.Reset();
+	Sys.Reboot();
 }
 
 void AP0801::OnLongPress(InputPort* port, bool down)
@@ -522,7 +522,7 @@ void AP0801::OnLongPress(InputPort* port, bool down)
 	if (port->PressTime >= 5000)
 		Restore();
 	else if (port->PressTime >= 1000)
-		Sys.Reset();
+		Sys.Reboot();
 }
 
 /*

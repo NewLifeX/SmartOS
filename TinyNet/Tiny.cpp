@@ -207,7 +207,7 @@ void ClearConfig()
 	if(client) client->DisJoin();
 	Sys.Sleep(300);
 
-	Sys.Reset();
+	Sys.Reboot();
 }
 
 bool CheckUserPress(InputPort* port, bool down, void* param)
@@ -226,7 +226,7 @@ bool CheckUserPress(InputPort* port, bool down, void* param)
 	// 按下3秒，重启
 	else if(port->PressTime >= 3000)
 	{
-		Sys.Reset();
+		Sys.Reboot();
 
 		return true;
 	}

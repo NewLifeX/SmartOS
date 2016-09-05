@@ -94,16 +94,16 @@ public:
 
 	bool CheckMemory() const;
 
-	// 重启系统
-    void Reset() const;
 	// 延迟异步重启
-	void ResetAsync(int msDelay) const;
+	void Reboot(int msDelay = 0) const;
 
 	// 系统跟踪
 	void InitTrace(void* port) const;
 	void Trace(int times = 1) const;
 
 private:
+	// 重启系统
+    void Reset() const;
 	void OnInit();
 	void OnShowInfo() const;
 	void OnStart();

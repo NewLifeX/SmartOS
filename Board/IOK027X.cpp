@@ -148,7 +148,7 @@ void IOK027X::InitClient()
 			if(!client.Opened)
 			{
 				debug_printf("联网超时，准备重启Esp！\r\n\r\n");
-				// Sys.Reset();
+				// Sys.Reboot();
 				auto port = dynamic_cast<Esp8266*>(bsp.Host);
 				port->Close();
 				Sys.Sleep(1000);
@@ -285,7 +285,7 @@ void IOK027X::Restore()
 {
 	Config::Current->RemoveAll();
 
-	Sys.Reset();
+	Sys.Reboot();
 }
 
 void IOK027X::FlushLed()
@@ -342,7 +342,7 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	if (time >= 6500 && time < 10000)
 	{
 		Sys.Sleep(1000);
-		Sys.Reset();
+		Sys.Reboot();
 		return;
 	}
 

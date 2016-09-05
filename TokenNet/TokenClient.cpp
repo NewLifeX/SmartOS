@@ -343,7 +343,7 @@ void TokenClient::LoopTask()
 	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms())
 	{
 		Master->Close();
-		// Sys.Reset();
+		// Sys.Reboot();
 	}
 }
 
@@ -894,7 +894,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 	{
 		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
 		Sys.Sleep(200);
-		Sys.Reset();
+		Sys.Reboot();
 	}
 	LocalSend(0, Store.Data);
 }
@@ -1010,7 +1010,8 @@ bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result
 	res.Set("Restart", (byte)01);
 
 	debug_printf("1000ms后重启\r\n");
-	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "Restart");
+	// Sys.AddTask([](void * param) {Sys.Reboot(); }, nullptr, 1000, 0, "Restart");
+	Sys.Reboot(1000);
 
 	return true;
 }
@@ -1023,8 +1024,10 @@ bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
 
 	debug_printf("1000ms后重置\r\n");
 	//Sys.Sleep(500);
-	//Sys.Reset();
-	Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
+	//Sys.Reboot();
+	//Sys.AddTask([](void * param) {Sys.Reset(); }, nullptr, 1000, 0, "RestBoot");
+
+	Sys.Reboot(1000);
 
 	return true;
 }
