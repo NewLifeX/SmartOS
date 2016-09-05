@@ -1058,7 +1058,7 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 
 	// 永久改变地址	
 	if (fixd)
-	{	
+	{
 		auto cfg = client->Cfg;
 		cfg->Show();
 
@@ -1073,6 +1073,27 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 	res.Set("SetRemote", (byte)1);
 	client->ChangeIPEndPoint(uri);
 
+	return true;
+}
+
+bool TokenClient::InvokeGetRemote(void * param, const Pair& args, Stream& result)
+{
+
+
+	debug_printf("获取远程地址\r\n");
+	auto client = (TokenClient*)param;
+
+	String remote;
+
+	auto cfg = client->Cfg;
+	cfg->Show();
+
+	String type = cfg->Protocol == NetType::Tcp ? "Tcp://" : "Udp://";
+	auto host = cfg->Server();
+	auto port = cfg->ServerPort;
+
+	remote = type + host + ":" + port;
+	result.Write(remote);
 	return true;
 }
 

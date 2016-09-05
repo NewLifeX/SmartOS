@@ -176,6 +176,8 @@ void AP0801::InitClient()
 	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
 	// 设置远程地址
 	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
+	// 获取远程配置信息
+	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
 
 	if(Data && Size > 0)
 	{

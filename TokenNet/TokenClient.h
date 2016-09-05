@@ -91,6 +91,8 @@ public:
 	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
 	//设置远程服务器地址
 	static bool InvokeSetRemote(void * param, const Pair& args, Stream& result);
+	//获取远程服务器地址
+	static bool InvokeGetRemote(void * param, const Pair& args, Stream& result);
 
 private:
 	bool OnHello(TokenMessage& msg, TokenController* ctrl);
