@@ -133,6 +133,7 @@ String& HelloMessage::ToStr(String& str) const
 
 			str = str + Server + ":" + Port;*/
 			str	+= Uri;
+			str	= str + " " + ErrMsg;
 		}
 		else
 		{
