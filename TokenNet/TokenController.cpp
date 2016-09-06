@@ -328,18 +328,9 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 	}
 
 	msg.Show();
-
-	// 如果是错误，显示错误信息
-	if (msg.Error)
-	{
-		debug_printf("Error=0x%02X ", msg.Data[0]);
-		if (msg.Data[0] == 0x01 && msg.Length - 1 < 0x40)
-		{
-			Stream ms(msg.Data + 1, msg.Length - 1);
-			ms.ReadString().Show(false);
-		}
-		debug_printf("\r\n");
-	}
+	// 后半截全部当字符串输出处理
+	Stream ms(msg.Data , msg.Length);
+	ms.ReadString().Show(true);
 #endif
 }
 
