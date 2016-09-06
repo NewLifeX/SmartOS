@@ -1006,9 +1006,8 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 
 bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result)
 {
-	BinaryPair res(result);
-	res.Set("Restart", (byte)01);
 
+	result.Write((byte)01);
 	debug_printf("1000ms后重启\r\n");
 	// Sys.AddTask([](void * param) {Sys.Reboot(); }, nullptr, 1000, 0, "Restart");
 	Sys.Reboot(1000);
@@ -1019,7 +1018,7 @@ bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result
 bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
 {
 	BinaryPair res(result);
-	res.Set("RestBoot", (byte)01);
+	result.Write((byte)01);
 	Config::Current->RemoveAll();
 
 	debug_printf("1000ms后重置\r\n");
