@@ -35,7 +35,9 @@ bool EspSocket::OnOpen()
 	{
 		// 累加端口
 		static ushort g_port = 1024;
-		if(g_port < 1024) g_port = 1024;
+		// 随机拿到1024 至 1024+255 的端口号
+		if (g_port <= 1024)g_port += Sys.Ms() & 0xff;
+
 		Local.Port = g_port++;
 	}
 	Local.Address = _Host.IP;

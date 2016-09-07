@@ -156,6 +156,12 @@ void IOK0612::InitClient()
 	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
 	// 重置
 	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	// 设置远程地址
+	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
+	// 获取远程配置信息
+	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
+	// 获取所有Ivoke命令
+	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
 	if (Data && Size > 0)
 	{

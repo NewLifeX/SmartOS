@@ -504,13 +504,14 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 
 	ctrl->Port->Close();
 	socket->Remote.Port = uri.Port;
+	// 让驱动随机拿到 Port
+	socket->Local.Port = 0;
 	socket->Server = uri.Host;
 
 	//Cfg->ServerIP = socket->Remote.Address.Value;
 	// 马上开始重新握手
 	Status = 0;
 	Sys.SetTask(_task, true, 0);
-
 
 	return true;
 }
@@ -613,8 +614,6 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	if (logMsg.Error)
 	{
 		// 登录失败，清空令牌
-
-
 		byte result = logMsg.ErrorCode;
 
 		// 未登录错误，马上重新登录
@@ -629,11 +628,8 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 		Token = 0;
 		Status = 0;
-		if (result == 0x7F)
-		{
-			Sys.SetTask(_task, true, 0);
 
-		}
+		if (result == 0x7F) Sys.SetTask(_task, true, 0);
 	}
 	else
 	{
@@ -1077,8 +1073,6 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 
 bool TokenClient::InvokeGetRemote(void * param, const Pair& args, Stream& result)
 {
-
-
 	debug_printf("获取远程地址\r\n");
 	auto client = (TokenClient*)param;
 
@@ -1096,4 +1090,19 @@ bool TokenClient::InvokeGetRemote(void * param, const Pair& args, Stream& result
 	return true;
 }
 
+bool TokenClient::InvokeGetAllApi(void * param, const Pair& args, Stream& result)
+{
+	debug_printf("获取Apis\r\n");
+	auto client = (TokenClient*)param;
 
+	auto& keys = client->Routes.Keys();
+	// 写入个数
+	result.Write((byte)keys.Count());
+	// 写入数据
+	for (int i = 0; i < keys.Count(); i++)
+	{
+		result.WriteArray(String(keys[i]));
+	}
+
+	return true;
+}

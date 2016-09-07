@@ -132,7 +132,9 @@ void IOK027X::InitClient()
 	// 重启
 	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset",	&TokenClient::InvokeRestBoot, Client);
+	// 获取所有Ivoke命令
+	Client->Register("Api/All",			&TokenClient::InvokeGetAllApi, Client);
 
 	if (Data && Size > 0)
 	{

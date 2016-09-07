@@ -178,6 +178,8 @@ void AP0801::InitClient()
 	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
 	// 获取远程配置信息
 	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
+	// 获取所有Ivoke命令
+	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
 	if(Data && Size > 0)
 	{
