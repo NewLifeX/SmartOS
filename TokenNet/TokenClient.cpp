@@ -1095,14 +1095,16 @@ bool TokenClient::InvokeGetAllApi(void * param, const Pair& args, Stream& result
 	debug_printf("获取Apis\r\n");
 	auto client = (TokenClient*)param;
 
+	String apis;
+
 	auto& keys = client->Routes.Keys();
-	// 写入个数
-	result.Write((byte)keys.Count());
-	// 写入数据
 	for (int i = 0; i < keys.Count(); i++)
 	{
-		result.WriteArray(String(keys[i]));
+		if (i > 0)apis += ",";
+		apis = apis + keys[i];
 	}
+
+	result.Write(apis);
 
 	return true;
 }
