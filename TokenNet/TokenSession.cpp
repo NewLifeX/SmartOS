@@ -224,7 +224,7 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 	RC4::Encrypt(pass, key);
 
 	String str((char*)(pass.GetBuffer()), pass.Length());
-
+	debug_printf("内网登录明文\r\n");
 	str.Show();
 	auto rs = msg.CreateReply();
 
