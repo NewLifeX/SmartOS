@@ -25,13 +25,13 @@ uint SessionStat::BraHello = 0;
 uint SessionStat::DecError = 0;
 
 SessionStat::SessionStat() { Clear(); }
-SessionStat::~SessionStat(){ }
+SessionStat::~SessionStat() { }
 
 void SessionStat::Clear()
 {
 	OnHello = 0;
 	OnLogin = 0;
-	OnPing	= 0;
+	OnPing = 0;
 }
 
 String& SessionStat::ToStr(String& str) const
@@ -104,7 +104,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 #if DEBUG
 		if (msg.OneWay)
 			SessionStat::BraHello++;
-		else 
+		else
 			Stat.OnHello++;
 #endif
 		OnHello(msg);
@@ -206,20 +206,50 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 
 	TS("TokenSession::OnLogin");
 
+	LoginMessage login;
+	login.ReadMessage(msg);
+
+	auto name = login.User;
+	// 访问令牌
+	auto vistoken = login.Pass;
+	auto cfg = TokenConfig::Current;
+
+	debug_printf("内网登录密文\r\n");
+	vistoken.Show();
+	// 上位机以HEX字符传送
+	auto pass = vistoken.ToHex();
+	// 密钥
+	auto key = cfg->Pass().GetBytes();
+	// 解密
+	RC4::Encrypt(pass, key);
+
+	String str((char*)(pass.GetBuffer()), pass.Length());
+
+	str.Show();
 	auto rs = msg.CreateReply();
 
-	Token = Sys.Ms();
+	if (!str.Contains(name))
+	{
+		login.Error = true;
+		login.ErrorCode = 0x01;
+		login.ErrorMessage = "访问令牌非法";
+		login.WriteMessage(rs);
 
-	LoginMessage login;
-	login.Key = Control.Key;
-	login.Token = Token;
-	login.Reply = true;
-	login.WriteMessage(rs);
+		return false;
+	}
+	else
+	{
+		Token = Sys.Ms();
+		login.Key = Control.Key;
+		login.Token = Token;
+		login.Reply = true;
+		login.WriteMessage(rs);
+
+		Status = 2;
+		Control.Token = Token;
+	}
 
 	Control.Reply(rs);
-
-	Status = 2;
-	Control.Token = Token;
 
 	return true;
 }
@@ -242,7 +272,7 @@ bool TokenSession::OnPing(TokenMessage& msg)
 String& TokenSession::ToStr(String& str) const
 {
 	int timeSec = (Sys.Ms() - LastActive) / 1000UL;
-	str = str + Remote + " "+ Name +" LastAct "+timeSec +"s ago \t";
+	str = str + Remote + " " + Name + " LastAct " + timeSec + "s ago \t";
 
 	Stat.ToStr(str);
 	return str;
