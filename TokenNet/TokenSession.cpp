@@ -214,8 +214,8 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 	auto vistoken = login.Pass;
 	auto cfg = TokenConfig::Current;
 
-	debug_printf("内网登录密文\r\n");
-	vistoken.Show();
+	debug_printf("内网登录密文:");
+	vistoken.Show(true);
 	// 上位机以HEX字符传送
 	auto pass = vistoken.ToHex();
 	// 密钥
@@ -224,8 +224,8 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 	RC4::Encrypt(pass, key);
 
 	String str((char*)(pass.GetBuffer()), pass.Length());
-	debug_printf("内网登录明文\r\n");
-	str.Show();
+	debug_printf("内网登录明文:");
+	str.Show(true);
 	auto rs = msg.CreateReply();
 
 	if (!str.Contains(name))
