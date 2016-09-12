@@ -6,6 +6,7 @@
 #include "Net\ITransport.h"
 #include "Power.h"
 #include "Message\DataStore.h"
+#include "APP\FlushPort.h"
 
 // NRF24L01类
 class NRF24L01 : public ITransport, public Power
@@ -40,16 +41,20 @@ public:
 
 	typedef int (*FuncBufInt)(const Buffer&);
 	FuncBufInt	FixData;// 修正数据的委托
-	IDataPort*	Led;	// 数据灯
 
 	byte Status;
 	byte FifoStatus;
 	void ShowStatus();
 
+	IDataPort*	Led;	// 数据灯
+	void SetLed(OutputPort& led);
+	void SetLed(Pin led);
+
 	//virtual String ToString() const { return String("R24"); }
 	virtual String& ToStr(String& str) const { return str + "R24"; }
 
 private:
+
 	virtual bool OnOpen();
     virtual void OnClose();
 

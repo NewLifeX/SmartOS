@@ -1059,3 +1059,20 @@ void NRF24L01::ReceiveTask(void* param)
 	// 需要判断锁，如果有别的线程正在读写，则定时器无条件退出。
 	if(nrf->Opened) nrf->OnIRQ();
 }
+
+void NRF24L01::SetLed(Pin led)
+{
+	if (led != P0)
+	{
+		auto port = new OutputPort(led);
+		SetLed(*port);
+	}
+}
+
+void NRF24L01::SetLed(OutputPort& led)
+{
+	auto fp = new FlushPort();
+	fp->Port = &led;
+	fp->Start();
+	Led = fp;
+}
