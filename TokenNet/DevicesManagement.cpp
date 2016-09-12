@@ -403,7 +403,9 @@ int DevicesManagement::WriteIDs(Stream &ms)
 bool DevicesManagement::GetDevInfo(byte id, MemoryStream &ms)
 {
 	if (id == 0x00)return false;
+
 	Device * dv = FindDev(id);
+
 	return GetDevInfo(dv, ms);
 }
 
@@ -476,17 +478,11 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	String actstr;
 	switch (act)
 	{
-	case DeviceAtions::Register:
-		actstr = "Device/Register";
-		break;
-	case DeviceAtions::Set:
-		actstr = "Device/Set";
-		break;
-	case DeviceAtions::Online:
-		actstr = "Device/Set";
-		break;
+	case DeviceAtions::Register:		
+	case DeviceAtions::Set:	
+	case DeviceAtions::Online:	
 	case DeviceAtions::Offline:
-		actstr = "Device/Set";
+		actstr = "Device/Update";
 		break;
 	case DeviceAtions::Delete:
 		actstr = "Device/Delete";
