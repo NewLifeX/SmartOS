@@ -309,12 +309,21 @@ bool DevicesManagement::DeviceProcess(DeviceAtions act, const Pair& args, Stream
 		{
 			// 获取数据ms
 			MemoryStream dvms;
+			
 			// 序列化一个DevInfo到ms
 			if (!GetDevInfo(ids[i], dvms))continue;
 			// 转换为ByteArray
 			ByteArray dvbs(dvms.GetBuffer(), dvms.Position());
 			// 写入DevInfo
+			// result.Write(String((byte)i));		// 数组格式   "idx" + Data
+			result.Write((byte)1);
+			result.Write((byte)i);
+			result.WriteEncodeInt(dvbs.Length());
 			result.Write(dvbs);
+
+			debug_printf("\r\n");
+			ByteArray bs(result.GetBuffer(), result.Position());
+			bs.Show(true);
 		}
 	}
 	break;
