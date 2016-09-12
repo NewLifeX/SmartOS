@@ -325,14 +325,15 @@ bool DevicesManagement::DeviceProcess(DeviceAtions act, const Pair& args, Stream
 	case DeviceAtions::FindAll:
 	{
 		// 获取需要发送的IDs
-		ByteArray idss;
-		args.Get("ids", idss);
-		for (int i = 0; i < idss.Length(); i++)	// 判定依据需要修改
+		ByteArray ids;
+		args.Get("ids", ids);
+
+		for (int i = 0; i < ids.Length(); i++)	// 判定依据需要修改
 		{
 			// 获取数据ms
 			MemoryStream dvms;
 			// 序列化一个DevInfo到ms
-			if (!GetDevInfo(idss[i], dvms))continue;
+			if (!GetDevInfo(ids[i], dvms))continue;
 			// 转换为ByteArray
 			ByteArray dvbs(dvms.GetBuffer(), dvms.Position());
 			// 写入DevInfo
@@ -409,12 +410,13 @@ bool DevicesManagement::GetDevInfo(byte id, MemoryStream &ms)
 // 获取设备信息到流
 bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 {
-	if (dv != nullptr)return false;
+	if (dv == nullptr)return false;
 
 	BinaryPair bp(ms);
 
-	MemoryStream dvms;
-	BinaryPair dvbp(dvms);
+	//MemoryStream dvms;
+	//BinaryPair dvbp(dvms);
+
 	bp.Set("ID", dv->Address);
 
 	byte login = dv->Logined ? 1 : 0;
@@ -423,7 +425,7 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	bp.Set("LastActive", dv->LastTime);
 	bp.Set("RegisterTime", dv->RegTime);
 	bp.Set("LoginTime", dv->LoginTime);
-	// bp.Set("HardID", dv->Logins);
+	bp.Set("HardID", dv->Logins);
 
 	bp.Set("Version", dv->Version);
 	bp.Set("DataSize", dv->DataSize);
