@@ -18,14 +18,7 @@
 
 #include "App\FlushPort.h"
 
-// static FlushPort* CreateFlushPort(OutputPort* led)
-// {
-// 	auto fp	= new FlushPort();
-// 	fp->Port	= led;
-// 	fp->Start();
-// 
-// 	return fp;
-// }
+AP0104* AP0104::Current = nullptr;
 
 AP0104::AP0104()
 {
@@ -39,8 +32,21 @@ AP0104::AP0104()
 	HostAP = nullptr;
 	Client = nullptr;
 
+	Nrf = nullptr;
+	Server = nullptr;
+	_GateWay = nullptr;
+
 	Data = nullptr;
 	Size = 0;
+
+	// AlarmObj = nullptr;
+	// 一众标识初始化
+
+	NetMaster = false;
+	NetBra = false;
+	EspMaster = false;
+	EspBra = false;
+	Current = this;
 }
 
 void AP0104::Init(ushort code, cstring name, COM message)
@@ -48,6 +54,13 @@ void AP0104::Init(ushort code, cstring name, COM message)
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
+
+	// RTC 提取时间
+	auto Rtc = HardRTC::Instance();
+	Rtc->LowPower = false;
+	Rtc->External = false;
+	Rtc->Init();
+	Rtc->Start(false, false);
 
 	// 初始化系统
 	sys.Init();
@@ -58,7 +71,7 @@ void AP0104::Init(ushort code, cstring name, COM message)
 	WatchDog::Start(20000, 10000);
 #endif
 
-	// Flash最后一块作为配置区
+		// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
 }
 
@@ -82,6 +95,8 @@ void* AP0104::InitData(void* data, int size)
 	return data;
 }
 
+/******************************** In Out ********************************/
+
 void AP0104::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)
@@ -92,18 +107,29 @@ void AP0104::InitLeds()
 	}
 }
 
-void AP0104::InitButtons()
+void ButtonOnpress(InputPort* port, bool down, void* param)
+{
+	// if (port->PressTime > 1000)
+		AP0104::OnPress(port, down);
+}
+
+void AP0104::InitButtons(InputPort::IOReadHandler press)
 {
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
 		auto port = new InputPort(ButtonPins[i]);
 		port->Mode = InputPort::Both;
 		port->Invert = true;
-		//port->Register(OnPress, (void*)i);
+		if (press)
+			port->Register(press, (void*)i);
+		else
+			port->Register(ButtonOnpress, (void*)i);
 		port->Open();
 		Buttons.Add(port);
 	}
 }
+
+/******************************** Token ********************************/
 
 ISocketHost* AP0104::Create5500()
 {
@@ -140,8 +166,6 @@ ISocketHost* AP0104::Create8266(bool apOnly)
 
 	return host;
 }
-
-/******************************** Token ********************************/
 
 void AP0104::InitClient()
 {
@@ -220,23 +244,58 @@ void AP0104::OpenClient(ISocketHost& host)
 		AddControl(*Host, uri, tk->Port);
 
 		Client->Open();
+		if (_GateWay)_GateWay->Start();
 	}
 
-	if (HostAP && esp)
+	// 避免重复打开
+	if (Host)
 	{
-		auto ctrl = AddControl(*HostAP, uri, tk->Port);
-
-		// 如果没有主机，这里打开令牌客户端，为组网做准备
-		if (!Host)
-			Client->Open();
-		else
-			Client->AttachControls();
-
-		// 假如来迟了，客户端已经打开，那么自己挂载事件
-		if (Client->Opened && Client->Master)
+		if (Host == esp)							// 8266 作为Host的时候  使用 Master 和广播端口两个    HostAP 为空
 		{
-			ctrl->Received = Client->Master->Received;
-			ctrl->Open();
+			if (esp->Joined && !EspMaster)
+			{
+				AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
+				EspMaster = true;
+			}
+			if (!EspBra)
+			{
+				AddControl(*Host, uri, tk->Port);
+				EspBra = true;
+			}
+		}
+
+		if (Host == net)							// w5500 作为Host的时候    使用Master和广播两个端口     HostAP 开启AP时非空 打开其内网端口
+		{
+			if (!NetMaster)
+			{
+				AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
+				NetMaster = true;
+			}
+			if (!NetBra)
+			{
+				AddControl(*Host, uri, tk->Port);
+				NetBra = true;
+			}
+		}
+
+		if (HostAP && HostAP == esp)				// 只使用esp的时候HostAp为空
+		{
+			if (!EspBra)
+			{
+				AddControl(*Host, uri, tk->Port);
+				EspBra = true;
+			}
+		}
+
+		if (!Client->Opened)
+		{
+			Client->Open();
+			if (_GateWay)_GateWay->Start();
+		}
+		else
+		{
+			Client->AttachControls();
+			if (_GateWay)_GateWay->Start();
 		}
 	}
 }
@@ -333,57 +392,137 @@ void AP0104::InitNet()
 }
 
 
-/******************************** 2401 *******************************
+/******************************** Tiny *******************************/
 
 int AP0104::Fix2401(const Buffer& bs)
 {
-//auto& bs	= *(Buffer*)param;
-// 微网指令特殊处理长度
-uint rs	= bs.Length();
-if(rs >= 8)
+	//auto& bs	= *(Buffer*)param;
+	// 微网指令特殊处理长度
+	uint rs = bs.Length();
+	if (rs >= 8)
+	{
+		rs = bs[5] + 8;
+		//if(rs < bs.Length()) bs.SetLength(rs);
+	}
+	return rs;
+}
+
+ITransport* AP0104::Create2401()
 {
-rs = bs[5] + 8;
-//if(rs < bs.Length()) bs.SetLength(rs);
-}
-return rs;
+	//(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+	debug_printf("\r\n Create2401 \r\n");
+
+	static Spi spi(Spi2, 10000000, true);
+	static NRF24L01 nrf;
+	nrf.Init(&spi, PD9, PD8, PE4);
+
+	auto tc = TinyConfig::Create();
+	if (tc->Channel == 0)
+	{
+		tc->Channel = 120;
+		tc->Speed = 250;
+	}
+	if (tc->Interval == 0)
+	{
+		tc->Interval = 40;
+		tc->Timeout = 1000;
+	}
+
+	nrf.AutoAnswer = false;
+	nrf.DynPayload = false;
+	nrf.Channel = tc->Channel;
+	nrf.Speed = tc->Speed;
+	nrf.FixData = Fix2401;
+
+	if (!nrf.Led) nrf.SetLed(*Leds[2]);
+
+	nrf.Master = true;
+
+	return &nrf;
 }
 
-ITransport* AP0104::Create2401()//(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
+void AP0104::InitTinyServer()
 {
-debug_printf("\r\n Create2401 \r\n");
+	if (Server)return;
 
-static Spi spi(Spi2, 10000000, true);
-static NRF24L01 nrf;
-nrf.Init(&spi, PD9, PD8, PE4);
+	if(!Nrf) Nrf = Create2401();
 
-auto tc	= TinyConfig::Create();
-if(tc->Channel == 0)
+	if (Nrf == nullptr)
+	{
+		debug_printf("Create2401 失败\r\n");
+		return;
+	}
+
+	auto TinyCtl = new TinyController();
+
+	TinyCtl->Port = Nrf;
+	TinyCtl->QueueLength = 64;
+	TinyCtl->ApplyConfig();
+
+	// 新配置需要保存一下
+	auto tc = TinyConfig::Current;
+	if (tc == nullptr)TinyConfig::Create();
+	
+	if (tc && tc->New) tc->Save();
+
+	Server = new TinyServer(TinyCtl);
+	Server->Cfg = tc;
+}
+
+/*************************** Tiny && Token* **************************/
+
+void AP0104::CreateGateway()
 {
-tc->Channel	= 120;
-tc->Speed	= 250;
+	if (!_GateWay)
+	{
+		if (!Client || !Server)debug_printf("TokenClient Or Server Not Ready!!\r\n");
+		_GateWay = Gateway::CreateGateway(Client,Server);
+	}
 }
-if(tc->Interval == 0)
+
+/******************************** 辅助 *******************************/
+
+void AP0104::Restore()
 {
-tc->Interval= 40;
-tc->Timeout	= 1000;
+	debug_printf("系统重置\r\n清空所有配置\r\n");
+	auto bsp = Current;
+	if (bsp->Server)bsp->Server->ClearDevices();
+	if (TokenConfig::Current)TokenConfig::Current->Clear();
+	if (TinyConfig::Current)TokenConfig::Current->Clear();
+	// Config::Current->RemoveAll();
+
+	debug_printf("系统将在1秒后重启\r\n");
+	Sys.Reboot(1000);
 }
 
-nrf.AutoAnswer	= false;
-nrf.DynPayload	= false;
-nrf.Channel		= tc->Channel;
-//nrf.Channel		= 120;
-nrf.Speed		= tc->Speed;
-
-nrf.FixData	= Fix2401;
-
-if(WirelessLed) nrf.Led	= CreateFlushPort(WirelessLed);
-
-nrf.Master	= true;
-
-return &nrf;
+void AP0104::OnPress(InputPort* port, bool down)
+{
+	if (down)return;
+	ushort time = port->PressTime;
+	if (time > 1000)
+	{
+		OnLongPress(port,down);
+	}
 }
-*/
 
+void AP0104::OnLongPress(InputPort* port, bool down)
+{
+	if (down) return;
+	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
+
+	ushort time = port->PressTime;
+	if (time >= 2500 && time < 4500)
+	{
+		debug_printf("系统重启\r\n");
+		Sys.Reboot(1000);
+		return;
+	}
+	if (time >= 4500)
+	{
+		Restore();
+		return;
+	}
+}
 
 /*
 NRF24L01+ 	(SPI2)		|	W5500		(SPI1)		|

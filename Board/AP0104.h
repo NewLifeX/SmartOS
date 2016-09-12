@@ -3,8 +3,13 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
-
 #include "TokenNet\TokenClient.h"
+#include "TinyNet\TinyServer.h"
+#include "TokenNet\GateWay.h"
+
+//#include "Message\ProxyFactory.h"
+#include "App\Alarm.h"
+#include "Device\RTC.h"
 
 // 阿波罗0801/0802
 class AP0104
@@ -22,6 +27,14 @@ public:
 	ISocketHost*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
 
+	ITransport*		Nrf;	// NRF24L01传输口
+	TinyServer*		Server; // TinyServer服务
+
+	Gateway*		_GateWay;	// 网关
+
+	// ProxyFactory*	ProxyFac;	// 透传管理器
+	// Alarm*			AlarmObj;
+
 	AP0104();
 
 	// 设置系统参数
@@ -32,29 +45,42 @@ public:
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
-	void InitButtons();
-	void InitPort();
+	void InitButtons(InputPort::IOReadHandler press = nullptr);
 
 	// 打开以太网W5500
 	ISocketHost* Create5500();
-
 	// 打开Esp8266，作为主控或者纯AP
 	ISocketHost* Create8266(bool apOnly);
-
-	ITransport* Create2401();
 
 	void InitClient();
 	void InitNet();
 
-	void Restore();
-	void OnLongPress(InputPort* port, bool down);
+	// 打开NRF24L01
+	ITransport* Create2401();
+	void	InitTinyServer();
+
+	void CreateGateway();
+
+	static void Restore();
+	static void OnPress(InputPort* port, bool down);
+	static void OnLongPress(InputPort* port, bool down);
+
+	static AP0104* Current;
 
 private:
 	void*	Data;
 	int		Size;
 
+	// Control 打开情况标识
+	bool	NetMaster;
+	bool	NetBra;
+	bool	EspMaster;
+	bool	EspBra;
+
 	void OpenClient(ISocketHost& host);
 	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+
+	static int Fix2401(const Buffer& bs);
 };
 
 #endif
