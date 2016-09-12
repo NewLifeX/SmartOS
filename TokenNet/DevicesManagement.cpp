@@ -8,20 +8,11 @@ DevicesManagement* DevicesManagement::Current = nullptr;
 DevicesManagement::DevicesManagement()
 {
 	//DevArr.SetLength(0);
-	//OnlineAlways.SetLength(0);
 	Current = this;
 }
 
 DevicesManagement::~DevicesManagement()
 {
-	// for (int i = 0; i < Length(); i++)
-	// {
-	// 	auto dv = DevArr[i];
-	// 	if (!dv)continue;
-	// 	delete dv;
-	// }
-	//DevArr.SetLength(0);
-	//OnlineAlways.SetLength(0);
 	Current = nullptr;
 }
 
@@ -101,10 +92,6 @@ bool DevicesManagement::DeleteDev(byte id)
 		debug_printf("idx~~~~~~~~~~~:%d\r\n", idx);
 		if (idx >= 0)DevArr[idx] = nullptr;
 
-		// 处理持久在线表
-		// int idx2 = OnlineAlways.FindIndex(dv);
-		// if (idx2 >= 0)OnlineAlways[idx2] = nullptr;
-
 		delete dv;
 		SaveDev();
 
@@ -145,8 +132,6 @@ int DevicesManagement::LoadDev()
 	int i = 0;
 	for (; i < count; i++)
 	{
-		//debug_printf("\t加载设备:");
-
 		bool fs = false;
 		/*ms.Seek(1);
 		byte id = ms.Peek();
@@ -171,7 +156,6 @@ int DevicesManagement::LoadDev()
 					DevArr.Add(dv);
 				else
 					delete dv;
-				//debug_printf("\t Push");
 			}
 		}
 		debug_printf("\r\n");
@@ -203,8 +187,6 @@ void DevicesManagement::SaveDev()
 		if (DevArr[i]) num++;
 	}
 
-	// 设备个数
-	//int count = num;
 	debug_printf("\tCount %d\r\n", num);
 	ms.Write((byte)num);
 
@@ -227,12 +209,7 @@ void DevicesManagement::ClearDev()
 	debug_printf("DevicesManagement::ClearDevices Clear List 0x%08X \r\n", cfg.Address);
 
 	DevArr.DeleteAll().Clear();
-	/*for (int i = 0; i < DevArr.Count(); i++)
-	{
-		if (DevArr[i]) delete DevArr[i];
-		DevArr[i] = nullptr;
-	}*/
-	//DevArr.SetLength(0);	// 清零后需要保存一下，否则重启后 Length 可能不是 0。做到以防万一
+
 	SaveDev();
 }
 
@@ -416,9 +393,6 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 
 	BinaryPair bp(ms);
 
-	//MemoryStream dvms;
-	//BinaryPair dvbp(dvms);
-
 	bp.Set("ID", dv->Address);
 
 	byte login = dv->Logined ? 1 : 0;
@@ -597,5 +571,3 @@ void DevicesManagement::MaintainState()
 		}
 	}
 }
-
-
