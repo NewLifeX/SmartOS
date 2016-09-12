@@ -44,8 +44,6 @@ private:
 public:
 	// 设备列表
 	IList	DevArr;
-	// 持久在线列表
-	// List	OnlineAlways;
 
 	TokenClient * Port = nullptr;
 	// 发送时刻再绑定？！ 如果绑定失败报错？
