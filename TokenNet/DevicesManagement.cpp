@@ -305,26 +305,26 @@ bool DevicesManagement::DeviceProcess(DeviceAtions act, const Pair& args, Stream
 		ByteArray ids;
 		args.Get("ids", ids);
 
+		// result.Write(ids.Length());
 		for (int i = 0; i < ids.Length(); i++)	// 判定依据需要修改
 		{
 			// 获取数据ms
 			MemoryStream dvms;
-			
+
 			// 序列化一个DevInfo到ms
 			if (!GetDevInfo(ids[i], dvms))continue;
 			// 转换为ByteArray
 			ByteArray dvbs(dvms.GetBuffer(), dvms.Position());
-			// 写入DevInfo
-			// result.Write(String((byte)i));		// 数组格式   "idx" + Data
-			result.Write((byte)1);
-			result.Write((byte)i);
-			result.WriteEncodeInt(dvbs.Length());
-			result.Write(dvbs);
 
-			debug_printf("\r\n");
-			ByteArray bs(result.GetBuffer(), result.Position());
-			bs.Show(true);
+			// 写入DevInfo
+			result.WriteArray(String(i));
+
+			//result.Write((byte)1);		// idxlen 这里打死不会超过127   
+			//result.Write((byte)i);		// idx    这里长度不会大于127   所以简便写法  不使用压缩编码
+			result.WriteEncodeInt(dvbs.Length());	// data[x]len
+			result.Write(dvbs);						// data[x]
 		}
+		// ByteArray(result.GetBuffer(), result.Position()).Show(true);
 	}
 	break;
 
@@ -427,9 +427,7 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	return true;
 }
 
-
 /******************************** 发送Invoke ********************************/
-
 
 void DevicesManagement::SendDevicesIDs()
 {
@@ -540,7 +538,6 @@ void DevicesManagement::MaintainState()
 	if (Port->Status < 2) return;
 	SendDevicesIDs();
 
-	//auto now = Sys.Seconds();
 	auto now = DateTime::Now().TotalSeconds();
 
 	// 处理持久在线设备
@@ -557,9 +554,6 @@ void DevicesManagement::MaintainState()
 		if (!dv) continue;
 
 		ushort time = dv->OfflineTime ? dv->OfflineTime : 60;
-
-		// 特殊处理网关自身
-		// if (dv->Address == gw->Server->Cfg->Address) dv->LastTime = now;
 
 		if (dv->LastTime + time < now)
 		{	// 下线

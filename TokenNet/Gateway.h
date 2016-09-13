@@ -50,7 +50,7 @@ public:
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
 
 	// 学习模式
-	static bool InvokeStudy(void * param, const Pair& args, Stream& result);
+	bool InvokeStudy(const Pair& args, Stream& result);
 
 public:
 	uint	_task = 0;	// 定时任务，10秒

@@ -83,6 +83,8 @@ void Gateway::Start()
 	_task = Sys.AddTask(Loop, this, 10000, LOOP_Interval, "设备任务");
 
 	Running = true;
+
+	Client->Register("Gateway/Study", &Gateway::InvokeStudy, this);
 }
 
 // 停止网关。取消本地和远程的消息挂载
@@ -298,6 +300,19 @@ Gateway* Gateway::CreateGateway(TokenClient* client, TinyServer* server)
 
 	return gw;
 }
+/******************************** invoke 调用********************************/
+
+// 调用学习模式
+bool Gateway::InvokeStudy(const Pair& args, Stream& result)
+{
+	uint time;
+	args.Get("time", time);
+	SetMode(time);
+	result.Write((byte)true);
+
+	return true;
+}
+
 // 设备上线下线报备
 void Gateway::Loop(void* param)
 {
@@ -316,16 +331,6 @@ void Gateway::Loop(void* param)
 			gw->SetMode(0);
 		}
 	}
-	gw->pDevMgmt->MaintainState();
+	// gw->pDevMgmt->MaintainState();
 }
-/******************************** invoke 调用********************************/
-// 调用学习模式
-bool Gateway::InvokeStudy(void * param, const Pair& args, Stream& result)
-{
-	uint time;
-	args.Get("time", time);
-	auto gw = (Gateway*)param;
-	gw->SetMode(time)
-		;
-	return true;
-}
+
