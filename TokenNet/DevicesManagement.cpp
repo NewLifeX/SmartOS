@@ -1,16 +1,8 @@
 ﻿#include "DevicesManagement.h"
-#include "Message\BinaryPair.h"
 
 DevicesManagement* DevicesManagement::Current = nullptr;
 
 /******************************** 功能代码 ********************************/
-
-//DevicesManagement::DevicesManagement()
-//{
-//	//DevArr.SetLength(0);
-//	Current = this;
-//	LoadDev();
-//}
 
 DevicesManagement::~DevicesManagement()
 {
@@ -237,9 +229,8 @@ void DevicesManagement::ShowDev()
 	debug_printf("\r\n\r\n");
 }
 
-
 /******************************** TokenMsg数据处理 ********************************/
-/******************************** 收到Invoke ********************************/
+/*********************************** 收到Invoke ***********************************/
 
 void DevicesManagement::SetTokenClient(TokenClient *port)
 {
@@ -576,11 +567,13 @@ void DevicesManagement::MaintainState()
 	}
 }
 
-DevicesManagement* DevicesManagement::CreateDevMgmt()
+DevicesManagement* DevicesManagement::CreateDevMgmt(uint addr, uint size)
 {
 	if (Current)return Current;
 	Current = new DevicesManagement();
+	
+	if(addr != 0) Current->SetFlashCfg(addr, size);
 	Current->LoadDev();
+
 	return Current;
 }
-

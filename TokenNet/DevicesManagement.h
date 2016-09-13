@@ -6,6 +6,7 @@
 
 #include "Flash.h"
 #include "TinyNet\TinyConfig.h"
+#include "Message\BinaryPair.h"
 
 #include "TokenClient.h"
 #include "DeviceMessage.h"
@@ -15,18 +16,8 @@
 class DevicesManagement
 {
 public:
-	// 全局只允许一个设备管理器  Invoke 也就使用这个
-	static DevicesManagement * Current;
-	static bool InvokeFindIDs (void * param, const Pair& args, Stream& result);
-	static bool InvokeFindAll(void * param, const Pair& args, Stream& result);
-	static bool InvokeSet	 (void * param, const Pair& args, Stream& result);
-	static bool InvokeDelete(void * param, const Pair& args, Stream& result);
-							 
-public:
-	// DevicesManagement();
 	~DevicesManagement();
 
-	bool SetFlashCfg(uint addr, uint size);
 	int Length() { return DevArr.Count(); }
 
 	Device* FindDev(byte id)const;
@@ -38,25 +29,26 @@ public:
 private:
 	// 不允许外部调用  避免重复LoadDev()
 	int LoadDev();
+	bool SetFlashCfg(uint addr, uint size);
+
 	// 外部操作使用 DeviceRequest
 	void SaveDev();
 	bool DeleteDev(byte id);
 	int	PushDev(Device* dv);
+
 public:
 	// 设备列表
 	IList	DevArr;
-
 	TokenClient * Port = nullptr;
 	// 发送时刻再绑定？！ 如果绑定失败报错？
 	void SetTokenClient(TokenClient *port);
 
-	// 处理TokenMsg的设备指令
-	//bool DeviceProcess(String &act, const Message& msg);
 	bool DeviceProcess(DeviceAtions act,const Pair& args, Stream& result);
 	void SendDevicesIDs();
 	// 设备状态变更上报 由TinyServer这种对象调用
 	void DeviceRequest(DeviceAtions act, const Device* dv = nullptr);
 	void DeviceRequest(DeviceAtions act, byte id);
+
 private:
 	// 把ids写入到ms
 	int WriteIDs(Stream & ms);
@@ -65,6 +57,7 @@ private:
 	bool GetDevInfo(Device *dv, MemoryStream &ms);
 	// 发送单个设备信息  只在维护设备状态时使用
 	bool SendDevices(DeviceAtions act, const Device* dv = nullptr);
+
 public:
 	// 维护设备状态
 	void MaintainState();
@@ -82,7 +75,15 @@ private:
 	void * _ClbkParam = nullptr;
 
 public:
-	static DevicesManagement* CreateDevMgmt(); 
+	// 使用默认最后4K空间设置 addr = 0x8000000 + (Sys.FlashSize << 10) - (4 << 10);
+	static DevicesManagement* CreateDevMgmt(uint addr = 0, uint size = 0);
+
+	// 全局只允许一个设备管理器  Invoke 也就使用这个
+	static DevicesManagement * Current;
+	static bool InvokeFindIDs(void * param, const Pair& args, Stream& result);
+	static bool InvokeFindAll(void * param, const Pair& args, Stream& result);
+	static bool InvokeSet(void * param, const Pair& args, Stream& result);
+	static bool InvokeDelete(void * param, const Pair& args, Stream& result);
 };
 
 
