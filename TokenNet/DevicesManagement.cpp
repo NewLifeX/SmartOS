@@ -5,11 +5,12 @@ DevicesManagement* DevicesManagement::Current = nullptr;
 
 /******************************** 功能代码 ********************************/
 
-DevicesManagement::DevicesManagement()
-{
-	//DevArr.SetLength(0);
-	Current = this;
-}
+//DevicesManagement::DevicesManagement()
+//{
+//	//DevArr.SetLength(0);
+//	Current = this;
+//	LoadDev();
+//}
 
 DevicesManagement::~DevicesManagement()
 {
@@ -574,3 +575,12 @@ void DevicesManagement::MaintainState()
 		}
 	}
 }
+
+DevicesManagement* DevicesManagement::CreateDevMgmt()
+{
+	if (Current)return Current;
+	Current = new DevicesManagement();
+	Current->LoadDev();
+	return Current;
+}
+

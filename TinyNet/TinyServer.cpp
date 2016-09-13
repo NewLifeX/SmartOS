@@ -63,12 +63,12 @@ void TinyServer::Start()
 	//const uint DevSize = 4 << 10;
 	//pDevMgmt->SetFlashCfg(DevAddr,DevSize);
 
-	if (DevicesManagement::Current)
-		pDevMgmt = DevicesManagement::Current;
-	else
-		pDevMgmt = new DevicesManagement();
+	pDevMgmt = DevicesManagement::CreateDevMgmt();
 
-	auto count = pDevMgmt->LoadDev();
+	//if (DevicesManagement::Current)
+	//	pDevMgmt = DevicesManagement::Current;
+	//else
+	//	pDevMgmt = new DevicesManagement();
 
 	// 添加网关这一条设备信息
 	if (!pDevMgmt->FindDev(Cfg->Address))

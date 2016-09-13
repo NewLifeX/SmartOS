@@ -23,7 +23,7 @@ public:
 	static bool InvokeDelete(void * param, const Pair& args, Stream& result);
 							 
 public:
-	DevicesManagement();
+	// DevicesManagement();
 	~DevicesManagement();
 
 	bool SetFlashCfg(uint addr, uint size);
@@ -32,11 +32,12 @@ public:
 	Device* FindDev(byte id)const;
 	Device* FindDev(const Buffer& hardid) const;
 
-	int LoadDev();
 	void ClearDev();
 	void ShowDev();
 
-private:	
+private:
+	// 不允许外部调用  避免重复LoadDev()
+	int LoadDev();
 	// 外部操作使用 DeviceRequest
 	void SaveDev();
 	bool DeleteDev(byte id);
@@ -79,6 +80,9 @@ private:
 
 	DevPrsCallback  _DevProcess = nullptr;
 	void * _ClbkParam = nullptr;
+
+public:
+	static DevicesManagement* CreateDevMgmt(); 
 };
 
 
