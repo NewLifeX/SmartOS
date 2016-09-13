@@ -49,6 +49,9 @@ public:
 	static Gateway*	Current;
 	static Gateway* CreateGateway(TokenClient* client, TinyServer* server);
 
+	// 学习模式
+	static bool InvokeStudy(void * param, const Pair& args, Stream& result);
+
 public:
 	uint	_task = 0;	// 定时任务，10秒
 	int		_Study = 0;	// 自动退出学习时间，秒

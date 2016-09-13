@@ -319,3 +319,13 @@ void Gateway::Loop(void* param)
 	gw->pDevMgmt->MaintainState();
 }
 /******************************** invoke 调用********************************/
+// 调用学习模式
+bool Gateway::InvokeStudy(void * param, const Pair& args, Stream& result)
+{
+	uint time;
+	args.Get("time", time);
+	auto gw = (Gateway*)param;
+	gw->SetMode(time)
+		;
+	return true;
+}
