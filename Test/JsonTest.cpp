@@ -27,7 +27,7 @@ static void TestRead()
 	assert(name.Type() == JsonType::string, "Type()");
 
 	auto enable	= json["enable"];
-	assert(id.Type() == JsonType::boolean, "Type()");
+	assert(enable.Type() == JsonType::boolean, "Type()");
 
 	auto noval	= json["noval"];
 	assert(noval.Type() == JsonType::null, "Type()");
@@ -44,7 +44,7 @@ static void TestRead()
 
 void Json::Test()
 {
-	TS("TestList");
+	TS("TestJson");
 
 	debug_printf("TestJson......\r\n");
 

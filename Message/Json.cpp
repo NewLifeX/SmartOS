@@ -1,6 +1,6 @@
 ﻿#include "Json.h"
 
-static Json Null;
+static const Json Null;
 
 Json::Json() { Init(nullptr, 0); }
 
@@ -11,7 +11,8 @@ Json::Json(cstring str)
 
 void Json::Init(cstring str, int len)
 {
-
+	_str	= str;
+	_len	= len;
 }
 
 // 值类型
@@ -38,7 +39,7 @@ JsonType Json::Type() const
 	{
 		char ch	= _str[i];
 		// 判断非数字
-		if(ch < '0' && ch > '9')
+		if(ch < '0' || ch > '9')
 		{
 			// 负号只能出现在第一位
 			if(ch == '-' && i > 0) return JsonType::null;
@@ -51,7 +52,7 @@ JsonType Json::Type() const
 		}
 	}
 
-	return isFloat ? JsonType::integer : JsonType::Float;
+	return isFloat ? JsonType::Float : JsonType::integer;
 }
 
 // 获取值
@@ -185,7 +186,8 @@ int readString(cstring str, int len)
 // 读取成员。找到指定成员，并用它的值构造一个新的对象
 Json Json::operator[](cstring key) const
 {
-	if(!_str && !_len) return Json::Null;
+	Json json;
+	if(!_str && !_len) return json;
 
 	String s((cstring)_str, _len);
 
@@ -196,7 +198,7 @@ Json Json::operator[](cstring key) const
 	int p	= 0;
 	while(true){
 		p	= s.IndexOf(key, p);
-		if(p < 0) return Json::Null;
+		if(p < 0) return json;
 
 		p	+= n;
 
@@ -228,17 +230,16 @@ Json Json::operator[](cstring key) const
 		}
 	}
 
-	Json json;
 	json.Init(val, n);
 
 	return json;
 }
 
 // 设置成员。找到指定成员，或添加成员，并返回对象
-Json& Json::operator[](cstring key)
+/*Json& Json::operator[](cstring key)
 {
 	return *this;
-}
+}*/
 
 // 特殊支持数组
 int Json::Length() const
