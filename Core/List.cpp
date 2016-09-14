@@ -11,34 +11,14 @@ IList::IList(const IList& list)
 {
 	Init();
 
-	// 如果list的缓冲区是自己的，则拷贝过来
-	// 如果不是自己的，则直接拿过来用
-	if(list._Arr != list.Arr) CheckCapacity(list._Count);
-
-	_Count	= list._Count;
-	Comparer	= list.Comparer;
-
-	Buffer(_Arr, _Count << 2)	= list._Arr;
+	operator=(list);
 }
 
 IList::IList(IList&& list)
 {
-	_Count	= list._Count;
-	_Capacity	= list._Capacity;
-	Comparer	= list.Comparer;
+	Init();
 
-	// 如果list的缓冲区是自己的，则拷贝过来
-	// 如果不是自己的，则直接拿过来用
-	if(list._Arr == list.Arr)
-	{
-		_Arr	= Arr;
-		Buffer(_Arr, _Count << 2)	= list._Arr;
-	}
-	else
-	{
-		_Arr	= list._Arr;
-		list.Init();
-	}
+	move(list);
 }
 
 IList::~IList()
@@ -53,6 +33,51 @@ void IList::Init()
 	_Capacity	= ArrayLength(Arr);
 
 	Comparer	= nullptr;
+}
+
+IList& IList::operator=(const IList& list)
+{
+	if(this != &list)
+	{
+		_Count	= list._Count;
+		Comparer	= list.Comparer;
+
+		if(list._Arr != list.Arr) CheckCapacity(list._Count);
+
+		Buffer(_Arr, _Count << 2)	= list._Arr;
+	}
+
+	return *this;
+}
+
+IList& IList::operator=(IList&& list)
+{
+	if(this != &list) move(list);
+
+	return *this;
+}
+
+void IList::move(IList& list)
+{
+	_Count	= list._Count;
+	_Capacity	= list._Capacity;
+	Comparer	= list.Comparer;
+
+	// 如果list的缓冲区是自己的，则拷贝过来
+	// 如果不是自己的，则直接拿过来用
+	if(list._Arr == list.Arr)
+	{
+		_Arr	= Arr;
+		Buffer(_Arr, _Count << 2)	= list._Arr;
+	}
+	else
+	{
+		// 如果已有数据区，则释放
+		if(_Arr && _Arr != Arr) delete _Arr;
+
+		_Arr	= list._Arr;
+		list.Init();
+	}
 }
 
 //int IList::Count() const { return _Count; }

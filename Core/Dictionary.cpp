@@ -10,6 +10,37 @@ IDictionary::IDictionary(IComparer comparer)
 	_Keys.Comparer	= comparer;
 }
 
+IDictionary::IDictionary(const IDictionary& dic)
+{
+	operator=(dic);
+}
+
+IDictionary::IDictionary(IDictionary&& dic)
+{
+	move(dic);
+}
+
+IDictionary& IDictionary::operator=(const IDictionary& dic)
+{
+	_Keys	= dic._Keys;
+	_Values	= dic._Values;
+
+	return *this;
+}
+
+IDictionary& IDictionary::operator=(IDictionary&& dic)
+{
+	move(dic);
+
+	return *this;
+}
+
+void IDictionary::move(IDictionary& dic)
+{
+	_Keys	= dic._Keys;
+	_Values	= dic._Values;
+}
+
 //int IDictionary::Count() const { return _Keys.Count(); }
 //const IList& IDictionary::Keys()	const { return _Keys; }
 //const IList& IDictionary::Values()	const { return _Values; }

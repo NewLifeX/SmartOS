@@ -9,6 +9,11 @@ class IDictionary
 	typedef void*		PValue;
 public:
     IDictionary(IComparer comparer = nullptr);
+    IDictionary(const IDictionary& dic);
+    IDictionary(IDictionary&& dic);
+
+	IDictionary& operator=(const IDictionary& dic);
+	IDictionary& operator=(IDictionary&& dic);
 
 	inline int Count()				const { return _Keys.Count(); }
 	inline const IList& Keys()		const { return _Keys; }
@@ -41,6 +46,8 @@ public:
 private:
 	IList	_Keys;
 	IList	_Values;
+
+	void move(IDictionary& dic);
 };
 
 template<typename TKey, typename TValue>

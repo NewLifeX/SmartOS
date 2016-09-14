@@ -14,6 +14,9 @@ public:
     IList(IList&& list);
 	virtual ~IList();
 
+	IList& operator=(const IList& list);
+	IList& operator=(IList&& list);
+
 	inline int Count()	const { return _Count; }
 
 	// 添加单个元素
@@ -53,6 +56,7 @@ private:
 
 	void Init();
 	bool CheckCapacity(int count);
+	void move(IList& list);
 };
 
 template<typename T>
