@@ -35,7 +35,7 @@ public:
 	JsonType Type() const;
 
 	// 获取值
-	cstring	AsString()	const;
+	String	AsString()	const;
 	bool	AsBoolean()	const;
 	int		AsInt()		const;
 	float	AsFloat()	const;

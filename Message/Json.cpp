@@ -56,13 +56,13 @@ JsonType Json::Type() const
 }
 
 // 获取值
-cstring	Json::AsString()	const
+String	Json::AsString()	const
 {
 	if(!_str && !_len) return nullptr;
 
 	if(_str[0] != '"') return nullptr;
 
-	return _str;
+	return String(_str, _len);
 }
 
 bool	Json::AsBoolean()	const
