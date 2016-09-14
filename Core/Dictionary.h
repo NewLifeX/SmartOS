@@ -77,8 +77,8 @@ public:
 	}
 
     // 重载索引运算符[]，返回指定元素的第一个
-    PValue operator[](PKey key) const	{ return IDictionary::operator[]((const void*)key); }
-    PValue& operator[](PKey key)		{ return IDictionary::operator[]((const void*)key); }
+    PValue operator[](PKey key) const	{ return (PValue)IDictionary::operator[]((const void*)key); }
+    PValue& operator[](PKey key)		{ return (PValue&)IDictionary::operator[]((const void*)key); }
 };
 
 #endif
