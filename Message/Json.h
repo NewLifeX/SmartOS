@@ -6,16 +6,71 @@
 #include "List.h"
 #include "Dictionary.h"
 
+/*
+一个Json对象内部包含有一个字符串，读取成员就是截取子字符串构建新的Json对象。
+要么只读，要么只写，不允许读取后修改，不允许写入后读取。
+*/
+
+enum class JsonType : byte
+{
+	null,
+	object,
+	array,
+	string,
+	boolean,
+	integer,
+	Float
+};
+
+// Json对象
+class Json : public Object
+{
+public:
+	static Json Null;
+
+	Json();
+	Json(cstring str);
+
+	// 值类型
+	JsonType Type() const;
+
+	// 获取值
+	cstring	AsString()	const;
+	bool	AsBoolean()	const;
+	int		AsInt()		const;
+	float	AsFloat()	const;
+
+	// 读取成员。找到指定成员，并用它的值构造一个新的对象
+	Json operator[](cstring key) const;
+	// 设置成员。找到指定成员，或添加成员，并返回对象
+	Json& operator[](cstring key);
+
+	// 特殊支持数组
+	int Length() const;
+	Json operator[](int index) const;
+	Json& operator[](int index);
+
+#if DEBUG
+	static void Test();
+#endif
+	
+private:
+	cstring	_str;
+	int		_len;
+
+	void Init(cstring str, int len);
+};
+
 /** Json值类型 */
 enum ValueType
 {
-	INT,        // JSON's int
-	FLOAT,      // JSON's float 3.14 12e-10
-	BOOL,       // JSON's boolean (true, false)
-	STRING,     // JSON's string " ... " or (not really JSON) ' ... '
-	OBJECT,     // JSON's object { ... }
-	ARRAY,      // JSON's array [ ... ]
-	NIL         // JSON's null
+	INT,
+	FLOAT,
+	BOOL,
+	STRING,
+	OBJECT,
+	ARRAY,
+	NIL
 };
 
 class JValue;
@@ -44,7 +99,7 @@ public:
 	uint size() const;
 
 	String& ToStr(String& str) const;
-	
+
 protected:
 
 	// 内部容器

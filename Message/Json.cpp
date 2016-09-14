@@ -1,5 +1,264 @@
 ﻿#include "Json.h"
 
+static Json Null;
+
+Json::Json() { Init(nullptr, 0); }
+
+Json::Json(cstring str)
+{
+	Init(str, String(str).Length());
+}
+
+void Json::Init(cstring str, int len)
+{
+
+}
+
+// 值类型
+JsonType Json::Type() const
+{
+	if(!_str && !_len) return JsonType::null;
+
+	// 快速判断对象、数组和字符串
+	switch(_str[0])
+	{
+		case '{': return JsonType::object;
+		case '[': return JsonType::array;
+		case '"': return JsonType::string;
+	}
+
+	// 对比判断空和布尔类型
+	String s((cstring)_str, _len);
+	if(s == "null") return JsonType::null;
+	if(s == "true" || s == "false") return JsonType::boolean;
+
+	// 剩下整数和浮点数
+	bool isFloat	= false;
+	for(int i=0; i<_len; i++)
+	{
+		char ch	= _str[i];
+		// 判断非数字
+		if(ch < '0' && ch > '9')
+		{
+			// 负号只能出现在第一位
+			if(ch == '-' && i > 0) return JsonType::null;
+
+			// 直接判断圆点，不支持指数类型
+			if(ch == '.' && !isFloat)
+				isFloat	= true;
+			else
+				return JsonType::null;
+		}
+	}
+
+	return isFloat ? JsonType::integer : JsonType::Float;
+}
+
+// 获取值
+cstring	Json::AsString()	const
+{
+	if(!_str && !_len) return nullptr;
+
+	if(_str[0] != '"') return nullptr;
+
+	return _str;
+}
+
+bool	Json::AsBoolean()	const
+{
+	if(!_str && !_len) return false;
+
+	if(_str[0] != 't' && _str[0] != 'f') return false;
+
+	String s((cstring)_str, _len);
+	return s == "true";
+}
+
+int		Json::AsInt()		const
+{
+	if(!_str && !_len) return 0;
+
+	if(Type() != JsonType::integer) return 0;
+
+	String s((cstring)_str, _len);
+	return s.ToInt();
+}
+
+float	Json::AsFloat()	const
+{
+	if(!_str && !_len) return 0;
+
+	if(Type() != JsonType::Float) return 0;
+
+	String s((cstring)_str, _len);
+	return s.ToFloat();
+}
+
+// 跳过空格
+cstring SkipSpace(cstring str)
+{
+	while(str[0] == ' ' ||
+		str[0] == '\t' ||
+		str[0] == '\r' ||
+		str[0] == '\n') str++;
+
+	return str;
+}
+
+// 读取对象结尾
+int readObject(cstring str, int len)
+{
+	// { ... }
+	if(str[0] != '{') return 0;
+
+	// 记录括号配对
+	int m	= 0;
+	// 是否在字符串中，此时不算括号
+	bool s	= false;
+	for(int i=0; i<len; i++)
+	{
+		switch(str[i])
+		{
+			case '{': if(!s) m++; break;
+			case '}': {
+				if(!s) m--;
+				if(!m) return i + 1;
+				break;
+			}
+			case '"': {
+				if(str[i-1] != '\\') s	= !s;
+			}
+		}
+	}
+	return 0;
+}
+
+// 读取数组结尾
+int readArray(cstring str, int len)
+{
+	// [ ... ]
+	if(str[0] != '[') return 0;
+
+	// 记录括号配对
+	int m	= 0;
+	// 是否在字符串中，此时不算括号
+	bool s	= false;
+	for(int i=0; i<len; i++)
+	{
+		switch(str[i])
+		{
+			case '[': if(!s) m++; break;
+			case ']': {
+				if(!s) m--;
+				if(!m) return i + 1;
+				break;
+			}
+			case '"': {
+				if(str[i-1] != '\\') s	= !s;
+			}
+		}
+	}
+	return 0;
+}
+
+// 读取字符串结尾
+int readString(cstring str, int len)
+{
+	// " ..\".. "
+	if(str[0] != '"') return 0;
+
+	// 找到第一个不是转义的双引号
+	for(int i=1; i<len; i++)
+	{
+		switch(str[i])
+		{
+			case '"': {
+				if(str[i-1] != '\\') return i + 1;
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
+// 读取成员。找到指定成员，并用它的值构造一个新的对象
+Json Json::operator[](cstring key) const
+{
+	if(!_str && !_len) return Json::Null;
+
+	String s((cstring)_str, _len);
+
+	// "name": value
+
+	// 找到名称
+	int n	= String(key).Length();
+	int p	= 0;
+	while(true){
+		p	= s.IndexOf(key, p);
+		if(p < 0) return Json::Null;
+
+		p	+= n;
+
+		// 找冒号
+		if(_str[p] == ':') { p++; break; }
+		if(_str[p] == '"' || _str[p+1] == ':') { p+=2; break; }
+	}
+
+	// 跳过可能的空格
+	auto val	= SkipSpace(_str + p);
+	n	= _str + _len - val;
+	// 找到结尾
+	switch(val[0])
+	{
+		case '{': n	= readObject(val, n); break;
+		case '[': n	= readArray(val, n); break;
+		case '"': n	= readString(val, n); break;
+		// 其它类型只需要逗号，如果没有逗号，就可能是最后一个了
+		default: {
+			auto ve	= val + n;
+			for(auto vs=val; vs < ve; vs++)
+			{
+				if(vs[0] == ',')
+				{
+					n	= vs - val;
+					break;
+				}
+			}
+		}
+	}
+
+	Json json;
+	json.Init(val, n);
+
+	return json;
+}
+
+// 设置成员。找到指定成员，或添加成员，并返回对象
+Json& Json::operator[](cstring key)
+{
+	return *this;
+}
+
+// 特殊支持数组
+int Json::Length() const
+{
+	if(!_str && !_len) return 0;
+
+	if(_str[0] != '[') return 0;
+
+	return 0;
+}
+
+Json Json::operator[](int index) const
+{
+	return *this;
+}
+
+Json& Json::operator[](int index)
+{
+	return *this;
+}
 
 JValue::JValue() : type_t(NIL) { }
 
