@@ -717,6 +717,13 @@ int String::ToInt() const
 	return atoi(_Arr);
 }
 
+float String::ToFloat() const
+{
+	if(_Length == 0) return 0;
+
+	return atof(_Arr);
+}
+
 // 输出对象的字符串表示方式
 String& String::ToStr(String& str) const
 {
