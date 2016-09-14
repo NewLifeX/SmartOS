@@ -92,14 +92,23 @@ void AP0801::InitLeds()
 	}
 }
 
-void AP0801::InitButtons()
+void ButtonOnpress(InputPort* port, bool down, void* param)
 {
-	for(int i=0; i<ButtonPins.Count(); i++)
+	if (port->PressTime > 1000)
+		AP0801::OnLongPress(port, down);
+}
+
+void AP0801::InitButtons(InputPort::IOReadHandler press)
+{
+	for (int i = 0; i<ButtonPins.Count(); i++)
 	{
-		auto port	= new InputPort(ButtonPins[i]);
-		port->Mode	= InputPort::Both;
-		port->Invert	= true;
-		//port->Register(OnPress, (void*)i);
+		auto port = new InputPort(ButtonPins[i]);
+		port->Mode = InputPort::Both;
+		port->Invert = true;
+		if (press)
+			port->Register(press, (void*)i);
+		else
+			port->Register(ButtonOnpress, (void*)i);
 		port->Open();
 		Buttons.Add(port);
 	}

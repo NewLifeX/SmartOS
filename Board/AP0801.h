@@ -39,8 +39,8 @@ public:
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
-	void InitButtons();
-	void InitPort();
+	void InitButtons(InputPort::IOReadHandler press = nullptr);
+	// void InitPort();
 
 	// 打开以太网W5500
 	ISocketHost* Create5500();
@@ -48,19 +48,17 @@ public:
 	// 打开Esp8266，作为主控或者纯AP
 	ISocketHost* Create8266(bool apOnly);
 
-	ITransport* Create2401();
+	// ITransport* Create2401();
 
 	void InitClient();
 	void InitNet();
 	void InitProxy();
 	void InitAlarm();
 
-	void Restore();
-	void OnLongPress(InputPort* port, bool down);
+	static void Restore();
+	static void OnLongPress(InputPort* port, bool down);
 
 	static AP0801* Current;
-
-
 
 private:
 	void*	Data;
