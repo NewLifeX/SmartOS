@@ -27,8 +27,8 @@ public:
 	explicit String(uint value, int radix = 10);
 	explicit String(Int64 value, int radix = 10);
 	explicit String(UInt64 value, int radix = 10);
-	explicit String(float value, byte decimalPlaces = 2);
-	explicit String(double value, byte decimalPlaces = 2);
+	explicit String(float value, int decimalPlaces = 4);
+	explicit String(double value, int decimalPlaces = 8);
 	//virtual ~String();
 
 	using Array::SetLength;
@@ -65,8 +65,8 @@ public:
 	bool Concat(uint num, int radix = 10);
 	bool Concat(Int64 num, int radix = 10);
 	bool Concat(UInt64 num, int radix = 10);
-	bool Concat(float num, byte decimalPlaces = 2);
-	bool Concat(double num, byte decimalPlaces = 2);
+	bool Concat(float num, int decimalPlaces = 4);
+	bool Concat(double num, int decimalPlaces = 8);
 
 	/*template<typename T>
 	String& operator += (T rhs)	{Concat(rhs); return (*this);}*/
@@ -122,6 +122,7 @@ public:
 
 	int ToInt() const;
 	float ToFloat() const;
+	double ToDouble() const;
 
 	// 输出对象的字符串表示方式
 	virtual String& ToStr(String& str) const;

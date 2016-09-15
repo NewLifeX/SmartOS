@@ -104,14 +104,14 @@ String::String(UInt64 value, int radix) : Array(Arr, ArrayLength(Arr))
 	Concat(value, radix);
 }
 
-String::String(float value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
+String::String(float value, int decimalPlaces) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
 	Concat(value, decimalPlaces);
 }
 
-String::String(double value, byte decimalPlaces) : Array(Arr, ArrayLength(Arr))
+String::String(double value, int decimalPlaces) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
@@ -470,14 +470,14 @@ bool String::Concat(UInt64 num, int radix)
 	return Concat(buf, strlen(buf));
 }
 
-bool String::Concat(float num, byte decimalPlaces)
+bool String::Concat(float num, int decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
 	return Concat(string, strlen(string));
 }
 
-bool String::Concat(double num, byte decimalPlaces)
+bool String::Concat(double num, int decimalPlaces)
 {
 	char buf[20];
 	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
@@ -714,14 +714,36 @@ int String::ToInt() const
 {
 	if(_Length == 0) return 0;
 
-	return atoi(_Arr);
+	if(_Arr[_Length] == '\0') return atoi(_Arr);
+
+	// 非零结尾字符串需要特殊处理
+	String s;
+	s.copy(_Arr, _Length);
+	return s.ToInt();
 }
 
 float String::ToFloat() const
 {
 	if(_Length == 0) return 0;
 
-	return atof(_Arr);
+	if(_Arr[_Length] == '\0') return atof(_Arr);
+
+	// 非零结尾字符串需要特殊处理
+	String s;
+	s.copy(_Arr, _Length);
+	return s.ToFloat();
+}
+
+double String::ToDouble() const
+{
+	if(_Length == 0) return 0;
+
+	if(_Arr[_Length] == '\0') return atof(_Arr);
+
+	// 非零结尾字符串需要特殊处理
+	String s;
+	s.copy(_Arr, _Length);
+	return s.ToDouble();
 }
 
 // 输出对象的字符串表示方式
