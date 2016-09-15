@@ -116,13 +116,19 @@ double	Json::AsDouble()	const
 	return s.ToDouble();
 }
 
+bool isSpace(char ch)
+{
+	return ch == ' ' ||
+		ch == '\t' ||
+		ch == '\r' ||
+		ch == '\n';
+	
+}
+
 // 跳过空格
 cstring SkipSpace(cstring str)
 {
-	while(str[0] == ' ' ||
-		str[0] == '\t' ||
-		str[0] == '\r' ||
-		str[0] == '\n') str++;
+	while(isSpace(str[0])) str++;
 
 	return str;
 }
@@ -242,7 +248,7 @@ Json Json::operator[](cstring key) const
 			auto ve	= val + n;
 			for(auto vs=val; vs < ve; vs++)
 			{
-				if(vs[0] == ',')
+				if(vs[0] == ',' || isSpace(vs[0]))
 				{
 					n	= vs - val;
 					break;

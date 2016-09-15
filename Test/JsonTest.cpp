@@ -59,7 +59,12 @@ static void TestRead()
 
 	auto value	= extend["value"];
 	assert(value.Type() == JsonType::Float, "Type()");
-	assert(value.AsFloat() == 67.89, "AsFloat()");
+	float v3	= value.AsFloat();
+	String s3(v3);
+	s3.Show(true);
+	//assert(value.AsFloat() == 67.89, "AsFloat()");
+	// 必须加上f结尾，说明这是单精度浮点数，否则不想等
+	assert(value.AsFloat() == 67.89f, "AsFloat()");
 }
 
 void Json::Test()
