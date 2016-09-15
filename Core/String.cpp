@@ -16,7 +16,7 @@ extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
-char* dtostrf(double val, char width, byte prec, char* sout);
+char* dtostrf(double val, byte prec, char* sout);
 
 /******************************** String ********************************/
 
@@ -470,18 +470,34 @@ bool String::Concat(UInt64 num, int radix)
 	return Concat(buf, strlen(buf));
 }
 
+char* ftoa(char* str, double num)
+{
+	int len	= sprintf(str, "%.8f", num);
+	// 干掉后面多余的0
+	for(int i=len; i>=0; i--)
+	{
+		if(str[i] == '0') str[i]	= '\0';
+	}
+	
+	return str;
+}
+
 bool String::Concat(float num, int decimalPlaces)
 {
 	char buf[20];
-	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strlen(string));
+	dtostrf(num, decimalPlaces, buf);
+	//sprintf(buf, "%f", num);
+	//ftoa(buf, num);
+	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(double num, int decimalPlaces)
 {
 	char buf[20];
-	auto string = dtostrf(num, (decimalPlaces + 2), decimalPlaces, buf);
-	return Concat(string, strlen(string));
+	dtostrf(num, decimalPlaces, buf);
+	//sprintf(buf, "%f", num);
+	//ftoa(buf, num);
+	return Concat(buf, strlen(buf));
 }
 
 String& operator + (String& lhs, const Object& rhs)
@@ -1118,13 +1134,19 @@ extern char* ultoa(UInt64 value, char* string, int radix)
 	return string;
 }
 
-char *dtostrf (double val, char width, byte prec, char* sout)
+char *dtostrf (double val, byte prec, char* str)
 {
 	char fmt[20];
-	sprintf(fmt, "%%%d.%df", width, prec);
-	sprintf(sout, fmt, val);
+	sprintf(fmt, "%%.%df", prec);
+	int len	= sprintf(str, fmt, val);
 
-	return sout;
+	// 干掉后面多余的0
+	for(int i=len; i>=0; i--)
+	{
+		if(str[i] == '0') str[i]	= '\0';
+	}
+
+	return str;
 }
 
 /******************************** StringSplit ********************************/
