@@ -62,7 +62,18 @@ String	Json::AsString()	const
 
 	if(_str[0] != '"') return nullptr;
 
-	return String(_str, _len);
+	// 去掉前后双引号
+	auto p	= _str;
+	int n	= _len;
+	if(p[0] == '"')
+	{
+		p++;
+		n--;
+	}
+	if(p[n-1] == '"') n--;
+
+	// 没有处理转义字符
+	return String(p, n);
 }
 
 bool	Json::AsBoolean()	const
