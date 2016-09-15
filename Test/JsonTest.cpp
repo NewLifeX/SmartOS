@@ -10,7 +10,7 @@ static void TestRead()
 	\"name\": \"Stone\",	\
 	\"enable\": true,		\
 	\"noval\": null,		\
-	\"score\": 3.1415,		\
+	\"score\": 3.14159,		\
 	\"array\": [1, 0, 2],	\
 	\"extend\": {			\
 		\"kind\": \"cost\",	\
@@ -37,11 +37,18 @@ static void TestRead()
 
 	auto score	= json["score"];
 	assert(score.Type() == JsonType::Float, "Type()");
-	assert(score.AsFloat() == 3.1415, "AsFloat()");
+	float v	= score.AsFloat();
+	String s(v);
+	s.Show(true);
+	double v2	= score.AsDouble();
+	//double v2	= 3.1415;
+	String s2(v2);
+	s2.Show(true);
+	assert(score.AsDouble() == 3.14159, "AsFloat()");
 
 	auto array	= json["array"];
 	assert(array.Type() == JsonType::array, "Type()");
-	assert(score.Length() == 3, "Length()");
+	//assert(score.Length() == 3, "Length()");
 
 	auto extend	= json["extend"];
 	assert(extend.Type() == JsonType::object, "Type()");

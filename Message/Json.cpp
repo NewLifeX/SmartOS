@@ -106,6 +106,16 @@ float	Json::AsFloat()	const
 	return s.ToFloat();
 }
 
+double	Json::AsDouble()	const
+{
+	if(!_str && !_len) return 0;
+
+	if(Type() != JsonType::Float) return 0;
+
+	String s((cstring)_str, _len);
+	return s.ToDouble();
+}
+
 // 跳过空格
 cstring SkipSpace(cstring str)
 {

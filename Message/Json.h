@@ -39,6 +39,7 @@ public:
 	bool	AsBoolean()	const;
 	int		AsInt()		const;
 	float	AsFloat()	const;
+	double	AsDouble()	const;
 
 	// 读取成员。找到指定成员，并用它的值构造一个新的对象
 	Json operator[](cstring key) const;
