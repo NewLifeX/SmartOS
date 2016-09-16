@@ -17,7 +17,7 @@ void Json::Init(cstring str, int len)
 {
 	//_str	= str;
 	_len	= len;
-	
+
 	_str	= SkipSpace(str, _len);
 }
 
@@ -122,8 +122,7 @@ double	Json::AsDouble()	const
 	return s.ToDouble();
 }
 
-// 读取成员。找到指定成员，并用它的值构造一个新的对象
-Json Json::operator[](cstring key) const
+Json Json::Find(cstring key) const
 {
 	Json json;
 	if(!_str && !_len) return json;
@@ -174,11 +173,21 @@ Json Json::operator[](cstring key) const
 	return json;
 }
 
+// 读取成员。找到指定成员，并用它的值构造一个新的对象
+const Json Json::operator[](cstring key) const { return Find(key); }
+
 // 设置成员。找到指定成员，或添加成员，并返回对象
-/*Json& Json::operator[](cstring key)
+Json& Json::operator[](cstring key)
 {
-	return *this;
-}*/
+	//if(!_s) return Find(key);
+
+	Json json;
+
+	Add(key, json);
+	json.SetOut(*_s);
+
+	return json;
+}
 
 // 特殊支持数组
 int Json::Length() const
@@ -201,7 +210,7 @@ int Json::Length() const
 	return n + 1;
 }
 
-Json Json::operator[](int index) const
+const Json Json::operator[](int index) const
 {
 	Json json;
 	if(!_str && !_len) return json;
@@ -237,6 +246,63 @@ Json Json::operator[](int index) const
 {
 	return *this;
 }*/
+
+// 设置输出缓冲区。写入Json前必须设置
+void Json::SetOut(String& result)
+{
+	_s	= &result;
+}
+
+void Json::Check()
+{
+	if(!_s) _s	= new String();
+}
+
+// 添加对象成员
+Json& Json::Add(cstring key, const Json& value)
+{
+	auto& s	= *_s;
+	// 如果已经有数据，则把最后的括号改为逗号
+	if(s.Length() > 0)
+		s[s.Length() - 1]	= ',';
+	else
+		s	+= '{';
+
+	s	+= '"';
+	s	+= key;
+	s	+= "\":";
+
+	//s	+= value;
+	value.ToStr(s);
+
+	s	+= '}';
+
+	return *this;
+}
+
+// 添加数组成员
+Json& Json::Add(const Json& value)
+{
+	auto& s	= *_s;
+	// 如果已经有数据，则把最后的括号改为逗号
+	if(s.Length() > 0)
+		s[s.Length() - 1]	= ',';
+	else
+		s	+= '[';
+
+	value.ToStr(s);
+
+	s	+= ']';
+
+	return *this;
+}
+
+String& Json::ToStr(String& str) const
+{
+	if(_s) str	+= *_s;
+
+	return str;
+}
 
 static bool isSpace(char ch)
 {

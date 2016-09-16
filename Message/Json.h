@@ -30,6 +30,13 @@ public:
 
 	Json();
 	Json(cstring str);
+	//Json(const Json& value)	= delete;
+	//Json(Json&& value)	= delete;
+
+	Json(int value);
+	Json(bool value);
+	Json(double value);
+	Json(String& value);
 
 	// 值类型
 	JsonType Type() const;
@@ -42,24 +49,37 @@ public:
 	double	AsDouble()	const;
 
 	// 读取成员。找到指定成员，并用它的值构造一个新的对象
-	Json operator[](cstring key) const;
+	const Json operator[](cstring key) const;
 	// 设置成员。找到指定成员，或添加成员，并返回对象
-	//Json& operator[](cstring key);
+	Json& operator[](cstring key);
 
 	// 特殊支持数组
 	int Length() const;
-	Json operator[](int index) const;
-	Json& operator[](int index);
+	const Json operator[](int index) const;
+	//Json& operator[](int index);
+
+	// 设置输出缓冲区。写入Json前必须设置
+	void SetOut(String& result);
+	// 添加对象成员
+	Json& Add(cstring key, const Json& value);
+	// 添加数组成员
+	Json& Add(const Json& value);
+
+	virtual String& ToStr(String& str) const;
 
 #if DEBUG
 	static void Test();
 #endif
-	
+
 private:
 	cstring	_str;
 	int		_len;
+	String*	_s;		// 仅用于写入处理的字符串指针
 
 	void Init(cstring str, int len);
+	Json Find(cstring key) const;
+
+	void Check();
 };
 
 /** Json值类型 */

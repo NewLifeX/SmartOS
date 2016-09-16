@@ -2,12 +2,10 @@
 #include "Message\Json.h"
 
 #if DEBUG
-static void TestRead()
-{
-	Json json	=
+static cstring jsonstr	=
 "{\
 	\"id\": 3141,			\
-	\"name\": \"Stone\",	\
+	\"name\": \"Smart \\\" Stone\",	\
 	\"enable\": true,		\
 	\"noval\": null,		\
 	\"score\": 3.14159,		\
@@ -18,6 +16,10 @@ static void TestRead()
 	}\
 }";
 
+static void TestRead()
+{
+	Json json	= jsonstr;
+
 	assert(json.Type() == JsonType::object, "Type()");
 
 	auto id		= json["id"];
@@ -26,7 +28,7 @@ static void TestRead()
 
 	auto name	= json["name"];
 	assert(name.Type() == JsonType::string, "Type()");
-	assert(name.AsString() == "Stone", "AsString()");
+	assert(name.AsString() == "Smart \" Stone", "AsString()");
 
 	auto enable	= json["enable"];
 	assert(enable.Type() == JsonType::boolean, "Type()");
@@ -71,6 +73,33 @@ static void TestRead()
 	assert(value.AsFloat() == 67.89f, "AsFloat()");
 }
 
+static void TestWrite()
+{
+	Json json;
+	String rs;
+	json.SetOut(rs);
+
+	json["id"]		= 3141;
+	json["name"]	= "Smart \" Stone";
+	json["enable"]	= "true";
+	json["noval"]	= nullptr;
+	json["score"]	= 3.14159;
+
+	auto arr	= json["array"];
+	/*arr[0]	= 1;
+	arr[1]	= 0;
+	arr[2]	= 2;*/
+	arr.Add(1).Add(0).Add(2);
+
+	auto ext	= json["extend"];
+	ext["kind"]	= "cost";
+	ext["value"]= 67.89f;
+
+	//auto rs	= json.ToString();
+	rs.Show(true);
+	//assert(rs == jsonstr, "ToString()");
+}
+
 void Json::Test()
 {
 	TS("TestJson");
@@ -78,6 +107,7 @@ void Json::Test()
 	debug_printf("TestJson......\r\n");
 
 	TestRead();
+	TestWrite();
 
 	debug_printf("TestJson 测试完毕......\r\n");
 
