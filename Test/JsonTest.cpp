@@ -48,7 +48,11 @@ static void TestRead()
 
 	auto array	= json["array"];
 	assert(array.Type() == JsonType::array, "Type()");
-	//assert(score.Length() == 3, "Length()");
+	assert(array.Length() == 3, "Length()");
+
+	auto arr2	= array[2];
+	assert(arr2.Type() == JsonType::integer, "Type()");
+	assert(arr2.AsInt() == 2, "AsInt()");
 
 	auto extend	= json["extend"];
 	assert(extend.Type() == JsonType::object, "Type()");

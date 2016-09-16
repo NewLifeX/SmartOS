@@ -1,5 +1,9 @@
 ﻿#include "Json.h"
 
+static bool isSpace(char ch);
+static cstring SkipSpace(cstring str, int& len);
+static int find(cstring str, int len, char ch);
+
 static const Json Null;
 
 Json::Json() { Init(nullptr, 0); }
@@ -11,8 +15,10 @@ Json::Json(cstring str)
 
 void Json::Init(cstring str, int len)
 {
-	_str	= str;
+	//_str	= str;
 	_len	= len;
+	
+	_str	= SkipSpace(str, _len);
 }
 
 // 值类型
@@ -116,100 +122,6 @@ double	Json::AsDouble()	const
 	return s.ToDouble();
 }
 
-bool isSpace(char ch)
-{
-	return ch == ' ' ||
-		ch == '\t' ||
-		ch == '\r' ||
-		ch == '\n';
-	
-}
-
-// 跳过空格
-cstring SkipSpace(cstring str)
-{
-	while(isSpace(str[0])) str++;
-
-	return str;
-}
-
-// 读取对象结尾
-int readObject(cstring str, int len)
-{
-	// { ... }
-	if(str[0] != '{') return 0;
-
-	// 记录括号配对
-	int m	= 0;
-	// 是否在字符串中，此时不算括号
-	bool s	= false;
-	for(int i=0; i<len; i++)
-	{
-		switch(str[i])
-		{
-			case '{': if(!s) m++; break;
-			case '}': {
-				if(!s) m--;
-				if(!m) return i + 1;
-				break;
-			}
-			case '"': {
-				if(str[i-1] != '\\') s	= !s;
-			}
-		}
-	}
-	return 0;
-}
-
-// 读取数组结尾
-int readArray(cstring str, int len)
-{
-	// [ ... ]
-	if(str[0] != '[') return 0;
-
-	// 记录括号配对
-	int m	= 0;
-	// 是否在字符串中，此时不算括号
-	bool s	= false;
-	for(int i=0; i<len; i++)
-	{
-		switch(str[i])
-		{
-			case '[': if(!s) m++; break;
-			case ']': {
-				if(!s) m--;
-				if(!m) return i + 1;
-				break;
-			}
-			case '"': {
-				if(str[i-1] != '\\') s	= !s;
-			}
-		}
-	}
-	return 0;
-}
-
-// 读取字符串结尾
-int readString(cstring str, int len)
-{
-	// " ..\".. "
-	if(str[0] != '"') return 0;
-
-	// 找到第一个不是转义的双引号
-	for(int i=1; i<len; i++)
-	{
-		switch(str[i])
-		{
-			case '"': {
-				if(str[i-1] != '\\') return i + 1;
-				break;
-			}
-		}
-	}
-
-	return 0;
-}
-
 // 读取成员。找到指定成员，并用它的值构造一个新的对象
 Json Json::operator[](cstring key) const
 {
@@ -235,14 +147,14 @@ Json Json::operator[](cstring key) const
 	}
 
 	// 跳过可能的空格
-	auto val	= SkipSpace(_str + p);
-	n	= _str + _len - val;
+	n	= _len - p;
+	auto val	= SkipSpace(_str + p, n);
 	// 找到结尾
 	switch(val[0])
 	{
-		case '{': n	= readObject(val, n); break;
-		case '[': n	= readArray(val, n); break;
-		case '"': n	= readString(val, n); break;
+		case '{': n	= find(val, n, '}'); break;
+		case '[': n	= find(val, n, ']'); break;
+		case '"': n	= find(val, n, '"'); break;
 		// 其它类型只需要逗号，如果没有逗号，就可能是最后一个了
 		default: {
 			auto ve	= val + n;
@@ -274,18 +186,100 @@ int Json::Length() const
 	if(!_str && !_len) return 0;
 
 	if(_str[0] != '[') return 0;
+	if(_len == 2 && _str[1] == ']') return 0;
 
-	return 0;
+	// 数逗号
+	int n	= 0;
+	for(int i=0; i<_len;)
+	{
+		int p	= find(_str + i + 1, _len - i - 1, ',');
+		if(p < 0) break;
+		i	+= p;
+	}
+
+	// 数组个数就是逗号个数加一
+	return n + 1;
 }
 
 Json Json::operator[](int index) const
 {
-	return *this;
+	Json json;
+	if(!_str && !_len) return json;
+
+	if(_str[0] != '[') return json;
+	if(_len == 2 && _str[1] == ']') return json;
+
+	// 数逗号
+	for(int i=0; i<_len;)
+	{
+		// 找下一个逗号
+		auto s	= _str + i + 1;
+		int p	= find(s, _len - i - 1, ',');
+		if(p < 0)
+		{
+			// 最后没找到逗号，如果刚好index为0，说明是最后一段
+			if(index == 0) json.Init(s, _len - i - 1);
+			break;
+		}
+		i	+= p;
+
+		if(index-- == 0)
+		{
+			json.Init(s, p);
+			break;
+		}
+	}
+
+	return json;
 }
 
-Json& Json::operator[](int index)
+/*Json& Json::operator[](int index)
 {
 	return *this;
+}*/
+
+static bool isSpace(char ch)
+{
+	return ch == ' ' ||
+		ch == '\t' ||
+		ch == '\r' ||
+		ch == '\n';
+
+}
+
+// 跳过空格
+static cstring SkipSpace(cstring str, int& len)
+{
+	while(len && isSpace(str[0])) { str++; len--; }
+	while(len && isSpace(str[len -1])) len--;
+
+	return str;
+}
+
+static int find(cstring str, int len, char ch)
+{
+	// 记录大括号、中括号配对
+	int m	= 0;
+	int n	= 0;
+	// 是否在字符串中，此时不算括号
+	bool s	= false;
+	for(int i=0; i<len; i++)
+	{
+		switch(str[i])
+		{
+			case '{': if(!s) m++; break;
+			case '}': if(!s) m--; break;
+			case '[': if(!s) n++; break;
+			case ']': if(!s) n--; break;
+			case '"':
+				if(i == 0 || str[i-1] != '\\') s	= !s;
+				break;
+		}
+
+		// 配对平衡的时候遇到目标，才是结果
+		if(str[i] == ch && m == 0 && n == 0 && !s) return i;
+	}
+	return -1;
 }
 
 JValue::JValue() : type_t(NIL) { }
