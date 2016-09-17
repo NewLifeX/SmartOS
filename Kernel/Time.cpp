@@ -40,14 +40,14 @@ TTime::TTime()
 	OnSleep	= nullptr;
 }
 
-void TTime::SetTime(UInt64 seconds)
+void TTime::SetTime(UInt64 sec)
 {
-	if(seconds >= BASE_YEAR_US) seconds -= BASE_YEAR_US;
+	if(sec >= BASE_YEAR_US) sec -= BASE_YEAR_US;
 
-	BaseSeconds = seconds - Seconds;
+	BaseSeconds = sec - Seconds;
 
 #if DEBUG
-	/*DateTime dt(seconds);
+	/*DateTime dt(sec);
 	debug_printf("TTime::SetTime 设置时间 ");
 	dt.Show(true);*/
 #endif
@@ -143,10 +143,10 @@ extern "C"
 	}
 
 	// 实现C函数库的time函数
-	time_t time(time_t* seconds)
+	time_t time(time_t* sec)
 	{
 		uint s	= Time.BaseSeconds + Time.Seconds;
-		if(seconds) *seconds	= s;
+		if(sec) *sec	= s;
 
 		return s;
 	}

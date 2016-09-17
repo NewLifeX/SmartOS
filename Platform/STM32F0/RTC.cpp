@@ -12,63 +12,6 @@ bool RTC_WaitForLastTask2(uint retry = 300)
 	return retry > 0;
 }
 
-#ifdef STM32F1
-void RTC_Configuration(bool init, bool ext)
-{
-	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
-	if(init) BKP_DeInit();
-
-	if(!ext)
-	{
-		/* Enable LSI */
-		RCC_LSICmd(ENABLE);
-		/* 等待稳定 */
-		while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
-
-		// 使用内部 32 KHz 晶振作为 RTC 时钟源
-		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
-	}
-	else
-	{
-		/* 设置外部低速晶振(LSE)32.768K  参数指定LSE的状态，可以是：RCC_LSE_ON：LSE晶振ON */
-		RCC_LSEConfig(RCC_LSE_ON);
-		/* 等待稳定 */
-		while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
-
-		// RTC时钟源配置成LSE（外部32.768K）
-		RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
-	}
-
-	/* 使能RTC时钟 */
-	RCC_RTCCLKCmd(ENABLE);
-
-	/* 开启后需要等待APB1时钟与RTC时钟同步，才能读写寄存器 */
-	RTC_WaitForSynchro();
-
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	RTC_WaitForLastTask2();
-
-	/* 使能秒中断 */
-	//RTC_ITConfig(RTC_IT_SEC, ENABLE);
-
-	/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-	//RTC_WaitForLastTask2();
-
-	if(init)
-	{
-		/* 设置RTC分频器，使RTC时钟为1Hz */
-		//if(!ext)
-			//RTC_SetPrescaler(31999); /* RTC period = RTCCLK/RTC_PR = (32.000 KHz)/(31999+1) */
-		//else
-			//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
-
-		RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
-
-		/* 每一次读写寄存器前，要确定上一个操作已经结束 */
-		RTC_WaitForLastTask2();
-	}
-}
-#else
 void RTC_Configuration(bool init, bool ext)
 {
 	RTC_WriteProtectionCmd(DISABLE);
@@ -126,7 +69,6 @@ void RTC_SetCounter(DateTime dt)
 	date.RTC_Year		= dt.Year;
 	RTC_SetDate(RTC_Format_BCD, &date);
 }
-#endif
 
 static uint g_NextSave;	// 下一次保存Ticks的时间，避免频繁保存
 
@@ -139,11 +81,7 @@ void HardRTC::Init()
 	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
 
 	/* 启用PWR和BKP的时钟 */
-#ifdef STM32F1
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
-#else
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-#endif
 
 	/* 后备域解锁 */
 	PWR_BackupAccessCmd(ENABLE);
@@ -178,17 +116,10 @@ void HardRTC::Init()
 		exit.EXTI_Trigger	= EXTI_Trigger_Rising;
 		exit.EXTI_LineCmd	= ENABLE;
 		EXTI_Init(&exit);
-
-#ifdef STM32F1
-		Interrupt.SetPriority(RTCAlarm_IRQn, 0);
-		Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
-#endif
 	}
 }
 
-#ifndef STM32F1
-	#define RTC_IT_ALR RTC_IT_ALRA
-#endif
+#define RTC_IT_ALR RTC_IT_ALRA
 
 void HardRTC::LoadTime()
 {
@@ -252,11 +183,6 @@ int HardRTC::Sleep(int ms)
 	// 打开RTC报警中断
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
     // 设定报警时间
-#ifdef STM32F1
-    RTC_SetAlarm(RTC_GetCounter() + ms);
-	//RTC_SetCounter(0);
-	//RTC_SetAlarm(ms);
-#else
 	RTC_AlarmTypeDef alr;
 	RTC_AlarmStructInit(&alr);
 
@@ -282,7 +208,6 @@ int HardRTC::Sleep(int ms)
 
 	// 打开警报
 	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );
-#endif
 	// 等待写入操作完成
     RTC_WaitForLastTask2();
 
@@ -301,22 +226,14 @@ uint HardRTC::ReadBackup(byte addr)
 {
 	if(!Opened) return 0;
 
-#ifdef STM32F1
-	return BKP_ReadBackupRegister(BKP_DR1 + (addr << 2));
-#else
 	return RTC_ReadBackupRegister(RTC_BKP_DR0 + (addr << 2));
-#endif
 }
 
 void HardRTC::WriteBackup(byte addr, uint value)
 {
 	if(!Opened) return;
 
-#ifdef STM32F1
-	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value);
-#else
 	RTC_WriteBackupRegister(RTC_BKP_DR0 + (addr << 2), value);
-#endif
 }
 
 // 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源

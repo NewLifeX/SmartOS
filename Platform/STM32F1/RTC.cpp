@@ -12,7 +12,6 @@ bool RTC_WaitForLastTask2(uint retry = 300)
 	return retry > 0;
 }
 
-#ifdef STM32F1
 void RTC_Configuration(bool init, bool ext)
 {
 	/* 备份寄存器模块复位，将BKP的全部寄存器重设为缺省值 */
@@ -62,71 +61,14 @@ void RTC_Configuration(bool init, bool ext)
 		//else
 			//RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
 
-		RTC_SetPrescaler(32);	// 为了使用低功耗，时钟为1kHz
+		// 为了使用低功耗，时钟为1kHz
+		// 1ms计数，32位定时器，最大计时约49天
+		RTC_SetPrescaler(32);
 
 		/* 每一次读写寄存器前，要确定上一个操作已经结束 */
 		RTC_WaitForLastTask2();
 	}
 }
-#else
-void RTC_Configuration(bool init, bool ext)
-{
-	RTC_WriteProtectionCmd(DISABLE);
-
-	RTC_EnterInitMode();
-
-	RTC_InitTypeDef rtc;
-	RTC_StructInit(&rtc);
-	rtc.RTC_HourFormat = RTC_HourFormat_24;
-	rtc.RTC_AsynchPrediv = 0x7D-1;
-	rtc.RTC_SynchPrediv = 0xFF-1;
-	RTC_Init(&rtc);
-
-	RTC_ExitInitMode();
-	RTC_WriteProtectionCmd(ENABLE);	//初始化完成，设置标志
-}
-
-DateTime RTC_GetCounter()
-{
-	DateTime dt;
-
-	RTC_TimeTypeDef time;
-	RTC_GetTime(RTC_Format_BCD, &time);
-
-	dt.Hour		= time.RTC_Hours;
-	dt.Minute	= time.RTC_Minutes;
-	dt.Second	= time.RTC_Seconds;
-
-	RTC_DateTypeDef date;
-	RTC_GetDate(RTC_Format_BCD, &date);
-
-	dt.Year		= date.RTC_Year;
-	dt.Month	= date.RTC_Month;
-	dt.Day		= date.RTC_Date;
-
-	return dt;
-}
-
-void RTC_SetCounter(DateTime dt)
-{
-	RTC_TimeTypeDef time;
-	RTC_TimeStructInit(&time);
-	time.RTC_Seconds	= dt.Second;
-	time.RTC_Minutes	= dt.Minute;
-	time.RTC_Hours		= dt.Hour;
-	time.RTC_H12		= RTC_H12_AM;
-	RTC_SetTime(RTC_Format_BCD, &time);
-
-	RTC_DateTypeDef date;
-	RTC_DateStructInit(&date);
-	date.RTC_Date		= dt.Day;
-	date.RTC_Month		= dt.Month;
-	byte weekdata = dt.DayOfWeek();
-	date.RTC_WeekDay	= weekdata > 0 ? weekdata : RTC_Weekday_Sunday;
-	date.RTC_Year		= dt.Year;
-	RTC_SetDate(RTC_Format_BCD, &date);
-}
-#endif
 
 static uint g_NextSave;	// 下一次保存Ticks的时间，避免频繁保存
 
@@ -139,19 +81,15 @@ void HardRTC::Init()
 	/* 虽然RTC靠电池工作，断电后能保持配置，但是在GD32还是得重新打开时钟 */
 
 	/* 启用PWR和BKP的时钟 */
-#ifdef STM32F1
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
-#else
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-#endif
 
 	/* 后备域解锁 */
 	PWR_BackupAccessCmd(ENABLE);
 
 	// 下一次保存Ticks的数值，避免频繁保存
-	g_NextSave = 5;
+	g_NextSave	= 0;
 
-	Opened = true;
+	Opened	= true;
 
 	if(ReadBackup(0) != 0xABCD)
 	{
@@ -166,7 +104,7 @@ void HardRTC::Init()
 		RTC_Configuration(false, External);
 
 		// 从RTC还原滴答
-		LoadTicks();
+		LoadTime();
 	}
 
 	if(LowPower)
@@ -179,45 +117,29 @@ void HardRTC::Init()
 		exit.EXTI_LineCmd	= ENABLE;
 		EXTI_Init(&exit);
 
-#ifdef STM32F1
 		Interrupt.SetPriority(RTCAlarm_IRQn, 0);
 		Interrupt.Activate(RTCAlarm_IRQn, AlarmHandler, this);
-#endif
 	}
 }
 
-#ifndef STM32F1
-	#define RTC_IT_ALR RTC_IT_ALRA
-#endif
-
-void HardRTC::LoadTicks()
+void HardRTC::LoadTime()
 {
 	if(!Opened) return;
 
 	auto& time	= (TTime&)Time;
-#ifdef STM32F1
-	// 加上计数器的值，注意计数器的单位是秒。注意必须转INT64，否则溢出
-	UInt64 ms	= RTC_GetCounter();
-	// 计数器调整为毫秒，采用第二个后备寄存器保存秒以上的数据
+	// 计数器记录保存时间以来经过的毫秒数
+	uint ms		= RTC_GetCounter();
+	// 采用第二个后备寄存器保存秒以上的数据
 	uint sec	= ReadBackup(1);
-	time.Seconds		= sec;
-	time.Milliseconds	= ms;
-
-	uint basesec = ReadBackup(2);
-	time.BaseSeconds = basesec;
-#else
-	DateTime dt	= RTC_GetCounter();
-	time.Seconds		= dt.TotalSeconds();
-	//time.Milliseconds	= dt.Millisecond;
-	time.Milliseconds	= dt.Ms;
-#endif
+	// 谨记sec + ms/1000就是当前绝对时间，要减去系统启动以来的总秒数，才能作为系统基准时间
+	time.BaseSeconds	= sec + (ms / 1000) - time.Seconds;
 }
 
-void HardRTC::SaveTicks()
+void HardRTC::SaveTime()
 {
 	if(!Opened) return;
 
-	if(g_NextSave == 0 || Time.Seconds < g_NextSave) return;
+	if(g_NextSave > 0 && Time.Seconds < g_NextSave) return;
 #if TIME_DEBUG
 	if(g_NextSave == 0)
 	{
@@ -231,23 +153,15 @@ void HardRTC::SaveTicks()
 	/* 等待最近一次对RTC寄存器的写操作完成，也即等待RTC寄存器同步 */
 	RTC_WaitForSynchro();
 
-#ifdef STM32F1
-	uint sec	= Time.Seconds;
-	uint ms		= Sys.Ms() - sec * 1000;
-	while(ms > 1000) ms -= 1000;
+	uint sec	= Time.BaseSeconds + Time.Seconds;
+	uint ms		= (uint)(Time.Current() - Time.Milliseconds);
 #if TIME_DEBUG
-	debug_printf("SaveTicks %ds %dms\r\n", sec, ms);
+	debug_printf("SaveTime %ds %dms\r\n", sec, ms);
 #endif
+	// 绝对总秒数存储后备寄存器
 	WriteBackup(1, sec);
-
-	uint basesec = Time.BaseSeconds;
-	WriteBackup(2, basesec);
-
-	// 设置计数器
+	// 剩余毫秒数设置计数器
 	RTC_SetCounter(ms);
-#else
-	RTC_SetCounter(DateTime::Now());
-#endif
 
 	// 必须打开时钟和后备域，否则写不进去时间
 	// Check if the Power On Reset flag is set
@@ -260,7 +174,7 @@ void HardRTC::SaveTicks()
 	RTC_WaitForLastTask2();
 
 	// 每秒钟保存一次
-	g_NextSave = Time.Seconds + 5;
+	g_NextSave	= Time.Seconds + 5;
 }
 
 // 暂停系统一段时间
@@ -275,42 +189,14 @@ int HardRTC::Sleep(int ms)
 #if TIME_DEBUG
 	debug_printf("进入低功耗模式 %d 毫秒\r\n", ms);
 #endif
-	//SaveTicks();
+	//SaveTime();
 
 	// 打开RTC报警中断
 	RTC_ITConfig(RTC_IT_ALR, ENABLE);
     // 设定报警时间
-#ifdef STM32F1
     RTC_SetAlarm(RTC_GetCounter() + ms);
 	//RTC_SetCounter(0);
 	//RTC_SetAlarm(ms);
-#else
-	RTC_AlarmTypeDef alr;
-	RTC_AlarmStructInit(&alr);
-
-	int second = ms / 1000;
-	int minute = second / 60;
-
-	// 关闭警报
-	RTC_AlarmCmd( RTC_Alarm_A, DISABLE );
-	alr.RTC_AlarmTime.RTC_H12		= RTC_H12_AM;
-	alr.RTC_AlarmTime.RTC_Hours		= minute / 60;
-	alr.RTC_AlarmTime.RTC_Minutes	= minute % 60;
-	alr.RTC_AlarmTime.RTC_Seconds	= second % 60;
-
-	// 设置警报
-	alr.RTC_AlarmDateWeekDay	= 31;
-	alr.RTC_AlarmDateWeekDaySel	= RTC_AlarmDateWeekDaySel_Date;
-	alr.RTC_AlarmMask = RTC_AlarmMask_DateWeekDay;
-
-	RTC_SetAlarm( RTC_Format_BIN, RTC_Alarm_A, &alr );
-
-	// 打开警报中断
-	RTC_ITConfig( RTC_IT_ALRA, ENABLE );
-
-	// 打开警报
-	RTC_AlarmCmd( RTC_Alarm_A, ENABLE );
-#endif
 	// 等待写入操作完成
     RTC_WaitForLastTask2();
 
@@ -329,22 +215,14 @@ uint HardRTC::ReadBackup(byte addr)
 {
 	if(!Opened) return 0;
 
-#ifdef STM32F1
 	return BKP_ReadBackupRegister(BKP_DR1 + (addr << 2));
-#else
-	return RTC_ReadBackupRegister(RTC_BKP_DR0 + (addr << 2));
-#endif
 }
 
 void HardRTC::WriteBackup(byte addr, uint value)
 {
 	if(!Opened) return;
 
-#ifdef STM32F1
 	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value);
-#else
-	RTC_WriteBackupRegister(RTC_BKP_DR0 + (addr << 2), value);
-#endif
 }
 
 // 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源
@@ -395,7 +273,7 @@ void AlarmHandler(ushort num, void* param)
 		RTC_WaitForLastTask2();
 	}
 	//SYSCLKConfig_STOP();
-	//rtc->LoadTicks();
+	//rtc->LoadTime();
 
 	debug_printf("离开低功耗模式\r\n");
 }

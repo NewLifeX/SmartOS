@@ -17,15 +17,15 @@ HardRTC* HardRTC::Instance()
 	return &_rtc;
 }
 
-void FuncLoadTicks() { HardRTC::Instance()->LoadTicks(); }
-void FuncSaveTicks() { HardRTC::Instance()->SaveTicks(); }
+void FuncLoadTime() { HardRTC::Instance()->LoadTime(); }
+void FuncSaveTime() { HardRTC::Instance()->SaveTime(); }
 int FuncSleep(int ms) { return HardRTC::Instance()->Sleep(ms); }
 
 void HardRTC::Start(bool lowpower, bool external)
 {
 	auto& time	= (TTime&)Time;
-	time.OnLoad		= FuncLoadTicks;
-	time.OnSave		= FuncSaveTicks;
+	time.OnLoad		= FuncLoadTime;
+	time.OnSave		= FuncSaveTime;
 	time.OnSleep	= FuncSleep;
 
 	auto rtc = Instance();

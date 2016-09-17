@@ -16,8 +16,8 @@ public:
 	HardRTC();
 
 	void Init();
-	void LoadTicks();
-	void SaveTicks();
+	void LoadTime();
+	void SaveTime();
 	int Sleep(int ms);
 
 	uint ReadBackup(byte addr);
