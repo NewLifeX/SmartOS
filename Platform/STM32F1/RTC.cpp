@@ -3,6 +3,8 @@
 
 #include "Platform\stm32.h"
 
+//#define TIME_DEBUG DEBUG
+
 /************************************************ HardRTC ************************************************/
 
 bool RTC_WaitForLastTask2(uint retry = 300)
@@ -130,7 +132,7 @@ void HardRTC::LoadTime()
 	// 计数器记录保存时间以来经过的毫秒数
 	uint ms		= RTC_GetCounter();
 	// 采用第二个后备寄存器保存秒以上的数据
-	uint sec	= ReadBackup(1);
+	uint sec	= ReadBackup(2);
 	// 谨记sec + ms/1000就是当前绝对时间，要减去系统启动以来的总秒数，才能作为系统基准时间
 	time.BaseSeconds	= sec + (ms / 1000) - time.Seconds;
 }
@@ -145,8 +147,6 @@ void HardRTC::SaveTime()
 	{
 		debug_printf("LoadTime: ");
 		DateTime::Now().Show(true);
-
-		g_Counter = 0;
 	}
 #endif
 
@@ -159,7 +159,7 @@ void HardRTC::SaveTime()
 	debug_printf("SaveTime %ds %dms\r\n", sec, ms);
 #endif
 	// 绝对总秒数存储后备寄存器
-	WriteBackup(1, sec);
+	WriteBackup(2, sec);
 	// 剩余毫秒数设置计数器
 	RTC_SetCounter(ms);
 
@@ -215,14 +215,22 @@ uint HardRTC::ReadBackup(byte addr)
 {
 	if(!Opened) return 0;
 
-	return BKP_ReadBackupRegister(BKP_DR1 + (addr << 2));
+	// BKP寄存器是16位，小端写入
+	uint v	= BKP_ReadBackupRegister(BKP_DR1 + (addr << 2));
+	addr++;
+	v	|= BKP_ReadBackupRegister(BKP_DR1 + (addr << 2)) << 16;
+
+	return v;
 }
 
 void HardRTC::WriteBackup(byte addr, uint value)
 {
 	if(!Opened) return;
 
-	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value);
+	// BKP寄存器是16位，小端写入
+	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value & 0xFFFF);
+	addr++;
+	BKP_WriteBackupRegister(BKP_DR1 + (addr << 2), value >> 16);
 }
 
 // 从停止模式醒来后配置系统时钟，打开HSE/PLL，选择PLL作为系统时钟源
@@ -275,5 +283,7 @@ void AlarmHandler(ushort num, void* param)
 	//SYSCLKConfig_STOP();
 	//rtc->LoadTime();
 
+#if TIME_DEBUG
 	debug_printf("离开低功耗模式\r\n");
+#endif
 }

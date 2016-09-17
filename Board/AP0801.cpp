@@ -43,7 +43,7 @@ void AP0801::Init(ushort code, cstring name, COM message)
 	sys.Name = (char*)name;
 
 	// RTC 提取时间
-	HardRTC::Start();
+	HardRTC::Start(false, false);
 
     // 初始化系统
     sys.Init();

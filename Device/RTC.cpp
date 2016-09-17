@@ -26,8 +26,13 @@ void HardRTC::Start(bool lowpower, bool external)
 	auto& time	= (TTime&)Time;
 	time.OnLoad		= FuncLoadTime;
 	time.OnSave		= FuncSaveTime;
-	time.OnSleep	= FuncSleep;
+	if(lowpower) time.OnSleep	= FuncSleep;
 
 	auto rtc = Instance();
-	if(!rtc->Opened) rtc->Init();
+	if(!rtc->Opened)
+	{
+		rtc->LowPower	= lowpower;
+		rtc->External	= external;
+		rtc->Init();
+	}
 }
