@@ -21,6 +21,26 @@ void Json::Init(cstring str, int len)
 	_str	= SkipSpace(str, _len);
 }
 
+Json::Json(int value)
+{
+	
+}
+
+Json::Json(bool value)
+{
+	
+}
+
+Json::Json(double value)
+{
+	
+}
+
+Json::Json(String& value)
+{
+	
+}
+
 // 值类型
 JsonType Json::Type() const
 {
