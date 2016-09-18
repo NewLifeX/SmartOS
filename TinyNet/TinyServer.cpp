@@ -117,7 +117,7 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 		{
 			if (!OnJoin(msg)) return;
 			dv = Current;
-			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);
+			// pDevMgmt->DeviceRequest(DeviceAtions::Online, dv); 成功收到登录消息不等于上线
 			return;
 		}
 
@@ -132,6 +132,7 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 			// 设置当前设备
 			Current = dv;
 			OnPing(msg);
+			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);  // 成功收到Ping才等于上线
 			break;
 		case 5:
 		case 0x15:

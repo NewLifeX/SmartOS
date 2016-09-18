@@ -491,7 +491,11 @@ bool DevicesManagement::SendDevices(DeviceAtions act, const Device* dv)
 	BinaryPair bp(datams);
 	GetDevInfo((Device*)dv, datams);
 
-	if (Port)Port->Invoke(actstr, Buffer(datams.GetBuffer(), datams.Position()));
+	MemoryStream ms;
+	BinaryPair bp2(ms);
+	bp2.Set("dv", Buffer(datams.GetBuffer(), datams.Position()));
+
+	if (Port)Port->Invoke(actstr, Buffer(ms.GetBuffer(), ms.Position()));
 	return true;
 }
 
