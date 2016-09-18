@@ -24,8 +24,6 @@ public:
 	String		ErrMsg;		// 错误信息
 
 	byte		Protocol;	// 协议,17为UDP  6为TCP
-	//String		Server;		// 服务器地址。可能是域名或IP
-	//ushort		Port;		// 本地端口
 	NetUri		Uri;
 	String		Cookie;		//访问令牌 
 

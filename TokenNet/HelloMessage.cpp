@@ -7,7 +7,7 @@
 // 错误：0xFE/0xFD + 1协议 + S服务器 + 2端口
 
 // 初始化消息，各字段为0
-HelloMessage::HelloMessage() : Cipher(1), Key(0), Cookie(0)
+HelloMessage::HelloMessage()
 {
 	Version		= Sys.Ver;
 
@@ -17,8 +17,6 @@ HelloMessage::HelloMessage() : Cipher(1), Key(0), Cookie(0)
 	LocalTime	= DateTime::Now().TotalMs();
 	Cipher[0]	= 1;
 	ErrCode		= 0;
-	//Protocol	= 17;
-	//Port		= 0;
 	Uri.Type	= NetType::Udp;
 }
 
@@ -34,9 +32,6 @@ HelloMessage::HelloMessage(const HelloMessage& msg) : MessageBase(msg), Cipher(1
 	Cookie.Copy(0, msg.Cookie, 0, msg.Cookie.Length());
 
 	ErrCode		= msg.ErrCode;
-	//Protocol	= msg.Protocol;
-	//Port		= msg.Port;
-	//Server		= msg.Server;
 	Uri			= msg.Uri;
 }
 
@@ -101,15 +96,15 @@ void HelloMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 	if(ErrCode != 0) bp.Set("ErrorCode", ErrCode);
-	if(Cookie.Length())bp.Set("Cookie", Cookie);
 	bp.Set("Ver", Version);
 	bp.Set("Type", Type);
 	bp.Set("Name", Name);
 	bp.Set("Time", LocalTime);
 	bp.Set("Protocol", Protocol);
 	bp.Set("EndPoint", EndPoint);
-	bp.Set("Cipher", Cipher);
-	bp.Set("Key", Key);
+	if(Cipher.Length())	bp.Set("Cipher", Cipher);
+	if(Key.Length())	bp.Set("Key", Key);
+	if(Cookie.Length())	bp.Set("Cookie", Cookie);
 }
 
 #if DEBUG
