@@ -18,6 +18,7 @@ class DevicesManagement
 public:
 	~DevicesManagement();
 
+	byte LocalId;
 	int Length() { return DevArr.Count(); }
 
 	Device* FindDev(byte id)const;

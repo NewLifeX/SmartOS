@@ -12,6 +12,7 @@ DevicesManagement::~DevicesManagement()
 int	DevicesManagement::PushDev(Device* dv)
 {
 	//DeviceRequest(DeviceAtions::Register, dv);
+	if (dv->Kind == Sys.Code)LocalId = dv->Address;
 	DevArr.Add(dv);
 	SaveDev();
 	return DevArr.Count() - 1;
@@ -140,6 +141,8 @@ int DevicesManagement::LoadDev()
 		dv->Read(ms);
 		dv->Show();
 
+		if (dv->Kind == Sys.Code)LocalId = dv->Address;
+
 		if (fs)
 		{
 			int idx = DevArr.FindIndex(nullptr);
@@ -214,6 +217,7 @@ void DevicesManagement::ShowDev()
 	byte len = Length();
 	byte count = 0;
 
+	debug_printf("\r\n\t\tShowDev\r\n");
 	for (int i = 0; i < len; i++)
 	{
 		auto dv = (Device*)DevArr[i];
@@ -222,10 +226,8 @@ void DevicesManagement::ShowDev()
 		count++;
 		dv->Show();
 		debug_printf("\r\n");
-
-		//Sys.Sleep(0);
 	}
-	debug_printf("\r\nHas %d Dev\r\n", count);
+	debug_printf("\r\nHas %d Dev \r\n", count);
 	debug_printf("\r\n\r\n");
 }
 
@@ -370,7 +372,10 @@ int DevicesManagement::WriteIDs(Stream &ms)
 		auto dv = (Device*)DevArr[i];
 		if (dv)
 		{
-			ms.Write(dv->Address);
+			if (dv->Address == LocalId)
+				ms.Write((byte)0x00);
+			else
+				ms.Write(dv->Address);
 			len++;
 		}
 	}
@@ -380,7 +385,8 @@ int DevicesManagement::WriteIDs(Stream &ms)
 // 获取设备信息到流
 bool DevicesManagement::GetDevInfo(byte id, MemoryStream &ms)
 {
-	if (id == 0x00)return false;
+	// if (id == 0x00)return false;
+	if (id == 0x00)id = LocalId;
 
 	Device * dv = FindDev(id);
 
@@ -393,8 +399,10 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	if (dv == nullptr)return false;
 
 	BinaryPair bp(ms);
-
-	bp.Set("ID", dv->Address);
+	if(dv->Address == LocalId)
+		bp.Set("ID", (byte)0x00);
+	else
+		bp.Set("ID", dv->Address);
 
 	byte login = dv->Logined ? 1 : 0;
 	bp.Set("Online", login);

@@ -170,6 +170,7 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 
 		TinyMessage tmsg;
 		if (!TokenToTiny(msg, tmsg)) return true;
+		if (tmsg.Dest == 0x00)tmsg.Dest = pDevMgmt->LocalId;
 
 		bool rs = Server->Dispatch(tmsg);
 		if (!rs) return false;
