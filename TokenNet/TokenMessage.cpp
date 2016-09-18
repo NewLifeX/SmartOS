@@ -124,11 +124,32 @@ void TokenMessage::Show() const
 	ushort len	= Length;
 	if(len > 0)
 	{
-		debug_printf(" Data[%d]=",len);
-		// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
-		//if(len > 32) debug_printf("\r\n");
-		if(len > 32) len	= 32;
-		ByteArray(Data, len).Show();
+		//if(Code == 0x08)
+		{
+			Stream ms(Data, len);
+			while(ms.Position() < ms.Length)
+			{
+				auto name	= ms.ReadString();
+				auto value	= ms.ReadArray();
+
+				debug_printf(" ");
+				name.Show();
+				debug_printf("=");
+
+				if(name == "Action")
+					value.AsString().Show();
+				else
+					value.Show();
+			}
+		}
+		/*else
+		{
+			debug_printf(" Data[%d]=",len);
+			// 大于32字节时，反正都要换行显示，干脆一开始就换行，让它对齐
+			//if(len > 32) debug_printf("\r\n");
+			if(len > 32) len	= 32;
+			ByteArray(Data, len).Show();
+		}*/
 	}
 	debug_printf("\r\n");
 #endif

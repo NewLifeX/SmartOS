@@ -328,9 +328,10 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 	}
 
 	msg.Show();
-	// 后半截全部当字符串输出处理
+
+	/*// 后半截全部当字符串输出处理
 	Stream ms(msg.Data , msg.Length);
-	ms.ReadString().Show(true);
+	ms.ReadString().Show(true);*/
 #endif
 }
 
