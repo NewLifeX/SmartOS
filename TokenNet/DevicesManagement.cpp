@@ -141,7 +141,11 @@ int DevicesManagement::LoadDev()
 		dv->Read(ms);
 		dv->Show();
 
-		if (dv->Kind == Sys.Code)LocalId = dv->Address;
+		if (dv->Kind == Sys.Code)
+		{
+			LocalId = dv->Address;
+			dv->Logined = true;
+		}
 
 		if (fs)
 		{
@@ -160,7 +164,7 @@ int DevicesManagement::LoadDev()
 	debug_printf("Load %d Dev from 0x%08X\r\n", i, cfg.Address);
 
 	byte len = DevArr.Count();
-	debug_printf("Devices has %d Dev\r\n", len);
+	debug_printf("Devices has %d Devs,LocalId :0x%02X\r\n", len,LocalId);
 	// 如果加载得到的设备数跟存入的设备数不想等，则需要覆盖一次
 	if (len != i) SaveDev();
 
@@ -404,8 +408,16 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	else
 		bp.Set("ID", dv->Address);
 
-	byte login = dv->Logined ? 1 : 0;
-	bp.Set("Online", login);
+	if (dv->Flag.BitFlag.OnlineAlws)
+	{
+		bp.Set("Online", (byte)1);		// 持久在线的 直接跳过在线判断直接写true
+	}
+	else
+	{
+		byte login = dv->Logined ? 1 : 0;
+		bp.Set("Online", login);
+	}
+
 	bp.Set("Kind", dv->Kind);
 	bp.Set("LastActive", dv->LastTime);
 	bp.Set("RegisterTime", dv->RegTime);
