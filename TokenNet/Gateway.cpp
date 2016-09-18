@@ -51,60 +51,55 @@ void Gateway::Start()
 	Client->Param = this;
 	debug_printf("\r\nGateway::Start \r\n");
 
-	pDevMgmt = DevicesManagement::CreateDevMgmt();
-	// 如果全局都没有设备列表，那就直接创建一个
-	//if (DevicesManagement::Current)
-	//	pDevMgmt = DevicesManagement::Current;
-	//else
-	//	pDevMgmt = new DevicesManagement();
+	Server->Start();
 
+	pDevMgmt = DevicesManagement::CreateDevMgmt();
+	
 	// 设备列表服务于Token  保存token的“联系方式”
-	//pDevMgmt->Port = Client;
 	pDevMgmt->SetTokenClient(Client);
 
 	if (pDevMgmt->Length() == 0)
 	{
-		// // 如果全局设备列表为空，则添加一条Addr=1的设备
-		// auto dv = new Device();
-		// dv->Address = 1;
-		// dv->Kind = Sys.Code;
-		// dv->LastTime = Sys.Seconds();
+		// 如果全局设备列表为空，则添加一条Addr=1的设备
+		auto dv = new Device();
+		dv->Address = 1;
+		dv->Kind = Sys.Code;
+		dv->LastTime = Sys.Seconds();
+		
+		dv->HardID = Sys.ID;
+		dv->Name = Sys.Name;
+		
+		//pDevMgmt->PushDev(dv);
+		// 标记为永久在线设备
+		dv->Flag.BitFlag.OnlineAlws = 1;
+		pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
+
+
+		// ushort kinds[] = { 0x0201,0x0202,0x0203,0x0431 };
+		// byte ids[12];
+		// Buffer bufids(ids, sizeof(ids));
+		// bufids = Sys.ID;
+		// byte Addr = Sys.Ms();
 		// 
-		// dv->HardID = Sys.ID;
-		// dv->Name = Sys.Name;
+		// for (int i = 0; i < ArrayLength(kinds); i++)
+		// {
+		// 	// 如果全局设备列表为空，则添加一条Addr=1的设备
+		// 	auto dv2 = new Device();
+		// 	dv2->Address = Addr + i;
+		// 	dv2->Kind = kinds[i];
+		// 	dv2->LastTime = Sys.Seconds();
 		// 
-		// //pDevMgmt->PushDev(dv);
-		// // 标记为永久在线设备
-		// dv->Flag.BitFlag.OnlineAlws = 1;
-		// pDevMgmt->DeviceRequest(DeviceAtions::Register, dv);
-
-
-		ushort kinds[] = { 0x0201,0x0202,0x0203,0x0431 };
-		byte ids[12];
-		Buffer bufids(ids, sizeof(ids));
-		bufids = Sys.ID;
-		byte Addr = Sys.Ms();
-
-		for (int i = 0; i < ArrayLength(kinds); i++)
-		{
-			// 如果全局设备列表为空，则添加一条Addr=1的设备
-			auto dv2 = new Device();
-			dv2->Address = Addr + i;
-			dv2->Kind = kinds[i];
-			dv2->LastTime = Sys.Seconds();
-
-			ids[11] += Sys.Ms();
-			dv2->HardID = ids;
-			dv2->Name = "测试设备";
-
-			//pDevMgmt->PushDev(dv);
-			// 标记为永久在线设备
-			dv2->Flag.BitFlag.OnlineAlws = 0;
-			pDevMgmt->DeviceRequest(DeviceAtions::Register, dv2);
-		}
+		// 	ids[11] += Sys.Ms();
+		// 	dv2->HardID = ids;
+		// 	dv2->Name = "测试设备";
+		// 
+		// 	//pDevMgmt->PushDev(dv);
+		// 	// 标记为永久在线设备
+		// 	dv2->Flag.BitFlag.OnlineAlws = 0;
+		// 	pDevMgmt->DeviceRequest(DeviceAtions::Register, dv2);
+		// }
 	}
 
-	Server->Start();
 	Client->Open();
 	_task = Sys.AddTask(Loop, this, 10000, LOOP_Interval, "设备任务");
 
