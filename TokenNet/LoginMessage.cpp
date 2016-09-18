@@ -40,20 +40,13 @@ void LoginMessage::Write(Stream& ms) const
 	{
 		bp.Set("UserName", User);
 		bp.Set("Password", Pass);
-		bp.Set("Cookie", Cookie);
-
-		if (Salt.Length() > 0)
-			bp.Set("Salt", Salt);
-		/*else
-		{
-			UInt64 now = Sys.Ms();
-			bp.Set("Salt", Buffer(&now, 8));
-		}*/
+		if(Cookie.Length())	bp.Set("Cookie", Cookie);
+		if(Salt.Length())	bp.Set("Salt", Salt);
 	}
 	else if (!Error)
 	{
 		bp.Set("Token", Token);
-		bp.Set("Key", Key);
+		if(Key.Length())	bp.Set("Key", Key);
 	}
 }
 
@@ -70,18 +63,18 @@ String& LoginMessage::ToStr(String& str) const
 
 		return str;
 	}
-	str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
-	if (Cookie.Length())
+	
+	if(!Reply)
 	{
-		str = str + "  Cookie " + "Len " + Cookie.Length() + "  ";
-		int len = Cookie.Length();
-		
-		if (len > 10)str = str + "\r\n";
-		if (len > 32)len = 32;
-		
-		ByteArray(Cookie.ToHex().GetBuffer(),len).ToStr(str);
-		
+		str = str + " User=" + User + " Pass=" + Pass + " Salt=" + Salt;
 	}
+	else
+	{
+		str += " Token=";
+		str.Concat(Token, 16);
+		str = str + " Key=" + Key;
+	}
+	if (Cookie.Length()) str = str + "  Cookie[" + Cookie.Length() + "]";
 
 	return str;
 }

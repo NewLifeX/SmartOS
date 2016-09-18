@@ -608,8 +608,7 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 
 	LoginMessage logMsg;
 	logMsg.ReadMessage(msg);
-	logMsg.Show();
-	debug_printf("\r\n");
+	logMsg.Show(true);
 
 	if (logMsg.Error)
 	{
@@ -620,8 +619,8 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		if (result == 0xF7)
 		{
 			// 任何错误，重新握手
-			Status = 1;
-			Token = 0;
+			Status	= 1;
+			Token	= 0;
 			Register();
 			return false;
 		}
@@ -633,13 +632,13 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	}
 	else
 	{
-		Status = 2;
+		Status	= 2;
 		debug_printf("登录成功！ ");
 
-		Token = logMsg.Token;
+		Token	= logMsg.Token;
 
 		if (ctrl) ctrl->Token = Token;
-		logMsg.Show(true);
+
 		debug_printf("令牌：0x%08X ", Token);
 		if (logMsg.Key.Length())
 		{

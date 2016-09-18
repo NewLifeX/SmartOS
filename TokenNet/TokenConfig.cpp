@@ -50,6 +50,7 @@ void TokenConfig::Show() const
 	debug_printf("\t厂商: %s \r\n", _Vendor);
 	debug_printf("\t登录: %s \r\n", _User);
 	debug_printf("\t密码: %s \r\n", _Pass);
+	debug_printf("\t令牌: %s \r\n", _Token);
 #endif
 }
 

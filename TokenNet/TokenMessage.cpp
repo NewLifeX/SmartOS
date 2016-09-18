@@ -136,7 +136,7 @@ void TokenMessage::Show() const
 				name.Show();
 				debug_printf("=");
 
-				if(name == "Action")
+				if(name == "Action" || name == "ErrorMessage")
 					value.AsString().Show();
 				else
 					value.Show();
