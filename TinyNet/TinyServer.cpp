@@ -79,7 +79,8 @@ void TinyServer::Start()
 		dv->Kind = Sys.Code;
 		dv->LastTime = Sys.Seconds();
 
-		dv->HardID = Sys.ID;
+		//dv->HardID = Sys.ID;
+		dv->HardID.Copy(0, Sys.ID, -1);
 		dv->Name = Sys.Name;
 
 		// 标记为永久在线设备

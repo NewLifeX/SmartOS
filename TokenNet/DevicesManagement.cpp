@@ -422,7 +422,7 @@ bool DevicesManagement::GetDevInfo(Device *dv, MemoryStream &ms)
 	bp.Set("LastActive", dv->LastTime);
 	bp.Set("RegisterTime", dv->RegTime);
 	bp.Set("LoginTime", dv->LoginTime);
-	bp.Set("HardID", dv->Logins);
+	bp.Set("HardID", dv->HardID);
 
 	bp.Set("Version", dv->Version);
 	bp.Set("DataSize", dv->DataSize);
@@ -522,9 +522,11 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 		return;
 	case DeviceAtions::Online:
 		debug_printf("节点上线 ID=0x%02X\r\n", id);
+		if (PortOk)SendDevices(act,dv);
 		break;
 	case DeviceAtions::Offline:
 		debug_printf("节点离线 ID=0x%02X\r\n", id);
+		if (PortOk)SendDevices(act, dv);
 		break;
 	case DeviceAtions::Register:
 		PushDev((Device*)dv);
@@ -533,8 +535,8 @@ void DevicesManagement::DeviceRequest(DeviceAtions act, const Device* dv)
 		return;
 	case DeviceAtions::Delete:
 		debug_printf("节点删除~~ ID=0x%02X\r\n", id);
+		if(PortOk)SendDevices(act, dv);
 		DeleteDev(id);
-		//if(PortOk)SendDevices(act, dv);
 		break;
 	default:
 		debug_printf("无法识别的节点操作 Act=%d ID=0x%02X\r\n", (byte)act, id);
@@ -571,17 +573,17 @@ void DevicesManagement::MaintainState()
 		{	// 下线
 			if (dv->Logined)
 			{
+				dv->Logined = false;
 				//debug_printf("设备最后活跃时间：%d,系统当前时间:%d,离线阈值:%d\r\n",dv->LastTime,now,time);
 				DeviceRequest(DeviceAtions::Offline, dv);
-				dv->Logined = false;
 			}
 		}
 		else
 		{	// 上线
 			if (!dv->Logined)
 			{
-				DeviceRequest(DeviceAtions::Online, dv);
 				dv->Logined = true;
+				DeviceRequest(DeviceAtions::Online, dv);
 			}
 		}
 	}
