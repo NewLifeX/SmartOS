@@ -70,9 +70,8 @@ bool Array::Release()
 	_Capacity	= 0;
 	_Length		= 0;
 
-	// 不能动是否能释放的标志位 ！！！ CheckCapacity 里会用到这
-	// _needFree	= false;
-	// _canWrite	= true;
+	_needFree	= false;
+	_canWrite	= true;
 
 	if(fr && p)
 	{
@@ -298,7 +297,11 @@ bool Array::CheckCapacity(int len, int bak)
 		Buffer(p, sz).Copy(0, _Arr, bak);
 
 	int oldlen	= _Length;
-	if(_free && _Arr != p) Release();
+	if (_free && _Arr != p)
+	{
+		// Release(); 会动标志位 不能用它
+		delete p;
+	}
 
 	_Arr		= (char*)p;
 	_Capacity	= sz;
