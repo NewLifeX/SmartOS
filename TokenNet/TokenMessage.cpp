@@ -139,7 +139,10 @@ void TokenMessage::Show() const
 				if(name == "Action" || name == "ErrorMessage")
 					value.AsString().Show();
 				else
+				{
+					if (value.Length() > 16)debug_printf("\r\n");
 					value.Show();
+				}
 			}
 		}
 		/*else
