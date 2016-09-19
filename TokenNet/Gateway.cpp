@@ -165,11 +165,9 @@ bool Gateway::OnRemote(const TokenMessage& msg)
 	}
 
 	// 应用级消息转发
-	if (msg.Code >= 0x10 && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)
+	bool applevel = (msg.Code >= 0x10 || msg.Code == 0x05 || msg.Code == 0x06);
+	if (applevel && !msg.Error && msg.Length <= Server->Control->Port->MaxSize - TinyMessage::MinSize)
 	{
-		//debug_printf("Gateway::Remote ");
-		//msg.Show();
-
 		TinyMessage tmsg;
 		if (!TokenToTiny(msg, tmsg)) return true;
 		if (tmsg.Dest == 0x00)tmsg.Dest = pDevMgmt->LocalId;
@@ -280,6 +278,9 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 
 	// 处理Reply标记
 	msg2.Code = msg.Code;
+	if (msg2.Code == 0x15)msg2.Code = 0x05;
+	if (msg2.Code == 0x16)msg2.Code = 0x06;
+
 	msg2.Reply = msg.Reply;
 	msg2.Error = msg.Error;
 
@@ -287,13 +288,14 @@ void TinyToToken(const TinyMessage& msg, TokenMessage& msg2)
 
 	TokenDataMessage dm;
 	//dm.ReadMessage(msg2);	// 很显然 什么都读不到
-	dm.ID = ms.ReadByte();
+	//dm.ID = ms.ReadByte();
+	dm.ID = msg.Src;
 	dm.Start = ms.ReadEncodeInt();
 
 	// 存在三种情况  云读设备的回复   云写设备的回复  设备上报
 	// 云读设备的回复  设备上报  没有长度
 	// 云写设备的回复 不确定
-	auto isRead = (msg.Code == 0x05 || msg.Code == 0x15);
+	auto isRead = (msg.Code == 0x05); // || msg.Code == 0x15);
 	if ((!isRead) && msg.Reply)
 	{
 		dm.Size = ms.ReadEncodeInt();

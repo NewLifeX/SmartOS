@@ -6,8 +6,8 @@
 
 // 仅用于调试使用的一些函数实现，RTM不需要
 
-#define MEM_DEBUG DEBUG
-//#define MEM_DEBUG 0
+//#define MEM_DEBUG DEBUG
+#define MEM_DEBUG 0
 #if MEM_DEBUG
 	#define mem_printf debug_printf
 #else
