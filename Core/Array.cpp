@@ -69,8 +69,10 @@ bool Array::Release()
 	_Arr		= nullptr;
 	_Capacity	= 0;
 	_Length		= 0;
-	_needFree	= false;
-	_canWrite	= true;
+
+	// 不能动是否能释放的标志位 ！！！ CheckCapacity 里会用到这
+	// _needFree	= false;
+	// _canWrite	= true;
 
 	if(fr && p)
 	{
