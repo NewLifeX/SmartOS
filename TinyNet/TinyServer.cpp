@@ -132,7 +132,7 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 			// 设置当前设备
 			Current = dv;
 			OnPing(msg);
-			pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);  // 成功收到Ping才等于上线
+			// pDevMgmt->DeviceRequest(DeviceAtions::Online, dv);  // 成功收到Ping才等于上线
 			break;
 		case 5:
 		case 0x15:
@@ -156,7 +156,7 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 	}
 
 	// 更新设备信息
-	if(dv) dv->LastTime = Sys.Seconds();
+	if(dv && msg.Code > 2) dv->LastTime = Sys.Seconds();
 
 	// 设置当前设备
 	Current = dv;

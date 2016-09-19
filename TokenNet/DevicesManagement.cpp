@@ -82,9 +82,11 @@ bool DevicesManagement::DeleteDev(byte id)
 	{
 		debug_printf("DevicesManagement::DeleteDev Del id: 0x%02X\r\n", id);
 
-		int idx = DevArr.FindIndex(dv);
-		debug_printf("idx~~~~~~~~~~~:%d\r\n", idx);
-		if (idx >= 0)DevArr[idx] = nullptr;
+		// int idx = DevArr.FindIndex(dv);
+		// debug_printf("idx~~~~~~~~~~~:%d\r\n", idx);
+		// if (idx >= 0)DevArr[idx] = nullptr;
+		// DevArr.RemoveAt(idx);
+		DevArr.Remove(dv);
 
 		delete dv;
 		SaveDev();
