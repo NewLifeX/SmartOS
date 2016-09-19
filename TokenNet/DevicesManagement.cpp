@@ -221,7 +221,7 @@ void DevicesManagement::ShowDev()
 	byte len = Length();
 	byte count = 0;
 
-	debug_printf("\r\n\t\tShowDev\r\n");
+	debug_printf("\r\n\t\tShowDev len： %d\r\n",len);
 	for (int i = 0; i < len; i++)
 	{
 		auto dv = (Device*)DevArr[i];
