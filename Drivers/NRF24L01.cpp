@@ -820,7 +820,7 @@ uint NRF24L01::OnRead(Buffer& bs)
 // 向NRF的发送缓冲区中写入数据
 bool NRF24L01::SendTo(const Buffer& bs, const Buffer& addr)
 {
-	if(bs.Length()) return false;
+	if(!bs.Length()) return false;
 
 	TS("R24::SendTo");
 
