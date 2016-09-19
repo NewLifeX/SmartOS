@@ -300,7 +300,7 @@ bool Array::CheckCapacity(int len, int bak)
 	if (_free && _Arr != p)
 	{
 		// Release(); 会动标志位 不能用它
-		delete p;
+		delete _Arr;
 	}
 
 	_Arr		= (char*)p;
