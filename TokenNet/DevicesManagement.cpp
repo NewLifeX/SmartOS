@@ -141,6 +141,13 @@ int DevicesManagement::LoadDev()
 		dv->Read(ms);
 		dv->Show();
 
+		// 加载时默认参数
+		dv->Logined = false;
+		dv->Logins = 0;
+		dv->LastTime = dv->RegTime;
+		dv->LoginTime = dv->RegTime;
+
+		// 网关自己特殊
 		if (dv->Kind == Sys.Code)
 		{
 			LocalId = dv->Address;

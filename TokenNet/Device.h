@@ -24,14 +24,15 @@ class Device : public Object
 {
 public:
 	bool	Logined;	// 是否在线
+	uint	LastTime;	// 活跃时间。秒
+	uint	LoginTime;	// 登录时间。秒
+	uint	Logins;		// 登录次数
+
 	byte	Address;	// 节点地址
 
 	ushort	Kind;		// 类型
 	byte	_HardID[16];// 硬件编码
-	uint	LastTime;	// 活跃时间。秒
 	uint	RegTime;	// 注册时间。秒
-	uint	LoginTime;	// 登录时间。秒
-	uint	Logins;		// 登录次数
 
 	ushort	Version;	// 版本
 	byte	DataSize;	// 数据大小
