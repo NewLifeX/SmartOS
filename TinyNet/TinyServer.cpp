@@ -44,7 +44,8 @@ bool TinyServer::Send(Message& msg) const
 		auto dv	= pDevMgmt->FindDev(((TinyMessage&)msg).Dest);
 		if(!dv)	dv	= Current;
 		//if(dv)	msg.State	= dv->Mac;
-		if(dv)	dv->Mac.CopyTo(0, msg.State, -1);
+		if (dv)	// dv->Mac.CopyTo(0, msg.State, -1);  msg.State 是指针  默认为0 所以 在这里出问题了
+			msg.State = dv->_Mac;
 	}
 
 	return Control->Send(msg);
@@ -110,6 +111,9 @@ void TinyServer::OnReceive(TinyMessage& msg, TinyController& ctrl)
 	if (!dv) dv = pDevMgmt->FindDev(id);
 	// 不响应不在设备列表设备的 非Join指令
 	if(!dv && msg.Code > 2) return;
+
+	//debug_printf("\r\nTinyServer Rev\r\n");
+	//msg.Show();
 
 	switch(msg.Code)
 	{
