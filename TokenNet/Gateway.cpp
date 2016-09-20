@@ -265,7 +265,8 @@ bool TokenToTiny(const TokenMessage& msg, TinyMessage& tny)
 	auto ms = tny.ToStream();
 	ms.WriteEncodeInt(dm.Start);
 	// 不管什么指令 有就写  没就不写
-	if (dm.Size)ms.WriteEncodeInt(dm.Size);
+	// dm.ReadMessage(msg); 读不到size的时候 size=data.Length 所以 这里不能用size进行判断
+	if (dm.HasSize)ms.WriteEncodeInt(dm.Size);
 	if (dm.Data.Length() != 0)ms.Write(dm.Data);
 
 	tny.Length = ms.Position();
