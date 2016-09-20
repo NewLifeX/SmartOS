@@ -14,6 +14,7 @@ public:
 	byte ID;
 	uint Start;
 	uint Size;
+	bool HasSize;
 	ByteArray Data;
 
 	TokenDataMessage();

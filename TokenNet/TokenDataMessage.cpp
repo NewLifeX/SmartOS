@@ -7,6 +7,7 @@ TokenDataMessage::TokenDataMessage() :Data(0)
 	ID		= 0;
 	Start	= 0;
 	Size	= 0;
+	HasSize = true;
 }
 
 TokenDataMessage::TokenDataMessage(const TokenDataMessage& msg)
@@ -27,7 +28,11 @@ bool TokenDataMessage::Read(Stream& ms)
 	bp.Get("Data", Data);
 
 	// 自动设置长度，方便业务层使用
-	if(Size == 0) Size	= Data.Length();
+	if (Size == 0)
+	{
+		HasSize = false;
+		Size = Data.Length();
+	}
 
 	return true;
 }
@@ -38,7 +43,7 @@ void TokenDataMessage::Write(Stream& ms) const
 	BinaryPair bp(ms);
 	if(ID) bp.Set("ID", ID);
 	bp.Set("Start", Start);
-	if(Size) bp.Set("Size", Size);
+	if(HasSize && Size) bp.Set("Size", Size);
 	if(Data.Length()) bp.Set("Data", Data);
 }
 
@@ -105,7 +110,7 @@ String& TokenDataMessage::ToStr(String& str) const
 	if (Reply) str += '#';
 	if(ID) str	= str + " ID:" + ID;
 	str	= str + " Start:" + Start;
-	if(Size) str	= str + " Size:" + Size;
+	if(HasSize && Size) str	= str + " Size:" + Size;
 
 	if(Data)
 	{
