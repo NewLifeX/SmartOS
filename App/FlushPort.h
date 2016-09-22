@@ -24,7 +24,8 @@ public:
 	~FlushPort();
 
 	void Start(int ms = 1000);
-	void Stop();
+	// mode 0xff  为不改变Port状态  0为Write false  1为Write true
+	void Stop(byte mode = 0xff);
 	void Flush();
 
 	virtual int Write(byte* data);

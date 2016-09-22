@@ -46,12 +46,17 @@ void FlushPort::Start(int ms)
 	Sys.SetTask(_tid, Count > 0, 0);
 }
 
-void FlushPort::Stop()
+void FlushPort::Stop(byte mode)
 {
 	if(Slow)
 		Sys.SetTaskPeriod(_tid, Slow);
 	else
 		Sys.SetTask(_tid, false, 0);
+
+	if (mode != 0xff)
+	{
+		Port->Write(mode > 0);
+	}
 }
 
 void FlushPort::Flush()
