@@ -87,8 +87,8 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 void PulsePort::OnHandler(InputPort* port,bool down)
 {
 	if(down)return;
-	// UInt64 now = Sys.Ms();
-	UInt64 now = DateTime::Now().TotalMs();
+	// 取UTC时间的MS值
+	UInt64 now = Sys.Seconds()*1000 + Sys.Ms() - Time.Milliseconds;
 	
 	if(Value)
 	{

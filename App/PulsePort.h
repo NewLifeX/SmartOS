@@ -2,8 +2,8 @@
 #ifndef __Pulse_Port_H__
 #define __Pulse_Port_H__
 
-#include "Sys.h"
-#include "Timer.h"
+#include "..\Kernel\Sys.h"
+#include "..\Kernel\TTime.h"
 #include "Port.h"
 
 
