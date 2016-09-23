@@ -760,7 +760,12 @@ void TokenClient::Write(int start, byte dat)
 
 void TokenClient::ReportAsync(int start, uint length)
 {
-	if (start + length >= Store.Data.Length()) return;
+	if (start + length > Store.Data.Length())
+	{
+		debug_printf("布置异步上报数据失败\r\n");
+		debug_printf("sta:%d  len:%d  data.len:%d\r\n",start,length,Store.Data.Length());
+		return;
+	}
 
 	NextReport = start;
 	ReportLength = length;
@@ -771,6 +776,7 @@ void TokenClient::ReportAsync(int start, uint length)
 
 bool TokenClient::CheckReport()
 {
+	//debug_printf("CheckReport\r\n");
 	uint offset = NextReport;
 	uint len = ReportLength;
 	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
@@ -779,7 +785,7 @@ bool TokenClient::CheckReport()
 
 	// 检查索引，否则数组越界
 	auto& bs = Store.Data;
-	if (bs.Length() > offset + len)
+	if (bs.Length() >= offset + len)
 	{
 		if (len == 1)
 			Write(offset, bs[offset]);

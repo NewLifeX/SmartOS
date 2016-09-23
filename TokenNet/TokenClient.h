@@ -70,6 +70,7 @@ public:
 	void Read(int start, int size);
 	void Write(int start, const Buffer& bs);
 	void Write(int start, byte dat);
+	// 必须满足 start > 0 才可以。
 	void ReportAsync(int start, uint length = 1);
 
 	// 远程调用
