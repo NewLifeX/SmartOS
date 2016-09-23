@@ -1105,10 +1105,12 @@ bool TokenClient::InvokeGetAllApi(void * param, const Pair& args, Stream& result
 	auto& keys = client->Routes.Keys();
 	for (int i = 0; i < keys.Count(); i++)
 	{
-		if (i > 0)apis += ",";
-		apis = apis + keys[i];
+		if (i > 0)apis += ',';
+		apis = apis + String(keys[i]);// keys[i];
 	}
 
+	//BinaryPair bp(result);
+	//bp.Set("Apis", apis);
 	result.Write(apis);
 
 	return true;
