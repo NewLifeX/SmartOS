@@ -560,29 +560,29 @@ JValue& JValue::operator=(JValue&& v)
 
 JValue& JValue::operator[] (cstring key)
 {
-    if (type() != OBJECT)
-        throw ("JValue not an object");
+    //if (type() != OBJECT)
+    //    throw ("JValue not an object");
     return object_v[key];
 }
 
 const JValue& JValue::operator[] (cstring key) const
 {
-    if (type() != OBJECT)
-        throw ("JValue not an object");
+    //if (type() != OBJECT)
+    //    throw ("JValue not an object");
     return object_v[key];
 }
 
 JValue& JValue::operator[] (uint i)
 {
-    if (type() != ARRAY)
-        throw ("JValue not an array");
+    //if (type() != ARRAY)
+    //    throw ("JValue not an array");
     return array_v[i];
 }
 
 const JValue& JValue::operator[] (uint i) const
 {
-    if (type() != ARRAY)
-        throw ("JValue not an array");
+    //if (type() != ARRAY)
+    //    throw ("JValue not an array");
     return array_v[i];
 }
 

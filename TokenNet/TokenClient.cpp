@@ -262,6 +262,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		delete ss;
 	}
 }
+
 //内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
 {
@@ -289,6 +290,7 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 		}
 	}
 }
+
 // 常用系统级消息
 
 // 定时任务
