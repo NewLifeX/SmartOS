@@ -481,6 +481,8 @@ void InputPort::OnClose()
 	Port::OnClose();
 
 	ClosePin();
+
+	RemoveFromCenter(this);
 }
 
 // 注册回调  及中断使能
@@ -493,12 +495,77 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
     if(!OnRegister()) return false;
 
-	if(!_taskInput && !HardEvent) _taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	if(handler)AddToCenter(this);
+
+	if (!_taskInput && !HardEvent)_taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
 
 	return true;
 }
 
 #endif
+
+uint InputPort::CenterTaskId = 0;
+InputPort * InputPort::InterruptPorts[16];
+
+void InputPort::CenterTask(void* param)
+{
+	// debug_printf("\r\nCenterTask\r\n");
+	UInt64 now = Sys.Ms();
+	for (int i = 0; i < ArrayLength(InterruptPorts); i++)
+	{
+		if (!InterruptPorts[i])continue;
+		InputPort * port = InterruptPorts[i];
+		// 如果按键没有按下，直接清空按下起始时间。之后来的弹起动作将失去意义
+		// 不会造成长按。
+		bool stat = port->Read();
+		if (stat)
+		{
+			port->_PressStart = 0;
+			port->_PressStart2 = 0;
+			port->PressTime = 0;
+			port->_PressLast = now;
+			port->_Value = 1;
+			// debug_printf("\r\nclear %d",i);
+		}
+	}
+}
+
+void InputPort::AddToCenter(InputPort* port)
+{
+	debug_printf("  AddToCenter  ");
+	if (!port)return;
+	// 添加核心处理任务
+	if (!CenterTaskId)
+	{
+		CenterTaskId = Sys.AddTask(CenterTask, nullptr, 1000, 1000, "输入替补");
+		for (int i = 0; i < ArrayLength(InterruptPorts); i++)InterruptPorts[i] = nullptr;
+	}
+	// 加入引脚
+	InterruptPorts[(port->_Pin) & 0x0f] = port;
+}
+
+void InputPort::RemoveFromCenter(InputPort* port)
+{
+	if (!port)return;
+	// 干掉要移除项
+	InterruptPorts[(port->_Pin) & 0x0f] = nullptr;
+
+	// 如果没有按键在注册中，则干掉任务
+	bool isNull = true;
+	for (int i = 0; i < ArrayLength(InterruptPorts); i++)
+	{
+		if (InterruptPorts[i])
+		{
+			isNull = false;
+			break;
+		}
+	}
+	if (isNull)
+	{
+		Sys.RemoveTask(CenterTaskId);
+		CenterTaskId = 0;
+	}
+}
 
 /******************************** AnalogInPort ********************************/
 

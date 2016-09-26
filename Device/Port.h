@@ -199,6 +199,13 @@ private:
 	void OpenPin(void* param);
 	void ClosePin();
 	bool OnRegister();
+
+public:
+	static InputPort * InterruptPorts[16];
+	static uint CenterTaskId;
+	static void CenterTask(void* param);
+	static void AddToCenter(InputPort* port);
+	static void RemoveFromCenter(InputPort* port);
 };
 
 /******************************** AnalogInPort ********************************/
