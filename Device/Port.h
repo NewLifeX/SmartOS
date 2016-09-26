@@ -187,9 +187,9 @@ protected:
 private:
 	byte	_Value	= 0;
 	uint	_taskInput	= 0;		// 输入任务
-	UInt64	_PressStart	= 0;	// 开始按下时间
-	UInt64	_PressStart2	= 0;	// 开始按下时间
-	UInt64	_PressLast	= 0;		// 最后一次按下时间
+	UInt64	_PressStart	= 0;		// 开始按下时间
+	//UInt64	_PressStart2	= 0;	// 开始按下时间
+	//UInt64	_PressLast	= 0;		// 最后一次按下时间
 	static void InputTask(void* param);
 
     IOReadHandler	Handler	= nullptr;
@@ -200,7 +200,7 @@ private:
 	void ClosePin();
 	bool OnRegister();
 
-public:
+private:
 	static InputPort * InterruptPorts[16];
 	static uint CenterTaskId;
 	static void CenterTask(void* param);

@@ -322,9 +322,9 @@ InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 	_Value		= 0;
 
 	_PressStart = 0;
-	_PressStart2 = 0;
+	//_PressStart2 = 0;
 	PressTime	= 0;
-	_PressLast	= 0;
+	//_PressLast	= 0;
 
 	if(pin != P0)
 	{
@@ -353,9 +353,14 @@ bool InputPort::Read() const
 	return Port::Read() ^ Invert;
 }
 
+/*int		pt[16];
+int		ps[16];
+bool	vs[16];
+int		vi	= 0;*/
+
 void InputPort::OnPress(bool down)
 {
-	//debug_printf("OnPress P%c%d down=%d Invert=%d 时间=%d\r\n", _PIN_NAME(_Pin), down, Invert, PressTime);
+	//debug_printf("OnPress P%c%d down=%d Invert=%d _Value=%d\r\n", _PIN_NAME(_Pin), down, Invert, _Value);
 	/*
 	！！！注意：
 	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
@@ -364,32 +369,32 @@ void InputPort::OnPress(bool down)
 	2，记录最近两次按下的时间，如果出现抖动且时间相差不是非常大，则使用上一次按下时间
 	3，也可能出现100抖动
 	*/
+
+	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
+	if(down && _Value == Rising) return;
+	if(!down && _Value != Rising) return;
+	_Value	= down ? Rising : Falling;
+
 	UInt64	now	= Sys.Ms();
-	// 预处理抖动。如果相邻两次间隔小于抖动时间，那么忽略上一次未处理的值（可能失败）
-	bool shake	= false;
-	if(ShakeTime && ShakeTime > now - _PressLast)
+	/*if(vi < 16)
 	{
-		_Value	= 0;
-		shake	= true;
-	}
+		pt[vi]	= _Pin;
+		ps[vi]	= now;
+		vs[vi]	= down;
+		vi++;
+	}*/
 
 	if(down)
 	{
-		_PressStart2	= _PressStart;
-		_PressStart		= now;
+		_PressStart	= now;
 	}
 	else
 	{
-		// 如果这次是弹起，倒退按下的时间。为了避免较大的误差，限定10秒内
-		if(shake && _PressStart2 > 0 && _PressStart2 + 10000 >= _PressStart)
-		{
-			_PressStart	= _PressStart2;
-			_PressStart2	= 0;
-		}
+		PressTime	= now - _PressStart;
 
-		if (_PressStart > 0) PressTime	= now - _PressStart;
+		// 处理抖动
+		if(PressTime < ShakeTime) return;
 	}
-	_PressLast	= now;
 
 	if(down)
 	{
@@ -408,21 +413,37 @@ void InputPort::OnPress(bool down)
 	{
 		// 允许两个值并存
 		//_Value	|= down ? Rising : Falling;
-		_Value	= down ? Rising : Falling;
 		Sys.SetTask(_taskInput, true, ShakeTime);
 	}
 }
 
+//int s	= 0;
 void InputPort::InputTask(void* param)
 {
-	auto port = (InputPort*)param;
-	byte v = port->_Value;
+	auto port	= (InputPort*)param;
+	byte v	= port->_Value;
 	if(!v) return;
 
 	if(port->Handler)
 	{
-		port->_Value = 0;
-		v &= port->Mode;
+		/*if(v & Falling)
+		{
+			debug_printf("\r\n");
+			for(int i=0; i<vi; i++)
+			{
+				debug_printf("port %02X %d %d", pt[i], ps[i], vs[i]);
+				if(vs[i])
+					s	= ps[i];
+				else
+					debug_printf(" %d ms", ps[i] - s);
+				debug_printf("\r\n");
+			}
+
+			vi	= 0;
+		}*/
+
+		//port->_Value = 0;
+		v	&= port->Mode;
 		if(v & Rising)	port->Handler(port, true, port->Param);
 		if(v & Falling)	port->Handler(port, false, port->Param);
 	}
@@ -482,7 +503,7 @@ void InputPort::OnClose()
 
 	ClosePin();
 
-	RemoveFromCenter(this);
+	//RemoveFromCenter(this);
 }
 
 // 注册回调  及中断使能
@@ -495,9 +516,10 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
     if(!OnRegister()) return false;
 
-	if(handler)AddToCenter(this);
+	//if(handler) AddToCenter(this);
 
-	if (!_taskInput && !HardEvent)_taskInput = Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	if (!_taskInput && !HardEvent) _taskInput	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	//_taskInput	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
 
 	return true;
 }
@@ -521,9 +543,9 @@ void InputPort::CenterTask(void* param)
 		if (stat)
 		{
 			port->_PressStart = 0;
-			port->_PressStart2 = 0;
+			//port->_PressStart2 = 0;
 			port->PressTime = 0;
-			port->_PressLast = now;
+			//port->_PressLast = now;
 			port->_Value = 1;
 			// debug_printf("\r\nclear %d",i);
 		}
