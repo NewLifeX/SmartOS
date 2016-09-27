@@ -413,7 +413,7 @@ void InputPort::OnPress(bool down)
 	{
 		// 允许两个值并存
 		//_Value	|= down ? Rising : Falling;
-		Sys.SetTask(_taskInput, true, ShakeTime);
+		Sys.SetTask(_taskInput, true, 0);
 	}
 }
 
