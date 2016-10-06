@@ -671,6 +671,8 @@ void TokenClient::Reset()
 
 	Invoke("Gateway/Reset", buf);
 
+	debug_printf("设备500ms后重置\r\n");
+
 	Sys.Sleep(500);
 
 	Config::Current->RemoveAll();
