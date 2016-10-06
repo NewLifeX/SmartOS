@@ -501,8 +501,10 @@ void AP0103::Restore()
 	if (TinyConfig::Current)TokenConfig::Current->Clear();
 	// Config::Current->RemoveAll();
 
-	debug_printf("系统将在1秒后重启\r\n");
-	Sys.Reboot(1000);
+	if (Client)
+	{
+		Client->Reset();
+	}	
 }
 
 void AP0103::OnPress(InputPort* port, bool down)
@@ -529,8 +531,8 @@ void AP0103::OnLongPress(InputPort* port, bool down)
 	}
 	if (time >= 4500)
 	{
-		Restore();
-		return;
+	 AP0103::Current->Restore();
+	 return;
 	}
 }
 

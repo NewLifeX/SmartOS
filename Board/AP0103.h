@@ -61,7 +61,7 @@ public:
 
 	void CreateGateway();
 
-	static void Restore();
+	void Restore();
 	static void OnPress(InputPort* port, bool down);
 	static void OnLongPress(InputPort* port, bool down);
 

@@ -312,9 +312,8 @@ void IOK0612::InitAlarm()
 
 void IOK0612::Restore()
 {
-	Config::Current->RemoveAll();
-
-	Sys.Reboot();
+	if (!Client) return;
+	Client->Reset();
 }
 
 void IOK0612::FlushLed()
@@ -376,7 +375,7 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 	}	
 	if (time >= 5000)
 	{
-		Restore();
+		IOK0612::Current->Restore();
 		return;
 	}
 }

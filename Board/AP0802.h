@@ -30,6 +30,7 @@ public:
 
 	AP0802();
 
+	static AP0802* Current;
 	// 设置系统参数
 	void Init(ushort code, cstring name, COM message = COM1);
 
@@ -53,7 +54,7 @@ public:
 	void InitClient();
 	void InitNet();
 
-	static void Restore();
+    void Restore();
 	static void OnLongPress(InputPort* port, bool down);
 
 private:

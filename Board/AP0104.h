@@ -35,8 +35,7 @@ public:
 	// ProxyFactory*	ProxyFac;	// 透传管理器
 	// Alarm*			AlarmObj;
 
-	AP0104();
-
+	AP0104();	
 	// 设置系统参数
 	void Init(ushort code, cstring name, COM message = COM1);
 
@@ -61,7 +60,7 @@ public:
 
 	void CreateGateway();
 
-	static void Restore();
+	void Restore();
 	static void OnPress(InputPort* port, bool down);
 	static void OnLongPress(InputPort* port, bool down);
 

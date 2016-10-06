@@ -13,6 +13,8 @@
 #include "..\TinyNet\TinyConfig.h"
 #include "..\App\FlushPort.h"
 
+AP0802 * AP0802::Current = nullptr;
+
 AP0802::AP0802()
 {
 	Host	= nullptr;
@@ -26,6 +28,7 @@ AP0802::AP0802()
 	NetBra		= false;
 	EspMaster	= false;
 	EspBra		= false;
+	Current		= this;
 
 	HardwareVer = HardwareVerLast;
 }
@@ -462,9 +465,10 @@ ITransport* AP0802::Create2401()
 
 void AP0802::Restore()
 {
-	Config::Current->RemoveAll();
-
-	Sys.Reboot();
+	if (Client)
+	{
+		Client->Reset();
+	}
 }
 
 void AP0802::OnLongPress(InputPort* port, bool down)
@@ -474,7 +478,7 @@ void AP0802::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	if (port->PressTime >= 5000)
-		Restore();
+	AP0802::Current-> Restore();
 	else if (port->PressTime >= 1000)
 		Sys.Reboot();
 }

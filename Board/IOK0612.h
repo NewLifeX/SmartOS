@@ -43,7 +43,7 @@ public:
 	void InitNet();
 	void InitAlarm();
 
-	static void Restore();
+    void Restore();
 	static void OnLongPress(InputPort* port, bool down);
 
 	static IOK0612* Current;

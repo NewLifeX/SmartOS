@@ -285,9 +285,10 @@ void IOK027X::InitAlarm()
 
 void IOK027X::Restore()
 {
-	Config::Current->RemoveAll();
-
-	Sys.Reboot();
+	if (Client)
+	{
+		Client->Reset();
+	}
 }
 
 void IOK027X::FlushLed()

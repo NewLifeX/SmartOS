@@ -492,7 +492,10 @@ void AP0104::Restore()
 	// Config::Current->RemoveAll();
 
 	debug_printf("系统将在1秒后重启\r\n");
-	Sys.Reboot(1000);
+	if (Client)
+	{
+		Client->Reset();
+	}	
 }
 
 void AP0104::OnPress(InputPort* port, bool down)
@@ -519,7 +522,7 @@ void AP0104::OnLongPress(InputPort* port, bool down)
 	}
 	if (time >= 4500)
 	{
-		Restore();
+		AP0104::Current-> Restore();
 		return;
 	}
 }

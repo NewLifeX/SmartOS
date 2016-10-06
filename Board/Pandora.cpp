@@ -262,9 +262,8 @@ void PA0903::InitNet()
 
 void PA0903::Restore()
 {
-	Config::Current->RemoveAll();
-
-	Sys.Reboot();
+	if (!Client) return;	
+	Client->Reset();
 }
 
 //auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
