@@ -659,6 +659,24 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	return true;
 }
 
+void TokenClient::Reset()
+{
+	auto time = DateTime::Now().TotalMs();
+
+	MemoryStream ms;
+	BinaryPair bp(ms);
+	bp.Set("time", time);
+
+	auto buf = Buffer(ms.GetBuffer(), ms.Position());
+
+	Invoke("Gateway/Reset", buf);
+
+	Sys.Sleep(500);
+
+	Config::Current->RemoveAll();
+	Sys.Reboot();
+}
+
 // Ping指令用于保持与对方的活动状态
 void TokenClient::Ping()
 {

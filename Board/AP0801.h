@@ -54,9 +54,8 @@ public:
 	void InitNet();
 	void InitProxy();
 	void InitAlarm();
-
-	static void Restore();
-	static void OnLongPress(InputPort* port, bool down);
+	void Restore();
+    void OnLongPress(InputPort* port, bool down);
 
 	static AP0801* Current;
 

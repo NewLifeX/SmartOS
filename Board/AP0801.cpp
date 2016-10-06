@@ -91,7 +91,7 @@ void AP0801::InitLeds()
 void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	if (port->PressTime > 1000)
-		AP0801::OnLongPress(port, down);
+		AP0801::Current->OnLongPress(port, down);
 }
 
 void AP0801::InitButtons(InputPort::IOReadHandler press)
@@ -518,9 +518,9 @@ ITransport* AP0801::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 
 void AP0801::Restore()
 {
-	Config::Current->RemoveAll();
+	if (!Client) return;
 
-	Sys.Reboot();
+	Client->Reset();
 }
 
 void AP0801::OnLongPress(InputPort* port, bool down)
