@@ -7,7 +7,6 @@
 #include "TokenNet\TokenClient.h"
 #include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
-#include "Device\RTC.h"
 
 // 阿波罗0801/0802
 class AP0801

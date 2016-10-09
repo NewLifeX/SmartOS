@@ -2,7 +2,6 @@
 #define __ProxyFactory_H__
 
 #include "Sys.h"
-#include "TokenNet\TokenMessage.h"
 #include "Message\Pair.h"
 #include "TokenNet\TokenClient.h"
 #include "Device\Proxy.h"
@@ -11,12 +10,12 @@
 class ProxyFactory
 {
 public:
-	
+
 	Dictionary<cstring, Proxy*> Proxys;
 	TokenClient* Client;
-	
-	
+
 	ProxyFactory();
+
 	// 工程打开
 	bool Open(TokenClient* client);
 	// 端口注册
@@ -32,7 +31,7 @@ public:
 	bool SetConfig(const Pair& args, Stream& result);
 	// 获取设备列表
 	bool QueryPorts(const Pair& args, Stream& result);
-	
+
 	// XXX7，自动bool Proxy/SetAuto(bool auto, Byte[] boot)。		// 设备上电后自动发送，可能需要引导数据   => 合并到2
 	// 8，查询状态Byte[] Proxy/Query(String port, String key)。		// 支持查询是否已打开、已缓存数据量等。
 

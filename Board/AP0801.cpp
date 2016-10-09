@@ -11,6 +11,8 @@
 
 #include "TokenNet\TokenController.h"
 
+#include "Device\RTC.h"
+
 AP0801* AP0801::Current = nullptr;
 
 AP0801::AP0801()
@@ -168,7 +170,7 @@ void AP0801::InitClient()
 	// 创建客户端
 	auto client		= new TokenClient();
 	client->Cfg		= tk;
-	
+
 	// 需要使用本地连接
 	//client->UseLocal();
 
@@ -286,13 +288,13 @@ void AP0801::OpenClient(ISocketHost& host)
 	// {
 	// 	debug_printf("4");
 	// 	auto ctrl	= AddControl(*HostAP, uri, tk->Port);
-	// 
+	//
 	// 	// 如果没有主机，这里打开令牌客户端，为组网做准备
-	// 	if(!Host) 
+	// 	if(!Host)
 	// 		Client->Open();
-	// 	else 
+	// 	else
 	// 		Client->AttachControls();
-	// 
+	//
 	// 	// 假如来迟了，客户端已经打开，那么自己挂载事件
 	// 	if(Client->Opened && Client->Master)
 	// 	{

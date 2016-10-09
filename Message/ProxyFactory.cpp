@@ -14,7 +14,7 @@ error code
 ProxyFactory::ProxyFactory():Proxys(String::Compare)
 {
 	debug_printf("创建 ProxyFac\r\n");
-	Client = nullptr;
+	Client	= nullptr;
 }
 
 bool ProxyFactory::Open(TokenClient* client)
@@ -32,6 +32,7 @@ bool ProxyFactory::Open(TokenClient* client)
 	Client->Register("Proxy/Read",		&ProxyFactory::Read,		this);
 	Client->Register("Proxy/QueryPorts",&ProxyFactory::QueryPorts,	this);
 	debug_printf("\r\n");
+
 	return true;
 }
 
@@ -244,23 +245,27 @@ bool ProxyFactory::QueryPorts(const Pair& args, Stream& result)
 bool ProxyFactory::Upload(Proxy& port, Buffer& data)
 {
 	if (!Client)return false;
+
 	MemoryStream ms;
 	BinaryPair bp(ms);
 	bp.Set("Port", port.Name);
 	bp.Set("Data", data);
 	Client->Invoke("Proxy/Upload", Buffer(ms.GetBuffer(),ms.Position()));
+
 	return true;
 }
 
 bool ProxyFactory::UpOpen(Proxy& port)
 {
 	if (!Client)return false;
+
 	MemoryStream ms;
 	BinaryPair bp(ms);
 	bp.Set("Port", port.Name);
 	bp.Set("Open", (byte)0x01);
 
 	Client->Invoke("Proxy/Open", Buffer(ms.GetBuffer(), ms.Position()));
+
 	return true;
 }
 
