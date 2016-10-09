@@ -13,7 +13,13 @@
 
 #include "Device\RTC.h"
 
-AP0801* AP0801::Current = nullptr;
+#include "TokenNet\TokenClient.h"
+#include "Message\ProxyFactory.h"
+
+AP0801* AP0801::Current	= nullptr;
+
+TokenClient*	Client	= nullptr;	// 令牌客户端
+ProxyFactory*	ProxyFac	= nullptr;	// 透传管理器
 
 AP0801::AP0801()
 {
@@ -125,10 +131,10 @@ ISocketHost* AP0801::Create5500()
 /*static void SetWiFiTask(void* param)
 {
 	auto bsp	= (AP0801*)param;
-	auto client	= bsp->Client;
+	auto tc	= bsp->Client;
 	auto esp	= (Esp8266*)bsp->Host;
 
-	client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	tc->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 }*/
 
 ISocketHost* AP0801::Create8266(bool apOnly)
@@ -168,43 +174,43 @@ void AP0801::InitClient()
 	auto tk = TokenConfig::Current;
 
 	// 创建客户端
-	auto client		= new TokenClient();
-	client->Cfg		= tk;
+	auto tc		= new TokenClient();
+	tc->Cfg		= tk;
 
 	// 需要使用本地连接
-	//client->UseLocal();
+	//tc->UseLocal();
 
-	Client = client;
-	Client->MaxNotActive = 480000;
+	Client = tc;
+	tc->MaxNotActive = 480000;
 
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	tc->Register("Gateway/Restart", &TokenClient::InvokeRestStart, tc);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	tc->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, tc);
 	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
+	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
 	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
+	tc->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, tc);
 	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
+	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
 
 	if(Data && Size > 0)
 	{
-		auto& ds	= Client->Store;
+		auto& ds	= tc->Store;
 		ds.Data.Set(Data, Size);
 	}
 
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
 		[](void* p){
-			auto& client	= *(TokenClient*)p;
-			if(!client.Opened)
+			auto& tc	= *(TokenClient*)p;
+			if(!tc.Opened)
 			{
 				debug_printf("联网超时，准备重启系统！\r\n\r\n");
 				Sys.Reboot();
 			}
 		},
-		client, 8 * 60 * 1000, -1, "联网检查");
+		tc, 8 * 60 * 1000, -1, "联网检查");
 }
 
 void AP0801::Register(int index, IDataPort& dp)
@@ -315,14 +321,14 @@ TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort
 	ctrl->Socket	= socket;
 
 	// 创建客户端
-	auto client	= Client;
+	auto tc	= Client;
 	if(localPort == 0)
-		client->Master	= ctrl;
+		tc->Master	= ctrl;
 	else
 	{
 		socket->Local.Port	= localPort;
 		ctrl->ShowRemote	= true;
-		client->Controls.Add(ctrl);
+		tc->Controls.Add(ctrl);
 	}
 
 	return ctrl;
@@ -416,13 +422,14 @@ void AlarmWrite(byte type, Buffer& bs)
 	debug_printf("AlarmWrite type %d data ", type);
 	bs.Show(true);
 
-	auto client = AP0801::Current->Client;
+	//auto tc	= AP0801::Current->Client;
+	auto tc	= Client;
 
 	Stream ms(bs);
 	auto start = ms.ReadByte();
 	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
-	client->Store.Write(start, data);
+	tc->Store.Write(start, data);
 }
 
 void AlarmReport(byte type, Buffer&bs)
@@ -431,11 +438,12 @@ void AlarmReport(byte type, Buffer&bs)
 	bs.Show(true);
 
 	Stream ms(bs);
-	auto start = ms.ReadByte();
-	auto size = ms.ReadByte();
-	auto client = AP0801::Current->Client;
+	auto start	= ms.ReadByte();
+	auto size	= ms.ReadByte();
+	//auto tc	= AP0801::Current->Client;
+	auto tc = Client;
 
-	client->ReportAsync(start, size);
+	tc->ReportAsync(start, size);
 }
 
 void AlarmDelayOpen(void *param)

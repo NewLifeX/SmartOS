@@ -3,10 +3,13 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 
-#include "TokenNet\TokenClient.h"
-#include "Message\ProxyFactory.h"
+//#include "TokenNet\TokenClient.h"
+//#include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
+#include "TokenNet\TokenController.h"
+#include "TokenNet\TokenConfig.h"
 
 // 阿波罗0801/0802
 class AP0801
@@ -24,8 +27,8 @@ public:
 
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
-	TokenClient*	Client;	// 令牌客户端
-	ProxyFactory*	ProxyFac;	// 透传管理器
+	//TokenClient*	Client;	// 令牌客户端
+	//ProxyFactory*	ProxyFac;	// 透传管理器
 	Alarm*			AlarmObj;
 
 	AP0801();
