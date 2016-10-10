@@ -16,20 +16,20 @@ IOK027X::IOK027X()
 	LedPins.Add(PA0);
 	LedPins.Add(PA4);
 
-	LedsShow = false;
+	LedsShow = 2;
 	LedsTaskId = 0;
 
-	Host	= nullptr;	// 网络主机
-	Client	= nullptr;
+	Host = nullptr;	// 网络主机
+	Client = nullptr;
 
-	Data	= nullptr;
-	Size	= 0;
+	Data = nullptr;
+	Size = 0;
 	Current = this;
 }
 
 void IOK027X::Init(ushort code, cstring name, COM message)
 {
-	auto& sys	= (TSys&)Sys;
+	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
@@ -40,23 +40,23 @@ void IOK027X::Init(ushort code, cstring name, COM message)
 	Rtc->Init();
 	Rtc->Start(false, false);
 
-    // 初始化系统
-    sys.Init();
+	// 初始化系统
+	sys.Init();
 #if DEBUG
-    sys.MessagePort = message; // 指定printf输出的串口
-    Sys.ShowInfo();
+	sys.MessagePort = message; // 指定printf输出的串口
+	Sys.ShowInfo();
 
 	WatchDog::Start(20000, 10000);
 #endif
 
 	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
+	Config::Current = &Config::CreateFlash();
 }
 
 void* IOK027X::InitData(void* data, int size)
 {
 	// 启动信息
-	auto hot	= &HotConfig::Current();
+	auto hot = &HotConfig::Current();
 	hot->Times++;
 
 	data = hot->Next();
@@ -70,17 +70,17 @@ void* IOK027X::InitData(void* data, int size)
 	// debug_printf("HotConfig Times %d Data: ",hot->Times);
 	// bs.Show(true);
 
-	Data	= data;
-	Size	= size;
+	Data = data;
+	Size = size;
 
 	return data;
 }
 
 void IOK027X::InitLeds()
 {
-	for(int i=0; i<LedPins.Count(); i++)
+	for (int i = 0; i < LedPins.Count(); i++)
 	{
-		auto port	= new OutputPort(LedPins[i]);
+		auto port = new OutputPort(LedPins[i]);
 		port->Invert = true;
 		port->Open();
 		port->Write(false);
@@ -90,18 +90,18 @@ void IOK027X::InitLeds()
 
 ISocketHost* IOK027X::Create8266()
 {
-	auto host	= new Esp8266(COM2, PB2, PA1);
+	auto host = new Esp8266(COM2, PB2, PA1);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join	= host->SSID && *host->SSID;
+	bool join = host->SSID && *host->SSID;
 	//if (!join) host->Mode = SocketMode::AP;
 
 	if (!join)
 	{
-		*host->SSID	= "WSWL";
+		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode	= SocketMode::STA_AP;
+		host->Mode = SocketMode::STA_AP;
 	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
@@ -132,9 +132,9 @@ void IOK027X::InitClient()
 	// 重启
 	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
 	// 重置
-	Client->Register("Gateway/Reset",	&TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
 	// 获取所有Ivoke命令
-	Client->Register("Api/All",			&TokenClient::InvokeGetAllApi, Client);
+	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
 	if (Data && Size > 0)
 	{
@@ -144,19 +144,19 @@ void IOK027X::InitClient()
 
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
-		[](void* p){
-			auto & bsp = *(IOK027X*)p;
-			auto & client = *bsp.Client;
-			if(!client.Opened)
-			{
-				debug_printf("联网超时，准备重启Esp！\r\n\r\n");
-				// Sys.Reboot();
-				auto port = dynamic_cast<Esp8266*>(bsp.Host);
-				port->Close();
-				Sys.Sleep(1000);
-				port->Open();
-			}
-		},
+		[](void* p) {
+		auto & bsp = *(IOK027X*)p;
+		auto & client = *bsp.Client;
+		if (!client.Opened)
+		{
+			debug_printf("联网超时，准备重启Esp！\r\n\r\n");
+			// Sys.Reboot();
+			auto port = dynamic_cast<Esp8266*>(bsp.Host);
+			port->Close();
+			Sys.Sleep(1000);
+			port->Open();
+		}
+	},
 		this, 8 * 60 * 1000, -1, "联网检查");
 }
 
@@ -176,8 +176,8 @@ void IOK027X::OpenClient(ISocketHost& host)
 
 	debug_printf("\r\n OpenClient \r\n");
 
-	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led && LedsShow) esp->SetLed(*Leds[0]);
+	auto esp = dynamic_cast<Esp8266*>(&host);
+	if (esp && !esp->Led && LedsShow == 1) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 
@@ -185,7 +185,7 @@ void IOK027X::OpenClient(ISocketHost& host)
 	if (host.IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
 
 	// STA或AP模式下，建立本地监听
-	if(Client->Controls.Count() == 0)
+	if (Client->Controls.Count() == 0)
 	{
 		NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 		AddControl(host, uri, tk->Port);
@@ -200,21 +200,21 @@ void IOK027X::OpenClient(ISocketHost& host)
 TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateRemote(uri);
+	auto socket = host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
+	auto ctrl = new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
+	ctrl->Socket = socket;
 
 	// 创建客户端
-	auto client	= Client;
-	if(localPort == 0)
-		client->Master	= ctrl;
+	auto client = Client;
+	if (localPort == 0)
+		client->Master = ctrl;
 	else
 	{
-		socket->Local.Port	= localPort;
-		ctrl->ShowRemote	= true;
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
 		client->Controls.Add(ctrl);
 	}
 
@@ -223,7 +223,7 @@ TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushor
 
 void IOK027X::InitNet()
 {
-	Host	= Create8266();
+	Host = Create8266();
 }
 
 void AlarmWrite(byte type, Buffer& bs)
@@ -238,7 +238,7 @@ void AlarmWrite(byte type, Buffer& bs)
 	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
 	client->Store.Write(start, data);
-}
+}	  
 
 // void AlarmReport(byte type, Buffer&bs)
 // {
@@ -293,20 +293,38 @@ void IOK027X::Restore()
 
 void IOK027X::FlushLed()
 {
+	if (LedsShow == 0)			// 启动时候20秒
+	{
+		static bool sta = false;
+		auto esp = dynamic_cast<Esp8266*>(Host);
+		if (esp && esp->Joined)	// 8266 初始化完成  且  连接完成
+		{
+			LedsShow = 2;		// 置为无效状态
+			Leds[0]->Write(false);
+		}
+		else
+		{
+			Leds[0]->Write(sta);
+			sta = !sta;
+		}
+
+		if (Sys.Ms() < 20000)return;
+		LedsShow = 2;	// 置为无效状态
+	}
+
 	bool stat = false;
 	// 3分钟内 Client还活着则表示  联网OK
-	if (Client && Client->LastActive + 180000 > Sys.Ms()&& LedsShow)stat = true;
+	if (Client && Client->LastActive + 180000 > Sys.Ms() && LedsShow == 1)stat = true;
 	Leds[1]->Write(stat);
-	if (!LedsShow)Sys.SetTask(LedsTaskId, false);
-	// if (!LedsShow)Sys.SetTask(Task::Scheduler()->Current->ID, false);
+	if (LedsShow == 2)Sys.SetTask(LedsTaskId, false);
 }
 
-bool IOK027X::LedStat(bool enable)
+byte IOK027X::LedStat(byte showmode)
 {
 	auto esp = dynamic_cast<Esp8266*>(Host);
 	if (esp)
 	{
-		if (enable)
+		if (showmode == 1)
 		{
 			esp->RemoveLed();
 			esp->SetLed(*Leds[0]);
@@ -318,19 +336,26 @@ bool IOK027X::LedStat(bool enable)
 			Leds[0]->Write(false);
 		}
 	}
-	if (enable)
+
+	if (showmode != 2)
 	{
 		if (!LedsTaskId)
-			LedsTaskId = Sys.AddTask(&IOK027X::FlushLed, this, 500, 500, "CltLedStat");
+		{
+			LedsTaskId = Sys.AddTask(&IOK027X::FlushLed, this, 500, 100, "CltLedStat");
+			debug_printf("AddTask(IOK027X:FlushLed)\r\n");
+		}
 		else
+		{
 			Sys.SetTask(LedsTaskId, true);
-		LedsShow = true;
+			if (showmode == 1)Sys.SetTaskPeriod(LedsTaskId, 500);
+		}
+		LedsShow = showmode;
 	}
-	else
+	if (showmode == 2)
 	{
 		// 由任务自己结束，顺带维护输出状态为false
 		// if (LedsTaskId)Sys.SetTask(LedsTaskId, false);
-		LedsShow = false;
+		LedsShow = 2;
 	}
 	return LedsShow;
 }
@@ -351,7 +376,10 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 
 	if (time >= 9000 && time < 14000)
 	{
-		LedStat(!LedsShow);
+		if (LedsShow != 1)
+			LedStat(1);
+		else
+			LedStat(2);
 		return;
 	}
 

@@ -15,7 +15,7 @@ public:
 	List<Pin>	LedPins;
 	List<OutputPort*>	Leds;
 
-	bool LedsShow;					// LED 显示状态开关
+	byte LedsShow;					// LED 显示状态开关  0 刚启动时候的20秒   1 使能   2 失能
 
 	ISocketHost*	Host;			// 网络主机
 	TokenClient*	Client;			//
@@ -32,7 +32,7 @@ public:
 	void InitLeds();
 	void FlushLed();			// 刷新led状态输出
 
-	bool LedStat(bool enable);
+	byte LedStat(byte showmode);
 
 	ISocketHost* Create8266();
 

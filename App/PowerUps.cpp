@@ -41,7 +41,11 @@ PowerUps::PowerUps(byte thld, int timeMs, Func act)
 		pc.Load();
 
 		ReStartCount = ++pc.ReStartCount;
+		debug_printf("ReStartCount %d\r\n",ReStartCount);
+
 		pc.Save();
+
+		Act = act;
 	}
 	// 保留他处理一些事情
 	Sys.AddTask(DelayAct, this, timeMs, -1, "重启阈值");

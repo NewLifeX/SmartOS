@@ -16,12 +16,14 @@
 class PowerUps
 {
 public:	
+	// thld 重启次数阈值  timeMs 重启超时  act 重启次数超过阈值的动作
 	PowerUps(byte thld,int timeMs = 5, Func act = nullptr);
 
 	byte ReStartCount;	// 当前重启的次数
 	byte ReStThld;		// 重启阈值，超过某个值则处理某事
 
 	Func Act;			// 当重启次数超出阈值时执行的动作
+	//uint taskid;		// 
 
 	static void DelayAct(void *param);	// 延迟动作
 };
