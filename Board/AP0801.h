@@ -8,8 +8,6 @@
 //#include "TokenNet\TokenClient.h"
 //#include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
-#include "TokenNet\TokenController.h"
-#include "TokenNet\TokenConfig.h"
 
 // 阿波罗0801/0802
 class AP0801
@@ -38,7 +36,9 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
-	void Register(int index, IDataPort& dp);
+	typedef bool (*Handler)(uint offset, uint size, bool write);
+	void Register(uint offset, uint size, Handler hook);
+	void Register(uint offset, IDataPort& dp);
 
 	void InitLeds();
 	void InitButtons(InputPort::IOReadHandler press = nullptr);
@@ -73,7 +73,7 @@ private:
 	// uint	Flag;		// 内部使用  标识Controller创建情况
 
 	void OpenClient(ISocketHost& host);
-	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

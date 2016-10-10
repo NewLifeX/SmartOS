@@ -10,10 +10,11 @@
 #include "Drivers\Esp8266\Esp8266.h"
 
 #include "TokenNet\TokenController.h"
+#include "TokenNet\TokenConfig.h"
+#include "TokenNet\TokenClient.h"
 
 #include "Device\RTC.h"
 
-#include "TokenNet\TokenClient.h"
 #include "Message\ProxyFactory.h"
 
 AP0801* AP0801::Current	= nullptr;
@@ -171,7 +172,9 @@ void AP0801::InitClient()
 {
 	if(Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
+	//auto tk = TokenConfig::Current;
 
 	// 创建客户端
 	auto tc		= new TokenClient();
@@ -213,12 +216,20 @@ void AP0801::InitClient()
 		tc, 8 * 60 * 1000, -1, "联网检查");
 }
 
-void AP0801::Register(int index, IDataPort& dp)
+void AP0801::Register(uint offset, IDataPort& dp)
 {
 	if(!Client) return;
 
 	auto& ds	= Client->Store;
-	ds.Register(index, dp);
+	ds.Register(offset, dp);
+}
+
+void AP0801::Register(uint offset, uint size, Handler hook)
+{
+	if(!Client) return;
+
+	auto& ds	= Client->Store;
+	ds.Register(offset, size, hook);
 }
 
 void AP0801::OpenClient(ISocketHost& host)
@@ -310,7 +321,7 @@ void AP0801::OpenClient(ISocketHost& host)
 	// }
 }
 
-TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+void AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket	= host.CreateRemote(uri);
@@ -330,8 +341,6 @@ TokenController* AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort
 		ctrl->ShowRemote	= true;
 		tc->Controls.Add(ctrl);
 	}
-
-	return ctrl;
 }
 
 /*
