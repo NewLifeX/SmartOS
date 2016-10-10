@@ -283,11 +283,19 @@ void IOK027X::InitAlarm()
 		Sys.AddTask(AlarmDelayOpen, AlarmObj, 2000, 2000, "打开Alarm");
 }
 
+static bool ledstat2 = false;
 void IOK027X::Restore()
 {
 	if (Client)
 	{
 		Client->Reset();
+	}
+
+	for (int i = 0; i < 10; i++)
+	{
+		Leds[1]->Write(ledstat2);
+		ledstat2 = !ledstat2;
+		Sys.Sleep(300);
 	}
 }
 
@@ -295,21 +303,20 @@ void IOK027X::FlushLed()
 {
 	if (LedsShow == 0)			// 启动时候20秒
 	{
-		static bool sta = false;
 		auto esp = dynamic_cast<Esp8266*>(Host);
-		if (esp && esp->Joined)	// 8266 初始化完成  且  连接完成
+		if (esp && esp->Joined)					// 8266 初始化完成  且  连接完成
 		{
-			LedsShow = 2;		// 置为无效状态
-			Leds[0]->Write(false);
-		}
-		else
-		{
-			Leds[0]->Write(sta);
-			sta = !sta;
+			Sys.SetTaskPeriod(LedsTaskId, 500);	// 慢闪
 		}
 
-		if (Sys.Ms() < 20000)return;
-		LedsShow = 2;	// 置为无效状态
+		Leds[0]->Write(ledstat2);
+		ledstat2 = !ledstat2;
+
+		if (Sys.Ms() > 20000)
+		{
+			Leds[0]->Write(false);
+			LedsShow = 2;	// 置为无效状态
+		}
 	}
 
 	bool stat = false;
