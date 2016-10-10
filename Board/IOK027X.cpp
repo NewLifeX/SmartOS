@@ -390,11 +390,11 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 		return;
 	}
 
-	if (time >= 14000)
-	{
-		Restore();
-		return;
-	}
+	// if (time >= 14000)
+	// {
+	// 	Restore();
+	// 	return;
+	// }
 }
 
 /*
