@@ -8,9 +8,9 @@
 
 JTW8953::JTW8953()
 {
-	IIC		= nullptr;
-	// 7位地址，到了I2C那里，需要左移1位
-	Address	= 0xa6;
+	IIC = nullptr;
+	// 7位地址
+	Address = 0xa7;
 }
 
 JTW8953::~JTW8953()
@@ -23,30 +23,37 @@ void JTW8953::Init()
 {
 	debug_printf("\r\nJTW8953::Init Address=0x%02X \r\n", Address);
 
-	IIC->SubWidth	= 1;
-	IIC->Address	= Address;
+	IIC->Address = Address;
 }
 
 bool JTW8953::SetConfig(const Buffer& bs) const
 {
-   return Write(ADDRESS_C, bs);
+	return Write(ADDRESS_C, bs);
 }
 
-bool JTW8953::WriteKey(ushort addr, byte data)
+bool JTW8953::WriteKey(ushort index, byte data)
 {
-	if(!IIC) return false;
+	if (!IIC) return false;
 	// 只有10个按键
-	if (addr > 10)return false;
+	//if (addr > 10)return false;
+
 
 	IIC->Address = ADDRESS_W;
-	addr = addr + ADDRESS_T;
-	
-	return IIC->Write(addr & 0xFF, data);
+	index = index + ADDRESS_T;
+
+
+	ByteArray buf(3);
+	buf[0] = index;
+	buf[1] = 0x10;
+	buf[2] = data;
+
+
+	return Write(0xff, buf);
 }
 
 byte JTW8953::Read(ushort addr)
 {
-	if(!IIC) return 0;
+	if (!IIC) return 0;
 	// 只有10个按键
 	if (addr > 10)return 0;
 
@@ -58,22 +65,58 @@ byte JTW8953::Read(ushort addr)
 
 bool JTW8953::Write(uint addr, const Buffer& bs) const
 {
-	if(!IIC) return false;
-	
+	if (!IIC) return false;
+
 	IIC->Address = ADDRESS_W;
 
-	return IIC->Write((ushort)addr, bs);
+	return IIC->Write(0, bs);
 }
 
 bool JTW8953::Read(uint addr, Buffer& bs) const
 {
-	if(!IIC) return false;
+	if (!IIC) return false;
 
 	IIC->Address = ADDRESS_R;
-	
-	uint len = IIC->Read((ushort)addr, bs);
-	if(len == 0)return false;
-	if(len != bs.Length()) bs.SetLength(len);
+
+	uint len = IIC->Read(0, bs);
+	if (len == 0)return false;
+	if (len != bs.Length()) bs.SetLength(len);
 
 	return true;
+}
+
+void JTW8953::JTW8953Test()
+{
+	auto iic = SoftI2C();
+	iic.SetPin(PA12, PB15);
+
+	auto jtw = JTW8953();
+	jtw.IIC = &iic;
+
+	// 读取数据缓存
+	ByteArray buf(6);
+	// 设置为滑条模式
+	ByteArray buf2(4);
+	buf[0] = 0xB1;
+	buf[1] = 0x23;
+	buf[2] = 0x33;
+	buf[2] = 0x03;
+
+	// 配置
+	jtw.Write(0xff, buf2);
+
+	while (true)
+	{
+		// 分别写入和读取
+		for (size_t i = 0; i < 10; i++)
+		{
+			Sys.Sleep(1000);
+			debug_printf("第%d键位写入数据%d\r\n", i, i % 2);
+			jtw.WriteKey(i, i % 2);
+			Sys.Sleep(1000);
+			auto date = jtw.Read(0xff, buf);
+			debug_printf("读取键位数据\r\n");
+			buf.Show(true);
+		}
+	}
 }

@@ -15,13 +15,19 @@ public:
 	I2C* IIC;		// I2C通信口
 
 	void Init();
-	bool Write(ushort addr, byte data);
+	// 写入键位数据
+	bool WriteKey(ushort index, byte data);
+
 	byte Read(ushort addr);
 	// 设置配置
 	bool SetConfig(const Buffer& bs) const;
 
 	virtual bool Write(uint addr, const Buffer& bs) const;
+
 	virtual bool Read(uint addr, Buffer& bs) const;
+
+	//测试
+	static void JTW8953Test();
 
 private:
 	byte Address;	// 设备地址
