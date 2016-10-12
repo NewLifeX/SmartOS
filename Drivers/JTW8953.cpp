@@ -95,7 +95,7 @@ void JTW8953::JTW8953Test()
 	jtw.IIC = &iic;
 
 	// 读取数据缓存
-	ByteArray buf(6);
+	ByteArray buf(18);
 	// 设置为滑条模式
 	ByteArray buf2(4);
 	buf2[0] = 0xB1;
@@ -104,8 +104,8 @@ void JTW8953::JTW8953Test()
 	buf2[3] = 0x03;
 
 	// 配置
-	//jtw.Write(0xff, buf2);
-	//Sys.Sleep(100);
+	jtw.Write(0xff, buf2);
+	Sys.Sleep(100);
 
 	while (true)
 	{
