@@ -55,6 +55,10 @@ public:
 	// 支持 buf[i] = 0x36 的语法
     byte& operator[](int i);
 
+	// 原始拷贝、清零，不检查边界
+	static void Copy(void* dest, const void* src, int len);
+	static void Zero(void* dest, int len);
+
 	// 拷贝数据，默认-1长度表示当前长度
 	virtual int Copy(int destIndex, const void* src, int len);
 	// 把数据复制到目标缓冲区，默认-1长度表示当前长度

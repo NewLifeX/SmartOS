@@ -104,6 +104,17 @@ bool Buffer::SetLength(int len)
 	_Length		= len;
 }*/
 
+// 原始拷贝、清零，不检查边界
+void Buffer::Copy(void* dest, const void* src, int len)
+{
+	memmove(dest, src, len);
+}
+
+void Buffer::Zero(void* dest, int len)
+{
+	memset(dest, 0, len);
+}
+
 // 拷贝数据，默认-1长度表示当前长度
 int Buffer::Copy(int destIndex, const void* src, int len)
 {
