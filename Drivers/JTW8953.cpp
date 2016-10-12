@@ -26,6 +26,7 @@ void JTW8953::Init()
 	IIC->Address = Address;
 }
 
+
 bool JTW8953::SetConfig(const Buffer& bs) const
 {
 	return Write(ADDRESS_C, bs);
@@ -35,7 +36,7 @@ bool JTW8953::WriteKey(ushort index, byte data)
 {
 	if (!IIC) return false;
 	// 只有10个按键
-	//if (addr > 10)return false;
+	if (index > 10)return false;
 
 
 	IIC->Address = ADDRESS_W;
@@ -88,7 +89,7 @@ bool JTW8953::Read(uint addr, Buffer& bs) const
 void JTW8953::JTW8953Test()
 {
 	auto iic = SoftI2C();
-	iic.SetPin(PA12, PB15);
+	iic.SetPin(PB15, PA12);
 
 	auto jtw = JTW8953();
 	jtw.IIC = &iic;
@@ -97,24 +98,25 @@ void JTW8953::JTW8953Test()
 	ByteArray buf(6);
 	// 设置为滑条模式
 	ByteArray buf2(4);
-	buf[0] = 0xB1;
-	buf[1] = 0x23;
-	buf[2] = 0x33;
-	buf[2] = 0x03;
+	buf2[0] = 0xB1;
+	buf2[1] = 0x23;
+	buf2[2] = 0x33;
+	buf2[3] = 0x03;
 
 	// 配置
-	jtw.Write(0xff, buf2);
+	//jtw.Write(0xff, buf2);
+	//Sys.Sleep(100);
 
 	while (true)
 	{
 		// 分别写入和读取
 		for (size_t i = 0; i < 10; i++)
 		{
+			//Sys.Sleep(1000);
+			//debug_printf("第%d键位写入数据%d\r\n", i, i % 2);
+			//jtw.WriteKey(i, i % 2);
 			Sys.Sleep(1000);
-			debug_printf("第%d键位写入数据%d\r\n", i, i % 2);
-			jtw.WriteKey(i, i % 2);
-			Sys.Sleep(1000);
-			auto date = jtw.Read(0xff, buf);
+			jtw.Read(0xff, buf);
 			debug_printf("读取键位数据\r\n");
 			buf.Show(true);
 		}

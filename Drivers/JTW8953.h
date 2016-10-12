@@ -26,7 +26,6 @@ public:
 
 	virtual bool Read(uint addr, Buffer& bs) const;
 
-	//测试
 	static void JTW8953Test();
 
 private:
