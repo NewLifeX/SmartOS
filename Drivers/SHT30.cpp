@@ -1,5 +1,7 @@
 ﻿#include "SHT30.h"
 
+#include "I2C.h"
+
 #define LITTLE_ENDIAN
 
 //-- Enumerations -------------------------------------------------------------
@@ -104,6 +106,8 @@ SHT30::SHT30()
 	Address	= 0x44;	// ADDR=VSS
 	//Address	= 0x45;	// ADDR=VDD
 
+	Pwr		= nullptr;
+
 	Mode	= 2;
 	Freq	= 5;
 	Repeat	= 2;
@@ -111,7 +115,7 @@ SHT30::SHT30()
 
 SHT30::~SHT30()
 {
-	Pwr	= false;
+	if(Pwr) *Pwr	= false;
 
 	delete IIC;
 	IIC = nullptr;
@@ -133,7 +137,7 @@ void SHT30::Init()
 		debug_printf(" 内部定期采集 每秒%d次", Freq);
 		break;
 	}
-	
+
 	debug_printf(" 重复性 ");
 	switch (Repeat)
 	{
@@ -154,7 +158,7 @@ void SHT30::Init()
 	IIC->Address	= Address << 1;
 	IIC->Retry		= 2;
 
-	Pwr	= true;
+	if(Pwr) *Pwr	= true;
 
 	bool rs	= CheckStatus();
 
@@ -302,7 +306,7 @@ void SHT30::SetMode()
 	// 软重启
 	if(!rs) rs	= Write(CMD_SOFT_RESET);
 	// 硬重启
-	if(!rs) Pwr.Down(100);
+	if(!rs && Pwr) Pwr->Down(100);
 }
 
 ushort SHT30::GetMode() const

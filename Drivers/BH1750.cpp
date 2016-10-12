@@ -1,6 +1,8 @@
 ﻿#include "ByteArray.h"
 #include "BH1750.h"
 
+#include "I2C.h"
+
 #define	CMD_PWN_OFF	0x00
 #define	CMD_PWN_ON	0x01
 #define	CMD_RESET	0x07
@@ -17,7 +19,7 @@
 BH1750::BH1750()
 {
 	IIC		= nullptr;
-	
+
 	// 7位地址，到了I2C那里，需要左移1位
 	Address	= 0x5C;
 	//Address	= 0x23;
@@ -26,7 +28,7 @@ BH1750::BH1750()
 BH1750::~BH1750()
 {
 	delete IIC;
-	IIC = nullptr;
+	IIC	= nullptr;
 }
 
 void BH1750::Init()

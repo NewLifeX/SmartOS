@@ -1,15 +1,16 @@
 ﻿#ifndef _BH1750_H_
 #define _BH1750_H_
 
-#include "I2C.h"
-#include "Power.h"
+#include "Device\Power.h"
+
+class I2C;
 
 // 光强传感器
 class BH1750 : public Power
 {
 public:
-    I2C* IIC;		// I2C通信口
-	byte Address;	// 设备地址
+    I2C*	IIC;		// I2C通信口
+	byte	Address;	// 设备地址
 
     BH1750();
     virtual ~BH1750();

@@ -1,8 +1,10 @@
 #ifndef _SHT30_H_
 #define _SHT30_H_
 
-#include "I2C.h"
-#include "Power.h"
+#include "Device\Power.h"
+
+class OutputPort;
+class I2C;
 
 // 光强传感器
 class SHT30 : public Power
@@ -14,7 +16,7 @@ public:
 	byte Freq;		// 频率，多少秒测量一次。05/1/2/4/10，05表示0.5s
 	byte Repeat;	// 重复性。0=高/1=中/2=低，多次测量相差不多，说明重复性高
 
-	OutputPort	Pwr;	// 电源
+	OutputPort*	Pwr;	// 电源
 
     SHT30();
     virtual ~SHT30();

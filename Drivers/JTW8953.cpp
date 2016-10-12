@@ -1,31 +1,42 @@
-﻿#include "JTW8953.h"
+﻿#include "Sys.h"
+#include "JTW8953.h"
 
-#define ADDRESS_W		0xa6	//从机的地址和写入标志
-#define ADDRESS_R		0xa7	//从机的地址和读取标志
+#include "I2C.h"
+
+#define ADDRESS_W		0xa6	// 从机的地址和写入标志
+#define ADDRESS_R		0xa7	// 从机的地址和读取标志
 
 #define ADDRESS_C		0xB1	// MCU配置起始地址
 #define ADDRESS_T		0xC0	// 触摸键起始地址, 共有9个触摸键地址范围0xc0~0xD0
 
 JTW8953::JTW8953()
 {
-	IIC = nullptr;
+	IIC		= nullptr;
+	Port	= nullptr;
 	// 7位地址
-	Address = 0xa7;
+	Address	= 0x53;
 }
 
 JTW8953::~JTW8953()
 {
 	delete IIC;
-	IIC = nullptr;
+	IIC	= nullptr;
+
+	delete Port;
+	Port	= nullptr;
 }
 
 void JTW8953::Init()
 {
 	debug_printf("\r\nJTW8953::Init Address=0x%02X \r\n", Address);
 
-	IIC->Address = Address;
+	IIC->Address	= Address << 1;
 }
 
+void JTW8953::SetSlide(bool slide)
+{
+	
+}
 
 bool JTW8953::SetConfig(const Buffer& bs) const
 {
@@ -88,10 +99,12 @@ bool JTW8953::Read(uint addr, Buffer& bs) const
 
 void JTW8953::JTW8953Test()
 {
-	auto iic = SoftI2C();
+	SoftI2C iic;
 	iic.SetPin(PB15, PA12);
 
-	auto jtw = JTW8953();
+	InputPort port(PD13);
+	
+	JTW8953 jtw;
 	jtw.IIC = &iic;
 
 	// 读取数据缓存

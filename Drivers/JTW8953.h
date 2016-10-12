@@ -1,20 +1,22 @@
 ﻿#ifndef _JTW8953_H_
 #define _JTW8953_H_
 
-#include "I2C.h"
-#include "..\Storage\Storage.h"
+class I2C;
+class InputPort;
 
-// EEPROM
-class JTW8953 : public CharStorage
+// 滑条按键触摸芯片
+class JTW8953
 {
 public:
-  
-    JTW8953();
-    virtual ~JTW8953();
+	I2C* 		IIC;		// I2C通信口
+	InputPort*	Port;		// 中断引脚
+	byte		Address;	// 设备地址
 
-	I2C* IIC;		// I2C通信口
+    JTW8953();
+    ~JTW8953();
 
 	void Init();
+	void SetSlide(bool slide);
 	// 写入键位数据
 	bool WriteKey(ushort index, byte data);
 
@@ -22,14 +24,13 @@ public:
 	// 设置配置
 	bool SetConfig(const Buffer& bs) const;
 
-	virtual bool Write(uint addr, const Buffer& bs) const;
+	bool Write(uint addr, const Buffer& bs) const;
 
-	virtual bool Read(uint addr, Buffer& bs) const;
+	bool Read(uint addr, Buffer& bs) const;
 
 	static void JTW8953Test();
 
 private:
-	byte Address;	// 设备地址
 };
 
 #endif
