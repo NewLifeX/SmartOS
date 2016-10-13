@@ -36,9 +36,9 @@ void PulsePort::Open()
 {
 	if(_Port == nullptr)return;
 	if(Handler == nullptr)return;
-	
+
 	ShkPulse = ShakeTime/Intervals;
-	
+
 	if(Opened)return;
 	_Port->HardEvent = true;
 	if (!_Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnHandler(port, down); },this))
@@ -47,23 +47,23 @@ void PulsePort::Open()
 		return;
 	}
 	_Port->Open();
-	
+
 	_task = Sys.AddTask(
 				[](void* param)
 						{
 						auto port = (PulsePort*)param;
-						
+
 						// 从无到有一定是去抖的结果
 						// 从有到无一定是超时的结果
 						// 不是去抖的结果 肯定是从有到无
 						if(port->ShkStat== false)
 							port->Value = false;
-						
+
 						Sys.SetTask(port->_task,false);
 						port->Handler(port,port->Value,port->Param);
 						},
 				this, ShakeTime, ShakeTime, "PulsePort触发任务");
-				
+
 	Opened = true;
 }
 
@@ -86,15 +86,16 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port,bool down)
 {
-	if(down)return;
+	if(down) return;
+
 	// 取UTC时间的MS值
-	UInt64 now = Sys.Seconds()*1000 + Sys.Ms() - Time.Milliseconds;
-	
+	UInt64 now	= Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
+
 	if(Value)
 	{
-		LastTriTime = now;
+		LastTriTime	= now;
 		// 有连续脉冲情况下  一定是不用去抖的
-		ShkStat = false;
+		ShkStat		= false;
 		// 丢失脉冲，使用定时器来做  如果定时到了 说明中间都没有脉冲
 		if(_task)Sys.SetTask(_task, true, ShakeTime);
 	}
@@ -103,9 +104,9 @@ void PulsePort::OnHandler(InputPort* port,bool down)
 		// 丢失脉冲后 重新来脉冲需要考虑 去抖 （也许是干扰脉冲）
 		if(!ShkStat)	// 断掉脉冲 && Shake去抖没开始
 		{
-			ShkTmeStar = now;
-			ShkStat = true;
-			ShkCnt = 1;
+			ShkTmeStar	= now;
+			ShkStat		= true;
+			ShkCnt		= 1;
 		}
 		else
 		{

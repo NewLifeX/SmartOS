@@ -207,7 +207,7 @@ void TSys::Delay(uint us) const
 #endif
 
 		// 在这段时间里面，去处理一下别的任务
-		if(Sys.Started && us != 0 && us >= 50)
+		if(Sys.Started && us != 0 && us >= 1000)
 		{
 			bool cancel	= false;
 			auto ct	= Task::Scheduler()->ExecuteForWait(us / 1000, cancel);

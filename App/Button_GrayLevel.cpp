@@ -1,7 +1,6 @@
 ﻿#include "Sys.h"
 #include "Task.h"
 #include "Port.h"
-#include "TTime.h"
 
 #include "Timer.h"
 
@@ -197,15 +196,15 @@ bool Button_GrayLevel::GetValue() { return _Value; }
 bool CheckZero(InputPort* port)
 {
 	// 过零检测代码有风险  强制执行喂狗任务确保不出问题
-	Task* feeddgtask = Task::Scheduler()->FindTask(WatchDog::FeedDogTask);
+	auto feeddgtask	= Task::Scheduler()->FindTask(WatchDog::FeedDogTask);
 	feeddgtask->Execute(Sys.Ms());
 
 	int retry = 200;
-	while (*port == false && retry-- > 0) Time.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
+	while (*port == false && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
 	if (retry <= 0) return false;
 
 	retry = 200;
-	while (*port == true && retry-- > 0) Time.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
+	while (*port == true && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
 	if (retry <= 0) return false;
 
 	return true;
@@ -217,7 +216,7 @@ void Button_GrayLevel::SetValue(bool value)
 
 	if (ACZero && ACZero->Opened)
 	{
-		if (CheckZero(ACZero)) Time.Delay(ACZeroAdjTime);
+		if (CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
 		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
 		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
 		// 故这里添加1ms延时

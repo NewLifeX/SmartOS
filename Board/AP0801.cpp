@@ -107,15 +107,15 @@ void AP0801::InitButtons(InputPort::IOReadHandler press)
 {
 	for (int i = 0; i<ButtonPins.Count(); i++)
 	{
-		auto port = new InputPort(ButtonPins[i]);
-		port->Mode = InputPort::Both;
-		port->Invert = true;
+		auto btn	= new InputPort(ButtonPins[i]);
+		btn->Mode	= InputPort::Both;
+		btn->Invert	= true;
 		if (press)
-			port->Register(press, (void*)i);
+			btn->Register(press, (void*)i);
 		else
-			port->Register(ButtonOnpress, (void*)i);
-		port->Open();
-		Buttons.Add(port);
+			btn->Register(ButtonOnpress, (void*)i);
+		btn->Open();
+		Buttons.Add(btn);
 	}
 }
 
@@ -194,7 +194,7 @@ void AP0801::InitClient()
 	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
 	// 获取远程配置信息
 	tc->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, tc);
-	// 获取所有Ivoke命令
+	// 获取所有Invoke命令
 	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
 
 	if(Data && Size > 0)
@@ -202,6 +202,8 @@ void AP0801::InitClient()
 		auto& ds	= tc->Store;
 		ds.Data.Set(Data, Size);
 	}
+
+	tc->UseLocal();
 
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
