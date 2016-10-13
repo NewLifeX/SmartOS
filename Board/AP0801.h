@@ -5,7 +5,7 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
-#include "TokenNet\TokenClient.h"
+//#include "TokenNet\TokenClient.h"
 //#include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
 
@@ -36,6 +36,9 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
+	// 设置TokenClient数据区
+	void SetStore(void*data, int len);
+
 	typedef bool (*Handler)(uint offset, uint size, bool write);
 	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& dp);
@@ -52,11 +55,13 @@ public:
 
 	// ITransport* Create2401();
 
-	TokenClient* InitClient();
+	void InitClient();
 	void InitNet();
 	void InitProxy();
 	void InitAlarm();
 	void Restore();
+	// invoke指令
+	void Invoke(const String& ation, const Buffer& bs);
     void OnLongPress(InputPort* port, bool down);
 
 	static AP0801* Current;
