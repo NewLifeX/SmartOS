@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 
-#include "WatchDog.h"
+//#include "WatchDog.h"
 
 #include "Platform\stm32.h"
 
@@ -358,7 +358,7 @@ void TSys::Reset() const { NVIC_SystemReset(); }
 void TSys::OnStart()
 {
 #if !DEBUG
-	WatchDog::Start();
+	//WatchDog::Start();
 #endif
 }
 

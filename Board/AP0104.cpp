@@ -69,6 +69,8 @@ void AP0104::Init(ushort code, cstring name, COM message)
 	Sys.ShowInfo();
 
 	WatchDog::Start(20000, 10000);
+#else
+	WatchDog::Start();
 #endif
 
 		// Flash最后一块作为配置区

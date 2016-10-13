@@ -78,6 +78,7 @@ void WatchDog::Start(uint ms, uint msFeed)
 	if(!tid && msFeed > 0 && msFeed <= 26000)
 	{
 		debug_printf("WatchDog::Start ");
-		tid = Sys.AddTask(WatchDog::FeedDogTask, &dog, msFeed, msFeed, "看门狗");
+		// 首次调度为0ms，让调度系统计算得到其平均耗时，其它任务Sleep时也可以喂狗
+		tid = Sys.AddTask(WatchDog::FeedDogTask, &dog, 0, msFeed, "看门狗");
 	}
 }

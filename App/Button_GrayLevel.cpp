@@ -5,7 +5,7 @@
 #include "Timer.h"
 
 #include "Button_GrayLevel.h"
-#include "..\Device\WatchDog.h"
+#include "Device\WatchDog.h"
 
 //#include "Platform\stm32.h"
 
