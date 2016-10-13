@@ -5,7 +5,7 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
-//#include "TokenNet\TokenClient.h"
+#include "TokenNet\TokenClient.h"
 //#include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
 
@@ -52,7 +52,7 @@ public:
 
 	// ITransport* Create2401();
 
-	void InitClient();
+	TokenClient* InitClient();
 	void InitNet();
 	void InitProxy();
 	void InitAlarm();

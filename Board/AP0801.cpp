@@ -170,9 +170,9 @@ ISocketHost* AP0801::Create8266(bool apOnly)
 
 /******************************** Token ********************************/
 
-void AP0801::InitClient()
+TokenClient* AP0801::InitClient()
 {
-	if(Client) return;
+	if(Client) return Client;
 
 	// 初始化令牌网
 	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
@@ -218,6 +218,8 @@ void AP0801::InitClient()
 			}
 		},
 		tc, 8 * 60 * 1000, -1, "联网检查");
+
+	return Client;
 }
 
 void AP0801::Register(uint offset, IDataPort& dp)
