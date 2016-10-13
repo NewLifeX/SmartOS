@@ -196,15 +196,20 @@ bool Button_GrayLevel::GetValue() { return _Value; }
 bool CheckZero(InputPort* port)
 {
 	// 过零检测代码有风险  强制执行喂狗任务确保不出问题
-	auto feeddgtask	= Task::Scheduler()->FindTask(WatchDog::FeedDogTask);
-	feeddgtask->Execute(Sys.Ms());
+	//auto dog	= Task::Scheduler()->FindTask(WatchDog::FeedDogTask);
+	//if(dog) dog->Execute(Sys.Ms());
 
+	// 检测下降沿   先去掉低电平  while（io==false）
 	int retry = 200;
-	while (*port == false && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
+	while (*port == false && retry-- > 0) Sys.Delay(100);
 	if (retry <= 0) return false;
 
+	// 喂狗
+	Sys.Sleep(1);
+
+	// 当检测到	     高电平结束  就是下降沿的到来
 	retry = 200;
-	while (*port == true && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
+	while (*port == true && retry-- > 0) Sys.Delay(100);
 	if (retry <= 0) return false;
 
 	return true;
