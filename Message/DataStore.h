@@ -86,10 +86,10 @@ public:
 	DataOutputPort(OutputPort* port = nullptr) { Port = port; }
 
 protected:
-	virtual int OnWrite(byte data) { Port->Write(data); return OnRead(); };
-	virtual byte OnRead() { return Port->Read() ? 1 : 0; };
+	virtual int OnWrite(byte data);
+	virtual byte OnRead();
 
-	virtual String& ToStr(String& str) const { return Port->ToStr(str); }
+	virtual String& ToStr(String& str) const;
 };
 
 // 数据输入口
@@ -100,10 +100,10 @@ public:
 
 	DataInputPort(InputPort* port = nullptr) { Port = port; }
 
-	virtual int Write(byte* data) { return Read(data); };
-	virtual int Read(byte* data) { *data = Port->Read() ? 1 : 0; return Size(); };
+	virtual int Write(byte* data);
+	virtual int Read(byte* data);
 
-	virtual String& ToStr(String& str) const { return Port->ToStr(str); }
+	virtual String& ToStr(String& str) const;
 };
 
 #endif

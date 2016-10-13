@@ -296,3 +296,47 @@ void ByteDataPort::StartAsync(int ms)
 	if(!_tid) _tid = Sys.AddTask(AsyncTask, this, -1, -1, "定时开关");
 	Sys.SetTask(_tid, true, ms);
 }
+
+int DataOutputPort::OnWrite(byte data)
+{
+	if(!Port) return 0;
+
+	Port->Write(data);
+	return OnRead();
+};
+
+byte DataOutputPort::OnRead()
+{
+	if(!Port) return 0;
+
+	return Port->Read() ? 1 : 0;
+};
+
+String& DataOutputPort::ToStr(String& str) const
+{
+	if(!Port) return str;
+
+	return Port->ToStr(str);
+}
+
+int DataInputPort::Write(byte* data)
+{
+	if(!Port) return 0;
+
+	return Read(data);
+};
+
+int DataInputPort::Read(byte* data)
+{
+	if(!Port) return 0;
+
+	*data	= Port->Read() ? 1 : 0;
+	return Size();
+};
+
+String& DataInputPort::ToStr(String& str) const
+{
+	if(!Port) return str;
+
+	return Port->ToStr(str);
+}
