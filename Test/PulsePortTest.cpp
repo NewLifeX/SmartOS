@@ -37,7 +37,7 @@ void InitPort()
 {
 	static InputPort io(PA6);
 	static PulsePort Port;
-	Port.Set(&io,15,35);
+	Port.Set(&io,35);
 	Port.Register(PulseHandler,nullptr);
 	Port.Open();
 }

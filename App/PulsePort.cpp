@@ -10,24 +10,23 @@ PulsePort::PulsePort(Pin pin)
 	needFree = true;
 }
 
-bool PulsePort::Set(InputPort * port, uint intervals, uint shktime)
+bool PulsePort::Set(InputPort * port, uint shktime)
 {
 	if (port == nullptr)return false;
-	if (intervals == 0)return false;
+
 	_Port = port;
 	needFree = false;
-	Intervals = intervals;
+
 	ShakeTime = shktime;
 	return true;
 }
 
-bool PulsePort::Set(Pin pin, uint intervals, uint shktime)
+bool PulsePort::Set(Pin pin, uint shktime)
 {
 	if (pin == P0)return false;
-	if (intervals == 0)return false;
+
 	_Port = new InputPort(pin);
 	needFree = true;
-	Intervals = intervals;
 	ShakeTime = shktime;
 	return false;
 }
@@ -36,8 +35,6 @@ void PulsePort::Open()
 {
 	if (_Port == nullptr)return;
 	if (Handler == nullptr)return;
-
-	ShkPulse = ShakeTime / Intervals;
 
 	if (Opened)return;
 	_Port->HardEvent = true;
@@ -93,44 +90,20 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 
 	if (Value)
 	{
+		//第一个信号到达，没有形成脉冲
 		LastTriTime = now;
-		// 有连续脉冲情况下  一定是不用去抖的
-		ShkStat = false;
-		// 丢失脉冲，使用定时器来做  如果定时到了 说明中间都没有脉冲
-		if (_task)Sys.SetTask(_task, true, ShakeTime);
+		Value = true;
+		return;
 	}
-	else
+	auto time = now - LastTriTime;
+	// 计算当前信号与上一个信号的时间差，对比抖动时间，看是否合格的信号
+	if (ShakeTime <= now - LastTriTime)
 	{
-		// 丢失脉冲后 重新来脉冲需要考虑 去抖 （也许是干扰脉冲）
-		if (!ShkStat)	// 断掉脉冲 && Shake去抖没开始
-		{
-			ShkTmeStar = now;
-			ShkStat = true;
-			ShkCnt = 1;
-		}
-		else
-		{
-			if (now >= ShkTmeStar + ShakeTime)
-			{		// ShakeTime 已过
-				//if(ShkCnt < ShkPulse)
-				//{
-				//	debug_printf("ShakeTime 已过\r\n");
-				//	// 去抖结果为失败
-				//	ShkTmeStar = now;
-				//	ShkCnt = 1;
-				//	return;
-				//}
-				LastTriTime = ShkTmeStar;
-				Value = true;		// 有脉冲
-				// 触发
-				if (_task)Sys.SetTask(_task, true, -1);
-				return;
-			}
-			//else	// 还在	ShakeTime 之中
-			//{
-			//	debug_printf("时间不够脉冲计数加1/r/n");
-			//	ShkCnt++;
-			//}
-		}
+		// 赋值脉冲间隔，给外部使用
+		Intervals = time;
+		// 完成一次符合标准脉冲信号,触发事件任务
+		LastTriTime = now;		
+		if (_task)Sys.SetTask(_task, true, -1);
+		return;
 	}
 }

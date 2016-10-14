@@ -1,4 +1,4 @@
-﻿#ifndef _Port_H_
+#ifndef _Port_H_
 #define _Port_H_
 
 #include "Type.h"
