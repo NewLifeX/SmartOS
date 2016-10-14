@@ -48,14 +48,7 @@ void PulsePort::Open()
 	_task = Sys.AddTask(
 		[](void* param)
 	{
-		auto port = (PulsePort*)param;
-
-		// 从无到有一定是去抖的结果
-		// 从有到无一定是超时的结果
-		// 不是去抖的结果 肯定是从有到无
-		if (port->ShkStat == false)
-			port->Value = false;
-
+		auto port = (PulsePort*)param;	
 		Sys.SetTask(port->_task, false);
 		port->Handler(port, port->Value, port->Param);
 	},
