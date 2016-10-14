@@ -84,7 +84,7 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 		//第一个信号到达;
 		LastTriTime = now;
 		Value = true;
-		if (_task)Sys.SetTask(_task, true, -1);
+		//if (_task)Sys.SetTask(_task, true, -1);
 		return;
 	}
 	auto time = now - LastTriTime;
