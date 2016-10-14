@@ -22,6 +22,7 @@ private:
 	bool	needFree	= false;	// 是否需要释放对象
 	UInt64 	ShkTmeStar;		
 	UInt64  LastTriTime;			// 上一个信号触发时间
+	bool	Value		= false;	// 是否形成脉冲,至少有两个信号才能形成脉冲波形
 
     PulsePortHandler	Handler	= nullptr;
 	void*				Param	= nullptr;
@@ -46,10 +47,7 @@ public:
 	// 注册回调函数
 	void Register(PulsePortHandler handler = NULL, void* param = NULL);
 	
-	bool		Opened 	= false;	// 是否是打开的
-	bool		Value	= false;	// 对外的状态
-
-	bool 	ShkStat;				// 去抖标志
+	bool		Opened 	= false;	// 是否是打开的	
 };
 
 #endif 
