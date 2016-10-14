@@ -83,12 +83,10 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port, bool down)
 {
-	if (down) return;
-
 	// 取UTC时间的MS值
 	UInt64 now = Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
 
-	if (Value)
+	if (!Value)
 	{
 		//第一个信号到达，没有形成脉冲
 		LastTriTime = now;

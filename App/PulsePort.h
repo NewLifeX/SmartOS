@@ -34,7 +34,7 @@ public:
 	// 如果是us  就没有程序处理的必要了  速度太快 会严重占用CPU时间的！！！
 	// 所以是不接受 us脉冲间隔的脉冲IO输入设备
 
-	// 脉冲间隔 单位 ms   即 1/Period  最低1ms 
+	// 脉冲间隔 单位 ms 
 	uint Intervals	= 0;			
 	// 去抖时间
 	uint ShakeTime	= 0;			
