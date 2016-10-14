@@ -88,9 +88,10 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 
 	if (!Value)
 	{
-		//第一个信号到达，没有形成脉冲
+		//第一个信号到达;
 		LastTriTime = now;
 		Value = true;
+		if (_task)Sys.SetTask(_task, true, -1);
 		return;
 	}
 	auto time = now - LastTriTime;
