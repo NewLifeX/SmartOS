@@ -1,4 +1,4 @@
-﻿
+
 #include "PulsePort.h"
 
 PulsePort::PulsePort() {}
@@ -16,8 +16,8 @@ bool PulsePort::Set(InputPort * port, uint shktime)
 
 	_Port = port;
 	needFree = false;
-
 	ShakeTime = shktime;
+
 	return true;
 }
 
@@ -76,6 +76,7 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port, bool down)
 {
+	if (!down) return;
 	
 	// 取UTC时间的MS值
 	UInt64 now = Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
