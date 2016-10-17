@@ -23,6 +23,8 @@ private:
 	UInt64 	ShkTmeStar;		
 	UInt64  LastTriTime;			// 上一个信号触发时间
 	bool	Value		= false;	// 是否形成脉冲,至少有两个信号才能形成脉冲波形
+									
+	bool LockTime = false;			// 锁住时间，不要乱动
 
     PulsePortHandler	Handler	= nullptr;
 	void*				Param	= nullptr;

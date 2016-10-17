@@ -37,7 +37,7 @@ void PulsePort::Open()
 	if (Handler == nullptr)return;
 
 	if (Opened)return;
-	_Port->HardEvent = true;
+	_Port->HardEvent = false;
 	if (!_Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnHandler(port, down); }, this))
 	{
 		// 注册失败就返回 不要再往下了  没意义
@@ -76,8 +76,10 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port, bool down)
 {
-	if (!down) return;
-	
+	//if (down) return;
+	//正在给时间赋值，不允许中断进入
+	if (LockTime) return;
+		
 	// 取UTC时间的MS值
 	UInt64 now = Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
 
@@ -89,15 +91,20 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 		//if (_task)Sys.SetTask(_task, true, -1);
 		return;
 	}
-	auto time = now - LastTriTime;
+	uint time = now - LastTriTime;
 	// 计算当前信号与上一个信号的时间差，对比抖动时间，看是否合格的信号
-	if (ShakeTime <= now - LastTriTime)
-	{
+	
+	if (ShakeTime <= time&&!LockTime)
+	{			
+		//时间先锁住
+		LockTime = true;
 		// 赋值脉冲间隔，给外部使用
 		Intervals = time;
 		// 完成一次符合标准脉冲信号,触发事件任务
-		LastTriTime = now;		
 		if (_task)Sys.SetTask(_task, true, -1);
+
+		LastTriTime = now;
+		LockTime = false;
 		return;
 	}
 }
