@@ -1,33 +1,43 @@
 
 #include "PulsePort.h"
 
-PulsePort::PulsePort() {}
+PulsePort::PulsePort() { Int(); }
 
 PulsePort::PulsePort(Pin pin)
 {
 	if (pin == P0)return;
 	_Port = new InputPort(pin);
 	needFree = true;
-}
 
-bool PulsePort::Set(InputPort * port, uint shktime)
+	Int();
+}
+void PulsePort::Int()
+{
+	LastTriTime = 0;
+	TriTime = 0;	//触发时间
+	TriCount = 0;	//触发次数
+}
+bool PulsePort::Set(InputPort * port, uint minIntervals, uint maxIntervals)
 {
 	if (port == nullptr)return false;
 
 	_Port = port;
 	needFree = false;
-	ShakeTime = shktime;
-
+	MinIntervals = minIntervals;
+	MaxIntervals = maxIntervals;
+	Int();
 	return true;
 }
 
-bool PulsePort::Set(Pin pin, uint shktime)
+bool PulsePort::Set(Pin pin, uint minIntervals, uint maxIntervals)
 {
 	if (pin == P0)return false;
 
 	_Port = new InputPort(pin);
 	needFree = true;
-	ShakeTime = shktime;
+	MinIntervals = minIntervals;
+	MaxIntervals = maxIntervals;
+	Int();
 	return false;
 }
 
@@ -48,11 +58,11 @@ void PulsePort::Open()
 	_task = Sys.AddTask(
 		[](void* param)
 	{
-		auto port = (PulsePort*)param;	
+		auto port = (PulsePort*)param;
 		Sys.SetTask(port->_task, false);
-		port->Handler(port, port->Value, port->Param);
+		port->Handler(port, port->Param);
 	},
-		this, ShakeTime, ShakeTime, "PulsePort触发任务");
+		this, -1, -1, "PulsePort触发任务");
 
 	Opened = true;
 }
@@ -76,35 +86,26 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port, bool down)
 {
-	//if (down) return;
-	//正在给时间赋值，不允许中断进入
-	if (LockTime) return;
-		
+	if (down) return;
+
+	auto preTime = port->PressTime;
+
+	// 默认最大最小为0时候，不做判断
+	auto go1 = MinIntervals < preTime&&preTime < MaxIntervals&&MinIntervals != 0 && MaxIntervals != 0;
+	auto go2 = preTime < MaxIntervals&&MinIntervals == 0 && MaxIntervals != 0;
+	auto go3 = MinIntervals < preTime&&MinIntervals == 0 && MaxIntervals == 0;
+	auto go4 = MinIntervals == 0 && MaxIntervals == 0;
+
+	if (!(go1 || go2 || go3 || go4))return;
+
 	// 取UTC时间的MS值
 	UInt64 now = Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
+	//上次触发时间
+	LastTriTime = TriTime;
+	//这次触发时间
+	TriTime = now;
 
-	if (!Value)
-	{
-		//第一个信号到达;
-		LastTriTime = now;
-		Value = true;
-		//if (_task)Sys.SetTask(_task, true, -1);
-		return;
-	}
-	uint time = now - LastTriTime;
-	// 计算当前信号与上一个信号的时间差，对比抖动时间，看是否合格的信号
-	
-	if (ShakeTime <= time&&!LockTime)
-	{			
-		//时间先锁住
-		LockTime = true;
-		// 赋值脉冲间隔，给外部使用
-		Intervals = time;
-		// 完成一次符合标准脉冲信号,触发事件任务
-		if (_task)Sys.SetTask(_task, true, -1);
+	if (_task)Sys.SetTask(_task, true, -1);
 
-		LastTriTime = now;
-		LockTime = false;
-		return;
-	}
+	return;
 }
