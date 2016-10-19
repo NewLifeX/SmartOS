@@ -13,11 +13,6 @@ class PulsePort
 public:
 	// PulsePort 事件函数形式
 	typedef void(*PulsePortHandler)(PulsePort* port, void* param);
-
-	UInt64  LastTriTime;	// 上一个信号触发时间
-	UInt64  TriTime;		//触发时间
-	UInt64  TriCount;		//触发次数
-
 private:
 
 	void	Int();
@@ -35,6 +30,11 @@ public:
 
 	uint MinIntervals = 0;		// 最小时间间隔 单位 ms 
 	uint MaxIntervals = 0;		// 最大时间间隔 单位 ms 
+
+
+	UInt64  LastTriTime;	// 上一个信号触发时间
+	UInt64  TriTime;		//触发时间
+	UInt64  TriCount;		//触发次数
 
 	void Open();
 	void Close();
