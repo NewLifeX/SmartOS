@@ -21,6 +21,7 @@ private:
 	bool	needFree = false;	// 是否需要释放对象								
 	PulsePortHandler	Handler = nullptr;
 	void*				Param = nullptr;
+	void InputTask();
 public:
 	PulsePort();
 	PulsePort(Pin pin);				// 默认浮空输入

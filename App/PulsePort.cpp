@@ -47,22 +47,23 @@ void PulsePort::Open()
 	if (Handler == nullptr)return;
 
 	if (Opened)return;
-	_Port->HardEvent = false;
+	_Port->HardEvent = true;
 	if (!_Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnHandler(port, down); }, this))
 	{
+		debug_printf("PulsePort 注册失败/r/n");
 		// 注册失败就返回 不要再往下了  没意义
 		return;
 	}
 	_Port->Open();
 
-	_task = Sys.AddTask(
+	/*_task = Sys.AddTask(
 		[](void* param)
 	{
 		auto port = (PulsePort*)param;
 		Sys.SetTask(port->_task, false);
 		port->Handler(port, port->Param);
 	},
-		this, -1, -1, "PulsePort触发任务");
+		this, 100, -1, "PulsePort事件");*/
 
 	Opened = true;
 }
@@ -75,6 +76,13 @@ void PulsePort::Close()
 		delete _Port;
 }
 
+void PulsePort::InputTask()
+{
+	if (Handler)
+	{
+		Handler(this, this->Param);
+	}
+}
 void PulsePort::Register(PulsePortHandler handler, void* param)
 {
 	if (handler)
@@ -82,6 +90,7 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 		Handler = handler;
 		Param = param;
 	}
+	if (!_task)_task = Sys.AddTask(&PulsePort::InputTask, this, -1, -1, "PulsePort中断");
 }
 
 void PulsePort::OnHandler(InputPort* port, bool down)
@@ -99,11 +108,13 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 	if (!(go1 || go2 || go3 || go4))return;
 
 	// 取UTC时间的MS值
-	UInt64 now = Sys.Seconds() * 1000 + Sys.Ms() - Time.Milliseconds;
+	UInt64 now = Sys.Ms();
 	//上次触发时间
 	LastTriTime = TriTime;
 	//这次触发时间
 	TriTime = now;
+	debug_printf("PulsePort preTime %ld ", preTime);
+	debug_printf("VisTime %ld \r\n", ushort(TriTime - LastTriTime));
 
 	if (_task)Sys.SetTask(_task, true, -1);
 
