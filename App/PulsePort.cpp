@@ -113,8 +113,8 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 	LastTriTime = TriTime;
 	//这次触发时间
 	TriTime = now;
-	debug_printf("PulsePort preTime %ld ", preTime);
-	debug_printf("VisTime %ld \r\n", ushort(TriTime - LastTriTime));
+	//debug_printf("PulsePort preTime %ld ", preTime);
+	//debug_printf("VisTime %ld \r\n", ushort(TriTime - LastTriTime));
 
 	if (_task)Sys.SetTask(_task, true, -1);
 
