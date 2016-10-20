@@ -1,7 +1,8 @@
 #ifndef _Port_H_
 #define _Port_H_
 
-#include "Type.h"
+#include "Core\Type.h"
+#include "Core\Delegate.h"
 
 /* 引脚定义 */
 #include "Platform\Pin.h"
@@ -176,6 +177,7 @@ public:
 
 	// 注册事件
     bool Register(IOReadHandler handler, void* param = nullptr);
+	bool Register(const Delegate2<InputPort&, bool>& dlg);
 	void OnPress(bool down);
 
     operator bool() const { return Read(); }
@@ -186,26 +188,19 @@ protected:
 
 private:
 	byte	_Value	= 0;
-	uint	_taskInput	= 0;		// 输入任务
-	UInt64	_PressStart	= 0;		// 开始按下时间
-	//UInt64	_PressStart2	= 0;	// 开始按下时间
-	//UInt64	_PressLast	= 0;		// 最后一次按下时间
+	uint	_task	= 0;	// 输入任务
+	UInt64	_Start	= 0;	// 开始按下时间
+	UInt64	_Last	= 0;	// 最后一次触发时间
 	static void InputTask(void* param);
 
-    IOReadHandler	Handler	= nullptr;
-	void*			Param	= nullptr;
+    //IOReadHandler	Handler	= nullptr;
+	//void*			Param	= nullptr;
+	Delegate2<InputPort&, bool>	Press;
 
 private:
 	void OpenPin(void* param);
 	void ClosePin();
 	bool OnRegister();
-
-private:
-	static InputPort * InterruptPorts[16];
-	static uint CenterTaskId;
-	static void CenterTask(void* param);
-	static void AddToCenter(InputPort* port);
-	static void RemoveFromCenter(InputPort* port);
 };
 
 /******************************** AnalogInPort ********************************/

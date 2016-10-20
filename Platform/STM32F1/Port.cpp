@@ -364,7 +364,6 @@ void InputPort::ClosePin()
 // 注册回调  及中断使能
 bool InputPort::OnRegister()
 {
-
     // 检查并初始化中断线数组
     if(!hasInitState)
     {

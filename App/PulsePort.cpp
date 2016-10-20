@@ -1,9 +1,7 @@
 #include "Kernel\Sys.h"
-#include "Kernel\TTime.h"
 #include "Device\Port.h"
 
 #include "PulsePort.h"
-//#include "Platform\Pin.h"
 
 PulsePort::PulsePort()
 {
@@ -11,8 +9,8 @@ PulsePort::PulsePort()
 	Min		= 0;
 	Max		= 0;
 	Last	= 0;
-	Time	= 0;	//触发时间
-	Times	= 0;	//触发次数
+	Time	= 0;	// 遮挡时间
+	Times	= 0;	// 触发次数
 }
 
 void PulsePort::Open()
@@ -30,7 +28,7 @@ void PulsePort::Open()
 	}
 	Port->Open();
 
-	Opened = true;
+	Opened	= true;
 }
 
 void PulsePort::Close()
@@ -39,7 +37,7 @@ void PulsePort::Close()
 
 	Port->Close();
 
-	Opened = false;
+	Opened	= false;
 }
 
 void PulsePort::OnPress(bool down)
@@ -47,6 +45,7 @@ void PulsePort::OnPress(bool down)
 	// 只有弹起来才计算
 	if (down) return;
 
+	// 计算上一次脉冲以来的遮挡时间，两个有效脉冲的间隔
 	UInt64 now	= Sys.Ms();
 	auto time	= (uint)(now - Last);
 	// 无论如何都更新最后一次时间，避免连续超长
@@ -56,6 +55,7 @@ void PulsePort::OnPress(bool down)
 	if(Min > 0 && time < Min || Max > 0 && time > Max) return;
 
 	Time	= time;
+	Times++;
 	if (time > 100)
 	{
 		debug_printf(" time %d,  Port  %02X \r\n", time, Port->_Pin);

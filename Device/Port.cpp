@@ -315,16 +315,15 @@ void AlternatePort::OnOpen(void* param)
 InputPort::InputPort() : InputPort(P0) { }
 InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 {
-	_taskInput	= 0;
+	_task	= 0;
 
-	Handler		= nullptr;
-	Param		= nullptr;
-	_Value		= 0;
+	//Handler	= nullptr;
+	//Param	= nullptr;
+	_Value	= 0;
 
-	_PressStart = 0;
-	//_PressStart2 = 0;
+	_Start	= 0;
 	PressTime	= 0;
-	//_PressLast	= 0;
+	_Last	= 0;
 
 	if(pin != P0)
 	{
@@ -335,7 +334,7 @@ InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 
 InputPort::~InputPort()
 {
-	Sys.RemoveTask(_taskInput);
+	Sys.RemoveTask(_task);
 }
 
 InputPort& InputPort::Init(Pin pin, bool invert)
@@ -353,48 +352,28 @@ bool InputPort::Read() const
 	return Port::Read() ^ Invert;
 }
 
-/*int		pt[16];
-int		ps[16];
-bool	vs[16];
-int		vi	= 0;*/
-
 void InputPort::OnPress(bool down)
 {
 	//debug_printf("OnPress P%c%d down=%d Invert=%d _Value=%d\r\n", _PIN_NAME(_Pin), down, Invert, _Value);
 	/*
 	！！！注意：
 	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
-	解决思路：
-	1，预处理抖动，先把上一次干掉（可能已经被处理）
-	2，记录最近两次按下的时间，如果出现抖动且时间相差不是非常大，则使用上一次按下时间
-	3，也可能出现100抖动
 	*/
 
+	UInt64	now	= Sys.Ms();
+	// 这一次触发离上一次太近，算作抖动忽略掉
+	if(_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime) return;
+	_Last	= now;
+	
 	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
 	if(down && _Value == Rising) return;
 	if(!down && _Value != Rising) return;
 	_Value	= down ? Rising : Falling;
 
-	UInt64	now	= Sys.Ms();
-	/*if(vi < 16)
-	{
-		pt[vi]	= _Pin;
-		ps[vi]	= now;
-		vs[vi]	= down;
-		vi++;
-	}*/
-
 	if(down)
-	{
-		_PressStart	= now;
-	}
+		_Start	= now;
 	else
-	{
-		PressTime	= now - _PressStart;
-
-		// 处理抖动
-		if(PressTime < ShakeTime) return;
-	}
+		PressTime	= now - _Start;
 
 	if(down)
 	{
@@ -407,46 +386,33 @@ void InputPort::OnPress(bool down)
 
 	if(HardEvent)
 	{
-		if(Handler) Handler(this, down, Param);
+		//if(Handler) Handler(this, down, Param);
+		Press(*this, down);
 	}
 	else
 	{
 		// 允许两个值并存
 		//_Value	|= down ? Rising : Falling;
-		Sys.SetTask(_taskInput, true, 0);
+		Sys.SetTask(_task, true, 0);
 	}
 }
 
-//int s	= 0;
 void InputPort::InputTask(void* param)
 {
 	auto port	= (InputPort*)param;
 	byte v	= port->_Value;
 	if(!v) return;
 
-	if(port->Handler)
+	/*if(port->Handler)
 	{
-		/*if(v & Falling)
-		{
-			debug_printf("\r\n");
-			for(int i=0; i<vi; i++)
-			{
-				debug_printf("port %02X %d %d", pt[i], ps[i], vs[i]);
-				if(vs[i])
-					s	= ps[i];
-				else
-					debug_printf(" %d ms", ps[i] - s);
-				debug_printf("\r\n");
-			}
-
-			vi	= 0;
-		}*/
-
 		//port->_Value = 0;
 		v	&= port->Mode;
 		if(v & Rising)	port->Handler(port, true, port->Param);
 		if(v & Falling)	port->Handler(port, false, port->Param);
-	}
+	}*/
+	v	&= port->Mode;
+	if(v & Rising)	port->Press(*port, true);
+	if(v & Falling)	port->Press(*port, false);
 }
 
 void InputPort::OnOpen(void* param)
@@ -454,7 +420,7 @@ void InputPort::OnOpen(void* param)
 	TS("InputPort::OnOpen");
 
 	// 如果不是硬件事件，则默认使用20ms抖动
-	if(!HardEvent) ShakeTime = 20;
+	if(!HardEvent && ShakeTime == 0) ShakeTime = 20;
 #if DEBUG
 	debug_printf(" 抖动=%dms", ShakeTime);
 	if(Floating)
@@ -507,7 +473,7 @@ void InputPort::OnClose()
 }
 
 // 注册回调  及中断使能
-bool InputPort::Register(IOReadHandler handler, void* param)
+/*bool InputPort::Register(IOReadHandler handler, void* param)
 {
 	assert(_Pin != P0, "输入注册必须先设置引脚");
 
@@ -516,78 +482,30 @@ bool InputPort::Register(IOReadHandler handler, void* param)
 
     if(!OnRegister()) return false;
 
-	//if(handler) AddToCenter(this);
+	if (!_task && !HardEvent) _task	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	//_task	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
 
-	if (!_taskInput && !HardEvent) _taskInput	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
-	//_taskInput	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
+	return true;
+}*/
+
+bool InputPort::Register(const Delegate2<InputPort&, bool>& dlg)
+{
+	assert(_Pin != P0, "输入注册必须先设置引脚");
+
+    //Handler	= handler;
+	//Param	= param;
+
+    if(!OnRegister()) return false;
+
+	Press	= dlg;
+
+	if (!_task && !HardEvent) _task	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	//_task	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
 
 	return true;
 }
 
 #endif
-
-uint InputPort::CenterTaskId = 0;
-InputPort * InputPort::InterruptPorts[16];
-
-void InputPort::CenterTask(void* param)
-{
-	// debug_printf("\r\nCenterTask\r\n");
-	UInt64 now = Sys.Ms();
-	for (int i = 0; i < ArrayLength(InterruptPorts); i++)
-	{
-		if (!InterruptPorts[i])continue;
-		InputPort * port = InterruptPorts[i];
-		// 如果按键没有按下，直接清空按下起始时间。之后来的弹起动作将失去意义
-		// 不会造成长按。
-		bool stat = port->Read();
-		if (stat)
-		{
-			port->_PressStart = 0;
-			//port->_PressStart2 = 0;
-			port->PressTime = 0;
-			//port->_PressLast = now;
-			port->_Value = 1;
-			// debug_printf("\r\nclear %d",i);
-		}
-	}
-}
-
-void InputPort::AddToCenter(InputPort* port)
-{
-	debug_printf("  AddToCenter  ");
-	if (!port)return;
-	// 添加核心处理任务
-	if (!CenterTaskId)
-	{
-		CenterTaskId = Sys.AddTask(CenterTask, nullptr, 1000, 1000, "输入替补");
-		for (int i = 0; i < ArrayLength(InterruptPorts); i++)InterruptPorts[i] = nullptr;
-	}
-	// 加入引脚
-	InterruptPorts[(port->_Pin) & 0x0f] = port;
-}
-
-void InputPort::RemoveFromCenter(InputPort* port)
-{
-	if (!port)return;
-	// 干掉要移除项
-	InterruptPorts[(port->_Pin) & 0x0f] = nullptr;
-
-	// 如果没有按键在注册中，则干掉任务
-	bool isNull = true;
-	for (int i = 0; i < ArrayLength(InterruptPorts); i++)
-	{
-		if (InterruptPorts[i])
-		{
-			isNull = false;
-			break;
-		}
-	}
-	if (isNull)
-	{
-		Sys.RemoveTask(CenterTaskId);
-		CenterTaskId = 0;
-	}
-}
 
 /******************************** AnalogInPort ********************************/
 
