@@ -67,6 +67,8 @@ void PulsePort::OnPress(InputPort& port, bool down)
 	{
 		debug_printf(" time %d,  Port  %02X Last=%d Times=%d\r\n", time, Port->_Pin, (int)Last, Times);
 	}
+	StartTime = now;
+
 	Press(*this);
 
 	return;
