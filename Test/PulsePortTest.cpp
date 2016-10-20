@@ -8,7 +8,7 @@ void TestPulsePort()
 	InitPort();
 }
 
-void PulseHandler(PulsePort* port, void* param)
+static void PulseHandler(PulsePort& port)
 {	
 #if defined(DEBUG)
 	// down true　无遮挡　　　down false 有遮挡
@@ -23,8 +23,11 @@ void InitPort()
 {
 	static InputPort io(PA6);
 	static PulsePort Port;
-	Port.Set(&io,35);
-	Port.Register(PulseHandler,nullptr);
+	//Port.Set(&io,35);
+	//Port.Register(PulseHandler, nullptr);
+	Port.Port	= &io;
+	Port.Min	= 35;
+	Port.Press	= PulseHandler;
 	Port.Open();
 }
 
