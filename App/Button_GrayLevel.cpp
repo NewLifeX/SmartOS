@@ -48,7 +48,9 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	Key.Mode = InputPort::Both;
 
 	Key.ShakeTime = 40;
-	Key.Register(OnKeyPress, this);
+	//Key.Register(OnPress, this);
+	Key.Press.Bind(&Button_GrayLevel::OnPress, this);
+	Key.UsePress();
 	Key.Open();
 
 	if (relay != P0) Relay.Init(relay, relayInvert).Open();
@@ -92,13 +94,13 @@ void Button_GrayLevel::GrayLevelDown()
 	}
 }
 
-void Button_GrayLevel::OnKeyPress(InputPort* port, bool down, void* param)
+/*void Button_GrayLevel::OnPress(InputPort* port, bool down, void* param)
 {
 	Button_GrayLevel* btn = (Button_GrayLevel*)param;
-	if (btn) btn->OnKeyPress(port, down);
-}
+	if (btn) btn->OnPress(port, down);
+}*/
 
-void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
+void Button_GrayLevel::OnPress(InputPort& port, bool down)
 {
 	// 每次按下弹起，都取反状态
 	/*if(down)
@@ -111,7 +113,7 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 	{
 		if (_Value && EnableDelayClose)
 		{
-			ushort time = port->PressTime;
+			ushort time = port.PressTime;
 			if (time > 1500)
 			{
 				debug_printf("DelayClose  ");
@@ -119,20 +121,20 @@ void Button_GrayLevel::OnKeyPress(InputPort* port, bool down)
 				{
 					debug_printf("60s\r\n");
 					DelayClose2(60 * 1000);
-					port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+					port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
 					return;
 				}
 				if(time < 3800)
 				{
 					debug_printf("15s\r\n");
 					DelayClose2(15 * 1000);
-					port->PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+					port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
 					return;
 				}
 			}
 		}
 		// 不启用长按时，长按操作当正常处理
-		if (port->PressTime <= 1500 || !EnableDelayClose)
+		if (port.PressTime <= 1500 || !EnableDelayClose)
 		{
 			SetValue(!_Value);
 			if (_task2)

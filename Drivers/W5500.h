@@ -89,7 +89,7 @@ private:
 	void OnClose();
 
 	// 中断脚回调
-	static void OnIRQ(InputPort* port, bool down, void* param);
+	void OnIRQ(InputPort& port, bool down);
 	static void IRQTask(void* param);
 	void OnIRQ();
 };

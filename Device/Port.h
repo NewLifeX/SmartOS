@@ -166,6 +166,8 @@ public:
 	Trigger	Mode		= Both;		// 触发模式，上升沿下降沿
 	bool	HardEvent	= false;	// 是否使用硬件事件。默认false
 
+	Delegate2<InputPort&, bool>	Press;
+
 	InputPort();
     InputPort(Pin pin, bool floating = true, PuPd pull = UP);
     virtual ~InputPort();
@@ -176,8 +178,8 @@ public:
     virtual bool Read() const;
 
 	// 注册事件
-    bool Register(IOReadHandler handler, void* param = nullptr);
-	bool Register(const Delegate2<InputPort&, bool>& dlg);
+    //bool Register(IOReadHandler handler, void* param = nullptr);
+	bool UsePress();
 	void OnPress(bool down);
 
     operator bool() const { return Read(); }
@@ -195,7 +197,6 @@ private:
 
     //IOReadHandler	Handler	= nullptr;
 	//void*			Param	= nullptr;
-	Delegate2<InputPort&, bool>	Press;
 
 private:
 	void OpenPin(void* param);

@@ -65,8 +65,8 @@ private:
 	bool _Value; // 状态
 	ushort Reserved;	// 补足对齐问题
 
-	static void OnKeyPress(InputPort* port, bool down, void* param);
-	void OnKeyPress(InputPort* port, bool down);
+	//static void OnPress(InputPort* port, bool down, void* param);
+	void OnPress(InputPort& port, bool down);
 
 public:
 	static byte OnGrayLevel;			// 开灯时 led 灰度

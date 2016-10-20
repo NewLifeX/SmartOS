@@ -33,7 +33,7 @@ public:
 
 	void InitLeds();
 	void FlushLed();			// 刷新led状态输出
-	void InitButtons(InputPort::IOReadHandler press = nullptr);
+	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	bool LedStat(bool enable);
 

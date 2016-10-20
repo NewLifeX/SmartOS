@@ -20,12 +20,14 @@ void PulsePort::Open()
 	if (!Port) return;
 
 	Port->HardEvent	= true;
-	if (!Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnPress(down); }, this))
+	/*if (!Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnPress(down); }, this))
 	{
 		debug_printf("PulsePort 注册失败/r/n");
 		// 注册失败就返回 不要再往下了  没意义
 		return;
-	}
+	}*/
+	Port->Press.Bind(&PulsePort::OnPress, this);
+	Port->UsePress();
 	Port->Open();
 
 	Opened	= true;
@@ -40,7 +42,7 @@ void PulsePort::Close()
 	Opened	= false;
 }
 
-void PulsePort::OnPress(bool down)
+void PulsePort::OnPress(InputPort& port, bool down)
 {
 	// 只有弹起来才计算
 	if (down) return;

@@ -39,7 +39,7 @@ private:
 	void Init();
 
 	static void OnPress(InputPort* port, bool down, void* param);
-	void OnPress(Pin pin, bool down);
+	void OnPress(InputPort& port, bool down);
 
 	//EventHandler _Handler;
 	//void* _Param;

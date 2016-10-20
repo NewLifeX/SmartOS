@@ -20,7 +20,9 @@ Sensor::Sensor(Pin key, Pin led, Pin buzzer)
 	Init();
 
 	Key = new InputPort(key);
-	Key->Register(OnPress, this);
+	//Key->Register(OnPress, this);
+	Key->Press.Bind(&Sensor::OnPress, this);
+	Key->UsePress();
 
 	if(led != P0) Led = new OutputPort(led);
 	if(buzzer != P0) Buzzer = new OutputPort(buzzer);
@@ -31,7 +33,9 @@ Sensor::Sensor(Pin key, Pin led, bool ledInvert, Pin buzzer, bool buzzerInvert)
 	Init();
 
 	Key = new InputPort(key);
-	Key->Register(OnPress, this);
+	//Key->Register(OnPress, this);
+	Key->Press.Bind(&Sensor::OnPress, this);
+	Key->UsePress();
 
 	if(led != P0) Led = new OutputPort(led, ledInvert);
 	if(buzzer != P0) Buzzer = new OutputPort(key, buzzerInvert);
@@ -51,13 +55,13 @@ Sensor::~Sensor()
 	Mag = nullptr;
 }
 
-void Sensor::OnPress(InputPort* port, bool down, void* param)
+/*void Sensor::OnPress(InputPort* port, bool down, void* param)
 {
 	Sensor* btn = (Sensor*)param;
 	if(btn) btn->OnPress(port->_Pin, down);
-}
+}*/
 
-void Sensor::OnPress(Pin pin, bool down)
+void Sensor::OnPress(InputPort& port, bool down)
 {
 	
 	if(!down)

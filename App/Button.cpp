@@ -25,7 +25,11 @@ void Button::Set(Pin key, Pin led, Pin relay)
 void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 {
 	Key.Set(key);
-	Key.Register(OnPress, this);
+	//Key.Register(OnPress, this);
+	//Key.Press	= OnPress;
+	Key.Press.Bind(&Button::OnPress, this);
+	Key.UsePress();
+	//Key.Register(Delegate2<InputPort&, bool>(&Button::OnPress, this))
 	Key.Open();
 
 	if(led != P0)
@@ -40,13 +44,13 @@ void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 	}
 }
 
-void Button::OnPress(InputPort* port, bool down, void* param)
+/*void Button::OnPress(InputPort* port, bool down, void* param)
 {
 	Button* btn = (Button*)param;
 	if(btn) btn->OnPress(port->_Pin, down);
-}
+}*/
 
-void Button::OnPress(Pin pin, bool down)
+void Button::OnPress(InputPort& port, bool down)
 {
 	// 每次按下弹起，都取反状态
 	if(!down)

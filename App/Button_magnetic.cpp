@@ -18,7 +18,9 @@ Button_magnetic::Button_magnetic(Pin key, Pin led, Pin relay_pin1, Pin relay_pin
 	Init();
 
 	Key = new InputPort(key);
-	Key->Register(OnPress, this);
+	//Key->Register(OnPress, this);
+	Key->Press.Bind(&Button_magnetic::OnPress, this);
+	Key->UsePress();
 
 	if(led != P0) Led = new OutputPort(led);
 	if(relay_pin1 != P0) Relay_pack1 = new OutputPort(relay_pin1);
@@ -31,7 +33,9 @@ Button_magnetic::Button_magnetic(Pin key, Pin led, bool ledInvert, Pin relay_pin
 	Init();
 
 	Key = new InputPort(key);
-	Key->Register(OnPress, this);
+	//Key->Register(OnPress, this);
+	Key->Press.Bind(&Button_magnetic::OnPress, this);
+	Key->UsePress();
 
 	if(led != P0) Led = new OutputPort(led, ledInvert);
 	if(relay_pin1 != P0) Relay_pack1 = new OutputPort(relay_pin1, relayInvert1);
@@ -59,13 +63,13 @@ Button_magnetic::~Button_magnetic()
 }
 
 
-void Button_magnetic::OnPress(InputPort* port, bool down, void* param)
+/*void Button_magnetic::OnPress(InputPort* port, bool down, void* param)
 {
 	Button_magnetic * btn = (Button_magnetic*)param;
 	if(btn) btn->OnPress(port->_Pin, down);
-}
+}*/
 
-void Button_magnetic::OnPress(Pin pin, bool down)
+void Button_magnetic::OnPress(InputPort& port, bool down)
 {
 	// 每次按下弹起，都取反状态
 	if(!down)

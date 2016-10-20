@@ -18,6 +18,9 @@ private:
 	ByteArray _Bs;		// 内部缓冲区
 	byte 	_irqCount;	// 记录pl信号后第几位数据
 	bool	_sckHighSpeed;
+	
+	void OnTrigger(InputPort& port, bool down);
+	void OnReaBit(InputPort& port, bool down);
 public:
 	bool Opened;
 	// pl采集，cp时钟，Q7输出， bufsize 是级联个数，highSpeed 是否是高速clk ms以下算高速

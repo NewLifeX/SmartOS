@@ -28,7 +28,7 @@ public:
 
 private:
 	// 内部中断函数
-	void OnPress(bool down);
+	void OnPress(InputPort& port, bool down);
 };
 
 #endif

@@ -97,17 +97,19 @@ void ButtonOnpress(InputPort* port, bool down, void* param)
 		IOK0612::OnLongPress(port, down);
 }
 
-void IOK0612::InitButtons(InputPort::IOReadHandler press)
+void IOK0612::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
 		auto port = new InputPort(ButtonPins[i]);
-		port->Mode = InputPort::Both;
+		//port->Mode = InputPort::Both;
 		port->Invert = true;
-		if (press)
+		/*if (press)
 			port->Register(press, (void*)i);
 		else
-			port->Register(ButtonOnpress, (void*)i);
+			port->Register(ButtonOnpress, (void*)i);*/
+		port->Press	= press;
+		port->UsePress();
 		port->Open();
 		Buttons.Add(port);
 	}

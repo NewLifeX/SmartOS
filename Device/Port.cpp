@@ -488,19 +488,15 @@ void InputPort::OnClose()
 	return true;
 }*/
 
-bool InputPort::Register(const Delegate2<InputPort&, bool>& dlg)
+bool InputPort::UsePress()
 {
 	assert(_Pin != P0, "输入注册必须先设置引脚");
 
-    //Handler	= handler;
-	//Param	= param;
-
     if(!OnRegister()) return false;
 
-	Press	= dlg;
+	//Press	= dlg;
 
 	if (!_task && !HardEvent) _task	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
-	//_task	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
 
 	return true;
 }

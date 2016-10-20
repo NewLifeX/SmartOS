@@ -110,19 +110,21 @@ void ButtonOnpress(InputPort* port, bool down, void* param)
 		AP0801::Current->OnLongPress(port, down);
 }
 
-void AP0801::InitButtons(InputPort::IOReadHandler press)
+void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
-		auto btn = new InputPort(ButtonPins[i]);
-		btn->Mode = InputPort::Both;
-		btn->Invert = true;
-		if (press)
-			btn->Register(press, (void*)i);
+		auto port = new InputPort(ButtonPins[i]);
+		//port->Mode = InputPort::Both;
+		port->Invert = true;
+		/*if (press)
+			port->Register(press, (void*)i);
 		else
-			btn->Register(ButtonOnpress, (void*)i);
-		btn->Open();
-		Buttons.Add(btn);
+			port->Register(ButtonOnpress, (void*)i);*/
+		port->Press	= press;
+		port->UsePress();
+		port->Open();
+		Buttons.Add(port);
 	}
 }
 

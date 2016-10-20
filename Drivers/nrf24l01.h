@@ -83,7 +83,7 @@ private:
 	static void ReceiveTask(void* param);
 	uint _tidOpen;
 	uint _tidRecv;
-	static void OnIRQ(InputPort* port, bool down, void* param);
+	void OnIRQ(InputPort& port, bool down);
 	void OnIRQ();
 };
 

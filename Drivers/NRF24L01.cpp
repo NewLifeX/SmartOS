@@ -249,7 +249,9 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		Irq.Init(irq, true);
-		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
+		//if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
+		Irq.Press.Bind(&NRF24L01::OnIRQ, this);
+		Irq.UsePress();
     }
 	if(power != P0) _Power.Set(power);
 
@@ -938,16 +940,17 @@ void NRF24L01::AddError()
 	}
 }
 
-void NRF24L01::OnIRQ(InputPort* port, bool down, void* param)
+void NRF24L01::OnIRQ(InputPort& port, bool down)
 {
 	// 必须在down=true才能读取到正确的状态
 	if(!down) return;
 
-	auto nrf = (NRF24L01*)param;
-	if(!nrf) return;
+	//auto nrf = (NRF24L01*)param;
+	//if(!nrf) return;
 
 	// 马上调度任务
-	Sys.SetTask(nrf->_tidRecv, true, 0);
+	//Sys.SetTask(nrf->_tidRecv, true, 0);
+	Sys.SetTask(_tidRecv, true, 0);
 }
 
 void NRF24L01::OnIRQ()

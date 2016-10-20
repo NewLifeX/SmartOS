@@ -255,11 +255,12 @@ extern "C"
         int idx	= Sys.MessagePort;
         if(idx == COM_NONE) return ch;
 
+		if(isInFPutc) return ch;
+		isInFPutc = true;
+
 		USART_TypeDef* g_Uart_Ports[] = UARTS;
         auto port = g_Uart_Ports[idx];
 
-		if(isInFPutc) return ch;
-		isInFPutc = true;
         // 检查并打开串口
         if((port->CR1 & USART_CR1_UE) != USART_CR1_UE)
         {

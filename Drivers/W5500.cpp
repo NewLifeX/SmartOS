@@ -370,7 +370,9 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		Irq.HardEvent	= true;
 		//Irq.Set(irq);
 		Irq.Init(irq, true);
-		if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
+		//if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;
+		Irq.Press.Bind(&W5500::OnIRQ, this);
+		Irq.UsePress();
 	}
 
 	_spi = spi;
@@ -779,14 +781,15 @@ ISocket* W5500::CreateSocket(NetType type)
 }
 
 // irq 中断处理部分
-void W5500::OnIRQ(InputPort* port, bool down, void* param)
+void W5500::OnIRQ(InputPort& port, bool down)
 {
 	if(!down) return;	// 低电平中断
 
-	auto net = (W5500*)param;
+	//auto net = (W5500*)param;
 	//net->OnIRQ();
 	//net_printf("OnIRQ \r\n");
-	Sys.SetTask(net->TaskID, true, 0);
+	//Sys.SetTask(net->TaskID, true, 0);
+	Sys.SetTask(TaskID, true, 0);
 }
 
 void W5500::OnIRQ()
