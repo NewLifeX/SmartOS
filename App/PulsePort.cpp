@@ -1,5 +1,6 @@
 
 #include "PulsePort.h"
+#include "Platform\Pin.h"
 
 PulsePort::PulsePort() { Int(); }
 
@@ -47,7 +48,7 @@ void PulsePort::Open()
 	if (Handler == nullptr)return;
 
 	if (Opened)return;
-	_Port->HardEvent = true;
+	_Port->HardEvent = false;
 	if (!_Port->Register([](InputPort* port, bool down, void* param) {((PulsePort*)param)->OnHandler(port, down); }, this))
 	{
 		debug_printf("PulsePort 注册失败/r/n");
@@ -95,8 +96,7 @@ void PulsePort::Register(PulsePortHandler handler, void* param)
 
 void PulsePort::OnHandler(InputPort* port, bool down)
 {
-	if (down) return;
-
+	if (!down) return;
 	auto preTime = port->PressTime;
 
 	// 默认最大最小为0时候，不做判断
@@ -106,7 +106,6 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 	auto go4 = MinIntervals == 0 && MaxIntervals == 0;
 
 	if (!(go1 || go2 || go3 || go4))return;
-
 	// 取UTC时间的MS值
 	UInt64 now = Sys.Ms();
 	//上次触发时间
@@ -114,9 +113,16 @@ void PulsePort::OnHandler(InputPort* port, bool down)
 	//这次触发时间
 	TriTime = now;
 	//debug_printf("PulsePort preTime %ld ", preTime);
-	//debug_printf("VisTime %ld \r\n", ushort(TriTime - LastTriTime));
+	auto time = ushort(TriTime - LastTriTime);
+	if (time > 100)
+	{
+		debug_printf(" time %d,  Port  %ld \r\n", time, _Port->_Pin);
+	}
+	//debug_printf("VisTime %ld \r\n", time);
 
 	if (_task)Sys.SetTask(_task, true, -1);
+	/*if (Handler)
+		(Handler(this, this->Param));*/
 
 	return;
 }
