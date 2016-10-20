@@ -384,7 +384,7 @@ void InputPort::OnPress(bool down)
 		if((Mode & Falling) == 0) return;
 	}
 
-	if(HardEvent)
+	if(HardEvent || !_IRQ)
 	{
 		//if(Handler) Handler(this, down, Param);
 		Press(*this, down);
@@ -400,19 +400,19 @@ void InputPort::OnPress(bool down)
 void InputPort::InputTask(void* param)
 {
 	auto port	= (InputPort*)param;
-	byte v	= port->_Value;
-	if(!v) return;
-
-	/*if(port->Handler)
+	if(port->_IRQ)
 	{
-		//port->_Value = 0;
+		byte v	= port->_Value;
+		if(!v) return;
+
 		v	&= port->Mode;
-		if(v & Rising)	port->Handler(port, true, port->Param);
-		if(v & Falling)	port->Handler(port, false, port->Param);
-	}*/
-	v	&= port->Mode;
-	if(v & Rising)	port->Press(*port, true);
-	if(v & Falling)	port->Press(*port, false);
+		if(v & Rising)	port->Press(*port, true);
+		if(v & Falling)	port->Press(*port, false);
+	}
+	else
+	{
+		port->OnPress(port->Read());
+	}
 }
 
 void InputPort::OnOpen(void* param)
@@ -468,35 +468,20 @@ void InputPort::OnClose()
 	Port::OnClose();
 
 	ClosePin();
-
-	//RemoveFromCenter(this);
 }
-
-// 注册回调  及中断使能
-/*bool InputPort::Register(IOReadHandler handler, void* param)
-{
-	assert(_Pin != P0, "输入注册必须先设置引脚");
-
-    Handler	= handler;
-	Param	= param;
-
-    if(!OnRegister()) return false;
-
-	if (!_task && !HardEvent) _task	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
-	//_task	= Sys.AddTask(InputTask, this, 3000, 3000, "输入中断");
-
-	return true;
-}*/
 
 bool InputPort::UsePress()
 {
 	assert(_Pin != P0, "输入注册必须先设置引脚");
 
-    if(!OnRegister()) return false;
+    _IRQ	= OnRegister();
 
-	//Press	= dlg;
-
-	if (!_task && !HardEvent) _task	= Sys.AddTask(InputTask, this, -1, -1, "输入中断");
+	if (!_task && !HardEvent)
+	{
+		// 如果硬件中断注册失败，则采用10ms定时读取
+		auto time	= _IRQ ? -1 : 10;
+		_task	= Sys.AddTask(InputTask, this, time, time, "输入中断");
+	}
 
 	return true;
 }
