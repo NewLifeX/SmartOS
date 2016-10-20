@@ -6,8 +6,8 @@
 PulsePort::PulsePort()
 {
 	Port	= nullptr;
-	Min		= 0;
-	Max		= 0;
+	Min		= 100;
+	Max		= 2000;
 	Last	= 0;
 	Time	= 0;	// 遮挡时间
 	Times	= 0;	// 触发次数
@@ -49,10 +49,15 @@ void PulsePort::OnPress(InputPort& port, bool down)
 
 	// 计算上一次脉冲以来的遮挡时间，两个有效脉冲的间隔
 	UInt64 now	= Sys.Ms();
+	if (Last == 0)
+	{
+		Last = now;
+		return;
+	}
 	auto time	= (uint)(now - Last);
 	// 无论如何都更新最后一次时间，避免连续超长
 	Last	= now;
-
+	//debug_printf(" timeA %d,  Port  %02X \r\n", time, Port->_Pin);
 	// 两次脉冲的间隔必须在一个范围内才算作有效
 	if(Min > 0 && time < Min || Max > 0 && time > Max) return;
 
@@ -60,9 +65,8 @@ void PulsePort::OnPress(InputPort& port, bool down)
 	Times++;
 	if (time > 100)
 	{
-		debug_printf(" time %d,  Port  %02X \r\n", time, Port->_Pin);
+		debug_printf(" time %d,  Port  %02X Last=%d Times=%d\r\n", time, Port->_Pin, (int)Last, Times);
 	}
-
 	Press(*this);
 
 	return;
