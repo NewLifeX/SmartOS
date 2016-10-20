@@ -360,14 +360,15 @@ void InputPort::OnPress(bool down)
 	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
 	*/
 
+	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
+	if(down && _Value == Rising) return;
+	if(!down && _Value != Rising) return;
+
 	UInt64	now	= Sys.Ms();
 	// 这一次触发离上一次太近，算作抖动忽略掉
 	if(_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime) return;
 	_Last	= now;
-	
-	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
-	if(down && _Value == Rising) return;
-	if(!down && _Value != Rising) return;
+
 	_Value	= down ? Rising : Falling;
 
 	if(down)
@@ -400,19 +401,18 @@ void InputPort::OnPress(bool down)
 void InputPort::InputTask(void* param)
 {
 	auto port	= (InputPort*)param;
-	if(port->_IRQ)
-	{
-		byte v	= port->_Value;
-		if(!v) return;
+	byte v	= port->_Value;
+	if(!v) return;
 
-		v	&= port->Mode;
-		if(v & Rising)	port->Press(*port, true);
-		if(v & Falling)	port->Press(*port, false);
-	}
-	else
-	{
-		port->OnPress(port->Read());
-	}
+	v	&= port->Mode;
+	if(v & Rising)	port->Press(*port, true);
+	if(v & Falling)	port->Press(*port, false);
+}
+
+static void InputNoIRQTask(void* param)
+{
+	auto port	= (InputPort*)param;
+	port->OnPress(port->Read());
 }
 
 void InputPort::OnOpen(void* param)
@@ -479,8 +479,10 @@ bool InputPort::UsePress()
 	if (!_task && !HardEvent)
 	{
 		// 如果硬件中断注册失败，则采用10ms定时读取
-		auto time	= _IRQ ? -1 : 10;
-		_task	= Sys.AddTask(InputTask, this, time, time, "输入中断");
+		if(_IRQ)
+			_task	= Sys.AddTask(InputTask, this, -1, 1, "输入事件");
+		else
+			_task	= Sys.AddTask(InputNoIRQTask, this, 10, 10, "输入轮询");
 	}
 
 	return true;
