@@ -37,6 +37,7 @@ public:
     ushort	Mask;		// 组内引脚位。每个引脚一个位
     Pin		_Pin;		// 引脚
 	bool	Opened;		// 是否已经打开
+	int		State;		// 用户状态数据。常用于批量端口操作时记录索引
 
 	Port();
 

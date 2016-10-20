@@ -12,6 +12,7 @@ Port::Port()
 	Group	= nullptr;
 	Mask	= 0;
 	Opened	= false;
+	State	= 0;
 }
 
 #ifndef TINY
