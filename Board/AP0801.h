@@ -38,8 +38,10 @@ public:
 	void* InitData(void* data, int size);
 	// 设置TokenClient数据区
 	void SetStore(void*data, int len);
-
-	typedef bool (*Handler)(uint offset, uint size, bool write);
+	//获取客户端的状态0，未握手，1已握手，2已经登陆
+	int GetStatus();
+	
+	typedef bool(*Handler)(uint offset, uint size, bool write);
 	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& dp);
 
@@ -49,7 +51,6 @@ public:
 
 	// 打开以太网W5500
 	ISocketHost* Create5500();
-
 	// 打开Esp8266，作为主控或者纯AP
 	ISocketHost* Create8266(bool apOnly);
 
@@ -62,7 +63,7 @@ public:
 	void Restore();
 	// invoke指令
 	void Invoke(const String& ation, const Buffer& bs);
-    void OnLongPress(InputPort* port, bool down);
+	void OnLongPress(InputPort* port, bool down);
 
 	static AP0801* Current;
 
