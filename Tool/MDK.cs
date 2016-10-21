@@ -685,8 +685,8 @@ namespace NewLife.Reflection
             if (!Directory.Exists(path)) return;
 
             // 有头文件才要，没有头文件不要
-            var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
-            if (!fs.Any()) return;
+            //var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
+            //if (!fs.Any()) return;
 
             if (!Includes.Contains(path) && HasHeaderFile(path))
             {

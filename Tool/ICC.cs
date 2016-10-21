@@ -33,7 +33,7 @@ namespace NewLife.Reflection
         {
             if (basePath.IsNullOrEmpty())
             {
-                var gcc = new GCC();
+                var gcc = new ICC();
                 if (gcc.ToolPath.IsNullOrEmpty() || !Directory.Exists(gcc.ToolPath))
                 {
                     XTrace.WriteLine("未找到MDK！");
@@ -884,7 +884,7 @@ namespace NewLife.Reflection
     }
 
     /// <summary>MDK环境</summary>
-    public class GCC
+    public class ICC
     {
         #region 属性
         /// <summary>名称</summary>
@@ -899,57 +899,43 @@ namespace NewLife.Reflection
 
         #region 初始化
         /// <summary>初始化</summary>
-        public GCC()
+        public ICC()
         {
-			Name = "GCC";
+			Name = "ICC";
 
             #region 从注册表获取目录和版本
             if (String.IsNullOrEmpty(ToolPath))
             {
-                var reg = Registry.LocalMachine.OpenSubKey(@"Software\ARM\GNU Tools for ARM Embedded Processors");
-                if (reg == null) reg = Registry.LocalMachine.OpenSubKey(@"Software\Wow6432Node\ARM\GNU Tools for ARM Embedded Processors");
+                var reg = Registry.LocalMachine.OpenSubKey(@"Software\IAR Systems\Embedded Workbench\5.0");
+                if (reg == null) reg = Registry.LocalMachine.OpenSubKey(@"Software\Wow6432Node\IAR Systems\Embedded Workbench\5.0");
                 if (reg != null)
                 {
-                    ToolPath = reg.GetValue("InstallFolder") + "";
-                    if(ToolPath.Contains(".")) Version = ToolPath.AsDirectory().Name;
+                    ToolPath = reg.GetValue("LastInstallPath") + "";
+                    if(ToolPath.Contains(".")) Version = ToolPath.AsDirectory().Name.Split(" ").Last();
                 }
             }
             #endregion
 
             #region 扫描所有根目录，获取MDK安装目录
-            //if (String.IsNullOrEmpty(ToolPath))
-            {
-                foreach (var item in DriveInfo.GetDrives())
-                {
-                    if (!item.IsReady) continue;
+			foreach (var item in DriveInfo.GetDrives())
+			{
+				if (!item.IsReady) continue;
 
-					var p = Path.Combine(item.RootDirectory.FullName, @"GCC\arm-none-eabi");
-                    if (Directory.Exists(p))
-                    {
-                        ToolPath = p.CombinePath(@"..\").GetFullPath();
-                        break;
-                    }
-                }
-            }
-            /*if (Version < new Version(5, 17))
-            {
-                var url = "http://www.newlifex.com/showtopic-1456.aspx";
-                var client = new WebClientX(true, true);
-                client.Log = XTrace.Log;
-                var dir = Environment.SystemDirectory.CombinePath("..\\..\\Keil").GetFullPath();
-                var file = client.DownloadLinkAndExtract(url, "GCC", dir);
-                var p = dir.CombinePath("ARM");
-                if (Directory.Exists(p))
-                {
-                    var ver = GetVer(p);
-                    if (ver > Version)
-                    {
-                        ToolPath = p;
-                        Version = ver;
-                    }
-                }
-            }*/
-            if (String.IsNullOrEmpty(ToolPath)) throw new Exception("无法获取GCC安装目录！");
+				//var p = Path.Combine(item.RootDirectory.FullName, @"Program Files (x86)\IAR Systems\Embedded Workbench 7.0");
+				var p = Path.Combine(item.RootDirectory.FullName, @"Program Files\IAR Systems");
+				if (!Directory.Exists(p)) p = Path.Combine(item.RootDirectory.FullName, @"Program Files (x86)\IAR Systems");
+				if (Directory.Exists(p))
+				{
+					var f = p.AsDirectory().GetAllFiles("iccarm.exe", true).LastOrDefault();
+					if(f != null)
+					{
+						ToolPath = f.Directory.FullName.CombinePath(@"..\..\").GetFullPath();
+						if(ToolPath.Contains(".")) Version = ToolPath.AsDirectory().Name.Split(" ").Last();
+						break;
+					}
+				}
+			}
+            if (String.IsNullOrEmpty(ToolPath)) throw new Exception("无法获取ICC安装目录！");
             #endregion
         }
         #endregion
@@ -1148,8 +1134,8 @@ namespace NewLife.Reflection
 
         public static String GetKeil()
         {
-            var reg = Registry.LocalMachine.OpenSubKey("Software\\Keil\\Products\\GCC");
-            if (reg == null) reg = Registry.LocalMachine.OpenSubKey("Software\\Wow6432Node\\Keil\\Products\\GCC");
+            var reg = Registry.LocalMachine.OpenSubKey("Software\\Keil\\Products\\ICC");
+            if (reg == null) reg = Registry.LocalMachine.OpenSubKey("Software\\Wow6432Node\\Keil\\Products\\ICC");
             if (reg == null) return null;
 
             return reg.GetValue("Path") + "";
