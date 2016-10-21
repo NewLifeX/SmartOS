@@ -31,7 +31,7 @@ void PulsePort::Open()
 	Port->UsePress();
 	Port->Open();
 	if (TaskPre)
-		Task = Sys.AddTask(&PulsePort::TaskSet, this, -1, -1);
+		Task = Sys.AddTask(&PulsePort::TaskSet, this, -1, -1,"脉冲事件");
 
 	Opened = true;
 }
