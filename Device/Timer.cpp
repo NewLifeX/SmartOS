@@ -44,6 +44,7 @@ Timer* Timer::Create(byte index)
 	TS("Timer::Create");
 
 	byte tcount	= ArrayLength(Timers);
+	//byte tcount	= 46;
 	// 特殊处理随机分配
 	if(index == 0xFF)
 	{
