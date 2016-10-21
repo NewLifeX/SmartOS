@@ -590,7 +590,9 @@ namespace NewLife.Reflection
 			//var fs = path.AsDirectory().GetAllFiles("*.h;*.hpp");
 			//if(!fs.Any()) return;
 
-            if (!Includes.Contains(path) && HasHeaderFile(path))
+            //if (!Includes.Contains(path) && (!sub || HasHeaderFile(path)))
+			// 有些头文件引用采用目录路径，而不是直接文件名
+            if (!Includes.Contains(path))
             {
                 WriteLog("引用目录：{0}".F(path));
                 Includes.Add(path);
@@ -604,7 +606,8 @@ namespace NewLife.Reflection
                     if (item.FullName.Contains(".svn")) continue;
                     if (item.Name.EqualIgnoreCase("List", "Obj", "ObjD", "Log")) continue;
 
-                    if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
+                    //if (!Includes.Contains(item.FullName) && HasHeaderFile(item.FullName))
+                    if (!Includes.Contains(item.FullName))
                     {
                         WriteLog("引用目录：{0}".F(item.FullName));
                         Includes.Add(item.FullName);
