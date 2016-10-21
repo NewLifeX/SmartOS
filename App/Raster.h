@@ -51,9 +51,6 @@ private:
 	PulsePort*  RasterA;		//每一组光栅分两路
 	PulsePort*  RasterB;
 
-	MemoryStream	Cache;		//实际送的数据
-	uint    _task;
-
 	FlagData FlagA;				//A标志
 	FlagData FlagB;				//B标志
 	byte Count;

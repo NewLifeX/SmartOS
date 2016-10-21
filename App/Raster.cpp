@@ -3,6 +3,11 @@
 
 #include "Raster.h"
 
+
+static Stream*	_Cache	= nullptr;		//实际送的数据
+static uint		_task	= 0;
+static int		_Ras	= 0;
+
 static PulsePort* Create(Pin pin)
 {
 	auto pp	= new PulsePort();
@@ -20,6 +25,8 @@ Raster::Raster(Pin pinA, Pin pinB, Pin bz)
 
 	RasterA	= Create(pinA);
 	RasterB	= Create(pinB);
+
+	_Ras++;
 }
 
 Raster::~Raster()
@@ -29,7 +36,11 @@ Raster::~Raster()
 	delete RasterB->Port;
 	delete RasterB;
 
-	Sys.RemoveTask(_task);
+	if(--_Ras == 0)
+	{
+		delete _Cache;
+		Sys.RemoveTask(_task);
+	}
 }
 
 void Raster::Init(Pin bz)
@@ -37,15 +48,11 @@ void Raster::Init(Pin bz)
 	RasterA = nullptr;
 	RasterB = nullptr;
 	Opened = false;
-	_task	= 0;
 
 	Buzzer.Set(bz);
 	Buzzer.Invert = 1;
 	Buzzer.Blink(2, 100);
 	Buzzer.Open();
-
-	// 缓冲区大小
-	Cache.SetCapacity(256);
 }
 
 bool Raster::Open()
@@ -64,8 +71,13 @@ bool Raster::Open()
 		RasterB->Open();
 	}
 
+	if(!_Cache)
+	{
+		_Cache	= new MemoryStream();
+		_Cache->SetCapacity(512);
+	}
 	// 光栅一直在轮训是否有数据要发送
-	_task	= Sys.AddTask(&Raster::Report, this, 3000, 3000, "光栅发送");
+	if(!_task) _task	= Sys.AddTask(&Raster::Report, this, 3000, 3000, "光栅发送");
 
 	Opened = true;
 
@@ -135,8 +147,8 @@ void Raster::LineReport()
 
 	Buffer bs(&data, size);
 	// 如果满了，马上发送
-	if(bs.Length() > Cache.Remain()) Report();
-	Cache.Write(bs);
+	if(bs.Length() > _Cache->Remain()) Report();
+	_Cache->Write(bs);
 
 	//写完数据后标致清零
 	FlagA.Count = FlagB.Count = 0;
@@ -145,7 +157,10 @@ void Raster::LineReport()
 void Raster::Report()
 {
 	// 没数据或者客户端未登录
-	if (Cache.Length == 0) return;
+	if (_Cache->Length == 0) return;
 
-	OnReport(Cache);
+	OnReport(*_Cache);
+
+	_Cache->SetPosition(0);
+	_Cache->Length	= 0;
 }
