@@ -17,8 +17,10 @@ public:
 	UInt64 	Last;		// 上一个信号触发时间
 	uint 	Time;		// 遮挡时间
 	UInt64 	StartTime;	// 开始遮挡时间
-	uint 	Times;	// 次数
-	bool	Opened;	// 是否打开
+	uint 	Times;		// 次数
+	bool	Opened;		// 是否打开
+
+	bool	TaskPre;	// 是否任务触发 
 
 	Delegate<PulsePort&> Press;	// 被遮挡时触发
 
@@ -28,6 +30,10 @@ public:
 	void Close();
 
 private:
+	//任务的调度
+	int Task;
+
+	void TaskSet();
 	// 内部中断函数
 	void OnPress(InputPort& port, bool down);
 };
