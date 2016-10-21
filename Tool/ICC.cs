@@ -47,6 +47,7 @@ namespace NewLife.Reflection
             Complier = basePath.CombinePath("iccarm.exe").GetFullPath();
             Asm = basePath.CombinePath("iasmarm.exe");
             Link = basePath.CombinePath("ilinkarm.exe");
+            Ar = basePath.CombinePath("iarchive.exe");
 
             IncPath = basePath.CombinePath(@"arm\include").GetFullPath();
             LibPath = basePath.CombinePath(@"arm\lib").GetFullPath();
@@ -188,23 +189,19 @@ namespace NewLife.Reflection
 			else
 				sb.Append("--use_c++_inline");
 			// -e打开C++扩展
-            sb.AppendFormat(" --endian=little --cpu={0} -e", CPU);
+            sb.AppendFormat(" --endian=little --cpu={0} -e --silent", CPU);
 			//sb.Append(" --enable_multibytes");
             if (Debug) sb.Append(" --debug");
 			// 默认低级优化，发行版-Ohz为代码大小优化，-Ohs为高速度优化
 			if (!Debug) sb.Append(" -Ohz");
-			var basePath = Complier.CombinePath(@"..\..\..\").GetFullPath();
-			//sb.AppendFormat(@" --dlib_config {0}\arm\INC\c\DLib_Config_Normal.h", basePath);
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D {0}", item);
             }
             if (Tiny) sb.Append(" -D TINY");
-			sb.AppendFormat(" -I.");
-            foreach (var item in Includes)
-            {
-                sb.AppendFormat(" -I{0}", item);
-            }
+			var basePath = Complier.CombinePath(@"..\..\..\").GetFullPath();
+			sb.AppendFormat(" --dlib_config \"{0}\\arm\\INC\\c\\DLib_Config_Normal.h\"", basePath);
+
 			if(showCmd)
 			{
 				Console.Write("命令参数：");
@@ -212,10 +209,19 @@ namespace NewLife.Reflection
 				Console.WriteLine(sb);
 				Console.ResetColor();
 			}
+			
+			sb.Append(" --diag_suppress  Be006,Pa050,Pa039,Pa089,Pe014,Pe047,Pe068,Pe089,Pe167,Pe177,Pe186,Pe188,Pe375,Pe550,Pe550,Pe223,Pe549,Pe550");
+
+			sb.AppendFormat(" -I.");
+            foreach (var item in Includes)
+            {
+                sb.AppendFormat(" -I{0}", item);
+            }
 
 			//if(Preprocess) sb.Append(" --preprocess=cn");
-            sb.AppendFormat(" -o {0}", Path.GetDirectoryName(objName));
+			
             sb.AppendFormat(" -c {0}", file);
+            sb.AppendFormat(" -o {0}", Path.GetDirectoryName(objName));
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
@@ -381,13 +387,7 @@ namespace NewLife.Reflection
             var lib = name.EnsureEnd(".a");
             var sb = new StringBuilder();
             //sb.Append("-static");
-            sb.AppendFormat(" -r \"{0}\"", lib);
-			// 还需要加载LDS文件
-			var lds = "F{0}.lds".F(Cortex == 3 ? 1 : Cortex);
-			var root = @".".GetFullPath();
-			if(!File.Exists(root.CombinePath(lds))) root = @"..\SmartOS\Tool".GetFullPath();
-			if(!File.Exists(root.CombinePath(lds))) root = @"..\..\SmartOS\Tool".GetFullPath();
-            sb.AppendFormat(" \"{0}\"", root.CombinePath(lds));
+            sb.AppendFormat(" --create \"{0}\"", lib);
 
 			Console.Write("命令参数：");
 			Console.ForegroundColor = ConsoleColor.Magenta;
@@ -422,35 +422,33 @@ namespace NewLife.Reflection
             XTrace.WriteLine("生成：{0}", name);
 
             /*
-             * --cpu Cortex-M3 *.o --library_type=microlib --strict --scatter ".\Obj\SmartOSF1_Debug.sct"
-             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols
-             * --info sizes --info totals --info unused --info veneers
-             * --list ".\Lis\SmartOSF1_Debug.map"
-             * -o .\Obj\SmartOSF1_Debug.axf
-             *
-             * --cpu Cortex-M0 *.o --library_type=microlib --diag_suppress 6803 --strict --scatter ".\Obj\Smart130.sct"
-             * --summary_stderr --info summarysizes --map --xref --callgraph --symbols
-             * --info sizes --info totals --info unused --info veneers
-             * --list ".\Lis\Smart130.map"
-             * -o .\Obj\Smart130.axf
-             */
-
+             * -o \Exe\application.axf 
+             * --redirect _Printf=_PrintfTiny 
+             * --redirect _Scanf=_ScanfSmallNoMb 
+             * --keep bootloader 
+             * --keep gImage2EntryFun0 
+             * --keep RAM_IMG2_VALID_PATTEN 
+             * --image_input=\ram_1.r.bin,bootloader,LOADER,4
+             * --map \List\application.map 
+             * --log veneers 
+             * --log_file \List\application.log 
+             * --config \image2.icf 
+             * --diag_suppress Lt009,Lp005,Lp006 
+             * --entry Reset_Handler --no_exceptions --no_vfe
+			 */
             var lstName = GetListPath(name);
             var objName = GetObjPath(name);
 
             var sb = new StringBuilder();
-            sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
+            //sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
             if (!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
-                sb.AppendFormat(" --scatter \"{0}\"", Scatter);
-            else
-                sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
-            //sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
-            //sb.Append(" --info sizes --info totals --info unused --info veneers");
-            sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
-            sb.Append(" --info sizes --info totals --info veneers --diag_suppress L6803 --diag_suppress L6314");
+                sb.AppendFormat(" --config \"{0}\"", Scatter);
+            //else
+            //    sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
+            sb.Append(" --entry Reset_Handler --no_exceptions --no_vfe");
 
             var axf = objName.EnsureEnd(".axf");
-            sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
+            sb.AppendFormat(" --map \"{0}.map\" -o \"{1}\"", lstName, axf);
 
             if (Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
@@ -500,20 +498,6 @@ namespace NewLife.Reflection
             {
                 if (msg.IsNullOrEmpty()) return;
 
-                // 引用错误可以删除obj文件，下次编译将会得到解决
-                /*var p = msg.IndexOf("Undefined symbol");
-                if(p >= 0)
-                {
-                    foreach(var obj in Objs)
-                    {
-                        if(File.Exists(obj)) File.Delete(obj);
-                        var crf = Path.ChangeExtension(obj, ".crf");
-                        if(File.Exists(crf)) File.Delete(crf);
-                        var dep = Path.ChangeExtension(obj, ".d");
-                        if(File.Exists(dep)) File.Delete(dep);
-                    }
-                }*/
-
                 WriteLog(msg);
             });
             if (rs != 0) return rs;
@@ -521,11 +505,11 @@ namespace NewLife.Reflection
             // 预处理axf。修改编译信息
             Helper.WriteBuildInfo(axf);
 
-            var bin = name.EnsureEnd(".bin");
+            /*var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
             sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
-            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);*/
 
             /*var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
@@ -631,7 +615,7 @@ namespace NewLife.Reflection
 
         Boolean HasHeaderFile(String path)
         {
-            return path.AsDirectory().GetFiles("*.h", SearchOption.AllDirectories).Length > 0;
+            return path.AsDirectory().GetFiles("*.h", SearchOption.TopDirectoryOnly).Length > 0;
         }
 
         public void AddLibs(String path, String filter = null, Boolean allSub = true)
@@ -709,7 +693,7 @@ namespace NewLife.Reflection
 
         private String GetObjPath(String file)
         {
-            var objName = "Gcc";
+            var objName = "ICC";
             if (Tiny)
                 objName += "T";
             else if (Debug)
@@ -1139,10 +1123,10 @@ namespace NewLife.Reflection
         {
             // 修改成功说明axf文件有更新，需要重新生成bin
             // 必须先找到Keil目录，否则没得玩
-            var gcc = GetKeil();
-            if (!String.IsNullOrEmpty(gcc) && Directory.Exists(gcc))
+            var icc = GetKeil();
+            if (!String.IsNullOrEmpty(icc) && Directory.Exists(icc))
             {
-                var fromelf = gcc.CombinePath("ARMCC\\bin\\fromelf.exe");
+                var fromelf = icc.CombinePath("ARMCC\\bin\\fromelf.exe");
                 //var bin = Path.GetFileNameWithoutExtension(axf) + ".bin";
                 var prj = Path.GetFileNameWithoutExtension(GetProjectFile());
                 if (Path.GetFileNameWithoutExtension(axf).EndsWithIgnoreCase("D"))
