@@ -33,26 +33,23 @@ namespace NewLife.Reflection
         {
             if (basePath.IsNullOrEmpty())
             {
-                var gcc = new ICC();
-                if (gcc.ToolPath.IsNullOrEmpty() || !Directory.Exists(gcc.ToolPath))
+                var icc = new ICC();
+                if (icc.ToolPath.IsNullOrEmpty() || !Directory.Exists(icc.ToolPath))
                 {
-                    XTrace.WriteLine("未找到MDK！");
+                    XTrace.WriteLine("未找到IAR！");
                     return false;
                 }
 
-                XTrace.WriteLine("发现 {0} {1} {2}", gcc.Name, gcc.Version, gcc.ToolPath);
-                //basePath = gcc.ToolPath.CombinePath("arm-none-eabi\\bin").GetFullPath();
-                basePath = gcc.ToolPath.CombinePath("bin").GetFullPath();
+                XTrace.WriteLine("发现 {0} {1} {2}", icc.Name, icc.Version, icc.ToolPath);
+                basePath = icc.ToolPath.CombinePath("arm\\bin").GetFullPath();
             }
 
-            Complier = basePath.CombinePath("arm-none-eabi-g++.exe").GetFullPath();
-            Asm = basePath.CombinePath("arm-none-eabi-gcc.exe");
-            Link = basePath.CombinePath("armlink.exe");
-            Ar = basePath.CombinePath("arm-none-eabi-ar.exe");
-            ObjCopy = basePath.CombinePath("arm-none-eabi-objcopy.exe");
+            Complier = basePath.CombinePath("iccarm.exe").GetFullPath();
+            Asm = basePath.CombinePath("iasmarm.exe");
+            Link = basePath.CombinePath("ilinkarm.exe");
 
-            IncPath = basePath.CombinePath(@"..\arm-none-eabi\include").GetFullPath();
-            LibPath = basePath.CombinePath(@"..\arm-none-eabi\lib").GetFullPath();
+            IncPath = basePath.CombinePath(@"arm\include").GetFullPath();
+            LibPath = basePath.CombinePath(@"arm\lib").GetFullPath();
 
             // 特殊处理GD32F1x0
             if (GD32) Cortex = Cortex;
@@ -181,29 +178,28 @@ namespace NewLife.Reflection
                 }
             }
 
-			// -ggdb -ffunction-sections -fno-exceptions -fno-rtti -O0   -mcpu=cortex-m3 -mthumb
-			// -I. -IstLib/inc -IstCM3 -DDEBUG=1 -DARM_MATH_CM3 -DSTM32F103VE -Dstm32_flash_layout -DSTM32F10X_HD
-			// -c LEDBlink.cpp -o Debug/LEDBlink.o -MD -MF Debug/LEDBlink.dep
+			// --debug --endian=little --cpu=Cortex-M3 --enum_is_int -e --char_is_signed --fpu=None 
+			// -Ohz --use_c++_inline 
+			// --dlib_config C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.0\arm\INC\c\DLib_Config_Normal.h 
             var sb = new StringBuilder();
-			sb.Append("-ggdb");
 			if(file.EndsWithIgnoreCase(".cpp"))
-				sb.Append(" -std=c++17");
-            sb.AppendFormat(" -mlittle-endian -mthumb -mcpu={0} -mthumb-interwork -O{1}", CPU, Debug ? 0 : 3);
-			sb.AppendFormat(" -ffunction-sections -fdata-sections");
-			sb.AppendFormat(" -fno-exceptions -MD");
-			//sb.AppendFormat(" -fno-exceptions --specs=nano.specs --specs=rdimon.specs -o");
-			//sb.AppendFormat(" -L. -L./ldscripts -T gcc.ld");
-			//sb.AppendFormat(" -Wl,--gc-sections");
-			//sb.AppendFormat(" -fwide-exec-charset=UTF-8");
-            //sb.AppendFormat("  -D__NO_SYSTEM_INIT -D{0}", Flash);
-            sb.AppendFormat(" -D{0}", Flash);
-            if (GD32) sb.Append(" -DGD32");
+				//sb.Append("--c++ --no_exceptions");
+				sb.Append("--eec++");
+			else
+				sb.Append("--use_c++_inline");
+			// -e打开C++扩展
+            sb.AppendFormat(" --endian=little --cpu={0} -e", CPU);
+			//sb.Append(" --enable_multibytes");
+            if (Debug) sb.Append(" --debug");
+			// 默认低级优化，发行版-Ohz为代码大小优化，-Ohs为高速度优化
+			if (!Debug) sb.Append(" -Ohz");
+			var basePath = Complier.CombinePath(@"..\..\..\").GetFullPath();
+			//sb.AppendFormat(@" --dlib_config {0}\arm\INC\c\DLib_Config_Normal.h", basePath);
             foreach (var item in Defines)
             {
-                sb.AppendFormat(" -D{0}", item);
+                sb.AppendFormat(" -D {0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
-            if (Tiny) sb.Append(" -DTINY");
+            if (Tiny) sb.Append(" -D TINY");
 			sb.AppendFormat(" -I.");
             foreach (var item in Includes)
             {
@@ -211,18 +207,15 @@ namespace NewLife.Reflection
             }
 			if(showCmd)
 			{
-				//if (Debug) sb.Append(" -v");
-
 				Console.Write("命令参数：");
 				Console.ForegroundColor = ConsoleColor.Magenta;
 				Console.WriteLine(sb);
 				Console.ResetColor();
 			}
 
-			if(Preprocess) sb.Append(" -E");
-			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
-            sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
-			sb.AppendFormat(" -MF {0}.dep", objName);
+			//if(Preprocess) sb.Append(" --preprocess=cn");
+            sb.AppendFormat(" -o {0}", Path.GetDirectoryName(objName));
+            sb.AppendFormat(" -c {0}", file);
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
