@@ -24,7 +24,7 @@ public:
 	bool Close();
 
 	bool SetConfig(Dictionary<cstring, int>& config, String& str);
-	bool GetConfig(Dictionary<char *, int>& config);
+	bool GetConfig(Dictionary<cstring, int>& config);
 	virtual int	 Write(Buffer& data) = 0;
 	virtual int  Read(Buffer& data, Buffer& input) = 0;
 	void UploadTask();
@@ -40,7 +40,7 @@ private:
 	virtual bool OnAutoTask() { return true; };	
 
 	virtual bool OnSetConfig(Dictionary<cstring, int>& config, String& str) = 0;
-	virtual bool OnGetConfig(Dictionary<char *, int>& config) = 0;
+	virtual bool OnGetConfig(Dictionary<cstring, int>& config) = 0;
 
 	virtual bool OnGetConfig(Stream& cfg) { return true; };
 	virtual bool OnSetConfig(Stream& cfg) { return true; };
@@ -59,7 +59,7 @@ public:
 	int		baudRate;
 
 	virtual bool OnSetConfig(Dictionary<cstring, int>& config, String& str) override;
-	virtual bool OnGetConfig(Dictionary<char*, int>& config) override;
+	virtual bool OnGetConfig(Dictionary<cstring, int>& config) override;
 
 	virtual int Write(Buffer& data) override;
 	virtual int Read(Buffer& data, Buffer& input) override;

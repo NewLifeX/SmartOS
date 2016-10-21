@@ -59,7 +59,7 @@ bool Proxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 	return true;
 }
 
-bool Proxy::GetConfig(Dictionary<char *, int>& config)
+bool Proxy::GetConfig(Dictionary<cstring, int>& config)
 {
 	LoadConfig();
 
@@ -219,7 +219,7 @@ bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 	return true;
 }
 
-bool ComProxy::OnGetConfig(Dictionary<char *, int>& config)
+bool ComProxy::OnGetConfig(Dictionary<cstring, int>& config)
 {
 	config.Add("baudrate", baudRate);
 

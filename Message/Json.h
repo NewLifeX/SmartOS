@@ -51,7 +51,7 @@ public:
 	// 读取成员。找到指定成员，并用它的值构造一个新的对象
 	const Json operator[](cstring key) const;
 	// 设置成员。找到指定成员，或添加成员，并返回对象
-	Json& operator[](cstring key);
+	//Json& operator[](cstring key);
 
 	// 特殊支持数组
 	int Length() const;

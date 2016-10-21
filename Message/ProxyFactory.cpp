@@ -166,7 +166,7 @@ bool ProxyFactory::GetConfig(const Pair& args, Stream& result)
 	}
 	else
 	{
-		Dictionary<char*, int> cfg;
+		Dictionary<cstring, int> cfg;
 		port->GetConfig(cfg);		// 调用端口的函数处理内容
 
 		if (cfg.Count() < 1)

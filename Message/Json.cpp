@@ -196,7 +196,7 @@ Json Json::Find(cstring key) const
 // 读取成员。找到指定成员，并用它的值构造一个新的对象
 const Json Json::operator[](cstring key) const { return Find(key); }
 
-// 设置成员。找到指定成员，或添加成员，并返回对象
+/*// 设置成员。找到指定成员，或添加成员，并返回对象
 Json& Json::operator[](cstring key)
 {
 	//if(!_s) return Find(key);
@@ -207,7 +207,7 @@ Json& Json::operator[](cstring key)
 	json.SetOut(*_s);
 
 	return json;
-}
+}*/
 
 // 特殊支持数组
 int Json::Length() const
