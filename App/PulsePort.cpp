@@ -65,13 +65,14 @@ void PulsePort::OnPress(InputPort& port, bool down)
 		return;
 	}
 	// 计算上一次脉冲以来的遮挡时间，两个有效脉冲的间隔
-	auto time = (uint)(now - Last);
+	auto st		= Last;
+	auto time	= (uint)(now - st);
 	// 无论如何都更新最后一次时间，避免连续超长
-	//Start = Last;
 	Last = now;
 	// 两次脉冲的间隔必须在一个范围内才算作有效
 	if (Min > 0 && time < Min || Max > 0 && time > Max) return;
 
+	Start = st;
 	Time = time;
 	Count++;
 	if (time > 100)
