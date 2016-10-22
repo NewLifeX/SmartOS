@@ -466,14 +466,21 @@ namespace NewLife.Reflection
 
             var sb = new StringBuilder();
             //sb.AppendFormat("--cpu {0} --library_type=microlib --strict", CPU);
-            if (!Scatter.IsNullOrEmpty() && File.Exists(Scatter.GetFullPath()))
-                sb.AppendFormat(" --config \"{0}\"", Scatter);
+			var icf = Scatter;
+			if(icf.IsNullOrEmpty()) icf = ".".AsDirectory().GetAllFiles("*.icf", false).FirstOrDefault()?.FullName;
+            if (!icf.IsNullOrEmpty() && File.Exists(icf.GetFullPath()))
+                sb.AppendFormat(" --config \"{0}\"", icf);
             //else
             //    sb.AppendFormat(" --ro-base 0x08000000 --rw-base 0x20000000 --first __Vectors");
             sb.Append(" --entry Reset_Handler --no_exceptions --no_vfe");
 
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --map \"{0}.map\" -o \"{1}\"", lstName, axf);
+
+			Console.Write("命令参数：");
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine(sb);
+			Console.ResetColor();
 
             if (Objs.Count < 6) Console.Write("使用对象文件：");
             foreach (var item in Objs)
