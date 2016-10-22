@@ -40,7 +40,7 @@ public:
 	byte	Index;			// 光栅组索引
 	bool	Opened;
 
-	Raster(Pin pinA, Pin pinB, Pin bz = P0);
+	Raster(Pin pinA, Pin pinB);
 	~Raster();
 
 	bool Open();
@@ -51,13 +51,14 @@ private:
 	PulsePort*  RasterA;		//每一组光栅分两路
 	PulsePort*  RasterB;
 
+	static MemoryStream	Cache;		//实际送的数据
+	uint    _task;
+
 	FlagData FlagA;				//A标志
 	FlagData FlagB;				//B标志
-	byte Count;
-	//光栅计数
-	OutputPort	Buzzer;
+	ushort Count;
 
-	void Init(Pin bz);
+	void Init();
 	void OnHandlerA(PulsePort& raster);
 	void OnHandlerB(PulsePort& raster);
 	void LineReport();
