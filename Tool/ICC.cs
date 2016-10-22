@@ -146,6 +146,9 @@ namespace NewLife.Reflection
 
         /// <summary>库文件集合</summary>
         public ICollection<String> Libs { get; private set; }
+
+        /// <summary>扩展编译集合</summary>
+        public ICollection<String> ExtBuilds { get; private set; }
         #endregion
 
         #region 构造函数
@@ -160,6 +163,7 @@ namespace NewLife.Reflection
 			Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
 			Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
 			Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			ExtBuilds = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
 		}
         #endregion
 
@@ -477,6 +481,11 @@ namespace NewLife.Reflection
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --map \"{0}.map\" -o \"{1}\"", lstName, axf);
 
+			foreach(var item in ExtBuilds)
+			{
+				sb.AppendFormat(" {0}", item.Trim());
+			}
+			
 			Console.Write("命令参数：");
 			Console.ForegroundColor = ConsoleColor.Magenta;
 			Console.WriteLine(sb);
