@@ -164,6 +164,8 @@ namespace NewLife.Reflection
         #endregion
 
         #region 主要编译方法
+        private String _Root;
+
         public Int32 Compile(String file, Boolean showCmd)
         {
             var objName = GetObjPath(file);
@@ -178,6 +180,8 @@ namespace NewLife.Reflection
                     if (obj.LastWriteTime.AddMinutes(RebuildTime) > DateTime.Now) return -2;
                 }
             }
+
+            obj.DirectoryName.EnsureDirectory(false);
 
 			// --debug --endian=little --cpu=Cortex-M3 --enum_is_int -e --char_is_signed --fpu=None 
 			// -Ohz --use_c++_inline 
@@ -246,6 +250,8 @@ namespace NewLife.Reflection
                 }
             }
 
+            obj.DirectoryName.EnsureDirectory(false);
+
 			/*
 			* -s+ -M<> -w+ -r --cpu Cortex-M3 --fpu None
 			* -s+	标记符大小写敏感
@@ -293,6 +299,23 @@ namespace NewLife.Reflection
             // 特殊处理GD32F130
             //if(GD32) Cortex = Cortex;
 
+            // 计算根路径，输出的对象文件以根路径下子路径的方式存放
+            var di = Files.First().AsFile().Directory;
+            _Root = di.FullName;
+            foreach (var item in Files)
+            {
+                while (!item.StartsWithIgnoreCase(_Root))
+                {
+                    di = di.Parent;
+                    if (di == null) break;
+
+                    _Root = di.FullName;
+                }
+                if (di == null) break;
+            }
+            _Root = _Root.EnsureEnd("\\");
+            Console.WriteLine("根目录：{0}", _Root);
+
             // 提前创建临时目录
             var obj = GetObjPath(null);
             var list = new List<String>();
@@ -334,7 +357,8 @@ namespace NewLife.Reflection
                 {
                     if (!Preprocess)
                     {
-                        var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+                        //var fi = obj.CombinePath(Path.GetFileNameWithoutExtension(item) + ".o");
+                        var fi = GetObjPath(item) + ".o";
                         list.Add(fi);
                     }
                 }
@@ -705,7 +729,15 @@ namespace NewLife.Reflection
             objName = Output.CombinePath(objName);
             objName.GetFullPath().EnsureDirectory(false);
             if (!file.IsNullOrEmpty())
-                objName += "\\" + Path.GetFileNameWithoutExtension(file);
+            {
+                //objName += "\\" + Path.GetFileNameWithoutExtension(file);
+                var p = file.IndexOf(_Root, StringComparison.OrdinalIgnoreCase);
+                if (p == 0) file = file.Substring(_Root.Length);
+
+                objName = objName.CombinePath(file);
+                p = objName.LastIndexOf('.');
+                if (p > 0) objName = objName.Substring(0, p);
+            }
 
             return objName;
         }
