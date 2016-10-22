@@ -48,6 +48,7 @@ namespace NewLife.Reflection
             Asm = basePath.CombinePath("iasmarm.exe");
             Link = basePath.CombinePath("ilinkarm.exe");
             Ar = basePath.CombinePath("iarchive.exe");
+            ObjCopy = basePath.CombinePath("ielftool.exe");
 
             IncPath = basePath.CombinePath(@"arm\include").GetFullPath();
             LibPath = basePath.CombinePath(@"arm\lib").GetFullPath();
@@ -546,17 +547,23 @@ namespace NewLife.Reflection
             // 预处理axf。修改编译信息
             Helper.WriteBuildInfo(axf);
 
-            /*var bin = name.EnsureEnd(".bin");
+            var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
-            sb.AppendFormat("--bin  -o \"{0}\" \"{1}\"", bin, axf);
-            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);*/
+            sb.AppendFormat("--bin \"{0}\" \"{1}\"", axf, bin);
+			
+			Console.Write("命令参数：");
+			Console.ForegroundColor = ConsoleColor.Magenta;
+			Console.WriteLine(sb);
+			Console.ResetColor();
 
-            /*var hex = name.EnsureEnd(".hex");
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
+
+            var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
             sb.Clear();
-            sb.AppendFormat("--i32  -o \"{0}\" \"{1}\"", hex, axf);
-            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);*/
+            sb.AppendFormat("--ihex  -o \"{0}\" \"{1}\"", hex, axf);
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
 
             if (name.Contains("\\")) name = name.Substring("\\", "_");
             if (rs == 0)
