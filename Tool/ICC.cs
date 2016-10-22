@@ -190,6 +190,7 @@ namespace NewLife.Reflection
 				sb.Append("--use_c++_inline");
 			// -e打开C++扩展
             sb.AppendFormat(" --endian=little --cpu={0} -e --silent", CPU);
+			if(Cortex >= 4) sb.Append(" --fpu=None");
 			//sb.Append(" --enable_multibytes");
             if (Debug) sb.Append(" --debug");
 			// 默认低级优化，发行版-Ohz为代码大小优化，-Ohs为高速度优化
@@ -199,8 +200,8 @@ namespace NewLife.Reflection
                 sb.AppendFormat(" -D {0}", item);
             }
             if (Tiny) sb.Append(" -D TINY");
-			var basePath = Complier.CombinePath(@"..\..\..\").GetFullPath();
-			sb.AppendFormat(" --dlib_config \"{0}\\arm\\INC\\c\\DLib_Config_Normal.h\"", basePath);
+			//var basePath = Complier.CombinePath(@"..\..\..\").GetFullPath();
+			//sb.AppendFormat(" --dlib_config \"{0}\\arm\\INC\\c\\DLib_Config_Normal.h\"", basePath);
 
 			if(showCmd)
 			{
