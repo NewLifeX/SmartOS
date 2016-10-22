@@ -246,38 +246,38 @@ namespace NewLife.Reflection
                 }
             }
 
+			/*
+			* -s+ -M<> -w+ -r --cpu Cortex-M3 --fpu None
+			* -s+	标记符大小写敏感
+			* -r	调试输出
+			*/
             var sb = new StringBuilder();
-			sb.Append("-ggdb");
-			if(file.EndsWithIgnoreCase(".cpp"))
-				sb.Append(" -std=c++17");
-            sb.AppendFormat(" -mlittle-endian -mthumb -mcpu={0} -mthumb-interwork -O{1}", CPU, Debug ? 0 : 3);
-			sb.AppendFormat(" -ffunction-sections -fdata-sections");
-			sb.AppendFormat(" -fno-exceptions -MD");
-            sb.AppendFormat(" -D{0}", Flash);
+			sb.Append("-s+ -M<> -w+ -S");
+            sb.AppendFormat(" --cpu {0}", CPU);
+			if(Cortex >= 4) sb.Append(" --fpu=None");
             if (GD32) sb.Append(" -DGD32");
             foreach (var item in Defines)
             {
                 sb.AppendFormat(" -D{0}", item);
             }
-            if (Debug) sb.Append(" -DDEBUG -DUSE_FULL_ASSERT");
+            if (Debug) sb.Append(" -r");
             if (Tiny) sb.Append(" -DTINY");
 			sb.AppendFormat(" -I.");
-            foreach (var item in Includes)
-            {
-                sb.AppendFormat(" -I{0}", item);
-            }
+			
 			if(showCmd)
 			{
-				//if (Debug) sb.Append(" -v");
-
 				Console.Write("命令参数：");
 				Console.ForegroundColor = ConsoleColor.Magenta;
 				Console.WriteLine(sb);
 				Console.ResetColor();
 			}
-			sb.AppendFormat(" -Wl,-Map={0}.map", objName);
-            sb.AppendFormat(" -c {0} -o {1}.o", file, objName);
-			sb.AppendFormat(" -MF {0}.dep", objName);
+			
+            foreach (var item in Includes)
+            {
+                sb.AppendFormat(" -I{0}", item);
+            }
+			
+            sb.AppendFormat(" {0} -O{1}", file, Path.GetDirectoryName(objName));
 
             // 先删除目标文件
             if (obj.Exists) obj.Delete();
