@@ -5,7 +5,7 @@
 
 
 static Stream*	_Cache = nullptr;		//实际送的数据
-static uint		_task = 0;
+static uint		_RasterTask = 0;
 static int		_Ras = 0;
 
 static PulsePort* Create(Pin pin)
@@ -73,7 +73,7 @@ bool Raster::Open()
 		_Cache->SetCapacity(512);
 	}
 	// 光栅一直在轮训是否有数据要发送
-	if (!_task) _task = Sys.AddTask(&Raster::Report, this, 3000, 3000, "光栅发送");
+	if (!_RasterTask) _RasterTask = Sys.AddTask(&Raster::Report, this, 3000, 3000, "光栅发送");
 
 	Opened = true;
 
