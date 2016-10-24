@@ -562,7 +562,7 @@ namespace NewLife.Reflection
             var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
             sb.Clear();
-            sb.AppendFormat("--ihex  -o \"{0}\" \"{1}\"", hex, axf);
+            sb.AppendFormat("--ihex \"{0}\" \"{1}\"", axf, hex);
             rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
 
             if (name.Contains("\\")) name = name.Substring("\\", "_");
