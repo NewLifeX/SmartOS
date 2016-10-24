@@ -124,6 +124,9 @@ namespace NewLife.Reflection
         /// <summary>是否使用最新的MDK 6.4</summary>
         public Boolean CLang { get; set; }
 
+        /// <summary>是否使用Linux标准</summary>
+        public Boolean Linux { get; set; }
+
         /// <summary>定义集合</summary>
         public ICollection<String> Defines { get; private set; }
 
@@ -186,7 +189,10 @@ namespace NewLife.Reflection
                 //sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --exceptions --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
                 sb.AppendFormat(" --cpu {0} -D__MICROLIB -g -O{1} --apcs=interwork --split_sections", CPU, Debug ? 0 : 3);
                 sb.Append(" --multibyte_chars --locale \"chinese\"");
-                if (Tiny) sb.Append(" -DTINY");
+				// arm_linux 需要编译器授权支持
+				//if(Linux) sb.Append(" --arm_linux");
+				// --signed_chars
+				if(Linux) sb.Append(" --enum_is_int --wchar32");
             }
             else
             {
