@@ -345,6 +345,7 @@ void TokenClient::LoopTask()
 	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms())
 	{
 		Master->Close();
+		if (Master->Socket->Host->Mode != SocketMode::Wire)Sys.Reboot();
 		// Sys.Reboot();
 	}
 }
