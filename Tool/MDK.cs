@@ -138,6 +138,12 @@ namespace NewLife.Reflection
 
         /// <summary>库文件集合</summary>
         public ICollection<String> Libs { get; private set; }
+
+        /// <summary>扩展编译集合</summary>
+        public ICollection<String> ExtCompiles { get; private set; }
+
+        /// <summary>扩展编译集合</summary>
+        public ICollection<String> ExtBuilds { get; private set; }
         #endregion
 
         #region 构造函数
@@ -151,6 +157,8 @@ namespace NewLife.Reflection
             Files = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
             Objs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
             Libs = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			ExtCompiles = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
+			ExtBuilds = new HashSet<String>(StringComparer.OrdinalIgnoreCase);
         }
         #endregion
 
@@ -206,6 +214,12 @@ namespace NewLife.Reflection
             {
                 sb.AppendFormat(" -D{0}", item);
             }
+
+			foreach(var item in ExtCompiles)
+			{
+				sb.AppendFormat(" {0}", item.Trim());
+			}
+
             foreach (var item in Includes)
             {
                 sb.AppendFormat(" -I{0}", item);
@@ -529,6 +543,11 @@ namespace NewLife.Reflection
             //sb.Append(" --info sizes --info totals --info unused --info veneers");
             sb.Append(" --summary_stderr --info summarysizes --map --xref --callgraph --symbols");
             sb.Append(" --info sizes --info totals --info veneers --diag_suppress L6803 --diag_suppress L6314");
+
+			foreach(var item in ExtBuilds)
+			{
+				sb.AppendFormat(" {0}", item.Trim());
+			}
 
             var axf = objName.EnsureEnd(".axf");
             sb.AppendFormat(" --list \"{0}.map\" -o \"{1}\"", lstName, axf);
