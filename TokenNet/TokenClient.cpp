@@ -1,4 +1,4 @@
-﻿#include "TTime.h"
+﻿#include "Kernel\TTime.h"
 
 #include "Net\Socket.h"
 
@@ -345,8 +345,8 @@ void TokenClient::LoopTask()
 	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms())
 	{
 		Master->Close();
-		if (Master->Socket->Host->Mode != SocketMode::Wire)Sys.Reboot();
-		// Sys.Reboot();
+		//if (Master->Socket->Host->Mode != SocketMode::Wire)Sys.Reboot();
+		Sys.Reboot();
 	}
 }
 
