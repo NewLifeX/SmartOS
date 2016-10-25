@@ -82,7 +82,7 @@ bool Raster::Open()
 		_Cache->SetCapacity(512);
 	}
 	// 光栅一直在轮训是否有数据要发送
-	if (!_RasterTask) _RasterTask = Sys.AddTask(&Raster::Report, this, 3000, 3000, "光栅发送");
+	if (!_RasterTask) _RasterTask = Sys.AddTask(&Raster::Report, this, 3000, 2500, "光栅发送");
 
 	Opened = true;
 
