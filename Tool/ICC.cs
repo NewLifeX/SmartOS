@@ -547,17 +547,11 @@ namespace NewLife.Reflection
             // 预处理axf。修改编译信息
             Helper.WriteBuildInfo(axf);
 
-            var bin = name.EnsureEnd(".bin");
+            /*var bin = name.EnsureEnd(".bin");
             XTrace.WriteLine("生成：{0}", bin);
             sb.Clear();
             sb.AppendFormat("--bin \"{0}\" \"{1}\"", axf, bin);
-			
-			Console.Write("命令参数：");
-			Console.ForegroundColor = ConsoleColor.Magenta;
-			Console.WriteLine(sb);
-			Console.ResetColor();
-
-            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);
+            rs = ObjCopy.Run(sb.ToString(), 3000, WriteLog);*/
 
             var hex = name.EnsureEnd(".hex");
             XTrace.WriteLine("生成：{0}", hex);
