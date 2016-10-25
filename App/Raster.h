@@ -20,7 +20,7 @@ struct  RasTriData
 
 	byte Size() { return sizeof(this[0]); }
 };
-// 单路光栅部分
+
 struct  FlagData
 {
 	byte	Count;			//计数
@@ -56,6 +56,8 @@ private:
 
 	FlagData FlagA;				//A标志
 	FlagData FlagB;				//B标志
+
+	bool	Stop = false;				//	
 	ushort Count;
 
 	void Init();

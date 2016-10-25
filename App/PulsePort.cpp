@@ -34,7 +34,7 @@ void PulsePort::Open()
 	// 如果使用了硬件事件，则这里使用任务来触发外部事件
 	if(Port->HardEvent) _task	= Sys.AddTask(OnPressTask, this, -1, -1,"脉冲事件");
 
-	//Port->HardEvent = true;
+	Port->HardEvent = true;
 	Port->Press.Bind(&PulsePort::OnPress, this);
 	Port->UsePress();
 	Port->Open();
@@ -72,7 +72,7 @@ void PulsePort::OnPress(InputPort& port, bool down)
 	// 两次脉冲的间隔必须在一个范围内才算作有效
 	if (Min > 0 && time < Min || Max > 0 && time > Max) return;
 
-	Start = st;
+	Start = now;
 	Time = time;
 	Count++;
 	if (time > 100)
