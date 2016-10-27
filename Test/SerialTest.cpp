@@ -9,6 +9,9 @@ static uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* pa
 	bs.Show(true);
 	bs.AsString().Show(true);
 
+	// 原路发回去
+	sp->Write(bs);
+	
     return 0;
 }
 
