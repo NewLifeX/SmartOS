@@ -79,11 +79,16 @@ static void TestWrite()
 	String rs;
 	json.SetOut(rs);
 
-	json["id"]		= 3141;
+	/*json["id"]		= 3141;
 	json["name"]	= "Smart \" Stone";
 	json["enable"]	= "true";
 	json["noval"]	= nullptr;
-	json["score"]	= 3.14159;
+	json["score"]	= 3.14159;*/
+	json.Add("id",		3141);
+	json.Add("name",	"Smart \" Stone");
+	json.Add("enable",	"true");
+	json.Add("noval",	nullptr);
+	json.Add("score",	3.14159);
 
 	auto arr	= json["array"];
 	/*arr[0]	= 1;
@@ -92,8 +97,10 @@ static void TestWrite()
 	arr.Add(1).Add(0).Add(2);
 
 	auto ext	= json["extend"];
-	ext["kind"]	= "cost";
-	ext["value"]= 67.89f;
+	/*ext["kind"]	= "cost";
+	ext["value"]= 67.89f;*/
+	ext.Add("kind",		"cost");
+	ext.Add("value",	67.89f);
 
 	//auto rs	= json.ToString();
 	rs.Show(true);
