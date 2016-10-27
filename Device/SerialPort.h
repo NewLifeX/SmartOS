@@ -67,6 +67,11 @@ public:
 	virtual String& ToStr(String& str) const { return str + Name; }
 
 	static SerialPort* GetMessagePort();
+
+#ifdef DEBUG
+	static void Test();
+#endif
+
 protected:
 	virtual bool OnOpen();
     virtual void OnClose();

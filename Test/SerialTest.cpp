@@ -1,32 +1,61 @@
-﻿#include "SerialPort.h"
+﻿#include "Platform\Pin.h"
+#include "SerialPort.h"
 
-uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* param2)
+#ifdef DEBUG
+static uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* param2)
 {
-	debug_printf("收到：");
+	auto sp	= (SerialPort*)param;
+	debug_printf("%s 收到：", sp->Name);
 	bs.Show(true);
-    
+	bs.AsString().Show(true);
+
     return 0;
 }
 
-SerialPort* sp1;
-void TestSerial()
+static void TestSerialTask(void* param)
 {
     debug_printf("\r\n\r\n");
-    debug_printf("TestSerial Start......\r\n");
+    debug_printf("测试串口开始......\r\n");
 
-    // 串口输入
-    //sp1 = new SerialPort(COM1);
-    sp1 = SerialPort::GetMessagePort();
-#ifdef STM32F0
-    sp1->Close();
-	sp1->SetBaudRate(512000);
-#endif
-    sp1->Open();
-    sp1->Register(OnUsartRead);
-    
-	String str = "http://www.NewLifeX.com \r\n";
-    //sp1->Write(str);
-    //Sys.Sleep(3000);
+	COM coms[]	= {COM2, COM3, COM4, COM5};
+	List<SerialPort*> list;
 
-    debug_printf("\r\nTestSerial Finish!\r\n");
+	// 创建待测试对象
+	for(int i=0; i<ArrayLength(coms); i++)
+	{
+		auto sp	= new SerialPort(coms[i], 115200);
+		sp->Register(OnUsartRead, sp);
+		sp->Open();
+
+		list.Add(sp);
+	}
+
+	// 串口输出
+	String str = "万家灯火，无声物联！\r\n";
+	debug_printf("向所有串口输出：");
+	str.Show();
+	for(int k=0; k<5; k++)
+	{
+		debug_printf("第 %d 次输出\r\n", k+1);
+		for(int i=0; i<list.Count(); i++)
+		{
+			auto sp	= list[i];
+			sp->Write(str);
+		}
+		Sys.Sleep(1000);
+	}
+
+    /*// 等待输入
+    Sys.Sleep(60000);
+
+	// 销毁
+	list.DeleteAll();*/
+
+    debug_printf("\r\n测试串口完成\r\n\r\n");
 }
+
+void SerialPort::Test()
+{
+    Sys.AddTask(TestSerialTask, nullptr, 1000, -1, "串口测试");
+}
+#endif
