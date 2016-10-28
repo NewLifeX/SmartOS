@@ -9,9 +9,19 @@ static uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* pa
 	bs.Show(true);
 	bs.AsString().Show(true);
 
+	// 休眠50ms，某些USB转RS232芯片需要这个延迟
+	Sys.Sleep(50);
+
 	// 原路发回去
-	sp->Write(bs);
-	
+	// 部分核心板COM4用于WiFi模块
+	if(sp->Name[3] != '4')
+	{
+		String str	= sp->Name;
+		str	+= " 收到：";
+		str	+= bs.AsString();
+		sp->Write(str);
+	}
+
     return 0;
 }
 
