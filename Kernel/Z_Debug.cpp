@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 
-//#include "Platform\stm32.h"
+#include "Interrupt.h"
 
 #include <stdlib.h>
 

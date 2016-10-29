@@ -1,11 +1,7 @@
 #ifndef _Port_H_
 #define _Port_H_
 
-#include "Core\Type.h"
-#include "Core\Delegate.h"
-
-/* 引脚定义 */
-#include "Platform\Pin.h"
+#include "Sys.h"
 
 #ifdef STM32F4
 	#define GPIO_MAX_SPEED 100

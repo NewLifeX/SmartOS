@@ -71,18 +71,6 @@ extern TInterrupt Interrupt;
 // 初始化函数  Interrupt.Init（）  在 Sys.cpp 内 TSys::TSys() 中被调用
 // <TSys::TSys()也是构造函数   Sys.TSys()函数 在main（）函数之前被执行>
 
-// 智能IRQ，初始化时备份，销毁时还原
-// SmartIRQ相当霸道，它直接关闭所有中断，再也没有别的任务可以跟当前任务争夺MCU
-class SmartIRQ
-{
-public:
-	SmartIRQ(bool enable = false);
-	~SmartIRQ();
-
-private:
-	uint _state;
-};
-
 // 智能锁。初始化时锁定一个整数，销毁时解锁
 class Lock
 {
@@ -107,26 +95,6 @@ extern "C"
 	void RealHandler(void);
 #endif
 }
-
-#if DEBUG
-// 函数栈。
-// 进入函数时压栈函数名，离开时弹出。便于异常时获取主线程调用列表
-class TraceStack
-{
-public:
-	TraceStack(cstring name);
-	~TraceStack();
-
-	static void Show();
-};
-
-#define TS(name) TraceStack __ts(name)
-
-#else
-
-#define TS(name) ((void)0)
-
-#endif
 
 #endif
 

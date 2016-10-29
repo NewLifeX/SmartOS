@@ -1,5 +1,6 @@
 ﻿#include "Sys.h"
 
+#include "Interrupt.h"
 #include "TTime.h"
 
 TSys Sys;

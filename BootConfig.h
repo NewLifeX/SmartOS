@@ -4,9 +4,6 @@
 #include "Sys.h"
 #include "Config.h"
 
-/* 引脚定义 */
-#include "Platform\Pin.h"
-
 #pragma pack(push)
 #pragma pack(1)
 

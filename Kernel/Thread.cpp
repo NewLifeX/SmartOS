@@ -1,7 +1,6 @@
 ﻿#include "Thread.h"
 #include "Task.h"
-
-//#include "Platform\stm32.h"
+#include "Interrupt.h"
 
 //#define TH_DEBUG DEBUG
 #define TH_DEBUG 0

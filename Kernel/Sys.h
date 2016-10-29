@@ -17,6 +17,9 @@
 #include "Core\Dictionary.h"
 #include "Core\Delegate.h"
 
+/* 引脚定义 */
+#include "Platform\Pin.h"
+
 // 强迫内联
 #define _force_inline __attribute__( ( always_inline ) ) __INLINE
 
@@ -155,9 +158,6 @@ public:
 	ushort	Checksum;	// 校验
 };
 
-//#include "Time.h"
-#include "Interrupt.h"
-
 void EnterCritical();
 void ExitCritical();
 
@@ -166,6 +166,38 @@ void ExitCritical();
 
 uint _REV(uint value);
 ushort _REV16(ushort value);
+
+// 智能IRQ，初始化时备份，销毁时还原
+// SmartIRQ相当霸道，它直接关闭所有中断，再也没有别的任务可以跟当前任务争夺MCU
+class SmartIRQ
+{
+public:
+	SmartIRQ(bool enable = false);
+	~SmartIRQ();
+
+private:
+	uint _state;
+};
+
+#if DEBUG
+// 函数栈。
+// 进入函数时压栈函数名，离开时弹出。便于异常时获取主线程调用列表
+class TraceStack
+{
+public:
+	TraceStack(cstring name);
+	~TraceStack();
+
+	static void Show();
+};
+
+#define TS(name) TraceStack __ts(name)
+
+#else
+
+#define TS(name) ((void)0)
+
+#endif
 
 #endif //_Sys_H_
 

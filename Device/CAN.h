@@ -1,7 +1,7 @@
 ﻿#ifndef __CAN_H__
 #define __CAN_H__
 
-#include "Platform\Pin.h"
+#include "Sys.h"
 
 // CAN类
 class Can
