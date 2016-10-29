@@ -5,7 +5,8 @@
 #include "IPEndPoint.h"
 #include "MacAddress.h"
 #include "NetUri.h"
-#include "Delegate.h"
+
+#include "Core\Delegate.h"
 
 class ISocket;
 

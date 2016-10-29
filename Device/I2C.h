@@ -1,8 +1,7 @@
 ﻿#ifndef _I2C_H_
 #define _I2C_H_
 
-#include "Buffer.h"
-#include "Port.h"
+#include "Device\Port.h"
 
 //SCL		开漏复用输出
 //SDA		开漏复用输出

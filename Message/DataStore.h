@@ -75,7 +75,7 @@ protected:
 	virtual byte OnRead() { return Size(); };
 };
 
-#include "Port.h"
+#include "Device\Port.h"
 
 // 数据输出口
 class DataOutputPort : public ByteDataPort, public Object

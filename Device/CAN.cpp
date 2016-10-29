@@ -1,5 +1,4 @@
-﻿#include "Type.h"
-#include "Platform\Pin.h"
+﻿#include "Sys.h"
 
 #include "Can.h"
 

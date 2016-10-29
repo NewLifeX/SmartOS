@@ -233,7 +233,7 @@ void TSys::Delay(uint us) const
 /****************系统跟踪****************/
 
 //#if DEBUG
-	#include "Port.h"
+	#include "Device\Port.h"
 	static OutputPort* _trace = nullptr;
 //#endif
 void TSys::InitTrace(void* port) const

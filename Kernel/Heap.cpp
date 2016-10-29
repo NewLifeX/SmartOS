@@ -1,4 +1,4 @@
-﻿#include "Type.h"
+﻿#include "Core\Type.h"
 #include "Interrupt.h"
 
 #include "Heap.h"

@@ -5,7 +5,6 @@
 #include "Message\Pair.h"
 #include "TokenNet\TokenClient.h"
 #include "Device\Proxy.h"
-#include "Core\Dictionary.h"
 
 class ProxyFactory
 {

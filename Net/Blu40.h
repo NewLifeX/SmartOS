@@ -2,15 +2,13 @@
 #define __BLU40_H__
 
 #include "Sys.h"
-#include "Port.h"
+#include "Device\Port.h"
 #include "Net\ITransport.h"
-#include "SerialPort.h"
 
 // 思卡乐 CC2540
 class Blu40 : public PackPort
 {
 private:
-	SerialPort *_port;
 	OutputPort *_rts;
 //	InputPort *_cts;
 	OutputPort *_rst;
@@ -19,10 +17,10 @@ private:
 
 public:
 	Blu40();
-	Blu40(SerialPort *port,Pin rts = P0 ,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = nullptr);
+	Blu40(Pin rts,/*Pin cts = P0,*/Pin sleep=P0, OutputPort* rst = nullptr);
 	virtual ~Blu40();
 	void Init();
-	void Init(SerialPort *port ,Pin rts = P0,/*Pin cts = P0,*/Pin sleep=P0, OutputPort * rst = nullptr);
+	void Init(Pin rts,/*Pin cts = P0,*/Pin sleep=P0, OutputPort* rst = nullptr);
 
 	virtual void Register(TransportHandler handler, void* param = nullptr);
 	virtual void Reset(void);

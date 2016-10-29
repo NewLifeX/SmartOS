@@ -2,7 +2,6 @@
 #define __RTC_H__
 
 #include "Sys.h"
-#include "Interrupt.h"
 
 // 实时时钟
 class HardRTC

@@ -2,8 +2,6 @@
 
 #include "I2C.h"
 
-//#include "Platform\Pin.h"
-
 I2C::I2C()
 {
 	Speed	= 10000;

@@ -1,7 +1,7 @@
 ﻿#include "stddef.h"
 
 #include "Config.h"
-#include "Flash.h"
+#include "Device\Flash.h"
 #include "Security\Crc.h"
 
 #define CFG_DEBUG DEBUG

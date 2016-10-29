@@ -1,7 +1,7 @@
 ﻿#ifndef __ADC_H__
 #define __ADC_H__
 
-#include "Port.h"
+#include "Device\Port.h"
 
 /*
 Analog-to-digital converter

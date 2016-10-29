@@ -1,11 +1,10 @@
 ﻿#ifndef __SerialPort_H__
 #define __SerialPort_H__
 
-#include "Port.h"
-#include "Queue.h"
-#include "Power.h"
+#include "Core\Queue.h"
+#include "Device\Port.h"
+#include "Device\Power.h"
 #include "Net\ITransport.h"
-// #include "Proxy.h"
 
 #define SERIAL_BAUDRATE 1024000
 

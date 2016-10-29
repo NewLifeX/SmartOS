@@ -1,10 +1,10 @@
 ﻿#ifndef __Json_H__
 #define __Json_H__
 
-#include "Type.h"
-#include "SString.h"
-#include "List.h"
-#include "Dictionary.h"
+#include "Core\Type.h"
+#include "Core\SString.h"
+#include "Core\List.h"
+#include "Core\Dictionary.h"
 
 /*
 一个Json对象内部包含有一个字符串，读取成员就是截取子字符串构建新的Json对象。

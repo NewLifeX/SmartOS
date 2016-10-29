@@ -1,7 +1,7 @@
 ﻿#ifndef __SPI_H__
 #define __SPI_H__
 
-#include "Port.h"
+#include "Device\Port.h"
 
 // Spi类
 class Spi
