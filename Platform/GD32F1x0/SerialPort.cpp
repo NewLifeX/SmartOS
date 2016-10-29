@@ -168,16 +168,14 @@ void SerialPort::OnWrite2()
 
 void SerialPort::OnTxHandler()
 {
-//#if !(defined(STM32F0) || defined(GD32F150))
 	if(!Tx.Empty())
 		USART_SendData((USART_TypeDef*)_port, (ushort)Tx.Pop());
 	else
 	{
 		USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, DISABLE);
 
-		if(RS485) *RS485 = false;
+		Set485(false);
 	}
-//#endif
 }
 
 void SerialPort::OnRxHandler()

@@ -83,6 +83,7 @@ private:
 	static void OnHandler(ushort num, void* param);
 	void OnTxHandler();
 	void OnRxHandler();
+	void Set485(bool flag);
 
 	void*	_task;
 	uint	_taskidRx;

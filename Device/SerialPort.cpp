@@ -78,7 +78,7 @@ bool SerialPort::OnOpen()
 
 	OnOpen2();
 
-	if(RS485) *RS485 = false;
+	Set485(false);
 
 	return true;
 }
@@ -96,13 +96,13 @@ bool SerialPort::OnWrite(const Buffer& bs)
 {
 	if(!bs.Length()) return true;
 /*#if defined(STM32F0) || defined(GD32F150)
-	if(RS485) *RS485 = true;
+	Set485(true);
 	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务
 	for(int i=0; i<bs.Length(); i++)
 	{
 		SendData(bs[i], 3000);
 	}
-	if(RS485) *RS485 = false;
+	Set485(false);
 #else*/
 	// 如果队列已满，则强制刷出
 	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
@@ -110,7 +110,7 @@ bool SerialPort::OnWrite(const Buffer& bs)
 	Tx.Write(bs);
 
 	// 打开串口发送
-	if(RS485) *RS485 = true;
+	Set485(true);
 	//USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, ENABLE);
 	OnWrite2();
 //#endif
@@ -121,18 +121,14 @@ bool SerialPort::OnWrite(const Buffer& bs)
 // 刷出某个端口中的数据
 bool SerialPort::Flush(uint times)
 {
-//#if !(defined(STM32F0) || defined(GD32F150))
 	// 打开串口发送
-	if(RS485) *RS485 = true;
+	Set485(true);
 
 	while(!Tx.Empty() && times > 0) times = SendData(Tx.Pop(), times);
 
-	if(RS485) *RS485 = false;
+	Set485(false);
 
 	return times > 0;
-/*#else
-	return true;
-#endif*/
 }
 
 // 从某个端口读取数据
@@ -177,7 +173,6 @@ uint SerialPort::OnRead(Buffer& bs)
 
 void SerialPort::ReceiveTask()
 {
-	//auto sp = (SerialPort*)param;
 	auto sp	= this;
 
 	//!!! 只要注释这一行，四位触摸开关就不会有串口溢出错误
@@ -262,4 +257,18 @@ SerialPort* SerialPort::GetMessagePort()
 		sp->Open();
 	}
 	return sp;
+}
+
+void SerialPort::Set485(bool flag)
+{
+	if(RS485)
+	{
+		if(!flag) Sys.Sleep(1);
+		*RS485	= flag;
+		if(flag) Sys.Sleep(1);
+		/*if(flag)
+			debug_printf("485 高\r\n");
+		else
+			debug_printf("485 低\r\n");*/
+	}
 }

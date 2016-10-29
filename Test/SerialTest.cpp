@@ -9,12 +9,9 @@ static uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* pa
 	bs.Show(true);
 	bs.AsString().Show(true);
 
-	// 休眠50ms，某些USB转RS232芯片需要这个延迟
-	Sys.Sleep(50);
-
 	// 原路发回去
 	// 部分核心板COM4用于WiFi模块
-	if(sp->Name[3] != '4')
+	if(!bs.AsString().Contains("ERROR"))
 	{
 		String str	= sp->Name;
 		str	+= " 收到：";
@@ -38,6 +35,8 @@ static void TestSerialTask(void* param)
 	{
 		auto sp	= new SerialPort(coms[i], 115200);
 		sp->Register(OnUsartRead, sp);
+		// COM5是RS485
+		if(coms[i] == COM5) sp->RS485	= new OutputPort(PC9, false);
 		sp->Open();
 
 		list.Add(sp);
