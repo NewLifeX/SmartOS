@@ -1,8 +1,6 @@
 ﻿#ifndef __Flash_H__
 #define __Flash_H__
 
-#include "Sys.h"
-#include "Device\Port.h"
 #include "Storage\Storage.h"
 
 // Flash类

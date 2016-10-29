@@ -1,8 +1,8 @@
 ﻿#ifndef _AT24CXX_H_
 #define _AT24CXX_H_
 
-#include "I2C.h"
-#include "..\Storage\Storage.h"
+#include "Device\I2C.h"
+#include "Storage\Storage.h"
 
 // EEPROM
 class AT24CXX : public CharStorage

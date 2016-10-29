@@ -2,8 +2,8 @@
 #define __TEST_CONF__H__
 
 #include "Sys.h"
-#include "Port.h"
-#include "Spi.h"
+#include "Device\Port.h"
+#include "Device\Spi.h"
 #include "TokenNet\TokenClient.h"
 
 void TestSerial();

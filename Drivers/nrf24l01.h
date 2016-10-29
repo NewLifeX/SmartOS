@@ -2,9 +2,9 @@
 #define __NRF24L01_H__
 
 #include "Sys.h"
-#include "Spi.h"
+#include "Device\Spi.h"
 #include "Net\ITransport.h"
-#include "Power.h"
+#include "Device\Power.h"
 #include "Message\DataStore.h"
 #include "APP\FlushPort.h"
 

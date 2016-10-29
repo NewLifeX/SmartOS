@@ -1,7 +1,7 @@
 ﻿#include "Sys.h"
 #include "JTW8953.h"
 
-#include "I2C.h"
+#include "Device\I2C.h"
 
 #define ADDRESS			0xa6	// 从机的地址和写入标志
 

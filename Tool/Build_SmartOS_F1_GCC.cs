@@ -20,9 +20,6 @@ namespace NewLife.Reflection
 			build.Cortex = 3;
 			build.Output = "F1";
 			build.AddIncludes("..\\..\\Lib");
-			build.AddIncludes("..\\Core");
-			build.AddIncludes("..\\Kernel");
-			build.AddIncludes("..\\Device");
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel", "*.c;*.cpp", false, "Thread");
             build.AddFiles("..\\Device");

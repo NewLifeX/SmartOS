@@ -2,8 +2,8 @@
 #define __ShunCom_H__
 
 #include "Sys.h"
-#include "Port.h"
-#include "Power.h"
+#include "Device\Port.h"
+#include "Device\Power.h"
 #include "Net\ITransport.h"
 #include "Message\DataStore.h"
 

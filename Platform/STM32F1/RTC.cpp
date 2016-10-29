@@ -1,5 +1,6 @@
 ﻿#include "RTC.h"
-#include "TTime.h"
+#include "Kernel\TTime.h"
+#include "Kernel\Interrupt.h"
 
 #include "Platform\stm32.h"
 

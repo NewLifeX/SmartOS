@@ -1,8 +1,8 @@
-﻿#include "TTime.h"
+﻿#include "Kernel\TTime.h"
 #include "Icmp.h"
 #include "Arp.h"
 
-#include "WaitHandle.h"
+#include "Kernel\WaitHandle.h"
 
 #define NET_DEBUG DEBUG
 

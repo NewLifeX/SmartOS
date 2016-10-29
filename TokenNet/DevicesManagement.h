@@ -4,7 +4,7 @@
 #include "Sys.h"
 #include "Device.h"
 
-#include "Flash.h"
+#include "Device\Flash.h"
 #include "TinyNet\TinyConfig.h"
 #include "Message\BinaryPair.h"
 

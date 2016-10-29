@@ -2,7 +2,7 @@
 #define __Proxy_H__
 
 #include "Sys.h"
-#include "SerialPort.h"
+#include "Device\SerialPort.h"
 #include "ProxyConfig.h"
 
 class Proxy

@@ -1,6 +1,6 @@
 ﻿#include "Arp.h"
 
-#include "WaitHandle.h"
+#include "Kernel\WaitHandle.h"
 
 #define NET_DEBUG 0
 

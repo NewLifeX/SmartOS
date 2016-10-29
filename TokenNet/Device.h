@@ -3,7 +3,6 @@
 
 #include "Sys.h"
 
-#include "Flash.h"
 #include "TinyNet\TinyConfig.h"
 
 /******************************** Device ********************************/

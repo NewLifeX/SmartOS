@@ -1,6 +1,6 @@
 ﻿#include "SHT30.h"
 
-#include "I2C.h"
+#include "Device\I2C.h"
 
 #define LITTLE_ENDIAN
 

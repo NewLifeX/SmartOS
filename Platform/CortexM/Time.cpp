@@ -1,5 +1,7 @@
-﻿#include "TTime.h"
-#include "Timer.h"
+﻿#include "Sys.h"
+#include "Kernel\Interrupt.h"
+#include "Kernel\TTime.h"
+#include "Device\Timer.h"
 
 #include "Platform\stm32.h"
 

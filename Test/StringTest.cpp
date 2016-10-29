@@ -1,5 +1,5 @@
-﻿#include "SString.h"
-#include "TTime.h"
+﻿#include "Core\SString.h"
+#include "Kernel\TTime.h"
 
 #if DEBUG
 

@@ -1,5 +1,5 @@
 ﻿#include "UBlox.h"
-#include "SerialPort.h"
+#include "Device\SerialPort.h"
 
 UBlox::UBlox()
 {

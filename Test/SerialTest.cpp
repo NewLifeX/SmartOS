@@ -1,5 +1,4 @@
-﻿#include "Platform\Pin.h"
-#include "SerialPort.h"
+﻿#include "Device\SerialPort.h"
 
 #ifdef DEBUG
 static uint OnUsartRead(ITransport* transport, Buffer& bs, void* param, void* param2)

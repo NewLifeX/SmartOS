@@ -1,5 +1,5 @@
 ﻿#include "Thread.h"
-#include "Task.h"
+#include "Kernel\Task.h"
 #include "Interrupt.h"
 
 //#define TH_DEBUG DEBUG

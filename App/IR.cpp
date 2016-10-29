@@ -1,5 +1,5 @@
 ﻿#include "Sys.h"
-#include "TTime.h"
+#include "Kernel\TTime.h"
 
 #include "IR.h"
 

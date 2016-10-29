@@ -1,6 +1,6 @@
 ﻿#include "Device\Power.h"
 
-#include "WatchDog.h"
+#include "Device\WatchDog.h"
 
 // 低功耗处理器
 static List<Power*>	_powers;

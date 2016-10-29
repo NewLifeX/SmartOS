@@ -1,5 +1,5 @@
 ﻿#include "Sys.h"
-#include "ADC.h"
+#include "Device\ADC.h"
 
 void TestADC()
 {

@@ -2,9 +2,9 @@
 #ifndef __IR_H__
 #define __IR_H__
 
-#include "Buffer.h"
-#include "Pwm.h"
-#include "Port.h"
+#include "Sys.h"
+#include "Device\Pwm.h"
+#include "Device\Port.h"
 
 /*
 	因为引脚跟定时器不是一一对应 还有 remap的关系   引脚不好处理需自行初始化引脚

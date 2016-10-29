@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
-#include "Port.h"
-#include "Spi.h"
+#include "Device\Port.h"
+#include "Device\Spi.h"
 #include "AT45DB.h"
 
 #define Dummy_Byte 0xA5

@@ -1,6 +1,6 @@
 ﻿#include "Tcp.h"
 
-#include "WaitHandle.h"
+#include "Kernel\WaitHandle.h"
 
 #define NET_DEBUG 0
 //#define NET_DEBUG DEBUG

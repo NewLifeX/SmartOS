@@ -2,7 +2,7 @@
 #define __ProxyCfg_H__
 
 #include "Sys.h"
-#include "../Config.h"
+#include "Config.h"
 
 class ProxyConfig : public ConfigBase
 {

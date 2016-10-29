@@ -19,9 +19,6 @@ namespace NewLife.Reflection
             build.Init();
 			build.Cortex = 4;
 			build.Defines.Add("STM32F4");
-			build.AddIncludes("..\\Core");
-			build.AddIncludes("..\\Kernel");
-			build.AddIncludes("..\\Device");
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
             build.AddFiles("..\\Device");

@@ -2,7 +2,7 @@
 #define __FlushPort_H__
 
 #include "Sys.h"
-#include "Port.h"
+#include "Device\Port.h"
 #include "Message\DataStore.h"
 
 // 闪烁端口

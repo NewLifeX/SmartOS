@@ -1,8 +1,8 @@
 ﻿#include "IOK0612.h"
 
-#include "Task.h"
+#include "Kernel\Task.h"
 
-#include "WatchDog.h"
+#include "Device\WatchDog.h"
 #include "Config.h"
 
 #include "Drivers\Esp8266\Esp8266.h"

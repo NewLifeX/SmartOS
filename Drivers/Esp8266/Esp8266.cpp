@@ -1,8 +1,8 @@
 ﻿#include "Sys.h"
-#include "Task.h"
-#include "TTime.h"
+#include "Kernel\Task.h"
+#include "Kernel\TTime.h"
 
-#include "SerialPort.h"
+#include "Device\SerialPort.h"
 
 #include "Esp8266.h"
 #include "EspTcp.h"

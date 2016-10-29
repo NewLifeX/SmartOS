@@ -1,8 +1,8 @@
 ﻿#include "AP0801.h"
 
-#include "Task.h"
+#include "Kernel\Task.h"
 
-#include "WatchDog.h"
+#include "Device\WatchDog.h"
 #include "Config.h"
 
 #include "Drivers\NRF24L01.h"

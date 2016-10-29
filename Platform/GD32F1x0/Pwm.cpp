@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
 
-#include "Pwm.h"
+#include "Device\Pwm.h"
 
 #include "Platform\stm32.h"
 

@@ -2,7 +2,7 @@
 #define __CommandPort_H__
 
 #include "Sys.h"
-#include "Port.h"
+#include "Device\Port.h"
 
 // 命令端口。通过命令来控制输出口开关、取反、延时打开、打开延迟等高级功能
 class CommandPort

@@ -1,5 +1,5 @@
 ﻿#include "BufferPort.h"
-#include "SerialPort.h"
+#include "Device\SerialPort.h"
 
 BufferPort::BufferPort() : Buf()
 {

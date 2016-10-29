@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
-#include "Port.h"
-#include "Thread.h"
+#include "Device\Port.h"
+#include "Kernel\Thread.h"
 
 Thread* th;
 

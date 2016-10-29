@@ -1,6 +1,5 @@
 #include "Sys.h"
-#include "List.h"
-#include "Dictionary.h"
+#include "Core\Dictionary.h"
 
 #if DEBUG
 void IDictionary::Test()

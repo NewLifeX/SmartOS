@@ -2,8 +2,8 @@
 #define __Alarm_H__
 
 #include "Sys.h"
-#include "Timer.h"
-#include "Port.h"
+#include "Device\Timer.h"
+#include "Device\Port.h"
 #include "Config.h"
 #include "Message\BinaryPair.h"
 #include "Message\DataStore.h"

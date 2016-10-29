@@ -1,8 +1,8 @@
 ﻿#include "Sys.h"
-#include "Task.h"
-#include "Port.h"
+#include "Kernel\Task.h"
+#include "Device\Port.h"
 
-#include "Timer.h"
+#include "Device\Timer.h"
 
 #include "Button_GrayLevel.h"
 #include "Device\WatchDog.h"

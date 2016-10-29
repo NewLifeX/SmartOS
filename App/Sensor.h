@@ -2,7 +2,7 @@
 #define __SENSOR_H__
 
 #include "Sys.h"
-#include "Port.h"
+#include "Device\Port.h"
 
 
 class Sensor

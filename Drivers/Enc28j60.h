@@ -2,8 +2,8 @@
 #define __Enc28j60_H__
 
 #include "Sys.h"
-#include "Spi.h"
-#include "Power.h"
+#include "Device\Spi.h"
+#include "Device\Power.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 

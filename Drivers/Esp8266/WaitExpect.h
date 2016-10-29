@@ -1,7 +1,7 @@
 ﻿#ifndef __WaitExpect_H__
 #define __WaitExpect_H__
 
-#include "WaitHandle.h"
+#include "Kernel\WaitHandle.h"
 
 // 等待
 class WaitExpect

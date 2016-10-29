@@ -1,8 +1,8 @@
 ﻿#ifndef _74HC165_H_
 #define _74HC165_H_
 
-#include "Port.h"
-#include "Power.h"
+#include "Device\Port.h"
+#include "Device\Power.h"
 
 // 温湿度传感器
 class IC74HC165

@@ -1,6 +1,6 @@
 ﻿#include "Sys.h"
-#include "Port.h"
-#include "Timer.h"
+#include "Device\Port.h"
+#include "Device\Timer.h"
 
 //Timer* timer;
 

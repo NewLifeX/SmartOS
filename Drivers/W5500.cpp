@@ -1,8 +1,8 @@
 ﻿#include "stddef.h"
 
 #include "Sys.h"
-#include "Spi.h"
-#include "Power.h"
+#include "Device\Spi.h"
+#include "Device\Power.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 #include "Message\DataStore.h"
@@ -11,8 +11,8 @@
 #include "Net\DNS.h"
 
 #include "W5500.h"
-#include "TTime.h"
-#include "Task.h"
+#include "Kernel\TTime.h"
+#include "Kernel\Task.h"
 
 #include "App\FlushPort.h"
 

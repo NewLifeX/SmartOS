@@ -3,8 +3,8 @@
 #define __Music_H__
 
 #include "Sys.h"
-#include "Timer.h"
-#include "Port.h"
+#include "Device\Timer.h"
+#include "Device\Port.h"
 
 typedef struct		// 单个音节
 {

@@ -1,9 +1,9 @@
 ﻿#include "Token.h"
 
-#include "Task.h"
+#include "Kernel\Task.h"
 
-#include "SerialPort.h"
-#include "WatchDog.h"
+#include "Device\SerialPort.h"
+#include "Device\WatchDog.h"
 #include "Config.h"
 
 #include "Drivers\NRF24L01.h"

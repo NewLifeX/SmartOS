@@ -1,7 +1,7 @@
 ﻿#include "Buffer.h"
 #include "Sys.h"
 
-#include "Spi.h"
+#include "Device\Spi.h"
 
 #include "Platform\stm32.h"
 

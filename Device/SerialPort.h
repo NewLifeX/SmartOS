@@ -2,8 +2,8 @@
 #define __SerialPort_H__
 
 #include "Core\Queue.h"
-#include "Device\Port.h"
-#include "Device\Power.h"
+#include "Port.h"
+#include "Power.h"
 #include "Net\ITransport.h"
 
 #define SERIAL_BAUDRATE 1024000

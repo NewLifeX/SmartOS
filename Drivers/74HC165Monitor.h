@@ -1,8 +1,8 @@
 ﻿#ifndef _74HC165MOR_H_
 #define _74HC165MOR_H_
 
-#include "Port.h"
-#include "Power.h"
+#include "Device\Port.h"
+#include "Device\Power.h"
 
 /* 备注
 调用构造函数后 需要Open()一下

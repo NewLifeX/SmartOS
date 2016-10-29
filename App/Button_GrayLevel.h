@@ -1,8 +1,8 @@
 ﻿#ifndef __BUTTON_GRAY_LEVEL_H__
 #define __BUTTON_GRAY_LEVEL_H__
 
-#include "Port.h"
-#include "Pwm.h"
+#include "Device\Port.h"
+#include "Device\Pwm.h"
 #include "Message\DataStore.h"
 
 struct ButtonPin

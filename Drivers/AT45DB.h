@@ -2,7 +2,7 @@
 #define __AT45DB_H__
 
 #include "Sys.h"
-#include "Spi.h"
+#include "Device\Spi.h"
 
 // AT45DB存储Flash
 class AT45DB
