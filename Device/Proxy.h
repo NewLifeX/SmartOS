@@ -68,8 +68,8 @@ private:
 	virtual bool OnOpen() override;
 	virtual bool OnClose() override;
 
-	virtual bool OnGetConfig(Stream& cfg);
-	virtual bool OnSetConfig(Stream& cfg);
+	virtual bool OnGetConfig(Stream& cfg) override;
+	virtual bool OnSetConfig(Stream& cfg) override;
 
 	static uint Dispatch(ITransport* port, Buffer& bs, void* param, void* param2);
 };

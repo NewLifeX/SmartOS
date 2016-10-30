@@ -15,7 +15,7 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            var build = new Builder();
+            var build = Builder.Create("GCC");
             build.Init();
 			build.Cortex = 3;
 			build.Defines.Add("STM32F1");

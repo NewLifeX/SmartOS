@@ -6,9 +6,9 @@
 class PowerUpsCfg : public ConfigBase
 {
 public:
-	byte	Length;			// Êı¾İ³¤¶È
-	byte	ReStartCount;	// ÖØÆô´ÎÊı
-	byte	TagEnd;			// Êı¾İÇø½áÊø±êÊ¶·û
+	byte	Length;			// æ•°æ®é•¿åº¦
+	byte	ReStartCount;	// é‡å¯æ¬¡æ•°
+	byte	TagEnd;			// æ•°æ®åŒºç»“æŸæ ‡è¯†ç¬¦
 
 	PowerUpsCfg();
 
@@ -35,7 +35,7 @@ void PowerUpsCfg::Init()
 PowerUps::PowerUps(byte thld, int timeMs, Func act)
 {
 	ReStThld = thld;
-	if (act)		// Ã»ÓĞ¶¯×÷ Ö±½ÓºöÂÔFlash²Ù×÷
+	if (act)		// æ²¡æœ‰åŠ¨ä½œ ç›´æ¥å¿½ç•¥Flashæ“ä½œ
 	{
 		PowerUpsCfg pc;
 		pc.Load();
@@ -47,8 +47,8 @@ PowerUps::PowerUps(byte thld, int timeMs, Func act)
 
 		Act = act;
 	}
-	// ±£ÁôËû´¦ÀíÒ»Ğ©ÊÂÇé
-	Sys.AddTask(DelayAct, this, timeMs, -1, "ÖØÆôãĞÖµ");
+	// ä¿ç•™ä»–å¤„ç†ä¸€äº›äº‹æƒ…
+	Sys.AddTask(DelayAct, this, timeMs, -1, "é‡å¯é˜ˆå€¼");
 }
 
 void PowerUps::DelayAct(void* param)
@@ -64,6 +64,6 @@ void PowerUps::DelayAct(void* param)
 		pc.ReStartCount = 0;
 		pc.Save();
 	}
-	// Íê³ÉÊ¹Ãü ¹¦³ÉÉíÍË
+	// å®Œæˆä½¿å‘½ åŠŸæˆèº«é€€
 	delete pu;
 }
