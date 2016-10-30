@@ -20,6 +20,7 @@ namespace NewLife.Reflection
 			build.Cortex = 3;
 			build.Output = "GCC";
 			build.Defines.Add("STM32F1");
+			build.AddIncludes("..\\", false);
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
             build.AddFiles("..\\Device");

@@ -5,6 +5,11 @@
 #include <math.h>
 #include <stdarg.h>
 
+// gcc里面strncasecmp位于strings.h
+#ifdef __GNUC__
+#include <strings.h>
+#endif
+
 #include "_Core.h"
 
 #include "ByteArray.h"
