@@ -15,10 +15,11 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            var build = new Builder();
+            var build = Builder.Create("MDK");
             build.Init();
 			build.Cortex = 3;
 			build.Defines.Add("STM32F1");
+			build.AddIncludes("..\\", false);
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
             build.AddFiles("..\\Device");
@@ -49,4 +50,3 @@ namespace NewLife.Reflection
         }
     }
 }
-	//include=MDK.cs
