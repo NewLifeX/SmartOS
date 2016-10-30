@@ -1,7 +1,7 @@
 ﻿#ifndef _PIN_STM32F0_H_
 #define _PIN_STM32F0_H_ 1
 
-#include "Pin.h"
+#include "..\Pin.h"
 
 // 获取组和针脚
 #define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))

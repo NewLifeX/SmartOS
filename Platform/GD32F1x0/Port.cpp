@@ -1,4 +1,5 @@
 ﻿#include "Sys.h"
+#include "Kernel\Interrupt.h"
 #include "Device\Port.h"
 
 #include "Platform\stm32.h"

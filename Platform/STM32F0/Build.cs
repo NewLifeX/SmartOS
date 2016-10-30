@@ -19,17 +19,13 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            var build = new Builder();
+            var build = Builder.Create("MDK");
             build.Init();
 			build.Cortex = 0;
 			build.Defines.Add("STM32F0");
 			build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 			build.AddIncludes("..\\..\\..\\Lib\\Inc");
-			build.AddIncludes("..\\", false);
 			build.AddIncludes("..\\..\\", false);
-			build.AddIncludes("..\\..\\Core");
-			build.AddIncludes("..\\..\\Kernel");
-			build.AddIncludes("..\\..\\Device");
             build.AddFiles(".", "*.c;*.cpp;*.s");
             build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
 			build.Libs.Clear();
@@ -40,11 +36,10 @@ namespace NewLife.Reflection
             build.CompileAll();
             build.BuildLib("..\\..\\SmartOS_F0");
 
-			build.Debug = false;
+			/*build.Debug = false;
 			build.Tiny = true;
             build.CompileAll();
-            build.BuildLib("..\\..\\SmartOS_F0");
+            build.BuildLib("..\\..\\SmartOS_F0");*/
         }
     }
 }
-	//include=..\..\Tool\MDK.cs

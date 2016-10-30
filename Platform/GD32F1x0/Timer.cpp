@@ -1,5 +1,5 @@
 ﻿#include "Sys.h"
-
+#include "Kernel\Interrupt.h"
 #include "Device\Timer.h"
 
 #include "Platform\stm32.h"

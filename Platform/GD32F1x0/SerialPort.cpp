@@ -1,5 +1,6 @@
 ﻿#include "Sys.h"
 #include "Kernel\Task.h"
+#include "Kernel\Interrupt.h"
 
 #include "Device\SerialPort.h"
 
