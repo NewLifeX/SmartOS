@@ -1,4 +1,4 @@
-﻿#include "Thread.h"
+﻿#include "Kernel\Thread.h"
 #include "Kernel\Task.h"
 #include "Kernel\Interrupt.h"
 

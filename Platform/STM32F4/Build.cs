@@ -19,7 +19,7 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            var build = new Builder();
+            var build = Builder.Create("MDK");
             build.Init();
 			build.Cortex = 4;
 			build.Defines.Add("STM32F4");
@@ -27,9 +27,6 @@ namespace NewLife.Reflection
 			build.AddIncludes("..\\..\\..\\Lib\\Inc");
 			build.AddIncludes("..\\", false);
 			build.AddIncludes("..\\..\\", false);
-			build.AddIncludes("..\\..\\Core");
-			build.AddIncludes("..\\..\\Kernel");
-			build.AddIncludes("..\\..\\Device");
             build.AddFiles(".", "*.c;*.cpp;*.s");
             build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
 			build.Libs.Clear();
@@ -46,4 +43,3 @@ namespace NewLife.Reflection
         }
     }
 }
-	//include=..\..\Tool\MDK.cs
