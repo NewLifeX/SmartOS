@@ -18,6 +18,7 @@ namespace NewLife.Reflection
             var build = Builder.Create("GCC");
             build.Init();
 			build.Cortex = 3;
+			build.Output = "GCC";
 			build.Defines.Add("STM32F1");
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
@@ -49,4 +50,3 @@ namespace NewLife.Reflection
         }
     }
 }
-	//include=GCC.cs

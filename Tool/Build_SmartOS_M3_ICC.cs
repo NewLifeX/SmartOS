@@ -15,13 +15,11 @@ namespace NewLife.Reflection
     {
         static void Main()
         {
-            var build = Builder.Create("MDK");
+            var build = Builder.Create("ICC");
             build.Init();
 			build.Cortex = 3;
-			build.Output = "Linux";
-			build.Linux = true;
+			build.Output = "ICC";
 			build.Defines.Add("STM32F1");
-			build.AddIncludes("..\\", false);
             build.AddFiles("..\\Core");
             build.AddFiles("..\\Kernel");
             build.AddFiles("..\\Device");
@@ -38,9 +36,6 @@ namespace NewLife.Reflection
             build.AddFiles("..\\TinyNet");
             build.AddFiles("..\\TokenNet");
 			build.Libs.Clear();
-			//build.ExtCompiles.Add("--enum_is_int");
-			//build.ExtCompiles.Add("--signed_chars");
-			//build.ExtCompiles.Add("--wchar32");
             build.CompileAll();
             build.BuildLib("..\\SmartOS_M3");
 
