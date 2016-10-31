@@ -50,6 +50,8 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	Key.ShakeTime = 40;
 	//Key.Register(OnPress, this);
 	Key.Press.Bind(&Button_GrayLevel::OnPress, this);
+	Key.HardEvent = true;
+
 	Key.UsePress();
 	Key.Open();
 
@@ -137,6 +139,7 @@ void Button_GrayLevel::OnPress(InputPort& port, bool down)
 		if (port.PressTime <= 1500 || !EnableDelayClose)
 		{
 			SetValue(!_Value);
+
 			if (_task2)
 			{
 				Sys.RemoveTask(_task2);
