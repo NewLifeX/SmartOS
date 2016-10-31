@@ -34,19 +34,10 @@ static void TestCtor()
 	assert(str2 == str1, err);
 	assert(str2.GetBuffer() != str1.GetBuffer(), err);
 
-	//StringHelper str3(str1);
-	//assert(str3 == str1, "String(StringHelper&& rval)");
-	//assert(str3.GetBuffer() != str1.GetBuffer(), "String(StringHelper&& rval)");
-
 	char cs[] = "Hello Buffer";
 	String str4(cs, sizeof(cs));
 	assert(str4 == cs, "String(char* str, int length)");
 	assert(str4.GetBuffer() == cs, "String(char* str, int length)");
-
-	/*debug_printf("move测试\r\n");
-	auto tt	= TestMove(str1);
-	tt.Show(true);
-	str1.Show(true);*/
 
 	String str5((char)'1');
 	assert(str5 == "1", "String(char c)");

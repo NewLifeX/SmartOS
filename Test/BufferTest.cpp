@@ -86,7 +86,7 @@ void Buffer::Test()
 	char cs[] = "This is Buffer Test.";
 	Buffer bs(cs, sizeof(cs));
 	debug_printf("Buffer bs(cs, strlen(cs)) => %s\r\n", cs);
-	assert(bs.GetBuffer() == (byte*)cs, "Buffer(void* p = nullptr, int len = 0)");
+	assert(bs.GetBuffer() == (byte*)cs, "GetBuffer()");
 	assert(bs == cs, "Buffer(void* p = nullptr, int len = 0)");
 
 	TestAssign();
