@@ -43,6 +43,10 @@ public:
 	Raster(Pin pinA, Pin pinB);
 	~Raster();
 
+	uint	Min;			// 最小时间间隔 单位 ms
+	uint	Max;			// 最大时间间隔 单位 ms
+	bool	Filter = false;	//是否过滤脉冲 
+
 	bool Open();
 
 	Delegate<Stream&> OnReport;

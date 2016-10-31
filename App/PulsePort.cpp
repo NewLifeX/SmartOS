@@ -21,7 +21,7 @@ PulsePort::~PulsePort()
 
 static void OnPressTask(void* param)
 {
-	auto port	= (PulsePort*)param;
+	auto port = (PulsePort*)param;
 	port->Press(*port);
 }
 
@@ -32,7 +32,7 @@ void PulsePort::Open()
 	if (!Port) return;
 
 	// 如果使用了硬件事件，则这里使用任务来触发外部事件
-	if(Port->HardEvent) _task	= Sys.AddTask(OnPressTask, this, -1, -1,"脉冲事件");
+	if (Port->HardEvent) _task = Sys.AddTask(OnPressTask, this, -1, -1, "脉冲事件");
 
 	Port->HardEvent = true;
 	Port->Press.Bind(&PulsePort::OnPress, this);
@@ -65,8 +65,15 @@ void PulsePort::OnPress(InputPort& port, bool down)
 		return;
 	}
 	// 计算上一次脉冲以来的遮挡时间，两个有效脉冲的间隔
-	auto st		= Last;
-	auto time	= (uint)(now - st);
+	auto st = Last;
+	uint time = 0;
+
+	//过滤形状的光栅需要两个信号的时间差
+	if (Filter)
+		time = (uint)(now - st);
+	else
+		time = port.PressTime;
+
 	// 无论如何都更新最后一次时间，避免连续超长
 	Last = now;
 	// 两次脉冲的间隔必须在一个范围内才算作有效

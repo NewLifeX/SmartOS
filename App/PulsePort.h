@@ -14,6 +14,8 @@ public:
 	uint	Min;		// 最小时间间隔 单位 ms
 	uint	Max;		// 最大时间间隔 单位 ms
 
+	bool	Filter;		//是否过滤形脉冲 
+
 	UInt64 	Start;		// 开始遮挡时间
 	UInt64 	Last;		// 上一次脉冲时间
 	uint 	Time;		// 遮挡时间

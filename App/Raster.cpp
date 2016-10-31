@@ -8,13 +8,14 @@ static Stream*	_Cache = nullptr;		//实际送的数据
 static uint		_RasterTask = 0;
 static int		_Ras = 0;
 
-static PulsePort* Create(Pin pin)
+static PulsePort* Create(Pin pin, uint min, uint max, bool filter)
 {
 	auto pp = new PulsePort();
 	pp->Port = new InputPort(pin);
 	pp->Port->HardEvent = true;
-	pp->Min = 100;
-	pp->Max = 2000;
+	pp->Min = min;
+	pp->Max = max;
+	pp->Filter = filter;
 
 	return pp;
 }
@@ -23,8 +24,9 @@ Raster::Raster(Pin pinA, Pin pinB)
 {
 	Init();
 
-	RasterA = Create(pinA);
-	RasterB = Create(pinB);
+	RasterA = Create(pinA, Min, Max, Filter);
+
+	RasterB = Create(pinB, Min, Max, Filter);
 
 	_Ras++;
 }
@@ -56,6 +58,11 @@ void Raster::Init()
 	FlagA.Start = 0;
 	FlagA.Time = 0;
 	FlagA.Count = 0;
+
+	Min = 100;		// 最小时间间隔 单位 ms
+	Max = 2000;		// 最大时间间隔 单位 ms
+
+	Filter = false;
 
 	Count = 0;
 }
