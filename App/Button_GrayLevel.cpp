@@ -55,6 +55,11 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	Key.UsePress();
 	Key.Open();
 
+	//面板事件
+	if (!_task3)
+	{
+		_task3 = Sys.AddTask(&Button_GrayLevel::ReportPress, this, -1, -1, "面板事件");
+	}
 	if (relay != P0) Relay.Init(relay, relayInvert).Open();
 }
 
@@ -119,14 +124,14 @@ void Button_GrayLevel::OnPress(InputPort& port, bool down)
 			if (time > 1500)
 			{
 				debug_printf("DelayClose  ");
-				if (time >= 3800 &&  time < 6500)
+				if (time >= 3800 && time < 6500)
 				{
 					debug_printf("60s\r\n");
 					DelayClose2(60 * 1000);
 					port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
 					return;
 				}
-				if(time < 3800)
+				if (time < 3800)
 				{
 					debug_printf("15s\r\n");
 					DelayClose2(15 * 1000);
@@ -147,8 +152,16 @@ void Button_GrayLevel::OnPress(InputPort& port, bool down)
 			}
 		}
 		// if (_Handler) _Handler(this, _Param);
-		Press(*this);
+		if (_task3)
+			Sys.SetTask(_task3, true, 0);
+		else
+			Press(*this);
 	}
+}
+
+void Button_GrayLevel::ReportPress()
+{
+	Press(*this);
 }
 
 void Close2Task(void * param)
@@ -163,7 +176,7 @@ void Close2Task(void * param)
 	else
 	{
 		bt->delaytime = 0;
-		debug_printf("延时关闭已完成 删除任务 0x%08X\r\n",bt->_task2);
+		debug_printf("延时关闭已完成 删除任务 0x%08X\r\n", bt->_task2);
 		Sys.RemoveTask(bt->_task2);
 		bt->_task2 = 0;
 		bt->SetValue(false);
@@ -300,7 +313,7 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 		btns[i].Name = names[i];
 #endif
 		//btns[i].Register(onpress);
-		btns[i].Press	= onpress;
+		btns[i].Press = onpress;
 
 		// 灰度 LED 绑定到 Button
 		btns[i].Set(&LedPWM, pins[i].PwmIndex);
