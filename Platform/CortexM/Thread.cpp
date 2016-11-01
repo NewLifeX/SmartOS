@@ -66,6 +66,7 @@ void Thread::OnSchedule()
 	__set_MSP(__get_MSP() & 0xFFFFFFF8);
 }
 
+#if defined(__CC_ARM)
 extern "C"
 {
 	extern uint** curStack;	// 当前线程栈的指针。需要保存线程栈，所以需要指针
@@ -163,6 +164,7 @@ PendSV_NoSave						// 此时整个上下文已经被保存
 	}
 #endif
 }
+#endif
 
 // 切换线程，马上切换时间片给下一个线程
 bool Thread::CheckPend()

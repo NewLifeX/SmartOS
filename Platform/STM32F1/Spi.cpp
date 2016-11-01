@@ -1,5 +1,4 @@
-﻿#include "Buffer.h"
-#include "Sys.h"
+﻿#include "Sys.h"
 
 #include "Device\Spi.h"
 

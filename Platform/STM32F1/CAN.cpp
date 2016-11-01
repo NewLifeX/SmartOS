@@ -2,7 +2,7 @@
 #include "Kernel\Interrupt.h"
 #include "Device\Port.h"
 
-#include "Can.h"
+#include "Device\Can.h"
 
 #include "Platform\stm32.h"
 
