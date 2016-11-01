@@ -27,8 +27,8 @@ namespace NewLife.Reflection
 			build.AddIncludes("..\\..\\..\\Lib\\Inc");
 			build.AddIncludes("..\\", false);
 			build.AddIncludes("..\\..\\", false);
-            build.AddFiles(".", "*.c;*.cpp;*.s");
-            build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
+            build.AddFiles(".", "*.c;*.cpp;startup_stm32f10x.s");
+            build.AddFiles("..\\CortexM", "*.c;*.cpp");
 			build.Libs.Clear();
             build.CompileAll();
             build.BuildLib("..\\..\\SmartOS_F1");
