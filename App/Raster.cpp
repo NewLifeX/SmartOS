@@ -97,16 +97,16 @@ bool Raster::Open()
 }
 
 // 检查配对
-static bool CheckMatch(FlagData& flag)
+static bool CheckMatch(FlagData& flag, UInt64 now)
 {
 	if (flag.Count == 0)
 	{
-		debug_printf("标致被清零\r\n");
+		debug_printf("等待配对\r\n");
 		return false;
 	}
 
 	// 超过3秒无效
-	if (flag.Start + 3000 < Sys.Ms())
+	if (flag.Start + 3000 < now)
 	{
 		debug_printf("过期清零\r\n");
 		flag.Count = 0;
@@ -124,7 +124,7 @@ void Raster::OnHandlerA(PulsePort& raster)
 	FlagA.Time = raster.Time;
 	FlagA.Count++;
 
-	if (CheckMatch(FlagB))
+	if (CheckMatch(FlagB,FlagA.Start))
 	{
 		LineReport();
 		debug_printf("A配对\r\n");
@@ -141,7 +141,7 @@ void Raster::OnHandlerB(PulsePort& raster)
 	debug_printf("获得波长%d\r\n", FlagB.Time);
 	FlagB.Count++;
 
-	if (CheckMatch(FlagA))
+	if (CheckMatch(FlagA, FlagB.Start))
 	{
 		LineReport();
 		debug_printf("B配对\r\n");
