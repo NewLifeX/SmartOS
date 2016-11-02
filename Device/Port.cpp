@@ -377,7 +377,6 @@ void InputPort::OnPress(bool down)
 	else
 	{
 		PressTime = now - _Start;
-		_Start = now;
 	}
 
 	if(down)
