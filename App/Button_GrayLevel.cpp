@@ -47,7 +47,7 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	// 中断过滤模式
 	Key.Mode = InputPort::Both;
 
-	Key.ShakeTime = 40;
+	Key.ShakeTime = 20;
 	//Key.Register(OnPress, this);
 	Key.Press.Bind(&Button_GrayLevel::OnPress, this);
 	Key.HardEvent = true;
@@ -109,54 +109,47 @@ void Button_GrayLevel::GrayLevelDown()
 
 void Button_GrayLevel::OnPress(InputPort& port, bool down)
 {
-	// 每次按下弹起，都取反状态
-	/*if(down)
-	{
-		SetValue(!_Value);
-		if(_Handler) _Handler(this, _Param);
-	}
-	else*/
-	if (!down)		// 要处理长按而不动作  所以必须是弹起响应
-	{
-		if (_Value && EnableDelayClose)
-		{
-			ushort time = port.PressTime;
-			if (time > 1500)
-			{
-				debug_printf("DelayClose  ");
-				if (time >= 3800 && time < 6500)
-				{
-					debug_printf("60s\r\n");
-					DelayClose2(60 * 1000);
-					port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
-					return;
-				}
-				if (time < 3800)
-				{
-					debug_printf("15s\r\n");
-					DelayClose2(15 * 1000);
-					port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
-					return;
-				}
-			}
-		}
-		// 不启用长按时，长按操作当正常处理
-		if (port.PressTime <= 1500 || !EnableDelayClose)
-		{
-			SetValue(!_Value);
+	//只有弹起才能执行业务动作
+	if (down) return;
 
-			if (_task2)
+	ushort time = port.PressTime;
+
+	debug_printf("按键时长 %d \r\n", time);
+	if (_Value && EnableDelayClose)
+	{
+		if (time > 1500)
+		{
+			debug_printf("DelayClose  ");
+			if (time >= 3800 && time < 6500)
 			{
-				Sys.RemoveTask(_task2);
-				_task2 = 0;
+				debug_printf("60s\r\n");
+				DelayClose2(60 * 1000);
+				port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+				return;
+			}
+			if (time < 3800)
+			{
+				debug_printf("15s\r\n");
+				DelayClose2(15 * 1000);
+				port.PressTime = 0;	// 保险一下，以免在延时关闭更新状态的时候误判造成重启
+				return;
 			}
 		}
-		// if (_Handler) _Handler(this, _Param);
-		if (_task3)
-			Sys.SetTask(_task3, true, 0);
-		else
-			Press(*this);
 	}
+
+	SetValue(!_Value);
+
+	//取消延迟关闭
+	if (_task2)
+	{
+		Sys.RemoveTask(_task2);
+		_task2 = 0;
+	}
+	// if (_Handler) _Handler(this, _Param);
+	if (_task3)
+		Sys.SetTask(_task3, true, 0);
+	else
+		Press(*this);
 }
 
 void Button_GrayLevel::ReportPress()
