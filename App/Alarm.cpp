@@ -210,6 +210,7 @@ byte Alarm::FindNext(int& nextTime)
 		if (time < miniTime)miniTime = time;	// 找出最小时间
 	}
 
+	NextAlarmIds.Clear();
 	if (miniTime != Int_Max)
 	{
 		for (int i = 0; i < ArrayLength(cfg.Data); i++)
@@ -226,10 +227,8 @@ byte Alarm::FindNext(int& nextTime)
 	else
 	{
 		// 如果最小值无效   直接明早再来算一次
-		// nextTime = ToTomorrow();
 		nextTime = tomorrowTime;
 		debug_printf("今天没有闹钟任务，下次唤醒时间为明天\r\n");
-		NextAlarmIds.Clear();
 	}
 
 	return NextAlarmIds.Count();
@@ -237,35 +236,37 @@ byte Alarm::FindNext(int& nextTime)
 
 void Alarm::AlarmTask()
 {
-	// debug_printf("AlarmTask");
 	// 获取定时的数据
 	AlarmDataType data;
+	// 拿到现在的时间
 	auto now = DateTime::Now();
 	now.Ms = 0;
 	for (int i = 0; i < NextAlarmIds.Count(); i++)
 	{
 		byte NextAlarmId = NextAlarmIds[i];
 		GetCfg(NextAlarmId, data);
-
+		// 拿到定时项的时间
 		DateTime dt(now.Year, now.Month, now.Day);
 		dt.Hour = data.Hour;
 		dt.Minute = data.Minutes;
 		dt.Second = dt.Second;
 		dt.Ms = 0;
+		// 对比现在时间和定时项的时间  符合则执行任务
 		if (dt == now)
 		{
 			// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
+			// 取总体数据长度
 			byte len = data.Data[0];
 			if (len <= 10)
 			{
+				// 取动作类型
 				auto type = (int)data.Data[1];
 				AlarmActuator acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
+					// 取动作数据
 					Buffer bs(&data.Data[2], len - 1);
 					// 执行动作   DoSomething(data);
-					// debug_printf("  DoSomething type %d ",type);
-					// bs.Show(true);
 					acttor(NextAlarmId, bs);
 				}
 			}
@@ -275,14 +276,11 @@ void Alarm::AlarmTask()
 			}
 		}
 	}
-	NextAlarmIds.Clear();
 
-	// 找到下一个定时器动作的时间
+	// 找到下一个定时器动作的时间，并拿到距离下次执行的时间。如果今天没有下一次了 就定明天早上第一时间来计算一次。
 	FindNext(NextAlarmMs);
-	if (NextAlarmIds.Count() != 0)
-		Sys.SetTask(AlarmTaskId, true, NextAlarmMs);
-	else
-		Sys.SetTask(AlarmTaskId, false);
+	// 设置下次执行的时间
+	Sys.SetTask(AlarmTaskId, true, NextAlarmMs);
 }
 
 void Alarm::Start()
