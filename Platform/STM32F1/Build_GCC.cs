@@ -1,6 +1,8 @@
 var build = Builder.Create("GCC");
 build.Init();
 build.Cortex = 3;
+build.Linux = true;
+build.RebuildTime = 7 * 24 * 3600;
 build.Defines.Add("STM32F1");
 build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 build.AddIncludes("..\\..\\..\\Lib\\Inc");
