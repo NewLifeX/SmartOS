@@ -12,6 +12,8 @@ typedef void (*InterruptCallback)(ushort num, void* param);
     #define VectorySize 64
 #elif defined(STM32F4)
     #define VectorySize (86 + 16 + 1)
+#else
+    #define VectorySize 32
 #endif
 
 //VectorySize 64 未考证
