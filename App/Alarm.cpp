@@ -90,14 +90,19 @@ byte Alarm::SetCfg(const AlarmItem& item)
 	if (!id) return 0;	// 查找失败
 
 	if (item.Hour < 0xFF)
+	{
 		Buffer::Copy(&cfg.Items[id - 1], &item, sizeof(item));
+		//重新分配
+		if (item.Index==0) 	cfg.Items[id - 1].Index = id;	
+	}
 	else	// Delete
 		cfg.Items[id - 1].Index = 0;
 
 	int n = 0;
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		if (cfg.Items[i].Index > 0) n++;
+		auto index = cfg.Items[i].Index;
+		if (cfg.Items[i].Index > 0)	n++;
 	}
 
 	cfg.Count = n;
