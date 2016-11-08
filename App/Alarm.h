@@ -43,7 +43,7 @@ typedef struct
 	byte Repeat 	: 1;
 public:
 	void Init(byte data = 0) { *(byte*)this = data; }
-	byte ToByte() { return *(byte*)this; }
+	byte ToByte() const { return *(byte*)this; }
 }AlarmType;
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
@@ -73,25 +73,17 @@ public:
 	/*  注册给 TokenClient 名称 Policy/Get  */
 	bool Get(const Pair& args, Stream& result) ;
 	void Start();
-	// 注册执行动作的函数
+	// 注册各种类型的执行动作
 	void Register(byte type, AlarmExecutor act);
 
 private:
 	Dictionary<int, AlarmExecutor> dic;// AlarmItem.Data[1] 表示动作类型，由此字典进行匹配动作执行器
 
-	uint		AlarmTaskId;			// 闹钟TaskId
-	List<int>	NextAlarmIds;			// 下次运行的编号，允许多组定时器定时时间相同
-	int			NextAlarmMs;			// 下次闹钟时间
-	// Task
+	uint		_taskid;			// 闹钟TaskId
 	void AlarmTask();
-	// 找到最近的闹钟的id以及时间
-	byte FindNext(int& nextTime);
-	// 计算下次闹钟时间
-	int CalcNextTime(AlarmItem& item);
 	
 	// Config
 	byte SetCfg(const AlarmItem& item);
-	bool GetCfg(byte id, AlarmItem& item);
 };
 
 

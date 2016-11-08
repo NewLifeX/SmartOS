@@ -14,9 +14,9 @@ public:
 
 AlarmConfig::AlarmConfig()
 {
-	_Name = "AlarmCf";
-	_Start = &Count;
-	_End = &TagEnd;
+	_Name	= "AlarmCf";
+	_Start	= &Count;
+	_End	= &TagEnd;
 	Init();
 }
 
@@ -24,7 +24,7 @@ AlarmConfig::AlarmConfig()
 
 Alarm::Alarm()
 {
-	AlarmTaskId = 0;
+	_taskid = 0;
 }
 
 bool Alarm::Set(const Pair& args, Stream& result)
@@ -41,7 +41,7 @@ bool Alarm::Set(const Pair& args, Stream& result)
 
 	auto& item = *(AlarmItem*)buf.GetBuffer();
 
-	if (item.Hour > 23 && item.Hour != 0xFF || item.Minutes > 59 || item.Seconds > 59) return false;
+	if ((item.Hour > 23 && item.Hour != 0xFF) || item.Minutes > 59 || item.Seconds > 59) return false;
 
 	debug_printf("%d  %d  %d 执行 bs：", item.Hour, item.Minutes, item.Seconds);
 
@@ -57,7 +57,7 @@ bool Alarm::Get(const Pair& args, Stream& result)
 	cfg.Load();
 
 	result.Write(cfg.Count);
-	// ZhuYi BuLianXu
+	// 注意，闹钟项可能不连续
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
 		auto& item = cfg.Items[i];
@@ -89,23 +89,27 @@ byte Alarm::SetCfg(const AlarmItem& item)
 	}
 	if (!id) return 0;	// 查找失败
 
+	auto& dst	= cfg.Items[id - 1];
 	if (item.Hour < 0xFF)
 	{
-		Buffer::Copy(&cfg.Items[id - 1], &item, sizeof(item));
+		Buffer::Copy(&dst, &item, sizeof(item));
 		//重新分配
-		if (item.Index==0) 	cfg.Items[id - 1].Index = id;	
+		if (item.Index == 0) dst.Index	= id;
 	}
-	else	// Delete
-		cfg.Items[id - 1].Index = 0;
+	else
+	{
+		// 删除
+		dst.Index	= 0;
+	}
 
+	// 重新计算个数
 	int n = 0;
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		auto index = cfg.Items[i].Index;
 		if (cfg.Items[i].Index > 0)	n++;
 	}
 
-	cfg.Count = n;
+	cfg.Count	= n;
 	cfg.Save();
 
 	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
@@ -115,149 +119,90 @@ byte Alarm::SetCfg(const AlarmItem& item)
 	return id;
 }
 
-bool Alarm::GetCfg(byte id, AlarmItem& item)
+// 检查闹钟还有多少秒到期
+static int CheckTime(const AlarmItem& item)
 {
-	AlarmConfig cfg;
-	cfg.Load();
+	// 判断有效
+	if(!item.Enable) return -100;
 
-	Buffer bf(&item.Index, sizeof(AlarmItem));
-	Buffer bf2(&cfg.Items[id].Index, sizeof(AlarmItem));
-	bf = bf2;
-	return true;
-}
+	// 判断星期，0~6表示星期天到星期六
+	auto now	= DateTime::Now();
+	auto week	= now.DayOfWeek();
+	int type	= item.Type.ToByte();
+	if((type & (1 << week)) == 0) return -100;
 
-int Alarm::CalcNextTime(AlarmItem& item)
-{
-	debug_printf("CalcNextTime Id %d  ", item.Index);
-	auto now = DateTime::Now();
-	byte type = item.Type.ToByte();
-	byte week = now.DayOfWeek();
-	int time;
-	if (type & 1 << week)	// 今天
-	{
-		DateTime dt(now.Year, now.Month, now.Day);
-		dt.Hour = item.Hour;
-		dt.Minute = item.Minutes;
-		dt.Second = item.Seconds;
-		if (dt > now)
-		{
-			time = (dt - now).Ms;
-			debug_printf("%d\r\n", time);
-			return time;		// 今天闹钟还没响
-		}
-	}
-	debug_printf("after today\r\n");
-	return Int_Max;
-}
+	// 判断时间有效性
+	auto dt	= now.Date();
+	dt.Hour	= item.Hour;
+	dt.Minute	= item.Minutes;
+	dt.Second	= item.Seconds;
 
-int ToTomorrow()
-{
-	auto dt = DateTime::Now();
-	int time = (24 - dt.Hour - 1) * 3600000;		// 时-1  ->  ms
-	time += ((60 - dt.Minute - 1) * 60000);			// 分-1  ->  ms
-	time += ((60 - dt.Second) * 1000);				// 秒	 ->  ms
-	// debug_printf("ToTomorrow : %d\r\n", time);
-	return time;
-}
-
-byte Alarm::FindNext(int& nextTime)
-{
-	// debug_printf("FindNext\r\n");
-	AlarmConfig cfg;
-	cfg.Load();
-
-	int miniTime = Int_Max;
-	int tomorrowTime = ToTomorrow();
-
-	int times[ArrayLength(cfg.Items)];
-	for (int i = 0; i < ArrayLength(cfg.Items); i++)
-	{
-		times[i] = Int_Max;
-		if (!cfg.Items[i].Enable)continue;
-		int time = CalcNextTime(cfg.Items[i]);	// 但凡有效的都计算出来
-		times[i] = time;
-
-		if (time < miniTime)miniTime = time;	// 找出最小时间
-	}
-
-	NextAlarmIds.Clear();
-	if (miniTime != Int_Max)
-	{
-		for (int i = 0; i < ArrayLength(cfg.Items); i++)
-		{
-			if (times[i] == miniTime)
-			{
-				NextAlarmIds.Add(i);
-				debug_printf("添加下一次闹钟的id %d\r\n", i);
-			}
-		}
-		nextTime = miniTime;
-		debug_printf("下一个闹钟时间是%dMs后\r\n", nextTime);
-	}
-	else
-	{
-		// 如果最小值无效   直接明早再来算一次
-		nextTime = tomorrowTime;
-		debug_printf("今天没有闹钟任务，下次唤醒时间为明天\r\n");
-	}
-
-	return NextAlarmIds.Count();
+	// 需要特别小心时间的偏差
+	return (dt - now).TotalSeconds();
 }
 
 void Alarm::AlarmTask()
 {
-	// 获取定时的数据
-	AlarmItem item;
-	// 拿到现在的时间
-	auto now = DateTime::Now();
-	now.Ms = 0;
-	for (int i = 0; i < NextAlarmIds.Count(); i++)
+	AlarmConfig cfg;
+	cfg.Load();
+
+	bool flag	= false;
+	int next	= -1;
+	// 遍历所有闹钟
+	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		byte NextAlarmId = NextAlarmIds[i];
-		GetCfg(NextAlarmId, item);
-		// 拿到定时项的时间
-		DateTime dt(now.Year, now.Month, now.Day);
-		dt.Hour = item.Hour;
-		dt.Minute = item.Minutes;
-		dt.Second = dt.Second;
-		dt.Ms = 0;
-		// 对比现在时间和定时项的时间  符合则执行任务
-		if (dt == now)
+		auto& item	= cfg.Items[i];
+		// 检查闹钟还有多少秒到期
+		int sec	= CheckTime(item);
+		if (sec < 3 || sec > -3)
 		{
-			// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
-			// 取总体数据长度
+			// 1长度 + 1类型 + n数据
 			byte len = item.Data[0];
 			if (len <= 10)
 			{
 				// 取动作类型
-				auto type = (int)item.Data[1];
+				auto type	= (int)item.Data[1];
 				AlarmExecutor acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
 					// 取动作数据
 					Buffer bs(&item.Data[2], len - 1);
 					// 执行动作   DoSomething(item);
-					acttor(NextAlarmId, bs);
+					acttor(type, bs);
 				}
 			}
 			else
 			{
 				debug_printf("无效数据\r\n");
 			}
+
+			// 非重复闹铃需要禁用
+			if(item.Type.Repeat)
+			{
+				item.Enable	= false;
+				flag	= true;
+			}
 		}
+
+		// 计算最近一次将要执行的时间
+		if(sec > 3 && sec < next) next	= sec;
 	}
 
-	// 找到下一个定时器动作的时间，并拿到距离下次执行的时间。如果今天没有下一次了 就定明天早上第一时间来计算一次。
-	FindNext(NextAlarmMs);
+	if(flag) cfg.Save();
+
 	// 设置下次执行的时间
-	Sys.SetTask(AlarmTaskId, true, NextAlarmMs);
+	if(next > 0) Sys.SetTask(_taskid, true, next);
 }
 
 void Alarm::Start()
 {
 	debug_printf("Alarm::Start\r\n");
-	if (!AlarmTaskId)AlarmTaskId = Sys.AddTask(&Alarm::AlarmTask, this, -1, -1, "AlarmTask");
-	Sys.SetTask(AlarmTaskId, true, 0);
+
+	// 创建任务
+	if (!_taskid)	_taskid	= Sys.AddTask(&Alarm::AlarmTask, this, 1000, 60000, "AlarmTask");
+
+	// 马上调度一次
+	Sys.SetTask(_taskid, true, 0);
 }
 
 void Alarm::Register(byte type, AlarmExecutor act)

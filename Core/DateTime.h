@@ -34,7 +34,7 @@ public:
 	uint TotalSeconds() const;
 	UInt64 TotalMs() const;
 
-	// 获取星期
+	// 获取星期，0~6表示星期天到星期六
 	byte DayOfWeek() const;
 	// 取时间日期的日期部分
 	DateTime Date() const;
