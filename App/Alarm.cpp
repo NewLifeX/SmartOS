@@ -27,7 +27,7 @@ Alarm::Alarm()
 	_taskid = 0;
 }
 
-bool Alarm::Set(const Pair& args, Stream& result)
+bool Alarm::Set(const Pair& args, Stream& result) const
 {
 	debug_printf("Set\r\n");
 
@@ -51,7 +51,7 @@ bool Alarm::Set(const Pair& args, Stream& result)
 	return resid;
 }
 
-bool Alarm::Get(const Pair& args, Stream& result)
+bool Alarm::Get(const Pair& args, Stream& result) const
 {
 	AlarmConfig cfg;
 	cfg.Load();
@@ -70,7 +70,7 @@ bool Alarm::Get(const Pair& args, Stream& result)
 	return true;
 }
 
-byte Alarm::SetCfg(const AlarmItem& item)
+byte Alarm::SetCfg(const AlarmItem& item) const
 {
 	AlarmConfig cfg;
 	cfg.Load();
@@ -112,9 +112,8 @@ byte Alarm::SetCfg(const AlarmItem& item)
 	cfg.Count	= n;
 	cfg.Save();
 
-	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
-	NextAlarmIds.Clear();
-	Start();
+	// 马上调度一次
+	Sys.SetTask(_taskid, true, 0);
 
 	return id;
 }
@@ -127,12 +126,21 @@ static int CheckTime(const AlarmItem& item)
 
 	// 判断星期，0~6表示星期天到星期六
 	auto now	= DateTime::Now();
+	auto dt		= now.Date();
 	auto week	= now.DayOfWeek();
 	int type	= item.Type.ToByte();
-	if((type & (1 << week)) == 0) return -100;
+	// 今天星期是否配对
+	if((type & (1 << week)) == 0)
+	{
+		// 明天星期是否配对
+		if(++week >= 7) week	-= 7;
+		if((type & (1 << week)) == 0)  return -100;
+
+		// 明天时间减去现在时间，避免漏了刚好跨天的闹铃
+		dt.Day++;
+	}
 
 	// 判断时间有效性
-	auto dt	= now.Date();
 	dt.Hour	= item.Hour;
 	dt.Minute	= item.Minutes;
 	dt.Second	= item.Seconds;

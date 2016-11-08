@@ -69,9 +69,9 @@ public:
 	Alarm();
 
 	/*  注册给 TokenClient 名称 Policy/Set  */
-	bool Set(const Pair& args, Stream& result);
+	bool Set(const Pair& args, Stream& result) const;
 	/*  注册给 TokenClient 名称 Policy/Get  */
-	bool Get(const Pair& args, Stream& result) ;
+	bool Get(const Pair& args, Stream& result) const;
 	void Start();
 	// 注册各种类型的执行动作
 	void Register(byte type, AlarmExecutor act);
@@ -83,7 +83,7 @@ private:
 	void AlarmTask();
 	
 	// Config
-	byte SetCfg(const AlarmItem& item);
+	byte SetCfg(const AlarmItem& item) const;
 };
 
 
