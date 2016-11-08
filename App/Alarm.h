@@ -50,7 +50,7 @@ public:
 #pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
 #pragma pack(1)
-// 
+//
 typedef struct
 {
 	byte Index;		// 闹钟编号
@@ -69,9 +69,9 @@ public:
 	Alarm();
 
 	/*  注册给 TokenClient 名称 Policy/Set  */
-	bool Set(const Pair& args, Stream& result) const;
+	bool Set(const Pair& args, Stream& result);
 	/*  注册给 TokenClient 名称 Policy/Get  */
-	bool Get(const Pair& args, Stream& result) const;
+	bool Get(const Pair& args, Stream& result);
 	void Start();
 	// 注册各种类型的执行动作
 	void Register(byte type, AlarmExecutor act);
@@ -81,10 +81,10 @@ private:
 
 	uint		_taskid;			// 闹钟TaskId
 	void AlarmTask();
-	
+
 	// Config
 	byte SetCfg(const AlarmItem& item) const;
 };
 
 
-#endif 
+#endif

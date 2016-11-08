@@ -27,7 +27,7 @@ Alarm::Alarm()
 	_taskid = 0;
 }
 
-bool Alarm::Set(const Pair& args, Stream& result) const
+bool Alarm::Set(const Pair& args, Stream& result)
 {
 	debug_printf("Set\r\n");
 
@@ -51,7 +51,7 @@ bool Alarm::Set(const Pair& args, Stream& result) const
 	return resid;
 }
 
-bool Alarm::Get(const Pair& args, Stream& result) const
+bool Alarm::Get(const Pair& args, Stream& result)
 {
 	AlarmConfig cfg;
 	cfg.Load();
@@ -151,6 +151,10 @@ static int CheckTime(const AlarmItem& item)
 
 void Alarm::AlarmTask()
 {
+	// 如果系统年份不对，则不执行任何动作
+	auto now	= DateTime::Now();
+	if(now.Year < 2010) return;
+
 	AlarmConfig cfg;
 	cfg.Load();
 
