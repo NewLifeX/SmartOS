@@ -490,8 +490,8 @@ void AP0801::InitAlarm()
 	if (!Client)return;
 
 	if (!AlarmObj)AlarmObj = new Alarm();
-	Client->Register("Policy/Set", &Alarm::Set, AlarmObj);
-	Client->Register("Policy/Get", &Alarm::Get, AlarmObj);
+	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
 	AlarmObj->Register(5, AlarmWrite);
 	AlarmObj->Register(6, AlarmReport);
