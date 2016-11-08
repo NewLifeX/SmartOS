@@ -51,7 +51,7 @@ bool Alarm::Set(const Pair& args, Stream& result)
 	return resid;
 }
 
-bool Alarm::Get(const Pair& args, Stream& result) const
+bool Alarm::Get(const Pair& args, Stream& result)
 {
 	AlarmConfig cfg;
 	cfg.Load();
@@ -60,8 +60,8 @@ bool Alarm::Get(const Pair& args, Stream& result) const
 	// ZhuYi BuLianXu
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		auto& item	= cfg.Items[i];
-		if(item.Index > 0)
+		auto& item = cfg.Items[i];
+		if (item.Index > 0)
 		{
 			result.WriteArray(Buffer(&item, sizeof(item)));
 		}
@@ -89,18 +89,18 @@ byte Alarm::SetCfg(const AlarmItem& item)
 	}
 	if (!id) return 0;	// 查找失败
 
-	if(item.Hour < 0xFF)
+	if (item.Hour < 0xFF)
 		Buffer::Copy(&cfg.Items[id - 1], &item, sizeof(item));
 	else	// Delete
-		cfg.Items[id - 1].Index	= 0;
+		cfg.Items[id - 1].Index = 0;
 
-	int n	= 0;
+	int n = 0;
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		if(cfg.Items[i].Index > 0) n++;
+		if (cfg.Items[i].Index > 0) n++;
 	}
 
-	cfg.Count	= n;
+	cfg.Count = n;
 	cfg.Save();
 
 	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
@@ -123,7 +123,7 @@ bool Alarm::GetCfg(byte id, AlarmItem& item)
 
 int Alarm::CalcNextTime(AlarmItem& item)
 {
-	debug_printf("CalcNextTime Id %d  ",item.Index);
+	debug_printf("CalcNextTime Id %d  ", item.Index);
 	auto now = DateTime::Now();
 	byte type = item.Type.ToByte();
 	byte week = now.DayOfWeek();

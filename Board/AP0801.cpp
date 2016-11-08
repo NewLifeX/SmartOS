@@ -455,7 +455,7 @@ void AlarmWrite(byte type, Buffer& bs)
 	// auto start = ms.ReadByte();
 	// Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
-	Client->Store.Write(bs[0], bs.Sub(1));
+	Client->Store.Write(bs[0], bs.Sub(0,1));
 }
 
 void AlarmReport(byte type, Buffer&bs)

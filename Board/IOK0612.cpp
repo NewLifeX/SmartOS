@@ -298,8 +298,8 @@ void IOK0612::InitAlarm()
 	if (!Client)return;
 
 	if (!AlarmObj)AlarmObj = new Alarm();
-	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
-	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
+	Client->Register("Policy/Set", &Alarm::Set, AlarmObj);
+	Client->Register("Policy/Get", &Alarm::Get, AlarmObj);
 
 	AlarmObj->Register(5, AlarmWrite);
 	// AlarmObj->Register(6, AlarmReport);
