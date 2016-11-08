@@ -5,29 +5,19 @@
 class AlarmConfig :public ConfigBase
 {
 public:
-	byte Length;
-	AlarmDataType Data[20];
+	byte Count;
+	AlarmItem Items[20];
 	byte TagEnd;
 
 	AlarmConfig();
-	virtual void Init();
 };
 
 AlarmConfig::AlarmConfig()
 {
 	_Name = "AlarmCf";
-	_Start = &Length;
+	_Start = &Count;
 	_End = &TagEnd;
 	Init();
-}
-
-void AlarmConfig::Init()
-{
-	Buffer(Data, sizeof(Data)).Clear();
-	for (int i = 0; i < ArrayLength(Data); i++)
-	{
-		Data[i].Number = i + 1;
-	}
 }
 
 /************************************************/
@@ -37,138 +27,113 @@ Alarm::Alarm()
 	AlarmTaskId = 0;
 }
 
-bool Alarm::AlarmSet(const Pair& args, Stream& result)
+bool Alarm::Set(const Pair& args, Stream& result)
 {
-	debug_printf("AlarmSet\r\n");
-	AlarmDataType alarm;
-	alarm.Enable = false;
+	debug_printf("Set\r\n");
 
 	Buffer buf = args.Get("alarm");
-
-	Stream ms(buf);
-	if (buf.Length() < 7)
+	if (buf.Length() < 7 || buf[0] > 20)
 	{
 		debug_printf("数据有误\r\n");
 		result.Write((byte)0);
 		return false;
 	}
 
-	byte Id = 0xff;
-	Id = ms.ReadByte();
-	if (Id > 20)
-	{
-		debug_printf("Index有误\r\n");
-		result.Write((byte)0);
-		return false;
-	}
-	alarm.Number = Id;
+	auto& item = *(AlarmItem*)buf.GetBuffer();
 
-	alarm.Enable = ms.ReadByte();
+	if (item.Hour > 23 && item.Hour != 0xFF || item.Minutes > 59 || item.Seconds > 59) return false;
 
-	byte type = ms.ReadByte();
-	alarm.Type.Init(type);
+	debug_printf("%d  %d  %d 执行 bs：", item.Hour, item.Minutes, item.Seconds);
 
-	alarm.Hour = ms.ReadByte();
-	alarm.Minutes = ms.ReadByte();
-	alarm.Seconds = ms.ReadByte();
+	byte resid = SetCfg(item);
+	result.Write(resid);
 
-	if (alarm.Hour > 23 || alarm.Minutes > 59 || alarm.Seconds > 59)return false;
-
-	// Buffer buf2(data.Data, sizeof(data.Data));
-	// auto len = ms.ReadArray(buf2);
-
-	Buffer buf2(alarm.Data, sizeof(alarm.Data));
-	Buffer buf3(buf.GetBuffer() + ms.Position(), buf.Length() - ms.Position());
-	buf2 = buf3;
-
-	// buf.Show(true);
-	// buf3.Show(true);
-	debug_printf("%d  %d  %d 执行 bs：", alarm.Hour, alarm.Minutes, alarm.Seconds);
-	buf2.Show(true);
-
-	byte resid = SetCfg(Id, alarm);
-	result.Write((byte)resid);
-	if (resid)return true;
-	return false;
+	return resid;
 }
 
-bool Alarm::AlarmGet(const Pair& args, Stream& result)
+bool Alarm::Get(const Pair& args, Stream& result) const
 {
-	// debug_printf("AlarmGet");
 	AlarmConfig cfg;
 	cfg.Load();
-	// debug_printf("data :\r\n");
-	result.Write((byte)20);		// 写入长度
-	for (int i = 0; i < 20; i++)
+
+	result.Write(cfg.Count);
+	// ZhuYi BuLianXu
+	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		Buffer bs(&cfg.Data[i].Number, sizeof(AlarmDataType));
-		bs.Show(true);
-		result.WriteArray(bs);
+		auto& item	= cfg.Items[i];
+		if(item.Index > 0)
+		{
+			result.WriteArray(Buffer(&item, sizeof(item)));
+		}
 	}
 
-	Buffer(result.GetBuffer(), result.Position()).Show(true);
-	// debug_printf("\r\n");
 	return true;
 }
 
-byte Alarm::SetCfg(byte id, AlarmDataType& data)
+byte Alarm::SetCfg(const AlarmItem& item)
 {
 	AlarmConfig cfg;
 	cfg.Load();
 
+	byte id = item.Index;
 	if (!id)	// 找到空闲位置
 	{
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < ArrayLength(cfg.Items); i++)
 		{
-			if (!cfg.Data[i].Enable)
+			if (cfg.Items[i].Index == 0)
 			{
 				id = i + 1;
 				break;
 			}
 		}
 	}
-	if (!id)return 0;	// 查找失败
+	if (!id) return 0;	// 查找失败
 
-	Buffer bf(&data.Number, sizeof(AlarmDataType));
-	Buffer bf2(&cfg.Data[id - 1].Number, sizeof(AlarmDataType));
-	bf2 = bf;
+	if(item.Hour < 0xFF)
+		Buffer::Copy(&cfg.Items[id - 1], &item, sizeof(item));
+	else	// Delete
+		cfg.Items[id - 1].Index	= 0;
 
-	for (int i = 0; i < 20; i++)
+	int n	= 0;
+	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
-		cfg.Data[i].Number = i + 1;		// 避免 id 出错
+		if(cfg.Items[i].Index > 0) n++;
 	}
 
+	cfg.Count	= n;
 	cfg.Save();
+
 	// 修改过后要检查一下Task的时间	// 取消下次动作并重新计算
 	NextAlarmIds.Clear();
 	Start();
+
 	return id;
 }
 
-bool Alarm::GetCfg(byte id, AlarmDataType& data)
+bool Alarm::GetCfg(byte id, AlarmItem& item)
 {
 	AlarmConfig cfg;
 	cfg.Load();
 
-	Buffer bf(&data.Number, sizeof(AlarmDataType));
-	Buffer bf2(&cfg.Data[id].Number, sizeof(AlarmDataType));
+	Buffer bf(&item.Index, sizeof(AlarmItem));
+	Buffer bf2(&cfg.Items[id].Index, sizeof(AlarmItem));
 	bf = bf2;
 	return true;
 }
 
-int Alarm::CalcNextTime(AlarmDataType& data)
+int Alarm::CalcNextTime(AlarmItem& item)
 {
-	debug_printf("CalcNextTime Id %d  ",data.Number);
+	debug_printf("CalcNextTime Id %d  ",item.Index);
 	auto now = DateTime::Now();
-	byte type = data.Type.ToByte();
+	byte type = item.Type.ToByte();
 	byte week = now.DayOfWeek();
 	int time;
 	if (type & 1 << week)	// 今天
 	{
 		DateTime dt(now.Year, now.Month, now.Day);
-		dt.Hour = data.Hour;
-		dt.Minute = data.Minutes;
-		dt.Second = data.Seconds;
+		dt.Hour = item.Hour;
+		dt.Minute = item.Minutes;
+		dt.Second = item.Seconds;
 		if (dt > now)
 		{
 			time = (dt - now).Ms;
@@ -199,12 +164,12 @@ byte Alarm::FindNext(int& nextTime)
 	int miniTime = Int_Max;
 	int tomorrowTime = ToTomorrow();
 
-	int times[ArrayLength(cfg.Data)];
-	for (int i = 0; i < ArrayLength(cfg.Data); i++)
+	int times[ArrayLength(cfg.Items)];
+	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
 		times[i] = Int_Max;
-		if (!cfg.Data[i].Enable)continue;
-		int time = CalcNextTime(cfg.Data[i]);	// 但凡有效的都计算出来
+		if (!cfg.Items[i].Enable)continue;
+		int time = CalcNextTime(cfg.Items[i]);	// 但凡有效的都计算出来
 		times[i] = time;
 
 		if (time < miniTime)miniTime = time;	// 找出最小时间
@@ -213,7 +178,7 @@ byte Alarm::FindNext(int& nextTime)
 	NextAlarmIds.Clear();
 	if (miniTime != Int_Max)
 	{
-		for (int i = 0; i < ArrayLength(cfg.Data); i++)
+		for (int i = 0; i < ArrayLength(cfg.Items); i++)
 		{
 			if (times[i] == miniTime)
 			{
@@ -237,18 +202,18 @@ byte Alarm::FindNext(int& nextTime)
 void Alarm::AlarmTask()
 {
 	// 获取定时的数据
-	AlarmDataType data;
+	AlarmItem item;
 	// 拿到现在的时间
 	auto now = DateTime::Now();
 	now.Ms = 0;
 	for (int i = 0; i < NextAlarmIds.Count(); i++)
 	{
 		byte NextAlarmId = NextAlarmIds[i];
-		GetCfg(NextAlarmId, data);
+		GetCfg(NextAlarmId, item);
 		// 拿到定时项的时间
 		DateTime dt(now.Year, now.Month, now.Day);
-		dt.Hour = data.Hour;
-		dt.Minute = data.Minutes;
+		dt.Hour = item.Hour;
+		dt.Minute = item.Minutes;
 		dt.Second = dt.Second;
 		dt.Ms = 0;
 		// 对比现在时间和定时项的时间  符合则执行任务
@@ -256,17 +221,17 @@ void Alarm::AlarmTask()
 		{
 			// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
 			// 取总体数据长度
-			byte len = data.Data[0];
+			byte len = item.Data[0];
 			if (len <= 10)
 			{
 				// 取动作类型
-				auto type = (int)data.Data[1];
-				AlarmActuator acttor;
+				auto type = (int)item.Data[1];
+				AlarmExecutor acttor;
 				if (dic.TryGetValue(type, acttor))
 				{
 					// 取动作数据
-					Buffer bs(&data.Data[2], len - 1);
-					// 执行动作   DoSomething(data);
+					Buffer bs(&item.Data[2], len - 1);
+					// 执行动作   DoSomething(item);
 					acttor(NextAlarmId, bs);
 				}
 			}
@@ -290,7 +255,7 @@ void Alarm::Start()
 	Sys.SetTask(AlarmTaskId, true, 0);
 }
 
-void Alarm::Register(byte type, AlarmActuator act)
+void Alarm::Register(byte type, AlarmExecutor act)
 {
 	dic.Add((int)type, act);
 }

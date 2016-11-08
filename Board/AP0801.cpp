@@ -448,14 +448,14 @@ void AlarmWrite(byte type, Buffer& bs)
 	debug_printf("AlarmWrite type %d data ", type);
 	bs.Show(true);
 
-	//auto tc	= AP0801::Current->Client;
-	auto tc = Client;
+	// auto tc	= AP0801::Current->Client;
+	// auto tc = Client;
 
-	Stream ms(bs);
-	auto start = ms.ReadByte();
-	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
+	// Stream ms(bs);
+	// auto start = ms.ReadByte();
+	// Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
-	tc->Store.Write(start, data);
+	Client->Store.Write(bs[0], bs.Sub(1));
 }
 
 void AlarmReport(byte type, Buffer&bs)
@@ -463,13 +463,13 @@ void AlarmReport(byte type, Buffer&bs)
 	debug_printf("AlarmReport type %d data ", type);
 	bs.Show(true);
 
-	Stream ms(bs);
-	auto start = ms.ReadByte();
-	auto size = ms.ReadByte();
-	//auto tc	= AP0801::Current->Client;
-	auto tc = Client;
+	// Stream ms(bs);
+	// auto start = ms.ReadByte();
+	// auto size = ms.ReadByte();
+	// //auto tc	= AP0801::Current->Client;
+	// auto tc = Client;
 
-	tc->ReportAsync(start, size);
+	Client->ReportAsync(bs[0], bs[1]);
 }
 
 void AlarmDelayOpen(void *param)
@@ -481,8 +481,8 @@ void AlarmDelayOpen(void *param)
 		alarm->Start();
 		Sys.RemoveTask(Task::Current().ID);
 	}
-	else
-		Sys.SetTask(Task::Current().ID, true, 2000);
+	// else
+	// 	Sys.SetTask(Task::Current().ID, true, 2000);
 }
 
 void AP0801::InitAlarm()
@@ -490,8 +490,8 @@ void AP0801::InitAlarm()
 	if (!Client)return;
 
 	if (!AlarmObj)AlarmObj = new Alarm();
-	Client->Register("Policy/AlarmSet", &Alarm::AlarmSet, AlarmObj);
-	Client->Register("Policy/AlarmGet", &Alarm::AlarmGet, AlarmObj);
+	Client->Register("Policy/Set", &Alarm::Set, AlarmObj);
+	Client->Register("Policy/Get", &Alarm::Get, AlarmObj);
 
 	AlarmObj->Register(5, AlarmWrite);
 	AlarmObj->Register(6, AlarmReport);
