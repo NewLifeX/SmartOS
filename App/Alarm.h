@@ -33,14 +33,14 @@ typedef void(*AlarmExecutor)(byte type, Buffer& bs);
 
 typedef struct
 {
-	byte Sunday : 1;
-	byte Monday : 1;
-	byte Tuesday : 1;
-	byte Wednesday : 1;
-	byte Thursday : 1;
-	byte Friday : 1;
-	byte Saturday : 1;
-	byte Repeat : 1;
+	byte Sunday		: 1;
+	byte Monday		: 1;
+	byte Tuesday	: 1;
+	byte Wednesday	: 1;
+	byte Thursday	: 1;
+	byte Friday		: 1;
+	byte Saturday	: 1;
+	byte Repeat 	: 1;
 public:
 	void Init(byte data = 0) { *(byte*)this = data; }
 	byte ToByte() { return *(byte*)this; }
@@ -71,8 +71,7 @@ public:
 	/*  注册给 TokenClient 名称 Policy/Set  */
 	bool Set(const Pair& args, Stream& result);
 	/*  注册给 TokenClient 名称 Policy/Get  */
-	bool Get(const Pair& args, Stream& result);
-
+	bool Get(const Pair& args, Stream& result) ;
 	void Start();
 	// 注册执行动作的函数
 	void Register(byte type, AlarmExecutor act);
@@ -89,7 +88,7 @@ private:
 	byte FindNext(int& nextTime);
 	// 计算下次闹钟时间
 	int CalcNextTime(AlarmItem& item);
-
+	
 	// Config
 	byte SetCfg(const AlarmItem& item);
 	bool GetCfg(byte id, AlarmItem& item);
