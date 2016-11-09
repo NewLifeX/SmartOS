@@ -12,6 +12,7 @@
 #include "LoginMessage.h"
 #include "RegisterMessage.h"
 #include "TokenDataMessage.h"
+#include "TokenPingMessage.h"
 #include "ErrorMessage.h"
 
 #include "Security\RC4.h"
@@ -702,10 +703,10 @@ void TokenClient::Ping()
 	// 30秒内发过数据，不再发送心跳
 	if (LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
-	TokenPingMessage pinMsg;
+	TokenPingMessage pm;
 
 	TokenMessage msg(3);
-	pinMsg.WriteMessage(msg);
+	pm.WriteMessage(msg);
 
 	Send(msg);
 }
@@ -716,14 +717,10 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 
 	if (!msg.Reply) return false;
 
-#if DEBUG
-	TokenPingMessage pinMsg;
-	pinMsg.ReadMessage(msg);
-	UInt64 start = pinMsg.LocalTime;
+	TokenPingMessage pm;
+	pm.ReadMessage(msg);
 
-	//int cost 	= (int)(Sys.Ms() - start);
-	// 使用绝对毫秒数，让服务器知道设备本地时间
-	int cost = (int)(DateTime::Now().TotalMs() - start);
+	int cost = (int)(DateTime::Now().TotalMs() - pm.LocalTime);
 
 	if (Delay)
 		Delay = (Delay + cost) / 2;
@@ -731,7 +728,9 @@ bool TokenClient::OnPing(TokenMessage& msg, TokenController* ctrl)
 		Delay = cost;
 
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
-#endif
+
+	// 同步本地时间
+	if (pm.ServerTime > 1000) ((TTime&)Time).SetTime(pm.ServerTime / 1000);
 
 	return true;
 }
