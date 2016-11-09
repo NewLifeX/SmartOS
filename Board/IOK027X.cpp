@@ -262,7 +262,7 @@ void IOK027X::InitAlarm()
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
 	AlarmObj->Register(5, AlarmWrite);
-	// AlarmObj->Register(6, AlarmReport);
+    // AlarmObj->Register(6, AlarmReport);
 	AlarmObj->Start();
 }
 
