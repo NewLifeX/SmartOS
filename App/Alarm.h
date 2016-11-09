@@ -33,14 +33,14 @@ typedef void(*AlarmExecutor)(byte type, Buffer& bs);
 
 typedef struct
 {
-	byte Sunday		: 1;
-	byte Monday		: 1;
-	byte Tuesday	: 1;
-	byte Wednesday	: 1;
-	byte Thursday	: 1;
-	byte Friday		: 1;
-	byte Saturday	: 1;
-	byte Repeat 	: 1;
+	byte Sunday : 1;
+	byte Monday : 1;
+	byte Tuesday : 1;
+	byte Wednesday : 1;
+	byte Thursday : 1;
+	byte Friday : 1;
+	byte Saturday : 1;
+	byte Repeat : 1;
 public:
 	void Init(byte data = 0) { *(byte*)this = data; }
 	byte ToByte() const { return *(byte*)this; }
@@ -75,6 +75,8 @@ public:
 	void Start();
 	// 注册各种类型的执行动作
 	void Register(byte type, AlarmExecutor act);
+
+	 void Test();
 
 private:
 	Dictionary<int, AlarmExecutor> dic;// AlarmItem.Data[1] 表示动作类型，由此字典进行匹配动作执行器
