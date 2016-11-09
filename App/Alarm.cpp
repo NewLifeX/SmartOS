@@ -154,7 +154,7 @@ static int CheckTime(const AlarmItem& item)
 	// 需要特别小心时间的偏差
 	 return (dt - now).TotalSeconds();
 }
-static bool test = false;
+//static bool test = false;
 void Alarm::AlarmTask()
 {
 	// 如果系统年份不对，则不执行任何动作
@@ -281,5 +281,5 @@ void Alarm::Test()
 
 	debug_printf("初始化设定时间\r\n");
 	DateTime::Now().Show(true);
-	test = true;
+	//test = true;
 }

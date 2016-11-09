@@ -9,11 +9,11 @@
 #include "Message\DataStore.h"
 
 /*
-注册给 TokenClient 名称 Policy/Set
-注册给 TokenClient 名称 Policy/Get
+注册给 TokenClient 名称 Policy/AlarmSet
+注册给 TokenClient 名称 Policy/AlarmGet
 
-Action = Policy/Set   alarm = AlarmItem
-Action = Policy/Get
+Action = Policy/AlarmSet   alarm = AlarmItem
+Action = Policy/AlarmGet
 
 
 Set
@@ -68,9 +68,9 @@ class Alarm
 public:
 	Alarm();
 
-	/*  注册给 TokenClient 名称 Policy/Set  */
+	/*  注册给 TokenClient 名称 Policy/AlarmSet  */
 	bool Set(const Pair& args, Stream& result);
-	/*  注册给 TokenClient 名称 Policy/Get  */
+	/*  注册给 TokenClient 名称 Policy/AlarmGet  */
 	bool Get(const Pair& args, Stream& result);
 	void Start();
 	// 注册各种类型的执行动作
