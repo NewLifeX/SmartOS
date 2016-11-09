@@ -169,7 +169,7 @@ void Alarm::AlarmTask()
 	cfg.Load();
 
 	bool flag = false;
-	int next = 60000;
+	int next = 60;
 	// 遍历所有闹钟
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
@@ -242,7 +242,7 @@ void Alarm::Start()
 	debug_printf("Alarm::Start\r\n");
 
 	// 创建任务
-	if (!_taskid)	_taskid = Sys.AddTask(&Alarm::AlarmTask, this, 1000, 20000, "AlarmTask");
+	if (!_taskid)	_taskid = Sys.AddTask(&Alarm::AlarmTask, this, 1000, 2000, "AlarmTask");
 
 	// 马上调度一次
 	Sys.SetTask(_taskid, true, 0);
