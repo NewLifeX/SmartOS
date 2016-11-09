@@ -235,11 +235,9 @@ void AlarmWrite(byte type, Buffer& bs)
 
 	auto client = IOK027X::Current->Client;
 
-	Stream ms(bs);
-	auto start = ms.ReadByte();
 	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
 
-	client->Store.Write(start, data);
+	client->Store.Write(bs[0], data);
 }	  
 
 // void AlarmReport(byte type, Buffer&bs)
