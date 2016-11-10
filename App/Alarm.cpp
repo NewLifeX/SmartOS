@@ -46,10 +46,13 @@ bool Alarm::Set(const Pair& args, Stream& result)
 
 	debug_printf("%d  %d  %d 执行 bs：", item.Hour, item.Minutes, item.Seconds);
 
-	byte resid = SetCfg(item);
-	result.Write(resid);
+	byte id = SetCfg(item);
+	result.Write(id);
 
-	return resid;
+	// 马上调度一次
+	if(id) Sys.SetTask(_taskid, true, 0);
+
+	return id;
 }
 
 bool Alarm::Get(const Pair& args, Stream& result)
@@ -71,7 +74,7 @@ bool Alarm::Get(const Pair& args, Stream& result)
 	return true;
 }
 
-byte Alarm::SetCfg(const AlarmItem& item) const
+byte Alarm::SetCfg(const AlarmItem& item)
 {
 	AlarmConfig cfg;
 	cfg.Load();
@@ -114,9 +117,6 @@ byte Alarm::SetCfg(const AlarmItem& item) const
 	cfg.Count = n;
 	cfg.Save();
 
-	// 马上调度一次
-	//Sys.SetTask(_taskid, true, 0);
-
 	return id;
 }
 
@@ -130,8 +130,6 @@ static int CheckTime(const AlarmItem& item)
 	auto now = DateTime::Now();
 	auto dt = now.Date();
 	auto week = now.DayOfWeek();
-
-	//now.Show();
 
 	int type = item.Type.ToByte();
 
@@ -154,22 +152,18 @@ static int CheckTime(const AlarmItem& item)
 	// 需要特别小心时间的偏差
 	 return (dt - now).TotalSeconds();
 }
-//static bool test = false;
+
 void Alarm::AlarmTask()
 {
 	// 如果系统年份不对，则不执行任何动作
 	auto now = DateTime::Now();
 	if (now.Year < 2010) return;
 
-	//if (!test)
-	//{
-	//	Test();
-	//}
 	AlarmConfig cfg;
 	cfg.Load();
 
 	bool flag = false;
-	int next = 60;
+	int next = -1;
 	// 遍历所有闹钟
 	for (int i = 0; i < ArrayLength(cfg.Items); i++)
 	{
@@ -178,63 +172,20 @@ void Alarm::AlarmTask()
 
 		// 检查闹钟还有多少秒到期
 		int sec = CheckTime(item);
-
-		debug_printf("\r\n");
-		debug_printf("sec = %d\r\n", sec);
-		if (sec < 3 && sec > -3)
+		if (sec <= 1 && sec >= -2)
 		{
-			debug_printf("闹钟执行系统时间:");
-			now.Show();
-			debug_printf(" 星期:%d", now.DayOfWeek());
-			debug_printf("闹钟时间 %d:%d:%d\r\n", item.Hour, item.Minutes, item.Seconds);
+			debug_printf("闹钟执行 %02d:%02d:%02d\r\n", item.Hour, item.Minutes, item.Seconds);
 
-			// 1长度 + 1类型 + n数据
-			byte len = item.Data[0];
-			if (len <= 10)
-			{
-				// 取动作类型
-				auto type = (int)item.Data[1];
-				AlarmExecutor acttor;
-				if (dic.TryGetValue(type, acttor))
-				{
-					// 取动作数据
-					Buffer bs(&item.Data[2], len - 1);
-					// 执行动作   DoSomething(item);
-					acttor(type, bs);
-				}
-			}
-			else
-			{
-				debug_printf("无效数据\r\n");
-			}
-
-			debug_printf("\r\n");
-			//// 非重复闹铃需要禁用
-			//if(item.Type.Repeat)
-			//{
-			//	item.Enable	= false;
-			//	flag	= true;
-			//}
-
-			//auto dt = now.Date();
-			//dt.Hour = 23;
-			//dt.Minute = 59;
-			//dt.Second = 50;
-			//dt.Day++;
-
-			//((TTime&)Time).SetTime(dt.TotalSeconds() - 3);
-			//debug_printf("设定系统时间:");
-			//DateTime::Now().Show();
+			OnAlarm(item);
 		}
 
 		// 计算最近一次将要执行的时间
-		if (sec >= 3 && sec < next) next = sec;
+		if (sec > 1 && (next < 0 || sec < next)) next = sec;
 	}
 
-	debug_printf("下次执行时间%d\r\n", next);
-	if (flag) cfg.Save();	
+	if (flag) cfg.Save();
 	if (next > 0)
-	    Sys.SetTask(_taskid, true, next*1000);
+	    Sys.SetTask(_taskid, true, next * 1000);
 }
 
 void Alarm::Start()
@@ -242,21 +193,18 @@ void Alarm::Start()
 	debug_printf("Alarm::Start\r\n");
 
 	// 创建任务
-	if (!_taskid)	_taskid = Sys.AddTask(&Alarm::AlarmTask, this, 1000, 2000, "AlarmTask");
-
-	// 马上调度一次
-	Sys.SetTask(_taskid, true, 0);
-}
-
-void Alarm::Register(byte type, AlarmExecutor act)
-{
-	dic.Add((int)type, act);
+	if (!_taskid)
+		_taskid = Sys.AddTask(&Alarm::AlarmTask, this, 1000, 60000, "定时闹钟");
+	else
+		// 马上调度一次
+		Sys.SetTask(_taskid, true, 0);
 }
 
 void Alarm::Test()
 {
 	debug_printf("闹钟测试...\r\n");
 
+	Alarm am;
 	for (size_t i = 0; i < 7; i++)
 	{
 		AlarmItem item;
@@ -266,7 +214,7 @@ void Alarm::Test()
 		item.Minutes = 59;
 		item.Seconds = 57;
 		item.Type.Init((byte)(1 << i));
-		SetCfg(item);
+		am.SetCfg(item);
 	}
 
 	auto now = DateTime::Now();

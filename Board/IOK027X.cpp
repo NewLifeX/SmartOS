@@ -228,41 +228,29 @@ void IOK027X::InitNet()
 	Host = Create8266();
 }
 
-void AlarmWrite(byte type, Buffer& bs)
+static void OnAlarm(AlarmItem& item)
 {
-	debug_printf("AlarmWrite type %d data ", type);
+	// 1长度n + 1类型 + 1偏移 + (n-2)数据
+	auto bs	= item.GetData();
+	debug_printf("OnAlarm ");
 	bs.Show(true);
 
-	auto client = IOK027X::Current->Client;
-
-	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
-
-	client->Store.Write(bs[0], data);
-}	  
-
-// void AlarmReport(byte type, Buffer&bs)
-// {
-// 	debug_printf("AlarmReport type %d data ", type);
-// 	bs.Show(true);
-// 
-// 	Stream ms(bs);
-// 	auto start = ms.ReadByte();
-// 	auto size = ms.ReadByte();
-// 	auto client = IOK027X::Current->Client;
-// 
-// 	client->ReportAsync(start, size);
-// }
+	if(bs[1] == 0x06)
+	{
+		auto client = IOK027X::Current->Client;
+		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+	}
+}
 
 void IOK027X::InitAlarm()
 {
 	if (!Client)return;
 
-	if (!AlarmObj)AlarmObj = new Alarm();
+	if (!AlarmObj) AlarmObj = new Alarm();
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
-	AlarmObj->Register(5, AlarmWrite);
-    // AlarmObj->Register(6, AlarmReport);
+	AlarmObj->OnAlarm	= OnAlarm;
 	AlarmObj->Start();
 }
 

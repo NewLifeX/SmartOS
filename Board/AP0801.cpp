@@ -443,34 +443,18 @@ void  AP0801::InitProxy()
 	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
 }
 
-void AlarmWrite(byte type, Buffer& bs)
+static void OnAlarm(AlarmItem& item)
 {
-	debug_printf("AlarmWrite type %d data ", type);
+	// 1长度n + 1类型 + 1偏移 + (n-2)数据
+	auto bs	= item.GetData();
+	debug_printf("OnAlarm ");
 	bs.Show(true);
 
-	// auto tc	= AP0801::Current->Client;
-	// auto tc = Client;
-
-	// Stream ms(bs);
-	// auto start = ms.ReadByte();
-	 Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
-
-	 data.Show(true);
-	Client->Store.Write(bs[0], data);
-}
-
-void AlarmReport(byte type, Buffer&bs)
-{
-	debug_printf("AlarmReport type %d data ", type);
-	bs.Show(true);
-
-	// Stream ms(bs);
-	// auto start = ms.ReadByte();
-	// auto size = ms.ReadByte();
-	// //auto tc	= AP0801::Current->Client;
-	// auto tc = Client;
-
-	Client->ReportAsync(bs[0], bs[1]);
+	if(bs[1] == 0x06)
+	{
+		auto client = Client;
+		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+	}
 }
 
 void AP0801::InitAlarm()
@@ -481,8 +465,7 @@ void AP0801::InitAlarm()
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
-	AlarmObj->Register(6, AlarmWrite);
-	AlarmObj->Register(5, AlarmReport);
+	AlarmObj->OnAlarm	= OnAlarm;
 	AlarmObj->Start();
 }
 

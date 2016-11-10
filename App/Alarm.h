@@ -28,9 +28,6 @@ Get
 
 */
 
-// 执行定时器的函数类型
-typedef void(*AlarmExecutor)(byte type, Buffer& bs);
-
 typedef struct
 {
 	byte Sunday : 1;
@@ -50,7 +47,7 @@ public:
 #pragma pack(push)	// 保存对齐状态
 // 强制结构体紧凑分配空间
 #pragma pack(1)
-//
+// 闹钟项
 typedef struct
 {
 	byte Index;		// 闹钟编号
@@ -59,33 +56,34 @@ typedef struct
 	byte Hour;		// 时
 	byte Minutes;	// 分
 	byte Seconds;	// 秒
-	byte Data[10];	// 第一个字节 有效数据长度，第二个字节动作类型，后面是数据
+	byte Data[10];	// 数据
+
+	Buffer GetData() { return Buffer(Data, ArrayLength(Data)); }
 }AlarmItem;
 #pragma pack(pop)	// 恢复对齐状态
 
+// 闹钟
 class Alarm
 {
 public:
+	Delegate<AlarmItem&>	OnAlarm;	// 闹钟到期委托
+
 	Alarm();
 
 	/*  注册给 TokenClient 名称 Policy/AlarmSet  */
 	bool Set(const Pair& args, Stream& result);
 	/*  注册给 TokenClient 名称 Policy/AlarmGet  */
 	bool Get(const Pair& args, Stream& result);
-	void Start();
-	// 注册各种类型的执行动作
-	void Register(byte type, AlarmExecutor act);
 
-	 void Test();
+	void Start();
+
+	static void Test();
 
 private:
-	Dictionary<int, AlarmExecutor> dic;// AlarmItem.Data[1] 表示动作类型，由此字典进行匹配动作执行器
-
-	uint		_taskid;			// 闹钟TaskId
+	uint	_taskid;	// 闹钟TaskId
 	void AlarmTask();
 
-	// Config
-	byte SetCfg(const AlarmItem& item) const;
+	static byte SetCfg(const AlarmItem& item);
 };
 
 
