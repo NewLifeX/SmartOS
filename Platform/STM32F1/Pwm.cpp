@@ -92,6 +92,9 @@ void Pwm::FlushOut()
 
 void Pwm::Open()
 {
+	// 设置映射
+	if(Remap) GPIO_PinRemapConfig(Remap, ENABLE);
+	
 	Timer::Open();
 
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
@@ -102,7 +105,6 @@ void Pwm::Close()
 {
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, DISABLE);
-
 
 	for (int i = 0; i < 4; i++)
 	{

@@ -6,6 +6,8 @@ Pwm::Pwm(TIMER index) : Timer(index)
 {
 	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
 
+	Remap		= 0;
+
 	Pulses		= nullptr;
 	PulseCount	= 0;
 	Channel		= 0;

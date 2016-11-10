@@ -10,6 +10,7 @@ public:
 	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
+    uint	Remap;		// 重映射。0不映射，其它为实际映射数字
 
 	Pwm(TIMER index);		// index 定时器编号
 
