@@ -262,12 +262,12 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 	debug_printf("\r\n初始化开关按钮 \r\n");
 
 	// 配置PWM来源
-	static Pwm LedPWM(tim);
+	static Pwm pwm(tim);
 	// 设置分频 尽量不要改 Prescaler * Period 就是 Pwm 周期
-	LedPWM.Prescaler = 0x04;		// 随便改  只要肉眼看不到都没问题
-	LedPWM.Period = 0xFF;		// 对应灰度调节范围
-	LedPWM.Polarity = true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
-	LedPWM.Open();
+	pwm.Prescaler = 0x04;		// 随便改  只要肉眼看不到都没问题
+	pwm.Period = 0xFF;		// 对应灰度调节范围
+	pwm.Polarity = true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
+	pwm.Open();
 
 	// 配置 LED 引脚
 	static AlternatePort Leds[4];
@@ -309,7 +309,7 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 		btns[i].Press = onpress;
 
 		// 灰度 LED 绑定到 Button
-		btns[i].Set(&LedPWM, pins[i].PwmIndex);
+		btns[i].Set(&pwm, pins[i].PwmIndex);
 
 		// 如果是热启动，恢复开关状态数据
 		if (state && state[i]) btns[i].SetValue(true);

@@ -1,9 +1,6 @@
 ﻿#ifndef __Timer_H__
 #define __Timer_H__
 
-#include "Sys.h"
-#include "Device\Port.h"
-
 // 定时器
 class Timer
 {
@@ -38,8 +35,6 @@ public:
 
 private:
 	static void OnHandler(ushort num, void* param);
-	//EventHandler _Handler;
-	//void* _Param;
 
 protected:
 	virtual void OnInterrupt();
@@ -57,34 +52,4 @@ private:
 	static const void* GetTimer(byte idx);
 };
 
-//extern Timer* Timers[];
-
-/*
-class Capture
-{
-private:
-	Timer * _timer;
-public:
-//	volatile byte HaveCap;		// 用位域可能比较好   低四位分别代表一路
-//	直接使用 stm32 的事件标志
-//	FlagStatus TIM_GetFlagStatus(TIM_TypeDef* TIMx, uint16_t TIM_FLAG);
-//	volatile int CapValue[4];	// 一个定时器又是四路
-
-	Capture(Timer * timer = nullptr);
-	~Capture();
-	uint GetCapture(int channel);
-
-	void Start(int channel);
-	void Stop(int channel);
-private :
-	static void OnHandler(ushort num, void* param);
-	void OnInterrupt();
-	EventHandler _Handler[4];
-	void* _Param[4];
-
-public :
-	void Register(int Index,EventHandler handler, void* param = nullptr);
-};
-//void (*EventHandler)(void* sender, void* param);
-*/
 #endif
