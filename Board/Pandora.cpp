@@ -212,18 +212,18 @@ void  PA0903::InitProxy()
 	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
 }
 
-void AlarmWrite(byte type, Buffer& bs)
+static void OnAlarm(AlarmItem& item)
 {
-	debug_printf("AlarmWrite type %d data ", type);
+	// 1长度n + 1类型 + 1偏移 + (n-2)数据
+	auto bs	= item.GetData();
+	debug_printf("OnAlarm ");
 	bs.Show(true);
 
-	auto client = PA0903::Current->Client;
-
-	Stream ms(bs);
-	auto start = ms.ReadByte();
-	Buffer data(bs.GetBuffer() + 1, bs.Length() - 1);
-
-	client->Store.Write(start, data);
+	if(bs[1] == 0x06)
+	{
+		auto client = PA0903::Current->Client;
+		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+	}
 }
 
 void PA0903::InitAlarm()
@@ -234,7 +234,7 @@ void PA0903::InitAlarm()
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
-	AlarmObj->Register(5, AlarmWrite);
+	AlarmObj->OnAlarm	= OnAlarm;
 	AlarmObj->Start();
 }
 
