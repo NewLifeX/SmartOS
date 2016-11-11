@@ -294,9 +294,23 @@ void OutputPort::Blink(uint times, uint ms) const
 /******************************** AlternatePort ********************************/
 
 AlternatePort::AlternatePort() : OutputPort(P0, false, false) { }
-AlternatePort::AlternatePort(Pin pin) : OutputPort(pin, false, false) { }
+AlternatePort::AlternatePort(Pin pin) : OutputPort(P0, false, false)
+{
+	if(pin != P0)
+	{
+		Set(pin);
+		Open();
+	}
+}
 AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
-	: OutputPort(pin, invert, openDrain, speed) { }
+	: OutputPort(P0, invert, openDrain, speed)
+{
+	if(pin != P0)
+	{
+		Set(pin);
+		Open();
+	}
+}
 
 void AlternatePort::OnOpen(void* param)
 {
