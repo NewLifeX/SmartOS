@@ -1,5 +1,6 @@
 ﻿#include "Sys.h"
 
+#include "Device\Port.h"
 #include "Device\Pwm.h"
 
 #include "Platform\stm32.h"
@@ -16,18 +17,6 @@ const static TIM_OCPldCfg TIM_OCPldCfgs[4] = { TIM_OC1PreloadConfig,TIM_OC2Prelo
 typedef void(*SetCompare)(TIM_TypeDef* TIMx, uint16_t TIM_ICPSC);
 const static SetCompare SetCompares[4] = { TIM_SetCompare1,TIM_SetCompare2,TIM_SetCompare3,TIM_SetCompare4, };
 
-// 外部初始化引脚 ？？  AFIO很头疼
-/*     @arg GPIO_AF_0:TIM15, TIM17, TIM14
- *     @arg GPIO_AF_1:Tim3, TIM15
- *     @arg GPIO_AF_2:TIM2, TIM1, TIM16, TIM17.
- *     @arg GPIO_AF_3:TIM15,
- *     @arg GPIO_AF_4:TIM14.
- *     @arg GPIO_AF_5:TIM16, TIM17.
- *     @arg GPIO_AF_6:
- *     @arg GPIO_AF_7:*/
-//const static uint8_t TIM_CH_AFa[8]=
-//{
-//};
 
 void Pwm::Config()
 {
@@ -48,7 +37,7 @@ void Pwm::Config()
 	{
 		if(Pulse[i] != 0xFFFF)
 		{
-			if (Configed & 0x1 << i)
+			if (Inited[i])
 			{
 				SetCompares[i]((TIM_TypeDef*)_Timer, Pulse[i]);
 			}
@@ -59,7 +48,7 @@ void Pwm::Config()
 
 				TIM_OCPldCfgs[i](ti, TIM_OCPreload_Enable);
 
-				Configed |= 0x1 << i;
+				Inited[i]	= true;
 				debug_printf("InitPWM[%d]\r\n",i);
 			}
 		}
@@ -94,11 +83,28 @@ void Pwm::Open()
 {
 	// 设置映射
 	if(Remap) GPIO_PinRemapConfig(Remap, ENABLE);
-	
+
 	Timer::Open();
 
 	if(_index == 0 ||_index == 14 ||_index == 15|| _index == 16)
 		TIM_CtrlPWMOutputs((TIM_TypeDef*)_Timer, ENABLE);
+
+	// 打开引脚
+	const Pin g_Pins[][4]	=  TIM_PINS;
+	const Pin g_Pins2[][4]	=  TIM_PINS_FULLREMAP;
+
+	// 仅支持标准引脚和完全映射，非完全映射需要外部自己初始化
+	auto pss	= g_Pins;
+	if(Remap != 0) pss	= g_Pins2;
+	auto ps	= pss[_index];
+
+	for(int i=0; i<4; i++)
+	{
+		if(Pulse[i] != 0xFFFF && Ports[i] == nullptr)
+		{
+			Ports[i]	= new AlternatePort(ps[i]);
+		}
+	}
 }
 
 void Pwm::Close()
@@ -108,10 +114,10 @@ void Pwm::Close()
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (Configed |= 0x1 << i)
+		if (Inited[i])
 		{
 			TIM_OCPldCfgs[i]((TIM_TypeDef*)_Timer, TIM_OCPreload_Disable);
-			Configed &= ~(0x1 << i);
+			Inited[i]	= false;
 		}
 	}
 

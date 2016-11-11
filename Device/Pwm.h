@@ -3,6 +3,8 @@
 
 #include "Timer.h"
 
+class AlternatePort;
+
 // 脉冲宽度调制
 class Pwm : public Timer
 {
@@ -11,8 +13,10 @@ public:
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
     uint	Remap;		// 重映射。0不映射，其它为实际映射数字
+	AlternatePort*	Ports[4];
 
 	Pwm(TIMER index);		// index 定时器编号
+	virtual ~Pwm();
 
 	virtual void Open();
 	virtual void Close();
@@ -34,7 +38,7 @@ protected:
 
 private:
 	// 是否已配置 从低到高 4位 分别对应4个通道
-	byte Configed;
+	byte	Inited[4];
 };
 
 #endif

@@ -1,10 +1,16 @@
 ﻿#include "Sys.h"
 
+#include "Port.h"
 #include "Pwm.h"
 
 Pwm::Pwm(TIMER index) : Timer(index)
 {
-	for(int i=0; i<4; i++) Pulse[i] = 0xFFFF;
+	for(int i=0; i<4; i++)
+	{
+		Pulse[i]	= 0xFFFF;
+		Ports[i]	= nullptr;
+		Inited[i]	= false;
+	}
 
 	Remap		= 0;
 
@@ -13,7 +19,14 @@ Pwm::Pwm(TIMER index) : Timer(index)
 	Channel		= 0;
 	PulseIndex	= 0xFF;
 	Repeated	= false;
-	Configed	= 0x00;
+}
+
+Pwm::~Pwm()
+{
+	for(int i=0; i<4; i++)
+	{
+		delete Ports[i];
+	}
 }
 
 void Pwm::SetPulse(int idx, ushort pulse)
