@@ -169,8 +169,9 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	if (key.Length() == 0)
 	{
 		auto now = Sys.Ms();
-		auto crc = Crc::Hash(Buffer(&now, 8));
-		key = Buffer(&crc, 4);
+		//auto crc = Crc::Hash(Buffer(&now, 8));
+		//key = Buffer(&crc, 4);
+		key = Buffer(&now, 4);
 		key.Show(true);
 		//通知其它内网，密码被修改了
 	}
