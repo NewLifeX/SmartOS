@@ -24,58 +24,46 @@ void Pwm::Config()
 
 	Timer::Config();	// 主要是配置时钟基础部分 TIM_TimeBaseInit
 
-	TIM_OCInitTypeDef oc;
-
-	TIM_OCStructInit(&oc);
-	oc.TIM_OCMode		= TIM_OCMode_PWM1;
-	oc.TIM_OutputState	= TIM_OutputState_Enable;
-	oc.TIM_OCPolarity	= Polarity ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
-	oc.TIM_OCIdleState	= IdleState ? TIM_OCIdleState_Reset : TIM_OCIdleState_Set;
-
 	auto ti	= (TIM_TypeDef*)_Timer;
-	for(int i=0; i<4; i++)
+	if(Opened)
+		Flush();
+	else
 	{
-		if(Pulse[i] != 0xFFFF)
+		TIM_OCInitTypeDef oc;
+
+		TIM_OCStructInit(&oc);
+		oc.TIM_OCMode		= TIM_OCMode_PWM1;
+		oc.TIM_OutputState	= TIM_OutputState_Enable;
+		oc.TIM_OCPolarity	= Polarity ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
+		oc.TIM_OCIdleState	= IdleState ? TIM_OCIdleState_Reset : TIM_OCIdleState_Set;
+
+		for(int i=0; i<4; i++)
 		{
-			if (Inited[i])
+			if(Enabled[i])
 			{
-				SetCompares[i]((TIM_TypeDef*)_Timer, Pulse[i]);
-			}
-			else
-			{
-				oc.TIM_Pulse = Pulse[i];
+				oc.TIM_Pulse	= Pulse[i];
 				OCInits[i](ti, &oc);
 
 				TIM_OCPldCfgs[i](ti, TIM_OCPreload_Enable);
 
-				Inited[i]	= true;
-				debug_printf("InitPWM[%d]\r\n",i);
+				debug_printf("Pwm%d::Config %d \r\n", _index, i);
 			}
 		}
 	}
 
-	if(!Pulses)
-	{
-		// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
-		TIM_ITConfig(ti, TIM_IT_Update, DISABLE);
-		TIM_ClearFlag(ti, TIM_FLAG_Update);
-	}
+	// PWM模式用不上中断  直接就丢了吧  给中断管理减减麻烦
+	TIM_ITConfig(ti, TIM_IT_Update, DISABLE);
+	TIM_ClearFlag(ti, TIM_FLAG_Update);
 
 	TIM_SetCounter(ti, 0x00000000);		// 清零定时器CNT计数寄存器
 	TIM_ARRPreloadConfig(ti, ENABLE);	// 使能预装载寄存器ARR
-
-	// 如果需要连续调整宽度，那么需要中断
-	if(Pulses) SetHandler(true);
 }
 
-void Pwm::FlushOut()
+void Pwm::Flush()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		if (Pulse[i] != 0xFFFF)
-		{
-			SetCompares[i]((TIM_TypeDef*)_Timer,Pulse[i]);
-		}
+		if (Enabled[i]) SetCompares[i]((TIM_TypeDef*)_Timer, Pulse[i]);
 	}
 }
 
@@ -100,10 +88,8 @@ void Pwm::Open()
 
 	for(int i=0; i<4; i++)
 	{
-		if(Pulse[i] != 0xFFFF && Ports[i] == nullptr)
-		{
+		if(Enabled[i] && Ports[i] == nullptr)
 			Ports[i]	= new AlternatePort(ps[i]);
-		}
 	}
 }
 
@@ -114,17 +100,21 @@ void Pwm::Close()
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (Inited[i])
-		{
-			TIM_OCPldCfgs[i]((TIM_TypeDef*)_Timer, TIM_OCPreload_Disable);
-			Inited[i]	= false;
-		}
+		if (Enabled[i]) TIM_OCPldCfgs[i]((TIM_TypeDef*)_Timer, TIM_OCPreload_Disable);
 	}
 
 	Timer::Close();
 }
 
-void Pwm::OnInterrupt()
+void PwmData::Config()
+{
+	Pwm::Config();
+
+	// 如果需要连续调整宽度，那么需要中断
+	if(Pulses) SetHandler(true);
+}
+
+void PwmData::OnInterrupt()
 {
 	if(!Pulses || !PulseCount || PulseIndex > PulseCount) return;
 

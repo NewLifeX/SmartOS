@@ -9,16 +9,10 @@ Pwm::Pwm(TIMER index) : Timer(index)
 	{
 		Pulse[i]	= 0xFFFF;
 		Ports[i]	= nullptr;
-		Inited[i]	= false;
+		Enabled[i]	= false;
 	}
 
 	Remap		= 0;
-
-	Pulses		= nullptr;
-	PulseCount	= 0;
-	Channel		= 0;
-	PulseIndex	= 0xFF;
-	Repeated	= false;
 }
 
 Pwm::~Pwm()
@@ -39,4 +33,13 @@ void Pwm::SetPulse(int idx, ushort pulse)
 		Config();
 	else
 		Open();
+}
+
+PwmData::PwmData(TIMER index) : Pwm(index)
+{
+	Pulses		= nullptr;
+	PulseCount	= 0;
+	Channel		= 0;
+	PulseIndex	= 0xFF;
+	Repeated	= false;
 }

@@ -9,11 +9,12 @@ class AlternatePort;
 class Pwm : public Timer
 {
 public:
-	ushort	Pulse[4];	// 每个通道的占空比，默认0xFFFF表示不使用该通道
+	ushort	Pulse[4];	// 每个通道的占空比
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
     uint	Remap;		// 重映射。0不映射，其它为实际映射数字
 	AlternatePort*	Ports[4];
+	byte	Enabled[4];	// 每个通道是否启用
 
 	Pwm(TIMER index);		// index 定时器编号
 	virtual ~Pwm();
@@ -21,11 +22,19 @@ public:
 	virtual void Open();
 	virtual void Close();
 	virtual void Config();
-	// 刷新输出
-	void FlushOut();
+
+	void Flush();	// 刷新输出
 
 	void SetPulse(int idx, ushort pulse);
+	void SetDuty(int idx, byte duty)	// 设置占空比，0~100
 
+private:
+};
+
+// PWM输出数据
+class PwmData : public Pwm
+{
+public:
 	// 连续调整占空比
 	ushort* Pulses;		// 宽度数组
 	byte	PulseCount;	// 宽度个数
@@ -33,12 +42,12 @@ public:
 	byte	PulseIndex;	// 索引。使用数组中哪一个位置的数据
 	bool	Repeated;	// 是否重复
 
+	PwmData(TIMER index);
+
+	virtual void Config();
+
 protected:
 	virtual void OnInterrupt();
-
-private:
-	// 是否已配置 从低到高 4位 分别对应4个通道
-	byte	Inited[4];
 };
 
 #endif
