@@ -26,9 +26,7 @@ public:
 	void Flush();	// 刷新输出
 
 	void SetPulse(int idx, ushort pulse);
-	void SetDuty(int idx, byte duty)	// 设置占空比，0~100
-
-private:
+	void SetDuty(int idx, byte duty);	// 设置占空比，0~100
 };
 
 // PWM输出数据
