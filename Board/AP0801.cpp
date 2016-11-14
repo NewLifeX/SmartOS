@@ -454,6 +454,9 @@ static void OnAlarm(AlarmItem& item)
 	{
 		auto client = Client;
 		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+
+		// 主动上报状态
+		client->ReportAsync(bs[2], bs[0] - 2);
 	}
 }
 
