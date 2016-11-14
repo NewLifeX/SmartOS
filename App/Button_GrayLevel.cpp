@@ -67,8 +67,11 @@ void Button_GrayLevel::Set(Pwm* drive, byte pulseIndex)
 {
 	if (drive && pulseIndex < 4)
 	{
-		_Pwm = drive;
-		_Channel = pulseIndex;
+		_Pwm	= drive;
+		_Channel	= pulseIndex;
+
+		_Pwm->Enabled[pulseIndex]	= true;
+
 		// 刷新输出
 		RenewGrayLevel();
 	}
@@ -79,7 +82,7 @@ void Button_GrayLevel::RenewGrayLevel()
 	if (_Pwm)
 	{
 		_Pwm->Pulse[_Channel] = _Value ? (0xFF - OnGrayLevel) : (0xFF - OffGrayLevel);
-		_Pwm->Config();
+		_Pwm->Flush();
 	}
 }
 
@@ -88,7 +91,7 @@ void Button_GrayLevel::GrayLevelUp()
 	if (_Pwm)
 	{
 		_Pwm->Pulse[_Channel] = (0xFF - OnGrayLevel);
-		_Pwm->Config();
+		_Pwm->Flush();
 	}
 }
 
@@ -97,7 +100,7 @@ void Button_GrayLevel::GrayLevelDown()
 	if (_Pwm)
 	{
 		_Pwm->Pulse[_Channel] = (0xFF - OffGrayLevel);
-		_Pwm->Config();
+		_Pwm->Flush();
 	}
 }
 

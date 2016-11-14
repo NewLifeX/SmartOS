@@ -40,7 +40,8 @@ Pwm* IRFREQ()
 //	IRFreq->SetFrequency(38000);	// 严重不准确 103ve上实际输出只有25KHz
 	IRFreq->Prescaler = 0x06;	
 	IRFreq->Period	= 0x13c;
-	IRFreq->Pulse[3]=IRFreq->Period/2;		
+	IRFreq->Pulse[3]	= IRFreq->Period/2;		
+	IRFreq->Enabled[3]	= true;
 //	IRFreq->Start();
 	return IRFreq;
 }
