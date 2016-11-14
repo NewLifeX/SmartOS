@@ -93,13 +93,13 @@ bool Task::Execute(UInt64 now)
 // 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
 void Task::Set(bool enable, int msNextTime)
 {
-	Enable = enable;
+	Enable	= enable;
 
 	// 可以安排最近一次执行的时间，比如0表示马上调度执行
 	if(msNextTime >= 0) NextTime = Sys.Ms() + msNextTime;
 
 	// 如果系统调度器处于Sleep，让它立马退出
-	if(enable) Scheduler()->Sleeping = false;
+	if(enable) Scheduler()->SkipSleep();
 }
 
 bool Task::CheckTime(UInt64 end, bool isSleep)
@@ -182,6 +182,8 @@ TaskScheduler::TaskScheduler(cstring name)
 	Times	= 0;
 	Cost	= 0;
 	MaxCost	= 0;
+
+	_SkipSleep	= false;
 }
 
 // 使用外部缓冲区初始化任务列表，避免频繁的堆分配
@@ -324,9 +326,9 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 {
 	TS("Task::Execute");
 
-	UInt64 now = Sys.Ms();
-	UInt64 end = now + msMax;
-	UInt64 min = UInt64_Max;		// 最小时间，这个时间就会有任务到来
+	UInt64 now	= Sys.Ms();
+	UInt64 end	= now + msMax;
+	UInt64 min	= UInt64_Max;		// 最小时间，这个时间就会有任务到来
 
 	TimeCost tc;
 
@@ -368,7 +370,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	if(min > end) min	= end;
 	// 如果有最小时间，睡一会吧
 	now = Sys.Ms();	// 当前时间
-	if(/*msMax == 0xFFFFFFFF &&*/ min != UInt64_Max && min > now)
+	if(/*msMax == 0xFFFFFFFF &&*/ !_SkipSleep && min != UInt64_Max && min > now)
 	{
 		min -= now;
 		Sleeping = true;
@@ -401,6 +403,13 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 	if(task) task->SleepTime	+= tc.Elapsed();
 
 	return cost;
+}
+
+// 跳过最近一次睡眠，马上开始下一轮循环
+void TaskScheduler::SkipSleep()
+{
+	_SkipSleep	= true;
+	Sleeping	= false;
 }
 
 #if !defined(TINY) && defined(STM32F0)

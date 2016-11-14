@@ -58,7 +58,8 @@ private:
 class TaskScheduler
 {
 private:
-	List<Task*>	_Tasks;
+	List<Task*>	_Tasks;	// 任务列表
+	bool	_SkipSleep;	// 跳过最近一次睡眠，马上开始下一轮循环
 
 	friend class Task;
 
@@ -95,6 +96,9 @@ public:
 	// 执行一次循环。指定最大可用时间
 	void Execute(uint msMax, bool& cancel);
 	uint ExecuteForWait(uint msMax, bool& cancel);
+
+	// 跳过最近一次睡眠，马上开始下一轮循环
+	void SkipSleep();
 
 	void ShowStatus();	// 显示状态
 
