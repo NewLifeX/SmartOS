@@ -70,8 +70,6 @@ void Button_GrayLevel::Set(Pwm* drive, byte pulseIndex)
 		_Pwm	= drive;
 		_Channel	= pulseIndex;
 
-		_Pwm->Enabled[pulseIndex]	= true;
-
 		// 刷新输出
 		RenewGrayLevel();
 	}
@@ -267,20 +265,25 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 	// 配置PWM来源
 	static Pwm pwm(tim);
 	// 设置分频 尽量不要改 Prescaler * Period 就是 Pwm 周期
-	pwm.Prescaler = 0x04;		// 随便改  只要肉眼看不到都没问题
-	pwm.Period = 0xFF;		// 对应灰度调节范围
-	pwm.Polarity = true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
-	pwm.Open();
+	pwm.Prescaler	= 0x04;		// 随便改  只要肉眼看不到都没问题
+	pwm.Period		= 0xFF;		// 对应灰度调节范围
+	pwm.Polarity	= true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
 
 	// 配置 LED 引脚
 	static AlternatePort Leds[4];
 
+	/*pwm.Remap	= GPIO_PartialRemap_TIM3;
 	for (int i = 0; i < count; i++)
 	{
 		Leds[i].Set(pins[i].Led);
-		Leds[i].Open();
+		//Leds[i].Open();
 		Leds[i].AFConfig(Port::AF_1);
-	}
+
+		pwm.Ports[i]	= new AlternatePort(Leds[i]);
+		pwm.Enabled[i]	= true;
+	}*/
+
+	pwm.Open();
 
 	// 设置默认灰度
 	if (level[0] == 0x00)
@@ -289,8 +292,8 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 		level[1] = 20;
 	}
 	// 使用 Data 记录的灰度
-	OnGrayLevel = level[0];
-	OffGrayLevel = level[1];
+	OnGrayLevel		= level[0];
+	OffGrayLevel	= level[1];
 
 	// 配置 Button 主体
 	for (int i = 0; i < count; i++)
