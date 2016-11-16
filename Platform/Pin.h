@@ -163,6 +163,7 @@ enum SPI
 
 enum TIMER
 {
+	Timer0 = 0xFF,
 	Timer1 = 0,
 	Timer2 = 1,
 	Timer3 = 2,

@@ -46,7 +46,7 @@ void Pwm::Config()
 
 				TIM_OCPldCfgs[i](ti, TIM_OCPreload_Enable);
 
-				debug_printf("Pwm%d::Config %d \r\n", _index, i);
+				debug_printf("Pwm%d::Config %d \r\n", _index+1, i);
 			}
 		}
 	}
@@ -63,7 +63,7 @@ void Pwm::Flush()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		if (Enabled[i]) SetCompares[i]((TIM_TypeDef*)_Timer, Pulse[i]);
+		if (Ports[i]) SetCompares[i]((TIM_TypeDef*)_Timer, Pulse[i]);
 	}
 }
 
@@ -100,7 +100,7 @@ void Pwm::Close()
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (Enabled[i]) TIM_OCPldCfgs[i]((TIM_TypeDef*)_Timer, TIM_OCPreload_Disable);
+		if (Ports[i]) TIM_OCPldCfgs[i]((TIM_TypeDef*)_Timer, TIM_OCPreload_Disable);
 	}
 
 	Timer::Close();

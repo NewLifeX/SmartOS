@@ -1,7 +1,6 @@
 var build = Builder.Create("MDK");
 build.Init();
-build.Cortex = 3;
-build.RebuildTime = 7 * 24 * 3600;
+build.CPU = "Cortex-M3";
 build.Defines.Add("STM32F1");
 build.AddIncludes("..\\", false);
 build.AddFiles("..\\Core");
