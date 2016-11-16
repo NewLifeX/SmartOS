@@ -107,6 +107,11 @@ void Dimmer::Open()
 	// 配置数据备份，用于比较保存
 	auto& cfg	= *Config;
 
+	// 先打开Pwm再设置脉宽，否则可能因为周期还没来得及计算
+
+	// 是否上电默认打开
+	if(cfg.PowerOn) _Pwm->Open();
+
 	// 是否恢复上次保存？
 	if(cfg.SaveLast)
 		Set(cfg.Values);
@@ -116,9 +121,6 @@ void Dimmer::Open()
 		byte vs[]	= { 0xFF, 0xFF, 0xFF, 0xFF };
 		Set(vs);
 	}
-
-	// 是否上电默认打开
-	if(cfg.PowerOn) _Pwm->Open();
 
 	Opened	= true;
 }
