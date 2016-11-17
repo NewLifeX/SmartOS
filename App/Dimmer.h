@@ -29,14 +29,18 @@ public :
 	void Set(byte vs[4]);
 	void Change(bool open);
 
-	void Test();
+	void Animate(byte mode, int ms = 3000);
 
 private:
 	uint	_task;
 	byte	_Pulse[4];
 	byte	_Next[4];
 
+	uint	_taskAnimate;
+	int		_AnimateData[4];
+
 	void FlushTask();
+	void AnimateTask();
 };
 
 // 配置
@@ -45,8 +49,8 @@ class DimmerConfig : public ConfigBase
 public:
 	byte	Values[4];	// 4通道亮度
 	byte	SaveLast;	// 保存最后亮度
-	byte	PowerOn;	// 上电是否开灯
-	byte	Gradient;	// 调光时渐变时间，默认100ms，0表示不使用渐变效果
+	byte	PowerOn;	// 上电状态。0关1开，0x10动感模式
+	byte	Speed;		// 渐变时间，默认10ms，0表示不使用渐变效果
 	byte	TagEnd;
 
 	DimmerConfig();
