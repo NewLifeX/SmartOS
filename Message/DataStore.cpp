@@ -42,9 +42,13 @@ int DataStore::Write(uint offset, const Buffer& bs)
 	if(size == 0) return 0;
 
 	uint realOffset	= offset - VirAddrBase;
+	
+	//起始位置越界
+	auto len =  Data.Length();
+	if(realOffset >= len) return -1;
 
-	// 检查是否越界
-	if(Strict && realOffset + size > Data.Length()) return -1;
+	// 数据越界
+	if(Strict && realOffset + size >len) size = len - realOffset;
 
 	// 从数据区读取数据
 	uint rs = Data.Copy(realOffset, bs, 0, size);
