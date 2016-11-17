@@ -33,8 +33,8 @@ public :
 
 private:
 	uint	_task;
-	uint	_Pulse[4];
-	uint	_Step[4];
+	byte	_Pulse[4];
+	byte	_Next[4];
 
 	void FlushTask();
 };
@@ -46,7 +46,7 @@ public:
 	byte	Values[4];	// 4通道亮度
 	byte	SaveLast;	// 保存最后亮度
 	byte	PowerOn;	// 上电是否开灯
-	ushort	Gradient;	// 调光时渐变时间，默认2000ms，0表示不使用渐变效果
+	byte	Gradient;	// 调光时渐变时间，默认100ms，0表示不使用渐变效果
 	byte	TagEnd;
 
 	DimmerConfig();

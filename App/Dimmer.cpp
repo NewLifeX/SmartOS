@@ -16,7 +16,7 @@ DimmerConfig::DimmerConfig()
 
 	SaveLast	= true;
 	PowerOn		= true;
-	Gradient	= 2000;
+	Gradient	= 100;
 	for(int i=0; i<4; i++) Values[i]	= 0xFF;
 }
 
@@ -53,7 +53,6 @@ static DimmerConfig* InitConfig()
 }
 
 /******************************** 调光Dimmer ********************************/
-static byte Levels[]	= {1,1,2,2,3,4,6,8,10,14,19,25,33,44,59,80,107,143,191,255,};
 
 Dimmer::Dimmer()
 {
@@ -66,7 +65,7 @@ Dimmer::Dimmer()
 	for(int i=0; i<4; i++)
 	{
 		_Pulse[i]	= 0;
-		_Step[i]	= 0;
+		_Next[i]	= 0;
 	}
 }
 
@@ -135,6 +134,7 @@ void Dimmer::Close()
 	Opened	= false;
 }
 
+static byte Levels[]	= { 1,1,2,2,3,4,6,8,10,14,19,25,33,44,59,80,107,143,191,255 };
 // 刷新任务。产生渐变效果
 void Dimmer::FlushTask()
 {
@@ -146,22 +146,33 @@ void Dimmer::FlushTask()
 	{
 		if(pwm.Enabled[i])
 		{
-			int now	= pwm.Pulse[i];
-			int dst	= _Pulse[i];
-			int st	= _Step[i];
-			if(now + st < dst)	// 递增
-				pwm.Pulse[i]	+= st;
-			else if(now - st > dst)// 递减
-				pwm.Pulse[i]	-= st;
-			else if(now != dst)	// 最后一步接近
-				pwm.Pulse[i]	= dst;
+			int k	= _Next[i];
+			if(k < ArrayLength(Levels))
+			{
+				// 向前跳一级
+				byte cur	= Levels[k];
+				pwm.SetDuty(i, cur);
+
+				// 计算下一跳，注意方向
+				if(cur < _Pulse[i])
+					k++;
+				else if(cur > _Pulse[i])
+					k--;
+				else
+					end++;
+
+				//debug_printf("Dimmer::Flush %d Pulse=%d => %d _Next=%d\r\n", i+1, cur, _Pulse[i], Levels[k]);
+				_Next[i]	= k;
+			}
 			else
 				end++;
-			//debug_printf("Dimmer::Flush %d Pulse=%d => %d\r\n", i+1, pwm.Pulse[i], _Pulse[i]);
 		}
 		else
 			end++;
 	}
+	// 刷新数据
+	pwm.Flush();
+
 	// 所有通道都结束，则关闭任务
 	if(end == 4)
 	{
@@ -169,42 +180,36 @@ void Dimmer::FlushTask()
 		Sys.SetTask(_task, false);
 		return;
 	}
-
-	// 刷新数据
-	pwm.Flush();
 }
 
 #define FlushLevel	100
 void Dimmer::Set(byte vs[4])
 {
 	auto& pwm	= *_Pwm;
+	auto& cfg	= *Config;
 	// 等分计算步长
 	for(int i=0; i<4; i++)
 	{
 		if(!pwm.Enabled[i]) continue;
 
-		// 冷暖光一共256级，需要除以256再乘以周期得到占空比宽度
-		_Pulse[i]	= ((vs[i] + 1) * pwm.Period) >> 8;
+		byte cur	= pwm.GetDuty(i);
+		// 找到第一个大于当前值的等级，注意方向
+		int k	= 0;
+		for(; k<ArrayLength(Levels) && cur >= Levels[k]; k++);
+		if(cur > vs[i]) k--;
 
-		int st	= ((int)pwm.Pulse[i] - (int)_Pulse[i]) / FlushLevel;
-		if(st < 0)
-			st	= -st;
-		else if(st == 0)
-			st	= 1;
-		_Step[i]	= st;
+		_Next[i]	= k;
+		_Pulse[i]	= vs[i];
 
-		debug_printf("Dimmer::Set %d Value=%d Pulse=%d => %d _Step=%d\r\n", i+1, vs[i], pwm.Pulse[i], _Pulse[i], _Step[i]);
+		if(cfg.SaveLast) cfg.Values[i]	= vs[i];
+
+		debug_printf("Dimmer::Set %d Pulse=%d => %d _Next=%d\r\n", i+1, cur, vs[i], Levels[k]);
 	}
 
-	if (Config->SaveLast)
+	debug_printf("开始调节……\r\n");
+	if(cfg.Gradient > 0)
 	{
-		for(int i=0; i<4; i++)
-			Config->Values[i]	= vs[i];
-	}
-
-	if(Config->Gradient > 0)
-	{
-		if(!_task) _task	= Sys.AddTask(&Dimmer::FlushTask, this, 10, Config->Gradient / FlushLevel, "灯光渐变");
+		if(!_task) _task	= Sys.AddTask(&Dimmer::FlushTask, this, 10, cfg.Gradient, "灯光渐变");
 		Sys.SetTask(_task, true, 0);
 	}
 	else
@@ -215,7 +220,6 @@ void Dimmer::Set(byte vs[4])
 		// 刷新数据
 		pwm.Flush();
 	}
-	debug_printf("开始调节……\r\n");
 }
 
 void Dimmer::Change(bool open)

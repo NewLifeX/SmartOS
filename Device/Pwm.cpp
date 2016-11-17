@@ -35,6 +35,21 @@ void Pwm::SetPulse(int idx, ushort pulse)
 		Open();
 }
 
+void Pwm::SetDuty(int idx, byte duty)
+{
+	if(idx <0 || idx >= 4) return;
+
+	Pulse[idx]	= (((int)duty + 1) * Period) >> 8;
+}
+
+byte Pwm::GetDuty(int idx)
+{
+	if(idx <0 || idx >= 4)	return 0;
+	if(Pulse[idx] == 0)		return 0;
+
+	return (Pulse[idx] << 8) / Period - 1;
+}
+
 PwmData::PwmData(TIMER index) : Pwm(index)
 {
 	Pulses		= nullptr;
