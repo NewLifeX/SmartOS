@@ -70,6 +70,8 @@ Dimmer::Dimmer()
 		_Pulse[i]	= 0;
 		_Current[i]	= 0;
 	}
+
+	_NextStatus	= 0xFF;
 }
 
 Dimmer::~Dimmer()
@@ -201,6 +203,15 @@ void Dimmer::FlushTask()
 	{
 		debug_printf("所有通道结束 \r\n");
 		Sys.SetTask(_task, false);
+
+		// 渐变完成后，关闭Pwm输出
+		if(_NextStatus != 0xFF)
+		{
+			_NextStatus	= 0xFF;
+
+			pwm.Close();
+		}
+
 		return;
 	}
 }
@@ -265,12 +276,34 @@ void Dimmer::SetPulse(byte vs[4])
 	}
 }
 
-void Dimmer::Change(bool open)
+void Dimmer::Change(byte mode)
 {
-	if(open)
+	if(mode == 0x01)
+	{
 		_Pwm->Open();
-	else
-		_Pwm->Close();
+
+		// 渐变打开
+		byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+		SetPulse(vs);
+	}
+	else if(mode == 0x00)
+	{
+		// 渐变关闭
+		byte vs[4]	= { 0, 0, 0, 0 };
+		SetPulse(vs);
+
+		//_Pwm->Close();
+		// 最后关闭Pwm
+		_NextStatus	= 0x00;
+	}
+	else if(mode >= 0x10)
+	{
+		auto& cfg	= *Config;
+		// 如果设置是保持开灯，则记录最后状态
+		if(cfg.PowerOn) cfg.PowerOn	= mode;
+
+		Animate(mode, (cfg.Speed << 8) + 500);
+	}
 }
 
 void Dimmer::AnimateTask()

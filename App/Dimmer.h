@@ -29,7 +29,7 @@ public :
 	void Close();
 
 	void Set(byte vs[4]);
-	void Change(bool open);
+	void Change(byte mode);
 
 	void Animate(byte mode, int ms = 3000);
 
@@ -37,6 +37,7 @@ private:
 	uint	_task;
 	byte	_Pulse[4];
 	byte	_Current[4];
+	byte	_NextStatus;
 
 	uint	_taskAnimate;
 	int		_AnimateData[4];
