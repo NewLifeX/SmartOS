@@ -115,7 +115,7 @@ void Dimmer::Open()
 		_Pwm->Open();
 
 		// 打开动感模式
-		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn);
+		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 100);
 	}
 
 	// 是否恢复上次保存？
