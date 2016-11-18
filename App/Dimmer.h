@@ -41,6 +41,8 @@ private:
 	uint	_taskAnimate;
 	int		_AnimateData[4];
 
+	void SetPulse(byte vs[4]);
+	
 	void FlushTask();
 	void AnimateTask();
 };

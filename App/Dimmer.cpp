@@ -117,17 +117,17 @@ void Dimmer::Open()
 		_Pwm->Open();
 
 		// 打开动感模式
-		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 100);
+		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
 	}
 
 	// 是否恢复上次保存？
 	if(cfg.SaveLast)
-		Set(cfg.Values);
+		SetPulse(cfg.Values);
 	else
 	{
 		// 出厂默认最大亮度100%
 		byte vs[]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		Set(vs);
+		SetPulse(vs);
 	}
 
 	Opened	= true;
@@ -147,6 +147,19 @@ void Dimmer::Close()
 
 // 调光亮度等级公式：2^(x/32) * 256 - 1
 static const ushort Levels[]	= { 261,266,272,278,284,291,297,303,310,317,324,331,338,346,353,361,369,377,385,394,402,411,420,430,439,449,458,469,479,489,500,511,522,534,545,557,570,582,595,608,621,635,649,663,678,692,708,723,739,755,772,789,806,824,842,860,879,898,918,938,959,980,1001,1023,1045,1068,1092,1116,1140,1165,1191,1217,1243,1271,1299,1327,1356,1386,1416,1447,1479,1511,1544,1578,1613,1648,1684,1721,1759,1797,1837,1877,1918,1960,2003,2047,2092,2138,2185,2232,2281,2331,2382,2434,2488,2542,2598,2655,2713,2773,2833,2895,2959,3024,3090,3157,3227,3297,3370,3443,3519,3596,3675,3755,3837,3921,4007,4095,4185,4276,4370,4466,4564,4663,4766,4870,4977,5086,5197,5311,5427,5546,5667,5792,5918,6048,6181,6316,6454,6596,6740,6888,7038,7193,7350,7511,7676,7844,8015,8191,8370,8554,8741,8932,9128,9328,9532,9741,9954,10172,10395,10623,10855,11093,11336,11584,11838,12097,12362,12633,12909,13192,13481,13776,14078,14386,14701,15023,15352,15688,16032,16383,16742,17108,17483,17866,18257,18657,19065,19483,19910,20346,20791,21246,21712,22187,22673,23169,23677,24195,24725,25267,25820,26385,26963,27553,28157,28773,29404,30047,30705,31378,32065,32767,33485,34218,34967,35733,36515,37315,38132,38967,39820,40692,41583,42494,43424,44375,45347,46340,47355,48392,49451,50534,51641,52772,53927,55108,56315,57548,58808,60096,61412,62756,64131,65535 };
+
+/*static byte GetX(byte y)
+{
+	int d	= y << 8;
+	for(int i=0; i<ArrayLength(Levels); i++)
+	{
+		if(d == Levels[i]) return i;
+
+		if(d > Levels[i]) return i;
+	}
+
+	return ArrayLength(Levels) - 1;
+}*/
 
 // 刷新任务。产生渐变效果
 void Dimmer::FlushTask()
@@ -171,7 +184,7 @@ void Dimmer::FlushTask()
 			// 向前跳一级
 			auto cur	= Levels[x];
 			//pwm.SetDuty(i, cur);
-			pwm.Pulse[i]	= ((int)cur * pwm.Period) >> 16;
+			pwm.Pulse[i]	= (((int)cur + 1) * pwm.Period) >> 16;
 
 			//debug_printf("Dimmer::Flush %d Pulse=%d => %d x=%d\r\n", i+1, cur, _Pulse[i], x);
 
@@ -192,7 +205,6 @@ void Dimmer::FlushTask()
 	}
 }
 
-#define FlushLevel	100
 void Dimmer::Set(byte vs[4])
 {
 	auto& pwm	= *_Pwm;
@@ -202,22 +214,34 @@ void Dimmer::Set(byte vs[4])
 	{
 		if(!pwm.Enabled[i]) continue;
 
-		// 没有改变则不需要调节
-		//if((((vs[i] + 1) * pwm.Period) >> 8) == pwm.Pulse[i]) continue;
-
-		//byte cur	= pwm.GetDuty(i);
-		//byte x		= GetX(cur);
-
-		//_Current[i]	= x;
 		byte d	= vs[i];
 
 		// 最大最小值
-		if(d < Min) d	= Min;
+		if(d < Min)	d	= Min;
+		if(d > Max) d	= Max;
+
+		if(cfg.SaveLast) cfg.Values[i]	= d;
+	}
+
+	SetPulse(vs);
+}
+
+void Dimmer::SetPulse(byte vs[4])
+{
+	auto& pwm	= *_Pwm;
+	auto& cfg	= *Config;
+	// 等分计算步长
+	for(int i=0; i<4; i++)
+	{
+		if(!pwm.Enabled[i]) continue;
+
+		byte d	= vs[i];
+
+		// 最大最小值
+		if(d < Min)	d	= Min;
 		if(d > Max) d	= Max;
 
 		_Pulse[i]	= d;
-
-		if(cfg.SaveLast) cfg.Values[i]	= d;
 
 #if DEBUG
 		byte x	= _Current[i];
@@ -294,7 +318,7 @@ void Dimmer::AnimateTask()
 		}
 	}
 
-	Set(on ? vs1 : vs2);
+	SetPulse(on ? vs1 : vs2);
 
 	on	= !on;
 	_AnimateData[1]	= on;
