@@ -16,7 +16,7 @@ DimmerConfig::DimmerConfig()
 
 	SaveLast= true;
 	PowerOn	= 0x10;	// 默认呼吸灯动感模式
-	Speed	= 100;
+	Speed	= 10;
 	for(int i=0; i<4; i++) Values[i]	= 0xFF;
 }
 
@@ -66,7 +66,7 @@ Dimmer::Dimmer()
 	for(int i=0; i<4; i++)
 	{
 		_Pulse[i]	= 0;
-		_Next[i]	= 0;
+		_Current[i]	= 0;
 	}
 }
 
@@ -90,7 +90,7 @@ void Dimmer::Init(Pwm* pwm, int channels)
 	if(pwm)
 	{
 		_Pwm	= pwm;
-		pwm->SetFrequency(100);
+		pwm->SetFrequency(500);
 		for(int i=0; i< channels; i++)
 		{
 			// 打开通道，初始值为0，渐变效果
@@ -144,55 +144,7 @@ void Dimmer::Close()
 }
 
 // 等级关键点。共20点，要是刚好32点就好了
-static byte Levels[]	= { 1,1,2,2,3,4,6,8,10,14,19,25,33,44,59,80,107,143,191,255 };
-// 根据Y获取X
-static byte GetX(byte y)
-{
-	if(y <= 1) return 0;
-	if(y == 255) return 255;
-
-	// 找到第一个大于等于当前值的等级，注意方向
-	int k	= 0;
-	for(; k<ArrayLength(Levels) && y > Levels[k]; k++);
-
-	// 刚好落在关键点
-	if(y == Levels[k]) return k * 256 / ArrayLength(Levels);
-
-	// 当前值和前一个值构成一个区间，要查找的y就在这个区间里面
-	byte cur	= Levels[k];
-	byte pri	= k==0 ? 0 : Levels[k - 1];
-
-	// 放大到256级。整段以及区间
-	// k * 256 / ArrayLength(Levels)
-	// (y - pri) / (cur - pri) * 256 / ArrayLength(Levels)
-	byte z	= (y - pri) * 256 / ArrayLength(Levels) / (cur - pri);
-	if(k > 0) k--;
-	byte x	= k * 256 / ArrayLength(Levels);
-
-	return x + z;
-}
-
-// 根据X获取Y
-static byte GetY(byte x)
-{
-	if(x == 0) return 1;
-	if(x == 255) return 255;
-
-	// 计算整段以及区间
-	byte k	= x * ArrayLength(Levels) / 256;
-
-	// 已经到达结尾
-	if(k >= ArrayLength(Levels) - 1) return Levels[k];
-
-	byte cur	= Levels[k];
-	byte next	= Levels[k + 1];
-
-	byte z	= x - k * 256 / ArrayLength(Levels);
-	// z * ArrayLength(Levels) / 256 * (next - cur)
-	z	= z * (next - cur) * ArrayLength(Levels) / 256;
-
-	return Levels[k] + z;
-}
+static const byte Levels[]	= { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,7,7,7,7,7,7,8,8,8,8,8,8,9,9,9,9,9,10,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,14,14,14,15,15,15,15,16,16,17,17,17,18,18,18,19,19,20,20,21,21,21,22,22,23,23,24,24,25,26,26,27,27,28,28,29,30,30,31,32,32,33,34,35,35,36,37,38,39,39,40,41,42,43,44,45,46,47,48,49,50,51,52,54,55,56,57,58,60,61,62,64,65,67,68,69,71,73,74,76,77,79,81,83,85,86,88,90,92,94,96,98,101,103,105,107,110,112,115,117,120,122,125,128,131,133,136,139,142,146,149,152,155,159,162,166,170,173,177,181,185,189,193,197,202,206,211,215,220,225,230,235,240,245,251,255 };
 
 // 刷新任务。产生渐变效果
 void Dimmer::FlushTask()
@@ -205,22 +157,22 @@ void Dimmer::FlushTask()
 	{
 		if(pwm.Enabled[i])
 		{
-			byte x		= _Next[i];
-			// 向前跳一级
-			byte cur	= GetY(x);
-			pwm.SetDuty(i, cur);
+			byte x	= _Current[i];
 
-			if(cur == 255)
-				end++;
-			else if(cur < _Pulse[i])
+			if(x < _Pulse[i])
 				x++;
-			else if(cur > _Pulse[i])
+			else if(x > _Pulse[i])
 				x--;
 			else
 				end++;
 
-			debug_printf("Dimmer::Flush %d Pulse=%d => %d x=%d\r\n", i+1, cur, _Pulse[i], x);
-			_Next[i]	= x;
+			// 向前跳一级
+			byte cur	= Levels[x];
+			pwm.SetDuty(i, cur);
+
+			//debug_printf("Dimmer::Flush %d Pulse=%d => %d x=%d\r\n", i+1, cur, _Pulse[i], x);
+
+			_Current[i]	= x;
 		}
 		else
 			end++;
@@ -250,15 +202,16 @@ void Dimmer::Set(byte vs[4])
 		// 没有改变则不需要调节
 		//if((((vs[i] + 1) * pwm.Period) >> 8) == pwm.Pulse[i]) continue;
 
-		byte cur	= pwm.GetDuty(i);
-		byte x		= GetX(cur);
+		//byte cur	= pwm.GetDuty(i);
+		//byte x		= GetX(cur);
 
-		_Next[i]	= x;
+		//_Current[i]	= x;
+		byte x	= _Current[i];
 		_Pulse[i]	= vs[i];
 
 		if(cfg.SaveLast) cfg.Values[i]	= vs[i];
 
-		debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i+1, cur, vs[i], x);
+		debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i+1, Levels[x], vs[i], x);
 	}
 
 	debug_printf("开始调节……\r\n");

@@ -34,7 +34,7 @@ public :
 private:
 	uint	_task;
 	byte	_Pulse[4];
-	byte	_Next[4];
+	byte	_Current[4];
 
 	uint	_taskAnimate;
 	int		_AnimateData[4];
