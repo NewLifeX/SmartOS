@@ -92,7 +92,7 @@ void Dimmer::Init(Pwm* pwm, int channels)
 	if(pwm)
 	{
 		_Pwm	= pwm;
-		pwm->SetFrequency(500);
+		pwm->SetFrequency(100);
 		for(int i=0; i< channels; i++)
 		{
 			// 打开通道，初始值为0，渐变效果
