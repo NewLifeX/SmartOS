@@ -11,8 +11,10 @@ class DimmerConfig;
 class Dimmer
 {
 public :
-	Pwm*	_Pwm;		// 用于调光的PWM
-	bool	Opened;		// 是否已打开
+	Pwm*	_Pwm;	// 用于调光的PWM
+	bool	Opened;	// 是否已打开
+	byte	Min;	// 最小值。默认0
+	byte	Max;	// 最大值。默认255
 	DimmerConfig*	Config;
 
 	Dimmer();

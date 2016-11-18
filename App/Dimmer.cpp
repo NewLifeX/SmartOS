@@ -58,6 +58,8 @@ Dimmer::Dimmer()
 {
 	_Pwm	= nullptr;
 	Opened	= false;
+	Min		= 0;
+	Max		= 255;
 	Config	= nullptr;
 
 	_task	= 0;
@@ -207,12 +209,20 @@ void Dimmer::Set(byte vs[4])
 		//byte x		= GetX(cur);
 
 		//_Current[i]	= x;
+		byte d	= vs[i];
+
+		// 最大最小值
+		if(d < Min) d	= Min;
+		if(d > Max) d	= Max;
+
+		_Pulse[i]	= d;
+
+		if(cfg.SaveLast) cfg.Values[i]	= d;
+
+#if DEBUG
 		byte x	= _Current[i];
-		_Pulse[i]	= vs[i];
-
-		if(cfg.SaveLast) cfg.Values[i]	= vs[i];
-
-		debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i+1, Levels[x], Levels[vs[i]], x);
+		debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i+1, Levels[x], Levels[d], x);
+#endif
 	}
 
 	debug_printf("开始调节……\r\n");
