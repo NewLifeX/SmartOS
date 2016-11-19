@@ -119,7 +119,7 @@ void Dimmer::Open()
 		_Pwm->Open();
 
 		// 打开动感模式
-		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
+		if(cfg.PowerOn == 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
 	}
 
 	// 是否恢复上次保存？
@@ -218,8 +218,9 @@ void Dimmer::FlushTask()
 
 void Dimmer::Set(byte vs[4])
 {
+	
 	auto& pwm	= *_Pwm;
-	auto& cfg	= *Config;
+	auto& cfg	= *Config;	
 	// 等分计算步长
 	for(int i=0; i<4; i++)
 	{
@@ -270,7 +271,6 @@ void Dimmer::SetPulse(byte vs[4])
 	{
 		for(int i=0; i<4; i++)
 			pwm.Pulse[i]	= vs[i];
-
 		// 刷新数据
 		pwm.Flush();
 	}
@@ -283,8 +283,8 @@ void Dimmer::Change(byte mode)
 		_Pwm->Open();
 
 		// 渐变打开
-		byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		SetPulse(vs);
+		//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+		//SetPulse(vs);
 	}
 	else if(mode == 0x00)
 	{
@@ -296,14 +296,13 @@ void Dimmer::Change(byte mode)
 		// 最后关闭Pwm
 		_NextStatus	= 0x00;
 	}
-	else if(mode >= 0x10)
-	{
-		auto& cfg	= *Config;
-		// 如果设置是保持开灯，则记录最后状态
-		if(cfg.PowerOn) cfg.PowerOn	= mode;
-
-		Animate(mode, (cfg.Speed << 8) + 500);
-	}
+	
+	auto& cfg	= *Config;
+	// 如果设置是保持开灯，则记录最后状态
+	if(cfg.PowerOn) cfg.PowerOn	= mode;
+	//设置模式
+	Animate(mode, (cfg.Speed << 8) + 500);
+	
 }
 
 void Dimmer::AnimateTask()
@@ -359,7 +358,7 @@ void Dimmer::AnimateTask()
 
 void Dimmer::Animate(byte mode, int ms)
 {
-	if(mode == 0)
+	if(mode != 0x10)
 	{
 		Sys.RemoveTask(_taskAnimate);
 		return;
