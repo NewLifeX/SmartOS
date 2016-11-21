@@ -186,10 +186,8 @@ void Dimmer::FlushTask()
 			// 向前跳一级
 			auto cur	= Levels[x];
 			//pwm.SetDuty(i, cur);
-			pwm.Pulse[i]	= (((int)cur + 1) * pwm.Period) >> 16;
-
-			//debug_printf("Dimmer::Flush %d Pulse=%d => %d x=%d\r\n", i+1, cur, _Pulse[i], x);
-
+			pwm.Pulse[i]	= (((int)cur + 1) * pwm.Period) >> 16;		
+			//debug_printf("Dimmer::Flush %d Pulse=%d => %d   Period:%d \r\n", i+1, x, pwm.Pulse[i], pwm.Period);
 			_Current[i]	= x;
 		}
 		else
@@ -242,35 +240,40 @@ void Dimmer::SetPulse(byte vs[4])
 {
 	auto& pwm	= *_Pwm;
 	auto& cfg	= *Config;
-	// 等分计算步长
-	for(int i=0; i<4; i++)
+	debug_printf("开始调节……\r\n");
+	if (cfg.Speed > 0)
 	{
-		if(!pwm.Enabled[i]) continue;
+		// 等分计算步长
+		for (int i = 0; i < 4; i++)
+		{
+			if (!pwm.Enabled[i]) continue;
 
-		byte d	= vs[i];
+			byte d = vs[i];
 
-		// 最大最小值
-		if(d < Min)	d	= Min;
-		if(d > Max) d	= Max;
+			// 最大最小值
+			if (d < Min)	d = Min;
+			if (d > Max) d = Max;
 
-		_Pulse[i]	= d;
+			_Pulse[i] = d;
 
 #if DEBUG
-		byte x	= _Current[i];
-		debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i+1, Levels[x], Levels[d], x);
+			byte x = _Current[i];
+			//debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i + 1, Levels[x], Levels[d], x);
 #endif
-	}
+		}
 
-	debug_printf("开始调节……\r\n");
-	if(cfg.Speed > 0)
-	{
-		if(!_task) _task	= Sys.AddTask(&Dimmer::FlushTask, this, 10, cfg.Speed, "灯光渐变");
+		if (!_task) _task = Sys.AddTask(&Dimmer::FlushTask, this, 10, cfg.Speed, "灯光渐变");
 		Sys.SetTask(_task, true, 0);
 	}
+
 	else
 	{
-		for(int i=0; i<4; i++)
-			pwm.Pulse[i]	= vs[i];
+		for (int i = 0; i < 4; i++)
+		{
+			pwm.Pulse[i] = ((int)vs[i] * pwm.Period)>>8;
+
+			debug_printf("通道%d, 非动态占空比%d 周期 %d\r\n",i, pwm.Pulse[i],pwm.Period);
+		}
 		// 刷新数据
 		pwm.Flush();
 	}
@@ -307,6 +310,10 @@ void Dimmer::Change(byte mode)
 
 void Dimmer::AnimateTask()
 {
+	// 配置数据备份，用于比较保存
+	auto& cfg = *Config;
+	if (cfg.Speed <= 0) return;
+	
 	bool on	= _AnimateData[1];
 	byte vs1[4];
 	byte vs2[4];
@@ -358,18 +365,25 @@ void Dimmer::AnimateTask()
 
 void Dimmer::Animate(byte mode, int ms)
 {
-	if(mode != 0x10)
+	_AnimateData[0] = mode;
+
+	if(mode != 0x10||mode == 0)
 	{
-		Sys.RemoveTask(_taskAnimate);
+		if (_taskAnimate)
+		   Sys.RemoveTask(_taskAnimate);
 		return;
-	}
+	}if (mode == 0x10)
+	{
+		if (!_Pwm->Opened)
+		{
+			_Pwm->Open();
+		}
+		debug_printf("Dimmer::Animate 动感模式 0x%02x ms=%d \r\n", mode, ms);
 
-	debug_printf("Dimmer::Animate 动感模式 0x%02x ms=%d \r\n", mode, ms);
+		if (!_taskAnimate)
+			_taskAnimate = Sys.AddTask(&Dimmer::AnimateTask, this, 100, ms, "动感模式");
+		else
+			Sys.SetTaskPeriod(_taskAnimate, ms);
 
-	_AnimateData[0]	= mode;
-
-	if(!_taskAnimate)
-		_taskAnimate	= Sys.AddTask(&Dimmer::AnimateTask, this, 100, ms, "动感模式");
-	else
-		Sys.SetTaskPeriod(_taskAnimate, ms);
+	}	
 }
