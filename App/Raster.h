@@ -46,6 +46,7 @@ public:
 	uint	Min;			// 最小时间间隔 单位 ms
 	uint	Max;			// 最大时间间隔 单位 ms
 	bool	Filter = false;	//是否过滤脉冲 
+	void Init();
 
 	bool Open();
 
@@ -65,8 +66,6 @@ private:
 	ushort Count;
 
 	void OnInit();
-	void Init();
-
 	void OnHandlerA(PulsePort& raster);
 	void OnHandlerB(PulsePort& raster);
 	void LineReport();
