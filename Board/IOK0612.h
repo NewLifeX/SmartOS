@@ -42,7 +42,7 @@ public:
 	void InitClient();
 	void InitNet();
 	void InitAlarm();
-
+	void Invoke(const String& ation, const Buffer& bs);
     void Restore();
 	static void OnLongPress(InputPort* port, bool down);
 
