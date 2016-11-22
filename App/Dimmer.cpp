@@ -297,7 +297,7 @@ void Dimmer::Change(byte mode)
 
 		//_Pwm->Close();
 		// 最后关闭Pwm
-		_NextStatus	= 0x00;
+		//_NextStatus	= 0x00;
 	}
 	
 	auto& cfg	= *Config;
