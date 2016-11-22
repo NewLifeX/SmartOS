@@ -64,7 +64,9 @@ private:
 	bool	Stop = false;				//	
 	ushort Count;
 
+	void OnInit();
 	void Init();
+
 	void OnHandlerA(PulsePort& raster);
 	void OnHandlerB(PulsePort& raster);
 	void LineReport();

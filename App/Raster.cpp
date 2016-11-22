@@ -8,25 +8,22 @@ static Stream*	_Cache = nullptr;		//实际送的数据
 static uint		_RasterTask = 0;
 static int		_Ras = 0;
 
-static PulsePort* Create(Pin pin, uint min, uint max, bool filter)
+static PulsePort* Create(Pin pin)
 {
 	auto pp = new PulsePort();
 	pp->Port = new InputPort(pin);
-	pp->Port->HardEvent = true;
-	pp->Min = min;
-	pp->Max = max;
-	pp->Filter = filter;
+	pp->Port->HardEvent = true;	
 
 	return pp;
 }
 
 Raster::Raster(Pin pinA, Pin pinB)
 {
-	Init();
+	OnInit();
 
-	RasterA = Create(pinA, Min, Max, Filter);
+	RasterA = Create(pinA);
 
-	RasterB = Create(pinB, Min, Max, Filter);
+	RasterB = Create(pinB);
 
 	_Ras++;
 }
@@ -47,6 +44,23 @@ Raster::~Raster()
 
 void Raster::Init()
 {
+	if (RasterA != nullptr)
+	{
+		RasterA->Min = Min;
+		RasterA->Max = Max;
+		RasterA->Filter = Filter;
+	}
+
+	if (RasterB != nullptr)
+	{
+		RasterB->Min = Min;
+		RasterB->Max = Max;
+		RasterB->Filter = Filter;
+	}
+}
+
+void Raster::OnInit()
+{
 	RasterA = nullptr;
 	RasterB = nullptr;
 	Opened = false;
@@ -59,8 +73,8 @@ void Raster::Init()
 	FlagA.Time = 0;
 	FlagA.Count = 0;
 
-	Min = 100;		// 最小时间间隔 单位 ms
-	Max = 2000;		// 最大时间间隔 单位 ms
+	Min = 0;		// 最小时间间隔 单位 ms
+	Max = 0;		// 最大时间间隔 单位 ms
 
 	Filter = false;
 
@@ -124,7 +138,7 @@ void Raster::OnHandlerA(PulsePort& raster)
 	FlagA.Time = raster.Time;
 	FlagA.Count++;
 
-	if (CheckMatch(FlagB,FlagA.Start))
+	if (CheckMatch(FlagB, FlagA.Start))
 	{
 		LineReport();
 		debug_printf("A配对\r\n");
