@@ -114,7 +114,7 @@ void IOK0612::InitButtons(const Delegate2<InputPort&, bool>& press)
 ISocketHost* IOK0612::Create8266()
 {
 	// auto host	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
-	auto host	= new Esp8266(COM4, PB12, PA1);
+	auto host	= new Esp8266(COM2, PB12, PA1);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join	= host->SSID && *host->SSID;
