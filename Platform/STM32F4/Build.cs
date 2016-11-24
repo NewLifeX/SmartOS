@@ -1,45 +1,17 @@
-using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Reflection;
-using System.Text;
-using System.Linq;
-using System.IO;
-using System.Collections.Generic;
-using Microsoft.Win32;
-using NewLife.Log;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Xml;
-using NewLife.Web;
+var build = Builder.Create("MDK");
+build.Init();
+build.CPU = "Cortex-M4";
+build.Defines.Add("STM32F4");
+build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
+build.AddIncludes("..\\..\\..\\Lib\\Inc");
+build.AddIncludes("..\\", false);
+build.AddIncludes("..\\..\\", false);
+build.AddFiles(".", "*.c;*.cpp;*.s");
+build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
+build.Libs.Clear();
+build.CompileAll();
+build.BuildLib("..\\..\\SmartOS_F4");
 
-namespace NewLife.Reflection
-{
-    public class ScriptEngine
-    {
-        static void Main()
-        {
-            var build = Builder.Create("MDK");
-            build.Init();
-			build.Cortex = 4;
-			build.Defines.Add("STM32F4");
-			build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
-			build.AddIncludes("..\\..\\..\\Lib\\Inc");
-			build.AddIncludes("..\\", false);
-			build.AddIncludes("..\\..\\", false);
-            build.AddFiles(".", "*.c;*.cpp;*.s");
-            build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
-			build.Libs.Clear();
-            build.CompileAll();
-            build.BuildLib("..\\..\\SmartOS_F4");
-
-			build.Debug = true;
-            build.CompileAll();
-            build.BuildLib("..\\..\\SmartOS_F4");
-
-			/*build.Tiny = true;
-            build.CompileAll();
-            build.BuildLib("..\\");*/
-        }
-    }
-}
+build.Debug = true;
+build.CompileAll();
+build.BuildLib("..\\..\\SmartOS_F4");

@@ -1,8 +1,7 @@
-var build = Builder.Create("GCC");
+var build = Builder.Create("GCCArm");
 build.Init();
-build.Cortex = 3;
+build.CPU = "Cortex-M3";
 build.Linux = true;
-build.RebuildTime = 7 * 24 * 3600;
 build.Defines.Add("STM32F1");
 build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 build.AddIncludes("..\\..\\..\\Lib\\Inc");
