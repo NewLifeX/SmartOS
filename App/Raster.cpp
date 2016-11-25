@@ -11,9 +11,12 @@ static int		_Ras = 0;
 static PulsePort* Create(Pin pin)
 {
 	auto pp = new PulsePort();
-	pp->Port = new InputPort(pin);
-	pp->Port->HardEvent = true;	
-
+	auto port = new InputPort();
+	port->Set(pin);
+	port->Full = InputPort::DOWN;
+	port->HardEvent = true;
+	pp->Port = port;
+	
 	return pp;
 }
 
