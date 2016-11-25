@@ -13,7 +13,7 @@ static PulsePort* Create(Pin pin)
 	auto pp = new PulsePort();
 	auto port = new InputPort();
 	port->Set(pin);
-	port->Full = InputPort::DOWN;
+	port->Pull = InputPort::DOWN;
 	port->HardEvent = true;
 	pp->Port = port;
 	
