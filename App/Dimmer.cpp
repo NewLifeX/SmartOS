@@ -297,6 +297,9 @@ void Dimmer::Change(byte mode)
 		debug_printf("Dimmer::Change 打开，调节到配置区上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
 		_Pwm->Open();
 
+		// 关闭动感模式
+		if(cfg.PowerOn) cfg.Status	= 0;
+
 		// 渐变打开
 		for(int i=0; i<4; i++)
 			_Current[i]	= 0;
