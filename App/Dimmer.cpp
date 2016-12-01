@@ -286,6 +286,9 @@ void Dimmer::SetPulse(byte vs[4])
 
 void Dimmer::Change(byte mode)
 {
+	// 先停了动感模式
+	if(_taskAnimate) Sys.SetTask(_taskAnimate, false);
+
 	auto& cfg	= *Config;
 	if(mode == 0x01)
 	{
@@ -317,11 +320,8 @@ void Dimmer::Change(byte mode)
 		if(cfg.PowerOn) cfg.PowerOn	= mode;
 
 		// 根据256级计算总耗时
-		//Animate(mode, (cfg.Speed << 8) + 500);
+		Animate(mode, (cfg.Speed << 8) + 500);
 	}
-
-	// 根据256级计算总耗时
-	Animate(mode, (cfg.Speed << 8) + 500);
 }
 
 void Dimmer::AnimateTask()
@@ -384,7 +384,7 @@ void Dimmer::Animate(byte mode, int ms)
 	// 非动感模式关闭任务
 	if(mode <= 0x10)
 	{
-		Sys.RemoveTask(_taskAnimate);
+		Sys.SetTask(_taskAnimate, false);
 		return;
 	}
 
