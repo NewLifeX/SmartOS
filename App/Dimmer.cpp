@@ -382,7 +382,7 @@ void Dimmer::AnimateTask()
 void Dimmer::Animate(byte mode, int ms)
 {
 	// 非动感模式关闭任务
-	if(mode <= 0x10)
+	if(mode < 0x10)
 	{
 		Sys.SetTask(_taskAnimate, false);
 		return;
