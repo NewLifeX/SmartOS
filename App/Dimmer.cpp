@@ -118,8 +118,8 @@ void Dimmer::Open()
 	{
 		_Pwm->Open();
 
-		// 打开动感模式
-		if(cfg.PowerOn == 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
+		// 打开动感模式，根据256级计算总耗时
+		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
 	}
 
 	// 是否恢复上次保存？
@@ -186,8 +186,10 @@ void Dimmer::FlushTask()
 			// 向前跳一级
 			auto cur	= Levels[x];
 			//pwm.SetDuty(i, cur);
-			pwm.Pulse[i]	= (((int)cur + 1) * pwm.Period) >> 16;		
-			//debug_printf("Dimmer::Flush %d Pulse=%d => %d   Period:%d \r\n", i+1, x, pwm.Pulse[i], pwm.Period);
+			pwm.Pulse[i]	= (((int)cur + 1) * pwm.Period) >> 16;
+
+			//debug_printf("Dimmer::Flush %d Pulse=%d => %d x=%d\r\n", i+1, cur, _Pulse[i], x);
+
 			_Current[i]	= x;
 		}
 		else
@@ -209,16 +211,13 @@ void Dimmer::FlushTask()
 
 			pwm.Close();
 		}
-
-		return;
 	}
 }
 
 void Dimmer::Set(byte vs[4])
 {
-	
 	auto& pwm	= *_Pwm;
-	auto& cfg	= *Config;	
+	auto& cfg	= *Config;
 	// 等分计算步长
 	for(int i=0; i<4; i++)
 	{
@@ -229,6 +228,8 @@ void Dimmer::Set(byte vs[4])
 		// 最大最小值
 		if(d < Min)	d	= Min;
 		if(d > Max) d	= Max;
+		// 修正数据
+		vs[i]	= d;
 
 		if(cfg.SaveLast) cfg.Values[i]	= d;
 	}
@@ -258,21 +259,25 @@ void Dimmer::SetPulse(byte vs[4])
 
 #if DEBUG
 			byte x = _Current[i];
-			//debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i + 1, Levels[x], Levels[d], x);
+			debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i + 1, Levels[x], Levels[d], x);
 #endif
 		}
 
 		if (!_task) _task = Sys.AddTask(&Dimmer::FlushTask, this, 10, cfg.Speed, "灯光渐变");
 		Sys.SetTask(_task, true, 0);
 	}
-
 	else
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			pwm.Pulse[i] = ((int)vs[i] * pwm.Period)>>8;
+			if (!pwm.Enabled[i]) continue;
 
-			debug_printf("通道%d, 非动态占空比%d 周期 %d\r\n",i, pwm.Pulse[i],pwm.Period);
+#if DEBUG
+			auto cur	= pwm.Pulse[i];
+#endif
+			pwm.Pulse[i]	= ((int)vs[i] * pwm.Period) >> 8;
+
+			debug_printf("Dimmer::Set %d Pulse=%d => %d\r\n", i + 1, cur, pwm.Pulse[i]);
 		}
 		// 刷新数据
 		pwm.Flush();
@@ -286,8 +291,8 @@ void Dimmer::Change(byte mode)
 		_Pwm->Open();
 
 		// 渐变打开
-		//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		//SetPulse(vs);
+		byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+		SetPulse(vs);
 	}
 	else if(mode == 0x00)
 	{
@@ -297,15 +302,17 @@ void Dimmer::Change(byte mode)
 
 		//_Pwm->Close();
 		// 最后关闭Pwm
-		//_NextStatus	= 0x00;
+		_NextStatus	= 0x00;
 	}
-	
-	auto& cfg	= *Config;
-	// 如果设置是保持开灯，则记录最后状态
-	if(cfg.PowerOn) cfg.PowerOn	= mode;
-	//设置模式
-	Animate(mode, (cfg.Speed << 8) + 500);
-	
+	else if(mode >= 0x10)
+	{
+		auto& cfg	= *Config;
+		// 如果设置是保持开灯，则记录最后状态
+		if(cfg.PowerOn) cfg.PowerOn	= mode;
+
+		// 根据256级计算总耗时
+		Animate(mode, (cfg.Speed << 8) + 500);
+	}
 }
 
 void Dimmer::AnimateTask()
@@ -313,7 +320,7 @@ void Dimmer::AnimateTask()
 	// 配置数据备份，用于比较保存
 	auto& cfg = *Config;
 	if (cfg.Speed <= 0) return;
-	
+
 	bool on	= _AnimateData[1];
 	byte vs1[4];
 	byte vs2[4];
@@ -365,25 +372,24 @@ void Dimmer::AnimateTask()
 
 void Dimmer::Animate(byte mode, int ms)
 {
-	_AnimateData[0] = mode;
-
-	if(mode != 0x10||mode == 0)
+	if(mode == 0)
 	{
-		if (_taskAnimate)
-		   Sys.RemoveTask(_taskAnimate);
+		Sys.RemoveTask(_taskAnimate);
 		return;
-	}if (mode == 0x10)
+	}
+
+	debug_printf("Dimmer::Animate 动感模式 0x%02x ms=%d \r\n", mode, ms);
+
+	_AnimateData[0]	= mode;
+
+	// 打开通道
+	if(!_Pwm->Opened) _Pwm->Open();
+
+	if(!_taskAnimate)
+		_taskAnimate	= Sys.AddTask(&Dimmer::AnimateTask, this, 0, ms, "动感模式");
+	else
 	{
-		if (!_Pwm->Opened)
-		{
-			_Pwm->Open();
-		}
-		debug_printf("Dimmer::Animate 动感模式 0x%02x ms=%d \r\n", mode, ms);
-
-		if (!_taskAnimate)
-			_taskAnimate = Sys.AddTask(&Dimmer::AnimateTask, this, 100, ms, "动感模式");
-		else
-			Sys.SetTaskPeriod(_taskAnimate, ms);
-
-	}	
+		Sys.SetTaskPeriod(_taskAnimate, ms);
+		Sys.SetTask(_taskAnimate, true, 0);
+	}
 }
