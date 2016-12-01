@@ -260,10 +260,7 @@ void IOK027X::InitAlarm()
 static bool ledstat2 = false;
 void IOK027X::Restore()
 {
-	if (Client)
-	{
-		Client->Reset();
-	}
+	if(Client) Client->Reset("按键重置");
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -348,11 +345,15 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
+	auto client	= IOK027X::Current->Client;
 	//if (time >= 10000 && time < 15000)
 	//	Current->Restore();
 	//else
 	if (time >= 7000)
+	{
+		if(client) client->Reboot("按键重启");
 		Sys.Reboot(1000);
+	}
 }
 
 /*

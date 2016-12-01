@@ -248,8 +248,7 @@ void PA0903::InitNet()
 
 void PA0903::Restore()
 {
-	if (!Client) return;	
-	Client->Reset();
+	if(Client) Client->Reset("按键重置");
 }
 
 //auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);

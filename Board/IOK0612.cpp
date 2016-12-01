@@ -292,8 +292,7 @@ void IOK0612::Invoke(const String& ation, const Buffer& bs)
 
 void IOK0612::Restore()
 {
-	if (!Client) return;
-	Client->Reset();
+	if(Client) Client->Reset("按键重置");
 }
 
 void IOK0612::FlushLed()
@@ -347,10 +346,16 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
+	auto client	= IOK0612::Current->Client;
 	if (time >= 5000 && time < 10000)
-		Current->Restore();
+	{
+		if(client) client->Reset("按键重置");
+	}
 	else if (time >= 3000)
+	{
+		if(client) client->Reboot("按键重启");
 		Sys.Reboot(1000);
+	}
 }
 
 /*

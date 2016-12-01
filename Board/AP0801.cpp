@@ -17,10 +17,10 @@
 
 #include "Message\ProxyFactory.h"
 
-AP0801* AP0801::Current = nullptr;
+AP0801* AP0801::Current	= nullptr;
 
-TokenClient*	Client = nullptr;	// 令牌客户端
-ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
+static TokenClient*	Client	= nullptr;	// 令牌客户端
+static ProxyFactory*	ProxyFac	= nullptr;	// 透传管理器
 
 AP0801::AP0801()
 {
@@ -28,20 +28,20 @@ AP0801::AP0801()
 	LedPins.Add(PE15);
 	ButtonPins.Add(PE13);
 	ButtonPins.Add(PE14);
-	Host = nullptr;
-	HostAP = nullptr;
-	Client = nullptr;
-	ProxyFac = nullptr;
-	AlarmObj = nullptr;
+	Host	= nullptr;
+	HostAP	= nullptr;
+	Client	= nullptr;
+	ProxyFac	= nullptr;
+	AlarmObj	= nullptr;
 
-	Data = nullptr;
-	Size = 0;
+	Data	= nullptr;
+	Size	= 0;
 	// 一众标识初始化
-	NetMaster = false;
-	NetBra = false;
-	EspMaster = false;
-	EspBra = false;
-	Current = this;
+	NetMaster	= false;
+	NetBra	= false;
+	EspMaster	= false;
+	EspBra	= false;
+	Current	= this;
 }
 
 void AP0801::Init(ushort code, cstring name, COM message)
@@ -526,7 +526,7 @@ void AP0801::Restore()
 {
 	if (!Client) return;
 
-	Client->Reset();
+	if(Client) Client->Reset("按键重置");
 }
 
 int AP0801::GetStatus()
@@ -542,10 +542,17 @@ void AP0801::OnLongPress(InputPort* port, bool down)
 
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
-	if (port->PressTime >= 5000)
-		Restore();
-	else if (port->PressTime >= 1000)
-		Sys.Reboot();
+	ushort time = port->PressTime;
+	auto client	= Client;
+	if (time >= 5000 && time < 10000)
+	{
+		if(client) client->Reset("按键重置");
+	}
+	else if (time >= 3000)
+	{
+		if(client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
+	}
 }
 
 /*

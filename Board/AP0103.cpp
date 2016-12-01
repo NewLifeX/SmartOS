@@ -1,4 +1,4 @@
-#include "AP0103.h"
+﻿#include "AP0103.h"
 
 #include "Kernel\Task.h"
 
@@ -501,10 +501,7 @@ void AP0103::Restore()
 	if (TinyConfig::Current)TokenConfig::Current->Clear();
 	// Config::Current->RemoveAll();
 
-	if (Client)
-	{
-		Client->Reset();
-	}	
+	if(Client) Client->Reset("按键重置");
 }
 
 void AP0103::OnPress(InputPort* port, bool down)
@@ -523,16 +520,15 @@ void AP0103::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	if (time >= 2500 && time < 4500)
+	auto client	= AP0103::Current->Client;
+	if (time >= 5000 && time < 10000)
 	{
-		debug_printf("系统重启\r\n");
-		Sys.Reboot(1000);
-		return;
+		if(client) client->Reset("按键重置");
 	}
-	if (time >= 4500)
+	else if (time >= 3000)
 	{
-	 AP0103::Current->Restore();
-	 return;
+		if(client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
 	}
 }
 

@@ -64,7 +64,8 @@ public:
 	// 登录
 	void Login();
 	// 重置并上报
-	void Reset();
+	void Reset(const String& reason);
+	void Reboot(const String& reason);
 
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
