@@ -289,7 +289,7 @@ void Dimmer::Change(byte mode)
 	auto& cfg	= *Config;
 	if(mode == 0x01)
 	{
-		debug_printf("Dimmer::Change 打开，调节到上一次亮度 \r\n");
+		debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", _Pulse[0], _Pulse[1], _Pulse[2], _Pulse[3]);
 		_Pwm->Open();
 
 		// 渐变打开
