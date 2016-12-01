@@ -295,28 +295,34 @@ void Dimmer::Change(byte mode)
 	{
 		auto ps	= cfg.Values;
 		debug_printf("Dimmer::Change 打开，调节到配置区上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
-		_Pwm->Open();
 
 		// 关闭动感模式
 		if(cfg.PowerOn) cfg.Status	= 0;
 
 		// 渐变打开
-		for(int i=0; i<4; i++)
-			_Current[i]	= 0;
-		//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		SetPulse(ps);
+		if(!_Pwm->Opened)
+		{
+			_Pwm->Open();
+			for(int i=0; i<4; i++)
+				_Current[i]	= Min;
+			//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+			SetPulse(ps);
+		}
 	}
 	else if(mode == 0x00)
 	{
 		debug_printf("Dimmer::Change 渐变关闭到最低亮度，然后完全关闭 \r\n");
 
 		// 渐变关闭
-		byte vs[4]	= { 0, 0, 0, 0 };
-		SetPulse(vs);
+		if(_Pwm->Opened)
+		{
+			byte vs[4]	= { 0, 0, 0, 0 };
+			SetPulse(vs);
 
-		//_Pwm->Close();
-		// 最后关闭Pwm，设为非0xFF，关闭一次
-		_NextStatus	= 0x00;
+			//_Pwm->Close();
+			// 最后关闭Pwm，设为非0xFF，关闭一次
+			_NextStatus	= 0x00;
+		}
 	}
 	else if(mode >= 0x10)
 	{
