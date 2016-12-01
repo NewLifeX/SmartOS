@@ -15,8 +15,9 @@ DimmerConfig::DimmerConfig()
 	Init();
 
 	SaveLast= true;
-	PowerOn	= 0x10;	// 默认呼吸灯动感模式
+	PowerOn	= 1;	// 默认上电开灯
 	Speed	= 10;
+	Status	= 0x10;	// 默认呼吸灯动感模式
 	for(int i=0; i<4; i++) Values[i]	= 0xFF;
 }
 
@@ -119,7 +120,7 @@ void Dimmer::Open()
 		_Pwm->Open();
 
 		// 打开动感模式，根据256级计算总耗时
-		if(cfg.PowerOn >= 0x10) Animate(cfg.PowerOn, (cfg.Speed << 8) + 500);
+		if(cfg.Status >= 0x10) Animate(cfg.Status, (cfg.Speed << 8) + 500);
 	}
 
 	// 是否恢复上次保存？
@@ -317,7 +318,7 @@ void Dimmer::Change(byte mode)
 	else if(mode >= 0x10)
 	{
 		// 如果设置是保持开灯，则记录最后状态
-		if(cfg.PowerOn) cfg.PowerOn	= mode;
+		if(cfg.PowerOn) cfg.Status	= mode;
 
 		// 根据256级计算总耗时
 		Animate(mode, (cfg.Speed << 8) + 500);

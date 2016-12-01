@@ -43,7 +43,7 @@ private:
 	int		_AnimateData[4];
 
 	void SetPulse(byte vs[4]);
-	
+
 	void FlushTask();
 	void AnimateTask();
 };
@@ -54,8 +54,9 @@ class DimmerConfig : public ConfigBase
 public:
 	byte	Values[4];	// 4通道亮度
 	byte	SaveLast;	// 保存最后亮度
-	byte	PowerOn;	// 上电状态。0关1开，0x10动感模式
+	byte	PowerOn;	// 上电状态。0关1开
 	byte	Speed;		// 渐变时间，默认10ms，0表示不使用渐变效果
+	byte	Status;		// 动感模式
 	byte	TagEnd;
 
 	DimmerConfig();
