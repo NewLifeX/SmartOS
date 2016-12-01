@@ -288,14 +288,19 @@ void Dimmer::Change(byte mode)
 {
 	if(mode == 0x01)
 	{
+		debug_printf("Dimmer::Change 打开，调节到上一次亮度 \r\n");
 		_Pwm->Open();
 
 		// 渐变打开
-		byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		SetPulse(vs);
+		for(int i=0; i<4; i++)
+			_Current[i]	= 0;
+		//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+		SetPulse(_Pulse);
 	}
 	else if(mode == 0x00)
 	{
+		debug_printf("Dimmer::Change 渐变关闭到最低亮度，然后完全关闭 \r\n");
+
 		// 渐变关闭
 		byte vs[4]	= { 0, 0, 0, 0 };
 		SetPulse(vs);
@@ -311,8 +316,11 @@ void Dimmer::Change(byte mode)
 		if(cfg.PowerOn) cfg.PowerOn	= mode;
 
 		// 根据256级计算总耗时
-		Animate(mode, (cfg.Speed << 8) + 500);
+		//Animate(mode, (cfg.Speed << 8) + 500);
 	}
+
+	// 根据256级计算总耗时
+	Animate(mode, (cfg.Speed << 8) + 500);
 }
 
 void Dimmer::AnimateTask()
@@ -372,7 +380,8 @@ void Dimmer::AnimateTask()
 
 void Dimmer::Animate(byte mode, int ms)
 {
-	if(mode == 0)
+	// 非动感模式关闭任务
+	if(mode <= 0x10)
 	{
 		Sys.RemoveTask(_taskAnimate);
 		return;
