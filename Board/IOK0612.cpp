@@ -102,7 +102,6 @@ void IOK0612::InitButtons(const Delegate2<InputPort&, bool>& press)
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
 		auto port = new InputPort(ButtonPins[i]);
-		port->Invert = true;
 		port->State	= i;
 		port->Press	= press;
 		port->UsePress();
