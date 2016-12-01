@@ -252,14 +252,14 @@ void Dimmer::SetPulse(byte vs[4])
 			byte d = vs[i];
 
 			// 最大最小值
-			if (d < Min)	d = Min;
-			if (d > Max) d = Max;
+			if (d < Min) d	= Min;
+			if (d > Max) d	= Max;
 
 			_Pulse[i] = d;
 
 #if DEBUG
 			byte x = _Current[i];
-			debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d\r\n", i + 1, Levels[x], Levels[d], x);
+			debug_printf("Dimmer::Set %d Pulse=%d => %d x=%d=>%d\r\n", i + 1, Levels[x], Levels[d], x, d);
 #endif
 		}
 
@@ -289,14 +289,15 @@ void Dimmer::Change(byte mode)
 	auto& cfg	= *Config;
 	if(mode == 0x01)
 	{
-		debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", _Pulse[0], _Pulse[1], _Pulse[2], _Pulse[3]);
+		auto ps	= cfg.Values;
+		debug_printf("Dimmer::Change 打开，调节到配置区上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
 		_Pwm->Open();
 
 		// 渐变打开
 		for(int i=0; i<4; i++)
 			_Current[i]	= 0;
 		//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
-		SetPulse(_Pulse);
+		SetPulse(ps);
 	}
 	else if(mode == 0x00)
 	{
