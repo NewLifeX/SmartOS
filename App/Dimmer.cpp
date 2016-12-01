@@ -301,7 +301,7 @@ void Dimmer::Change(byte mode)
 		SetPulse(vs);
 
 		//_Pwm->Close();
-		// 最后关闭Pwm
+		// 最后关闭Pwm，设为非0xFF，关闭一次
 		_NextStatus	= 0x00;
 	}
 	else if(mode >= 0x10)
