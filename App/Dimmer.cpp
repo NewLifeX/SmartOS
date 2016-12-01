@@ -286,6 +286,7 @@ void Dimmer::SetPulse(byte vs[4])
 
 void Dimmer::Change(byte mode)
 {
+	auto& cfg	= *Config;
 	if(mode == 0x01)
 	{
 		debug_printf("Dimmer::Change 打开，调节到上一次亮度 \r\n");
@@ -311,7 +312,6 @@ void Dimmer::Change(byte mode)
 	}
 	else if(mode >= 0x10)
 	{
-		auto& cfg	= *Config;
 		// 如果设置是保持开灯，则记录最后状态
 		if(cfg.PowerOn) cfg.PowerOn	= mode;
 
