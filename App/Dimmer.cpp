@@ -217,6 +217,9 @@ void Dimmer::FlushTask()
 
 void Dimmer::Set(byte vs[4])
 {
+	// 关闭状态不许修改目标值，避免无法结束
+	if(!_Pwm->Opened) return;
+
 	auto& pwm	= *_Pwm;
 	auto& cfg	= *Config;
 	// 等分计算步长
@@ -300,7 +303,8 @@ void Dimmer::Change(byte mode)
 		if(!_Pwm->Opened)
 		{
 			// 打开时使用最高亮度，如果保存最后一次配置，则使用最后一次
-			byte ps[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+			byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+			auto ps	= vs;
 			if(cfg.SaveLast) ps	= cfg.Values;
 			debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
 
