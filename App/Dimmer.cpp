@@ -293,19 +293,20 @@ void Dimmer::Change(byte mode)
 	auto& cfg	= *Config;
 	if(mode == 0x01)
 	{
-		auto ps	= cfg.Values;
-		debug_printf("Dimmer::Change 打开，调节到配置区上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
-
 		// 关闭动感模式
 		if(cfg.PowerOn) cfg.Status	= 0;
 
 		// 渐变打开
 		if(!_Pwm->Opened)
 		{
+			// 打开时使用最高亮度，如果保存最后一次配置，则使用最后一次
+			byte ps[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
+			if(cfg.SaveLast) ps	= cfg.Values;
+			debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
+
 			_Pwm->Open();
 			for(int i=0; i<4; i++)
 				_Current[i]	= Min;
-			//byte vs[4]	= { 0xFF, 0xFF, 0xFF, 0xFF };
 			SetPulse(ps);
 		}
 	}
