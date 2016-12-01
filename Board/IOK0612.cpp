@@ -347,28 +347,21 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	if (time >= 6500 && time < 10000)
-	{
-		Sys.Sleep(1000);
-		Sys.Reboot();
-		return;
-	}	
-	if (time >= 5000)
-	{
-		IOK0612::Current->Restore();
-		return;
-	}
+	if (time >= 5000 && time < 10000)
+		Current->Restore();
+	else if (time >= 3000)
+		Sys.Reboot(1000);
 }
 
 /*
-NRF24L01+ 	(SPI3)	
-NSS			|		
-CLK			|		
-MISO		|		
-MOSI		|		
-PE3			IRQ		
-PD12		CE		
-PE6			POWER	
+NRF24L01+ 	(SPI3)
+NSS			|
+CLK			|
+MISO		|
+MOSI		|
+PE3			IRQ
+PD12		CE
+PE6			POWER
 
 ESP8266		(COM4)
 TX
