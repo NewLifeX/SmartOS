@@ -17,7 +17,7 @@ DimmerConfig::DimmerConfig()
 	SaveLast= true;
 	PowerOn	= 1;	// 默认上电开灯
 	Speed	= 10;
-	Status	= 0x10;	// 默认呼吸灯动感模式
+	Status	= 0x0;	// 默认呼吸灯动感模式
 	for(int i=0; i<4; i++) Values[i]	= 0xFF;
 }
 
@@ -243,6 +243,7 @@ void Dimmer::Set(byte vs[4])
 
 void Dimmer::SetPulse(byte vs[4])
 {
+	if (_Closing) return;	
 	auto& pwm	= *_Pwm;
 	auto& cfg	= *Config;
 	debug_printf("开始调节……\r\n");
@@ -292,6 +293,7 @@ void Dimmer::Change(byte mode)
 {
 	// 先停了动感模式
 	if(_taskAnimate) Sys.SetTask(_taskAnimate, false);
+	_Closing = false;
 
 	auto& cfg	= *Config;
 	if(mode == 0x01)
@@ -327,6 +329,8 @@ void Dimmer::Change(byte mode)
 			//_Pwm->Close();
 			// 最后关闭Pwm，设为非0xFF，关闭一次
 			_NextStatus	= 0x00;
+			_Closing = true;
+			return;
 		}
 	}
 	else if(mode >= 0x10)
