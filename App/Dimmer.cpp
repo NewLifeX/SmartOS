@@ -243,6 +243,7 @@ void Dimmer::Set(byte vs[4])
 
 void Dimmer::SetPulse(byte vs[4])
 {
+	if (_Closing) return;	
 	auto& pwm	= *_Pwm;
 	auto& cfg	= *Config;
 	debug_printf("开始调节……\r\n");
@@ -327,6 +328,8 @@ void Dimmer::Change(byte mode)
 			//_Pwm->Close();
 			// 最后关闭Pwm，设为非0xFF，关闭一次
 			_NextStatus	= 0x00;
+			_Closing = true;
+			return;
 		}
 	}
 	else if(mode >= 0x10)
@@ -337,6 +340,7 @@ void Dimmer::Change(byte mode)
 		// 根据256级计算总耗时
 		Animate(mode, (cfg.Speed << 8) + 500);
 	}
+	_Closing = false;
 }
 
 void Dimmer::AnimateTask()
