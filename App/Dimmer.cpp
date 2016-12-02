@@ -296,16 +296,19 @@ void Dimmer::Change(byte mode)
 		if (cfg.PowerOn) cfg.Status = 0;
 
 		// 渐变打开
-		if (!_Pwm->Opened) 	_Pwm->Open();
-		// 打开时使用最高亮度，如果保存最后一次配置，则使用最后一次
-		byte vs[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
-		auto ps = vs;
-		if (cfg.SaveLast) ps = cfg.Values;
-		debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
+		if (!_Pwm->Opened)
+		{
+			_Pwm->Open();
+			// 打开时使用最高亮度，如果保存最后一次配置，则使用最后一次
+			byte vs[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+			auto ps = vs;
+			if (cfg.SaveLast) ps = cfg.Values;
+			debug_printf("Dimmer::Change 打开，调节到上一次亮度 {%d, %d, %d, %d} \r\n", ps[0], ps[1], ps[2], ps[3]);
 
-		for (int i = 0; i < 4; i++)
-			_Current[i] = Min;
-		SetPulse(ps);
+			for (int i = 0; i < 4; i++)
+				_Current[i] = Min;
+			SetPulse(ps);
+		}
 	}
 	else if (mode == 0x00)
 	{
