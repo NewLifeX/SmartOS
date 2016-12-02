@@ -132,9 +132,9 @@ void IOK027X::InitClient()
 	Client = client;
 	Client->MaxNotActive = 480000;
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
 	// 获取所有Ivoke命令
 	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 

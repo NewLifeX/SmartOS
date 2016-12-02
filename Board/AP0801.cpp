@@ -194,9 +194,9 @@ void AP0801::InitClient()
 	tc->MaxNotActive = 480000;
 
 	// 重启
-	tc->Register("Gateway/Restart", &TokenClient::InvokeRestStart, tc);
+	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
 	// 重置
-	tc->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, tc);
+	tc->Register("Gateway/Reset", &TokenClient::InvokeReset, tc);
 	// 设置远程地址
 	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
 	// 获取远程配置信息

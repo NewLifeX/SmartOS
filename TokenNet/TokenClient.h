@@ -91,8 +91,8 @@ public:
 	}
 
 	// 重启，重置
-	static bool InvokeRestStart(void * param, const Pair& args, Stream& result);
-	static bool InvokeRestBoot(void * param, const Pair& args, Stream& result);
+	static bool InvokeRestart(void * param, const Pair& args, Stream& result);
+	static bool InvokeReset(void * param, const Pair& args, Stream& result);
 	//设置远程服务器地址
 	static bool InvokeSetRemote(void * param, const Pair& args, Stream& result);
 	//获取远程服务器地址

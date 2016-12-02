@@ -43,9 +43,9 @@ TokenClient::TokenClient()
 	ReportLength = 0;
 
 	// 重启
-	//Register("Gateway/Restart", InvokeRestStart, this);
+	//Register("Gateway/Restart", InvokeRestart, this);
 	// 重置
-	//Register("Gateway/Reset", InvokeRestBoot, this);
+	//Register("Gateway/Reset", InvokeReset, this);
 }
 
 void TokenClient::Open()
@@ -1042,7 +1042,7 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 	}
 }
 
-bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result)
+bool TokenClient::InvokeRestart(void * param, const Pair& args, Stream& result)
 {
 
 	result.Write((byte)01);
@@ -1053,7 +1053,7 @@ bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result
 	return true;
 }
 
-bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
+bool TokenClient::InvokeReset(void * param, const Pair& args, Stream& result)
 {
 	BinaryPair res(result);
 	result.Write((byte)01);
