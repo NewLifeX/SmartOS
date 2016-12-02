@@ -115,13 +115,7 @@ void Dimmer::Open()
 	// 先打开Pwm再设置脉宽，否则可能因为周期还没来得及计算
 
 	// 是否上电默认打开
-	if(cfg.PowerOn)
-	{
-		_Pwm->Open();
-
-		// 打开动感模式，根据256级计算总耗时
-		if(cfg.Status >= 0x10) Animate(cfg.Status, (cfg.Speed << 8) + 500);
-	}
+	if(cfg.PowerOn) _Pwm->Open();
 
 	// 是否恢复上次保存？
 	if(cfg.SaveLast)
@@ -243,7 +237,7 @@ void Dimmer::Set(byte vs[4])
 
 void Dimmer::SetPulse(byte vs[4])
 {
-	if (_Closing) return;	
+	if (_Closing) return;
 	auto& pwm	= *_Pwm;
 	auto& cfg	= *Config;
 	debug_printf("开始调节……\r\n");
