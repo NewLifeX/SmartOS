@@ -203,7 +203,7 @@ void IOK0612::OpenClient(ISocketHost& host)
 	debug_printf("\r\n OpenClient \r\n");
 
 	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led && LedsShow) esp->SetLed(*Leds[0]);
+	if(esp && !esp->Led) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 
