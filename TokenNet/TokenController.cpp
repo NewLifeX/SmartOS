@@ -172,21 +172,21 @@ static bool Encrypt(Stream& ms, const Buffer& pass)
 	Buffer bs(ms.ReadBytes(len), len);
 
 	// 计算明文校验码，写在最后面
-	auto crc = Crc::Hash16(bs);
+	//auto crc = Crc::Hash16(bs);
 	RC4::Encrypt(bs, pass);
 
-	ms.Write(crc);
+	//ms.Write(crc);
 
 	return true;
 }
 
-// Decrypt(Buffer(msg.Data,len),Key)  只处理data部分
+// 只处理data部分
 static bool Decrypt(Buffer& data, const Buffer& pass)
 {
 	if (data.Length() <= 3) return false;
 	if (pass.Length() == 0) return true;
 
-	auto msgDataLen = data.Length() - 2;
+	/*auto msgDataLen = data.Length() - 2;
 	Stream ms(data);
 	ms.Seek(msgDataLen);
 	auto crc = ms.ReadUInt16();		// 读取数据包中crc
@@ -196,7 +196,9 @@ static bool Decrypt(Buffer& data, const Buffer& pass)
 	RC4::Encrypt(bs, pass);			// 解密
 
 	auto crc2 = Crc::Hash16(bs);	// 明文的CRC值
-	if (crc != crc2) return false;
+	if (crc != crc2) return false;*/
+
+	RC4::Encrypt(data, pass);
 
 	return true;
 }
@@ -243,7 +245,7 @@ bool TokenController::OnReceive(Message& msg)
 	// 加解密。握手不加密，登录响应不加密
 	if (msg.Code > 0x01)
 	{
-		Buffer bs(msg.Data, msg.Length + 2);
+		Buffer bs(msg.Data, msg.Length);
 		if (!Decrypt(bs, Key))
 		{
 			debug_printf("TokenController::OnReceive 解密失败 Key:\r\n");
