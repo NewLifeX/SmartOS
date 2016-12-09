@@ -11,7 +11,11 @@ static int		_Ras = 0;
 static PulsePort* Create(Pin pin)
 {
 	auto pp = new PulsePort();
-	pp->Port = new InputPort(pin);
+	pp->Port = new InputPort();
+	pp->Port->Set(pin);	
+	pp->Port->Floating = false;
+	pp->Port->Pull = InputPort::DOWN;
+
 	pp->Port->HardEvent = true;	
 
 	return pp;

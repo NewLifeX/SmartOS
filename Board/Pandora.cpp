@@ -103,9 +103,9 @@ void PA0903::InitClient()
 	Client = client;
 
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
 	// 设置远程地址
 	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
 	// 获取远程配置信息
@@ -248,8 +248,7 @@ void PA0903::InitNet()
 
 void PA0903::Restore()
 {
-	if (!Client) return;	
-	Client->Reset();
+	if(Client) Client->Reset("按键重置");
 }
 
 //auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);

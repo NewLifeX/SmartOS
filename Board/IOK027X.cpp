@@ -132,9 +132,9 @@ void IOK027X::InitClient()
 	Client = client;
 	Client->MaxNotActive = 480000;
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
 	// 获取所有Ivoke命令
 	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
@@ -260,10 +260,7 @@ void IOK027X::InitAlarm()
 static bool ledstat2 = false;
 void IOK027X::Restore()
 {
-	if (Client)
-	{
-		Client->Reset();
-	}
+	if(Client) Client->Reset("按键重置");
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -348,27 +345,15 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	if (time >= 6500 && time < 10000)
+	auto client	= IOK027X::Current->Client;
+	//if (time >= 10000 && time < 15000)
+	//	Current->Restore();
+	//else
+	if (time >= 7000)
 	{
-		Sys.Sleep(1000);
-		Sys.Reboot();
-		return;
+		if(client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
 	}
-
-	if (time >= 9000 && time < 14000)
-	{
-		if (LedsShow != 1)
-			LedStat(1);
-		else
-			LedStat(2);
-		return;
-	}
-
-	// if (time >= 14000)
-	// {
-	// 	Restore();
-	// 	return;
-	// }
 }
 
 /*

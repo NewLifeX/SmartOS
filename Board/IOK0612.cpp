@@ -102,7 +102,6 @@ void IOK0612::InitButtons(const Delegate2<InputPort&, bool>& press)
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
 		auto port = new InputPort(ButtonPins[i]);
-		port->Invert = true;
 		port->State	= i;
 		port->Press	= press;
 		port->UsePress();
@@ -153,9 +152,9 @@ void IOK0612::InitClient()
 	Client = client;
 	Client->MaxNotActive = 480000;
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
 	// 设置远程地址
 	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
 	// 获取远程配置信息
@@ -204,7 +203,7 @@ void IOK0612::OpenClient(ISocketHost& host)
 	debug_printf("\r\n OpenClient \r\n");
 
 	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led && LedsShow) esp->SetLed(*Leds[0]);
+	if(esp && !esp->Led) esp->SetLed(*Leds[0]);
 
 	auto tk = TokenConfig::Current;
 
@@ -292,8 +291,7 @@ void IOK0612::Invoke(const String& ation, const Buffer& bs)
 
 void IOK0612::Restore()
 {
-	if (!Client) return;
-	Client->Reset();
+	if(Client) Client->Reset("按键重置");
 }
 
 void IOK0612::FlushLed()
@@ -347,28 +345,27 @@ void IOK0612::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	if (time >= 6500 && time < 10000)
+	auto client	= IOK0612::Current->Client;
+	if (time >= 5000 && time < 10000)
 	{
-		Sys.Sleep(1000);
-		Sys.Reboot();
-		return;
-	}	
-	if (time >= 5000)
+		if(client) client->Reset("按键重置");
+	}
+	else if (time >= 3000)
 	{
-		IOK0612::Current->Restore();
-		return;
+		if(client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
 	}
 }
 
 /*
-NRF24L01+ 	(SPI3)	
-NSS			|		
-CLK			|		
-MISO		|		
-MOSI		|		
-PE3			IRQ		
-PD12		CE		
-PE6			POWER	
+NRF24L01+ 	(SPI3)
+NSS			|
+CLK			|
+MISO		|
+MOSI		|
+PE3			IRQ
+PD12		CE
+PE6			POWER
 
 ESP8266		(COM4)
 TX

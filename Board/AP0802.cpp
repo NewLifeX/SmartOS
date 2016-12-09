@@ -179,9 +179,9 @@ void AP0802::InitClient()
 	Client = client;
 	Client->MaxNotActive = 480000;
 	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestStart, Client);
+	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeRestBoot, Client);
+	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
 	// 设置远程地址
 	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
 	// 获取远程配置信息
@@ -465,10 +465,7 @@ ITransport* AP0802::Create2401()
 
 void AP0802::Restore()
 {
-	if (Client)
-	{
-		Client->Reset();
-	}
+	if(Client) Client->Reset("按键重置");
 }
 
 void AP0802::OnLongPress(InputPort* port, bool down)
@@ -477,10 +474,17 @@ void AP0802::OnLongPress(InputPort* port, bool down)
 
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
-	if (port->PressTime >= 5000)
-	AP0802::Current-> Restore();
-	else if (port->PressTime >= 1000)
-		Sys.Reboot();
+	ushort time = port->PressTime;
+	auto client	= AP0802::Current->Client;
+	if (time >= 5000 && time < 10000)
+	{
+		if(client) client->Reset("按键重置");
+	}
+	else if (time >= 3000)
+	{
+		if(client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
+	}
 }
 
 /*

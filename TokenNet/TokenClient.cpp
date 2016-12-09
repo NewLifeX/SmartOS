@@ -43,9 +43,9 @@ TokenClient::TokenClient()
 	ReportLength = 0;
 
 	// 重启
-	//Register("Gateway/Restart", InvokeRestStart, this);
+	//Register("Gateway/Restart", InvokeRestart, this);
 	// 重置
-	//Register("Gateway/Reset", InvokeRestBoot, this);
+	//Register("Gateway/Reset", InvokeReset, this);
 }
 
 void TokenClient::Open()
@@ -661,13 +661,14 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	return true;
 }
 
-void TokenClient::Reset()
+void TokenClient::Reset(const String& reason)
 {
 	auto time = DateTime::Now().TotalMs();
 
 	MemoryStream ms;
 	BinaryPair bp(ms);
 	bp.Set("time", time);
+	bp.Set("reason", reason);
 
 	auto buf = Buffer(ms.GetBuffer(), ms.Position());
 
@@ -679,6 +680,20 @@ void TokenClient::Reset()
 
 	Config::Current->RemoveAll();
 	Sys.Reboot();
+}
+
+void TokenClient::Reboot(const String& reason)
+{
+	auto time = DateTime::Now().TotalMs();
+
+	MemoryStream ms;
+	BinaryPair bp(ms);
+	bp.Set("time", time);
+	bp.Set("reason", reason);
+
+	auto buf = Buffer(ms.GetBuffer(), ms.Position());
+
+	Invoke("Gateway/Reboot", buf);
 }
 
 // Ping指令用于保持与对方的活动状态
@@ -1027,7 +1042,7 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 	}
 }
 
-bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result)
+bool TokenClient::InvokeRestart(void * param, const Pair& args, Stream& result)
 {
 
 	result.Write((byte)01);
@@ -1038,7 +1053,7 @@ bool TokenClient::InvokeRestStart(void * param, const Pair& args, Stream& result
 	return true;
 }
 
-bool TokenClient::InvokeRestBoot(void * param, const Pair& args, Stream& result)
+bool TokenClient::InvokeReset(void * param, const Pair& args, Stream& result)
 {
 	BinaryPair res(result);
 	result.Write((byte)01);
