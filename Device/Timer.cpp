@@ -18,21 +18,15 @@ Timer::Timer(TIMER index)
 	OnInit();
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次
-	/*Prescaler = Sys.Clock / 1000000;
-	Period = 1000;*/
 	SetFrequency(10);
 
 	Opened	= false;
-
-	//_Handler	= nullptr;
-	//_Param		= nullptr;
 }
 
 Timer::~Timer()
 {
 	Close();
 
-	//if(_Handler) Register(nullptr);
 	if(OnTick.Method) SetHandler(false);
 
 	Timers[_index] = nullptr;
@@ -93,14 +87,6 @@ void Timer::Close()
 	Opened = false;
 }
 
-/*void Timer::Register(EventHandler handler, void* param)
-{
-	_Handler	= handler;
-	_Param		= param;
-
-	SetHandler(handler != nullptr);
-}*/
-
 void Timer::Register(const Delegate<Timer&>& dlg)
 {
 	OnTick	= dlg;
@@ -110,6 +96,5 @@ void Timer::Register(const Delegate<Timer&>& dlg)
 
 void Timer::OnInterrupt()
 {
-	//if(_Handler) _Handler(this, _Param);
 	OnTick(*this);
 }

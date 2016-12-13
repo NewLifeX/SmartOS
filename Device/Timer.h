@@ -1,6 +1,9 @@
 ﻿#ifndef __Timer_H__
 #define __Timer_H__
 
+#include "Sys.h"
+#include "Device\Port.h"
+
 // 定时器
 class Timer
 {
@@ -22,14 +25,13 @@ public:
 	virtual void Open();	// 开始定时器
 	virtual void Close();	// 停止定时器
 	virtual void Config();
-	//void SetScaler(uint scaler);	// 设置预分频目标，比如1MHz
 	void SetFrequency(uint frequency);	// 设置频率，自动计算预分频
 
 	uint GetCounter();
 	void SetCounter(uint cnt);		// 设置计数器值
 
-	//void Register(EventHandler handler, void* param = nullptr);
 	void Register(const Delegate<Timer&>& dlg);
+	virtual void OnInterrupt();
 
 	static void ClockCmd(int idx, bool state);
 
@@ -37,7 +39,6 @@ private:
 	static void OnHandler(ushort num, void* param);
 
 protected:
-	virtual void OnInterrupt();
 
 public:
 	static const byte	TimerCount;	// 定时器个数
