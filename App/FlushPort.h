@@ -21,7 +21,7 @@ public:
 	int		Count;	// 剩余快闪次数
 
 	FlushPort();
-	~FlushPort();
+	virtual ~FlushPort();
 
 	void Start(int ms = 1000);
 	// mode 0xff  为不改变Port状态  0为Write false  1为Write true

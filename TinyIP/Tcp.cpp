@@ -67,10 +67,10 @@ bool TcpSocket::Process(IP_HEADER& ip, Stream& ms)
 	if(!tcp) return false;
 
 	Header = tcp;
-	uint len = ms.Remain();
+	//uint len = ms.Remain();
 
 	ushort port = _REV16(tcp->DestPort);
-	ushort remotePort = _REV16(tcp->SrcPort);
+	//ushort remotePort = _REV16(tcp->SrcPort);
 
 	// 仅处理本连接的IP和端口
 	if(port != Local.Port) return false;

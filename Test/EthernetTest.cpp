@@ -161,8 +161,8 @@ void TestEthernet()
 	// 如果不是为了Dhcp，这里可以不用Open，Init里面会Open
     if(!tip->Open()) return;
 
-    auto icmp	= new IcmpSocket(tip);
-    //icmp->OnPing = OnPing;
+    //auto icmp	= new IcmpSocket(tip);
+    //icmp->OnPing	= OnPing;
 
     auto udp	= new UdpSocket(tip);
     //udp->OnReceived = OnUdpReceived;

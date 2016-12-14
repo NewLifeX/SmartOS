@@ -2,7 +2,7 @@
 #include "TokenDataMessage.h"
 #include "Message\BinaryPair.h"
 
-TokenDataMessage::TokenDataMessage() :Data(0)
+TokenDataMessage::TokenDataMessage() : Data(0)
 {
 	ID		= 0;
 	Start	= 0;
@@ -10,7 +10,7 @@ TokenDataMessage::TokenDataMessage() :Data(0)
 	HasSize = true;
 }
 
-TokenDataMessage::TokenDataMessage(const TokenDataMessage& msg)
+TokenDataMessage::TokenDataMessage(const TokenDataMessage& msg) : MessageBase(msg)
 {
 	ID		= msg.ID;
 	Start	= msg.Start;

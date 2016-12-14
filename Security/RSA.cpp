@@ -811,109 +811,109 @@ static inline void __rsa_mon_pro_double(rsa_data_TypeDef *sour_x)
         }
 }
 
+/*
+#define RSA_TEST_MODE_CNT      32
+#define RSA_TEST_MODE_DATA    {\
+0X67598CC9,  0XAA3FD278,  0X049B64E7,  0X6B04EAB2,  0XACA78B9C,  0XF760B29E,  0XE432C8F9,  0X0FE17786,\
+0X0AD347E2,  0X3C328E63,  0X6F23CFAD,  0X48F74EB2,  0X1B17AA71,  0X0FE69715,  0XC30A8BFD,  0X88AD5DB3,\
+0X7EBEF3B5,  0X9171CDE2,  0X3ECB2B2D,  0X59596D2C,  0XF0235EF4,  0X0C107B62,  0XFC15D796,  0X868903DB,\
+0XC42016EA,  0X41784605,  0X949E0147,  0XB7FC8662,  0X05658A3B,  0X4F474D13,  0X281A21C3,  0X9D76CAC2}
 
-//#define RSA_TEST_MODE_CNT      32
-//#define RSA_TEST_MODE_DATA    {\
-//0X67598CC9,  0XAA3FD278,  0X049B64E7,  0X6B04EAB2,  0XACA78B9C,  0XF760B29E,  0XE432C8F9,  0X0FE17786,\
-//0X0AD347E2,  0X3C328E63,  0X6F23CFAD,  0X48F74EB2,  0X1B17AA71,  0X0FE69715,  0XC30A8BFD,  0X88AD5DB3,\
-//0X7EBEF3B5,  0X9171CDE2,  0X3ECB2B2D,  0X59596D2C,  0XF0235EF4,  0X0C107B62,  0XFC15D796,  0X868903DB,\
-//0XC42016EA,  0X41784605,  0X949E0147,  0XB7FC8662,  0X05658A3B,  0X4F474D13,  0X281A21C3,  0X9D76CAC2}
-//
-//#define RSA_TEST_PB_KEY_CNT 1
-//#define RSA_TEST_PB_KEY_DATA {0x10001}
-//
-//#define RSA_TEST_PR_KEY_CNT 32
-//#define RSA_TEST_PR_KEY_DATA {\
-//0X30409009,  0XBD6F7B7D,  0X2D0E6654,  0X1F5EEBCA,  0X03CDB701,  0X4B194C4C,  0X3B04D5BB,  0X226F467E,\
-//0XBE4CF497,  0XB7969F50,  0X4AC26ED8,  0XE055F3B5,  0XC2847600,  0XD48D6B4E,  0X39E6366E,  0X09D1D6F3,\
-//0XF08AEF82,  0XC20E7730,  0XDDE0C548,  0XC438886E,  0XD340F89C,  0X51676C2A,  0X86E9B6AD,  0XD025A5A8,\
-//0X03D4B7EA,  0XCAD22E79,  0XFBF687E2,  0X9ACA7B8F,  0X396D1C79,  0XD8CEDDBF,  0X5C949FB4,  0X6A7DC64E}
-//
-//#define RSA_TEST_MES_CNT 32
-//#define RSA_TEST_MES_DATA {0x12345678,0xffffffff,0xffffaa55}
-//
-//#pragma data_alignment = 4
-//const char test_char1[33*4] = "Hello World! This is Gecko!";
-//const char test_char2[33*4] = "Hello World! This is abandada!";
-//const char test_char3[33*4] = "Helldsadsais is Geckdasdsado!";
-//const char test_char4[33*4] = "Hello Worldsadasdsadasdascko!";
-//
-//uint32_t test_mod[RSA_TEST_MODE_CNT] = RSA_TEST_MODE_DATA;
-//uint8_t  test_mod_len =   RSA_TEST_MODE_CNT;
-//
-//uint32_t test_pb_key[RSA_TEST_PB_KEY_CNT] = RSA_TEST_PB_KEY_DATA;
-//uint8_t test_pb_key_len =   RSA_TEST_PB_KEY_CNT;
-//
-//uint32_t test_pr_key[RSA_TEST_PR_KEY_CNT] = RSA_TEST_PR_KEY_DATA;
-//uint8_t test_pr_key_len =   RSA_TEST_PR_KEY_CNT;
-//
-//
-//uint32_t test_mes[RSA_TEST_MES_CNT] = RSA_TEST_MES_DATA ;
-//uint8_t test_mes_len =   RSA_TEST_MES_CNT;
-//
-//extern volatile uint32_t rsa_test_cnt  ;
-//void rsa_test(void)
-//{
-//        uint32_t *test_p;
-//        uint8_t i,j;
-//        uint32_t  test_time2;
-//        __rsa_struc_init();
-//
-//
-//
-//
-//
-//        rsa_encrypt_init(test_mod,test_mod_len,test_pb_key,test_pb_key_len);
-//        rsa_decrypt_init(test_mod,test_mod_len,test_pr_key,test_pr_key_len);
-//        while(1){
-//        for(j = 0; j < 4; j++){
-//
-//          switch(j){
-//                  case 0:test_p = (uint32_t *)test_char1;break;
-//                  case 1:test_p = (uint32_t *)test_char2;break;
-//                  case 2:test_p = (uint32_t *)test_char3;break;
-//                  case 3 : test_p = (uint32_t *)test_char4;break;
-//                  default:break;
+#define RSA_TEST_PB_KEY_CNT 1
+#define RSA_TEST_PB_KEY_DATA {0x10001}
+
+#define RSA_TEST_PR_KEY_CNT 32
+#define RSA_TEST_PR_KEY_DATA {\
+0X30409009,  0XBD6F7B7D,  0X2D0E6654,  0X1F5EEBCA,  0X03CDB701,  0X4B194C4C,  0X3B04D5BB,  0X226F467E,\
+0XBE4CF497,  0XB7969F50,  0X4AC26ED8,  0XE055F3B5,  0XC2847600,  0XD48D6B4E,  0X39E6366E,  0X09D1D6F3,\
+0XF08AEF82,  0XC20E7730,  0XDDE0C548,  0XC438886E,  0XD340F89C,  0X51676C2A,  0X86E9B6AD,  0XD025A5A8,\
+0X03D4B7EA,  0XCAD22E79,  0XFBF687E2,  0X9ACA7B8F,  0X396D1C79,  0XD8CEDDBF,  0X5C949FB4,  0X6A7DC64E}
+
+#define RSA_TEST_MES_CNT 32
+#define RSA_TEST_MES_DATA {0x12345678,0xffffffff,0xffffaa55}
+
+#pragma data_alignment = 4
+const char test_char1[33*4] = "Hello World! This is Gecko!";
+const char test_char2[33*4] = "Hello World! This is abandada!";
+const char test_char3[33*4] = "Helldsadsais is Geckdasdsado!";
+const char test_char4[33*4] = "Hello Worldsadasdsadasdascko!";
+
+uint32_t test_mod[RSA_TEST_MODE_CNT] = RSA_TEST_MODE_DATA;
+uint8_t  test_mod_len =   RSA_TEST_MODE_CNT;
+
+uint32_t test_pb_key[RSA_TEST_PB_KEY_CNT] = RSA_TEST_PB_KEY_DATA;
+uint8_t test_pb_key_len =   RSA_TEST_PB_KEY_CNT;
+
+uint32_t test_pr_key[RSA_TEST_PR_KEY_CNT] = RSA_TEST_PR_KEY_DATA;
+uint8_t test_pr_key_len =   RSA_TEST_PR_KEY_CNT;
+
+
+uint32_t test_mes[RSA_TEST_MES_CNT] = RSA_TEST_MES_DATA ;
+uint8_t test_mes_len =   RSA_TEST_MES_CNT;
+
+extern volatile uint32_t rsa_test_cnt  ;
+void rsa_test(void)
+{
+        uint32_t *test_p;
+        uint8_t i,j;
+        uint32_t  test_time2;
+        __rsa_struc_init();
+
+
+
+
+
+        rsa_encrypt_init(test_mod,test_mod_len,test_pb_key,test_pb_key_len);
+        rsa_decrypt_init(test_mod,test_mod_len,test_pr_key,test_pr_key_len);
+        while(1){
+        for(j = 0; j < 4; j++){
+
+          switch(j){
+                  case 0:test_p = (uint32_t *)test_char1;break;
+                  case 1:test_p = (uint32_t *)test_char2;break;
+                  case 2:test_p = (uint32_t *)test_char3;break;
+                  case 3 : test_p = (uint32_t *)test_char4;break;
+                  default:break;
+          }
+
+         for(i = 0; i < 32; i++)
+                  test_mes[i] = test_p[i];
+
+       rsa_test_cnt = 0;
+       printf("----------------------------------------RSA_encrypt_start!!!\n\r");
+       printf("Encrypt Message ===> %s\n\r",(uint8_t *)test_mes);
+        rsa_encrypt(test_mes,test_mes_len);
+//        printf("Encrypt data as follow\n\r");
+//        printf("[%2d]=%8X ",0,test_mes[0]);
+//        for(i= 1; i < 32; i++){
+//          printf("[%2d]=%8X ",i,test_mes[i]);
+//          if((i+1)%4){
+//          }else{
+//            printf("\r\n");
 //          }
-//
-//         for(i = 0; i < 32; i++)
-//                  test_mes[i] = test_p[i];
-//
-//       rsa_test_cnt = 0;
-//       printf("----------------------------------------RSA_encrypt_start!!!\n\r");
-//       printf("Encrypt Message ===> %s\n\r",(uint8_t *)test_mes);
-//        rsa_encrypt(test_mes,test_mes_len);
-////        printf("Encrypt data as follow\n\r");
-////        printf("[%2d]=%8X ",0,test_mes[0]);
-////        for(i= 1; i < 32; i++){
-////          printf("[%2d]=%8X ",i,test_mes[i]);
-////          if((i+1)%4){
-////          }else{
-////            printf("\r\n");
-////          }
-////        }
-//        test_time2 =  rsa_test_cnt ;
-//        printf("Const time =%6d Ms\n\r",test_time2/100);
-//        printf("----------------------------------------RSA_encrypt_end!!!\n\r");
-//
-//        printf("******************************\n\r");
-//        printf("----------------------------------------RSA_decrypt_start!!!\n\r");
-//        rsa_test_cnt = 0;
-//        rsa_decrypt(test_mes,test_mes_len);
-//
-//        test_time2 =  rsa_test_cnt ;
-//        printf("Const time =%6d Ms\n\r",test_time2/100);
-//
-//        printf("Dncrypt Message ===> %s\n\r",(uint8_t *)test_mes);
-//        printf("----------------------------------------RSA_decrypt_end!!!\n\r");
-//        printf("------------------------------------------------------------\n\r");
-//        printf("------------------------------------------------------------\n\r");
-//
 //        }
-//        j = 0;
-//        }
-//}
+        test_time2 =  rsa_test_cnt ;
+        printf("Const time =%6d Ms\n\r",test_time2/100);
+        printf("----------------------------------------RSA_encrypt_end!!!\n\r");
 
+        printf("******************************\n\r");
+        printf("----------------------------------------RSA_decrypt_start!!!\n\r");
+        rsa_test_cnt = 0;
+        rsa_decrypt(test_mes,test_mes_len);
+
+        test_time2 =  rsa_test_cnt ;
+        printf("Const time =%6d Ms\n\r",test_time2/100);
+
+        printf("Dncrypt Message ===> %s\n\r",(uint8_t *)test_mes);
+        printf("----------------------------------------RSA_decrypt_end!!!\n\r");
+        printf("------------------------------------------------------------\n\r");
+        printf("------------------------------------------------------------\n\r");
+
+        }
+        j = 0;
+        }
+}
+*/
 
 
 /*  des = des + sour

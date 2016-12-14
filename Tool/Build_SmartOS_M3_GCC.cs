@@ -25,5 +25,7 @@ build.CompileAll();
 build.BuildLib("..\\libSmartOS_M3.a");
 
 build.Debug = true;
+// 未使用参数和无符号整数比较太多了，过滤掉
+build.ExtCompiles = "-Wno-unused-parameter -Wno-sign-compare";
 build.CompileAll();
 build.BuildLib("..\\libSmartOS_M3.a");

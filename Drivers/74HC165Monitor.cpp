@@ -60,7 +60,7 @@ void IC74HC165MOR::Trigger()
 		_irqCount = 0;
 		return;
 	}
-	int bits = _Bs.Length() * 8;	// 总位数
+	//int bits = _Bs.Length() * 8;	// 总位数
 	for(int i = 0; i < _Bs.Length(); i++)
 	{
 		byte temp = 0x00;

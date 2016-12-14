@@ -159,7 +159,9 @@ void TinyController::ShowMessage(const TinyMessage& msg, bool send, const ITrans
 		blank -= 5;
 	}
 	else
+	{
 		msg_printf("::");
+	}
 
 	if(msg.Error)
 	{
