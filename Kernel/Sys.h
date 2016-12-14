@@ -26,7 +26,8 @@
 extern "C"
 {
 #if defined(DEBUG)
-	#define debug_printf printf
+	#define debug_printf SmartOS_printf
+	extern int SmartOS_printf(const char *format, ...);
 #else
 	#define debug_printf(format, ...)
 #endif

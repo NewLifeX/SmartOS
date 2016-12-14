@@ -371,3 +371,16 @@ void ExitCritical()		{ __enable_irq(); }
 
 uint	_REV(uint value)		{ return __REV(value); }
 ushort	_REV16(ushort value)	{ return __REV16(value); }
+
+/******************************** 调试日志 ********************************/
+
+int SmartOS_printf(const char* format, ...)
+{
+	va_list ap;
+
+	va_start(ap, format);
+	int rs	= printf(format, ap);
+	va_end(ap);
+
+	return rs;
+}
