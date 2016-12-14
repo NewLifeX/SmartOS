@@ -78,7 +78,7 @@ void Raster::OnInit()
 	FlagA.Count = 0;
 
 	Min = 100;		// 最小时间间隔 单位 ms
-	Max = 0;		// 最大时间间隔 单位 ms
+	Max = 3000;		// 最大时间间隔 单位 ms
 
 	Filter = false;
 
