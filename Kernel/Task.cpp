@@ -70,7 +70,7 @@ bool Task::Execute(UInt64 now)
 	// 累加任务执行次数和时间
 	Times++;
 	int ct = tc.Elapsed();
-	if(ct < 0) debug_printf("cost = %d \r\n", ct);
+	//if(ct < 0) debug_printf("cost = %d \r\n", ct);
 
 	ct -= SleepTime;
 	if(ct > MaxCost) MaxCost = ct;
@@ -79,7 +79,7 @@ bool Task::Execute(UInt64 now)
 	CostMs	= Cost / 1000;
 
 #if DEBUG
-	if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
+	//if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
 #endif
 
 	// 如果只是一次性任务，在这里清理
