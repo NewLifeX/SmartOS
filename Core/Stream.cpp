@@ -36,6 +36,8 @@ Stream::Stream(const Buffer& bs)
 	CanWrite	= false;
 }
 
+Stream::~Stream(){ }
+
 void Stream::Init(void* buf, uint len)
 {
 	assert(buf, "buf");

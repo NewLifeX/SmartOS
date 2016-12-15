@@ -56,7 +56,7 @@ public:
 #endif
 
 	TokenSession(TokenClient& client, TokenController& ctrl);
-	~TokenSession();
+	virtual ~TokenSession();
 
 	bool Send(TokenMessage& msg);
 	void OnReceive(TokenMessage& msg);

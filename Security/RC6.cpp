@@ -20,8 +20,8 @@
 #define lgw     5                           /* log2(w) -- wussed out */
 
 /* Rotations */
-#define ROTL(x,y) (((x)<<(y&(rc6_w-1))) | ((x)>>(rc6_w-(y&(rc6_w-1)))))
-#define ROTR(x,y) (((x)>>(y&(rc6_w-1))) | ((x)<<(rc6_w-(y&(rc6_w-1)))))
+#define ROTL(x,y) (((x)<<((y)&(rc6_w-1))) | ((x)>>(rc6_w-((y)&(rc6_w-1)))))
+#define ROTR(x,y) (((x)>>((y)&(rc6_w-1))) | ((x)<<(rc6_w-((y)&(rc6_w-1)))))
 
 void rc6_block_encrypt(uint *pt, uint *ct, uint* box)
 {

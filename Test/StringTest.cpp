@@ -27,7 +27,7 @@ static void TestCtor()
 
 	String str1("456");
 	assert(str1 == "456", err);
-	assert(str1.GetBuffer() == "456", err);
+	assert(str1.GetBuffer() == (void*)"456", err);
 
 	err	= "String(const String& str)";
 	String str2(str1);

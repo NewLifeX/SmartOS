@@ -41,7 +41,7 @@ Raster::~Raster()
 
 	if (--_Ras == 0)
 	{
-		delete _Cache;
+		//delete _Cache;
 		Sys.RemoveTask(_task);
 	}
 }

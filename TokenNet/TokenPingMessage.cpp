@@ -8,7 +8,7 @@ TokenPingMessage::TokenPingMessage()
 	ServerTime	= 0;
 }
 
-TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg)
+TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg) : MessageBase(msg)
 {
 	LocalTime	= msg.LocalTime;
 }

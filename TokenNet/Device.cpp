@@ -39,6 +39,11 @@ Device::Device() :
 	//LastWrite	= 0;
 }
 
+Device::~Device()
+{
+	
+}
+
 void Device::Write(Stream& ms) const
 {
 	TS("Device::Write");

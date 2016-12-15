@@ -65,6 +65,7 @@ public:
 	//Buffer	Config;
 	
 	Device();
+	virtual ~Device();
 
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;

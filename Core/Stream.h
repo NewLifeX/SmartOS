@@ -24,6 +24,7 @@ public:
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	explicit Stream(Buffer& bs);
 	explicit Stream(const Buffer& bs);
+	virtual ~Stream();
 
 	// 数据流容量
 	uint Capacity() const;
@@ -112,7 +113,7 @@ public:
 	// 使用缓冲区初始化数据流，支持自动扩容
 	MemoryStream(void* buf, uint len);
 	// 销毁数据流
-	~MemoryStream();
+	virtual ~MemoryStream();
 };
 
 #endif

@@ -532,7 +532,7 @@ uint Esp8266::OnReceive(Buffer& bs, void* param)
 		{
 			if (_Expect)
 			{
-				uint rs = ParseReply(bs.Sub(s, size));
+				ParseReply(bs.Sub(s, size));
 #if NET_DEBUG
 				// 如果没有吃完，剩下部分报未识别
 				//if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));

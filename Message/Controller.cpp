@@ -97,7 +97,7 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	TS("Controller::DispatchMsg");
 
-	byte* buf = ms.Current();
+	//byte* buf = ms.Current();
 
 	auto& msg = *pmsg;
 	msg.State = param;
