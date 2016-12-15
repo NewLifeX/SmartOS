@@ -1,5 +1,5 @@
 ﻿#include "Sys.h"
-
+#include <stdarg.h>
 //#include "WatchDog.h"
 
 #include "Platform\stm32.h"
