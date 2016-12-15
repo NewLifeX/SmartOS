@@ -192,7 +192,7 @@ void AP0801::InitClient()
 	Client = tc;
 
 	tc->MaxNotActive = 480000;
-
+	InitAlarm();
 	// 重启
 	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
 	// 重置

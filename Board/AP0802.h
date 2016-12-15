@@ -6,6 +6,7 @@
 
 #include "TokenNet\TokenClient.h"
 #include "Device\Port.h"
+#include "App\Alarm.h"
 
 #define HardwareVerFist		0
 #define HardwareVerAt160712 1
@@ -25,7 +26,6 @@ public:
 
 	ISocketHost*	Host;	// 网络主机
 	ISocketHost*	HostAP;	// 网络主机
-	TokenClient*	Client;	// 令牌客户端
 	byte HardwareVer;
 
 	AP0802();
@@ -37,7 +37,7 @@ public:
 	// 设置数据区
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);
-
+	void InitAlarm();
 	void InitLeds();
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 	void InitPort();
@@ -54,7 +54,7 @@ public:
 	void InitClient();
 	void InitNet();
 
-    void Restore();
+	void Restore();
 	static void OnLongPress(InputPort* port, bool down);
 
 private:
@@ -65,7 +65,7 @@ private:
 	bool	NetBra;
 	bool	EspMaster;
 	bool	EspBra;
-
+	Alarm*	AlarmObj;
 	// uint	Flag;		// 内部使用  标识Controller创建情况
 
 	void OpenClient(ISocketHost& host);

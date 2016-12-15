@@ -14,36 +14,37 @@
 #include "..\App\FlushPort.h"
 
 AP0802 * AP0802::Current = nullptr;
+static TokenClient*	Client = nullptr;	// 令牌客户端
 
 AP0802::AP0802()
 {
-	Host	= nullptr;
-	HostAP	= nullptr;
-	Client	= nullptr;
+	Host = nullptr;
+	HostAP = nullptr;
+	Client = nullptr;
 
-	Data	= nullptr;
-	Size	= 0;
+	Data = nullptr;
+	Size = 0;
 	// Control 打开情况标识
-	NetMaster	= false;
-	NetBra		= false;
-	EspMaster	= false;
-	EspBra		= false;
-	Current		= this;
+	NetMaster = false;
+	NetBra = false;
+	EspMaster = false;
+	EspBra = false;
+	Current = this;
 
 	HardwareVer = HardwareVerLast;
 }
 
 void AP0802::Init(ushort code, cstring name, COM message)
 {
-	auto& sys	= (TSys&)Sys;
+	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
 
-    // 初始化系统
-    sys.Init();
+	// 初始化系统
+	sys.Init();
 #if DEBUG
-    sys.MessagePort = message; // 指定printf输出的串口
-    Sys.ShowInfo();
+	sys.MessagePort = message; // 指定printf输出的串口
+	Sys.ShowInfo();
 
 	WatchDog::Start(20000, 10000);
 #else
@@ -51,7 +52,7 @@ void AP0802::Init(ushort code, cstring name, COM message)
 #endif
 
 	// Flash最后一块作为配置区
-	Config::Current	= &Config::CreateFlash();
+	Config::Current = &Config::CreateFlash();
 
 	if (HardwareVer == HardwareVerLast)
 	{
@@ -77,7 +78,7 @@ void AP0802::Init(ushort code, cstring name, COM message)
 void* AP0802::InitData(void* data, int size)
 {
 	// 启动信息
-	auto hot	= &HotConfig::Current();
+	auto hot = &HotConfig::Current();
 	hot->Times++;
 
 	data = hot->Next();
@@ -88,17 +89,17 @@ void* AP0802::InitData(void* data, int size)
 		ds[0] = size;
 	}
 
-	Data	= data;
-	Size	= size;
+	Data = data;
+	Size = size;
 
 	return data;
 }
 
 void AP0802::InitLeds()
 {
-	for(int i=0; i<LedPins.Count(); i++)
+	for (int i = 0; i < LedPins.Count(); i++)
 	{
-		auto port	= new OutputPort(LedPins[i]);
+		auto port = new OutputPort(LedPins[i]);
 		port->Open();
 		Leds.Add(port);
 	}
@@ -110,14 +111,43 @@ void ButtonOnpress(InputPort* port, bool down, void* param)
 		AP0802::OnLongPress(port, down);
 }
 
+static void OnAlarm(AlarmItem& item)
+{
+	// 1长度n + 1类型 + 1偏移 + (n-2)数据
+	auto bs = item.GetData();
+	debug_printf("OnAlarm ");
+	bs.Show(true);
+
+	if (bs[1] == 0x06)
+	{
+		auto client = Client;
+		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+
+		// 主动上报状态
+		client->ReportAsync(bs[2], bs[0] - 2);
+	}
+}
+
+void AP0802::InitAlarm()
+{
+	if (!Client)return;
+
+	if (!AlarmObj)AlarmObj = new Alarm();
+	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
+
+	AlarmObj->OnAlarm = OnAlarm;
+	AlarmObj->Start();
+}
+
 void AP0802::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
-	for(int i=0; i<ButtonPins.Count(); i++)
+	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
-		auto port	= new InputPort(ButtonPins[i]);
-		port->Invert	= true;
-		port->State	= i;
-		port->Press	= press;
+		auto port = new InputPort(ButtonPins[i]);
+		port->Invert = true;
+		port->State = i;
+		port->Press = press;
 		port->UsePress();
 		port->Open();
 		Buttons.Add(port);
@@ -128,7 +158,7 @@ ISocketHost* AP0802::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto host	= new W5500(Spi2, PE1, PD13);
+	auto host = new W5500(Spi2, PE1, PD13);
 	host->NetReady.Bind(&AP0802::OpenClient, this);
 
 	return host;
@@ -136,7 +166,7 @@ ISocketHost* AP0802::Create5500()
 
 ISocketHost* AP0802::Create8266(bool apOnly)
 {
-	auto host	= new Esp8266(COM4, PE0, PD3);
+	auto host = new Esp8266(COM4, PE0, PD3);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
@@ -165,16 +195,18 @@ ISocketHost* AP0802::Create8266(bool apOnly)
 
 void AP0802::InitClient()
 {
-	if(Client) return;
+	if (Client) return;
 
 	auto tk = TokenConfig::Current;
 
 	// 创建客户端
-	auto client		= new TokenClient();
-	client->Cfg		= tk;
-	
+	auto client = new TokenClient();
+	client->Cfg = tk;
+
 	// 需要使用本地连接
 	//client->UseLocal();
+	//配置闹钟
+	InitAlarm();
 
 	Client = client;
 	Client->MaxNotActive = 480000;
@@ -189,30 +221,30 @@ void AP0802::InitClient()
 	// 获取所有Ivoke命令
 	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
-	if(Data && Size > 0)
+	if (Data && Size > 0)
 	{
-		auto& ds	= Client->Store;
+		auto& ds = Client->Store;
 		ds.Data.Set(Data, Size);
 	}
 
 	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
 	Sys.AddTask(
-		[](void* p){
-			auto& client	= *(TokenClient*)p;
-			if(!client.Opened)
-			{
-				debug_printf("联网超时，准备重启系统！\r\n\r\n");
-				Sys.Reboot();
-			}
-		},
+		[](void* p) {
+		auto& client = *(TokenClient*)p;
+		if (!client.Opened)
+		{
+			debug_printf("联网超时，准备重启系统！\r\n\r\n");
+			Sys.Reboot();
+		}
+	},
 		client, 8 * 60 * 1000, -1, "联网检查");
 }
 
 void AP0802::Register(int index, IDataPort& dp)
 {
-	if(!Client) return;
+	if (!Client) return;
 
-	auto& ds	= Client->Store;
+	auto& ds = Client->Store;
 	ds.Register(index, dp);
 }
 
@@ -234,17 +266,17 @@ void AP0802::OpenClient(ISocketHost& host)
 	debug_printf("\r\n OpenClient \r\n");
 
 	// 网络就绪后，打开指示灯
-	auto net	= dynamic_cast<W5500*>(&host);
-	if(net && !net->Led) net->SetLed(*Leds[0]);
+	auto net = dynamic_cast<W5500*>(&host);
+	if (net && !net->Led) net->SetLed(*Leds[0]);
 
-	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led) esp->SetLed(*Leds[1]);
+	auto esp = dynamic_cast<Esp8266*>(&host);
+	if (esp && !esp->Led) esp->SetLed(*Leds[1]);
 
 	auto tk = TokenConfig::Current;
 	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
 
 	// 避免重复打开
-	if(Host)
+	if (Host)
 	{
 		if (Host == esp)							// 8266 作为Host的时候  使用 Master 和广播端口两个    HostAP 为空
 		{
@@ -317,21 +349,21 @@ void AP0802::OpenClient(ISocketHost& host)
 TokenController* AP0802::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateRemote(uri);
+	auto socket = host.CreateRemote(uri);
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
+	auto ctrl = new TokenController();
 	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
+	ctrl->Socket = socket;
 
 	// 创建客户端
-	auto client	= Client;
-	if(localPort == 0)
-		client->Master	= ctrl;
+	auto client = Client;
+	if (localPort == 0)
+		client->Master = ctrl;
 	else
 	{
-		socket->Local.Port	= localPort;
-		ctrl->ShowRemote	= true;
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
 		client->Controls.Add(ctrl);
 	}
 
@@ -357,17 +389,17 @@ Host为空 或 AP/STA_AP
 */
 void OnInitNet(void* param)
 {
-	auto& bsp	= *(AP0802*)param;
+	auto& bsp = *(AP0802*)param;
 
 	// 检查是否连接网线
-	auto host	= (W5500*)bsp.Create5500();
+	auto host = (W5500*)bsp.Create5500();
 	// 软路由的DHCP要求很严格，必须先把自己IP设为0
-	host->IP	= IPAddress::Any();
-	if(host->Open())
+	host->IP = IPAddress::Any();
+	if (host->Open())
 	{
 		host->EnableDNS();
 		host->EnableDHCP();
-		bsp.Host	= host;
+		bsp.Host = host;
 	}
 	else
 	{
@@ -375,25 +407,25 @@ void OnInitNet(void* param)
 	}
 
 	// 没有接网线，需要完整WiFi通道
-	if(!bsp.Host)
+	if (!bsp.Host)
 	{
-		auto esp	= bsp.Create8266(false);
-		if(esp)
+		auto esp = bsp.Create8266(false);
+		if (esp)
 		{
 			// 未组网时，主机留空，仅保留AP主机
-			bool join	= esp->SSID && *esp->SSID;
-			if(join && esp->IsStation())
-				bsp.Host	= esp;
+			bool join = esp->SSID && *esp->SSID;
+			if (join && esp->IsStation())
+				bsp.Host = esp;
 			else
-				bsp.HostAP	= esp;
+				bsp.HostAP = esp;
 		}
 	}
 	// 接了网线，同时需要AP
-	else if(host->IsAP())
+	else if (host->IsAP())
 	{
 		// 如果Host已存在，则8266仅作为AP
-		auto esp	= bsp.Create8266(true);
-		if(esp) bsp.HostAP	= esp;
+		auto esp = bsp.Create8266(true);
+		if (esp) bsp.HostAP = esp;
 	}
 
 	// 打开DHCP，完成时会打开客户端
@@ -412,8 +444,8 @@ int Fix2401(const Buffer& bs)
 {
 	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度
-	uint rs	= bs.Length();
-	if(rs >= 8)
+	uint rs = bs.Length();
+	if (rs >= 8)
 	{
 		rs = bs[5] + 8;
 		//if(rs < bs.Length()) bs.SetLength(rs);
@@ -429,29 +461,29 @@ ITransport* AP0802::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerI
 	static NRF24L01 nrf;
 	nrf.Init(&spi, ce, irq, power);
 
-	auto tc	= TinyConfig::Create();
-	if(tc->Channel == 0)
+	auto tc = TinyConfig::Create();
+	if (tc->Channel == 0)
 	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
+		tc->Channel = 120;
+		tc->Speed = 250;
 	}
-	if(tc->Interval == 0)
+	if (tc->Interval == 0)
 	{
-		tc->Interval= 40;
-		tc->Timeout	= 1000;
+		tc->Interval = 40;
+		tc->Timeout = 1000;
 	}
 
-	nrf.AutoAnswer	= false;
-	nrf.DynPayload	= false;
-	nrf.Channel		= tc->Channel;
+	nrf.AutoAnswer = false;
+	nrf.DynPayload = false;
+	nrf.Channel = tc->Channel;
 	//nrf.Channel		= 120;
-	nrf.Speed		= tc->Speed;
+	nrf.Speed = tc->Speed;
 
-	nrf.FixData	= Fix2401;
+	nrf.FixData = Fix2401;
 
 	//if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
 
-	nrf.Master	= true;
+	nrf.Master = true;
 
 	return &nrf;
 }
@@ -460,12 +492,12 @@ ITransport* AP0802::Create2401()
 {
 	auto port = new FlushPort();
 	port->Port = Leds[2];
-	return Create2401(Spi3,PD12,PE3,PE6,true,port);
+	return Create2401(Spi3, PD12, PE3, PE6, true, port);
 }
 
 void AP0802::Restore()
 {
-	if(Client) Client->Reset("按键重置");
+	if (Client) Client->Reset("按键重置");
 }
 
 void AP0802::OnLongPress(InputPort* port, bool down)
@@ -475,14 +507,14 @@ void AP0802::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	auto client	= AP0802::Current->Client;
+	auto client =Client;
 	if (time >= 5000 && time < 10000)
 	{
-		if(client) client->Reset("按键重置");
+		if (client) client->Reset("按键重置");
 	}
 	else if (time >= 3000)
 	{
-		if(client) client->Reboot("按键重启");
+		if (client) client->Reboot("按键重启");
 		Sys.Reboot(1000);
 	}
 }
@@ -514,14 +546,14 @@ Host为空 或 AP/STA_AP
 */
 
 /*
-NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		
-NSS						|				NSS			
-CLK						|				SCK			
-MISO					|				MISO		
-MOSI					|				MOSI		
-PE3			IRQ			|	PE1			INT(IRQ)	
-PD12		CE			|	PD13		NET_NRST	
-PE6			POWER		|				POWER		
+NRF24L01+ 	(SPI3)		|	W5500		(SPI2)
+NSS						|				NSS
+CLK						|				SCK
+MISO					|				MISO
+MOSI					|				MOSI
+PE3			IRQ			|	PE1			INT(IRQ)
+PD12		CE			|	PD13		NET_NRST
+PE6			POWER		|				POWER
 
 ESP8266		(COM4)
 TX

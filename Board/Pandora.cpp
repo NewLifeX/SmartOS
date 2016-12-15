@@ -102,6 +102,7 @@ void PA0903::InitClient()
 
 	Client = client;
 
+	InitAlarm();
 	// 重启
 	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
 	// 重置
