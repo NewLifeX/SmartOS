@@ -263,7 +263,8 @@ static void UnionPress(InputPort& port, bool down)
 	if (IOK027X::Current == nullptr) return;
 	auto client = IOK027X::Current->Client;
 
-	byte data[]{ (byte)(down ? 1 : 0) };
+	byte data[1];
+	data[0] = down ? 1 : 0;
 
 	client->Store.Write(port.Index + 1, Buffer(data, 1));
 	// 主动上报状态
