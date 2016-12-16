@@ -278,7 +278,7 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 		auto port = new InputPort(p[i]);
 		port->Invert = true;
 		port->ShakeTime = 40;
-		port->Index = i + 1;
+		port->Index = i;
 		port->Press.Bind(UnionPress);
 		port->UsePress();
 		port->Open();
