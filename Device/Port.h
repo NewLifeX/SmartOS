@@ -29,12 +29,9 @@ public:
 		AF_7 = 7
 	};
 
-    void*	Group;		// 引脚组
-    ushort	Mask;		// 组内引脚位。每个引脚一个位
     Pin		_Pin;		// 引脚
 	bool	Opened;		// 是否已经打开
 	int		State;		// 用户状态数据。常用于批量端口操作时记录索引
-	byte    Index;		//引脚自身次序编号，用于区分多引脚次序	
 
 	Port();
 
@@ -69,7 +66,6 @@ protected:
 	virtual void OnClose();
 
 private:
-	static void* IndexToGroup(byte index);
 	void OpenPin();
 };
 

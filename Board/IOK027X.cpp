@@ -266,9 +266,9 @@ static void UnionPress(InputPort& port, bool down)
 	byte data[1];
 	data[0] = down ? 1 : 0;
 
-	client->Store.Write(port.Index + 1, Buffer(data, 1));
+	client->Store.Write(port.State + 1, Buffer(data, 1));
 	// 主动上报状态
-	client->ReportAsync(port.Index + 1, 1);
+	client->ReportAsync(port.State + 1, 1);
 
 }
 void IOK027X::Union(Pin pin1, Pin pin2)
@@ -279,7 +279,7 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 		auto port = new InputPort(p[i]);
 		port->Invert = true;
 		port->ShakeTime = 40;
-		port->Index = i;
+		port->State = i;
 		port->Press.Bind(UnionPress);
 		port->UsePress();
 		port->Open();

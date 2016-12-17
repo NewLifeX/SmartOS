@@ -9,8 +9,6 @@
 Port::Port()
 {
 	_Pin	= P0;
-	Group	= nullptr;
-	Mask	= 0;
 	Opened	= false;
 	State	= 0;
 }
@@ -49,16 +47,6 @@ Port& Port::Set(Pin pin)
 #endif
 
     _Pin = pin;
-	if(_Pin != P0)
-	{
-		Group	= IndexToGroup(pin >> 4);
-		Mask	= 1 << (pin & 0x0F);
-	}
-	else
-	{
-		Group	= nullptr;
-		Mask	= 0;
-	}
 
 	return *this;
 }
@@ -67,16 +55,12 @@ bool Port::Empty() const
 {
 	if(_Pin != P0) return false;
 
-	if(Group == nullptr || Mask == 0) return true;
-
 	return false;
 }
 
 void Port::Clear()
 {
-	Group	= nullptr;
 	_Pin	= P0;
-	Mask	= 0;
 }
 
 // 确定配置,确认用对象内部的参数进行初始化
