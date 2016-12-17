@@ -31,7 +31,8 @@ public:
 
     Pin		_Pin;		// 引脚
 	bool	Opened;		// 是否已经打开
-	int		State;		// 用户状态数据。常用于批量端口操作时记录索引
+	byte    Index;		// 引脚自身次序编号，用于区分多引脚次序	
+	void*	State;		// 用户状态数据。常用于批量端口操作时记录索引
 
 	Port();
 

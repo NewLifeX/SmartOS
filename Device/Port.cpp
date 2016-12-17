@@ -10,7 +10,8 @@ Port::Port()
 {
 	_Pin	= P0;
 	Opened	= false;
-	State	= 0;
+	Index	= 0;
+	State	= nullptr;
 }
 
 #ifndef TINY
