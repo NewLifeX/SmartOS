@@ -56,8 +56,6 @@ public:
 	static bool IsBusy(Pin pin);	// 引脚是否被保护
 #endif
 
-	static void OpenClock(Pin pin, bool flag);
-
 	virtual String& ToStr(String& str) const;
 
 protected:
@@ -72,7 +70,6 @@ protected:
 
 private:
 	static void* IndexToGroup(byte index);
-	static void OnOpenClock(Pin pin, bool flag);
 	void OpenPin();
 };
 

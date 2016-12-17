@@ -30,9 +30,23 @@ static const byte PORT_IRQns[] = {
 
 void* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 
-void Port::OnOpenClock(Pin pin, bool flag)
+// 分组时钟
+static byte _GroupClock[10];
+
+void Port::OpenClock(Pin pin, bool flag)
 {
     int gi = pin >> 4;
+
+	if(flag)
+	{
+		// 增加计数，首次打开时钟
+		if(_GroupClock[gi]++) return;
+	}
+	else
+	{
+		// 减少计数，最后一次关闭时钟
+		if(_GroupClock[gi]-- > 1) return;
+	}
 
 	FunctionalState fs = flag ? ENABLE : DISABLE;
 #if defined(STM32F0) || defined(GD32F150)
@@ -47,6 +61,9 @@ void Port::OnOpenClock(Pin pin, bool flag)
 // 确定配置,确认用对象内部的参数进行初始化
 void Port::OpenPin()
 {
+    // 先打开时钟才能配置
+	OpenClock(_Pin, true);
+
 	GPIO_InitTypeDef gpio;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
@@ -77,6 +94,12 @@ void Port::OnOpen(void* param)
 		}
 	}
 #endif
+}
+
+void Port::OnClose()
+{
+	// 不能随便关闭时钟，否则可能会影响别的引脚
+	OpenClock(_Pin, false);
 }
 
 void Port::RemapConfig(uint param, bool sta)

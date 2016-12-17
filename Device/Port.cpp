@@ -79,27 +79,6 @@ void Port::Clear()
 	Mask	= 0;
 }
 
-// 分组时钟
-static byte _GroupClock[10];
-
-void Port::OpenClock(Pin pin, bool flag)
-{
-    int gi = pin >> 4;
-
-	if(flag)
-	{
-		// 增加计数，首次打开时钟
-		if(_GroupClock[gi]++) return;
-	}
-	else
-	{
-		// 减少计数，最后一次关闭时钟
-		if(_GroupClock[gi]-- > 1) return;
-	}
-
-	OnOpenClock(pin, flag);
-}
-
 // 确定配置,确认用对象内部的参数进行初始化
 bool Port::Open()
 {
@@ -107,9 +86,6 @@ bool Port::Open()
 	if(Opened) return true;
 
 	TS("Port::Open");
-
-    // 先打开时钟才能配置
-	OpenClock(_Pin, true);
 
 #if DEBUG
 	// 保护引脚
@@ -141,12 +117,6 @@ void Port::Close()
 #endif
 
 	Opened = false;
-}
-
-void Port::OnClose()
-{
-	// 不能随便关闭时钟，否则可能会影响别的引脚
-	OpenClock(_Pin, false);
 }
 #endif
 
