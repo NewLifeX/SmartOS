@@ -231,11 +231,11 @@ void IOK027X::InitNet()
 static void OnAlarm(AlarmItem& item)
 {
 	// 1长度n + 1类型 + 1偏移 + (n-2)数据
-	auto bs	= item.GetData();
+	auto bs = item.GetData();
 	debug_printf("OnAlarm ");
 	bs.Show(true);
 
-	if(bs[1] == 0x06)
+	if (bs[1] == 0x06)
 	{
 		auto client = IOK027X::Current->Client;
 		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
@@ -253,14 +253,43 @@ void IOK027X::InitAlarm()
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
-	AlarmObj->OnAlarm	= OnAlarm;
+	AlarmObj->OnAlarm = OnAlarm;
 	AlarmObj->Start();
+}
+
+//双联开关被触发 
+static void UnionPress(InputPort& port, bool down)
+{
+	if (IOK027X::Current == nullptr) return;
+	auto client = IOK027X::Current->Client;
+
+	byte data[1];
+	data[0] = down ? 1 : 0;
+
+	client->Store.Write(port.Index + 1, Buffer(data, 1));
+	// 主动上报状态
+	client->ReportAsync(port.Index + 1, 1);
+
+}
+void IOK027X::Union(Pin pin1, Pin pin2)
+{
+	Pin p[] = { pin1,pin2 };
+	for (size_t i = 0; i < 2; i++)
+	{
+		auto port = new InputPort(p[i]);
+		port->Invert = true;
+		port->ShakeTime = 40;
+		port->Index = i;
+		port->Press.Bind(UnionPress);
+		port->UsePress();
+		port->Open();
+	}
 }
 
 static bool ledstat2 = false;
 void IOK027X::Restore()
 {
-	if(Client) Client->Reset("按键重置");
+	if (Client) Client->Reset("按键重置");
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -345,13 +374,13 @@ void IOK027X::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	auto client	= IOK027X::Current->Client;
+	auto client = IOK027X::Current->Client;
 	//if (time >= 10000 && time < 15000)
 	//	Current->Restore();
 	//else
 	if (time >= 7000)
 	{
-		if(client) client->Reboot("按键重启");
+		if (client) client->Reboot("按键重启");
 		Sys.Reboot(1000);
 	}
 }

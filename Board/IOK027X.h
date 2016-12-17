@@ -39,7 +39,8 @@ public:
 	void InitClient();
 	void InitNet();
 	void InitAlarm();
-
+	//双联开关
+	void Union(Pin pin1,Pin pin2);
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);
 
