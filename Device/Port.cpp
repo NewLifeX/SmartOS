@@ -9,10 +9,9 @@
 Port::Port()
 {
 	_Pin	= P0;
-	Group	= nullptr;
-	Mask	= 0;
 	Opened	= false;
-	State	= 0;
+	Index	= 0;
+	State	= nullptr;
 }
 
 #ifndef TINY
@@ -49,16 +48,6 @@ Port& Port::Set(Pin pin)
 #endif
 
     _Pin = pin;
-	if(_Pin != P0)
-	{
-		Group	= IndexToGroup(pin >> 4);
-		Mask	= 1 << (pin & 0x0F);
-	}
-	else
-	{
-		Group	= nullptr;
-		Mask	= 0;
-	}
 
 	return *this;
 }
@@ -67,37 +56,12 @@ bool Port::Empty() const
 {
 	if(_Pin != P0) return false;
 
-	if(Group == nullptr || Mask == 0) return true;
-
 	return false;
 }
 
 void Port::Clear()
 {
-	Group	= nullptr;
 	_Pin	= P0;
-	Mask	= 0;
-}
-
-// 分组时钟
-static byte _GroupClock[10];
-
-void Port::OpenClock(Pin pin, bool flag)
-{
-    int gi = pin >> 4;
-
-	if(flag)
-	{
-		// 增加计数，首次打开时钟
-		if(_GroupClock[gi]++) return;
-	}
-	else
-	{
-		// 减少计数，最后一次关闭时钟
-		if(_GroupClock[gi]-- > 1) return;
-	}
-
-	OnOpenClock(pin, flag);
 }
 
 // 确定配置,确认用对象内部的参数进行初始化
@@ -107,9 +71,6 @@ bool Port::Open()
 	if(Opened) return true;
 
 	TS("Port::Open");
-
-    // 先打开时钟才能配置
-	OpenClock(_Pin, true);
 
 #if DEBUG
 	// 保护引脚
@@ -141,12 +102,6 @@ void Port::Close()
 #endif
 
 	Opened = false;
-}
-
-void Port::OnClose()
-{
-	// 不能随便关闭时钟，否则可能会影响别的引脚
-	OpenClock(_Pin, false);
 }
 #endif
 

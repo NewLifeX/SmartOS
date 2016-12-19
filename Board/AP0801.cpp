@@ -117,7 +117,7 @@ void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 		auto port = new InputPort(ButtonPins[i]);
 		port->Invert = true;
 		port->ShakeTime = 40;
-		port->State	= i;
+		port->Index	= i;
 		port->Press	= press;
 		port->UsePress();
 		port->Open();

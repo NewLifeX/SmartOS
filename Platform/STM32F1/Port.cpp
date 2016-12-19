@@ -28,11 +28,25 @@ static const byte PORT_IRQns[] = {
 #define REGION_Port 1
 #ifdef REGION_Port
 
-void* Port::IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+static GPIO_TypeDef* IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 
-void Port::OnOpenClock(Pin pin, bool flag)
+// 分组时钟
+static byte _GroupClock[10];
+
+static void OpenClock(Pin pin, bool flag)
 {
     int gi = pin >> 4;
+
+	if(flag)
+	{
+		// 增加计数，首次打开时钟
+		if(_GroupClock[gi]++) return;
+	}
+	else
+	{
+		// 减少计数，最后一次关闭时钟
+		if(_GroupClock[gi]-- > 1) return;
+	}
 
 	FunctionalState fs = flag ? ENABLE : DISABLE;
 #if defined(STM32F0) || defined(GD32F150)
@@ -47,18 +61,22 @@ void Port::OnOpenClock(Pin pin, bool flag)
 // 确定配置,确认用对象内部的参数进行初始化
 void Port::OpenPin()
 {
+    // 先打开时钟才能配置
+	OpenClock(_Pin, true);
+
 	GPIO_InitTypeDef gpio;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(&gpio);
 
     OnOpen(&gpio);
-    GPIO_Init((GPIO_TypeDef*)Group, &gpio);
+
+    GPIO_Init(IndexToGroup(_Pin >> 4), &gpio);
 }
 
 void Port::OnOpen(void* param)
 {
 	auto gpio	= (GPIO_InitTypeDef*)param;
-    gpio->GPIO_Pin = Mask;
+    gpio->GPIO_Pin = 1 << (_Pin & 0x0F);
 
 #ifdef STM32F1
 	// PA15/PB3/PB4 需要关闭JTAG
@@ -79,6 +97,12 @@ void Port::OnOpen(void* param)
 #endif
 }
 
+void Port::OnClose()
+{
+	// 不能随便关闭时钟，否则可能会影响别的引脚
+	OpenClock(_Pin, false);
+}
+
 void Port::RemapConfig(uint param, bool sta)
 {
 #ifdef STM32F1
@@ -92,7 +116,7 @@ void Port::AFConfig(GPIO_AF GPIO_AF) const
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
 	assert(Opened, "打开后才能配置AF");
 
-	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _PIN(_Pin), GPIO_AF);
+	GPIO_PinAFConfig(IndexToGroup(_Pin >> 4), _PIN(_Pin), GPIO_AF);
 #endif
 }
 
@@ -100,7 +124,9 @@ bool Port::Read() const
 {
 	if(_Pin == P0) return false;
 
-	return GPIO_ReadInputData((GPIO_TypeDef*)Group) & Mask;
+	auto gp	= IndexToGroup(_Pin >> 4);
+	ushort ms	= 1 << (_Pin & 0x0F);
+	return GPIO_ReadInputData(gp) & ms;
 }
 #endif
 
@@ -144,8 +170,10 @@ bool OutputPort::Read() const
 {
 	if(Empty()) return false;
 
+	auto gp	= IndexToGroup(_Pin >> 4);
+	ushort ms	= 1 << (_Pin & 0x0F);
 	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadOutputData((GPIO_TypeDef*)Group) & Mask;
+	bool rs = GPIO_ReadOutputData(gp) & ms;
 	return rs ^ Invert;
 }
 
@@ -160,10 +188,12 @@ void OutputPort::Write(bool value) const
 {
 	if(Empty()) return;
 
+	auto gi	= IndexToGroup(_Pin >> 4);
+	ushort ms	= 1 << (_Pin & 0x0F);
     if(value ^ Invert)
-        GPIO_SetBits((GPIO_TypeDef*)Group, Mask);
+        GPIO_SetBits(gi, ms);
     else
-        GPIO_ResetBits((GPIO_TypeDef*)Group, Mask);
+        GPIO_ResetBits(gi, ms);
 }
 
 // 设置端口状态
@@ -349,7 +379,7 @@ InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 
 void InputPort::ClosePin()
 {
-	int idx = Bits2Index(Mask);
+	int idx = Bits2Index(1 << (_Pin & 0x0F));
 
     auto st = &States[idx];
 	if(st->Port == this)
@@ -376,7 +406,7 @@ bool InputPort::OnRegister()
     }
 
 	byte gi = _Pin >> 4;
-	int idx = Bits2Index(Mask);
+	int idx = Bits2Index(1 << (_Pin & 0x0F));
 	auto st = &States[idx];
 
 	auto port	= st->Port;
@@ -393,7 +423,7 @@ bool InputPort::OnRegister()
     st->Port		= this;
 
 	//byte gi = _Pin >> 4;
-	//int idx = Bits2Index(Mask);
+	//int idx = Bits2Index(1 << (_Pin & 0x0F));
 
     // 打开时钟，选择端口作为端口EXTI时钟线
 #if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
