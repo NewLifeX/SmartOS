@@ -96,8 +96,8 @@ void Dimmer::Init(Pwm* pwm, int channels)
 	{
 		_Pwm = pwm;
 		pwm->SetFrequency(100);
-		_Pwm->Polarity = false;
-		_Pwm->IdleState = false;
+		_Pwm->Polarity = true;
+		_Pwm->IdleState = true;
 
 		for (int i = 0; i < channels; i++)
 		{
