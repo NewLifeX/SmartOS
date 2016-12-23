@@ -132,6 +132,9 @@ void operator delete[](void* p) noexcept
 	}
 }
 
+void operator delete(void* p, uint size) noexcept	{ operator delete(p); }
+void operator delete[](void* p, uint size) noexcept	{ operator delete[](p); }
+
 #if !defined(TINY) && defined(STM32F0)
 	#if defined(__CC_ARM)
 		#pragma arm section code

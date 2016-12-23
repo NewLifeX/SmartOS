@@ -478,7 +478,7 @@ bool Enc28j60::PhyWrite(byte addr, ushort data)
 
     // 等待 PHY 写完成
 	int times = 100;
-    while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0);
+    while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0) { }
 
 	return times > 0;
 }
