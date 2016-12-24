@@ -22,7 +22,7 @@
 TTime::TTime()
 {
 	Seconds	= 0;
-	Ticks	= 0;
+	//Ticks	= 0;
 #if defined(STM32F0) || defined(GD32F150)
 	Index	= 13;
 #else
@@ -111,11 +111,12 @@ void TTime::Delay(uint us) const
 
 	// 无需关闭中断，也能实现延迟
 	UInt64 ms	= Current();
-	uint ticks	= CurrentTicks() + us * Ticks;
-	if(ticks >= (1000 - 1) * Ticks)
+	uint ticks	= CurrentTicks() + UsToTicks(us);
+	uint max	= UsToTicks(1000 - 1);
+	if(ticks >= max)
 	{
 		ms++;
-		ticks -= (1000 - 1) * Ticks;
+		ticks -= max;
 	}
 
     while(true)
@@ -188,17 +189,17 @@ TimeCost::TimeCost()
 // 逝去的时间，微秒
 int TimeCost::Elapsed()
 {
-	short ts	= Time.CurrentTicks() - StartTicks;
-	int ms		= (int)(Time.Current() - Start);
+	int ts	= (int)(Time.CurrentTicks() - StartTicks);
+	int ms	= (int)(Time.Current() - Start);
 
-	short us	= ts / Time.Ticks;
-	if(ts < 0 && ms > 0)
-	{
-		ms--;
-		us	+= 1000;
-	}
+	// 有可能滴答部分不是完整的一圈
+	if(ts > 0) return ms * 1000 + Time.TicksToUs(ts);
 
-	return ms * 1000 + us;
+	// 如果毫秒部分也没有，那么可能是微小错误偏差
+	if(ms <= 0) return 0;
+
+	// 如果滴答是负数，则干脆减去
+	return ms * 1000 - Time.TicksToUs(-ts);
 }
 
 void TimeCost::Show(cstring format)
