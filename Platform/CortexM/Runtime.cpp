@@ -1,6 +1,5 @@
-﻿#include "Sys.h"
-
-#include "Interrupt.h"
+﻿#include "Kernel\Sys.h"
+#include "Kernel\Interrupt.h"
 
 #include <stdlib.h>
 
