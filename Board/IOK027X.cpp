@@ -13,8 +13,8 @@ IOK027X* IOK027X::Current = nullptr;
 
 IOK027X::IOK027X()
 {
-	LedPins.Add(PA0);
 	LedPins.Add(PA4);
+	LedPins.Add(PA5);
 
 	LedsShow = 2;
 	LedsTaskId = 0;
