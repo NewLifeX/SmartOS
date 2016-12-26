@@ -89,7 +89,7 @@ void TinyClient::Close()
 /******************************** 收发中心 ********************************/
 bool TinyClient::Send(TinyMessage& msg)
 {
-	assert(this, "令牌客户端未初始化");
+	//assert(this, "令牌客户端未初始化");
 	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
@@ -103,7 +103,7 @@ bool TinyClient::Send(TinyMessage& msg)
 
 bool TinyClient::Reply(TinyMessage& msg)
 {
-	assert(this, "令牌客户端未初始化");
+	//assert(this, "令牌客户端未初始化");
 	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里

@@ -13,6 +13,7 @@
 #define SYSTICK_ENABLE         SysTick_CTRL_ENABLE_Msk	//     0		/* Config-Bit to start or stop the SysTick Timer */
 
 static TIM_TypeDef* const g_Timers[] = TIMS;
+static uint	gTicks;
 
 void TTime::Init()
 {
@@ -23,13 +24,13 @@ void TTime::Init()
 	// 96M时，每秒96M/8=12M个滴答，1us=12滴答
 	// 120M时，每秒120M/8=15M个滴答，1us=15滴答
 	// 168M时，每秒168M/8=21M个滴答，1us=21滴答
-	Ticks = clk / 1000000;	// 每微秒的时钟滴答数
+	gTicks = clk / 1000000;	// 每微秒的时钟滴答数
 
 	//uint ticks = SYSTICK_MAXCOUNT;
 	// ticks为每次中断的嘀嗒数，也就是重载值
 	//SysTick_Config(ticks);
 	// 上面的函数会打开中断
-	uint ticks = Ticks * 1000;	// 1000微秒，便于跟毫秒叠加
+	uint ticks = gTicks * 1000;	// 1000微秒，便于跟毫秒叠加
 	SysTick->LOAD  = ticks - 1;
 	SysTick->VAL   = 0;
 	SysTick->CTRL  = SysTick_CTRL_ENABLE_Msk;
@@ -132,5 +133,8 @@ UInt64 TTime::Current() const
 #endif
 	return Milliseconds + cnt;
 }
+
+uint TTime::TicksToUs(uint ticks) const	{ return !ticks ? 0 : (ticks / gTicks); }
+uint TTime::UsToTicks(uint us) const	{ return !us ? 0 : (us * gTicks); }
 
 #pragma arm section code

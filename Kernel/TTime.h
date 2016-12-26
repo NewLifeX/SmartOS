@@ -15,7 +15,7 @@ public:
     uint	Seconds;		// 全局秒数，系统启动后总秒数。累加
 	UInt64	Milliseconds;	// 全局毫秒数，系统启动后总毫秒（1000ms整部分）。累加
     uint	BaseSeconds;	// 基准秒数。系统启动时相对于1970年的秒数，时间调节，加上Seconds得到当前时间Now()
-    byte	Ticks;			// 每微秒的时钟滴答数
+    //byte	Ticks;			// 每微秒的时钟滴答数
 	byte	Index;			// 定时器
 #if ! (defined(STM32F0) || defined(GD32F150))
 	byte	Div;			// 分频系数。最大分频64k，无法让大于64M主频的芯片分配得到1k时钟
@@ -37,8 +37,10 @@ public:
 	void SetTime(UInt64 seconds);	// 设置时间
 
 	void Sleep(uint ms, bool* running = nullptr) const;
-	// 微秒级延迟
-    void Delay(uint us) const;
+    void Delay(uint us) const;	// 微秒级延迟
+
+	uint TicksToUs(uint ticks) const;
+	uint UsToTicks(uint us) const;
 };
 
 extern const TTime Time;
@@ -63,7 +65,7 @@ class TimeCost
 {
 public:
 	UInt64	Start;		// 开始时间，毫秒
-	ushort	StartTicks;	// 开始滴答
+	uint	StartTicks;	// 开始滴答
 
 	TimeCost();
 

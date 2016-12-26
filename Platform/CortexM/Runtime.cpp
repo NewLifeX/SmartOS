@@ -1,6 +1,5 @@
-﻿#include "Sys.h"
-
-#include "Interrupt.h"
+﻿#include "Kernel\Sys.h"
+#include "Kernel\Interrupt.h"
 
 #include <stdlib.h>
 
@@ -131,6 +130,9 @@ void operator delete[](void* p) noexcept
 		free_(p);
 	}
 }
+
+void operator delete(void* p, uint size) noexcept	{ operator delete(p); }
+void operator delete[](void* p, uint size) noexcept	{ operator delete[](p); }
 
 #if !defined(TINY) && defined(STM32F0)
 	#if defined(__CC_ARM)
