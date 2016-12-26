@@ -442,6 +442,9 @@ void InputPort::OnClose()
 	ClosePin();
 }
 
+// 输入轮询时间间隔。默认100ms，允许外部修改
+uint InputPort_Polling	= 100;
+
 bool InputPort::UsePress()
 {
 	assert(_Pin != P0, "输入注册必须先设置引脚");
@@ -452,9 +455,9 @@ bool InputPort::UsePress()
 	{
 		// 如果硬件中断注册失败，则采用10ms定时读取
 		if(_IRQ)
-			_task	= Sys.AddTask(InputTask, this, -1, 1, "输入事件");
+			_task	= Sys.AddTask(InputTask, this, -1, -1, "输入事件");
 		else
-			_task	= Sys.AddTask(InputNoIRQTask, this, 10, 10, "输入轮询");
+			_task	= Sys.AddTask(InputNoIRQTask, this, InputPort_Polling, InputPort_Polling, "输入轮询");
 	}
 
 	return true;
