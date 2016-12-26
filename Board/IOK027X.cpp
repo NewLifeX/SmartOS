@@ -289,14 +289,14 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 static bool ledstat2 = false;
 void IOK027X::Restore()
 {
-	if (Client) Client->Reset("按键重置");
-
 	for (int i = 0; i < 10; i++)
 	{
 		Leds[1]->Write(ledstat2);
 		ledstat2 = !ledstat2;
 		Sys.Sleep(300);
 	}
+	if (Client) Client->Reset("按键重置");
+	
 }
 
 void IOK027X::FlushLed()
