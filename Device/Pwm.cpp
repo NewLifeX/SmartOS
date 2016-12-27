@@ -12,7 +12,7 @@ Pwm::Pwm(TIMER index) : Timer(index)
 		Enabled[i]	= false;
 	}
 
-	Remap		= 0;
+	//Remap		= 0;
 }
 
 Pwm::~Pwm()

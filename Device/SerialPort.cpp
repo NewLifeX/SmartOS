@@ -26,8 +26,11 @@ void SerialPort::Init()
 	RS485	= nullptr;
 	Error	= 0;
 
-	Remap	= false;
+	Remap	= 0;
 	MinSize	= 1;
+
+	Pins[0]		= Pins[1]	= P0;
+	Ports[0]	= Ports[1]	= nullptr;
 
 	_taskidRx	= 0;
 

@@ -20,21 +20,17 @@ private:
 	int		_baudRate;
 
     void*	_port;
-	AlternatePort	_tx;
-#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-	AlternatePort	_rx;
-#else
-	InputPort	_rx;
-#endif
 
 	void Init();
 
 public:
 	char 		Name[5];	// 名称。COMxx，后面1字节\0表示结束
-    bool		Remap;		// 是否重映射
+    byte		Remap;		// 重映射组
 	OutputPort* RS485;		// RS485使能引脚
 	int 		Error;		// 错误计数
 	int			ByteTime;	// 字节间隔，最小1ms
+	Pin			Pins[2];	// Tx/Rx
+	Port*		Ports[2];	// Tx/Rx
 
 	// 收发缓冲区
 	Queue	Tx;
@@ -55,14 +51,11 @@ public:
 
 	void SetBaudRate(int baudRate = SERIAL_BAUDRATE);
 
-    void GetPins(Pin* txPin, Pin* rxPin);
-
     virtual void Register(TransportHandler handler, void* param = nullptr);
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-	//virtual String ToString() const { return String(Name); }
 	virtual String& ToStr(String& str) const { return str + Name; }
 
 	void OnTxHandler();

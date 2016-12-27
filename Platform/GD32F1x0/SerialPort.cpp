@@ -10,6 +10,8 @@
 
 const byte uart_irqs[] = UART_IRQs;
 
+static void GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin);
+
 void SerialPort::OnInit()
 {
     _parity		= USART_Parity_No;
@@ -22,6 +24,8 @@ bool SerialPort::OnSet()
 	USART_TypeDef* const g_Uart_Ports[] = UARTS;
 	assert_param(_index < ArrayLength(g_Uart_Ports));
 
+	GetPins(_index, Remap, &Pins[0], &Pins[1]);
+
     auto sp	= g_Uart_Ports[_index];
 	_port	= sp;
 
@@ -32,8 +36,9 @@ bool SerialPort::OnSet()
 // 打开串口
 void SerialPort::OnOpen2()
 {
-    Pin rx, tx;
-    GetPins(&tx, &rx);
+	// 串口引脚初始化
+    if(!Ports[0]) Ports[0]	= new Outport(Pins[0]);
+    if(!Ports[1]) Ports[1]	= new AlternatePort(Pins[1]);
 
 	//串口引脚初始化
     _tx.Set(tx).Open();
@@ -224,7 +229,7 @@ void SerialPort::OnHandler(ushort num, void* param)
 #pragma arm section code
 
 // 获取引脚
-void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
+void GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin)
 {
     *rxPin = *txPin = P0;
 
@@ -232,10 +237,10 @@ void SerialPort::GetPins(Pin* txPin, Pin* rxPin)
 	const Pin* p = g_Uart_Pins;
 #ifdef STM32F1
 	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
-	if(Remap) p = g_Uart_Pins_Map;
+	if(remap) p = g_Uart_Pins_Map;
 #endif
 
-	int n = _index << 2;
+	int n = index << 2;
 	*txPin  = p[n];
 	*rxPin  = p[n + 1];
 }

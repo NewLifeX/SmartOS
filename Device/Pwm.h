@@ -12,7 +12,7 @@ public:
 	ushort	Pulse[4];	// 每个通道的占空比
 	bool	Polarity	= true;	// 极性。默认true高电平
 	bool	IdleState	= true;	// 空闲状态。
-    uint	Remap;		// 重映射。0不映射，其它为实际映射数字
+    //uint	Remap;		// 重映射。0不映射，其它为实际映射数字
 	AlternatePort*	Ports[4];
 	byte	Enabled[4];	// 每个通道是否启用
 
