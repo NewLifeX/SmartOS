@@ -1,6 +1,7 @@
 ﻿#ifndef __BUTTON_GRAY_LEVEL_H__
 #define __BUTTON_GRAY_LEVEL_H__
 
+#include "Config.h"
 #include "Device\Port.h"
 #include "Device\Pwm.h"
 #include "Message\DataStore.h"
@@ -13,14 +14,25 @@ struct ButtonPin
 	bool Invert;
 	byte PwmIndex;
 };
+// 配置
+class Button_GrayLevelConfig : public ConfigBase
+{
+public:
+	byte	OnGrayLevel; // 开灯灰度
+	byte	OffGrayLevel;// 关灯灰度
+	byte	TagEnd;
+	Button_GrayLevelConfig();
+};
 
 class Button_GrayLevel;
-using TAction	= Delegate<Button_GrayLevel&>::TAction;
+using TAction = Delegate<Button_GrayLevel&>::TAction;
 
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
 //__packed class Button
 // 干脆把_Value挪到最后解决问题
+static   Button_GrayLevelConfig*	ButtonConfig = nullptr;
+
 class Button_GrayLevel : public ByteDataPort
 {
 public:
@@ -40,10 +52,10 @@ public:
 public:
 	bool EnableDelayClose;			// 标识是否启用延时关闭功能,默认启用
 	Delegate<Button_GrayLevel&>	Press;
-	
+
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
-
+	static Button_GrayLevelConfig InitGrayConfig();
 	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
 	// led 驱动器设置
 	void Set(Pwm* drive, byte pulseIndex);
@@ -69,12 +81,9 @@ private:
 	void OnPress(InputPort& port, bool down);
 
 public:
-	static byte OnGrayLevel;			// 开灯时 led 灰度
-	static byte OffGrayLevel;			// 关灯时 led 灰度
-
 	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, TAction onpress, const ButtonPin* pins, byte* level, const byte* state);
 	static void InitZero(Pin zero, int us = 2300);
-	static bool UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
+	static void UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 
 	void GrayLevelDown();
 	void GrayLevelUp();

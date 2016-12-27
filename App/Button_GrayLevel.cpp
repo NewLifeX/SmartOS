@@ -3,7 +3,6 @@
 #include "Device\Port.h"
 
 #include "Device\Timer.h"
-
 #include "Button_GrayLevel.h"
 #include "Device\WatchDog.h"
 
@@ -17,9 +16,19 @@
 #define btn_printf(format, ...)
 #endif
 
+/******************************** 调光配置 ********************************/
+Button_GrayLevelConfig::Button_GrayLevelConfig()
+{
+	_Name = "Gray";
+	_Start = &OnGrayLevel;
+	_End = &TagEnd;
+	Init();
+
+	OnGrayLevel = 0xff;
+	OffGrayLevel = 20;
+}
+
 InputPort* Button_GrayLevel::ACZero = nullptr;
-byte Button_GrayLevel::OnGrayLevel = 0xFF;			// 开灯时 led 灰度
-byte Button_GrayLevel::OffGrayLevel = 0x00;			// 关灯时 led 灰度
 int Button_GrayLevel::ACZeroAdjTime = 2300;
 
 Button_GrayLevel::Button_GrayLevel() : ByteDataPort()
@@ -67,8 +76,8 @@ void Button_GrayLevel::Set(Pwm* drive, byte pulseIndex)
 {
 	if (drive && pulseIndex < 4)
 	{
-		_Pwm	= drive;
-		_Channel	= pulseIndex;
+		_Pwm = drive;
+		_Channel = pulseIndex;
 
 		// 刷新输出
 		RenewGrayLevel();
@@ -77,27 +86,32 @@ void Button_GrayLevel::Set(Pwm* drive, byte pulseIndex)
 
 void Button_GrayLevel::RenewGrayLevel()
 {
+	auto on = ButtonConfig->OnGrayLevel;
+	auto off = ButtonConfig->OffGrayLevel;
+
 	if (_Pwm)
 	{
-		_Pwm->Pulse[_Channel] = _Value ? (0xFF - OnGrayLevel) : (0xFF - OffGrayLevel);
+		_Pwm->Pulse[_Channel] = _Value ? (0xFF - on) : (0xFF - off);
 		_Pwm->Flush();
 	}
 }
 
 void Button_GrayLevel::GrayLevelUp()
 {
+	auto on = ButtonConfig->OnGrayLevel;
 	if (_Pwm)
 	{
-		_Pwm->Pulse[_Channel] = (0xFF - OnGrayLevel);
+		_Pwm->Pulse[_Channel] = (0xFF - on);
 		_Pwm->Flush();
 	}
 }
 
 void Button_GrayLevel::GrayLevelDown()
 {
+	auto off = ButtonConfig->OffGrayLevel;
 	if (_Pwm)
 	{
-		_Pwm->Pulse[_Channel] = (0xFF - OffGrayLevel);
+		_Pwm->Pulse[_Channel] = (0xFF - off);
 		_Pwm->Flush();
 	}
 }
@@ -265,9 +279,9 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 	// 配置PWM来源
 	static Pwm pwm(tim);
 	// 设置分频 尽量不要改 Prescaler * Period 就是 Pwm 周期
-	pwm.Prescaler	= 0x04;		// 随便改  只要肉眼看不到都没问题
-	pwm.Period		= 0xFF;		// 对应灰度调节范围
-	pwm.Polarity	= true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
+	pwm.Prescaler = 0x04;		// 随便改  只要肉眼看不到都没问题
+	pwm.Period = 0xFF;		// 对应灰度调节范围
+	pwm.Polarity = true;		// 极性。默认true高电平。如有必要，将来根据Led引脚自动检测初始状态
 
 	// 配置 LED 引脚
 	static AlternatePort Leds[4];
@@ -291,9 +305,6 @@ void Button_GrayLevel::Init(TIMER tim, byte count, Button_GrayLevel* btns, TActi
 		level[0] = 250;
 		level[1] = 20;
 	}
-	// 使用 Data 记录的灰度
-	OnGrayLevel		= level[0];
-	OffGrayLevel	= level[1];
 
 	// 配置 Button 主体
 	for (int i = 0; i < count; i++)
@@ -354,24 +365,26 @@ void Button_GrayLevel::InitZero(Pin zero, int us)
 	Sys.AddTask(ACZeroReset, nullptr, 60000, 60000, "定时过零");
 }
 
-bool Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte count)
+Button_GrayLevelConfig Button_GrayLevel::InitGrayConfig()
 {
-	bool rs = false;
-	if (OnGrayLevel != level[0])
+	static Button_GrayLevelConfig	cfg;
+	if (!ButtonConfig)
 	{
-		OnGrayLevel = level[0];
-		rs = true;
+		ButtonConfig = &cfg;
+		ButtonConfig->Load();
+
+		debug_printf("开关灰度%d,%d\r\n", cfg.OnGrayLevel, cfg.OffGrayLevel);
 	}
-	if (OffGrayLevel != level[1])
-	{
-		OffGrayLevel = level[1];
-		rs = true;
-	}
-	if (rs)
-	{
-		debug_printf("指示灯灰度调整\r\n");
-		for (int i = 0; i < count; i++)
-			btns[i].RenewGrayLevel();
-	}
-	return rs;
+	return cfg;
+}
+
+void Button_GrayLevel::UpdateLevel(byte* level, Button_GrayLevel* btns, byte count)
+{
+	ButtonConfig->OnGrayLevel = level[0];
+	ButtonConfig->OffGrayLevel = level[1];
+	ButtonConfig->Save();
+
+	debug_printf("指示灯灰度调整\r\n");
+	for (int i = 0; i < count; i++)
+		btns[i].RenewGrayLevel();
 }
