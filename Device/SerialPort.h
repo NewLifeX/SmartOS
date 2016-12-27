@@ -65,6 +65,9 @@ public:
 	//virtual String ToString() const { return String(Name); }
 	virtual String& ToStr(String& str) const { return str + Name; }
 
+	void OnTxHandler();
+	void OnRxHandler();
+
 	static SerialPort* GetMessagePort();
 
 #ifdef DEBUG
@@ -80,8 +83,6 @@ protected:
 
 private:
 	static void OnHandler(ushort num, void* param);
-	void OnTxHandler();
-	void OnRxHandler();
 	void Set485(bool flag);
 
 	void*	_task;
