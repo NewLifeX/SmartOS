@@ -223,7 +223,7 @@ TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushor
 
 void IOK027X::InitNet(Pin power)
 {
-	Host = Create8266(PB2);
+	Host = Create8266(power);
 }
 
 static void OnAlarm(AlarmItem& item)
