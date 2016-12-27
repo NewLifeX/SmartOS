@@ -4,7 +4,6 @@
 
 #include "Device\WatchDog.h"
 #include "Config.h"
-
 #include "Drivers\Esp8266\Esp8266.h"
 #include "TokenNet\TokenController.h"
 #include "Kernel\Task.h"
@@ -90,10 +89,9 @@ void IOK027X::InitLeds()
 	}
 }
 
-ISocketHost* IOK027X::Create8266()
+ISocketHost* IOK027X::Create8266(Pin power)
 {
-	auto host = new Esp8266(COM2, PB2, PA1);
-
+	auto host = new Esp8266(COM2, power, PA1);
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
 	//if (!join) host->Mode = SocketMode::AP;
@@ -223,9 +221,9 @@ TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushor
 	return ctrl;
 }
 
-void IOK027X::InitNet()
+void IOK027X::InitNet(Pin power)
 {
-	Host = Create8266();
+	Host = Create8266(PB2);
 }
 
 static void OnAlarm(AlarmItem& item)
@@ -271,6 +269,7 @@ static void UnionPress(InputPort& port, bool down)
 	client->ReportAsync(port.Index + 1, 1);
 
 }
+
 void IOK027X::Union(Pin pin1, Pin pin2)
 {
 	Pin p[] = { pin1,pin2 };
@@ -296,7 +295,7 @@ void IOK027X::Restore()
 		Sys.Sleep(300);
 	}
 	if (Client) Client->Reset("按键重置");
-	
+
 }
 
 void IOK027X::FlushLed()

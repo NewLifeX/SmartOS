@@ -6,6 +6,7 @@
 
 #include "TokenNet\TokenClient.h"
 #include "App\Alarm.h"
+#include "APP\Button_GrayLevel.h"
 #include "Device\RTC.h"
 
 // WIFI触摸开关 123位
@@ -34,13 +35,13 @@ public:
 
 	byte LedStat(byte showmode);
 
-	ISocketHost* Create8266();
+	ISocketHost* Create8266(Pin power=PB2);
 
 	void InitClient();
-	void InitNet();
+	void InitNet(Pin power=PB2);
 	void InitAlarm();
 	//双联开关
-	void Union(Pin pin1,Pin pin2);
+	void Union(Pin pin1, Pin pin2);
 	void Restore();
 	void OnLongPress(InputPort* port, bool down);
 
