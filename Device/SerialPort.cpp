@@ -16,8 +16,14 @@ SerialPort::SerialPort(COM index, int baudRate)
 // 析构时自动关闭
 SerialPort::~SerialPort()
 {
-	if(RS485) delete RS485;
+	delete RS485;
 	RS485 = nullptr;
+
+	delete Ports[0];
+	Ports[0] = nullptr;
+
+	delete Ports[1];
+	Ports[1] = nullptr;
 }
 
 void SerialPort::Init()
@@ -70,12 +76,10 @@ void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
 // 打开串口
 bool SerialPort::OnOpen()
 {
-    debug_printf("Serial%d Open(%d, %d, %d, %d)\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits);
+    debug_printf("Serial%d Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]));
 
 	// 清空缓冲区
-//#if !(defined(STM32F0) || defined(GD32F150))
 	Tx.Clear();
-//#endif
 	Rx.SetCapacity(0x80);
 	Rx.Clear();
 

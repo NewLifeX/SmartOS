@@ -35,6 +35,9 @@ public:
 	void*	State;		// 用户状态数据。常用于批量端口操作时记录索引
 
 	Port();
+#ifndef TINY
+	virtual ~Port();
+#endif
 
     Port& Set(Pin pin);	// 设置引脚
 	bool Empty() const;
@@ -57,10 +60,6 @@ public:
 	virtual String& ToStr(String& str) const;
 
 protected:
-	//Port() = default;
-#ifndef TINY
-	virtual ~Port();
-#endif
 
     // 配置过程，由Open调用，最后GPIO_Init
     virtual void OnOpen(void* param);
