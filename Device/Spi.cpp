@@ -26,6 +26,7 @@ void Spi::Init()
 	_index	= 0xFF;
     Retry	= 200;
 	Opened	= false;
+	Pins[0]	= Pins[1]	= Pins[2]	= Pins[3]	= P0;
 }
 
 void Spi::Init(SPI spi, uint speedHz, bool useNss)

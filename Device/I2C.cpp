@@ -111,7 +111,7 @@ bool I2C::SendSubAddr(int addr)
 }
 
 // 新会话向指定地址写入多个字节
-bool I2C::Write(int addr, const Buffer& bs)
+bool __attribute__((weak)) I2C::Write(int addr, const Buffer& bs)
 {
 	/*debug_printf("I2C::Write addr=0x%02X ", addr);
 	bs.Show(true);*/
@@ -135,7 +135,7 @@ bool I2C::Write(int addr, const Buffer& bs)
 }
 
 // 新会话从指定地址读取多个字节
-uint I2C::Read(int addr, Buffer& bs)
+uint __attribute__((weak)) I2C::Read(int addr, Buffer& bs)
 {
 	Open();
 
@@ -203,7 +203,7 @@ HardI2C::HardI2C(byte index, uint speedHz) : I2C()
 
 void HardI2C::Init(byte index, uint speedHz)
 {
-	_index = index;
+	_index	= index;
 	Speed	= speedHz;
 
 	OnInit();
