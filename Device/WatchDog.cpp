@@ -70,7 +70,7 @@ void WatchDog::Start(uint ms, uint msFeed)
     static WatchDog dog;
 	static uint		tid = 0;
 
-	if(ms > 0x0FFF)
+	if(ms > 20000)
 		dog.ConfigMax();
 	else
 		dog.Config(ms);
