@@ -433,7 +433,7 @@ void TaskScheduler::ShowStatus()
 	auto now	= Sys.Ms();
 
 	debug_printf("Task::ShowStatus [%d]", host->Times);
-	debug_printf(" 负载 %d/100", 100 - (int)(TotalSleep * 100 / now));
+	debug_printf(" 负载 %d/10000", 10000 - (int)(TotalSleep * 10000 / now));
 	debug_printf(" 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
