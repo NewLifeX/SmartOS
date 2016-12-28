@@ -2,6 +2,7 @@
 
 #include "Kernel\Task.h"
 
+#include "Device\Power.h"
 #include "Device\WatchDog.h"
 #include "Config.h"
 
@@ -50,6 +51,9 @@ void IOK026X::Init(ushort code, cstring name, COM message)
 #else
 	WatchDog::Start();
 #endif
+
+	// 系统休眠时自动进入低功耗
+	Power::AttachTimeSleep();
 
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();

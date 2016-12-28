@@ -46,6 +46,9 @@ void PA0903::Init(ushort code, cstring name, COM message)
 	Sys.ShowInfo();
 #endif
 
+	// 系统休眠时自动进入低功耗
+	Power::AttachTimeSleep();
+
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
 }

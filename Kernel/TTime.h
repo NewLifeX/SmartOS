@@ -24,7 +24,7 @@ public:
 	Func OnInit;
 	Func OnLoad;
 	Func OnSave;
-	typedef int (*FuncInt)(int);
+	typedef void (*FuncInt)(int);
 	FuncInt OnSleep;
 
     TTime();
@@ -36,8 +36,8 @@ public:
 	UInt64 Current() const; 		// 当前毫秒数
 	void SetTime(UInt64 seconds);	// 设置时间
 
-	void Sleep(uint ms, bool* running = nullptr) const;
-    void Delay(uint us) const;	// 微秒级延迟
+	void Sleep(int ms, bool* running = nullptr) const;
+    void Delay(int us) const;	// 微秒级延迟
 
 	uint TicksToUs(uint ticks) const;
 	uint UsToTicks(uint us) const;

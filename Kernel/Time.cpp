@@ -64,41 +64,43 @@ void TTime::SetTime(UInt64 sec)
 	#endif
 #endif
 
-void TTime::Sleep(uint ms, bool* running) const
+void TTime::Sleep(int ms, bool* running) const
 {
     // 睡眠时间太短
-    if(!ms) return;
+    if(ms <= 0) return;
+
+	// 结束时间
+	Int64 end	= Current() + ms;
 
 	// 较大的睡眠时间直接让CPU停下来
 	if(OnSleep && ms >= 10)
 	{
-		uint ms2 = ms;
-		if(OnSleep(ms2) == 0)
+		while(ms >= 10)
 		{
-			// CPU睡眠是秒级，还有剩余量
-			if(ms >= ms2)
-				ms -= ms2;
-			else
-				ms = 0;
+			OnSleep(ms);
+
+			// 判断是否需要继续
+			if(running != nullptr && !*running) break;
+
+			// 重新计算剩下的时间
+			ms	= (int)(end - Current());
 		}
 	}
     // 睡眠时间太短
     if(!ms || (running && !*running)) return;
 
-	uint me	= Current() + ms;
-
+	// 空转
     while(true)
 	{
-		if(Current() >= me) break;
-
+		if(Current() >= end) break;
 		if(running != nullptr && !*running) break;
 	}
 }
 
-void TTime::Delay(uint us) const
+void TTime::Delay(int us) const
 {
     // 睡眠时间太短
-    if(!us) return;
+    if(us <= 0) return;
 
 	// 较大的时间，按毫秒休眠
 	if(us >= 1000)

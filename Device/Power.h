@@ -13,17 +13,20 @@ public:
 	virtual void ChangePower(int level);
 
 	// 低功耗相关
-    static void Stop(uint msTime = 0);
-	static void DeepSleep(uint msTime = 0);
-	static void Standby(uint msTime = 0);
+    static void Sleep(int msTime = 0);
+	static void Stop(int msTime = 0);
+	static void Standby(int msTime = 0);
 
 	// 各模块向系统注册低功耗句柄，供系统进入低功耗前调用
 	static void AddPower(Power* power);
+	
+	// 附加到系统时钟，睡眠时进入低功耗
+	static bool AttachTimeSleep();
 
 private:
-	static void OnStop();
-	static void OnDeepSleep();
-	static void OnStandby();
+	static void OnSleep(int msTime);
+	static void OnStop(int msTime);
+	static void OnStandby(int msTime);
 };
 
 #endif

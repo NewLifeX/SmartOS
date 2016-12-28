@@ -19,7 +19,7 @@ HardRTC* HardRTC::Instance()
 
 void FuncLoadTime() { HardRTC::Instance()->LoadTime(); }
 void FuncSaveTime() { HardRTC::Instance()->SaveTime(); }
-int FuncSleep(int ms) { return HardRTC::Instance()->Sleep(ms); }
+void FuncSleep(int ms) { HardRTC::Instance()->Sleep(ms); }
 
 void HardRTC::Start(bool lowpower, bool external)
 {
