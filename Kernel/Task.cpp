@@ -182,6 +182,7 @@ TaskScheduler::TaskScheduler(cstring name)
 	Times	= 0;
 	Cost	= 0;
 	MaxCost	= 0;
+	TotalSleep	= 0;
 
 	_SkipSleep	= false;
 }
@@ -376,6 +377,10 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		Sleeping = true;
 		Time.Sleep(min, &Sleeping);
 		Sleeping = false;
+		
+		// 累加睡眠时间
+		Int64 ms	= (Int64)Sys.Ms() - (Int64)now;
+		TotalSleep	+= ms;
 	}
 }
 
@@ -425,13 +430,14 @@ void TaskScheduler::ShowStatus()
 {
 	//auto host = (TaskScheduler*)param;
 	auto host	= this;
+	auto now	= Sys.Ms();
 
-	debug_printf("Task::ShowStatus [%d] 平均 %dus 最大 %dus 当前 ", host->Times, host->Cost, host->MaxCost);
+	debug_printf("Task::ShowStatus [%d]", host->Times);
+	debug_printf(" 负载 %d/100", 100 - (int)(TotalSleep * 100 / now));
+	debug_printf(" 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
-	//DateTime dt(Sys.Ms() / 1000);
-	//dt.Show(true);
-	TimeSpan ts(Sys.Ms());
+	TimeSpan ts(now);
 	ts.Show(true);
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
