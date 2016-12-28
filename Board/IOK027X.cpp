@@ -275,6 +275,8 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 	Pin p[] = { pin1,pin2 };
 	for (size_t i = 0; i < 2; i++)
 	{
+		if(p[i]==P0) continue;
+		
 		auto port = new InputPort(p[i]);
 		port->Invert = true;
 		port->ShakeTime = 40;
@@ -286,6 +288,7 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 }
 
 static bool ledstat2 = false;
+
 void IOK027X::Restore()
 {
 	for (int i = 0; i < 10; i++)
