@@ -1,7 +1,7 @@
 ﻿#ifndef __TokenConfig_H__
 #define __TokenConfig_H__
 
-#include "Config.h"
+#include "..\Config.h"
 #include "Net\NetUri.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置
