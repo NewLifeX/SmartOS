@@ -373,15 +373,16 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	now = Sys.Ms();	// 当前时间
 	if(/*msMax == 0xFFFFFFFF &&*/ !_SkipSleep && min != UInt64_Max && min > now)
 	{
-		min -= now;
-		Sleeping = true;
+		min	-= now;
+		Sleeping	= true;
 		Time.Sleep(min, &Sleeping);
-		Sleeping = false;
+		Sleeping	= false;
 		
 		// 累加睡眠时间
 		Int64 ms	= (Int64)Sys.Ms() - (Int64)now;
 		TotalSleep	+= ms;
 	}
+	_SkipSleep	= false;
 }
 
 uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
