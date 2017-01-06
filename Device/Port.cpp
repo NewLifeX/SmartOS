@@ -399,6 +399,9 @@ void InputPort::OnOpen(void* param)
 	bool fg	= false;
 #endif
 
+	Port::OnOpen(param);
+	OpenPin(param);
+
 	// 根据倒置情况来获取初始状态，自动判断是否倒置
 	bool rs = Port::Read();
 	if(Invert > 1)
@@ -422,9 +425,6 @@ void InputPort::OnOpen(void* param)
 #if DEBUG
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
-
-	Port::OnOpen(param);
-	OpenPin(param);
 }
 
 void InputPort::OnClose()
