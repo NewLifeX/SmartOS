@@ -331,43 +331,35 @@ void InputPort::OnPress(bool down)
 	*/
 
 	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
-	if(down && _Value == Rising) return;
-	if(!down && _Value != Rising) return;
+	//if(down && _Value == Rising) return;
+	//if(!down && _Value != Rising) return;
 
 	UInt64	now	= Sys.Ms();
 	// 这一次触发离上一次太近，算作抖动忽略掉
-	if(_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime) return;
+	//if(_Last > 0 && ShakeTime > 0 && ((Int64)now - (Int64)_Last) < ShakeTime) return;
 	_Last	= now;
 
+	// 允许两个值并存
 	_Value	= down ? Rising : Falling;
 
 	if(down)
 		_Start	= now;
 	else
-	{
-		PressTime = now - _Start;
-	}
+		PressTime	= now - _Start;
 
-	if(down)
+	/*if(down)
 	{
 		if((Mode & Rising) == 0) return;
 	}
 	else
 	{
 		if((Mode & Falling) == 0) return;
-	}
+	}*/
 
 	if(HardEvent || !_IRQ)
-	{
-		//if(Handler) Handler(this, down, Param);
 		Press(*this, down);
-	}
 	else
-	{
-		// 允许两个值并存
-		//_Value	|= down ? Rising : Falling;
 		Sys.SetTask(_task, true, 0);
-	}
 }
 
 void InputPort::InputTask(void* param)
@@ -376,7 +368,7 @@ void InputPort::InputTask(void* param)
 	byte v	= port->_Value;
 	if(!v) return;
 
-	v	&= port->Mode;
+	//v	&= port->Mode;
 	if(v & Rising)	port->Press(*port, true);
 	if(v & Falling)	port->Press(*port, false);
 }
@@ -401,8 +393,8 @@ void InputPort::OnOpen(void* param)
 		debug_printf(" 上升沿");
 	else if(Pull == DOWN)
 		debug_printf(" 下降沿");
-	if(Mode & Rising)	debug_printf(" 按下");
-	if(Mode & Falling)	debug_printf(" 弹起");
+	//if(Mode & Rising)	debug_printf(" 按下");
+	//if(Mode & Falling)	debug_printf(" 弹起");
 
 	bool fg	= false;
 #endif

@@ -54,7 +54,7 @@ void Button_GrayLevel::Set(Pin key, Pin relay, bool relayInvert)
 	Key.Set(key);
 
 	// 中断过滤模式
-	Key.Mode = InputPort::Both;
+	//Key.Mode = InputPort::Both;
 
 	Key.ShakeTime = 20;
 	//Key.Register(OnPress, this);

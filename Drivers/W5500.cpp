@@ -366,7 +366,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 		//Irq.ShakeTime	= 0;
 		Irq.Floating	= false;
 		Irq.Pull		= InputPort::UP;
-		Irq.Mode		= InputPort::Rising;
+		//Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		//Irq.Set(irq);
 		Irq.Init(irq, true);
@@ -758,7 +758,7 @@ ISocket* W5500::CreateSocket(NetType type)
 		debug_printf("没有空余的Socket可用了 !\r\n");
 		return nullptr;
 	}
-	
+
 	HardSocket* socket	= nullptr;
 	switch(type)
 	{
@@ -770,13 +770,13 @@ ISocket* W5500::CreateSocket(NetType type)
 		default:
 			break;
 	}
-	
+
 	if(socket)
 	{
 		socket->Index	= Sockets.Count();
 		Sockets.Add(socket);
 	}
-	
+
 	return socket;
 }
 

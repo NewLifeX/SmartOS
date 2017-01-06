@@ -14,7 +14,7 @@ bool IC74HC165MOR::Open()
 	if(Opened)return true;
 	
 	_PL.HardEvent = true;	// 硬中断
-	_PL.Mode = InputPort::Rising;		// 上升沿
+	//_PL.Mode = InputPort::Rising;		// 上升沿
 	//_PL.Register([](InputPort* port, bool down, void* param){ ((IC74HC165MOR*)param)->Trigger();},this);
 	_PL.Press.Bind(&IC74HC165MOR::OnTrigger, this);
 	_PL.UsePress();
@@ -23,7 +23,7 @@ bool IC74HC165MOR::Open()
 	if(!_sckHighSpeed)
 	{
 		_PL.HardEvent = true;	// 硬中断
-		_SCK.Mode = InputPort::Rising;		// 上升沿
+		//_SCK.Mode = InputPort::Rising;		// 上升沿
 		//_SCK.Register([](InputPort* port, bool down, void* param){ ((IC74HC165MOR*)param)->ReaBit();},this);
 		_SCK.Press.Bind(&IC74HC165MOR::OnReaBit, this);
 		_SCK.UsePress();

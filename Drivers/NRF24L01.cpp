@@ -246,7 +246,7 @@ void NRF24L01::Init(Spi* spi, Pin ce, Pin irq, Pin power)
 		//Irq->ShakeTime = 2;
 		Irq.Floating	= false;
 		Irq.Pull		= InputPort::UP;
-		Irq.Mode		= InputPort::Rising;
+		//Irq.Mode		= InputPort::Rising;
 		Irq.HardEvent	= true;
 		Irq.Init(irq, true);
 		//if(!Irq.Register(OnIRQ, this)) Irq.HardEvent	= false;

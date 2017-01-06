@@ -325,7 +325,7 @@ bool IsOnlyExOfInt(const InputPort* pt, int idx)
 	return true;
 }
 
-InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
+/*InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 {
 	if(invert && mode != InputPort::Both)
 	{
@@ -337,7 +337,7 @@ InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
 	}
 
 	return mode;
-}
+}*/
 
 void InputPort::ClosePin()
 {
@@ -348,7 +348,7 @@ void InputPort::ClosePin()
 	{
 		st->Port = nullptr;
 
-		SetEXIT(idx, false, GetTrigger(Mode, Invert));
+		SetEXIT(idx, false, InputPort::Both);
 		if(!IsOnlyExOfInt(this, idx))return;
 		Interrupt.Deactivate(PORT_IRQns[idx]);
 	}
@@ -397,7 +397,7 @@ bool InputPort::OnRegister()
     GPIO_EXTILineConfig(gi, idx);
 #endif
 
-	SetEXIT(idx, true, GetTrigger(Mode, Invert));
+	SetEXIT(idx, true, InputPort::Both);
 
     // 打开并设置EXTI中断为低优先级
     Interrupt.SetPriority(PORT_IRQns[idx], 1);
