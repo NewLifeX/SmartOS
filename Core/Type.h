@@ -54,4 +54,11 @@ public:
 // 数组清零，固定长度
 //#define ArrayZero(arr) memset(arr, 0, sizeof(arr))
 
+// 弱函数
+#if defined(__CC_ARM)
+	#define	WEAK	__weak
+#elif defined(__GNUC__)
+	#define	WEAK	__attribute__((weak))
+#endif
+
 #endif
