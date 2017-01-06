@@ -3,6 +3,9 @@
 
 /******************************** Port ********************************/
 
+// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
+static bool Port_Reserve(Pin pin, bool flag);
+
 // 端口基本功能
 #define REGION_Port 1
 #ifdef REGION_Port
@@ -76,10 +79,11 @@ bool Port::Open()
 	// 保护引脚
 	//Show();
 	GetType().Name().Show();
-	Reserve(_Pin, true);
+	Port_Reserve(_Pin, true);
 #endif
 
-	OpenPin();
+	Opening();
+	OnOpen();
 
 	Opened = true;
 
@@ -97,12 +101,20 @@ void Port::Close()
 	// 保护引脚
 	//Show();
 	GetType().Name().Show();
-	Reserve(_Pin, false);
+	Port_Reserve(_Pin, false);
 	debug_printf("\r\n");
 #endif
 
 	Opened = false;
 }
+
+WEAK void Port::Opening() {}
+WEAK void Port::OnOpen() {}
+
+WEAK void Port::OnClose() {}
+
+WEAK void Port::RemapConfig(uint param, bool sta) {}
+WEAK void Port::AFConfig(GPIO_AF GPIO_AF) const {}
 #endif
 
 // 端口引脚保护
@@ -112,7 +124,7 @@ void Port::Close()
 static ushort Reserved[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF};
 
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
-bool Port::Reserve(Pin pin, bool flag)
+bool Port_Reserve(Pin pin, bool flag)
 {
 	debug_printf("::");
     int port = pin >> 4, bit = 1 << (pin & 0x0F);
@@ -134,12 +146,12 @@ bool Port::Reserve(Pin pin, bool flag)
     return true;
 }
 
-// 引脚是否被保护
+/*// 引脚是否被保护
 bool Port::IsBusy(Pin pin)
 {
     int port = pin >> 4, sh = pin & 0x0F;
     return (Reserved[port] >> sh) & 1;
-}
+}*/
 #endif
 
 /******************************** OutputPort ********************************/
@@ -172,7 +184,7 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 	return *this;
 }
 
-void OutputPort::OnOpen(void* param)
+void OutputPort::OnOpen()
 {
 	TS("OutputPort::OnOpen");
 
@@ -209,9 +221,16 @@ void OutputPort::OnOpen(void* param)
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
-	Port::OnOpen(param);
+	Port::OnOpen();
 
-	OpenPin(param);
+	OpenPin();
+}
+
+WEAK bool OutputPort::ReadInput() const
+{
+	if(Empty()) return false;
+
+	return Port::Read() ^ Invert;
 }
 
 void OutputPort::Up(uint ms) const
@@ -267,12 +286,7 @@ AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
 	}
 }
 
-void AlternatePort::OnOpen(void* param)
-{
-	OutputPort::OnOpen(param);
-
-	OpenPin(param);
-}
+WEAK void AlternatePort::OpenPin() { OutputPort::OpenPin(); }
 
 #endif
 
@@ -379,7 +393,7 @@ static void InputNoIRQTask(void* param)
 	port->OnPress(port->Read());
 }
 
-void InputPort::OnOpen(void* param)
+void InputPort::OnOpen()
 {
 	TS("InputPort::OnOpen");
 
@@ -399,8 +413,8 @@ void InputPort::OnOpen(void* param)
 	bool fg	= false;
 #endif
 
-	Port::OnOpen(param);
-	OpenPin(param);
+	Port::OnOpen();
+	OpenPin();
 
 	// 根据倒置情况来获取初始状态，自动判断是否倒置
 	bool rs = Port::Read();
@@ -459,13 +473,13 @@ bool InputPort::UsePress()
 
 /******************************** AnalogInPort ********************************/
 
-void AnalogInPort::OnOpen(void* param)
+void AnalogInPort::OnOpen()
 {
 #if DEBUG
 	debug_printf("\r\n");
 #endif
 
-	Port::OnOpen(param);
+	Port::OnOpen();
 
-	OpenPin(param);
+	OpenPin();
 }

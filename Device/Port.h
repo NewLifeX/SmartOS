@@ -9,6 +9,19 @@
 	#define GPIO_MAX_SPEED 50
 #endif
 
+/******** 端口打开关闭流程 ********/
+/*
+Port::Open
+	#Port::Opening
+	OutputPort::OnOpen
+		#Port::OnOpen
+		#OutputPort::OpenPin
+
+Port::Close
+	#Port::OnClose
+*/
+
+
 /******************************** Port ********************************/
 
 // 端口基类
@@ -31,8 +44,8 @@ public:
 
     Pin		_Pin;		// 引脚
 	bool	Opened;		// 是否已经打开
-	byte    Index;		// 引脚自身次序编号，用于区分多引脚次序	
-	void*	State;		// 用户状态数据。常用于批量端口操作时记录索引
+	byte    Index;		// 引脚自身次序编号，用于区分多引脚次序
+	void*	State;		// 用户状态数据
 
 	Port();
 #ifndef TINY
@@ -47,26 +60,19 @@ public:
 	void Clear();
 
 	void AFConfig(GPIO_AF GPIO_AF) const;
-	static void RemapConfig(uint param,bool sta);
+	static void RemapConfig(uint param, bool sta);
 
     virtual bool Read() const;
-
-#if DEBUG
-	// 保护引脚，别的功能要使用时将会报错。返回是否保护成功
-	static bool Reserve(Pin pin, bool flag);
-	static bool IsBusy(Pin pin);	// 引脚是否被保护
-#endif
 
 	virtual String& ToStr(String& str) const;
 
 protected:
-
-    // 配置过程，由Open调用，最后GPIO_Init
-    virtual void OnOpen(void* param);
+    // 配置过程
+    virtual void OnOpen();
 	virtual void OnClose();
 
 private:
-	void OpenPin();
+	void Opening();
 };
 
 /******************************** OutputPort ********************************/
@@ -103,10 +109,10 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen(void* param);
+    virtual void OnOpen();
+	virtual void OpenPin();
 
 private:
-	void OpenPin(void* param);
 };
 
 /******************************** AlternatePort ********************************/
@@ -120,10 +126,10 @@ public:
     AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
-    virtual void OnOpen(void* param);
+    //virtual void OnOpen();
+	virtual void OpenPin();
 
 private:
-	void OpenPin(void* param);
 };
 
 /******************************** InputPort ********************************/
@@ -138,7 +144,6 @@ public:
         UP		= 0x01,	// 上拉电阻
         DOWN	= 0x02,	// 下拉电阻
     }PuPd;
-    //enum class Trigger	// 强类型枚举
     typedef enum
     {
         Rising	= 0x01,	// 上升沿
@@ -174,7 +179,7 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen(void* param);
+    virtual void OnOpen();
 	virtual void OnClose();
 
 private:
@@ -186,7 +191,7 @@ private:
 	static void InputTask(void* param);
 
 private:
-	void OpenPin(void* param);
+	void OpenPin();
 	void ClosePin();
 	bool OnRegister();
 };
@@ -201,10 +206,10 @@ public:
     AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:
-    virtual void OnOpen(void* param);
+    virtual void OnOpen();
 
 private:
-	void OpenPin(void* param);
+	void OpenPin();
 };
 
 /******************************** PortScope ********************************/
