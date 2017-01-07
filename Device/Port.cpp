@@ -350,7 +350,7 @@ void InputPort::OnPress(bool down)
 
 	UInt64	now	= Sys.Ms();
 	// 这一次触发离上一次太近，算作抖动忽略掉
-	//if(_Last > 0 && ShakeTime > 0 && ((Int64)now - (Int64)_Last) < ShakeTime) return;
+	if(_Last > 0 && ShakeTime > 0 && ((Int64)now - (Int64)_Last) < ShakeTime) return;
 	_Last	= now;
 
 	// 允许两个值并存
