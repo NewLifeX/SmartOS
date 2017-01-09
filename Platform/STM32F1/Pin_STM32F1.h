@@ -3,9 +3,6 @@
 
 #include "../Pin.h"
 
-// 获取组和针脚
-#define _GROUP(PIN) ((GPIO_TypeDef *) (GPIOA_BASE + (((PIN) & (uint16_t)0xF0) << 6)))
-
 #ifdef STM32F10X_HD
 	/* 通用同步/异步收发器(USART)针脚 ------------------------------------------------------------------*/
 	#define UARTS {USART1, USART2, USART3, UART4, UART5}

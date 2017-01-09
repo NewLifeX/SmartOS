@@ -4,6 +4,8 @@
 
 #include "Platform\stm32.h"
 
+GPIO_TypeDef* IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
+
 /******************************** Port ********************************/
 
 // 端口基本功能
@@ -46,14 +48,14 @@ void Port::Opening()
 	State	= &gpio;
 }
 
-WEAK void Port_OnOpen() {}
+WEAK void Port_OnOpen(Pin pin) {}
 
 void Port::OnOpen()
 {
 	auto gpio	= (GPIO_InitTypeDef*)State;
     gpio->GPIO_Pin = 1 << (_Pin & 0x0F);
 
-	Port_OnOpen();
+	Port_OnOpen(_Pin);
 }
 
 void Port::OnClose()
@@ -86,7 +88,7 @@ bool OutputPort::Read() const
 	if(Empty()) return false;
 
 	auto gp	= IndexToGroup(_Pin >> 4);
-	ushort ms	= 1 << (_Pin & 0x0F);
+	auto ms	= 1 << (_Pin & 0x0F);
 	// 转为bool时会转为0/1
 	bool rs = GPIO_ReadOutputData(gp) & ms;
 	return rs ^ Invert;
@@ -97,7 +99,7 @@ void OutputPort::Write(bool value) const
 	if(Empty()) return;
 
 	auto gi	= IndexToGroup(_Pin >> 4);
-	ushort ms	= 1 << (_Pin & 0x0F);
+	auto ms	= 1 << (_Pin & 0x0F);
     if(value ^ Invert)
         GPIO_SetBits(gi, ms);
     else
@@ -109,15 +111,17 @@ void OutputPort::Write(Pin pin, bool value)
 {
 	if(pin == P0) return;
 
+	auto gi	= IndexToGroup(pin >> 4);
+	auto ms	= 1 << (pin & 0x0F);
     if(value)
-        GPIO_SetBits(_GROUP(pin), _PORT(pin));
+        GPIO_SetBits(gi, ms);
     else
-        GPIO_ResetBits(_GROUP(pin), _PORT(pin));
+        GPIO_ResetBits(gi, ms);
 }
 
-/******************************** AlternatePort ********************************/
-
 #endif
+
+/******************************** AlternatePort ********************************/
 
 /******************************** InputPort ********************************/
 
@@ -146,8 +150,11 @@ int Bits2Index(ushort value)
 	return -1;
 }
 
-#define IT 1
-#ifdef IT
+bool InputPort_HasEXTI(int line, const InputPort& port)
+{
+	return States[line].Port != nullptr && States[line].Port != &port;
+}
+
 void GPIO_ISR(int num)  // 0 <= num <= 15
 {
 	if(!hasInitState) return;
@@ -165,24 +172,6 @@ void GPIO_ISR(int num)  // 0 <= num <= 15
 	// Read的时候已经计算倒置，这里不必重复计算
 	st->Port->OnPress(value);
 }
-
-void EXTI_IRQHandler(ushort num, void* param)
-{
-#if defined(STM32F1) || defined(STM32F4)
-	// EXTI0 - EXTI4
-	if(num <= EXTI4_IRQn)
-		GPIO_ISR(num - EXTI0_IRQn);
-	else
-#endif
-	{
-		uint pending = EXTI->PR & EXTI->IMR;
-		for(int i=0; i < 16 && pending != 0; i++, pending >>= 1)
-		{
-			if (pending & 1) GPIO_ISR(i);
-		}
-	}
-}
-#endif
 
 void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode)
 {
@@ -202,78 +191,8 @@ void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode)
     EXTI_Init(&ext);
 }
 
-void InputPort::OpenPin()
-{
-	auto gpio	= (GPIO_InitTypeDef*)State;
-
-#ifdef STM32F1
-	if(Floating)
-		gpio->GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	else if(Pull == UP)
-		gpio->GPIO_Mode = GPIO_Mode_IPU;
-	else if(Pull == DOWN)
-		gpio->GPIO_Mode = GPIO_Mode_IPD; // 这里很不确定，需要根据实际进行调整
-#else
-	gpio->GPIO_Mode = GPIO_Mode_IN;
-	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-
-    GPIO_Init(IndexToGroup(_Pin >> 4), gpio);
-}
-
-// 是否独享中断号
-bool IsOnlyExOfInt(const InputPort* pt, int idx)
-{
-	int s=0, e=0;
-#if defined(STM32F1) || defined(STM32F4)
-	if(idx <= 4) return true;
-
-	if(idx <= 9)
-	{
-		s	= 5;
-		e	= 9;
-	}
-	else if(idx <= 15)
-	{
-		s	= 10;
-		e	= 15;
-	}
-#elif defined(STM32F0) || defined(GD32F150)
-	if(idx <= 1)
-	{
-		s	= 0;
-		e	= 1;
-	}
-	else if(idx <= 3)
-	{
-		s	= 2;
-		e	= 3;
-	}
-	else if(idx <= 15)
-	{
-		s	= 4;
-		e	= 15;
-	}
-#endif
-	for(int i = s; i <= e; i++)
-		if(States[i].Port != nullptr && States[i].Port != pt) return false;
-
-	return true;
-}
-
-/*InputPort::Trigger GetTrigger(InputPort::Trigger mode, bool invert)
-{
-	if(invert && mode != InputPort::Both)
-	{
-		// 把上升沿下降沿换过来
-		if(mode == InputPort::Rising)
-			mode	= InputPort::Falling;
-		else if(mode == InputPort::Falling)
-			mode	= InputPort::Rising;
-	}
-
-	return mode;
-}*/
+extern void InputPort_CloseEXTI(const InputPort& port);
+extern void InputPort_OpenEXTI(InputPort& port);
 
 void InputPort::ClosePin()
 {
@@ -284,9 +203,7 @@ void InputPort::ClosePin()
 	{
 		st->Port = nullptr;
 
-		SetEXIT(idx, false, InputPort::Both);
-		if(!IsOnlyExOfInt(this, idx))return;
-		Interrupt.Deactivate(PORT_IRQns[idx]);
+		InputPort_CloseEXTI(_Pin);
 	}
 }
 
@@ -303,7 +220,6 @@ bool InputPort::OnRegister()
         hasInitState = true;
     }
 
-	byte gi = _Pin >> 4;
 	int idx = Bits2Index(1 << (_Pin & 0x0F));
 	auto st = &States[idx];
 
@@ -312,7 +228,7 @@ bool InputPort::OnRegister()
     if(port != this && port != nullptr)
     {
 #if DEBUG
-        debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", gi, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
+        debug_printf("中断线EXTI%d 不能注册到 P%c%d, 它已经注册到 P%c%d\r\n", _Pin >> 4, _PIN_NAME(_Pin), _PIN_NAME(port->_Pin));
 #endif
 
 		// 将来可能修改设计，即使注册失败，也可以开启一个短时间的定时任务，来替代中断输入
@@ -320,24 +236,8 @@ bool InputPort::OnRegister()
     }
     st->Port		= this;
 
-	//byte gi = _Pin >> 4;
-	//int idx = Bits2Index(1 << (_Pin & 0x0F));
-
     // 打开时钟，选择端口作为端口EXTI时钟线
-#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-    SYSCFG_EXTILineConfig(gi, idx);
-#elif defined(STM32F1)
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-    GPIO_EXTILineConfig(gi, idx);
-#endif
-
-	SetEXIT(idx, true, InputPort::Both);
-
-    // 打开并设置EXTI中断为低优先级
-    Interrupt.SetPriority(PORT_IRQns[idx], 1);
-
-    Interrupt.Activate(PORT_IRQns[idx], EXTI_IRQHandler, this);
+	InputPort_OpenEXTI(*this);
 
 	return true;
 }
@@ -345,17 +245,3 @@ bool InputPort::OnRegister()
 #endif
 
 /******************************** AnalogInPort ********************************/
-
-void AnalogInPort::OpenPin()
-{
-	auto gpio	= (GPIO_InitTypeDef*)State;
-
-#ifdef STM32F1
-	gpio->GPIO_Mode	= GPIO_Mode_AIN; //
-#else
-	gpio->GPIO_Mode	= GPIO_Mode_AN;
-	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
-
-    GPIO_Init(IndexToGroup(_Pin >> 4), gpio);
-}
