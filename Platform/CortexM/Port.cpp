@@ -41,11 +41,11 @@ void Port::Opening()
     // 先打开时钟才能配置
 	OpenClock(_Pin, true);
 
-	GPIO_InitTypeDef gpio;
+	auto gpio	= new GPIO_InitTypeDef();
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-	GPIO_StructInit(&gpio);
+	GPIO_StructInit(gpio);
 
-	State	= &gpio;
+	State	= gpio;
 }
 
 WEAK void Port_OnOpen(Pin pin) {}
