@@ -28,10 +28,10 @@ SerialPort::~SerialPort()
 
 void SerialPort::Init()
 {
-	_index	= 0xFF;
+	Index	= COM_NONE;
 	RS485	= nullptr;
 	Error	= 0;
-	_port	= nullptr;
+	State	= nullptr;
 
 	Remap	= 0;
 	MinSize	= 1;
@@ -46,7 +46,7 @@ void SerialPort::Init()
 
 void SerialPort::Set(COM index, int baudRate)
 {
-	_index		= index;
+	Index		= index;
     _baudRate	= baudRate;
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
@@ -60,7 +60,7 @@ void SerialPort::Set(COM index, int baudRate)
 
 	// 设置名称
 	Buffer(Name, 4)	= "COMx";
-	Name[3] = '0' + _index + 1;
+	Name[3] = '0' + Index + 1;
 	Name[4] = 0;
 
 	// 根据端口实际情况决定打开状态
@@ -77,12 +77,12 @@ void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
 // 打开串口
 bool SerialPort::OnOpen()
 {
-    debug_printf("Serial%d Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d\r\n", _index + 1, _baudRate, _parity, _dataBits, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]));
-
 	// 清空缓冲区
 	Tx.Clear();
 	Rx.SetCapacity(0x80);
 	Rx.Clear();
+
+    debug_printf("Serial%d Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d\r\n", Index + 1, _baudRate, _parity, _dataBits, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]));
 
 	OnOpen2();
 
@@ -94,7 +94,7 @@ bool SerialPort::OnOpen()
 // 关闭端口
 void SerialPort::OnClose()
 {
-    debug_printf("~Serial%d Close\r\n", _index + 1);
+    debug_printf("~Serial%d Close\r\n", Index + 1);
 
 	OnClose2();
 }
@@ -119,7 +119,7 @@ bool SerialPort::OnWrite(const Buffer& bs)
 
 	// 打开串口发送
 	Set485(true);
-	//USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, ENABLE);
+	//USART_ITConfig((USART_TypeDef*)State, USART_IT_TXE, ENABLE);
 	OnWrite2();
 //#endif
 
@@ -203,7 +203,7 @@ void SerialPort::ReceiveTask()
 
 void SerialPort::SetBaudRate(int baudRate)
 {
-	Set((COM)_index,  baudRate);
+	Set((COM)Index,  baudRate);
 }
 
 void SerialPort::ChangePower(int level)
@@ -230,7 +230,7 @@ void SerialPort::Register(TransportHandler handler, void* param)
 		}
 /*#if defined(STM32F0) || defined(GD32F150)
 		// 打开中断
-		byte irq = uart_irqs[_index];
+		byte irq = uart_irqs[Index];
 		Interrupt.SetPriority(irq, 0);
 		Interrupt.Activate(irq, OnHandler, this);
 #endif*/
@@ -251,7 +251,7 @@ SerialPort* SerialPort::GetMessagePort()
 {
 	auto sp	= _printf_sp;
 	// 支持中途改变调试口
-	if(sp && Sys.MessagePort != sp->_index)
+	if(sp && Sys.MessagePort != sp->Index)
 	{
 		delete sp;
 		_printf_sp	= nullptr;

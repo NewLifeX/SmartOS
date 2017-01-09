@@ -13,13 +13,10 @@ class SerialPort : public ITransport, public Power
 {
 private:
 	friend class ComProxy;
-	byte	_index;
 	ushort	_parity;
 	ushort	_dataBits;
 	ushort	_stopBits;
 	int		_baudRate;
-
-    void*	_port;
 
 	void Init();
 
@@ -31,6 +28,9 @@ public:
 	int			ByteTime;	// 字节间隔，最小1ms
 	Pin			Pins[2];	// Tx/Rx
 	Port*		Ports[2];	// Tx/Rx
+	COM			Index;
+
+    void*	State;
 
 	// 收发缓冲区
 	Queue	Tx;
