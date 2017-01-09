@@ -17,30 +17,35 @@
 
 #include "Security\RC4.h"
 
+TokenClient* TokenClient::Current	= nullptr;
+
 static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
 	: Routes(String::Compare)
 {
-	Token = 0;
+	Token	= 0;
 
-	Opened = false;
-	Status = 0;
+	Opened	= false;
+	Status	= 0;
 
-	LoginTime = 0;
-	LastSend = 0;
-	LastActive = 0;
-	Delay = 0;
-	MaxNotActive = 0;
+	LoginTime	= 0;
+	LastSend	= 0;
+	LastActive	= 0;
+	Delay	= 0;
+	MaxNotActive	= 0;
 
-	Master = nullptr;
-	Cfg = nullptr;
+	Master	= nullptr;
+	Cfg	= nullptr;
 
-	Received = nullptr;
-	Param = nullptr;
+	Received	= nullptr;
+	Param	= nullptr;
 
-	NextReport = 0;
-	ReportLength = 0;
+	NextReport	= 0;
+	ReportLength	= 0;
+
+	assert(!Current, "只能有一个令牌客户端实例");
+	Current	= this;
 
 	// 重启
 	//Register("Gateway/Restart", InvokeRestart, this);
@@ -1075,7 +1080,7 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 
 	String remote;
 	byte fixd;
-	// 远程地址 
+	// 远程地址
 	if (!args.Get("remote", remote))
 	{
 		res.Set("SetRemote", (byte)0);
@@ -1093,7 +1098,7 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 	debug_printf("远程地址设置\r\n");
 	uri.Show();
 
-	// 永久改变地址	
+	// 永久改变地址
 	if (fixd)
 	{
 		auto cfg = client->Cfg;

@@ -90,6 +90,8 @@ public:
 		Register(action, *(InvokeHandler*)&func, target);
 	}
 
+	static TokenClient* Current;
+
 	// 重启，重置
 	static bool InvokeRestart(void * param, const Pair& args, Stream& result);
 	static bool InvokeReset(void * param, const Pair& args, Stream& result);
