@@ -3,8 +3,10 @@
 
 /******************************** Port ********************************/
 
+#if DEBUG
 // 保护引脚，别的功能要使用时将会报错。返回是否保护成功
 static bool Port_Reserve(Pin pin, bool flag);
+#endif
 
 // 端口基本功能
 #define REGION_Port 1

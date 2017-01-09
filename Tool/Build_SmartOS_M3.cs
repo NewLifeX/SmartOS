@@ -19,6 +19,7 @@ build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
 build.AddFiles("..\\TinyNet");
 build.AddFiles("..\\TokenNet");
 build.Libs.Clear();
+//build.Preprocess = true;
 build.CompileAll();
 build.BuildLib("..\\SmartOS_M3");
 
