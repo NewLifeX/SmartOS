@@ -279,8 +279,8 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 	Pin p[] = { pin1,pin2 };
 	for (size_t i = 0; i < 2; i++)
 	{
-		if(p[i]==P0) continue;
-		
+		if (p[i] == P0) continue;
+
 		auto port = new InputPort(p[i]);
 		port->Invert = true;
 		port->ShakeTime = 40;
@@ -291,8 +291,22 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 	}
 }
 
-static bool ledstat2 = false;
+static void RestPress(InputPort& port, bool down)
+{
+	if (down) return;
+	auto client = IOK027X::Current;
+	client->Restore();
+}
+void IOK027X::SetRestore(Pin pin)
+{
+	if (pin == P0) return;
+	auto port = new InputPort(pin);
+	port->Open();
+	port->Press = RestPress;
+	RestPort = port;
+}
 
+static bool ledstat2 = false;
 void IOK027X::Restore()
 {
 	for (int i = 0; i < 10; i++)
@@ -304,7 +318,6 @@ void IOK027X::Restore()
 	if (Client) Client->Reset("按键重置");
 
 }
-
 void IOK027X::FlushLed()
 {
 	if (LedsShow == 0)			// 启动时候20秒

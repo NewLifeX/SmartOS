@@ -13,7 +13,7 @@
 class IOK027X
 {
 public:
-	List<Pin>	LedPins;
+	List<Pin>			LedPins;
 	List<OutputPort*>	Leds;
 
 	byte LedsShow;					// LED 显示状态开关  0 刚启动时候的20秒   1 使能   2 失能
@@ -29,16 +29,16 @@ public:
 
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);
-
+	void SetRestore(Pin pin = PB4);			//设置重置引脚
 	void InitLeds();
 	void FlushLed();			// 刷新led状态输出
 
 	byte LedStat(byte showmode);
 
-	ISocketHost* Create8266(Pin power=PB2);
+	ISocketHost* Create8266(Pin power = PB2);
 
 	void InitClient();
-	void InitNet(Pin power=PB2);
+	void InitNet(Pin power = PB2);
 	void InitAlarm();
 	//双联开关
 	void Union(Pin pin1, Pin pin2);
@@ -50,6 +50,7 @@ public:
 private:
 	void*	Data;
 	int		Size;
+	InputPort* RestPort;
 
 	void OpenClient(ISocketHost& host);
 	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
