@@ -4,23 +4,11 @@
 
 #include "Platform\stm32.h"
 
-#if defined(STM32F1) || defined(STM32F4)
 static const byte PORT_IRQns[] = {
     EXTI0_IRQn, EXTI1_IRQn, EXTI2_IRQn, EXTI3_IRQn, EXTI4_IRQn, // 5个基础的
     EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn, EXTI9_5_IRQn,    // EXTI9_5
     EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn, EXTI15_10_IRQn   // EXTI15_10
 };
-#elif defined(STM32F0) || defined(GD32F150)
-static const byte PORT_IRQns[] = {
-    EXTI0_1_IRQn, EXTI0_1_IRQn, // 基础
-    EXTI2_3_IRQn, EXTI2_3_IRQn, // 基础
-    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn,
-    EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn, EXTI4_15_IRQn   // EXTI15_10
-};
-#endif
-
-//_force_inline GPIO_TypeDef* IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
-//_force_inline byte GroupToIndex(GPIO_TypeDef* group) { return (byte)(((int)group - GPIOA_BASE) >> 10); }
 
 /******************************** Port ********************************/
 
@@ -30,53 +18,15 @@ static const byte PORT_IRQns[] = {
 
 static GPIO_TypeDef* IndexToGroup(byte index) { return ((GPIO_TypeDef *) (GPIOA_BASE + (index << 10))); }
 
-// 分组时钟
-static byte _GroupClock[10];
-
-static void OpenClock(Pin pin, bool flag)
+static void OpenPeriphClock(Pin pin, bool flag)
 {
     int gi = pin >> 4;
-
-	if(flag)
-	{
-		// 增加计数，首次打开时钟
-		if(_GroupClock[gi]++) return;
-	}
-	else
-	{
-		// 减少计数，最后一次关闭时钟
-		if(_GroupClock[gi]-- > 1) return;
-	}
-
 	FunctionalState fs = flag ? ENABLE : DISABLE;
-#if defined(STM32F0) || defined(GD32F150)
-    RCC_AHBPeriphClockCmd(RCC_AHBENR_GPIOAEN << gi, fs);
-#elif defined(STM32F1)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA << gi, fs);
-#elif defined(STM32F4)
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA << gi, fs);
-#endif
 }
 
-// 确定配置,确认用对象内部的参数进行初始化
-void Port::Opening()
+void Port_OnOpen()
 {
-    // 先打开时钟才能配置
-	OpenClock(_Pin, true);
-
-	GPIO_InitTypeDef gpio;
-	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-	GPIO_StructInit(&gpio);
-
-	State	= &gpio;
-}
-
-void Port::OnOpen()
-{
-	auto gpio	= (GPIO_InitTypeDef*)State;
-    gpio->GPIO_Pin = 1 << (_Pin & 0x0F);
-
-#ifdef STM32F1
 	// PA15/PB3/PB4 需要关闭JTAG
 	switch(_Pin)
 	{
@@ -92,42 +42,12 @@ void Port::OnOpen()
 			break;
 		}
 	}
-#endif
-}
-
-void Port::OnClose()
-{
-	// 不能随便关闭时钟，否则可能会影响别的引脚
-	OpenClock(_Pin, false);
-
-	delete (GPIO_InitTypeDef*)State;
-	State	= nullptr;
 }
 
 void Port::RemapConfig(uint param, bool sta)
 {
-#ifdef STM32F1
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(param, sta ? ENABLE : DISABLE);
-#endif
-}
-
-void Port::AFConfig(GPIO_AF GPIO_AF) const
-{
-#if defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
-	assert(Opened, "打开后才能配置AF");
-
-	GPIO_PinAFConfig(IndexToGroup(_Pin >> 4), _PIN(_Pin), GPIO_AF);
-#endif
-}
-
-bool Port::Read() const
-{
-	if(_Pin == P0) return false;
-
-	auto gp	= IndexToGroup(_Pin >> 4);
-	ushort ms	= 1 << (_Pin & 0x0F);
-	return GPIO_ReadInputData(gp) & ms;
 }
 #endif
 
@@ -139,68 +59,20 @@ bool Port::Read() const
 
 void OutputPort::OpenPin()
 {
-#ifndef STM32F4
 	assert(Speed == 2 || Speed == 10 || Speed == 50, "Speed");
-#else
-	assert(Speed == 2 || Speed == 25 || Speed == 50 || Speed == 100, "Speed");
-#endif
 
 	auto gpio	= (GPIO_InitTypeDef*)State;
 
 	switch(Speed)
 	{
 		case 2:		gpio->GPIO_Speed = GPIO_Speed_2MHz;	break;
-#ifndef STM32F4
 		case 10:	gpio->GPIO_Speed = GPIO_Speed_10MHz;	break;
-#else
-		case 25:	gpio->GPIO_Speed = GPIO_Speed_25MHz;	break;
-		case 100:	gpio->GPIO_Speed = GPIO_Speed_100MHz;break;
-#endif
 		case 50:	gpio->GPIO_Speed = GPIO_Speed_50MHz;	break;
 	}
 
-#ifdef STM32F1
 	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_Out_OD : GPIO_Mode_Out_PP;
-#else
-	gpio->GPIO_Mode	= GPIO_Mode_OUT;
-	gpio->GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
 
     GPIO_Init(IndexToGroup(_Pin >> 4), gpio);
-}
-
-bool OutputPort::Read() const
-{
-	if(Empty()) return false;
-
-	auto gp	= IndexToGroup(_Pin >> 4);
-	ushort ms	= 1 << (_Pin & 0x0F);
-	// 转为bool时会转为0/1
-	bool rs = GPIO_ReadOutputData(gp) & ms;
-	return rs ^ Invert;
-}
-
-void OutputPort::Write(bool value) const
-{
-	if(Empty()) return;
-
-	auto gi	= IndexToGroup(_Pin >> 4);
-	ushort ms	= 1 << (_Pin & 0x0F);
-    if(value ^ Invert)
-        GPIO_SetBits(gi, ms);
-    else
-        GPIO_ResetBits(gi, ms);
-}
-
-// 设置端口状态
-void OutputPort::Write(Pin pin, bool value)
-{
-	if(pin == P0) return;
-
-    if(value)
-        GPIO_SetBits(_GROUP(pin), _PORT(pin));
-    else
-        GPIO_ResetBits(_GROUP(pin), _PORT(pin));
 }
 
 /******************************** AlternatePort ********************************/
@@ -209,12 +81,7 @@ void AlternatePort::OpenPin()
 {
 	auto gpio	= (GPIO_InitTypeDef*)State;
 
-#ifdef STM32F1
 	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
-#else
-	gpio->GPIO_Mode	= GPIO_Mode_AF;
-	gpio->GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
-#endif
 
     GPIO_Init(IndexToGroup(_Pin >> 4), gpio);
 }

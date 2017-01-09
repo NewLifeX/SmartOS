@@ -6,7 +6,7 @@ build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
 build.AddIncludes("..\\..\\..\\Lib\\Inc");
 build.AddIncludes("..\\", false);
 build.AddIncludes("..\\..\\", false);
-build.AddFiles(".", "*.c;*.cpp;*.s");
+build.AddFiles(".", "*.c;*.cpp;startup_stm32f4xx.s");
 build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");
 build.Libs.Clear();
 build.CompileAll();

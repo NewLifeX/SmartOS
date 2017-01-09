@@ -36,7 +36,10 @@ void SerialPort::OnOpen2()
 {
 	// 串口引脚初始化
     if(!Ports[0]) Ports[0]	= new OutputPort(Pins[0]);
-    if(!Ports[1]) Ports[1]	= new InputPort(Pins[1]);
+    if(!Ports[1]) Ports[1]	= new InputPort(Pins[1], false);
+
+    Ports[0]->Open();
+	Ports[1]->Open();
 
 	auto st	= (USART_TypeDef*)_port;
 
@@ -45,7 +48,6 @@ void SerialPort::OnOpen2()
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
 	// 检查重映射
-#ifdef STM32F1
 	if(Remap)
 	{
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -55,32 +57,13 @@ void SerialPort::OnOpen2()
 		case 2: AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
 		}
 	}
-#endif
 
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
-#if defined(STM32F0) || defined(GD32F150)
-	switch(_index)
-	{
-		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;
-		case COM2:	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);	break;
-		default:	break;
-	}
-#else
 	if (_index) { // COM2-5 on APB1
         RCC->APB1ENR |= RCC_APB1ENR_USART2EN >> 1 << _index;
     } else { // COM1 on APB2
         RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
     }
-#endif
-
-#if defined(STM32F0) || defined(GD32F150)
-	_tx.AFConfig(Port::AF_1);
-	_rx.AFConfig(Port::AF_1);
-#elif defined(STM32F4)
-	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
-	_tx.AFConfig((Port::GPIO_AF)afs[_index]);
-	_rx.AFConfig((Port::GPIO_AF)afs[_index]);
-#endif
 
 	USART_InitTypeDef  p;
     USART_StructInit(&p);
@@ -117,26 +100,13 @@ void SerialPort::OnClose2()
 	USART_Cmd(st, DISABLE);
     USART_DeInit(st);
 
-	//if(por)
-    //_tx.Close();
-	//_rx.Close();
-	 if(Ports[0])
-	 {
-		 Ports[0]->Close();
-		 delete Ports[0];
-	 }
+    Ports[0]->Close();
+	Ports[1]->Close();
 	 
-	if(Ports[1]) 
-	{
-		Ports[1]->Close();
-		delete Ports[1];
-	}
-	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.Deactivate(irq);
 
 	// 检查重映射
-#ifdef STM32F1
 	if(Remap)
 	{
 		switch (_index) {
@@ -145,7 +115,6 @@ void SerialPort::OnClose2()
 		case 2: AFIO->MAPR &= ~AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
 		}
 	}
-#endif
 }
 
 // 发送单一字节数据
@@ -172,10 +141,6 @@ void SerialPort::OnWrite2()
 	// 打开串口发送
 	USART_ITConfig((USART_TypeDef*)_port, USART_IT_TXE, ENABLE);
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
 
 void SerialPort::OnTxHandler()
 {
@@ -231,8 +196,6 @@ void SerialPort::OnHandler(ushort num, void* param)
 	if(USART_GetFlagStatus(st, USART_FLAG_PE) != RESET) USART_ClearFlag(st, USART_FLAG_PE);*/
 }
 
-#pragma arm section code
-
 // 获取引脚
 void GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin)
 {
@@ -240,10 +203,8 @@ void GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin)
 
 	const Pin g_Uart_Pins[] = UART_PINS;
 	const Pin* p = g_Uart_Pins;
-#ifdef STM32F1
 	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
 	if(remap) p = g_Uart_Pins_Map;
-#endif
 
 	int n = index << 2;
 	*txPin  = p[n];

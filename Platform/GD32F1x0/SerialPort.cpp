@@ -1,9 +1,7 @@
 ﻿#include "Sys.h"
 #include "Kernel\Task.h"
 #include "Kernel\Interrupt.h"
-
 #include "Device\SerialPort.h"
-
 #include "Platform\stm32.h"
 
 #define COM_DEBUG 0
@@ -37,12 +35,11 @@ bool SerialPort::OnSet()
 void SerialPort::OnOpen2()
 {
 	// 串口引脚初始化
-    if(!Ports[0]) Ports[0]	= new Outport(Pins[0]);
+    if(!Ports[0]) Ports[0]	= new OutputPort(Pins[0]);
     if(!Ports[1]) Ports[1]	= new AlternatePort(Pins[1]);
 
-	//串口引脚初始化
-    _tx.Set(tx).Open();
-    _rx.Init(rx, false).Open();
+    Ports[0]->Open();
+	Ports[1]->Open();
 
 	auto st	= (USART_TypeDef*)_port;
 
@@ -50,43 +47,16 @@ void SerialPort::OnOpen2()
     if(_index != Sys.MessagePort) USART_DeInit(st);
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
-	// 检查重映射
-#ifdef STM32F1
-	if(Remap)
-	{
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-		switch (_index) {
-		case 0: AFIO->MAPR |= AFIO_MAPR_USART1_REMAP; break;
-		case 1: AFIO->MAPR |= AFIO_MAPR_USART2_REMAP; break;
-		case 2: AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
-		}
-	}
-#endif
-
     // 打开 UART 时钟。必须先打开串口时钟，才配置引脚
-#if defined(STM32F0) || defined(GD32F150)
 	switch(_index)
 	{
 		case COM1:	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);	break;
 		case COM2:	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);	break;
 		default:	break;
 	}
-#else
-	if (_index) { // COM2-5 on APB1
-        RCC->APB1ENR |= RCC_APB1ENR_USART2EN >> 1 << _index;
-    } else { // COM1 on APB2
-        RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    }
-#endif
 
-#if defined(STM32F0) || defined(GD32F150)
-	_tx.AFConfig(Port::AF_1);
-	_rx.AFConfig(Port::AF_1);
-#elif defined(STM32F4)
-	const byte afs[] = { GPIO_AF_USART1, GPIO_AF_USART2, GPIO_AF_USART3, GPIO_AF_UART4, GPIO_AF_UART5, GPIO_AF_USART6, GPIO_AF_UART7, GPIO_AF_UART8 };
-	_tx.AFConfig((Port::GPIO_AF)afs[_index]);
-	_rx.AFConfig((Port::GPIO_AF)afs[_index]);
-#endif
+	Ports[0]->AFConfig(Port::AF_1);
+	Ports[1]->AFConfig(Port::AF_1);
 
 	USART_InitTypeDef  p;
     USART_StructInit(&p);
@@ -107,7 +77,6 @@ void SerialPort::OnOpen2()
 	//USART_OverrunDetectionConfig(st, USART_OVRDetection_Disable);
 //#else
 	// 打开中断，收发都要使用
-	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
@@ -123,24 +92,11 @@ void SerialPort::OnClose2()
 	USART_Cmd(st, DISABLE);
     USART_DeInit(st);
 
-    _tx.Close();
-	_rx.Close();
+    Ports[0]->Close();
+	Ports[1]->Close();
 
-	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.Deactivate(irq);
-
-	// 检查重映射
-#ifdef STM32F1
-	if(Remap)
-	{
-		switch (_index) {
-		case 0: AFIO->MAPR &= ~AFIO_MAPR_USART1_REMAP; break;
-		case 1: AFIO->MAPR &= ~AFIO_MAPR_USART2_REMAP; break;
-		case 2: AFIO->MAPR &= ~AFIO_MAPR_USART3_REMAP_FULLREMAP; break;
-		}
-	}
-#endif
 }
 
 // 发送单一字节数据
@@ -235,10 +191,6 @@ void GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin)
 
 	const Pin g_Uart_Pins[] = UART_PINS;
 	const Pin* p = g_Uart_Pins;
-#ifdef STM32F1
-	const Pin g_Uart_Pins_Map[] = UART_PINS_FULLREMAP;
-	if(remap) p = g_Uart_Pins_Map;
-#endif
 
 	int n = index << 2;
 	*txPin  = p[n];
