@@ -374,17 +374,47 @@ ushort	_REV16(ushort value)	{ return __REV16(value); }
 
 /******************************** 调试日志 ********************************/
 
-int SmartOS_printf(const char* format, ...)
+#include "Device\SerialPort.h"
+
+extern "C"
 {
+	int SmartOS_printf(const char* format, ...)
+	{
+		if(Sys.Clock == 0 || Sys.MessagePort == COM_NONE) return 0;
+
+		// 检查并打开串口
+		auto sp	= SerialPort::GetMessagePort();
+		if(!sp) return 0;
+
 		va_list ap;
 
-	va_start(ap, format);
-	//int rs	= DiagPrintf(format, ap);
-	char cs[256];
-	int rs = vsnprintf(cs, 256, format, ap);
-	printf(cs);
-	va_end(ap);
+		va_start(ap, format);
+		//int rs	= printf(format, ap);
+		char cs[256];
+		int rs = vsnprintf(cs, 256, format, ap);
+		va_end(ap);
 
-	return rs;
+		sp->Write(Buffer(cs, rs));
 
+		return rs;
+	}
+
+    /* 重载fputc可以让用户程序使用printf函数 */
+    int fputc(int ch, FILE *f)
+    {
+#if DEBUG
+        if(Sys.Clock == 0) return ch;
+
+        int idx	= Sys.MessagePort;
+        if(idx == COM_NONE) return ch;
+
+        // 检查并打开串口
+		auto sp	= SerialPort::GetMessagePort();
+		if(!sp) return 0;
+
+		byte b = ch;
+		sp->Write(Buffer(&b, 1));
+#endif
+        return ch;
+    }
 }

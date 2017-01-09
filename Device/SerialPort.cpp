@@ -243,7 +243,8 @@ void SerialPort::Register(TransportHandler handler, void* param)
 
 extern "C"
 {
-    SerialPort* _printf_sp;
+    static SerialPort* _printf_sp;
+	static bool isInFPutc;
 }
 
 SerialPort* SerialPort::GetMessagePort()
@@ -261,8 +262,13 @@ SerialPort* SerialPort::GetMessagePort()
         auto idx	= (COM)Sys.MessagePort;
         if(idx == COM_NONE) return nullptr;
 
+		if(isInFPutc) return nullptr;
+		isInFPutc	= true;
+
 		sp = _printf_sp = new SerialPort(idx);
 		sp->Open();
+
+		isInFPutc	= false;
 	}
 	return sp;
 }
