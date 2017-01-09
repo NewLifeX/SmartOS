@@ -1,9 +1,7 @@
 ﻿#include "Sys.h"
 #include "Kernel\Task.h"
 #include "Kernel\Interrupt.h"
-
 #include "Device\SerialPort.h"
-
 #include "Platform\stm32.h"
 
 #define COM_DEBUG 0
@@ -37,7 +35,7 @@ bool SerialPort::OnSet()
 void SerialPort::OnOpen2()
 {
 	// 串口引脚初始化
-    if(!Ports[0]) Ports[0]	= new Outport(Pins[0]);
+    if(!Ports[0]) Ports[0]	= new OutputPort(Pins[0]);
     if(!Ports[1]) Ports[1]	= new InputPort(Pins[1]);
 
 	auto st	= (USART_TypeDef*)_port;
@@ -119,9 +117,20 @@ void SerialPort::OnClose2()
 	USART_Cmd(st, DISABLE);
     USART_DeInit(st);
 
-    _tx.Close();
-	_rx.Close();
-
+	//if(por)
+    //_tx.Close();
+	//_rx.Close();
+	 if(Ports[0])
+	 {
+		 Ports[0]->Close();
+		 delete Ports[0];
+	 }
+	 
+	if(Ports[1]) 
+	{
+		Ports[1]->Close();
+		delete Ports[1];
+	}
 	//const byte irqs[] = UART_IRQs;
 	byte irq = uart_irqs[_index];
 	Interrupt.Deactivate(irq);

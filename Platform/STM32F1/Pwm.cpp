@@ -70,7 +70,7 @@ void Pwm::Flush()
 void Pwm::Open()
 {
 	// 设置映射
-	if(Remap) GPIO_PinRemapConfig(Remap, ENABLE);
+	//if(Remap！=0) GPIO_PinRemapConfig(Remap, ENABLE);
 
 	Timer::Open();
 
@@ -83,7 +83,7 @@ void Pwm::Open()
 
 	// 仅支持标准引脚和完全映射，非完全映射需要外部自己初始化
 	auto pss	= g_Pins;
-	if(Remap != 0) pss	= g_Pins2;
+	//if(Remap) pss	= g_Pins2;
 	auto ps	= pss[_index];
 
 	for(int i=0; i<4; i++)
