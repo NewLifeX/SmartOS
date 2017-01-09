@@ -79,7 +79,7 @@ void Pwm::Open()
 
 	// 打开引脚
 	const Pin g_Pins[][4]	=  TIM_PINS;
-	const Pin g_Pins2[][4]	=  TIM_PINS_FULLREMAP;
+	//const Pin g_Pins2[][4]	=  TIM_PINS_FULLREMAP;
 
 	// 仅支持标准引脚和完全映射，非完全映射需要外部自己初始化
 	auto pss	= g_Pins;
