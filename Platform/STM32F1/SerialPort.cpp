@@ -36,7 +36,12 @@ void SerialPort::OnOpen2()
 {
 	// 串口引脚初始化
     if(!Ports[0]) Ports[0]	= new OutputPort(Pins[0]);
-    if(!Ports[1]) Ports[1]	= new InputPort(Pins[1], false);
+    if(!Ports[1])
+	{
+		auto port	= new InputPort();
+		port->Init(Pins[1], false).Open();
+		Ports[1]	= port;
+	}
 
     Ports[0]->Open();
 	Ports[1]->Open();
@@ -102,7 +107,7 @@ void SerialPort::OnClose2()
 
     Ports[0]->Close();
 	Ports[1]->Close();
-	 
+
 	byte irq = uart_irqs[_index];
 	Interrupt.Deactivate(irq);
 
