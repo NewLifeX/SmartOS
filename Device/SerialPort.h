@@ -13,10 +13,10 @@ class SerialPort : public ITransport, public Power
 {
 private:
 	friend class ComProxy;
-	ushort	_parity;
-	ushort	_dataBits;
-	ushort	_stopBits;
 	int		_baudRate;
+	ushort	_dataBits;
+	ushort	_parity;
+	ushort	_stopBits;
 
 	void Init();
 
@@ -43,7 +43,7 @@ public:
     virtual ~SerialPort();
 
     void Set(COM index, int baudRate = SERIAL_BAUDRATE);
-    void Set(byte parity, byte dataBits, byte stopBits);
+    void Set(byte dataBits, byte parity, byte stopBits);
 
 	uint SendData(byte data, uint times = 3000);
 

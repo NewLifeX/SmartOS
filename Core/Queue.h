@@ -3,8 +3,8 @@
 
 #include "ByteArray.h"
 
-// 内存缓冲区
-// 缓冲区内有一个缓冲区，游标位置，数据长度。实际有效数据仅占用缓冲区中间部分，头尾都可能有剩余
+// 队列
+// 内有一个缓冲区，游标位置，数据长度。实际有效数据仅占用缓冲区中间部分，头尾都可能有剩余
 class Queue
 {
 private:
@@ -24,8 +24,8 @@ public:
 
 	void Clear();
 
-	void Push(byte dat);
-	byte Pop();
+	void Enqueue(byte dat);
+	byte Dequeue();
 
 	uint Write(const Buffer& bs);	// 批量写入
 	uint Read(Buffer& bs);		// 批量读取

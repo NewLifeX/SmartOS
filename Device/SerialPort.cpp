@@ -39,6 +39,10 @@ void SerialPort::Init()
 	Pins[0]		= Pins[1]	= P0;
 	Ports[0]	= Ports[1]	= nullptr;
 
+    _dataBits	= 8;
+    _parity		= 0;
+    _stopBits	= 1;
+
 	_taskidRx	= 0;
 
 	OnInit();
@@ -67,10 +71,10 @@ void SerialPort::Set(COM index, int baudRate)
 	if(OnSet()) Opened = true;
 }
 
-void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
+void SerialPort::Set(byte dataBits, byte parity, byte stopBits)
 {
-    _parity		= parity;
     _dataBits	= dataBits;
+    _parity		= parity;
     _stopBits	= stopBits;
 }
 
@@ -78,11 +82,12 @@ void SerialPort::Set(byte parity, byte dataBits, byte stopBits)
 bool SerialPort::OnOpen()
 {
 	// 清空缓冲区
+	Tx.SetCapacity(256);
 	Tx.Clear();
-	Rx.SetCapacity(0x80);
+	Rx.SetCapacity(256);
 	Rx.Clear();
 
-    debug_printf("Serial%d Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d\r\n", Index + 1, _baudRate, _parity, _dataBits, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]));
+    debug_printf("Serial%d::Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d Cache(TX=%d, RX=%d)\r\n", Index + 1, _baudRate, _dataBits, _parity, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]), Tx.Capacity(), Rx.Capacity());
 
 	OnOpen2();
 
@@ -113,7 +118,7 @@ bool SerialPort::OnWrite(const Buffer& bs)
 	Set485(false);
 #else*/
 	// 如果队列已满，则强制刷出
-	if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
+	//if(Tx.Length() + bs.Length() > Tx.Capacity()) Flush(Sys.Clock / 40000);
 
 	Tx.Write(bs);
 
@@ -132,7 +137,7 @@ bool SerialPort::Flush(uint times)
 	// 打开串口发送
 	Set485(true);
 
-	while(!Tx.Empty() && times > 0) times = SendData(Tx.Pop(), times);
+	while(!Tx.Empty() && times > 0) times = SendData(Tx.Dequeue(), times);
 
 	Set485(false);
 

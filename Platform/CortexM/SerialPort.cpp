@@ -12,9 +12,12 @@ extern void SerialPort_GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin);
 
 void SerialPort::OnInit()
 {
-    _parity		= USART_Parity_No;
+    /*_parity		= USART_Parity_No;
     _dataBits	= USART_WordLength_8b;
-    _stopBits	= USART_StopBits_1;
+    _stopBits	= USART_StopBits_1;*/
+    _dataBits	= 8;
+    _parity		= 0;
+    _stopBits	= 1;
 }
 
 bool SerialPort::OnSet()
@@ -45,12 +48,26 @@ void SerialPort::OnOpen2()
 
 	SerialPort_Opening(*this);
 
+	const ushort paritys[]	= { USART_Parity_No, USART_Parity_Even, USART_Parity_Odd };
+	if(_parity >= ArrayLength(paritys)) _parity	= 0;
+
+	const ushort StopBits[]	= { 1, USART_StopBits_1, 5, USART_StopBits_0_5, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
+	ushort stop	= StopBits[1];
+	for(int i=0; i<ArrayLength(StopBits); i+=2)
+	{
+		if(StopBits[i] == _stopBits)
+		{
+			stop	= StopBits[i+1];
+			break;
+		}
+	}
+	
 	USART_InitTypeDef  p;
     USART_StructInit(&p);
 	p.USART_BaudRate	= _baudRate;
-	p.USART_WordLength	= _dataBits;
-	p.USART_StopBits	= _stopBits;
-	p.USART_Parity		= _parity;
+	p.USART_WordLength	= _dataBits == 8 ? USART_WordLength_8b : USART_WordLength_9b;
+	p.USART_StopBits	= stop;
+	p.USART_Parity		= paritys[_parity];
 	USART_Init(st, &p);
 
 	// 串口接收中断配置，同时会打开过载错误中断
@@ -121,7 +138,7 @@ void SerialPort::OnWrite2()
 void SerialPort::OnTxHandler()
 {
 	if(!Tx.Empty())
-		USART_SendData((USART_TypeDef*)State, (ushort)Tx.Pop());
+		USART_SendData((USART_TypeDef*)State, (ushort)Tx.Dequeue());
 	else
 	{
 		USART_ITConfig((USART_TypeDef*)State, USART_IT_TXE, DISABLE);
@@ -136,7 +153,7 @@ void SerialPort::OnRxHandler()
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
 	// 缓冲区里面别用%，那会产生非常耗时的除法运算
 	byte dat = (byte)USART_ReceiveData((USART_TypeDef*)State);
-	Rx.Push(dat);
+	Rx.Enqueue(dat);
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
