@@ -52,7 +52,7 @@ void IOK027X::Init(ushort code, cstring name, COM message)
 #endif
 
 	// 系统休眠时自动进入低功耗
-	Power::AttachTimeSleep();
+	//Power::AttachTimeSleep();
 
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
@@ -297,11 +297,13 @@ static void RestPress(InputPort& port, bool down)
 	auto client = IOK027X::Current;
 	client->Restore();
 }
+
 void IOK027X::SetRestore(Pin pin)
 {
 	if (pin == P0) return;
 	auto port = new InputPort(pin);
 	port->Open();
+	port->UsePress();
 	port->Press = RestPress;
 	RestPort = port;
 }
