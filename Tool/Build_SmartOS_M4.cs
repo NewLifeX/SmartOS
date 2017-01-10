@@ -1,6 +1,6 @@
 var build = Builder.Create("MDK");
 build.Init();
-build.CPU = "Cortex-M4";
+build.CPU = "Cortex-M4F";
 build.Defines.Add("STM32F4");
 build.AddIncludes("..\\", false);
 build.AddFiles("..\\Core");

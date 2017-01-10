@@ -18,7 +18,7 @@ static const byte PORT_IRQns[] = {
 
 extern GPIO_TypeDef* IndexToGroup(byte index);
 
-void Port::OpenPeriphClock(Pin pin, bool flag)
+void OpenPeriphClock(Pin pin, bool flag)
 {
     int gi = pin >> 4;
 	FunctionalState fs = flag ? ENABLE : DISABLE;
