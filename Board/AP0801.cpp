@@ -62,10 +62,10 @@ void AP0801::Init(ushort code, cstring name, COM message)
 	WatchDog::Start(20000, 10000);
 #else
 	WatchDog::Start();
-#endif
 
 	// 系统休眠时自动进入低功耗
 	Power::AttachTimeSleep();
+#endif
 
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
