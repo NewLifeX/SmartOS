@@ -390,8 +390,8 @@ extern "C"
 
 		va_start(ap, format);
 		//int rs	= printf(format, ap);
-		char cs[256];
-		int rs = vsnprintf(cs, 256, format, ap);
+		char cs[512];
+		int rs = vsnprintf(cs, 512, format, ap);
 		va_end(ap);
 
 		sp->Write(Buffer(cs, rs));

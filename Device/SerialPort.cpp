@@ -270,7 +270,9 @@ SerialPort* SerialPort::GetMessagePort()
 		if(isInFPutc) return nullptr;
 		isInFPutc	= true;
 
+		// 打开日志输出口，需要较大发送缓冲区
 		sp = _printf_sp = new SerialPort(idx);
+		sp->Tx.SetCapacity(512);
 		sp->Open();
 
 		isInFPutc	= false;
