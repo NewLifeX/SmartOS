@@ -384,7 +384,7 @@ extern "C"
 
 		// 检查并打开串口
 		auto sp	= SerialPort::GetMessagePort();
-		if(!sp) return 0;
+		if(!sp || !sp->Opened) return 0;
 
 		va_list ap;
 
