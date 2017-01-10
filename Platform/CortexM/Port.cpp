@@ -41,18 +41,18 @@ void Port::Opening()
     // 先打开时钟才能配置
 	OpenClock(_Pin, true);
 
-	auto gpio	= new GPIO_InitTypeDef();
+	//auto gpio	= new GPIO_InitTypeDef();
+	// 刚好4字节，不用申请内存啦
+	auto gpio	= (GPIO_InitTypeDef*)&State;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
 	GPIO_StructInit(gpio);
-
-	State	= gpio;
 }
 
 WEAK void Port_OnOpen(Pin pin) {}
 
 void Port::OnOpen()
 {
-	auto gpio	= (GPIO_InitTypeDef*)State;
+	auto gpio	= (GPIO_InitTypeDef*)&State;
     gpio->GPIO_Pin = 1 << (_Pin & 0x0F);
 
 	Port_OnOpen(_Pin);
@@ -63,7 +63,7 @@ void Port::OnClose()
 	// 不能随便关闭时钟，否则可能会影响别的引脚
 	OpenClock(_Pin, false);
 
-	delete (GPIO_InitTypeDef*)State;
+	//delete (GPIO_InitTypeDef*)State;
 	State	= nullptr;
 }
 

@@ -61,7 +61,7 @@ void OutputPort::OpenPin()
 {
 	assert(Speed == 2 || Speed == 10 || Speed == 50, "Speed");
 
-	auto gpio	= (GPIO_InitTypeDef*)State;
+	auto gpio	= (GPIO_InitTypeDef*)&State;
 
 	switch(Speed)
 	{
@@ -79,7 +79,7 @@ void OutputPort::OpenPin()
 
 void AlternatePort::OpenPin()
 {
-	auto gpio	= (GPIO_InitTypeDef*)State;
+	auto gpio	= (GPIO_InitTypeDef*)&State;
 
 	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
 
@@ -101,7 +101,7 @@ extern void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode);
 
 void InputPort::OpenPin()
 {
-	auto gpio	= (GPIO_InitTypeDef*)State;
+	auto gpio	= (GPIO_InitTypeDef*)&State;
 
 	if(Floating)
 		gpio->GPIO_Mode = GPIO_Mode_IN_FLOATING;
@@ -183,7 +183,7 @@ void InputPort_OpenEXTI(InputPort& port)
 
 void AnalogInPort::OpenPin()
 {
-	auto gpio	= (GPIO_InitTypeDef*)State;
+	auto gpio	= (GPIO_InitTypeDef*)&State;
 
 	gpio->GPIO_Mode	= GPIO_Mode_AIN; //
 
