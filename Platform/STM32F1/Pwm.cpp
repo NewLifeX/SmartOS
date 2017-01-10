@@ -120,7 +120,7 @@ void PwmData::OnInterrupt()
 
 	auto ti	= (TIM_TypeDef*)_Timer;
 	// 动态计算4个寄存器中的某一个，并设置宽度
-	volatile ushort* reg = &(ti->CCR1);
+	auto reg	= &(ti->CCR1);
 
 	reg += Channel;
 	// 发送完成以后，最后一次中断，把占空比调整为一半
