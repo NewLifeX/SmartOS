@@ -4,7 +4,7 @@
 extern void EnterCritical();
 extern void ExitCritical();
 
-Queue::Queue(uint len) : _s(len)
+Queue::Queue() : _s((void*)nullptr, 0)
 {
 	Clear();
 }
@@ -32,8 +32,9 @@ void Queue::Clear()
 
 void Queue::Enqueue(byte dat)
 {
-	// 溢出不再接收
 	int total	= _s.Capacity();
+	if(!total) _s.SetLength(64);
+	// 溢出不再接收
 	if(_size >= total) return;
 
 	_s[_head++] = dat;
@@ -78,8 +79,9 @@ byte Queue::Dequeue()
 #endif
 uint Queue::Write(const Buffer& bs)
 {
-	// 溢出不再接收
 	int total	= _s.Capacity();
+	if(!total) _s.SetLength(64);
+	// 溢出不再接收
 	if(_size >= total) return 0;
 
 	/*

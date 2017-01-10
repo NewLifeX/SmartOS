@@ -82,9 +82,9 @@ void SerialPort::Set(byte dataBits, byte parity, byte stopBits)
 bool SerialPort::OnOpen()
 {
 	// 清空缓冲区
-	Tx.SetCapacity(256);
+	if(Tx.Capacity() == 0) Tx.SetCapacity(256);
+	if(Rx.Capacity() == 0) Rx.SetCapacity(256);
 	Tx.Clear();
-	Rx.SetCapacity(256);
 	Rx.Clear();
 
     debug_printf("Serial%d::Open(%d, %d, %d, %d) TX=P%c%d RX=P%c%d Cache(TX=%d, RX=%d)\r\n", Index + 1, _baudRate, _dataBits, _parity, _stopBits, _PIN_NAME(Pins[0]), _PIN_NAME(Pins[1]), Tx.Capacity(), Rx.Capacity());
@@ -107,7 +107,7 @@ void SerialPort::OnClose()
 // 向某个端口写入数据。如果size为0，则把data当作字符串，一直发送直到遇到\0为止
 bool SerialPort::OnWrite(const Buffer& bs)
 {
-	if(!bs.Length()) return true;
+	if(!Opened || !bs.Length()) return true;
 /*#if defined(STM32F0) || defined(GD32F150)
 	Set485(true);
 	// 中断发送过于频繁，影响了接收中断，采用循环阻塞发送。后面考虑独立发送任务

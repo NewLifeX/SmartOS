@@ -1,21 +1,20 @@
 ﻿#ifndef _Queue_H_
 #define _Queue_H_
 
-#include "ByteArray.h"
+#include "Array.h"
 
 // 队列
 // 内有一个缓冲区，游标位置，数据长度。实际有效数据仅占用缓冲区中间部分，头尾都可能有剩余
 class Queue
 {
 private:
-	ByteArray _s;	// 数据流
+	Array _s;	// 数据流
 	uint _head;		// 头部位置
     uint _tail;		// 尾部位置
 	uint _size;		// 长度
 
 public:
-	// 分配指定大小的缓冲区
-	explicit Queue(uint len = 0);
+	Queue();
 
 	bool Empty() const { return _size == 0; }	// 队列空
 	uint Capacity() const { return _s.Capacity(); }	// 队列容量
