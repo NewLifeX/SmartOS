@@ -203,7 +203,7 @@ void InputPort::ClosePin()
 	{
 		st->Port = nullptr;
 
-		InputPort_CloseEXTI(_Pin);
+		InputPort_CloseEXTI(*this);
 	}
 }
 

@@ -86,7 +86,7 @@ public:
     byte Speed		= GPIO_MAX_SPEED;			// 速度
 
     OutputPort();
-    OutputPort(Pin pin);
+    explicit OutputPort(Pin pin);
     OutputPort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 	OutputPort& Init(Pin pin, bool invert);
@@ -122,7 +122,7 @@ class AlternatePort : public OutputPort
 {
 public:
 	AlternatePort();
-    AlternatePort(Pin pin);
+    explicit AlternatePort(Pin pin);
     AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
 
 protected:
@@ -165,7 +165,7 @@ public:
 	Delegate2<InputPort&, bool>	Press;	// 按下事件
 
 	InputPort();
-    InputPort(Pin pin, bool floating = true, PuPd pull = UP);
+    explicit InputPort(Pin pin, bool floating = true, PuPd pull = UP);
     virtual ~InputPort();
 
 	InputPort& Init(Pin pin, bool invert);
@@ -203,7 +203,7 @@ class AnalogInPort : public Port
 {
 public:
     AnalogInPort() : Port() { }
-    AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
+    explicit AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:
     virtual void OnOpen();

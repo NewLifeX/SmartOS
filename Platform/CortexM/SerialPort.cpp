@@ -51,7 +51,11 @@ void SerialPort::OnOpen2()
 	const ushort paritys[]	= { USART_Parity_No, USART_Parity_Even, USART_Parity_Odd };
 	if(_parity >= ArrayLength(paritys)) _parity	= 0;
 
+#ifdef STM32F0
+	const ushort StopBits[]	= { 1, USART_StopBits_1, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
+#else
 	const ushort StopBits[]	= { 1, USART_StopBits_1, 5, USART_StopBits_0_5, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
+#endif
 	ushort stop	= StopBits[1];
 	for(int i=0; i<ArrayLength(StopBits); i+=2)
 	{
@@ -61,7 +65,7 @@ void SerialPort::OnOpen2()
 			break;
 		}
 	}
-	
+
 	USART_InitTypeDef  p;
     USART_StructInit(&p);
 	p.USART_BaudRate	= _baudRate;

@@ -29,7 +29,7 @@ void Port::AFConfig(GPIO_AF GPIO_AF) const
 {
 	assert(Opened, "打开后才能配置AF");
 
-	GPIO_PinAFConfig((GPIO_TypeDef*)Group, _Pin & 0x000F, GPIO_AF);
+	GPIO_PinAFConfig(IndexToGroup(_Pin >> 4), _Pin & 0x000F, GPIO_AF);
 }
 #endif
 
@@ -80,6 +80,9 @@ void AlternatePort::OpenPin()
 #ifdef REGION_Input
 
 extern int Bits2Index(ushort value);
+extern bool InputPort_HasEXTI(int line, const InputPort& port);
+extern void GPIO_ISR(int num);
+extern void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode);
 
 void InputPort::OpenPin()
 {
