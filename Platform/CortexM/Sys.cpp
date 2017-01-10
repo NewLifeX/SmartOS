@@ -12,10 +12,8 @@ struct HandlerRemap StrBoot __attribute__((at(0x2000fff0)));
 #endif
 
 extern uint __heap_base;
-extern uint __heap_limit;
+//extern uint __heap_limit;
 extern uint __initial_sp;
-extern uint __microlib_freelist;
-extern uint __microlib_freelist_initialised;
 
 #ifndef BIT
     #define BIT(x)	(1 << (x))
@@ -65,34 +63,6 @@ _force_inline void InitHeapStack(uint top)
 
 	// 必须先拷贝完成栈，再修改栈指针
 	__set_MSP(msp);
-
-	// 这个时候还没有初始化堆，我们来设置堆到内存最大值，让堆栈共用RAM剩下全部
-	//__microlib_freelist
-	p = &__heap_base + 1;
-	if(!__microlib_freelist_initialised)
-	{
-		//*(uint*)&__heap_limit = top;
-		// 堆顶地址__heap_limit被编译固化到malloc函数附近，无法修改。只能这里负责初始化整个堆
-		__microlib_freelist = (uint)p;	// 空闲链表指针
-		// 设置堆大小，直达天花板
-		*p = (top - (uint)p) & 0xFFFFFFF8;	// 空闲链表剩余大小
-		*(p + 1) = 0;
-
-		__microlib_freelist_initialised = 1;
-	}
-	else
-	{
-		//// 如果已经初始化堆，则直接增加大小即可
-		//*p += (top - (uint)&__heap_limit) & 0xFFFFFFF8;	// 空闲链表剩余大小
-
-		// 需要找到最后一个空闲节点，然后把大小加上去
-		uint* p = (uint*)__microlib_freelist;
-		// 每一个节点由4字节大小以及4字节下一节点的指针组成
-		while(*(p + 1)) p = (uint*)*(p + 1);
-
-		// 给最后一个空闲节点增加大小
-		*p += (top - (uint)p) & 0xFFFFFFF8;	// 空闲链表剩余大小
-	}
 }
 
 // 获取JTAG编号，ST是0x041，GD是0x7A3
@@ -221,18 +191,6 @@ void TSys::SetStackTop(uint addr)
 
 bool TSys::CheckMemory() const
 {
-#if DEBUG
-	uint msp = __get_MSP();
-
-	//if(__microlib_freelist >= msp) return false;
-	assert(__microlib_freelist + 0x40 < msp, "堆栈相互穿透，内存已用完！可能是堆分配或野指针带来了内存泄漏！");
-
-	// 如果堆只剩下64字节，则报告失败，要求用户扩大堆空间以免不测
-	//uint end = SRAM_BASE + (RAMSize << 10);
-	//if(__microlib_freelist + 0x40 >= end) return false;
-	assert(__microlib_freelist + 0x40 < SRAM_BASE + (RAMSize << 10), "堆栈相互穿透，内存已用完！一定是堆分配带来了内存泄漏！");
-#endif
-
 	return true;
 }
 
@@ -333,7 +291,7 @@ void TSys::OnShowInfo() const
     debug_printf("\r\n");
 
 	// 输出堆信息
-	uint start	= (uint)&__heap_base;
+	uint start	= HeapBase();
 	// F4有64k的CCM内存
 #if defined(STM32F4)
 	if(start < 0x20000000) start = 0x20000000;
@@ -341,7 +299,6 @@ void TSys::OnShowInfo() const
 	uint end	= SRAM_BASE + (RAMSize << 10);
 	uint size	= end - start;
 	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
-	start = (uint)&__heap_limit;
 #if defined(STM32F4)
 	if(start < 0x20000000) start = 0x20000000;
 #endif
