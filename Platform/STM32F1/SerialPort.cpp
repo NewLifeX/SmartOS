@@ -13,7 +13,7 @@ void SerialPort_Opening(SerialPort& sp)
 	auto& rx	= sp.Ports[1];
 
 	// 串口引脚初始化
-    if(!tx) tx	= new OutputPort(sp.Pins[0]);
+    if(!tx) tx	= new AlternatePort(sp.Pins[0]);
     if(!rx)
 	{
 		auto port	= new InputPort();
