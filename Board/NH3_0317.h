@@ -8,7 +8,7 @@
 #include "App\Alarm.h"
 #include "Device\RTC.h"
 
-// WIFI WRGB调色
+// 氨气
 class NH3_0317
 {
 public:
