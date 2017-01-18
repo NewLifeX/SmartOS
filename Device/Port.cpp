@@ -61,7 +61,7 @@ bool Port::Empty() const
 {
 	if(_Pin != P0) return false;
 
-	return false;
+	return true;
 }
 
 void Port::Clear()

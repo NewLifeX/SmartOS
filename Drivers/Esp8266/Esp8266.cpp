@@ -63,7 +63,7 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 {
 	Set(port);
 
-	if (power != P0) _power.Init(power, false);
+	_power.Init(power, false);
 	if (rst != P0) _rst.Init(rst, true);
 
 	_task = 0;
@@ -1063,18 +1063,18 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 
 	bool haveChang = false;
 	// 现有密码与设置密码不一致才写FLASH
-	if (*SSID != ssid  || *Pass != pass)
+	if (*SSID != ssid || *Pass != pass)
 	{
 		haveChang = true;
 		// 保存密码
 		*SSID = ssid;
 		*Pass = pass;
-	// 组网后单独STA模式，调试时使用混合模式
-	//#if DEBUG
-	//	Mode	= SocketMode::STA_AP;
-	//#else
+		// 组网后单独STA模式，调试时使用混合模式
+		//#if DEBUG
+		//	Mode	= SocketMode::STA_AP;
+		//#else
 		Mode = SocketMode::Station;
-	//#endif
+		//#endif
 		SaveConfig();
 	}
 
@@ -1087,7 +1087,7 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 	// 返回结果
 	result.Write((byte)true);
 	// 延迟重启
-	if(haveChang)Sys.Reboot(5000);
+	if (haveChang)Sys.Reboot(5000);
 
 	return true;
 }

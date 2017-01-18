@@ -152,7 +152,7 @@ void NH3_0317::InitClient()
 	// 创建客户端
 	auto client = new TokenClient();
 	client->Cfg = tk;
-
+	client->UseLocal();
 	Client = client;
 	Client->MaxNotActive = 480000;
 	// 重启
