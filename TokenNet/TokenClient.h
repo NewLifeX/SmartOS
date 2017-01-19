@@ -128,7 +128,7 @@ private:
 
 	Delegate2<Message&, Controller&>	_LocalReceive;
 
-	byte	NextReport;		// 下次上报偏移，0不动
+	int		NextReport = -1;	// 下次上报偏移，-1不动
 	byte	ReportLength;	// 下次上报数据长度
 
 	void LoopTask();

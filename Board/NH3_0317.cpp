@@ -15,8 +15,8 @@ NH3_0317* NH3_0317::Current = nullptr;
 NH3_0317::NH3_0317()
 {
 	//LedPins.Add(PA4);
-	ButtonPins.Add(PB0);
-	LedPins.Add(PA0);
+	ButtonPins.Add(PA0);
+	LedPins.Add(PB0);
 
 	LedsShow = false;
 	LedsTaskId = 0;
@@ -143,6 +143,11 @@ ISocketHost* NH3_0317::Create8266()
 
 /******************************** Token ********************************/
 
+void NH3_0317::SetStore(void*data, int len)
+{
+	if (!Client)return;
+	Client->Store.Data.Set(data, len);
+}
 void NH3_0317::InitClient()
 {
 	if (Client) return;
@@ -352,7 +357,7 @@ void NH3_0317::OnLongPress(InputPort* port, bool down)
 	{
 		if(client) client->Reset("按键重置");
 	}
-	else if (time >= 3000)
+	else if (time >= 1000)
 	{
 		if(client) client->Reboot("按键重启");
 		Sys.Reboot(1000);

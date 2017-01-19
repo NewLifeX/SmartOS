@@ -17,35 +17,35 @@
 
 #include "Security\RC4.h"
 
-TokenClient* TokenClient::Current	= nullptr;
+TokenClient* TokenClient::Current = nullptr;
 
 static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
 	: Routes(String::Compare)
 {
-	Token	= 0;
+	Token = 0;
 
-	Opened	= false;
-	Status	= 0;
+	Opened = false;
+	Status = 0;
 
-	LoginTime	= 0;
-	LastSend	= 0;
-	LastActive	= 0;
-	Delay	= 0;
-	MaxNotActive	= 0;
+	LoginTime = 0;
+	LastSend = 0;
+	LastActive = 0;
+	Delay = 0;
+	MaxNotActive = 0;
 
-	Master	= nullptr;
-	Cfg	= nullptr;
+	Master = nullptr;
+	Cfg = nullptr;
 
-	Received	= nullptr;
-	Param	= nullptr;
+	Received = nullptr;
+	Param = nullptr;
 
-	NextReport	= 0;
-	ReportLength	= 0;
+	NextReport = -1;
+	ReportLength = 0;
 
 	assert(!Current, "只能有一个令牌客户端实例");
-	Current	= this;
+	Current = this;
 
 	// 重启
 	//Register("Gateway/Restart", InvokeRestart, this);
@@ -303,9 +303,6 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 void TokenClient::LoopTask()
 {
 	TS("TokenClient::LoopTask");
-
-	CheckReport();
-
 	// 状态。0准备、1握手完成、2登录后
 	switch (Status)
 	{
@@ -326,6 +323,7 @@ void TokenClient::LoopTask()
 		break;
 	}
 
+	CheckReport();
 	// 检查超时会话。倒序，因为可能有删除
 	// auto& cs = Controls;
 	auto & cs = Sessions;
@@ -628,8 +626,8 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		if (result == 0xF7)
 		{
 			// 任何错误，重新握手
-			Status	= 1;
-			Token	= 0;
+			Status = 1;
+			Token = 0;
 			Register();
 			return false;
 		}
@@ -641,10 +639,10 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 	}
 	else
 	{
-		Status	= 2;
+		Status = 2;
 		debug_printf("登录成功！ ");
 
-		Token	= logMsg.Token;
+		Token = logMsg.Token;
 
 		if (ctrl) ctrl->Token = Token;
 
@@ -805,7 +803,7 @@ void TokenClient::ReportAsync(int start, uint length)
 	if (start + length > Store.Data.Length())
 	{
 		debug_printf("布置异步上报数据失败\r\n");
-		debug_printf("sta:%d  len:%d  data.len:%d\r\n",start,length,Store.Data.Length());
+		debug_printf("sta:%d  len:%d  data.len:%d\r\n", start, length, Store.Data.Length());
 		return;
 	}
 
@@ -819,11 +817,10 @@ void TokenClient::ReportAsync(int start, uint length)
 bool TokenClient::CheckReport()
 {
 	//debug_printf("CheckReport\r\n");
-	uint offset = NextReport;
+	auto offset = NextReport;
 	uint len = ReportLength;
-	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 
-	if (!offset) return false;
+	if (offset < 0) return false;
 
 	// 检查索引，否则数组越界
 	auto& bs = Store.Data;
@@ -834,7 +831,7 @@ bool TokenClient::CheckReport()
 		else
 			Write(offset, Buffer(&bs[offset], len));
 	}
-	NextReport = 0;
+	NextReport = -1;
 
 	return true;
 }

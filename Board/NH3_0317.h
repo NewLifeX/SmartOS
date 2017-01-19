@@ -39,6 +39,8 @@ public:
 
 	ISocketHost* Create8266();
 
+	void SetStore(void* data, int len);
+
 	void InitClient();
 	void InitNet();
 	void InitAlarm();
