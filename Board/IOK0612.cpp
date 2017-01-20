@@ -166,6 +166,8 @@ void IOK0612::InitClient()
 	// 获取所有Ivoke命令
 	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
 
+	InitAlarm();
+
 	if (Data && Size > 0)
 	{
 		auto& ds = Client->Store;
