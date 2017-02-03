@@ -15,7 +15,7 @@ enum class ProtocolType
 };
 
 // IP地址
-class IPAddress : public Object
+class IPAddress
 {
 public:
 	uint	Value;	// 地址
@@ -44,7 +44,8 @@ public:
 	uint GetSubNet(const IPAddress& mask) const;
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
+	void Show(bool newLine = false) const { ToString().Show(newLine); }
 
     friend bool operator==(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value == addr2.Value; }
     friend bool operator!=(const IPAddress& addr1, const IPAddress& addr2) { return addr1.Value != addr2.Value; }

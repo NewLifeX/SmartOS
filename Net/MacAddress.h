@@ -4,7 +4,7 @@
 class Buffer;
 
 // Mac地址
-class MacAddress : public Object
+class MacAddress
 {
 public:
 	// 长整型转为Mac地址，取内存前6字节。因为是小字节序，需要v4在前，v2在后
@@ -29,7 +29,8 @@ public:
 	void CopyTo(byte* macs) const;
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
+	void Show(bool newLine = false) const { ToString().Show(newLine); }
 
     friend bool operator==(const MacAddress& addr1, const MacAddress& addr2)
 	{

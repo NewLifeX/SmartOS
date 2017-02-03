@@ -94,8 +94,9 @@ void MacAddress::CopyTo(byte* macs) const
 	if(macs) Buffer((byte*)&Value, 6).CopyTo(0, macs, 6);
 }
 
-String& MacAddress::ToStr(String& str) const
+String MacAddress::ToString() const
 {
+	String str;
 	byte* macs = (byte*)&Value;
 
 	for(int i=0; i<6; i++)
@@ -135,7 +136,7 @@ MacAddress MacAddress::Parse(const String& macstr)
 #if NET_DEBUG
 	// 只显示失败
 	net_printf("MacAddress::Parse %s => ", macstr.GetBuffer());
-	mac.Show(true);
+	mac.ToString().Show(true);
 #endif
 
 	return mac;

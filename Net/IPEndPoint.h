@@ -4,7 +4,7 @@
 #include "IPAddress.h"
 
 // IP结点
-class IPEndPoint : public Object
+class IPEndPoint
 {
 public:
 	IPAddress	Address;	// 地址
@@ -21,7 +21,8 @@ public:
 	void CopyTo(byte* ips) const;
 
 	// 输出对象的字符串表示方式
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
+	void Show(bool newLine = false) const { ToString().Show(newLine); }
 
 	static const IPEndPoint& Any();
 };

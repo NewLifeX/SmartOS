@@ -126,8 +126,9 @@ void IPAddress::CopyTo(byte* ips) const
 	if(ips) Buffer((byte*)&Value, 4).CopyTo(0, ips, 4);
 }
 
-String& IPAddress::ToStr(String& str) const
+String IPAddress::ToString() const
 {
+	String str;
 	byte* ips = (byte*)&Value;
 
 	for(int i=0; i<4; i++)

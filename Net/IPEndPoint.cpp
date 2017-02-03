@@ -57,13 +57,10 @@ void IPEndPoint::CopyTo(byte* ips) const
 	if(ips) ToArray().CopyTo(0, ips, 6);
 }
 
-String& IPEndPoint::ToStr(String& str) const
+String IPEndPoint::ToString() const
 {
-	Address.ToStr(str);
+	auto str	= Address.ToString();
 
-	//char ss[7];
-	//int len = sprintf(ss, ":%d", Port);
-	//str.Copy(ss, len, str.Length());
 	str.Concat(':');
 	str.Concat(Port);
 
