@@ -7,7 +7,10 @@
 
 #include "Device\Spi.h"
 #include "Drivers\W5500.h"
+#include "Drivers\Esp8266\Esp8266.h"
 #include "TokenNet\TokenController.h"
+
+#include "Device\RTC.h"
 
 PA0903* PA0903::Current = nullptr;
 
@@ -16,14 +19,14 @@ PA0903::PA0903()
 	LedPins.Add(PB1);
 	LedPins.Add(PB14);
 
-	Host = nullptr;
-	Client = nullptr;
-	ProxyFac = nullptr;
-	AlarmObj = nullptr;
+	Host	= nullptr;
+	Client	= nullptr;
+	ProxyFac	= nullptr;
+	AlarmObj	= nullptr;
 
-	Data = nullptr;
-	Size = 0;
-	Current = this;
+	Data	= nullptr;
+	Size	= 0;
+	Current	= this;
 }
 
 void PA0903::Init(ushort code, cstring name, COM message)
@@ -33,17 +36,17 @@ void PA0903::Init(ushort code, cstring name, COM message)
 	sys.Name = (char*)name;
 
 	// RTC 提取时间
-	auto Rtc = HardRTC::Instance();
-	Rtc->LowPower = false;
-	Rtc->External = false;
-	Rtc->Init();
-	Rtc->Start(false, false);
+	HardRTC::Start(false, false);
 
 	// 初始化系统
 	sys.Init();
 #if DEBUG
 	sys.MessagePort = message; // 指定printf输出的串口
 	Sys.ShowInfo();
+
+	WatchDog::Start(20000, 10000);
+#else
+	WatchDog::Start();
 
 	// 系统休眠时自动进入低功耗
 	Power::AttachTimeSleep();
@@ -92,6 +95,36 @@ ISocketHost* PA0903::Create5500()
 
 	return host;
 }
+
+ISocketHost* PA0903::Create8266(bool apOnly)
+{
+	auto host = new Esp8266(COM4, PE2, PD3);
+
+	// 初次需要指定模式 否则为 Wire
+	bool join = host->SSID && *host->SSID;
+	// host->Mode = SocketMode::Station;
+	// if (!join) host->Mode = SocketMode::AP;
+	if (!join)
+	{
+		*host->SSID = "WSWL";
+		*host->Pass = "12345678";
+
+		host->Mode = SocketMode::STA_AP;
+		host->WorkMode = SocketMode::STA_AP;
+	}
+
+	// 绑定委托，避免5500没有连接时导致没有启动客户端
+	host->NetReady.Bind(&PA0903::OpenClient, this);
+
+	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	host->OpenAsync();
+
+	return host;
+}
+
+/******************************** Token ********************************/
 
 void PA0903::InitClient()
 {
@@ -190,14 +223,25 @@ void OnInitNet(void* param)
 {
 	auto& bsp = *(PA0903*)param;
 
-	// 检查是否连接网线
+	/*// 检查是否连接网线
 	auto host = (W5500*)bsp.Create5500();
 	// 软路由的DHCP要求很严格，必须先把自己IP设为0
 	host->IP = IPAddress::Any();
 
 	host->EnableDNS();
 	host->EnableDHCP();
-	bsp.Host = host;
+	bsp.Host = host;*/
+
+	auto esp = bsp.Create8266(false);
+	if (esp)
+	{
+		// 未组网时，主机留空，仅保留AP主机
+		bool join = esp->SSID && *esp->SSID;
+		if (join && esp->IsStation())
+			bsp.Host = esp;
+		//else
+		//	bsp.HostAP = esp;
+	}
 }
 
 void  PA0903::InitProxy()

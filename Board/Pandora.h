@@ -45,7 +45,7 @@ public:
 	ISocketHost* Create5500();
 
 	// 打开Esp8266，作为主控或者纯AP
-	//ISocketHost* Create8266(bool apOnly);
+	ISocketHost* Create8266(bool apOnly);
 	//ITransport* Create2401();
 
 	void InitClient();

@@ -64,7 +64,7 @@ void AP0801::Init(ushort code, cstring name, COM message)
 	WatchDog::Start();
 
 	// 系统休眠时自动进入低功耗
-	//Power::AttachTimeSleep();
+	Power::AttachTimeSleep();
 #endif
 
 	// Flash最后一块作为配置区
@@ -97,6 +97,7 @@ void AP0801::SetStore(void*data, int len)
 
 	Client->Store.Data.Set(data, len);
 }
+
 void AP0801::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)

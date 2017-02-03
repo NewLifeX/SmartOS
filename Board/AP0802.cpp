@@ -13,6 +13,8 @@
 #include "..\TinyNet\TinyConfig.h"
 #include "..\App\FlushPort.h"
 
+#include "Device\RTC.h"
+
 AP0802 * AP0802::Current = nullptr;
 static TokenClient*	Client = nullptr;	// 令牌客户端
 
@@ -39,6 +41,9 @@ void AP0802::Init(ushort code, cstring name, COM message)
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
 	sys.Name = (char*)name;
+
+	// RTC 提取时间
+	HardRTC::Start(false, false);
 
 	// 初始化系统
 	sys.Init();
