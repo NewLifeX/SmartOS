@@ -19,6 +19,7 @@ public:
 	String(char* str, int length, bool expand);
 	// 包装静态字符串，直接使用，修改时扩容
 	String(cstring str, int length);
+	explicit String(bool value);
 	explicit String(char c);
 	explicit String(byte value, int radix = 10);
 	explicit String(short value, int radix = 10);
@@ -29,13 +30,11 @@ public:
 	explicit String(UInt64 value, int radix = 10);
 	explicit String(float value, int decimalPlaces = 4);
 	explicit String(double value, int decimalPlaces = 8);
-	//virtual ~String();
 
 	using Array::SetLength;
 	using Array::Copy;
 
 	// 内存管理
-	//inline uint Length() const { return _Length; }
 	inline cstring GetBuffer() const { return (cstring)_Arr; }
 	// 设置数组长度。改变长度后，确保最后以0结尾
 	virtual bool SetLength(int length, bool bak);
@@ -57,6 +56,7 @@ public:
 	bool Concat(const Object& obj);
 	bool Concat(const String& str);
 	bool Concat(cstring cstr);
+	bool Concat(bool value);
 	bool Concat(char c);
 	bool Concat(byte c, int radix = 10);
 	bool Concat(short num, int radix = 10);
@@ -68,31 +68,15 @@ public:
 	bool Concat(float num, int decimalPlaces = 4);
 	bool Concat(double num, int decimalPlaces = 8);
 
-	/*template<typename T>
-	String& operator += (T rhs)	{Concat(rhs); return (*this);}*/
-	String& operator += (const Object& rhs)	{Concat(rhs); return (*this);}
-	String& operator += (const String& rhs)	{Concat(rhs); return (*this);}
-	String& operator += (cstring cstr)	{Concat(cstr); return (*this);}
-	String& operator += (char c)			{Concat(c); return (*this);}
-	String& operator += (byte num)			{Concat(num); return (*this);}
-	String& operator += (int num)			{Concat(num); return (*this);}
-	String& operator += (uint num)			{Concat(num); return (*this);}
-	String& operator += (Int64 num)			{Concat(num); return (*this);}
-	String& operator += (UInt64 num)		{Concat(num); return (*this);}
-	String& operator += (float num)			{Concat(num); return (*this);}
-	String& operator += (double num)		{Concat(num); return (*this);}
+	// 模版连接可连接任何带有ToString方法的对象
+	template<class T>
+	bool Concat(const T& rhs) { return Concat(rhs.ToString()); }
 
-	friend String& operator + (String& lhs, const Object& rhs);
-	friend String& operator + (String& lhs, const String& rhs);
-	friend String& operator + (String& lhs, cstring cstr);
-	friend String& operator + (String& lhs, char c);
-	friend String& operator + (String& lhs, byte num);
-	friend String& operator + (String& lhs, int num);
-	friend String& operator + (String& lhs, uint num);
-	friend String& operator + (String& lhs, Int64 num);
-	friend String& operator + (String& lhs, UInt64 num);
-	friend String& operator + (String& lhs, float num);
-	friend String& operator + (String& lhs, double num);
+	// 重载字符串连接运算符
+	template<class T>
+	String& operator += (const T& rhs)		{ Concat(rhs); return (*this); }
+	template<class T>
+	friend String& operator + (String& lhs, const T& rhs) { lhs.Concat(rhs); return lhs; }
 
     explicit operator bool() const { return _Length > 0; }
     bool operator !() const { return _Length == 0; }
@@ -128,8 +112,6 @@ public:
 	virtual String& ToStr(String& str) const;
 	// 输出对象的字符串表示方式
 	virtual String ToString() const;
-	//// 清空已存储数据。
-	//virtual void Clear();
 
 	// 调试输出字符串
 	virtual void Show(bool newLine = false) const;
@@ -172,12 +154,6 @@ public:
 #endif
 
 private:
-	//char*	_Arr;		// 字符数组
-	//int		_Capacity;	// 容量，不包含0结束符
-	//int		_Length;		// 字符串长度，不包含0结束符
-	//bool	_needFree;	// 是否需要释放
-	//bool	_canWrite;	// 是否可写
-
 	char	Arr[0x40];
 
 	void init();

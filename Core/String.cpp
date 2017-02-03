@@ -51,6 +51,13 @@ String::String(String&& rval) : Array(Arr, ArrayLength(Arr))
 	move(rval);
 }
 
+String::String(bool value) : Array(Arr, ArrayLength(Arr))
+{
+	init();
+
+	Concat(value);
+}
+
 String::String(char c) : Array(Arr, ArrayLength(Arr))
 {
 	init();
@@ -240,18 +247,6 @@ bool String::CopyOrWrite()
 	return false;
 }
 
-/*void String::SetBuffer(const void* str, int length)
-{
-	release();
-
-	_Arr		= (char*)str;
-	_Capacity	= length;
-	_Length		= 0;
-
-	_needFree	= false;
-	_canWrite	= false;
-}*/
-
 bool String::SetLength(int len, bool bak)
 {
 	//if(!Array::SetLength(length, bak)) return false;
@@ -282,17 +277,6 @@ int String::Copy(int destIndex, const void* src, int len)
 
 	return rs;
 }
-
-/*// 拷贝数据，默认-1长度表示两者最小长度
-int String::Copy(int destIndex, const Buffer& src, int srcIndex, int len)
-{
-	int rs	= Buffer::Copy(destIndex, src, srcIndex, len);
-	if(!rs) return 0;
-
-	_Arr[_Length]	= '\0';
-
-	return rs;
-}*/
 
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
 int String::CopyTo(int srcIndex, void* dest, int len) const
@@ -359,6 +343,11 @@ bool String::Concat(cstring cstr)
 {
 	if (!cstr) return 0;
 	return Concat(cstr, strlen(cstr));
+}
+
+bool String::Concat(bool value)
+{
+	return Concat(value ? "true" : "false");
 }
 
 bool String::Concat(char c)
@@ -483,7 +472,7 @@ char* ftoa(char* str, double num)
 	{
 		if(str[i] == '0') str[i]	= '\0';
 	}
-	
+
 	return str;
 }
 
@@ -503,84 +492,6 @@ bool String::Concat(double num, int decimalPlaces)
 	//sprintf(buf, "%f", num);
 	//ftoa(buf, num);
 	return Concat(buf, strlen(buf));
-}
-
-String& operator + (String& lhs, const Object& rhs)
-{
-	auto& a = const_cast<String&>(lhs);
-	auto str = rhs.ToString();
-	if (!a.Concat(str._Arr, str._Length)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, const String& rhs)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(rhs._Arr, rhs._Length)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, cstring cstr)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!cstr || !a.Concat(cstr, strlen(cstr))) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, char c)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(c)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, byte num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, int num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, uint num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, Int64 num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, UInt64 num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, float num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
-}
-
-String& operator + (String& lhs, double num)
-{
-	auto& a = const_cast<String&>(lhs);
-	if (!a.Concat(num)) a.release();
-	return a;
 }
 
 int String::CompareTo(const String& s) const
@@ -782,12 +693,6 @@ String String::ToString() const
 {
 	return *this;
 }
-
-/*// 清空已存储数据。
-void String::Clear()
-{
-	release();
-}*/
 
 // 调试输出字符串
 void String::Show(bool newLine) const
