@@ -24,7 +24,7 @@ protected:
 	//virtual bool SendInternal(const Buffer& bs, const void* state);
 
 public:
-	ISocket*	Socket;
+	Socket*	Socket;
 	
 	uint		Token;	// 令牌
 	ByteArray	Key;	// 通信密码

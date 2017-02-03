@@ -356,7 +356,7 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 	return ms.Position();
 }
 
-DNS::DNS(ISocketHost& host, const IPAddress& dns) : Host(host)
+DNS::DNS(NetworkInterface& host, const IPAddress& dns) : Host(host)
 {
 	Socket	= host.CreateSocket(NetType::Udp);
 
@@ -437,7 +437,7 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 }
 
 // 快捷查询。借助主机直接查询多次
-IPAddress DNS::Query(ISocketHost& host, const String& domain, int times, int msTimeout)
+IPAddress DNS::Query(NetworkInterface& host, const String& domain, int times, int msTimeout)
 {
 	auto& any	= IPAddress::Any();
 	for(int k=0; k<2; k++)

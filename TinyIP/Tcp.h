@@ -4,7 +4,7 @@
 #include "TinyIP.h"
 
 // Tcp会话
-class TcpSocket : public TinySocket, public ITransport, public ISocket
+class TcpSocket : public TinySocket, public ITransport, public Socket
 {
 private:
 	uint		Seq;		// 序列号，本地发出数据包

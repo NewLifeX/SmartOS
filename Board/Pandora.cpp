@@ -86,7 +86,7 @@ void PA0903::InitLeds()
 	}
 }
 
-ISocketHost* PA0903::Create5500()
+NetworkInterface* PA0903::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -96,21 +96,21 @@ ISocketHost* PA0903::Create5500()
 	return host;
 }
 
-ISocketHost* PA0903::Create8266(bool apOnly)
+NetworkInterface* PA0903::Create8266(bool apOnly)
 {
 	auto host = new Esp8266(COM4, PE2, PD3);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	// host->Mode = SocketMode::Station;
-	// if (!join) host->Mode = SocketMode::AP;
+	// host->Mode = NetworkType::Station;
+	// if (!join) host->Mode = NetworkType::AP;
 	if (!join)
 	{
 		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode = SocketMode::STA_AP;
-		host->WorkMode = SocketMode::STA_AP;
+		host->Mode = NetworkType::STA_AP;
+		host->WorkMode = NetworkType::STA_AP;
 	}
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -172,7 +172,7 @@ void PA0903::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void PA0903::OpenClient(ISocketHost& host)
+void PA0903::OpenClient(NetworkInterface& host)
 {
 	assert(Client, "Client");
 
@@ -195,7 +195,7 @@ void PA0903::OpenClient(ISocketHost& host)
 	}
 }
 
-TokenController* PA0903::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+TokenController* PA0903::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);

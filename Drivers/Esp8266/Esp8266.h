@@ -9,12 +9,12 @@
 
 // 最好打开 Soket 前 不注册中断，以免AT指令乱入到中断里面去  然后信息不对称
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
-class Esp8266 : public PackPort, public ISocketHost
+class Esp8266 : public PackPort, public NetworkInterface
 {
 public:
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
 	bool	Joined;		// 是否已连接热点
-	SocketMode	WorkMode;	// 工作模式
+	NetworkType	WorkMode;	// 工作模式
 
 	IDataPort*	Led;	// 指示灯
 
@@ -32,7 +32,7 @@ public:
 	void RemoveLed();
 
 	//virtual const String ToString() const { return String("Esp8266"); }
-	virtual ISocket* CreateSocket(NetType type);
+	virtual Socket* CreateSocket(NetType type);
 	// 启用DNS
 	virtual bool EnableDNS();
 	// 启用DHCP
@@ -49,9 +49,9 @@ public:
 
 /******************************** WiFi功能指令 ********************************/
 	// 获取模式
-	SocketMode GetMode();
+	NetworkType GetMode();
 	// 设置模式。需要重启
-	bool SetMode(SocketMode mode);
+	bool SetMode(NetworkType mode);
 
 	// 连接AP相关
 	String GetJoinAP();
@@ -66,7 +66,7 @@ public:
 	String LoadStations();
 
 	bool GetDHCP(bool* sta, bool* ap);
-	bool SetDHCP(SocketMode mode, bool enable);
+	bool SetDHCP(NetworkType mode, bool enable);
 
 	MacAddress GetMAC(bool sta);
 	bool SetMAC(bool sta, const MacAddress& mac);

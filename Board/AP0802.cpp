@@ -162,7 +162,7 @@ void AP0802::InitButtons(const Delegate2<InputPort&, bool>& press)
 	}
 }
 
-ISocketHost* AP0802::Create5500()
+NetworkInterface* AP0802::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -172,20 +172,20 @@ ISocketHost* AP0802::Create5500()
 	return host;
 }
 
-ISocketHost* AP0802::Create8266(bool apOnly)
+NetworkInterface* AP0802::Create8266(bool apOnly)
 {
 	auto host = new Esp8266(COM4, PE0, PD3);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = SocketMode::AP;
+	//if (!join) host->Mode = NetworkType::AP;
 	if (!join)
 	{
 		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode = SocketMode::STA_AP;
-		host->WorkMode = SocketMode::STA_AP;
+		host->Mode = NetworkType::STA_AP;
+		host->WorkMode = NetworkType::STA_AP;
 	}
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -263,7 +263,7 @@ bool	NetBra;
 bool	EspMaster;
 bool	EspBra;
 */
-void AP0802::OpenClient(ISocketHost& host)
+void AP0802::OpenClient(NetworkInterface& host)
 {
 	/*
 	Flag   四个字节   最高字节标识esp作为Master  第二字节标识esp广播Controller
@@ -354,7 +354,7 @@ void AP0802::OpenClient(ISocketHost& host)
 	// }
 }
 
-TokenController* AP0802::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+TokenController* AP0802::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);

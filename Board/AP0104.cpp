@@ -131,7 +131,7 @@ void AP0104::InitButtons(const Delegate2<InputPort&, bool>& press)
 
 /******************************** Token ********************************/
 
-ISocketHost* AP0104::Create5500()
+NetworkInterface* AP0104::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -141,19 +141,19 @@ ISocketHost* AP0104::Create5500()
 	return host;
 }
 
-ISocketHost* AP0104::Create8266(bool apOnly)
+NetworkInterface* AP0104::Create8266(bool apOnly)
 {
 	auto host = new Esp8266(COM4, P0, P0);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = SocketMode::AP;
+	//if (!join) host->Mode = NetworkType::AP;
 	if (!join)
 	{
 		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode = SocketMode::STA_AP;
+		host->Mode = NetworkType::STA_AP;
 	}
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -221,7 +221,7 @@ void AP0104::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void AP0104::OpenClient(ISocketHost& host)
+void AP0104::OpenClient(NetworkInterface& host)
 {
 	assert(Client, "Client");
 
@@ -300,7 +300,7 @@ void AP0104::OpenClient(ISocketHost& host)
 	}
 }
 
-TokenController* AP0104::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+TokenController* AP0104::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);

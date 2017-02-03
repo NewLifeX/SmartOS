@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 
 #include "TokenNet\TokenClient.h"
 #include "Device\Port.h"
@@ -24,8 +25,8 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	ISocketHost*	Host;	// 网络主机
-	ISocketHost*	HostAP;	// 网络主机
+	NetworkInterface*	Host;	// 网络主机
+	NetworkInterface*	HostAP;	// 网络主机
 	byte HardwareVer;
 
 	AP0802();
@@ -43,10 +44,10 @@ public:
 	void InitPort();
 
 	// 打开以太网W5500
-	ISocketHost* Create5500();
+	NetworkInterface* Create5500();
 
 	// 打开Esp8266，作为主控或者纯AP
-	ISocketHost* Create8266(bool apOnly);
+	NetworkInterface* Create8266(bool apOnly);
 
 	ITransport* Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led);
 	ITransport* Create2401();
@@ -68,8 +69,8 @@ private:
 	Alarm*	AlarmObj;
 	// uint	Flag;		// 内部使用  标识Controller创建情况
 
-	void OpenClient(ISocketHost& host);
-	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void OpenClient(NetworkInterface& host);
+	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

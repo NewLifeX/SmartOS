@@ -78,8 +78,8 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 
 	Buffer(_sockets, 5 * 4).Clear();
 
-	Mode = SocketMode::STA_AP;
-	WorkMode = SocketMode::STA_AP;
+	Mode = NetworkType::STA_AP;
+	WorkMode = NetworkType::STA_AP;
 
 	SSID = new String();
 	Pass = new String();
@@ -162,7 +162,7 @@ bool Esp8266::OnOpen()
 
 	auto mode = WorkMode;
 	// 默认Both
-	if (mode == SocketMode::Wire) mode = SocketMode::STA_AP;
+	if (mode == NetworkType::Wire) mode = NetworkType::STA_AP;
 
 	if (GetMode() != mode)
 	{
@@ -183,7 +183,7 @@ bool Esp8266::OnOpen()
 	// 等待WiFi自动连接
 	if (!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
 	{
-		if (!join || mode == SocketMode::STA_AP) OpenAP();
+		if (!join || mode == NetworkType::STA_AP) OpenAP();
 		if (join)
 		{
 			if (!_task2) _task2 = Sys.AddTask(LoopJoinTask, this, 0, 30 * 1000, "JoinAP");
@@ -273,7 +273,7 @@ void Esp8266::TryJoinAP()
 		// 停止尝试
 		Sys.RemoveTask(_task2);
 	}
-	else if (Mode != SocketMode::STA_AP)
+	else if (Mode != NetworkType::STA_AP)
 	{
 		// 尝试若干次以后还是连接失败，则重启模块
 		auto tsk = Task::Get(_task2);
@@ -313,7 +313,7 @@ void Esp8266::Config()
 	SetAutoConn(AutoConn);
 }
 
-ISocket* Esp8266::CreateSocket(NetType type)
+Socket* Esp8266::CreateSocket(NetType type)
 {
 	auto es = (EspSocket**)_sockets;
 
@@ -348,13 +348,13 @@ bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
 bool Esp8266::EnableDHCP()
 {
-	//Mode	= SocketMode::STA_AP;
+	//Mode	= NetworkType::STA_AP;
 	//return true;
-	//return SetDHCP(SocketMode::Both, true);
+	//return SetDHCP(NetworkType::Both, true);
 
 	if (!Opened) return false;
 
-	if (!SetDHCP(SocketMode::STA_AP, true)) return false;
+	if (!SetDHCP(NetworkType::STA_AP, true)) return false;
 
 	NetReady(*this);
 
@@ -758,7 +758,7 @@ bool Esp8266::Restore()
 OK
 "
 */
-bool Esp8266::SetMode(SocketMode mode)
+bool Esp8266::SetMode(NetworkType mode)
 {
 	String cmd = "AT+CWMODE=";
 	cmd += (byte)mode;
@@ -780,11 +780,11 @@ bool Esp8266::SetMode(SocketMode mode)
 OK
 "
 */
-SocketMode Esp8266::GetMode()
+NetworkType Esp8266::GetMode()
 {
 	TS("Esp8266::GetMode");
 
-	auto mod = SocketMode::Station;
+	auto mod = NetworkType::Station;
 
 	auto rs = Send("AT+CWMODE?\r\n", "OK");
 	if (!rs) return mod;
@@ -792,7 +792,7 @@ SocketMode Esp8266::GetMode()
 	int p = rs.IndexOf(':');
 	if (p < 0) return mod;
 
-	return	(SocketMode)rs.Substring(p + 1, 1).ToInt();
+	return	(NetworkType)rs.Substring(p + 1, 1).ToInt();
 }
 
 // +CWJAP:<ssid>,<bssid>,<channel>,<rssi>
@@ -928,18 +928,18 @@ bool Esp8266::GetDHCP(bool* sta, bool* ap)
 	return true;
 }
 
-bool Esp8266::SetDHCP(SocketMode mode, bool enable)
+bool Esp8266::SetDHCP(NetworkType mode, bool enable)
 {
 	byte m = 0;
 	switch (mode)
 	{
-	case SocketMode::Station:
+	case NetworkType::Station:
 		m = 1;
 		break;
-	case SocketMode::AP:
+	case NetworkType::AP:
 		m = 0;
 		break;
-	case SocketMode::STA_AP:
+	case NetworkType::STA_AP:
 		m = 2;
 		break;
 	default:
@@ -1071,9 +1071,9 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 		*Pass = pass;
 		// 组网后单独STA模式，调试时使用混合模式
 		//#if DEBUG
-		//	Mode	= SocketMode::STA_AP;
+		//	Mode	= NetworkType::STA_AP;
 		//#else
-		Mode = SocketMode::Station;
+		Mode = NetworkType::Station;
 		//#endif
 		SaveConfig();
 	}

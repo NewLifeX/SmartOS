@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 
 #include "TokenNet\TokenClient.h"
 #include "App\Alarm.h"
@@ -18,7 +19,7 @@ public:
 
 	byte LedsShow;					// LED 显示状态开关  0 刚启动时候的20秒   1 使能   2 失能
 
-	ISocketHost*	Host;			// 网络主机
+	NetworkInterface*	Host;			// 网络主机
 	TokenClient*	Client;			//
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
@@ -35,7 +36,7 @@ public:
 
 	byte LedStat(byte showmode);
 
-	ISocketHost* Create8266(Pin power = PB2);
+	NetworkInterface* Create8266(Pin power = PB2);
 
 	void InitClient();
 	void InitNet(Pin power = PB2);
@@ -52,8 +53,8 @@ private:
 	int		Size;
 	InputPort* RestPort;
 
-	void OpenClient(ISocketHost& host);
-	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void OpenClient(NetworkInterface& host);
+	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

@@ -614,7 +614,7 @@ void StatTask(void* param)
 	st->Clear();
 
 	// 向以太网广播
-	/*auto sock = dynamic_cast<ISocket*>(Port);
+	/*auto sock = dynamic_cast<Socket*>(Port);
 	if(sock)
 	{
 		IPEndPoint ep(IPAddress::Broadcast(), 514);

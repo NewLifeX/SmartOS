@@ -23,8 +23,8 @@ public:
 
 	// HardRTC*		Rtc;
 
-	ISocketHost*	Host;	// 网络主机
-	ISocketHost*	HostAP;	// 网络主机
+	NetworkInterface*	Host;	// 网络主机
+	NetworkInterface*	HostAP;	// 网络主机
 	//TokenClient*	Client;	// 令牌客户端
 	//ProxyFactory*	ProxyFac;	// 透传管理器
 	Alarm*			AlarmObj;
@@ -50,9 +50,9 @@ public:
 	// void InitPort();
 
 	// 打开以太网W5500
-	ISocketHost* Create5500();
+	NetworkInterface* Create5500();
 	// 打开Esp8266，作为主控或者纯AP
-	ISocketHost* Create8266(bool apOnly);
+	NetworkInterface* Create8266(bool apOnly);
 
 	// ITransport* Create2401();
 
@@ -78,8 +78,8 @@ private:
 
 	// uint	Flag;		// 内部使用  标识Controller创建情况
 
-	void OpenClient(ISocketHost& host);
-	void AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void OpenClient(NetworkInterface& host);
+	void AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

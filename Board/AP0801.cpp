@@ -129,7 +129,7 @@ void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 	}
 }
 
-ISocketHost* AP0801::Create5500()
+NetworkInterface* AP0801::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -148,21 +148,21 @@ ISocketHost* AP0801::Create5500()
 	tc->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 }*/
 
-ISocketHost* AP0801::Create8266(bool apOnly)
+NetworkInterface* AP0801::Create8266(bool apOnly)
 {
 	auto host = new Esp8266(COM4, PE2, PD3);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	// host->Mode = SocketMode::Station;
-	// if (!join) host->Mode = SocketMode::AP;
+	// host->Mode = NetworkType::Station;
+	// if (!join) host->Mode = NetworkType::AP;
 	if (!join)
 	{
 		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode = SocketMode::STA_AP;
-		host->WorkMode = SocketMode::STA_AP;
+		host->Mode = NetworkType::STA_AP;
+		host->WorkMode = NetworkType::STA_AP;
 	}
 
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
@@ -245,7 +245,7 @@ void AP0801::Register(uint offset, uint size, Handler hook)
 	ds.Register(offset, size, hook);
 }
 
-void AP0801::OpenClient(ISocketHost& host)
+void AP0801::OpenClient(NetworkInterface& host)
 {
 	assert(Client, "Client");
 	// debug_printf("\r\n OpenClient Flag :0x%08X\r\n", Flag);
@@ -334,7 +334,7 @@ void AP0801::OpenClient(ISocketHost& host)
 	// }
 }
 
-void AP0801::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+void AP0801::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);

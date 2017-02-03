@@ -93,19 +93,19 @@ void IOK027X::InitLeds()
 	}
 }
 
-ISocketHost* IOK027X::Create8266(Pin power)
+NetworkInterface* IOK027X::Create8266(Pin power)
 {
 	auto host = new Esp8266(COM2, power, PA1);
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = SocketMode::AP;
+	//if (!join) host->Mode = NetworkType::AP;
 
 	if (!join)
 	{
 		*host->SSID = "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode = SocketMode::STA_AP;
+		host->Mode = NetworkType::STA_AP;
 	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&IOK027X::OpenClient, this);
@@ -172,7 +172,7 @@ void IOK027X::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void IOK027X::OpenClient(ISocketHost& host)
+void IOK027X::OpenClient(NetworkInterface& host)
 {
 	assert(Client, "Client");
 
@@ -201,7 +201,7 @@ void IOK027X::OpenClient(ISocketHost& host)
 		Client->AttachControls();
 }
 
-TokenController* IOK027X::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+TokenController* IOK027X::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket = host.CreateRemote(uri);

@@ -42,7 +42,7 @@ static void OnDhcpStop(Dhcp& dhcp)
 	}
 }
 
-ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
+NetworkInterface* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort* led)
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
@@ -60,7 +60,7 @@ ISocketHost* Token::CreateW5500(SPI spi_, Pin irq, Pin rst, Pin power, IDataPort
 	return net;
 }
 
-ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
+NetworkInterface* Token::Create2860(SPI spi_, Pin irq, Pin rst)
 {
 	debug_printf("\r\nENC2860::Create \r\n");
 
@@ -83,7 +83,7 @@ ISocketHost* Token::Create2860(SPI spi_, Pin irq, Pin rst)
 	return _tip;
 }
 
-TokenClient* Token::CreateClient(ISocketHost* host)
+TokenClient* Token::CreateClient(NetworkInterface* host)
 {
 	debug_printf("\r\nCreateClient \r\n");
 
@@ -308,16 +308,16 @@ ITransport* Token::CreateShunCom(COM index, int baudRate, Pin rst, Pin power, Pi
 
 void StartGateway(void* param)
 {
-	//ISocket* socket	= nullptr;
+	//Socket* socket	= nullptr;
 	auto gw	= Gateway::Current;
-	//if(gw) socket = dynamic_cast<ISocket*>(gw->Client->Control->Port);
+	//if(gw) socket = dynamic_cast<Socket*>(gw->Client->Control->Port);
 
 	/*auto tk = TokenConfig::Current;
 
 	if(tk && tk->Server.Length() > 0)
 	{
 		// 根据DNS获取云端IP地址
-		auto ip	= DNS::Query(*(ISocketHost*)param, tk->Server);
+		auto ip	= DNS::Query(*(NetworkInterface*)param, tk->Server);
 		if(ip == IPAddress::Any())
 		{
 			debug_printf("DNS::Query %s 失败！\r\n", tk->Server.GetBuffer());

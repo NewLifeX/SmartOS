@@ -207,7 +207,7 @@ typedef struct : ByteStruct
 /****************************** 基础类 ************************************/
 
 // 硬件Socket控制器
-class HardSocket : public Object, public ITransport, public ISocket
+class HardSocket : public Object, public ITransport, public Socket
 {
 private:
 	W5500&	_Host;	// W5500公共部分控制器
@@ -751,7 +751,7 @@ bool W5500::CheckLink()
 	return phy.LNK;
 }
 
-ISocket* W5500::CreateSocket(NetType type)
+Socket* W5500::CreateSocket(NetType type)
 {
 	if(Sockets.Count() >= 8)
 	{
@@ -877,7 +877,7 @@ IPAddress W5500::QueryDNS(const String& domain)
 	return ip;
 }
 
-static IPAddress FullQueryDNS(ISocketHost* host, const String& domain)
+static IPAddress FullQueryDNS(NetworkInterface* host, const String& domain)
 {
 	return DNS::Query(*host, domain);
 }

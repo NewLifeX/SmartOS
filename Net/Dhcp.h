@@ -8,7 +8,7 @@ private:
 	uint dhcpid;	// 事务ID
 	uint taskID;	// 任务ID
 	UInt64 _expired;	// 目标过期时间，毫秒
-	ISocket*	Socket;
+	Socket*	Socket;
 
 	void Discover();
 	void Request();
@@ -18,7 +18,7 @@ private:
 
 	static void Loop(void* param);
 public:
-	ISocketHost&	Host;	// 主机
+	NetworkInterface&	Host;	// 主机
 	IPAddress	IP;			// 获取的IP地址
 
 	uint ExpiredTime;	// 过期时间，默认5000毫秒
@@ -27,7 +27,7 @@ public:
 	byte Times;		// 运行次数
 	byte MaxTimes;	// 最大重试次数，默认6次，超过该次数仍然失败则恢复上一次设置
 
-	Dhcp(ISocketHost& host);
+	Dhcp(NetworkInterface& host);
 	~Dhcp();
 
 	void Start();	// 开始

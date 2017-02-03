@@ -16,7 +16,7 @@
 	#define net_printf(format, ...)
 #endif
 
-Dhcp::Dhcp(ISocketHost& host) : Host(host)
+Dhcp::Dhcp(NetworkInterface& host) : Host(host)
 {
 	Socket	= host.CreateSocket(NetType::Udp);
 

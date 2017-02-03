@@ -4,7 +4,7 @@
 #include "TinyIP.h"
 
 // Udp会话
-class UdpSocket : public TinySocket, public ITransport, public ISocket
+class UdpSocket : public TinySocket, public ITransport, public Socket
 {
 private:
 

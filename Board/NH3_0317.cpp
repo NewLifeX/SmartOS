@@ -114,21 +114,21 @@ void NH3_0317::InitButtons(const Delegate2<InputPort&, bool>& press)
 	}
 }
 
-ISocketHost* NH3_0317::Create8266()
+NetworkInterface* NH3_0317::Create8266()
 {
 	// auto host	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
 	auto host	= new Esp8266(COM3, P0, PA5);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join	= host->SSID && *host->SSID;
-	//if (!join) host->Mode = SocketMode::AP;
+	//if (!join) host->Mode = NetworkType::AP;
 
 	if (!join)
 	{
 		*host->SSID	= "WSWL";
 		*host->Pass = "12345678";
 
-		host->Mode	= SocketMode::STA_AP;
+		host->Mode	= NetworkType::STA_AP;
 	}
 	// 绑定委托，避免5500没有连接时导致没有启动客户端
 	host->NetReady.Bind(&NH3_0317::OpenClient, this);
@@ -203,7 +203,7 @@ void NH3_0317::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void NH3_0317::OpenClient(ISocketHost& host)
+void NH3_0317::OpenClient(NetworkInterface& host)
 {
 	assert(Client, "Client");
 
@@ -230,7 +230,7 @@ void NH3_0317::OpenClient(ISocketHost& host)
 		Client->AttachControls();
 }
 
-TokenController* NH3_0317::AddControl(ISocketHost& host, const NetUri& uri, ushort localPort)
+TokenController* NH3_0317::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
 	auto socket	= host.CreateRemote(uri);

@@ -3,6 +3,8 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
+
 #include "TokenNet\TokenClient.h"
 #include "TinyNet\TinyServer.h"
 #include "TokenNet\GateWay.h"
@@ -23,8 +25,8 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	ISocketHost*	Host;	// 网络主机
-	ISocketHost*	HostAP;	// 网络主机
+	NetworkInterface*	Host;	// 网络主机
+	NetworkInterface*	HostAP;	// 网络主机
 	TokenClient*	Client;	// 令牌客户端
 
 	ITransport*		Nrf;	// NRF24L01传输口
@@ -48,9 +50,9 @@ public:
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	// 打开以太网W5500
-	ISocketHost* Create5500();
+	NetworkInterface* Create5500();
 	// 打开Esp8266，作为主控或者纯AP
-	ISocketHost* Create8266(bool apOnly);
+	NetworkInterface* Create8266(bool apOnly);
 
 	void InitClient();
 	void InitNet();
@@ -77,8 +79,8 @@ private:
 	bool	EspMaster;
 	bool	EspBra;
 
-	void OpenClient(ISocketHost& host);
-	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void OpenClient(NetworkInterface& host);
+	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 
 	static int Fix2401(const Buffer& bs);
 };

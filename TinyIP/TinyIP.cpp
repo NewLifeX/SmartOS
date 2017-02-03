@@ -317,7 +317,7 @@ bool TinyIP::SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint
 	return SendEthernet(ETH_IP, mac, (byte*)ip, sizeof(IP_HEADER) + len);
 }
 
-ISocket* TinyIP::CreateSocket(NetType type)
+Socket* TinyIP::CreateSocket(NetType type)
 {
 	switch(type)
 	{

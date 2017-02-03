@@ -3,6 +3,7 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\Socket.h"
 
 #include "TokenNet\TokenClient.h"
 #include "App\Alarm.h"
@@ -19,7 +20,7 @@ public:
 
 	bool LedsShow;					// LED 显示状态开关
 
-	ISocketHost*	Host;			// 网络主机
+	NetworkInterface*	Host;			// 网络主机
 	TokenClient*	Client;			//
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
@@ -37,7 +38,7 @@ public:
 
 	bool LedStat(bool enable);
 
-	ISocketHost* Create8266();
+	NetworkInterface* Create8266();
 
 	void InitClient();
 	void InitNet();
@@ -52,8 +53,8 @@ private:
 	void*	Data;
 	int		Size;
 
-	void OpenClient(ISocketHost& host);
-	TokenController* AddControl(ISocketHost& host, const NetUri& uri, ushort localPort);
+	void OpenClient(NetworkInterface& host);
+	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

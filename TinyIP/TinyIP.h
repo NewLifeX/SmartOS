@@ -26,7 +26,7 @@ public:
 };
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
-class TinyIP : public Object, public ISocketHost
+class TinyIP : public Object, public NetworkInterface
 {
 private:
 	ITransport*	_port;
@@ -66,7 +66,7 @@ public:
 	bool SendIP(IP_TYPE type, const IPAddress& remote, const byte* buf, uint len);
 	bool IsBroadcast(const IPAddress& ip);	// 是否广播地址
 
-	virtual ISocket* CreateSocket(NetType type);
+	virtual Socket* CreateSocket(NetType type);
 };
 
 /*

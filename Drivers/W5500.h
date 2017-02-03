@@ -4,7 +4,7 @@
 #include "Net\Socket.h"
 
 // W5500以太网驱动
-class W5500 : public ISocketHost
+class W5500 : public NetworkInterface
 {
 public:
 	ushort		RetryTime;
@@ -52,7 +52,7 @@ public:
 
 	cstring ToString() const { return "W5500"; }
 
-	virtual ISocket* CreateSocket(NetType type);
+	virtual Socket* CreateSocket(NetType type);
 
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
@@ -71,12 +71,12 @@ private:
 	OutputPort	Rst;
 
 	// 8个硬件socket
-	List<ISocket*>	Sockets;
+	List<Socket*>	Sockets;
 
 	// spi 模式（默认变长）
 	ushort		PhaseOM;
 
-	typedef IPAddress (*DnsHandler)(ISocketHost* host, const String& domain);
+	typedef IPAddress (*DnsHandler)(NetworkInterface* host, const String& domain);
 	DnsHandler	_Dns;	// 解析域名为IP地址
 	void*	_Dhcp;
 
