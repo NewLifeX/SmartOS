@@ -7,6 +7,7 @@
 #include "NetUri.h"
 #include "Socket.h"
 
+#include "Core\List.h"
 #include "Core\Delegate.h"
 
 class Socket;
@@ -24,19 +25,24 @@ enum class NetworkType
 class NetworkInterface
 {
 public:
+	byte		Index;	// 索引
+	bool		Active;	// 可用
+	ushort		Speed;	// 速度Mbps。决定优先级
+	cstring		Name;	// 名称
+
 	IPAddress	IP;		// 本地IP地址
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 	NetworkType	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
 
-	IPAddress	DHCPServer;
+	IPAddress	Gateway;
 	IPAddress	DNSServer;
 	IPAddress	DNSServer2;
-	IPAddress	Gateway;
 
 	String*		SSID;	// 无线SSID
 	String*		Pass;	// 无线密码
 
+	Delegate<NetworkInterface&>	Changed;	// 网络改变
 	Delegate<NetworkInterface&>	NetReady;	// 网络准备就绪。带this参数
 
 	NetworkInterface();
@@ -53,8 +59,6 @@ public:
 	void ShowConfig();
 
 	virtual Socket* CreateSocket(NetType type) = 0;
-	virtual Socket* CreateClient(const NetUri& uri);
-	virtual Socket* CreateRemote(const NetUri& uri);
 
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
@@ -65,6 +69,11 @@ public:
 
 	bool IsStation() const;
 	bool IsAP() const;
+
+	// 全局静态
+	static List<NetworkInterface*> All;
+	static Socket* CreateClient(const NetUri& uri);
+	static Socket* CreateRemote(const NetUri& uri);
 };
 
 #endif

@@ -35,7 +35,7 @@ void TinyIP::Init()
 	_Arr.SetLength(1500);
 
 	Mask = 0x00FFFFFF;
-	DHCPServer = Gateway = DNSServer = IP = 0;
+	Gateway = DNSServer = IP = 0;
 
 	Arp = nullptr;
 }

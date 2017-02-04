@@ -113,7 +113,7 @@ void Dhcp::Request()
 	auto opt	= (DHCP_OPT*)p;
 	opt->SetType(DHCP_TYPE_Request);
 
-	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Host.DHCPServer.Value);
+	opt = opt->Next()->SetData(DHCP_OPT_DHCPServer, Server.Value);
 
 	// 发往DHCP服务器
 	SendDhcp(buf, (byte*)opt->Next() - p);
@@ -259,7 +259,7 @@ void Dhcp::PareOption(Stream& ms)
 		{
 			case DHCP_OPT_Mask:			Host.Mask		= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_Router:		Host.Gateway	= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_DHCPServer:	Host.DHCPServer= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_DHCPServer:	Server			= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_DNSServer:
 			{
 				// 有可能有多个DNS，只要第一个

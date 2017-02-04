@@ -20,6 +20,7 @@ private:
 public:
 	NetworkInterface&	Host;	// 主机
 	IPAddress	IP;			// 获取的IP地址
+	IPAddress	Server;
 
 	uint ExpiredTime;	// 过期时间，默认5000毫秒
 	bool Running;	// 正在运行

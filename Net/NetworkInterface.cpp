@@ -9,6 +9,8 @@
 	#define net_printf(format, ...)
 #endif
 
+List<NetworkInterface*>	NetworkInterface::All;
+
 /******************************** NetworkInterface ********************************/
 
 struct NetConfig
@@ -19,7 +21,6 @@ struct NetConfig
 	byte	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
 	byte	Reserved;
 
-	uint	DHCPServer;
 	uint	DNSServer;
 	uint	DNSServer2;
 	uint	Gateway;
@@ -49,7 +50,7 @@ void NetworkInterface::InitConfig()
 	IP[3] = first;
 
 	Mask = IPAddress(255, 255, 255, 0);
-	DHCPServer = Gateway = defip;
+	Gateway = defip;
 
 	// 修改为双DNS方案，避免单点故障。默认使用阿里和百度公共DNS。
 	DNSServer	= IPAddress(223, 5, 5, 5);
@@ -82,7 +83,6 @@ bool NetworkInterface::LoadConfig()
 	Mac			= nc.Mac;
 	Mode		= (NetworkType)nc.Mode;
 
-	DHCPServer	= nc.DHCPServer;
 	DNSServer	= nc.DNSServer;
 	DNSServer2	= nc.DNSServer2;
 	Gateway		= nc.Gateway;
@@ -103,7 +103,6 @@ bool NetworkInterface::SaveConfig()
 	Mac.CopyTo(nc.Mac);
 	nc.Mode	= (byte)Mode;
 
-	nc.DHCPServer	= DHCPServer.Value;
 	nc.DNSServer	= DNSServer.Value;
 	nc.DNSServer2	= DNSServer2.Value;
 	nc.Gateway		= Gateway.Value;
@@ -130,8 +129,8 @@ void NetworkInterface::ShowConfig()
 	Mask.Show();
 	net_printf("\r\n    Gate:\t");
 	Gateway.Show();
-	net_printf("\r\n    DHCP:\t");
-	DHCPServer.Show();
+	//net_printf("\r\n    DHCP:\t");
+	//DHCPServer.Show();
 	net_printf("\r\n    DNS:\t");
 	DNSServer.Show();
 	if(!DNSServer2.IsAny())
@@ -164,25 +163,6 @@ void NetworkInterface::ShowConfig()
 #endif
 }
 
-Socket* NetworkInterface::CreateClient(const NetUri& uri)
-{
-	auto socket	= CreateSocket(uri.Type);
-	socket->Local.Address	= uri.Address;
-	socket->Local.Port		= uri.Port;
-
-	return socket;
-}
-
-Socket* NetworkInterface::CreateRemote(const NetUri& uri)
-{
-	auto socket	= CreateSocket(uri.Type);
-	socket->Remote.Address	= uri.Address;
-	socket->Remote.Port		= uri.Port;
-	socket->Server			= uri.Host;
-
-	return socket;
-}
-
 // DNS解析。默认仅支持字符串IP地址解析
 IPAddress NetworkInterface::QueryDNS(const String& domain)
 {
@@ -197,4 +177,41 @@ bool NetworkInterface::IsStation() const
 bool NetworkInterface::IsAP() const
 {
 	return Mode == NetworkType::AP || Mode == NetworkType::STA_AP;
+}
+
+Socket* NetworkInterface::CreateClient(const NetUri& uri)
+{
+	for(int i=0; i < All.Count(); i++)
+	{
+		auto ni	= All[i];
+		if(ni->Active)
+		{
+			auto socket	= ni->CreateSocket(uri.Type);
+			socket->Local.Address	= uri.Address;
+			socket->Local.Port		= uri.Port;
+
+			return socket;
+		}
+	}
+
+	return nullptr;
+}
+
+Socket* NetworkInterface::CreateRemote(const NetUri& uri)
+{
+	for(int i=0; i < All.Count(); i++)
+	{
+		auto ni	= All[i];
+		if(ni->Active)
+		{
+			auto socket	= ni->CreateSocket(uri.Type);
+			socket->Remote.Address	= uri.Address;
+			socket->Remote.Port		= uri.Port;
+			socket->Server			= uri.Host;
+
+			return socket;
+		}
+	}
+
+	return nullptr;
 }
