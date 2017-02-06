@@ -30,6 +30,7 @@ public:
     IPAddress& operator=(uint v)		{ Value = v; return *this; }
     IPAddress& operator=(const byte* v);
     IPAddress& operator=(const Buffer& arr);
+    IPAddress& operator=(const IPAddress& addr);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);

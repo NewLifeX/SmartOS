@@ -74,6 +74,13 @@ MacAddress& MacAddress::operator=(const Buffer& arr)
 	return *this;
 }
 
+MacAddress& MacAddress::operator=(const MacAddress& mac)
+{
+	Value	= mac.Value;
+
+	return *this;
+}
+
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& MacAddress::operator[](int i)
 {

@@ -40,6 +40,14 @@ IPEndPoint& IPEndPoint::operator=(const Buffer& arr)
 	return *this;
 }
 
+IPEndPoint& IPEndPoint::operator=(const IPEndPoint& endPoint)
+{
+	Address	= endPoint.Address;
+	Port	= endPoint.Port;
+
+	return *this;
+}
+
 // 字节数组
 ByteArray IPEndPoint::ToArray() const
 {

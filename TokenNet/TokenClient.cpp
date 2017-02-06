@@ -382,8 +382,8 @@ void TokenClient::SayHello(bool broadcast)
 	{
 		auto ctrl = cs[0];
 		auto sock = ctrl->Socket;
-		ext.EndPoint.Address = sock->Host->IP;
-		ext.EndPoint.Port = sock->Local.Port;
+		//ext.EndPoint.Address = sock->Local.Address;
+		ext.EndPoint = sock->Local;
 		ext.Protocol = sock->Protocol == NetType::Udp ? 17 : 6;
 	}
 

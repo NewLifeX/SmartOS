@@ -178,8 +178,8 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	ext2.Key = key;
 
 	auto sock = Control.Socket;
-	ext2.EndPoint.Address = sock->Host->IP;
-	ext2.EndPoint.Port = sock->Local.Port;
+	//ext2.EndPoint.Address = sock->Host->IP;
+	ext2.EndPoint = sock->Local;
 
 	ext2.Cipher = "RC4";
 	ext2.Name = Client.Cfg->User();

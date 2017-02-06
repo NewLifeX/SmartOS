@@ -106,6 +106,13 @@ IPAddress& IPAddress::operator=(const Buffer& arr)
 	return *this;
 }
 
+IPAddress& IPAddress::operator=(const IPAddress& addr)
+{
+	Value	= addr.Value;
+
+	return *this;
+}
+
 // 重载索引运算符[]，让它可以像数组一样使用下标索引。
 byte& IPAddress::operator[](int i)
 {

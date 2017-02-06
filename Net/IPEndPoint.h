@@ -15,6 +15,7 @@ public:
 	IPEndPoint(const Buffer& arr);
 
     IPEndPoint& operator=(const Buffer& arr);
+    IPEndPoint& operator=(const IPEndPoint& endPoint);
 
 	// 字节数组
     ByteArray ToArray() const;

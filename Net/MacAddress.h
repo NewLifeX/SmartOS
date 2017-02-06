@@ -20,6 +20,7 @@ public:
     MacAddress& operator=(UInt64 v);
     MacAddress& operator=(const byte* buf);
     MacAddress& operator=(const Buffer& arr);
+    MacAddress& operator=(const MacAddress& mac);
 
     // 重载索引运算符[]，让它可以像数组一样使用下标索引。
     byte& operator[](int i);
