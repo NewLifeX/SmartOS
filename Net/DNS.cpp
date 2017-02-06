@@ -3,6 +3,7 @@
 #include "ITransport.h"
 
 #include "Socket.h"
+#include "NetworkInterface.h"
 
 #include "DNS.h"
 #include "Ethernet.h"

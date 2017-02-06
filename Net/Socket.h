@@ -5,7 +5,6 @@
 #include "IPEndPoint.h"
 #include "MacAddress.h"
 #include "NetUri.h"
-#include "NetworkInterface.h"
 
 #include "Core\Delegate.h"
 
@@ -33,6 +32,10 @@ public:
 	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote) { return Send(bs); }
 	// 接收数据
 	virtual uint Receive(Buffer& bs) = 0;
+
+	// 全局静态
+	static Socket* CreateClient(const NetUri& uri);
+	static Socket* CreateRemote(const NetUri& uri);
 };
 
 #endif

@@ -2,6 +2,7 @@
 #include "ITransport.h"
 
 #include "Socket.h"
+#include "NetworkInterface.h"
 
 #include "Dhcp.h"
 #include "Ethernet.h"
@@ -167,14 +168,15 @@ void Dhcp::Stop()
 
 	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x Times=%d MaxTimes=%d\r\n", Result, dhcpid, Times, MaxTimes);
 
+	auto& host	= Host;
 	if(Result)
 	{
 		// 成功后次数清零
 		Times	= 0;
 
 		// 获取IP成功，重新设置参数
-		Host.Config();
-		Host.SaveConfig();
+		host.Config();
+		host.SaveConfig();
 	}
 	else
 	{
@@ -188,16 +190,16 @@ void Dhcp::Stop()
 			net_printf("尝试次数 %d 超过最大允许次数 %d ，", Times, MaxTimes);
 
 			// 恢复上一次设置，如果首次，则恢复出厂设置
-			if(Host.LoadConfig())
+			if(host.LoadConfig())
 				net_printf("恢复上一次设置");
 			else
 			{
 				net_printf("恢复出厂设置");
-				Host.InitConfig();
+				host.InitConfig();
 			}
 			net_printf("\r\n");
 
-			Host.Config();
+			host.Config();
 
 			// 3分钟后继续启动DHCP
 			Sys.SetTaskPeriod(taskID, 3 * 60 * 1000);
@@ -249,6 +251,7 @@ DHCP_OPT* GetOption(byte* p, int len, DHCP_OPTION option)
 
 void Dhcp::PareOption(Stream& ms)
 {
+	auto& host	= Host;
 	while(ms.Remain())
 	{
 		byte opt = ms.ReadByte();
@@ -257,8 +260,8 @@ void Dhcp::PareOption(Stream& ms)
 		// 有些家用路由器会发送错误的len，大于4字节，导致覆盖前后数据
 		switch(opt)
 		{
-			case DHCP_OPT_Mask:			Host.Mask		= ms.ReadUInt32(); len -= 4; break;
-			case DHCP_OPT_Router:		Host.Gateway	= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_Mask:			host.Mask		= ms.ReadUInt32(); len -= 4; break;
+			case DHCP_OPT_Router:		host.Gateway	= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_DHCPServer:	Server			= ms.ReadUInt32(); len -= 4; break;
 			case DHCP_OPT_DNSServer:
 			{
@@ -266,9 +269,9 @@ void Dhcp::PareOption(Stream& ms)
 				IPAddress dns	= ms.ReadUInt32();
 				// 成功获取DHCP信息后，采用本地DNS为主DNS，阿里公共DNS为备用DNS
 				IPAddress aliyun(223, 5, 5, 5);
-				//if(Host.DNSServer != dns) Host.DNSServer2	= Host.DNSServer;
-				Host.DNSServer2	= aliyun;
-				Host.DNSServer	= dns;
+				//if(host.DNSServer != dns) host.DNSServer2	= host.DNSServer;
+				host.DNSServer2	= aliyun;
+				host.DNSServer	= dns;
 				len -= 4;
 				break;
 			}
