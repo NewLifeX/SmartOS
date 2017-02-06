@@ -1,6 +1,7 @@
 ﻿#ifndef _W5500_H_
 #define _W5500_H_
 
+#include "Net\NetworkInterface.h"
 #include "Net\Socket.h"
 
 // W5500以太网驱动
@@ -29,8 +30,8 @@ public:
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
 
-	bool Open();
-	bool Close();
+	virtual bool Open();
+	virtual void Close();
 	virtual void Config();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）

@@ -61,7 +61,14 @@ Esp8266::~Esp8266()
 
 void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 {
-	Set(port);
+	Port = port;
+	if(Port)
+	{
+		//MinSize	= Port->MinSize;
+		MaxSize	= Port->MaxSize;
+
+		Port->Register(OnPortReceive, this);
+	}
 
 	_power.Init(power, false);
 	if (rst != P0) _rst.Init(rst, true);
@@ -138,9 +145,9 @@ void Esp8266::OpenAsync()
 	//Sys.SetTask(_task, true, 0);
 }
 
-bool Esp8266::OnOpen()
+bool Esp8266::Open()
 {
-	if (!PackPort::OnOpen()) return false;
+	if (!Port->Open()) return false;
 
 	if (!CheckReady())
 	{
@@ -285,7 +292,7 @@ void Esp8266::TryJoinAP()
 	}
 }
 
-void Esp8266::OnClose()
+void Esp8266::Close()
 {
 	if (_task) Sys.RemoveTask(_task);
 	if (_task2) Sys.RemoveTask(_task2);
@@ -293,7 +300,7 @@ void Esp8266::OnClose()
 	_power.Close();
 	_rst.Close();
 
-	PackPort::OnClose();
+	Port->Close();
 }
 
 // 配置网络参数
@@ -348,15 +355,9 @@ bool Esp8266::EnableDNS() { return true; }
 // 启用DHCP
 bool Esp8266::EnableDHCP()
 {
-	//Mode	= NetworkType::STA_AP;
-	//return true;
-	//return SetDHCP(NetworkType::Both, true);
-
 	if (!Opened) return false;
 
 	if (!SetDHCP(NetworkType::STA_AP, true)) return false;
-
-	NetReady(*this);
 
 	return true;
 }
@@ -507,6 +508,12 @@ void ParseFail(cstring name, const Buffer& bs)
 		str.Show(true);
 	}
 #endif
+}
+
+uint Esp8266::OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2)
+{
+	auto esp	= (Esp8266*)param;
+	return esp->OnReceive(bs, param2);
 }
 
 // 引发数据到达事件

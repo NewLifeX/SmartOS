@@ -5,13 +5,14 @@
 
 #include "Sys.h"
 #include "Net\ITransport.h"
+#include "Net\NetworkInterface.h"
 #include "Net\Socket.h"
 #include "Net\Ethernet.h"
 
 class TinyIP;
 
 // 网络数据处理Socket基类
-class TinySocket : public Object
+class TinySocket
 {
 public:
 	TinyIP*	Tip;	// TinyIP控制器
@@ -26,7 +27,7 @@ public:
 };
 
 // 精简以太网协议。封装以太网帧以及IP协议，不包含其它协议实现，仅提供底层支持。
-class TinyIP : public Object, public NetworkInterface
+class TinyIP : public NetworkInterface
 {
 private:
 	ITransport*	_port;
@@ -58,7 +59,8 @@ public:
     virtual ~TinyIP();
 	void Init(ITransport* port);
 
-	bool Open();
+	virtual bool Open();
+	virtual void Close();
 	virtual void Config();
 	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 

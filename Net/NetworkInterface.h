@@ -21,6 +21,14 @@ enum class NetworkType
 	STA_AP	= 3,
 };
 
+// 网络状态
+enum class NetworkStatus
+{
+	Unknown	= 0,	// 未知
+	Up		= 1,	// 启用
+	Down	= 2,	// 禁用
+};
+
 // 网络接口
 class NetworkInterface
 {
@@ -34,21 +42,23 @@ public:
     IPAddress	Mask;	// 子网掩码
 	MacAddress	Mac;	// 本地Mac地址
 	NetworkType	Mode;	// 无线模式。0不是无线，1是STA，2是AP，3是混合
+	NetworkStatus	Status;	// 网络状态
 
 	IPAddress	Gateway;
 	IPAddress	DNSServer;
 	IPAddress	DNSServer2;
-
-	String*		SSID;	// 无线SSID
-	String*		Pass;	// 无线密码
 
 	Delegate<NetworkInterface&>	Changed;	// 网络改变
 	Delegate<NetworkInterface&>	NetReady;	// 网络准备就绪。带this参数
 
 	NetworkInterface();
 	// 加上虚析构函数，因为应用层可能要释放该接口
-	virtual ~NetworkInterface() { }
+	virtual ~NetworkInterface();
 
+	// 打开与关闭
+	virtual bool Open()	= 0;
+	virtual void Close()= 0;
+	
 	// 应用配置
 	virtual void Config() = 0;
 
@@ -67,13 +77,25 @@ public:
 	// 启用DHCP
 	virtual bool EnableDHCP() { return false; }
 
+	// 全局静态
+	static List<NetworkInterface*> All;
+};
+
+/****************************** WiFiInterface ************************************/
+
+// WiFi接口
+class WiFiInterface : public NetworkInterface
+{
+public:
+	String*		SSID;	// 无线SSID
+	String*		Pass;	// 无线密码
+
+	WiFiInterface();
+	virtual ~WiFiInterface() { }
+
 	bool IsStation() const;
 	bool IsAP() const;
 
-	// 全局静态
-	static List<NetworkInterface*> All;
-	static Socket* CreateClient(const NetUri& uri);
-	static Socket* CreateRemote(const NetUri& uri);
 };
 
 #endif

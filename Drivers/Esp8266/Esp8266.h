@@ -2,16 +2,31 @@
 #define __Esp8266_H__
 
 #include "Device\Port.h"
-#include "Net\ITransport.h"
+
 #include "Net\Socket.h"
+#include "Net\NetworkInterface.h"
+#include "Net\ITransport.h"
+
 #include "Message\DataStore.h"
 #include "Message\Pair.h"
 
 // 最好打开 Soket 前 不注册中断，以免AT指令乱入到中断里面去  然后信息不对称
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
-class Esp8266 : public PackPort, public NetworkInterface
+class Esp8266 : public WiFiInterface
 {
+private:
+	TransportHandler _handler;
+	void* _param;
+
 public:
+	bool Opening;	// 是否正在打开
+    bool Opened;    // 是否打开
+
+	ushort	MinSize;	// 数据包最小大小
+	ushort	MaxSize;	// 数据包最大大小
+
+	ITransport*	Port;	// 传输口
+
 	bool	AutoConn;	// 是否自动连接WiFi，默认false
 	bool	Joined;		// 是否已连接热点
 	NetworkType	WorkMode;	// 工作模式
@@ -26,6 +41,8 @@ public:
 
 	void OpenAsync();
 	void TryJoinAP();
+	virtual bool Open();
+	virtual void Close();
 	virtual void Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
@@ -101,13 +118,6 @@ public:
 	void GetAPsTask();
 	bool GetAPs(const Pair& args, Stream& result);
 
-protected:
-	virtual bool OnOpen();
-	virtual void OnClose();
-
-	// 引发数据到达事件
-	virtual uint OnReceive(Buffer& bs, void* param);
-
 private:
     OutputPort	_power;
     OutputPort	_rst;
@@ -133,6 +143,10 @@ private:
 	uint ParseReceive(const Buffer& bs);
 	// 分析关键字。返回被用掉的字节数
 	uint ParseReply(const Buffer& bs);
+
+	// 引发数据到达事件
+	uint OnReceive(Buffer& bs, void* param);
+	static uint OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2);
 };
 
 #endif

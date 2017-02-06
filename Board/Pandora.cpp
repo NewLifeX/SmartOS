@@ -198,7 +198,7 @@ void PA0903::OpenClient(NetworkInterface& host)
 TokenController* PA0903::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket = host.CreateRemote(uri);
+	auto socket = Socket::CreateRemote(uri);
 
 	// 创建连接服务器的控制器
 	auto ctrl = new TokenController();
@@ -232,7 +232,7 @@ void OnInitNet(void* param)
 	host->EnableDHCP();
 	bsp.Host = host;*/
 
-	auto esp = bsp.Create8266(false);
+	auto esp = (WiFiInterface*)bsp.Create8266(false);
 	if (esp)
 	{
 		// 未组网时，主机留空，仅保留AP主机

@@ -357,7 +357,7 @@ void AP0802::OpenClient(NetworkInterface& host)
 TokenController* AP0802::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket = host.CreateRemote(uri);
+	auto socket = Socket::CreateRemote(uri);
 
 	// 创建连接服务器的控制器
 	auto ctrl = new TokenController();
@@ -417,7 +417,7 @@ void OnInitNet(void* param)
 	// 没有接网线，需要完整WiFi通道
 	if (!bsp.Host)
 	{
-		auto esp = bsp.Create8266(false);
+		auto esp = (WiFiInterface*)bsp.Create8266(false);
 		if (esp)
 		{
 			// 未组网时，主机留空，仅保留AP主机
@@ -428,16 +428,6 @@ void OnInitNet(void* param)
 				bsp.HostAP = esp;
 		}
 	}
-	// 接了网线，同时需要AP
-	else if (host->IsAP())
-	{
-		// 如果Host已存在，则8266仅作为AP
-		auto esp = bsp.Create8266(true);
-		if (esp) bsp.HostAP = esp;
-	}
-
-	// 打开DHCP，完成时会打开客户端
-	//if(bsp.Host) bsp.Host->EnableDHCP();
 }
 
 void AP0802::InitNet()

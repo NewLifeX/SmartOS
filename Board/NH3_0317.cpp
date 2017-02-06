@@ -148,6 +148,7 @@ void NH3_0317::SetStore(void*data, int len)
 	if (!Client)return;
 	Client->Store.Data.Set(data, len);
 }
+
 void NH3_0317::InitClient()
 {
 	if (Client) return;
@@ -215,7 +216,7 @@ void NH3_0317::OpenClient(NetworkInterface& host)
 	auto tk = TokenConfig::Current;
 
 	// STA模式下，主连接服务器
-	if (host.IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
+	if (esp->IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
 
 	// STA或AP模式下，建立本地监听
 	if(Client->Controls.Count() == 0)
@@ -233,7 +234,7 @@ void NH3_0317::OpenClient(NetworkInterface& host)
 TokenController* NH3_0317::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host.CreateRemote(uri);
+	auto socket	= Socket::CreateRemote(uri);
 
 	// 创建连接服务器的控制器
 	auto ctrl	= new TokenController();

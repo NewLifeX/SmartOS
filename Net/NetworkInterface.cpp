@@ -32,11 +32,14 @@ struct NetConfig
 NetworkInterface::NetworkInterface()
 {
 	Mode	= NetworkType::Wire;
+	Status	= NetworkStatus::Unknown;
 
-	SSID	= nullptr;
-	Pass	= nullptr;
+	All.Add(this);
+}
 
-	//NetReady	= nullptr;
+NetworkInterface::~NetworkInterface()
+{
+	All.Remove(this);
 }
 
 void NetworkInterface::InitConfig()
@@ -66,8 +69,8 @@ void NetworkInterface::InitConfig()
 
 	Mode	= NetworkType::Wire;
 
-	if(SSID)	SSID->Clear();
-	if(Pass)	Pass->Clear();
+	//if(SSID)	SSID->Clear();
+	//if(Pass)	Pass->Clear();
 }
 
 bool NetworkInterface::LoadConfig()
@@ -87,8 +90,8 @@ bool NetworkInterface::LoadConfig()
 	DNSServer2	= nc.DNSServer2;
 	Gateway		= nc.Gateway;
 
-	if(SSID) *SSID	= nc.SSID;
-	if(Pass) *Pass	= nc.Pass;
+	//if(SSID) *SSID	= nc.SSID;
+	//if(Pass) *Pass	= nc.Pass;
 
 	return true;
 }
@@ -107,12 +110,12 @@ bool NetworkInterface::SaveConfig()
 	nc.DNSServer2	= DNSServer2.Value;
 	nc.Gateway		= Gateway.Value;
 
-	if(SSID) SSID->CopyTo(0, nc.SSID, ArrayLength(nc.SSID) - 1);
+	/*if(SSID) SSID->CopyTo(0, nc.SSID, ArrayLength(nc.SSID) - 1);
 	if (Pass)
 	{
 		Pass->CopyTo(0, nc.Pass, ArrayLength(nc.Pass) - 1);
 		if (Pass->Length() == 0)nc.Pass[0] = 0x00;			// 如果密码为空 写一个字节   弥补String Copy的问题
-	}
+	}*/
 
 	Buffer bs(&nc, sizeof(nc));
 	return Config::Current->Set("NET", bs);
@@ -156,8 +159,8 @@ void NetworkInterface::ShowConfig()
 	}
 	//net_printf("\r\n");
 
-	if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(false); }
-	if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(false); }
+	//if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(false); }
+	//if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(false); }
 
 	net_printf("\r\n");
 #endif
@@ -169,49 +172,22 @@ IPAddress NetworkInterface::QueryDNS(const String& domain)
 	return IPAddress::Parse(domain);
 }
 
-bool NetworkInterface::IsStation() const
+/****************************** WiFiInterface ************************************/
+
+WiFiInterface::WiFiInterface() : NetworkInterface()
+{
+	Mode	= NetworkType::Station;
+
+	SSID	= nullptr;
+	Pass	= nullptr;
+}
+
+bool WiFiInterface::IsStation() const
 {
 	return Mode == NetworkType::Station || Mode == NetworkType::STA_AP;
 }
 
-bool NetworkInterface::IsAP() const
+bool WiFiInterface::IsAP() const
 {
 	return Mode == NetworkType::AP || Mode == NetworkType::STA_AP;
-}
-
-Socket* NetworkInterface::CreateClient(const NetUri& uri)
-{
-	for(int i=0; i < All.Count(); i++)
-	{
-		auto ni	= All[i];
-		if(ni->Active)
-		{
-			auto socket	= ni->CreateSocket(uri.Type);
-			socket->Local.Address	= uri.Address;
-			socket->Local.Port		= uri.Port;
-
-			return socket;
-		}
-	}
-
-	return nullptr;
-}
-
-Socket* NetworkInterface::CreateRemote(const NetUri& uri)
-{
-	for(int i=0; i < All.Count(); i++)
-	{
-		auto ni	= All[i];
-		if(ni->Active)
-		{
-			auto socket	= ni->CreateSocket(uri.Type);
-			socket->Remote.Address	= uri.Address;
-			socket->Remote.Port		= uri.Port;
-			socket->Server			= uri.Host;
-
-			return socket;
-		}
-	}
-
-	return nullptr;
 }

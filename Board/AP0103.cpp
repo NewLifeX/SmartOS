@@ -309,7 +309,7 @@ void AP0103::OpenClient(NetworkInterface& host)
 TokenController* AP0103::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
 {
 	// 创建连接服务器的Socket
-	auto socket = host.CreateRemote(uri);
+	auto socket = Socket::CreateRemote(uri);
 
 	// 创建连接服务器的控制器
 	auto ctrl = new TokenController();
@@ -355,42 +355,10 @@ void OnInitNet(void* param)
 	auto host = (W5500*)bsp.Create5500();
 	// 软路由的DHCP要求很严格，必须先把自己IP设为0
 	host->IP = IPAddress::Any();
-	//if (host->Open())
-	//{
-		host->Open();
-		host->EnableDNS();
-		host->EnableDHCP();
-		bsp.Host = host;
-	// }
-	// else
-	// {
-	// 	delete host;
-	// }
-	// 
-	//  没有接网线，需要完整WiFi通道
-	// if (!bsp.Host)
-	// {
-	// auto esp = bsp.Create8266(false);
-	// if (esp)
-	// {
-	// 	// 未组网时，主机留空，仅保留AP主机
-	// 	bool join = esp->SSID && *esp->SSID;
-	// 	if (join && esp->IsStation())
-	// 		bsp.Host = esp;
-	// 	else
-	// 		bsp.HostAP = esp;
-	// }
-	// }
-	//  接了网线，同时需要AP
-	// else if (host->IsAP())
-	// {
-	//		// 如果Host已存在，则8266仅作为AP
-	//		auto esp = bsp.Create8266(true);
-	//		if (esp) bsp.HostAP = esp;
-	// }
-
-	// 打开DHCP，完成时会打开客户端
-	//if(bsp.Host) bsp.Host->EnableDHCP();
+	host->Open();
+	host->EnableDNS();
+	host->EnableDHCP();
+	bsp.Host = host;
 }
 
 void AP0103::InitNet()

@@ -550,16 +550,14 @@ void W5500::Config()
 	WriteFrame(0, bs);
 }
 
-bool W5500::Close()
+void W5500::Close()
 {
-	if(!Opened) return true;
+	if(!Opened) return;
 
 	net_printf("W5500::Close \r\n");
 	OnClose();
 
 	Opened = false;
-
-	return true;
 }
 
 void W5500::ChangePower(int level)
