@@ -78,6 +78,7 @@ public:
 
 protected:
 	uint	_taskLink;
+	uint	_retry;
 
 	// 打开与关闭
 	virtual bool OnOpen()	= 0;
@@ -85,8 +86,8 @@ protected:
 
 	// 循环检测连接
 	virtual void OnLoop();
-	virtual bool OnLink() { return true; }
-	virtual bool CheckLink() { return false; }
+	virtual bool OnLink(uint retry) { return true; }
+	virtual bool CheckLink() { return Linked; }
 
 public:
 	// 全局静态

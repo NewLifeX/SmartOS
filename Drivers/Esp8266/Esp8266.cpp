@@ -230,7 +230,7 @@ void Esp8266::OnClose()
 	Port->Close();
 }
 
-bool Esp8266::OnLink()
+bool Esp8266::OnLink(uint retry)
 {
 	bool join = SSID && *SSID;
 	// 等待WiFi自动连接
@@ -247,11 +247,6 @@ bool Esp8266::OnLink()
 	}
 
 	return true;
-}
-
-bool Esp8266::CheckLink()
-{
-	return Linked;
 }
 
 // 配置网络参数

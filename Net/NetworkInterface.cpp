@@ -40,6 +40,7 @@ NetworkInterface::NetworkInterface()
 	Status	= NetworkStatus::None;
 
 	_taskLink	= 0;
+	_retry	= 0;
 
 	debug_printf("Network::Add 0x%p\r\n", this);
 	All.Add(this);
@@ -93,11 +94,12 @@ void NetworkInterface::OnLoop()
 	// 未连接时执行连接
 	if(!link)
 	{
-		link	= OnLink();
+		link	= OnLink(++_retry);
 		if(link ^ Linked)
 		{
 			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
 			Linked	= link;
+			_retry	= 0;
 		}
 	}
 }

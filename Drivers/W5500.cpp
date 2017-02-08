@@ -451,19 +451,22 @@ void W5500::OnClose()
 	Rst.Close();
 }
 
-bool W5500::OnLink()
+bool W5500::OnLink(uint retry)
 {
+	if(retry > 1 && !CheckLink()) return false;
+
 	debug_printf("等待PHY连接 ");
 
 	T_PHYCFGR phy;
 	phy.Init(0x00);		// 先清空
 
-	TimeWheel tw(5000);
+	TimeWheel tw(3000);
+	tw.Sleep	= 50;
 	int temp = 0;
 	while(!tw.Expired() && !phy.LNK)
 	{
 		phy.Init(ReadByte(offsetof(TGeneral, PHYCFGR)));
-		Sys.Sleep(50);
+		//Sys.Sleep(50);
 		if(++temp == 10)
 		{
 			temp = 0;

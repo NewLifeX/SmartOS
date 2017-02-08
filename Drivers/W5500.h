@@ -89,7 +89,7 @@ private:
 	virtual bool OnOpen();
 	virtual void OnClose();
 	// 检测连接
-	virtual bool OnLink();
+	virtual bool OnLink(uint retry);
 
 	// 中断脚回调
 	void OnIRQ(InputPort& port, bool down);

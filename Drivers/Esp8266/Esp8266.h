@@ -121,8 +121,7 @@ private:
 	virtual bool OnOpen();
 	virtual void OnClose();
 	// 检测连接
-	virtual bool OnLink();
-	virtual bool CheckLink();
+	virtual bool OnLink(uint retry);
 
 	bool CheckReady();
 	void OpenAP();

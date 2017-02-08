@@ -215,6 +215,9 @@ void Dhcp::Stop()
 void Dhcp::Loop(void* param)
 {
 	auto& dhcp	= *(Dhcp*)param;
+	// 网络未就绪时不要处理
+	if(!dhcp.Host.Linked) return;
+
 	if(!dhcp.Running)
 	{
 		// 上一次是成功的，这次定时任务可能就是重新获取IP
