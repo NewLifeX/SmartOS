@@ -59,8 +59,6 @@ public:
     virtual ~TinyIP();
 	void Init(ITransport* port);
 
-	virtual bool Open();
-	virtual void Close();
 	virtual void Config();
 	ushort CheckSum(IPAddress* remote, const byte* buf, uint len, byte type);
 
@@ -69,6 +67,11 @@ public:
 	bool IsBroadcast(const IPAddress& ip);	// 是否广播地址
 
 	virtual Socket* CreateSocket(NetType type);
+
+private:
+	// 打开与关闭
+	virtual bool OnOpen();
+	virtual void OnClose();
 };
 
 /*

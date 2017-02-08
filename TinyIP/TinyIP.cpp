@@ -199,7 +199,7 @@ void TinyIP::Work(void* param)
 	}
 }
 
-bool TinyIP::Open()
+bool TinyIP::OnOpen()
 {
 	debug_printf("\r\nTinyIP::Open...\r\n");
 
@@ -227,6 +227,13 @@ bool TinyIP::Open()
 #endif
 
 	return true;
+}
+
+void TinyIP::OnClose()
+{
+	delete Arp;
+
+	_port->Close();
 }
 
 void TinyIP::Config()

@@ -39,13 +39,6 @@ AP0104::AP0104()
 	Data = nullptr;
 	Size = 0;
 
-	// AlarmObj = nullptr;
-	// 一众标识初始化
-
-	NetMaster = false;
-	NetBra = false;
-	EspMaster = false;
-	EspBra = false;
 	Current = this;
 }
 
@@ -136,7 +129,6 @@ NetworkInterface* AP0104::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto host = new W5500(Spi1, PE7, PB2);
-	host->NetReady.Bind(&AP0104::OpenClient, this);
 
 	return host;
 }
@@ -156,13 +148,10 @@ NetworkInterface* AP0104::Create8266(bool apOnly)
 		host->Mode = NetworkType::STA_AP;
 	}
 
-	// 绑定委托，避免5500没有连接时导致没有启动客户端
-	host->NetReady.Bind(&AP0104::OpenClient, this);
-
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 
-	host->OpenAsync();
+	host->Open();
 
 	return host;
 }
@@ -219,109 +208,6 @@ void AP0104::Register(int index, IDataPort& dp)
 
 	auto& ds = Client->Store;
 	ds.Register(index, dp);
-}
-
-void AP0104::OpenClient(NetworkInterface& host)
-{
-	assert(Client, "Client");
-
-	debug_printf("\r\n OpenClient \r\n");
-
-	// 网络就绪后，打开指示灯
-	auto net = dynamic_cast<W5500*>(&host);
-	if (net && !net->Led) net->SetLed(*Leds[0]);
-
-	auto esp = dynamic_cast<Esp8266*>(&host);
-	if (esp && !esp->Led) esp->SetLed(*Leds[1]);
-
-	auto tk = TokenConfig::Current;
-	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-
-	// 避免重复打开
-	if (!Client->Opened && Host)
-	{
-		AddControl(*Host, tk->Uri(), 0);
-		AddControl(*Host, uri, tk->Port);
-
-		Client->Open();
-		if (_GateWay)_GateWay->Start();
-	}
-
-	// 避免重复打开
-	if (Host)
-	{
-		if (Host == esp)							// 8266 作为Host的时候  使用 Master 和广播端口两个    HostAP 为空
-		{
-			if (esp->Joined && !EspMaster)
-			{
-				AddControl(*Host, tk->Uri(), 0);	// 如果 Host 是 ESP8266 则要求 JoinAP 完成才能添加主控制器
-				EspMaster = true;
-			}
-			if (!EspBra)
-			{
-				AddControl(*Host, uri, tk->Port);
-				EspBra = true;
-			}
-		}
-
-		if (Host == net)							// w5500 作为Host的时候    使用Master和广播两个端口     HostAP 开启AP时非空 打开其内网端口
-		{
-			if (!NetMaster)
-			{
-				AddControl(*Host, tk->Uri(), 0);					// 如果 Host 是 W5500 打开了就直接允许添加Master
-				NetMaster = true;
-			}
-			if (!NetBra)
-			{
-				AddControl(*Host, uri, tk->Port);
-				NetBra = true;
-			}
-		}
-
-		if (HostAP && HostAP == esp)				// 只使用esp的时候HostAp为空
-		{
-			if (!EspBra)
-			{
-				AddControl(*Host, uri, tk->Port);
-				EspBra = true;
-			}
-		}
-
-		if (!Client->Opened)
-		{
-			Client->Open();
-			if (_GateWay)_GateWay->Start();
-		}
-		else
-		{
-			Client->AttachControls();
-			if (_GateWay)_GateWay->Start();
-		}
-	}
-}
-
-TokenController* AP0104::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
-{
-	// 创建连接服务器的Socket
-	auto socket = Socket::CreateRemote(uri);
-
-	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
-	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket = socket;
-
-	// 创建客户端
-	auto client = Client;
-	if (localPort == 0)
-		client->Master = ctrl;
-	else
-	{
-		socket->Local.Port = localPort;
-		ctrl->ShowRemote = true;
-		client->Controls.Add(ctrl);
-	}
-
-	return ctrl;
 }
 
 /*

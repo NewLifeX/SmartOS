@@ -326,14 +326,15 @@ W5500::~W5500()
 {
 	Close();
 
-	Sys.RemoveTask(TaskID);
-
 	delete _spi;
 }
 
 // 初始化
 void W5500::Init()
 {
+	Name	= "W5500";
+	Speed	= 100;
+
 	_spi	= nullptr;
 	Led		= nullptr;
 	_Dns	= nullptr;
@@ -345,7 +346,6 @@ void W5500::Init()
 	RetryCount	= 8;
 	LowLevelTime= 0;
 	PingACK		= true;
-	Opened		= false;
 	TaskID		= 0;
 
 	InitConfig();
@@ -356,7 +356,7 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 {
 	assert(spi, "spi");
 
-	debug_printf("\r\n");
+	//debug_printf("\r\n");
 
 	if(rst != P0) Rst.Init(rst, true);
 	if(irq != P0)
@@ -395,15 +395,14 @@ void W5500::SetLed(OutputPort& led)
 	Led	= fp;
 }
 
-bool W5500::Open()
+bool W5500::OnOpen()
 {
-	if(Opened) return true;
-
-	net_printf("\r\nW5500::Open\r\n");
+	net_printf("W5500::Open\r\n");
 	//ShowInfo();
 
 	net_printf("\tRst: ");
 	if(!Rst.Open()) return false;
+
 	//net_printf("硬件复位 \r\n");
 	Rst = true;		// 低电平有效
 	Sys.Delay(600);	// 最少500us
@@ -432,12 +431,34 @@ bool W5500::Open()
 	}
 	net_printf("硬件版本: %02X\r\n", ver);
 
+#if NET_DEBUG
+	//StateShow();
+	//PhyStateShow();
+#endif
+
+	return true;
+}
+
+void W5500::OnClose()
+{
+	net_printf("W5500::Close \r\n");
+
+	Sys.RemoveTask(TaskID);
+
+	_spi->Close();
+
+	Irq.Close();
+	Rst.Close();
+}
+
+bool W5500::OnLink()
+{
 	debug_printf("等待PHY连接 ");
 
 	T_PHYCFGR phy;
 	phy.Init(0x00);		// 先清空
 
-	tw.Reset(5000);
+	TimeWheel tw(5000);
 	int temp = 0;
 	while(!tw.Expired() && !phy.LNK)
 	{
@@ -449,7 +470,6 @@ bool W5500::Open()
 			debug_printf(".");
 		}
 	}
-	//debug_printf("\r\n");
 
 	if(phy.LNK)
 	{
@@ -466,8 +486,8 @@ bool W5500::Open()
 	else
 	{
 		net_printf("PHY连接异常\r\n");
-		OnClose();
-		debug_printf("W5500::Open 打开失败！请检查网线!\r\n");
+		//OnClose();
+		debug_printf("W5500::Link 连接失败！请检查网线!\r\n");
 
 		return false;
 	}
@@ -481,30 +501,16 @@ bool W5500::Open()
 		WriteByte(offsetof(TSocket, RXBUF_SIZE), 0x02, i+1);	//Socket Tx mempry size=2k
 	}
 
-	//if(!TaskID) TaskID = Sys.AddTask(IRQTask, this, -1, -1, "W5500中断");
 	// 为解决芯片有时候无法接收数据的问题，需要守护任务辅助
 	if(!TaskID)
 	{
-		int time = Irq.Empty() || !Irq.HardEvent ? 10 : 500;
-		TaskID = Sys.AddTask(IRQTask, this, time, time, "W5500中断");
+		int time = (Irq.Empty() || !Irq.HardEvent) ? 10 : 500;
+		TaskID = Sys.AddTask([](void* p){ ((W5500*)p)->OnIRQ(); }, this, time, time, "W5500中断");
 		auto task = Task::Get(TaskID);
 		task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 	}
 
-	Opened = true;
-
-#if NET_DEBUG
-	//StateShow();
-	//PhyStateShow();
-#endif
-
 	return true;
-}
-
-void W5500::IRQTask(void* param)
-{
-	W5500* net = (W5500*)param;
-	net->OnIRQ();
 }
 
 void W5500::Config()
@@ -550,28 +556,10 @@ void W5500::Config()
 	WriteFrame(0, bs);
 }
 
-void W5500::Close()
-{
-	if(!Opened) return;
-
-	net_printf("W5500::Close \r\n");
-	OnClose();
-
-	Opened = false;
-}
-
 void W5500::ChangePower(int level)
 {
 	// 进入低功耗时，直接关闭
 	if(level) Close();
-}
-
-void W5500::OnClose()
-{
-	_spi->Close();
-
-	Irq.Close();
-	Rst.Close();
 }
 
 // 复位
@@ -783,10 +771,6 @@ void W5500::OnIRQ(InputPort& port, bool down)
 {
 	if(!down) return;	// 低电平中断
 
-	//auto net = (W5500*)param;
-	//net->OnIRQ();
-	//net_printf("OnIRQ \r\n");
-	//Sys.SetTask(net->TaskID, true, 0);
 	Sys.SetTask(TaskID, true, 0);
 }
 
@@ -888,14 +872,14 @@ bool W5500::EnableDNS()
 	return true;
 }
 
-static void OnDhcpStop(W5500& net, Dhcp& dhcp)
+/*static void OnDhcpStop(W5500& net, Dhcp& dhcp)
 {
 	// DHCP成功，或者失败且超过最大错误次数，都要启动网关，让它以上一次配置工作
 	if(dhcp.Result || dhcp.Times >= dhcp.MaxTimes)
 	{
 		net.NetReady(net);
 	}
-}
+}*/
 
 // 启用DHCP
 bool W5500::EnableDHCP()
@@ -904,7 +888,7 @@ bool W5500::EnableDHCP()
 
 	// 打开DHCP
 	auto dhcp	= new Dhcp(*this);
-	dhcp->OnStop.Bind(OnDhcpStop, this);
+	//dhcp->OnStop.Bind(OnDhcpStop, this);
 	dhcp->Start();
 
 	_Dhcp	= dhcp;

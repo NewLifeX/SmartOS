@@ -91,7 +91,6 @@ NetworkInterface* PA0903::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto host = new W5500(Spi1, PA8, PA0);
-	host->NetReady.Bind(&PA0903::OpenClient, this);
 
 	return host;
 }
@@ -113,13 +112,10 @@ NetworkInterface* PA0903::Create8266(bool apOnly)
 		host->WorkMode = NetworkType::STA_AP;
 	}
 
-	// 绑定委托，避免5500没有连接时导致没有启动客户端
-	host->NetReady.Bind(&PA0903::OpenClient, this);
-
 	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
-	host->OpenAsync();
+	host->Open();
 
 	return host;
 }
@@ -170,53 +166,6 @@ void PA0903::Register(int index, IDataPort& dp)
 
 	auto& ds = Client->Store;
 	ds.Register(index, dp);
-}
-
-void PA0903::OpenClient(NetworkInterface& host)
-{
-	assert(Client, "Client");
-
-	debug_printf("\r\n OpenClient \r\n");
-
-	// 网络就绪后，打开指示灯
-	auto net = dynamic_cast<W5500*>(&host);
-	if (net && !net->Led) net->SetLed(*Leds[0]);
-
-	auto tk = TokenConfig::Current;
-	NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-
-	// 避免重复打开  不判断也行  这里只有W5500
-	if (!Client->Opened)
-	{
-		AddControl(*Host, tk->Uri(), 0);
-		AddControl(*Host, uri, tk->Port);
-		Client->Open();
-		if (ProxyFac)ProxyFac->AutoStart();
-	}
-}
-
-TokenController* PA0903::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
-{
-	// 创建连接服务器的Socket
-	auto socket = Socket::CreateRemote(uri);
-
-	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
-	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket = socket;
-
-	// 创建客户端
-	auto client = Client;
-	if (localPort == 0)
-		client->Master = ctrl;
-	else
-	{
-		socket->Local.Port = localPort;
-		ctrl->ShowRemote = true;
-		client->Controls.Add(ctrl);
-	}
-
-	return ctrl;
 }
 
 void OnInitNet(void* param)

@@ -61,11 +61,14 @@ Esp8266::~Esp8266()
 
 void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 {
+	Name	= "Esp8266";
+	Speed	= 54;
+
 	Port = port;
 	if(Port)
 	{
-		//MinSize	= Port->MinSize;
-		MaxSize	= Port->MaxSize;
+		if(MinSize) MinSize	= Port->MinSize;
+		if(MaxSize) MaxSize	= Port->MaxSize;
 
 		Port->Register(OnPortReceive, this);
 	}
@@ -73,23 +76,19 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 	_power.Init(power, false);
 	if (rst != P0) _rst.Init(rst, true);
 
-	_task = 0;
-	_task2 = 0;
+	_task	= 0;
 
-	AutoConn = false;
-	Joined = false;
+	Led		= nullptr;
 
-	Led = nullptr;
-
-	_Expect = nullptr;
+	_Expect	= nullptr;
 
 	Buffer(_sockets, 5 * 4).Clear();
 
-	Mode = NetworkType::STA_AP;
-	WorkMode = NetworkType::STA_AP;
+	Mode	= NetworkType::STA_AP;
+	WorkMode	= NetworkType::STA_AP;
 
-	SSID = new String();
-	Pass = new String();
+	SSID	= new String();
+	Pass	= new String();
 }
 
 void Esp8266::SetLed(Pin led)
@@ -103,10 +102,10 @@ void Esp8266::SetLed(Pin led)
 
 void Esp8266::SetLed(OutputPort& led)
 {
-	auto fp = new FlushPort();
-	fp->Port = &led;
+	auto fp	= new FlushPort();
+	fp->Port	= &led;
 	fp->Start();
-	Led = fp;
+	Led	= fp;
 }
 
 void Esp8266::RemoveLed()
@@ -115,37 +114,7 @@ void Esp8266::RemoveLed()
 	Led = nullptr;
 }
 
-void LoopOpenTask(void* param)
-{
-	auto& esp = *(Esp8266*)param;
-	// 如果8266没有被打开，并且没有处于正在打开的状态，那么再次打开8266
-	if (!esp.Opened && !esp.Opening)
-		esp.Open();
-}
-
-void LoopJoinTask(void* param)
-{
-	auto& esp = *(Esp8266*)param;
-	if (esp.Opened && !esp.Joined)
-	{
-		// 如果已打开，则尝试连WiFi
-		esp.TryJoinAP();
-	}
-}
-
-void Esp8266::OpenAsync()
-{
-	if (Opened || Opening) return;
-
-	// 异步打开任务，一般执行时间6~10秒，分离出来避免拉高8266数据处理任务的平均值
-	Sys.AddTask(LoopOpenTask, this, 0, -1, "Open8266");
-	//if(!_task) _task	= Sys.AddTask(LoopTask, this, 0, -1, "Open8266");
-
-	// 马上调度一次
-	//Sys.SetTask(_task, true, 0);
-}
-
-bool Esp8266::Open()
+bool Esp8266::OnOpen()
 {
 	if (!Port->Open()) return false;
 
@@ -186,20 +155,7 @@ bool Esp8266::Open()
 
 	SetDHCP(mode, true);
 
-	bool join = SSID && *SSID;
-	// 等待WiFi自动连接
-	if (!AutoConn || !WaitForCmd("WIFI CONNECTED", 3000))
-	{
-		if (!join || mode == NetworkType::STA_AP) OpenAP();
-		if (join)
-		{
-			if (!_task2) _task2 = Sys.AddTask(LoopJoinTask, this, 0, 30 * 1000, "JoinAP");
-		}
-	}
-
 	if (!_task) _task = Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
-
-	NetReady(*this);
 
 	return true;
 }
@@ -264,43 +220,38 @@ void Esp8266::OpenAP()
 #endif
 }
 
-void Esp8266::TryJoinAP()
-{
-	if (JoinAP(*SSID, *Pass))
-	{
-		// 拿到IP，网络就绪
-		IP = GetIP(true);
-
-		SaveConfig();
-		ShowConfig();
-
-		Joined = true;
-
-		NetReady(*this);
-		// 停止尝试
-		Sys.RemoveTask(_task2);
-	}
-	else if (Mode != NetworkType::STA_AP)
-	{
-		// 尝试若干次以后还是连接失败，则重启模块
-		auto tsk = Task::Get(_task2);
-		if (tsk->Times > 0 && tsk->Times % 4 == 0)
-		{
-			Close();
-			OpenAsync();
-		}
-	}
-}
-
-void Esp8266::Close()
+void Esp8266::OnClose()
 {
 	if (_task) Sys.RemoveTask(_task);
-	if (_task2) Sys.RemoveTask(_task2);
 
 	_power.Close();
 	_rst.Close();
 
 	Port->Close();
+}
+
+bool Esp8266::OnLink()
+{
+	bool join = SSID && *SSID;
+	// 等待WiFi自动连接
+	if (!WaitForCmd("WIFI CONNECTED", 3000))
+	{
+		auto mode = WorkMode;
+		// 默认Both
+		if (mode == NetworkType::Wire) mode = NetworkType::STA_AP;
+		if (!join || mode == NetworkType::STA_AP) OpenAP();
+		if (join)
+		{
+			if (!JoinAP(*SSID, *Pass)) return false;
+		}
+	}
+
+	return true;
+}
+
+bool Esp8266::CheckLink()
+{
+	return Linked;
 }
 
 // 配置网络参数
@@ -317,7 +268,7 @@ void Esp8266::Config()
 	mac[5]++;
 	SetMAC(false, mac);
 
-	SetAutoConn(AutoConn);
+	//SetAutoConn(AutoConn);
 }
 
 Socket* Esp8266::CreateSocket(NetType type)
@@ -1085,8 +1036,6 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 		SaveConfig();
 	}
 
-	// 马上要准备重启了  不需要再JoinAp了  避免堵塞SetWifi的消息回复。
-	if (_task2)Sys.SetTask(_task2, false);
 	// Sleep跳出去处理其他的
 	// 让JoinAp相关的东西数据先处理掉  然后再去回复  较少处理数据冲突的情况。
 	Sys.Sleep(150);
@@ -1094,7 +1043,7 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 	// 返回结果
 	result.Write((byte)true);
 	// 延迟重启
-	if (haveChang)Sys.Reboot(5000);
+	if (haveChang) Sys.Reboot(5000);
 
 	return true;
 }

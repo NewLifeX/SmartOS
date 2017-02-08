@@ -19,16 +19,11 @@ private:
 	void* _param;
 
 public:
-	bool Opening;	// 是否正在打开
-    bool Opened;    // 是否打开
-
 	ushort	MinSize;	// 数据包最小大小
 	ushort	MaxSize;	// 数据包最大大小
 
 	ITransport*	Port;	// 传输口
 
-	bool	AutoConn;	// 是否自动连接WiFi，默认false
-	bool	Joined;		// 是否已连接热点
 	NetworkType	WorkMode;	// 工作模式
 
 	IDataPort*	Led;	// 指示灯
@@ -39,10 +34,6 @@ public:
 
 	void Init(ITransport* port, Pin power = P0, Pin rst = P0);
 
-	void OpenAsync();
-	void TryJoinAP();
-	virtual bool Open();
-	virtual void Close();
 	virtual void Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
@@ -123,9 +114,15 @@ private:
     OutputPort	_rst;
 
 	uint		_task;		// 调度任务
-	uint		_task2;		// 连接热点任务
 	ByteArray	_Buffer;	// 待处理数据包
 	IPEndPoint	_Remote;	// 当前数据包远程地址
+
+	// 打开与关闭
+	virtual bool OnOpen();
+	virtual void OnClose();
+	// 检测连接
+	virtual bool OnLink();
+	virtual bool CheckLink();
 
 	bool CheckReady();
 	void OpenAP();

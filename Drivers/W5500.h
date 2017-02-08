@@ -13,7 +13,6 @@ public:
 	byte		RetryCount;
 	bool		PingACK;
 
-	bool		Opened;	// 是否已经打开
 	uint		TaskID;
 
 	IDataPort*	Led;	// 指示灯
@@ -30,8 +29,6 @@ public:
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
 
-	virtual bool Open();
-	virtual void Close();
 	virtual void Config();
 
 	// 读写帧，帧本身由外部构造   （包括帧数据内部的读写标志）
@@ -47,7 +44,7 @@ public:
 	// 网卡状态输出
 	void StateShow();
 	// 测试PHY状态  返回是否连接网线
-	bool CheckLink();
+	virtual bool CheckLink();
 	// 输出物理链路层状态
 	void PhyStateShow();
 
@@ -87,11 +84,15 @@ private:
 	ushort ReadByte2(ushort addr, byte socket = 0 ,byte block = 0);
 
 	void SetAddress(ushort addr, byte rw, byte socket = 0 ,byte block = 0);
-	void OnClose();
+
+	// 打开与关闭
+	virtual bool OnOpen();
+	virtual void OnClose();
+	// 检测连接
+	virtual bool OnLink();
 
 	// 中断脚回调
 	void OnIRQ(InputPort& port, bool down);
-	static void IRQTask(void* param);
 	void OnIRQ();
 };
 

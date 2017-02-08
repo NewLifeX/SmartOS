@@ -54,9 +54,6 @@ public:
 private:
 	void*	Data;
 	int		Size;
-
-	void OpenClient(NetworkInterface& host);
-	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

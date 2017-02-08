@@ -1,4 +1,4 @@
-#include "NetworkInterface.h"
+﻿#include "NetworkInterface.h"
 #include "Config.h"
 
 #define NET_DEBUG DEBUG
@@ -31,16 +31,78 @@ struct NetConfig
 
 NetworkInterface::NetworkInterface()
 {
-	Mode	= NetworkType::Wire;
-	Status	= NetworkStatus::Unknown;
+	Name	= "Network";
+	Speed	= 0;
+	Opened	= false;
+	Linked	= false;
 
+	Mode	= NetworkType::Wire;
+	Status	= NetworkStatus::None;
+
+	_taskLink	= 0;
+
+	debug_printf("Network::Add 0x%p\r\n", this);
 	All.Add(this);
 }
 
 NetworkInterface::~NetworkInterface()
 {
+	debug_printf("Network::Remove 0x%p\r\n", this);
 	All.Remove(this);
+
+	if(!Opened) Close();
 }
+
+bool NetworkInterface::Open()
+{
+	if(Opened) return true;
+
+	// 打开接口
+	Opened	= OnOpen();
+
+	// 建立连接任务
+	_taskLink	= Sys.AddTask([](void* s){ ((NetworkInterface*)s)->OnLoop(); }, this, 0, 1000, "网络检测");
+
+	return Opened;
+}
+
+void NetworkInterface::Close()
+{
+	if(!Opened) return;
+
+	Sys.RemoveTask(_taskLink);
+
+	OnClose();
+
+	Opened	= false;
+}
+
+void NetworkInterface::OnLoop()
+{
+	// 检测并通知状态改变
+	bool link	= CheckLink();
+	if(link ^ Linked)
+	{
+		debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
+		Linked	= link;
+
+		Changed(*this);
+		link	= Linked;
+	}
+
+	// 未连接时执行连接
+	if(!link)
+	{
+		link	= OnLink();
+		if(link ^ Linked)
+		{
+			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
+			Linked	= link;
+		}
+	}
+}
+
+//bool NetworkInterface::OnLink() { return true; }
 
 void NetworkInterface::InitConfig()
 {

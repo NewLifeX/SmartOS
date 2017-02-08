@@ -72,15 +72,6 @@ private:
 	void*	Data;
 	int		Size;
 
-	// Control 打开情况标识
-	bool	NetMaster;
-	bool	NetBra;
-	bool	EspMaster;
-	bool	EspBra;
-
-	void OpenClient(NetworkInterface& host);
-	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
-
 	static int Fix2401(const Buffer& bs);
 };
 

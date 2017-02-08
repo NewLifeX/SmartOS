@@ -107,14 +107,12 @@ NetworkInterface* IOK027X::Create8266(Pin power)
 
 		host->Mode = NetworkType::STA_AP;
 	}
-	// 绑定委托，避免5500没有连接时导致没有启动客户端
-	host->NetReady.Bind(&IOK027X::OpenClient, this);
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 	Client->Register("GetAPs", &Esp8266::GetAPs, host);
 
-	host->OpenAsync();
+	host->Open();
 
 	return host;
 }
@@ -170,59 +168,6 @@ void IOK027X::Register(int index, IDataPort& dp)
 
 	auto& ds = Client->Store;
 	ds.Register(index, dp);
-}
-
-void IOK027X::OpenClient(NetworkInterface& host)
-{
-	assert(Client, "Client");
-
-	//if(Client->Opened) return;
-
-	debug_printf("\r\n OpenClient \r\n");
-
-	auto esp = dynamic_cast<Esp8266*>(&host);
-	if (esp && !esp->Led && LedsShow == 1) esp->SetLed(*Leds[0]);
-
-	auto tk = TokenConfig::Current;
-
-	// STA模式下，主连接服务器
-	if (esp->IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
-
-	// STA或AP模式下，建立本地监听
-	if (Client->Controls.Count() == 0)
-	{
-		NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-		AddControl(host, uri, tk->Port);
-	}
-
-	if (!Client->Opened)
-		Client->Open();
-	else
-		Client->AttachControls();
-}
-
-TokenController* IOK027X::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
-{
-	// 创建连接服务器的Socket
-	auto socket = Socket::CreateRemote(uri);
-
-	// 创建连接服务器的控制器
-	auto ctrl = new TokenController();
-	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket = socket;
-
-	// 创建客户端
-	auto client = Client;
-	if (localPort == 0)
-		client->Master = ctrl;
-	else
-	{
-		socket->Local.Port = localPort;
-		ctrl->ShowRemote = true;
-		client->Controls.Add(ctrl);
-	}
-
-	return ctrl;
 }
 
 void IOK027X::InitNet(Pin power)
@@ -325,7 +270,7 @@ void IOK027X::FlushLed()
 	if (LedsShow == 0)			// 启动时候20秒
 	{
 		auto esp = dynamic_cast<Esp8266*>(Host);
-		if (esp && esp->Joined)					// 8266 初始化完成  且  连接完成
+		if (esp && esp->Linked)					// 8266 初始化完成  且  连接完成
 		{
 			Sys.SetTaskPeriod(LedsTaskId, 500);	// 慢闪
 		}

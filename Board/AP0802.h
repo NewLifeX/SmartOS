@@ -61,16 +61,8 @@ public:
 private:
 	void*	Data;
 	int		Size;
-	// Control 打开情况标识
-	bool	NetMaster;
-	bool	NetBra;
-	bool	EspMaster;
-	bool	EspBra;
 	Alarm*	AlarmObj;
-	// uint	Flag;		// 内部使用  标识Controller创建情况
 
-	void OpenClient(NetworkInterface& host);
-	TokenController* AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif

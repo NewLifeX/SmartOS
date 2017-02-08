@@ -130,13 +130,11 @@ NetworkInterface* NH3_0317::Create8266()
 
 		host->Mode	= NetworkType::STA_AP;
 	}
-	// 绑定委托，避免5500没有连接时导致没有启动客户端
-	host->NetReady.Bind(&NH3_0317::OpenClient, this);
 
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
 
-	host->OpenAsync();
+	host->Open();
 
 	return host;
 }
@@ -202,57 +200,6 @@ void NH3_0317::Register(int index, IDataPort& dp)
 
 	auto& ds = Client->Store;
 	ds.Register(index, dp);
-}
-
-void NH3_0317::OpenClient(NetworkInterface& host)
-{
-	assert(Client, "Client");
-
-	debug_printf("\r\n OpenClient \r\n");
-
-	auto esp	= dynamic_cast<Esp8266*>(&host);
-	if(esp && !esp->Led) esp->SetLed(*Leds[0]);
-
-	auto tk = TokenConfig::Current;
-
-	// STA模式下，主连接服务器
-	if (esp->IsStation() && esp->Joined && !Client->Master) AddControl(host, tk->Uri(), 0);
-
-	// STA或AP模式下，建立本地监听
-	if(Client->Controls.Count() == 0)
-	{
-		NetUri uri(NetType::Udp, IPAddress::Broadcast(), 3355);
-		AddControl(host, uri, tk->Port);
-	}                                                                          
-
-	if (!Client->Opened)
-		Client->Open();
-	else
-		Client->AttachControls();
-}
-
-TokenController* NH3_0317::AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort)
-{
-	// 创建连接服务器的Socket
-	auto socket	= Socket::CreateRemote(uri);
-
-	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
-	//ctrl->Port = dynamic_cast<ITransport*>(socket);
-	ctrl->Socket	= socket;
-
-	// 创建客户端
-	auto client	= Client;
-	if(localPort == 0)
-		client->Master	= ctrl;
-	else
-	{
-		socket->Local.Port	= localPort;
-		ctrl->ShowRemote	= true;
-		client->Controls.Add(ctrl);
-	}
-
-	return ctrl;
 }
 
 void NH3_0317::InitNet()

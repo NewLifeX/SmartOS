@@ -1,4 +1,4 @@
-#include "Socket.h"
+﻿#include "Socket.h"
 #include "Config.h"
 
 #include "NetworkInterface.h"
@@ -17,7 +17,7 @@ Socket* Socket::CreateClient(const NetUri& uri)
 	for(int i=0; i < list.Count(); i++)
 	{
 		auto ni	= list[i];
-		if(ni->Active)
+		if(ni->Linked)
 		{
 			auto socket	= ni->CreateSocket(uri.Type);
 			if(socket)
@@ -39,7 +39,7 @@ Socket* Socket::CreateRemote(const NetUri& uri)
 	for(int i=0; i < list.Count(); i++)
 	{
 		auto ni	= list[i];
-		if(ni && ni->Active)
+		if(ni && ni->Linked)
 		{
 			auto socket	= ni->CreateSocket(uri.Type);
 			if(socket)

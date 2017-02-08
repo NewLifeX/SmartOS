@@ -21,12 +21,8 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	// HardRTC*		Rtc;
-
 	NetworkInterface*	Host;	// 网络主机
 	NetworkInterface*	HostAP;	// 网络主机
-	//TokenClient*	Client;	// 令牌客户端
-	//ProxyFactory*	ProxyFac;	// 透传管理器
 	Alarm*			AlarmObj;
 
 	AP0801();
@@ -70,16 +66,6 @@ public:
 private:
 	void*	Data;
 	int		Size;
-	// Control 打开情况标识
-	bool	NetMaster;
-	bool	NetBra;
-	bool	EspMaster;
-	bool	EspBra;
-
-	// uint	Flag;		// 内部使用  标识Controller创建情况
-
-	void OpenClient(NetworkInterface& host);
-	void AddControl(NetworkInterface& host, const NetUri& uri, ushort localPort);
 };
 
 #endif
