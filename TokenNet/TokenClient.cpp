@@ -97,7 +97,7 @@ static TokenController* AddControl(TokenClient& client, const NetUri& uri, ushor
 
 	// 创建连接服务器的控制器
 	auto ctrl = new TokenController();
-	ctrl->Socket = socket;
+	ctrl->Socket	= socket;
 
 	// 创建客户端
 	if (localPort == 0)
@@ -127,14 +127,21 @@ void TokenClient::AttachControls()
 		if(!ctrl) return;
 
 		AddControl(*this, uri, 3377);
+
+		debug_printf("TokenClient::CheckNet %s 成功创建主连接\r\n", ctrl->Socket->Host->Name);
 	}
 	// 检测主链接是否已经断开
 	else if(!Master->Socket->Host->Linked)
 	{
+		debug_printf("TokenClient::CheckNet %s断开，切换主连接\r\n", Master->Socket->Host->Name);
+
+		delete Master;
+		Master	= nullptr;
+
 		auto ctrl	= AddControl(*this, uri, 0);
 		if(!ctrl) return;
 
-		AddControl(*this, uri, 3377);
+		//AddControl(*this, uri, 3377);
 	}
 	// 为其它网卡创建本地会话
 	else
@@ -158,6 +165,8 @@ void TokenClient::AttachControls()
 				// 在该接口上创建控制器
 				if(!flag)
 				{
+					debug_printf("TokenClient::CheckNet %s 创建本地监听\r\n", nis[k]->Name);
+
 					auto ctrl	= AddControl(*this, uri, 3377);
 					ctrl->Received	= _LocalReceive;
 					ctrl->Open();
@@ -358,12 +367,13 @@ void TokenClient::LoopTask()
 {
 	TS("TokenClient::LoopTask");
 
-	if(!Master)
+	auto flag	= Master;
+	//if(!Master)
 	{
 		AttachControls();
 		if(!Master) return;
 
-		Sys.SetTaskPeriod(_task, 5000);
+		if(!flag) Sys.SetTaskPeriod(_task, 5000);
 	}
 
 	// 状态。0准备、1握手完成、2登录后
