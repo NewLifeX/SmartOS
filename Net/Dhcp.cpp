@@ -25,7 +25,7 @@ Dhcp::Dhcp(NetworkInterface& host) : Host(host)
 	Socket->Remote.Port		= 67;
 	Socket->Remote.Address	= IPAddress::Broadcast();
 
-	IP		= IPAddress::Any();
+	IP		= host.IP;
 
 	Running	= false;
 	Result	= false;
@@ -136,7 +136,8 @@ void Dhcp::Start()
 	{
 		// 这里无法关闭主机，只能希望DHCP是第一个启动的Socket
 		//Host->Close();
-		Host.IP	= IPAddress::Any();
+		Host.IP	= IP = IPAddress::Any();
+		Host.Config();
 	}
 
 	// 发送网络请求时会自动开始
