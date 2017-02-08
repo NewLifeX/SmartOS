@@ -61,11 +61,11 @@ public:
 	// 应用配置
 	virtual void Config() = 0;
 
-	// 保存和加载动态获取的网络配置到存储设备
+	// 保存和加载网络配置
 	void InitConfig();
 	bool LoadConfig();
-	bool SaveConfig();
-	void ShowConfig();
+	bool SaveConfig() const;
+	void ShowConfig() const;
 
 	virtual Socket* CreateSocket(NetType type) = 0;
 
@@ -89,6 +89,12 @@ protected:
 	virtual bool OnLink(uint retry) { return true; }
 	virtual bool CheckLink() { return Linked; }
 
+	// 保存和加载网络配置
+	virtual void OnInitConfig() {}
+	virtual void OnLoadConfig(const Buffer& buf) {}
+	virtual void OnSaveConfig(Buffer& buf) const {}
+	virtual void OnShowConfig() const {}
+
 public:
 	// 全局静态
 	static List<NetworkInterface*> All;
@@ -108,6 +114,13 @@ public:
 
 	bool IsStation() const;
 	bool IsAP() const;
+	
+protected:
+	// 保存和加载网络配置
+	virtual void OnInitConfig();
+	virtual void OnLoadConfig(const Buffer& buf);
+	virtual void OnSaveConfig(Buffer& buf) const;
+	virtual void OnShowConfig() const;
 };
 
 #endif

@@ -46,6 +46,7 @@ void TinyIP::Init(ITransport* port)
 	_StartTime = Sys.Ms();
 
 	InitConfig();
+	LoadConfig();
 }
 
 // 循环调度的任务
@@ -238,7 +239,7 @@ void TinyIP::OnClose()
 
 void TinyIP::Config()
 {
-	ShowConfig();
+	//ShowConfig();
 }
 
 bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)

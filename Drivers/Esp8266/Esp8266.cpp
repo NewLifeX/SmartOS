@@ -46,11 +46,6 @@ Esp8266::Esp8266(COM idx, Pin power, Pin rst)
 	srp->MaxSize = 512;
 
 	Init(srp, power, rst);
-	InitConfig();
-	LoadConfig();
-
-	// 配置模式作为工作模式
-	WorkMode = Mode;
 }
 
 Esp8266::~Esp8266()
@@ -85,10 +80,13 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 	Buffer(_sockets, 5 * 4).Clear();
 
 	Mode	= NetworkType::STA_AP;
-	WorkMode	= NetworkType::STA_AP;
+	WorkMode= NetworkType::STA_AP;
 
-	SSID	= new String();
-	Pass	= new String();
+	InitConfig();
+	LoadConfig();
+
+	// 配置模式作为工作模式
+	WorkMode = Mode;
 }
 
 void Esp8266::SetLed(Pin led)
@@ -243,6 +241,9 @@ bool Esp8266::OnLink(uint retry)
 		if (join)
 		{
 			if (!JoinAP(*SSID, *Pass)) return false;
+
+			ShowConfig();
+			SaveConfig();
 		}
 	}
 

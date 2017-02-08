@@ -318,7 +318,6 @@ W5500::W5500(SPI spi, Pin irq, Pin rst)
 	auto spi_	= new Spi(spi, 36000000);
 
 	Init();
-	LoadConfig();
 	Init(spi_, irq, rst);
 }
 
@@ -347,8 +346,6 @@ void W5500::Init()
 	LowLevelTime= 0;
 	PingACK		= true;
 	TaskID		= 0;
-
-	InitConfig();
 }
 
 // 初始化
@@ -376,6 +373,9 @@ void W5500::Init(Spi* spi, Pin irq, Pin rst)
 	}
 
 	_spi = spi;
+
+	InitConfig();
+	LoadConfig();
 }
 
 void W5500::SetLed(Pin led)

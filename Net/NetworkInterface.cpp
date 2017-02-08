@@ -25,8 +25,9 @@ struct NetConfig
 	uint	DNSServer2;
 	uint	Gateway;
 
-	char	SSID[32];
-	char	Pass[32];
+	/*char	SSID[32];
+	char	Pass[32];*/
+	char	Data[4 * (32 - 7)];
 };
 
 NetworkInterface::NetworkInterface()
@@ -135,8 +136,7 @@ void NetworkInterface::InitConfig()
 
 	Mode	= NetworkType::Wire;
 
-	//if(SSID)	SSID->Clear();
-	//if(Pass)	Pass->Clear();
+	OnInitConfig();
 }
 
 bool NetworkInterface::LoadConfig()
@@ -145,7 +145,9 @@ bool NetworkInterface::LoadConfig()
 
 	NetConfig nc;
 	Buffer bs(&nc, sizeof(nc));
-	if(!Config::Current->Get("NET", bs)) return false;
+	if(!Config::Current->Get(Name, bs)) return false;
+
+	debug_printf("%s::Load %d 字节\r\n", Name, sizeof(nc));
 
 	IP			= nc.IP;
 	Mask		= nc.Mask;
@@ -156,13 +158,12 @@ bool NetworkInterface::LoadConfig()
 	DNSServer2	= nc.DNSServer2;
 	Gateway		= nc.Gateway;
 
-	//if(SSID) *SSID	= nc.SSID;
-	//if(Pass) *Pass	= nc.Pass;
+	OnLoadConfig(Buffer(nc.Data, sizeof(nc.Data)));
 
 	return true;
 }
 
-bool NetworkInterface::SaveConfig()
+bool NetworkInterface::SaveConfig() const
 {
 	if(!Config::Current) return false;
 
@@ -176,18 +177,17 @@ bool NetworkInterface::SaveConfig()
 	nc.DNSServer2	= DNSServer2.Value;
 	nc.Gateway		= Gateway.Value;
 
-	/*if(SSID) SSID->CopyTo(0, nc.SSID, ArrayLength(nc.SSID) - 1);
-	if (Pass)
-	{
-		Pass->CopyTo(0, nc.Pass, ArrayLength(nc.Pass) - 1);
-		if (Pass->Length() == 0)nc.Pass[0] = 0x00;			// 如果密码为空 写一个字节   弥补String Copy的问题
-	}*/
+	Buffer dat(nc.Data, sizeof(nc.Data));
+	dat.Clear();
+	OnSaveConfig(dat);
+
+	debug_printf("%s::Save %d 字节\r\n", Name, sizeof(nc));
 
 	Buffer bs(&nc, sizeof(nc));
-	return Config::Current->Set("NET", bs);
+	return Config::Current->Set(Name, bs);
 }
 
-void NetworkInterface::ShowConfig()
+void NetworkInterface::ShowConfig() const
 {
 #if NET_DEBUG
 	net_printf("    MAC:\t");
@@ -207,6 +207,7 @@ void NetworkInterface::ShowConfig()
 		net_printf("\r\n    DNS2:\t");
 		DNSServer2.Show();
 	}
+	net_printf("\r\n    Speed:\t%dMps", Speed);
 	net_printf("\r\n    Mode:\t");
 	switch(Mode)
 	{
@@ -225,8 +226,7 @@ void NetworkInterface::ShowConfig()
 	}
 	//net_printf("\r\n");
 
-	//if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(false); }
-	//if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(false); }
+	OnShowConfig();
 
 	net_printf("\r\n");
 #endif
@@ -256,4 +256,37 @@ bool WiFiInterface::IsStation() const
 bool WiFiInterface::IsAP() const
 {
 	return Mode == NetworkType::AP || Mode == NetworkType::STA_AP;
+}
+
+void WiFiInterface::OnInitConfig()
+{
+	if(!SSID)
+		SSID	= new String();
+	else
+		SSID->Clear();
+
+	if(!Pass)
+		Pass	= new String();
+	else
+		Pass->Clear();
+}
+
+void WiFiInterface::OnLoadConfig(const Buffer& buf)
+{
+	Stream ms(buf);
+	if(SSID) *SSID	= ms.ReadString();
+	if(Pass) *Pass	= ms.ReadString();
+}
+
+void WiFiInterface::OnSaveConfig(Buffer& buf) const
+{
+	Stream ms(buf);
+	if(SSID) ms.WriteArray(*SSID);
+	if(Pass) ms.WriteArray(*Pass);
+}
+
+void WiFiInterface::OnShowConfig() const
+{
+	if(SSID) { net_printf("\r\n    SSID:\t"); SSID->Show(false); }
+	if(Pass) { net_printf("\r\n    Pass:\t"); Pass->Show(false); }
 }

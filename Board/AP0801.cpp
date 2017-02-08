@@ -130,7 +130,7 @@ NetworkInterface* AP0801::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto net = new W5500(Spi2, PE1, PD13);
-	// 软路由的DHCP要求很严格，必须先把自己IP设为0
+	// 必须先把自己IP设为0，否则本地IP段与路由器不一致时将得不到分配
 	//net->IP = IPAddress::Any();
 
 	if(!net->Open())
