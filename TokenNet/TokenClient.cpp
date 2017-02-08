@@ -1,6 +1,7 @@
 ﻿#include "Kernel\TTime.h"
 
 #include "Net\Socket.h"
+#include "Net\NetworkInterface.h"
 
 #include "Message\BinaryPair.h"
 
@@ -46,11 +47,6 @@ TokenClient::TokenClient()
 
 	assert(!Current, "只能有一个令牌客户端实例");
 	Current = this;
-
-	// 重启
-	//Register("Gateway/Restart", InvokeRestart, this);
-	// 重置
-	//Register("Gateway/Reset", InvokeReset, this);
 }
 
 void TokenClient::Open()
@@ -59,12 +55,11 @@ void TokenClient::Open()
 
 	TS("TokenClient::Open");
 
-	AttachControls();
+	//AttachControls();
 
 	// 令牌客户端定时任务
-	if (Master) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
-	// 令牌广播使用素数，避免跟别的任务重叠
-	//if (cs.Count() > 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+	//if (Master)
+		_task = Sys.AddTask(&TokenClient::LoopTask, this, 3000, 3000, "令牌客户");
 
 	auto cfg = Cfg;
 	Cookie = cfg->Token();
@@ -94,10 +89,84 @@ void TokenClient::Close()
 	Opened = false;
 }
 
+static TokenController* AddControl(TokenClient& client, const NetUri& uri, ushort localPort)
+{
+	// 创建连接服务器的Socket
+	auto socket = Socket::CreateRemote(uri);
+	if(!socket) return nullptr;
+
+	// 创建连接服务器的控制器
+	auto ctrl = new TokenController();
+	ctrl->Socket = socket;
+
+	// 创建客户端
+	if (localPort == 0)
+		client.Master = ctrl;
+	else
+	{
+		socket->Local.Port = localPort;
+		ctrl->ShowRemote = true;
+		client.Controls.Add(ctrl);
+	}
+
+	return ctrl;
+}
+
 void TokenClient::AttachControls()
 {
 	auto& cs = Controls;
 	//assert(cs.Count() > 0, "令牌客户端还没设置控制器呢");
+
+	auto token	= TokenConfig::Current;
+	auto uri	= token->Uri();
+
+	// 检测主链接
+	if(!Master)
+	{
+		auto ctrl	= AddControl(*this, uri, 0);
+		if(!ctrl) return;
+
+		AddControl(*this, uri, 3377);
+	}
+	// 检测主链接是否已经断开
+	else if(!Master->Socket->Host->Linked)
+	{
+		auto ctrl	= AddControl(*this, uri, 0);
+		if(!ctrl) return;
+
+		AddControl(*this, uri, 3377);
+	}
+	// 为其它网卡创建本地会话
+	else
+	{
+		// 启动本地控制器
+		if (_LocalReceive)
+		{
+			auto& nis	= NetworkInterface::All;
+			for (int k = 0; k < nis.Count(); k++)
+			{
+				// 检测该接口上是否创建了控制器
+				bool flag	= false;
+				for (int i = 0; i < cs.Count(); i++)
+				{
+					if(cs[i]->Socket->Host == nis[k])
+					{
+						flag	= true;
+						break;
+					}
+				}
+				// 在该接口上创建控制器
+				if(!flag)
+				{
+					auto ctrl	= AddControl(*this, uri, 3377);
+					ctrl->Received	= _LocalReceive;
+					ctrl->Open();
+				}
+			}
+			// 令牌广播使用素数，避免跟别的任务重叠
+			if (cs.Count() > 0 && _taskBroadcast == 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+		}
+	}
 
 	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
 	Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
@@ -105,24 +174,9 @@ void TokenClient::AttachControls()
 	{
 		Master->Received = dlg;
 		Master->Open();
-		if (!_task) _task = Sys.AddTask(&TokenClient::LoopTask, this, 1000, 5000, "令牌客户");
 	}
 	// 启动本地控制器
-	if (_LocalReceive)
-	{
-		for (int i = 0; i < cs.Count(); i++)
-		{
-			auto ctrl = cs[i];
-			ctrl->Received = _LocalReceive;
-			ctrl->Open();
-		}
-		// 令牌广播使用素数，避免跟别的任务重叠
-		if (cs.Count() > 0 && _taskBroadcast == 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
-	}
-	else
-	{
-		if (cs.Count() > 0) debug_printf("设置了本地令牌控制器，但是没有启用本地功能，你可能需要client->UserLocal()\r\n");
-	}
+	if (!_LocalReceive)	if (cs.Count() > 0) debug_printf("设置了本地令牌控制器，但是没有启用本地功能，你可能需要client->UserLocal()\r\n");
 }
 
 // 启用内网功能。必须显式调用，否则内网功能不参与编译链接，以减少大小
@@ -303,6 +357,15 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 void TokenClient::LoopTask()
 {
 	TS("TokenClient::LoopTask");
+
+	if(!Master)
+	{
+		AttachControls();
+		if(!Master) return;
+
+		Sys.SetTaskPeriod(_task, 5000);
+	}
+
 	// 状态。0准备、1握手完成、2登录后
 	switch (Status)
 	{

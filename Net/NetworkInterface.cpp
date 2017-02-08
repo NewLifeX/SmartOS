@@ -76,6 +76,7 @@ void NetworkInterface::Close()
 
 	OnClose();
 
+	Linked	= false;
 	Opened	= false;
 }
 

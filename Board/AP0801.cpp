@@ -210,17 +210,7 @@ void AP0801::InitClient()
 
 	tc->UseLocal();
 
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p) {
-		auto& tc = *(TokenClient*)p;
-		if (!tc.Opened)
-		{
-			debug_printf("联网超时，准备重启系统！\r\n\r\n");
-			Sys.Reboot();
-		}
-	},
-		tc, 8 * 60 * 1000, -1, "联网检查");
+	//tc->Open();
 }
 
 void AP0801::Register(uint offset, IDataPort& dp)
@@ -245,6 +235,8 @@ void OnInitNet(void* param)
 
 	bsp.Create5500();
 	bsp.Create8266(false);
+
+	Client->Open();
 }
 
 void AP0801::InitNet()

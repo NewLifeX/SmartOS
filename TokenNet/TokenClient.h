@@ -55,7 +55,7 @@ public:
 	void*			Param;
 
 	// 常用系统级消息
-		// 握手广播
+	// 握手广播
 	void SayHello(bool broadcast);
 
 	// 注册
