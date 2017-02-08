@@ -80,26 +80,28 @@ void NetworkInterface::Close()
 
 void NetworkInterface::OnLoop()
 {
-	// 检测并通知状态改变
-	bool link	= CheckLink();
-	if(link ^ Linked)
-	{
-		debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
-		Linked	= link;
-
-		Changed(*this);
-		link	= Linked;
-	}
-
 	// 未连接时执行连接
-	if(!link)
+	if(!Linked)
 	{
-		link	= OnLink(++_retry);
+		bool link	= OnLink(++_retry);
 		if(link ^ Linked)
 		{
 			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
 			Linked	= link;
 			_retry	= 0;
+		}
+	}
+	else
+	{
+		// 检测并通知状态改变
+		bool link	= CheckLink();
+		if(link ^ Linked)
+		{
+			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
+			Linked	= link;
+
+			Changed(*this);
+			link	= Linked;
 		}
 	}
 }
