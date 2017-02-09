@@ -80,15 +80,21 @@ void NetworkInterface::Close()
 	Opened	= false;
 }
 
+bool NetworkInterface::Active() const
+{
+	return Opened && Linked && IP != IPAddress::Any();
+}
+
 void NetworkInterface::OnLoop()
 {
+	bool old	= Linked;
 	// 未连接时执行连接
-	if(!Linked)
+	if(!old)
 	{
 		bool link	= OnLink(++_retry);
-		if(link ^ Linked)
+		if(link ^ old)
 		{
-			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
+			debug_printf("%s::Change %s => %s \r\n", Name, old ? "连接" : "断开", link ? "连接" : "断开");
 			Linked	= link;
 			_retry	= 0;
 		}
@@ -97,18 +103,15 @@ void NetworkInterface::OnLoop()
 	{
 		// 检测并通知状态改变
 		bool link	= CheckLink();
-		if(link ^ Linked)
+		if(link ^ old)
 		{
-			debug_printf("%s::Change %s => %s \r\n", Name, Linked ? "连接" : "断开", link ? "连接" : "断开");
+			debug_printf("%s::Change %s => %s \r\n", Name, old ? "连接" : "断开", link ? "连接" : "断开");
 			Linked	= link;
 
 			Changed(*this);
-			link	= Linked;
 		}
 	}
 }
-
-//bool NetworkInterface::OnLink() { return true; }
 
 void NetworkInterface::InitConfig()
 {
@@ -134,6 +137,11 @@ void NetworkInterface::InitConfig()
 	mac[0] = 'N'; mac[1] = 'X';
 	for(int i=0; i< 4; i++)
 		mac[2 + i] = Sys.ID[3 - i];
+
+	// 多网卡时MAC不能相同
+	int k=0;
+	for(;k<All.Count() && All[k]!=this;k++);
+	mac[5]	+= k;
 
 	Mode	= NetworkType::Wire;
 
