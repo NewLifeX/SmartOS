@@ -17,7 +17,7 @@ Socket* Socket::CreateClient(const NetUri& uri)
 	for(int i=0; i < list.Count(); i++)
 	{
 		auto ni	= list[i];
-		if(ni->Linked)
+		if(ni->Active())
 		{
 			auto socket	= ni->CreateSocket(uri.Type);
 			if(socket)
@@ -39,7 +39,7 @@ Socket* Socket::CreateRemote(const NetUri& uri)
 	for(int i=0; i < list.Count(); i++)
 	{
 		auto ni	= list[i];
-		if(ni && ni->Linked)
+		if(ni && ni->Active())
 		{
 			auto socket	= ni->CreateSocket(uri.Type);
 			if(socket)

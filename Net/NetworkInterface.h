@@ -57,6 +57,7 @@ public:
 	// 打开与关闭
 	bool Open();
 	void Close();
+	bool Active() const;
 
 	// 应用配置
 	virtual void Config() = 0;
@@ -114,7 +115,7 @@ public:
 
 	bool IsStation() const;
 	bool IsAP() const;
-	
+
 protected:
 	// 保存和加载网络配置
 	virtual void OnInitConfig();

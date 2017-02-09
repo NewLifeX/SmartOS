@@ -58,8 +58,7 @@ void TokenClient::Open()
 	//AttachControls();
 
 	// 令牌客户端定时任务
-	//if (Master)
-		_task = Sys.AddTask(&TokenClient::LoopTask, this, 3000, 3000, "令牌客户");
+	_task = Sys.AddTask(&TokenClient::LoopTask, this, 0, 1000, "令牌客户");
 
 	auto cfg = Cfg;
 	Cookie = cfg->Token();
@@ -126,9 +125,9 @@ void TokenClient::AttachControls()
 		auto ctrl	= AddControl(*this, uri, 0);
 		if(!ctrl) return;
 
-		AddControl(*this, uri, 3377);
-
 		debug_printf("TokenClient::CheckNet %s 成功创建主连接\r\n", ctrl->Socket->Host->Name);
+
+		AddControl(*this, uri, 3377);
 	}
 	// 检测主链接是否已经断开
 	else if(!Master->Socket->Host->Linked)
@@ -137,6 +136,9 @@ void TokenClient::AttachControls()
 
 		delete Master;
 		Master	= nullptr;
+
+		Status	= 0;
+		Token	= 0;
 
 		auto ctrl	= AddControl(*this, uri, 0);
 		if(!ctrl) return;
@@ -511,8 +513,8 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 
 		TS("TokenClient::OnHello_Error");
 
-		Status = 0;
-		Token = 0;
+		Status	= 0;
+		Token	= 0;
 
 		// 未握手错误，马上重新握手
 		if (ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
@@ -699,14 +701,14 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		if (result == 0xF7)
 		{
 			// 任何错误，重新握手
-			Status = 1;
-			Token = 0;
+			Status	= 1;
+			Token	= 0;
 			Register();
 			return false;
 		}
 
-		Token = 0;
-		Status = 0;
+		Token	= 0;
+		Status	= 0;
 
 		if (result == 0x7F) Sys.SetTask(_task, true, 0);
 	}
