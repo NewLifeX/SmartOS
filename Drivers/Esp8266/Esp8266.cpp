@@ -230,6 +230,10 @@ void Esp8266::OnClose()
 
 bool Esp8266::OnLink(uint retry)
 {
+	//if(Linked) return true;
+
+	debug_printf("Esp8266::OnLink\r\n");
+
 	bool join = SSID && *SSID;
 	// 等待WiFi自动连接
 	if (!WaitForCmd("WIFI CONNECTED", 3000))
@@ -366,7 +370,7 @@ String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint ms
 		if (EnableLog)
 		{
 			we.Command = &cmd;
-			net_printf("%d=> ", task.ID);
+			//net_printf("%d=> ", task.ID);
 			cmd.Trim().Show(true);
 		}
 #endif
@@ -1078,7 +1082,7 @@ bool Esp8266::GetAPs(const Pair& args, Stream& result)
 	}
 
 	// 只运行一次
-	Sys.AddTask(&Esp8266::GetAPsTask, this, 0, -1, "");
+	Sys.AddTask(&Esp8266::GetAPsTask, this, 0, -1, "GetAPs");
 
 	return rt;
 }
