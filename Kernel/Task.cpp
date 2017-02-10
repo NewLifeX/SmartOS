@@ -48,8 +48,9 @@ bool Task::Execute(UInt64 now)
 {
 	TS(Name);
 
-	if(Deepth >= MaxDeepth) return false;
-	Deepth++;
+	auto& dp	= Deepth;
+	if(dp >= MaxDeepth) return false;
+	dp++;
 
 	// 如果是事件型任务，这里禁用。任务中可以重新启用
 	if(Event)
@@ -79,13 +80,13 @@ bool Task::Execute(UInt64 now)
 	CostMs	= Cost / 1000;
 
 #if DEBUG
-	//if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
+	if(ct > 500000) debug_printf("Task::Execute 任务 %d [%d] 执行时间过长 %dus 睡眠 %dus\r\n", ID, Times, ct, SleepTime);
 #endif
 
 	// 如果只是一次性任务，在这里清理
 	if(!Event && Period < 0) Host->Remove(ID);
 
-	Deepth--;
+	dp--;
 
 	return true;
 }
@@ -178,6 +179,8 @@ TaskScheduler::TaskScheduler(cstring name)
 	Running = false;
 	Current	= nullptr;
 	Count	= 0;
+	Deepth	= 0;
+	MaxDeepth	= 8;
 
 	Times	= 0;
 	Cost	= 0;
@@ -294,17 +297,19 @@ void TaskScheduler::Start()
 	if(Running) return;
 
 #if DEBUG
-	//Add([](void* p){ ((TaskScheduler*)p)->ShowStatus(); }, this, 10000, 30000, "任务状态");
 	Add(&TaskScheduler::ShowStatus, this, 10000, 30000, "任务状态");
 #endif
 	debug_printf("%s::准备就绪 开始循环处理%d个任务！\r\n\r\n", Name, Count);
 
 	bool cancel	= false;
 	Running = true;
+	Deepth++;
 	while(Running)
 	{
 		Execute(0xFFFFFFFF, cancel);
 	}
+	Deepth--;
+	Running = false;
 	debug_printf("%s停止调度，共有%d个任务！\r\n", Name, Count);
 }
 
@@ -377,7 +382,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		Sleeping	= true;
 		Time.Sleep(min, &Sleeping);
 		Sleeping	= false;
-		
+
 		// 累加睡眠时间
 		Int64 ms	= (Int64)Sys.Ms() - (Int64)now;
 		TotalSleep	+= ms;
@@ -387,6 +392,10 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 
 uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 {
+	auto& dp	= Deepth;
+	if(dp >= MaxDeepth) return 0;
+	dp++;
+
 	// 记录当前正在执行任务
 	auto task = Current;
 
@@ -407,6 +416,8 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 
 	int cost	= (int)(Sys.Ms() - start);
 	if(task) task->SleepTime	+= tc.Elapsed();
+
+	dp--;
 
 	return cost;
 }
@@ -429,12 +440,15 @@ void TaskScheduler::SkipSleep()
 // 显示状态
 void TaskScheduler::ShowStatus()
 {
+#if DEBUG
 	//auto host = (TaskScheduler*)param;
 	auto host	= this;
 	auto now	= Sys.Ms();
 
+	auto p	= 10000 - (int)(TotalSleep * 10000 / now);
+
 	debug_printf("Task::ShowStatus [%d]", host->Times);
-	debug_printf(" 负载 %d/10000", 10000 - (int)(TotalSleep * 10000 / now));
+	debug_printf(" 负载 %d.%d%%", p/100, p%100);
 	debug_printf(" 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
@@ -454,6 +468,7 @@ void TaskScheduler::ShowStatus()
 			Sys.Sleep(ms);
 		}
 	}
+#endif
 }
 
 Task* TaskScheduler::operator[](int taskid)

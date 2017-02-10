@@ -69,6 +69,8 @@ public:
 	Task*	Current;	// 正在执行的任务
 	bool	Running;	// 是否正在运行
 	bool	Sleeping;	// 如果当前处于Sleep状态，马上停止并退出
+	byte	Deepth;		// 当前深度
+	byte	MaxDeepth;	// 最大深度。默认5层
 
 	int		Times;		// 执行次数
 	int		Cost;		// 平均执行时间us
