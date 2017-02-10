@@ -117,6 +117,7 @@ static TokenController* AddControl(TokenClient& client, NetworkInterface* host, 
 	ctrl->Socket	= socket;
 
 	// 创建客户端
+	socket->Remote.Address	= IPAddress::Broadcast();
 	socket->Remote.Port	= remotePort;
 	ctrl->ShowRemote	= true;
 	client.Controls.Add(ctrl);
@@ -196,8 +197,11 @@ void TokenClient::CheckNet()
 
 				NetUri uri(NetType::Udp, IPAddress::Broadcast(), Cfg->Port);
 				auto ctrl	= AddControl(*this, nis[k], uri, Cfg->Port);
-				ctrl->Received	= _LocalReceive;
-				ctrl->Open();
+				if(ctrl)
+				{
+					ctrl->Received	= _LocalReceive;
+					ctrl->Open();
+				}
 			}
 		}
 		// 令牌广播使用素数，避免跟别的任务重叠
