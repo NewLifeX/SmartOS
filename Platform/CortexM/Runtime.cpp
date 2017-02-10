@@ -142,6 +142,7 @@ void assert_failed2(cstring msg, cstring file, unsigned int line)
 }
 
 extern "C" {
+	// 这里的静态对象不需要析构
 	int __aeabi_atexit(int a1, int a2, int a3)
 	{
 		return 0;
