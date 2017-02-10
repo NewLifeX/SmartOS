@@ -11,12 +11,9 @@
 // 构造控制器
 Controller::Controller()
 {
-	Port = nullptr;
-	MinSize = 0;
-	Opened = false;
-
-	//Received	= nullptr;
-	//Param		= nullptr;
+	Port	= nullptr;
+	MinSize	= 0;
+	Opened	= false;
 }
 
 Controller::~Controller()
@@ -97,8 +94,6 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 {
 	TS("Controller::DispatchMsg");
 
-	//byte* buf = ms.Current();
-
 	auto& msg = *pmsg;
 	msg.State = param;
 	if (!msg.Read(ms)) return false;
@@ -106,15 +101,7 @@ bool Controller::Dispatch(Stream& ms, Message* pmsg, void* param)
 	// 校验
 	if (!msg.Valid()) return true;
 
-	if (!Valid(msg))
-	{
-		/*debug_printf("消息校验未通过\r\n");
-		msg.Show();
-		debug_printf("\r\n");*/
-
-		return true;
-	}
-	//if(!msg.Valid()) return true;
+	if (!Valid(msg)) return true;
 
 	return OnReceive(msg);
 }
@@ -130,10 +117,6 @@ bool Controller::OnReceive(Message& msg)
 	TS("Controller::OnReceive");
 
 	// 外部公共消息事件
-	/*if(Received)
-	{
-		if(!Received(this, msg, Param)) return true;
-	}*/
 	Received(msg, *this);
 
 	return true;
@@ -162,7 +145,6 @@ bool Controller::SendInternal(const Message& msg)
 	msg.Write(ms);
 
 	Buffer bs(ms.GetBuffer(), ms.Position());
-	//return Port->Write(bs, msg.State);
 	return SendInternal(bs, msg.State);
 }
 

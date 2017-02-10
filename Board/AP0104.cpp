@@ -365,7 +365,6 @@ void AP0104::Restore()
 	if (bsp->Server)bsp->Server->ClearDevices();
 	if (TokenConfig::Current)TokenConfig::Current->Clear();
 	if (TinyConfig::Current)TokenConfig::Current->Clear();
-	// Config::Current->RemoveAll();
 
 	debug_printf("系统将在1秒后重启\r\n");
 	if(Client) Client->Reset("按键重置");

@@ -352,7 +352,6 @@ void AP0103::Restore()
 	if (bsp->Server)bsp->Server->ClearDevices();
 	if (TokenConfig::Current)TokenConfig::Current->Clear();
 	if (TinyConfig::Current)TokenConfig::Current->Clear();
-	// Config::Current->RemoveAll();
 
 	if(Client) Client->Reset("按键重置");
 }

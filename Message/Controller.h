@@ -41,7 +41,6 @@ public:
 
 	// 收到消息时触发
 	Delegate2<Message&, Controller&>	Received;
-	//void*			Param;
 	
 protected:
 	bool SendInternal(const Message& msg);

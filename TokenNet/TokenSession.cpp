@@ -36,7 +36,7 @@ void SessionStat::Clear()
 
 String& SessionStat::ToStr(String& str) const
 {
-	str = str + "OnHello: " + OnHello + " OnLogin: " + OnLogin + " OnPing: " + OnPing;
+	str = str + "Hello: " + OnHello + " Login: " + OnLogin + " Ping: " + OnPing;
 	return str;
 }
 #endif
@@ -49,8 +49,11 @@ TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 #if DEBUG
 	HisSsNum++;			// 历史Session个数
 #endif
+
+	Status	= 0;
+	LastActive	= Sys.Ms();
+
 	client.Sessions.Add(this);
-	Status = 0;
 }
 
 TokenSession::~TokenSession()
@@ -76,7 +79,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 {
 	TS("TokenSession::OnReceive");
 
-	LastActive = Sys.Ms();
+	LastActive	= Sys.Ms();
 	// if (Token == 0 && msg.Code > 1 && Key.Length() == 0)
 	if ((Token == 0 && msg.Code > 2) || msg.ErrorCode == DecryptError)	// 解密失败 直接让他重新来过
 	{
@@ -143,6 +146,8 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	TS("TokenSession::OnHello");
 
+	Name	= ext.Name;
+
 	BinaryPair bp(msg.ToStream());
 	if (bp.Get("Action"))
 	{
@@ -157,7 +162,7 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	}
 
 	// 同步本地时间
-	if (ext.LocalTime > 0 && DateTime::Now().Year < 2016) ((TTime&)Time).SetTime(ext.LocalTime / 1000);
+	//if (ext.LocalTime > 0 && DateTime::Now().Year < 2016) ((TTime&)Time).SetTime(ext.LocalTime / 1000);
 
 	auto rs = msg.CreateReply();
 
@@ -269,13 +274,27 @@ bool TokenSession::OnPing(TokenMessage& msg)
 	Status = 3;
 	return true;
 }
+
+bool TokenSession::CheckExpired()
+{
+	auto now	= Sys.Ms();
+	// 5分钟不活跃超时	LastActive为0的为特殊Session 不删除
+	if (LastActive + 5 * 60 * 1000 < now) return true;
+
+	// 握手一分钟后还不登录的删掉
+	if (LastActive + 60 * 1000 < now && Status == 1) return true;
+
+	return false;
+}
+
 #if DEBUG
 String& TokenSession::ToStr(String& str) const
 {
-	int timeSec = (Sys.Ms() - LastActive) / 1000UL;
-	str = str + Remote + " " + Name + " LastAct " + timeSec + "s ago \t";
+	int sec	= (Sys.Ms() - LastActive) / 1000UL;
+	str = str + Remote + " " + Name + " LastActive " + sec + "s \t";
 
 	Stat.ToStr(str);
+
 	return str;
 }
 #endif
