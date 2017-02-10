@@ -140,3 +140,10 @@ void assert_failed2(cstring msg, cstring file, unsigned int line)
 
 	TInterrupt::Halt();
 }
+
+extern "C" {
+	int __aeabi_atexit(int a1, int a2, int a3)
+	{
+		return 0;
+	}
+}
