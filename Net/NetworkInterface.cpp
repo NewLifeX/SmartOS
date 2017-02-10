@@ -27,7 +27,7 @@ struct NetConfig
 
 	/*char	SSID[32];
 	char	Pass[32];*/
-	char	Data[4 * (32 - 7)];
+	char	Data[4 * (32 - 7)];	// 扩展数据，给各接口保存自定义数据
 };
 
 NetworkInterface::NetworkInterface()
@@ -113,6 +113,36 @@ void NetworkInterface::OnLoop()
 	}
 }
 
+Socket* NetworkInterface::CreateClient(const NetUri& uri)
+{
+	if(!Active()) return nullptr;
+
+	auto socket	= CreateSocket(uri.Type);
+	if(socket)
+	{
+		socket->Local.Address	= uri.Address;
+		socket->Local.Port		= uri.Port;
+	}
+
+	return socket;
+}
+
+Socket* NetworkInterface::CreateRemote(const NetUri& uri)
+{
+	if(!Active()) return nullptr;
+
+	auto socket	= CreateSocket(uri.Type);
+	if(socket)
+	{
+		socket->Local.Address	= IP;
+		socket->Remote.Address	= uri.Address;
+		socket->Remote.Port		= uri.Port;
+		socket->Server			= uri.Host;
+	}
+
+	return socket;
+}
+
 void NetworkInterface::InitConfig()
 {
 	IPAddress defip(192, 168, 1, 1);
@@ -121,20 +151,21 @@ void NetworkInterface::InitConfig()
 	IP = defip;
 	byte first = Sys.ID[0];
 	if(first <= 1 || first >= 254) first = 2;
-	IP[3] = first;
+	IP[3]	= first;
 
-	Mask = IPAddress(255, 255, 255, 0);
-	Gateway = defip;
+	Mask	= IPAddress(255, 255, 255, 0);
+	Gateway	= defip;
 
 	// 修改为双DNS方案，避免单点故障。默认使用阿里和百度公共DNS。
 	DNSServer	= IPAddress(223, 5, 5, 5);
 	DNSServer2	= IPAddress(180, 76, 76, 76);
 
-	auto& mac = Mac;
+	auto& mac	= Mac;
 	// 随机Mac，前2个字节取自ASCII，最后4个字节取自后三个ID
 	//mac[0] = 'W'; mac[1] = 'S';
 	// 第一个字节最低位为1表示组播地址，所以第一个字节必须是偶数
-	mac[0] = 'N'; mac[1] = 'X';
+	mac[0]	= 'N';
+	mac[1]	= 'X';
 	for(int i=0; i< 4; i++)
 		mac[2 + i] = Sys.ID[3 - i];
 
@@ -150,31 +181,32 @@ void NetworkInterface::InitConfig()
 
 bool NetworkInterface::LoadConfig()
 {
-	if(!Config::Current) return false;
+	auto cfg	= Config::Current;
+	if(!cfg) return false;
 
-	NetConfig nc;
-	Buffer bs(&nc, sizeof(nc));
-	if(!Config::Current->Get(Name, bs)) return false;
+	auto nc	= (NetConfig*)cfg->Get(Name);
+	if(!nc) return false;
 
-	debug_printf("%s::Load %d 字节\r\n", Name, sizeof(nc));
+	debug_printf("%s::Load %d 字节\r\n", Name, sizeof(NetConfig));
 
-	IP			= nc.IP;
-	Mask		= nc.Mask;
-	Mac			= nc.Mac;
-	Mode		= (NetworkType)nc.Mode;
+	IP			= nc->IP;
+	Mask		= nc->Mask;
+	Mac			= nc->Mac;
+	Mode		= (NetworkType)nc->Mode;
 
-	DNSServer	= nc.DNSServer;
-	DNSServer2	= nc.DNSServer2;
-	Gateway		= nc.Gateway;
+	DNSServer	= nc->DNSServer;
+	DNSServer2	= nc->DNSServer2;
+	Gateway		= nc->Gateway;
 
-	OnLoadConfig(Buffer(nc.Data, sizeof(nc.Data)));
+	OnLoadConfig(Buffer(nc->Data, sizeof(nc->Data)));
 
 	return true;
 }
 
 bool NetworkInterface::SaveConfig() const
 {
-	if(!Config::Current) return false;
+	auto cfg	= Config::Current;
+	if(!cfg) return false;
 
 	NetConfig nc;
 	nc.IP	= IP.Value;
@@ -193,7 +225,7 @@ bool NetworkInterface::SaveConfig() const
 	debug_printf("%s::Save %d 字节\r\n", Name, sizeof(nc));
 
 	Buffer bs(&nc, sizeof(nc));
-	return Config::Current->Set(Name, bs);
+	return cfg->Set(Name, bs);
 }
 
 void NetworkInterface::ShowConfig() const
@@ -265,6 +297,21 @@ bool WiFiInterface::IsStation() const
 bool WiFiInterface::IsAP() const
 {
 	return Mode == NetworkType::AP || Mode == NetworkType::STA_AP;
+}
+
+Socket* WiFiInterface::CreateClient(const NetUri& uri)
+{
+	// WiFi无需连接路由器就可以建立本地监听
+	if(!Opened) return nullptr;
+
+	auto socket	= CreateSocket(uri.Type);
+	if(socket)
+	{
+		socket->Local.Address	= uri.Address;
+		socket->Local.Port		= uri.Port;
+	}
+
+	return socket;
 }
 
 void WiFiInterface::OnInitConfig()

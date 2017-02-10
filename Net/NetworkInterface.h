@@ -69,6 +69,8 @@ public:
 	void ShowConfig() const;
 
 	virtual Socket* CreateSocket(NetType type) = 0;
+	Socket* CreateClient(const NetUri& uri);
+	Socket* CreateRemote(const NetUri& uri);
 
 	// DNS解析。默认仅支持字符串IP地址解析
 	virtual IPAddress QueryDNS(const String& domain);
@@ -115,6 +117,9 @@ public:
 
 	bool IsStation() const;
 	bool IsAP() const;
+
+	// WiFi无需连接路由器就可以建立本地监听
+	Socket* CreateClient(const NetUri& uri);
 
 protected:
 	// 保存和加载网络配置

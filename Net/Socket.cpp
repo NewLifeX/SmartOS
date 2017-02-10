@@ -16,18 +16,8 @@ Socket* Socket::CreateClient(const NetUri& uri)
 	auto& list	= NetworkInterface::All;
 	for(int i=0; i < list.Count(); i++)
 	{
-		auto ni	= list[i];
-		if(ni->Active())
-		{
-			auto socket	= ni->CreateSocket(uri.Type);
-			if(socket)
-			{
-				socket->Local.Address	= uri.Address;
-				socket->Local.Port		= uri.Port;
-
-				return socket;
-			}
-		}
+		auto socket	= list[i]->CreateClient(uri);
+		if(socket) return socket;
 	}
 
 	return nullptr;
@@ -38,20 +28,8 @@ Socket* Socket::CreateRemote(const NetUri& uri)
 	auto& list	= NetworkInterface::All;
 	for(int i=0; i < list.Count(); i++)
 	{
-		auto ni	= list[i];
-		if(ni && ni->Active())
-		{
-			auto socket	= ni->CreateSocket(uri.Type);
-			if(socket)
-			{
-				socket->Local.Address	= ni->IP;
-				socket->Remote.Address	= uri.Address;
-				socket->Remote.Port		= uri.Port;
-				socket->Server			= uri.Host;
-
-				return socket;
-			}
-		}
+		auto socket	= list[i]->CreateRemote(uri);
+		if(socket) return socket;
 	}
 
 	return nullptr;
