@@ -6,7 +6,6 @@
 #include "Net\Socket.h"
 
 #include "Device\RTC.h"
-#include "TokenNet\TokenClient.h"
 #include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
 
@@ -23,9 +22,6 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	NetworkInterface*	Host;	// 网络主机
-	//NetworkInterface*	HostAP;	// 网络主机
-	TokenClient*	Client;	// 令牌客户端
 	ProxyFactory*	ProxyFac;	// 透传管理器
 	Alarm*			AlarmObj;
 	

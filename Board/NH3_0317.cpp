@@ -116,27 +116,31 @@ void NH3_0317::InitButtons(const Delegate2<InputPort&, bool>& press)
 
 NetworkInterface* NH3_0317::Create8266()
 {
-	// auto host	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
-	auto host	= new Esp8266(COM3, P0, PA5);
+	// auto esp	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
+	auto esp	= new Esp8266(COM3, P0, PA5);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join	= host->SSID && *host->SSID;
-	//if (!join) host->Mode = NetworkType::AP;
+	bool join	= esp->SSID && *esp->SSID;
+	//if (!join) esp->Mode = NetworkType::AP;
 
 	if (!join)
 	{
-		*host->SSID	= "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID	= "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode	= NetworkType::STA_AP;
+		esp->Mode	= NetworkType::STA_AP;
 	}
 
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	if(!esp->Open())
+	{
+		delete esp;
+		return nullptr;
+	}
 
-	host->Open();
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 
-	return host;
+	return esp;
 }
 
 /******************************** Token ********************************/
@@ -151,47 +155,17 @@ void NH3_0317::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
-	client->UseLocal();
-	Client = client;
-	Client->MaxNotActive = 480000;
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
-	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}
+	Client = tc;
 
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p){
-			auto & bsp = *(NH3_0317*)p;
-			auto & client = *bsp.Client;
-			if(!client.Opened)
-			{
-				debug_printf("联网超时，准备重启Esp！\r\n\r\n");
-				// Sys.Reboot();
-				auto port = dynamic_cast<Esp8266*>(bsp.Host);
-				port->Close();
-				Sys.Sleep(1000);
-				port->Open();
-			}
-		},
-		this, 8 * 60 * 1000, -1, "联网检查");
+	InitAlarm();
 }
 
 void NH3_0317::Register(int index, IDataPort& dp)

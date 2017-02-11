@@ -1121,6 +1121,29 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 	}
 }
 
+// 快速建立令牌客户端，注册默认Api
+TokenClient* TokenClient::CreateFast(const Buffer& store)
+{
+	auto tc	= new TokenClient();
+
+	// 重启
+	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
+	// 重置
+	tc->Register("Gateway/Reset", &TokenClient::InvokeReset, tc);
+	// 设置远程地址
+	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
+	// 获取远程配置信息
+	tc->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, tc);
+	// 获取所有Invoke命令
+	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
+
+	if(store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
+
+	tc->UseLocal();
+
+	return tc;
+}
+
 bool TokenClient::InvokeRestart(void * param, const Pair& args, Stream& result)
 {
 

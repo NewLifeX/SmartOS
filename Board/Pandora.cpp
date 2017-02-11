@@ -13,13 +13,13 @@
 #include "Device\RTC.h"
 
 PA0903* PA0903::Current = nullptr;
+static TokenClient*	Client = nullptr;	// 令牌客户端
 
 PA0903::PA0903()
 {
 	LedPins.Add(PB1);
 	LedPins.Add(PB14);
 
-	Host	= nullptr;
 	Client	= nullptr;
 	ProxyFac	= nullptr;
 	AlarmObj	= nullptr;
@@ -90,34 +90,46 @@ NetworkInterface* PA0903::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto host = new W5500(Spi1, PA8, PA0);
+	auto net = new W5500(Spi1, PA8, PA0);
+	if(!net->Open())
+	{
+		delete net;
+		return nullptr;
+	}
 
-	return host;
+	net->EnableDNS();
+	net->EnableDHCP();
+
+	return net;
 }
 
 NetworkInterface* PA0903::Create8266(bool apOnly)
 {
-	auto host = new Esp8266(COM4, PE2, PD3);
+	auto esp = new Esp8266(COM4, PE2, PD3);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join = host->SSID && *host->SSID;
-	// host->Mode = NetworkType::Station;
-	// if (!join) host->Mode = NetworkType::AP;
+	bool join = esp->SSID && *esp->SSID;
+	// esp->Mode = NetworkType::Station;
+	// if (!join) esp->Mode = NetworkType::AP;
 	if (!join)
 	{
-		*host->SSID = "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID = "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode = NetworkType::STA_AP;
-		host->WorkMode = NetworkType::STA_AP;
+		esp->Mode = NetworkType::STA_AP;
+		esp->WorkMode = NetworkType::STA_AP;
 	}
 
-	//Sys.AddTask(SetWiFiTask, this, 0, -1, "SetWiFi");
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
-	host->Open();
+	if(!esp->Open())
+	{
+		delete esp;
+		return nullptr;
+	}
 
-	return host;
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
+
+	return esp;
 }
 
 /******************************** Token ********************************/
@@ -126,38 +138,17 @@ void PA0903::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	Client = client;
+	Client = tc;
 
 	InitAlarm();
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
-	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
-
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}
-
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p) {
-		if (!((TokenClient*)p)->Opened) Sys.Reboot();
-	},
-		client, 8 * 60 * 1000, -1, "CheckClient");
 }
 
 void PA0903::Register(int index, IDataPort& dp)
@@ -170,27 +161,17 @@ void PA0903::Register(int index, IDataPort& dp)
 
 void OnInitNet(void* param)
 {
-	auto& bsp = *(PA0903*)param;
+	auto& bsp	= *(PA0903*)param;
 
-	/*// 检查是否连接网线
-	auto host = (W5500*)bsp.Create5500();
-	// 软路由的DHCP要求很严格，必须先把自己IP设为0
-	host->IP = IPAddress::Any();
+	bsp.Create5500();
+	bsp.Create8266(false);
 
-	host->EnableDNS();
-	host->EnableDHCP();
-	bsp.Host = host;*/
+	Client->Open();
+}
 
-	auto esp = (WiFiInterface*)bsp.Create8266(false);
-	if (esp)
-	{
-		// 未组网时，主机留空，仅保留AP主机
-		bool join = esp->SSID && *esp->SSID;
-		if (join && esp->IsStation())
-			bsp.Host = esp;
-		//else
-		//	bsp.HostAP = esp;
-	}
+void PA0903::InitNet()
+{
+	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
 }
 
 void  PA0903::InitProxy()
@@ -218,7 +199,7 @@ static void OnAlarm(AlarmItem& item)
 
 	if(bs[1] == 0x06)
 	{
-		auto client = PA0903::Current->Client;
+		auto client = Client;
 		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
 
 		// 主动上报状态
@@ -236,11 +217,6 @@ void PA0903::InitAlarm()
 
 	AlarmObj->OnAlarm	= OnAlarm;
 	AlarmObj->Start();
-}
-
-void PA0903::InitNet()
-{
-	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
 }
 
 void PA0903::Restore()

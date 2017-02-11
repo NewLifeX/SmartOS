@@ -35,7 +35,7 @@ public:
 
 	byte LedStat(byte showmode);
 
-	NetworkInterface* CreateNet();
+	NetworkInterface* Create8266();
 
 	void InitClient();
 	void InitNet();

@@ -19,6 +19,7 @@
 #include "App\FlushPort.h"
 
 AP0104* AP0104::Current = nullptr;
+static TokenClient*	Client = nullptr;	// 令牌客户端
 
 AP0104::AP0104()
 {
@@ -28,9 +29,7 @@ AP0104::AP0104()
 	ButtonPins.Add(PE9);
 	ButtonPins.Add(PA1);
 
-	Host = nullptr;
-	HostAP = nullptr;
-	Client = nullptr;
+	AlarmObj	= nullptr;
 
 	Nrf = nullptr;
 	Server = nullptr;
@@ -128,78 +127,61 @@ NetworkInterface* AP0104::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto host = new W5500(Spi1, PE7, PB2);
+	auto net = new W5500(Spi1, PE7, PB2);
+	if(!net->Open())
+	{
+		delete net;
+		return nullptr;
+	}
 
-	return host;
+	net->EnableDNS();
+	net->EnableDHCP();
+
+	return net;
 }
 
 NetworkInterface* AP0104::Create8266(bool apOnly)
 {
-	auto host = new Esp8266(COM4, P0, P0);
+	auto esp = new Esp8266(COM4, P0, P0);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = NetworkType::AP;
+	bool join = esp->SSID && *esp->SSID;
+	//if (!join) esp->Mode = NetworkType::AP;
 	if (!join)
 	{
-		*host->SSID = "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID = "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode = NetworkType::STA_AP;
+		esp->Mode = NetworkType::STA_AP;
 	}
 
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	if(!esp->Open())
+	{
+		delete esp;
+		return nullptr;
+	}
 
-	host->Open();
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 
-	return host;
+	return esp;
 }
 
 void AP0104::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	// 需要使用本地连接
-	//client->UseLocal();
+	Client = tc;
 
-	Client = client;
-	Client->MaxNotActive = 480000;
-
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
-	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
-
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}
-
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p) {
-		auto& client = *(TokenClient*)p;
-		if (!client.Opened)
-		{
-			debug_printf("联网超时，准备重启系统！\r\n\r\n");
-			Sys.Reboot();
-		}
-	},
-		client, 8 * 60 * 1000, -1, "check connet net");
+	InitAlarm();
 }
 
 void AP0104::Register(int index, IDataPort& dp)
@@ -210,61 +192,48 @@ void AP0104::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-/*
-网络使用流程：
-
-5500网线检测
-网线连通
-启动DHCP/DNS
-作为Host
-Host为空 或 AP/STA_AP
-创建8266，加载配置
-Host为空
-作为Host
-else STA_AP
-工作模式 = AP
-
-令牌客户端主通道
-令牌客户端内网通道
-*/
 void OnInitNet(void* param)
 {
-	auto& bsp = *(AP0104*)param;
+	auto& bsp	= *(AP0104*)param;
 
-	// 检查是否连接网线
-	auto host = (W5500*)bsp.Create5500();
-	// 软路由的DHCP要求很严格，必须先把自己IP设为0
-	host->IP = IPAddress::Any();
-	if (host->Open())
-	{
-		host->EnableDNS();
-		host->EnableDHCP();
-		bsp.Host = host;
-	}
-	else
-	{
-		delete host;
-	}
+	bsp.Create5500();
+	bsp.Create8266(false);
 
-	// 没有接网线，需要完整WiFi通道
-	if (!bsp.Host)
-	{
-		auto esp = (WiFiInterface*)bsp.Create8266(false);
-		if (esp)
-		{
-			// 未组网时，主机留空，仅保留AP主机
-			bool join = esp->SSID && *esp->SSID;
-			if (join && esp->IsStation())
-				bsp.Host = esp;
-			else
-				bsp.HostAP = esp;
-		}
-	}
+	Client->Open();
 }
 
 void AP0104::InitNet()
 {
 	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
+}
+
+static void OnAlarm(AlarmItem& item)
+{
+	// 1长度n + 1类型 + 1偏移 + (n-2)数据
+	auto bs	= item.GetData();
+	debug_printf("OnAlarm ");
+	bs.Show(true);
+
+	if(bs[1] == 0x06)
+	{
+		auto client = Client;
+		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
+
+		// 主动上报状态
+		client->ReportAsync(bs[2], bs[0] - 2);
+	}
+}
+
+void AP0104::InitAlarm()
+{
+	if (!Client)return;
+
+	if (!AlarmObj) AlarmObj = new Alarm();
+	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
+	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
+
+	AlarmObj->OnAlarm	= OnAlarm;
+	AlarmObj->Start();
 }
 
 
@@ -386,7 +355,7 @@ void AP0104::OnLongPress(InputPort* port, bool down)
 	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
 
 	ushort time = port->PressTime;
-	auto client	= AP0104::Current->Client;
+	auto client	= Client;
 	if (time >= 5000 && time < 10000)
 	{
 		if(client) client->Reset("按键重置");
