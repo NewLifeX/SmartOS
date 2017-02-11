@@ -145,19 +145,6 @@ void PA0903::InitClient()
 	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
 	// 获取所有Ivoke命令
 	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
-
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}
-
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p) {
-		if (!((TokenClient*)p)->Opened) Sys.Reboot();
-	},
-		client, 8 * 60 * 1000, -1, "CheckClient");
 }
 
 void PA0903::Register(int index, IDataPort& dp)

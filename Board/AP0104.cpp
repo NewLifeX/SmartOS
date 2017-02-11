@@ -188,18 +188,6 @@ void AP0104::InitClient()
 		auto& ds = Client->Store;
 		ds.Data.Set(Data, Size);
 	}
-
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p) {
-		auto& client = *(TokenClient*)p;
-		if (!client.Opened)
-		{
-			debug_printf("联网超时，准备重启系统！\r\n\r\n");
-			Sys.Reboot();
-		}
-	},
-		client, 8 * 60 * 1000, -1, "check connet net");
 }
 
 void AP0104::Register(int index, IDataPort& dp)

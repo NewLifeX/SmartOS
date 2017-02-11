@@ -171,23 +171,6 @@ void IOK0612::InitClient()
 		auto& ds = Client->Store;
 		ds.Data.Set(Data, Size);
 	}
-
-	// 如果若干分钟后仍然没有打开令牌客户端，则重启系统
-	Sys.AddTask(
-		[](void* p){
-			auto & bsp = *(IOK0612*)p;
-			auto & client = *bsp.Client;
-			if(!client.Opened)
-			{
-				debug_printf("联网超时，准备重启Esp！\r\n\r\n");
-				// Sys.Reboot();
-				auto port = dynamic_cast<Esp8266*>(bsp.Host);
-				port->Close();
-				Sys.Sleep(1000);
-				port->Open();
-			}
-		},
-		this, 8 * 60 * 1000, -1, "联网检查");
 }
 
 void IOK0612::Register(int index, IDataPort& dp)

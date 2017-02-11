@@ -233,7 +233,7 @@ void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0801*)param;
 
-	bsp.Create5500();
+	//bsp.Create5500();
 	bsp.Create8266(false);
 
 	Client->Open();
