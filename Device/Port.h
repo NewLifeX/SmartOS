@@ -184,16 +184,19 @@ protected:
 
 private:
 	bool	_IRQ	= false;
-	byte	_Value	= 0;	// 当前值
+	
 	uint	_task	= 0;	// 输入任务
 	UInt64	_Start	= 0;	// 开始按下时间
 	UInt64	_Last	= 0;	// 最后一次触发时间
 	static void InputTask(void* param);
+	static void InputNoIRQTask(void* param);
 
 private:
 	void OpenPin();
 	void ClosePin();
 	bool OnRegister();
+	byte	_Value = 0;	// 当前值
+	 bool	 Val = false;
 };
 
 /******************************** AnalogInPort ********************************/
