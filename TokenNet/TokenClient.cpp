@@ -193,7 +193,7 @@ void TokenClient::CheckNet()
 			// 在该接口上创建控制器
 			if(!flag)
 			{
-				debug_printf("TokenClient::CheckNet %s 创建本地监听\r\n", nis[k]->Name);
+				debug_printf("TokenClient::CheckNet %s 创建本地监听 ", nis[k]->Name);
 
 				NetUri uri(NetType::Udp, IPAddress::Broadcast(), Cfg->Port);
 				auto ctrl	= AddControl(*this, nis[k], uri, Cfg->Port);
@@ -201,6 +201,12 @@ void TokenClient::CheckNet()
 				{
 					ctrl->Received	= _LocalReceive;
 					ctrl->Open();
+
+					debug_printf("成功\r\n");
+				}
+				else
+				{
+					debug_printf("失败\r\n");
 				}
 			}
 		}
