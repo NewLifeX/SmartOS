@@ -184,7 +184,6 @@ TaskScheduler::TaskScheduler(cstring name)
 
 	Times	= 0;
 	Cost	= 0;
-	MaxCost	= 0;
 	TotalSleep	= 0;
 
 	_SkipSleep	= false;
@@ -370,7 +369,6 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		Cost = (Cost + ct) >> 1;
 	else
 		Cost = ct;
-	if(ct > MaxCost) MaxCost = ct;
 
 	// 有可能这一次轮询是有限时间
 	if(min > end) min	= end;
@@ -449,7 +447,7 @@ void TaskScheduler::ShowStatus()
 
 	debug_printf("Task::ShowStatus [%d]", host->Times);
 	debug_printf(" 负载 %d.%d%%", p/100, p%100);
-	debug_printf(" 平均 %dus 最大 %dus 当前 ", host->Cost, host->MaxCost);
+	debug_printf(" 平均 %dus 当前 ", host->Cost);
 	DateTime::Now().Show();
 	debug_printf(" 启动 ");
 	TimeSpan ts(now);
