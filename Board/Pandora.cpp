@@ -19,14 +19,14 @@ PA0903::PA0903()
 	LedPins.Add(PB1);
 	LedPins.Add(PB14);
 
-	Host	= nullptr;
-	Client	= nullptr;
-	ProxyFac	= nullptr;
-	AlarmObj	= nullptr;
+	Host = nullptr;
+	Client = nullptr;
+	ProxyFac = nullptr;
+	AlarmObj = nullptr;
 
-	Data	= nullptr;
-	Size	= 0;
-	Current	= this;
+	Data = nullptr;
+	Size = 0;
+	Current = this;
 }
 
 void PA0903::Init(ushort code, cstring name, COM message)
@@ -95,10 +95,9 @@ NetworkInterface* PA0903::Create5500()
 	return host;
 }
 
-NetworkInterface* PA0903::Create8266(bool apOnly)
+NetworkInterface* PA0903::Create8266()
 {
 	auto host = new Esp8266(COM4, PE2, PD3);
-
 	// 初次需要指定模式 否则为 Wire
 	bool join = host->SSID && *host->SSID;
 	// host->Mode = NetworkType::Station;
@@ -155,30 +154,22 @@ void PA0903::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void OnInitNet(void* param)
-{
-	auto& bsp = *(PA0903*)param;
-
-	/*// 检查是否连接网线
-	auto host = (W5500*)bsp.Create5500();
-	// 软路由的DHCP要求很严格，必须先把自己IP设为0
-	host->IP = IPAddress::Any();
-
-	host->EnableDNS();
-	host->EnableDHCP();
-	bsp.Host = host;*/
-
-	auto esp = (WiFiInterface*)bsp.Create8266(false);
-	if (esp)
-	{
-		// 未组网时，主机留空，仅保留AP主机
-		bool join = esp->SSID && *esp->SSID;
-		if (join && esp->IsStation())
-			bsp.Host = esp;
-		//else
-		//	bsp.HostAP = esp;
-	}
-}
+//void OnInitNet(void* param)
+//{
+//	auto& bsp = *(PA0903*)param;
+//
+//	/*// 检查是否连接网线
+//	auto host = (W5500*)bsp.Create5500();
+//	// 软路由的DHCP要求很严格，必须先把自己IP设为0
+//	host->IP = IPAddress::Any();
+//
+//	host->EnableDNS();
+//	host->EnableDHCP();
+//	bsp.Host = host;*/
+//
+//
+//	
+//}
 
 void  PA0903::InitProxy()
 {
@@ -199,11 +190,11 @@ void  PA0903::InitProxy()
 static void OnAlarm(AlarmItem& item)
 {
 	// 1长度n + 1类型 + 1偏移 + (n-2)数据
-	auto bs	= item.GetData();
+	auto bs = item.GetData();
 	debug_printf("OnAlarm ");
 	bs.Show(true);
 
-	if(bs[1] == 0x06)
+	if (bs[1] == 0x06)
 	{
 		auto client = PA0903::Current->Client;
 		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
@@ -221,18 +212,20 @@ void PA0903::InitAlarm()
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
-	AlarmObj->OnAlarm	= OnAlarm;
+	AlarmObj->OnAlarm = OnAlarm;
 	AlarmObj->Start();
 }
 
 void PA0903::InitNet()
 {
-	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
+	Create5500();
+	Create8266();
+	Client->Open();
 }
 
 void PA0903::Restore()
 {
-	if(Client) Client->Reset("按键重置");
+	if (Client) Client->Reset("按键重置");
 }
 
 //auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);

@@ -188,6 +188,7 @@ void NH3_0317::Register(int index, IDataPort& dp)
 void NH3_0317::InitNet()
 {
 	Host	= Create8266();
+	Client->Open();
 }
 
 static void OnAlarm(AlarmItem& item)

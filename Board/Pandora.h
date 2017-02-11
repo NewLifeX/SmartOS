@@ -46,7 +46,7 @@ public:
 	NetworkInterface* Create5500();
 
 	// 打开Esp8266，作为主控或者纯AP
-	NetworkInterface* Create8266(bool apOnly);
+	NetworkInterface* Create8266();
 	//ITransport* Create2401();
 
 	void InitClient();

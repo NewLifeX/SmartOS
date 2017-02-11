@@ -157,6 +157,7 @@ void IOK027X::Register(int index, IDataPort& dp)
 void IOK027X::InitNet(Pin power)
 {
 	Host = Create8266(power);
+	Client->Open();
 }
 
 static void OnAlarm(AlarmItem& item)

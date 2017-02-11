@@ -184,6 +184,7 @@ void IOK0612::Register(int index, IDataPort& dp)
 void IOK0612::InitNet()
 {
 	Host	= Create8266();
+	Client->Open();
 }
 
 static void OnAlarm(AlarmItem& item)
