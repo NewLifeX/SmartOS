@@ -21,7 +21,7 @@ private:
 	static uint OnReceive(ITransport* port, Buffer& bs, void* param, void* param2);
 	void Process(Buffer& bs, const IPEndPoint& server);
 
-	Socket*	Socket;
+	Socket*		_Socket;
 	Array*		_Buffer;
 };
 

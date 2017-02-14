@@ -16,12 +16,14 @@
 #define btn_printf(format, ...)
 #endif
 
+static   Button_GrayLevelConfig*	ButtonConfig = nullptr;
+
 /******************************** 调光配置 ********************************/
 Button_GrayLevelConfig::Button_GrayLevelConfig()
 {
-	_Name = "Gray";
-	_Start = &OnGrayLevel;
-	_End = &TagEnd;
+	_Name	= "Gray";
+	_Start	= &OnGrayLevel;
+	_End	= &TagEnd;
 	Init();
 
 	OnGrayLevel = 0xff;

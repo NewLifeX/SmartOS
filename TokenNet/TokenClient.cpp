@@ -98,7 +98,7 @@ static TokenController* AddMaster(TokenClient& client)
 
 	// 创建连接服务器的控制器
 	auto ctrl	= new TokenController();
-	ctrl->Socket	= socket;
+	ctrl->_Socket	= socket;
 
 	// 创建客户端
 	client.Master = ctrl;
@@ -114,7 +114,7 @@ static TokenController* AddControl(TokenClient& client, NetworkInterface* host, 
 
 	// 创建连接服务器的控制器
 	auto ctrl	= new TokenController();
-	ctrl->Socket	= socket;
+	ctrl->_Socket	= socket;
 
 	// 创建客户端
 	socket->Remote.Address	= IPAddress::Broadcast();
@@ -141,13 +141,13 @@ void TokenClient::CheckNet()
 		auto ctrl	= AddMaster(*this);
 		if(!ctrl) return;
 
-		debug_printf("TokenClient::CheckNet %s 成功创建主连接\r\n", ctrl->Socket->Host->Name);
+		debug_printf("TokenClient::CheckNet %s 成功创建主连接\r\n", ctrl->_Socket->Host->Name);
 	}
 	// 检测主链接是否已经断开
-	else if(!mst->Socket->Host->Linked)
+	else if(!mst->_Socket->Host->Linked)
 	{
 		linked	= false;
-		debug_printf("TokenClient::CheckNet %s断开，切换主连接\r\n", mst->Socket->Host->Name);
+		debug_printf("TokenClient::CheckNet %s断开，切换主连接\r\n", mst->_Socket->Host->Name);
 
 		delete mst;
 		Master	= nullptr;
@@ -170,7 +170,7 @@ void TokenClient::CheckNet()
 		mst->Received = dlg;
 		mst->Open();
 
-		Cfg->ServerIP	= mst->Socket->Remote.Address.Value;
+		Cfg->ServerIP	= mst->_Socket->Remote.Address.Value;
 	}
 
 	// 为其它网卡创建本地会话
@@ -184,7 +184,7 @@ void TokenClient::CheckNet()
 			bool flag	= false;
 			for (int i = 0; i < cs.Count(); i++)
 			{
-				if(cs[i]->Socket->Host == nis[k])
+				if(cs[i]->_Socket->Host == nis[k])
 				{
 					flag	= true;
 					break;
@@ -459,7 +459,7 @@ void TokenClient::SayHello(bool broadcast)
 	if (cs.Count() > 0)
 	{
 		auto ctrl = cs[0];
-		auto sock = ctrl->Socket;
+		auto sock = ctrl->_Socket;
 		//ext.EndPoint.Address = sock->Local.Address;
 		ext.EndPoint = sock->Local;
 		ext.Protocol = sock->Protocol == NetType::Udp ? 17 : 6;
@@ -482,11 +482,11 @@ void TokenClient::SayHello(bool broadcast)
 	{
 		msg.OneWay = true;
 
-		//msg.State	= &ctrl->Socket->Remote;
+		//msg.State	= &ctrl->_Socket->Remote;
 		for (int i = 0; i < cs.Count(); i++)
 		{
 			auto ctrl = cs[i];
-			msg.State = &ctrl->Socket->Remote;
+			msg.State = &ctrl->_Socket->Remote;
 			if (ctrl->Port != nullptr)
 			{
 				Send(msg, ctrl);
@@ -584,7 +584,7 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 	uri.Show(true);
 
 	auto ctrl = Master;
-	auto socket = ctrl->Socket;
+	auto socket = ctrl->_Socket;
 	if (socket == nullptr) return false;
 
 	ctrl->Port->Close();

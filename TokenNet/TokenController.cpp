@@ -60,7 +60,7 @@ TokenController::TokenController() : Controller(), Key(0)
 
 	MinSize = TokenMessage::MinSize;
 
-	Socket = nullptr;
+	_Socket = nullptr;
 	Server = nullptr;
 
 	ShowRemote = false;
@@ -81,8 +81,8 @@ void TokenController::Open()
 {
 	if (Opened) return;
 
-	assert(Socket, "还没有Socket呢");
-	if (!Port) Port = dynamic_cast<ITransport*>(Socket);
+	assert(_Socket, "还没有Socket呢");
+	if (!Port) Port = dynamic_cast<ITransport*>(_Socket);
 	assert(Port, "还没有传输口呢");
 
 	debug_printf("TokenNet::Inited 使用传输接口 ");
@@ -92,7 +92,7 @@ void TokenController::Open()
 	//Port->Show(true);
 #endif
 
-	Server = &Socket->Remote;
+	Server = &_Socket->Remote;
 
 #if DEBUG
 	if (!Stat)

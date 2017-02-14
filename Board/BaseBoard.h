@@ -3,7 +3,8 @@
 
 #include "Sys.h"
 #include "Device\RTC.h"
-struct
+
+/*struct
 {
 	byte ClksCount;
 	byte OldIdx;	// 初始值无效
@@ -14,7 +15,7 @@ struct
 		OldIdx = 0xff;
 		LastClkTim = 0;
 	};
-}ClickStr;
+}ClickStr;*/
 
 class BaseBoard
 {
