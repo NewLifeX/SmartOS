@@ -248,18 +248,22 @@ extern "C"
 
 		char cs[512];
 		int tab	= 0;
+
 		// 先根据子任务打印缩进级别
-		int deepth	= Task::Scheduler()->Deepth - 1;
-		if(newline && deepth > 0 && (format[0] != '\0' || format[1] != '\0' || format[2] != '\0'))
+		if(Sys.Started)
 		{
-			String fm	= format;
-			if(fm.Length() == 1)
+			int deepth	= Task::Scheduler()->Deepth - 1;
+			if(newline && deepth > 0 && (format[0] != '\0' || format[1] != '\0' || format[2] != '\0'))
 			{
-				tab	= 0;
+				String fm	= format;
+				if(fm.Length() == 1)
+				{
+					tab	= 0;
+				}
+				for(int i=0; i<deepth; i++)
+					cs[tab++]	= '\t';
+				tab	+= snprintf(&cs[tab], sizeof(cs) - tab, "%d=>", Task::Current().ID);
 			}
-			for(int i=0; i<deepth; i++)
-				cs[tab++]	= '\t';
-			tab	+= snprintf(&cs[tab], sizeof(cs) - tab, "%d=>", Task::Current().ID);
 		}
 
 		va_list ap;
