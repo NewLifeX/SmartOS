@@ -116,27 +116,27 @@ void IOK0612::InitButtons(const Delegate2<InputPort&, bool>& press)
 
 NetworkInterface* IOK0612::Create8266()
 {
-	// auto host	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
-	auto host	= new Esp8266(COM2, PB12, PA1);
+	// auto esp	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
+	auto esp	= new Esp8266(COM2, PB12, PA1);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join	= host->SSID && *host->SSID;
-	//if (!join) host->Mode = NetworkType::AP;
+	bool join	= esp->SSID && *esp->SSID;
+	//if (!join) esp->Mode = NetworkType::AP;
 
 	if (!join)
 	{
-		*host->SSID	= "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID	= "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode	= NetworkType::STA_AP;
+		esp->Mode	= NetworkType::STA_AP;
 	}
 
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 
-	host->Open();
+	esp->Open();
 
-	return host;
+	return esp;
 }
 
 /******************************** Token ********************************/
@@ -145,32 +145,17 @@ void IOK0612::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	Client = client;
-	Client->MaxNotActive = 480000;
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
-	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
+	Client = tc;
 
 	InitAlarm();
-
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}
 }
 
 void IOK0612::Register(int index, IDataPort& dp)

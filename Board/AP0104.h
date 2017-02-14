@@ -5,7 +5,6 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
-#include "TokenNet\TokenClient.h"
 #include "TinyNet\TinyServer.h"
 #include "TokenNet\GateWay.h"
 
@@ -25,17 +24,13 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	NetworkInterface*	Host;	// 网络主机
-	NetworkInterface*	HostAP;	// 网络主机
-	TokenClient*	Client;	// 令牌客户端
-
 	ITransport*		Nrf;	// NRF24L01传输口
 	TinyServer*		Server; // TinyServer服务
 
 	Gateway*		_GateWay;	// 网关
 
 	// ProxyFactory*	ProxyFac;	// 透传管理器
-	// Alarm*			AlarmObj;
+	 Alarm*			AlarmObj;
 
 	AP0104();	
 	// 设置系统参数
@@ -55,6 +50,7 @@ public:
 
 	void InitClient();
 	void InitNet();
+	void InitAlarm();
 
 	// 打开NRF24L01
 	ITransport* Create2401();

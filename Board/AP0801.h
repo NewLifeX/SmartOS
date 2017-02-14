@@ -5,8 +5,6 @@
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
-//#include "TokenNet\TokenClient.h"
-//#include "Message\ProxyFactory.h"
 #include "App\Alarm.h"
 
 // 阿波罗0801/0802
@@ -21,8 +19,6 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	NetworkInterface*	Host;	// 网络主机
-	NetworkInterface*	HostAP;	// 网络主机
 	Alarm*			AlarmObj;
 
 	AP0801();
@@ -43,7 +39,6 @@ public:
 
 	void InitLeds();
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
-	// void InitPort();
 
 	// 打开以太网W5500
 	NetworkInterface* Create5500();

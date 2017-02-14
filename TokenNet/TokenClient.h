@@ -91,12 +91,15 @@ public:
 
 	static TokenClient* Current;
 
+	// 快速建立令牌客户端，注册默认Api
+	static TokenClient* CreateFast(const Buffer& store);
+
 	// 重启，重置
 	static bool InvokeRestart(void * param, const Pair& args, Stream& result);
 	static bool InvokeReset(void * param, const Pair& args, Stream& result);
-	//设置远程服务器地址
+	// 设置远程服务器地址
 	static bool InvokeSetRemote(void * param, const Pair& args, Stream& result);
-	//获取远程服务器地址
+	// 获取远程服务器地址
 	static bool InvokeGetRemote(void * param, const Pair& args, Stream& result);
 	// 获取所有API
 	static bool InvokeGetAllApi(void * param, const Pair& args, Stream& result);
