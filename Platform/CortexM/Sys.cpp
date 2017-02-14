@@ -334,68 +334,14 @@ ushort	_REV16(ushort value)	{ return __REV16(value); }
 #include "Device\SerialPort.h"
 #include "Kernel\Task.h"
 
-extern "C"
+// 打印日志
+int SmartOS_Log(const String& msg)
 {
-	// 是否新行结尾
-	static bool	newline	= false;
+	if(Sys.Clock == 0 || Sys.MessagePort == COM_NONE) return 0;
 
-	int SmartOS_printf(const char* format, ...)
-	{
-		if(Sys.Clock == 0 || Sys.MessagePort == COM_NONE) return 0;
+	// 检查并打开串口
+	auto sp	= SerialPort::GetMessagePort();
+	if(!sp || !sp->Opened) return 0;
 
-		// 检查并打开串口
-		auto sp	= SerialPort::GetMessagePort();
-		if(!sp || !sp->Opened) return 0;
-
-		char cs[512];
-		int tab	= 0;
-		// 先根据子任务打印缩进级别
-		int deepth	= Task::Scheduler()->Deepth - 1;
-		if(newline && deepth > 0 && (format[0] != '\0' || format[1] != '\0' || format[2] != '\0'))
-		{
-			String fm	= format;
-			if(fm.Length() == 1)
-			{
-				tab	= 0;
-			}
-			for(int i=0; i<deepth; i++)
-				cs[tab++]	= '\t';
-			tab	+= snprintf(&cs[tab], sizeof(cs) - tab, "%d=>", Task::Current().ID);
-		}
-
-		va_list ap;
-
-		va_start(ap, format);
-		//int rs	= printf(format, ap);
-		int rs = vsnprintf(&cs[tab], sizeof(cs) - tab, format, ap);
-		va_end(ap);
-
-		// 如果格式化得到为空，则不做输出
-		if(rs == 0) return rs;
-
-		newline	= cs[tab + rs - 1] == '\r' || cs[tab + rs - 1] == '\n';
-
-		sp->Write(Buffer(cs, tab + rs));
-
-		return rs;
-	}
-
-    /* 重载fputc可以让用户程序使用printf函数 */
-    int fputc(int ch, FILE *f)
-    {
-#if DEBUG
-        if(Sys.Clock == 0) return ch;
-
-        int idx	= Sys.MessagePort;
-        if(idx == COM_NONE) return ch;
-
-        // 检查并打开串口
-		auto sp	= SerialPort::GetMessagePort();
-		if(!sp) return 0;
-
-		byte b = ch;
-		sp->Write(Buffer(&b, 1));
-#endif
-        return ch;
-    }
+	return sp->Write(msg);
 }
