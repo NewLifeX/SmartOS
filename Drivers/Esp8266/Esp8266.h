@@ -14,10 +14,6 @@
 // 安信可 ESP8266  模块固件版本 v1.3.0.2
 class Esp8266 : public WiFiInterface
 {
-private:
-	TransportHandler _handler;
-	void* _param;
-
 public:
 	ushort	MinSize;	// 数据包最小大小
 	ushort	MaxSize;	// 数据包最大大小
