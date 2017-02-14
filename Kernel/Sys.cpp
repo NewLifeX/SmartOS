@@ -242,7 +242,7 @@ extern "C"
 	// 是否新行结尾
 	static bool	newline	= false;
 
-	int SmartOS_printf(const char* format, ...)
+	WEAK int SmartOS_printf(const char* format, ...)
 	{
 		if(Sys.Clock == 0 || Sys.MessagePort == COM_NONE) return 0;
 
@@ -269,7 +269,6 @@ extern "C"
 		va_list ap;
 
 		va_start(ap, format);
-		//int rs	= printf(format, ap);
 		int rs = vsnprintf(&cs[tab], sizeof(cs) - tab, format, ap);
 		va_end(ap);
 
@@ -278,7 +277,8 @@ extern "C"
 
 		newline	= cs[tab + rs - 1] == '\r' || cs[tab + rs - 1] == '\n';
 
-		rs	+= SmartOS_Log(String(cs, tab + rs));
+		// 必须转为cstring，否则会当作缓冲区，并把最后一个字符清零。当作缓冲区，长度加一也可以
+		rs	+= SmartOS_Log(String((cstring)cs, tab + rs));
 
 		return rs;
 	}
