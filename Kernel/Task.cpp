@@ -185,6 +185,7 @@ TaskScheduler::TaskScheduler(cstring name)
 	Times	= 0;
 	Cost	= 0;
 	TotalSleep	= 0;
+	LastTrace	= Sys.Ms();
 
 	_SkipSleep	= false;
 }
@@ -364,11 +365,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		}
 	}
 
-	int ct = tc.Elapsed();
-	if(Cost > 0)
-		Cost = (Cost + ct) >> 1;
-	else
-		Cost = ct;
+	Cost	+= tc.Elapsed();
 
 	// 有可能这一次轮询是有限时间
 	if(min > end) min	= end;
@@ -439,27 +436,32 @@ void TaskScheduler::SkipSleep()
 void TaskScheduler::ShowStatus()
 {
 #if DEBUG
-	//auto host = (TaskScheduler*)param;
-	auto host	= this;
 	auto now	= Sys.Ms();
 
-	auto p	= 10000 - (int)(TotalSleep * 10000 / now);
+	// 分段统计负载均值
+	auto ts	= Times;
+	auto ct	= Cost;
+	auto p	= 10000 - (int)(TotalSleep * 10000 / (now - LastTrace));
 
-	debug_printf("Task::ShowStatus [%d]", host->Times);
+	Times	= 0;
+	Cost	= 0;
+	TotalSleep	= 0;
+	LastTrace	= now;
+
+	debug_printf("Task::ShowStatus [%d]", ts);
 	debug_printf(" 负载 %d.%d%%", p/100, p%100);
-	debug_printf(" 平均 %dus 当前 ", host->Cost);
-	DateTime::Now().Show();
+	debug_printf(" 平均 %dus 当前 ", ts ? ct/ts : 0);
+	DateTime(now/1000).Show();
 	debug_printf(" 启动 ");
-	TimeSpan ts(now);
-	ts.Show(true);
+	TimeSpan(now).Show(true);
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
-	int ms = host->Cost / 1000;
+	int ms = ct / 1000;
 	if(ms > 10) ms = 10;
 
-	for(int i=0; i<host->_Tasks.Count(); i++)
+	for(int i=0; i<_Tasks.Count(); i++)
 	{
-		auto task = (Task*)host->_Tasks[i];
+		auto task = (Task*)_Tasks[i];
 		if(task && task->ID)
 		{
 			task->ShowStatus();
