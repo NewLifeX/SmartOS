@@ -1,7 +1,7 @@
 ﻿#ifndef __MD5_H__
 #define __MD5_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // MD5 散列算法
 class MD5

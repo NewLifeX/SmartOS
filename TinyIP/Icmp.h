@@ -1,7 +1,7 @@
 ﻿#ifndef _TinyIP_ICMP_H_
 #define _TinyIP_ICMP_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "TinyIP.h"
 
 // ICMP协议

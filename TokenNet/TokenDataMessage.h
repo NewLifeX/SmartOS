@@ -1,7 +1,7 @@
 ﻿#ifndef __TokenDataMessage_H__
 #define __TokenDataMessage_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #include "Message\Message.h"
 #include "Message\MessageBase.h"

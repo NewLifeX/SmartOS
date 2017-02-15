@@ -1,7 +1,7 @@
 ﻿#ifndef _AP0104_H_
 #define _AP0104_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 

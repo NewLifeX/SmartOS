@@ -1,7 +1,7 @@
 ﻿#ifndef __Config_H__
 #define __Config_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Storage\Storage.h"
 
 // 配置管理

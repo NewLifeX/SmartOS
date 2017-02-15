@@ -1,7 +1,7 @@
 ﻿#ifndef __RC6_H__
 #define __RC6_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // RC6 加密算法
 class RC6

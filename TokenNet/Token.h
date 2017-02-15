@@ -1,7 +1,7 @@
 ﻿#ifndef _Token_H_
 #define _Token_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 #include "Message\DataStore.h"

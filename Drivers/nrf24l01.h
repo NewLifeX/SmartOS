@@ -1,7 +1,7 @@
 ﻿#ifndef __NRF24L01_H__
 #define __NRF24L01_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Spi.h"
 #include "Net\ITransport.h"
 #include "Device\Power.h"

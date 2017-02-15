@@ -2,7 +2,7 @@
 #ifndef __IRCODING_H__
 #define __IRCODING_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "..\Storage\Storage.h"
 
 /*	

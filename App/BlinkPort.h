@@ -1,7 +1,7 @@
 ﻿#ifndef __BlinkPort_H__
 #define __BlinkPort_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 
 // 闪烁端口

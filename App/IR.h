@@ -2,7 +2,7 @@
 #ifndef __IR_H__
 #define __IR_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Pwm.h"
 #include "Device\Port.h"
 

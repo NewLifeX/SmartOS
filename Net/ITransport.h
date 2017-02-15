@@ -1,7 +1,7 @@
 ﻿#ifndef __ITransport_H__
 #define __ITransport_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 class ITransport;
 

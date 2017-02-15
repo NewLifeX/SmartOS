@@ -1,7 +1,7 @@
 ﻿#ifndef __WatchDog_H__
 #define __WatchDog_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 看门狗
 class WatchDog

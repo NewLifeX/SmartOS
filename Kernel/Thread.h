@@ -1,7 +1,7 @@
 ﻿#ifndef __Thread_H__
 #define __Thread_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Core\LinkedList.h"
 
 class Thread;

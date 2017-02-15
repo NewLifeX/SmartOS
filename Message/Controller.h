@@ -1,7 +1,7 @@
 ﻿#ifndef __Controller_H__
 #define __Controller_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 
 #include "Message.h"

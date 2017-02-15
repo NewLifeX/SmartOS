@@ -1,7 +1,7 @@
 ﻿#ifndef __TokenClient_H__
 #define __TokenClient_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "TokenNet\TokenConfig.h"
 #include "TokenMessage.h"
 #include "HelloMessage.h"

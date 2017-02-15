@@ -1,7 +1,7 @@
 ﻿#ifndef __FlushPort_H__
 #define __FlushPort_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 #include "Message\DataStore.h"
 

@@ -1,7 +1,7 @@
 ﻿#ifndef _IOK026X_H_
 #define _IOK026X_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 

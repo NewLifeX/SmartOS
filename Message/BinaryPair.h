@@ -1,7 +1,7 @@
 ﻿#ifndef __BinaryPair_H__
 #define __BinaryPair_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Pair.h"
 
 #include "Net\IPEndPoint.h"

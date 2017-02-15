@@ -1,7 +1,7 @@
 ﻿#ifndef __Enc28j60_H__
 #define __Enc28j60_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Spi.h"
 #include "Device\Power.h"
 #include "Net\ITransport.h"

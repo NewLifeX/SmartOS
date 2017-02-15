@@ -1,7 +1,7 @@
 ﻿#ifndef __ProxyCfg_H__
 #define __ProxyCfg_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Config.h"
 
 class ProxyConfig : public ConfigBase

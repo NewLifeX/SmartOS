@@ -1,7 +1,7 @@
 ﻿#ifndef __MessageBase_H__
 #define __MessageBase_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Message.h"
 
 // 应用消息基类

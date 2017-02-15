@@ -1,7 +1,7 @@
 ﻿#ifndef _BaseBoard_H_
 #define _BaseBoard_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\RTC.h"
 
 /*struct

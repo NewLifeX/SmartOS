@@ -1,7 +1,7 @@
 ﻿#ifndef __Storage_H__
 #define __Storage_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 存储接口
 class Storage

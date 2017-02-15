@@ -1,7 +1,7 @@
 ﻿#ifndef _Tiny_H_
 #define _Tiny_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Power.h"
 #include "Net\ITransport.h"
 

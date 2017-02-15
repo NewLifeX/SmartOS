@@ -3,7 +3,7 @@
 
 // 模块开发使用说明见后
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\NetworkInterface.h"
 #include "Net\Socket.h"

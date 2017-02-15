@@ -1,7 +1,7 @@
 ﻿#ifndef __UTPort_H__
 #define __UTPort_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\SerialPort.h"
 #include "Message/Pair.h"
 

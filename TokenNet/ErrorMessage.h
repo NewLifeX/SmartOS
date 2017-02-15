@@ -1,7 +1,7 @@
 ﻿#ifndef __ErrorMessage_H__
 #define __ErrorMessage_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Message\Message.h"
 
 // 错误消息

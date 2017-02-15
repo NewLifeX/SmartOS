@@ -2,7 +2,7 @@
 #ifndef __Music_H__
 #define __Music_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Timer.h"
 #include "Device\Port.h"
 

@@ -1,7 +1,7 @@
 ﻿#ifndef __TinyConfig_H__
 #define __TinyConfig_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Config.h"
 
 // 必须设定为1字节对齐，否则offsetof会得到错误的位置

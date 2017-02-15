@@ -1,7 +1,7 @@
 ﻿#ifndef __UTPacket_H__
 #define __UTPacket_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "TokenNet\TokenMessage.h"
 #include "Message\Pair.h"
 #include "Device\UTPort.h"

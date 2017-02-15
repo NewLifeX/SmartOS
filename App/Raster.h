@@ -1,7 +1,7 @@
 ﻿#ifndef __RASTER__H__
 #define __RASTER__H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #pragma pack(push)
 #pragma pack(1)

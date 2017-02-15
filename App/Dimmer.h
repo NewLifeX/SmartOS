@@ -1,7 +1,7 @@
 ﻿#ifndef __Dimmer_H_
 #define __Dimmer_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Platform\Pin.h"
 
 class Pwm;

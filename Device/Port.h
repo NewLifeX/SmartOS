@@ -1,7 +1,7 @@
 #ifndef _Port_H_
 #define _Port_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #ifdef STM32F4
 	#define GPIO_MAX_SPEED 100

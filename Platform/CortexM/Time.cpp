@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Kernel\Interrupt.h"
 #include "Kernel\TTime.h"
 #include "Device\Timer.h"

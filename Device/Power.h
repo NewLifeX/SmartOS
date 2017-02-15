@@ -1,7 +1,7 @@
 ﻿#ifndef __Power_H__
 #define __Power_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 电源管理接口
 class Power

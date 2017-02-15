@@ -1,7 +1,7 @@
 ﻿#ifndef __Pair_H__
 #define __Pair_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Message.h"
 
 #include "Net\IPEndPoint.h"

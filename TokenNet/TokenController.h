@@ -1,7 +1,7 @@
 ﻿#ifndef __TokenController_H__
 #define __TokenController_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
