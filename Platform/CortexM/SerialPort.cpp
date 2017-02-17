@@ -34,8 +34,8 @@ bool SerialPort::OnSet()
 	return sp->CR1 & USART_CR1_UE;
 }
 
-extern void SerialPort_Opening(SerialPort& sp);
-extern void SerialPort_Closeing(SerialPort& sp);
+WEAK void SerialPort_Opening(SerialPort& sp)	{ }
+WEAK void SerialPort_Closeing(SerialPort& sp)	{ }
 
 // 打开串口
 void SerialPort::OnOpen2()
