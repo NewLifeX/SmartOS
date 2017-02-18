@@ -56,11 +56,11 @@ bool I2C::SendAddress(int addr, bool tx)
 
 	// 发送写入地址
 	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
-	debug_printf("I2C::SendAddr %02X \r\n", d);
+	//debug_printf("I2C::SendAddr %02X \r\n", d);
     WriteByte(d);
 	if(!WaitAck())
 	{
-		debug_printf("可能设备未连接，或地址 0x%02X 不对\r\n", d);
+		debug_printf("I2C::SendAddr %02X 可能设备未连接，或地址不对\r\n", d);
 		return false;
 	}
 
@@ -69,7 +69,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 发送子地址
 	if(!SendSubAddr(addr))
 	{
-		debug_printf("发送子地址 0x%02X 失败\r\n", addr);
+		debug_printf("I2C::SendAddr %02X 发送子地址 0x%02X 失败\r\n", d, addr);
 		return false;
 	}
 
@@ -87,7 +87,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	}
 	if(!rs)
 	{
-		debug_printf("发送读取地址 0x%02X 失败\r\n", d);
+		debug_printf("I2C::SendAddr %02X 发送读取地址失败\r\n", d);
 		return false;
 	}
 
@@ -113,8 +113,8 @@ bool I2C::SendSubAddr(int addr)
 // 新会话向指定地址写入多个字节
 WEAK bool I2C::Write(int addr, const Buffer& bs)
 {
-	debug_printf("I2C::Write addr=0x%02X ", addr);
-	bs.Show(true);
+	/*debug_printf("I2C::Write addr=0x%02X ", addr);
+	bs.Show(true);*/
 
 	Open();
 
