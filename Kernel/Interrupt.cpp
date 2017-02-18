@@ -2,24 +2,15 @@
 
 #include "Interrupt.h"
 
-TInterrupt Interrupt;
+extern InterruptCallback Vectors[];      // 对外的中断向量表
+extern void* Params[];       // 每一个中断向量对应的参数
 
-//#define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
+TInterrupt Interrupt;
 
 void TInterrupt::Init() const
 {
     OnInit();
 }
-
-/*TInterrupt::~TInterrupt()
-{
-	// 恢复中断向量表
-#if defined(STM32F1) || defined(STM32F4)
-	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0);
-#else
-    SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_Flash);
-#endif
-}*/
 
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
@@ -42,10 +33,8 @@ bool TInterrupt::Deactivate(short irq)
 // 关键性代码，放到开头
 INROOT void TInterrupt::Process(uint num) const
 {
-	auto& inter	= Interrupt;
-	//assert_param(num < VectorySize);
-	//assert_param(Interrupt.Vectors[num]);
-	if(!inter.Vectors[num]) return;
+	//auto& inter	= Interrupt;
+	if(!Vectors[num]) return;
 
 	// 内存检查
 #if DEBUG
@@ -53,8 +42,8 @@ INROOT void TInterrupt::Process(uint num) const
 #endif
 
     // 找到应用层中断委托并调用
-    auto isr	= (InterruptCallback)inter.Vectors[num];
-    void* param	= (void*)inter.Params[num];
+    auto isr	= (InterruptCallback)Vectors[num];
+    void* param	= (void*)Params[num];
     isr(num - 16, param);
 }
 

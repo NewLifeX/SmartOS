@@ -7,6 +7,21 @@
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
 
+#ifdef STM32F1
+    #define VectorySize 84
+#elif defined(STM32F0)
+    #define VectorySize 48
+#elif defined(GD32F150)
+    #define VectorySize 64
+#elif defined(STM32F4)
+    #define VectorySize (86 + 16 + 1)
+#else
+    #define VectorySize 32
+#endif
+
+InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
+void* Params[VectorySize];       // 每一个中断向量对应的参数
+
 bool TInterrupt::OnActivate(short irq)
 {
 	assert_param(IS_IRQ(irq));

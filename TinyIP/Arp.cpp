@@ -20,13 +20,7 @@ ArpSocket::ArpSocket(TinyIP* tip) : TinySocket(tip, IP_NONE)
 {
 	//Type = IP_NONE;
 
-#ifdef STM32F0
-	Count = 4;
-#elif defined(STM32F1)
-	Count = 16;
-#elif defined(STM32F4)
-	Count = 64;
-#endif
+	Count = 8;
 	_Arps = nullptr;
 
 	Enable = true;
