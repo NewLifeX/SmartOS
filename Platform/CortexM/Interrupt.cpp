@@ -20,7 +20,7 @@
 #endif
 
 InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
-void* Params[VectorySize];       // 每一个中断向量对应的参数
+void* VectorParams[VectorySize];       // 每一个中断向量对应的参数
 
 bool TInterrupt::OnActivate(short irq)
 {

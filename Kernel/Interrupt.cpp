@@ -3,7 +3,7 @@
 #include "Interrupt.h"
 
 extern InterruptCallback Vectors[];      // 对外的中断向量表
-extern void* Params[];       // 每一个中断向量对应的参数
+extern void* VectorParams[];       // 每一个中断向量对应的参数
 
 TInterrupt Interrupt;
 
@@ -16,7 +16,7 @@ bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
     short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = isr;
-    Params[irq2] = param;
+    VectorParams[irq2] = param;
 
     return OnActivate(irq);
 }
@@ -25,7 +25,7 @@ bool TInterrupt::Deactivate(short irq)
 {
     short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = 0;
-    Params[irq2] = 0;
+    VectorParams[irq2] = 0;
 
     return OnDeactivate(irq);
 }
@@ -43,7 +43,7 @@ INROOT void TInterrupt::Process(uint num) const
 
     // 找到应用层中断委托并调用
     auto isr	= (InterruptCallback)Vectors[num];
-    void* param	= (void*)Params[num];
+    void* param	= (void*)VectorParams[num];
     isr(num - 16, param);
 }
 
