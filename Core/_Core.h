@@ -24,4 +24,11 @@ void assert_failed2(const char* msg, const char* file, unsigned int line);
 
 #endif
 
+// 关键性代码放到开头
+#if !defined(TINY)
+	#define INROOT __attribute__((section(".InRoot")))
+#else
+	#define INROOT
+#endif
+
 #endif

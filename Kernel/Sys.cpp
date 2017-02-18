@@ -16,15 +16,8 @@ struct HandlerRemap StrBoot __attribute__((at(0x2000fff0)));
     #define BIT(x)	(1 << (x))
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-TSys::TSys()
+// 关键性代码，放到开头
+INROOT TSys::TSys()
 {
 	Config	= nullptr;
 
@@ -43,14 +36,6 @@ TSys::TSys()
 
 	Started	= false;
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 void TSys::Init(void)
 {
@@ -106,15 +91,8 @@ void TSys::RemoveTask(uint& taskid) const
 	taskid = 0;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
+// 关键性代码，放到开头
+INROOT bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
 {
 	if(!taskid) return false;
 
@@ -127,7 +105,7 @@ bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
 }
 
 // 改变任务周期
-bool TSys::SetTaskPeriod(uint taskid, int period) const
+INROOT bool TSys::SetTaskPeriod(uint taskid, int period) const
 {
 	if(!taskid) return false;
 
@@ -167,11 +145,11 @@ void TSys::Reboot(int msDelay) const
 }
 
 // 系统启动后的毫秒数
-UInt64 TSys::Ms() const { return Time.Current(); }
+INROOT UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
-uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
+INROOT uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 
-void TSys::Sleep(uint ms) const
+INROOT void TSys::Sleep(uint ms) const
 {
 	// 优先使用线程级睡眠
 	if(OnSleep)
@@ -196,7 +174,7 @@ void TSys::Sleep(uint ms) const
 	}
 }
 
-void TSys::Delay(uint us) const
+INROOT void TSys::Delay(uint us) const
 {
 	// 如果延迟微秒数太大，则使用线程级睡眠
 	if(OnSleep && us >= 2000)
@@ -221,14 +199,6 @@ void TSys::Delay(uint us) const
 		if(us) Time.Delay(us);
 	}
 }
-#endif
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
 #endif
 
 /****************系统日志****************/

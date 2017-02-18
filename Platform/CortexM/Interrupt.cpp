@@ -50,9 +50,8 @@ void TInterrupt::GlobalEnable()	{ __enable_irq(); }
 void TInterrupt::GlobalDisable(){ __disable_irq(); }
 bool TInterrupt::GlobalState()	{ return __get_PRIMASK(); }
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
+// 关键性代码，放到开头
+INROOT
 
 #if defined ( __CC_ARM   )
 __ASM uint GetIPSR()

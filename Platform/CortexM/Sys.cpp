@@ -47,11 +47,8 @@ static int _Index;	// MCU在型号表中的索引
 
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
-
-_force_inline void InitHeapStack(uint top)
+// 关键性代码，放到开头
+INROOT _force_inline void InitHeapStack(uint top)
 {
 	uint* p = (uint*)__get_MSP();
 
@@ -66,7 +63,7 @@ _force_inline void InitHeapStack(uint top)
 }
 
 // 获取JTAG编号，ST是0x041，GD是0x7A3
-uint16_t Get_JTAG_ID()
+INROOT uint16_t Get_JTAG_ID()
 {
     if( *( uint8_t *)( 0xE00FFFE8 ) & 0x08 )
     {
@@ -77,7 +74,7 @@ uint16_t Get_JTAG_ID()
     return  0;
 }
 
-void TSys::OnInit()
+INROOT void TSys::OnInit()
 {
 #ifdef STM32F0
     Clock = 48000000;
@@ -147,8 +144,6 @@ void TSys::OnInit()
 #endif
 }
 
-#pragma arm section code
-
 void TSys::InitClock()
 {
 #ifndef TINY
@@ -185,16 +180,11 @@ void TSys::SetStackTop(uint addr)
 	__set_MSP(addr);
 }
 
-#if !defined(TINY) && defined(STM32F0) && defined(DEBUG)
-	#pragma arm section code = "SectionForSys"
-#endif
-
-bool TSys::CheckMemory() const
+// 关键性代码，放到开头
+INROOT bool TSys::CheckMemory() const
 {
 	return true;
 }
-
-#pragma arm section code
 
 #if DEBUG
 typedef struct
@@ -321,13 +311,13 @@ void TSys::OnStart()
 
 /******************************** 临界区 ********************************/
 
-void EnterCritical()	{ __disable_irq(); }
-void ExitCritical()		{ __enable_irq(); }
+INROOT void EnterCritical()	{ __disable_irq(); }
+INROOT void ExitCritical()	{ __enable_irq(); }
 
 /******************************** REV ********************************/
 
-uint	_REV(uint value)		{ return __REV(value); }
-ushort	_REV16(ushort value)	{ return __REV16(value); }
+INROOT uint	_REV(uint value)		{ return __REV(value); }
+INROOT ushort	_REV16(ushort value)	{ return __REV16(value); }
 
 /******************************** 调试日志 ********************************/
 

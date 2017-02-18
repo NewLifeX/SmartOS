@@ -56,15 +56,8 @@ void TTime::SetTime(UInt64 sec)
 	if(OnSave) OnSave();
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-void TTime::Sleep(int ms, bool* running) const
+// 关键性代码，放到开头
+INROOT void TTime::Sleep(int ms, bool* running) const
 {
     // 睡眠时间太短
     if(ms <= 0) return;
@@ -97,7 +90,7 @@ void TTime::Sleep(int ms, bool* running) const
 	}
 }
 
-void TTime::Delay(int us) const
+INROOT void TTime::Delay(int us) const
 {
     // 睡眠时间太短
     if(us <= 0) return;
@@ -128,14 +121,6 @@ void TTime::Delay(int us) const
 		if(n == 0 && CurrentTicks() >= ticks) break;
 	}
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 extern "C"
 {

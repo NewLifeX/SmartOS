@@ -22,15 +22,8 @@ void Queue::Clear()
 	_size	= 0;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-void Queue::Enqueue(byte dat)
+// 关键性代码，放到开头
+INROOT void Queue::Enqueue(byte dat)
 {
 	int total	= _s.Capacity();
 	if(!total) _s.SetLength(64);
@@ -47,7 +40,7 @@ void Queue::Enqueue(byte dat)
 	ExitCritical();
 }
 
-byte Queue::Dequeue()
+INROOT byte Queue::Dequeue()
 {
 	if(_size == 0) return 0;
 
@@ -70,13 +63,6 @@ byte Queue::Dequeue()
 	return dat;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 uint Queue::Write(const Buffer& bs)
 {
 	int total	= _s.Capacity();

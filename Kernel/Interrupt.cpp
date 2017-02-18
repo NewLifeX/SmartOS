@@ -39,15 +39,8 @@ bool TInterrupt::Deactivate(short irq)
     return OnDeactivate(irq);
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-void TInterrupt::Process(uint num) const
+// 关键性代码，放到开头
+INROOT void TInterrupt::Process(uint num) const
 {
 	auto& inter	= Interrupt;
 	//assert_param(num < VectorySize);
@@ -80,7 +73,7 @@ void TInterrupt::Halt()
 /******************************** SmartIRQ ********************************/
 
 // 智能IRQ，初始化时备份，销毁时还原
-SmartIRQ::SmartIRQ(bool enable)
+INROOT SmartIRQ::SmartIRQ(bool enable)
 {
 	_state = TInterrupt::GlobalState();
 	if(enable)
@@ -89,7 +82,7 @@ SmartIRQ::SmartIRQ(bool enable)
 		TInterrupt::GlobalDisable();
 }
 
-SmartIRQ::~SmartIRQ()
+INROOT SmartIRQ::~SmartIRQ()
 {
 	//__set_PRIMASK(_state);
 	if(_state)
@@ -97,14 +90,6 @@ SmartIRQ::~SmartIRQ()
 	else
 		TInterrupt::GlobalEnable();
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 /******************************** Lock ********************************/
 

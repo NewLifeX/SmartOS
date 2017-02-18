@@ -36,15 +36,8 @@ void Task::Init()
 	MaxDeepth	= 1;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-bool Task::Execute(UInt64 now)
+// 关键性代码，放到开头
+INROOT bool Task::Execute(UInt64 now)
 {
 	TS(Name);
 
@@ -92,7 +85,7 @@ bool Task::Execute(UInt64 now)
 }
 
 // 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
-void Task::Set(bool enable, int msNextTime)
+INROOT void Task::Set(bool enable, int msNextTime)
 {
 	Enable	= enable;
 
@@ -103,7 +96,7 @@ void Task::Set(bool enable, int msNextTime)
 	if(enable) Scheduler()->SkipSleep();
 }
 
-bool Task::CheckTime(UInt64 end, bool isSleep)
+INROOT bool Task::CheckTime(UInt64 end, bool isSleep)
 {
 	if(Deepth >= MaxDeepth) return false;
 
@@ -136,23 +129,15 @@ TaskScheduler* Task::Scheduler()
 	return &_sc;
 }
 
-Task* Task::Get(int taskid)
+INROOT Task* Task::Get(int taskid)
 {
 	return (*Scheduler())[taskid];
 }
 
-Task& Task::Current()
+INROOT Task& Task::Current()
 {
 	return *(Scheduler()->Current);
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 // 显示状态
 void Task::ShowStatus()
@@ -319,16 +304,9 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
+// 关键性代码，放到开头
 // 执行一次循环。指定最大可用时间
-void TaskScheduler::Execute(uint msMax, bool& cancel)
+INROOT void TaskScheduler::Execute(uint msMax, bool& cancel)
 {
 	TS("Task::Execute");
 
@@ -385,7 +363,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	_SkipSleep	= false;
 }
 
-uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
+INROOT uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 {
 	auto& dp	= Deepth;
 	if(dp >= MaxDeepth) return 0;
@@ -418,19 +396,11 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 }
 
 // 跳过最近一次睡眠，马上开始下一轮循环
-void TaskScheduler::SkipSleep()
+INROOT void TaskScheduler::SkipSleep()
 {
 	_SkipSleep	= true;
 	Sleeping	= false;
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 // 显示状态
 void TaskScheduler::ShowStatus()

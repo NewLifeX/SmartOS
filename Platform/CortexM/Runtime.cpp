@@ -12,19 +12,14 @@
 	#define mem_printf(format, ...)
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
+#pragma arm section rwdata = ".InRoot"
 // 全局堆
 Heap* _Heap	= nullptr;
 
+// 关键性代码，放到开头
+
 extern "C" {
-	void* malloc(uint size)
+	INROOT void* malloc(uint size)
 	{
 		// 初始化全局堆
 		if(!_Heap)
@@ -52,7 +47,7 @@ extern "C" {
 		return p;
 	}
 
-	void free(void* p)
+	INROOT void free(void* p)
 	{
 	#if MEM_DEBUG
 		byte* bs = (byte*)p;
@@ -66,7 +61,7 @@ extern "C" {
 	}
 }
 
-void* operator new(uint size)
+INROOT void* operator new(uint size)
 {
     mem_printf(" new size: %d ", size);
 
@@ -89,7 +84,7 @@ void* operator new(uint size)
     return p;
 }
 
-void* operator new[](uint size)
+INROOT void* operator new[](uint size)
 {
     mem_printf(" new size[]: %d ", size);
 	// 内存大小向4字节对齐
@@ -111,7 +106,7 @@ void* operator new[](uint size)
 	return p;
 }
 
-void operator delete(void* p) noexcept
+INROOT void operator delete(void* p) noexcept
 {
 	mem_printf(" delete 0x%p ", p);
     if(p)
@@ -121,7 +116,7 @@ void operator delete(void* p) noexcept
 	}
 }
 
-void operator delete[](void* p) noexcept
+INROOT void operator delete[](void* p) noexcept
 {
 	mem_printf(" delete[] 0x%p ", p);
     if(p)
@@ -131,8 +126,8 @@ void operator delete[](void* p) noexcept
 	}
 }
 
-void operator delete(void* p, uint size) noexcept	{ operator delete(p); }
-void operator delete[](void* p, uint size) noexcept	{ operator delete[](p); }
+INROOT void operator delete(void* p, uint size) noexcept	{ operator delete(p); }
+INROOT void operator delete[](void* p, uint size) noexcept	{ operator delete[](p); }
 
 void assert_failed2(cstring msg, cstring file, unsigned int line)
 {

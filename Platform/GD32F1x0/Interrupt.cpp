@@ -31,9 +31,6 @@ void TInterrupt::OnInit() const
 }
 
 #if !defined(TINY)
-#if defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
 
 extern "C"
 {
