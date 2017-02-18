@@ -3,18 +3,12 @@
 
 #include "Kernel\Sys.h"
 
-#ifdef STM32F4
-	#define GPIO_MAX_SPEED 100
-#else
-	#define GPIO_MAX_SPEED 50
-#endif
-
 /******** 端口打开关闭流程 ********/
 /*
 Port::Open
 	#Port::Opening
-	OutputPort::OnOpen
-		#Port::OnOpen
+		OutputPort::OnOpen
+			#Port::OnOpen
 		#OutputPort::OpenPin
 
 Port::Close
@@ -68,7 +62,7 @@ public:
 
 protected:
     // 配置过程
-    virtual void OnOpen();
+    virtual void OnOpen(void* param);
 	virtual void OnClose();
 
 private:
@@ -83,11 +77,11 @@ class OutputPort : public Port
 public:
     byte Invert		= 2;		// 是否倒置输入输出。默认2表示自动检测
     bool OpenDrain	= false;	// 是否开漏输出
-    byte Speed		= GPIO_MAX_SPEED;			// 速度
+    byte Speed		= 50;		// 速度
 
     OutputPort();
     OutputPort(Pin pin);
-    OutputPort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    OutputPort(Pin pin, byte invert, bool openDrain = false, byte speed = 50);
 
 	OutputPort& Init(Pin pin, bool invert);
 
@@ -109,8 +103,8 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen();
-	virtual void OpenPin();
+    virtual void OnOpen(void* param);
+	virtual void OpenPin(void* param);
 
 private:
 };
@@ -123,11 +117,11 @@ class AlternatePort : public OutputPort
 public:
 	AlternatePort();
     AlternatePort(Pin pin);
-    AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = GPIO_MAX_SPEED);
+    AlternatePort(Pin pin, byte invert, bool openDrain = false, byte speed = 50);
 
 protected:
     //virtual void OnOpen();
-	virtual void OpenPin();
+	virtual void OpenPin(void* param);
 
 private:
 };
@@ -179,12 +173,12 @@ public:
     operator bool() const { return Read(); }
 
 protected:
-    virtual void OnOpen();
+    virtual void OnOpen(void* param);
 	virtual void OnClose();
 
 private:
 	bool	_IRQ	= false;
-	
+
 	uint	_task	= 0;	// 输入任务
 	UInt64	_Start	= 0;	// 开始按下时间
 	UInt64	_Last	= 0;	// 最后一次触发时间
@@ -192,7 +186,7 @@ private:
 	static void InputNoIRQTask(void* param);
 
 private:
-	void OpenPin();
+	void OpenPin(void* param);
 	void ClosePin();
 	bool OnRegister();
 	byte	_Value = 0;	// 当前值
@@ -209,10 +203,10 @@ public:
     AnalogInPort(Pin pin) : Port() { Set(pin); Open(); }
 
 protected:
-    virtual void OnOpen();
+    virtual void OnOpen(void* param);
 
 private:
-	void OpenPin();
+	void OpenPin(void* param);
 };
 
 /******************************** PortScope ********************************/

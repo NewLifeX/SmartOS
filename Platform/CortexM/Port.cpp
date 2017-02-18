@@ -43,16 +43,20 @@ void Port::Opening()
 
 	//auto gpio	= new GPIO_InitTypeDef();
 	// 刚好4字节，不用申请内存啦
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	//auto gpio	= (GPIO_InitTypeDef*)param;
+	// 该结构体在F1与F0/F4的大小不一样
+	GPIO_InitTypeDef gpio;
 	// 特别要慎重，有些结构体成员可能因为没有初始化而酿成大错
-	GPIO_StructInit(gpio);
+	GPIO_StructInit(&gpio);
+
+	OnOpen(&gpio);
 }
 
 WEAK void Port_OnOpen(Pin pin) {}
 
-void Port::OnOpen()
+void Port::OnOpen(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
     gpio->GPIO_Pin = 1 << (_Pin & 0x0F);
 
 	Port_OnOpen(_Pin);

@@ -13,10 +13,10 @@ static bool Port_Reserve(Pin pin, bool flag);
 #ifdef REGION_Port
 Port::Port()
 {
-	_Pin = P0;
-	Opened = false;
-	Index = 0;
-	State = nullptr;
+	_Pin	= P0;
+	Opened	= false;
+	Index	= 0;
+	State	= nullptr;
 }
 
 #ifndef TINY
@@ -85,7 +85,6 @@ bool Port::Open()
 #endif
 
 	Opening();
-	OnOpen();
 
 	Opened = true;
 
@@ -110,8 +109,8 @@ void Port::Close()
 	Opened = false;
 }
 
-WEAK void Port::Opening() {}
-WEAK void Port::OnOpen() {}
+WEAK void Port::Opening() { OnOpen(nullptr); }
+WEAK void Port::OnOpen(void* param) {}
 
 WEAK void Port::OnClose() {}
 
@@ -167,9 +166,9 @@ OutputPort::OutputPort() : Port() { }
 OutputPort::OutputPort(Pin pin) : OutputPort(pin, 2) { }
 OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port()
 {
-	OpenDrain = openDrain;
-	Speed = speed;
-	Invert = invert;
+	OpenDrain	= openDrain;
+	Speed	= speed;
+	Invert	= invert;
 
 	if (pin != P0)
 	{
@@ -182,12 +181,12 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 {
 	Port::Set(pin);
 
-	Invert = invert;
+	Invert	= invert;
 
 	return *this;
 }
 
-void OutputPort::OnOpen()
+void OutputPort::OnOpen(void* param)
 {
 	TS("OutputPort::OnOpen");
 
@@ -224,9 +223,9 @@ void OutputPort::OnOpen()
 	debug_printf(" 初始电平=%d \r\n", rs);
 #endif
 
-	Port::OnOpen();
+	Port::OnOpen(param);
 
-	OpenPin();
+	OpenPin(param);
 }
 
 WEAK bool OutputPort::ReadInput() const
@@ -289,7 +288,7 @@ AlternatePort::AlternatePort(Pin pin, byte invert, bool openDrain, byte speed)
 	}
 }
 
-WEAK void AlternatePort::OpenPin() { OutputPort::OpenPin(); }
+WEAK void AlternatePort::OpenPin(void* param) { OutputPort::OpenPin(param); }
 
 #endif
 
@@ -400,7 +399,7 @@ void InputPort::InputNoIRQTask(void* param)
 	port->OnPress(val);
 }
 
-void InputPort::OnOpen()
+void InputPort::OnOpen(void* param)
 {
 	TS("InputPort::OnOpen");
 
@@ -420,8 +419,8 @@ void InputPort::OnOpen()
 	bool fg = false;
 #endif
 
-	Port::OnOpen();
-	OpenPin();
+	Port::OnOpen(param);
+	OpenPin(param);
 
 	// 根据倒置情况来获取初始状态，自动判断是否倒置
 	bool rs = Port::Read();
@@ -480,13 +479,13 @@ bool InputPort::UsePress()
 
 /******************************** AnalogInPort ********************************/
 
-void AnalogInPort::OnOpen()
+void AnalogInPort::OnOpen(void* param)
 {
 #if DEBUG
 	debug_printf("\r\n");
 #endif
 
-	Port::OnOpen();
+	Port::OnOpen(param);
 
-	OpenPin();
+	OpenPin(param);
 }

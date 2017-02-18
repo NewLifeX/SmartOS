@@ -57,11 +57,11 @@ void Port::RemapConfig(uint param, bool sta)
 #define REGION_Output 1
 #ifdef REGION_Output
 
-void OutputPort::OpenPin()
+void OutputPort::OpenPin(void* param)
 {
 	assert(Speed == 2 || Speed == 10 || Speed == 50, "Speed");
 
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	switch(Speed)
 	{
@@ -77,9 +77,9 @@ void OutputPort::OpenPin()
 
 /******************************** AlternatePort ********************************/
 
-void AlternatePort::OpenPin()
+void AlternatePort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	gpio->GPIO_Mode	= OpenDrain ? GPIO_Mode_AF_OD : GPIO_Mode_AF_PP;
 
@@ -99,9 +99,9 @@ extern bool InputPort_HasEXTI(int line, const InputPort& port);
 extern void GPIO_ISR(int num);
 extern void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode);
 
-void InputPort::OpenPin()
+void InputPort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	if(Floating)
 		gpio->GPIO_Mode = GPIO_Mode_IN_FLOATING;
@@ -181,9 +181,9 @@ void InputPort_OpenEXTI(InputPort& port)
 
 /******************************** AnalogInPort ********************************/
 
-void AnalogInPort::OpenPin()
+void AnalogInPort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	gpio->GPIO_Mode	= GPIO_Mode_AIN; //
 
