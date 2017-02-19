@@ -66,9 +66,6 @@ void Port::OnClose()
 {
 	// 不能随便关闭时钟，否则可能会影响别的引脚
 	OpenClock(_Pin, false);
-
-	//delete (GPIO_InitTypeDef*)State;
-	State	= nullptr;
 }
 
 bool Port::Read() const
