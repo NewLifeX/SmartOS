@@ -53,13 +53,13 @@ void* Heap::Alloc(uint size)
 	size = (size+MEMORY_ALIGN-1) & (~(MEMORY_ALIGN-1));
 
 	void* ret	= nullptr;
-	auto need	= size + sizeof(MemoryBlock);
+	int need	= size + sizeof(MemoryBlock);
 
 	SmartIRQ irq;
 	for(auto mcb=(MemoryBlock*)Address; mcb->Next!=nullptr; mcb=mcb->Next)
 	{
 		// 找到一块满足大小的内存块
-		auto free	= (uint)mcb->Next - (uint)mcb - mcb->Used;
+		int free	= (uint)mcb->Next - (uint)mcb - mcb->Used;
 		if(free >= need)
 		{
 			// 割一块出来
