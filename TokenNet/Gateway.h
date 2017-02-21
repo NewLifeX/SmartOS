@@ -1,7 +1,7 @@
 ﻿#ifndef __SERVER__H__
 #define __SERVER__H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 #include "Net\ITransport.h"
 #include "Message\DataStore.h"

@@ -1,7 +1,7 @@
 ﻿#ifndef __TinyMessage_H__
 #define __TinyMessage_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 
 #include "Message\Message.h"

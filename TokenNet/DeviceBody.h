@@ -1,7 +1,7 @@
 ﻿#ifndef __DeviceBody_H__
 #define __DeviceBody_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Message\DataStore.h"
 
 //#include "TokenNet\TokenClient.h"

@@ -1,7 +1,7 @@
 ﻿#ifndef __RSA_H__
 #define __RSA_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // RSA 加密算法
 class RSA

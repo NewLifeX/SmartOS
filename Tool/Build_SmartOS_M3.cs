@@ -1,7 +1,6 @@
 var build = Builder.Create("MDK");
 build.Init();
 build.CPU = "Cortex-M3";
-build.Defines.Add("STM32F1");
 build.AddIncludes("..\\", false);
 build.AddFiles("..\\Core");
 build.AddFiles("..\\Kernel");

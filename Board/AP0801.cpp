@@ -28,8 +28,7 @@ AP0801::AP0801()
 	LedPins.Add(PE15);
 	ButtonPins.Add(PE13);
 	ButtonPins.Add(PE14);
-	Host	= nullptr;
-	HostAP	= nullptr;
+
 	Client	= nullptr;
 	ProxyFac	= nullptr;
 	AlarmObj	= nullptr;
@@ -130,9 +129,6 @@ NetworkInterface* AP0801::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto net = new W5500(Spi2, PE1, PD13);
-	// 必须先把自己IP设为0，否则本地IP段与路由器不一致时将得不到分配
-	//net->IP = IPAddress::Any();
-
 	if(!net->Open())
 	{
 		delete net;
@@ -184,33 +180,13 @@ void AP0801::InitClient()
 	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto tc = new TokenClient();
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
 	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
 	Client = tc;
 
-	tc->MaxNotActive = 480000;
 	InitAlarm();
-	// 重启
-	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
-	// 重置
-	tc->Register("Gateway/Reset", &TokenClient::InvokeReset, tc);
-	// 设置远程地址
-	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
-	// 获取远程配置信息
-	tc->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, tc);
-	// 获取所有Invoke命令
-	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
-
-	if (Data && Size > 0)
-	{
-		auto& ds = tc->Store;
-		ds.Data.Set(Data, Size);
-	}
-
-	tc->UseLocal();
-
-	//tc->Open();
 }
 
 void AP0801::Register(uint offset, IDataPort& dp)
@@ -289,7 +265,7 @@ void AP0801::InitAlarm()
 {
 	if (!Client)return;
 
-	if (!AlarmObj)AlarmObj = new Alarm();
+	if (!AlarmObj) AlarmObj = new Alarm();
 	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
 	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
 
@@ -379,32 +355,6 @@ void AP0801::OnLongPress(InputPort* port, bool down)
 		Sys.Reboot(1000);
 	}
 }
-
-/*
-网络使用流程：
-
-5500网线检测
-网线连通
-	启动DHCP
-	作为Host
-Host为空 或 AP/STA_AP
-	创建8266，加载配置
-	Host为空
-		作为Host
-	else STA_AP
-		工作模式 = AP
-	打开8266
-	STA/STA_AP
-		SSID != null
-			JoinWiFi
-		else
-			工作模式 = AP
-	AP/STA_AP
-		SetAP
-
-令牌客户端主通道
-令牌客户端内网通道
-*/
 
 /*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)

@@ -20,8 +20,6 @@ static TokenClient*	Client = nullptr;	// 令牌客户端
 
 AP0802::AP0802()
 {
-	Host = nullptr;
-	HostAP = nullptr;
 	Client = nullptr;
 
 	Data = nullptr;
@@ -162,33 +160,45 @@ NetworkInterface* AP0802::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
 
-	auto host = new W5500(Spi2, PE1, PD13);
+	auto net = new W5500(Spi2, PE1, PD13);
+	if(!net->Open())
+	{
+		delete net;
+		return nullptr;
+	}
 
-	return host;
+	net->EnableDNS();
+	net->EnableDHCP();
+
+	return net;
 }
 
 NetworkInterface* AP0802::Create8266(bool apOnly)
 {
-	auto host = new Esp8266(COM4, PE0, PD3);
+	auto esp = new Esp8266(COM4, PE0, PD3);
 
 	// 初次需要指定模式 否则为 Wire
-	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = NetworkType::AP;
+	bool join = esp->SSID && *esp->SSID;
+	//if (!join) esp->Mode = NetworkType::AP;
 	if (!join)
 	{
-		*host->SSID = "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID = "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode = NetworkType::STA_AP;
-		host->WorkMode = NetworkType::STA_AP;
+		esp->Mode = NetworkType::STA_AP;
+		esp->WorkMode = NetworkType::STA_AP;
 	}
 
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
+	if(!esp->Open())
+	{
+		delete esp;
+		return nullptr;
+	}
 
-	host->Open();
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 
-	return host;
+	return esp;
 }
 
 /******************************** Token ********************************/
@@ -197,35 +207,17 @@ void AP0802::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	// 需要使用本地连接
-	//client->UseLocal();
-	//配置闹钟
+	Client = tc;
+
 	InitAlarm();
-
-	Client = client;
-	Client->MaxNotActive = 480000;
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 设置远程地址
-	Client->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, Client);
-	// 获取远程配置信息
-	Client->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
-
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}	
 }
 
 void AP0802::Register(int index, IDataPort& dp)
@@ -236,56 +228,14 @@ void AP0802::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-/*
-网络使用流程：
-
-5500网线检测
-网线连通
-	启动DHCP/DNS
-	作为Host
-Host为空 或 AP/STA_AP
-	创建8266，加载配置
-	Host为空
-		作为Host
-	else STA_AP
-		工作模式 = AP
-
-令牌客户端主通道
-令牌客户端内网通道
-*/
 void OnInitNet(void* param)
 {
-	auto& bsp = *(AP0802*)param;
+	auto& bsp	= *(AP0802*)param;
 
-	// 检查是否连接网线
-	auto host = (W5500*)bsp.Create5500();
-	// 软路由的DHCP要求很严格，必须先把自己IP设为0
-	host->IP = IPAddress::Any();
-	if (host->Open())
-	{
-		host->EnableDNS();
-		host->EnableDHCP();
-		bsp.Host = host;
-	}
-	else
-	{
-		delete host;
-	}
+	bsp.Create5500();
+	bsp.Create8266(false);
 
-	// 没有接网线，需要完整WiFi通道
-	if (!bsp.Host)
-	{
-		auto esp = (WiFiInterface*)bsp.Create8266(false);
-		if (esp)
-		{
-			// 未组网时，主机留空，仅保留AP主机
-			bool join = esp->SSID && *esp->SSID;
-			if (join && esp->IsStation())
-				bsp.Host = esp;
-			else
-				bsp.HostAP = esp;
-		}
-	}
+	Client->Open();
 }
 
 void AP0802::InitNet()
@@ -374,32 +324,6 @@ void AP0802::OnLongPress(InputPort* port, bool down)
 		Sys.Reboot(1000);
 	}
 }
-
-/*
-网络使用流程：
-
-5500网线检测
-网线连通
-	启动DHCP
-	作为Host
-Host为空 或 AP/STA_AP
-	创建8266，加载配置
-	Host为空
-		作为Host
-	else STA_AP
-		工作模式 = AP
-	打开8266
-	STA/STA_AP
-		SSID != null
-			JoinWiFi
-		else
-			工作模式 = AP
-	AP/STA_AP
-		SetAP
-
-令牌客户端主通道
-令牌客户端内网通道
-*/
 
 /*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)

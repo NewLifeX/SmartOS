@@ -1,7 +1,7 @@
 ﻿#ifndef __BLU40_H__
 #define __BLU40_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 #include "Net\ITransport.h"
 

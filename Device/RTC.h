@@ -1,7 +1,7 @@
 ﻿#ifndef __RTC_H__
 #define __RTC_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 实时时钟
 class HardRTC

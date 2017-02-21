@@ -1,7 +1,7 @@
 ﻿#ifndef __Proxy_H__
 #define __Proxy_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\SerialPort.h"
 #include "ProxyConfig.h"
 

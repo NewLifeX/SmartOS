@@ -1,7 +1,7 @@
 ﻿#ifndef __AT45DB_H__
 #define __AT45DB_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Spi.h"
 
 // AT45DB存储Flash

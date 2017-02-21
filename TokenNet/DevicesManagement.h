@@ -1,7 +1,7 @@
 ﻿#ifndef __DevMgmt_H__
 #define __DevMgmt_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device.h"
 
 #include "Device\Flash.h"

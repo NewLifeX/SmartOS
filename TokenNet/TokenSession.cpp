@@ -182,7 +182,7 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	}
 	ext2.Key = key;
 
-	auto sock = Control.Socket;
+	auto sock = Control._Socket;
 	//ext2.EndPoint.Address = sock->Host->IP;
 	ext2.EndPoint = sock->Local;
 

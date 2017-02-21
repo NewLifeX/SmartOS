@@ -1,7 +1,7 @@
 ﻿#ifndef __TEST_CONF__H__
 #define __TEST_CONF__H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 #include "Device\Spi.h"
 #include "TokenNet\TokenClient.h"

@@ -1,7 +1,7 @@
 ﻿#ifndef _AP0802_H_
 #define _AP0802_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
@@ -25,8 +25,6 @@ public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	NetworkInterface*	Host;	// 网络主机
-	NetworkInterface*	HostAP;	// 网络主机
 	byte HardwareVer;
 
 	AP0802();

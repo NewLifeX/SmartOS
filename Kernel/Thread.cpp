@@ -23,10 +23,6 @@
 	#define STACK_SAVE_Size (8 << 2)	// 0x20 = 32
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
-
 Thread::Thread(Action callback, void* state, uint stackSize)
 {
 	SmartIRQ irq;	// 关闭全局中断

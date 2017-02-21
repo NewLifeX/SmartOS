@@ -1,7 +1,7 @@
 ﻿#ifndef __CRC_H__
 #define __CRC_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // CRC 校验算法
 class Crc

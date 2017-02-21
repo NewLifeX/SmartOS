@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "ITransport.h"
 
 #include "Socket.h"
@@ -19,11 +19,11 @@
 
 Dhcp::Dhcp(NetworkInterface& host) : Host(host)
 {
-	Socket	= host.CreateSocket(NetType::Udp);
+	_Socket	= host.CreateSocket(NetType::Udp);
 
-	Socket->Local.Port		= 68;
-	Socket->Remote.Port		= 67;
-	Socket->Remote.Address	= IPAddress::Broadcast();
+	_Socket->Local.Port		= 68;
+	_Socket->Remote.Port		= 67;
+	_Socket->Remote.Address	= IPAddress::Broadcast();
 
 	IP		= host.IP;
 
@@ -35,14 +35,14 @@ Dhcp::Dhcp(NetworkInterface& host) : Host(host)
 
 	taskID	= 0;
 
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(_Socket);
 	port->Register(OnReceive, this);
 }
 
 Dhcp::~Dhcp()
 {
 	Sys.RemoveTask(taskID);
-	delete Socket;
+	delete _Socket;
 }
 
 void Dhcp::SendDhcp(byte* buf, uint len)
@@ -78,7 +78,7 @@ void Dhcp::SendDhcp(byte* buf, uint len)
 	Host.Mac.CopyTo(dhcp->ClientMac);
 
 	Buffer bs(dhcp, sizeof(DHCP_HEADER) + len);
-	Socket->Send(bs);
+	_Socket->Send(bs);
 }
 
 // 找服务器
@@ -141,7 +141,7 @@ void Dhcp::Start()
 	}
 
 	// 发送网络请求时会自动开始
-	//auto port = dynamic_cast<ITransport*>(Socket);
+	//auto port = dynamic_cast<ITransport*>(_Socket);
 	//if(port) port->Open();
 
 	// 创建任务，每500ms发送一次Discover
@@ -161,7 +161,7 @@ void Dhcp::Stop()
 {
 	if(!Running) return;
 
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(_Socket);
 	if(port) port->Close();
 
 	Running	= false;

@@ -1,7 +1,7 @@
 ﻿#ifndef __TinyClient_H__
 #define __TinyClient_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #include "TinyController.h"
 #include "TinyConfig.h"

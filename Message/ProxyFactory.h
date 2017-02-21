@@ -1,7 +1,7 @@
 ﻿#ifndef __ProxyFactory_H__
 #define __ProxyFactory_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Message\Pair.h"
 #include "TokenNet\TokenClient.h"
 #include "Device\Proxy.h"

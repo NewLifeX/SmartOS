@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 
 #include "Interrupt.h"
 #include "TTime.h"
@@ -16,15 +16,8 @@ struct HandlerRemap StrBoot __attribute__((at(0x2000fff0)));
     #define BIT(x)	(1 << (x))
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-TSys::TSys()
+// 关键性代码，放到开头
+INROOT TSys::TSys()
 {
 	Config	= nullptr;
 
@@ -43,14 +36,6 @@ TSys::TSys()
 
 	Started	= false;
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 void TSys::Init(void)
 {
@@ -106,15 +91,8 @@ void TSys::RemoveTask(uint& taskid) const
 	taskid = 0;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
+// 关键性代码，放到开头
+INROOT bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
 {
 	if(!taskid) return false;
 
@@ -127,7 +105,7 @@ bool TSys::SetTask(uint taskid, bool enable, int msNextTime) const
 }
 
 // 改变任务周期
-bool TSys::SetTaskPeriod(uint taskid, int period) const
+INROOT bool TSys::SetTaskPeriod(uint taskid, int period) const
 {
 	if(!taskid) return false;
 
@@ -167,11 +145,11 @@ void TSys::Reboot(int msDelay) const
 }
 
 // 系统启动后的毫秒数
-UInt64 TSys::Ms() const { return Time.Current(); }
+INROOT UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
-uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
+INROOT uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 
-void TSys::Sleep(uint ms) const
+INROOT void TSys::Sleep(uint ms) const
 {
 	// 优先使用线程级睡眠
 	if(OnSleep)
@@ -196,7 +174,7 @@ void TSys::Sleep(uint ms) const
 	}
 }
 
-void TSys::Delay(uint us) const
+INROOT void TSys::Delay(uint us) const
 {
 	// 如果延迟微秒数太大，则使用线程级睡眠
 	if(OnSleep && us >= 2000)
@@ -223,13 +201,73 @@ void TSys::Delay(uint us) const
 }
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
+/****************系统日志****************/
+#include <stdarg.h>
+
+// 打印日志
+extern int SmartOS_Log(const String& msg);
+
+extern "C"
+{
+	// 是否新行结尾
+	static bool	newline	= false;
+
+	WEAK int SmartOS_printf(const char* format, ...)
+	{
+		if(Sys.Clock == 0 || Sys.MessagePort == COM_NONE) return 0;
+
+		char cs[512];
+		int tab	= 0;
+
+		// 先根据子任务打印缩进级别
+		if(Sys.Started)
+		{
+			int deepth	= Task::Scheduler()->Deepth - 1;
+			if(newline && deepth > 0 && (format[0] != '\0' || format[1] != '\0' || format[2] != '\0'))
+			{
+				String fm	= format;
+				if(fm.Length() == 1)
+				{
+					tab	= 0;
+				}
+				for(int i=0; i<deepth; i++)
+					cs[tab++]	= '\t';
+				tab	+= snprintf(&cs[tab], sizeof(cs) - tab, "%d=>", Task::Current().ID);
+			}
+		}
+
+		va_list ap;
+
+		va_start(ap, format);
+		int rs = vsnprintf(&cs[tab], sizeof(cs) - tab, format, ap);
+		va_end(ap);
+
+		// 如果格式化得到为空，则不做输出
+		if(rs == 0) return rs;
+
+		newline	= cs[tab + rs - 1] == '\r' || cs[tab + rs - 1] == '\n';
+
+		// 必须转为cstring，否则会当作缓冲区，并把最后一个字符清零。当作缓冲区，长度加一也可以
+		rs	+= SmartOS_Log(String((cstring)cs, tab + rs));
+
+		return rs;
+	}
+
+    /* 重载fputc可以让用户程序使用printf函数 */
+    int fputc(int ch, FILE *f)
+    {
+#if DEBUG
+        if(Sys.Clock == 0) return ch;
+
+        int idx	= Sys.MessagePort;
+        if(idx == COM_NONE) return ch;
+
+		byte b = ch;
+		SmartOS_Log(String((cstring)&b, 1));
 #endif
+        return ch;
+    }
+}
 
 /****************系统跟踪****************/
 

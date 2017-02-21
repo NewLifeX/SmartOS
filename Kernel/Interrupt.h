@@ -4,28 +4,12 @@
 // 中断委托（中断号，参数）
 typedef void (*InterruptCallback)(ushort num, void* param);
 
-#ifdef STM32F1
-    #define VectorySize 84
-#elif defined(STM32F0)
-    #define VectorySize 48
-#elif defined(GD32F150)
-    #define VectorySize 64
-#elif defined(STM32F4)
-    #define VectorySize (86 + 16 + 1)
-#else
-    #define VectorySize 32
-#endif
-
 //VectorySize 64 未考证
 // 中断管理类
 class TInterrupt
 {
 public:
-    InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
-    void* Params[VectorySize];       // 每一个中断向量对应的参数
-
     void Init() const;    // 初始化中断向量表
-    //~TInterrupt();
 
 	void Process(uint num) const;
 

@@ -1,31 +1,22 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 
 #include "Interrupt.h"
 
-TInterrupt Interrupt;
+extern InterruptCallback Vectors[];      // 对外的中断向量表
+extern void* VectorParams[];       // 每一个中断向量对应的参数
 
-//#define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
+TInterrupt Interrupt;
 
 void TInterrupt::Init() const
 {
     OnInit();
 }
 
-/*TInterrupt::~TInterrupt()
-{
-	// 恢复中断向量表
-#if defined(STM32F1) || defined(STM32F4)
-	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0);
-#else
-    SYSCFG_MemoryRemapConfig(SYSCFG_MemoryRemap_Flash);
-#endif
-}*/
-
 bool TInterrupt::Activate(short irq, InterruptCallback isr, void* param)
 {
     short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = isr;
-    Params[irq2] = param;
+    VectorParams[irq2] = param;
 
     return OnActivate(irq);
 }
@@ -34,25 +25,16 @@ bool TInterrupt::Deactivate(short irq)
 {
     short irq2 = irq + 16; // exception = irq + 16
     Vectors[irq2] = 0;
-    Params[irq2] = 0;
+    VectorParams[irq2] = 0;
 
     return OnDeactivate(irq);
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-void TInterrupt::Process(uint num) const
+// 关键性代码，放到开头
+INROOT void TInterrupt::Process(uint num) const
 {
-	auto& inter	= Interrupt;
-	//assert_param(num < VectorySize);
-	//assert_param(Interrupt.Vectors[num]);
-	if(!inter.Vectors[num]) return;
+	//auto& inter	= Interrupt;
+	if(!Vectors[num]) return;
 
 	// 内存检查
 #if DEBUG
@@ -60,8 +42,8 @@ void TInterrupt::Process(uint num) const
 #endif
 
     // 找到应用层中断委托并调用
-    auto isr	= (InterruptCallback)inter.Vectors[num];
-    void* param	= (void*)inter.Params[num];
+    auto isr	= (InterruptCallback)Vectors[num];
+    void* param	= (void*)VectorParams[num];
     isr(num - 16, param);
 }
 
@@ -80,7 +62,7 @@ void TInterrupt::Halt()
 /******************************** SmartIRQ ********************************/
 
 // 智能IRQ，初始化时备份，销毁时还原
-SmartIRQ::SmartIRQ(bool enable)
+INROOT SmartIRQ::SmartIRQ(bool enable)
 {
 	_state = TInterrupt::GlobalState();
 	if(enable)
@@ -89,7 +71,7 @@ SmartIRQ::SmartIRQ(bool enable)
 		TInterrupt::GlobalDisable();
 }
 
-SmartIRQ::~SmartIRQ()
+INROOT SmartIRQ::~SmartIRQ()
 {
 	//__set_PRIMASK(_state);
 	if(_state)
@@ -97,14 +79,6 @@ SmartIRQ::~SmartIRQ()
 	else
 		TInterrupt::GlobalEnable();
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 /******************************** Lock ********************************/
 

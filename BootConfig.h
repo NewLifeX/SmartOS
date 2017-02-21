@@ -1,7 +1,7 @@
 ﻿#ifndef __BootConfig__H__
 #define __BootConfig__H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Config.h"
 
 #pragma pack(push)

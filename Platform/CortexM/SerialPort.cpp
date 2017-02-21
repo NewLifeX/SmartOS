@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Kernel\Task.h"
 #include "Kernel\Interrupt.h"
 #include "Device\SerialPort.h"
@@ -34,8 +34,8 @@ bool SerialPort::OnSet()
 	return sp->CR1 & USART_CR1_UE;
 }
 
-extern void SerialPort_Opening(SerialPort& sp);
-extern void SerialPort_Closeing(SerialPort& sp);
+WEAK void SerialPort_Opening(SerialPort& sp)	{ }
+WEAK void SerialPort_Closeing(SerialPort& sp)	{ }
 
 // 打开串口
 void SerialPort::OnOpen2()
@@ -135,11 +135,8 @@ void SerialPort::OnWrite2()
 	USART_ITConfig((USART_TypeDef*)State, USART_IT_TXE, ENABLE);
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
-
-void SerialPort::OnTxHandler()
+// 关键性代码，放到开头
+INROOT void SerialPort::OnTxHandler()
 {
 	if(!Tx.Empty())
 		USART_SendData((USART_TypeDef*)State, (ushort)Tx.Dequeue());
@@ -151,7 +148,7 @@ void SerialPort::OnTxHandler()
 	}
 }
 
-void SerialPort::OnRxHandler()
+INROOT void SerialPort::OnRxHandler()
 {
 	// 串口接收中断必须以极快的速度完成，否则会出现丢数据的情况
 	// 判断缓冲区足够最小值以后才唤醒任务，减少时间消耗
@@ -169,7 +166,7 @@ void SerialPort::OnRxHandler()
 }
 
 // 真正的串口中断函数
-void SerialPort::OnHandler(ushort num, void* param)
+INROOT void SerialPort::OnHandler(ushort num, void* param)
 {
 	auto sp	= (SerialPort*)param;
 	auto st	= (USART_TypeDef*)sp->State;
@@ -192,5 +189,3 @@ void SerialPort::OnHandler(ushort num, void* param)
 	if(USART_GetFlagStatus(st, USART_FLAG_FE) != RESET) USART_ClearFlag(st, USART_FLAG_FE);
 	if(USART_GetFlagStatus(st, USART_FLAG_PE) != RESET) USART_ClearFlag(st, USART_FLAG_PE);*/
 }
-
-#pragma arm section code

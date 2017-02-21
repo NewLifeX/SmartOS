@@ -1,7 +1,7 @@
 ﻿#ifndef __ShunCom_H__
 #define __ShunCom_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 #include "Device\Power.h"
 #include "Net\ITransport.h"

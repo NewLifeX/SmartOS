@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 
 #include "I2C.h"
 
@@ -55,12 +55,12 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 3，读取模式，如果有子地址，先发送写地址，再发送子地址，然后重新开始并发送读地址
 
 	// 发送写入地址
-	debug_printf("I2C::SendAddr\t");
 	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
+	//debug_printf("I2C::SendAddr %02X \r\n", d);
     WriteByte(d);
 	if(!WaitAck())
 	{
-		debug_printf("可能设备未连接，或地址 0x%02X 不对\r\n", d);
+		debug_printf("I2C::SendAddr %02X 可能设备未连接，或地址不对\r\n", d);
 		return false;
 	}
 
@@ -69,7 +69,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 发送子地址
 	if(!SendSubAddr(addr))
 	{
-		debug_printf("发送子地址 0x%02X 失败\r\n", addr);
+		debug_printf("I2C::SendAddr %02X 发送子地址 0x%02X 失败\r\n", d, addr);
 		return false;
 	}
 
@@ -87,7 +87,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	}
 	if(!rs)
 	{
-		debug_printf("发送读取地址 0x%02X 失败\r\n", d);
+		debug_printf("I2C::SendAddr %02X 发送读取地址失败\r\n", d);
 		return false;
 	}
 
@@ -111,7 +111,7 @@ bool I2C::SendSubAddr(int addr)
 }
 
 // 新会话向指定地址写入多个字节
-bool __attribute__((weak)) I2C::Write(int addr, const Buffer& bs)
+WEAK bool I2C::Write(int addr, const Buffer& bs)
 {
 	/*debug_printf("I2C::Write addr=0x%02X ", addr);
 	bs.Show(true);*/
@@ -135,7 +135,7 @@ bool __attribute__((weak)) I2C::Write(int addr, const Buffer& bs)
 }
 
 // 新会话从指定地址读取多个字节
-uint __attribute__((weak)) I2C::Read(int addr, Buffer& bs)
+WEAK uint I2C::Read(int addr, Buffer& bs)
 {
 	Open();
 
@@ -263,7 +263,7 @@ void SoftI2C::OnOpen()
 {
 	assert(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
-	debug_printf("I2C::Open Addr=0x%02X \r\n", Address);
+	debug_printf("I2C::Open Addr=0x%02X SubWidth=%d \r\n", Address, SubWidth);
 
 	// 开漏输出
 	SCL.OpenDrain = true;

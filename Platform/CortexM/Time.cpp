@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Kernel\Interrupt.h"
 #include "Kernel\TTime.h"
 #include "Device\Timer.h"
@@ -89,14 +89,11 @@ void TTime::Init()
 	TIM_Cmd(tim, ENABLE);
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
-
 #if  defined(STM32F0) || defined(GD32F150) || defined(STM32F4)
     #define SysTick_CTRL_COUNTFLAG SysTick_CTRL_COUNTFLAG_Msk
 #endif
-void TTime::OnHandler(ushort num, void* param)
+// 关键性代码，放到开头
+INROOT void TTime::OnHandler(ushort num, void* param)
 {
 	auto timer = (TIM_TypeDef*)param;
 	if(!timer) return;
@@ -119,13 +116,13 @@ void TTime::OnHandler(ushort num, void* param)
 }
 
 // 当前滴答时钟
-uint TTime::CurrentTicks() const
+INROOT uint TTime::CurrentTicks() const
 {
 	return SysTick->LOAD - SysTick->VAL;
 }
 
 // 当前毫秒数
-UInt64 TTime::Current() const
+INROOT UInt64 TTime::Current() const
 {
 	uint cnt = g_Timers[Index]->CNT;
 #if ! (defined(STM32F0) || defined(GD32F150))
@@ -134,7 +131,5 @@ UInt64 TTime::Current() const
 	return Milliseconds + cnt;
 }
 
-uint TTime::TicksToUs(uint ticks) const	{ return !ticks ? 0 : (ticks / gTicks); }
-uint TTime::UsToTicks(uint us) const	{ return !us ? 0 : (us * gTicks); }
-
-#pragma arm section code
+INROOT uint TTime::TicksToUs(uint ticks) const	{ return !ticks ? 0 : (ticks / gTicks); }
+INROOT uint TTime::UsToTicks(uint us) const	{ return !us ? 0 : (us * gTicks); }

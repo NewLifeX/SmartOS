@@ -25,11 +25,7 @@
 	#define STACK_SAVE_Size (8 << 2)	// 0x20 = 32
 #endif
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
-
-void Thread::CheckStack()
+INROOT void Thread::CheckStack()
 {
 #ifdef DEBUG
 	uint p = __get_PSP();
@@ -47,7 +43,7 @@ void Thread::CheckStack()
 }
 
 // 系统线程调度开始
-void Thread::OnSchedule()
+INROOT void Thread::OnSchedule()
 {
 	// 使用双栈。每个线程有自己的栈，属于PSP，中断专用MSP
 	if(__get_CONTROL() != 2)
@@ -73,7 +69,7 @@ extern "C"
 	extern uint* newStack;	// 新的线程栈
 
 #ifdef STM32F0
-	__asm void PendSV_Handler()
+	INROOT __asm void PendSV_Handler()
 	{
 		IMPORT curStack
 		IMPORT newStack
@@ -123,7 +119,7 @@ PendSV_NoSave						// 此时整个上下文已经被保存
 		BX      LR                  // 中断返回将恢复上下文
 	}
 #else
-	__asm void PendSV_Handler()
+	INROOT __asm void PendSV_Handler()
 	{
 		IMPORT curStack
 		IMPORT newStack
@@ -167,25 +163,25 @@ PendSV_NoSave						// 此时整个上下文已经被保存
 #endif
 
 // 切换线程，马上切换时间片给下一个线程
-bool Thread::CheckPend()
+INROOT bool Thread::CheckPend()
 {
 	// 如果有挂起的切换，则不再切换。否则切换时需要保存的栈会出错
 	return SCB->ICSR & SCB_ICSR_PENDSVSET_Msk;
 }
 
-void Thread::OnSwitch()
+INROOT void Thread::OnSwitch()
 {
 	// 触发PendSV异常，引发上下文切换
 	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-void Thread::OnInit()
+INROOT void Thread::OnInit()
 {
     Interrupt.SetPriority(PendSV_IRQn, 0xFF);
 }
 
 // 每个线程结束时执行该方法，销毁线程
-void Thread::OnEnd()
+INROOT void Thread::OnEnd()
 {
 	//SmartIRQ irq;	// 关闭全局中断，确保销毁成功
 	__disable_irq();

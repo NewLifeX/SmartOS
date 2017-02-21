@@ -95,27 +95,30 @@ void IOK027X::InitLeds()
 
 NetworkInterface* IOK027X::Create8266(Pin power)
 {
-	auto host = new Esp8266(COM2, power, PA1);
+	auto esp = new Esp8266(COM2, power, PA1);
 	// 初次需要指定模式 否则为 Wire
-	//auto host = new Esp8266(COM4, PE2, PD3);
-	bool join = host->SSID && *host->SSID;
-	//if (!join) host->Mode = NetworkType::AP;
+	bool join = esp->SSID && *esp->SSID;
+	//if (!join) esp->Mode = NetworkType::AP;
 
 	if (!join)
 	{
-		*host->SSID = "WSWL";
-		*host->Pass = "12345678";
+		*esp->SSID = "WSWL";
+		*esp->Pass = "12345678";
 
-		host->Mode = NetworkType::STA_AP;
+		esp->Mode = NetworkType::STA_AP;
 	}
 
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, host);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, host);
-	Client->Register("GetAPs", &Esp8266::GetAPs, host);
+	if(!esp->Open())
+	{
+		delete esp;
+		return nullptr;
+	}
 
-	host->Open();
+	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
+	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
+	Client->Register("GetAPs", &Esp8266::GetAPs, esp);
 
-	return host;
+	return esp;
 }
 
 /******************************** Token ********************************/
@@ -124,26 +127,17 @@ void IOK027X::InitClient()
 {
 	if (Client) return;
 
-	auto tk = TokenConfig::Current;
+	// 初始化令牌网
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto client = new TokenClient();
-	client->Cfg = tk;
+	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
-	Client = client;
-	Client->MaxNotActive = 480000;
-	// 重启
-	Client->Register("Gateway/Restart", &TokenClient::InvokeRestart, Client);
-	// 重置
-	Client->Register("Gateway/Reset", &TokenClient::InvokeReset, Client);
-	// 获取所有Ivoke命令
-	Client->Register("Api/All", &TokenClient::InvokeGetAllApi, Client);
+	Client = tc;
 
-	if (Data && Size > 0)
-	{
-		auto& ds = Client->Store;
-		ds.Data.Set(Data, Size);
-	}	
+	InitAlarm();
 }
 
 void IOK027X::Register(int index, IDataPort& dp)

@@ -1,7 +1,7 @@
 ﻿#ifndef __TokenController_H__
 #define __TokenController_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
@@ -24,8 +24,8 @@ protected:
 	//virtual bool SendInternal(const Buffer& bs, const void* state);
 
 public:
-	Socket*	Socket;
-	
+	Socket*		_Socket;
+
 	uint		Token;	// 令牌
 	ByteArray	Key;	// 通信密码
 

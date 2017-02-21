@@ -1,7 +1,7 @@
 ﻿#ifndef __BUTTON_H__
 #define __BUTTON_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 
 // 面板按钮

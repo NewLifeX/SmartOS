@@ -8,7 +8,7 @@ private:
 	uint dhcpid;	// 事务ID
 	uint taskID;	// 任务ID
 	UInt64 _expired;	// 目标过期时间，毫秒
-	Socket*	Socket;
+	Socket*	_Socket;
 
 	void Discover();
 	void Request();

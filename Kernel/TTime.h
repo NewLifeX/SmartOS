@@ -1,7 +1,7 @@
 ﻿#ifndef __TIME_H__
 #define __TIME_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 时间类
 // 使用双计数时钟，TIMx专用于毫秒级系统计时，SysTick用于微秒级延迟，秒级以及以上采用全局整数累加

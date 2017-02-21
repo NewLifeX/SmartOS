@@ -1,7 +1,7 @@
 ﻿#ifndef __Device_H__
 #define __Device_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #include "TinyNet\TinyConfig.h"
 

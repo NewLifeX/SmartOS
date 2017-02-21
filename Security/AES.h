@@ -1,7 +1,7 @@
 ﻿#ifndef __AES_H__
 #define __AES_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // AES 加密算法
 class AES

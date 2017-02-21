@@ -37,8 +37,8 @@ public:
 	virtual bool WaitAck(int retry = 0) = 0;	// 等待Ack，默认0表示采用全局Retry
 
 	// 新会话向指定地址写入
-	virtual bool Write(int addr, const Buffer& bs);
-	virtual bool Write(int addr, byte data);
+	bool Write(int addr, const Buffer& bs);
+	bool Write(int addr, byte data);
 	// 新会话从指定地址读取
 	virtual uint Read(int addr, Buffer& bs);
 	virtual byte Read(int addr);

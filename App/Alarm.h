@@ -1,7 +1,7 @@
 ﻿#ifndef __Alarm_H__
 #define __Alarm_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Timer.h"
 #include "Device\Port.h"
 #include "Config.h"

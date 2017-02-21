@@ -1,7 +1,7 @@
 ﻿#ifndef __TinyServer_H__
 #define __TinyServer_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 #include "TinyController.h"
 #include "TinyConfig.h"

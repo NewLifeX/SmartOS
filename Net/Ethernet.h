@@ -1,7 +1,7 @@
 ﻿#ifndef _Ethernet_H_
 #define _Ethernet_H_
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // TCP/IP协议头部结构体
 

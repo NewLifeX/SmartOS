@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 
 #include "Kernel\Interrupt.h"
 //#include "SerialPort.h"
@@ -6,6 +6,21 @@
 #include "..\stm32.h"
 
 #define IS_IRQ(irq) (irq >= -16 && irq <= VectorySize - 16)
+
+#ifdef STM32F1
+    #define VectorySize 84
+#elif defined(STM32F0)
+    #define VectorySize 48
+#elif defined(GD32F150)
+    #define VectorySize 64
+#elif defined(STM32F4)
+    #define VectorySize (86 + 16 + 1)
+#else
+    #define VectorySize 32
+#endif
+
+InterruptCallback Vectors[VectorySize];      // 对外的中断向量表
+void* VectorParams[VectorySize];       // 每一个中断向量对应的参数
 
 bool TInterrupt::OnActivate(short irq)
 {
@@ -50,9 +65,8 @@ void TInterrupt::GlobalEnable()	{ __enable_irq(); }
 void TInterrupt::GlobalDisable(){ __disable_irq(); }
 bool TInterrupt::GlobalState()	{ return __get_PRIMASK(); }
 
-#if !defined(TINY) && defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
+// 关键性代码，放到开头
+INROOT
 
 #if defined ( __CC_ARM   )
 __ASM uint GetIPSR()

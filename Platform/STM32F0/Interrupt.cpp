@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 
 #include "Kernel\Interrupt.h"
 //#include "SerialPort.h"
@@ -71,9 +71,6 @@ void TInterrupt::DecodePriority (uint priority, uint priorityGroup, uint* pPreem
 #endif
 
 #if !defined(TINY)
-#if defined(STM32F0)
-	#pragma arm section code = "SectionForSys"
-#endif
 
 extern "C"
 {

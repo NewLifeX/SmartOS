@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Kernel\Interrupt.h"
 #include "Device\Port.h"
 
@@ -39,18 +39,18 @@ void Port::AFConfig(GPIO_AF GPIO_AF) const
 #define REGION_Output 1
 #ifdef REGION_Output
 
-void OutputPort::OpenPin()
+void OutputPort::OpenPin(void* param)
 {
 	assert(Speed == 2 || Speed == 25 || Speed == 50 || Speed == 100, "Speed");
 
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	switch(Speed)
 	{
-		case 2:		gpio->GPIO_Speed = GPIO_Speed_2MHz;	break;
+		case 2:		gpio->GPIO_Speed = GPIO_Speed_2MHz;		break;
 		case 25:	gpio->GPIO_Speed = GPIO_Speed_25MHz;	break;
-		case 100:	gpio->GPIO_Speed = GPIO_Speed_100MHz;break;
 		case 50:	gpio->GPIO_Speed = GPIO_Speed_50MHz;	break;
+		case 100:	gpio->GPIO_Speed = GPIO_Speed_100MHz;	break;
 	}
 
 	gpio->GPIO_Mode	= GPIO_Mode_OUT;
@@ -61,9 +61,9 @@ void OutputPort::OpenPin()
 
 /******************************** AlternatePort ********************************/
 
-void AlternatePort::OpenPin()
+void AlternatePort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	gpio->GPIO_Mode	= GPIO_Mode_AF;
 	gpio->GPIO_OType	= OpenDrain ? GPIO_OType_OD : GPIO_OType_PP;
@@ -84,9 +84,9 @@ extern bool InputPort_HasEXTI(int line, const InputPort& port);
 extern void GPIO_ISR(int num);
 extern void SetEXIT(int pinIndex, bool enable, InputPort::Trigger mode);
 
-void InputPort::OpenPin()
+void InputPort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	gpio->GPIO_Mode = GPIO_Mode_IN;
 	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;
@@ -162,9 +162,9 @@ void InputPort_OpenEXTI(InputPort& port)
 
 /******************************** AnalogInPort ********************************/
 
-void AnalogInPort::OpenPin()
+void AnalogInPort::OpenPin(void* param)
 {
-	auto gpio	= (GPIO_InitTypeDef*)&State;
+	auto gpio	= (GPIO_InitTypeDef*)param;
 
 	gpio->GPIO_Mode	= GPIO_Mode_AN;
 	//gpio->GPIO_OType = !Floating ? GPIO_OType_OD : GPIO_OType_PP;

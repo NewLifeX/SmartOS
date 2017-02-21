@@ -1,7 +1,7 @@
 ﻿#ifndef __Message_H__
 #define __Message_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 
 // 消息基类
 class Message

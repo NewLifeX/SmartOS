@@ -36,15 +36,8 @@ void Task::Init()
 	MaxDeepth	= 1;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
-bool Task::Execute(UInt64 now)
+// 关键性代码，放到开头
+INROOT bool Task::Execute(UInt64 now)
 {
 	TS(Name);
 
@@ -92,7 +85,7 @@ bool Task::Execute(UInt64 now)
 }
 
 // 设置任务的开关状态，同时运行指定任务最近一次调度的时间，0表示马上调度
-void Task::Set(bool enable, int msNextTime)
+INROOT void Task::Set(bool enable, int msNextTime)
 {
 	Enable	= enable;
 
@@ -103,7 +96,7 @@ void Task::Set(bool enable, int msNextTime)
 	if(enable) Scheduler()->SkipSleep();
 }
 
-bool Task::CheckTime(UInt64 end, bool isSleep)
+INROOT bool Task::CheckTime(UInt64 end, bool isSleep)
 {
 	if(Deepth >= MaxDeepth) return false;
 
@@ -136,23 +129,15 @@ TaskScheduler* Task::Scheduler()
 	return &_sc;
 }
 
-Task* Task::Get(int taskid)
+INROOT Task* Task::Get(int taskid)
 {
 	return (*Scheduler())[taskid];
 }
 
-Task& Task::Current()
+INROOT Task& Task::Current()
 {
 	return *(Scheduler()->Current);
 }
-
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
 
 // 显示状态
 void Task::ShowStatus()
@@ -185,6 +170,7 @@ TaskScheduler::TaskScheduler(cstring name)
 	Times	= 0;
 	Cost	= 0;
 	TotalSleep	= 0;
+	LastTrace	= Sys.Ms();
 
 	_SkipSleep	= false;
 }
@@ -318,16 +304,9 @@ void TaskScheduler::Stop()
 	Running = false;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code = "SectionForSys"
-	#elif defined(__GNUC__)
-		__attribute__((section("SectionForSys")))
-	#endif
-#endif
-
+// 关键性代码，放到开头
 // 执行一次循环。指定最大可用时间
-void TaskScheduler::Execute(uint msMax, bool& cancel)
+INROOT void TaskScheduler::Execute(uint msMax, bool& cancel)
 {
 	TS("Task::Execute");
 
@@ -364,11 +343,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 		}
 	}
 
-	int ct = tc.Elapsed();
-	if(Cost > 0)
-		Cost = (Cost + ct) >> 1;
-	else
-		Cost = ct;
+	Cost	+= tc.Elapsed();
 
 	// 有可能这一次轮询是有限时间
 	if(min > end) min	= end;
@@ -388,7 +363,7 @@ void TaskScheduler::Execute(uint msMax, bool& cancel)
 	_SkipSleep	= false;
 }
 
-uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
+INROOT uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 {
 	auto& dp	= Deepth;
 	if(dp >= MaxDeepth) return 0;
@@ -421,45 +396,42 @@ uint TaskScheduler::ExecuteForWait(uint msMax, bool& cancel)
 }
 
 // 跳过最近一次睡眠，马上开始下一轮循环
-void TaskScheduler::SkipSleep()
+INROOT void TaskScheduler::SkipSleep()
 {
 	_SkipSleep	= true;
 	Sleeping	= false;
 }
 
-#if !defined(TINY) && defined(STM32F0)
-	#if defined(__CC_ARM)
-		#pragma arm section code
-	#elif defined(__GNUC__)
-		__attribute__((section("")))
-	#endif
-#endif
-
 // 显示状态
 void TaskScheduler::ShowStatus()
 {
 #if DEBUG
-	//auto host = (TaskScheduler*)param;
-	auto host	= this;
 	auto now	= Sys.Ms();
 
-	auto p	= 10000 - (int)(TotalSleep * 10000 / now);
+	// 分段统计负载均值
+	auto ts	= Times;
+	auto ct	= Cost;
+	auto p	= 10000 - (int)(TotalSleep * 10000 / (now - LastTrace));
 
-	debug_printf("Task::ShowStatus [%d]", host->Times);
+	Times	= 0;
+	Cost	= 0;
+	TotalSleep	= 0;
+	LastTrace	= now;
+
+	debug_printf("Task::ShowStatus [%d]", ts);
 	debug_printf(" 负载 %d.%d%%", p/100, p%100);
-	debug_printf(" 平均 %dus 当前 ", host->Cost);
-	DateTime::Now().Show();
+	debug_printf(" 平均 %dus 当前 ", ts ? ct/ts : 0);
+	DateTime(now/1000).Show();
 	debug_printf(" 启动 ");
-	TimeSpan ts(now);
-	ts.Show(true);
+	TimeSpan(now).Show(true);
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
-	int ms = host->Cost / 1000;
+	int ms = ct / 1000;
 	if(ms > 10) ms = 10;
 
-	for(int i=0; i<host->_Tasks.Count(); i++)
+	for(int i=0; i<_Tasks.Count(); i++)
 	{
-		auto task = (Task*)host->_Tasks[i];
+		auto task = (Task*)_Tasks[i];
 		if(task && task->ID)
 		{
 			task->ShowStatus();

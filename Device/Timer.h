@@ -1,7 +1,7 @@
 ﻿#ifndef __Timer_H__
 #define __Timer_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 
 // 定时器

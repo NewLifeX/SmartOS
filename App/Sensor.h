@@ -1,7 +1,7 @@
 ﻿#ifndef __SENSOR_H__
 #define __SENSOR_H__
 
-#include "Sys.h"
+#include "Kernel\Sys.h"
 #include "Device\Port.h"
 
 

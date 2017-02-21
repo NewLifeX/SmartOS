@@ -1,4 +1,4 @@
-﻿#include "Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Kernel\TTime.h"
 #include "ITransport.h"
 
@@ -359,25 +359,25 @@ short dns_makequery(short op, const String& name, Buffer& bs)
 
 DNS::DNS(NetworkInterface& host, const IPAddress& dns) : Host(host)
 {
-	Socket	= host.CreateSocket(NetType::Udp);
+	_Socket	= host.CreateSocket(NetType::Udp);
 
-	Socket->Remote.Port		= 53;
-	Socket->Remote.Address	= !dns.IsAny() ? dns : host.DNSServer;
+	_Socket->Remote.Port		= 53;
+	_Socket->Remote.Address	= !dns.IsAny() ? dns : host.DNSServer;
 
-	auto port = dynamic_cast<ITransport*>(Socket);
+	auto port = dynamic_cast<ITransport*>(_Socket);
 	port->Register(OnReceive, this);
 }
 
 DNS::~DNS()
 {
-	delete Socket;
+	delete _Socket;
 }
 
 IPAddress DNS::Query(const String& domain, int msTimeout)
 {
 #if NET_DEBUG
 	net_printf("DNS::Query %s Timeout: %dms DNS Server : ", domain.GetBuffer(), msTimeout);
-	Socket->Remote.Address.Show(true);
+	_Socket->Remote.Address.Show(true);
 #endif
 
 	auto ip	= IPAddress::Parse(domain);
@@ -391,7 +391,7 @@ IPAddress DNS::Query(const String& domain, int msTimeout)
 	_Buffer = &rs;
 
 	dns_makequery(0, domain, bs);
-	Socket->Send(bs);
+	_Socket->Send(bs);
 
 	TimeWheel tw(msTimeout);
 	tw.Sleep = 100;
@@ -420,7 +420,7 @@ uint DNS::OnReceive(ITransport* port, Buffer& bs, void* param, void* param2)
 void DNS::Process(Buffer& bs, const IPEndPoint& server)
 {
 	// 只要来自服务器的
-	if(server.Address != Socket->Remote.Address) return;
+	if(server.Address != _Socket->Remote.Address) return;
 
 	//net_printf("DNS::Process [%d] = 0x%08X [%d] = 0x%08X \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
 	//bs.Show(true);
