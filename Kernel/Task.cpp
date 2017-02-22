@@ -173,6 +173,9 @@ TaskScheduler::TaskScheduler(cstring name)
 	LastTrace	= Sys.Ms();
 
 	_SkipSleep	= false;
+
+	EnterSleep	= nullptr;
+	ExitSleep	= nullptr;
 }
 
 // 使用外部缓冲区初始化任务列表，避免频繁的堆分配
@@ -353,7 +356,11 @@ INROOT void TaskScheduler::Execute(uint msMax, bool& cancel)
 	{
 		min	-= now;
 		Sleeping	= true;
-		Time.Sleep(min, &Sleeping);
+		// 通知外部，需要睡眠若干毫秒
+		if(EnterSleep)
+			EnterSleep(min);
+		else
+			Time.Sleep(min, &Sleeping);
 		Sleeping	= false;
 
 		// 累加睡眠时间
@@ -400,6 +407,9 @@ INROOT void TaskScheduler::SkipSleep()
 {
 	_SkipSleep	= true;
 	Sleeping	= false;
+
+	// 通知外部，要求退出睡眠，恢复调度
+	if(ExitSleep) ExitSleep();
 }
 
 // 显示状态

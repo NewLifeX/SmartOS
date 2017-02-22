@@ -77,6 +77,10 @@ public:
 	UInt64	TotalSleep;	// 所有任务的总睡眠时间ms
 	UInt64	LastTrace;	// 最后统计跟踪时间ms
 
+	typedef void (*SAction)(uint ms);
+	SAction	EnterSleep;	// 通知外部，需要睡眠若干毫秒
+	Func	ExitSleep;	// 通知外部，要求退出睡眠，恢复调度
+
 	TaskScheduler(cstring name = nullptr);
 
 	// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
