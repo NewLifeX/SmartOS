@@ -52,6 +52,12 @@ void* Heap::Alloc(uint size)
 	// 要申请的内存大小需要对齐
 	size = (size+MEMORY_ALIGN-1) & (~(MEMORY_ALIGN-1));
 
+	if(size > Size - _Used)
+	{
+		debug_printf("Heap::Alloc %d > %d 失败！ \r\n", size, Size - _Used);
+		return nullptr;
+	}
+
 	void* ret	= nullptr;
 	int need	= size + sizeof(MemoryBlock);
 
@@ -76,6 +82,8 @@ void* Heap::Alloc(uint size)
 			break;
 		}
 	}
+
+	if(!ret) debug_printf("Heap::Alloc %d 失败！\r\n", size);
 
 	return ret;
 }
