@@ -412,6 +412,8 @@ INROOT void TaskScheduler::SkipSleep()
 	if(ExitSleep) ExitSleep();
 }
 
+#include "Heap.h"
+
 // 显示状态
 void TaskScheduler::ShowStatus()
 {
@@ -433,7 +435,10 @@ void TaskScheduler::ShowStatus()
 	debug_printf(" 平均 %dus 当前 ", ts ? ct/ts : 0);
 	DateTime(now/1000).Show();
 	debug_printf(" 启动 ");
-	TimeSpan(now).Show(true);
+	TimeSpan(now).Show(false);
+
+	auto hp	= Heap::Current;
+	debug_printf(" 堆 %d/%d\r\n", hp->Used(), hp->Count());
 
 	// 计算任务执行的平均毫秒数，用于中途调度其它任务，避免一个任务执行时间过长而堵塞其它任务
 	int ms = ct / 1000;
