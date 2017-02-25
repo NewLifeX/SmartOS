@@ -2,6 +2,7 @@
 #include "Interrupt.h"
 
 #include "Heap.h"
+#include "TTime.h"
 
 #define MEMORY_ALIGN	4
 
@@ -48,6 +49,9 @@ Heap::Heap(uint addr, uint size)
 	_Used	= sizeof(MemoryBlock) << 1;
 	_Count	= 0;
 
+	// 记录第一个有空闲内存的块，减少内存分配时的查找次数
+	_First	= mb;
+
 	debug_printf("Heap::Init(%p, %d) Free=%d \r\n", Address, Size, FreeSize());
 }
 
@@ -75,7 +79,7 @@ void* Heap::Alloc(uint size)
 	int need	= size + sizeof(MemoryBlock);
 
 	SmartIRQ irq;
-	for(auto mcb=(MemoryBlock*)Address; mcb->Next!=nullptr; mcb=mcb->Next)
+	for(auto mcb=(MemoryBlock*)_First; mcb->Next!=nullptr; mcb=mcb->Next)
 	{
 		// 找到一块满足大小的内存块。计算当前块剩余长度
 		int free	= (int)mcb->Next - (int)mcb - mcb->Used;
@@ -87,12 +91,15 @@ void* Heap::Alloc(uint size)
 			tmp->Used	= need;
 			mcb->Next	= tmp;
 
+			// 记录第一个有空闲内存的块，减少内存分配时的查找次数
+			_First		= tmp;
+
 			ret	= (void*)((uint)(tmp+1));
 
 			_Used	+= need;
 			_Count++;
 
-			debug_printf("Heap::Alloc (%p, %d) Used=%d Count=%d \r\n", ret, need, _Used, _Count);
+			//debug_printf("Heap::Alloc (%p, %d) First=%p Used=%d Count=%d \r\n", ret, need, _First, _Used, _Count);
 
 			break;
 		}
@@ -106,23 +113,26 @@ void* Heap::Alloc(uint size)
 void Heap::Free(void* ptr)
 {
 	auto prev	= (MemoryBlock*)Address;
-	auto mcb	= (MemoryBlock*)ptr - 1;
+	auto cur	= (MemoryBlock*)ptr - 1;
 
 	SmartIRQ irq;
-	for(auto find=prev->Next; find->Next!=nullptr; find=find->Next)
+	for(auto mcb=prev->Next; mcb->Next!=nullptr; mcb=mcb->Next)
 	{
 		// 找到内存块
-		if(find == mcb)
+		if(mcb == cur)
 		{
-			_Used	-= find->Used;
+			_Used	-= cur->Used;
 			_Count--;
 
-			debug_printf("Heap::Free  (%p, %d) Used=%d Count=%d \r\n", ptr, find->Used, _Used, _Count);
+			// 前面有空闲位置
+			if(cur <= _First) _First	= prev;
 
-			prev->Next = find->Next;
+			//debug_printf("Heap::Free  (%p, %d) First=%p Used=%d Count=%d \r\n", ptr, cur->Used, _First, _Used, _Count);
+
+			prev->Next = cur->Next;
 
 			break;
 		}
-		prev = find;
+		prev = mcb;
 	}
 }

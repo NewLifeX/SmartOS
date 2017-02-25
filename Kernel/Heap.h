@@ -23,6 +23,7 @@ public:
 private:
 	uint	_Used;
 	uint	_Count;
+	void*	_First;	// 第一个有空闲的内存块，加速搜索
 };
 
 #endif
