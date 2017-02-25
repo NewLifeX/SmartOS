@@ -170,7 +170,7 @@ int DevicesManagement::LoadDev()
 		debug_printf("\r\n");
 	}
 
-	debug_printf("Load %d Dev from 0x%08X\r\n", i, cfg.Address);
+	debug_printf("Load %d Dev from %p\r\n", i, cfg.Address);
 
 	byte len = DevArr.Count();
 	debug_printf("Devices has %d Devs,LocalId :0x%02X\r\n", len,LocalId);
@@ -215,7 +215,7 @@ void DevicesManagement::ClearDev()
 	Flash flash;
 	auto cfg = GetStore(flash);
 
-	debug_printf("DevicesManagement::ClearDevices Clear List 0x%08X \r\n", cfg.Address);
+	debug_printf("DevicesManagement::ClearDevices Clear List %p \r\n", cfg.Address);
 
 	DevArr.DeleteAll().Clear();
 

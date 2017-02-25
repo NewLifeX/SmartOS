@@ -8,7 +8,7 @@ void TestAT45DB()
     Spi spi(Spi2, 9000000, true);
     _spi = &spi;
     AT45DB sf(&spi);
-    debug_printf("AT45DB ID=0x%08X PageSize=%d\r\n", sf.ID, sf.PageSize);
+    debug_printf("AT45DB ID=%p PageSize=%d\r\n", sf.ID, sf.PageSize);
     int size = ArrayLength(Tx_Buffer);
     debug_printf("DataSize=%d\r\n", size);
 

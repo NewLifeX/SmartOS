@@ -29,7 +29,7 @@ extern "C" {
 			static Heap g_Heap(heap, stack - heap);
 			_Heap	= &g_Heap;
 
-			mem_printf("Heap::Init(0x%08X, %d)\r\n", heap, stack - heap);
+			mem_printf("Heap::Init(%p, %d)\r\n", heap, stack - heap);
 		}
 
 	#if MEM_DEBUG

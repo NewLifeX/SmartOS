@@ -270,7 +270,7 @@ void TSys::OnShowInfo() const
 	//debug_printf("\r\n");
     debug_printf("DevID:0x%04X RevID:0x%04X \r\n", DevID, RevID);
 
-    debug_printf("CPUID:0x%08X", CPUID);
+    debug_printf("CPUID:%p", CPUID);
 	if(cpu->Implementer == 0x41) debug_printf(" ARM:");
 	if(cpu->Constant == 0x0C)
 		debug_printf(" ARMv6-M");
@@ -296,7 +296,7 @@ void TSys::OnShowInfo() const
 	size	= end - start;
 	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
 
-	if(IsGD) debug_printf("ChipType:0x%08X %s\r\n", *(uint*)0x40022100, (cstring)0x40022100);
+	if(IsGD) debug_printf("ChipType:%p %s\r\n", *(uint*)0x40022100, (cstring)0x40022100);
 #endif
 }
 

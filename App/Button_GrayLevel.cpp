@@ -186,7 +186,7 @@ void Close2Task(void * param)
 	else
 	{
 		bt->delaytime = 0;
-		debug_printf("延时关闭已完成 删除任务 0x%08X\r\n", bt->_task2);
+		debug_printf("延时关闭已完成 删除任务 %p\r\n", bt->_task2);
 		Sys.RemoveTask(bt->_task2);
 		bt->_task2 = 0;
 		bt->SetValue(false);

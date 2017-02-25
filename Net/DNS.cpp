@@ -422,7 +422,7 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 	// 只要来自服务器的
 	if(server.Address != _Socket->Remote.Address) return;
 
-	//net_printf("DNS::Process [%d] = 0x%08X [%d] = 0x%08X \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
+	//net_printf("DNS::Process [%d] = %p [%d] = %p \r\n", bs.Length(), bs.GetBuffer(), _Buffer->Length(), _Buffer->GetBuffer());
 	//bs.Show(true);
 	if(_Buffer)
 		*_Buffer	= bs;
@@ -433,7 +433,7 @@ void DNS::Process(Buffer& bs, const IPEndPoint& server)
 		server.Show(true);
 #endif
 	}
-	//net_printf("DNS::Process [%d] = 0x%08X \r\n", _Buffer->Length(), _Buffer->GetBuffer());
+	//net_printf("DNS::Process [%d] = %p \r\n", _Buffer->Length(), _Buffer->GetBuffer());
 	//_Buffer->Show(true);
 }
 

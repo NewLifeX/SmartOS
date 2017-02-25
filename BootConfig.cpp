@@ -51,8 +51,8 @@ BootConfig * BootConfig::Create()
 void BootConfig::Show() const
 {
 	debug_printf("BootConfig   HasApp %d  NeedUpData %d  SearchPinCfg %d\r\n", Stat.HasApp, Stat.NeedUpDate, Stat.SearchPinCfg);
-	debug_printf("WorkAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", App.WorkAddr, App.Length, App.Directory, App.Checksum);
-	debug_printf("UpdateAddr 0x%08X  Length 0x%08X  Depositary 0x%08X  Checksum 0x%08X\r\n", Update.WorkAddr, Update.Length, Update.Directory, Update.Checksum);
+	debug_printf("WorkAddr %p  Length %p  Depositary %p  Checksum %p\r\n", App.WorkAddr, App.Length, App.Directory, App.Checksum);
+	debug_printf("UpdateAddr %p  Length %p  Depositary %p  Checksum %p\r\n", Update.WorkAddr, Update.Length, Update.Directory, Update.Checksum);
 
 	debug_printf("PinConfig\r\n");
 	if (AllPin.IsEff)

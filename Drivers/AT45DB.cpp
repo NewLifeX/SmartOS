@@ -32,7 +32,7 @@ AT45DB::AT45DB(Spi* spi)
     else
     {
         PageSize = 256;
-        debug_printf("AT45DB Not Support 0x%08X\r\n", ID);
+        debug_printf("AT45DB Not Support %p\r\n", ID);
     }
 }
 

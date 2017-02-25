@@ -577,7 +577,7 @@ String& TokenStat::ToStr(String& str) const
 {
 	TS("TokenStat::ToStr");
 
-	/*debug_printf("this=0x%08X _Last=0x%08X _Total=0x%08X ", this, _Last, _Total);
+	/*debug_printf("this=%p _Last=%p _Total=%p ", this, _Last, _Total);
 	Percent().Show(true);*/
 	if (SendRequest > 0)
 	{

@@ -270,7 +270,7 @@ bool SHT30::CheckStatus()
 	if(st != 0)
 	{
 		uint sn		= ReadSerialNumber();
-		debug_printf("SNum=0x%08X Status=0x%04X \r\n", sn, st);
+		debug_printf("SNum=%p Status=0x%04X \r\n", sn, st);
 		debug_printf("Status=0x%04X \r\n", st);
 		//if(rs.bit.ResetDetected)		debug_printf(" RstDet");	// ResetDetected
 		//if(rs.bit.HeaterStatus)		debug_printf(" HatSta");	// HeaterStatus
