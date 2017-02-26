@@ -70,10 +70,12 @@ void* Heap::Alloc(uint size)
 		return nullptr;
 	}
 
+#if DEBUG
 	// 检查头部完整性
 	auto head	= (MemoryBlock*)Address;
 	assert(head->Used <= Size && (uint)head + head->Used <= (uint)head->Next, "堆头被破坏！");
 	assert(_Used <= Size, "Heap::Used异常！");
+#endif
 
 	void* ret	= nullptr;
 	int need	= size + sizeof(MemoryBlock);
