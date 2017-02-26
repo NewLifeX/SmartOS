@@ -7,29 +7,32 @@
 /************************************************ TimeSpan ************************************************/
 TimeSpan::TimeSpan(Int64 ms)
 {
-	Ms	= ms;
+	_Seconds	= ms / 1000;
+	_Ms	= ms % 1000;
 }
 
 TimeSpan::TimeSpan(int hours, int minutes, int seconds) : TimeSpan(0, hours, minutes, seconds) { }
 
 TimeSpan::TimeSpan(int days, int hours, int minutes, int seconds)
 {
-	int val	= days * 24 * 3600 + hours * 3600 + minutes * 60 + seconds;
-	Ms	= (Int64)val * 1000ULL;
+	_Seconds	= ((days * 24 + hours) * 60 + minutes) * 60 + seconds;
+	_Ms	= 0;
 }
 
-int TimeSpan::Days()	const { return Ms / (24 * 60 * 60 * 1000); }
-int TimeSpan::Hours()	const { return Ms / (60 * 60 * 1000) % 24; }
-int TimeSpan::Minutes()	const { return Ms / (60 * 1000) % 60; }
-int TimeSpan::Seconds()	const { return Ms / 1000 % 60; }
-int TimeSpan::TotalDays()		const { return Ms / (24 * 60 * 60 * 1000); }
-int TimeSpan::TotalHours()		const { return Ms / (60 * 60 * 1000); }
-int TimeSpan::TotalMinutes()	const { return Ms / (60 * 1000); }
-int TimeSpan::TotalSeconds()	const { return Ms / 1000; }
+int TimeSpan::Days()	const { return _Seconds / (24 * 60 * 60); }
+int TimeSpan::Hours()	const { return _Seconds / (60 * 60) % 24; }
+int TimeSpan::Minutes()	const { return _Seconds / 60 % 60; }
+int TimeSpan::Seconds()	const { return _Seconds % 60; }
+int TimeSpan::Ms()		const { return _Ms; }
+int TimeSpan::TotalDays()		const { return _Seconds / (24 * 60 * 60); }
+int TimeSpan::TotalHours()		const { return _Seconds / (60 * 60); }
+int TimeSpan::TotalMinutes()	const { return _Seconds / 60; }
+int TimeSpan::TotalSeconds()	const { return _Seconds; }
+Int64 TimeSpan::TotalMs()		const { return _Seconds * 1000LL + (Int64)_Ms; }
 
 int TimeSpan::CompareTo(const TimeSpan& value) const
 {
-	return Ms - value.Ms;
+	return _Ms - value._Ms;
 }
 
 bool operator==	(const TimeSpan& left, const TimeSpan& right) { return left.CompareTo(right) == 0; }
@@ -39,9 +42,11 @@ bool operator<	(const TimeSpan& left, const TimeSpan& right) { return left.Compa
 bool operator>=	(const TimeSpan& left, const TimeSpan& right) { return left.CompareTo(right) >= 0; }
 bool operator<=	(const TimeSpan& left, const TimeSpan& right) { return left.CompareTo(right) <= 0; }
 
-String& TimeSpan::ToStr(String& str) const
+String TimeSpan::ToString() const
 {
-	if(Ms >= 24 * 60 * 60 * 1000) str	= str + Days() + ' ';
+	String str;
+
+	if(_Seconds >= 24 * 60 * 60) str	= str + Days() + ' ';
 
 	str	= str + Hours() + ':';
 
@@ -53,7 +58,7 @@ String& TimeSpan::ToStr(String& str) const
 	if(sec < 10) str += '0';
 	str	= str + sec;
 
-	int ms	= Ms % 1000;
+	int ms	= _Ms;
 	if(ms > 0)
 	{
 		str	+=	'.';
@@ -65,4 +70,9 @@ String& TimeSpan::ToStr(String& str) const
 	}
 
 	return str;
+}
+
+void TimeSpan::Show(bool newLine) const
+{
+	ToString().Show(newLine);
 }
