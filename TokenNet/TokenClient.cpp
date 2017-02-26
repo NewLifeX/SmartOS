@@ -754,7 +754,7 @@ void TokenClient::Reset(const String& reason)
 
 	MemoryStream ms;
 	BinaryPair bp(ms);
-	bp.Set("time", time);
+	bp.Set("time", (UInt64)time);
 	bp.Set("reason", reason);
 
 	auto buf = Buffer(ms.GetBuffer(), ms.Position());
@@ -775,7 +775,7 @@ void TokenClient::Reboot(const String& reason)
 
 	MemoryStream ms;
 	BinaryPair bp(ms);
-	bp.Set("time", time);
+	bp.Set("time", (UInt64)time);
 	bp.Set("reason", reason);
 
 	auto buf = Buffer(ms.GetBuffer(), ms.Position());

@@ -35,7 +35,7 @@ DateTime::DateTime()
 	Init();
 }
 
-DateTime::DateTime(ushort year, byte month, byte day)
+DateTime::DateTime(int year, int month, int day)
 {
 	if(year < BASE_YEAR) year	= BASE_YEAR;
 	if(month < 1 || month > 12) month	= 1;
@@ -50,9 +50,11 @@ DateTime::DateTime(ushort year, byte month, byte day)
 	Ms		= 0;
 }
 
-DateTime::DateTime(uint seconds)
+DateTime::DateTime(int seconds)
 {
 	Parse(seconds);
+
+	Ms	= 0;
 }
 
 DateTime::DateTime(const DateTime& value)
@@ -63,8 +65,7 @@ DateTime::DateTime(const DateTime& value)
 DateTime::DateTime(DateTime&& value)
 {
 	// 拷贝对方数据，把对方初始化为默认值
-	auto bs	= ToArray();
-	bs	= value.ToArray();
+	ToArray()	= value.ToArray();
 	// 对方反正不用了，就不要浪费时间做初始化啦，反正没有需要释放的资源
 	//value.Init();
 }
@@ -81,14 +82,14 @@ void DateTime::Init()
 	Ms		= 0;
 }
 
-DateTime& DateTime::Parse(uint seconds)
+DateTime& DateTime::Parse(int seconds)
 {
 	auto& st	= *this;
 
 	//if(seconds >= BASE_YEAR_SECONDS) seconds -= BASE_YEAR_SECONDS;
 
 	// 分别计算毫秒、秒、分、时，剩下天数
-	uint time = seconds;
+	int time = seconds;
     st.Second = time % 60;
     time /= 60;
     st.Minute = time % 60;
@@ -98,24 +99,22 @@ DateTime& DateTime::Parse(uint seconds)
 
 	ParseDays(time);
 
-	Ms	= 0;
-
 	return st;
 }
 
-DateTime& DateTime::ParseMs(UInt64 ms)
+DateTime& DateTime::ParseMs(Int64 ms)
 {
-	Parse(ms / 1000ULL);
-	Ms = ms % 1000ULL;
+	Parse(ms / 1000LL);
+	Ms = ms % 1000LL;
 
 	return *this;
 }
 
-DateTime& DateTime::ParseDays(uint days)
+DateTime& DateTime::ParseDays(int days)
 {
 	// 基本年的一天不一定是星期天，需要偏移BASE_YEAR_DAYOFWEEK_SHIFT
     //DayOfWeek = (days + BASE_YEAR_DAYOFWEEK_SHIFT) % 7;
-    Year = (ushort)(days / 365);
+    Year = (short)(days / 365);
 	if(Year < 136) Year += BASE_YEAR;
 
 	// 按最小每年365天估算，如果不满当年总天数，年份减一
@@ -130,7 +129,7 @@ DateTime& DateTime::ParseDays(uint days)
     days -= ytd;
 
 	// 按最大每月31天估算，如果超过当月总天数，月份加一
-    Month = (ushort)(days / 31 + 1);
+    Month = (short)(days / 31 + 1);
     int mtd = MONTH_TO_DAYS(Year, Month + 1);
     if (days >= mtd) Month++;
 
@@ -138,7 +137,7 @@ DateTime& DateTime::ParseDays(uint days)
     mtd = MONTH_TO_DAYS(Year, Month);
 
 	// 今年总天数减去月份天数，得到该月第几天
-    Day = (ushort)(days - mtd + 1);
+    Day = (short)(days - mtd + 1);
 
 	return *this;
 }
@@ -148,8 +147,13 @@ Buffer DateTime::ToArray()
 	return Buffer(&Year, &Ms - &Year + sizeof(Ms));
 }
 
+const Buffer DateTime::ToArray() const
+{
+	return Buffer((void*)&Year, (int)&Ms - (int)&Year + sizeof(Ms));
+}
+
 // 重载等号运算符
-DateTime& DateTime::operator=(uint seconds)
+DateTime& DateTime::operator=(int seconds)
 {
 	Parse(seconds);
 
@@ -162,38 +166,37 @@ DateTime& DateTime::operator=(const DateTime& value)
 	if(this != &value)
 	{
 		// 拷贝对方数据
-		auto bs	= ToArray();
-		bs	= ((DateTime&)value).ToArray();
+		ToArray()	= value.ToArray();
 	}
 
 	return *this;
 }
 
-uint DateTime::TotalDays() const
+int DateTime::TotalDays() const
 {
 	return YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
 }
 
-uint DateTime::TotalSeconds() const
+int DateTime::TotalSeconds() const
 {
-	uint s = TotalDays() * 24 + Hour;
+	int s = TotalDays() * 24 + Hour;
 	s = s * 60 + Minute;
 	s = s * 60 + Second;
 
 	return s;
 }
 
-UInt64 DateTime::TotalMs() const
+Int64 DateTime::TotalMs() const
 {
-	UInt64 sec = (UInt64)TotalSeconds();
+	Int64 sec = (Int64)TotalSeconds();
 
-	return sec * 1000UL + (UInt64)Ms;
+	return sec * 1000LL + (Int64)Ms;
 }
 
 // 获取星期
 byte DateTime::DayOfWeek() const
 {
-	uint days	= YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
+	int days	= YEARS_TO_DAYS(Year) + MONTH_TO_DAYS(Year, Month) + Day - 1;
 	return (days + BASE_YEAR_DAYOFWEEK_SHIFT) % 7;
 }
 
@@ -233,7 +236,7 @@ DateTime DateTime::AddMonths(int value) const
 
 DateTime DateTime::AddDays(int value) const
 {
-	DateTime dt;
+	auto dt	= *this;
 	dt.ParseDays(TotalDays() + value);
 
 	return dt;
@@ -241,49 +244,17 @@ DateTime DateTime::AddDays(int value) const
 
 DateTime DateTime::AddHours(int value) const
 {
-	/*value		+= Hour;
-	int days	= value / 24;
-	int hour	= value % 24;
-
-	// 可能上下溢出，需要修正
-	if(hour < 0)
-	{
-		days--;
-		hour	+= 24;
-	}
-
-	auto dt	= AddDays(days);
-	dt.Hour	= hour;
-
-	return dt;*/
-
 	return AddSeconds(value * 3600);
 }
 
 DateTime DateTime::AddMinutes(int value) const
 {
-	/*value		+= Minute;
-	int hours	= value / 60;
-	int mins	= value % 60;
-
-	// 可能上下溢出，需要修正
-	if(mins < 0)
-	{
-		hours--;
-		mins	+= 60;
-	}
-
-	auto dt	= AddHours(hours);
-	dt.Minute	= mins;
-
-	return dt;*/
-
 	return AddSeconds(value * 60);
 }
 
 DateTime DateTime::AddSeconds(int value) const
 {
-	DateTime dt;
+	auto dt	= *this;
 	dt.Parse(TotalSeconds() + value);
 
 	return dt;
@@ -297,16 +268,15 @@ DateTime DateTime::AddMilliseconds(Int64 value) const
 	return dt;
 }
 
-DateTime DateTime::Add(const TimeSpan& value) const { return AddMilliseconds(value.Ms); }
-DateTime DateTime::operator+(const TimeSpan& value) { return AddMilliseconds(value.Ms); }
-DateTime DateTime::operator-(const TimeSpan& value) { return AddMilliseconds(-value.Ms); }
+DateTime DateTime::Add(const TimeSpan& value) const { return AddMilliseconds(value.TotalMs()); }
+DateTime DateTime::operator+(const TimeSpan& value) { return AddMilliseconds(value.TotalMs()); }
+DateTime DateTime::operator-(const TimeSpan& value) { return AddMilliseconds(-value.TotalMs()); }
 
 TimeSpan operator-(const DateTime& left, const DateTime& right)
 {
-	TimeSpan ts;
-	ts.Ms	= left.TotalMs() - right.TotalMs();
+	Int64 ms	= left.TotalMs() - right.TotalMs();
 
-	return ts;
+	return TimeSpan(ms);
 }
 
 int DateTime::CompareTo(const DateTime& value) const
@@ -342,21 +312,10 @@ bool operator<	(const DateTime& left, const DateTime& right) { return left.Compa
 bool operator>=	(const DateTime& left, const DateTime& right) { return left.CompareTo(right) >= 0; }
 bool operator<=	(const DateTime& left, const DateTime& right) { return left.CompareTo(right) <= 0; }
 
-String& DateTime::ToStr(String& str) const
+String DateTime::ToString() const
 {
 	// F长全部 yyyy-MM-dd HH:mm:ss
-	/*str.Concat(Year, 10, 4);
-	str	+= '-';
-	str.Concat(Month, 10, 2);
-	str	+= '-';
-	str.Concat(Day, 10, 2);
-	str	+= ' ';
-	str.Concat(Hour, 10, 2);
-	str	+= ':';
-	str.Concat(Minute, 10, 2);
-	str	+= ':';
-	str.Concat(Second, 10, 2);*/
-	//str = str + Year + '-' + Month + '-' + Day + ' ' + Hour + ':' + Minute + ':' + Second;
+	String str;
 	if(Year < 10) str += '0';
 	if(Year < 100) str += '0';
 	if(Year < 1000) str += '0';
@@ -377,11 +336,12 @@ String& DateTime::ToStr(String& str) const
 	if(Second < 10) str += '0';
 	str	= str + Second;
 
-	/*char cs[20];
-	sprintf(cs, "%04d-%02d-%02d %02d:%02d:%02d", Year, Month, Day, Hour, Minute, Second);
-	str	+= cs;*/
-
 	return str;
+}
+
+void DateTime::Show(bool newLine) const
+{
+	ToString().Show(newLine);
 }
 
 // 默认格式化时间为yyyy-MM-dd HH:mm:ss
@@ -395,9 +355,6 @@ String& DateTime::ToStr(String& str) const
 */
 cstring DateTime::GetString(byte kind, char* str)
 {
-	//assert_param(str);
-	//if(!str) str = _Str;
-
 	auto& st = *this;
 	switch(kind)
 	{

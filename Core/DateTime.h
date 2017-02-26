@@ -5,34 +5,34 @@
 #include "TimeSpan.h"
 
 // 时间日期
-class DateTime : public Object
+class DateTime
 {
 public:
-	ushort	Year;
+	short	Year;
 	byte	Month;
 	byte	Day;
 	byte	Hour;
 	byte	Minute;
 	byte	Second;
-	ushort	Ms;
+	short	Ms;
 
 	DateTime();
-	DateTime(ushort year, byte month, byte day);
-	DateTime(uint seconds);
+	DateTime(int year, int month, int day);
+	DateTime(int seconds);
 	DateTime(const DateTime& value);
 	DateTime(DateTime&& value);
 
 	// 重载等号运算符
-    DateTime& operator=(uint seconds);
+    DateTime& operator=(int seconds);
     DateTime& operator=(const DateTime& value);
 
-	DateTime& Parse(uint seconds);
-	DateTime& ParseMs(UInt64 ms);
-	DateTime& ParseDays(uint days);
-	
-	uint TotalDays() const;
-	uint TotalSeconds() const;
-	UInt64 TotalMs() const;
+	DateTime& Parse(int seconds);
+	DateTime& ParseMs(Int64 ms);
+	DateTime& ParseDays(int days);
+
+	int TotalDays() const;
+	int TotalSeconds() const;
+	Int64 TotalMs() const;
 
 	// 获取星期，0~6表示星期天到星期六
 	byte DayOfWeek() const;
@@ -48,7 +48,7 @@ public:
 	DateTime AddSeconds(int value) const;
 	DateTime AddMilliseconds(Int64 value) const;
 	DateTime Add(const TimeSpan& value) const;
-    
+
 	DateTime operator+(const TimeSpan& value);
 	DateTime operator-(const TimeSpan& value);
     friend TimeSpan operator-(const DateTime& left, const DateTime& right);
@@ -62,7 +62,8 @@ public:
     friend bool operator>=	(const DateTime& left, const DateTime& right);
     friend bool operator<=	(const DateTime& left, const DateTime& right);
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
+	void Show(bool newLine = true) const;
 
 	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
 	/*
@@ -85,6 +86,7 @@ public:
 private:
 	void Init();
 	Buffer ToArray();
+	const Buffer ToArray() const;
 };
 
 #endif
