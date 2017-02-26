@@ -661,7 +661,7 @@ float String::ToFloat() const
 {
 	if(_Length == 0) return 0;
 
-	if(_Arr[_Length] == '\0') return atof(_Arr);
+	if(_Arr[_Length] == '\0') return (float)atof(_Arr);
 
 	// 非零结尾字符串需要特殊处理
 	String s;

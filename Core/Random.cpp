@@ -8,7 +8,7 @@
 /************************************************ Random ************************************************/
 Random::Random()
 {
-	srand(time(NULL));
+	srand((uint)time(NULL));
 }
 
 Random::Random(uint seed)

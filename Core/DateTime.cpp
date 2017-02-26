@@ -104,7 +104,7 @@ DateTime& DateTime::Parse(int seconds)
 
 DateTime& DateTime::ParseMs(Int64 ms)
 {
-	Parse(ms / 1000LL);
+	Parse((int)(ms / 1000LL));
 	Ms = ms % 1000LL;
 
 	return *this;
@@ -129,7 +129,7 @@ DateTime& DateTime::ParseDays(int days)
     days -= ytd;
 
 	// 按最大每月31天估算，如果超过当月总天数，月份加一
-    Month = (short)(days / 31 + 1);
+    Month = (byte)(days / 31 + 1);
     int mtd = MONTH_TO_DAYS(Year, Month + 1);
     if (days >= mtd) Month++;
 
@@ -137,7 +137,7 @@ DateTime& DateTime::ParseDays(int days)
     mtd = MONTH_TO_DAYS(Year, Month);
 
 	// 今年总天数减去月份天数，得到该月第几天
-    Day = (short)(days - mtd + 1);
+    Day = (byte)(days - mtd + 1);
 
 	return *this;
 }
@@ -353,7 +353,7 @@ void DateTime::Show(bool newLine) const
 	f短全部 M/d/yy HH:mm
 	F长全部 yyyy-MM-dd HH:mm:ss
 */
-cstring DateTime::GetString(byte kind, char* str)
+/*cstring DateTime::GetString(byte kind, char* str)
 {
 	auto& st = *this;
 	switch(kind)
@@ -382,12 +382,12 @@ cstring DateTime::GetString(byte kind, char* str)
 	}
 
 	return str;
-}
+}*/
 
 // 当前时间
 DateTime DateTime::Now()
 {
-	DateTime dt(time(NULL));
+	DateTime dt((int)time(NULL));
 
 	return dt;
 }
