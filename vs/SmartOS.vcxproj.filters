@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="App">
+      <UniqueIdentifier>{68cafcf9-0446-45fb-9ba0-e29094e97816}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Board">
+      <UniqueIdentifier>{55eaf1b2-508a-4bdb-8dff-4e99c96e458f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{da241b09-cddc-414b-a87a-9a22187f53b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device">
+      <UniqueIdentifier>{ce8de3bb-b0e4-4d24-8899-96ed1dafc5c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Drivers">
+      <UniqueIdentifier>{ac8cd3cc-8f65-45e0-8b86-0cdb78b4bfdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel">
+      <UniqueIdentifier>{1ec82080-7ddc-43ec-9171-4716b5a73bba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Message">
+      <UniqueIdentifier>{50d9af31-12f9-4fe9-869c-a86e9db183bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Net">
+      <UniqueIdentifier>{9ce7a428-911e-41f6-9064-e5ddaa413bcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{ef28b1f5-18bf-4969-a50f-b7c0e0ab52ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Security">
+      <UniqueIdentifier>{46d87250-c97b-4733-834b-78c8cd385591}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage">
+      <UniqueIdentifier>{78919a0d-baca-4dc9-bb17-b451e78ef98a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Test">
+      <UniqueIdentifier>{571c34d7-b9f1-4707-9a68-c4927ee96dc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TinyIP">
+      <UniqueIdentifier>{06ee290f-07a2-4f74-ba74-6af3b238d0db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TinyNet">
+      <UniqueIdentifier>{8217de0f-89b4-4070-951a-ac0c7cb119f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TokenNet">
+      <UniqueIdentifier>{05569624-5acc-4f56-96eb-8f0c4aefd004}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Drivers\Esp8266">
+      <UniqueIdentifier>{5148c153-2531-43dd-b3d0-c6e56c956568}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Core\Type.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Version.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Array.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Buffer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\ByteArray.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\DateTime.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Delegate.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Dictionary.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Environment.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\List.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Queue.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Random.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\Stream.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\String.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\TimeSpan.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

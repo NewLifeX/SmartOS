@@ -499,6 +499,9 @@ int String::CompareTo(const String& s) const
 	return CompareTo(s._Arr, s._Length, false);
 }
 
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#endif
 int String::CompareTo(cstring cstr, int len, bool ignoreCase) const
 {
 	if(len < 0) len	= strlen(cstr);
@@ -944,6 +947,7 @@ int String::Compare(const void* v1, const void* v2)
 
 /******************************** 辅助 ********************************/
 
+#ifndef _MSC_VER
 extern char* itoa(int value, char *string, int radix)
 {
 	return ltoa(value, string, radix) ;
@@ -987,6 +991,7 @@ extern char* ltoa(Int64 value, char* string, int radix)
 
 	return string;
 }
+#endif
 
 char* utohex(uint value, byte size, char* string, bool upper)
 {
@@ -1011,6 +1016,7 @@ char* utohex(uint value, byte size, char* string, bool upper)
 	return string;
 }
 
+#ifndef _MSC_VER
 extern char* utoa(uint value, char* string, int radix)
 {
 	return ultoa(value, string, radix ) ;
@@ -1043,6 +1049,7 @@ extern char* ultoa(UInt64 value, char* string, int radix)
 
 	return string;
 }
+#endif
 
 char *dtostrf (double val, byte prec, char* str)
 {
