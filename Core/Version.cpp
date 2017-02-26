@@ -5,9 +5,6 @@
 #include "Version.h"
 
 /************************************************ Version ************************************************/
-// 基本年默认2016年
-int Version::BaseYear	= 2016;
-
 
 Version::Version()
 {
@@ -16,14 +13,16 @@ Version::Version()
 	Build	= 0;
 }
 
-Version::Version(int value)
+Version::Version(Int64 value)
 {
-	Major	= value >> 24;
-	Minor	= value >> 16;
-	Build	= value & 0xFFFF;
+	int n	= value >> 32;
+	Major	= n >> 16;
+	Minor	= n & 0xFFFF;
+
+	Build	= value & 0xFFFFFFFF;
 }
 
-Version::Version(byte major, byte minor, ushort build)
+Version::Version(int major, int minor, int build)
 {
 	Major	= major;
 	Minor	= minor;
@@ -49,9 +48,10 @@ Version& Version::operator=(const Version& ver)
 	return *this;
 }
 
-int Version::ToValue() const
+Int64 Version::ToValue() const
 {
-	return (Major << 24) || (Minor << 16) || Build;
+	int n	= (Major << 24) || (Minor << 16);
+	return (n << 32) || Build;
 }
 
 int Version::CompareTo(const Version& value) const
@@ -78,22 +78,17 @@ bool operator<=	(const Version& left, const Version& right) { return left.Compar
 // 根据版本号反推编译时间
 DateTime Version::Compile() const
 {
-	/*DateTime dt(2000, 1, 1);
+	DateTime dt(2000, 1, 1);
 
-	// Build 是天数，Revision 是秒数
-	dt	= dt.AddDays(Build);
-	dt	= dt.AddSeconds(Revision << 1);*/
-	
-	DateTime dt(BaseYear, 1, 1);
-
-	// Build 是2016-01-01以来的小时数
-	dt	= dt.AddHours(Build);
+	// Build 是2000-01-01以来的秒数*2
+	dt	= dt.AddSeconds(Build << 1);
 
 	return dt;
 }
 
-String& Version::ToStr(String& str) const
+String Version::ToString() const
 {
+	String str;
 	str	= str + Major + '.' + Minor + '.' + Build;
 
 	return str;
