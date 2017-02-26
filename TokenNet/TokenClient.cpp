@@ -345,7 +345,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 			{
 				ss = (TokenSession*)sss[i];
 				//ss->Stat.Show(true);
-				ss->Show(true);
+				ss->ToString().Show(true);
 			}
 			debug_printf("\r\n");
 		},

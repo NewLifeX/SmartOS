@@ -32,9 +32,7 @@ public:
 	// 把消息写入数据流中
 	virtual void Write(Stream& ms) const;
 
-#if DEBUG
 	virtual String& ToStr(String& str) const;
-#endif
 };
 
 #endif

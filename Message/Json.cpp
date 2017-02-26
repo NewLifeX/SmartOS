@@ -23,22 +23,22 @@ void Json::Init(cstring str, int len)
 
 Json::Json(int value)
 {
-	
+
 }
 
 Json::Json(bool value)
 {
-	
+
 }
 
 Json::Json(double value)
 {
-	
+
 }
 
 Json::Json(String& value)
 {
-	
+
 }
 
 // 值类型
@@ -292,8 +292,7 @@ Json& Json::Add(cstring key, const Json& value)
 	s	+= key;
 	s	+= "\":";
 
-	//s	+= value;
-	value.ToStr(s);
+	s	+= value;
 
 	s	+= '}';
 
@@ -310,15 +309,16 @@ Json& Json::Add(const Json& value)
 	else
 		s	+= '[';
 
-	value.ToStr(s);
+	s	+= value;
 
 	s	+= ']';
 
 	return *this;
 }
 
-String& Json::ToStr(String& str) const
+String Json::ToString() const
 {
+	String str;
 	if(_s) str	+= *_s;
 
 	return str;
@@ -627,8 +627,9 @@ uint JObject::size() const
     return _items.Count();
 }
 
-String& JObject::ToStr(String& str) const
+String JObject::ToString() const
 {
+	String str;
 	auto& keys	= _items.Keys();
 	auto& vals	= _items.Values();
 	str	+= '{';
@@ -640,7 +641,7 @@ String& JObject::ToStr(String& str) const
 		str	= str + '"' + key + '"' + ':';
 
 		auto& val	= *(JValue*)vals[i];
-		val.ToStr(str);
+		str	+= val;
 	}
 	str	+= '}';
 
@@ -688,23 +689,25 @@ void JArray::Add(const JValue& v)
     _array.Add(&(JValue&)v);
 }
 
-String& JArray::ToStr(String& str) const
+String JArray::ToString() const
 {
+	String str;
 	str	+= '[';
 	for(int i=0; i<size(); i++)
 	{
 		if(i > 0) str	+= ',';
 
 		auto& v	= (*this)[i];
-		v.ToStr(str);
+		str	+= v;
 	}
 	str	+= ']';
 
 	return str;
 }
 
-String& JValue::ToStr(String& str) const
+String JValue::ToString() const
 {
+	String str;
 	auto& v	= *this;
     switch(v.type())
     {
@@ -729,11 +732,11 @@ String& JValue::ToStr(String& str) const
             break;
 
         case ARRAY:
-            ((JArray)v).ToStr(str);
+			str	+= (JArray&)v;
             break;
 
         case OBJECT:
-            ((JObject)v).ToStr(str);
+			str	+= (JObject&)v;
             break;
     }
 

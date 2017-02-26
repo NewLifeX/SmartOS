@@ -19,7 +19,7 @@ union DevFlag
 
 
 // 设备信息
-class Device : public Object
+class Device
 {
 public:
 	bool	Logined;	// 是否在线
@@ -65,7 +65,7 @@ public:
 	//Buffer	Config;
 	
 	Device();
-	virtual ~Device();
+	~Device();
 
 	// 序列化到消息数据流
 	void Write(Stream& ms) const;
@@ -77,9 +77,7 @@ public:
 	bool CanSleep() const { return SleepTime > 0; }
 	bool Valid() const;
 
-#if DEBUG
-	virtual String& ToStr(String& str) const;
-#endif
+	String ToString() const;
 };
 
 bool operator==(const Device& d1, const Device& d2);

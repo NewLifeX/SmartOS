@@ -141,7 +141,7 @@ int DevicesManagement::LoadDev()
 			fs = true;
 		}
 		dv->Read(ms);
-		dv->Show();
+		dv->ToString().Show();
 
 		// 加载时默认参数
 		dv->Logined = false;
@@ -237,7 +237,7 @@ void DevicesManagement::ShowDev()
 		if (dv == nullptr) continue;
 
 		count++;
-		dv->Show();
+		dv->ToString().Show();
 		debug_printf("\r\n");
 	}
 	debug_printf("\r\nHas %d Dev \r\n", count);

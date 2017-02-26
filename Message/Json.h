@@ -23,7 +23,7 @@ enum class JsonType : byte
 };
 
 // Json对象
-class Json : public Object
+class Json
 {
 public:
 	static Json Null;
@@ -65,7 +65,7 @@ public:
 	// 添加数组成员
 	Json& Add(const Json& value);
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 
 #if DEBUG
 	static void Test();
@@ -100,7 +100,6 @@ class JValue;
 class JObject
 {
 public:
-
 	JObject();
 	JObject(const JObject& o);
 	JObject(JObject&& o);
@@ -119,7 +118,7 @@ public:
 	// 大小
 	uint size() const;
 
-	String& ToStr(String& str) const;
+	String ToString() const;
 
 protected:
 
@@ -131,9 +130,7 @@ protected:
 class JArray
 {
 public:
-
 	JArray();
-
 	~JArray();
 
 	JArray(const JArray& a);
@@ -151,10 +148,9 @@ public:
 	// 大小
 	uint size() const;
 
-	String& ToStr(String& str) const;
+	String ToString() const;
 
 protected:
-
 	// 内部容器
 	List<JValue*> _array;
 };
@@ -207,11 +203,9 @@ public:
 	bool as_bool()		const { return bool_v; }
 	String as_string()	const { return string_v; }
 
-	String& ToStr(String& str) const;
-
+	String ToString() const;
 
 protected:
-
 	double	float_v;
 	Int64	int_v;
 	bool	bool_v;

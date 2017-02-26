@@ -8,7 +8,7 @@
 //#define MSG_DEBUG 0
 
 // 令牌统计
-class TokenStat : public Object
+class TokenStat
 {
 public:
 	// 发送统计
@@ -34,11 +34,11 @@ public:
 	int InvokeReply;
 
 	TokenStat();
-	virtual ~TokenStat();
+	~TokenStat();
 
 	void Clear();
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 
 private:
 	TokenStat*	_Last;
@@ -573,9 +573,11 @@ void TokenStat::Clear()
 	InvokeReply = 0;
 }
 
-String& TokenStat::ToStr(String& str) const
+String TokenStat::ToString() const
 {
-	TS("TokenStat::ToStr");
+	TS("TokenStat::ToString");
+
+	String str;
 
 	/*debug_printf("this=%p _Last=%p _Total=%p ", this, _Last, _Total);
 	Percent().Show(true);*/
@@ -592,7 +594,7 @@ String& TokenStat::ToStr(String& str) const
 	if (_Total)
 	{
 		str += " 总";
-		_Total->ToStr(str);
+		str	+= *_Total;
 	}
 
 	return str;
@@ -603,15 +605,16 @@ void StatTask(void* param)
 {
 	TS("TokenController::ShowStat");
 
-	auto st = (TokenStat*)param;
+	auto& st = *(TokenStat*)param;
 	// 这里输出  字节数 在 90-140   为了减少 new 直接使用256
 	char cs[256];
 	String str(cs, ArrayLength(cs));
 	str.SetLength(0);
-	st->ToStr(str);
+	//st->ToStr(str);
+	str	+= str;
 	str.Show(true);
 
-	st->Clear();
+	st.Clear();
 
 	// 向以太网广播
 	/*auto sock = dynamic_cast<Socket*>(Port);

@@ -34,8 +34,9 @@ void SessionStat::Clear()
 	OnPing = 0;
 }
 
-String& SessionStat::ToStr(String& str) const
+String SessionStat::ToString() const
 {
+	String str;
 	str = str + "Hello: " + OnHello + " Login: " + OnLogin + " Ping: " + OnPing;
 	return str;
 }
@@ -287,14 +288,15 @@ bool TokenSession::CheckExpired()
 	return false;
 }
 
-#if DEBUG
-String& TokenSession::ToStr(String& str) const
+String TokenSession::ToString() const
 {
+	String str;
 	int sec	= (Sys.Ms() - LastActive) / 1000UL;
 	str = str + Remote + " " + Name + " LastActive " + sec + "s \t";
 
-	Stat.ToStr(str);
+#if DEBUG
+	str	+= Stat;
+#endif
 
 	return str;
 }
-#endif

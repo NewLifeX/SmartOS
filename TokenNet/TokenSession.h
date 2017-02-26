@@ -13,7 +13,7 @@
 
 #if DEBUG
 
-class SessionStat : public Object
+class SessionStat
 {
 public:
 	ushort OnHello;		// 握手次数
@@ -26,13 +26,13 @@ public:
 	~SessionStat();
 	void Clear();
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 };
 
 #endif
 
 // 令牌会话
-class TokenSession :public Object
+class TokenSession
 {
 public:
 	TokenClient&		Client;		// 客户端
@@ -50,22 +50,20 @@ public:
 	UInt64	LastActive;	// 最后活跃时间ms
 
 #if DEBUG
-	static uint		HisSsNum;		// 历史Session个数
-	static uint StatShowTaskID;		// 输出统计信息的任务ID
-	SessionStat Stat;				// 统计信息
+	static uint	HisSsNum;		// 历史Session个数
+	static uint StatShowTaskID;	// 输出统计信息的任务ID
+	SessionStat Stat;			// 统计信息
 #endif
 
 	TokenSession(TokenClient& client, TokenController& ctrl);
-	virtual ~TokenSession();
+	~TokenSession();
 
 	bool Send(TokenMessage& msg);
 	void OnReceive(TokenMessage& msg);
 
 	bool CheckExpired();
 
-#if DEBUG
-	virtual String& ToStr(String& str) const;
-#endif
+	String ToString() const;
 
 private:
 	bool OnHello(TokenMessage& msg);

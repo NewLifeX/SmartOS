@@ -58,7 +58,7 @@ void TinyServer::Start()
 	TS("TinyServer::Start");
 
 	assert(Cfg, "未指定微网服务器的配置");
-	
+
 	// 最后倒数8KB - 倒数位置4KB  的 4KB 空间
 	//const uint DevAddr = 0x8000000 + (Sys.FlashSize << 10) - (8 << 10);
 	//const uint DevSize = 4 << 10;
@@ -331,7 +331,7 @@ bool TinyServer::OnJoin(const TinyMessage& msg)
 	dv->Logins++;
 
 	debug_printf("\r\nTinyServer::设备第 %d 次组网 TranID=0x%04X \r\n", dv->Logins, dm.TranID);
-	dv->Show(true);
+	dv->ToString().Show(true);
 
 	// 响应
 	auto rs	= msg.CreateReply();

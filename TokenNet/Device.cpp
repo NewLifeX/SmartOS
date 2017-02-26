@@ -132,9 +132,9 @@ bool Device::Valid() const
 	return true;
 }
 
-#if DEBUG
-String& Device::ToStr(String& str) const
+String Device::ToString() const
 {
+	String str;
 	str += "Addr=0x";
 	str.Concat(Address, -16);
 	str += " Kind=";
@@ -167,7 +167,6 @@ String& Device::ToStr(String& str) const
 	}
 	return str;
 }
-#endif
 
 bool operator==(const Device& d1, const Device& d2)
 {
