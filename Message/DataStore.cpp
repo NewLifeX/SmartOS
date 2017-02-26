@@ -42,7 +42,7 @@ int DataStore::Write(uint offset, const Buffer& bs)
 	if(size == 0) return 0;
 
 	uint realOffset	= offset - VirAddrBase;
-	
+
 	//起始位置越界
 	auto len =  Data.Length();
 	if(realOffset >= len) return -1;
@@ -313,11 +313,12 @@ byte DataOutputPort::OnRead()
 	return Port->Read() ? 1 : 0;
 };
 
-String& DataOutputPort::ToStr(String& str) const
+String DataOutputPort::ToString() const
 {
+	String str;
 	if(!Port) return str;
 
-	return Port->ToStr(str);
+	return Port->ToString();
 }
 
 int DataInputPort::Write(byte* data)
@@ -335,9 +336,10 @@ int DataInputPort::Read(byte* data)
 	return Size();
 };
 
-String& DataInputPort::ToStr(String& str) const
+String DataInputPort::ToString() const
 {
+	String str;
 	if(!Port) return str;
 
-	return Port->ToStr(str);
+	return Port->ToString();
 }

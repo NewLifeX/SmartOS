@@ -7,7 +7,7 @@
 #include "Net\IPEndPoint.h"
 
 // 二进制名值对
-class BinaryPair : public Object, public Pair
+class BinaryPair : public Pair
 {
 public:
 	//BinaryPair(Buffer& bs);

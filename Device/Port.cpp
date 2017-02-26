@@ -1,6 +1,9 @@
 ﻿#include "Kernel\Sys.h"
 #include "Device\Port.h"
 
+#include <typeinfo>
+using namespace ::std;
+
 /******************************** Port ********************************/
 
 #if DEBUG
@@ -26,8 +29,9 @@ Port::~Port()
 }
 #endif
 
-String& Port::ToStr(String& str) const
+String Port::ToString() const
 {
+	String str;
 	str += 'P';
 	if (_Pin == P0)
 	{
@@ -79,8 +83,9 @@ bool Port::Open()
 
 #if DEBUG
 	// 保护引脚
-	//Show();
-	GetType().Name().Show();
+	auto name = typeid(*this).name();
+	while(*name >= '0' && *name <= '9') name++;
+	debug_printf("%s", name);
 	Port_Reserve(_Pin, true);
 #endif
 
@@ -100,8 +105,9 @@ void Port::Close()
 
 #if DEBUG
 	// 保护引脚
-	//Show();
-	GetType().Name().Show();
+	auto name = typeid(*this).name();
+	while(*name >= '0' && *name <= '9') name++;
+	debug_printf("%s", name);
 	Port_Reserve(_Pin, false);
 	debug_printf("\r\n");
 #endif

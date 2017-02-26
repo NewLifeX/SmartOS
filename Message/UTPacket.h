@@ -10,9 +10,9 @@
 
 // unvarnished transmission 透传报文
 // 由bsp注册端口到 Ports ID和对应的类
-// C++ 没有反射  找不到由UTPort派生的子类。 
+// C++ 没有反射  找不到由UTPort派生的子类。
 // 为了节省内存，UTPort只包含Port指针 Name指针 和一个虚函数  在没有create之前只占用12字节（3个指针）
-class UTPacket : public Object
+class UTPacket
 {
 private:
 	Dictionary<uint, UTPort*>	Ports;	// 端口集合   Dic不支持byte 所以用uint替代
@@ -37,11 +37,7 @@ public:
 	// Invoke回调函数
 	bool PressTMsg(const Pair& args, Stream& result);
 
-	static UTPacket * Current;
-#if DEBUG
-	virtual String& ToStr(String& str) const;
-#endif
-
+	static UTPacket* Current;
 };
 
 #endif

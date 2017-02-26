@@ -78,7 +78,7 @@ protected:
 #include "Device\Port.h"
 
 // 数据输出口
-class DataOutputPort : public ByteDataPort, public Object
+class DataOutputPort : public ByteDataPort
 {
 public:
 	OutputPort*	Port;
@@ -89,11 +89,11 @@ protected:
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 };
 
 // 数据输入口
-class DataInputPort : public IDataPort, public Object
+class DataInputPort : public IDataPort
 {
 public:
 	InputPort*	Port;
@@ -103,7 +103,7 @@ public:
 	virtual int Write(byte* data);
 	virtual int Read(byte* data);
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 };
 
 #endif

@@ -104,10 +104,3 @@ bool UTPacket::PressTMsg(const Pair& args, Stream& result)
 	}
 	return true;
 }
-
-#if DEBUG
-String& UTPacket::ToStr(String& str) const
-{
-	return str;
-}
-#endif 

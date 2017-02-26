@@ -90,12 +90,10 @@ byte Button::OnRead()
 	return _Value ? 1 : 0;
 }
 
-String& Button::ToStr(String& str) const
+String Button::ToString() const
 {
-	if(Name)
-		str += Name;
-	else
-		Object::ToStr(str);
+	String str;
+	if(Name) str += Name;
 
 	return str;
 }

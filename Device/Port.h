@@ -21,7 +21,7 @@ Port::Close
 // 端口基类
 // 用于管理一个端口，通过PinBit标识该组的哪些引脚。
 // 子类初始化时先通过SetPort设置端口，备份引脚状态，然后Config通过gpio结构体配置端口，端口销毁时恢复引脚状态
-class Port : public Object
+class Port
 {
 public:
 	enum GPIO_AF
@@ -58,7 +58,7 @@ public:
 
     virtual bool Read() const;
 
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 
 protected:
     // 配置过程
@@ -190,7 +190,7 @@ private:
 	void ClosePin();
 	bool OnRegister();
 	byte	_Value = 0;	// 当前值
-	 bool	 Val = false;
+	bool	 Val = false;
 };
 
 /******************************** AnalogInPort ********************************/
