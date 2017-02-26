@@ -10,15 +10,16 @@ enum class NetType
 	Unknown	= 0,
 	Tcp		= 6,
 	Udp		= 17,
+	Http	= 80,
 };
 
 // 网络资源
-class NetUri : public Object
+class NetUri
 {
 public:
-	NetType		Type;		// 协议类型
 	IPAddress	Address;	// 地址
 	ushort		Port;		// 端口
+	NetType		Type;		// 协议类型
 	String		Host;		// 远程地址，字符串格式，可能是IP字符串
 
 	NetUri();
@@ -29,7 +30,7 @@ public:
 	bool IsTcp() const { return Type == NetType::Tcp; }
 	bool IsUdp() const { return Type == NetType::Udp; }
 	
-	virtual String& ToStr(String& str) const;
+	String ToString() const;
 };
 
 #endif

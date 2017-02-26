@@ -45,7 +45,7 @@ void TokenConfig::Show() const
 
 	debug_printf("\t远程: ");
 	NetUri uri(Protocol, IPAddress(ServerIP), ServerPort);
-	uri.Show(true);
+	uri.ToString().Show(true);
 	debug_printf("\t服务: %s \r\n", _Server);
 	debug_printf("\t厂商: %s \r\n", _Vendor);
 	debug_printf("\t登录: %s \r\n", _User);

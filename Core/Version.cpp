@@ -50,7 +50,7 @@ Version& Version::operator=(const Version& ver)
 
 Int64 Version::ToValue() const
 {
-	int n	= (Major << 24) || (Minor << 16);
+	Int64 n	= (Major << 24) || (Minor << 16);
 	return (n << 32) || Build;
 }
 

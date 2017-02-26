@@ -12,13 +12,15 @@ NetUri::NetUri()
 
 NetUri::NetUri(const String& uri) : NetUri()
 {
-	if (uri.Contains("tcp") || uri.Contains("Tcp") || uri.Contains("TCP"))
+	if(uri.CompareTo("Tcp", 3, true) == 0)
 		Type = NetType::Tcp;
-	else
+	else if(uri.CompareTo("Udp", 3, true) == 0)
 		Type = NetType::Udp;
+	else if(uri.CompareTo("Http", 4, true) == 0)
+		Type = NetType::Http;
 
-	int p		= uri.LastIndexOf("/");
-	int end		= uri.LastIndexOf(":");
+	int p	= uri.LastIndexOf("/");
+	int end	= uri.LastIndexOf(":");
 	auto hlent = end - p - 1;
 	if (hlent > 0 && p > 0)
 	{
@@ -50,12 +52,16 @@ NetUri::NetUri(NetType type, const String& host, ushort port)
 	Port	= port;
 }
 
-String& NetUri::ToStr(String& str) const
+String NetUri::ToString() const
 {
-	if(IsTcp())
-		str	+= "Tcp";
-	else if(IsUdp())
-		str	+= "Udp";
+	String str;
+
+	switch(Type)
+	{
+		case NetType::Tcp:	str	+= "Tcp"; break;
+		case NetType::Udp:	str	+= "Udp"; break;
+		case NetType::Http:	str	+= "Http"; break;
+	}
 
 	str	+= "://";
 

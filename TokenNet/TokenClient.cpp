@@ -587,7 +587,7 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 
 	debug_printf("ChangeIPEndPoint ");
 
-	uri.Show(true);
+	uri.ToString().Show(true);
 
 	auto ctrl = Master;
 	auto socket = ctrl->_Socket;
@@ -1199,7 +1199,7 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 	NetUri uri(remote);
 	auto client = (TokenClient*)param;
 	debug_printf("远程地址设置\r\n");
-	uri.Show();
+	uri.ToString().Show();
 
 	// 永久改变地址
 	if (fixd)
