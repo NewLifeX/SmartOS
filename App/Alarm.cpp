@@ -50,9 +50,9 @@ bool Alarm::Set(const Pair& args, Stream& result)
 	result.Write(id);
 
 	// 马上调度一次
-	if(id) Sys.SetTask(_taskid, true, 0);
+	if (id) Sys.SetTask(_taskid, true, 0);
 
-	return id;
+	return id > 0;
 }
 
 bool Alarm::Get(const Pair& args, Stream& result)
@@ -145,12 +145,12 @@ static int CheckTime(const AlarmItem& item)
 	}
 
 	// 判断时间有效性
-	dt.Hour		= item.Hour;
-	dt.Minute	= item.Minutes;
-	dt.Second	= item.Seconds;
+	dt.Hour = item.Hour;
+	dt.Minute = item.Minutes;
+	dt.Second = item.Seconds;
 
 	// 需要特别小心时间的偏差
-	 return (dt - now).TotalSeconds();
+	return (dt - now).TotalSeconds();
 }
 
 void Alarm::AlarmTask()
@@ -185,7 +185,7 @@ void Alarm::AlarmTask()
 
 	if (flag) cfg.Save();
 	if (next > 0)
-	    Sys.SetTask(_taskid, true, next * 1000);
+		Sys.SetTask(_taskid, true, next * 1000);
 }
 
 void Alarm::Start()

@@ -105,7 +105,7 @@ void TinyMessage::Write(Stream& ms) const
 	// 实际数据拷贝到占位符
 	auto p = (TinyMessage*)this;
 	p->_Code	= Code;
-	p->_Length	= len;
+	p->_Length	= (byte)len;
 	p->_Reply	= Reply;
 	p->_Error	= Error;
 

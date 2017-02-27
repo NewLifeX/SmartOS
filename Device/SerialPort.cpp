@@ -147,8 +147,8 @@ bool SerialPort::Flush(uint times)
 // 从某个端口读取数据
 uint SerialPort::OnRead(Buffer& bs)
 {
-	uint count = 0;
-	uint len = Rx.Length();
+	int count = 0;
+	int len = Rx.Length();
 	// 如果没有数据，立刻返回，不要等待浪费时间
 	if(!len)
 	{

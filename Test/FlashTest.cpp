@@ -7,7 +7,7 @@ void TestFlash()
     debug_printf("TestFlash Start......\r\n");
 
     byte buf[] = "STM32F10x SPI Firmware Library Example: communication with an AT45DB SPI FLASH";
-    uint size = ArrayLength(buf);
+    int size = ArrayLength(buf);
 
     Flash flash;
 	// 凑一个横跨两页的地址

@@ -6,23 +6,23 @@ class Heap
 {
 public:
 	uint	Address;// 开始地址
-	uint	Size;	// 大小
+	int		Size;	// 大小
 
-	Heap(uint addr, uint size);
+	Heap(uint addr, int size);
 
-	uint Used() const;	// 已使用内存数
-	uint Count() const;	// 已使用内存块数
-	uint FreeSize() const;	// 可用内存数
+	int Used() const;	// 已使用内存数
+	int Count() const;	// 已使用内存块数
+	int FreeSize() const;	// 可用内存数
 
-	void* Alloc(uint size);
+	void* Alloc(int size);
 	void Free(void* ptr);
 
 	// 当前堆
 	static Heap* Current;
 
 private:
-	uint	_Used;
-	uint	_Count;
+	int		_Used;
+	int		_Count;
 	void*	_First;	// 第一个有空闲的内存块，加速搜索
 };
 

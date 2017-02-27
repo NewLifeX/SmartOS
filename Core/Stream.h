@@ -7,34 +7,34 @@ class Stream
 {
 protected:
 	byte* _Buffer;	// 数据缓冲区。扩容后会重新分配缓冲区
-	uint _Capacity;	// 缓冲区容量
-    uint _Position;	// 游标位置
+	int _Capacity;	// 缓冲区容量
+    int _Position;	// 游标位置
 
-	void Init(void* buf, uint len);
-	virtual bool CheckRemain(uint count);
+	void Init(void* buf, int len);
+	virtual bool CheckRemain(int count);
 public:
-	uint Length;	// 数据长度
+	int	Length;	// 数据长度
 	bool Little;	// 默认小字节序。仅影响数据读写操作
 	bool CanWrite;	// 是否可写
 	bool CanResize;	// 是否可以自动扩容
 
 	// 使用缓冲区初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
-	Stream(void* buf, uint len);
-	Stream(const void* buf, uint len);
+	Stream(void* buf, int len);
+	Stream(const void* buf, int len);
 	// 使用字节数组初始化数据流。注意，此时指针位于0，而内容长度为缓冲区长度
 	explicit Stream(Buffer& bs);
 	explicit Stream(const Buffer& bs);
 	virtual ~Stream();
 
 	// 数据流容量
-	uint Capacity() const;
-	void SetCapacity(uint len);
+	int Capacity() const;
+	void SetCapacity(int len);
 	// 当前位置
-	uint Position() const;
+	int Position() const;
 	// 设置位置
 	bool SetPosition(int p);
 	// 余下的有效数据流长度。0表示已经到达终点
-	uint Remain() const;
+	int Remain() const;
 	// 尝试前后移动一段距离，返回成功或者失败。如果失败，不移动游标
 	bool Seek(int offset);
 
@@ -44,17 +44,17 @@ public:
     byte* Current() const;
 
 	// 读取7位压缩编码整数
-	uint ReadEncodeInt();
+	int ReadEncodeInt();
 	// 读取数据到字节数组，由字节数组指定大小。不包含长度前缀
-	uint Read(Buffer& bs);
+	int Read(Buffer& bs);
 
 	// 写入7位压缩编码整数
-	uint WriteEncodeInt(uint value);
+	int WriteEncodeInt(int value);
 	// 把字节数组的数据写入到数据流。不包含长度前缀
 	bool Write(const Buffer& bs);
 
 	// 从数据流读取变长数据到字节数组。以压缩整数开头表示长度
-	uint ReadArray(Buffer& bs);
+	int ReadArray(Buffer& bs);
 	ByteArray ReadArray(int count);
 	// 把字节数组作为变长数据写入到数据流。以压缩整数开头表示长度
 	bool WriteArray(const Buffer& bs);
@@ -105,13 +105,13 @@ private:
 	bool _needFree;		// 是否自动释放
 	//bool _resize;		// 是否可以自动扩容
 
-	virtual bool CheckRemain(uint count);
+	virtual bool CheckRemain(int count);
 
 public:
 	// 分配指定大小的数据流
-	MemoryStream(uint len = 0);
+	MemoryStream(int len = 0);
 	// 使用缓冲区初始化数据流，支持自动扩容
-	MemoryStream(void* buf, uint len);
+	MemoryStream(void* buf, int len);
 	// 销毁数据流
 	virtual ~MemoryStream();
 };

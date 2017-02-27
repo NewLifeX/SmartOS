@@ -17,7 +17,7 @@
 #include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
-extern char* itoa(int value, char* string, int radix);
+//extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
@@ -173,7 +173,7 @@ void String::release()
 	init();
 }
 
-bool String::CheckCapacity(uint size)
+bool String::CheckCapacity(int size)
 {
 	int old = _Capacity;
 	CheckCapacity(size + 1, _Length);
@@ -201,7 +201,7 @@ void* String::Alloc(int len)
 	}
 }
 
-String& String::copy(cstring cstr, uint length)
+String& String::copy(cstring cstr, int length)
 {
 	if (!cstr || !length) return *this;
 
@@ -324,12 +324,12 @@ bool String::Concat(const String& s)
 	return Concat(s._Arr, s._Length);
 }
 
-bool String::Concat(cstring cstr, uint length)
+bool String::Concat(cstring cstr, int length)
 {
 	if (!cstr) return false;
 	if (length == 0) return true;
 
-	uint newlen = _Length + length;
+	int newlen = _Length + length;
 	if (!CheckCapacity(newlen)) return false;
 
 	//strcpy(_Arr + _Length, cstr);

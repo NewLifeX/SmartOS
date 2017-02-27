@@ -23,10 +23,10 @@ public:
     void Add(void* item);
 
 	// 添加多个元素
-    void Add(void** items, uint count);
+    void Add(void** items, int count);
 
 	// 删除指定位置元素
-	void RemoveAt(uint index);
+	void RemoveAt(int index);
 
 	// 删除指定元素
 	int Remove(const void* item);
@@ -49,8 +49,8 @@ public:
 
 private:
 	void**	_Arr;
-	uint	_Count;
-	uint	_Capacity;
+	int		_Count;
+	int		_Capacity;
 
 	void*	Arr[0x04];
 

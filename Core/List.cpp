@@ -91,7 +91,7 @@ void IList::Add(void* item)
 }
 
 // 添加多个元素
-void IList::Add(void** items, uint count)
+void IList::Add(void** items, int count)
 {
 	if(!items || !count) return;
 
@@ -101,7 +101,7 @@ void IList::Add(void** items, uint count)
 }
 
 // 删除指定位置元素
-void IList::RemoveAt(uint index)
+void IList::RemoveAt(int index)
 {
 	int len = _Count;
 	if(len <= 0 || index >= len) return;

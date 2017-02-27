@@ -16,10 +16,10 @@ static bool Port_Reserve(Pin pin, bool flag);
 #ifdef REGION_Port
 Port::Port()
 {
-	_Pin	= P0;
-	Opened	= false;
-	Index	= 0;
-	State	= nullptr;
+	_Pin = P0;
+	Opened = false;
+	Index = 0;
+	State = nullptr;
 }
 
 #ifndef TINY
@@ -84,7 +84,7 @@ bool Port::Open()
 #if DEBUG
 	// 保护引脚
 	auto name = typeid(*this).name();
-	while(*name >= '0' && *name <= '9') name++;
+	while (*name >= '0' && *name <= '9') name++;
 	debug_printf("%s", name);
 	Port_Reserve(_Pin, true);
 #endif
@@ -106,7 +106,7 @@ void Port::Close()
 #if DEBUG
 	// 保护引脚
 	auto name = typeid(*this).name();
-	while(*name >= '0' && *name <= '9') name++;
+	while (*name >= '0' && *name <= '9') name++;
 	debug_printf("%s", name);
 	Port_Reserve(_Pin, false);
 	debug_printf("\r\n");
@@ -172,9 +172,9 @@ OutputPort::OutputPort() : Port() { }
 OutputPort::OutputPort(Pin pin) : OutputPort(pin, 2) { }
 OutputPort::OutputPort(Pin pin, byte invert, bool openDrain, byte speed) : Port()
 {
-	OpenDrain	= openDrain;
-	Speed	= speed;
-	Invert	= invert;
+	OpenDrain = openDrain;
+	Speed = speed;
+	Invert = invert;
 
 	if (pin != P0)
 	{
@@ -187,7 +187,7 @@ OutputPort& OutputPort::Init(Pin pin, bool invert)
 {
 	Port::Set(pin);
 
-	Invert	= invert;
+	Invert = invert;
 
 	return *this;
 }
@@ -238,7 +238,9 @@ WEAK bool OutputPort::ReadInput() const
 {
 	if (Empty()) return false;
 
-	return Port::Read() ^ Invert;
+	bool v = Port::Read();
+	if (Invert)return !v;
+	return v;
 }
 
 void OutputPort::Up(uint ms) const
@@ -341,7 +343,9 @@ InputPort& InputPort::Init(Pin pin, bool invert)
 // 读取本组所有引脚，任意脚为true则返回true，主要为单一引脚服务
 bool InputPort::Read() const
 {
-	return Port::Read() ^ Invert;
+	bool v = Port::Read();
+	if (Invert)return !v;
+	return v;
 }
 
 void InputPort::OnPress(bool down)
@@ -367,7 +371,7 @@ void InputPort::OnPress(bool down)
 	if (down)
 		_Start = now;
 	else
-		PressTime = now - _Start;
+		PressTime = (ushort)(now - _Start);
 
 	/*if(down)
 	{

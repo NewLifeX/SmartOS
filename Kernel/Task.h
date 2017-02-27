@@ -77,14 +77,14 @@ public:
 	UInt64	TotalSleep;	// 所有任务的总睡眠时间ms
 	UInt64	LastTrace;	// 最后统计跟踪时间ms
 
-	typedef void (*SAction)(uint ms);
+	typedef void (*SAction)(int ms);
 	SAction	EnterSleep;	// 通知外部，需要睡眠若干毫秒
 	Func	ExitSleep;	// 通知外部，要求退出睡眠，恢复调度
 
 	TaskScheduler(cstring name = nullptr);
 
 	// 使用外部缓冲区初始化任务列表，避免频繁的堆分配
-	void Set(Task* tasks, uint count);
+	void Set(Task* tasks, int count);
 	// 查找任务 返回使用此函数的首个任务的ID
 	uint FindID(Action func);
 	// 查找任务 返回使用此函数的首个任务

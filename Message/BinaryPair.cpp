@@ -36,7 +36,7 @@ Buffer BinaryPair::Get(cstring name) const
 	String sn	= name;
 
 	auto& ms	= *_s;
-	uint p	= ms.Position();
+	int p	= ms.Position();
 	for(int i=0; i<2; i++)
 	{
 		while(ms.Remain() && (i ==0 || ms.Position() < p))

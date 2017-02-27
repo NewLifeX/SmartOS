@@ -11,19 +11,19 @@ Random::Random()
 	srand((uint)time(NULL));
 }
 
-Random::Random(uint seed)
+Random::Random(int seed)
 {
 	srand(seed);
 }
 
-uint Random::Next() const
+int Random::Next() const
 {
 	return rand();
 }
 
-uint Random::Next(uint max) const
+int Random::Next(int max) const
 {
-	uint value	= rand();
+	int value	= rand();
 
 	if(max == 0x100) return value & 0xFF;
 

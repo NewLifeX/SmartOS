@@ -12,22 +12,22 @@ static Timer* Timers[16] = {
 
 Timer::Timer(TIMER index)
 {
-	Timers[index]	= this;
+	Timers[index] = this;
 
-	_index		= index;
+	_index = index;
 	OnInit();
 
 	// 默认情况下，预分频到1MHz，然后1000个周期，即是1ms中断一次
 	SetFrequency(10);
 
-	Opened	= false;
+	Opened = false;
 }
 
 Timer::~Timer()
 {
 	Close();
 
-	if(OnTick.Method) SetHandler(false);
+	if (OnTick.Method) SetHandler(false);
 
 	Timers[_index] = nullptr;
 }
@@ -37,16 +37,16 @@ Timer* Timer::Create(byte index)
 {
 	TS("Timer::Create");
 
-	byte tcount	= ArrayLength(Timers);
+	byte tcount = ArrayLength(Timers);
 	//byte tcount	= 46;
 	// 特殊处理随机分配
-	if(index == 0xFF)
+	if (index == 0xFF)
 	{
 		// 找到第一个可用的位置，没有被使用，并且该位置定时器存在
 		byte i = 0;
-		for(; i<tcount && (Timers[i] || !GetTimer(i)); i++);
+		for (; i < tcount && (Timers[i] || !GetTimer(i)); i++);
 
-		if(i >= tcount)
+		if (i >= tcount)
 		{
 			debug_printf("Timer::Create 失败！没有空闲定时器！\r\n");
 			return nullptr;
@@ -57,7 +57,7 @@ Timer* Timer::Create(byte index)
 
 	assert(index < tcount, "index");
 
-	if(Timers[index])
+	if (Timers[index])
 		return Timers[index];
 	else
 		return new Timer((TIMER)index);
@@ -65,7 +65,7 @@ Timer* Timer::Create(byte index)
 
 void Timer::Open()
 {
-	if(Opened) return;
+	if (Opened) return;
 
 	TS("Timer::Open");
 
@@ -76,7 +76,7 @@ void Timer::Open()
 
 void Timer::Close()
 {
-	if(!Opened) return;
+	if (!Opened) return;
 
 	TS("Timer::Close");
 
@@ -89,9 +89,9 @@ void Timer::Close()
 
 void Timer::Register(const Delegate<Timer&>& dlg)
 {
-	OnTick	= dlg;
+	OnTick = dlg;
 
-	SetHandler(dlg.Method);
+	SetHandler(dlg.Method != nullptr);
 }
 
 void Timer::OnInterrupt()

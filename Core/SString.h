@@ -158,14 +158,14 @@ private:
 
 	void init();
 	void release();
-	bool Concat(cstring cstr, uint length);
+	bool Concat(cstring cstr, int length);
 
-	String& copy(cstring cstr, uint length);
+	String& copy(cstring cstr, int length);
 	void move(String& rhs);
 	bool CopyOrWrite();
 
 	using Array::CheckCapacity;
-	bool CheckCapacity(uint size);
+	bool CheckCapacity(int size);
 	virtual void* Alloc(int len);
 
 	int Search(cstring str, int len, int startIndex, bool rev) const;

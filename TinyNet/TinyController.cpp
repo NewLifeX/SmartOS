@@ -28,7 +28,7 @@ TinyController::TinyController() : Controller()
 	while(Address < 2 || Address > 254)
 	{
 		Sys.Delay(30);
-		Address = Sys.Ms();
+		Address = (byte)Sys.Ms();
 	}
 
 	// 接收模式。0只收自己，1接收自己和广播，2接收所有。默认0
@@ -350,7 +350,7 @@ void TinyController::AckRequest(const TinyMessage& msg)
 		auto& node = _Queue[i];
 		if(node.Using && node.Seq == msg.Seq)
 		{
-			int cost = Sys.Ms() - node.StartTime;
+			int cost = (int)(Sys.Ms() - node.StartTime);
 			if(cost < 0) cost = -cost;
 
 			Total.Cost	+= cost;
