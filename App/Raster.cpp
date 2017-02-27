@@ -12,11 +12,11 @@ static PulsePort* Create(Pin pin)
 {
 	auto pp = new PulsePort();
 	pp->Port = new InputPort();
-	pp->Port->Set(pin);	
+	pp->Port->Set(pin);
 	pp->Port->Floating = false;
 	pp->Port->Pull = InputPort::DOWN;
 
-	pp->Port->HardEvent = true;	
+	pp->Port->HardEvent = true;
 
 	return pp;
 }
@@ -195,7 +195,7 @@ void Raster::LineReport()
 
 	Buffer bs(&data, size);
 	// 如果满了，马上发送
-	if (bs.Length() > 256 - _Cache->Position())
+	if (bs.Length() > 256 - (int)_Cache->Position())
 		Report();
 	_Cache->Write(bs);
 

@@ -1,4 +1,4 @@
-#include "Core\_Core.h"
+﻿#include "Core\_Core.h"
 
 #include "Core\ByteArray.h"
 #include "Core\SString.h"

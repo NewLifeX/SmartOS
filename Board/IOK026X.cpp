@@ -201,7 +201,7 @@ static void UnionPress(InputPort& port, bool down)
 void IOK026X::Union(Pin pin1, Pin pin2)
 {
 	Pin p[] = { pin1,pin2 };
-	for (size_t i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		auto port = new InputPort(p[i]);
 		port->Invert = true;

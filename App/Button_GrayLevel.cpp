@@ -21,9 +21,9 @@ static   Button_GrayLevelConfig*	ButtonConfig = nullptr;
 /******************************** 调光配置 ********************************/
 Button_GrayLevelConfig::Button_GrayLevelConfig()
 {
-	_Name	= "Gray";
-	_Start	= &OnGrayLevel;
-	_End	= &TagEnd;
+	_Name = "Gray";
+	_Start = &OnGrayLevel;
+	_End = &TagEnd;
 	Init();
 
 	OnGrayLevel = 0xff;
@@ -209,7 +209,7 @@ void Button_GrayLevel::DelayClose2(int ms)
 
 int Button_GrayLevel::OnWrite(byte data)
 {
-	SetValue(data);
+	SetValue(data > 0);
 
 	return OnRead();
 }

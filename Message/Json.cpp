@@ -622,7 +622,7 @@ void JObject::Add(cstring key, JValue& value)
 	_items.Add(key, &value);
 }
 
-uint JObject::size() const
+int JObject::size() const
 {
     return _items.Count();
 }
@@ -679,7 +679,7 @@ const JValue& JArray::operator[] (uint i) const
     return *_array[i];
 }
 
-uint JArray::size() const
+int JArray::size() const
 {
     return _array.Count();
 }

@@ -116,7 +116,7 @@ public:
 	void Add(cstring key, JValue& value);
 
 	// 大小
-	uint size() const;
+	int size() const;
 
 	String ToString() const;
 
@@ -146,7 +146,7 @@ public:
 	void Add(const JValue& n);
 
 	// 大小
-	uint size() const;
+	int size() const;
 
 	String ToString() const;
 
@@ -191,7 +191,7 @@ public:
 	JValue& operator=(JValue&& v);
 
 	explicit operator double()	const { return float_v; }
-	explicit operator int()		const { return int_v; }
+	explicit operator int()		const { return (int)int_v; }
 	explicit operator bool()	const { return bool_v; }
 	explicit operator String()	const { return string_v; }
 
@@ -199,7 +199,7 @@ public:
 	operator JArray ()	const { return array_v; }
 
 	double as_float()	const { return float_v; }
-	int as_int()		const { return int_v; }
+	int as_int()		const { return (int)int_v; }
 	bool as_bool()		const { return bool_v; }
 	String as_string()	const { return string_v; }
 

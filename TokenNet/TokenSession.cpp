@@ -51,8 +51,8 @@ TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 	HisSsNum++;			// 历史Session个数
 #endif
 
-	Status	= 0;
-	LastActive	= Sys.Ms();
+	Status = 0;
+	LastActive = Sys.Ms();
 
 	client.Sessions.Add(this);
 }
@@ -80,7 +80,7 @@ void TokenSession::OnReceive(TokenMessage& msg)
 {
 	TS("TokenSession::OnReceive");
 
-	LastActive	= Sys.Ms();
+	LastActive = Sys.Ms();
 	// if (Token == 0 && msg.Code > 1 && Key.Length() == 0)
 	if ((Token == 0 && msg.Code > 2) || msg.ErrorCode == DecryptError)	// 解密失败 直接让他重新来过
 	{
@@ -140,14 +140,14 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	// 解析数据
 	HelloMessage ext;
-	ext.Reply = msg.Reply;
+	ext.Reply = msg.Reply > 0;
 
 	ext.ReadMessage(msg);
 	ext.Show(true);
 
 	TS("TokenSession::OnHello");
 
-	Name	= ext.Name;
+	Name = ext.Name;
 
 	BinaryPair bp(msg.ToStream());
 	if (bp.Get("Action"))
@@ -246,7 +246,7 @@ bool TokenSession::OnLogin(TokenMessage& msg)
 	}
 	else
 	{
-		Token = Sys.Ms();
+		Token = (uint)Sys.Ms();
 		login.Key = Control.Key;
 		login.Token = Token;
 		login.Reply = true;
@@ -278,7 +278,7 @@ bool TokenSession::OnPing(TokenMessage& msg)
 
 bool TokenSession::CheckExpired()
 {
-	auto now	= Sys.Ms();
+	auto now = Sys.Ms();
 	// 5分钟不活跃超时	LastActive为0的为特殊Session 不删除
 	if (LastActive + 5 * 60 * 1000 < now) return true;
 
@@ -291,11 +291,11 @@ bool TokenSession::CheckExpired()
 String TokenSession::ToString() const
 {
 	String str;
-	int sec	= (Sys.Ms() - LastActive) / 1000UL;
+	int sec = (int)(Sys.Ms() - LastActive) / 1000UL;
 	str = str + Remote + " " + Name + " LastActive " + sec + "s \t";
 
 #if DEBUG
-	str	+= Stat;
+	str += Stat;
 #endif
 
 	return str;

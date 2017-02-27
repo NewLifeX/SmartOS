@@ -96,5 +96,371 @@
     <ClCompile Include="..\Core\TimeSpan.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\App\Sound.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Alarm.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\BlinkPort.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Button.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Button_GrayLevel.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Button_magnetic.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\CommandPort.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Dimmer.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\FlushPort.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\IR.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\IRcoding.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\PowerUps.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\PulsePort.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Raster.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\Sensor.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\Pandora.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\AP0103.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\AP0104.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\AP0801.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\AP0802.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\BaseBoard.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\IOK026X.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\IOK027X.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\IOK0612.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\NH3_0317.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Timer.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\UTPort.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\WatchDog.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\ADC.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\CAN.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\DAC.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\DMA.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Flash.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\I2C.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Port.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Power.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Proxy.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\ProxyConfig.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Pwm.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\RTC.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\SerialPort.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Device\Spi.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\ShunCom.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Sim900A.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\UBlox.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\W5500.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\74HC165.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\74HC165Monitor.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\AT24CXX.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\AT45DB.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\BH1750.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\BufferPort.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\DHT11.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Enc28j60.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\HX711.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\JTW8953.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\NRF24L01.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\PMS5003.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\SHT30.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\WaitHandle.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Heap.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Interrupt.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Sys.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Task.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Thread.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kernel\Time.cpp">
+      <Filter>Kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\Pair.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\ProxyFactory.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\UTPacket.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\WeakStore.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\BinaryPair.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\Controller.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\DataStore.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\Json.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\Message.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Message\MessageBase.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\MacAddress.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\NetUri.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\NetworkInterface.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\Socket.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\Zigbee.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\Blu40.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\Dhcp.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\DNS.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\IPAddress.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\IPEndPoint.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\ITransport.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\RSA.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\AES.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\Crc.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\Crc16.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\MD5.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\RC4.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Security\RC6.cpp">
+      <Filter>Security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Storage\Storage.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\TinyController.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\TinyMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\TinyServer.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\DataMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\JoinMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\PingMessage.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\Tiny.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\TinyClient.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyNet\TinyConfig.cpp">
+      <Filter>TinyNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenController.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenDataMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenDevice.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenPingMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenSession.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\Device.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\DeviceBody.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\DeviceMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\DevicesManagement.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\ErrorMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\Gateway.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\HelloMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\LoginMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\RegisterMessage.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\Token.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenClient.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TokenNet\TokenConfig.cpp">
+      <Filter>TokenNet</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-#ifndef _SHT30_H_
+﻿#ifndef _SHT30_H_
 #define _SHT30_H_
 
 #include "Device\Power.h"

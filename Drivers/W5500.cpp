@@ -677,7 +677,7 @@ bool W5500::WriteByte2(ushort addr, ushort dat, byte socket, byte block)
 	SpiScope sc(_spi);
 
 	SetAddress(addr, 1, socket, block);
-	_spi->Write(dat);
+	_spi->Write((byte)dat);
 	_spi->Write(dat >> 8);
 
 	return true;

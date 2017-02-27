@@ -5,9 +5,9 @@ int Button::ACZeroAdjTime = 2300;
 
 Button::Button()
 {
-	Name	= nullptr;
-	Index	= 0;
-	_Value	= false;
+	Name = nullptr;
+	Index = 0;
+	_Value = false;
 
 	//_Handler	= nullptr;
 	//_Param		= nullptr;
@@ -32,12 +32,12 @@ void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 	//Key.Register(Delegate2<InputPort&, bool>(&Button::OnPress, this))
 	Key.Open();
 
-	if(led != P0)
+	if (led != P0)
 	{
 		Led.Invert = ledInvert;
 		Led.Set(led).Open();
 	}
-	if(relay != P0)
+	if (relay != P0)
 	{
 		Relay.Invert = relayInvert;
 		Relay.Set(relay).Open();
@@ -53,7 +53,7 @@ void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 void Button::OnPress(InputPort& port, bool down)
 {
 	// 每次按下弹起，都取反状态
-	if(!down)
+	if (!down)
 	{
 		SetValue(!_Value);
 
@@ -80,7 +80,7 @@ bool Button::GetValue() { return _Value; }
 
 int Button::OnWrite(byte data)
 {
-	SetValue(data);
+	SetValue(data > 0);
 
 	return OnRead();
 }
@@ -93,7 +93,7 @@ byte Button::OnRead()
 String Button::ToString() const
 {
 	String str;
-	if(Name) str += Name;
+	if (Name) str += Name;
 
 	return str;
 }
@@ -101,31 +101,31 @@ String Button::ToString() const
 bool CheckZero(const InputPort& port)
 {
 	int retry = 200;
-	while(!port.Read() && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
-	if(retry <= 0) return false;
+	while (!port.Read() && retry-- > 0) Sys.Delay(100);	// 检测下降沿   先去掉低电平  while（io==false）
+	if (retry <= 0) return false;
 
 	retry = 200;
-	while(port.Read() && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
-	if(retry <= 0) return false;
+	while (port.Read() && retry-- > 0) Sys.Delay(100);		// 当检测到	     高电平结束  就是下降沿的到来
+	if (retry <= 0) return false;
 
 	return true;
 }
 
 void Button::SetValue(bool value)
 {
-	if(!ACZero.Empty())
+	if (!ACZero.Empty())
 	{
-		if(CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
+		if (CheckZero(ACZero)) Sys.Delay(ACZeroAdjTime);
 
 		// 经检测 过零检测电路的信号是  高电平12ms  低电平7ms    即下降沿后8.5ms 是下一个过零点
 		// 从给出信号到继电器吸合 测量得到的时间是 6.4ms  继电器抖动 1ms左右  即  平均在7ms上下
 		// 故这里添加1ms延时
 		// 这里有个不是问题的问题   一旦过零检测电路烧了   开关将不能正常工作
 	}
-	Led		= value;
-	Relay	= value;
+	Led = value;
+	Relay = value;
 
-	_Value	= value;
+	_Value = value;
 }
 
 bool Button::SetACZeroPin(Pin aczero)
@@ -133,12 +133,12 @@ bool Button::SetACZeroPin(Pin aczero)
 	auto& port = ACZero;
 
 	// 该方法可能被初级工程师多次调用，需要检查并释放旧的，避免内存泄漏
-	if(!port.Empty()) port.Close();
+	if (!port.Empty()) port.Close();
 
 	port.Set(aczero).Open();
 
 	// 需要检测是否有交流电，否则关闭
-	if(CheckZero(port)) return true;
+	if (CheckZero(port)) return true;
 
 	port.Close();
 	port.Clear();

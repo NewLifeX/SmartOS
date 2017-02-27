@@ -10,7 +10,7 @@ class WeakStore
 {
 public:
 	cstring	Magic;	// 幻数。用于唯一标识
-	uint		MagicLength;
+	int		MagicLength;
 	ByteArray	Data;	// 数据
 
 	// 初始化

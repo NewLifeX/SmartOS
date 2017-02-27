@@ -25,28 +25,28 @@ static void BroadcastHelloTask(void* param);
 TokenClient::TokenClient()
 	: Routes(String::Compare)
 {
-	Token	= 0;
+	Token = 0;
 
-	Opened	= false;
-	Status	= 0;
+	Opened = false;
+	Status = 0;
 
-	LoginTime	= 0;
-	LastSend	= 0;
-	LastActive	= 0;
-	Delay	= 0;
-	MaxNotActive	= 0;
+	LoginTime = 0;
+	LastSend = 0;
+	LastActive = 0;
+	Delay = 0;
+	MaxNotActive = 0;
 
-	Master	= nullptr;
-	Cfg	= nullptr;
+	Master = nullptr;
+	Cfg = nullptr;
 
-	Received	= nullptr;
-	Param	= nullptr;
+	Received = nullptr;
+	Param = nullptr;
 
-	NextReport	= -1;
-	ReportLength	= 0;
+	NextReport = -1;
+	ReportLength = 0;
 
 	assert(!Current, "只能有一个令牌客户端实例");
-	Current	= this;
+	Current = this;
 }
 
 void TokenClient::Open()
@@ -76,10 +76,10 @@ void TokenClient::Close()
 	if (Master)
 	{
 		delete Master;
-		Master	= nullptr;
+		Master = nullptr;
 	}
 
-	auto& cs	= Controls;
+	auto& cs = Controls;
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		delete cs[i];
@@ -91,14 +91,14 @@ void TokenClient::Close()
 
 static TokenController* AddMaster(TokenClient& client)
 {
-	auto uri	= client.Cfg->Uri();
+	auto uri = client.Cfg->Uri();
 	// 创建连接服务器的Socket
-	auto socket	= Socket::CreateRemote(uri);
-	if(!socket) return nullptr;
+	auto socket = Socket::CreateRemote(uri);
+	if (!socket) return nullptr;
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
-	ctrl->_Socket	= socket;
+	auto ctrl = new TokenController();
+	ctrl->_Socket = socket;
 
 	// 创建客户端
 	client.Master = ctrl;
@@ -109,17 +109,17 @@ static TokenController* AddMaster(TokenClient& client)
 static TokenController* AddControl(TokenClient& client, NetworkInterface* host, const NetUri& uri, ushort remotePort)
 {
 	// 创建连接服务器的Socket
-	auto socket	= host ? host->CreateClient(uri) : Socket::CreateClient(uri);
-	if(!socket) return nullptr;
+	auto socket = host ? host->CreateClient(uri) : Socket::CreateClient(uri);
+	if (!socket) return nullptr;
 
 	// 创建连接服务器的控制器
-	auto ctrl	= new TokenController();
-	ctrl->_Socket	= socket;
+	auto ctrl = new TokenController();
+	ctrl->_Socket = socket;
 
 	// 创建客户端
-	socket->Remote.Address	= IPAddress::Broadcast();
-	socket->Remote.Port	= remotePort;
-	ctrl->ShowRemote	= true;
+	socket->Remote.Address = IPAddress::Broadcast();
+	socket->Remote.Port = remotePort;
+	ctrl->ShowRemote = true;
 	client.Controls.Add(ctrl);
 
 	return ctrl;
@@ -127,79 +127,79 @@ static TokenController* AddControl(TokenClient& client, NetworkInterface* host, 
 
 void TokenClient::CheckNet()
 {
-	auto mst	= Master;
-	auto& cs	= Controls;
+	auto mst = Master;
+	auto& cs = Controls;
 	//assert(cs.Count() > 0, "令牌客户端还没设置控制器呢");
 
 	// 现在是否已连接
-	bool linked	= true;
+	bool linked = true;
 
 	// 检测主链接
-	if(!mst)
+	if (!mst)
 	{
-		linked	= false;
-		auto ctrl	= AddMaster(*this);
-		if(!ctrl) return;
+		linked = false;
+		auto ctrl = AddMaster(*this);
+		if (!ctrl) return;
 
 		debug_printf("TokenClient::CheckNet %s 成功创建主连接\r\n", ctrl->_Socket->Host->Name);
 	}
 	// 检测主链接是否已经断开
-	else if(!mst->_Socket->Host->Linked)
+	else if (!mst->_Socket->Host->Linked)
 	{
-		linked	= false;
+		linked = false;
 		debug_printf("TokenClient::CheckNet %s断开，切换主连接\r\n", mst->_Socket->Host->Name);
 
 		delete mst;
-		Master	= nullptr;
+		Master = nullptr;
 
-		Status	= 0;
-		Token	= 0;
+		Status = 0;
+		Token = 0;
 
 		// 未连接时，加快网络检查速度
 		Sys.SetTaskPeriod(_task, 1000);
 
-		auto ctrl	= AddMaster(*this);
-		if(!ctrl) return;
+		auto ctrl = AddMaster(*this);
+		if (!ctrl) return;
 	}
 
 	// 从未连接转为已连接
-	mst	= Master;
+	mst = Master;
 	if (!linked && mst)
 	{
 		Delegate2<TokenMessage&, TokenController&> dlg(&TokenClient::OnReceive, this);
 		mst->Received = dlg;
 		mst->Open();
 
-		Cfg->ServerIP	= mst->_Socket->Remote.Address.Value;
+		Cfg->ServerIP = mst->_Socket->Remote.Address.Value;
 	}
 
 	// 为其它网卡创建本地会话
 	// 启动本地控制器
 	if (_LocalReceive)
 	{
-		auto& nis	= NetworkInterface::All;
+		auto& nis = NetworkInterface::All;
 		for (int k = 0; k < nis.Count(); k++)
 		{
 			// 检测该接口上是否创建了控制器
-			bool flag	= false;
+			bool flag = false;
 			for (int i = 0; i < cs.Count(); i++)
 			{
-				if(cs[i]->_Socket->Host == nis[k])
+				if (cs[i]->_Socket->Host == nis[k])
 				{
-					flag	= true;
+					flag = true;
 					break;
 				}
 			}
 			// 在该接口上创建控制器
-			if(!flag)
+			if (!flag)
 			{
 				debug_printf("TokenClient::CheckNet %s 创建本地监听 ", nis[k]->Name);
 
 				NetUri uri(NetType::Udp, IPAddress::Broadcast(), Cfg->Port);
-				auto ctrl	= AddControl(*this, nis[k], uri, Cfg->Port);
-				if(ctrl)
+				auto ctrl = AddControl(*this, nis[k], uri, Cfg->Port);
+				if (ctrl)
 				{
-					ctrl->Received	= _LocalReceive;
+					ctrl->Received = _LocalReceive;
 					ctrl->Open();
 
 					debug_printf("成功\r\n");
@@ -233,7 +233,7 @@ bool TokenClient::Send(TokenMessage& msg, TokenController* ctrl)
 		if (msg.Code != 0x01 && msg.Code != 0x02 && msg.Code != 0x07) return false;
 	}
 
-	if (!ctrl) ctrl	= Master;
+	if (!ctrl) ctrl = Master;
 	if (!ctrl) return false;
 
 	assert(ctrl, "TokenClient::Send");
@@ -362,11 +362,11 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 	debug_printf("LocalSend\r\n");
 
 	TokenDataMessage dm;
-	dm.Start	= start;
-	dm.Data	= bs;
+	dm.Start = start;
+	dm.Data = bs;
 
 	TokenMessage msg;
-	msg.Code	= 0x06;
+	msg.Code = 0x06;
 	dm.WriteMessage(msg);
 
 	Send(msg);
@@ -406,13 +406,13 @@ void TokenClient::LoopTask()
 	// MaxNotActive 为零便不考虑重启
 	if (MaxNotActive != 0 && LastActive + MaxNotActive < Sys.Ms()) Sys.Reboot();
 
-	auto flag	= Master;
+	auto flag = Master;
 	//if(!Master)
 	{
 		CheckNet();
-		if(!Master) return;
+		if (!Master) return;
 
-		if(!flag) Sys.SetTaskPeriod(_task, 5000);
+		if (!flag) Sys.SetTaskPeriod(_task, 5000);
 	}
 
 	// 状态。0准备、1握手完成、2登录后
@@ -471,13 +471,13 @@ void TokenClient::SayHello(bool broadcast)
 		ext.Protocol = sock->Protocol == NetType::Udp ? 17 : 6;
 	}
 
-	ext.Cipher	= "RC4";
-	ext.Name	= Cfg->User();
+	ext.Cipher = "RC4";
+	ext.Name = Cfg->User();
 	// 未注册时采用系统名称
 	if (!ext.Name)
 	{
-		ext.Name	= Sys.Name;
-		ext.Key	= Buffer(Sys.ID, 16);
+		ext.Name = Sys.Name;
+		ext.Key = Buffer(Sys.ID, 16);
 	}
 
 	ext.WriteMessage(msg);
@@ -510,7 +510,7 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 
 	// 解析数据
 	HelloMessage ext;
-	ext.Reply = msg.Reply;
+	ext.Reply = msg.Reply > 0;
 
 	ext.ReadMessage(msg);
 	ext.Show(true);
@@ -522,8 +522,8 @@ bool TokenClient::OnHello(TokenMessage& msg, TokenController* ctrl)
 
 		TS("TokenClient::OnHello_Error");
 
-		Status	= 0;
-		Token	= 0;
+		Status = 0;
+		Token = 0;
 
 		// 未握手错误，马上重新握手
 		if (ext.ErrCode == 0x7F) Sys.SetTask(_task, true, 0);
@@ -559,7 +559,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 
 	if (!(msg.ErrCode == 0xFE || msg.ErrCode == 0xFD)) return false;
 
-	Cookie	= msg.Cookie;
+	Cookie = msg.Cookie;
 
 	// 0xFE永久改变厂商地址
 	if (msg.ErrCode == 0xFE)
@@ -567,10 +567,10 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		auto cfg = Cfg;
 		cfg->Show();
 
-		cfg->Protocol	= msg.Uri.Type;
-		cfg->Server()	= msg.Uri.Host;
-		cfg->ServerPort	= msg.Uri.Port;
-		cfg->Token()	= msg.Cookie;
+		cfg->Protocol = msg.Uri.Type;
+		cfg->Server() = msg.Uri.Host;
+		cfg->ServerPort = msg.Uri.Port;
+		cfg->Token() = msg.Cookie;
 
 		cfg->Save();
 		cfg->Show();
@@ -669,18 +669,18 @@ void TokenClient::Login()
 
 	LoginMessage login;
 
-	auto cfg	= Cfg;
-	login.User	= cfg->User();
+	auto cfg = Cfg;
+	login.User = cfg->User();
 
 	// 原始密码对盐值进行加密，得到登录密码
 	// auto now = Sys.Ms();
-	auto now	= DateTime::Now().TotalMs();
-	auto arr	= Buffer(&now, 8);
+	auto now = DateTime::Now().TotalMs();
+	auto arr = Buffer(&now, 8);
 	// login.Salt = arr;
 	RC4::Encrypt(arr, cfg->Pass());
-	login.Pass	= arr.ToHex();
+	login.Pass = arr.ToHex();
 
-	login.Cookie	= Cookie;
+	login.Cookie = Cookie;
 
 	TokenMessage msg(2);
 	login.WriteMessage(msg);
@@ -710,14 +710,14 @@ bool TokenClient::OnLogin(TokenMessage& msg, TokenController* ctrl)
 		if (result == 0xF7)
 		{
 			// 任何错误，重新握手
-			Status	= 1;
-			Token	= 0;
+			Status = 1;
+			Token = 0;
 			Register();
 			return false;
 		}
 
-		Token	= 0;
-		Status	= 0;
+		Token = 0;
+		Status = 0;
 
 		if (result == 0x7F) Sys.SetTask(_task, true, 0);
 	}
@@ -884,15 +884,15 @@ void TokenClient::Write(int start, byte dat)
 
 void TokenClient::ReportAsync(int start, uint length)
 {
-	if (start + length > Store.Data.Length())
+	if (start + (int)length > Store.Data.Length())
 	{
 		debug_printf("布置异步上报数据失败\r\n");
 		debug_printf("sta:%d  len:%d  data.len:%d\r\n", start, length, Store.Data.Length());
 		return;
 	}
 
-	NextReport	= start;
-	ReportLength	= length;
+	NextReport = start;
+	ReportLength = length;
 
 	// 延迟上报，期间有其它上报任务到来将会覆盖
 	Sys.SetTask(_task, true, 20);
@@ -902,13 +902,13 @@ bool TokenClient::CheckReport()
 {
 	TS("TokenClient::CheckReport");
 
-	auto offset	= NextReport;
-	uint len	= ReportLength;
+	auto offset = NextReport;
+	int len = ReportLength;
 
 	if (offset < 0) return false;
 
 	// 检查索引，否则数组越界
-	auto& bs	= Store.Data;
+	auto& bs = Store.Data;
 	if (bs.Length() >= offset + len)
 	{
 		if (len == 1)
@@ -1130,7 +1130,7 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 // 快速建立令牌客户端，注册默认Api
 TokenClient* TokenClient::CreateFast(const Buffer& store)
 {
-	auto tc	= new TokenClient();
+	auto tc = new TokenClient();
 
 	// 重启
 	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
@@ -1143,7 +1143,7 @@ TokenClient* TokenClient::CreateFast(const Buffer& store)
 	// 获取所有Invoke命令
 	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
 
-	if(store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
+	if (store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
 
 	tc->UseLocal();
 
@@ -1204,12 +1204,12 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 	// 永久改变地址
 	if (fixd)
 	{
-		auto cfg	= client->Cfg;
+		auto cfg = client->Cfg;
 		cfg->Show();
 
-		cfg->Protocol	= uri.Type;
-		cfg->Server()	= uri.Host;
-		cfg->ServerPort	= uri.Port;
+		cfg->Protocol = uri.Type;
+		cfg->Server() = uri.Host;
+		cfg->ServerPort = uri.Port;
 
 		cfg->Save();
 		cfg->Show();

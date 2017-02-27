@@ -4,14 +4,14 @@
 
 I2C::I2C()
 {
-	Speed	= 10000;
-	Retry	= 200;
-	Error	= 0;
+	Speed = 10000;
+	Retry = 200;
+	Error = 0;
 
-	Address	= 0x00;
-	SubWidth= 0;
+	Address = 0x00;
+	SubWidth = 0;
 
-	Opened	= false;
+	Opened = false;
 }
 
 I2C::~I2C()
@@ -21,7 +21,7 @@ I2C::~I2C()
 
 void I2C::Open()
 {
-	if(Opened) return;
+	if (Opened) return;
 
 	OnOpen();
 
@@ -30,7 +30,7 @@ void I2C::Open()
 
 void I2C::Close()
 {
-	if(!Opened) return;
+	if (!Opened) return;
 
 	OnClose();
 
@@ -57,35 +57,35 @@ bool I2C::SendAddress(int addr, bool tx)
 	// 发送写入地址
 	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
 	//debug_printf("I2C::SendAddr %02X \r\n", d);
-    WriteByte(d);
-	if(!WaitAck())
+	WriteByte((byte)d);
+	if (!WaitAck())
 	{
 		debug_printf("I2C::SendAddr %02X 可能设备未连接，或地址不对\r\n", d);
 		return false;
 	}
 
-	if(!SubWidth) return true;
+	if (!SubWidth) return true;
 
 	// 发送子地址
-	if(!SendSubAddr(addr))
+	if (!SendSubAddr(addr))
 	{
 		debug_printf("I2C::SendAddr %02X 发送子地址 0x%02X 失败\r\n", d, addr);
 		return false;
 	}
 
-	if(tx) return true;
+	if (tx) return true;
 
 	d = Address | 0x01;
 	// 多次尝试启动并发送读取地址
 	uint retry = 10;
 	bool rs = false;
-	while(retry-- && !rs)
+	while (retry-- && !rs)
 	{
 		Start();
-		WriteByte(d);
+		WriteByte((byte)d);
 		rs = WaitAck();
 	}
-	if(!rs)
+	if (!rs)
 	{
 		debug_printf("I2C::SendAddr %02X 发送读取地址失败\r\n", d);
 		return false;
@@ -97,13 +97,13 @@ bool I2C::SendAddress(int addr, bool tx)
 bool I2C::SendSubAddr(int addr)
 {
 	// 发送子地址
-	if(SubWidth > 0)
+	if (SubWidth > 0)
 	{
 		// 逐字节发送
-		for(int k=SubWidth-1; k>=0; k--)
+		for (int k = SubWidth - 1; k >= 0; k--)
 		{
 			WriteByte(addr >> (k << 3));
-			if(!WaitAck()) return false;
+			if (!WaitAck()) return false;
 		}
 	}
 
@@ -121,14 +121,14 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 	I2CScope ics(this);
 
 	// 发送设备地址
-    if(!SendAddress(addr, true)) return false;
+	if (!SendAddress(addr, true)) return false;
 
-	uint len = bs.Length();
-	for(int i=0; i<len; i++)
+	int len = bs.Length();
+	for (int i = 0; i < len; i++)
 	{
 		WriteByte(bs[i]);
 		// 最后一次不要等待Ack
-		if(i < len - 1 && !WaitAck()) return false;
+		if (i < len - 1 && !WaitAck()) return false;
 	}
 
 	return true;
@@ -142,11 +142,11 @@ WEAK uint I2C::Read(int addr, Buffer& bs)
 	I2CScope ics(this);
 
 	// 发送设备地址
-    if(!SendAddress(addr, false)) return 0;
+	if (!SendAddress(addr, false)) return 0;
 
 	uint rs = 0;
-	uint len = bs.Length();
-	for(int i=0; i<len; i++)
+	int len = bs.Length();
+	for (int i = 0; i < len; i++)
 	{
 		bs[i] = ReadByte();
 		rs++;
@@ -159,21 +159,21 @@ bool I2C::Write(int addr, byte data) { return Write(addr, Buffer(&data, 1)); }
 byte I2C::Read(int addr)
 {
 	ByteArray bs(1);
-	if(!Read(addr, bs)) return 0;
+	if (!Read(addr, bs)) return 0;
 
 	return bs[0];
 }
 ushort I2C::Read2(int addr)
 {
 	ByteArray bs(2);
-	if(!Read(addr, bs)) return 0;
+	if (!Read(addr, bs)) return 0;
 
 	return (bs[0] << 8) | bs[1];
 }
 uint I2C::Read4(int addr)
 {
 	ByteArray bs(4);
-	if(!Read(addr, bs)) return 0;
+	if (!Read(addr, bs)) return 0;
 
 	return (bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3];
 }
@@ -203,12 +203,12 @@ HardI2C::HardI2C(byte index, uint speedHz) : I2C()
 
 void HardI2C::Init(byte index, uint speedHz)
 {
-	_index	= index;
-	Speed	= speedHz;
+	_index = index;
+	Speed = speedHz;
 
 	OnInit();
 
-    debug_printf("HardI2C_%d::Init %dHz \r\n", _index + 1, speedHz);
+	debug_printf("HardI2C_%d::Init %dHz \r\n", _index + 1, speedHz);
 }
 
 HardI2C::~HardI2C()
@@ -216,25 +216,25 @@ HardI2C::~HardI2C()
 	Close();
 }
 
-void HardI2C::SetPin(Pin scl , Pin sda )
+void HardI2C::SetPin(Pin scl, Pin sda)
 {
 	SCL.Set(scl);
 	SDA.Set(sda);
 }
 
-void HardI2C::GetPin(Pin* scl , Pin* sda )
+void HardI2C::GetPin(Pin* scl, Pin* sda)
 {
-	if(scl) *scl = SCL._Pin;
-	if(sda) *sda = SDA._Pin;
+	if (scl) *scl = SCL._Pin;
+	if (sda) *sda = SDA._Pin;
 }
 
 SoftI2C::SoftI2C(uint speedHz) : I2C()
 {
-	Speed	= speedHz;
-	_delay	= Sys.Clock / speedHz;
-	Retry	= 100;
-	Error	= 0;
-	Address	= 0x00;
+	Speed = speedHz;
+	_delay = Sys.Clock / speedHz;
+	Retry = 100;
+	Error = 0;
+	Address = 0x00;
 }
 
 SoftI2C::~SoftI2C()
@@ -242,7 +242,7 @@ SoftI2C::~SoftI2C()
 	Close();
 }
 
-void SoftI2C::SetPin(Pin scl , Pin sda )
+void SoftI2C::SetPin(Pin scl, Pin sda)
 {
 	//SCL.Set(scl);
 	//SDA.Set(sda);
@@ -253,10 +253,10 @@ void SoftI2C::SetPin(Pin scl , Pin sda )
 	SDA.Init(sda, false);
 }
 
-void SoftI2C::GetPin(Pin* scl , Pin* sda )
+void SoftI2C::GetPin(Pin* scl, Pin* sda)
 {
-	if(scl) *scl = SCL._Pin;
-	if(sda) *sda = SDA._Pin;
+	if (scl) *scl = SCL._Pin;
+	if (sda) *sda = SDA._Pin;
 }
 
 void SoftI2C::OnOpen()
@@ -329,7 +329,7 @@ void SoftI2C::Stop()
 // 等待Ack
 bool SoftI2C::WaitAck(int retry)
 {
-	if(!retry) retry = Retry;
+	if (!retry) retry = Retry;
 
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SDA = true;
@@ -337,9 +337,9 @@ bool SoftI2C::WaitAck(int retry)
 	Delay(1);
 
 	// 等待SDA低电平
-	while(SDA.ReadInput())
+	while (SDA.ReadInput())
 	{
-		if(retry-- <= 0)
+		if (retry-- <= 0)
 		{
 			//debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
 			return false;
@@ -382,9 +382,9 @@ void SoftI2C::WriteByte(byte dat)
 {
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SCL = false;
-	for(byte mask=0x80; mask>0; mask>>=1)
-    {
-		SDA = dat & mask;
+	for (byte mask = 0x80; mask > 0; mask >>= 1)
+	{
+		SDA = (dat & mask) > 0;
 		Delay(1);
 
 		// 置时钟线为高，通知被控器开始接收数据位
@@ -392,7 +392,7 @@ void SoftI2C::WriteByte(byte dat)
 		Delay(1);
 		SCL = false;
 		Delay(1);
-    }
+	}
 }
 
 byte SoftI2C::ReadByte()
@@ -400,19 +400,19 @@ byte SoftI2C::ReadByte()
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
 	SDA = true;
 	byte rs = 0;
-	for(byte mask=0x80; mask>0; mask>>=1)
+	for (byte mask = 0x80; mask > 0; mask >>= 1)
 	{
 		SCL = true;		// 置时钟线为高使数据线上数据有效
 		//Delay(2);
 		// 等SCL变高
 		uint retry = 50;
-		while(!SCL.ReadInput())
+		while (!SCL.ReadInput())
 		{
-			if(retry-- <= 0) break;
+			if (retry-- <= 0) break;
 			Delay(1);
 		}
 
-		if(SDA.ReadInput()) rs |= mask;	//读数据位
+		if (SDA.ReadInput()) rs |= mask;	//读数据位
 		SCL = false;	// 置时钟线为低，准备接收数据位
 		Delay(1);
 	}

@@ -238,11 +238,11 @@ void Dimmer::Set(byte vs[4])
 
 void Dimmer::SetPulse(byte vs[4])
 {
-	
+
 	auto& pwm = *_Pwm;
 	auto& cfg = *Config;
 	debug_printf("开始调节……\r\n");
-	if (cfg.Speed > 0&& !_Closing)
+	if (cfg.Speed > 0 && !_Closing)
 	{
 		// 等分计算步长
 		for (int i = 0; i < 4; i++)
@@ -345,7 +345,7 @@ void Dimmer::AnimateTask()
 	auto& cfg = *Config;
 	if (cfg.Speed <= 0) return;
 
-	bool on = _AnimateData[1];
+	bool on = _AnimateData[1] > 0;
 	byte vs1[4];
 	byte vs2[4];
 	Buffer bs1(vs1, 4);

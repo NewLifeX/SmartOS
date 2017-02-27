@@ -3,9 +3,9 @@
 #include "Core\Environment.h"
 
 #if defined(__CC_ARM)
-	#include <time.h>
+#include <time.h>
 #else
-	#include <ctime>
+#include <ctime>
 #endif
 
 #define TIME_DEBUG 0
@@ -21,30 +21,30 @@
 
 TTime::TTime()
 {
-	Seconds	= 0;
+	Seconds = 0;
 	//Ticks	= 0;
 #if defined(STM32F0) || defined(GD32F150)
-	Index	= 13;
+	Index = 13;
 #else
-	Div		= 0;
-	if(Sys.FlashSize > 0x80)
-		Index	= 5;
+	Div = 0;
+	if (Sys.FlashSize > 0x80)
+		Index = 5;
 	else
-		Index	= 1;	// 错开开关的 TIM3 背光
+		Index = 1;	// 错开开关的 TIM3 背光
 #endif
 	BaseSeconds = 0;
 
-	OnInit	= nullptr;
-	OnLoad	= nullptr;
-	OnSave	= nullptr;
-	OnSleep	= nullptr;
+	OnInit = nullptr;
+	OnLoad = nullptr;
+	OnSave = nullptr;
+	OnSleep = nullptr;
 }
 
 void TTime::SetTime(UInt64 sec)
 {
-	if(sec >= BASE_YEAR_US) sec -= BASE_YEAR_US;
+	if (sec >= BASE_YEAR_US) sec -= BASE_YEAR_US;
 
-	BaseSeconds = sec - Seconds;
+	BaseSeconds = (uint)(sec - Seconds);
 
 #if DEBUG
 	/*DateTime dt(sec);
@@ -53,77 +53,78 @@ void TTime::SetTime(UInt64 sec)
 #endif
 
 	// 保存到RTC
-	if(OnSave) OnSave();
+	if (OnSave) OnSave();
 }
 
 // 关键性代码，放到开头
 INROOT void TTime::Sleep(int ms, bool* running) const
 {
-    // 睡眠时间太短
-    if(ms <= 0) return;
+	// 睡眠时间太短
+	if (ms <= 0) return;
 
 	// 结束时间
-	Int64 end	= Current() + ms;
+	UInt64 end = Current() + ms;
 
 	// 较大的睡眠时间直接让CPU停下来
-	if(OnSleep && ms >= 10)
+	if (OnSleep && ms >= 10)
 	{
-		while(ms >= 10)
+		while (ms >= 10)
 		{
 			OnSleep(ms);
 
 			// 判断是否需要继续
-			if(running != nullptr && !*running) break;
+			if (running != nullptr && !*running) break;
 
 			// 重新计算剩下的时间
-			ms	= (int)(end - Current());
+			ms = (int)(end - Current());
 		}
 	}
-    // 睡眠时间太短
-    if(!ms || (running && !*running)) return;
+	// 睡眠时间太短
+	if (!ms || (running && !*running)) return;
 
 	// 空转
-    while(true)
+	while (true)
 	{
-		if(Current() >= end) break;
-		if(running != nullptr && !*running) break;
+		if (Current() >= end) break;
+		if (running != nullptr && !*running) break;
 	}
 }
 
 INROOT void TTime::Delay(int us) const
 {
-    // 睡眠时间太短
-    if(us <= 0) return;
+	// 睡眠时间太短
+	if (us <= 0) return;
 
 	// 较大的时间，按毫秒休眠
-	if(us >= 1000)
+	if (us >= 1000)
 	{
 		Sleep(us / 1000);
 		us %= 1000;
 	}
-    // 睡眠时间太短
-    if(!us) return;
+	// 睡眠时间太短
+	if (!us) return;
 
 	// 无需关闭中断，也能实现延迟
-	UInt64 ms	= Current();
-	uint ticks	= CurrentTicks() + UsToTicks(us);
-	uint max	= UsToTicks(1000 - 1);
-	if(ticks >= max)
+	UInt64 ms = Current();
+	uint ticks = CurrentTicks() + UsToTicks(us);
+	uint max = UsToTicks(1000 - 1);
+	if (ticks >= max)
 	{
 		ms++;
 		ticks -= max;
 	}
 
-    while(true)
+	while (true)
 	{
-		int n = Current() - ms;
-		if(n > 0) break;
-		if(n == 0 && CurrentTicks() >= ticks) break;
+		int n = (int)(Current() - ms);
+		if (n > 0) break;
+		if (n == 0 && CurrentTicks() >= ticks) break;
 	}
 }
 
 extern "C"
 {
+#ifndef _MSC_VER
 	// 获取系统启动后经过的毫秒数
 	clock_t clock(void)
 	{
@@ -133,34 +134,35 @@ extern "C"
 	// 实现C函数库的time函数
 	time_t time(time_t* sec)
 	{
-		uint s	= Time.BaseSeconds + Time.Seconds;
-		if(sec) *sec	= s;
+		uint s = Time.BaseSeconds + Time.Seconds;
+		if (sec) *sec = s;
 
 		return s;
 	}
+#endif
 }
 
 /************************************************ TimeWheel ************************************************/
 
 TimeWheel::TimeWheel(uint ms)
 {
-	Sleep	= 0;
+	Sleep = 0;
 	Reset(ms);
 }
 
 void TimeWheel::Reset(uint ms)
 {
-	Expire	= Time.Current() + + ms;
+	Expire = Time.Current() + ms;
 }
 
 // 是否已过期
 bool TimeWheel::Expired()
 {
 	UInt64 now = Time.Current();
-	if(now > Expire) return true;
+	if (now > Expire) return true;
 
 	// 睡眠，释放CPU
-	if(Sleep) Sys.Sleep(Sleep);
+	if (Sleep) Sys.Sleep(Sleep);
 
 	return false;
 }
@@ -169,21 +171,21 @@ bool TimeWheel::Expired()
 
 TimeCost::TimeCost()
 {
-	Start		= Time.Current();
-	StartTicks	= Time.CurrentTicks();
+	Start = Time.Current();
+	StartTicks = Time.CurrentTicks();
 }
 
 // 逝去的时间，微秒
 int TimeCost::Elapsed()
 {
-	int ts	= (int)(Time.CurrentTicks() - StartTicks);
-	int ms	= (int)(Time.Current() - Start);
+	int ts = (int)(Time.CurrentTicks() - StartTicks);
+	int ms = (int)(Time.Current() - Start);
 
 	// 有可能滴答部分不是完整的一圈
-	if(ts > 0) return ms * 1000 + Time.TicksToUs(ts);
+	if (ts > 0) return ms * 1000 + Time.TicksToUs(ts);
 
 	// 如果毫秒部分也没有，那么可能是微小错误偏差
-	if(ms <= 0) return 0;
+	if (ms <= 0) return 0;
 
 	// 如果滴答是负数，则干脆减去
 	return ms * 1000 - Time.TicksToUs(-ts);
@@ -191,6 +193,6 @@ int TimeCost::Elapsed()
 
 void TimeCost::Show(cstring format)
 {
-	if(!format) format = "执行 %dus\r\n";
+	if (!format) format = "执行 %dus\r\n";
 	debug_printf(format, Elapsed());
 }

@@ -270,7 +270,7 @@ bool parseDNSMSG(const Buffer& bs, Buffer& ip_from_dns)
 	/* Answer section */
 	for (int i = 0; i < hdr.ancount; i++)
 	{
-		if(!dns_answer(ms, ip_from_dns)) return -1;
+		if(!dns_answer(ms, ip_from_dns)) return false;
 	}
 
 	/* Name server (authority) section */

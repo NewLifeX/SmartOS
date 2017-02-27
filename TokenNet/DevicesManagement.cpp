@@ -565,7 +565,7 @@ void DevicesManagement::MaintainState()
 	if (Port->Status < 2) return;
 	SendDevicesIDs();
 
-	auto now = DateTime::Now().TotalSeconds();
+	uint now = DateTime::Now().TotalSeconds();
 
 	// 处理持久在线设备
 	byte len = Length();

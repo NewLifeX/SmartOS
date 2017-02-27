@@ -108,7 +108,7 @@ NetworkInterface* IOK027X::Create8266(Pin power)
 		esp->Mode = NetworkType::STA_AP;
 	}
 
-	if(!esp->Open())
+	if (!esp->Open())
 	{
 		delete esp;
 		return nullptr;
@@ -201,7 +201,7 @@ static void UnionPress(InputPort& port, bool down)
 void IOK027X::Union(Pin pin1, Pin pin2)
 {
 	Pin p[] = { pin1,pin2 };
-	for (size_t i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		if (p[i] == P0) continue;
 

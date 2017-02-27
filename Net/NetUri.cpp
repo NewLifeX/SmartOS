@@ -61,6 +61,7 @@ String NetUri::ToString() const
 		case NetType::Tcp:	str	+= "Tcp"; break;
 		case NetType::Udp:	str	+= "Udp"; break;
 		case NetType::Http:	str	+= "Http"; break;
+		default: break;
 	}
 
 	str	+= "://";

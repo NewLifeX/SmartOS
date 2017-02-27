@@ -19,7 +19,7 @@ bool DeviceMessage::GetBaseInfo(Stream& ms)
 {
 	BinaryPair bp(ms);
 	byte act;
-	if (!bp.Get("Action",act))return false;
+	if (!bp.Get("Action", act))return false;
 	Action = (DeviceAtions)act;
 	if (!bp.Get("ID", Id))return false;
 	return true;
@@ -40,7 +40,7 @@ bool DeviceMessage::GetMsgInfo(Stream&ms, Device* dv)
 	}
 	byte login = 0;
 	if (bp.Get("Online", login))
-		pDev->Logined = login;
+		pDev->Logined = login > 0;
 	bp.Get("Kind", pDev->Kind);
 	bp.Get("LastActive", pDev->LastTime);
 	bp.Get("RegisterTime", pDev->RegTime);
