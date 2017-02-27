@@ -228,7 +228,7 @@ void AP0802::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void OnInitNet(void* param)
+static void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0802*)param;
 
@@ -246,7 +246,7 @@ void AP0802::InitNet()
 /******************************** 2401 ********************************/
 
 
-int Fix2401(const Buffer& bs)
+static int Fix2401(const Buffer& bs)
 {
 	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度

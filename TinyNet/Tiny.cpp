@@ -56,7 +56,7 @@ void Setup(ushort code, cstring name, COM message, int baudRate)
 	Config::Current	= &Config::CreateFlash();
 }
 
-int Fix2401(const Buffer& bs)
+static int Fix2401(const Buffer& bs)
 {
 	//auto& bs	= *(Buffer*)param;
 	// 微网指令特殊处理长度

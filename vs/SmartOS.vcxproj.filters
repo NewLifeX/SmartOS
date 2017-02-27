@@ -462,5 +462,85 @@
     <ClCompile Include="..\TokenNet\TokenConfig.cpp">
       <Filter>TokenNet</Filter>
     </ClCompile>
+    <ClCompile Include="..\Config.cpp" />
+    <ClCompile Include="..\BootConfig.cpp" />
+    <ClCompile Include="..\TinyIP\Icmp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyIP\Tcp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyIP\TinyIP.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyIP\Udp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyIP\Arp.cpp">
+      <Filter>TinyIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\TimerTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\ADCTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\ArrayTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\AT45DBTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\BufferTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\CrcTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\DateTimeTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\DictionaryTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\EthernetTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\FlashTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\InvokeTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\IRTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\JsonTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\ListTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\MessageTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\NRF24L01Test.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\PulsePortTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\SerialTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\StringTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Test\ThreadTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Net\HttpClient.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

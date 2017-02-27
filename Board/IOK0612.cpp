@@ -95,7 +95,7 @@ void IOK0612::InitLeds()
 	}
 }
 
-void ButtonOnpress(InputPort* port, bool down, void* param)
+static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	if (port->PressTime > 1000)
 		IOK0612::OnLongPress(port, down);

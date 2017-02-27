@@ -103,7 +103,7 @@ void AP0801::InitLeds()
 	}
 }
 
-void ButtonOnpress(InputPort* port, bool down, void* param)
+static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	if (port->PressTime > 1000)
 		AP0801::Current->OnLongPress(port, down);
@@ -205,7 +205,7 @@ void AP0801::Register(uint offset, uint size, Handler hook)
 	ds.Register(offset, size, hook);
 }
 
-void OnInitNet(void* param)
+static void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0801*)param;
 
