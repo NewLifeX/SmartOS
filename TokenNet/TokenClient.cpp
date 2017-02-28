@@ -593,11 +593,17 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 	auto socket = ctrl->_Socket;
 	if (socket == nullptr) return false;
 
-	ctrl->Port->Close();
+	// 为了能够处理Tcp/Udp切换，重新建立连接
+
+	delete socket;
+	socket = Socket::CreateRemote(uri);
+	ctrl->_Socket = socket;
+
+	/*ctrl->Port->Close();
 	socket->Remote.Port = uri.Port;
 	// 让驱动随机拿到 Port
 	socket->Local.Port = 0;
-	socket->Server = uri.Host;
+	socket->Server = uri.Host;*/
 
 	//Cfg->ServerIP = socket->Remote.Address.Value;
 	// 马上开始重新握手
