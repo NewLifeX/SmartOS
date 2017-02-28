@@ -11,6 +11,8 @@ public:
 	virtual bool WriteBlock(uint address, const byte* buf, int len, bool inc) const;
     // 擦除块 （段地址）
     virtual bool EraseBlock(uint address) const;
+    // 指定块是否被擦除
+    virtual bool IsErased(uint address, int len) const;
 
 public:
 	Flash();

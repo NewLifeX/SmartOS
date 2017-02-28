@@ -109,12 +109,26 @@ bool ConfigBlock::Write(const Storage& storage, uint addr, const Buffer& bs)
 
 	// 先写入头部，然后写入数据
 	uint len = sizeof(ConfigBlock) - offsetof(ConfigBlock, Hash);
-	if(!storage.Write(addr, Buffer(&Hash, len))) return false;
-	if(bs.Length() > 0)
+	// 合并写入，减少擦除次数
+	if(Size <= 512 && len + bs.Length() <= 512)
 	{
-		uint len2 = bs.Length();
-		if(len2 > Size) len2 = Size;
-		if(!storage.Write(addr + len, bs.Sub(0, len2))) return false;
+		byte buf[512];
+		Buffer ds(buf, 512);
+		ds.Copy(0, &Hash, len);
+		ds.Copy(len, bs, 0, bs.Length());
+		ds.SetLength(len + bs.Length());
+
+		if(!storage.Write(addr, ds)) return false;
+	}
+	else
+	{
+		if(!storage.Write(addr, Buffer(&Hash, len))) return false;
+		if(bs.Length() > 0)
+		{
+			uint len2 = bs.Length();
+			if(len2 > Size) len2 = Size;
+			if(!storage.Write(addr + len, bs.Sub(0, len2))) return false;
+		}
 	}
 
     return true;

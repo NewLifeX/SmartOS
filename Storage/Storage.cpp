@@ -8,6 +8,11 @@
 	#define st_printf(format, ...)
 #endif
 
+WEAK bool ReadBlock(uint address, Buffer& bs)
+{
+	return bs.Copy(0, (byte*)address, -1);
+}
+
 bool BlockStorage::Read(uint address, Buffer& bs) const
 {
 	int len = bs.Length();
@@ -19,7 +24,10 @@ bool BlockStorage::Read(uint address, Buffer& bs) const
     st_printf("BlockStorage::Read(%p, %d, %p)\r\n", address, len, bs.GetBuffer());
 #endif
 
-	bs.Copy(0, (byte*)address, -1);
+	if(XIP)
+		bs.Copy(0, (byte*)address, -1);
+	else
+		ReadBlock(address, bs);
 
     return true;
 }
@@ -48,25 +56,28 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 	// 长度也必须2字节对齐
 	if(len & 0x01) len++;
 	// 比较跳过相同数据
-	while(len)
+	if(XIP)
 	{
-		if(*(ushort*)address != *(ushort*)buf) break;
+		while(len)
+		{
+			if(*(ushort*)address != *(ushort*)buf) break;
 
-		address	+= 2;
-		buf		+= 2;
-		len		-= 2;
-	}
-	// 从后面比较相同数据
-	while(len)
-	{
-		if(*(ushort*)(address + len - 2) != *(ushort*)(buf + len - 2)) break;
+			address	+= 2;
+			buf		+= 2;
+			len		-= 2;
+		}
+		// 从后面比较相同数据
+		while(len)
+		{
+			if(*(ushort*)(address + len - 2) != *(ushort*)(buf + len - 2)) break;
 
-		len		-= 2;
-	}
-	if(!len)
-	{
-		st_printf("数据相同，无需写入！\r\n");
-		return true;
+			len		-= 2;
+		}
+		if(!len)
+		{
+			st_printf("数据相同，无需写入！\r\n");
+			return true;
+		}
 	}
 
     // 如果没有读改写，直接执行
@@ -200,6 +211,8 @@ bool BlockStorage::IsErased(uint address, int len) const
 #if STORAGE_DEBUG
 	//st_printf("BlockStorage::IsErased(%p, %d)\r\n", address, len);
 #endif
+
+	if(!XIP) return false;
 
     ushort* p	= (ushort*)address;
     ushort* e	= (ushort*)(address + len);

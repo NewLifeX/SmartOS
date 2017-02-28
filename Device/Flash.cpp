@@ -8,6 +8,7 @@ Flash::Flash()
 	Block	= 0x400;
     Start	= 0x8000000;
 	ReadModifyWrite	= true;
+	XIP		= true;
 
 	OnInit();
 }

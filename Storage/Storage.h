@@ -21,6 +21,7 @@ public:
     uint Start;		// 起始地址
     int Block;		// 每块字节数
 	bool ReadModifyWrite;	// 是否读改写
+	bool XIP;		// 是否映射片上执行
 
     // 读取
     virtual bool Read(uint address, Buffer& bs) const;
