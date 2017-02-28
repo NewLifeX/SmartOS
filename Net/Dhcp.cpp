@@ -128,7 +128,7 @@ void Dhcp::Start()
 	uint randnum = (ran.Next() << 16) & 0xffff0000;
 	dhcpid = (uint)now + randnum;
 
-	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=0x%08x\r\n", ExpiredTime, dhcpid);
+	net_printf("Dhcp::Start ExpiredTime=%dms DhcpID=%p\r\n", ExpiredTime, dhcpid);
 
 	// 使用DHCP之前最好清空本地IP地址，KWF等软路由要求非常严格
 	// 严格路由要求默认请求的IP必须在本网段，否则不予处理
@@ -167,7 +167,7 @@ void Dhcp::Stop()
 	Running = false;
 	Sys.SetTask(taskID, false);
 
-	net_printf("Dhcp::Stop Result=%d DhcpID=0x%08x Times=%d MaxTimes=%d\r\n", Result, dhcpid, Times, MaxTimes);
+	net_printf("Dhcp::Stop Result=%d DhcpID=%p Times=%d MaxTimes=%d\r\n", Result, dhcpid, Times, MaxTimes);
 
 	auto& host = Host;
 	if (Result)

@@ -47,7 +47,7 @@ bool Flash::WriteBlock(uint address, const byte* buf, uint len, bool inc) const
             *s = *p;
             while (FLASH->SR & FLASH_SR_BSY);
             if (*s != *p) {
-                debug_printf("Flash::WriteBlock 失败 0x%08x, 写 0x%04x, 读 0x%04x\r\n", s, *p, *s);
+                debug_printf("Flash::WriteBlock 失败 %p, 写 0x%04x, 读 0x%04x\r\n", s, *p, *s);
                 return false;
             }
         }
@@ -72,7 +72,7 @@ bool Flash::EraseBlock(uint address) const
     if(address < Start || address + Block > Start + Size) return false;
 
 #if FLASH_DEBUG
-    debug_printf("\tFlash::EraseBlock(0x%08x)\r\n", address);
+    debug_printf("\tFlash::EraseBlock(%p)\r\n", address);
 #endif
 
     // 进行闪存编程操作时(写或擦除)，必须打开内部的RC振荡器(HSI)

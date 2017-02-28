@@ -71,7 +71,7 @@ void TestCrc()
 	uint crc	= Crc::Hash(bs, 0);
 	uint crc2	= Crc::Hash(bs, 4);
 	bs.Show();
-	debug_printf("\r\n\tSoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf("\r\n\tSoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 无初值时，两者一样
 
 	uint temp	= crc;
@@ -80,7 +80,7 @@ void TestCrc()
 	crc2	= Crc::Hash(Buffer(&crc2, 4));
 	ByteArray(&temp, 4).Show();
 	debug_printf("\r\n\t");
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 结果相同，但都不是0
 
 	// 连续测试。构建8字节，前面是data，后面是前面的crc
@@ -92,7 +92,7 @@ void TestCrc()
 	crc2	= Crc::Hash(bs2);
 	bs2.Show();
 	debug_printf("\r\n\t");
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 结果相同，但都不是0
 
 	// 实际应用中，先计算数据的校验，然后接着附加校验码部分，跟直接连续计算效果应该一致
@@ -101,16 +101,16 @@ void TestCrc()
 	crc		= Crc::Hash(bs3, data);
 	//crc2	= HardCrc(bs3, data);
 	bs3.Show();
-	debug_printf(" <= 0x%08x\r\n\t", data);
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf(" <= %p\r\n\t", data);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 结果不同，HardCrc结果跟8字节测试相同
 
 	ByteArray bs4(&temp, 4);
 	crc		= Crc::Hash(bs4, temp);
 	//crc2	= HardCrc(bs4, temp);
 	bs4.Show();
-	debug_printf(" <= 0x%08x\r\n\t", temp);
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf(" <= %p\r\n\t", temp);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 结果不同，SoftCrc结果跟8字节测试相同
 
 	// 对大数据块进行校验
@@ -121,7 +121,7 @@ void TestCrc()
 	crc2	= Crc::Hash(bs5);
 	bs5.Show();
 	debug_printf("\r\n\t");
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 无初值时，两者一样
 
 	temp = crc;
@@ -131,8 +131,8 @@ void TestCrc()
 	crc		= Crc::Hash(bs6, temp);
 	//crc2	= HardCrc(bs6, temp);
 	bs6.Show();
-	debug_printf(" <= 0x%08x\r\n\t", temp);
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf(" <= %p\r\n\t", temp);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 	// 有初值时，两者不一样
 
 	// 增量计算CRC
@@ -143,8 +143,8 @@ void TestCrc()
 	//crc2	= HardCrc(bs7, 0);
 	//crc2	= HardCrc(Buffer(&crc2, 4), crc2);
 	bs7.Show();
-	debug_printf(" <= 0x%08x\r\n\t", temp);
-	debug_printf("SoftCrc:0x%08x  HardCrc:0x%08x \r\n", crc, crc2);
+	debug_printf(" <= %p\r\n\t", temp);
+	debug_printf("SoftCrc:%p  HardCrc:%p \r\n", crc, crc2);
 
 	// 测试Crc16，数据和crc部分一起计算crc16，结果为0
     debug_printf("\r\n");

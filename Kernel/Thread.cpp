@@ -463,7 +463,7 @@ void Thread::Switch()
 
 	// 检查新栈的xPSR
 	//uint* psr = newStack + (STACK_Size >> 2) - 1;
-	//if(*psr != 0x01000000L) debug_printf("可能出错 xPSR=0x%08x\r\n", *psr);
+	//if(*psr != 0x01000000L) debug_printf("可能出错 xPSR=%p\r\n", *psr);
 
 	// 触发PendSV异常，引发上下文切换
 	OnSwitch();

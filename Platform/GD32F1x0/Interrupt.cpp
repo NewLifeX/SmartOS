@@ -40,10 +40,10 @@ extern "C"
 	*/
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
-		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x SP=0x%08x\r\n", registers[13], registers[14], registers[15], registers[16]);
+		debug_printf("LR=%p PC=%p PSR=%p SP=%p\r\n", registers[13], registers[14], registers[15], registers[16]);
 		for(int i=0; i<=12; i++)
 		{
-			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
+			debug_printf("R%d=%p\r\n", i, registers[i]);
 		}
 
 		TInterrupt::Halt();

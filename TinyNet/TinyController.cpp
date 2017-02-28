@@ -588,7 +588,7 @@ void TinyController::Loop()
 		Buffer bs(node.Data, node.Length);
 		if(node.Length <= 0 || node.Length > 32)
 		{
-			debug_printf("node=0x%08x Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", (uint)&node, node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
+			debug_printf("node=%p Length=%d Seq=0x%02X Times=%d Next=%d EndTime=%d\r\n", (uint)&node, node.Length, node.Seq, node.Times, (uint)node.Next, (uint)node.EndTime);
 		}
 		if(node.Mac[0])
 			Port->Write(bs, &node.Mac[1]);

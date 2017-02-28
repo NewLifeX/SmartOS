@@ -1,7 +1,7 @@
 ﻿#include "Storage.h"
 
-//#define STORAGE_DEBUG DEBUG
-#define STORAGE_DEBUG 0
+#define STORAGE_DEBUG DEBUG
+//#define STORAGE_DEBUG 0
 #if STORAGE_DEBUG
 	#define st_printf debug_printf
 #else
@@ -16,7 +16,7 @@ bool BlockStorage::Read(uint address, Buffer& bs) const
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    st_printf("BlockStorage::Read(0x%08x, %d, 0x%08x)\r\n", address, len, bs.GetBuffer());
+    st_printf("BlockStorage::Read(%p, %d, %p)\r\n", address, len, bs.GetBuffer());
 #endif
 
 	bs.Copy(0, (byte*)address, -1);
@@ -35,7 +35,7 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    st_printf("BlockStorage::Write(0x%08x, %d, 0x%08x)", address, len, buf);
+    st_printf("BlockStorage::Write(%p, %d, %p)", address, len, buf);
     int len2 = 0x10;
     if(len < len2) len2 = len;
     //st_printf("    Data: ");
@@ -148,7 +148,7 @@ bool BlockStorage::Memset(uint address, byte data, int len) const
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    st_printf("BlockStorage::Memset(0x%08x, %d, 0x%02x)\r\n", address, len, data);
+    st_printf("BlockStorage::Memset(%p, %d, 0x%02x)\r\n", address, len, data);
 #endif
 
 	// 这里还没有考虑超过一块的情况，将来补上
@@ -163,7 +163,7 @@ bool BlockStorage::Erase(uint address, int len) const
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-    st_printf("BlockStorage::Erase(0x%08x, %d)\r\n", address, len);
+    st_printf("BlockStorage::Erase(%p, %d)\r\n", address, len);
 #endif
 
 	if(len == 0) len = Start + Size - address;
@@ -198,7 +198,7 @@ bool BlockStorage::IsErased(uint address, int len) const
     if(address < Start || address + len > Start + Size) return false;
 
 #if STORAGE_DEBUG
-	//st_printf("BlockStorage::IsErased(0x%08x, %d)\r\n", address, len);
+	//st_printf("BlockStorage::IsErased(%p, %d)\r\n", address, len);
 #endif
 
     ushort* p	= (ushort*)address;

@@ -386,7 +386,7 @@ bool TcpSocket::Send(const Buffer& bs)
 #if NET_DEBUG
 	debug_printf("Tcp::Send ");
 	Remote.Show();
-	debug_printf(" buf=0x%08x len=%d ...... \r\n", bs.GetBuffer(), bs.Length());
+	debug_printf(" buf=%p len=%d ...... \r\n", bs.GetBuffer(), bs.Length());
 #endif
 
 	//Stream ms(sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(TCP_HEADER) + bs.Length());

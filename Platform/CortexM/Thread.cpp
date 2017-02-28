@@ -37,7 +37,7 @@ INROOT void Thread::CheckStack()
 
 	uint stackBottom = (uint)StackTop - StackSize;
 	if(p < stackBottom)
-		debug_printf("Thread::CheckStack %d %s Overflow, Stack 0x%08x < 0x%08x\r\n", ID, Name, p, stackBottom);
+		debug_printf("Thread::CheckStack %d %s Overflow, Stack %p < %p\r\n", ID, Name, p, stackBottom);
 	assert(stackBottom <= p, "StackSize");
 #endif
 }

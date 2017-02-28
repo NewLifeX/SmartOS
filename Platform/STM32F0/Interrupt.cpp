@@ -76,12 +76,12 @@ extern "C"
 {
 	void FAULT_SubHandler(uint* registers, uint exception)
 	{
-		debug_printf("LR=0x%08x PC=0x%08x PSR=0x%08x\r\n", registers[5], registers[6], registers[7]);
+		debug_printf("LR=%p PC=%p PSR=%p\r\n", registers[5], registers[6], registers[7]);
 		for(int i=0; i<=7; i++)
 		{
-			debug_printf("R%d=0x%08x\r\n", i, registers[i]);
+			debug_printf("R%d=%p\r\n", i, registers[i]);
 		}
-		debug_printf("R12=0x%08x\r\n", registers[4]);
+		debug_printf("R12=%p\r\n", registers[4]);
 
 		TInterrupt::Halt();
 	}

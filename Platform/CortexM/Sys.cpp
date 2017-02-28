@@ -288,13 +288,13 @@ void TSys::OnShowInfo() const
 #endif
 	uint end	= SRAM_BASE + (RAMSize << 10);
 	uint size	= end - start;
-	debug_printf("Heap :(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
+	debug_printf("Heap :(%p, %p) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
 #if defined(STM32F4)
 	if(start < 0x20000000) start = 0x20000000;
 #endif
 	//end = 0x20000000 + (RAMSize << 10);
 	size	= end - start;
-	debug_printf("Stack:(0x%08x, 0x%08x) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
+	debug_printf("Stack:(%p, %p) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
 
 	if(IsGD) debug_printf("ChipType:%p %s\r\n", *(uint*)0x40022100, (cstring)0x40022100);
 #endif
