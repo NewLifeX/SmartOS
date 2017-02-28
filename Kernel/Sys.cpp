@@ -189,7 +189,7 @@ INROOT void TSys::Delay(int us) const
 		if(Sys.Started && us != 0 && us >= 1000)
 		{
 			bool cancel	= false;
-			auto ct	= Task::Scheduler()->ExecuteForWait(us / 1000, cancel);
+			int ct	= Task::Scheduler()->ExecuteForWait(us / 1000, cancel);
 			ct	*= 1000;
 
 			if(ct >= us) return;
@@ -253,6 +253,7 @@ extern "C"
 		return rs;
 	}
 
+#ifndef _MSC_VER
     /* 重载fputc可以让用户程序使用printf函数 */
     int fputc(int ch, FILE *f)
     {
@@ -267,6 +268,7 @@ extern "C"
 #endif
         return ch;
     }
+#endif
 }
 
 /****************系统跟踪****************/

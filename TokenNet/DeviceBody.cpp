@@ -17,7 +17,7 @@ DeviceBody::DeviceBody(BodyManagement* mgmt)
 
 bool DeviceBody::SetSecDaStor(uint addr, byte * buf, int len)
 {
-	if (addr < Store.Data.Length() || addr > 0x8000000)
+	if (addr < (uint)Store.Data.Length() || addr > 0x8000000)
 	{
 		debug_printf("DeviceBody::SetSecDaStor 地址设置不合法\r\n");
 		return false;
@@ -31,7 +31,7 @@ bool DeviceBody::SetSecDaStor(uint addr, byte * buf, int len)
 
 bool DeviceBody::SetSecDaStor(DataStore * store)
 {
-	if (store->VirAddrBase + store->Data.Length() > 0x8000000 || store->VirAddrBase < Store.Data.Length())
+	if (store->VirAddrBase + store->Data.Length() > 0x8000000 || store->VirAddrBase < (uint)Store.Data.Length())
 	{
 		debug_printf(" DeviceBody::SetSecDaStor 虚拟地址不正确\r\n");
 	}
@@ -121,7 +121,7 @@ void DeviceBody::OnWrite(const TokenMessage & msg)
 		dm.Offset -= 64;
 		//rt	= dm.WriteData(dv.GetConfig(), false);
 	}
-	else if(Store2 && dm.Offset > Store2->VirAddrBase)
+	else if(Store2 && (uint)dm.Offset > Store2->VirAddrBase)
 	{
 		rt = dm.WriteData(*Store2, false);
 	}
@@ -156,7 +156,7 @@ void DeviceBody::OnRead(const TokenMessage & msg)
 		//Buffer bs(Cfg, Cfg->Length);
 		//rt = dm.ReadData(bs);
 	}
-	else if (Store2 && dm.Offset > Store2->VirAddrBase)
+	else if (Store2 && (uint)dm.Offset > Store2->VirAddrBase)
 	{
 		rt = dm.ReadData(*Store2);
 	}

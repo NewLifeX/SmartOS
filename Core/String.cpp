@@ -17,7 +17,9 @@
 #include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
+#ifndef _MSC_VER
 extern char* itoa(int value, char* string, int radix);
+#endif
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
@@ -189,7 +191,7 @@ bool String::CheckCapacity(int size)
 
 void* String::Alloc(int len)
 {
-	if (len <= sizeof(Arr))
+	if (len <= (int)sizeof(Arr))
 	{
 		_needFree = false;
 		return Arr;

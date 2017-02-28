@@ -7,7 +7,7 @@
 #include "PingMessage.h"
 #include "DataMessage.h"
 
-TinyClient* TinyClient::Current	= nullptr;
+TinyClient* TinyClient::Current = nullptr;
 
 static void TinyClientTask(void* param);
 //static void TinyClientReset();
@@ -17,64 +17,64 @@ static void TinyClientTask(void* param);
 
 TinyClient::TinyClient(TinyController* control)
 {
-	Control 		= control;
-	Control->GetKey	= Delegate2<byte, Buffer&>(&TinyClient::GetDeviceKey, this);
+	Control = control;
+	Control->GetKey = Delegate2<byte, Buffer&>(&TinyClient::GetDeviceKey, this);
 
-	Opened		= false;
-	Joining		= false;
-	Server		= 0;
-	Type		= Sys.Code;
+	Opened = false;
+	Joining = false;
+	Server = 0;
+	Type = Sys.Code;
 
-	LastSend	= 0;
-	LastActive	= 0;
+	LastSend = 0;
+	LastActive = 0;
 
-	Received	= nullptr;
-	Param		= nullptr;
+	Received = nullptr;
+	Param = nullptr;
 
-	Cfg			= nullptr;
+	Cfg = nullptr;
 
-	_TaskID		= 0;
+	_TaskID = 0;
 
-	NextReport	= 0;
-	Encryption	= false;
+	NextReport = 0;
+	Encryption = false;
 }
 
 void TinyClient::Open()
 {
-	if(Opened) return;
+	if (Opened) return;
 
 	// 使用另一个强类型参数的委托，事件函数里面不再需要做类型
-	Control->Received	= Delegate2<TinyMessage&, TinyController&>(&TinyClient::OnReceive, this);
+	Control->Received = Delegate2<TinyMessage&, TinyController&>(&TinyClient::OnReceive, this);
 	//Control->Param		= this;
 
-	TranID	= (int)Sys.Ms();
+	TranID = (int)Sys.Ms();
 
-	if(Cfg->Address > 0 && Cfg->Server > 0)
+	if (Cfg->Address > 0 && Cfg->Server > 0)
 	{
 		Control->Address = Cfg->Address;
 		Server = Cfg->Server;
 
 		//Password.Load(Cfg->Password, ArrayLength(Cfg->Password));
-		Password	= Cfg->Pass;
+		Password = Cfg->Pass;
 	}
 
-	HardCrc	= Crc::Hash16(Buffer(Sys.ID, 16));
-	if(Sys.Ver > 1) Encryption = true;
+	HardCrc = Crc::Hash16(Buffer(Sys.ID, 16));
+	if (Sys.Ver > 1) Encryption = true;
 
 	Control->Mode = 0;	// 客户端只接收自己的消息
 	Control->Open();
 
-	int t	= 5000;
-	if(Server) t	= Cfg->PingTime * 1000;
-	if(t < 1000) t = 1000;
+	int t = 5000;
+	if (Server) t = Cfg->PingTime * 1000;
+	if (t < 1000) t = 1000;
 	_TaskID = Sys.AddTask(TinyClientTask, this, 0, t, "微网客户端");
 
-	Opened	= true;
+	Opened = true;
 }
 
 void TinyClient::Close()
 {
-	if(!Opened) return;
+	if (!Opened) return;
 
 	Sys.RemoveTask(_TaskID);
 
@@ -83,7 +83,7 @@ void TinyClient::Close()
 
 	Control->Close();
 
-	Opened	= false;
+	Opened = false;
 }
 
 /******************************** 收发中心 ********************************/
@@ -93,10 +93,10 @@ bool TinyClient::Send(TinyMessage& msg)
 	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
-	if(!Server) return false;
+	if (!Server) return false;
 
 	// 设置网关地址
-	if(!msg.Dest) msg.Dest = Server;
+	if (!msg.Dest) msg.Dest = Server;
 
 	return Control->Send(msg);
 }
@@ -107,9 +107,9 @@ bool TinyClient::Reply(TinyMessage& msg)
 	assert(Control, "令牌控制器未初始化");
 
 	// 未组网时，禁止发其它消息。组网消息通过广播发出，不经过这里
-	if(!Server) return false;
+	if (!Server) return false;
 
-	if(!msg.Dest) msg.Dest = Server;
+	if (!msg.Dest) msg.Dest = Server;
 
 	return Control->Reply(msg);
 }
@@ -117,33 +117,33 @@ bool TinyClient::Reply(TinyMessage& msg)
 void TinyClient::OnReceive(TinyMessage& msg, TinyController& ctrl)
 {
 	// 不是组网消息。不是被组网网关消息，不受其它消息设备控制.
-	if(msg.Code != 0x01 && Server != msg.Src) return;
+	if (msg.Code != 0x01 && Server != msg.Src) return;
 
-	if(msg.Src == Server) LastActive = Sys.Ms();
+	if (msg.Src == Server) LastActive = Sys.Ms();
 
-	switch(msg.Code)
+	switch (msg.Code)
 	{
-		case 0x01:
-			OnJoin(msg);
-			break;
-		case 0x02:
-			OnDisjoin(msg);
-			break;
-		case 0x03:
-			OnPing(msg);
-			break;
-		case 0x05:
-		case 0x15:
-			OnRead(msg);
-			break;
-		case 0x06:
-		case 0x16:
-			OnWrite(msg);
-			break;
+	case 0x01:
+		OnJoin(msg);
+		break;
+	case 0x02:
+		OnDisjoin(msg);
+		break;
+	case 0x03:
+		OnPing(msg);
+		break;
+	case 0x05:
+	case 0x15:
+		OnRead(msg);
+		break;
+	case 0x06:
+	case 0x16:
+		OnWrite(msg);
+		break;
 	}
 
 	// 消息转发
-	if(Received) Received(this, msg, Param);
+	if (Received) Received(this, msg, Param);
 }
 
 /******************************** 数据区 ********************************/
@@ -154,26 +154,26 @@ void TinyClient::OnReceive(TinyMessage& msg, TinyController& ctrl)
 */
 void TinyClient::OnRead(const TinyMessage& msg)
 {
-	if(msg.Reply) return;
-	if(msg.Length < 2) return;
+	if (msg.Reply) return;
+	if (msg.Length < 2) return;
 
-	auto rs	= msg.CreateReply();
-	auto ms	= rs.ToStream();
+	auto rs = msg.CreateReply();
+	auto ms = rs.ToStream();
 
 	DataMessage dm(msg, &ms);
 
-	bool rt	= true;
-	if(dm.Offset < 64)
-		rt	= dm.ReadData(Store);
-	else if(dm.Offset < 128)
+	bool rt = true;
+	if (dm.Offset < 64)
+		rt = dm.ReadData(Store);
+	else if (dm.Offset < 128)
 	{
-		dm.Offset	-= 64;
+		dm.Offset -= 64;
 		Buffer bs(Cfg, Cfg->Length);
-		rt	= dm.ReadData(bs);
+		rt = dm.ReadData(bs);
 	}
 
-	rs.Error	= !rt;
-	rs.Length	= ms.Position();
+	rs.Error = !rt;
+	rs.Length = ms.Position();
 
 	Reply(rs);
 }
@@ -185,34 +185,34 @@ void TinyClient::OnRead(const TinyMessage& msg)
 */
 void TinyClient::OnWrite(const TinyMessage& msg)
 {
-	if(msg.Reply) return;
-	if(msg.Length < 2) return;
+	if (msg.Reply) return;
+	if (msg.Length < 2) return;
 
-	auto rs	= msg.CreateReply();
-	auto ms	= rs.ToStream();
+	auto rs = msg.CreateReply();
+	auto ms = rs.ToStream();
 
 	DataMessage dm(msg, &ms);
 
-	bool rt	= true;
-	if(dm.Offset < 64)
+	bool rt = true;
+	if (dm.Offset < 64)
 	{
-		rt	= dm.WriteData(Store, true);
+		rt = dm.WriteData(Store, true);
 	}
-	else if(dm.Offset < 128)
+	else if (dm.Offset < 128)
 	{
-		dm.Offset	-= 64;
+		dm.Offset -= 64;
 		Buffer bs(Cfg, Cfg->Length);
-		rt	= dm.WriteData(bs, true);
+		rt = dm.WriteData(bs, true);
 
 		Cfg->Save();
 	}
 
-	rs.Error	= !rt;
-	rs.Length	= ms.Position();
+	rs.Error = !rt;
+	rs.Length = ms.Position();
 
 	Reply(rs);
 
-	if(dm.Offset >= 64 && dm.Offset < 128)
+	if (dm.Offset >= 64 && dm.Offset < 128)
 	{
 		debug_printf("\r\n 配置区被修改，200ms后重启\r\n");
 		Sys.Sleep(200);
@@ -223,36 +223,36 @@ void TinyClient::OnWrite(const TinyMessage& msg)
 	Sys.SetTask(_TaskID, true, 500);
 }
 
-bool TinyClient::Report(uint offset, byte dat)
+bool TinyClient::Report(int offset, byte dat)
 {
 	TinyMessage msg;
-	msg.Code	= 0x06;
+	msg.Code = 0x06;
 
 	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(dat);
-	msg.Length	= ms.Position();
+	msg.Length = ms.Position();
 
 	return Send(msg);
 }
 
-bool TinyClient::Report(uint offset, const Buffer& bs)
+bool TinyClient::Report(int offset, const Buffer& bs)
 {
 	TinyMessage msg;
-	msg.Code	= 0x06;
+	msg.Code = 0x06;
 
 	auto ms = msg.ToStream();
 	ms.WriteEncodeInt(offset);
 	ms.Write(bs);
-	msg.Length	= ms.Position();
+	msg.Length = ms.Position();
 
 	return Send(msg);
 }
 
-void TinyClient::ReportAsync(uint offset,uint length)
+void TinyClient::ReportAsync(int offset, int length)
 {
 	//if(this == nullptr) return;
-	if(offset + length >= Store.Data.Length()) return;
+	if (offset + length >= Store.Data.Length()) return;
 
 	NextReport = offset;
 	ReportLength = length;
@@ -265,17 +265,17 @@ void TinyClient::ReportAsync(uint offset,uint length)
 void TinyClientTask(void* param)
 {
 	auto client = (TinyClient*)param;
-	uint offset = client->NextReport;
-	uint len	= client->ReportLength;
+	int offset = client->NextReport;
+	int len = client->ReportLength;
 	assert(offset == 0 || offset < 0x10, "自动上报偏移量异常！");
 
-	if(offset)
+	if (offset)
 	{
 		// 检查索引，否则数组越界
 		auto& bs = client->Store.Data;
-		if(bs.Length() > offset + len)
+		if (bs.Length() > offset + len)
 		{
-			if(len == 1)
+			if (len == 1)
 				client->Report(offset, bs[offset]);
 			else
 			{
@@ -286,8 +286,8 @@ void TinyClientTask(void* param)
 		client->NextReport = 0;
 		return;
 	}
-	if(client->Server == 0 || client->Joining) client->Join();
-	if(client->Server != 0) client->Ping();
+	if (client->Server == 0 || client->Joining) client->Join();
+	if (client->Server != 0) client->Ping();
 }
 
 void TinyClient::GetDeviceKey(byte id, Buffer& key)
@@ -313,10 +313,10 @@ void TinyClient::Join()
 
 	// 组网版本不是系统版本，而是为了做新旧版本组网消息兼容的版本号
 	//dm.Version	= Sys.Version;
-	dm.Kind		= Type;
+	dm.Kind = Type;
 	//dm.HardID.Copy(Sys.ID, 16);
-	dm.HardID	= Sys.ID;
-	dm.TranID	= TranID;
+	dm.HardID = Sys.ID;
+	dm.TranID = TranID;
 	dm.WriteMessage(msg);
 	//dm.Show(true);
 
@@ -327,7 +327,7 @@ void TinyClient::Join()
 bool TinyClient::OnJoin(const TinyMessage& msg)
 {
 	// 客户端只处理Discover响应
-	if(!msg.Reply || msg.Error) return true;
+	if (!msg.Reply || msg.Error) return true;
 
 	TS("TinyClient::OnJoin");
 
@@ -337,34 +337,34 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 	dm.Show(true);
 
 	// 校验不对
-	if(TranID != dm.TranID)
+	if (TranID != dm.TranID)
 	{
 		debug_printf("组网响应序列号 0x%04X 不等于内部序列号 0x%04X \r\n", dm.TranID, TranID);
 		return true;
 	}
 
-	Joining		= false;
+	Joining = false;
 
-	Cfg->SoftVer	= dm.Version;
+	Cfg->SoftVer = dm.Version;
 	// 小于2的版本不加密
-	if(dm.Version < 2) Encryption	= false;
+	if (dm.Version < 2) Encryption = false;
 
-	Cfg->Address	= dm.Address;
-	Control->Address	= dm.Address;
-	Password	= dm.Password;
-	Cfg->Pass	= dm.Password;
+	Cfg->Address = dm.Address;
+	Control->Address = dm.Address;
+	Password = dm.Password;
+	Cfg->Pass = dm.Password;
 	//Password.Copy(0, dm.Password, 0, -1);
 	//Password.Save(Cfg->Password, ArrayLength(Cfg->Password));
 
 	// 记住服务端地址
 	Server = dm.Server;
-	Cfg->Server		= dm.Server;
-	if(Cfg->Channel != dm.Channel)
+	Cfg->Server = dm.Server;
+	if (Cfg->Channel != dm.Channel)
 	{
-	   //todo 设置zigbee 通道
+		//todo 设置zigbee 通道
 	}
-	Cfg->Channel	= dm.Channel;
-	Cfg->Speed		= dm.Speed * 10;
+	Cfg->Channel = dm.Channel;
+	Cfg->Speed = dm.Speed * 10;
 
 	// 服务端组网密码，退网使用
 	//Cfg->Mac[0]		= dm.HardID.Length();
@@ -378,10 +378,10 @@ bool TinyClient::OnJoin(const TinyMessage& msg)
 #endif
 
 	// 取消Join任务，启动Ping任务
-	ushort time		= Cfg->PingTime;
-	if(time < 5)	time	= 5;
-	if(time > 60)	time	= 60;
-	Cfg->PingTime	= time;
+	ushort time = Cfg->PingTime;
+	if (time < 5)	time = 5;
+	if (time > 60)	time = 60;
+	Cfg->PingTime = (byte)time;
 	Sys.SetTaskPeriod(_TaskID, time * 1000);
 
 	// 组网成功更新一次最后活跃时间
@@ -401,11 +401,11 @@ void TinyClient::DisJoin()
 	TS("TinyClient::DisJoin");
 
 	TinyMessage msg;
-	msg.Code	= 2;
+	msg.Code = 2;
 
-	auto ms		= msg.ToStream();
+	auto ms = msg.ToStream();
 	ms.Write(HardCrc);
-	msg.Length	= ms.Position();
+	msg.Length = ms.Position();
 
 	Send(msg);
 }
@@ -413,14 +413,14 @@ void TinyClient::DisJoin()
 // 离网
 bool TinyClient::OnDisjoin(const TinyMessage& msg)
 {
-	if(msg.Length < 2) return false;
+	if (msg.Length < 2) return false;
 
 	TS("TinyClient::OnDisJoin");
 
-	auto ms		= msg.ToStream();
-	ushort crc	= ms.ReadUInt16();
+	auto ms = msg.ToStream();
+	ushort crc = ms.ReadUInt16();
 
-	if(crc != HardCrc)
+	if (crc != HardCrc)
 	{
 		debug_printf("退网密码 0x%04X 不等于本地密码 0x%04X \r\n", crc, HardCrc);
 		return false;
@@ -428,8 +428,8 @@ bool TinyClient::OnDisjoin(const TinyMessage& msg)
 
 	Cfg->Clear();
 
-    Sys.Sleep(3000);
-    Sys.Reboot();
+	Sys.Sleep(3000);
+	Sys.Reboot();
 
 	return true;
 }
@@ -441,7 +441,7 @@ void TinyClient::Ping()
 
 	/*ushort off = (Cfg->OfflineTime)*5;
 	//debug_printf(" TinyClient::Ping  Cfg->OfflineTime:%d\r\n", Cfg->OfflineTime);
-    ushort now = Sys.Seconds();
+	ushort now = Sys.Seconds();
 
 	if(off < 10) off = 30;
 
@@ -470,19 +470,19 @@ void TinyClient::Ping()
 
 	debug_printf("TinyClient::Ping");
 	// 没有服务端时不要上报
-	if(!Server) return;
+	if (!Server) return;
 
 	// 30秒内发过数据，不再发送心跳
-	if(LastSend > 0 && LastSend + 30000 > Sys.Ms()) return;
+	if (LastSend > 0 && LastSend + 30000 > Sys.Ms()) return;
 
 	TinyMessage msg;
 	msg.Code = 3;
 
 	auto ms = msg.ToStream();
 	PingMessage pm;
-	pm.MaxSize	= ms.Capacity();
+	pm.MaxSize = ms.Capacity();
 	uint len = Control->Port->MaxSize - TinyMessage::MinSize;
-	if(pm.MaxSize > len) pm.MaxSize = len;
+	if (pm.MaxSize > len) pm.MaxSize = len;
 
 	pm.WriteData(ms, 0x01, Store.Data);
 	pm.WriteHardCrc(ms, HardCrc);
@@ -496,35 +496,35 @@ void TinyClient::Ping()
 bool TinyClient::OnPing(const TinyMessage& msg)
 {
 	// 仅处理来自网关的消息
-	if(Server == 0 || Server != msg.Src) return true;
+	if (Server == 0 || Server != msg.Src) return true;
 
 	TS("TinyClient::OnPing");
 
 	// 忽略响应消息
-	if(!msg.Reply)return true;
+	if (!msg.Reply)return true;
 
-	if(msg.Src != Server) return true;
+	if (msg.Src != Server) return true;
 
 	// 处理消息
-	auto ms	= msg.ToStream();
+	auto ms = msg.ToStream();
 	PingMessage pm;
-	pm.MaxSize	= Control->Port->MaxSize - TinyMessage::MinSize;
+	pm.MaxSize = Control->Port->MaxSize - TinyMessage::MinSize;
 	// 子操作码
-	while(ms.Remain())
+	while (ms.Remain())
 	{
-		switch(ms.ReadByte())
+		switch (ms.ReadByte())
 		{
-			case 0x04:
+		case 0x04:
+		{
+			uint seconds = 0;
+			if (pm.ReadTime(ms, seconds))
 			{
-				uint seconds = 0;
-				if(pm.ReadTime(ms, seconds))
-				{
-					((TTime&)Time).SetTime(seconds);
-				}
-				break;
+				((TTime&)Time).SetTime(seconds);
 			}
-			default:
-				break;
+			break;
+		}
+		default:
+			break;
 		}
 	}
 

@@ -69,8 +69,8 @@ public:
 
 ShunCom::ShunCom()
 {
-	Led			= nullptr;
-	ExternalCfg	= nullptr;
+	Led = nullptr;
+	ExternalCfg = nullptr;
 }
 
 void ShunCom::Init(ITransport* port, Pin rst)
@@ -79,43 +79,43 @@ void ShunCom::Init(ITransport* port, Pin rst)
 
 	Set(port);
 	//MaxSize	= 82;
-	MaxSize		= 64;
-	AddrLength	= 0;
+	MaxSize = 64;
+	AddrLength = 0;
 
-	if(rst != P0) Reset.Init(rst, true);
+	if (rst != P0) Reset.Init(rst, true);
 }
 
 bool ShunCom::OnOpen()
 {
-	if(ExternalCfg)ExternalCfg(this);
+	if (ExternalCfg)ExternalCfg(this);
 
 	debug_printf("\r\nShunCom::Open \r\n");
 
-    debug_printf("    Sleep : ");
+	debug_printf("    Sleep : ");
 	Sleep.Open();
-    debug_printf("    Config: ");
+	debug_printf("    Config: ");
 	Config.Open();
-    debug_printf("    Reset : ");
+	debug_printf("    Reset : ");
 	Reset.Open();
-    debug_printf("    Power : ");
+	debug_printf("    Power : ");
 	Power.Open();
 
-	Power	= true;
-	Sleep	= false;
-	Config	= false;
-	Reset	= false;
+	Power = true;
+	Sleep = false;
+	Config = false;
+	Reset = false;
 
 	//debug_printf("Power=%d Sleep=%d Config=%d Reset=%d MinSize=%d\r\n", Power.Read(), Sleep.Read(), Config.Read(), Reset.Read(), MinSize);
 
-	Port->MinSize	= MinSize;
+	Port->MinSize = MinSize;
 
 	return PackPort::OnOpen();
 }
 
 void ShunCom::OnClose()
 {
-	Power	= false;
-	Reset	= true;
+	Power = false;
+	Reset = true;
 
 	Power.Close();
 	Sleep.Close();
@@ -131,10 +131,10 @@ void ShunCom::ChangePower(int level)
 {
 	//Power	= false;
 
-	Sleep	= true;
-	Config	= false;
+	Sleep = true;
+	Config = false;
 
-	Reset	= true;
+	Reset = true;
 
 	//Power* pwr	= dynamic_cast<Power*>(Port);
 	//if(pwr) pwr->ChangePower(level);
@@ -144,16 +144,16 @@ void ShunCom::ChangePower(int level)
 // 引发数据到达事件
 uint ShunCom::OnReceive(Buffer& bs, void* param)
 {
-	if(Led) Led->Write(1000);
+	if (Led) Led->Write(1000);
 
 	//debug_printf("zigbee接收\r\n");
 	//bs.Show(true);
 
-	if(!AddrLength)
-     return ITransport::OnReceive(bs, param);
+	if (!AddrLength)
+		return ITransport::OnReceive(bs, param);
 
 	// 取出地址
-	byte* addr	= bs.GetBuffer();
+	byte* addr = bs.GetBuffer();
 	Buffer bs2(addr + AddrLength, bs.Length() - AddrLength);
 	//debug_printf("zigbee接收\r\n");
 	//bs2.Show(true);
@@ -166,7 +166,7 @@ bool ShunCom::OnWriteEx(const Buffer& bs, const void* opt)
 	//debug_printf("zigbee发送\r\n");
 	//bs.Show(true);
 
-	if(!AddrLength || !opt) return OnWrite(bs);
+	if (!AddrLength || !opt) return OnWrite(bs);
 	// 加入地址
 	ByteArray bs2;
 	bs2.Copy(0, opt, AddrLength);
@@ -181,22 +181,22 @@ bool ShunCom::OnWriteEx(const Buffer& bs, const void* opt)
 // 进入配置模式
 bool ShunCom::EnterConfig()
 {
-	if(!Open()) return false;
+	if (!Open()) return false;
 
 	Sys.Sleep(2000);
 
-	Config	= true;
+	Config = true;
 	Sys.Sleep(1000);
-	Config	= false;
+	Config = false;
 
 	ByteArray rs1;
 
 	// 清空串口缓冲区
-	while(true)
+	while (true)
 	{
 		ByteArray rs1;
 		Read(rs1);
-		if(rs1.Length() == 0) break;
+		if (rs1.Length() == 0) break;
 	}
 
 	Sys.Sleep(1000);
@@ -206,59 +206,59 @@ bool ShunCom::EnterConfig()
 // 退出配置模式
 void ShunCom::ExitConfig()
 {
-	if(!Open()) return;
+	if (!Open()) return;
 
 	ShunComMessage msg(0x0041);
-	msg.Length	= 1;
-	msg.Data[0]	= 0x00;
+	msg.Length = 1;
+	msg.Data[0] = 0x00;
 
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunComs重启生效\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 
 }
 void ShunCom::PrintSrc(bool flag)
 {
 	ShunComMessage msg(0x0921);
-	if(flag)
+	if (flag)
 	{
-		msg.Set(0x040E,(byte)2);
+		msg.Set(0x040E, (byte)2);
 	}
 	else
 	{
-		msg.Set(0x040E,(byte)1);
+		msg.Set(0x040E, (byte)1);
 	}
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom设置源地址\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 
 }
 
 void ShunCom::EraConfig()
 {
-	if(!Open()) return;
+	if (!Open()) return;
 
 	ShunComMessage msg(0x0921);
-	msg.Set(0x0003,(byte)02);
+	msg.Set(0x0003, (byte)02);
 
 	MemoryStream ms;
 	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom擦除组网信息\r\n");
 	buf.Show();
 	//Write(buf);
-    //debug_printf("\r\n");
+	//debug_printf("\r\n");
 }
 
 // 读取配置信息
 void ShunCom::ShowConfig()
 {
-	if(!Open()) return;
+	if (!Open()) return;
 
 	ShunComMessage msg(0x1521);
 
@@ -271,7 +271,7 @@ void ShunCom::ShowConfig()
 
 	ByteArray bs;
 	Read(bs);
-    debug_printf("ShunCom配置信息\r\n");
+	debug_printf("ShunCom配置信息\r\n");
 	bs.Show(true);
 }
 
@@ -285,7 +285,7 @@ void ShunCom::SetDevice(byte kind)
 	//debug_printf("ShunCom配置设备类型\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 }
 
 // 设置无线频点，注意大小端，ShunCom是小端存储
@@ -296,11 +296,11 @@ void ShunCom::SetChannel(byte chn)
 	msg.Set(0x0084, (uint)(0x01 << chn));
 
 	MemoryStream ms;
-	auto buf=msg.ToArray(ms);
+	auto buf = msg.ToArray(ms);
 	//debug_printf("ShunCom配置无线频点\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 }
 
 // 进入配置PanID,同一网络PanID必须相同
@@ -314,7 +314,7 @@ void ShunCom::SetPanID(ushort id)
 	//debug_printf("ShunCom配置PanID\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 }
 
 // 设置发送模式00为广播、01为主从模式、02为点对点模式
@@ -328,7 +328,7 @@ void ShunCom::SetSend(byte mode)
 	//debug_printf("ShunCom配置设备主从模式\r\n");
 	//buf.Show();
 	Write(buf);
-   // debug_printf("\r\n");
+	// debug_printf("\r\n");
 }
 //还原zigBee默认配置
 void ShunCom::ShunComReset()
@@ -345,57 +345,57 @@ void ShunCom::ShunComReset()
 }
 ShunComMessage::ShunComMessage(ushort code)
 {
-	Frame	= 0xFE;
-	Code	= code;
-	Length	= 0;
+	Frame = 0xFE;
+	Code = code;
+	Length = 0;
 }
 
 bool ShunComMessage::Read(Stream& ms)
 {
-	byte magic	= ms.ReadByte();
-	if(magic != 0xFE) return false;
+	byte magic = ms.ReadByte();
+	if (magic != 0xFE) return false;
 
-	Frame	= magic;
-	Length	= ms.ReadByte();
-	Code	= ms.ReadUInt16();
-	
+	Frame = magic;
+	Length = ms.ReadByte();
+	Code = ms.ReadUInt16();
+
 	Buffer bs(Data, sizeof(Data));
-	if(Length > 4)
+	if (Length > 4)
 	{
-		Kind	= ms.ReadUInt16();
-		Size	= _REV16(ms.ReadUInt16());
+		Kind = ms.ReadUInt16();
+		Size = _REV16(ms.ReadUInt16());
 		assert(2 + 2 + Size == Length, "ShunComMessage::Read");
 		//ms.Read(Data, 0, Size);
 		bs.SetLength(Size);
 	}
-	else if(Length > 0)
+	else if (Length > 0)
 	{
 		//ms.Read(Data, 0, Length);
 		bs.SetLength(Length);
 	}
 	ms.Read(bs);
 	// 不做校验检查，不是很重要
-	Checksum	= ms.ReadByte();
+	Checksum = ms.ReadByte();
 
 	return true;
 }
 
 void ShunComMessage::Write(Stream& ms) const
 {
-	byte* p	= ms.Current();
+	byte* p = ms.Current();
 	ms.Write(Frame);
 	ms.Write(Length);
 	ms.Write(Code);
 
 	Buffer bs((void*)Data, sizeof(Data));
-	if(Length > 4)
+	if (Length > 4)
 	{
 		ms.Write(Kind);
 		ms.Write((ushort)_REV16(Size));
 		//ms.Write(Data, 0, Size);
 		bs.SetLength(Size);
 	}
-	else if(Length > 0)
+	else if (Length > 0)
 	{
 		//ms.Write(Data, 0, Length);
 		bs.SetLength(Length);
@@ -403,8 +403,8 @@ void ShunComMessage::Write(Stream& ms) const
 	ms.Write(bs);
 	//ms.Write(Checksum);
 	// 计算校验
-	byte sum	= 0;
-	while(p++ < ms.Current()-1) sum^= *p;
+	byte sum = 0;
+	while (p++ < ms.Current() - 1) sum ^= *p;
 	ms.Write(sum);
 
 }
@@ -425,41 +425,41 @@ ByteArray ShunComMessage::ToArray() const
 ByteArray ShunComMessage::ToArray(Stream& ms)
 {
 	Write(ms);
-    ByteArray bs(ms.GetBuffer(), ms.Position());
+	ByteArray bs(ms.GetBuffer(), ms.Position());
 	return bs;
 }
 void ShunComMessage::Set(ushort kind, const Buffer& bs)
 {
-	Kind	= kind;
+	Kind = kind;
 	bs.CopyTo(0, Data, -1);
 
-	Length	= 2 + 2 + bs.Length();
+	Length = 2 + 2 + bs.Length();
 }
 
 void ShunComMessage::Set(ushort kind, byte dat)
 {
-	Kind	= kind;
-	Data[0]	= dat;
-	Size	= 1;
-	Length	= 2 + 2 + Size;
+	Kind = kind;
+	Data[0] = dat;
+	Size = 1;
+	Length = 2 + 2 + Size;
 }
 
 void ShunComMessage::Set(ushort kind, ushort dat)
 {
-	Kind	= kind;
-	Data[0]	= dat;
-	Data[1]	= dat >> 8;
-	Size	= 2;
-	Length	= 2 + 2 + Size;
+	Kind = kind;
+	Data[0] = dat & 0xFF;
+	Data[1] = dat >> 8;
+	Size = 2;
+	Length = 2 + 2 + Size;
 }
 
 void ShunComMessage::Set(ushort kind, uint dat)
 {
-	Kind	= kind;
-	Data[0]	= dat;
-	Data[1]	= dat >> 8;
-	Data[2]	= dat >> 16;
-	Data[3]	= dat >> 24;
-	Size	= 4;
-	Length	= 2 + 2 + Size;
+	Kind = kind;
+	Data[0] = dat;
+	Data[1] = dat >> 8;
+	Data[2] = dat >> 16;
+	Data[3] = dat >> 24;
+	Size = 4;
+	Length = 2 + 2 + Size;
 }

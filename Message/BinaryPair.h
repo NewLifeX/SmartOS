@@ -36,9 +36,9 @@ public:
 	// 字典名值对操作
 	IDictionary GetAll() const;
 	bool Set(const IDictionary& dic);
-	
+
 private:
-	uint	_p;	// 写入时的位置
+	int	_p;	// 写入时的位置
 	Stream*	_s;
 	bool	_canWrite;
 };

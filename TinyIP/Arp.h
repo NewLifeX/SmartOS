@@ -12,7 +12,7 @@ private:
 	{
 		IPAddr	IP;
 		MacAddr	Mac;
-		uint	Time;	// 生存时间，秒
+		int	Time;	// 生存时间，秒
 	}ARP_ITEM;
 
 	ARP_ITEM* _Arps;	// Arp表，动态分配

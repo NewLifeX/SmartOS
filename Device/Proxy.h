@@ -53,9 +53,9 @@ public:
 
 	SerialPort port;
 
-	ushort	parity;
-	ushort	dataBits;
-	ushort	stopBits;
+	byte	parity;
+	byte	dataBits;
+	byte	stopBits;
 	int		baudRate;
 
 	virtual bool OnSetConfig(Dictionary<cstring, int>& config, String& str) override;

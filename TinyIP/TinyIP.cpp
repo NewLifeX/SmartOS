@@ -56,7 +56,7 @@ uint TinyIP::Fetch(Stream& ms)
 	Buffer bs(ms.Current(), ms.Remain());
 	int len = _port->Read(bs);
 	// 如果缓冲器里面没有数据则转入下一次循环
-	if(len < sizeof(ETH_HEADER)) return 0;
+	if(len < (int)sizeof(ETH_HEADER)) return 0;
 
 	// 位置指针后移
 	//ms.Seek(-len);
@@ -223,7 +223,7 @@ bool TinyIP::OnOpen()
 	task->MaxDeepth = 2;	// 以太网允许重入，因为有时候在接收里面等待下一次接收
 
 #if NET_DEBUG
-	uint us = Sys.Ms() - _StartTime;
+	int us = (int)(Sys.Ms() - _StartTime);
 	debug_printf("TinyIP Ready! Cost:%dms\r\n\r\n", us / 1000);
 #endif
 

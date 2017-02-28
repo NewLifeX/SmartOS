@@ -75,7 +75,7 @@ void UdpSocket::OnProcess(IP_HEADER& ip, UDP_HEADER& udp, Stream& ms)
 	byte* data = ms.Current();
 	//uint len = ms.Remain();
 	// 计算标称的数据长度
-	uint len = _REV16(udp.Length) - sizeof(UDP_HEADER);
+	int len = _REV16(udp.Length) - sizeof(UDP_HEADER);
 	assert(len <= ms.Remain(), "UDP数据包不完整");
 
 	// 触发ITransport接口事件

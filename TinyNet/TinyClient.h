@@ -42,16 +42,16 @@ public:
 
 	static TinyClient* Current;
 
-// 数据区
+	// 数据区
 public:
 	DataStore	Store;		// 数据存储区
 
-	bool Report(uint offset, byte dat);
-	bool Report(uint offset, const Buffer& bs);
+	bool Report(int offset, byte dat);
+	bool Report(int offset, const Buffer& bs);
 
-	uint NextReport;		// 下次上报偏移，0不动
-	uint ReportLength;	// 下次上报数据长度
-	void ReportAsync(uint offset,uint length = 1);
+	int NextReport;	// 下次上报偏移，0不动
+	int ReportLength;	// 下次上报数据长度
+	void ReportAsync(int offset, int length = 1);
 
 private:
 	uint _TaskID;
@@ -62,7 +62,7 @@ private:
 
 	void GetDeviceKey(byte id, Buffer& key);
 
-// 常用系统级消息
+	// 常用系统级消息
 public:
 	// 组网
 	ushort		TranID;		// 组网会话

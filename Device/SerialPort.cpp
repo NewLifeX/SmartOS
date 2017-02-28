@@ -132,7 +132,7 @@ bool SerialPort::OnWrite(const Buffer& bs)
 }
 
 // 刷出某个端口中的数据
-bool SerialPort::Flush(uint times)
+bool SerialPort::Flush(int times)
 {
 	// 打开串口发送
 	Set485(true);

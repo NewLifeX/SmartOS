@@ -11,44 +11,44 @@
 class Enc28j60 : public ITransport
 {
 private:
-    Spi* _spi;
-    OutputPort _ce;
+	Spi* _spi;
+	OutputPort _ce;
 	OutputPort _reset;
 
-    uint NextPacketPtr;
+	uint NextPacketPtr;
 
 	UInt64	LastTime;		// 记录最后一次收到数据的时间，超时重启
-	uint	ResetPeriod;	// 重启间隔，默认6000微秒
+	int		ResetPeriod;	// 重启间隔，默认6000微秒
 	uint	_ResetTask;		// 重启任务
 public:
 	//byte Mac[6];
 	MacAddress Mac;
-    byte Bank;
+	byte Bank;
 
 	Enc28j60();
-    virtual ~Enc28j60();
+	virtual ~Enc28j60();
 	void Init(Spi* spi, Pin ce = P0, Pin reset = P0);
 
-    byte ReadOp(byte op, byte addr);
-    void WriteOp(byte op, byte addr, byte data);
-    void ReadBuffer(byte* buf, uint len);
-    void WriteBuffer(const byte* buf, uint len);
+	byte ReadOp(byte op, byte addr);
+	void WriteOp(byte op, byte addr, byte data);
+	void ReadBuffer(byte* buf, int len);
+	void WriteBuffer(const byte* buf, int len);
 	// 设定寄存器地址区域
-    void SetBank(byte addr);
+	void SetBank(byte addr);
 	// 读取寄存器值 发送读寄存器命令和地址
-    byte ReadReg(byte addr);
+	byte ReadReg(byte addr);
 	// 写寄存器值 发送写寄存器命令和地址
-    void WriteReg(byte addr, byte data);
-    ushort PhyRead(byte addr);
-    bool PhyWrite(byte addr, ushort data);
-    void ClockOut(byte clock);
+	void WriteReg(byte addr, byte data);
+	ushort PhyRead(byte addr);
+	bool PhyWrite(byte addr, ushort data);
+	void ClockOut(byte clock);
 	bool Linked();
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
 
-    //void Init(byte mac[6]);
-    byte GetRevision();
+	//void Init(byte mac[6]);
+	byte GetRevision();
 
 	bool Broadcast;
 	// 设置是否接收广播数据包
@@ -63,9 +63,9 @@ public:
 
 protected:
 	virtual bool OnOpen();
-    virtual void OnClose() { }
+	virtual void OnClose() { }
 
-    virtual bool OnWrite(const Buffer& bs);
+	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
 };
 

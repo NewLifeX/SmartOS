@@ -50,7 +50,7 @@ bool JTW8953::WriteKey(ushort index, byte data)
 	index = index + ADDRESS_T;
 
 	ByteArray buf(3);
-	buf[0] = index;
+	buf[0] = index & 0xFF;
 	buf[1] = 0x10;
 	buf[2] = data;
 

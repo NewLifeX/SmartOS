@@ -250,32 +250,32 @@
 
 typedef union _WORD_VAL
 {
-    ushort Val;
-    byte v[2];
-    struct
-    {
-        byte LB;
-        byte HB;
-    } bytes;
-    struct
-    {
-        unsigned char b0:1;
-        unsigned char b1:1;
-        unsigned char b2:1;
-        unsigned char b3:1;
-        unsigned char b4:1;
-        unsigned char b5:1;
-        unsigned char b6:1;
-        unsigned char b7:1;
-        unsigned char b8:1;
-        unsigned char b9:1;
-        unsigned char b10:1;
-        unsigned char b11:1;
-        unsigned char b12:1;
-        unsigned char b13:1;
-        unsigned char b14:1;
-        unsigned char b15:1;
-    } bits;
+	ushort Val;
+	byte v[2];
+	struct
+	{
+		byte LB;
+		byte HB;
+	} bytes;
+	struct
+	{
+		unsigned char b0 : 1;
+		unsigned char b1 : 1;
+		unsigned char b2 : 1;
+		unsigned char b3 : 1;
+		unsigned char b4 : 1;
+		unsigned char b5 : 1;
+		unsigned char b6 : 1;
+		unsigned char b7 : 1;
+		unsigned char b8 : 1;
+		unsigned char b9 : 1;
+		unsigned char b10 : 1;
+		unsigned char b11 : 1;
+		unsigned char b12 : 1;
+		unsigned char b13 : 1;
+		unsigned char b14 : 1;
+		unsigned char b15 : 1;
+	} bits;
 } WORD_VAL, WORD_BITS;
 
 /*
@@ -306,25 +306,25 @@ typedef union {
 	byte v[7];
 	struct {
 		ushort	 		ByteCount;
-		unsigned char	CollisionCount:4;
-		unsigned char	CRCError:1;
-		unsigned char	LengthCheckError:1;
-		unsigned char	LengthOutOfRange:1;
-		unsigned char	Done:1;
-		unsigned char	Multicast:1;
-		unsigned char	Broadcast:1;
-		unsigned char	PacketDefer:1;
-		unsigned char	ExcessiveDefer:1;
-		unsigned char	MaximumCollisions:1;
-		unsigned char	LateCollision:1;
-		unsigned char	Giant:1;
-		unsigned char	Underrun:1;
+		unsigned char	CollisionCount : 4;
+		unsigned char	CRCError : 1;
+		unsigned char	LengthCheckError : 1;
+		unsigned char	LengthOutOfRange : 1;
+		unsigned char	Done : 1;
+		unsigned char	Multicast : 1;
+		unsigned char	Broadcast : 1;
+		unsigned char	PacketDefer : 1;
+		unsigned char	ExcessiveDefer : 1;
+		unsigned char	MaximumCollisions : 1;
+		unsigned char	LateCollision : 1;
+		unsigned char	Giant : 1;
+		unsigned char	Underrun : 1;
 		ushort 	 		BytesTransmittedOnWire;
-		unsigned char	ControlFrame:1;
-		unsigned char	PAUSEControlFrame:1;
-		unsigned char	BackpressureApplied:1;
-		unsigned char	VLANTaggedFrame:1;
-		unsigned char	Zeros:4;
+		unsigned char	ControlFrame : 1;
+		unsigned char	PAUSEControlFrame : 1;
+		unsigned char	BackpressureApplied : 1;
+		unsigned char	VLANTaggedFrame : 1;
+		unsigned char	Zeros : 4;
 	} bits;
 } TXSTATUS;
 
@@ -333,17 +333,17 @@ void ResetTask(void* param);
 
 Enc28j60::Enc28j60()
 {
-	MaxSize	= 1500;
+	MaxSize = 1500;
 
-	_spi	= nullptr;
+	_spi = nullptr;
 
-	LastTime	= Sys.Ms();
-	ResetPeriod	= 6000;
-	_ResetTask	= 0;
+	LastTime = Sys.Ms();
+	ResetPeriod = 6000;
+	_ResetTask = 0;
 
-	Broadcast	= true;
+	Broadcast = true;
 
-	Error		= 0;
+	Error = 0;
 }
 
 Enc28j60::~Enc28j60()
@@ -357,12 +357,12 @@ Enc28j60::~Enc28j60()
 void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
 {
 	_spi = spi;
-	if(ce != P0)
+	if (ce != P0)
 	{
 		_ce.OpenDrain = false;
 		_ce.Set(ce);
 	}
-	if(reset != P0)
+	if (reset != P0)
 	{
 		_reset.OpenDrain = false;
 		_reset.Set(reset);
@@ -371,81 +371,81 @@ void Enc28j60::Init(Spi* spi, Pin ce, Pin reset)
 
 byte Enc28j60::ReadOp(byte op, byte addr)
 {
-    SpiScope sc(_spi);
+	SpiScope sc(_spi);
 
 	// 操作码和地址
-    _spi->Write(op | (addr & ADDR_MASK));
-    byte dat = _spi->Write(0xFF);
-    // 如果是MAC和MII寄存器，第一个读取的字节无效，该信息包含在地址的最高位
-    if(addr & 0x80)
-    {
-        dat = _spi->Write(0xFF);
-    }
+	_spi->Write(op | (addr & ADDR_MASK));
+	byte dat = _spi->Write(0xFF);
+	// 如果是MAC和MII寄存器，第一个读取的字节无效，该信息包含在地址的最高位
+	if (addr & 0x80)
+	{
+		dat = _spi->Write(0xFF);
+	}
 
-    return dat;
+	return dat;
 }
 
 void Enc28j60::WriteOp(byte op, byte addr, byte data)
 {
-    SpiScope sc(_spi);
+	SpiScope sc(_spi);
 
 	// 操作码和地址
-    _spi->Write(op | (addr & ADDR_MASK));
-    _spi->Write(data);
+	_spi->Write(op | (addr & ADDR_MASK));
+	_spi->Write(data);
 }
 
-void Enc28j60::ReadBuffer(byte* buf, uint len)
+void Enc28j60::ReadBuffer(byte* buf, int len)
 {
-    SpiScope sc(_spi);
+	SpiScope sc(_spi);
 
 	// 发送读取缓冲区命令
-    _spi->Write(ENC28J60_READ_BUF_MEM);
-    while(len--)
-    {
-        *buf++ = _spi->Write(0);
-    }
-    //*buf='\0';
+	_spi->Write(ENC28J60_READ_BUF_MEM);
+	while (len--)
+	{
+		*buf++ = _spi->Write(0);
+	}
+	//*buf='\0';
 }
 
-void Enc28j60::WriteBuffer(const byte* buf, uint len)
+void Enc28j60::WriteBuffer(const byte* buf, int len)
 {
-    SpiScope sc(_spi);
+	SpiScope sc(_spi);
 
 	// 发送写取缓冲区命令
-    _spi->Write(ENC28J60_WRITE_BUF_MEM);
-    while(len--)
-    {
-        _spi->Write(*buf++);
-    }
+	_spi->Write(ENC28J60_WRITE_BUF_MEM);
+	while (len--)
+	{
+		_spi->Write(*buf++);
+	}
 }
 
 // 设定寄存器地址区域
 void Enc28j60::SetBank(byte addr)
 {
-    // 计算本次寄存器地址在存取区域的位置
-    if((addr & BANK_MASK) != Bank)
-    {
-        // 清除ECON1的BSEL1 BSEL0 详见数据手册15页
-        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, (ECON1_BSEL1 | ECON1_BSEL0));
+	// 计算本次寄存器地址在存取区域的位置
+	if ((addr & BANK_MASK) != Bank)
+	{
+		// 清除ECON1的BSEL1 BSEL0 详见数据手册15页
+		WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, (ECON1_BSEL1 | ECON1_BSEL0));
 		// 请注意寄存器地址的宏定义，bit6 bit5代码寄存器存储区域位置
-        WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, (addr & BANK_MASK) >> 5);
+		WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, (addr & BANK_MASK) >> 5);
 		// 重新确定当前寄存器存储区域
-        Bank = (addr & BANK_MASK);
-    }
+		Bank = (addr & BANK_MASK);
+	}
 }
 
 // 读取寄存器值 发送读寄存器命令和地址
 byte Enc28j60::ReadReg(byte addr)
 {
-    SetBank(addr);
-    return ReadOp(ENC28J60_READ_CTRL_REG, addr);
+	SetBank(addr);
+	return ReadOp(ENC28J60_READ_CTRL_REG, addr);
 }
 
 // 写寄存器值 发送写寄存器命令和地址
 void Enc28j60::WriteReg(byte addr, byte data)
 {
-    SetBank(addr);
-    WriteOp(ENC28J60_WRITE_CTRL_REG, addr, data);
+	SetBank(addr);
+	WriteOp(ENC28J60_WRITE_CTRL_REG, addr, data);
 }
 
 // 发送ARP请求包到目的地址
@@ -457,7 +457,7 @@ ushort Enc28j60::PhyRead(byte addr)
 
 	// 循环等待PHY寄存器被MII读取，需要10.24us
 	int times = 100;
-	while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0);
+	while ((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0);
 
 	// 停止读取
 	//WriteReg(MICMD, MICMD_MIIRD);
@@ -469,16 +469,16 @@ ushort Enc28j60::PhyRead(byte addr)
 
 bool Enc28j60::PhyWrite(byte addr, ushort data)
 {
-    // 向MIREGADR写入地址 详见数据手册19页
-    WriteReg(MIREGADR, addr);
-    // 写入低8位数据
-    WriteReg(MIWRL, data);
+	// 向MIREGADR写入地址 详见数据手册19页
+	WriteReg(MIREGADR, addr);
+	// 写入低8位数据
+	WriteReg(MIWRL, data & 0xFF);
 	// 写入高8位数据
-    WriteReg(MIWRH, data >> 8);
+	WriteReg(MIWRH, data >> 8);
 
-    // 等待 PHY 写完成
+	// 等待 PHY 写完成
 	int times = 100;
-    while((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0) { }
+	while ((ReadReg(MISTAT) & MISTAT_BUSY) && --times > 0) {}
 
 	return times > 0;
 }
@@ -488,15 +488,15 @@ void Enc28j60::ClockOut(byte clock)
 #if NET_DEBUG
 	debug_printf("ENC28J60::ECOCON\t= 0x%02X => 0x%02X\r\n", ReadReg(ECOCON), clock & 0x7);
 #endif
-    // setup clkout: 2 is 12.5MHz:
-    WriteReg(ECOCON, clock & 0x7);
+	// setup clkout: 2 is 12.5MHz:
+	WriteReg(ECOCON, clock & 0x7);
 }
 
 bool Enc28j60::OnOpen()
 {
 	debug_printf("\r\nEnc28j60::Open(%s)\r\n", Mac.ToString().GetBuffer());
 
-	if(!_reset.Empty())
+	if (!_reset.Empty())
 	{
 		_reset.Open();
 		_reset = false;
@@ -504,66 +504,66 @@ bool Enc28j60::OnOpen()
 		_reset = true;
 		Sys.Sleep(1);
 	}
-    if(!_ce.Empty())
-    {
+	if (!_ce.Empty())
+	{
 		_ce.Open();
-        _ce = true;
-        Sys.Sleep(100);
-        _ce = false;
-        Sys.Sleep(100);
-        _ce = true;
-    }
+		_ce = true;
+		Sys.Sleep(100);
+		_ce = false;
+		Sys.Sleep(100);
+		_ce = true;
+	}
 
 	// 检查并打开Spi
 	_spi->Open();
 
-    // 系统软重启
+	// 系统软重启
 #if NET_DEBUG
 	debug_printf("ENC28J60::RESET\t= 0x%02X => 0x%02X\r\n", ReadReg(0), ENC28J60_SOFT_RESET);
 #endif
-    WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
+	WriteOp(ENC28J60_SOFT_RESET, 0, ENC28J60_SOFT_RESET);
 	//Sys.Sleep(3);
 
-    // 查询 CLKRDY 位判断是否重启完成
-    // The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
+	// 查询 CLKRDY 位判断是否重启完成
+	// The CLKRDY does not work. See Rev. B4 Silicon Errata point. Just wait.
 	int times = 100;
-    while((ReadReg(ESTAT) & ESTAT_CLKRDY) && --times > 0);
+	while ((ReadReg(ESTAT) & ESTAT_CLKRDY) && --times > 0);
 
-    // do bank 0 stuff
-    // initialize receive buffer
-    // 16-bit transfers, must write low byte first
-    // 设置接收缓冲区起始地址 该变量用于每次读取缓冲区时保留下一个包的首地址
-    NextPacketPtr = RXSTART_INIT;
-    // 设置接收缓冲区 起始指针
-    WriteReg(ERXSTL, RXSTART_INIT & 0xFF);
-    WriteReg(ERXSTH, RXSTART_INIT >> 8);
-    // 设置接收缓冲区 读指针
-    WriteReg(ERXRDPTL, RXSTART_INIT & 0xFF);
-    WriteReg(ERXRDPTH, RXSTART_INIT >> 8);
-    // 设置接收缓冲区 结束指针
-    WriteReg(ERXNDL, RXSTOP_INIT & 0xFF);
-    WriteReg(ERXNDH, RXSTOP_INIT >> 8);
-    // 设置发送缓冲区 起始指针
-    WriteReg(ETXSTL, TXSTART_INIT & 0xFF);
-    WriteReg(ETXSTH, TXSTART_INIT >> 8);
-    // 设置发送缓冲区 结束指针
-    WriteReg(ETXNDL, TXSTOP_INIT & 0xFF);
-    WriteReg(ETXNDH, TXSTOP_INIT >> 8);
+	// do bank 0 stuff
+	// initialize receive buffer
+	// 16-bit transfers, must write low byte first
+	// 设置接收缓冲区起始地址 该变量用于每次读取缓冲区时保留下一个包的首地址
+	NextPacketPtr = RXSTART_INIT;
+	// 设置接收缓冲区 起始指针
+	WriteReg(ERXSTL, RXSTART_INIT & 0xFF);
+	WriteReg(ERXSTH, RXSTART_INIT >> 8);
+	// 设置接收缓冲区 读指针
+	WriteReg(ERXRDPTL, RXSTART_INIT & 0xFF);
+	WriteReg(ERXRDPTH, RXSTART_INIT >> 8);
+	// 设置接收缓冲区 结束指针
+	WriteReg(ERXNDL, RXSTOP_INIT & 0xFF);
+	WriteReg(ERXNDH, RXSTOP_INIT >> 8);
+	// 设置发送缓冲区 起始指针
+	WriteReg(ETXSTL, TXSTART_INIT & 0xFF);
+	WriteReg(ETXSTH, TXSTART_INIT >> 8);
+	// 设置发送缓冲区 结束指针
+	WriteReg(ETXNDL, TXSTOP_INIT & 0xFF);
+	WriteReg(ETXNDH, TXSTOP_INIT >> 8);
 
-    // Bank 1 填充，包过滤
-    // 广播包只允许ARP通过，单播包只允许目的地址是我们mac(MAADR)的数据包
-    //
-    // The pattern to match on is therefore
-    // Type     ETH.DST
-    // ARP      BROADCAST
-    // 06 08 -- ff ff ff ff ff ff -> ip checksum for theses bytes=f7f9
-    // in binary these poitions are:11 0000 0011 1111
-    // This is hex 303F->EPMM0=0x3f,EPMM1=0x30
+	// Bank 1 填充，包过滤
+	// 广播包只允许ARP通过，单播包只允许目的地址是我们mac(MAADR)的数据包
+	//
+	// The pattern to match on is therefore
+	// Type     ETH.DST
+	// ARP      BROADCAST
+	// 06 08 -- ff ff ff ff ff ff -> ip checksum for theses bytes=f7f9
+	// in binary these poitions are:11 0000 0011 1111
+	// This is hex 303F->EPMM0=0x3f,EPMM1=0x30
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::ERXFCON\t= 0x%02X => 0x%02X\r\n", ReadReg(ERXFCON), ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN);
 #endif
-	if(Broadcast)
+	if (Broadcast)
 		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
 	else
 		// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤
@@ -574,10 +574,10 @@ bool Enc28j60::OnOpen()
 	debug_printf("ENC28J60::EPMCSL\t= 0x%02X => 0x%02X\r\n", ReadReg(EPMCSL), 0xf9);
 	debug_printf("ENC28J60::EPMCSH\t= 0x%02X => 0x%02X\r\n", ReadReg(EPMCSH), 0xf7);
 #endif
-    WriteReg(EPMM0, 0x3f);
-    WriteReg(EPMM1, 0x30);
-    WriteReg(EPMCSL, 0xf9);
-    WriteReg(EPMCSH, 0xf7);
+	WriteReg(EPMM0, 0x3f);
+	WriteReg(EPMM1, 0x30);
+	WriteReg(EPMCSL, 0xf9);
+	WriteReg(EPMCSH, 0xf7);
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::MACON1\t= 0x%02X => 0x%02X\r\n", ReadReg(MACON1), MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
@@ -586,48 +586,48 @@ bool Enc28j60::OnOpen()
 	debug_printf("ENC28J60::MACON2\t= 0x%02X => 0x%02X", dat, 0x00);
 
 	//debug_printf("ENC28J60::MACON2");
-	if(dat & MACON2_MARST)		debug_printf(" MARST");
-	if(dat & MACON2_RNDRST)		debug_printf(" RNDRST");
-	if(dat & MACON2_MARXRST)	debug_printf(" MARXRST");
-	if(dat & MACON2_RFUNRST)	debug_printf(" RFUNRST");
-	if(dat & MACON2_MATXRST)	debug_printf(" MATXRST");
-	if(dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
+	if (dat & MACON2_MARST)		debug_printf(" MARST");
+	if (dat & MACON2_RNDRST)		debug_printf(" RNDRST");
+	if (dat & MACON2_MARXRST)	debug_printf(" MARXRST");
+	if (dat & MACON2_RFUNRST)	debug_printf(" RFUNRST");
+	if (dat & MACON2_MATXRST)	debug_printf(" MATXRST");
+	if (dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
 	debug_printf("\r\n");
 
 	debug_printf("ENC28J60::EFLOCON\t= 0x%02X => 0x%02X\r\n", ReadReg(EFLOCON), 0x02);
 #endif
-    // Bank 2，使能MAC接收 允许MAC发送暂停控制帧 当接收到暂停控制帧时停止发送
-    WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
-    //WriteReg(MACON1, MACON1_MARXEN);
-    // MACON2清零，让MAC退出复位状态
-    WriteReg(MACON2, 0x00);
+	// Bank 2，使能MAC接收 允许MAC发送暂停控制帧 当接收到暂停控制帧时停止发送
+	WriteReg(MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);
+	//WriteReg(MACON1, MACON1_MARXEN);
+	// MACON2清零，让MAC退出复位状态
+	WriteReg(MACON2, 0x00);
 	// 在接收缓冲器空间不足时，主控制器应通过向EFLOCON 寄存器写入02h 打开流量控制。 硬件会周期性地发送暂停帧
 	WriteReg(EFLOCON, 0x02);
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::MACON3\t= 0x%02X => 0x%02X\r\n", ReadReg(MACON3), MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
 #endif
-    // 启用自动填充到60字节并进行Crc校验 帧长度校验使能 MAC全双工使能
+	// 启用自动填充到60字节并进行Crc校验 帧长度校验使能 MAC全双工使能
 	// 提示 由于ENC28J60不支持802.3的自动协商机制， 所以对端的网络卡需要强制设置为全双工
-    WriteOp(ENC28J60_BIT_FIELD_SET, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
-    // 配置非背对背包之间的间隔
-    WriteReg(MAIPGL, 0x12);
-    WriteReg(MAIPGH, 0x0C);
-    // 配置背对背包之间的间隔
-    WriteReg(MABBIPG, 0x15);   // 全双工15，半双工12
-    // 设置控制器将接收的最大包大小，不要发送大于该大小的包
-    WriteReg(MAMXFLL, MAX_FRAMELEN & 0xFF);
-    WriteReg(MAMXFLH, MAX_FRAMELEN >> 8);
+	WriteOp(ENC28J60_BIT_FIELD_SET, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);
+	// 配置非背对背包之间的间隔
+	WriteReg(MAIPGL, 0x12);
+	WriteReg(MAIPGH, 0x0C);
+	// 配置背对背包之间的间隔
+	WriteReg(MABBIPG, 0x15);   // 全双工15，半双工12
+	// 设置控制器将接收的最大包大小，不要发送大于该大小的包
+	WriteReg(MAMXFLL, MAX_FRAMELEN & 0xFF);
+	WriteReg(MAMXFLH, MAX_FRAMELEN >> 8);
 
 	// Bank 3 填充
-    // write MAC addr
-    // NOTE: MAC addr in ENC28J60 is byte-backward
-    WriteReg(MAADR5, Mac[0]);
-    WriteReg(MAADR4, Mac[1]);
-    WriteReg(MAADR3, Mac[2]);
-    WriteReg(MAADR2, Mac[3]);
-    WriteReg(MAADR1, Mac[4]);
-    WriteReg(MAADR0, Mac[5]);
+	// write MAC addr
+	// NOTE: MAC addr in ENC28J60 is byte-backward
+	WriteReg(MAADR5, Mac[0]);
+	WriteReg(MAADR4, Mac[1]);
+	WriteReg(MAADR3, Mac[2]);
+	WriteReg(MAADR2, Mac[3]);
+	WriteReg(MAADR1, Mac[4]);
+	WriteReg(MAADR0, Mac[5]);
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::PHCON1\t= 0x%04X => 0x%04X\r\n", PhyRead(PHCON1), PHCON1_PDPXMD);
@@ -637,44 +637,44 @@ bool Enc28j60::OnOpen()
 	debug_printf("ENC28J60::PHLCON\t= 0x%04X => 0x%04X\r\n", PhyRead(PHLCON), 0x476);
 #endif
 	bool flag = true;
-    // 配置PHY为全双工  LEDB为拉电流
-    if(flag && !PhyWrite(PHCON1, PHCON1_PDPXMD)) flag = false;
-    // 阻止发送回路的自动环回
-    if(flag && !PhyWrite(PHCON2, PHCON2_HDLDIS)) flag = false;
-    // PHY LED 配置,LED用来指示通信的状态
+	// 配置PHY为全双工  LEDB为拉电流
+	if (flag && !PhyWrite(PHCON1, PHCON1_PDPXMD)) flag = false;
+	// 阻止发送回路的自动环回
+	if (flag && !PhyWrite(PHCON2, PHCON2_HDLDIS)) flag = false;
+	// PHY LED 配置,LED用来指示通信的状态
 	// 0x476 LEDA 0100 显示链接状态; LEDB 0111 显示发送和接收活动；LFRQ 01 延长LED脉冲至大约73ms
-    if(flag && !PhyWrite(PHLCON, 0x476)) flag = false;
-    //if(flag && !PhyWrite(PHLCON, 0xE70)) flag = false;
-	if(!flag)
+	if (flag && !PhyWrite(PHLCON, 0x476)) flag = false;
+	//if(flag && !PhyWrite(PHLCON, 0xE70)) flag = false;
+	if (!flag)
 	{
 		debug_printf("Enc28j60::Init Failed! Can't write Physical, please check Spi!\r\n");
 		return false;
 	}
 
-    // 切换到bank0
-    SetBank(ECON1);
+	// 切换到bank0
+	SetBank(ECON1);
 #if NET_DEBUG
 	debug_printf("ENC28J60::EIE\t= 0x%02X => 0x%02X\r\n", ReadReg(EIE), EIE_INTIE | EIE_PKTIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);
 #endif
-    // 使能中断 全局中断 接收中断 接收错误中断
-    WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);
-    // 新增加，有些例程里面没有
-    //WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_RXERIE | EIE_TXERIE | EIE_INTIE);
+	// 使能中断 全局中断 接收中断 接收错误中断
+	WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_INTIE | EIE_PKTIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);
+	// 新增加，有些例程里面没有
+	//WriteOp(ENC28J60_BIT_FIELD_SET, EIE, EIE_RXERIE | EIE_TXERIE | EIE_INTIE);
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::ECON1\t= 0x%02X => 0x%02X\r\n", ReadReg(ECON1), ECON1_RXEN);
 #endif
-    // 打开包接收
-    WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
+	// 打开包接收
+	WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
 	byte rev = GetRevision();
-	if(rev == 0)
+	if (rev == 0)
 	{
 		debug_printf("Enc28j60::Init Failed! Revision=%d\r\n", rev);
 		return false;
 	}
-    // 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
-    ClockOut(2);
+	// 将enc28j60第三引脚的时钟输出改为：from 6.25MHz to 12.5MHz(本例程该引脚NC,没用到)
+	ClockOut(2);
 
 #if NET_DEBUG
 	debug_printf("ENC28J60::PHSTAT1\t= 0x%04X\r\n", PhyRead(PHSTAT1));
@@ -683,7 +683,7 @@ bool Enc28j60::OnOpen()
 
 	LastTime = Sys.Ms();
 
-	if(!_ResetTask)
+	if (!_ResetTask)
 	{
 		//debug_printf("Enc28j60::出错检查 ");
 		_ResetTask = Sys.AddTask(ResetTask, this, 500, 500, "守护2860");
@@ -695,13 +695,13 @@ bool Enc28j60::OnOpen()
 void Enc28j60::ChangePower(int level)
 {
 	// 进入低功耗时，直接关闭
-	if(level) Close();
+	if (level) Close();
 }
 
 byte Enc28j60::GetRevision()
 {
-    // 在EREVID 内也存储了版本信息。 EREVID 是一个只读控制寄存器，包含一个5 位标识符，用来标识器件特定硅片的版本号
-    return ReadReg(EREVID);
+	// 在EREVID 内也存储了版本信息。 EREVID 是一个只读控制寄存器，包含一个5 位标识符，用来标识器件特定硅片的版本号
+	return ReadReg(EREVID);
 }
 
 bool Enc28j60::OnWrite(const Buffer& bs)
@@ -709,7 +709,7 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 	uint len = bs.Length();
 	assert(len <= MAX_FRAMELEN, "以太网数据帧超大");
 
-	if(!Linked())
+	if (!Linked())
 	{
 		debug_printf("以太网已断开！\r\n");
 		return false;
@@ -717,26 +717,26 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 
 	// ECON1_TXRTS 发送逻辑正在尝试发送数据包
 	int times = 1000;
-	while((ReadReg(ECON1) & ECON1_TXRTS) && --times > 0);
-	if(times <= 0)
+	while ((ReadReg(ECON1) & ECON1_TXRTS) && --times > 0);
+	if (times <= 0)
 	{
 		debug_printf("Enc28j60::OnWrite 发送失败，设备正忙于发送数据！\r\n");
 		return false;
 	}
 
-    // 设置写指针为传输数据区域的开头
-    WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
-    WriteReg(EWRPTH, TXSTART_INIT >> 8);
+	// 设置写指针为传输数据区域的开头
+	WriteReg(EWRPTL, TXSTART_INIT & 0xFF);
+	WriteReg(EWRPTH, TXSTART_INIT >> 8);
 
-    // 设置TXND指针为纠正后的给定数据包大小
-    WriteReg(ETXNDL, (TXSTART_INIT + len) & 0xFF);
-    WriteReg(ETXNDH, (TXSTART_INIT + len) >> 8);
+	// 设置TXND指针为纠正后的给定数据包大小
+	WriteReg(ETXNDL, (TXSTART_INIT + len) & 0xFF);
+	WriteReg(ETXNDH, (TXSTART_INIT + len) >> 8);
 
-    // 写每个包的控制字节（0x00意味着使用macon3设置）
-    WriteOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
+	// 写每个包的控制字节（0x00意味着使用macon3设置）
+	WriteOp(ENC28J60_WRITE_BUF_MEM, 0, 0x00);
 
-    // 复制数据包到传输缓冲区
-    WriteBuffer((const byte*)bs.GetBuffer(), len);
+	// 复制数据包到传输缓冲区
+	WriteBuffer((const byte*)bs.GetBuffer(), len);
 
 	/*
 	仅发送复位通过SPI接口向ECON1寄存器的 TXRST 位写入1可实现仅发送复位。
@@ -749,11 +749,11 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 #if NET_DEBUG
 	//debug_printf("ENC28J60::ECON1\t= 0x%02X => 0x%02X\r\n", ReadReg(ECON1), ECON1_TXRTS);
 #endif
-    // 把传输缓冲区的内容发送到网络
-    WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
+	// 把传输缓冲区的内容发送到网络
+	WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 	// 等待发送完成
 	times = 1000;
-	while(((ReadReg(ECON1) & ECON1_TXRTS) && --times) > 0) { }
+	while ((ReadReg(ECON1) & ECON1_TXRTS) && (--times > 0)) {}
 
 	/*
 	如果数据包发送完成或因错误/ 取消而中止发送，ECON1.TXRTS 位会被清零，一个7 字节的发送状态向量将被写入由ETXND + 1 指向的单元，
@@ -765,15 +765,15 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 
 #if ENC_DEBUG
 	// 根据发送中断寄存器，特殊处理发送冲突延迟导致的失败，实现16次出错重发
-    if(GetRevision() == 0x05u || GetRevision() == 0x06u)
+	if (GetRevision() == 0x05u || GetRevision() == 0x06u)
 	{
 		// 如果有 发送错误中断 TXERIF 或者 发送中断 TXIF ，则等待发送结束
 		times = 1000;
-		while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
+		while (!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
 
 		// 如果有 发送错误中断 TXERIF 或者 超时
 		//if((ReadReg(EIR) & EIR_TXERIF) || (times <= 0))
-		if((ReadReg(EIR) & EIR_TXERIF) || (ReadReg(ESTAT) & (ESTAT_LATECOL | ESTAT_TXABRT)))
+		if ((ReadReg(EIR) & EIR_TXERIF) || (ReadReg(ESTAT) & (ESTAT_LATECOL | ESTAT_TXABRT)))
 		{
 			WORD_VAL ReadPtrSave;
 			WORD_VAL TXEnd;
@@ -783,7 +783,7 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 			// 取消上一次发送
 			// Cancel the previous transmission if it has become stuck set
 			//BFCReg(ECON1, ECON1_TXRTS);
-            WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+			WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 
 			// 保存当前读指针
 			// Save the current read pointer (controlled by application)
@@ -813,26 +813,26 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 			src.Show();
 			debug_printf(" Type=0x%04X Len=%d \r\n", *(ushort*)(packet + 12), len);
 
-			debug_printf("ENC28J60::EIR\t=0x%02X 发送错误中断 发送状态向量 0x%02X 0x%02X", ReadReg(EIR), *(uint*)(p+4), *(uint*)p);
-			if(TXStatus.bits.ByteCount)			debug_printf(" 字节数=%d/%d", TXStatus.bits.ByteCount, len);
-			if(TXStatus.bits.CollisionCount)	debug_printf(" 冲突数=%d", TXStatus.bits.CollisionCount);
-			if(TXStatus.bits.CRCError)			debug_printf(" CRCError");
-			if(TXStatus.bits.LengthCheckError)	debug_printf(" LengthCheckError=长度校验错误");
-			if(TXStatus.bits.LengthOutOfRange)	debug_printf(" LengthOutOfRange=帧类型/长度字段大于1500字节");
+			debug_printf("ENC28J60::EIR\t=0x%02X 发送错误中断 发送状态向量 0x%02X 0x%02X", ReadReg(EIR), *(uint*)(p + 4), *(uint*)p);
+			if (TXStatus.bits.ByteCount)			debug_printf(" 字节数=%d/%d", TXStatus.bits.ByteCount, len);
+			if (TXStatus.bits.CollisionCount)	debug_printf(" 冲突数=%d", TXStatus.bits.CollisionCount);
+			if (TXStatus.bits.CRCError)			debug_printf(" CRCError");
+			if (TXStatus.bits.LengthCheckError)	debug_printf(" LengthCheckError=长度校验错误");
+			if (TXStatus.bits.LengthOutOfRange)	debug_printf(" LengthOutOfRange=帧类型/长度字段大于1500字节");
 			//if(TXStatus.bits.Done)				debug_printf(" Done发送完成");
-			if(TXStatus.bits.Multicast)			debug_printf(" Multicast发送组播");
-			if(TXStatus.bits.Broadcast)			debug_printf(" Broadcast发送广播");
-			if(TXStatus.bits.PacketDefer)		debug_printf(" PacketDefer发送数据包延期");
-			if(TXStatus.bits.ExcessiveDefer)	debug_printf(" ExcessiveDefer发送过度延期");
-			if(TXStatus.bits.MaximumCollisions)	debug_printf(" MaximumCollisions过度冲突");
-			if(TXStatus.bits.LateCollision)		debug_printf(" LateCollision延时冲突");
-			if(TXStatus.bits.Giant)				debug_printf(" Giant特大帧字节数超过MAMXFL");
-			if(TXStatus.bits.Underrun)			debug_printf(" Underrun欠载保留");
-			if(TXStatus.bits.BytesTransmittedOnWire)debug_printf(" 线上发送的总字节数=%d", TXStatus.bits.BytesTransmittedOnWire);
-			if(TXStatus.bits.ControlFrame)		debug_printf(" ControlFrame控制帧");
-			if(TXStatus.bits.PAUSEControlFrame)	debug_printf(" PAUSEControlFrame暂停控制帧");
-			if(TXStatus.bits.BackpressureApplied)debug_printf(" BackpressureApplied应用背压流控");
-			if(TXStatus.bits.VLANTaggedFrame)	debug_printf(" VLANTaggedFrame发送VLAN标记帧");
+			if (TXStatus.bits.Multicast)			debug_printf(" Multicast发送组播");
+			if (TXStatus.bits.Broadcast)			debug_printf(" Broadcast发送广播");
+			if (TXStatus.bits.PacketDefer)		debug_printf(" PacketDefer发送数据包延期");
+			if (TXStatus.bits.ExcessiveDefer)	debug_printf(" ExcessiveDefer发送过度延期");
+			if (TXStatus.bits.MaximumCollisions)	debug_printf(" MaximumCollisions过度冲突");
+			if (TXStatus.bits.LateCollision)		debug_printf(" LateCollision延时冲突");
+			if (TXStatus.bits.Giant)				debug_printf(" Giant特大帧字节数超过MAMXFL");
+			if (TXStatus.bits.Underrun)			debug_printf(" Underrun欠载保留");
+			if (TXStatus.bits.BytesTransmittedOnWire)debug_printf(" 线上发送的总字节数=%d", TXStatus.bits.BytesTransmittedOnWire);
+			if (TXStatus.bits.ControlFrame)		debug_printf(" ControlFrame控制帧");
+			if (TXStatus.bits.PAUSEControlFrame)	debug_printf(" PAUSEControlFrame暂停控制帧");
+			if (TXStatus.bits.BackpressureApplied)debug_printf(" BackpressureApplied应用背压流控");
+			if (TXStatus.bits.VLANTaggedFrame)	debug_printf(" VLANTaggedFrame发送VLAN标记帧");
 			debug_printf("\r\n");
 #endif
 
@@ -840,19 +840,19 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 			// Implement retransmission if a late collision occured (this can
 			// happen on B5 when certain link pulses arrive at the same time
 			// as the transmission)
-			for(i = 0; i < 16u; i++)
+			for (i = 0; i < 16u; i++)
 			{
-				if((ReadReg(EIR) & EIR_TXERIF) && TXStatus.bits.LateCollision)
+				if ((ReadReg(EIR) & EIR_TXERIF) && TXStatus.bits.LateCollision)
 				{
 					// 重置发送逻辑
-                    WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
-                    WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
-                    WriteOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF | EIR_TXIF);
+					WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
+					WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+					WriteOp(ENC28J60_BIT_FIELD_CLR, EIR, EIR_TXERIF | EIR_TXIF);
 
 					// 再次发送数据包
 					WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 					int times = 100;
-					while(!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
+					while (!(ReadReg(EIR) & (EIR_TXERIF | EIR_TXIF)) && --times > 0);
 
 					// 如果被卡住，取消上一次发送
 					// Cancel the previous transmission if it has become stuck set
@@ -862,7 +862,7 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 					// ReadReg transmit status vector
 					WriteReg(ERDPTL, TXEnd.v[0]);
 					WriteReg(ERDPTH, TXEnd.v[1]);
-                    ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
+					ReadBuffer((byte*)&TXStatus, sizeof(TXStatus));
 				}
 				else
 				{
@@ -878,9 +878,9 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 	}
 #endif
 
-    // 复位发送逻辑的问题
-    if(ReadReg(EIR) & EIR_TXERIF)
-    {
+	// 复位发送逻辑的问题
+	if (ReadReg(EIR) & EIR_TXERIF)
+	{
 		/*
 		发送错误中断标志 TXERIF 用于指出是否发生了发送被中止的情况。 以下原因可导致发送被中止：
 		1. 发生了MACLCON1 寄存器中最大重发次数（RETMAX）位定义的过度冲突。
@@ -895,7 +895,7 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 		ShowStatus();
 #endif
 		SetBank(ECON1);
-        //WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
+		//WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRTS);
 		// 参考手册11.3，仅发送复位
 		/*
 		通过SPI 接口向ECON1 寄存器的TXRST 位写入1 可实现仅发送复位。
@@ -904,20 +904,20 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 		其他寄存器和控制模块（如缓冲管理器和主机接口）将不受仅发送复位的影响。
 		主控制器若要恢复正常工作应将TXRST 位清零。
 		*/
-        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+		WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
 
 		// 发送数据失败
 		return false;
-    }
+	}
 
 	// 检测是否发送成功
-	if(ReadReg(ESTAT) & ESTAT_TXABRT)
+	if (ReadReg(ESTAT) & ESTAT_TXABRT)
 	{
 		debug_printf("ENC28J60::ESTAT_TXABRT 发送中止错误\r\n");
 		ShowStatus();
 
 		SetBank(ECON1);
-        WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
+		WriteOp(ENC28J60_BIT_FIELD_CLR, ECON1, ECON1_TXRST);
 
 		return false;
 	}
@@ -929,79 +929,79 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
 uint Enc28j60::OnRead(Buffer& bs)
 {
-    int rxstat;
-    int len;
+	int rxstat;
+	int len;
 
 	// 检测并打开包接收
-	if(!(ReadReg(ECON1) & ECON1_RXEN)) WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
+	if (!(ReadReg(ECON1) & ECON1_RXEN)) WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);
 
-    // 检测缓冲区是否收到一个数据包
+	// 检测缓冲区是否收到一个数据包
 	// PKTIF： 接收数据包待处理中断标志位
 	// 接收错误中断标志（RXERIF）用于指出接收缓冲器溢出的情况。 也就是说，此中断表明接收缓冲器中的数据包太多，再接收的话将造成EPKTCNT 寄存器溢出。
-    if(!(ReadReg(EIR) & EIR_PKTIF))
+	if (!(ReadReg(EIR) & EIR_PKTIF))
 	{
 		// The above does not work. See Rev. B4 Silicon Errata point 6.
 		// 通过查看EPKTCNT寄存器再次检查是否收到包
 		// EPKTCNT为0表示没有包接收/或包已被处理
-		if(ReadReg(EPKTCNT) == 0) return 0;
+		if (ReadReg(EPKTCNT) == 0) return 0;
 	}
 
 	// 收到的以太网数据包长度
-    if(ReadReg(EPKTCNT) == 0) return 0;
+	if (ReadReg(EPKTCNT) == 0) return 0;
 
-    // 配置接收缓冲器读指针指向地址
-    WriteReg(ERDPTL, (NextPacketPtr));
-    WriteReg(ERDPTH, (NextPacketPtr) >> 8);
+	// 配置接收缓冲器读指针指向地址
+	WriteReg(ERDPTL, (NextPacketPtr));
+	WriteReg(ERDPTH, (NextPacketPtr) >> 8);
 
-    // 下一个数据包的读指针
-    NextPacketPtr  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
-    NextPacketPtr |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
+	// 下一个数据包的读指针
+	NextPacketPtr = ReadOp(ENC28J60_READ_BUF_MEM, 0);
+	NextPacketPtr |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
-    // 读数据包字节长度 (see datasheet page 43)
-    len  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
-    len |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
+	// 读数据包字节长度 (see datasheet page 43)
+	len = ReadOp(ENC28J60_READ_BUF_MEM, 0);
+	len |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
 
 	// 去除CRC校验部分
-    len -= 4;
-    // 读接收数据包的状态 (see datasheet page 43)
-    rxstat  = ReadOp(ENC28J60_READ_BUF_MEM, 0);
-    rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
-    // 限制获取的长度。有些例程这里不用减一
-    if (len > bs.Length() - 1) len = bs.Length() - 1;
+	len -= 4;
+	// 读接收数据包的状态 (see datasheet page 43)
+	rxstat = ReadOp(ENC28J60_READ_BUF_MEM, 0);
+	rxstat |= ReadOp(ENC28J60_READ_BUF_MEM, 0) << 8;
+	// 限制获取的长度。有些例程这里不用减一
+	if (len > bs.Length() - 1) len = bs.Length() - 1;
 
-    // 检查CRC和符号错误
-    // ERXFCON.CRCEN是默认设置。通常我们不需要检查
-    if ((rxstat & 0x80) == 0)
-    {
-        // 无效的
-        len = 0;
-    }
-    else
-    {
-        // 从缓冲区中将数据包复制到packet中
-        ReadBuffer((byte*)bs.GetBuffer(), len);
-    }
+	// 检查CRC和符号错误
+	// ERXFCON.CRCEN是默认设置。通常我们不需要检查
+	if ((rxstat & 0x80) == 0)
+	{
+		// 无效的
+		len = 0;
+	}
+	else
+	{
+		// 从缓冲区中将数据包复制到packet中
+		ReadBuffer((byte*)bs.GetBuffer(), len);
+	}
 	//bs.SetLength(len);
-    // 移动接收缓冲区 读指针
-    WriteReg(ERXRDPTL, (NextPacketPtr));
-    WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);
+	// 移动接收缓冲区 读指针
+	WriteReg(ERXRDPTL, (NextPacketPtr));
+	WriteReg(ERXRDPTH, (NextPacketPtr) >> 8);
 
 #if NET_DEBUG
 	//debug_printf("ENC28J60::ECON2\t= 0x%02X => 0x%02X\r\n", ReadReg(ECON2), ECON2_PKTDEC);
 #endif
-    // 数据包个数递减位EPKTCNT减1
-    WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
+	// 数据包个数递减位EPKTCNT减1
+	WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
 
 	// 最后收到数据包的时间
 	LastTime = Sys.Ms();
 
-    return len;
+	return len;
 }
 
 // 返回MAC连接状态
 bool Enc28j60::Linked()
 {
-	return PhyRead(PHSTAT1) & PHSTAT1_LLSTAT;
+	return (PhyRead(PHSTAT1) & PHSTAT1_LLSTAT) > 0;
 }
 
 // 显示寄存器状态
@@ -1011,61 +1011,61 @@ void Enc28j60::ShowStatus()
 	debug_printf("\r\n寄存器状态：\r\n");
 
 	byte dat = ReadReg(MACON1);
-	if(dat != 0x0D) debug_printf("ENC28J60::MACON1\t= 0x%02X\r\n", dat);
+	if (dat != 0x0D) debug_printf("ENC28J60::MACON1\t= 0x%02X\r\n", dat);
 	dat = ReadReg(MACON2);
-	if(dat != 0x00)
+	if (dat != 0x00)
 	{
 		debug_printf("ENC28J60::MACON2\t= 0x%02X", dat);
-		if(dat & MACON2_MARST)		debug_printf(" MARST");
-		if(dat & MACON2_RNDRST)		debug_printf(" RNDRST");
-		if(dat & MACON2_MARXRST)	debug_printf(" MARXRST");
-		if(dat & MACON2_RFUNRST)	debug_printf(" RFUNRST");
-		if(dat & MACON2_MATXRST)	debug_printf(" MATXRST");
-		if(dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
+		if (dat & MACON2_MARST)		debug_printf(" MARST");
+		if (dat & MACON2_RNDRST)		debug_printf(" RNDRST");
+		if (dat & MACON2_MARXRST)	debug_printf(" MARXRST");
+		if (dat & MACON2_RFUNRST)	debug_printf(" RFUNRST");
+		if (dat & MACON2_MATXRST)	debug_printf(" MATXRST");
+		if (dat & MACON2_TFUNRST)	debug_printf(" TFUNRST");
 		debug_printf("\r\n");
 	}
 	dat = ReadReg(MACON3);
-	if(dat != 0x33) debug_printf("ENC28J60::MACON3\t= 0x%02X\r\n", dat);
+	if (dat != 0x33) debug_printf("ENC28J60::MACON3\t= 0x%02X\r\n", dat);
 
 	//SetBank(ECON1);
 	dat = ReadReg(EIE);
-	if(dat != 0xCB) debug_printf("ENC28J60::EIE\t= 0x%02X\r\n", dat);
+	if (dat != 0xCB) debug_printf("ENC28J60::EIE\t= 0x%02X\r\n", dat);
 
 	dat = ReadReg(EIR);
-	if(dat != 0x00 && dat != EIR_TXIF)
+	if (dat != 0x00 && dat != EIR_TXIF)
 	{
 		debug_printf("ENC28J60::EIR\t= 0x%02X", dat);
-		if(dat & EIR_PKTIF)		debug_printf(" PKTIF");
-		if(dat & EIR_DMAIF)		debug_printf(" DMAIF");
-		if(dat & EIR_LINKIF)	debug_printf(" LINKIF");
-		if(dat & EIR_TXIF)		debug_printf(" TXIF");
-		if(dat & EIR_WOLIF)		debug_printf(" WOLIF");
-		if(dat & EIR_TXERIF)	debug_printf(" TXERIF");
-		if(dat & EIR_RXERIF)	debug_printf(" RXERIF");
+		if (dat & EIR_PKTIF)		debug_printf(" PKTIF");
+		if (dat & EIR_DMAIF)		debug_printf(" DMAIF");
+		if (dat & EIR_LINKIF)	debug_printf(" LINKIF");
+		if (dat & EIR_TXIF)		debug_printf(" TXIF");
+		if (dat & EIR_WOLIF)		debug_printf(" WOLIF");
+		if (dat & EIR_TXERIF)	debug_printf(" TXERIF");
+		if (dat & EIR_RXERIF)	debug_printf(" RXERIF");
 		debug_printf("\r\n");
 	}
 
 	dat = ReadReg(ESTAT);
-	if(dat != ESTAT_CLKRDY)
+	if (dat != ESTAT_CLKRDY)
 	{
 		debug_printf("Enc28j60::ESTAT\t=0x%02X", dat);
-		if(dat & ESTAT_INT)		debug_printf(" INT");
-		if(dat & ESTAT_LATECOL)	debug_printf(" LATECOL");
-		if(dat & ESTAT_RXBUSY)		debug_printf(" RXBUSY");
-		if(dat & ESTAT_TXABRT)		debug_printf(" TXABRT");
-		if(dat & ESTAT_CLKRDY)		debug_printf(" CLKRDY");
+		if (dat & ESTAT_INT)		debug_printf(" INT");
+		if (dat & ESTAT_LATECOL)	debug_printf(" LATECOL");
+		if (dat & ESTAT_RXBUSY)		debug_printf(" RXBUSY");
+		if (dat & ESTAT_TXABRT)		debug_printf(" TXABRT");
+		if (dat & ESTAT_CLKRDY)		debug_printf(" CLKRDY");
 		debug_printf("\r\n");
 	}
 
 	dat = ReadReg(ECON2);
-	if(dat != 0x80) debug_printf("ENC28J60::ECON2\t= 0x%02X\r\n", dat);
+	if (dat != 0x80) debug_printf("ENC28J60::ECON2\t= 0x%02X\r\n", dat);
 	dat = ReadReg(ECON1);
-	if(dat != 0x04) debug_printf("ENC28J60::ECON1\t= 0x%02X\r\n", dat);
+	if (dat != 0x04) debug_printf("ENC28J60::ECON1\t= 0x%02X\r\n", dat);
 
 	ushort pst = PhyRead(PHSTAT1);
-	if(pst != 0x1804) debug_printf("ENC28J60::PHSTAT1\t= 0x%04X\r\n", pst);
+	if (pst != 0x1804) debug_printf("ENC28J60::PHSTAT1\t= 0x%04X\r\n", pst);
 	pst = PhyRead(PHSTAT2);
-	if(pst != 0x0400) debug_printf("ENC28J60::PHSTAT2\t= 0x%04X\r\n", pst);
+	if (pst != 0x0400) debug_printf("ENC28J60::PHSTAT2\t= 0x%04X\r\n", pst);
 #endif
 }
 
@@ -1085,8 +1085,8 @@ void Enc28j60::CheckError()
 		return;
 	}*/
 
-	uint ts = Sys.Ms() - LastTime;
-	if(ResetPeriod < ts)
+	int ts = (int)(Sys.Ms() - LastTime);
+	if (ResetPeriod < ts)
 	{
 		Error++;
 
@@ -1101,7 +1101,7 @@ void Enc28j60::SetBroadcast(bool flag)
 {
 	Broadcast = flag;
 	//SetBank(ECON1);
-	if(flag)
+	if (flag)
 		WriteReg(ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN); // ERXFCON_BCEN 不过滤广播包，实现DHCP
 	else
 		// 使能单播过滤 使能CRC校验 使能 格式匹配自动过滤

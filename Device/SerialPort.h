@@ -14,15 +14,15 @@ class SerialPort : public ITransport, public Power
 private:
 	friend class ComProxy;
 	int		_baudRate;
-	ushort	_dataBits;
-	ushort	_parity;
-	ushort	_stopBits;
+	byte	_dataBits;
+	byte	_parity;
+	byte	_stopBits;
 
 	void Init();
 
 public:
 	char 		Name[5];	// 名称。COMxx，后面1字节\0表示结束
-    byte		Remap;		// 重映射组
+	byte		Remap;		// 重映射组
 	OutputPort* RS485;		// RS485使能引脚
 	int 		Error;		// 错误计数
 	int			ByteTime;	// 字节间隔，最小1ms
@@ -30,28 +30,28 @@ public:
 	Port*		Ports[2];	// Tx/Rx
 	COM			Index;
 
-    void*	State;
+	void*	State;
 
 	// 收发缓冲区
 	Queue	Tx;
 	Queue	Rx;
 
 	SerialPort();
-    SerialPort(COM index, int baudRate = SERIAL_BAUDRATE);
+	SerialPort(COM index, int baudRate = SERIAL_BAUDRATE);
 
 	// 析构时自动关闭
-    virtual ~SerialPort();
+	virtual ~SerialPort();
 
-    void Set(COM index, int baudRate = SERIAL_BAUDRATE);
-    void Set(byte dataBits, byte parity, byte stopBits);
+	void Set(COM index, int baudRate = SERIAL_BAUDRATE);
+	void Set(byte dataBits, byte parity, byte stopBits);
 
-	uint SendData(byte data, uint times = 3000);
+	int SendData(byte data, int times = 3000);
 
-    bool Flush(uint times = 3000);
+	bool Flush(int times = 3000);
 
 	void SetBaudRate(int baudRate = SERIAL_BAUDRATE);
 
-    virtual void Register(TransportHandler handler, void* param = nullptr);
+	virtual void Register(TransportHandler handler, void* param = nullptr);
 
 	// 电源等级变更（如进入低功耗模式）时调用
 	virtual void ChangePower(int level);
@@ -69,9 +69,9 @@ public:
 
 protected:
 	virtual bool OnOpen();
-    virtual void OnClose();
+	virtual void OnClose();
 
-    virtual bool OnWrite(const Buffer& bs);
+	virtual bool OnWrite(const Buffer& bs);
 	virtual uint OnRead(Buffer& bs);
 
 private:

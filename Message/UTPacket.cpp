@@ -70,16 +70,16 @@ bool UTPacket::AndPort(byte id, UTPort* port)
 
 bool UTPacket::PressTMsg(const Pair& args, Stream& result)
 {
-	Buffer buff = args.Get("Data");			// 引用源数据区，后面使用要小心，不能修改任何值。
-	if (buff.Length() < sizeof(PacketHead))return false;
+	auto buff = args.Get("Data");			// 引用源数据区，后面使用要小心，不能修改任何值。
+	if (buff.Length() < (int)sizeof(PacketHead))return false;
 
-	PacketHead * head = (PacketHead*)buff.GetBuffer();
+	auto head = (PacketHead*)buff.GetBuffer();
 	void * tail = head + buff.Length();		// 结尾位置
-	UTPort * port = nullptr;
+	UTPort* port = nullptr;
 
 	while (head < tail)
 	{
-		if ((uint)head->Next() >(uint)tail)break;	// 要么越界，要么数据包错
+		if ((uint)head->Next() > (uint)tail)break;	// 要么越界，要么数据包错
 
 		MemoryStream resms;
 		if (!Ports.TryGetValue((uint)head->PortID, port) || !port)		// 获取端口

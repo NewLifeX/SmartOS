@@ -9,8 +9,8 @@
 class DataMessage
 {
 public:
-	uint	Offset;
-	uint	Length;
+	int	Offset;
+	int	Length;
 
 	DataMessage(const Message& msg, Stream* dest, bool isTokenMsg = false);
 

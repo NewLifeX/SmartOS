@@ -16,16 +16,16 @@ public:
 
 	PingSession(IPAddress& ip, ushort id, ushort seq)
 	{
-		Address		= ip;
-		Identifier	= id;
-		Sequence	= seq;
+		Address = ip;
+		Identifier = id;
+		Sequence = seq;
 	}
 
 	bool Check(IPAddress& remote, ICMP_HEADER* icmp)
 	{
-		if(remote != Address) return false;
-		if(Identifier != icmp->Identifier) return false;
-		if(Sequence != icmp->Sequence) return false;
+		if (remote != Address) return false;
+		if (Identifier != icmp->Identifier) return false;
+		if (Sequence != icmp->Sequence) return false;
 
 		return true;
 	}
@@ -43,26 +43,26 @@ IcmpSocket::IcmpSocket(TinyIP* tip) : TinySocket(tip, IP_ICMP)
 
 bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 {
-	auto icmp	= ms.Retrieve<ICMP_HEADER>();
-	if(!icmp) return false;
+	auto icmp = ms.Retrieve<ICMP_HEADER>();
+	if (!icmp) return false;
 
-	IPAddress remote	= ip.SrcIP;
+	IPAddress remote = ip.SrcIP;
 
 	// 检查有没有会话等待
-	if(icmp->Type == 0 && _IcmpSession != nullptr && _IcmpSession->Check(remote, icmp))
+	if (icmp->Type == 0 && _IcmpSession != nullptr && _IcmpSession->Check(remote, icmp))
 	{
 		_IcmpSession->Handle.Set();
-		_IcmpSession	= nullptr;
+		_IcmpSession = nullptr;
 
 		return true;
 	}
 
 	uint len = ms.Remain();
-	if(OnPing)
+	if (OnPing)
 	{
 		// 返回值指示是否向对方发送数据包
 		bool rs = OnPing(*this, *icmp, icmp->Next(), len);
-		if(!rs) return true;
+		if (!rs) return true;
 	}
 	else
 	{
@@ -71,20 +71,20 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 			debug_printf("Ping From "); // 打印发方的ip
 		else
 			debug_printf("Ping Reply "); // 打印发方的ip*/
-		switch(icmp->Type)
+		switch (icmp->Type)
 		{
-			case 0:
-				debug_printf("Ping Reply ");
-				break;
-			case 3:
-				debug_printf("ICMP::应用端口不可达 ");
-				break;
-			case 8:
-				debug_printf("Ping From ");
-				break;
-			default:
-				debug_printf("ICMP%d ", icmp->Type);
-				break;
+		case 0:
+			debug_printf("Ping Reply ");
+			break;
+		case 3:
+			debug_printf("ICMP::应用端口不可达 ");
+			break;
+		case 8:
+			debug_printf("Ping From ");
+			break;
+		default:
+			debug_printf("ICMP%d ", icmp->Type);
+			break;
 		}
 		remote.Show();
 		debug_printf(" Payload=%d ", len);
@@ -95,41 +95,41 @@ bool IcmpSocket::Process(IP_HEADER& ip, Stream& ms)
 	}
 
 	// 只处理ECHO请求
-	if(icmp->Type != 8) return true;
+	if (icmp->Type != 8) return true;
 
 	icmp->Type = 0; // 响应
 	// 因为仅仅改变类型，因此我们能够提前修正校验码
 	icmp->Checksum += 0x08;
 
 	// 这里不能直接用sizeof(ICMP_HEADER)，而必须用len，因为ICMP包后面一般有附加数据
-    Tip->SendIP(IP_ICMP, remote, (byte*)icmp, icmp->Size() + len);
+	Tip->SendIP(IP_ICMP, remote, (byte*)icmp, icmp->Size() + len);
 
 	return true;
 }
 
 // Ping目的地址，附带a~z重复的负载数据
-bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
+bool IcmpSocket::Ping(IPAddress& ip, int payloadLength)
 {
 	byte buf[sizeof(ETH_HEADER) + sizeof(IP_HEADER) + sizeof(ICMP_HEADER) + 64];
 	// 注意，此时指针位于0，而内容长度为缓冲区长度
 	Stream ms(buf, ArrayLength(buf));
 	ms.Seek(sizeof(ETH_HEADER) + sizeof(IP_HEADER));
 
-	auto icmp	= ms.Retrieve<ICMP_HEADER>();
+	auto icmp = ms.Retrieve<ICMP_HEADER>();
 	icmp->Init(true);
 
 	icmp->Type = 8;
 	icmp->Code = 0;
 
 	// 限定最大长度64
-	if(payloadLength > 64) payloadLength = 64;
-	for(int i=0, k=0; i<payloadLength; i++, k++)
+	if (payloadLength > 64) payloadLength = 64;
+	for (int i = 0, k = 0; i < payloadLength; i++, k++)
 	{
-		if(k >= 23) k-=23;
+		if (k >= 23) k -= 23;
 		ms.Write((byte)('a' + k));
 	}
 
-	ushort now = Sys.Ms();
+	ushort now = (ushort)Sys.Ms();
 	ushort id = _REV16(Sys.ID[0]);
 	ushort seq = _REV16(now);
 	icmp->Identifier = id;
@@ -151,11 +151,11 @@ bool IcmpSocket::Ping(IPAddress& ip, uint payloadLength)
 	_IcmpSession = &ps;
 
 	// 等待响应
-	bool rs	= ps.Handle.WaitOne(1000);
+	bool rs = ps.Handle.WaitOne(1000);
 
 #if NET_DEBUG
 	uint cost = ct.Elapsed() / 1000;
-	if(rs)
+	if (rs)
 		debug_printf(" 成功 %dms\r\n", cost);
 	else
 		debug_printf(" 失败 %dms\r\n", cost);

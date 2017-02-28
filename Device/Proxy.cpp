@@ -4,13 +4,13 @@
 
 Proxy::Proxy()
 {
-	Cache		= nullptr;
-	CacheSize	= 10;
-	BufferSize	= 256;
-	TimeStamp	= 0;
-	EnableStamp	= false;
-	UploadTaskId= 0;
-	AutoStart	= false;
+	Cache = nullptr;
+	CacheSize = 10;
+	BufferSize = 256;
+	TimeStamp = 0;
+	EnableStamp = false;
+	UploadTaskId = 0;
+	AutoStart = false;
 }
 
 bool Proxy::Open()
@@ -50,7 +50,7 @@ bool Proxy::SetConfig(Dictionary<cstring, int>& config, String& str)
 		value = 0;
 		if (config.TryGetValue(ByteParam2[i], value))
 		{
-			*(ParamP2[i]) = value;
+			*(ParamP2[i]) = value > 0;
 		}
 	}
 
@@ -72,7 +72,7 @@ bool Proxy::GetConfig(Dictionary<cstring, int>& config)
 	// debug_printf("基础配置条数%d\r\n",config.Count());
 	OnGetConfig(config);
 
-	debug_printf("一共%d跳配置",config.Count());
+	debug_printf("一共%d跳配置", config.Count());
 
 	return true;
 }
@@ -98,7 +98,7 @@ bool Proxy::Upload(Buffer& data)
 	bp.Set("Data", data);
 	// CacheSize 为0时立马发送   ||   Cache 满立马发送
 	if ((UploadTaskId && !CacheSize)
-		||(CacheSize && Cache->Position()>CacheSize))Sys.SetTask(UploadTaskId, true, 0);
+		|| (CacheSize && Cache->Position() > CacheSize))Sys.SetTask(UploadTaskId, true, 0);
 	/*
 	不知道怎么在同一个包里存放多个数据，暂时没写缓存问题的东西
 	*/
@@ -117,8 +117,8 @@ bool Proxy::LoadConfig()
 
 	CacheSize = cfg.CacheSize;
 	BufferSize = cfg.BufferSize;
-	EnableStamp = cfg.EnableStamp;
-	AutoStart = cfg.AutoStart;
+	EnableStamp = cfg.EnableStamp > 0;
+	AutoStart = cfg.AutoStart > 0;
 
 	Stream st(cfg.PortCfg, sizeof(cfg.PortCfg));
 	OnGetConfig(st);
@@ -130,10 +130,10 @@ void Proxy::SaveConfig()
 {
 	ProxyConfig cfg(Name);
 
-	cfg.CacheSize	= CacheSize;
-	cfg.EnableStamp	= EnableStamp;
-	cfg.AutoStart	= AutoStart;
-	cfg.BufferSize  = BufferSize;
+	cfg.CacheSize = CacheSize;
+	cfg.EnableStamp = EnableStamp;
+	cfg.AutoStart = AutoStart;
+	cfg.BufferSize = BufferSize;
 
 	Stream st(cfg.PortCfg, sizeof(cfg.PortCfg));
 	OnSetConfig(st);
@@ -203,7 +203,7 @@ bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 	}
 
 	cstring const ByteParam[] = { "parity","dataBits","stopBits" };
-	ushort*	ParamP[] = {&parity, &dataBits, &stopBits};
+	byte*	ParamP[] = { &parity, &dataBits, &stopBits };
 	bool haveChang = false;
 	for (int i = 0; i < ArrayLength(ByteParam); i++)
 	{
@@ -214,7 +214,7 @@ bool ComProxy::OnSetConfig(Dictionary<cstring, int>& config, String& str)
 			haveChang = true;
 		}
 	}
-	if (haveChang)port.Set(parity,  dataBits,  stopBits);
+	if (haveChang)port.Set(parity, dataBits, stopBits);
 	// SaveConfig();
 	return true;
 }
@@ -249,7 +249,7 @@ uint ComProxy::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
 	// 串口不关心 param2
 	auto& pro = *(ComProxy*)param;
 	pro.Upload(bs);
-	
+
 	// auto fac = ProxyFactory::Current;	// 直接扔给上级
 	// if (!fac)return 0;
 	// fac->Upload(pro, bs);
@@ -258,9 +258,9 @@ uint ComProxy::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
 
 bool ComProxy::OnGetConfig(Stream& cfg)
 {
-	parity = cfg.ReadUInt16();
-	dataBits = cfg.ReadUInt16();
-	stopBits = cfg.ReadUInt16();
+	parity = (byte)cfg.ReadByte();
+	dataBits = (byte)cfg.ReadByte();
+	stopBits = (byte)cfg.ReadByte();
 	baudRate = cfg.ReadUInt32();
 	return true;
 }
