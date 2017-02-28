@@ -289,6 +289,12 @@ WiFiInterface::WiFiInterface() : NetworkInterface()
 	Pass = nullptr;
 }
 
+WiFiInterface::~WiFiInterface()
+{
+	delete SSID;
+	delete Pass;
+}
+
 bool WiFiInterface::IsStation() const
 {
 	return Mode == NetworkType::Station || Mode == NetworkType::STA_AP;

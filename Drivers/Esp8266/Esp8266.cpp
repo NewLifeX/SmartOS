@@ -50,20 +50,19 @@ Esp8266::Esp8266(COM idx, Pin power, Pin rst)
 
 Esp8266::~Esp8266()
 {
-	delete SSID;
-	delete Pass;
+	RemoveLed();
 }
 
 void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 {
-	Name	= "Esp8266";
-	Speed	= 54;
+	Name = "Esp8266";
+	Speed = 54;
 
 	Port = port;
-	if(Port)
+	if (Port)
 	{
-		if(MinSize) MinSize	= Port->MinSize;
-		if(MaxSize) MaxSize	= Port->MaxSize;
+		if (MinSize) MinSize = Port->MinSize;
+		if (MaxSize) MaxSize = Port->MaxSize;
 
 		Port->Register(OnPortReceive, this);
 	}
@@ -71,16 +70,16 @@ void Esp8266::Init(ITransport* port, Pin power, Pin rst)
 	_power.Init(power, false);
 	if (rst != P0) _rst.Init(rst, true);
 
-	_task	= 0;
+	_task = 0;
 
-	Led		= nullptr;
+	Led = nullptr;
 
-	_Expect	= nullptr;
+	_Expect = nullptr;
 
 	Buffer(_sockets, 5 * 4).Clear();
 
-	Mode	= NetworkType::STA_AP;
-	WorkMode= NetworkType::STA_AP;
+	Mode = NetworkType::STA_AP;
+	WorkMode = NetworkType::STA_AP;
 
 	InitConfig();
 	LoadConfig();
@@ -100,10 +99,10 @@ void Esp8266::SetLed(Pin led)
 
 void Esp8266::SetLed(OutputPort& led)
 {
-	auto fp	= new FlushPort();
-	fp->Port	= &led;
+	auto fp = new FlushPort();
+	fp->Port = &led;
 	fp->Start();
-	Led	= fp;
+	Led = fp;
 }
 
 void Esp8266::RemoveLed()
@@ -463,7 +462,7 @@ void ParseFail(cstring name, const Buffer& bs)
 
 uint Esp8266::OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2)
 {
-	auto esp	= (Esp8266*)param;
+	auto esp = (Esp8266*)param;
 	return esp->OnReceive(bs, param2);
 }
 

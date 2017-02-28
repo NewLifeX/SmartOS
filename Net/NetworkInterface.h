@@ -113,7 +113,7 @@ public:
 	String*		Pass;	// 无线密码
 
 	WiFiInterface();
-	virtual ~WiFiInterface() { }
+	virtual ~WiFiInterface();
 
 	bool IsStation() const;
 	bool IsAP() const;
