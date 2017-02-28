@@ -55,19 +55,10 @@ public:
 //#define ArrayZero(arr) memset(arr, 0, sizeof(arr))
 
 // 弱函数
-#if defined(__CC_ARM)
-#define	WEAK	__weak
-#elif defined(__GNUC__)
-#define	WEAK	__attribute__((weak))
-//#elif defined(_MSC_VER)
-//	#define	WEAK	__declspec(selectany)
-#else
-#define WEAK
-#endif
-
 #if defined(_MSC_VER)
-//#define itoa	_itoa_s
-//#define sprintf	sprintf_s
+#define WEAK
+#else
+#define	WEAK	__attribute__((weak))
 #endif
 
 #endif
