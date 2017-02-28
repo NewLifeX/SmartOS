@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="STM32F1">
+      <UniqueIdentifier>{39d63b8a-0872-411c-ad23-689a43861d49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CortexM">
+      <UniqueIdentifier>{7bce6691-e556-4a39-9dc3-426ec04026c9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Platform\STM32F1\WatchDog.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\ADC.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Boot_F1.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\CAN.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\DAC.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\DMA.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Flash.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\I2C.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Interrupt.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Port.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Power.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Pwm.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\RTC.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\SerialPort.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Spi.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\STM32F1\Timer.cpp">
+      <Filter>STM32F1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Time.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Interrupt.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Port.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Runtime.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\SerialPort.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Sys.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Platform\CortexM\Thread.cpp">
+      <Filter>CortexM</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

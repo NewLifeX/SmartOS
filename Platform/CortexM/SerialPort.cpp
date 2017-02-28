@@ -12,12 +12,12 @@ extern void SerialPort_GetPins(byte index, byte remap, Pin* txPin, Pin* rxPin);
 
 void SerialPort::OnInit()
 {
-    /*_parity		= USART_Parity_No;
-    _dataBits	= USART_WordLength_8b;
-    _stopBits	= USART_StopBits_1;*/
-    _dataBits	= 8;
-    _parity		= 0;
-    _stopBits	= 1;
+	/*_parity		= USART_Parity_No;
+	_dataBits	= USART_WordLength_8b;
+	_stopBits	= USART_StopBits_1;*/
+	_dataBits = 8;
+	_parity = 0;
+	_stopBits = 1;
 }
 
 bool SerialPort::OnSet()
@@ -27,51 +27,51 @@ bool SerialPort::OnSet()
 
 	SerialPort_GetPins(Index, Remap, &Pins[0], &Pins[1]);
 
-    auto sp	= g_Uart_Ports[Index];
-	State	= sp;
+	auto sp = g_Uart_Ports[Index];
+	State = sp;
 
 	// 根据端口实际情况决定打开状态
 	return sp->CR1 & USART_CR1_UE;
 }
 
-WEAK void SerialPort_Opening(SerialPort& sp)	{ }
-WEAK void SerialPort_Closeing(SerialPort& sp)	{ }
+WEAK void SerialPort_Opening(SerialPort& sp) { }
+WEAK void SerialPort_Closeing(SerialPort& sp) { }
 
 // 打开串口
 void SerialPort::OnOpen2()
 {
-	auto st	= (USART_TypeDef*)State;
+	auto st = (USART_TypeDef*)State;
 
 	// 不要关调试口，否则杯具
-    if(Index != Sys.MessagePort) USART_DeInit(st);
+	if (Index != Sys.MessagePort) USART_DeInit(st);
 	// USART_DeInit其实就是关闭时钟，这里有点多此一举。但为了安全起见，还是使用
 
 	SerialPort_Opening(*this);
 
-	const ushort paritys[]	= { USART_Parity_No, USART_Parity_Even, USART_Parity_Odd };
-	if(_parity >= ArrayLength(paritys)) _parity	= 0;
+	const ushort paritys[] = { USART_Parity_No, USART_Parity_Even, USART_Parity_Odd };
+	if (_parity >= ArrayLength(paritys)) _parity = 0;
 
 #ifdef STM32F0
-	const ushort StopBits[]	= { 1, USART_StopBits_1, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
+	const ushort StopBits[] = { 1, USART_StopBits_1, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
 #else
-	const ushort StopBits[]	= { 1, USART_StopBits_1, 5, USART_StopBits_0_5, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
+	const ushort StopBits[] = { 1, USART_StopBits_1, 5, USART_StopBits_0_5, 2, USART_StopBits_2, 15, USART_StopBits_1_5 };
 #endif
-	ushort stop	= StopBits[1];
-	for(int i=0; i<ArrayLength(StopBits); i+=2)
+	ushort stop = StopBits[1];
+	for (int i = 0; i < ArrayLength(StopBits); i += 2)
 	{
-		if(StopBits[i] == _stopBits)
+		if (StopBits[i] == _stopBits)
 		{
-			stop	= StopBits[i+1];
+			stop = StopBits[i + 1];
 			break;
 		}
 	}
 
 	USART_InitTypeDef  p;
-    USART_StructInit(&p);
-	p.USART_BaudRate	= _baudRate;
-	p.USART_WordLength	= _dataBits == 8 ? USART_WordLength_8b : USART_WordLength_9b;
-	p.USART_StopBits	= stop;
-	p.USART_Parity		= paritys[_parity];
+	USART_StructInit(&p);
+	p.USART_BaudRate = _baudRate;
+	p.USART_WordLength = _dataBits == 8 ? USART_WordLength_8b : USART_WordLength_9b;
+	p.USART_StopBits = stop;
+	p.USART_Parity = paritys[_parity];
 	USART_Init(st, &p);
 
 	// 串口接收中断配置，同时会打开过载错误中断
@@ -89,7 +89,7 @@ void SerialPort::OnOpen2()
 	byte irq = uart_irqs[Index];
 	Interrupt.SetPriority(irq, 0);
 	Interrupt.Activate(irq, OnHandler, this);
-//#endif
+	//#endif
 
 	USART_Cmd(st, ENABLE);//使能串口
 }
@@ -97,11 +97,11 @@ void SerialPort::OnOpen2()
 // 关闭端口
 void SerialPort::OnClose2()
 {
-	auto st	= (USART_TypeDef*)State;
+	auto st = (USART_TypeDef*)State;
 	USART_Cmd(st, DISABLE);
-    USART_DeInit(st);
+	USART_DeInit(st);
 
-    Ports[0]->Close();
+	Ports[0]->Close();
 	Ports[1]->Close();
 
 	byte irq = uart_irqs[Index];
@@ -111,7 +111,7 @@ void SerialPort::OnClose2()
 }
 
 // 发送单一字节数据
-uint SerialPort::SendData(byte data, uint times)
+int SerialPort::SendData(byte data, int times)
 {
 	/*
 	在USART_DR寄存器中写入了最后一个数据字后，在关闭USART模块之前或设置微控制器进入低功耗模式之前，
@@ -119,11 +119,11 @@ uint SerialPort::SendData(byte data, uint times)
 	1．读一次USART_SR寄存器；
 	2．写一次USART_DR寄存器。
 	*/
-	auto st	= (USART_TypeDef*)State;
+	auto st = (USART_TypeDef*)State;
 	USART_SendData(st, (ushort)data);
 	// 等待发送完毕
-    while(USART_GetFlagStatus(st, USART_FLAG_TXE) == RESET && --times > 0);
-    if(!times) Error++;
+	while (USART_GetFlagStatus(st, USART_FLAG_TXE) == RESET && --times > 0);
+	if (!times) Error++;
 
 	return times;
 }
@@ -138,7 +138,7 @@ void SerialPort::OnWrite2()
 // 关键性代码，放到开头
 INROOT void SerialPort::OnTxHandler()
 {
-	if(!Tx.Empty())
+	if (!Tx.Empty())
 		USART_SendData((USART_TypeDef*)State, (ushort)Tx.Dequeue());
 	else
 	{
@@ -158,7 +158,7 @@ INROOT void SerialPort::OnRxHandler()
 
 	// 收到数据，开启任务调度。延迟_byteTime，可能还有字节到来
 	//!!! 暂时注释任务唤醒，避免丢数据问题
-	if(_taskidRx && Rx.Length() >= MinSize)
+	if (_taskidRx && Rx.Length() >= MinSize)
 	{
 		//Sys.SetTask(_taskidRx, true, (ByteTime >> 10) + 1);
 		((Task*)_task)->Set(true, 20);
@@ -168,16 +168,16 @@ INROOT void SerialPort::OnRxHandler()
 // 真正的串口中断函数
 INROOT void SerialPort::OnHandler(ushort num, void* param)
 {
-	auto sp	= (SerialPort*)param;
-	auto st	= (USART_TypeDef*)sp->State;
+	auto sp = (SerialPort*)param;
+	auto st = (USART_TypeDef*)sp->State;
 
-//#if !(defined(STM32F0) || defined(GD32F150))
-	if(USART_GetITStatus(st, USART_IT_TXE) != RESET) sp->OnTxHandler();
-//#endif
-	// 接收中断
-	if(USART_GetITStatus(st, USART_IT_RXNE) != RESET) sp->OnRxHandler();
+	//#if !(defined(STM32F0) || defined(GD32F150))
+	if (USART_GetITStatus(st, USART_IT_TXE) != RESET) sp->OnTxHandler();
+	//#endif
+		// 接收中断
+	if (USART_GetITStatus(st, USART_IT_RXNE) != RESET) sp->OnRxHandler();
 	// 溢出
-	if(USART_GetFlagStatus(st, USART_FLAG_ORE) != RESET)
+	if (USART_GetFlagStatus(st, USART_FLAG_ORE) != RESET)
 	{
 		//USART_ClearFlag(st, USART_FLAG_ORE);	// ST 库文件 ClearFlag 不许动 USART_FLAG_ORE 寄存器
 		// 读取并扔到错误数据

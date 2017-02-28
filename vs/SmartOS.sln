@@ -5,16 +5,30 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmartOS", "SmartOS.vcxproj", "{6C0D43A8-8411-48F3-989E-51C5379A5563}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "STM32F1", "STM32F1.vcxproj", "{E3FBB0A1-21E2-4720-A447-BB9B4631955E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Debug|x64.ActiveCfg = Debug|Win32
 		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Debug|x86.ActiveCfg = Debug|Win32
 		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Debug|x86.Build.0 = Debug|Win32
+		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Release|x64.ActiveCfg = Release|Win32
 		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Release|x86.ActiveCfg = Release|Win32
 		{6C0D43A8-8411-48F3-989E-51C5379A5563}.Release|x86.Build.0 = Release|Win32
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Debug|x64.ActiveCfg = Debug|x64
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Debug|x64.Build.0 = Debug|x64
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Debug|x86.ActiveCfg = Debug|Win32
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Debug|x86.Build.0 = Debug|Win32
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Release|x64.ActiveCfg = Release|x64
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Release|x64.Build.0 = Release|x64
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Release|x86.ActiveCfg = Release|Win32
+		{E3FBB0A1-21E2-4720-A447-BB9B4631955E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
