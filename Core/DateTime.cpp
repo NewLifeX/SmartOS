@@ -144,12 +144,14 @@ DateTime& DateTime::ParseDays(int days)
 
 Buffer DateTime::ToArray()
 {
-	return Buffer(&Year, &Ms - &Year + sizeof(Ms));
+	//return Buffer(&Year, (int)&Ms - (int)&Year + sizeof(Ms));
+	return Buffer(this, sizeof(this[0]));
 }
 
 const Buffer DateTime::ToArray() const
 {
-	return Buffer((void*)&Year, (int)&Ms - (int)&Year + sizeof(Ms));
+	//return Buffer((void*)&Year, (int)&Ms - (int)&Year + sizeof(Ms));
+	return Buffer((void*)this, sizeof(this[0]));
 }
 
 // 重载等号运算符

@@ -63,7 +63,7 @@ public:
     friend bool operator<=	(const DateTime& left, const DateTime& right);
 
 	String ToString() const;
-	void Show(bool newLine = true) const;
+	void Show(bool newLine = false) const;
 
 	// 默认格式化时间为yyyy-MM-dd HH:mm:ss
 	/*

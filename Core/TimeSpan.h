@@ -29,7 +29,7 @@ public:
     friend bool operator<=	(const TimeSpan& left, const TimeSpan& right);
 
 	String ToString() const;
-	void Show(bool newLine = true) const;
+	void Show(bool newLine = false) const;
 
 private:
 	int	_Seconds;
