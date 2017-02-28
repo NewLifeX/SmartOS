@@ -9,7 +9,7 @@ Queue::Queue() : _s((void*)nullptr, 0)
 	Clear();
 }
 
-void Queue::SetCapacity(uint len)
+void Queue::SetCapacity(int len)
 {
 	_s.SetLength(len);
 }
@@ -63,7 +63,7 @@ INROOT byte Queue::Dequeue()
 	return dat;
 }
 
-uint Queue::Write(const Buffer& bs)
+int Queue::Write(const Buffer& bs)
 {
 	int total	= _s.Capacity();
 	if(!total) _s.SetLength(64);
@@ -77,17 +77,17 @@ uint Queue::Write(const Buffer& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	uint	len	= bs.Length();
+	int	len	= bs.Length();
 
 	// 如果队列满了，不需要覆盖
 	if(_size + len > total)
 		len	= total - _size;
 
-	uint rs = 0;
+	int rs = 0;
 	while(true)
 	{
 		// 计算这一个循环剩下的位置
-		uint remain	= _s.Capacity() - _head;
+		int remain	= _s.Capacity() - _head;
 		// 如果要写入的数据足够存放
 		if(len <= remain)
 		{
@@ -113,7 +113,7 @@ uint Queue::Write(const Buffer& bs)
 	return rs;
 }
 
-uint Queue::Read(Buffer& bs)
+int Queue::Read(Buffer& bs)
 {
 	if(_size == 0) return 0;
 
@@ -124,17 +124,17 @@ uint Queue::Read(Buffer& bs)
 	4，如果队列过小，很有可能后来数据会覆盖前面数据
 	*/
 
-	uint	len	= bs.Length();
+	int	len	= bs.Length();
 	if(!len) return 0;
 
 	if(len > _size) len = _size;
 
-	uint rs = 0;
+	int rs = 0;
 	while(true)
 	{
 		int total	= _s.Capacity();
 		// 计算这一个循环剩下的位置
-		uint remain = total - _tail;
+		int remain = total - _tail;
 		// 如果要读取的数据都在这里
 		if(len <= remain)
 		{

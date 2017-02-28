@@ -9,25 +9,25 @@ class Queue
 {
 private:
 	Array _s;	// 数据流
-	uint _head;		// 头部位置
-    uint _tail;		// 尾部位置
-	uint _size;		// 长度
+	int _head;		// 头部位置
+    int _tail;		// 尾部位置
+	int _size;		// 长度
 
 public:
 	Queue();
 
 	bool Empty() const { return _size == 0; }	// 队列空
-	uint Capacity() const { return _s.Capacity(); }	// 队列容量
-	uint Length() const { return _size; }		// 队列大小
-	void SetCapacity(uint len);
+	int Capacity() const { return _s.Capacity(); }	// 队列容量
+	int Length() const { return _size; }		// 队列大小
+	void SetCapacity(int len);
 
 	void Clear();
 
 	void Enqueue(byte dat);
 	byte Dequeue();
 
-	uint Write(const Buffer& bs);	// 批量写入
-	uint Read(Buffer& bs);		// 批量读取
+	int Write(const Buffer& bs);	// 批量写入
+	int Read(Buffer& bs);		// 批量读取
 };
 
 #endif

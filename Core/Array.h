@@ -59,7 +59,7 @@ public:
 #endif
 
 protected:
-	uint	_Capacity;	// 最大个数。非字节数
+	int		_Capacity;	// 最大个数。非字节数
 	bool	_needFree;	// 是否需要释放
 	bool	_canWrite;	// 是否可写
 	ushort	_Size;		// 单个元素大小。字节

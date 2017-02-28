@@ -44,7 +44,7 @@ void TTime::SetTime(UInt64 sec)
 {
 	if (sec >= BASE_YEAR_US) sec -= BASE_YEAR_US;
 
-	BaseSeconds = (uint)(sec - Seconds);
+	BaseSeconds = (int)(sec - Seconds);
 
 #if DEBUG
 	/*DateTime dt(sec);

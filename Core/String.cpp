@@ -17,11 +17,12 @@
 #include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
-extern char* itoa(int value, char* string, int radix);
+//extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
-char* dtostrf(double val, byte prec, char* sout);
+char* dtostrf(double val, byte prec, char* sout, int len);
+
 
 /******************************** String ********************************/
 
@@ -29,13 +30,13 @@ String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
-	_Length	= strlen(cstr);
-	if(_Length)
+	_Length = strlen(cstr);
+	if (_Length)
 	{
-		_Arr	= (char*)cstr;
+		_Arr = (char*)cstr;
 		// 此时保证外部一定是0结尾
-		_Capacity	= _Length + 1;
-		_canWrite	= false;
+		_Capacity = _Length + 1;
+		_canWrite = false;
 	}
 }
 
@@ -64,7 +65,7 @@ String::String(char c) : Array(Arr, ArrayLength(Arr))
 
 	_Arr[0] = c;
 	_Arr[1] = 0;
-	_Length	= 1;
+	_Length = 1;
 }
 
 String::String(byte value, int radix) : Array(Arr, ArrayLength(Arr))
@@ -133,36 +134,36 @@ String::String(double value, int decimalPlaces) : Array(Arr, ArrayLength(Arr))
 // 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
 String::String(char* str, int length) : Array(str, length)
 {
-	_Arr	= str;
-	_Capacity	= length - 1;
+	_Arr = str;
+	_Capacity = length - 1;
 
 	// 计算外部字符串长度
-	int len	= strlen(str);
-	if(len >= length) len	= length - 1;
-	_Length	= len;
-	_Arr[_Length]	= '\0';
+	int len = strlen(str);
+	if (len >= length) len = length - 1;
+	_Length = len;
+	_Arr[_Length] = '\0';
 }
 
 // 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
 String::String(char* str, int length, bool expand) : String(str, length)
 {
-	Expand	= expand;
+	Expand = expand;
 }
 
 // 包装静态字符串，直接使用，修改时扩容
 String::String(cstring str, int length) : Array((char*)str, length)
 {
 	// 此时不能保证外部一定是0结尾
-	_Capacity	= length + 1;
-	_canWrite	= false;
+	_Capacity = length + 1;
+	_canWrite = false;
 }
 
 inline void String::init()
 {
-	_Arr		= Arr;
-	_Capacity	= sizeof(Arr) - 1;
-	_Length		= 0;
-	_Arr[0]		= '\0';
+	_Arr = Arr;
+	_Capacity = sizeof(Arr) - 1;
+	_Length = 0;
+	_Arr[0] = '\0';
 }
 
 void String::release()
@@ -172,14 +173,14 @@ void String::release()
 	init();
 }
 
-bool String::CheckCapacity(uint size)
+bool String::CheckCapacity(int size)
 {
-	int old	= _Capacity;
+	int old = _Capacity;
 	CheckCapacity(size + 1, _Length);
-	if(old == _Capacity) return true;
+	if (old == _Capacity) return true;
 
 	// 强制最后一个字符为0
-	_Arr[_Length]	= '\0';
+	_Arr[_Length] = '\0';
 
 	_Capacity--;
 
@@ -188,21 +189,21 @@ bool String::CheckCapacity(uint size)
 
 void* String::Alloc(int len)
 {
-	if(len <= sizeof(Arr))
+	if (len <= sizeof(Arr))
 	{
-		_needFree	= false;
+		_needFree = false;
 		return Arr;
 	}
 	else
 	{
-		_needFree	= true;
+		_needFree = true;
 		return new byte[len];
 	}
 }
 
-String& String::copy(cstring cstr, uint length)
+String& String::copy(cstring cstr, int length)
 {
-	if(!cstr || !length) return *this;
+	if (!cstr || !length) return *this;
 
 	if (!CheckCapacity(length))
 		release();
@@ -211,8 +212,8 @@ String& String::copy(cstring cstr, uint length)
 		_Length = length;
 		//strcpy(_Arr, cstr);
 		//!!! 特别注意要拷贝的长度
-		if(length) Buffer(_Arr, _Capacity).Copy(0, cstr, length);
-		_Arr[length]	= '\0';
+		if (length) Buffer(_Arr, _Capacity).Copy(0, cstr, length);
+		_Arr[length] = '\0';
 	}
 
 	return *this;
@@ -227,7 +228,7 @@ void String::move(String& rhs)
 	3，如果右值是外部指针，而不需要释放，则拷贝数据，因为那指针可能是借用外部的栈内存
 	*/
 
-	if(rhs._Arr != rhs.Arr && rhs._needFree)
+	if (rhs._Arr != rhs.Arr && rhs._needFree)
 	{
 		Array::move(rhs);
 
@@ -242,7 +243,7 @@ void String::move(String& rhs)
 bool String::CopyOrWrite()
 {
 	// 如果不可写
-	if(!_canWrite) return CheckCapacity(_Length);
+	if (!_canWrite) return CheckCapacity(_Length);
 
 	return false;
 }
@@ -251,18 +252,18 @@ bool String::SetLength(int len, bool bak)
 {
 	//if(!Array::SetLength(length, bak)) return false;
 	// 字符串的最大长度为容量减一，因为需要保留一个零结束字符
-	if(len < _Capacity)
+	if (len < _Capacity)
 	{
 		_Length = len;
 	}
 	else
 	{
-		if(!CheckCapacity(len + 1, bak ? _Length : 0)) return false;
+		if (!CheckCapacity(len + 1, bak ? _Length : 0)) return false;
 		// 扩大长度
-		if(len > _Length) _Length = len;
+		if (len > _Length) _Length = len;
 	}
 
-	_Arr[_Length]	= '\0';
+	_Arr[_Length] = '\0';
 
 	return true;
 }
@@ -270,10 +271,10 @@ bool String::SetLength(int len, bool bak)
 // 拷贝数据，默认-1长度表示当前长度
 int String::Copy(int destIndex, const void* src, int len)
 {
-	int rs	= Buffer::Copy(destIndex, src, len);
-	if(!rs) return 0;
+	int rs = Buffer::Copy(destIndex, src, len);
+	if (!rs) return 0;
 
-	_Arr[_Length]	= '\0';
+	_Arr[_Length] = '\0';
 
 	return rs;
 }
@@ -281,10 +282,10 @@ int String::Copy(int destIndex, const void* src, int len)
 // 把数据复制到目标缓冲区，默认-1长度表示当前长度
 int String::CopyTo(int srcIndex, void* dest, int len) const
 {
-	int rs	= Buffer::CopyTo(srcIndex, dest, len);
-	if(!rs) return 0;
+	int rs = Buffer::CopyTo(srcIndex, dest, len);
+	if (!rs) return 0;
 
-	((char*)dest)[rs]	= '\0';
+	((char*)dest)[rs] = '\0';
 
 	return rs;
 }
@@ -323,18 +324,18 @@ bool String::Concat(const String& s)
 	return Concat(s._Arr, s._Length);
 }
 
-bool String::Concat(cstring cstr, uint length)
+bool String::Concat(cstring cstr, int length)
 {
 	if (!cstr) return false;
 	if (length == 0) return true;
 
-	uint newlen = _Length + length;
+	int newlen = _Length + length;
 	if (!CheckCapacity(newlen)) return false;
 
 	//strcpy(_Arr + _Length, cstr);
 	Buffer(_Arr, _Capacity).Copy(_Length, cstr, length);
 	_Length = newlen;
-	_Arr[_Length]	= '\0';
+	_Arr[_Length] = '\0';
 
 	return true;
 }
@@ -354,7 +355,7 @@ bool String::Concat(char c)
 {
 	if (!CheckCapacity(_Length + 1)) return false;
 
-	_Arr[_Length++]	= c;
+	_Arr[_Length++] = c;
 
 	return true;
 }
@@ -362,18 +363,22 @@ bool String::Concat(char c)
 bool String::Concat(byte num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16)
+	if (radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
 
 		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
-		_Length	+= (sizeof(num) << 1);
+		_Length += (sizeof(num) << 1);
 
 		return true;
 	}
 
 	char buf[1 + 3 * sizeof(byte)];
+#if defined(_MSC_VER)
+	_itoa_s(num, buf, sizeof(buf), radix);
+#else
 	itoa(num, buf, radix);
+#endif
 
 	return Concat(buf, strlen(buf));
 }
@@ -381,22 +386,26 @@ bool String::Concat(byte num, int radix)
 bool String::Concat(short num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16) return Concat((ushort)num, radix);
+	if (radix == 16 || radix == -16) return Concat((ushort)num, radix);
 
 	char buf[2 + 3 * sizeof(int)];
+#if defined(_MSC_VER)
+	_itoa_s(num, buf, sizeof(buf), radix);
+#else
 	itoa(num, buf, radix);
+#endif
 	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(ushort num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16)
+	if (radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
 
 		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
-		_Length	+= (sizeof(num) << 1);
+		_Length += (sizeof(num) << 1);
 
 		return true;
 	}
@@ -409,22 +418,26 @@ bool String::Concat(ushort num, int radix)
 bool String::Concat(int num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16) return Concat((uint)num, radix);
+	if (radix == 16 || radix == -16) return Concat((uint)num, radix);
 
 	char buf[2 + 3 * sizeof(int)];
+#if defined(_MSC_VER)
+	_itoa_s(num, buf, sizeof(buf), radix);
+#else
 	itoa(num, buf, radix);
+#endif
 	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(uint num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16)
+	if (radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
 
 		utohex(num, sizeof(num), _Arr + _Length, radix < 0);
-		_Length	+= (sizeof(num) << 1);
+		_Length += (sizeof(num) << 1);
 
 		return true;
 	}
@@ -437,7 +450,7 @@ bool String::Concat(uint num, int radix)
 bool String::Concat(Int64 num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16) return Concat((UInt64)num, radix);
+	if (radix == 16 || radix == -16) return Concat((UInt64)num, radix);
 
 	char buf[2 + 3 * sizeof(Int64)];
 	ltoa(num, buf, radix);
@@ -447,14 +460,14 @@ bool String::Concat(Int64 num, int radix)
 bool String::Concat(UInt64 num, int radix)
 {
 	// 十六进制固定长度
-	if(radix == 16 || radix == -16)
+	if (radix == 16 || radix == -16)
 	{
 		if (!CheckCapacity(_Length + (sizeof(num) << 1))) return false;
 
 		utohex((int)(num >> 32), sizeof(num) >> 1, _Arr + _Length, radix < 0);
-		_Length	+= sizeof(num);
+		_Length += sizeof(num);
 		utohex((int)(num & 0xFFFFFFFF), sizeof(num) >> 1, _Arr + _Length, radix < 0);
-		_Length	+= sizeof(num);
+		_Length += sizeof(num);
 
 		return true;
 	}
@@ -464,13 +477,17 @@ bool String::Concat(UInt64 num, int radix)
 	return Concat(buf, strlen(buf));
 }
 
-char* ftoa(char* str, double num)
+static char* ftoa(char* str, int len, double num)
 {
-	int len	= sprintf(str, "%.8f", num);
+#if defined(_MSC_VER)
+	len = sprintf_s(str, len, "%.8f", num);
+#else
+	len = sprintf(str, "%.8f", num);
+#endif
 	// 干掉后面多余的0
-	for(int i=len; i>=0; i--)
+	for (int i = len; i >= 0; i--)
 	{
-		if(str[i] == '0') str[i]	= '\0';
+		if (str[i] == '0') str[i] = '\0';
 	}
 
 	return str;
@@ -479,7 +496,7 @@ char* ftoa(char* str, double num)
 bool String::Concat(float num, int decimalPlaces)
 {
 	char buf[20];
-	dtostrf(num, decimalPlaces, buf);
+	dtostrf(num, decimalPlaces, buf, sizeof(buf));
 	//sprintf(buf, "%f", num);
 	//ftoa(buf, num);
 	return Concat(buf, strlen(buf));
@@ -488,7 +505,7 @@ bool String::Concat(float num, int decimalPlaces)
 bool String::Concat(double num, int decimalPlaces)
 {
 	char buf[20];
-	dtostrf(num, decimalPlaces, buf);
+	dtostrf(num, decimalPlaces, buf, sizeof(buf));
 	//sprintf(buf, "%f", num);
 	//ftoa(buf, num);
 	return Concat(buf, strlen(buf));
@@ -504,16 +521,16 @@ int String::CompareTo(const String& s) const
 #endif
 int String::CompareTo(cstring cstr, int len, bool ignoreCase) const
 {
-	if(len < 0) len	= strlen(cstr);
+	if (len < 0) len = strlen(cstr);
 	if (!_Arr)
 	{
 		if (cstr && len > 0) return -1;
 		return 0;
 	}
-	if(!cstr && _Arr && _Length > 0) return 1;
+	if (!cstr && _Arr && _Length > 0) return 1;
 
 	// 逐个比较字符，直到指定长度或者源字符串结束
-	if(ignoreCase)
+	if (ignoreCase)
 		return strncasecmp(_Arr, cstr, _Length);
 	else
 		return strncmp(_Arr, cstr, _Length);
@@ -526,8 +543,8 @@ bool String::Equals(const String& str) const
 
 bool String::Equals(cstring cstr) const
 {
-	int len	= strlen(cstr);
-	if(len != _Length) return false;
+	int len = strlen(cstr);
+	if (len != _Length) return false;
 
 	return CompareTo(cstr, len, false) == 0;
 }
@@ -539,8 +556,8 @@ bool String::EqualsIgnoreCase(const String &str) const
 
 bool String::EqualsIgnoreCase(cstring cstr) const
 {
-	int len	= strlen(cstr);
-	if(len != _Length) return false;
+	int len = strlen(cstr);
+	if (len != _Length) return false;
 
 	return CompareTo(cstr, len, true) == 0;
 }
@@ -620,19 +637,19 @@ ByteArray String::ToHex() const
 	bs.SetLength(_Length / 2);
 
 	char cs[3];
-	cs[2]	= 0;
-	byte* b	= bs.GetBuffer();
-	auto p	= _Arr;
-	int n	= 0;
-	for(int i=0; i<_Length; i+=2)
+	cs[2] = 0;
+	byte* b = bs.GetBuffer();
+	auto p = _Arr;
+	int n = 0;
+	for (int i = 0; i < _Length; i += 2)
 	{
-		cs[0]	= *p++;
-		cs[1]	= *p++;
+		cs[0] = *p++;
+		cs[1] = *p++;
 
-		*b++	= (byte)strtol(cs, nullptr, 16);
+		*b++ = (byte)strtol(cs, nullptr, 16);
 
 		// 过滤横杠和空格
-		if(*p == '-' || isspace(*p))
+		if (*p == '-' || isspace(*p))
 		{
 			p++;
 			i++;
@@ -647,9 +664,9 @@ ByteArray String::ToHex() const
 
 int String::ToInt() const
 {
-	if(_Length == 0) return 0;
+	if (_Length == 0) return 0;
 
-	if(_Arr[_Length] == '\0') return atoi(_Arr);
+	if (_Arr[_Length] == '\0') return atoi(_Arr);
 
 	// 非零结尾字符串需要特殊处理
 	String s;
@@ -659,9 +676,9 @@ int String::ToInt() const
 
 float String::ToFloat() const
 {
-	if(_Length == 0) return 0;
+	if (_Length == 0) return 0;
 
-	if(_Arr[_Length] == '\0') return (float)atof(_Arr);
+	if (_Arr[_Length] == '\0') return (float)atof(_Arr);
 
 	// 非零结尾字符串需要特殊处理
 	String s;
@@ -671,9 +688,9 @@ float String::ToFloat() const
 
 double String::ToDouble() const
 {
-	if(_Length == 0) return 0;
+	if (_Length == 0) return 0;
 
-	if(_Arr[_Length] == '\0') return atof(_Arr);
+	if (_Arr[_Length] == '\0') return atof(_Arr);
 
 	// 非零结尾字符串需要特殊处理
 	String s;
@@ -686,7 +703,7 @@ String& String::ToStr(String& str) const
 {
 	// 把当前字符串复制到目标字符串后面
 	//str.Copy(*this, str._Length);
-	str	+= *this;
+	str += *this;
 
 	return (String&)*this;
 }
@@ -701,12 +718,12 @@ String String::ToString() const
 void String::Show(bool newLine) const
 {
 	//if(_Length) debug_printf("%s", _Arr);
-	for(int i=0; i<_Length; i++)
+	for (int i = 0; i < _Length; i++)
 	{
 		//fput(_Arr[i]);
 		debug_printf("%c", _Arr[i]);
 	}
-	if(newLine) debug_printf("\r\n");
+	if (newLine) debug_printf("\r\n");
 }
 
 // 格式化字符串，输出到现有字符串后面。方便我们连续格式化多个字符串
@@ -730,12 +747,12 @@ String& String::Format(cstring format, ...)
 
 int String::IndexOf(const char ch, int startIndex) const
 {
-	if(startIndex < 0) return -1;
-	if(startIndex >= _Length) return -1;
+	if (startIndex < 0) return -1;
+	if (startIndex >= _Length) return -1;
 
-	for(int i=startIndex; i<_Length; i++)
+	for (int i = startIndex; i < _Length; i++)
 	{
-		if(_Arr[i] == ch) return i;
+		if (_Arr[i] == ch) return i;
 	}
 
 	return -1;
@@ -753,11 +770,11 @@ int String::IndexOf(cstring str, int startIndex) const
 
 int String::LastIndexOf(const char ch, int startIndex) const
 {
-	if(startIndex >= _Length) return -1;
+	if (startIndex >= _Length) return -1;
 
-	for(int i=_Length - 1; i>=startIndex; i--)
+	for (int i = _Length - 1; i >= startIndex; i--)
 	{
-		if(_Arr[i] == ch) return i;
+		if (_Arr[i] == ch) return i;
 	}
 	return -1;
 }
@@ -774,29 +791,29 @@ int String::LastIndexOf(cstring str, int startIndex) const
 
 int String::Search(cstring str, int len, int startIndex, bool rev) const
 {
-	if(!str) return -1;
-	if(startIndex < 0) return -1;
+	if (!str) return -1;
+	if (startIndex < 0) return -1;
 
 	// 可遍历的长度
-	int count	= _Length - len;
-	if(startIndex > count) return -1;
+	int count = _Length - len;
+	if (startIndex > count) return -1;
 
 	// 遍历源字符串
-	auto s	= _Arr + startIndex;
-	auto e	= _Arr + _Length - 1;
-	auto p	= rev ? e : s;
-	for(int i=0; i<=count; i++)
+	auto s = _Arr + startIndex;
+	auto e = _Arr + _Length - 1;
+	auto p = rev ? e : s;
+	for (int i = 0; i <= count; i++)
 	{
 		// 最大比较个数以目标字符串为准，源字符串确保长度足够
-		if(strncmp(p, str, len) == 0) return p - _Arr;
+		if (strncmp(p, str, len) == 0) return p - _Arr;
 
-		if(rev)
+		if (rev)
 		{
-			if(--p < s) break;
+			if (--p < s) break;
 		}
 		else
 		{
-			if(++p > e) break;
+			if (++p > e) break;
 		}
 	}
 	return -1;
@@ -808,8 +825,8 @@ bool String::Contains(cstring str) const { return IndexOf(str) >= 0; }
 
 bool String::StartsWith(const String& str, int startIndex) const
 {
-	if(!_Arr || !str._Arr) return false;
-	if(str._Length == 0) return false;
+	if (!_Arr || !str._Arr) return false;
+	if (str._Length == 0) return false;
 	if (startIndex + str._Length > _Length) return false;
 
 	return strncmp(&_Arr[startIndex], str._Arr, str._Length) == 0;
@@ -817,9 +834,9 @@ bool String::StartsWith(const String& str, int startIndex) const
 
 bool String::StartsWith(cstring str, int startIndex) const
 {
-	if(!_Arr || !str) return false;
-	int slen	= strlen(str);
-	if(slen == 0) return false;
+	if (!_Arr || !str) return false;
+	int slen = strlen(str);
+	if (slen == 0) return false;
 	if (startIndex + slen > _Length) return false;
 
 	return strncmp(&_Arr[startIndex], str, slen) == 0;
@@ -827,19 +844,19 @@ bool String::StartsWith(cstring str, int startIndex) const
 
 bool String::EndsWith(const String& str) const
 {
-	if(!_Arr || !str._Arr) return false;
-	if(str._Length == 0) return false;
-	if(str._Length > _Length) return false;
+	if (!_Arr || !str._Arr) return false;
+	if (str._Length == 0) return false;
+	if (str._Length > _Length) return false;
 
 	return strncmp(&_Arr[_Length - str._Length], str._Arr, str._Length) == 0;
 }
 
 bool String::EndsWith(cstring str) const
 {
-	if(!_Arr || !str) return false;
-	int slen	= strlen(str);
-	if(slen == 0) return false;
-	if(slen > _Length) return false;
+	if (!_Arr || !str) return false;
+	int slen = strlen(str);
+	if (slen == 0) return false;
+	if (slen > _Length) return false;
 
 	return strncmp(&_Arr[_Length - slen], str, slen) == 0;
 }
@@ -858,9 +875,9 @@ String String::Substring(int start, int len) const
 {
 	String str;
 
-	if(len < 0) len	= _Length - start;
+	if (len < 0) len = _Length - start;
 	//str.Copy(this, _Length, start);
-	if(_Length && start < _Length) str.copy(_Arr + start, len);
+	if (_Length && start < _Length) str.copy(_Arr + start, len);
 
 	return str;
 }
@@ -869,11 +886,11 @@ void trim(char* buffer, int& len, bool trimBegin, bool trimEnd)
 {
 	if (!buffer || len == 0) return;
 	char *begin = buffer;
-	if(trimBegin) while (isspace(*begin)) begin++;
+	if (trimBegin) while (isspace(*begin)) begin++;
 	char *end = buffer + len - 1;
-	if(trimEnd) while (isspace(*end) && end >= begin) end--;
+	if (trimEnd) while (isspace(*end) && end >= begin) end--;
 	len = end + 1 - begin;
-	if (begin > buffer && len) Buffer(buffer, len)	= begin;
+	if (begin > buffer && len) Buffer(buffer, len) = begin;
 	buffer[len] = 0;
 }
 
@@ -905,10 +922,10 @@ String String::Replace(char find, char replace) const
 {
 	String str(*this);
 
-	auto p	= (char*)str.GetBuffer();
-	for(int i=0; i<Length(); i++, p++)
+	auto p = (char*)str.GetBuffer();
+	for (int i = 0; i < Length(); i++, p++)
 	{
-		if(*p == find) *p	= replace;
+		if (*p == find) *p = replace;
 	}
 
 	return str;
@@ -917,9 +934,9 @@ String String::Replace(char find, char replace) const
 String String::ToLower() const
 {
 	String str(*this);
-	auto p	= str._Arr;
-	for(int i=0; i<str._Length; i++)
-		p[i]	= tolower(p[i]);
+	auto p = str._Arr;
+	for (int i = 0; i < str._Length; i++)
+		p[i] = tolower(p[i]);
 
 	return str;
 }
@@ -927,9 +944,9 @@ String String::ToLower() const
 String String::ToUpper() const
 {
 	String str(*this);
-	auto p	= str._Arr;
-	for(int i=0; i<str._Length; i++)
-		p[i]	= toupper(p[i]);
+	auto p = str._Arr;
+	for (int i = 0; i < str._Length; i++)
+		p[i] = toupper(p[i]);
 
 	return str;
 }
@@ -937,11 +954,11 @@ String String::ToUpper() const
 // 静态比较器。比较两个字符串指针
 int String::Compare(const void* v1, const void* v2)
 {
-	if(!v1) return v1	== v2 ? 0 : -1;
-	if(!v2) return 1;
+	if (!v1) return v1 == v2 ? 0 : -1;
+	if (!v2) return 1;
 
-	auto str1	= (cstring)v1;
-	auto str2	= (cstring)v2;
+	auto str1 = (cstring)v1;
+	auto str2 = (cstring)v2;
 	return strncmp((char*)v1, str2, strlen(str1));
 }
 
@@ -950,7 +967,7 @@ int String::Compare(const void* v1, const void* v2)
 #ifndef _MSC_VER
 extern char* itoa(int value, char *string, int radix)
 {
-	return ltoa(value, string, radix) ;
+	return ltoa(value, string, radix);
 }
 
 extern char* ltoa(Int64 value, char* string, int radix)
@@ -962,9 +979,9 @@ extern char* ltoa(Int64 value, char* string, int radix)
 	int sign;
 	char *sp;
 
-	if ( string == nullptr ) return 0 ;
+	if (string == nullptr) return 0;
 
-	if (radix > 36 || radix <= 1) return 0 ;
+	if (radix > 36 || radix <= 1) return 0;
 
 	sign = (radix == 10 && value < 0);
 	if (sign)
@@ -977,7 +994,7 @@ extern char* ltoa(Int64 value, char* string, int radix)
 		i = v % radix;
 		v = v / radix;
 		if (i < 10)
-			*tp++ = i+'0';
+			*tp++ = i + '0';
 		else
 			*tp++ = i + 'a' - 10;
 	}
@@ -995,18 +1012,18 @@ extern char* ltoa(Int64 value, char* string, int radix)
 
 char* utohex(uint value, byte size, char* string, bool upper)
 {
-	if (string == nullptr ) return 0;
+	if (string == nullptr) return 0;
 
 	// 字节数乘以2是字符个数
-	size	<<= 1;
+	size <<= 1;
 	// 指针提前指向最后一个字符，数字从小往大处理，字符需要倒过来赋值
-	auto tp	= string + size;;
-	*tp--	= '\0';
-	char ch	= upper ? 'A' : 'a';
-	for(int i=0; i<size; i++)
+	auto tp = string + size;;
+	*tp-- = '\0';
+	char ch = upper ? 'A' : 'a';
+	for (int i = 0; i < size; i++)
 	{
 		byte bt = value & 0x0F;
-		value	>>= 4;
+		value >>= 4;
 		if (bt < 10)
 			*tp-- = bt + '0';
 		else
@@ -1019,19 +1036,19 @@ char* utohex(uint value, byte size, char* string, bool upper)
 #ifndef _MSC_VER
 extern char* utoa(uint value, char* string, int radix)
 {
-	return ultoa(value, string, radix ) ;
+	return ultoa(value, string, radix);
 }
 
 extern char* ultoa(UInt64 value, char* string, int radix)
 {
-	if (string == nullptr ) return 0;
+	if (string == nullptr) return 0;
 
 	if (radix > 36 || radix <= 1) return 0;
 
 	char tmp[33];
-	auto tp	= tmp;
-	auto v	= value;
-	char ch	= radix < 0 ? 'A' : 'a';
+	auto tp = tmp;
+	auto v = value;
+	char ch = radix < 0 ? 'A' : 'a';
 	while (v || tp == tmp)
 	{
 		auto i = v % radix;
@@ -1051,16 +1068,21 @@ extern char* ultoa(UInt64 value, char* string, int radix)
 }
 #endif
 
-char *dtostrf (double val, byte prec, char* str)
+static char *dtostrf(double val, byte prec, char* str, int len)
 {
 	char fmt[20];
+#if defined(_MSC_VER)
+	sprintf_s(fmt, sizeof(fmt), "%%.%df", prec);
+	len = sprintf_s(str, len, fmt, val);
+#else
 	sprintf(fmt, "%%.%df", prec);
-	int len	= sprintf(str, fmt, val);
+	len = sprintf(str, fmt, val);
+#endif
 
 	// 干掉后面多余的0
-	for(int i=len; i>=0; i--)
+	for (int i = len; i >= 0; i--)
 	{
-		if(str[i] == '0') str[i]	= '\0';
+		if (str[i] == '0') str[i] = '\0';
 	}
 
 	return str;
@@ -1071,9 +1093,9 @@ char *dtostrf (double val, byte prec, char* str)
 StringSplit::StringSplit(const String& str, cstring sep) :
 	_Str(str)
 {
-	Sep			= sep;
-	Position	= -1;
-	Length		= 0;
+	Sep = sep;
+	Position = -1;
+	Length = 0;
 
 	// 先算好第一段
 	//int p	= _Str.IndexOf(_Sep);
@@ -1082,44 +1104,44 @@ StringSplit::StringSplit(const String& str, cstring sep) :
 
 const String StringSplit::Next()
 {
-	cstring ptr	= nullptr;
-	int len		= 0;
+	cstring ptr = nullptr;
+	int len = 0;
 
-	if(Position >= -1 && Sep)
+	if (Position >= -1 && Sep)
 	{
-		String sp	= Sep;
+		String sp = Sep;
 
 		// 从当前段之后开始找一段
-		int s	= Position + Length;
+		int s = Position + Length;
 		// 除首次以外，每次都要跳过分隔符
-		if(s < 0)
-			s	= 0;
+		if (s < 0)
+			s = 0;
 		else
-			s	+= sp.Length();
+			s += sp.Length();
 
 		// 检查是否已经越界
-		if(s >= _Str.Length())
+		if (s >= _Str.Length())
 		{
-			Position	= -2;
-			Length		= 0;
+			Position = -2;
+			Length = 0;
 		}
 		else
 		{
 			// 查找分隔符
-			int p	= _Str.IndexOf(Sep, s);
+			int p = _Str.IndexOf(Sep, s);
 
-			int sz	= 0;
+			int sz = 0;
 			// 剩余全部长度，如果找不到下一个，那么这个就是最后长度。不用跳过分隔符
-			if(p < 0)
-				sz	= _Str.Length() - s;
+			if (p < 0)
+				sz = _Str.Length() - s;
 			else
-				sz	= p - s;
+				sz = p - s;
 
-			Position	= s;
-			Length		= sz;
+			Position = s;
+			Length = sz;
 
-			ptr	= _Str.GetBuffer() + Position;
-			len	= Length;
+			ptr = _Str.GetBuffer() + Position;
+			len = Length;
 		}
 	}
 

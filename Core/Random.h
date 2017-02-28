@@ -6,10 +6,10 @@ class Random
 {
 public:
 	Random();
-	Random(uint seed);
+	Random(int seed);
 
-	uint Next() const;
-	uint Next(uint max) const;
+	int Next() const;
+	int Next(int max) const;
 	void Next(Buffer& bs) const;
 };
 

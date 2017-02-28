@@ -179,7 +179,7 @@ TaskScheduler::TaskScheduler(cstring name)
 }
 
 // 使用外部缓冲区初始化任务列表，避免频繁的堆分配
-void TaskScheduler::Set(Task* tasks, uint count)
+void TaskScheduler::Set(Task* tasks, int count)
 {
 	for(int i=0; i<count; i++)
 	{
@@ -358,9 +358,9 @@ INROOT void TaskScheduler::Execute(uint msMax, bool& cancel)
 		Sleeping	= true;
 		// 通知外部，需要睡眠若干毫秒
 		if(EnterSleep)
-			EnterSleep(min);
+			EnterSleep((int)min);
 		else
-			Time.Sleep(min, &Sleeping);
+			Time.Sleep((int)min, &Sleeping);
 		Sleeping	= false;
 
 		// 累加睡眠时间
@@ -433,7 +433,7 @@ void TaskScheduler::ShowStatus()
 	debug_printf("Task::ShowStatus [%d]", ts);
 	debug_printf(" 负载 %d.%d%%", p/100, p%100);
 	debug_printf(" 平均 %dus 当前 ", ts ? ct/ts : 0);
-	DateTime(now/1000).Show();
+	DateTime((int)(now/1000)).Show();
 	debug_printf(" 启动 ");
 	TimeSpan(now).Show(false);
 

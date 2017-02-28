@@ -101,7 +101,7 @@ void AP0104::InitLeds()
 	}
 }
 
-void ButtonOnpress(InputPort* port, bool down, void* param)
+static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	// if (port->PressTime > 1000)
 		AP0104::OnPress(port, down);
@@ -192,7 +192,7 @@ void AP0104::Register(int index, IDataPort& dp)
 	ds.Register(index, dp);
 }
 
-void OnInitNet(void* param)
+static void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0104*)param;
 

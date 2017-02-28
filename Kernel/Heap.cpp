@@ -27,7 +27,7 @@ typedef struct MemoryBlock_
 } MemoryBlock;
 
 /******************************** Heap ********************************/
-Heap::Heap(uint addr, uint size)
+Heap::Heap(uint addr, int size)
 {
 	Current	= this;
 
@@ -55,11 +55,11 @@ Heap::Heap(uint addr, uint size)
 	debug_printf("Heap::Init(%p, %d) Free=%d \r\n", Address, Size, FreeSize());
 }
 
-uint Heap::Used()	const { return _Used; }
-uint Heap::Count()	const { return _Count; }
-uint Heap::FreeSize()	const { return Size - _Used; }
+int Heap::Used()	const { return _Used; }
+int Heap::Count()	const { return _Count; }
+int Heap::FreeSize()	const { return Size - _Used; }
 
-void* Heap::Alloc(uint size)
+void* Heap::Alloc(int size)
 {
 	// 要申请的内存大小需要对齐
 	size = (size+MEMORY_ALIGN-1) & (~(MEMORY_ALIGN-1));
@@ -73,7 +73,7 @@ void* Heap::Alloc(uint size)
 #if DEBUG
 	// 检查头部完整性
 	auto head	= (MemoryBlock*)Address;
-	assert(head->Used <= Size && (uint)head + head->Used <= (uint)head->Next, "堆头被破坏！");
+	assert(head->Used <= (uint)Size && (uint)head + head->Used <= (uint)head->Next, "堆头被破坏！");
 	assert(_Used <= Size, "Heap::Used异常！");
 #endif
 

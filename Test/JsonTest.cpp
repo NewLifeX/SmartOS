@@ -1,4 +1,4 @@
-#include "Kernel\Sys.h"
+﻿#include "Kernel\Sys.h"
 #include "Message\Json.h"
 
 #if DEBUG
