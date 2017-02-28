@@ -461,7 +461,7 @@ Task* TaskScheduler::operator[](int taskid)
 	for(int i=0; i<_Tasks.Count(); i++)
 	{
 		auto task = (Task*)_Tasks[i];
-		if(task->ID == taskid) return task;
+		if(task->ID == (uint)taskid) return task;
 	}
 
 	return nullptr;

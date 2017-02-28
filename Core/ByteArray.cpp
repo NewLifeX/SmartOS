@@ -91,7 +91,7 @@ void ByteArray::move(ByteArray& rval)
 
 void* ByteArray::Alloc(int len)
 {
-	if(len <= sizeof(Arr))
+	if(len <= (int)sizeof(Arr))
 	{
 		_needFree	= false;
 		return Arr;
