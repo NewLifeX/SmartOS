@@ -16,7 +16,7 @@
 #define btn_printf(format, ...)
 #endif
 
-static   Button_GrayLevelConfig*	ButtonConfig = nullptr;
+Button_GrayLevelConfig*	ButtonConfig = nullptr;
 
 /******************************** 调光配置 ********************************/
 Button_GrayLevelConfig::Button_GrayLevelConfig()
