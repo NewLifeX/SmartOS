@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\App\ACZero.cpp" />
     <ClCompile Include="..\App\Alarm.cpp" />
     <ClCompile Include="..\App\BlinkPort.cpp" />
     <ClCompile Include="..\App\Button.cpp" />

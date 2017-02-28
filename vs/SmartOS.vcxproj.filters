@@ -542,5 +542,8 @@
     <ClCompile Include="..\Net\HttpClient.cpp">
       <Filter>Net</Filter>
     </ClCompile>
+    <ClCompile Include="..\App\ACZero.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
