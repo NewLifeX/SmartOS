@@ -234,7 +234,7 @@ bool CheckUserPress(InputPort* port, bool down, void* param)
 	return false;
 }
 
-void CheckUserPress3(Button_GrayLevel& btn)
+void CheckUserPress3(Button& btn)
 {
 	CheckUserPress(&btn.Key, btn.Key.Read(), nullptr);
 }

@@ -5,14 +5,13 @@
 #include "Device\Port.h"
 #include "Message\DataStore.h"
 
+class ACZero;
+
 // 面板按钮
 class Button : public ByteDataPort
 {
-private:
-	void OnPress(InputPort& port, bool down);
-
 public:
-	cstring	Name;	// 按钮名称
+	cstring	Name;		// 按钮名称
 	int		Index;		// 索引号，方便在众多按钮中标识按钮
 
 	InputPort	Key;	// 输入按键
@@ -21,7 +20,8 @@ public:
 
 	Delegate<Button&>	Press;	// 按下事件
 
-public:
+	ACZero*	Zero;	// 交流电过零检测
+
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button();
 	virtual ~Button();
@@ -29,25 +29,17 @@ public:
 	void Set(Pin key, Pin led = P0, bool ledInvert = true, Pin relay = P0, bool relayInvert = true);
 	void Set(Pin key, Pin led, Pin relay);
 	bool GetValue();
-	void SetValue(bool value);
+	virtual void SetValue(bool value);
 
 	virtual int OnWrite(byte data);
 	virtual byte OnRead();
 
 	String ToString() const;
 
-// 过零检测
-private:
-	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us
-
-public:
-	static InputPort	ACZero;			// 交流过零检测引脚
-
-	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
-	static void SetACZeroAdjTime(int us){ ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
-
 private:
 	bool _Value; // 状态
+
+	virtual void OnPress(InputPort& port, bool down);
 };
 
 #endif

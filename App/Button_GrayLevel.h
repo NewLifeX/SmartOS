@@ -2,9 +2,9 @@
 #define __BUTTON_GRAY_LEVEL_H__
 
 #include "Config.h"
-#include "Device\Port.h"
 #include "Device\Pwm.h"
-#include "Message\DataStore.h"
+
+#include "Button.h"
 
 struct ButtonPin
 {
@@ -25,7 +25,7 @@ public:
 };
 
 class Button_GrayLevel;
-using TAction = Delegate<Button_GrayLevel&>::TAction;
+using TAction = Delegate<Button&>::TAction;
 
 // 面板按钮
 // 这里必须使用_packed关键字，生成对齐的代码，否则_Value只占一个字节，导致后面的成员进行内存操作时错乱
@@ -33,41 +33,27 @@ using TAction = Delegate<Button_GrayLevel&>::TAction;
 // 干脆把_Value挪到最后解决问题
 extern Button_GrayLevelConfig*	ButtonConfig;
 
-class Button_GrayLevel : public ByteDataPort
+class Button_GrayLevel : public Button
 {
 public:
-	int		Index;			// 索引号，方便在众多按钮中标识按钮
-#if DEBUG
-	cstring	Name;		// 按钮名称
-#endif
-
-	InputPort	Key;				// 输入按键
-	OutputPort	Relay;				// 继电器
-
-	// 外部设置模式调用
-	typedef bool(*IOHandler)(Button_GrayLevel* bt, bool down, void * param);
-	IOHandler	ExterSet = nullptr;
-	void * ExterSetParam = nullptr;
-
-public:
 	bool EnableDelayClose;			// 标识是否启用延时关闭功能,默认启用
-	Delegate<Button_GrayLevel&>	Press;
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button_GrayLevel();
+
 	static Button_GrayLevelConfig InitGrayConfig();
-	void Set(Pin key, Pin relay = P0, bool relayInvert = true);
+
+	using Button::Set;
+
 	// led 驱动器设置
 	void Set(Pwm* drive, byte pulseIndex);
-	bool GetValue();
-	void SetValue(bool value);
+
+	virtual void SetValue(bool value);
 	void RenewGrayLevel();
 
-	//virtual int Write(byte* pcmd);	// 重载 ByteDataPort 的函数  自定义 Delay  Flush Open Close
-	//virtual int Read(byte* cmd);	
-
-	virtual int OnWrite(byte data);
-	virtual byte OnRead();
+public:
+	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, TAction onpress, const ButtonPin* pins, byte* level, const byte* state);
+	static void UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
 
 private:
 	// 指示灯灰度驱动器 Pwm;
@@ -77,33 +63,19 @@ private:
 	bool _Value; // 状态
 	ushort Reserved;	// 补足对齐问题
 
-	//static void OnPress(InputPort* port, bool down, void* param);
-	void OnPress(InputPort& port, bool down);
-
-public:
-	static void Init(TIMER tim, byte count, Button_GrayLevel* btns, TAction onpress, const ButtonPin* pins, byte* level, const byte* state);
-	static void InitZero(Pin zero, int us = 2300);
-	static void UpdateLevel(byte* level, Button_GrayLevel* btns, byte count);
+	virtual void OnPress(InputPort& port, bool down);
 
 	void GrayLevelDown();
 	void GrayLevelUp();
 	void DelayClose2(int ms);		// 自定义延时关闭
 	int delaytime = 0;
 	uint _task2 = 0;
+	void OnDelayClose();
 
 	//上报状态变化
 	uint _task3 = 0;
 
 	void	ReportPress();
-	// 过零检测
-private:
-	static int ACZeroAdjTime;			// 过零检测时间补偿  默认 2300us
-
-public:
-	static InputPort*  ACZero;			// 交流过零检测引脚
-
-	static bool SetACZeroPin(Pin aczero);	// 设置过零检测引脚
-	static void SetACZeroAdjTime(int us) { ACZeroAdjTime = us; };	// 设置 过零检测补偿时间
 };
 
 #endif
