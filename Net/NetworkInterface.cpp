@@ -134,8 +134,12 @@ Socket* NetworkInterface::CreateRemote(const NetUri& uri)
 	auto socket = CreateSocket(uri.Type);
 	if (socket)
 	{
+		// 域名解析
+		auto ip = QueryDNS(uri.Host);
+		if (ip == IPAddress::Any())ip = uri.Address;
+
 		socket->Local.Address = IP;
-		socket->Remote.Address = uri.Address;
+		socket->Remote.Address = ip;
 		socket->Remote.Port = uri.Port;
 		socket->Server = uri.Host;
 	}
