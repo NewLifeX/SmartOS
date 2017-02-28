@@ -36,10 +36,11 @@ public:
 
 	String ToString() const;
 
-private:
+protected:
 	bool _Value; // 状态
 
 	virtual void OnPress(InputPort& port, bool down);
+	static void OnKeyPress(Button& btn, InputPort& port, bool down);
 };
 
 #endif

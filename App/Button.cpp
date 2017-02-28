@@ -22,7 +22,7 @@ void Button::Set(Pin key, Pin led, Pin relay)
 void Button::Set(Pin key, Pin led, bool ledInvert, Pin relay, bool relayInvert)
 {
 	Key.Set(key);
-	Key.Press.Bind(&Button::OnPress, this);
+	Key.Press.Bind(&Button::OnKeyPress, this);
 	Key.UsePress();
 	Key.Open();
 
@@ -47,6 +47,11 @@ void Button::OnPress(InputPort& port, bool down)
 
 		Press(*this);
 	}
+}
+
+void Button::OnKeyPress(Button& btn, InputPort& port, bool down)
+{
+	btn.OnPress(port, down);
 }
 
 bool Button::GetValue() { return _Value; }
