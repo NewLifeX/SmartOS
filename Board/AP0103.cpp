@@ -101,11 +101,11 @@ void AP0103::InitLeds()
 	}
 }
 
-static void ButtonOnpress(InputPort* port, bool down, void* param)
+/*static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	// if (port->PressTime > 1000)
 		AP0103::OnPress(port, down);
-}
+}*/
 
 void AP0103::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
@@ -126,7 +126,7 @@ void AP0103::InitButtons(const Delegate2<InputPort&, bool>& press)
 NetworkInterface* AP0103::Create5500()
 {
 	debug_printf("\r\nW5500::Create \r\n");
-	
+
 	auto tc = TinyConfig::Create();
 	W5500 * net = nullptr;
 
@@ -267,7 +267,7 @@ ITransport* AP0103::Create2401()
 
 	static Spi spi(Spi2, 10000000, true);
 	static NRF24L01 nrf;
-	
+
 	auto irq = tc->HardVer == 0x03 ? P0 : PD8;
 	nrf.Init(&spi, PD9, irq, PE4);
 
@@ -316,7 +316,7 @@ void AP0103::InitTinyServer()
 	// 新配置需要保存一下
 	auto tc = TinyConfig::Current;
 	if (tc == nullptr)TinyConfig::Create();
-	
+
 	if (tc && tc->New) tc->Save();
 
 	Server = new TinyServer(TinyCtl);

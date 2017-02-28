@@ -95,11 +95,11 @@ void NH3_0317::InitLeds()
 	}
 }
 
-static void ButtonOnpress(InputPort* port, bool down, void* param)
+/*static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	if (port->PressTime > 1000)
 		NH3_0317::OnLongPress(port, down);
-}
+}*/
 
 void NH3_0317::InitButtons(const Delegate2<InputPort&, bool>& press)
 {

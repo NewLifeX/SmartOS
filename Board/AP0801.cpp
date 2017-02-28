@@ -103,11 +103,11 @@ void AP0801::InitLeds()
 	}
 }
 
-static void ButtonOnpress(InputPort* port, bool down, void* param)
+/*static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	if (port->PressTime > 1000)
 		AP0801::Current->OnLongPress(port, down);
-}
+}*/
 
 void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 {

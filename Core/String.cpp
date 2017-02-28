@@ -17,7 +17,7 @@
 #include "SString.h"
 
 char* utohex(uint value, byte size, char* string, bool upper);
-//extern char* itoa(int value, char* string, int radix);
+extern char* itoa(int value, char* string, int radix);
 extern char* ltoa(Int64 value, char* string, int radix);
 extern char* utoa(uint value, char* string, int radix);
 extern char* ultoa(UInt64 value, char* string, int radix);
@@ -477,7 +477,7 @@ bool String::Concat(UInt64 num, int radix)
 	return Concat(buf, strlen(buf));
 }
 
-static char* ftoa(char* str, int len, double num)
+/*static char* ftoa(char* str, int len, double num)
 {
 #if defined(_MSC_VER)
 	len = sprintf_s(str, len, "%.8f", num);
@@ -491,7 +491,7 @@ static char* ftoa(char* str, int len, double num)
 	}
 
 	return str;
-}
+}*/
 
 bool String::Concat(float num, int decimalPlaces)
 {
@@ -1068,7 +1068,7 @@ extern char* ultoa(UInt64 value, char* string, int radix)
 }
 #endif
 
-static char *dtostrf(double val, byte prec, char* str, int len)
+char *dtostrf(double val, byte prec, char* str, int len)
 {
 	char fmt[20];
 #if defined(_MSC_VER)

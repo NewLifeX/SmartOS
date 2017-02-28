@@ -101,11 +101,11 @@ void AP0104::InitLeds()
 	}
 }
 
-static void ButtonOnpress(InputPort* port, bool down, void* param)
+/*static void ButtonOnpress(InputPort* port, bool down, void* param)
 {
 	// if (port->PressTime > 1000)
 		AP0104::OnPress(port, down);
-}
+}*/
 
 void AP0104::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
