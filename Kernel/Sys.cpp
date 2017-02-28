@@ -149,7 +149,7 @@ INROOT UInt64 TSys::Ms() const { return Time.Current(); }
 // 系统绝对当前时间，秒
 INROOT uint TSys::Seconds() const { return Time.Seconds + Time.BaseSeconds; }
 
-INROOT void TSys::Sleep(uint ms) const
+INROOT void TSys::Sleep(int ms) const
 {
 	// 优先使用线程级睡眠
 	if(OnSleep)
@@ -174,7 +174,7 @@ INROOT void TSys::Sleep(uint ms) const
 	}
 }
 
-INROOT void TSys::Delay(uint us) const
+INROOT void TSys::Delay(int us) const
 {
 	// 如果延迟微秒数太大，则使用线程级睡眠
 	if(OnSleep && us >= 2000)

@@ -10,7 +10,7 @@
 
 bool BlockStorage::Read(uint address, Buffer& bs) const
 {
-	uint len = bs.Length();
+	int len = bs.Length();
     if (!len) return true;
 
     if(address < Start || address + len > Start + Size) return false;
@@ -29,7 +29,7 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
     assert((address & 0x01) == 0x00, "Write起始地址必须是2字节对齐");
 
 	auto buf	= bs.GetBuffer();
-	uint len	= bs.Length();
+	int len	= bs.Length();
     if (!len) return true;
 
     if(address < Start || address + len > Start + Size) return false;
@@ -93,8 +93,8 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
 	if(offset)
 	{
 		// 计算块起始地址和剩余大小
-		uint blk	= addr - offset;
-		uint size	= Block - offset;
+		int blk	= addr - offset;
+		int size	= Block - offset;
 		// 前段原始数据，中段来源数据，末段原始数据
 		ms.Copy(0, (byte*)blk, offset);
 		if(size > remain) size = remain;
@@ -141,7 +141,7 @@ bool BlockStorage::Write(uint address, const Buffer& bs) const
     return true;
 }
 
-bool BlockStorage::Memset(uint address, byte data, uint len) const
+bool BlockStorage::Memset(uint address, byte data, int len) const
 {
     assert((address & 0x01) == 0x00, "Memset起始地址必须是2字节对齐");
 
@@ -156,7 +156,7 @@ bool BlockStorage::Memset(uint address, byte data, uint len) const
 }
 
 // 擦除块。起始地址，字节数量默认0表示擦除全部
-bool BlockStorage::Erase(uint address, uint len) const
+bool BlockStorage::Erase(uint address, int len) const
 {
     assert((address & 0x01) == 0x00, "Erase起始地址必须是2字节对齐");
 
@@ -173,7 +173,7 @@ bool BlockStorage::Erase(uint address, uint len) const
 	uint end	= address + len;
 	// 需要检查是否擦除的范围，从第一段开始
 	uint addr	= address;
-	uint len2	= blk + Block - address;
+	int len2	= blk + Block - address;
 	// 如果还不够一段，则直接长度
 	if(len2 > len) len2 = len;
 	while(blk < end)
@@ -191,7 +191,7 @@ bool BlockStorage::Erase(uint address, uint len) const
 }
 
 /* 指定块是否被擦除 */
-bool BlockStorage::IsErased(uint address, uint len) const
+bool BlockStorage::IsErased(uint address, int len) const
 {
     assert((address & 0x01) == 0x00, "IsErased起始地址必须是2字节对齐");
 

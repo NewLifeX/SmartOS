@@ -67,7 +67,8 @@ bool JTW8953::Write(const Buffer& bs) const
 bool JTW8953::Read(Buffer& bs) const
 {
 	if (!IIC) return false;
-	uint len = IIC->Read(0, bs);
+
+	int len = IIC->Read(0, bs);
 	if (len == 0)return false;
 	if (len != bs.Length()) bs.SetLength(len);
 

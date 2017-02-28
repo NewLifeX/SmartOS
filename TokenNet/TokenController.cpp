@@ -216,7 +216,7 @@ bool TokenController::OnReceive(Message& msg)
 		auto& tmsg = (TokenMessage&)msg;
 		// 过滤重复请求。1秒内不接收重复指令
 		UInt64 start = Sys.Ms() - 5000;
-		for (int i = 0; i < (int)ArrayLength(_RecvQueue); i++)
+		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
 			auto& qi = _RecvQueue[i];
 			if (qi.Code == msg.Code && qi.Seq == tmsg.Seq && qi.Time > start)
@@ -225,7 +225,7 @@ bool TokenController::OnReceive(Message& msg)
 				return true;
 			}
 		}
-		for (int i = 0; i < (int)ArrayLength(_RecvQueue); i++)
+		for (int i = 0; i < ArrayLength(_RecvQueue); i++)
 		{
 			auto& qi = _RecvQueue[i];
 			if (qi.Code == 0 || qi.Time <= start)
@@ -314,7 +314,7 @@ void TokenController::ShowMessage(cstring action, const Message& msg)
 #if MSG_DEBUG
 	TS("TokenController::ShowMessage");
 
-	for (int i = 0; i < (int)ArrayLength(NoLogCodes); i++)
+	for (int i = 0; i < ArrayLength(NoLogCodes); i++)
 	{
 		if (msg.Code == NoLogCodes[i]) return;
 		if (NoLogCodes[i] == 0) break;
@@ -377,7 +377,7 @@ bool TokenController::StatSend(const Message& msg)
 
 		// 超时指令也干掉
 		UInt64 end = Sys.Ms() - 5000;
-		for (int i = 0; i < (int)ArrayLength(_StatQueue); i++)
+		for (int i = 0; i < ArrayLength(_StatQueue); i++)
 		{
 			auto& qi = _StatQueue[i];
 			if (qi.Code == 0 || qi.Time <= end)
@@ -408,7 +408,7 @@ bool TokenController::StatReceive(const Message& msg)
 	if (msg.Reply)
 	{
 		bool rs = false;
-		for (int i = 0; i < (int)ArrayLength(_StatQueue); i++)
+		for (int i = 0; i < ArrayLength(_StatQueue); i++)
 		{
 			auto& qi = _StatQueue[i];
 			if (qi.Code == code)

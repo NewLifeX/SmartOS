@@ -98,10 +98,10 @@ public:
 	UInt64	Ms() const;		// 系统启动后的毫秒数
 	uint	Seconds() const;	// 系统绝对当前时间，秒
 
-    void Sleep(uint ms) const; // 毫秒级延迟
-    void Delay(uint us) const; // 微秒级延迟
-	typedef void (*FuncU32)(uint param);
-	FuncU32 OnSleep;
+    void Sleep(int ms) const; // 毫秒级延迟
+    void Delay(int us) const; // 微秒级延迟
+	typedef void (*FuncI32)(int param);
+	FuncI32 OnSleep;
 
 	bool CheckMemory() const;
 

@@ -29,17 +29,17 @@ public:
 	// 负载数据及校验部分，并非内存布局。
 	ushort Crc;		// 整个消息的Crc16校验，计算前Checksum清零
 
-	static const uint HeaderSize = 1 + 1 + 1 + 1 + 1 + 1;	// 消息头部大小
-	static const uint MinSize = HeaderSize + 0 + 2;	// 最小消息大小
+	static const int HeaderSize = 1 + 1 + 1 + 1 + 1 + 1;	// 消息头部大小
+	static const int MinSize = HeaderSize + 0 + 2;	// 最小消息大小
 
 public:
 	// 初始化消息，各字段为0
 	TinyMessage(byte code = 0);
 
 	// 消息所占据的指令数据大小。包括头部、负载数据和附加数据
-	virtual uint Size() const;
+	virtual int Size() const;
 	// 数据缓冲区大小
-	virtual uint MaxDataSize() const;
+	virtual int MaxDataSize() const;
 
 	// 分析数据，转为消息。负载数据部分将指向数据区，外部不要提前释放内存
 	virtual bool Read(Stream& ms);

@@ -71,7 +71,7 @@ bool AT24CXX::Read(uint addr, Buffer& bs) const
 
 	IIC->Address = Address << 1;
 	
-	uint len = IIC->Read((ushort)addr, bs);
+	int len = IIC->Read((ushort)addr, bs);
 	if(len == 0)return false;
 	if(len != bs.Length()) bs.SetLength(len);
 

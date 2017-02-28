@@ -3,7 +3,7 @@
 
 //Pin _Pins[] = ADC1_PINS;
 
-ADConverter::ADConverter(byte line, uint channel)
+ADConverter::ADConverter(byte line, int channel)
 {
 	assert(line >= 1 && line <= 3, "ADC Line");
 
@@ -12,7 +12,7 @@ ADConverter::ADConverter(byte line, uint channel)
 
 	uint dat	= 1;
 	Count	= 0;
-	for(int i=0; i<ArrayLength(Data); i++, dat <<= 1)
+	for(int i=0; i<(int)ArrayLength(Data); i++, dat <<= 1)
 	{
 		if(Channel & dat) Count++;
 	}
@@ -56,7 +56,7 @@ void ADConverter::Open()
 	debug_printf("ADC::Open %d 共%d个通道\r\n", Line, Count);
 
 	uint dat = 1;
-	for(int i=0; i<ArrayLength(Data); i++, dat <<= 1)
+	for(int i=0; i<(int)ArrayLength(Data); i++, dat <<= 1)
 	{
 		if(Channel & dat)
 		{

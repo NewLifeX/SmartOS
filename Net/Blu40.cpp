@@ -153,7 +153,7 @@ bool Blu40::SetBP(int BP)
 		Sys.Delay(500);
 		Port->Read(ds);
 
-		for(int j=0;j<sizeof(BPSOK);j++)
+		for(int j=0;j<(int)sizeof(BPSOK);j++)
 		{
 			if(ds[j] != BPSOK[j])
 			{
@@ -188,7 +188,7 @@ bool Blu40::SetBP(int BP)
 			Port->Read(ds);
 			//"AT:BPS SET AFTER 2S \r\n\0"
 			//"AT:ERR\r\n\0"
-			for(int j=0;j<sizeof(BPSOK);j++)
+			for(int j=0;j<(int)sizeof(BPSOK);j++)
 			{
 				if(ds[j] != BPSOK[j])
 				{
@@ -215,7 +215,7 @@ bool Blu40::CheckSet()
 	//byte buf[40];
 	ByteArray bs;
 	Port->Read(bs);
-	for(int i=0;i<sizeof(ATOK);i++)
+	for(int i=0;i<(int)sizeof(ATOK);i++)
 	{
 		if(bs[i] != ATOK[i])
 		{

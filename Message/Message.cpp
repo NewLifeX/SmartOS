@@ -15,7 +15,7 @@ Message::Message(byte code)
 }
 
 // 设置数据。
-void Message::SetData(const Buffer& bs, uint offset)
+void Message::SetData(const Buffer& bs, int offset)
 {
 	Length = bs.Length() + offset;
 	if(Length > 0) bs.CopyTo(0, Data + offset, Length);

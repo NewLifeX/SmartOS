@@ -60,7 +60,7 @@ bool TinyMessage::Read(Stream& ms)
 	if(Dest == Src)	return false;
 
 	// 校验剩余长度
-	ushort len	= Length;
+	short len	= Length;
 	if(ms.Remain() < len + 2) return false;
 
 	// 避免错误指令超长，导致溢出
@@ -145,12 +145,12 @@ bool TinyMessage::Valid() const
 }
 
 // 消息所占据的指令数据大小。包括头部、负载数据和附加数据
-uint TinyMessage::Size() const
+int TinyMessage::Size() const
 {
 	return MinSize + Length;
 }
 
-uint TinyMessage::MaxDataSize() const
+int TinyMessage::MaxDataSize() const
 {
 	return Data == _Data ? ArrayLength(_Data) : Length;
 }

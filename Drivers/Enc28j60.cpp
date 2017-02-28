@@ -929,8 +929,8 @@ bool Enc28j60::OnWrite(const Buffer& bs)
 // packet，该包应该存储到的缓冲区；maxlen，可接受的最大数据长度
 uint Enc28j60::OnRead(Buffer& bs)
 {
-    uint rxstat;
-    uint len;
+    int rxstat;
+    int len;
 
 	// 检测并打开包接收
 	if(!(ReadReg(ECON1) & ECON1_RXEN)) WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_RXEN);

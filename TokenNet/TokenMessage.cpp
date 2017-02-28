@@ -73,12 +73,12 @@ bool TokenMessage::Valid() const
 }
 
 // 消息总长度，包括头部、负载数据和校验
-uint TokenMessage::Size() const
+int TokenMessage::Size() const
 {
 	return HeaderSize + Length;
 }
 
-uint TokenMessage::MaxDataSize() const
+int TokenMessage::MaxDataSize() const
 {
 	return Data == _Data ? ArrayLength(_Data) : Length;
 }

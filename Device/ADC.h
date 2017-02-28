@@ -27,11 +27,11 @@ private:
 public :
 	byte	Line;		// 中断线 1/2/3
 	byte	Count;		// 通道个数
-	uint	Channel;	// 使用哪些通道，每个通道一位
+	int		Channel;	// 使用哪些通道，每个通道一位
 	ushort	Data[19];	// 存放数据
 
 	// 如果需要读取温度和电压，通道需要设置0x30000
-	ADConverter(byte line = 1, uint channel = 0);
+	ADConverter(byte line = 1, int channel = 0);
 
 	void Add(Pin pin);
 	void Remove(Pin pin);

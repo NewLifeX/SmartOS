@@ -387,9 +387,9 @@ byte Thread::BuildReady()
 	return count;
 }
 
-void OnSleep(uint ms)
+static void OnSleep(int ms)
 {
-	Thread* th = Thread::Current;
+	auto th = Thread::Current;
 	if(th) th->Sleep(ms);
 }
 

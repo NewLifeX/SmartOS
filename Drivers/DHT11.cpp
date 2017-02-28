@@ -44,7 +44,7 @@ bool DHT11::Read(ushort& temp, ushort& humi)
 
 	/*开始接收数据*/
 	byte buf[5];
-	for(int i=0; i<ArrayLength(buf); i++)
+	for(int i=0; i<(int)ArrayLength(buf); i++)
 		buf[i]	= ReadByte();
 
 	/*读取结束，引脚改为输出模式*/

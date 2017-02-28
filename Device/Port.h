@@ -87,10 +87,10 @@ public:
 
     void Write(bool value) const;
 	// 拉高一段时间后拉低
-	void Up(uint ms) const;
-	void Down(uint ms) const;
+	void Up(int ms) const;
+	void Down(int ms) const;
 	// 闪烁多次
-	void Blink(uint times, uint ms) const;
+	void Blink(int times, int ms) const;
 
 	// Read/ReadInput 的区别在于，前者读输出后者读输入，在开漏输出的时候有很大区别
     virtual bool Read() const;

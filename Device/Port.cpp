@@ -243,7 +243,7 @@ WEAK bool OutputPort::ReadInput() const
 	return v;
 }
 
-void OutputPort::Up(uint ms) const
+void OutputPort::Up(int ms) const
 {
 	if (Empty()) return;
 
@@ -252,7 +252,7 @@ void OutputPort::Up(uint ms) const
 	Write(false);
 }
 
-void OutputPort::Down(uint ms) const
+void OutputPort::Down(int ms) const
 {
 	if (Empty()) return;
 
@@ -261,7 +261,7 @@ void OutputPort::Down(uint ms) const
 	Write(true);
 }
 
-void OutputPort::Blink(uint times, uint ms) const
+void OutputPort::Blink(int times, int ms) const
 {
 	if (Empty()) return;
 

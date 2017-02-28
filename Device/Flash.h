@@ -8,7 +8,7 @@ class Flash : public BlockStorage
 {
 public:
 	// 写块
-	virtual bool WriteBlock(uint address, const byte* buf, uint len, bool inc) const;
+	virtual bool WriteBlock(uint address, const byte* buf, int len, bool inc) const;
     // 擦除块 （段地址）
     virtual bool EraseBlock(uint address) const;
 

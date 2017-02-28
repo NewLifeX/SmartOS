@@ -20,8 +20,8 @@ public:
 	
 	byte	_Data[512];	// 数据
 
-	static const uint HeaderSize = 1 + 1 + 1;	// 消息头部大小
-	static const uint MinSize = HeaderSize + 0;	// 最小消息大小
+	static const int HeaderSize = 1 + 1 + 1;	// 消息头部大小
+	static const int MinSize = HeaderSize + 0;	// 最小消息大小
 
 	// 使用指定功能码初始化令牌消息
 	TokenMessage(byte code = 0);
@@ -32,9 +32,9 @@ public:
 	virtual void Write(Stream& ms) const;
 
 	// 消息总长度，包括头部、负载数据和校验
-	virtual uint Size() const;
+	virtual int Size() const;
 	// 数据缓冲区大小
-	virtual uint MaxDataSize() const;
+	virtual int MaxDataSize() const;
 
 	// 验证消息校验码是否有效
 	virtual bool Valid() const;

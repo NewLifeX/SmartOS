@@ -50,7 +50,7 @@ public:
 };
 
 // 数组长度
-#define ArrayLength(arr) (sizeof(arr)/sizeof(arr[0]))
+#define ArrayLength(arr) (int)(sizeof(arr)/sizeof(arr[0]))
 // 数组清零，固定长度
 //#define ArrayZero(arr) memset(arr, 0, sizeof(arr))
 
