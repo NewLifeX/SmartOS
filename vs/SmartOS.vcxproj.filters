@@ -545,5 +545,20 @@
     <ClCompile Include="..\App\ACZero.cpp">
       <Filter>App</Filter>
     </ClCompile>
+    <ClCompile Include="..\Drivers\Esp8266\Esp8266.cpp">
+      <Filter>Drivers\Esp8266</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Esp8266\EspSocket.cpp">
+      <Filter>Drivers\Esp8266</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Esp8266\EspTcp.cpp">
+      <Filter>Drivers\Esp8266</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Esp8266\EspUdp.cpp">
+      <Filter>Drivers\Esp8266</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\Esp8266\WaitExpect.cpp">
+      <Filter>Drivers\Esp8266</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

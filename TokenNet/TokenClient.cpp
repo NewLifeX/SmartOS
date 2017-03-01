@@ -598,6 +598,8 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 	delete socket;
 	socket = Socket::CreateRemote(uri);
 	ctrl->_Socket = socket;
+	ctrl->Close();
+	ctrl->Open();
 
 	/*ctrl->Port->Close();
 	socket->Remote.Port = uri.Port;

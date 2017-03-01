@@ -79,6 +79,11 @@
     <ClCompile Include="..\Drivers\BufferPort.cpp" />
     <ClCompile Include="..\Drivers\DHT11.cpp" />
     <ClCompile Include="..\Drivers\Enc28j60.cpp" />
+    <ClCompile Include="..\Drivers\Esp8266\Esp8266.cpp" />
+    <ClCompile Include="..\Drivers\Esp8266\EspSocket.cpp" />
+    <ClCompile Include="..\Drivers\Esp8266\EspTcp.cpp" />
+    <ClCompile Include="..\Drivers\Esp8266\EspUdp.cpp" />
+    <ClCompile Include="..\Drivers\Esp8266\WaitExpect.cpp" />
     <ClCompile Include="..\Drivers\HX711.cpp" />
     <ClCompile Include="..\Drivers\JTW8953.cpp" />
     <ClCompile Include="..\Drivers\NRF24L01.cpp" />
