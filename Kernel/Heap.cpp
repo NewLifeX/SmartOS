@@ -7,7 +7,7 @@
 #define MEMORY_ALIGN	4
 
 // 当前堆
-Heap* Heap::Current	= nullptr;
+Heap* Heap::Current = nullptr;
 
 /*
 堆分配原理：
@@ -22,37 +22,37 @@ Heap* Heap::Current	= nullptr;
 // 内存块。大小和下一块地址
 typedef struct MemoryBlock_
 {
-	uint	Used;
+	int	Used;
 	struct MemoryBlock_*	Next;
 } MemoryBlock;
 
 /******************************** Heap ********************************/
 Heap::Heap(uint addr, int size)
 {
-	Current	= this;
+	Current = this;
 
 	// 地址对齐
-	uint end	= addr + size;
-	addr	= (addr + MEMORY_ALIGN - 1) & (~(MEMORY_ALIGN - 1));
-	end		= end & (~(MEMORY_ALIGN - 1));
+	uint end = addr + size;
+	addr = (addr + MEMORY_ALIGN - 1) & (~(MEMORY_ALIGN - 1));
+	end = end & (~(MEMORY_ALIGN - 1));
 
-	Address	= addr;
-	Size	= end - addr;
+	Address = addr;
+	Size = end - addr;
 
 	// 第一块内存块
-	auto mb	= (MemoryBlock*)addr;
+	auto mb = (MemoryBlock*)addr;
 	mb->Used = sizeof(MemoryBlock);
 	mb->Next = (MemoryBlock*)(end - sizeof(MemoryBlock));
 	mb->Next->Used = sizeof(MemoryBlock);
 	mb->Next->Next = nullptr;
 
-	_Used	= sizeof(MemoryBlock) << 1;
-	_Count	= 0;
+	_Used = sizeof(MemoryBlock) << 1;
+	_Count = 0;
 
 	// 记录第一个有空闲内存的块，减少内存分配时的查找次数
-	_First	= mb;
+	_First = mb;
 
-	debug_printf("Heap::Init(%p, %d) Free=%d \r\n", Address, Size, FreeSize());
+	debug_printf("Heap::Init(0x%p, %d) Free=%d \r\n", Address, Size, FreeSize());
 }
 
 int Heap::Used()	const { return _Used; }
@@ -62,43 +62,44 @@ int Heap::FreeSize()	const { return Size - _Used; }
 void* Heap::Alloc(int size)
 {
 	// 要申请的内存大小需要对齐
-	size = (size+MEMORY_ALIGN-1) & (~(MEMORY_ALIGN-1));
+	size = (size + MEMORY_ALIGN - 1) & (~(MEMORY_ALIGN - 1));
 
-	if(size > Size - _Used)
+	int remain = Size - _Used;
+	if (size > remain)
 	{
-		debug_printf("Heap::Alloc %d > %d 失败！ \r\n", size, Size - _Used);
+		debug_printf("Heap::Alloc %d > %d (0x%p) 失败！ \r\n", size, remain, remain);
 		return nullptr;
 	}
 
 #if DEBUG
 	// 检查头部完整性
-	auto head	= (MemoryBlock*)Address;
-	assert(head->Used <= (uint)Size && (uint)head + head->Used <= (uint)head->Next, "堆头被破坏！");
+	auto head = (MemoryBlock*)Address;
+	assert(head->Used <= Size && (byte*)head + head->Used <= (byte*)head->Next, "堆头被破坏！");
 	assert(_Used <= Size, "Heap::Used异常！");
 #endif
 
-	void* ret	= nullptr;
-	int need	= size + sizeof(MemoryBlock);
+	void* ret = nullptr;
+	int need = size + sizeof(MemoryBlock);
 
 	SmartIRQ irq;
-	for(auto mcb=(MemoryBlock*)_First; mcb->Next!=nullptr; mcb=mcb->Next)
+	for (auto mcb = (MemoryBlock*)_First; mcb->Next != nullptr; mcb = mcb->Next)
 	{
 		// 找到一块满足大小的内存块。计算当前块剩余长度
-		int free	= (int)mcb->Next - (int)mcb - mcb->Used;
-		if(free >= need)
+		int free = (byte*)mcb->Next - (byte*)mcb - mcb->Used;
+		if (free >= need)
 		{
 			// 割一块出来
-			auto tmp	= (MemoryBlock*)((uint)mcb + mcb->Used);
-			tmp->Next	= mcb->Next;
-			tmp->Used	= need;
-			mcb->Next	= tmp;
+			auto tmp = (MemoryBlock*)((byte*)mcb + mcb->Used);
+			tmp->Next = mcb->Next;
+			tmp->Used = need;
+			mcb->Next = tmp;
 
 			// 记录第一个有空闲内存的块，减少内存分配时的查找次数
-			_First		= tmp;
+			_First = tmp;
 
-			ret	= (void*)((uint)(tmp+1));
+			ret = (byte*)(tmp + 1);
 
-			_Used	+= need;
+			_Used += need;
 			_Count++;
 
 			//debug_printf("Heap::Alloc (%p, %d) First=%p Used=%d Count=%d \r\n", ret, need, _First, _Used, _Count);
@@ -107,34 +108,35 @@ void* Heap::Alloc(int size)
 		}
 	}
 
-	if(!ret) debug_printf("Heap::Alloc %d 失败！\r\n", size);
+	if (!ret) debug_printf("Heap::Alloc %d 失败！\r\n", size);
 
 	return ret;
 }
 
 void Heap::Free(void* ptr)
 {
-	auto prev	= (MemoryBlock*)Address;
-	auto cur	= (MemoryBlock*)ptr - 1;
+	auto prev = (MemoryBlock*)Address;
+	auto cur = (MemoryBlock*)ptr - 1;
 
 	SmartIRQ irq;
-	for(auto mcb=prev->Next; mcb->Next!=nullptr; mcb=mcb->Next)
+	for (auto mcb = prev->Next; mcb->Next != nullptr; mcb = mcb->Next)
 	{
 		// 找到内存块
-		if(mcb == cur)
+		if (mcb == cur)
 		{
-			_Used	-= cur->Used;
+			_Used -= cur->Used;
 			_Count--;
 
 			// 前面有空闲位置
-			if(cur <= _First) _First	= prev;
+			if (cur <= _First) _First = prev;
 
 			//debug_printf("Heap::Free  (%p, %d) First=%p Used=%d Count=%d \r\n", ptr, cur->Used, _First, _Used, _Count);
 
 			prev->Next = cur->Next;
 
-			break;
+			return;
 		}
 		prev = mcb;
 	}
+	debug_printf("正在释放不是本系统申请的内存 0x%p \r\n", ptr);
 }
