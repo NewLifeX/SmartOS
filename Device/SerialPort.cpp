@@ -62,7 +62,7 @@ void SerialPort::Set(COM index, int baudRate)
 		else if (clock >= 36)
 			_baudRate = 1024000;
 		else
-			_baudRate = 1152000;
+			_baudRate = 115200;
 	}
 
 	// 计算字节间隔。字节速度一般是波特率转为字节后再除以2
@@ -292,7 +292,7 @@ SerialPort* SerialPort::GetMessagePort()
 
 		// 打开日志输出口，需要较大发送缓冲区
 		sp = _printf_sp = new SerialPort(idx);
-		sp->Tx.SetCapacity(256);
+		sp->Tx.SetCapacity(512);
 		sp->Open();
 
 		isInFPutc = false;
