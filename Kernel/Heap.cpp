@@ -67,7 +67,7 @@ void* Heap::Alloc(int size)
 	int remain = Size - _Used;
 	if (size > remain)
 	{
-		debug_printf("Heap::Alloc %d > %d (0x%p) 失败！ \r\n", size, remain, remain);
+		debug_printf("Heap::Alloc %d > %d (0x%p) 失败！Size=%d Used=%d \r\n", size, remain, remain, Size, _Used);
 		return nullptr;
 	}
 
@@ -102,13 +102,13 @@ void* Heap::Alloc(int size)
 			_Used += need;
 			_Count++;
 
-			//debug_printf("Heap::Alloc (%p, %d) First=%p Used=%d Count=%d \r\n", ret, need, _First, _Used, _Count);
+			debug_printf("Heap::Alloc (%p, %d) First=%p Used=%d Count=%d \r\n", ret, need, _First, _Used, _Count);
 
-			break;
+			return ret;
 		}
 	}
 
-	if (!ret) debug_printf("Heap::Alloc %d 失败！\r\n", size);
+	if (!ret) debug_printf("Heap::Alloc %d 失败！Count=%d Used=%d Free=%d First=%p \r\n", size, _Count, _Used, FreeSize(), _First);
 
 	return ret;
 }
@@ -130,7 +130,7 @@ void Heap::Free(void* ptr)
 			// 前面有空闲位置
 			if (cur <= _First) _First = prev;
 
-			//debug_printf("Heap::Free  (%p, %d) First=%p Used=%d Count=%d \r\n", ptr, cur->Used, _First, _Used, _Count);
+			debug_printf("Heap::Free  (%p, %d) First=%p Used=%d Count=%d \r\n", ptr, cur->Used, _First, _Used, _Count);
 
 			prev->Next = cur->Next;
 
