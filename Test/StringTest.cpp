@@ -18,7 +18,7 @@ static void TestCtor()
 
 	debug_printf("字符串构造函数测试\r\n");
 
-	auto err	= "String(cstring cstr)";
+	auto err = "String(cstring cstr)";
 
 	// 默认空字符串，使用内部数据区
 	String str;
@@ -29,7 +29,7 @@ static void TestCtor()
 	assert(str1 == "456", err);
 	assert(str1.GetBuffer() == (void*)"456", err);
 
-	err	= "String(const String& str)";
+	err = "String(const String& str)";
 	String str2(str1);
 	assert(str2 == str1, err);
 	assert(str2.GetBuffer() != str1.GetBuffer(), err);
@@ -66,16 +66,18 @@ void TestNum10()
 	String str6((UInt64)331144, 10);
 	assert(str6 == "331144", "String(UInt64 value, int radix = 10)");
 
-	// 默认2位小数，所以字符串要补零
+	// 浮点数格式化
 	String str7((float)123.0);
-	assert(str7 == "123.00", "String(float value, int decimalPlaces = 2)");
+	str7.Show(true);
+	assert(str7 == "123", "String(float value, int decimalPlaces = 2)");
 
-	// 浮点数格式化的时候，如果超过要求小数位数，则会四舍五入
-	String str8((double)456.784);
-	assert(str8 == "456.78", "String(double value, int decimalPlaces = 2)");
+	String str8((double)456.784, 2);
+	str8.Show(true);
+	assert(str8 == "456.78", "String(double value, int decimalPlaces = 4)");
 
 	String str9((double)456.789);
-	assert(str9 == "456.79", "String(double value, int decimalPlaces = 2)");
+	str9.Show(true);
+	assert(str9.StartsWith("456.78"), "String(double value, int decimalPlaces = 2)");
 }
 
 void TestNum16()
@@ -111,11 +113,11 @@ static void TestAssign()
 
 	String str = "万家灯火，无声物联！";
 	debug_printf("TestAssign: %s\r\n", str.GetBuffer());
-	str	= "无声物联";
+	str = "无声物联";
 	assert(str == "无声物联", "String& operator = (cstring cstr)");
 
-	String str2	= "xxx";
-	str2	= str;
+	String str2 = "xxx";
+	str2 = str;
 	assert(str == "无声物联", "String& operator = (cstring cstr)");
 	assert(str2.GetBuffer() != str.GetBuffer(), "String& operator = (const String& rhs)");
 }
@@ -126,40 +128,40 @@ static void TestConcat()
 
 	debug_printf("字符串连接测试\r\n");
 
-	auto now	= DateTime::Now();
+	auto now = DateTime::Now();
 	//char cs[32];
 	//debug_printf("now: %d %s\r\n", now.Second, now.GetString('F', cs));
 
 	String str;
 
 	// 连接时间，继承自Object
-	str	+= now;
+	str += now;
 	str.Show(true);
 	// yyyy-MM-dd HH:mm:ss
 	assert(str.Length() == 19, "String& operator += (const Object& rhs)");
 
 	// 连接其它字符串
-	int len	= str.Length();
+	int len = str.Length();
 	String str2(" 中国时间");
 	str += str2;
 	assert(str.Length() == len + str2.Length(), "String& operator += (const String& rhs)");
 
 	// 连接C格式字符串
-	str	+= " ";
+	str += " ";
 
 	// 连接整数
-	len	= str.Length();
+	len = str.Length();
 	str += 1234;
 	assert(str.Length() == len + 4, "String& operator += (int num)");
 
 	// 连接C格式字符串
-	str	+= " ";
+	str += " ";
 
 	// 连接浮点数
-	len	= str.Length();
-	str += -1234.8856;	// 特别注意，默认2位小数，所以字符串是-1234.89
+	len = str.Length();
+	str += -1234.8856;
 	str.Show(true);
-	assert(str.Length() == len + 8, "String& operator += (double num)");
+	assert(str.Length() == len + 10, "String& operator += (double num)");
 }
 
 static void TestConcat16()
@@ -172,7 +174,7 @@ static void TestConcat16()
 	str.Concat((byte)0x20, 16);
 
 	// 连接整数的十六进制，前面补零
-	str	+= " @ ";
+	str += " @ ";
 	str.Concat((ushort)0xE3F, 16);
 
 	// 连接整数的十六进制（大写字母），前面补零
@@ -192,7 +194,7 @@ static void TestAdd()
 	str = str + 1234 + "#" + R("99xx") + '$' + -33.883 + "@" + DateTime::Now();
 	str.Show(true);
 	// 字符串连加 1234@0000-00-00 00:00:00#99xx
-	assert(str.Contains("字符串连加 1234#99xx$-33.88@"), "friend StringHelper& operator + (const StringHelper& lhs, cstring cstr)");
+	assert(str.Contains("字符串连加 1234#99xx$-33.883@"), "friend StringHelper& operator + (const StringHelper& lhs, cstring cstr)");
 }
 
 static void TestEquals()
@@ -216,20 +218,20 @@ static void TestSet()
 	String str = "ABCDEFG";
 	assert(str[3] == 'D', "char operator [] (int index)");
 
-	str[5]	= 'W';
+	str[5] = 'W';
 	assert(str[5] == 'W', "char& operator [] (int index)");
 	//debug_printf("%s 的第 %d 个字符是 %c \r\n", str.GetBuffer(), 5, str[5]);
 
-	str	= "我是ABC";
-	int len	= str.Length();
-	auto bs	= str.GetBytes();
+	str = "我是ABC";
+	int len = str.Length();
+	auto bs = str.GetBytes();
 	assert(bs.Length() == str.Length(), "ByteArray GetBytes() const");
 	assert(bs[len - 1] == (byte)'C', "ByteArray GetBytes() const");
 	//assert(bs.GetBuffer() == (byte*)str.GetBuffer(), "ByteArray GetBytes() const");
 
 	// 十六进制字符串转为二进制数组
-	str	= "36-1f-36-35-34-3F-31-31-32-30-32-34";
-	auto bs2	= str.ToHex();
+	str = "36-1f-36-35-34-3F-31-31-32-30-32-34";
+	auto bs2 = str.ToHex();
 	bs2.Show(true);
 	assert(bs2.Length() == 12, "ByteArray ToHex()");
 	assert(bs2[1] == 0x1F, "ByteArray ToHex()");
@@ -245,12 +247,12 @@ static void TestSet()
 	assert(str.EndsWith("-32-34"), "bool EndsWith(cstring str)");
 
 	// 字符串截取
-	str	= " 36-1f-36-35-34\n";
-	len	= str.Length();
-	str	= str.Trim();
+	str = " 36-1f-36-35-34\n";
+	len = str.Length();
+	str = str.Trim();
 	assert(str.Length() == len - 2, "String& Trim()");
 
-	str	= str.Substring(3, 5).ToUpper();
+	str = str.Substring(3, 5).ToUpper();
 	str.Show(true);
 	assert(str == "1F-36", "String Substring(int start, int _Length)");
 }
@@ -261,17 +263,17 @@ static void TestMemory()
 
 	debug_printf("字符串内存泄漏测试\r\n");
 
-	int p	= 0;
+	int p = 0;
 	{
 		auto arr = new int[4];
-		p	= (int)arr;
+		p = (int)arr;
 
 		delete[] arr;
 	}
 
 	{
 		String str = "ABCDEFG";
-		for(int i=0; i<4; i++) str += str;
+		for (int i = 0; i < 4; i++) str += str;
 	}
 
 	{
@@ -289,30 +291,30 @@ static void TestCompare()
 
 	debug_printf("字符串比较测试\r\n");
 
-	String str	= "abcd";
-	cstring cs	= "abcdef";
+	String str = "abcd";
+	cstring cs = "abcdef";
 
-	auto err	= "int CompareTo(cstring cstr) const";
+	auto err = "int CompareTo(cstring cstr) const";
 
 	// 因为按照左边长度来比较，所以返回0
 	assert(str.CompareTo(cs) == 0, err);
 
-	err	= "bool operator != (cstring cstr) const";
+	err = "bool operator != (cstring cstr) const";
 	assert(str != cs, err);
 
 	// 倒过来试试
-	String str2	= "abcdef";
-	cstring cs2	= "abcd";
+	String str2 = "abcdef";
+	cstring cs2 = "abcd";
 
 	assert(str2.CompareTo(cs2) > 0, err);
 
-	err	= "bool operator != (cstring cstr) const";
+	err = "bool operator != (cstring cstr) const";
 	assert(str2 != cs2, err);
 
 	// 不区分大小写
-	String str3	= "ABCD";
+	String str3 = "ABCD";
 
-	err	= "bool EqualsIgnoreCase(cstring cstr) const";
+	err = "bool EqualsIgnoreCase(cstring cstr) const";
 	assert(!str3.Equals(cs2), err);
 	assert(str3.EqualsIgnoreCase(cs2), err);
 	assert(str3.EqualsIgnoreCase(String(cs2)), err);
@@ -324,66 +326,66 @@ static void TestSplit(cstring cstr)
 
 	debug_printf("字符串分割测试\r\n");
 
-	String str	= cstr;
+	String str = cstr;
 
-	auto err	= "StringSplit Split(cstring sep) const";
+	auto err = "StringSplit Split(cstring sep) const";
 
-	int p	= -1;
-	auto sp	= str.Split(",");
+	int p = -1;
+	auto sp = str.Split(",");
 	assert(sp.Position == p && sp.Length == 0, err);
 	assert(sp, err);
 
-	auto rs	= sp.Next();
+	auto rs = sp.Next();
 
-	p	= 0;
+	p = 0;
 
 	// 如果分隔符开头，则跳过它
-	if(cstr[0] == ',')
+	if (cstr[0] == ',')
 	{
-		rs	= sp.Next();
+		rs = sp.Next();
 		p++;
 	}
 
 	assert(sp.Position == p && sp.Length == 4, err);
 	assert(rs == "+IPD", err);
-	p	+= 4 + 1;
+	p += 4 + 1;
 
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(sp.Position == p && sp.Length == 1, err);
 	assert(rs.ToInt() == 3, err);
-	p	+= 1 + 1;
+	p += 1 + 1;
 
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(sp.Position == p && sp.Length == 2, err);
 	assert(rs.ToInt() == 96, err);
-	p	+= 2 + 1;
+	p += 2 + 1;
 
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(sp.Position == p && sp.Length == rs.Length(), err);
 	assert(rs == "10.0.0.21", err);
-	p	+= rs.Length() + 1;
+	p += rs.Length() + 1;
 
 	// 更换分隔符
-	sp.Sep	= ":";
-	rs	= sp.Next();
+	sp.Sep = ":";
+	rs = sp.Next();
 	assert(sp.Position == p && sp.Length == 4, err);
 	assert(rs.ToInt() == 3377, err);
-	p	+= 4 + 1;
+	p += 4 + 1;
 
 	// 最后一组
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(sp.Position == p && sp.Length == rs.Length(), err);
 	assert(rs == "abcdef", err);
 	//assert(sp.Position + sp.Length == str.Length(), err);
 
 	// 再来一组
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(!sp, err);
 	assert(sp.Position == -2 && sp.Length == 0, err);
 	assert(!rs, err);
 
 	// 到了默认不再查找
-	rs	= sp.Next();
+	rs = sp.Next();
 	assert(!sp, err);
 	assert(sp.Position == -2 && sp.Length == 0, err);
 	assert(!rs, err);
@@ -409,10 +411,10 @@ void String::Test()
 	TestCompare();
 
 	// 分隔符
-	cstring cstr	= "+IPD,3,96,10.0.0.21,3377:abcdef";
+	cstring cstr = "+IPD,3,96,10.0.0.21,3377:abcdef";
 	TestSplit(cstr);
 	// 以分隔符开头和结尾的情况
-	cstr	= ",+IPD,3,96,10.0.0.21,3377:abcdef:";
+	cstr = ",+IPD,3,96,10.0.0.21,3377:abcdef:";
 	TestSplit(cstr);
 
 	debug_printf("字符串单元测试全部通过！");

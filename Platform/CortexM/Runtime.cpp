@@ -64,29 +64,29 @@ extern "C" {
 
 INROOT void* operator new(uint size)
 {
-	mem_printf(" new size: %d ", size);
+	mem_printf(" new(%d,", size);
 	auto p = malloc(size);
-	mem_printf("0x%p ", p);
+	mem_printf("0x%p) ", p);
 	return p;
 }
 
 INROOT void* operator new[](uint size)
 {
-	mem_printf(" new size[]: %d ", size);
+	mem_printf(" new[](%d,", size);
 	auto p = malloc(size);
-	mem_printf("0x%p ", p);
+	mem_printf("0x%p) ", p);
 	return p;
 }
 
 INROOT void operator delete(void* p) noexcept
 {
-	mem_printf(" delete 0x%p ", p);
+	mem_printf(" delete(0x%p) ", p);
 	if (p) free(p);
 }
 
 INROOT void operator delete[](void* p) noexcept
 {
-	mem_printf(" delete[] 0x%p ", p);
+	mem_printf(" delete[](0x%p) ", p);
 	if (p) free(p);
 }
 

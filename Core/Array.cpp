@@ -75,7 +75,7 @@ bool Array::Release()
 
 	if(fr && p)
 	{
-		delete (byte*)p;
+		delete[] (byte*)p;
 
 		return true;
 	}
