@@ -34,9 +34,8 @@ void SessionStat::Clear()
 	OnPing = 0;
 }
 
-String SessionStat::ToString() const
+String& SessionStat::ToStr(String& str) const
 {
-	String str;
 	str = str + "Hello: " + OnHello + " Login: " + OnLogin + " Ping: " + OnPing;
 	return str;
 }
@@ -288,15 +287,41 @@ bool TokenSession::CheckExpired()
 	return false;
 }
 
-String TokenSession::ToString() const
+String& TokenSession::ToStr(String& str) const
 {
-	String str;
 	int sec = (int)(Sys.Ms() - LastActive) / 1000UL;
 	str = str + Remote + " " + Name + " LastActive " + sec + "s \t";
 
 #if DEBUG
-	str += Stat;
+	//str += Stat;
+	Stat.ToStr(str);
 #endif
 
 	return str;
+}
+
+void TokenSession::Show(IList& sessions)
+{
+#if DEBUG
+	if (!StatShowTaskID)
+	{
+		StatShowTaskID = Sys.AddTask(
+			[](void *param)
+		{
+			auto& sss = *(IList*)param;
+			TokenSession* ss = nullptr;
+			debug_printf("\r\n\tSessions统计信息\r\n解密失败次数 %d", SessionStat::DecError);
+			debug_printf("   收到广播握手%d条\r\n", SessionStat::BraHello);
+			debug_printf("Sessions: %d/%d\r\n", sss.Count(), TokenSession::HisSsNum);
+			for (int i = 0; i < sss.Count(); i++)
+			{
+				ss = (TokenSession*)sss[i];
+				//ss->Stat.Show(true);
+				ss->ToString().Show(true);
+			}
+			debug_printf("\r\n");
+		},
+			&sessions, 5000, 15000, "会话状态");
+	}
+#endif
 }

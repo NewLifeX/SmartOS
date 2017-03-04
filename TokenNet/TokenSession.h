@@ -26,7 +26,7 @@ public:
 	~SessionStat();
 	void Clear();
 
-	String ToString() const;
+	String& ToStr(String& str) const;
 };
 
 #endif
@@ -63,7 +63,9 @@ public:
 
 	bool CheckExpired();
 
-	String ToString() const;
+	String& ToStr(String& str) const;
+
+	static void Show(IList& sessions);
 
 private:
 	bool OnHello(TokenMessage& msg);

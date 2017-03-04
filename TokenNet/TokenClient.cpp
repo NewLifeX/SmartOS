@@ -330,28 +330,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		ss->Remote = *remote;
 	}
 
-#if DEBUG
-	if (!TokenSession::StatShowTaskID)
-	{
-		TokenSession::StatShowTaskID = Sys.AddTask(
-			[](void *param)
-		{
-			auto & sss = *(IList*)param;
-			TokenSession* ss = nullptr;
-			debug_printf("\r\n\tSessions统计信息\r\n解密失败次数 %d", SessionStat::DecError);
-			debug_printf("   收到广播握手%d条\r\n", SessionStat::BraHello);
-			debug_printf("Sessions: %d/%d\r\n", sss.Count(), TokenSession::HisSsNum);
-			for (int i = 0; i < sss.Count(); i++)
-			{
-				ss = (TokenSession*)sss[i];
-				//ss->Stat.Show(true);
-				ss->ToString().Show(true);
-			}
-			debug_printf("\r\n");
-		},
-			&Sessions, 5000, 15000, "SsStat");
-	}
-#endif
+	TokenSession::Show(Sessions);
 
 	ss->OnReceive(msg);
 }
