@@ -313,11 +313,15 @@ void TokenSession::Show(IList& sessions)
 			debug_printf("\r\n\tSessions统计信息\r\n解密失败次数 %d", SessionStat::DecError);
 			debug_printf("   收到广播握手%d条\r\n", SessionStat::BraHello);
 			debug_printf("Sessions: %d/%d\r\n", sss.Count(), TokenSession::HisSsNum);
+			String str;
 			for (int i = 0; i < sss.Count(); i++)
 			{
 				ss = (TokenSession*)sss[i];
 				//ss->Stat.Show(true);
-				ss->ToString().Show(true);
+				//ss->ToString().Show(true);
+				ss->ToStr(str);
+				str.Show(true);
+				str.Clear();
 			}
 			debug_printf("\r\n");
 		},
