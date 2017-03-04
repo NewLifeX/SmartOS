@@ -321,7 +321,7 @@ void TokenSession::Show(IList& sessions)
 				//ss->ToString().Show(true);
 				ss->ToStr(str);
 				str.Show(true);
-				str.Clear();
+				str.SetLength(0);
 			}
 			debug_printf("\r\n");
 		},
