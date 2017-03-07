@@ -189,11 +189,7 @@ private:
 	void OpenPin(void* param);
 	void ClosePin();
 	bool OnRegister();
-	byte	_Value = 0;	// 当前值
-	bool	_LastValue = false;
-	/*byte	_qu_read;
-	byte	_qu_write;
-	byte	_queue[8];	// 队列。1读+1写+6状态*/
+	byte	_Value;	// 当前值
 };
 
 /******************************** AnalogInPort ********************************/
