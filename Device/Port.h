@@ -180,8 +180,8 @@ private:
 	bool	_IRQ	= false;
 
 	uint	_task	= 0;	// 输入任务
-	UInt64	_Start	= 0;	// 开始按下时间
-	UInt64	_Last	= 0;	// 最后一次触发时间
+	int		_Start	= 0;	// 开始按下时间
+	int		_Last	= 0;	// 最后一次触发时间
 	static void InputTask(void* param);
 	static void InputNoIRQTask(void* param);
 
@@ -190,7 +190,10 @@ private:
 	void ClosePin();
 	bool OnRegister();
 	byte	_Value = 0;	// 当前值
-	bool	 Val = false;
+	bool	_LastValue = false;
+	/*byte	_qu_read;
+	byte	_qu_write;
+	byte	_queue[8];	// 队列。1读+1写+6状态*/
 };
 
 /******************************** AnalogInPort ********************************/

@@ -311,9 +311,9 @@ InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 {
 	_task = 0;
 
-	//Handler	= nullptr;
-	//Param	= nullptr;
 	_Value = 0;
+	//_qu_read = 0;
+	//_qu_write = 0;
 
 	_Start = 0;
 	PressTime = 0;
@@ -348,54 +348,82 @@ bool InputPort::Read() const
 	return v;
 }
 
+#if DEBUG
+int InputPort_Total = 0;
+int InputPort_Error = 0;
+#endif
 void InputPort::OnPress(bool down)
 {
-	//debug_printf("OnPress P%c%d down=%d Invert=%d _Value=%d\r\n", _PIN_NAME(_Pin), down, Invert, _Value);
+	// 在GD32F103VE上，按下PE13，有5%左右几率触发PE14的弹起中断
+	if (_LastValue == down)return;
+	_LastValue = down;
+
 	/*
 	！！！注意：
 	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
 	*/
 
-	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
-	//if(down && _Value == Rising) return;
-	//if(!down && _Value != Rising) return;
-
-	UInt64	now = Sys.Ms();
+#if DEBUG
+	InputPort_Total++;
+#endif
+	int	now = (int)Sys.Ms();
 	// 这一次触发离上一次太近，算作抖动忽略掉
-	if (_Last > 0 && ShakeTime > 0 && ((Int64)now - (Int64)_Last) < ShakeTime) return;
+	//if (_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime) return;
+	if (_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime)
+	{
+		// 撤消上一次准备执行的动作，并取消这一次事件
+		_Value = 0;
+#if DEBUG
+		InputPort_Error++;
+#endif
+		return;
+	}
+	if (Index == 1)
+	{
+		_Last = now;
+	}
 	_Last = now;
 
 	// 允许两个值并存
 	_Value = down ? Rising : Falling;
+	/*// 压入队列
+	_queue[_qu_write++] = down ? Rising : Falling;
+	if (_qu_write >= sizeof(_queue)) _qu_write = 0;
+	// 如果追上了读取指针，那么说明溢出
+	if (_qu_write == _qu_read)
+	{
+		_qu_write--;
+		debug_printf("InputPort::OnPress 队列溢出，共有%d个输入状态未处理 \r\n", sizeof(_queue));
+	}
+	int n = _qu_write - _qu_read;
+	if (n < 0) n += sizeof(_queue);
+	Port_Cur = n;
+	if (n > Port_Max) Port_Max = n;*/
 
 	if (down)
 		_Start = now;
 	else
 		PressTime = (ushort)(now - _Start);
 
-	/*if(down)
-	{
-		if((Mode & Rising) == 0) return;
-	}
-	else
-	{
-		if((Mode & Falling) == 0) return;
-	}*/
-
 	if (HardEvent || !_IRQ)
 		Press(*this, down);
 	else
-		Sys.SetTask(_task, true, 0);
+		Sys.SetTask(_task, true, ShakeTime);
 }
 
 void InputPort::InputTask(void* param)
 {
 	auto port = (InputPort*)param;
 	byte v = port->_Value;
+	/*if (port->_qu_read == port->_qu_write) return;
+
+	byte v = port->_queue[port->_qu_read++];
+	if (port->_qu_read >= sizeof(port->_queue))port->_qu_read = 0;
+	if (port->_qu_read != port->_qu_write) Sys.SetTask(port->_task, true, 0);*/
 	if (!v) return;
 
 	//v	&= port->Mode;
-	if (v & Rising)	port->Press(*port, true);
+	if (v & Rising)		port->Press(*port, true);
 	if (v & Falling)	port->Press(*port, false);
 }
 
@@ -403,8 +431,6 @@ void InputPort::InputNoIRQTask(void* param)
 {
 	auto port = (InputPort*)param;
 	auto val = port->Read();
-	if (val == port->Val) return;
-	port->Val = val;
 
 	port->OnPress(val);
 }

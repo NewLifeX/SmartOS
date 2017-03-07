@@ -64,10 +64,11 @@ void* Heap::Alloc(int size)
 	// 要申请的内存大小需要对齐
 	size = (size + MEMORY_ALIGN - 1) & (~(MEMORY_ALIGN - 1));
 
+	//debug_printf("Address=%p Size=%d ", Address, Size);
 	int remain = Size - _Used;
 	if (size > remain)
 	{
-		debug_printf("Heap::Alloc %d > %d (0x%p) 失败！Size=%d Used=%d \r\n", size, remain, remain, Size, _Used);
+		debug_printf("Heap::Alloc %d > %d (0x%p) 失败！Size=%d Used=%d First=%p \r\n", size, remain, remain, Size, _Used, _First);
 		return nullptr;
 	}
 
