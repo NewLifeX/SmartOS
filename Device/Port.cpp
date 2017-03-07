@@ -356,7 +356,7 @@ void InputPort::OnPress(bool down)
 
 	// 在GD32F103VE上，按下PE13，有5%左右几率触发PE14的弹起中断，且示波器没有检测到PE14按键有波形
 	// 上述问题仅出现于0801，在0802上没有重现，两个按键是PE9/PE14
-	if (_Value == v)return;
+	if (_Value == v) return;
 
 	/*
 	！！！注意：
@@ -379,6 +379,8 @@ void InputPort::OnPress(bool down)
 	}
 	_Last = now;
 
+	//_Value |= v;
+	// 不能或运算，否则轮询时会连续触发，具体原因未清楚
 	_Value = v;
 
 	if (down)
@@ -397,6 +399,7 @@ void InputPort::InputTask(void* param)
 {
 	auto port = (InputPort*)param;
 	byte v = port->_Value;
+	port->_Value = 0;
 	if (!v) return;
 
 	//v	&= port->Mode;
@@ -443,6 +446,9 @@ void InputPort::OnOpen(void* param)
 #if DEBUG
 		fg = true;
 #endif
+
+		// 设置按键初始状态，避免开始轮询时产生一次误触发
+		_Value = Falling;
 	}
 
 #if DEBUG
@@ -484,7 +490,7 @@ bool InputPort::UsePress()
 		else
 		{
 			// 设置按键初始状态，避免开始轮询时产生一次误触发
-			_Value = Read() ? Rising : Falling;
+			//_Value = Read() ? Rising : Falling;
 			_task = Sys.AddTask(InputNoIRQTask, this, InputPort_Polling, InputPort_Polling, "输入轮询");
 		}
 	}
