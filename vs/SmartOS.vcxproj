@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\App\ACZero.cpp" />
     <ClCompile Include="..\App\Alarm.cpp" />
+    <ClCompile Include="..\App\AT.cpp" />
     <ClCompile Include="..\App\BlinkPort.cpp" />
     <ClCompile Include="..\App\Button.cpp" />
     <ClCompile Include="..\App\Button_GrayLevel.cpp" />
@@ -31,6 +32,7 @@
     <ClCompile Include="..\Board\AP0104.cpp" />
     <ClCompile Include="..\Board\AP0801.cpp" />
     <ClCompile Include="..\Board\AP0802.cpp" />
+    <ClCompile Include="..\Board\AP0803.cpp" />
     <ClCompile Include="..\Board\BaseBoard.cpp" />
     <ClCompile Include="..\Board\IOK026X.cpp" />
     <ClCompile Include="..\Board\IOK027X.cpp" />
@@ -84,6 +86,7 @@
     <ClCompile Include="..\Drivers\Esp8266\EspTcp.cpp" />
     <ClCompile Include="..\Drivers\Esp8266\EspUdp.cpp" />
     <ClCompile Include="..\Drivers\Esp8266\WaitExpect.cpp" />
+    <ClCompile Include="..\Drivers\GSM07.cpp" />
     <ClCompile Include="..\Drivers\HX711.cpp" />
     <ClCompile Include="..\Drivers\JTW8953.cpp" />
     <ClCompile Include="..\Drivers\NRF24L01.cpp" />

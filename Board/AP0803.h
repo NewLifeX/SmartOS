@@ -40,12 +40,8 @@ public:
 	void InitLeds();
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
-	// 打开以太网W5500
-	NetworkInterface* Create5500();
-	// 打开Esp8266，作为主控或者纯AP
-	NetworkInterface* Create8266(bool apOnly);
-
-	// ITransport* Create2401();
+	// 打开GPRS
+	NetworkInterface* CreateGPRS();
 
 	void InitClient();
 	void InitNet();

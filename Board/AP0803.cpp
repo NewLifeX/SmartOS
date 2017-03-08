@@ -5,9 +5,7 @@
 #include "Device\WatchDog.h"
 #include "Config.h"
 
-#include "Drivers\NRF24L01.h"
-#include "Drivers\W5500.h"
-#include "Drivers\Esp8266\Esp8266.h"
+#include "Drivers\GSM07.h"
 
 #include "TokenNet\TokenController.h"
 #include "TokenNet\TokenConfig.h"
@@ -124,50 +122,20 @@ void AP0803::InitButtons(const Delegate2<InputPort&, bool>& press)
 	}
 }
 
-NetworkInterface* AP0803::Create5500()
+NetworkInterface* AP0803::CreateGPRS()
 {
-	debug_printf("\r\nW5500::Create \r\n");
+	debug_printf("\r\nCreateGPRS::Create \r\n");
 
-	auto net = new W5500(Spi2, PE1, PD13);
+	auto net = new GSM07();
+	net->Init(COM4);
+	net->Set(P0, P0);
 	if(!net->Open())
 	{
 		delete net;
 		return nullptr;
 	}
 
-	net->EnableDNS();
-	net->EnableDHCP();
-
 	return net;
-}
-
-NetworkInterface* AP0803::Create8266(bool apOnly)
-{
-	debug_printf("\r\nEsp8266::Create \r\n");
-
-	auto esp = new Esp8266(COM4, PE2, PD3);
-
-	// 初次需要指定模式 否则为 Wire
-	bool join	= esp->SSID && *esp->SSID;
-	if (!join)
-	{
-		*esp->SSID	= "WSWL";
-		*esp->Pass	= "12345678";
-
-		esp->Mode	= NetworkType::STA_AP;
-		esp->WorkMode	= NetworkType::STA_AP;
-	}
-
-	if(!esp->Open())
-	{
-		delete esp;
-		return nullptr;
-	}
-
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
-
-	return esp;
 }
 
 /******************************** Token ********************************/
@@ -209,8 +177,7 @@ static void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0803*)param;
 
-	bsp.Create5500();
-	bsp.Create8266(false);
+	bsp.CreateGPRS();
 
 	Client->Open();
 }
