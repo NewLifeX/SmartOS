@@ -83,6 +83,7 @@ void Raster::OnInit()
 	Filter = false;
 
 	Count = 0;
+	Count2 = 0;
 }
 
 bool Raster::Open()
@@ -167,10 +168,10 @@ void Raster::OnHandlerB(PulsePort& raster)
 
 }
 
+// 已经匹配一对通过事件
 void Raster::LineReport()
 {
 	auto size = sizeof(RasTriData);
-	Count++;
 	Stop = true;
 	// 构造当前数据
 	RasTriData data;
@@ -179,18 +180,21 @@ void Raster::LineReport()
 	data.TimeA = FlagA.Time;
 	data.TimeB = FlagB.Time;
 	debug_printf("data获得波长%d\r\n", data.TimeB);
-	data.Count = Count;
 
 	// 时间差加方向
 	if (FlagA.Start > FlagB.Start)
 	{
 		data.Direction = 0x00;
 		data.Time = (ushort)(FlagA.Start - FlagB.Start);
+		Count++;
+		data.Count = Count;
 	}
 	else
 	{
 		data.Direction = 0x01;
 		data.Time = (ushort)(FlagB.Start - FlagA.Start);
+		Count2++;
+		data.Count = Count2;
 	}
 
 	Buffer bs(&data, size);
@@ -199,7 +203,7 @@ void Raster::LineReport()
 		Report();
 	_Cache->Write(bs);
 
-	debug_printf("写入%d\r\n", Count);
+	debug_printf("写入%d\r\n", data.Count);
 
 	//写完数据后标致清零
 	FlagA.Count = FlagB.Count = 0;
@@ -220,5 +224,4 @@ void Raster::Report()
 
 	//委托执行时间太久了
 	OnReport(cache);
-
 }

@@ -16,7 +16,7 @@ struct  RasTriData
 
 	ushort	TimeA;		// 光栅A遮挡时间
 	ushort	TimeB;		// 光栅B遮挡时间
-	ushort	Count;		// 本地计数
+	ushort	Count;		// 本地计数。不同方向有自己的累计数
 
 	byte Size() { return sizeof(this[0]); }
 };
@@ -64,6 +64,7 @@ private:
 
 	bool	Stop = false;				//	
 	ushort Count;
+	ushort Count2;
 
 	void OnInit();
 	void OnHandlerA(PulsePort& raster);
