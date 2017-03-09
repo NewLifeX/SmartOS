@@ -106,6 +106,8 @@ bool GSM07::OnOpen()
 {
 	if (!At.Open()) return false;
 
+	// 开回显
+	Echo(true);
 	if (!CheckReady())
 	{
 		net_printf("GSM07::Open 打开失败！");
@@ -114,9 +116,6 @@ bool GSM07::OnOpen()
 	}
 
 	At.Received.Bind(&GSM07::OnReceive, this);
-
-	// 开回显
-	Echo(true);
 
 #if NET_DEBUG
 	// 获取版本

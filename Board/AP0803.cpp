@@ -122,7 +122,7 @@ NetworkInterface* AP0803::CreateGPRS()
 	debug_printf("\r\nCreateGPRS::Create \r\n");
 
 	auto net = new A67();
-	net->Init(COM4, 9600);
+	net->Init(COM4, 115200);
 	net->Set(PE0, PD3, P0);
 	net->SetLed(*Leds[0]);
 	if (!net->Open())

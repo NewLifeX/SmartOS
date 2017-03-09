@@ -252,6 +252,9 @@ uint AT::OnReceive(Buffer& bs, void* param)
 {
 	if (bs.Length() == 0) return 0;
 
+	debug_printf("收到：");
+	bs.Show(true);
+
 	//!!! 分析数据和命令返回，特别要注意粘包
 	int s = 0;
 	int p = 0;
