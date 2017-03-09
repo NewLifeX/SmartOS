@@ -43,8 +43,8 @@ GSM07::GSM07()
 {
 	Name = "GSM07";
 	Speed = 10;
-	
-	APN	= "CMNET";
+
+	APN = "CMNET";
 
 	Led = nullptr;
 
@@ -71,11 +71,11 @@ void GSM07::Init(ITransport* port)
 	At.Init(port);
 }
 
-void GSM07::Set(Pin power, Pin rst)
+void GSM07::Set(Pin power, Pin rst, Pin low)
 {
-	if (power != P0) _Power.Init(power, false);
-	if (rst != P0) _Reset.Init(rst, true);
-
+	if (power != P0) _Power.Set(power);
+	if (rst != P0) _Reset.Set(rst);
+	if (low != P0) _LowPower.Set(low);
 }
 
 void GSM07::SetLed(Pin led)
@@ -119,10 +119,10 @@ bool GSM07::OnOpen()
 
 #if NET_DEBUG
 	// 获取版本
-	GetVersion();
-	//auto ver	= GetVersion();
-	//net_printf("版本:");
-	//ver.Show(true);
+	//GetVersion();
+	auto ver	= GetVersion();
+	net_printf("版本:");
+	ver.Show(true);
 #endif
 
 	Config();
@@ -161,6 +161,8 @@ void GSM07::OnClose()
 {
 	// 先断开已有连接
 	At.SendCmd("AT+CIPSHUT\r");
+	// Device will be switched off (power down mode). Do not send any command after this command.
+	At.SendCmd("AT+CPOF\r");
 
 	At.Close();
 
@@ -197,9 +199,7 @@ bool GSM07::OnLink(uint retry)
 // 配置网络参数
 void GSM07::Config()
 {
-	// ATE0 关闭回显
-	// ATE1 开启回显
-	At.SendCmd("ATE0\r");
+	Echo(true);
 	At.SendCmd("AT+CIPSHUT\r");
 	At.SendCmd("AT+CGCLASS=\"B\"\r");
 	SetAPN(APN, false);
@@ -236,11 +236,11 @@ Socket* GSM07::CreateSocket(NetType type)
 
 	switch (type)
 	{
-	/*case NetType::Tcp:
-		return es[i] = new EspTcp(*this, i);
+		/*case NetType::Tcp:
+			return es[i] = new EspTcp(*this, i);
 
-	case NetType::Udp:
-		return es[i] = new EspUdp(*this, i);*/
+		case NetType::Udp:
+			return es[i] = new EspUdp(*this, i);*/
 
 	default:
 		return nullptr;
@@ -278,14 +278,12 @@ bool GSM07::Reset(bool soft)
 	return true;
 }
 
-/*
-AT 版本信息
-基于的SDK版本信息
-编译生成时间
-*/
+// AT 版本信息
 String GSM07::GetVersion()
 {
-	return At.Send("AT+GMR\r\n", "OK");
+	//return At.Send("AT+GMR\r\n", "OK");
+	//return At.Send("AT+GSN\r\n", "OK");
+	return At.Send("ATI\r\n", "OK");
 }
 
 bool GSM07::Sleep(uint ms)
@@ -312,7 +310,7 @@ bool GSM07::Restore()
 void GSM07::SetAPN(cstring apn, bool issgp)
 {
 	String str;
-	if(issgp)
+	if (issgp)
 		str = "AT+CIPCSGP=1";
 	else
 		str = "AT+CGDCONT=1,\"IP\"";
@@ -320,5 +318,8 @@ void GSM07::SetAPN(cstring apn, bool issgp)
 
 	At.SendCmd(str);
 }
+
+String GSM07::GetIMSI() { return At.Send("AT+CIMI\r\n", "OK"); }
+String GSM07::GetIMEI() { return At.Send("AT+EGMR\r\n", "OK"); }
 
 /******************************** TCP/IP ********************************/

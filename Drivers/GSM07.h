@@ -21,9 +21,9 @@ public:
 
 	IDataPort*	Led;	// 指示灯
 
-	OutputPort	_Power;
-	OutputPort	_Reset;
-	OutputPort	_LowPower;
+	OutputPort	_Power;	// 电源
+	OutputPort	_Reset;	// 重置
+	OutputPort	_LowPower;	// 低功耗
 
 	Delegate<Buffer&>	Received;
 
@@ -31,8 +31,8 @@ public:
 	virtual ~GSM07();
 
 	void Init(ITransport* port);
-    void Init(COM idx, int baudrate = 115200);
-	void Set(Pin power = P0, Pin rst = P0);
+	void Init(COM idx, int baudrate = 115200);
+	void Set(Pin power = P0, Pin rst = P0, Pin low = P0);
 
 	virtual void Config();
 	void SetLed(Pin led);
@@ -41,7 +41,7 @@ public:
 
 	virtual Socket* CreateSocket(NetType type);
 
-/******************************** 基础AT指令 ********************************/
+	/******************************** 基础AT指令 ********************************/
 	bool Test();
 	bool Reset(bool soft);
 	String GetVersion();
@@ -50,13 +50,15 @@ public:
 	// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
 	bool Restore();
 	void SetAPN(cstring apn, bool issgp);
+	String GetIMSI();
+	String GetIMEI();
 
-/******************************** 功能指令 ********************************/
+	/******************************** 功能指令 ********************************/
 	IPAddress GetIP(bool sta);
 
-/******************************** TCP/IP ********************************/
+	/******************************** TCP/IP ********************************/
 
-/******************************** 发送指令 ********************************/
+	/******************************** 发送指令 ********************************/
 
 private:
 	IPEndPoint	_Remote;	// 当前数据包远程地址

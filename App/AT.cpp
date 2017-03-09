@@ -133,7 +133,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	_Expect = &handle;
 
 #if NET_DEBUG
-	bool EnableLog = true;
+	bool enableLog = true;
 #endif
 
 	if (cmd)
@@ -142,8 +142,8 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if (!cmd.StartsWith("AT") || (expect && expect[0] == '>')) EnableLog = false;
-		if (EnableLog)
+		if (!cmd.StartsWith("AT") || (expect && expect[0] == '>')) enableLog = false;
+		if (enableLog)
 		{
 			we.Command = &cmd;
 			//net_printf("%d=> ", task.ID);
@@ -158,7 +158,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	//if(rs.Length() > 4) rs.Trim();
 
 #if NET_DEBUG
-	if (EnableLog && rs)
+	if (enableLog && rs)
 	{
 		net_printf("%d<= ", task.ID);
 		// 太长时不要去尾，避免产生重新分配
