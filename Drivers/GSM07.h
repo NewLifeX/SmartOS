@@ -16,8 +16,9 @@
 class GSM07 : public NetworkInterface
 {
 public:
-	AT		At;	// AT操作对象
+	AT		At;		// AT操作对象
 	cstring	APN;
+	bool	Mux;	// 开启多路socket模式，最多同时开启4路
 
 	IDataPort*	Led;	// 指示灯
 
@@ -41,7 +42,7 @@ public:
 
 	virtual Socket* CreateSocket(NetType type);
 
-	/******************************** 基础AT指令 ********************************/
+	/******************************** 基础指令 ********************************/
 	bool Test();
 	bool Reset(bool soft);
 	String GetVersion();
@@ -52,13 +53,32 @@ public:
 	void SetAPN(cstring apn, bool issgp);
 	String GetIMSI();
 	String GetIMEI();
+	// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
+	String GetCCID();
+	// 获取运营商名称
+	String GetMobiles();
 
-	/******************************** 功能指令 ********************************/
-	IPAddress GetIP(bool sta);
+	/******************************** 网络服务 ********************************/
+	bool AttachMT(bool flag);
+	IPAddress GetIP();
+	bool SetClass(cstring mode);
 
 	/******************************** TCP/IP ********************************/
+	bool IPStart(const NetUri& remote);
+	bool IPSend(int index, const Buffer& data);
+	bool SendData(const String& cmd, const Buffer& bs);
+	bool IPClose(int index);
+	bool IPShutdown(int index);
+	String IPStatus();
+	bool SetAutoSendTimer(bool enable, ushort time);
+	IPAddress DNSGetIP(const String& domain);
+	bool IPMux(bool enable);
+	bool IPHeartConfig(int index, int mode, int value);
+	bool IPHeart(int index, bool enable);
 
-	/******************************** 发送指令 ********************************/
+	// 透明传输
+	bool IPTransparentConfig(int mode, int value);
+	bool IPTransparent(bool enable);
 
 private:
 	IPEndPoint	_Remote;	// 当前数据包远程地址
@@ -73,11 +93,6 @@ private:
 
 	// 多个硬件socket
 	int* _sockets[5];
-
-	// 分析+IPD接收数据。返回被用掉的字节数
-	uint ParseReceive(const Buffer& bs);
-	// 分析关键字。返回被用掉的字节数
-	uint ParseReply(const Buffer& bs);
 
 	// 数据到达
 	void OnReceive(Buffer& bs);

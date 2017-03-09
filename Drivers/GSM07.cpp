@@ -45,6 +45,7 @@ GSM07::GSM07()
 	Speed = 10;
 
 	APN = "CMNET";
+	Mux = true;
 
 	Led = nullptr;
 
@@ -120,7 +121,7 @@ bool GSM07::OnOpen()
 #if NET_DEBUG
 	// 获取版本
 	//GetVersion();
-	auto ver	= GetVersion();
+	auto ver = GetVersion();
 	net_printf("版本:");
 	ver.Show(true);
 #endif
@@ -135,10 +136,10 @@ bool GSM07::CheckReady()
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
 	if (!_Power.Empty())
 	{
-		_Power.Open();					// 使用前必须Open；
+		_Power.Open();					// 使用前必须Open
 		_Power.Down(20);
 	}
-	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open；
+	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open
 
 	// 每两次启动会有一次打开失败，交替
 	if (!_Reset.Empty())
@@ -201,9 +202,11 @@ void GSM07::Config()
 {
 	Echo(true);
 	At.SendCmd("AT+CIPSHUT\r");
-	At.SendCmd("AT+CGCLASS=\"B\"\r");
+	//At.SendCmd("AT+CGCLASS=\"B\"\r");
+	SetClass("B");
 	SetAPN(APN, false);
-	At.SendCmd("AT+CGATT=1\r");
+	AttachMT(true);
+	//At.SendCmd("AT+CGATT=1\r");
 	// 先断开已有连接
 	//At.SendCmd("AT+CIPSHUT\r");
 	//设置APN
@@ -321,5 +324,222 @@ void GSM07::SetAPN(cstring apn, bool issgp)
 
 String GSM07::GetIMSI() { return At.Send("AT+CIMI\r\n", "OK"); }
 String GSM07::GetIMEI() { return At.Send("AT+EGMR\r\n", "OK"); }
+// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
+String GSM07::GetCCID() { return At.Send("AT+CCID\r\n", "OK"); }
+// 获取运营商名称
+String GSM07::GetMobiles() { return At.Send("AT+COPN\r\n", "OK"); }
+
+/******************************** 网络服务 ********************************/
+bool GSM07::AttachMT(bool flag)
+{
+	if (flag)
+		return At.SendCmd("AT+CGATT=1");
+	else
+		return At.SendCmd("AT+CGATT=0");
+}
+
+IPAddress GSM07::GetIP()
+{
+	auto rs = At.Send("AT+CIMI\r\n", "OK");
+	rs.Show(true);
+
+	rs = At.Send("AT+CIFSR\r\n", "OK");
+	rs.Show(true);
+
+	int p = rs.IndexOf("\r\n");
+	int q = rs.IndexOf("\r\n", p + 1);
+	rs = rs.Substring(p, q - p - 2);
+
+	return IPAddress::Parse(rs);
+}
+
+bool GSM07::SetClass(cstring mode)
+{
+	if (!mode)mode = "B";
+
+	String str = "AT_CGCLASS=\"";
+	str += mode;
+	str += "\"";
+
+	return At.SendCmd(str);
+}
 
 /******************************** TCP/IP ********************************/
+bool GSM07::IPStart(const NetUri& remote)
+{
+	String str = "AT+CIPSTART=\"";
+	switch (remote.Type)
+	{
+	case NetType::Tcp:
+	case NetType::Http:
+		str += "TCP";
+		break;
+	case NetType::Udp:
+		str += "UDP";
+		break;
+	default:
+		return false;
+	}
+	//str = str + "\",\"" + remote.Address + "\",\"" + remote.Port + "\"";
+	str = str + "\",\"" + remote.Address + "\"," + remote.Port;
+
+	return At.SendCmd(str);
+}
+
+bool GSM07::SendData(const String& cmd, const Buffer& bs)
+{
+	// 重发3次AT指令，避免busy
+	int i = 0;
+	for (i = 0; i < 3; i++)
+	{
+		//auto rt	= _Host.Send(cmd, ">", "OK", 1600);
+		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
+		auto rt = At.Send(cmd, ">", "ERROR", 1600);
+		if (rt.Contains(">")) break;
+
+		Sys.Sleep(500);
+	}
+	if (i < 3 && At.Send(bs.AsString(), "SEND OK", "ERROR", 1600).Contains("SEND OK"))
+	{
+		return true;
+	}
+
+	/*// 发送失败，关闭链接，下一次重新打开
+	if (++_Error >= 10)
+	{
+		_Error = 0;
+
+		Close();
+	}*/
+
+	return false;
+}
+
+bool GSM07::IPSend(int index, const Buffer& data)
+{
+	assert(data.Length() <= 1024, "每次最多发送1024字节");
+
+	/*
+	AT+CIPSEND=5,”12345” //同步发送字符串
+	AT+CIPSEND=5 //出现”>”后可以发送5个字节的二进制数据
+	AT+CIPSEND //出现”>”后可以发送以CTRL+Z结尾的字符串
+	*/
+
+	String cmd = "AT+CIPSEND=";
+	if (Mux) cmd = cmd + index + ",";
+	cmd = cmd + data.Length() + "\r\n";
+
+	return SendData(cmd, data);
+}
+
+bool GSM07::IPClose(int index)
+{
+	String cmd = "AT+CIPSEND=";
+	if (Mux) cmd = cmd + index + ",";
+
+	return At.SendCmd("AT+CIPCLOSE\r\n");
+}
+
+bool GSM07::IPShutdown(int index)
+{
+	return At.SendCmd("AT+CIPCLOSE\r\n");
+}
+
+String GSM07::IPStatus() { return At.Send("AT+CIPSTATUS\r\n", "OK"); }
+
+bool GSM07::SetAutoSendTimer(bool enable, ushort time)
+{
+	String cmd = "AT+CIPATS=";
+	cmd = cmd + (enable ? "1" : "0") + "," + time;
+
+	return At.SendCmd(cmd);
+}
+
+IPAddress GSM07::DNSGetIP(const String& domain)
+{
+	String cmd = "AT+CDNSGIP=";
+	cmd += domain;
+
+	auto rs = At.Send(cmd, "OK");
+	rs.Show(true);
+
+	int p = rs.IndexOf("\r\n");
+	int q = rs.IndexOf("\r\n", p + 1);
+	rs = rs.Substring(p, q - p - 2);
+
+	return IPAddress::Parse(rs);
+}
+
+bool GSM07::IPMux(bool enable)
+{
+	String cmd = "AT+CIPMUX=";
+	cmd = cmd + (enable ? "1" : "0");
+
+	return At.SendCmd(cmd);
+}
+
+bool GSM07::IPHeartConfig(int index, int mode, int value)
+{
+	/*
+	AT+CIPHCFG=?可以查询该指令的用法。
+	AT+CIPHCFG=mode,param;
+	参数说明：
+	Mode: 0, 心跳包间隔时间，单位秒，参数为5-7200
+	1， 心跳发送包，长度不超过100个字节
+	2， 回应包，长度不超过100个字节
+	AT+CIPHCFG?查询配置的参数
+	AT+CIPHCFG=0,15,配置15秒发送一次心跳包
+	AT+CIPHCFG=1,553435ff,配置心跳包的内容为16进制的” 553435ff”
+	AT+CIPHCFG=2,883435ee, 配置回应心跳包的内容为16进制的” 883435ee”
+	*/
+
+	String cmd = "AT+CIPHCFG=";
+	if (Mux) cmd = cmd + index + ",";
+	cmd = cmd + mode + ",";
+
+	auto cs = (cstring)value;
+
+	if (mode == 0) return At.SendCmd(cmd + value);
+	if (mode == 1) return At.SendCmd(cmd + cs);
+	if (mode == 2) return At.SendCmd(cmd + cs);
+
+	return false;
+}
+
+bool GSM07::IPHeart(int index, bool enable)
+{
+	String cmd = "AT+CIPHMODE=";
+	if (Mux) cmd = cmd + index + ",";
+	cmd = cmd + (enable ? "1" : "0");
+
+	return At.SendCmd(cmd);
+}
+
+// 透明传输
+bool GSM07::IPTransparentConfig(int mode, int value)
+{
+	/*
+	AT+CIPTCFG=?可以查询该指令的用法。
+	AT+CIPTCFG=mode,param;
+	参数说明：
+	Mode: 0, 失败发送次数，参数为0-5次；
+	1， 失败发送延时，参数0-3000毫秒；
+	2， 触发发送的发送包大小，取值为10-100，；当发送内容达到这个长度，立马启动发送；
+	3， 触发发送的延时，1000-8000，毫秒，当向串口发送的最后一个字符完成后，延时这个时间就可以触发发送；
+	AT+CIPTCFG？查询配置的参数
+	AT+CIPTCFG=0,15,配置15秒发送一次心跳包
+	*/
+
+	String cmd = "AT+CIPTCFG=";
+	cmd = cmd + mode + ",";
+
+	return At.SendCmd(cmd + value);
+}
+
+bool GSM07::IPTransparent(bool enable)
+{
+	if (enable)
+		return At.SendCmd("AT+CIPTCFG=1");
+	else
+		return At.SendCmd("+++");
+}

@@ -5,7 +5,7 @@
 #include "Device\WatchDog.h"
 #include "Config.h"
 
-#include "Drivers\GSM07.h"
+#include "Drivers\A67.h"
 
 #include "TokenNet\TokenController.h"
 #include "TokenNet\TokenConfig.h"
@@ -121,7 +121,7 @@ NetworkInterface* AP0803::CreateGPRS()
 {
 	debug_printf("\r\nCreateGPRS::Create \r\n");
 
-	auto net = new GSM07();
+	auto net = new A67();
 	net->Init(COM4, 9600);
 	net->Set(PE0, PD3, P0);
 	net->SetLed(*Leds[0]);
