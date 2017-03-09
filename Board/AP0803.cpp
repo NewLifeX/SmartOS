@@ -1,4 +1,4 @@
-﻿#include "AP0803.h"
+#include "AP0803.h"
 
 #include "Kernel\Task.h"
 
@@ -324,37 +324,22 @@ void AP0803::OnLongPress(InputPort* port, bool down)
 }
 
 /*
-NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)
-NSS			|				NSS			|	PD6			NSS
-CLK			|				SCK			|				SCK
-MISO		|				MISO		|				MISO
-MOSI		|				MOSI		|				MOSI
-PE3			IRQ			|	PE1			INT(IRQ)	|	PD11		INT(IRQ)
-PD12		CE			|	PD13		NET_NRST	|				NET_NRST
-PE6			POWER		|				POWER		|				POWER
 
-ESP8266		(COM4)
-TX
-RX
-PD3			RST
-PE2			POWER
+GPRS(COM4)
+PE0					PWR_KEY
+PD3					RST
+PC10(TX4)		RXD	
+PC11(RX4)		TXD	
 
-TFT
-FSMC_D 0..15		TFT_D 0..15
-NOE					RD
-NWE					RW
-NE1					RS
-PE4					CE
-PC7					LIGHT
-PE5					RST
-
-PE13				KEY1
+PE9					KEY1
 PE14				KEY2
 
-PE15				LED2
-PD8					LED1
+PE5					LED1
+PE4					LED2
+PD0					LED3
 
 
 USB
-PA11 PA12
+PA11 				_N
+PA12				_P
 */
