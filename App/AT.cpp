@@ -160,10 +160,11 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	if (_Expect == &handle) _Expect = nullptr;
 
 	// 去掉响应中的回显和头尾空格
-	if (trim && at )
+	if (trim && at)
 	{
 		int p = 0;
-		if (rs.StartsWith(cmd)) p = cmd.Length();
+		if (rs.StartsWith(cmd.TrimEnd())) p = cmd.Length();
+
 		int len = rs.Length();
 		while (p < len && (rs[p] == '\0' || rs[p] == '\r' || rs[p] == '\n' || rs[p] == '\t')) p++;
 

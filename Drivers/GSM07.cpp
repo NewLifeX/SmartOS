@@ -59,6 +59,8 @@ GSM07::GSM07()
 
 	Mode = NetworkType::STA_AP;
 
+	At.DataKey = "+CIPRCV:";
+
 	InitConfig();
 	LoadConfig();
 }
@@ -263,6 +265,7 @@ bool GSM07::Config()
 
 	// 检查网络质量
 	QuerySignal();
+	//QueryRegister();
 
 	// 附着网络，上网必须
 	if (!AttachMT(true)) return false;
@@ -468,7 +471,7 @@ bool GSM07::QueryRegister()
 	4 unknown
 	5 registered, roaming
 	*/
-	auto rs = At.Send("AT+CREG?", "OK", nullptr, 5000);
+	auto rs = At.Send("AT+CREG?", "OK");
 	//if (!rs.StartsWith("+CREG: ")) return false;
 
 	// 去掉头部，然后分割
@@ -500,14 +503,14 @@ bool GSM07::SetAPN(cstring apn, bool issgp)
 {
 	if (!apn) apn = "CMNET";
 
-	String str;
+	String cmd;
 	if (issgp)
-		str = "AT+CIPCSGP=1";
+		cmd = "AT+CIPCSGP=1";
 	else
-		str = "AT+CGDCONT=1,\"IP\"";
-	str = str + ",\"" + apn + "\"";
+		cmd = "AT+CGDCONT=1,\"IP\"";
+	cmd = cmd + ",\"" + apn + "\"";
 
-	return At.SendCmd(str);
+	return At.SendCmd(cmd);
 }
 
 bool GSM07::SetPDP(bool enable)
@@ -537,33 +540,41 @@ bool GSM07::SetClass(cstring mode)
 {
 	if (!mode)mode = "B";
 
-	String str = "AT+CGCLASS=\"";
-	str += mode;
-	str += "\"";
+	String cmd = "AT+CGCLASS=\"";
+	cmd += mode;
+	cmd += "\"";
 
-	return At.SendCmd(str);
+	return At.SendCmd(cmd);
 }
 
 /******************************** TCP/IP ********************************/
-bool GSM07::IPStart(const NetUri& remote)
+int GSM07::IPStart(const NetUri& remote)
 {
-	String str = "AT+CIPSTART=\"";
+	String cmd = "AT+CIPSTART=\"";
 	switch (remote.Type)
 	{
 	case NetType::Tcp:
 	case NetType::Http:
-		str += "TCP";
+		cmd += "TCP";
 		break;
 	case NetType::Udp:
-		str += "UDP";
+		cmd += "UDP";
 		break;
 	default:
-		return false;
+		return -1;
 	}
-	//str = str + "\",\"" + remote.Address + "\",\"" + remote.Port + "\"";
-	str = str + "\",\"" + remote.Address + "\"," + remote.Port;
+	//cmd = cmd + "\",\"" + remote.Address + "\",\"" + remote.Port + "\"";
+	cmd = cmd + "\",\"" + remote.Address + "\"," + remote.Port;
 
-	return At.SendCmd(str);
+	if (!Mux) return At.SendCmd(cmd) ? 1 : -1;
+
+	// +CIPNUM:0 截取链路号
+	auto rs = At.Send(cmd, "OK");
+	int p = rs.IndexOf(":");
+	if (p < 0)return -1;
+	int q = rs.IndexOf("\r");
+
+	return rs.Substring(p + 1, q - p - 1).ToInt();
 }
 
 bool GSM07::SendData(const String& cmd, const Buffer& bs)

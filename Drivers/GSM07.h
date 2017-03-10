@@ -77,7 +77,7 @@ public:
 	bool SetClass(cstring mode);
 
 	/******************************** TCP/IP ********************************/
-	bool IPStart(const NetUri& remote);
+	int IPStart(const NetUri& remote);
 	bool IPSend(int index, const Buffer& data);
 	bool SendData(const String& cmd, const Buffer& bs);
 	bool IPClose(int index);
