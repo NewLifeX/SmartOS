@@ -377,9 +377,7 @@ String GSM07::GetIMSI()
 	// 460040492206250
 	//Country = rs.Substring(0, 3).ToInt();
 	//Network = rs.Substring(3, 2).ToInt();
-	rs.TrimStart().Substring(0, 5).Show(true);
 	Network = (uint)rs.TrimStart().Substring(0, 5).ToInt();
-	debug_printf("Network=%d \r\n", Network);
 
 	// 自动设置APN
 	if (!APN)
@@ -463,7 +461,7 @@ String GSM07::GetMobile()
 
 bool GSM07::QueryRegister()
 {
-	At.SendCmd("AT+CREG=2");
+	//At.SendCmd("AT+CREG=2");
 
 	/*
 	类型，状态，本地区域，CellID

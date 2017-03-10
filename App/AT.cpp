@@ -93,7 +93,7 @@ void AT::Close()
 }
 
 // 发送指令，在超时时间内等待返回期望字符串，然后返回内容
-String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeout)
+String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeout, bool trim)
 {
 	TS("AT::Send");
 
@@ -136,17 +136,20 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	bool enableLog = true;
 #endif
 
+	bool at = false;
 	if (cmd)
 	{
+		at = cmd.StartsWith("AT");
+
 		Port->Write(cmd);
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if (!cmd.StartsWith("AT") || (expect && expect[0] == '>')) enableLog = false;
+		if (!at || (expect && expect[0] == '>')) enableLog = false;
 		if (enableLog)
 		{
 			we.Command = &cmd;
-			//net_printf("%d=> ", task.ID);
+			net_printf("%d=> ", task.ID);
 			cmd.Trim().Show(true);
 		}
 #endif
@@ -155,7 +158,28 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	handle.WaitOne(msTimeout);
 	if (_Expect == &handle) _Expect = nullptr;
 
-	//if(rs.Length() > 4) rs.Trim();
+	// 去掉响应中的回显和头尾空格
+	if (trim && at )
+	{
+		int p = 0;
+		if (rs.StartsWith(cmd)) p = cmd.Length();
+		int len = rs.Length();
+		while (p < len && (rs[p] == '\0' || rs[p] == '\r' || rs[p] == '\n' || rs[p] == '\t')) p++;
+
+		// 剩下部分的长度
+		len -= p;
+
+		// 减去尾部的匹配字符串
+		if (expect || expect2)
+		{
+			int q = rs.LastIndexOf(expect, p);
+			if (q < 0) q = rs.LastIndexOf(expect2, p);
+			if (q >= 0) len -= rs.Length() - q;
+		}
+
+		// 截取
+		rs = rs.Substring(p, len);
+	}
 
 #if NET_DEBUG
 	if (enableLog && rs)
@@ -192,7 +216,7 @@ bool AT::SendCmd(const String& cmd, uint msTimeout)
 	}
 
 	// 二级拦截。遇到错误也马上结束
-	auto rt = Send(*p, ok, err, msTimeout);
+	auto rt = Send(*p, ok, err, msTimeout, false);
 
 	return rt.Contains(ok);
 }
