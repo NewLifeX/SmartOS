@@ -28,6 +28,12 @@ public:
 
 	Delegate<Buffer&>	Received;
 
+	//ushort	Country;	// 国家MCC 3位
+	//ushort	Network;	// 网络MNC 2位
+	uint	Network;	// 国家MCC + 网络MNC 3位+2位
+	ushort	Area;		// 基站区域
+	ushort	CellID;		// 基站编码
+
 	GSM07();
 	virtual ~GSM07();
 
@@ -43,23 +49,30 @@ public:
 	virtual Socket* CreateSocket(NetType type);
 
 	/******************************** 基础指令 ********************************/
-	bool Test();
+	bool Test(int times = 10, int interval = 500);
 	bool Reset(bool soft);
 	String GetVersion();
 	bool Sleep(uint ms);
 	bool Echo(bool open);
 	// 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
 	bool Restore();
-	void SetAPN(cstring apn, bool issgp);
 	String GetIMSI();
 	String GetIMEI();
 	// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
 	String GetCCID();
-	// 获取运营商名称
-	String GetMobiles();
 
 	/******************************** 网络服务 ********************************/
-	bool AttachMT(bool flag);
+	// 获取运营商列表
+	String GetMobiles();
+	// 获取当前运营商
+	String GetMobile();
+	// 检查网络是否注册
+	bool QueryRegister();
+	String QuerySignal();
+
+	bool AttachMT(bool enable);
+	bool SetAPN(cstring apn, bool issgp = false);
+	bool SetPDP(bool enable);
 	IPAddress GetIP();
 	bool SetClass(cstring mode);
 

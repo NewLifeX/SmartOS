@@ -252,8 +252,9 @@ uint AT::OnReceive(Buffer& bs, void* param)
 {
 	if (bs.Length() == 0) return 0;
 
-	debug_printf("收到：");
+	/*debug_printf("收到：");
 	bs.Show(true);
+	bs.AsString().Show(true);*/
 
 	//!!! 分析数据和命令返回，特别要注意粘包
 	int s = 0;
@@ -386,14 +387,14 @@ uint CmdState::FindKey(const String& str)
 	p = Key2 ? str.IndexOf(Key2) : -1;
 	if (p >= 0)
 	{
-		net_printf("适配第二关键字 %s \r\n", Key2);
+		//net_printf("适配第二关键字 %s \r\n", Key2);
 		return p + String(Key2).Length();
 	}
 	// 适配busy
 	p = str.IndexOf(Key3);
 	if (p >= 0)
 	{
-		net_printf("适配第三关键字 %s \r\n", Key3);
+		//net_printf("适配第三关键字 %s \r\n", Key3);
 		return p + String(Key3).Length();
 	}
 	return 0;

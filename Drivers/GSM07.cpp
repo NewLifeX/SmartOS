@@ -44,10 +44,16 @@ GSM07::GSM07()
 	Name = "GSM07";
 	Speed = 10;
 
-	APN = "CMNET";
+	//APN = "CMNET";
+	APN = nullptr;
 	Mux = true;
 
 	Led = nullptr;
+
+	//Country = 0;
+	Network = 0;
+	Area = 0;
+	CellID = 0;
 
 	Buffer(_sockets, 5 * 4).Clear();
 
@@ -106,9 +112,11 @@ bool GSM07::OnOpen()
 {
 	if (!At.Open()) return false;
 
-	// 开回显
-	Echo(true);
-	if (!CheckReady())
+	// 回显
+	Echo(false);
+
+	// 先检测AT失败再重启。保证模块处于启动状态，降低网络注册时间损耗
+	if (!Test(1, 1000) && !CheckReady())
 	{
 		net_printf("GSM07::Open 打开失败！");
 
@@ -119,11 +127,25 @@ bool GSM07::OnOpen()
 
 #if NET_DEBUG
 	// 获取版本
-	//GetVersion();
-	auto ver = GetVersion();
+	GetVersion();
+	/*auto ver = GetVersion();
 	net_printf("版本:");
-	ver.Show(true);
+	ver.Show(true);*/
+	GetCCID();
+	//GetMobiles();
+	GetMobile();
+	GetIMEI();
 #endif
+	GetIMSI();
+
+	// 检查网络质量
+	QuerySignal();
+	if (!QueryRegister())
+	{
+		net_printf("GSM07::Open 注册网络失败，打开失败！");
+
+		return false;
+	}
 
 	Config();
 
@@ -199,25 +221,68 @@ bool GSM07::OnLink(uint retry)
 // 配置网络参数
 void GSM07::Config()
 {
-	Echo(true);
-	At.SendCmd("AT+CIPSHUT\r");
-	//At.SendCmd("AT+CGCLASS=\"B\"\r");
-	SetClass("B");
-	SetAPN(APN, false);
+	/*
+	GPRS透传
+	AT+CGATT=1 Attach to the GPRS network, can also use parameter 0 to detach.
+	OK Response, attach successful
+	AT+CGDCONT=? Input test command for help information.
+	+CGDCONT: (1..7), (IP,IPV6,PPP),(0..3),(0..4)
+	OK Response, show the helpful information.
+	AT+CGDCONT=1, "IP", "cmnet" Before active, use this command to set PDP context.
+	OK Response. Set context OK.
+	AT+CGACT=1,1 Active command is used to active the specified PDP context.
+	OK Response, active successful.
+	ATD*99***1# This command is to start PPP translation.
+	CONNECT Response, when get this, the module has been set to data state. PPP data should be transferred after this response and anything input is treated as data.
+	+++ This command is to change the status to online data state. Notice that before input this command, you need to wait for a three seconds’ break, and it should also be followed by 3 seconds’ break, otherwise “+++” will be treated as data.
+	*/
+
+	/*
+	TCP/IP 数据操作
+	at+cipstatus Check the status of TCP/IP +IPSTATUS: IP INITIAL
+	OK Response, in the state of INITIAL
+
+	AT+CIPSTART="TCP","124.42.0.80",7 Start TCP/IP, if the MS hadn’t attached to the GPRS network, this command will fulfill all the prepare task and make ready for TCP/IP data transfer.
+	CONNECT OK
+	OK Response
+
+	at+cipstatus Check the status of TCP/IP
+	+IPSTATUS: CONNECT OK
+	OK Response, in the state of CONNECT
+
+	at+cipsend
+	> this is a test<ctl+z> Send data “this is a test” ended with ctrl+z
+	OK Response
+
+	at+cifsr Check IP
+	10.8.18.69 OK Response
+
+	at+cipclose Close a TCP/IP translation
+	OK Response
+
+	at+cipstatus Check status
+	+IPSTATUS: IP CLOSE
+	OK In the state of IP CLOSE
+
+	AT+CIPSHUT Disconnect the wireless connection
+	OK
+
+	at+cipstatus Check status
+	+IPSTATUS: IP INITIAL
+	OK Return to the initial status
+	*/
+
+	//IPShutdown(0);
+
+	// 附着网络，上网必须
 	AttachMT(true);
-	//At.SendCmd("AT+CGATT=1\r");
-	// 先断开已有连接
-	//At.SendCmd("AT+CIPSHUT\r");
-	//设置APN
-	SetAPN(APN, true);
-	At.SendCmd("AT+CLPORT=\"UDP\",\"3399\"\r");
-	// IP设置方式
-	//At.SendCmd("AT+CIPSTART=\"UDP\",\"183.63.213.113\",\"3388\"\r");
-	// 域名设置方式
-	At.SendCmd("AT+CIPMUX=0\r");
-	At.SendCmd("AT+CIPRXGET=1\r");
-	At.SendCmd("AT+CIPQRCLOSE=1\r");
-	At.SendCmd("AT+CIPMODE=0\r");
+	SetAPN(APN, false);
+	SetPDP(true);
+
+	SetClass("B");
+
+	IPMux(Mux);
+	IPStatus();
 }
 
 Socket* GSM07::CreateSocket(NetType type)
@@ -258,15 +323,14 @@ void GSM07::OnReceive(Buffer& bs)
 /******************************** 基础AT指令 ********************************/
 
 // 基础AT指令
-bool GSM07::Test()
+bool GSM07::Test(int times, int interval)
 {
 	// 避免在循环内部频繁构造和析构
 	String cmd = "AT";
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < times; i++)
 	{
-		if (At.SendCmd(cmd, 500)) return true;
-
-		Reset(false);
+		if (i > 0)	Reset(false);
+		if (At.SendCmd(cmd, interval)) return true;
 	}
 
 	return false;
@@ -303,38 +367,163 @@ bool GSM07::Echo(bool open)
 }
 
 // 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
-bool GSM07::Restore()
+bool GSM07::Restore() { return At.SendCmd("AT+RESTORE"); }
+
+String GSM07::GetIMSI()
 {
-	return At.SendCmd("AT+RESTORE");
+	auto rs = At.Send("AT+CIMI\r\n", "OK");
+	if (!rs.Contains("OK")) return rs;
+
+	// 460040492206250
+	//Country = rs.Substring(0, 3).ToInt();
+	//Network = rs.Substring(3, 2).ToInt();
+	rs.TrimStart().Substring(0, 5).Show(true);
+	Network = (uint)rs.TrimStart().Substring(0, 5).ToInt();
+	debug_printf("Network=%d \r\n", Network);
+
+	// 自动设置APN
+	if (!APN)
+	{
+		switch (Network)
+		{
+			// 中国移动
+		case 46000:
+		case 46002:
+		case 46004:
+		case 46007:
+			APN = "CMNET";
+			break;
+			// 中国联通
+		case 46001:
+			APN = "UNINET";
+			break;
+			// 中国电信
+		case 46003:
+			APN = "CTNET";
+			break;
+			// 香港电讯
+		case 45400:
+		case 45402:
+		case 45418:
+			APN = "CHKT";
+			break;
+			// 香港万众电话
+		case 45412:
+		case 45413:
+			APN = "CMHK";
+			break;
+		default:
+			break;
+		}
+
+		if (APN)debug_printf("GSM07::GetMobile 根据IMSI自动设置APN=%s \r\n", APN);
+	}
+
+	return rs;
+}
+
+String GSM07::GetIMEI() { return At.Send("AT+EGMR=2,7\r\n", "OK"); }
+// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
+String GSM07::GetCCID() { return At.Send("AT+CCID\r\n", "OK"); }
+
+/******************************** 网络服务 ********************************/
+// 获取运营商名称。非常慢
+String GSM07::GetMobiles() { return At.Send("AT+COPN\r\n", "OK"); }
+
+String GSM07::GetMobile()
+{
+	/*
+	mode + format
+	mode = 0 表示自动选择网络
+
+	format
+	0 长格式名称 如 ChinaMobile
+	1 短格式名称 如 CMCC
+	2 数字 如 46000
+
+	修改后貌似要重启才能生效
+
+	可以根据这个自动设置APN
+	*/
+	//At.SendCmd("AT+COPS=0,0");
+
+	auto rs = At.Send("AT+COPS?\r\n", "OK");
+
+	// 自动设置APN
+	/*if (!APN)
+	{
+		if (rs.Contains("46000") || rs.Contains("CMCC") || rs.Contains("ChinaMobile"))
+			APN = "cmnet";
+
+		if (APN)debug_printf("GSM07::GetMobile 根据网络运营商自动设置APN=%s \r\n", APN);
+	}*/
+
+	return rs;
+}
+
+bool GSM07::QueryRegister()
+{
+	At.SendCmd("AT+CREG=2");
+
+	/*
+	类型，状态，本地区域，CellID
+	+CREG: 2,5,"26F4","BEF8"
+
+	0 not registered, MT is not currently searching a new operator to register to
+	1 registered, home network
+	2 not registered, but MT is currently searching a new operator to register to
+	3 registration denied
+	4 unknown
+	5 registered, roaming
+	*/
+	auto rs = At.Send("AT+CREG?", "OK");
+	//if (!rs.StartsWith("+CREG: ")) return false;
+
+	// 去掉头部，然后分割
+	//rs = rs.Substring(7);
+	// 直接分割，反正不要第一段
+	auto sp = rs.Split(",");
+
+	// 跳过第一段
+	sp.Next();
+	int state = sp.Next().ToInt();
+	Area = sp.Next().Substring(1, 4).ToHex().ToUInt16();
+	CellID = sp.Next().Substring(1, 4).ToHex().ToUInt16();
+
+	return state == 1 || state == 5;
+}
+
+String GSM07::QuerySignal() { return At.Send("AT+CSQ\r\n", "OK"); }
+
+bool GSM07::AttachMT(bool enable)
+{
+	if (enable)
+		return At.SendCmd("AT+CGATT=1");
+	else
+		return At.SendCmd("AT+CGATT=0");
 }
 
 // 00:CMNET 10:CMHK 01:CHKT 11:HKCSL
-void GSM07::SetAPN(cstring apn, bool issgp)
+bool GSM07::SetAPN(cstring apn, bool issgp)
 {
+	if (!apn) apn = "CMNET";
+
 	String str;
 	if (issgp)
 		str = "AT+CIPCSGP=1";
 	else
 		str = "AT+CGDCONT=1,\"IP\"";
-	str = str + ",\"" + apn + "\"\r";
+	str = str + ",\"" + apn + "\"";
 
-	At.SendCmd(str);
+	return At.SendCmd(str);
 }
 
-String GSM07::GetIMSI() { return At.Send("AT+CIMI\r\n", "OK"); }
-String GSM07::GetIMEI() { return At.Send("AT+EGMR\r\n", "OK"); }
-// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
-String GSM07::GetCCID() { return At.Send("AT+CCID\r\n", "OK"); }
-// 获取运营商名称
-String GSM07::GetMobiles() { return At.Send("AT+COPN\r\n", "OK"); }
-
-/******************************** 网络服务 ********************************/
-bool GSM07::AttachMT(bool flag)
+bool GSM07::SetPDP(bool enable)
 {
-	if (flag)
-		return At.SendCmd("AT+CGATT=1");
+	if (enable)
+		return At.SendCmd("AT+CGACT=1");
 	else
-		return At.SendCmd("AT+CGATT=0");
+		return At.SendCmd("AT+CGACT=0");
 }
 
 IPAddress GSM07::GetIP()
@@ -356,7 +545,7 @@ bool GSM07::SetClass(cstring mode)
 {
 	if (!mode)mode = "B";
 
-	String str = "AT_CGCLASS=\"";
+	String str = "AT+CGCLASS=\"";
 	str += mode;
 	str += "\"";
 
@@ -441,7 +630,7 @@ bool GSM07::IPClose(int index)
 
 bool GSM07::IPShutdown(int index)
 {
-	return At.SendCmd("AT+CIPCLOSE\r\n");
+	return At.SendCmd("AT+CIPSHUT\r\n");
 }
 
 String GSM07::IPStatus() { return At.Send("AT+CIPSTATUS\r\n", "OK"); }
