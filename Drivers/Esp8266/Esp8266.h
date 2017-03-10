@@ -30,7 +30,7 @@ public:
 
 	void Init(ITransport* port, Pin power = P0, Pin rst = P0);
 
-	virtual void Config();
+	virtual bool Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
 	void RemoveLed();

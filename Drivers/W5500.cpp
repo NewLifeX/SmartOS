@@ -514,7 +514,7 @@ bool W5500::OnLink(uint retry)
 	return true;
 }
 
-void W5500::Config()
+bool W5500::Config()
 {
 	ShowConfig();
 
@@ -555,6 +555,8 @@ void W5500::Config()
 
 	// 一次性全部写入
 	WriteFrame(0, bs);
+
+	return true;
 }
 
 void W5500::ChangePower(int level)

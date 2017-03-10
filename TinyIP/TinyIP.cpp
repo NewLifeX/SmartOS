@@ -237,9 +237,10 @@ void TinyIP::OnClose()
 	_port->Close();
 }
 
-void TinyIP::Config()
+bool TinyIP::Config()
 {
 	//ShowConfig();
+	return true;
 }
 
 bool TinyIP::SendEthernet(ETH_TYPE type, const MacAddress& remote, const byte* buf, uint len)

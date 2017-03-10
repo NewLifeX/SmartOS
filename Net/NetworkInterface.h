@@ -60,7 +60,7 @@ public:
 	bool Active() const;
 
 	// 应用配置
-	virtual void Config() = 0;
+	virtual bool Config() = 0;
 
 	// 保存和加载网络配置
 	void InitConfig();
