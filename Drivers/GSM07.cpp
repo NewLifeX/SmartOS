@@ -115,10 +115,11 @@ bool GSM07::OnOpen()
 	if (!At.Open()) return false;
 
 	// 回显
-	Echo(false);
+	Echo(true);
 
 	// 先检测AT失败再重启。保证模块处于启动状态，降低网络注册时间损耗
-	if (!Test(1, 1000) && !CheckReady())
+	//if (!Test(1, 1000) && !CheckReady())
+	if (!CheckReady())
 	{
 		net_printf("GSM07::Open 打开失败！");
 
@@ -344,9 +345,9 @@ bool GSM07::Reset(bool soft)
 // AT 版本信息
 String GSM07::GetVersion()
 {
-	//return At.Send("AT+GMR\r\n", "OK");
-	//return At.Send("AT+GSN\r\n", "OK");
-	return At.Send("ATI\r\n", "OK");
+	//return At.Send("AT+GMR");
+	//return At.Send("AT+GSN");
+	return At.Send("ATI");
 }
 
 bool GSM07::Sleep(uint ms)
@@ -368,7 +369,7 @@ bool GSM07::Restore() { return At.SendCmd("AT+RESTORE"); }
 
 String GSM07::GetIMSI()
 {
-	auto rs = At.Send("AT+CIMI\r\n", "OK");
+	auto rs = At.Send("AT+CIMI");
 	if (rs.Length() == 0) return rs;
 
 	// 460040492206250
@@ -417,13 +418,13 @@ String GSM07::GetIMSI()
 	return rs;
 }
 
-String GSM07::GetIMEI() { return At.Send("AT+EGMR=2,7\r\n", "OK"); }
+String GSM07::GetIMEI() { return At.Send("AT+EGMR=2,7"); }
 // 查询SIM的CCID，也可以用于查询SIM是否存或者插好
-String GSM07::GetCCID() { return At.Send("AT+CCID\r\n", "OK"); }
+String GSM07::GetCCID() { return At.Send("AT+CCID"); }
 
 /******************************** 网络服务 ********************************/
 // 获取运营商名称。非常慢
-String GSM07::GetMobiles() { return At.Send("AT+COPN\r\n", "OK"); }
+String GSM07::GetMobiles() { return At.Send("AT+COPN"); }
 
 String GSM07::GetMobile()
 {
@@ -442,7 +443,7 @@ String GSM07::GetMobile()
 	*/
 	//At.SendCmd("AT+COPS=0,0");
 
-	auto rs = At.Send("AT+COPS?\r\n", "OK");
+	auto rs = At.Send("AT+COPS?");
 
 	// 自动设置APN
 	/*if (!APN)
@@ -488,7 +489,7 @@ bool GSM07::QueryRegister()
 	return state == 1 || state == 5;
 }
 
-String GSM07::QuerySignal() { return At.Send("AT+CSQ\r\n", "OK"); }
+String GSM07::QuerySignal() { return At.Send("AT+CSQ"); }
 
 bool GSM07::AttachMT(bool enable)
 {
@@ -523,10 +524,10 @@ bool GSM07::SetPDP(bool enable)
 
 IPAddress GSM07::GetIP()
 {
-	auto rs = At.Send("AT+CIMI\r\n", "OK");
+	auto rs = At.Send("AT+CIMI");
 	rs.Show(true);
 
-	rs = At.Send("AT+CIFSR\r\n", "OK");
+	rs = At.Send("AT+CIFSR");
 	rs.Show(true);
 
 	int p = rs.IndexOf("\r\n");
@@ -636,7 +637,7 @@ bool GSM07::IPShutdown(int index)
 	return At.SendCmd("AT+CIPSHUT\r\n");
 }
 
-String GSM07::IPStatus() { return At.Send("AT+CIPSTATUS\r\n", "OK"); }
+String GSM07::IPStatus() { return At.Send("AT+CIPSTATUS"); }
 
 bool GSM07::SetAutoSendTimer(bool enable, ushort time)
 {

@@ -19,6 +19,9 @@
 #define net_printf(format, ...)
 #endif
 
+static const cstring ok = "OK";
+static const cstring err = "ERROR";
+
 struct CmdState
 {
 	const String* Command = nullptr;
@@ -199,13 +202,8 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 }
 
 // 发送命令，自动检测并加上\r\n，等待响应OK
-bool AT::SendCmd(const String& cmd, uint msTimeout)
+String AT::Send(const String& cmd, uint msTimeout)
 {
-	TS("AT::SendCmd");
-
-	static const cstring ok = "OK";
-	static const cstring err = "ERROR";
-
 	String cmd2;
 
 	// 只有AT指令需要检查结尾，其它指令不检查，避免产生拷贝
@@ -218,7 +216,16 @@ bool AT::SendCmd(const String& cmd, uint msTimeout)
 	}
 
 	// 二级拦截。遇到错误也马上结束
-	auto rt = Send(*p, ok, err, msTimeout, false);
+	return Send(*p, ok, err, msTimeout, false);
+}
+
+// 发送命令，自动检测并加上\r\n，等待响应OK
+bool AT::SendCmd(const String& cmd, uint msTimeout)
+{
+	TS("AT::SendCmd");
+
+	// 二级拦截。遇到错误也马上结束
+	auto rt = Send(cmd, msTimeout);
 
 	return rt.Contains(ok);
 }
