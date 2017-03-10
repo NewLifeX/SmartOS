@@ -123,8 +123,6 @@ bool GSM07::OnOpen()
 		return false;
 	}
 
-	At.Received.Bind(&GSM07::OnReceive, this);
-
 #if NET_DEBUG
 	// 获取版本
 	GetVersion();
@@ -139,15 +137,17 @@ bool GSM07::OnOpen()
 	GetIMSI();
 
 	// 检查网络质量
-	QuerySignal();
-	if (!QueryRegister())
+	//QuerySignal();
+	/*if (!QueryRegister())
 	{
 		net_printf("GSM07::Open 注册网络失败，打开失败！");
 
 		return false;
-	}
+	}*/
 
 	Config();
+
+	At.Received.Bind(&GSM07::OnReceive, this);
 
 	return true;
 }
@@ -198,28 +198,15 @@ bool GSM07::OnLink(uint retry)
 
 	debug_printf("GSM07::OnLink\r\n");
 
-	/*bool join = SSID && *SSID;
-	// 等待WiFi自动连接
-	if (!WaitForCmd("WIFI CONNECTED", 3000))
-	{
-		auto mode = WorkMode;
-		// 默认Both
-		if (mode == NetworkType::Wire) mode = NetworkType::STA_AP;
-		if (!join || mode == NetworkType::STA_AP) OpenAP();
-		if (join)
-		{
-			if (!JoinAP(*SSID, *Pass)) return false;
+	//if (!QueryRegister()) return false;
 
-			ShowConfig();
-			SaveConfig();
-		}
-	}*/
+	return Config();
 
-	return true;
+	//return true;
 }
 
 // 配置网络参数
-void GSM07::Config()
+bool GSM07::Config()
 {
 	/*
 	GPRS透传
@@ -274,15 +261,22 @@ void GSM07::Config()
 
 	//IPShutdown(0);
 
-	// 附着网络，上网必须
-	AttachMT(true);
-	SetAPN(APN, false);
-	SetPDP(true);
+	// 检查网络质量
+	QuerySignal();
 
-	SetClass("B");
+	// 附着网络，上网必须
+	if (!AttachMT(true)) return false;
+	// 执行网络查询可能导致模块繁忙
+	//if (!QueryRegister()) return false;
+
+	if (!SetAPN(APN, false)
+		|| !SetPDP(true)
+		|| !SetClass("B")) return false;
 
 	IPMux(Mux);
 	IPStatus();
+
+	return true;
 }
 
 Socket* GSM07::CreateSocket(NetType type)
@@ -372,7 +366,7 @@ bool GSM07::Restore() { return At.SendCmd("AT+RESTORE"); }
 String GSM07::GetIMSI()
 {
 	auto rs = At.Send("AT+CIMI\r\n", "OK");
-	if (!rs.Contains("OK")) return rs;
+	if (rs.Length() == 0) return rs;
 
 	// 460040492206250
 	//Country = rs.Substring(0, 3).ToInt();
@@ -414,7 +408,7 @@ String GSM07::GetIMSI()
 			break;
 		}
 
-		if (APN)debug_printf("GSM07::GetMobile 根据IMSI自动设置APN=%s \r\n", APN);
+		if (APN) debug_printf("GSM07::GetMobile 根据IMSI自动设置APN=%s \r\n", APN);
 	}
 
 	return rs;
@@ -461,7 +455,7 @@ String GSM07::GetMobile()
 
 bool GSM07::QueryRegister()
 {
-	//At.SendCmd("AT+CREG=2");
+	At.SendCmd("AT+CREG=2");
 
 	/*
 	类型，状态，本地区域，CellID
@@ -474,7 +468,7 @@ bool GSM07::QueryRegister()
 	4 unknown
 	5 registered, roaming
 	*/
-	auto rs = At.Send("AT+CREG?", "OK");
+	auto rs = At.Send("AT+CREG?", "OK", nullptr, 5000);
 	//if (!rs.StartsWith("+CREG: ")) return false;
 
 	// 去掉头部，然后分割

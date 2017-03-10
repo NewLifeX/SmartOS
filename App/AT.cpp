@@ -149,7 +149,8 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 		if (enableLog)
 		{
 			we.Command = &cmd;
-			net_printf("%d=> ", task.ID);
+			//net_printf("%d=> ", task.ID);
+			net_printf("=>");
 			cmd.Trim().Show(true);
 		}
 #endif

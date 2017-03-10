@@ -41,7 +41,7 @@ public:
 	void Init(COM idx, int baudrate = 115200);
 	void Set(Pin power = P0, Pin rst = P0, Pin low = P0);
 
-	virtual void Config();
+	virtual bool Config();
 	void SetLed(Pin led);
 	void SetLed(OutputPort& led);
 	void RemoveLed();
