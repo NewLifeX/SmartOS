@@ -315,7 +315,26 @@ Socket* GSM07::CreateSocket(NetType type)
 // 数据到达
 void GSM07::OnReceive(Buffer& bs)
 {
-	Received(bs);
+	// +CIPRCV:61,xxx
+	auto str = bs.AsString();
+	int p = str.IndexOf(",");
+	if (p <= 0) return;
+
+	int len = str.Substring(0, p).ToInt();
+	// 检查长度
+	if (p + 1 + len > bs.Length()) len = bs.Length() - p - 1;
+	auto data = bs.Sub(p + 1, len);
+
+	Received(data);
+
+	// 分发到各个Socket
+	int idx = 0;
+	auto es = (GSMSocket**)_sockets;
+	auto sk = es[idx];
+	if (sk)
+	{
+		sk->OnProcess(data, _Remote);
+	}
 }
 
 /******************************** 基础AT指令 ********************************/

@@ -322,7 +322,8 @@ uint AT::OnReceive(Buffer& bs, void* param)
 		// +IPD开头的数据，作为收到数据
 		if (p >= 0)
 		{
-			if (p + 5 >= bs.Length())
+			p += String(DataKey).Length();
+			if (p >= bs.Length())
 			{
 #if NET_DEBUG
 				ParseFail("+IPD<=5", bs.Sub(p, -1));
