@@ -163,7 +163,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	if (_Expect == &handle) _Expect = nullptr;
 
 	// 去掉响应中的回显和头尾空格
-	if (trim && at)
+	if (at)
 	{
 		int p = 0;
 		if (rs.StartsWith(cmd.TrimEnd())) p = cmd.Length();
@@ -175,7 +175,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 		len -= p;
 
 		// 减去尾部的匹配字符串
-		if (expect || expect2)
+		if (trim && (expect || expect2))
 		{
 			int q = rs.LastIndexOf(expect, p);
 			if (q < 0) q = rs.LastIndexOf(expect2, p);
@@ -202,7 +202,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 }
 
 // 发送命令，自动检测并加上\r\n，等待响应OK
-String AT::Send(const String& cmd, uint msTimeout)
+String AT::Send(const String& cmd, uint msTimeout, bool trim)
 {
 	String cmd2;
 
@@ -216,7 +216,7 @@ String AT::Send(const String& cmd, uint msTimeout)
 	}
 
 	// 二级拦截。遇到错误也马上结束
-	return Send(*p, ok, err, msTimeout, false);
+	return Send(*p, ok, err, msTimeout, trim);
 }
 
 // 发送命令，自动检测并加上\r\n，等待响应OK
@@ -225,7 +225,7 @@ bool AT::SendCmd(const String& cmd, uint msTimeout)
 	TS("AT::SendCmd");
 
 	// 二级拦截。遇到错误也马上结束
-	auto rt = Send(cmd, msTimeout);
+	auto rt = Send(cmd, msTimeout, false);
 
 	return rt.Contains(ok);
 }
@@ -286,7 +286,7 @@ uint AT::OnReceive(Buffer& bs, void* param)
 	if (bs.Length() == 0) return 0;
 
 	/*debug_printf("收到：");
-	bs.Show(true);
+	//bs.Show(true);
 	bs.AsString().Show(true);*/
 
 	//!!! 分析数据和命令返回，特别要注意粘包
@@ -359,7 +359,7 @@ uint AT::ParseReply(const Buffer& bs)
 	// 拦截给同步方法
 	auto handle = (WaitHandle*)_Expect;
 	auto we = (CmdState*)handle->State;
-	bool rs = we->Parse(bs, *handle);
+	int rs = we->Parse(bs, *handle);
 
 	// 如果内部已经适配，则清空
 	if (!we->Result) _Expect = nullptr;

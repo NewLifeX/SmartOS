@@ -569,5 +569,8 @@
     <ClCompile Include="..\App\AT.cpp">
       <Filter>App</Filter>
     </ClCompile>
+    <ClCompile Include="..\Drivers\A67.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

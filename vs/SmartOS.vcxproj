@@ -75,6 +75,7 @@
     <ClCompile Include="..\Device\WatchDog.cpp" />
     <ClCompile Include="..\Drivers\74HC165.cpp" />
     <ClCompile Include="..\Drivers\74HC165Monitor.cpp" />
+    <ClCompile Include="..\Drivers\A67.cpp" />
     <ClCompile Include="..\Drivers\AT24CXX.cpp" />
     <ClCompile Include="..\Drivers\AT45DB.cpp" />
     <ClCompile Include="..\Drivers\BH1750.cpp" />

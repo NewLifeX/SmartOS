@@ -24,7 +24,7 @@ public:
 	/******************************** 发送指令 ********************************/
 	// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
 	String Send(const String& cmd, cstring expect, cstring expect2 = nullptr, uint msTimeout = 1000, bool trim = true);
-	String Send(const String& cmd, uint msTimeout = 1000);
+	String Send(const String& cmd, uint msTimeout = 1000, bool trim = true);
 	// 发送命令，自动检测并加上\r\n，等待响应OK
 	bool SendCmd(const String& cmd, uint msTimeout = 1000);
 	// 等待命令返回
