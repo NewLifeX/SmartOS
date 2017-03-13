@@ -172,7 +172,7 @@ bool GSM07::CheckReady()
 		Reset(true);	// 软件重启命令
 
 	// 等待模块启动进入就绪状态
-	if (!Test())
+	if (!Test(40, 500))
 	{
 		net_printf("GSM07::Open 打开失败！");
 
@@ -593,7 +593,7 @@ bool GSM07::SendData(const String& cmd, const Buffer& bs)
 	{
 		//auto rt	= _Host.Send(cmd, ">", "OK", 1600);
 		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
-		auto rt = At.Send(cmd, ">", "ERROR", 1600);
+		auto rt = At.Send(cmd, ">", "ERROR", 1600, false);
 		if (rt.Contains(">")) break;
 
 		Sys.Sleep(500);
@@ -626,6 +626,27 @@ bool GSM07::IPSend(int index, const Buffer& data)
 
 	String cmd = "AT+CIPSEND=";
 	if (Mux) cmd = cmd + index + ",";
+
+	// 数据较短时，直接发送
+	if (data.Length() < 256)
+	{
+		// 字符串里面不能有特殊字符
+		bool flag = true;
+		for (int i = 0;i < data.Length();i++)
+		{
+			if (data[i] == '\0' || data[i] == '\"')
+			{
+				flag = false;
+				break;
+			}
+		}
+		if (flag)
+		{
+			cmd = cmd + data.Length() + ",\"" + data.AsString() + "\"";
+			return At.SendCmd(cmd, 1600);
+		}
+	}
+
 	cmd = cmd + data.Length() + "\r\n";
 
 	return SendData(cmd, data);
