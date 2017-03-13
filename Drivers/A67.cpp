@@ -22,8 +22,7 @@
 /******************************** 扩展指令 ********************************/
 bool A67::GetGPS()
 {
-	auto rs = At.Send("AT+GPS\r\n", "OK");
-	return rs.Contains("OK");
+	return At.SendCmd("AT+GPS");
 }
 
 bool A67::SetGPS(bool enable, int rate)
@@ -42,8 +41,7 @@ bool A67::SetGPS(bool enable, int rate)
 
 bool A67::GetAGPS()
 {
-	auto rs = At.Send("AT+AGPS\r\n", "OK");
-	return rs.Contains("OK");
+	return At.SendCmd("AT+AGPS");
 }
 
 
@@ -80,7 +78,7 @@ String A67::CameraRead(int from, int to)
 	if (to > 0) cmd = cmd + "," + to;
 	cmd += "\r\n";
 
-	return At.Send(cmd, "OK");
+	return At.Send(cmd);
 }
 
 // "192.168.1.111/A6C/123.jpg",80

@@ -111,4 +111,52 @@ private:
 	void OnReceive(Buffer& bs);
 };
 
+class GSMSocket : public ITransport, public Socket
+{
+protected:
+	GSM07&	_Host;
+	byte	_Index;
+	int		_Error;
+
+public:
+	GSMSocket(GSM07& host, NetType protocol, byte idx);
+	virtual ~GSMSocket();
+
+	// 打开Socket
+	virtual bool OnOpen();
+	virtual void OnClose();
+
+	virtual bool OnWrite(const Buffer& bs);
+	virtual uint OnRead(Buffer& bs);
+
+	// 发送数据
+	virtual bool Send(const Buffer& bs);
+	// 接收数据
+	virtual uint Receive(Buffer& bs);
+
+	// 收到数据
+	virtual void OnProcess(const Buffer& bs, const IPEndPoint& remote);
+};
+
+class GSMTcp : public GSMSocket
+{
+public:
+	GSMTcp(GSM07& host, byte idx);
+
+	virtual String& ToStr(String& str) const { return str + "Tcp_" + Local.Port; }
+};
+
+class GSMUdp : public GSMSocket
+{
+public:
+	GSMUdp(GSM07& host, byte idx);
+
+	virtual bool SendTo(const Buffer& bs, const IPEndPoint& remote);
+
+	virtual String& ToStr(String& str) const { return str + "Udp_" + Local.Port; }
+
+private:
+	virtual bool OnWriteEx(const Buffer& bs, const void* opt);
+};
+
 #endif

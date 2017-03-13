@@ -144,7 +144,7 @@ void AP0803::InitClient()
 	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
-	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
+	auto tc = TokenClient::CreateFastNoLocal(Buffer(Data, Size));
 	tc->Cfg = tk;
 	tc->MaxNotActive = 8 * 60 * 1000;
 

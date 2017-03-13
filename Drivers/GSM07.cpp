@@ -46,7 +46,7 @@ GSM07::GSM07()
 
 	//APN = "CMNET";
 	APN = nullptr;
-	Mux = true;
+	Mux = false;
 
 	Led = nullptr;
 
@@ -271,13 +271,13 @@ bool GSM07::Config()
 	// 附着网络，上网必须
 	if (!AttachMT(true)) return false;
 	// 执行网络查询可能导致模块繁忙
-	//if (!QueryRegister()) return false;
+	if (!QueryRegister()) return false;
 
 	if (!SetAPN(APN, false)
 		|| !SetPDP(true)
 		|| !SetClass("B")) return false;
 
-	IPMux(Mux);
+	if (Mux) Mux = IPMux(true);
 	IPStatus();
 
 	return true;
@@ -285,7 +285,7 @@ bool GSM07::Config()
 
 Socket* GSM07::CreateSocket(NetType type)
 {
-	/*auto es = (EspSocket**)_sockets;
+	auto es = (GSMSocket**)_sockets;
 
 	int i = 0;
 	for (i = 0; i < 5; i++)
@@ -297,15 +297,15 @@ Socket* GSM07::CreateSocket(NetType type)
 		net_printf("没有空余的Socket可用了 !\r\n");
 
 		return nullptr;
-	}*/
+	}
 
 	switch (type)
 	{
-		/*case NetType::Tcp:
-			return es[i] = new EspTcp(*this, i);
+	case NetType::Tcp:
+		return es[i] = new GSMTcp(*this, i);
 
-		case NetType::Udp:
-			return es[i] = new EspUdp(*this, i);*/
+	case NetType::Udp:
+		return es[i] = new GSMUdp(*this, i);
 
 	default:
 		return nullptr;
@@ -472,7 +472,7 @@ bool GSM07::QueryRegister()
 	4 unknown
 	5 registered, roaming
 	*/
-	auto rs = At.Send("AT+CREG?", "OK");
+	auto rs = At.Send("AT+CREG?", 5000);
 	//if (!rs.StartsWith("+CREG: ")) return false;
 
 	// 去掉头部，然后分割
@@ -565,14 +565,21 @@ int GSM07::IPStart(const NetUri& remote)
 		return -1;
 	}
 	//cmd = cmd + "\",\"" + remote.Address + "\",\"" + remote.Port + "\"";
-	cmd = cmd + "\",\"" + remote.Address + "\"," + remote.Port;
+	if (remote.Host)
+		cmd = cmd + "\",\"" + remote.Host + "\"," + remote.Port;
+	else
+		cmd = cmd + "\",\"" + remote.Address + "\"," + remote.Port;
 
 	if (!Mux) return At.SendCmd(cmd) ? 1 : -1;
 
 	// +CIPNUM:0 截取链路号
-	auto rs = At.Send(cmd, "OK");
+	auto rs = At.Send(cmd, 5000, false);
+
+	// 有可能没有打开多链接
+	if (!Mux) return rs.Contains("OK") ? 0 : -1;
+
 	int p = rs.IndexOf(":");
-	if (p < 0)return -1;
+	if (p < 0)return -2;
 	int q = rs.IndexOf("\r");
 
 	return rs.Substring(p + 1, q - p - 1).ToInt();
@@ -652,7 +659,7 @@ IPAddress GSM07::DNSGetIP(const String& domain)
 	String cmd = "AT+CDNSGIP=";
 	cmd += domain;
 
-	auto rs = At.Send(cmd, "OK");
+	auto rs = At.Send(cmd);
 	rs.Show(true);
 
 	int p = rs.IndexOf("\r\n");
@@ -734,4 +741,138 @@ bool GSM07::IPTransparent(bool enable)
 		return At.SendCmd("AT+CIPTCFG=1");
 	else
 		return At.SendCmd("+++");
+}
+
+/******************************** Socket ********************************/
+
+GSMSocket::GSMSocket(GSM07& host, NetType protocol, byte idx)
+	: _Host(host)
+{
+	_Index = idx;
+	_Error = 0;
+
+	Host = &host;
+	Protocol = protocol;
+}
+
+GSMSocket::~GSMSocket()
+{
+	Close();
+}
+
+bool GSMSocket::OnOpen()
+{
+	// 确保宿主打开
+	if (!_Host.Open()) return false;
+
+	// 如果没有指定本地端口，则使用累加端口
+	if (!Local.Port)
+	{
+		// 累加端口
+		static ushort g_port = 1024;
+		// 随机拿到1024 至 1024+255 的端口号
+		if (g_port <= 1024)g_port += Sys.Ms() & 0xff;
+
+		Local.Port = g_port++;
+	}
+	Local.Address = _Host.IP;
+
+	//_Host.SetMux(true);
+
+#if NET_DEBUG
+	net_printf("%s::Open ", Protocol == NetType::Tcp ? "Tcp" : "Udp");
+	Local.Show(false);
+	net_printf(" => ");
+	if (Server)
+	{
+		Server.Show(false);
+		net_printf(":%d\r\n", Remote.Port);
+	}
+	else
+		Remote.Show(true);
+#endif
+
+	NetUri uri;
+	uri.Type = Protocol;
+	uri.Address = Remote.Address;
+	uri.Port = Remote.Port;
+	uri.Host = Server;
+
+	int idx = _Host.IPStart(uri);
+	if (idx < 0)
+	{
+		net_printf("协议 %d, %d 打开失败 %d \r\n", (byte)Protocol, Remote.Port, idx);
+		return false;
+	}
+	_Index = idx;
+
+	_Error = 0;
+
+	return true;
+}
+
+void GSMSocket::OnClose()
+{
+	_Host.IPClose(_Index);
+}
+
+// 接收数据
+uint GSMSocket::Receive(Buffer& bs)
+{
+	if (!Open()) return 0;
+
+	return 0;
+}
+
+// 发送数据
+bool GSMSocket::Send(const Buffer& bs)
+{
+	if (!Open()) return false;
+
+	return _Host.IPSend(_Index, bs);
+}
+
+bool GSMSocket::OnWrite(const Buffer& bs) { return Send(bs); }
+uint GSMSocket::OnRead(Buffer& bs) { return Receive(bs); }
+
+// 收到数据
+void GSMSocket::OnProcess(const Buffer& bs, const IPEndPoint& remote)
+{
+	OnReceive((Buffer&)bs, (void*)&remote);
+}
+
+/******************************** Tcp ********************************/
+
+GSMTcp::GSMTcp(GSM07& host, byte idx)
+	: GSMSocket(host, NetType::Tcp, idx)
+{
+
+}
+
+/******************************** Udp ********************************/
+
+GSMUdp::GSMUdp(GSM07& host, byte idx)
+	: GSMSocket(host, NetType::Udp, idx)
+{
+
+}
+
+bool GSMUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
+{
+	//!!! ESP8266有BUG，收到数据后，远程地址还是乱了，所以这里的远程地址跟实际可能不一致
+	if (remote == Remote) return Send(bs);
+
+	if (!Open()) return false;
+
+	assert(false, "不支持改变UDP远程地址");
+
+	return false;
+}
+
+bool GSMUdp::OnWriteEx(const Buffer& bs, const void* opt)
+{
+	auto ep = (IPEndPoint*)opt;
+	if (!ep) return OnWrite(bs);
+
+	return SendTo(bs, *ep);
 }
