@@ -176,6 +176,8 @@ void Button_GrayLevel::DelayClose2(int ms)
 
 void Button_GrayLevel::SetValue(bool value)
 {
+	_Value	= value;
+	
 	Button::SetValue(value);
 
 	RenewGrayLevel();
