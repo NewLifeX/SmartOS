@@ -7,7 +7,7 @@
 #define MEMORY_ALIGN	4
 
 // 当前堆
-Heap* Heap::Current = nullptr;
+const Heap* Heap::Current = nullptr;
 
 /*
 堆分配原理：
@@ -75,6 +75,7 @@ void* Heap::Alloc(int size)
 #if DEBUG
 	// 检查头部完整性
 	auto head = (MemoryBlock*)Address;
+	//assert(_First >= head && head->Used <= Size && (byte*)head + head->Used <= (byte*)head->Next, "堆头被破坏！");
 	assert(head->Used <= Size && (byte*)head + head->Used <= (byte*)head->Next, "堆头被破坏！");
 	assert(_Used <= Size, "Heap::Used异常！");
 #endif
