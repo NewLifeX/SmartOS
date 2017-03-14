@@ -904,9 +904,11 @@ bool GSMUdp::SendTo(const Buffer& bs, const IPEndPoint& remote)
 
 	if (!Open()) return false;
 
-	assert(false, "不支持改变UDP远程地址");
+	//remote.Show(true);
+	//assert(false, "不支持改变UDP远程地址");
 
-	return false;
+	//return false;
+	return Send(bs);
 }
 
 bool GSMUdp::OnWriteEx(const Buffer& bs, const void* opt)
