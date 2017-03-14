@@ -5,19 +5,19 @@
 class Version
 {
 public:
-	short	Major;	// 主版本
-	short	Minor;	// 次版本
-	int		Build;	// 编译时间
+	byte	Major;	// 主版本
+	byte	Minor;	// 次版本
+	short	Build;	// 编译时间。2000年以来天数
 
 	Version();
-	Version(Int64 value);
+	Version(int value);
 	Version(int major, int minor, int build);
 	Version(const Version& ver);
 	Version(Version&& ver);
 
     Version& operator=(const Version& ver);
 
-	Int64 ToValue() const;
+	int ToValue() const;
 
 	int CompareTo(const Version& value) const;
     friend bool operator==	(const Version& left, const Version& right);

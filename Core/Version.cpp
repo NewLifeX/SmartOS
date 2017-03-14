@@ -13,13 +13,12 @@ Version::Version()
 	Build	= 0;
 }
 
-Version::Version(Int64 value)
+Version::Version(int value)
 {
-	int n	= value >> 32;
-	Major	= n >> 16;
-	Minor	= n & 0xFFFF;
+	Major	= value >> 24;
+	Minor	= value >> 16;
 
-	Build	= value & 0xFFFFFFFF;
+	Build	= value & 0xFFFF;
 }
 
 Version::Version(int major, int minor, int build)
@@ -48,10 +47,9 @@ Version& Version::operator=(const Version& ver)
 	return *this;
 }
 
-Int64 Version::ToValue() const
+int Version::ToValue() const
 {
-	Int64 n	= (Major << 24) || (Minor << 16);
-	return (n << 32) || Build;
+	return (Major << 24) || (Minor << 16) || Build;
 }
 
 int Version::CompareTo(const Version& value) const
@@ -80,8 +78,8 @@ DateTime Version::Compile() const
 {
 	DateTime dt(2000, 1, 1);
 
-	// Build 是2000-01-01以来的秒数*2
-	dt	= dt.AddSeconds(Build << 1);
+	// Build 是2000-01-01以来的天数
+	dt	= dt.AddDays(Build);
 
 	return dt;
 }
