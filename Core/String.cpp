@@ -479,37 +479,62 @@ bool String::Concat(UInt64 num, int radix)
 	return Concat(buf, strlen(buf));
 }
 
-/*static char* ftoa(char* str, int len, double num)
+static char* ftoa(char* str, int len, double num, int prec)
 {
-#if defined(_MSC_VER)
-	len = sprintf_s(str, len, "%.8f", num);
-#else
-	len = sprintf(str, "%.8f", num);
-#endif
-	// 干掉后面多余的0
-	for (int i = len; i >= 0; i--)
+	// 先计算整数部分，连符号一起计算了
+	// 在逐级计算小数点后
+	int n = (int)num;
+	num -= n;
+	if (num < 0)num = -num;
+
+	// 整数部分
+	ltoa((Int64)n, str, 10);
+
+	if (prec > 0 && num > 0.0)
 	{
-		if (str[i] == '0') str[i] = '\0';
+		// 小数部分
+		int slen = strlen(str);
+		int m = 10;
+		while (--prec > 0) m *= 10;
+
+		str[slen++] = '.';
+		ltoa((Int64)(m*num), str + slen, 10);
+		slen = strlen(str);
+		/*for (int i = 0; i < prec; i++)
+		{
+			num *= 10;
+			n = (int)num;
+			num -= n;
+			str[slen++] = '0' + n;
+		}
+		str[slen] = 0;*/
+
+		// 干掉后面多余的0
+		for (int i = slen - 1; i >= 0 && str[i] == '0'; i--, slen--)
+		{
+			str[i] = '\0';
+		}
+		if (str[slen - 1] == '.') str[slen - 1] = '\0';
 	}
 
 	return str;
-}*/
+}
 
 bool String::Concat(float num, int decimalPlaces)
 {
 	char buf[20];
-	dtostrf(num, decimalPlaces, buf, sizeof(buf));
+	//dtostrf(num, decimalPlaces, buf, sizeof(buf));
 	//sprintf(buf, "%f", num);
-	//ftoa(buf, num);
+	ftoa(buf, sizeof(buf), num, decimalPlaces);
 	return Concat(buf, strlen(buf));
 }
 
 bool String::Concat(double num, int decimalPlaces)
 {
 	char buf[20];
-	dtostrf(num, decimalPlaces, buf, sizeof(buf));
+	//dtostrf(num, decimalPlaces, buf, sizeof(buf));
 	//sprintf(buf, "%f", num);
-	//ftoa(buf, num);
+	ftoa(buf, sizeof(buf), num, decimalPlaces);
 	return Concat(buf, strlen(buf));
 }
 

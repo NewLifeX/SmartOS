@@ -311,8 +311,6 @@ InputPort::InputPort(Pin pin, bool floating, PuPd pull) : Port()
 {
 	_task = 0;
 
-	//Handler	= nullptr;
-	//Param	= nullptr;
 	_Value = 0;
 
 	_Start = 0;
@@ -348,54 +346,64 @@ bool InputPort::Read() const
 	return v;
 }
 
+#if DEBUG
+int InputPort_Total = 0;
+int InputPort_Error = 0;
+#endif
 void InputPort::OnPress(bool down)
 {
-	//debug_printf("OnPress P%c%d down=%d Invert=%d _Value=%d\r\n", _PIN_NAME(_Pin), down, Invert, _Value);
+	auto v = down ? Rising : Falling;
+
+	// 在GD32F103VE上，按下PE13，有5%左右几率触发PE14的弹起中断，且示波器没有检测到PE14按键有波形
+	// 上述问题仅出现于0801，在0802上没有重现，两个按键是PE9/PE14
+	if (_Value == v) return;
+
 	/*
 	！！！注意：
 	有些按钮可能会出现110现象，也就是按下的时候1（正常），弹起的时候连续的1和0（不正常）。
 	*/
 
-	// 状态机。上一次和这一次状态相同时，认为出错，抛弃
-	//if(down && _Value == Rising) return;
-	//if(!down && _Value != Rising) return;
-
-	UInt64	now = Sys.Ms();
+#if DEBUG
+	InputPort_Total++;
+#endif
+	int	now = (int)Sys.Ms();
 	// 这一次触发离上一次太近，算作抖动忽略掉
-	if (_Last > 0 && ShakeTime > 0 && ((Int64)now - (Int64)_Last) < ShakeTime) return;
+	if (_Last > 0 && ShakeTime > 0 && now - _Last < ShakeTime)
+	{
+		// 撤消上一次准备执行的动作，并取消这一次事件
+		_Value = 0;
+#if DEBUG
+		InputPort_Error++;
+#endif
+		return;
+	}
 	_Last = now;
 
-	// 允许两个值并存
-	_Value = down ? Rising : Falling;
+	//_Value |= v;
+	// 不能或运算，否则轮询时会连续触发，具体原因未清楚
+	_Value = v;
 
 	if (down)
 		_Start = now;
 	else
 		PressTime = (ushort)(now - _Start);
 
-	/*if(down)
-	{
-		if((Mode & Rising) == 0) return;
-	}
-	else
-	{
-		if((Mode & Falling) == 0) return;
-	}*/
-
 	if (HardEvent || !_IRQ)
 		Press(*this, down);
 	else
-		Sys.SetTask(_task, true, 0);
+		// 在抖动时间内，如果下一次信号到来，还有机会撤消
+		Sys.SetTask(_task, true, ShakeTime);
 }
 
 void InputPort::InputTask(void* param)
 {
 	auto port = (InputPort*)param;
 	byte v = port->_Value;
+	port->_Value = 0;
 	if (!v) return;
 
 	//v	&= port->Mode;
-	if (v & Rising)	port->Press(*port, true);
+	if (v & Rising)		port->Press(*port, true);
 	if (v & Falling)	port->Press(*port, false);
 }
 
@@ -403,8 +411,6 @@ void InputPort::InputNoIRQTask(void* param)
 {
 	auto port = (InputPort*)param;
 	auto val = port->Read();
-	if (val == port->Val) return;
-	port->Val = val;
 
 	port->OnPress(val);
 }
@@ -440,6 +446,9 @@ void InputPort::OnOpen(void* param)
 #if DEBUG
 		fg = true;
 #endif
+
+		// 设置按键初始状态，避免开始轮询时产生一次误触发
+		_Value = Falling;
 	}
 
 #if DEBUG
@@ -479,7 +488,11 @@ bool InputPort::UsePress()
 		if (_IRQ)
 			_task = Sys.AddTask(InputTask, this, -1, -1, "输入事件");
 		else
+		{
+			// 设置按键初始状态，避免开始轮询时产生一次误触发
+			//_Value = Read() ? Rising : Falling;
 			_task = Sys.AddTask(InputNoIRQTask, this, InputPort_Polling, InputPort_Polling, "输入轮询");
+		}
 	}
 
 	return true;

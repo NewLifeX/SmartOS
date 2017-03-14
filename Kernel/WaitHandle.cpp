@@ -5,6 +5,9 @@
 WaitHandle::WaitHandle()
 {
 	Result		= false;
+
+	TaskID = Task::Current().ID;
+	State = nullptr;
 }
 
 bool WaitHandle::WaitOne(int ms)

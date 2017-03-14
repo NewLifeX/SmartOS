@@ -29,13 +29,14 @@ extern "C" {
 			static Heap g_Heap(heap, stack - heap);
 			_Heap	= &g_Heap;
 
-			mem_printf("Heap::Init(%p, %d)\r\n", heap, stack - heap);
+			//mem_printf("Heap::Init(%p, %d)\r\n", heap, stack - heap);
 		}
 
 	#if MEM_DEBUG
 		size	+= 4;
 	#endif
 		void* p	= _Heap->Alloc(size);
+		if (!p) return nullptr;
 	#if MEM_DEBUG
 		byte* bs = (byte*)p;
 		bs[0]	= 'S';
@@ -52,7 +53,7 @@ extern "C" {
 	#if MEM_DEBUG
 		byte* bs = (byte*)p;
 		bs	-= 4;
-		if(!(bs[0] == 'S' && bs[1] == 'M')) mem_printf("p=0x%p bs[0]=%c bs[1]=%c\r\n", p, bs[0], bs[1]);
+		if(!(bs[0] == 'S' && bs[1] == 'M')) mem_printf("p=%p bs[0]=%c bs[1]=%c\r\n", p, bs[0], bs[1]);
 		assert(bs[0] == 'S' && bs[1] == 'M', "正在释放不是本系统申请的内存！");
 		p	= bs;
 	#endif
@@ -63,71 +64,34 @@ extern "C" {
 
 INROOT void* operator new(uint size)
 {
-    mem_printf(" new size: %d ", size);
-
-	// 内存大小向4字节对齐
-	if(size & 0x03)
-	{
-		size += 4 - (size & 0x03);
-		mem_printf("=> %d ", size);
-	}
-	void* p = nullptr;
-	{
-		SmartIRQ irq;
-		p = malloc(size);
-	}
-	if(!p)
-		mem_printf("malloc failed! size=%d ", size);
-	else
-		mem_printf("0x%p ", p);
-
-    return p;
+	mem_printf(" new(%d,", size);
+	auto p = malloc(size);
+	mem_printf("0x%p) ", p);
+	return p;
 }
 
 INROOT void* operator new[](uint size)
 {
-    mem_printf(" new size[]: %d ", size);
-	// 内存大小向4字节对齐
-	if(size & 0x03)
-	{
-		size += 4 - (size & 0x03);
-		mem_printf("=> %d ", size);
-	}
-	void* p = nullptr;
-	{
-		SmartIRQ irq;
-		p = malloc(size);
-	}
-	if(!p)
-		mem_printf("malloc failed! size=%d ", size);
-	else
-		mem_printf("0x%p ", p);
-
+	mem_printf(" new[](%d,", size);
+	auto p = malloc(size);
+	mem_printf("0x%p) ", p);
 	return p;
 }
 
 INROOT void operator delete(void* p) noexcept
 {
-	mem_printf(" delete 0x%p ", p);
-    if(p)
-	{
-		SmartIRQ irq;
-		free(p);
-	}
+	mem_printf(" delete(0x%p) ", p);
+	if (p) free(p);
 }
 
 INROOT void operator delete[](void* p) noexcept
 {
-	mem_printf(" delete[] 0x%p ", p);
-    if(p)
-	{
-		SmartIRQ irq;
-		free(p);
-	}
+	mem_printf(" delete[](0x%p) ", p);
+	if (p) free(p);
 }
 
-INROOT void operator delete(void* p, uint size) noexcept	{ operator delete(p); }
-INROOT void operator delete[](void* p, uint size) noexcept	{ operator delete[](p); }
+INROOT void operator delete(void* p, uint size) noexcept { operator delete(p); }
+INROOT void operator delete[](void* p, uint size) noexcept { operator delete[](p); }
 
 void assert_failed2(cstring msg, cstring file, unsigned int line)
 {

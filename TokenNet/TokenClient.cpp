@@ -330,28 +330,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 		ss->Remote = *remote;
 	}
 
-#if DEBUG
-	if (!TokenSession::StatShowTaskID)
-	{
-		TokenSession::StatShowTaskID = Sys.AddTask(
-			[](void *param)
-		{
-			auto & sss = *(IList*)param;
-			TokenSession* ss = nullptr;
-			debug_printf("\r\n\tSessions统计信息\r\n解密失败次数 %d", SessionStat::DecError);
-			debug_printf("   收到广播握手%d条\r\n", SessionStat::BraHello);
-			debug_printf("Sessions: %d/%d\r\n", sss.Count(), TokenSession::HisSsNum);
-			for (int i = 0; i < sss.Count(); i++)
-			{
-				ss = (TokenSession*)sss[i];
-				//ss->Stat.Show(true);
-				ss->ToString().Show(true);
-			}
-			debug_printf("\r\n");
-		},
-			&Sessions, 5000, 15000, "SsStat");
-	}
-#endif
+	TokenSession::Show(Sessions);
 
 	ss->OnReceive(msg);
 }
@@ -1154,6 +1133,27 @@ TokenClient* TokenClient::CreateFast(const Buffer& store)
 	if (store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
 
 	tc->UseLocal();
+
+	return tc;
+}
+
+// 快速建立令牌客户端，注册默认Api
+TokenClient* TokenClient::CreateFastNoLocal(const Buffer& store)
+{
+	auto tc = new TokenClient();
+
+	// 重启
+	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
+	// 重置
+	tc->Register("Gateway/Reset", &TokenClient::InvokeReset, tc);
+	// 设置远程地址
+	tc->Register("Gateway/SetRemote", &TokenClient::InvokeSetRemote, tc);
+	// 获取远程配置信息
+	tc->Register("Gateway/GetRemote", &TokenClient::InvokeGetRemote, tc);
+	// 获取所有Invoke命令
+	tc->Register("Api/All", &TokenClient::InvokeGetAllApi, tc);
+
+	if (store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
 
 	return tc;
 }

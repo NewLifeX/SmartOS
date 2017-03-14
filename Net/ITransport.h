@@ -38,16 +38,9 @@ public:
 	bool Write(const Buffer& bs, const void* opt);
 	// 接收数据
 	uint Read(Buffer& bs);
-	//Buffer Read();
 
 	// 注册回调函数
 	virtual void Register(TransportHandler handler, void* param = nullptr);
-
-#if DEBUG
-	//virtual const String ToString() const { return String("ITransport"); }
-#else
-	//virtual const String ToString() const { return String(""); }
-#endif
 
 protected:
 	virtual bool OnOpen() { return true; }

@@ -93,6 +93,7 @@ public:
 
 	// 快速建立令牌客户端，注册默认Api
 	static TokenClient* CreateFast(const Buffer& store);
+	static TokenClient* CreateFastNoLocal(const Buffer& store);
 
 	// 重启，重置
 	static bool InvokeRestart(void * param, const Pair& args, Stream& result);

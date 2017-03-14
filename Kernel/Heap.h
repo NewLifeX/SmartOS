@@ -18,7 +18,7 @@ public:
 	void Free(void* ptr);
 
 	// 当前堆
-	static Heap* Current;
+	static const Heap* Current;
 
 private:
 	int		_Used;

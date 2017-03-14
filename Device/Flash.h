@@ -12,7 +12,7 @@ public:
     // 擦除块 （段地址）
     virtual bool EraseBlock(uint address) const;
     // 指定块是否被擦除
-    virtual bool IsErased(uint address, int len) const;
+    //virtual bool IsErased(uint address, int len) const;
 
 public:
 	Flash();

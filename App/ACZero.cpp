@@ -8,7 +8,7 @@ static void ACZeroTask(void *param);
 ACZero::ACZero()
 {
 	Time = 0;
-	AdjustTime = 2;
+	//AdjustTime = 2;
 
 	_taskid = 0;
 }
@@ -81,12 +81,14 @@ bool ACZero::Check()
 	if (retry <= 0) return false;
 
 	// 计算10ms为基数的当前延迟
-	int ms = (int)(Sys.Ms() / 10);
+	int ms = (int)Sys.Ms() / 10;
 	// 折算为需要等待的时间
-	ms = 10 - ms;
+	//ms = 10 - ms;
 	// 加上对齐纠正时间
-	ms += AdjustTime;
-	ms %= 10;
+	//ms += AdjustTime;
+	//ms %= 10;
+
+	debug_printf("ACZero::Check 交流零点延迟 %dms \r\n", ms);
 
 	// 计算加权平均数
 	Time = (Time + ms) / 2;

@@ -560,5 +560,17 @@
     <ClCompile Include="..\Drivers\Esp8266\WaitExpect.cpp">
       <Filter>Drivers\Esp8266</Filter>
     </ClCompile>
+    <ClCompile Include="..\Board\AP0803.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\GSM07.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\App\AT.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Drivers\A67.cpp">
+      <Filter>Drivers</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

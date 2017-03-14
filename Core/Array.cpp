@@ -32,6 +32,9 @@ Array::Array(Array&& rval) : Buffer(nullptr, 0)
 
 void Array::move(Array& rval)
 {
+	// 如果自己有申请内存，则需要先释放
+	if (_needFree && _Arr != rval._Arr) Release();
+
 	Buffer::move(rval);
 
 	_Capacity	= rval._Capacity;
@@ -75,7 +78,7 @@ bool Array::Release()
 
 	if(fr && p)
 	{
-		delete (byte*)p;
+		delete[] (byte*)p;
 
 		return true;
 	}

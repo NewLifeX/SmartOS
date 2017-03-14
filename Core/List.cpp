@@ -23,7 +23,7 @@ IList::IList(IList&& list)
 
 IList::~IList()
 {
-	if(_Arr && _Arr != Arr) delete _Arr;
+	if(_Arr && _Arr != Arr) delete[] _Arr;
 }
 
 void IList::Init()
@@ -73,7 +73,7 @@ void IList::move(IList& list)
 	else
 	{
 		// 如果已有数据区，则释放
-		if(_Arr && _Arr != Arr) delete _Arr;
+		if(_Arr && _Arr != Arr) delete[] _Arr;
 
 		_Arr	= list._Arr;
 		list.Init();
@@ -188,7 +188,7 @@ bool IList::CheckCapacity(int count)
 		// 为了安全，按照字节拷贝
 		Buffer(p, sz << 2).Copy(0, _Arr, _Count << 2);
 
-	if(_Arr && _Arr != Arr) delete _Arr;
+	if(_Arr && _Arr != Arr) delete[] _Arr;
 
 	_Arr		= (void**)p;
 	_Capacity	= sz;

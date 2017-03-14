@@ -20,7 +20,9 @@ public:
 
 	Delegate<Button&>	Press;	// 按下事件
 
-	ACZero*	Zero;	// 交流电过零检测
+	ACZero*	Zero;		// 交流电过零检测
+	ushort	DelayOpen;	// 延迟打开继电器us
+	ushort	DelayClose;	// 延迟关闭继电器us
 
 	// 构造函数。指示灯和继电器一般开漏输出，需要倒置
 	Button();

@@ -1,7 +1,7 @@
 ﻿#include "Storage.h"
 
-#define STORAGE_DEBUG DEBUG
-//#define STORAGE_DEBUG 0
+//#define STORAGE_DEBUG DEBUG
+#define STORAGE_DEBUG 0
 #if STORAGE_DEBUG
 	#define st_printf debug_printf
 #else

@@ -6,8 +6,6 @@
 #include "Power.h"
 #include "Net\ITransport.h"
 
-#define SERIAL_BAUDRATE 1024000
-
 // 串口类
 class SerialPort : public ITransport, public Power
 {
@@ -37,19 +35,19 @@ public:
 	Queue	Rx;
 
 	SerialPort();
-	SerialPort(COM index, int baudRate = SERIAL_BAUDRATE);
+	SerialPort(COM index, int baudRate = 0);
 
 	// 析构时自动关闭
 	virtual ~SerialPort();
 
-	void Set(COM index, int baudRate = SERIAL_BAUDRATE);
+	void Set(COM index, int baudRate = 0);
 	void Set(byte dataBits, byte parity, byte stopBits);
 
 	int SendData(byte data, int times = 3000);
 
 	bool Flush(int times = 3000);
 
-	void SetBaudRate(int baudRate = SERIAL_BAUDRATE);
+	void SetBaudRate(int baudRate = 0);
 
 	virtual void Register(TransportHandler handler, void* param = nullptr);
 

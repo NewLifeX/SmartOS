@@ -254,7 +254,7 @@ bool Esp8266::OnLink(uint retry)
 }
 
 // 配置网络参数
-void Esp8266::Config()
+bool Esp8266::Config()
 {
 	// 设置多连接
 	SetMux(true);
@@ -268,6 +268,8 @@ void Esp8266::Config()
 	SetMAC(false, mac);
 
 	//SetAutoConn(AutoConn);
+
+	return true;
 }
 
 Socket* Esp8266::CreateSocket(NetType type)
