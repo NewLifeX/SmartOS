@@ -906,7 +906,9 @@ bool Esp8266::SetDHCP(NetworkType mode, bool enable)
 	}
 
 	String cmd = "AT+CWDHCP=";
-	return SendCmd(cmd + m + ',' + enable);
+	String n = enable ? "1" : "0";
+	
+	return SendCmd(cmd + m + ',' + n);
 }
 
 MacAddress Esp8266::GetMAC(bool sta)
