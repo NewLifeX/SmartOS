@@ -6,20 +6,32 @@
 TSys Sys;
 const TTime Time;
 
+// 系统配置
+const SystemConfig g_Config = {
+	// 操作系统 v3.2.x
+	(0x03020000 | __BUILD_DATE__),
+	"SmartOS_CPU",
+
+	// 硬件
+	0x0,
+
+	// 应用软件
+	0x0,
+	0x0,
+	"WsLink",
+	"",
+};
+
 #if defined(BOOT) || defined(APP)
 
 struct HandlerRemap StrBoot __attribute__((at(0x2000fff0)));
 
 #endif
 
-#ifndef BIT
-    #define BIT(x)	(1 << (x))
-#endif
-
 // 关键性代码，放到开头
 INROOT TSys::TSys()
 {
-	Config	= nullptr;
+	Config = &g_Config;
 
 	OnInit();
 
@@ -48,11 +60,10 @@ void TSys::Init(void)
 void TSys::ShowInfo() const
 {
 #if DEBUG
-	//byte* ver = (byte*)&Version;
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
-	//debug_printf("Ver:%x.%x Build:%s\r\n", *ver++, *ver++, BuildTime);
-	Version v(0, 0, Ver);
-	debug_printf("Ver:%s Build:%s\r\n", v.ToString().GetBuffer(), v.Compile().ToString().GetBuffer());
+	Version v(Config->Ver);
+	debug_printf("Ver:%s\r\n", v.ToString().GetBuffer());
+	debug_printf("Build:%s %s\r\n", __BUILD_USER__, __BUILD_COMPILE__);
 
 	OnShowInfo();
 

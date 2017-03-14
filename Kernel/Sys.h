@@ -144,18 +144,17 @@ class SystemConfig
 {
 public:
 	// 操作系统
+	uint	Ver;		// 系统版本。Version格式
 	char	Name[16];	// 系统名称。如：SmartOS-M3-10x
-	uint	Ver;		// 系统版本。系统内
 
 	// 硬件
 	uint	HardVer;	// 硬件版本
 
 	// 应用软件
-	ushort	Type;		// 产品种类
+	ushort	Code;		// 产品种类
 	uint	AppVer;		// 产品版本
-	char	Serial[16];	// 授权码
-	char	Product[16];// 产品名称
 	char	Company[16];// 公司
+	char	Product[16];// 产品批次
 
 	char	DevID[16];	// 设备编码
 	char	Server[32];	// 服务器。重置后先尝试厂商前端，再尝试原服务器
@@ -206,6 +205,21 @@ public:
 #define TS(name) ((void)0)
 
 #endif
+
+// 编译信息兼容性处理
+#ifndef __BUILD_DATE__
+#define __BUILD_DATE__ 0
+#endif
+#ifndef __BUILD_TIME__
+#define __BUILD_TIME__ 0
+#endif
+#ifndef __BUILD_COMPILE__
+#define __BUILD_COMPILE__ ""
+#endif
+#ifndef __BUILD_USER__
+#define __BUILD_USER__ ""
+#endif
+
 
 #endif //_Sys_H_
 
