@@ -24,6 +24,7 @@ void ACZero::Set(Pin pin)
 	Port.HardEvent = true;
 	Port.Set(pin);
 	Port.Press.Bind(&ACZero::OnHandler, this);
+	Port.UsePress();
 }
 
 bool ACZero::Open()
