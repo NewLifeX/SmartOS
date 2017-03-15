@@ -36,16 +36,6 @@ struct CmdState
 	uint FindKey(const String& str);
 };
 
-void LoadStationTask(void* param);
-
-/*
-		注意事项
-1、设置模式AT+CWMODE需要重启后生效AT+RST
-2、AP模式下查询本机IP无效，可能会造成死机
-3、开启server需要多连接作为基础AT+CIPMUX=1
-4、单连接模式，多连接模式  收发数据有参数个数区别
-*/
-
 /******************************** AT ********************************/
 
 AT::AT()
@@ -79,13 +69,6 @@ void AT::Init(ITransport* port)
 bool AT::Open()
 {
 	if (!Port->Open()) return false;
-
-	/*if (!CheckReady())
-	{
-		net_printf("AT::Open 打开失败！");
-
-		return false;
-	}*/
 
 	return true;
 }
@@ -163,7 +146,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 	if (_Expect == &handle) _Expect = nullptr;
 
 	// 去掉响应中的回显和头尾空格
-	if (at)
+	if (rs && at)
 	{
 		int p = 0;
 		if (rs.StartsWith(cmd.TrimEnd())) p = cmd.Length();

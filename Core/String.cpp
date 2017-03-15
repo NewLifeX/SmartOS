@@ -900,49 +900,73 @@ StringSplit String::Split(cstring sep) const
 
 String String::Substring(int start, int len) const
 {
-	String str;
+	/*String str;
 
 	if (len < 0) len = _Length - start;
-	//str.Copy(this, _Length, start);
 	if (_Length && start < _Length) str.copy(_Arr + start, len);
 
-	return str;
+	return str;*/
+
+	if (len < 0) len = _Length - start;
+	if (len > _Length - start) len = _Length - start;
+
+	return String(_Arr + start, len);
 }
 
-void trim(char* buffer, int& len, bool trimBegin, bool trimEnd)
+cstring trim(cstring str, int& len, bool trimBegin, bool trimEnd)
 {
-	if (!buffer || len == 0) return;
-	char *begin = buffer;
-	if (trimBegin) while (isspace(*begin)) begin++;
-	char *end = buffer + len - 1;
-	if (trimEnd) while (isspace(*end) && end >= begin) end--;
-	len = end + 1 - begin;
-	if (begin > buffer && len) Buffer(buffer, len) = begin;
-	buffer[len] = 0;
+	if (!str || len == 0) return str;
+
+	auto s = str;
+	if (trimBegin) while (isspace(*s)) s++;
+
+	auto e = str + len - 1;
+	if (trimEnd) while (isspace(*e) && e >= s) e--;
+
+	len = e + 1 - s;
+	//if (s > str && len) Buffer(str, len) = s;
+	//str[len] = 0;
+
+	return s;
 }
 
 String String::TrimStart() const
 {
-	String str(*this);
+	/*String str(*this);
 	trim(str._Arr, str._Length, true, false);
 
-	return str;
+	return str;*/
+
+	int len = _Length;
+	auto str = trim(_Arr, len, true, false);
+
+	return String(str, len);
 }
 
 String String::TrimEnd() const
 {
-	String str(*this);
+	/*String str(*this);
 	trim(str._Arr, str._Length, false, true);
 
-	return str;
+	return str;*/
+
+	int len = _Length;
+	auto str = trim(_Arr, len, false, true);
+
+	return String(str, len);
 }
 
 String String::Trim() const
 {
-	String str(*this);
+	/*String str(*this);
 	trim(str._Arr, str._Length, true, true);
 
-	return str;
+	return str;*/
+
+	int len = _Length;
+	auto str = trim(_Arr, len, true, true);
+
+	return String(str, len);
 }
 
 String String::Replace(char find, char replace) const
