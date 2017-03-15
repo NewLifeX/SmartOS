@@ -19,24 +19,6 @@
 #define net_printf(format, ...)
 #endif
 
-struct CmdState
-{
-	String* Command = nullptr;
-	String* Result = nullptr;
-	cstring	Key1 = nullptr;
-	cstring	Key2 = nullptr;
-
-	bool	Capture = true;	// 是否捕获所有
-};
-
-/*
-		注意事项
-1、设置模式AT+CWMODE需要重启后生效AT+RST
-2、AP模式下查询本机IP无效，可能会造成死机
-3、开启server需要多连接作为基础AT+CIPMUX=1
-4、单连接模式，多连接模式  收发数据有参数个数区别
-*/
-
 /******************************** GSM07 ********************************/
 
 GSM07::GSM07()

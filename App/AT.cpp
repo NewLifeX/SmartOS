@@ -30,8 +30,6 @@ struct CmdState
 	cstring	Key2 = nullptr;
 	cstring	Key3 = nullptr;
 
-	bool	Capture = true;	// 是否捕获所有
-
 	uint Parse(const Buffer& bs, WaitHandle& handle);
 	uint FindKey(const String& str);
 };
@@ -221,7 +219,6 @@ bool AT::WaitForCmd(cstring expect, uint msTimeout)
 	CmdState we;
 	we.Result = &rs;
 	we.Key1 = expect;
-	we.Capture = false;
 
 	WaitHandle handle;
 	handle.State = &we;
@@ -309,7 +306,7 @@ uint AT::OnReceive(Buffer& bs, void* param)
 			if (p >= bs.Length())
 			{
 #if NET_DEBUG
-				ParseFail("+IPD<=5", bs.Sub(p, -1));
+				ParseFail(DataKey, bs.Sub(p, -1));
 #endif
 				break;
 			}
@@ -364,15 +361,7 @@ uint CmdState::Parse(const Buffer& bs, WaitHandle& handle)
 	auto& rs = *Result;
 
 	// 捕获所有
-	if (Capture)
-	{
-		if (p > 0)
-			rs += bs.Sub(0, p).AsString();
-		else
-			rs += s;
-	}
-	else if (p > 0)
-		rs = bs.Sub(0, p).AsString();
+	rs += s;
 
 	// 匹配关键字，任务完成
 	if (p > 0)
