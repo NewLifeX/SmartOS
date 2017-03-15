@@ -185,8 +185,6 @@ void AP0801::InitClient()
 	tc->MaxNotActive = 8 * 60 * 1000;
 
 	Client = tc;
-
-	InitAlarm();
 }
 
 void AP0801::Register(uint offset, IDataPort& dp)

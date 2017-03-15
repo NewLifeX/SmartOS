@@ -178,10 +178,9 @@ void AP0104::InitClient()
 	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
 	tc->Cfg = tk;
 	tc->MaxNotActive = 8 * 60 * 1000;
+	tc->UseLocal();
 
 	Client = tc;
-
-	InitAlarm();
 }
 
 void AP0104::Register(int index, IDataPort& dp)

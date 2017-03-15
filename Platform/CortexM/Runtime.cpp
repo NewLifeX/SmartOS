@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 //#define MEM_DEBUG DEBUG
-#define MEM_DEBUG 1
+#define MEM_DEBUG 0
 #if MEM_DEBUG
 	#define mem_printf debug_printf
 #else

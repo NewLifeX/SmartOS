@@ -134,10 +134,9 @@ void IOK027X::InitClient()
 	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
 	tc->Cfg = tk;
 	tc->MaxNotActive = 8 * 60 * 1000;
+	tc->UseLocal();
 
 	Client = tc;
-
-	InitAlarm();
 }
 
 void IOK027X::Register(int index, IDataPort& dp)
