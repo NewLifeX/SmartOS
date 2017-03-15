@@ -20,7 +20,7 @@ public:
 
 	Delegate<Button&>	Press;	// 按下事件
 
-	ACZero*	Zero;		// 交流电过零检测
+	const ACZero*	Zero;	// 交流电过零检测
 	ushort	DelayOpen;	// 延迟打开继电器us
 	ushort	DelayClose;	// 延迟关闭继电器us
 

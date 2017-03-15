@@ -1,41 +1,29 @@
 ﻿#include "Kernel\Sys.h"
+#include "Kernel\TTime.h"
+
 #include "Device\Port.h"
 
 #include "ACZero.h"
 
-static void ACZeroTask(void *param);
-
 ACZero::ACZero()
 {
-	Time = 0;
-	//AdjustTime = 2;
-
-	_taskid = 0;
+	Period = 10000;
+	Count = 0;
+	Last = 0;
 }
 
 ACZero::~ACZero()
 {
 	if (Port.Opened) Close();
-	Sys.RemoveTask(_taskid);
 }
 
 void ACZero::Set(Pin pin)
 {
 	if (pin == P0) return;
 
+	Port.HardEvent = true;
 	Port.Set(pin);
-}
-
-void ACZeroTask(void *param)
-{
-	auto port = (ACZero*)param;
-	if (port)
-	{
-		debug_printf("定时检查交流电过零\r\n");
-
-		// 需要检测是否有交流电，否则关闭
-		port->Check();
-	}
+	Port.Press.Bind(&ACZero::OnHandler, this);
 }
 
 bool ACZero::Open()
@@ -44,7 +32,9 @@ bool ACZero::Open()
 
 	debug_printf("过零检测引脚探测: ");
 
-	if (Check())
+	// 等一次零点
+	Sys.Sleep(20);
+	if (Count > 0)
 	{
 		debug_printf("已连接交流电！\r\n");
 	}
@@ -55,8 +45,6 @@ bool ACZero::Open()
 		return false;
 	}
 
-	_taskid = Sys.AddTask(ACZeroTask, this, 1000, 10000, "过零检测");
-
 	return true;
 }
 
@@ -65,33 +53,49 @@ void ACZero::Close()
 	Port.Close();
 }
 
-bool ACZero::Check()
+void ACZero::OnHandler(InputPort& port, bool down)
 {
-	// 检测下降沿   先去掉低电平  while（io==false）
-	int retry = 200;
-	while (Port == false && retry-- > 0) Sys.Delay(100);
-	if (retry <= 0) return false;
+	if (!down) return;
 
-	// 喂狗
-	Sys.Sleep(1);
+	auto now = Sys.Ms();
+	if (Last > 0)
+	{
+		// 两次零点
+		int ms = now - Last;
+		int us = ms * 1000;
+		if (Count == 0)
+			Period = us;
+		else
+			Period = (Period * 7 + us) / 8;
+	}
 
-	// 当检测到	     高电平结束  就是下降沿的到来
-	retry = 200;
-	while (Port == true && retry-- > 0) Sys.Delay(100);
-	if (retry <= 0) return false;
+	Last = now;
 
-	// 计算10ms为基数的当前延迟
-	int ms = (int)(Sys.Ms() % 10);
-	// 折算为需要等待的时间
-	//ms = 10 - ms;
-	// 加上对齐纠正时间
-	//ms += AdjustTime;
-	//ms %= 10;
+	Count++;
+}
 
-	debug_printf("ACZero::Check 交流零点延迟 %dms \r\n", ms);
+// 等待下一次零点，需要考虑继电器动作延迟
+bool ACZero::Wait(int usDelay) const
+{
+	if (Count == 0 || Last == 0) return false;
 
-	// 计算加权平均数
-	Time = (Time + ms) / 2;
+	// 计算上一次零点后过去的时间
+	int ms = Sys.Ms() - Last;
+	if (ms < 0 && ms > 40) return false;
+
+	// 计算下一次零点什么时候到来
+	int us = Period - ms * 1000;
+	// 继电器动作延迟
+	us -= usDelay;
+
+	int d = Period;
+	while (us < 0) us += d;
+	while (us > d) us -= d;
+
+	debug_printf("ACZero::Wait 周期=%dus 等待=%dus \r\n", Period, us);
+	
+	//Sys.Delay(us);
+	Time.Delay(us);
 
 	return true;
 }

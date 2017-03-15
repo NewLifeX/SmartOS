@@ -1,8 +1,6 @@
 ﻿#include "Button.h"
 #include "ACZero.h"
 
-#include "Kernel\TTime.h"
-
 Button::Button()
 {
 	Name = nullptr;
@@ -82,31 +80,16 @@ String Button::ToString() const
 
 void Button::SetValue(bool value)
 {
-	int us = 0;
-	if (Zero)
+	// 过零检测
+	if (Zero && Zero->Count > 0)
 	{
-		// 计算10ms为基数的当前延迟
-		int ms = (int)(Sys.Ms() % 10);
-		// 而零点以10ms为基数在Zero->Time处，计算需要等待的时间量
-		ms = Zero->Time - ms;
-
-		us = ms * 1000;
 		// 打开关闭的延迟时间不同，需要减去这个时间量
-		us -= value ? DelayOpen : DelayClose;
-
-		while (us < 0) us += 10000;
-		while (us > 10000) us -= 10000;
-
-		//Sys.Delay(us);
-		Time.Delay(us);
+		int us = value ? DelayOpen : DelayClose;
+		Zero->Wait(us);
 	}
+
 	Led = value;
 	Relay = value;
 
 	_Value = value;
-
-	if (Zero)
-	{
-		debug_printf("Button::SetValue %d 零点=%dus \r\n", value, us);
-	}
 }
