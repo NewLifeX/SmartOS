@@ -81,7 +81,7 @@ bool ACZero::Check()
 	if (retry <= 0) return false;
 
 	// 计算10ms为基数的当前延迟
-	int ms = (int)Sys.Ms() / 10;
+	int ms = (int)(Sys.Ms() % 10);
 	// 折算为需要等待的时间
 	//ms = 10 - ms;
 	// 加上对齐纠正时间

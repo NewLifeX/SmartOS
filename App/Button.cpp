@@ -1,6 +1,8 @@
 ﻿#include "Button.h"
 #include "ACZero.h"
 
+#include "Kernel\TTime.h"
+
 Button::Button()
 {
 	Name = nullptr;
@@ -84,7 +86,7 @@ void Button::SetValue(bool value)
 	if (Zero)
 	{
 		// 计算10ms为基数的当前延迟
-		int ms = (int)Sys.Ms() / 10;
+		int ms = (int)(Sys.Ms() % 10);
 		// 而零点以10ms为基数在Zero->Time处，计算需要等待的时间量
 		ms = Zero->Time - ms;
 
@@ -95,7 +97,8 @@ void Button::SetValue(bool value)
 		while (us < 0) us += 10000;
 		while (us > 10000) us -= 10000;
 
-		Sys.Delay(us);
+		//Sys.Delay(us);
+		Time.Delay(us);
 	}
 	Led = value;
 	Relay = value;
