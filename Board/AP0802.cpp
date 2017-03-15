@@ -161,6 +161,7 @@ NetworkInterface* AP0802::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto net = new W5500(Spi2, PE1, PD13);
+	net->SetLed(*Leds[0]);
 	if(!net->Open())
 	{
 		delete net;
@@ -176,6 +177,7 @@ NetworkInterface* AP0802::Create5500()
 NetworkInterface* AP0802::Create8266(bool apOnly)
 {
 	auto esp = new Esp8266(COM4, PE0, PD3);
+	esp->SetLed(*Leds[1]);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = esp->SSID && *esp->SSID;
