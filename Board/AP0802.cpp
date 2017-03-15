@@ -176,7 +176,9 @@ NetworkInterface* AP0802::Create5500()
 
 NetworkInterface* AP0802::Create8266(bool apOnly)
 {
-	auto esp = new Esp8266(COM4, PE0, PD3);
+	auto esp = new Esp8266();
+	esp->Init(COM4);
+	esp->Set(PE0, PD3);
 	esp->SetLed(*Leds[1]);
 
 	// 初次需要指定模式 否则为 Wire

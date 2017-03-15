@@ -7,7 +7,6 @@
 #include "Esp8266.h"
 #include "EspTcp.h"
 #include "EspUdp.h"
-#include "WaitExpect.h"
 
 #include "Config.h"
 
@@ -33,19 +32,27 @@ void LoadStationTask(void* param);
 
 /******************************** Esp8266 ********************************/
 
-Esp8266::Esp8266(ITransport* port, Pin power, Pin rst)
+Esp8266::Esp8266()
 {
-	Init(port, power, rst);
-}
+	Name = "Esp8266";
+	Speed = 54;
 
-Esp8266::Esp8266(COM idx, Pin power, Pin rst)
-{
-	auto srp = new SerialPort(idx, 115200);
-	srp->Tx.SetCapacity(0x200);
-	srp->Rx.SetCapacity(0x200);
-	srp->MaxSize = 512;
+	_task = 0;
 
-	Init(srp, power, rst);
+	Led = nullptr;
+
+	Buffer(_sockets, 5 * 4).Clear();
+
+	Mode = NetworkType::STA_AP;
+	WorkMode = NetworkType::STA_AP;
+
+	At.DataKey = "+IPD,";
+
+	InitConfig();
+	LoadConfig();
+
+	// 配置模式作为工作模式
+	WorkMode = Mode;
 }
 
 Esp8266::~Esp8266()
@@ -53,39 +60,21 @@ Esp8266::~Esp8266()
 	RemoveLed();
 }
 
-void Esp8266::Init(ITransport* port, Pin power, Pin rst)
+void Esp8266::Init(COM idx, int baudrate)
 {
-	Name = "Esp8266";
-	Speed = 54;
+	At.Init(idx, baudrate);
+}
 
-	Port = port;
-	if (Port)
-	{
-		if (MinSize) MinSize = Port->MinSize;
-		if (MaxSize) MaxSize = Port->MaxSize;
+void Esp8266::Init(ITransport* port)
+{
+	At.Init(port);
+}
 
-		Port->Register(OnPortReceive, this);
-	}
-
-	_power.Init(power, false);
-	if (rst != P0) _rst.Init(rst, true);
-
-	_task = 0;
-
-	Led = nullptr;
-
-	_Expect = nullptr;
-
-	Buffer(_sockets, 5 * 4).Clear();
-
-	Mode = NetworkType::STA_AP;
-	WorkMode = NetworkType::STA_AP;
-
-	InitConfig();
-	LoadConfig();
-
-	// 配置模式作为工作模式
-	WorkMode = Mode;
+void Esp8266::Set(Pin power, Pin rst, Pin low)
+{
+	if (power != P0) _Power.Set(power);
+	if (rst != P0) _Reset.Set(rst);
+	if (low != P0) _LowPower.Set(low);
 }
 
 void Esp8266::SetLed(Pin led)
@@ -113,7 +102,7 @@ void Esp8266::RemoveLed()
 
 bool Esp8266::OnOpen()
 {
-	if (!Port->Open()) return false;
+	if (!At.Open()) return false;
 
 	if (!CheckReady())
 	{
@@ -154,21 +143,23 @@ bool Esp8266::OnOpen()
 
 	if (!_task) _task = Sys.AddTask(&Esp8266::Process, this, -1, -1, "Esp8266");
 
+	At.Received.Bind(&Esp8266::OnReceive, this);
+
 	return true;
 }
 
 bool Esp8266::CheckReady()
 {
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if (!_power.Empty())
+	if (!_Power.Empty())
 	{
-		_power.Open();					// 使用前必须Open；
-		_power.Down(20);
+		_Power.Open();					// 使用前必须Open；
+		_Power.Down(20);
 	}
-	if (!_rst.Empty()) _rst.Open();		// 使用前必须Open；
+	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open；
 
 	// 每两次启动会有一次打开失败，交替
-	if (!_rst.Empty())
+	if (!_Reset.Empty())
 		Reset(false);	// 硬重启
 	else
 		Reset(true);	// 软件重启命令
@@ -180,9 +171,9 @@ bool Esp8266::CheckReady()
 	for (int i = 0; i < 2; i++)
 	{
 		// 等待模块启动进入就绪状态
-		if (!WaitForCmd("ready", 3000))
+		if (!Test(1, 500) && !At.WaitForCmd("ready", 3000))
 		{
-			if (!Test())
+			if (!Test(10, 1000))
 			{
 				net_printf("Esp8266::Open 打开失败！");
 
@@ -221,10 +212,10 @@ void Esp8266::OnClose()
 {
 	if (_task) Sys.RemoveTask(_task);
 
-	_power.Close();
-	_rst.Close();
+	At.Close();
 
-	Port->Close();
+	_Power.Close();
+	_Reset.Close();
 }
 
 bool Esp8266::OnLink(uint retry)
@@ -235,7 +226,7 @@ bool Esp8266::OnLink(uint retry)
 
 	bool join = SSID && *SSID;
 	// 等待WiFi自动连接
-	if (!WaitForCmd("WIFI CONNECTED", 3000))
+	if (!At.WaitForCmd("WIFI CONNECTED", 3000))
 	{
 		auto mode = WorkMode;
 		// 默认Both
@@ -314,228 +305,7 @@ bool Esp8266::EnableDHCP()
 	return true;
 }
 
-// 发送指令，在超时时间内等待返回期望字符串，然后返回内容
-String Esp8266::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeout)
-{
-	TS("Esp8266::Send");
-
-	/*// 使用较大的字符串缓冲区，避免内部堆分配
-	char cs[0x80];
-	cs[0]	= '\0';
-	String rs(cs, sizeof(cs));*/
-	String rs;
-
-	auto& task = Task::Current();
-	// 判断是否正在发送其它指令
-	if (_Expect)
-	{
-#if NET_DEBUG
-		auto w = (WaitExpect*)_Expect;
-		net_printf("Esp8266::Send %d 正在发送 ", w->TaskID);
-		if (w->Command)
-			w->Command->Trim().Show(false);
-		else
-			net_printf("数据");
-		net_printf(" ，%d 无法发送 ", task.ID);
-		cmd.Trim().Show(true);
-#endif
-
-		return rs;
-	}
-
-	// 在接收事件中拦截
-	WaitExpect we;
-	we.TaskID = task.ID;
-	// 数据不显示Command，没有打开NET_DEBUG时也不显示
-	//we.Command	= &cmd;
-	we.Result = &rs;
-	we.Key1 = expect;
-	we.Key2 = expect2;
-
-	_Expect = &we;
-
-#if NET_DEBUG
-	bool EnableLog = true;
-#endif
-
-	if (cmd)
-	{
-		// 设定小灯快闪时间，单位毫秒
-		if (Led) Led->Write(50);
-
-		Port->Write(cmd);
-
-#if NET_DEBUG
-		// 只有AT指令显示日志
-		if (!cmd.StartsWith("AT") || (expect && expect[0] == '>')) EnableLog = false;
-		if (EnableLog)
-		{
-			we.Command = &cmd;
-			//net_printf("%d=> ", task.ID);
-			cmd.Trim().Show(true);
-		}
-#endif
-	}
-
-	we.Wait(msTimeout);
-	if (_Expect == &we) _Expect = nullptr;
-
-	//if(rs.Length() > 4) rs.Trim();
-
-#if NET_DEBUG
-	if (EnableLog && rs)
-	{
-		net_printf("%d<= ", task.ID);
-		// 太长时不要去尾，避免产生重新分配
-		if (rs.Length() < 0x40)
-			rs.Trim().Show(true);
-		else
-			rs.Show(true);
-	}
-#endif
-
-	return rs;
-}
-
-// 发送命令，自动检测并加上\r\n，等待响应OK
-bool Esp8266::SendCmd(const String& cmd, uint msTimeout)
-{
-	TS("Esp8266::SendCmd");
-
-	static const cstring ok = "OK";
-	static const cstring err = "ERROR";
-
-	String cmd2;
-
-	// 只有AT指令需要检查结尾，其它指令不检查，避免产生拷贝
-	auto p = &cmd;
-	if (cmd.StartsWith("AT") && !cmd.EndsWith("\r\n"))
-	{
-		cmd2 = cmd;
-		cmd2 += "\r\n";
-		p = &cmd2;
-	}
-
-	// 二级拦截。遇到错误也马上结束
-	auto rt = Send(*p, ok, err, msTimeout);
-
-	return rt.Contains(ok);
-}
-
-bool Esp8266::WaitForCmd(cstring expect, uint msTimeout)
-{
-	String rs;
-
-	// 在接收事件中拦截
-	WaitExpect we;
-	we.Result = &rs;
-	we.Key1 = expect;
-	we.Capture = false;
-
-	_Expect = &we;
-
-	// 等待收到数据
-	bool rt = we.Wait(msTimeout);
-	_Expect = nullptr;
-
-	return rt;
-}
-
-void ParseFail(cstring name, const Buffer& bs)
-{
-#if NET_DEBUG
-	if (bs.Length() == 0) return;
-
-	int p = 0;
-	if (p < bs.Length() && bs[p] == ' ') p++;
-	if (p < bs.Length() && bs[p] == '\r') p++;
-	if (p < bs.Length() && bs[p] == '\n') p++;
-
-	// 无法识别的数据可能是空格前缀，需要特殊处理
-	auto str = bs.Sub(p, -1).AsString();
-	if (str)
-	{
-		net_printf("Esp8266:%s 无法识别[%d]：", name, bs.Length());
-		//if(bs.Length() == 2) net_printf("%02X %02X ", bs[0], bs[1]);
-		str.Show(true);
-	}
-#endif
-}
-
-uint Esp8266::OnPortReceive(ITransport* sender, Buffer& bs, void* param, void* param2)
-{
-	auto esp = (Esp8266*)param;
-	return esp->OnReceive(bs, param2);
-}
-
-// 引发数据到达事件
-uint Esp8266::OnReceive(Buffer& bs, void* param)
-{
-	if (bs.Length() == 0) return 0;
-
-	//TS("Esp8266::OnReceive");
-	//debug_printf("Esp::OnRev %d\r\n", bs.Length());
-
-	//!!! 分析+IPD数据和命令返回，特别要注意粘包
-	int s = 0;
-	int p = 0;
-	auto str = bs.AsString();
-	while (p >= 0 && p < bs.Length())
-	{
-		s = p;
-		p = str.IndexOf("+IPD,", s);
-
-		// +IPD之前之后的数据，留给命令分析
-		int size = p >= 0 ? p - s : bs.Length() - s;
-		if (size > 0)
-		{
-			if (_Expect)
-			{
-				ParseReply(bs.Sub(s, size));
-#if NET_DEBUG
-				// 如果没有吃完，剩下部分报未识别
-				//if(rs < size) ParseFail("ParseReply", bs.Sub(s + rs, size - rs));
-				// 不要报未识别了，反正内部会全部吃掉
-#endif
-			}
-			else
-			{
-#if NET_DEBUG
-				ParseFail("NoExpect", bs.Sub(s, size));
-#endif
-			}
-		}
-
-		// +IPD开头的数据，作为收到数据
-		if (p >= 0)
-		{
-			if (p + 5 >= bs.Length())
-			{
-#if NET_DEBUG
-				ParseFail("+IPD<=5", bs.Sub(p, -1));
-#endif
-				break;
-			}
-			else
-			{
-				uint rs = ParseReceive(bs.Sub(p, -1));
-				if (rs <= 0)
-				{
-#if NET_DEBUG
-					ParseFail("ParseReceive", bs.Sub(p + rs, -1));
-#endif
-					break;
-				}
-
-				// 游标移到下一组数据
-				p += rs;
-			}
-		}
-	}
-
-	return 0;
-}
-
+// 数据到达
 void Esp8266::Process()
 {
 	if (_Buffer.Length() <= 1) return;
@@ -567,37 +337,36 @@ port>]:<data>
 */
 
 // 分析+IPD接收数据。返回被用掉的字节数
-uint Esp8266::ParseReceive(const Buffer& bs)
+void Esp8266::OnReceive(Buffer& bs)
 {
-	TS("Esp8266::ParseReceive");
+	TS("Esp8266::OnReceive");
 
 	auto str = bs.AsString();
 
 	StringSplit sp(str, ",");
 
-	// 跳过第一段+IPD
+	// 第一段
 	auto rs = sp.Next();
-
-	if (!(rs = sp.Next())) return 0;
+	if (!rs) return;
 	int idx = rs.ToInt();
-	if (idx < 0 || idx > 4) return 0;
+	if (idx < 0 || idx > 4) return;
 
-	if (!(rs = sp.Next())) return 0;
+	if (!(rs = sp.Next())) return;
 	int len = rs.ToInt();
 
 	IPEndPoint ep;
-	if (!(rs = sp.Next())) return 0;
+	if (!(rs = sp.Next())) return;
 	ep.Address = IPAddress::Parse(rs);
 
 	// 提前改变下一个分隔符
 	sp.Sep = ":";
-	if (!(rs = sp.Next())) return 0;
+	if (!(rs = sp.Next())) return;
 	ep.Port = rs.ToInt();
 
 	// 后面是数据
 	sp.Next();
 	int s = sp.Position;
-	if (s <= 0) return 0;
+	if (s <= 0) return;
 
 	// 校验数据长度
 	int len2 = len;
@@ -628,37 +397,19 @@ uint Esp8266::ParseReceive(const Buffer& bs)
 
 		Sys.SetTask(_task, true, 0);
 	}
-
-	return sp.Position + len;
-}
-
-// 分析关键字。返回被用掉的字节数
-uint Esp8266::ParseReply(const Buffer& bs)
-{
-	if (!_Expect) return 0;
-
-	// 拦截给同步方法
-	auto we = (WaitExpect*)_Expect;
-	bool rs = we->Parse(bs);
-
-	// 如果内部已经适配，则清空
-	if (!we->Result) _Expect = nullptr;
-
-	return rs;
 }
 
 /******************************** 基础AT指令 ********************************/
 
 // 基础AT指令
-bool Esp8266::Test()
+bool Esp8266::Test(int times, int interval)
 {
 	// 避免在循环内部频繁构造和析构
 	String cmd = "AT";
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < times; i++)
 	{
-		if (SendCmd(cmd, 500)) return true;
-
-		Reset(false);
+		if (i > 0)	Reset(false);
+		if (At.SendCmd(cmd, interval)) return true;
 	}
 
 	return false;
@@ -666,13 +417,10 @@ bool Esp8266::Test()
 
 bool Esp8266::Reset(bool soft)
 {
-	if (soft)
-		return SendCmd("AT+RST");
-	else
-	{
-		_rst.Up(100);
-		return true;
-	}
+	if (soft) return At.SendCmd("AT+RST");
+
+	_Reset.Up(100);
+	return true;
 }
 
 /*
@@ -682,27 +430,27 @@ AT 版本信息
 */
 String Esp8266::GetVersion()
 {
-	return Send("AT+GMR\r\n", "OK");
+	return At.Send("AT+GMR");
 }
 
 bool Esp8266::Sleep(uint ms)
 {
 	String cmd = "AT+GSLP=";
 	cmd += ms;
-	return SendCmd(cmd);
+	return At.SendCmd(cmd);
 }
 
 bool Esp8266::Echo(bool open)
 {
 	String cmd = "ATE";
 	cmd = cmd + (open ? '1' : '0');
-	return SendCmd(cmd);
+	return At.SendCmd(cmd);
 }
 
 // 恢复出厂设置，将擦写所有保存到Flash的参数，恢复为默认参数。会导致模块重启
 bool Esp8266::Restore()
 {
-	return SendCmd("AT+RESTORE");
+	return At.SendCmd("AT+RESTORE");
 }
 
 /******************************** Esp8266 ********************************/
@@ -722,7 +470,7 @@ bool Esp8266::SetMode(NetworkType mode)
 	String cmd = "AT+CWMODE=";
 	cmd += (byte)mode;
 
-	if (!SendCmd(cmd)) return false;
+	if (!At.SendCmd(cmd)) return false;
 
 	WorkMode = mode;
 
@@ -745,7 +493,7 @@ NetworkType Esp8266::GetMode()
 
 	auto mod = NetworkType::Station;
 
-	auto rs = Send("AT+CWMODE?\r\n", "OK");
+	auto rs = At.Send("AT+CWMODE?");
 	if (!rs) return mod;
 
 	int p = rs.IndexOf(':');
@@ -758,7 +506,7 @@ NetworkType Esp8266::GetMode()
 // <bssid>目标AP的MAC地址
 String Esp8266::GetJoinAP()
 {
-	return Send("AT+CWJAP?\r\n", "OK");
+	return At.Send("AT+CWJAP?");
 }
 
 /*
@@ -793,7 +541,7 @@ bool Esp8266::JoinAP(const String& ssid, const String& pass)
 	String cmd = "AT+CWJAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"";
 
-	bool rs = SendCmd(cmd, 15000);
+	bool rs = At.SendCmd(cmd, 15000);
 
 #if NET_DEBUG
 	net_printf("Esp8266::JoinAP ");
@@ -816,7 +564,7 @@ OK
 */
 bool Esp8266::UnJoinAP()
 {
-	return SendCmd("AT+CWQAP", 2000);
+	return At.SendCmd("AT+CWQAP", 2000);
 }
 
 /*
@@ -826,7 +574,7 @@ bool Esp8266::SetAutoConn(bool enable)
 {
 	String cmd = "AT+CWAUTOCONN=";
 
-	return SendCmd(cmd + (enable ? '1' : '0'));
+	return At.SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 // +CWLAP:<enc>,<ssid>,<rssi>,<mac>,<ch>,<freq offset>,<freq calibration>
@@ -834,13 +582,13 @@ bool Esp8266::SetAutoConn(bool enable)
 // freq calibration，频偏校准值
 String Esp8266::LoadAPs()
 {
-	return Send("AT+CWLAP\r\n", "OK");
+	return At.Send("AT+CWLAP");
 }
 
 // +CWSAP:<ssid>,<pwd>,<chl>,<ecn>,<max conn>,<ssid hidden>
 String Esp8266::GetAP()
 {
-	return Send("AT+CWSAP\r\n", "OK");
+	return At.Send("AT+CWSAP");
 }
 
 /*
@@ -865,19 +613,19 @@ bool Esp8266::SetAP(const String& ssid, const String& pass, byte channel, byte e
 	String cmd = "AT+CWSAP=";
 	cmd = cmd + "\"" + ssid + "\",\"" + pass + "\"," + channel + ',' + ecn /*+ ',' + maxConnect + ',' + (hidden ? '1' : '0')*/;
 
-	return SendCmd(cmd, 1600);
+	return At.SendCmd(cmd, 1600);
 }
 
 // <ip addr>,<mac>
 // 查询连接到AP的Stations信息。无法查询DHCP接入
 String Esp8266::LoadStations()
 {
-	return Send("AT+CWLIF\r\n", "OK");
+	return At.Send("AT+CWLIF");
 }
 
 bool Esp8266::GetDHCP(bool* sta, bool* ap)
 {
-	auto rs = Send("AT+CWDHCP?\r\n", "OK");
+	auto rs = At.Send("AT+CWDHCP?");
 	if (!rs) return false;
 
 	byte n = rs.ToInt();
@@ -907,13 +655,13 @@ bool Esp8266::SetDHCP(NetworkType mode, bool enable)
 
 	String cmd = "AT+CWDHCP=";
 	String n = enable ? "1" : "0";
-	
-	return SendCmd(cmd + m + ',' + n);
+
+	return At.SendCmd(cmd + m + ',' + n);
 }
 
 MacAddress Esp8266::GetMAC(bool sta)
 {
-	auto rs = Send(sta ? "AT+CIPSTAMAC?\r\n" : "AT+CIPAPMAC?\r\n", "OK");
+	auto rs = At.Send(sta ? "AT+CIPSTAMAC?" : "AT+CIPAPMAC?");
 	int p = rs.IndexOf(':');
 	if (p < 0) return MacAddress::Empty();
 
@@ -926,12 +674,12 @@ bool Esp8266::SetMAC(bool sta, const MacAddress& mac)
 	String cmd = sta ? "AT+CIPSTAMAC" : "AT+CIPAPMAC";
 	cmd = cmd + "=\"" + mac.ToString().Replace('-', ':') + '\"';
 
-	return SendCmd(cmd);
+	return At.SendCmd(cmd);
 }
 
 IPAddress Esp8266::GetIP(bool sta)
 {
-	auto rs = Send(sta ? "AT+CIPSTA?\r\n" : "AT+CIPAP?\r\n", "OK");
+	auto rs = At.Send(sta ? "AT+CIPSTA?" : "AT+CIPAP?");
 	int p = rs.IndexOf("ip:\"");
 	if (p < 0) return IPAddress::Any();
 
@@ -965,12 +713,12 @@ STATUS:<stat>
 */
 String Esp8266::GetStatus()
 {
-	return Send("AT+CIPSTATUS?\r\n", "OK");
+	return At.Send("AT+CIPSTATUS?");
 }
 
 bool Esp8266::GetMux()
 {
-	auto rs = Send("AT+CIPMUX?\r\n", "OK");
+	auto rs = At.Send("AT+CIPMUX?");
 	int p = rs.IndexOf(':');
 	if (p < 0) return false;
 
@@ -980,25 +728,25 @@ bool Esp8266::GetMux()
 bool Esp8266::SetMux(bool enable)
 {
 	String cmd = "AT+CIPMUX=";
-	return SendCmd(cmd + (enable ? '1' : '0'));
+	return At.SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 bool Esp8266::Update()
 {
-	return SendCmd("AT+CIPUPDATE");
+	return At.SendCmd("AT+CIPUPDATE");
 }
 
 bool Esp8266::Ping(const IPAddress& ip)
 {
 	String cmd = "AT+PING=";
 
-	return SendCmd(cmd + ip);
+	return At.SendCmd(cmd + ip);
 }
 
 bool Esp8266::SetIPD(bool enable)
 {
 	String cmd = "AT+CIPDINFO=";
-	return SendCmd(cmd + (enable ? '1' : '0'));
+	return At.SendCmd(cmd + (enable ? '1' : '0'));
 }
 
 void LoadStationTask(void* param)

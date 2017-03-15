@@ -146,7 +146,9 @@ NetworkInterface* AP0801::Create8266(bool apOnly)
 {
 	debug_printf("\r\nEsp8266::Create \r\n");
 
-	auto esp = new Esp8266(COM4, PE2, PD3);
+	auto esp = new Esp8266();
+	esp->Init(COM4);
+	esp->Set(PE2, PD3);
 	esp->SetLed(*Leds[1]);
 
 	// 初次需要指定模式 否则为 Wire
@@ -209,7 +211,7 @@ static void OnInitNet(void* param)
 {
 	auto& bsp	= *(AP0801*)param;
 
-	bsp.Create5500();
+	//bsp.Create5500();
 	bsp.Create8266(false);
 
 	Client->Open();

@@ -142,7 +142,9 @@ NetworkInterface* AP0104::Create5500()
 
 NetworkInterface* AP0104::Create8266(bool apOnly)
 {
-	auto esp = new Esp8266(COM4, P0, P0);
+	auto esp = new Esp8266();
+	esp->Init(COM4);
+	esp->Set(P0, P0);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = esp->SSID && *esp->SSID;

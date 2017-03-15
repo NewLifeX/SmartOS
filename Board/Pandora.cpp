@@ -105,7 +105,9 @@ NetworkInterface* PA0903::Create5500()
 
 NetworkInterface* PA0903::Create8266()
 {
-	auto esp = new Esp8266(COM4, PE2, PD3);
+	auto esp = new Esp8266();
+	esp->Init(COM4);
+	esp->Set(PE2, PD3);
 	// 初次需要指定模式 否则为 Wire
 	bool join = esp->SSID && *esp->SSID;
 	// esp->Mode = NetworkType::Station;

@@ -95,7 +95,7 @@ bool ACZero::Wait(int usDelay) const
 	while (us < 0) us += d;
 	while (us > d) us -= d;
 
-	debug_printf("ACZero::Wait 周期=%dus 等待=%dus \r\n", Period, us);
+	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Count=%d Last=%d \r\n", Period, us, Count, (int)Last);
 
 	//Sys.Delay(us);
 	Time.Delay(us);

@@ -95,7 +95,10 @@ void IOK027X::InitLeds()
 
 NetworkInterface* IOK027X::Create8266(Pin power)
 {
-	auto esp = new Esp8266(COM2, power, PA1);
+	auto esp = new Esp8266();
+	esp->Init(COM2);
+	esp->Set(power, PA1);
+
 	// 初次需要指定模式 否则为 Wire
 	bool join = esp->SSID && *esp->SSID;
 	//if (!join) esp->Mode = NetworkType::AP;
