@@ -77,10 +77,12 @@ void ACZero::OnHandler(InputPort& port, bool down)
 // 等待下一次零点，需要考虑继电器动作延迟
 bool ACZero::Wait(int usDelay) const
 {
+	debug_printf("ACZero::Wait Last=%dms Count=%d \r\n", (int)Last, Count);
 	if (Count == 0 || Last == 0) return false;
 
 	// 计算上一次零点后过去的时间
 	int ms = Sys.Ms() - Last;
+	debug_printf("ACZero::Wait ms=%dms \r\n", ms);
 	if (ms < 0 && ms > 40) return false;
 
 	// 计算下一次零点什么时候到来
