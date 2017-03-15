@@ -63,11 +63,13 @@ void ACZero::OnHandler(InputPort& port, bool down)
 	{
 		// 两次零点
 		int ms = now - Last;
+
+		// 零点信号可能有毛刺或者干扰，需要避开
+		if (ms <= Period / 2 || ms >= Period * 2) return;
+
+		// 通过加权平均算法纠正数据
 		int us = ms * 1000;
-		if (Count == 0)
-			Period = us;
-		else
-			Period = (Period * 7 + us) / 8;
+		Period = (Period * 7 + us) / 8;
 	}
 
 	Last = now;
@@ -94,7 +96,7 @@ bool ACZero::Wait(int usDelay) const
 	while (us > d) us -= d;
 
 	debug_printf("ACZero::Wait 周期=%dus 等待=%dus \r\n", Period, us);
-	
+
 	//Sys.Delay(us);
 	Time.Delay(us);
 
