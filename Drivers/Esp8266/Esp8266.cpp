@@ -104,7 +104,8 @@ bool Esp8266::OnOpen()
 {
 	if (!At.Open()) return false;
 
-	if (!CheckReady())
+	if (!Test(1, 1000) && !CheckReady())
+	//if (!CheckReady())
 	{
 		net_printf("Esp8266::Open 打开失败！");
 
@@ -318,7 +319,10 @@ void Esp8266::Process()
 	auto sk = es[idx];
 	if (sk)
 	{
-		sk->OnProcess(_Buffer.Sub(1, -1), _Remote);
+		auto data = _Buffer.Sub(1, -1);
+		_Buffer.SetLength(0);
+
+		sk->OnProcess(data, _Remote);
 	}
 
 	// 清零长度，其它数据包才可能进来
