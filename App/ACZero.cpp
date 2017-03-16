@@ -65,7 +65,8 @@ void ACZero::OnHandler(InputPort& port, bool down)
 		int ms = now - Last;
 
 		// 零点信号可能有毛刺或者干扰，需要避开
-		if (ms <= Period / 2 || ms >= Period * 2) return;
+		//if (ms <= Period / 2 || ms >= Period * 2) return;
+		if (ms <= (Period >> 1) || ms >= (Period << 1)) return;
 
 		// 通过加权平均算法纠正数据
 		int us = ms * 1000;
