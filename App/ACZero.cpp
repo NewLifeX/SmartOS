@@ -54,6 +54,7 @@ void ACZero::Close()
 	Port.Close();
 }
 
+static int Cost = 0;
 void ACZero::OnHandler(InputPort& port, bool down)
 {
 	if (!down) return;
@@ -63,6 +64,7 @@ void ACZero::OnHandler(InputPort& port, bool down)
 	{
 		// 两次零点
 		int ms = now - Last;
+		Cost = ms;
 
 		// 零点信号可能有毛刺或者干扰，需要避开
 		//if (ms <= Period / 2 || ms >= Period * 2) return;
@@ -96,7 +98,7 @@ bool ACZero::Wait(int usDelay) const
 	while (us < 0) us += d;
 	while (us > d) us -= d;
 
-	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Count=%d Last=%d \r\n", Period, us, Count, (int)Last);
+	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Count=%d Last=%d Cost=%d \r\n", Period, us, Count, (int)Last, Cost);
 
 	//Sys.Delay(us);
 	Time.Delay(us);
