@@ -99,7 +99,7 @@ bool ACZero::Wait(int usDelay) const
 
 	// 4号继电器作为输出信号
 	static OutputPort sign(PA5);
-	sign != sign;
+	sign = !sign;
 
 	// 计算下一次零点什么时候到来
 	int us = Period - ms * 1000;
