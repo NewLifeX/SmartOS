@@ -117,7 +117,7 @@ INROOT void TTime::Delay(int us) const
 	uint max = UsToTicks(1000 - 1);
 	if (ticks >= max)
 	{
-		ms++;
+		end++;
 		ticks -= max;
 	}
 
@@ -125,7 +125,7 @@ INROOT void TTime::Delay(int us) const
 	while (true)
 	{
 		// 首先比较毫秒数
-		int n = (int)(Current() - ms);
+		int n = (int)(Current() - end);
 		if (n > 0) break;
 
 		if (n == 0 && CurrentTicks() >= ticks) break;
