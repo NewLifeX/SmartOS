@@ -97,6 +97,10 @@ bool ACZero::Wait(int usDelay) const
 	int ms = Sys.Ms() - Last;
 	if (ms < 0 && ms > 40) return false;
 
+	// 4号继电器作为输出信号
+	static OutputPort sign(PB14);
+	sign != sign;
+
 	// 计算下一次零点什么时候到来
 	int us = Period - ms * 1000;
 	// 继电器动作延迟
