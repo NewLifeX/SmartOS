@@ -18,12 +18,13 @@ ACZero::~ACZero()
 	if (Port.Opened) Close();
 }
 
-void ACZero::Set(Pin pin)
+void ACZero::Set(Pin pin, byte invert)
 {
 	if (pin == P0) return;
 
 	Port.HardEvent = true;
 	Port.Set(pin);
+	if (invert < 2) Port.Invert = invert;
 	Port.Press.Bind(&ACZero::OnHandler, this);
 	Port.UsePress();
 }

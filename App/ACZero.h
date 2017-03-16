@@ -16,7 +16,8 @@ public:
 	ACZero();
 	~ACZero();
 
-	void Set(Pin pin);
+	// 设置引脚，0下拉1上拉2自动检测
+	void Set(Pin pin, byte invert = 0);
 	bool Open();
 	void Close();
 
