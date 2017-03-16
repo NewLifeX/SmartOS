@@ -95,24 +95,21 @@ INROOT void TTime::Delay(int us) const
 	// 睡眠时间太短
 	if (us <= 0) return;
 
-	/*// 较大的时间，按毫秒休眠
+	// 当前函数耗时1~3us
+	if (us > 100) us -= 1;
+
+	UInt64 end = Current();
 	if (us >= 1000)
 	{
-		Sleep(us / 1000);
+		// 拆分毫秒和微秒
+		int ms = us / 1000;
+		end += ms;
+
 		us %= 1000;
 	}
-	// 睡眠时间太短
-	if (!us) return;*/
-
-	// 无需关闭中断，也能实现延迟
-	// 拆分毫秒和微秒
-	int ms = us / 1000;
-	us %= 1000;
 
 	// 微秒转为滴答
 	uint ticks = CurrentTicks() + UsToTicks(us);
-
-	UInt64 end = Current() + ms;
 	// 结束嘀嗒数有可能超过1000
 	uint max = UsToTicks(1000 - 1);
 	if (ticks >= max)
