@@ -8,6 +8,7 @@
 ACZero::ACZero()
 {
 	Period = 10000;
+	Width = 0;
 	Count = 0;
 	Last = 0;
 }
@@ -54,30 +55,36 @@ void ACZero::Close()
 	Port.Close();
 }
 
-static int Cost = 0;
 void ACZero::OnHandler(InputPort& port, bool down)
 {
-	if (!down) return;
+	if (!down)
+	{
+		Width = port.PressTime;
+		return;
+	}
 
 	auto now = Sys.Ms();
-	if (Last > 0)
+	Count++;
+
+	// 每256*10ms修正一次周期
+	if (Last > 0 && (Count & 0xFF) == 0)
+		//if (Last > 0 && (Count & 0xFF) == 0)
 	{
 		// 两次零点
 		int ms = now - Last;
-		Cost = ms;
+		int us = ms * 1000;
 
 		// 零点信号可能有毛刺或者干扰，需要避开
-		//if (ms <= Period / 2 || ms >= Period * 2) return;
-		if (ms <= (Period >> 1) || ms >= (Period << 1)) return;
+		//if (us <= Period / 2 || us >= Period * 2) return;
+		if (us <= (Period >> 1) || us >= (Period << 1)) return;
 
 		// 通过加权平均算法纠正数据
-		int us = ms * 1000;
 		Period = (Period * 7 + us) / 8;
+
+		debug_printf("OnHandler us=%d Period=%d Width=%d \r\n", us, Period, Width);
 	}
 
 	Last = now;
-
-	Count++;
 }
 
 // 等待下一次零点，需要考虑继电器动作延迟
@@ -98,7 +105,7 @@ bool ACZero::Wait(int usDelay) const
 	while (us < 0) us += d;
 	while (us > d) us -= d;
 
-	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Count=%d Last=%d Cost=%d \r\n", Period, us, Count, (int)Last, Cost);
+	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Width=%dms Count=%d Last=%d \r\n", Period, us, Width, Count, (int)Last);
 
 	//Sys.Delay(us);
 	Time.Delay(us);

@@ -9,6 +9,7 @@ class ACZero
 public:
 	InputPort	Port;	// 交流过零检测引脚
 	int		Period;		// 周期us
+	int		Width;		// 零点信号宽度ms
 	uint	Count;		// 累计次数
 	UInt64	Last;		// 最后一次零点
 
