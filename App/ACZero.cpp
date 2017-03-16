@@ -113,10 +113,13 @@ bool ACZero::Wait(int usDelay) const
 
 	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Width=%dms Count=%d Last=%d Now=%d", Period, us, Width, Count, (int)Last, (int)now);
 
+	TimeCost tc;
+
 	//Sys.Delay(us);
 	Time.Delay(us);
 
-	debug_printf(" Now2=%d \r\n", (int)Sys.Ms());
+	us = tc.Elapsed();
+	debug_printf(" Now2=%d Cost=%d \r\n", (int)Sys.Ms(), us);
 
 	return true;
 }
