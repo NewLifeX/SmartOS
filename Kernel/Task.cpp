@@ -433,7 +433,7 @@ void TaskScheduler::ShowStatus()
 	debug_printf("Task::ShowStatus [%d]", ts);
 	debug_printf(" 负载 %d.%d%%", p/100, p%100);
 	debug_printf(" 平均 %dus 当前 ", ts ? ct/ts : 0);
-	DateTime((int)(now/1000)).Show();
+	DateTime::Now().Show();
 	debug_printf(" 启动 ");
 	TimeSpan(now).Show(false);
 
