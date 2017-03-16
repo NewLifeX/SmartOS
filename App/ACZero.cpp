@@ -80,7 +80,7 @@ void ACZero::OnHandler(InputPort& port, bool down)
 		if (us <= (Period >> 1) || us >= (Period << 1)) return;
 
 		// 通过加权平均算法纠正数据
-		Period = (Period * 7 + us) / 8;
+		Period = (Period * 31 + us) / 32;
 
 		debug_printf("OnHandler us=%d Period=%d Width=%d \r\n", us, Period, Width);
 	}
