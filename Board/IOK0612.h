@@ -25,11 +25,15 @@ public:
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
 
+	cstring			SSID;
+	cstring			Pass;
+
 	IOK0612();
 
 	void Init(ushort code, cstring name, COM message = COM1);
 
 	void* InitData(void* data, int size);
+	void InitWiFi(cstring ssid,cstring pass);
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
