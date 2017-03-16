@@ -141,12 +141,12 @@ bool Lock::Wait(int ms)
 #if DEBUG
 
 // 使用字符串指针的指针，因为引用的都是字符串常量，不需要拷贝和分配空间
-static cstring _TS[16];
+static cstring _TS[64];
 static int _TS_Len = 0;
 
 TraceStack::TraceStack(cstring name)
 {
-	if (_TS_Len < 16) _TS[_TS_Len++] = name;
+	if (_TS_Len < 64) _TS[_TS_Len++] = name;
 }
 
 TraceStack::~TraceStack()
