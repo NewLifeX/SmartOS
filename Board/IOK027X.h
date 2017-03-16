@@ -24,11 +24,15 @@ public:
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
 
+	cstring			SSID;
+	cstring			Pass;
+
 	IOK027X();
 
 	void Init(ushort code, cstring name, COM message = COM1);
 
 	void* InitData(void* data, int size);
+	void InitWiFi(cstring ssid, cstring pass);
 	void Register(int index, IDataPort& dp);
 	void SetRestore(Pin pin = PB4);			//设置重置引脚
 	void InitLeds();

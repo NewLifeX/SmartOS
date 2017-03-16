@@ -27,6 +27,9 @@ IOK0612::IOK0612()
 	Data	= nullptr;
 	Size	= 0;
 	Current = this;
+
+	SSID = "WSWL";
+	Pass = "12345678";
 }
 
 void IOK0612::Init(ushort code, cstring name, COM message)
@@ -83,6 +86,12 @@ void* IOK0612::InitData(void* data, int size)
 	return data;
 }
 
+void IOK0612::InitWiFi(cstring ssid,cstring pass)
+{
+	SSID = ssid;
+	Pass = pass;
+}
+
 void IOK0612::InitLeds()
 {
 	for(int i=0; i<LedPins.Count(); i++)
@@ -128,8 +137,8 @@ NetworkInterface* IOK0612::Create8266()
 
 	if (!join)
 	{
-		*esp->SSID	= "WSWL";
-		*esp->Pass = "12345678";
+		*esp->SSID	= SSID;
+		*esp->Pass  = Pass;
 
 		esp->Mode	= NetworkType::STA_AP;
 	}
