@@ -83,7 +83,12 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 
 	String rs;
 
-	auto& task = Task::Current();
+#if NET_DEBUG
+	uint tid = 0;
+	auto task = &Task::Current();
+	if (task)tid = task->ID;
+#endif
+
 	// 判断是否正在发送其它指令
 	if (_Expect)
 	{
@@ -95,7 +100,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 			w->Command->Trim().Show(false);
 		else
 			net_printf("数据");
-		net_printf(" ，%d 无法发送 ", task.ID);
+		net_printf(" ，%d 无法发送 ", tid);
 		cmd.Trim().Show(true);
 #endif
 
@@ -170,7 +175,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 #if NET_DEBUG
 	if (enableLog && rs)
 	{
-		net_printf("%d<= ", task.ID);
+		net_printf("%d<= ", tid);
 		// 太长时不要去尾，避免产生重新分配
 		if (rs.Length() < 0x40)
 			rs.Trim().Show(true);

@@ -157,7 +157,11 @@ bool Esp8266::CheckReady()
 		_Power.Open();					// 使用前必须Open；
 		_Power.Down(20);
 	}
-	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open；
+	if (!_Reset.Empty()) 
+	{
+		_Reset.Open();		// 使用前必须Open；
+		_Reset = true;
+	}
 
 	// 每两次启动会有一次打开失败，交替
 	if (!_Reset.Empty())
@@ -423,7 +427,8 @@ bool Esp8266::Reset(bool soft)
 {
 	if (soft) return At.SendCmd("AT+RST");
 
-	_Reset.Up(100);
+	_Reset.Down(100);
+
 	return true;
 }
 
