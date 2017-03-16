@@ -57,9 +57,9 @@ void SerialPort::Set(COM index, int baudRate)
 	if (_baudRate <= 0)
 	{
 		int clock = Sys.Clock;
-		if (clock >= 72)
+		if (clock > 72)
 			_baudRate = 2048000;
-		else if (clock >= 36)
+		else if (clock > 36)
 			_baudRate = 1024000;
 		else
 			_baudRate = 115200;

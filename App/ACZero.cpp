@@ -98,7 +98,7 @@ bool ACZero::Wait(int usDelay) const
 	if (ms < 0 && ms > 40) return false;
 
 	// 4号继电器作为输出信号
-	static OutputPort sign(PB14);
+	static OutputPort sign(PA5);
 	sign != sign;
 
 	// 计算下一次零点什么时候到来
