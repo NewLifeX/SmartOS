@@ -99,7 +99,7 @@ bool ACZero::Wait(int usDelay) const
 	int ms = now - Last;
 	if (ms < 0 && ms > 40) return false;
 
-	Sys.Trace();
+	Sys.Trace(4);
 
 	// 计算下一次零点什么时候到来
 	int us = Period - ms * 1000;
@@ -121,9 +121,9 @@ bool ACZero::Wait(int usDelay) const
 	Time.Delay(us);
 
 	us = tc.Elapsed();
-	Sys.Trace();
+	Sys.Trace(4);
 	//debug_printf(" Now2=%d Cost=%d \r\n", (int)Sys.Ms(), us);
 
-	Sys.Trace();
+	//Sys.Trace();
 	return true;
 }
