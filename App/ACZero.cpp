@@ -98,9 +98,7 @@ bool ACZero::Wait(int usDelay) const
 	int ms = now - Last;
 	if (ms < 0 && ms > 40) return false;
 
-	// 4号继电器作为输出信号
-	static OutputPort sign(PB15);
-	sign = !sign;
+	Sys.Trace();
 
 	// 计算下一次零点什么时候到来
 	int us = Period - ms * 1000;
@@ -111,15 +109,19 @@ bool ACZero::Wait(int usDelay) const
 	while (us < 0) us += d;
 	while (us > d) us -= d;
 
+	Sys.Trace();
 	debug_printf("ACZero::Wait 周期=%dus 等待=%dus Width=%dms Count=%d Last=%d Now=%d", Period, us, Width, Count, (int)Last, (int)now);
 
 	TimeCost tc;
 
+	Sys.Trace();
 	//Sys.Delay(us);
 	Time.Delay(us);
 
 	us = tc.Elapsed();
+	Sys.Trace();
 	debug_printf(" Now2=%d Cost=%d \r\n", (int)Sys.Ms(), us);
 
+	Sys.Trace();
 	return true;
 }
