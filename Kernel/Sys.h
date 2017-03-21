@@ -145,7 +145,7 @@ class SystemConfig
 public:
 	// 操作系统
 	uint	Ver;		// 系统版本。Version格式
-	char	Name[16];	// 系统名称。如：SmartOS-M3-10x
+	char	Name[16];	// 系统名称
 
 	// 硬件
 	uint	HardVer;	// 硬件版本
@@ -208,16 +208,16 @@ public:
 
 // 编译信息兼容性处理
 #ifndef __BUILD_DATE__
-#define __BUILD_DATE__ 0
+#define __BUILD_DATE__ 6289		// 2017-03-21
 #endif
 #ifndef __BUILD_TIME__
-#define __BUILD_TIME__ 0
+#define __BUILD_TIME__ 1490054400	// 2017-03-21 00:00:00
 #endif
 #ifndef __BUILD_COMPILE__
-#define __BUILD_COMPILE__ ""
+#define __BUILD_COMPILE__ "2017-03-21 00:00:00"
 #endif
 #ifndef __BUILD_USER__
-#define __BUILD_USER__ ""
+#define __BUILD_USER__ "User_Computer"
 #endif
 
 
