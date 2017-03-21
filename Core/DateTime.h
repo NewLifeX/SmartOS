@@ -30,8 +30,11 @@ public:
 	DateTime& ParseMs(Int64 ms);
 	DateTime& ParseDays(int days);
 
+	// 1970/1/1以来天数
 	int TotalDays() const;
+	// 1970/1/1以来秒数
 	int TotalSeconds() const;
+	// 1970/1/1以来毫秒数
 	Int64 TotalMs() const;
 
 	// 获取星期，0~6表示星期天到星期六

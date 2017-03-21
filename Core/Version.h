@@ -18,6 +18,7 @@ public:
     Version& operator=(const Version& ver);
 
 	int ToValue() const;
+	operator int() const { return ToValue(); }
 
 	int CompareTo(const Version& value) const;
     friend bool operator==	(const Version& left, const Version& right);
@@ -29,6 +30,7 @@ public:
 
 	// 根据版本号反推编译时间。
 	DateTime Compile() const;
+	Version& SetCompile(int year, int month, int day);
 
 	String ToString() const;
 };

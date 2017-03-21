@@ -8,68 +8,68 @@
 
 Version::Version()
 {
-	Major	= 0;
-	Minor	= 0;
-	Build	= 0;
+	Major = 0;
+	Minor = 0;
+	Build = 0;
 }
 
 Version::Version(int value)
 {
-	Major	= value >> 24;
-	Minor	= value >> 16;
+	Major = value >> 24;
+	Minor = value >> 16;
 
-	Build	= value & 0xFFFF;
+	Build = value & 0xFFFF;
 }
 
 Version::Version(int major, int minor, int build)
 {
-	Major	= major;
-	Minor	= minor;
-	Build	= build;
+	Major = major;
+	Minor = minor;
+	Build = build;
 }
 
 Version::Version(const Version& ver)
 {
-	*this	= ver;
+	*this = ver;
 }
 
 Version::Version(Version&& ver)
 {
-	*this	= ver;
+	*this = ver;
 }
 
 Version& Version::operator=(const Version& ver)
 {
-	Major	= ver.Major;
-	Minor	= ver.Minor;
-	Build	= ver.Build;
+	Major = ver.Major;
+	Minor = ver.Minor;
+	Build = ver.Build;
 
 	return *this;
 }
 
 int Version::ToValue() const
 {
-	return (Major << 24) || (Minor << 16) || Build;
+	return (Major << 24) | (Minor << 16) | Build;
 }
 
 int Version::CompareTo(const Version& value) const
 {
-	int n	= (int)Major	- value.Major;
-	if(n) return n;
+	int n = (int)Major - value.Major;
+	if (n) return n;
 
-	n		= (int)Minor	- value.Minor;
-	if(n) return n;
+	n = (int)Minor - value.Minor;
+	if (n) return n;
 
-	n		= (int)Build	- value.Build;
-	if(n) return n;
+	n = (int)Build - value.Build;
+	if (n) return n;
 
 	return 0;
 }
 
 bool operator==	(const Version& left, const Version& right) { return left.CompareTo(right) == 0; }
 bool operator!=	(const Version& left, const Version& right) { return left.CompareTo(right) != 0; }
-bool operator>	(const Version& left, const Version& right) { return left.CompareTo(right) >  0; }
-bool operator<	(const Version& left, const Version& right) { return left.CompareTo(right) <  0; }
+bool operator>	(const Version& left, const Version& right) { return left.CompareTo(right) > 0; }
+bool operator<	(const Version& left, const Version& right) { return left.CompareTo(right) < 0; }
 bool operator>=	(const Version& left, const Version& right) { return left.CompareTo(right) >= 0; }
 bool operator<=	(const Version& left, const Version& right) { return left.CompareTo(right) <= 0; }
 
@@ -79,15 +79,24 @@ DateTime Version::Compile() const
 	DateTime dt(2000, 1, 1);
 
 	// Build 是2000-01-01以来的天数
-	dt	= dt.AddDays(Build);
+	dt = dt.AddDays(Build);
 
 	return dt;
+}
+
+Version& Version::SetCompile(int year, int month, int day)
+{
+	DateTime dt(2000, 1, 1);
+	DateTime dt2(year, month, day);
+	Build = (dt2 - dt).TotalDays();
+
+	return *this;
 }
 
 String Version::ToString() const
 {
 	String str;
-	str	= str + Major + '.' + Minor + '.' + Build;
+	str = str + Major + '.' + Minor + '.' + Build;
 
 	return str;
 }
