@@ -213,11 +213,14 @@ public:
 #ifndef __BUILD_TIME__
 #define __BUILD_TIME__ 1490054400	// 2017-03-21 00:00:00
 #endif
-#ifndef __BUILD_COMPILE__
-#define __BUILD_COMPILE__ "2017-03-21 00:00:00"
+#ifndef __BUILD_SDATE__
+#define __BUILD_SDATE__ "170321"
+#endif
+#ifndef __BUILD_STIME__
+#define __BUILD_STIME__ "2017-03-21 00:00:00"
 #endif
 #ifndef __BUILD_USER__
-#define __BUILD_USER__ "User_Computer"
+#define __BUILD_USER__ "Computer_User"
 #endif
 
 

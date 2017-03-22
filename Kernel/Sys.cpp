@@ -14,13 +14,13 @@ SystemConfig g_Config = {
 	"SmartOS_CPU",
 
 	// 硬件
-	0x0,
+	(0x0 | __BUILD_DATE__),
 
 	// 应用软件
-	0x0,
-	0x0,
+	(0x0 | __BUILD_DATE__),
+	(0x0 | __BUILD_DATE__),
 	__BUILD_USER__,
-	"170321",
+	__BUILD_SDATE__,
 };
 
 #if defined(BOOT) || defined(APP)
@@ -65,7 +65,7 @@ void TSys::ShowInfo() const
 	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
 	Version v(Config->Ver);
 	debug_printf("Ver:%s\r\n", v.ToString().GetBuffer());
-	debug_printf("Product:%s Build:%s %s\r\n", Config->Product, __BUILD_USER__, __BUILD_COMPILE__);
+	debug_printf("Product:%s Build:%s %s\r\n", Config->Product, __BUILD_USER__, __BUILD_STIME__);
 	Version v1(Config->AppVer);
 	Version v2(Config->HardVer);
 	debug_printf("AppVer:%s HardVer:%s\r\n", v1.ToString().GetBuffer(), v2.ToString().GetBuffer());
