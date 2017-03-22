@@ -163,6 +163,9 @@ bool Esp8266::CheckReady()
 		_Reset = true;
 	}
 
+	// 如果已连接，不需要再次重启
+	if (Test(1, 500)) return true;
+
 	// 每两次启动会有一次打开失败，交替
 	if (!_Reset.Empty())
 		Reset(false);	// 硬重启
@@ -215,6 +218,9 @@ void Esp8266::OpenAP()
 
 void Esp8266::OnClose()
 {
+	// 断电
+	_Power = false;
+
 	if (_task) Sys.RemoveTask(_task);
 
 	At.Close();
@@ -416,7 +422,7 @@ bool Esp8266::Test(int times, int interval)
 	String cmd = "AT";
 	for (int i = 0; i < times; i++)
 	{
-		if (i > 0)	Reset(false);
+		//if (i > 0)	Reset(false);
 		if (At.SendCmd(cmd, interval)) return true;
 	}
 
