@@ -178,12 +178,17 @@ bool TimeWheel::Expired()
 
 TimeCost::TimeCost()
 {
+	Reset();
+}
+
+void TimeCost::Reset()
+{
 	Start = Time.Current();
 	StartTicks = Time.CurrentTicks();
 }
 
 // 逝去的时间，微秒
-int TimeCost::Elapsed()
+int TimeCost::Elapsed() const
 {
 	int ts = (int)(Time.CurrentTicks() - StartTicks);
 	int ms = (int)(Time.Current() - Start);
@@ -198,7 +203,7 @@ int TimeCost::Elapsed()
 	return ms * 1000 - Time.TicksToUs(-ts);
 }
 
-void TimeCost::Show(cstring format)
+void TimeCost::Show(cstring format) const
 {
 	if (!format) format = "执行 %dus\r\n";
 	debug_printf(format, Elapsed());

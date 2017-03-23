@@ -1,6 +1,7 @@
 ﻿#ifndef __ACZero_H__
 #define __ACZero_H__
 
+#include "Kernel\TTime.h"
 #include "Device\Port.h"
 
 // 交流过零检测
@@ -11,7 +12,7 @@ public:
 	int		Period;		// 周期us
 	int		Width;		// 零点信号宽度ms
 	uint	Count;		// 累计次数
-	UInt64	Last;		// 最后一次零点
+	TimeCost	Last;		// 上一次零点
 
 	ACZero();
 	~ACZero();
