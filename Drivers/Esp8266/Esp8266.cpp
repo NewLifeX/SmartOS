@@ -72,9 +72,10 @@ void Esp8266::Init(ITransport* port)
 
 void Esp8266::Set(Pin power, Pin rst, Pin low)
 {
-	if (power != P0) _Power.Set(power);
-	if (rst != P0) _Reset.Set(rst);
-	if (low != P0) _LowPower.Set(low);
+	// 电源、重置、低功耗 均不需要倒置，内部true代表高电平。保险期间，设计电路时需要电源脚下拉、重置脚上拉
+	if (power != P0) _Power.Init(power, false);
+	if (rst != P0) _Reset.Init(rst, false);
+	if (low != P0) _LowPower.Init(low, false);
 }
 
 void Esp8266::SetLed(Pin led)
