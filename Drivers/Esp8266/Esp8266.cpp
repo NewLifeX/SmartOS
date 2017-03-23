@@ -235,6 +235,10 @@ bool Esp8266::OnLink(uint retry)
 
 	debug_printf("Esp8266::OnLink\r\n");
 
+	// 获取IP地址，如果成功，说明已经连上WiFi，无需重新连接
+	auto ip = GetIP(true);
+	if (!ip.IsAny()) return true;
+
 	bool join = SSID && *SSID;
 	// 等待WiFi自动连接
 	if (!At.WaitForCmd("WIFI CONNECTED", 3000))
