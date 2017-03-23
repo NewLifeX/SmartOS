@@ -77,7 +77,7 @@ bool EspSocket::OnOpen()
 	/*if(Remote.Address == IPAddress::Broadcast())
 		cmd += ",2";
 	else*/
-	cmd += ",0";
+	if (Protocol == NetType::Udp) cmd += ",0";
 
 	// 打开Socket。有OK/ERROR/ALREADY CONNECTED三种
 	auto rt = _Host.At.Send(cmd + "\r\n", "OK", "ERROR", 10000, false);
