@@ -422,7 +422,7 @@ bool Esp8266::Test(int times, int interval)
 	String cmd = "AT";
 	for (int i = 0; i < times; i++)
 	{
-		//if (i > 0)	Reset(false);
+		if (i > 0)	Reset(false);
 		if (At.SendCmd(cmd, interval)) return true;
 	}
 
