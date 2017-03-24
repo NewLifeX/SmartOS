@@ -218,6 +218,8 @@ bool AT::SendCmd(const String& cmd, uint msTimeout)
 
 bool AT::WaitForCmd(cstring expect, uint msTimeout)
 {
+	debug_printf("AT::WaitForCmd %s msTimeout=%d \r\n", expect, msTimeout);
+
 	String rs;
 
 	// 在接收事件中拦截

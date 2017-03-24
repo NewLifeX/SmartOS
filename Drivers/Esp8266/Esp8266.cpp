@@ -105,8 +105,22 @@ bool Esp8266::OnOpen()
 {
 	if (!At.Open()) return false;
 
-	if (!Test(1, 1000) && !CheckReady())
-	//if (!CheckReady())
+	if (!_Power.Empty())
+	{
+		_Power.Open();
+		//_Power.Down(20);
+		_Power = true;
+	}
+	if (!_Reset.Empty())
+	{
+		_Reset.Open();
+		_Reset = true;
+	}
+	debug_printf("Esp8266::OnOpen Power=%d Reset=%d \r\n", _Power.ReadInput(), _Reset.ReadInput());
+
+	// 模块上电后就可以测试通过AT指令，但是其它功能需要等到出现ready才可以使用
+	//if (!Test(1, 1000) && !CheckReady())
+	if (!CheckReady())
 	{
 		net_printf("Esp8266::Open 打开失败！");
 
@@ -152,20 +166,11 @@ bool Esp8266::OnOpen()
 
 bool Esp8266::CheckReady()
 {
-	// 先关一会电，然后再上电，让它来一个完整的冷启动
-	if (!_Power.Empty())
-	{
-		_Power.Open();					// 使用前必须Open；
-		_Power.Down(20);
-	}
-	if (!_Reset.Empty()) 
-	{
-		_Reset.Open();		// 使用前必须Open；
-		_Reset = true;
-	}
+	// 有可能是热重启
+	//bool at = Test(1, 500);
 
 	// 如果已连接，不需要再次重启
-	if (Test(1, 500)) return true;
+	//if (at) return true;
 
 	// 每两次启动会有一次打开失败，交替
 	if (!_Reset.Empty())
@@ -173,28 +178,15 @@ bool Esp8266::CheckReady()
 	else
 		Reset(true);	// 软件重启命令
 
-	// 如果首次加载，则说明现在处于出厂设置模式，需要对模块恢复出厂设置
-	auto cfg = Config::Current->Find("NET");
-	//if(!cfg) Restore();
-
 	for (int i = 0; i < 2; i++)
 	{
+		if (i > 0) Restore();
+
 		// 等待模块启动进入就绪状态
-		if (!Test(1, 500) && !At.WaitForCmd("ready", 3000))
-		{
-			if (!Test(10, 1000))
-			{
-				net_printf("Esp8266::Open 打开失败！");
-
-				return false;
-			}
-		}
-		if (cfg || i == 1) break;
-
-		Restore();
+		if (At.WaitForCmd("ready", 3000) && Test(2, 500)) return true;
 	}
 
-	return true;
+	return false;
 }
 
 void Esp8266::OpenAP()
@@ -236,13 +228,15 @@ bool Esp8266::OnLink(uint retry)
 
 	debug_printf("Esp8266::OnLink\r\n");
 
+	GetJoinAP();
 	// 获取IP地址，如果成功，说明已经连上WiFi，无需重新连接
 	auto ip = GetIP(true);
 	if (!ip.IsAny()) return true;
 
 	bool join = SSID && *SSID;
 	// 等待WiFi自动连接
-	if (!At.WaitForCmd("WIFI CONNECTED", 3000))
+	//if (!At.WaitForCmd("WIFI CONNECTED", 3000))
+	if (!At.WaitForCmd("WIFI GOT IP", 3000))
 	{
 		auto mode = WorkMode;
 		// 默认Both
@@ -252,6 +246,7 @@ bool Esp8266::OnLink(uint retry)
 		{
 			if (!JoinAP(*SSID, *Pass)) return false;
 
+			GetJoinAP();
 			ShowConfig();
 			SaveConfig();
 		}
@@ -790,21 +785,25 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 		// return false;
 	}
 
-	bool haveChang = false;
 	// 现有密码与设置密码不一致才写FLASH
 	if (*SSID != ssid || *Pass != pass)
 	{
-		haveChang = true;
 		// 保存密码
 		*SSID = ssid;
 		*Pass = pass;
-		// 组网后单独STA模式，调试时使用混合模式
-		//#if DEBUG
-		//	Mode	= NetworkType::STA_AP;
-		//#else
 		Mode = NetworkType::Station;
-		//#endif
 		SaveConfig();
+
+		Sys.AddTask([](void* param) {
+			auto esp = (Esp8266*)param;
+			
+			// 断开连接并恢复出厂设置
+			esp->UnJoinAP();
+			esp->Restore();
+
+			// 延迟重启
+			Sys.Reboot(1000);
+		}, this, 5000, -1, "SetWiFi");
 	}
 
 	// Sleep跳出去处理其他的
@@ -813,11 +812,10 @@ bool Esp8266::SetWiFi(const Pair& args, Stream& result)
 
 	// 返回结果
 	result.Write((byte)true);
-	// 延迟重启
-	if (haveChang) Sys.Reboot(5000);
 
 	return true;
 }
+
 // 获取WIFI名称
 bool Esp8266::GetWiFi(const Pair& args, Stream& result)
 {
@@ -829,7 +827,7 @@ bool Esp8266::GetWiFi(const Pair& args, Stream& result)
 
 void Esp8266::GetAPsTask()
 {
-	if (APs == nullptr)APs = new String();
+	if (APs == nullptr) APs = new String();
 	APs->Clear();
 	*APs = LoadAPs();
 }
