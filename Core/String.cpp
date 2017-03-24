@@ -910,7 +910,7 @@ String String::Substring(int start, int len) const
 	if (len < 0) len = _Length - start;
 	if (len > _Length - start) len = _Length - start;
 
-	return String(_Arr + start, len);
+	return String((cstring)(_Arr + start), len);
 }
 
 cstring trim(cstring str, int& len, bool trimBegin, bool trimEnd)
