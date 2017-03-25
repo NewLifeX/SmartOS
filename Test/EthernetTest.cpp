@@ -6,7 +6,6 @@
 #include "TinyIP\Icmp.h"
 #include "TinyIP\Tcp.h"
 #include "TinyIP\Udp.h"
-#include "conf.h"
 
 TinyIP* tip;
 

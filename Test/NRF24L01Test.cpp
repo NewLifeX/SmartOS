@@ -1,6 +1,6 @@
 ﻿#include "Drivers\NRF24L01.h"
 
-#include "conf.h"
+extern NRF24L01* Create2401();
 
 //const char tx_buf[] = "It's 0123456789AB Time:";
 

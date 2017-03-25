@@ -5,8 +5,6 @@
 
 #include "TinyNet\TinyMessage.h"
 
-#include "conf.h"
-
 // 消息处理函数
 bool OpenLed(Message& msg, void* param)
 {

@@ -1,6 +1,5 @@
 ﻿#include "Kernel\Sys.h"
 #include "Security\Crc.h"
-#include "conf.h"
 
 static const uint DataBuffer[] =
 {
