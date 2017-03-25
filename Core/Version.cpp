@@ -26,6 +26,9 @@ Version::Version(int major, int minor, int build)
 	Major = major;
 	Minor = minor;
 	Build = build;
+
+	// 有可能是 170325 这样的写法
+	if (build > 120000) SetCompile(build);
 }
 
 Version::Version(const Version& ver)
@@ -86,6 +89,21 @@ DateTime Version::Compile() const
 
 Version& Version::SetCompile(int year, int month, int day)
 {
+	DateTime dt(2000, 1, 1);
+	DateTime dt2(year, month, day);
+	Build = (dt2 - dt).TotalDays();
+
+	return *this;
+}
+
+// 设置编译日期 170325
+Version& Version::SetCompile(int buildday)
+{
+	int day = buildday % 100;
+	buildday /= 100;
+	int month = buildday % 100;
+	int year = buildday / 100 + 2000;
+
 	DateTime dt(2000, 1, 1);
 	DateTime dt2(year, month, day);
 	Build = (dt2 - dt).TotalDays();

@@ -30,7 +30,10 @@ public:
 
 	// 根据版本号反推编译时间。
 	DateTime Compile() const;
+	// 设置编译日期
 	Version& SetCompile(int year, int month, int day);
+	// 设置编译日期 170325
+	Version& SetCompile(int buildday);
 
 	String ToString() const;
 };
