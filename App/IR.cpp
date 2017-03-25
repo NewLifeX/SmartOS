@@ -3,8 +3,6 @@
 
 #include "IR.h"
 
-//#include "Platform\stm32.h"
-
 /*
 Timer2  CH2       通道
 DMA1    Channel3  通道

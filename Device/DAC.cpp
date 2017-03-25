@@ -2,8 +2,6 @@
 #include "Device\Port.h"
 #include "DAC.h"
 
-//#include "Platform\stm32.h"
-
 #if defined(STM32F1)
 DAConverter::DAConverter(Pin pin)
 {

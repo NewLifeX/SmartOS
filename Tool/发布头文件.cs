@@ -1,1 +1,0 @@
-﻿"xcopy".Run("*.h ..\\SmartOSLib\\ /S");

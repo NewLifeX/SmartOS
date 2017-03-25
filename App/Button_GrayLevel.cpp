@@ -6,8 +6,6 @@
 #include "Button_GrayLevel.h"
 #include "Device\WatchDog.h"
 
-//#include "Platform\stm32.h"
-
 #define BTN_DEBUG DEBUG
 //#define BTN_DEBUG 0
 #if BTN_DEBUG
