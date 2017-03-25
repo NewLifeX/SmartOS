@@ -4,7 +4,7 @@ var dlib = dst + "Lib\\";
 
 "..\\".AsDirectory().CopyTo(dsos, "*.h;*.exe;*.dll", true);
 "..\\Test".AsDirectory().CopyTo(dsos + "Test", "*.cpp");
-Directory.Delete(dsos + "Platform", true);
+//Directory.Delete(dsos + "Platform", true);
 Directory.Delete(dsos + "XX", true);
 
 // 压缩库文件
