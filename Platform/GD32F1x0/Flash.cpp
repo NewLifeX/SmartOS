@@ -19,7 +19,7 @@ void Flash::OnInit()
 }
 
 /* 写入段数据 （起始段，段数量，目标缓冲区，读改写） */
-bool Flash::WriteBlock(uint address, const byte* buf, uint len, bool inc) const
+bool Flash::WriteBlock(uint address, const byte* buf, int len, bool inc) const
 {
     if(address < Start || address + len > Start + Size) return false;
 
