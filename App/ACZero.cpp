@@ -55,7 +55,6 @@ void ACZero::Close()
 	Port.Close();
 }
 
-static int _Delay = 0;
 void ACZero::OnHandler(InputPort& port, bool down)
 {
 	if (!down)
@@ -77,7 +76,7 @@ void ACZero::OnHandler(InputPort& port, bool down)
 		// 通过加权平均算法纠正数据
 		Period = (Period * 31 + us) / 32;
 
-		debug_printf("OnHandler us=%d Period=%d Width=%d _Delay=%d \r\n", us, Period, Width, _Delay);
+		//debug_printf("OnHandler us=%d Period=%d Width=%d _Delay=%d \r\n", us, Period, Width, _Delay);
 	}
 
 	Last.Reset();
@@ -92,8 +91,6 @@ bool ACZero::Wait(int usDelay) const
 	int us = Last.Elapsed();
 	if (us < 0 && us > 40000) return false;
 
-	Sys.Trace(4);
-
 	// 计算下一次零点什么时候到来
 	us = Period - us;
 	// 继电器动作延迟
@@ -103,20 +100,11 @@ bool ACZero::Wait(int usDelay) const
 	while (us < 0) us += d;
 	while (us > d) us -= d;
 
-	//Sys.Trace();
 	//debug_printf("ACZero::Wait 周期=%dus 等待=%dus Width=%dms Count=%d Last=%d Now=%d", Period, us, Width, Count, (int)Last, (int)now);
-	_Delay = us;
 
-	//TimeCost tc;
-
-	//Sys.Trace();
-	//Sys.Delay(us);
 	Time.Delay(us);
 
-	//us = tc.Elapsed();
-	Sys.Trace(4);
 	//debug_printf(" Now2=%d Cost=%d \r\n", (int)Sys.Ms(), us);
 
-	//Sys.Trace();
 	return true;
 }
