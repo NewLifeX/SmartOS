@@ -3,6 +3,7 @@
 
 #include "Net\NetworkInterface.h"
 #include "Net\Socket.h"
+#include "Device\Spi.h"
 
 // W5500以太网驱动
 class W5500 : public NetworkInterface
@@ -94,6 +95,15 @@ private:
 	// 中断脚回调
 	void OnIRQ(InputPort& port, bool down);
 	void OnIRQ();
+};
+
+// W5500配置
+class W5500Config
+{
+public:
+	SPI Spi;
+	Pin	Irq;
+	Pin Reset;
 };
 
 #endif

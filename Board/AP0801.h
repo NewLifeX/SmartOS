@@ -7,7 +7,11 @@
 
 #include "App\Alarm.h"
 
-// 阿波罗0801/0802
+#include "Device\Spi.h"
+#include "Drivers\W5500.h"
+#include "Drivers\Esp8266\Esp8266.h"
+
+// 阿波罗0801
 class AP0801
 {
 public:
@@ -20,6 +24,9 @@ public:
 	List<InputPort*>	Inputs;
 
 	Alarm*			AlarmObj;
+
+	W5500Config		Net;
+	Esp8266Config	Esp;
 
 	AP0801();
 
@@ -43,7 +50,7 @@ public:
 	// 打开以太网W5500
 	NetworkInterface* Create5500();
 	// 打开Esp8266，作为主控或者纯AP
-	NetworkInterface* Create8266(bool apOnly);
+	NetworkInterface* Create8266();
 
 	// ITransport* Create2401();
 
