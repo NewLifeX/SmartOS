@@ -389,7 +389,7 @@ void W5500::SetLed(OutputPort& led)
 {
 	auto fp	= new FlushPort();
 	fp->Port	= &led;
-	fp->Start();
+	//fp->Start();
 	Led	= fp;
 }
 
@@ -433,6 +433,9 @@ bool W5500::OnOpen()
 	//StateShow();
 	//PhyStateShow();
 #endif
+
+	// 小灯快闪
+	if (Led) Led->Write(500);
 
 	return true;
 }

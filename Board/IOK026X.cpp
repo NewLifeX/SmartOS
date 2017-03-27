@@ -127,6 +127,7 @@ NetworkInterface* IOK026X::Create8266()
 		return nullptr;
 	}
 
+	esp->SetLed(*Leds[0]);
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 	Client->Register("GetAPs", &Esp8266::GetAPs, esp);

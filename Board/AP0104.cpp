@@ -134,6 +134,7 @@ NetworkInterface* AP0104::Create5500()
 		return nullptr;
 	}
 
+	net->SetLed(*Leds[0]);
 	net->EnableDNS();
 	net->EnableDHCP();
 
@@ -163,6 +164,7 @@ NetworkInterface* AP0104::Create8266(bool apOnly)
 		return nullptr;
 	}
 
+	esp->SetLed(*Leds[1]);
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 

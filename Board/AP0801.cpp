@@ -139,13 +139,13 @@ NetworkInterface* AP0801::Create5500()
 	debug_printf("\r\nW5500::Create \r\n");
 
 	auto net = new W5500(Net.Spi, Net.Irq, Net.Reset);
-	net->SetLed(*Leds[0]);
 	if (!net->Open())
 	{
 		delete net;
 		return nullptr;
 	}
 
+	net->SetLed(*Leds[0]);
 	net->EnableDNS();
 	net->EnableDHCP();
 
@@ -159,7 +159,6 @@ NetworkInterface* AP0801::Create8266()
 	auto esp = new Esp8266();
 	esp->Init(Esp.Com, Esp.Baudrate);
 	esp->Set(Esp.Power, Esp.Reset, Esp.LowPower);
-	esp->SetLed(*Leds[1]);
 
 	// 初次需要指定模式 否则为 Wire
 	bool join = esp->SSID && *esp->SSID;
@@ -178,6 +177,7 @@ NetworkInterface* AP0801::Create8266()
 		return nullptr;
 	}
 
+	esp->SetLed(*Leds[1]);
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 

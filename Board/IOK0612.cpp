@@ -143,6 +143,7 @@ NetworkInterface* IOK0612::Create8266()
 		esp->Mode	= NetworkType::STA_AP;
 	}
 
+	esp->SetLed(*Leds[0]);
 	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
 	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
 
