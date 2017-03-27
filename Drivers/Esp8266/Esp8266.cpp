@@ -41,7 +41,7 @@ Esp8266::Esp8266()
 
 	Led = nullptr;
 
-	Buffer(_sockets, 5 * 4).Clear();
+	Buffer(Sockets, 5 * 4).Clear();
 
 	Mode = NetworkType::STA_AP;
 	WorkMode = NetworkType::STA_AP;
@@ -276,7 +276,7 @@ bool Esp8266::Config()
 
 Socket* Esp8266::CreateSocket(NetType type)
 {
-	auto es = (EspSocket**)_sockets;
+	auto es = (EspSocket**)Sockets;
 
 	int i = 0;
 	for (i = 0; i < 5; i++)
@@ -322,10 +322,10 @@ void Esp8266::Process()
 	if (_Buffer.Length() <= 1) return;
 
 	byte idx = _Buffer[0];
-	if (idx >= ArrayLength(_sockets)) return;
+	if (idx >= ArrayLength(Sockets)) return;
 
 	// 分发给各个Socket
-	auto es = (EspSocket**)_sockets;
+	auto es = (EspSocket**)Sockets;
 	auto sk = es[idx];
 	if (sk)
 	{

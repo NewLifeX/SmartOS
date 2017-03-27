@@ -37,7 +37,7 @@ GSM07::GSM07()
 	Area = 0;
 	CellID = 0;
 
-	Buffer(_sockets, 5 * 4).Clear();
+	Buffer(Sockets, 5 * 4).Clear();
 
 	Mode = NetworkType::STA_AP;
 
@@ -267,7 +267,7 @@ bool GSM07::Config()
 
 Socket* GSM07::CreateSocket(NetType type)
 {
-	auto es = (GSMSocket**)_sockets;
+	auto es = (GSMSocket**)Sockets;
 
 	int i = 0;
 	for (i = 0; i < 5; i++)
@@ -311,7 +311,7 @@ void GSM07::OnReceive(Buffer& bs)
 
 	// 分发到各个Socket
 	int idx = 0;
-	auto es = (GSMSocket**)_sockets;
+	auto es = (GSMSocket**)Sockets;
 	auto sk = es[idx];
 	if (sk)
 	{
@@ -779,6 +779,8 @@ GSMSocket::GSMSocket(GSM07& host, NetType protocol, byte idx)
 
 GSMSocket::~GSMSocket()
 {
+	if (_Host.Sockets[_Index] == this) _Host.Sockets[_Index] = nullptr;
+
 	Close();
 }
 

@@ -26,6 +26,9 @@ public:
 	OutputPort	_Reset;	// 重置
 	OutputPort	_LowPower;	// 低功耗
 
+	// 多个硬件socket
+	void*	Sockets[5];
+
 	Delegate<Buffer&>	Received;
 
 	//ushort	Country;	// 国家MCC 3位
@@ -103,9 +106,6 @@ private:
 	virtual bool OnLink(uint retry);
 
 	bool CheckReady();
-
-	// 多个硬件socket
-	int* _sockets[5];
 
 	// 数据到达
 	void OnReceive(Buffer& bs);

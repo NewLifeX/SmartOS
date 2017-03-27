@@ -22,6 +22,8 @@ EspSocket::EspSocket(Esp8266& host, NetType protocol, byte idx)
 
 EspSocket::~EspSocket()
 {
+	if (_Host.Sockets[_Index] == this) _Host.Sockets[_Index] = nullptr;
+
 	Close();
 }
 

@@ -27,6 +27,9 @@ public:
 	OutputPort	_Reset;	// 重置
 	OutputPort	_LowPower;	// 低功耗
 
+	// 多个硬件socket
+	void*	Sockets[5];
+
 	Esp8266();
 	virtual ~Esp8266();
 
@@ -118,9 +121,6 @@ private:
 
 	// 处理收到的数据包
 	void Process();
-
-	// 多个硬件socket
-	int* _sockets[5];
 
 	// 数据到达
 	void OnReceive(Buffer& bs);
