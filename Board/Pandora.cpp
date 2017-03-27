@@ -76,6 +76,16 @@ void* PA0903::InitData(void* data, int size)
 	return data;
 }
 
+// 写入数据区并上报
+void PA0903::Write(uint offset, byte data)
+{
+	auto client = Client;
+	if (!client) return;
+
+	client->Store.Write(offset, data);
+	client->ReportAsync(offset, 1);
+}
+
 void PA0903::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)
@@ -83,6 +93,22 @@ void PA0903::InitLeds()
 		auto port = new OutputPort(LedPins[i]);
 		port->Open();
 		Leds.Add(port);
+	}
+}
+
+void PA0903::InitButtons(const Delegate2<InputPort&, bool>& press)
+{
+	for (int i = 0; i < ButtonPins.Count(); i++)
+	{
+		auto port = new InputPort();
+		port->Index = i;
+		port->Init(ButtonPins[i], true);
+		//port->ShakeTime = 40;
+		port->Press = press;
+		port->UsePress();
+		port->Open();
+
+		Buttons.Add(port);
 	}
 }
 
@@ -226,4 +252,22 @@ void PA0903::Restore()
 	if (Client) Client->Reset("按键重置");
 }
 
-//auto host	= (W5500*)Create5500(Spi1, PA8, PA0, led);
+
+void PA0903::OnLongPress(InputPort* port, bool down)
+{
+	if (down) return;
+
+	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
+
+	ushort time = port->PressTime;
+	auto client = Client;
+	if (time >= 5000 && time < 10000)
+	{
+		if (client) client->Reset("按键重置");
+	}
+	else if (time >= 3000)
+	{
+		if (client) client->Reboot("按键重启");
+		Sys.Reboot(1000);
+	}
+}

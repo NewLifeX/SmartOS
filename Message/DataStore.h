@@ -16,6 +16,7 @@ public:
 
 	// 写入数据 offset 为虚拟地址
 	int Write(uint offset, const Buffer& bs);
+	int Write(uint offset, byte data) { return Write(offset, Buffer(&data, 1)); }
 	// 读取数据 offset 为虚拟地址
 	int Read(uint offset, Buffer& bs);
 

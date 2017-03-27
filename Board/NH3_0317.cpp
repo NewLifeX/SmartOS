@@ -149,12 +149,6 @@ NetworkInterface* NH3_0317::Create8266()
 
 /******************************** Token ********************************/
 
-void NH3_0317::SetStore(void*data, int len)
-{
-	if (!Client)return;
-	Client->Store.Data.Set(data, len);
-}
-
 void NH3_0317::InitClient()
 {
 	if (Client) return;

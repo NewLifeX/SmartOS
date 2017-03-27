@@ -14,13 +14,12 @@ class PA0903
 {
 public:
 	List<Pin>	LedPins;
+	List<Pin>	ButtonPins;
 	List<OutputPort*>	Leds;
+	List<InputPort*>	Buttons;
 
-	//List<Pin>	ButtonPins;
-	//List<InputPort*>	Buttons;
-
-	List<OutputPort*>	Outputs;
-	List<InputPort*>	Inputs;
+	//List<OutputPort*>	Outputs;
+	//List<InputPort*>	Inputs;
 
 	ProxyFactory*	ProxyFac;	// 透传管理器
 	Alarm*			AlarmObj;
@@ -32,11 +31,12 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
+	// 写入数据区并上报
+	void Write(uint offset, byte data);
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
-	//void InitButtons();
-	//void InitPort();
+	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	// 打开以太网W5500
 	NetworkInterface* Create5500();
@@ -51,7 +51,7 @@ public:
 	void InitAlarm();
 
 	void Restore();
-	//void OnLongPress(InputPort* port, bool down);
+	void OnLongPress(InputPort* port, bool down);
 
 	static PA0903* Current;
 

@@ -85,11 +85,14 @@ void* AP0803::InitData(void* data, int size)
 	return data;
 }
 
-void AP0803::SetStore(void*data, int len)
+// 写入数据区并上报
+void AP0803::Write(uint offset, byte data)
 {
-	if (!Client)return;
+	auto client = Client;
+	if (!client) return;
 
-	Client->Store.Data.Set(data, len);
+	client->Store.Write(offset, data);
+	client->ReportAsync(offset, 1);
 }
 
 void AP0803::InitLeds()

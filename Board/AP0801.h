@@ -35,8 +35,8 @@ public:
 
 	// 设置数据区
 	void* InitData(void* data, int size);
-	// 设置TokenClient数据区
-	void SetStore(void*data, int len);
+	// 写入数据区并上报
+	void Write(uint offset, byte data);
 	//获取客户端的状态0，未握手，1已握手，2已经登陆
 	int GetStatus();
 	

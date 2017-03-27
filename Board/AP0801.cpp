@@ -96,11 +96,14 @@ void* AP0801::InitData(void* data, int size)
 	return data;
 }
 
-void AP0801::SetStore(void*data, int len)
+// 写入数据区并上报
+void AP0801::Write(uint offset, byte data)
 {
-	if (!Client)return;
+	auto client = Client;
+	if (!client) return;
 
-	Client->Store.Data.Set(data, len);
+	client->Store.Write(offset, data);
+	client->ReportAsync(offset, 1);
 }
 
 void AP0801::InitLeds()
@@ -123,13 +126,14 @@ void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
 	for (int i = 0; i < ButtonPins.Count(); i++)
 	{
-		auto port = new InputPort(ButtonPins[i]);
-		port->Invert = true;
-		port->ShakeTime = 40;
+		auto port = new InputPort();
 		port->Index = i;
+		port->Init(ButtonPins[i], true);
+		//port->ShakeTime = 40;
 		port->Press = press;
 		port->UsePress();
 		port->Open();
+
 		Buttons.Add(port);
 	}
 }
