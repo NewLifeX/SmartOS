@@ -8,6 +8,7 @@ class TokenPingMessage : public MessageBase
 public:
 	UInt64	LocalTime;	// 时间ms
 	UInt64	ServerTime;	// 时间ms
+	Buffer*	Data;
 
 	TokenPingMessage();
 	TokenPingMessage(const TokenPingMessage& msg);

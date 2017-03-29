@@ -6,11 +6,14 @@ TokenPingMessage::TokenPingMessage()
 {
 	LocalTime	= DateTime::Now().TotalMs();
 	ServerTime	= 0;
+	Data		= nullptr;
 }
 
 TokenPingMessage::TokenPingMessage(const TokenPingMessage& msg) : MessageBase(msg)
 {
 	LocalTime	= msg.LocalTime;
+	ServerTime	= msg.ServerTime;
+	Data		= msg.Data;
 }
 
 // 从数据流中读取消息
@@ -28,6 +31,8 @@ void TokenPingMessage::Write(Stream& ms) const
 {
 	BinaryPair bp(ms);
 	bp.Set("Time", LocalTime);
+
+	if(Data) bp.Set("Data", *Data);
 }
 
 #if DEBUG
@@ -48,6 +53,8 @@ String& TokenPingMessage::ToStr(String& str) const
 		dt2.ParseMs(ServerTime);
 		str	= str + " ServerTime=" + dt2;
 	}
+
+	if (Data) str = str + "Data=" + Data->Length();
 
 	return str;
 }
