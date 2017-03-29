@@ -16,40 +16,10 @@
 #include "Security\RC4.h"
 #include "Security\Crc.h"
 
-
-#if DEBUG
-uint TokenSession::StatShowTaskID = 0;
-uint TokenSession::HisSsNum = 0;
-
-uint SessionStat::BraHello = 0;
-uint SessionStat::DecError = 0;
-
-SessionStat::SessionStat() { Clear(); }
-SessionStat::~SessionStat() { }
-
-void SessionStat::Clear()
-{
-	OnHello = 0;
-	OnLogin = 0;
-	OnPing = 0;
-}
-
-String& SessionStat::ToStr(String& str) const
-{
-	str = str + "Hello: " + OnHello + " Login: " + OnLogin + " Ping: " + OnPing;
-	return str;
-}
-#endif
-
-
 TokenSession::TokenSession(TokenClient& client, TokenController& ctrl) :
 	Client(client),
 	Control(ctrl)
 {
-#if DEBUG
-	HisSsNum++;			// 历史Session个数
-#endif
-
 	Status = 0;
 	LastActive = Sys.Ms();
 
@@ -95,33 +65,18 @@ void TokenSession::OnReceive(TokenMessage& msg)
 
 		Control.Reply(rs);
 
-#if DEBUG
-		SessionStat::DecError++;
-#endif
 		return;
 	}
 
 	switch (msg.Code)
 	{
 	case 0x01:
-#if DEBUG
-		if (msg.OneWay)
-			SessionStat::BraHello++;
-		else
-			Stat.OnHello++;
-#endif
 		OnHello(msg);
 		break;
 	case 0x02:
-#if DEBUG
-		Stat.OnLogin++;
-#endif
 		OnLogin(msg);
 		break;
 	case 0x03:
-#if DEBUG
-		Stat.OnPing++;
-#endif
 		OnPing(msg);
 		break;
 	case 0x05:
@@ -146,7 +101,7 @@ bool TokenSession::OnHello(TokenMessage& msg)
 
 	TS("TokenSession::OnHello");
 
-	Name = ext.Name;
+	DeviceID = ext.Name;
 
 	BinaryPair bp(msg.ToStream());
 	if (bp.Get("Action"))
@@ -186,14 +141,8 @@ bool TokenSession::OnHello(TokenMessage& msg)
 	//ext2.EndPoint.Address = sock->Host->IP;
 	ext2.EndPoint = sock->Local;
 
-	ext2.Cipher = "RC4";
+	//ext2.Cipher = "RC4";
 	ext2.Name = Client.Cfg->User();
-	// 未注册时采用系统名称    内网不考虑此问题
-	// if (!ext2.Name)
-	// {
-	// 	ext2.Name = Sys.Name;
-	// 	ext2.Key = Buffer(Sys.ID, 16);
-	// }
 
 	// 使用当前时间
 	ext2.LocalTime = DateTime::Now().TotalMs();
@@ -290,12 +239,7 @@ bool TokenSession::CheckExpired()
 String& TokenSession::ToStr(String& str) const
 {
 	int sec = (int)(Sys.Ms() - LastActive) / 1000UL;
-	str = str + Remote + " " + Name + " LastActive " + sec + "s \t";
-
-#if DEBUG
-	//str += Stat;
-	Stat.ToStr(str);
-#endif
+	str = str + Remote + "\t" + DeviceID + "\tLastActive\t" + sec + "s";
 
 	return str;
 }
@@ -303,29 +247,24 @@ String& TokenSession::ToStr(String& str) const
 void TokenSession::Show(IList& sessions)
 {
 #if DEBUG
-	if (!StatShowTaskID)
+	static uint _task = 0;
+	if(!_task) _task = Sys.AddTask(
+		[](void *param)
 	{
-		StatShowTaskID = Sys.AddTask(
-			[](void *param)
+		auto& list = *(IList*)param;
+		debug_printf("Sessions: %d \r\n", list.Count());
+		String str;
+		for (int i = 0; i < list.Count(); i++)
 		{
-			auto& sss = *(IList*)param;
-			TokenSession* ss = nullptr;
-			debug_printf("\r\n\tSessions统计信息\r\n解密失败次数 %d", SessionStat::DecError);
-			debug_printf("   收到广播握手%d条\r\n", SessionStat::BraHello);
-			debug_printf("Sessions: %d/%d\r\n", sss.Count(), TokenSession::HisSsNum);
-			String str;
-			for (int i = 0; i < sss.Count(); i++)
-			{
-				ss = (TokenSession*)sss[i];
-				//ss->Stat.Show(true);
-				//ss->ToString().Show(true);
-				ss->ToStr(str);
-				str.Show(true);
-				str.SetLength(0);
-			}
-			debug_printf("\r\n");
-		},
-			&sessions, 5000, 15000, "会话状态");
-	}
+			auto ss = (TokenSession*)list[i];
+			//ss->Stat.Show(true);
+			//ss->ToString().Show(true);
+			ss->ToStr(str);
+			str.Show(true);
+			str.SetLength(0);
+		}
+		debug_printf("\r\n");
+	},
+		&sessions, 5000, 15000, "会话状态");
 #endif
 }

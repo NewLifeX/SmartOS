@@ -126,7 +126,7 @@ private:
 
 private:
 	uint	_task;
-	uint	_taskBroadcast;	// 广播任务
+	//uint	_taskBroadcast;	// 广播任务
 
 	Delegate2<Message&, Controller&>	_LocalReceive;
 

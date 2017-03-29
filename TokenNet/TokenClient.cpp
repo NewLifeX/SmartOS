@@ -20,7 +20,7 @@
 
 TokenClient* TokenClient::Current = nullptr;
 
-static void BroadcastHelloTask(void* param);
+//static void BroadcastHelloTask(void* param);
 
 TokenClient::TokenClient()
 	: Routes(String::Compare)
@@ -71,7 +71,7 @@ void TokenClient::Close()
 	if (!Opened) return;
 
 	Sys.RemoveTask(_task);
-	Sys.RemoveTask(_taskBroadcast);
+	//Sys.RemoveTask(_taskBroadcast);
 
 	if (Master)
 	{
@@ -211,7 +211,7 @@ void TokenClient::CheckNet()
 			}
 		}
 		// 令牌广播使用素数，避免跟别的任务重叠
-		if (cs.Count() > 0 && _taskBroadcast == 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
+		//if (cs.Count() > 0 && _taskBroadcast == 0) _taskBroadcast = Sys.AddTask(BroadcastHelloTask, this, 7000, 37000, "令牌广播");
 	}
 	else if (cs.Count() > 0)
 	{
@@ -375,8 +375,9 @@ void TokenClient::LoopTask()
 	TS("TokenClient::LoopTask");
 
 	// 检查超时会话。倒序，因为可能有删除
-	auto & cs = Sessions;
-	for (int i = cs.Count() - 1; i >= 0; i--)
+	auto& cs = Sessions;
+	// 列表保存32个本地会话
+	for (int i = cs.Count() - 1; i >= 0 && cs.Count() > 32; i--)
 	{
 		auto ss = (TokenSession*)cs[i];
 		// 5分钟不活跃 或 1分钟未登录 销毁
@@ -408,7 +409,11 @@ void TokenClient::LoopTask()
 		if (!Cfg->User())
 			Register();
 		else
+		{
 			Login();
+			// 登录成功以后做一次内网广播
+			SayHello(true);
+		}
 
 		break;
 	}
@@ -420,13 +425,13 @@ void TokenClient::LoopTask()
 	CheckReport();
 }
 
-void BroadcastHelloTask(void* param)
+/*void BroadcastHelloTask(void* param)
 {
 	TS("TokenClient::BroadcastHello");
 
 	auto client = (TokenClient*)param;
 	client->SayHello(true);
-}
+}*/
 
 // 发送发现消息，告诉大家我在这
 // 请求：2版本 + S类型 + S名称 + 8本地时间 + 6本地IP端口 + S支持加密算法列表
