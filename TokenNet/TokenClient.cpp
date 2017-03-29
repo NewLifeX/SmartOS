@@ -809,6 +809,7 @@ void TokenClient::Ping()
 	if (LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
 	TokenPingMessage pm;
+	pm.Data	= &Store.Data;
 
 	TokenMessage msg(3);
 	pm.WriteMessage(msg);
