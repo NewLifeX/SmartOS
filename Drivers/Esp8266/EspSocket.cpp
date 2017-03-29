@@ -44,7 +44,7 @@ bool EspSocket::OnOpen()
 	}
 	Local.Address = _Host.IP;
 
-	_Host.SetMux(true);
+	//_Host.SetMux(true);
 
 #if NET_DEBUG
 	net_printf("%s::Open ", Protocol == NetType::Tcp ? "Tcp" : "Udp");

@@ -180,6 +180,8 @@ void TokenClient::CheckNet()
 		auto& nis = NetworkInterface::All;
 		for (int k = 0; k < nis.Count(); k++)
 		{
+			if (!nis[k]->Active()) continue;
+
 			// 检测该接口上是否创建了控制器
 			bool flag = false;
 			for (int i = 0; i < cs.Count(); i++)
@@ -411,6 +413,8 @@ void TokenClient::LoopTask()
 		else
 		{
 			Login();
+
+			Sys.Sleep(1000);
 			// 登录成功以后做一次内网广播
 			SayHello(true);
 		}
