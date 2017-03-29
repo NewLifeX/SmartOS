@@ -73,12 +73,14 @@ void* NH3_0317::InitData(void* data, int size)
 		ds.Clear();
 		ds[0] = size;
 	}
-	// Buffer bs(data, size);
-	// debug_printf("HotConfig Times %d Data: ",hot->Times);
-	// bs.Show(true);
 
 	Data	= data;
 	Size	= size;
+
+#if DEBUG
+	debug_printf("数据区%d：", hot->Times);
+	Buffer(Data, Size).Show(true);
+#endif
 
 	return data;
 }

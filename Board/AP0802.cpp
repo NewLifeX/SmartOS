@@ -5,27 +5,33 @@ AP0802::AP0802(int hardver) : AP0801()
 	LedPins.Clear();
 	ButtonPins.Clear();
 
+	LedPins.Add(PE5);
+	LedPins.Add(PE4);
+	LedPins.Add(PD0);
+
+	HardVer	= hardver;
 	if (hardver > 160712)
-	{
-		LedPins.Add(PE5);
-		LedPins.Add(PE4);
-		LedPins.Add(PD0);
-
 		ButtonPins.Add(PE9);
-		ButtonPins.Add(PE14);
-	}
 	else
-	{
-		LedPins.Add(PE5);
-		LedPins.Add(PE4);
-		LedPins.Add(PD0);
-
 		ButtonPins.Add(PE13);
-		ButtonPins.Add(PE14);
-	}
+
+	ButtonPins.Add(PE14);
 
 	Esp.Power = PE0;
 	Esp.Reset = PD3;
+}
+
+void AP0802::InitLeds()
+{
+	for (int i = 0; i < LedPins.Count(); i++)
+	{
+		// 旧版本没有加上拉下拉电阻
+		auto port = new OutputPort(LedPins[i], HardVer <= 170106 ? 0 : 2);
+		//if(HardVer <= 170309) port->Invert = false;
+		port->Open();
+		*port	= false;
+		Leds.Add(port);
+	}
 }
 
 /*

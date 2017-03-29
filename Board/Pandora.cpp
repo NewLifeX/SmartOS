@@ -73,6 +73,11 @@ void* PA0903::InitData(void* data, int size)
 	Data = data;
 	Size = size;
 
+#if DEBUG
+	debug_printf("数据区%d：", hot->Times);
+	Buffer(Data, Size).Show(true);
+#endif
+
 	return data;
 }
 

@@ -28,6 +28,8 @@ public:
 	W5500Config		Net;
 	Esp8266Config	Esp;
 
+	uint	HardVer;
+
 	AP0801();
 
 	// 设置系统参数
@@ -39,12 +41,12 @@ public:
 	void Write(uint offset, byte data);
 	//获取客户端的状态0，未握手，1已握手，2已经登陆
 	int GetStatus();
-	
+
 	typedef bool(*Handler)(uint offset, uint size, bool write);
 	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& dp);
 
-	void InitLeds();
+	virtual void InitLeds();
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	// 打开以太网W5500

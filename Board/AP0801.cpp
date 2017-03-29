@@ -35,6 +35,8 @@ AP0801::AP0801()
 
 	Data = nullptr;
 	Size = 0;
+	
+	HardVer	= 0;
 
 	Net.Spi = Spi2;
 	Net.Irq = PE1;
@@ -93,6 +95,11 @@ void* AP0801::InitData(void* data, int size)
 	Data = data;
 	Size = size;
 
+#if DEBUG
+	debug_printf("数据区%d：", hot->Times);
+	Buffer(Data, Size).Show(true);
+#endif
+
 	return data;
 }
 
@@ -128,7 +135,7 @@ void AP0801::InitButtons(const Delegate2<InputPort&, bool>& press)
 	{
 		auto port = new InputPort();
 		port->Index = i;
-		port->Init(ButtonPins[i], true);
+		port->Set(ButtonPins[i]);
 		//port->ShakeTime = 40;
 		port->Press = press;
 		port->UsePress();

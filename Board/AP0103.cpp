@@ -86,6 +86,11 @@ void* AP0103::InitData(void* data, int size)
 	Data = data;
 	Size = size;
 
+#if DEBUG
+	debug_printf("数据区：");
+	Buffer(Data, Size).Show(true);
+#endif
+
 	return data;
 }
 
