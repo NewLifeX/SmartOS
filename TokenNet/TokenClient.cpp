@@ -338,6 +338,9 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 // 内网分发
 void TokenClient::LocalSend(int start, const Buffer& bs)
 {
+	auto& cs = Sessions;
+	if(cs.Count() == 0) return;
+
 	debug_printf("LocalSend\r\n");
 
 	TokenDataMessage dm;
@@ -348,10 +351,10 @@ void TokenClient::LocalSend(int start, const Buffer& bs)
 	msg.Code = 0x06;
 	dm.WriteMessage(msg);
 
-	Send(msg);
+	// 不要再发给云端
+	//Send(msg);
 
 	// 主动上报发给服务器的同时，也发给内网已登录用户
-	auto& cs = Sessions;
 	for (int i = 0; i < cs.Count(); i++)
 	{
 		auto ss = (TokenSession*)cs[i];
@@ -962,8 +965,6 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 	if (msg.Reply) return;
 	if (msg.Length < 2) return;
 
-	auto rs = msg.CreateReply();
-
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
 	debug_printf("Write ");
@@ -993,6 +994,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		Cfg->Save();
 	}
 
+	auto rs = msg.CreateReply();
 	if (!rt)
 		rs.Error = true;
 	else
@@ -1006,7 +1008,10 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		Sys.Sleep(200);
 		Sys.Reboot();
 	}
-	LocalSend(0, Store.Data);
+
+	// 再解析一次，发给本地
+	dm.ReadMessage(msg);
+	LocalSend(dm.Start, dm.Data);
 }
 
 /******************************** 远程调用 ********************************/
