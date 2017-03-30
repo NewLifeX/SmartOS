@@ -117,7 +117,7 @@ void AP0801::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)
 	{
-		auto port = new OutputPort(LedPins[i]);
+		auto port = new OutputPort(LedPins[i], false);
 		port->Open();
 		Leds.Add(port);
 	}

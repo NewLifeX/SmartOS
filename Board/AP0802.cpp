@@ -21,7 +21,7 @@ AP0802::AP0802(int hardver) : AP0801()
 	Esp.Reset = PD3;
 }
 
-void AP0802::InitLeds()
+/*void AP0802::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)
 	{
@@ -32,7 +32,7 @@ void AP0802::InitLeds()
 		*port	= false;
 		Leds.Add(port);
 	}
-}
+}*/
 
 /*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)

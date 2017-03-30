@@ -46,7 +46,7 @@ public:
 	void Register(uint offset, uint size, Handler hook);
 	void Register(uint offset, IDataPort& dp);
 
-	virtual void InitLeds();
+	void InitLeds();
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	// 打开以太网W5500

@@ -8,8 +8,6 @@ class AP0802 : public AP0801
 {
 public:
 	AP0802(int hardver);
-
-	virtual void InitLeds();
 };
 
 #endif
