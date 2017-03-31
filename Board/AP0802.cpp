@@ -10,14 +10,17 @@ AP0802::AP0802(int hardver) : AP0801()
 	LedPins.Add(PD0);
 
 	HardVer	= hardver;
-	if (hardver > 160712)
+	if (hardver >= 160712)
 		ButtonPins.Add(PE9);
 	else
 		ButtonPins.Add(PE13);
 
 	ButtonPins.Add(PE14);
 
-	Esp.Power = PE0;
+	if (hardver >= 170106)
+		Esp.Power = PE2;
+	else
+		Esp.Power = PE0;
 	Esp.Reset = PD3;
 }
 
