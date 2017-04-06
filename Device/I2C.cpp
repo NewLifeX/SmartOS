@@ -96,6 +96,8 @@ bool I2C::SendAddress(int addr, bool tx)
 
 bool I2C::SendSubAddr(int addr)
 {
+	//debug_printf("I2C::SendSubAddr addr=0x%02X \r\n", addr);
+
 	// 发送子地址
 	if (SubWidth > 0)
 	{
@@ -113,8 +115,8 @@ bool I2C::SendSubAddr(int addr)
 // 新会话向指定地址写入多个字节
 WEAK bool I2C::Write(int addr, const Buffer& bs)
 {
-	/*debug_printf("I2C::Write addr=0x%02X ", addr);
-	bs.Show(true);*/
+	//debug_printf("I2C::Write addr=0x%02X ", addr);
+	//bs.Show(true);
 
 	Open();
 
@@ -128,7 +130,9 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 	{
 		WriteByte(bs[i]);
 		// 最后一次不要等待Ack
-		if (i < len - 1 && !WaitAck()) return false;
+		//if (i < len - 1 && !WaitAck()) return false;
+		// EEPROM上最后一次也要等Ack，否则错乱
+		if (!WaitAck()) return false;
 	}
 
 	return true;
@@ -137,6 +141,8 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 // 新会话从指定地址读取多个字节
 WEAK uint I2C::Read(int addr, Buffer& bs)
 {
+	//debug_printf("I2C::Read addr=0x%02X size=%d \r\n", addr, bs.Length());
+
 	Open();
 
 	I2CScope ics(this);
@@ -156,6 +162,7 @@ WEAK uint I2C::Read(int addr, Buffer& bs)
 }
 
 bool I2C::Write(int addr, byte data) { return Write(addr, Buffer(&data, 1)); }
+
 byte I2C::Read(int addr)
 {
 	ByteArray bs(1);
@@ -163,19 +170,23 @@ byte I2C::Read(int addr)
 
 	return bs[0];
 }
+
 ushort I2C::Read2(int addr)
 {
 	ByteArray bs(2);
 	if (!Read(addr, bs)) return 0;
 
-	return (bs[0] << 8) | bs[1];
+	// 小字节序
+	return (bs[1] << 8) | bs[0];
 }
+
 uint I2C::Read4(int addr)
 {
 	ByteArray bs(4);
 	if (!Read(addr, bs)) return 0;
 
-	return (bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3];
+	// 小字节序
+	return (bs[3] << 24) | (bs[2] << 16) | (bs[1] << 8) | bs[0];
 }
 
 /*HardI2C::HardI2C(I2C_TypeDef* iic, uint speedHz ) : I2C()
@@ -285,7 +296,18 @@ void SoftI2C::OnClose()
 
 void SoftI2C::Delay(int us)
 {
-	Sys.Delay(us);
+	//Sys.Delay(us);
+
+	/*
+	右移23位时：
+	48M = 5;
+	72M = 8;
+	108M= 12;
+	120M= 14;
+	*/
+	// 72M = 4
+	int t = Sys.Clock >> 22;
+	while (t-- > 0);
 }
 
 // 起始条件 当 SCL 处于高电平期间时，SDA 从高电平向低电平跳变时产生起始条件。

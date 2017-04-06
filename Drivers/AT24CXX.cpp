@@ -44,13 +44,16 @@ void AT24CXX::Init()
 
 	IIC->SubWidth = 1;
 	IIC->Address = Address << 1;
+	IIC->Open();
+
+	// 等待可用
+	int retry = 5;
+	while (retry-- > 0 && Read(0, 4).Length() < 4) Sys.Sleep(1);
 }
 
 bool AT24CXX::Write(ushort addr, byte data)
 {
 	if (!IIC) return false;
-
-	IIC->Address = (Address + (addr >> 8)) << 1;
 
 	return IIC->Write(addr & 0xFF, data);
 }
@@ -59,16 +62,12 @@ byte AT24CXX::Read(ushort addr) const
 {
 	if (!IIC) return 0;
 
-	IIC->Address = (Address + (addr >> 8)) << 1;
-
 	return IIC->Read(addr & 0xFF);
 }
 
 bool AT24CXX::Write(uint addr, const Buffer& bs) const
 {
 	if (!IIC) return false;
-
-	IIC->Address = Address << 1;
 
 	return IIC->Write((ushort)addr, bs);
 }
@@ -77,10 +76,9 @@ bool AT24CXX::Read(uint addr, Buffer& bs) const
 {
 	if (!IIC) return false;
 
-	IIC->Address = Address << 1;
-
 	int len = IIC->Read((ushort)addr, bs);
 	if (len == 0) return false;
+
 	if (len != bs.Length()) bs.SetLength(len);
 
 	return true;
@@ -97,18 +95,16 @@ ByteArray AT24CXX::Read(ushort addr, int count) const
 
 ushort AT24CXX::Read16(ushort addr) const
 {
-	auto bs = Read(addr, 2);
-	if (bs.Length() < 2) return 0xFFFF;
+	if (!IIC) return 0xFFFF;
 
-	return bs.ToUInt16();
+	return IIC->Read2(addr);
 }
 
 uint AT24CXX::Read32(ushort addr) const
 {
-	auto bs = Read(addr, 4);
-	if (bs.Length() < 4) return 0xFFFFFFFF;
+	if (!IIC) return 0xFFFFFFFF;
 
-	return bs.ToUInt32();
+	return IIC->Read4(addr);
 }
 
 bool AT24CXX::Write(ushort addr, ushort data)
