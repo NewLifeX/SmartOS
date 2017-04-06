@@ -7,8 +7,8 @@ TSys Sys;
 const TTime Time;
 
 // 系统配置
-//const SystemConfig g_Config = {
-SystemConfig g_Config = {
+const SystemConfig g_Config = {
+//SystemConfig g_Config = {
 	// 操作系统 v3.2.x
 	(0x03020000 | __BUILD_DATE__),
 	"SmartOS_CPU",
@@ -41,12 +41,18 @@ INROOT TSys::TSys()
 
 	Code	= cfg.Code;
 	Ver		= cfg.Ver;
+	HardVer = cfg.HardVer;
+	AppVer = cfg.AppVer;
 #ifndef TINY
 	Name	= cfg.Name;
 	Company	= cfg.Company;
+	Product = cfg.Product;
 
     Interrupt.Init();
 #endif
+
+	StartTimes = 1;
+	HotStart = 1;
 
 	Started	= false;
 }
@@ -62,13 +68,12 @@ void TSys::Init(void)
 void TSys::ShowInfo() const
 {
 #if DEBUG
-	debug_printf("%s::%s Code:%04X ", Company, Name, Code);
-	Version v(Config->Ver);
-	debug_printf("Ver:%s\r\n", v.ToString().GetBuffer());
-	debug_printf("Product:%s Build:%s %s\r\n", Config->Product, __BUILD_USER__, __BUILD_STIME__);
-	Version v1(Config->AppVer);
-	Version v2(Config->HardVer);
-	debug_printf("AppVer:%s HardVer:%s\r\n", v1.ToString().GetBuffer(), v2.ToString().GetBuffer());
+	debug_printf("%s::%s Code:%04X %s \r\n", Company, Name, Code, Product);
+	debug_printf("Build:%s %s\r\n", __BUILD_USER__, __BUILD_STIME__);
+	Version v1(AppVer);
+	Version v2(HardVer);
+	Version v3(Ver);
+	debug_printf("AppVer:%s HardVer:%s CoreVer:%s\r\n", v1.ToString().GetBuffer(), v2.ToString().GetBuffer(), v3.ToString().GetBuffer());
 
 	OnShowInfo();
 
@@ -82,7 +87,8 @@ void TSys::ShowInfo() const
 	str.Show(true);
 
 	debug_printf("Time : ");
-	DateTime::Now().Show(true);
+	DateTime::Now().Show(false);
+	debug_printf(" Start: %d/%d \r\n", HotStart, StartTimes);
 	debug_printf("Support: http://www.WsLink.cn\r\n");
 
     debug_printf("\r\n");

@@ -35,8 +35,8 @@ AP0801::AP0801()
 
 	Data = nullptr;
 	Size = 0;
-	
-	HardVer	= 0;
+
+	HardVer = 0;
 
 	Net.Spi = Spi2;
 	Net.Irq = PE1;
@@ -62,6 +62,11 @@ void AP0801::Init(ushort code, cstring name, COM message)
 
 	// 初始化系统
 	sys.Init();
+
+	auto hot = &HotConfig::Current();
+	// 热启动次数
+	Sys.HotStart = hot->Times + 1;
+
 #if DEBUG
 	sys.MessagePort = message; // 指定printf输出的串口
 	Sys.ShowInfo();

@@ -303,7 +303,7 @@ void TSys::OnShowInfo() const
 	size = end - start;
 	debug_printf("Stack:(%p, %p) = 0x%x (%dk)\r\n", start, end, size, size >> 10);
 
-	if (IsGD) debug_printf("ChipType:%p %s\r\n", *(uint*)0x40022100, (cstring)0x40022100);
+	//if (IsGD) debug_printf("ChipType:%p %s\r\n", *(uint*)0x40022100, (cstring)0x40022100);
 #endif
 }
 
