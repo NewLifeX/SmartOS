@@ -122,14 +122,24 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 
 	I2CScope ics(this);
 
-	// 发送设备地址
-	if (!SendAddress(addr, true)) return false;
+	bool rs = false;
+	for (int i = 0; i < 5; i++) {
+		// 发送设备地址
+		rs = SendAddress(addr, true);
+		if (rs) break;
+
+		Stop();
+		Sys.Sleep(1);
+		Start();
+	}
+	if (!rs) return false;
 
 	int len = bs.Length();
 	for (int i = 0; i < len; i++)
 	{
 		WriteByte(bs[i]);
-		// 最后一次不要等待Ack
+		// 最后一次不要等待Ack，因为有些设备返回Nak
+		//if (i < len - 1 && !WaitAck(true)) return false;
 		if (!WaitAck(i < len - 1)) return false;
 		// EEPROM上最后一次也要等Ack，否则错乱
 		//if (!WaitAck()) return false;
@@ -141,24 +151,33 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 // 新会话从指定地址读取多个字节
 WEAK uint I2C::Read(int addr, Buffer& bs)
 {
-	//debug_printf("I2C::Read addr=0x%02X size=%d \r\n", addr, bs.Length());
+	debug_printf("I2C::Read addr=0x%02X size=%d \r\n", addr, bs.Length());
 
 	if (!Open()) return 0;
 
 	I2CScope ics(this);
 
-	// 发送设备地址
-	if (!SendAddress(addr, false)) return 0;
+	bool rs = false;
+	for (int i = 0; i < 5; i++) {
+		// 发送设备地址
+		rs = SendAddress(addr, false);
+		if (rs) break;
 
-	uint rs = 0;
+		Stop();
+		Sys.Sleep(1);
+		Start();
+	}
+	if (!rs) return 0;
+
+	uint count = 0;
 	int len = bs.Length();
 	for (int i = 0; i < len; i++)
 	{
 		bs[i] = ReadByte();
-		rs++;
+		count++;
 		Ack(i < len - 1);	// 最后一次不需要发送Ack
 	}
-	return rs;
+	return count;
 }
 
 bool I2C::Write(int addr, byte data) { return Write(addr, Buffer(&data, 1)); }
@@ -335,6 +354,7 @@ scl		___--------____
 */
 void SoftI2C::Start()
 {
+	//debug_printf("SoftI2C::Start \r\n");
 	// 在SCL高电平期间，SDA产生下降沿
 	SCL = true;
 
@@ -355,6 +375,7 @@ scl		____----
 */
 void SoftI2C::Stop()
 {
+	//debug_printf("SoftI2C::Stop \r\n");
 	// 在SCL高电平期间，SDA产生上升沿
 	SCL = false;
 	SDA = false;
@@ -371,17 +392,19 @@ bool SoftI2C::WaitAck(bool ack)
 	int retry = Retry;
 
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
-	SDA = ack;
+	SDA = true;
 	SCL = true;
 	Delay();
 
-	// 等待SDA低电平
-	while (SDA.ReadInput() == ack)
-	{
-		if (retry-- <= 0)
+	if (ack) {
+		// 等待SDA低电平
+		while (SDA.ReadInput() == ack)
 		{
-			//debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
-			return false;
+			if (retry-- <= 0)
+			{
+				//debug_printf("SoftI2C::WaitAck Retry=%d 无法等到ACK \r\n", Retry);
+				return false;
+			}
 		}
 	}
 
@@ -434,6 +457,12 @@ void SoftI2C::WriteByte(byte dat)
 		SCL = false;
 		Delay();
 	}
+
+	// 发送完一个字节数据后要主机要等待从机的应答，第九位
+	SCL = false;	// 允许sda变化
+	Delay();
+	SDA = true;		// sda拉高等待应答，当sda=0时，表示从机的应答
+	Delay();
 }
 
 byte SoftI2C::ReadByte()

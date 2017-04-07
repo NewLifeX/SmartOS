@@ -79,6 +79,9 @@ bool AT24CXX::Write(uint addr, const Buffer& bs) const
 
 		index += size;
 		count -= size;
+
+		// 内部存储数据，忙！等1ms差点点，等5ms足够了
+		Sys.Sleep(5);
 	}
 	return true;
 }
