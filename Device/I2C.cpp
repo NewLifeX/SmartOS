@@ -19,13 +19,13 @@ I2C::~I2C()
 	Close();
 }
 
-void I2C::Open()
+bool I2C::Open()
 {
-	if (Opened) return;
+	if (Opened) return true;
 
-	OnOpen();
+	if (!OnOpen()) return false;
 
-	Opened = true;
+	return Opened = true;
 }
 
 void I2C::Close()
@@ -118,7 +118,7 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 	debug_printf("I2C::Write addr=0x%02X ", addr);
 	bs.Show(true);
 
-	Open();
+	if (!Open()) return false;
 
 	I2CScope ics(this);
 
@@ -143,7 +143,7 @@ WEAK uint I2C::Read(int addr, Buffer& bs)
 {
 	//debug_printf("I2C::Read addr=0x%02X size=%d \r\n", addr, bs.Length());
 
-	Open();
+	if (!Open()) return 0;
 
 	I2CScope ics(this);
 
@@ -270,7 +270,7 @@ void SoftI2C::GetPin(Pin* scl, Pin* sda)
 	if (sda) *sda = SDA._Pin;
 }
 
-void SoftI2C::OnOpen()
+bool SoftI2C::OnOpen()
 {
 	assert(!SCL.Empty() && !SDA.Empty(), "未设置I2C引脚");
 
@@ -280,12 +280,26 @@ void SoftI2C::OnOpen()
 	SCL.OpenDrain = true;
 	SDA.OpenDrain = true;
 
+	debug_printf("\tSCL: ");
 	SCL.Open();
+	debug_printf("\tSDA: ");
 	SDA.Open();
 
 	// 当总线空闲时这两条线路都是高电平
 	SCL = true;
 	SDA = true;
+
+	// SDA/SCL 默认上拉
+	if (!SDA.ReadInput()) {
+		debug_printf("打开失败，没有在SDA上检测到高电平！\r\n");
+
+		SCL.Close();
+		SDA.Close();
+
+		return false;
+	}
+
+	return true;
 }
 
 void SoftI2C::OnClose()
@@ -376,12 +390,14 @@ bool SoftI2C::WaitAck(int retry)
 
 // 发送Ack
 /*
-在 I2C 总线传输数据过程中，每传输一个字节，都要跟一个应答状态位。接收器接收数
-据的情况可以通过应答位来告知发送器。应答位的时钟脉冲仍由主机产生，而应答位的数据
-状态则遵循“谁接收谁产生”的原则，即总是由接收器产生应答位。主机向从机发送数据时，
-应答位由从机产生；主机从从机接收数据时，应答位由主机产生。I2C 总线标准规定：应答
-位为0 表示接收器应答（ACK），常常简记为A；为1 则表示非应答（NACK），常常简记为
-A。发送器发送完LSB 之后，应当释放SDA 线（拉高SDA，输出晶体管截止），以等待接
+在 I2C 总线传输数据过程中，每传输一个字节，都要跟一个应答状态位。
+接收器接收数据的情况可以通过应答位来告知发送器。
+应答位的时钟脉冲仍由主机产生，而应答位的数据状态则遵循“谁接收谁产生”的原则，即总是由接收器产生应答位。
+主机向从机发送数据时，应答位由从机产生；主机从从机接收数据时，应答位由主机产生。
+
+I2C 总线标准规定：
+应答位为0 表示接收器应答（ACK），常常简记为A；为1 则表示非应答（NACK），常常简记为A。
+发送器发送完LSB 之后，应当释放SDA 线（拉高SDA，输出晶体管截止），以等待接
 收器产生应答位。
 */
 void SoftI2C::Ack(bool ack)

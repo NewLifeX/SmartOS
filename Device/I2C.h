@@ -25,7 +25,7 @@ public:
 	virtual void SetPin(Pin scl, Pin sda) = 0;
 	virtual void GetPin(Pin* scl = nullptr, Pin* sda = nullptr) = 0;
 
-	virtual void Open();		// 打开设备
+	virtual bool Open();		// 打开设备
 	virtual void Close();		// 关闭设备
 
 	virtual void Start() = 0;	// 开始会话
@@ -46,7 +46,7 @@ public:
 	virtual uint Read4(int addr);
 
 protected:
-	virtual void OnOpen() = 0;	// 打开设备
+	virtual bool OnOpen() = 0;	// 打开设备
 	virtual void OnClose() = 0;	// 外部设备
 
 	virtual bool SendAddress(int addr, bool tx);
@@ -109,7 +109,7 @@ private:
 	virtual bool SendAddress(int addr, bool tx = true);
 
 	void OnInit();
-	virtual void OnOpen();
+	virtual bool OnOpen();
 	virtual void OnClose();
 };
 
@@ -140,7 +140,7 @@ private:
 	OutputPort	SCL;	// 时钟。开漏输出
 	OutputPort	SDA;	// 数据。开漏输出，直接具备读写功能
 
-	virtual void OnOpen();
+	virtual bool OnOpen();
 	virtual void OnClose();
 	
 	void Delay(int us);

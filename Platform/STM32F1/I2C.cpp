@@ -16,7 +16,7 @@ void HardI2C::OnInit()
 	SDA.Set(pins[_index][1]);
 }
 
-void HardI2C::OnOpen()
+bool HardI2C::OnOpen()
 {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1 << _index, ENABLE);
 #ifdef STM32F0
@@ -74,6 +74,8 @@ void HardI2C::OnOpen()
 
 	I2C_Cmd(iic, ENABLE);
 	I2C_Init(iic, &i2c);
+
+	return true;
 }
 
 void HardI2C::OnClose()
