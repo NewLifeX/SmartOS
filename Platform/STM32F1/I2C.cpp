@@ -102,7 +102,7 @@ void HardI2C::Start()
     I2C_GenerateSTART(iic, ENABLE);
 
 	_Event = I2C_EVENT_MASTER_MODE_SELECT;
-	WaitAck();
+	WaitAck(true);
 }
 
 void HardI2C::Stop()
@@ -119,9 +119,9 @@ void HardI2C::Ack(bool ack)
 	I2C_AcknowledgeConfig((I2C_TypeDef*)_IIC, ack ? ENABLE : DISABLE);
 }
 
-bool HardI2C::WaitAck(int retry)
+bool HardI2C::WaitAck(bool ack)
 {
-	if(!retry) retry = Retry;
+	int retry = Retry;
 	while(!I2C_CheckEvent((I2C_TypeDef*)_IIC, _Event))
     {
         if(--retry <= 0) return ++Error; // 超时处理
@@ -138,7 +138,7 @@ bool HardI2C::SendAddress(int addr, bool tx)
 		I2C_Send7bitAddress(iic, Address, I2C_Direction_Transmitter);
 
 		_Event = I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED;
-		if(!WaitAck()) return false;
+		if(!WaitAck(true)) return false;
 
 		_Event = I2C_EVENT_MASTER_BYTE_TRANSMITTED;
 		return I2C::SendSubAddr(addr);
@@ -158,7 +158,7 @@ bool HardI2C::SendAddress(int addr, bool tx)
 		I2C_Send7bitAddress(iic, Address, I2C_Direction_Receiver);
 
 		_Event = I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED;
-		if(!WaitAck()) return false;
+		if(!WaitAck(true)) return false;
 
 		return true;
 	}

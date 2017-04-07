@@ -33,8 +33,8 @@ public:
 
 	virtual void WriteByte(byte dat) = 0;	// 写入单个字节
 	virtual byte ReadByte() = 0;			// 读取单个字节
-	virtual void Ack(bool ack) = 0;
-	virtual bool WaitAck(int retry = 0) = 0;	// 等待Ack，默认0表示采用全局Retry
+	virtual void Ack(bool ack) = 0;			// 发送Ack/Nak
+	virtual bool WaitAck(bool ack) = 0;		// 等待Ack/Nak
 
 	// 新会话向指定地址写入
 	bool Write(int addr, const Buffer& bs);
@@ -93,7 +93,7 @@ public:
 	virtual void WriteByte(byte dat);
 	virtual byte ReadByte();
 	virtual void Ack(bool ack);
-	virtual bool WaitAck(int retry=0);	// 等待Ack，默认0表示采用全局Retry
+	virtual bool WaitAck(bool ack);
 
 	//virtual bool Write(int addr, byte* buf, uint len);	// 新会话向指定地址写入多个字节
 	//virtual uint Read(int addr, byte* buf, uint len);	// 新会话从指定地址读取多个字节
@@ -131,8 +131,8 @@ public:
 
 	virtual void WriteByte(byte dat);
 	virtual byte ReadByte();
-	virtual void Ack(bool ack = true);
-	virtual bool WaitAck(int retry=0);
+	virtual void Ack(bool ack);
+	virtual bool WaitAck(bool ack);
 
 private:
 	int _delay;			// 根据速度匹配的延时
@@ -143,7 +143,7 @@ private:
 	virtual bool OnOpen();
 	virtual void OnClose();
 	
-	void Delay(int us);
+	void Delay();
 };
 
 /*

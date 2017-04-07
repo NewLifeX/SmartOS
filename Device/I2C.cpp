@@ -58,7 +58,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	ushort d = (tx || SubWidth > 0) ? Address : (Address | 0x01);
 	//debug_printf("I2C::SendAddr %02X \r\n", d);
 	WriteByte((byte)d);
-	if (!WaitAck())
+	if (!WaitAck(true))
 	{
 		debug_printf("I2C::SendAddr %02X 可能设备未连接，或地址不对\r\n", d);
 		return false;
@@ -83,7 +83,7 @@ bool I2C::SendAddress(int addr, bool tx)
 	{
 		Start();
 		WriteByte((byte)d);
-		rs = WaitAck();
+		rs = WaitAck(true);
 	}
 	if (!rs)
 	{
@@ -105,7 +105,7 @@ bool I2C::SendSubAddr(int addr)
 		for (int k = SubWidth - 1; k >= 0; k--)
 		{
 			WriteByte(addr >> (k << 3));
-			if (!WaitAck()) return false;
+			if (!WaitAck(true)) return false;
 		}
 	}
 
@@ -130,9 +130,9 @@ WEAK bool I2C::Write(int addr, const Buffer& bs)
 	{
 		WriteByte(bs[i]);
 		// 最后一次不要等待Ack
-		//if (i < len - 1 && !WaitAck()) return false;
+		if (!WaitAck(i < len - 1)) return false;
 		// EEPROM上最后一次也要等Ack，否则错乱
-		if (!WaitAck()) return false;
+		//if (!WaitAck()) return false;
 	}
 
 	return true;
@@ -239,6 +239,9 @@ void HardI2C::GetPin(Pin* scl, Pin* sda)
 	if (sda) *sda = SDA._Pin;
 }
 
+/******************************** SoftI2C ********************************/
+
+// 3种速率可选择  标准模式100kbps、快速模式400kbps、最高速率3.4Mbps
 SoftI2C::SoftI2C(uint speedHz) : I2C()
 {
 	Speed = speedHz;
@@ -308,7 +311,7 @@ void SoftI2C::OnClose()
 	SDA.Close();
 }
 
-void SoftI2C::Delay(int us)
+void SoftI2C::Delay()
 {
 	//Sys.Delay(us);
 
@@ -337,10 +340,10 @@ void SoftI2C::Start()
 
 	// 下降沿
 	SDA = true;
-	Delay(1);
+	Delay();
 	SDA = false;
 
-	Delay(1);
+	Delay();
 	SCL = false;
 }
 
@@ -355,25 +358,25 @@ void SoftI2C::Stop()
 	// 在SCL高电平期间，SDA产生上升沿
 	SCL = false;
 	SDA = false;
-	Delay(1);
+	Delay();
 
 	SCL = true;
-	Delay(1);
+	Delay();
 	SDA = true;
 }
 
 // 等待Ack
-bool SoftI2C::WaitAck(int retry)
+bool SoftI2C::WaitAck(bool ack)
 {
-	if (!retry) retry = Retry;
+	int retry = Retry;
 
 	// SDA 线上的数据必须在时钟的高电平周期保持稳定
-	SDA = true;
+	SDA = ack;
 	SCL = true;
-	Delay(1);
+	Delay();
 
 	// 等待SDA低电平
-	while (SDA.ReadInput())
+	while (SDA.ReadInput() == ack)
 	{
 		if (retry-- <= 0)
 		{
@@ -383,7 +386,7 @@ bool SoftI2C::WaitAck(int retry)
 	}
 
 	SCL = false;
-	Delay(1);
+	Delay();
 
 	return true;
 }
@@ -397,8 +400,8 @@ bool SoftI2C::WaitAck(int retry)
 
 I2C 总线标准规定：
 应答位为0 表示接收器应答（ACK），常常简记为A；为1 则表示非应答（NACK），常常简记为A。
-发送器发送完LSB 之后，应当释放SDA 线（拉高SDA，输出晶体管截止），以等待接
-收器产生应答位。
+发送器发送完LSB 之后，应当释放SDA 线（拉高SDA，输出晶体管截止），以等待接收器产生应答位。
+如果接收器在接收完最后一个字节的数据，或者不能再接收更多的数据时，应当产 生非应答来通知发送器
 */
 void SoftI2C::Ack(bool ack)
 {
@@ -406,14 +409,14 @@ void SoftI2C::Ack(bool ack)
 	SCL = false;
 
 	SDA = !ack;
-	Delay(1);
+	Delay();
 
 	SCL = true;
-	Delay(1);
+	Delay();
 	SCL = false;
 
 	SDA = true;
-	Delay(1);
+	Delay();
 }
 
 void SoftI2C::WriteByte(byte dat)
@@ -423,13 +426,13 @@ void SoftI2C::WriteByte(byte dat)
 	for (byte mask = 0x80; mask > 0; mask >>= 1)
 	{
 		SDA = (dat & mask) > 0;
-		Delay(1);
+		Delay();
 
 		// 置时钟线为高，通知被控器开始接收数据位
 		SCL = true;
-		Delay(1);
+		Delay();
 		SCL = false;
-		Delay(1);
+		Delay();
 	}
 }
 
@@ -447,12 +450,12 @@ byte SoftI2C::ReadByte()
 		while (!SCL.ReadInput())
 		{
 			if (retry-- <= 0) break;
-			Delay(1);
+			Delay();
 		}
 
 		if (SDA.ReadInput()) rs |= mask;	//读数据位
 		SCL = false;	// 置时钟线为低，准备接收数据位
-		Delay(1);
+		Delay();
 	}
 
 	return rs;
