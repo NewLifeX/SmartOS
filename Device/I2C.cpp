@@ -115,8 +115,8 @@ bool I2C::SendSubAddr(int addr)
 // 新会话向指定地址写入多个字节
 WEAK bool I2C::Write(int addr, const Buffer& bs)
 {
-	//debug_printf("I2C::Write addr=0x%02X ", addr);
-	//bs.Show(true);
+	debug_printf("I2C::Write addr=0x%02X ", addr);
+	bs.Show(true);
 
 	Open();
 
@@ -306,7 +306,7 @@ void SoftI2C::Delay(int us)
 	120M= 14;
 	*/
 	// 72M = 4
-	int t = Sys.Clock >> 22;
+	int t = Sys.Clock >> 21;
 	while (t-- > 0);
 }
 

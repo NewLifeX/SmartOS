@@ -69,7 +69,18 @@ bool AT24CXX::Write(uint addr, const Buffer& bs) const
 {
 	if (!IIC) return false;
 
-	return IIC->Write((ushort)addr, bs);
+	// 单页最大只能写入8个
+	int index = 0;
+	int count = bs.Length();
+	while (count > 0) {
+		int size = 8;
+		if (size > count) size = count;
+		if (!IIC->Write((ushort)addr, bs.Sub(index, size))) return false;
+
+		index += size;
+		count -= size;
+	}
+	return true;
 }
 
 bool AT24CXX::Read(uint addr, Buffer& bs) const
