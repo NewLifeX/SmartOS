@@ -77,10 +77,11 @@ bool AT24CXX::Write(uint addr, const Buffer& bs) const
 		if (size > count) size = count;
 		if (!IIC->Write((ushort)addr, bs.Sub(index, size))) return false;
 
+		addr += size;
 		index += size;
 		count -= size;
 
-		// 内部存储数据，忙！等1ms差点点，等5ms足够了
+		// 内部存储数据，忙！等1ms差点点，等5ms足够了。手册规定10ms
 		Sys.Sleep(5);
 	}
 	return true;
