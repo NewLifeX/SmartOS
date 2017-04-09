@@ -33,6 +33,7 @@
     <ClCompile Include="..\Board\AP0801.cpp" />
     <ClCompile Include="..\Board\AP0802.cpp" />
     <ClCompile Include="..\Board\AP0803.cpp" />
+    <ClCompile Include="..\Board\B8266.cpp" />
     <ClCompile Include="..\Board\BaseBoard.cpp" />
     <ClCompile Include="..\Board\IOK026X.cpp" />
     <ClCompile Include="..\Board\IOK027X.cpp" />

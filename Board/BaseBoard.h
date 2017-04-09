@@ -2,30 +2,28 @@
 #define _BaseBoard_H_
 
 #include "Kernel\Sys.h"
-#include "Device\RTC.h"
 
-/*struct
-{
-	byte ClksCount;
-	byte OldIdx;	// 初始值无效
-	UInt64 LastClkTim;
-	void Init()
-	{
-		ClksCount = 0;
-		OldIdx = 0xff;
-		LastClkTim = 0;
-	};
-}ClickStr;*/
+#include "Device\Port.h"
 
+// 板级包基类
 class BaseBoard
 {
 public:
+	List<Pin>	LedPins;		// 指示灯 引脚
+	List<Pin>	ButtonPins;		// 按键 引脚
+	List<OutputPort*>	Leds;	// 指示灯
+	List<InputPort*>	Buttons;// 按键
+	byte	LedInvert;	// 指示灯倒置。默认自动检测
+
 	BaseBoard();
-	void Init(ushort code, cstring name, COM message = COM1);
-	//初始化按键重启
-	void InitReboot();
-	//初始化断电重置
-	void InitRestore();
+
+	// 设置系统参数
+	void Init(ushort code, cstring name);
+	// 初始化配置区
+	void InitConfig();
+
+	void InitLeds();
+	void InitButtons(const Delegate2<InputPort&, bool>& press);
 };
 
 #endif

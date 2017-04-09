@@ -9,7 +9,7 @@ AP0802::AP0802(int hardver) : AP0801()
 	LedPins.Add(PE4);
 	LedPins.Add(PD0);
 
-	HardVer	= hardver;
+	Sys.HardVer = hardver;
 	if (hardver >= 160712)
 		ButtonPins.Add(PE9);
 	else

@@ -1,16 +1,17 @@
 ﻿#include "BaseBoard.h"
-#include "Device\Power.h"
-#include "Device\WatchDog.h"
+
 #include "Config.h"
 
-#include "Kernel\Task.h"
-
+#include "Device\RTC.h"
+#include "Device\Power.h"
+#include "Device\WatchDog.h"
 
 BaseBoard::BaseBoard()
 {	
+	LedInvert = 2;
 }
 
-void BaseBoard::Init(ushort code, cstring name, COM message)
+void BaseBoard::Init(ushort code, cstring name)
 {
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
@@ -25,8 +26,12 @@ void BaseBoard::Init(ushort code, cstring name, COM message)
 
 	// 初始化系统
 	sys.Init();
+
+	auto hot = &HotConfig::Current();
+	// 热启动次数
+	Sys.HotStart = hot->Times + 1;
+
 #if DEBUG
-	sys.MessagePort = message; // 指定printf输出的串口
 	Sys.ShowInfo();
 
 	WatchDog::Start(20000, 10000);
@@ -36,56 +41,38 @@ void BaseBoard::Init(ushort code, cstring name, COM message)
 	// 系统休眠时自动进入低功耗
 	Power::AttachTimeSleep();
 #endif
+}
 
+// 初始化配置区
+void BaseBoard::InitConfig()
+{
 	// Flash最后一块作为配置区
 	Config::Current = &Config::CreateFlash();
 }
 
-void BaseBoard::InitReboot()
+void BaseBoard::InitLeds()
 {
-	
+	for (int i = 0; i < LedPins.Count(); i++)
+	{
+		auto port = new OutputPort(LedPins[i], LedInvert);
+		//auto port = new OutputPort(LedPins[i], false);
+		port->Open();
+		Leds.Add(port);
+	}
 }
 
-void BaseBoard::InitRestore()
+void BaseBoard::InitButtons(const Delegate2<InputPort&, bool>& press)
 {
-	
+	for (int i = 0; i < ButtonPins.Count(); i++)
+	{
+		auto port = new InputPort();
+		port->Index = i;
+		port->Set(ButtonPins[i]);
+		//port->ShakeTime = 40;
+		port->Press = press;
+		port->UsePress();
+		port->Open();
+
+		Buttons.Add(port);
+	}
 }
-
-
-
-
-/*
-NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)
-NSS			|				NSS			|	PD6			NSS
-CLK			|				SCK			|				SCK
-MISO		|				MISO		|				MISO
-MOSI		|				MOSI		|				MOSI
-PE3			IRQ			|	PE1			INT(IRQ)	|	PD11		INT(IRQ)
-PD12		CE			|	PD13		NET_NRST	|				NET_NRST
-PE6			POWER		|				POWER		|				POWER
-
-ESP8266		(COM4)
-TX
-RX
-PD3			RST
-PE2			POWER
-
-TFT
-FSMC_D 0..15		TFT_D 0..15
-NOE					RD
-NWE					RW
-NE1					RS
-PE4					CE
-PC7					LIGHT
-PE5					RST
-
-PE13				KEY1
-PE14				KEY2
-
-PE15				LED2
-PD8					LED1
-
-
-USB
-PA11 PA12
-*/
