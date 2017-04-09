@@ -87,4 +87,16 @@ private:
 	void OnWrite2();
 };
 
+// 串口设备配置
+class SerialConfig
+{
+public:
+	COM Com;
+	int Baudrate;
+
+	Pin	Power;
+	Pin Reset;
+	Pin	LowPower;
+};
+
 #endif

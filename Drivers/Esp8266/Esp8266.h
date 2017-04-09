@@ -126,15 +126,4 @@ private:
 	void OnReceive(Buffer& bs);
 };
 
-// Esp8266配置
-class Esp8266Config
-{
-public:
-	COM Com;
-	int Baudrate;
-	Pin	Power;
-	Pin Reset;
-	Pin	LowPower;
-};
-
 #endif

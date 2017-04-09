@@ -97,13 +97,4 @@ private:
 	void OnIRQ();
 };
 
-// W5500配置
-class W5500Config
-{
-public:
-	SPI Spi;
-	Pin	Irq;
-	Pin Reset;
-};
-
 #endif

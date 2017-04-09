@@ -73,4 +73,14 @@ public:
 	}
 };
 
+// Spi设备配置
+class SpiConfig
+{
+public:
+	SPI Spi;
+
+	Pin	Irq;
+	Pin Reset;
+};
+
 #endif
