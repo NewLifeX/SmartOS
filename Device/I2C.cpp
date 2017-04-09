@@ -332,7 +332,7 @@ void SoftI2C::OnClose()
 
 void SoftI2C::Delay()
 {
-	//Sys.Delay(us);
+	Sys.Delay(5);
 
 	/*
 	右移23位时：
@@ -341,9 +341,8 @@ void SoftI2C::Delay()
 	108M= 12;
 	120M= 14;
 	*/
-	// 72M = 4
-	int t = Sys.Clock >> 21;
-	while (t-- > 0);
+	//int t = Sys.Clock >> 21;
+	//while (t-- > 0);
 }
 
 // 起始条件 当 SCL 处于高电平期间时，SDA 从高电平向低电平跳变时产生起始条件。
