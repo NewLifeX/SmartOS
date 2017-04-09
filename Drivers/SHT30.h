@@ -18,12 +18,15 @@ public:
 
 	OutputPort*	Pwr;	// 电源
 
+	bool Opened;
+
     SHT30();
     virtual ~SHT30();
 
-	void Init();
-	uint ReadSerialNumber() const;
-	ushort ReadStatus() const;
+	bool Open();
+
+	uint ReadSerialNumber();
+	ushort ReadStatus();
 	bool Read(ushort& temp, ushort& humi);
 
 	// 电源等级变更（如进入低功耗模式）时调用
@@ -31,9 +34,9 @@ public:
 
 private:
 	bool Write(ushort cmd);
-	ushort Read2(ushort cmd) const;
+	ushort Read2(ushort cmd);
 	// 同时读取温湿度并校验Crc
-	uint Read4(ushort cmd) const;
+	uint Read4(ushort cmd);
 
 	bool CheckStatus();
 	void SetMode();

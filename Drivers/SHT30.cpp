@@ -102,27 +102,31 @@ typedef union {
 
 SHT30::SHT30()
 {
-	IIC		= nullptr;
-	Address	= 0x44;	// ADDR=VSS
+	IIC = nullptr;
+	Address = 0x44;	// ADDR=VSS
 	//Address	= 0x45;	// ADDR=VDD
 
-	Pwr		= nullptr;
+	Pwr = nullptr;
 
-	Mode	= 2;
-	Freq	= 5;
-	Repeat	= 2;
+	Mode = 2;
+	Freq = 5;
+	Repeat = 2;
+
+	Opened = false;
 }
 
 SHT30::~SHT30()
 {
-	if(Pwr) *Pwr	= false;
+	if (Pwr) *Pwr = false;
 
 	delete IIC;
 	IIC = nullptr;
 }
 
-void SHT30::Init()
+bool SHT30::Open()
 {
+	if (Opened) return true;
+
 #if DEBUG
 	debug_printf("\r\nSHT30::Init Addr=0x%02X ", Address);
 	switch (Mode)
@@ -154,13 +158,13 @@ void SHT30::Init()
 	debug_printf("\r\n");
 #endif
 
-	IIC->SubWidth	= 2;
-	IIC->Address	= Address << 1;
-	IIC->Retry		= 2;
+	IIC->SubWidth = 2;
+	IIC->Address = Address << 1;
+	IIC->Retry = 2;
 
-	if(Pwr) *Pwr	= true;
+	if (Pwr) *Pwr = true;
 
-	bool rs	= CheckStatus();
+	bool rs = CheckStatus();
 
 	/*
 	SHT30三种采集数据方式：
@@ -171,21 +175,27 @@ void SHT30::Init()
 	//Read4(CMD_MEAS_CLOCKSTR_H);
 	//Read4(CMD_MEAS_POLLING_H);
 	//Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
-	if(rs) SetMode();
+	//if(rs)
+	// 每次初始化都必须设置模式，在热启动和冷启动的情况下都能使用
+	SetMode();
+
+	return Opened = true;
 }
 
-uint SHT30::ReadSerialNumber() const
+uint SHT30::ReadSerialNumber()
 {
 	return Read4(CMD_READ_SERIALNBR);
 }
 
-ushort SHT30::ReadStatus() const
+ushort SHT30::ReadStatus()
 {
 	return Read2(CMD_READ_STATUS);
 }
 
 bool SHT30::Read(ushort& temp, ushort& humi)
 {
+	if (!Open()) return false;
+
 	/*
 	SHT30三种采集数据方式：
 	1，Stretch阻塞模式，发送命令后采集，需要长时间等待SCL拉高，才能发送读取头然后读取数据
@@ -198,10 +208,10 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 	//uint data = Read4(CMD_FETCH_DATA);
 	uint data = Read4(GetMode());
 	//tc.Show();
-	if(!data)
+	if (!data)
 	{
-		bool rs	= CheckStatus();
-		if(rs) SetMode();
+		bool rs = CheckStatus();
+		if (rs) SetMode();
 
 		return false;
 	}
@@ -220,20 +230,19 @@ bool SHT30::Read(ushort& temp, ushort& humi)
 
 bool SHT30::Write(ushort cmd)
 {
-	//debug_printf("cmd=0x%04X \r\n", cmd);
-
 	// 只有子操作码，没有数据
 	bool rs = IIC->Write(cmd, ByteArray(0));
-	if(!rs) debug_printf("SHT30::Write 0x%04X 失败\r\n", cmd);
+	if (!rs) debug_printf("SHT30::Write 0x%04X 失败\r\n", cmd);
 
 	return rs;
 }
 
-ushort SHT30::Read2(ushort cmd) const
+ushort SHT30::Read2(ushort cmd)
 {
 	ByteArray rs(3);
-	if(IIC->Read(cmd, rs) == 0)
+	if (IIC->Read(cmd, rs) == 0)
 	{
+		Opened = false;
 		debug_printf("SHT30::Read2 0x%04X 失败\r\n", cmd);
 		return 0;
 	}
@@ -242,13 +251,14 @@ ushort SHT30::Read2(ushort cmd) const
 }
 
 // 同时读取温湿度并校验Crc
-uint SHT30::Read4(ushort cmd) const
+uint SHT30::Read4(ushort cmd)
 {
-	if(!cmd) return 0;
+	if (!cmd) return 0;
 
 	ByteArray rs(6);
-	if(IIC->Read(cmd, rs) == 0)
+	if (IIC->Read(cmd, rs) == 0)
 	{
+		Opened = false;
 		debug_printf("SHT30::Read4 0x%04X 失败\r\n", cmd);
 		return 0;
 	}
@@ -263,15 +273,15 @@ uint SHT30::Read4(ushort cmd) const
 
 bool SHT30::CheckStatus()
 {
-	ushort st	= ReadStatus();
+	ushort st = ReadStatus();
 	regStatus rs;
-	rs.u16	= st;
+	rs.u16 = st;
 #if DEBUG
-	if(st != 0)
+	//if(st != 0)
 	{
-		uint sn		= ReadSerialNumber();
-		debug_printf("SNum=%p Status=0x%04X \r\n", sn, st);
-		debug_printf("Status=0x%04X \r\n", st);
+		uint sn = ReadSerialNumber();
+		debug_printf("SerialNumber=%p Status=0x%04X \r\n", sn, st);
+		//debug_printf("Status=0x%04X \r\n", st);
 		//if(rs.bit.ResetDetected)		debug_printf(" RstDet");	// ResetDetected
 		//if(rs.bit.HeaterStatus)		debug_printf(" HatSta");	// HeaterStatus
 		//if(rs.bit.AlertPending)		debug_printf(" AltPed");	// AlertPending
@@ -279,7 +289,7 @@ bool SHT30::CheckStatus()
 	}
 #endif
 
-	if(!rs.bit.ResetDetected) return false;
+	if (!rs.bit.ResetDetected) return false;
 
 	Write(CMD_CLEAR_STATUS);
 
@@ -288,47 +298,47 @@ bool SHT30::CheckStatus()
 
 void SHT30::SetMode()
 {
-	if(Mode != 2) return;
+	//if (Mode != 2) return;
 
 	debug_printf("SHT30::SetMode Repeat=%d Freq=%d \r\n", Repeat, Freq);
 	//Write(CMD_MEAS_PERI_1_H);	// 高精度重复读取，每秒一次
-	static ushort cmds[]	= {
+	static ushort cmds[] = {
 		CMD_MEAS_PERI_05_H, CMD_MEAS_PERI_1_H, CMD_MEAS_PERI_2_H, CMD_MEAS_PERI_4_H, CMD_MEAS_PERI_10_H,
 		CMD_MEAS_PERI_05_M, CMD_MEAS_PERI_1_M, CMD_MEAS_PERI_2_M, CMD_MEAS_PERI_4_M, CMD_MEAS_PERI_10_M,
 		CMD_MEAS_PERI_05_L, CMD_MEAS_PERI_1_L, CMD_MEAS_PERI_2_L, CMD_MEAS_PERI_4_L, CMD_MEAS_PERI_10_L,
 	};
-	static byte maps[]	= { 0, 1, 2, 0, 3, 0, 0, 0, 0, 0, 4 };
+	static byte maps[] = { 0, 1, 2, 0, 3, 0, 0, 0, 0, 0, 4 };
 	// 5/1/2/4/10 转为 0/1/2/3/4
-	byte map	= maps[Freq];
-	ushort cmd	= cmds[map + Repeat * 5];
-	bool rs		= Write(cmd);
+	byte map = maps[Freq];
+	ushort cmd = cmds[map + Repeat * 5];
+	bool rs = Write(cmd);
 
 	// 软重启
-	if(!rs) rs	= Write(CMD_SOFT_RESET);
+	if (!rs) rs = Write(CMD_SOFT_RESET);
 	// 硬重启
-	if(!rs && Pwr) Pwr->Down(100);
+	if (!rs && Pwr) Pwr->Down(100);
 }
 
 ushort SHT30::GetMode() const
 {
-	static ushort cs[] = {CMD_MEAS_CLOCKSTR_L, CMD_MEAS_CLOCKSTR_M, CMD_MEAS_CLOCKSTR_H};
-	static ushort ps[] = {CMD_MEAS_POLLING_L, CMD_MEAS_POLLING_M, CMD_MEAS_POLLING_H};
-	switch(Mode)
+	static ushort cs[] = { CMD_MEAS_CLOCKSTR_L, CMD_MEAS_CLOCKSTR_M, CMD_MEAS_CLOCKSTR_H };
+	static ushort ps[] = { CMD_MEAS_POLLING_L, CMD_MEAS_POLLING_M, CMD_MEAS_POLLING_H };
+	switch (Mode)
 	{
-		case 0:
-		{
-			if(Repeat < ArrayLength(cs)) return cs[Repeat];
-			break;
-		}
-		case 1:
-		{
-			if(Repeat < ArrayLength(ps)) return ps[Repeat];
-			break;
-		}
-		case 2:
-		{
-			return CMD_FETCH_DATA;
-		}
+	case 0:
+	{
+		if (Repeat < ArrayLength(cs)) return cs[Repeat];
+		break;
+	}
+	case 1:
+	{
+		if (Repeat < ArrayLength(ps)) return ps[Repeat];
+		break;
+	}
+	case 2:
+	{
+		return CMD_FETCH_DATA;
+	}
 	}
 
 	return 0;
@@ -336,7 +346,7 @@ ushort SHT30::GetMode() const
 
 void SHT30::ChangePower(int level)
 {
-	if(!level) Write(CMD_NO_SLEEP);
+	if (!level) Write(CMD_NO_SLEEP);
 	// 进入低功耗时，直接关闭
 	//if(level) Close();
 }
