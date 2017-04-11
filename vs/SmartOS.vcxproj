@@ -40,6 +40,7 @@
     <ClCompile Include="..\Board\IOK0612.cpp" />
     <ClCompile Include="..\Board\NH3_0317.cpp" />
     <ClCompile Include="..\Board\Pandora.cpp" />
+    <ClCompile Include="..\Board\TokenBoard.cpp" />
     <ClCompile Include="..\BootConfig.cpp" />
     <ClCompile Include="..\Config.cpp" />
     <ClCompile Include="..\Core\Array.cpp" />

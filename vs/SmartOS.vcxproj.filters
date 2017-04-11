@@ -575,5 +575,8 @@
     <ClCompile Include="..\Board\B8266.cpp">
       <Filter>Board</Filter>
     </ClCompile>
+    <ClCompile Include="..\Board\TokenBoard.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

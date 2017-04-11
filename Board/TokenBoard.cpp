@@ -53,7 +53,7 @@ void TokenBoard::InitClient()
 	InitConfig();
 
 	// 初始化令牌网
-	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Tcp, 33333, 3377);
+	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
 
 	// 创建客户端
 	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
