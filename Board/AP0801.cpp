@@ -4,7 +4,17 @@
 #include "Drivers\W5500.h"
 #include "Drivers\Esp8266\Esp8266.h"
 
+#include "Kernel\Task.h"
+
+#include "Device\WatchDog.h"
+#include "Config.h"
+
 #include "Message\ProxyFactory.h"
+#include "TokenNet\TokenController.h"
+#include "..\TinyNet\TinyConfig.h"
+#include "..\App\FlushPort.h"
+
+#include "Device\RTC.h"
 
 AP0801* AP0801::Current = nullptr;
 static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
@@ -32,6 +42,37 @@ AP0801::AP0801()
 	Esp.LowPower = P0;
 
 	Current = this;
+}
+void AP0801::Init(ushort code, cstring name, COM message)
+{
+	auto& sys = (TSys&)Sys;
+	sys.Code = code;
+	sys.Name = (char*)name;
+
+	// RTC 提取时间
+	HardRTC::Start(false, false);
+
+	// 初始化系统
+	sys.Init();
+
+	auto hot = &HotConfig::Current();
+	// 热启动次数
+	Sys.HotStart = hot->Times + 1;
+
+#if DEBUG
+	sys.MessagePort = message; // 指定printf输出的串口
+	Sys.ShowInfo();
+
+	WatchDog::Start(20000, 10000);
+#else
+	WatchDog::Start();
+
+	// 系统休眠时自动进入低功耗
+	// Power::AttachTimeSleep();
+#endif
+
+	// Flash最后一块作为配置区
+	Config::Current = &Config::CreateFlash();
 }
 
 NetworkInterface* AP0801::Create5500()
