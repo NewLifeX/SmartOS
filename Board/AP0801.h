@@ -23,7 +23,6 @@ public:
 	SerialConfig	Esp;
 
 	AP0801();
-	void Init(ushort code, cstring name, COM message);
 
 	// 打开以太网W5500
 	NetworkInterface* Create5500();
