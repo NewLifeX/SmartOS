@@ -34,6 +34,10 @@ public:
 	// 写入一条历史数据
 	int Write(const Buffer& bs);
 
+	// 存储数据到Flash上指定地址
+	static uint ReadFlash(uint address, Buffer& bs);
+	static uint WriteFlash(uint address, const Buffer& bs);
+
 private:
 	void*	Data;
 	int		Size;

@@ -1,5 +1,7 @@
 ﻿#include "Kernel\Sys.h"
 
+#include "Device\Flash.h"
+
 #include "HistoryStore.h"
 
 #define DS_DEBUG DEBUG
@@ -43,6 +45,8 @@ bool HistoryStore::Open()
 {
 	if (Opened) return true;
 
+	ds_printf("HistoryStore::Open Render=%ds Report=%ds Store=%ds \r\n", RenderPeriod, ReportPeriod, StorePeriod);
+
 	_Report = 0;
 	_Store = 0;
 
@@ -69,11 +73,17 @@ int HistoryStore::Write(const Buffer& bs)
 	auto& s = Cache;
 	auto p = s.Position();
 
+	// 移到最后
+	s.SetPosition(s.Length);
+
 	// 历史数据格式：4时间 + N数据
 	s.Write(Sys.Seconds());
 	s.Write(bs);
 
-	return s.Position() - p;
+	// 回到原来位置
+	s.SetPosition(p);
+
+	return 4 + bs.Length();
 }
 
 void HistoryStore::RenderTask(void* param)
@@ -84,6 +94,8 @@ void HistoryStore::RenderTask(void* param)
 
 void HistoryStore::Reader()
 {
+	ds_printf("HistoryStore::Reader %d/%d/%d \r\n", Size, Cache.Position(), Cache.Length);
+
 	// 生成历史数据
 	Buffer bs(Data, Size);
 	Write(bs);
@@ -97,6 +109,8 @@ void HistoryStore::Reader()
 	if (_Store <= 0) _Store = StorePeriod;
 	_Store -= RenderPeriod;
 	if (_Store <= 0) Store();
+
+	//ds_printf("_Report=%d _Store=%d \r\n", _Report, _Store);
 }
 
 void HistoryStore::Report()
@@ -113,7 +127,7 @@ void HistoryStore::Report()
 	int len2 = n * Size;
 	if (len2 > len) len2 = len;
 
-	ds_printf("HistoryStore::Report %d/%d", len2, len);
+	ds_printf("HistoryStore::Report %d/%d \r\n", len2, len);
 
 	Process(len2, OnReport);
 }
@@ -127,7 +141,7 @@ void HistoryStore::Store()
 	// 没有数据
 	if (!len) return;
 
-	ds_printf("HistoryStore::Store %d", len);
+	ds_printf("HistoryStore::Store %d \r\n", len);
 
 	Process(len, OnStore);
 }
@@ -150,4 +164,19 @@ void HistoryStore::Process(int len, DataHandler handler)
 			s.Length = 0;
 		}
 	}
+}
+
+// 存储数据到Flash上指定地址
+uint HistoryStore::ReadFlash(uint address, Buffer& bs)
+{
+	Flash flash;
+
+	return bs.Length();
+}
+
+uint HistoryStore::WriteFlash(uint address, const Buffer& bs)
+{
+	Flash flash;
+
+	return bs.Length();
 }
