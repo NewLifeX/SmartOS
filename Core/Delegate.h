@@ -9,8 +9,8 @@ typedef void(*Action2)(void*, void*);
 typedef void(*Action3)(void*, void*, void*);
 // 事件处理委托，一般sender表示事件发出者，param用作目标对象，调用者用静态函数包装成员函数
 typedef void (*EventHandler)(void* sender, void* param);
-// 传入数据缓冲区地址和长度，如有反馈，仍使用该缓冲区，返回数据长度
-typedef uint (*DataHandler)(void* sender, byte* buf, uint size, void* param);
+// 数据处理
+typedef uint (*DataHandler)(void* sender, Buffer& bs, void* param);
 
 // 委托接口
 class IDelegate
