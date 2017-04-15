@@ -123,8 +123,8 @@ void HistoryStore::Report()
 	if (!len) return;
 
 	// 根据每次最大上报长度，计算可以上报多少条历史记录
-	int n = MaxReport / Size;
-	int len2 = n * Size;
+	int n = MaxReport / (4 + Size);
+	int len2 = n * (4 + Size);
 	if (len2 > len) len2 = len;
 
 	ds_printf("HistoryStore::Report %d/%d \r\n", len2, len);
