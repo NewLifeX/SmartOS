@@ -2,8 +2,8 @@
 
 #include "HistoryStore.h"
 
-//#define DS_DEBUG DEBUG
-#define DS_DEBUG 0
+#define DS_DEBUG DEBUG
+//#define DS_DEBUG 0
 #if DS_DEBUG
 #define ds_printf debug_printf
 #else
@@ -17,13 +17,13 @@ HistoryStore::HistoryStore()
 
 	RenderPeriod = 30;
 	ReportPeriod = 300;
-	FlashPeriod = 600;
+	StorePeriod = 600;
 
 	MaxCache = 16 * 1024;
 	MaxReport = 1024;
 
 	OnReport = nullptr;
-	OnFlash = nullptr;
+	OnStore = nullptr;
 
 	_task = 0;
 }
@@ -44,7 +44,7 @@ bool HistoryStore::Open()
 	if (Opened) return true;
 
 	_Report = 0;
-	_Flash = 0;
+	_Store = 0;
 
 	// 定时生成历史数据 30s
 	int p = RenderPeriod * 1000;
@@ -93,10 +93,10 @@ void HistoryStore::Reader()
 	_Report -= RenderPeriod;
 	if (_Report <= 0) Report();
 
-	// 自动写入Flash
-	if (_Flash <= 0) _Flash = FlashPeriod;
-	_Flash -= RenderPeriod;
-	if (_Flash <= 0) Flash();
+	// 自动写入Store
+	if (_Store <= 0) _Store = StorePeriod;
+	_Store -= RenderPeriod;
+	if (_Store <= 0) Store();
 }
 
 void HistoryStore::Report()
@@ -104,63 +104,50 @@ void HistoryStore::Report()
 	if (!OnReport) return;
 
 	auto& s = Cache;
+	int len = s.Length - s.Position();
 	// 没有数据
-	if (s.Position() == s.Length) return;
+	if (!len) return;
 
 	// 根据每次最大上报长度，计算可以上报多少条历史记录
 	int n = MaxReport / Size;
-	int len = n * Size;
+	int len2 = n * Size;
+	if (len2 > len) len2 = len;
 
-	ByteArray bs(len);
-	len = s.Read(bs);
-	bs.SetLength(len);
+	ds_printf("HistoryStore::Report %d/%d", len2, len);
 
-	// 游标先移回去，成功以后再删除
-	s.Seek(-len);
-
-	if (len) {
-		int len2 = OnReport(this, bs, nullptr);
-		if (len2) {
-			s.Seek(len2);
-
-			// 如果缓存里面没有了数据，则从头开始使用
-			if (s.Position() == s.Length) {
-				s.SetPosition(0);
-				s.Length = 0;
-			}
-		}
-	}
+	Process(len2, OnReport);
 }
 
-void HistoryStore::Flash()
+void HistoryStore::Store()
 {
-	if (!OnFlash) return;
+	if (!OnStore) return;
 
 	auto& s = Cache;
+	int len = s.Length - s.Position();
 	// 没有数据
-	if (s.Position() == s.Length) return;
+	if (!len) return;
 
-	// 根据每次最大上报长度，计算可以上报多少条历史记录
-	int n = MaxReport / Size;
-	int len = n * Size;
+	ds_printf("HistoryStore::Store %d", len);
 
-	ByteArray bs(len);
-	len = s.Read(bs);
-	bs.SetLength(len);
+	Process(len, OnStore);
+}
 
-	// 游标先移回去，成功以后再删除
-	s.Seek(-len);
+void HistoryStore::Process(int len, DataHandler handler)
+{
+	if (!len || !handler) return;
 
-	if (len) {
-		int len2 = OnFlash(this, bs, nullptr);
-		if (len2) {
-			s.Seek(len2);
+	auto& s = Cache;
 
-			// 如果缓存里面没有了数据，则从头开始使用
-			if (s.Position() == s.Length) {
-				s.SetPosition(0);
-				s.Length = 0;
-			}
+	Buffer bs(s.GetBuffer() + s.Position(), len);
+
+	int rs = handler(this, bs, nullptr);
+	if (rs) {
+		s.Seek(rs);
+
+		// 如果缓存里面没有了数据，则从头开始使用
+		if (s.Position() == s.Length) {
+			s.SetPosition(0);
+			s.Length = 0;
 		}
 	}
 }

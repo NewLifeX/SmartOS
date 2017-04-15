@@ -10,7 +10,7 @@ public:
 	MemoryStream	Cache;	// 数据
 	short	RenderPeriod;	// 生成历史数据周期。默认30s
 	short	ReportPeriod;	// 上报数据周期。默认300s
-	short	FlashPeriod;	// 写入Flash周期。默认600s
+	short	StorePeriod;	// 写入Store周期。默认600s
 
 	short	MaxCache;		// 缓存最大长度。默认16 * 1024
 	short	MaxReport;		// 每次最大上报长度。默认1024
@@ -20,7 +20,7 @@ public:
 	// 数据上报句柄
 	DataHandler OnReport;
 	// 数据存储句柄
-	DataHandler OnFlash;
+	DataHandler OnStore;
 
 	// 初始化
 	HistoryStore();
@@ -39,14 +39,16 @@ private:
 	int		Size;
 
 	short	_Report;
-	short	_Flash;
+	short	_Store;
 
 	uint	_task;
 
 	static void RenderTask(void* param);
 	void Reader();
 	void Report();
-	void Flash();
+	void Store();
+
+	void Process(int len, DataHandler handler);
 };
 
 /*
