@@ -578,5 +578,8 @@
     <ClCompile Include="..\Board\TokenBoard.cpp">
       <Filter>Board</Filter>
     </ClCompile>
+    <ClCompile Include="..\Message\HistoryStore.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

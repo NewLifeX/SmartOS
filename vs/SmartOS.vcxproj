@@ -109,6 +109,7 @@
     <ClCompile Include="..\Message\BinaryPair.cpp" />
     <ClCompile Include="..\Message\Controller.cpp" />
     <ClCompile Include="..\Message\DataStore.cpp" />
+    <ClCompile Include="..\Message\HistoryStore.cpp" />
     <ClCompile Include="..\Message\Json.cpp" />
     <ClCompile Include="..\Message\Message.cpp" />
     <ClCompile Include="..\Message\MessageBase.cpp" />

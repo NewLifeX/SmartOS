@@ -39,7 +39,7 @@ void BaseBoard::Init(ushort code, cstring name)
 	WatchDog::Start();
 
 	// 系统休眠时自动进入低功耗
-	Power::AttachTimeSleep();
+	//Power::AttachTimeSleep();
 #endif
 }
 
