@@ -72,6 +72,10 @@ public:
 	void Read(int start, int size);
 	void Write(int start, const Buffer& bs);
 	void Write(int start, byte dat);
+	
+	// 异步上传并等待响应，返回实际上传字节数
+	int WriteAsync(int start, const Buffer& bs, int msTimeout);
+
 	// 必须满足 start > 0 才可以。
 	void ReportAsync(int start, uint length = 1);
 
@@ -127,6 +131,7 @@ private:
 private:
 	uint	_task;
 	//uint	_taskBroadcast;	// 广播任务
+	void*	_Expect;	// 等待内容
 
 	Delegate2<Message&, Controller&>	_LocalReceive;
 

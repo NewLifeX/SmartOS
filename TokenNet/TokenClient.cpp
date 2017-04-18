@@ -1,4 +1,5 @@
 ﻿#include "Kernel\TTime.h"
+#include "Kernel\WaitHandle.h"
 
 #include "Net\Socket.h"
 #include "Net\NetworkInterface.h"
@@ -44,6 +45,8 @@ TokenClient::TokenClient()
 
 	NextReport = -1;
 	ReportLength = 0;
+
+	_Expect = nullptr;
 
 	assert(!Current, "只能有一个令牌客户端实例");
 	Current = this;
@@ -341,7 +344,7 @@ void TokenClient::OnReceiveLocal(TokenMessage& msg, TokenController& ctrl)
 void TokenClient::LocalSend(int start, const Buffer& bs)
 {
 	auto& cs = Sessions;
-	if(cs.Count() == 0) return;
+	if (cs.Count() == 0) return;
 
 	debug_printf("LocalSend\r\n");
 
@@ -809,7 +812,7 @@ void TokenClient::Ping()
 	if (LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
 	TokenPingMessage pm;
-	pm.Data	= &Store.Data;
+	pm.Data = &Store.Data;
 
 	TokenMessage msg(3);
 	pm.WriteMessage(msg);
@@ -884,6 +887,26 @@ void TokenClient::Write(int start, const Buffer& bs)
 void TokenClient::Write(int start, byte dat)
 {
 	Write(start, Buffer(&dat, 1));
+}
+
+// 异步上传并等待响应
+int TokenClient::WriteAsync(int start, const Buffer& bs, int msTimeout)
+{
+	// 如果别的任务正在上传，此次写入失败
+	if (_Expect) return 0;
+
+	WaitHandle handle;
+	handle.State = (void*)start;
+
+	_Expect = &handle;
+
+	handle.WaitOne(msTimeout);
+	if (_Expect == &handle) _Expect = nullptr;
+
+	// 可能失败
+	if (!handle.Result) return 0;
+
+	return (int)handle.State;
 }
 
 void TokenClient::ReportAsync(int start, uint length)
@@ -976,13 +999,27 @@ void TokenClient::OnRead(const TokenMessage& msg, TokenController* ctrl)
 */
 void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 {
-	if (msg.Reply) return;
 	if (msg.Length < 2) return;
 
 	TokenDataMessage dm;
 	dm.ReadMessage(msg);
 	debug_printf("Write ");
 	dm.Show(true);
+
+	if (msg.Reply) {
+		// 拦截给同步方法
+		auto handle = (WaitHandle*)_Expect;
+		if (handle) {
+			auto start = (int)handle->State;
+			if (start == dm.Start) {
+				// 设置事件，通知等待任务退出循环
+				handle->State = (void*)dm.Size;
+				handle->Set();
+			}
+		}
+
+		return;
+	}
 
 	bool rt = true;
 	if (dm.Start < 64)
