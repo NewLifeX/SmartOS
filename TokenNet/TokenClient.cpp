@@ -899,12 +899,12 @@ int TokenClient::WriteAsync(int start, const Buffer& bs, int msTimeout)
 	handle.State = (void*)start;
 
 	_Expect = &handle;
-
+	Write(start, bs);
 	handle.WaitOne(msTimeout);
 	if (_Expect == &handle) _Expect = nullptr;
 
 	// 可能失败
-	if (!handle.Result) return 0;
+	if (!handle.Result) return 1;
 
 	return (int)handle.State;
 }
