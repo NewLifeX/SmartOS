@@ -682,12 +682,14 @@ void TokenClient::Login()
 	// auto now = Sys.Ms();
 	auto now = DateTime::Now().TotalMs();
 	auto arr = Buffer(&now, 8);
-	ByteArray bs = arr;
+	ByteArray bs;
+	bs	= arr;
 	// login.Salt = arr;
 	RC4::Encrypt(arr, cfg->Pass());
 	// 散列明文和密码连接在一起
-	bs += arr;
-	login.Pass = bs.ToHex();
+	auto pass = bs.ToHex();
+	pass += arr.ToHex();
+	login.Pass = pass;
 
 	login.Cookie = Cookie;
 
