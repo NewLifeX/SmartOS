@@ -111,7 +111,7 @@ INROOT void TSys::OnInit()
 	//if (IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 	if (IsGD) Clock = 120000000;
 #elif defined(STM32F4)
-	//if (IsGD) Clock = 200000000;
+	if (IsGD) Clock = 200000000;
 #endif
 
 	_Index = 0;
@@ -137,9 +137,6 @@ INROOT void TSys::OnInit()
 			}
 		}
 		RAMSize = RamSizes[_Index];
-#if defined(STM32F4)
-		//if (IsGD) RAMSize <<= 1;
-#endif
 	}
 
 	InitHeapStack(StackTop());

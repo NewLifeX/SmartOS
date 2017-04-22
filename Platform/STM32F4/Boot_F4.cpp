@@ -88,20 +88,23 @@ extern "C"
 			SYSCLK = PLL_VCO / PLL_P
 			USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ
 			*/
-			PLL_N = clock / 1000000;
+			int n = clock / 1000000;
 			PLL_M = cystalClock / 1000000;	// 为了让它除到1
 			PLL_P = 2;	// 这是分母，可用2/4/6，在系统主频不变的情况下，可以加倍扩大PLL_VC0以获取48M
-			PLL_N *= PLL_P;
-			// 168M分不出48M，向上加倍吧，恰巧336M可以
+			PLL_N = n * PLL_P;
+			/*// 168M分不出48M，向上加倍吧，恰巧336M可以
 			while(PLL_N % 48 != 0)
 			{
 				PLL_P += 2;
-				assert_param(PLL_P >=2 && PLL_P <= 6);
-				PLL_N *= PLL_P;
+				assert_param(PLL_P >=2 && PLL_P <= 8);
+				PLL_N = n * PLL_P;
 			}
-			PLL_Q = PLL_N / 48;	// USB等需要48M
-			RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
-						   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
+			PLL_Q = PLL_N / 48;	// USB等需要48M*/
+			PLL_Q = 0;
+			for(int usb=0; usb<PLL_N; usb+=48) PLL_Q++;
+			/*RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
+						   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);*/
+			RCC_PLLConfig(RCC_PLLCFGR_PLLSRC_HSE, PLL_M, PLL_N, PLL_P, PLL_Q);
 
 			/* Enable the main PLL */
 			RCC->CR |= RCC_CR_PLLON;
