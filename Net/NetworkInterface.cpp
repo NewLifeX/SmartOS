@@ -49,10 +49,14 @@ NetworkInterface::NetworkInterface()
 
 NetworkInterface::~NetworkInterface()
 {
+	// 先关闭接口，再移除，避免空指针
+	//if (!Opened) Close();
+	// 外部可能直接设置Opened而没有关闭网络接口，导致出错
+	Opened = true;
+	Close();
+
 	debug_printf("Network::Remove 0x%p\r\n", this);
 	All.Remove(this);
-
-	if (!Opened) Close();
 }
 
 bool NetworkInterface::Open()
