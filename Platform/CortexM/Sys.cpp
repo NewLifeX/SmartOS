@@ -110,6 +110,8 @@ INROOT void TSys::OnInit()
 #ifdef STM32F1
 	//if (IsGD && (DevID == 0x0430 || DevID == 0x0414)) Clock = 120000000;
 	if (IsGD) Clock = 120000000;
+#elif defined(STM32F4)
+	//if (IsGD) Clock = 200000000;
 #endif
 
 	_Index = 0;
@@ -135,6 +137,9 @@ INROOT void TSys::OnInit()
 			}
 		}
 		RAMSize = RamSizes[_Index];
+#if defined(STM32F4)
+		//if (IsGD) RAMSize <<= 1;
+#endif
 	}
 
 	InitHeapStack(StackTop());
@@ -242,6 +247,8 @@ void TSys::OnShowInfo() const
 #ifdef STM32F4
 		else if (DevID == 0x413)
 			debug_printf("F407");
+		else if (DevID == 0x419)
+			debug_printf("F450");
 #endif
 		else if (DevID == 0x440 || DevID == 0x444) // F030x4/F030x6=0x444 F030x8=0x440
 			debug_printf("F030/F051");
