@@ -33,7 +33,7 @@ static void UnionPress(InputPort& port, bool down)
 
 }
 
-void IOK027X::Union(Pin pin1, Pin pin2)
+void IOK027X::Union(Pin pin1, Pin pin2, bool invert)
 {
 	Pin p[] = { pin1,pin2 };
 	for (int i = 0; i < 2; i++)
@@ -41,8 +41,8 @@ void IOK027X::Union(Pin pin1, Pin pin2)
 		if (p[i] == P0) continue;
 
 		auto port = new InputPort(p[i]);
-		port->Invert = true;
-		port->ShakeTime = 0;
+		port->Invert = invert;	// 是否倒置输入输出
+		//port->ShakeTime = shake;
 		port->Index = i;
 		port->Press.Bind(UnionPress);
 		port->UsePress();

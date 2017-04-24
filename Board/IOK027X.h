@@ -12,7 +12,7 @@ public:
 	IOK027X();
 
 	// 联动开关
-	void Union(Pin pin1, Pin pin2);
+	void Union(Pin pin1, Pin pin2, bool invert);
 
 	static IOK027X* Current;
 };
