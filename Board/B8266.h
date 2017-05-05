@@ -17,6 +17,7 @@ public:
 	Alarm*			AlarmObj;
 
 	SerialConfig	Esp;
+	NetworkInterface*	Host;			// 网络主机
 
 	cstring			SSID;
 	cstring			Pass;

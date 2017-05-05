@@ -18,6 +18,8 @@ B8266::B8266()
 	SSID = "WSWL";
 	Pass = "12345678";
 
+	Host = nullptr;	// 网络主机
+
 	Current = this;
 }
 
@@ -61,7 +63,7 @@ NetworkInterface* B8266::Create8266()
 
 void B8266::InitNet()
 {
-	Create8266();
+	Host = Create8266();
 	Client->Open();
 }
 

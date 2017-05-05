@@ -1,6 +1,7 @@
 ﻿#include "IOK027X.h"
 
 IOK027X* IOK027X::Current = nullptr;
+#include "Drivers\Esp8266\Esp8266.h"
 
 IOK027X::IOK027X()
 {
@@ -14,6 +15,9 @@ IOK027X::IOK027X()
 	Esp.Power = PB2;
 	Esp.Reset = PA1;
 	Esp.LowPower = P0;
+
+	LedsShow = 2;
+	LedsTaskId = 0;
 
 	Current = this;
 }
@@ -48,6 +52,79 @@ void IOK027X::Union(Pin pin1, Pin pin2, bool invert)
 		port->UsePress();
 		port->Open();
 	}
+}
+
+static bool ledstat2 = false;
+void IOK027X::FlushLed()
+{
+	if (LedsShow == 0)			// 启动时候20秒
+	{
+		auto esp = dynamic_cast<Esp8266*>(Host);
+		if (esp && esp->Linked)					// 8266 初始化完成  且  连接完成
+		{
+			Sys.SetTaskPeriod(LedsTaskId, 500);	// 慢闪
+		}
+
+		Leds[0]->Write(ledstat2);
+		ledstat2 = !ledstat2;
+
+		if (Sys.Ms() > 20000)
+		{
+			Leds[0]->Write(true);
+			LedsShow = 2;	// 置为无效状态
+		}
+	}
+
+	bool stat = false;
+	// 3分钟内 Client还活着则表示  联网OK
+	if (Client && Client->LastActive + 180000 > Sys.Ms() && LedsShow == 1)stat = true;
+	Leds[1]->Write(stat);
+	if (LedsShow == 2)Sys.SetTask(LedsTaskId, false);
+}
+
+byte IOK027X::LedStat(byte showmode)
+{
+	auto esp = dynamic_cast<Esp8266*>(Host);
+	if (esp)
+	{
+		debug_printf("ESP已经初始化了，Host\r\n");
+		if (showmode == 1)
+		{
+			esp->RemoveLed();
+			esp->SetLed(*Leds[0]);
+		}
+		else
+		{
+			esp->RemoveLed();
+			// 维护状态为false
+			Leds[0]->Write(false);
+		}
+	}
+
+	if (showmode != 2)
+	{
+		if (!LedsTaskId)
+		{
+			LedsTaskId = Sys.AddTask(&IOK027X::FlushLed, this, 500, 100, "CltLedStat");
+			debug_printf("AddTask(IOK027X:FlushLed)\r\n");
+		}
+		else
+		{
+			Sys.SetTask(LedsTaskId, true);
+			debug_printf("已经建立任务Sys.SetTask(LedsTaskId, true)\r\n");
+			if (showmode == 1)Sys.SetTaskPeriod(LedsTaskId, 500);
+		}
+		LedsShow = showmode;
+	}
+	if (showmode == 2)
+	{
+		// 由任务自己结束，顺带维护输出状态为false
+		// if (LedsTaskId)Sys.SetTask(LedsTaskId, false);
+		LedsShow = 2;
+		debug_printf("灯光展示LedsShow = 2;\r\n");
+
+	}
+	return LedsShow;
 }
 
 /*
