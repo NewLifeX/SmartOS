@@ -17,6 +17,7 @@ IOK027X::IOK027X()
 	Esp.LowPower = P0;
 
 	LedsShow = 2;
+	LedInvert = true;
 	LedsTaskId = 0;
 
 	Current = this;
@@ -37,6 +38,21 @@ static void UnionPress(InputPort& port, bool down)
 
 }
 
+static bool ledstat2 = false;
+//重写重置方法，使得重置时红灯闪烁
+void IOK027X::Restore()
+{
+	if (!Client) return;
+	for (int i = 0; i < 10; i++)
+	{
+		Leds[1]->Write(ledstat2);
+		ledstat2 = !ledstat2;
+		Sys.Sleep(300);
+	}
+
+	if (Client) Client->Reset("按键重置");
+}
+
 void IOK027X::Union(Pin pin1, Pin pin2, bool invert)
 {
 	Pin p[] = { pin1,pin2 };
@@ -53,8 +69,20 @@ void IOK027X::Union(Pin pin1, Pin pin2, bool invert)
 		port->Open();
 	}
 }
+//重写指示灯默认倒置
+void IOK027X::InitLeds()
+{
+	for (int i = 0; i < LedPins.Count(); i++)
+	{
+		auto port = new OutputPort(LedPins[i], LedInvert);
+		//auto port = new OutputPort(LedPins[i], false);
+		port->Open();
+		port->Write(false);
+		Leds.Add(port);
+	}
+}
 
-static bool ledstat2 = false;
+
 void IOK027X::FlushLed()
 {
 	if (LedsShow == 0)			// 启动时候20秒
@@ -70,7 +98,7 @@ void IOK027X::FlushLed()
 
 		if (Sys.Ms() > 20000)
 		{
-			Leds[0]->Write(true);
+			Leds[0]->Write(false);
 			LedsShow = 2;	// 置为无效状态
 		}
 	}
@@ -87,7 +115,6 @@ byte IOK027X::LedStat(byte showmode)
 	auto esp = dynamic_cast<Esp8266*>(Host);
 	if (esp)
 	{
-		debug_printf("ESP已经初始化了，Host\r\n");
 		if (showmode == 1)
 		{
 			esp->RemoveLed();
@@ -111,7 +138,6 @@ byte IOK027X::LedStat(byte showmode)
 		else
 		{
 			Sys.SetTask(LedsTaskId, true);
-			debug_printf("已经建立任务Sys.SetTask(LedsTaskId, true)\r\n");
 			if (showmode == 1)Sys.SetTaskPeriod(LedsTaskId, 500);
 		}
 		LedsShow = showmode;
@@ -121,7 +147,6 @@ byte IOK027X::LedStat(byte showmode)
 		// 由任务自己结束，顺带维护输出状态为false
 		// if (LedsTaskId)Sys.SetTask(LedsTaskId, false);
 		LedsShow = 2;
-		debug_printf("灯光展示LedsShow = 2;\r\n");
 
 	}
 	return LedsShow;

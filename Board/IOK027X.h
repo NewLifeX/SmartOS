@@ -16,6 +16,8 @@ public:
 
 	// 联动开关
 	void Union(Pin pin1, Pin pin2, bool invert);
+	void InitLeds();
+	void Restore();
 	void FlushLed();			// 刷新led状态输出
 	byte LedStat(byte showmode);
 
