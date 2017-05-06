@@ -14,7 +14,7 @@ static PulsePort* Create(Pin pin)
 	pp->Port = new InputPort();
 	pp->Port->Set(pin);
 	pp->Port->Floating = false;
-	pp->Port->Pull = InputPort::DOWN;
+	pp->Port->Pull = InputPort::UP;
 
 	pp->Port->HardEvent = true;
 
