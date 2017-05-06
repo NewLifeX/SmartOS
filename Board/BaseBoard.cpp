@@ -29,7 +29,6 @@ void BaseBoard::Init(ushort code, cstring name)
 
 #if DEBUG
 	Sys.ShowInfo();
-	debug_printf("hot=%p \r\n", hot);
 
 	WatchDog::Start(20000, 10000);
 #else

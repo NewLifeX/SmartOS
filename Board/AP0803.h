@@ -27,6 +27,8 @@ public:
 	void InitNet();
 	void InitProxy();
 	void InitAlarm();
+
+	static AP0803* Current;
 };
 
 #endif

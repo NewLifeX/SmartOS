@@ -4,7 +4,7 @@
 
 #include "Message\ProxyFactory.h"
 
-static TokenClient*	Client = nullptr;	// 令牌客户端
+AP0803* AP0803::Current = nullptr;
 static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
 
 AP0803::AP0803()
@@ -24,6 +24,8 @@ AP0803::AP0803()
 	Gsm.Power = PE0;
 	Gsm.Reset = PD3;
 	Gsm.LowPower = P0;
+
+	Current = this;
 }
 
 NetworkInterface* AP0803::CreateGPRS()
@@ -49,7 +51,7 @@ static void OnInitNet(void* param)
 
 	bsp.CreateGPRS();
 
-	Client->Open();
+	bsp.Client->Open();
 }
 
 void AP0803::InitNet()
@@ -82,7 +84,7 @@ static void OnAlarm(AlarmItem& item)
 
 	if (bs[1] == 0x06)
 	{
-		auto client = Client;
+		auto client = AP0803::Current->Client;
 		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
 
 		// 主动上报状态

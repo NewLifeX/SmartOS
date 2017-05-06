@@ -45,7 +45,7 @@ void TokenBoard::Write(uint offset, byte data)
 
 /******************************** Token ********************************/
 
-void TokenBoard::InitClient()
+void TokenBoard::InitClient(bool useLocal)
 {
 	if (Client) return;
 
@@ -59,7 +59,7 @@ void TokenBoard::InitClient()
 	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
 	tc->Cfg = tk;
 	tc->MaxNotActive = 8 * 60 * 1000;
-	tc->UseLocal();
+	if (useLocal) tc->UseLocal();
 
 	Client = tc;
 }
