@@ -130,7 +130,8 @@ bool GSM07::OnOpen()
 		return false;
 	}*/
 
-	Config();
+	// 这里不用配置，待会OnLink马上就会执行
+	//Config();
 
 	At.Received.Bind(&GSM07::OnReceive, this);
 
@@ -147,11 +148,8 @@ bool GSM07::CheckReady()
 	}
 	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open
 
-	// 每两次启动会有一次打开失败，交替
-	if (!_Reset.Empty())
-		Reset(false);	// 硬重启
-	else
-		Reset(true);	// 软件重启命令
+	Reset(true);	// 软件重启命令
+	if (!_Reset.Empty()) Reset(false);	// 硬重启
 
 	// 等待模块启动进入就绪状态
 	if (!Test(40, 500))
@@ -246,18 +244,24 @@ bool GSM07::Config()
 
 	//IPShutdown(0);
 
-	// 检查网络质量
+	// 1，检查网络质量
 	QuerySignal();
 	//QueryRegister();
 
-	// 附着网络，上网必须
-	if (!AttachMT(true)) return false;
-	// 执行网络查询可能导致模块繁忙
+	// 2，网络查询
 	if (!QueryRegister()) return false;
+	//QueryRegister();
 
-	if (!SetAPN(APN, false)
-		|| !SetPDP(true)
-		|| !SetClass("B")) return false;
+	// 3，附着网络
+	if (!AttachMT(true)) return false;
+
+	// 4，设置PDP参数
+	if (!SetAPN(APN, false)) return false;
+
+	// 5，激活PDP
+	if (!SetPDP(true)) return false;
+
+	if (!SetClass("B")) return false;
 
 	if (Mux) Mux = IPMux(true);
 	IPStatus();
@@ -339,7 +343,14 @@ bool GSM07::Reset(bool soft)
 {
 	if (soft) return At.SendCmd("AT+RST");
 
+	/*
+	模块硬件RESET脚，此脚使用的时候低电平<0.05V,电流在70ma左右，必须使用NMOS可以控制；
+	拉低以后其实是模块硬件关机了，该脚在正常工作的时候不能有漏电，否则会导致模块不稳定，难以注册网络；
+	在RESET的时候注意PWR_KEY脚要先拉低，然后再拉高。
+	*/
+	if (!_Power.Empty()) _Power.Down(100);
 	_Reset.Up(100);
+
 	return true;
 }
 
@@ -633,7 +644,7 @@ bool GSM07::IPSend(int index, const Buffer& data)
 	{
 		// 字符串里面不能有特殊字符
 		bool flag = true;
-		for (int i = 0;i < data.Length();i++)
+		for (int i = 0; i < data.Length(); i++)
 		{
 			if (data[i] == '\0' || data[i] == '\"')
 			{
@@ -821,6 +832,13 @@ bool GSMSocket::OnOpen()
 	uri.Address = Remote.Address;
 	uri.Port = Remote.Port;
 	uri.Host = Server;
+
+#if NET_DEBUG
+	//_Host.IPStatus();
+#endif
+
+	// 先关闭一次
+	OnClose();
 
 	int idx = _Host.IPStart(uri);
 	if (idx < 0)
