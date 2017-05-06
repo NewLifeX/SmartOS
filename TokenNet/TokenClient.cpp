@@ -593,10 +593,11 @@ bool TokenClient::ChangeIPEndPoint(const NetUri& uri)
 
 	// 为了能够处理Tcp/Udp切换，重新建立连接
 
+	ctrl->Close();
 	delete socket;
+
 	socket = Socket::CreateRemote(uri);
 	ctrl->_Socket = socket;
-	ctrl->Close();
 	ctrl->Open();
 
 	/*ctrl->Port->Close();
