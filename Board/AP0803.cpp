@@ -1,21 +1,8 @@
 ﻿#include "AP0803.h"
 
-#include "Kernel\Task.h"
-
-#include "Device\WatchDog.h"
-#include "Config.h"
-
 #include "Drivers\A67.h"
 
-#include "TokenNet\TokenController.h"
-#include "TokenNet\TokenConfig.h"
-#include "TokenNet\TokenClient.h"
-
-#include "Device\RTC.h"
-
 #include "Message\ProxyFactory.h"
-
-AP0803* AP0803::Current = nullptr;
 
 static TokenClient*	Client = nullptr;	// 令牌客户端
 static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
@@ -32,97 +19,11 @@ AP0803::AP0803()
 	ProxyFac = nullptr;
 	AlarmObj = nullptr;
 
-	Data = nullptr;
-	Size = 0;
-
-	Current = this;
-}
-
-void AP0803::Init(ushort code, cstring name, COM message)
-{
-	auto& sys = (TSys&)Sys;
-	sys.Code = code;
-	sys.Name = (char*)name;
-
-	// RTC 提取时间
-	HardRTC::Start(false, false);
-
-	// 初始化系统
-	sys.Init();
-#if DEBUG
-	sys.MessagePort = message; // 指定printf输出的串口
-	Sys.ShowInfo();
-
-	WatchDog::Start(20000, 10000);
-#else
-	WatchDog::Start();
-
-	// 系统休眠时自动进入低功耗
-	// Power::AttachTimeSleep();
-#endif
-
-	// Flash最后一块作为配置区
-	Config::Current = &Config::CreateFlash();
-}
-
-void* AP0803::InitData(void* data, int size)
-{
-	// 启动信息
-	auto hot = &HotConfig::Current();
-	hot->Times++;
-
-	data = hot->Next();
-	if (hot->Times == 1)
-	{
-		Buffer ds(data, size);
-		ds.Clear();
-		ds[0] = size;
-	}
-
-	Data = data;
-	Size = size;
-
-#if DEBUG
-	debug_printf("数据区：");
-	Buffer(Data, Size).Show(true);
-#endif
-
-	return data;
-}
-
-// 写入数据区并上报
-void AP0803::Write(uint offset, byte data)
-{
-	auto client = Client;
-	if (!client) return;
-
-	client->Store.Write(offset, data);
-	client->ReportAsync(offset, 1);
-}
-
-void AP0803::InitLeds()
-{
-	for (int i = 0; i < LedPins.Count(); i++)
-	{
-		auto port = new OutputPort(LedPins[i]);
-		port->Open();
-		Leds.Add(port);
-	}
-}
-
-void AP0803::InitButtons(const Delegate2<InputPort&, bool>& press)
-{
-	for (int i = 0; i < ButtonPins.Count(); i++)
-	{
-		auto port = new InputPort(ButtonPins[i]);
-		port->Invert = true;
-		port->ShakeTime = 40;
-		port->Index = i;
-		port->Press = press;
-		port->UsePress();
-		port->Open();
-		Buttons.Add(port);
-	}
+	Gsm.Com = COM4;
+	Gsm.Baudrate = 115200;
+	Gsm.Power = PE0;
+	Gsm.Reset = PD3;
+	Gsm.LowPower = P0;
 }
 
 NetworkInterface* AP0803::CreateGPRS()
@@ -130,8 +31,8 @@ NetworkInterface* AP0803::CreateGPRS()
 	debug_printf("\r\nCreateGPRS::Create \r\n");
 
 	auto net = new A67();
-	net->Init(COM4, 115200);
-	net->Set(PE0, PD3, P0);
+	net->Init(Gsm.Com, Gsm.Baudrate);
+	net->Set(Gsm.Power, Gsm.Reset, Gsm.LowPower);
 	net->SetLed(*Leds[0]);
 	if (!net->Open())
 	{
@@ -140,40 +41,6 @@ NetworkInterface* AP0803::CreateGPRS()
 	}
 
 	return net;
-}
-
-/******************************** Token ********************************/
-
-void AP0803::InitClient()
-{
-	if (Client) return;
-
-	// 初始化令牌网
-	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
-
-	// 创建客户端
-	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
-	tc->Cfg = tk;
-	tc->MaxNotActive = 8 * 60 * 1000;
-	//tc->UseLocal();
-
-	Client = tc;
-}
-
-void AP0803::Register(uint offset, IDataPort& dp)
-{
-	if (!Client) return;
-
-	auto& ds = Client->Store;
-	ds.Register(offset, dp);
-}
-
-void AP0803::Register(uint offset, uint size, Handler hook)
-{
-	if (!Client) return;
-
-	auto& ds = Client->Store;
-	ds.Register(offset, size, hook);
 }
 
 static void OnInitNet(void* param)
@@ -188,14 +55,6 @@ static void OnInitNet(void* param)
 void AP0803::InitNet()
 {
 	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
-}
-
-void AP0803::Invoke(const String& ation, const Buffer& bs)
-{
-	if (!Client) return;
-
-	Client->Invoke(ation, bs);
-
 }
 
 void  AP0803::InitProxy()
@@ -241,89 +100,6 @@ void AP0803::InitAlarm()
 
 	AlarmObj->OnAlarm = OnAlarm;
 	AlarmObj->Start();
-}
-
-/******************************** 2401 ********************************/
-
-/*int Fix2401(const Buffer& bs)
-{
-	//auto& bs	= *(Buffer*)param;
-	// 微网指令特殊处理长度
-	uint rs	= bs.Length();
-	if(rs >= 8)
-	{
-		rs = bs[5] + 8;
-		//if(rs < bs.Length()) bs.SetLength(rs);
-	}
-	return rs;
-}
-
-ITransport* AP0803::Create2401(SPI spi_, Pin ce, Pin irq, Pin power, bool powerInvert, IDataPort* led)
-{
-	debug_printf("\r\n Create2401 \r\n");
-
-	static Spi spi(spi_, 10000000, true);
-	static NRF24L01 nrf;
-	nrf.Init(&spi, ce, irq, power);
-
-	auto tc	= TinyConfig::Create();
-	if(tc->Channel == 0)
-	{
-		tc->Channel	= 120;
-		tc->Speed	= 250;
-	}
-	if(tc->Interval == 0)
-	{
-		tc->Interval= 40;
-		tc->Timeout	= 1000;
-	}
-
-	nrf.AutoAnswer	= false;
-	nrf.DynPayload	= false;
-	nrf.Channel		= tc->Channel;
-	//nrf.Channel		= 120;
-	nrf.Speed		= tc->Speed;
-
-	nrf.FixData	= Fix2401;
-
-	if(WirelessLed) net->Led	= CreateFlushPort(WirelessLed);
-
-	nrf.Master	= true;
-
-	return &nrf;
-}*/
-
-void AP0803::Restore()
-{
-	if (!Client) return;
-
-	if (Client) Client->Reset("按键重置");
-}
-
-int AP0803::GetStatus()
-{
-	if (!Client) return 0;
-
-	return Client->Status;
-}
-
-void AP0803::OnLongPress(InputPort* port, bool down)
-{
-	if (down) return;
-
-	debug_printf("Press P%c%d Time=%d ms\r\n", _PIN_NAME(port->_Pin), port->PressTime);
-
-	ushort time = port->PressTime;
-	auto client = Client;
-	if (time >= 5000 && time < 10000)
-	{
-		if (client) client->Reset("按键重置");
-	}
-	else if (time >= 3000)
-	{
-		if (client) client->Reboot("按键重启");
-		Sys.Reboot(1000);
-	}
 }
 
 /*

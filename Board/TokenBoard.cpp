@@ -26,7 +26,7 @@ void* TokenBoard::InitData(void* data, int size)
 	Size = size;
 
 #if DEBUG
-	debug_printf("数据区%d：", hot->Times);
+	debug_printf("数据区[%d]：", hot->Times);
 	Buffer(Data, Size).Show(true);
 #endif
 

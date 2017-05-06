@@ -31,37 +31,6 @@ IOK026X::IOK026X()
 	Pass = "12345678";
 }
 
-void IOK026X::Init(ushort code, cstring name, COM message)
-{
-	auto& sys = (TSys&)Sys;
-	sys.Code = code;
-	sys.Name = (char*)name;
-
-	// RTC 提取时间
-	auto Rtc = HardRTC::Instance();
-	Rtc->LowPower = false;
-	Rtc->External = false;
-	Rtc->Init();
-	Rtc->Start(false, false);
-
-	// 初始化系统
-	sys.Init();
-#if DEBUG
-	sys.MessagePort = message; // 指定printf输出的串口
-	Sys.ShowInfo();
-
-	WatchDog::Start(20000, 10000);
-#else
-	WatchDog::Start();
-
-	// 系统休眠时自动进入低功耗
-	Power::AttachTimeSleep();
-#endif
-
-	// Flash最后一块作为配置区
-	Config::Current = &Config::CreateFlash();
-}
-
 void* IOK026X::InitData(void* data, int size)
 {
 	// 启动信息

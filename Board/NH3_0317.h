@@ -27,8 +27,6 @@ public:
 
 	NH3_0317();
 
-	void Init(ushort code, cstring name, COM message = COM1);
-
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);
 

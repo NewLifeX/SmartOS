@@ -26,9 +26,6 @@ public:
 	
 	PA0903();
 
-	// 设置系统参数
-	void Init(ushort code, cstring name, COM message = COM2);
-
 	// 设置数据区
 	void* InitData(void* data, int size);
 	// 写入数据区并上报

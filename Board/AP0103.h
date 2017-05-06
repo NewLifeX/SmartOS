@@ -34,9 +34,6 @@ public:
 
 	AP0103();
 
-	// 设置系统参数
-	void Init(ushort code, cstring name, COM message = COM1);
-
 	// 设置数据区
 	void* InitData(void* data, int size);
 	void Register(int index, IDataPort& dp);

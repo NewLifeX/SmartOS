@@ -18,11 +18,7 @@ void BaseBoard::Init(ushort code, cstring name)
 	sys.Name = (char*)name;
 
 	// RTC 提取时间
-	auto Rtc = HardRTC::Instance();
-	Rtc->LowPower = false;
-	Rtc->External = false;
-	Rtc->Init();
-	Rtc->Start(false, false);
+	HardRTC::Start(false, false);
 
 	// 初始化系统
 	sys.Init();
@@ -33,6 +29,7 @@ void BaseBoard::Init(ushort code, cstring name)
 
 #if DEBUG
 	Sys.ShowInfo();
+	debug_printf("hot=%p \r\n", hot);
 
 	WatchDog::Start(20000, 10000);
 #else
