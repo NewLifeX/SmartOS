@@ -25,6 +25,10 @@ public:
 
 	String HttpGet(const String& url, int port = 80);
 	bool HttpPost(const String& url, int port, const Buffer& data);
+
+protected:
+	// 数据到达
+	virtual void OnReceive(Buffer& bs);
 };
 
 #endif

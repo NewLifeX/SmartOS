@@ -9,6 +9,14 @@ class Sim900A : public GSM07
 public:
     Sim900A();
 
+	virtual bool IPSend(int index, const Buffer& data);
+
+protected:
+	virtual bool OnOpen();
+
+	// 数据到达
+	virtual void OnReceive(Buffer& bs);
+
 private:
 	//void Init(uint msTimeout = 1000);
 };

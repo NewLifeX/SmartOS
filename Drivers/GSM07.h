@@ -20,8 +20,6 @@ public:
 	cstring	APN;
 	bool	Mux;	// 开启多路socket模式，最多同时开启4路
 
-	Dictionary<cstring, cstring> DataKeys;	// 数据键值配对
-
 	IDataPort*	Led;	// 指示灯
 
 	OutputPort	_Power;	// 电源
@@ -83,7 +81,7 @@ public:
 
 	/******************************** TCP/IP ********************************/
 	int IPStart(const NetUri& remote);
-	bool IPSend(int index, const Buffer& data);
+	virtual bool IPSend(int index, const Buffer& data);
 	bool SendData(const String& cmd, const Buffer& bs);
 	bool IPClose(int index);
 	bool IPShutdown(int index);
@@ -98,7 +96,7 @@ public:
 	bool IPTransparentConfig(int mode, int value);
 	bool IPTransparent(bool enable);
 
-private:
+protected:
 	IPEndPoint	_Remote;	// 当前数据包远程地址
 
 	// 打开与关闭
@@ -110,7 +108,8 @@ private:
 	bool CheckReady();
 
 	// 数据到达
-	void OnReceive(Buffer& bs);
+	virtual void OnReceive(Buffer& bs);
+	void OnProcess(int index, Buffer& data, const IPEndPoint& remotre);
 };
 
 class GSMSocket : public ITransport, public Socket

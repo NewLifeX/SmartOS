@@ -23,6 +23,23 @@ A67::A67() :GSM07() {
 	At.DataKey = "+CIPRCV:";
 }
 
+// 数据到达
+void A67::OnReceive(Buffer& bs)
+{
+	// +CIPRCV:61,xxx
+	auto str = bs.AsString();
+	int p = str.IndexOf(",");
+	if (p < 0) p = str.IndexOf(":");
+	if (p <= 0) return;
+
+	int len = str.Substring(0, p).ToInt();
+	// 检查长度
+	if (p + 1 + len > bs.Length()) len = bs.Length() - p - 1;
+	auto data = bs.Sub(p + 1, len);
+
+	OnProcess(0, data, _Remote);
+}
+
 /******************************** 扩展指令 ********************************/
 bool A67::GetGPS()
 {

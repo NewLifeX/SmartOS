@@ -97,7 +97,7 @@ bool GSM07::OnOpen()
 	if (!At.Open()) return false;
 
 	// 回显
-	Echo(false);
+	Echo(true);
 
 	// 先检测AT失败再重启。保证模块处于启动状态，降低网络注册时间损耗
 	//if (!Test(1, 1000) && !CheckReady())
@@ -108,9 +108,9 @@ bool GSM07::OnOpen()
 		return false;
 	}
 
+#if NET_DEBUG
 	// 获取版本
 	GetVersion();
-#if NET_DEBUG
 	/*auto ver = GetVersion();
 	net_printf("版本:");
 	ver.Show(true);*/
@@ -136,7 +136,7 @@ bool GSM07::OnOpen()
 	// 接收数据时是否增加IP头提示
 	At.SendCmd("AT+CIPHEAD=1");
 
-	At.Received.Bind(&GSM07::OnReceive, this);
+	At.Received.Bind<GSM07>([](GSM07& gsm, Buffer& bs) { gsm.OnReceive(bs); }, this);
 
 	return true;
 }
@@ -309,26 +309,19 @@ Socket* GSM07::CreateSocket(NetType type)
 // 数据到达
 void GSM07::OnReceive(Buffer& bs)
 {
-	// +CIPRCV:61,xxx
-	auto str = bs.AsString();
-	int p = str.IndexOf(",");
-	if (p < 0) p = str.IndexOf(":");
-	if (p <= 0) return;
+	OnProcess(0, bs, _Remote);
+}
 
-	int len = str.Substring(0, p).ToInt();
-	// 检查长度
-	if (p + 1 + len > bs.Length()) len = bs.Length() - p - 1;
-	auto data = bs.Sub(p + 1, len);
-
+void GSM07::OnProcess(int index, Buffer& data, const IPEndPoint& remotre)
+{
 	Received(data);
 
 	// 分发到各个Socket
-	int idx = 0;
 	auto es = (GSMSocket**)Sockets;
-	auto sk = es[idx];
+	auto sk = es[index];
 	if (sk)
 	{
-		sk->OnProcess(data, _Remote);
+		sk->OnProcess(data, remotre);
 	}
 }
 
@@ -371,21 +364,6 @@ String GSM07::GetVersion()
 	auto rs = At.Send("ATI");
 	At.Send("AT+CGMI");
 	At.Send("AT+CGMM");
-
-	// 如果没有设置DataKey，则自动计算
-	if (rs.Length() > 0 && !At.DataKey) {
-		for (int i = 0; i < DataKeys.Count(); i++) {
-			if (rs.Contains(DataKeys.Keys()[i])) {
-				At.DataKey = DataKeys.Values()[i];
-
-				auto key = At.DataKey;
-				if (key == nullptr) key = "";
-				debug_printf("GSM07.DataKey=%s\r\n", key);
-
-				break;
-			}
-		}
-	}
 
 	return rs;
 }

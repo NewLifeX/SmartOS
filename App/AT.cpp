@@ -86,7 +86,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 #if NET_DEBUG
 	uint tid = 0;
 	auto task = &Task::Current();
-	if (task)tid = task->ID;
+	if (task) tid = task->ID;
 #endif
 
 	// 判断是否正在发送其它指令
@@ -134,7 +134,7 @@ String AT::Send(const String& cmd, cstring expect, cstring expect2, uint msTimeo
 
 #if NET_DEBUG
 		// 只有AT指令显示日志
-		if (!at || (expect && expect[0] == '>')) enableLog = false;
+		//if (!at || (expect && expect[0] == '>')) enableLog = false;
 		if (enableLog)
 		{
 			we.Command = &cmd;

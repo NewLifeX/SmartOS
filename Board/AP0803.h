@@ -22,7 +22,8 @@ public:
 	AP0803();
 
 	// 打开GPRS
-	NetworkInterface* CreateGPRS();
+	NetworkInterface* CreateA67();
+	NetworkInterface* CreateSIM900A();
 
 	void InitNet();
 	void InitProxy();

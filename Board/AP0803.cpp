@@ -1,6 +1,7 @@
 ﻿#include "AP0803.h"
 
 #include "Drivers\A67.h"
+#include "Drivers\Sim900A.h"
 
 #include "Message\ProxyFactory.h"
 
@@ -28,17 +29,11 @@ AP0803::AP0803()
 	Current = this;
 }
 
-NetworkInterface* AP0803::CreateGPRS()
+static NetworkInterface* CreateGPRS(GSM07* net, const SerialConfig& gsm, OutputPort* led)
 {
-	debug_printf("\r\nCreateGPRS::Create \r\n");
-
-	auto net = new GSM07();
-	net->Init(Gsm.Com, Gsm.Baudrate);
-	net->Set(Gsm.Power, Gsm.Reset, Gsm.LowPower);
-	net->SetLed(*Leds[0]);
-
-	net->DataKeys.Add("A6", "+CIPRCV:");
-	net->DataKeys.Add("SIM900A", "\r\n+IPD,");
+	net->Init(gsm.Com, gsm.Baudrate);
+	net->Set(gsm.Power, gsm.Reset, gsm.LowPower);
+	if (led) net->SetLed(*led);
 
 	if (!net->Open())
 	{
@@ -49,11 +44,30 @@ NetworkInterface* AP0803::CreateGPRS()
 	return net;
 }
 
+NetworkInterface* AP0803::CreateA67()
+{
+	debug_printf("\r\nCreateA67::Create \r\n");
+
+	auto net = new A67();
+
+	return CreateGPRS(net, Gsm, Leds[0]);
+}
+
+NetworkInterface* AP0803::CreateSIM900A()
+{
+	debug_printf("\r\nCreateSIM900A::Create \r\n");
+
+	auto net = new Sim900A();
+
+	return CreateGPRS(net, Gsm, Leds[0]);
+}
+
 static void OnInitNet(void* param)
 {
 	auto& bsp = *(AP0803*)param;
 
-	bsp.CreateGPRS();
+	//bsp.CreateGPRS();
+	bsp.CreateSIM900A();
 
 	bsp.Client->Open();
 }
