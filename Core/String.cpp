@@ -32,7 +32,7 @@ String::String(cstring cstr) : Array(Arr, ArrayLength(Arr))
 {
 	init();
 
-	_Length = strlen(cstr);
+	_Length = cstr ? strlen(cstr) : 0;
 	if (_Length)
 	{
 		_Arr = (char*)cstr;
