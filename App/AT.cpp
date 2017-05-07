@@ -298,6 +298,8 @@ uint AT::OnReceive(Buffer& bs, void* param)
 				// 不要报未识别了，反正内部会全部吃掉
 #endif
 			}
+			else if (!DataKey)
+				p = 0;
 			else
 			{
 #if NET_DEBUG
