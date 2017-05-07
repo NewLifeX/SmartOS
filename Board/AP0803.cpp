@@ -32,10 +32,14 @@ NetworkInterface* AP0803::CreateGPRS()
 {
 	debug_printf("\r\nCreateGPRS::Create \r\n");
 
-	auto net = new A67();
+	auto net = new GSM07();
 	net->Init(Gsm.Com, Gsm.Baudrate);
 	net->Set(Gsm.Power, Gsm.Reset, Gsm.LowPower);
 	net->SetLed(*Leds[0]);
+
+	net->DataKeys.Add("A6", "+CIPRCV:");
+	net->DataKeys.Add("SIM900A", "\r\n+IPD,");
+
 	if (!net->Open())
 	{
 		delete net;

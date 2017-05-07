@@ -41,7 +41,7 @@ GSM07::GSM07()
 
 	Mode = NetworkType::STA_AP;
 
-	At.DataKey = "+CIPRCV:";
+	//At.DataKey = "+CIPRCV:";
 
 	InitConfig();
 	LoadConfig();
@@ -97,7 +97,7 @@ bool GSM07::OnOpen()
 	if (!At.Open()) return false;
 
 	// 回显
-	Echo(true);
+	Echo(false);
 
 	// 先检测AT失败再重启。保证模块处于启动状态，降低网络注册时间损耗
 	//if (!Test(1, 1000) && !CheckReady())
@@ -108,9 +108,9 @@ bool GSM07::OnOpen()
 		return false;
 	}
 
-#if NET_DEBUG
 	// 获取版本
 	GetVersion();
+#if NET_DEBUG
 	/*auto ver = GetVersion();
 	net_printf("版本:");
 	ver.Show(true);*/
@@ -132,6 +132,9 @@ bool GSM07::OnOpen()
 
 	// 这里不用配置，待会OnLink马上就会执行
 	//Config();
+
+	// 接收数据时是否增加IP头提示
+	At.SendCmd("AT+CIPHEAD=1");
 
 	At.Received.Bind(&GSM07::OnReceive, this);
 
@@ -252,19 +255,24 @@ bool GSM07::Config()
 	if (!QueryRegister()) return false;
 	//QueryRegister();
 
+	if (!SetClass("B")) return false;
+
+	SetAPN(APN, false);
+
 	// 3，附着网络
 	if (!AttachMT(true)) return false;
 
 	// 4，设置PDP参数
-	if (!SetAPN(APN, false)) return false;
+	SetAPN(APN, true);
 
 	// 5，激活PDP
-	if (!SetPDP(true)) return false;
-
-	if (!SetClass("B")) return false;
+	SetPDP(true);
 
 	if (Mux) Mux = IPMux(true);
 	IPStatus();
+	At.SendCmd("AT+CDNSCFG?");
+	At.SendCmd("AT+CDNSCFG=\"180.76.76.76\",\"223.5.5.5\"");
+	At.SendCmd("AT+CDNSGIP=\"smart.wslink.cn\"");
 
 	return true;
 }
@@ -304,6 +312,7 @@ void GSM07::OnReceive(Buffer& bs)
 	// +CIPRCV:61,xxx
 	auto str = bs.AsString();
 	int p = str.IndexOf(",");
+	if (p < 0) p = str.IndexOf(":");
 	if (p <= 0) return;
 
 	int len = str.Substring(0, p).ToInt();
@@ -359,7 +368,26 @@ String GSM07::GetVersion()
 {
 	//return At.Send("AT+GMR");
 	//return At.Send("AT+GSN");
-	return At.Send("ATI");
+	auto rs = At.Send("ATI");
+	At.Send("AT+CGMI");
+	At.Send("AT+CGMM");
+
+	// 如果没有设置DataKey，则自动计算
+	if (rs.Length() > 0 && !At.DataKey) {
+		for (int i = 0; i < DataKeys.Count(); i++) {
+			if (rs.Contains(DataKeys.Keys()[i])) {
+				At.DataKey = DataKeys.Values()[i];
+
+				auto key = At.DataKey;
+				if (key == nullptr) key = "";
+				debug_printf("GSM07.DataKey=%s\r\n", key);
+
+				break;
+			}
+		}
+	}
+
+	return rs;
 }
 
 bool GSM07::Sleep(uint ms)
@@ -432,7 +460,11 @@ String GSM07::GetIMSI()
 
 String GSM07::GetIMEI() { return At.Send("AT+EGMR=2,7"); }
 // 查询SIM的CCID，也可以用于查询SIM是否存或者插好
-String GSM07::GetCCID() { return At.Send("AT+CCID"); }
+String GSM07::GetCCID() {
+	At.Send("AT+CPIN?");
+	At.Send("AT+CNUM");
+	return At.Send("AT+CCID");
+}
 
 /******************************** 网络服务 ********************************/
 // 获取运营商名称。非常慢
@@ -529,7 +561,7 @@ bool GSM07::SetAPN(cstring apn, bool issgp)
 bool GSM07::SetPDP(bool enable)
 {
 	if (enable)
-		return At.SendCmd("AT+CGACT=1");
+		return At.SendCmd("AT+CGACT=1,1");
 	else
 		return At.SendCmd("AT+CGACT=0");
 }
@@ -591,7 +623,7 @@ int GSM07::IPStart(const NetUri& remote)
 	if (!Mux) return rs.Contains("OK") ? 0 : -1;
 
 	int p = rs.IndexOf(":");
-	if (p < 0)return -2;
+	if (p < 0) return -2;
 	int q = rs.IndexOf("\r");
 
 	return rs.Substring(p + 1, q - p - 1).ToInt();
@@ -666,10 +698,10 @@ bool GSM07::IPSend(int index, const Buffer& data)
 
 bool GSM07::IPClose(int index)
 {
-	String cmd = "AT+CIPSEND=";
-	if (Mux) cmd = cmd + index + ",";
+	String cmd = "AT+CIPCLOSE";
+	if (Mux) cmd = cmd + "=" + index;
 
-	return At.SendCmd("AT+CIPCLOSE\r\n");
+	return At.SendCmd(cmd);
 }
 
 bool GSM07::IPShutdown(int index)

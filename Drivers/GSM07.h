@@ -20,6 +20,8 @@ public:
 	cstring	APN;
 	bool	Mux;	// 开启多路socket模式，最多同时开启4路
 
+	Dictionary<cstring, cstring> DataKeys;	// 数据键值配对
+
 	IDataPort*	Led;	// 指示灯
 
 	OutputPort	_Power;	// 电源

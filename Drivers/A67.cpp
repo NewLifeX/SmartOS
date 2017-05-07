@@ -19,6 +19,10 @@
 #define net_printf(format, ...)
 #endif
 
+A67::A67() :GSM07() {
+	At.DataKey = "+CIPRCV:";
+}
+
 /******************************** 扩展指令 ********************************/
 bool A67::GetGPS()
 {
