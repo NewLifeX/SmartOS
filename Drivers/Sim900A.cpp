@@ -10,8 +10,11 @@ Sim900A::Sim900A() :GSM07() {
 bool Sim900A::OnOpen()
 {
 	// 退出传输
-	String str((byte)0x1A, 16);
-	At.Send(str);
+	ByteArray end((byte)0x1A, 1);
+	At.Send(end.AsString());
+
+	// 强行关闭场景
+	At.Send("AT+CIPSHUT", 2000);
 
 	return GSM07::OnOpen();
 }
@@ -69,8 +72,8 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 	return SendData(cmd, data);*/
 
 	// 退出传输
-	String str((byte)0x1A, 16);
-	At.Send(str);
+	ByteArray end((byte)0x1A, 1);
+	At.Send(end.AsString());
 
 	String cmd = "AT+CIPSEND\r\n";
 
@@ -89,7 +92,7 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 	At.Send(data.AsString(), 1000, false);
 
 	//String str((byte)0x1A, 16);
-	return At.Send(str, "SEND OK", "ERROR", 1600).Contains("SEND OK");
+	return At.Send(end.AsString(), "SEND OK", "ERROR", 3000).Contains("SEND OK");
 }
 
 /*void Sim900A::Init(uint msTimeout)
