@@ -676,15 +676,17 @@ bool GSM07::IPSend(int index, const Buffer& data)
 
 bool GSM07::IPClose(int index)
 {
-	if (!Mux) return At.SendCmd("AT+CIPSHUT", 10000);
-
 	String cmd = "AT+CIPCLOSE=";
 	if (Mux)
 		cmd = cmd + index + "[1]";
 	else
 		cmd += 1;
 
-	return At.SendCmd(cmd, 3000);
+	bool rs = At.SendCmd(cmd, 3000);
+	
+	if (!Mux) At.SendCmd("AT+CIPSHUT", 10000);
+
+	return rs;
 }
 
 bool GSM07::IPShutdown(int index)
