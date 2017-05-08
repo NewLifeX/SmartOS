@@ -592,13 +592,13 @@ int GSM07::IPStart(const NetUri& remote)
 	else
 		cmd = cmd + "\",\"" + remote.Address + "\"," + remote.Port;
 
-	if (!Mux) return At.SendCmd(cmd) ? 1 : -1;
+	//if (!Mux) return At.SendCmd(cmd) ? 1 : -1;
 
 	// +CIPNUM:0 截取链路号
-	auto rs = At.Send(cmd, 5000, false);
+	auto rs = At.Send(cmd + "\r\n", "CONNECT", "BIND", 10000, false);
 
 	// 有可能没有打开多链接
-	if (!Mux) return rs.Contains("OK") ? 0 : -1;
+	if (!Mux) return rs.Length() == 0 || rs.Contains("FAIL") || rs.Contains("ERROR") ? -1 : 0;
 
 	int p = rs.IndexOf(":");
 	if (p < 0) return -2;
@@ -676,10 +676,15 @@ bool GSM07::IPSend(int index, const Buffer& data)
 
 bool GSM07::IPClose(int index)
 {
-	String cmd = "AT+CIPCLOSE";
-	if (Mux) cmd = cmd + "=" + index;
+	if (!Mux) return At.SendCmd("AT+CIPSHUT", 10000);
 
-	return At.SendCmd(cmd);
+	String cmd = "AT+CIPCLOSE=";
+	if (Mux)
+		cmd = cmd + index + "[1]";
+	else
+		cmd += 1;
+
+	return At.SendCmd(cmd, 3000);
 }
 
 bool GSM07::IPShutdown(int index)
