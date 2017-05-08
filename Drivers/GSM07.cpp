@@ -43,6 +43,8 @@ GSM07::GSM07()
 
 	//At.DataKey = "+CIPRCV:";
 
+	_task = 0;
+
 	InitConfig();
 	LoadConfig();
 }
@@ -135,6 +137,8 @@ bool GSM07::OnOpen()
 
 	// 接收数据时是否增加IP头提示
 	At.SendCmd("AT+CIPHEAD=1");
+
+	if (!_task) _task = Sys.AddTask(&GSM07::Process, this, -1, -1, "GSM07");
 
 	At.Received.Bind<GSM07>([](GSM07& gsm, Buffer& bs) { gsm.OnReceive(bs); }, this);
 
@@ -307,21 +311,56 @@ Socket* GSM07::CreateSocket(NetType type)
 }
 
 // 数据到达
+void GSM07::Process()
+{
+	if (_Buffer.Length() <= 1) return;
+
+	byte idx = _Buffer[0];
+	if (idx >= ArrayLength(Sockets)) return;
+
+	// 分发给各个Socket
+	auto es = (GSMSocket**)Sockets;
+	auto sk = es[idx];
+	if (sk)
+	{
+		auto data = _Buffer.Sub(1, -1);
+		_Buffer.SetLength(0);
+
+		sk->OnProcess(data, _Remote);
+	}
+
+	// 清零长度，其它数据包才可能进来
+	_Buffer.SetLength(0);
+}
+
+// 数据到达
 void GSM07::OnReceive(Buffer& bs)
 {
 	OnProcess(0, bs, _Remote);
 }
 
-void GSM07::OnProcess(int index, Buffer& data, const IPEndPoint& remotre)
+void GSM07::OnProcess(int index, Buffer& data, const IPEndPoint& remote)
 {
 	Received(data);
 
-	// 分发到各个Socket
-	auto es = (GSMSocket**)Sockets;
-	auto sk = es[index];
-	if (sk)
+	// 如果有数据包正在处理，则丢弃
+	if (_Buffer.Length() > 0)
 	{
-		sk->OnProcess(data, remotre);
+#if NET_DEBUG
+		net_printf("已有数据包 %d 字节正在处理，丢弃当前数据包 %d 字节 \r\n处理：", _Buffer.Length(), data.Length());
+		_Buffer.Show(true);
+		net_printf("当前：");
+		data.Show(true);
+#endif
+	}
+	else
+	{
+		_Remote = remote;
+		// 第一字节放Socket索引，数据包放在后面
+		_Buffer.SetAt(0, index);
+		_Buffer.Copy(1, data, 0, -1);
+
+		Sys.SetTask(_task, true, 0);
 	}
 }
 

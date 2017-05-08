@@ -97,6 +97,8 @@ public:
 	bool IPTransparent(bool enable);
 
 protected:
+	uint		_task;		// 调度任务
+	ByteArray	_Buffer;	// 待处理数据包
 	IPEndPoint	_Remote;	// 当前数据包远程地址
 
 	// 打开与关闭
@@ -109,7 +111,10 @@ protected:
 
 	// 数据到达
 	virtual void OnReceive(Buffer& bs);
-	void OnProcess(int index, Buffer& data, const IPEndPoint& remotre);
+	void OnProcess(int index, Buffer& data, const IPEndPoint& remote);
+
+	// 处理收到的数据包
+	void Process();
 };
 
 class GSMSocket : public ITransport, public Socket
