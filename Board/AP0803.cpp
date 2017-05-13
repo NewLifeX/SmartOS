@@ -20,9 +20,9 @@ AP0803::AP0803()
 	ProxyFac = nullptr;
 	AlarmObj = nullptr;
 
-	Gsm.Com = COM4;
+	Gsm.Com = COM2;
 	Gsm.Baudrate = 115200;
-	Gsm.Power = PE0;
+	Gsm.Power = PA4;
 	Gsm.Reset = PD3;
 	Gsm.LowPower = P0;
 
@@ -124,7 +124,8 @@ void AP0803::InitAlarm()
 
 /*
 
-GPRS(COM4)
+GPRS(COM2)
+PA4                 POWER
 PE0					PWR_KEY
 PD3					RST
 PC10(TX4)		RXD
