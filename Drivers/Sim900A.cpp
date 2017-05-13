@@ -45,11 +45,11 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 	AT+CIPSEND //出现”>”后可以发送以CTRL+Z结尾的字符串
 	*/
 
-	/*String cmd = "AT+CIPSEND=";
+	String cmd = "AT+CIPSEND=";
 	if (Mux) cmd = cmd + index + ",";
 
 	// 数据较短时，直接发送
-	if (data.Length() < 256)
+	/*if (data.Length() < 256)
 	{
 		// 字符串里面不能有特殊字符
 		bool flag = true;
@@ -66,12 +66,12 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 			cmd = cmd + data.Length() + ",\"" + data.AsString() + "\"";
 			return At.SendCmd(cmd, 1600);
 		}
-	}
+	}*/
 
 	cmd = cmd + data.Length() + "\r\n";
-	return SendData(cmd, data);*/
+	return SendData(cmd, data);
 
-	// 退出传输
+	/*// 退出传输
 	ByteArray end((byte)0x1A, 1);
 	At.Send(end.AsString());
 
@@ -87,12 +87,23 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 
 		Sys.Sleep(500);
 	}
-	if (i >= 3) return false;
+	if (i >= 3)
+	{
+		// 退出传输
+		ByteArray end((byte)0x1A, 1);
+		At.Send(end.AsString());
+
+		debug_printf("CIPSEND 已经超过三次 \r\n");
+		Linked = false;
+		return false;
+	}
+		
 
 	At.Send(data.AsString(), 1000, false);
 
 	//String str((byte)0x1A, 16);
-	return At.Send(end.AsString(), "SEND OK", "ERROR", 3000).Contains("SEND OK");
+	At.Send(end.AsString());
+	return At.Send(end.AsString(), "SEND OK", "ERROR", 3000).Contains("SEND OK");*/
 }
 
 /*void Sim900A::Init(uint msTimeout)
@@ -123,3 +134,4 @@ bool Sim900A::IPSend(int index, const Buffer& data)
 	Inited = SendCmd(nullptr, 5000);
 	//SendCmd("AT+CIPSHUT\r");
 }*/
+
