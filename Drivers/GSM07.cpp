@@ -96,6 +96,8 @@ void GSM07::RemoveLed()
 
 bool GSM07::OnOpen()
 {
+	_Power.Open();					// 使用前必须Open
+	_Power.Write(false);			// 打开电源（低电平有效）
 	if (!At.Open()) return false;
 
 	// 回显
@@ -151,7 +153,8 @@ bool GSM07::CheckReady()
 	if (!_Power.Empty())
 	{
 		_Power.Open();					// 使用前必须Open
-		_Power.Down(20);
+		//_Power.Down(20);
+		_Power.Write(false);
 	}
 	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open
 
@@ -386,10 +389,10 @@ bool GSM07::Reset(bool soft)
 
 	/*
 	模块硬件RESET脚，此脚使用的时候低电平<0.05V,电流在70ma左右，必须使用NMOS可以控制；
-	拉低以后其实是模块硬件关机了，该脚在正常工作的时候不能有漏电，否则会导致模块不稳定，难以注册网络；
+	拉高以后其实是模块硬件关机了，该脚在正常工作的时候不能有漏电，否则会导致模块不稳定，难以注册网络；
 	在RESET的时候注意PWR_KEY脚要先拉低，然后再拉高。
 	*/
-	if (!_Power.Empty()) _Power.Down(100);
+	if (!_Power.Empty()) _Power.Up(100);
 	_Reset.Up(100);
 
 	return true;
@@ -665,13 +668,14 @@ bool GSM07::SendData(const String& cmd, const Buffer& bs)
 	}
 
 	/*// 发送失败，关闭链接，下一次重新打开
-	if (++_Error >= 10)
+	if (++_Error >= 3)
 	{
 		_Error = 0;
 
 		Close();
 	}*/
-
+	Sys.Reboot(500);
+	net_printf(" SmartOS将在500毫秒后重启\r\n");
 	return false;
 }
 
