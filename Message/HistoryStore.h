@@ -8,12 +8,12 @@ class HistoryStore
 {
 public:
 	MemoryStream	Cache;	// 数据
-	short	RenderPeriod;	// 生成历史数据周期。默认30s
-	short	ReportPeriod;	// 上报数据周期。默认300s
-	short	StorePeriod;	// 写入Store周期。默认600s
+	ushort	RenderPeriod;	// 生成历史数据周期。默认30s
+	ushort	ReportPeriod;	// 上报数据周期。默认300s
+	ushort	StorePeriod;	// 写入Store周期。默认600s
 
-	short	MaxCache;		// 缓存最大长度。默认16 * 1024
-	short	MaxReport;		// 每次最大上报长度。默认1024
+	ushort	MaxCache;		// 缓存最大长度。默认16 * 1024
+	ushort	MaxReport;		// 每次最大上报长度。默认1024
 
 	bool Opened;
 
