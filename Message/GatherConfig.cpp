@@ -27,7 +27,8 @@ bool GatherConfig::Set(const Pair& args, Stream& result)
 {
 	debug_printf("GatherConfig::Set\r\n");
 
-	auto cfg	= GatherConfig::Create();
+	//auto cfg	= GatherConfig::Create();
+	auto cfg	= this;
 
 	args.Get("RenderPeriod",	cfg->RenderPeriod);
 	args.Get("ReportPeriod",	cfg->ReportPeriod);
@@ -43,7 +44,8 @@ bool GatherConfig::Get(const Pair& args, Stream& result)
 {
 	debug_printf("GatherConfig::Get\r\n");
 
-	auto cfg	= GatherConfig::Create();
+	//auto cfg	= GatherConfig::Create();
+	auto cfg	= this;
 	cfg->Write(result);
 
 	return true;
