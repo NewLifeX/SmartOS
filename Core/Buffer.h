@@ -83,7 +83,7 @@ public:
 	String ToHex(char sep = 0, int newLine = 0) const;
 
 	ushort	ToUInt16() const;
-	uint	ToUInt32() const;
+	uint	ToUInt32(bool ishigh = false) const;
 	UInt64	ToUInt64() const;
 	void Write(ushort value, int index = 0);
 	void Write(short value, int index = 0);

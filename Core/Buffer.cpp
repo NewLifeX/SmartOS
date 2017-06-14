@@ -290,9 +290,14 @@ ushort	Buffer::ToUInt16() const
 	return p[0] | (p[1] << 8);
 }
 
-uint	Buffer::ToUInt32() const
+//根据数据格式不同选择不同的转换方式，默认高位在后
+uint	Buffer::ToUInt32(bool ishigh) const
 {
 	auto p = GetBuffer();
+	if (ishigh)
+	{
+		return  (p[2] << 8) | (p[1] << 0x10) | (p[0] << 0x18);
+	}
 	// 字节对齐时才能之前转为目标整数
 	if (((int)p & 0x03) == 0) return *(uint*)p;
 
