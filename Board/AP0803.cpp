@@ -10,7 +10,7 @@ static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
 
 AP0803::AP0803()
 {
-	LedPins.Add(PE5);
+	LedPins.Add(PC7);		//PE5 0803上的网络指示灯
 	LedPins.Add(PE4);
 	LedPins.Add(PD0);
 	ButtonPins.Add(PE9);
@@ -20,9 +20,9 @@ AP0803::AP0803()
 	ProxyFac = nullptr;
 	AlarmObj = nullptr;
 
-	Gsm.Com = COM2;
+	Gsm.Com = COM4;
 	Gsm.Baudrate = 115200;
-	Gsm.Power = PA4;
+	Gsm.Power = PE0;		// 0A04（170509）板上电源为PA4
 	Gsm.Reset = PD3;
 	Gsm.LowPower = P0;
 
