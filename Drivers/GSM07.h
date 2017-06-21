@@ -63,6 +63,14 @@ public:
 	String GetIMEI();
 	// 查询SIM的CCID，也可以用于查询SIM是否存或者插好
 	String GetCCID();
+	
+	/******************************** GPS服务 ********************************/
+	bool GPSGpioOut();
+	bool GPSPowerOpen();
+	bool NameExplain();
+	bool WaitForGPSSuccess();
+	bool GPSSetTime();
+	bool GPSMessageOut();
 
 	/******************************** 网络服务 ********************************/
 	// 获取运营商列表
@@ -100,6 +108,7 @@ protected:
 	uint		_task;		// 调度任务
 	ByteArray	_Buffer;	// 待处理数据包
 	IPEndPoint	_Remote;	// 当前数据包远程地址
+	int		_Error;
 
 	// 打开与关闭
 	virtual bool OnOpen();

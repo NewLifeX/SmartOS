@@ -96,9 +96,19 @@ void GSM07::RemoveLed()
 
 bool GSM07::OnOpen()
 {
+	/*_Power.Invert = 1;
+	_Power.OpenDrain = true;
+	_Power.Open();					// 使用前必须Open
+	_Power.Up(500);
+	//_Power.Write(false);			// 打开电源（低电平有效）
+	_Power.Close();*/
+	_Power.Invert = 0;
 	_Power.Open();					// 使用前必须Open
 	_Power.Write(false);			// 打开电源（低电平有效）
+	debug_printf("SIM800C::OnOpen Power=%d \r\n", _Power.ReadInput());
+
 	if (!At.Open()) return false;
+	
 
 	// 回显
 	Echo(true);
@@ -111,6 +121,14 @@ bool GSM07::OnOpen()
 
 		return false;
 	}
+	
+	GPSGpioOut();
+	GPSPowerOpen();
+	Sys.Sleep(1);
+	NameExplain();
+	WaitForGPSSuccess();
+	GPSSetTime();
+	//GPSMessageOut();
 
 #if NET_DEBUG
 	// 获取版本
@@ -152,9 +170,9 @@ bool GSM07::CheckReady()
 	// 先关一会电，然后再上电，让它来一个完整的冷启动
 	if (!_Power.Empty())
 	{
-		_Power.Open();					// 使用前必须Open
-		//_Power.Down(20);
-		_Power.Write(false);
+		//_Power.Up(500);
+		//_Power.Write(false);
+		net_printf("SIM800C::CheckReady  Power=%d \r\n", _Power.ReadInput());
 	}
 	if (!_Reset.Empty()) _Reset.Open();		// 使用前必须Open
 
@@ -194,8 +212,6 @@ bool GSM07::OnLink(uint retry)
 	//if (!QueryRegister()) return false;
 
 	return Config();
-
-	//return true;
 }
 
 // 配置网络参数
@@ -280,7 +296,7 @@ bool GSM07::Config()
 	At.SendCmd("AT+CDNSCFG?");
 	At.SendCmd("AT+CDNSCFG=\"180.76.76.76\",\"223.5.5.5\"");
 	At.SendCmd("AT+CDNSGIP=\"smart.wslink.cn\"");
-
+	At.SendCmd("AT+CIPHEAD=1");
 	return true;
 }
 
@@ -376,7 +392,8 @@ bool GSM07::Test(int times, int interval)
 	String cmd = "AT";
 	for (int i = 0; i < times; i++)
 	{
-		if (i > 0)	Reset(false);
+		//if (i > 0)	Reset(false);
+		Sys.Sleep(500);
 		if (At.SendCmd(cmd, interval)) return true;
 	}
 
@@ -392,7 +409,7 @@ bool GSM07::Reset(bool soft)
 	拉高以后其实是模块硬件关机了，该脚在正常工作的时候不能有漏电，否则会导致模块不稳定，难以注册网络；
 	在RESET的时候注意PWR_KEY脚要先拉低，然后再拉高。
 	*/
-	if (!_Power.Empty()) _Power.Up(100);
+	if (!_Power.Empty()) _Power.Up(500);
 	_Reset.Up(100);
 
 	return true;
@@ -485,6 +502,46 @@ String GSM07::GetCCID() {
 	At.Send("AT+CNUM");
 	return At.Send("AT+CCID");
 }
+
+/******************************** GPS服务 ********************************/
+
+//设置GPIO1输出高电平
+bool GSM07::GPSGpioOut()
+{
+	return At.SendCmd("AT+CGPIO=0,57,1,1");
+}
+//打开电源
+bool GSM07::GPSPowerOpen()
+{
+	return At.SendCmd("AT+CGNSPWR=1");
+}
+
+//名字解析
+bool GSM07::NameExplain()
+{
+	return At.SendCmd("AT+CGNSSEQ=\"RMC\"");
+}
+
+//等待GPS开机
+bool GSM07::WaitForGPSSuccess()
+{
+	auto rs = At.Send("AT+CGNSINF",5000);
+	return true;
+}
+
+//设置GPS数据输出时间
+bool GSM07::GPSSetTime()
+{
+	return At.SendCmd("AT+CGNSURC=3");
+}
+
+//打开GPS数据流输出
+bool GSM07::GPSMessageOut()
+{
+	return At.SendCmd("AT+CGNSTST=1");
+}
+
+
 
 /******************************** 网络服务 ********************************/
 // 获取运营商名称。非常慢
@@ -657,25 +714,31 @@ bool GSM07::SendData(const String& cmd, const Buffer& bs)
 	{
 		//auto rt	= _Host.Send(cmd, ">", "OK", 1600);
 		// 不能等待OK，而应该等待>，因为发送期间可能给别的指令碰撞
-		auto rt = At.Send(cmd, ">", "ERROR", 1600, false);
+		auto rt = At.Send(cmd, ">", "ERROR", 2000, false);
 		if (rt.Contains(">")) break;
 
 		Sys.Sleep(500);
 	}
+
+	
+	
 	if (i < 3 && At.Send(bs.AsString(), "SEND OK", "ERROR", 1600).Contains("SEND OK"))
 	{
 		return true;
 	}
-
-	/*// 发送失败，关闭链接，下一次重新打开
+	
 	if (++_Error >= 3)
 	{
 		_Error = 0;
 
 		Close();
-	}*/
-	Sys.Reboot(500);
-	net_printf(" SmartOS将在500毫秒后重启\r\n");
+		net_printf("发送超过三次 关闭链接 下一次重新打开！\r\n");
+	}
+	if (_Error == 0)
+	{
+		Sys.Reboot(500);
+		net_printf(" SmartOS将在500毫秒后重启\r\n");
+	}
 	return false;
 }
 
