@@ -22,6 +22,10 @@
 static const cstring ok = "OK";
 static const cstring err = "ERROR";
 
+static float latitude;
+static float longitude;
+
+
 struct CmdState
 {
 	const String* Command = nullptr;
@@ -41,6 +45,8 @@ AT::AT()
 	Port = nullptr;
 	DataKey = nullptr;
 	_Expect = nullptr;
+	latitude = 0;
+	longitude = 0;
 }
 
 AT::~AT()
@@ -63,6 +69,18 @@ void AT::Init(ITransport* port)
 	Port = port;
 	if (Port) Port->Register(OnPortReceive, this);
 }
+
+float AT::GetLatitude() 
+{
+	return latitude;
+	
+}
+float AT::GetLongitude()
+{
+	return longitude;
+}
+
+ 
 
 bool AT::Open()
 {
@@ -276,10 +294,22 @@ uint AT::OnReceive(Buffer& bs, void* param)
 	//bs.Show(true);
 	bs.AsString().Show(true);*/
 
+	//分割数据，查询是否有GPS数据输出
+	auto str = bs.AsString();
+	auto sp = str.Split(",");
+	auto sp1=sp.Next();
+	if (sp1.Contains("+UGNSINF: 1") )
+	{
+		sp.Next();
+		sp.Next();
+		latitude = sp.Next().ToFloat();
+		longitude = sp.Next().ToFloat();
+
+		return 0;
+	}
 	//!!! 分析数据和命令返回，特别要注意粘包
 	int s = 0;
 	int p = 0;
-	auto str = bs.AsString();
 	while (p >= 0 && p < bs.Length())
 	{
 		s = p;

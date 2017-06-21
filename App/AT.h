@@ -6,6 +6,7 @@ class AT
 {
 public:
 	ITransport*	Port;	// 传输口
+	
 
 	cstring	DataKey;	// 数据关键字
 
@@ -16,6 +17,8 @@ public:
 
 	void Init(COM idx, int baudrate = 115200);
 	void Init(ITransport* port);
+	float GetLatitude();
+	float GetLongitude();
 
 	// 打开与关闭
 	bool Open();
