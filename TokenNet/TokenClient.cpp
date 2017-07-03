@@ -417,9 +417,9 @@ void TokenClient::LoopTask()
 		{
 			Login();
 
-			Sys.Sleep(1000);
-			// 登录成功以后做一次内网广播
-			if (Status >= 2) SayHello(true);
+			//Sys.Sleep(1000);
+			//// 登录成功以后做一次内网广播
+			//if (Status >= 2) SayHello(true);
 
 			// 登录成功后，心跳一次，把数据同步上去
 			Sys.Sleep(1000);
