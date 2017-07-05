@@ -28,7 +28,7 @@ public:
 
 	void Set(void* data, int size);
 
-	bool Open();
+	bool Open(bool UseThousand=true);
 	void Close();
 
 	// 写入一条历史数据

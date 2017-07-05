@@ -41,7 +41,7 @@ void HistoryStore::Set(void* data, int size)
 	Size = size;
 }
 
-bool HistoryStore::Open()
+bool HistoryStore::Open(bool UseThousand)
 {
 	if (Opened) return true;
 
@@ -49,9 +49,16 @@ bool HistoryStore::Open()
 
 	_Report = 0;
 	_Store = 0;
-
-	// 定时生成历史数据 30s
-	int p = RenderPeriod * 1000;
+	int p;
+	if(UseThousand)
+	{ 
+		// 定时生成历史数据 30s
+		p = RenderPeriod * 1000;
+	}
+	else
+	{
+		p = RenderPeriod;
+	}
 	_task = Sys.AddTask(RenderTask, this, p, p, "历史数据");
 
 	return Opened = true;
@@ -94,7 +101,7 @@ void HistoryStore::RenderTask(void* param)
 
 void HistoryStore::Reader()
 {
-	ds_printf("HistoryStore::Reader %d/%d/%d \r\n", Size, Cache.Position(), Cache.Length);
+	//ds_printf("HistoryStore::Reader %d/%d/%d \r\n", Size, Cache.Position(), Cache.Length);
 
 	// 生成历史数据
 	Buffer bs(Data, Size);
@@ -127,7 +134,7 @@ void HistoryStore::Report()
 	int len2 = n * (4 + Size);
 	if (len2 > len) len2 = len;
 
-	ds_printf("HistoryStore::Report %d/%d \r\n", len2, len);
+	//ds_printf("HistoryStore::Report %d/%d \r\n", len2, len);
 
 	Process(len2, OnReport);
 }
