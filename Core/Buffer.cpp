@@ -281,40 +281,61 @@ String Buffer::ToHex(char sep, int newLine) const
 	return str;
 }
 
-ushort	Buffer::ToUInt16() const
+ushort	Buffer::ToUInt16(int offset, bool isLittleEndian) const
 {
-	auto p = GetBuffer();
-	// 字节对齐时才能之前转为目标整数
-	if (((int)p & 0x01) == 0) return *(ushort*)p;
+	auto p = GetBuffer() + offset;
+	if (isLittleEndian)
+	{
+		// 字节对齐时才能之前转为目标整数
+		if (((int)p & 0x01) == 0) return *(ushort*)p;
 
-	return p[0] | (p[1] << 8);
+		return p[0] | (p[1] << 8);
+	}
+	else
+	{
+		return p[1] | (p[0] << 8);
+	}
 }
 
 //根据数据格式不同选择不同的转换方式，默认高位在后
-uint	Buffer::ToUInt32(bool ishigh) const
+uint	Buffer::ToUInt32(int offset, bool isLittleEndian) const
 {
-	auto p = GetBuffer();
-	if (ishigh)
+	auto p = GetBuffer() + offset;
+	if (isLittleEndian)
 	{
-		return  (p[2] << 8) | (p[1] << 0x10) | (p[0] << 0x18);
-	}
-	// 字节对齐时才能之前转为目标整数
-	if (((int)p & 0x03) == 0) return *(uint*)p;
+		// 字节对齐时才能之前转为目标整数
+		if (((int)p & 0x03) == 0) return *(uint*)p;
 
-	return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+		return p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+	}
+	else
+	{
+		return p[3] | (p[2] << 8) | (p[1] << 0x10) | (p[0] << 0x18);
+	}
 }
 
-UInt64	Buffer::ToUInt64() const
+UInt64	Buffer::ToUInt64(int offset, bool isLittleEndian) const
 {
-	auto p = GetBuffer();
-	// 字节对齐时才能之前转为目标整数
-	if (((int)p & 0x07) == 0) return *(UInt64*)p;
+	if (isLittleEndian)
+	{
+		auto p = GetBuffer() + offset;
+		// 字节对齐时才能之前转为目标整数
+		if (((int)p & 0x07) == 0) return *(UInt64*)p;
 
-	uint n1 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
-	p += 4;
-	uint n2 = p[0] | (p[1] << 8) | (p[2] << 0x10) | (p[3] << 0x18);
+		uint n1 = ToUInt32(offset, isLittleEndian);
+		offset += 4;
+		uint n2 = ToUInt32(offset, isLittleEndian);
 
-	return n1 | ((UInt64)n2 << 0x20);
+		return n1 | ((UInt64)n2 << 0x20);
+	}
+	else
+	{
+		uint n1 = ToUInt32(offset, isLittleEndian);
+		offset += 4;
+		uint n2 = ToUInt32(offset, isLittleEndian);
+
+		return n2 | ((UInt64)n1 << 0x20);
+	}
 }
 
 void Buffer::Write(ushort value, int index)

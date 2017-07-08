@@ -82,9 +82,9 @@ public:
 	// 显示十六进制数据，指定分隔字符和换行长度
 	String ToHex(char sep = 0, int newLine = 0) const;
 
-	ushort	ToUInt16() const;
-	uint	ToUInt32(bool ishigh = false) const;
-	UInt64	ToUInt64() const;
+	ushort	ToUInt16(int offset = 0, bool isLittleEndian = true) const;
+	uint	ToUInt32(int offset = 0, bool isLittleEndian = true) const;
+	UInt64	ToUInt64(int offset = 0, bool isLittleEndian = true) const;
 	void Write(ushort value, int index = 0);
 	void Write(short value, int index = 0);
 	void Write(uint value, int index = 0);
