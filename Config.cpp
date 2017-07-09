@@ -393,7 +393,13 @@ const Config& Config::CreateRAM()
 {
 	// 最后一块作为配置区
 	static CharStorage cs;
-	static Config cfg(cs, Sys.StackTop(), 64);
+	static Config cfg(cs, Sys.StackTop(), 256);
+
+	/*// 从堆申请一块内存
+	if (cfg.Size == 0) {
+		cfg.Address = (uint)new byte[256];
+		cfg.Size = 256;
+	}*/
 
 	return cfg;
 }

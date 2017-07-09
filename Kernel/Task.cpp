@@ -124,7 +124,7 @@ INROOT bool Task::CheckTime(UInt64 end, bool isSleep)
 // 全局任务调度器
 TaskScheduler* Task::Scheduler()
 {
-	static TaskScheduler _sc("Sys");
+	static TaskScheduler _sc("Task");
 
 	return &_sc;
 }
@@ -256,7 +256,7 @@ uint TaskScheduler::Add(Action func, void* param, int dueTime, int period, cstri
 	Count++;
 
 #if DEBUG
-	debug_printf("%s::添加%d %s First=%dms Period=%dms 0x%p\r\n", Name, task->ID, name, dueTime, period, func);
+	debug_printf("%s::Add%d %s First=%dms Period=%dms 0x%p\r\n", Name, task->ID, name, dueTime, period, func);
 #endif
 
 	return task->ID;
@@ -271,7 +271,7 @@ void TaskScheduler::Remove(uint taskid)
 		auto task = (Task*)_Tasks[i];
 		if(task->ID == taskid)
 		{
-			debug_printf("%s::删除%d %s 0x%p\r\n", Name, task->ID, task->Name, task->Callback);
+			debug_printf("%s::Remove%d %s 0x%p\r\n", Name, task->ID, task->Name, task->Callback);
 			// 清零ID，实现重用
 			task->ID = 0;
 

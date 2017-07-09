@@ -177,7 +177,7 @@ uint TSys::HeapBase() const
 // 栈顶，后面是初始化不清零区域
 uint TSys::StackTop() const
 {
-	return SRAM_BASE + (RAMSize << 10) - 0x40;
+	return SRAM_BASE + (RAMSize << 10) - 0x100;
 }
 
 void TSys::SetStackTop(uint addr)

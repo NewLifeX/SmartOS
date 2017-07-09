@@ -89,7 +89,7 @@ void TSys::ShowInfo() const
 	debug_printf("Time : ");
 	DateTime::Now().Show(false);
 	debug_printf(" Start: %d/%d \r\n", HotStart, StartTimes);
-	debug_printf("Support: http://www.WsLink.cn\r\n");
+	//debug_printf("Support: http://www.WsLink.cn\r\n");
 
     debug_printf("\r\n");
 #endif
