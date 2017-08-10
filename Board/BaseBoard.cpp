@@ -5,13 +5,14 @@
 #include "Device\RTC.h"
 #include "Device\Power.h"
 #include "Device\WatchDog.h"
+#include "Device\SerialPort.h"
 
 BaseBoard::BaseBoard()
-{	
+{
 	LedInvert = 2;
 }
 
-void BaseBoard::Init(ushort code, cstring name)
+void BaseBoard::Init(ushort code, cstring name, int baudRate)
 {
 	auto& sys = (TSys&)Sys;
 	sys.Code = code;
@@ -28,6 +29,16 @@ void BaseBoard::Init(ushort code, cstring name)
 	Sys.HotStart = hot->Times + 1;
 
 #if DEBUG
+	// 重新设置波特率
+	if (baudRate > 0) {
+		auto sp = SerialPort::GetMessagePort();
+		if (sp) {
+			sp->Close();
+			sp->SetBaudRate(baudRate);
+			sp->Open();
+		}
+	}
+
 	Sys.ShowInfo();
 
 	WatchDog::Start(20000, 10000);

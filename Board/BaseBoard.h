@@ -18,7 +18,7 @@ public:
 	BaseBoard();
 
 	// 设置系统参数
-	void Init(ushort code, cstring name);
+	void Init(ushort code, cstring name, int baudRate = 0);
 	// 初始化配置区
 	void InitConfig();
 
