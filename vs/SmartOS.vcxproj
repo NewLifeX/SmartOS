@@ -106,6 +106,7 @@
     <ClCompile Include="..\Kernel\Thread.cpp" />
     <ClCompile Include="..\Kernel\Time.cpp" />
     <ClCompile Include="..\Kernel\WaitHandle.cpp" />
+    <ClCompile Include="..\Link\LinkClient.cpp" />
     <ClCompile Include="..\Message\BinaryPair.cpp" />
     <ClCompile Include="..\Message\Controller.cpp" />
     <ClCompile Include="..\Message\DataStore.cpp" />

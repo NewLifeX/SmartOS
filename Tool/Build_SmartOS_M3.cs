@@ -17,6 +17,7 @@ build.AddFiles("..\\Test");
 build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
 build.AddFiles("..\\TinyNet");
 build.AddFiles("..\\TokenNet");
+build.AddFiles("..\\Link");
 build.AlwaysBuild = "Sys.cpp";
 build.Libs.Clear();
 //build.Preprocess = true;

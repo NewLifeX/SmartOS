@@ -49,6 +49,9 @@
     <Filter Include="Drivers\Esp8266">
       <UniqueIdentifier>{5148c153-2531-43dd-b3d0-c6e56c956568}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Link">
+      <UniqueIdentifier>{f7ce12fa-0f45-4e6e-bc63-a16c0fd2ca7e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Core\Type.cpp">
@@ -580,6 +583,9 @@
     </ClCompile>
     <ClCompile Include="..\Message\HistoryStore.cpp">
       <Filter>Message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Link\LinkClient.cpp">
+      <Filter>Link</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
