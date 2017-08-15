@@ -6,6 +6,8 @@
 #include "Message\DataStore.h"
 #include "Message\Json.h"
 
+#include "LinkMessage.h"
+
 // 物联客户端
 class LinkClient
 {
@@ -19,6 +21,7 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
+	Socket*	Socket;
 	DataStore	Store;	// 数据存储区
 	Dictionary<cstring, IDelegate*>	Routes;	// 路由集合
 
@@ -28,14 +31,13 @@ public:
 	void Close();
 
 	// 发送消息
-	bool Send(TokenMessage& msg, TokenController* ctrl = nullptr);
-	bool Reply(TokenMessage& msg, TokenController* ctrl = nullptr);
-	void OnReceive(TokenMessage& msg, TokenController& ctrl);
-	void OnReceiveLocal(TokenMessage& msg, TokenController& ctrl);
+	bool Invoke(String& action, String& args);
+	bool Reply(String& action, int code, String& result, int seq);
+	void OnReceive(String& data);
 	void LocalSend(int start, const Buffer& bs);
 
 	// 收到功能消息时触发
-	MessageHandler	Received;
+	//MessageHandler	Received;
 	void*			Param;
 
 	// 常用系统级消息
@@ -54,10 +56,10 @@ public:
 	// Ping指令用于保持与对方的活动状态
 	void Ping();
 
-	void Read(int start, int size);
+	/*void Read(int start, int size);
 	void Write(int start, const Buffer& bs);
 	void Write(int start, byte dat);
-	
+
 	// 异步上传并等待响应，返回实际上传字节数
 	int WriteAsync(int start, const Buffer& bs, int msTimeout);
 
@@ -76,13 +78,15 @@ public:
 	void Register(cstring action, bool(T::*func)(const Pair&, Stream&), T* target)
 	{
 		Register(action, *(InvokeHandler*)&func, target);
-	}
+	}*/
 
 	static LinkClient* Current;
 
 private:
+	bool Send(LinkMessage& msg);
+	
 	// 跳转
-	bool OnRedirect(HelloMessage& msg);
+	/*bool OnRedirect(IDictionary);
 
 	bool OnLogin(TokenMessage& msg, TokenController* ctrl);
 
@@ -94,7 +98,7 @@ private:
 	void OnWrite(const TokenMessage& msg, TokenController* ctrl);
 
 	void OnInvoke(const TokenMessage& msg, TokenController* ctrl);
-	bool OnInvoke(const String& action, const Pair& args, Stream& result);
+	bool OnInvoke(const String& action, const Pair& args, Stream& result);*/
 
 private:
 	uint	_task;

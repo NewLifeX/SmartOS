@@ -1,0 +1,27 @@
+﻿#ifndef __LinkMessage_H__
+#define __LinkMessage_H__
+
+#include "Kernel\Sys.h"
+
+#include "Message\DataStore.h"
+#include "Message\Json.h"
+
+// 物联消息
+struct LinkMessage
+{
+public:
+	byte	Reply : 1;	// 是否响应
+	byte	Error : 1;	// 是否错误
+	byte	Code : 6;	// 代码
+	byte	Seq;		// 序列号
+	ushort	Length;		// 长度
+
+	// 数据指针
+	const void* Data() const { return (const void*)&this[1]; }
+
+	void Init();
+
+private:
+};
+
+#endif
