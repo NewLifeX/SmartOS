@@ -36,7 +36,7 @@ Json::Json(double value)
 
 }
 
-Json::Json(String& value)
+Json::Json(const String& value)
 {
 
 }
@@ -199,12 +199,12 @@ const Json Json::operator[](cstring key) const { return Find(key); }
 /*// 设置成员。找到指定成员，或添加成员，并返回对象
 Json& Json::operator[](cstring key)
 {
-	//if(!_s) return Find(key);
+	//if(!_writer) return Find(key);
 
 	Json json;
 
 	Add(key, json);
-	json.SetOut(*_s);
+	json.SetOut(*_writer);
 
 	return json;
 }*/
@@ -270,18 +270,18 @@ const Json Json::operator[](int index) const
 // 设置输出缓冲区。写入Json前必须设置
 void Json::SetOut(String& result)
 {
-	_s	= &result;
+	_writer	= &result;
 }
 
 void Json::Check()
 {
-	if(!_s) _s	= new String();
+	if(!_writer) _writer	= new String();
 }
 
 // 添加对象成员
 Json& Json::Add(cstring key, const Json& value)
 {
-	auto& s	= *_s;
+	auto& s	= *_writer;
 	// 如果已经有数据，则把最后的括号改为逗号
 	if(s.Length() > 0)
 		s[s.Length() - 1]	= ',';
@@ -302,7 +302,7 @@ Json& Json::Add(cstring key, const Json& value)
 // 添加数组成员
 Json& Json::Add(const Json& value)
 {
-	auto& s	= *_s;
+	auto& s	= *_writer;
 	// 如果已经有数据，则把最后的括号改为逗号
 	if(s.Length() > 0)
 		s[s.Length() - 1]	= ',';
@@ -319,7 +319,7 @@ Json& Json::Add(const Json& value)
 String Json::ToString() const
 {
 	String str;
-	if(_s) str	+= *_s;
+	if(_writer) str	+= *_writer;
 
 	return str;
 }
@@ -333,7 +333,7 @@ static bool isSpace(char ch)
 
 }
 
-// 跳过空格
+// 跳过空白
 static cstring SkipSpace(cstring str, int& len)
 {
 	while(len && isSpace(str[0])) { str++; len--; }
@@ -368,6 +368,7 @@ static int find(cstring str, int len, char ch)
 	return -1;
 }
 
+/*
 JValue::JValue() : type_t(NIL) { }
 
 JValue::JValue(Int64 i) : int_v(i), type_t(INT) { }
@@ -742,3 +743,4 @@ String JValue::ToString() const
 
 	return str;
 }
+*/

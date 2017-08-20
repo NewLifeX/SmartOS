@@ -28,7 +28,7 @@ static void TestRead()
 
 	auto name	= json["name"];
 	assert(name.Type() == JsonType::string, "Type()");
-	assert(name.AsString() == "Smart \" Stone", "AsString()");
+	assert(name.AsString() == "Smart \\\" Stone", "AsString()");
 
 	auto enable	= json["enable"];
 	assert(enable.Type() == JsonType::boolean, "Type()");

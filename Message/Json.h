@@ -36,7 +36,7 @@ public:
 	Json(int value);
 	Json(bool value);
 	Json(double value);
-	Json(String& value);
+	Json(const String& value);
 
 	// 值类型
 	JsonType Type() const;
@@ -74,7 +74,7 @@ public:
 private:
 	cstring	_str;
 	int		_len;
-	String*	_s;		// 仅用于写入处理的字符串指针
+	String*	_writer;	// 仅用于写入处理的字符串指针
 
 	void Init(cstring str, int len);
 	Json Find(cstring key) const;
@@ -82,7 +82,8 @@ private:
 	void Check();
 };
 
-/** Json值类型 */
+/*
+// Json值类型 
 enum ValueType
 {
 	INT,
@@ -216,5 +217,5 @@ protected:
 
 	ValueType	type_t;
 };
-
+*/
 #endif
