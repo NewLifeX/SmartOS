@@ -556,11 +556,25 @@ int String::CompareTo(cstring cstr, int len, bool ignoreCase) const
 	}
 	if (!cstr && _Arr && _Length > 0) return 1;
 
+	// 小心越界
+	int len2 = len;
+	if (len2 > _Length) len2 = _Length;
+
 	// 逐个比较字符，直到指定长度或者源字符串结束
+	int rs = 0;
 	if (ignoreCase)
-		return strncasecmp(_Arr, cstr, _Length);
+		rs = strncasecmp(_Arr, cstr, len2);
 	else
-		return strncmp(_Arr, cstr, _Length);
+		rs = strncmp(_Arr, cstr, len2);
+
+	// 如果不等，直接返回
+	if (rs != 0)return rs;
+
+	// 如果相等，则还要考虑没有比较部分
+	if (len > len2) return -1;
+	if (_Length > len2) return 1;
+
+	return 0;
 }
 
 bool String::Equals(const String& str) const
