@@ -12,11 +12,12 @@ NetUri::NetUri()
 
 NetUri::NetUri(const String& uri) : NetUri()
 {
-	if(uri.CompareTo("Tcp", 3, true) == 0)
+	auto t = uri.Substring(0, 3);
+	if(t.EqualsIgnoreCase("Tcp"))
 		Type = NetType::Tcp;
-	else if(uri.CompareTo("Udp", 3, true) == 0)
+	else if(t.EqualsIgnoreCase("Udp"))
 		Type = NetType::Udp;
-	else if(uri.CompareTo("Http", 4, true) == 0)
+	else if(uri.Substring(0, 4).EqualsIgnoreCase("Http"))
 		Type = NetType::Http;
 
 	int p	= uri.LastIndexOf("/");
