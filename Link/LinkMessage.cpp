@@ -13,5 +13,11 @@
 void LinkMessage::Init() {
 	*(byte*)Reply = 0;
 	Seq = 0;
+	Code = 0;
 	Length = 0;
+}
+
+void LinkMessage::Show(bool newline) const {
+	String str((cstring)&this[1], Length);
+	str.Show(newline);
 }

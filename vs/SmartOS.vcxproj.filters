@@ -587,5 +587,8 @@
     <ClCompile Include="..\Link\LinkClient.cpp">
       <Filter>Link</Filter>
     </ClCompile>
+    <ClCompile Include="..\Link\LinkMessage.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

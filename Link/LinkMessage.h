@@ -18,8 +18,11 @@ public:
 
 	// 数据指针
 	const void* Data() const { return (const void*)&this[1]; }
+	const String GetString() const { return String((cstring)&this[1], Length); }
 
 	void Init();
+
+	void Show(bool newline = false) const;
 
 private:
 };
