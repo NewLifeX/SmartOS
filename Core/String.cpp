@@ -140,10 +140,15 @@ String::String(char* str, int length) : Array(str, length)
 	_Capacity = length - 1;
 
 	// 计算外部字符串长度
-	int len = strlen(str);
-	if (len >= length) len = length - 1;
+	//int len = strlen(str);
+	//if (len >= length) len = length - 1;
+
+	auto p = str;
+	int len = 0;
+	while (*p++ != '\0' && len < _Capacity) len++;
+
 	_Length = len;
-	_Arr[_Length] = '\0';
+	_Arr[len] = '\0';
 }
 
 // 外部传入缓冲区供内部使用，内部计算字符串长度，注意长度减去零结束符
