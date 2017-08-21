@@ -72,6 +72,7 @@ public:
 	Json AddArray(cstring key);
 
 	String ToString() const;
+	void Show(bool newline = false) const;
 
 #if DEBUG
 	static void Test();
@@ -79,7 +80,7 @@ public:
 
 private:
 	String	_str;
-	String*	_writer;	// 仅用于写入处理的字符串指针
+	//String*	_writer;	// 仅用于写入处理的字符串指针
 
 	void Init(cstring str, int len);
 	Json Find(cstring key) const;

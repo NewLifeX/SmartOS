@@ -7,10 +7,10 @@ static int find(cstring str, int len, char ch);
 static const Json Null(nullptr);
 
 // 构造只读实例
-Json::Json(cstring str) :_str(str) { _writer = nullptr; }
-Json::Json(cstring str, int len) : _str(str, len) { _writer = nullptr; }
+Json::Json(cstring str) :_str(str) { }
+Json::Json(cstring str, int len) : _str(str, len) { }
 
-Json::Json(const String& value) : _str(value) { _writer = nullptr; }
+Json::Json(const String& value) : _str(value) { }
 
 // 值类型
 JsonType Json::Type() const
@@ -132,9 +132,9 @@ Json Json::Find(cstring key) const {
 	// 找到结尾
 	switch (val[0])
 	{
-	case '{': n = find(val, n, '}'); break;
-	case '[': n = find(val, n, ']'); break;
-	case '"': n = find(val, n, '"'); break;
+	case '{': n = find(val, n, '}') + 1; break;
+	case '[': n = find(val, n, ']') + 1; break;
+	case '"': n = find(val, n, '"') + 1; break;
 		// 其它类型只需要逗号，如果没有逗号，就可能是最后一个了
 	default: {
 		auto ve = val + n;
@@ -220,7 +220,10 @@ const Json Json::operator[](int index) const {
 		if (p < 0)
 		{
 			// 最后没找到逗号，如果刚好index为0，说明是最后一段
-			if (index == 0) return Json(cs, len);
+			if (index == 0) {
+				if (cs[len - 1] == ']') len--;
+				return Json(cs, len);
+			}
 			break;
 		}
 		if (index-- == 0) return Json(cs, p);
@@ -238,12 +241,12 @@ const Json Json::operator[](int index) const {
 }*/
 
 Json::Json() {
-	_writer = &_str;
+	//_writer = &_str;
 }
 
 // 设置输出缓冲区
 Json::Json(String& writer) :_str(writer) {
-	_writer = &writer;
+	//_writer = &writer;
 }
 
 Json::Json(bool value) : _str(value) { }
@@ -251,13 +254,13 @@ Json::Json(int value) : _str(value) { }
 Json::Json(float value) : _str(value) { }
 Json::Json(double value) : _str(value) { }
 
-void Json::Check() {
+/*void Json::Check() {
 	if (!_writer) _writer = new String();
-}
+}*/
 
 // 添加对象成员
 Json& Json::Add(cstring key, const Json& value) {
-	auto& s = *_writer;
+	auto& s = _str;
 	// 如果已经有数据，则把最后的括号改为逗号
 	if (s.Length() > 0)
 		s[s.Length() - 1] = ',';
@@ -277,7 +280,7 @@ Json& Json::Add(cstring key, const Json& value) {
 
 // 添加数组成员
 Json& Json::Add(const Json& value) {
-	auto& s = *_writer;
+	auto& s = _str;
 	// 如果已经有数据，则把最后的括号改为逗号
 	if (s.Length() > 0)
 		s[s.Length() - 1] = ',';
@@ -300,10 +303,14 @@ Json Json::AddArray(cstring key) {
 }
 
 String Json::ToString() const {
-	String str;
-	if (_writer) str += *_writer;
+	//String str;
+	//if (_writer) str += *_writer;
 
-	return str;
+	return _str;
+}
+
+void Json::Show(bool newline) const {
+	_str.Show(newline);
 }
 
 static bool isSpace(char ch) {

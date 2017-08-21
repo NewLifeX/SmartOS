@@ -23,21 +23,26 @@ static void TestRead()
 	assert(json.Type() == JsonType::object, "Type()");
 
 	auto id		= json["id"];
+	debug_printf("id=");	id.Show(true);
 	assert(id.Type() == JsonType::integer, "Type()");
 	assert(id.AsInt() == 3141, "AsInt()");
 
 	auto name	= json["name"];
+	debug_printf("name=");	name.Show(true);
 	assert(name.Type() == JsonType::string, "Type()");
 	assert(name.AsString() == "Smart \\\" Stone", "AsString()");
 
 	auto enable	= json["enable"];
+	debug_printf("enable=");	enable.Show(true);
 	assert(enable.Type() == JsonType::boolean, "Type()");
 	assert(enable.AsBoolean() == true, "AsBoolean()");
 
 	auto noval	= json["noval"];
+	debug_printf("noval=");	noval.Show(true);
 	assert(noval.Type() == JsonType::null, "Type()");
 
 	auto score	= json["score"];
+	debug_printf("score=");	score.Show(true);
 	assert(score.Type() == JsonType::Float, "Type()");
 	float v	= score.AsFloat();
 	String s(v);
@@ -49,21 +54,26 @@ static void TestRead()
 	assert(score.AsDouble() == 3.14159, "AsFloat()");
 
 	auto array	= json["array"];
+	debug_printf("array=");	array.Show(true);
 	assert(array.Type() == JsonType::array, "Type()");
 	assert(array.Length() == 3, "Length()");
 
 	auto arr2	= array[2];
+	debug_printf("array[2]=");	arr2.Show(true);
 	assert(arr2.Type() == JsonType::integer, "Type()");
 	assert(arr2.AsInt() == 2, "AsInt()");
 
 	auto extend	= json["extend"];
+	debug_printf("extend=");	extend.Show(true);
 	assert(extend.Type() == JsonType::object, "Type()");
 
 	auto kind	= extend["kind"];
+	debug_printf("kind=");	kind.Show(true);
 	assert(kind.Type() == JsonType::string, "Type()");
 	assert(kind.AsString() == "cost", "AsString()");
 
 	auto value	= extend["value"];
+	debug_printf("value=");	value.Show(true);
 	assert(value.Type() == JsonType::Float, "Type()");
 	float v3	= value.AsFloat();
 	String s3(v3);
