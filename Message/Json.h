@@ -66,10 +66,13 @@ public:
 	Json& Add(cstring key, double value);*/
 	// 添加对象成员
 	Json& Add(cstring key, const Json& value);
-	Json AddObject(cstring key);
+	// 特殊处理字符串，避免隐式转换
+	Json& Add(cstring key, const String& value);
+	Json& Add(cstring key, cstring value);
+	//Json AddObject(cstring key);
 	// 添加数组成员
 	Json& Add(const Json& value);
-	Json AddArray(cstring key);
+	//Json AddArray(cstring key);
 
 	String ToString() const;
 	void Show(bool newline = false) const;
@@ -80,12 +83,8 @@ public:
 
 private:
 	String	_str;
-	//String*	_writer;	// 仅用于写入处理的字符串指针
 
-	void Init(cstring str, int len);
 	Json Find(cstring key) const;
-
-	void Check();
 };
 
 /*

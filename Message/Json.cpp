@@ -240,30 +240,23 @@ const Json Json::operator[](int index) const {
 	return *this;
 }*/
 
-Json::Json() {
-	//_writer = &_str;
-}
+Json::Json() { }
 
 // 设置输出缓冲区
-Json::Json(String& writer) :_str(writer) {
-	//_writer = &writer;
-}
+Json::Json(String& writer) :_str(writer) { }
 
 Json::Json(bool value) : _str(value) { }
 Json::Json(int value) : _str(value) { }
 Json::Json(float value) : _str(value) { }
 Json::Json(double value) : _str(value) { }
 
-/*void Json::Check() {
-	if (!_writer) _writer = new String();
-}*/
-
 // 添加对象成员
 Json& Json::Add(cstring key, const Json& value) {
 	auto& s = _str;
+	int len = s.Length();
 	// 如果已经有数据，则把最后的括号改为逗号
-	if (s.Length() > 0)
-		s[s.Length() - 1] = ',';
+	if (len > 0)
+		s[len - 1] = ',';
 	else
 		s += '{';
 
@@ -271,19 +264,46 @@ Json& Json::Add(cstring key, const Json& value) {
 	s += key;
 	s += "\":";
 
-	s += value;
+	if (value.Type() == JsonType::null)
+		s += "null";
+	else
+		s += value;
 
 	s += '}';
 
 	return *this;
 }
 
+// 特殊处理字符串，避免隐式转换
+Json& Json::Add(cstring key, const String& value) {
+	auto& s = _str;
+	int len = s.Length();
+	// 如果已经有数据，则把最后的括号改为逗号
+	if (len > 0)
+		s[len - 1] = ',';
+	else
+		s += '{';
+
+	s += '"';
+	s += key;
+	s += "\":\"";
+
+	s += value;
+
+	s += "\"}";
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, cstring value) { return Add(key, String(value)); }
+
 // 添加数组成员
 Json& Json::Add(const Json& value) {
 	auto& s = _str;
+	int len = s.Length();
 	// 如果已经有数据，则把最后的括号改为逗号
-	if (s.Length() > 0)
-		s[s.Length() - 1] = ',';
+	if (len > 0)
+		s[len - 1] = ',';
 	else
 		s += '[';
 
@@ -294,20 +314,15 @@ Json& Json::Add(const Json& value) {
 	return *this;
 }
 
-Json Json::AddObject(cstring key) {
+/*Json Json::AddObject(cstring key) {
 	return Null;
 }
 
 Json Json::AddArray(cstring key) {
 	return Null;
-}
+}*/
 
-String Json::ToString() const {
-	//String str;
-	//if (_writer) str += *_writer;
-
-	return _str;
-}
+String Json::ToString() const { return _str; }
 
 void Json::Show(bool newline) const {
 	_str.Show(newline);
