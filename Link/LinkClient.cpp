@@ -158,9 +158,8 @@ void LinkClient::Login()
 {
 	TS("LinkClient::Login");
 
-	Json json;
 	String args;
-	json.SetOut(args);
+	Json json(args);
 
 	json.Add("User", User);
 
@@ -230,9 +229,8 @@ void LinkClient::Ping()
 	// 30秒内发过数据，不再发送心跳
 	if (LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
-	Json json;
 	String args;
-	json.SetOut(args);
+	Json json(args);
 
 	//json.Add("Data", Store.Data.ToHex());
 

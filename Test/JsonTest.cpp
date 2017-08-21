@@ -75,9 +75,9 @@ static void TestRead()
 
 static void TestWrite()
 {
-	Json json;
 	String rs;
-	json.SetOut(rs);
+	Json json(rs);
+	//json.SetOut(rs);
 
 	/*json["id"]		= 3141;
 	json["name"]	= "Smart \" Stone";
@@ -90,7 +90,7 @@ static void TestWrite()
 	json.Add("noval",	nullptr);
 	json.Add("score",	3.14159);
 
-	auto arr	= json["array"];
+	auto arr	= json.AddArray("array");
 	/*arr[0]	= 1;
 	arr[1]	= 0;
 	arr[2]	= 2;*/

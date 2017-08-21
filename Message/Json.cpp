@@ -4,75 +4,48 @@ static bool isSpace(char ch);
 static cstring SkipSpace(cstring str, int& len);
 static int find(cstring str, int len, char ch);
 
-static const Json Null;
+static const Json Null(nullptr);
 
-Json::Json() { Init(nullptr, 0); }
+// 构造只读实例
+Json::Json(cstring str) :_str(str) { _writer = nullptr; }
+Json::Json(cstring str, int len) : _str(str, len) { _writer = nullptr; }
 
-Json::Json(cstring str)
-{
-	Init(str, String(str).Length());
-}
-
-void Json::Init(cstring str, int len)
-{
-	//_str	= str;
-	_len	= len;
-
-	_str	= SkipSpace(str, _len);
-}
-
-Json::Json(int value)
-{
-
-}
-
-Json::Json(bool value)
-{
-
-}
-
-Json::Json(double value)
-{
-
-}
-
-Json::Json(const String& value)
-{
-
-}
+Json::Json(const String& value) : _str(value) { _writer = nullptr; }
 
 // 值类型
 JsonType Json::Type() const
 {
-	if(!_str && !_len) return JsonType::null;
+	if (!_str) return JsonType::null;
 
 	// 快速判断对象、数组和字符串
-	switch(_str[0])
+	auto s = _str.Trim();
+	auto p = s.GetBuffer();
+	int len = s.Length();
+	switch (s[0])
 	{
-		case '{': return JsonType::object;
-		case '[': return JsonType::array;
-		case '"': return JsonType::string;
+	case '{': return JsonType::object;
+	case '[': return JsonType::array;
+	case '"': return JsonType::string;
 	}
 
 	// 对比判断空和布尔类型
-	String s((cstring)_str, _len);
-	if(s == "null") return JsonType::null;
-	if(s == "true" || s == "false") return JsonType::boolean;
+	if (s == "null") return JsonType::null;
+	if (s == "true" || s == "false") return JsonType::boolean;
 
 	// 剩下整数和浮点数
-	bool isFloat	= false;
-	for(int i=0; i<_len; i++)
+	bool isFloat = false;
+	for (int i = 0; i < len; i++)
 	{
-		char ch	= _str[i];
+		char ch = s[i];
 		// 判断非数字
-		if(ch < '0' || ch > '9')
+		if (ch < '0' || ch > '9')
 		{
 			// 负号只能出现在第一位
-			if(ch == '-' && i > 0) return JsonType::null;
+			if (ch == '-' && i > 0) return JsonType::null;
 
 			// 直接判断圆点，不支持指数类型
-			if(ch == '.' && !isFloat)
-				isFloat	= true;
+			if (ch == '.' && !isFloat)
+				isFloat = true;
 			else
 				return JsonType::null;
 		}
@@ -82,115 +55,101 @@ JsonType Json::Type() const
 }
 
 // 获取值
-String	Json::AsString()	const
-{
-	if(!_str && !_len) return nullptr;
+String Json::AsString() const {
+	if (!_str) return nullptr;
 
-	if(_str[0] != '"') return nullptr;
+	if (_str[0] != '"') return nullptr;
 
 	// 去掉前后双引号
-	auto p	= _str;
-	int n	= _len;
-	if(p[0] == '"')
+	auto p = _str.GetBuffer();
+	int n = _str.Length();
+	if (p[0] == '"')
 	{
 		p++;
 		n--;
 	}
-	if(p[n-1] == '"') n--;
+	if (p[n - 1] == '"') n--;
 
 	// 没有处理转义字符
 	return String(p, n);
 }
 
-bool	Json::AsBoolean()	const
-{
-	if(!_str && !_len) return false;
+bool Json::AsBoolean() const {
+	if (!_str) return false;
 
-	if(_str[0] != 't' && _str[0] != 'f') return false;
+	//if (_str[0] != 't' && _str[0] != 'f') return false;
 
-	String s((cstring)_str, _len);
-	return s == "true";
+	return _str.Trim() == "true";
 }
 
-int		Json::AsInt()		const
-{
-	if(!_str && !_len) return 0;
+int Json::AsInt() const {
+	if (!_str) return 0;
 
-	if(Type() != JsonType::integer) return 0;
+	if (Type() != JsonType::integer) return 0;
 
-	String s((cstring)_str, _len);
-	return s.ToInt();
+	return _str.Trim().ToInt();
 }
 
-float	Json::AsFloat()	const
-{
-	if(!_str && !_len) return 0;
+float Json::AsFloat() const {
+	if (!_str) return 0;
 
-	if(Type() != JsonType::Float) return 0;
+	if (Type() != JsonType::Float) return 0;
 
-	String s((cstring)_str, _len);
-	return s.ToFloat();
+	return _str.Trim().ToFloat();
 }
 
-double	Json::AsDouble()	const
+double Json::AsDouble() const
 {
-	if(!_str && !_len) return 0;
+	if (!_str) return 0;
 
-	if(Type() != JsonType::Float) return 0;
+	if (Type() != JsonType::Float) return 0;
 
-	String s((cstring)_str, _len);
-	return s.ToDouble();
+	return _str.Trim().ToDouble();
 }
 
-Json Json::Find(cstring key) const
-{
-	Json json;
-	if(!_str && !_len) return json;
-
-	String s((cstring)_str, _len);
+Json Json::Find(cstring key) const {
+	if (!_str) return Null;
 
 	// "name": value
 
 	// 找到名称
-	int n	= String(key).Length();
-	int p	= 0;
-	while(true){
-		p	= s.IndexOf(key, p);
-		if(p < 0) return json;
+	int n = String(key).Length();
+	int p = 0;
+	while (true) {
+		p = _str.IndexOf(key, p);
+		if (p < 0) return Null;
 
-		p	+= n;
+		p += n;
 
 		// 找冒号
-		if(_str[p] == ':') { p++; break; }
-		if(_str[p] == '"' || _str[p+1] == ':') { p+=2; break; }
+		if (_str[p] == ':') { p++; break; }
+		if (_str[p] == '"' || _str[p + 1] == ':') { p += 2; break; }
 	}
 
 	// 跳过可能的空格
-	n	= _len - p;
-	auto val	= SkipSpace(_str + p, n);
+	n = _str.Length() - p;
+	auto val = SkipSpace(_str.GetBuffer() + p, n);
 	// 找到结尾
-	switch(val[0])
+	switch (val[0])
 	{
-		case '{': n	= find(val, n, '}'); break;
-		case '[': n	= find(val, n, ']'); break;
-		case '"': n	= find(val, n, '"'); break;
+	case '{': n = find(val, n, '}'); break;
+	case '[': n = find(val, n, ']'); break;
+	case '"': n = find(val, n, '"'); break;
 		// 其它类型只需要逗号，如果没有逗号，就可能是最后一个了
-		default: {
-			auto ve	= val + n;
-			for(auto vs=val; vs < ve; vs++)
+	default: {
+		auto ve = val + n;
+		for (auto vs = val; vs < ve; vs++)
+		{
+			if (vs[0] == ',' || isSpace(vs[0]))
 			{
-				if(vs[0] == ',' || isSpace(vs[0]))
-				{
-					n	= vs - val;
-					break;
-				}
+				n = vs - val;
+				break;
 			}
 		}
 	}
+	}
 
-	json.Init(val, n);
-
-	return json;
+	return Json(val, n);
 }
 
 // 读取成员。找到指定成员，并用它的值构造一个新的对象
@@ -210,53 +169,64 @@ Json& Json::operator[](cstring key)
 }*/
 
 // 特殊支持数组
-int Json::Length() const
-{
-	if(!_str && !_len) return 0;
+int Json::Length() const {
+	if (!_str) return 0;
 
-	if(_str[0] != '[') return 0;
-	if(_len == 2 && _str[1] == ']') return 0;
+	auto cs = _str.GetBuffer();
+	if (cs[0] != '[') return 0;
+
+	int len = _str.Length();
+	if (len == 2 && cs[1] == ']') return 0;
+
+	// 跳过左方括号
+	cs++;
+	len--;
 
 	// 数逗号
-	int n	= 0;
-	for(int i=0; i<_len;)
+	int n = 0;
+	while (len > 0)
 	{
-		int p	= find(_str + i + 1, _len - i - 1, ',');
-		if(p < 0) break;
-		i	+= p;
+		int p = find(cs, len, ',');
+		if (p < 0) break;
+
+		n++;
+		cs += p + 1;
+		len -= p + 1;
 	}
 
 	// 数组个数就是逗号个数加一
 	return n + 1;
 }
 
-const Json Json::operator[](int index) const
-{
-	Json json;
-	if(!_str && !_len) return json;
+const Json Json::operator[](int index) const {
+	auto& json = Null;
+	if (!_str) return json;
 
-	if(_str[0] != '[') return json;
-	if(_len == 2 && _str[1] == ']') return json;
+	auto cs = _str.GetBuffer();
+	if (cs[0] != '[') return json;
+
+	int len = _str.Length();
+	if (len == 2 && cs[1] == ']') return json;
+
+	// 跳过左方括号
+	cs++;
+	len--;
 
 	// 数逗号
-	for(int i=0; i<_len;)
+	while (len > 0)
 	{
 		// 找下一个逗号
-		auto s	= _str + i + 1;
-		int p	= find(s, _len - i - 1, ',');
-		if(p < 0)
+		int p = find(cs, len, ',');
+		if (p < 0)
 		{
 			// 最后没找到逗号，如果刚好index为0，说明是最后一段
-			if(index == 0) json.Init(s, _len - i - 1);
+			if (index == 0) return Json(cs, len);
 			break;
 		}
-		i	+= p;
+		if (index-- == 0) return Json(cs, p);
 
-		if(index-- == 0)
-		{
-			json.Init(s, p);
-			break;
-		}
+		cs += p + 1;
+		len -= p + 1;
 	}
 
 	return json;
@@ -267,103 +237,111 @@ const Json Json::operator[](int index) const
 	return *this;
 }*/
 
-// 设置输出缓冲区。写入Json前必须设置
-void Json::SetOut(String& result)
-{
-	_writer	= &result;
+Json::Json() {
+	_writer = &_str;
 }
 
-void Json::Check()
-{
-	if(!_writer) _writer	= new String();
+// 设置输出缓冲区
+Json::Json(String& writer) :_str(writer) {
+	_writer = &writer;
+}
+
+Json::Json(bool value) : _str(value) { }
+Json::Json(int value) : _str(value) { }
+Json::Json(float value) : _str(value) { }
+Json::Json(double value) : _str(value) { }
+
+void Json::Check() {
+	if (!_writer) _writer = new String();
 }
 
 // 添加对象成员
-Json& Json::Add(cstring key, const Json& value)
-{
-	auto& s	= *_writer;
+Json& Json::Add(cstring key, const Json& value) {
+	auto& s = *_writer;
 	// 如果已经有数据，则把最后的括号改为逗号
-	if(s.Length() > 0)
-		s[s.Length() - 1]	= ',';
+	if (s.Length() > 0)
+		s[s.Length() - 1] = ',';
 	else
-		s	+= '{';
+		s += '{';
 
-	s	+= '"';
-	s	+= key;
-	s	+= "\":";
+	s += '"';
+	s += key;
+	s += "\":";
 
-	s	+= value;
+	s += value;
 
-	s	+= '}';
+	s += '}';
 
 	return *this;
 }
 
 // 添加数组成员
-Json& Json::Add(const Json& value)
-{
-	auto& s	= *_writer;
+Json& Json::Add(const Json& value) {
+	auto& s = *_writer;
 	// 如果已经有数据，则把最后的括号改为逗号
-	if(s.Length() > 0)
-		s[s.Length() - 1]	= ',';
+	if (s.Length() > 0)
+		s[s.Length() - 1] = ',';
 	else
-		s	+= '[';
+		s += '[';
 
-	s	+= value;
+	s += value;
 
-	s	+= ']';
+	s += ']';
 
 	return *this;
 }
 
-String Json::ToString() const
-{
+Json Json::AddObject(cstring key) {
+	return Null;
+}
+
+Json Json::AddArray(cstring key) {
+	return Null;
+}
+
+String Json::ToString() const {
 	String str;
-	if(_writer) str	+= *_writer;
+	if (_writer) str += *_writer;
 
 	return str;
 }
 
-static bool isSpace(char ch)
-{
+static bool isSpace(char ch) {
 	return ch == ' ' ||
 		ch == '\t' ||
 		ch == '\r' ||
 		ch == '\n';
-
 }
 
 // 跳过空白
-static cstring SkipSpace(cstring str, int& len)
-{
-	while(len && isSpace(str[0])) { str++; len--; }
-	while(len && isSpace(str[len -1])) len--;
+static cstring SkipSpace(cstring str, int& len) {
+	while (len && isSpace(str[0])) { str++; len--; }
+	while (len && isSpace(str[len - 1])) len--;
 
 	return str;
 }
 
-static int find(cstring str, int len, char ch)
-{
+static int find(cstring str, int len, char ch) {
 	// 记录大括号、中括号配对
-	int m	= 0;
-	int n	= 0;
+	int m = 0;
+	int n = 0;
 	// 是否在字符串中，此时不算括号
-	bool s	= false;
-	for(int i=0; i<len; i++)
+	bool s = false;
+	for (int i = 0; i < len; i++)
 	{
-		switch(str[i])
+		switch (str[i])
 		{
-			case '{': if(!s) m++; break;
-			case '}': if(!s) m--; break;
-			case '[': if(!s) n++; break;
-			case ']': if(!s) n--; break;
-			case '"':
-				if(i == 0 || str[i-1] != '\\') s	= !s;
-				break;
+		case '{': if (!s) m++; break;
+		case '}': if (!s) m--; break;
+		case '[': if (!s) n++; break;
+		case ']': if (!s) n--; break;
+		case '"':
+			if (i == 0 || str[i - 1] != '\\') s = !s;
+			break;
 		}
 
 		// 配对平衡的时候遇到目标，才是结果
-		if(str[i] == ch && m == 0 && n == 0 && !s) return i;
+		if (str[i] == ch && m == 0 && n == 0 && !s) return i;
 	}
 	return -1;
 }
@@ -395,196 +373,196 @@ JValue::JValue(JArray&& o) : array_v(o), type_t(ARRAY) { }
 
 JValue::JValue(const JValue& v)
 {
-    switch(v.type())
-    {
-        case INT:
-            int_v = v.int_v;
-            type_t = INT;
-            break;
+	switch(v.type())
+	{
+		case INT:
+			int_v = v.int_v;
+			type_t = INT;
+			break;
 
-        case FLOAT:
-            float_v = v.float_v;
-            type_t = FLOAT;
-            break;
+		case FLOAT:
+			float_v = v.float_v;
+			type_t = FLOAT;
+			break;
 
-        case BOOL:
-            bool_v = v.bool_v;
-            type_t = BOOL;
-            break;
+		case BOOL:
+			bool_v = v.bool_v;
+			type_t = BOOL;
+			break;
 
-        case NIL:
-            type_t = NIL;
-            break;
+		case NIL:
+			type_t = NIL;
+			break;
 
-        case STRING:
-            string_v = v.string_v;
-            type_t = STRING;
-            break;
+		case STRING:
+			string_v = v.string_v;
+			type_t = STRING;
+			break;
 
-            case ARRAY:
-            array_v = v.array_v;
-            type_t = ARRAY;
-            break;
+			case ARRAY:
+			array_v = v.array_v;
+			type_t = ARRAY;
+			break;
 
-        case OBJECT:
-            object_v = v.object_v;
-            type_t = OBJECT;
-            break;
-    }
+		case OBJECT:
+			object_v = v.object_v;
+			type_t = OBJECT;
+			break;
+	}
 }
 
 JValue::JValue(JValue&& v)
 {
-    switch(v.type())
-    {
-        case INT:
-            int_v	= (v.int_v);
-            type_t	= INT;
-            break;
+	switch(v.type())
+	{
+		case INT:
+			int_v	= (v.int_v);
+			type_t	= INT;
+			break;
 
-        case FLOAT:
-            float_v	= (v.float_v);
-            type_t	= FLOAT;
-            break;
+		case FLOAT:
+			float_v	= (v.float_v);
+			type_t	= FLOAT;
+			break;
 
-        case BOOL:
-            bool_v	= (v.bool_v);
-            type_t	= BOOL;
-            break;
+		case BOOL:
+			bool_v	= (v.bool_v);
+			type_t	= BOOL;
+			break;
 
-        case NIL:
-            type_t	= NIL;
-            break;
+		case NIL:
+			type_t	= NIL;
+			break;
 
-        case STRING:
-            string_v= (v.string_v);
-            type_t	= STRING;
-            break;
+		case STRING:
+			string_v= (v.string_v);
+			type_t	= STRING;
+			break;
 
-            case ARRAY:
-            array_v	= (v.array_v);
-            type_t	= ARRAY;
-            break;
+			case ARRAY:
+			array_v	= (v.array_v);
+			type_t	= ARRAY;
+			break;
 
-        case OBJECT:
-            object_v= (v.object_v);
-            type_t	= OBJECT;
-            break;
-    }
+		case OBJECT:
+			object_v= (v.object_v);
+			type_t	= OBJECT;
+			break;
+	}
 }
 
 JValue& JValue::operator=(const JValue& v)
 {
-    switch(v.type())
-    {
-        case INT:
-            int_v = v.int_v;
-            type_t = INT;
-            break;
+	switch(v.type())
+	{
+		case INT:
+			int_v = v.int_v;
+			type_t = INT;
+			break;
 
-        case FLOAT:
-            float_v = v.float_v;
-            type_t = FLOAT;
-            break;
+		case FLOAT:
+			float_v = v.float_v;
+			type_t = FLOAT;
+			break;
 
-        case BOOL:
-            bool_v = v.bool_v;
-            type_t = BOOL;
-            break;
+		case BOOL:
+			bool_v = v.bool_v;
+			type_t = BOOL;
+			break;
 
-        case NIL:
-            type_t = NIL;
-            break;
+		case NIL:
+			type_t = NIL;
+			break;
 
-        case STRING:
-            string_v = v.string_v;
-            type_t = STRING;
-            break;
+		case STRING:
+			string_v = v.string_v;
+			type_t = STRING;
+			break;
 
-            case ARRAY:
-            array_v = v.array_v;
-            type_t = ARRAY;
-            break;
+			case ARRAY:
+			array_v = v.array_v;
+			type_t = ARRAY;
+			break;
 
-        case OBJECT:
-            object_v = v.object_v;
-            type_t = OBJECT;
-            break;
-    }
+		case OBJECT:
+			object_v = v.object_v;
+			type_t = OBJECT;
+			break;
+	}
 
-    return *this;
+	return *this;
 
 }
 
 JValue& JValue::operator=(JValue&& v)
 {
-    switch(v.type())
-    {
-        case INT:
-            int_v = (v.int_v);
-            type_t = INT;
-            break;
+	switch(v.type())
+	{
+		case INT:
+			int_v = (v.int_v);
+			type_t = INT;
+			break;
 
-        case FLOAT:
-            float_v = (v.float_v);
-            type_t = FLOAT;
-            break;
+		case FLOAT:
+			float_v = (v.float_v);
+			type_t = FLOAT;
+			break;
 
-        case BOOL:
-            bool_v = (v.bool_v);
-            type_t = BOOL;
-            break;
+		case BOOL:
+			bool_v = (v.bool_v);
+			type_t = BOOL;
+			break;
 
-        case NIL:
-            type_t = NIL;
-            break;
+		case NIL:
+			type_t = NIL;
+			break;
 
-        case STRING:
-            string_v = (v.string_v);
-            type_t = STRING;
-            break;
+		case STRING:
+			string_v = (v.string_v);
+			type_t = STRING;
+			break;
 
-            case ARRAY:
-            array_v = (v.array_v);
-            type_t = ARRAY;
-            break;
+			case ARRAY:
+			array_v = (v.array_v);
+			type_t = ARRAY;
+			break;
 
-        case OBJECT:
-            object_v = (v.object_v);
-            type_t = OBJECT;
-            break;
-    }
+		case OBJECT:
+			object_v = (v.object_v);
+			type_t = OBJECT;
+			break;
+	}
 
-    return *this;
+	return *this;
 
 }
 
 JValue& JValue::operator[] (cstring key)
 {
-    //if (type() != OBJECT)
-    //    throw ("JValue not an object");
-    return object_v[key];
+	//if (type() != OBJECT)
+	//    throw ("JValue not an object");
+	return object_v[key];
 }
 
 const JValue& JValue::operator[] (cstring key) const
 {
-    //if (type() != OBJECT)
-    //    throw ("JValue not an object");
-    return object_v[key];
+	//if (type() != OBJECT)
+	//    throw ("JValue not an object");
+	return object_v[key];
 }
 
 JValue& JValue::operator[] (uint i)
 {
-    //if (type() != ARRAY)
-    //    throw ("JValue not an array");
-    return array_v[i];
+	//if (type() != ARRAY)
+	//    throw ("JValue not an array");
+	return array_v[i];
 }
 
 const JValue& JValue::operator[] (uint i) const
 {
-    //if (type() != ARRAY)
-    //    throw ("JValue not an array");
-    return array_v[i];
+	//if (type() != ARRAY)
+	//    throw ("JValue not an array");
+	return array_v[i];
 }
 
 
@@ -598,24 +576,24 @@ JObject::JObject(JObject&& o) : _items((o._items)) { }
 
 JObject& JObject::operator=(const JObject& o)
 {
-    _items = o._items;
-    return *this;
+	_items = o._items;
+	return *this;
 }
 
 JObject& JObject::operator=(JObject&& o)
 {
-    _items = (o._items);
-    return *this;
+	_items = (o._items);
+	return *this;
 }
 
 JValue& JObject::operator[] (cstring key)
 {
-    return *_items[key];
+	return *_items[key];
 }
 
 const JValue& JObject::operator[] (cstring key) const
 {
-    return *_items[key];
+	return *_items[key];
 }
 
 void JObject::Add(cstring key, JValue& value)
@@ -625,7 +603,7 @@ void JObject::Add(cstring key, JValue& value)
 
 int JObject::size() const
 {
-    return _items.Count();
+	return _items.Count();
 }
 
 String JObject::ToString() const
@@ -659,35 +637,35 @@ JArray::JArray(JArray&& a) : _array((a._array)) { }
 
 JArray& JArray::operator=(const JArray& a)
 {
-    _array = a._array;
-    return *this;
+	_array = a._array;
+	return *this;
 }
 
 JArray& JArray::operator=(JArray&& a)
 {
-    _array = (a._array);
-    return *this;
+	_array = (a._array);
+	return *this;
 }
 
 
 JValue& JArray::operator[] (uint i)
 {
-    return *_array[i];
+	return *_array[i];
 }
 
 const JValue& JArray::operator[] (uint i) const
 {
-    return *_array[i];
+	return *_array[i];
 }
 
 int JArray::size() const
 {
-    return _array.Count();
+	return _array.Count();
 }
 
 void JArray::Add(const JValue& v)
 {
-    _array.Add(&(JValue&)v);
+	_array.Add(&(JValue&)v);
 }
 
 String JArray::ToString() const
@@ -710,36 +688,36 @@ String JValue::ToString() const
 {
 	String str;
 	auto& v	= *this;
-    switch(v.type())
-    {
-        case INT:
-            str	+= (int)v;
-            break;
+	switch(v.type())
+	{
+		case INT:
+			str	+= (int)v;
+			break;
 
-        case FLOAT:
-            str	+= (double)v;
-            break;
+		case FLOAT:
+			str	+= (double)v;
+			break;
 
-        case BOOL:
-            str	+= ((bool)v ? "true" : "false");
-            break;
+		case BOOL:
+			str	+= ((bool)v ? "true" : "false");
+			break;
 
-        case NIL:
-            str	+= "null";
-            break;
+		case NIL:
+			str	+= "null";
+			break;
 
-        case STRING:
-            str	= str + '"' + (String)v + '"';
-            break;
+		case STRING:
+			str	= str + '"' + (String)v + '"';
+			break;
 
-        case ARRAY:
+		case ARRAY:
 			str	+= (JArray&)v;
-            break;
+			break;
 
-        case OBJECT:
+		case OBJECT:
 			str	+= (JObject&)v;
-            break;
-    }
+			break;
+	}
 
 	return str;
 }

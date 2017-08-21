@@ -8,7 +8,6 @@
 
 /*
 一个Json对象内部包含有一个字符串，读取成员就是截取子字符串构建新的Json对象。
-要么只读，要么只写，不允许读取后修改，不允许写入后读取。
 */
 
 enum class JsonType : byte
@@ -26,16 +25,9 @@ enum class JsonType : byte
 class Json
 {
 public:
-	static Json Null;
-
-	Json();
+	// 构造只读实例
 	Json(cstring str);
-	//Json(const Json& value)	= delete;
-	//Json(Json&& value)	= delete;
-
-	Json(int value);
-	Json(bool value);
-	Json(double value);
+	Json(cstring str, int len);
 	Json(const String& value);
 
 	// 值类型
@@ -58,12 +50,26 @@ public:
 	const Json operator[](int index) const;
 	//Json& operator[](int index);
 
-	// 设置输出缓冲区。写入Json前必须设置
-	void SetOut(String& result);
+	// 设置输出缓冲区
+	Json();
+	Json(String& writer);
+	Json(bool value);
+	Json(int value);
+	Json(float value);
+	Json(double value);
+
+	// 添加成员
+	/*Json& Add(cstring key, cstring value);
+	Json& Add(cstring key, bool value);
+	Json& Add(cstring key, int value);
+	Json& Add(cstring key, float value);
+	Json& Add(cstring key, double value);*/
 	// 添加对象成员
 	Json& Add(cstring key, const Json& value);
+	Json AddObject(cstring key);
 	// 添加数组成员
 	Json& Add(const Json& value);
+	Json AddArray(cstring key);
 
 	String ToString() const;
 
@@ -72,8 +78,7 @@ public:
 #endif
 
 private:
-	cstring	_str;
-	int		_len;
+	String	_str;
 	String*	_writer;	// 仅用于写入处理的字符串指针
 
 	void Init(cstring str, int len);
@@ -83,7 +88,7 @@ private:
 };
 
 /*
-// Json值类型 
+// Json值类型
 enum ValueType
 {
 	INT,
