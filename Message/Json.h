@@ -32,6 +32,7 @@ public:
 
 	// 值类型
 	JsonType Type() const;
+	bool IsNull() const;
 
 	// 获取值
 	String	AsString()	const;

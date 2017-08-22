@@ -53,6 +53,8 @@ JsonType Json::Type() const
 	return isFloat ? JsonType::Float : JsonType::integer;
 }
 
+bool Json::IsNull() const { return !_str; }
+
 // 获取值
 String Json::AsString() const {
 	if (!_str) return nullptr;

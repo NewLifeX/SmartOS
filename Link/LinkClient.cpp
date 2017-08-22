@@ -3,6 +3,7 @@
 
 #include "Net\Socket.h"
 #include "Net\NetworkInterface.h"
+#include "Net\ITransport.h"
 
 #include "Message\Json.h"
 
@@ -66,6 +67,10 @@ void LinkClient::CheckNet()
 		auto socket = Socket::CreateRemote(uri);
 		if (!socket) return;
 
+		// 注册收到数据事件
+		auto port = dynamic_cast<ITransport*>(socket);
+		port->Register(Dispatch, this);
+
 		Master = socket;
 
 		debug_printf("LinkClient::CheckNet %s 成功创建主连接\r\n", socket->Host->Name);
@@ -119,6 +124,79 @@ void LinkClient::LoopTask()
 	}
 }
 
+uint LinkClient::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
+{
+	TS("LinkClient::Dispatch");
+
+	byte* buf = bs.GetBuffer();
+	uint len = bs.Length();
+
+	auto& client = *(LinkClient*)param;
+
+	auto& msg = *(LinkMessage*)buf;
+	if (len - sizeof(msg) < msg.Length) {
+		debug_printf("LinkClient::Receive %d < %d 数据包长度不足\r\n", len - sizeof(msg), msg.Length);
+		return 0;
+	}
+
+	client.OnReceive(msg);
+
+	return 0;
+}
+
+// 接收处理
+void LinkClient::OnReceive(LinkMessage& msg)
+{
+	TS("LinkClient::OnReceive");
+
+#if DEBUG
+	debug_printf("LinkClient::Receive <= ");
+	msg.Show(true);
+#endif // DEBUG
+
+	auto js = msg.Create();
+
+	/*// 带有code是响应
+	auto jcode = js["code"];
+	if (!jcode.IsNull()) {
+		// 错误处理
+		int code = js["code"].AsInt();
+		if (code)
+		{
+#if DEBUG
+			debug_printf("<= code=%d error=");
+			js["data"].AsString().Show(true);
+#endif // DEBUG
+
+			return;
+		}
+
+		// 正常响应
+		auto act = js["action"].AsString();
+		auto args = js["result"];
+
+		if (act == "login")
+			OnLogin(args);
+		else if (act == "ping")
+			OnLogin(args);
+	}
+	// 没有code是请求
+	else {
+		auto action = js["action"];
+		auto args = js["args"];
+	}*/
+
+	auto act = js["action"].AsString();
+
+	if (act == "login")
+		OnLogin(msg);
+	else if (act == "ping")
+		OnLogin(msg);
+
+	// 外部公共消息事件
+	//Received(msg, *this);
+}
+
 bool LinkClient::Send(const LinkMessage& msg) {
 	return Master->Send(msg.GetString());
 }
@@ -156,9 +234,8 @@ bool LinkClient::Invoke(const String& action, const String& args) {
 	if (_g_seq == 0)_g_seq++;
 
 #if DEBUG
-	debug_printf("LinkClient::Send seq=%d [%d] => ", msg.Seq, msg.Length);
-
-	str.Show(true);
+	debug_printf("LinkClient::Send => ");
+	msg.Show(true);
 #endif
 
 	// 发送
@@ -189,32 +266,32 @@ void LinkClient::Login()
 	Invoke("Login", json.ToString());
 }
 
-bool LinkClient::OnLogin(LinkMessage& msg)
+void LinkClient::OnLogin(LinkMessage& msg)
 {
-	if (!msg.Reply) return false;
-
 	TS("LinkClient::OnLogin");
+	if (!msg.Reply) return;
 
-	msg.Show(true);
-
-	auto str = msg.GetString();
-	//Json json = str;
-
+	auto js = msg.Create();
+	auto rs = js["result"];
 	if (msg.Error)
 	{
 		Status = 0;
-		debug_printf("登录失败！\r\n");
+#if DEBUG
+		debug_printf("登录失败！");
+		rs.AsString().Show(true);
+#endif
 	}
 	else
 	{
 		Status = 2;
-		debug_printf("登录成功！\r\n");
+
+		auto key = rs["key"].AsString();
+		debug_printf("登录成功！ Key=");
+		key.Show(true);
 
 		// 登录成功后加大心跳间隔
 		Sys.SetTaskPeriod(_task, 60000);
 	}
-
-	return true;
 }
 
 // 心跳，用于保持与对方的活动状态
@@ -252,19 +329,17 @@ void LinkClient::Ping()
 	Invoke("Ping", args);
 }
 
-bool LinkClient::OnPing(LinkMessage& msg)
+void LinkClient::OnPing(LinkMessage& msg)
 {
 	TS("LinkClient::OnPing");
-
-	if (!msg.Reply) return false;
+	if (!msg.Reply) return;
 
 	msg.Show(true);
-	if (msg.Error) return false;
+	if (msg.Error) return;
 
-	auto str = msg.GetString();
-	Json json = str;
+	auto js = msg.Create();
 
-	int ms = json["Time"].AsInt();
+	int ms = js["Time"].AsInt();
 	int cost = (int)(Sys.Ms() - ms);
 
 	if (Delay)
@@ -275,8 +350,6 @@ bool LinkClient::OnPing(LinkMessage& msg)
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 
 	// 同步本地时间
-	int serverTime = json["ServerTime"].AsInt();
+	int serverTime = js["ServerTime"].AsInt();
 	if (serverTime > 1000) ((TTime&)Time).SetTime(serverTime);
-
-	return true;
 }

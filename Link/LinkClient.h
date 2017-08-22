@@ -37,7 +37,6 @@ public:
 	// 发送消息
 	bool Invoke(const String& action, const String& args);
 	bool Reply(String& action, int code, String& result, int seq);
-	void OnReceive(String& data);
 
 	// 收到功能消息时触发
 	//MessageHandler	Received;
@@ -52,16 +51,19 @@ public:
 	static LinkClient* Current;
 
 private:
+	void OnReceive(LinkMessage& msg);
 	bool Send(const LinkMessage& msg);
 
-	bool OnPing(LinkMessage& msg);
-	bool OnLogin(LinkMessage& msg);
+	void OnLogin(LinkMessage& msg);
+	void OnPing(LinkMessage& msg);
 
 private:
 	uint	_task;
 
 	void LoopTask();
 	void CheckNet();
+
+	static uint Dispatch(ITransport* port, Buffer& bs, void* param, void* param2);
 };
 
 #endif

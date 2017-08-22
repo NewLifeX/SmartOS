@@ -17,7 +17,7 @@ void LinkMessage::Init() {
 	Length = 0;
 }
 
-const Json LinkMessage::Create() const { return Json((cstring)Data()); }
+const Json LinkMessage::Create() const { return Json((cstring)Data(), Length); }
 
 // 在数据区上建立Json对象
 Json LinkMessage::Create(int len) {
@@ -28,6 +28,8 @@ Json LinkMessage::Create(int len) {
 }
 
 void LinkMessage::Show(bool newline) const {
+	debug_printf("Seq=%d [%d] => ", Seq, Length);
+
 	String str((cstring)&this[1], Length);
 	str.Show(newline);
 }
