@@ -22,6 +22,10 @@ public:
 
 	void Init();
 
+	// 在数据区上建立Json对象
+	const Json Create() const;
+	Json Create(int len);
+
 	void Show(bool newline = false) const;
 
 private:

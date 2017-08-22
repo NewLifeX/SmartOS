@@ -17,6 +17,16 @@ void LinkMessage::Init() {
 	Length = 0;
 }
 
+const Json LinkMessage::Create() const { return Json((cstring)Data()); }
+
+// 在数据区上建立Json对象
+Json LinkMessage::Create(int len) {
+	len -= sizeof(this[0]);
+	if (len <= 0) return Json();
+
+	return Json((char*)Data(), len);
+}
+
 void LinkMessage::Show(bool newline) const {
 	String str((cstring)&this[1], Length);
 	str.Show(newline);

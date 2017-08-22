@@ -126,19 +126,25 @@ bool LinkClient::Send(const LinkMessage& msg) {
 bool LinkClient::Invoke(const String& action, const String& args) {
 	// 消息缓冲区，跳过头部
 	char cs[512];
-	String str(&cs[sizeof(LinkMessage)], sizeof(cs) - sizeof(LinkMessage), false);
-	str.SetLength(0);
+	/*String str(&cs[sizeof(LinkMessage)], sizeof(cs) - sizeof(LinkMessage), false);
+	str.SetLength(0);*/
 
 	// 构造内容
-	str += "{\"action\":\"";
+	/*str += "{\"action\":\"";
 	str += action;
-	str += "\",\"args\":{";
+	str += "\",\"args\":";
 	str += args;
-	str += "\"}";
+	str += "}";*/
 
 	// 格式化消息
 	auto& msg = *(LinkMessage*)cs;
 	msg.Init();
+
+	auto js = msg.Create(sizeof(cs));
+	js.Add("action", action);
+	js.Add("args", args);
+
+	auto str = js.ToString();
 
 	// 长度
 	msg.Length = str.Length();
@@ -149,6 +155,12 @@ bool LinkClient::Invoke(const String& action, const String& args) {
 	msg.Seq = _g_seq++;
 	if (_g_seq == 0)_g_seq++;
 
+#if DEBUG
+	debug_printf("LinkClient::Send seq=%d [%d] => ", msg.Seq, msg.Length);
+
+	str.Show(true);
+#endif
+
 	// 发送
 	return Send(msg);
 }
@@ -158,8 +170,7 @@ void LinkClient::Login()
 {
 	TS("LinkClient::Login");
 
-	String args;
-	Json json(args);
+	Json json;
 
 	json.Add("User", User);
 
@@ -175,7 +186,7 @@ void LinkClient::Login()
 
 	json.Add("Password", pass);
 
-	Invoke("Login", args);
+	Invoke("Login", json.ToString());
 }
 
 bool LinkClient::OnLogin(LinkMessage& msg)
