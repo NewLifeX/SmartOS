@@ -9,7 +9,6 @@ static const Json Null(nullptr);
 // 构造只读实例
 Json::Json(cstring str) :_str(str) { }
 Json::Json(cstring str, int len) : _str(str, len) { }
-
 Json::Json(const String& value) : _str(value) { }
 
 // 值类型
@@ -242,39 +241,98 @@ const Json Json::operator[](int index) const {
 
 Json::Json() { }
 
-// 设置输出缓冲区
-Json::Json(String& writer) :_str(writer) { }
+/*Json::Json(String& value) {
+	_str = _str + "\"" + value + "\"";
+}
 
 Json::Json(bool value) : _str(value) { }
 Json::Json(int value) : _str(value) { }
 Json::Json(float value) : _str(value) { }
-Json::Json(double value) : _str(value) { }
+Json::Json(double value) : _str(value) { }*/
+
+// 设置输出缓冲区
+Json::Json(char* buf, int len) :_str(buf, len, false) { _str.SetLength(0); }
 
 // 添加对象成员
 Json& Json::Add(cstring key, const Json& value) {
-	auto& s = _str;
-	int len = s.Length();
-	// 如果已经有数据，则把最后的括号改为逗号
-	if (len > 0)
-		s[len - 1] = ',';
-	else
-		s += '{';
-
-	s += '"';
-	s += key;
-	s += "\":";
+	AddKey(key);
 
 	if (value.Type() == JsonType::null)
-		s += "null";
+		_str += "null";
 	else
-		s += value;
+		_str += value;
 
-	s += '}';
+	_str += key ? '}' : ']';
 
 	return *this;
 }
 
-// 特殊处理字符串，避免隐式转换
+Json& Json::Add(cstring key, cstring value) {
+	AddKey(key);
+
+	_str = _str + "\"" + value + "\"";
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, bool value) {
+	AddKey(key);
+
+	if (value)
+		_str += "true";
+	else
+		_str += "false";
+
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, int value) {
+	AddKey(key);
+
+	_str += value;
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, float value) {
+	AddKey(key);
+
+	_str += value;
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, double value) {
+	AddKey(key);
+
+	_str += value;
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring key, const String& value) {
+	AddKey(key);
+
+	_str = _str + "\"" + value + "\"";
+	_str += key ? '}' : ']';
+
+	return *this;
+}
+
+Json& Json::Add(cstring value) { return Add(nullptr, value); }
+Json& Json::Add(bool value) { return Add(nullptr, value); }
+Json& Json::Add(int value) { return Add(nullptr, value); }
+Json& Json::Add(float value) { return Add(nullptr, value); }
+Json& Json::Add(double value) { return Add(nullptr, value); }
+Json& Json::Add(const String& value) { return Add(nullptr, value); }
+
+/*// 特殊处理字符串，避免隐式转换
 Json& Json::Add(cstring key, const String& value) {
 	auto& s = _str;
 	int len = s.Length();
@@ -295,10 +353,10 @@ Json& Json::Add(cstring key, const String& value) {
 	return *this;
 }
 
-Json& Json::Add(cstring key, cstring value) { return Add(key, String(value)); }
+Json& Json::Add(cstring key, cstring value) { return Add(key, String(value)); }*/
 
 // 添加数组成员
-Json& Json::Add(const Json& value) {
+/*Json& Json::Add(const Json& value) {
 	auto& s = _str;
 	int len = s.Length();
 	// 如果已经有数据，则把最后的括号改为逗号
@@ -312,7 +370,7 @@ Json& Json::Add(const Json& value) {
 	s += ']';
 
 	return *this;
-}
+}*/
 
 /*Json Json::AddObject(cstring key) {
 	return Null;
@@ -321,6 +379,27 @@ Json& Json::Add(const Json& value) {
 Json Json::AddArray(cstring key) {
 	return Null;
 }*/
+
+// 添加键
+void Json::AddKey(cstring key) {
+	// 数组没有key
+	auto& s = _str;
+	int len = s.Length();
+	// 如果已经有数据，则把最后的括号改为逗号
+	if (len > 0)
+		s[len - 1] = ',';
+	else if (key)
+		s += '{';
+	else
+		s += '[';
+
+	// 数组没有键和冒号
+	if (key) {
+		s += '"';
+		s += key;
+		s += "\":";
+	}
+}
 
 String Json::ToString() const { return _str; }
 

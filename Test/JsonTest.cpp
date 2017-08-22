@@ -94,7 +94,7 @@ static void TestWrite()
 	json["score"]	= 3.14159;*/
 	json.Add("id", 3141);
 	json.Add("name", "Smart \\\" Stone");
-	json.Add("enable", "true");
+	json.Add("enable", true);
 	json.Add("noval", nullptr);
 	json.Add("score", 3.14159);
 

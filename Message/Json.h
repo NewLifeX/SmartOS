@@ -50,29 +50,37 @@ public:
 	const Json operator[](int index) const;
 	//Json& operator[](int index);
 
-	// 设置输出缓冲区
 	Json();
-	Json(String& writer);
+	/*Json(String& value);
 	Json(bool value);
 	Json(int value);
 	Json(float value);
-	Json(double value);
+	Json(double value);*/
+	// 设置输出缓冲区
+	Json(char* buf, int len);
 
 	// 添加成员
-	/*Json& Add(cstring key, cstring value);
+	Json& Add(cstring key, cstring value);
 	Json& Add(cstring key, bool value);
 	Json& Add(cstring key, int value);
 	Json& Add(cstring key, float value);
-	Json& Add(cstring key, double value);*/
+	Json& Add(cstring key, double value);
+	Json& Add(cstring key, const String& value);
+
+	// 添加数组成员
+	//Json& Add(const Json& value);
+	Json& Add(cstring value);
+	Json& Add(bool value);
+	Json& Add(int value);
+	Json& Add(float value);
+	Json& Add(double value);
+	Json& Add(const String& value);
+
 	// 添加对象成员
 	Json& Add(cstring key, const Json& value);
 	// 特殊处理字符串，避免隐式转换
-	Json& Add(cstring key, const String& value);
-	Json& Add(cstring key, cstring value);
+	//Json& Add(cstring key, cstring value);
 	//Json AddObject(cstring key);
-	// 添加数组成员
-	Json& Add(const Json& value);
-	//Json AddArray(cstring key);
 
 	String ToString() const;
 	void Show(bool newline = false) const;
@@ -85,6 +93,7 @@ private:
 	String	_str;
 
 	Json Find(cstring key) const;
+	void AddKey(cstring key);
 };
 
 /*
