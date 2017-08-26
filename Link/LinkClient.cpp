@@ -158,9 +158,9 @@ void LinkClient::OnReceive(LinkMessage& msg)
 
 	auto act = js["action"].AsString();
 
-	if (act == "login")
+	if (act == "Device/Login")
 		OnLogin(msg);
-	else if (act == "ping")
+	else if (act == "Device/Ping")
 		OnLogin(msg);
 
 	// 外部公共消息事件

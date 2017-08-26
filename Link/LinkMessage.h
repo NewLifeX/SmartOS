@@ -10,9 +10,9 @@
 struct LinkMessage
 {
 public:
-	byte	Reply : 1;	// 是否响应
-	byte	Error : 1;	// 是否错误
 	byte	Code : 6;	// 代码
+	byte	Error : 1;	// 是否错误
+	byte	Reply : 1;	// 是否响应
 	byte	Seq;		// 序列号
 	ushort	Length;		// 长度
 
