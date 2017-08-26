@@ -35,7 +35,7 @@ public:
 	void Close();
 
 	// 发送消息
-	bool Invoke(const String& action, const String& args);
+	bool Invoke(const String& action, const Json& args);
 	bool Reply(String& action, int code, String& result, int seq);
 
 	// 收到功能消息时触发

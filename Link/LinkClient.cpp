@@ -198,10 +198,11 @@ void LinkClient::OnReceive(LinkMessage& msg)
 }
 
 bool LinkClient::Send(const LinkMessage& msg) {
-	return Master->Send(msg.GetString());
+	
+	return Master->Send(msg.GetBuffer());
 }
 
-bool LinkClient::Invoke(const String& action, const String& args) {
+bool LinkClient::Invoke(const String& action, const Json& args) {
 	// 消息缓冲区，跳过头部
 	char cs[512];
 	/*String str(&cs[sizeof(LinkMessage)], sizeof(cs) - sizeof(LinkMessage), false);
@@ -249,7 +250,7 @@ void LinkClient::Login()
 
 	Json json;
 
-	json.Add("User", User);
+	json.Add("user", User);
 
 	// 原始密码对盐值进行加密，得到登录密码
 	auto now = DateTime::Now().TotalMs();
@@ -261,9 +262,9 @@ void LinkClient::Login()
 	auto pass = bs.ToHex();
 	pass += arr.ToHex();
 
-	json.Add("Password", pass);
+	json.Add("pass", pass);
 
-	Invoke("Login", json.ToString());
+	Invoke("Device/Login", json);
 }
 
 void LinkClient::OnLogin(LinkMessage& msg)
@@ -317,8 +318,7 @@ void LinkClient::Ping()
 	// 30秒内发过数据，不再发送心跳
 	if (LastSend > 0 && LastSend + 60000 > Sys.Ms()) return;
 
-	String args;
-	Json json(args);
+	Json json;
 
 	//json.Add("Data", Store.Data.ToHex());
 
@@ -326,7 +326,7 @@ void LinkClient::Ping()
 	auto ms = (int)Sys.Ms();
 	json.Add("Time", ms);
 
-	Invoke("Ping", args);
+	Invoke("Device/Ping", json);
 }
 
 void LinkClient::OnPing(LinkMessage& msg)
