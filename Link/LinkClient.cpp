@@ -210,7 +210,7 @@ bool LinkClient::Invoke(const String& action, const Json& args) {
 
 #if DEBUG
 	debug_printf("Link => ");
-	msg.Show(false);
+	msg.Show(true);
 #endif
 
 	// 发送
@@ -249,6 +249,8 @@ void LinkClient::Login()
 	json.Add("type", Buffer(&code, 2).ToHex());
 	json.Add("agent", Sys.Name);
 	json.Add("version", Version(Sys.Ver).ToString());
+
+	json.Add("ip", Master->Host->IP.ToString());
 
 	Invoke("Device/Login", json);
 }
