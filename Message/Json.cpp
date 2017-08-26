@@ -141,7 +141,7 @@ Json Json::Find(cstring key) const {
 		auto ve = val + n;
 		for (auto vs = val; vs < ve; vs++)
 		{
-			if (vs[0] == ',' || isSpace(vs[0]))
+			if (vs[0] == ',' || vs[0] == '}' || vs[0] == ']' || isSpace(vs[0]))
 			{
 				n = vs - val;
 				break;
