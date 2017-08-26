@@ -21,6 +21,7 @@ LinkClient::LinkClient()
 
 	Cfg = LinkConfig::Current;
 
+	PingTime = 10;
 	LoginTime = 0;
 	LastSend = 0;
 	LastActive = 0;
@@ -150,18 +151,30 @@ void LinkClient::OnReceive(LinkMessage& msg)
 	TS("LinkClient::OnReceive");
 
 #if DEBUG
-	debug_printf("LinkClient::Receive <= ");
+	debug_printf("Link <= ");
 	msg.Show(true);
 #endif // DEBUG
 
+	LastActive = Sys.Ms();
+
 	auto js = msg.Create();
 
-	auto act = js["action"].AsString();
+	// 特殊处理响应
+	if (msg.Reply) {
+		auto code = js["code"].AsInt();
+		// 未登录时马上重新登录
+		if (code == 401) {
+			Status = 0;
+			Sys.SetTask(_task, true, 0);
+			return;
+		}
+	}
 
+	auto act = js["action"].AsString();
 	if (act == "Device/Login")
 		OnLogin(msg);
 	else if (act == "Device/Ping")
-		OnLogin(msg);
+		OnPing(msg);
 
 	// 外部公共消息事件
 	//Received(msg, *this);
@@ -196,8 +209,8 @@ bool LinkClient::Invoke(const String& action, const Json& args) {
 	if (_g_seq == 0)_g_seq++;
 
 #if DEBUG
-	debug_printf("LinkClient::Send => ");
-	msg.Show(true);
+	debug_printf("Link => ");
+	msg.Show(false);
 #endif
 
 	// 发送
@@ -259,12 +272,35 @@ void LinkClient::OnLogin(LinkMessage& msg)
 	{
 		Status = 2;
 
-		auto key = rs["key"].AsString();
-		debug_printf("登录成功！ Key=");
-		key.Show(true);
+		auto key = rs["Key"].AsString();
 
-		// 登录成功后加大心跳间隔
-		Sys.SetTaskPeriod(_task, 60000);
+		auto user = rs["user"].AsString();
+		if (user) {
+			debug_printf("注册成功！ user=");
+			user.Show(true);
+
+			// 保存用户密码
+			Cfg->User() = user;
+			Cfg->Pass() = rs["pass"].AsString();
+
+			// 保存服务器地址
+			auto svr = rs["server"].AsString();
+			if (svr) Cfg->Server() = svr;
+
+			Cfg->Show();
+			Cfg->Save();
+
+			Status = 0;
+
+			Sys.SetTask(_task, true, 0);
+		}
+		else {
+			debug_printf("登录成功！ Key=");
+			key.Show(true);
+
+			// 登录成功后加大心跳间隔
+			Sys.SetTaskPeriod(_task, PingTime * 1000);
+		}
 	}
 }
 
@@ -276,7 +312,7 @@ void LinkClient::Ping()
 	if (LastActive > 0 && LastActive + 300000 < Sys.Ms())
 	{
 		// 30秒无法联系，服务端可能已经掉线，重启Hello任务
-		debug_printf("300秒无法联系，服务端可能已经掉线，重新开始握手\r\n");
+		debug_printf("300秒无法联系，服务端可能已经掉线，重新登录\r\n");
 
 		delete Master;
 		Master = nullptr;
@@ -305,10 +341,7 @@ void LinkClient::Ping()
 void LinkClient::OnPing(LinkMessage& msg)
 {
 	TS("LinkClient::OnPing");
-	if (!msg.Reply) return;
-
-	msg.Show(true);
-	if (msg.Error) return;
+	if (!msg.Reply || msg.Error) return;
 
 	auto js = msg.Create();
 
@@ -323,6 +356,6 @@ void LinkClient::OnPing(LinkMessage& msg)
 	debug_printf("心跳延迟 %dms / %dms \r\n", cost, Delay);
 
 	// 同步本地时间
-	int serverTime = js["ServerTime"].AsInt();
+	int serverTime = js["ServerSeconds"].AsInt();
 	if (serverTime > 1000) ((TTime&)Time).SetTime(serverTime);
 }

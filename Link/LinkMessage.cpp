@@ -11,9 +11,10 @@
 #include "Security\RC4.h"
 
 void LinkMessage::Init() {
-	*(byte*)Reply = 0;
-	Seq = 0;
+	Reply = 0;
+	Error = 0;
 	Code = 0;
+	Seq = 0;
 	Length = 0;
 }
 
@@ -28,7 +29,7 @@ Json LinkMessage::Create(int len) {
 }
 
 void LinkMessage::Show(bool newline) const {
-	debug_printf("Seq=%d [%d] => ", Seq, Length);
+	debug_printf("Seq=%d [%d] ", Seq, Length);
 
 	String str((cstring)&this[1], Length);
 	str.Show(newline);

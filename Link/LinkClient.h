@@ -13,9 +13,10 @@
 class LinkClient
 {
 public:
-	bool	Opened;
 	int		Status;	// 状态。0准备、1握手完成、2登录后
+	bool	Opened;
 
+	byte	PingTime;	// 心跳时间。秒
 	UInt64	LoginTime;	// 登录时间ms
 	UInt64	LastSend;	// 最后发送时间ms
 	UInt64	LastActive;	// 最后活跃时间ms
