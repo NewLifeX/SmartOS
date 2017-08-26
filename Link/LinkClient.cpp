@@ -13,13 +13,13 @@
 
 LinkClient* LinkClient::Current = nullptr;
 
-//static void BroadcastHelloTask(void* param);
-
 LinkClient::LinkClient()
 	: Routes(String::Compare)
 {
 	Opened = false;
 	Status = 0;
+
+	Cfg = LinkConfig::Current;
 
 	LoginTime = 0;
 	LastSend = 0;
@@ -36,6 +36,7 @@ void LinkClient::Open()
 	if (Opened) return;
 
 	TS("LinkClient::Open");
+	assert(Cfg, "未指定物联配置Cfg");
 
 	// 令牌客户端定时任务
 	_task = Sys.AddTask(&LinkClient::LoopTask, this, 0, 1000, "物联客户");
@@ -62,7 +63,7 @@ void LinkClient::CheckNet()
 	// 检测主链接
 	if (!mst)
 	{
-		auto uri = Server;
+		auto uri = Cfg->Uri();
 		// 创建连接服务器的Socket
 		auto socket = Socket::CreateRemote(uri);
 		if (!socket) return;
@@ -115,7 +116,6 @@ void LinkClient::LoopTask()
 		// 登录成功后，心跳一次，把数据同步上去
 		Sys.Sleep(1000);
 		if (Status >= 2) Ping();
-
 		break;
 
 	case 2:
@@ -156,36 +156,6 @@ void LinkClient::OnReceive(LinkMessage& msg)
 
 	auto js = msg.Create();
 
-	/*// 带有code是响应
-	auto jcode = js["code"];
-	if (!jcode.IsNull()) {
-		// 错误处理
-		int code = js["code"].AsInt();
-		if (code)
-		{
-#if DEBUG
-			debug_printf("<= code=%d error=");
-			js["data"].AsString().Show(true);
-#endif // DEBUG
-
-			return;
-		}
-
-		// 正常响应
-		auto act = js["action"].AsString();
-		auto args = js["result"];
-
-		if (act == "login")
-			OnLogin(args);
-		else if (act == "ping")
-			OnLogin(args);
-	}
-	// 没有code是请求
-	else {
-		auto action = js["action"];
-		auto args = js["args"];
-	}*/
-
 	auto act = js["action"].AsString();
 
 	if (act == "login")
@@ -198,22 +168,13 @@ void LinkClient::OnReceive(LinkMessage& msg)
 }
 
 bool LinkClient::Send(const LinkMessage& msg) {
-	
+
 	return Master->Send(msg.GetBuffer());
 }
 
 bool LinkClient::Invoke(const String& action, const Json& args) {
 	// 消息缓冲区，跳过头部
 	char cs[512];
-	/*String str(&cs[sizeof(LinkMessage)], sizeof(cs) - sizeof(LinkMessage), false);
-	str.SetLength(0);*/
-
-	// 构造内容
-	/*str += "{\"action\":\"";
-	str += action;
-	str += "\",\"args\":";
-	str += args;
-	str += "}";*/
 
 	// 格式化消息
 	auto& msg = *(LinkMessage*)cs;
@@ -250,19 +211,31 @@ void LinkClient::Login()
 
 	Json json;
 
-	json.Add("user", User);
+	// 已有用户名则直接登录，否则用机器码注册
+	auto user = Cfg->User();
+	if (user) {
+		json.Add("user", user);
 
-	// 原始密码对盐值进行加密，得到登录密码
-	auto now = DateTime::Now().TotalMs();
-	auto arr = Buffer(&now, 8);
-	ByteArray bs;
-	bs = arr;
-	RC4::Encrypt(arr, Pass);
-	// 散列明文和密码连接在一起
-	auto pass = bs.ToHex();
-	pass += arr.ToHex();
+		// 原始密码对盐值进行加密，得到登录密码
+		auto now = DateTime::Now().TotalMs();
+		auto arr = Buffer(&now, 8);
+		ByteArray bs;
+		bs = arr;
+		RC4::Encrypt(arr, Cfg->Pass());
+		// 散列明文和密码连接在一起
+		auto pass = bs.ToHex();
+		pass += arr.ToHex();
 
-	json.Add("pass", pass);
+		json.Add("pass", pass);
+	}
+	else {
+		json.Add("user", Buffer(Sys.ID, 16).ToHex());
+	}
+
+	ushort code = _REV16(Sys.Code);
+	json.Add("type", Buffer(&code, 2).ToHex());
+	json.Add("agent", Sys.Name);
+	json.Add("version", Version(Sys.Ver).ToString());
 
 	Invoke("Device/Login", json);
 }

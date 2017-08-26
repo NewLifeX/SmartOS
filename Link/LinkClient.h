@@ -7,6 +7,7 @@
 #include "Message\Json.h"
 
 #include "LinkMessage.h"
+#include "LinkConfig.h"
 
 // 物联客户端
 class LinkClient
@@ -21,11 +22,9 @@ public:
 	int		Delay;		// 心跳延迟。一条心跳指令从发出到收到所花费的时间
 	int		MaxNotActive;	// 最大不活跃时间ms，超过该时间时重启系统。默认0
 
-	NetUri	Server;
-	String	User;
-	String	Pass;
+	LinkConfig*	Cfg;
 
-	Socket*	Master;		// 主链接。服务器长连接
+	Socket*		Master;		// 主链接。服务器长连接
 	DataStore	Store;	// 数据存储区
 	Dictionary<cstring, IDelegate*>	Routes;	// 路由集合
 
