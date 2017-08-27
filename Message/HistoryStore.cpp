@@ -102,7 +102,7 @@ void HistoryStore::RenderTask(void* param)
 void HistoryStore::Reader()
 {
 	//ds_printf("HistoryStore::Reader %d/%d/%d \r\n", Size, Cache.Position(), Cache.Length);
-
+	Process(OnWrite);
 	// 生成历史数据
 	Buffer bs(Data, Size);
 	Write(bs);
@@ -151,6 +151,12 @@ void HistoryStore::Store()
 	ds_printf("HistoryStore::Store %d \r\n", len);
 
 	Process(len, OnStore);
+}
+
+void HistoryStore::Process(EventHandler handler)
+{
+	if (!handler) return;
+	handler(this, nullptr);
 }
 
 void HistoryStore::Process(int len, DataHandler handler)
