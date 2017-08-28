@@ -21,6 +21,8 @@ public:
 	DataHandler OnReport;
 	// 数据存储句柄
 	DataHandler OnStore;
+	// 数据写入句柄
+	EventHandler OnWrite;
 
 	// 初始化
 	HistoryStore();
@@ -52,6 +54,7 @@ private:
 	void Report();
 	void Store();
 
+	void Process(EventHandler handler);
 	void Process(int len, DataHandler handler);
 };
 
