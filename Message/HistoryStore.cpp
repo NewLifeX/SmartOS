@@ -24,6 +24,7 @@ HistoryStore::HistoryStore()
 	MaxCache = 16 * 1024;
 	MaxReport = 1024;
 
+	OnWrite = nullptr;
 	OnReport = nullptr;
 	OnStore = nullptr;
 
