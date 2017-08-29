@@ -28,6 +28,10 @@ LinkClient::LinkClient()
 	Delay = 0;
 	MaxNotActive = 0;
 
+	_task = 0;
+	ReportStart = 0;
+	ReportLength = 0;
+
 	assert(!Current, "只能有一个物联客户端实例");
 	Current = this;
 }
@@ -123,6 +127,8 @@ void LinkClient::LoopTask()
 		Ping();
 		break;
 	}
+
+	CheckReport();
 }
 
 uint LinkClient::Dispatch(ITransport* port, Buffer& bs, void* param, void* param2)
@@ -397,6 +403,31 @@ void LinkClient::OnPing(LinkMessage& msg)
 	if (serverTime > 1000) ((TTime&)Time).SetTime(serverTime);
 }
 
+void LinkClient::Reset(const String& reason)
+{
+	Json js;
+	js.Add("time", DateTime::Now().TotalSeconds());
+	js.Add("reason", reason);
+
+	Invoke("Reset", js);
+
+	debug_printf("设备500ms后重置\r\n");
+
+	Sys.Sleep(500);
+
+	Config::Current->RemoveAll();
+	Sys.Reboot();
+}
+
+void LinkClient::Reboot(const String& reason)
+{
+	Json js;
+	js.Add("time", DateTime::Now().TotalSeconds());
+	js.Add("reason", reason);
+
+	Invoke("Reboot", js);
+}
+
 void LinkClient::OnRead(LinkMessage& msg)
 {
 	TS("LinkClient::OnRead");
@@ -440,4 +471,73 @@ void LinkClient::OnWrite(LinkMessage& msg)
 	rs.Add("data", bs.ToHex());
 
 	Reply(js["action"].AsString(), msg.Seq, 0, rs);
+}
+
+void LinkClient::Write(int start, const Buffer& bs)
+{
+	Json js;
+	js.Add("start", start);
+	js.Add("data", bs.ToHex());
+
+	Invoke("Write", js);
+}
+
+void LinkClient::Write(int start, byte dat)
+{
+	Write(start, Buffer(&dat, 1));
+}
+
+void LinkClient::ReportAsync(int start, uint length)
+{
+	if (start<0 || start + (int)length > Store.Data.Length())
+	{
+		debug_printf("布置异步上报数据失败\r\n");
+		debug_printf("start=%d  len:%d  data.len:%d\r\n", start, length, Store.Data.Length());
+		return;
+	}
+
+	ReportStart = start;
+	ReportLength = length;
+
+	// 延迟上报，期间有其它上报任务到来将会覆盖
+	Sys.SetTask(_task, true, 20);
+}
+
+bool LinkClient::CheckReport()
+{
+	TS("LinkClient::CheckReport");
+
+	auto offset = ReportStart;
+	int len = ReportLength;
+
+	if (offset < 0) return false;
+
+	// 检查索引，否则数组越界
+	auto& bs = Store.Data;
+	if (bs.Length() >= offset + len) Write(offset, Buffer(&bs[offset], len));
+
+	ReportStart = -1;
+
+	return true;
+}
+
+// 快速建立客户端，注册默认Api
+LinkClient* LinkClient::CreateFast(const Buffer& store)
+{
+	auto tc = new LinkClient();
+
+	/*// 重启
+	tc->Register("Gateway/Restart", &LinkClient::InvokeRestart, tc);
+	// 重置
+	tc->Register("Gateway/Reset", &LinkClient::InvokeReset, tc);
+	// 设置远程地址
+	tc->Register("Gateway/SetRemote", &LinkClient::InvokeSetRemote, tc);
+	// 获取远程配置信息
+	tc->Register("Gateway/GetRemote", &LinkClient::InvokeGetRemote, tc);
+	// 获取所有Invoke命令
+	tc->Register("Api/All", &LinkClient::InvokeGetAllApi, tc);*/
+
+	if (store.Length()) tc->Store.Data.Set(store.GetBuffer(), store.Length());
+
+	return tc;
 }

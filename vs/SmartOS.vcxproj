@@ -38,6 +38,7 @@
     <ClCompile Include="..\Board\IOK026X.cpp" />
     <ClCompile Include="..\Board\IOK027X.cpp" />
     <ClCompile Include="..\Board\IOK0612.cpp" />
+    <ClCompile Include="..\Board\LinkBoard.cpp" />
     <ClCompile Include="..\Board\NH3_0317.cpp" />
     <ClCompile Include="..\Board\Pandora.cpp" />
     <ClCompile Include="..\Board\TokenBoard.cpp" />

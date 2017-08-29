@@ -593,5 +593,8 @@
     <ClCompile Include="..\Link\LinkConfig.cpp">
       <Filter>Link</Filter>
     </ClCompile>
+    <ClCompile Include="..\Board\LinkBoard.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
