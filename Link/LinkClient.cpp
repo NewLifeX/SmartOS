@@ -175,6 +175,10 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		OnLogin(msg);
 	else if (act == "Device/Ping")
 		OnPing(msg);
+	else if (act == "Read")
+		OnRead(msg);
+	else if (act == "Write")
+		OnWrite(msg);
 
 	// 外部公共消息事件
 	//Received(msg, *this);
@@ -207,6 +211,37 @@ bool LinkClient::Invoke(const String& action, const Json& args) {
 	static byte _g_seq = 1;
 	msg.Seq = _g_seq++;
 	if (_g_seq == 0)_g_seq++;
+
+#if DEBUG
+	debug_printf("Link => ");
+	msg.Show(true);
+#endif
+
+	// 发送
+	return Send(msg);
+}
+
+bool LinkClient::Reply(const String& action, int seq, int code, const Json& result) {
+	// 消息缓冲区，跳过头部
+	char cs[512];
+
+	// 格式化消息
+	auto& msg = *(LinkMessage*)cs;
+	msg.Init();
+	msg.Reply = true;
+	msg.Error = code != 0;
+	msg.Seq = seq;
+
+	auto js = msg.Create(sizeof(cs));
+	js.Add("action", action);
+	js.Add("code", code);
+	js.Add("result", result);
+
+	auto str = js.ToString();
+
+	// 长度
+	msg.Length = str.Length();
+	msg.Code = 1;
 
 #if DEBUG
 	debug_printf("Link => ");
@@ -360,4 +395,49 @@ void LinkClient::OnPing(LinkMessage& msg)
 	// 同步本地时间
 	int serverTime = js["ServerSeconds"].AsInt();
 	if (serverTime > 1000) ((TTime&)Time).SetTime(serverTime);
+}
+
+void LinkClient::OnRead(LinkMessage& msg)
+{
+	TS("LinkClient::OnRead");
+	if (msg.Reply) return;
+
+	auto js = msg.Create();
+	auto args = js["args"];
+	int start = args["start"].AsInt();
+	auto data = args["data"].AsString().ToHex();
+
+	Store.Write(start, data);
+	auto& bs = Store.Data;
+
+	// 响应
+	Json rs;
+	rs.Add("start", 0);
+	rs.Add("size", bs.Length());
+	rs.Add("data", bs.ToHex());
+
+	Reply(js["action"].AsString(), msg.Seq, 0, rs);
+}
+
+void LinkClient::OnWrite(LinkMessage& msg)
+{
+	TS("LinkClient::OnWrite");
+	if (msg.Reply) return;
+
+	auto js = msg.Create();
+	auto args = js["args"];
+	int start = args["start"].AsInt();
+	int size = args["size"].AsInt();
+
+	ByteArray bs(size);
+	int len = Store.Read(start, bs);
+	bs.SetLength(len);
+
+	// 响应
+	Json rs;
+	rs.Add("start", 0);
+	rs.Add("size", bs.Length());
+	rs.Add("data", bs.ToHex());
+
+	Reply(js["action"].AsString(), msg.Seq, 0, rs);
 }

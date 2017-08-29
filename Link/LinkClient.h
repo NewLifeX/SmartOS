@@ -36,7 +36,7 @@ public:
 
 	// 发送消息
 	bool Invoke(const String& action, const Json& args);
-	bool Reply(String& action, int code, String& result, int seq);
+	bool Reply(const String& action, int seq, int code, const Json& result);
 
 	// 收到功能消息时触发
 	//MessageHandler	Received;
@@ -56,6 +56,9 @@ private:
 
 	void OnLogin(LinkMessage& msg);
 	void OnPing(LinkMessage& msg);
+
+	void OnRead(LinkMessage& msg);
+	void OnWrite(LinkMessage& msg);
 
 private:
 	uint	_task;
