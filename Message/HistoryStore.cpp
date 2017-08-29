@@ -64,7 +64,7 @@ bool HistoryStore::Open(bool UseThousand)
 	}
 	_task = Sys.AddTask(RenderTask, this, p, p, "历史数据");
 	auto task = Task::Get(_task);
-	task->MaxDeepth = 2;
+	task->MaxDeepth = 4;
 
 	return Opened = true;
 }
