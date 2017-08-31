@@ -436,10 +436,11 @@ void LinkClient::OnRead(LinkMessage& msg)
 	auto js = msg.Create();
 	auto args = js["args"];
 	int start = args["start"].AsInt();
-	auto data = args["data"].AsString().ToHex();
+	int size = args["size"].AsInt();
 
-	Store.Write(start, data);
-	auto& bs = Store.Data;
+	ByteArray bs(size);
+	int len = Store.Read(start, bs);
+	bs.SetLength(len);
 
 	// 响应
 	Json rs;
@@ -458,11 +459,10 @@ void LinkClient::OnWrite(LinkMessage& msg)
 	auto js = msg.Create();
 	auto args = js["args"];
 	int start = args["start"].AsInt();
-	int size = args["size"].AsInt();
+	auto data = args["data"].AsString().ToHex();
 
-	ByteArray bs(size);
-	int len = Store.Read(start, bs);
-	bs.SetLength(len);
+	Store.Write(start, data);
+	auto& bs = Store.Data;
 
 	// 响应
 	Json rs;
