@@ -1,7 +1,9 @@
 ﻿#ifndef _IOK026X_H_
 #define _IOK026X_H_
 
-#include "Kernel\Sys.h"
+#include "BaseBoard.h"
+#include "Esp8266Module.h"
+
 #include "Net\ITransport.h"
 #include "Net\Socket.h"
 
@@ -10,7 +12,7 @@
 #include "Device\RTC.h"
 
 // WIFI触摸开关 123位
-class IOK026X
+class IOK026X : public BaseBoard, public Esp8266Module
 {
 public:
 	List<Pin>	LedPins;
@@ -23,21 +25,15 @@ public:
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
 
-	cstring			SSID;
-	cstring			Pass;
-
 	IOK026X();
 
 	void* InitData(void* data, int size);
-	void InitWiFi(cstring ssid, cstring pass);
 	void Register(int index, IDataPort& dp);
 
 	void InitLeds();
 	void FlushLed();			// 刷新led状态输出
 
 	byte LedStat(byte showmode);
-
-	NetworkInterface* Create8266();
 
 	void InitClient();
 	void InitNet();

@@ -52,16 +52,8 @@ void LinkBoard::InitClient()
 {
 	if (Client) return;
 
-	// 初始化配置区
-	InitConfig();
-
-	// 初始化令牌网
-	auto tk = LinkConfig::Create("tcp://192.168.0.3:2233");
-
 	// 创建客户端
-	auto tc = LinkClient::CreateFast(Buffer(Data, Size));
-	tc->Cfg = tk;
-	tc->MaxNotActive = 8 * 60 * 1000;
+	auto tc = LinkClient::Create("tcp://192.168.0.3:2233", Buffer(Data, Size));
 
 	Client = tc;
 }
@@ -101,54 +93,4 @@ void LinkBoard::OnLongPress(InputPort* port, bool down)
 		client->Reboot("按键重启");
 		Sys.Reboot(1000);
 	}
-}
-
-NetworkInterface* LinkBoard::Create5500()
-{
-	debug_printf("\r\nW5500::Create \r\n");
-
-	auto net = new W5500(Net.Spi, Net.Irq, Net.Reset);
-	if (!net->Open())
-	{
-		delete net;
-		return nullptr;
-	}
-
-	net->SetLed(*Leds[0]);
-	net->EnableDNS();
-	net->EnableDHCP();
-
-	return net;
-}
-
-NetworkInterface* LinkBoard::Create8266()
-{
-	debug_printf("\r\nEsp8266::Create \r\n");
-
-	auto esp = new Esp8266();
-	esp->Init(Esp.Com, Esp.Baudrate);
-	esp->Set(Esp.Power, Esp.Reset, Esp.LowPower);
-
-	// 初次需要指定模式 否则为 Wire
-	bool join = esp->SSID && *esp->SSID;
-	if (!join)
-	{
-		*esp->SSID = "WSWL";
-		*esp->Pass = "12345678";
-
-		esp->Mode = NetworkType::STA_AP;
-		esp->WorkMode = NetworkType::STA_AP;
-	}
-
-	if (!esp->Open())
-	{
-		delete esp;
-		return nullptr;
-	}
-
-	esp->SetLed(*Leds[1]);
-	//Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-	//Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
-
-	return esp;
 }

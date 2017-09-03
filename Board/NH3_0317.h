@@ -1,16 +1,15 @@
 ﻿#ifndef _NH3_0317_H_
 #define _NH3_0317_H_
 
-#include "Kernel\Sys.h"
-#include "Net\ITransport.h"
-#include "Net\Socket.h"
+#include "BaseBoard.h"
+#include "Esp8266Module.h"
 
 #include "TokenNet\TokenClient.h"
 #include "App\Alarm.h"
 #include "Device\RTC.h"
 
 // 氨气
-class NH3_0317
+class NH3_0317 : public BaseBoard, public Esp8266Module
 {
 public:
 	List<Pin>	LedPins;
@@ -21,7 +20,7 @@ public:
 	bool LedsShow;					// LED 显示状态开关
 
 	NetworkInterface*	Host;			// 网络主机
-	TokenClient*	Client;			//
+	TokenClient*	Client;
 	Alarm*			AlarmObj;
 	uint			LedsTaskId;
 
@@ -35,8 +34,6 @@ public:
 	void InitButtons(const Delegate2<InputPort&, bool>& press);
 
 	bool LedStat(bool enable);
-
-	NetworkInterface* Create8266();
 
 	void InitClient();
 	void InitNet();

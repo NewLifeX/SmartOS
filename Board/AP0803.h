@@ -1,33 +1,24 @@
 ﻿#ifndef _AP0803_H_
 #define _AP0803_H_
 
-#include "TokenBoard.h"
+#include "BaseBoard.h"
+#include "GsmModule.h"
 
-#include "Net\Socket.h"
-
-#include "Device\SerialPort.h"
-#include "App\Alarm.h"
+//#include "App\Alarm.h"
 
 // 阿波罗0803 GPRS通信
-class AP0803 : public TokenBoard
+class AP0803 : public BaseBoard, public GsmModule
 {
 public:
 	List<OutputPort*>	Outputs;
 	List<InputPort*>	Inputs;
 
-	Alarm*			AlarmObj;
-
-	SerialConfig	Gsm;
+	//Alarm*			AlarmObj;
 
 	AP0803();
 
-	// 打开GPRS
-	NetworkInterface* CreateA67();
-	NetworkInterface* CreateSIM900A();
-
-	void InitNet();
-	void InitProxy();
-	void InitAlarm();
+	//void InitProxy();
+	//void InitAlarm();
 
 	static AP0803* Current;
 };

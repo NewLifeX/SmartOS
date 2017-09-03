@@ -456,9 +456,6 @@
     <ClCompile Include="..\TokenNet\RegisterMessage.cpp">
       <Filter>TokenNet</Filter>
     </ClCompile>
-    <ClCompile Include="..\TokenNet\Token.cpp">
-      <Filter>TokenNet</Filter>
-    </ClCompile>
     <ClCompile Include="..\TokenNet\TokenClient.cpp">
       <Filter>TokenNet</Filter>
     </ClCompile>
@@ -575,9 +572,6 @@
     <ClCompile Include="..\Drivers\A67.cpp">
       <Filter>Drivers</Filter>
     </ClCompile>
-    <ClCompile Include="..\Board\B8266.cpp">
-      <Filter>Board</Filter>
-    </ClCompile>
     <ClCompile Include="..\Board\TokenBoard.cpp">
       <Filter>Board</Filter>
     </ClCompile>
@@ -594,6 +588,15 @@
       <Filter>Link</Filter>
     </ClCompile>
     <ClCompile Include="..\Board\LinkBoard.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\Esp8266Module.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\GsmModule.cpp">
+      <Filter>Board</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Board\W5500Module.cpp">
       <Filter>Board</Filter>
     </ClCompile>
   </ItemGroup>

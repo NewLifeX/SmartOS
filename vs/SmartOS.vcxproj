@@ -33,8 +33,9 @@
     <ClCompile Include="..\Board\AP0801.cpp" />
     <ClCompile Include="..\Board\AP0802.cpp" />
     <ClCompile Include="..\Board\AP0803.cpp" />
-    <ClCompile Include="..\Board\B8266.cpp" />
     <ClCompile Include="..\Board\BaseBoard.cpp" />
+    <ClCompile Include="..\Board\Esp8266Module.cpp" />
+    <ClCompile Include="..\Board\GsmModule.cpp" />
     <ClCompile Include="..\Board\IOK026X.cpp" />
     <ClCompile Include="..\Board\IOK027X.cpp" />
     <ClCompile Include="..\Board\IOK0612.cpp" />
@@ -42,6 +43,7 @@
     <ClCompile Include="..\Board\NH3_0317.cpp" />
     <ClCompile Include="..\Board\Pandora.cpp" />
     <ClCompile Include="..\Board\TokenBoard.cpp" />
+    <ClCompile Include="..\Board\W5500Module.cpp" />
     <ClCompile Include="..\BootConfig.cpp" />
     <ClCompile Include="..\Config.cpp" />
     <ClCompile Include="..\Core\Array.cpp" />
@@ -184,7 +186,6 @@
     <ClCompile Include="..\TokenNet\HelloMessage.cpp" />
     <ClCompile Include="..\TokenNet\LoginMessage.cpp" />
     <ClCompile Include="..\TokenNet\RegisterMessage.cpp" />
-    <ClCompile Include="..\TokenNet\Token.cpp" />
     <ClCompile Include="..\TokenNet\TokenClient.cpp" />
     <ClCompile Include="..\TokenNet\TokenConfig.cpp" />
     <ClCompile Include="..\TokenNet\TokenController.cpp" />

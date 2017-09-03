@@ -66,7 +66,7 @@ public:
 	void Reboot(const String& reason);
 
 	// 快速建立客户端，注册默认Api
-	static LinkClient* CreateFast(const Buffer& store);
+	static LinkClient* Create(cstring server, const Buffer& store);
 
 	static LinkClient* Current;
 

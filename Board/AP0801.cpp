@@ -1,13 +1,13 @@
 ﻿#include "AP0801.h"
 
-#include "Drivers\NRF24L01.h"
+//#include "Drivers\NRF24L01.h"
 #include "Drivers\W5500.h"
 #include "Drivers\Esp8266\Esp8266.h"
 
-#include "Message\ProxyFactory.h"
+//#include "Message\ProxyFactory.h"
 
 AP0801* AP0801::Current = nullptr;
-static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
+//static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
 
 AP0801::AP0801()
 {
@@ -18,88 +18,13 @@ AP0801::AP0801()
 
 	LedInvert = false;
 
-	ProxyFac = nullptr;
-	AlarmObj = nullptr;
-
-	Net.Spi = Spi2;
-	Net.Irq = PE1;
-	Net.Reset = PD13;
-
-	Esp.Com = COM4;
-	Esp.Baudrate = 115200;
-	Esp.Power = PE2;
-	Esp.Reset = PD3;
-	Esp.LowPower = P0;
+	//ProxyFac = nullptr;
+	//AlarmObj = nullptr;
 
 	Current = this;
 }
 
-NetworkInterface* AP0801::Create5500()
-{
-	debug_printf("\r\nW5500::Create \r\n");
-
-	auto net = new W5500(Net.Spi, Net.Irq, Net.Reset);
-	if (!net->Open())
-	{
-		delete net;
-		return nullptr;
-	}
-
-	net->SetLed(*Leds[0]);
-	net->EnableDNS();
-	net->EnableDHCP();
-
-	return net;
-}
-
-NetworkInterface* AP0801::Create8266()
-{
-	debug_printf("\r\nEsp8266::Create \r\n");
-
-	auto esp = new Esp8266();
-	esp->Init(Esp.Com, Esp.Baudrate);
-	esp->Set(Esp.Power, Esp.Reset, Esp.LowPower);
-
-	// 初次需要指定模式 否则为 Wire
-	bool join = esp->SSID && *esp->SSID;
-	if (!join)
-	{
-		*esp->SSID = "WSWL";
-		*esp->Pass = "12345678";
-
-		esp->Mode = NetworkType::STA_AP;
-		esp->WorkMode = NetworkType::STA_AP;
-	}
-
-	if (!esp->Open())
-	{
-		delete esp;
-		return nullptr;
-	}
-
-	esp->SetLed(*Leds[1]);
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
-
-	return esp;
-}
-
-static void OnInitNet(void* param)
-{
-	auto& bsp = *(AP0801*)param;
-
-	bsp.Create5500();
-	bsp.Create8266();
-
-	bsp.Client->Open();
-}
-
-void AP0801::InitNet()
-{
-	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
-}
-
-void  AP0801::InitProxy()
+/*void  AP0801::InitProxy()
 {
 	if (ProxyFac)return;
 	if (!Client)
@@ -142,7 +67,7 @@ void AP0801::InitAlarm()
 
 	AlarmObj->OnAlarm = OnAlarm;
 	AlarmObj->Start();
-}
+}*/
 
 /******************************** 2401 ********************************/
 

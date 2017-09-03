@@ -5,6 +5,8 @@
 #include "Net\Socket.h"
 #include "Device\Spi.h"
 
+class IDataPort;
+
 // W5500以太网驱动
 class W5500 : public NetworkInterface
 {

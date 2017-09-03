@@ -49,9 +49,6 @@ void TokenBoard::InitClient(bool useLocal)
 {
 	if (Client) return;
 
-	// 初始化配置区
-	InitConfig();
-
 	// 创建客户端
 	auto tc = TokenClient::Create("udp://smart.wslink.cn:33333", Buffer(Data, Size));
 	if (useLocal) tc->UseLocal();

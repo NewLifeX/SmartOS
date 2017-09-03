@@ -85,39 +85,6 @@ void NH3_0317::InitButtons(const Delegate2<InputPort&, bool>& press)
 	}
 }
 
-NetworkInterface* NH3_0317::Create8266()
-{
-	// auto esp	= new Esp8266(COM2, PB2, PA1);	// 触摸开关的
-	//auto esp	= new Esp8266(COM3, P0, PA5);
-	auto esp = new Esp8266();
-	esp->Init(COM3);
-	esp->Set(P0, PA5);
-
-	// 初次需要指定模式 否则为 Wire
-	bool join	= esp->SSID && *esp->SSID;
-	//if (!join) esp->Mode = NetworkType::AP;
-
-	if (!join)
-	{
-		*esp->SSID	= "WSWL";
-		*esp->Pass = "12345678";
-
-		esp->Mode	= NetworkType::STA_AP;
-	}
-
-	if(!esp->Open())
-	{
-		delete esp;
-		return nullptr;
-	}
-
-	esp->SetLed(*Leds[0]);
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
-
-	return esp;
-}
-
 /******************************** Token ********************************/
 
 void NH3_0317::InitClient()

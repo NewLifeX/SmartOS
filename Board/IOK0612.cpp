@@ -34,7 +34,7 @@ void IOK0612::InitLeds()
 }
 
 
-void IOK0612::FlushLed()
+/*void IOK0612::FlushLed()
 {
 	if (LedsShow == 0)			// 启动时候20秒
 	{
@@ -101,7 +101,8 @@ byte IOK0612::LedStat(byte showmode)
 
 	}
 	return LedsShow;
-}
+}*/
+
 /*
 NRF24L01+ 	(SPI3)
 NSS			|

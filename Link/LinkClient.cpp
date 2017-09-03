@@ -29,7 +29,7 @@ LinkClient::LinkClient()
 	MaxNotActive = 0;
 
 	_task = 0;
-	ReportStart = 0;
+	ReportStart = -1;
 	ReportLength = 0;
 
 	assert(!Current, "只能有一个物联客户端实例");
@@ -377,6 +377,7 @@ void LinkClient::Ping()
 	// 原始密码对盐值进行加密，得到登录密码
 	auto ms = (int)Sys.Ms();
 	json.Add("Time", ms);
+	json.Add("Data", Store.Data.ToHex());
 
 	Invoke("Device/Ping", json);
 }
@@ -479,7 +480,7 @@ void LinkClient::Write(int start, const Buffer& bs)
 	js.Add("start", start);
 	js.Add("data", bs.ToHex());
 
-	Invoke("Write", js);
+	Invoke("Device/Write", js);
 }
 
 void LinkClient::Write(int start, byte dat)
@@ -510,11 +511,11 @@ bool LinkClient::CheckReport()
 	auto offset = ReportStart;
 	int len = ReportLength;
 
-	if (offset < 0) return false;
+	if (offset < 0 || len <= 0) return false;
 
 	// 检查索引，否则数组越界
 	auto& bs = Store.Data;
-	if (bs.Length() >= offset + len) Write(offset, Buffer(&bs[offset], len));
+	if (bs.Length() >= offset + len) Write(offset, bs.Sub(offset, len));
 
 	ReportStart = -1;
 
@@ -522,9 +523,17 @@ bool LinkClient::CheckReport()
 }
 
 // 快速建立客户端，注册默认Api
-LinkClient* LinkClient::CreateFast(const Buffer& store)
+LinkClient* LinkClient::Create(cstring server, const Buffer& store)
 {
+	// Flash最后一块作为配置区
+	if (Config::Current == nullptr) Config::Current = &Config::CreateFlash();
+
+	// 初始化令牌网
+	auto tk = LinkConfig::Create(server);
+
 	auto tc = new LinkClient();
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
 	/*// 重启
 	tc->Register("Gateway/Restart", &LinkClient::InvokeRestart, tc);

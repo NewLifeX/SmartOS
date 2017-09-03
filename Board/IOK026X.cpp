@@ -25,10 +25,14 @@ IOK026X::IOK026X()
 
 	Data = nullptr;
 	Size = 0;
-	Current = this;
 
-	SSID = "WSWL";
-	Pass = "12345678";
+	Esp.Com = COM2;
+	Esp.Baudrate = 115200;
+	Esp.Power = PB2;
+	Esp.Reset = PA1;
+	Esp.LowPower = P0;
+
+	Current = this;
 }
 
 void* IOK026X::InitData(void* data, int size)
@@ -56,12 +60,6 @@ void* IOK026X::InitData(void* data, int size)
 	return data;
 }
 
-void IOK026X::InitWiFi(cstring ssid, cstring pass)
-{
-	SSID = ssid;
-	Pass = pass;
-}
-
 void IOK026X::InitLeds()
 {
 	for (int i = 0; i < LedPins.Count(); i++)
@@ -72,38 +70,6 @@ void IOK026X::InitLeds()
 		port->Write(false);
 		Leds.Add(port);
 	}
-}
-
-NetworkInterface* IOK026X::Create8266()
-{
-	auto esp = new Esp8266();
-	esp->Init(COM2);
-	esp->Set(PB2, PA1);
-
-	// 初次需要指定模式 否则为 Wire
-	bool join = esp->SSID && *esp->SSID;
-	//if (!join) esp->Mode = NetworkType::AP;
-
-	if (!join)
-	{
-		*esp->SSID = SSID;
-		*esp->Pass = Pass;
-
-		esp->Mode = NetworkType::STA_AP;
-	}
-
-	if(!esp->Open())
-	{
-		delete esp;
-		return nullptr;
-	}
-
-	esp->SetLed(*Leds[0]);
-	Client->Register("SetWiFi", &Esp8266::SetWiFi, esp);
-	Client->Register("GetWiFi", &Esp8266::GetWiFi, esp);
-	Client->Register("GetAPs", &Esp8266::GetAPs, esp);
-
-	return esp;
 }
 
 /******************************** Token ********************************/

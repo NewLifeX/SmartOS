@@ -1,12 +1,10 @@
 ﻿#ifndef _TokenBoard_H_
 #define _TokenBoard_H_
 
-#include "BaseBoard.h"
-
 #include "TokenNet\TokenClient.h"
 
 // 令牌协议板级包基类
-class TokenBoard : public BaseBoard
+class TokenBoard
 {
 public:
 	TokenClient*	Client;	// 令牌客户端

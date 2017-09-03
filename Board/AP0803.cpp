@@ -1,12 +1,9 @@
 ﻿#include "AP0803.h"
 
-#include "Drivers\A67.h"
-#include "Drivers\Sim900A.h"
-
-#include "Message\ProxyFactory.h"
+//#include "Message\ProxyFactory.h"
 
 AP0803* AP0803::Current = nullptr;
-static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
+//static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
 
 AP0803::AP0803()
 {
@@ -16,9 +13,9 @@ AP0803::AP0803()
 	ButtonPins.Add(PE9);
 	ButtonPins.Add(PE14);
 
-	Client = nullptr;
+	/*Client = nullptr;
 	ProxyFac = nullptr;
-	AlarmObj = nullptr;
+	AlarmObj = nullptr;*/
 
 	Gsm.Com = COM4;
 	Gsm.Baudrate = 115200;
@@ -29,55 +26,7 @@ AP0803::AP0803()
 	Current = this;
 }
 
-static NetworkInterface* CreateGPRS(GSM07* net, const SerialConfig& gsm, OutputPort* led)
-{
-	net->Init(gsm.Com, gsm.Baudrate);
-	net->Set(gsm.Power, gsm.Reset, gsm.LowPower);
-	if (led) net->SetLed(*led);
-
-	if (!net->Open())
-	{
-		delete net;
-		return nullptr;
-	}
-
-	return net;
-}
-
-NetworkInterface* AP0803::CreateA67()
-{
-	debug_printf("\r\nCreateA67::Create \r\n");
-
-	auto net = new A67();
-
-	return CreateGPRS(net, Gsm, Leds[0]);
-}
-
-NetworkInterface* AP0803::CreateSIM900A()
-{
-	debug_printf("\r\nCreateSIM900A::Create \r\n");
-
-	auto net = new Sim900A();
-
-	return CreateGPRS(net, Gsm, Leds[0]);
-}
-
-static void OnInitNet(void* param)
-{
-	auto& bsp = *(AP0803*)param;
-
-	//bsp.CreateGPRS();
-	bsp.CreateSIM900A();
-
-	bsp.Client->Open();
-}
-
-void AP0803::InitNet()
-{
-	Sys.AddTask(OnInitNet, this, 0, -1, "InitNet");
-}
-
-void  AP0803::InitProxy()
+/*void  AP0803::InitProxy()
 {
 	if (ProxyFac)return;
 	if (!Client)
@@ -120,7 +69,7 @@ void AP0803::InitAlarm()
 
 	AlarmObj->OnAlarm = OnAlarm;
 	AlarmObj->Start();
-}
+}*/
 
 /*
 

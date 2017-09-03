@@ -1,7 +1,8 @@
 ﻿#include "IOK027X.h"
 
-IOK027X* IOK027X::Current = nullptr;
 #include "Drivers\Esp8266\Esp8266.h"
+
+IOK027X* IOK027X::Current = nullptr;
 
 IOK027X::IOK027X()
 {
@@ -83,7 +84,7 @@ void IOK027X::InitLeds()
 }
 
 
-void IOK027X::FlushLed()
+/*void IOK027X::FlushLed()
 {
 	if (LedsShow == 0)			// 启动时候20秒
 	{
@@ -150,7 +151,7 @@ byte IOK027X::LedStat(byte showmode)
 
 	}
 	return LedsShow;
-}
+}*/
 
 /*
 NRF24L01+ 	(SPI3)		|	W5500		(SPI2)		|	TOUCH		(SPI3)

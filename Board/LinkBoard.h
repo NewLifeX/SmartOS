@@ -1,17 +1,10 @@
 ﻿#ifndef _LinkBoard_H_
 #define _LinkBoard_H_
 
-#include "Net\Socket.h"
-
-#include "Device\Spi.h"
-#include "Device\SerialPort.h"
-
-#include "BaseBoard.h"
-
 #include "Link\LinkClient.h"
 
 // 物联协议板级包基类
-class LinkBoard : public BaseBoard
+class LinkBoard
 {
 public:
 	LinkClient*	Client;	// 物联客户端
@@ -31,14 +24,6 @@ public:
 	void Restore();
 
 	void InitClient();
-
-	SpiConfig		Net;
-	SerialConfig	Esp;
-
-	// 打开以太网W5500
-	NetworkInterface* Create5500();
-	// 打开Esp8266，作为主控或者纯AP
-	NetworkInterface* Create8266();
 
 private:
 	void*	Data;
