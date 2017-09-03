@@ -112,13 +112,8 @@ void IOK026X::InitClient()
 {
 	if (Client) return;
 
-	// 初始化令牌网
-	auto tk = TokenConfig::Create("smart.wslink.cn", NetType::Udp, 33333, 3377);
-
 	// 创建客户端
-	auto tc = TokenClient::CreateFast(Buffer(Data, Size));
-	tc->Cfg = tk;
-	tc->MaxNotActive = 8 * 60 * 1000;
+	auto tc = TokenClient::Create("udp://smart.wslink.cn:33333", Buffer(Data, Size));
 	tc->UseLocal();
 
 	Client = tc;

@@ -173,7 +173,7 @@ void TokenClient::CheckNet()
 		mst->Received = dlg;
 		mst->Open();
 
-		Cfg->ServerIP = mst->_Socket->Remote.Address.Value;
+		//Cfg->ServerIP = mst->_Socket->Remote.Address.Value;
 	}
 
 	// 为其它网卡创建本地会话
@@ -565,9 +565,7 @@ bool TokenClient::OnRedirect(HelloMessage& msg)
 		auto cfg = Cfg;
 		cfg->Show();
 
-		cfg->Protocol = msg.Uri.Type;
-		cfg->Server() = msg.Uri.Host;
-		cfg->ServerPort = msg.Uri.Port;
+		cfg->Server() = msg.Uri.ToString();
 		cfg->Token() = msg.Cookie;
 
 		cfg->Save();
@@ -1177,9 +1175,17 @@ void TokenClient::Register(cstring action, InvokeHandler handler, void* param)
 }
 
 // 快速建立令牌客户端，注册默认Api
-TokenClient* TokenClient::CreateFast(const Buffer& store)
+TokenClient* TokenClient::Create(cstring server, const Buffer& store)
 {
+	// Flash最后一块作为配置区
+	if (Config::Current == nullptr) Config::Current = &Config::CreateFlash();
+
+	// 初始化令牌网
+	auto tk = TokenConfig::Create(server, 3377);
+
 	auto tc = new TokenClient();
+	tc->Cfg = tk;
+	tc->MaxNotActive = 8 * 60 * 1000;
 
 	// 重启
 	tc->Register("Gateway/Restart", &TokenClient::InvokeRestart, tc);
@@ -1254,9 +1260,7 @@ bool TokenClient::InvokeSetRemote(void * param, const Pair& args, Stream& result
 		auto cfg = client->Cfg;
 		cfg->Show();
 
-		cfg->Protocol = uri.Type;
-		cfg->Server() = uri.Host;
-		cfg->ServerPort = uri.Port;
+		cfg->Server() = uri.ToString();
 
 		cfg->Save();
 		cfg->Show();
@@ -1278,12 +1282,10 @@ bool TokenClient::InvokeGetRemote(void * param, const Pair& args, Stream& result
 	auto cfg = client->Cfg;
 	cfg->Show();
 
-	String type = cfg->Protocol == NetType::Tcp ? "Tcp://" : "Udp://";
-	auto host = cfg->Server();
-	auto port = cfg->ServerPort;
+	auto svr = cfg->Server();
 
-	remote = type + host + ":" + port;
-	result.Write(remote);
+	result.Write(svr);
+
 	return true;
 }
 
