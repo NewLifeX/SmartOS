@@ -331,7 +331,9 @@ Json& Json::Add(cstring key, const String& value) {
 		if (left == '{'&&right == '}' || left == '['&&right == ']' || left == '\"'&&right == '\"') flag = false;
 	}
 
-	if (flag)	_str = _str + "\"" + value + "\"";
+	if (flag)	_str += "\"";
+	_str += value;
+	if (flag)	_str += "\"";
 	_str += key ? '}' : ']';
 
 	return *this;

@@ -455,7 +455,7 @@ void LinkClient::OnRead(LinkMessage& msg)
 	// 响应
 	Json rs;
 	rs.Add("start", 0);
-	rs.Add("size", bs.Length());
+	//rs.Add("size", bs.Length());
 	rs.Add("data", bs.ToHex());
 
 	Reply(js["action"].AsString(), msg.Seq, 0, rs.ToString());
@@ -477,7 +477,7 @@ void LinkClient::OnWrite(LinkMessage& msg)
 	// 响应
 	Json rs;
 	rs.Add("start", 0);
-	rs.Add("size", bs.Length());
+	//rs.Add("size", bs.Length());
 	rs.Add("data", bs.ToHex());
 
 	Reply(js["action"].AsString(), msg.Seq, 0, rs.ToString());
