@@ -321,7 +321,16 @@ Json& Json::Add(cstring key, double value) {
 Json& Json::Add(cstring key, const String& value) {
 	AddKey(key);
 
-	_str = _str + "\"" + value + "\"";
+	// 如果字符串是大括号或方括号对，则不需要双引号
+	bool flag = true;
+	if (value.Length() >= 2) {
+		char left = value[0];
+		char right = value[value.Length() - 1];
+
+		if (left == '{'&&right == '}' || left == '['&&right == ']' || left == '\"'&&right == '\"') flag = false;
+	}
+
+	if (flag)	_str = _str + "\"" + value + "\"";
 	_str += key ? '}' : ']';
 
 	return *this;
