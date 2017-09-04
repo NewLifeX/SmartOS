@@ -112,6 +112,7 @@
     <ClCompile Include="..\Link\LinkClient.cpp" />
     <ClCompile Include="..\Link\LinkConfig.cpp" />
     <ClCompile Include="..\Link\LinkMessage.cpp" />
+    <ClCompile Include="..\Message\Api.cpp" />
     <ClCompile Include="..\Message\BinaryPair.cpp" />
     <ClCompile Include="..\Message\Controller.cpp" />
     <ClCompile Include="..\Message\DataStore.cpp" />

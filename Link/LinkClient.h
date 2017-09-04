@@ -39,7 +39,7 @@ public:
 
 	// 发送消息
 	bool Invoke(const String& action, const Json& args);
-	bool Reply(const String& action, int seq, int code, const Json& result);
+	bool Reply(const String& action, int seq, int code, const String& result);
 
 	void Read(int start, int size);
 	void Write(int start, const Buffer& bs);

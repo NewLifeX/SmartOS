@@ -59,7 +59,7 @@ bool Json::IsNull() const { return !_str; }
 String Json::AsString() const {
 	if (!_str) return nullptr;
 
-	if (_str[0] != '"') return nullptr;
+	//if (_str[0] != '"') return nullptr;
 
 	// 去掉前后双引号
 	auto p = _str.GetBuffer();
@@ -253,7 +253,8 @@ Json::Json(float value) : _str(value) { }
 Json::Json(double value) : _str(value) { }*/
 
 // 设置输出缓冲区
-Json::Json(char* buf, int len) :_str(buf, len, false) { _str.SetLength(0); }
+//Json::Json(String& value) : _str((char*)value.GetBuffer(), value.Length(), false) { }
+Json::Json(char* buf, int len) : _str(buf, len, false) { _str.SetLength(0); }
 
 // 添加对象成员
 Json& Json::Add(cstring key, const Json& value) {

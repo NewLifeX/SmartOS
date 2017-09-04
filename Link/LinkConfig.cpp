@@ -74,9 +74,10 @@ int LinkConfig::SetServer(const String& args, String& result)
 {
 	if (!args) return -1;
 
-	Json js(args);
+	//Json js(args);
 
-	auto svr = js["server"].AsString();
+	//auto svr = js["server"].AsString();
+	auto& svr = args;
 	if (!svr) return -1;
 
 	Server() = svr;
@@ -92,8 +93,9 @@ int LinkConfig::SetServer(const String& args, String& result)
 // 获取服务器地址
 int LinkConfig::GetServer(const String& args, String& result)
 {
-	Json js(result);
-	js.Add("server", Server());
+	//Json js(result);
+	//js.Add("server", Server());
+	result = Server();
 
 	return 0;
 }

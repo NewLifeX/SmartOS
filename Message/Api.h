@@ -16,6 +16,8 @@ public:
 	Dictionary<cstring, ApiHandler>	Routes;	// 路由集合
 	Dictionary<cstring, void*>		Params;	// 参数集合
 
+	TApi();
+
 	// 注册远程调用处理器
 	void Register(cstring action, ApiHandler handler, void* param = nullptr);
 	// 模版支持成员函数
@@ -29,7 +31,7 @@ public:
 	bool Contain(cstring action);
 
 	// 执行接口
-	int Invoke(cstring action, void* param, const String& args, String& result);
+	int Invoke(cstring action, const String& args, String& result);
 };
 
 // 全局对象

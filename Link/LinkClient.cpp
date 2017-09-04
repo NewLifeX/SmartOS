@@ -190,7 +190,7 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		// 调用全局动作
 		auto act2 = act;
 		String rs;
-		int code = Api.Invoke(act2.GetBuffer(), this, js["args"].AsString(), rs);
+		int code = Api.Invoke(act2.GetBuffer(), js["args"].AsString(), rs);
 
 		Reply(act, msg.Seq, code, rs);
 	}
@@ -236,7 +236,7 @@ bool LinkClient::Invoke(const String& action, const Json& args) {
 	return Send(msg);
 }
 
-bool LinkClient::Reply(const String& action, int seq, int code, const Json& result) {
+bool LinkClient::Reply(const String& action, int seq, int code, const String& result) {
 	// 消息缓冲区，跳过头部
 	char cs[512];
 
@@ -458,7 +458,7 @@ void LinkClient::OnRead(LinkMessage& msg)
 	rs.Add("size", bs.Length());
 	rs.Add("data", bs.ToHex());
 
-	Reply(js["action"].AsString(), msg.Seq, 0, rs);
+	Reply(js["action"].AsString(), msg.Seq, 0, rs.ToString());
 }
 
 void LinkClient::OnWrite(LinkMessage& msg)
@@ -480,7 +480,7 @@ void LinkClient::OnWrite(LinkMessage& msg)
 	rs.Add("size", bs.Length());
 	rs.Add("data", bs.ToHex());
 
-	Reply(js["action"].AsString(), msg.Seq, 0, rs);
+	Reply(js["action"].AsString(), msg.Seq, 0, rs.ToString());
 }
 
 void LinkClient::Write(int start, const Buffer& bs)

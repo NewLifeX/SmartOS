@@ -599,5 +599,8 @@
     <ClCompile Include="..\Board\W5500Module.cpp">
       <Filter>Board</Filter>
     </ClCompile>
+    <ClCompile Include="..\Message\Api.cpp">
+      <Filter>Message</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
