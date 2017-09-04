@@ -27,6 +27,12 @@ public:
 
 	static LinkConfig* Current;
 	static LinkConfig*	Create(cstring server);
+
+	// 设置服务器地址
+	int SetServer(const String& args, String& result);
+	// 获取服务器地址
+	int GetServer(const String& args, String& result);
+
 };
 
 #endif

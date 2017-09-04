@@ -2,6 +2,9 @@
 
 #include "LinkConfig.h"
 
+#include "Message\Json.h"
+#include "Message\Api.h"
+
 LinkConfig* LinkConfig::Current = nullptr;
 
 LinkConfig::LinkConfig() : ConfigBase()
@@ -57,7 +60,40 @@ LinkConfig* LinkConfig::Create(cstring server)
 		}
 
 		tc.Show();
+
+		// 注册全局动作
+		Api.Register("SetServer", &LinkConfig::SetServer, &tc);
+		Api.Register("GetServer", &LinkConfig::GetServer, &tc);
 	}
 
 	return &tc;
+}
+
+// 设置服务器地址
+int LinkConfig::SetServer(const String& args, String& result)
+{
+	if (!args) return -1;
+
+	Json js(args);
+
+	auto svr = js["server"].AsString();
+	if (!svr) return -1;
+
+	Server() = svr;
+	Save();
+	Show();
+
+	// 3秒后重启
+	Sys.Reboot(3000);
+
+	return 0;
+}
+
+// 获取服务器地址
+int LinkConfig::GetServer(const String& args, String& result)
+{
+	Json js(result);
+	js.Add("server", Server());
+
+	return 0;
 }

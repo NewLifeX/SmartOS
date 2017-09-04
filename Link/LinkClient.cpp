@@ -6,6 +6,7 @@
 #include "Net\ITransport.h"
 
 #include "Message\Json.h"
+#include "Message\Api.h"
 
 #include "LinkClient.h"
 
@@ -185,6 +186,14 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		OnRead(msg);
 	else if (act == "Write")
 		OnWrite(msg);
+	else if (!msg.Reply) {
+		// 调用全局动作
+		auto act2 = act;
+		String rs;
+		int code = Api.Invoke(act2.GetBuffer(), this, js["args"].AsString(), rs);
+
+		Reply(act, msg.Seq, code, rs);
+	}
 
 	// 外部公共消息事件
 	//Received(msg, *this);
