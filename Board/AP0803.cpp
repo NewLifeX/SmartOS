@@ -1,9 +1,6 @@
 ﻿#include "AP0803.h"
 
-//#include "Message\ProxyFactory.h"
-
 AP0803* AP0803::Current = nullptr;
-//static ProxyFactory*	ProxyFac = nullptr;	// 透传管理器
 
 AP0803::AP0803()
 {
@@ -13,10 +10,6 @@ AP0803::AP0803()
 	ButtonPins.Add(PE9);
 	ButtonPins.Add(PE14);
 
-	/*Client = nullptr;
-	ProxyFac = nullptr;
-	AlarmObj = nullptr;*/
-
 	Gsm.Com = COM4;
 	Gsm.Baudrate = 115200;
 	Gsm.Power = PE0;		// 0A04（170509）板上电源为PA4
@@ -25,51 +18,6 @@ AP0803::AP0803()
 
 	Current = this;
 }
-
-/*void  AP0803::InitProxy()
-{
-	if (ProxyFac)return;
-	if (!Client)
-	{
-		debug_printf("请先初始化TokenClient！！\r\n");
-		return;
-	}
-	ProxyFac = ProxyFactory::Create();
-
-	ProxyFac->Register(new ComProxy(COM2));
-
-	ProxyFac->Open(Client);
-	// ProxyFac->AutoStart();		// 自动启动的设备  需要保证Client已经开启，否则没有意义
-}
-
-static void OnAlarm(AlarmItem& item)
-{
-	// 1长度n + 1类型 + 1偏移 + (n-2)数据
-	auto bs = item.GetData();
-	debug_printf("OnAlarm ");
-	bs.Show(true);
-
-	if (bs[1] == 0x06)
-	{
-		auto client = AP0803::Current->Client;
-		client->Store.Write(bs[2], bs.Sub(3, bs[0] - 2));
-
-		// 主动上报状态
-		client->ReportAsync(bs[2], bs[0] - 2);
-	}
-}
-
-void AP0803::InitAlarm()
-{
-	if (!Client)return;
-
-	if (!AlarmObj) AlarmObj = new Alarm();
-	Client->Register("Policy/AlarmSet", &Alarm::Set, AlarmObj);
-	Client->Register("Policy/AlarmGet", &Alarm::Get, AlarmObj);
-
-	AlarmObj->OnAlarm = OnAlarm;
-	AlarmObj->Start();
-}*/
 
 /*
 
