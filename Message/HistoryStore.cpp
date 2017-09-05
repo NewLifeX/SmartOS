@@ -2,6 +2,8 @@
 
 #include "Device\Flash.h"
 
+#include "Kernel\Task.h"
+
 #include "HistoryStore.h"
 
 #define DS_DEBUG DEBUG
@@ -61,6 +63,8 @@ bool HistoryStore::Open(bool UseThousand)
 		p = RenderPeriod;
 	}
 	_task = Sys.AddTask(RenderTask, this, p, p, "历史数据");
+	auto task = Task::Get(_task);
+	task->MaxDeepth = 4;
 
 	return Opened = true;
 }
