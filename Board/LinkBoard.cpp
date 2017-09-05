@@ -48,12 +48,14 @@ void LinkBoard::Write(uint offset, byte data)
 
 /******************************** Link ********************************/
 
-void LinkBoard::InitClient()
+void LinkBoard::InitClient(cstring server)
 {
 	if (Client) return;
 
+	if (!server) server = "tcp://feifan.link:2233";
+
 	// 创建客户端
-	auto tc = LinkClient::Create("tcp://192.168.0.3:2233", Buffer(Data, Size));
+	auto tc = LinkClient::Create(server, Buffer(Data, Size));
 
 	Client = tc;
 }

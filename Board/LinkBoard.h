@@ -23,7 +23,7 @@ public:
 	void OnLongPress(InputPort* port, bool down);
 	void Restore();
 
-	void InitClient();
+	void InitClient(cstring server = nullptr);
 
 private:
 	void*	Data;

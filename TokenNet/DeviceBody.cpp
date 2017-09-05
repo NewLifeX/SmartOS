@@ -1,7 +1,6 @@
 ﻿
 #include "Config.h"
 
-#include "TokenNet\Token.h"
 #include "Security\RC4.h"
 
 #include "DeviceBody.h"
