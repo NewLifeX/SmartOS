@@ -300,7 +300,9 @@ void LinkClient::Login()
 	json.Add("agent", Sys.Name);
 	json.Add("version", Version(Sys.Ver).ToString());
 
-	json.Add("ip", Master->Host->IP.ToString());
+	auto host = Master->Host;
+	json.Add("ip", host->IP.ToString());
+	json.Add("nettype", host->Name);
 
 	Invoke("Device/Login", json);
 }
