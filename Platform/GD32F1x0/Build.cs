@@ -1,10 +1,10 @@
 var build = Builder.Create("MDK");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M3";
 build.Defines.Add("STM32F0");
 build.Defines.Add("GD32");
-build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
-build.AddIncludes("..\\..\\..\\Lib\\Inc");
+build.AddIncludes("..\\..\\..\\LibF0\\CMSIS");
+build.AddIncludes("..\\..\\..\\LibF0\\Inc");
 build.AddIncludes("..\\..\\", false);
 build.AddFiles(".", "*.c;*.cpp;startup_stm32f0xx.s");
 build.AddFiles("..\\CortexM", "*.c;*.cpp;*.s");

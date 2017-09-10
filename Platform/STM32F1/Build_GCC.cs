@@ -1,10 +1,10 @@
 var build = Builder.Create("GCCArm");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M3";
 build.Linux = true;
 build.Defines.Add("STM32F1");
-build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
-build.AddIncludes("..\\..\\..\\Lib\\Inc");
+build.AddIncludes("..\\..\\..\\LibF1\\CMSIS");
+build.AddIncludes("..\\..\\..\\LibF1\\Inc");
 build.AddIncludes("..\\..\\", false);
 build.AddFiles(".", "*.c;*.cpp;startup_stm32f10x_gcc.S");
 build.AddFiles("..\\CortexM", "*.c;*.cpp");

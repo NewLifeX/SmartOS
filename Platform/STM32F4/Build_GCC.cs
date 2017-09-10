@@ -1,9 +1,9 @@
 var build = Builder.Create("GCCArm");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M4";
 build.Defines.Add("STM32F4");
-build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
-build.AddIncludes("..\\..\\..\\Lib\\Inc");
+build.AddIncludes("..\\..\\..\\LibF4\\CMSIS");
+build.AddIncludes("..\\..\\..\\LibF4\\Inc");
 build.AddIncludes("..\\", false);
 build.AddIncludes("..\\..\\", false);
 build.AddFiles(".", "*.c;*.cpp;*.s");

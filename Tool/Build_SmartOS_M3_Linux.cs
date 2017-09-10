@@ -1,25 +1,10 @@
 var build = Builder.Create("MDK");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M3";
 build.Output = "Linux";
 build.Linux = true;
 build.Defines.Add("STM32F1");
-build.AddIncludes("..\\", false);
-build.AddFiles("..\\Core");
-build.AddFiles("..\\Kernel");
-build.AddFiles("..\\Device");
-build.AddFiles("..\\", "*.c;*.cpp", false);
-build.AddFiles("..\\Security", "*.cpp");
-build.AddFiles("..\\Board");
-build.AddFiles("..\\Storage");
-build.AddFiles("..\\App");
-build.AddFiles("..\\Drivers");
-build.AddFiles("..\\Net");
-build.AddFiles("..\\Test");
-build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
-build.AddFiles("..\\Message");
-build.AddFiles("..\\TinyNet");
-build.AddFiles("..\\TokenNet");
+//include=_Files.cs
 build.Libs.Clear();
 //build.ExtCompiles.Add("--enum_is_int");
 //build.ExtCompiles.Add("--signed_chars");

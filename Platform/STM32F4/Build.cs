@@ -1,9 +1,9 @@
 var build = Builder.Create("MDK");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M4F";
 build.Defines.Add("STM32F4");
-build.AddIncludes("..\\..\\..\\Lib\\CMSIS");
-build.AddIncludes("..\\..\\..\\Lib\\Inc");
+build.AddIncludes("..\\..\\..\\LibF4\\CMSIS");
+build.AddIncludes("..\\..\\..\\LibF4\\Inc");
 build.AddIncludes("..\\", false);
 build.AddIncludes("..\\..\\", false);
 build.AddFiles(".", "*.c;*.cpp;startup_stm32f4xx.s");

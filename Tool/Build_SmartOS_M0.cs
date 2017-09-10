@@ -1,23 +1,9 @@
 var build = Builder.Create("MDK");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M0+";
+
 build.Defines.Add("STM32F0");
-build.AddIncludes("..\\", false);
-build.AddFiles("..\\Core");
-build.AddFiles("..\\Kernel");
-build.AddFiles("..\\Device");
-build.AddFiles("..\\", "*.c;*.cpp", false);
-build.AddFiles("..\\Security", "*.cpp");
-build.AddFiles("..\\Board");
-build.AddFiles("..\\Storage");
-build.AddFiles("..\\App");
-build.AddFiles("..\\Drivers");
-build.AddFiles("..\\Net");
-build.AddFiles("..\\Test");
-build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
-build.AddFiles("..\\Message");
-build.AddFiles("..\\TinyNet");
-build.AddFiles("..\\TokenNet");
+//include=_Files.cs
 build.Libs.Clear();
 build.CompileAll();
 build.BuildLib("..\\SmartOS_M0");

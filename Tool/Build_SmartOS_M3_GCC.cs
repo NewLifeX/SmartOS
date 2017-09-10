@@ -1,24 +1,9 @@
 var build = Builder.Create("GCCArm");
-build.Init();
+build.Init(false);
 build.CPU = "Cortex-M3";
 build.Linux = true;
 build.Output = "GCC";
-build.AddIncludes("..\\", false);
-build.AddFiles("..\\Core");
-build.AddFiles("..\\Kernel");
-build.AddFiles("..\\Device");
-build.AddFiles("..\\", "*.c;*.cpp", false);
-build.AddFiles("..\\Security", "*.cpp");
-build.AddFiles("..\\Board");
-build.AddFiles("..\\Storage");
-build.AddFiles("..\\App");
-build.AddFiles("..\\Drivers");
-build.AddFiles("..\\Net");
-build.AddFiles("..\\Test");
-build.AddFiles("..\\TinyIP", "*.c;*.cpp", false, "HttpClient");
-build.AddFiles("..\\Message");
-build.AddFiles("..\\TinyNet");
-build.AddFiles("..\\TokenNet");
+//include=_Files.cs
 build.Libs.Clear();
 build.CompileAll();
 build.BuildLib("..\\libSmartOS_M3.a");
