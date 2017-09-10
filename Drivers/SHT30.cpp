@@ -164,7 +164,8 @@ bool SHT30::Open()
 
 	if (Pwr) *Pwr = true;
 
-	bool rs = CheckStatus();
+	//bool rs = CheckStatus();
+	CheckStatus();
 
 	/*
 	SHT30三种采集数据方式：

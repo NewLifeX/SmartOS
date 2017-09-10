@@ -1014,7 +1014,7 @@ void TokenClient::OnWrite(const TokenMessage& msg, TokenController* ctrl)
 		// 拦截给同步方法
 		auto handle = (WaitHandle*)_Expect;
 		if (handle) {
-			auto start = (int)handle->State;
+			auto start = (uint)handle->State;
 			if (start == dm.Start) {
 				// 设置事件，通知等待任务退出循环
 				handle->State = (void*)dm.Size;

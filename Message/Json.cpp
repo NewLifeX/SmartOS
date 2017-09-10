@@ -18,7 +18,7 @@ JsonType Json::Type() const
 
 	// 快速判断对象、数组和字符串
 	auto s = _str.Trim();
-	auto p = s.GetBuffer();
+	//auto p = s.GetBuffer();
 	int len = s.Length();
 	switch (s[0])
 	{
@@ -328,7 +328,7 @@ Json& Json::Add(cstring key, const String& value) {
 		char left = value[0];
 		char right = value[value.Length() - 1];
 
-		if (left == '{'&&right == '}' || left == '['&&right == ']' || left == '\"'&&right == '\"') flag = false;
+		if ((left == '{' && right == '}') || (left == '[' && right == ']') || (left == '\"' && right == '\"')) flag = false;
 	}
 
 	if (flag)	_str += "\"";

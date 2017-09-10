@@ -172,7 +172,7 @@ bool Flash::ReadOutProtection(bool set)
 		// 取消读保护会清空 Flash 内容，注意：要上电复位才可以使用IC
 		FLASH_Unlock();
 		FLASH_ReadOutProtection(DISABLE);
-	}return set;
+	}
 #endif
 #if defined(STM32F0)
 	bool isProt = FLASH_OB_GetRDP() == SET ? true : false;
@@ -197,6 +197,7 @@ bool Flash::ReadOutProtection(bool set)
 		FLASH_Unlock();
 		FLASH_OB_RDPConfig(OB_RDP_Level_0);
 		FLASH_OB_Lock();
-	}return set;
+	}
 #endif
+	return set;
 }

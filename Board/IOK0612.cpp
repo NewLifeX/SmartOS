@@ -18,7 +18,7 @@ IOK0612::IOK0612()
 
 	Current = this;
 }
-static bool ledstat2 = false;
+//static bool ledstat2 = false;
 
 //重写指示灯默认倒置
 void IOK0612::InitLeds()
