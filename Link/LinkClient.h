@@ -71,6 +71,7 @@ public:
 	static LinkClient* Current;
 
 private:
+	void Redirect(const String& uri);
 	void OnReceive(LinkMessage& msg);
 	bool Send(const LinkMessage& msg);
 

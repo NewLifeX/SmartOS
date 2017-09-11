@@ -152,6 +152,28 @@ uint LinkClient::Dispatch(ITransport* port, Buffer& bs, void* param, void* param
 	return 0;
 }
 
+//重定向
+void LinkClient::Redirect(const String& uri)
+{
+	Master->~Socket();
+	Master = nullptr;
+
+	// 创建连接服务器的Socket
+	auto socket = Socket::CreateRemote(NetUri(uri));
+	if (!socket) return;
+
+	// 注册收到数据事件
+	auto port = dynamic_cast<ITransport*>(socket);
+	port->Register(Dispatch, this);
+
+	Master = socket;
+
+	debug_printf("LinkClient::CheckNet %s 成功创建主连接\r\n", socket->Host->Name);
+
+	// 已连接时，减慢网络检查速度
+	Sys.SetTaskPeriod(_task, 5000);
+}
+
 // 接收处理
 void LinkClient::OnReceive(LinkMessage& msg)
 {
@@ -173,6 +195,27 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		if (code == 401) {
 			Status = 0;
 			Sys.SetTask(_task, true, 0);
+			return;
+		}
+		//重定向
+		else if (code == 301)
+		{
+			auto server = js["result"].AsString();
+			//重定向类型 0:临时 1:永久
+			auto type = js["type"].AsInt();
+
+			//修改默认连接
+			if (type == 1)
+			{
+				Cfg->Server() = server;
+				Cfg->Show();
+				Cfg->Save();
+			}
+
+			debug_printf("\r\n重定向:type:%d,server:%d\r\n",type, server);
+
+			//设置连接服务器
+			Redirect(server);
 			return;
 		}
 	}
@@ -339,7 +382,7 @@ void LinkClient::OnLogin(LinkMessage& msg)
 
 			// 保存服务器地址
 			auto svr = rs["server"].AsString();
-			if (svr) Cfg->Server() = svr;
+			//if (svr) Cfg->Server() = svr;
 
 			Cfg->Show();
 			Cfg->Save();
