@@ -12,7 +12,7 @@
 #include "LinkMessage.h"
 #include "LinkConfig.h"
 
-// 物联客户端
+// 物联客户端。以太网通信
 class LinkClient
 {
 public:

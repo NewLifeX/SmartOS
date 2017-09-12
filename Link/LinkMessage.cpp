@@ -29,7 +29,7 @@ Json LinkMessage::Create(int len) {
 }
 
 void LinkMessage::Show(bool newline) const {
-	debug_printf("Seq=%d [%d] ", Seq, Length);
+	debug_printf("%d [%d] ", Seq, Length);
 
 	String str((cstring)&this[1], Length);
 	str.Show(newline);
