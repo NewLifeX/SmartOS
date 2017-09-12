@@ -202,10 +202,10 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		{
 			auto rs = js["result"];			
 			//重定向类型 0:临时 1:永久
-			auto type = rs["type"].AsInt();
+			auto type = rs["type"].AsString();
 			auto server = rs["url"].AsString();
 			//修改默认连接
-			if (type == 1)
+			if (type == "1")
 			{
 				Cfg->Server() = server;
 				Cfg->Show();
