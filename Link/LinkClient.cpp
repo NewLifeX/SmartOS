@@ -200,10 +200,10 @@ void LinkClient::OnReceive(LinkMessage& msg)
 		//重定向
 		else if (code == 301)
 		{
-			auto server = js["result"].AsString();
+			auto rs = js["result"];			
 			//重定向类型 0:临时 1:永久
-			auto type = js["type"].AsInt();
-
+			auto type = rs["type"].AsInt();
+			auto server = rs["url"].AsString();
 			//修改默认连接
 			if (type == 1)
 			{
@@ -211,8 +211,6 @@ void LinkClient::OnReceive(LinkMessage& msg)
 				Cfg->Show();
 				Cfg->Save();
 			}
-
-			debug_printf("\r\n重定向:type:%d,server:%d\r\n",type, server);
 
 			//设置连接服务器
 			Redirect(server);
