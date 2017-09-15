@@ -7,7 +7,7 @@
 #include "Net\ITransport.h"
 
 // 串口类
-class SerialPort : public ITransport, public Power
+class SerialPort : public Object, public ITransport, public Power
 {
 private:
 	friend class ComProxy;

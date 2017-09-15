@@ -207,7 +207,7 @@ typedef struct : ByteStruct
 /****************************** 基础类 ************************************/
 
 // 硬件Socket控制器
-class HardSocket : public ITransport, public Socket
+class HardSocket : public Object, public ITransport, public Socket
 {
 private:
 	W5500&	_Host;	// W5500公共部分控制器
