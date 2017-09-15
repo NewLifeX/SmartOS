@@ -602,5 +602,8 @@
     <ClCompile Include="..\Message\Api.cpp">
       <Filter>Message</Filter>
     </ClCompile>
+    <ClCompile Include="..\Link\TinyLink.cpp">
+      <Filter>Link</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -180,7 +180,9 @@ void LinkClient::OnReceive(LinkMessage& msg)
 	TS("LinkClient::OnReceive");
 
 #if DEBUG
-	debug_printf("Link <= ");
+	auto obj = dynamic_cast<Object*>(Master);
+	obj->Show(false);
+	debug_printf(" <= ");
 	msg.Show(true);
 #endif // DEBUG
 
@@ -269,7 +271,9 @@ bool LinkClient::Invoke(const String& action, const Json& args) {
 	if (_g_seq == 0)_g_seq++;
 
 #if DEBUG
-	debug_printf("Link => ");
+	auto obj = dynamic_cast<Object*>(Master);
+	obj->Show(false);
+	debug_printf(" => ");
 	msg.Show(true);
 #endif
 
@@ -300,7 +304,9 @@ bool LinkClient::Reply(const String& action, int seq, int code, const String& re
 	msg.Code = 1;
 
 #if DEBUG
-	debug_printf("Link => ");
+	auto obj = dynamic_cast<Object*>(Master);
+	obj->Show(false);
+	debug_printf(" => ");
 	msg.Show(true);
 #endif
 

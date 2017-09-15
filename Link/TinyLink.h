@@ -24,8 +24,9 @@ public:
 
 	TinyLink();
 
-	void Open();
-	void Close();
+	void Open();	// 打开连接，登录并定时心跳
+	void Close();	// 关闭连接
+	void Listen();	// 打开并监听连接，作为服务端，没有登录和心跳
 
 	// 发送消息
 	bool Send(LinkMessage& msg, const String& data);

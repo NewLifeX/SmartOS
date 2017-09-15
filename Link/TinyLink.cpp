@@ -24,8 +24,23 @@ void TinyLink::Open()
 	TS("TinyLink::Open");
 	assert(Port, "未指定Port");
 
+	Port->Register(Dispatch, this);
 	Port->Open();
-	_task = Sys.AddTask(&TinyLink::LoopTask, this, 0, 1000, "微联定时");
+
+	if (PingTime > 0) _task = Sys.AddTask(&TinyLink::LoopTask, this, 0, PingTime * 1000, "微联定时");
+
+	Opened = true;
+}
+
+void TinyLink::Listen()
+{
+	if (Opened) return;
+
+	TS("TinyLink::Open");
+	assert(Port, "未指定Port");
+
+	Port->Register(Dispatch, this);
+	Port->Open();
 
 	Opened = true;
 }
@@ -34,6 +49,7 @@ void TinyLink::Close()
 {
 	if (!Opened) return;
 
+	Port->Register(nullptr, nullptr);
 	Port->Close();
 	Sys.RemoveTask(_task);
 
@@ -77,7 +93,9 @@ void TinyLink::OnReceive(LinkMessage& msg)
 	TS("TinyLink::OnReceive");
 
 #if DEBUG
-	debug_printf("Link <= ");
+	auto obj = dynamic_cast<Object*>(Port);
+	obj->Show(false);
+	debug_printf(" <= ");
 	msg.Show(true);
 #endif // DEBUG
 
@@ -102,7 +120,9 @@ bool TinyLink::Send(LinkMessage& msg, const String& data) {
 	msg.Code = 1;
 
 #if DEBUG
-	debug_printf("Link => ");
+	auto obj = dynamic_cast<Object*>(Port);
+	obj->Show(false);
+	debug_printf(" => ");
 	str.Show(true);
 #endif
 
