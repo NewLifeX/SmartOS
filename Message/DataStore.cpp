@@ -151,8 +151,14 @@ bool Area::In(uint start, uint len)
 bool Area::Any(uint start, uint len)
 {
 	// 只要搭边就算数
-	//return start <= Offset + Size && start + len >= Offset;
-	return !(Offset > start + len - 1 || Offset + Size < start);
+	// start  <= A < start + len
+	// Offset <= B < Offset + Size
+
+	// A左边小于B右边，且A右边大于B左边
+	//return start < Offset + Size && start + len > Offset;
+
+	// 不是A右边小于等于B左边，且不是A左边大于等于B右边
+	return !(Offset >= start + len || Offset + Size <= start);
 }
 
 /****************************** 数据操作接口 ************************************/
