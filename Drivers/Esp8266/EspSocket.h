@@ -3,7 +3,7 @@
 
 #include "Esp8266.h"
 
-class EspSocket : public ITransport, public Socket
+class EspSocket : public Object, public ITransport, public Socket
 {
 protected:
 	Esp8266&	_Host;
