@@ -1,3 +1,5 @@
+using NewLife.Build;
+
 var build = Builder.Create("MDK");
 build.Init(false);
 build.CPU = "Cortex-M0+";

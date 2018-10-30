@@ -1,3 +1,5 @@
+using NewLife.Build;
+
 var build = Builder.Create("ICC");
 build.Init(false);
 build.CPU = "Cortex-M3";
