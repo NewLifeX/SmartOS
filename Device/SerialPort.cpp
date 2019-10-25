@@ -304,9 +304,22 @@ void SerialPort::Set485(bool flag)
 {
 	if (RS485)
 	{
-		if (!flag) Sys.Sleep(1);
+		if (!flag)
+		{
+			//切换到接收需要等待发送完成
+			//需要根据实际测试值修改
+			switch (this->_baudRate)
+			{
+			case 115200:
+				Sys.Delay(100);
+				break;
+			default:
+				Sys.Sleep(1);
+				break;
+			}			
+		}
 		*RS485 = flag;
-		if (flag) Sys.Sleep(1);
+		/*if (flag) Sys.Sleep(1);*/
 		/*if(flag)
 			debug_printf("485 高\r\n");
 		else
